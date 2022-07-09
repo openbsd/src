@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.20 2022/01/08 00:20:10 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.21 2022/07/09 20:51:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -307,11 +307,14 @@ struct dwxe_softc {
 
 int	dwxe_match(struct device *, void *, void *);
 void	dwxe_attach(struct device *, struct device *, void *);
+int	dwxe_activate(struct device *, int);
+void	dwxe_init(struct dwxe_softc *sc);
 void	dwxe_phy_setup_emac(struct dwxe_softc *);
 void	dwxe_phy_setup_gmac(struct dwxe_softc *);
 
 const struct cfattach dwxe_ca = {
-	sizeof(struct dwxe_softc), dwxe_match, dwxe_attach
+	sizeof(struct dwxe_softc), dwxe_match, dwxe_attach,
+	NULL, dwxe_activate
 };
 
 struct cfdriver dwxe_cd = {
@@ -372,7 +375,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	struct dwxe_softc *sc = (void *)self;
 	struct fdt_attach_args *faa = aux;
 	struct ifnet *ifp;
-	uint32_t phy, phy_supply;
+	uint32_t phy;
 	int node;
 
 	sc->sc_node = faa->fa_node;
@@ -392,18 +395,6 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_phyloc = MII_PHY_ANY;
 
-	pinctrl_byname(faa->fa_node, "default");
-
-	/* Enable clock. */
-	clock_enable(faa->fa_node, "stmmaceth");
-	reset_deassert(faa->fa_node, "stmmaceth");
-	delay(5000);
-
-	/* Power up PHY. */
-	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
-	if (phy_supply)
-		regulator_enable(phy_supply);
-
 	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
 	if (sc->sc_clk > 160000000)
 		sc->sc_clk = DWXE_MDIO_CMD_MDC_DIV_RATIO_M_128;
@@ -419,11 +410,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 		dwxe_lladdr_read(sc, sc->sc_lladdr);
 	printf(": address %s\n", ether_sprintf(sc->sc_lladdr));
 
-	/* Do hardware specific initializations. */
-	if (OF_is_compatible(faa->fa_node, "allwinner,sun8i-r40-gmac"))
-		dwxe_phy_setup_gmac(sc);
-	else
-		dwxe_phy_setup_emac(sc);
+	dwxe_init(sc);
 
 	timeout_set(&sc->sc_tick, dwxe_tick, sc);
 	timeout_set(&sc->sc_rxto, dwxe_rxtick, sc);
@@ -447,8 +434,6 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 
 	ifmedia_init(&sc->sc_media, 0, dwxe_media_change, dwxe_media_status);
 
-	dwxe_reset(sc);
-
 	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
 	    MII_OFFSET_ANY, MIIF_NOISOLATE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -465,6 +450,53 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	    dwxe_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+}
+
+int
+dwxe_activate(struct device *self, int act)
+{
+	struct dwxe_softc *sc = (struct dwxe_softc *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (ifp->if_flags & IFF_RUNNING)
+			dwxe_down(sc);
+		break;
+	case DVACT_RESUME:
+		dwxe_init(sc);
+		if (ifp->if_flags & IFF_UP)
+			dwxe_up(sc);
+		break;
+	}
+
+	return 0;
+}
+
+void
+dwxe_init(struct dwxe_softc *sc)
+{
+	uint32_t phy_supply;
+
+	pinctrl_byname(sc->sc_node, "default");
+
+	/* Enable clock. */
+	clock_enable(sc->sc_node, "stmmaceth");
+	reset_deassert(sc->sc_node, "stmmaceth");
+	delay(5000);
+
+	/* Power up PHY. */
+	phy_supply = OF_getpropint(sc->sc_node, "phy-supply", 0);
+	if (phy_supply)
+		regulator_enable(phy_supply);
+
+	/* Do hardware specific initializations. */
+	if (OF_is_compatible(sc->sc_node, "allwinner,sun8i-r40-gmac"))
+		dwxe_phy_setup_gmac(sc);
+	else
+		dwxe_phy_setup_emac(sc);
+
+	dwxe_reset(sc);
 }
 
 void
@@ -512,7 +544,6 @@ dwxe_phy_setup_emac(struct dwxe_softc *sc)
 	syscon |= ((rx_delay / 100) << SYSCON_ERXDC_SHIFT) & SYSCON_ERXDC_MASK;
 
 	regmap_write_4(rm, SYSCON_EMAC, syscon);
-	dwxe_reset(sc);
 }
 
 void
@@ -545,7 +576,6 @@ dwxe_phy_setup_gmac(struct dwxe_softc *sc)
 	syscon |= ((rx_delay / 100) << SYSCON_ERXDC_SHIFT) & SYSCON_ERXDC_MASK;
 
 	regmap_write_4(rm, SYSCON_GMAC, syscon);
-	dwxe_reset(sc);
 }
 
 uint32_t
