@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1api.c,v 1.2 2021/12/14 17:10:02 jsing Exp $ */
+/* $OpenBSD: asn1api.c,v 1.3 2022/07/09 14:47:42 tb Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -381,6 +381,26 @@ asn1_get_object(void)
 	return failed;
 }
 
+static int
+asn1_integer_get_null_test(void)
+{
+	int failed = 0;
+	long ret;
+
+	if ((ret = ASN1_INTEGER_get(NULL)) != 0) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_get(NULL) %ld != 0\n", ret);
+		failed |= 1;
+	}
+
+	if ((ret = ASN1_ENUMERATED_get(NULL)) != 0) {
+		fprintf(stderr, "FAIL: ASN1_ENUMERATED_get(NULL) %ld != 0\n",
+		    ret);
+		failed |= 1;
+	}
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -389,6 +409,7 @@ main(int argc, char **argv)
 	failed |= asn1_tag2bit();
 	failed |= asn1_tag2str();
 	failed |= asn1_get_object();
+	failed |= asn1_integer_get_null_test();
 
 	return (failed);
 }
