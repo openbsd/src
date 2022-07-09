@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.81 2022/06/29 09:08:07 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.82 2022/07/09 20:57:01 mvs Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -948,6 +948,9 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			error = 0;
 
 		if_put(eth_if);
+
+		if (error != 0)
+			return (error);
 
 		return (sppp_ioctl(ifp, cmd, data));
 	}
