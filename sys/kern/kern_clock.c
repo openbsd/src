@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.103 2022/02/16 08:01:32 jsg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.104 2022/07/10 20:16:15 mlarkin Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -324,7 +324,7 @@ statclock(struct clockframe *frame)
 		if (psdiv == 1) {
 			setstatclockrate(stathz);
 		} else {
-			setstatclockrate(profhz);			
+			setstatclockrate(profhz);
 		}
 	}
 
