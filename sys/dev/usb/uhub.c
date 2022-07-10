@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.95 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: uhub.c,v 1.96 2022/07/10 20:15:31 mlarkin Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -80,13 +80,13 @@ int uhub_port_connect(struct uhub_softc *, int, int);
  * Every other driver only connects to hubs
  */
 
-int uhub_match(struct device *, void *, void *); 
-void uhub_attach(struct device *, struct device *, void *); 
-int uhub_detach(struct device *, int); 
+int uhub_match(struct device *, void *, void *);
+void uhub_attach(struct device *, struct device *, void *);
+int uhub_detach(struct device *, int);
 
-struct cfdriver uhub_cd = { 
-	NULL, "uhub", DV_DULL 
-}; 
+struct cfdriver uhub_cd = {
+	NULL, "uhub", DV_DULL
+};
 
 const struct cfattach uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach,  uhub_detach
