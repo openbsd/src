@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.162 2022/07/10 17:46:03 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.163 2022/07/10 20:34:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,7 +49,7 @@ extern const unsigned char	manpage[];
 extern const int		manpage_sz;
 
 int
-Xreinit(char *args, struct mbr *mbr)
+Xreinit(const char *args, struct mbr *mbr)
 {
 	int			dogpt;
 
@@ -78,14 +78,20 @@ Xreinit(char *args, struct mbr *mbr)
 }
 
 int
-Xswap(char *args, struct mbr *mbr)
+Xswap(const char *args, struct mbr *mbr)
 {
+	char			 lbuf[LINEBUFSZ];
 	char			*from, *to;
 	int			 pf, pt;
 	struct prt		 pp;
 	struct gpt_partition	 gg;
 
-	to = args;
+	if (strlcpy(lbuf, args, sizeof(lbuf)) >= sizeof(lbuf)) {
+		printf("argument string too long\n");
+		return CMD_CONT;
+	}
+
+	to = lbuf;
 	from = strsep(&to, WHITESPACE);
 
 	pt = parsepn(to);
@@ -223,7 +229,7 @@ edit(const int pn, struct mbr *mbr)
 }
 
 int
-Xedit(char *args, struct mbr *mbr)
+Xedit(const char *args, struct mbr *mbr)
 {
 	struct gpt_partition	 oldgg;
 	struct prt		 oldprt;
@@ -298,7 +304,7 @@ setpid(const int pn, struct mbr *mbr)
 }
 
 int
-Xsetpid(char *args, struct mbr *mbr)
+Xsetpid(const char *args, struct mbr *mbr)
 {
 	struct gpt_partition	oldgg;
 	struct prt		oldprt;
@@ -326,7 +332,7 @@ Xsetpid(char *args, struct mbr *mbr)
 }
 
 int
-Xselect(char *args, struct mbr *mbr)
+Xselect(const char *args, struct mbr *mbr)
 {
 	static uint64_t		lba_firstembr = 0;
 	uint64_t		lba_self;
@@ -361,7 +367,7 @@ Xselect(char *args, struct mbr *mbr)
 }
 
 int
-Xprint(char *args, struct mbr *mbr)
+Xprint(const char *args, struct mbr *mbr)
 {
 	if (gh.gh_sig == GPTSIGNATURE)
 		GPT_print(args, VERBOSE);
@@ -372,7 +378,7 @@ Xprint(char *args, struct mbr *mbr)
 }
 
 int
-Xwrite(char *args, struct mbr *mbr)
+Xwrite(const char *args, struct mbr *mbr)
 {
 	int			i, n;
 
@@ -404,25 +410,25 @@ Xwrite(char *args, struct mbr *mbr)
 }
 
 int
-Xquit(char *args, struct mbr *mbr)
+Xquit(const char *args, struct mbr *mbr)
 {
 	return CMD_QUIT;
 }
 
 int
-Xabort(char *args, struct mbr *mbr)
+Xabort(const char *args, struct mbr *mbr)
 {
 	exit(0);
 }
 
 int
-Xexit(char *args, struct mbr *mbr)
+Xexit(const char *args, struct mbr *mbr)
 {
 	return CMD_EXIT;
 }
 
 int
-Xhelp(char *args, struct mbr *mbr)
+Xhelp(const char *args, struct mbr *mbr)
 {
 	USER_help();
 
@@ -430,7 +436,7 @@ Xhelp(char *args, struct mbr *mbr)
 }
 
 int
-Xupdate(char *args, struct mbr *mbr)
+Xupdate(const char *args, struct mbr *mbr)
 {
 	memcpy(mbr->mbr_code, default_dmbr.dmbr_boot, sizeof(mbr->mbr_code));
 	mbr->mbr_signature = DOSMBR_SIGNATURE;
@@ -439,14 +445,20 @@ Xupdate(char *args, struct mbr *mbr)
 }
 
 int
-Xflag(char *args, struct mbr *mbr)
+Xflag(const char *args, struct mbr *mbr)
 {
+	char			 lbuf[LINEBUFSZ];
 	const char		*errstr;
 	char			*part, *flag;
 	long long		 val = -1;
 	int			 i, pn;
 
-	flag = args;
+	if (strlcpy(lbuf, args, sizeof(lbuf)) >= sizeof(lbuf)) {
+		printf("argument string too long\n");
+		return CMD_CONT;
+	}
+
+	flag = lbuf;
 	part = strsep(&flag, WHITESPACE);
 
 	pn = parsepn(part);
@@ -490,7 +502,7 @@ Xflag(char *args, struct mbr *mbr)
 }
 
 int
-Xmanual(char *args, struct mbr *mbr)
+Xmanual(const char *args, struct mbr *mbr)
 {
 	char			*pager = "/usr/bin/less";
 	char			*p;

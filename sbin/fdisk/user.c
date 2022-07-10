@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.81 2022/07/10 17:46:03 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.82 2022/07/10 20:34:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,7 +34,7 @@
 struct cmd {
 	char	*cmd_name;
 	int	 cmd_gpt;
-	int	(*cmd_fcn)(char *, struct mbr *);
+	int	(*cmd_fcn)(const char *, struct mbr *);
 	char	*cmd_help;
 };
 

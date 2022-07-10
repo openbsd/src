@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.26 2021/10/25 13:51:25 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.27 2022/07/10 20:34:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -22,18 +22,18 @@
 #define CMD_CLEAN	0x0003
 #define CMD_DIRTY	0x0004
 
-int		Xreinit(char *, struct mbr *);
-int		Xdisk(char *, struct mbr *);
-int		Xmanual(char *, struct mbr *);
-int		Xedit(char *, struct mbr *);
-int		Xsetpid(char *, struct mbr *);
-int		Xselect(char *, struct mbr *);
-int		Xswap(char *, struct mbr *);
-int		Xprint(char *, struct mbr *);
-int		Xwrite(char *, struct mbr *);
-int		Xexit(char *, struct mbr *);
-int		Xquit(char *, struct mbr *);
-int		Xabort(char *, struct mbr *);
-int		Xhelp(char *, struct mbr *);
-int		Xflag(char *, struct mbr *);
-int		Xupdate(char *, struct mbr *);
+int		Xreinit(const char *, struct mbr *);
+int		Xdisk(const char *, struct mbr *);
+int		Xmanual(const char *, struct mbr *);
+int		Xedit(const char *, struct mbr *);
+int		Xsetpid(const char *, struct mbr *);
+int		Xselect(const char *, struct mbr *);
+int		Xswap(const char *, struct mbr *);
+int		Xprint(const char *, struct mbr *);
+int		Xwrite(const char *, struct mbr *);
+int		Xexit(const char *, struct mbr *);
+int		Xquit(const char *, struct mbr *);
+int		Xabort(const char *, struct mbr *);
+int		Xhelp(const char *, struct mbr *);
+int		Xflag(const char *, struct mbr *);
+int		Xupdate(const char *, struct mbr *);
