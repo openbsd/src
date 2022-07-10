@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.32 2022/04/07 16:41:13 naddy Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.33 2022/07/10 21:13:41 bluhm Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -113,8 +113,8 @@ ifmedia_init(struct ifmedia *ifm, uint64_t dontcare_mask,
 	ifm->ifm_cur = NULL;
 	ifm->ifm_media = 0;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
-	ifm->ifm_change = change_callback;
-	ifm->ifm_status = status_callback;
+	ifm->ifm_change_cb = change_callback;
+	ifm->ifm_status_cb = status_callback;
 }
 
 /*
@@ -276,7 +276,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		oldmedia = ifm->ifm_media;
 		ifm->ifm_cur = match;
 		ifm->ifm_media = newmedia;
-		error = (*ifm->ifm_change)(ifp);
+		error = (*ifm->ifm_change_cb)(ifp);
 		if (error && error != ENETRESET) {
 			ifm->ifm_cur = oldentry;
 			ifm->ifm_media = oldmedia;
@@ -300,7 +300,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
 		ifmr->ifm_mask = ifm->ifm_mask;
 		ifmr->ifm_status = 0;
-		(*ifm->ifm_status)(ifp, ifmr);
+		(*ifm->ifm_status_cb)(ifp, ifmr);
 
 		/*
 		 * Count them so we know a-priori how much is the max we'll

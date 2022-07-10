@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.64 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.65 2022/07/10 21:13:41 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -354,7 +354,7 @@ athn_usb_attachhook(struct device *self)
 	ic->ic_ampdu_tx_stop = athn_usb_ampdu_tx_stop;
 #endif
 	ic->ic_newstate = athn_usb_newstate;
-	ic->ic_media.ifm_change = athn_usb_media_change;
+	ic->ic_media.ifm_change_cb = athn_usb_media_change;
 	timeout_set(&sc->scan_to, athn_usb_next_scan, usc);
 
 	ops->rx_enable = athn_usb_rx_enable;
