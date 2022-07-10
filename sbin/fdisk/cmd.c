@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.161 2022/05/09 15:09:50 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.162 2022/07/10 17:46:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -517,7 +517,7 @@ Xmanual(char *args, struct mbr *mbr)
 int
 ask_num(const char *str, int dflt, int low, int high)
 {
-	char			 lbuf[100];
+	char			 lbuf[LINEBUFSZ];
 	const char		*errstr;
 	int			 num;
 
@@ -546,7 +546,7 @@ ask_num(const char *str, int dflt, int low, int high)
 int
 ask_pid(const int dflt)
 {
-	char			lbuf[100];
+	char			lbuf[LINEBUFSZ];
 	int			num;
 
 	for (;;) {
@@ -573,7 +573,7 @@ struct uuid *
 ask_uuid(const struct uuid *olduuid)
 {
 	static struct uuid	 uuid;
-	char			 lbuf[100];
+	char			 lbuf[LINEBUFSZ];
 	char			*dflt = NULL;
 	uint32_t		 status;
 	int			 num = 0;
