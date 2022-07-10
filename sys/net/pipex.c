@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.143 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: pipex.c,v 1.144 2022/07/10 21:28:10 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -842,20 +842,38 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 
 		m0->m_flags &= ~(M_BCAST|M_MCAST);
 
-		LIST_FOREACH(session_tmp, &pipex_session_list, session_list) {
+		mtx_enter(&pipex_list_mtx);
+
+		session_tmp = LIST_FIRST(&pipex_session_list);
+		while (session_tmp != NULL) {
+			struct pipex_session *session_save = NULL;
+
 			if (session_tmp->ownersc != session->ownersc)
-				continue;
+				goto next;
 			if ((session->flags & (PIPEX_SFLAGS_IP_FORWARD |
 			    PIPEX_SFLAGS_IP6_FORWARD)) == 0)
-				continue;
+				goto next;
+
+			refcnt_take(&session_tmp->pxs_refcnt);
+			mtx_leave(&pipex_list_mtx);
+
 			m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
-			if (m == NULL) {
-				counters_inc(session->stat_counters,
+			if (m != NULL)
+				pipex_ppp_output(m, session_tmp, PPP_IP);
+			else
+				counters_inc(session_tmp->stat_counters,
 				    pxc_oerrors);
-				continue;
-			}
-			pipex_ppp_output(m, session_tmp, PPP_IP);
+
+			mtx_enter(&pipex_list_mtx);
+			session_save = session_tmp;
+next:
+			session_tmp = LIST_NEXT(session_tmp, session_list);
+			if (session_save != NULL)
+				pipex_rele_session(session_save);
 		}
+
+		mtx_leave(&pipex_list_mtx);
+
 		m_freem(m0);
 	}
 
