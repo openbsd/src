@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.104 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: nvme.c,v 1.105 2022/07/10 20:14:16 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -142,7 +142,7 @@ nvme_read8(struct nvme_softc *sc, bus_size_t r)
 {
 	u_int64_t v;
 
-	v = (u_int64_t)nvme_read4(sc, r) | 
+	v = (u_int64_t)nvme_read4(sc, r) |
 	    (u_int64_t)nvme_read4(sc, r + 4) << 32;
 
 	return (v);
