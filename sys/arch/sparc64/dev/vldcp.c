@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.23 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.24 2022/07/10 08:33:00 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -683,6 +683,7 @@ vldcpkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
+		device_unref(&sc->sc_dv);
 		return (EINVAL);
 	}
 
@@ -692,5 +693,6 @@ vldcpkqfilter(dev_t dev, struct knote *kn)
 	klist_insert_locked(klist, kn);
 	splx(s);
 
+	device_unref(&sc->sc_dv);
 	return (0);
 }
