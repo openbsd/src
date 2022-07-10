@@ -1,10 +1,10 @@
-.\" $OpenBSD: DSA_meth_new.3,v 1.2 2022/01/15 23:38:50 jsg Exp $
-.\" selective merge up to: OpenSSL a970b14f Jul 31 18:58:40 2017 -0400
+.\" $OpenBSD: DSA_meth_new.3,v 1.3 2022/07/10 13:41:59 schwarze Exp $
+.\" selective merge up to: OpenSSL c4d3c19b Apr 3 13:57:12 2018 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,13 +65,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: July 10 2022 $
 .Dt DSA_METH_NEW 3
 .Os
 .Sh NAME
 .Nm DSA_meth_new ,
 .Nm DSA_meth_free ,
 .Nm DSA_meth_dup ,
+.Nm DSA_meth_get0_name ,
+.Nm DSA_meth_set1_name ,
 .Nm DSA_meth_set_sign ,
 .Nm DSA_meth_set_finish
 .Nd build up DSA methods
@@ -89,6 +91,15 @@
 .Ft DSA_METHOD *
 .Fo DSA_meth_dup
 .Fa "const DSA_METHOD *meth"
+.Fc
+.Ft const char *
+.Fo DSA_meth_get0_name
+.Fa "const DSA_METHOD *meth"
+.Fc
+.Ft int
+.Fo DSA_meth_set1_name
+.Fa "DSA_METHOD *meth"
+.Fa "const char *name"
 .Fc
 .Ft int
 .Fo DSA_meth_set_sign
@@ -134,6 +145,18 @@ destroys
 .Fa meth
 and frees any memory associated with it.
 .Pp
+.Fn DSA_meth_get0_name
+returns an internal pointer to the name of
+.Fa meth .
+.Fn DSA_meth_set1_name
+stores a copy of the NUL-terminated
+.Fa name
+in
+.Fa meth
+after freeing the previously stored name.
+Method names are ignored by the default DSA implementation but can be
+used by alternative implementations and by the application program.
+.Pp
 .Fn DSA_meth_set_sign
 sets the function used for creating a DSA signature.
 This function will be called from
@@ -166,11 +189,22 @@ function.
 .Fn DSA_meth_new
 and
 .Fn DSA_meth_dup
-return the newly allocated DSA_METHOD object or NULL on failure.
+return the newly allocated
+.Vt DSA_METHOD
+object or
+.Dv NULL
+on failure.
 .Pp
-All
+.Fn DSA_meth_get0_name
+returns an internal pointer which must not be freed by the caller.
+.Pp
+.Fn DSA_meth_set1_name
+and all
 .Fn DSA_meth_set_*
 functions return 1 on success or 0 on failure.
+In the current implementation, only
+.Fn DSA_meth_set1_name
+can actually fail.
 .Sh SEE ALSO
 .Xr DSA_do_sign 3 ,
 .Xr DSA_new 3 ,
@@ -178,6 +212,19 @@ functions return 1 on success or 0 on failure.
 .Xr DSA_SIG_new 3 ,
 .Xr DSA_sign 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0
-and have been available since
+These functions first appeared in OpenSSL 1.1.0.
+.Pp
+.Fn DSA_meth_new ,
+.Fn DSA_meth_free ,
+.Fn DSA_meth_dup ,
+.Fn DSA_meth_set_sign ,
+and
+.Fn DSA_meth_set_finish
+have been available since
 .Ox 6.3 .
+.Pp
+.Fn DSA_meth_get0_name
+and
+.Fn DSA_meth_set1_name
+have been available since
+.Ox 7.2 .
