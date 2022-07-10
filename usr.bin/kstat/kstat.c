@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.10 2022/05/05 22:36:36 cheloha Exp $ */
+/* $OpenBSD: kstat.c,v 1.11 2022/07/10 19:51:37 kn Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -123,7 +123,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-w wait] "
-	    "[name | provider:0:name:unit] ...\n", __progname);
+	    "[name | provider:instance:name:unit] ...\n", __progname);
 
 	exit(1);
 }
