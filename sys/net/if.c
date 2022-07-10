@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.657 2022/06/29 09:08:07 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.658 2022/07/10 21:26:55 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1029,6 +1029,10 @@ if_detach(struct ifnet *ifp)
 	/* Other CPUs must not have a reference before we start destroying. */
 	if_remove(ifp);
 
+	ifp->if_qstart = if_detached_qstart;
+
+	/* Wait until the start routines finished. */
+	ifq_barrier(&ifp->if_snd);
 	ifq_clr_oactive(&ifp->if_snd);
 
 #if NBPFILTER > 0
@@ -1037,7 +1041,6 @@ if_detach(struct ifnet *ifp)
 
 	NET_LOCK();
 	s = splnet();
-	ifp->if_qstart = if_detached_qstart;
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_watchdog = NULL;
 
