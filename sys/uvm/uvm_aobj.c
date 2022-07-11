@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.103 2021/12/29 20:22:06 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.104 2022/07/11 11:33:17 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -143,7 +143,6 @@ struct pool uvm_aobj_pool;
 
 static struct uao_swhash_elt	*uao_find_swhash_elt(struct uvm_aobj *, int,
 				     boolean_t);
-static int			 uao_find_swslot(struct uvm_object *, int);
 static boolean_t		 uao_flush(struct uvm_object *, voff_t,
 				     voff_t, int);
 static void			 uao_free(struct uvm_aobj *);
@@ -241,7 +240,7 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 /*
  * uao_find_swslot: find the swap slot number for an aobj/pageidx
  */
-inline static int
+int
 uao_find_swslot(struct uvm_object *uobj, int pageidx)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
