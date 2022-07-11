@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsa_meth.c,v 1.4 2022/07/04 12:22:32 tb Exp $	*/
+/*	$OpenBSD: dsa_meth.c,v 1.5 2022/07/11 05:33:14 bcook Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -43,7 +43,7 @@ void
 DSA_meth_free(DSA_METHOD *meth)
 {
 	if (meth == NULL)
-		return
+		return;
 
 	free(meth->name);
 	free(meth);
