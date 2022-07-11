@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.6 2022/03/08 13:02:42 tb Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.7 2022/07/11 16:47:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -208,7 +208,7 @@ rtr_newmsg(enum rtr_pdu_type type, uint32_t len, uint16_t session_id)
 	rh.session_id = htons(session_id);
 	rh.length = htonl(len);
 
-	/* can not fail with fixed buffers */
+	/* cannot fail with fixed buffers */
 	ibuf_add(buf, &rh, sizeof(rh));
 	return buf;
 }
@@ -240,7 +240,7 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 		return;
 	}
 
-	/* can not fail with fixed buffers */
+	/* cannot fail with fixed buffers */
 	hdrlen = ntohl(len);
 	ibuf_add(buf, &hdrlen, sizeof(hdrlen));
 	ibuf_add(buf, pdu, len);
@@ -280,7 +280,7 @@ rtr_serial_query(struct rtr_session *rs)
 		return;
 	}
 
-	/* can not fail with fixed buffers */
+	/* cannot fail with fixed buffers */
 	s = htonl(rs->serial);
 	ibuf_add(buf, &s, sizeof(s));
 	ibuf_close(&rs->w, buf);
