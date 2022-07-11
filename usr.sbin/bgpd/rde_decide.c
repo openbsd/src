@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.94 2022/07/07 19:46:38 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.95 2022/07/11 16:46:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -541,7 +541,7 @@ prefix_best(struct rib_entry *re)
 void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
-	struct prefix	*xp, *active;
+	struct prefix	*newbest, *oldbest;
 	struct rib	*rib;
 
 	rib = re_rib(re);
@@ -556,7 +556,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		return;
 	}
 
-	active = prefix_best(re);
+	oldbest = prefix_best(re);
 
 	if (old != NULL)
 		prefix_remove(old, re);
@@ -564,23 +564,23 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (new != NULL)
 		prefix_insert(new, NULL, re);
 
-	xp = TAILQ_FIRST(&re->prefix_h);
-	if (xp != NULL && !prefix_eligible(xp))
-		xp = NULL;
+	newbest = TAILQ_FIRST(&re->prefix_h);
+	if (newbest != NULL && !prefix_eligible(newbest))
+		newbest = NULL;
 
 	/*
 	 * If the active prefix changed or the active prefix was removed
 	 * and added again then generate an update.
 	 */
-	if (active != xp || (old != NULL && xp == old)) {
+	if (oldbest != newbest || (old != NULL && newbest == old)) {
 		/*
-		 * Send update withdrawing re->active and adding xp
-		 * but remember that xp may be NULL aka ineligible.
+		 * Send update withdrawing oldbest and adding newbest
+		 * but remember that newbest may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(rib, xp, active, EVAL_DEFAULT);
+		rde_generate_updates(rib, newbest, oldbest, EVAL_DEFAULT);
 		if ((rib->flags & F_RIB_NOFIB) == 0)
-			rde_send_kroute(rib, xp, active);
+			rde_send_kroute(rib, newbest, oldbest);
 		return;
 	}
 
@@ -591,6 +591,5 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
-			rde_generate_updates(rib, prefix_best(re), NULL,
-			    EVAL_ALL);
+			rde_generate_updates(rib, newbest, NULL, EVAL_ALL);
 }
