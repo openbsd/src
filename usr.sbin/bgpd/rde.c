@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.552 2022/07/08 08:11:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.553 2022/07/11 16:51:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2526,10 +2526,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
 		rib.flags |= F_PREF_ANNOUNCE;
-	if (nexthop == NULL || nexthop->state == NEXTHOP_REACH)
+	if (prefix_eligible(p))
 		rib.flags |= F_PREF_ELIGIBLE;
-	if (asp->flags & F_ATTR_LOOP)
-		rib.flags &= ~F_PREF_ELIGIBLE;
 	/* otc loop includes parse err so skip the latter if the first is set */
 	if (asp->flags & F_ATTR_OTC_LOOP)
 		rib.flags |= F_PREF_OTC_LOOP;
