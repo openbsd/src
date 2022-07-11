@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.440 2022/07/07 12:16:04 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.441 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -307,6 +307,20 @@ struct bgpd_config {
 
 extern int cmd_opts;
 
+enum addpath_mode {
+	ADDPATH_EVAL_NONE,
+	ADDPATH_EVAL_BEST,
+	ADDPATH_EVAL_ECMP,
+	ADDPATH_EVAL_AS_WIDE,
+	ADDPATH_EVAL_ALL,
+};
+
+struct addpath_eval {
+	enum addpath_mode	mode;
+	int			extrapaths;
+	int			maxpaths;
+};
+
 enum export_type {
 	EXPORT_UNSET,
 	EXPORT_NONE,
@@ -402,6 +416,7 @@ struct peer_config {
 	struct bgpd_addr	 local_addr_v6;
 	struct peer_auth	 auth;
 	struct capabilities	 capabilities;
+	struct addpath_eval	 eval;
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
 	char			 reason[REASON_LEN];

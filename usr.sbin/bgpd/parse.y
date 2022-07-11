@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.431 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.432 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
-%token	SEND RECV POLICY
+%token	SEND RECV PLUS POLICY
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT
@@ -230,12 +230,13 @@ typedef struct {
 %token	IPSEC ESP AH SPI IKE
 %token	IPV4 IPV6
 %token	QUALIFY VIA
-%token	NE LE GE XRANGE LONGER MAXLEN
+%token	NE LE GE XRANGE LONGER MAXLEN MAX
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family safi restart origincode nettype
 %type	<v.number>		yesno inout restricted validity expires enforce
+%type	<v.number>		addpathextra addpathmax
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -718,7 +719,7 @@ conf_main	: AS as4number		{
 			struct rde_rib *rr;
 			rr = find_rib("Loc-RIB");
 			if (rr == NULL)
-				fatalx("RTABLE can not find the main RIB!");
+				fatalx("RTABLE cannot find the main RIB!");
 
 			if ($2 == 0)
 				rr->flags |= F_RIB_NOFIBSYNC;
@@ -880,7 +881,7 @@ conf_main	: AS as4number		{
 			}
 			rr = find_rib("Loc-RIB");
 			if (rr == NULL)
-				fatalx("RTABLE can not find the main RIB!");
+				fatalx("RTABLE cannot find the main RIB!");
 			rr->rtableid = $2;
 		}
 		| CONNECTRETRY NUMBER {
@@ -1356,6 +1357,28 @@ groupopts_l	: /* empty */
 		| groupopts_l error '\n'
 		;
 
+addpathextra	: /* empty */		{ $$ = 0;	}
+		| PLUS NUMBER		{
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("additional paths must be between "
+				    "%u and %u", 1, USHRT_MAX);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+addpathmax	: /* empty */		{ $$ = 0;	}
+		| MAX NUMBER		{
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("maximum additional paths must be "
+				    "between %u and %u", 1, USHRT_MAX);
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
 peeropts_h	: '{' '\n' peeropts_l '}'
 		| '{' peeropts '}'
 		| /* empty */
@@ -1514,6 +1537,50 @@ peeropts	: REMOTEAS as4number	{
 					*ap++ |= CAPA_AP_RECV;
 				else
 					*ap++ &= ~CAPA_AP_RECV;
+		}
+		| ANNOUNCE ADDPATH SEND STRING addpathextra addpathmax {
+			int8_t *ap = curpeer->conf.capabilities.add_path;
+			enum addpath_mode mode;
+			u_int8_t i;
+
+			if (!strcmp($4, "no")) {
+				free($4);
+				if ($5 != 0 || $6 != 0) {
+					yyerror("no additional option allowed "
+					    "for 'add-path send no'");
+					YYERROR;
+				}
+				for (i = 0; i < AID_MAX; i++)
+					*ap++ &= ~CAPA_AP_SEND;
+				break;
+			} else if (!strcmp($4, "all")) {
+				free($4);
+				if ($5 != 0 || $6 != 0) {
+					yyerror("no additional option allowed "
+					    "for 'add-path send all'");
+					YYERROR;
+				}
+				mode = ADDPATH_EVAL_ALL;
+			} else if (!strcmp($4, "best")) {
+				free($4);
+				mode = ADDPATH_EVAL_BEST;
+			} else if (!strcmp($4, "ecmp")) {
+				free($4);
+				mode = ADDPATH_EVAL_ECMP;
+			} else if (!strcmp($4, "as-wide-best")) {
+				free($4);
+				mode = ADDPATH_EVAL_AS_WIDE;
+			} else {
+				yyerror("announce add-path send: "
+				    "unknown mode \"%s\"", $4);
+				free($4);
+				YYERROR;
+			}
+			for (i = 0; i < AID_MAX; i++)
+				*ap++ |= CAPA_AP_SEND;
+			curpeer->conf.eval.mode = mode;
+			curpeer->conf.eval.extrapaths = $5;
+			curpeer->conf.eval.maxpaths = $6;
 		}
 		| ANNOUNCE POLICY STRING enforce {
 			curpeer->conf.capabilities.role_ena = $4;
@@ -3070,6 +3137,7 @@ lookup(char *s)
 		{ "localpref",		LOCALPREF},
 		{ "log",		LOG},
 		{ "match",		MATCH},
+		{ "max",		MAX},
 		{ "max-as-len",		MAXASLEN},
 		{ "max-as-seq",		MAXASSEQ},
 		{ "max-communities",	MAXCOMMUNITIES},
@@ -3098,6 +3166,7 @@ lookup(char *s)
 		{ "password",		PASSWORD},
 		{ "peer-as",		PEERAS},
 		{ "pftable",		PFTABLE},
+		{ "plus",		PLUS},
 		{ "policy",		POLICY},
 		{ "port",		PORT},
 		{ "prefix",		PREFIX},
@@ -4593,6 +4662,14 @@ neighbor_consistent(struct peer *p)
 		char *descr = log_fmt_peer(&p->conf);
 		yyerror("duplicate %s", descr);
 		free(descr);
+		return (-1);
+	}
+
+	/* bail if add-path send and rde evaluate all is used together */
+	if ((p->conf.flags & PEERFLAG_EVALUATE_ALL) &&
+	    (p->conf.capabilities.add_path[0] & CAPA_AP_SEND)) {
+		yyerror("neighbors with add-path send cannot use "
+		    "'rde evaluate all'");
 		return (-1);
 	}
 

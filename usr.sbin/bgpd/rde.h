@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.258 2022/07/08 10:01:52 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.259 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -87,6 +87,7 @@ struct rde_peer {
 	struct bgpd_addr		 local_v4_addr;
 	struct bgpd_addr		 local_v6_addr;
 	struct capabilities		 capa;
+	struct addpath_eval		 eval;
 	struct prefix_index		 adj_rib_out;
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
@@ -696,6 +697,8 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
 void		 up_generate_updates(struct filter_head *, struct rde_peer *,
+		     struct prefix *, struct prefix *);
+void		 up_generate_addpath(struct filter_head *, struct rde_peer *,
 		     struct prefix *, struct prefix *);
 void		 up_generate_default(struct filter_head *, struct rde_peer *,
 		     uint8_t);

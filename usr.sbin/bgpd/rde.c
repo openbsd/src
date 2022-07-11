@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.553 2022/07/11 16:51:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.554 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1091,6 +1091,9 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 			imsg_compose(ibuf_se, IMSG_SESSION_DOWN, peer->conf.id,
 			    0, -1, NULL, 0);
 		}
+		/* make sure rde_eval_all is on if needed. */
+		if (peer_has_add_path(peer, AID_UNSPEC, CAPA_AP_SEND))
+			rde_eval_all = 1;
 		break;
 	case IMSG_SESSION_DOWN:
 		peer_down(peer, NULL);
@@ -3493,6 +3496,23 @@ rde_reload_done(void)
 			if (peer->loc_rib_id == RIB_NOTFOUND)
 				fatalx("King Bula's peer met an unknown RIB");
 			peer->reconf_rib = 1;
+		}
+		/*
+		 * Update add-path settings but only if the session is
+		 * running with add-path and the config uses add-path
+		 * as well.
+		 */
+		if (peer_has_add_path(peer, AID_UNSPEC, CAPA_AP_SEND)) {
+			if (peer->conf.eval.mode != ADDPATH_EVAL_NONE &&
+			    memcmp(&peer->eval, &peer->conf.eval,
+			    sizeof(peer->eval)) != 0) {
+				log_peer_info(&peer->conf,
+				    "addpath eval change, reloading");
+				peer->reconf_out = 1;
+				peer->eval = peer->conf.eval;
+			}
+			/* add-path send needs rde_eval_all */
+			rde_eval_all = 1;
 		}
 		peer->export_type = peer->conf.export_type;
 		peer->flags = peer->conf.flags;

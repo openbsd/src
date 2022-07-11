@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.155 2022/06/28 11:46:05 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.156 2022/07/11 17:08:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -768,6 +768,23 @@ print_enc_alg(enum auth_enc_alg alg)
 	}
 }
 
+static const char *
+print_addpath_mode(enum addpath_mode mode)
+{
+	switch (mode) {
+	case ADDPATH_EVAL_NONE:
+		return "none";
+	case ADDPATH_EVAL_BEST:
+		return "best";
+	case ADDPATH_EVAL_ECMP:
+		return "ecmp";
+	case ADDPATH_EVAL_AS_WIDE:
+		return "as-wide-best";
+	case ADDPATH_EVAL_ALL:
+		return "all";
+	}
+}
+
 void
 print_announce(struct peer_config *p, const char *c)
 {
@@ -790,6 +807,15 @@ print_announce(struct peer_config *p, const char *c)
 		printf("%s\tannounce as4byte no\n", c);
 	if (p->capabilities.add_path[0] & CAPA_AP_RECV)
 		printf("%s\tannounce add-path recv yes\n", c);
+	if (p->capabilities.add_path[0] & CAPA_AP_SEND) {
+		printf("%s\tannounce add-path send %s", c,
+		     print_addpath_mode(p->eval.mode));
+		if (p->eval.extrapaths != 0)
+			printf(" plus %d", p->eval.extrapaths);
+		if (p->eval.maxpaths != 0)
+			printf(" max %d", p->eval.maxpaths);
+		printf("\n");
+	}
 	if (p->capabilities.role_ena) {
 		printf("%s\tannounce policy %s%s\n", c,
 		    log_policy(p->capabilities.role),

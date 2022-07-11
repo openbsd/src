@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.144 2022/07/11 16:58:58 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.145 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -228,6 +228,138 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	/* withdraw prefix */
 	if (p != NULL)
 		prefix_adjout_withdraw(p);
+}
+
+/*
+ * Generate updates for the add-path send case. Depending on the
+ * peer eval settings prefixes are selected and distributed.
+ * This highly depends on the Adj-RIB-Out to handle prefixes with no
+ * changes gracefully. It may be possible to improve the API so that
+ * less churn is needed.
+ */
+void
+up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
+    struct prefix *new, struct prefix *old)
+{
+	struct filterstate	state;
+	struct bgpd_addr	addr;
+	struct prefix		*head, *p;
+	uint8_t			prefixlen;
+	int			maxpaths = 0, extrapaths = 0, extra;
+	int			checkmode = 1;
+
+	if (new == NULL) {
+		pt_getaddr(old->pt, &addr);
+		prefixlen = old->pt->prefixlen;
+	} else {
+		pt_getaddr(new->pt, &addr);
+		prefixlen = new->pt->prefixlen;
+	}
+
+	head = prefix_adjout_lookup(peer, &addr, prefixlen);
+
+	/* mark all paths as stale */
+	for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
+		p->flags |= PREFIX_FLAG_STALE;
+
+	/* update paths */
+	for ( ; new != NULL; new = TAILQ_NEXT(new, entry.list.rib)) {
+		/* since list is sorted, stop at first invalid prefix */
+		if (!prefix_eligible(new))
+			break;
+
+		/* check limits and stop when a limit is reached */
+		if (peer->eval.maxpaths != 0 &&
+		    maxpaths >= peer->eval.maxpaths)
+			break;
+		if (peer->eval.extrapaths != 0 &&
+		    extrapaths >= peer->eval.extrapaths)
+			break;
+
+		extra = 1;
+		if (checkmode) {
+			switch (peer->eval.mode) {
+			case ADDPATH_EVAL_BEST:
+				if (new->dmetric == PREFIX_DMETRIC_BEST)
+					extra = 0;
+				else
+					checkmode = 0;
+				break;
+			case ADDPATH_EVAL_ECMP:
+				if (new->dmetric == PREFIX_DMETRIC_BEST ||
+				    new->dmetric == PREFIX_DMETRIC_ECMP)
+					extra = 0;
+				else
+					checkmode = 0;
+				break;
+			case ADDPATH_EVAL_AS_WIDE:
+				if (new->dmetric == PREFIX_DMETRIC_BEST ||
+				    new->dmetric == PREFIX_DMETRIC_ECMP ||
+				    new->dmetric == PREFIX_DMETRIC_AS_WIDE)
+					extra = 0;
+				else
+					checkmode = 0;
+				break;
+			case ADDPATH_EVAL_ALL:
+				/* nothing to check */
+				checkmode = 0;
+				break;
+			default:
+				fatalx("unknown add-path eval mode");
+			}
+		}
+
+		/*
+		 * up_test_update() needs to run before the output filters
+		 * else the well known communities won't work properly.
+		 * The output filters would not be able to add well known
+		 * communities.
+		 */
+		if (!up_test_update(peer, new))
+			continue;
+
+		rde_filterstate_prep(&state, prefix_aspath(new),
+		    prefix_communities(new), prefix_nexthop(new),
+		    prefix_nhflags(new));
+		if (rde_filter(rules, peer, prefix_peer(new), &addr,
+		    prefixlen, prefix_vstate(new), &state) == ACTION_DENY) {
+			rde_filterstate_clean(&state);
+			continue;
+		}
+
+		if (up_enforce_open_policy(peer, &state)) {
+			rde_filterstate_clean(&state);
+			continue;
+		}
+
+		/* from here on we know this is an update */
+		maxpaths++;
+		extrapaths += extra;
+
+		p = prefix_adjout_get(peer, new->path_id_tx, &addr,
+		    new->pt->prefixlen);
+
+		up_prep_adjout(peer, &state, addr.aid);
+		prefix_adjout_update(p, peer, &state, &addr,
+		    new->pt->prefixlen, new->path_id_tx, prefix_vstate(new));
+		rde_filterstate_clean(&state);
+
+		/* max prefix checker outbound */
+		if (peer->conf.max_out_prefix &&
+		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+			log_peer_warnx(&peer->conf,
+			    "outbound prefix limit reached (>%u/%u)",
+			    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			rde_update_err(peer, ERR_CEASE,
+			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+		}
+	}
+
+	/* withdraw stale paths */
+	for (p = head; p != NULL; p = prefix_adjout_next(peer, p)) {
+		if (p->flags & PREFIX_FLAG_STALE)
+			prefix_adjout_withdraw(p);
+	}
 }
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.18 2022/07/07 10:46:54 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.19 2022/07/11 17:08:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -58,6 +58,13 @@ peer_has_add_path(struct rde_peer *peer, uint8_t aid, int mode)
 {
 	if (aid > AID_MAX)
 		return 0;
+	if (aid == AID_UNSPEC) {
+		/* check if at capability is set for at least one AID */
+		for (aid = AID_MIN; aid < AID_MAX; aid++)
+			if (peer->capa.add_path[aid] & mode)
+				return 1;
+		return 0;
+	}
 	return (peer->capa.add_path[aid] & mode);
 }
 
@@ -200,6 +207,7 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 	if (peer->loc_rib_id == RIB_NOTFOUND)
 		fatalx("King Bula's new peer met an unknown RIB");
 	peer->state = PEER_NONE;
+	peer->eval = peer->conf.eval;
 	peer->export_type = peer->conf.export_type;
 	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);
@@ -244,10 +252,16 @@ peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
 	/* if reconf skip peers which don't need to reconfigure */
 	if (mode == EVAL_RECONF && peer->reconf_out == 0)
 		return;
+
+	/* handle peers with add-path */
+	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
+		up_generate_addpath(out_rules, peer, new, old);
+		return;
+	}
+
 	/* skip regular peers if the best path didn't change */
 	if (mode == EVAL_ALL && (peer->flags & PEERFLAG_EVALUATE_ALL) == 0)
 		return;
-
 	up_generate_updates(out_rules, peer, new, old);
 }
 
