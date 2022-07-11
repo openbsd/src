@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.559 2022/06/28 18:46:01 claudio Exp $
+#	$OpenBSD: rc,v 1.560 2022/07/11 18:19:47 tobhe Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -139,7 +139,7 @@ make_keys() {
 	local _iked_pub=/etc/iked/local.pub
 
 	if [[ ! -f $_isakmpd_key ]]; then
-		echo -n "openssl: generating isakmpd/iked RSA keys... "
+		echo -n "openssl: generating isakmpd RSA keys... "
 		if openssl genrsa -out $_isakmpd_key 2048 >/dev/null 2>&1 &&
 			chmod 600 $_isakmpd_key &&
 			openssl rsa -out $_isakmpd_pub -in $_isakmpd_key \
@@ -151,10 +151,15 @@ make_keys() {
 	fi
 
 	if [[ ! -f $_iked_key ]]; then
-		# Just copy the generated isakmpd key
-		cp $_isakmpd_key $_iked_key
-		chmod 600 $_iked_key
-		cp $_isakmpd_pub $_iked_pub
+		echo -n "openssl: generating iked ECDSA keys... "
+		if openssl ecparam -genkey -name prime256v1 -out $_iked_key >/dev/null 2>&1 &&
+			chmod 600 $_iked_key &&
+			openssl ec -out $_iked_pub -in $_iked_key \
+			    -pubout >/dev/null 2>&1; then
+			echo done.
+		else
+			echo failed.
+		fi
 	fi
 
 	ssh-keygen -A
