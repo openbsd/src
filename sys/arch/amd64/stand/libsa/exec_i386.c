@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.36 2022/06/30 15:46:57 anton Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.37 2022/07/11 19:45:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -91,7 +91,7 @@ run_loadfile(uint64_t *marks, int howto)
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
-	bios_oconsdev_t cd;
+	bios_consdev_t cd;
 	extern int com_speed; /* from bioscons.c */
 	extern int com_addr;
 	bios_ddb_t ddb;
@@ -105,10 +105,10 @@ run_loadfile(uint64_t *marks, int howto)
 	if (sa_cleanup != NULL)
 		(*sa_cleanup)();
 
+	memset(&cd, 0, sizeof(cd));
 	cd.consdev = cn_tab->cn_dev;
 	cd.conspeed = com_speed;
 	cd.consaddr = com_addr;
-	cd.consfreq = 0;
 	addbootarg(BOOTARG_CONSDEV, sizeof(cd), &cd);
 
 	if (bootmac != NULL)

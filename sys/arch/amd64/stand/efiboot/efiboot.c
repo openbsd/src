@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.39 2022/06/20 02:22:05 yasuoka Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.40 2022/07/11 19:45:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -936,6 +936,70 @@ efi_makebootargs(void)
 #endif
 
 	addbootarg(BOOTARG_EFIINFO, sizeof(bios_efiinfo), &bios_efiinfo);
+}
+
+/* Vendor device path used to indicate the mmio UART on AMD SoCs. */
+#define AMDSOC_DEVPATH \
+	{ 0xe76fd4e9, 0x0a30, 0x4ca9, \
+	    { 0x95, 0x40, 0xd7, 0x99, 0x53, 0x4c, 0xc4, 0xff } }
+
+void
+efi_setconsdev(void)
+{
+	bios_consdev_t cd;
+	EFI_STATUS status;
+	UINT8 data[128];
+	UINTN size = sizeof(data);
+	EFI_DEVICE_PATH *dp = (void *)data;
+	VENDOR_DEVICE_PATH *vdp;
+	UART_DEVICE_PATH *udp;
+	EFI_GUID global = EFI_GLOBAL_VARIABLE;
+	EFI_GUID amdsoc = AMDSOC_DEVPATH;
+
+	memset(&cd, 0, sizeof(cd));
+	cd.consdev = cn_tab->cn_dev;
+	cd.conspeed = com_speed;
+	cd.consaddr = com_addr;
+
+	/*
+	 * If the ConOut variable indicates we're using a serial
+	 * console, use it to determine the baud rate.
+	 */
+	status = RS->GetVariable(L"ConOut", &global, NULL, &size, &data);
+	if (status == EFI_SUCCESS) {
+		for (dp = (void *)data; !IsDevicePathEnd(dp);
+		     dp = NextDevicePathNode(dp)) {
+			/*
+			 * AMD Ryzen Embedded V1000 SoCs integrate a
+			 * Synopsys DesignWare UART that is not
+			 * compatible with the traditional 8250 UART
+			 * found on the IBM PC.  Pass the magic
+			 * parameters to the kernel to make this UART
+			 * work.
+			 */
+			if (DevicePathType(dp) == HARDWARE_DEVICE_PATH &&
+			    DevicePathSubType(dp) == HW_VENDOR_DP) {
+				vdp = (VENDOR_DEVICE_PATH *)dp;
+				if (efi_guidcmp(&vdp->Guid, &amdsoc) == 0) {
+					cd.consdev = makedev(8, 4);
+					cd.consaddr = *(uint64_t *)(vdp + 1);
+					cd.consfreq = 48000000;
+					cd.flags = BCD_MMIO;
+					cd.reg_width = 4;
+					cd.reg_shift = 2;
+				}
+			}
+
+			if (DevicePathType(dp) == MESSAGING_DEVICE_PATH &&
+			    DevicePathSubType(dp) == MSG_UART_DP) {
+				udp = (UART_DEVICE_PATH *)dp;
+				if (cd.conspeed == -1)
+					cd.conspeed = udp->BaudRate;
+			}
+		}
+	}
+
+	addbootarg(BOOTARG_CONSDEV, sizeof(cd), &cd);
 }
 
 void
