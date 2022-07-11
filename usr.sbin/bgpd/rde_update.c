@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.143 2022/07/11 16:55:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.144 2022/07/11 16:58:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -675,8 +675,11 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		}
 		pt_getaddr(p->pt, &addr);
 		if ((r = prefix_write(buf + wpos, len - wpos,
-		    &addr, p->pt->prefixlen, withdraw)) == -1)
+		    &addr, p->pt->prefixlen, withdraw)) == -1) {
+			if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND))
+				wpos -= sizeof(pathid);
 			break;
+		}
 		wpos += r;
 
 		/* make sure we only dump prefixes which belong together */
@@ -687,7 +690,6 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		    np->nhflags != p->nhflags ||
 		    (np->flags & PREFIX_FLAG_EOR))
 			done = 1;
-
 
 		if (withdraw) {
 			/* prefix no longer needed, remove it */
@@ -700,6 +702,7 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 			peer->up_nlricnt--;
 			peer->prefix_sent_update++;
 		}
+
 		if (done)
 			break;
 	}
