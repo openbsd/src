@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.142 2022/07/08 10:01:52 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.143 2022/07/11 16:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -96,6 +96,44 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	return (1);
 }
 
+/* RFC9234 open policy handling */
+static int
+up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state)
+{
+	uint8_t role;
+
+	if (!peer_has_open_policy(peer, &role))
+		return 0;
+
+	/*
+	 * do not propagate (consider it filtered) if OTC is present and
+	 * neighbor role is peer, provider or rs.
+	 */
+	if (role == CAPA_ROLE_PEER || role == CAPA_ROLE_PROVIDER ||
+	    role == CAPA_ROLE_RS)
+		if (state->aspath.flags & F_ATTR_OTC)
+			return (1);
+
+	/*
+	 * add OTC attribute if not present for peers, customers and rs-clients.
+	 */
+	if (role == CAPA_ROLE_PEER || role == CAPA_ROLE_CUSTOMER ||
+	    role == CAPA_ROLE_RS_CLIENT)
+		if ((state->aspath.flags & F_ATTR_OTC) == 0) {
+			uint32_t tmp;
+
+			tmp = htonl(peer->conf.local_as);
+			if (attr_optadd(&state->aspath,
+			    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
+			    &tmp, sizeof(tmp)) == -1)
+				log_peer_warnx(&peer->conf,
+				    "failed to add OTC attribute");
+			state->aspath.flags |= F_ATTR_OTC;
+		}
+
+	return 0;
+}
+
 void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
@@ -104,12 +142,9 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	struct bgpd_addr	addr;
 	struct prefix		*p;
 	int			need_withdraw;
-	uint8_t			prefixlen, role;
+	uint8_t			prefixlen;
 
 	if (new == NULL) {
-		if (old == NULL)
-			/* no prefix to update or withdraw */
-			return;
 		pt_getaddr(old->pt, &addr);
 		prefixlen = old->pt->prefixlen;
 	} else {
@@ -123,7 +158,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		need_withdraw = 0;
 		/*
 		 * up_test_update() needs to run before the output filters
-		 * else the well known communities wont work properly.
+		 * else the well known communities won't work properly.
 		 * The output filters would not be able to add well known
 		 * communities.
 		 */
@@ -156,43 +191,14 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 			break;
 		}
 
-		/* RFC9234 open policy handling */
-		if (peer_has_open_policy(peer, &role)) {
-			/*
-			 * do not propagate (consider it filtered) if
-			 * OTC is present and neighbor role is peer,
-			 * provider or rs.
-			 */
-			if ((role == CAPA_ROLE_PEER ||
-			    role == CAPA_ROLE_PROVIDER ||
-			    role == CAPA_ROLE_RS) &&
-			    state.aspath.flags & F_ATTR_OTC) {
-				rde_filterstate_clean(&state);
-				if (peer->flags & PEERFLAG_EVALUATE_ALL) {
-					new = TAILQ_NEXT(new, entry.list.rib);
-					if (new != NULL && prefix_eligible(new))
-						continue;
-				}
-				break;
+		if (up_enforce_open_policy(peer, &state)) {
+			rde_filterstate_clean(&state);
+			if (peer->flags & PEERFLAG_EVALUATE_ALL) {
+				new = TAILQ_NEXT(new, entry.list.rib);
+				if (new != NULL && prefix_eligible(new))
+					continue;
 			}
-			/*
-			 * add OTC attribute if not present for peers,
-			 * customers and rs-clients.
-			 */
-			if ((role == CAPA_ROLE_PEER ||
-			    role == CAPA_ROLE_CUSTOMER ||
-			    role == CAPA_ROLE_RS_CLIENT) &&
-			    (state.aspath.flags & F_ATTR_OTC) == 0) {
-				uint32_t tmp;
-
-				tmp = htonl(peer->conf.local_as);
-				if (attr_optadd(&state.aspath,
-				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
-				    &tmp, sizeof(tmp)) == -1)
-					log_peer_warnx(&peer->conf,
-					    "failed to add OTC attribute");
-				state.aspath.flags |= F_ATTR_OTC;
-			}
+			break;
 		}
 
 		/* check if this was actually a withdraw */
