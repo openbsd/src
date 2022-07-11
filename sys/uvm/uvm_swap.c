@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.159 2022/06/30 13:54:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.160 2022/07/11 11:29:11 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1603,8 +1603,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 	}
 
 	KERNEL_LOCK();
-	result = uvm_swap_io(&page, swslot, 1, B_READ |
-	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
+	result = uvm_swap_io(&page, swslot, 1, B_READ);
 	KERNEL_UNLOCK();
 
 	if (result == VM_PAGER_OK || result == VM_PAGER_PEND) {
