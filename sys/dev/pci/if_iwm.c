@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.402 2022/07/07 07:48:45 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.403 2022/07/11 11:28:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8751,7 +8751,6 @@ iwm_auth(struct iwm_softc *sc)
 		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
 		    in->in_ni.ni_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
 		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-		if (err)
 		if (err)
 			return err;
 	}
