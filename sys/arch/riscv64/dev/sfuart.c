@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfuart.c,v 1.5 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: sfuart.c,v 1.6 2022/07/12 17:14:12 jca Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -262,8 +262,20 @@ sfuart_softintr(void *arg)
 
 	splx(s);
 
-	while (ibufp < ibufend)
-		(*linesw[tp->t_line].l_rint)(*ibufp++, tp);
+	while (ibufp < ibufend) {
+		int i = *ibufp++;
+#ifdef DDB
+		if (tp->t_dev == cn_tab->cn_dev) {
+			int j = db_rint(i);
+
+			if (j == 1)	/* Escape received, skip */
+				continue;
+			if (j == 2)	/* Second char wasn't 'D' */
+				(*linesw[tp->t_line].l_rint)(27, tp);
+		}
+#endif
+		(*linesw[tp->t_line].l_rint)(i, tp);
+	}
 }
 
 int
