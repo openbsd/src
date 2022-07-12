@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.144 2022/07/10 21:28:10 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.145 2022/07/12 08:58:53 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -173,11 +173,6 @@ pipex_ioctl(void *ownersc, u_long cmd, caddr_t data)
 
 	NET_ASSERT_LOCKED();
 	switch (cmd) {
-	case PIPEXCSESSION:
-		ret = pipex_config_session(
-		    (struct pipex_session_config_req *)data, ownersc);
-		break;
-
 	case PIPEXGSTAT:
 		ret = pipex_get_stat((struct pipex_session_stat_req *)data,
 		    ownersc);
@@ -322,8 +317,6 @@ pipex_init_session(struct pipex_session **rsession,
 	session->timeout_sec = req->pr_timeout_sec;
 	session->ppp_flags = req->pr_ppp_flags;
 	session->ppp_id = req->pr_ppp_id;
-
-	session->flags |= PIPEX_SFLAGS_IP_FORWARD;
 
 	session->stat_counters = counters_alloc(pxc_ncounters);
 
@@ -569,32 +562,6 @@ pipex_export_session_stats(struct pipex_session *session,
 }
 
 Static int
-pipex_config_session(struct pipex_session_config_req *req, void *ownersc)
-{
-	struct pipex_session *session;
-	int error = 0;
-
-	NET_ASSERT_LOCKED();
-
-	session = pipex_lookup_by_session_id(req->pcr_protocol,
-	    req->pcr_session_id);
-	if (session == NULL)
-		return (EINVAL);
-
-	if (session->ownersc == ownersc) {
-		if (req->pcr_ip_forward != 0)
-			session->flags |= PIPEX_SFLAGS_IP_FORWARD;
-		else
-			session->flags &= ~PIPEX_SFLAGS_IP_FORWARD;
-	} else
-		error = EINVAL;
-
-	pipex_rele_session(session);
-
-	return error;
-}
-
-Static int
 pipex_get_stat(struct pipex_session_stat_req *req, void *ownersc)
 {
 	struct pipex_session *session;
@@ -810,9 +777,7 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 		/*
 		 * Multicast packet is a idle packet and it's not TCP.
 		 */
-		if ((session->flags & (PIPEX_SFLAGS_IP_FORWARD |
-		    PIPEX_SFLAGS_IP6_FORWARD)) == 0)
-			goto drop;
+
 		/* reset idle timer */
 		if (session->timeout_sec != 0) {
 			is_idle = 0;
@@ -850,9 +815,6 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 
 			if (session_tmp->ownersc != session->ownersc)
 				goto next;
-			if ((session->flags & (PIPEX_SFLAGS_IP_FORWARD |
-			    PIPEX_SFLAGS_IP6_FORWARD)) == 0)
-				goto next;
 
 			refcnt_take(&session_tmp->pxs_refcnt);
 			mtx_leave(&pipex_list_mtx);
@@ -878,8 +840,6 @@ next:
 	}
 
 	return;
-drop:
-	m_freem(m0);
 dropped:
 	counters_inc(session->stat_counters, pxc_oerrors);
 }
@@ -989,8 +949,6 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 
 	switch (proto) {
 	case PPP_IP:
-		if ((session->flags & PIPEX_SFLAGS_IP_FORWARD) == 0)
-			goto drop;
 		if (!decrypted && pipex_session_is_mppe_required(session))
 			/*
 			 * if ip packet received when mppe
@@ -1001,8 +959,6 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 		return;
 #ifdef INET6
 	case PPP_IPV6:
-		if ((session->flags & PIPEX_SFLAGS_IP6_FORWARD) == 0)
-			goto drop;
 		if (!decrypted && pipex_session_is_mppe_required(session))
 			/*
 			 * if ip packet received when mppe

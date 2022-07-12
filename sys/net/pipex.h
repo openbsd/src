@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.32 2022/06/26 15:50:21 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.33 2022/07/12 08:58:53 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -145,12 +145,6 @@ struct pipex_session_list_req {
 	int	plr_ppp_id[PIPEX_MAX_LISTREQ];	/* PPP id */
 };
 
-struct pipex_session_config_req {
-	int		pcr_protocol;		/* tunnel protocol  */
-	uint16_t	pcr_session_id;		/* session-id */
-	int		pcr_ip_forward;		/* ip_forwarding on/off */
-};
-
 /* for pppx(4) */
 struct pppx_hdr {
 	u_int32_t	pppx_proto;	/* write: protocol in PIPEX_PROTO_ */
@@ -167,7 +161,6 @@ struct pipex_session_descr_req {
 /* PIPEX ioctls */
 #define PIPEXASESSION	_IOW ('p',  3, struct pipex_session_req)
 #define PIPEXDSESSION	_IOWR('p',  4, struct pipex_session_close_req)
-#define PIPEXCSESSION	_IOW ('p',  5, struct pipex_session_config_req)
 #define PIPEXGSTAT	_IOWR('p',  6, struct pipex_session_stat_req)
 #define PIPEXGCLOSED	_IOR ('p',  7, struct pipex_session_list_req)
 #define PIPEXSIFDESCR	_IOW ('p',  8, struct pipex_session_descr_req)

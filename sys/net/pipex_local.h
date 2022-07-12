@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.47 2022/06/26 15:50:21 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.48 2022/07/12 08:58:53 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -180,12 +180,9 @@ struct pipex_session {
 
 	uint32_t	idle_time;	/* [L] idle time in seconds */
 
-	u_int		flags;		/* [N] flags, see below */
-#define PIPEX_SFLAGS_IP_FORWARD		0x01 /* [N] enable IP forwarding */
-#define PIPEX_SFLAGS_IP6_FORWARD	0x02 /* [N] enable IPv6 forwarding */
-#define PIPEX_SFLAGS_MULTICAST		0x04 /* [I] virtual entry for
-						multicast */
-#define PIPEX_SFLAGS_PPPX		0x08 /* [I] interface is
+	u_int		flags;		/* [I] flags, see below */
+#define PIPEX_SFLAGS_MULTICAST		0x01 /* virtual entry for multicast */
+#define PIPEX_SFLAGS_PPPX		0x02 /* interface is
 						point2point(pppx) */
 
 	uint16_t	protocol;		/* [I] tunnel protocol (PK) */
@@ -415,8 +412,6 @@ void                  pipex_unlink_session(struct pipex_session *);
 void                  pipex_unlink_session_locked(struct pipex_session *);
 void                  pipex_export_session_stats(struct pipex_session *,
                           struct pipex_statistics *);
-int                   pipex_config_session (struct pipex_session_config_req *,
-                          void *);
 int                   pipex_get_stat (struct pipex_session_stat_req *,
                           void *);
 int                   pipex_get_closed (struct pipex_session_list_req *,
