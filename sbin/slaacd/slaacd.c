@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.64 2021/08/24 14:56:06 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.65 2022/07/12 16:54:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -381,7 +381,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 	int			 shut = 0;
 	int			 rdomain;
 #ifndef	SMALL
-	struct imsg_addrinfo	 imsg_addrinfo;
 	int			 verbose;
 #endif	/* SMALL */
 
@@ -422,15 +421,6 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
-			break;
-		case IMSG_UPDATE_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_addrinfo))
-				fatalx("%s: IMSG_UPDATE_ADDRESS wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_addrinfo, imsg.data,
-			    sizeof(imsg_addrinfo));
-			main_imsg_compose_engine(IMSG_UPDATE_ADDRESS, 0,
-			    &imsg_addrinfo, sizeof(imsg_addrinfo));
 			break;
 #endif	/* SMALL */
 		case IMSG_UPDATE_IF:

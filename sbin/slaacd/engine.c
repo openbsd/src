@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.80 2022/06/28 13:35:42 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.81 2022/07/12 16:54:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -100,38 +100,18 @@
 
 enum if_state {
 	IF_DOWN,
-	IF_DELAY,
-	IF_PROBE,
-	IF_IDLE,
-	IF_DEAD,
-};
-
-const char* if_state_name[] = {
-	"IF_DOWN",
-	"IF_DELAY",
-	"IF_PROBE",
-	"IF_IDLE",
-	"IF_DEAD",
+	IF_INIT,
+	IF_BOUND,
 };
 
 enum proposal_state {
+	PROPOSAL_IF_DOWN,
 	PROPOSAL_NOT_CONFIGURED,
-	PROPOSAL_SENT,
 	PROPOSAL_CONFIGURED,
 	PROPOSAL_NEARLY_EXPIRED,
 	PROPOSAL_WITHDRAWN,
 	PROPOSAL_DUPLICATED,
 	PROPOSAL_STALE,
-};
-
-const char* proposal_state_name[] = {
-	"NOT_CONFIGURED",
-	"SENT",
-	"CONFIGURED",
-	"NEARLY_EXPIRED",
-	"WITHDRAWN",
-	"DUPLICATED",
-	"STALE",
 };
 
 const char* rpref_name[] = {
@@ -181,12 +161,13 @@ struct address_proposal {
 	struct event			 timer;
 	int64_t				 id;
 	enum proposal_state		 state;
-	time_t				 next_timeout;
+	struct timeval			 timo;
 	struct timespec			 created;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
 	struct ether_addr		 hw_address;
+	struct sockaddr_in6		 from;
 	struct sockaddr_in6		 addr;
 	struct in6_addr			 mask;
 	struct in6_addr			 prefix;
@@ -204,7 +185,7 @@ struct dfr_proposal {
 	struct event			 timer;
 	int64_t				 id;
 	enum proposal_state		 state;
-	time_t				 next_timeout;
+	struct timeval			 timo;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -219,7 +200,7 @@ struct rdns_proposal {
 	struct event			 timer;
 	int64_t				 id;
 	enum proposal_state		 state;
-	time_t				 next_timeout;
+	struct timeval			 timo;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -234,6 +215,8 @@ struct slaacd_iface {
 	LIST_ENTRY(slaacd_iface)	 entries;
 	enum if_state			 state;
 	struct event			 timer;
+	struct timeval			 timo;
+	struct timespec			 last_sol;
 	int				 probes;
 	uint32_t			 if_index;
 	uint32_t			 rdomain;
@@ -264,12 +247,19 @@ void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 void			 debug_log_ra(struct imsg_ra *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 #endif	/* SMALL */
-void			 deprecate_all_proposals(struct slaacd_iface *);
-void			 send_rdns_withdraw(struct slaacd_iface *);
 struct slaacd_iface	*get_slaacd_iface_by_id(uint32_t);
 void			 remove_slaacd_iface(uint32_t);
 void			 free_ra(struct radv *);
+void			 iface_state_transition(struct slaacd_iface *, enum
+			     if_state);
+void			 addr_proposal_state_transition(struct
+			     address_proposal *, enum proposal_state);
+void			 dfr_proposal_state_transition(struct dfr_proposal *,
+			     enum proposal_state);
+void			 rdns_proposal_state_transition(struct rdns_proposal *,
+			     enum proposal_state);
 void			 engine_update_iface(struct imsg_ifinfo *);
+void			 request_solicitation(struct slaacd_iface *);
 void			 parse_ra(struct slaacd_iface *, struct imsg_ra *);
 void			 gen_addr(struct slaacd_iface *, struct radv_prefix *,
 			     struct address_proposal *, int);
@@ -277,7 +267,6 @@ void			 gen_address_proposal(struct slaacd_iface *, struct
 			     radv *, struct radv_prefix *, int);
 void			 free_address_proposal(struct address_proposal *);
 void			 withdraw_addr(struct address_proposal *);
-void			 timeout_from_lifetime(struct address_proposal *);
 void			 configure_address(struct address_proposal *);
 void			 in6_prefixlen2mask(struct in6_addr *, int len);
 void			 gen_dfr_proposal(struct slaacd_iface *, struct
@@ -289,15 +278,14 @@ void			 update_iface_ra_rdns(struct slaacd_iface *,
 			     struct radv *);
 void			 gen_rdns_proposal(struct slaacd_iface *, struct
 			     radv *);
-void			 propose_rdns(struct rdns_proposal *);
 void			 free_rdns_proposal(struct rdns_proposal *);
+void			 withdraw_rdns(struct rdns_proposal *);
 void			 compose_rdns_proposal(uint32_t, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 update_iface_ra_dfr(struct slaacd_iface *,
     			     struct radv *);
 void			 update_iface_ra_prefix(struct slaacd_iface *,
 			     struct radv *, struct radv_prefix *prefix);
-void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
 void			 rdns_proposal_timeout(int, short, void *);
@@ -309,7 +297,7 @@ struct dfr_proposal	*find_dfr_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 struct rdns_proposal	*find_rdns_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
-struct radv_prefix	*find_prefix(struct radv *, struct radv_prefix *);
+struct radv_prefix	*find_prefix(struct radv *, struct in6_addr *, uint8_t);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 uint32_t		 real_lifetime(struct timespec *, uint32_t);
 void			 merge_dad_couters(struct radv *, struct radv *);
@@ -317,6 +305,33 @@ void			 merge_dad_couters(struct radv *, struct radv *);
 static struct imsgev	*iev_frontend;
 static struct imsgev	*iev_main;
 int64_t			 proposal_id;
+
+
+#define	CASE(x) case x : return #x
+
+static const char*
+if_state_name(enum if_state ifs)
+{
+	switch (ifs) {
+	CASE(IF_DOWN);
+	CASE(IF_INIT);
+	CASE(IF_BOUND);
+	}
+}
+
+static const char*
+proposal_state_name(enum proposal_state ps)
+{
+	switch (ps) {
+	CASE(PROPOSAL_IF_DOWN);
+	CASE(PROPOSAL_NOT_CONFIGURED);
+	CASE(PROPOSAL_CONFIGURED);
+	CASE(PROPOSAL_NEARLY_EXPIRED);
+	CASE(PROPOSAL_WITHDRAWN);
+	CASE(PROPOSAL_DUPLICATED);
+	CASE(PROPOSAL_STALE);
+	}
+}
 
 void
 engine_sig_handler(int sig, short event, void *arg)
@@ -441,7 +456,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 	struct imsg_del_addr		 del_addr;
 	struct imsg_del_route		 del_route;
 	struct imsg_dup_addr		 dup_addr;
-	struct timeval			 tv;
 	ssize_t				 n;
 	int				 shut = 0;
 #ifndef	SMALL
@@ -499,7 +513,13 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&ra, imsg.data, sizeof(ra));
 			iface = get_slaacd_iface_by_id(ra.if_index);
-			if (iface != NULL)
+
+			/*
+			 * Ignore unsolicitated router advertisements
+			 * if we think the interface is still down.
+			 * Otherwise we confuse the state machine.
+			 */
+			if (iface != NULL && iface->state != IF_DOWN)
 				parse_ra(iface, &ra);
 			break;
 		case IMSG_CTL_SEND_SOLICITATION:
@@ -512,10 +532,10 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			if (iface == NULL)
 				log_warnx("requested to send solicitation on "
 				    "non-autoconf interface: %u", if_index);
-			else
-				engine_imsg_compose_frontend(
-				    IMSG_CTL_SEND_SOLICITATION, imsg.hdr.pid,
-				    &iface->if_index, sizeof(iface->if_index));
+			else {
+				iface->last_sol.tv_sec = 0; /* no rate limit */
+				request_solicitation(iface);
+			}
 			break;
 		case IMSG_DEL_ADDRESS:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(del_addr))
@@ -531,8 +551,14 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 
 			addr_proposal = find_address_proposal_by_addr(iface,
 			    &del_addr.addr);
-
-			free_address_proposal(addr_proposal);
+			/*
+			 * If it's in state PROPOSAL_WITHDRAWN we just
+			 * deleted it ourself but want to keep it around
+			 * so we can renew it
+			 */
+			if (addr_proposal && addr_proposal->state !=
+			    PROPOSAL_WITHDRAWN)
+				free_address_proposal(addr_proposal);
 			break;
 		case IMSG_DEL_ROUTE:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(del_route))
@@ -552,7 +578,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			if (dfr_proposal) {
 				dfr_proposal->state = PROPOSAL_WITHDRAWN;
 				free_dfr_proposal(dfr_proposal);
-				start_probe(iface);
 			}
 			break;
 		case IMSG_DUP_ADDRESS:
@@ -570,13 +595,9 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			addr_proposal = find_address_proposal_by_addr(iface,
 			    &dup_addr.addr);
 
-			if (addr_proposal) {
-				addr_proposal->state = PROPOSAL_DUPLICATED;
-				tv.tv_sec = 0;
-				tv.tv_usec = arc4random_uniform(1000000);
-				addr_proposal->next_timeout = 0;
-				evtimer_add(&addr_proposal->timer, &tv);
-			}
+			if (addr_proposal)
+				addr_proposal_state_transition(addr_proposal,
+				    PROPOSAL_DUPLICATED);
 			break;
 		case IMSG_REPROPOSE_RDNS:
 			LIST_FOREACH (iface, &slaacd_interfaces, entries)
@@ -608,10 +629,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 	struct imsg_ifinfo	 imsg_ifinfo;
 	ssize_t			 n;
 	int			 shut = 0;
-	struct slaacd_iface	*iface;
-	struct imsg_addrinfo	 imsg_addrinfo;
-	struct address_proposal	*addr_proposal = NULL;
-	size_t			 i;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -669,65 +686,6 @@ engine_dispatch_main(int fd, short event, void *bula)
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
 			engine_update_iface(&imsg_ifinfo);
 			break;
-#ifndef	SMALL
-		case IMSG_UPDATE_ADDRESS:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_addrinfo))
-				fatalx("%s: IMSG_UPDATE_ADDRESS wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-
-			memcpy(&imsg_addrinfo, imsg.data,
-			    sizeof(imsg_addrinfo));
-
-			iface = get_slaacd_iface_by_id(imsg_addrinfo.if_index);
-			if (iface == NULL)
-				break;
-
-			log_debug("%s: IMSG_UPDATE_ADDRESS", __func__);
-
-			addr_proposal = find_address_proposal_by_addr(iface,
-			    &imsg_addrinfo.addr);
-			if (addr_proposal)
-				break;
-
-			if ((addr_proposal = calloc(1,
-			    sizeof(*addr_proposal))) == NULL)
-				fatal("calloc");
-			evtimer_set(&addr_proposal->timer,
-			    address_proposal_timeout, addr_proposal);
-			addr_proposal->id = ++proposal_id;
-			addr_proposal->state = PROPOSAL_CONFIGURED;
-			addr_proposal->vltime = imsg_addrinfo.vltime;
-			addr_proposal->pltime = imsg_addrinfo.pltime;
-
-			timeout_from_lifetime(addr_proposal);
-
-			/* leave created 0, we don't know when it was created */
-			if (clock_gettime(CLOCK_REALTIME, &addr_proposal->when))
-				fatal("clock_gettime");
-			if (clock_gettime(CLOCK_MONOTONIC,
-			    &addr_proposal->uptime))
-				fatal("clock_gettime");
-			addr_proposal->if_index = imsg_addrinfo.if_index;
-			memcpy(&addr_proposal->hw_address, &iface->hw_address,
-			    sizeof(addr_proposal->hw_address));
-			addr_proposal->addr = imsg_addrinfo.addr;
-			addr_proposal->mask = imsg_addrinfo.mask;
-			addr_proposal->prefix = addr_proposal->addr.sin6_addr;
-
-			for (i = 0; i < sizeof(addr_proposal->prefix.s6_addr) /
-			    sizeof(addr_proposal->prefix.s6_addr[0]); i++)
-				addr_proposal->prefix.s6_addr[i] &=
-				    addr_proposal->mask.s6_addr[i];
-
-			addr_proposal->temporary = imsg_addrinfo.temporary;
-			addr_proposal->prefix_len =
-			    in6_mask2prefixlen(&addr_proposal->mask);
-
-			LIST_INSERT_HEAD(&iface->addr_proposals,
-			    addr_proposal, entries);
-
-			break;
-#endif	/* SMALL */
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
 			    imsg.hdr.type);
@@ -824,11 +782,11 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		memset(&cei_addr_proposal, 0, sizeof(cei_addr_proposal));
 		cei_addr_proposal.id = addr_proposal->id;
 		if(strlcpy(cei_addr_proposal.state,
-		    proposal_state_name[addr_proposal->state],
+		    proposal_state_name(addr_proposal->state),
 		    sizeof(cei_addr_proposal.state)) >=
 		    sizeof(cei_addr_proposal.state))
 			log_warnx("truncated state name");
-		cei_addr_proposal.next_timeout = addr_proposal->next_timeout;
+		cei_addr_proposal.next_timeout = addr_proposal->timo.tv_sec;
 		cei_addr_proposal.when = addr_proposal->when;
 		cei_addr_proposal.uptime = addr_proposal->uptime;
 		memcpy(&cei_addr_proposal.addr, &addr_proposal->addr, sizeof(
@@ -853,11 +811,11 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		memset(&cei_dfr_proposal, 0, sizeof(cei_dfr_proposal));
 		cei_dfr_proposal.id = dfr_proposal->id;
 		if(strlcpy(cei_dfr_proposal.state,
-		    proposal_state_name[dfr_proposal->state],
+		    proposal_state_name(dfr_proposal->state),
 		    sizeof(cei_dfr_proposal.state)) >=
 		    sizeof(cei_dfr_proposal.state))
 			log_warnx("truncated state name");
-		cei_dfr_proposal.next_timeout = dfr_proposal->next_timeout;
+		cei_dfr_proposal.next_timeout = dfr_proposal->timo.tv_sec;
 		cei_dfr_proposal.when = dfr_proposal->when;
 		cei_dfr_proposal.uptime = dfr_proposal->uptime;
 		memcpy(&cei_dfr_proposal.addr, &dfr_proposal->addr, sizeof(
@@ -882,11 +840,11 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		memset(&cei_rdns_proposal, 0, sizeof(cei_rdns_proposal));
 		cei_rdns_proposal.id = rdns_proposal->id;
 		if(strlcpy(cei_rdns_proposal.state,
-		    proposal_state_name[rdns_proposal->state],
+		    proposal_state_name(rdns_proposal->state),
 		    sizeof(cei_rdns_proposal.state)) >=
 		    sizeof(cei_rdns_proposal.state))
 			log_warnx("truncated state name");
-		cei_rdns_proposal.next_timeout = rdns_proposal->next_timeout;
+		cei_rdns_proposal.next_timeout = rdns_proposal->timo.tv_sec;
 		cei_rdns_proposal.when = rdns_proposal->when;
 		cei_rdns_proposal.uptime = rdns_proposal->uptime;
 		memcpy(&cei_rdns_proposal.from, &rdns_proposal->from, sizeof(
@@ -926,32 +884,6 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 }
 
 #endif	/* SMALL */
-
-void
-deprecate_all_proposals(struct slaacd_iface *iface)
-{
-	struct address_proposal	*addr_proposal;
-
-	log_debug("%s: iface: %d", __func__, iface->if_index);
-
-	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
-		addr_proposal->pltime = 0;
-		configure_address(addr_proposal);
-		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
-	}
-}
-
-void
-send_rdns_withdraw(struct slaacd_iface *iface)
-{
-	struct rdns_proposal	*rdns_proposal;
-
-	while(!LIST_EMPTY(&iface->rdns_proposals)) {
-		rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
-		free_rdns_proposal(rdns_proposal);
-	}
-	compose_rdns_proposal(iface->if_index, iface->rdomain);
-}
 
 struct slaacd_iface*
 get_slaacd_iface_by_id(uint32_t if_index)
@@ -1029,6 +961,326 @@ free_ra(struct radv *ra)
 }
 
 void
+iface_state_transition(struct slaacd_iface *iface, enum if_state new_state)
+{
+	enum if_state		 old_state = iface->state;
+	struct address_proposal	*addr_proposal;
+	struct dfr_proposal	*dfr_proposal;
+	struct rdns_proposal	*rdns_proposal;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+
+	iface->state = new_state;
+
+	switch (new_state) {
+	case IF_DOWN:
+		if (old_state != IF_DOWN) {
+			LIST_FOREACH (addr_proposal, &iface->addr_proposals,
+			    entries)
+				addr_proposal_state_transition(addr_proposal,
+				    PROPOSAL_IF_DOWN);
+			LIST_FOREACH (dfr_proposal, &iface->dfr_proposals,
+			    entries)
+				dfr_proposal_state_transition(dfr_proposal,
+					PROPOSAL_IF_DOWN);
+			LIST_FOREACH (rdns_proposal, &iface->rdns_proposals,
+			    entries)
+				rdns_proposal_state_transition(rdns_proposal,
+				    PROPOSAL_IF_DOWN);
+		}
+
+		/* nothing else to do until interface comes back up */
+		iface->timo.tv_sec = -1;
+		break;
+	case IF_INIT:
+		switch (old_state) {
+		case IF_INIT:
+			iface->probes++;
+			break;
+		case IF_DOWN:
+			LIST_FOREACH (addr_proposal, &iface->addr_proposals,
+			    entries)
+				addr_proposal_state_transition(addr_proposal,
+				    PROPOSAL_WITHDRAWN);
+			LIST_FOREACH (dfr_proposal, &iface->dfr_proposals,
+			    entries)
+				dfr_proposal_state_transition(dfr_proposal,
+				    PROPOSAL_WITHDRAWN);
+			LIST_FOREACH (rdns_proposal, &iface->rdns_proposals,
+			    entries)
+				rdns_proposal_state_transition(rdns_proposal,
+				    PROPOSAL_WITHDRAWN);
+		default:
+			iface->probes = 0;
+		}
+		if (iface->probes < MAX_RTR_SOLICITATIONS) {
+			iface->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+			request_solicitation(iface);
+		} else
+			/* no router available, stop probing */
+			iface->timo.tv_sec = -1;
+		break;
+	case IF_BOUND:
+		iface->timo.tv_sec = -1;
+		break;
+	}
+
+	if_name = if_indextoname(iface->if_index, ifnamebuf);
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
+	    "?" : if_name, if_state_name(old_state), if_state_name(new_state),
+	    iface->timo.tv_sec);
+
+	if (iface->timo.tv_sec == -1) {
+		if (evtimer_pending(&iface->timer, NULL))
+			evtimer_del(&iface->timer);
+	} else
+		evtimer_add(&iface->timer, &iface->timo);
+}
+
+void addr_proposal_state_transition(struct address_proposal *addr_proposal,
+    enum proposal_state new_state)
+{
+	enum proposal_state	 old_state = addr_proposal->state;
+	struct slaacd_iface	*iface;
+	uint32_t		 lifetime;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+
+	addr_proposal->state = new_state;
+
+	if ((iface = get_slaacd_iface_by_id(addr_proposal->if_index)) == NULL)
+		return;
+
+	switch (addr_proposal->state) {
+	case PROPOSAL_IF_DOWN:
+		if (old_state == PROPOSAL_IF_DOWN) {
+			withdraw_addr(addr_proposal);
+			addr_proposal->timo.tv_sec = -1;
+		} else {
+			addr_proposal->timo.tv_sec =
+			    real_lifetime(&addr_proposal->uptime,
+				addr_proposal->vltime);
+		}
+		break;
+	case PROPOSAL_NOT_CONFIGURED:
+		break;
+	case PROPOSAL_CONFIGURED:
+		lifetime = real_lifetime(&addr_proposal->uptime,
+		    addr_proposal->pltime);
+		if (lifetime == 0)
+			lifetime = real_lifetime(&addr_proposal->uptime,
+			    addr_proposal->vltime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			addr_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			addr_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_NEARLY_EXPIRED:
+		lifetime = real_lifetime(&addr_proposal->uptime,
+		    addr_proposal->pltime);
+		if (lifetime == 0)
+			lifetime = real_lifetime(&addr_proposal->uptime,
+			    addr_proposal->vltime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			addr_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			addr_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		request_solicitation(iface);
+		break;
+	case PROPOSAL_WITHDRAWN:
+		withdraw_addr(addr_proposal);
+		addr_proposal->timo.tv_sec = MAX_RTR_SOLICITATIONS *
+		    RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_DUPLICATED:
+		addr_proposal->timo.tv_sec = 0;
+		break;
+	case PROPOSAL_STALE:
+		addr_proposal->timo.tv_sec = 0; /* remove immediately */
+		break;
+	}
+
+	if_name = if_indextoname(addr_proposal->if_index, ifnamebuf);
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
+	    "?" : if_name, proposal_state_name(old_state),
+	    proposal_state_name(new_state),
+	    addr_proposal->timo.tv_sec);
+
+	if (addr_proposal->timo.tv_sec == -1) {
+		if (evtimer_pending(&addr_proposal->timer, NULL))
+			evtimer_del(&addr_proposal->timer);
+	} else
+		evtimer_add(&addr_proposal->timer, &addr_proposal->timo);
+}
+
+void dfr_proposal_state_transition(struct dfr_proposal *dfr_proposal,
+    enum proposal_state new_state)
+{
+	enum proposal_state	 old_state = dfr_proposal->state;
+	struct slaacd_iface	*iface;
+	uint32_t		 lifetime;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+
+	dfr_proposal->state = new_state;
+
+	if ((iface = get_slaacd_iface_by_id(dfr_proposal->if_index)) == NULL)
+		return;
+
+	switch (dfr_proposal->state) {
+	case PROPOSAL_IF_DOWN:
+		if (old_state == PROPOSAL_IF_DOWN) {
+			withdraw_dfr(dfr_proposal);
+			dfr_proposal->timo.tv_sec = -1;
+		} else {
+			dfr_proposal->timo.tv_sec =
+			    real_lifetime(&dfr_proposal->uptime,
+				dfr_proposal->router_lifetime);
+		}
+		break;
+	case PROPOSAL_NOT_CONFIGURED:
+		break;
+	case PROPOSAL_CONFIGURED:
+		lifetime = real_lifetime(&dfr_proposal->uptime,
+		    dfr_proposal->router_lifetime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			dfr_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			dfr_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_NEARLY_EXPIRED:
+		lifetime = real_lifetime(&dfr_proposal->uptime,
+		    dfr_proposal->router_lifetime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			dfr_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			dfr_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		request_solicitation(iface);
+		break;
+	case PROPOSAL_WITHDRAWN:
+		withdraw_dfr(dfr_proposal);
+		dfr_proposal->timo.tv_sec = MAX_RTR_SOLICITATIONS *
+		    RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_STALE:
+		dfr_proposal->timo.tv_sec = 0; /* remove immediately */
+		break;
+	case PROPOSAL_DUPLICATED:
+		fatalx("invalid dfr state: PROPOSAL_DUPLICATED");
+		break;
+	}
+
+	if_name = if_indextoname(dfr_proposal->if_index, ifnamebuf);
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
+	    "?" : if_name, proposal_state_name(old_state),
+	    proposal_state_name(new_state),
+	    dfr_proposal->timo.tv_sec);
+
+	if (dfr_proposal->timo.tv_sec == -1) {
+		if (evtimer_pending(&dfr_proposal->timer, NULL))
+			evtimer_del(&dfr_proposal->timer);
+	} else
+		evtimer_add(&dfr_proposal->timer, &dfr_proposal->timo);
+
+}
+
+void rdns_proposal_state_transition(struct rdns_proposal *rdns_proposal,
+    enum proposal_state new_state)
+{
+	enum proposal_state	 old_state = rdns_proposal->state;
+	struct slaacd_iface	*iface;
+	uint32_t		 lifetime;
+	char			 ifnamebuf[IF_NAMESIZE], *if_name;
+
+	rdns_proposal->state = new_state;
+
+	if ((iface = get_slaacd_iface_by_id(rdns_proposal->if_index)) == NULL)
+		return;
+
+	switch (rdns_proposal->state) {
+	case PROPOSAL_IF_DOWN:
+		if (old_state == PROPOSAL_IF_DOWN) {
+			withdraw_rdns(rdns_proposal);
+			rdns_proposal->timo.tv_sec = -1;
+		} else {
+			rdns_proposal->timo.tv_sec =
+			    real_lifetime(&rdns_proposal->uptime,
+				rdns_proposal->rdns_lifetime);
+		}
+		break;
+	case PROPOSAL_NOT_CONFIGURED:
+		break;
+	case PROPOSAL_CONFIGURED:
+		lifetime = real_lifetime(&rdns_proposal->uptime,
+		    rdns_proposal->rdns_lifetime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			rdns_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			rdns_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_NEARLY_EXPIRED:
+		lifetime = real_lifetime(&rdns_proposal->uptime,
+		    rdns_proposal->rdns_lifetime);
+		if (lifetime > MAX_RTR_SOLICITATIONS *
+		    (RTR_SOLICITATION_INTERVAL + 1))
+			rdns_proposal->timo.tv_sec = lifetime -
+			    MAX_RTR_SOLICITATIONS * RTR_SOLICITATION_INTERVAL;
+		else
+			rdns_proposal->timo.tv_sec = RTR_SOLICITATION_INTERVAL;
+		request_solicitation(iface);
+		break;
+	case PROPOSAL_WITHDRAWN:
+		withdraw_rdns(rdns_proposal);
+		rdns_proposal->timo.tv_sec = MAX_RTR_SOLICITATIONS *
+		    RTR_SOLICITATION_INTERVAL;
+		break;
+	case PROPOSAL_STALE:
+		rdns_proposal->timo.tv_sec = 0; /* remove immediately */
+		break;
+	case PROPOSAL_DUPLICATED:
+		fatalx("invalid rdns state: PROPOSAL_DUPLICATED");
+		break;
+	}
+
+	if_name = if_indextoname(rdns_proposal->if_index, ifnamebuf);
+	log_debug("%s[%s] %s -> %s, timo: %lld", __func__, if_name == NULL ?
+	    "?" : if_name, proposal_state_name(old_state),
+	    proposal_state_name(new_state),
+	    rdns_proposal->timo.tv_sec);
+
+	if (rdns_proposal->timo.tv_sec == -1) {
+		if (evtimer_pending(&rdns_proposal->timer, NULL))
+			evtimer_del(&rdns_proposal->timer);
+	} else
+		evtimer_add(&rdns_proposal->timer, &rdns_proposal->timo);
+}
+
+void
+request_solicitation(struct slaacd_iface *iface)
+{
+	struct timespec	now, diff, sol_delay = {RTR_SOLICITATION_INTERVAL, 0};
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	timespecsub(&now, &iface->last_sol, &diff);
+	if (timespeccmp(&diff, &sol_delay, <)) {
+		log_warnx("last solicitation less then %d seconds ago",
+		    RTR_SOLICITATION_INTERVAL);
+		return;
+	}
+
+	iface->last_sol = now;
+	engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION, 0,
+	    &iface->if_index, sizeof(iface->if_index));
+}
+
+void
 engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 {
 	struct slaacd_iface	*iface;
@@ -1039,6 +1291,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
 		iface->state = IF_DOWN;
+		iface->timo.tv_usec = arc4random_uniform(1000000);
 		evtimer_set(&iface->timer, iface_timeout, iface);
 		iface->if_index = imsg_ifinfo->if_index;
 		iface->rdomain = imsg_ifinfo->rdomain;
@@ -1106,16 +1359,10 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		return;
 
 	if (iface->running && LINK_STATE_IS_UP(iface->link_state))
-		start_probe(iface);
+		iface_state_transition(iface, IF_INIT);
 
-	else {
-		/* XXX correct state transition */
-		send_rdns_withdraw(iface);
-		deprecate_all_proposals(iface);
-		iface->state = IF_DOWN;
-		if (evtimer_pending(&iface->timer, NULL))
-			evtimer_del(&iface->timer);
-	}
+	else
+		iface_state_transition(iface, IF_DOWN);
 }
 
 void
@@ -1318,7 +1565,6 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		p += nd_opt_hdr->nd_opt_len * 8 - 2;
 	}
 	update_iface_ra(iface, radv);
-	iface->state = IF_IDLE;
 	return;
 
 err:
@@ -1646,25 +1892,24 @@ update_iface_ra_dfr(struct slaacd_iface *iface, struct radv *ra)
 		return;
 	}
 
-	if (real_lifetime(&dfr_proposal->uptime, dfr_proposal->router_lifetime)
-	    > ra->router_lifetime) {
-		log_warnx("ignoring router advertisement lowering router "
-		    "lifetime");
-		return;
-	}
-
 	dfr_proposal->when = ra->when;
 	dfr_proposal->uptime = ra->uptime;
 	dfr_proposal->router_lifetime = ra->router_lifetime;
 
 	log_debug("%s, dfr state: %s, rl: %d", __func__,
-	    proposal_state_name[dfr_proposal->state],
+	    proposal_state_name(dfr_proposal->state),
 	    real_lifetime(&dfr_proposal->uptime,
 	    dfr_proposal->router_lifetime));
 
 	switch (dfr_proposal->state) {
 	case PROPOSAL_CONFIGURED:
 	case PROPOSAL_NEARLY_EXPIRED:
+		/* routes do not expire in the kernel, update timeout */
+		dfr_proposal_state_transition(dfr_proposal,
+		    PROPOSAL_CONFIGURED);
+		break;
+	case PROPOSAL_IF_DOWN:
+	case PROPOSAL_WITHDRAWN:
 		log_debug("updating dfr");
 		configure_dfr(dfr_proposal);
 		break;
@@ -1744,6 +1989,7 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 			found = 1;
 		}
 
+		addr_proposal->from = ra->from;
 		addr_proposal->when = ra->when;
 		addr_proposal->uptime = ra->uptime;
 
@@ -1758,11 +2004,13 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 		}
 
 		log_debug("%s, addr state: %s", __func__,
-		    proposal_state_name[addr_proposal->state]);
+		    proposal_state_name(addr_proposal->state));
 
 		switch (addr_proposal->state) {
 		case PROPOSAL_CONFIGURED:
 		case PROPOSAL_NEARLY_EXPIRED:
+		case PROPOSAL_IF_DOWN:
+		case PROPOSAL_WITHDRAWN:
 			log_debug("updating address");
 			configure_address(addr_proposal);
 			break;
@@ -1800,37 +2048,63 @@ void
 update_iface_ra_rdns(struct slaacd_iface *iface, struct radv *ra)
 {
 	struct rdns_proposal	*rdns_proposal;
+	struct radv_rdns	*radv_rdns;
+	struct in6_addr		 rdns[MAX_RDNS_COUNT];
+	int			 rdns_count;
 
 	rdns_proposal = find_rdns_proposal_by_gw(iface, &ra->from);
 
 	if (!rdns_proposal) {
 		/* new proposal */
-		gen_rdns_proposal(iface, ra);
+		if (!LIST_EMPTY(&ra->rdns_servers))
+			gen_rdns_proposal(iface, ra);
 		return;
 	}
 
-	if (real_lifetime(&rdns_proposal->uptime, rdns_proposal->rdns_lifetime)
-	    > ra->rdns_lifetime) {
-		/* XXX check RFC */
-		log_warnx("ignoring router advertisement lowering rdns "
-		    "lifetime");
+	rdns_count = 0;
+	memset(&rdns, 0, sizeof(rdns));
+	LIST_FOREACH(radv_rdns, &ra->rdns_servers, entries) {
+		memcpy(&rdns[rdns_count++],
+		    &radv_rdns->rdns, sizeof(struct in6_addr));
+		if (rdns_proposal->rdns_count == MAX_RDNS_COUNT)
+			break;
+	}
+
+	if (rdns_count == 0) {
+		free_rdns_proposal(rdns_proposal);
 		return;
 	}
 
+	if (rdns_proposal->rdns_count != rdns_count ||
+	    memcmp(&rdns_proposal->rdns, &rdns, sizeof(rdns)) != 0) {
+		memcpy(&rdns_proposal->rdns, &rdns, sizeof(rdns));
+		rdns_proposal->rdns_count = rdns_count;
+		rdns_proposal->state = PROPOSAL_NOT_CONFIGURED;
+	}
 	rdns_proposal->when = ra->when;
 	rdns_proposal->uptime = ra->uptime;
 	rdns_proposal->rdns_lifetime = ra->rdns_lifetime;
 
 	log_debug("%s, rdns state: %s, rl: %d", __func__,
-	    proposal_state_name[rdns_proposal->state],
+	    proposal_state_name(rdns_proposal->state),
 	    real_lifetime(&rdns_proposal->uptime,
 	    rdns_proposal->rdns_lifetime));
 
 	switch (rdns_proposal->state) {
-	case PROPOSAL_SENT:
+	case PROPOSAL_CONFIGURED:
 	case PROPOSAL_NEARLY_EXPIRED:
+		/* rdns are not expired by the kernel, update timeout */
+		rdns_proposal_state_transition(rdns_proposal,
+		    PROPOSAL_CONFIGURED);
+		break;
+	case PROPOSAL_IF_DOWN:
+	case PROPOSAL_WITHDRAWN:
+	case PROPOSAL_NOT_CONFIGURED:
 		log_debug("updating rdns");
-		propose_rdns(rdns_proposal);
+		rdns_proposal_state_transition(rdns_proposal,
+		    PROPOSAL_CONFIGURED);
+		compose_rdns_proposal(rdns_proposal->if_index,
+		    rdns_proposal->rdomain);
 		break;
 	default:
 		log_debug("%s: iface %d: %s", __func__, iface->if_index,
@@ -1839,39 +2113,12 @@ update_iface_ra_rdns(struct slaacd_iface *iface, struct radv *ra)
 	}
 }
 
-void
-timeout_from_lifetime(struct address_proposal *addr_proposal)
-{
-	struct timeval	 tv;
-	time_t		 lifetime;
-
-	addr_proposal->next_timeout = 0;
-
-	if (addr_proposal->pltime > MAX_RTR_SOLICITATIONS *
-	    (RTR_SOLICITATION_INTERVAL + 1))
-		lifetime = addr_proposal->pltime;
-	else
-		lifetime = addr_proposal->vltime;
-
-	if (lifetime > MAX_RTR_SOLICITATIONS *
-	    (RTR_SOLICITATION_INTERVAL + 1)) {
-		addr_proposal->next_timeout = lifetime - MAX_RTR_SOLICITATIONS *
-		    (RTR_SOLICITATION_INTERVAL + 1);
-		tv.tv_sec = addr_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		evtimer_add(&addr_proposal->timer, &tv);
-		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
-		    __func__, addr_proposal->if_index, tv.tv_sec, tv.tv_usec);
-	}
-}
 
 void
 configure_address(struct address_proposal *addr_proposal)
 {
 	struct imsg_configure_address	 address;
-
-	timeout_from_lifetime(addr_proposal);
-	addr_proposal->state = PROPOSAL_CONFIGURED;
+	struct slaacd_iface		*iface;
 
 	log_debug("%s: %d", __func__, addr_proposal->if_index);
 
@@ -1885,6 +2132,10 @@ configure_address(struct address_proposal *addr_proposal)
 
 	engine_imsg_compose_main(IMSG_CONFIGURE_ADDRESS, 0, &address,
 	    sizeof(address));
+
+	if ((iface = get_slaacd_iface_by_id(addr_proposal->if_index)) != NULL)
+		iface_state_transition(iface, IF_BOUND);
+	addr_proposal_state_transition(addr_proposal, PROPOSAL_CONFIGURED);
 }
 
 void
@@ -1899,13 +2150,16 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->id = ++proposal_id;
 	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
 	    addr_proposal);
-	addr_proposal->next_timeout = 1;
+	addr_proposal->timo.tv_sec = 1;
+	addr_proposal->timo.tv_usec = arc4random_uniform(1000000);
 	addr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	if (clock_gettime(CLOCK_MONOTONIC, &addr_proposal->created))
 		fatal("clock_gettime");
 	addr_proposal->when = ra->when;
 	addr_proposal->uptime = ra->uptime;
 	addr_proposal->if_index = iface->if_index;
+	memcpy(&addr_proposal->from, &ra->from,
+	    sizeof(addr_proposal->from));
 	memcpy(&addr_proposal->hw_address, &iface->hw_address,
 	    sizeof(addr_proposal->hw_address));
 	memcpy(&addr_proposal->soiikey, &iface->soiikey,
@@ -1987,7 +2241,8 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 	dfr_proposal->id = ++proposal_id;
 	evtimer_set(&dfr_proposal->timer, dfr_proposal_timeout,
 	    dfr_proposal);
-	dfr_proposal->next_timeout = 1;
+	dfr_proposal->timo.tv_sec = 1;
+	dfr_proposal->timo.tv_usec = arc4random_uniform(1000000);
 	dfr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	dfr_proposal->when = ra->when;
 	dfr_proposal->uptime = ra->uptime;
@@ -2009,32 +2264,8 @@ void
 configure_dfr(struct dfr_proposal *dfr_proposal)
 {
 	struct imsg_configure_dfr	 dfr;
-	struct timeval			 tv;
-	enum proposal_state		 prev_state;
-
-	if (dfr_proposal->router_lifetime > MAX_RTR_SOLICITATIONS *
-	    (RTR_SOLICITATION_INTERVAL + 1)) {
-		dfr_proposal->next_timeout = dfr_proposal->router_lifetime -
-		    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
-		tv.tv_sec = dfr_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		evtimer_add(&dfr_proposal->timer, &tv);
-		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
-		    __func__, dfr_proposal->if_index, tv.tv_sec, tv.tv_usec);
-	} else
-		dfr_proposal->next_timeout = 0;
-
-	prev_state = dfr_proposal->state;
-
-	dfr_proposal->state = PROPOSAL_CONFIGURED;
 
 	log_debug("%s: %d", __func__, dfr_proposal->if_index);
-
-	if (prev_state == PROPOSAL_CONFIGURED || prev_state ==
-	    PROPOSAL_NEARLY_EXPIRED) {
-		/* nothing to do here, routes do not expire in the kernel */
-		return;
-	}
 
 	dfr.if_index = dfr_proposal->if_index;
 	dfr.rdomain = dfr_proposal->rdomain;
@@ -2042,6 +2273,8 @@ configure_dfr(struct dfr_proposal *dfr_proposal)
 	dfr.router_lifetime = dfr_proposal->router_lifetime;
 
 	engine_imsg_compose_main(IMSG_CONFIGURE_DFR, 0, &dfr, sizeof(dfr));
+
+	dfr_proposal_state_transition(dfr_proposal, PROPOSAL_CONFIGURED);
 }
 
 void
@@ -2091,7 +2324,8 @@ gen_rdns_proposal(struct slaacd_iface *iface, struct radv *ra)
 	rdns_proposal->id = ++proposal_id;
 	evtimer_set(&rdns_proposal->timer, rdns_proposal_timeout,
 	    rdns_proposal);
-	rdns_proposal->next_timeout = 1;
+	rdns_proposal->timo.tv_sec = 1;
+	rdns_proposal->timo.tv_usec = arc4random_uniform(1000000);
 	rdns_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	rdns_proposal->when = ra->when;
 	rdns_proposal->uptime = ra->uptime;
@@ -2108,42 +2342,10 @@ gen_rdns_proposal(struct slaacd_iface *iface, struct radv *ra)
 	}
 
 	LIST_INSERT_HEAD(&iface->rdns_proposals, rdns_proposal, entries);
-	propose_rdns(rdns_proposal);
+	compose_rdns_proposal(iface->if_index, iface->rdomain);
 
 	hbuf = sin6_to_str(&rdns_proposal->from);
 	log_debug("%s: iface %d: %s", __func__, iface->if_index, hbuf);
-}
-
-void
-propose_rdns(struct rdns_proposal *rdns_proposal)
-{
-	struct timeval			 tv;
-	enum proposal_state		 prev_state;
-
-	if (rdns_proposal->rdns_lifetime > MAX_RTR_SOLICITATIONS *
-	    (RTR_SOLICITATION_INTERVAL + 1)) {
-		rdns_proposal->next_timeout = rdns_proposal->rdns_lifetime -
-		    MAX_RTR_SOLICITATIONS * (RTR_SOLICITATION_INTERVAL + 1);
-		tv.tv_sec = rdns_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		evtimer_add(&rdns_proposal->timer, &tv);
-		log_debug("%s: %d, scheduling new timeout in %llds.%06ld",
-		    __func__, rdns_proposal->if_index, tv.tv_sec, tv.tv_usec);
-	} else
-		rdns_proposal->next_timeout = 0;
-
-	prev_state = rdns_proposal->state;
-
-	rdns_proposal->state = PROPOSAL_SENT;
-
-	log_debug("%s: %d", __func__, rdns_proposal->if_index);
-
-	if (prev_state == PROPOSAL_SENT || prev_state ==
-	    PROPOSAL_NEARLY_EXPIRED) {
-		/* nothing to do here rDNS proposals do not expire */
-		return;
-	}
-	compose_rdns_proposal(rdns_proposal->if_index, rdns_proposal->rdomain);
 }
 
 void
@@ -2160,6 +2362,11 @@ compose_rdns_proposal(uint32_t if_index, int rdomain)
 
 	if ((iface = get_slaacd_iface_by_id(if_index)) != NULL) {
 		LIST_FOREACH(rdns_proposal, &iface->rdns_proposals, entries) {
+			if (rdns_proposal->state == PROPOSAL_WITHDRAWN ||
+			    rdns_proposal->state == PROPOSAL_STALE)
+				continue;
+			rdns_proposal_state_transition(rdns_proposal,
+			    PROPOSAL_CONFIGURED);
 			for (i = 0; i < rdns_proposal->rdns_count &&
 				 rdns.rdns_count < MAX_RDNS_COUNT; i++) {
 				rdns.rdns[rdns.rdns_count++] =
@@ -2179,31 +2386,36 @@ free_rdns_proposal(struct rdns_proposal *rdns_proposal)
 
 	LIST_REMOVE(rdns_proposal, entries);
 	evtimer_del(&rdns_proposal->timer);
+	switch (rdns_proposal->state) {
+	case PROPOSAL_CONFIGURED:
+	case PROPOSAL_NEARLY_EXPIRED:
+	case PROPOSAL_STALE:
+		withdraw_rdns(rdns_proposal);
+		break;
+	default:
+		break;
+	}
 	free(rdns_proposal);
 }
 
 void
-start_probe(struct slaacd_iface *iface)
+withdraw_rdns(struct rdns_proposal *rdns_proposal)
 {
-	struct timeval	tv;
+	log_debug("%s: %d", __func__, rdns_proposal->if_index);
 
-	iface->state = IF_DELAY;
-	iface->probes = 0;
+	rdns_proposal->state = PROPOSAL_WITHDRAWN;
 
-	tv.tv_sec = 0;
-	tv.tv_usec = arc4random_uniform(MAX_RTR_SOLICITATION_DELAY_USEC);
-
-	log_debug("%s: iface %d: sleeping for %ldusec", __func__,
-	    iface->if_index, tv.tv_usec);
-
-	evtimer_add(&iface->timer, &tv);
+	/* we have to re-propose all rdns servers, minus one */
+	compose_rdns_proposal(rdns_proposal->if_index, rdns_proposal->rdomain);
 }
 
 void
 address_proposal_timeout(int fd, short events, void *arg)
 {
 	struct address_proposal	*addr_proposal;
-	struct timeval		 tv;
+	struct slaacd_iface	*iface = NULL;
+	struct radv		*ra = NULL;
+	struct radv_prefix	*prefix = NULL;
 	const char		*hbuf;
 
 	addr_proposal = (struct address_proposal *)arg;
@@ -2211,67 +2423,53 @@ address_proposal_timeout(int fd, short events, void *arg)
 	hbuf = sin6_to_str(&addr_proposal->addr);
 	log_debug("%s: iface %d: %s [%s], priv: %s", __func__,
 	    addr_proposal->if_index, hbuf,
-	    proposal_state_name[addr_proposal->state],
+	    proposal_state_name(addr_proposal->state),
 	    addr_proposal->temporary ? "y" : "n");
 
 	switch (addr_proposal->state) {
+	case PROPOSAL_IF_DOWN:
+		addr_proposal_state_transition(addr_proposal, PROPOSAL_STALE);
+		break;
 	case PROPOSAL_CONFIGURED:
-		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld, temporary: "
-		    "%s", addr_proposal->id, addr_proposal->temporary ?
-		    "y" : "n");
-
-		addr_proposal->next_timeout = 1;
-		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		evtimer_add(&addr_proposal->timer, &tv);
-
+		addr_proposal_state_transition(addr_proposal,
+		    PROPOSAL_NEARLY_EXPIRED);
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
-		log_debug("%s: rl: %d", __func__,
-		    real_lifetime(&addr_proposal->uptime,
-		    addr_proposal->vltime));
-		/*
-		 * we should have gotten a RTM_DELADDR from the kernel,
-		 * in case we missed it, delete to not waste memory
-		 */
 		if (real_lifetime(&addr_proposal->uptime,
-		    addr_proposal->vltime) == 0) {
-			evtimer_del(&addr_proposal->timer);
-			free_address_proposal(addr_proposal);
-			log_debug("%s: removing address proposal", __func__);
-			break;
-		}
-
-		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
-		    0, &addr_proposal->if_index,
-		    sizeof(addr_proposal->if_index));
-
-		if (addr_proposal->temporary) {
-			addr_proposal->next_timeout = 0;
-			break; /* just let it expire */
-		}
-
-		tv.tv_sec = addr_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		addr_proposal->next_timeout *= 2;
-		evtimer_add(&addr_proposal->timer, &tv);
-		log_debug("%s: scheduling new timeout in %llds.%06ld",
-		    __func__, tv.tv_sec, tv.tv_usec);
+		    addr_proposal->vltime) > 0)
+			addr_proposal_state_transition(addr_proposal,
+			    PROPOSAL_NEARLY_EXPIRED);
+		else
+			addr_proposal_state_transition(addr_proposal,
+			    PROPOSAL_STALE);
 		break;
 	case PROPOSAL_DUPLICATED:
-		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
-		    0, &addr_proposal->if_index,
-		    sizeof(addr_proposal->if_index));
-		log_debug("%s: address duplicated",
-		    __func__);
+		iface = get_slaacd_iface_by_id(addr_proposal->if_index);
+		if (iface != NULL)
+			ra = find_ra(iface, &addr_proposal->from);
+		if (ra != NULL)
+			prefix = find_prefix(ra, &addr_proposal->prefix,
+			    addr_proposal->prefix_len);
+		if (prefix != NULL) {
+			if (!addr_proposal->temporary) {
+				prefix->dad_counter++;
+				gen_address_proposal(iface, ra, prefix, 0);
+			} else
+				gen_address_proposal(iface, ra, prefix, 1);
+		}
+		addr_proposal_state_transition(addr_proposal, PROPOSAL_STALE);
 		break;
 	case PROPOSAL_STALE:
+		free_address_proposal(addr_proposal);
+		addr_proposal = NULL;
+		break;
+	case PROPOSAL_WITHDRAWN:
+		free_address_proposal(addr_proposal);
+		addr_proposal = NULL;
 		break;
 	default:
 		log_debug("%s: unhandled state: %s", __func__,
-		    proposal_state_name[addr_proposal->state]);
+		    proposal_state_name(addr_proposal->state));
 	}
 }
 
@@ -2279,48 +2477,43 @@ void
 dfr_proposal_timeout(int fd, short events, void *arg)
 {
 	struct dfr_proposal	*dfr_proposal;
-	struct timeval		 tv;
 	const char		*hbuf;
 
 	dfr_proposal = (struct dfr_proposal *)arg;
 
 	hbuf = sin6_to_str(&dfr_proposal->addr);
 	log_debug("%s: iface %d: %s [%s]", __func__, dfr_proposal->if_index,
-	    hbuf, proposal_state_name[dfr_proposal->state]);
+	    hbuf, proposal_state_name(dfr_proposal->state));
 
 	switch (dfr_proposal->state) {
+	case PROPOSAL_IF_DOWN:
+		dfr_proposal_state_transition(dfr_proposal, PROPOSAL_STALE);
+		break;
 	case PROPOSAL_CONFIGURED:
-		log_debug("PROPOSAL_CONFIGURED timeout: id: %lld",
-		    dfr_proposal->id);
-
-		dfr_proposal->next_timeout = 1;
-		dfr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		evtimer_add(&dfr_proposal->timer, &tv);
-
+		dfr_proposal_state_transition(dfr_proposal,
+		    PROPOSAL_NEARLY_EXPIRED);
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
 		if (real_lifetime(&dfr_proposal->uptime,
-		    dfr_proposal->router_lifetime) == 0) {
-			free_dfr_proposal(dfr_proposal);
-			log_debug("%s: removing dfr proposal", __func__);
-			break;
-		}
-		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
-		    0, &dfr_proposal->if_index,
-		    sizeof(dfr_proposal->if_index));
-		tv.tv_sec = dfr_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		dfr_proposal->next_timeout *= 2;
-		evtimer_add(&dfr_proposal->timer, &tv);
-		log_debug("%s: scheduling new timeout in %llds.%06ld",
-		    __func__, tv.tv_sec, tv.tv_usec);
+		    dfr_proposal->router_lifetime) > 0)
+			dfr_proposal_state_transition(dfr_proposal,
+			    PROPOSAL_NEARLY_EXPIRED);
+		else
+			dfr_proposal_state_transition(dfr_proposal,
+			    PROPOSAL_STALE);
 		break;
+	case PROPOSAL_STALE:
+		free_dfr_proposal(dfr_proposal);
+		dfr_proposal = NULL;
+		break;
+	case PROPOSAL_WITHDRAWN:
+		free_dfr_proposal(dfr_proposal);
+		dfr_proposal = NULL;
+		break;
+
 	default:
 		log_debug("%s: unhandled state: %s", __func__,
-		    proposal_state_name[dfr_proposal->state]);
+		    proposal_state_name(dfr_proposal->state));
 	}
 }
 
@@ -2328,50 +2521,43 @@ void
 rdns_proposal_timeout(int fd, short events, void *arg)
 {
 	struct rdns_proposal	*rdns_proposal;
-	struct timeval		 tv;
 	const char		*hbuf;
 
 	rdns_proposal = (struct rdns_proposal *)arg;
 
 	hbuf = sin6_to_str(&rdns_proposal->from);
 	log_debug("%s: iface %d: %s [%s]", __func__, rdns_proposal->if_index,
-	    hbuf, proposal_state_name[rdns_proposal->state]);
+	    hbuf, proposal_state_name(rdns_proposal->state));
 
 	switch (rdns_proposal->state) {
-	case PROPOSAL_SENT:
-		log_debug("PROPOSAL_SENT timeout: id: %lld",
-		    rdns_proposal->id);
-
-		rdns_proposal->next_timeout = 1;
-		rdns_proposal->state = PROPOSAL_NEARLY_EXPIRED;
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		evtimer_add(&rdns_proposal->timer, &tv);
-
+	case PROPOSAL_IF_DOWN:
+		rdns_proposal_state_transition(rdns_proposal, PROPOSAL_STALE);
+		break;
+	case PROPOSAL_CONFIGURED:
+		rdns_proposal_state_transition(rdns_proposal,
+		    PROPOSAL_NEARLY_EXPIRED);
 		break;
 	case PROPOSAL_NEARLY_EXPIRED:
 		if (real_lifetime(&rdns_proposal->uptime,
-		    rdns_proposal->rdns_lifetime) == 0) {
-			free_rdns_proposal(rdns_proposal);
-			log_debug("%s: removing rdns proposal", __func__);
-			compose_rdns_proposal(rdns_proposal->if_index,
-			    rdns_proposal->rdomain);
-			break;
-		}
-		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION,
-		    0, &rdns_proposal->if_index,
-		    sizeof(rdns_proposal->if_index));
-		tv.tv_sec = rdns_proposal->next_timeout;
-		tv.tv_usec = arc4random_uniform(1000000);
-		rdns_proposal->next_timeout *= 2;
-		evtimer_add(&rdns_proposal->timer, &tv);
-		log_debug("%s: scheduling new timeout in %llds.%06ld",
-		    __func__, tv.tv_sec, tv.tv_usec);
+		    rdns_proposal->rdns_lifetime) > 0)
+			rdns_proposal_state_transition(rdns_proposal,
+			    PROPOSAL_NEARLY_EXPIRED);
+		else
+			rdns_proposal_state_transition(rdns_proposal,
+			    PROPOSAL_STALE);
 		break;
+	case PROPOSAL_STALE:
+		free_rdns_proposal(rdns_proposal);
+		rdns_proposal = NULL;
+		break;
+	case PROPOSAL_WITHDRAWN:
+		free_rdns_proposal(rdns_proposal);
+		rdns_proposal = NULL;
+		break;
+
 	default:
 		log_debug("%s: unhandled state: %s", __func__,
-		    proposal_state_name[rdns_proposal->state]);
+		    proposal_state_name(rdns_proposal->state));
 	}
 }
 
@@ -2379,48 +2565,17 @@ void
 iface_timeout(int fd, short events, void *arg)
 {
 	struct slaacd_iface	*iface = (struct slaacd_iface *)arg;
-	struct timeval		 tv;
-	struct address_proposal	*addr_proposal;
-	struct dfr_proposal	*dfr_proposal;
-	struct rdns_proposal	*rdns_proposal;
 
 	log_debug("%s[%d]: %s", __func__, iface->if_index,
-	    if_state_name[iface->state]);
+	    if_state_name(iface->state));
 
 	switch (iface->state) {
-	case IF_DELAY:
-	case IF_PROBE:
-		iface->state = IF_PROBE;
-		engine_imsg_compose_frontend(IMSG_CTL_SEND_SOLICITATION, 0,
-		    &iface->if_index, sizeof(iface->if_index));
-		if (++iface->probes >= MAX_RTR_SOLICITATIONS) {
-			iface->state = IF_DEAD;
-			tv.tv_sec = 0;
-		} else
-			tv.tv_sec = RTR_SOLICITATION_INTERVAL;
-		tv.tv_usec = arc4random_uniform(1000000);
-		evtimer_add(&iface->timer, &tv);
-		break;
-	case IF_DEAD:
-		while(!LIST_EMPTY(&iface->addr_proposals)) {
-			addr_proposal = LIST_FIRST(&iface->addr_proposals);
-			addr_proposal->state = PROPOSAL_STALE;
-			free_address_proposal(addr_proposal);
-		}
-		while(!LIST_EMPTY(&iface->dfr_proposals)) {
-			dfr_proposal = LIST_FIRST(&iface->dfr_proposals);
-			dfr_proposal->state = PROPOSAL_STALE;
-			free_dfr_proposal(dfr_proposal);
-		}
-		while(!LIST_EMPTY(&iface->rdns_proposals)) {
-			rdns_proposal = LIST_FIRST(&iface->rdns_proposals);
-			rdns_proposal->state = PROPOSAL_STALE;
-			free_rdns_proposal(rdns_proposal);
-		}
-		compose_rdns_proposal(iface->if_index, iface->rdomain);
-		break;
 	case IF_DOWN:
-	case IF_IDLE:
+		fatalx("%s: timeout in wrong state IF_DOWN", __func__);
+		break;
+	case IF_INIT:
+		iface_state_transition(iface, IF_INIT);
+		break;
 	default:
 		break;
 	}
@@ -2483,15 +2638,15 @@ find_rdns_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
 }
 
 struct radv_prefix *
-find_prefix(struct radv *ra, struct radv_prefix *prefix)
+find_prefix(struct radv *ra, struct in6_addr *prefix, uint8_t prefix_len)
 {
 	struct radv_prefix	*result;
 
 
 	LIST_FOREACH(result, &ra->prefixes, entries) {
-		if (memcmp(&result->prefix, &prefix->prefix,
-		    sizeof(prefix->prefix)) == 0 && result->prefix_len ==
-		    prefix->prefix_len)
+		if (memcmp(&result->prefix, prefix,
+		    sizeof(result->prefix)) == 0 && result->prefix_len ==
+		    prefix_len)
 			return (result);
 	}
 	return (NULL);
@@ -2525,7 +2680,8 @@ merge_dad_couters(struct radv *old_ra, struct radv *new_ra)
 	LIST_FOREACH(old_prefix, &old_ra->prefixes, entries) {
 		if (!old_prefix->dad_counter)
 			continue;
-		if ((new_prefix = find_prefix(new_ra, old_prefix)) != NULL)
+		if ((new_prefix = find_prefix(new_ra, &old_prefix->prefix,
+		    old_prefix->prefix_len)) != NULL)
 			new_prefix->dad_counter = old_prefix->dad_counter;
 	}
 }
