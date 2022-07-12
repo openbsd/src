@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.34 2022/07/12 22:08:18 bluhm Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.35 2022/07/12 22:27:38 bluhm Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -133,10 +133,10 @@ ifmedia_add(struct ifmedia *ifm, uint64_t mword, int data, void *aux)
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
 		if (ifm == NULL) {
-			printf("ifmedia_add: null ifm\n");
+			printf("%s: null ifm\n", __func__);
 			return;
 		}
-		printf("Adding entry for ");
+		printf("%s: adding entry for ", __func__);
 		ifmedia_printword(mword);
 	}
 #endif
@@ -198,7 +198,7 @@ ifmedia_set(struct ifmedia *ifm, uint64_t target)
 	 * In either case, it makes sense to select no media.
 	 */
 	if (match == NULL) {
-		printf("ifmedia_set: no match for 0x%llx/0x%llx\n",
+		printf("%s: no match for 0x%llx/0x%llx\n", __func__,
 		    target, ~ifm->ifm_mask);
 		target = (target & IFM_NMASK) | IFM_NONE;
 		match = ifmedia_match(ifm, target, ifm->ifm_mask);
@@ -213,9 +213,9 @@ ifmedia_set(struct ifmedia *ifm, uint64_t target)
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
-		printf("ifmedia_set: target ");
+		printf("%s: target ", __func__);
 		ifmedia_printword(target);
-		printf("ifmedia_set: setting to ");
+		printf("%s: setting to ", __func__);
 		ifmedia_printword(ifm->ifm_cur->ifm_media);
 	}
 #endif
@@ -249,8 +249,8 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if (match == NULL) {
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
-				printf("ifmedia_ioctl: no media found for 0x%llx\n",
-				    newmedia);
+				printf("%s: no media found for 0x%llx\n",
+				    __func__, newmedia);
 			}
 #endif
 			return (EINVAL);
@@ -274,7 +274,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		 */
 #ifdef IFMEDIA_DEBUG
 		if (ifmedia_debug) {
-			printf("ifmedia_ioctl: switching %s to ",
+			printf("%s: switching %s to ", __func__,
 			    ifp->if_xname);
 			ifmedia_printword(match->ifm_media);
 		}
@@ -383,8 +383,8 @@ ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 		if ((next->ifm_media & mask) == (target & mask)) {
 			if (match) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
-				printf("ifmedia_match: multiple match for "
-				    "0x%llx/0x%llx, selected instance %lld\n",
+				printf("%s: multiple match for 0x%llx/0x%llx, "
+				    "selected instance %lld\n", __func__,
 				    target, mask, IFM_INST(match->ifm_media));
 #endif
 				break;
