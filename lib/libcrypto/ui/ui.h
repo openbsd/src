@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.13 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: ui.h,v 1.14 2022/07/12 18:43:56 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -371,7 +371,6 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
     int verify);
 
-/*
 void ERR_load_UI_strings(void);
 
 /* Error codes for the UI functions. */
