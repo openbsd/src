@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.43 2022/07/10 21:13:41 bluhm Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.44 2022/07/12 22:08:18 bluhm Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@
 #ifdef _KERNEL
 
 struct ifnet;
+extern struct mutex ifmedia_mtx;
 
 #include <sys/queue.h>
 /*
@@ -78,6 +79,11 @@ struct ifnet;
  */
 typedef	int (*ifm_change_cb_t)(struct ifnet *);
 typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
+
+/*
+ * Locks used to protect struct members in this file:
+ *	M	ifmedia_mtx		interface media mutex
+ */
 
 /*
  * In-kernel representation of a single supported media type.
@@ -89,6 +95,7 @@ struct ifmedia_entry {
 	void	*ifm_aux;	/* for driver-specific use */
 };
 
+TAILQ_HEAD(ifmedia_list, ifmedia_entry);
 /*
  * One of these goes into a network interface's softc structure.
  * It is used to keep general media state.
@@ -97,7 +104,8 @@ struct ifmedia {
 	uint64_t	ifm_mask;	/* mask of changes we don't care about */
 	uint64_t	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
+	struct ifmedia_list ifm_list;	/* [M] list of all supported media */
+	size_t		ifm_nwords;	/* [M] number of ifm_list entries */
 	ifm_change_cb_t	ifm_change_cb;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status_cb;	/* media status driver callback */
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.33 2022/07/10 21:13:41 bluhm Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.34 2022/07/12 22:08:18 bluhm Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #ifdef IFMEDIA_DEBUG
@@ -102,6 +103,8 @@ int	ifmedia_debug = 0;
 static	void ifmedia_printword(uint64_t);
 #endif
 
+struct mutex ifmedia_mtx = MUTEX_INITIALIZER(IPL_NET);
+
 /*
  * Initialize if_media struct for a specific interface instance.
  */
@@ -110,6 +113,7 @@ ifmedia_init(struct ifmedia *ifm, uint64_t dontcare_mask,
     ifm_change_cb_t change_callback, ifm_stat_cb_t status_callback)
 {
 	TAILQ_INIT(&ifm->ifm_list);
+	ifm->ifm_nwords = 0;
 	ifm->ifm_cur = NULL;
 	ifm->ifm_media = 0;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
@@ -145,7 +149,10 @@ ifmedia_add(struct ifmedia *ifm, uint64_t mword, int data, void *aux)
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
 
+	mtx_enter(&ifmedia_mtx);
 	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
+	ifm->ifm_nwords++;
+	mtx_leave(&ifmedia_mtx);
 }
 
 /*
@@ -290,7 +297,6 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	case  SIOCGIFMEDIA:
 	{
 		struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
-		struct ifmedia_entry *ep;
 		size_t nwords;
 
 		if (ifmr->ifm_count < 0)
@@ -302,37 +308,54 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		ifmr->ifm_status = 0;
 		(*ifm->ifm_status_cb)(ifp, ifmr);
 
-		/*
-		 * Count them so we know a-priori how much is the max we'll
-		 * need.
-		 */
-		ep = TAILQ_FIRST(&ifm->ifm_list);
-		for (nwords = 0; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
-			nwords++;
+		mtx_enter(&ifmedia_mtx);
+		nwords = ifm->ifm_nwords;
+		mtx_leave(&ifmedia_mtx);
 
-		if (ifmr->ifm_count != 0) {
-			size_t minwords, ksiz;
+		if (ifmr->ifm_count == 0) {
+			ifmr->ifm_count = nwords;
+			return (0);
+		}
+
+		do {
+			struct ifmedia_entry *ife;
 			uint64_t *kptr;
+			size_t ksiz;
 
-			minwords = nwords > (size_t)ifmr->ifm_count ?
-			    (size_t)ifmr->ifm_count : nwords;
 			kptr = mallocarray(nwords, sizeof(*kptr), M_TEMP,
 			    M_WAITOK | M_ZERO);
 			ksiz = nwords * sizeof(*kptr);
+
+			mtx_enter(&ifmedia_mtx);
+			/* Media list might grow during malloc(). */
+			if (nwords < ifm->ifm_nwords) {
+				nwords = ifm->ifm_nwords;
+				mtx_leave(&ifmedia_mtx);
+				free(kptr, M_TEMP, ksiz);
+				continue;
+			}
+			/* Request memory too small, set error and ifm_count. */
+			if (ifmr->ifm_count < ifm->ifm_nwords) {
+				nwords = ifm->ifm_nwords;
+				mtx_leave(&ifmedia_mtx);
+				free(kptr, M_TEMP, ksiz);
+				error = E2BIG;
+				break;
+			}
 			/*
 			 * Get the media words from the interface's list.
 			 */
-			ep = TAILQ_FIRST(&ifm->ifm_list);
-			for (nwords = 0; ep != NULL && nwords < minwords;
-			    ep = TAILQ_NEXT(ep, ifm_list))
-				kptr[nwords++] = ep->ifm_media;
-			if (ep == NULL)
-				error = copyout(kptr, ifmr->ifm_ulist,
-				    nwords * sizeof(*kptr));
-			else
-				error = E2BIG;
+			nwords = 0;
+			TAILQ_FOREACH(ife, &ifm->ifm_list, ifm_list) {
+				kptr[nwords++] = ife->ifm_media;
+			}
+			KASSERT(nwords == ifm->ifm_nwords);
+			mtx_leave(&ifmedia_mtx);
+
+			error = copyout(kptr, ifmr->ifm_ulist,
+			    nwords * sizeof(*kptr));
 			free(kptr, M_TEMP, ksiz);
-		}
+		} while (0);
 		ifmr->ifm_count = nwords;
 		break;
 	}
@@ -355,6 +378,7 @@ ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 	match = NULL;
 	mask = ~mask;
 
+	mtx_enter(&ifmedia_mtx);
 	TAILQ_FOREACH(next, &ifm->ifm_list, ifm_list) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 			if (match) {
@@ -368,6 +392,7 @@ ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 			match = next;
 		}
 	}
+	mtx_leave(&ifmedia_mtx);
 
 	return (match);
 }
@@ -379,13 +404,25 @@ void
 ifmedia_delete_instance(struct ifmedia *ifm, uint64_t inst)
 {
 	struct ifmedia_entry *ife, *nife;
+	struct ifmedia_list ifmlist;
 
+	TAILQ_INIT(&ifmlist);
+
+	mtx_enter(&ifmedia_mtx);
 	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_IFADDR, sizeof *ife);
+			ifm->ifm_nwords--;
+			TAILQ_INSERT_TAIL(&ifmlist, ife, ifm_list);
 		}
+	}
+	mtx_leave(&ifmedia_mtx);
+
+	/* Do not hold mutex longer than necessary, call free() without. */
+	while((ife = TAILQ_FIRST(&ifmlist)) != NULL) {
+		TAILQ_REMOVE(&ifmlist, ife, ifm_list);
+		free(ife, M_IFADDR, sizeof *ife);
 	}
 }
 

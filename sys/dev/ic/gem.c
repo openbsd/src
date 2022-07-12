@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.126 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: gem.c,v 1.127 2022/07/12 22:08:17 bluhm Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -332,6 +332,7 @@ gem_config(struct gem_softc *sc)
 	}
 
 	/* Check if we support GigE media. */
+	mtx_enter(&ifmedia_mtx);
 	TAILQ_FOREACH(ifm, &sc->sc_media.ifm_list, ifm_list) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
@@ -341,6 +342,7 @@ gem_config(struct gem_softc *sc)
 			break;
 		}
 	}
+	mtx_leave(&ifmedia_mtx);
 
 	/* Attach the interface. */
 	if_attach(ifp);
