@@ -2,6 +2,7 @@
 ./usr/bin/llvm-config
 ./usr/bin/llvm-objcopy
 ./usr/bin/llvm-objdump
+./usr/bin/llvm-profdata
 ./usr/bin/llvm-readelf
 ./usr/bin/llvm-readobj
 ./usr/include/c++
@@ -2185,5 +2186,6 @@
 ./usr/share/man/man1/llvm-config.1
 ./usr/share/man/man1/llvm-objcopy.1
 ./usr/share/man/man1/llvm-objdump.1
+./usr/share/man/man1/llvm-profdata.1
 ./usr/share/man/man1/llvm-readelf.1
 ./usr/share/man/man1/llvm-readobj.1
