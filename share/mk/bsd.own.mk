@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.212 2021/11/23 10:30:08 robert Exp $
+#	$OpenBSD: bsd.own.mk,v 1.213 2022/07/12 21:01:37 jca Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -19,6 +19,7 @@ CLANG_ARCH=aarch64 amd64 arm i386 mips64 mips64el powerpc powerpc64 riscv64 spar
 GCC4_ARCH=alpha hppa sh sparc64
 GCC3_ARCH=m88k
 LLD_ARCH=aarch64 amd64 arm i386 powerpc powerpc64 riscv64
+LLDB_ARCH=aarch64 amd64
 
 # m88k: ?
 PIE_ARCH=aarch64 alpha amd64 arm hppa i386 mips64 mips64el powerpc powerpc64 riscv64 sh sparc64
@@ -55,6 +56,12 @@ AR_VERSION?=llvm
 .else
 LINKER_VERSION?=bfd
 AR_VERSION?=binutils
+.endif
+
+.if !empty(LLDB_ARCH:M${_arch})
+BUILD_LLDB?=yes
+.else
+BUILD_LLDB?=no
 .endif
 
 .if !empty(STATICPIE_ARCH:M${_arch})
