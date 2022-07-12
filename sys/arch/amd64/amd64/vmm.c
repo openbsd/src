@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.317 2022/07/12 04:46:00 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.318 2022/07/12 04:52:38 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -7251,6 +7251,12 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rbx = ebx & VMM_AMDSPEC_EBX_MASK;
 		/* Reset %rcx (topology) */
 		*rcx = 0;
+		*rdx = edx;
+		break;
+	case 0x8000001d:	/* cache topology (AMD) */
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
 		*rdx = edx;
 		break;
 	default:
