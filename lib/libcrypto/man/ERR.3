@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR.3,v 1.8 2019/06/10 09:49:48 schwarze Exp $
+.\"	$OpenBSD: ERR.3,v 1.9 2022/07/12 14:42:49 kn Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: July 12 2022 $
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -171,14 +171,6 @@ definitions it uses.
 .Sh USING ERROR CODES IN EXTERNAL LIBRARIES
 It is also possible to use OpenSSL's error code scheme in external
 libraries.
-The library needs to load its own codes and call the OpenSSL error code
-insertion script
-.Pa mkerr.pl
-explicitly to add codes to the header file and generate the C error code
-file.
-This will normally be done if the external library needs to generate new
-ASN.1 structures but it can also be used to add more general purpose
-error code handling.
 .Sh INTERNALS
 The error queues are stored in a hash table with one
 .Vt ERR_STATE

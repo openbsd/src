@@ -1,4 +1,4 @@
-/* $OpenBSD: comp_err.c,v 1.11 2022/01/09 23:50:10 tb Exp $ */
+/* $OpenBSD: comp_err.c,v 1.12 2022/07/12 14:42:48 kn Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -62,7 +62,6 @@
 
 #include "comp_local.h"
 
-/* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
 
 #define ERR_FUNC(func) ERR_PACK(ERR_LIB_COMP,func,0)
