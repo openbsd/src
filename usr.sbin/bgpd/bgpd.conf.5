@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.223 2022/06/28 11:52:24 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.224 2022/07/12 17:30:57 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2022 $
+.Dd $Mdocdate: July 12 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -837,8 +837,60 @@ for the same address family of the session.
 .Xc
 If set to
 .Ic yes ,
-the receive add-path capability is announced which allows reception of multiple
+the receive add-path capability is announced, which allows reception of multiple
 paths per prefix.
+The default is
+.Ic no .
+.Pp
+.It Xo
+.Ic announce add-path send
+.Pq Ic no Ns | Ns Ic all
+.Xc
+.It Xo
+.Ic announce add-path send
+.Pq Ic best Ns | Ns Ic ecmp | Ns Ic as-wide-best
+.Op Ic plus Ar num
+.Op Ic max Ar num
+.Xc
+If set to
+.Ic all ,
+.Ic best ,
+.Ic ecmp ,
+or
+.Ic as-wide-best ,
+the send add-path capability is announced, which allows sending multiple paths
+per prefix.
+The paths sent depend on which mode is selected:
+.Pp
+.Bl -tag -width as-wide-best -compact
+.It Ic no
+do not advertise add-path send capability
+.It Ic all
+send all valid paths
+.It Ic best
+send the best path
+.It Ic ecmp
+send paths with equal nexthop cost
+.It Ic as-wide-best
+send paths where the first 8 checks of the decision process match
+.El
+.Pp
+.Ic plus
+allows the inclusion of additional backup paths and works for
+.Ic best ,
+.Ic ecmp ,
+and
+.Ic as-wide-best .
+.Ic max
+can be used to limit the total amount of paths sent for
+.Ic ecmp
+and
+.Ic as-wide-best .
+Right now
+.Ic ecmp
+and
+.Ic as-wide-best
+are equivalent.
 The default is
 .Ic no .
 .Pp
