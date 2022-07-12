@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.9 2022/06/20 19:42:58 tb Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.10 2022/07/12 16:08:19 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -54,9 +54,6 @@
  */
 
 #include "bn_lcl.h"
-
-/* The least significant word of a BIGNUM. */
-#define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
 
 /*
  * Kronecker symbol, implemented according to Henri Cohen, "A Course in

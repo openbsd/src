@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.31 2022/01/14 08:01:47 tb Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.32 2022/07/12 16:08:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -492,6 +492,9 @@ struct bn_gencb_st {
 	(r)=l&BN_MASK2; \
 	}
 #endif /* !BN_LLONG */
+
+/* The least significant word of a BIGNUM. */
+#define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
 
 void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
 void bn_mul_comba8(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);
