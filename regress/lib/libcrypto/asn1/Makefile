@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2022/06/28 08:44:26 tb Exp $
+#	$OpenBSD: Makefile,v 1.21 2022/07/12 13:31:38 tb Exp $
 
 PROGS = \
 	asn1api \
@@ -22,9 +22,6 @@ CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/asn1
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
 LDADD_asn1basic = ${CRYPTO_INT}
-
-# XXX needs to be static until symbols are exposed
-LDADD_asn1time = ${CRYPTO_INT}
 
 .for p in ${PROGS}
 REGRESS_TARGETS +=	run-$p
