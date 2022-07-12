@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.66 2022/06/26 10:57:36 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.67 2022/07/12 18:09:31 op Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -653,32 +653,30 @@ grep_revstr(unsigned char *str, int len)
 void
 printline(str_t *line, int sep, regmatch_t *pmatch)
 {
-	int n, printsep;
+	int n;
 
 	n = 0;
-	printsep = !nullflag;
 	if (!hflag) {
 		fputs(line->file, stdout);
 		if (nullflag)
 			putchar(0);
-		++n;
+		else
+			++n;
 	}
 	if (nflag) {
-		if (n && printsep)
+		if (n)
 			putchar(sep);
 		printf("%lld", line->line_no);
-		printsep = 1;
 		++n;
 	}
 	if (bflag) {
-		if (n && printsep)
+		if (n)
 			putchar(sep);
 		printf("%lld", (long long)line->off +
 		    (pmatch ? pmatch->rm_so : 0));
-		printsep = 1;
 		++n;
 	}
-	if (n && printsep)
+	if (n)
 		putchar(sep);
 	if (pmatch)
 		fwrite(line->dat + pmatch->rm_so,
