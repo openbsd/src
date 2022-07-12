@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.316 2022/06/30 13:17:58 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.317 2022/07/12 04:46:00 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -7229,16 +7229,16 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = curcpu()->ci_brand[11];
 		break;
 	case 0x80000005:	/* Reserved (Intel), cacheinfo (AMD) */
-		*rax = curcpu()->ci_amdcacheinfo[0];
-		*rbx = curcpu()->ci_amdcacheinfo[1];
-		*rcx = curcpu()->ci_amdcacheinfo[2];
-		*rdx = curcpu()->ci_amdcacheinfo[3];
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
+		*rdx = edx;
 		break;
 	case 0x80000006:	/* ext. cache info */
-		*rax = curcpu()->ci_extcacheinfo[0];
-		*rbx = curcpu()->ci_extcacheinfo[1];
-		*rcx = curcpu()->ci_extcacheinfo[2];
-		*rdx = curcpu()->ci_extcacheinfo[3];
+		*rax = eax;
+		*rbx = ebx;
+		*rcx = ecx;
+		*rdx = edx;
 		break;
 	case 0x80000007:	/* apmi */
 		*rax = eax;

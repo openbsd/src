@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.10 2022/06/28 12:11:41 jsg Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.11 2022/07/12 04:46:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
@@ -21,30 +21,6 @@
 
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
-
-void
-amd_cpu_cacheinfo(struct cpu_info *ci)
-{
-	u_int eax, ebx, ecx, edx;
-
-	/* used by vmm */
-
-	if (ci->ci_pnfeatset >= 0x80000005) {
-		CPUID(0x80000005, eax, ebx, ecx, edx);
-		ci->ci_amdcacheinfo[0] = eax;
-		ci->ci_amdcacheinfo[1] = ebx;
-		ci->ci_amdcacheinfo[2] = ecx;
-		ci->ci_amdcacheinfo[3] = edx;
-	}
-
-	if (ci->ci_pnfeatset >= 0x80000006) {
-		CPUID(0x80000006, eax, ebx, ecx, edx);
-		ci->ci_extcacheinfo[0] = eax;
-		ci->ci_extcacheinfo[1] = ebx;
-		ci->ci_extcacheinfo[2] = ecx;
-		ci->ci_extcacheinfo[3] = edx;
-	}
-}
 
 void
 amd64_print_l1_cacheinfo(struct cpu_info *ci)
