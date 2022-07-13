@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.16 2022/02/16 06:41:27 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.17 2022/07/13 09:28:18 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -48,6 +48,11 @@
 #include <machine/cpu.h>
 #include <machine/acpiapm.h>
 #include <machine/apmvar.h>
+
+#include "psci.h"
+#if NPSCI > 0
+#include <dev/fdt/pscivar.h>
+#endif
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
@@ -352,11 +357,30 @@ apm_record_event(u_int event, const char *src, const char *msg)
 void
 sleep_mp(void)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		arm_send_ipi(ci, ARM_IPI_HALT);
+		while (ci->ci_flags & CPUF_RUNNING)
+			CPU_BUSY_CYCLE();
+	}
 }
 
 void
 resume_mp(void)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+		cpu_resume_secondary(ci);
+	}
+	cpu_boot_secondary_processors();
 }
 
 #endif /* MULTIPROCESSOR */
@@ -364,7 +388,12 @@ resume_mp(void)
 int
 sleep_showstate(void *v, int sleepmode)
 {
-	return 0;
+#if NPSCI > 0
+	if (sleepmode == SLEEP_SUSPEND && psci_can_suspend())
+		return 0;
+#endif
+
+	return EOPNOTSUPP;
 }
 
 int
@@ -376,7 +405,7 @@ sleep_setstate(void *v)
 int
 gosleep(void *v)
 {
-	return EOPNOTSUPP;
+	return cpu_suspend_primary();
 }
 
 void
@@ -393,18 +422,6 @@ sleep_resume(void *v)
 int
 suspend_finish(void *v)
 {
-#if 0
-	extern int lid_action;
-
-	acpi_record_event(sc, APM_NORMAL_RESUME);
-	acpi_indicator(sc, ACPI_SST_WORKING);
-
-	/* XXX won't work, there is no acpi thread on arm64 */
-
-	/* If we woke up but all the lids are closed, go back to sleep */
-	if (acpibtn_numopenlids() == 0 && lid_action != 0)
-		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
-#endif
 	return 0;
 }
 

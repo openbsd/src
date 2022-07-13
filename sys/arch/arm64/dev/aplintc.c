@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.11 2022/04/10 10:43:34 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.12 2022/07/13 09:28:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -601,8 +601,8 @@ aplintc_send_ipi(struct cpu_info *ci, int reason)
 	if (ci == curcpu() && reason == ARM_IPI_NOP)
 		return;
 
-	/* never overwrite IPI_DDB with IPI_NOP */
-	if (reason == ARM_IPI_DDB)
+	/* never overwrite IPI_DDB or IPI_HALT with IPI_NOP */
+	if (reason == ARM_IPI_DDB || reason == ARM_IPI_HALT)
 		sc->sc_ipi_reason[ci->ci_cpuid] = reason;
 	membar_producer();
 

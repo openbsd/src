@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.27 2022/01/02 20:00:21 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.28 2022/07/13 09:28:18 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -142,7 +142,7 @@ struct ampintc_softc {
 	struct evcount		 sc_spur;
 	struct interrupt_controller sc_ic;
 	int			 sc_ipi_reason[ICD_ICTR_CPU_M + 1];
-	int			 sc_ipi_num[2];
+	int			 sc_ipi_num[3];
 };
 struct ampintc_softc *ampintc;
 
@@ -170,6 +170,8 @@ struct intrq {
 
 int		 ampintc_match(struct device *, void *, void *);
 void		 ampintc_attach(struct device *, struct device *, void *);
+int		 ampintc_activate(struct device *, int);
+void		 ampintc_init(struct ampintc_softc *);
 void		 ampintc_cpuinit(void);
 int		 ampintc_spllower(int);
 void		 ampintc_splx(int);
@@ -197,10 +199,12 @@ void		 ampintc_intr_barrier(void *);
 int		 ampintc_ipi_combined(void *);
 int		 ampintc_ipi_nop(void *);
 int		 ampintc_ipi_ddb(void *);
+int		 ampintc_ipi_halt(void *);
 void		 ampintc_send_ipi(struct cpu_info *, int);
 
 const struct cfattach	ampintc_ca = {
-	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach
+	sizeof (struct ampintc_softc), ampintc_match, ampintc_attach,
+	NULL, ampintc_activate
 };
 
 struct cfdriver ampintc_cd = {
@@ -236,7 +240,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	int i, nintr, ncpu;
 	uint32_t ictr;
 #ifdef MULTIPROCESSOR
-	int nipi, ipiirq[2];
+	int nipi, ipiirq[3];
 #endif
 
 	ampintc = sc;
@@ -268,23 +272,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cpu_mask[curcpu()->ci_cpuid] =
 	    bus_space_read_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(0));
 
-	/* Disable all interrupts, clear all pending */
-	for (i = 0; i < nintr/32; i++) {
-		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
-		    ICD_ICERn(i*32), ~0);
-		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
-		    ICD_ICPRn(i*32), ~0);
-	}
-	for (i = 0; i < nintr; i++) {
-		/* lowest priority ?? */
-		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i), 0xff);
-		/* target no cpus */
-		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(i), 0);
-	}
-	for (i = 2; i < nintr/16; i++) {
-		/* irq 32 - N */
-		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_ICRn(i*16), 0);
-	}
+	ampintc_init(sc);
 
 	/* software reset of the part? */
 	/* set protection bit (kernel only)? */
@@ -308,9 +296,10 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	/* setup IPI interrupts */
 
 	/*
-	 * Ideally we want two IPI interrupts, one for NOP and one for
-	 * DDB, however we can survive if only one is available it is
-	 * possible that most are not available to the non-secure OS.
+	 * Ideally we want three IPI interrupts, one for NOP, one for
+	 * DDB and one for HALT.  However we can survive if only one
+	 * is available; it is possible that most are not available to
+	 * the non-secure OS.
 	 */
 	nipi = 0;
 	for (i = 0; i < 16; i++) {
@@ -335,7 +324,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			printf(", %d", i);
 		ipiirq[nipi++] = i;
-		if (nipi == 2)
+		if (nipi == 3)
 			break;
 	}
 
@@ -348,14 +337,27 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_combined, sc, "ipi");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[0];
 		break;
 	case 2:
 		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
 		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_nop, sc, "ipinop");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		ampintc_intr_establish(ipiirq[1], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_combined, sc, "ipi");
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[1];
+		break;
+	case 3:
+		ampintc_intr_establish(ipiirq[0], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_nop, sc, "ipinop");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		ampintc_intr_establish(ipiirq[1], IST_EDGE_RISING,
 		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_ddb, sc, "ipiddb");
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		ampintc_intr_establish(ipiirq[2], IST_EDGE_RISING,
+		    IPL_IPI|IPL_MPSAFE, NULL, ampintc_ipi_halt, sc, "ipihalt");
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[2];
 		break;
 	default:
 		panic("nipi unexpected number %d", nipi);
@@ -380,6 +382,61 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* attach GICv2M frame controller */
 	simplebus_attach(parent, &sc->sc_sbus.sc_dev, faa);
+}
+
+int
+ampintc_activate(struct device *self, int act)
+{
+	struct ampintc_softc *sc = (struct ampintc_softc *)self;
+	struct cpu_info *ci;
+	int irq, min;
+
+	switch (act) {
+	case DVACT_RESUME:
+		for (irq = 0; irq < sc->sc_nintr; irq++) {
+			ci = sc->sc_handler[irq].iq_ci;
+			min = sc->sc_handler[irq].iq_irq_min;
+			if (min != IPL_NONE) {
+				ampintc_set_priority(irq, min);
+				ampintc_intr_enable(irq);
+				ampintc_route(irq, IRQ_ENABLE, ci);
+			} else {
+				ampintc_intr_disable(irq);
+			}
+		}
+
+		/* enable interrupts */
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_DCR, 3);
+		bus_space_write_4(sc->sc_iot, sc->sc_p_ioh, ICPICR, 1);
+		break;
+	}
+
+	return 0;
+}
+
+void
+ampintc_init(struct ampintc_softc *sc)
+{
+	int i;
+
+	/* Disable all interrupts, clear all pending */
+	for (i = 0; i < sc->sc_nintr / 32; i++) {
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_ICERn(i * 32), ~0);
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_ICPRn(i * 32), ~0);
+	}
+	for (i = 0; i < sc->sc_nintr; i++) {
+		/* lowest priority ?? */
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPRn(i), 0xff);
+		/* target no cpus */
+		bus_space_write_1(sc->sc_iot, sc->sc_d_ioh, ICD_IPTRn(i), 0);
+	}
+	for (i = 2; i < sc->sc_nintr / 16; i++) {
+		/* irq 32 - N */
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    ICD_ICRn(i * 16), 0);
+	}
 }
 
 void
@@ -613,6 +670,15 @@ ampintc_cpuinit(void)
 		else
 			ampintc_route(irq, IRQ_DISABLE, curcpu());
 	}
+
+	/*
+	 * If a secondary CPU is turned off from an IPI handler and
+	 * the GIC did not go through a full reset (for example when
+	 * we fail to suspend) the IPI might still be active.  So
+	 * signal EOI here to make sure new interrupts will be
+	 * serviced.
+	 */
+	ampintc_eoi(sc->sc_ipi_num[ARM_IPI_HALT]);
 }
 
 void
@@ -995,6 +1061,13 @@ ampintc_ipi_ddb(void *v)
 }
 
 int
+ampintc_ipi_halt(void *v)
+{
+	cpu_halt();
+	return 1;
+}
+
+int
 ampintc_ipi_nop(void *v)
 {
 	/* Nothing to do here, just enough to wake up from WFI */
@@ -1009,6 +1082,9 @@ ampintc_ipi_combined(void *v)
 	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
 		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
 		return ampintc_ipi_ddb(v);
+	} else if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_HALT) {
+		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
+		return ampintc_ipi_halt(v);
 	} else {
 		return ampintc_ipi_nop(v);
 	}
@@ -1023,8 +1099,8 @@ ampintc_send_ipi(struct cpu_info *ci, int id)
 	if (ci == curcpu() && id == ARM_IPI_NOP)
 		return;
 
-	/* never overwrite IPI_DDB with IPI_NOP */
-	if (id == ARM_IPI_DDB)
+	/* never overwrite IPI_DDB or IPI_HALT with IPI_NOP */
+	if (id == ARM_IPI_DDB || id == ARM_IPI_HALT)
 		sc->sc_ipi_reason[ci->ci_cpuid] = id;
 
 	/* currently will only send to one cpu */

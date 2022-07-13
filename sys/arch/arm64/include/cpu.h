@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.26 2022/06/16 20:45:42 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.27 2022/07/13 09:28:19 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -102,11 +102,9 @@ struct cpu_info {
 	u_int32_t		ci_pkg_id;
 
 	struct proc		*ci_curproc;
+	struct pcb		*ci_curpcb;
 	struct pmap		*ci_curpm;
 	u_int32_t		ci_randseed;
-
-	struct pcb		*ci_curpcb;
-	struct pcb		*ci_idle_pcb;
 
 	u_int32_t		ci_ctrl; /* The CPU control register */
 
@@ -120,6 +118,9 @@ struct cpu_info {
 
 	void			(*ci_flush_bp)(void);
 
+	uint64_t		ci_ttbr1;
+	vaddr_t			ci_el1_stkend;
+	
 	struct opp_table	*ci_opp_table;
 	volatile int		ci_opp_idx;
 	volatile int		ci_opp_max;
@@ -128,8 +129,6 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
 	volatile int		ci_flags;
-	uint64_t		ci_ttbr1;
-	vaddr_t			ci_el1_stkend;
 
 	volatile int		ci_ddb_paused;
 #define CI_DDB_RUNNING		0
@@ -312,7 +311,10 @@ intr_restore(u_long daif)
 	restore_daif(daif);
 }
 
+void	cpu_halt(void);
 void	cpu_startclock(void);
+int	cpu_suspend_primary(void);
+void	cpu_resume_secondary(struct cpu_info *);
 
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)

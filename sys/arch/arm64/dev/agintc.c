@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.37 2022/06/16 20:44:09 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.38 2022/07/13 09:28:18 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -161,9 +161,9 @@ struct agintc_softc {
 	struct agintc_dmamem	*sc_prop;
 	struct agintc_dmamem	*sc_pend;
 	struct interrupt_controller sc_ic;
-	int			 sc_ipi_num[2]; /* id for NOP and DDB ipi */
-	int			 sc_ipi_reason[MAXCPUS]; /* NOP or DDB caused */
-	void			*sc_ipi_irq[2]; /* irqhandle for each ipi */
+	int			 sc_ipi_num[3]; /* id for each ipi */
+	int			 sc_ipi_reason[MAXCPUS]; /* cause of ipi */
+	void			*sc_ipi_irq[3]; /* irqhandle for each ipi */
 };
 struct agintc_softc *agintc_sc;
 
@@ -234,6 +234,7 @@ void		agintc_r_wait_rwp(struct agintc_softc *sc);
 uint32_t	agintc_r_ictlr(void);
 
 int		agintc_ipi_ddb(void *v);
+int		agintc_ipi_halt(void *v);
 int		agintc_ipi_nop(void *v);
 int		agintc_ipi_combined(void *);
 void		agintc_send_ipi(struct cpu_info *, int);
@@ -287,7 +288,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	int			 i, nbits, nintr;
 	int			 offset, nredist;
 #ifdef MULTIPROCESSOR
-	int			 nipi, ipiirq[2];
+	int			 nipi, ipiirq[3];
 #endif
 
 	psw = intr_disable();
@@ -540,9 +541,10 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	/* setup IPI interrupts */
 
 	/*
-	 * Ideally we want two IPI interrupts, one for NOP and one for
-	 * DDB, however we can survive if only one is available it is
-	 * possible that most are not available to the non-secure OS.
+	 * Ideally we want three IPI interrupts, one for NOP, one for
+	 * DDB and one for HALT.  However we can survive if only one
+	 * is available; it is possible that most are not available to
+	 * the non-secure OS.
 	 */
 	nipi = 0;
 	for (i = 0; i < 16; i++) {
@@ -569,7 +571,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			printf(", %d", i);
 		ipiirq[nipi++] = i;
-		if (nipi == 2)
+		if (nipi == 3)
 			break;
 	}
 
@@ -583,6 +585,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		    agintc_ipi_combined, sc, "ipi");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[0];
 		break;
 	case 2:
 		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
@@ -591,8 +594,23 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
 		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_combined, sc, "ipi");
+		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[1];
+		break;
+	case 3:
+		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_nop, sc, "ipinop");
+		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
+		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
 		    agintc_ipi_ddb, sc, "ipiddb");
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
+		sc->sc_ipi_irq[2] = agintc_intr_establish(ipiirq[2],
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_halt, sc, "ipihalt");
+		sc->sc_ipi_num[ARM_IPI_HALT] = ipiirq[2];
 		break;
 	default:
 		panic("nipi unexpected number %d", nipi);
@@ -1168,6 +1186,13 @@ agintc_ipi_ddb(void *v)
 }
 
 int
+agintc_ipi_halt(void *v)
+{
+	cpu_halt();
+	return 1;
+}
+
+int
 agintc_ipi_nop(void *v)
 {
 	/* Nothing to do here, just enough to wake up from WFI */
@@ -1182,6 +1207,9 @@ agintc_ipi_combined(void *v)
 	if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_DDB) {
 		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
 		return agintc_ipi_ddb(v);
+	} else if (sc->sc_ipi_reason[cpu_number()] == ARM_IPI_HALT) {
+		sc->sc_ipi_reason[cpu_number()] = ARM_IPI_NOP;
+		return agintc_ipi_halt(v);
 	} else {
 		return agintc_ipi_nop(v);
 	}
@@ -1196,8 +1224,8 @@ agintc_send_ipi(struct cpu_info *ci, int id)
 	if (ci == curcpu() && id == ARM_IPI_NOP)
 		return;
 
-	/* never overwrite IPI_DDB with IPI_NOP */
-	if (id == ARM_IPI_DDB)
+	/* never overwrite IPI_DDB or IPI_HALT with IPI_NOP */
+	if (id == ARM_IPI_DDB || id == ARM_IPI_HALT)
 		sc->sc_ipi_reason[ci->ci_cpuid] = id;
 
 	/* will only send 1 cpu */

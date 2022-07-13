@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.18 2021/05/17 17:25:13 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.19 2022/07/13 09:28:19 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -188,6 +188,7 @@ extern void (*intr_send_ipi_func)(struct cpu_info *, int);
 
 #define ARM_IPI_NOP	0
 #define ARM_IPI_DDB	1
+#define ARM_IPI_HALT	2
 
 #ifdef DIAGNOSTIC
 /*

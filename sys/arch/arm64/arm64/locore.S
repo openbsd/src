@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.39 2021/09/02 10:48:52 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.40 2022/07/13 09:28:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -394,8 +394,8 @@ sigfillsiz:
 	.text
 
 #ifdef MULTIPROCESSOR
-	.globl cpu_hatch
-cpu_hatch:
+	.globl cpu_hatch_secondary
+cpu_hatch_secondary:
 	/* Drop to EL1 */
 	bl	drop_to_el1
 
@@ -421,16 +421,14 @@ cpu_hatch:
 	ldr	x1, [x0, #CI_EL1_STKEND]
 	mov	sp, x1
 
-	adr	x1, .Lcpu_start_secondary
+	adr	x1, .Lcpu_init_secondary
 	ldr	x1, [x1]
 	blr	x1
 	b	.
 
 	.align 3
-.Lcpu_start_secondary:
-	.xword	cpu_start_secondary
-.Lpagetable_l0_ttbr0:
-	.xword	pagetable_l0_ttbr0
+.Lcpu_init_secondary:
+	.xword	cpu_init_secondary
 .Lcpu_hatch_ci:
 	.xword	cpu_hatch_ci
 
@@ -442,3 +440,43 @@ cpu_hatch_ci:
 
 	.text
 #endif
+
+#ifdef SUSPEND
+	.globl cpu_hatch_primary
+cpu_hatch_primary:
+	/* Drop to EL1 */
+	bl	drop_to_el1
+
+	/* Get the virt -> phys offset */
+	bl	get_virt_delta
+
+	/* Set up CPU info */
+	ldr	x1, [x0, #CI_SELF]
+	msr	tpidr_el1, x1
+
+	/* Enable the mmu */
+	adr	x27, .Lpagetable_l0_ttbr0
+	ldr	x27, [x27] 
+	sub	x27, x27, x29
+	ldr	x26, [x0, #CI_TTBR1]
+	bl	start_mmu
+
+	mrs	x0, tpidr_el1
+	ldr	x1, [x0, #CI_EL1_STKEND]
+	mov	sp, x1
+
+	/* Restore registers. */
+	adr	x1, .Lcpu_init_primary
+	ldr	x1, [x1]
+	blr	x1
+	b	.
+
+	.align 3
+.Lcpu_init_primary:
+	.xword	cpu_init_primary
+#endif
+
+	.align 3
+.Lpagetable_l0_ttbr0:
+	.xword	pagetable_l0_ttbr0
+	
