@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.33 2022/07/13 06:28:22 tb Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.34 2022/07/13 06:32:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -658,6 +658,8 @@ int	BN_swap_ct(BN_ULONG swap, BIGNUM *a, BIGNUM *b, size_t nwords);
 
 int bn_isqrt(BIGNUM *out_sqrt, int *out_perfect, const BIGNUM *n, BN_CTX *ctx);
 int bn_is_perfect_square(int *is_perfect_square, const BIGNUM *n, BN_CTX *ctx);
+
+int bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx);
 
 __END_HIDDEN_DECLS
 #endif
