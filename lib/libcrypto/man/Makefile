@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.233 2022/05/06 07:39:21 tb Exp $
+# $OpenBSD: Makefile,v 1.234 2022/07/13 20:54:39 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -178,6 +178,7 @@ MAN=	\
 	EVP_PKEY_add1_attr.3 \
 	EVP_PKEY_asn1_get_count.3 \
 	EVP_PKEY_asn1_new.3 \
+	EVP_PKEY_check.3 \
 	EVP_PKEY_cmp.3 \
 	EVP_PKEY_decrypt.3 \
 	EVP_PKEY_derive.3 \
@@ -190,6 +191,7 @@ MAN=	\
 	EVP_PKEY_print_private.3 \
 	EVP_PKEY_set1_RSA.3 \
 	EVP_PKEY_sign.3 \
+	EVP_PKEY_size.3 \
 	EVP_PKEY_verify.3 \
 	EVP_PKEY_verify_recover.3 \
 	EVP_SealInit.3 \
@@ -278,6 +280,7 @@ MAN=	\
 	RSA_print.3 \
 	RSA_private_encrypt.3 \
 	RSA_public_encrypt.3 \
+	RSA_security_bits.3 \
 	RSA_set_method.3 \
 	RSA_sign.3 \
 	RSA_sign_ASN1_OCTET_STRING.3 \
