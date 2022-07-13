@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.19 2022/06/18 15:52:35 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.20 2022/07/13 06:36:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,12 +259,22 @@ int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     int do_trial_division, BN_GENCB *cb)
 {
-	int i, j, ret = -1;
-	int k;
 	BN_CTX *ctx = NULL;
 	BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
 	BN_MONT_CTX *mont = NULL;
 	const BIGNUM *A = NULL;
+	int i, j, k;
+	int ret = -1;
+
+#ifdef LIBRESSL_HAS_BPSW
+	int is_prime;
+
+	/* XXX - tickle BN_GENCB in bn_is_prime_bpsw(). */
+	if (!bn_is_prime_bpsw(&is_prime, a, ctx_passed))
+		return -1;
+
+	return is_prime;
+#endif
 
 	if (BN_cmp(a, BN_value_one()) <= 0)
 		return 0;
