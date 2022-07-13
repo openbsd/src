@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssl.3,v 1.20 2020/09/21 08:53:56 schwarze Exp $
+.\" $OpenBSD: ssl.3,v 1.21 2022/07/13 22:05:53 schwarze Exp $
 .\" full merge up to: OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\" selective merge up to: OpenSSL 322755cc Sep 1 08:40:51 2018 +0800
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 21 2020 $
+.Dd $Mdocdate: July 13 2022 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -233,6 +233,7 @@ Protocol and algorithm configuration:
 .Xr SSL_CTX_set_cipher_list 3 ,
 .Xr SSL_CTX_set_min_proto_version 3 ,
 .Xr SSL_CTX_set_options 3 ,
+.Xr SSL_CTX_set_security_level 3 ,
 .Xr SSL_CTX_set_tlsext_use_srtp 3 ,
 .Xr SSL_CTX_set_tmp_dh_callback 3 ,
 .Xr SSL_CTX_set1_groups 3
