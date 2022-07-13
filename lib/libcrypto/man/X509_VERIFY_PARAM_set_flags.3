@@ -1,11 +1,11 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.25 2022/03/31 17:27:17 naddy Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.26 2022/07/13 21:17:03 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2021, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 13 2022 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -80,10 +80,12 @@
 .Nm X509_VERIFY_PARAM_set_purpose ,
 .Nm X509_VERIFY_PARAM_set_trust ,
 .Nm X509_VERIFY_PARAM_set_time ,
+.Nm X509_VERIFY_PARAM_get_time ,
 .Nm X509_VERIFY_PARAM_add0_policy ,
 .Nm X509_VERIFY_PARAM_set1_policies ,
 .Nm X509_VERIFY_PARAM_set_depth ,
 .Nm X509_VERIFY_PARAM_get_depth ,
+.Nm X509_VERIFY_PARAM_set_auth_level ,
 .Nm X509_VERIFY_PARAM_set1_host ,
 .Nm X509_VERIFY_PARAM_add1_host ,
 .Nm X509_VERIFY_PARAM_set_hostflags ,
@@ -132,6 +134,10 @@
 .Fa "X509_VERIFY_PARAM *param"
 .Fa "time_t t"
 .Fc
+.Ft time_t
+.Fo X509_VERIFY_PARAM_get_time
+.Fa const X509_VERIFY_PARAM *param"
+.Fc
 .Ft int
 .Fo X509_VERIFY_PARAM_add0_policy
 .Fa "X509_VERIFY_PARAM *param"
@@ -150,6 +156,11 @@
 .Ft int
 .Fo X509_VERIFY_PARAM_get_depth
 .Fa "const X509_VERIFY_PARAM *param"
+.Fc
+.Ft void
+.Fo X509_VERIFY_PARAM_set_auth_level
+.Fa "X509_VERIFY_PARAM *param"
+.Fa "int auth_level"
 .Fc
 .Ft int
 .Fo X509_VERIFY_PARAM_set1_host
@@ -322,6 +333,23 @@ sets the maximum verification depth to
 That is the maximum number of untrusted CA certificates that can appear
 in a chain.
 .Pp
+.Fn X509_VERIFY_PARAM_set_auth_level
+sets the security level as defined in
+.Xr SSL_CTX_set_security_level 3
+for certificate chain validation.
+For a certificate chain to validate, the public keys of all the
+certificates must meet the specified security level.
+The signature algorithm security level is not enforced for the
+chain's trust anchor certificate, which is either directly trusted
+or validated by means other than its signature.
+.Pp
+From the point of view of the X.509 library,
+the default security level is 0.
+However, the SSL library
+uses a different default security level of 1 and calls
+.Fn X509_VERIFY_PARAM_set_auth_level
+with its own level before validating a certificate chain.
+.Pp
 .Fn X509_VERIFY_PARAM_set1_host
 sets the expected DNS hostname to
 .Fa name
@@ -467,6 +495,12 @@ using the poisoned object will fail.
 .Pp
 .Fn X509_VERIFY_PARAM_get_flags
 returns the current verification flags.
+.Pp
+.Fn X509_VERIFY_PARAM_get_time
+always returns the configured verification time.
+It does so even if the returned time will not be used because the flag
+.Dv X509_V_FLAG_USE_CHECK_TIME
+is unset.
 .Pp
 .Fn X509_VERIFY_PARAM_get_depth
 returns the current verification depth.
@@ -687,6 +721,13 @@ and
 .Fn X509_VERIFY_PARAM_set1_ip_asc
 first appeared in OpenSSL 1.0.2 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn X509_VERIFY_PARAM_set_auth_level
+first appeared in OpenSSL 1.1.0 and
+.Fn X509_VERIFY_PARAM_get_time
+in OpenSSL 1.1.0d.
+Both functions have been available since
+.Ox 7.2 .
 .Sh BUGS
 Delta CRL checking is currently primitive.
 Only a single delta can be used and (partly due to limitations of
