@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.24 2022/01/10 12:00:52 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.25 2022/07/13 18:38:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -269,9 +269,7 @@ DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *flags)
 		*flags |= DH_CHECK_PUBKEY_TOO_SMALL;
 
 	/* max_pub_key = dh->p - 1 */
-	if (BN_copy(max_pub_key, dh->p) == NULL)
-		goto err;
-	if (!BN_sub_word(max_pub_key, 1))
+	if (!BN_sub(max_pub_key, dh->p, BN_value_one()))
 		goto err;
 
 	if (BN_cmp(pub_key, max_pub_key) >= 0)
