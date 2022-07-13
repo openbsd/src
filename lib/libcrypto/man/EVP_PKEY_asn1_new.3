@@ -1,8 +1,9 @@
-.\" $OpenBSD: EVP_PKEY_asn1_new.3,v 1.7 2021/11/06 15:00:25 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_asn1_new.3,v 1.8 2022/07/13 19:10:40 schwarze Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/EVP_PKEY_ASN1_METHOD b0004708 Nov 1 00:45:24 2017 +0800
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>
+.\" and Paul Yang <yang.yang@baishancloud.com>.
 .\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 6 2021 $
+.Dd $Mdocdate: July 13 2022 $
 .Dt EVP_PKEY_ASN1_NEW 3
 .Os
 .Sh NAME
@@ -62,7 +63,11 @@
 .Nm EVP_PKEY_asn1_set_private ,
 .Nm EVP_PKEY_asn1_set_param ,
 .Nm EVP_PKEY_asn1_set_free ,
-.Nm EVP_PKEY_asn1_set_ctrl
+.Nm EVP_PKEY_asn1_set_ctrl ,
+.Nm EVP_PKEY_asn1_set_check ,
+.Nm EVP_PKEY_asn1_set_public_check ,
+.Nm EVP_PKEY_asn1_set_param_check ,
+.Nm EVP_PKEY_asn1_set_security_bits
 .Nd manipulating and registering an EVP_PKEY_ASN1_METHOD structure
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -131,6 +136,26 @@
 .Fo EVP_PKEY_asn1_set_ctrl
 .Fa "EVP_PKEY_ASN1_METHOD *ameth"
 .Fa "int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_asn1_set_check
+.Fa "EVP_PKEY_ASN1_METHOD *ameth"
+.Fa "int (*pkey_check)(const EVP_PKEY *pk)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_asn1_set_public_check
+.Fa "EVP_PKEY_ASN1_METHOD *ameth"
+.Fa "int (*pkey_public_check)(const EVP_PKEY *pk)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_asn1_set_param_check
+.Fa "EVP_PKEY_ASN1_METHOD *ameth"
+.Fa "int (*pkey_param_check)(const EVP_PKEY *pk)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_asn1_set_security_bits
+.Fa "EVP_PKEY_ASN1_METHOD *ameth"
+.Fa "int (*pkey_security_bits)(const EVP_PKEY *pkey)"
 .Fc
 .Sh DESCRIPTION
 .Vt EVP_PKEY_ASN1_METHOD
@@ -325,6 +350,30 @@ This method is called by
 .Fn PKCS7_SIGNER_INFO_set ,
 .Fn PKCS7_RECIP_INFO_set ,
 and other functions.
+.Bd -unfilled
+.Ft int Fn (*pkey_check) "const EVP_PKEY *pk"
+.Ft int Fn (*pkey_public_check) "const EVP_PKEY *pk"
+.Ft int Fn (*pkey_param_check) "const EVP_PKEY *pk"
+.Ed
+.Pp
+Check the validity of
+.Fa pk
+for key-pair, public component, and parameters, respectively.
+These methods must return 0 for an invalid key or 1 for a valid key.
+They are called by
+.Xr EVP_PKEY_check 3 ,
+.Xr EVP_PKEY_public_check 3 ,
+and
+.Xr EVP_PKEY_param_check 3 ,
+respectively.
+.Bd -unfilled
+.Ft int Fn (*pkey_security_bits) "const EVP_PKEY *pkey"
+.Ed
+.Pp
+Return the security strength measured in bits of
+.Fa pkey .
+It is called by
+.Xr EVP_PKEY_security_bits 3 .
 .Ss Functions
 .Fn EVP_PKEY_asn1_new
 creates and returns a new
@@ -396,8 +445,12 @@ initializing the application.
 .Fn EVP_PKEY_asn1_set_private ,
 .Fn EVP_PKEY_asn1_set_param ,
 .Fn EVP_PKEY_asn1_set_free ,
+.Fn EVP_PKEY_asn1_set_ctrl ,
+.Fn EVP_PKEY_asn1_set_check ,
+.Fn EVP_PKEY_asn1_set_public_check ,
+.Fn EVP_PKEY_asn1_set_param_check ,
 and
-.Fn EVP_PKEY_asn1_set_ctrl
+.Fn EVP_PKEY_asn1_set_security_bits
 set the diverse methods of the given
 .Vt EVP_PKEY_ASN1_METHOD
 object.
@@ -418,6 +471,27 @@ return 0 on error or 1 on success.
 .Xr EVP_PKEY_new 3 ,
 .Xr X509_PUBKEY_new 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.0.0
-and have been available since
+.Fn EVP_PKEY_asn1_new ,
+.Fn EVP_PKEY_asn1_copy ,
+.Fn EVP_PKEY_asn1_free ,
+.Fn EVP_PKEY_asn1_add0 ,
+.Fn EVP_PKEY_asn1_add_alias ,
+.Fn EVP_PKEY_asn1_set_public ,
+.Fn EVP_PKEY_asn1_set_private ,
+.Fn EVP_PKEY_asn1_set_param ,
+.Fn EVP_PKEY_asn1_set_free ,
+and
+.Fn EVP_PKEY_asn1_set_ctrl
+first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
+.Fn EVP_PKEY_asn1_set_check ,
+.Fn EVP_PKEY_asn1_set_public_check ,
+and
+.Fn EVP_PKEY_asn1_set_param_check
+first appeared in OpenSSL 1.1.1 and have been available since
+.Ox 7.1 .
+.Pp
+.Fn EVP_PKEY_asn1_set_security_bits
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.2 .

@@ -1,5 +1,5 @@
-.\" $OpenBSD: EVP_PKEY_meth_new.3,v 1.4 2019/06/06 01:06:58 schwarze Exp $
-.\" selective merge up to: OpenSSL 43f985fd Aug 21 11:47:17 2017 -0400
+.\" $OpenBSD: EVP_PKEY_meth_new.3,v 1.5 2022/07/13 19:10:40 schwarze Exp $
+.\" selective merge up to: OpenSSL 335a587b May 7 11:59:11 2019 +0200
 .\"
 .\" This file was written by Paul Yang <yang.yang@baishancloud.com>
 .\" Copyright (c) 2017 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: July 13 2022 $
 .Dt EVP_PKEY_METH_NEW 3
 .Os
 .Sh NAME
@@ -70,7 +70,10 @@
 .Nm EVP_PKEY_meth_set_encrypt ,
 .Nm EVP_PKEY_meth_set_decrypt ,
 .Nm EVP_PKEY_meth_set_derive ,
-.Nm EVP_PKEY_meth_set_ctrl
+.Nm EVP_PKEY_meth_set_ctrl ,
+.Nm EVP_PKEY_meth_set_check ,
+.Nm EVP_PKEY_meth_set_public_check ,
+.Nm EVP_PKEY_meth_set_param_check
 .Nd manipulate an EVP_PKEY_METHOD structure
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -183,6 +186,21 @@
 .Fa "EVP_PKEY_METHOD *pmeth"
 .Fa "int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)"
 .Fa "int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_check
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*check)(EVP_PKEY *pkey)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_public_check
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*public_check)(EVP_PKEY *pkey)"
+.Fc
+.Ft void
+.Fo EVP_PKEY_meth_set_param_check
+.Fa "EVP_PKEY_METHOD *pmeth"
+.Fa "int (*param_check)(EVP_PKEY *pkey)"
 .Fc
 .Sh DESCRIPTION
 The
@@ -451,6 +469,21 @@ methods are used to adjust algorithm-specific settings.
 See
 .Xr EVP_PKEY_CTX_ctrl 3
 for details.
+.Bd -unfilled
+.Ft int Fn (*check) "EVP_PKEY *pkey"
+.Ft int Fn (*public_check) "EVP_PKEY *pkey"
+.Ft int Fn (*param_check) "EVP_PKEY *pkey"
+.Ed
+These methods are used to validate a key pair, the public component,
+and the parameters for the given
+.Fa pkey ,
+respectively.
+They are called by
+.Xr EVP_PKEY_check 3 ,
+.Xr EVP_PKEY_public_check 3 ,
+and
+.Xr EVP_PKEY_param_check 3 ,
+respectively.
 .Ss Functions
 .Fn EVP_PKEY_meth_new
 creates a new
@@ -553,3 +586,10 @@ first appeared in OpenSSL 1.0.0 and have been available since
 .Fn EVP_PKEY_meth_copy
 first appeared in OpenSSL 1.0.1 and has been available since
 .Ox 5.3 .
+.Pp
+.Fn EVP_PKEY_meth_set_check ,
+.Fn EVP_PKEY_meth_set_public_check ,
+and
+.Fn EVP_PKEY_meth_set_param_check
+first appeared in OpenSSL 1.1.1 and have been available since
+.Ox 7.1 .
