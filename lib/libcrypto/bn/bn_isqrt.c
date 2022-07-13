@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.1 2022/07/13 06:28:22 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.2 2022/07/13 11:20:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -162,12 +162,12 @@ bn_isqrt(BIGNUM *out_sqrt, int *out_perfect, const BIGNUM *n, BN_CTX *in_ctx)
  * The tables are generated in regress/lib/libcrypto/bn/bn_isqrt.c.
  */
 
-static const uint8_t is_square_mod_11[] = {
+const uint8_t is_square_mod_11[] = {
 	1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0,
 };
 CTASSERT(sizeof(is_square_mod_11) == 11);
 
-static const uint8_t is_square_mod_63[] = {
+const uint8_t is_square_mod_63[] = {
 	1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0,
 	1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0,
 	0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
@@ -175,7 +175,7 @@ static const uint8_t is_square_mod_63[] = {
 };
 CTASSERT(sizeof(is_square_mod_63) == 63);
 
-static const uint8_t is_square_mod_64[] = {
+const uint8_t is_square_mod_64[] = {
 	1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
 	1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
 	0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
@@ -183,7 +183,7 @@ static const uint8_t is_square_mod_64[] = {
 };
 CTASSERT(sizeof(is_square_mod_64) == 64);
 
-static const uint8_t is_square_mod_65[] = {
+const uint8_t is_square_mod_65[] = {
 	1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0,
 	1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0,
 	0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
