@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.20 2022/07/13 06:36:08 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.21 2022/07/13 06:38:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,6 +254,8 @@ BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed, BN_GENCB *cb)
 {
 	return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
 }
+
+#define LIBRESSL_HAS_BPSW
 
 int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
