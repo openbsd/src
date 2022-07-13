@@ -1,7 +1,26 @@
-.\"	$OpenBSD: DH_generate_parameters.3,v 1.13 2019/06/10 14:58:48 schwarze Exp $
-.\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
+.\" $OpenBSD: DH_generate_parameters.3,v 1.14 2022/07/13 13:47:59 schwarze Exp $
+.\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" selective merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org>
+.\" and Matt Caswell <matt@openssl.org>.
 .\" Copyright (c) 2000, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,12 +67,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: July 13 2022 $
 .Dt DH_GENERATE_PARAMETERS 3
 .Os
 .Sh NAME
 .Nm DH_generate_parameters_ex ,
 .Nm DH_check ,
+.Nm DH_check_pub_key ,
 .Nm DH_generate_parameters
 .Nd generate and check Diffie-Hellman parameters
 .Sh SYNOPSIS
@@ -68,6 +88,12 @@
 .Ft int
 .Fo DH_check
 .Fa "DH *dh"
+.Fa "int *codes"
+.Fc
+.Ft int
+.Fo DH_check_pub_key
+.Fa "const DH *dh"
+.Fa "const BIGNUM *pub_key"
 .Fa "int *codes"
 .Fc
 .Pp
@@ -130,11 +156,39 @@ The generator
 .Fa dh->g
 is not suitable.
 .El
+.Pp
+.Fn DH_check_pub_key
+checks whether
+.Fa pub_key
+is a valid public key when using the domain parameters contained in
+.Fa dh .
+If no problems are found,
+.Pf * Ar codes
+is set to zero.
+Otherwise, one or more of the following bits are set:
+.Bl -tag -width Ds
+.It Dv DH_CHECK_PUBKEY_TOO_SMALL
+.Fa pub_key
+is less than or equal to 1.
+.It Dv DH_CHECK_PUBKEY_TOO_LARGE
+.Fa pub_key
+is greater than or equal to
+.Fa dh->p No \- 1 .
+.It DH_CHECK_PUBKEY_INVALID
+.Fa dh->q
+is set but
+.Fa pub_key
+to the power of
+.Fa dh->q
+is not 1 modulo
+.Fa dh->p .
+.El
 .Sh RETURN VALUES
-.Fn DH_generate_parameters_ex
+.Fn DH_generate_parameters_ex ,
+.Fn DH_check ,
 and
-.Fn DH_check
-return 1 if the check could be performed, or 0 otherwise.
+.Fn DH_check_pub_key
+return 1 if the check could be performed or 0 otherwise.
 .Pp
 .Fn DH_generate_parameters
 (deprecated) returns a pointer to the
@@ -161,10 +215,9 @@ argument to
 .Fn DH_generate_parameters
 was added in SSLeay 0.9.0.
 .Pp
-In versions before OpenSSL 0.9.5,
-.Dv DH_CHECK_P_NOT_STRONG_PRIME
-is used instead of
-.Dv DH_CHECK_P_NOT_SAFE_PRIME .
+.Fn DH_check_pub_key
+first appeared in OpenSSL 0.9.8a and has been available since
+.Ox 4.0 .
 .Pp
 .Fn DH_generate_parameters_ex
 first appeared in OpenSSL 0.9.8 and has been available since
