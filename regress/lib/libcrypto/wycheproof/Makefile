@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2022/07/08 06:25:39 tb Exp $
+# $OpenBSD: Makefile,v 1.6 2022/07/13 06:40:24 tb Exp $
 
 WYCHEPROOF_TESTVECTORS = /usr/local/share/wycheproof/testvectors/
 
@@ -9,7 +9,7 @@ regress:
 	@echo SKIPPED
 .else
 
-# REGRESS_TARGETS += regress-wycheproof-primes
+REGRESS_TARGETS += regress-wycheproof-primes
 
 . if exists(/usr/local/bin/go)
 
