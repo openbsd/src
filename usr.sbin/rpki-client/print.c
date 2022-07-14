@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.13 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.14 2022/07/14 13:24:56 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -91,15 +91,15 @@ tal_print(const struct tal *p)
 
 	if (outformats & FORMAT_JSON) {
 		printf("\t\"type\": \"tal\",\n");
-		printf("\t\"name\": %s\n", p->descr);
-		printf("\t\"ski\": %s\n", pretty_key_id(ski));
+		printf("\t\"name\": \"%s\",\n", p->descr);
+		printf("\t\"ski\": \"%s\",\n", pretty_key_id(ski));
 		printf("\t\"trust_anchor_locations\": [");
 		for (i = 0; i < p->urisz; i++) {
 			printf("\"%s\"", p->uri[i]);
 			if (i + 1 < p->urisz)
 				printf(", ");
 		}
-		printf("]\n");
+		printf("],\n");
 	} else {
 		printf("Trust anchor name: %s\n", p->descr);
 		printf("Subject key identifier: %s\n", pretty_key_id(ski));
