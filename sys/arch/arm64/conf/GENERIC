@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.232 2022/07/13 09:28:18 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.233 2022/07/14 19:06:29 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -296,6 +296,7 @@ gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
 sxidog*		at fdt?
 sxipwm*		at fdt?
+sxirintc*	at fdt?
 sxirsb*		at fdt? early 1	# Reduced Serial Bus
 axppmic*	at rsb?
 sxirtc*		at fdt? early 1	# Real Time Clock
