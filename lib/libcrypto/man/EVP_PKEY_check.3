@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_check.3,v 1.1 2022/07/13 19:10:40 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_check.3,v 1.2 2022/07/14 14:49:09 tb Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: July 14 2022 $
 .Dt EVP_PKEY_CHECK 3
 .Os
 .Sh NAME
@@ -60,8 +60,8 @@ not supported, return value \-2
 .El
 .Pp
 .Fn EVP_PKEY_public_check
-performs various sanity checks on the public key contained in 
-.Fa ctx 
+performs various sanity checks on the public key contained in
+.Fa ctx
 but only supports a small number of key types by default.
 It preferably uses the function
 .Fa public_check
