@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.271 2022/06/28 09:32:27 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.272 2022/07/14 13:52:10 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -88,7 +88,8 @@ void tdb_hashstats(void);
 
 /*
  * Locks used to protect global data and struct members:
- *	F	ipsec_flows_mtx
+ *	D	tdb_sadb_mtx
+ *	F	ipsec_flows_mtx             SA database global mutex
  */
 
 struct mutex ipsec_flows_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -194,14 +195,13 @@ const struct xformsw *const xformswNXFORMSW = &xformsw[nitems(xformsw)];
 
 #define	TDB_HASHSIZE_INIT	32
 
-/* Protected by the tdb_sadb_mtx. */
 struct mutex tdb_sadb_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
-static SIPHASH_KEY tdbkey;
-static struct tdb **tdbh;
-static struct tdb **tdbdst;
-static struct tdb **tdbsrc;
-static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;
-static int tdb_count;
+static SIPHASH_KEY tdbkey;				/* [D] */
+static struct tdb **tdbh;				/* [D] */
+static struct tdb **tdbdst;				/* [D] */
+static struct tdb **tdbsrc;				/* [D] */
+static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;	/* [D] */
+static int tdb_count;					/* [D] */
 
 void
 ipsp_init(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.239 2022/04/30 13:28:53 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.240 2022/07/14 13:52:10 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -47,9 +47,9 @@
  *	N	net lock
  *	A	ipsec_acquire_mtx
  *	F	ipsec_flows_mtx
+ *	P	ipo_tdb_mtx		link policy to TDB global mutex
+ *	D	tdb_sadb_mtx		SA database global mutex
  *	m	tdb_mtx			fields of struct tdb
- *	p	ipo_tdb_mtx		link policy to TDB global mutex
- *	s	tdb_sadb_mtx		SA database global mutex
  */
 
 /* IPSP global definitions. */
@@ -278,7 +278,7 @@ struct ipsec_policy {
 						 * mode was used.
 						 */
 
-	u_int64_t	ipo_last_searched;	/* [p] Timestamp of lookup */
+	u_int64_t	ipo_last_searched;	/* [P] Timestamp of lookup */
 
 	u_int8_t		ipo_flags;	/* See IPSP_POLICY_* definitions */
 	u_int8_t		ipo_type;	/* USE/ACQUIRE/... */
@@ -287,12 +287,12 @@ struct ipsec_policy {
 
 	struct refcnt		ipo_refcnt;
 
-	struct tdb		*ipo_tdb;	/* [p] Cached TDB entry */
+	struct tdb		*ipo_tdb;	/* [P] Cached TDB entry */
 
 	struct ipsec_ids	*ipo_ids;
 
 	struct ipsec_acquire_head ipo_acquires;	/* [A] List of acquires */
-	TAILQ_ENTRY(ipsec_policy) ipo_tdb_next;	/* [p] List TDB policies */
+	TAILQ_ENTRY(ipsec_policy) ipo_tdb_next;	/* [P] List TDB policies */
 	TAILQ_ENTRY(ipsec_policy) ipo_list;	/* List of all policies */
 };
 
@@ -322,9 +322,9 @@ struct tdb {				/* tunnel descriptor block */
 	 * policy matching. The following three fields maintain the hash
 	 * queues in those three tables.
 	 */
-	struct tdb	*tdb_hnext;	/* [s] dst/spi/sproto table */
-	struct tdb	*tdb_dnext;	/* [s] dst/sproto table */
-	struct tdb	*tdb_snext;	/* [s] src/sproto table */
+	struct tdb	*tdb_hnext;	/* [D] dst/spi/sproto table */
+	struct tdb	*tdb_dnext;	/* [D] dst/sproto table */
+	struct tdb	*tdb_snext;	/* [D] src/sproto table */
 	struct tdb	*tdb_inext;
 	struct tdb	*tdb_onext;
 	SIMPLEQ_ENTRY(tdb) tdb_walk;	/* [N] temp list for tdb walker */
@@ -438,7 +438,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
 
-	TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head; /* [p] */
+	TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head; /* [P] */
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 	TAILQ_ENTRY(tdb)	tdb_sync_snap;
 };
