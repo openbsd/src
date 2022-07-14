@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.271 2022/06/30 20:33:14 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.272 2022/07/14 12:56:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -725,8 +725,10 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 			return (-1);
 		}
 		memcpy(&kr6->prefix, &kf->prefix.v6, sizeof(struct in6_addr));
+		kr6->prefix_scope_id = kf->prefix.scope_id;
 		kr6->prefixlen = kf->prefixlen;
 		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kf->nexthop.scope_id;
 		kr6->flags = kf->flags | F_BGPD | F_MPLS;
 		kr6->priority = RTP_MINE;
 		kr6->labelid = labelid;
@@ -742,6 +744,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 		kr6->mplslabel = mplslabel;
 		kr6->ifindex = kf->ifindex;
 		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kf->nexthop.scope_id;
 		rtlabel_unref(kr6->labelid);
 		kr6->labelid = labelid;
 		if (kf->flags & F_BLACKHOLE)
@@ -1469,6 +1472,7 @@ kr_redistribute6(int type, struct ktable *kt, struct kroute6 *kr6)
 	bzero(&net, sizeof(net));
 	net.prefix.aid = AID_INET6;
 	memcpy(&net.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	net.prefix.scope_id = kr6->prefix_scope_id;
 	net.prefixlen = kr6->prefixlen;
 	net.rtlabel = kr6->labelid;
 	net.priority = kr6->priority;
@@ -1680,6 +1684,10 @@ kroute6_compare(struct kroute6 *a, struct kroute6 *b)
 		if (a->prefix.s6_addr[i] > b->prefix.s6_addr[i])
 			return (1);
 	}
+	if (a->prefix_scope_id < b->prefix_scope_id)
+		return (-1);
+	if (a->prefix_scope_id > b->prefix_scope_id)
+		return (1);
 
 	if (a->prefixlen < b->prefixlen)
 		return (-1);
@@ -1939,6 +1947,7 @@ kroute6_find(struct ktable *kt, const struct bgpd_addr *prefix,
 	struct kroute6	*kn6, *tmp;
 
 	s.prefix = prefix->v6;
+	s.prefix_scope_id = prefix->scope_id;
 	s.prefixlen = prefixlen;
 	s.priority = prio;
 
@@ -1968,7 +1977,8 @@ kroute6_matchgw(struct kroute6 *kr, struct bgpd_addr *gw)
 	nexthop = gw->v6;
 
 	do {
-		if (memcmp(&kr->nexthop, &nexthop, sizeof(nexthop)) == 0)
+		if (memcmp(&kr->nexthop, &nexthop, sizeof(nexthop)) == 0 &&
+		    kr->nexthop_scope_id == gw->scope_id)
 			return (kr);
 		kr = kr->next;
 	} while (kr);
@@ -3524,9 +3534,13 @@ add4:
 				if (kl->nexthop.aid == AID_INET6) {
 					if (memcmp(&kr6->nexthop,
 					    &kl->nexthop.v6,
-					    sizeof(struct in6_addr)))
+					    sizeof(struct in6_addr)) ||
+					    kr6->nexthop_scope_id !=
+					    kl->nexthop.scope_id)
 						changed = 1;
 					kr6->nexthop = kl->nexthop.v6;
+					kr6->nexthop_scope_id =
+					    kl->nexthop.scope_id;
 					kr6->ifindex = kl->ifindex;
 				} else {
 					if (memcmp(&kr6->nexthop,
@@ -3534,6 +3548,7 @@ add4:
 					    sizeof(struct in6_addr)))
 						changed = 1;
 					kr6->nexthop = in6addr_any;
+					kr6->nexthop_scope_id = 0;
 					kr6->ifindex = kl->ifindex;
 				}
 
