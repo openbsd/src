@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.29 2022/04/26 14:50:04 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.30 2022/07/14 15:23:09 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1170,8 +1170,10 @@ remove_iface(uint32_t if_index)
 		return;
 
 	LIST_REMOVE(iface, entries);
-	event_del(&iface->bpfev.ev);
-	close(EVENT_FD(&iface->bpfev.ev));
+	if (event_initialized(&iface->bpfev.ev)) {
+		event_del(&iface->bpfev.ev);
+		close(EVENT_FD(&iface->bpfev.ev));
+	}
 	if (iface->udpsock != -1)
 		close(iface->udpsock);
 	free(iface);
@@ -1182,10 +1184,18 @@ set_bpfsock(int bpfsock, uint32_t if_index)
 {
 	struct iface	*iface;
 
-	if ((iface = get_iface_by_id(if_index)) == NULL) {
+	iface = get_iface_by_id(if_index);
+
+	if (iface == NULL) {
 		/*
 		 * The interface disappeared while we were waiting for the
-		 * parent process to open the raw socket.
+		 * parent process to open the bpf socket.
+		 */
+		close(bpfsock);
+	} else if (event_initialized(&iface->bpfev.ev)) {
+		/*
+		 * The autoconf flag is flapping and we have multiple bpf sockets in
+		 * flight. We don't need this one because we already got one.
 		 */
 		close(bpfsock);
 	} else {
