@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.82 2022/07/09 20:57:01 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.83 2022/07/14 11:03:15 mvs Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -117,30 +117,30 @@ struct pppoetag {
 /*
  * Locks used to protect struct members and global data
  *       I       immutable after creation
- *       N       net lock
+ *       K       kernel lock
  */
 
 struct pppoe_softc {
 	struct sppp sc_sppp;		/* contains a struct ifnet as first element */
-	LIST_ENTRY(pppoe_softc) sc_list;/* [N] */
-	unsigned int sc_eth_ifidx;	/* [N] */
+	LIST_ENTRY(pppoe_softc) sc_list;/* [K] */
+	unsigned int sc_eth_ifidx;	/* [K] */
 
-	int sc_state;			/* [N] discovery phase or session connected */
-	struct ether_addr sc_dest;	/* [N] hardware address of concentrator */
-	u_int16_t sc_session;		/* [N] PPPoE session id */
+	int sc_state;			/* [K] discovery phase or session connected */
+	struct ether_addr sc_dest;	/* [K] hardware address of concentrator */
+	u_int16_t sc_session;		/* [K] PPPoE session id */
 
-	char *sc_service_name;		/* [N] if != NULL: requested name of service */
-	char *sc_concentrator_name;	/* [N] if != NULL: requested concentrator id */
-	u_int8_t *sc_ac_cookie;		/* [N] content of AC cookie we must echo back */
-	size_t sc_ac_cookie_len;	/* [N] length of cookie data */
-	u_int8_t *sc_relay_sid;		/* [N] content of relay SID we must echo back */
-	size_t sc_relay_sid_len;	/* [N] length of relay SID data */
+	char *sc_service_name;		/* [K] if != NULL: requested name of service */
+	char *sc_concentrator_name;	/* [K] if != NULL: requested concentrator id */
+	u_int8_t *sc_ac_cookie;		/* [K] content of AC cookie we must echo back */
+	size_t sc_ac_cookie_len;	/* [K] length of cookie data */
+	u_int8_t *sc_relay_sid;		/* [K] content of relay SID we must echo back */
+	size_t sc_relay_sid_len;	/* [K] length of relay SID data */
 	u_int32_t sc_unique;		/* [I] our unique id */
-	struct timeout sc_timeout;	/* [N] timeout while not in session state */
-	int sc_padi_retried;		/* [N] number of PADI retries already done */
-	int sc_padr_retried;		/* [N] number of PADR retries already done */
+	struct timeout sc_timeout;	/* [K] timeout while not in session state */
+	int sc_padi_retried;		/* [K] number of PADI retries already done */
+	int sc_padr_retried;		/* [K] number of PADR retries already done */
 
-	struct timeval sc_session_time;	/* [N] time the session was established */
+	struct timeval sc_session_time;	/* [K] time the session was established */
 };
 
 /* input routines */
