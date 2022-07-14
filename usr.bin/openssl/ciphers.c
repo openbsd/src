@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.12 2022/07/14 08:35:15 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.13 2022/07/14 08:37:17 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -49,7 +49,6 @@ static const struct option ciphers_options[] = {
 	},
 	{
 		.name = "tls1",
-		.desc = "This option is deprecated since it is the default",
 		.type = OPTION_DISCARD,
 	},
 	{
@@ -72,7 +71,7 @@ static const struct option ciphers_options[] = {
 static void
 ciphers_usage(void)
 {
-	fprintf(stderr, "usage: ciphers [-hsVv] [-tls1] [cipherlist]\n");
+	fprintf(stderr, "usage: ciphers [-hsVv] [cipherlist]\n");
 	options_usage(ciphers_options);
 }
 
