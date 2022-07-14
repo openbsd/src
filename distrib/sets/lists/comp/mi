@@ -1914,6 +1914,7 @@
 ./usr/share/man/man3/EVP_PKEY_add1_attr.3
 ./usr/share/man/man3/EVP_PKEY_asn1_get_count.3
 ./usr/share/man/man3/EVP_PKEY_asn1_new.3
+./usr/share/man/man3/EVP_PKEY_check.3
 ./usr/share/man/man3/EVP_PKEY_cmp.3
 ./usr/share/man/man3/EVP_PKEY_decrypt.3
 ./usr/share/man/man3/EVP_PKEY_derive.3
@@ -1926,6 +1927,7 @@
 ./usr/share/man/man3/EVP_PKEY_print_private.3
 ./usr/share/man/man3/EVP_PKEY_set1_RSA.3
 ./usr/share/man/man3/EVP_PKEY_sign.3
+./usr/share/man/man3/EVP_PKEY_size.3
 ./usr/share/man/man3/EVP_PKEY_verify.3
 ./usr/share/man/man3/EVP_PKEY_verify_recover.3
 ./usr/share/man/man3/EVP_SealInit.3
@@ -2018,6 +2020,7 @@
 ./usr/share/man/man3/RSA_print.3
 ./usr/share/man/man3/RSA_private_encrypt.3
 ./usr/share/man/man3/RSA_public_encrypt.3
+./usr/share/man/man3/RSA_security_bits.3
 ./usr/share/man/man3/RSA_set_method.3
 ./usr/share/man/man3/RSA_sign.3
 ./usr/share/man/man3/RSA_sign_ASN1_OCTET_STRING.3
@@ -2068,6 +2071,7 @@
 ./usr/share/man/man3/SSL_CTX_set_options.3
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3
 ./usr/share/man/man3/SSL_CTX_set_read_ahead.3
+./usr/share/man/man3/SSL_CTX_set_security_level.3
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3
