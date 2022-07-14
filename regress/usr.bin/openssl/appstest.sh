@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.54 2022/02/05 18:36:08 tb Exp $
+# $OpenBSD: appstest.sh,v 1.55 2022/07/14 08:33:31 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1569,7 +1569,7 @@ function test_sc_all_cipher {
 				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
 			fi
 		fi
-		$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
+		$c_bin ciphers -s -v $cipher_string | awk '{print $1}' > $c_ciph
 
 		grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
 	fi
