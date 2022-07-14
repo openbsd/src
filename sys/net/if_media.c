@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.35 2022/07/12 22:27:38 bluhm Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.36 2022/07/14 13:46:25 bluhm Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -105,6 +105,8 @@ static	void ifmedia_printword(uint64_t);
 
 struct mutex ifmedia_mtx = MUTEX_INITIALIZER(IPL_NET);
 
+struct	ifmedia_entry *ifmedia_get(struct ifmedia *, uint64_t, uint64_t);
+
 /*
  * Initialize if_media struct for a specific interface instance.
  */
@@ -181,7 +183,8 @@ ifmedia_set(struct ifmedia *ifm, uint64_t target)
 {
 	struct ifmedia_entry *match;
 
-	match = ifmedia_match(ifm, target, ifm->ifm_mask);
+	mtx_enter(&ifmedia_mtx);
+	match = ifmedia_get(ifm, target, ifm->ifm_mask);
 
 	/*
 	 * If we didn't find the requested media, then we try to fall
@@ -201,15 +204,20 @@ ifmedia_set(struct ifmedia *ifm, uint64_t target)
 		printf("%s: no match for 0x%llx/0x%llx\n", __func__,
 		    target, ~ifm->ifm_mask);
 		target = (target & IFM_NMASK) | IFM_NONE;
-		match = ifmedia_match(ifm, target, ifm->ifm_mask);
+		match = ifmedia_get(ifm, target, ifm->ifm_mask);
 		if (match == NULL) {
+			mtx_leave(&ifmedia_mtx);
 			ifmedia_add(ifm, target, 0, NULL);
-			match = ifmedia_match(ifm, target, ifm->ifm_mask);
-			if (match == NULL)
+			mtx_enter(&ifmedia_mtx);
+			match = ifmedia_get(ifm, target, ifm->ifm_mask);
+			if (match == NULL) {
+				mtx_leave(&ifmedia_mtx);
 				panic("ifmedia_set failed");
+			}
 		}
 	}
 	ifm->ifm_cur = match;
+	mtx_leave(&ifmedia_mtx);
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
@@ -245,8 +253,10 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		uint64_t oldmedia;
 		uint64_t newmedia = ifr->ifr_media;
 
-		match = ifmedia_match(ifm, newmedia, ifm->ifm_mask);
+		mtx_enter(&ifmedia_mtx);
+		match = ifmedia_get(ifm, newmedia, ifm->ifm_mask);
 		if (match == NULL) {
+			mtx_leave(&ifmedia_mtx);
 #ifdef IFMEDIA_DEBUG
 			if (ifmedia_debug) {
 				printf("%s: no media found for 0x%llx\n",
@@ -264,8 +274,10 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		 */
 		if ((IFM_SUBTYPE(newmedia) != IFM_AUTO) &&
 		    (newmedia == ifm->ifm_media) &&
-		    (match == ifm->ifm_cur))
+		    (match == ifm->ifm_cur)) {
+			mtx_leave(&ifmedia_mtx);
 			return (0);
+		}
 
 		/*
 		 * We found a match, now make the driver switch to it.
@@ -283,10 +295,16 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		oldmedia = ifm->ifm_media;
 		ifm->ifm_cur = match;
 		ifm->ifm_media = newmedia;
+		mtx_leave(&ifmedia_mtx);
+
 		error = (*ifm->ifm_change_cb)(ifp);
 		if (error && error != ENETRESET) {
-			ifm->ifm_cur = oldentry;
-			ifm->ifm_media = oldmedia;
+			mtx_enter(&ifmedia_mtx);
+			if (ifm->ifm_cur == match) {
+				ifm->ifm_cur = oldentry;
+				ifm->ifm_media = oldmedia;
+			}
+			mtx_leave(&ifmedia_mtx);
 		}
 		break;
 	}
@@ -302,10 +320,13 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		if (ifmr->ifm_count < 0)
 			return (EINVAL);
 
+		mtx_enter(&ifmedia_mtx);
 		ifmr->ifm_active = ifmr->ifm_current = ifm->ifm_cur ?
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
 		ifmr->ifm_mask = ifm->ifm_mask;
 		ifmr->ifm_status = 0;
+		mtx_leave(&ifmedia_mtx);
+
 		(*ifm->ifm_status_cb)(ifp, ifmr);
 
 		mtx_enter(&ifmedia_mtx);
@@ -368,17 +389,30 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 }
 
 /*
- * Find media entry matching a given ifm word.
+ * Find media entry matching a given ifm word.  Return 1 if found.
  */
-struct ifmedia_entry *
+int
 ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 {
+	struct ifmedia_entry *match;
+
+	mtx_enter(&ifmedia_mtx);
+	match = ifmedia_get(ifm, target, mask);
+	mtx_leave(&ifmedia_mtx);
+
+	return (match != NULL);
+}
+
+struct ifmedia_entry *
+ifmedia_get(struct ifmedia *ifm, uint64_t target, uint64_t mask)
+{
 	struct ifmedia_entry *match, *next;
+
+	MUTEX_ASSERT_LOCKED(&ifmedia_mtx);
 
 	match = NULL;
 	mask = ~mask;
 
-	mtx_enter(&ifmedia_mtx);
 	TAILQ_FOREACH(next, &ifm->ifm_list, ifm_list) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 			if (match) {
@@ -392,7 +426,6 @@ ifmedia_match(struct ifmedia *ifm, uint64_t target, uint64_t mask)
 			match = next;
 		}
 	}
-	mtx_leave(&ifmedia_mtx);
 
 	return (match);
 }
@@ -417,6 +450,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, uint64_t inst)
 			TAILQ_INSERT_TAIL(&ifmlist, ife, ifm_list);
 		}
 	}
+	ifm->ifm_cur = NULL;
 	mtx_leave(&ifmedia_mtx);
 
 	/* Do not hold mutex longer than necessary, call free() without. */

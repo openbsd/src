@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.44 2022/07/12 22:08:18 bluhm Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.45 2022/07/14 13:46:25 bluhm Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ TAILQ_HEAD(ifmedia_list, ifmedia_entry);
 struct ifmedia {
 	uint64_t	ifm_mask;	/* mask of changes we don't care about */
 	uint64_t	ifm_media;	/* current user-set media word */
-	struct ifmedia_entry *ifm_cur;	/* currently selected media */
+	struct ifmedia_entry *ifm_cur;	/* [M] currently selected media */
 	struct ifmedia_list ifm_list;	/* [M] list of all supported media */
 	size_t		ifm_nwords;	/* [M] number of ifm_list entries */
 	ifm_change_cb_t	ifm_change_cb;	/* media change driver callback */
@@ -129,7 +129,7 @@ int	ifmedia_ioctl(struct ifnet *, struct ifreq *, struct ifmedia *,
 	    u_long);
 
 /* Locate a media entry */
-struct	ifmedia_entry *ifmedia_match(struct ifmedia *, uint64_t, uint64_t);
+int	ifmedia_match(struct ifmedia *, uint64_t, uint64_t);
 
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance(struct ifmedia *, uint64_t);

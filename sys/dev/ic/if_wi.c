@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.176 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.177 2022/07/14 13:46:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2707,7 +2707,7 @@ wi_sync_media(struct wi_softc *sc, int ptype, int txrate)
 	}
 	media = IFM_MAKEWORD(IFM_TYPE(media), subtype, options,
 	IFM_INST(media));
-	if (ifmedia_match(&sc->sc_media, media, sc->sc_media.ifm_mask) == NULL)
+	if (!ifmedia_match(&sc->sc_media, media, sc->sc_media.ifm_mask))
 		return (EINVAL);
 	ifmedia_set(&sc->sc_media, media);
 	sc->wi_ptype = ptype;
