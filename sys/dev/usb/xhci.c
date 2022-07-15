@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.125 2022/04/12 19:41:11 naddy Exp $ */
+/* $OpenBSD: xhci.c,v 1.126 2022/07/15 07:52:06 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -593,7 +593,7 @@ xhci_intr(void *v)
 {
 	struct xhci_softc *sc = v;
 
-	if (sc == NULL || sc->sc_bus.dying)
+	if (sc->sc_dead)
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
@@ -613,6 +613,7 @@ xhci_intr1(struct xhci_softc *sc)
 	intrs = XOREAD4(sc, XHCI_USBSTS);
 	if (intrs == 0xffffffff) {
 		sc->sc_bus.dying = 1;
+		sc->sc_dead = 1;
 		return (0);
 	}
 
