@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.285 2022/06/30 15:35:14 claudio Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.286 2022/07/15 17:25:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -18,7 +18,6 @@
  */
 
 #include <sys/param.h>
-
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
@@ -374,6 +373,8 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YPACTIVE,
 
+	[SYS_ypconnect] = PLEDGE_GETPW,
+
 	[SYS_swapctl] = PLEDGE_VMINFO,	/* XXX should limit to "get" operations */
 };
 
@@ -655,6 +656,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			return (0);
 		}
 
+		/* XXX delete chunk after ypconnect() is established */
 		/* when avoiding YP mode, getpw* functions touch this */
 		if (ni->ni_pledge == PLEDGE_RPATH &&
 		    strcmp(path, "/var/run/ypbind.lock") == 0) {
@@ -723,6 +725,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 
 		if ((ni->ni_pledge == PLEDGE_RPATH) &&
 		    (pledge & PLEDGE_GETPW)) {
+			/* XXX delete chunk after ypconnect() is established */
 			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
 				/*
 				 * XXX
