@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.1 2022/07/13 06:32:15 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.2 2022/07/15 06:14:17 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -319,6 +319,7 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 	if (!BN_sub(n_minus_one, n, BN_value_one()))
 		goto err;
 
+	/* Factorize n - 1 = k * 2^s. */
 	s = 0;
 	while (!BN_is_bit_set(n_minus_one, s))
 		s++;
