@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.226 2022/06/29 12:17:31 jca Exp $
+;	$OpenBSD: syscalls.master,v 1.227 2022/07/15 17:20:24 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -286,7 +286,7 @@
 148	STD		{ int sys_quotactl(const char *path, int cmd, \
 			    int uid, char *arg); }
 149	OBSOL		oquota
-150	OBSOL		ogetsockname
+150	STD NOLOCK	{ int sys_ypconnect(int type); }
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
 ; system calls.  (This includes various calls added for compatibility

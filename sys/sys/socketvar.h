@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.105 2022/07/01 09:56:17 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.106 2022/07/15 17:20:24 deraadt Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -153,6 +153,7 @@ struct socket {
 #define	SS_ISSENDING		0x2000	/* hint for lower layer */
 #define	SS_DNS			0x4000	/* created using SOCK_DNS socket(2) */
 #define	SS_NEWCONN_WAIT		0x8000	/* waiting sonewconn() relock */
+#define	SS_YP			0x10000	/* created using ypconnect(2) */
 
 #ifdef _KERNEL
 
