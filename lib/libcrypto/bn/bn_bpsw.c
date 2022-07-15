@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.2 2022/07/15 06:14:17 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.3 2022/07/15 06:19:27 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -192,8 +192,8 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 	}
 
 	/*
-	 * If any V_{k * 2^r} is zero for 1 <= r < s then n is a strong Lucas
-	 * pseudoprime.
+	 * Calculate the Lucas terms U_{k * 2^r}, V_{k * 2^r} for 1 <= r < s.
+	 * If any V_{k * 2^r} is zero then n is a strong Lucas pseudoprime.
 	 */
 	for (r = 1; r < s; r++) {
 		if (!bn_lucas_step(U, V, 0, D, n, ctx))
