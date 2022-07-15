@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.38 2022/02/14 03:38:59 guenther Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.39 2022/07/15 17:33:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -73,6 +73,7 @@ struct cu_data {
 	int		   cu_sock;
 	bool_t		   cu_closeit;
 	struct sockaddr_in cu_raddr;
+	int		   cu_connected;	/* use send() instead */
 	int		   cu_rlen;
 	struct timeval	   cu_wait;
 	struct timeval     cu_total;
@@ -138,6 +139,7 @@ clntudp_bufcreate(struct sockaddr_in *raddr, u_long program, u_long version,
 	cl->cl_ops = &udp_ops;
 	cl->cl_private = (caddr_t)cu;
 	cu->cu_raddr = *raddr;
+	cu->cu_connected = 0;
 	cu->cu_rlen = sizeof (cu->cu_raddr);
 	cu->cu_wait = wait;
 	cu->cu_total.tv_sec = -1;
@@ -209,6 +211,7 @@ clntudp_call(CLIENT *cl,	/* client handle */
 	XDR *xdrs;
 	int outlen;
 	int inlen;
+	int ret;
 	socklen_t fromlen;
 	struct pollfd pfd[1];
 	struct sockaddr_in from;
@@ -244,8 +247,12 @@ call_again:
 	outlen = (int)XDR_GETPOS(xdrs);
 
 send_again:
-	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
-	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen) != outlen) {
+	if (cu->cu_connected)
+		ret = send(cu->cu_sock, cu->cu_outbuf, outlen, 0);
+	else
+		ret = sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
+		    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen);
+	if (ret != outlen) {
 		cu->cu_error.re_errno = errno;
 		return (cu->cu_error.re_status = RPC_CANTSEND);
 	}
@@ -410,6 +417,9 @@ clntudp_control(CLIENT *cl, u_int request, void *info)
 		break;
 	case CLGET_SERVER_ADDR:
 		*(struct sockaddr_in *)info = cu->cu_raddr;
+		break;
+	case CLSET_CONNECTED:
+		cu->cu_connected = *(int *)info;
 		break;
 	default:
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.35 2022/02/14 03:38:59 guenther Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.36 2022/07/15 17:33:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -80,6 +80,7 @@ static const struct clnt_ops tcp_ops = {
 struct ct_data {
 	int		ct_sock;
 	bool_t		ct_closeit;
+	int		ct_connected;	/* pre-connected */
 	struct timeval	ct_wait;
 	bool_t          ct_waitset;       /* wait set by clnt_control? */
 	struct sockaddr_in ct_addr; 
@@ -352,6 +353,9 @@ clnttcp_control(CLIENT *cl, u_int request, void *info)
 		break;
 	case CLGET_SERVER_ADDR:
 		*(struct sockaddr_in *)info = ct->ct_addr;
+		break;
+	case CLSET_CONNECTED:
+		ct->ct_connected = *(int *)info;
 		break;
 	default:
 		return (FALSE);

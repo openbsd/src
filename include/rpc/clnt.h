@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.12 2022/02/14 03:38:59 guenther Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.13 2022/07/15 17:33:28 deraadt Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -214,6 +214,7 @@ typedef struct __rpc_client {
  */
 #define CLSET_RETRY_TIMEOUT 4   /* set retry timeout (timeval) */
 #define CLGET_RETRY_TIMEOUT 5   /* get retry timeout (timeval) */
+#define CLSET_CONNECTED	    6	/* socket is connected, so use send() */
 
 /*
  * void
