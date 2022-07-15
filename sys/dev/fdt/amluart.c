@@ -1,4 +1,4 @@
-/*	$OpenBSD: amluart.c,v 1.3 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: amluart.c,v 1.4 2022/07/15 17:14:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -276,8 +276,20 @@ amluart_softintr(void *arg)
 
 	splx(s);
 
-	while (ibufp < ibufend)
-		(*linesw[tp->t_line].l_rint)(*ibufp++, tp);
+	while (ibufp < ibufend) {
+		int i = *ibufp++;
+#ifdef DDB
+		if (tp->t_dev == cn_tab->cn_dev) {
+			int j = db_rint(i);
+
+			if (j == 1)	/* Escape received, skip */
+				continue;
+			if (j == 2)	/* Second char wasn't 'D' */
+				(*linesw[tp->t_line].l_rint)(27, tp);
+		}
+#endif
+		(*linesw[tp->t_line].l_rint)(i, tp);
+	}
 }
 
 int
