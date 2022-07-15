@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.48 2022/07/12 08:58:53 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.49 2022/07/15 22:56:13 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -56,8 +56,8 @@ extern struct mutex pipex_list_mtx;
 
 /*
  * Locks used to protect struct members:
+ *      A       atomic operation
  *      I       immutable after creation
- *      N       net lock
  *      L       pipex_list_mtx
  *      s       this pipex_session' `pxs_mtx'
  *      m       this pipex_mppe' `pxm_mtx'
@@ -91,14 +91,14 @@ struct pipex_pppoe_session {
 #ifdef PIPEX_PPTP
 struct pipex_pptp_session {
 	/* sequence number gap between pipex and userland */
-	int32_t	snd_gap;		/* [N] gap of our sequence */
-	int32_t rcv_gap;		/* [N] gap of peer's sequence */
-	int32_t ul_snd_una;		/* [N] userland send acked seq */
+	int32_t	snd_gap;		/* [s] gap of our sequence */
+	int32_t rcv_gap;		/* [s] gap of peer's sequence */
+	int32_t ul_snd_una;		/* [s] userland send acked seq */
 
-	uint32_t snd_nxt;		/* [N] send next */
-	uint32_t rcv_nxt;		/* [N] receive next */
-	uint32_t snd_una;		/* [N] send acked sequence */
-	uint32_t rcv_acked;		/* [N] recv acked sequence */
+	uint32_t snd_nxt;		/* [s] send next */
+	uint32_t rcv_nxt;		/* [s] receive next */
+	uint32_t snd_una;		/* [s] send acked sequence */
+	uint32_t rcv_acked;		/* [s] recv acked sequence */
 
 	int winsz;			/* [I] windows size */
 	int maxwinsz;			/* [I] max windows size */
@@ -141,16 +141,16 @@ struct pipex_l2tp_session {
 
 	uint32_t option_flags;		/* [I] protocol options */
 
-	int16_t ns_gap;		/* [N] gap between userland and pipex */
-	int16_t nr_gap;		/* [N] gap between userland and pipex */
-	uint16_t ul_ns_una;	/* [N] unacked sequence number (userland) */
+	int16_t ns_gap;		/* [s] gap between userland and pipex */
+	int16_t nr_gap;		/* [s] gap between userland and pipex */
+	uint16_t ul_ns_una;	/* [s] unacked sequence number (userland) */
 
-	uint16_t ns_nxt;	/* [N] next sequence number to send */
-	uint16_t ns_una;	/* [N] unacked sequence number to send */
+	uint16_t ns_nxt;	/* [s] next sequence number to send */
+	uint16_t ns_una;	/* [s] unacked sequence number to send */
 
-	uint16_t nr_nxt;	/* [N] next sequence number to recv */
-	uint16_t nr_acked;	/* [N] acked sequence number to recv */
-	uint32_t ipsecflowinfo;	/* [N] IPsec SA flow id for NAT-T */
+	uint16_t nr_nxt;	/* [s] next sequence number to recv */
+	uint16_t nr_acked;	/* [s] acked sequence number to recv */
+	uint32_t ipsecflowinfo;	/* [s] IPsec SA flow id for NAT-T */
 };
 #endif /* PIPEX_L2TP */
 
@@ -197,7 +197,7 @@ struct pipex_session {
 	struct sockaddr_in6 ip6_address; /* [I] remote IPv6 address */
 	int		ip6_prefixlen;   /* [I] remote IPv6 prefixlen */
 
-	u_int		ifindex;		/* [N] interface index */
+	u_int		ifindex;		/* [A] interface index */
 	void		*ownersc;		/* [I] owner context */
 
 	uint32_t	ppp_flags;		/* [I] configure flags */
@@ -429,7 +429,7 @@ void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
 void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
 #endif
 struct mbuf           *pipex_common_input(struct pipex_session *,
-                          struct mbuf *, int, int);
+                          struct mbuf *, int, int, int);
 
 #ifdef PIPEX_PPPOE
 void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);
@@ -449,8 +449,10 @@ void                  pipex_mppe_init (struct pipex_mppe *, int, int, u_char *, 
 void                  GetNewKeyFromSHA (u_char *, u_char *, int, u_char *);
 void                  pipex_mppe_reduce_key (struct pipex_mppe *);
 void                  mppe_key_change (struct pipex_mppe *);
-void                  pipex_mppe_input (struct mbuf *, struct pipex_session *);
-void                  pipex_mppe_output (struct mbuf *, struct pipex_session *, uint16_t);
+struct mbuf           *pipex_mppe_input (struct mbuf *,
+                          struct pipex_session *);
+struct mbuf           *pipex_mppe_output (struct mbuf *,
+                          struct pipex_session *, uint16_t);
 void                  pipex_ccp_input (struct mbuf *, struct pipex_session *);
 int                   pipex_ccp_output (struct pipex_session *, int, int);
 #endif

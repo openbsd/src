@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.118 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.119 2022/07/15 22:56:13 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -637,8 +637,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
 	if_counters_alloc(ifp);
-	/* XXXSMP: be sure pppx_if_qstart() called with NET_LOCK held */
-	ifq_set_maxlen(&ifp->if_snd, 1);
 
 	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
@@ -779,7 +777,6 @@ pppx_if_qstart(struct ifqueue *ifq)
 	struct mbuf *m;
 	int proto;
 
-	NET_ASSERT_LOCKED();
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 		proto = *mtod(m, int *);
 		m_adj(m, sizeof(proto));
@@ -1022,8 +1019,6 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	ifp->if_output = pppac_output;
 	ifp->if_qstart = pppac_qstart;
 	ifp->if_ioctl = pppac_ioctl;
-	/* XXXSMP: be sure pppac_qstart() called with NET_LOCK held */
-	ifq_set_maxlen(&ifp->if_snd, 1);
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);
@@ -1398,7 +1393,6 @@ pppac_qstart(struct ifqueue *ifq)
 	struct ip ip;
 	int rv;
 
-	NET_ASSERT_LOCKED();
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf) {
