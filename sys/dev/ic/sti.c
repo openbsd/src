@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.82 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: sti.c,v 1.83 2022/07/15 19:29:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -1115,9 +1115,9 @@ sti_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->width  = scr->scr_cfg.scr_width;
 		wdf->depth  = scr->scr_bpp;
 		if (scr->scr_bpp > 8)
-			wdf->stride = scr->sc_cfg.fb_width * 4;
+			wdf->stride = scr->scr_cfg.fb_width * 4;
 		else
-			wdf->stride = src->sc_cfg.fb_width;
+			wdf->stride = scr->scr_cfg.fb_width;
 		wdf->offset = 0;
 		if (scr->putcmap == NULL || scr->scr_bpp > 8)
 			wdf->cmsize = 0;
