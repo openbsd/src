@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.13 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.14 2022/07/15 17:57:26 kettenis Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -276,6 +276,8 @@ rkdrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		return 0;
 	case WSDISPLAYIO_LINEBYTES:

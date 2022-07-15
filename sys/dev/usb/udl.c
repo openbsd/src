@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.97 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: udl.c,v 1.98 2022/07/15 17:57:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -509,6 +509,8 @@ udl_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->height = sc->sc_height;
 		wdf->width = sc->sc_width;
 		wdf->depth = sc->sc_depth;
+		wdf->stride = sc->sc_width * (sc->sc_depth / 8);
+		wdf->offset = 0;
 		wdf->cmsize = 0;	/* XXX fill up colormap size */
 		break;
 	case WSDISPLAYIO_SMODE:

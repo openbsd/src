@@ -1,4 +1,4 @@
-/*	$OpenBSD: efifb.c,v 1.33 2020/07/07 02:13:13 jcs Exp $	*/
+/*	$OpenBSD: efifb.c,v 1.34 2022/07/15 17:57:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -290,6 +290,8 @@ efifb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;	/* color map is unavailable */
 		break;
 	case WSDISPLAYIO_LINEBYTES:

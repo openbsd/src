@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.42 2022/03/11 18:00:52 mpi Exp $ */
+/* $OpenBSD: tga.c,v 1.43 2022/07/15 17:57:26 kettenis Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -594,6 +594,8 @@ tga_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->height = sc->sc_dc->dc_ht;
 		wsd_fbip->width = sc->sc_dc->dc_wid;
 		wsd_fbip->depth = sc->sc_dc->dc_tgaconf->tgac_phys_depth;
+		wsd_fbip->stride = sc->sc_dc->dc_rowbytes;
+		wsd_fbip->offset = 0;
 		wsd_fbip->cmsize = 1024;		/* XXX ??? */
 #undef wsd_fbip
 		break;

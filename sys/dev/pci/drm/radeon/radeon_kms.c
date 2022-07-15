@@ -241,6 +241,8 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		return 0;
 	case WSDISPLAYIO_GETPARAM:

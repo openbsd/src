@@ -1,4 +1,4 @@
-/*	$OpenBSD: smfb.c,v 1.20 2021/01/02 14:29:16 visa Exp $	*/
+/*	$OpenBSD: smfb.c,v 1.21 2022/07/15 17:57:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -282,6 +282,8 @@ smfb_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:

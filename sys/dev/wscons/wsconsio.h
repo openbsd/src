@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.97 2021/03/12 23:42:50 kettenis Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.98 2022/07/15 17:57:27 kettenis Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -448,9 +448,20 @@ struct wsdisplay_fbinfo {
 	u_int	height;				/* height in pixels */
 	u_int	width;				/* width in pixels */
 	u_int	depth;				/* bits per pixel */
+	u_int	stride;				/* bytes per line */
+	u_int	offset;				/* first pixel offset (bytes) */
 	u_int	cmsize;				/* color map size (entries) */
 };
 #define	WSDISPLAYIO_GINFO	_IOR('W', 65, struct wsdisplay_fbinfo)
+
+/* Backwards compat; remove after OpenBSD 7.3 is released. */
+struct wsdisplay_ofbinfo {
+	u_int	height;				/* height in pixels */
+	u_int	width;				/* width in pixels */
+	u_int	depth;				/* bits per pixel */
+	u_int	cmsize;				/* color map size (entries) */
+};
+#define	WSDISPLAYIO_OGINFO	_IOR('W', 65, struct wsdisplay_ofbinfo)
 
 /* Colormap operations.  Not applicable to all display types. */
 struct wsdisplay_cmap {

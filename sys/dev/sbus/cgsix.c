@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.61 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.62 2022/07/15 17:57:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -270,6 +270,8 @@ cgsix_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = sc->sc_sunfb.sf_depth;
+		wdf->stride = sc->sc_sunfb.sf_linebytes;
+		wdf->offset = 0;
 		wdf->cmsize = 256;
 		break;
 	case WSDISPLAYIO_LINEBYTES:

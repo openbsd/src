@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.12 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.13 2022/07/15 17:57:26 kettenis Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -634,6 +634,8 @@ ssdfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;	/* color map is unavailable */
 		break;
 	case WSDISPLAYIO_LINEBYTES:

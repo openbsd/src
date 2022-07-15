@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.11 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.12 2022/07/15 17:57:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -279,6 +279,8 @@ cgtwelve_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = 32;
+		wdf->stride = sc->sc_sunfb.sf_linebytes * 32;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:

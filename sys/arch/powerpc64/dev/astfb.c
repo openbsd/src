@@ -1,4 +1,4 @@
-/*	$OpenBSD: astfb.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: astfb.c,v 1.5 2022/07/15 17:57:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis.
@@ -201,6 +201,8 @@ astfb_wsioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->width = ri->ri_width;
 		wdf->height = ri->ri_height;
 		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
 		wdf->cmsize = 0;	/* color map is unavailable */
 		break;
 	case WSDISPLAYIO_LINEBYTES:

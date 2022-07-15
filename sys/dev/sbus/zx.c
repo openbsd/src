@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.23 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: zx.c,v 1.24 2022/07/15 17:57:27 kettenis Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -330,6 +330,8 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width = sc->sc_sunfb.sf_width;
 		wdf->depth = 32;
+		wdf->stride = sc->sc_sunfb.sf_linebytes;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:

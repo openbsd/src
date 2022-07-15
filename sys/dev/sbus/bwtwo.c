@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.20 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.21 2022/07/15 17:57:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -225,6 +225,8 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 		wdf->height = sc->sc_sunfb.sf_height;
 		wdf->width  = sc->sc_sunfb.sf_width;
 		wdf->depth  = sc->sc_sunfb.sf_depth;
+		wdf->stride = sc->sc_sunfb.sf_linebytes;
+		wdf->offset = 0;
 		wdf->cmsize = 0;
 		break;
 	case WSDISPLAYIO_LINEBYTES:
