@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.24 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.25 2022/07/16 16:42:58 kn Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -74,7 +74,7 @@ static int TS_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
 static int TS_check_signing_certs(PKCS7_SIGNER_INFO *si, STACK_OF(X509) *chain);
 static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si);
 static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
-static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo);
+static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509 *cert);
 static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
     PKCS7 *token, TS_TST_INFO *tst_info);
 static int TS_check_status_info(TS_RESP *response);
@@ -346,7 +346,7 @@ TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 		    cert_hash, TS_HASH_LEN)) {
 			/* Check the issuer/serial as well if specified. */
 			ESS_ISSUER_SERIAL *is = cid->issuer_serial;
-			if (!is || !TS_issuer_serial_cmp(is, cert->cert_info))
+			if (is == NULL || !TS_issuer_serial_cmp(is, cert))
 				return i;
 		}
 	}
@@ -355,21 +355,21 @@ TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 }
 
 static int
-TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo)
+TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509 *cert)
 {
 	GENERAL_NAME *issuer;
 
-	if (!is || !cinfo || sk_GENERAL_NAME_num(is->issuer) != 1)
+	if (is == NULL || cert == NULL || sk_GENERAL_NAME_num(is->issuer) != 1)
 		return -1;
 
 	/* Check the issuer first. It must be a directory name. */
 	issuer = sk_GENERAL_NAME_value(is->issuer, 0);
 	if (issuer->type != GEN_DIRNAME ||
-	    X509_NAME_cmp(issuer->d.dirn, cinfo->issuer))
+	    X509_NAME_cmp(issuer->d.dirn, X509_get_issuer_name(cert)))
 		return -1;
 
 	/* Check the serial number, too. */
-	if (ASN1_INTEGER_cmp(is->serial, cinfo->serialNumber))
+	if (ASN1_INTEGER_cmp(is->serial, X509_get_serialNumber(cert)))
 		return -1;
 
 	return 0;
@@ -726,7 +726,7 @@ TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer)
 
 	/* Check the subject name first. */
 	if (tsa_name->type == GEN_DIRNAME &&
-	    X509_NAME_cmp(tsa_name->d.dirn, signer->cert_info->subject) == 0)
+	    X509_name_cmp(tsa_name->d.dirn, X509_get_subject_name(signer)) == 0)
 		return 1;
 
 	/* Check all the alternative names. */
