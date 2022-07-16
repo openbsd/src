@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.14 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.15 2022/07/16 11:26:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,6 +36,20 @@ extern void (*powerdownfn)(void);
 #define  AXP209_ADC_EN1_ACIN	(3 << 4)
 #define  AXP209_ADC_EN1_VBUS	(3 << 2)
 
+#define AXP803_IRQ1_EN		0x40
+#define AXP803_IRQ2_EN		0x41
+#define AXP803_IRQ3_EN		0x42
+#define AXP803_IRQ4_EN		0x43
+#define AXP803_IRQ5_EN		0x44
+#define  AXP803_IRQ5_EN_PEK_SHORT	(1 << 4)
+#define AXP803_IRQ6_EN		0x45
+#define AXP803_IRQ1_STAT	0x48
+#define AXP803_IRQ2_STAT	0x49
+#define AXP803_IRQ3_STAT	0x4a
+#define AXP803_IRQ4_STAT	0x4b
+#define AXP803_IRQ5_STAT	0x4c
+#define  AXP803_IRQ5_STAT_PEK_SHORT	(1 << 4)
+#define AXP803_IRQ6_STAT	0x4d
 #define AXP803_BAT_CAP_WARN		0xe6
 #define  AXP803_BAT_CAP_WARN_LV1	0xf0
 #define  AXP803_BAT_CAP_WARN_LV1BASE	5
@@ -315,6 +329,7 @@ struct axppmic_softc {
 	struct device	sc_dev;
 	void		*sc_cookie;
 	uint16_t 	sc_addr;
+	const char	*sc_name;
 
 	uint8_t		(*sc_read)(struct axppmic_softc *, uint8_t);
 	void		(*sc_write)(struct axppmic_softc *, uint8_t, uint8_t);
@@ -341,6 +356,7 @@ axppmic_write_reg(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 }
 
 void	axppmic_attach_common(struct axppmic_softc *, const char *, int);
+int	axppmic_activate(struct device *, int);
 
 /* I2C interface */
 
@@ -348,7 +364,8 @@ int	axppmic_i2c_match(struct device *, void *, void *);
 void	axppmic_i2c_attach(struct device *, struct device *, void *);
 
 const struct cfattach axppmic_ca = {
-	sizeof(struct axppmic_softc), axppmic_i2c_match, axppmic_i2c_attach
+	sizeof(struct axppmic_softc), axppmic_i2c_match, axppmic_i2c_attach,
+	NULL, axppmic_activate
 };
 
 struct cfdriver axppmic_cd = {
@@ -424,7 +441,8 @@ int	axppmic_rsb_match(struct device *, void *, void *);
 void	axppmic_rsb_attach(struct device *, struct device *, void *);
 
 const struct cfattach axppmic_rsb_ca = {
-	sizeof(struct axppmic_softc), axppmic_rsb_match, axppmic_rsb_attach
+	sizeof(struct axppmic_softc), axppmic_rsb_match, axppmic_rsb_attach,
+	NULL, axppmic_activate
 };
 
 struct cfdriver axppmic_rsb_cd = {
@@ -488,6 +506,7 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 	device = axppmic_lookup(name);
 	printf(": %s\n", device->chip);
 
+	sc->sc_name = device->name;
 	sc->sc_regdata = device->regdata;
 	sc->sc_sensdata = device->sensdata;
 
@@ -534,6 +553,16 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 	if (sc->sc_sensdata)
 		axppmic_attach_sensors(sc);
 
+	/* Disable all interrupts on AXP803. */
+	if (strcmp(name, "x-powers,axp803") == 0) {
+		axppmic_write_reg(sc, AXP803_IRQ1_EN, 0);
+		axppmic_write_reg(sc, AXP803_IRQ2_EN, 0);
+		axppmic_write_reg(sc, AXP803_IRQ3_EN, 0);
+		axppmic_write_reg(sc, AXP803_IRQ4_EN, 0);
+		axppmic_write_reg(sc, AXP803_IRQ5_EN, 0);
+		axppmic_write_reg(sc, AXP803_IRQ6_EN, 0);
+	}
+
 #ifdef __armv7__
 	if (strcmp(name, "x-powers,axp152") == 0 ||
 	    strcmp(name, "x-powers,axp209") == 0) {
@@ -554,6 +583,32 @@ axppmic_attach_node(struct axppmic_softc *sc, int node)
 
 	if (OF_is_compatible(node, "x-powers,axp803-battery-power-supply"))
 		sc->sc_sensdata = axp803_battery_sensdata;
+}
+
+int
+axppmic_activate(struct device *self, int act)
+{
+	struct axppmic_softc *sc = (struct axppmic_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		if (strcmp(sc->sc_name, "x-powers,axp803") == 0) {
+			/* Enable interrupt for short power button press. */
+			axppmic_write_reg(sc, AXP803_IRQ5_STAT,
+			    AXP803_IRQ5_STAT_PEK_SHORT);
+			axppmic_write_reg(sc, AXP803_IRQ5_EN,
+			    AXP803_IRQ5_EN_PEK_SHORT);
+		}
+		break;
+	case DVACT_RESUME:
+		if (strcmp(sc->sc_name, "x-powers,axp803") == 0) {
+			/* Disable interrupt for short power button press. */
+			axppmic_write_reg(sc, AXP803_IRQ5_EN, 0);
+		}
+		break;
+	}
+
+	return 0;
 }
 
 /* Regulators */
