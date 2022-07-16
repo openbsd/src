@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.250 2022/06/27 20:47:10 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.251 2022/07/16 15:25:30 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ void arpreply(struct ifnet *, struct mbuf *, struct in_addr *, uint8_t *,
     unsigned int);
 
 struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
+
+/* llinfo_arp live time, rt_llinfo and RTF_LLINFO are protected by arp_mtx */
 struct mutex arp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 LIST_HEAD(, llinfo_arp) arp_list; /* [mN] list of all llinfo_arp structures */
@@ -155,7 +157,7 @@ void
 arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
-	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct llinfo_arp *la;
 	time_t uptime;
 
 	NET_ASSERT_LOCKED();
@@ -171,7 +173,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			rt->rt_expire = 0;
 			break;
 		}
-		if ((rt->rt_flags & RTF_LOCAL) && !la)
+		if ((rt->rt_flags & RTF_LOCAL) && rt->rt_llinfo == NULL)
 			rt->rt_expire = 0;
 		/*
 		 * Announce a new entry if requested or warn the user
@@ -192,44 +194,52 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		}
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
-		if (la != NULL)
-			break; /* This happens on a route change */
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
 		la = pool_get(&arp_pool, PR_NOWAIT | PR_ZERO);
-		rt->rt_llinfo = (caddr_t)la;
 		if (la == NULL) {
 			log(LOG_DEBUG, "%s: pool get failed\n", __func__);
 			break;
 		}
 
+		mtx_enter(&arp_mtx);
+		if (rt->rt_llinfo != NULL) {
+			/* we lost the race, another thread has entered it */
+			mtx_leave(&arp_mtx);
+			pool_put(&arp_pool, la);
+			break;
+		}
 		mq_init(&la->la_mq, LA_HOLD_QUEUE, IPL_SOFTNET);
+		rt->rt_llinfo = (caddr_t)la;
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
+		LIST_INSERT_HEAD(&arp_list, la, la_list);
 		if ((rt->rt_flags & RTF_LOCAL) == 0)
 			rt->rt_expire = uptime;
-		mtx_enter(&arp_mtx);
-		LIST_INSERT_HEAD(&arp_list, la, la_list);
 		mtx_leave(&arp_mtx);
+
 		break;
 
 	case RTM_DELETE:
-		if (la == NULL)
-			break;
 		mtx_enter(&arp_mtx);
+		la = (struct llinfo_arp *)rt->rt_llinfo;
+		if (la == NULL) {
+			/* we lost the race, another thread has removed it */
+			mtx_leave(&arp_mtx);
+			break;
+		}
 		LIST_REMOVE(la, la_list);
-		mtx_leave(&arp_mtx);
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 		atomic_sub_int(&la_hold_total, mq_purge(&la->la_mq));
+		mtx_leave(&arp_mtx);
+
 		pool_put(&arp_pool, la);
 		break;
 
 	case RTM_INVALIDATE:
-		if (la == NULL)
-			break;
 		if (!ISSET(rt->rt_flags, RTF_LOCAL))
 			arpinvalidate(rt);
 		break;
@@ -363,8 +373,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		goto bad;
 	}
 
-	la = (struct llinfo_arp *)rt->rt_llinfo;
-	KASSERT(la != NULL);
 
 	/*
 	 * Check the address family and length is valid, the address
@@ -372,13 +380,27 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > uptime) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
+		int refresh = 0;
+
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
 
 		/* refresh ARP entry when timeout gets close */
 		if (rt->rt_expire != 0 &&
-		    rt->rt_expire - arpt_keep / 8 < uptime &&
-		    la->la_refreshed + 30 < uptime) {
-			la->la_refreshed = uptime;
+		    rt->rt_expire - arpt_keep / 8 < uptime) {
+
+			mtx_enter(&arp_mtx);
+			if (ISSET(rt->rt_flags, RTF_LLINFO)) {
+				la = (struct llinfo_arp *)rt->rt_llinfo;
+				KASSERT(la != NULL);
+
+				if (la->la_refreshed + 30 < uptime) {
+					la->la_refreshed = uptime;
+					refresh = 1;
+				}
+			}
+			mtx_leave(&arp_mtx);
+		}
+		if (refresh) {
 			arprequest(ifp,
 			    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
 			    &satosin(dst)->sin_addr.s_addr,
@@ -724,12 +746,19 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 void
 arpinvalidate(struct rtentry *rt)
 {
-	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
 
+	mtx_enter(&arp_mtx);
+	la = (struct llinfo_arp *)rt->rt_llinfo;
+	if (la == NULL) {
+		mtx_leave(&arp_mtx);
+		return;
+	}
 	atomic_sub_int(&la_hold_total, mq_purge(&la->la_mq));
 	sdl->sdl_alen = 0;
 	la->la_asked = 0;
+	mtx_leave(&arp_mtx);
 }
 
 /*
