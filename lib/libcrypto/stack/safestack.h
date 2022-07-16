@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.21 2022/01/14 08:59:30 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.22 2022/07/16 19:11:51 kn Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -772,6 +772,30 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_ESS_CERT_ID_pop(st) SKM_sk_pop(ESS_CERT_ID, (st))
 #define sk_ESS_CERT_ID_sort(st) SKM_sk_sort(ESS_CERT_ID, (st))
 #define sk_ESS_CERT_ID_is_sorted(st) SKM_sk_is_sorted(ESS_CERT_ID, (st))
+
+#ifdef LIBRESSL_INTERNAL
+#define sk_ESS_CERT_ID_V2_new(cmp) SKM_sk_new(ESS_CERT_ID_V2, (cmp))
+#define sk_ESS_CERT_ID_V2_new_null() SKM_sk_new_null(ESS_CERT_ID_V2)
+#define sk_ESS_CERT_ID_V2_free(st) SKM_sk_free(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_num(st) SKM_sk_num(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_value(st, i) SKM_sk_value(ESS_CERT_ID_V2, (st), (i))
+#define sk_ESS_CERT_ID_V2_set(st, i, val) SKM_sk_set(ESS_CERT_ID_V2, (st), (i), (val))
+#define sk_ESS_CERT_ID_V2_zero(st) SKM_sk_zero(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_push(st, val) SKM_sk_push(ESS_CERT_ID_V2, (st), (val))
+#define sk_ESS_CERT_ID_V2_unshift(st, val) SKM_sk_unshift(ESS_CERT_ID_V2, (st), (val))
+#define sk_ESS_CERT_ID_V2_find(st, val) SKM_sk_find(ESS_CERT_ID_V2, (st), (val))
+#define sk_ESS_CERT_ID_V2_find_ex(st, val) SKM_sk_find_ex(ESS_CERT_ID_V2, (st), (val))
+#define sk_ESS_CERT_ID_V2_delete(st, i) SKM_sk_delete(ESS_CERT_ID_V2, (st), (i))
+#define sk_ESS_CERT_ID_V2_delete_ptr(st, ptr) SKM_sk_delete_ptr(ESS_CERT_ID_V2, (st), (ptr))
+#define sk_ESS_CERT_ID_V2_insert(st, val, i) SKM_sk_insert(ESS_CERT_ID_V2, (st), (val), (i))
+#define sk_ESS_CERT_ID_V2_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(ESS_CERT_ID_V2, (st), (cmp))
+#define sk_ESS_CERT_ID_V2_dup(st) SKM_sk_dup(ESS_CERT_ID_V2, st)
+#define sk_ESS_CERT_ID_V2_pop_free(st, free_func) SKM_sk_pop_free(ESS_CERT_ID_V2, (st), (free_func))
+#define sk_ESS_CERT_ID_V2_shift(st) SKM_sk_shift(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_pop(st) SKM_sk_pop(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_sort(st) SKM_sk_sort(ESS_CERT_ID_V2, (st))
+#define sk_ESS_CERT_ID_V2_is_sorted(st) SKM_sk_is_sorted(ESS_CERT_ID_V2, (st))
+#endif /* LIBRESSL_INTERNAL */
 
 #define sk_EVP_MD_new(cmp) SKM_sk_new(EVP_MD, (cmp))
 #define sk_EVP_MD_new_null() SKM_sk_new_null(EVP_MD)
