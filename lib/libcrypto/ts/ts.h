@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.12 2022/07/16 15:02:29 kn Exp $ */
+/* $OpenBSD: ts.h,v 1.13 2022/07/16 18:36:36 kn Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -264,6 +264,34 @@ typedef struct ESS_signing_cert {
 	STACK_OF(POLICYINFO) *policy_info;
 } ESS_SIGNING_CERT;
 
+#ifdef LIBRESSL_INTERNAL
+/*
+ * ESSCertIDv2 ::=  SEQUENCE {
+ *     hashAlgorithm           AlgorithmIdentifier
+ *            DEFAULT {algorithm id-sha256},
+ *     certHash                 Hash,
+ *     issuerSerial             IssuerSerial OPTIONAL }
+ */
+
+typedef struct ESS_cert_id_v2 {
+	X509_ALGOR *hash_alg;	/* Default SHA-256. */
+	ASN1_OCTET_STRING *hash;
+	ESS_ISSUER_SERIAL *issuer_serial;
+} ESS_CERT_ID_V2;
+
+DECLARE_STACK_OF(ESS_CERT_ID_V2)
+
+/*
+ * SigningCertificateV2 ::=  SEQUENCE {
+ *     certs        SEQUENCE OF ESSCertIDv2,
+ *     policies     SEQUENCE OF PolicyInformation OPTIONAL }
+ */
+
+typedef struct ESS_signing_cert_v2 {
+	STACK_OF(ESS_CERT_ID_V2) *cert_ids;
+	STACK_OF(POLICYINFO) *policy_info;
+} ESS_SIGNING_CERT_V2;
+#endif /* LIBRESSL_INTERNAL */
 
 TS_REQ	*TS_REQ_new(void);
 void	TS_REQ_free(TS_REQ *a);
@@ -350,6 +378,23 @@ int		 i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a,
 ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
 		    const unsigned char **pp, long length);
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
+
+#ifdef LIBRESSL_INTERNAL
+ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new(void);
+void ESS_CERT_ID_V2_free(ESS_CERT_ID_V2 *a);
+int i2d_ESS_CERT_ID_V2(const ESS_CERT_ID_V2 *a, unsigned char **pp);
+ESS_CERT_ID_V2 *d2i_ESS_CERT_ID_V2(ESS_CERT_ID_V2 **a, const unsigned char **pp,
+    long length);
+ESS_CERT_ID_V2 *ESS_CERT_ID_V2_dup(ESS_CERT_ID_V2 *a);
+
+ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_new(void);
+void ESS_SIGNING_CERT_V2_free(ESS_SIGNING_CERT_V2 *a);
+int i2d_ESS_SIGNING_CERT_V2(const ESS_SIGNING_CERT_V2 *a,
+    unsigned char **pp);
+ESS_SIGNING_CERT_V2 *d2i_ESS_SIGNING_CERT_V2(ESS_SIGNING_CERT_V2 **a,
+    const unsigned char **pp, long length);
+ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_dup(ESS_SIGNING_CERT_V2 *a);
+#endif /* LIBRESSL_INTERNAL */
 
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);

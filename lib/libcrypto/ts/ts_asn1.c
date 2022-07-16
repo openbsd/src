@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.12 2022/07/16 18:36:36 kn Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -844,6 +844,129 @@ ESS_SIGNING_CERT *
 ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *x)
 {
 	return ASN1_item_dup(&ESS_SIGNING_CERT_it, x);
+}
+
+static const ASN1_TEMPLATE ESS_CERT_ID_V2_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ESS_CERT_ID_V2, hash_alg),
+		.field_name = "hash_alg",
+		.item = &X509_ALGOR_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ESS_CERT_ID_V2, hash),
+		.field_name = "hash",
+		.item = &ASN1_OCTET_STRING_it,
+	},
+	{
+		.flags = ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ESS_CERT_ID_V2, issuer_serial),
+		.field_name = "issuer_serial",
+		.item = &ESS_ISSUER_SERIAL_it,
+	},
+};
+
+static const ASN1_ITEM ESS_CERT_ID_V2_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ESS_CERT_ID_V2_seq_tt,
+	.tcount = sizeof(ESS_CERT_ID_V2_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ESS_CERT_ID_V2),
+	.sname = "ESS_CERT_ID_V2",
+};
+
+ESS_CERT_ID_V2 *
+d2i_ESS_CERT_ID_V2(ESS_CERT_ID_V2 **a, const unsigned char **in, long len)
+{
+	return (ESS_CERT_ID_V2 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ESS_CERT_ID_V2_it);
+}
+
+int
+i2d_ESS_CERT_ID_V2(const ESS_CERT_ID_V2 *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_CERT_ID_V2_it);
+}
+
+ESS_CERT_ID_V2 *
+ESS_CERT_ID_V2_new(void)
+{
+	return (ESS_CERT_ID_V2 *)ASN1_item_new(&ESS_CERT_ID_V2_it);
+}
+
+void
+ESS_CERT_ID_V2_free(ESS_CERT_ID_V2 *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ESS_CERT_ID_V2_it);
+}
+
+ESS_CERT_ID_V2 *
+ESS_CERT_ID_V2_dup(ESS_CERT_ID_V2 *x)
+{
+	return ASN1_item_dup(&ESS_CERT_ID_V2_it, x);
+}
+
+static const ASN1_TEMPLATE ESS_SIGNING_CERT_V2_seq_tt[] = {
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF,
+		.tag = 0,
+		.offset = offsetof(ESS_SIGNING_CERT_V2, cert_ids),
+		.field_name = "cert_ids",
+		.item = &ESS_CERT_ID_V2_it,
+	},
+	{
+		.flags = ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_OPTIONAL,
+		.tag = 0,
+		.offset = offsetof(ESS_SIGNING_CERT_V2, policy_info),
+		.field_name = "policy_info",
+		.item = &POLICYINFO_it,
+	},
+};
+
+static const ASN1_ITEM ESS_SIGNING_CERT_V2_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ESS_SIGNING_CERT_V2_seq_tt,
+	.tcount = sizeof(ESS_SIGNING_CERT_V2_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ESS_SIGNING_CERT_V2),
+	.sname = "ESS_SIGNING_CERT_V2",
+};
+
+ESS_SIGNING_CERT_V2 *
+d2i_ESS_SIGNING_CERT_V2(ESS_SIGNING_CERT_V2 **a, const unsigned char **in, long len)
+{
+	return (ESS_SIGNING_CERT_V2 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ESS_SIGNING_CERT_V2_it);
+}
+
+int
+i2d_ESS_SIGNING_CERT_V2(const ESS_SIGNING_CERT_V2 *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_SIGNING_CERT_V2_it);
+}
+
+ESS_SIGNING_CERT_V2 *
+ESS_SIGNING_CERT_V2_new(void)
+{
+	return (ESS_SIGNING_CERT_V2 *)ASN1_item_new(&ESS_SIGNING_CERT_V2_it);
+}
+
+void
+ESS_SIGNING_CERT_V2_free(ESS_SIGNING_CERT_V2 *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ESS_SIGNING_CERT_V2_it);
+}
+
+ESS_SIGNING_CERT_V2 *
+ESS_SIGNING_CERT_V2_dup(ESS_SIGNING_CERT_V2 *x)
+{
+	return ASN1_item_dup(&ESS_SIGNING_CERT_V2_it, x);
 }
 
 /* Getting encapsulated TS_TST_INFO object from PKCS7. */
