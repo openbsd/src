@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.11 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: ts.h,v 1.12 2022/07/16 15:02:29 kn Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -350,8 +350,6 @@ int		 i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a,
 ESS_SIGNING_CERT *d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a,
 		    const unsigned char **pp, long length);
 ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
-
-void ERR_load_TS_strings(void);
 
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);
