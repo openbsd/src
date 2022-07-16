@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.28 2022/07/13 09:28:18 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.29 2022/07/16 12:07:55 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -1104,7 +1104,7 @@ ampintc_send_ipi(struct cpu_info *ci, int id)
 		sc->sc_ipi_reason[ci->ci_cpuid] = id;
 
 	/* currently will only send to one cpu */
-	sendmask = 1 << (16 + ci->ci_cpuid);
+	sendmask = sc->sc_cpu_mask[ci->ci_cpuid] << 16;
 	sendmask |= sc->sc_ipi_num[id];
 
 	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, ICD_SGIR, sendmask);
