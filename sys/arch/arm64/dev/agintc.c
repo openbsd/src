@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.38 2022/07/13 09:28:18 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.39 2022/07/16 12:02:28 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -697,6 +697,8 @@ agintc_cpuinit(void)
 		agintc_route_irq(sc->sc_ipi_irq[0], IRQ_ENABLE, curcpu());
 	if (sc->sc_ipi_irq[1] != NULL)
 		agintc_route_irq(sc->sc_ipi_irq[1], IRQ_ENABLE, curcpu());
+	if (sc->sc_ipi_irq[2] != NULL)
+		agintc_route_irq(sc->sc_ipi_irq[2], IRQ_ENABLE, curcpu());
 
 	__asm volatile("msr "STR(ICC_PMR)", %x0" :: "r"(0xff));
 	__asm volatile("msr "STR(ICC_BPR1)", %x0" :: "r"(0));
