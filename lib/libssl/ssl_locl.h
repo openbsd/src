@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.413 2022/07/10 18:40:55 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.414 2022/07/17 14:49:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1066,7 +1066,8 @@ struct ssl_st {
 	 */
 	int version;
 
-	const SSL_METHOD *method; /* SSLv3 */
+	const SSL_METHOD *method;
+	const void *quic_method; /* XXX */
 
 	/* There are 2 BIO's even though they are normally both the
 	 * same.  This is so data can be read and written to different

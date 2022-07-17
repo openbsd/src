@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.295 2022/07/02 16:31:04 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.296 2022/07/17 14:49:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3313,6 +3313,12 @@ OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num)
 {
 	return (SSL_CIPHER *)OBJ_bsearch_(key, base, num, sizeof(SSL_CIPHER),
 	    ssl_cipher_id_cmp_BSEARCH_CMP_FN);
+}
+
+int
+SSL_is_quic(const SSL *ssl)
+{
+	return ssl->quic_method != NULL;
 }
 
 int
