@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.43 2022/07/17 03:17:00 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.44 2022/07/17 04:29:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -37,7 +37,7 @@
 #define PLEDGE_UNIX	0x0000000000000100ULL	/* AF_UNIX sockets */
 #define PLEDGE_ID	0x0000000000000200ULL	/* allow setuid, setgid, etc */
 #define PLEDGE_TAPE	0x0000000000000400ULL	/* Tape ioctl */
-#define PLEDGE_GETPW	0x0000000000000800ULL	/* getpwent() and related */
+#define PLEDGE_GETPW	0x0000000000000800ULL	/* YP enables if ypbind.lock */
 #define PLEDGE_PROC	0x0000000000001000ULL	/* fork, waitpid, etc */
 #define PLEDGE_SETTIME	0x0000000000002000ULL	/* able to set/adj time/freq */
 #define PLEDGE_FATTR	0x0000000000004000ULL	/* allow explicit file st_* mods */
@@ -69,6 +69,7 @@
  * to track program behaviours which have been observed.
  */
 #define PLEDGE_USERSET	0x0fffffffffffffffULL
+#define PLEDGE_YPACTIVE	0x8000000000000000ULL	/* YP use detected and allowed */
 
 #ifdef PLEDGENAMES
 static const struct {

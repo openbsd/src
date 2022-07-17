@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.287 2022/07/17 03:17:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.288 2022/07/17 04:29:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -169,7 +169,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_pwrite] = PLEDGE_STDIO,
 	[SYS_pwritev] = PLEDGE_STDIO,
 	[SYS_recvmsg] = PLEDGE_STDIO,
-	[SYS_recvfrom] = PLEDGE_STDIO,
+	[SYS_recvfrom] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
 	[SYS_ftruncate] = PLEDGE_STDIO,
 	[SYS_lseek] = PLEDGE_STDIO,
 	[SYS_fpathconf] = PLEDGE_STDIO,
@@ -190,7 +190,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * Address selection required a network pledge ("inet",
 	 * "unix", "dns".
 	 */
-	[SYS_sendto] = PLEDGE_STDIO,
+	[SYS_sendto] = PLEDGE_STDIO | PLEDGE_YPACTIVE,
 
 	/*
 	 * Address specification required a network pledge ("inet",
@@ -361,17 +361,17 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_lchown] = PLEDGE_CHOWN,
 	[SYS_fchown] = PLEDGE_CHOWN,
 
-	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
-	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS,
+	[SYS_socket] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
+	[SYS_connect] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
+	[SYS_bind] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
+	[SYS_getsockname] = PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE,
 
 	[SYS_listen] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept4] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_accept] = PLEDGE_INET | PLEDGE_UNIX,
 	[SYS_getpeername] = PLEDGE_INET | PLEDGE_UNIX,
 
-	[SYS_flock] = PLEDGE_FLOCK,
+	[SYS_flock] = PLEDGE_FLOCK | PLEDGE_YPACTIVE,
 
 	[SYS_ypconnect] = PLEDGE_GETPW,
 
@@ -655,6 +655,17 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
+
+		/* XXX delete chunk after ypconnect() is established */
+		/* when avoiding YP mode, getpw* functions touch this */
+		if (ni->ni_pledge == PLEDGE_RPATH &&
+		    strcmp(path, "/var/run/ypbind.lock") == 0) {
+			if (pledge & PLEDGE_GETPW) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+				return (0);
+			} else
+				return (pledge_fail(p, error, PLEDGE_GETPW));
+		}
 		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
@@ -689,11 +700,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			}
-			if (strncmp(path, "/var/yp/binding/",
-			    sizeof("/var/yp/binding/") - 1) == 0) {
-				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-				return (0);
-			}
 		}
 
 		/* DNS needs /etc/{resolv.conf,hosts,services,protocols}. */
@@ -712,6 +718,29 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				return (0);
 			}
 			if (strcmp(path, "/etc/protocols") == 0) {
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+				return (0);
+			}
+		}
+
+		if ((ni->ni_pledge == PLEDGE_RPATH) &&
+		    (pledge & PLEDGE_GETPW)) {
+			/* XXX delete chunk after ypconnect() is established */
+			if (strcmp(path, "/var/run/ypbind.lock") == 0) {
+				/*
+				 * XXX
+				 * The current hack for YP support in "getpw"
+				 * is to enable some "inet" features until
+				 * next pledge call.
+				 */
+				mtx_enter(&p->p_p->ps_mtx);
+				p->p_p->ps_pledge |= PLEDGE_YPACTIVE;
+				mtx_leave(&p->p_p->ps_mtx);
+				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
+				return (0);
+			}
+			if (strncmp(path, "/var/yp/binding/",
+			    sizeof("/var/yp/binding/") - 1) == 0) {
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			}
@@ -1055,7 +1084,7 @@ pledge_sendit(struct proc *p, const void *to)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
 
-	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS)))
+	if ((p->p_p->ps_pledge & (PLEDGE_INET | PLEDGE_UNIX | PLEDGE_DNS | PLEDGE_YPACTIVE)))
 		return (0);		/* may use address */
 	if (to == NULL)
 		return (0);		/* behaves just like write */
@@ -1389,7 +1418,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		}
 	}
 
-	if ((pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS)) == 0)
+	if ((pledge & (PLEDGE_INET|PLEDGE_UNIX|PLEDGE_DNS|PLEDGE_YPACTIVE)) == 0)
 		return pledge_fail(p, EPERM, PLEDGE_INET);
 	/* In use by some service libraries */
 	switch (level) {
@@ -1410,6 +1439,25 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			case IPV6_USE_MIN_MTU:
 				return (0);
 			}
+		}
+	}
+
+	/* YP may do these requests */
+	if (pledge & PLEDGE_YPACTIVE) {
+		switch (level) {
+		case IPPROTO_IP:
+			switch (optname) {
+			case IP_PORTRANGE:
+				return (0);
+			}
+			break;
+
+		case IPPROTO_IPV6:
+			switch (optname) {
+			case IPV6_PORTRANGE:
+				return (0);
+			}
+			break;
 		}
 	}
 
@@ -1510,7 +1558,8 @@ pledge_socket(struct proc *p, int domain, unsigned int state)
 		return (0);
 	case AF_INET:
 	case AF_INET6:
-		if (ISSET(pledge, PLEDGE_INET))
+		if (ISSET(pledge, PLEDGE_INET) ||
+		    ISSET(pledge, PLEDGE_YPACTIVE))
 			return 0;
 		return pledge_fail(p, EPERM, PLEDGE_INET);
 
