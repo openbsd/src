@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.34 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.35 2022/07/17 10:32:45 jsg Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -383,7 +383,7 @@ ta_get(struct tal *tal)
 		err(1, NULL);
 	tr->basedir = repo_dir(tal->descr, "ta", 0);
 
-	/* steal URI infromation from TAL */
+	/* steal URI information from TAL */
 	tr->urisz = tal->urisz;
 	tr->uri = tal->uri;
 	tal->urisz = 0;
