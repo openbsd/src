@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypconnect.2,v 1.1 2022/07/17 03:01:23 deraadt Exp $
+.\"	$OpenBSD: ypconnect.2,v 1.2 2022/07/17 05:48:26 jmc Exp $
 .\"
 .\" Copyright (c) 2022 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -52,10 +52,11 @@ will fail if:
 .Bl -tag -width Er
 .It Bq Er EAFNOSUPPORT
 The YP subsystem is not active.
-.It BQ Er EFTYPE
+.It Bq Er EFTYPE
 The YP binding file is strange.
 .It Bq Er EOWNERDEAD
-The YP binding file is not locked. YP subsystem is not active.
+The YP binding file is not locked.
+YP subsystem is not active.
 .It Bq Er EMFILE
 The per-process descriptor table is full.
 .It Bq Er ENFILE
