@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.64 2022/07/17 15:49:20 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.65 2022/07/17 15:51:06 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -401,7 +401,8 @@ tls13_ctx_new(int mode, SSL *ssl)
 	ctx->info_cb = tls13_legacy_info_cb;
 	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
 
-	ctx->middlebox_compat = 1;
+	if (!SSL_is_quic(ssl))
+		ctx->middlebox_compat = 1;
 
 	ssl->internal->tls13 = ctx;
 
