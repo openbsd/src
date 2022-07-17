@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.97 2022/06/03 13:11:04 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.98 2022/07/17 15:49:20 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -292,7 +292,7 @@ struct tls13_ctx {
 #define TLS13_PHH_LIMIT 100
 #endif
 
-struct tls13_ctx *tls13_ctx_new(int mode);
+struct tls13_ctx *tls13_ctx_new(int mode, SSL *ssl);
 void tls13_ctx_free(struct tls13_ctx *ctx);
 
 const EVP_AEAD *tls13_cipher_aead(const SSL_CIPHER *cipher);

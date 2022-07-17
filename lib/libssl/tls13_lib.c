@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.63 2022/02/05 14:54:10 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.64 2022/07/17 15:49:20 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -382,14 +382,16 @@ static const struct tls13_record_layer_callbacks rl_callbacks = {
 };
 
 struct tls13_ctx *
-tls13_ctx_new(int mode)
+tls13_ctx_new(int mode, SSL *ssl)
 {
 	struct tls13_ctx *ctx = NULL;
 
 	if ((ctx = calloc(sizeof(struct tls13_ctx), 1)) == NULL)
 		goto err;
 
+	ctx->hs = &ssl->s3->hs;
 	ctx->mode = mode;
+	ctx->ssl = ssl;
 
 	if ((ctx->rl = tls13_record_layer_new(&rl_callbacks, ctx)) == NULL)
 		goto err;
@@ -400,6 +402,8 @@ tls13_ctx_new(int mode)
 	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
 
 	ctx->middlebox_compat = 1;
+
+	ssl->internal->tls13 = ctx;
 
 	return ctx;
 

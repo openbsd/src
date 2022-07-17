@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.37 2022/02/06 16:08:14 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.38 2022/07/17 15:49:20 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -414,14 +414,10 @@ tls13_legacy_accept(SSL *ssl)
 	int ret;
 
 	if (ctx == NULL) {
-		if ((ctx = tls13_ctx_new(TLS13_HS_SERVER)) == NULL) {
+		if ((ctx = tls13_ctx_new(TLS13_HS_SERVER, ssl)) == NULL) {
 			SSLerror(ssl, ERR_R_INTERNAL_ERROR); /* XXX */
 			return -1;
 		}
-		ssl->internal->tls13 = ctx;
-		ctx->ssl = ssl;
-		ctx->hs = &ssl->s3->hs;
-
 		if (!tls13_server_init(ctx)) {
 			if (ERR_peek_error() == 0)
 				SSLerror(ssl, ERR_R_INTERNAL_ERROR); /* XXX */
@@ -450,14 +446,10 @@ tls13_legacy_connect(SSL *ssl)
 	int ret;
 
 	if (ctx == NULL) {
-		if ((ctx = tls13_ctx_new(TLS13_HS_CLIENT)) == NULL) {
+		if ((ctx = tls13_ctx_new(TLS13_HS_CLIENT, ssl)) == NULL) {
 			SSLerror(ssl, ERR_R_INTERNAL_ERROR); /* XXX */
 			return -1;
 		}
-		ssl->internal->tls13 = ctx;
-		ctx->ssl = ssl;
-		ctx->hs = &ssl->s3->hs;
-
 		if (!tls13_client_init(ctx)) {
 			if (ERR_peek_error() == 0)
 				SSLerror(ssl, ERR_R_INTERNAL_ERROR); /* XXX */
