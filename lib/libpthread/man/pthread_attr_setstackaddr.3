@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.12 2018/04/12 17:13:34 deraadt Exp $
+.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.13 2022/07/17 09:53:40 jsg Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: April 12 2018 $
+.Dd $Mdocdate: July 17 2022 $
 .Dt PTHREAD_ATTR_SETSTACKADDR 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@ The size of the storage is at least
 On
 .Ox
 the stack must have been allocated using
-.Xr mmap
+.Xr mmap 2
 with the
 .Va MAP_STACK
 attribute.
