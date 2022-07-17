@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: ypbind,v 1.9 2018/01/11 21:09:26 rpe Exp $
+# $OpenBSD: ypbind,v 1.10 2022/07/17 03:17:37 deraadt Exp $
 
 daemon="/usr/sbin/ypbind"
 
@@ -11,10 +11,6 @@ rc_reload=NO
 
 rc_pre() {
 	[[ -n $(domainname) ]]
-}
-
-rc_post() {
-	rm -f /var/run/ypbind.lock
 }
 
 rc_cmd $1
