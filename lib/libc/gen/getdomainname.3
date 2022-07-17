@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdomainname.3,v 1.27 2022/03/31 17:27:15 naddy Exp $
+.\"	$OpenBSD: getdomainname.3,v 1.28 2022/07/17 08:33:01 jsg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 17 2022 $
 .Dt GETDOMAINNAME 3
 .Os
 .Sh NAME
@@ -79,9 +79,9 @@ The caller tried to set the domain name and was not the superuser.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
+.Xr sysctl 2 ,
 .Xr gethostid 3 ,
 .Xr gethostname 3 ,
-.Xr sysctl 2 ,
 .Xr sysctl 8 ,
 .Xr yp 8
 .Sh HISTORY
