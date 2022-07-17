@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.26 2022/07/17 17:00:44 kn Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.27 2022/07/17 19:40:38 kn Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -381,7 +381,8 @@ TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
 		return -1;
 
 	/* Recompute SHA1 hash of certificate if necessary (side effect). */
-	X509_check_purpose(cert, -1, 0);
+	if (X509_check_purpose(cert, -1, 0) == -1)
+		return -1;
 
 	/* Look for cert in the cert_ids vector. */
 	for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i) {
@@ -416,6 +417,8 @@ TS_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert)
 
 		if (cid->hash_alg != NULL)
 			md = EVP_get_digestbyobj(cid->hash_alg->algorithm);
+		if (md == NULL)
+			return -1;
 
 		if (!X509_digest(cert, md, cert_digest, &len))
 			return -1;
