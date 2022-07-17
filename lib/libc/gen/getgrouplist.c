@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.28 2019/07/02 15:54:05 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.29 2022/07/17 03:10:47 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -149,9 +149,6 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 	int *skipyp = &foundyp;
 	extern struct group *_getgrent_yp(int *);
 	struct group *grp;
-#ifdef YP
-	int saved_errno;
-#endif
 
 	/*
 	 * install primary group
@@ -161,15 +158,6 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 		return (-1);
 	}
 	groups[ngroups++] = agroup;
-
-#ifdef YP
-	/*
-	 * Hint to the kernel that a passwd database operation is happening.
-	 */
-	saved_errno = errno;
-	(void)access("/var/run/ypbind.lock", R_OK);
-	errno = saved_errno;
-#endif
 
 	/*
 	 * Scan the group file to find additional groups.
