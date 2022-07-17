@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.65 2022/07/02 16:01:56 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.66 2022/07/17 14:57:05 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1904,15 +1904,14 @@ test_tlsext_sni_server(void)
 
 
 /*
- * QUIC transport parameters extenstion - RFC 90210 :)
+ * QUIC transport parameters extension - RFC 90210 :)
  */
 
 #define TEST_QUIC_TRANSPORT_DATA "0123456789abcdef"
 
 static unsigned char tlsext_quic_transport_data[] = {
-	0x00, 0x10, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
-	0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64,
-	0x65, 0x66,
+	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+	0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 };
 
 static int
@@ -1959,9 +1958,17 @@ test_tlsext_quic_transport_parameters_client(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	ssl->s3->hs.negotiated_tls_version = TLS1_3_VERSION;
 
-	if (!tlsext_quic_transport_parameters_client_needs(ssl,
+	if (tlsext_quic_transport_parameters_client_needs(ssl,
 	    SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need QUIC\n");
+		goto err;
+	}
+
+	ssl->quic_method = ssl->method; /* XXX */
+
+	if (!tlsext_quic_transport_parameters_client_needs(ssl,
+	    SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should need QUIC\n");
 		goto err;
 	}
 
@@ -2060,7 +2067,8 @@ test_tlsext_quic_transport_parameters_server(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if (tlsext_quic_transport_parameters_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+	if (tlsext_quic_transport_parameters_server_needs(ssl,
+	    SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need QUIC\n");
 		goto err;
 	}
@@ -2071,13 +2079,22 @@ test_tlsext_quic_transport_parameters_server(void)
 		goto err;
 	}
 
-	if (!tlsext_quic_transport_parameters_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+	if (tlsext_quic_transport_parameters_server_needs(ssl,
+	    SSL_TLSEXT_MSG_EE)) {
+		FAIL("server should not need QUIC\n");
+		goto err;
+	}
+
+	ssl->quic_method = ssl->method; /* XXX */
+
+	if (!tlsext_quic_transport_parameters_server_needs(ssl,
+	    SSL_TLSEXT_MSG_EE)) {
 		FAIL("server should need QUIC\n");
 		goto err;
 	}
 
 	if (!tlsext_quic_transport_parameters_server_build(ssl,
-	    SSL_TLSEXT_MSG_SH, &cbb)) {
+	    SSL_TLSEXT_MSG_EE, &cbb)) {
 		FAIL("server failed to build QUIC\n");
 		goto err;
 	}
@@ -2086,9 +2103,8 @@ test_tlsext_quic_transport_parameters_server(void)
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_quic_transport_data)) {
-		FAIL("got server QUIC with length %zu, "
-		    "want length %zu\n", dlen,
-		    sizeof(tlsext_quic_transport_data));
+		FAIL("got server QUIC with length %zu, want length %zu\n",
+		    dlen, sizeof(tlsext_quic_transport_data));
 		goto err;
 	}
 
@@ -2105,14 +2121,15 @@ test_tlsext_quic_transport_parameters_server(void)
 	CBS_init(&cbs, tlsext_quic_transport_data,
 	    sizeof(tlsext_quic_transport_data));
 
+	ssl->quic_method = NULL;
+
 	if (tlsext_quic_transport_parameters_client_parse(ssl,
-	    SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
+	    SSL_TLSEXT_MSG_EE, &cbs, &alert)) {
 		FAIL("QUIC parse should have failed!\n");
 		goto err;
 	}
 
-	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
-	ssl->s3->hs.negotiated_tls_version = TLS1_3_VERSION;
+	ssl->quic_method = ssl->method; /* XXX */
 
 	if (!tlsext_quic_transport_parameters_client_parse(ssl,
 	    SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
