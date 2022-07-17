@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.119 2022/07/02 16:31:04 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.120 2022/07/17 14:41:27 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2245,7 +2245,7 @@ static const struct tls_extension tls_extensions[] = {
 #endif /* OPENSSL_NO_SRTP */
 	{
 		.type = TLSEXT_TYPE_quic_transport_parameters,
-		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_quic_transport_parameters_client_needs,
 			.build = tlsext_quic_transport_parameters_client_build,
