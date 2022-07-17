@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.75 2022/07/15 16:59:49 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.76 2022/07/17 03:12:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -58,7 +58,6 @@
 
 #define SERVERSDIR	"/etc/yp"
 #define BINDINGDIR	"/var/yp/binding"
-#define YPBINDLOCK	"/var/run/ypbind.lock"
 
 struct _dom_binding {
 	struct _dom_binding *dom_pnext;
@@ -339,7 +338,7 @@ main(int argc, char *argv[])
 	char path[PATH_MAX];
 	struct sockaddr_in sin;
 	struct pollfd *pfd = NULL;
-	int width = 0, nready, lockfd, lsock;
+	int width = 0, nready, lsock;
 	socklen_t len;
 	int evil = 0, one = 1;
 	DIR *dirp;
@@ -376,23 +375,6 @@ main(int argc, char *argv[])
 	} else {
 		(void)mkdir(BINDINGDIR, 0755);
 	}
-
-#ifdef O_SHLOCK
-	if ((lockfd = open(YPBINDLOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC,
-	    0644)) == -1) {
-		fprintf(stderr, "ypbind: cannot create %s\n", YPBINDLOCK);
-		exit(1);
-	}
-#else
-	if ((lockfd = open(YPBINDLOCK, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
-		fprintf(stderr, "ypbind: cannot create %s.\n", YPBINDLOCK);
-		exit(1);
-	}
-	flock(lockfd, LOCK_SH);
-#endif
-
-	if (fchmod(lockfd, 0644) == -1)
-		err(1, "fchmod");
 
 	(void)pmap_unset(YPBINDPROG, YPBINDVERS);
 
@@ -1036,24 +1018,12 @@ rpc_received(char *dom, struct sockaddr_in *raddrp, int force)
 
 	snprintf(path, sizeof path, "%s/%s.%d", BINDINGDIR,
 	    ypdb->dom_domain, (int)ypdb->dom_vers);
-#ifdef O_SHLOCK
 	if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644)) == -1) {
 		(void)mkdir(BINDINGDIR, 0755);
 		if ((fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC,
 		    0644)) == -1)
 			return;
 	}
-#else
-	if ((fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1) {
-		(void)mkdir(BINDINGDIR, 0755);
-		if ((fd = open(path, O_CREAT|O_RDWR|O_TRUNC, 0644)) == -1)
-			return;
-	}
-	flock(fd, LOCK_SH);
-#endif
-
-	if (fchmod(fd, 0644) == -1)
-		err(1, "fchmod");
 
 	/*
 	 * ok, if BINDINGDIR exists, and we can create the binding file,
