@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.16 2022/06/26 07:15:49 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.17 2022/07/17 09:14:26 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6
@@ -30,6 +30,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Apple iMac (24-inch, M1, 2021)
 		Apple MacBook Pro (14-inch, M1 Pro/Max, 2021)
 		Apple MacBook Pro (16-inch, M1 Pro/Max, 2021)
+		Apple Studio (M1 Max/Ultra, 2022)
 	Broadcom BCM2837/BCM2711
 		Raspberry Pi 3
 		Raspberry Pi 3 Model B+
