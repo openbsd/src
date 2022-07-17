@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.161 2021/12/23 18:50:32 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.162 2022/07/17 03:01:22 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -198,4 +198,5 @@ MAN+=	__get_tcb.2 __thrsigdivert.2 __thrsleep.2 _exit.2 accept.2 \
 	sigprocmask.2 sigreturn.2 sigsuspend.2 socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 symlink.2 \
 	sync.2 sysarch.2 syscall.2 sysctl.2 thrkill.2 truncate.2 \
-	umask.2 unlink.2 unveil.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
+	umask.2 unlink.2 unveil.2 utimes.2 utrace.2 vfork.2 wait.2 write.2 \
+	ypconnect.2
