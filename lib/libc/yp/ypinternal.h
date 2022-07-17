@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.12 2022/07/17 03:04:27 deraadt Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.13 2022/07/17 03:08:58 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -42,7 +42,6 @@ struct dom_binding {
 };
 
 #define BINDINGDIR	"/var/yp/binding"
-#define YPBINDLOCK	"/var/run/ypbind.lock"
 
 __BEGIN_HIDDEN_DECLS
 extern struct dom_binding *_ypbindlist;

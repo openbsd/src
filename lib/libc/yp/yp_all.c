@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.13 2015/09/28 14:51:04 deraadt Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.14 2022/07/17 03:08:58 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -26,10 +26,12 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
@@ -96,47 +98,58 @@ fail:
 }
 
 int
-yp_all(const char *indomain, const char *inmap, struct ypall_callback *incallback)
+yp_all(const char *dom, const char *inmap, struct ypall_callback *incallback)
 {
 	struct ypreq_nokey yprnk;
-	struct dom_binding *ysd;
+	struct dom_binding *ypbinding;
 	struct timeval  tv;
-	struct sockaddr_in clnt_sin;
-	CLIENT         *clnt;
+	int connected = 1;
 	u_long		status;
-	int             clnt_sock;
-	int		r = 0;
+	int		r = 0, s;
 
-	if (indomain == NULL || *indomain == '\0' ||
-	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	if (dom == NULL || strlen(dom) == 0)
+		return YPERR_BADARGS;
+
+	if (strlen(dom) > YPMAXDOMAIN || inmap == NULL ||
 	    *inmap == '\0' || strlen(inmap) > YPMAXMAP || incallback == NULL)
 		return YPERR_BADARGS;
 
-	if (_yp_dobind(indomain, &ysd) != 0)
-		return YPERR_DOMAIN;
+again:
+	s = ypconnect(SOCK_STREAM);
+	if (s == -1)
+		return YPERR_DOMAIN;	/* YP not running */
+
+	ypbinding = calloc(1, sizeof *ypbinding);
+	if (ypbinding == NULL) {
+		close(s);
+		return YPERR_RESRC;
+	}
+	ypbinding->dom_socket = s;
+	ypbinding->dom_server_addr.sin_port = -1; /* don't consult portmap */
+
+	ypbinding->dom_client = clnttcp_create(&ypbinding->dom_server_addr,
+	    YPPROG, YPVERS, &ypbinding->dom_socket, 0, 0);
+	if (ypbinding->dom_client == NULL) {
+		close(ypbinding->dom_socket);
+		free(ypbinding);
+		printf("clnttcp_create failed\n");
+		goto again;
+	}
+	clnt_control(ypbinding->dom_client, CLSET_CONNECTED, &connected);
 
 	tv.tv_sec = _yplib_timeout;
 	tv.tv_usec = 0;
-	clnt_sock = RPC_ANYSOCK;
-	clnt_sin = ysd->dom_server_addr;
-	clnt_sin.sin_port = 0;
-	clnt = clnttcp_create(&clnt_sin, YPPROG, YPVERS, &clnt_sock, 0, 0);
-	if (clnt == NULL) {
-		printf("clnttcp_create failed\n");
-		r = YPERR_PMAP;
-		goto out;
-	}
-	yprnk.domain = (char *)indomain;
+	yprnk.domain = (char *)dom;
 	yprnk.map = (char *)inmap;
 	ypresp_allfn = incallback->foreach;
 	ypresp_data = (void *) incallback->data;
-
-	(void) clnt_call(clnt, YPPROC_ALL,
+	(void) clnt_call(ypbinding->dom_client, YPPROC_ALL,
 	    xdr_ypreq_nokey, &yprnk, _xdr_ypresp_all_seq, &status, tv);
-	clnt_destroy(clnt);
+	close(ypbinding->dom_socket);
+	clnt_destroy(ypbinding->dom_client);
+	free(ypbinding);
+
 	if (status != YP_FALSE)
 		r = ypprot_err(status);
-out:
-	_yp_unbind(ysd);
 	return r;
 }
