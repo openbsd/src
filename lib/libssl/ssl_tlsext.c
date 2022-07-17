@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.120 2022/07/17 14:41:27 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.121 2022/07/17 14:54:10 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1950,30 +1950,21 @@ tlsext_psk_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 }
 
 /*
- * QUIC transport parameters extension.
+ * QUIC transport parameters extension - RFC 9001 section 8.2.
  */
 
 int
 tlsext_quic_transport_parameters_client_needs(SSL *s, uint16_t msg_type)
 {
-	return (s->internal->quic_transport_params_len > 0 &&
-	    s->s3->hs.our_max_tls_version >= TLS1_3_VERSION);
+	return SSL_is_quic(s) && s->internal->quic_transport_params_len > 0;
 }
 
 int
 tlsext_quic_transport_parameters_client_build(SSL *s, uint16_t msg_type,
     CBB *cbb)
 {
-	CBB contents;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &contents))
-		return 0;
-
-	if (!CBB_add_bytes(&contents, s->internal->quic_transport_params,
+	if (!CBB_add_bytes(cbb, s->internal->quic_transport_params,
 	    s->internal->quic_transport_params_len))
-		return 0;
-
-	if (!CBB_flush(cbb))
 		return 0;
 
 	return 1;
@@ -1983,19 +1974,15 @@ int
 tlsext_quic_transport_parameters_client_parse(SSL *s, uint16_t msg_type,
     CBS *cbs, int *alert)
 {
-	CBS transport_data;
-
-	/* QUIC requires TLS 1.3. */
-	if (ssl_effective_tls_version(s) < TLS1_3_VERSION) {
+	if (!SSL_is_quic(s)) {
 		*alert = SSL_AD_UNSUPPORTED_EXTENSION;
 		return 0;
 	}
 
-	if (!CBS_get_u16_length_prefixed(cbs, &transport_data))
-		return 0;
-
-	if (!CBS_stow(&transport_data, &s->s3->peer_quic_transport_params,
+	if (!CBS_stow(cbs, &s->s3->peer_quic_transport_params,
 	    &s->s3->peer_quic_transport_params_len))
+		return 0;
+	if (!CBS_skip(cbs, s->s3->peer_quic_transport_params_len))
 		return 0;
 
 	return 1;
@@ -2004,23 +1991,15 @@ tlsext_quic_transport_parameters_client_parse(SSL *s, uint16_t msg_type,
 int
 tlsext_quic_transport_parameters_server_needs(SSL *s, uint16_t msg_type)
 {
-	return s->internal->quic_transport_params_len > 0;
+	return SSL_is_quic(s) && s->internal->quic_transport_params_len > 0;
 }
 
 int
 tlsext_quic_transport_parameters_server_build(SSL *s, uint16_t msg_type,
     CBB *cbb)
 {
-	CBB contents;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &contents))
-		return 0;
-
-	if (!CBB_add_bytes(&contents, s->internal->quic_transport_params,
+	if (!CBB_add_bytes(cbb, s->internal->quic_transport_params,
 	    s->internal->quic_transport_params_len))
-		return 0;
-
-	if (!CBB_flush(cbb))
 		return 0;
 
 	return 1;
@@ -2030,26 +2009,15 @@ int
 tlsext_quic_transport_parameters_server_parse(SSL *s, uint16_t msg_type,
     CBS *cbs, int *alert)
 {
-	CBS transport_data;
-
-	/*
-	 * Ignore this extension if we don't have configured quic transport data
-	 * or if we are not TLS 1.3.
-	 */
-	if (s->internal->quic_transport_params_len == 0 ||
-	    ssl_effective_tls_version(s) < TLS1_3_VERSION) {
-		if (!CBS_skip(cbs, CBS_len(cbs))) {
-			*alert = SSL_AD_INTERNAL_ERROR;
-			return 0;
-		}
-		return 1;
+	if (!SSL_is_quic(s)) {
+		*alert = SSL_AD_UNSUPPORTED_EXTENSION;
+		return 0;
 	}
 
-	if (!CBS_get_u16_length_prefixed(cbs, &transport_data))
-		return 0;
-
-	if (!CBS_stow(&transport_data, &s->s3->peer_quic_transport_params,
+	if (!CBS_stow(cbs, &s->s3->peer_quic_transport_params,
 	    &s->s3->peer_quic_transport_params_len))
+		return 0;
+	if (!CBS_skip(cbs, s->s3->peer_quic_transport_params_len))
 		return 0;
 
 	return 1;
