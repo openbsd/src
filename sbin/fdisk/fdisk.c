@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.145 2022/05/12 11:04:27 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.146 2022/07/17 12:53:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,7 +56,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s "
 	    "[-evy] [-A | -g | -i | -u] [-b blocks[@offset[:type]]]\n"
-	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f mbrfile] "
+	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f file] "
 	    "disk\n", __progname);
 	exit(1);
 }
