@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.63 2022/02/25 18:24:01 tedu Exp $
+.\" $OpenBSD: pledge.2,v 1.64 2022/07/17 03:12:55 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 25 2022 $
+.Dd $Mdocdate: July 17 2022 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -395,16 +395,9 @@ for the
 .Xr getgrouplist 3 ,
 and
 .Xr initgroups 3
-family of functions.
-They may also need to operate in a
+family of functions, including lookups via the
 .Xr yp 8
-environment, so a successful
-.Xr open 2
-of
-.Pa /var/run/ypbind.lock
-enables
-.Cm inet
-operations.
+protocol for YP and LDAP databases.
 .It Cm sendfd
 Allows sending of file descriptors using
 .Xr sendmsg 2 .
