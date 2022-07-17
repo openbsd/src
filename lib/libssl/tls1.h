@@ -1,4 +1,4 @@
-/* $OpenBSD: tls1.h,v 1.55 2022/07/13 14:28:09 tb Exp $ */
+/* $OpenBSD: tls1.h,v 1.56 2022/07/17 14:39:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -255,9 +255,6 @@ extern "C" {
 /* ExtensionType value from RFC 7685. */
 #define TLSEXT_TYPE_padding	21
 
-/* ExtensionType value from draft-ietf-quic-tls */
-#define TLSEXT_TYPE_quic_transport_parameters 26
-
 /* ExtensionType value from RFC 4507. */
 #define TLSEXT_TYPE_session_ticket		35
 
@@ -273,6 +270,11 @@ extern "C" {
 #define TLSEXT_TYPE_post_handshake_auth		49
 #define TLSEXT_TYPE_signature_algorithms_cert	50
 #define TLSEXT_TYPE_key_share			51
+#endif
+
+/* ExtensionType value from RFC 9001 section 8.2 */
+#if defined(LIBRESSL_HAS_QUIC) || defined(LIBRESSL_INTERNAL)
+#define TLSEXT_TYPE_quic_transport_parameters	57
 #endif
 
 /*
