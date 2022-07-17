@@ -1736,6 +1736,7 @@
 ./usr/share/man/man2/vfork.2
 ./usr/share/man/man2/wait.2
 ./usr/share/man/man2/write.2
+./usr/share/man/man2/ypconnect.2
 ./usr/share/man/man3/ACCESS_DESCRIPTION_new.3
 ./usr/share/man/man3/AES_encrypt.3
 ./usr/share/man/man3/ASN1_BIT_STRING_num_asc.3
