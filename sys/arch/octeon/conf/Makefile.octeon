@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.60 2021/12/17 14:59:22 patrick Exp $
+#	$OpenBSD: Makefile.octeon,v 1.61 2022/07/18 12:48:35 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -34,7 +34,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-pointer-sign \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-mno-abicalls ${ABI} -msoft-float -G 0
+CMACHFLAGS=	-march=mips64r2 -mno-abicalls ${ABI} -msoft-float -G 0
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
