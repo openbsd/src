@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.115 2022/07/17 12:53:19 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.116 2022/07/18 13:46:19 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2022 $
+.Dd $Mdocdate: July 18 2022 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -369,20 +369,19 @@ is not provided, sizes are shown in sectors.
 .It Cm write
 Writes the partition table to disk.
 .It Cm exit
+Discards outstanding changes and exits the current edit level.
+If the edit level is 1,
+.Nm
+terminates.
+.It Cm quit
 Writes outstanding changes to disk and exits the current edit
 level.
 If the edit level is 1,
 .Nm
 terminates.
-.It Cm quit
-Discards outstanding changes and exits the current edit level.
-If the edit level is 1,
-.Nm
-terminates.
 .It Cm abort
-Terminates
-.Nm
-without saving outstanding changes.
+Discards outstanding changes and terminates
+.Nm .
 .El
 .Sh FILES
 .Bl -tag -width /usr/mdec/mbr -compact
