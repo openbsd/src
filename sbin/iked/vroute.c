@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.16 2022/03/16 18:17:20 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.17 2022/07/18 19:32:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -133,7 +133,8 @@ vroute_rtmsg_cb(int fd, short events, void *arg)
 
 	switch(rtm->rtm_type) {
 	case RTM_PROPOSAL:
-		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
+		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT &&
+		    ivr->ivr_dns) {
 			log_debug("%s: got solicit", __func__);
 			vroute_dodns(env, (struct sockaddr *)&ivr->ivr_dns->vd_addr, 1,
 			    ivr->ivr_dns->vd_ifidx);
