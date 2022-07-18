@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.95 2022/07/11 16:46:41 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.96 2022/07/18 09:42:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -331,8 +331,12 @@ prefix_set_dmetric(struct prefix *pp, struct prefix *np)
 			    PREFIX_DMETRIC_BEST : PREFIX_DMETRIC_INVALID;
 		else
 			np->dmetric = prefix_cmp(pp, np, &testall);
-		if (np->dmetric < 0)
-			fatalx("bad dmetric in decision process");
+		if (np->dmetric < 0) {
+			struct bgpd_addr addr;
+			pt_getaddr(np->pt, &addr);
+			log_debug("bad dmetric in decision process: %s/%u",
+			    log_addr(&addr), np->pt->prefixlen);
+		}
 	}
 }
 
