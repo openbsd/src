@@ -1,4 +1,4 @@
-/*	$OpenBSD: pledge.h,v 1.44 2022/07/17 04:29:37 deraadt Exp $	*/
+/*	$OpenBSD: pledge.h,v 1.45 2022/07/18 17:45:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -69,7 +69,6 @@
  * to track program behaviours which have been observed.
  */
 #define PLEDGE_USERSET	0x0fffffffffffffffULL
-#define PLEDGE_YPACTIVE	0x8000000000000000ULL	/* YP use detected and allowed */
 
 #ifdef PLEDGENAMES
 static const struct {
