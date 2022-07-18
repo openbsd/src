@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.430 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.431 2022/07/18 13:56:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3506,11 +3506,9 @@ imsg_ctl_parent(int type, uint32_t peerid, pid_t pid, void *data,
 int
 imsg_ctl_rde(int type, pid_t pid, void *data, uint16_t datalen)
 {
-	if (ibuf_rde_ctl == NULL) {
-		log_warnx("Can't send message %u to RDE, ctl pipe closed",
-		    type);
+	if (ibuf_rde_ctl == NULL)
 		return (0);
-	}
+
 	/*
 	 * Use control socket to talk to RDE to bypass the queue of the
 	 * regular imsg socket.
@@ -3521,10 +3519,8 @@ imsg_ctl_rde(int type, pid_t pid, void *data, uint16_t datalen)
 int
 imsg_rde(int type, uint32_t peerid, void *data, uint16_t datalen)
 {
-	if (ibuf_rde == NULL) {
-		log_warnx("Can't send message %u to RDE, pipe closed", type);
+	if (ibuf_rde == NULL)
 		return (0);
-	}
 
 	return (imsg_compose(ibuf_rde, type, peerid, 0, -1, data, datalen));
 }
