@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.289 2022/07/18 17:45:46 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.290 2022/07/18 18:02:27 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -34,6 +34,7 @@
 #include <sys/syslog.h>
 #include <sys/ktrace.h>
 #include <sys/acct.h>
+#include <sys/swap.h>
 
 #include <sys/ioctl.h>
 #include <sys/termios.h>
@@ -363,7 +364,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 
 	[SYS_ypconnect] = PLEDGE_GETPW,
 
-	[SYS_swapctl] = PLEDGE_VMINFO,	/* XXX should limit to "get" operations */
+	[SYS_swapctl] = PLEDGE_VMINFO,
 };
 
 static const struct {
@@ -1539,11 +1540,20 @@ pledge_flock(struct proc *p)
 }
 
 int
-pledge_swapctl(struct proc *p)
+pledge_swapctl(struct proc *p, int cmd)
 {
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	return (EPERM);
+
+	if (p->p_p->ps_pledge & PLEDGE_VMINFO) {
+		switch (cmd) {
+		case SWAP_NSWAP:
+		case SWAP_STATS:
+			return (0);
+		}
+	}
+
+	return pledge_fail(p, EPERM, PLEDGE_VMINFO);
 }
 
 /* bsearch over pledgereq. return flags value if found, 0 else */

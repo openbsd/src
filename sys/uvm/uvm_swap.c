@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.160 2022/07/11 11:29:11 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.161 2022/07/18 18:02:27 jca Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -637,6 +637,9 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 
 	misc = SCARG(uap, misc);
 
+	if ((error = pledge_swapctl(p, SCARG(uap, cmd))))
+		return error;
+
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
@@ -696,7 +699,7 @@ sys_swapctl(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* all other requests require superuser privs.   verify. */
-	if ((error = suser(p)) || (error = pledge_swapctl(p)))
+	if ((error = suser(p)))
 		goto out;
 
 	/*
