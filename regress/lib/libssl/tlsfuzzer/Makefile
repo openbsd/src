@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2021/08/30 17:34:02 tb Exp $
+#	$OpenBSD: Makefile,v 1.5 2022/07/18 09:15:08 tb Exp $
 
 .if !exists(/usr/local/share/tlsfuzzer)
 regress:
@@ -18,7 +18,7 @@ CLEANFILES	+= localhost.key localhost.crt
 
 PORT		?= 4433
 SLOW		= -s
-TIMING		= # -t
+TIMING		= -t
 VERBOSE		= # -v
 
 regress-tlsfuzzer: certs
