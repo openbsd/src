@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.116 2022/07/18 13:46:19 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.117 2022/07/18 15:06:22 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -300,6 +300,8 @@ If
 .Cm gpt
 is specified a GPT partition table is initialized, including the
 protective MBR.
+.It Cm setpid Ar #
+Sets the identifier of the partition table entry.
 .It Cm edit Ar #
 Edit an entry in the partition table.
 The offset and size of the entry may be specified in CHS mode (MBR only),
@@ -346,8 +348,6 @@ Not available when editing a GPT.
 Selects an extended partition entry, increasing the edit level by 1.
 .Pp
 Not available when editing a GPT.
-.It Cm setpid Ar #
-Sets the identifier of the partition table entry.
 .It Cm swap Ar # Ar #
 Swaps two partition entries.
 .It Cm print Op Ar unit

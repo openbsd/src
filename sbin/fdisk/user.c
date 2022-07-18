@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.82 2022/07/10 20:34:31 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.83 2022/07/18 15:06:22 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,25 +39,25 @@ struct cmd {
 };
 
 const struct cmd		cmd_table[] = {
-	{"help",   1, Xhelp,   "Command help list"},
-	{"manual", 1, Xmanual, "Show entire OpenBSD man page for fdisk"},
-	{"reinit", 1, Xreinit, "Re-initialize loaded MBR (to defaults)"},
-	{"setpid", 1, Xsetpid, "Set the identifier of a given table entry"},
-	{"edit",   1, Xedit,   "Edit given table entry"},
-	{"flag",   1, Xflag,   "Flag given table entry as bootable"},
-	{"update", 0, Xupdate, "Update machine code in loaded MBR"},
-	{"select", 0, Xselect, "Select extended partition table entry MBR"},
-	{"swap",   1, Xswap,   "Swap two partition entries"},
-	{"print",  1, Xprint,  "Print loaded MBR partition table"},
-	{"write",  1, Xwrite,  "Write loaded MBR to disk"},
-	{"exit",   1, Xexit,   "Exit edit of current MBR, without saving changes"},
-	{"quit",   1, Xquit,   "Quit edit of current MBR, saving current changes"},
-	{"abort",  1, Xabort,  "Abort program without saving current changes"},
+	{"help",   1, Xhelp,   "Display summary of available commands"},
+	{"manual", 1, Xmanual, "Display fdisk man page"},
+	{"reinit", 1, Xreinit, "Initialize the partition table"},
+	{"setpid", 1, Xsetpid, "Set identifier of table entry"},
+	{"edit",   1, Xedit,   "Edit table entry"},
+	{"flag",   1, Xflag,   "Set flag value of table entry"},
+	{"update", 0, Xupdate, "Update MBR bootcode"},
+	{"select", 0, Xselect, "Select MBR extended table entry"},
+	{"swap",   1, Xswap,   "Swap two table entries"},
+	{"print",  1, Xprint,  "Print partition table"},
+	{"write",  1, Xwrite,  "Write partition table to disk"},
+	{"exit",   1, Xexit,   "Discard changes and exit edit level"},
+	{"quit",   1, Xquit,   "Save changes and exit edit level"},
+	{"abort",  1, Xabort,  "Discard changes and terminate fdisk"},
 };
 
 int			modified;
 
-int			ask_cmd(const int, char **);
+int			ask_cmd(char **);
 
 void
 USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
@@ -81,7 +81,10 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 		if (gh.gh_sig == GPTSIGNATURE && editlevel > 1)
 			break;	/* 'reinit gpt'. Unwind recursion! */
 
-		i = ask_cmd(editlevel, &args);
+		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "",
+		    editlevel);
+		fflush(stdout);
+		i = ask_cmd(&args);
 		if (i == -1)
 			continue;
 
@@ -160,32 +163,23 @@ USER_print_disk(const int verbosity)
 void
 USER_help(void)
 {
-	char			 help[HELPBUFSZ];
-	char			*mbrstr;
-	int			 i;
+	unsigned int		i;
 
 	for (i = 0; i < nitems(cmd_table); i++) {
-		strlcpy(help, cmd_table[i].cmd_help, sizeof(help));
-		if (gh.gh_sig == GPTSIGNATURE) {
-			if (cmd_table[i].cmd_gpt == 0)
+		if (gh.gh_sig == GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)
 				continue;
-			mbrstr = strstr(help, "MBR");
-			if (mbrstr)
-				memcpy(mbrstr, "GPT", 3);
-		}
-		printf("\t%s\t\t%s\n", cmd_table[i].cmd_name, help);
+		printf("\t%s\t\t%s\n", cmd_table[i].cmd_name,
+		    cmd_table[i].cmd_help);
 	}
 }
 
 int
-ask_cmd(const int editlevel, char **arg)
+ask_cmd(char **arg)
 {
 	static char		 lbuf[LINEBUFSZ];
 	char			*cmd;
 	unsigned int		 i;
 
-	printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
-	fflush(stdout);
 	string_from_line(lbuf, sizeof(lbuf), TRIMMED);
 
 	*arg = lbuf;
