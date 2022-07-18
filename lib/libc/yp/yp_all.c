@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.14 2022/07/17 03:08:58 deraadt Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.15 2022/07/18 02:31:19 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -132,7 +132,7 @@ again:
 	if (ypbinding->dom_client == NULL) {
 		close(ypbinding->dom_socket);
 		free(ypbinding);
-		printf("clnttcp_create failed\n");
+		clnt_pcreateerror("clnttcp_create");
 		goto again;
 	}
 	clnt_control(ypbinding->dom_client, CLSET_CONNECTED, &connected);
