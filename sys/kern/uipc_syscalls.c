@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.198 2022/07/18 03:02:05 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.199 2022/07/18 04:42:37 deraadt Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1331,7 +1331,7 @@ sys_ypconnect(struct proc *p, void *v, register_t *retval)
 	} __packed data;
 	struct sockaddr_in ypsin;
 
-	if (!domainname[0])
+	if (!domainname[0] || strchr(domainname, '/'))
 		return EAFNOSUPPORT;
 
 	switch (SCARG(uap, type)) {
