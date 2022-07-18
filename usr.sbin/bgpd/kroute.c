@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.272 2022/07/14 12:56:37 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.273 2022/07/18 23:09:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -1224,7 +1224,7 @@ kr_show_route(struct imsg *imsg)
 static void
 kr_send_dependon(struct kif *kif)
 {
-	struct session_dependon sdon = { 0 };
+	struct session_dependon sdon = { {0} };
 
 	strlcpy(sdon.ifname, kif->ifname, sizeof(sdon.ifname));
 	sdon.depend_state = kif->depend_state;
