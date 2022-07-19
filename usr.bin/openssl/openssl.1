@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.138 2022/07/14 08:08:26 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.139 2022/07/19 16:08:09 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 14 2022 $
+.Dd $Mdocdate: July 19 2022 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -911,6 +911,10 @@ Specify the directories to process.
 .Sh CIPHERS
 .Nm openssl ciphers
 .Op Fl hsVv
+.Op Fl tls1
+.Op Fl tls1_1
+.Op Fl tls1_2
+.Op Fl tls1_3
 .Op Ar control
 .Pp
 The
@@ -932,6 +936,11 @@ The options are as follows:
 Print a brief usage message.
 .It Fl s
 Only list ciphers that are supported by the TLS method.
+.It Fl tls1 | tls1_1 | tls1_2 | tls1_3
+In combination with the
+.Fl s
+option, list the ciphers which could be used
+if the specified protocol version were negotiated.
 .It Fl V
 Verbose.
 List ciphers with cipher suite code in hex format,
