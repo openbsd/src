@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.554 2022/07/11 17:08:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.555 2022/07/19 10:26:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3031,7 +3031,7 @@ rde_send_kroute_flush(struct rib *rib)
 void
 rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 {
-	struct kroute_full	 kr;
+	struct kroute_full	 kf;
 	struct prefix		*p;
 	struct l3vpn		*vpn;
 	enum imsg_type		 type;
@@ -3052,21 +3052,21 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 		p = new;
 	}
 
-	bzero(&kr, sizeof(kr));
-	pt_getaddr(p->pt, &kr.prefix);
-	kr.prefixlen = p->pt->prefixlen;
+	bzero(&kf, sizeof(kf));
+	pt_getaddr(p->pt, &kf.prefix);
+	kf.prefixlen = p->pt->prefixlen;
 	if (type == IMSG_KROUTE_CHANGE) {
 		if (prefix_nhflags(p) == NEXTHOP_REJECT)
-			kr.flags |= F_REJECT;
+			kf.flags |= F_REJECT;
 		if (prefix_nhflags(p) == NEXTHOP_BLACKHOLE)
-			kr.flags |= F_BLACKHOLE;
-		memcpy(&kr.nexthop, &prefix_nexthop(p)->true_nexthop,
-		    sizeof(kr.nexthop));
-		strlcpy(kr.label, rtlabel_id2name(prefix_aspath(p)->rtlabelid),
-		    sizeof(kr.label));
+			kf.flags |= F_BLACKHOLE;
+		memcpy(&kf.nexthop, &prefix_nexthop(p)->true_nexthop,
+		    sizeof(kf.nexthop));
+		strlcpy(kf.label, rtlabel_id2name(prefix_aspath(p)->rtlabelid),
+		    sizeof(kf.label));
 	}
 
-	switch (kr.prefix.aid) {
+	switch (kf.prefix.aid) {
 	case AID_VPN_IPv4:
 	case AID_VPN_IPv6:
 		if (!(rib->flags & F_RIB_LOCAL))
@@ -3080,20 +3080,20 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			 * is chosen
 			 */
 			if (type == IMSG_KROUTE_CHANGE)
-				memcpy(&kr.nexthop,
+				memcpy(&kf.nexthop,
 				    &prefix_nexthop(p)->exit_nexthop,
-				    sizeof(kr.nexthop));
+				    sizeof(kf.nexthop));
 			/* XXX not ideal but this will change */
-			kr.ifindex = if_nametoindex(vpn->ifmpe);
+			kf.ifindex = if_nametoindex(vpn->ifmpe);
 			if (imsg_compose(ibuf_main, type, vpn->rtableid, 0, -1,
-			    &kr, sizeof(kr)) == -1)
+			    &kf, sizeof(kf)) == -1)
 				fatal("%s %d imsg_compose error", __func__,
 				    __LINE__);
 		}
 		break;
 	default:
 		if (imsg_compose(ibuf_main, type, rib->rtableid, 0, -1,
-		    &kr, sizeof(kr)) == -1)
+		    &kf, sizeof(kf)) == -1)
 			fatal("%s %d imsg_compose error", __func__, __LINE__);
 		break;
 	}
@@ -4237,7 +4237,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct prefix		*p;
 	struct rde_aspath	*asp;
-	struct kroute_full	 k;
+	struct kroute_full	 kf;
 	struct bgpd_addr	 addr;
 	struct rde_dump_ctx	*ctx = ptr;
 
@@ -4247,20 +4247,20 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			continue;
 		pt_getaddr(p->pt, &addr);
 
-		bzero(&k, sizeof(k));
-		memcpy(&k.prefix, &addr, sizeof(k.prefix));
+		bzero(&kf, sizeof(kf));
+		memcpy(&kf.prefix, &addr, sizeof(kf.prefix));
 		if (prefix_nexthop(p) == NULL ||
 		    prefix_nexthop(p)->state != NEXTHOP_REACH)
-			k.nexthop.aid = k.prefix.aid;
+			kf.nexthop.aid = kf.prefix.aid;
 		else
-			memcpy(&k.nexthop, &prefix_nexthop(p)->true_nexthop,
-			    sizeof(k.nexthop));
-		k.prefixlen = p->pt->prefixlen;
-		k.flags = F_KERNEL;
+			memcpy(&kf.nexthop, &prefix_nexthop(p)->true_nexthop,
+			    sizeof(kf.nexthop));
+		kf.prefixlen = p->pt->prefixlen;
+		kf.flags = F_KERNEL;
 		if ((asp->flags & F_ANN_DYNAMIC) == 0)
-			k.flags = F_STATIC;
+			kf.flags = F_STATIC;
 		if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
-		    ctx->req.pid, -1, &k, sizeof(k)) == -1)
+		    ctx->req.pid, -1, &kf, sizeof(kf)) == -1)
 			log_warnx("network_dump_upcall: "
 			    "imsg_compose error");
 	}
