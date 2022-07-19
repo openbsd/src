@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.14 2022/07/19 16:07:35 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.15 2022/07/19 20:15:19 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -174,7 +174,7 @@ ciphers_main(int argc, char **argv)
 		if (ciphers_config.verbose > 1) {
 			value = SSL_CIPHER_get_value(cipher);
 			fprintf(stdout, "%-*s0x%02X,0x%02X - ", 10, "",
-				((value >> 8) & 0xff), (value & 0xff));
+			    ((value >> 8) & 0xff), (value & 0xff));
 		}
 		desc = SSL_CIPHER_description(cipher, NULL, 0);
 		if (strcmp(desc, "OPENSSL_malloc Error") == 0) {
