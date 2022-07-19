@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.13 2022/07/14 08:37:17 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.14 2022/07/19 16:07:35 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,7 @@ struct {
 	int usage;
 	int use_supported;
 	int verbose;
+	int version;
 } ciphers_config;
 
 static const struct option ciphers_options[] = {
@@ -49,7 +50,31 @@ static const struct option ciphers_options[] = {
 	},
 	{
 		.name = "tls1",
-		.type = OPTION_DISCARD,
+		.desc = "Use TLS protocol version 1",
+		.type = OPTION_VALUE,
+		.opt.value = &ciphers_config.version,
+		.value = TLS1_VERSION,
+	},
+	{
+		.name = "tls1_1",
+		.desc = "Use TLS protocol version 1.1",
+		.type = OPTION_VALUE,
+		.opt.value = &ciphers_config.version,
+		.value = TLS1_1_VERSION,
+	},
+	{
+		.name = "tls1_2",
+		.desc = "Use TLS protocol version 1.2",
+		.type = OPTION_VALUE,
+		.opt.value = &ciphers_config.version,
+		.value = TLS1_2_VERSION,
+	},
+	{
+		.name = "tls1_3",
+		.desc = "Use TLS protocol version 1.3",
+		.type = OPTION_VALUE,
+		.opt.value = &ciphers_config.version,
+		.value = TLS1_3_VERSION,
 	},
 	{
 		.name = "v",
@@ -71,7 +96,8 @@ static const struct option ciphers_options[] = {
 static void
 ciphers_usage(void)
 {
-	fprintf(stderr, "usage: ciphers [-hsVv] [cipherlist]\n");
+	fprintf(stderr, "usage: ciphers [-hsVv] [-tls1] [-tls1_1] [-tls1_2] "
+	    "[-tls1_3] [cipherlist]\n");
 	options_usage(ciphers_options);
 }
 
@@ -108,8 +134,17 @@ ciphers_main(int argc, char **argv)
 		return (1);
 	}
 
-	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL)
 		goto err;
+
+	if (ciphers_config.version != 0) {
+		if (!SSL_CTX_set_min_proto_version(ssl_ctx,
+		    ciphers_config.version))
+			goto err;
+		if (!SSL_CTX_set_max_proto_version(ssl_ctx,
+		    ciphers_config.version))
+			goto err;
+	}
 
 	if (cipherlist != NULL) {
 		if (SSL_CTX_set_cipher_list(ssl_ctx, cipherlist) == 0)
