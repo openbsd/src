@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.10 2022/07/07 12:20:50 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.11 2022/07/19 16:27:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -400,3 +400,16 @@ log_warnx(const char *emsg, ...)
 	va_end(ap);
 }
 
+void
+log_debug(const char *emsg, ...)
+{
+	va_list  ap;
+	va_start(ap, emsg);
+	vwarnx(emsg, ap);
+	va_end(ap);
+}
+
+void
+pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
+{
+}
