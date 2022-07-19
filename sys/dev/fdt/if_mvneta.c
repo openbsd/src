@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.26 2022/06/05 02:54:18 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.27 2022/07/19 21:49:22 jmatthew Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -975,11 +975,15 @@ mvneta_start(struct ifqueue *ifq)
 
 		mvneta_encap(sc, map, m, prod);
 
-		nprod = (prod + map->dm_nsegs) % MVNETA_TX_RING_CNT;
-		sc->sc_txbuf[prod].tb_map = sc->sc_txbuf[nprod].tb_map;
-		prod = nprod;
-		sc->sc_txbuf[prod].tb_map = map;
+		if (map->dm_nsegs > 1) {
+			nprod = (prod + (map->dm_nsegs - 1)) %
+			    MVNETA_TX_RING_CNT;
+			sc->sc_txbuf[prod].tb_map = sc->sc_txbuf[nprod].tb_map;
+			prod = nprod;
+			sc->sc_txbuf[prod].tb_map = map;
+		}
 		sc->sc_txbuf[prod].tb_m = m;
+		prod = MVNETA_TX_RING_NEXT(prod);
 
 		free -= map->dm_nsegs;
 
