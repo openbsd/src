@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.308 2022/07/06 07:36:36 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.309 2022/07/19 06:46:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3564,12 +3564,12 @@ found:
 	}
 	if (modifiers & FORMAT_QUOTE_SHELL) {
 		saved = found;
-		found = xstrdup(format_quote_shell(saved));
+		found = format_quote_shell(saved);
 		free(saved);
 	}
 	if (modifiers & FORMAT_QUOTE_STYLE) {
 		saved = found;
-		found = xstrdup(format_quote_style(saved));
+		found = format_quote_style(saved);
 		free(saved);
 	}
 	return (found);
