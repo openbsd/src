@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.21 2022/07/13 06:38:02 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.22 2022/07/19 16:19:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,6 +116,8 @@
 
 #include "bn_lcl.h"
 
+#define LIBRESSL_HAS_BPSW
+
 /* NB: these functions have been "upgraded", the deprecated versions (which are
  * compatibility wrappers using these functions) are in bn_depr.c.
  * - Geoff
@@ -166,7 +168,7 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 	int found = 0;
 	int i, j, c1 = 0;
 	BN_CTX *ctx;
-	int checks;
+	int checks = 1;
 
 	if (bits < 2 || (bits == 2 && safe)) {
 		/*
@@ -184,7 +186,9 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
+#ifndef LIBRESSL_HAS_BPSW
 	checks = BN_prime_checks_for_size(bits);
+#endif
 
 loop:
 	/* make a random number and set the top and bottom bits */
@@ -254,8 +258,6 @@ BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed, BN_GENCB *cb)
 {
 	return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
 }
-
-#define LIBRESSL_HAS_BPSW
 
 int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
