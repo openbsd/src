@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.69 2022/06/28 05:49:05 tb Exp $ */
+/*	$OpenBSD: util.c,v 1.70 2022/07/19 13:03:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -364,7 +364,7 @@ aspath_strlen(void *data, uint16_t len)
 /*
  * Extract the asnum out of the as segment at the specified position.
  * Direct access is not possible because of non-aligned reads.
- * ATTENTION: no bounds checks are done.
+ * Only works on verified 4-byte AS paths.
  */
 uint32_t
 aspath_extract(const void *seg, int pos)
@@ -372,6 +372,9 @@ aspath_extract(const void *seg, int pos)
 	const u_char	*ptr = seg;
 	uint32_t	 as;
 
+	/* minimal pos check, return 0 since that is an invalid ASN */
+	if (pos < 0 || pos >= ptr[1])
+		return (0);
 	ptr += 2 + sizeof(uint32_t) * pos;
 	memcpy(&as, ptr, sizeof(uint32_t));
 	return (ntohl(as));
