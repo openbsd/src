@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.14 2021/10/24 18:03:27 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.15 2022/07/19 19:25:42 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1660,7 +1660,7 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 #endif
 	if (axi->axi_type == AXI_TYPE_DYNAMIC) {
 		axi->axi_cstate = AX_CSTATE_OPEN;
-		return 0;
+		goto objects_start;
 	}
 
 	resp = &(pdu->ap_payload.ap_response);
@@ -1717,6 +1717,7 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 	if (axi->axi_dstate == AX_DSTATE_CLOSE)
 		return agentx_index_close(axi);
 
+ objects_start:
 	/* TODO Make use of range_subid register */
 	for (i = 0; i < axi->axi_objectlen; i++) {
 		if (axi->axi_object[i]->axo_dstate == AX_DSTATE_OPEN) {
