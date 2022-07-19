@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysconf.c,v 1.27 2020/10/12 19:51:28 deraadt Exp $ */
+/*	$OpenBSD: sysconf.c,v 1.28 2022/07/19 09:25:44 claudio Exp $ */
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ sysconf(int name)
 {
 	struct rlimit rl;
 	size_t len;
-	int mib[2], value, namelen, sverrno;
+	int mib[3], value, namelen, sverrno;
 
 	len = sizeof(value);
 	namelen = 2;
@@ -238,12 +238,17 @@ sysconf(int name)
 	case _SC_IPV6:
 #if _POSIX_IPV6 == 0
 		sverrno = errno;
-		value = socket(PF_INET6, SOCK_DGRAM, 0);
+		mib[0] = CTL_NET;
+		mib[1] = PF_INET6;
+		mib[2] = 0;
+		namelen = 3;
+		value = 0;
+		if (sysctl(mib, 3, NULL, 0, NULL, 0) == -1)
+			value = errno;
 		errno = sverrno;
-		if (value >= 0) {
-			HIDDEN(close)(value);
+		if (value != ENOPROTOOPT)
 			return (200112L);
-		} else
+		else
 			return (0);
 #else
 		return (_POSIX_IPV6);
