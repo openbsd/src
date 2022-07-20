@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.122 2022/07/20 13:35:05 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.123 2022/07/20 14:14:34 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -113,14 +113,15 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 	    s->ctx->internal->alpn_select_cb_arg);
 
 	if (r == SSL_TLSEXT_ERR_OK) {
-		free(s->s3->alpn_selected);
-		if ((s->s3->alpn_selected = malloc(selected_len)) == NULL) {
-			s->s3->alpn_selected_len = 0;
+		CBS cbs;
+
+		CBS_init(&cbs, selected, selected_len);
+
+		if (!CBS_stow(&cbs, &s->s3->alpn_selected,
+		    &s->s3->alpn_selected_len)) {
 			*alert = SSL_AD_INTERNAL_ERROR;
 			return 0;
 		}
-		memcpy(s->s3->alpn_selected, selected, selected_len);
-		s->s3->alpn_selected_len = selected_len;
 
 		return 1;
 	}
