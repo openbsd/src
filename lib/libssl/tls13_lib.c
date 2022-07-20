@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.66 2022/07/20 06:20:44 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.67 2022/07/20 06:32:24 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -338,11 +338,11 @@ tls13_phh_done_cb(void *cb_arg)
 }
 
 static ssize_t
-tls13_phh_received_cb(void *cb_arg, CBS *cbs)
+tls13_phh_received_cb(void *cb_arg)
 {
 	ssize_t ret = TLS13_IO_FAILURE;
 	struct tls13_ctx *ctx = cb_arg;
-	CBS phh_cbs;
+	CBS cbs;
 
 	if (!tls13_phh_limit_check(ctx))
 		return tls13_send_alert(ctx->rl, TLS13_ALERT_UNEXPECTED_MESSAGE);
@@ -351,19 +351,16 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 	    ((ctx->hs_msg = tls13_handshake_msg_new()) == NULL))
 		return TLS13_IO_FAILURE;
 
-	if (!tls13_handshake_msg_set_buffer(ctx->hs_msg, cbs))
-		return TLS13_IO_FAILURE;
-
-	if ((ret = tls13_handshake_msg_recv(ctx->hs_msg, ctx->rl))
-	    != TLS13_IO_SUCCESS)
+	if ((ret = tls13_handshake_msg_recv(ctx->hs_msg, ctx->rl)) !=
+	    TLS13_IO_SUCCESS)
 		return ret;
 
-	if (!tls13_handshake_msg_content(ctx->hs_msg, &phh_cbs))
+	if (!tls13_handshake_msg_content(ctx->hs_msg, &cbs))
 		return TLS13_IO_FAILURE;
 
 	switch(tls13_handshake_msg_type(ctx->hs_msg)) {
 	case TLS13_MT_KEY_UPDATE:
-		ret = tls13_key_update_recv(ctx, &phh_cbs);
+		ret = tls13_key_update_recv(ctx, &cbs);
 		break;
 	case TLS13_MT_NEW_SESSION_TICKET:
 		/* XXX do nothing for now and ignore this */

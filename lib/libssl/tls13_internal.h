@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.98 2022/07/17 15:49:20 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.99 2022/07/20 06:32:24 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -88,7 +88,7 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_INFO_CONNECT_EXIT				SSL_CB_CONNECT_EXIT
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
-typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
+typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg);
 typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
 typedef void (*tls13_info_cb)(void *_cb_arg, int _state, int _ret);
@@ -226,7 +226,6 @@ struct tls13_handshake_msg;
 struct tls13_handshake_msg *tls13_handshake_msg_new(void);
 void tls13_handshake_msg_free(struct tls13_handshake_msg *msg);
 void tls13_handshake_msg_data(struct tls13_handshake_msg *msg, CBS *cbs);
-int tls13_handshake_msg_set_buffer(struct tls13_handshake_msg *msg, CBS *cbs);
 uint8_t tls13_handshake_msg_type(struct tls13_handshake_msg *msg);
 int tls13_handshake_msg_content(struct tls13_handshake_msg *msg, CBS *cbs);
 int tls13_handshake_msg_start(struct tls13_handshake_msg *msg, CBB *body,

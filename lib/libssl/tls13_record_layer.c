@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.67 2022/01/14 09:12:15 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.68 2022/07/20 06:32:24 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -909,7 +909,7 @@ tls13_record_layer_recv_phh(struct tls13_record_layer *rl)
 	 * TLS13_IO_FAILURE	 something broke.
 	 */
 	if (rl->cb.phh_recv != NULL)
-		ret = rl->cb.phh_recv(rl->cb_arg, tls_content_cbs(rl->rcontent));
+		ret = rl->cb.phh_recv(rl->cb_arg);
 
 	tls_content_clear(rl->rcontent);
 
