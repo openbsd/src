@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.123 2022/07/20 14:14:34 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.124 2022/07/20 14:15:50 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -190,8 +190,7 @@ tlsext_alpn_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if (CBS_len(&proto) == 0)
 		goto err;
 
-	if (!CBS_stow(&proto, &(s->s3->alpn_selected),
-	    &(s->s3->alpn_selected_len)))
+	if (!CBS_stow(&proto, &s->s3->alpn_selected, &s->s3->alpn_selected_len))
 		goto err;
 
 	return 1;
