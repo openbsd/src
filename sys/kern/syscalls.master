@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.227 2022/07/15 17:20:24 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.228 2022/07/20 05:55:08 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -324,10 +324,8 @@
 172	STD NOLOCK	{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    off_t offset); }
-173	STD NOLOCK	{ ssize_t sys_pad_pread(int fd, void *buf, \
-			  size_t nbyte, int pad, off_t offset); }
-174	STD NOLOCK	{ ssize_t sys_pad_pwrite(int fd, const void *buf, \
-			  size_t nbyte, int pad, off_t offset); }
+173	UNIMPL		pad_pread
+174	UNIMPL		pad_pwrite
 175	UNIMPL		ntp_gettime
 176	UNIMPL		ntp_adjtime
 177	UNIMPL
@@ -354,14 +352,11 @@
 195	STD NOLOCK	{ int sys_setrlimit(int which, \
 			    const struct rlimit *rlp); }
 196	OBSOL		ogetdirentries48
-197	STD		{ void *sys_pad_mmap(void *addr, size_t len, int prot, \
-			    int flags, int fd, long pad, off_t pos); }
+197	UNIMPL		pad_mmap
 198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
-199	STD NOLOCK	{ off_t sys_pad_lseek(int fd, int pad, off_t offset, \
-			    int whence); }
-200	STD		{ int sys_pad_truncate(const char *path, int pad, \
-			    off_t length); }
-201	STD		{ int sys_pad_ftruncate(int fd, int pad, off_t length); }
+199	UNIMPL		pad_lseek
+200	UNIMPL		pad_truncate
+201	UNIMPL		pad_ftruncate
 202	STD		{ int sys_sysctl(const int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
 			    size_t newlen); }
@@ -460,12 +455,8 @@
 264	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 265	UNIMPL
 266	UNIMPL
-267	STD NOLOCK	{ ssize_t sys_pad_preadv(int fd, \
-			  const struct iovec *iovp, int iovcnt, \
-			  int pad, off_t offset); }
-268	STD NOLOCK	{ ssize_t sys_pad_pwritev(int fd, \
-			  const struct iovec *iovp, int iovcnt, \
-			  int pad, off_t offset); }
+267	UNIMPL		pad_preadv
+268	UNIMPL		pad_pwritev
 269	STD NOLOCK	{ int sys_kqueue(void); }
 270	OBSOL		t32_kevent
 271	STD		{ int sys_mlockall(int flags); }
@@ -487,9 +478,7 @@
 284	STD		{ int sys_setresgid(gid_t rgid, gid_t egid, \
 			    gid_t sgid); }
 285	OBSOL		sys_omquery
-286	STD		{ void *sys_pad_mquery(void *addr, size_t len, \
-			    int prot, int flags, int fd, long pad, \
-			    off_t pos); }
+286	UNIMPL		pad_mquery
 287	STD NOLOCK	{ int sys_closefrom(int fd); }
 288	STD		{ int sys_sigaltstack(const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
