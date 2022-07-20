@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Thu Apr 21 07:01:00 MST 2022
+From deraadt@do-not-reply.openbsd.org Thu Nov 21 07:02:00 MST 2022
 Return-Path: root
-Date: Apr 21 07:01:00 MST 2022
+Date: Nov 21 07:02:00 MST 2022
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 7.1!
+Subject: Welcome to OpenBSD 7.2!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
