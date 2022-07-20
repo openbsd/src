@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.414 2022/07/17 14:49:01 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.415 2022/07/20 13:43:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -863,8 +863,8 @@ typedef struct ssl_ctx_internal_st {
 	void *alpn_select_cb_arg;
 
 	/* Client list of supported protocols in wire format. */
-	unsigned char *alpn_client_proto_list;
-	unsigned int alpn_client_proto_list_len;
+	uint8_t *alpn_client_proto_list;
+	size_t alpn_client_proto_list_len;
 
 	size_t tlsext_ecpointformatlist_length;
 	uint8_t *tlsext_ecpointformatlist; /* our list */
@@ -929,8 +929,8 @@ typedef struct ssl_internal_st {
 	unsigned long mode; /* API behaviour */
 
 	/* Client list of supported protocols in wire format. */
-	unsigned char *alpn_client_proto_list;
-	unsigned int alpn_client_proto_list_len;
+	uint8_t *alpn_client_proto_list;
+	size_t alpn_client_proto_list_len;
 
 	/* QUIC transport params we will send */
 	uint8_t *quic_transport_params;
@@ -1221,7 +1221,7 @@ typedef struct ssl3_state_st {
 	 * protocol that the server selected once the ServerHello has been
 	 * processed.
 	 */
-	unsigned char *alpn_selected;
+	uint8_t *alpn_selected;
 	size_t alpn_selected_len;
 
 	/* Contains the QUIC transport params received from our peer. */
