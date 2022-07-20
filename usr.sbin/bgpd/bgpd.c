@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.248 2022/06/23 13:09:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.249 2022/07/20 12:43:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -599,7 +599,9 @@ send_config(struct bgpd_config *conf)
 
 	reconfpending = 3;	/* one per child */
 
-	expand_networks(conf);
+	expand_networks(conf, &conf->networks);
+	SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry)
+		expand_networks(conf, &vpn->net_l);
 
 	cflags = conf->flags;
 

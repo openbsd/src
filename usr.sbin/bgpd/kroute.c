@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.274 2022/07/19 10:26:19 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.275 2022/07/20 12:43:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -141,7 +141,6 @@ int	kr4_delete(struct ktable *, struct kroute_full *);
 int	kr6_delete(struct ktable *, struct kroute_full *);
 int	krVPN4_delete(struct ktable *, struct kroute_full *);
 int	krVPN6_delete(struct ktable *, struct kroute_full *);
-void	kr_net_delete(struct network *);
 int	kr_net_match(struct ktable *, struct network_config *, uint16_t, int);
 struct network *kr_net_find(struct ktable *, struct network *);
 void	kr_net_clear(struct ktable *);
@@ -1243,13 +1242,6 @@ kr_ifinfo(char *ifname)
 		}
 }
 
-void
-kr_net_delete(struct network *n)
-{
-	filterset_free(&n->net.attrset);
-	free(n);
-}
-
 static int
 kr_net_redist_add(struct ktable *kt, struct network_config *net,
     struct filter_set_head *attr, int dynamic)
@@ -1370,7 +1362,9 @@ kr_net_find(struct ktable *kt, struct network *n)
 	TAILQ_FOREACH(xn, &kt->krn, entry) {
 		if (n->net.type != xn->net.type ||
 		    n->net.prefixlen != xn->net.prefixlen ||
-		    n->net.rd != xn->net.rd)
+		    n->net.rd != xn->net.rd ||
+		    n->net.rtlabel != xn->net.rtlabel ||
+		    n->net.priority != xn->net.priority)
 			continue;
 		if (memcmp(&n->net.prefix, &xn->net.prefix,
 		    sizeof(n->net.prefix)) == 0)
@@ -1397,7 +1391,7 @@ kr_net_reload(u_int rtableid, uint64_t rd, struct network_head *nh)
 			xn->net.old = 0;
 			filterset_free(&xn->net.attrset);
 			filterset_move(&n->net.attrset, &xn->net.attrset);
-			kr_net_delete(n);
+			network_free(n);
 		} else
 			TAILQ_INSERT_TAIL(&kt->krn, n, entry);
 	}
@@ -1412,7 +1406,7 @@ kr_net_clear(struct ktable *kt)
 		TAILQ_REMOVE(&kt->krn, n, entry);
 		if (n->net.type == NETWORK_DEFAULT)
 			kr_net_redist_del(kt, &n->net, 0);
-		kr_net_delete(n);
+		network_free(n);
 	}
 }
 
@@ -1556,7 +1550,7 @@ ktable_postload(void)
 				TAILQ_REMOVE(&kt->krn, n, entry);
 				if (n->net.type == NETWORK_DEFAULT)
 					kr_net_redist_del(kt, &n->net, 0);
-				kr_net_delete(n);
+				network_free(n);
 			}
 		}
 	}

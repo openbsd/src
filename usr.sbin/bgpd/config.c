@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.102 2022/06/05 12:43:13 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.103 2022/07/20 12:43:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -86,14 +86,21 @@ copy_config(struct bgpd_config *to, struct bgpd_config *from)
 }
 
 void
+network_free(struct network *n)
+{
+	rtlabel_unref(n->net.rtlabel);
+	filterset_free(&n->net.attrset);
+	free(n);
+}
+
+void
 free_networks(struct network_head *networks)
 {
 	struct network		*n;
 
 	while ((n = TAILQ_FIRST(networks)) != NULL) {
 		TAILQ_REMOVE(networks, n, entry);
-		filterset_free(&n->net.attrset);
-		free(n);
+		network_free(n);
 	}
 }
 
@@ -431,7 +438,8 @@ host_ip(const char *s, struct bgpd_addr *h, uint8_t *len)
 		sa2addr(res->ai_addr, h, NULL);
 		freeaddrinfo(res);
 	} else {	/* ie. for 10/8 parsing */
-		if ((bits = inet_net_pton(AF_INET, s, &h->v4, sizeof(h->v4))) == -1)
+		if ((bits = inet_net_pton(AF_INET, s, &h->v4,
+		    sizeof(h->v4))) == -1)
 			return (0);
 		*len = bits;
 		h->aid = AID_INET;
@@ -502,10 +510,9 @@ prepare_listeners(struct bgpd_config *conf)
 }
 
 void
-expand_networks(struct bgpd_config *c)
+expand_networks(struct bgpd_config *c, struct network_head *nw)
 {
 	struct network		*n, *m, *tmp;
-	struct network_head	*nw = &c->networks;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi;
 
@@ -527,8 +534,7 @@ expand_networks(struct bgpd_config *c)
 				    &m->net.attrset);
 				TAILQ_INSERT_TAIL(nw, m, entry);
 			}
-			filterset_free(&n->net.attrset);
-			free(n);
+			network_free(n);
 		}
 	}
 }

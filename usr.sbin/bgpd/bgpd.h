@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.441 2022/07/11 17:08:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.442 2022/07/20 12:43:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -476,8 +476,8 @@ struct network_config {
 	struct filter_set_head	 attrset;
 	char			 psname[SET_NAME_LEN];
 	uint64_t		 rd;
-	uint16_t		 rtlabel;
 	enum network_type	 type;
+	uint16_t		 rtlabel;
 	uint8_t			 prefixlen;
 	uint8_t			 priority;
 	uint8_t			 old;	/* used for reloading */
@@ -1275,6 +1275,7 @@ int	control_imsg_relay(struct imsg *);
 /* config.c */
 struct bgpd_config	*new_config(void);
 void		copy_config(struct bgpd_config *, struct bgpd_config *);
+void		network_free(struct network *);
 void		free_l3vpns(struct l3vpn_head *);
 void		free_config(struct bgpd_config *);
 void		free_prefixsets(struct prefixset_head *);
@@ -1285,7 +1286,7 @@ void		free_rtrs(struct rtr_config_head *);
 void		filterlist_free(struct filter_head *);
 int		host(const char *, struct bgpd_addr *, uint8_t *);
 uint32_t	get_bgpid(void);
-void		expand_networks(struct bgpd_config *);
+void		expand_networks(struct bgpd_config *, struct network_head *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 int		roa_cmp(struct roa *, struct roa *);
 RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
