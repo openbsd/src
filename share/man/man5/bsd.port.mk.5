@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.565 2022/07/06 09:42:15 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.566 2022/07/20 16:37:49 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2022 $
+.Dd $Mdocdate: July 20 2022 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -698,9 +698,11 @@ Force rebuilding configure scripts using
 steps.
 .It Cm reinstall
 Force reinstallation of a port, by first cleaning the old installation.
-Seldom needed, as
+This will obviously not work for software used as dependencies of other
+installed software.
+In that case,
 .Cm update
-will often do the right thing.
+might do the right thing.
 .It Cm repackage
 Rebuild the packages of a port after removing existing packages.
 .It Cm run-depends-args
@@ -823,6 +825,16 @@ See
 and
 .Ev FORCE_UPDATE
 as well.
+.Pp
+However, see
+.Sx CAVEATS
+in
+.Xr ports 7 :
+.Cm update
+is always
+.Sq best-effort
+and will often not work correctly when
+updating to a significantly different newer version.
 .It Cm update-or-install
 Update an installed package or perform a fresh installation,
 by using

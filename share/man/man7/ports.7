@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.129 2021/11/29 14:06:03 espie Exp $
+.\" $OpenBSD: ports.7,v 1.130 2022/07/20 16:37:50 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: November 29 2021 $
+.Dd $Mdocdate: July 20 2022 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -431,12 +431,11 @@ the
 See the next section for more details, since most of the fine points of
 bulk package building also apply to updates.
 .Pp
-There are bugs in the ports tree, most related to libtool, which make some
-updates prefer the already installed libraries instead of the newly built
-ones.
-This shows up as undefined references in libraries, in which case there
-is no choice but to proceed the old way: deinstall the offending package
-and everything built on top of it, build and install new packages.
+However, also note that
+.Li make update
+is not guaranteed to work, see
+.Sx CAVEATS
+below.
 .Sh BULK PACKAGE BUILDING
 Building any significant number of packages from the ports tree should use
 .Xr dpb 1 ,
@@ -726,3 +725,20 @@ This man page was originated by
 from the
 .Fx
 project.
+.Sh CAVEATS
+Building a new version of an already installed package is not guaranteed
+to work.
+.Pp
+The safer way would be to create a sandbox for building the updated port
+using
+.Xr proot 1
+.Po see also
+.Xr bulk 8
+.Pc ,
+and then update the installed package.
+.Pp
+Specifically: most software expects building in a virgin environment
+with only the required dependency.
+As a result, lots of time, libraries and headers under
+.Pa /usr/local
+will be favored over the currently building version.
