@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.30 2022/06/29 17:39:20 beck Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.31 2022/07/20 13:35:05 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -31,6 +31,7 @@
 
 __BEGIN_HIDDEN_DECLS
 
+int tlsext_alpn_check_format(CBS *cbs);
 int tlsext_alpn_client_needs(SSL *s, uint16_t msg_type);
 int tlsext_alpn_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_alpn_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);

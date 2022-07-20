@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.121 2022/07/17 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.122 2022/07/20 13:35:05 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -63,29 +63,41 @@ tlsext_alpn_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 }
 
 int
+tlsext_alpn_check_format(CBS *cbs)
+{
+	CBS proto_name_list;
+
+	if (CBS_len(cbs) == 0)
+		return 0;
+
+	CBS_dup(cbs, &proto_name_list);
+	while (CBS_len(&proto_name_list) > 0) {
+		CBS proto_name;
+
+		if (!CBS_get_u8_length_prefixed(&proto_name_list, &proto_name))
+			return 0;
+		if (CBS_len(&proto_name) == 0)
+			return 0;
+	}
+
+	return 1;
+}
+
+int
 tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 {
-	CBS proto_name_list, alpn;
+	CBS alpn;
 	const unsigned char *selected;
 	unsigned char selected_len;
 	int r;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &alpn))
 		goto err;
-	if (CBS_len(&alpn) < 2)
-		goto err;
 	if (CBS_len(cbs) != 0)
 		goto err;
 
-	CBS_dup(&alpn, &proto_name_list);
-	while (CBS_len(&proto_name_list) > 0) {
-		CBS proto_name;
-
-		if (!CBS_get_u8_length_prefixed(&proto_name_list, &proto_name))
-			goto err;
-		if (CBS_len(&proto_name) == 0)
-			goto err;
-	}
+	if (!tlsext_alpn_check_format(&alpn))
+		goto err;
 
 	if (s->ctx->internal->alpn_select_cb == NULL)
 		return 1;
