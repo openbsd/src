@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.18 2018/12/27 16:54:01 kn Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.19 2022/07/20 09:33:11 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,6 +40,7 @@
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #endif /* _KERNEL */
 #include <sys/syslog.h>
 
@@ -58,6 +59,11 @@
 #ifdef _KERNEL
 #define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
 #define rs_free(x, siz)		free(x, M_TEMP, siz)
+#define rs_pool_get_anchor()	pool_get(&pf_anchor_pl, \
+				    PR_WAITOK|PR_LIMITFAIL|PR_ZERO)
+#define rs_pool_put_anchor(x)	pool_put(&pf_anchor_pl, x)
+
+struct pool	pf_anchor_pl;
 
 #else	/* !_KERNEL */
 /* Userland equivalents so we can lend code to pfctl et al. */
@@ -67,8 +73,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#define rs_malloc(x)		 calloc(1, x)
-#define rs_free(x, siz)		 freezero(x, siz)
+#define rs_malloc(x)		calloc(1, x)
+#define rs_free(x, siz)		freezero(x, siz)
+#define rs_pool_get_anchor()	calloc(1, sizeof(struct pf_anchor))
+#define rs_pool_put_anchor(x)	freezero(x, sizeof(struct pf_anchor))
 
 #ifdef PFDEBUG
 #include <sys/stdarg.h>	/* for DPFPRINTF() */
@@ -184,7 +192,7 @@ pf_create_anchor(struct pf_anchor *parent, const char *aname)
 	    ((parent != NULL) && (strlen(parent->path) >= PF_ANCHOR_MAXPATH)))
 		return (NULL);
 
-	anchor = rs_malloc(sizeof(*anchor));
+	anchor = rs_pool_get_anchor();
 	if (anchor == NULL)
 		return (NULL);
 
@@ -204,7 +212,7 @@ pf_create_anchor(struct pf_anchor *parent, const char *aname)
 		DPFPRINTF(LOG_NOTICE,
 		    "%s: RB_INSERT to global '%s' '%s' collides with '%s' '%s'",
 		    __func__, anchor->path, anchor->name, dup->path, dup->name);
-		rs_free(anchor, sizeof(*anchor));
+		rs_pool_put_anchor(anchor);
 		return (NULL);
 	}
 
@@ -218,7 +226,7 @@ pf_create_anchor(struct pf_anchor *parent, const char *aname)
 			    dup->path, dup->name);
 			RB_REMOVE(pf_anchor_global, &pf_anchors,
 			    anchor);
-			rs_free(anchor, sizeof(*anchor));
+			rs_pool_put_anchor(anchor);
 			return (NULL);
 		}
 	}
@@ -300,7 +308,7 @@ pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 		if ((parent = ruleset->anchor->parent) != NULL)
 			RB_REMOVE(pf_anchor_node, &parent->children,
 			    ruleset->anchor);
-		rs_free(ruleset->anchor, sizeof(*(ruleset->anchor)));
+		rs_pool_put_anchor(ruleset->anchor);
 		if (parent == NULL)
 			return;
 		ruleset = &parent->ruleset;

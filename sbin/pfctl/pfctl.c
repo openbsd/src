@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.385 2021/11/11 12:49:53 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.386 2022/07/20 09:33:11 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -158,6 +158,7 @@ static const struct {
 	{ "tables",		PF_LIMIT_TABLES },
 	{ "table-entries",	PF_LIMIT_TABLE_ENTRIES },
 	{ "pktdelay-pkts",	PF_LIMIT_PKTDELAY_PKTS },
+	{ "anchors",		PF_LIMIT_ANCHORS },
 	{ NULL,			0 }
 };
 

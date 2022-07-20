@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1135 2022/06/28 13:48:06 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1136 2022/07/20 09:33:11 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -276,7 +276,8 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT, PFFRAG_FRENT_HIWAT },
 	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT, PFR_KTABLE_HIWAT },
 	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT, PFR_KENTRY_HIWAT },
-	{ &pf_pktdelay_pl, PF_PKTDELAY_MAXPKTS, PF_PKTDELAY_MAXPKTS }
+	{ &pf_pktdelay_pl, PF_PKTDELAY_MAXPKTS, PF_PKTDELAY_MAXPKTS },
+	{ &pf_anchor_pl, PF_ANCHOR_HIWAT, PF_ANCHOR_HIWAT }
 };
 
 #define BOUND_IFACE(r, k) \

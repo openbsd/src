@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.382 2022/06/26 11:37:08 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.383 2022/07/20 09:33:11 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -191,6 +191,8 @@ pfattach(int num)
 	    IPL_SOFTNET, 0, "pftag", NULL);
 	pool_init(&pf_pktdelay_pl, sizeof(struct pf_pktdelay), 0,
 	    IPL_SOFTNET, 0, "pfpktdelay", NULL);
+	pool_init(&pf_anchor_pl, sizeof(struct pf_anchor), 0,
+	    IPL_SOFTNET, 0, "pfanchor", NULL);
 
 	hfsc_initialize();
 	pfr_initialize();
@@ -200,6 +202,8 @@ pfattach(int num)
 
 	pool_sethardlimit(pf_pool_limits[PF_LIMIT_STATES].pp,
 	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
+	pool_sethardlimit(pf_pool_limits[PF_LIMIT_ANCHORS].pp,
+	    pf_pool_limits[PF_LIMIT_ANCHORS].limit, NULL, 0);
 
 	if (physmem <= atop(100*1024*1024))
 		pf_pool_limits[PF_LIMIT_TABLE_ENTRIES].limit =
