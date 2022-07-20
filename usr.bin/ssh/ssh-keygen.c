@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.456 2022/07/20 03:29:14 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.457 2022/07/20 03:33:22 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -3207,7 +3207,6 @@ confirm_sk_overwrite(const char *application, const char *user)
 		return 0;
 	if (yesno[0] != 'y' && yesno[0] != 'Y')
 		return 0;
-	printf("Touch your authenticator to authorize key generation.\n");
 	return 1;
 }
 
@@ -3774,10 +3773,6 @@ main(int argc, char **argv)
 				    "FIDO authenticator enrollment", opts[i]);
 			}
 		}
-		if (!quiet) {
-			printf("You may need to touch your authenticator "
-			    "to authorize key generation.\n");
-		}
 		if ((attest = sshbuf_new()) == NULL)
 			fatal("sshbuf_new failed");
 		if ((sk_flags &
@@ -3787,7 +3782,14 @@ main(int argc, char **argv)
 		} else {
 			passphrase = NULL;
 		}
-		for (i = 0 ; ; i++) {
+		r = 0;
+		for (i = 0 ;;) {
+			if (!quiet) {
+				printf("You may need to touch your "
+				    "authenticator%s to authorize key "
+				    "generation.\n",
+				    r == 0 ? "" : " again");
+			}
 			fflush(stdout);
 			r = sshsk_enroll(type, sk_provider, sk_device,
 			    sk_application == NULL ? "ssh:" : sk_application,
@@ -3809,15 +3811,10 @@ main(int argc, char **argv)
 				freezero(passphrase, strlen(passphrase));
 				passphrase = NULL;
 			}
-			if (i >= 3)
+			if (++i >= 3)
 				fatal("Too many incorrect PINs");
 			passphrase = read_passphrase("Enter PIN for "
 			    "authenticator: ", RP_ALLOW_STDIN);
-			if (!quiet) {
-				printf("You may need to touch your "
-				    "authenticator (again) to authorize "
-				    "key generation.\n");
-			}
 		}
 		if (passphrase != NULL) {
 			freezero(passphrase, strlen(passphrase));
