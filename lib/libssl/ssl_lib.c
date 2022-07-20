@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.296 2022/07/17 14:49:01 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.297 2022/07/20 13:57:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1763,27 +1763,23 @@ int
 SSL_CTX_set_alpn_protos(SSL_CTX *ctx, const unsigned char *protos,
     unsigned int protos_len)
 {
+	CBS cbs;
 	int failed = 1;
 
-	if (protos == NULL || protos_len == 0)
+	if (protos == NULL)
+		protos_len = 0;
+
+	CBS_init(&cbs, protos, protos_len);
+
+	if (!CBS_stow(&cbs, &ctx->internal->alpn_client_proto_list,
+	    &ctx->internal->alpn_client_proto_list_len))
 		goto err;
-
-	free(ctx->internal->alpn_client_proto_list);
-	ctx->internal->alpn_client_proto_list = NULL;
-	ctx->internal->alpn_client_proto_list_len = 0;
-
-	if ((ctx->internal->alpn_client_proto_list = malloc(protos_len))
-	    == NULL)
-		goto err;
-	ctx->internal->alpn_client_proto_list_len = protos_len;
-
-	memcpy(ctx->internal->alpn_client_proto_list, protos, protos_len);
 
 	failed = 0;
 
  err:
 	/* NOTE: Return values are the reverse of what you expect. */
-	return (failed);
+	return failed;
 }
 
 /*
@@ -1795,27 +1791,23 @@ int
 SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
     unsigned int protos_len)
 {
+	CBS cbs;
 	int failed = 1;
 
-	if (protos == NULL || protos_len == 0)
+	if (protos == NULL)
+		protos_len = 0;
+
+	CBS_init(&cbs, protos, protos_len);
+
+	if (!CBS_stow(&cbs, &ssl->internal->alpn_client_proto_list,
+	    &ssl->internal->alpn_client_proto_list_len))
 		goto err;
-
-	free(ssl->internal->alpn_client_proto_list);
-	ssl->internal->alpn_client_proto_list = NULL;
-	ssl->internal->alpn_client_proto_list_len = 0;
-
-	if ((ssl->internal->alpn_client_proto_list = malloc(protos_len))
-	    == NULL)
-		goto err;
-	ssl->internal->alpn_client_proto_list_len = protos_len;
-
-	memcpy(ssl->internal->alpn_client_proto_list, protos, protos_len);
 
 	failed = 0;
 
  err:
 	/* NOTE: Return values are the reverse of what you expect. */
-	return (failed);
+	return failed;
 }
 
 /*
