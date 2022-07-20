@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.106 2022/02/22 17:14:14 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.107 2022/07/20 05:56:36 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -204,10 +204,6 @@ ktrsysret(struct proc *p, register_t code, int error,
 	else if (code == SYS_lseek)
 		/* the one exception: lseek on ILP32 needs more */
 		len = sizeof(long long);
-#if 1
-	else if (code == SYS_pad_lseek)
-		len = sizeof(long long);
-#endif
 	else
 		len = sizeof(register_t);
 	ktrwrite2(p, &kth, &ktp, sizeof(ktp), retval, len);

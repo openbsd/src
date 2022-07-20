@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.156 2021/12/23 18:50:32 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.157 2022/07/20 05:56:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -849,17 +849,6 @@ syscall(struct trapframe *frame)
 		case SYS_pwrite:	i = 4;	break;
 		case SYS_mquery:
 		case SYS_mmap:		i = 6;	break;
-#ifdef SYS_pad_lseek
-		case SYS_pad_lseek:	retq = 0;
-		case SYS_pad_truncate:
-		case SYS_pad_ftruncate:	i = 2;	break;
-		case SYS_pad_preadv:
-		case SYS_pad_pwritev:
-		case SYS_pad_pread:
-		case SYS_pad_pwrite:	i = 4;	break;
-		case SYS_pad_mquery:
-		case SYS_pad_mmap:	i = 6;	break;
-#endif
 		}
 
 		if (i) {

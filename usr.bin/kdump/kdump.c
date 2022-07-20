@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.148 2022/02/22 17:31:31 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.149 2022/07/20 05:56:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -818,10 +818,6 @@ static const formatter scargs[][8] = {
     [SYS_sysarch]	= { Pdecint, Pptr },
     [SYS_pread]		= { Pfd, Pptr, Pbigsize, Poff_t, END64 },
     [SYS_pwrite]        = { Pfd, Pptr, Pbigsize, Poff_t, END64 },
-#ifdef SYS_pad_pread
-    [SYS_pad_pread]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
-    [SYS_pad_pwrite]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
-#endif
     [SYS_setgid]	= { Gidname },
     [SYS_setegid]	= { Gidname },
     [SYS_seteuid]	= { Uidname },
@@ -834,12 +830,6 @@ static const formatter scargs[][8] = {
     [SYS_lseek]		= { Pfd, Poff_t, Whencename, END64 },
     [SYS_truncate]	= { Ppath, Poff_t, END64 },
     [SYS_ftruncate]	= { Pfd, Poff_t, END64 },
-#ifdef SYS_pad_mmap
-    [SYS_pad_mmap]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
-    [SYS_pad_lseek]	= { Pfd, PAD, Poff_t, Whencename },
-    [SYS_pad_truncate]	= { Ppath, PAD, Poff_t },
-    [SYS_pad_ftruncate]	= { Pfd, PAD, Poff_t },
-#endif
     [SYS_sysctl]	= { Pptr, Pcount, Pptr, Pptr, Pptr, Psize },
     [SYS_mlock]		= { Pptr, Pbigsize },
     [SYS_munlock]	= { Pptr, Pbigsize },
@@ -860,19 +850,12 @@ static const formatter scargs[][8] = {
     [SYS_fhopen]	= { Pptr, Openflagsname },
     [SYS_preadv]	= { Pfd, Pptr, Pcount, Poff_t, END64 },
     [SYS_pwritev]	= { Pfd, Pptr, Pcount, Poff_t, END64 },
-#ifdef SYS_pad_preadv
-    [SYS_pad_preadv]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
-    [SYS_pad_pwritev]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
-#endif
     [SYS_mlockall]	= { Mlockallname },
     [SYS_getresuid]	= { Pptr, Pptr, Pptr },
     [SYS_setresuid]	= { Uidname, Uidname, Uidname },
     [SYS_getresgid]	= { Pptr, Pptr, Pptr },
     [SYS_setresgid]	= { Gidname, Gidname, Gidname },
     [SYS_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, Poff_t, END64 },
-#ifdef SYS_pad_mquery
-    [SYS_pad_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
-#endif
     [SYS_closefrom]	= { Pfd },
     [SYS_sigaltstack]	= { Pptr, Pptr },
     [SYS_shmget]	= { Pkey_t, Pbigsize, Semgetname },
@@ -1145,9 +1128,6 @@ doerr:
 		if (fancy) {
 			switch (code) {
 			case SYS_lseek:
-#ifdef SYS_pad_lseek
-			case SYS_pad_lseek:
-#endif
 				(void)printf("%lld", retll);
 				if (retll < 0 || retll > 9)
 					(void)printf("/%#llx", retll);
