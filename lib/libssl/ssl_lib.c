@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.298 2022/07/20 14:08:49 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.299 2022/07/20 14:13:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,6 +240,7 @@ SSL *
 SSL_new(SSL_CTX *ctx)
 {
 	SSL *s;
+	CBS cbs;
 
 	if (ctx == NULL) {
 		SSLerrorx(SSL_R_NULL_SSL_CTX);
@@ -329,17 +330,11 @@ SSL_new(SSL_CTX *ctx)
 		    ctx->internal->tlsext_supportedgroups_length;
 	}
 
-	if (s->ctx->internal->alpn_client_proto_list != NULL) {
-		s->internal->alpn_client_proto_list =
-		    malloc(s->ctx->internal->alpn_client_proto_list_len);
-		if (s->internal->alpn_client_proto_list == NULL)
-			goto err;
-		memcpy(s->internal->alpn_client_proto_list,
-		    s->ctx->internal->alpn_client_proto_list,
-		    s->ctx->internal->alpn_client_proto_list_len);
-		s->internal->alpn_client_proto_list_len =
-		    s->ctx->internal->alpn_client_proto_list_len;
-	}
+	CBS_init(&cbs, ctx->internal->alpn_client_proto_list,
+	    ctx->internal->alpn_client_proto_list_len);
+	if (!CBS_stow(&cbs, &s->internal->alpn_client_proto_list,
+	    &s->internal->alpn_client_proto_list_len))
+		goto err;
 
 	s->verify_result = X509_V_OK;
 
