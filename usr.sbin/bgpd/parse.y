@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.432 2022/07/11 17:08:21 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.433 2022/07/21 12:34:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4662,14 +4662,6 @@ neighbor_consistent(struct peer *p)
 		char *descr = log_fmt_peer(&p->conf);
 		yyerror("duplicate %s", descr);
 		free(descr);
-		return (-1);
-	}
-
-	/* bail if add-path send and rde evaluate all is used together */
-	if ((p->conf.flags & PEERFLAG_EVALUATE_ALL) &&
-	    (p->conf.capabilities.add_path[0] & CAPA_AP_SEND)) {
-		yyerror("neighbors with add-path send cannot use "
-		    "'rde evaluate all'");
 		return (-1);
 	}
 
