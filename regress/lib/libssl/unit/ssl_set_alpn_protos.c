@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_set_alpn_protos.c,v 1.1 2022/07/20 14:50:03 tb Exp $ */
+/*	$OpenBSD: ssl_set_alpn_protos.c,v 1.2 2022/07/21 03:59:04 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -20,34 +20,124 @@
 
 #include <openssl/ssl.h>
 
-static const uint8_t valid[] = {
-	6, 's', 'p', 'd', 'y', '/', '1',
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+struct alpn_test {
+	const char *description;
+	const uint8_t protocols[24];
+	size_t protocols_len;
+	int ret;
 };
 
-static const uint8_t invalid_len1[] = {
-	0,
+static const struct alpn_test alpn_tests[] = {
+	{
+		.description = "valid protocol list",
+		.protocols = {
+			6, 's', 'p', 'd', 'y', '/', '1',
+			8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+		},
+		.protocols_len = 16,
+		.ret = 0,
+	},
+	{
+		.description = "zero length protocol",
+		.protocols = {
+			0,
+		},
+		.protocols_len = 1,
+		.ret = 1,
+	},
+	{
+		.description = "zero length protocol at start",
+		.protocols = {
+			0,
+			8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+			6, 's', 'p', 'd', 'y', '/', '1',
+		},
+		.protocols_len = 17,
+		.ret = 1,
+	},
+	{
+		.description = "zero length protocol embedded",
+		.protocols = {
+			8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+			0,
+			6, 's', 'p', 'd', 'y', '/', '1',
+		},
+		.protocols_len = 17,
+		.ret = 1,
+	},
+	{
+		.description = "zero length protocol at end",
+		.protocols = {
+			8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+			6, 's', 'p', 'd', 'y', '/', '1',
+			0,
+		},
+		.protocols_len = 17,
+		.ret = 1,
+	},
+	{
+		.description = "protocol length too short",
+		.protocols = {
+			6, 'h', 't', 't', 'p', '/', '1', '.', '1',
+		},
+		.protocols_len = 9,
+		.ret = 1,
+	},
+	{
+		.description = "protocol length too long",
+		.protocols = {
+			8, 's', 'p', 'd', 'y', '/', '1',
+		},
+		.protocols_len = 7,
+		.ret = 1,
+	},
 };
 
-static const uint8_t invalid_contains_len0_proto[] = {
-	8, 'h', 't', 't', 'p', '/', '1', '.', '1',
-	0,
-	6, 's', 'p', 'd', 'y', '/', '1',
-};
-
-static const uint8_t invalid_proto_len_too_short[] = {
-	6, 'h', 't', 't', 'p', '/', '1', '.', '1',
-};
-
-static const uint8_t invalid_proto_len_too_long[] = {
-	8, 's', 'p', 'd', 'y', '/', '1',
-};
+static const size_t N_ALPN_TESTS = sizeof(alpn_tests) / sizeof(alpn_tests[0]);
 
 static int
-test_ssl_set_alpn_protos(void)
+test_ssl_set_alpn_protos(const struct alpn_test *tc)
 {
 	SSL_CTX *ctx;
-	SSL *ssl = NULL;
+	SSL *ssl;
+	int ret;
+	int failed = 0;
+
+	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "SSL_CTX_new");
+
+	ret = SSL_CTX_set_alpn_protos(ctx, tc->protocols, tc->protocols_len);
+	if (ret != tc->ret) {
+		warnx("%s: setting on SSL_CTX: want %d, got %d",
+		    tc->description, tc->ret, ret);
+		failed = 1;
+	}
+
+	if ((ssl = SSL_new(ctx)) == NULL)
+		errx(1, "SSL_new");
+
+	ret = SSL_set_alpn_protos(ssl, tc->protocols, tc->protocols_len);
+	if (ret != tc->ret) {
+		warnx("%s: setting on SSL: want %d, got %d",
+		    tc->description, tc->ret, ret);
+		failed = 1;
+	}
+
+	SSL_CTX_free(ctx);
+	SSL_free(ssl);
+
+	return failed;
+}
+
+static int
+test_ssl_set_alpn_protos_edge_cases(void)
+{
+	SSL_CTX *ctx;
+	SSL *ssl;
+	const uint8_t valid[] = {
+		6, 's', 'p', 'd', 'y', '/', '3',
+		8, 'h', 't', 't', 'p', '/', '1', '.', '1',
+	};
 	int failed = 0;
 
 	if ((ctx = SSL_CTX_new(TLS_client_method())) == NULL)
@@ -57,7 +147,6 @@ test_ssl_set_alpn_protos(void)
 		warnx("setting valid protocols on SSL_CTX failed");
 		failed = 1;
 	}
-
 	if (SSL_CTX_set_alpn_protos(ctx, NULL, 0) != 0) {
 		warnx("setting 'NULL, 0' on SSL_CTX failed");
 		failed = 1;
@@ -67,31 +156,7 @@ test_ssl_set_alpn_protos(void)
 		failed = 1;
 	}
 	if (SSL_CTX_set_alpn_protos(ctx, NULL, 43) != 0) {
-		warnx("setting 'valid, 43' on SSL_CTX failed");
-		failed = 1;
-	}
-
-	if (SSL_CTX_set_alpn_protos(ctx, invalid_len1, sizeof(invalid_len1))
-	    != 1) {
-		warnx("setting invalid_len1 on SSL_CTX succeeded");
-		failed = 1;
-	}
-	if (SSL_CTX_set_alpn_protos(ctx, invalid_contains_len0_proto,
-	    sizeof(invalid_contains_len0_proto)) != 1) {
-		warnx("setting invalid_contains_len0_proto on SSL_CTX "
-		    "succeeded");
-		failed = 1;
-	}
-	if (SSL_CTX_set_alpn_protos(ctx, invalid_proto_len_too_short,
-	    sizeof(invalid_proto_len_too_short)) != 1) {
-		warnx("setting invalid_proto_len_too_short on SSL_CTX "
-		    "succeeded");
-		failed = 1;
-	}
-	if (SSL_CTX_set_alpn_protos(ctx, invalid_proto_len_too_long,
-	    sizeof(invalid_proto_len_too_long)) != 1) {
-		warnx("setting invalid_proto_len_too_long on SSL_CTX "
-		    "succeeded");
+		warnx("setting 'NULL, 43' on SSL_CTX failed");
 		failed = 1;
 	}
 
@@ -111,28 +176,7 @@ test_ssl_set_alpn_protos(void)
 		failed = 1;
 	}
 	if (SSL_set_alpn_protos(ssl, NULL, 43) != 0) {
-		warnx("setting 'valid, 43' on SSL failed");
-		failed = 1;
-	}
-
-	if (SSL_set_alpn_protos(ssl, invalid_len1, sizeof(invalid_len1))
-	    != 1) {
-		warnx("setting invalid_len1 on SSL succeeded");
-		failed = 1;
-	}
-	if (SSL_set_alpn_protos(ssl, invalid_contains_len0_proto,
-	    sizeof(invalid_contains_len0_proto)) != 1) {
-		warnx("setting invalid_contains_len0_proto on SSL succeeded");
-		failed = 1;
-	}
-	if (SSL_set_alpn_protos(ssl, invalid_proto_len_too_short,
-	    sizeof(invalid_proto_len_too_short)) != 1) {
-		warnx("setting invalid_proto_len_too_short on SSL succeeded");
-		failed = 1;
-	}
-	if (SSL_set_alpn_protos(ssl, invalid_proto_len_too_long,
-	    sizeof(invalid_proto_len_too_long)) != 1) {
-		warnx("setting invalid_proto_len_too_long on SSL succeeded");
+		warnx("setting 'NULL, 43' on SSL failed");
 		failed = 1;
 	}
 
@@ -145,9 +189,13 @@ test_ssl_set_alpn_protos(void)
 int
 main(void)
 {
-	int failed;
+	size_t i;
+	int failed = 0;
 
-	failed = test_ssl_set_alpn_protos();
+	for (i = 0; i < N_ALPN_TESTS; i++)
+		failed |= test_ssl_set_alpn_protos(&alpn_tests[i]);
+
+	failed |= test_ssl_set_alpn_protos_edge_cases();
 
 	if (!failed)
 		printf("PASS %s\n", __FILE__);
