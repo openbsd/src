@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vsw.4,v 1.3 2013/07/16 16:05:50 schwarze Exp $
+.\"     $OpenBSD: vsw.4,v 1.4 2022/07/21 08:00:31 kn Exp $
 .\"
 .\" Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: July 21 2022 $
 .Dt VSW 4 sparc64
 .Os
 .Sh NAME
@@ -33,6 +33,8 @@ It attaches a separate
 interface for each switch port.
 These ports can be added to a
 .Xr bridge 4
+or
+.Xr veb 4
 to create a functional network switch.
 .Pp
 The
@@ -42,7 +44,8 @@ driver supports version 1.0 of the vNet protocol.
 .Xr bridge 4 ,
 .Xr cbus 4 ,
 .Xr intro 4 ,
-.Xr netintro 4
+.Xr netintro 4 ,
+.Xr veb 4
 .Sh HISTORY
 The
 .Nm
