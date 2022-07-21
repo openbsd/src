@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.386 2022/07/20 09:33:11 mbuhl Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.387 2022/07/21 05:26:10 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1727,6 +1727,7 @@ pfctl_init_options(struct pfctl *pf)
 	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
 	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
 	pf->limit[PF_LIMIT_PKTDELAY_PKTS] = PF_PKTDELAY_MAXPKTS;
+	pf->limit[PF_LIMIT_ANCHORS] = PF_ANCHOR_HIWAT;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PHYSMEM64;
