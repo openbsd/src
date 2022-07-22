@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.556 2022/07/22 11:17:48 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.557 2022/07/22 17:26:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4256,6 +4256,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			memcpy(&kf.nexthop, &prefix_nexthop(p)->true_nexthop,
 			    sizeof(kf.nexthop));
 		kf.prefixlen = p->pt->prefixlen;
+		kf.flags = F_KERNEL;
 		if ((asp->flags & F_ANN_DYNAMIC) == 0)
 			kf.flags = F_STATIC;
 		if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
