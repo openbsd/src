@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.240 2022/07/22 13:27:17 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.241 2022/07/22 20:29:27 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -87,8 +87,6 @@ int nd6_debug = 0;
 TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list;
 struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
 int	nd6_inuse;
-
-int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 void nd6_timer(void *);
 void nd6_slowtimo(void *);
@@ -1318,7 +1316,7 @@ nd6_slowtimo(void *ignored_arg)
 			 * value gets recomputed at least once every few hours.
 			 * (RFC 2461, 6.3.4)
 			 */
-			nd6if->recalctm = nd6_recalc_reachtm_interval;
+			nd6if->recalctm = ND6_RECALC_REACHTM_INTERVAL;
 			nd6if->reachable = ND_COMPUTE_RTIME(nd6if->basereachable);
 		}
 	}
