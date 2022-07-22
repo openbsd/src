@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.80 2021/11/25 19:41:03 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.81 2022/07/22 15:33:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1894,13 +1894,13 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 		flow.flow_src.addr_port = htons(socket_getport(ssrc));
 		if ((slen = ssrc->sa_len) > sizeof(flow.flow_src.addr)) {
 			log_debug("%s: invalid src address len", __func__);
-			return (0);
+			goto out;
 		}
 		memcpy(&flow.flow_src.addr, ssrc, slen);
 		if (socket_af((struct sockaddr *)&flow.flow_src.addr,
 		    flow.flow_src.addr_port) == -1) {
 			log_debug("%s: invalid address", __func__);
-			return (0);
+			goto out;
 		}
 
 		if ((sa_addr = pfkey_find_ext(reply, rlen,
@@ -1913,13 +1913,13 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 		flow.flow_dst.addr_port = htons(socket_getport(sdst));
 		if ((slen = sdst->sa_len) > sizeof(flow.flow_dst.addr)) {
 			log_debug("%s: invalid dst address len", __func__);
-			return (0);
+			goto out;
 		}
 		memcpy(&flow.flow_dst.addr, sdst, slen);
 		if (socket_af((struct sockaddr *)&flow.flow_dst.addr,
 		    flow.flow_dst.addr_port) == -1) {
 			log_debug("%s: invalid address", __func__);
-			return (0);
+			goto out;
 		}
 
 		if ((sa_addr = pfkey_find_ext(reply, rlen,
@@ -1943,8 +1943,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			break;
 		default:
 			log_debug("%s: bad address family", __func__);
-			free(reply);
-			return (0);
+			goto out;
 		}
 
 		if ((sa_addr = pfkey_find_ext(reply, rlen,
@@ -1968,8 +1967,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			break;
 		default:
 			log_debug("%s: bad address family", __func__);
-			free(reply);
-			return (0);
+			goto out;
 		}
 
 		switch (hdr->sadb_msg_satype) {
