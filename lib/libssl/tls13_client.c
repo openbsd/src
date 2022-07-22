@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.95 2022/07/02 16:00:12 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.96 2022/07/22 14:53:07 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -504,16 +504,10 @@ tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs)
 
 	if (!tlsext_client_parse(ctx->ssl, SSL_TLSEXT_MSG_EE, cbs, &alert_desc)) {
 		ctx->alert = alert_desc;
-		goto err;
+		return 0;
 	}
 
 	return 1;
-
- err:
-	if (ctx->alert == 0)
-		ctx->alert = TLS13_ALERT_DECODE_ERROR;
-
-	return 0;
 }
 
 int
