@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.34 2021/01/27 05:03:25 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.35 2022/07/22 09:04:44 jsg Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -281,7 +281,7 @@ cmdloop(void)
 
 	while ((elline = el_gets(elptr, &scratch)) != NULL && scratch != 0) {
 		if (debug)
-			printf("command `%s'\n", line);
+			printf("command `%s'\n", elline);
 
 		history(hist, &hev, H_ENTER, elline);
 
