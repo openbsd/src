@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.239 2022/07/22 13:26:00 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.240 2022/07/22 13:27:17 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ int nd6_debug = 0;
 
 TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list;
 struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
-int	nd6_inuse, nd6_allocated;
+int	nd6_inuse;
 
 int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
@@ -885,7 +885,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			break;
 		}
 		nd6_inuse++;
-		nd6_allocated++;
 		ln->ln_rt = rt;
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
