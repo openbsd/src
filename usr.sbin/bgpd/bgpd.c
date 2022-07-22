@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.249 2022/07/20 12:43:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.250 2022/07/22 11:17:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1119,7 +1119,7 @@ int
 bgpd_filternexthop(struct kroute_full *kf)
 {
 	/* kernel routes are never filtered */
-	if (kf->flags & F_KERNEL && kf->prefixlen != 0)
+	if (kf->priority != RTP_MINE && kf->prefixlen != 0)
 		return (0);
 
 	if (cflags & BGPD_FLAG_NEXTHOP_BGP) {
