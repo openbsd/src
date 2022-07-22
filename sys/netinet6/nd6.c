@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.238 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.239 2022/07/22 13:26:00 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ nd6_init(void)
 	nd6_init_done = 1;
 
 	/* start timer */
-	timeout_set_proc(&nd6_timer_to, nd6_timer, &nd6_timer_to);
+	timeout_set_proc(&nd6_timer_to, nd6_timer, NULL);
 	timeout_set_proc(&nd6_slowtimo_ch, nd6_slowtimo, NULL);
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 	timeout_set(&nd6_expire_timeout, nd6_expire_timer, NULL);
@@ -318,7 +318,7 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, unsigned int secs)
 }
 
 void
-nd6_timer(void *arg)
+nd6_timer(void *unused)
 {
 	struct llinfo_nd6 *ln, *nln;
 	time_t expire = getuptime() + nd6_gctimer;
