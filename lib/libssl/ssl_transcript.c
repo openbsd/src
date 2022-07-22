@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.7 2022/03/17 17:22:16 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.8 2022/07/22 19:54:46 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <openssl/ssl.h>
 
 #include "ssl_locl.h"
+#include "tls_internal.h"
 
 int
 tls1_transcript_hash_init(SSL *s)
@@ -118,7 +119,7 @@ tls1_transcript_init(SSL *s)
 	if (s->s3->handshake_transcript != NULL)
 		return 0;
 
-	if ((s->s3->handshake_transcript = BUF_MEM_new()) == NULL)
+	if ((s->s3->handshake_transcript = tls_buffer_new(0)) == NULL)
 		return 0;
 
 	tls1_transcript_reset(s);
@@ -129,21 +130,14 @@ tls1_transcript_init(SSL *s)
 void
 tls1_transcript_free(SSL *s)
 {
-	BUF_MEM_free(s->s3->handshake_transcript);
+	tls_buffer_free(s->s3->handshake_transcript);
 	s->s3->handshake_transcript = NULL;
 }
 
 void
 tls1_transcript_reset(SSL *s)
 {
-	/*
-	 * We should check the return value of BUF_MEM_grow_clean(), however
-	 * due to yet another bad API design, when called with a length of zero
-	 * it is impossible to tell if it succeeded (returning a length of zero)
-	 * or if it failed (and returned zero)... our implementation never
-	 * fails with a length of zero, so we trust all is okay...
-	 */
-	(void)BUF_MEM_grow_clean(s->s3->handshake_transcript, 0);
+	tls_buffer_clear(s->s3->handshake_transcript);
 
 	tls1_transcript_unfreeze(s);
 }
@@ -151,36 +145,29 @@ tls1_transcript_reset(SSL *s)
 int
 tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len)
 {
-	size_t olen, nlen;
-
 	if (s->s3->handshake_transcript == NULL)
 		return 1;
 
 	if (s->s3->flags & TLS1_FLAGS_FREEZE_TRANSCRIPT)
 		return 1;
 
-	olen = s->s3->handshake_transcript->length;
-	nlen = olen + len;
-
-	if (nlen < olen)
-		return 0;
-
-	if (BUF_MEM_grow(s->s3->handshake_transcript, nlen) == 0)
-		return 0;
-
-	memcpy(s->s3->handshake_transcript->data + olen, buf, len);
-
-	return 1;
+	return tls_buffer_append(s->s3->handshake_transcript, buf, len);
 }
 
 int
 tls1_transcript_data(SSL *s, const unsigned char **data, size_t *len)
 {
+	CBS cbs;
+
 	if (s->s3->handshake_transcript == NULL)
 		return 0;
 
-	*data = s->s3->handshake_transcript->data;
-	*len = s->s3->handshake_transcript->length;
+	if (!tls_buffer_data(s->s3->handshake_transcript, &cbs))
+		return 0;
+
+	/* XXX - change to caller providing a CBS argument. */
+	*data = CBS_data(&cbs);
+	*len = CBS_len(&cbs);
 
 	return 1;
 }

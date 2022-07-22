@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.415 2022/07/20 13:43:33 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.416 2022/07/22 19:54:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1181,7 +1181,7 @@ typedef struct ssl3_state_st {
 	const unsigned char *wpend_buf;
 
 	/* Transcript of handshake messages that have been sent and received. */
-	BUF_MEM *handshake_transcript;
+	struct tls_buffer *handshake_transcript;
 
 	/* Rolling hash of handshake messages. */
 	EVP_MD_CTX *handshake_hash;
