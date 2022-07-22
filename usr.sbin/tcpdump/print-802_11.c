@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.43 2022/07/22 20:31:45 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.44 2022/07/22 20:37:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -971,7 +971,7 @@ ieee80211_print_rsn(u_int8_t *data, u_int len)
 	for (i = 0; i < npmk; i++) {
 		printf("0x");
 		for (j = 0; j < IEEE80211_PMKID_LEN; j++)
-			printf("%x", data[i + j]);
+			printf("%x", data[j]);
 		if (i < npmk - 1)
 			printf(" ");
 		data += IEEE80211_PMKID_LEN;
