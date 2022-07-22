@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.7 2022/07/20 06:32:24 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.8 2022/07/22 19:33:53 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -47,10 +47,15 @@ typedef ssize_t (*tls_flush_cb)(void *_cb_arg);
 struct tls_buffer;
 
 struct tls_buffer *tls_buffer_new(size_t init_size);
+void tls_buffer_clear(struct tls_buffer *buf);
 void tls_buffer_free(struct tls_buffer *buf);
+void tls_buffer_set_capacity_limit(struct tls_buffer *buf, size_t limit);
 ssize_t tls_buffer_extend(struct tls_buffer *buf, size_t len,
     tls_read_cb read_cb, void *cb_arg);
-void tls_buffer_cbs(struct tls_buffer *buf, CBS *cbs);
+ssize_t tls_buffer_read(struct tls_buffer *buf, uint8_t *rbuf, size_t n);
+ssize_t tls_buffer_write(struct tls_buffer *buf, const uint8_t *wbuf, size_t n);
+int tls_buffer_append(struct tls_buffer *buf, const uint8_t *wbuf, size_t n);
+int tls_buffer_data(struct tls_buffer *buf, CBS *cbs);
 int tls_buffer_finish(struct tls_buffer *buf, uint8_t **out, size_t *out_len);
 
 /*
