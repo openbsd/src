@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.76 2020/03/28 16:15:45 florian Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.77 2022/07/22 15:34:46 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -109,11 +109,9 @@ struct	llinfo_nd6 {
 	short	ln_router;	/* 2^0: ND6 router bit */
 };
 
-#define ND6_IS_LLINFO_PROBREACH(n) ((n)->ln_state > ND6_LLINFO_INCOMPLETE)
 #define ND6_LLINFO_PERMANENT(n)	((n)->ln_rt->rt_expire == 0)
 
 /* node constants */
-#define MAX_REACHABLE_TIME		3600000	/* msec */
 #define REACHABLE_TIME			30000	/* msec */
 #define RETRANS_TIMER			1000	/* msec */
 #define MIN_RANDOM_FACTOR		512	/* 1024 * 0.5 */
