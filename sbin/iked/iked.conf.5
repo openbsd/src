@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.93 2022/04/13 11:06:15 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.94 2022/07/22 15:53:33 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2022 $
+.Dd $Mdocdate: July 22 2022 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -216,6 +216,11 @@ If
 .Ic tolerate
 is set to 0 then the times are not verified at all.
 This is the default setting.
+.It Ic set vendorid
+Send OpenIKED Vendor ID payload.
+This is the default
+.It Ic set novendorid
+Don't send a Vendor ID payload.
 .It Ic user Ar name password
 .Xr iked 8
 supports user-based authentication by tunneling the Extensible

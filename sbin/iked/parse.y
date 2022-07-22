@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.140 2022/04/11 20:41:21 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.141 2022/07/22 15:53:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -102,6 +102,7 @@ static int		 mobike = 1;
 static int		 enforcesingleikesa = 0;
 static int		 stickyaddress = 0;
 static int		 fragmentation = 0;
+static int		 vendorid = 1;
 static int		 dpd_interval = IKED_IKE_SA_ALIVE_TIMEOUT;
 static char		*ocsp_url = NULL;
 static long		 ocsp_tolerate = 0;
@@ -442,6 +443,7 @@ typedef struct {
 %token	FRAGMENTATION NOFRAGMENTATION DPD_CHECK_INTERVAL
 %token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
 %token	STICKYADDRESS NOSTICKYADDRESS
+%token	VENDORID NOVENDORID
 %token	TOLERATE MAXAGE DYNAMIC
 %token	CERTPARTIALCHAIN
 %token	REQUEST IFACE
@@ -509,6 +511,8 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET NOFRAGMENTATION	{ fragmentation = 0; }
 		| SET MOBIKE	{ mobike = 1; }
 		| SET NOMOBIKE	{ mobike = 0; }
+		| SET VENDORID		{ vendorid = 1; }
+		| SET NOVENDORID	{ vendorid = 0; }
 		| SET ENFORCESINGLEIKESA	{ enforcesingleikesa = 1; }
 		| SET NOENFORCESINGLEIKESA	{ enforcesingleikesa = 0; }
 		| SET STICKYADDRESS	{ stickyaddress = 1; }
@@ -1376,6 +1380,7 @@ lookup(char *s)
 		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
 		{ "nostickyaddress",	NOSTICKYADDRESS },
+		{ "novendorid",		NOVENDORID },
 		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
@@ -1398,7 +1403,8 @@ lookup(char *s)
 		{ "tolerate",		TOLERATE },
 		{ "transport",		TRANSPORT },
 		{ "tunnel",		TUNNEL },
-		{ "user",		USER }
+		{ "user",		USER },
+		{ "vendorid",		VENDORID }
 	};
 	const struct keywords	*p;
 
@@ -1806,6 +1812,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_ocsp_tolerate = ocsp_tolerate;
 	env->sc_ocsp_maxage = ocsp_maxage;
 	env->sc_cert_partial_chain = cert_partial_chain;
+	env->sc_vendorid = vendorid;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

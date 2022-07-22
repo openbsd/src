@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.349 2022/07/08 19:51:11 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.350 2022/07/22 15:53:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -45,6 +45,7 @@
 #include "eap.h"
 #include "dh.h"
 #include "chap_ms.h"
+#include "version.h"
 
 void	 ikev2_info(struct iked *, int);
 void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
@@ -171,6 +172,8 @@ ssize_t	 ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
 	    ssize_t);
 ssize_t	 ikev2_add_nat_detection(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, struct iked_message *, ssize_t);
+ssize_t	 ikev2_add_vendor_id(struct ibuf *, struct ikev2_payload **,
+	    ssize_t, struct ibuf *);
 ssize_t	 ikev2_add_notify(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    uint16_t);
 ssize_t	 ikev2_add_mobike(struct ibuf *, struct ikev2_payload **, ssize_t);
@@ -1326,7 +1329,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	struct ikev2_keyexchange	*ke;
 	struct ikev2_notify		*n;
 	struct iked_sa			*sa = NULL;
-	struct ibuf			*buf, *cookie = NULL;
+	struct ibuf			*buf, *cookie = NULL, *vendor_id = NULL;
 	struct dh_group			*group;
 	ssize_t				 len;
 	int				 ret = -1;
@@ -1440,6 +1443,14 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		goto done;
 	len = ibuf_size(sa->sa_inonce);
 
+	if (env->sc_vendorid != 0) {
+		vendor_id = ibuf_new(IKED_VENDOR_ID, strlen(IKED_VENDOR_ID));
+		ibuf_add(vendor_id, IKED_VERSION, strlen(IKED_VERSION));
+		if ((len = ikev2_add_vendor_id(buf, &pld, len, vendor_id))
+		    == -1)
+			goto done;
+	}
+
 	/* Fragmentation Notify */
 	if (env->sc_frag) {
 		if ((len = ikev2_add_fragmentation(buf, &pld, len))
@@ -1490,6 +1501,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 		ikev2_ike_sa_setreason(sa, "failed to send SA_INIT");
 		sa_free(env, sa);
 	}
+	ibuf_free(vendor_id);
 
 	return (ret);
 }
@@ -2149,6 +2161,21 @@ ikev2_add_notify(struct ibuf *e, struct ikev2_payload **pld, ssize_t len,
 	log_debug("%s: done", __func__);
 
 	return (len);
+}
+
+ssize_t
+ikev2_add_vendor_id(struct ibuf *e, struct ikev2_payload **pld,
+    ssize_t len, struct ibuf *id)
+{
+	if (*pld)
+		if (ikev2_next_payload(*pld, len, IKEV2_PAYLOAD_VENDOR) == -1)
+			return (-1);
+	if ((*pld = ikev2_add_payload(e)) == NULL)
+		return (-1);
+	if (ibuf_cat(e, id) == -1)
+		return (-1);
+
+	return (ibuf_length(id));
 }
 
 ssize_t
@@ -3272,6 +3299,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	struct ikev2_keyexchange	*ke;
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ibuf			*buf;
+	struct ibuf			*vendor_id = NULL;
 	struct dh_group			*group;
 	ssize_t				 len;
 	int				 ret = -1;
@@ -3336,6 +3364,14 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 		goto done;
 	len = ibuf_size(sa->sa_rnonce);
 
+	if (env->sc_vendorid != 0) {
+		vendor_id = ibuf_new(IKED_VENDOR_ID, strlen(IKED_VENDOR_ID));
+		ibuf_add(vendor_id, IKED_VERSION, strlen(IKED_VERSION));
+		if ((len = ikev2_add_vendor_id(buf, &pld, len, vendor_id))
+		    == -1)
+			goto done;
+	}
+
 	/* Fragmentation Notify*/
 	if (sa->sa_frag) {
 		if ((len = ikev2_add_fragmentation(buf, &pld, len))
@@ -3382,6 +3418,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	ret = ikev2_msg_send(env, &resp);
 
  done:
+	ibuf_free(vendor_id);
 	ikev2_msg_cleanup(env, &resp);
 
 	return (ret);

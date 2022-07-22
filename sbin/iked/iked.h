@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.205 2022/07/08 19:51:11 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.206 2022/07/22 15:53:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -735,6 +735,7 @@ struct iked_static {
 	uint8_t			 st_mobike;	/* MOBIKE */
 	in_port_t		 st_nattport;
 	int			 st_stickyaddress; /* addr per DSTID  */
+	int			 st_vendorid;
 };
 
 struct iked {
@@ -753,6 +754,7 @@ struct iked {
 #define sc_mobike		sc_static.st_mobike
 #define sc_nattport		sc_static.st_nattport
 #define sc_stickyaddress	sc_static.st_stickyaddress
+#define sc_vendorid		sc_static.st_vendorid
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;
