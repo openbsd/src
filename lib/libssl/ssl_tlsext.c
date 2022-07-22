@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.125 2022/07/20 15:16:06 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.126 2022/07/22 13:10:31 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -93,8 +93,6 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 
 	if (!CBS_get_u16_length_prefixed(cbs, &alpn))
 		goto err;
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	if (!tlsext_alpn_check_format(&alpn))
 		goto err;
@@ -179,8 +177,6 @@ tlsext_alpn_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (!CBS_get_u16_length_prefixed(cbs, &list))
 		goto err;
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	if (!CBS_get_u8_length_prefixed(&list, &proto))
 		goto err;
@@ -250,8 +246,6 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 	int i;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &grouplist))
-		goto err;
-	if (CBS_len(cbs) != 0)
 		goto err;
 
 	groups_len = CBS_len(&grouplist);
@@ -377,8 +371,6 @@ tlsext_ecpf_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		return 0;
 	if (CBS_len(&ecpf) == 0)
 		return 0;
-	if (CBS_len(cbs) != 0)
-		return 0;
 
 	/* Must contain uncompressed (0) - RFC 8422, section 5.1.2. */
 	if (!CBS_contains_zero_byte(&ecpf)) {
@@ -466,8 +458,6 @@ tlsext_ri_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (!CBS_get_u8_length_prefixed(cbs, &reneg))
 		goto err;
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	if (!CBS_mem_equal(&reneg, s->s3->previous_client_finished,
 	    s->s3->previous_client_finished_len)) {
@@ -539,8 +529,6 @@ tlsext_ri_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	    s->s3->previous_server_finished_len))
 		goto err;
 	if (CBS_len(&reneg) != 0)
-		goto err;
-	if (CBS_len(cbs) != 0)
 		goto err;
 
 	if (!CBS_mem_equal(&prev_client, s->s3->previous_client_finished,
@@ -833,8 +821,6 @@ tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		*alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	return 1;
 
@@ -1013,10 +999,6 @@ tlsext_ocsp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		    &p, CBS_len(&exts))) == NULL)
 			goto err;
 	}
-
-	/* should be nothing left */
-	if (CBS_len(cbs) > 0)
-		goto err;
 
 	ret = 1;
  err:
@@ -1324,8 +1306,6 @@ tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		*alert = SSL_AD_DECODE_ERROR;
 		goto done;
 	}
-	if (CBS_len(cbs) != 0)
-		goto err;
 
 	/*
 	 * Per RFC 5764 section 4.1.1
