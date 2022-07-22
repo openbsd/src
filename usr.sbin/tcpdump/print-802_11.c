@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.42 2022/03/17 14:00:53 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.43 2022/07/22 20:31:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -860,6 +860,9 @@ ieee80211_print_akm(uint8_t selector[4])
 	case 6:
 		printf("SHA256-PSK");
 		break;
+	case 8:
+		printf("SAE");
+		break;
 	default:
 		printf("%d", selector[3]);
 		break;
@@ -910,7 +913,7 @@ ieee80211_print_rsn(u_int8_t *data, u_int len)
 	printf(",cipher%s ", nciphers > 1 ? "s" : "");
 	for (i = 0; i < nciphers; i++) {
 		for (j = 0; j < 4; j++)
-			selector[j] = data[i + j];
+			selector[j] = data[j];
 		ieee80211_print_rsncipher(selector);
 		if (i < nciphers - 1)
 			printf(" ");
@@ -931,11 +934,11 @@ ieee80211_print_rsn(u_int8_t *data, u_int len)
 	}
 
 	printf(",akm%s ", nakms > 1 ? "s" : "");
-	for (i = 0; i < nciphers; i++) {
+	for (i = 0; i < nakms; i++) {
 		for (j = 0; j < 4; j++)
-			selector[j] = data[i + j];
+			selector[j] = data[j];
 		ieee80211_print_akm(selector);
-		if (i < nciphers - 1)
+		if (i < nakms - 1)
 			printf(" ");
 		data += 4;
 	}
