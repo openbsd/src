@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.81 2022/07/12 16:54:59 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.82 2022/07/23 09:00:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -2207,6 +2207,8 @@ free_address_proposal(struct address_proposal *addr_proposal)
 	LIST_REMOVE(addr_proposal, entries);
 	evtimer_del(&addr_proposal->timer);
 	switch (addr_proposal->state) {
+	case PROPOSAL_CONFIGURED:
+	case PROPOSAL_NEARLY_EXPIRED:
 	case PROPOSAL_STALE:
 		withdraw_addr(addr_proposal);
 		break;
