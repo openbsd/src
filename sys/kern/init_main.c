@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.315 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.316 2022/07/23 22:10:58 cheloha Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -430,8 +430,6 @@ main(void *framep)
 			panic("fork init");
 		initprocess = initproc->p_p;
 	}
-
-	randompid = 1;
 
 	/*
 	 * Create any kernel threads whose creation was deferred because

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.333 2022/07/05 15:06:16 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.334 2022/07/23 22:10:59 cheloha Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -498,7 +498,6 @@ extern struct proc proc0;		/* Process slot for swapper. */
 extern struct process process0;		/* Process slot for kernel threads. */
 extern int nprocesses, maxprocess;	/* Cur and max number of processes. */
 extern int nthreads, maxthread;		/* Cur and max number of threads. */
-extern int randompid;			/* fork() should create random pid's */
 
 LIST_HEAD(proclist, proc);
 LIST_HEAD(processlist, process);
