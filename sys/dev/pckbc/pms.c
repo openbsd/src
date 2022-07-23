@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.96 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: pms.c,v 1.97 2022/07/23 05:55:16 sdk Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2610,6 +2610,16 @@ pms_proc_elantech_v4(struct pms_softc *sc)
 
 	case ELANTECH_PKT_TRACKPOINT:
 		if (sc->sc_dev_enable & PMS_DEV_SECONDARY) {
+			/*
+			* This firmware misreport coordinates for trackpoint
+			* occasionally. Discard packets outside of [-127, 127] range
+			* to prevent cursor jumps.
+			*/
+			if (sc->packet[4] == 0x80 || sc->packet[5] == 0x80 ||
+			    sc->packet[1] >> 7 == sc->packet[4] >> 7 ||
+			    sc->packet[2] >> 7 == sc->packet[5] >> 7)
+				return;
+
 			x = sc->packet[4] - 0x100 + (sc->packet[1] << 1);
 			y = sc->packet[5] - 0x100 + (sc->packet[2] << 1);
 			buttons = butmap[sc->packet[0] & 7];
