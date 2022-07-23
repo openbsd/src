@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.c,v 1.1 2020/07/06 13:33:06 pirofti Exp $ */
+/*	$OpenBSD: microtime.c,v 1.2 2022/07/23 22:58:51 cheloha Exp $ */
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
@@ -45,10 +45,10 @@ binuptime(struct bintime *bt, struct timekeep *tk)
 	do {
 		gen = tk->tk_generation;
 		membar_consumer();
-		*bt = tk->tk_offset;
 		if (tc_delta(tk, &delta))
 			return -1;
-		bintimeaddfrac(bt, tk->tk_scale * delta, bt);
+		TIMECOUNT_TO_BINTIME(delta, tk->tk_scale, bt);
+		bintimeadd(bt, &tk->tk_offset, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != tk->tk_generation);
 
@@ -65,7 +65,8 @@ binruntime(struct bintime *bt, struct timekeep *tk)
 		membar_consumer();
 		if (tc_delta(tk, &delta))
 			return -1;
-		bintimeaddfrac(&tk->tk_offset, tk->tk_scale * delta, bt);
+		TIMECOUNT_TO_BINTIME(delta, tk->tk_scale, bt);
+		bintimeadd(bt, &tk->tk_offset, bt);
 		bintimesub(bt, &tk->tk_naptime, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != tk->tk_generation);
@@ -81,10 +82,10 @@ bintime(struct bintime *bt, struct timekeep *tk)
 	do {
 		gen = tk->tk_generation;
 		membar_consumer();
-		*bt = tk->tk_offset;
 		if (tc_delta(tk, &delta))
 			return -1;
-		bintimeaddfrac(bt, tk->tk_scale * delta, bt);
+		TIMECOUNT_TO_BINTIME(delta, tk->tk_scale, bt);
+		bintimeadd(bt, &tk->tk_offset, bt);
 		bintimeadd(bt, &tk->tk_boottime, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != tk->tk_generation);

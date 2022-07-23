@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.61 2021/06/19 13:49:39 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.62 2022/07/23 22:58:51 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -206,6 +206,17 @@ bintimesub(const struct bintime *bt, const struct bintime *ct,
 	if (bt->frac < bt->frac - ct->frac)
 		dt->sec--;
 	dt->frac = bt->frac - ct->frac;
+}
+
+static inline void
+TIMECOUNT_TO_BINTIME(u_int count, uint64_t scale, struct bintime *bt)
+{
+	uint64_t hi64;
+
+	hi64 = count * (scale >> 32);
+	bt->sec = hi64 >> 32;
+	bt->frac = hi64 << 32;
+	bintimeaddfrac(bt, count * (scale & 0xffffffff), bt);
 }
 
 /*-

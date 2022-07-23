@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.75 2021/10/24 00:02:25 jsg Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.76 2022/07/23 22:58:51 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -189,8 +189,8 @@ binuptime(struct bintime *bt)
 		th = timehands;
 		gen = th->th_generation;
 		membar_consumer();
-		*bt = th->th_offset;
-		bintimeaddfrac(bt, th->th_scale * tc_delta(th), bt);
+		TIMECOUNT_TO_BINTIME(tc_delta(th), th->th_scale, bt);
+		bintimeadd(bt, &th->th_offset, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
 }
@@ -278,7 +278,8 @@ binruntime(struct bintime *bt)
 		th = timehands;
 		gen = th->th_generation;
 		membar_consumer();
-		bintimeaddfrac(&th->th_offset, th->th_scale * tc_delta(th), bt);
+		TIMECOUNT_TO_BINTIME(tc_delta(th), th->th_scale, bt);
+		bintimeadd(bt, &th->th_offset, bt);
 		bintimesub(bt, &th->th_naptime, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
@@ -303,8 +304,8 @@ bintime(struct bintime *bt)
 		th = timehands;
 		gen = th->th_generation;
 		membar_consumer();
-		*bt = th->th_offset;
-		bintimeaddfrac(bt, th->th_scale * tc_delta(th), bt);
+		TIMECOUNT_TO_BINTIME(tc_delta(th), th->th_scale, bt);
+		bintimeadd(bt, &th->th_offset, bt);
 		bintimeadd(bt, &th->th_boottime, bt);
 		membar_consumer();
 	} while (gen == 0 || gen != th->th_generation);
@@ -641,7 +642,8 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 		ncount = 0;
 	th->th_offset_count += delta;
 	th->th_offset_count &= th->th_counter->tc_counter_mask;
-	bintimeaddfrac(&th->th_offset, th->th_scale * delta, &th->th_offset);
+	TIMECOUNT_TO_BINTIME(delta, th->th_scale, &bt);
+	bintimeadd(&th->th_offset, &bt, &th->th_offset);
 
 	/*
 	 * Ignore new offsets that predate the current offset.
