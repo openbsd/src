@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.278 2022/07/22 17:26:58 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.279 2022/07/23 10:24:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2444,7 +2444,7 @@ knexthop_send_update(struct knexthop *kn)
 }
 
 struct kroute *
-kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
+kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchany)
 {
 	int			 i;
 	struct kroute		*kr;
@@ -2453,8 +2453,7 @@ kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 	for (i = 32; i >= 0; i--) {
 		applymask(&masked, key, i);
 		if ((kr = kroute_find(kt, &masked, i, RTP_ANY)) != NULL)
-			if (matchall ||
-			    bgpd_filternexthop(kr_tofull(kr)) == 0)
+			if (matchany || bgpd_oknexthop(kr_tofull(kr)))
 				return (kr);
 	}
 
@@ -2462,7 +2461,7 @@ kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 }
 
 struct kroute6 *
-kroute6_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
+kroute6_match(struct ktable *kt, struct bgpd_addr *key, int matchany)
 {
 	int			 i;
 	struct kroute6		*kr6;
@@ -2471,8 +2470,7 @@ kroute6_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 	for (i = 128; i >= 0; i--) {
 		applymask(&masked, key, i);
 		if ((kr6 = kroute6_find(kt, &masked, i, RTP_ANY)) != NULL)
-			if (matchall ||
-			    bgpd_filternexthop(kr6_tofull(kr6)) == 0)
+			if (matchany || bgpd_oknexthop(kr6_tofull(kr6)))
 				return (kr6);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.251 2022/07/22 17:26:58 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.252 2022/07/23 10:24:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1115,23 +1115,19 @@ send_network(int type, struct network_config *net, struct filter_set_head *h)
 	return (0);
 }
 
+/*
+ * Return true if a route can be used for nexthop resolution.
+ */
 int
-bgpd_filternexthop(struct kroute_full *kf)
+bgpd_oknexthop(struct kroute_full *kf)
 {
-	/* kernel routes are never filtered */
-	if (kf->flags & F_KERNEL && kf->prefixlen != 0)
-		return (0);
+	if (kf->flags & F_BGPD)
+		return ((cflags & BGPD_FLAG_NEXTHOP_BGP) != 0);
 
-	if (cflags & BGPD_FLAG_NEXTHOP_BGP) {
-		if (kf->flags & F_BGPD)
-			return (0);
-	}
+	if (kf->prefixlen == 0)
+		return ((cflags & BGPD_FLAG_NEXTHOP_DEFAULT) != 0);
 
-	if (cflags & BGPD_FLAG_NEXTHOP_DEFAULT) {
-		if (kf->prefixlen == 0)
-			return (0);
-	}
-
+	/* any other route is fine */
 	return (1);
 }
 
