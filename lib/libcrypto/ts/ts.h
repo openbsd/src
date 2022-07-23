@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.13 2022/07/16 18:36:36 kn Exp $ */
+/* $OpenBSD: ts.h,v 1.14 2022/07/23 07:13:03 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -184,7 +184,7 @@ PKIFreeText ::= SEQUENCE SIZE (1..MAX) OF UTF8String
 	-- of the contained text)
 */
 
-/* Possible values for status. See ts_resp_print.c && ts_resp_verify.c. */
+/* Possible values for status. See ts_rsp_print.c && ts_rsp_verify.c. */
 
 #define	TS_STATUS_GRANTED			0
 #define	TS_STATUS_GRANTED_WITH_MODS		1
@@ -193,7 +193,7 @@ PKIFreeText ::= SEQUENCE SIZE (1..MAX) OF UTF8String
 #define	TS_STATUS_REVOCATION_WARNING		4
 #define	TS_STATUS_REVOCATION_NOTIFICATION	5
 
-/* Possible values for failure_info. See ts_resp_print.c && ts_resp_verify.c */
+/* Possible values for failure_info. See ts_rsp_print.c && ts_rsp_verify.c */
 
 #define	TS_INFO_BAD_ALG			0
 #define	TS_INFO_BAD_REQUEST		2
@@ -432,7 +432,7 @@ void *TS_REQ_get_ext_d2i(TS_REQ *a, int nid, int *crit, int *idx);
 
 int TS_REQ_print_bio(BIO *bio, TS_REQ *a);
 
-/* Function declarations for TS_RESP defined in ts/ts_resp_utils.c */
+/* Function declarations for TS_RESP defined in ts/ts_rsp_utils.c */
 
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *info);
 TS_STATUS_INFO *TS_RESP_get_status_info(TS_RESP *a);
@@ -490,7 +490,7 @@ X509_EXTENSION *TS_TST_INFO_delete_ext(TS_TST_INFO *a, int loc);
 int TS_TST_INFO_add_ext(TS_TST_INFO *a, X509_EXTENSION *ex, int loc);
 void *TS_TST_INFO_get_ext_d2i(TS_TST_INFO *a, int nid, int *crit, int *idx);
 
-/* Declarations related to response generation, defined in ts/ts_resp_sign.c. */
+/* Declarations related to response generation, defined in ts/ts_rsp_sign.c. */
 
 /* Optional flags for response generation. */
 
@@ -628,7 +628,7 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio);
 
 /*
  * Declarations related to response verification,
- * they are defined in ts/ts_resp_verify.c.
+ * they are defined in ts/ts_rsp_verify.c.
  */
 
 int TS_RESP_verify_signature(PKCS7 *token, STACK_OF(X509) *certs,
@@ -731,7 +731,7 @@ void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
  */
 TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx);
 
-/* Function declarations for TS_RESP defined in ts/ts_resp_print.c */
+/* Function declarations for TS_RESP defined in ts/ts_rsp_print.c */
 
 int TS_RESP_print_bio(BIO *bio, TS_RESP *a);
 int TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a);
