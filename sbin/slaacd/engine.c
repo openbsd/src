@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.82 2022/07/23 09:00:10 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.83 2022/07/23 16:16:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1929,6 +1929,20 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 	int			 found, found_temporary, duplicate_found;
 
 	found = found_temporary = duplicate_found = 0;
+
+	if (!!iface->autoconf != !!iface->temporary) {
+		struct address_proposal	*tmp;
+		/*
+		 * If only the autoconf or temporary flag is set, check if we
+		 * have the "other kind" of address configured and delete it.
+		 */
+		LIST_FOREACH_SAFE (addr_proposal, &iface->addr_proposals,
+		    entries, tmp) {
+			if ((!addr_proposal->temporary && !iface->autoconf) ||
+			    (addr_proposal->temporary && !iface->temporary))
+				free_address_proposal(addr_proposal);
+		}
+	}
 
 	LIST_FOREACH(addr_proposal, &iface->addr_proposals, entries) {
 		if (prefix->prefix_len == addr_proposal-> prefix_len &&
