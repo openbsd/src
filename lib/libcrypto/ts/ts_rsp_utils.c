@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_utils.c,v 1.8 2022/07/24 08:16:47 tb Exp $ */
+/* $OpenBSD: ts_rsp_utils.c,v 1.9 2022/07/24 19:25:36 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -89,6 +89,30 @@ TS_STATUS_INFO *
 TS_RESP_get_status_info(TS_RESP *a)
 {
 	return a->status_info;
+}
+
+const ASN1_UTF8STRING *
+TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *si)
+{
+	return si->failure_info;
+}
+
+const STACK_OF(ASN1_UTF8STRING) *
+TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *si)
+{
+	return si->text;
+}
+
+const ASN1_INTEGER *
+TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *si)
+{
+	return si->status;
+}
+
+int
+TS_STATUS_INFO_set_status(TS_STATUS_INFO *si, int i)
+{
+	return ASN1_INTEGER_set(si->status, i);
 }
 
 /* Caller loses ownership of PKCS7 and TS_TST_INFO objects. */

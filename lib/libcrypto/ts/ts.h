@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.15 2022/07/24 08:16:47 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.16 2022/07/24 19:25:36 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -397,6 +397,14 @@ int TS_REQ_print_bio(BIO *bio, TS_REQ *a);
 
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *info);
 TS_STATUS_INFO *TS_RESP_get_status_info(TS_RESP *a);
+
+#if defined(LIBRESSL_INTERNAL)
+const ASN1_UTF8STRING *TS_STATUS_INFO_get0_failure_info(const TS_STATUS_INFO *si);
+const STACK_OF(ASN1_UTF8STRING) *
+    TS_STATUS_INFO_get0_text(const TS_STATUS_INFO *si);
+const ASN1_INTEGER *TS_STATUS_INFO_get0_status(const TS_STATUS_INFO *si);
+int TS_STATUS_INFO_set_status(TS_STATUS_INFO *si, int i);
+#endif
 
 /* Caller loses ownership of PKCS7 and TS_TST_INFO objects. */
 void TS_RESP_set_tst_info(TS_RESP *a, PKCS7 *p7, TS_TST_INFO *tst_info);
