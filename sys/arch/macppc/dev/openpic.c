@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.89 2022/02/21 10:38:50 jsg Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.90 2022/07/24 00:28:09 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -382,6 +382,10 @@ openpic_splx(int newcpl)
 
 	intr = ppc_intr_disable();
 	openpic_setipl(newcpl);
+	if (ci->ci_dec_deferred && newcpl < IPL_CLOCK) {
+		ppc_mtdec(0);
+		ppc_mtdec(UINT32_MAX);	/* raise DEC exception */
+	}
 	if (newcpl < IPL_SOFTTTY && (ci->ci_ipending & ppc_smask[newcpl])) {
 		s = splsofttty();
 		dosoftint(newcpl);

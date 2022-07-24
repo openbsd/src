@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.48 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.49 2022/07/24 00:28:09 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -128,6 +128,19 @@ decr_intr(struct clockframe *frame)
 		return;
 
 	/*
+	 * We can't actually mask DEC interrupts at or above IPL_CLOCK
+	 * without masking other essential interrupts.  To simulate
+	 * masking, we retrigger the DEC by hand from splx(9) the next
+	 * time our IPL drops below IPL_CLOCK.
+	 */
+	if (ci->ci_cpl >= IPL_CLOCK) {
+		ci->ci_dec_deferred = 1;
+		ppc_mtdec(UINT32_MAX >> 1);	/* clear DEC exception */
+		return;
+	}
+	ci->ci_dec_deferred = 0;
+
+	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
@@ -160,39 +173,35 @@ decr_intr(struct clockframe *frame)
 	 */
 	ppc_mtdec(nextevent - tb);
 
-	if (ci->ci_cpl >= IPL_CLOCK) {
-		ci->ci_statspending += nstats;
-	} else {
-		nstats += ci->ci_statspending;
-		ci->ci_statspending = 0;
+	nstats += ci->ci_statspending;
+	ci->ci_statspending = 0;
 
-		s = splclock();
+	s = splclock();
 
-		/*
-		 * Reenable interrupts
-		 */
-		ppc_intr_enable(1);
+	/*
+	 * Reenable interrupts
+	 */
+	ppc_intr_enable(1);
 
-		/*
-		 * Do standard timer interrupt stuff.
-		 */
-		while (ci->ci_lasttb < ci->ci_prevtb) {
-			/* sync lasttb with hardclock */
-			ci->ci_lasttb += ticks_per_intr;
-			clk_count.ec_count++;
-			hardclock(frame);
-		}
-
-		while (nstats-- > 0)
-			statclock(frame);
-
-		splx(s);
-		(void) ppc_intr_disable();
-
-		/* if a tick has occurred while dealing with these,
-		 * dont service it now, delay until the next tick.
-		 */
+	/*
+	 * Do standard timer interrupt stuff.
+	 */
+	while (ci->ci_lasttb < ci->ci_prevtb) {
+		/* sync lasttb with hardclock */
+		ci->ci_lasttb += ticks_per_intr;
+		clk_count.ec_count++;
+		hardclock(frame);
 	}
+
+	while (nstats-- > 0)
+		statclock(frame);
+
+	splx(s);
+	(void) ppc_intr_disable();
+
+	/* if a tick has occurred while dealing with these,
+	 * dont service it now, delay until the next tick.
+	 */
 }
 
 void cpu_startclock(void);
