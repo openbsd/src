@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.10 2022/07/24 08:16:47 tb Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.11 2022/07/24 19:54:46 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -112,6 +112,70 @@ TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx)
 	GENERAL_NAME_free(ctx->tsa_name);
 
 	TS_VERIFY_CTX_init(ctx);
+}
+
+/*
+ * XXX: The following accessors demonstrate the amount of care and thought that
+ * went into OpenSSL 1.1 API design and the review thereof: for whatever reason
+ * these functions return what was passed in. Correct memory management is left
+ * as an exercise for the reader... Unfortunately, careful consumers like
+ * openssl-ruby assume this behavior, so we're stuck with this insanity. The
+ * cherry on top is the TS_VERIFY_CTS_set_certs() [sic!] function that made it
+ * into the public API.
+ *
+ * Outstanding job, R$ and tjh, A+.
+ */
+
+int
+TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int flags)
+{
+	ctx->flags |= flags;
+
+	return ctx->flags;
+}
+
+int
+TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int flags)
+{
+	ctx->flags = flags;
+
+	return ctx->flags;
+}
+
+BIO *
+TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *bio)
+{
+	ctx->data = bio;
+
+	return ctx->data;
+}
+
+X509_STORE *
+TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *store)
+{
+	ctx->store = store;
+
+	return ctx->store;
+}
+
+STACK_OF(X509) *
+TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs)
+{
+	ctx->certs = certs;
+
+	return ctx->certs;
+}
+
+unsigned char *
+TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx, unsigned char *imprint,
+    long imprint_len)
+{
+	free(ctx->imprint);
+
+	ctx->imprint = imprint;
+	ctx->imprint_len = imprint_len;
+
+	return ctx->imprint;
 }
 
 TS_VERIFY_CTX *

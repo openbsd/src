@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.16 2022/07/24 19:25:36 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.17 2022/07/24 19:54:46 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -681,6 +681,19 @@ TS_VERIFY_CTX *TS_VERIFY_CTX_new(void);
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
+
+#if defined(LIBRESSL_INTERNAL)
+int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int flags);
+int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int flags);
+BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *bio);
+X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *store);
+/* R$ special */
+#define TS_VERIFY_CTS_set_certs TS_VERIFY_CTX_set_certs
+STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx,
+    STACK_OF(X509) *certs);
+unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
+    unsigned char *imprint, long imprint_len);
+#endif
 
 /*
  * If ctx is NULL, it allocates and returns a new object, otherwise
