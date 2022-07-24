@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.8 2022/07/22 19:33:53 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.9 2022/07/24 14:28:16 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -33,6 +33,10 @@ __BEGIN_HIDDEN_DECLS
 #define TLS_IO_WANT_POLLOUT		-4
 #define TLS_IO_WANT_RETRY		-5 /* Retry the previous call immediately. */
 
+enum ssl_encryption_level_t;
+
+struct tls13_secret;
+
 /*
  * Callbacks.
  */
@@ -40,6 +44,14 @@ typedef ssize_t (*tls_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
 typedef ssize_t (*tls_flush_cb)(void *_cb_arg);
+
+typedef ssize_t (*tls_handshake_read_cb)(void *_buf, size_t _buflen,
+    void *_cb_arg);
+typedef ssize_t (*tls_handshake_write_cb)(const void *_buf, size_t _buflen,
+    void *_cb_arg);
+typedef int (*tls_traffic_key_cb)(struct tls13_secret *key,
+    enum ssl_encryption_level_t level, void *_cb_arg);
+typedef int (*tls_alert_send_cb)(int _alert_desc, void *_cb_arg);
 
 /*
  * Buffers.

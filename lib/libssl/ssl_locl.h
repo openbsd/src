@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.416 2022/07/22 19:54:46 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.417 2022/07/24 14:28:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -581,6 +581,10 @@ typedef struct ssl_handshake_tls13_st {
 	EVP_MD_CTX *clienthello_md_ctx;
 	unsigned char *clienthello_hash;
 	unsigned int clienthello_hash_len;
+
+	/* QUIC read/write encryption levels. */
+	enum ssl_encryption_level_t quic_read_level;
+	enum ssl_encryption_level_t quic_write_level;
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_handshake_st {

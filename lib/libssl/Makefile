@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.75 2022/06/28 20:40:24 tb Exp $
+# $OpenBSD: Makefile,v 1.76 2022/07/24 14:28:16 jsing Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -79,6 +79,7 @@ SRCS= \
 	tls13_key_schedule.c \
 	tls13_legacy.c \
 	tls13_lib.c \
+	tls13_quic.c \
 	tls13_record.c \
 	tls13_record_layer.c \
 	tls13_server.c \

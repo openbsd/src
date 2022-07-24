@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.69 2022/07/24 14:19:45 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.70 2022/07/24 14:28:16 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -103,7 +103,7 @@ tls13_cipher_hash(const SSL_CIPHER *cipher)
 	return NULL;
 }
 
-static void
+void
 tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
@@ -132,7 +132,7 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	SSL_CTX_remove_session(ctx->ssl->ctx, ctx->ssl->session);
 }
 
-static void
+void
 tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
@@ -328,7 +328,7 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return tls13_send_alert(ctx->rl, alert);
 }
 
-static ssize_t
+ssize_t
 tls13_phh_received_cb(void *cb_arg)
 {
 	ssize_t ret = TLS13_IO_FAILURE;
@@ -369,7 +369,7 @@ tls13_phh_received_cb(void *cb_arg)
 	return ret;
 }
 
-static void
+void
 tls13_phh_done_cb(void *cb_arg)
 {
 	struct tls13_ctx *ctx = cb_arg;
@@ -380,10 +380,11 @@ tls13_phh_done_cb(void *cb_arg)
 	}
 }
 
-static const struct tls13_record_layer_callbacks rl_callbacks = {
+static const struct tls13_record_layer_callbacks tls13_rl_callbacks = {
 	.wire_read = tls13_legacy_wire_read_cb,
 	.wire_write = tls13_legacy_wire_write_cb,
 	.wire_flush = tls13_legacy_wire_flush_cb,
+
 	.alert_recv = tls13_alert_received_cb,
 	.alert_sent = tls13_alert_sent_cb,
 	.phh_recv = tls13_phh_received_cb,
@@ -402,7 +403,7 @@ tls13_ctx_new(int mode, SSL *ssl)
 	ctx->mode = mode;
 	ctx->ssl = ssl;
 
-	if ((ctx->rl = tls13_record_layer_new(&rl_callbacks, ctx)) == NULL)
+	if ((ctx->rl = tls13_record_layer_new(&tls13_rl_callbacks, ctx)) == NULL)
 		goto err;
 
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
@@ -410,10 +411,14 @@ tls13_ctx_new(int mode, SSL *ssl)
 	ctx->info_cb = tls13_legacy_info_cb;
 	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
 
-	if (!SSL_is_quic(ssl))
-		ctx->middlebox_compat = 1;
+	ctx->middlebox_compat = 1;
 
 	ssl->internal->tls13 = ctx;
+
+	if (SSL_is_quic(ssl)) {
+		if (!tls13_quic_init(ctx))
+			goto err;
+	}
 
 	return ctx;
 

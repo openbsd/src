@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.100 2022/07/24 14:16:29 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.101 2022/07/24 14:28:16 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -175,9 +175,19 @@ int tls13_update_server_traffic_secret(struct tls13_secrets *secrets);
 struct tls13_record_layer;
 
 struct tls13_record_layer_callbacks {
+	/* Wire callbacks. */
 	tls_read_cb wire_read;
 	tls_write_cb wire_write;
 	tls_flush_cb wire_flush;
+
+	/* Interceptors. */
+	tls_handshake_read_cb handshake_read;
+	tls_handshake_write_cb handshake_write;
+	tls_traffic_key_cb set_read_traffic_key;
+	tls_traffic_key_cb set_write_traffic_key;
+	tls_alert_send_cb alert_send;
+
+	/* Notification callbacks. */
 	tls13_alert_cb alert_recv;
 	tls13_alert_cb alert_sent;
 	tls13_phh_recv_cb phh_recv;
@@ -187,6 +197,8 @@ struct tls13_record_layer_callbacks {
 struct tls13_record_layer *tls13_record_layer_new(
     const struct tls13_record_layer_callbacks *callbacks, void *cb_arg);
 void tls13_record_layer_free(struct tls13_record_layer *rl);
+void tls13_record_layer_set_callbacks(struct tls13_record_layer *rl,
+    const struct tls13_record_layer_callbacks *callbacks, void *cb_arg);
 void tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow);
 void tls13_record_layer_allow_legacy_alerts(struct tls13_record_layer *rl, int allow);
 void tls13_record_layer_rcontent(struct tls13_record_layer *rl, CBS *cbs);
@@ -296,6 +308,13 @@ void tls13_ctx_free(struct tls13_ctx *ctx);
 
 const EVP_AEAD *tls13_cipher_aead(const SSL_CIPHER *cipher);
 const EVP_MD *tls13_cipher_hash(const SSL_CIPHER *cipher);
+
+void tls13_alert_received_cb(uint8_t alert_desc, void *arg);
+void tls13_alert_sent_cb(uint8_t alert_desc, void *arg);
+ssize_t tls13_phh_received_cb(void *cb_arg);
+void tls13_phh_done_cb(void *cb_arg);
+
+int tls13_quic_init(struct tls13_ctx *ctx);
 
 /*
  * Legacy interfaces.
