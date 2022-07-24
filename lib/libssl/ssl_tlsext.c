@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.126 2022/07/22 13:10:31 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.127 2022/07/24 10:52:51 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -92,10 +92,10 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 	int r;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &alpn))
-		goto err;
+		return 0;
 
 	if (!tlsext_alpn_check_format(&alpn))
-		goto err;
+		return 0;
 
 	if (s->ctx->internal->alpn_select_cb == NULL)
 		return 1;
@@ -131,10 +131,6 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 	*alert = SSL_AD_NO_APPLICATION_PROTOCOL;
 	SSLerror(s, SSL_R_NO_APPLICATION_PROTOCOL);
 
-	return 0;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
 	return 0;
 }
 
@@ -176,24 +172,20 @@ tlsext_alpn_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &list))
-		goto err;
+		return 0;
 
 	if (!CBS_get_u8_length_prefixed(&list, &proto))
-		goto err;
+		return 0;
 
 	if (CBS_len(&list) != 0)
-		goto err;
+		return 0;
 	if (CBS_len(&proto) == 0)
-		goto err;
+		return 0;
 
 	if (!CBS_stow(&proto, &s->s3->alpn_selected, &s->s3->alpn_selected_len))
-		goto err;
+		return 0;
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 /*
@@ -246,11 +238,11 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 	int i;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &grouplist))
-		goto err;
+		return 0;
 
 	groups_len = CBS_len(&grouplist);
 	if (groups_len == 0 || groups_len % 2 != 0)
-		goto err;
+		return 0;
 	groups_len /= 2;
 
 	if (s->internal->hit)
@@ -271,7 +263,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 	}
 
 	if (s->session->tlsext_supportedgroups != NULL)
-		goto err;
+		return 0; /* XXX internal error? */
 
 	if ((groups = reallocarray(NULL, groups_len, sizeof(uint16_t))) == NULL) {
 		*alert = SSL_AD_INTERNAL_ERROR;
@@ -281,23 +273,19 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 	for (i = 0; i < groups_len; i++) {
 		if (!CBS_get_u16(&grouplist, &groups[i])) {
 			free(groups);
-			goto err;
+			return 0;
 		}
 	}
 
 	if (CBS_len(&grouplist) != 0) {
 		free(groups);
-		goto err;
+		return 0;
 	}
 
 	s->session->tlsext_supportedgroups = groups;
 	s->session->tlsext_supportedgroups_length = groups_len;
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 /* This extension is never used by the server. */
@@ -456,8 +444,10 @@ tlsext_ri_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS reneg;
 
-	if (!CBS_get_u8_length_prefixed(cbs, &reneg))
-		goto err;
+	if (!CBS_get_u8_length_prefixed(cbs, &reneg)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+		return 0;
+	}
 
 	if (!CBS_mem_equal(&reneg, s->s3->previous_client_finished,
 	    s->s3->previous_client_finished_len)) {
@@ -470,11 +460,6 @@ tlsext_ri_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	s->s3->send_connection_binding = 1;
 
 	return 1;
-
- err:
-	SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
@@ -520,16 +505,24 @@ tlsext_ri_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		return 0;
 	}
 
-	if (!CBS_get_u8_length_prefixed(cbs, &reneg))
-		goto err;
+	if (!CBS_get_u8_length_prefixed(cbs, &reneg)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+		return 0;
+	}
 	if (!CBS_get_bytes(&reneg, &prev_client,
-	    s->s3->previous_client_finished_len))
-		goto err;
+	    s->s3->previous_client_finished_len)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+		return 0;
+	}
 	if (!CBS_get_bytes(&reneg, &prev_server,
-	    s->s3->previous_server_finished_len))
-		goto err;
-	if (CBS_len(&reneg) != 0)
-		goto err;
+	    s->s3->previous_server_finished_len)) {
+		SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+		return 0;
+	}
+	if (CBS_len(&reneg) != 0) {
+		SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
+		return 0;
+	}
 
 	if (!CBS_mem_equal(&prev_client, s->s3->previous_client_finished,
 	    s->s3->previous_client_finished_len)) {
@@ -548,11 +541,6 @@ tlsext_ri_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	s->s3->send_connection_binding = 1;
 
 	return 1;
-
- err:
-	SSLerror(s, SSL_R_RENEGOTIATION_ENCODING_ERR);
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 /*
@@ -862,10 +850,8 @@ tlsext_sni_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			return 0;
 		}
 	} else {
-		if (s->session->tlsext_hostname != NULL) {
-			*alert = SSL_AD_DECODE_ERROR;
+		if (s->session->tlsext_hostname != NULL)
 			return 0;
-		}
 		if ((s->session->tlsext_hostname =
 		    strdup(s->tlsext_hostname)) == NULL) {
 			*alert = SSL_AD_INTERNAL_ERROR;
@@ -1303,7 +1289,6 @@ tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (!CBS_get_u8_length_prefixed(cbs, &mki) || CBS_len(&mki) != 0) {
 		SSLerror(s, SSL_R_BAD_SRTP_MKI_VALUE);
-		*alert = SSL_AD_DECODE_ERROR;
 		goto done;
 	}
 
@@ -1319,8 +1304,7 @@ tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	if ((srvr = SSL_get_srtp_profiles(s)) == NULL)
 		goto err;
 	for (i = 0; i < sk_SRTP_PROTECTION_PROFILE_num(srvr); i++) {
-		if ((sprof = sk_SRTP_PROTECTION_PROFILE_value(srvr, i))
-		    == NULL)
+		if ((sprof = sk_SRTP_PROTECTION_PROFILE_value(srvr, i)) == NULL)
 			goto err;
 
 		for (j = 0; j < sk_SRTP_PROTECTION_PROFILE_num(clnt); j++) {
@@ -1342,7 +1326,6 @@ tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
  err:
 	SSLerror(s, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-	*alert = SSL_AD_DECODE_ERROR;
 
  done:
 	sk_SRTP_PROTECTION_PROFILE_free(clnt);
@@ -1390,12 +1373,12 @@ tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (!CBS_get_u16_length_prefixed(cbs, &profile_ids)) {
 		SSLerror(s, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-		goto err;
+		return 0;
 	}
 
 	if (!CBS_get_u16(&profile_ids, &id) || CBS_len(&profile_ids) != 0) {
 		SSLerror(s, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
-		goto err;
+		return 0;
 	}
 
 	if (!CBS_get_u8_length_prefixed(cbs, &mki) || CBS_len(&mki) != 0) {
@@ -1406,14 +1389,14 @@ tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if ((clnt = SSL_get_srtp_profiles(s)) == NULL) {
 		SSLerror(s, SSL_R_NO_SRTP_PROFILES);
-		goto err;
+		return 0;
 	}
 
 	for (i = 0; i < sk_SRTP_PROTECTION_PROFILE_num(clnt); i++) {
 		if ((prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i))
 		    == NULL) {
 			SSLerror(s, SSL_R_NO_SRTP_PROFILES);
-			goto err;
+			return 0;
 		}
 
 		if (prof->id == id) {
@@ -1423,8 +1406,7 @@ tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	SSLerror(s, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
- err:
-	*alert = SSL_AD_DECODE_ERROR;
+
 	return 0;
 }
 
@@ -1635,11 +1617,11 @@ tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	min = s->s3->hs.our_min_tls_version;
 
 	if (!CBS_get_u8_length_prefixed(cbs, &versions))
-		goto err;
+		return 0;
 
 	while (CBS_len(&versions) > 0) {
 		if (!CBS_get_u16(&versions, &version))
-			goto err;
+			return 0;
 		/*
 		 * XXX What is below implements client preference, and
 		 * ignores any server preference entirely.
@@ -1655,10 +1637,6 @@ tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	*alert = SSL_AD_PROTOCOL_VERSION;
-	return 0;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
 	return 0;
 }
 
@@ -1679,10 +1657,8 @@ tlsext_versions_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	uint16_t selected_version;
 
-	if (!CBS_get_u16(cbs, &selected_version)) {
-		*alert = SSL_AD_DECODE_ERROR;
+	if (!CBS_get_u16(cbs, &selected_version))
 		return 0;
-	}
 
 	/* XXX - need to fix for DTLS 1.3 */
 	if (selected_version < TLS1_3_VERSION) {
@@ -1732,10 +1708,10 @@ tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	CBS cookie;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &cookie))
-		goto err;
+		return 0;
 
 	if (CBS_len(&cookie) != s->s3->hs.tls13.cookie_len)
-		goto err;
+		return 0;
 
 	/*
 	 * Check provided cookie value against what server previously
@@ -1750,10 +1726,6 @@ tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
@@ -1804,17 +1776,13 @@ tlsext_cookie_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &cookie))
-		goto err;
+		return 0;
 
 	if (!CBS_stow(&cookie, &s->s3->hs.tls13.cookie,
 	    &s->s3->hs.tls13.cookie_len))
-		goto err;
+		return 0;
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 /*
