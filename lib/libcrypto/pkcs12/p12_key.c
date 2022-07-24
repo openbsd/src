@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.28 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.29 2022/07/24 18:55:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -99,50 +99,58 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n, unsigned char *out,
     const EVP_MD *md_type)
 {
-	unsigned char *B, *D, *I, *p, *Ai;
-	int Slen, Plen, Ilen, Ijlen;
+	EVP_MD_CTX *ctx = NULL;
+	unsigned char *B = NULL, *D = NULL, *I = NULL, *Ai = NULL;
+	unsigned char *p;
+	int Slen, Plen, Ilen;
 	int i, j, u, v;
 	int ret = 0;
-	BIGNUM *Ij, *Bpl1;	/* These hold Ij and B + 1 */
-	EVP_MD_CTX ctx;
 
-	v = EVP_MD_block_size(md_type);
-	u = EVP_MD_size(md_type);
-	if (u < 0)
-		return 0;
-
-	EVP_MD_CTX_init(&ctx);
-	D = malloc(v);
-	Ai = malloc(u);
-	B = malloc(v + 1);
-	Slen = v * ((saltlen + v - 1) / v);
-	if (passlen)
-		Plen = v * ((passlen + v - 1)/v);
-	else
-		Plen = 0;
-	Ilen = Slen + Plen;
-	I = malloc(Ilen);
-	Ij = BN_new();
-	Bpl1 = BN_new();
-	if (!D || !Ai || !B || !I || !Ij || !Bpl1)
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
+
+	if ((v = EVP_MD_block_size(md_type)) <= 0)
+		goto err;
+	if ((u = EVP_MD_size(md_type)) <= 0)
+		goto err;
+
+	if ((D = malloc(v)) == NULL)
+		goto err;
+	if ((Ai = malloc(u)) == NULL)
+		goto err;
+	if ((B = malloc(v + 1)) == NULL)
+		goto err;
+
+	Slen = v * ((saltlen + v - 1) / v);
+
+	Plen = 0;
+	if (passlen)
+		Plen = v * ((passlen + v - 1) / v);
+
+	Ilen = Slen + Plen;
+
+	if ((I = malloc(Ilen)) == NULL)
+		goto err;
+
 	for (i = 0; i < v; i++)
 		D[i] = id;
+
 	p = I;
 	for (i = 0; i < Slen; i++)
 		*p++ = salt[i % saltlen];
 	for (i = 0; i < Plen; i++)
 		*p++ = pass[i % passlen];
+
 	for (;;) {
-		if (!EVP_DigestInit_ex(&ctx, md_type, NULL) ||
-		    !EVP_DigestUpdate(&ctx, D, v) ||
-		    !EVP_DigestUpdate(&ctx, I, Ilen) ||
-		    !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+		if (!EVP_DigestInit_ex(ctx, md_type, NULL) ||
+		    !EVP_DigestUpdate(ctx, D, v) ||
+		    !EVP_DigestUpdate(ctx, I, Ilen) ||
+		    !EVP_DigestFinal_ex(ctx, Ai, NULL))
 			goto err;
 		for (j = 1; j < iter; j++) {
-			if (!EVP_DigestInit_ex(&ctx, md_type, NULL) ||
-			    !EVP_DigestUpdate(&ctx, Ai, u) ||
-			    !EVP_DigestFinal_ex(&ctx, Ai, NULL))
+			if (!EVP_DigestInit_ex(ctx, md_type, NULL) ||
+			    !EVP_DigestUpdate(ctx, Ai, u) ||
+			    !EVP_DigestFinal_ex(ctx, Ai, NULL))
 				goto err;
 		}
 		memcpy(out, Ai, min(n, u));
@@ -154,46 +162,30 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		out += u;
 		for (j = 0; j < v; j++)
 			B[j] = Ai[j % u];
-		/* Work out B + 1 first then can use B as tmp space */
-		if (!BN_bin2bn(B, v, Bpl1))
-			goto err;
-		if (!BN_add_word(Bpl1, 1))
-			goto err;
+
 		for (j = 0; j < Ilen; j += v) {
-			if (!BN_bin2bn(I + j, v, Ij))
-				goto err;
-			if (!BN_add(Ij, Ij, Bpl1))
-				goto err;
-			if (!BN_bn2bin(Ij, B))
-				goto err;
-			Ijlen = BN_num_bytes(Ij);
-			/* If more than 2^(v*8) - 1 cut off MSB */
-			if (Ijlen > v) {
-				if (!BN_bn2bin(Ij, B))
-					goto err;
-				memcpy(I + j, B + 1, v);
-#ifndef PKCS12_BROKEN_KEYGEN
-				/* If less than v bytes pad with zeroes */
-			} else if (Ijlen < v) {
-				memset(I + j, 0, v - Ijlen);
-				if (!BN_bn2bin(Ij, I + j + v - Ijlen))
-					goto err;
-#endif
-			} else if (!BN_bn2bin(Ij, I + j))
-				goto err;
+			unsigned char *Ij = &I[j];
+			uint16_t c = 1;
+			int k;
+
+			/* Work out Ij = Ij + B + 1. */
+			for (k = v - 1; k >= 0; k--) {
+				c += Ij[k] + B[k];
+				Ij[k] = (unsigned char)c;
+				c >>= 8;
+			}
 		}
 	}
 
-err:
+ err:
 	PKCS12error(ERR_R_MALLOC_FAILURE);
 
-end:
+ end:
 	free(Ai);
 	free(B);
 	free(D);
 	free(I);
-	BN_free(Ij);
-	BN_free(Bpl1);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_free(ctx);
+
 	return ret;
 }
