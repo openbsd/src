@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.299 2022/07/20 14:13:13 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.300 2022/07/24 15:05:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3298,21 +3298,6 @@ SSL_set_security_level(SSL *ssl, int level)
 	ssl->cert->security_level = level;
 }
 
-static int
-ssl_cipher_id_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	SSL_CIPHER const *a = a_;
-	SSL_CIPHER const *b = b_;
-	return ssl_cipher_id_cmp(a, b);
-}
-
-SSL_CIPHER *
-OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num)
-{
-	return (SSL_CIPHER *)OBJ_bsearch_(key, base, num, sizeof(SSL_CIPHER),
-	    ssl_cipher_id_cmp_BSEARCH_CMP_FN);
-}
-
 int
 SSL_is_quic(const SSL *ssl)
 {
@@ -3343,4 +3328,19 @@ SSL_get_peer_quic_transport_params(const SSL *ssl, const uint8_t **out_params,
 {
 	*out_params = ssl->s3->peer_quic_transport_params;
 	*out_params_len = ssl->s3->peer_quic_transport_params_len;
+}
+
+static int
+ssl_cipher_id_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+{
+	SSL_CIPHER const *a = a_;
+	SSL_CIPHER const *b = b_;
+	return ssl_cipher_id_cmp(a, b);
+}
+
+SSL_CIPHER *
+OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num)
+{
+	return (SSL_CIPHER *)OBJ_bsearch_(key, base, num, sizeof(SSL_CIPHER),
+	    ssl_cipher_id_cmp_BSEARCH_CMP_FN);
 }
