@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.22 2022/05/20 08:00:05 tb Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.23 2022/07/24 18:51:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -84,17 +84,16 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 {
 	STACK_OF(X509) *ocerts = NULL;
 	X509 *x = NULL;
-	/* Check for NULL PKCS12 structure */
 
-	if (!p12) {
-		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
-		return 0;
-	}
-
-	if (pkey)
+	if (pkey != NULL)
 		*pkey = NULL;
-	if (cert)
+	if (cert != NULL)
 		*cert = NULL;
+
+	if (p12 == NULL) {
+		PKCS12error(PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+		goto err;
+	}
 
 	/* Check the mac */
 
@@ -104,7 +103,7 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	 * password are two different things...
 	 */
 
-	if (!pass || !*pass) {
+	if (pass == NULL || *pass == '\0') {
 		if (PKCS12_verify_mac(p12, NULL, 0))
 			pass = NULL;
 		else if (PKCS12_verify_mac(p12, "", 0))
@@ -119,10 +118,9 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 	}
 
 	/* Allocate stack for other certificates */
-	ocerts = sk_X509_new_null();
-	if (!ocerts) {
+	if ((ocerts = sk_X509_new_null()) == NULL) {
 		PKCS12error(ERR_R_MALLOC_FAILURE);
-		return 0;
+		goto err;
 	}
 
 	if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
@@ -130,8 +128,9 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 		goto err;
 	}
 
-	while ((x = sk_X509_pop(ocerts))) {
-		if (pkey && *pkey && cert && !*cert) {
+	while ((x = sk_X509_pop(ocerts)) != NULL) {
+		if (pkey != NULL && *pkey != NULL &&
+		    cert != NULL && *cert == NULL) {
 			ERR_set_mark();
 			if (X509_check_private_key(x, *pkey)) {
 				*cert = x;
@@ -140,31 +139,31 @@ PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 			ERR_pop_to_mark();
 		}
 
-		if (ca && x) {
-			if (!*ca)
+		if (ca != NULL && x != NULL) {
+			if (*ca == NULL)
 				*ca = sk_X509_new_null();
-			if (!*ca)
+			if (*ca == NULL)
 				goto err;
 			if (!sk_X509_push(*ca, x))
 				goto err;
 			x = NULL;
 		}
 		X509_free(x);
+		x = NULL;
 	}
 
-	if (ocerts)
-		sk_X509_pop_free(ocerts, X509_free);
+	sk_X509_pop_free(ocerts, X509_free);
 
 	return 1;
 
 err:
-	if (pkey && *pkey)
+	if (pkey != NULL)
 		EVP_PKEY_free(*pkey);
-	if (cert)
+	if (cert != NULL)
 		X509_free(*cert);
 	X509_free(x);
-	if (ocerts)
-		sk_X509_pop_free(ocerts, X509_free);
+	sk_X509_pop_free(ocerts, X509_free);
+
 	return 0;
 }
 
