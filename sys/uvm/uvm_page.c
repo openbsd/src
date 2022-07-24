@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.167 2022/07/11 11:33:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.168 2022/07/24 11:00:22 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1036,14 +1036,13 @@ uvm_pagefree(struct vm_page *pg)
  * uvm_page_unbusy: unbusy an array of pages.
  *
  * => pages must either all belong to the same object, or all belong to anons.
- * => if pages are object-owned, object must be locked.
  * => if pages are anon-owned, anons must have 0 refcount.
- * => caller must make sure that anon-owned pages are not PG_RELEASED.
  */
 void
 uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
+	struct uvm_object *uobj;
 	int i;
 
 	for (i = 0; i < npgs; i++) {
@@ -1053,19 +1052,35 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
+#if notyet
+		/*
+                 * XXX swap case in uvm_aio_aiodone() is not holding the lock.
+		 *
+		 * This isn't compatible with the PG_RELEASED anon case below.
+		 */
 		KASSERT(uvm_page_owner_locked_p(pg));
+#endif
 		KASSERT(pg->pg_flags & PG_BUSY);
 
 		if (pg->pg_flags & PG_WANTED) {
 			wakeup(pg);
 		}
 		if (pg->pg_flags & PG_RELEASED) {
-			KASSERT(pg->uobject != NULL ||
-			    (pg->uanon != NULL && pg->uanon->an_ref > 0));
-			atomic_clearbits_int(&pg->pg_flags, PG_RELEASED);
-			uvm_pagefree(pg);
+			uobj = pg->uobject;
+			if (uobj != NULL) {
+				uvm_lock_pageq();
+				pmap_page_protect(pg, PROT_NONE);
+				/* XXX won't happen right now */
+				if (pg->pg_flags & PQ_AOBJ)
+					uao_dropswap(uobj,
+					    pg->offset >> PAGE_SHIFT);
+				uvm_pagefree(pg);
+				uvm_unlock_pageq();
+			} else {
+				rw_enter(pg->uanon->an_lock, RW_WRITE);
+				uvm_anon_release(pg->uanon);
+			}
 		} else {
-			KASSERT((pg->pg_flags & PG_FAKE) == 0);
 			atomic_clearbits_int(&pg->pg_flags, PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}

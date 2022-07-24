@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.84 2022/07/17 17:59:35 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.85 2022/07/24 11:00:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -735,77 +735,50 @@ void
 uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, boolean_t write,
     int error)
 {
-	struct uvm_object *uobj;
 	struct vm_page *pg;
-	struct rwlock *slock;
+	struct uvm_object *uobj;
 	boolean_t swap;
-	int i, swslot;
+	int i;
 
-	slock = NULL;
 	uobj = NULL;
-	pg = pgs[0];
-	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
-		(pg->pg_flags & PQ_AOBJ) != 0;
-
-	KASSERT(swap);
-	KASSERT(write);
-
-	if (error) {
-		if (pg->uobject != NULL) {
-			swslot = uao_find_swslot(pg->uobject,
-			    pg->offset >> PAGE_SHIFT);
-		} else {
-			swslot = pg->uanon->an_swslot;
-		}
-		KASSERT(swslot);
-	}
 
 	for (i = 0; i < npages; i++) {
-		int anon_disposed = 0;
-
 		pg = pgs[i];
-		KASSERT((pg->pg_flags & PG_FAKE) == 0);
 
-		/*
-		 * lock each page's object (or anon) individually since
-		 * each page may need a different lock.
-		 */
-		if (pg->uobject != NULL) {
-			slock = pg->uobject->vmobjlock;
-		} else {
-			slock = pg->uanon->an_lock;
+		if (i == 0) {
+			swap = (pg->pg_flags & PQ_SWAPBACKED) != 0;
+			if (!swap) {
+				uobj = pg->uobject;
+				rw_enter(uobj->vmobjlock, RW_WRITE);
+			}
 		}
-		rw_enter(slock, RW_WRITE);
-		anon_disposed = (pg->pg_flags & PG_RELEASED) != 0;
-		KASSERT(!anon_disposed || pg->uobject != NULL ||
-		    pg->uanon->an_ref == 0);
-		uvm_lock_pageq();
+		KASSERT(swap || pg->uobject == uobj);
 
 		/*
-		 * if this was a successful write,
-		 * mark the page PG_CLEAN.
+		 * if this is a read and we got an error, mark the pages
+		 * PG_RELEASED so that uvm_page_unbusy() will free them.
 		 */
-		if (!error) {
-			pmap_clear_reference(pg);
-			pmap_clear_modify(pg);
-			atomic_setbits_int(&pg->pg_flags, PG_CLEAN);
+		if (!write && error) {
+			atomic_setbits_int(&pg->pg_flags, PG_RELEASED);
+			continue;
 		}
+		KASSERT(!write || (pgs[i]->pg_flags & PG_FAKE) == 0);
 
 		/*
-		 * unlock everything for this page now.
+		 * if this is a read and the page is PG_FAKE,
+		 * or this was a successful write,
+		 * mark the page PG_CLEAN and not PG_FAKE.
 		 */
-		if (pg->uobject == NULL && anon_disposed) {
-			uvm_unlock_pageq();
-			uvm_anon_release(pg->uanon);
-		} else {
-			uvm_page_unbusy(&pg, 1);
-			uvm_unlock_pageq();
-			rw_exit(slock);
+		if ((pgs[i]->pg_flags & PG_FAKE) || (write && error != ENOMEM)) {
+			pmap_clear_reference(pgs[i]);
+			pmap_clear_modify(pgs[i]);
+			atomic_setbits_int(&pgs[i]->pg_flags, PG_CLEAN);
+			atomic_clearbits_int(&pgs[i]->pg_flags, PG_FAKE);
 		}
 	}
-
-	if (error) {
-		uvm_swap_markbad(swslot, npages);
+	uvm_page_unbusy(pgs, npages);
+	if (!swap) {
+		rw_exit(uobj->vmobjlock);
 	}
 }
 
