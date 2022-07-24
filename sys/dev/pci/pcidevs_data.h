@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1998 2022/06/28 13:05:42 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.1999 2022/07/24 17:22:12 kn Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2820,8 +2820,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AR9280",
 	},
 	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9281,
-	    "AR9281",
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR928X,
+	    "AR928X",
 	},
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9285,
