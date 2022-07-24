@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.17 2022/07/24 19:54:46 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.18 2022/07/24 20:02:04 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -566,6 +566,11 @@ void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);
 
 /* Default callback always returns a constant. */
 void TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data);
+
+#if defined(LIBRESSL_INTERNAL)
+/* Default callback uses gettimeofday() and gmtime(). */
+void TS_RESP_CTX_set_time_cb(TS_RESP_CTX *ctx, TS_time_cb cb, void *data);
+#endif
 
 /* Default callback rejects all extensions. The extension callback is called
  * when the TS_TST_INFO object is already set up and not signed yet. */
