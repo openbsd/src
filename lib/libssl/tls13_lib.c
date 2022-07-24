@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.67 2022/07/20 06:32:24 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.68 2022/07/24 14:16:29 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -230,7 +230,8 @@ tls13_phh_update_read_traffic_secret(struct tls13_ctx *ctx)
 			return 0;
 	}
 
-	return tls13_record_layer_set_read_traffic_key(ctx->rl, secret);
+	return tls13_record_layer_set_read_traffic_key(ctx->rl,
+	    secret, ssl_encryption_application);
 }
 
 static int
@@ -249,7 +250,8 @@ tls13_phh_update_write_traffic_secret(struct tls13_ctx *ctx)
 			return 0;
 	}
 
-	return tls13_record_layer_set_write_traffic_key(ctx->rl, secret);
+	return tls13_record_layer_set_write_traffic_key(ctx->rl,
+	    secret, ssl_encryption_application);
 }
 
 /*

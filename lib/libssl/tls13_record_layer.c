@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.68 2022/07/20 06:32:24 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.69 2022/07/24 14:16:29 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -487,7 +487,7 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, const EVP_MD *hash,
 
 int
 tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
-    struct tls13_secret *read_key)
+    struct tls13_secret *read_key, enum ssl_encryption_level_t read_level)
 {
 	return tls13_record_layer_set_traffic_key(rl->aead, rl->hash,
 	    rl->read, read_key);
@@ -495,7 +495,7 @@ tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
 
 int
 tls13_record_layer_set_write_traffic_key(struct tls13_record_layer *rl,
-    struct tls13_secret *write_key)
+    struct tls13_secret *write_key, enum ssl_encryption_level_t write_level)
 {
 	return tls13_record_layer_set_traffic_key(rl->aead, rl->hash,
 	    rl->write, write_key);

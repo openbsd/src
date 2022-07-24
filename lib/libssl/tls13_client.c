@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.96 2022/07/22 14:53:07 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.97 2022/07/24 14:16:29 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -382,10 +382,10 @@ tls13_client_engage_record_protection(struct tls13_ctx *ctx)
 	tls13_record_layer_set_hash(ctx->rl, ctx->hash);
 
 	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
-	    &secrets->server_handshake_traffic))
+	    &secrets->server_handshake_traffic, ssl_encryption_handshake))
 		goto err;
 	if (!tls13_record_layer_set_write_traffic_key(ctx->rl,
-	    &secrets->client_handshake_traffic))
+	    &secrets->client_handshake_traffic, ssl_encryption_handshake))
 		goto err;
 
 	ret = 1;
@@ -801,7 +801,7 @@ tls13_server_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 	 * using the server application traffic keys.
 	 */
 	if (!tls13_record_layer_set_read_traffic_key(ctx->rl,
-	    &secrets->server_application_traffic))
+	    &secrets->server_application_traffic, ssl_encryption_application))
 		goto err;
 
 	tls13_record_layer_allow_ccs(ctx->rl, 0);
@@ -1080,5 +1080,5 @@ tls13_client_finished_sent(struct tls13_ctx *ctx)
 	 * using the client application traffic keys.
 	 */
 	return tls13_record_layer_set_write_traffic_key(ctx->rl,
-	    &secrets->client_application_traffic);
+	    &secrets->client_application_traffic, ssl_encryption_application);
 }

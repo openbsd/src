@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.221 2022/07/17 14:49:01 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.222 2022/07/24 14:16:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1577,6 +1577,17 @@ void SSL_CTX_set_security_level(SSL_CTX *ctx, int level);
 int SSL_CTX_get_security_level(const SSL_CTX *ctx);
 
 #if defined(LIBRESSL_HAS_QUIC) || defined(LIBRESSL_INTERNAL)
+/*
+ * ssl_encryption_level_t specifies the QUIC encryption level used to transmit
+ * handshake messages.
+ */
+typedef enum ssl_encryption_level_t {
+	ssl_encryption_initial = 0,
+	ssl_encryption_early_data,
+	ssl_encryption_handshake,
+	ssl_encryption_application,
+} OSSL_ENCRYPTION_LEVEL;
+
 int SSL_is_quic(const SSL *ssl);
 
 /*
