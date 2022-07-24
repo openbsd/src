@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.28 2022/07/24 18:41:08 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.29 2022/07/24 18:45:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -78,47 +78,60 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     unsigned char *mac, unsigned int *maclen)
 {
 	const EVP_MD *md_type;
-	HMAC_CTX hmac;
+	HMAC_CTX *hmac = NULL;
 	unsigned char key[EVP_MAX_MD_SIZE], *salt;
 	int saltlen, iter;
 	int md_size;
+	int ret = 0;
 
 	if (!PKCS7_type_is_data(p12->authsafes)) {
 		PKCS12error(PKCS12_R_CONTENT_TYPE_NOT_DATA);
-		return 0;
+		goto err;
 	}
 
 	salt = p12->mac->salt->data;
 	saltlen = p12->mac->salt->length;
-	if (!p12->mac->iter)
-		iter = 1;
-	else if ((iter = ASN1_INTEGER_get(p12->mac->iter)) <= 0) {
-		PKCS12error(PKCS12_R_DECODE_ERROR);
-		return 0;
+
+	iter = 1;
+	if (p12->mac->iter != NULL) {
+		if ((iter = ASN1_INTEGER_get(p12->mac->iter)) <= 0) {
+			PKCS12error(PKCS12_R_DECODE_ERROR);
+			goto err;
+		}
 	}
-	if (!(md_type = EVP_get_digestbyobj(
-	    p12->mac->dinfo->algor->algorithm))) {
+
+	md_type = EVP_get_digestbyobj(p12->mac->dinfo->algor->algorithm);
+	if (md_type == NULL) {
 		PKCS12error(PKCS12_R_UNKNOWN_DIGEST_ALGORITHM);
-		return 0;
+		goto err;
 	}
-	md_size = EVP_MD_size(md_type);
-	if (md_size < 0)
-		return 0;
+
+	if ((md_size = EVP_MD_size(md_type)) < 0)
+		goto err;
+
 	if (!PKCS12_key_gen(pass, passlen, salt, saltlen, PKCS12_MAC_ID, iter,
 	    md_size, key, md_type)) {
 		PKCS12error(PKCS12_R_KEY_GEN_ERROR);
-		return 0;
+		goto err;
 	}
-	HMAC_CTX_init(&hmac);
-	if (!HMAC_Init_ex(&hmac, key, md_size, md_type, NULL) ||
-	    !HMAC_Update(&hmac, p12->authsafes->d.data->data,
-	    p12->authsafes->d.data->length) ||
-	    !HMAC_Final(&hmac, mac, maclen)) {
-		HMAC_CTX_cleanup(&hmac);
-		return 0;
-	}
-	HMAC_CTX_cleanup(&hmac);
-	return 1;
+
+	if ((hmac = HMAC_CTX_new()) == NULL)
+		goto err;
+	if (!HMAC_Init_ex(hmac, key, md_size, md_type, NULL))
+	       goto err;
+	if (!HMAC_Update(hmac, p12->authsafes->d.data->data,
+	    p12->authsafes->d.data->length))
+		goto err;
+	if (!HMAC_Final(hmac, mac, maclen))
+		goto err;
+
+	ret = 1;
+
+ err:
+	explicit_bzero(key, sizeof(key));
+	HMAC_CTX_free(hmac);
+
+	return ret;
 }
 
 /* Verify the mac */
