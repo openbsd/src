@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.372 2022/06/29 09:01:48 mvs Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.373 2022/07/24 22:38:25 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -556,8 +556,6 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 	struct ipqent *ipqe;
 	int mff, hlen;
 
-	NET_ASSERT_WLOCKED();
-
 	hlen = ip->ip_hl << 2;
 
 	/*
@@ -673,6 +671,8 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 #ifdef INET6
 	int nest = 0;
 #endif /* INET6 */
+
+	NET_ASSERT_WLOCKED();
 
 	/* pf might have modified stuff, might have to chksum */
 	switch (af) {

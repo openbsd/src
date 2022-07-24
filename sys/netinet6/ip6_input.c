@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.248 2022/06/29 22:45:24 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.249 2022/07/24 22:38:25 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -448,8 +448,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 			if (ours) {
 				if (af == AF_UNSPEC)
-					nxt = ip_deliver(mp, offp, nxt,
-					    AF_INET6);
+					nxt = ip6_ours(mp, offp, nxt, af);
 				goto out;
 			}
 			goto bad;
@@ -550,7 +549,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 
 	if (ours) {
 		if (af == AF_UNSPEC)
-			nxt = ip_deliver(mp, offp, nxt, AF_INET6);
+			nxt = ip6_ours(mp, offp, nxt, af);
 		goto out;
 	}
 
@@ -584,8 +583,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 int
 ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
-	NET_ASSERT_WLOCKED();
-
 	nxt = ip6_hbhchcheck(mp, offp, NULL);
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
