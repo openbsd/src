@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_print.c,v 1.5 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: ts_rsp_print.c,v 1.6 2022/07/24 08:16:47 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -62,6 +62,8 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/x509v3.h>
+
+#include "ts_local.h"
 
 struct status_map_st {
 	int bit;

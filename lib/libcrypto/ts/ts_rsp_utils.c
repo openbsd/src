@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_utils.c,v 1.7 2018/05/13 15:35:46 tb Exp $ */
+/* $OpenBSD: ts_rsp_utils.c,v 1.8 2022/07/24 08:16:47 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -62,6 +62,8 @@
 #include <openssl/objects.h>
 #include <openssl/pkcs7.h>
 #include <openssl/ts.h>
+
+#include "ts_local.h"
 
 /* Function definitions. */
 
