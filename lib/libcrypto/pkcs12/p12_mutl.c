@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.27 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.28 2022/07/24 18:41:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -174,7 +174,8 @@ int
 PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt, int saltlen,
     const EVP_MD *md_type)
 {
-	if (!(p12->mac = PKCS12_MAC_DATA_new()))
+	PKCS12_MAC_DATA_free(p12->mac);
+	if ((p12->mac = PKCS12_MAC_DATA_new()) == NULL)
 		return PKCS12_ERROR;
 	if (iter > 1) {
 		if (!(p12->mac->iter = ASN1_INTEGER_new())) {
