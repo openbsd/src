@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.68 2022/07/24 14:16:29 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.69 2022/07/24 14:19:45 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -328,17 +328,6 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return tls13_send_alert(ctx->rl, alert);
 }
 
-static void
-tls13_phh_done_cb(void *cb_arg)
-{
-	struct tls13_ctx *ctx = cb_arg;
-
-	if (ctx->key_update_request) {
-		tls13_phh_update_write_traffic_secret(ctx);
-		ctx->key_update_request = 0;
-	}
-}
-
 static ssize_t
 tls13_phh_received_cb(void *cb_arg)
 {
@@ -378,6 +367,17 @@ tls13_phh_received_cb(void *cb_arg)
 	tls13_handshake_msg_free(ctx->hs_msg);
 	ctx->hs_msg = NULL;
 	return ret;
+}
+
+static void
+tls13_phh_done_cb(void *cb_arg)
+{
+	struct tls13_ctx *ctx = cb_arg;
+
+	if (ctx->key_update_request) {
+		tls13_phh_update_write_traffic_secret(ctx);
+		ctx->key_update_request = 0;
+	}
 }
 
 static const struct tls13_record_layer_callbacks rl_callbacks = {
