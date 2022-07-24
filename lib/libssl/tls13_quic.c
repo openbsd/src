@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.1 2022/07/24 14:28:16 jsing Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.2 2022/07/24 14:31:37 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -127,9 +127,22 @@ static const struct tls13_record_layer_callbacks quic_rl_callbacks = {
 int
 tls13_quic_init(struct tls13_ctx *ctx)
 {
+	BIO *bio;
+
 	tls13_record_layer_set_callbacks(ctx->rl, &quic_rl_callbacks, ctx);
 
 	ctx->middlebox_compat = 0;
+
+	/*
+	 * QUIC does not use BIOs, however we currently expect a BIO to exist
+	 * for status handling.
+	 */
+	if ((bio = BIO_new(BIO_s_null())) == NULL)
+		return 0;
+
+	BIO_up_ref(bio);
+	SSL_set_bio(ctx->ssl, bio, bio);
+	bio = NULL;
 
 	return 1;
 }
