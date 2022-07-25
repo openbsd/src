@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.65 2022/07/20 21:03:10 kn Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.66 2022/07/25 14:48:24 kn Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -768,7 +768,7 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 		DPRINTF(("DATA/ACK/DESC_DATA\n"));
 
 		if (dm->desc_handle != sc->sc_tx_cons) {
-			printf("out of order\n");
+			printf("%s: out of order\n", __func__);
 			return;
 		}
 
