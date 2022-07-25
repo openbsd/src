@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.96 2022/07/18 09:42:46 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.97 2022/07/25 16:37:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -147,28 +147,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	peer1 = prefix_peer(p1);
 	peer2 = prefix_peer(p2);
 
-	/* pathes with errors are not eligible */
-	if (asp1 == NULL || asp1->flags & F_ATTR_PARSE_ERR)
-		return -rv;
-	if (asp2 == NULL || asp2->flags & F_ATTR_PARSE_ERR)
+	/* 1. check if prefix is eligible a.k.a reachable */
+	if (!prefix_eligible(p2))
 		return rv;
-
-	/* only loop free pathes are eligible */
-	if (asp1->flags & F_ATTR_LOOP)
-		return -rv;
-	if (asp2->flags & F_ATTR_LOOP)
-		return rv;
-
-	/*
-	 * 1. check if prefix is eligible a.k.a reachable
-	 *    A NULL nexthop is eligible since it is used for locally
-	 *    announced networks.
-	 */
-	if (prefix_nexthop(p2) != NULL &&
-	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
-		return rv;
-	if (prefix_nexthop(p1) != NULL &&
-	    prefix_nexthop(p1)->state != NEXTHOP_REACH)
+	if (!prefix_eligible(p1))
 		return -rv;
 
 	/* bump rv, from here on prefix is considered valid */
@@ -503,16 +485,13 @@ int
 prefix_eligible(struct prefix *p)
 {
 	struct rde_aspath *asp = prefix_aspath(p);
-	struct nexthop *nh = prefix_nexthop(p);
 
 	/* The aspath needs to be loop and error free */
 	if (asp == NULL || asp->flags & (F_ATTR_LOOP|F_ATTR_PARSE_ERR))
 		return 0;
-	/*
-	 * If the nexthop exists it must be reachable.
-	 * It is OK if the nexthop does not exist (local announcement).
-	 */
-	if (nh != NULL && nh->state != NEXTHOP_REACH)
+
+	/* The nexthop must be valid. */
+	if (!prefix_nhvalid(p))
 		return 0;
 
 	return 1;
@@ -561,16 +540,11 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	}
 
 	oldbest = prefix_best(re);
-
 	if (old != NULL)
 		prefix_remove(old, re);
-
 	if (new != NULL)
 		prefix_insert(new, NULL, re);
-
-	newbest = TAILQ_FIRST(&re->prefix_h);
-	if (newbest != NULL && !prefix_eligible(newbest))
-		newbest = NULL;
+	newbest = prefix_best(re);
 
 	/*
 	 * If the active prefix changed or the active prefix was removed
@@ -596,4 +570,75 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
 			rde_generate_updates(rib, newbest, NULL, EVAL_ALL);
+}
+
+void
+prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
+    enum nexthop_state oldstate)
+{
+	struct rib_entry *re = prefix_re(p);
+	struct prefix	*newbest, *oldbest;
+	struct rib	*rib;
+
+	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
+	rib = re_rib(re);
+	if (rib->flags & F_RIB_NOEVALUATE) {
+		log_warnx("%s: prefix with F_RIB_NOEVALUATE hit", __func__);
+		return;
+	}
+
+	if (oldstate == state) {
+		/*
+		 * The state of the nexthop did not change. The only
+		 * thing that may have changed is the true_nexthop
+		 * or other internal infos. This will not change
+		 * the routing decision so shortcut here.
+		 * XXX needs to be changed for ECMP
+		 */
+		if (state == NEXTHOP_REACH) {
+			if ((rib->flags & F_RIB_NOFIB) == 0 &&
+			    p == prefix_best(re))
+				rde_send_kroute(rib, p, NULL);
+		}
+		return;
+	}
+
+	/*
+	 * Re-evaluate the prefix by removing the prefix then updating the
+	 * nexthop state and reinserting the prefix again.
+	 */
+	oldbest = prefix_best(re);
+	prefix_remove(p, re);
+
+	if (state == NEXTHOP_REACH)
+		p->nhflags |= NEXTHOP_VALID;
+	else
+		p->nhflags &= ~NEXTHOP_VALID;
+
+	prefix_insert(p, NULL, re);
+	newbest = prefix_best(re);
+
+	/*
+	 * If the active prefix changed or the active prefix was removed
+	 * and added again then generate an update.
+	 */
+	if (oldbest != newbest || newbest == p) {
+		/*
+		 * Send update withdrawing oldbest and adding newbest
+		 * but remember that newbest may be NULL aka ineligible.
+		 * Additional decision may be made by the called functions.
+		 */
+		rde_generate_updates(rib, newbest, oldbest, EVAL_DEFAULT);
+		if ((rib->flags & F_RIB_NOFIB) == 0)
+			rde_send_kroute(rib, newbest, oldbest);
+		return;
+	}
+
+	/*
+	 * If there are peers with 'rde evaluate all' every update needs
+	 * to be passed on (not only a change of the best prefix).
+	 * rde_generate_updates() will then take care of distribution.
+	 */
+	if (rde_evaluate_all())
+		rde_generate_updates(rib, newbest, NULL, EVAL_ALL);
 }

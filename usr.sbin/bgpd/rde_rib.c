@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.240 2022/07/08 10:01:52 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.241 2022/07/25 16:37:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1521,37 +1521,6 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, uint32_t path_id)
 	return (NULL);
 }
 
-static void
-prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
-    enum nexthop_state oldstate)
-{
-	struct rib_entry *re = prefix_re(p);
-
-	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
-	if (re_rib(re)->flags & F_RIB_NOEVALUATE) {
-		log_warnx("%s: prefix with F_RIB_NOEVALUATE hit", __func__);
-		return;
-	}
-
-	if (oldstate == state) {
-		/*
-		 * The state of the nexthop did not change. The only
-		 * thing that may have changed is the true_nexthop
-		 * or other internal infos. This will not change
-		 * the routing decision so shortcut here.
-		 */
-		if (state == NEXTHOP_REACH) {
-			if ((re_rib(re)->flags & F_RIB_NOFIB) == 0 &&
-			    p == prefix_best(re))
-				rde_send_kroute(re_rib(re), p, NULL);
-		}
-		return;
-	}
-
-	/* redo the route decision */
-	prefix_evaluate(prefix_re(p), p, p);
-}
-
 /* kill a prefix. */
 void
 prefix_destroy(struct prefix *p)
@@ -1724,7 +1693,7 @@ nexthop_runner(void)
 
 	p = nh->next_prefix;
 	for (j = 0; p != NULL && j < RDE_RUNNER_ROUNDS; j++) {
-		prefix_evaluate_all(p, nh->state, nh->oldstate);
+		prefix_evaluate_nexthop(p, nh->state, nh->oldstate);
 		p = LIST_NEXT(p, entry.list.nexthop);
 	}
 
@@ -1826,15 +1795,24 @@ nexthop_modify(struct nexthop *setnh, enum action_types type, uint8_t aid,
 void
 nexthop_link(struct prefix *p)
 {
-	if (p->nexthop == NULL)
+	p->nhflags &= ~NEXTHOP_VALID;
+
+	if (p->flags & PREFIX_FLAG_ADJOUT) {
+		/* All nexthops are valid in Adj-RIB-Out */
+		p->nhflags |= NEXTHOP_VALID;
 		return;
-	if (p->flags & PREFIX_FLAG_ADJOUT)
-		return;
+	}
 
 	/* no need to link prefixes in RIBs that have no decision process */
 	if (re_rib(prefix_re(p))->flags & F_RIB_NOEVALUATE)
 		return;
 
+	/* self-announce networks use nexthop NULL and are valid as well */
+	if (p->nexthop == NULL || p->nexthop->state == NEXTHOP_REACH)
+		p->nhflags |= NEXTHOP_VALID;
+
+	if (p->nexthop == NULL)
+		return;
 	p->flags |= PREFIX_NEXTHOP_LINKED;
 	LIST_INSERT_HEAD(&p->nexthop->prefix_h, p, entry.list.nexthop);
 }
@@ -1842,6 +1820,8 @@ nexthop_link(struct prefix *p)
 void
 nexthop_unlink(struct prefix *p)
 {
+	p->nhflags &= ~NEXTHOP_VALID;
+
 	if (p->nexthop == NULL || (p->flags & PREFIX_NEXTHOP_LINKED) == 0)
 		return;
 

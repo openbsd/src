@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.558 2022/07/23 08:44:06 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.559 2022/07/25 16:37:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4249,8 +4249,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 
 		bzero(&kf, sizeof(kf));
 		memcpy(&kf.prefix, &addr, sizeof(kf.prefix));
-		if (prefix_nexthop(p) == NULL ||
-		    prefix_nexthop(p)->state != NEXTHOP_REACH)
+		if (prefix_nhvalid(p))
 			kf.nexthop.aid = kf.prefix.aid;
 		else
 			memcpy(&kf.nexthop, &prefix_nexthop(p)->true_nexthop,
