@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.7 2022/07/25 15:29:21 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.8 2022/07/25 21:29:16 guenther Exp $ */
 /*
  * Copyright (c) 2017, 2022 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -315,8 +315,6 @@ child_func(void *arg)
 	wctyc = wctype_l("upper", _LOCALE_C);
 	if (wctyc == NULL)
 		errx(1, "wctype_l(upper, C) == NULL");
-	if (wctyg == wctyc)
-		errx(1, "wctype global == C");
 	TEST_R(iswctype, 1, 0x00D0, wctyg);  /* Eth */
 	TEST_R(iswctype_l, 1, 0x00D0, wctyu, _LOCALE_UTF8);
 	TEST_R(iswctype_l, 0, 0x00D0, wctyc, _LOCALE_C);
@@ -337,8 +335,6 @@ child_func(void *arg)
 	wctrc = wctrans_l("tolower", _LOCALE_C);
 	if (wctrc == NULL)
 		errx(1, "wctrans(tolower, C) == NULL");
-	if (wctrg == wctrc)
-		errx(1, "wctrans global == C");
 	TEST_R(towctrans, 0x00FE, 0x00DE, wctrg);  /* Thorn */
 	TEST_R(towctrans_l, 0x00FE, 0x00DE, wctru, _LOCALE_UTF8);
 	TEST_R(towctrans_l, 0x00DE, 0x00DE, wctrc, _LOCALE_C);
