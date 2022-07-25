@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.373 2022/07/24 22:38:25 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.374 2022/07/25 23:19:34 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -142,6 +142,11 @@ int	ip_local(struct mbuf **, int *, int, int);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
 
+int		ip_fragcheck(struct mbuf **, int *);
+struct mbuf *	ip_reass(struct ipqent *, struct ipq *);
+void		ip_freef(struct ipq *);
+void		ip_flush(void);
+
 static void ip_send_dispatch(void *);
 static void ip_sendraw_dispatch(void *);
 static struct task ipsend_task = TASK_INITIALIZER(ip_send_dispatch, &ipsend_mq);
@@ -234,6 +239,10 @@ ip_init(void)
 int
 ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	nxt = ip_fragcheck(mp, offp);
+	if (nxt == IPPROTO_DONE)
+		return IPPROTO_DONE;
+
 	/* We are already in a IPv4/IPv6 local deliver loop. */
 	if (af != AF_UNSPEC)
 		return ip_local(mp, offp, nxt, af);
@@ -550,12 +559,27 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 int
 ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
-	struct mbuf *m = *mp;
-	struct ip *ip = mtod(m, struct ip *);
+	struct ip *ip;
+
+	ip = mtod(*mp, struct ip *);
+	*offp = ip->ip_hl << 2;
+	nxt = ip->ip_p;
+
+	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
+	if (af == AF_UNSPEC)
+		nxt = ip_deliver(mp, offp, nxt, AF_INET);
+	return nxt;
+}
+
+int
+ip_fragcheck(struct mbuf **mp, int *offp)
+{
+	struct ip *ip;
 	struct ipq *fp;
 	struct ipqent *ipqe;
 	int mff, hlen;
 
+	ip = mtod(*mp, struct ip *);
 	hlen = ip->ip_hl << 2;
 
 	/*
@@ -566,12 +590,12 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 	 * but it's not worth the time; just let them time out.)
 	 */
 	if (ip->ip_off &~ htons(IP_DF | IP_RF)) {
-		if (m->m_flags & M_EXT) {		/* XXX */
-			if ((m = *mp = m_pullup(m, hlen)) == NULL) {
+		if ((*mp)->m_flags & M_EXT) {		/* XXX */
+			if ((*mp = m_pullup(*mp, hlen)) == NULL) {
 				ipstat_inc(ips_toosmall);
 				return IPPROTO_DONE;
 			}
-			ip = mtod(m, struct ip *);
+			ip = mtod(*mp, struct ip *);
 		}
 
 		mtx_enter(&ipq_mutex);
@@ -628,28 +652,26 @@ ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 			}
 			ip_frags++;
 			ipqe->ipqe_mff = mff;
-			ipqe->ipqe_m = m;
+			ipqe->ipqe_m = *mp;
 			ipqe->ipqe_ip = ip;
-			m = *mp = ip_reass(ipqe, fp);
-			if (m == NULL)
+			*mp = ip_reass(ipqe, fp);
+			if (*mp == NULL)
 				goto bad;
 			ipstat_inc(ips_reassembled);
-			ip = mtod(m, struct ip *);
+			ip = mtod(*mp, struct ip *);
 			hlen = ip->ip_hl << 2;
 			ip->ip_len = htons(ntohs(ip->ip_len) + hlen);
-		} else
-			if (fp)
+		} else {
+			if (fp != NULL)
 				ip_freef(fp);
+		}
 
 		mtx_leave(&ipq_mutex);
 	}
 
 	*offp = hlen;
-	nxt = ip->ip_p;
-	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
-	if (af == AF_UNSPEC)
-		nxt = ip_deliver(mp, offp, nxt, AF_INET);
-	return nxt;
+	return ip->ip_p;
+
  bad:
 	mtx_leave(&ipq_mutex);
 	m_freemp(mp);
