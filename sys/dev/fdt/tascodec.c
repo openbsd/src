@@ -1,4 +1,4 @@
-/*	$OpenBSD: tascodec.c,v 1.3 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: tascodec.c,v 1.4 2022/07/25 16:35:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -107,8 +107,8 @@ tascodec_attach(struct device *parent, struct device *self, void *aux)
 	struct tascodec_softc *sc = (struct tascodec_softc *)self;
 	struct i2c_attach_args *ia = aux;
 	int node = *(int *)ia->ia_cookie;
-	uint32_t *reset_gpio;
-	int reset_gpiolen;
+	uint32_t *sdz_gpio;
+	int sdz_gpiolen;
 	uint8_t cfg2;
 
 	sc->sc_tag = ia->ia_tag;
@@ -116,14 +116,14 @@ tascodec_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	reset_gpiolen = OF_getproplen(node, "reset-gpios");
-	if (reset_gpiolen > 0) {
-		reset_gpio = malloc(reset_gpiolen, M_TEMP, M_WAITOK);
-		OF_getpropintarray(node, "reset-gpios",
-		    reset_gpio, reset_gpiolen);
-		gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
-		gpio_controller_set_pin(reset_gpio, 1);
-		free(reset_gpio, M_TEMP, reset_gpiolen);
+	sdz_gpiolen = OF_getproplen(node, "shutdown-gpios");
+	if (sdz_gpiolen > 0) {
+		sdz_gpio = malloc(sdz_gpiolen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "shutdown-gpios",
+		    sdz_gpio, sdz_gpiolen);
+		gpio_controller_config_pin(sdz_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(sdz_gpio, 1);
+		free(sdz_gpio, M_TEMP, sdz_gpiolen);
 		delay(1000);
 	}
 
