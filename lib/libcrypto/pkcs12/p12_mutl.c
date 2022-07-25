@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.29 2022/07/24 18:45:21 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.30 2022/07/25 05:06:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -118,7 +118,7 @@ PKCS12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
 	if ((hmac = HMAC_CTX_new()) == NULL)
 		goto err;
 	if (!HMAC_Init_ex(hmac, key, md_size, md_type, NULL))
-	       goto err;
+		goto err;
 	if (!HMAC_Update(hmac, p12->authsafes->d.data->data,
 	    p12->authsafes->d.data->length))
 		goto err;
