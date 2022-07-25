@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype_l.c,v 1.1 2017/09/05 03:16:13 schwarze Exp $ */
+/*	$OpenBSD: iswctype_l.c,v 1.2 2022/07/25 21:38:24 guenther Exp $ */
 /*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $ */
 
 /*
@@ -192,19 +192,6 @@ towctrans_l(wint_t c, wctrans_t desc,
     locale_t locale __attribute__((__unused__)))
 {
 	return towctrans(c, desc);
-}
-
-wctype_t
-wctype_l(const char *property, locale_t locale)
-{
-	_RuneLocale	*rl;
-	int		 i;
-
-	rl = __runelocale(locale);
-	for (i = 0; i < _WCTYPE_NINDEXES; i++)
-		if (strcmp(rl->rl_wctype[i].te_name, property) == 0)
-			return &rl->rl_wctype[i];
-	return NULL;
 }
 
 int

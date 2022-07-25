@@ -1,7 +1,7 @@
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
 
-/* $OpenBSD: runetype.h,v 1.8 2016/09/05 09:47:03 schwarze Exp $ */
+/* $OpenBSD: runetype.h,v 1.9 2022/07/25 21:38:24 guenther Exp $ */
 /*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
 /*-
  * Copyright (c) 1993
@@ -150,7 +150,7 @@ typedef struct _WCTransEntry {
  * wctype stuffs.
  */
 typedef struct _WCTypeEntry {
-	char		*te_name;
+	char		te_name[8];
 	_RuneType	te_mask;
 } _WCTypeEntry;
 #define _WCTYPE_INDEX_ALNUM	0
@@ -200,7 +200,6 @@ typedef struct {
 	 */
 	char				*rl_codeset;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
-	_WCTypeEntry			rl_wctype[_WCTYPE_NINDEXES];
 
 	struct old_tabs *		rl_tabs;
 

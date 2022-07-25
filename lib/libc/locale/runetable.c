@@ -252,19 +252,5 @@ _RuneLocale _DefaultRuneLocale = {
 	    { NULL, NULL, NULL },
 	    { NULL, NULL, NULL },
     },
-    {
-	    { "alnum", _CTYPE_A|_CTYPE_D },
-	    { "alpha", _CTYPE_A },
-	    { "blank", _CTYPE_B },
-	    { "cntrl", _CTYPE_C },
-	    { "digit", _CTYPE_D },
-	    { "graph", _CTYPE_G },
-	    { "lower", _CTYPE_L },
-	    { "print", _CTYPE_R },
-	    { "punct", _CTYPE_P },
-	    { "space", _CTYPE_S },
-	    { "upper", _CTYPE_U },
-	    { "xdigit", _CTYPE_X },
-    },
     NULL
 };

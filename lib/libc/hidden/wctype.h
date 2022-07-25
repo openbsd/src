@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.2 2017/09/05 03:16:13 schwarze Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.3 2022/07/25 21:38:24 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -54,7 +54,7 @@ PROTO_STD_DEPRECATED(towupper);
 PROTO_DEPRECATED(towupper_l);
 PROTO_STD_DEPRECATED(wctrans);
 PROTO_DEPRECATED(wctrans_l);
-PROTO_STD_DEPRECATED(wctype);
+PROTO_NORMAL(wctype);
 PROTO_DEPRECATED(wctype_l);
 
 #endif /* !_LIBC_WCTYPE_H_ */

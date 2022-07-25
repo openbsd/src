@@ -1,4 +1,4 @@
-/*	$OpenBSD: rune.c,v 1.8 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: rune.c,v 1.9 2022/07/25 21:38:24 guenther Exp $ */
 /*	$NetBSD: rune.c,v 1.26 2004/05/09 11:26:33 kleink Exp $	*/
 
 /*-
@@ -80,7 +80,6 @@ do {					\
 
 static int readrange(_RuneLocale *, _RuneRange *, uint32_t, void *, FILE *);
 static void _freeentry(_RuneRange *);
-static void _wctype_init(_RuneLocale *rl);
 
 static int
 readrange(_RuneLocale *rl, _RuneRange *rr, uint32_t nranges, void *lastp,
@@ -205,13 +204,6 @@ _freeentry(_RuneRange *rr)
 	}
 }
 
-void
-_wctype_init(_RuneLocale *rl)
-{
-	memcpy(&rl->rl_wctype, &_DefaultRuneLocale.rl_wctype,
-	       sizeof(rl->rl_wctype));
-}
-
 
 _RuneLocale *
 _Read_RuneMagi(FILE *fp)
@@ -303,7 +295,6 @@ _Read_RuneMagi(FILE *fp)
 		goto rune_err;
 	if (find_codeset(rl))
 		goto rune_err;
-	_wctype_init(rl);
 
 	/*
 	 * error if we have junk at the tail, 
