@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.146 2022/07/15 22:56:13 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.147 2022/07/25 08:28:42 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -73,9 +73,6 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <crypto/arc4.h>
-
-/* drop static for ddb debuggability */
-#define	Static
 
 #include <net/pipex.h>
 #include "pipex_local.h"
@@ -559,7 +556,7 @@ pipex_export_session_stats(struct pipex_session *session,
 	stats->idle_time = session->idle_time;
 }
 
-Static int
+int
 pipex_get_stat(struct pipex_session_stat_req *req, void *ownersc)
 {
 	struct pipex_session *session;
@@ -580,7 +577,7 @@ pipex_get_stat(struct pipex_session_stat_req *req, void *ownersc)
 	return error;
 }
 
-Static int
+int
 pipex_get_closed(struct pipex_session_list_req *req, void *ownersc)
 {
 	struct pipex_session *session, *session_tmp;
@@ -608,7 +605,7 @@ pipex_get_closed(struct pipex_session_list_req *req, void *ownersc)
 	return (0);
 }
 
-Static struct pipex_session *
+struct pipex_session *
 pipex_lookup_by_ip_address_locked(struct in_addr addr)
 {
 	struct pipex_session *session;
@@ -660,7 +657,7 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 }
 
 
-Static struct pipex_session *
+struct pipex_session *
 pipex_lookup_by_session_id_locked(int protocol, int session_id)
 {
 	struct pipex_hash_head *list;
@@ -704,20 +701,20 @@ pipex_lookup_by_session_id(int protocol, int session_id)
 /***********************************************************************
  * Timer functions
  ***********************************************************************/
-Static void
+void
 pipex_timer_start(void)
 {
 	timeout_set_proc(&pipex_timer_ch, pipex_timer, NULL);
 	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 }
 
-Static void
+void
 pipex_timer_stop(void)
 {
 	timeout_del(&pipex_timer_ch);
 }
 
-Static void
+void
 pipex_timer(void *ignored_arg)
 {
 	struct pipex_session *session, *session_tmp;
@@ -764,7 +761,7 @@ pipex_timer(void *ignored_arg)
 /***********************************************************************
  * Common network I/O functions.  (tunnel protocol independent)
  ***********************************************************************/
-Static void
+void
 pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int is_idle;
@@ -840,7 +837,7 @@ dropped:
 	counters_inc(session->stat_counters, pxc_oerrors);
 }
 
-Static void
+void
 pipex_ppp_output(struct mbuf *m0, struct pipex_session *session, int proto)
 {
 	u_char *cp, hdr[16];
@@ -897,7 +894,7 @@ drop:
 	counters_inc(session->stat_counters, pxc_oerrors);
 }
 
-Static void
+void
 pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 {
 	int proto, hlen = 0;
@@ -990,7 +987,7 @@ drop:
 	counters_inc(session->stat_counters, pxc_ierrors);
 }
 
-Static void
+void
 pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
@@ -1067,7 +1064,7 @@ drop:
 }
 
 #ifdef INET6
-Static void
+void
 pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 {
 	struct ifnet *ifp;
@@ -1115,7 +1112,7 @@ drop:
 }
 #endif
 
-Static struct mbuf *
+struct mbuf *
 pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
     int plen, int locked)
 {
@@ -1187,7 +1184,7 @@ not_ours:
 /*
  * pipex_ppp_proto
  */
-Static int
+int
 pipex_ppp_proto(struct mbuf *m0, struct pipex_session *session, int off,
     int *hlenp)
 {
@@ -1228,7 +1225,7 @@ pipex_ppp_proto(struct mbuf *m0, struct pipex_session *session, int off,
 /***********************************************************************
  * PPPoE
  ***********************************************************************/
-Static u_char	pipex_pppoe_padding[ETHERMIN];
+static const u_char	pipex_pppoe_padding[ETHERMIN];
 /*
  * pipex_pppoe_lookup_session
  */
@@ -1286,7 +1283,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 /*
  * pipex_ppope_output
  */
-Static void
+void
 pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 {
 	struct pipex_pppoe_header *pppoe;
@@ -1332,7 +1329,7 @@ pipex_pppoe_output(struct mbuf *m0, struct pipex_session *session)
 /***********************************************************************
  * PPTP
  ***********************************************************************/
-Static void
+void
 pipex_pptp_output(struct mbuf *m0, struct pipex_session *session,
     int has_seq, int has_ack)
 {
@@ -1671,7 +1668,7 @@ pipex_pptp_userland_lookup_session_ipv6(struct mbuf *m0, struct in6_addr dst)
 }
 #endif
 
-Static struct pipex_session *
+struct pipex_session *
 pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 {
 	struct pipex_gre_header gre;
@@ -1795,7 +1792,7 @@ pipex_pptp_userland_output(struct mbuf *m0, struct pipex_session *session)
 /***********************************************************************
  * L2TP support
  ***********************************************************************/
-Static void
+void
 pipex_l2tp_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int hlen, plen, datalen;
@@ -2289,7 +2286,7 @@ pipex_mppe_crypt(struct pipex_mppe *mppe, int len, u_char *indata,
 	rc4_crypt(&mppe->rc4ctx, indata, outdata, len);
 }
 
-Static void
+void
 pipex_mppe_init(struct pipex_mppe *mppe, int stateless, int keylenbits,
     u_char *master_key, int has_oldkey)
 {
@@ -2355,7 +2352,7 @@ static u_char SHAPad1[] = {
 	0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
 };
 
-Static void
+void
 GetNewKeyFromSHA(u_char *StartKey, u_char *SessionKey, int SessionKeyLength,
     u_char *InterimKey)
 {
@@ -2372,7 +2369,7 @@ GetNewKeyFromSHA(u_char *StartKey, u_char *SessionKey, int SessionKeyLength,
 	memcpy(InterimKey, Digest, SessionKeyLength);
 }
 
-Static void
+void
 pipex_mppe_reduce_key(struct pipex_mppe *mppe)
 {
 	switch (mppe->keylenbits) {
@@ -2387,7 +2384,7 @@ pipex_mppe_reduce_key(struct pipex_mppe *mppe)
 	}
 }
 
-Static void
+void
 mppe_key_change(struct pipex_mppe *mppe)
 {
 	u_char interim[16];
@@ -2646,7 +2643,7 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 	return (m0);
 }
 
-Static void
+void
 pipex_ccp_input(struct mbuf *m0, struct pipex_session *session)
 {
 	u_char *cp;
@@ -2689,7 +2686,7 @@ drop:
 	counters_inc(session->stat_counters, pxc_ierrors);
 }
 
-Static int
+int
 pipex_ccp_output(struct pipex_session *session, int code, int id)
 {
 	u_char *cp;
@@ -2770,7 +2767,7 @@ pipex_ccp_output(struct pipex_session *session, int code, int id)
  * The mtu parameter should be the MTU bottleneck (as far as we know)
  * on the link between the source and the destination.
  */
-Static struct mbuf *
+struct mbuf *
 adjust_tcp_mss(struct mbuf *m0, int mtu)
 {
 	int opt, optlen, acc, mss, maxmss, lpktp;
@@ -2860,7 +2857,7 @@ drop:
  *  Check whether a packet should reset idle timer
  *  Returns 1 to don't reset timer (i.e. the packet is "idle" packet)
  */
-Static struct mbuf *
+struct mbuf *
 ip_is_idle_packet(struct mbuf *m0, int *ris_idle)
 {
 	u_int16_t ip_off;
@@ -2944,7 +2941,7 @@ error:
 	return (NULL);
 }
 
-Static void
+void
 pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 {
 	char logbuf[1024];
@@ -2972,7 +2969,7 @@ pipex_session_log(struct pipex_session *session, int prio, const char *fmt, ...)
 	addlog("%s\n", logbuf);
 }
 
-Static uint32_t
+uint32_t
 pipex_sockaddr_hash_key(struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
@@ -2989,7 +2986,7 @@ pipex_sockaddr_hash_key(struct sockaddr *sa)
  * Compare struct sockaddr_in{,6} with the address only.
  * The port number is not covered.
  */
-Static int
+int
 pipex_sockaddr_compar_addr(struct sockaddr *a, struct sockaddr *b)
 {
 	int cmp;
