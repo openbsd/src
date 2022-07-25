@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.8 2020/09/29 16:40:33 mvs Exp $	*/
+/*	$OpenBSD: smr.h,v 1.9 2022/07/25 08:06:44 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -334,7 +334,7 @@ struct {								\
 #define	SMR_TAILQ_HEAD(name, type)					\
 struct name {								\
 	struct type *smr_tqh_first;	/* first element, SMR-protected */\
-	struct type **smr_tqh_last;	/* last element, SMR-protected */\
+	struct type **smr_tqh_last;	/* last element */		\
 }
 
 #define	SMR_TAILQ_HEAD_INITIALIZER(head)				\
