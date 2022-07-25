@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tput.1,v 1.24 2022/03/31 17:27:28 naddy Exp $
+.\"	$OpenBSD: tput.1,v 1.25 2022/07/25 02:25:56 jsg Exp $
 .\"	$NetBSD: tput.1,v 1.4 1994/12/07 08:49:10 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tput.1	8.2 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 25 2022 $
 .Dt TPUT 1
 .Os
 .Sh NAME
@@ -179,8 +179,10 @@ utility first appeared in
 .Bx 2 .
 The
 .Nm
-utility appeared in
-.Bx 4.4 .
+utility first appeared in
+.At V.2
+and was reimplemented for
+.Bx 4.3 Reno .
 .Sh BUGS
 .Nm
 can't really distinguish between different types of attributes.

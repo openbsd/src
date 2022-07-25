@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.21 2014/07/11 09:24:03 tedu Exp $
+.\"	$OpenBSD: getenv.3,v 1.22 2022/07/25 02:25:55 jsg Exp $
 .\"
-.Dd $Mdocdate: July 11 2014 $
+.Dd $Mdocdate: July 25 2022 $
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -174,7 +174,9 @@ appeared in
 .Bx 4.3 Tahoe .
 The
 .Fn putenv
-function appeared in
+function first appeared in
+.At V.2
+and was reimplemented for
 .Bx 4.3 Reno .
 .Sh CAVEATS
 Library code must be careful about using
