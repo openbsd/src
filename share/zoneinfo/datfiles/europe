@@ -1,4 +1,4 @@
-# $OpenBSD: europe,v 1.83 2022/03/17 14:37:26 millert Exp $
+# $OpenBSD: europe,v 1.84 2022/07/25 21:43:58 millert Exp $
 # tzdb data for Europe and environs
 
 # This file is in the public domain, so clarified as of
@@ -498,7 +498,6 @@ Rule	GB-Eire 1990	1995	-	Oct	Sun>=22	1:00u	0	GMT
 # Summer Time Order 1997 (S.I. 1997/2982)
 # See EU for rules starting in 1996.
 #
-# Use Europe/London for Jersey, Guernsey, and the Isle of Man.
 
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/London	-0:01:15 -	LMT	1847 Dec  1  0:00s
@@ -506,9 +505,30 @@ Zone	Europe/London	-0:01:15 -	LMT	1847 Dec  1  0:00s
 			 1:00	-	BST	1971 Oct 31  2:00u
 			 0:00	GB-Eire	%s	1996
 			 0:00	EU	GMT/BST
-Link	Europe/London	Europe/Jersey
-Link	Europe/London	Europe/Guernsey
-Link	Europe/London	Europe/Isle_of_Man
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Jersey	-0:08:26 -	LMT	1898 Jun 11 16:00u
+			 0:00	GB-Eire	%s	1940 Jul  2
+			 1:00	C-Eur	CE%sT	1945 May  8
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Guernsey	-0:10:09 -	LMT	1913 Jun 18
+			 0:00	GB-Eire	%s	1940 Jul  2
+			 1:00	C-Eur	CE%sT	1945 May  8
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
+
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Isle_of_Man	-0:17:55 -	LMT	1883 Mar 30  0:00s
+			 0:00	GB-Eire	%s	1968 Oct 27
+			 1:00	-	BST	1971 Oct 31  2:00u
+			 0:00	GB-Eire	%s	1996
+			 0:00	EU	GMT/BST
 
 # From Paul Eggert (2018-02-15):
 # In January 2018 we discovered that the negative SAVE values in the
@@ -964,7 +984,13 @@ Zone	Europe/Brussels	0:17:30 -	LMT	1880
 			1:00	EU	CE%sT
 
 # Bosnia and Herzegovina
-# See Europe/Belgrade.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Sarajevo	1:13:40	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
 
 # Bulgaria
 #
@@ -992,7 +1018,13 @@ Zone	Europe/Sofia	1:33:16 -	LMT	1880
 			2:00	EU	EE%sT
 
 # Croatia
-# See Europe/Belgrade.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Zagreb	1:03:52	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
 
 # Cyprus
 # Please see the 'asia' file for Asia/Nicosia.
@@ -1902,7 +1934,10 @@ Zone	Europe/Riga	1:36:34	-	LMT	1880
 # I could confirm from the paper that Liechtenstein did in fact follow
 # the same DST in 1941 and 1942 as Switzerland did.
 
-Link Europe/Zurich Europe/Vaduz
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Vaduz	0:38:04 -	LMT	1894 Jun
+			1:00	Swiss	CE%sT	1981
+			1:00	EU	CE%sT
 
 
 # Lithuania
@@ -1994,7 +2029,13 @@ Zone Europe/Luxembourg	0:24:36 -	LMT	1904 Jun
 			1:00	EU	CE%sT
 
 # North Macedonia
-# See Europe/Belgrade.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	Europe/Skopje	1:25:44	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
 
 # Malta
 #
@@ -2115,7 +2156,7 @@ Zone	Europe/Monaco	0:29:32 -	LMT	1892 Jun  1
 			1:00	EU	CE%sT
 
 # Montenegro
-# See Europe/Belgrade.
+Link	Europe/Belgrade	Europe/Podgorica
 
 # Netherlands
 
@@ -3547,17 +3588,18 @@ Zone	Europe/Belgrade	1:22:00	-	LMT	1884
 # Shanks & Pottenger don't give as much detail, so go with Koželj.
 			1:00	-	CET	1982 Nov 27
 			1:00	EU	CE%sT
-Link Europe/Belgrade Europe/Ljubljana	# Slovenia
-Link Europe/Belgrade Europe/Podgorica	# Montenegro
-Link Europe/Belgrade Europe/Sarajevo	# Bosnia and Herzegovina
-Link Europe/Belgrade Europe/Skopje	# North Macedonia
-Link Europe/Belgrade Europe/Zagreb	# Croatia
 
 # Slovakia
 Link Europe/Prague Europe/Bratislava
 
 # Slovenia
-# See Europe/Belgrade.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Europe/Ljubljana	0:58:04	-	LMT	1884
+			1:00	-	CET	1941 Apr 18 23:00
+			1:00	C-Eur	CE%sT	1945 May  8  2:00s
+			1:00	1:00	CEST	1945 Sep 16  2:00s
+			1:00	-	CET	1982 Nov 27
+			1:00	EU	CE%sT
 
 # Spain
 #

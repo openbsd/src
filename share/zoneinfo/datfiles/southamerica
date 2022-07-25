@@ -1,4 +1,4 @@
-# $OpenBSD: southamerica,v 1.73 2022/03/17 14:37:27 millert Exp $
+# $OpenBSD: southamerica,v 1.74 2022/07/25 21:43:58 millert Exp $
 # tzdb data for South America and environs
 
 # This file is in the public domain, so clarified as of
@@ -575,7 +575,10 @@ Zone America/Argentina/Ushuaia -4:33:12 - LMT	1894 Oct 31
 			-3:00	-	-03
 
 # Aruba
-# See America/Puerto_Rico.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Aruba	-4:40:24 -	LMT	1912 Feb 12 # Oranjestad
+			-4:30	-	-0430	1965
+			-4:00	-	AST
 
 # Bolivia
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
@@ -1397,7 +1400,13 @@ Zone	America/Bogota	-4:56:16 -	LMT	1884 Mar 13
 # no information; probably like America/Bogota
 
 # Curaçao
-# See America/Puerto_Rico.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone	America/Curacao	-4:35:47 -	LMT	1912 Feb 12 # Willemstad
+			-4:30	-	-0430	1965
+			-4:00	-	AST
+
+Link	America/Curacao	America/Kralendijk
+Link	America/Curacao	America/Lower_Princes
 #
 # From Arthur David Olson (2011-06-15):
 # use links for places with new iso3166 codes.
@@ -1721,8 +1730,12 @@ Zone America/Paramaribo	-3:40:40 -	LMT	1911
 			-3:00	-	-03
 
 # Trinidad and Tobago
-# See America/Puerto_Rico.
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone America/Port_of_Spain -4:06:04 -	LMT	1912 Mar 2
+			-4:00	-	AST
 
+Link	America/Port_of_Spain	America/Marigot
+Link	America/Port_of_Spain	America/St_Barthelemy
 # Uruguay
 # From Paul Eggert (1993-11-18):
 # Uruguay wins the prize for the strangest peacetime manipulation of the rules.

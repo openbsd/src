@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.39 2021/10/22 14:40:49 millert Exp $
+# $OpenBSD: backward,v 1.40 2022/07/25 21:43:58 millert Exp $
 # tzdb links for backward compatibility
 
 # This file is in the public domain, so clarified as of
@@ -10,13 +10,13 @@
 # for pre-1970 timestamps and so is out of scope for tzdb proper.
 
 # Link	TARGET			LINK-NAME
-Link	Africa/Nairobi		Africa/Asmera
-Link	Africa/Abidjan		Africa/Timbuktu
+Link	Africa/Asmara	Africa/Asmera
+Link	Africa/Bamako	Africa/Timbuktu
 Link	America/Argentina/Catamarca	America/Argentina/ComodRivadavia
 Link	America/Adak		America/Atka
 Link	America/Argentina/Buenos_Aires	America/Buenos_Aires
 Link	America/Argentina/Catamarca	America/Catamarca
-Link	America/Panama		America/Coral_Harbour
+Link	America/Atikokan	America/Coral_Harbour
 Link	America/Argentina/Cordoba	America/Cordoba
 Link	America/Tijuana		America/Ensenada
 Link	America/Indiana/Indianapolis	America/Fort_Wayne
@@ -31,8 +31,8 @@ Link	America/Rio_Branco	America/Porto_Acre
 Link	America/Argentina/Cordoba	America/Rosario
 Link	America/Tijuana		America/Santa_Isabel
 Link	America/Denver		America/Shiprock
-Link	America/Puerto_Rico	America/Virgin
-Link	Pacific/Auckland	Antarctica/South_Pole
+Link	America/St_Thomas	America/Virgin
+Link	Antarctica/McMurdo	Antarctica/South_Pole
 Link	Asia/Ashgabat		Asia/Ashkhabad
 Link	Asia/Kolkata		Asia/Calcutta
 Link	Asia/Shanghai		Asia/Chongqing

@@ -1,4 +1,4 @@
-# $OpenBSD: antarctica,v 1.43 2021/10/22 14:40:49 millert Exp $
+# $OpenBSD: antarctica,v 1.44 2022/07/25 21:43:58 millert Exp $
 # tzdb data for Antarctica and environs
 
 # This file is in the public domain, so clarified as of
@@ -163,7 +163,12 @@ Zone Indian/Kerguelen	0	-	-00	1950 # Port-aux-Français
 			5:00	-	+05
 #
 # year-round base in the main continent
-# Dumont d'Urville - see Pacific/Port_Moresby.
+# Dumont d'Urville, Île des Pétrels, -6640+14001, since 1956-11
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Antarctica/DumontDUrville 0 -	-00	1947
+			10:00	-	+10	1952 Jan 14
+			0	-	-00	1956 Nov
+			10:00	-	+10
 
 # France & Italy - year-round base
 # Concordia, -750600+1232000, since 2005
@@ -179,7 +184,11 @@ Zone Indian/Kerguelen	0	-	-00	1950 # Port-aux-Français
 # Zuchelli, Terra Nova Bay, -744140+1640647, since 1986
 
 # Japan - year-round bases
-# See Asia/Riyadh.
+# Syowa (also known as Showa), -690022+0393524, since 1957
+# Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]
+Zone Antarctica/Syowa	0	-	-00	1957 Jan 29
+			3:00	-	+03
+
 
 # S Korea - year-round base
 # Jang Bogo, Terra Nova Bay, -743700+1641205 since 2014
