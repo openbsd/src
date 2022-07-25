@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.163 2022/07/10 20:34:31 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.164 2022/07/25 17:45:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -371,8 +371,13 @@ Xprint(const char *args, struct mbr *mbr)
 {
 	if (gh.gh_sig == GPTSIGNATURE)
 		GPT_print(args, VERBOSE);
-	else
+	else if (MBR_valid_prt(mbr))
 		MBR_print(mbr, args);
+	else {
+		DISK_printgeometry("s");
+		printf("Offset: %d\tSignature: 0x%X.\tNo MBR or GPT.\n",
+		    DOSBBSECTOR, (int)mbr->mbr_signature);
+	}
 
 	return CMD_CONT;
 }
@@ -430,7 +435,7 @@ Xexit(const char *args, struct mbr *mbr)
 int
 Xhelp(const char *args, struct mbr *mbr)
 {
-	USER_help();
+	USER_help(mbr);
 
 	return CMD_CONT;
 }

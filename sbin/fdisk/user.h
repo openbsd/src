@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.23 2022/07/10 17:46:03 krw Exp $	*/
+/*	$OpenBSD: user.h,v 1.24 2022/07/25 17:45:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -21,4 +21,4 @@
 
 void		USER_edit(const uint64_t, const uint64_t);
 void		USER_print_disk(const int);
-void		USER_help(void);
+void		USER_help(const struct mbr *);

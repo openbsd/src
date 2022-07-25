@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.83 2022/07/18 15:06:22 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.84 2022/07/25 17:45:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,31 +33,34 @@
 
 struct cmd {
 	char	*cmd_name;
-	int	 cmd_gpt;
+	int	 cmd_valid;
 	int	(*cmd_fcn)(const char *, struct mbr *);
 	char	*cmd_help;
 };
 
 const struct cmd		cmd_table[] = {
-	{"help",   1, Xhelp,   "Display summary of available commands"},
-	{"manual", 1, Xmanual, "Display fdisk man page"},
-	{"reinit", 1, Xreinit, "Initialize the partition table"},
+	{"help",   2, Xhelp,   "Display summary of available commands"},
+	{"manual", 2, Xmanual, "Display fdisk man page"},
+	{"reinit", 2, Xreinit, "Initialize the partition table"},
 	{"setpid", 1, Xsetpid, "Set identifier of table entry"},
 	{"edit",   1, Xedit,   "Edit table entry"},
 	{"flag",   1, Xflag,   "Set flag value of table entry"},
 	{"update", 0, Xupdate, "Update MBR bootcode"},
 	{"select", 0, Xselect, "Select MBR extended table entry"},
 	{"swap",   1, Xswap,   "Swap two table entries"},
-	{"print",  1, Xprint,  "Print partition table"},
+	{"print",  2, Xprint,  "Print partition table"},
 	{"write",  1, Xwrite,  "Write partition table to disk"},
 	{"exit",   1, Xexit,   "Discard changes and exit edit level"},
 	{"quit",   1, Xquit,   "Save changes and exit edit level"},
-	{"abort",  1, Xabort,  "Discard changes and terminate fdisk"},
+	{"abort",  2, Xabort,  "Discard changes and terminate fdisk"},
 };
+
+#define	ANY_CMD(_i)	(cmd_table[(_i)].cmd_valid > 1)
+#define	GPT_CMD(_i)	(cmd_table[(_i)].cmd_valid > 0)
 
 int			modified;
 
-int			ask_cmd(char **);
+int			ask_cmd(const struct mbr *, char **);
 
 void
 USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
@@ -84,7 +87,7 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 		printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "",
 		    editlevel);
 		fflush(stdout);
-		i = ask_cmd(&args);
+		i = ask_cmd(&mbr, &args);
 		if (i == -1)
 			continue;
 
@@ -121,7 +124,14 @@ USER_print_disk(const int verbosity)
 	do {
 		if (MBR_read(lba_self, lba_firstembr, &mbr))
 			break;
-		if (lba_self == 0) {
+		if (lba_self == DOSBBSECTOR) {
+			if (MBR_valid_prt(&mbr) == 0) {
+				DISK_printgeometry("s");
+				printf("Offset: %d\tSignature: 0x%X.\t"
+				    "No MBR or GPT.\n", DOSBBSECTOR,
+				    (int)mbr.mbr_signature);
+				return;
+			}
 			if (GPT_read(ANYGPT)) {
 				if (verbosity == VERBOSE) {
 					printf("Primary GPT:\nNot Found\n");
@@ -161,20 +171,22 @@ USER_print_disk(const int verbosity)
 }
 
 void
-USER_help(void)
+USER_help(const struct mbr *mbr)
 {
 	unsigned int		i;
 
 	for (i = 0; i < nitems(cmd_table); i++) {
-		if (gh.gh_sig == GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)
+		if (gh.gh_sig == GPTSIGNATURE && GPT_CMD(i) == 0)
 				continue;
+		if (MBR_valid_prt(mbr) == 0 && ANY_CMD(i) == 0)
+			continue;
 		printf("\t%s\t\t%s\n", cmd_table[i].cmd_name,
 		    cmd_table[i].cmd_help);
 	}
 }
 
 int
-ask_cmd(char **arg)
+ask_cmd(const struct mbr *mbr, char **arg)
 {
 	static char		 lbuf[LINEBUFSZ];
 	char			*cmd;
@@ -194,7 +206,9 @@ ask_cmd(char **arg)
 		cmd = "help";
 
 	for (i = 0; i < nitems(cmd_table); i++) {
-		if (gh.gh_sig == GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)
+		if (gh.gh_sig == GPTSIGNATURE && GPT_CMD(i) == 0)
+			continue;
+		if (MBR_valid_prt(mbr) == 0 && ANY_CMD(i) == 0)
 			continue;
 		if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
 			return i;

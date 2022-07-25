@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.119 2022/04/25 17:10:09 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.120 2022/07/25 17:45:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -179,4 +179,24 @@ MBR_write(const struct mbr *mbr)
 		warn("DIOCRLDINFO");
 
 	return 0;
+}
+
+int
+MBR_valid_prt(const struct mbr *mbr)
+{
+	uint64_t		bs, ns;
+	unsigned int		i, nprt;
+	unsigned char		id;
+
+	nprt = 0;
+	for (i = 0; i < NDOSPART; i++) {
+		bs = mbr->mbr_prt[i].prt_bs;
+		ns = mbr->mbr_prt[i].prt_ns;
+		id = mbr->mbr_prt[i].prt_id;
+		if ((bs == 0 && ns == 0 && id == 0) ||
+		    (bs < DL_GETDSIZE(&dl) && ns > 0 && ns <= DL_GETDSIZE(&dl)))
+			nprt++;
+	}
+
+	return nprt > 0 && mbr->mbr_signature == DOSMBR_SIGNATURE;
 }
