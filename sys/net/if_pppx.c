@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.120 2022/07/18 10:55:20 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.121 2022/07/25 08:29:26 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1154,7 +1154,6 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct pppac_softc *sc = pppac_lookup(dev);
 	int error = 0;
 
-	NET_LOCK();
 	switch (cmd) {
 	case FIONBIO:
 		break;
@@ -1173,7 +1172,6 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		error = pipex_ioctl(sc, cmd, data);
 		break;
 	}
-	NET_UNLOCK();
 
 	return (error);
 }
