@@ -1,4 +1,4 @@
-/*	$OpenBSD: gmon.c,v 1.32 2020/10/12 22:08:33 deraadt Exp $ */
+/*	$OpenBSD: gmon.c,v 1.33 2022/07/26 04:07:13 cheloha Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,6 @@ static int	s_scale;
 
 PROTO_NORMAL(moncontrol);
 PROTO_DEPRECATED(monstartup);
-static int hertz(void);
 
 void
 monstartup(u_long lowpc, u_long highpc)
@@ -159,17 +158,15 @@ _mcleanup(void)
 	if (p->state == GMON_PROF_ERROR)
 		ERR("_mcleanup: tos overflow\n");
 
+	/*
+	 * There is nothing we can do if sysctl(2) fails or if
+	 * clockinfo.hz is unset.
+	 */
 	size = sizeof(clockinfo);
 	if (sysctl(mib, 2, &clockinfo, &size, NULL, 0) == -1) {
-		/*
-		 * Best guess
-		 */
-		clockinfo.profhz = hertz();
+		clockinfo.profhz = 0;
 	} else if (clockinfo.profhz == 0) {
-		if (clockinfo.hz != 0)
-			clockinfo.profhz = clockinfo.hz;
-		else
-			clockinfo.profhz = hertz();
+		clockinfo.profhz = clockinfo.hz;	/* best guess */
 	}
 
 	moncontrol(0);
@@ -304,23 +301,3 @@ moncontrol(int mode)
 	}
 }
 DEF_WEAK(moncontrol);
-
-/*
- * discover the tick frequency of the machine
- * if something goes wrong, we return 0, an impossible hertz.
- */
-static int
-hertz(void)
-{
-	struct itimerval tim;
-
-	tim.it_interval.tv_sec = 0;
-	tim.it_interval.tv_usec = 1;
-	tim.it_value.tv_sec = 0;
-	tim.it_value.tv_usec = 0;
-	setitimer(ITIMER_REAL, &tim, 0);
-	setitimer(ITIMER_REAL, 0, &tim);
-	if (tim.it_interval.tv_usec < 2)
-		return(0);
-	return (1000000 / tim.it_interval.tv_usec);
-}
