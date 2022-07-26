@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.23 2022/07/13 10:20:18 jca Exp $
+# $OpenBSD: Makefile,v 1.24 2022/07/26 15:34:33 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -51,6 +51,7 @@ SUBDIR+=liblldELF
 SUBDIR+=lld
 
 
+.if ${BUILD_LLDB:L} == "yes"
 SUBDIR+=lldb-tblgen
 SUBDIR+=include/lldb/Commands
 SUBDIR+=include/lldb/Core
@@ -97,6 +98,7 @@ SUBDIR+=liblldbUtility
 
 SUBDIR+=lldb
 SUBDIR+=lldb-server
+.endif
 
 SUBDIR+=include/llvm-objcopy
 SUBDIR+=llvm-objcopy
