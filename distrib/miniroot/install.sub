@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1202 2022/06/28 12:10:08 sthen Exp $
+#	$OpenBSD: install.sub,v 1.1203 2022/07/26 00:38:42 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2420,8 +2420,8 @@ parse_hn_line() {
 		_cmds[${#_cmds[*]}]="ifconfig $_if inet autoconf"
 		V4_AUTOCONF=true
 		;;
-	'!'*|bridge)
-		# Skip shell commands and bridge in the installer.
+	'!'*)
+		# Skip shell commands in the installer.
 		return
 		;;
 	*)	_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
