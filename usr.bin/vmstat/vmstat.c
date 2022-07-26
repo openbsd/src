@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.153 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.154 2022/07/26 14:49:13 visa Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -72,13 +72,11 @@ struct nlist namelist[] = {
 	{ "_bucket" },
 #define	X_FORKSTAT	5		/* sysctl */
 	{ "_forkstat" },
-#define X_NSELCOLL	6		/* sysctl */
-	{ "_nselcoll" },
-#define X_POOLHEAD	7		/* sysctl */
+#define X_POOLHEAD	6		/* sysctl */
 	{ "_pool_head" },
-#define	X_NAPTIME	8
+#define	X_NAPTIME	7
 	{ "_naptime" },
-	{ "" },
+	{ NULL },
 };
 
 /* Objects defined in dkstats.c */
@@ -485,7 +483,7 @@ void
 dosum(void)
 {
 	struct nchstats nchstats;
-	int mib[2], nselcoll;
+	int mib[2];
 	long long nchtotal;
 	size_t size;
 
@@ -571,19 +569,6 @@ dosum(void)
 	    pct(nchstats.ncs_badhits, nchtotal),
 	    pct(nchstats.ncs_falsehits, nchtotal),
 	    pct(nchstats.ncs_long, nchtotal));
-
-	if (nlistf == NULL && memf == NULL) {
-		size = sizeof(nselcoll);
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_NSELCOLL;
-		if (sysctl(mib, 2, &nselcoll, &size, NULL, 0) == -1) {
-			warn("could not read kern.nselcoll");
-			nselcoll = 0;
-		}
-	} else {
-		kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
-	}
-	(void)printf("%11d select collisions\n", nselcoll);
 }
 
 void
