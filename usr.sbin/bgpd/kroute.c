@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.281 2022/07/26 16:36:33 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.282 2022/07/26 17:12:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2060,11 +2060,7 @@ kif_remove(struct kif_node *kif)
 	if ((kt = ktable_get(kif->k.rdomain)) != NULL)
 		knexthop_track(kt, kif->k.ifindex);
 
-	if (RB_REMOVE(kif_tree, &kit, kif) == NULL) {
-		log_warnx("RB_REMOVE(kif_tree, &kit, kif)");
-		return (-1);
-	}
-
+	RB_REMOVE(kif_tree, &kit, kif);
 	free(kif);
 	return (0);
 }
@@ -2549,7 +2545,8 @@ if_announce(void *msg)
 		break;
 	case IFAN_DEPARTURE:
 		kif = kif_find(ifan->ifan_index);
-		kif_remove(kif);
+		if (kif != NULL)
+			kif_remove(kif);
 		break;
 	}
 }
