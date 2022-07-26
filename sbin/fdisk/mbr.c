@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.120 2022/07/25 17:45:16 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.121 2022/07/26 14:30:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -105,7 +105,13 @@ dos_mbr_to_mbr(const struct dos_mbr *dmbr, const uint64_t lba_self,
     const uint64_t lba_firstembr, struct mbr *mbr)
 {
 	struct dos_partition	dos_parts[NDOSPART];
-	int			i;
+	uint8_t			*p;
+	unsigned int		 i;
+
+	p = (uint8_t *)dmbr;
+	mbr->mbr_dmbrzeros = 0;
+	for (i = 0; i < sizeof(struct dos_mbr) && *p == 0; i++, p++)
+		mbr->mbr_dmbrzeros++;
 
 	memcpy(mbr->mbr_code, dmbr->dmbr_boot, sizeof(mbr->mbr_code));
 	mbr->mbr_lba_self = lba_self;
@@ -187,6 +193,9 @@ MBR_valid_prt(const struct mbr *mbr)
 	uint64_t		bs, ns;
 	unsigned int		i, nprt;
 	unsigned char		id;
+
+	if (mbr->mbr_dmbrzeros == sizeof(struct dos_mbr))
+		return 1;	/* All zeros struct dos_mbr is editable. */
 
 	nprt = 0;
 	for (i = 0; i < NDOSPART; i++) {
