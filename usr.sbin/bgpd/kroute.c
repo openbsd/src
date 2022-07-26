@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.280 2022/07/26 16:32:29 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.281 2022/07/26 16:36:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2049,7 +2049,7 @@ kif_remove(struct kif_node *kif)
 {
 	struct ktable	*kt;
 
-	kif->flags &= ~IFF_UP;
+	kif->k.flags &= ~IFF_UP;
 
 	/*
 	 * TODO, remove all kroutes using this interface,
