@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.403 2022/07/05 15:06:16 visa Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.404 2022/07/26 14:53:45 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -486,8 +486,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			hostnamelen = newlen;
 		return (error);
 	case KERN_DOMAINNAME:
-		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
-		    domainname, sizeof(domainname));
+		if (securelevel >= 1 && domainnamelen && newp)
+			error = EPERM;
+		else
+			error = sysctl_tstring(oldp, oldlenp, newp, newlen,
+			    domainname, sizeof(domainname));
 		if (newp && !error)
 			domainnamelen = newlen;
 		return (error);
