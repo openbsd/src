@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdomainname.3,v 1.28 2022/07/17 08:33:01 jsg Exp $
+.\"	$OpenBSD: getdomainname.3,v 1.29 2022/07/26 14:53:29 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 17 2022 $
+.Dd $Mdocdate: July 26 2022 $
 .Dt GETDOMAINNAME 3
 .Os
 .Sh NAME
@@ -61,6 +61,8 @@ which has length
 .Fa namelen .
 This call is restricted to the superuser and
 is normally used only when the system is bootstrapped.
+Under normal operation once the domainname is set, it cannot be
+changed.
 .Sh RETURN VALUES
 If the call succeeds, a value of 0 is returned.
 If the call fails, a value of \-1 is returned and an error code is
