@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2020/03/12 15:40:39 visa Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/07/26 13:20:16 krw Exp $
 
 REGRESS_SETUP=		setup
 REGRESS_CLEANUP=	cleanup
@@ -19,7 +19,7 @@ run-regress-async-mount: unconfig
 	mount_mfs -s1M -oasync swap /mnt/regress-vnd
 	dd if=/dev/zero of=/mnt/regress-vnd/disk.img count=1024
 	vnconfig vnd0 /mnt/regress-vnd/disk.img
-	echo 'e 0\nC\n\n64\n960\nw\nq\n' | fdisk -e vnd0
+	fdisk -iy -b "960@64:0c" vnd0
 	newfs -t msdos vnd0i
 
 REGRESS_ROOT_TARGETS=	${REGRESS_TARGETS}
