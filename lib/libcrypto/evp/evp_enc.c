@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.44 2021/02/18 19:12:29 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.45 2022/07/26 19:50:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -300,6 +300,14 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 {
 	int i, j, bl;
 
+	*outl = 0;
+
+	if (inl < 0)
+		return 0;
+
+	if (inl == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
+		return 1;
+
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
 		i = M_do_cipher(ctx, out, in, inl);
 		if (i < 0)
@@ -307,11 +315,6 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		else
 			*outl = i;
 		return 1;
-	}
-
-	if (inl <= 0) {
-		*outl = 0;
-		return inl == 0;
 	}
 
 	if (ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0) {
@@ -438,6 +441,14 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	int fix_len;
 	unsigned int b;
 
+	*outl = 0;
+
+	if (inl < 0)
+		return 0;
+
+	if (inl == 0 && EVP_CIPHER_mode(ctx->cipher) != EVP_CIPH_CCM_MODE)
+		return 1;
+
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
 		fix_len = M_do_cipher(ctx, out, in, inl);
 		if (fix_len < 0) {
@@ -446,11 +457,6 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		} else
 			*outl = fix_len;
 		return 1;
-	}
-
-	if (inl <= 0) {
-		*outl = 0;
-		return inl == 0;
 	}
 
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
