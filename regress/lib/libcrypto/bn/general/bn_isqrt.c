@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.1 2022/07/25 20:48:57 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.2 2022/07/26 07:09:24 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -98,8 +98,7 @@ check_tables(int print)
 		if (!print)
 			continue;
 
-		printf("const uint8_t is_square_mod_%d[] = {\n\t",
-		    fill[i]);
+		printf("const uint8_t is_square_mod_%d[] = {\n\t", fill[i]);
 		for (j = 0; j < fill[i]; j++) {
 			const char *end = " ";
 
@@ -225,7 +224,7 @@ isqrt_test(void)
 	}
 
 	/*
-	 * Finally check that isqrt(n^2 - 1) + 1 = n.
+	 * Finally check that isqrt(n^2 - 1) + 1 == n.
 	 */
 
 	if (!BN_sub(testcase, n_sqr, BN_value_one()))
@@ -244,7 +243,6 @@ isqrt_test(void)
 		    is_perfect_square, cmp);
 		failed = 1;
 	}
-
 
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
