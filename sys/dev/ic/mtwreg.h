@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtwreg.h,v 1.1 2021/12/20 13:59:02 hastings Exp $	*/
+/*	$OpenBSD: mtwreg.h,v 1.2 2022/07/27 06:41:04 hastings Exp $	*/
 /*
  * Copyright (c) 2007 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2021 James Hastings
@@ -727,6 +727,14 @@
 #define MTW_RXQ_MCU		1
 #define MTW_TXQ_MCU		5
 
+enum mtw_phy_mode {
+	MTW_PHY_CCK,
+	MTW_PHY_OFDM,
+	MTW_PHY_HT,
+	MTW_PHY_HT_GF,
+	MTW_PHY_VHT,
+};
+
 /* RT2860 TX descriptor */
 struct rt2860_txd {
 	uint32_t	sdp0;		/* Segment Data Pointer 0 */
@@ -781,14 +789,12 @@ struct mtw_txwi {
 #define MTW_TX_TXOP_BACKOFF	3
 
 	uint16_t	phy;
-#define MTW_PHY_MODE		0xe000
-#define MTW_PHY_CCK		(0 << 13)
-#define MTW_PHY_OFDM		(1 << 13)
-#define MTW_PHY_HT		(2 << 13)
-#define MTW_PHY_HT_GF		(3 << 13)
-#define MTW_PHY_VHT		(4 << 13)
-#define MTW_PHY_STBC		(1 << 10)
-#define MTW_PHY_SGI		(1 << 9)
+#define MT7650_PHY_MODE		0xe000
+#define MT7601_PHY_MODE		0xc000
+#define MT7601_PHY_SHIFT	14
+#define MT7650_PHY_SHIFT	13
+#define MT7650_PHY_SGI		(1 << 9)
+#define MT7601_PHY_SGI		(1 << 8)
 #define MTW_PHY_BW20		(0 << 7)
 #define MTW_PHY_BW40		(1 << 7)
 #define MTW_PHY_BW80		(2 << 7)
