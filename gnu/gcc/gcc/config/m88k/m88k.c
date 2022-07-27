@@ -2572,6 +2572,10 @@ m88k_override_options (void)
   if (align_functions == 0)
     align_functions = TARGET_88100 ? 16 : 8;
 
+#if 1 /* XXX breaks -freorder-blocks and even without it, tree-cfg.c */
+  flag_delayed_branch = 0;
+#endif
+
   /* XXX -freorder-blocks (enabled at -O2) does not work with -fdelayed-branch
      yet.  */
   if (flag_delayed_branch)
