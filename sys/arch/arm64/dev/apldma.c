@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldma.c,v 1.1 2022/02/02 22:55:57 kettenis Exp $	*/
+/*	$OpenBSD: apldma.c,v 1.2 2022/07/27 20:18:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,36 +38,43 @@
  * dropped as soon as official bindings are available.
  */
 
+/*
+ * The device tree bindings for this hardware use separate Tx and Rx
+ * channels with Tx channels using even channel numbers and Rx
+ * channels using odd channel numbers.
+ */
+
 #define DMA_TX_EN			0x0000
 #define DMA_TX_EN_CLR			0x0004
 #define DMA_TX_INTR			0x0034
 
-#define DMA_TX_CTL(chan)		(0x8000 + (chan) * 0x400)
+#define DMA_TX_CTL(chan)		(0x8000 + ((chan) / 2) * 0x400)
 #define  DMA_TX_CTL_RESET_RINGS		(1 << 0)
-#define DMA_TX_INTRSTAT(chan)		(0x8014 + (chan) * 0x400)
+#define DMA_TX_INTRSTAT(chan)		(0x8014 + ((chan) / 2) * 0x400)
 #define  DMA_TX_INTRSTAT_DESC_DONE	(1 << 0)
 #define  DMA_TX_INTRSTAT_ERR		(1 << 6)
-#define DMA_TX_INTRMASK(chan)		(0x8024 + (chan) * 0x400)
+#define DMA_TX_INTRMASK(chan)		(0x8024 + ((chan) / 2) * 0x400)
 #define  DMA_TX_INTRMASK_DESC_DONE	(1 << 0)
 #define  DMA_TX_INTRMASK_ERR		(1 << 6)
-#define DMA_TX_BUS_WIDTH(chan)		(0x8040 + (chan) * 0x400)
+#define DMA_TX_BUS_WIDTH(chan)		(0x8040 + ((chan) / 2) * 0x400)
 #define  DMA_TX_BUS_WIDTH_8BIT		(0 << 0)
 #define  DMA_TX_BUS_WIDTH_16BIT		(1 << 0)
 #define  DMA_TX_BUS_WIDTH_32BIT		(2 << 0)
 #define  DMA_TX_BUS_WIDTH_FRAME_2_WORDS	(1 << 4)
 #define  DMA_TX_BUS_WIDTH_FRAME_4_WORDS	(2 << 4)
-#define DMA_TX_BURST_SIZE(chan)		(0x8054 + (chan) * 0x400)
-#define DMA_TX_RESIDUE(chan)		(0x8064 + (chan) * 0x400)
-#define DMA_TX_DESC_RING(chan)		(0x8070 + (chan) * 0x400)
+#define DMA_TX_BURST_SIZE(chan)		(0x8054 + ((chan) / 2) * 0x400)
+#define  DMA_TX_BURST_SIZE_MAGIC	0x00c00060
+#define DMA_TX_RESIDUE(chan)		(0x8064 + ((chan) / 2) * 0x400)
+#define DMA_TX_DESC_RING(chan)		(0x8070 + ((chan) / 2) * 0x400)
 #define  DMA_TX_DESC_RING_FULL		(1 << 9)
-#define DMA_TX_REPORT_RING(chan)	(0x8074 + (chan) * 0x400)
+#define DMA_TX_REPORT_RING(chan)	(0x8074 + ((chan) / 2) * 0x400)
 #define  DMA_TX_REPORT_RING_EMPTY	(1 << 8)
-#define DMA_TX_DESC_WRITE(chan)		(0x10000 + (chan) * 4)
-#define DMA_TX_REPORT_READ(chan)	(0x10100 + (chan) * 4)
+#define DMA_TX_DESC_WRITE(chan)		(0x10000 + ((chan) / 2) * 4)
+#define DMA_TX_REPORT_READ(chan)	(0x10100 + ((chan) / 2) * 4)
 
 #define DMA_DESC_NOTIFY			(1 << 16)
 #define DMA_NUM_DESCRIPTORS		4
-#define DMA_NUM_CHANNELS		4
+#define DMA_NUM_INTERRUPTS		4
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -101,7 +108,8 @@ struct apldma_softc {
 	int			sc_node;
 	void			*sc_ih;
 
-	struct apldma_channel	*sc_ac[DMA_NUM_CHANNELS];
+	int			sc_nchannels;
+	struct apldma_channel	**sc_ac;
 };
 
 struct apldma_softc *apldma_sc;
@@ -145,6 +153,14 @@ apldma_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_nchannels = OF_getpropint(faa->fa_node, "dma-channels", 0);
+	if (sc->sc_nchannels == 0) {
+		printf(": no DMA channels\n");
+		goto unmap;
+	}
+	sc->sc_ac = mallocarray(sc->sc_nchannels,
+	    sizeof(struct apldma_channel), M_DEVBUF, M_WAITOK | M_ZERO);
+
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
 
@@ -154,7 +170,7 @@ apldma_attach(struct device *parent, struct device *self, void *aux)
 	    apldma_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
-		goto unmap;
+		goto free;
 	}
 
 	printf("\n");
@@ -162,6 +178,9 @@ apldma_attach(struct device *parent, struct device *self, void *aux)
 	apldma_sc = sc;
 	return;
 
+free:
+	free(sc->sc_ac, M_DEVBUF,
+	    sc->sc_nchannels * sizeof(struct apldma_channel));
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 }
@@ -199,8 +218,8 @@ apldma_intr(void *arg)
 	unsigned int chan, i;
 
 	intr = HREAD4(sc, DMA_TX_INTR);
-	for (chan = 0; chan < DMA_NUM_CHANNELS; chan++) {
-		if ((intr & (1 << chan)) == 0)
+	for (chan = 0; chan < sc->sc_nchannels; chan += 2) {
+		if ((intr & (1 << (chan / 2))) == 0)
 			continue;
 
 		intrstat = HREAD4(sc, DMA_TX_INTRSTAT(chan));
@@ -208,7 +227,7 @@ apldma_intr(void *arg)
 
 		if ((intrstat & DMA_TX_INTRSTAT_DESC_DONE) == 0)
 			continue;
-		
+
 		for (i = 0; i < DMA_NUM_DESCRIPTORS; i++) {
 			uint32_t status;
 
@@ -240,7 +259,11 @@ apldma_alloc_channel(unsigned int chan)
 	struct apldma_softc *sc = apldma_sc;
 	struct apldma_channel *ac;
 
-	if (chan >= DMA_NUM_CHANNELS)
+	if (chan >= sc->sc_nchannels)
+		return NULL;
+
+	/* We only support Tx channels for now. */
+	if ((chan % 2) != 0)
 		return NULL;
 
 	ac = malloc(sizeof(*ac), M_DEVBUF, M_WAITOK);
@@ -337,6 +360,7 @@ apldma_trigger_output(struct apldma_channel *ac, void *start, void *end,
 	default:
 		return EINVAL;
 	}
+	HWRITE4(sc, DMA_TX_BURST_SIZE(ac->ac_chan), DMA_TX_BURST_SIZE_MAGIC);
 
 	/* Reset rings. */
 	HWRITE4(sc, DMA_TX_CTL(ac->ac_chan), DMA_TX_CTL_RESET_RINGS);
@@ -351,7 +375,7 @@ apldma_trigger_output(struct apldma_channel *ac, void *start, void *end,
 	apldma_fill_descriptors(ac);
 
 	/* Start DMA transfer. */
-	HWRITE4(sc, DMA_TX_EN, 1 << ac->ac_chan);
+	HWRITE4(sc, DMA_TX_EN, 1 << (ac->ac_chan / 2));
 
 	return 0;
 }
@@ -362,7 +386,7 @@ apldma_halt_output(struct apldma_channel *ac)
 	struct apldma_softc *sc = ac->ac_sc;
 
 	/* Stop DMA transfer. */
-	HWRITE4(sc, DMA_TX_EN_CLR, 1 << ac->ac_chan);
+	HWRITE4(sc, DMA_TX_EN_CLR, 1 << (ac->ac_chan / 2));
 
 	/* Mask all interrupts. */
 	HWRITE4(sc, DMA_TX_INTRMASK(ac->ac_chan), 0);
