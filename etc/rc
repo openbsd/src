@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.561 2022/07/17 03:17:37 deraadt Exp $
+#	$OpenBSD: rc,v 1.562 2022/07/27 23:06:50 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -498,9 +498,9 @@ if [[ $ipsec != NO && -f /etc/ipsec.conf ]]; then
 fi
 
 echo -n 'starting RPC daemons:'
-start_daemon portmap ypldap
+start_daemon portmap
 if [[ -n $(domainname) ]]; then
-	start_daemon ypserv ypbind
+	start_daemon ypldap ypserv ypbind
 fi
 start_daemon mountd nfsd lockd statd amd
 echo '.'
