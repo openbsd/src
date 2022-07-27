@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.69 2022/03/23 23:36:35 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.70 2022/07/27 21:01:38 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -771,8 +771,6 @@ uint32_t mmap_desc_ver;
 
 EFI_MEMORY_DESCRIPTOR *mmap;
 
-void	remap_efi_runtime(EFI_PHYSICAL_ADDRESS);
-
 void	collect_kernel_args(const char *);
 void	process_kernel_args(void);
 
@@ -950,10 +948,6 @@ initarm(struct arm64_bootparams *abp)
 
 	arm64_bs_tag._space_map = map_func_save;
 
-	/* Remap EFI runtime. */
-	if (mmap_start != 0 && system_table != 0)
-		remap_efi_runtime(system_table);
-
 	pmap_avail_fixup();
 
 	uvmexp.pagesize = PAGE_SIZE;
@@ -1036,94 +1030,6 @@ initarm(struct arm64_bootparams *abp)
 
 	softintr_init();
 	splraise(IPL_IPI);
-}
-
-void
-remap_efi_runtime(EFI_PHYSICAL_ADDRESS system_table)
-{
-	EFI_SYSTEM_TABLE *st = (EFI_SYSTEM_TABLE *)system_table;
-	EFI_RUNTIME_SERVICES *rs;
-	EFI_STATUS status;
-	EFI_MEMORY_DESCRIPTOR *src;
-	EFI_MEMORY_DESCRIPTOR *dst;
-	EFI_PHYSICAL_ADDRESS phys_start = ~0ULL;
-	EFI_PHYSICAL_ADDRESS phys_end = 0;
-	EFI_VIRTUAL_ADDRESS virt_start;
-	vsize_t space;
-	int i, count = 0;
-	paddr_t pa;
-
-	/*
-	 * Pick a random address somewhere in the lower half of the
-	 * usable virtual address space.
-	 */
-	space = 3 * (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / 4;
-	virt_start = VM_MIN_ADDRESS +
-	    ((vsize_t)arc4random_uniform(space >> PAGE_SHIFT) << PAGE_SHIFT);
-
-	/* Make sure the EFI system table is mapped. */
-	pmap_map_early(system_table, sizeof(EFI_SYSTEM_TABLE));
-	rs = st->RuntimeServices;
-
-	/*
-	 * Make sure memory for EFI runtime services is mapped.  We
-	 * only map normal memory at this point and pray that the
-	 * SetVirtualAddressMap call doesn't need anything else.
-	 */
-	src = mmap;
-	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-		if (src->Attribute & EFI_MEMORY_RUNTIME) {
-			if (src->Attribute & EFI_MEMORY_WB) {
-				pmap_map_early(src->PhysicalStart,
-				    src->NumberOfPages * PAGE_SIZE);
-				phys_start = MIN(phys_start,
-				    src->PhysicalStart);
-				phys_end = MAX(phys_end, src->PhysicalStart +
-				    src->NumberOfPages * PAGE_SIZE);
-			}
-			count++;
-		}
-		src = NextMemoryDescriptor(src, mmap_desc_size);
-	}
-
-	/* Allocate memory descriptors for new mappings. */
-	pa = pmap_steal_avail(count * mmap_desc_size,
-	    mmap_desc_size, NULL);
-	memset((void *)pa, 0, count * mmap_desc_size);
-
-	/*
-	 * Establish new mappings.  Apparently some EFI code relies on
-	 * the offset between code and data remaining the same so pick
-	 * virtual addresses for normal memory that meet that
-	 * constraint.  Other mappings are simply tagged to the end of
-	 * the last normal memory mapping.
-	 */
-	src = mmap;
-	dst = (EFI_MEMORY_DESCRIPTOR *)pa;
-	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-		if (src->Attribute & EFI_MEMORY_RUNTIME) {
-			if (src->Attribute & EFI_MEMORY_WB) {
-				src->VirtualStart = virt_start +
-				    (src->PhysicalStart - phys_start);
-			} else {
-				src->VirtualStart = virt_start +
-				     (phys_end - phys_start);
-				phys_end += src->NumberOfPages * PAGE_SIZE;
-			}
-			/* Mask address to make sure it fits in our pmap. */
-			src->VirtualStart &= ((1ULL << USER_SPACE_BITS) - 1);
-			memcpy(dst, src, mmap_desc_size);
-			dst = NextMemoryDescriptor(dst, mmap_desc_size);
-		}
-		src = NextMemoryDescriptor(src, mmap_desc_size);
-	}
-
-	/* Install new mappings. */
-	dst = (EFI_MEMORY_DESCRIPTOR *)pa;
-	status = rs->SetVirtualAddressMap(count * mmap_desc_size,
-	    mmap_desc_size, mmap_desc_ver, dst);
-	if (status != EFI_SUCCESS)
-		printf("SetVirtualAddressMap failed: %lu\n", status);
 }
 
 char bootargs[256];
