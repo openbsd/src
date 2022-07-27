@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.387 2022/07/21 05:26:10 mbuhl Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.388 2022/07/27 12:28:27 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1541,7 +1541,6 @@ pfctl_rules(int dev, char *filename, int opts, int optimize,
 	int			 osize;
 	char			*p;
 
-	bzero(&pf, sizeof(pf));
 	RB_INIT(&pf_anchors);
 	memset(&pf_main_anchor, 0, sizeof(pf_main_anchor));
 	pf_init_ruleset(&pf_main_anchor.ruleset);
@@ -2429,6 +2428,7 @@ pfctl_reset(int dev, int opts)
 	struct pfr_buffer t;
 	int		i;
 
+	memset(&pf, 0, sizeof(pf));
 	pf.dev = dev;
 	pfctl_init_options(&pf);
 
