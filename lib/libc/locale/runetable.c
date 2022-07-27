@@ -44,10 +44,6 @@
 #include "citrus_ctype.h"
 
 _RuneLocale _DefaultRuneLocale = {
-    _RUNE_MAGIC_1,
-    "NONE",
-    _DEFAULT_INVALID_RUNE,
-
     {	/*00*/	_CTYPE_C,
 		_CTYPE_C,
 		_CTYPE_C,
@@ -252,5 +248,4 @@ _RuneLocale _DefaultRuneLocale = {
 	    { NULL, NULL, NULL },
 	    { NULL, NULL, NULL },
     },
-    NULL
 };

@@ -1,7 +1,7 @@
 #ifndef _NB_RUNETYPE_H_
 #define _NB_RUNETYPE_H_
 
-/* $OpenBSD: runetype.h,v 1.9 2022/07/25 21:38:24 guenther Exp $ */
+/* $OpenBSD: runetype.h,v 1.10 2022/07/27 20:00:11 guenther Exp $ */
 /*	$NetBSD: runetype.h,v 1.18 2003/08/07 16:43:04 agc Exp $	*/
 /*-
  * Copyright (c) 1993
@@ -168,23 +168,10 @@ typedef struct _WCTypeEntry {
 #define _WCTYPE_NINDEXES	12
 
 /*
- * ctype stuffs
+ * The parts of _FileRuneLocale needed at runtime
  */
 
-struct old_tabs {
-	/* compatibility with `old' ctype */
-	char ctype_tab[CTYPE_NUM_CHARS + 1];
-	short tolower_tab[256 + 1];
-	short toupper_tab[256 + 1];
-};
-
 typedef struct {
-	/*
-	 * copied from _FileRuneLocale
-	 */
-	char		rl_magic[8];	/* Magic saying what version we are */
-	char		rl_encoding[32];/* ASCII name of this encoding */
-	rune_t		rl_invalid_rune;
 	_RuneType	rl_runetype[_CACHED_RUNES];
 	rune_t		rl_maplower[_CACHED_RUNES];
 	rune_t		rl_mapupper[_CACHED_RUNES];
@@ -200,9 +187,6 @@ typedef struct {
 	 */
 	char				*rl_codeset;
 	_WCTransEntry			rl_wctrans[_WCTRANS_NINDEXES];
-
-	struct old_tabs *		rl_tabs;
-
 } _RuneLocale;
 
 /* magic number for LC_CTYPE (rune)locale declaration */

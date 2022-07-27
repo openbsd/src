@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2022/07/25 21:38:24 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2022/07/27 20:00:11 guenther Exp $
 
 # locale sources
 .PATH: ${LIBCSRCDIR}/locale
@@ -12,7 +12,7 @@ SRCS+=	btowc.c _def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	wcscoll_l.c \
 	wcstombs.c wctob.c wctomb.c wcstof.c wcstod.c wcstold.c wcstol.c \
 	wcstoul.c wcstoll.c wcstoull.c wcstoimax.c wcstoumax.c \
-	runeglue.c rune.c runetable.c ___runetype_mb.c \
+	rune.c runetable.c ___runetype_mb.c \
 	_wctrans.c wcsxfrm.c wcsxfrm_l.c
 
 MAN+=	nl_langinfo.3 setlocale.3 newlocale.3 uselocale.3 localeconv.3 \
