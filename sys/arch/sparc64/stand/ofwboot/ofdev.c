@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.32 2021/12/01 17:25:35 kettenis Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.33 2022/07/27 12:32:03 kn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -553,7 +553,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			partition = 'a';
 			cp = &fname[0];
 		}
-		snprintf(buf, sizeof buf, "sr%c:%c", volno, partition);
+		snprintf(buf, sizeof buf, "sr%c%c:", volno, partition);
 		if (strlcpy(opened_name, buf, sizeof opened_name)
 		    >= sizeof opened_name)
 			return ENAMETOOLONG;
