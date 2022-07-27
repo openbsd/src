@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.2 2022/07/26 07:09:24 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.3 2022/07/27 19:22:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -117,16 +117,16 @@ check_tables(int print)
 }
 
 /*
- * Choose a random number n between 2^10 and 2^16384 and check n == isqrt(n^2).
- * Random numbers n^2 <= test < (n + 1)^2 are checked to have isqrt(test) == n.
+ * Choose a random number n of bit length between LOWER_BITS and UPPER_BITS and
+ * check that n == isqrt(n^2). Random numbers n^2 <= test < (n + 1)^2 are
+ * checked to have isqrt(test) == n.
  */
 static int
 isqrt_test(void)
 {
 	BN_CTX *ctx;
 	BIGNUM *n, *n_sqr, *lower, *upper, *testcase, *isqrt;
-	int cmp, is_perfect_square;
-	int i;
+	int cmp, i, is_perfect_square;
 	int failed = 0;
 
 	if ((ctx = BN_CTX_new()) == NULL)
@@ -166,7 +166,7 @@ isqrt_test(void)
 	if ((cmp = BN_cmp(n, isqrt)) != 0 || !is_perfect_square) {
 		fprintf(stderr, "n = ");
 		BN_print_fp(stderr, n);
-		fprintf(stderr, "n^2 is_perfect_square: %d, cmp: %d\n",
+		fprintf(stderr, "\nn^2 is_perfect_square: %d, cmp: %d\n",
 		    is_perfect_square, cmp);
 		failed = 1;
 	}
@@ -204,7 +204,7 @@ isqrt_test(void)
 	 * that their isqrt is n.
 	 */
 
-	for (i = 1; i < N_TESTS; i++) {
+	for (i = 0; i < N_TESTS; i++) {
 		if (!bn_rand_interval(testcase, n_sqr, upper))
 			errx(1, "bn_rand_interval testcase");
 
