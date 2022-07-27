@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.11 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: ds.c,v 1.12 2022/07/27 19:42:22 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -741,8 +741,10 @@ ds_conn_serve(void)
 
 	while (1) {
 		nfds = poll(pfd, num_ds_conns, -1);
-		if (nfds == -1 || nfds == 0)
-			errx(1, "poll");
+		if (nfds == -1)
+			err(1, "poll");
+		if (nfds == 0)
+			errx(1, "poll timeout");
 
 		TAILQ_FOREACH(dc, &ds_conns, link) {
 			if (pfd[dc->id].revents)
