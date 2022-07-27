@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.11 2022/07/07 00:56:46 daniel Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.12 2022/07/27 01:44:25 daniel Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 #define CPUVENDOR_CYRIX		1
 #define CPUVENDOR_AMD		3
 #define CPUVENDOR_IDT		4
-#define CPUVENDOR_RISE		5
 #define CPUVENDOR_TRANSMETA	6
 #define CPUVENDOR_NS		7
 #define CPUVENDOR_VIA		8
