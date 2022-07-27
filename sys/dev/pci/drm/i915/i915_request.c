@@ -165,7 +165,7 @@ static void irq_execute_cb(struct irq_work *wrk)
 	struct execute_cb *cb = container_of(wrk, typeof(*cb), work);
 
 	i915_sw_fence_complete(cb->fence);
-#ifdef notyet
+#ifdef __linux__
 	kmem_cache_free(slab_execute_cbs, cb);
 #else
 	pool_put(&slab_execute_cbs, cb);
@@ -180,13 +180,10 @@ __notify_execute_cb(struct i915_request *rq, bool (*fn)(struct irq_work *wrk))
 	if (llist_empty(&rq->execute_cb))
 		return;
 
-	STUB();
-#ifdef notyet
 	llist_for_each_entry_safe(cb, cn,
 				  llist_del_all(&rq->execute_cb),
 				  work.node.llist)
 		fn(&cb->work);
-#endif
 }
 
 static void __notify_execute_cb_irq(struct i915_request *rq)
@@ -196,10 +193,10 @@ static void __notify_execute_cb_irq(struct i915_request *rq)
 
 static bool irq_work_imm(struct irq_work *wrk)
 {
-#ifdef notyet
+#ifdef __linux__
 	wrk->func(wrk);
 #else
-	STUB();
+	wrk->task.t_func(wrk);
 #endif
 	return false;
 }
@@ -506,11 +503,6 @@ __await_execution(struct i915_request *rq,
 	if (i915_request_is_active(signal))
 		return 0;
 
-	STUB();
-	i915_sw_fence_await(&rq->submit);
-	return -ENOSYS;
-#ifdef notyet
-
 #ifdef __linux__
 	cb = kmem_cache_alloc(slab_execute_cbs, gfp);
 #else
@@ -544,7 +536,6 @@ __await_execution(struct i915_request *rq,
 	}
 
 	return 0;
-#endif
 }
 
 static bool fatal_error(int error)

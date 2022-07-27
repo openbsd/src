@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_work.h,v 1.8 2022/01/19 05:36:54 jsg Exp $	*/
+/*	$OpenBSD: irq_work.h,v 1.9 2022/07/27 07:08:34 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -22,13 +22,20 @@
 #include <sys/systm.h>
 #include <sys/task.h>
 
+#include <linux/llist.h>
+
 struct workqueue_struct;
 
 extern struct workqueue_struct *system_wq;
 
+struct irq_node {
+	struct llist_node llist;
+};
+
 struct irq_work {
 	struct task task;
 	struct taskq *tq;
+	struct irq_node node;
 };
 
 typedef void (*irq_work_func_t)(struct irq_work *);
