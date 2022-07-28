@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.562 2022/07/27 23:06:50 deraadt Exp $
+#	$OpenBSD: rc,v 1.563 2022/07/28 16:06:04 miod Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -312,7 +312,7 @@ if [[ -f /etc/myname ]]; then
 fi
 
 # Must set the domainname before rc.conf, so YP startup choices can be made.
-if [[ -s /etc/defaultdomain ]]; then
+if [[ -s /etc/defaultdomain && -z "$(sysctl -n kern.domainname)" ]]; then
 	domainname "$(stripcom /etc/defaultdomain)"
 fi
 
