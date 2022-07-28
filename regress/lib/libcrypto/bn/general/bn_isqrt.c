@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.3 2022/07/27 19:22:45 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.4 2022/07/28 20:06:01 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -111,6 +111,46 @@ check_tables(int print)
 		}
 		printf("\n};\nCTASSERT(sizeof(is_square_mod_%d) == %d);\n\n",
 		    fill[i], fill[i]);
+	}
+
+	return failed;
+}
+
+static int
+validate_tables(void)
+{
+	int fill[] = {11, 63, 64, 65};
+	const uint8_t *table;
+	size_t i;
+	int j, k;
+	int failed = 0;
+
+	for (i = 0; i < sizeof(fill) / sizeof(fill[0]); i++) {
+		if ((table = get_table(fill[i])) == NULL) {
+			fprintf(stderr, "failed to get table %d\n", fill[i]);
+			failed |= 1;
+			continue;
+		}
+
+		for (j = 0; j < fill[i]; j++) {
+			for (k = 0; k < fill[i]; k++) {
+				if (j == (k * k) % fill[i])
+					break;
+			}
+
+			if (table[j] == 0 && k < fill[i]) {
+				fprintf(stderr, "%d == %d^2 (mod %d)", j, k,
+				    fill[i]);
+				failed |= 1;
+			}
+			if (table[j] == 1 && k == fill[i]) {
+				fprintf(stderr, "%d not a square (mod %d)", j,
+				    fill[i]);
+				failed |= 1;
+			}
+
+		}
+
 	}
 
 	return failed;
@@ -282,6 +322,7 @@ main(int argc, char *argv[])
 		failed |= isqrt_test();
 
 	failed |= check_tables(0);
+	failed |= validate_tables();
 
 	if (!failed)
 		printf("SUCCESS\n");
