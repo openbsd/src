@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.22 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.23 2022/07/28 22:19:09 bluhm Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -61,6 +61,10 @@ void m_print(void *, int (*)(const char *, ...));
 
 /* kern/uipc_socket.c */
 void so_print(void *, int (*)(const char *, ...));
+
+struct rtentry;
+int db_show_rtentry(struct rtentry *, void *, unsigned int);
+int db_show_rtable(int, unsigned int);
 
 /* nfs/nfs_debug.c */
 void db_show_all_nfsreqs(db_expr_t, int, db_expr_t, char *);

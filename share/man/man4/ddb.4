@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.101 2022/03/31 17:27:20 naddy Exp $
+.\"	$OpenBSD: ddb.4,v 1.102 2022/07/28 22:19:09 bluhm Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 28 2022 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -791,6 +791,12 @@ Note: The
 modifier is not supported on every machine, in which case
 incorrect information may be displayed.
 .\" --------------------
+.It Ic show route Ar addr
+Prints the
+.Li struct rtentry
+at
+.Ar addr .
+.\" --------------------
 .It Ic show socket Ar addr
 Prints the
 .Li struct socket
@@ -952,6 +958,26 @@ For each NFS requests, print a more detailed output.
 See the
 .Ic show nfsreq
 command for more information.
+.El
+.\" --------------------
+.It Xo
+.Ic show all routes
+.Op Cm /iI
+.Op Ar rtableid
+.Op Ic \&, Ns Ar count
+.Xc
+Show internet routing tables.
+Default for
+.Ar rtableid
+is 0 and
+.Ar count
+is 1.
+.Pp
+.Bl -tag -width foo -compact
+.It Cm /i
+Restrict to AF_INET.
+.It Cm /I
+Restrict to AF_INET6.
 .El
 .\" --------------------
 .It Ic show all tdbs Op Cm /f

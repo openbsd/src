@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.412 2022/06/28 10:01:13 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.413 2022/07/28 22:19:09 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -160,12 +160,6 @@ struct rtentry *rt_match(struct sockaddr *, uint32_t *, int, unsigned int);
 int	rt_clone(struct rtentry **, struct sockaddr *, unsigned int);
 struct sockaddr *rt_plentosa(sa_family_t, int, struct sockaddr_in6 *);
 static int rt_copysa(struct sockaddr *, struct sockaddr *, struct sockaddr **);
-
-#ifdef DDB
-void	db_print_sa(struct sockaddr *);
-void	db_print_ifa(struct ifaddr *);
-int	db_show_rtentry(struct rtentry *, void *, unsigned int);
-#endif
 
 #define	LABELID_MAX	50000
 
@@ -1825,6 +1819,9 @@ rt_plen2mask(struct rtentry *rt, struct sockaddr_in6 *sa_mask)
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 
+void	db_print_sa(struct sockaddr *);
+void	db_print_ifa(struct ifaddr *);
+
 void
 db_print_sa(struct sockaddr *sa)
 {
@@ -1873,8 +1870,8 @@ db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%u use=%llu expire=%lld rtableid=%u\n",
-	    rt->rt_flags, rt->rt_refcnt.r_refs, rt->rt_use, rt->rt_expire, id);
+	db_printf(" flags=0x%x refcnt=%u use=%llu expire=%lld\n",
+	    rt->rt_flags, rt->rt_refcnt.r_refs, rt->rt_use, rt->rt_expire);
 
 	db_printf(" key="); db_print_sa(rt_key(rt));
 	db_printf(" plen=%d", rt_plen(rt));
@@ -1883,19 +1880,19 @@ db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
 	db_printf(" ifa=%p\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
 
-	db_printf(" gwroute=%p llinfo=%p\n", rt->rt_gwroute, rt->rt_llinfo);
+	db_printf(" gwroute=%p llinfo=%p priority=%d\n",
+	    rt->rt_gwroute, rt->rt_llinfo, rt->rt_priority);
 	return (0);
 }
 
 /*
  * Function to print all the route trees.
- * Use this from ddb:  "call db_show_arptab"
  */
 int
-db_show_arptab(void)
+db_show_rtable(int af, unsigned int rtableid)
 {
-	db_printf("Route tree for AF_INET\n");
-	rtable_walk(0, AF_INET, NULL, db_show_rtentry, NULL);
+	db_printf("Route tree for af %d, rtableid %u\n", af, rtableid);
+	rtable_walk(rtableid, af, NULL, db_show_rtentry, NULL);
 	return (0);
 }
 #endif /* DDB */
