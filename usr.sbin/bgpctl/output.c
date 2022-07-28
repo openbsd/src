@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.24 2022/07/08 16:12:11 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.25 2022/07/28 10:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -45,12 +45,12 @@ show_head(struct parse_result *res)
 		    "MsgRcvd", "MsgSent", "OutQ", "Up/Down", "State/PrfRcvd");
 		break;
 	case SHOW_FIB:
-		printf("flags: * = valid, B = BGP, C = Connected, "
-		    "S = Static\n");
+		printf("flags: B = BGP, C = Connected, S = Static\n");
 		printf("       "
 		    "N = BGP Nexthop reachable via this route\n");
 		printf("       r = reject route, b = blackhole route\n\n");
-		printf("flags prio destination          gateway\n");
+		printf("%-5s %-4s %-32s %-32s\n", "flags", "prio",
+		    "destination", "gateway");
 		break;
 	case SHOW_FIB_TABLES:
 		printf("%-5s %-20s %-8s\n", "Table", "Description", "State");
@@ -467,7 +467,7 @@ show_fib(struct kroute_full *kf)
 
 	if (asprintf(&p, "%s/%u", log_addr(&kf->prefix), kf->prefixlen) == -1)
 		err(1, NULL);
-	printf("%s%4i %-20s ", fmt_fib_flags(kf->flags), kf->priority, p);
+	printf("%-5s %4i %-32s ", fmt_fib_flags(kf->flags), kf->priority, p);
 	free(p);
 
 	if (kf->flags & F_CONNECTED)

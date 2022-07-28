@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.19 2022/07/08 16:12:11 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.20 2022/07/28 10:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -362,7 +362,6 @@ json_fib(struct kroute_full *kf)
 
 	json_do_printf("prefix", "%s/%u", log_addr(&kf->prefix), kf->prefixlen);
 	json_do_uint("priority", kf->priority);
-	json_do_bool("up", !(kf->flags & F_DOWN));
 	if (kf->flags & F_BGPD)
 		origin = "bgp";
 	else if (kf->flags & F_CONNECTED)

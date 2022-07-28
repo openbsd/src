@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.280 2022/07/07 12:17:57 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.281 2022/07/28 10:40:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -625,19 +625,14 @@ fmt_fib_flags(uint16_t flags)
 {
 	static char buf[8];
 
-	if (flags & F_DOWN)
-		strlcpy(buf, " ", sizeof(buf));
-	else
-		strlcpy(buf, "*", sizeof(buf));
-
 	if (flags & F_BGPD)
-		strlcat(buf, "B", sizeof(buf));
+		strlcpy(buf, "B", sizeof(buf));
 	else if (flags & F_CONNECTED)
-		strlcat(buf, "C", sizeof(buf));
+		strlcpy(buf, "C", sizeof(buf));
 	else if (flags & F_STATIC)
-		strlcat(buf, "S", sizeof(buf));
+		strlcpy(buf, "S", sizeof(buf));
 	else
-		strlcat(buf, " ", sizeof(buf));
+		strlcpy(buf, " ", sizeof(buf));
 
 	if (flags & F_NEXTHOP)
 		strlcat(buf, "N", sizeof(buf));
@@ -652,9 +647,6 @@ fmt_fib_flags(uint16_t flags)
 		strlcat(buf, "b", sizeof(buf));
 	else
 		strlcat(buf, " ", sizeof(buf));
-
-	if (strlcat(buf, " ", sizeof(buf)) >= sizeof(buf))
-		errx(1, "%s buffer too small", __func__);
 
 	return buf;
 }
