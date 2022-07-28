@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.431 2022/07/18 13:56:41 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.432 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -288,7 +288,7 @@ session_main(int debug, int verbose)
 		if (peer_cnt > peer_l_elms) {
 			if ((newp = reallocarray(peer_l, peer_cnt,
 			    sizeof(struct peer *))) == NULL) {
-				/* panic for now  */
+				/* panic for now */
 				log_warn("could not resize peer_l from %u -> %u"
 				    " entries", peer_l_elms, peer_cnt);
 				fatalx("exiting");
@@ -313,7 +313,7 @@ session_main(int debug, int verbose)
 		if (mrt_cnt > mrt_l_elms) {
 			if ((newp = reallocarray(mrt_l, mrt_cnt,
 			    sizeof(struct mrt *))) == NULL) {
-				/* panic for now  */
+				/* panic for now */
 				log_warn("could not resize mrt_l from %u -> %u"
 				    " entries", mrt_l_elms, mrt_cnt);
 				fatalx("exiting");
@@ -327,7 +327,7 @@ session_main(int debug, int verbose)
 		if (new_cnt > pfd_elms) {
 			if ((newp = reallocarray(pfd, new_cnt,
 			    sizeof(struct pollfd))) == NULL) {
-				/* panic for now  */
+				/* panic for now */
 				log_warn("could not resize pfd from %u -> %u"
 				    " entries", pfd_elms, new_cnt);
 				fatalx("exiting");
@@ -1442,7 +1442,7 @@ session_open(struct peer *p)
 	/* BGP open policy, RFC 9234 */
 	if (p->capa.ann.role_ena) {
 		errs += session_capa_add(opb, CAPA_ROLE, 1);
-		errs += ibuf_add(opb, &p->capa.ann.role, 1); 
+		errs += ibuf_add(opb, &p->capa.ann.role, 1);
 	}
 
 	/* graceful restart and End-of-RIB marker, RFC 4724 */
@@ -2174,7 +2174,7 @@ bad_len:
 			extlen = 1;
 		}
 
-		/* RFC9020 encoding has 3 extra bytes */ 
+		/* RFC9020 encoding has 3 extra bytes */
 		if (optparamlen + 3 * extlen != msglen - MSGSIZE_OPEN_MIN)
 			goto bad_len;
 	}
@@ -2524,14 +2524,14 @@ parse_notification(struct peer *peer)
 			reason_len = *p++;
 			datalen--;
 			if (datalen < reason_len) {
-			    log_peer_warnx(&peer->conf,
-				"received truncated shutdown reason");
-			    return (0);
+				log_peer_warnx(&peer->conf,
+				    "received truncated shutdown reason");
+				return (0);
 			}
 			if (reason_len > REASON_LEN - 1) {
-			    log_peer_warnx(&peer->conf,
-				"received overly long shutdown reason");
-			    return (0);
+				log_peer_warnx(&peer->conf,
+				    "received overly long shutdown reason");
+				return (0);
 			}
 			memcpy(peer->stats.last_reason, p, reason_len);
 			peer->stats.last_reason[reason_len] = '\0';

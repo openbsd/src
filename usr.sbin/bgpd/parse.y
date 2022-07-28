@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.433 2022/07/21 12:34:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.434 2022/07/28 13:11:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -368,7 +368,7 @@ string		: string STRING			{
 		| STRING
 		;
 
-yesno		:  STRING			{
+yesno		: STRING			{
 			if (!strcmp($1, "yes"))
 				$$ = 1;
 			else if (!strcmp($1, "no"))
@@ -2175,11 +2175,11 @@ filter_prefix_m	: filter_prefix_l
 		| '{' filter_prefix_l '}'		{ $$ = $2; }
 		| '{' filter_prefix_l '}' filter_prefix_m
 		{
-			struct filter_prefix_l  *p;
+			struct filter_prefix_l	*p;
 
 			/* merge, both can be lists */
 			for (p = $2; p != NULL && p->next != NULL; p = p->next)
-				;       /* nothing */
+				;	/* nothing */
 			if (p != NULL)
 				p->next = $4;
 			$$ = $2;
@@ -3862,7 +3862,7 @@ getcommunity(char *s, int large, uint32_t *val, uint32_t *flag)
 		*flag = COMMUNITY_NEIGHBOR_AS;
 		return 0;
 	} else if (strcmp(s, "local-as") == 0) {
-		*flag =  COMMUNITY_LOCAL_AS;
+		*flag = COMMUNITY_LOCAL_AS;
 		return 0;
 	}
 	if (large)
@@ -4494,7 +4494,7 @@ expand_rule(struct filter_rule *rule, struct filter_rib_l *rib,
 
 					if (rb != NULL)
 						strlcpy(r->rib, rb->name,
-						     sizeof(r->rib));
+						    sizeof(r->rib));
 
 					if (p != NULL)
 						memcpy(&r->peer, &p->p,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.107 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.108 2022/07/28 13:11:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -416,7 +416,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 
 	/* XXX is this for peer self? */
 	aid = peer->remote_addr.aid == AID_UNSPEC ? p->pt->aid :
-	     peer->remote_addr.aid;
+	    peer->remote_addr.aid;
 	switch (aid) {
 	case AID_INET:
 	case AID_VPN_IPv4:

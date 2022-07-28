@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.126 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.127 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -445,7 +445,7 @@ static uint16_t aspath_count(const void *, uint16_t);
 static uint32_t aspath_extract_origin(const void *, uint16_t);
 static uint16_t aspath_countlength(struct aspath *, uint16_t, int);
 static void	 aspath_countcopy(struct aspath *, uint16_t, uint8_t *,
-		     uint16_t, int);
+		    uint16_t, int);
 struct aspath	*aspath_lookup(const void *, uint16_t);
 
 struct aspath_table {
@@ -1074,7 +1074,7 @@ aspath_prepend(struct aspath *asp, uint32_t as, int quantum, uint16_t *len)
  */
 u_char *
 aspath_override(struct aspath *asp, uint32_t neighbor_as, uint32_t local_as,
-     uint16_t *len)
+    uint16_t *len)
 {
 	u_char		*p, *seg, *nseg;
 	uint32_t	 as;

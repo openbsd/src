@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.559 2022/07/25 16:37:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.560 2022/07/28 13:11:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,20 +51,20 @@ void		 rde_dispatch_imsg_rtr(struct imsgbuf *);
 void		 rde_dispatch_imsg_peer(struct rde_peer *, void *);
 void		 rde_update_dispatch(struct rde_peer *, struct imsg *);
 int		 rde_update_update(struct rde_peer *, uint32_t,
-                     struct filterstate *, struct bgpd_addr *, uint8_t);
+		    struct filterstate *, struct bgpd_addr *, uint8_t);
 void		 rde_update_withdraw(struct rde_peer *, uint32_t,
-		     struct bgpd_addr *, uint8_t);
+		    struct bgpd_addr *, uint8_t);
 int		 rde_attr_parse(u_char *, uint16_t, struct rde_peer *,
-		     struct filterstate *, struct mpattr *);
+		    struct filterstate *, struct mpattr *);
 int		 rde_attr_add(struct filterstate *, u_char *, uint16_t);
 uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
 int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
-		     struct filterstate *);
+		    struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
-		     enum imsg_type);
+		    enum imsg_type);
 void		 rde_dump_ctx_throttle(pid_t, int);
 void		 rde_dump_ctx_terminate(pid_t);
 void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
@@ -86,9 +86,9 @@ void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(uint8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
 void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
-		     struct rde_prefixset_head *);
+		    struct rde_prefixset_head *);
 uint8_t		 rde_roa_validity(struct rde_prefixset *,
-		     struct bgpd_addr *, uint8_t, uint32_t);
+		    struct bgpd_addr *, uint8_t, uint32_t);
 
 static void	 rde_peer_recv_eor(struct rde_peer *, uint8_t);
 static void	 rde_peer_send_eor(struct rde_peer *, uint8_t);
@@ -4056,7 +4056,7 @@ rde_peer_send_rrefresh(struct rde_peer *peer, uint8_t aid, uint8_t subtype)
 	struct route_refresh rr;
 
 	/* not strickly needed, the SE checks as well */
-        if (peer->capa.enhanced_rr == 0)
+	if (peer->capa.enhanced_rr == 0)
 		return;
 
 	switch (subtype) {

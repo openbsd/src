@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.106 2022/02/04 12:01:12 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.107 2022/07/28 13:11:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ control_init(int restricted, char *path)
 	mode_t			 old_umask, mode;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	     0)) == -1) {
+	    0)) == -1) {
 		log_warn("control_init: socket");
 		return (-1);
 	}

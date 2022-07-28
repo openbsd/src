@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.7 2022/06/28 11:42:41 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.8 2022/07/28 13:11:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,7 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			suberrname = suberr_header_names[subcode];
 		break;
 	case ERR_OPEN:
-		if (subcode >= sizeof(suberr_open_names) / sizeof(char *) || 
+		if (subcode >= sizeof(suberr_open_names) / sizeof(char *) ||
 		    suberr_open_names[subcode] == NULL)
 			uk = 1;
 		else

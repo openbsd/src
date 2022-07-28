@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.65 2022/06/16 09:51:07 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.66 2022/07/28 13:11:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -864,7 +864,7 @@ tcp_md5_check(int fd, struct peer *p)
 		if (getsockopt(fd, IPPROTO_TCP, TCP_MD5SIG,
 		    &opt, &len) == -1)
 			fatal("getsockopt TCP_MD5SIG");
-		if (!opt) {     /* non-md5'd connection! */
+		if (!opt) {	/* non-md5'd connection! */
 			log_peer_warnx(&p->conf,
 			    "connection attempt without md5 signature");
 			return -1;

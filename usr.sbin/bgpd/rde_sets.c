@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.11 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.12 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -158,7 +158,7 @@ set_add(struct set_table *set, void *elms, size_t nelms)
 			return -1;
 		}
 		for (new_size = set->max; new_size < set->nmemb + nelms; )
-		     new_size += (new_size < 4096 ? new_size : 4096);
+			new_size += (new_size < 4096 ? new_size : 4096);
 
 		s = reallocarray(set->set, new_size, set->size);
 		if (s == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.252 2022/07/23 10:24:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.253 2022/07/28 13:11:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1316,7 +1316,7 @@ bgpd_rtr_connect(struct rtr_config *r)
 
 	ce->id = r->id;
 	ce->fd = socket(aid2af(r->remote_addr.aid),
-	     SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_TCP);
+	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, IPPROTO_TCP);
 	if (ce->fd == -1) {
 		log_warn("rtr %s", r->descr);
 		free(ce);
@@ -1365,7 +1365,7 @@ bgpd_rtr_connect_done(int fd, struct bgpd_config *conf)
 	}
 	if (ce == NULL)
 		fatalx("connect entry not found");
-	
+
 	TAILQ_REMOVE(&connect_queue, ce, entry);
 	connect_cnt--;
 

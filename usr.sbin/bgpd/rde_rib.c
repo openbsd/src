@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.241 2022/07/25 16:37:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.242 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -850,9 +850,9 @@ static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct nexthop *, uint8_t, uint8_t);
 
 static void	prefix_link(struct prefix *, struct rib_entry *,
-		     struct pt_entry *, struct rde_peer *, uint32_t, uint32_t,
-		     struct rde_aspath *, struct rde_community *,
-		     struct nexthop *, uint8_t, uint8_t);
+		    struct pt_entry *, struct rde_peer *, uint32_t, uint32_t,
+		    struct rde_aspath *, struct rde_community *,
+		    struct nexthop *, uint8_t, uint8_t);
 static void	prefix_unlink(struct prefix *);
 
 static struct prefix	*prefix_alloc(void);

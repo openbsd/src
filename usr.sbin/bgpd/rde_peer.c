@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.19 2022/07/11 17:08:21 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.20 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -337,7 +337,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 			if (rib == NULL)
 				continue;
 			rp = prefix_get(rib, peer, p->path_id,
-			     &addr, prefixlen);
+			    &addr, prefixlen);
 			if (rp) {
 				asp = prefix_aspath(rp);
 				if (asp && asp->pftableid)

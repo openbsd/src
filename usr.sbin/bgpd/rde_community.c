@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.6 2022/05/31 09:45:33 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.7 2022/07/28 13:11:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -290,7 +290,7 @@ community_count(struct rde_community *comm, uint8_t type)
 {
 	size_t l;
 	int count = 0;
-	
+
 	/* use the fact that the array is ordered by type */
 	switch (type) {
 	case COMMUNITY_TYPE_BASIC:

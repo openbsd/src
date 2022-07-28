@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.283 2022/07/27 17:23:17 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.284 2022/07/28 13:11:48 deraadt Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -141,14 +141,14 @@ int	kredist_compare(struct kredist_node *, struct kredist_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 
 struct kroute	*kroute_find(struct ktable *, const struct bgpd_addr *,
-			    uint8_t, uint8_t);
+		    uint8_t, uint8_t);
 struct kroute	*kroute_matchgw(struct kroute *, struct bgpd_addr *);
 int		 kroute_insert(struct ktable *, struct kroute_full *);
 int		 kroute_remove(struct ktable *, struct kroute *);
 void		 kroute_clear(struct ktable *);
 
 struct kroute6	*kroute6_find(struct ktable *, const struct bgpd_addr *,
-			    uint8_t, uint8_t);
+		    uint8_t, uint8_t);
 struct kroute6	*kroute6_matchgw(struct kroute6 *, struct bgpd_addr *);
 int		 kroute6_remove(struct ktable *, struct kroute6 *);
 void		 kroute6_clear(struct ktable *);
@@ -1128,7 +1128,7 @@ kr_send_dependon(struct kif *kif)
 	sdon.depend_state = kif->depend_state;
 	send_imsg_session(IMSG_SESSION_DEPENDON, 0, &sdon, sizeof(sdon));
 }
-	
+
 void
 kr_ifinfo(char *ifname)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.156 2022/07/11 17:08:21 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.157 2022/07/28 13:11:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -637,10 +637,10 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tpassive\n", c);
 	if (p->local_addr_v4.aid)
 		printf("%s\tlocal-address %s\n", c,
-		   log_addr(&p->local_addr_v4));
+		    log_addr(&p->local_addr_v4));
 	if (p->local_addr_v6.aid)
 		printf("%s\tlocal-address %s\n", c,
-		   log_addr(&p->local_addr_v6));
+		    log_addr(&p->local_addr_v6));
 	if (p->remote_port != BGP_PORT)
 		printf("%s\tport %hu\n", c, p->remote_port);
 	if (p->max_prefix) {
@@ -809,7 +809,7 @@ print_announce(struct peer_config *p, const char *c)
 		printf("%s\tannounce add-path recv yes\n", c);
 	if (p->capabilities.add_path[0] & CAPA_AP_SEND) {
 		printf("%s\tannounce add-path send %s", c,
-		     print_addpath_mode(p->eval.mode));
+		    print_addpath_mode(p->eval.mode));
 		if (p->eval.extrapaths != 0)
 			printf(" plus %d", p->eval.extrapaths);
 		if (p->eval.maxpaths != 0)
