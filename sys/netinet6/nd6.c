@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.241 2022/07/22 20:29:27 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.242 2022/07/28 13:10:37 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -701,9 +701,6 @@ nd6_invalidate(struct rtentry *rt)
 
 /*
  * Free an nd6 llinfo entry.
- * Since the function would cause significant changes in the kernel, DO NOT
- * make it global, unless you have a strong reason for the change, and are sure
- * that the change is safe.
  */
 void
 nd6_free(struct rtentry *rt)
