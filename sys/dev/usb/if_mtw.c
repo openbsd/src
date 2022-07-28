@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.6 2022/07/27 06:41:22 hastings Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.7 2022/07/28 00:56:02 kevlo Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -654,8 +654,6 @@ mtw_ucode_write(struct mtw_softc *sc, const uint8_t *fw, uint32_t len,
 		if ((error = usbd_transfer(xfer)) != 0)
 			break;
 
-		mtw_read_cfg(sc, MTW_MCU_DMA_LEN, &tmp);
-
 		mtw_read(sc, MTW_MCU_FW_IDX, &tmp);
 		mtw_write(sc, MTW_MCU_FW_IDX, tmp++);
 
@@ -719,7 +717,6 @@ mtw_load_microcode(struct mtw_softc *sc)
 		if ((error = mtw_ucode_write(sc, fw->data, ilen, 0x90000)) != 0)
 			goto fail;
 
-		mtw_read_cfg(sc, 0x0208, &tmp);
 		mtw_usb_dma_write(sc, 0x00e41814);
 		free(ucode, M_DEVBUF, size);
 	}
