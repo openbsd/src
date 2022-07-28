@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.383 2022/07/20 09:33:11 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.384 2022/07/28 12:27:29 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2621,13 +2621,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
-		NET_LOCK();
-		PF_LOCK();
 		/* first makes sure everything will succeed */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
@@ -2635,13 +2631,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
+			NET_LOCK();
+			PF_LOCK();
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				rs = pf_find_ruleset(ioe->anchor);
@@ -2677,7 +2673,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 				goto fail;
 			}
+			PF_UNLOCK();
+			NET_UNLOCK();
 		}
+		NET_LOCK();
+		PF_LOCK();
 
 		/*
 		 * Checked already in DIOCSETLIMIT, but check again as the
@@ -2696,9 +2696,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		/* now do the commit - no errors should happen here */
 		for (i = 0; i < io->size; i++) {
+			PF_UNLOCK();
+			NET_UNLOCK();
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
@@ -2706,13 +2706,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
+			NET_LOCK();
+			PF_LOCK();
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				memset(table, 0, sizeof(*table));
