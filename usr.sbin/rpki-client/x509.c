@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.46 2022/05/31 18:51:35 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.47 2022/07/28 16:03:19 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -536,7 +536,7 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 }
 
 /*
- * Extract and validate an accessLocation, RFC 6487, 4.8 and RFC 8192, 3.2.
+ * Extract and validate an accessLocation, RFC 6487, 4.8 and RFC 8182, 3.2.
  * Returns 0 on failure and 1 on success.
  */
 int
