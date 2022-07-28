@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.374 2022/07/25 23:19:34 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.375 2022/07/28 22:05:39 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -583,13 +583,13 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 	hlen = ip->ip_hl << 2;
 
 	/*
-	 * If offset or IP_MF are set, must reassemble.
+	 * If offset or more fragments are set, must reassemble.
 	 * Otherwise, nothing need be done.
 	 * (We could look in the reassembly queue to see
 	 * if the packet was previously fragmented,
 	 * but it's not worth the time; just let them time out.)
 	 */
-	if (ip->ip_off &~ htons(IP_DF | IP_RF)) {
+	if (ISSET(ip->ip_off, htons(IP_OFFMASK | IP_MF))) {
 		if ((*mp)->m_flags & M_EXT) {		/* XXX */
 			if ((*mp = m_pullup(*mp, hlen)) == NULL) {
 				ipstat_inc(ips_toosmall);
@@ -597,6 +597,27 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 			}
 			ip = mtod(*mp, struct ip *);
 		}
+
+		/*
+		 * Adjust ip_len to not reflect header,
+		 * set ipqe_mff if more fragments are expected,
+		 * convert offset of this to bytes.
+		 */
+		ip->ip_len = htons(ntohs(ip->ip_len) - hlen);
+		mff = ISSET(ip->ip_off, htons(IP_MF));
+		if (mff) {
+			/*
+			 * Make sure that fragments have a data length
+			 * that's a non-zero multiple of 8 bytes.
+			 */
+			if (ntohs(ip->ip_len) == 0 ||
+			    (ntohs(ip->ip_len) & 0x7) != 0) {
+				ipstat_inc(ips_badfrags);
+				m_freemp(mp);
+				return IPPROTO_DONE;
+			}
+		}
+		ip->ip_off = htons(ntohs(ip->ip_off) << 3);
 
 		mtx_enter(&ipq_mutex);
 
@@ -611,26 +632,6 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 			    ip->ip_p == fp->ipq_p)
 				break;
 		}
-
-		/*
-		 * Adjust ip_len to not reflect header,
-		 * set ipqe_mff if more fragments are expected,
-		 * convert offset of this to bytes.
-		 */
-		ip->ip_len = htons(ntohs(ip->ip_len) - hlen);
-		mff = (ip->ip_off & htons(IP_MF)) != 0;
-		if (mff) {
-			/*
-			 * Make sure that fragments have a data length
-			 * that's a non-zero multiple of 8 bytes.
-			 */
-			if (ntohs(ip->ip_len) == 0 ||
-			    (ntohs(ip->ip_len) & 0x7) != 0) {
-				ipstat_inc(ips_badfrags);
-				goto bad;
-			}
-		}
-		ip->ip_off = htons(ntohs(ip->ip_off) << 3);
 
 		/*
 		 * If datagram marked as having more fragments
