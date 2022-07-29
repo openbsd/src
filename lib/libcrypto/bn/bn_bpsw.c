@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.3 2022/07/15 06:19:27 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.4 2022/07/29 08:32:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -25,6 +25,7 @@
  * For an odd n compute a / 2 (mod n). If a is even, we can do a plain
  * division, otherwise calculate (a + n) / 2. Then reduce (mod n).
  */
+
 static int
 bn_div_by_two_mod_odd_n(BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 {
@@ -57,6 +58,7 @@ bn_div_by_two_mod_odd_n(BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
  *
  * Compare with FIPS 186-4, Appendix C.3.3, step 6.
  */
+
 static int
 bn_lucas_step(BIGNUM *U, BIGNUM *V, int digit, const BIGNUM *D,
     const BIGNUM *n, BN_CTX *ctx)
@@ -116,6 +118,7 @@ bn_lucas_step(BIGNUM *U, BIGNUM *V, int digit, const BIGNUM *D,
 /*
  * Compute the Lucas terms U_k, V_k, see FIPS 186-4, Appendix C.3.3, steps 4-6.
  */
+
 static int
 bn_lucas(BIGNUM *U, BIGNUM *V, const BIGNUM *k, const BIGNUM *D,
     const BIGNUM *n, BN_CTX *ctx)
@@ -132,6 +135,7 @@ bn_lucas(BIGNUM *U, BIGNUM *V, const BIGNUM *k, const BIGNUM *D,
 	 * Iterate over the digits of k from MSB to LSB. Start at digit 2
 	 * since the first digit is dealt with by setting U = 1 and V = 1.
 	 */
+
 	for (i = BN_num_bits(k) - 2; i >= 0; i--) {
 		digit = BN_is_bit_set(k, i);
 
@@ -150,6 +154,7 @@ bn_lucas(BIGNUM *U, BIGNUM *V, const BIGNUM *k, const BIGNUM *D,
  * Every strong Lucas pseudoprime n is also a Lucas pseudoprime since
  * U_{n+1} == 0 follows from U_k == 0 or V_{k * 2^r} == 0 for 0 <= r < s.
  */
+
 static int
 bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
     BN_CTX *ctx)
@@ -171,6 +176,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 	 * Factorize n + 1 = k * 2^s with odd k: shift away the s trailing ones
 	 * of n and set the lowest bit of the resulting number k.
 	 */
+
 	s = 0;
 	while (BN_is_bit_set(n, s))
 		s++;
@@ -183,6 +189,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 	 * Calculate the Lucas terms U_k and V_k. If either of them is zero,
 	 * then n is a strong Lucas pseudoprime.
 	 */
+
 	if (!bn_lucas(U, V, k, D, n, ctx))
 		goto err;
 
@@ -195,6 +202,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 	 * Calculate the Lucas terms U_{k * 2^r}, V_{k * 2^r} for 1 <= r < s.
 	 * If any V_{k * 2^r} is zero then n is a strong Lucas pseudoprime.
 	 */
+
 	for (r = 1; r < s; r++) {
 		if (!bn_lucas_step(U, V, 0, D, n, ctx))
 			goto err;
@@ -205,7 +213,10 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 		}
 	}
 
-	/* If we got here, n is definitely composite. */
+	/*
+	 * If we got here, n is definitely composite.
+	 */
+
 	*is_prime = 0;
 
  done:
@@ -218,10 +229,11 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 }
 
 /*
- * Test n for primality using the strong Lucas test with Selfridge's
- * parameters. Returns 1 if n is prime or a strong Lucas-Selfridge
- * pseudoprime. Returns 0 if n is definitely composite.
+ * Test n for primality using the strong Lucas test with Selfridge's Method A.
+ * Returns 1 if n is prime or a strong Lucas-Selfridge pseudoprime.
+ * If it returns 0 then n is definitely composite.
  */
+
 static int
 bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 {
@@ -243,6 +255,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 	 * Find the first D in the Selfridge sequence 5, -7, 9, -11, 13, ...
 	 * such that the Jacobi symbol (D/n) is -1.
 	 */
+
 	if ((D = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((two = BN_CTX_get(ctx)) == NULL)
@@ -319,14 +332,20 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 	if (!BN_sub(n_minus_one, n, BN_value_one()))
 		goto err;
 
-	/* Factorize n - 1 = k * 2^s. */
+	/*
+	 * Factorize n - 1 = k * 2^s.
+	 */
+
 	s = 0;
 	while (!BN_is_bit_set(n_minus_one, s))
 		s++;
 	if (!BN_rshift(k, n_minus_one, s))
 		goto err;
 
-	/* If 2^k is 1 or -1 (mod n) then n is a 2-pseudoprime. */
+	/*
+	 * If 2^k is 1 or -1 (mod n) then n is a 2-pseudoprime.
+	 */
+
 	if (!BN_set_word(x, 2))
 		goto err;
 	if (!BN_mod_exp_ct(x, x, k, n, ctx))
@@ -341,6 +360,7 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 	 * If 2^{2^i k} == -1 (mod n) for some 1 <= i < s, then n is a
 	 * 2-pseudoprime
 	 */
+
 	for (i = 1; i < s; i++) {
 		if (!BN_mod_sqr(x, x, n, ctx))
 			goto err;
@@ -350,7 +370,10 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 		}
 	}
 
-	/* If we got here, n is definitely composite. */
+	/*
+	 * If we got here, n is definitely composite.
+	 */
+
 	*is_prime = 0;
 
  done:
@@ -405,7 +428,7 @@ bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx)
 	if (!*is_prime)
 		goto done;
 
-	/* XXX - Miller-Rabin for random bases? - see FIPS 186-4, Table C.1. */
+	/* XXX - Miller-Rabin for random bases? See FIPS 186-4, Table C.1. */
 
 	if (!bn_strong_lucas_selfridge(is_prime, n, ctx))
 		goto err;
