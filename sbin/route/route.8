@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.103 2022/03/31 17:27:20 naddy Exp $
+.\"	$OpenBSD: route.8,v 1.104 2022/07/29 18:28:32 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 29 2022 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -78,6 +78,8 @@ Suppress all output.
 .It Fl T Ar rtable
 Select an alternate routing table to modify or query.
 The default is to use the current routing table.
+The current routing table can be displayed with
+.Xr id 1 .
 .It Fl t
 Write routing messages to a fake device
 .Pa ( /dev/null )
@@ -624,10 +626,12 @@ low on resources and was unable to allocate memory
 to create the new entry.
 .El
 .Sh SEE ALSO
+.Xr id 1 ,
 .Xr netstat 1 ,
 .Xr gethostbyname 3 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
+.Xr rtable 4 ,
 .Xr tcp 4 ,
 .Xr hosts 5 ,
 .Xr mygate 5 ,

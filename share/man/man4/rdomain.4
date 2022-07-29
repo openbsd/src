@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.18 2022/03/31 17:27:21 naddy Exp $
+.\"	$OpenBSD: rdomain.4,v 1.19 2022/07/29 18:28:32 kn Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 29 2022 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -114,9 +114,13 @@ in rtable 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
-Display to which rdomain processes are assigned:
+Display the routing table used by each process:
 .Pp
 .Dl $ ps aux -o rtable
+.Pp
+Display the routing table of the current process:
+.Pp
+.Dl $ id -R
 .Pp
 A
 .Xr pf.conf 5
@@ -133,6 +137,7 @@ Delete rdomain 4 again:
 # ifconfig lo4 destroy
 .Ed
 .Sh SEE ALSO
+.Xr id 1 ,
 .Xr netstat 1 ,
 .Xr ps 1 ,
 .Xr lo 4 ,
