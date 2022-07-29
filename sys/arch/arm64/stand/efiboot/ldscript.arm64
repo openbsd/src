@@ -1,4 +1,4 @@
-/* $OpenBSD: ldscript.arm64,v 1.3 2021/05/15 14:20:11 kettenis Exp $ */
+/* $OpenBSD: ldscript.arm64,v 1.4 2022/07/29 21:34:59 kettenis Exp $ */
 
 ENTRY(_start)
 SECTIONS
@@ -13,7 +13,9 @@ SECTIONS
     *(.gnu.warning)
     *(.plt)
   } =0xD4200000
-  . = ALIGN(16);
+  . = ALIGN(4096);
+  _etext = .;
+  __data_start = .;
   .data		: {
     *(.rodata .rodata.* .gnu.linkonce.r.*)
     *(.rodata1)
@@ -76,6 +78,7 @@ SECTIONS
   .dynsym	: { *(.dynsym) }
   .dynstr	: { *(.dynstr) }
   _edata = .;
+  __data_size = . - __data_start;
 
   /* Unused sections */
   .hash		: { *(.hash) }
