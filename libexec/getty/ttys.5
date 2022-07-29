@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ttys.5,v 1.13 2020/02/08 01:09:57 jsg Exp $
+.\"	$OpenBSD: ttys.5,v 1.14 2022/07/29 13:56:36 millert Exp $
+.\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +29,7 @@
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: July 29 2022 $
 .Dt TTYS 5
 .Os
 .Sh NAME
@@ -42,6 +43,7 @@ and control the use of terminal special files.
 This information is read with the
 .Xr getttyent 3
 library routines.
+.Pp
 There is one line in the
 .Nm
 file per special device file.
@@ -54,24 +56,29 @@ are delimited by hash marks
 and newlines.
 Any unspecified fields will default to null.
 .Pp
+Each line in
+.Nm
+is of the format:
+.Dl tty command type flags
+.Pp
 The first field is the
 name of the terminal special file as it is found in
 .Pa /dev .
 .Pp
-The second field of the file is the command to execute for the line,
+The second field is the command to execute for the line,
 usually
 .Xr getty 8 ,
 which initializes and opens the line, setting the speed, waiting for
 a user name and executing the
 .Xr login 1
-program.
+utility.
 It can be, however, any desired command, for example
 the start up for a window system terminal emulator or some other
 daemon process, and can contain multiple words if quoted.
 .Pp
 The third field is the type of terminal usually connected to that
-TTY line, normally the one found in the
-.Xr termcap 5
+tty line, normally the one found in the
+.Xr terminfo 5
 database file.
 The environment variable
 .Dv TERM
@@ -87,7 +94,7 @@ entry (see
 or specify a window system process that
 .Xr init 8
 will maintain for the terminal line.
-The following is a list of permitted flags for each TTY:
+The following is a list of permitted flags for each tty:
 .Bl -tag -width xxxxxxx
 .It Ar on
 Specify that
@@ -98,7 +105,7 @@ The opposite of on.
 .It Ar secure
 If
 .Ar on
-is also specified, allows users with a UID of 0 to log in on this line.
+is also specified, allows users with a user ID of 0 to log in on this line.
 If set for the
 .Ar console
 entry, then
@@ -130,11 +137,21 @@ will execute
 .Em before
 starting the command specified by the second field.
 .Pp
-Changes to the ttys file take effect after it has been reloaded by
+Changes to the
+.Nm
+file take effect after it has been reloaded by
 .Xr init 8 ,
 which can be triggered by sending it a
 .Dv HUP
 signal.
+Reloading the
+.Nm
+file does
+.Em not
+change the state of the device-specific terminal flags described above.
+The
+.Xr ttyflags 8
+utility can be used to set those flags.
 .Sh FILES
 .Bl -tag -width /etc/ttys -compact
 .It Pa /etc/ttys
