@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.4 2022/07/29 08:32:20 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.5 2022/07/29 08:37:33 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -248,7 +248,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 		goto err;
 	if (is_perfect_square) {
 		*is_prime = 0;
-		goto err;
+		goto done;
 	}
 
 	/*
