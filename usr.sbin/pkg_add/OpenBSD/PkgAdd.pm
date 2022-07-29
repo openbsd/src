@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.137 2022/06/06 08:03:32 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.138 2022/07/29 14:26:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -992,6 +992,8 @@ sub process_set
 		return ();
 	}
 
+	$set->setup_header($state, undef, "processing");
+	$state->progress->message("...");
 	$set->precomplete($state);
 	for my $handle ($set->newer) {
 		if ($state->tracker->is_installed($handle->pkgname)) {
