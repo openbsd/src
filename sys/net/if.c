@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.659 2022/07/14 11:03:15 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.660 2022/07/29 08:23:40 visa Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -217,9 +217,12 @@ struct if_idxmap {
 	unsigned int		 serial;
 	unsigned int		 count;
 	struct srp		 map;
+	struct rwlock		 lock;
+	unsigned char		*usedidx;	/* bitmap of indices in use */
 };
 
 void	if_idxmap_init(unsigned int);
+void	if_idxmap_alloc(struct ifnet *);
 void	if_idxmap_insert(struct ifnet *);
 void	if_idxmap_remove(struct ifnet *);
 
@@ -273,7 +276,9 @@ ifinit(void)
 static struct if_idxmap if_idxmap = {
 	0,
 	0,
-	SRP_INITIALIZER()
+	SRP_INITIALIZER(),
+	RWLOCK_INITIALIZER("idxmaplk"),
+	NULL,
 };
 
 struct srp_gc if_ifp_gc = SRP_GC_INITIALIZER(if_ifp_dtor, NULL);
@@ -298,12 +303,15 @@ if_idxmap_init(unsigned int limit)
 	for (i = 0; i < limit; i++)
 		srp_init(&map[i]);
 
+	if_idxmap.usedidx = malloc(howmany(limit, NBBY),
+	    M_IFADDR, M_WAITOK | M_ZERO);
+
 	/* this is called early so there's nothing to race with */
 	srp_update_locked(&if_map_gc, &if_idxmap.map, if_map);
 }
 
 void
-if_idxmap_insert(struct ifnet *ifp)
+if_idxmap_alloc(struct ifnet *ifp)
 {
 	struct if_map *if_map;
 	struct srp *map;
@@ -311,10 +319,9 @@ if_idxmap_insert(struct ifnet *ifp)
 
 	refcnt_init(&ifp->if_refcnt);
 
-	/* the kernel lock guarantees serialised modifications to if_idxmap */
-	KERNEL_ASSERT_LOCKED();
+	rw_enter_write(&if_idxmap.lock);
 
-	if (++if_idxmap.count > USHRT_MAX)
+	if (++if_idxmap.count >= USHRT_MAX)
 		panic("too many interfaces");
 
 	if_map = srp_get_locked(&if_idxmap.map);
@@ -327,6 +334,7 @@ if_idxmap_insert(struct ifnet *ifp)
 		struct srp *nmap;
 		unsigned int nlimit;
 		struct ifnet *nifp;
+		unsigned char *nusedidx;
 
 		nlimit = if_map->limit * 2;
 		nif_map = malloc(sizeof(*nif_map) + nlimit * sizeof(*nmap),
@@ -348,6 +356,14 @@ if_idxmap_insert(struct ifnet *ifp)
 			i++;
 		}
 
+		nusedidx = malloc(howmany(nlimit, NBBY),
+		    M_IFADDR, M_WAITOK | M_ZERO);
+		memcpy(nusedidx, if_idxmap.usedidx,
+		    howmany(if_map->limit, NBBY));
+		free(if_idxmap.usedidx, M_IFADDR,
+		    howmany(if_map->limit, NBBY));
+		if_idxmap.usedidx = nusedidx;
+
 		srp_update_locked(&if_map_gc, &if_idxmap.map, nif_map);
 		if_map = nif_map;
 		map = nmap;
@@ -355,15 +371,39 @@ if_idxmap_insert(struct ifnet *ifp)
 
 	/* pick the next free index */
 	for (i = 0; i < USHRT_MAX; i++) {
-		if (index != 0 && srp_get_locked(&map[index]) == NULL)
+		if (index != 0 && isclr(if_idxmap.usedidx, index))
 			break;
 
 		index = if_idxmap.serial++ & USHRT_MAX;
 	}
+	KASSERT(index != 0 && index < if_map->limit);
+	KASSERT(isclr(if_idxmap.usedidx, index));
+
+	setbit(if_idxmap.usedidx, index);
+	ifp->if_index = index;
+
+	rw_exit_write(&if_idxmap.lock);
+}
+
+void
+if_idxmap_insert(struct ifnet *ifp)
+{
+	struct if_map *if_map;
+	struct srp *map;
+	unsigned int index = ifp->if_index;
+
+	rw_enter_write(&if_idxmap.lock);
+
+	if_map = srp_get_locked(&if_idxmap.map);
+	map = (struct srp *)(if_map + 1);
+
+	KASSERT(index != 0 && index < if_map->limit);
+	KASSERT(isset(if_idxmap.usedidx, index));
 
 	/* commit */
-	ifp->if_index = index;
 	srp_update_locked(&if_ifp_gc, &map[index], if_ref(ifp));
+
+	rw_exit_write(&if_idxmap.lock);
 }
 
 void
@@ -375,8 +415,7 @@ if_idxmap_remove(struct ifnet *ifp)
 
 	index = ifp->if_index;
 
-	/* the kernel lock guarantees serialised modifications to if_idxmap */
-	KERNEL_ASSERT_LOCKED();
+	rw_enter_write(&if_idxmap.lock);
 
 	if_map = srp_get_locked(&if_idxmap.map);
 	KASSERT(index < if_map->limit);
@@ -386,7 +425,12 @@ if_idxmap_remove(struct ifnet *ifp)
 
 	srp_update_locked(&if_ifp_gc, &map[index], NULL);
 	if_idxmap.count--;
+
+	KASSERT(isset(if_idxmap.usedidx, index));
+	clrbit(if_idxmap.usedidx, index);
 	/* end of if_idxmap modifications */
+
+	rw_exit_write(&if_idxmap.lock);
 }
 
 void
@@ -606,6 +650,8 @@ if_attach_common(struct ifnet *ifp)
 		KASSERTMSG(ifp->if_qstart != NULL,
 		    "%s: if_qstart not set with MPSAFE set", ifp->if_xname);
 	}
+
+	if_idxmap_alloc(ifp);
 
 	ifq_init(&ifp->if_snd, ifp, 0);
 
