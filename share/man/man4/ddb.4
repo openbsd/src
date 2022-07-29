@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.102 2022/07/28 22:19:09 bluhm Exp $
+.\"	$OpenBSD: ddb.4,v 1.103 2022/07/29 17:47:11 semarie Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: July 28 2022 $
+.Dd $Mdocdate: July 29 2022 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -817,6 +817,9 @@ as a struct
 .Ar name .
 Nested structures and bit fields are not printed.
 Character arrays are printed as bytes.
+.\" --------------------
+.It Ic show swap
+Prints a detailed list of all swaps.
 .\" --------------------
 .It Xo
 .Ic show tdb

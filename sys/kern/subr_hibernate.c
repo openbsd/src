@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.134 2022/02/19 23:57:09 deraadt Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.135 2022/07/29 17:47:12 semarie Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1918,7 +1918,7 @@ hibernate_suspend(void)
 
 	if (end - start < 1000) {
 		printf("hibernate: insufficient swap (%lu is too small)\n",
-			end - start);
+			end - start + 1);
 		return (1);
 	}
 
@@ -1926,7 +1926,7 @@ hibernate_suspend(void)
 	hib.image_offset = ctod(start);
 
 	DPRINTF("hibernate @ block %lld max-length %lu blocks\n",
-	    hib.image_offset, ctod(end) - ctod(start));
+	    hib.image_offset, ctod(end) - ctod(start) + 1);
 
 	pmap_activate(curproc);
 	DPRINTF("hibernate: writing chunks\n");

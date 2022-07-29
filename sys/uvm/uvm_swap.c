@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.161 2022/07/18 18:02:27 jca Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.162 2022/07/29 17:47:12 semarie Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/extent.h>
+#include <sys/blist.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
@@ -136,8 +137,7 @@ struct swapdev {
 	int			swd_npgbad;	/* #pages bad */
 	int			swd_drumoffset;	/* page0 offset in drum */
 	int			swd_drumsize;	/* #pages in drum */
-	struct extent		*swd_ex;	/* extent for this swapdev */
-	char			swd_exname[12];	/* name of extent above */
+	blist_t			swd_blist;	/* blist for this swapdev */
 	struct vnode		*swd_vp;	/* backing vnode */
 	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
 
@@ -847,7 +847,6 @@ out:
 int
 swap_on(struct proc *p, struct swapdev *sdp)
 {
-	static int count = 0;	/* static */
 	struct vnode *vp;
 	int error, npages, nblocks, size;
 	long addr;
@@ -965,30 +964,20 @@ swap_on(struct proc *p, struct swapdev *sdp)
 	}
 
 	/*
-	 * now we need to allocate an extent to manage this swap device
+	 * now we need to allocate a blist to manage this swap device
 	 */
-	snprintf(sdp->swd_exname, sizeof(sdp->swd_exname), "swap0x%04x",
-	    count++);
+	sdp->swd_blist = blist_create(npages);
+	/* mark all expect the `saved' region free. */
+	blist_free(sdp->swd_blist, addr, size);
 
-	/* note that extent_create's 3rd arg is inclusive, thus "- 1" */
-	sdp->swd_ex = extent_create(sdp->swd_exname, 0, npages - 1, M_VMSWAP,
-				    0, 0, EX_WAITOK);
-	/* allocate the `saved' region from the extent so it won't be used */
-	if (addr) {
-		if (extent_alloc_region(sdp->swd_ex, 0, addr, EX_WAITOK))
-			panic("disklabel reserve");
-		/* XXX: is extent synchronized with swd_npginuse? */
-	}
 #ifdef HIBERNATE
 	/*
 	 * Lock down the last region of primary disk swap, in case
 	 * hibernate needs to place a signature there.
 	 */
 	if (dev == swdevt[0].sw_dev && vp->v_type == VBLK && size > 3 ) {
-		if (extent_alloc_region(sdp->swd_ex,
-		    npages - 1 - 1, 1, EX_WAITOK))
+		if (blist_fill(sdp->swd_blist, npages - 1, 1) != 1)
 			panic("hibernate reserve");
-		/* XXX: is extent synchronized with swd_npginuse? */
 	}
 #endif
 
@@ -1073,7 +1062,7 @@ swap_off(struct proc *p, struct swapdev *sdp)
 	 */
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
-	extent_destroy(sdp->swd_ex);
+	blist_destroy(sdp->swd_blist);
 	/* free sdp->swd_path ? */
 	free(sdp, M_VMSWAP, sizeof(*sdp));
 	return (0);
@@ -1425,7 +1414,6 @@ uvm_swap_alloc(int *nslots, boolean_t lessok)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
-	u_long	result;
 
 	/*
 	 * no swap devices configured yet?   definite failure.
@@ -1440,16 +1428,18 @@ uvm_swap_alloc(int *nslots, boolean_t lessok)
 ReTry:	/* XXXMRG */
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+			bsblk_t result;
+
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0)
 				continue;
 			if (sdp->swd_npginuse + *nslots > sdp->swd_npages)
 				continue;
-			if (extent_alloc(sdp->swd_ex, *nslots, EX_NOALIGN, 0,
-					 EX_NOBOUNDARY, EX_MALLOCOK|EX_NOWAIT,
-					 &result) != 0) {
+			result = blist_alloc(sdp->swd_blist, *nslots);
+			if (result == SWAPBLK_NONE) {
 				continue;
 			}
+			KASSERT(result < sdp->swd_drumsize);
 
 			/*
 			 * successful allocation!  now rotate the tailq.
@@ -1466,7 +1456,8 @@ ReTry:	/* XXXMRG */
 	/* XXXMRG: BEGIN HACK */
 	if (*nslots > 1 && lessok) {
 		*nslots = 1;
-		goto ReTry;	/* XXXMRG: ugh!  extent should support this for us */
+		/* XXXMRG: ugh!  blist should support this for us */
+		goto ReTry;
 	}
 	/* XXXMRG: END HACK */
 
@@ -1543,12 +1534,7 @@ uvm_swap_free(int startslot, int nslots)
 	KASSERT(uvmexp.nswapdev >= 1);
 	KASSERT(sdp != NULL);
 	KASSERT(sdp->swd_npginuse >= nslots);
-	if (extent_free(sdp->swd_ex, startslot - sdp->swd_drumoffset, nslots,
-			EX_MALLOCOK|EX_NOWAIT) != 0) {
-		printf("warning: resource shortage: %d pages of swap lost\n",
-			nslots);
-	}
-
+	blist_free(sdp->swd_blist, startslot - sdp->swd_drumoffset, nslots);
 	sdp->swd_npginuse -= nslots;
 	uvmexp.swpginuse -= nslots;
 #ifdef UVM_SWAP_ENCRYPT
@@ -1966,8 +1952,6 @@ uvm_hibswap(dev_t dev, u_long *sp, u_long *ep)
 {
 	struct swapdev *sdp, *swd = NULL;
 	struct swappri *spp;
-	struct extent_region *exr, *exrn;
-	u_long start = 0, end = 0, size = 0;
 
 	/* no swap devices configured yet? */
 	if (uvmexp.nswapdev < 1 || dev != swdevt[0].sw_dev)
@@ -1983,27 +1967,48 @@ uvm_hibswap(dev_t dev, u_long *sp, u_long *ep)
 	if (swd == NULL || (swd->swd_flags & SWF_ENABLE) == 0)
 		return (1);
 
-	LIST_FOREACH(exr, &swd->swd_ex->ex_regions, er_link) {
-		u_long gapstart, gapend, gapsize;
-	
-		gapstart = exr->er_end + 1;
-		exrn = LIST_NEXT(exr, er_link);
-		if (!exrn)
-			break;
-		gapend = exrn->er_start - 1;
-		gapsize = gapend - gapstart;
-		if (gapsize > size) {
-			start = gapstart;
-			end = gapend;
-			size = gapsize;
-		}
-	}
+	blist_gapfind(swd->swd_blist, sp, ep);
 
-	if (size) {
-		*sp = start;
-		*ep = end;
-		return (0);
-	}
-	return (1);
+	if (*ep - *sp == 0)
+		/* no gap found */
+		return (1);
+
+	/*
+	 * blist_gapfind returns the gap as [sp,ep[ ,
+	 * whereas [sp,ep] is expected from uvm_hibswap().
+	 */
+	*ep -= 1;
+
+	return (0);
 }
 #endif /* HIBERNATE */
+
+#ifdef DDB
+void
+swap_print_all(int (*pr)(const char *, ...))
+{
+	struct swappri *spp;
+	struct swapdev *sdp;
+
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
+#ifdef HIBERNATE
+			u_long bgap = 0, egap = 0;
+#endif
+
+			pr("swap %p path \"%s\" flags 0x%x\n", sdp,
+			    sdp->swd_path, sdp->swd_flags);
+
+			blist_print(sdp->swd_blist);
+
+#ifdef HIBERNATE
+			if (!uvm_hibswap(sdp->swd_dev, &bgap, &egap))
+				pr("hibernate gap: [0x%lx, 0x%lx] size=%lu\n",
+				    bgap, egap, (egap - bgap + 1));
+			else
+				pr("hibernate gap: not found\n");
+#endif
+		}
+	}
+}
+#endif /* DDB */

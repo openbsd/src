@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.715 2022/07/12 17:12:31 jca Exp $
+#	$OpenBSD: files,v 1.716 2022/07/29 17:47:11 semarie Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -710,6 +710,7 @@ file kern/kern_srp.c
 file kern/kern_xxx.c
 file kern/sched_bsd.c
 file kern/subr_autoconf.c
+file kern/subr_blist.c
 file kern/subr_disk.c
 file kern/subr_evcount.c
 file kern/subr_extent.c

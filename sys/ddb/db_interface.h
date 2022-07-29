@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.23 2022/07/28 22:19:09 bluhm Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.24 2022/07/29 17:47:11 semarie Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -71,6 +71,9 @@ void db_show_all_nfsreqs(db_expr_t, int, db_expr_t, char *);
 void nfs_request_print(void *, int, int (*)(const char *, ...));
 void db_show_all_nfsnodes(db_expr_t, int, db_expr_t, char *);
 void nfs_node_print(void *, int, int (*)(const char *, ...));
+
+/* uvm/uvm_swap.c */
+void swap_print_all(int (*)(const char *, ...));
 
 /* ufs/ffs/ffs_softdep.c */
 struct worklist;

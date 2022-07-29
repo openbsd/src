@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.95 2022/07/28 22:19:09 bluhm Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.96 2022/07/29 17:47:11 semarie Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -102,6 +102,7 @@ void	db_tdb_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_nfsreq_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_nfsnode_print_cmd(db_expr_t, int, db_expr_t, char *);
+void	db_swap_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_help_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_fncall(db_expr_t, int, db_expr_t, char *);
 void	db_boot_sync_cmd(db_expr_t, int, db_expr_t, char *);
@@ -507,6 +508,13 @@ db_nfsnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 }
 #endif
 
+/*ARGSUSED*/
+void
+db_swap_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif)
+{
+	swap_print_all(db_printf);
+}
 
 /*ARGSUSED*/
 void
@@ -633,6 +641,7 @@ const struct db_command db_show_cmds[] = {
 	{ "route",	db_show_route,		0,	NULL },
 	{ "socket",	db_socket_print_cmd,	0,	NULL },
 	{ "struct",	db_ctf_show_struct,	CS_OWN,	NULL },
+	{ "swap",	db_swap_print_cmd,	0,	NULL },
 #ifdef IPSEC
 	{ "tdb",	db_tdb_print_cmd,	0,	NULL },
 #endif
