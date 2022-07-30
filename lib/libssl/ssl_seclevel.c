@@ -1,6 +1,6 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.23 2022/07/19 18:55:12 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.24 2022/07/30 17:26:01 tb Exp $ */
 /*
- * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
