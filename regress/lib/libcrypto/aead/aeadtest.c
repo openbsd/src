@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.18 2022/07/30 16:12:40 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.19 2022/07/30 16:17:22 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -84,31 +84,32 @@ hex_digit(char h)
 }
 
 static int
-aead_from_name(const EVP_AEAD **aead, const char *name)
+aead_from_name(const EVP_AEAD **aead, const EVP_CIPHER **cipher,
+    const char *name)
 {
 	*aead = NULL;
+	*cipher = NULL;
 
 	if (strcmp(name, "aes-128-gcm") == 0) {
 		*aead = EVP_aead_aes_128_gcm();
+		*cipher = EVP_aes_128_gcm();
 	} else if (strcmp(name, "aes-256-gcm") == 0) {
 		*aead = EVP_aead_aes_256_gcm();
+		*cipher = EVP_aes_256_gcm();
 	} else if (strcmp(name, "chacha20-poly1305") == 0) {
 		*aead = EVP_aead_chacha20_poly1305();
 	} else if (strcmp(name, "xchacha20-poly1305") == 0) {
 		*aead = EVP_aead_xchacha20_poly1305();
 	} else {
 		fprintf(stderr, "Unknown AEAD: %s\n", name);
-		return -1;
-	}
-
-	if (*aead == NULL)
 		return 0;
+	}
 
 	return 1;
 }
 
 static int
-run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
+run_aead_test(const EVP_AEAD *aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
     const unsigned int lengths[NUM_TYPES], unsigned int line_no)
 {
 	EVP_AEAD_CTX *ctx;
@@ -182,13 +183,213 @@ run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
 	return ret;
 }
 
+static int
+run_cipher_aead_encrypt_test(const EVP_CIPHER *cipher,
+    unsigned char bufs[NUM_TYPES][BUF_MAX],
+    const unsigned int lengths[NUM_TYPES], unsigned int line_no)
+{
+	unsigned char out[BUF_MAX + EVP_AEAD_MAX_TAG_LENGTH];
+	EVP_CIPHER_CTX *ctx;
+	size_t out_len;
+	int len;
+	int ret = 0;
+
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+		fprintf(stderr, "FAIL: EVP_CIPHER_CTX_new\n");
+		goto err;
+	}
+
+	if (!EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL)) {
+		fprintf(stderr, "FAIL: EVP_EncryptInit_ex with cipher\n");
+		goto err;
+	}
+
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, lengths[NONCE], NULL)) {
+		fprintf(stderr, "FAIL: EVP_CTRL_AEAD_SET_IVLEN\n");
+		goto err;
+	}
+
+	if (!EVP_EncryptInit_ex(ctx, NULL, NULL, bufs[KEY], NULL)) {
+		fprintf(stderr, "FAIL: EVP_EncryptInit_ex with key\n");
+		goto err;
+	}
+	if (!EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, bufs[NONCE])) {
+		fprintf(stderr, "FAIL: EVP_EncryptInit_ex with nonce\n");
+		goto err;
+	}
+
+	if (!EVP_EncryptUpdate(ctx, NULL, &len, bufs[AD], lengths[AD])) {
+		fprintf(stderr, "FAIL: EVP_EncryptUpdate with AD\n");
+		goto err;
+	}
+	if ((unsigned int)len != lengths[AD]) {
+		fprintf(stderr, "FAIL: EVP_EncryptUpdate with AD length = %u, "
+		    "want %u\n", len, lengths[AD]);
+		goto err;
+	}
+	if (!EVP_EncryptUpdate(ctx, out, &len, bufs[IN], lengths[IN])) {
+		fprintf(stderr, "FAIL: EVP_EncryptUpdate with plaintext\n");
+		goto err;
+	}
+	out_len = len;
+	if (!EVP_EncryptFinal_ex(ctx, out + out_len, &len)) {
+		fprintf(stderr, "FAIL: EVP_EncryptFinal_ex\n");
+		goto err;
+	}
+	out_len += len;
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, lengths[TAG],
+	    out + out_len)) {
+		fprintf(stderr, "FAIL: EVP_EncryptInit_ex with cipher\n");
+		goto err;
+	}
+	out_len += lengths[TAG];
+
+	if (out_len != lengths[CT] + lengths[TAG]) {
+		fprintf(stderr, "Bad output length on line %u: %zu vs %u\n",
+		    line_no, out_len, (unsigned)(lengths[CT] + lengths[TAG]));
+		goto err;
+	}
+
+	if (memcmp(out, bufs[CT], lengths[CT]) != 0) {
+		fprintf(stderr, "Bad output on line %u\n", line_no);
+		goto err;
+	}
+
+	if (memcmp(out + lengths[CT], bufs[TAG], lengths[TAG]) != 0) {
+		fprintf(stderr, "Bad tag on line %u\n", line_no);
+		goto err;
+	}
+
+	ret = 1;
+
+ err:
+	EVP_CIPHER_CTX_free(ctx);
+
+	return ret;
+}
+
+static int
+run_cipher_aead_decrypt_test(const EVP_CIPHER *cipher, int invalid,
+    unsigned char bufs[NUM_TYPES][BUF_MAX],
+    const unsigned int lengths[NUM_TYPES], unsigned int line_no)
+{
+	unsigned char in[BUF_MAX], out[BUF_MAX + EVP_AEAD_MAX_TAG_LENGTH];
+	EVP_CIPHER_CTX *ctx;
+	size_t out_len;
+	int len;
+	int ret = 0;
+
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+		fprintf(stderr, "FAIL: EVP_CIPHER_CTX_new\n");
+		goto err;
+	}
+
+	if (!EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL)) {
+		fprintf(stderr, "FAIL: EVP_DecryptInit_ex with cipher\n");
+		goto err;
+	}
+
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, lengths[NONCE],
+	    NULL)) {
+		fprintf(stderr, "FAIL: EVP_CTRL_AEAD_SET_IVLEN\n");
+		goto err;
+	}
+
+	memcpy(in, bufs[TAG], lengths[TAG]);
+	if (invalid && lengths[CT] == 0)
+		in[0] ^= 0x80;
+
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, lengths[TAG], in)) {
+		fprintf(stderr, "FAIL: EVP_CTRL_AEAD_SET_TAG\n");
+		goto err;
+	}
+
+	if (!EVP_DecryptInit_ex(ctx, NULL, NULL, bufs[KEY], NULL)) {
+		fprintf(stderr, "FAIL: EVP_DecryptInit_ex with key\n");
+		goto err;
+	}
+	if (!EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, bufs[NONCE])) {
+		fprintf(stderr, "FAIL: EVP_DecryptInit_ex with nonce\n");
+		goto err;
+	}
+
+	if (!EVP_DecryptUpdate(ctx, NULL, &len, bufs[AD], lengths[AD])) {
+		fprintf(stderr, "FAIL: EVP_DecryptUpdate with AD\n");
+		goto err;
+	}
+	if ((unsigned int)len != lengths[AD]) {
+		fprintf(stderr, "FAIL: EVP_EncryptUpdate with AD length = %u, "
+		    "want %u\n", len, lengths[AD]);
+		goto err;
+	}
+
+	memcpy(in, bufs[CT], lengths[CT]);
+	if (invalid && lengths[CT] > 0)
+		in[0] ^= 0x80;
+
+	if (!EVP_DecryptUpdate(ctx, out, &len, in, lengths[CT])) {
+		fprintf(stderr, "FAIL: EVP_DecryptUpdate with ciphertext\n");
+		goto err;
+	}
+	out_len = len;
+
+	if (invalid) {
+		if (EVP_DecryptFinal_ex(ctx, out + out_len, &len)) {
+			fprintf(stderr, "FAIL: EVP_DecryptFinal_ex succeeded "
+			    "with invalid ciphertext on line %u\n", line_no);
+			goto err;
+		}
+		goto done;
+	}
+
+	if (!EVP_DecryptFinal_ex(ctx, out + out_len, &len)) {
+		fprintf(stderr, "FAIL: EVP_DecryptFinal_ex\n");
+		goto err;
+	}
+	out_len += len;
+
+	if (out_len != lengths[IN]) {
+		fprintf(stderr, "Bad decrypt on line %u: %zu\n",
+		    line_no, out_len);
+		goto err;
+	}
+
+	if (memcmp(out, bufs[IN], out_len) != 0) {
+		fprintf(stderr, "Plaintext mismatch on line %u\n", line_no);
+		goto err;
+	}
+
+ done:
+	ret = 1;
+
+ err:
+	EVP_CIPHER_CTX_free(ctx);
+
+	return ret;
+}
+
+static int
+run_cipher_aead_test(const EVP_CIPHER *cipher,
+    unsigned char bufs[NUM_TYPES][BUF_MAX],
+    const unsigned int lengths[NUM_TYPES], unsigned int line_no)
+{
+	if (!run_cipher_aead_encrypt_test(cipher, bufs, lengths, line_no))
+		return 0;
+	if (!run_cipher_aead_decrypt_test(cipher, 0, bufs, lengths, line_no))
+		return 0;
+	if (!run_cipher_aead_decrypt_test(cipher, 1, bufs, lengths, line_no))
+		return 0;
+
+	return 1;
+}
+
 int
 main(int argc, char **argv)
 {
 	FILE *f;
 	const EVP_AEAD *aead = NULL;
+	const EVP_CIPHER *cipher = NULL;
 	unsigned int line_no = 0, num_tests = 0, j;
-
 	unsigned char bufs[NUM_TYPES][BUF_MAX];
 	unsigned int lengths[NUM_TYPES];
 
@@ -233,17 +434,21 @@ main(int argc, char **argv)
 			if (!any_values_set)
 				continue;
 
-			switch (aead_from_name(&aead, bufs[AEAD])) {
-			case 0:
-				fprintf(stderr, "Skipping test...\n");
-				continue;
-			case -1:
+			if (!aead_from_name(&aead, &cipher, bufs[AEAD])) {
 				fprintf(stderr, "Aborting...\n");
 				return 4;
 			}
 
-			if (!run_test_case(aead, bufs, lengths, line_no))
-				return 4;
+			if (aead != NULL) {
+				if (!run_aead_test(aead, bufs, lengths,
+				    line_no))
+					return 4;
+			}
+			if (cipher != NULL) {
+				if (!run_cipher_aead_test(cipher, bufs, lengths,
+				    line_no))
+					return 4;
+			}
 
 			for (j = 0; j < NUM_TYPES; j++)
 				lengths[j] = 0;
