@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.30 2022/07/30 11:24:52 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.31 2022/07/30 11:27:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -169,14 +169,13 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 			B[j] = Ai[j % u];
 
 		for (j = 0; j < Ilen; j += v) {
-			unsigned char *Ij = &I[j];
 			uint16_t c = 1;
 			int k;
 
-			/* Work out Ij = Ij + B + 1. */
+			/* Work out I[j] = I[j] + B + 1. */
 			for (k = v - 1; k >= 0; k--) {
-				c += Ij[k] + B[k];
-				Ij[k] = (unsigned char)c;
+				c += I[j + k] + B[k];
+				I[j + k] = (unsigned char)c;
 				c >>= 8;
 			}
 		}
