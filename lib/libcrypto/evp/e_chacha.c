@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha.c,v 1.8 2020/01/26 07:47:26 tb Exp $ */
+/* $OpenBSD: e_chacha.c,v 1.9 2022/07/30 17:11:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -25,10 +25,29 @@
 
 #include "evp_locl.h"
 
-static int chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-static int chacha_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
+static int
+chacha_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *openssl_iv, int enc)
+{
+	if (key != NULL)
+		ChaCha_set_key((ChaCha_ctx *)ctx->cipher_data, key,
+		    EVP_CIPHER_CTX_key_length(ctx) * 8);
+	if (openssl_iv != NULL) {
+		const unsigned char *iv = openssl_iv + 8;
+		const unsigned char *counter = openssl_iv;
+
+		ChaCha_set_iv((ChaCha_ctx *)ctx->cipher_data, iv, counter);
+	}
+	return 1;
+}
+
+static int
+chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
+    size_t len)
+{
+	ChaCha((ChaCha_ctx *)ctx->cipher_data, out, in, len);
+	return 1;
+}
 
 static const EVP_CIPHER chacha20_cipher = {
 	.nid = NID_chacha20,
@@ -54,30 +73,6 @@ const EVP_CIPHER *
 EVP_chacha20(void)
 {
 	return (&chacha20_cipher);
-}
-
-static int
-chacha_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *openssl_iv, int enc)
-{
-	if (key != NULL)
-		ChaCha_set_key((ChaCha_ctx *)ctx->cipher_data, key,
-		    EVP_CIPHER_CTX_key_length(ctx) * 8);
-	if (openssl_iv != NULL) {
-		const unsigned char *iv = openssl_iv + 8;
-		const unsigned char *counter = openssl_iv;
-
-		ChaCha_set_iv((ChaCha_ctx *)ctx->cipher_data, iv, counter);
-	}
-	return 1;
-}
-
-static int
-chacha_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
-    size_t len)
-{
-	ChaCha((ChaCha_ctx *)ctx->cipher_data, out, in, len);
-	return 1;
 }
 
 #endif
