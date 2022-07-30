@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.71 2022/05/13 00:17:20 yasuoka Exp $	*/
+/*	$OpenBSD: main.c,v 1.72 2022/07/30 14:17:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -587,7 +587,7 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc != 1)
 		ctl_usage(res->ctl);
 
 	type = parse_disktype(argv[0], &disk);
