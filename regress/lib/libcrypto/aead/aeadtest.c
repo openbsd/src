@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.14 2022/07/30 14:06:36 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.15 2022/07/30 14:09:00 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -25,7 +25,8 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-/* This program tests an AEAD against a series of test vectors from a file. The
+/*
+ * This program tests an AEAD against a series of test vectors from a file. The
  * test vector file consists of key-value lines where the key and value are
  * separated by a colon and optional whitespace. The keys are listed in
  * NAMES, below. The values are hex-encoded data.
@@ -267,10 +268,12 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		/* Each line looks like:
+		/*
+		 * Each line looks like:
 		 *   TYPE: 0123abc
 		 * Where "TYPE" is the type of the data on the line,
-		 * e.g. "KEY". */
+		 * e.g. "KEY".
+		 */
 		for (i = 0; line[i] != 0 && line[i] != '\n'; i++) {
 			if (line[i] == ':') {
 				type_len = i;
