@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.13 2022/07/27 21:01:38 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.14 2022/07/30 17:56:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -71,7 +71,7 @@ struct cfdriver efi_cd = {
 	NULL, "efi", DV_DULL
 };
 
-void	efi_remap_runtime(struct efi_softc *);
+void	efi_map_runtime(struct efi_softc *);
 void	efi_enter(struct efi_softc *);
 void	efi_leave(struct efi_softc *);
 int	efi_gettime(struct todr_chip_handle *, struct timeval *);
@@ -120,13 +120,11 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 		printf(".%d", minor % 10);
 	printf("\n");
 
-	efi_remap_runtime(sc);
-	sc->sc_rs = st->RuntimeServices;
+	efi_map_runtime(sc);
 
 	/*
-	 * The FirmwareVendor and ConfigurationTable fields have been
-	 * converted from a physical pointer to a virtual pointer, so
-	 * we have to activate our pmap to access them.
+	 * Activate our pmap such that we can access the
+	 * FirmwareVendor and ConfigurationTable fields.
 	 */
 	efi_enter(sc);
 	if (st->FirmwareVendor) {
@@ -171,17 +169,9 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-efi_remap_runtime(struct efi_softc *sc)
+efi_map_runtime(struct efi_softc *sc)
 {
-	EFI_MEMORY_DESCRIPTOR *src;
-	EFI_MEMORY_DESCRIPTOR *dst;
-	EFI_MEMORY_DESCRIPTOR *vmap;
-	EFI_PHYSICAL_ADDRESS phys_start = ~0ULL;
-	EFI_PHYSICAL_ADDRESS phys_end = 0;
-	EFI_VIRTUAL_ADDRESS virt_start;
-	EFI_STATUS status;
-	vsize_t space;
-	int count = 0;
+	EFI_MEMORY_DESCRIPTOR *desc;
 	int i;
 
 	/*
@@ -193,157 +183,34 @@ efi_remap_runtime(struct efi_softc *sc)
 	sc->sc_pm->pm_privileged = 1;
 	sc->sc_pm->have_4_level_pt = 1;
 
-	/*
-	 * We need to provide identity mappings for the complete
-	 * memory map for the first SetVirtualAddressMap() call.
-	 */
-	src = mmap;
+	desc = mmap;
 	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-		if (src->Type != EfiConventionalMemory) {
-			vaddr_t va = src->PhysicalStart;
-			paddr_t pa = src->PhysicalStart;
-			int npages = src->NumberOfPages;
-			vm_prot_t prot = PROT_READ | PROT_WRITE | PROT_EXEC;
-
-#ifdef EFI_DEBUG
-			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
-			    src->Type, src->PhysicalStart,
-			    src->VirtualStart, src->NumberOfPages,
-			    src->Attribute);
-#endif
-
-			/*
-			 * Normal memory is expected to be "write
-			 * back" cacheable.  Everything else is mapped
-			 * as device memory.
-			 */
-			if ((src->Attribute & EFI_MEMORY_WB) == 0)
-				pa |= PMAP_DEVICE;
-
-			if (src->Attribute & EFI_MEMORY_RP)
-				prot &= ~PROT_READ;
-			if (src->Attribute & EFI_MEMORY_XP)
-				prot &= ~PROT_EXEC;
-			if (src->Attribute & EFI_MEMORY_RO)
-				prot &= ~PROT_WRITE;
-
-			while (npages--) {
-				pmap_enter(sc->sc_pm, va, pa, prot,
-				   prot | PMAP_WIRED);
-				va += PAGE_SIZE;
-				pa += PAGE_SIZE;
-			}
-		}
-
-		if (src->Attribute & EFI_MEMORY_RUNTIME) {
-			if (src->Attribute & EFI_MEMORY_WB) {
-				phys_start = MIN(phys_start,
-				    src->PhysicalStart);
-				phys_end = MAX(phys_end, src->PhysicalStart +
-				    src->NumberOfPages * PAGE_SIZE);
-			}
-			count++;
-		}
-
-		src = NextMemoryDescriptor(src, mmap_desc_size);
-	}
-
-	/* Allocate memory descriptors for new mappings. */
-	vmap = km_alloc(round_page(count * mmap_desc_size),
-	    &kv_any, &kp_zero, &kd_waitok);
-
-	/*
-	 * Pick a random address somewhere in the lower half of the
-	 * usable virtual address space.
-	 */
-	space = 3 * (VM_MAX_ADDRESS - VM_MIN_ADDRESS) / 4;
-	virt_start = VM_MIN_ADDRESS +
-	    ((vsize_t)arc4random_uniform(space >> PAGE_SHIFT) << PAGE_SHIFT);
-
-	/*
-	 * Establish new mappings.  Apparently some EFI code relies on
-	 * the offset between code and data remaining the same so pick
-	 * virtual addresses for normal memory that meets that
-	 * constraint.  Other mappings are simply tagged on to the end
-	 * of the last normal memory mapping.
-	 */
-	src = mmap;
-	dst = vmap;
-	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-		if (src->Attribute & EFI_MEMORY_RUNTIME) {
-			memcpy(dst, src, mmap_desc_size);
-			if (dst->Attribute & EFI_MEMORY_WB) {
-				dst->VirtualStart = virt_start +
-				    (dst->PhysicalStart - phys_start);
-			} else {
-				dst->VirtualStart = virt_start +
-				     (phys_end - phys_start);
-				phys_end += dst->NumberOfPages * PAGE_SIZE;
-			}
-			/* Mask address to make sure it fits in our pmap. */
-			dst->VirtualStart &= ((1ULL << EFI_SPACE_BITS) - 1);
-			dst = NextMemoryDescriptor(dst, mmap_desc_size);
-		}
-
-		src = NextMemoryDescriptor(src, mmap_desc_size);
-	}
-
-	efi_enter(sc);
-	status = sc->sc_rs->SetVirtualAddressMap(count * mmap_desc_size,
-	    mmap_desc_size, mmap_desc_ver, vmap);
-	efi_leave(sc);
-
-	/*
-	 * If remapping fails, undo the translations.
-	 */
-	if (status != EFI_SUCCESS) {
-		src = mmap;
-		dst = vmap;
-		for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-			if (src->Attribute & EFI_MEMORY_RUNTIME) {
-				dst->VirtualStart = src->PhysicalStart;
-				dst = NextMemoryDescriptor(dst, mmap_desc_size);
-			}
-			src = NextMemoryDescriptor(src, mmap_desc_size);
-		}
-	}
-
-	/*
-	 * Remove all mappings from the pmap.
-	 */
-	src = mmap;
-	for (i = 0; i < mmap_size / mmap_desc_size; i++) {
-		if (src->Type != EfiConventionalMemory) {
-			pmap_remove(sc->sc_pm, src->PhysicalStart,
-			    src->PhysicalStart + src->NumberOfPages * PAGE_SIZE);
-		}
-		src = NextMemoryDescriptor(src, mmap_desc_size);
-	}
-
-	/*
-	 * Add back the (translated) runtime mappings.
-	 */
-	src = vmap;
-	for (i = 0; i < count; i++) {
-		if (src->Attribute & EFI_MEMORY_RUNTIME) {
-			vaddr_t va = src->VirtualStart;
-			paddr_t pa = src->PhysicalStart;
-			int npages = src->NumberOfPages;
+		if (desc->Attribute & EFI_MEMORY_RUNTIME) {
+			vaddr_t va = desc->VirtualStart;
+			paddr_t pa = desc->PhysicalStart;
+			int npages = desc->NumberOfPages;
 			vm_prot_t prot = PROT_READ | PROT_WRITE;
 
 #ifdef EFI_DEBUG
 			printf("type 0x%x pa 0x%llx va 0x%llx pages 0x%llx attr 0x%llx\n",
-			    src->Type, src->PhysicalStart,
-			    src->VirtualStart, src->NumberOfPages,
-			    src->Attribute);
+			    desc->Type, desc->PhysicalStart,
+			    desc->VirtualStart, desc->NumberOfPages,
+			    desc->Attribute);
 #endif
+
+			/*
+			 * If the virtual address is still zero, use
+			 * an identity mapping.
+			 */
+			if (va == 0)
+				va = pa;
 
 			/*
 			 * Normal memory is expected to be "write
 			 * back" cacheable.  Everything else is mapped
 			 * as device memory.
 			 */
-			if ((src->Attribute & EFI_MEMORY_WB) == 0)
+			if ((desc->Attribute & EFI_MEMORY_WB) == 0)
 				pa |= PMAP_DEVICE;
 
 			/*
@@ -351,14 +218,14 @@ efi_remap_runtime(struct efi_softc *sc)
 			 * executable.  This violates the standard but it
 			 * seems we can get away with it.
 			 */
-			if (src->Type == EfiRuntimeServicesCode)
+			if (desc->Type == EfiRuntimeServicesCode)
 				prot |= PROT_EXEC;
 
-			if (src->Attribute & EFI_MEMORY_RP)
+			if (desc->Attribute & EFI_MEMORY_RP)
 				prot &= ~PROT_READ;
-			if (src->Attribute & EFI_MEMORY_XP)
+			if (desc->Attribute & EFI_MEMORY_XP)
 				prot &= ~PROT_EXEC;
-			if (src->Attribute & EFI_MEMORY_RO)
+			if (desc->Attribute & EFI_MEMORY_RO)
 				prot &= ~PROT_WRITE;
 
 			while (npages--) {
@@ -369,10 +236,8 @@ efi_remap_runtime(struct efi_softc *sc)
 			}
 		}
 
-		src = NextMemoryDescriptor(src, mmap_desc_size);
+		desc = NextMemoryDescriptor(desc, mmap_desc_size);
 	}
-
-	km_free(vmap, round_page(count * mmap_desc_size), &kv_any, &kp_zero);
 }
 
 void
