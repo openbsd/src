@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2022/03/14 19:09:32 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.16 2022/07/30 21:06:54 patrick Exp $
 
 NOMAN=		#
 
@@ -9,7 +9,7 @@ OBJFMT=		binary
 INSTALL_STRIP=
 BINDIR=		/usr/mdec
 SRCS=		start.S self_reloc.c efiboot.c conf.c exec.c efiacpi.c
-SRCS+=		efidev.c efipxe.c efirng.c fdt.c dt_blob.S
+SRCS+=		efidev.c efipxe.c efirng.c fdt.c
 SRCS+=		softraid_arm64.c
 
 S=		${.CURDIR}/../../../..

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.38 2022/07/29 21:34:59 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.39 2022/07/30 21:06:54 patrick Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,7 +46,7 @@
 #include "efipxe.h"
 #include "softraid_arm64.h"
 
-const char version[] = "1.10";
+const char version[] = "1.11";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
