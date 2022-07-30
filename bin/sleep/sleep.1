@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.22 2016/08/16 18:51:25 schwarze Exp $
+.\"	$OpenBSD: sleep.1,v 1.23 2022/07/30 15:57:35 cheloha Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sleep.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: August 16 2016 $
+.Dd $Mdocdate: July 30 2022 $
 .Dt SLEEP 1
 .Os
 .Sh NAME
@@ -45,58 +45,26 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility
-suspends execution for a minimum of the specified number of
+utility suspends execution for at least the given number of
 .Ar seconds .
-This number must be positive and may contain a decimal fraction.
-.Nm
-is commonly used to schedule the execution of other commands (see below).
+.Ar seconds
+must be a non-negative decimal value and may contain a fraction.
 .Sh ASYNCHRONOUS EVENTS
 .Bl -tag -width "SIGALRMXXX"
 .It Dv SIGALRM
-Terminate normally, with a zero exit status.
+Terminate early, with a zero exit status.
 .El
 .Sh EXIT STATUS
 .Ex -std sleep
 .Sh EXAMPLES
-Wait a half hour before running the script
-.Pa command_file
-(see also the
-.Xr at 1
-utility):
+Wait five seconds before running a command:
 .Pp
-.Dl (sleep 1800; sh command_file >& errors)&
+.Dl $ sleep 5 ; echo Hello, World!
 .Pp
-To repetitively run a command (with
-.Xr csh 1 ) :
+List a file twice per second:
 .Bd -literal -offset indent
-while (! -r zzz.rawdata)
-	sleep 300
-end
-foreach i (*.rawdata)
-	sleep 70
-	awk -f collapse_data $i >> results
-end
-.Ed
-.Pp
-The scenario for such a script might be: a program currently
-running is taking longer than expected to process a series of
-files, and it would be nice to have another program start
-processing the files created by the first program as soon as it is finished
-(when
-.Pa zzz.rawdata
-is created).
-The script checks every five minutes for this file.
-When it is found, processing is done in several steps
-by sleeping 70 seconds between each
-.Xr awk 1
-job.
-.Pp
-To monitor the growth of a file without consuming too many resources:
-.Bd -literal -offset indent
-while true; do
-	ls -l file
-	sleep 5
+while ls -l file; do
+	sleep 0.5
 done
 .Ed
 .Sh SEE ALSO
@@ -108,10 +76,16 @@ utility is compliant with the
 .St -p1003.1-2008
 specification.
 .Pp
-The handling of fractional arguments is provided as an extension to that
-specification.
+Support for fractional
+.Ar seconds
+is an extension to that specification.
 .Sh HISTORY
 A
 .Nm
-utility appeared in
+utility first appeared in
 .At v4 .
+.Pp
+This implementation of
+.Nm
+first appeared in
+.Bx 4.4 .
