@@ -2007,15 +2007,15 @@ static const struct drm_driver driver = {
 
 #include "intagp.h"
 
-#if NINTAGP > 0
-int	intagpsubmatch(struct device *, void *, void *);
-int	intagp_print(void *, const char *);
-
 /*
  * some functions are only called once on init regardless of how many times
  * inteldrm attaches in linux this is handled via module_init()/module_exit()
  */
 int inteldrm_refcnt;
+
+#if NINTAGP > 0
+int	intagpsubmatch(struct device *, void *, void *);
+int	intagp_print(void *, const char *);
 
 int
 intagpsubmatch(struct device *parent, void *match, void *aux)
