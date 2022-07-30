@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.34 2022/05/12 20:00:06 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.35 2022/07/30 17:50:17 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -753,9 +753,13 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 int
 X509v3_asid_canonize(ASIdentifiers *asid)
 {
-	return (asid == NULL ||
-	    (ASIdentifierChoice_canonize(asid->asnum) &&
-	     ASIdentifierChoice_canonize(asid->rdi)));
+	if (asid == NULL)
+		return 1;
+
+	if (!ASIdentifierChoice_canonize(asid->asnum))
+		return 0;
+
+	return ASIdentifierChoice_canonize(asid->rdi);
 }
 
 /*
@@ -900,11 +904,20 @@ const X509V3_EXT_METHOD v3_asid = {
 int
 X509v3_asid_inherits(ASIdentifiers *asid)
 {
-	return (asid != NULL &&
-	    ((asid->asnum != NULL &&
-	      asid->asnum->type == ASIdentifierChoice_inherit) ||
-	     (asid->rdi != NULL &&
-	      asid->rdi->type == ASIdentifierChoice_inherit)));
+	if (asid == NULL)
+		return 0;
+
+	if (asid->asnum != NULL) {
+		if (asid->asnum->type == ASIdentifierChoice_inherit)
+			return 1;
+	}
+
+	if (asid->rdi != NULL) {
+		if (asid->rdi->type == ASIdentifierChoice_inherit)
+			return 1;
+	}
+
+	return 0;
 }
 
 /*
