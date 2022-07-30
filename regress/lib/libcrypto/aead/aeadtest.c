@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.19 2022/07/30 16:17:22 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.20 2022/07/30 16:30:42 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -392,14 +392,14 @@ main(int argc, char **argv)
 	unsigned int line_no = 0, num_tests = 0, j;
 	unsigned char bufs[NUM_TYPES][BUF_MAX];
 	unsigned int lengths[NUM_TYPES];
+	const char *aeadname;
 
-	if (argc != 2) {
-		fprintf(stderr, "%s <test file.txt>\n", argv[0]);
+	if (argc != 3) {
+		fprintf(stderr, "%s <aead> <test file.txt>\n", argv[0]);
 		return 1;
 	}
 
-	f = fopen(argv[1], "r");
-	if (f == NULL) {
+	if ((f = fopen(argv[2], "r")) == NULL) {
 		perror("failed to open input");
 		return 1;
 	}
@@ -434,7 +434,11 @@ main(int argc, char **argv)
 			if (!any_values_set)
 				continue;
 
-			if (!aead_from_name(&aead, &cipher, bufs[AEAD])) {
+			aeadname = argv[1];
+			if (lengths[AEAD] != 0)
+				aeadname = bufs[AEAD];
+
+			if (!aead_from_name(&aead, &cipher, aeadname)) {
 				fprintf(stderr, "Aborting...\n");
 				return 4;
 			}

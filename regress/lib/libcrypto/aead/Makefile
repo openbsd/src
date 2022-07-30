@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2022/01/14 09:38:50 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2022/07/30 16:30:42 jsing Exp $
 
 PROG=	aeadtest
 LDADD=	-lcrypto
@@ -9,6 +9,6 @@ CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
 REGRESS_TARGETS=regress-aeadtest
 
 regress-aeadtest: ${PROG}
-	./${PROG} ${.CURDIR}/aeadtests.txt
+	./${PROG} aead ${.CURDIR}/aeadtests.txt
 
 .include <bsd.regress.mk>
