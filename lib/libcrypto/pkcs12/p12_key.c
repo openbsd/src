@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_key.c,v 1.29 2022/07/24 18:55:22 tb Exp $ */
+/* $OpenBSD: p12_key.c,v 1.30 2022/07/30 11:24:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -142,15 +142,20 @@ PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		*p++ = pass[i % passlen];
 
 	for (;;) {
-		if (!EVP_DigestInit_ex(ctx, md_type, NULL) ||
-		    !EVP_DigestUpdate(ctx, D, v) ||
-		    !EVP_DigestUpdate(ctx, I, Ilen) ||
-		    !EVP_DigestFinal_ex(ctx, Ai, NULL))
+		if (!EVP_DigestInit_ex(ctx, md_type, NULL))
+			goto err;
+		if (!EVP_DigestUpdate(ctx, D, v))
+			goto err;
+		if (!EVP_DigestUpdate(ctx, I, Ilen))
+			goto err;
+		if (!EVP_DigestFinal_ex(ctx, Ai, NULL))
 			goto err;
 		for (j = 1; j < iter; j++) {
-			if (!EVP_DigestInit_ex(ctx, md_type, NULL) ||
-			    !EVP_DigestUpdate(ctx, Ai, u) ||
-			    !EVP_DigestFinal_ex(ctx, Ai, NULL))
+			if (!EVP_DigestInit_ex(ctx, md_type, NULL))
+				goto err;
+			if (!EVP_DigestUpdate(ctx, Ai, u))
+				goto err;
+			if (!EVP_DigestFinal_ex(ctx, Ai, NULL))
 				goto err;
 		}
 		memcpy(out, Ai, min(n, u));
