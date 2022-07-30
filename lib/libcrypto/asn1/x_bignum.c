@@ -1,4 +1,4 @@
-/* $OpenBSD: x_bignum.c,v 1.10 2019/04/01 15:49:22 jsing Exp $ */
+/* $OpenBSD: x_bignum.c,v 1.11 2022/07/30 13:37:17 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -70,6 +70,7 @@
 
 static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
+static void bn_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 static int bn_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
     const ASN1_ITEM *it);
@@ -83,7 +84,7 @@ static ASN1_PRIMITIVE_FUNCS bignum_pf = {
 	.flags = 0,
 	.prim_new = bn_new,
 	.prim_free = bn_free,
-	.prim_clear = NULL,	/* XXX */
+	.prim_clear = bn_clear,
 	.prim_c2i = bn_c2i,
 	.prim_i2c = bn_i2c,
 	.prim_print = bn_print,
@@ -112,11 +113,17 @@ const ASN1_ITEM CBIGNUM_it = {
 static int
 bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	*pval = (ASN1_VALUE *)BN_new();
-	if (*pval)
-		return 1;
-	else
+	if ((*pval = (ASN1_VALUE *)BN_new()) == NULL)
 		return 0;
+
+	return 1;
+}
+
+static void
+bn_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	BN_free((BIGNUM *)*pval);
+	*pval = NULL;
 }
 
 static void
@@ -124,8 +131,8 @@ bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	if (*pval == NULL)
 		return;
-	BN_clear_free((BIGNUM *)*pval);
-	*pval = NULL;
+
+	bn_clear(pval, it);
 }
 
 static int
