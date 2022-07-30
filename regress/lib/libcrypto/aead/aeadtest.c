@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.17 2022/07/30 14:49:15 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.18 2022/07/30 16:12:40 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -306,31 +306,52 @@ main(int argc, char **argv)
 			continue;
 		}
 
-		for (j = 0; line[i] != 0 && line[i] != '\n'; i++) {
-			unsigned char v, v2;
-			v = hex_digit(line[i++]);
-			if (line[i] == 0 || line[i] == '\n') {
-				fprintf(stderr, "Odd-length hex data on "
-				    "line %u\n", line_no);
-				return 3;
+		if (line[i] == '"') {
+			i++;
+			for (j = 0; line[i] != 0 && line[i] != '\n'; i++) {
+				if (line[i] == '"')
+					break;
+				if (j == BUF_MAX) {
+					fprintf(stderr, "Too much data on "
+					    "line %u (max is %u bytes)\n",
+					    line_no, (unsigned) BUF_MAX);
+					return 3;
+				}
+				buf[j++] = line[i];
+				*buf_len = *buf_len + 1;
 			}
-			v2 = hex_digit(line[i]);
-			if (v > 15 || v2 > 15) {
-				fprintf(stderr, "Invalid hex char on line %u\n",
+			if (line[i + 1] != 0 && line[i + 1] != '\n') {
+				fprintf(stderr, "Trailing data on line %u\n",
 				    line_no);
 				return 3;
 			}
-			v <<= 4;
-			v |= v2;
+		} else {
+			for (j = 0; line[i] != 0 && line[i] != '\n'; i++) {
+				unsigned char v, v2;
+				v = hex_digit(line[i++]);
+				if (line[i] == 0 || line[i] == '\n') {
+					fprintf(stderr, "Odd-length hex data "
+					    "on line %u\n", line_no);
+					return 3;
+				}
+				v2 = hex_digit(line[i]);
+				if (v > 15 || v2 > 15) {
+					fprintf(stderr, "Invalid hex char on "
+					    "line %u\n", line_no);
+					return 3;
+				}
+				v <<= 4;
+				v |= v2;
 
-			if (j == BUF_MAX) {
-				fprintf(stderr, "Too much hex data on line %u "
-				    "(max is %u bytes)\n",
-				    line_no, (unsigned) BUF_MAX);
-				return 3;
+				if (j == BUF_MAX) {
+					fprintf(stderr, "Too much hex data on "
+					    "line %u (max is %u bytes)\n",
+					    line_no, (unsigned) BUF_MAX);
+					return 3;
+				}
+				buf[j++] = v;
+				*buf_len = *buf_len + 1;
 			}
-			buf[j++] = v;
-			*buf_len = *buf_len + 1;
 		}
 	}
 
