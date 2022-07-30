@@ -1279,6 +1279,7 @@
 ./usr/include/sys/ataio.h
 ./usr/include/sys/atomic.h
 ./usr/include/sys/audioio.h
+./usr/include/sys/blist.h
 ./usr/include/sys/buf.h
 ./usr/include/sys/cdefs.h
 ./usr/include/sys/cdio.h
