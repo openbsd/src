@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.15 2022/07/30 14:09:00 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.16 2022/07/30 14:24:33 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -89,29 +89,13 @@ aead_from_name(const EVP_AEAD **aead, const char *name)
 	*aead = NULL;
 
 	if (strcmp(name, "aes-128-gcm") == 0) {
-#ifndef OPENSSL_NO_AES
 		*aead = EVP_aead_aes_128_gcm();
-#else
-		fprintf(stderr, "No AES support.\n");
-#endif
 	} else if (strcmp(name, "aes-256-gcm") == 0) {
-#ifndef OPENSSL_NO_AES
 		*aead = EVP_aead_aes_256_gcm();
-#else
-		fprintf(stderr, "No AES support.\n");
-#endif
 	} else if (strcmp(name, "chacha20-poly1305") == 0) {
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 		*aead = EVP_aead_chacha20_poly1305();
-#else
-		fprintf(stderr, "No chacha20-poly1305 support.\n");
-#endif
 	} else if (strcmp(name, "xchacha20-poly1305") == 0) {
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 		*aead = EVP_aead_xchacha20_poly1305();
-#else
-		fprintf(stderr, "No xchacha20-poly1305 support.\n");
-#endif
 	} else {
 		fprintf(stderr, "Unknown AEAD: %s\n", name);
 		return -1;
