@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.16 2022/07/30 14:24:33 jsing Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.17 2022/07/30 14:49:15 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -15,15 +15,15 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <unistd.h>
-#include <ctype.h>
 
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 /*
  * This program tests an AEAD against a series of test vectors from a file. The
