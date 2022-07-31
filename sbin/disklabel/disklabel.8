@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.147 2022/06/25 19:19:39 mbuhl Exp $
+.\"	$OpenBSD: disklabel.8,v 1.148 2022/07/31 14:29:19 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: June 25 2022 $
+.Dd $Mdocdate: July 31 2022 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -352,24 +352,7 @@ Delete an existing partition (or
 to delete all partitions).
 If no partition is specified, the user will be prompted for one.
 .It Cm e
-Edit drive parameters.
-This option is used to set the following parameters:
-disk type, a descriptive label string, sectors/track,
-tracks/cylinder, sectors/cylinder, number of cylinders,
-and total sectors.
-.It Xo
-.Cm g
-.Op Ar d | u
-.Xc
-Set disk geometry based on what the
-.Em disk
-or
-.Em user
-thinks (the
-.Em user
-geometry is simply what the label said before
-.Nm
-made any changes).
+Edit disk type, e.g. 'SCSI', and label description, e.g. 'UMIS RPJTJ256MED'.
 .It Cm i
 Change the disklabel UID, specified as a 16-character hexadecimal string.
 If set to all zeros, a new UID will automatically be allocated when the

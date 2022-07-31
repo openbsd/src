@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.372 2022/06/25 19:19:39 mbuhl Exp $	*/
+/*	$OpenBSD: editor.c,v 1.373 2022/07/31 14:29:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -165,9 +165,6 @@ int	get_fstype(struct disklabel *, int);
 int	get_mp(struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
-void	get_geometry(int, struct disklabel **);
-void	set_geometry(struct disklabel *, struct disklabel *, struct disklabel *,
-    char *);
 void	zero_partitions(struct disklabel *);
 u_int64_t max_partition_size(struct disklabel *, int);
 void	display_edit(struct disklabel *, char);
@@ -191,7 +188,6 @@ int
 editor(int f)
 {
 	struct disklabel origlabel, lastlabel, tmplabel, newlab = lab;
-	struct disklabel *disk_geop = NULL;
 	struct partition *pp;
 	FILE *fp;
 	char buf[BUFSIZ], *cmd, *arg;
@@ -208,9 +204,6 @@ editor(int f)
 	/* Don't allow disk type of "unknown" */
 	getdisktype(&newlab, "You need to specify a type for this disk.",
 	    specname);
-
-	/* Get the on-disk geometries if possible */
-	get_geometry(f, &disk_geop);
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(&newlab);
@@ -325,10 +318,6 @@ editor(int f)
 
 		case 'e':
 			edit_parms(&newlab);
-			break;
-
-		case 'g':
-			set_geometry(&newlab, disk_geop, &lab, arg);
 			break;
 
 		case 'i':
@@ -534,7 +523,6 @@ done:
 	mpfree(omountpoints);
 	mpfree(origmountpoints);
 	mpfree(tmpmountpoints);
-	free(disk_geop);
 	return (error);
 }
 
@@ -1305,7 +1293,7 @@ edit_parms(struct disklabel *lp)
 	u_int64_t freesectors, ui;
 	struct disklabel oldlabel = *lp;
 
-	printf("Changing device parameters for %s:\n", specname);
+	printf("Changing disk type and label description for %s:\n", specname);
 
 	/* disk type */
 	for (;;) {
@@ -1344,104 +1332,6 @@ edit_parms(struct disklabel *lp)
 		return;
 	}
 	strncpy(lp->d_packname, p, sizeof(lp->d_packname));	/* checked */
-
-	/* sectors/track */
-	for (;;) {
-		ui = getnumber("sectors/track",
-		    "The Number of sectors per track.", lp->d_nsectors,
-		    UINT32_MAX);
-		if (ui == CMD_ABORTED) {
-			*lp = oldlabel;		/* undo damage */
-			return;
-		} else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else
-			break;
-	}
-	lp->d_nsectors = ui;
-
-	/* tracks/cylinder */
-	for (;;) {
-		ui = getnumber("tracks/cylinder",
-		    "The number of tracks per cylinder.", lp->d_ntracks,
-		    UINT32_MAX);
-		if (ui == CMD_ABORTED) {
-			*lp = oldlabel;		/* undo damage */
-			return;
-		} else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else
-			break;
-	}
-	lp->d_ntracks = ui;
-
-	/* sectors/cylinder */
-	for (;;) {
-		ui = getnumber("sectors/cylinder",
-		    "The number of sectors per cylinder (Usually sectors/track "
-		    "* tracks/cylinder).", lp->d_secpercyl, UINT32_MAX);
-		if (ui == CMD_ABORTED) {
-			*lp = oldlabel;		/* undo damage */
-			return;
-		} else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else
-			break;
-	}
-	lp->d_secpercyl = ui;
-
-	/* number of cylinders */
-	for (;;) {
-		ui = getnumber("number of cylinders",
-		    "The total number of cylinders on the disk.",
-		    lp->d_ncylinders, UINT32_MAX);
-		if (ui == CMD_ABORTED) {
-			*lp = oldlabel;		/* undo damage */
-			return;
-		} else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else
-			break;
-	}
-	lp->d_ncylinders = ui;
-
-	/* total sectors */
-	for (;;) {
-		u_int64_t nsec = MAXIMUM(DL_GETDSIZE(lp),
-		    (u_int64_t)lp->d_ncylinders * lp->d_secpercyl);
-		ui = getuint64(lp, "total sectors",
-		    "The total number of sectors on the disk.",
-		    nsec, nsec, NULL);
-		if (ui == CMD_ABORTED) {
-			*lp = oldlabel;		/* undo damage */
-			return;
-		} else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else if (ui > DL_GETDSIZE(lp) &&
-		    ending_sector == DL_GETDSIZE(lp)) {
-			puts("You may want to increase the size of the 'c' "
-			    "partition.");
-			break;
-		} else if (ui < DL_GETDSIZE(lp) &&
-		    ending_sector == DL_GETDSIZE(lp)) {
-			/* shrink free count */
-			freesectors = editor_countfree(lp);
-			if (DL_GETDSIZE(lp) - ui > freesectors)
-				fprintf(stderr,
-				    "Not enough free space to shrink by %llu "
-				    "sectors (only %llu sectors left)\n",
-				    DL_GETDSIZE(lp) - ui, freesectors);
-			else
-				break;
-		} else
-			break;
-	}
-	/* Adjust ending_sector if necessary. */
-	if (ending_sector > ui) {
-		ending_sector = ui;
-		DL_SETBEND(lp, ending_sector);
-	}
-	DL_SETDSIZE(lp, ui);
 }
 
 struct partition **
@@ -1721,12 +1611,11 @@ editor_help(void)
 " c [part] - change partition size     r        - display free space\n"
 " D        - reset label to default    s [path] - save label to file\n"
 " d [part] - delete partition          U        - undo all changes\n"
-" e        - edit drive parameters     u        - undo last change\n"
-" g [d|u]  - [d]isk or [u]ser geometry w        - write label to disk\n"
-" i        - modify disklabel UID      X        - toggle expert mode\n"
-" l [unit] - print disk label header   x        - exit & lose changes\n"
-" M        - disklabel(8) man page     z        - delete all partitions\n"
-" m [part] - modify partition\n"
+" e        - edit type and label name  u        - undo last change\n"
+" i        - modify disklabel UID      w        - write label to disk\n"
+" l [unit] - print disk label header   X        - toggle expert mode\n"
+" M        - disklabel(8) man page     x        - exit & lose changes\n"
+" m [part] - modify partition          z        - delete all partitions\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 " 'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes) 't' (terabytes)\n"
@@ -2184,76 +2073,6 @@ micmp(const void *a1, const void *a2)
 		return (-1);
 	else
 		return (strcmp(mi1->mountpoint, mi2->mountpoint));
-}
-
-void
-get_geometry(int f, struct disklabel **dgpp)
-{
-	struct stat st;
-	struct disklabel *disk_geop;
-
-	if (fstat(f, &st) == -1)
-		err(4, "Can't stat device");
-
-	/* Get disk geometry */
-	if ((disk_geop = calloc(1, sizeof(struct disklabel))) == NULL)
-		errx(4, "out of memory");
-	if (ioctl(f, DIOCGPDINFO, disk_geop) == -1)
-		err(4, "DIOCGPDINFO");
-	*dgpp = disk_geop;
-}
-
-void
-set_geometry(struct disklabel *lp, struct disklabel *dgp,
-    struct disklabel *ugp, char *p)
-{
-	if (p == NULL)
-		p = getstring("[d]isk or [u]ser geometry",
-		    "Enter 'd' to use the geometry based on what the disk "
-		    "itself thinks it is, or 'u' to use the geometry that "
-		    "was found in the label.",
-		    "d");
-	if (p == NULL)
-		return;
-	switch (*p) {
-	case 'd':
-	case 'D':
-		if (dgp == NULL)
-			fputs("BIOS geometry not defined.\n", stderr);
-		else {
-			lp->d_secsize = dgp->d_secsize;
-			lp->d_nsectors = dgp->d_nsectors;
-			lp->d_ntracks = dgp->d_ntracks;
-			lp->d_ncylinders = dgp->d_ncylinders;
-			lp->d_secpercyl = dgp->d_secpercyl;
-			DL_SETDSIZE(lp, DL_GETDSIZE(dgp));
-		}
-		break;
-	case 'u':
-	case 'U':
-		if (ugp == NULL)
-			fputs("BIOS geometry not defined.\n", stderr);
-		else {
-			lp->d_secsize = ugp->d_secsize;
-			lp->d_nsectors = ugp->d_nsectors;
-			lp->d_ntracks = ugp->d_ntracks;
-			lp->d_ncylinders = ugp->d_ncylinders;
-			lp->d_secpercyl = ugp->d_secpercyl;
-			DL_SETDSIZE(lp, DL_GETDSIZE(ugp));
-			if (dgp != NULL && ugp->d_secsize == dgp->d_secsize &&
-			    ugp->d_nsectors == dgp->d_nsectors &&
-			    ugp->d_ntracks == dgp->d_ntracks &&
-			    ugp->d_ncylinders == dgp->d_ncylinders &&
-			    ugp->d_secpercyl == dgp->d_secpercyl &&
-			    DL_GETDSIZE(ugp) == DL_GETDSIZE(dgp))
-				fputs("Note: user geometry is the same as disk "
-				    "geometry.\n", stderr);
-		}
-		break;
-	default:
-		fputs("You must enter either 'd' or 'u'.\n", stderr);
-		break;
-	}
 }
 
 void

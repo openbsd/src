@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.240 2022/02/24 14:44:14 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.241 2022/07/31 14:29:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -337,6 +337,7 @@ writelabel(int f, struct disklabel *lp)
 void
 readlabel(int f)
 {
+	struct disklabel	dl;
 
 	if (cflag && ioctl(f, DIOCRLDINFO) == -1)
 		err(4, "DIOCRLDINFO");
@@ -347,6 +348,13 @@ readlabel(int f)
 	} else {
 		if (ioctl(f, DIOCGDINFO, &lab) == -1)
 			err(4, "DIOCGDINFO");
+		if (ioctl(f, DIOCGPDINFO, &dl) == -1)
+			err(4, "DIOCGPDINFO");
+		lab.d_secsize = dl.d_secsize;
+		lab.d_nsectors = dl.d_nsectors;
+		lab.d_ntracks = dl.d_ntracks;
+		lab.d_secpercyl = dl.d_secpercyl;
+		lab.d_ncylinders = dl.d_ncylinders;
 	}
 }
 
@@ -922,51 +930,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			}
 			continue;
 		}
-		if (!strcmp(cp, "bytes/sector")) {
-			v = GETNUM(lp->d_secsize, tp, 1, &errstr);
-			if (errstr || (v % 512) != 0) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_secsize = v;
-			continue;
-		}
-		if (!strcmp(cp, "sectors/track")) {
-			v = GETNUM(lp->d_nsectors, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_nsectors = v;
-			continue;
-		}
-		if (!strcmp(cp, "sectors/cylinder")) {
-			v = GETNUM(lp->d_secpercyl, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_secpercyl = v;
-			continue;
-		}
-		if (!strcmp(cp, "tracks/cylinder")) {
-			v = GETNUM(lp->d_ntracks, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_ntracks = v;
-			continue;
-		}
-		if (!strcmp(cp, "cylinders")) {
-			v = GETNUM(lp->d_ncylinders, tp, 1, &errstr);
-			if (errstr) {
-				warnx("line %d: bad %s: %s", lineno, cp, tp);
-				errors++;
-			} else
-				lp->d_ncylinders = v;
-			continue;
-		}
 
 		/* Ignore fields that are no longer in the disklabel. */
 		if (!strcmp(cp, "rpm") ||
@@ -980,7 +943,12 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		/* Ignore fields that are forcibly set when label is read. */
 		if (!strcmp(cp, "total sectors") ||
 		    !strcmp(cp, "boundstart") ||
-		    !strcmp(cp, "boundend"))
+		    !strcmp(cp, "boundend") ||
+		    !strcmp(cp, "bytes/sector") ||
+		    !strcmp(cp, "sectors/track") ||
+		    !strcmp(cp, "sectors/cylinder") ||
+		    !strcmp(cp, "tracks/cylinder") ||
+		    !strcmp(cp, "cylinders"))
 			continue;
 
 		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
