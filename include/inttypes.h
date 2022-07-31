@@ -1,4 +1,4 @@
-/*	$OpenBSD: inttypes.h,v 1.13 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: inttypes.h,v 1.14 2022/07/31 01:27:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997, 2005 Todd C. Miller <millert@openbsd.org>
@@ -23,6 +23,9 @@
 
 #ifdef __cplusplus
 #define __wchar_t	wchar_t
+#elif __POSIX_VISIBLE >= 200809 && !defined(_WCHAR_T_DEFINED_)
+#define _WCHAR_T_DEFINED_
+typedef	__wchar_t	wchar_t;
 #endif
 
 /*
