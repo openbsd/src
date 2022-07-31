@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_lib.c,v 1.50 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: pem_lib.c,v 1.51 2022/07/31 09:48:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -608,8 +608,7 @@ PEM_write_bio(BIO *bp, const char *name, const char *header,
 	    (BIO_write(bp, "-----\n", 6) != 6))
 		goto err;
 
-	i = strlen(header);
-	if (i > 0) {
+	if (header != NULL && (i = strlen(header)) > 0) {
 		if ((BIO_write(bp, header, i) != i) ||
 		    (BIO_write(bp, "\n", 1) != 1))
 			goto err;
