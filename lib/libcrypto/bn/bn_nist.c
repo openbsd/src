@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.21 2022/07/30 18:03:36 jsing Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.22 2022/07/31 14:38:38 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -464,12 +464,13 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 int
 BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
-	int top = a->top, i;
-	int carry;
-	BN_ULONG *r_d, *a_d = a->d;
 	BN_ULONG bnbuf[BN_NIST_192_TOP] = { 0 };
-	BN_ULONG c_d[BN_NIST_192_TOP], *res;
+	BN_ULONG c_d[BN_NIST_192_TOP] = { 0 };
+	BN_ULONG *a_d = a->d;
+	BN_ULONG *r_d, *res;
 	uintptr_t mask;
+	int top = a->top;
+	int carry, i;
 
 	field = &_bignum_nist_p_192; /* just to make sure */
 
@@ -611,13 +612,14 @@ typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *, const BN_ULONG *,
 int
 BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
-	int top = a->top, i;
-	int carry;
-	BN_ULONG *r_d, *a_d = a->d;
 	BN_ULONG bnbuf[BN_NIST_224_TOP] = { 0 };
-	BN_ULONG c_d[BN_NIST_224_TOP], *res;
-	uintptr_t mask;
+	BN_ULONG c_d[BN_NIST_224_TOP] = { 0 };
+	BN_ULONG *a_d = a->d;
+	BN_ULONG *r_d, *res;
 	bn_addsub_f addsubf;
+	uintptr_t mask;
+	int top = a->top;
+	int carry, i;
 
 	field = &_bignum_nist_p_224; /* just to make sure */
 
@@ -794,13 +796,14 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 int
 BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
-	int i, top = a->top;
-	int carry = 0;
-	BN_ULONG *a_d = a->d, *r_d;
 	BN_ULONG bnbuf[BN_NIST_256_TOP] = { 0 };
-	BN_ULONG c_d[BN_NIST_256_TOP] = {0}, *res;
-	uintptr_t mask;
+	BN_ULONG c_d[BN_NIST_256_TOP] = { 0 };
+	BN_ULONG *a_d = a->d;
+	BN_ULONG *r_d, *res;
 	bn_addsub_f addsubf;
+	uintptr_t mask;
+	int top = a->top;
+	int carry, i;
 
 	field = &_bignum_nist_p_256; /* just to make sure */
 
@@ -1025,13 +1028,14 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 int
 BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
-	int i, top = a->top;
-	int carry = 0;
-	BN_ULONG *r_d, *a_d = a->d;
 	BN_ULONG bnbuf[BN_NIST_384_TOP] = { 0 };
-	BN_ULONG c_d[BN_NIST_384_TOP], *res;
-	uintptr_t mask;
+	BN_ULONG c_d[BN_NIST_384_TOP] = { 0 };
+	BN_ULONG *a_d = a->d;
+	BN_ULONG *r_d, *res;
 	bn_addsub_f addsubf;
+	uintptr_t mask;
+	int top = a->top;
+	int carry, i;
 
 	field = &_bignum_nist_p_384; /* just to make sure */
 
@@ -1277,9 +1281,13 @@ BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 int
 BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 {
-	int top = a->top, i;
-	BN_ULONG *r_d, *a_d = a->d, t_d[BN_NIST_521_TOP], val, tmp, *res;
+	BN_ULONG t_d[BN_NIST_521_TOP] = { 0 };
+	BN_ULONG *a_d = a->d;
+	BN_ULONG *r_d, *res;
+	BN_ULONG tmp, val;
 	uintptr_t mask;
+	int top = a->top;
+	int i;
 
 	field = &_bignum_nist_p_521; /* just to make sure */
 
