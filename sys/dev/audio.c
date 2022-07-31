@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.199 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: audio.c,v 1.200 2022/07/31 03:31:36 visa Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -20,6 +20,8 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/event.h>
+#include <sys/mutex.h>
 #include <sys/task.h>
 #include <sys/vnode.h>
 #include <sys/malloc.h>
@@ -75,8 +77,7 @@ struct audio_buf {
 	size_t used;			/* bytes used in the FIFO */
 	size_t blksz;			/* DMA block size */
 	unsigned int nblks;		/* number of blocks */
-	struct selinfo sel;		/* to record & wakeup poll(2) */
-	void *softintr;			/* context to call selwakeup() */
+	struct klist klist;		/* list of knotes */
 	unsigned int pos;		/* bytes transferred */
 	unsigned int xrun;		/* bytes lost by xruns */
 	int blocking;			/* read/write blocking */
@@ -136,10 +137,9 @@ struct audio_softc {
 	int mix_nent;			/* size of mixer state */
 	int mix_isopen;			/* mixer open for reading */
 	int mix_blocking;		/* read() blocking */
-	struct selinfo mix_sel;		/* wakeup poll(2) */
+	struct klist mix_klist;		/* list of knotes */
 	struct mixer_ev *mix_evbuf;	/* per mixer-control event */
 	struct mixer_ev *mix_pending;	/* list of changed controls */
-	void *mix_softintr;		/* context to call selwakeup() */
 #if NWSKBD > 0
 	struct wskbd_vol spkr, mic;
 	struct task wskbd_task;
@@ -153,6 +153,8 @@ int audio_activate(struct device *, int);
 int audio_detach(struct device *, int);
 void audio_pintr(void *);
 void audio_rintr(void *);
+void audio_buf_wakeup(struct audio_buf *);
+void audio_mixer_wakeup(struct audio_softc *);
 #if NWSKBD > 0
 void wskbd_mixer_init(struct audio_softc *);
 void wskbd_mixer_cb(void *);
@@ -275,53 +277,33 @@ audio_blksz_bytes(int mode,
 }
 
 void
-audio_mixer_wakeup(void *addr)
+audio_mixer_wakeup(struct audio_softc *sc)
 {
-	struct audio_softc *sc = addr;
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 
 	if (sc->mix_blocking) {
 		wakeup(&sc->mix_blocking);
 		sc->mix_blocking = 0;
 	}
-	/*
-	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
-	 * already held here to avoid lock ordering problems with `audio_lock'
-	 */
-	KERNEL_ASSERT_LOCKED();
-	mtx_enter(&audio_lock);
-	selwakeup(&sc->mix_sel);
-	mtx_leave(&audio_lock);
+	KNOTE(&sc->mix_klist, 0);
 }
 
 void
-audio_buf_wakeup(void *addr)
+audio_buf_wakeup(struct audio_buf *buf)
 {
-	struct audio_buf *buf = addr;
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 
 	if (buf->blocking) {
 		wakeup(&buf->blocking);
 		buf->blocking = 0;
 	}
-	/*
-	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
-	 * already held here to avoid lock ordering problems with `audio_lock'
-	 */
-	KERNEL_ASSERT_LOCKED();
-	mtx_enter(&audio_lock);
-	selwakeup(&buf->sel);
-	mtx_leave(&audio_lock);
+	KNOTE(&buf->klist, 0);
 }
 
 int
 audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 {
-	klist_init_mutex(&buf->sel.si_note, &audio_lock);
-	buf->softintr = softintr_establish(IPL_SOFTAUDIO,
-	    audio_buf_wakeup, buf);
-	if (buf->softintr == NULL) {
-		printf("%s: can't establish softintr\n", DEVNAME(sc));
-		goto bad;
-	}
+	klist_init_mutex(&buf->klist, &audio_lock);
 	if (sc->ops->round_buffersize) {
 		buf->datalen = sc->ops->round_buffersize(sc->arg,
 		    dir, AUDIO_BUFSZ);
@@ -333,13 +315,10 @@ audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 	} else
 		buf->data = malloc(buf->datalen, M_DEVBUF, M_WAITOK);
 	if (buf->data == NULL) {
-		softintr_disestablish(buf->softintr);
-		goto bad;
+		klist_free(&buf->klist);
+		return ENOMEM;
 	}
 	return 0;
-bad:
-	klist_free(&buf->sel.si_note);
-	return ENOMEM;
 }
 
 void
@@ -349,8 +328,7 @@ audio_buf_done(struct audio_softc *sc, struct audio_buf *buf)
 		sc->ops->freem(sc->arg, buf->data, M_DEVBUF);
 	else
 		free(buf->data, M_DEVBUF, buf->datalen);
-	softintr_disestablish(buf->softintr);
-	klist_free(&buf->sel.si_note);
+	klist_free(&buf->klist);
 }
 
 /*
@@ -563,13 +541,7 @@ audio_pintr(void *addr)
 	if (sc->play.used < sc->play.len) {
 		DPRINTFN(1, "%s: play wakeup, chan = %d\n",
 		    DEVNAME(sc), sc->play.blocking);
-		/*
-		 * As long as selwakeup() needs to be protected by the
-		 * KERNEL_LOCK() we have to delay the wakeup to another
-		 * context to keep the interrupt context KERNEL_LOCK()
-		 * free.
-		 */
-		softintr_schedule(sc->play.softintr);
+		audio_buf_wakeup(&sc->play);
 	}
 }
 
@@ -646,13 +618,7 @@ audio_rintr(void *addr)
 	if (sc->rec.used > 0) {
 		DPRINTFN(1, "%s: rec wakeup, chan = %d\n",
 		    DEVNAME(sc), sc->rec.blocking);
-		/*
-		 * As long as selwakeup() needs to be protected by the
-		 * KERNEL_LOCK() we have to delay the wakeup to another
-		 * context to keep the interrupt context KERNEL_LOCK()
-		 * free.
-		 */
-		softintr_schedule(sc->rec.softintr);
+		audio_buf_wakeup(&sc->rec);
 	}
 }
 
@@ -1272,17 +1238,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	klist_init_mutex(&sc->mix_sel.si_note, &audio_lock);
-	sc->mix_softintr = softintr_establish(IPL_SOFTAUDIO,
-	    audio_mixer_wakeup, sc);
-	if (sc->mix_softintr == NULL) {
-		klist_free(&sc->mix_sel.si_note);
-		audio_buf_done(sc, &sc->rec);
-		audio_buf_done(sc, &sc->play);
-		sc->ops = 0;
-		printf("%s: can't establish softintr\n", DEVNAME(sc));
-		return;
-	}
+	klist_init_mutex(&sc->mix_klist, &audio_lock);
 
 	/* set defaults */
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1445,31 +1401,20 @@ audio_detach(struct device *self, int flags)
 	if (sc->mode != 0) {
 		if (sc->active) {
 			wakeup(&sc->play.blocking);
-			KERNEL_ASSERT_LOCKED();
-			mtx_enter(&audio_lock);
 			wakeup(&sc->rec.blocking);
-			selwakeup(&sc->play.sel);
-			selwakeup(&sc->rec.sel);
-			mtx_leave(&audio_lock);
 			audio_stop(sc);
 		}
 		sc->ops->close(sc->arg);
 		sc->mode = 0;
 	}
-	if (sc->mix_isopen) {
+	if (sc->mix_isopen)
 		wakeup(&sc->mix_blocking);
-		KERNEL_ASSERT_LOCKED();
-		mtx_enter(&audio_lock);
-		selwakeup(&sc->mix_sel);
-		mtx_leave(&audio_lock);
-	}
-	klist_invalidate(&sc->play.sel.si_note);
-	klist_invalidate(&sc->rec.sel.si_note);
-	klist_invalidate(&sc->mix_sel.si_note);
+	klist_invalidate(&sc->play.klist);
+	klist_invalidate(&sc->rec.klist);
+	klist_invalidate(&sc->mix_klist);
 
 	/* free resources */
-	softintr_disestablish(sc->mix_softintr);
-	klist_free(&sc->mix_sel.si_note);
+	klist_free(&sc->mix_klist);
 	free(sc->mix_evbuf, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ev));
 	free(sc->mix_ents, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ctrl));
 	audio_buf_done(sc, &sc->play);
@@ -1875,7 +1820,7 @@ audio_event(struct audio_softc *sc, int addr)
 			e->next = sc->mix_pending;
 			sc->mix_pending = e;
 		}
-		softintr_schedule(sc->mix_softintr);
+		audio_mixer_wakeup(sc);
 	}
 	mtx_leave(&audio_lock);
 }
@@ -2228,11 +2173,11 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	case AUDIO_DEV_AUDIO:
 		switch (kn->kn_filter) {
 		case EVFILT_READ:
-			klist = &sc->rec.sel.si_note;
+			klist = &sc->rec.klist;
 			kn->kn_fop = &audioread_filtops;
 			break;
 		case EVFILT_WRITE:
-			klist = &sc->play.sel.si_note;
+			klist = &sc->play.klist;
 			kn->kn_fop = &audiowrite_filtops;
 			break;
 		default:
@@ -2243,7 +2188,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	case AUDIO_DEV_AUDIOCTL:
 		switch (kn->kn_filter) {
 		case EVFILT_READ:
-			klist = &sc->mix_sel.si_note;
+			klist = &sc->mix_klist;
 			kn->kn_fop = &audioctlread_filtops;
 			break;
 		default:
@@ -2265,7 +2210,7 @@ filt_audiordetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	klist_remove(&sc->rec.sel.si_note, kn);
+	klist_remove(&sc->rec.klist, kn);
 }
 
 int
@@ -2283,7 +2228,7 @@ filt_audiowdetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	klist_remove(&sc->play.sel.si_note, kn);
+	klist_remove(&sc->play.klist, kn);
 }
 
 int
@@ -2301,7 +2246,7 @@ filt_audioctlrdetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	klist_remove(&sc->mix_sel.si_note, kn);
+	klist_remove(&sc->mix_klist, kn);
 }
 
 int
