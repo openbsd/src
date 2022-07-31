@@ -1,4 +1,4 @@
-.\" $OpenBSD: intrmap_create.9,v 1.3 2020/06/17 06:25:41 jmc Exp $
+.\" $OpenBSD: intrmap_create.9,v 1.4 2022/07/31 12:55:31 denis Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 17 2020 $
+.Dd $Mdocdate: July 31 2022 $
 .Dt INTRMAP_CREATE 9
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm intrmap_cpu
 .Nd interrupt to CPU mapping API
 .Sh SYNOPSIS
-.In sys/inrtmap.h
+.In sys/intrmap.h
 .Ft struct intrmap *
 .Fo intrmap_create
 .Fa "const struct device *dv"
