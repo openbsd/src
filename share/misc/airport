@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.83 2022/06/26 06:28:51 deraadt Exp $
+#	$OpenBSD: airport,v 1.84 2022/07/31 06:12:20 kn Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1031,6 +1031,7 @@ LVI:Livingstone, Zambia
 LVK:Livermore, California, USA
 LWB:Greenbrier Valley, West Virginia, USA
 LWK:Tingwall, Shetland Islands /Shetland Isd, Scotland, United Kingdom
+LWN:Gyumri, Shirak Region, Armenia
 LWO:Lviv Danylo Halytskyi International, Lviv, Ukraine
 LWT:Lewistown Municipal, Montana, USA
 LWY:Lawas, Sarawak, Malaysia
