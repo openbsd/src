@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleaudio.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: simpleaudio.c,v 1.6 2022/08/01 09:50:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -541,7 +541,8 @@ simpleaudio_trigger_input(void *cookie, void *start, void *end, int blksize,
 	return 0;
 }
 
-int simpleaudio_halt_output(void *cookie)
+int
+simpleaudio_halt_output(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
@@ -568,7 +569,8 @@ int simpleaudio_halt_output(void *cookie)
 	return 0;
 }
 
-int simpleaudio_halt_input(void *cookie)
+int
+simpleaudio_halt_input(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
