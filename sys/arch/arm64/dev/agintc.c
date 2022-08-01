@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.39 2022/07/16 12:02:28 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.40 2022/08/01 20:48:19 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1248,6 +1248,7 @@ agintc_send_ipi(struct cpu_info *ci, int id)
 #define  GITS_CTLR_ENABLED	(1UL << 0)
 #define GITS_TYPER		0x0008
 #define  GITS_TYPER_CIL		(1ULL << 36)
+#define  GITS_TYPER_CIDBITS(x)	(((x) >> 32) & 0xf)
 #define  GITS_TYPER_HCC(x)	(((x) >> 24) & 0xff)
 #define  GITS_TYPER_PTA		(1ULL << 19)
 #define  GITS_TYPER_DEVBITS(x)	(((x) >> 13) & 0x1f)
@@ -1265,7 +1266,8 @@ agintc_send_ipi(struct cpu_info *ci, int id)
 #define  GITS_BASER_IC_NORM_NC	(1ULL << 59)
 #define  GITS_BASER_TYPE_MASK	(7ULL << 56)
 #define  GITS_BASER_TYPE_DEVICE	(1ULL << 56)
-#define  GITS_BASER_DTE_SZ(x)	(((x) >> 48) & 0x1f)
+#define  GITS_BASER_TYPE_COLL	(4ULL << 56)
+#define  GITS_BASER_TTE_SZ(x)	(((x) >> 48) & 0x1f)
 #define  GITS_BASER_PGSZ_MASK	(3ULL << 8)
 #define  GITS_BASER_PGSZ_4K	(0ULL << 8)
 #define  GITS_BASER_PGSZ_16K	(1ULL << 8)
@@ -1329,6 +1331,10 @@ struct agintc_msi_softc {
 	struct agintc_dmamem		*sc_dtt;
 	size_t				sc_dtt_pgsz;
 	uint8_t				sc_dte_sz;
+	int				sc_cidbits;
+	struct agintc_dmamem		*sc_ctt;
+	size_t				sc_ctt_pgsz;
+	uint8_t				sc_cte_sz;
 	uint8_t				sc_ite_sz;
 
 	LIST_HEAD(, agintc_msi_device)	sc_msi_devices;
@@ -1386,13 +1392,16 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	typer = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_TYPER);
-	if ((typer & GITS_TYPER_PHYS) == 0 || typer & GITS_TYPER_PTA ||
-	    GITS_TYPER_HCC(typer) < ncpus || typer & GITS_TYPER_CIL) {
+	if ((typer & GITS_TYPER_PHYS) == 0 || typer & GITS_TYPER_PTA) {
 		printf(": unsupported type 0x%016llx\n", typer);
 		goto unmap;
 	}
 	sc->sc_ite_sz = GITS_TYPER_ITE_SZ(typer) + 1;
 	sc->sc_devbits = GITS_TYPER_DEVBITS(typer) + 1;
+	if (typer & GITS_TYPER_CIL)
+		sc->sc_cidbits = GITS_TYPER_CIDBITS(typer) + 1;
+	else
+		sc->sc_cidbits = 16;
 
 	sc->sc_nlpi = agintc_sc->sc_nlpi;
 	sc->sc_lpi = mallocarray(sc->sc_nlpi, sizeof(void *), M_DEVBUF,
@@ -1424,19 +1433,19 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_64K);
 		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
 		if ((baser & GITS_BASER_PGSZ_MASK) == GITS_BASER_PGSZ_64K)
-			goto found;
+			goto dfound;
 		
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
 		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_16K);
 		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
 		if ((baser & GITS_BASER_PGSZ_MASK) == GITS_BASER_PGSZ_16K)
-			goto found;
+			goto dfound;
 
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
 		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_4K);
 		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
 
-	found:
+	dfound:
 		switch (baser & GITS_BASER_PGSZ_MASK) {
 		case GITS_BASER_PGSZ_4K:
 			sc->sc_dtt_pgsz = PAGE_SIZE;
@@ -1450,7 +1459,7 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		/* Calculate table size. */
-		sc->sc_dte_sz = GITS_BASER_DTE_SZ(baser) + 1;
+		sc->sc_dte_sz = GITS_BASER_TTE_SZ(baser) + 1;
 		size = (1ULL << sc->sc_devbits) * sc->sc_dte_sz;
 		size = roundup(size, sc->sc_dtt_pgsz);
 
@@ -1468,6 +1477,67 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
 		    GITS_BASER_IC_NORM_NC | baser & GITS_BASER_PGSZ_MASK | 
 		    dtt_pa | (size / sc->sc_dtt_pgsz) - 1 | GITS_BASER_VALID);
+	}
+
+	/* Set up collection translation table. */
+	for (i = 0; i < GITS_NUM_BASER; i++) {
+		uint64_t baser;
+		paddr_t ctt_pa;
+		size_t size;
+
+		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
+		if ((baser & GITS_BASER_TYPE_MASK) != GITS_BASER_TYPE_COLL)
+			continue;
+
+		/* Determine the maximum supported page size. */
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
+		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_64K);
+		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
+		if ((baser & GITS_BASER_PGSZ_MASK) == GITS_BASER_PGSZ_64K)
+			goto cfound;
+
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
+		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_16K);
+		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
+		if ((baser & GITS_BASER_PGSZ_MASK) == GITS_BASER_PGSZ_16K)
+			goto cfound;
+
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
+		    (baser & ~GITS_BASER_PGSZ_MASK) | GITS_BASER_PGSZ_4K);
+		baser = bus_space_read_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i));
+
+	cfound:
+		switch (baser & GITS_BASER_PGSZ_MASK) {
+		case GITS_BASER_PGSZ_4K:
+			sc->sc_ctt_pgsz = PAGE_SIZE;
+			break;
+		case GITS_BASER_PGSZ_16K:
+			sc->sc_ctt_pgsz = 4 * PAGE_SIZE;
+			break;
+		case GITS_BASER_PGSZ_64K:
+			sc->sc_ctt_pgsz = 16 * PAGE_SIZE;
+			break;
+		}
+
+		/* Calculate table size. */
+		sc->sc_cte_sz = GITS_BASER_TTE_SZ(baser) + 1;
+		size = (1ULL << sc->sc_cidbits) * sc->sc_cte_sz;
+		size = roundup(size, sc->sc_ctt_pgsz);
+
+		/* Allocate table. */
+		sc->sc_ctt = agintc_dmamem_alloc(sc->sc_dmat,
+		    size, sc->sc_ctt_pgsz);
+		if (sc->sc_ctt == NULL) {
+			printf(": can't alloc translation table\n");
+			goto unmap;
+		}
+
+		/* Configure table. */
+		ctt_pa = AGINTC_DMA_DVA(sc->sc_ctt);
+		KASSERT((ctt_pa & GITS_BASER_PA_MASK) == ctt_pa);
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh, GITS_BASER(i),
+		    GITS_BASER_IC_NORM_NC | baser & GITS_BASER_PGSZ_MASK | 
+		    ctt_pa | (size / sc->sc_ctt_pgsz) - 1 | GITS_BASER_VALID);
 	}
 
 	/* Enable ITS. */
