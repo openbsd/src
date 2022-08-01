@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.125 2022/07/07 13:52:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.126 2022/08/01 14:15:46 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -684,11 +684,10 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				}
 			} else if (flags & PGO_FREE) {
 				if (pp->pg_flags & PG_BUSY) {
-					atomic_setbits_int(&pp->pg_flags,
-					    PG_WANTED);
 					uvm_unlock_pageq();
-					rwsleep_nsec(pp, uobj->vmobjlock, PVM,
-					    "uvn_flsh", INFSLP);
+					uvm_pagewait(pp, uobj->vmobjlock,
+					    "uvn_flsh");
+					rw_enter(uobj->vmobjlock, RW_WRITE);
 					uvm_lock_pageq();
 					curoff -= PAGE_SIZE;
 					continue;
@@ -1054,9 +1053,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->pg_flags & PG_BUSY) != 0) {
-				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
-				rwsleep_nsec(ptmp, uobj->vmobjlock, PVM,
-				    "uvn_get", INFSLP);
+				uvm_pagewait(ptmp, uobj->vmobjlock, "uvn_get");
+				rw_enter(uobj->vmobjlock, RW_WRITE);
 				continue;	/* goto top of pps while loop */
 			}
 

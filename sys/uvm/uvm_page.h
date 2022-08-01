@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.68 2022/05/12 12:48:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.69 2022/08/01 14:15:46 mpi Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -233,7 +233,7 @@ void		uvm_pagefree(struct vm_page *);
 void		uvm_page_unbusy(struct vm_page **, int);
 struct vm_page	*uvm_pagelookup(struct uvm_object *, voff_t);
 void		uvm_pageunwire(struct vm_page *);
-void		uvm_pagewait(struct vm_page *, int);
+void		uvm_pagewait(struct vm_page *, struct rwlock *, const char *);
 void		uvm_pagewake(struct vm_page *);
 void		uvm_pagewire(struct vm_page *);
 void		uvm_pagezero(struct vm_page *);

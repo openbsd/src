@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.90 2021/08/30 16:59:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.91 2022/08/01 14:15:46 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -781,9 +781,7 @@ ReStart:
 			 * it and then restart.
 			 */
 			if (pg->pg_flags & PG_BUSY) {
-				atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-				rwsleep_nsec(pg, amap->am_lock, PVM | PNORELOCK,
-				    "cownow", INFSLP);
+				uvm_pagewait(pg, amap->am_lock, "cownow");
 				goto ReStart;
 			}
 

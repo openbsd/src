@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.168 2022/07/24 11:00:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.169 2022/08/01 14:15:46 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1085,6 +1085,23 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			UVM_PAGE_OWN(pg, NULL);
 		}
 	}
+}
+
+/*
+ * uvm_pagewait: wait for a busy page
+ *
+ * => page must be known PG_BUSY
+ * => object must be locked
+ * => object will be unlocked on return
+ */
+void
+uvm_pagewait(struct vm_page *pg, struct rwlock *lock, const char *wmesg)
+{
+	KASSERT(rw_lock_held(lock));
+	KASSERT((pg->pg_flags & PG_BUSY) != 0);
+
+	atomic_setbits_int(&pg->pg_flags, PG_WANTED);
+	rwsleep_nsec(pg, lock, PVM | PNORELOCK, wmesg, INFSLP);
 }
 
 #if defined(UVM_PAGE_TRKOWN)
