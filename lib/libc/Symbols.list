@@ -1763,4 +1763,4 @@ yp_order
 yperr_string
 ypprot_err
 _yp_check		/* chpass, passwd, login_chpass */
-yp_unbind		/* passwd */
+yp_unbind
