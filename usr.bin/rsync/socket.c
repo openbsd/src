@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.31 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: socket.c,v 1.32 2022/08/02 18:09:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -75,14 +75,18 @@ static int
 inet_connect(int *sd, const struct source *src, const char *host,
     const struct source *bsrc, size_t bsrcsz)
 {
-	int	 c, flags;
+	struct pollfd	pfd;
+	socklen_t	optlen;
+	int		c;
+	int		optval;
 
 	if (*sd != -1)
 		close(*sd);
 
 	LOG2("trying: %s, %s", src->ip, host);
 
-	if ((*sd = socket(src->family, SOCK_STREAM, 0)) == -1) {
+	if ((*sd = socket(src->family, SOCK_STREAM | SOCK_NONBLOCK, 0))
+	    == -1) {
 		ERR("socket");
 		return -1;
 	}
@@ -94,31 +98,40 @@ inet_connect(int *sd, const struct source *src, const char *host,
 
 	/*
 	 * Initiate blocking connection.
-	 * We use the blocking connect() instead of passing NONBLOCK to
-	 * the socket() function because we don't need to do anything
-	 * while waiting for this to finish.
+	 * We use non-blocking connect() so we can poll() for contimeout.
 	 */
 
-	c = connect(*sd, (const struct sockaddr *)&src->sa, src->salen);
+	if ((c = connect(*sd, (const struct sockaddr *)&src->sa, src->salen))
+	    != 0 && errno == EINPROGRESS) {
+		pfd.fd = *sd;
+		pfd.events = POLLOUT;
+		switch (c = poll(&pfd, 1, poll_contimeout)) {
+		case 1:
+			optlen = sizeof(optval);
+			if ((c = getsockopt(*sd, SOL_SOCKET, SO_ERROR, &optval,
+			    &optlen)) == 0) {
+				errno = optval;
+				if (optval != 0)
+					c = -1;
+			}
+			break;
+		case 0:
+			errno = ETIMEDOUT;
+			WARNX("connect timeout: %s, %s", src->ip, host);
+			return 0;
+		default:
+			ERR("poll failed");
+			return -1;
+		}
+	}
 	if (c == -1) {
 		if (errno == EADDRNOTAVAIL)
 			return 0;
 		if (errno == ECONNREFUSED || errno == EHOSTUNREACH) {
-			WARNX("connect refused: %s, %s",
-			    src->ip, host);
+			WARNX("connect refused: %s, %s", src->ip, host);
 			return 0;
 		}
 		ERR("connect");
-		return -1;
-	}
-
-	/* Set up non-blocking mode. */
-
-	if ((flags = fcntl(*sd, F_GETFL, 0)) == -1) {
-		ERR("fcntl");
-		return -1;
-	} else if (fcntl(*sd, F_SETFL, flags|O_NONBLOCK) == -1) {
-		ERR("fcntl");
 		return -1;
 	}
 

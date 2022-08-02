@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.29 2021/11/26 03:41:39 jsg Exp $
+.\"	$OpenBSD: rsync.1,v 1.30 2022/08/02 18:09:20 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: August 2 2022 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Op Fl e Ar program
 .Op Fl -address Ns = Ns Ar sourceaddr
 .Op Fl -compare-dest Ns = Ns Ar directory
+.Op Fl -contimeout Ns = Ns Ar seconds
 .Op Fl -del
 .Op Fl -exclude Ar pattern
 .Op Fl -exclude-from Ns = Ns Ar file
@@ -77,6 +78,10 @@ directories may be provided.
 If
 .Ar directory
 is a relative path, it is relative to the destination directory.
+.It Fl -contimeout Ns = Ns Ar seconds
+Set the connection timeout in seconds.
+Exit if no connection established within the specified time.
+The default is 0, which means no timeout.
 .It Fl D
 Also transfer device and special files.
 Shorthand for

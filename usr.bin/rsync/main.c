@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2021/11/03 14:42:12 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.64 2022/08/02 18:09:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,6 +31,7 @@
 #include "extern.h"
 
 int verbose;
+int poll_contimeout;
 int poll_timeout;
 
 /*
@@ -286,6 +287,7 @@ static struct opts	 opts;
 #define OP_LINK_DEST	1011
 #define OP_MAX_SIZE	1012
 #define OP_MIN_SIZE	1013
+#define OP_CONTIMEOUT	1014
 
 const struct option	 lopts[] = {
     { "address",	required_argument, NULL,		OP_ADDRESS },
@@ -296,6 +298,7 @@ const struct option	 lopts[] = {
     { "link-dest",	required_argument, NULL,		OP_LINK_DEST },
 #endif
     { "compress",	no_argument,	NULL,			'z' },
+    { "contimeout",	required_argument, NULL,		OP_CONTIMEOUT },
     { "del",		no_argument,	&opts.del,		1 },
     { "delete",		no_argument,	&opts.del,		1 },
     { "devices",	no_argument,	&opts.devices,		1 },
@@ -411,6 +414,12 @@ main(int argc, char *argv[])
 		case OP_ADDRESS:
 			opts.address = optarg;
 			break;
+		case OP_CONTIMEOUT:
+			poll_contimeout = strtonum(optarg, 0, 60*60, &errstr);
+			if (errstr != NULL)
+				errx(ERR_SYNTAX, "timeout is %s: %s",
+				    errstr, optarg);
+			break;
 		case OP_PORT:
 			opts.port = optarg;
 			break;
@@ -503,9 +512,16 @@ basedir:
 	if (opts.port == NULL)
 		opts.port = "rsync";
 
+	/* by default and for --contimeout=0 disable poll_contimeout */
+	if (poll_contimeout == 0)
+		poll_contimeout = -1;
+	else
+		poll_contimeout *= 1000;
+
 	/* by default and for --timeout=0 disable poll_timeout */
 	if (poll_timeout == 0)
-		poll_timeout = -1; else
+		poll_timeout = -1;
+	else
 		poll_timeout *= 1000;
 
 	/*
@@ -614,10 +630,11 @@ basedir:
 usage:
 	fprintf(stderr, "usage: %s"
 	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr]\n"
-	    "\t[--compare-dest=dir] [--del] [--exclude] [--exclude-from=file]\n"
-	    "\t[--include] [--include-from=file] [--no-motd] [--numeric-ids]\n"
-	    "\t[--port=portnumber] [--rsync-path=program] [--timeout=seconds]\n"
-	    "\t[--version] source ... directory\n",
+	    "\t[--contimeout=seconds [--compare-dest=dir] [--del] [--exclude]\n"
+	    "\t[--exclude-from=file] [--include] [--include-from=file]\n"
+	    "\t[--no-motd] [--numeric-ids] [--port=portnumber]\n"
+	    "\t[--rsync-path=program] [--timeout=seconds] [--version]\n"
+	    "\tsource ... directory\n",
 	    getprogname());
 	exit(ERR_SYNTAX);
 }
