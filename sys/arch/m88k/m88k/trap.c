@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.120 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.121 2022/08/02 20:15:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -868,7 +868,17 @@ m88110_user_fault:
 #endif
 		} else {
 			fault_addr = frame->tf_dlar;
-			if (frame->tf_dsr & CMMU_DSR_RW) {
+			/*
+			 * Unlike the 88100, there is no specific bit telling
+			 * us this is the read part of an xmem operation.
+			 * However, if the WE (Write Exception) bit is set,
+			 * then obviously this is not a read fault.
+			 * But the value of this bit can not be relied upon
+			 * if either PI or SI are set...
+			 */
+			if ((frame->tf_dsr & CMMU_DSR_RW) != 0 &&
+			    ((frame->tf_dsr & (CMMU_DSR_PI|CMMU_DSR_SI)) != 0 ||
+			     (frame->tf_dsr & CMMU_DSR_WE) == 0)) {
 				access_type = PROT_READ;
 				fault_code = PROT_READ;
 			} else {
