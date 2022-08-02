@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.85 2022/07/24 11:00:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.86 2022/08/02 14:04:06 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -258,6 +258,15 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vsize_t size;
 	struct vm_page *pp;
 
+#if defined(__HAVE_PMAP_DIRECT) && !defined(PMAP_PREFER)
+	/* use direct mappings for single page */
+	if (npages == 1) {
+		KASSERT(pps[0]);
+		KASSERT(pps[0]->pg_flags & PG_BUSY);
+		return pmap_map_direct(pps[0]);
+	}
+#endif
+
 	prot = PROT_READ;
 	if (flags & UVMPAGER_MAPIN_READ)
 		prot |= PROT_WRITE;
@@ -294,6 +303,13 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 void
 uvm_pagermapout(vaddr_t kva, int npages)
 {
+#if defined(__HAVE_PMAP_DIRECT) && !defined(PMAP_PREFER)
+	/* use direct mappings for single page */
+	if (npages == 1) {
+		pmap_unmap_direct(kva);
+		return;
+	}
+#endif
 
 	pmap_remove(pmap_kernel(), kva, kva + ((vsize_t)npages << PAGE_SHIFT));
 	pmap_update(pmap_kernel());
