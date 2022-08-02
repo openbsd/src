@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpwent.c,v 1.65 2022/07/17 03:10:47 deraadt Exp $ */
+/*	$OpenBSD: getpwent.c,v 1.66 2022/08/02 17:00:15 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Theo de Raadt
  * Copyright (c) 1988, 1993
@@ -332,12 +332,8 @@ again:
 		int keylen, datalen, r, s;
 		char *key, *data = NULL;
 
-		if (!__ypdomain) {
-			if (_yp_check(&__ypdomain) == 0) {
-				__ypmode = YPMODE_NONE;
-				goto again;
-			}
-		}
+		if (!__ypdomain)
+			yp_get_default_domain(&__ypdomain);
 		switch (__ypmode) {
 		case YPMODE_FULL:
 			if (__ypcurrent) {
@@ -538,14 +534,8 @@ __has_ypmaster(void)
 		return (checked);
 	}
 
-	if (!__ypdomain) {
-		if (_yp_check(&__ypdomain) == 0) {
-			saved_uid = uid;
-			saved_euid = euid;
-			checked = 0;
-			return (checked);	/* No domain. */
-		}
-	}
+	if (!__ypdomain)
+		yp_get_default_domain(&__ypdomain);
 
 	if (yp_first(__ypdomain, "master.passwd.byname",
 	    &key, &keylen, &result, &resultlen)) {
@@ -583,10 +573,8 @@ __yppwlookup(int lookup, char *name, uid_t uid, struct passwd *pw,
 			break;
 		switch (pw->pw_name[0]) {
 		case '+':
-			if (!__ypdomain) {
-				if (_yp_check(&__ypdomain) == 0)
-					continue;
-			}
+			if (!__ypdomain)
+				yp_get_default_domain(&__ypdomain);
 			__ypproto_set(pw, &__yppbuf, *flagsp, &yp_pw_flags);
 			if (!map) {
 				if (lookup == LOOKUP_BYNAME) {

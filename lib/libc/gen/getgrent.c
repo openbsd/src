@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrent.c,v 1.49 2022/07/17 03:10:47 deraadt Exp $ */
+/*	$OpenBSD: getgrent.c,v 1.50 2022/08/02 17:00:15 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -341,18 +341,8 @@ grscan(int search, gid_t gid, const char *name, struct group *p_gr,
 		}
 #ifdef YP
 		if (line[0] == '+' || line[0] == '-') {
-			if (__ypdomain == NULL &&
-			    yp_get_default_domain(&__ypdomain))
-				goto parse;
-			switch (yp_bind(__ypdomain)) {
-			case 0:
-				break;
-			case YPERR_BADARGS:
-			case YPERR_YPBIND:
-				goto parse;
-			default:
-				return 0;
-			}
+			if (!__ypdomain)
+				yp_get_default_domain(&__ypdomain);
 		}
 		if (line[0] == '+') {
 			switch (line[1]) {

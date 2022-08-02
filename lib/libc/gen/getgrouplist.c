@@ -1,4 +1,4 @@
-/*	$OpenBSD: getgrouplist.c,v 1.29 2022/07/17 03:10:47 deraadt Exp $ */
+/*	$OpenBSD: getgrouplist.c,v 1.30 2022/08/02 17:00:15 deraadt Exp $ */
 /*
  * Copyright (c) 2008 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 1991, 1993
@@ -223,9 +223,8 @@ getgrouplist(const char *uname, gid_t agroup, gid_t *groups, int *grpcnt)
 		}
 
 		/* Only access YP when there is no static entry. */
-		if (!yp_bind(__ypdomain) &&
-		    !yp_match(__ypdomain, "netid.byname", key,
-			     (int)strlen(key), &ypdata, &ypdatalen))
+		if (!yp_match(__ypdomain, "netid.byname", key,
+		    (int)strlen(key), &ypdata, &ypdatalen))
 			if (_parse_netid(ypdata, pwstore.pw_uid,
 			    groups, &ngroups, maxgroups) == -1)
 				ret = -1;

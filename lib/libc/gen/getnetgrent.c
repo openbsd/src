@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.28 2016/09/24 12:43:37 millert Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.29 2022/08/02 17:00:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -619,7 +619,8 @@ setnetgrent(const char *ng)
 {
 	struct stringlist	*sl;
 #ifdef YP
-	char			*line;
+	static char		*__ypdomain;
+	char			*line = NULL;
 #endif
 	char			*ng_copy, *ypdom = NULL;
 
@@ -639,10 +640,12 @@ setnetgrent(const char *ng)
 	 * We use yp if there is a "+" in the netgroup file, or if there is
 	 * no netgroup file at all
 	 */
-	if (_ng_db == NULL || lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0)
-		yp_get_default_domain(&ypdom);
-	else
-		free(line);
+	if (_ng_db == NULL || lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0) {
+		if (!__ypdomain)
+			yp_get_default_domain(&__ypdomain);
+		ypdom = __ypdomain;
+	}
+	free(line);
 #endif
 	ng_copy = strdup(ng);
 	if (ng_copy != NULL)
@@ -673,9 +676,10 @@ DEF_WEAK(getnetgrent);
 int
 innetgr(const char *grp, const char *host, const char *user, const char *domain)
 {
-	char	*ypdom = NULL, *grpdup;
+	char		*ypdom = NULL, *grpdup;
 #ifdef YP
-	char	*line = NULL;
+	static char	*__ypdomain;
+	char		*line = NULL;
 #endif
 	int	 found;
 	struct stringlist *sl;
@@ -688,10 +692,11 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 	 * We use yp if there is a "+" in the netgroup file, or if there is
 	 * no netgroup file at all
 	 */
-	if (_ng_db == NULL)
-		yp_get_default_domain(&ypdom);
-	else if (lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0)
-		yp_get_default_domain(&ypdom);
+	if (_ng_db == NULL || lookup(NULL, "+", &line, _NG_KEYBYNAME) == 0) {
+		if (!__ypdomain)
+			yp_get_default_domain(&__ypdomain);
+		ypdom = __ypdomain;
+	}
 
 	free(line);
 #endif
