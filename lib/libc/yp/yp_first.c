@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_first.c,v 1.11 2015/09/13 20:57:28 guenther Exp $ */
+/*	$OpenBSD: yp_first.c,v 1.12 2022/08/02 16:59:29 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -41,7 +41,7 @@ yp_first(const char *indomain, const char *inmap, char **outkey, int *outkeylen,
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
-	struct dom_binding *ysd;
+	struct dom_binding *ysd = NULL;
 	struct timeval  tv;
 	int tries = 0, r;
 
@@ -69,7 +69,7 @@ again:
 	if (r != RPC_SUCCESS) {
 		if (tries++)
 			clnt_perror(ysd->dom_client, "yp_first: clnt_call");
-		ysd->dom_vers = -1;
+		_yp_unbind(ysd);
 		goto again;
 	}
 	if (!(r = ypprot_err(yprkv.stat))) {

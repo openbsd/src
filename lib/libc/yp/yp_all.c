@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.15 2022/07/18 02:31:19 deraadt Exp $ */
+/*	$OpenBSD: yp_all.c,v 1.16 2022/08/02 16:59:29 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -101,7 +101,7 @@ int
 yp_all(const char *dom, const char *inmap, struct ypall_callback *incallback)
 {
 	struct ypreq_nokey yprnk;
-	struct dom_binding *ypbinding;
+	struct dom_binding ypbinding;
 	struct timeval  tv;
 	int connected = 1;
 	u_long		status;
@@ -118,24 +118,18 @@ again:
 	s = ypconnect(SOCK_STREAM);
 	if (s == -1)
 		return YPERR_DOMAIN;	/* YP not running */
+	ypbinding.dom_socket = s;
+	ypbinding.dom_server_addr.sin_port = -1; /* don't consult portmap */
 
-	ypbinding = calloc(1, sizeof *ypbinding);
-	if (ypbinding == NULL) {
-		close(s);
-		return YPERR_RESRC;
-	}
-	ypbinding->dom_socket = s;
-	ypbinding->dom_server_addr.sin_port = -1; /* don't consult portmap */
-
-	ypbinding->dom_client = clnttcp_create(&ypbinding->dom_server_addr,
-	    YPPROG, YPVERS, &ypbinding->dom_socket, 0, 0);
-	if (ypbinding->dom_client == NULL) {
-		close(ypbinding->dom_socket);
-		free(ypbinding);
+	ypbinding.dom_client = clnttcp_create(&ypbinding.dom_server_addr,
+	    YPPROG, YPVERS, &ypbinding.dom_socket, 0, 0);
+	if (ypbinding.dom_client == NULL) {
+		close(ypbinding.dom_socket);
+		ypbinding.dom_socket = -1;
 		clnt_pcreateerror("clnttcp_create");
 		goto again;
 	}
-	clnt_control(ypbinding->dom_client, CLSET_CONNECTED, &connected);
+	clnt_control(ypbinding.dom_client, CLSET_CONNECTED, &connected);
 
 	tv.tv_sec = _yplib_timeout;
 	tv.tv_usec = 0;
@@ -143,11 +137,10 @@ again:
 	yprnk.map = (char *)inmap;
 	ypresp_allfn = incallback->foreach;
 	ypresp_data = (void *) incallback->data;
-	(void) clnt_call(ypbinding->dom_client, YPPROC_ALL,
+	(void) clnt_call(ypbinding.dom_client, YPPROC_ALL,
 	    xdr_ypreq_nokey, &yprnk, _xdr_ypresp_all_seq, &status, tv);
-	close(ypbinding->dom_socket);
-	clnt_destroy(ypbinding->dom_client);
-	free(ypbinding);
+	close(ypbinding.dom_socket);
+	clnt_destroy(ypbinding.dom_client);
 
 	if (status != YP_FALSE)
 		r = ypprot_err(status);

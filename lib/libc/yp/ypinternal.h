@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.13 2022/07/17 03:08:58 deraadt Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.14 2022/08/02 16:59:30 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -31,14 +31,9 @@
  * yp_prot.h and yp.h.
  */
 struct dom_binding {
-	struct dom_binding *dom_pnext;
-	char dom_domain[YPMAXDOMAIN + 1];
 	struct sockaddr_in dom_server_addr;
-	u_short dom_server_port;
 	int dom_socket;
 	CLIENT *dom_client;
-	u_short dom_local_port;
-	long dom_vers;
 };
 
 #define BINDINGDIR	"/var/yp/binding"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.17 2015/09/13 20:57:28 guenther Exp $ */
+/*	$OpenBSD: ypmatch_cache.c,v 1.18 2022/08/02 16:59:30 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -187,7 +187,7 @@ again:
 	if (r != RPC_SUCCESS) {
 		if (tries++)
 			clnt_perror(ysd->dom_client, "yp_match: clnt_call");
-		ysd->dom_vers = -1;
+		_yp_unbind(ysd);
 		goto again;
 	}
 	if (!(r = ypprot_err(yprv.stat))) {
@@ -248,7 +248,7 @@ again:
 	if (r != RPC_SUCCESS) {
 		if (tries++)
 			clnt_perror(ysd->dom_client, "yp_next: clnt_call");
-		ysd->dom_vers = -1;
+		_yp_unbind(ysd);
 		goto again;
 	}
 	if (!(r = ypprot_err(yprkv.stat))) {

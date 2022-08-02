@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_get_default_domain.c,v 1.9 2015/09/13 20:57:28 guenther Exp $ */
+/*	$OpenBSD: yp_get_default_domain.c,v 1.10 2022/08/02 16:59:30 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -33,17 +33,27 @@
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
+#include "thread_private.h"
+
+_THREAD_PRIVATE_KEY(yp_get_default_domain);
 
 int
 yp_get_default_domain(char **domp)
 {
+	int r = 0;
+
+	_THREAD_PRIVATE_MUTEX_LOCK(yp_get_default_domain);
 	*domp = NULL;
-	if (_yp_domain[0] == '\0')
-		if (getdomainname(_yp_domain, sizeof _yp_domain))
-			return YPERR_NODOM;
+	if (_yp_domain[0] == '\0') {
+		if (getdomainname(_yp_domain, sizeof _yp_domain) ||
+		    _yp_domain[0] == '\0') {
+			r = YPERR_NODOM;
+			goto out;
+		}
+	}
 	*domp = _yp_domain;
-	if (_yp_domain[0] == '\0')
-		return YPERR_NODOM;
-	return 0;
+out:
+	_THREAD_PRIVATE_MUTEX_UNLOCK(yp_get_default_domain);
+	return r;
 }
 DEF_WEAK(yp_get_default_domain);

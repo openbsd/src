@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_order.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: yp_order.c,v 1.11 2022/08/02 16:59:30 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -72,7 +72,7 @@ again:
 	}
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_order: clnt_call");
-		ysd->dom_vers = -1;
+		_yp_unbind(ysd);
 		goto again;
 	}
 	*outorder = ypro.ordernum;

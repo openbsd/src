@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.31 2022/07/22 05:55:05 jsg Exp $ */
+/*	$OpenBSD: yp_bind.c,v 1.32 2022/08/02 16:59:29 deraadt Exp $ */
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
@@ -43,13 +43,13 @@
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 
-static struct dom_binding *ypbinding;
 char _yp_domain[HOST_NAME_MAX+1];
 int _yplib_timeout = 10;
 
 int
 _yp_dobind(const char *dom, struct dom_binding **ypdb)
 {
+	struct dom_binding *ypbinding;
 	struct timeval tv;
 	int connected = 1;
 	int s;
@@ -57,19 +57,15 @@ _yp_dobind(const char *dom, struct dom_binding **ypdb)
 	if (dom == NULL || strlen(dom) == 0)
 		return YPERR_BADARGS;
 
-again:
-	if (ypbinding && ypbinding->dom_client)
-		_yp_unbind(ypbinding);
-
-	s = ypconnect(SOCK_DGRAM);
-	if (s == -1)
-		return YPERR_YPBIND;	/* YP not running */
-
-	free(ypbinding);
-	ypbinding = calloc(1, sizeof *ypbinding);
-	if (ypbinding == NULL) {
-		close(s);
+	ypbinding = calloc(1, sizeof (*ypbinding));
+	if (ypbinding == NULL)
 		return YPERR_RESRC;
+
+again:
+	s = ypconnect(SOCK_DGRAM);
+	if (s == -1) {
+		free(ypbinding);
+		return YPERR_YPBIND;	/* YP not running */
 	}
 	ypbinding->dom_socket = s;
 	ypbinding->dom_server_addr.sin_port = -1; /* don't consult portmap */
@@ -80,14 +76,12 @@ again:
 	    YPPROG, YPVERS, tv, &ypbinding->dom_socket);
 	if (ypbinding->dom_client == NULL) {
 		close(ypbinding->dom_socket);
-		free(ypbinding);
-		ypbinding = NULL;
+		ypbinding->dom_socket = -1;
 		clnt_pcreateerror("clntudp_create");
 		goto again;
 	}
 	clnt_control(ypbinding->dom_client, CLSET_CONNECTED, &connected);
-	if (ypdb)
-		*ypdb = ypbinding;
+	*ypdb = ypbinding;
 	return 0;
 }
 
@@ -95,20 +89,30 @@ void
 _yp_unbind(struct dom_binding *ypb)
 {
 	close(ypb->dom_socket);
-	ypb->dom_socket = -1;
-	clnt_destroy(ypb->dom_client);
-	ypb->dom_client = NULL;
+	if (ypb->dom_client)
+		clnt_destroy(ypb->dom_client);
+	free(ypb);
 }
 
+/*
+ * Check if YP is running.  But do not leave it active, because we
+ * may not return from libc with a fd active.
+ */
 int
 yp_bind(const char *dom)
 {
-	return _yp_dobind(dom, NULL);
+	struct dom_binding *ysd;
+	int r;
+
+	r = _yp_dobind(dom, &ysd);
+	if (r == 0)
+		_yp_unbind(ysd);
+	return r;
 }
 DEF_WEAK(yp_bind);
 
 void
 yp_unbind(const char *dom)
 {
-	_yp_unbind(ypbinding);
+	/* do nothing */
 }
