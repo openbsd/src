@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.163 2022/06/14 07:29:00 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.164 2022/08/02 11:09:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -87,6 +87,9 @@ static const char *options_table_detach_on_destroy_list[] = {
 };
 static const char *options_table_extended_keys_list[] = {
 	"off", "on", "always", NULL
+};
+static const char *options_table_allow_passthrough_list[] = {
+	"off", "on", "all", NULL
 };
 
 /* Status line format. */
@@ -804,11 +807,14 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "allow-passthrough",
-	  .type = OPTIONS_TABLE_FLAG,
+	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .choices = options_table_allow_passthrough_list,
 	  .default_num = 0,
 	  .text = "Whether applications are allowed to use the escape sequence "
-	          "to bypass tmux."
+		  "to bypass tmux. Can be 'off' (disallowed), 'on' (allowed "
+		  "if the pane is visible), or 'all' (allowed even if the pane "
+		  "is invisible)."
 	},
 
 	{ .name = "allow-rename",

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.208 2022/06/09 09:12:55 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.209 2022/08/02 11:09:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2100,13 +2100,15 @@ screen_write_setselection(struct screen_write_ctx *ctx, const char *flags,
 
 /* Write unmodified string. */
 void
-screen_write_rawstring(struct screen_write_ctx *ctx, u_char *str, u_int len)
+screen_write_rawstring(struct screen_write_ctx *ctx, u_char *str, u_int len,
+    int allow_invisible_panes)
 {
 	struct tty_ctx	ttyctx;
 
 	screen_write_initctx(ctx, &ttyctx, 0);
 	ttyctx.ptr = str;
 	ttyctx.num = len;
+	ttyctx.allow_invisible_panes = allow_invisible_panes;
 
 	tty_write(tty_cmd_rawstring, &ttyctx);
 }
