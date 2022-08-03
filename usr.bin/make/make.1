@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.135 2022/03/31 17:27:25 naddy Exp $
+.\"	$OpenBSD: make.1,v 1.136 2022/08/03 07:54:47 jsg Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 3 2022 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1598,12 +1598,17 @@ should probably be avoided for greater compatibility.
 .Sh HISTORY
 A
 .Nm
-command appeared in
-.At v7 .
+command first appeared outside of Bell Labs in PWB/UNIX 1.0.
+It was replaced in
+.Bx 4.3 Reno .
+.Sh AUTHORS
+.An Stuart Feldman
+wrote the original implementation at the
+Bell Labs Computing Sciences Research Center.
 .Pp
 This implementation is a distant derivative of
 .Nm pmake ,
-originally written by Adam de Boor.
+originally written by Adam de Boor for the Sprite operating system.
 .Sh BUGS
 If the same target is specified several times in complete target rules,
 .Nm
