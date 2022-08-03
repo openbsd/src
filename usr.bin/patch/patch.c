@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.69 2019/12/02 22:17:32 jca Exp $	*/
+/*	$OpenBSD: patch.c,v 1.70 2022/08/03 07:25:44 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -260,7 +260,8 @@ main(int argc, char *argv[])
 			if (!skip_rest_of_patch) {
 				do {
 					where = locate_hunk(fuzz);
-					if (hunk == 1 && where == 0 && !force) {
+					if ((hunk == 1 && where == 0 && !force) ||
+					    (where == 1 && pch_ptrn_lines() == 0 && !force)) {
 						/* dwim for reversed patch? */
 						if (!pch_swap()) {
 							if (fuzz == 0)
@@ -276,6 +277,10 @@ main(int argc, char *argv[])
 								/* put it back to normal */
 								fatal("lost hunk on alloc error!\n");
 							reverse = !reverse;
+
+							/* restore position if this patch creates a file */
+							if (pch_ptrn_lines() == 0)
+								where = 1;
 						} else if (noreverse) {
 							if (!pch_swap())
 								/* put it back to normal */
