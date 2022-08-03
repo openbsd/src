@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.20 2022/04/28 15:42:10 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.21 2022/08/03 20:17:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -70,6 +70,12 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+
+/* XXX: temporary workarounds until the next libcrypto bump. */
+#define PKCS12_get_attr(bag, attr_nid) \
+			 PKCS12_get_attr_gen(bag->attrib, attr_nid)
+#undef PKCS12_certbag2x509
+X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag);
 
 #define NOKEYS		0x1
 #define NOCERTS 	0x2
