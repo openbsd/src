@@ -1,15 +1,11 @@
-# $OpenBSD: Makefile,v 1.13 2017/07/06 21:33:45 bluhm Exp $
+# $OpenBSD: Makefile,v 1.14 2022/08/03 07:35:04 op Exp $
 
 PATCH?=		patch
 PATCHFLAGS=	-sN
 CLEANFILES=	*.copy *.orig *.rej t5 d19/*
 
 REGRESS_TARGETS=     t1  t2  t3  t4  t5  t6  t7  t8  t9 \
-		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19
-
-t3:
-	@echo ${*} currently fails
-	@echo DISABLED
+		t10 t11 t12 t13 t14 t15 t16 t17 t18 t19 t20
 
 # .in: input file
 # .diff: patch
@@ -18,7 +14,7 @@ t3:
 # t1: diff contains invalid line number 0.
 # t2: diff contains invalid line numbers beyond end of input file.
 # t3: a case where patch should detect a previously applied patch.
-#     Diff transform an empty file into a single line one. Currently fails.
+#     Diff transform an empty file into a single line one.
 # t4: a case where patch has to detect a previously applied patch.
 #     Diff transform a file with a single line with an eol into a single
 #     line without eol.
@@ -31,6 +27,8 @@ t3:
 # t16: diff in ed format.
 # t17: diff in ed format that inserts a dot-line.
 # t18: diff in ed format that fully replaces input content.
+# t19: git-produced unified diff.
+# t20: reversal application of a patch to create a file with a single line.
 
 .SUFFIXES: .in
 
@@ -47,6 +45,7 @@ t3:
 	@(! ${PATCH} ${PATCHFLAGS} ${*}.copy ${.CURDIR}/${*}.diff)
 	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
 		(echo "XXX ${*} failed" && false)
+
 t4:
 	@echo ${*}
 	@cp ${.CURDIR}/${*}.in ${*}.copy
@@ -73,6 +72,13 @@ t19:
 	@cp ${.CURDIR}/t19.in d19/file
 	@${PATCH} -t ${PATCHFLAGS} < ${.CURDIR}/t19.diff
 	@cmp -s ${.CURDIR}/t19.out d19/file || (echo "XXX t19 failed" && false)
+
+t20:
+	@echo ${*}
+	@cp ${.CURDIR}/${*}.in ${*}.copy
+	@${PATCH} ${PATCHFLAGS} -Rf ${*}.copy ${.CURDIR}/${*}.diff
+	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
+		(echo "XXX ${*} failed" && false)
 
 .PHONY: t5
 
