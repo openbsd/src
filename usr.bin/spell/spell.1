@@ -1,4 +1,4 @@
-.\" $OpenBSD: spell.1,v 1.15 2020/02/08 01:09:58 jsg Exp $
+.\" $OpenBSD: spell.1,v 1.16 2022/08/03 07:43:45 jsg Exp $
 .\"
 .\" Copyright (C) 1985, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)spell.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: August 3 2022 $
 .Dt SPELL 1
 .Os
 .Sh NAME
@@ -223,8 +223,13 @@ Binary executed by the shell script
 The
 .Nm spell
 command first appeared in
-.At v5
-and has been available since
+.At v5 .
+It did not appear in freely redistributable
+.Bx
+releases for licensing reasons.
+After Caldera relicensed early UNIX releases the
+.Bx 4.4
+version was added to
 .Ox 3.1 .
 .Pp
 Unlike historic versions, the
