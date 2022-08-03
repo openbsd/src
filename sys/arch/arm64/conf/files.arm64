@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.57 2022/06/12 16:00:12 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.58 2022/08/03 13:42:16 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -139,6 +139,10 @@ device	agtimer
 attach	agtimer at fdt
 file	arch/arm64/dev/agtimer.c		agtimer
 
+device	aplaudio: audio
+attach	aplaudio at fdt
+file	arch/arm64/dev/aplaudio.c		aplaudio
+
 device	aplcpu
 attach	aplcpu at fdt
 file	arch/arm64/dev/aplcpu.c			aplcpu
@@ -174,6 +178,10 @@ file	arch/arm64/dev/aplhidev.c		aplhidev | aplkbd | aplms needs-flag
 device	aplmbox
 attach	aplmbox at fdt
 file	arch/arm64/dev/aplmbox.c		aplmbox
+
+device	aplmca
+attach	aplmca at fdt
+file	arch/arm64/dev/aplmca.c			aplmca
 
 device	aplnco
 attach	aplnco at fdt
