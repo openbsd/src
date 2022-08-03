@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.187 2021/10/07 14:11:32 robert Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.188 2022/08/03 05:54:50 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -359,6 +359,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d7676:
 		this->name = "IDT 92HD73E1";	/* aka 92HDW74E1 */
+		break;
+	case 0x111d7695:
+		this->name = "IDT 92HD95";	/* aka IDT/TSI 92HD95B */
 		break;
 	case 0x111d76b0:
 		this->name = "IDT 92HD71B8";
