@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.60 2021/03/08 02:47:28 jsg Exp $
+.\"	$OpenBSD: sed.1,v 1.61 2022/08/03 08:16:50 jsg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: August 3 2022 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -600,5 +600,14 @@ is portable.
 .Sh HISTORY
 A
 .Nm
-command appeared in
-.At v7 .
+command first appeared outside of Bell Labs in PWB/UNIX 1.0.
+It was replaced in
+.Bx 4.4 .
+.Sh AUTHORS
+.An Lee McMahon
+wrote the original implementation at the
+Bell Labs Computing Sciences Research Center.
+The
+.Bx 4.4
+implementation was written by
+.An Diomidis Spinellis .
