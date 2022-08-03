@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.40 2022/08/01 20:48:19 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.41 2022/08/03 13:36:51 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -481,6 +481,8 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Disable all interrupts, clear all pending */
 	for (i = 1; i < nintr / 32; i++) {
+		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
+		    GICD_ICACTIVER(i * 32), ~0);
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
 		    GICD_ICENABLER(i * 32), ~0);
 	}
