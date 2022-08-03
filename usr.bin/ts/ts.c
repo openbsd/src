@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.8 2022/07/07 10:40:25 claudio Exp $	*/
+/*	$OpenBSD: ts.c,v 1.9 2022/08/03 16:54:30 job Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -71,6 +71,8 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	setvbuf(stdout, NULL, _IOLBF, 0);
 
 	if ((iflag && sflag) || argc > 1)
 		usage();
