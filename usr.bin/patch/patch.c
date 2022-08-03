@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.70 2022/08/03 07:25:44 op Exp $	*/
+/*	$OpenBSD: patch.c,v 1.71 2022/08/03 07:30:37 op Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -651,6 +651,8 @@ locate_hunk(LINENUM fuzz)
 		    || diff_type == UNI_DIFF)) {
 			say("Empty context always matches.\n");
 		}
+		if (first_guess == 0)
+			return 1;
 		return (first_guess);
 	}
 	if (max_neg_offset >= first_guess)	/* do not try lines < 0 */
