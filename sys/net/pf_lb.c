@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.70 2022/02/16 08:46:11 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.71 2022/08/03 08:16:04 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -344,6 +344,17 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	return (0);
 }
 
+uint32_t
+pf_rand_addr(uint32_t mask)
+{
+	uint32_t addr;
+
+	mask = ~ntohl(mask);
+	addr = arc4random_uniform(mask + 1);
+
+	return (htonl(addr));
+}
+
 int
 pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sns,
@@ -428,24 +439,29 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		} else if (init_addr != NULL && PF_AZERO(init_addr, af)) {
 			switch (af) {
 			case AF_INET:
-				rpool->counter.addr32[0] = arc4random();
+				rpool->counter.addr32[0] = pf_rand_addr(
+				    rmask->addr32[0]);
 				break;
 #ifdef INET6
 			case AF_INET6:
 				if (rmask->addr32[3] != 0xffffffff)
-					rpool->counter.addr32[3] = arc4random();
+					rpool->counter.addr32[3] = pf_rand_addr(
+					    rmask->addr32[3]);
 				else
 					break;
 				if (rmask->addr32[2] != 0xffffffff)
-					rpool->counter.addr32[2] = arc4random();
+					rpool->counter.addr32[2] = pf_rand_addr(
+					    rmask->addr32[2]);
 				else
 					break;
 				if (rmask->addr32[1] != 0xffffffff)
-					rpool->counter.addr32[1] = arc4random();
+					rpool->counter.addr32[1] = pf_rand_addr(
+					    rmask->addr32[1]);
 				else
 					break;
 				if (rmask->addr32[0] != 0xffffffff)
-					rpool->counter.addr32[0] = arc4random();
+					rpool->counter.addr32[0] = pf_rand_addr(
+					    rmask->addr32[0]);
 				break;
 #endif /* INET6 */
 			default:
@@ -500,11 +516,16 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			}
 		} else if (PF_AZERO(&rpool->counter, af)) {
 			/*
-			 * fall back to POOL_NONE if there are no addresses in
-			 * pool
+			 * fall back to POOL_NONE if there is a single host
+			 * address in pool.
 			 */
-			pf_addrcpy(naddr, raddr, af);
-			break;
+			if ((af == AF_INET &&
+			    rmask->addr32[0] == INADDR_BROADCAST) ||
+			    (af == AF_INET6 &&
+			    IN6_ARE_ADDR_EQUAL(&rmask->v6, &in6mask128))) {
+				pf_addrcpy(naddr, raddr, af);
+				break;
+			}
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
 
@@ -532,9 +553,9 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			weight = rpool->weight;
 		}
 
-		pf_addrcpy(naddr, &rpool->counter, af);
+		pf_poolmask(naddr, raddr, rmask, &rpool->counter, af);
 		if (init_addr != NULL && PF_AZERO(init_addr, af))
-			pf_addrcpy(init_addr, naddr, af);
+			pf_addrcpy(init_addr, &rpool->counter, af);
 		pf_addr_inc(&rpool->counter, af);
 		break;
 	case PF_POOL_LEASTSTATES:
