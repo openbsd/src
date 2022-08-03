@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.286 2022/08/03 08:11:18 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.287 2022/08/03 08:16:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -1716,6 +1716,7 @@ static int
 kroute4_remove(struct ktable *kt, struct kroute_full *kf, int any)
 {
 	struct kroute	*kr, *krm;
+	struct knexthop	*n;
 	int multipath = 1;
 
 	if ((kr = kroute_find(kt, &kf->prefix, kf->prefixlen,
@@ -1742,9 +1743,9 @@ kroute4_remove(struct ktable *kt, struct kroute_full *kf, int any)
 
 	if (krm == kr) {
 		/* head element */
-		RB_REMOVE(kroute_tree, &kt->krt, kr);
-		if (kr->next != NULL) {
-			kr = kr->next;
+		RB_REMOVE(kroute_tree, &kt->krt, krm);
+		if (krm->next != NULL) {
+			kr = krm->next;
 			if (RB_INSERT(kroute_tree, &kt->krt, kr) != NULL) {
 				log_warnx("%s: failed to add %s/%u",
 				    __func__, inet_ntoa(kr->prefix),
@@ -1765,6 +1766,15 @@ kroute4_remove(struct ktable *kt, struct kroute_full *kf, int any)
 		}
 		kr->next = krm->next;
 	}
+
+	/* check whether a nexthop depends on this kroute */
+	if (krm->flags & F_NEXTHOP) {
+		RB_FOREACH(n, knexthop_tree, KT2KNT(kt)) {
+			if (n->kroute == krm)
+				knexthop_validate(kt, n);
+		}
+	}
+
 	*kf = *kr_tofull(krm);
 
 	rtlabel_unref(krm->labelid);
@@ -1776,6 +1786,7 @@ static int
 kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 {
 	struct kroute6	*kr, *krm;
+	struct knexthop	*n;
 	int multipath = 1;
 
 	if ((kr = kroute6_find(kt, &kf->prefix, kf->prefixlen,
@@ -1802,9 +1813,9 @@ kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 
 	if (krm == kr) {
 		/* head element */
-		RB_REMOVE(kroute6_tree, &kt->krt6, kr);
-		if (kr->next != NULL) {
-			kr = kr->next;
+		RB_REMOVE(kroute6_tree, &kt->krt6, krm);
+		if (krm->next != NULL) {
+			kr = krm->next;
 			if (RB_INSERT(kroute6_tree, &kt->krt6, kr) != NULL) {
 				log_warnx("%s: failed to add %s/%u", __func__,
 				    log_in6addr(&kr->prefix), kr->prefixlen);
@@ -1824,6 +1835,15 @@ kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 		}
 		kr->next = krm->next;
 	}
+
+	/* check whether a nexthop depends on this kroute */
+	if (kr->flags & F_NEXTHOP) {
+		RB_FOREACH(n, knexthop_tree, KT2KNT(kt)) {
+			if (n->kroute == krm)
+				knexthop_validate(kt, n);
+		}
+	}
+
 	*kf = *kr6_tofull(krm);
 
 	rtlabel_unref(krm->labelid);
@@ -1835,7 +1855,6 @@ kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 int
 kroute_remove(struct ktable *kt, struct kroute_full *kf, int any)
 {
-	struct knexthop	*n;
 	int multipath;
 
 	switch (kf->prefix.aid) {
@@ -1855,15 +1874,6 @@ kroute_remove(struct ktable *kt, struct kroute_full *kf, int any)
 
 	if (kf->flags & F_BGPD_INSERTED)
 		send_rtmsg(kr_state.fd, RTM_DELETE, kt, kf);
-
-	/* check whether a nexthop depends on this kroute */
-	if (kf->flags & F_NEXTHOP) {
-		RB_FOREACH(n, knexthop_tree, KT2KNT(kt)) {
-			if (prefix_compare(&kf->prefix, &n->nexthop,
-			    kf->prefixlen) == 0)
-				knexthop_validate(kt, n);
-		}
-	}
 
 	/* remove only once all multipath routes are gone */
 	if (!(kf->flags & F_BGPD) && !multipath)
