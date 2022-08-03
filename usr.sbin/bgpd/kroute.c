@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.285 2022/07/28 14:05:13 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.286 2022/08/03 08:11:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2131,8 +2131,9 @@ knexthop_validate(struct ktable *kt, struct knexthop *kn)
 	case AID_INET:
 		kr = kroute_match(kt, &kn->nexthop, 0);
 
-		if (kr) {
+		if (kr != NULL) {
 			kn->kroute = kr;
+			kn->ifindex = kr->ifindex;
 			kr->flags |= F_NEXTHOP;
 		}
 
@@ -2141,23 +2142,20 @@ knexthop_validate(struct ktable *kt, struct knexthop *kn)
 		 * the route remains the same then the NH state has not
 		 * changed. State changes are tracked by knexthop_track().
 		 */
-		if (kr != oldk) {
-			kn->ifindex = kr->ifindex;
+		if (kr != oldk)
 			knexthop_send_update(kn);
-		}
 		break;
 	case AID_INET6:
 		kr6 = kroute6_match(kt, &kn->nexthop, 0);
 
-		if (kr6) {
+		if (kr6 != NULL) {
 			kn->kroute = kr6;
+			kn->ifindex = kr6->ifindex;
 			kr6->flags |= F_NEXTHOP;
 		}
 
-		if (kr6 != oldk) {
-			kn->ifindex = kr6->ifindex;
+		if (kr6 != oldk)
 			knexthop_send_update(kn);
-		}
 		break;
 	}
 }
@@ -2292,6 +2290,7 @@ kroute_detach_nexthop(struct ktable *kt, struct knexthop *kn)
 	}
 
 	kn->kroute = NULL;
+	kn->ifindex = 0;
 }
 
 /*
