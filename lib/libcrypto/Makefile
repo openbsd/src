@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.77 2022/07/24 08:16:47 tb Exp $
+# $OpenBSD: Makefile,v 1.78 2022/08/03 20:16:06 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -234,7 +234,7 @@ SRCS+= pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
 
 # pkcs12/
 SRCS+= p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_decr.c
-SRCS+= p12_init.c p12_key.c p12_kiss.c p12_mutl.c
+SRCS+= p12_init.c p12_key.c p12_kiss.c p12_mutl.c p12_sbag.c
 SRCS+= p12_utl.c p12_npas.c pk12err.c p12_p8d.c p12_p8e.c
 
 # pkcs7/

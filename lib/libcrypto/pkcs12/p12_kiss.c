@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_kiss.c,v 1.23 2022/07/24 18:51:16 tb Exp $ */
+/* $OpenBSD: p12_kiss.c,v 1.24 2022/08/03 20:16:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -224,14 +224,14 @@ parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen, EVP_PKEY **pkey,
 {
 	PKCS8_PRIV_KEY_INFO *p8;
 	X509 *x509;
-	ASN1_TYPE *attrib;
+	const ASN1_TYPE *attrib;
 	ASN1_BMPSTRING *fname = NULL;
 	ASN1_OCTET_STRING *lkid = NULL;
 
-	if ((attrib = PKCS12_get_attr(bag, NID_friendlyName)))
+	if ((attrib = PKCS12_SAFEBAG_get0_attr(bag, NID_friendlyName)))
 		fname = attrib->value.bmpstring;
 
-	if ((attrib = PKCS12_get_attr(bag, NID_localKeyID)))
+	if ((attrib = PKCS12_SAFEBAG_get0_attr(bag, NID_localKeyID)))
 		lkid = attrib->value.octet_string;
 
 	switch (OBJ_obj2nid(bag->type)) {

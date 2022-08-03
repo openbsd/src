@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.25 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.26 2022/08/03 20:16:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -155,11 +155,62 @@ typedef struct pkcs12_bag_st {
 #define M_PKCS12_decrypt_skey PKCS12_decrypt_skey
 #define M_PKCS8_decrypt PKCS8_decrypt
 
+#if !defined(LIBRESSL_NEXT_API)
 #define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
 #define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
 #define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
+#endif
 
 #endif /* !LIBRESSL_INTERNAL */
+
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+
+#define M_PKCS12_bag_type	PKCS12_bag_type
+#define M_PKCS12_cert_bag_type	PKCS12_cert_bag_type
+#define M_PKCS12_crl_bag_type	PKCS12_cert_bag_type
+
+#define PKCS12_bag_type		PKCS12_SAFEBAG_get_nid
+#define PKCS12_cert_bag_type	PKCS12_SAFEBAG_get_bag_nid
+
+#define PKCS12_certbag2x509	PKCS12_SAFEBAG_get1_cert
+#define PKCS12_certbag2x509crl	PKCS12_SAFEBAG_get1_crl
+
+#define PKCS12_x5092certbag	PKCS12_SAFEBAG_create_cert
+#define PKCS12_x509crl2certbag	PKCS12_SAFEBAG_create_crl
+#define PKCS12_MAKE_KEYBAG	PKCS12_SAFEBAG_create0_p8inf
+#define PKCS12_MAKE_SHKEYBAG	PKCS12_SAFEBAG_create_pkcs8_encrypt
+
+const ASN1_TYPE *PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag,
+    int attr_nid);
+const STACK_OF(X509_ATTRIBUTE) *
+    PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag);
+int PKCS12_SAFEBAG_get_nid(const PKCS12_SAFEBAG *bag);
+int PKCS12_SAFEBAG_get_bag_nid(const PKCS12_SAFEBAG *bag);
+
+X509 *PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag);
+X509_CRL *PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag);
+
+ASN1_TYPE *PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid);
+int PKCS12_mac_present(const PKCS12 *p12);
+void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac, const X509_ALGOR **pmacalg,
+    const ASN1_OCTET_STRING **psalt, const ASN1_INTEGER **piter,
+    const PKCS12 *p12);
+
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_crl(X509_CRL *crl);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8);
+PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid,
+    const char *pass, int passlen, unsigned char *salt, int saltlen, int iter,
+    PKCS8_PRIV_KEY_INFO *p8);
+
+const PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag);
+const X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag);
+const STACK_OF(PKCS12_SAFEBAG) *
+    PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag);
+const ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(const PKCS12_SAFEBAG *bag);
+
+#else /* !LIBRESSL_NEXT_API && !LIBRESSL_INTERNAL*/
 
 #define PKCS12_get_attr(bag, attr_nid) \
 			 PKCS12_get_attr_gen(bag->attrib, attr_nid)
@@ -169,24 +220,26 @@ typedef struct pkcs12_bag_st {
 
 #define PKCS12_mac_present(p12) ((p12)->mac ? 1 : 0)
 
-
 PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509);
 PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl);
 X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag);
 X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag);
 
+PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
+PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
+    int passlen, unsigned char *salt, int saltlen, int iter,
+    PKCS8_PRIV_KEY_INFO *p8);
+
+#endif /* !LIBRESSL_NEXT_API && !LIBRESSL_INTERNAL */
+
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     int nid1, int nid2);
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt(const X509_SIG *p8, const char *pass,
     int passlen);
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
     const char *pass, int passlen);
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
     const char *pass, int passlen, unsigned char *salt, int saltlen, int iter,
-    PKCS8_PRIV_KEY_INFO *p8);
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
-    int passlen, unsigned char *salt, int saltlen, int iter,
     PKCS8_PRIV_KEY_INFO *p8);
 PKCS7 *PKCS12_pack_p7data(STACK_OF(PKCS12_SAFEBAG) *sk);
 STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7);

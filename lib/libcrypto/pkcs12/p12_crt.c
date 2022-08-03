@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.18 2018/05/13 13:46:55 tb Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.19 2022/08/03 20:16:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -232,12 +232,12 @@ PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags, EVP_PKEY *key, int key_usage,
 	if (key_usage && !PKCS8_add_keyusage(p8, key_usage))
 		goto err;
 	if (nid_key != -1) {
-		bag = PKCS12_MAKE_SHKEYBAG(nid_key, pass, -1, NULL, 0,
-		    iter, p8);
+		bag = PKCS12_SAFEBAG_create_pkcs8_encrypt(nid_key, pass, -1,
+		    NULL, 0, iter, p8);
 		PKCS8_PRIV_KEY_INFO_free(p8);
 		p8 = NULL;
 	} else {
-		bag = PKCS12_MAKE_KEYBAG(p8);
+		bag = PKCS12_SAFEBAG_create0_p8inf(p8);
 		if (bag != NULL)
 			p8 = NULL;
 	}

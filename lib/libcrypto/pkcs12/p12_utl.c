@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.16 2018/05/30 15:32:11 tb Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.17 2022/08/03 20:16:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -148,6 +148,12 @@ d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 	    return ASN1_item_d2i_fp(&PKCS12_it, fp, p12);
 }
 
+#if !defined(LIBRESSL_NEXT_API)
+#undef PKCS12_x5092certbag
+#undef PKCS12_x509crl2certbag
+#undef PKCS12_certbag2x509
+#undef PKCS12_certbag2x509crl
+
 PKCS12_SAFEBAG *
 PKCS12_x5092certbag(X509 *x509)
 {
@@ -183,3 +189,4 @@ PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
 	return ASN1_item_unpack(bag->value.bag->value.octet,
 	    &X509_CRL_it);
 }
+#endif
