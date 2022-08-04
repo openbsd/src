@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.16 2015/10/03 13:22:06 stsp Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.17 2022/08/04 09:16:53 kn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 3 2015 $
+.Dd $Mdocdate: August 4 2022 $
 .Dt BOOT_SPARC64 8 sparc64
 .Os
 .Sh NAME
@@ -90,28 +90,11 @@ bootloader will then look for a kernel named
 .Pa bsd
 by default, unless the
 .Va boot-file
-variable is set, or a different filename has been specified
+variable contains a filename, or a different filename has been specified
 in the boot command.
 To reset this variable to its default, empty, value, type the following:
 .Pp
 .D1 Sy ok Li set-default boot-file
-.Pp
-To boot from a
-.Xr softraid 4
-volume by default,
-.Va boot-device
-must be set to a disk device hosting a chunk of the softraid volume:
-.Pp
-.D1 Sy ok Li setenv boot-device disk0
-.Pp
-and
-.Va boot-file
-must contain the
-.Pq Pa sr
-device name of the softraid volume and optionally a partition letter
-and/or kernel:
-.Pp
-.D1 Sy ok Li setenv boot-file sr0a:/bsd
 .Pp
 Autoboot is enabled by setting the
 .Va auto-boot?\&
