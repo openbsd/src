@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dev_mkdb.8,v 1.9 2022/08/04 06:20:24 jsg Exp $
+.\"	$OpenBSD: dev_mkdb.8,v 1.10 2022/08/04 11:50:46 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,18 +48,18 @@ which contains the names of all of the character and block special
 files in the
 .Dq Pa /dev
 directory, using the file type and the
-.Va st_rdev
+.Fa st_rdev
 field as the key.
 .Pp
 Keys are a structure containing a
-.Tn mode_t
+.Vt mode_t
 followed by a
-.Tn dev_t ,
+.Vt dev_t ,
 with any padding zeroed out.
 The former is the type of the file
-.Pq st_mode & S_IFMT ,
+.Pq Fa st_mode No & Dv S_IFMT ,
 the latter is the
-.Va st_rdev
+.Fa st_rdev
 field.
 .Sh FILES
 .Bl -tag -width /var/run/dev.db -compact
