@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.21 2020/12/12 06:35:37 bentley Exp $
+.\"	$OpenBSD: cu.1,v 1.22 2022/08/04 04:01:48 jsg Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 12 2020 $
+.Dd $Mdocdate: August 4 2022 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -203,8 +203,13 @@ host description file
 .Sh HISTORY
 The
 .Nm
-command appeared in
-.At v7 .
-This version was written for
-.Ox 5.4
-by Nicholas Marriott.
+.Pq Dq Call Unix
+command first appeared outside of Bell Labs in PWB/UNIX 1.0.
+It was reimplemented as part of the
+.Nm tip
+command in
+.Bx 4.1c .
+The current version was written for
+.Ox 5.4 .
+.Sh AUTHORS
+.An Nicholas Marriott Aq Mt nicm@openbsd.org
