@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.208 2022/06/27 10:18:27 job Exp $ */
+/*	$OpenBSD: main.c,v 1.209 2022/08/04 13:44:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1006,8 +1006,7 @@ main(int argc, char *argv[])
 		signal(SIGALRM, suicide);
 	}
 
-	/* TODO unveil cachedir and outputdir, no other access allowed */
-	if (pledge("stdio rpath wpath cpath fattr sendfd", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
 		err(1, "pledge");
 
 	msgbuf_init(&procq);
@@ -1048,7 +1047,17 @@ main(int argc, char *argv[])
 	if (filemode) {
 		while (*argv != NULL)
 			queue_add_file(*argv++, RTYPE_FILE, 0);
+
+		if (unveil(cachedir, "r") == -1)
+			err(1, "unveil cachedir");
+	} else {
+		if (unveil(outputdir, "rwc") == -1)
+			err(1, "unveil outputdir");
+		if (unveil(cachedir, "rwc") == -1)
+			err(1, "unveil cachedir");
 	}
+	if (pledge("stdio rpath wpath cpath fattr sendfd", NULL) == -1)
+		err(1, "unveil");
 
 	/* change working directory to the cache directory */
 	if (fchdir(cachefd) == -1)
