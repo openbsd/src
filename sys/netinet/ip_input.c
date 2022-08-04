@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.375 2022/07/28 22:05:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.376 2022/08/04 18:05:09 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -577,7 +577,8 @@ ip_fragcheck(struct mbuf **mp, int *offp)
 	struct ip *ip;
 	struct ipq *fp;
 	struct ipqent *ipqe;
-	int mff, hlen;
+	int hlen;
+	uint16_t mff;
 
 	ip = mtod(*mp, struct ip *);
 	hlen = ip->ip_hl << 2;

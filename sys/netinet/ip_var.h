@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.94 2022/07/25 23:19:34 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.95 2022/08/04 18:05:09 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ struct ipqent {
 	LIST_ENTRY(ipqent) ipqe_q;
 	struct ip	*ipqe_ip;
 	struct mbuf	*ipqe_m;	/* mbuf contains packet */
-	u_int8_t	ipqe_mff;	/* for IP fragmentation */
+	uint16_t	 ipqe_mff;	/* for IP fragmentation */
 };
 
 /*
