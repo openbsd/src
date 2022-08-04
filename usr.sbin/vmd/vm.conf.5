@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.57 2021/11/11 09:33:36 claudio Exp $
+.\" $OpenBSD: vm.conf.5,v 1.58 2022/08/04 11:50:51 stsp Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2021 $
+.Dd $Mdocdate: August 4 2022 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -385,7 +385,7 @@ is pre-configured using
 .Xr hostname.if 5
 or
 .Xr ifconfig 8
-(see the BRIDGE and SWITCH sections in
+(see the BRIDGE and VEB sections in
 .Xr ifconfig 8
 accordingly).
 When a VM is started, virtual network interfaces which are assigned to a
