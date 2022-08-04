@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.31 2022/07/20 13:35:05 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.32 2022/08/04 09:27:36 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -32,129 +32,7 @@
 __BEGIN_HIDDEN_DECLS
 
 int tlsext_alpn_check_format(CBS *cbs);
-int tlsext_alpn_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_alpn_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_alpn_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_alpn_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_alpn_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_alpn_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-int tlsext_ri_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_ri_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ri_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_ri_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_ri_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ri_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-int tlsext_sigalgs_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sigalgs_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-int tlsext_sigalgs_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_sigalgs_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sigalgs_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_sni_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_sni_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sni_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_sni_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_sni_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 int tlsext_sni_is_valid_hostname(CBS *cbs, int *is_ip);
-
-int tlsext_supportedgroups_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_supportedgroups_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_supportedgroups_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-int tlsext_supportedgroups_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_supportedgroups_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_ecpf_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_ecpf_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ecpf_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_ecpf_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_ecpf_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ecpf_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-int tlsext_ocsp_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_ocsp_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ocsp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_ocsp_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_ocsp_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_ocsp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-int tlsext_sessionticket_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_sessionticket_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sessionticket_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-     int *alert);
-int tlsext_sessionticket_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_sessionticket_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_sessionticket_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_versions_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_versions_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_versions_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-int tlsext_versions_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_versions_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_versions_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_keyshare_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_keyshare_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-int tlsext_keyshare_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_keyshare_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_cookie_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_cookie_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_cookie_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_cookie_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_cookie_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_cookie_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-int tlsext_psk_kex_modes_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_psk_kex_modes_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_psk_kex_modes_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-int tlsext_psk_kex_modes_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_psk_kex_modes_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_psk_kex_modes_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
-    int *alert);
-
-int tlsext_psk_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_psk_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_psk_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_psk_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_psk_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_psk_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-
-#ifndef OPENSSL_NO_SRTP
-int tlsext_srtp_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_srtp_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-int tlsext_srtp_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_srtp_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
-int tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
-#endif
-
-int tlsext_quic_transport_parameters_client_needs(SSL *s, uint16_t msg_type);
-int tlsext_quic_transport_parameters_client_build(SSL *s, uint16_t msg_type,
-    CBB *cbb);
-int tlsext_quic_transport_parameters_client_parse(SSL *s, uint16_t msg_type,
-    CBS *cbs, int *alert);
-int tlsext_quic_transport_parameters_server_needs(SSL *s, uint16_t msg_type);
-int tlsext_quic_transport_parameters_server_build(SSL *s, uint16_t msg_type,
-    CBB *cbb);
-int tlsext_quic_transport_parameters_server_parse(SSL *s, uint16_t msg_type,
-    CBS *cbs, int *alert);
 
 int tlsext_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
@@ -162,8 +40,8 @@ int tlsext_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 int tlsext_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 
-const struct tls_extension *tls_extension_find(uint16_t, size_t *);
 int tlsext_extension_seen(SSL *s, uint16_t);
+
 __END_HIDDEN_DECLS
 
 #endif
