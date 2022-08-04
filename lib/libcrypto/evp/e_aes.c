@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.43 2022/08/02 07:51:37 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.44 2022/08/04 08:00:11 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -257,26 +257,6 @@ aesni_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-#define aesni_ofb_cipher aes_ofb_cipher
-static int aesni_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
-#define aesni_cfb_cipher aes_cfb_cipher
-static int aesni_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
-#define aesni_cfb8_cipher aes_cfb8_cipher
-static int aesni_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
-#define aesni_cfb1_cipher aes_cfb1_cipher
-static int aesni_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
-#define aesni_ctr_cipher aes_ctr_cipher
-static int aesni_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
 static int
 aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
@@ -311,10 +291,6 @@ aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 	return 1;
 }
-
-#define aesni_gcm_cipher aes_gcm_cipher
-static int aesni_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
 
 static int
 aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -354,10 +330,6 @@ aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 }
 
-#define aesni_xts_cipher aes_xts_cipher
-static int aesni_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
-
 static int
 aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
@@ -380,10 +352,6 @@ aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 	return 1;
 }
-
-#define aesni_ccm_cipher aes_ccm_cipher
-static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, size_t len);
 
 #endif
 
@@ -645,7 +613,7 @@ static const EVP_CIPHER aesni_128_ofb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ofb_cipher,
+	.do_cipher = aes_ofb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -679,7 +647,7 @@ static const EVP_CIPHER aesni_128_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb_cipher,
+	.do_cipher = aes_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -713,7 +681,7 @@ static const EVP_CIPHER aesni_128_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb1_cipher,
+	.do_cipher = aes_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -747,7 +715,7 @@ static const EVP_CIPHER aesni_128_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb8_cipher,
+	.do_cipher = aes_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -781,7 +749,7 @@ static const EVP_CIPHER aesni_128_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ctr_cipher,
+	.do_cipher = aes_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -884,7 +852,7 @@ static const EVP_CIPHER aesni_192_ofb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ofb_cipher,
+	.do_cipher = aes_ofb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -918,7 +886,7 @@ static const EVP_CIPHER aesni_192_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb_cipher,
+	.do_cipher = aes_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -952,7 +920,7 @@ static const EVP_CIPHER aesni_192_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb1_cipher,
+	.do_cipher = aes_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -986,7 +954,7 @@ static const EVP_CIPHER aesni_192_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb8_cipher,
+	.do_cipher = aes_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1020,7 +988,7 @@ static const EVP_CIPHER aesni_192_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ctr_cipher,
+	.do_cipher = aes_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1123,7 +1091,7 @@ static const EVP_CIPHER aesni_256_ofb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ofb_cipher,
+	.do_cipher = aes_ofb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1157,7 +1125,7 @@ static const EVP_CIPHER aesni_256_cfb = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb_cipher,
+	.do_cipher = aes_cfb_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1191,7 +1159,7 @@ static const EVP_CIPHER aesni_256_cfb1 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb1_cipher,
+	.do_cipher = aes_cfb1_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1225,7 +1193,7 @@ static const EVP_CIPHER aesni_256_cfb8 = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_cfb8_cipher,
+	.do_cipher = aes_cfb8_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1259,7 +1227,7 @@ static const EVP_CIPHER aesni_256_ctr = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS | EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
-	.do_cipher = aesni_ctr_cipher,
+	.do_cipher = aes_ctr_cipher,
 	.ctx_size = sizeof(EVP_AES_KEY),
 };
 #endif
@@ -1673,7 +1641,7 @@ static const EVP_CIPHER aesni_128_gcm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
-	.do_cipher = aesni_gcm_cipher,
+	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
 	.ctx_size = sizeof(EVP_AES_GCM_CTX),
 	.ctrl = aes_gcm_ctrl,
@@ -1715,7 +1683,7 @@ static const EVP_CIPHER aesni_192_gcm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
-	.do_cipher = aesni_gcm_cipher,
+	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
 	.ctx_size = sizeof(EVP_AES_GCM_CTX),
 	.ctrl = aes_gcm_ctrl,
@@ -1757,7 +1725,7 @@ static const EVP_CIPHER aesni_256_gcm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
-	.do_cipher = aesni_gcm_cipher,
+	.do_cipher = aes_gcm_cipher,
 	.cleanup = aes_gcm_cleanup,
 	.ctx_size = sizeof(EVP_AES_GCM_CTX),
 	.ctrl = aes_gcm_ctrl,
@@ -1929,7 +1897,7 @@ static const EVP_CIPHER aesni_128_xts = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
-	.do_cipher = aesni_xts_cipher,
+	.do_cipher = aes_xts_cipher,
 	.cleanup = aes_xts_cleanup,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
@@ -1971,7 +1939,7 @@ static const EVP_CIPHER aesni_256_xts = {
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_FIPS|XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
-	.do_cipher = aesni_xts_cipher,
+	.do_cipher = aes_xts_cipher,
 	.cleanup = aes_xts_cleanup,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
@@ -2174,7 +2142,7 @@ static const EVP_CIPHER aesni_128_ccm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
-	.do_cipher = aesni_ccm_cipher,
+	.do_cipher = aes_ccm_cipher,
 	.cleanup = aes_ccm_cleanup,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
@@ -2216,7 +2184,7 @@ static const EVP_CIPHER aesni_192_ccm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
-	.do_cipher = aesni_ccm_cipher,
+	.do_cipher = aes_ccm_cipher,
 	.cleanup = aes_ccm_cleanup,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
@@ -2258,7 +2226,7 @@ static const EVP_CIPHER aesni_256_ccm = {
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
-	.do_cipher = aesni_ccm_cipher,
+	.do_cipher = aes_ccm_cipher,
 	.cleanup = aes_ccm_cleanup,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
