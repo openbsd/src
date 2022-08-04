@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.45 2022/08/04 08:02:31 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.46 2022/08/04 08:06:48 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -541,7 +541,7 @@ aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aesni_128_cbc = {
 	.nid = NID_aes_128_cbc,
 	.block_size = 16,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aesni_init_key,
@@ -553,7 +553,7 @@ static const EVP_CIPHER aesni_128_cbc = {
 static const EVP_CIPHER aes_128_cbc = {
 	.nid = NID_aes_128_cbc,
 	.block_size = 16,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aes_init_key,
@@ -575,7 +575,7 @@ EVP_aes_128_cbc(void)
 static const EVP_CIPHER aesni_128_ecb = {
 	.nid = NID_aes_128_ecb,
 	.block_size = 16,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aesni_init_key,
@@ -587,7 +587,7 @@ static const EVP_CIPHER aesni_128_ecb = {
 static const EVP_CIPHER aes_128_ecb = {
 	.nid = NID_aes_128_ecb,
 	.block_size = 16,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aes_init_key,
@@ -609,7 +609,7 @@ EVP_aes_128_ecb(void)
 static const EVP_CIPHER aesni_128_ofb = {
 	.nid = NID_aes_128_ofb128,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
@@ -621,7 +621,7 @@ static const EVP_CIPHER aesni_128_ofb = {
 static const EVP_CIPHER aes_128_ofb = {
 	.nid = NID_aes_128_ofb128,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aes_init_key,
@@ -643,7 +643,7 @@ EVP_aes_128_ofb(void)
 static const EVP_CIPHER aesni_128_cfb = {
 	.nid = NID_aes_128_cfb128,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -655,7 +655,7 @@ static const EVP_CIPHER aesni_128_cfb = {
 static const EVP_CIPHER aes_128_cfb = {
 	.nid = NID_aes_128_cfb128,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -677,7 +677,7 @@ EVP_aes_128_cfb(void)
 static const EVP_CIPHER aesni_128_cfb1 = {
 	.nid = NID_aes_128_cfb1,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -689,7 +689,7 @@ static const EVP_CIPHER aesni_128_cfb1 = {
 static const EVP_CIPHER aes_128_cfb1 = {
 	.nid = NID_aes_128_cfb1,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -711,7 +711,7 @@ EVP_aes_128_cfb1(void)
 static const EVP_CIPHER aesni_128_cfb8 = {
 	.nid = NID_aes_128_cfb8,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -723,7 +723,7 @@ static const EVP_CIPHER aesni_128_cfb8 = {
 static const EVP_CIPHER aes_128_cfb8 = {
 	.nid = NID_aes_128_cfb8,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -745,7 +745,7 @@ EVP_aes_128_cfb8(void)
 static const EVP_CIPHER aesni_128_ctr = {
 	.nid = NID_aes_128_ctr,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
@@ -757,7 +757,7 @@ static const EVP_CIPHER aesni_128_ctr = {
 static const EVP_CIPHER aes_128_ctr = {
 	.nid = NID_aes_128_ctr,
 	.block_size = 1,
-	.key_len = 128 / 8,
+	.key_len = 16,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aes_init_key,
@@ -780,7 +780,7 @@ EVP_aes_128_ctr(void)
 static const EVP_CIPHER aesni_192_cbc = {
 	.nid = NID_aes_192_cbc,
 	.block_size = 16,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aesni_init_key,
@@ -792,7 +792,7 @@ static const EVP_CIPHER aesni_192_cbc = {
 static const EVP_CIPHER aes_192_cbc = {
 	.nid = NID_aes_192_cbc,
 	.block_size = 16,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aes_init_key,
@@ -814,7 +814,7 @@ EVP_aes_192_cbc(void)
 static const EVP_CIPHER aesni_192_ecb = {
 	.nid = NID_aes_192_ecb,
 	.block_size = 16,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aesni_init_key,
@@ -826,7 +826,7 @@ static const EVP_CIPHER aesni_192_ecb = {
 static const EVP_CIPHER aes_192_ecb = {
 	.nid = NID_aes_192_ecb,
 	.block_size = 16,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aes_init_key,
@@ -848,7 +848,7 @@ EVP_aes_192_ecb(void)
 static const EVP_CIPHER aesni_192_ofb = {
 	.nid = NID_aes_192_ofb128,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
@@ -860,7 +860,7 @@ static const EVP_CIPHER aesni_192_ofb = {
 static const EVP_CIPHER aes_192_ofb = {
 	.nid = NID_aes_192_ofb128,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aes_init_key,
@@ -882,7 +882,7 @@ EVP_aes_192_ofb(void)
 static const EVP_CIPHER aesni_192_cfb = {
 	.nid = NID_aes_192_cfb128,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -894,7 +894,7 @@ static const EVP_CIPHER aesni_192_cfb = {
 static const EVP_CIPHER aes_192_cfb = {
 	.nid = NID_aes_192_cfb128,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -916,7 +916,7 @@ EVP_aes_192_cfb(void)
 static const EVP_CIPHER aesni_192_cfb1 = {
 	.nid = NID_aes_192_cfb1,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -928,7 +928,7 @@ static const EVP_CIPHER aesni_192_cfb1 = {
 static const EVP_CIPHER aes_192_cfb1 = {
 	.nid = NID_aes_192_cfb1,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -950,7 +950,7 @@ EVP_aes_192_cfb1(void)
 static const EVP_CIPHER aesni_192_cfb8 = {
 	.nid = NID_aes_192_cfb8,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -962,7 +962,7 @@ static const EVP_CIPHER aesni_192_cfb8 = {
 static const EVP_CIPHER aes_192_cfb8 = {
 	.nid = NID_aes_192_cfb8,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -984,7 +984,7 @@ EVP_aes_192_cfb8(void)
 static const EVP_CIPHER aesni_192_ctr = {
 	.nid = NID_aes_192_ctr,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
@@ -996,7 +996,7 @@ static const EVP_CIPHER aesni_192_ctr = {
 static const EVP_CIPHER aes_192_ctr = {
 	.nid = NID_aes_192_ctr,
 	.block_size = 1,
-	.key_len = 192 / 8,
+	.key_len = 24,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aes_init_key,
@@ -1019,7 +1019,7 @@ EVP_aes_192_ctr(void)
 static const EVP_CIPHER aesni_256_cbc = {
 	.nid = NID_aes_256_cbc,
 	.block_size = 16,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aesni_init_key,
@@ -1031,7 +1031,7 @@ static const EVP_CIPHER aesni_256_cbc = {
 static const EVP_CIPHER aes_256_cbc = {
 	.nid = NID_aes_256_cbc,
 	.block_size = 16,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
 	.init = aes_init_key,
@@ -1053,7 +1053,7 @@ EVP_aes_256_cbc(void)
 static const EVP_CIPHER aesni_256_ecb = {
 	.nid = NID_aes_256_ecb,
 	.block_size = 16,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aesni_init_key,
@@ -1065,7 +1065,7 @@ static const EVP_CIPHER aesni_256_ecb = {
 static const EVP_CIPHER aes_256_ecb = {
 	.nid = NID_aes_256_ecb,
 	.block_size = 16,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 0,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
 	.init = aes_init_key,
@@ -1087,7 +1087,7 @@ EVP_aes_256_ecb(void)
 static const EVP_CIPHER aesni_256_ofb = {
 	.nid = NID_aes_256_ofb128,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aesni_init_key,
@@ -1099,7 +1099,7 @@ static const EVP_CIPHER aesni_256_ofb = {
 static const EVP_CIPHER aes_256_ofb = {
 	.nid = NID_aes_256_ofb128,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
 	.init = aes_init_key,
@@ -1121,7 +1121,7 @@ EVP_aes_256_ofb(void)
 static const EVP_CIPHER aesni_256_cfb = {
 	.nid = NID_aes_256_cfb128,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -1133,7 +1133,7 @@ static const EVP_CIPHER aesni_256_cfb = {
 static const EVP_CIPHER aes_256_cfb = {
 	.nid = NID_aes_256_cfb128,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -1155,7 +1155,7 @@ EVP_aes_256_cfb(void)
 static const EVP_CIPHER aesni_256_cfb1 = {
 	.nid = NID_aes_256_cfb1,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -1167,7 +1167,7 @@ static const EVP_CIPHER aesni_256_cfb1 = {
 static const EVP_CIPHER aes_256_cfb1 = {
 	.nid = NID_aes_256_cfb1,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -1189,7 +1189,7 @@ EVP_aes_256_cfb1(void)
 static const EVP_CIPHER aesni_256_cfb8 = {
 	.nid = NID_aes_256_cfb8,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aesni_init_key,
@@ -1201,7 +1201,7 @@ static const EVP_CIPHER aesni_256_cfb8 = {
 static const EVP_CIPHER aes_256_cfb8 = {
 	.nid = NID_aes_256_cfb8,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CFB_MODE,
 	.init = aes_init_key,
@@ -1223,7 +1223,7 @@ EVP_aes_256_cfb8(void)
 static const EVP_CIPHER aesni_256_ctr = {
 	.nid = NID_aes_256_ctr,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aesni_init_key,
@@ -1235,7 +1235,7 @@ static const EVP_CIPHER aesni_256_ctr = {
 static const EVP_CIPHER aes_256_ctr = {
 	.nid = NID_aes_256_ctr,
 	.block_size = 1,
-	.key_len = 256 / 8,
+	.key_len = 32,
 	.iv_len = 16,
 	.flags = EVP_CIPH_CTR_MODE,
 	.init = aes_init_key,
@@ -1635,9 +1635,7 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aesni_128_gcm = {
 	.nid = NID_aes_128_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 16,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
@@ -1651,9 +1649,7 @@ static const EVP_CIPHER aesni_128_gcm = {
 static const EVP_CIPHER aes_128_gcm = {
 	.nid = NID_aes_128_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 16,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
@@ -1677,9 +1673,7 @@ EVP_aes_128_gcm(void)
 static const EVP_CIPHER aesni_192_gcm = {
 	.nid = NID_aes_192_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    192 / 8,
+	.key_len = 24,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
@@ -1693,9 +1687,7 @@ static const EVP_CIPHER aesni_192_gcm = {
 static const EVP_CIPHER aes_192_gcm = {
 	.nid = NID_aes_192_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    192 / 8,
+	.key_len = 24,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
@@ -1719,9 +1711,7 @@ EVP_aes_192_gcm(void)
 static const EVP_CIPHER aesni_256_gcm = {
 	.nid = NID_aes_256_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 32,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aesni_gcm_init_key,
@@ -1735,9 +1725,7 @@ static const EVP_CIPHER aesni_256_gcm = {
 static const EVP_CIPHER aes_256_gcm = {
 	.nid = NID_aes_256_gcm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_GCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 32,
 	.iv_len = 12,
 	.flags = EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS | EVP_CIPH_GCM_MODE,
 	.init = aes_gcm_init_key,
@@ -1891,9 +1879,7 @@ aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aesni_128_xts = {
 	.nid = NID_aes_128_xts,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_XTS_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 2 * 16,
 	.iv_len = 16,
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
@@ -1907,9 +1893,7 @@ static const EVP_CIPHER aesni_128_xts = {
 static const EVP_CIPHER aes_128_xts = {
 	.nid = NID_aes_128_xts,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_XTS_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 2 * 16,
 	.iv_len = 16,
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aes_xts_init_key,
@@ -1933,9 +1917,7 @@ EVP_aes_128_xts(void)
 static const EVP_CIPHER aesni_256_xts = {
 	.nid = NID_aes_256_xts,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_XTS_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 2 * 32,
 	.iv_len = 16,
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
@@ -1949,9 +1931,7 @@ static const EVP_CIPHER aesni_256_xts = {
 static const EVP_CIPHER aes_256_xts = {
 	.nid = NID_aes_256_xts,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_XTS_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 2 * 32,
 	.iv_len = 16,
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aes_xts_init_key,
@@ -2136,9 +2116,7 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aesni_128_ccm = {
 	.nid = NID_aes_128_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 16,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
@@ -2152,9 +2130,7 @@ static const EVP_CIPHER aesni_128_ccm = {
 static const EVP_CIPHER aes_128_ccm = {
 	.nid = NID_aes_128_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    128 / 8,
+	.key_len = 16,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
@@ -2178,9 +2154,7 @@ EVP_aes_128_ccm(void)
 static const EVP_CIPHER aesni_192_ccm = {
 	.nid = NID_aes_192_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    192 / 8,
+	.key_len = 24,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
@@ -2194,9 +2168,7 @@ static const EVP_CIPHER aesni_192_ccm = {
 static const EVP_CIPHER aes_192_ccm = {
 	.nid = NID_aes_192_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    192 / 8,
+	.key_len = 24,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
@@ -2220,9 +2192,7 @@ EVP_aes_192_ccm(void)
 static const EVP_CIPHER aesni_256_ccm = {
 	.nid = NID_aes_256_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 32,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
@@ -2236,9 +2206,7 @@ static const EVP_CIPHER aesni_256_ccm = {
 static const EVP_CIPHER aes_256_ccm = {
 	.nid = NID_aes_256_ccm,
 	.block_size = 1,
-	.key_len =
-	    (EVP_CIPH_CCM_MODE == EVP_CIPH_XTS_MODE ? 2 : 1) *
-	    256 / 8,
+	.key_len = 32,
 	.iv_len = 12,
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
