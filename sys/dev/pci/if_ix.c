@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.186 2022/06/27 15:11:23 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.187 2022/08/05 13:57:16 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -1575,6 +1575,9 @@ ixgbe_update_link_status(struct ix_softc *sc)
 {
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	int		link_state = LINK_STATE_DOWN;
+
+	splassert(IPL_NET);
+	KERNEL_ASSERT_LOCKED();
 
 	ixgbe_check_link(&sc->hw, &sc->link_speed, &sc->link_up, 0);
 

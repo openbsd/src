@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.36 2022/07/14 13:46:25 bluhm Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.37 2022/08/05 13:57:16 bluhm Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -312,7 +312,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	/*
 	 * Get list of available media and current media on interface.
 	 */
-	case  SIOCGIFMEDIA:
+	case SIOCGIFMEDIA:
 	{
 		struct ifmediareq *ifmr = (struct ifmediareq *) ifr;
 		size_t nwords;

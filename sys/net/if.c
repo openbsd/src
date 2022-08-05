@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.660 2022/07/29 08:23:40 visa Exp $	*/
+/*	$OpenBSD: if.c,v 1.661 2022/08/05 13:57:16 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2305,6 +2305,15 @@ forceup:
 		error = ((*ifp->if_ioctl)(ifp, cmd, data));
 		break;
 
+	case SIOCSIFMEDIA:
+		if ((error = suser(p)) != 0)
+			break;
+		/* FALLTHROUGH */
+	case SIOCGIFMEDIA:
+		/* net lock is not needed */
+		error = ((*ifp->if_ioctl)(ifp, cmd, data));
+		break;
+
 	case SIOCSETKALIVE:
 	case SIOCDIFPHYADDR:
 	case SIOCSLIFPHYADDR:
@@ -2314,7 +2323,6 @@ forceup:
 	case SIOCSLIFPHYECN:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-	case SIOCSIFMEDIA:
 	case SIOCSVNETID:
 	case SIOCDVNETID:
 	case SIOCSVNETFLOWID:

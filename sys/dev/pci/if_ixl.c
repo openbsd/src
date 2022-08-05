@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.83 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.84 2022/08/05 13:57:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2069,7 +2069,7 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifm)
 {
 	struct ixl_softc *sc = ifp->if_softc;
 
-	NET_ASSERT_LOCKED();
+	KERNEL_ASSERT_LOCKED();
 
 	ifm->ifm_status = sc->sc_media_status;
 	ifm->ifm_active = sc->sc_media_active;
@@ -3517,7 +3517,9 @@ ixl_link_state_update_iaq(struct ixl_softc *sc, void *arg)
 		return;
 	}
 
+	KERNEL_LOCK();
 	link_state = ixl_set_link_status(sc, iaq);
+	KERNEL_UNLOCK();
 	mtx_enter(&sc->sc_link_state_mtx);
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
@@ -4488,6 +4490,8 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	const struct ixl_aq_link_status *status;
 	const struct ixl_phy_type *itype;
 
+	KERNEL_ASSERT_LOCKED();
+
 	uint64_t ifm_active = IFM_ETHER;
 	uint64_t ifm_status = IFM_AVALID;
 	int link_state = LINK_STATE_DOWN;
@@ -4513,7 +4517,6 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	baudrate = ixl_search_link_speed(status->link_speed);
 
 done:
-	/* NET_ASSERT_LOCKED() except during attach */
 	sc->sc_media_active = ifm_active;
 	sc->sc_media_status = ifm_status;
 	sc->sc_ac.ac_if.if_baudrate = baudrate;
