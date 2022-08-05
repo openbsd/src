@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.42 2022/02/20 21:53:04 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.43 2022/08/05 18:01:40 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -168,21 +168,30 @@ verify() {
 }
 
 firmware_in_dmesg() {
-	local _d _m _line _dmesgtail _last='' _nl=$( echo )
+	local IFS
+	local _d _m _dmesgtail _last='' _nl='
+'
 
 	# The dmesg can contain multiple boots, only look in the last one
 	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' /var/run/dmesg.boot )"
 
 	grep -v '^[[:space:]]*#' "$FWPATTERNS" |
 	    while read -r _d _m; do
-		[ "$_d" = "$_last" ] && continue
+		[ "$_d" = "$_last" ]  && continue
 		[ "$_m" ]             || _m="${_nl}${_d}[0-9] at "
 		[ "$_m" = "${_m#^}" ] || _m="${_nl}${_m#^}"
 
-		if [[ $_dmesgtail = *$_m* ]]; then
-			echo "$_d"
-			_last="$_d"
-		fi
+		IFS='*'
+		set -- $_m
+		unset IFS
+
+		case $# in
+		    1|2|3) [[ $_dmesgtail = *$1*([!$_nl])${2-}*([!$_nl])${3-}* ]] || continue;;
+		    *) echo "${0##*/}: Bad pattern '${_m#$_nl}' in $FWPATTERNS" >&2; exit 1 ;;
+		esac
+
+		echo "$_d"
+		_last="$_d"
 	    done
 }
 
