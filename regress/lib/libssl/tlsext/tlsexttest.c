@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.69 2022/08/05 16:51:11 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.70 2022/08/05 17:03:33 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -166,10 +166,10 @@ test_tlsext_alpn_client(void)
 	int failure, alert;
 	size_t dlen;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -367,10 +367,10 @@ test_tlsext_alpn_server(void)
 	int failure, alert;
 	size_t dlen;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1463,7 +1463,6 @@ test_tlsext_ri_client(void)
 	CBS_init(&cbs, tlsext_ri_client, sizeof(tlsext_ri_client));
 	if (server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("parsed invalid client RI\n");
-		failure = 1;
 		goto err;
 	}
 
@@ -1623,11 +1622,13 @@ test_tlsext_sigalgs_client(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -1645,7 +1646,6 @@ test_tlsext_sigalgs_client(void)
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		fprintf(stderr, "FAIL: client should not need sigalgs\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -1653,13 +1653,11 @@ test_tlsext_sigalgs_client(void)
 
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		fprintf(stderr, "FAIL: client should need sigalgsn");
-		failure = 1;
 		goto done;
 	}
 
 	if (!client_funcs->build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		fprintf(stderr, "FAIL: client failed to build sigalgsn");
-		failure = 1;
 		goto done;
 	}
 
@@ -1669,7 +1667,6 @@ test_tlsext_sigalgs_client(void)
 	if (dlen != sizeof(tlsext_sigalgs_client)) {
 		fprintf(stderr, "FAIL: got client sigalgs length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_sigalgs_client));
-		failure = 1;
 		goto done;
 	}
 
@@ -1679,20 +1676,20 @@ test_tlsext_sigalgs_client(void)
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
-		failure = 1;
 		goto done;
 	}
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (!server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		fprintf(stderr, "FAIL: failed to parse client SNI\n");
-		failure = 1;
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
 		goto done;
 	}
+
+	failure = 0;
 
  done:
 	CBB_cleanup(&cbb);
@@ -1712,11 +1709,13 @@ test_tlsext_sigalgs_server(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -1732,13 +1731,11 @@ test_tlsext_sigalgs_server(void)
 
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		fprintf(stderr, "FAIL: server should not need sigalgs\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (server_funcs->build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		fprintf(stderr, "FAIL: server should not build sigalgs\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -1748,9 +1745,10 @@ test_tlsext_sigalgs_server(void)
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		fprintf(stderr, "FAIL: server should not parse sigalgs\n");
-		failure = 1;
 		goto done;
 	}
+
+	failure = 0;
 
  done:
 	CBB_cleanup(&cbb);
@@ -1792,7 +1790,6 @@ test_tlsext_sni_client(void)
 	CBS cbs;
 
 	failure = 1;
-
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2681,10 +2678,10 @@ test_tlsext_sessionticket_server(void)
 	size_t dlen;
 	CBB cbb;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2820,10 +2817,10 @@ test_tlsext_srtp_client(void)
 	int failure, alert;
 	size_t dlen;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	/* SRTP is for DTLS */
 	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
@@ -3060,10 +3057,10 @@ test_tlsext_srtp_server(void)
 	int failure, alert;
 	size_t dlen;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	/* SRTP is for DTLS */
 	if ((ssl_ctx = SSL_CTX_new(DTLSv1_client_method())) == NULL)
@@ -3448,11 +3445,13 @@ test_tlsext_versions_client(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -3470,7 +3469,6 @@ test_tlsext_versions_client(void)
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need versions\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3478,7 +3476,6 @@ test_tlsext_versions_client(void)
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need versions\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3486,7 +3483,6 @@ test_tlsext_versions_client(void)
 
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need versions\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3495,34 +3491,32 @@ test_tlsext_versions_client(void)
 
 	if (!client_funcs->build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built versions\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (dlen != sizeof(tlsext_versions_client)) {
 		FAIL("got versions with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_versions_client));
-		failure = 1;
 		goto done;
 	}
 
 	CBS_init(&cbs, data, dlen);
 	if (!server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
-		failure = 1;
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
-		failure = 1;
 		goto done;
 	}
+
+	failure = 0;
+
  done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -3540,11 +3534,13 @@ test_tlsext_versions_server(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -3562,7 +3558,6 @@ test_tlsext_versions_server(void)
 
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need versions\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3570,40 +3565,37 @@ test_tlsext_versions_server(void)
 
 	if (!server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need versions\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!server_funcs->build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
 		FAIL("server should have built versions\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (dlen != sizeof(tlsext_versions_server)) {
 		FAIL("got versions with length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_versions_server));
-		failure = 1;
 		goto done;
 	}
 
 	CBS_init(&cbs, data, dlen);
 	if (!client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse client versions\n");
-		failure = 1;
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
-		failure = 1;
 		goto done;
 	}
+
+	failure = 0;
+
  done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -3637,11 +3629,13 @@ test_tlsext_keyshare_client(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -3664,34 +3658,29 @@ test_tlsext_keyshare_client(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need keyshare\n");
-		failure = 1;
 		goto done;
 	}
 
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need keyshare\n");
-		failure = 1;
 		goto done;
 	}
 
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	if (!client_funcs->build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built keyshare\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (dlen != sizeof(tlsext_keyshare_client)) {
 		FAIL("got client keyshare with length %zu, "
 		    "want length %zu\n", dlen, (size_t) sizeof(tlsext_keyshare_client));
-		failure = 1;
 		goto done;
 	}
 
@@ -3700,16 +3689,15 @@ test_tlsext_keyshare_client(void)
 
 	if (!server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client keyshare\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
-		failure = 1;
 		goto done;
 	}
 
+	failure = 0;
 
  done:
 	CBB_cleanup(&cbb);
@@ -3729,7 +3717,7 @@ test_tlsext_keyshare_server(void)
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
 	int decode_error;
-	int failure = 1;
+	int failure;
 	size_t dlen, idx;
 	int alert;
 	CBB cbb;
@@ -3740,6 +3728,8 @@ test_tlsext_keyshare_server(void)
 		0x45, 0x77, 0x8e, 0x11,	0xb3, 0xb9, 0x12, 0xb6,
 		0xbe, 0x35, 0xca, 0x51,	0x76, 0x1e, 0xe8, 0x22,
 	};
+
+	failure = 1;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -3841,6 +3831,7 @@ test_tlsext_keyshare_server(void)
 	}
 
 	failure = 0;
+
 done:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -3867,11 +3858,13 @@ test_tlsext_cookie_client(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -3888,7 +3881,6 @@ test_tlsext_cookie_client(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3896,7 +3888,6 @@ test_tlsext_cookie_client(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3906,19 +3897,16 @@ test_tlsext_cookie_client(void)
 
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!client_funcs->build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client should have built a cookie response\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -3926,7 +3914,6 @@ test_tlsext_cookie_client(void)
 		FAIL("got cookie with length %zu, "
 		    "want length %zu\n", dlen, strlen(cookie) +
 		    sizeof(uint16_t));
-		failure = 1;
 		goto done;
 	}
 
@@ -3935,15 +3922,15 @@ test_tlsext_cookie_client(void)
 	/* Checks cookie against what's in the hs.tls13 */
 	if (!server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
 		FAIL("failed to parse client cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
-		failure = 1;
 		goto done;
 	}
+
+	failure = 0;
 
  done:
 	CBB_cleanup(&cbb);
@@ -3962,11 +3949,13 @@ test_tlsext_cookie_server(void)
 	SSL *ssl = NULL;
 	const struct tls_extension_funcs *client_funcs;
 	const struct tls_extension_funcs *server_funcs;
-	int failure = 0;
+	int failure;
 	size_t dlen;
 	int alert;
 	CBB cbb;
 	CBS cbs;
+
+	failure = 1;
 
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
@@ -3983,14 +3972,12 @@ test_tlsext_cookie_server(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should not need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -4000,19 +3987,16 @@ test_tlsext_cookie_server(void)
 
 	if (!server_funcs->needs(ssl, SSL_TLSEXT_MSG_HRR)) {
 		FAIL("server should need cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!server_funcs->build(ssl, SSL_TLSEXT_MSG_HRR, &cbb)) {
 		FAIL("server should have built a cookie response\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (!CBB_finish(&cbb, &data, &dlen)) {
 		FAIL("failed to finish CBB\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -4020,7 +4004,6 @@ test_tlsext_cookie_server(void)
 		FAIL("got cookie with length %zu, "
 		    "want length %zu\n", dlen, strlen(cookie) +
 		    sizeof(uint16_t));
-		failure = 1;
 		goto done;
 	}
 
@@ -4028,7 +4011,6 @@ test_tlsext_cookie_server(void)
 
 	if (client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("client should not have parsed server cookie\n");
-		failure = 1;
 		goto done;
 	}
 
@@ -4038,22 +4020,21 @@ test_tlsext_cookie_server(void)
 
 	if (!client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("failed to parse server cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (memcmp(cookie, ssl->s3->hs.tls13.cookie,
 		ssl->s3->hs.tls13.cookie_len) != 0) {
 		FAIL("parsed server cookie does not match sent cookie\n");
-		failure = 1;
 		goto done;
 	}
 
 	if (CBS_len(&cbs) != 0) {
 		FAIL("extension data remaining\n");
-		failure = 1;
 		goto done;
 	}
+
+	failure = 0;
 
 done:
 	CBB_cleanup(&cbb);
@@ -4090,10 +4071,10 @@ test_tlsext_psk_modes_client(void)
 	CBS cbs;
 	int alert;
 
+	failure = 1;
+
 	if (!CBB_init(&cbb, 0))
 		errx(1, "Failed to create CBB");
-
-	failure = 1;
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -4237,6 +4218,7 @@ test_tlsext_psk_modes_client(void)
 	}
 
 	failure = 0;
+
  err:
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
@@ -4272,6 +4254,7 @@ test_tlsext_psk_modes_server(void)
 	}
 
 	failure = 0;
+
  err:
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
@@ -4389,9 +4372,11 @@ static const struct tls_sni_test tls_sni_tests[] = {
 static int
 test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
 {
-	int failure = 0;
+	int failure;
 	int is_ip;
 	CBS cbs;
+
+	failure = 1;
 
 	CBS_init(&cbs, tst->hostname, strlen(tst->hostname));
 	if (tlsext_sni_is_valid_hostname(&cbs, &is_ip) != tst->valid) {
@@ -4402,7 +4387,6 @@ test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
 			FAIL("Invalid hostname '%s' accepted\n",
 			    tst->hostname);
 		}
-		failure = 1;
 		goto done;
 	}
 	if (tst->is_ip != is_ip) {
@@ -4413,7 +4397,6 @@ test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
 			FAIL("Hostname '%s' is not an IP literal but is "
 			    "identified as one\n", tst->hostname);
 		}
-		failure = 1;
 		goto done;
 	}
 
@@ -4422,11 +4405,14 @@ test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
 		    strlen(tst->hostname) + 1);
 		if (tlsext_sni_is_valid_hostname(&cbs, &is_ip)) {
 			FAIL("hostname with NUL byte accepted\n");
-			failure = 1;
 			goto done;
 		}
 	}
+
+	failure = 0;
+
  done:
+
 	return failure;
 }
 
