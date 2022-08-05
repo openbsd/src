@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.68 2022/08/05 08:51:35 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.69 2022/08/05 16:51:11 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -166,7 +166,8 @@ test_tlsext_alpn_client(void)
 	int failure, alert;
 	size_t dlen;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
@@ -226,7 +227,8 @@ test_tlsext_alpn_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -365,7 +367,8 @@ test_tlsext_alpn_server(void)
 	int failure, alert;
 	size_t dlen;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
@@ -426,7 +429,8 @@ test_tlsext_alpn_server(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -649,7 +653,8 @@ test_tlsext_supportedgroups_client(void)
 	 * Test parsing secp384r1
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -691,7 +696,8 @@ test_tlsext_supportedgroups_client(void)
 	 * Use a custom order.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	SSL_SESSION_free(ssl->session);
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
@@ -748,7 +754,8 @@ test_tlsext_supportedgroups_client(void)
 	 * Parse non-default curves to session.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -892,7 +899,8 @@ test_tlsext_ecpf_client(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -970,7 +978,8 @@ test_tlsext_ecpf_client(void)
 	 * Make sure we can parse the default.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1007,7 +1016,8 @@ test_tlsext_ecpf_client(void)
 	 * Test with a custom order.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1058,7 +1068,8 @@ test_tlsext_ecpf_client(void)
 	 * Make sure that we can parse this custom order.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1123,7 +1134,8 @@ test_tlsext_ecpf_server(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1189,7 +1201,8 @@ test_tlsext_ecpf_server(void)
 	 * Cannot parse a non-default list without at least uncompressed.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1212,7 +1225,8 @@ test_tlsext_ecpf_server(void)
 	 * Test with a custom order that replaces the default uncompressed.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1272,7 +1286,8 @@ test_tlsext_ecpf_server(void)
 	 * Should be able to parse the custom list into a session list.
 	 */
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -1365,7 +1380,8 @@ test_tlsext_ri_client(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLSv1_2_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1483,7 +1499,8 @@ test_tlsext_ri_server(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1612,7 +1629,8 @@ test_tlsext_sigalgs_client(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1700,7 +1718,8 @@ test_tlsext_sigalgs_server(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -1784,7 +1803,8 @@ test_tlsext_sni_client(void)
 	    &server_funcs))
 		errx(1, "failed to fetch sni funcs");
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SNI\n");
@@ -1912,7 +1932,8 @@ test_tlsext_sni_server(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2044,7 +2065,8 @@ test_tlsext_quic_transport_parameters_client(void)
 	    &client_funcs, &server_funcs))
 		errx(1, "failed to fetch quic transport parameter funcs");
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need QUIC\n");
@@ -2165,7 +2187,8 @@ test_tlsext_quic_transport_parameters_server(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2294,7 +2317,8 @@ test_tlsext_ocsp_client(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2373,7 +2397,8 @@ test_tlsext_ocsp_server(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -2439,7 +2464,8 @@ test_tlsext_sessionticket_client(void)
 
 	failure = 1;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	/* Create fake session tickets with random data. */
 	arc4random_buf(tlsext_sessionticket_hello_min,
@@ -2498,7 +2524,8 @@ test_tlsext_sessionticket_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -2523,7 +2550,8 @@ test_tlsext_sessionticket_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -2563,7 +2591,8 @@ test_tlsext_sessionticket_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 	free(ssl->session->tlsext_tick);
@@ -2652,7 +2681,8 @@ test_tlsext_sessionticket_server(void)
 	size_t dlen;
 	CBB cbb;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
@@ -2790,7 +2820,8 @@ test_tlsext_srtp_client(void)
 	int failure, alert;
 	size_t dlen;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
@@ -2844,7 +2875,8 @@ test_tlsext_srtp_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -2913,7 +2945,8 @@ test_tlsext_srtp_client(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -3027,7 +3060,8 @@ test_tlsext_srtp_server(void)
 	int failure, alert;
 	size_t dlen;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
@@ -3083,7 +3117,8 @@ test_tlsext_srtp_server(void)
 	}
 
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 	free(data);
 	data = NULL;
 
@@ -3225,7 +3260,8 @@ test_tlsext_clienthello_build(void)
 	free(data);
 	data = NULL;
 	CBB_cleanup(&cbb);
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	/* Switch to TLSv1.1, disable EC ciphers and session tickets. */
 	ssl->s3->hs.our_max_tls_version = TLS1_1_VERSION;
@@ -3343,7 +3379,8 @@ test_tlsext_serverhello_build(void)
 	CBB_cleanup(&cbb);
 	free(data);
 	data = NULL;
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	/* Turn a few things on so we get extensions... */
 	ssl->s3->send_connection_binding = 1;
@@ -3417,7 +3454,8 @@ test_tlsext_versions_client(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -3508,7 +3546,8 @@ test_tlsext_versions_server(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -3604,7 +3643,8 @@ test_tlsext_keyshare_client(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -3710,7 +3750,8 @@ test_tlsext_keyshare_server(void)
 	    &server_funcs))
 		errx(1, "failed to fetch keyshare funcs");
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	ssl->s3->hs.negotiated_tls_version = TLS1_2_VERSION;
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
@@ -3832,7 +3873,8 @@ test_tlsext_cookie_client(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -3926,7 +3968,8 @@ test_tlsext_cookie_server(void)
 	CBB cbb;
 	CBS cbs;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
@@ -4047,7 +4090,8 @@ test_tlsext_psk_modes_client(void)
 	CBS cbs;
 	int alert;
 
-	CBB_init(&cbb, 0);
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
 
 	failure = 1;
 
