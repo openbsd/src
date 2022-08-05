@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.73 2022/08/05 17:12:32 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.74 2022/08/05 17:19:09 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -495,7 +495,7 @@ test_tlsext_alpn_server(void)
 	ssl->s3->alpn_selected_len = 0;
 
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
-		FAIL("server should need ALPN by default\n");
+		FAIL("server should not need ALPN by default\n");
 		goto err;
 	}
 
