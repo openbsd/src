@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.59 2022/06/28 16:05:42 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.60 2022/08/05 14:46:52 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -268,16 +268,6 @@ x509_verify_check_chain_end(X509 *cert, int full_chain)
 }
 
 static int
-x509_verify_check_legacy_chain_end(struct x509_verify_ctx *ctx, X509 *cert,
-    int full_chain)
-{
-	if (X509_check_trust(cert, ctx->xsc->param->trust, 0) !=
-	    X509_TRUST_TRUSTED)
-		return 0;
-	return x509_verify_check_chain_end(cert, full_chain);
-}
-
-static int
 x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
     int full_chain)
 {
@@ -292,8 +282,7 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 		if ((match = x509_vfy_lookup_cert_match(ctx->xsc,
 		    cert)) != NULL) {
 			X509_free(match);
-			return x509_verify_check_legacy_chain_end(ctx, cert,
-			    full_chain);
+			return x509_verify_check_chain_end(cert, full_chain);
 
 		}
 	} else {
@@ -713,8 +702,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		}
 		if (ret > 0) {
 			if (x509_verify_potential_parent(ctx, candidate, cert)) {
-				is_root = x509_verify_check_legacy_chain_end(
-				    ctx, candidate, full_chain);
+				is_root = x509_verify_check_chain_end(candidate,
+				    full_chain);
 				x509_verify_consider_candidate(ctx, cert,
 				    is_root, candidate, current_chain,
 				    full_chain, name);
