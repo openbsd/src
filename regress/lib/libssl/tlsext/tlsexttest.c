@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.70 2022/08/05 17:03:33 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.71 2022/08/05 17:06:17 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1791,6 +1791,9 @@ test_tlsext_sni_client(void)
 
 	failure = 1;
 
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
+
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
@@ -1799,9 +1802,6 @@ test_tlsext_sni_client(void)
 	if (!tls_extension_funcs(TLSEXT_TYPE_server_name, &client_funcs,
 	    &server_funcs))
 		errx(1, "failed to fetch sni funcs");
-
-	if (!CBB_init(&cbb, 0))
-		errx(1, "Failed to create CBB");
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SNI\n");
@@ -2053,6 +2053,9 @@ test_tlsext_quic_transport_parameters_client(void)
 
 	failure = 1;
 
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
+
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
@@ -2061,9 +2064,6 @@ test_tlsext_quic_transport_parameters_client(void)
 	if (!tls_extension_funcs(TLSEXT_TYPE_quic_transport_parameters,
 	    &client_funcs, &server_funcs))
 		errx(1, "failed to fetch quic transport parameter funcs");
-
-	if (!CBB_init(&cbb, 0))
-		errx(1, "Failed to create CBB");
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need QUIC\n");
@@ -3731,6 +3731,9 @@ test_tlsext_keyshare_server(void)
 
 	failure = 1;
 
+	if (!CBB_init(&cbb, 0))
+		errx(1, "Failed to create CBB");
+
 	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
 		errx(1, "failed to create SSL_CTX");
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
@@ -3739,9 +3742,6 @@ test_tlsext_keyshare_server(void)
 	if (!tls_extension_funcs(TLSEXT_TYPE_key_share, &client_funcs,
 	    &server_funcs))
 		errx(1, "failed to fetch keyshare funcs");
-
-	if (!CBB_init(&cbb, 0))
-		errx(1, "Failed to create CBB");
 
 	ssl->s3->hs.negotiated_tls_version = TLS1_2_VERSION;
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
