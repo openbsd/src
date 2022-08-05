@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.72 2022/08/05 17:08:02 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.73 2022/08/05 17:12:32 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1645,19 +1645,19 @@ test_tlsext_sigalgs_client(void)
 	ssl->s3->hs.our_max_tls_version = TLS1_1_VERSION;
 
 	if (client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
-		fprintf(stderr, "FAIL: client should not need sigalgs\n");
+		FAIL("client should not need sigalgs\n");
 		goto done;
 	}
 
 	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
 
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
-		fprintf(stderr, "FAIL: client should need sigalgsn");
+		FAIL("client should need sigalgs\n");
 		goto done;
 	}
 
 	if (!client_funcs->build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
-		fprintf(stderr, "FAIL: client failed to build sigalgsn");
+		FAIL("client failed to build sigalgs\n");
 		goto done;
 	}
 
@@ -1665,13 +1665,13 @@ test_tlsext_sigalgs_client(void)
 		errx(1, "failed to finish CBB");
 
 	if (dlen != sizeof(tlsext_sigalgs_client)) {
-		fprintf(stderr, "FAIL: got client sigalgs length %zu, "
+		FAIL("got client sigalgs length %zu, "
 		    "want length %zu\n", dlen, sizeof(tlsext_sigalgs_client));
 		goto done;
 	}
 
 	if (memcmp(data, tlsext_sigalgs_client, dlen) != 0) {
-		fprintf(stderr, "FAIL: client SNI differs:\n");
+		FAIL("client SNI differs:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
@@ -1681,7 +1681,7 @@ test_tlsext_sigalgs_client(void)
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (!server_funcs->parse(ssl, SSL_TLSEXT_MSG_CH, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: failed to parse client SNI\n");
+		FAIL("failed to parse client SNI\n");
 		goto done;
 	}
 	if (CBS_len(&cbs) != 0) {
@@ -1730,12 +1730,12 @@ test_tlsext_sigalgs_server(void)
 		errx(1, "failed to fetch sigalgs funcs");
 
 	if (server_funcs->needs(ssl, SSL_TLSEXT_MSG_SH)) {
-		fprintf(stderr, "FAIL: server should not need sigalgs\n");
+		FAIL("server should not need sigalgs\n");
 		goto done;
 	}
 
 	if (server_funcs->build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
-		fprintf(stderr, "FAIL: server should not build sigalgs\n");
+		FAIL("server should not build sigalgs\n");
 		goto done;
 	}
 
@@ -1744,7 +1744,7 @@ test_tlsext_sigalgs_server(void)
 
 	CBS_init(&cbs, tlsext_sigalgs_client, sizeof(tlsext_sigalgs_client));
 	if (client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
-		fprintf(stderr, "FAIL: server should not parse sigalgs\n");
+		FAIL("server should not parse sigalgs\n");
 		goto done;
 	}
 
