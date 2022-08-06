@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.65 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.66 2022/08/06 23:35:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -331,7 +331,6 @@ kfind_tcb(int sock)
 	socklen_t melen, themlen;
 	struct sockaddr_in *in4;
 	struct sockaddr_in6 *in6;
-	char tmp1[64], tmp2[64];
 	int nretry;
 
 	nretry = 10;
@@ -345,6 +344,9 @@ kfind_tcb(int sock)
 	if (me.ss_family != AF_INET && me.ss_family != AF_INET6)
 		errx(1, "%s: unknown socket family", __func__);
 	if (ptb->vflag >= 2) {
+		char tmp1[NI_MAXHOST + 2 + NI_MAXSERV];
+		char tmp2[NI_MAXHOST + 2 + NI_MAXSERV];
+
 		saddr_ntop((struct sockaddr *)&me, me.ss_len,
 		    tmp1, sizeof(tmp1));
 		saddr_ntop((struct sockaddr *)&them, them.ss_len,
@@ -385,6 +387,9 @@ retry:
 				continue;
 			}
 			if (ptb->vflag >= 2) {
+				char tmp1[NI_MAXHOST];
+				char tmp2[NI_MAXHOST];
+
 				inet_ntop(AF_INET, &inpcb.inp_laddr,
 				    tmp1, sizeof(tmp1));
 				inet_ntop(AF_INET, &inpcb.inp_faddr,
@@ -408,6 +413,9 @@ retry:
 			if ((inpcb.inp_flags & INP_IPV6) == 0)
 				continue;
 			if (ptb->vflag >= 2) {
+				char tmp1[NI_MAXHOST];
+				char tmp2[NI_MAXHOST];
+
 				inet_ntop(AF_INET6, &inpcb.inp_laddr6,
 				    tmp1, sizeof(tmp1));
 				inet_ntop(AF_INET6, &inpcb.inp_faddr6,
@@ -780,7 +788,7 @@ tcp_server_accept(int fd, short event, void *arg)
 	struct statctx *sc;
 	struct sockaddr_storage ss;
 	socklen_t sslen;
-	char tmp[128];
+	char tmp[NI_MAXHOST + 2 + NI_MAXSERV];
 
 	sslen = sizeof(ss);
 
@@ -838,7 +846,6 @@ tcp_server_accept(int fd, short event, void *arg)
 static void
 server_init(struct addrinfo *aitop)
 {
-	char tmp[128];
 	int sock, on = 1;
 	struct addrinfo *ai;
 	struct event *ev;
@@ -847,6 +854,8 @@ server_init(struct addrinfo *aitop)
 
 	lnfds = 0;
 	for (ai = aitop; ai != NULL; ai = ai->ai_next) {
+		char tmp[NI_MAXHOST + 2 + NI_MAXSERV];
+
 		saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp, sizeof(tmp));
 		if (ptb->vflag)
 			fprintf(stderr, "Try to bind to %s\n", tmp);
@@ -959,11 +968,12 @@ client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 {
 	struct statctx *sc;
 	struct addrinfo *ai;
-	char tmp[128];
 	int i, r, sock;
 
 	for (i = 0; i < nconn; i++) {
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
+			char tmp[NI_MAXHOST + 2 + NI_MAXSERV];
+
 			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
 			    sizeof(tmp));
 			if (ptb->vflag && i == 0)
