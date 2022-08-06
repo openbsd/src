@@ -1,4 +1,5 @@
-/* $OpenBSD: blist.h,v 1.1 2022/07/29 17:47:12 semarie Exp $ */
+/* $OpenBSD: blist.h,v 1.2 2022/08/06 13:44:04 semarie Exp $ */
+/* DragonFlyBSD:7b80531f545c7d3c51c1660130c71d01f6bccbe0:/sys/sys/blist.h */
 /*
  * Copyright (c) 2003,2004 The DragonFly Project.  All rights reserved.
  * 
@@ -65,15 +66,14 @@
 #include <sys/types.h>
 #endif
 
-#define	SWBLK_BITS 64
-typedef u_long bsbmp_t;
-typedef u_long bsblk_t;
+typedef u_long		swblk_t;
+typedef u_int64_t	u_swblk_t;
 
 /*
  * note: currently use SWAPBLK_NONE as an absolute value rather then
  * a flag bit.
  */
-#define SWAPBLK_NONE	((bsblk_t)-1)
+#define SWAPBLK_NONE	((swblk_t)-1)
 
 /*
  * blmeta and bl_bitmap_t MUST be a power of 2 in size.
@@ -81,39 +81,40 @@ typedef u_long bsblk_t;
 
 typedef struct blmeta {
 	union {
-	    bsblk_t	bmu_avail;	/* space available under us	*/
-	    bsbmp_t	bmu_bitmap;	/* bitmap if we are a leaf	*/
+	    swblk_t	bmu_avail;	/* space available under us	*/
+	    u_swblk_t	bmu_bitmap;	/* bitmap if we are a leaf	*/
 	} u;
-	bsblk_t		bm_bighint;	/* biggest contiguous block hint*/
+	swblk_t		bm_bighint;	/* biggest contiguous block hint*/
 } blmeta_t;
 
 typedef struct blist {
-	bsblk_t		bl_blocks;	/* area of coverage		*/
+	swblk_t		bl_blocks;	/* area of coverage		*/
 	/* XXX int64_t bl_radix */
-	bsblk_t		bl_radix;	/* coverage radix		*/
-	bsblk_t		bl_skip;	/* starting skip		*/
-	bsblk_t		bl_free;	/* number of free blocks	*/
+	swblk_t		bl_radix;	/* coverage radix		*/
+	swblk_t		bl_skip;	/* starting skip		*/
+	swblk_t		bl_free;	/* number of free blocks	*/
 	blmeta_t	*bl_root;	/* root of radix tree		*/
-	bsblk_t		bl_rootblks;	/* bsblk_t blks allocated for tree */
+	swblk_t		bl_rootblks;	/* swblk_t blks allocated for tree */
 } *blist_t;
 
-#define BLIST_META_RADIX	(sizeof(bsbmp_t)*8/2)	/* 2 bits per */
-#define BLIST_BMAP_RADIX	(sizeof(bsbmp_t)*8)	/* 1 bit per */
+#define BLIST_META_RADIX	(sizeof(u_swblk_t)*8/2)	/* 2 bits per */
+#define BLIST_BMAP_RADIX	(sizeof(u_swblk_t)*8)	/* 1 bit per */
 
 /*
  * The radix may exceed the size of a 64 bit signed (or unsigned) int
- * when the maximal number of blocks is allocated.  With a 32-bit bsblk_t
+ * when the maximal number of blocks is allocated.  With a 32-bit swblk_t
  * this corresponds to ~1G x PAGE_SIZE = 4096GB.  The swap code usually
  * divides this by 4, leaving us with a capability of up to four 1TB swap
  * devices.
  *
- * With a 64-bit bsblk_t the limitation is some insane number.
+ * With a 64-bit swblk_t the limitation is some insane number.
  *
  * NOTE: For now I don't trust that we overflow-detect properly so we divide
  *	 out to ensure that no overflow occurs.
  */
 
-#if SWBLK_BITS == 64
+#if defined(_LP64)
+/* swblk_t 64bits */
 #define BLIST_MAXBLKS		(0x4000000000000000LL /		\
 				 (BLIST_BMAP_RADIX / BLIST_META_RADIX))
 #else
@@ -123,14 +124,14 @@ typedef struct blist {
 
 #define BLIST_MAX_ALLOC		BLIST_BMAP_RADIX
 
-blist_t blist_create(bsblk_t);
+blist_t blist_create(swblk_t);
 void blist_destroy(blist_t);
-bsblk_t blist_alloc(blist_t, bsblk_t);
-bsblk_t blist_allocat(blist_t, bsblk_t, bsblk_t);
-void blist_free(blist_t, bsblk_t, bsblk_t);
-bsblk_t blist_fill(blist_t, bsblk_t, bsblk_t);
+swblk_t blist_alloc(blist_t, swblk_t);
+swblk_t blist_allocat(blist_t, swblk_t, swblk_t);
+void blist_free(blist_t, swblk_t, swblk_t);
+swblk_t blist_fill(blist_t, swblk_t, swblk_t);
 void blist_print(blist_t);
-void blist_resize(blist_t *, bsblk_t, int);
-void blist_gapfind(blist_t, bsblk_t *, bsblk_t *);
+void blist_resize(blist_t *, swblk_t, int);
+void blist_gapfind(blist_t, swblk_t *, swblk_t *);
 
 #endif	/* _SYS_BLIST_H_ */

@@ -1,4 +1,5 @@
-/* $OpenBSD: subr_blist.c,v 1.1 2022/07/29 17:47:12 semarie Exp $ */
+/* $OpenBSD: subr_blist.c,v 1.2 2022/08/06 13:44:04 semarie Exp $ */
+/* DragonFlyBSD:7b80531f545c7d3c51c1660130c71d01f6bccbe0:/sys/kern/subr_blist.c */
 /*
  * BLIST.C -	Bitmap allocator/deallocator, using a radix tree with hinting
  * 
@@ -133,29 +134,29 @@
  * static support functions
  */
 
-static bsblk_t blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat,
-				bsblk_t blk, bsblk_t count);
-static bsblk_t blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
-				bsblk_t blk, bsblk_t count,
-				bsblk_t radix, bsblk_t skip);
-static void blst_leaf_free(blmeta_t *scan, bsblk_t relblk, bsblk_t count);
-static void blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
-					bsblk_t radix, bsblk_t skip,
-					bsblk_t blk);
-static bsblk_t blst_leaf_fill(blmeta_t *scan, bsblk_t blk, bsblk_t count);
-static bsblk_t blst_meta_fill(blmeta_t *scan, bsblk_t fillBlk, bsblk_t count,
-					bsblk_t radix, bsblk_t skip,
-					bsblk_t blk);
-static void blst_copy(blmeta_t *scan, bsblk_t blk, bsblk_t radix,
-				bsblk_t skip, blist_t dest, bsblk_t count);
-static bsblk_t	blst_radix_init(blmeta_t *scan, bsblk_t radix,
-						bsblk_t skip, bsblk_t count);
-static int blst_radix_gapfind(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip,
-    int state, bsblk_t *maxbp, bsblk_t *maxep, bsblk_t *bp, bsblk_t *ep);
+static swblk_t blst_leaf_alloc(blmeta_t *scan, swblk_t blkat,
+				swblk_t blk, swblk_t count);
+static swblk_t blst_meta_alloc(blmeta_t *scan, swblk_t blkat,
+				swblk_t blk, swblk_t count,
+				swblk_t radix, swblk_t skip);
+static void blst_leaf_free(blmeta_t *scan, swblk_t relblk, swblk_t count);
+static void blst_meta_free(blmeta_t *scan, swblk_t freeBlk, swblk_t count, 
+					swblk_t radix, swblk_t skip,
+					swblk_t blk);
+static swblk_t blst_leaf_fill(blmeta_t *scan, swblk_t blk, swblk_t count);
+static swblk_t blst_meta_fill(blmeta_t *scan, swblk_t fillBlk, swblk_t count,
+					swblk_t radix, swblk_t skip,
+					swblk_t blk);
+static void blst_copy(blmeta_t *scan, swblk_t blk, swblk_t radix,
+				swblk_t skip, blist_t dest, swblk_t count);
+static swblk_t	blst_radix_init(blmeta_t *scan, swblk_t radix,
+						swblk_t skip, swblk_t count);
+static int blst_radix_gapfind(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip,
+    int state, swblk_t *maxbp, swblk_t *maxep, swblk_t *bp, swblk_t *ep);
 
 #if defined(BLIST_DEBUG) || defined(DDB)
-static void	blst_radix_print(blmeta_t *scan, bsblk_t blk,
-					bsblk_t radix, bsblk_t skip, int tab);
+static void	blst_radix_print(blmeta_t *scan, swblk_t blk,
+					swblk_t radix, swblk_t skip, int tab);
 #endif
 
 /*
@@ -171,18 +172,18 @@ static void	blst_radix_print(blmeta_t *scan, bsblk_t blk,
  */
 
 blist_t
-blist_create(bsblk_t blocks)
+blist_create(swblk_t blocks)
 {
 	blist_t bl;
-	bsblk_t radix;
-	bsblk_t skip = 0;
+	swblk_t radix;
+	swblk_t skip = 0;
 
 	KASSERT(blocks > 0);
 
 	/*
 	 * Calculate radix and skip field used for scanning.
 	 *
-	 * Radix can exceed BLIST_BMAP_RADIX bits even if bsblk_t is limited
+	 * Radix can exceed BLIST_BMAP_RADIX bits even if swblk_t is limited
 	 * to BLIST_BMAP_RADIX bits.
 	 *
 	 * XXX check overflow
@@ -236,10 +237,10 @@ blist_destroy(blist_t bl)
  *		     not be allocated.
  */
 
-bsblk_t
-blist_alloc(blist_t bl, bsblk_t count)
+swblk_t
+blist_alloc(blist_t bl, swblk_t count)
 {
-	bsblk_t blk = SWAPBLK_NONE;
+	swblk_t blk = SWAPBLK_NONE;
 
 	if (bl) {
 		if (bl->bl_radix == BLIST_BMAP_RADIX)
@@ -253,10 +254,10 @@ blist_alloc(blist_t bl, bsblk_t count)
 	return(blk);
 }
 
-bsblk_t
-blist_allocat(blist_t bl, bsblk_t count, bsblk_t blkat)
+swblk_t
+blist_allocat(blist_t bl, swblk_t count, swblk_t blkat)
 {
-	bsblk_t blk = SWAPBLK_NONE;
+	swblk_t blk = SWAPBLK_NONE;
 
 	if (bl) {
 		KASSERT(blkat < bl->bl_blocks);
@@ -280,7 +281,7 @@ blist_allocat(blist_t bl, bsblk_t count, bsblk_t blkat)
  */
 
 void
-blist_free(blist_t bl, bsblk_t blkno, bsblk_t count)
+blist_free(blist_t bl, swblk_t blkno, swblk_t count)
 {
 	if (bl) {
 		KASSERT(blkno < bl->bl_blocks);
@@ -301,10 +302,10 @@ blist_free(blist_t bl, bsblk_t blkno, bsblk_t count)
  *			actually filled that were free before the call.
  */
 
-bsblk_t
-blist_fill(blist_t bl, bsblk_t blkno, bsblk_t count)
+swblk_t
+blist_fill(blist_t bl, swblk_t blkno, swblk_t count)
 {
-	bsblk_t filled;
+	swblk_t filled;
 
 	if (bl) {
 		KASSERT(blkno < bl->bl_blocks);
@@ -332,7 +333,7 @@ blist_fill(blist_t bl, bsblk_t blkno, bsblk_t count)
  */
 
 void
-blist_resize(blist_t *pbl, bsblk_t count, int freenew)
+blist_resize(blist_t *pbl, swblk_t count, int freenew)
 {
     blist_t newbl = blist_create(count);
     blist_t save = *pbl;
@@ -362,10 +363,10 @@ blist_resize(blist_t *pbl, bsblk_t count, int freenew)
  */
 
 void
-blist_gapfind(blist_t bl, bsblk_t *maxbp, bsblk_t *maxep)
+blist_gapfind(blist_t bl, swblk_t *maxbp, swblk_t *maxep)
 {
 	int state;
-	bsblk_t b, e;
+	swblk_t b, e;
 
 	/* initialize gaps (max and current) */
 	*maxbp = *maxep = 0;
@@ -398,16 +399,16 @@ blist_gapfind(blist_t bl, bsblk_t *maxbp, bsblk_t *maxep)
  * - max is the larger free gap
  */
 static int
-blst_radix_gapfind(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip,
-    int state, bsblk_t *maxbp, bsblk_t *maxep, bsblk_t *bp, bsblk_t *ep)
+blst_radix_gapfind(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip,
+    int state, swblk_t *maxbp, swblk_t *maxep, swblk_t *bp, swblk_t *ep)
 {
-	bsblk_t i;
-	bsblk_t next_skip;
+	swblk_t i;
+	swblk_t next_skip;
 
 	if (radix == BLIST_BMAP_RADIX) {
 		/* leaf node: we considere only completely free bitmap as free */
 		if (state == GAPFIND_FIRSTFREE) {
-			if (scan->u.bmu_bitmap == (bsbmp_t)-1) {
+			if (scan->u.bmu_bitmap == (u_swblk_t)-1) {
 				/* node is fully free */
 				*bp = blk;
 				return GAPFIND_FIRSTUSED;
@@ -417,7 +418,7 @@ blst_radix_gapfind(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip,
 			return state;
 
 		} else if (state == GAPFIND_FIRSTUSED) {
-			if (scan->u.bmu_bitmap == (bsbmp_t)-1) {
+			if (scan->u.bmu_bitmap == (u_swblk_t)-1) {
 				/* it is free, not found, keep state */
 				return state;
 			}
@@ -466,7 +467,7 @@ blst_radix_gapfind(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip,
 	next_skip = (skip / BLIST_META_RADIX);
 
 	for (i = 1; i <= skip; i += next_skip) {
-		if (scan[i].bm_bighint == (bsblk_t)-1)
+		if (scan[i].bm_bighint == (swblk_t)-1)
 			/* Terminator */
 			break;
 
@@ -514,11 +515,11 @@ blist_print(blist_t bl)
  *	quick.
  */
 
-static bsblk_t
-blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat __unused, bsblk_t blk,
-		bsblk_t count)
+static swblk_t
+blst_leaf_alloc(blmeta_t *scan, swblk_t blkat __unused, swblk_t blk,
+		swblk_t count)
 {
-	bsbmp_t orig = scan->u.bmu_bitmap;
+	u_swblk_t orig = scan->u.bmu_bitmap;
 
 	if (orig == 0) {
 		/*
@@ -533,11 +534,11 @@ blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat __unused, bsblk_t blk,
 		/*
 		 * Optimized code to allocate one bit out of the bitmap
 		 */
-		bsbmp_t mask;
+		u_swblk_t mask;
 		int j = BLIST_BMAP_RADIX/2;
 		int r = 0;
 
-		mask = (bsbmp_t)-1 >> (BLIST_BMAP_RADIX/2);
+		mask = (u_swblk_t)-1 >> (BLIST_BMAP_RADIX/2);
 
 		while (j) {
 			if ((orig & mask) == 0) {
@@ -547,7 +548,7 @@ blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat __unused, bsblk_t blk,
 			j >>= 1;
 			mask >>= j;
 		}
-		scan->u.bmu_bitmap &= ~((bsbmp_t)1 << r);
+		scan->u.bmu_bitmap &= ~((u_swblk_t)1 << r);
 		return(blk + r);
 	}
 	if (count <= BLIST_BMAP_RADIX) {
@@ -560,9 +561,9 @@ blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat __unused, bsblk_t blk,
 		 */
 		int j;
 		int n = (int)(BLIST_BMAP_RADIX - count);
-		bsbmp_t mask;
+		u_swblk_t mask;
 
-		mask = (bsbmp_t)-1 >> n;
+		mask = (u_swblk_t)-1 >> n;
 
 		for (j = 0; j <= n; ++j) {
 			if ((orig & mask) == mask) {
@@ -589,14 +590,14 @@ blst_leaf_alloc(blmeta_t *scan, bsblk_t blkat __unused, bsblk_t blk,
  *	calls that hit this node.  We have to check for our collapse cases
  *	and we have a few optimizations strewn in as well.
  */
-static bsblk_t
-blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
-		bsblk_t blk, bsblk_t count,
-		bsblk_t radix, bsblk_t skip)
+static swblk_t
+blst_meta_alloc(blmeta_t *scan, swblk_t blkat,
+		swblk_t blk, swblk_t count,
+		swblk_t radix, swblk_t skip)
 {
 	int hintok = (blk >= blkat);
-	bsblk_t next_skip = ((bsblk_t)skip / BLIST_META_RADIX);
-	bsblk_t i;
+	swblk_t next_skip = ((swblk_t)skip / BLIST_META_RADIX);
+	swblk_t i;
 
 #ifndef _KERNEL
 	printf("blist_meta_alloc blkat %lu blk %lu count %lu radix %lu\n",
@@ -622,14 +623,14 @@ blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
 
 		radix /= BLIST_META_RADIX;
 		for (i = 1; i <= skip; i += next_skip) {
-			if (scan[i].bm_bighint == (bsblk_t)-1)
+			if (scan[i].bm_bighint == (swblk_t)-1)
 				break;
 			if (next_skip == 1) {
-				scan[i].u.bmu_bitmap = (bsbmp_t)-1;
+				scan[i].u.bmu_bitmap = (u_swblk_t)-1;
 				scan[i].bm_bighint = BLIST_BMAP_RADIX;
 			} else {
-				scan[i].bm_bighint = (bsblk_t)radix;
-				scan[i].u.bmu_avail = (bsblk_t)radix;
+				scan[i].bm_bighint = (swblk_t)radix;
+				scan[i].u.bmu_avail = (swblk_t)radix;
 			}
 		}
 	} else {
@@ -638,11 +639,11 @@ blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
 
 	for (i = 1; i <= skip; i += next_skip) {
 		if (count <= scan[i].bm_bighint &&
-		    blk + (bsblk_t)radix > blkat) {
+		    blk + (swblk_t)radix > blkat) {
 			/*
 			 * count fits in object
 			 */
-			bsblk_t r;
+			swblk_t r;
 			if (next_skip == 1) {
 				r = blst_leaf_alloc(&scan[i], blkat,
 						    blk, count);
@@ -658,12 +659,12 @@ blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
 				return(r);
 			}
 			/* bighint was updated by recursion */
-		} else if (scan[i].bm_bighint == (bsblk_t)-1) {
+		} else if (scan[i].bm_bighint == (swblk_t)-1) {
 			/*
 			 * Terminator
 			 */
 			break;
-		} else if (count > (bsblk_t)radix) {
+		} else if (count > (swblk_t)radix) {
 			/*
 			 * count does not fit in object even if it were
 			 * complete free.
@@ -671,7 +672,7 @@ blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
 			panic("%s: allocation too large %lu/%lu",
 			      __func__, count, radix);
 		}
-		blk += (bsblk_t)radix;
+		blk += (swblk_t)radix;
 	}
 
 	/*
@@ -686,7 +687,7 @@ blst_meta_alloc(blmeta_t *scan, bsblk_t blkat,
  * BLST_LEAF_FREE() -	free allocated block from leaf bitmap
  */
 static void
-blst_leaf_free(blmeta_t *scan, bsblk_t blk, bsblk_t count)
+blst_leaf_free(blmeta_t *scan, swblk_t blk, swblk_t count)
 {
 	/*
 	 * free some data in this bitmap
@@ -697,10 +698,10 @@ blst_leaf_free(blmeta_t *scan, bsblk_t blk, bsblk_t count)
 	 *		v        n
 	 */
 	int n = blk & (BLIST_BMAP_RADIX - 1);
-	bsbmp_t mask;
+	u_swblk_t mask;
 
-	mask = ((bsbmp_t)-1 << n) &
-	    ((bsbmp_t)-1 >> (BLIST_BMAP_RADIX - count - n));
+	mask = ((u_swblk_t)-1 << n) &
+	    ((u_swblk_t)-1 >> (BLIST_BMAP_RADIX - count - n));
 
 	if (scan->u.bmu_bitmap & mask)
 		panic("%s: freeing free block", __func__);
@@ -727,11 +728,11 @@ blst_leaf_free(blmeta_t *scan, bsblk_t blk, bsblk_t count)
  */
 
 static void
-blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
-	       bsblk_t radix, bsblk_t skip, bsblk_t blk)
+blst_meta_free(blmeta_t *scan, swblk_t freeBlk, swblk_t count,
+	       swblk_t radix, swblk_t skip, swblk_t blk)
 {
-	bsblk_t i;
-	bsblk_t next_skip = ((bsblk_t)skip / BLIST_META_RADIX);
+	swblk_t i;
+	swblk_t next_skip = ((swblk_t)skip / BLIST_META_RADIX);
 
 #if 0
 	printf("FREE (%04lx,%lu) FROM (%04lx,%lu)\n",
@@ -751,7 +752,7 @@ blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
 
 		if (count != radix)  {
 			for (i = 1; i <= skip; i += next_skip) {
-				if (scan[i].bm_bighint == (bsblk_t)-1)
+				if (scan[i].bm_bighint == (swblk_t)-1)
 					break;
 				scan[i].bm_bighint = 0;
 				if (next_skip == 1) {
@@ -788,18 +789,18 @@ blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
 
 	radix /= BLIST_META_RADIX;
 
-	i = (freeBlk - blk) / (bsblk_t)radix;
-	blk += i * (bsblk_t)radix;
+	i = (freeBlk - blk) / (swblk_t)radix;
+	blk += i * (swblk_t)radix;
 	i = i * next_skip + 1;
 
 	while (i <= skip && blk < freeBlk + count) {
-		bsblk_t v;
+		swblk_t v;
 
-		v = blk + (bsblk_t)radix - freeBlk;
+		v = blk + (swblk_t)radix - freeBlk;
 		if (v > count)
 			v = count;
 
-		if (scan->bm_bighint == (bsblk_t)-1)
+		if (scan->bm_bighint == (swblk_t)-1)
 			panic("%s: freeing unexpected range", __func__);
 
 		if (next_skip == 1) {
@@ -822,7 +823,7 @@ blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
 		}
 		count -= v;
 		freeBlk += v;
-		blk += (bsblk_t)radix;
+		blk += (swblk_t)radix;
 		i += next_skip;
 	}
 }
@@ -834,15 +835,15 @@ blst_meta_free(blmeta_t *scan, bsblk_t freeBlk, bsblk_t count,
  *	any existing allocations in that range.  Returns the number
  *	of blocks allocated by the call.
  */
-static bsblk_t
-blst_leaf_fill(blmeta_t *scan, bsblk_t blk, bsblk_t count)
+static swblk_t
+blst_leaf_fill(blmeta_t *scan, swblk_t blk, swblk_t count)
 {
 	int n = blk & (BLIST_BMAP_RADIX - 1);
-	bsblk_t nblks;
-	bsbmp_t mask, bitmap;
+	swblk_t nblks;
+	u_swblk_t mask, bitmap;
 
-	mask = ((bsbmp_t)-1 << n) &
-	    ((bsbmp_t)-1 >> (BLIST_BMAP_RADIX - count - n));
+	mask = ((u_swblk_t)-1 << n) &
+	    ((u_swblk_t)-1 >> (BLIST_BMAP_RADIX - count - n));
 
 	/* Count the number of blocks we're about to allocate */
 	bitmap = scan->u.bmu_bitmap & mask;
@@ -861,13 +862,13 @@ blst_leaf_fill(blmeta_t *scan, bsblk_t blk, bsblk_t count)
  *	be within the extent of this node.  Returns the number
  *	of blocks allocated by the call.
  */
-static bsblk_t
-blst_meta_fill(blmeta_t *scan, bsblk_t fillBlk, bsblk_t count,
-	       bsblk_t radix, bsblk_t skip, bsblk_t blk)
+static swblk_t
+blst_meta_fill(blmeta_t *scan, swblk_t fillBlk, swblk_t count,
+	       swblk_t radix, swblk_t skip, swblk_t blk)
 {
-	bsblk_t i;
-	bsblk_t next_skip = ((bsblk_t)skip / BLIST_META_RADIX);
-	bsblk_t nblks = 0;
+	swblk_t i;
+	swblk_t next_skip = ((swblk_t)skip / BLIST_META_RADIX);
+	swblk_t nblks = 0;
 
 	if (count == radix || scan->u.bmu_avail == 0) {
 		/*
@@ -886,35 +887,35 @@ blst_meta_fill(blmeta_t *scan, bsblk_t fillBlk, bsblk_t count,
 		 * ALL-FREE special case, initialize sublevel
 		 */
 		for (i = 1; i <= skip; i += next_skip) {
-			if (scan[i].bm_bighint == (bsblk_t)-1)
+			if (scan[i].bm_bighint == (swblk_t)-1)
 				break;
 			if (next_skip == 1) {
-				scan[i].u.bmu_bitmap = (bsbmp_t)-1;
+				scan[i].u.bmu_bitmap = (u_swblk_t)-1;
 				scan[i].bm_bighint = BLIST_BMAP_RADIX;
 			} else {
-				scan[i].bm_bighint = (bsblk_t)radix;
-				scan[i].u.bmu_avail = (bsblk_t)radix;
+				scan[i].bm_bighint = (swblk_t)radix;
+				scan[i].u.bmu_avail = (swblk_t)radix;
 			}
 		}
 	} else {
 		radix /= BLIST_META_RADIX;
 	}
 
-	if (count > (bsblk_t)radix)
+	if (count > (swblk_t)radix)
 		panic("%s: allocation too large", __func__);
 
-	i = (fillBlk - blk) / (bsblk_t)radix;
-	blk += i * (bsblk_t)radix;
+	i = (fillBlk - blk) / (swblk_t)radix;
+	blk += i * (swblk_t)radix;
 	i = i * next_skip + 1;
 
 	while (i <= skip && blk < fillBlk + count) {
-		bsblk_t v;
+		swblk_t v;
 
-		v = blk + (bsblk_t)radix - fillBlk;
+		v = blk + (swblk_t)radix - fillBlk;
 		if (v > count)
 			v = count;
 
-		if (scan->bm_bighint == (bsblk_t)-1)
+		if (scan->bm_bighint == (swblk_t)-1)
 			panic("%s: filling unexpected range", __func__);
 
 		if (next_skip == 1) {
@@ -925,7 +926,7 @@ blst_meta_fill(blmeta_t *scan, bsblk_t fillBlk, bsblk_t count,
 		}
 		count -= v;
 		fillBlk += v;
-		blk += (bsblk_t)radix;
+		blk += (swblk_t)radix;
 		i += next_skip;
 	}
 	scan->u.bmu_avail -= nblks;
@@ -940,24 +941,24 @@ blst_meta_fill(blmeta_t *scan, bsblk_t fillBlk, bsblk_t count,
  */
 
 static void
-blst_copy(blmeta_t *scan, bsblk_t blk, bsblk_t radix,
-	  bsblk_t skip, blist_t dest, bsblk_t count)
+blst_copy(blmeta_t *scan, swblk_t blk, swblk_t radix,
+	  swblk_t skip, blist_t dest, swblk_t count)
 {
-	bsblk_t next_skip;
-	bsblk_t i;
+	swblk_t next_skip;
+	swblk_t i;
 
 	/*
 	 * Leaf node
 	 */
 
 	if (radix == BLIST_BMAP_RADIX) {
-		bsbmp_t v = scan->u.bmu_bitmap;
+		u_swblk_t v = scan->u.bmu_bitmap;
 
-		if (v == (bsbmp_t)-1) {
+		if (v == (u_swblk_t)-1) {
 			blist_free(dest, blk, count);
 		} else if (v != 0) {
 			for (i = 0; i < BLIST_BMAP_RADIX && i < count; ++i) {
-				if (v & ((bsblk_t)1 << i))
+				if (v & ((swblk_t)1 << i))
 					blist_free(dest, blk + i, 1);
 			}
 		}
@@ -981,28 +982,28 @@ blst_copy(blmeta_t *scan, bsblk_t blk, bsblk_t radix,
 		if (count < radix)
 			blist_free(dest, blk, count);
 		else
-			blist_free(dest, blk, (bsblk_t)radix);
+			blist_free(dest, blk, (swblk_t)radix);
 		return;
 	}
 
 
 	radix /= BLIST_META_RADIX;
-	next_skip = ((bsbmp_t)skip / BLIST_META_RADIX);
+	next_skip = ((u_swblk_t)skip / BLIST_META_RADIX);
 
 	for (i = 1; count && i <= skip; i += next_skip) {
-		if (scan[i].bm_bighint == (bsblk_t)-1)
+		if (scan[i].bm_bighint == (swblk_t)-1)
 			break;
 
-		if (count >= (bsblk_t)radix) {
+		if (count >= (swblk_t)radix) {
 			blst_copy(
 			    &scan[i],
 			    blk,
 			    radix,
 			    next_skip - 1,
 			    dest,
-			    (bsblk_t)radix
+			    (swblk_t)radix
 			);
-			count -= (bsblk_t)radix;
+			count -= (swblk_t)radix;
 		} else {
 			if (count) {
 				blst_copy(
@@ -1016,7 +1017,7 @@ blst_copy(blmeta_t *scan, bsblk_t blk, bsblk_t radix,
 			}
 			count = 0;
 		}
-		blk += (bsblk_t)radix;
+		blk += (swblk_t)radix;
 	}
 }
 
@@ -1029,12 +1030,12 @@ blst_copy(blmeta_t *scan, bsblk_t blk, bsblk_t radix,
  *	RADIX values we use.
  */
 
-static bsblk_t
-blst_radix_init(blmeta_t *scan, bsblk_t radix, bsblk_t skip, bsblk_t count)
+static swblk_t
+blst_radix_init(blmeta_t *scan, swblk_t radix, swblk_t skip, swblk_t count)
 {
-	bsblk_t i;
-	bsblk_t next_skip;
-	bsblk_t memindex = 0;
+	swblk_t i;
+	swblk_t next_skip;
+	swblk_t memindex = 0;
 
 	/*
 	 * Leaf node
@@ -1060,10 +1061,10 @@ blst_radix_init(blmeta_t *scan, bsblk_t radix, bsblk_t skip, bsblk_t count)
 	}
 
 	radix /= BLIST_META_RADIX;
-	next_skip = ((bsbmp_t)skip / BLIST_META_RADIX);
+	next_skip = ((u_swblk_t)skip / BLIST_META_RADIX);
 
 	for (i = 1; i <= skip; i += next_skip) {
-		if (count >= (bsblk_t)radix) {
+		if (count >= (swblk_t)radix) {
 			/*
 			 * Allocate the entire object
 			 */
@@ -1071,9 +1072,9 @@ blst_radix_init(blmeta_t *scan, bsblk_t radix, bsblk_t skip, bsblk_t count)
 			    ((scan) ? &scan[i] : NULL),
 			    radix,
 			    next_skip - 1,
-			    (bsblk_t)radix
+			    (swblk_t)radix
 			);
-			count -= (bsblk_t)radix;
+			count -= (swblk_t)radix;
 		} else if (count > 0) {
 			/*
 			 * Allocate a partial object
@@ -1090,7 +1091,7 @@ blst_radix_init(blmeta_t *scan, bsblk_t radix, bsblk_t skip, bsblk_t count)
 			 * Add terminator and break out
 			 */
 			if (scan)
-				scan[i].bm_bighint = (bsblk_t)-1;
+				scan[i].bm_bighint = (swblk_t)-1;
 			break;
 		}
 	}
@@ -1102,14 +1103,14 @@ blst_radix_init(blmeta_t *scan, bsblk_t radix, bsblk_t skip, bsblk_t count)
 #if defined(BLIST_DEBUG) || defined(DDB)
 
 static void
-blst_radix_print(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip, int tab)
+blst_radix_print(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip, int tab)
 {
-	bsblk_t i;
-	bsblk_t next_skip;
+	swblk_t i;
+	swblk_t next_skip;
 
 	if (radix == BLIST_BMAP_RADIX) {
 		printf(
-		    "%*.*s(%04lx,%lu): bitmap %0*lx big=%lu\n",
+		    "%*.*s(%04lx,%lu): bitmap %0*llx big=%lu\n",
 		    tab, tab, "",
 		    blk, radix,
 		    (int)(1 + (BLIST_BMAP_RADIX - 1) / 4),
@@ -1148,11 +1149,11 @@ blst_radix_print(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip, int t
 	);
 
 	radix /= BLIST_META_RADIX;
-	next_skip = ((bsbmp_t)skip / BLIST_META_RADIX);
+	next_skip = ((u_swblk_t)skip / BLIST_META_RADIX);
 	tab += 4;
 
 	for (i = 1; i <= skip; i += next_skip) {
-		if (scan[i].bm_bighint == (bsblk_t)-1) {
+		if (scan[i].bm_bighint == (swblk_t)-1) {
 			printf(
 			    "%*.*s(%04lx,%lu): Terminator\n",
 			    tab, tab, "",
@@ -1167,7 +1168,7 @@ blst_radix_print(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip, int t
 		    next_skip - 1,
 		    tab
 		);
-		blk += (bsblk_t)radix;
+		blk += (swblk_t)radix;
 	}
 	tab -= 4;
 
@@ -1184,11 +1185,11 @@ blst_radix_print(blmeta_t *scan, bsblk_t blk, bsblk_t radix, bsblk_t skip, int t
 int
 main(int ac, char **av)
 {
-	bsblk_t size = 1024;
-	bsblk_t i;
+	swblk_t size = 1024;
+	swblk_t i;
 	blist_t bl;
 
-	for (i = 1; i < (bsblk_t)ac; ++i) {
+	for (i = 1; i < (swblk_t)ac; ++i) {
 		const char *ptr = av[i];
 		if (*ptr != '-') {
 			size = strtol(ptr, NULL, 0);
@@ -1203,9 +1204,9 @@ main(int ac, char **av)
 
 	for (;;) {
 		char buf[1024];
-		bsblk_t da = 0;
-		bsblk_t count = 0;
-		bsblk_t blkat;
+		swblk_t da = 0;
+		swblk_t count = 0;
+		swblk_t blkat;
 
 
 		printf("%lu/%lu/%lu> ",
@@ -1229,10 +1230,10 @@ main(int ac, char **av)
 		case 'a':
 			if (sscanf(buf + 1, "%li %li", &count, &blkat) == 1) {
 				printf("count %lu\n", count);
-				bsblk_t blk = blist_alloc(bl, count);
+				swblk_t blk = blist_alloc(bl, count);
 				printf("    R=%04lx\n", blk);
 			} else if (sscanf(buf + 1, "%li %li", &count, &blkat) == 2) {
-				bsblk_t blk = blist_allocat(bl, count, blkat);
+				swblk_t blk = blist_allocat(bl, count, blkat);
 				printf("    R=%04lx\n", blk);
 			} else {
 				printf("?\n");
@@ -1246,7 +1247,7 @@ main(int ac, char **av)
 			}
 			break;
 		case 'g': {
-				bsblk_t b, e;
+				swblk_t b, e;
 				blist_gapfind(bl, &b, &e);
 				printf("gapfind: begin=%04lx end=%04lx size=%lu\n",
 				    b, e, e-b);

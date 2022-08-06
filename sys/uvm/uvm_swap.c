@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.162 2022/07/29 17:47:12 semarie Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.163 2022/08/06 13:44:04 semarie Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1428,7 +1428,7 @@ uvm_swap_alloc(int *nslots, boolean_t lessok)
 ReTry:	/* XXXMRG */
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
-			bsblk_t result;
+			swblk_t result;
 
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0)
