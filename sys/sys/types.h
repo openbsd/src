@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.48 2019/02/09 04:54:11 guenther Exp $	*/
+/*	$OpenBSD: types.h,v 1.49 2022/08/06 13:31:13 semarie Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -144,7 +144,6 @@ typedef	__mode_t	mode_t;		/* permissions */
 typedef	__nlink_t	nlink_t;	/* link count */
 typedef	__rlim_t	rlim_t;		/* resource limit */
 typedef	__segsz_t	segsz_t;	/* segment size */
-typedef	__swblk_t	swblk_t;	/* swap offset */
 typedef	__uid_t		uid_t;		/* user id */
 typedef	__useconds_t	useconds_t;	/* microseconds */
 typedef	__suseconds_t	suseconds_t;	/* microseconds (signed) */
