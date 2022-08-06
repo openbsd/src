@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.117 2022/04/14 14:10:22 claudio Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.118 2022/08/06 15:57:59 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -375,7 +375,7 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 	u_int32_t flowinfo;
 	u_int rdomain;
 
-	NET_ASSERT_WLOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;

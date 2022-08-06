@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.279 2022/06/26 15:50:21 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.280 2022/08/06 15:57:59 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -364,7 +364,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
 		 */
-		NET_ASSERT_WLOCKED();
+		NET_ASSERT_LOCKED_EXCLUSIVE();
 		SIMPLEQ_INIT(&inpcblist);
 		mtx_enter(&udbtable.inpt_mtx);
 		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {

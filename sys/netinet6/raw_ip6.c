@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.147 2022/03/23 00:16:07 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.148 2022/08/06 15:57:59 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 #endif
-	NET_ASSERT_WLOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 	SIMPLEQ_INIT(&inpcblist);
 	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.384 2022/07/28 12:27:29 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.385 2022/08/06 15:57:58 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3244,12 +3244,12 @@ pf_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	struct pf_status	pfs;
 
-	NET_RLOCK_IN_IOCTL();
+	NET_LOCK_SHARED();
 	PF_LOCK();
 	memcpy(&pfs, &pf_status, sizeof(struct pf_status));
 	pfi_update_status(pfs.ifname, &pfs);
 	PF_UNLOCK();
-	NET_RUNLOCK_IN_IOCTL();
+	NET_UNLOCK_SHARED();
 
 	return sysctl_rdstruct(oldp, oldlenp, newp, &pfs, sizeof(pfs));
 }

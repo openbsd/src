@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.376 2022/08/04 18:05:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.377 2022/08/06 15:57:59 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -233,8 +233,8 @@ ip_init(void)
 
 /*
  * Enqueue packet for local delivery.  Queuing is used as a boundary
- * between the network layer (input/forward path) running with shared
- * NET_RLOCK_IN_SOFTNET() and the transport layer needing it exclusively.
+ * between the network layer (input/forward path) running with
+ * NET_LOCK_SHARED() and the transport layer needing it exclusively.
  */
 int
 ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
@@ -254,6 +254,7 @@ ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
 
 /*
  * Dequeue and process locally delivered packets.
+ * This is called with exclusive NET_LOCK().
  */
 void
 ipintr(void)
@@ -696,7 +697,7 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 	int nest = 0;
 #endif /* INET6 */
 
-	NET_ASSERT_WLOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	/* pf might have modified stuff, might have to chksum */
 	switch (af) {

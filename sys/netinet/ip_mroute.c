@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.135 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.136 2022/08/06 15:57:59 bluhm Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -266,16 +266,16 @@ mrt_ioctl(struct socket *so, u_long cmd, caddr_t data)
 	else
 		switch (cmd) {
 		case SIOCGETVIFCNT:
-			NET_RLOCK_IN_IOCTL();
+			NET_LOCK_SHARED();
 			error = get_vif_cnt(inp->inp_rtableid,
 			    (struct sioc_vif_req *)data);
-			NET_RUNLOCK_IN_IOCTL();
+			NET_UNLOCK_SHARED();
 			break;
 		case SIOCGETSGCNT:
-			NET_RLOCK_IN_IOCTL();
+			NET_LOCK_SHARED();
 			error = get_sg_cnt(inp->inp_rtableid,
 			    (struct sioc_sg_req *)data);
-			NET_RUNLOCK_IN_IOCTL();
+			NET_UNLOCK_SHARED();
 			break;
 		default:
 			error = ENOTTY;

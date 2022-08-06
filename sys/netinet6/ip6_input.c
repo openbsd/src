@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.249 2022/07/24 22:38:25 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.250 2022/08/06 15:57:59 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -169,8 +169,8 @@ ip6_init(void)
 
 /*
  * Enqueue packet for local delivery.  Queuing is used as a boundary
- * between the network layer (input/forward path) running with shared
- * NET_RLOCK_IN_SOFTNET() and the transport layer needing it exclusively.
+ * between the network layer (input/forward path) running with
+ * NET_LOCK_SHARED() and the transport layer needing it exclusively.
  */
 int
 ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
@@ -186,6 +186,7 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 
 /*
  * Dequeue and process locally delivered packets.
+ * This is called with exclusive NET_LOCK().
  */
 void
 ip6intr(void)
