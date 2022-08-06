@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.28 2022/08/06 11:05:23 schwarze Exp $
+.\"	$OpenBSD: regex.3,v 1.29 2022/08/06 19:04:49 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -626,19 +626,65 @@ sections 2.8 (Regular Expression Notation)
 and
 B.5 (C Binding for Regular Expression Matching).
 .Sh HISTORY
-Predecessors to
-.Fn regcomp
-and
-.Fn regexec ,
+Predecessors called
 .Fn regcmp
 and
-.Fn regex ,
-first appeared in the Programmer's Workbench (PWB/UNIX).
+.Fn regex
+first appeared in PWB/UNIX 1.0.
 .Pp
-The present functions were originally written by Henry Spencer
-and altered for inclusion in the
+Predecessors
+.Fn re_comp
+and
+.Fn re_exec
+first appeared in
+.Bx 4.0 ,
+became part of
+.In unistd.h
+in
+.Bx 4.4 ,
+and were deleted after
+.Ox 5.4 .
+.Pp
+Functions called
+.Fn regcomp ,
+.Fn regexec ,
+.Fn regerror ,
+and
+.Fn regsub
+first appeared in Version\~8
+.At ,
+were reimplemented and declared in
+.In regexp.h
+for
+.Bx 4.3 Tahoe ,
+and were also deleted after
+.Ox 5.4 .
+.Pp
+Taking different arguments, the POSIX
+.In regex.h
+functions
+.Fn regcomp ,
+.Fn regexec ,
+.Fn regerror ,
+and
+.Fn regfree
+appeared in
+.Bx 4.4 .
+.Sh AUTHORS
+.An -nosplit
+The
+Version\~8
+.At
+code was implemented by
+.An Rob Pike
+and extracted into a library by
+.An Dave Presotto .
+The
+.Bx 4.3 Tahoe
+and
 .Bx 4.4
-distribution.
+versions were both written by
+.An Henry Spencer .
 .Sh BUGS
 The implementation of internationalization is incomplete:
 the locale is always assumed to be the default one of
