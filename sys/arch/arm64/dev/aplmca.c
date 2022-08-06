@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.1 2022/08/03 13:42:16 kettenis Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.2 2022/08/06 09:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -201,7 +201,7 @@ aplmca_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ad[i].ad_cluster = i;
 		sc->sc_ad[i].ad_sc = sc;
 		sc->sc_ad[i].ad_dai.dd_node = sc->sc_node;
-		sc->sc_ad[i].ad_dai.dd_cookie = &sc->sc_ad[0];
+		sc->sc_ad[i].ad_dai.dd_cookie = &sc->sc_ad[i];
 		sc->sc_ad[i].ad_dai.dd_hw_if = &aplmca_hw_if;
 		sc->sc_ad[i].ad_dai.dd_set_format = aplmca_set_format;
 		sc->sc_ad[i].ad_dai.dd_set_sysclk = aplmca_set_sysclk;
