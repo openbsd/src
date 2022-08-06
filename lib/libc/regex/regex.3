@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.27 2016/05/26 05:46:44 martijn Exp $
+.\"	$OpenBSD: regex.3,v 1.28 2022/08/06 11:05:23 schwarze Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: May 26 2016 $
+.Dd $Mdocdate: August 6 2022 $
 .Dt REGEXEC 3
 .Os
 .Sh NAME
@@ -102,9 +102,7 @@ structure pointed to by
 .Fa preg .
 The
 .Fa cflags
-argument is the bitwise
-.Tn OR
-of zero or more of the following values:
+argument is the bitwise OR of zero or more of the following values:
 .Bl -tag -width XREG_EXTENDEDX
 .It Dv REG_EXTENDED
 Compile modern
@@ -220,9 +218,7 @@ is considered to be the text of an entire line, minus any terminating
 newline.
 The
 .Fa eflags
-argument is the bitwise
-.Tn OR
-of zero or more of the following values:
+argument is the bitwise OR of zero or more of the following values:
 .Bl -tag -width XREG_STARTENDX
 .It Dv REG_NOTBOL
 The first character of the string is treated as the continuation
@@ -452,9 +448,7 @@ If the
 .Fa errcode
 given to
 .Fn regerror
-is first
-.Tn OR Ns 'ed
-with
+is first OR'ed with
 .Dv REG_ITOA ,
 the
 .Dq message
@@ -589,7 +583,8 @@ include the following:
 .Pp
 .Bl -tag -compact -width XREG_ECOLLATEX
 .It Er REG_NOMATCH
-regexec() failed to match
+.Fn regexec
+failed to match
 .It Er REG_BADPAT
 invalid regular expression
 .It Er REG_ECOLLATE
@@ -645,10 +640,6 @@ and altered for inclusion in the
 .Bx 4.4
 distribution.
 .Sh BUGS
-This is an alpha release with known defects.
-Please report problems.
-.Pp
-There is one known functionality bug.
 The implementation of internationalization is incomplete:
 the locale is always assumed to be the default one of
 .St -p1003.2 ,
