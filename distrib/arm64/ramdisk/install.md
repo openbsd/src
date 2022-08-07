@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2022/03/31 16:16:09 deraadt Exp $
+#	$OpenBSD: install.md,v 1.32 2022/08/07 03:22:29 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,6 +90,10 @@ md_prep_fdisk() {
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
 	local bootfstype="msdos"
+
+	case $(sysctl -n machdep.compatible) in
+	openbsd,acpi)		bootsectorsize=532480;;
+	esac
 
 	while :; do
 		_d=whole
