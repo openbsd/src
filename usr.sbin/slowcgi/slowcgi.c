@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.63 2022/08/06 17:11:36 op Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.64 2022/08/07 07:43:53 op Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -254,7 +254,7 @@ usage(void)
 	extern char *__progname;
 	fprintf(stderr,
 	    "usage: %s [-dv] [-p path] [-s socket] [-t timeout] [-U user] "
-	    " [-u user]\n", __progname);
+	    "[-u user]\n", __progname);
 	exit(1);
 }
 
