@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.278 2022/06/29 07:51:54 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.279 2022/08/07 23:56:06 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -604,8 +604,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	sss = (sizeof(ksc) + 15) & ~15;
 
 	/* Save FPU state to PCB if necessary, then copy it out */
-	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
-		curcpu()->ci_flags &= ~CPUF_USERXSTATE;
+	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
+		curcpu()->ci_pflags &= ~CPUPF_USERXSTATE;
 		fpusavereset(&p->p_addr->u_pcb.pcb_savefpu);
 	}
 	sp -= fpu_save_len;
@@ -646,7 +646,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* The reset state _is_ the userspace state for this thread now */
-	curcpu()->ci_flags |= CPUF_USERXSTATE;
+	curcpu()->ci_pflags |= CPUPF_USERXSTATE;
 
 	return 0;
 }
@@ -694,8 +694,8 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 
 	/* Current state is obsolete; toss it and force a reload */
-	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
-		curcpu()->ci_flags &= ~CPUF_USERXSTATE;
+	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
+		curcpu()->ci_pflags &= ~CPUPF_USERXSTATE;
 		fpureset();
 	}
 
@@ -1110,8 +1110,8 @@ reset_segs(void)
 	 * This operates like the cpu_switchto() sequence: if we
 	 * haven't reset %[defg]s already, do so now.
 	*/
-	if (curcpu()->ci_flags & CPUF_USERSEGS) {
-		curcpu()->ci_flags &= ~CPUF_USERSEGS;
+	if (curcpu()->ci_pflags & CPUPF_USERSEGS) {
+		curcpu()->ci_pflags &= ~CPUPF_USERSEGS;
 		__asm volatile(
 		    "movw %%ax,%%ds\n\t"
 		    "movw %%ax,%%es\n\t"
@@ -1137,12 +1137,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
 	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
 
-	if (curcpu()->ci_flags & CPUF_USERXSTATE) {
+	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
 		/* state in CPU is obsolete; reset it */
 		fpureset();
 	} else {
 		/* the reset state _is_ the userspace state now */
-		curcpu()->ci_flags |= CPUF_USERXSTATE;
+		curcpu()->ci_pflags |= CPUPF_USERXSTATE;
 	}
 
 	/* To reset all registers we have to return via iretq */

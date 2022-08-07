@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.125 2022/07/12 04:46:00 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.126 2022/08/07 23:56:06 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -580,25 +580,23 @@ identifycpu(struct cpu_info *ci)
 		if (!strcmp(cpu_vendor, "GenuineIntel")) {
 			if ((ci->ci_family == 0x0f && ci->ci_model >= 0x03) ||
 			    (ci->ci_family == 0x06 && ci->ci_model >= 0x0e)) {
-				ci->ci_flags |= CPUF_CONST_TSC;
+				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
 		} else if (!strcmp(cpu_vendor, "CentaurHauls")) {
 			/* VIA */
 			if (ci->ci_model >= 0x0f) {
-				ci->ci_flags |= CPUF_CONST_TSC;
+				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
 		} else if (!strcmp(cpu_vendor, "AuthenticAMD")) {
 			if (cpu_apmi_edx & CPUIDEDX_ITSC) {
-				/* Invariant TSC indicates constant TSC on
-				 * AMD.
-				 */
-				ci->ci_flags |= CPUF_CONST_TSC;
+				/* Invariant TSC indicates constant TSC on AMD */
+				atomic_setbits_int(&ci->ci_flags, CPUF_CONST_TSC);
 			}
 		}
 
 		/* Check if it's an invariant TSC */
 		if (cpu_apmi_edx & CPUIDEDX_ITSC)
-			ci->ci_flags |= CPUF_INVAR_TSC;
+			atomic_setbits_int(&ci->ci_flags, CPUF_INVAR_TSC);
 
 		tsc_identify(ci);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.318 2022/07/12 04:52:38 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.319 2022/08/07 23:56:06 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1548,7 +1548,7 @@ start_vmm_on_cpu(struct cpu_info *ci)
 		}
 	}
 
-	ci->ci_flags |= CPUF_VMM;
+	atomic_setbits_int(&ci->ci_flags, CPUF_VMM);
 }
 
 /*
@@ -1587,7 +1587,7 @@ stop_vmm_on_cpu(struct cpu_info *ci)
 		lcr4(cr4);
 	}
 
-	ci->ci_flags &= ~CPUF_VMM;
+	atomic_clearbits_int(&ci->ci_flags, CPUF_VMM);
 }
 
 /*
@@ -4632,8 +4632,8 @@ vmm_fpurestore(struct vcpu *vcpu)
 	rw_assert_wrlock(&vcpu->vc_lock);
 
 	/* save vmm's FPU state if we haven't already */
-	if (ci->ci_flags & CPUF_USERXSTATE) {
-		ci->ci_flags &= ~CPUF_USERXSTATE;
+	if (ci->ci_pflags & CPUPF_USERXSTATE) {
+		ci->ci_pflags &= ~CPUPF_USERXSTATE;
 		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
 	}
 

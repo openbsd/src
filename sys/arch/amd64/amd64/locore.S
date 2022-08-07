@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.127 2021/12/31 10:40:30 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.128 2022/08/07 23:56:06 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -374,7 +374,7 @@ ENTRY(cpu_switchto)
 	 * If the old proc ran in userspace then save the
 	 * floating-point/"extended state" registers
 	 */
-	testl	$CPUF_USERXSTATE,CPUVAR(FLAGS)
+	testl	$CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 	jz	.Lxstate_reset
 
 	movq	%r13, %rdi
@@ -394,16 +394,16 @@ switch_exited:
 	CODEPATCH_START
 	fxrstor64	(%rdi)
 	CODEPATCH_END(CPTAG_XRSTOR)
-	andl	$~CPUF_USERXSTATE,CPUVAR(FLAGS)
+	andl	$~CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 
 .Lxstate_reset:
 	/*
 	 * If the segment registers haven't been reset since the old proc
 	 * ran in userspace then reset them now
 	 */
-	testl	$CPUF_USERSEGS,CPUVAR(FLAGS)
+	testl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	jz	restore_saved
-	andl	$~CPUF_USERSEGS,CPUVAR(FLAGS)
+	andl	$~CPUPF_USERSEGS,CPUVAR(PFLAGS)
 
 	/* set %ds, %es, %fs, and %gs to expected value to prevent info leak */
 	movw	$(GSEL(GUDATA_SEL, SEL_UPL)),%ax
@@ -642,11 +642,11 @@ IDTVEC_NOALIGN(syscall)
 	jne	intr_user_exit_post_ast
 
 	/* Restore FPU/"extended CPU state" if it's not already in the CPU */
-	testl	$CPUF_USERXSTATE,CPUVAR(FLAGS)
+	testl	$CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 	jz	.Lsyscall_restore_xstate
 
 	/* Restore FS.base if it's not already in the CPU */
-	testl	$CPUF_USERSEGS,CPUVAR(FLAGS)
+	testl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	jz	.Lsyscall_restore_fsbase
 
 .Lsyscall_restore_registers:
@@ -712,13 +712,13 @@ KUTEXT_PAGE_END
 	_ALIGN_TRAPS
 	/* in this case, need FS.base but not xstate, rarely happens */
 .Lsyscall_restore_fsbase:	/* CPU doesn't have curproc's FS.base */
-	orl	$CPUF_USERSEGS,CPUVAR(FLAGS)
+	orl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	movq	CPUVAR(CURPCB),%rdi
 	jmp	.Lsyscall_restore_fsbase_real
 
 	_ALIGN_TRAPS
 .Lsyscall_restore_xstate:	/* CPU doesn't have curproc's xstate */
-	orl	$(CPUF_USERXSTATE|CPUF_USERSEGS),CPUVAR(FLAGS)
+	orl	$(CPUPF_USERXSTATE|CPUPF_USERSEGS),CPUVAR(PFLAGS)
 	movq	CPUVAR(CURPCB),%rdi
 	movq	xsave_mask(%rip),%rdx
 	movl	%edx,%eax
@@ -812,7 +812,7 @@ GENTRY(intr_user_exit)
 
 intr_user_exit_post_ast:
 	/* Restore FPU/"extended CPU state" if it's not already in the CPU */
-	testl	$CPUF_USERXSTATE,CPUVAR(FLAGS)
+	testl	$CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 	jz	.Lintr_restore_xstate
 
 #ifdef DIAGNOSTIC
@@ -822,7 +822,7 @@ intr_user_exit_post_ast:
 #endif /* DIAGNOSTIC */
 
 	/* Restore FS.base if it's not already in the CPU */
-	testl	$CPUF_USERSEGS,CPUVAR(FLAGS)
+	testl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	jz	.Lintr_restore_fsbase
 
 .Lintr_restore_registers:
@@ -911,7 +911,7 @@ KTEXT_PAGE_END
 	.text
 	_ALIGN_TRAPS
 .Lintr_restore_xstate:		/* CPU doesn't have curproc's xstate */
-	orl	$CPUF_USERXSTATE,CPUVAR(FLAGS)
+	orl	$CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 	movq	CPUVAR(CURPCB),%rdi
 #if PCB_SAVEFPU != 0
 	addq	$PCB_SAVEFPU,%rdi
@@ -921,7 +921,7 @@ KTEXT_PAGE_END
 	testl	%eax,%eax
 	jnz	.Lintr_xrstor_faulted
 .Lintr_restore_fsbase:		/* CPU doesn't have curproc's FS.base */
-	orl	$CPUF_USERSEGS,CPUVAR(FLAGS)
+	orl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	movq	CPUVAR(CURPCB),%rdx
 	movq	PCB_FSBASE(%rdx),%rdx
 	movl	%edx,%eax

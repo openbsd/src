@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.45 2022/02/05 09:37:06 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.46 2022/08/07 23:56:06 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct switchframe *sf;
 
 	/* Save the fpu h/w state to p1's pcb so that we can copy it. */
-	if (p1 != &proc0 && (ci->ci_flags & CPUF_USERXSTATE))
+	if (p1 != &proc0 && (ci->ci_pflags & CPUPF_USERXSTATE))
 		fpusave(&pcb1->pcb_savefpu);
 
 	p2->p_md.md_flags = p1->p_md.md_flags;

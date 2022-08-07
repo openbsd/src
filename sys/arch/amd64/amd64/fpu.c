@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.42 2020/11/30 02:56:42 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.43 2022/08/07 23:56:06 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -99,8 +99,8 @@ fputrap(int type)
 	u_int32_t mxcsr, statbits;
 	u_int16_t cw;
 
-	KASSERT(ci->ci_flags & CPUF_USERXSTATE);
-	ci->ci_flags &= ~CPUF_USERXSTATE;
+	KASSERT(ci->ci_pflags & CPUPF_USERXSTATE);
+	ci->ci_pflags &= ~CPUPF_USERXSTATE;
 	fpusavereset(sfp);
 
 	if (type == T_XMM) {
@@ -149,8 +149,8 @@ fpu_kernel_enter(void)
 	struct cpu_info *ci = curcpu();
 
 	/* save curproc's FPU state if we haven't already */
-	if (ci->ci_flags & CPUF_USERXSTATE) {
-		ci->ci_flags &= ~CPUF_USERXSTATE;
+	if (ci->ci_pflags & CPUPF_USERXSTATE) {
+		ci->ci_pflags &= ~CPUPF_USERXSTATE;
 		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
 	} else {
 		fpureset();

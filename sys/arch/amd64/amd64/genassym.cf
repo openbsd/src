@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.42 2021/06/18 06:17:28 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.43 2022/08/07 23:56:06 guenther Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -120,7 +120,7 @@ member	CPU_INFO_MUTEX_LEVEL	ci_mutex_level
 endif
 member	CPU_INFO_GDT		ci_gdt
 member	CPU_INFO_TSS		ci_tss
-member	CPU_INFO_FLAGS		ci_flags
+member	CPU_INFO_PFLAGS		ci_pflags
 member	CPU_INFO_KERN_CR3	ci_kern_cr3
 member	CPU_INFO_USER_CR3	ci_user_cr3
 member	CPU_INFO_KERN_RSP	ci_kern_rsp
@@ -128,8 +128,8 @@ member	CPU_INFO_INTR_RSP	ci_intr_rsp
 member	CPU_INFO_MDS_BUF	ci_mds_buf
 member	CPU_INFO_MDS_TMP	ci_mds_tmp
 
-export	CPUF_USERSEGS
-export	CPUF_USERXSTATE
+export	CPUPF_USERSEGS
+export	CPUPF_USERXSTATE
 
 struct	intrsource
 member	is_recurse

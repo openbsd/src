@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.103 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.104 2022/08/07 23:56:06 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -406,7 +406,7 @@ acpi_sleep_cpu(struct acpi_softc *sc, int state)
 	 */
 	if (acpi_savecpu()) {
 		/* Suspend path */
-		KASSERT((curcpu()->ci_flags & CPUF_USERXSTATE) == 0);
+		KASSERT((curcpu()->ci_pflags & CPUPF_USERXSTATE) == 0);
 		wbinvd();
 
 #ifdef HIBERNATE
@@ -547,7 +547,7 @@ resume_mp(void)
 		ci->ci_idepth = 0;
 		ci->ci_handled_intr_level = IPL_NONE;
 
-		ci->ci_flags &= ~CPUF_PRESENT;
+		atomic_clearbits_int(&ci->ci_flags, CPUF_PRESENT);
 		cpu_start_secondary(ci);
 	}
 	cpu_boot_secondary_processors();
