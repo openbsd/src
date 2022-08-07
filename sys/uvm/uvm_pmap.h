@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.29 2019/12/08 05:22:44 visa Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.30 2022/08/07 19:39:25 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -99,6 +99,12 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 
 #ifndef PMAP_WC
 #define PMAP_WC		0
+#endif
+
+#ifndef PMAP_PREFER
+#define PMAP_PREFER_ALIGN()	0
+#define PMAP_PREFER_OFFSET(off)	0
+#define PMAP_PREFER(addr, off)	(addr)
 #endif
 
 #ifdef _KERNEL

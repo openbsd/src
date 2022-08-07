@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.291 2022/05/04 14:58:26 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.292 2022/08/07 19:39:25 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -221,15 +221,6 @@ void			 vmspace_validate(struct vm_map*);
 #define uvm_tree_sanity(_map, _file, _line)		do {} while (0)
 #define uvm_tree_size_chk(_map, _file, _line)		do {} while (0)
 #define vmspace_validate(_map)				do {} while (0)
-#endif
-
-/*
- * All architectures will have pmap_prefer.
- */
-#ifndef PMAP_PREFER
-#define PMAP_PREFER_ALIGN()	(vaddr_t)PAGE_SIZE
-#define PMAP_PREFER_OFFSET(off)	0
-#define PMAP_PREFER(addr, off)	(addr)
 #endif
 
 /*
