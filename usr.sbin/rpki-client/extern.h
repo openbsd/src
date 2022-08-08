@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.143 2022/06/27 10:18:27 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.144 2022/08/08 14:10:10 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -726,6 +726,9 @@ int	mkpathat(int, const char *);
 /* Maximum number of concurrent http and rsync requests. */
 #define MAX_HTTP_REQUESTS	64
 #define MAX_RSYNC_REQUESTS	16
+
+/* How many seconds to wait for a connection to succeed. */
+#define MAX_CONTIMEOUT		15
 
 /* Maximum allowd repositories per tal */
 #define MAX_REPO_PER_TAL	1000
