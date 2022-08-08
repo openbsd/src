@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.184 2022/03/02 12:53:15 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.185 2022/08/08 12:06:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -671,7 +671,9 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d, inp != NULL);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d,
+			    inp != NULL);
+			in_pcbunref(inp);
 			return;
 		}
 		if (inp) {
@@ -686,6 +688,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		    inet6ctlerrmap[cmd] == EHOSTDOWN)
 			syn_cache_unreach((struct sockaddr *)sa6_src,
 			    sa, &th, rdomain);
+		in_pcbunref(inp);
 	} else {
 		in6_pcbnotify(&tcbtable, sa6, 0,
 		    sa6_src, 0, rdomain, cmd, NULL, notify);
@@ -746,8 +749,10 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			 * ever sent, drop the message.
 			 */
 			mtu = (u_int)ntohs(icp->icmp_nextmtu);
-			if (mtu >= tp->t_pmtud_mtu_sent)
+			if (mtu >= tp->t_pmtud_mtu_sent) {
+				in_pcbunref(inp);
 				return;
+			}
 			if (mtu >= tcp_hdrsz(tp) + tp->t_pmtud_mss_acked) {
 				/* 
 				 * Calculate new MTU, and create corresponding
@@ -764,20 +769,25 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 				 * refers to an older TCP segment
 				 */
 				if (tp->t_flags & TF_PMTUD_PEND) {
-					if (SEQ_LT(tp->t_pmtud_th_seq, seq))
+					if (SEQ_LT(tp->t_pmtud_th_seq, seq)) {
+						in_pcbunref(inp);
 						return;
+					}
 				} else
 					tp->t_flags |= TF_PMTUD_PEND;
 				tp->t_pmtud_th_seq = seq;
 				tp->t_pmtud_nextmtu = icp->icmp_nextmtu;
 				tp->t_pmtud_ip_len = icp->icmp_ip.ip_len;
 				tp->t_pmtud_ip_hl = icp->icmp_ip.ip_hl;
+				in_pcbunref(inp);
 				return;
 			}
 		} else {
 			/* ignore if we don't have a matching connection */
+			in_pcbunref(inp);
 			return;
 		}
+		in_pcbunref(inp);
 		notify = tcp_mtudisc, ip = 0;
 	} else if (cmd == PRC_MTUINC)
 		notify = tcp_mtudisc_increase, ip = 0;
@@ -810,6 +820,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			sin.sin_addr = ip->ip_src;
 			syn_cache_unreach(sintosa(&sin), sa, th, rdomain);
 		}
+		in_pcbunref(inp);
 	} else
 		in_pcbnotifyall(&tcbtable, sa, rdomain, errno, notify);
 }

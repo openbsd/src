@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.148 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.149 2022/08/08 12:06:31 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 
 		if (in6p && in6p->inp_ipv6.ip6_nxt &&
 		    in6p->inp_ipv6.ip6_nxt == nxt)
-			valid++;
+			valid = 1;
 
 		/*
 		 * Depending on the value of "valid" and routing table
@@ -328,6 +328,7 @@ rip6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 * - ignore the MTU change notification.
 		 */
 		icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
+		in_pcbunref(in6p);
 
 		/*
 		 * regardless of if we called icmp6_mtudisc_update(),

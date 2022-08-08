@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1136 2022/07/20 09:33:11 mbuhl Exp $ */
+/*	$OpenBSD: pf.c,v 1.1137 2022/08/08 12:06:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3375,6 +3375,7 @@ pf_socket_lookup(struct pf_pdesc *pd)
 	pd->lookup.uid = inp->inp_socket->so_euid;
 	pd->lookup.gid = inp->inp_socket->so_egid;
 	pd->lookup.pid = inp->inp_socket->so_cpid;
+	in_pcbunref(inp);
 	return (1);
 }
 
@@ -7531,6 +7532,7 @@ pf_inp_lookup(struct mbuf *m)
 	if (inp && inp->inp_pf_sk)
 		KASSERT(m->m_pkthdr.pf.statekey == inp->inp_pf_sk);
 
+	in_pcbref(inp);
 	return (inp);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.183 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.184 2022/08/08 12:06:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -822,6 +822,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 			tp = tcp_drop(tp, ECONNABORTED);
 		else
 			error = ESRCH;
+		in_pcbunref(inp);
 		return (error);
 	}
 
@@ -851,6 +852,7 @@ tcp_ident(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int dodrop)
 
 	*oldlenp = sizeof (tir);
 	error = copyout((void *)&tir, oldp, sizeof (tir));
+	in_pcbunref(inp);
 	return (error);
 }
 

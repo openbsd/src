@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.375 2022/01/04 06:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.376 2022/08/08 12:06:30 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -723,7 +723,8 @@ findpcb:
 					 * full-blown connection.
 					 */
 					tp = NULL;
-					inp = sotoinpcb(so);
+					in_pcbunref(inp);
+					inp = in_pcbref(sotoinpcb(so));
 					tp = intotcpcb(inp);
 					if (tp == NULL)
 						goto badsyn;	/*XXX*/
@@ -832,6 +833,7 @@ findpcb:
 					tcpstat_inc(tcps_dropsyn);
 					goto drop;
 				}
+				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
 		}
@@ -1002,6 +1004,7 @@ findpcb:
 				if (so->so_snd.sb_cc ||
 				    tp->t_flags & TF_NEEDOUTPUT)
 					(void) tcp_output(tp);
+				in_pcbunref(inp);
 				return IPPROTO_DONE;
 			}
 		} else if (th->th_ack == tp->snd_una &&
@@ -1050,6 +1053,7 @@ findpcb:
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 				(void) tcp_output(tp);
+			in_pcbunref(inp);
 			return IPPROTO_DONE;
 		}
 	}
@@ -1244,6 +1248,7 @@ trimthenstep6:
 			    ((arc4random() & 0x7fffffff) | 0x8000);
 			reuse = &iss;
 			tp = tcp_close(tp);
+			in_pcbunref(inp);
 			inp = NULL;
 			goto findpcb;
 		}
@@ -2028,6 +2033,7 @@ dodata:							/* XXX */
 	 */
 	if (tp->t_flags & (TF_ACKNOW|TF_NEEDOUTPUT))
 		(void) tcp_output(tp);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
 badsyn:
@@ -2056,6 +2062,7 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
 dropwithreset_ratelim:
@@ -2090,6 +2097,7 @@ dropwithreset:
 		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.ph_rtableid);
 	}
 	m_freem(m);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 
 drop:
@@ -2100,6 +2108,7 @@ drop:
 		tcp_trace(TA_DROP, ostate, tp, otp, saveti, 0, tlen);
 
 	m_freem(m);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.269 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.270 2022/08/08 12:06:30 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -403,17 +403,24 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 	}
 	if (lport) {
 		struct inpcb *t;
+		int error = 0;
 
 		if (so->so_euid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
 			t = in_pcblookup_local(table, &sin->sin_addr, lport,
 			    INPLOOKUP_WILDCARD, inp->inp_rtableid);
 			if (t && (so->so_euid != t->inp_socket->so_euid))
-				return (EADDRINUSE);
+				error = EADDRINUSE;
+			in_pcbunref(t);
+			if (error)
+				return (error);
 		}
 		t = in_pcblookup_local(table, &sin->sin_addr, lport,
 		    wild, inp->inp_rtableid);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
-			return (EADDRINUSE);
+			error = EADDRINUSE;
+		in_pcbunref(t);
+		if (error)
+			return (error);
 	}
 
 	return (0);
@@ -425,6 +432,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 {
 	struct socket *so = inp->inp_socket;
 	struct inpcbtable *table = inp->inp_table;
+	struct inpcb *t;
 	u_int16_t first, last, lower, higher, candidate, localport;
 	int count;
 
@@ -456,16 +464,20 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 	count = higher - lower;
 	candidate = lower + arc4random_uniform(count);
 
+	t = NULL;
 	do {
-		if (count-- < 0)	/* completely used? */
-			return (EADDRNOTAVAIL);
-		++candidate;
-		if (candidate < lower || candidate > higher)
-			candidate = lower;
-		localport = htons(candidate);
-	} while (in_baddynamic(candidate, so->so_proto->pr_protocol) ||
-	    in_pcblookup_local(table, laddr, localport, wild,
-	    inp->inp_rtableid));
+		in_pcbunref(t);
+		do {
+			if (count-- < 0)	/* completely used? */
+				return (EADDRNOTAVAIL);
+			++candidate;
+			if (candidate < lower || candidate > higher)
+				candidate = lower;
+			localport = htons(candidate);
+		} while (in_baddynamic(candidate, so->so_proto->pr_protocol));
+		t = in_pcblookup_local(table, laddr, localport, wild,
+		    inp->inp_rtableid);
+	} while (t != NULL);
 	*lport = localport;
 
 	return (0);
@@ -482,6 +494,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
 	struct in_addr ina;
 	struct sockaddr_in *sin;
+	struct inpcb *t;
 	int error;
 
 #ifdef INET6
@@ -498,9 +511,12 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (error)
 		return (error);
 
-	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
-	    ina, inp->inp_lport, inp->inp_rtableid) != NULL)
+	t = in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
+	    ina, inp->inp_lport, inp->inp_rtableid);
+	if (t != NULL) {
+		in_pcbunref(t);
 		return (EADDRINUSE);
+	}
 
 	KASSERT(inp->inp_laddr.s_addr == INADDR_ANY || inp->inp_lport);
 
@@ -509,10 +525,12 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 			error = in_pcbbind(inp, NULL, curproc);
 			if (error)
 				return (error);
-			if (in_pcbhashlookup(inp->inp_table, sin->sin_addr,
+			t = in_pcbhashlookup(inp->inp_table, sin->sin_addr,
 			    sin->sin_port, ina, inp->inp_lport,
-			    inp->inp_rtableid) != NULL) {
+			    inp->inp_rtableid);
+			if (t != NULL) {
 				inp->inp_lport = 0;
+				in_pcbunref(t);
 				return (EADDRINUSE);
 			}
 		}
@@ -603,23 +621,26 @@ in_pcbdetach(struct inpcb *inp)
 struct inpcb *
 in_pcbref(struct inpcb *inp)
 {
-	if (inp != NULL)
-		refcnt_take(&inp->inp_refcnt);
+	if (inp == NULL)
+		return NULL;
+	refcnt_take(&inp->inp_refcnt);
 	return inp;
 }
 
 void
 in_pcbunref(struct inpcb *inp)
 {
-	if (refcnt_rele(&inp->inp_refcnt)) {
-		KASSERT((LIST_NEXT(inp, inp_hash) == NULL) ||
-		    (LIST_NEXT(inp, inp_hash) == _Q_INVALID));
-		KASSERT((LIST_NEXT(inp, inp_lhash) == NULL) ||
-		    (LIST_NEXT(inp, inp_lhash) == _Q_INVALID));
-		KASSERT((TAILQ_NEXT(inp, inp_queue) == NULL) ||
-		    (TAILQ_NEXT(inp, inp_queue) == _Q_INVALID));
-		pool_put(&inpcb_pool, inp);
-	}
+	if (inp == NULL)
+		return;
+	if (refcnt_rele(&inp->inp_refcnt) == 0)
+		return;
+	KASSERT((LIST_NEXT(inp, inp_hash) == NULL) ||
+	    (LIST_NEXT(inp, inp_hash) == _Q_INVALID));
+	KASSERT((LIST_NEXT(inp, inp_lhash) == NULL) ||
+	    (LIST_NEXT(inp, inp_lhash) == _Q_INVALID));
+	KASSERT((TAILQ_NEXT(inp, inp_queue) == NULL) ||
+	    (TAILQ_NEXT(inp, inp_queue) == _Q_INVALID));
+	pool_put(&inpcb_pool, inp);
 }
 
 void
@@ -830,6 +851,7 @@ in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
 				break;
 		}
 	}
+	in_pcbref(match);
 	mtx_leave(&table->inpt_mtx);
 
 	return (match);
@@ -1119,6 +1141,7 @@ in_pcbhashlookup(struct inpcbtable *table, struct in_addr faddr,
 			break;
 		}
 	}
+	in_pcbref(inp);
 	mtx_leave(&table->inpt_mtx);
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
@@ -1218,6 +1241,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 		LIST_REMOVE(inp, inp_hash);
 		LIST_INSERT_HEAD(head, inp, inp_hash);
 	}
+	in_pcbref(inp);
 	mtx_leave(&table->inpt_mtx);
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.280 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.281 2022/08/08 12:06:30 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -570,17 +570,20 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			m = *mp = pipex_l2tp_input(m, off, session,
 			    ipsecflowinfo);
 			pipex_rele_session(session);
-
-			if (m == NULL)
+			if (m == NULL) {
+				in_pcbunref(inp);
 				return IPPROTO_DONE;
+			}
 		}
 	}
 #endif
 
 	udp_sbappend(inp, m, ip, ip6, iphlen, uh, &srcsa.sa, ipsecflowinfo);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 bad:
 	m_freem(m);
+	in_pcbunref(inp);
 	return IPPROTO_DONE;
 }
 
@@ -674,6 +677,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		u_int16_t uh_sport;
 		u_int16_t uh_dport;
 	} *uhp;
+	struct inpcb *inp;
 	void (*notify)(struct inpcb *, int) = udp_notify;
 
 	if (sa == NULL)
@@ -759,17 +763,14 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		}
 
 		if (cmd == PRC_MSGSIZE) {
-			int valid = 0;
-
 			/*
 			 * Check to see if we have a valid UDP socket
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcbhashlookup(&udbtable, &sa6.sin6_addr,
+			inp = in6_pcbhashlookup(&udbtable, &sa6.sin6_addr,
 			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
-			    rdomain))
-				valid = 1;
+			    rdomain);
 #if 0
 			/*
 			 * As the use of sendto(2) is fairly popular,
@@ -778,10 +779,11 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * We should at least check if the local address (= s)
 			 * is really ours.
 			 */
-			else if (in6_pcblookup_listen(&udbtable,
-			    &sa6_src.sin6_addr, uh.uh_sport, NULL,
-			    rdomain))
-				valid = 1;
+			if (inp == NULL) {
+				inp = in6_pcblookup_listen(&udbtable,
+				    &sa6_src.sin6_addr, uh.uh_sport, NULL,
+				    rdomain))
+			}
 #endif
 
 			/*
@@ -791,7 +793,9 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */
-			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
+			icmp6_mtudisc_update((struct ip6ctlparam *)d,
+			    inp != NULL);
+			in_pcbunref(inp);
 
 			/*
 			 * regardless of if we called icmp6_mtudisc_update(),
@@ -855,6 +859,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		    rdomain);
 		if (inp && inp->inp_socket != NULL)
 			notify(inp, errno);
+		in_pcbunref(inp);
 	} else
 		in_pcbnotifyall(&udbtable, sa, rdomain, errno, notify);
 }
