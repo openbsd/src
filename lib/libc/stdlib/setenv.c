@@ -1,4 +1,4 @@
-/*	$OpenBSD: setenv.c,v 1.19 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: setenv.c,v 1.20 2022/08/08 22:40:03 millert Exp $ */
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -48,9 +48,10 @@ putenv(char *str)
 
 	for (cp = str; *cp && *cp != '='; ++cp)
 		;
-	if (*cp != '=') {
+	if (cp == str || *cp != '=') {
+		/* '=' is the first character of string or is missing. */
 		errno = EINVAL;
-		return (-1);			/* missing `=' in string */
+		return (-1);
 	}
 
 	if (__findenv(str, (int)(cp - str), &offset) != NULL) {
