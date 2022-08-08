@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.31 2021/03/11 21:18:25 naddy Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.32 2022/08/08 17:54:08 op Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -224,11 +224,15 @@ quiz(void)
 {
 	QE *qp;
 	int i;
-	size_t len;
+	size_t size;
+	ssize_t len;
 	u_int guesses, rights, wrongs;
 	int next;
 	char *answer, *t, question[LINE_SZ];
 	const char *s;
+
+	size = 0;
+	answer = NULL;
 
 	guesses = rights = wrongs = 0;
 	for (;;) {
@@ -278,7 +282,7 @@ quiz(void)
 		qp->q_asked = TRUE;
 		(void)printf("%s?\n", question);
 		for (;; ++guesses) {
-			if ((answer = fgetln(stdin, &len)) == NULL ||
+			if ((len = getline(&answer, &size, stdin)) == -1 ||
 			    answer[len - 1] != '\n') {
 				score(rights, wrongs, guesses);
 				exit(0);
@@ -302,6 +306,7 @@ quiz(void)
 		}
 	}
 	score(rights, wrongs, guesses);
+	free(answer);
 }
 
 const char *
