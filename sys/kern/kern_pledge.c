@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.291 2022/08/02 11:04:25 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.292 2022/08/08 01:53:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -656,16 +656,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 			return (0);
 		}
-		/*
-		 * XXX delete before 7.2.
-		 * Old static binaries may try this file in getpwent and friends
-		 */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    (pledge & PLEDGE_GETPW) &&
-		    strcmp(path, "/var/run/ypbind.lock") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
-		}
 		break;
 	case SYS_open:
 		/* daemon(3) or other such functions */
@@ -721,17 +711,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			}
-		}
-
-		/*
-		 * XXX delete before 7.2.
-		 * Old static binaries may try this file in getpwent and friends
-		 */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    (pledge & PLEDGE_GETPW) &&
-		    strcmp(path, "/var/run/ypbind.lock") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
 		}
 
 		/* tzset() needs these. */
