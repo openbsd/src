@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2017/01/21 08:22:57 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2022/08/08 17:57:05 op Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <sys/select.h>
@@ -247,24 +247,18 @@ parse_line(char *buf, char *fnm, int *line)
 static void
 load_config(FILE *f, char *fnm)
 {
-	char buf[BUFSIZ];
-	size_t len;
-	int line;
-	char *p;
+	int lineno = 0;
+	char *line = NULL;
+	size_t linesize = 0;
+	ssize_t linelen;
 
-	line = 0;
-	while ((p = fgetln(f, &len)) != NULL) {
-		line++;
-		if (p[len-1] == '\n')
-			len--;
-		if (len >= sizeof(buf)) {
-			logx(LOG_ERR, "%s:%d: line too long", fnm, line);
-			continue;
-		}
-		(void)memcpy(buf, p, len);
-		buf[len] = '\0';
-		parse_line(buf, fnm, &line);
+	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
+		lineno++;
+		if (line[linelen - 1] == '\n')
+			line[linelen - 1] = '\0';
+		parse_line(line, fnm, &lineno);
 	}
+	free(line);
 }
 
 /*

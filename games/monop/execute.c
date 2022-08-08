@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.15 2019/06/28 13:32:52 deraadt Exp $	*/
+/*	$OpenBSD: execute.c,v 1.16 2022/08/08 17:57:05 op Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -285,7 +285,8 @@ rest_f(char *file)
 	int  i, j, num;
 	FILE *inf;
 	char *st, *a, *b;
-	size_t len;
+	size_t linesize;
+	ssize_t len;
 	STAT sbuf;
 	int  t1;
 	short t2, t3, t4;
@@ -302,19 +303,22 @@ rest_f(char *file)
 	}
 
 	num = 1;
-	st = fgetln(inf, &len);
-	if (st == NULL || len != strlen(MONOP_TAG) + 1 ||
+	st = NULL;
+	linesize = 0;
+	len = getline(&st, &linesize, inf);
+	if (len == -1 || len != strlen(MONOP_TAG) + 1 ||
 	    strncmp(st, MONOP_TAG, strlen(MONOP_TAG))) {
 badness:
 		warnx("%s line %d", file, num);
+		free(st);
 		fclose(inf);
 		return(FALSE);
 	}
 	num++;
-	if (fgetln(inf, &len) == NULL)
+	if (getline(&st, &linesize, inf) == -1)
 		goto badness;
 	num++;
-	if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+	if ((len = getline(&st, &linesize, inf)) == -1 || st[len - 1] != '\n')
 		goto badness;
 	st[len - 1] = '\0';
 	if (sscanf(st, "%d %d %d", &num_play, &player, &num_doub) != 3 ||
@@ -328,7 +332,8 @@ badness:
 	/* Names */
 	for (i = 0; i < num_play; i++) {
 		num++;
-		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+		if ((len = getline(&st, &linesize, inf)) == -1 ||
+		    st[len - 1] != '\n')
 			goto badness;
 		st[len - 1] = '\0';
 		if ((name_list[i] = play[i].name = strdup(st)) == NULL)
@@ -340,7 +345,8 @@ badness:
 	/* Money, location, GOJF cards, turns in jail */
 	for (i = 0; i < num_play; i++) {
 		num++;
-		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+		if ((len = getline(&st, &linesize, inf)) == -1 ||
+		    st[len - 1] != '\n')
 			goto badness;
 		st[len - 1] = '\0';
 		if (sscanf(st, "%d %hd %hd %hd", &(play[i].money), &t2,
@@ -355,7 +361,8 @@ badness:
 	/* Deck status; init_decks() must have been called. */
 	for (i = 0; i < 2; i++) {
 		num++;
-		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+		if ((len = getline(&st, &linesize, inf)) == -1 ||
+		    st[len - 1] != '\n')
 			goto badness;
 		st[len - 1] = '\0';
 		if (sscanf(st, "%d %d %hd", &t1, &j, &t2) != 3 ||
@@ -365,7 +372,8 @@ badness:
 		deck[i].top_card = j;
 		deck[i].gojf_used = t2;
 		num++;
-		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+		if ((len = getline(&st, &linesize, inf)) == -1 ||
+		    st[len - 1] != '\n')
 			goto badness;
 		st[len - 1] = '\0';
 		a = st;
@@ -379,7 +387,7 @@ badness:
 		/* Ignore anything trailing */
 	}
 	trading = FALSE;
-	while ((st = fgetln(inf, &len)) != NULL) {
+	while ((len = getline(&st, &linesize, inf)) != -1) {
 		num++;
 		if (st[len - 1] != '\n')
 			goto badness;
@@ -403,6 +411,7 @@ badness:
 		 * within 1 in each monopoly
 		 */
 	}
+	free(st);
 	fclose(inf);
 	/* Check total hotel and house count */
 	t1 = j = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.22 2022/02/05 23:00:20 gnezdo Exp $	*/
+/*	$OpenBSD: extern.h,v 1.23 2022/08/08 17:57:05 op Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ void ravage(void);
 void restore(const char *);
 int ride(void);
 void save(const char *);
-char *save_file_name(const char *, size_t);
+char *save_file_name(const char *);
 int shoot(void);
 int take(unsigned int[]);
 int takeoff(void);

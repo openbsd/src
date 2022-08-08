@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.13 2015/12/31 17:51:19 mestre Exp $	*/
+/*	$OpenBSD: save.c,v 1.14 2022/08/08 17:57:05 op Exp $	*/
 /*	$NetBSD: save.c,v 1.3 1995/03/21 15:07:57 cgd Exp $	*/
 
 /*
@@ -145,44 +145,26 @@ save(const char *filename)
 }
 
 /*
- * Given a save file name (possibly from fgetln, so without terminating NUL),
- * determine the name of the file to be saved to by adding the HOME
- * directory if the name does not contain a slash.  Name will be allocated
- * with malloc(3).
+ * Given a save file name determine the name of the file to be saved
+ * to by adding the HOME directory if the name does not contain a
+ * slash.  Name will be allocated with malloc(3).
  */
 char *
-save_file_name(const char *filename, size_t len)
+save_file_name(const char *filename)
 {
 	char   *home;
 	char   *newname;
-	size_t	tmpl;
 
-	if (memchr(filename, '/', len)) {
-		if ((newname = malloc(len + 1)) == NULL) {
+	home = getenv("HOME");
+	if (strchr(filename, '/') != NULL || home == NULL) {
+		if ((newname = strdup(filename)) == NULL)
 			warnx("out of memory");
-			return NULL;
-		}
-		memcpy(newname, filename, len);
-		newname[len] = 0;
-	} else {
-		if ((home = getenv("HOME")) != NULL) {
-			tmpl = strlen(home);
-			if ((newname = malloc(tmpl + len + 2)) == NULL) {
-				warnx("out of memory");
-				return NULL;
-			}
-			memcpy(newname, home, tmpl);
-			newname[tmpl] = '/';
-			memcpy(newname + tmpl + 1, filename, len);
-			newname[tmpl + len + 1] = 0;
-		} else {
-			if ((newname = malloc(len + 1)) == NULL) {
-				warnx("out of memory");
-				return NULL;
-			}
-			memcpy(newname, filename, len);
-			newname[len] = 0;
-		}
+		return(newname);
+	}
+
+	if (asprintf(&newname, "%s/%s", home, filename) == -1) {
+		warnx("out of memory");
+		return(NULL);
 	}
 	return(newname);
 }

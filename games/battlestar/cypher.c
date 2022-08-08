@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.20 2019/05/09 20:19:22 tedu Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.21 2022/08/08 17:57:05 op Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -84,8 +84,9 @@ cypher(void)
 	int     n;
 	int     junk;
 	int     lflag = -1;
-	char   *filename, *rfilename;
-	size_t  filename_len;
+	char   *line = NULL, *filename;
+	size_t  linesize = 0;
+	ssize_t linelen;
 
 	while (wordnumber <= wordcount) {
 		if (wordtype[wordnumber] != VERB &&
@@ -357,19 +358,16 @@ cypher(void)
 		case SAVE:
 			printf("\nSave file name (default %s):  ",
 			    DEFAULT_SAVE_FILE);
-			filename = fgetln(stdin, &filename_len);
-			if (filename_len == 0
-			    || (filename_len == 1 && filename[0] == '\n'))
-				rfilename = save_file_name(DEFAULT_SAVE_FILE,
-				    strlen(DEFAULT_SAVE_FILE));
+			linelen = getline(&line, &linesize, stdin);
+			if (linelen == -1 || *line == '\n')
+				filename = save_file_name(DEFAULT_SAVE_FILE);
 			else {
-				if (filename[filename_len - 1] == '\n')
-					filename_len--;
-				rfilename = save_file_name(filename,
-				    filename_len);
+				if (line[linelen - 1] == '\n')
+					line[linelen - 1] = '\0';
+				filename = save_file_name(line);
 			}
-			save(rfilename);
-			free(rfilename);
+			save(filename);
+			free(filename);
 			break;
 
 		case VERBOSE:
@@ -463,6 +461,9 @@ cypher(void)
 		}
 		if (!lflag)
 			newlocation();
+
+		free(line);
+
 		if (wordnumber < wordcount && !stop_cypher &&
 		    (*words[wordnumber] == ',' || *words[wordnumber] == '.')) {
 			wordnumber++;
