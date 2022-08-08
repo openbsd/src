@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.25 2022/07/26 15:37:34 jca Exp $
+# $OpenBSD: Makefile,v 1.26 2022/08/08 09:25:13 fcambus Exp $
 
 .include <bsd.own.mk>
 
@@ -108,6 +108,7 @@ SUBDIR+=include/llvm-readobj
 SUBDIR+=llvm-readobj
 
 SUBDIR+=llvm-profdata
+SUBDIR+=llvm-cov
 
 .if ${AR_VERSION:L} == "llvm" || make(obj)
 SUBDIR+=libLLVMDlltoolDriver
