@@ -1,6 +1,7 @@
 ./usr/bin/lldb
 ./usr/bin/lldb-server
 ./usr/bin/llvm-config
+./usr/bin/llvm-cov
 ./usr/bin/llvm-objcopy
 ./usr/bin/llvm-objdump
 ./usr/bin/llvm-profdata
@@ -2196,6 +2197,7 @@
 ./usr/share/man/man1/ld.lld.1
 ./usr/share/man/man1/lldb.1
 ./usr/share/man/man1/llvm-config.1
+./usr/share/man/man1/llvm-cov.1
 ./usr/share/man/man1/llvm-objcopy.1
 ./usr/share/man/man1/llvm-objdump.1
 ./usr/share/man/man1/llvm-profdata.1
