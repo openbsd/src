@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.84 2022/07/31 06:12:20 kn Exp $
+#	$OpenBSD: airport,v 1.85 2022/08/08 17:45:11 jeremy Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1892,6 +1892,7 @@ YFB:Iqaluit, Northwest Territories, Canada
 YFC:Fredericton, New Brunswick, Canada
 YFS:Fort Simpson, Northwest Territories, Canada
 YGB:Gillies Bay, British Columbia, Canada
+YGJ:Yonago Kitaro, Tottori, Japan
 YGK:Kingston, Ontario, Canada
 YGP:Gaspe, Quebec, Canada
 YGR:Iles-de-la-Madeleine, Quebec, Canada
