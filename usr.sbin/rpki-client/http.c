@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.62 2022/05/24 09:22:45 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.63 2022/08/08 15:22:31 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -70,7 +70,6 @@
 #define HTTP_USER_AGENT		"OpenBSD rpki-client"
 #define HTTP_BUF_SIZE		(32 * 1024)
 #define HTTP_IDLE_TIMEOUT	10
-#define HTTP_IO_TIMEOUT		(3 * 60)
 #define MAX_CONTENTLEN		(2 * 1024 * 1024 * 1024LL)
 #define NPFDS			(MAX_HTTP_REQUESTS + 1)
 
@@ -1814,7 +1813,7 @@ proc_http(char *bind_addr, int fd)
 				errx(1, "too many connections");
 
 			if (conn->io_time == 0)
-				conn->io_time = now + HTTP_IO_TIMEOUT;
+				conn->io_time = now + MAX_IO_TIMEOUT;
 
 			if (conn->io_time <= now)
 				timeout = 0;
