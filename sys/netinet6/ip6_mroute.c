@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.132 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.133 2022/08/08 15:56:35 kn Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -897,11 +897,15 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	 * (although such packets must normally set 1 to the hop limit field).
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
+		time_t uptime;
+
 		ip6stat_inc(ip6s_cantforward);
-		if (ip6_log_time + ip6_log_interval < getuptime()) {
+		uptime = getuptime();
+
+		if (ip6_log_time + ip6_log_interval < uptime) {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-			ip6_log_time = getuptime();
+			ip6_log_time = uptime;
 
 			inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst));
