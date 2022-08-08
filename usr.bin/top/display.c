@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.65 2020/08/26 16:21:28 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.66 2022/08/08 16:54:09 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -208,31 +208,28 @@ display_init(struct statics * statics)
 	return (display_lines);
 }
 
+/*
+ * Print the time elapsed since the system booted.
+ */
 static void
 format_uptime(char *buf, size_t buflen)
 {
-	time_t uptime;
-	int days, hrs, mins;
 	struct timespec boottime;
+	time_t uptime;
+	unsigned int days, hrs, mins, secs;
 
-	/*
-	 * Print how long system has been up.
-	 */
-	if (clock_gettime(CLOCK_BOOTTIME, &boottime) != -1) {
-		uptime = boottime.tv_sec;
-		uptime += 30;
-		days = uptime / (3600 * 24);
-		uptime %= (3600 * 24);
-		hrs = uptime / 3600;
-		uptime %= 3600;
-		mins = uptime / 60;
-		if (days > 0)
-			snprintf(buf, buflen, "up %d day%s, %2d:%02d",
-			    days, days > 1 ? "s" : "", hrs, mins);
-		else
-			snprintf(buf, buflen, "up %2d:%02d",
-			    hrs, mins);
-	}
+	if (clock_gettime(CLOCK_BOOTTIME, &boottime) == -1)
+		err(1, "clock_gettime");
+
+	uptime = boottime.tv_sec;
+	days = uptime / (3600 * 24);
+	uptime %= (3600 * 24);
+	hrs = uptime / 3600;
+	uptime %= 3600;
+	mins = uptime / 60;
+	secs = uptime % 60;
+	snprintf(buf, buflen, "up %u days %02u:%02u:%02u",
+	    days, hrs, mins, secs);
 }
 
 
