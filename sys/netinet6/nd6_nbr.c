@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.131 2022/02/07 15:23:43 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.132 2022/08/08 17:47:59 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -357,8 +357,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
  * dad - duplicated address detection
  */
 void
-nd6_ns_output(struct ifnet *ifp, struct in6_addr *daddr6, 
-    struct in6_addr *taddr6, struct llinfo_nd6 *ln, int dad)
+nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
+    const struct in6_addr *taddr6, const struct llinfo_nd6 *ln, int dad)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -871,8 +871,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
  * sdl0 - sockaddr_dl (= proxy NA) or NULL
  */
 void
-nd6_na_output(struct ifnet *ifp, struct in6_addr *daddr6, 
-    struct in6_addr *taddr6, u_long flags, int tlladdr, 
+nd6_na_output(struct ifnet *ifp, const struct in6_addr *daddr6,
+    const struct in6_addr *taddr6, u_long flags, int tlladdr,
     struct sockaddr *sdl0)
 {
 	struct mbuf *m;

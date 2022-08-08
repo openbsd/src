@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.244 2022/08/08 15:56:35 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.245 2022/08/08 17:47:59 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ skip1:
  * ND6 timer routine to handle ND6 entries
  */
 void
-nd6_llinfo_settimer(struct llinfo_nd6 *ln, unsigned int secs)
+nd6_llinfo_settimer(const struct llinfo_nd6 *ln, unsigned int secs)
 {
 	time_t expire = getuptime() + secs;
 
@@ -547,7 +547,7 @@ nd6_purge(struct ifnet *ifp)
 }
 
 struct rtentry *
-nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
+nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp,
     u_int rtableid)
 {
 	struct rtentry *rt;
@@ -641,7 +641,7 @@ nd6_lookup(struct in6_addr *addr6, int create, struct ifnet *ifp,
  * XXX: should take care of the destination of a p2p link?
  */
 int
-nd6_is_addr_neighbor(struct sockaddr_in6 *addr, struct ifnet *ifp)
+nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 {
 	struct in6_ifaddr *ia6;
 	struct ifaddr *ifa;
@@ -1079,7 +1079,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
  * code - type dependent information
  */
 void
-nd6_cache_lladdr(struct ifnet *ifp, struct in6_addr *from, char *lladdr,
+nd6_cache_lladdr(struct ifnet *ifp, const struct in6_addr *from, char *lladdr,
     int lladdrlen, int type, int code)
 {
 	struct rtentry *rt = NULL;

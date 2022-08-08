@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.78 2022/07/28 13:11:44 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.79 2022/08/08 17:47:59 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -157,27 +157,29 @@ union nd_opts {
 void nd6_init(void);
 struct nd_ifinfo *nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct nd_ifinfo *);
-int nd6_is_addr_neighbor(struct sockaddr_in6 *, struct ifnet *);
+int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
-struct	rtentry *nd6_lookup(struct in6_addr *, int, struct ifnet *, u_int);
-void nd6_llinfo_settimer(struct llinfo_nd6 *, unsigned int);
+struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *,
+    u_int);
+void nd6_llinfo_settimer(const struct llinfo_nd6 *, unsigned int);
 void nd6_purge(struct ifnet *);
 void nd6_nud_hint(struct rtentry *);
 void nd6_rtrequest(struct ifnet *, int, struct rtentry *);
 int nd6_ioctl(u_long, caddr_t, struct ifnet *);
-void nd6_cache_lladdr(struct ifnet *, struct in6_addr *, char *, int, int, int);
+void nd6_cache_lladdr(struct ifnet *, const struct in6_addr *, char *,
+    int, int, int);
 int nd6_resolve(struct ifnet *, struct rtentry *, struct mbuf *,
 	 struct sockaddr *, u_char *);
 int nd6_need_cache(struct ifnet *);
 
 void nd6_na_input(struct mbuf *, int, int);
-void nd6_na_output(struct ifnet *, struct in6_addr *,
-	struct in6_addr *, u_long, int, struct sockaddr *);
+void nd6_na_output(struct ifnet *, const struct in6_addr *,
+	const struct in6_addr *, u_long, int, struct sockaddr *);
 void nd6_ns_input(struct mbuf *, int, int);
-void nd6_ns_output(struct ifnet *, struct in6_addr *,
-	struct in6_addr *, struct llinfo_nd6 *, int);
+void nd6_ns_output(struct ifnet *, const struct in6_addr *,
+	const struct in6_addr *, const struct llinfo_nd6 *, int);
 caddr_t nd6_ifptomac(struct ifnet *);
 void nd6_dad_start(struct ifaddr *);
 void nd6_dad_stop(struct ifaddr *);
