@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2022/08/09 04:40:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -98,6 +98,17 @@ decr_intr(struct trapframe *frame)
 	int s;
 
 	/*
+	 * If the clock interrupt is masked, postpone all work until
+	 * it is unmasked in splx(9).
+	 */
+	if (ci->ci_cpl >= IPL_CLOCK) {
+		ci->ci_dec_deferred = 1;
+		mtdec(UINT32_MAX >> 1);		/* clear DEC exception */
+		return;
+	}
+	ci->ci_dec_deferred = 0;
+
+	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
 	 */
@@ -130,30 +141,23 @@ decr_intr(struct trapframe *frame)
 	mtdec(nextevent - tb);
 	mtdec(nextevent - mftb());
 
-	if (ci->ci_cpl >= IPL_CLOCK) {
-		ci->ci_statspending += nstats;
-	} else {
-		nstats += ci->ci_statspending;
-		ci->ci_statspending = 0;
+	s = splclock();
+	intr_enable();
 
-		s = splclock();
-		intr_enable();
-
-		/*
-		 * Do standard timer interrupt stuff.
-		 */
-		while (ci->ci_lasttb < prevtb) {
-			ci->ci_lasttb += tick_increment;
-			clock_count.ec_count++;
-			hardclock((struct clockframe *)frame);
-		}
-
-		while (nstats-- > 0)
-			statclock((struct clockframe *)frame);
-
-		intr_disable();
-		splx(s);
+	/*
+	 * Do standard timer interrupt stuff.
+	 */
+	while (ci->ci_lasttb < prevtb) {
+		ci->ci_lasttb += tick_increment;
+		clock_count.ec_count++;
+		hardclock((struct clockframe *)frame);
 	}
+
+	while (nstats-- > 0)
+		statclock((struct clockframe *)frame);
+
+	intr_disable();
+	splx(s);
 }
 
 void

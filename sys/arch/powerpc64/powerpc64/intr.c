@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.10 2022/07/27 20:26:17 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.11 2022/08/09 04:40:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -138,6 +138,11 @@ void
 splx(int new)
 {
 	struct cpu_info *ci = curcpu();
+
+	if (ci->ci_dec_deferred && new < IPL_CLOCK) {
+		mtdec(0);
+		mtdec(UINT32_MAX);	/* raise DEC exception */
+	}
 
 	if (ci->ci_ipending & intr_smask[new])
 		intr_do_pending(new);
