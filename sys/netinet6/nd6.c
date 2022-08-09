@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.245 2022/08/08 17:47:59 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.246 2022/08/09 21:10:03 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -319,16 +319,14 @@ void
 nd6_timer(void *unused)
 {
 	struct llinfo_nd6 *ln, *nln;
-	time_t uptime, expire;
-
-	uptime = getuptime();
-	expire = uptime + nd6_gctimer;
+	time_t expire = getuptime() + nd6_gctimer;
+	int secs;
 
 	NET_LOCK();
 	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
 		struct rtentry *rt = ln->ln_rt;
 
-		if (rt->rt_expire && rt->rt_expire <= uptime)
+		if (rt->rt_expire && rt->rt_expire <= getuptime())
 			if (nd6_llinfo_timer(rt))
 				continue;
 
@@ -336,9 +334,12 @@ nd6_timer(void *unused)
 			expire = rt->rt_expire;
 	}
 
+	secs = expire - getuptime();
+	if (secs < 0)
+		secs = 0;
 	if (!TAILQ_EMPTY(&nd6_list)) {
-		nd6_timer_next = expire;
-		timeout_add_sec(&nd6_timer_to, nd6_gctimer);
+		nd6_timer_next = getuptime() + secs;
+		timeout_add_sec(&nd6_timer_to, secs);
 	}
 
 	NET_UNLOCK();
@@ -443,6 +444,7 @@ void
 nd6_expire_timer_update(struct in6_ifaddr *ia6)
 {
 	time_t expire_time = INT64_MAX;
+	int secs;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -467,8 +469,6 @@ nd6_expire_timer_update(struct in6_ifaddr *ia6)
 
 	if (!timeout_pending(&nd6_expire_timeout) ||
 	    nd6_expire_next > expire_time) {
-		int secs;
-
 		secs = expire_time - getuptime();
 		if (secs < 0)
 			secs = 0;

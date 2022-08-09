@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.107 2022/08/08 15:56:35 kn Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.108 2022/08/09 21:10:02 kn Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -102,13 +102,9 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		time_t uptime;
-
 		ip6stat_inc(ip6s_cantforward);
-		uptime = getuptime();
-
-		if (ip6_log_time + ip6_log_interval < uptime) {
-			ip6_log_time = uptime;
+		if (ip6_log_time + ip6_log_interval < getuptime()) {
+			ip6_log_time = getuptime();
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
@@ -193,14 +189,11 @@ reroute:
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.ph_ifidx, &ip6->ip6_src) !=
 	    in6_addr2scopeid(rt->rt_ifidx, &ip6->ip6_src)) {
-		time_t uptime;
-
 		ip6stat_inc(ip6s_cantforward);
 		ip6stat_inc(ip6s_badscope);
-		uptime = getuptime();
 
-		if (ip6_log_time + ip6_log_interval < uptime) {
-			ip6_log_time = uptime;
+		if (ip6_log_time + ip6_log_interval < getuptime()) {
+			ip6_log_time = getuptime();
 			inet_ntop(AF_INET6, &ip6->ip6_src, src6, sizeof(src6));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
