@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2022/06/10 21:34:15 jca Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2022/08/09 04:49:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -92,7 +92,7 @@ struct cpu_info {
 	uint64_t		ci_lasttb;
 	uint64_t		ci_nexttimerevent;
 	uint64_t		ci_nextstatevent;
-	int			ci_statspending;
+	volatile int		ci_timer_deferred;
 
 	uint32_t		ci_cpl;
 	uint32_t		ci_ipending;

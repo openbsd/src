@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2021/07/24 22:41:09 jca Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2022/08/09 04:49:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/evcount.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <machine/cpufunc.h>
@@ -106,6 +107,17 @@ clock_intr(void *frame)
 	int s;
 
 	/*
+	 * If the clock interrupt is masked, defer all clock interrupt
+	 * work until the clock interrupt is unmasked from splx(9).
+	 */
+	if (ci->ci_cpl >= IPL_CLOCK) {
+		ci->ci_timer_deferred = 1;
+		sbi_set_timer(UINT64_MAX);
+		return 0;
+	}
+	ci->ci_timer_deferred = 0;
+
+	/*
 	 * Based on the actual time delay since the last clock interrupt,
 	 * we arrange for earlier interrupt next time.
 	 */
@@ -132,30 +144,23 @@ clock_intr(void *frame)
 
 	sbi_set_timer(nextevent);
 
-	if (ci->ci_cpl >= IPL_CLOCK) {
-		ci->ci_statspending += nstats;
-	} else {
-		nstats += ci->ci_statspending;
-		ci->ci_statspending = 0;
+	s = splclock();
+	intr_enable();
 
-		s = splclock();
-		intr_enable();
-
-		/*
-		 * Do standard timer interrupt stuff.
-		 */
-		while (ci->ci_lasttb < prevtb) {
-			ci->ci_lasttb += tick_increment;
-			clock_count.ec_count++;
-			hardclock((struct clockframe *)frame);
-		}
-
-		while (nstats-- > 0)
-			statclock((struct clockframe *)frame);
-
-		intr_disable();
-		splx(s);
+	/*
+	 * Do standard timer interrupt stuff.
+	 */
+	while (ci->ci_lasttb < prevtb) {
+		ci->ci_lasttb += tick_increment;
+		clock_count.ec_count++;
+		hardclock((struct clockframe *)frame);
 	}
+
+	while (nstats-- > 0)
+		statclock((struct clockframe *)frame);
+
+	intr_disable();
+	splx(s);
 
 	return 0;
 }

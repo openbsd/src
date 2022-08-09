@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.10 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: plic.c,v 1.11 2022/08/09 04:49:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -27,6 +27,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/cpu.h>
+#include <machine/sbi.h>
 #include "riscv64/dev/riscv_cpu_intc.h"
 
 #include <dev/ofw/openfirm.h>
@@ -556,6 +557,10 @@ plic_setipl(int new)
 
 	/* higher values are higher priority */
 	plic_set_threshold(ci->ci_cpuid, new);
+
+	/* trigger deferred timer interrupt if cpl is now low enough */
+	if (ci->ci_timer_deferred && new < IPL_CLOCK)
+		sbi_set_timer(0);
 
 	intr_restore(sie);
 }
