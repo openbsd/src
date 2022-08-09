@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.40 2022/08/08 15:22:31 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.41 2022/08/09 09:02:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -312,7 +312,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			args[i++] = "-rt";
 			args[i++] = "--no-motd";
 			args[i++] = "--max-size=" STRINGIFY(MAX_FILE_SIZE);
-			args[i++] = "--contimeout=" STRINGIFY(MAX_CONTIMEOUT);
+			args[i++] = "--contimeout=" STRINGIFY(MAX_CONN_TIMEOUT);
 			args[i++] = "--timeout=" STRINGIFY(MAX_IO_TIMEOUT);
 			args[i++] = "--include=*/";
 			args[i++] = "--include=*.cer";

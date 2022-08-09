@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.145 2022/08/08 15:22:31 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.146 2022/08/09 09:02:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -728,7 +728,7 @@ int	mkpathat(int, const char *);
 #define MAX_RSYNC_REQUESTS	16
 
 /* How many seconds to wait for a connection to succeed. */
-#define MAX_CONTIMEOUT		15
+#define MAX_CONN_TIMEOUT	15
 
 /* How long to wait for IO from a remote server. */
 #define MAX_IO_TIMEOUT		180

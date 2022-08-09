@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.63 2022/08/08 15:22:31 job Exp $ */
+/*	$OpenBSD: http.c,v 1.64 2022/08/09 09:02:26 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -753,6 +753,19 @@ http_failed(struct http_connection *conn)
 	}
 
 	return DONE;
+}
+
+/*
+ * Called in case of connect timeout, try an alternate connection.
+ */
+static enum res
+http_connect_failed(struct http_connection *conn)
+{
+	assert(conn->state == STATE_CONNECT);
+	close(conn->fd);
+	conn->fd = -1;
+
+	return http_connect(conn);
 }
 
 /*
@@ -1812,8 +1825,12 @@ proc_http(char *bind_addr, int fd)
 			if (i >= NPFDS)
 				errx(1, "too many connections");
 
-			if (conn->io_time == 0)
-				conn->io_time = now + MAX_IO_TIMEOUT;
+			if (conn->io_time == 0) {
+				if (conn->state == STATE_CONNECT)
+					conn->io_time = now + MAX_CONN_TIMEOUT;
+				else
+					conn->io_time = now + MAX_IO_TIMEOUT;
+			}
 
 			if (conn->io_time <= now)
 				timeout = 0;
@@ -1901,9 +1918,15 @@ proc_http(char *bind_addr, int fd)
 			if (conn->pfd != NULL && conn->pfd->revents != 0)
 				http_do(conn, http_handle);
 			else if (conn->io_time <= now) {
-				warnx("%s: timeout, connection closed",
-				    http_info(conn->host));
-				http_do(conn, http_failed);
+				if (conn->state == STATE_CONNECT) {
+					warnx("%s: connect timeout",
+					    http_info(conn->host));
+					http_do(conn, http_connect_failed);
+				} else {
+					warnx("%s: timeout, connection closed",
+					    http_info(conn->host));
+					http_do(conn, http_failed);
+				}
 			}
 
 			if (conn->state == STATE_FREE)
