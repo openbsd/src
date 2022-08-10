@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.120 2022/07/05 09:33:39 tb Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.121 2022/08/10 16:58:16 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -260,6 +260,7 @@ struct acpi_softc {
 	uint32_t		sc_gpe_en;
 	struct acpi_thread	*sc_thread;
 
+	struct aml_node		*sc_root;
 	struct aml_node		*sc_tts;
 	struct aml_node		*sc_pts;
 	struct aml_node		*sc_bfs;

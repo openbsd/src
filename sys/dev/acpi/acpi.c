@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.413 2022/02/17 00:21:40 jsg Exp $ */
+/* $OpenBSD: acpi.c,v 1.414 2022/08/10 16:58:16 patrick Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -183,7 +183,6 @@ int	mouse_has_softbtn;
 
 struct acpi_softc *acpi_softc;
 
-/* XXX move this into dsdt softc at some point */
 extern struct aml_node aml_root;
 
 struct cfdriver acpi_cd = {
@@ -986,6 +985,7 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	rw_init(&sc->sc_lck, "acpilk");
 
 	acpi_softc = sc;
+	sc->sc_root = &aml_root;
 
 	if (acpi_map(base, sizeof(struct acpi_rsdp), &handle)) {
 		printf(": can't map memory\n");
@@ -1188,42 +1188,42 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	}
 
 	/* initialize runtime environment */
-	aml_find_node(&aml_root, "_INI", acpi_inidev, sc);
+	aml_find_node(sc->sc_root, "_INI", acpi_inidev, sc);
 
 	/* Get PCI mapping */
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_getpci, sc);
+	aml_walknodes(sc->sc_root, AML_WALK_PRE, acpi_getpci, sc);
 
 #if defined (__amd64__) || defined(__i386__)
 	/* attach pci interrupt routing tables */
-	aml_find_node(&aml_root, "_PRT", acpi_foundprt, sc);
+	aml_find_node(sc->sc_root, "_PRT", acpi_foundprt, sc);
 #endif
 
-	aml_find_node(&aml_root, "_HID", acpi_foundec, sc);
+	aml_find_node(sc->sc_root, "_HID", acpi_foundec, sc);
 
 	/* check if we're running on a sony */
-	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
+	aml_find_node(sc->sc_root, "GBRT", acpi_foundsony, sc);
 
 #ifndef SMALL_KERNEL
 	/* try to find smart battery first */
-	aml_find_node(&aml_root, "_HID", acpi_foundsbs, sc);
+	aml_find_node(sc->sc_root, "_HID", acpi_foundsbs, sc);
 #endif /* SMALL_KERNEL */
 
 	/* attach battery, power supply and button devices */
-	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
+	aml_find_node(sc->sc_root, "_HID", acpi_foundhid, sc);
 
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
+	aml_walknodes(sc->sc_root, AML_WALK_PRE, acpi_add_device, sc);
 
 #ifndef SMALL_KERNEL
 #if NWD > 0
 	/* Attach IDE bay */
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_foundide, sc);
+	aml_walknodes(sc->sc_root, AML_WALK_PRE, acpi_foundide, sc);
 #endif
 
 	/* attach docks */
-	aml_find_node(&aml_root, "_DCK", acpi_founddock, sc);
+	aml_find_node(sc->sc_root, "_DCK", acpi_founddock, sc);
 
 	/* attach video */
-	aml_find_node(&aml_root, "_DOS", acpi_foundvideo, sc);
+	aml_find_node(sc->sc_root, "_DOS", acpi_foundvideo, sc);
 
 	/* create list of devices we want to query when APM comes in */
 	SLIST_INIT(&sc->sc_ac);
@@ -2356,30 +2356,30 @@ acpi_init_gpes(struct acpi_softc *sc)
 	for (idx = 0; idx < sc->sc_lastgpe; idx++) {
 		/* Search Level-sensitive GPES */
 		snprintf(name, sizeof(name), "\\_GPE._L%.2X", idx);
-		gpe = aml_searchname(&aml_root, name);
+		gpe = aml_searchname(sc->sc_root, name);
 		if (gpe != NULL)
 			acpi_set_gpehandler(sc, idx, acpi_gpe, gpe, GPE_LEVEL);
 		if (gpe == NULL) {
 			/* Search Edge-sensitive GPES */
 			snprintf(name, sizeof(name), "\\_GPE._E%.2X", idx);
-			gpe = aml_searchname(&aml_root, name);
+			gpe = aml_searchname(sc->sc_root, name);
 			if (gpe != NULL)
 				acpi_set_gpehandler(sc, idx, acpi_gpe, gpe,
 				    GPE_EDGE);
 		}
 	}
-	aml_find_node(&aml_root, "_PRW", acpi_foundprw, sc);
+	aml_find_node(sc->sc_root, "_PRW", acpi_foundprw, sc);
 }
 
 void
 acpi_init_pm(struct acpi_softc *sc)
 {
-	sc->sc_tts = aml_searchname(&aml_root, "_TTS");
-	sc->sc_pts = aml_searchname(&aml_root, "_PTS");
-	sc->sc_wak = aml_searchname(&aml_root, "_WAK");
-	sc->sc_bfs = aml_searchname(&aml_root, "_BFS");
-	sc->sc_gts = aml_searchname(&aml_root, "_GTS");
-	sc->sc_sst = aml_searchname(&aml_root, "_SI_._SST");
+	sc->sc_tts = aml_searchname(sc->sc_root, "_TTS");
+	sc->sc_pts = aml_searchname(sc->sc_root, "_PTS");
+	sc->sc_wak = aml_searchname(sc->sc_root, "_WAK");
+	sc->sc_bfs = aml_searchname(sc->sc_root, "_BFS");
+	sc->sc_gts = aml_searchname(sc->sc_root, "_GTS");
+	sc->sc_sst = aml_searchname(sc->sc_root, "_SI_._SST");
 }
 
 #ifndef SMALL_KERNEL
@@ -2396,7 +2396,7 @@ acpi_init_states(struct acpi_softc *sc)
 		snprintf(name, sizeof(name), "_S%d_", i);
 		sc->sc_sleeptype[i].slp_typa = -1;
 		sc->sc_sleeptype[i].slp_typb = -1;
-		if (aml_evalname(sc, &aml_root, name, 0, NULL, &res) == 0) {
+		if (aml_evalname(sc, sc->sc_root, name, 0, NULL, &res) == 0) {
 			if (res.type == AML_OBJTYPE_PACKAGE) {
 				sc->sc_sleeptype[i].slp_typa =
 				    aml_val2int(res.v_package[0]);

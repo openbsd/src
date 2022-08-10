@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.32 2020/09/11 09:27:10 mpi Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.33 2022/08/10 16:58:16 patrick Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -51,8 +51,6 @@ void			db_disprint(void *, const char *, ...);
 const char		*db_aml_fieldacc(int);
 const char		*db_aml_fieldlock(int);
 const char		*db_aml_fieldupdate(int);
-
-extern struct aml_node	aml_root;
 
 /* name of scope for lexer */
 char			scope[80];
@@ -288,7 +286,7 @@ db_acpi_showval(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	if (db_parse_name())
 		return;
 
-	node = aml_searchname(&aml_root, scope);
+	node = aml_searchname(acpi_softc->sc_root, scope);
 	if (node)
 		db_aml_showvalue(node->value);
 	else
@@ -312,7 +310,7 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	if (db_parse_name())
 		return;
 
-	node = aml_searchname(&aml_root, scope);
+	node = aml_searchname(acpi_softc->sc_root, scope);
 	if (node && node->value && node->value->type == AML_OBJTYPE_METHOD) {
 		struct aml_scope ns;
 
@@ -330,7 +328,7 @@ db_acpi_disasm(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 void
 db_acpi_tree(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
-	db_aml_walktree(&aml_root);
+	db_aml_walktree(acpi_softc->sc_root);
 }
 
 void

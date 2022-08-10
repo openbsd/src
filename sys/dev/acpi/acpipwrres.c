@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.11 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.12 2022/08/10 16:58:16 patrick Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -98,8 +98,6 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 	struct aml_value		res;
 	struct acpipwrres_consumer	*cons;
 
-	extern struct aml_node	aml_root;
-
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aaa->aaa_node;
 	memset(&res, 0, sizeof res);
@@ -125,12 +123,12 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 	/* Get the list of consumers */
 	SIMPLEQ_INIT(&sc->sc_cons);
 #if notyet
-	aml_find_node(&aml_root, "_PRW", acpipwrres_foundcons, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_PRW", acpipwrres_foundcons, sc);
 #endif
-	aml_find_node(&aml_root, "_PR0", acpipwrres_foundcons, sc);
-	aml_find_node(&aml_root, "_PR1", acpipwrres_foundcons, sc);
-	aml_find_node(&aml_root, "_PR2", acpipwrres_foundcons, sc);
-	aml_find_node(&aml_root, "_PR3", acpipwrres_foundcons, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_PR0", acpipwrres_foundcons, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_PR1", acpipwrres_foundcons, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_PR2", acpipwrres_foundcons, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_PR3", acpipwrres_foundcons, sc);
 
 	DPRINTF(("%s", DEVNAME(sc)));
 	if (!SIMPLEQ_EMPTY(&sc->sc_cons)) {
@@ -268,8 +266,6 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 	struct aml_value		res, *ref;
 	int				i = 0;
 
-	extern struct aml_node	aml_root;
-
 	memset(&res, 0, sizeof(res));
 
 	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1) {
@@ -294,7 +290,7 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 		if (ref->type == AML_OBJTYPE_NAMEREF) {
 			struct aml_node	*pnode;
 
-			pnode = aml_searchrel(&aml_root,
+			pnode = aml_searchrel(sc->sc_acpi->sc_root,
 			    aml_getname(ref->v_nameref));
 			if (pnode == NULL) {
 				DPRINTF(("%s: device %s not found\n",

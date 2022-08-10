@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.45 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpidock.c,v 1.46 2022/08/10 16:58:16 patrick Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -73,7 +73,6 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpidock_softc	*sc = (struct acpidock_softc *)self;
 	struct acpi_attach_args *aa = aux;
-	extern struct aml_node	aml_root;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -107,7 +106,7 @@ acpidock_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensdev);
 
 	TAILQ_INIT(&sc->sc_deps_h);
-	aml_find_node(&aml_root, "_EJD", acpidock_foundejd, sc);
+	aml_find_node(sc->sc_acpi->sc_root, "_EJD", acpidock_foundejd, sc);
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 	    acpidock_notify, sc, ACPIDEV_NOPOLL);
@@ -279,14 +278,13 @@ acpidock_foundejd(struct aml_node *node, void *arg)
 	struct acpidock_softc	*sc = (struct acpidock_softc *)arg;
 	struct aml_value	res;
 	struct aml_node		*dock;
-	extern struct aml_node	aml_root;
 
 	dnprintf(15, "%s: %s", DEVNAME(sc), node->name);
 
 	if (aml_evalnode(sc->sc_acpi, node, 0, NULL, &res) == -1)
 		printf(": error\n");
 	else {
-		dock = aml_searchname(&aml_root, res.v_string);
+		dock = aml_searchname(sc->sc_acpi->sc_root, res.v_string);
 
 		if (dock == sc->sc_devnode)
 			/* Add all children devices of Device containing _EJD */

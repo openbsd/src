@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.58 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpitz.c,v 1.59 2022/08/10 16:58:16 patrick Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -95,8 +95,6 @@ extern int	perflevel;
 #define ACPITZ_TRIPS	(1L << 0)
 #define ACPITZ_DEVLIST	(1L << 1)
 #define ACPITZ_INIT	(ACPITZ_TRIPS|ACPITZ_DEVLIST)
-
-extern struct aml_node aml_root;
 
 void
 acpitz_init_perf(void *arg)
