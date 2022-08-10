@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.47 2022/06/10 10:36:43 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.48 2022/08/10 14:37:33 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -226,6 +226,11 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
+		goto out;
+	}
+
+	if (X509_get_ext_by_NID(*x509, NID_sbgp_autonomousSysNum, -1) != -1) {
+		warnx("%s: superfluous AS Resources extension present", fn);
 		goto out;
 	}
 
