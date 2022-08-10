@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.30 2022/05/30 13:06:41 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.31 2022/08/10 14:03:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -391,7 +391,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	 */
 	if (chdir(new_wp->cwd) == 0)
 		environ_set(child, "PWD", 0, "%s", new_wp->cwd);
-	else if ((tmp = find_home()) != NULL || chdir(tmp) == 0)
+	else if ((tmp = find_home()) != NULL && chdir(tmp) == 0)
 		environ_set(child, "PWD", 0, "%s", tmp);
 	else if (chdir("/") == 0)
 		environ_set(child, "PWD", 0, "/");
