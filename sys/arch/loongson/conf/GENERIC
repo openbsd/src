@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 2021/08/20 05:23:18 anton Exp $
+#	$OpenBSD: GENERIC,v 1.66 2022/08/10 11:05:50 miod Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -48,6 +48,7 @@ glxpcib*	at pci?
 gpio*		at glxpcib?
 isa0		at glxpcib?
 glxclk*		at glxpcib?
+iic*		at glxpcib?
 mcclock0	at isa? port 0x70
 pckbc0		at isa?				# Yeeloong only
 pckbd*		at pckbc?			# Yeeloong only
