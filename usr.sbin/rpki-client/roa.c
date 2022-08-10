@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.48 2022/08/10 14:37:33 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.49 2022/08/10 14:54:03 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -140,7 +140,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		}
 
 		if (p->res->ipsz + addrsz >= MAX_IP_SIZE) {
-			warnx("%s: too many IPAddress entries: limit %d",
+			warnx("%s: too many ROAIPAddress entries: limit %d",
 			    p->fn, MAX_IP_SIZE);
 			goto out;
 		}
