@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.561 2022/08/10 11:11:02 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.562 2022/08/10 14:17:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2474,7 +2474,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 
 	nexthop = prefix_nexthop(p);
 	peer = prefix_peer(p);
-	bzero(&rib, sizeof(rib));
+	memset(&rib, 0, sizeof(rib));
 	rib.age = getmonotime() - p->lastchange;
 	rib.local_pref = asp->lpref;
 	rib.med = asp->med;
@@ -2484,16 +2484,12 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	    sizeof(rib.remote_addr));
 	rib.remote_id = peer->remote_bgpid;
 	if (nexthop != NULL) {
-		memcpy(&rib.true_nexthop, &nexthop->true_nexthop,
-		    sizeof(rib.true_nexthop));
-		memcpy(&rib.exit_nexthop, &nexthop->exit_nexthop,
-		    sizeof(rib.exit_nexthop));
+		rib.exit_nexthop = nexthop->exit_nexthop;
+		rib.true_nexthop = nexthop->true_nexthop;
 	} else {
-		/* announced network may have a NULL nexthop */
-		bzero(&rib.true_nexthop, sizeof(rib.true_nexthop));
-		bzero(&rib.exit_nexthop, sizeof(rib.exit_nexthop));
-		rib.true_nexthop.aid = p->pt->aid;
+		/* announced network can have a NULL nexthop */
 		rib.exit_nexthop.aid = p->pt->aid;
+		rib.true_nexthop.aid = p->pt->aid;
 	}
 	pt_getaddr(p->pt, &rib.prefix);
 	rib.prefixlen = p->pt->prefixlen;
