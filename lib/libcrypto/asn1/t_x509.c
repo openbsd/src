@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.37 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: t_x509.c,v 1.38 2022/08/10 11:15:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,9 +137,15 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	}
 	if (!(cflag & X509_FLAG_NO_VERSION)) {
 		l = X509_get_version(x);
-		if (BIO_printf(bp, "%8sVersion: %lu (0x%lx)\n",
-		    "", l + 1, l) <= 0)
-			goto err;
+		if (l >= 0 && l <= 2) {
+			if (BIO_printf(bp, "%8sVersion: %ld (0x%lx)\n",
+			    "", l + 1, l) <= 0)
+				goto err;
+		} else {
+			if (BIO_printf(bp, "%8sVersion: unknown (%ld)\n",
+			    "", l) <= 0)
+				goto err;
+		}
 	}
 	if (!(cflag & X509_FLAG_NO_SERIAL)) {
 		if (BIO_write(bp, "        Serial Number:", 22) <= 0)
