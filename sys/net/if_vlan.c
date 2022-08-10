@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.209 2021/08/30 14:44:39 jasper Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.210 2022/08/10 09:01:48 mvs Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -676,7 +676,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	uint16_t tag;
 	int error = 0;
 
-	NET_ASSERT_LOCKED();
 	if (sc->sc_dead)
 		return (ENXIO);
 
