@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.100 2021/12/09 00:26:11 guenther Exp $ */
+/* $OpenBSD: trap.c,v 1.101 2022/08/10 10:41:35 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -109,21 +109,6 @@
 #include <machine/db_machdep.h>
 #endif
 #include <alpha/alpha/db_instruction.h>
-
-#ifndef SMALL_KERNEL
-
-unsigned long	Sfloat_to_reg(unsigned int);
-unsigned int	reg_to_Sfloat(unsigned long);
-unsigned long	Tfloat_reg_cvt(unsigned long);
-#ifdef FIX_UNALIGNED_VAX_FP
-unsigned long	Ffloat_to_reg(unsigned int);
-unsigned int	reg_to_Ffloat(unsigned long);
-unsigned long	Gfloat_reg_cvt(unsigned long);
-#endif
-
-int		unaligned_fixup(unsigned long, unsigned long,
-		    unsigned long, struct proc *);
-#endif	/* SMALL_KERNEL */
 
 int		handle_opdec(struct proc *p, u_int64_t *ucodep);
 
@@ -249,19 +234,10 @@ trap(a0, a1, a2, entry, framep)
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
 		/*
-		 * If user-land, do whatever fixups, printing, and
-		 * signalling is appropriate (based on system-wide
-		 * and per-process unaligned-access-handling flags).
+		 * If user-land, deliver SIGBUS unconditionally.
 		 */
 		if (user) {
-#ifndef SMALL_KERNEL
-			KERNEL_LOCK();
-			i = unaligned_fixup(a0, a1, a2, p);
-			KERNEL_UNLOCK();
-			if (i == 0)
-				goto out;
-#endif
-
+			i = SIGBUS;
 			ucode = ILL_ILLADR;
 			v = (caddr_t)a0;
 			break;
@@ -716,11 +692,6 @@ ast(framep)
 	userret(p);
 }
 
-/*
- * Unaligned access handler.  It's not clear that this can get much slower...
- *
- */
-
 const static int reg_to_framereg[32] = {
 	FRAME_V0,	FRAME_T0,	FRAME_T1,	FRAME_T2,
 	FRAME_T3,	FRAME_T4,	FRAME_T5,	FRAME_T6,
@@ -735,356 +706,6 @@ const static int reg_to_framereg[32] = {
 #define	irp(p, reg)							\
 	((reg_to_framereg[(reg)] == -1) ? NULL :			\
 	    &(p)->p_md.md_tf->tf_regs[reg_to_framereg[(reg)]])
-
-#ifndef SMALL_KERNEL
-
-#define	frp(p, reg)							\
-	(&(p)->p_addr->u_pcb.pcb_fp.fpr_regs[(reg)])
-
-#define	dump_fp_regs()							\
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)				\
-		fpusave_proc(p, 1);
-
-#define	unaligned_load(storage, ptrf, mod)				\
-	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0) {	\
-		p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;			\
-		signal = SIGSEGV;					\
-		goto out;						\
-	}								\
-	signal = 0;							\
-	if ((regptr = ptrf(p, reg)) != NULL)				\
-		*regptr = mod (storage);
-
-#define	unaligned_store(storage, ptrf, mod)				\
-	if ((regptr = ptrf(p, reg)) != NULL)				\
-		(storage) = mod (*regptr);				\
-	else								\
-		(storage) = 0;						\
-	if (copyout(&(storage), (caddr_t)va, sizeof (storage)) != 0) {	\
-		p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;			\
-		signal = SIGSEGV;					\
-		goto out;						\
-	}								\
-	signal = 0;
-
-#define	unaligned_load_integer(storage)					\
-	unaligned_load(storage, irp, )
-
-#define	unaligned_store_integer(storage)				\
-	unaligned_store(storage, irp, )
-
-#define	unaligned_load_floating(storage, mod)				\
-	dump_fp_regs();							\
-	unaligned_load(storage, frp, mod)
-
-#define	unaligned_store_floating(storage, mod)				\
-	dump_fp_regs();							\
-	unaligned_store(storage, frp, mod)
-
-unsigned long
-Sfloat_to_reg(s)
-	unsigned int s;
-{
-	unsigned long sign, expn, frac;
-	unsigned long result;
-
-	sign = (s & 0x80000000) >> 31;
-	expn = (s & 0x7f800000) >> 23;
-	frac = (s & 0x007fffff) >>  0;
-
-	/* map exponent part, as appropriate. */
-	if (expn == 0xff)
-		expn = 0x7ff;
-	else if ((expn & 0x80) != 0)
-		expn = (0x400 | (expn & ~0x80));
-	else if ((expn & 0x80) == 0 && expn != 0)
-		expn = (0x380 | (expn & ~0x80));
-
-	result = (sign << 63) | (expn << 52) | (frac << 29);
-	return (result);
-}
-
-unsigned int
-reg_to_Sfloat(r)
-	unsigned long r;
-{
-	unsigned long sign, expn, frac;
-	unsigned int result;
-
-	sign = (r & 0x8000000000000000) >> 63;
-	expn = (r & 0x7ff0000000000000) >> 52;
-	frac = (r & 0x000fffffe0000000) >> 29;
-
-	/* map exponent part, as appropriate. */
-	expn = (expn & 0x7f) | ((expn & 0x400) != 0 ? 0x80 : 0x00);
-
-	result = (sign << 31) | (expn << 23) | (frac << 0);
-	return (result);
-}
-
-/*
- * Conversion of T floating datums to and from register format
- * requires no bit reordering whatsoever.
- */
-unsigned long
-Tfloat_reg_cvt(input)
-	unsigned long input;
-{
-
-	return (input);
-}
-
-#ifdef FIX_UNALIGNED_VAX_FP
-unsigned long
-Ffloat_to_reg(f)
-	unsigned int f;
-{
-	unsigned long sign, expn, frlo, frhi;
-	unsigned long result;
-
-	sign = (f & 0x00008000) >> 15;
-	expn = (f & 0x00007f80) >>  7;
-	frhi = (f & 0x0000007f) >>  0;
-	frlo = (f & 0xffff0000) >> 16;
-
-	/* map exponent part, as appropriate. */
-	if ((expn & 0x80) != 0)
-		expn = (0x400 | (expn & ~0x80));
-	else if ((expn & 0x80) == 0 && expn != 0)
-		expn = (0x380 | (expn & ~0x80));
-
-	result = (sign << 63) | (expn << 52) | (frhi << 45) | (frlo << 29);
-	return (result);
-}
-
-unsigned int
-reg_to_Ffloat(r)
-	unsigned long r;
-{
-	unsigned long sign, expn, frhi, frlo;
-	unsigned int result;
-
-	sign = (r & 0x8000000000000000) >> 63;
-	expn = (r & 0x7ff0000000000000) >> 52;
-	frhi = (r & 0x000fe00000000000) >> 45;
-	frlo = (r & 0x00001fffe0000000) >> 29;
-
-	/* map exponent part, as appropriate. */
-	expn = (expn & 0x7f) | ((expn & 0x400) != 0 ? 0x80 : 0x00);
-
-	result = (sign << 15) | (expn << 7) | (frhi << 0) | (frlo << 16);
-	return (result);
-}
-
-/*
- * Conversion of G floating datums to and from register format is
- * symmetrical.  Just swap shorts in the quad...
- */
-unsigned long
-Gfloat_reg_cvt(input)
-	unsigned long input;
-{
-	unsigned long a, b, c, d;
-	unsigned long result;
-
-	a = (input & 0x000000000000ffff) >> 0;
-	b = (input & 0x00000000ffff0000) >> 16;
-	c = (input & 0x0000ffff00000000) >> 32;
-	d = (input & 0xffff000000000000) >> 48;
-
-	result = (a << 48) | (b << 32) | (c << 16) | (d << 0);
-	return (result);
-}
-#endif /* FIX_UNALIGNED_VAX_FP */
-
-struct unaligned_fixup_data {
-	const char *type;	/* opcode name */
-	int fixable;		/* fixable, 0 if fixup not supported */
-	int size;		/* size, 0 if unknown */
-};
-
-#define	UNKNOWN()	{ "0x%lx", 0, 0 }
-#define	FIX_LD(n,s)	{ n, 1, s }
-#define	FIX_ST(n,s)	{ n, 1, s }
-#define	NOFIX_LD(n,s)	{ n, 0, s }
-#define	NOFIX_ST(n,s)	{ n, 0, s }
-
-int
-unaligned_fixup(va, opcode, reg, p)
-	unsigned long va, opcode, reg;
-	struct proc *p;
-{
-	const struct unaligned_fixup_data tab_unknown[1] = {
-		UNKNOWN(),
-	};
-	const struct unaligned_fixup_data tab_0c[0x02] = {
-		FIX_LD("ldwu", 2),	FIX_ST("stw", 2),
-	};
-	const struct unaligned_fixup_data tab_20[0x10] = {
-#ifdef FIX_UNALIGNED_VAX_FP
-		FIX_LD("ldf", 4),	FIX_LD("ldg", 8),
-#else
-		NOFIX_LD("ldf", 4),	NOFIX_LD("ldg", 8),
-#endif
-		FIX_LD("lds", 4),	FIX_LD("ldt", 8),
-#ifdef FIX_UNALIGNED_VAX_FP
-		FIX_ST("stf", 4),	FIX_ST("stg", 8),
-#else
-		NOFIX_ST("stf", 4),	NOFIX_ST("stg", 8),
-#endif
-		FIX_ST("sts", 4),	FIX_ST("stt", 8),
-		FIX_LD("ldl", 4),	FIX_LD("ldq", 8),
-		NOFIX_LD("ldl_c", 4),	NOFIX_LD("ldq_c", 8),
-		FIX_ST("stl", 4),	FIX_ST("stq", 8),
-		NOFIX_ST("stl_c", 4),	NOFIX_ST("stq_c", 8),
-	};
-	const struct unaligned_fixup_data *selected_tab;
-	int doprint, dofix, dosigbus, signal;
-	unsigned long *regptr, longdata;
-	int intdata;		/* signed to get extension when storing */
-	u_int16_t worddata;	/* unsigned to _avoid_ extension */
-
-	/*
-	 * Read USP into frame in case it's the register to be modified.
-	 * This keeps us from having to check for it in lots of places
-	 * later.
-	 */
-	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
-
-	/*
-	 * Figure out what actions to take.
-	 *
-	 * XXX In the future, this should have a per-process component
-	 * as well.
-	 */
-	doprint = alpha_unaligned_print;
-	dofix = alpha_unaligned_fix;
-	dosigbus = alpha_unaligned_sigbus;
-
-	/*
-	 * Find out which opcode it is.  Arrange to have the opcode
-	 * printed if it's an unknown opcode.
-	 */
-	if (opcode >= 0x0c && opcode <= 0x0d)
-		selected_tab = &tab_0c[opcode - 0x0c];
-	else if (opcode >= 0x20 && opcode <= 0x2f)
-		selected_tab = &tab_20[opcode - 0x20];
-	else
-		selected_tab = tab_unknown;
-
-	/*
-	 * If we're supposed to be noisy, squawk now.
-	 */
-	if (doprint) {
-		uprintf(
-		"pid %u (%s): unaligned access: va=0x%lx pc=0x%lx ra=0x%lx op=",
-		    p->p_p->ps_pid, p->p_p->ps_comm, va,
-		    p->p_md.md_tf->tf_regs[FRAME_PC] - 4,
-		    p->p_md.md_tf->tf_regs[FRAME_RA]);
-		uprintf(selected_tab->type,opcode);
-		uprintf("\n");
-	}
-
-	/*
-	 * If we should try to fix it and know how, give it a shot.
-	 *
-	 * We never allow bad data to be unknowingly used by the
-	 * user process.  That is, if we decide not to fix up an
-	 * access we cause a SIGBUS rather than letting the user
-	 * process go on without warning.
-	 *
-	 * If we're trying to do a fixup, we assume that things
-	 * will be botched.  If everything works out OK,
-	 * unaligned_{load,store}_* clears the signal flag.
-	 */
-	signal = SIGBUS;
-	if (dofix && selected_tab->fixable) {
-		switch (opcode) {
-		case 0x0c:			/* ldwu */
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			unaligned_load_integer(worddata);
-			break;
-
-		case 0x0d:			/* stw */
-			/* XXX ONLY WORKS ON LITTLE-ENDIAN ALPHA */
-			unaligned_store_integer(worddata);
-			break;
-
-#ifdef FIX_UNALIGNED_VAX_FP
-		case 0x20:			/* ldf */
-			unaligned_load_floating(intdata, Ffloat_to_reg);
-			break;
-
-		case 0x21:			/* ldg */
-			unaligned_load_floating(longdata, Gfloat_reg_cvt);
-			break;
-#endif
-
-		case 0x22:			/* lds */
-			unaligned_load_floating(intdata, Sfloat_to_reg);
-			break;
-
-		case 0x23:			/* ldt */
-			unaligned_load_floating(longdata, Tfloat_reg_cvt);
-			break;
-
-#ifdef FIX_UNALIGNED_VAX_FP
-		case 0x24:			/* stf */
-			unaligned_store_floating(intdata, reg_to_Ffloat);
-			break;
-
-		case 0x25:			/* stg */
-			unaligned_store_floating(longdata, Gfloat_reg_cvt);
-			break;
-#endif
-
-		case 0x26:			/* sts */
-			unaligned_store_floating(intdata, reg_to_Sfloat);
-			break;
-
-		case 0x27:			/* stt */
-			unaligned_store_floating(longdata, Tfloat_reg_cvt);
-			break;
-
-		case 0x28:			/* ldl */
-			unaligned_load_integer(intdata);
-			break;
-
-		case 0x29:			/* ldq */
-			unaligned_load_integer(longdata);
-			break;
-
-		case 0x2c:			/* stl */
-			unaligned_store_integer(intdata);
-			break;
-
-		case 0x2d:			/* stq */
-			unaligned_store_integer(longdata);
-			break;
-
-#ifdef DIAGNOSTIC
-		default:
-			panic("unaligned_fixup: can't get here");
-#endif
-		}
-	}
-
-	/*
-	 * Force SIGBUS if requested.
-	 */
-	if (dosigbus)
-		signal = SIGBUS;
-
-out:
-	/*
-	 * Write back USP.
-	 */
-	alpha_pal_wrusp(p->p_md.md_tf->tf_regs[FRAME_SP]);
-
-	return (signal);
-}
-
-#endif	/* SMALL_KERNEL */
 
 /*
  * Reserved/unimplemented instruction (opDec fault) handler
@@ -1141,17 +762,9 @@ handle_opdec(p, ucodep)
 
 		if (inst.mem_format.opcode == op_ldwu ||
 		    inst.mem_format.opcode == op_stw) {
-			if (memaddr & 0x01) {
-#ifndef SMALL_KERNEL
-				sig = unaligned_fixup(memaddr,
-				    inst.mem_format.opcode,
-				    inst.mem_format.ra, p);
-				if (sig)
-					goto unaligned_fixup_sig;
-#else
-				goto sigill;
-#endif
-				break;
+			if (memaddr & 0x01) {	/* misaligned address */
+				sig = SIGBUS;
+				goto sigbus;
 			}
 		}
 
@@ -1265,9 +878,7 @@ sigill:
 sigsegv:
 	sig = SIGSEGV;
 	p->p_md.md_tf->tf_regs[FRAME_PC] = inst_pc;	/* re-run instr. */
-#ifndef SMALL_KERNEL
-unaligned_fixup_sig:
-#endif
+sigbus:
 	*ucodep = memaddr;				/* faulting address */
 	return (sig);
 }

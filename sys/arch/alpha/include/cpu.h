@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.65 2021/07/06 09:34:06 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.66 2022/08/10 10:41:35 miod Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -113,7 +113,6 @@ extern u_long cpu_implver;		/* from IMPLVER instruction */
 extern u_long cpu_amask;		/* from AMASK instruction */
 extern int bootdev_debug;
 extern int alpha_fp_sync_complete;
-extern int alpha_unaligned_print, alpha_unaligned_fix, alpha_unaligned_sigbus;
 
 void	XentArith(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
 void	XentIF(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
@@ -358,9 +357,6 @@ do {									\
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
-#define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
-#define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define CPU_CHIPSET		8	/* chipset information */
@@ -381,9 +377,9 @@ do {									\
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
-	{ "unaligned_print", CTLTYPE_INT }, \
-	{ "unaligned_fix", CTLTYPE_INT }, \
-	{ "unaligned_sigbus", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
 	{ "fp_sync_complete", CTLTYPE_INT }, \
 	{ "chipset", CTLTYPE_NODE }, \
