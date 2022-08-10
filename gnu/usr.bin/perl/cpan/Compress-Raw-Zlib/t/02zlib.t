@@ -13,6 +13,7 @@ use bytes;
 use Test::More  ;
 use CompTestUtils;
 
+use constant ZLIB_1_2_12_0 => 0x12C0;
 
 BEGIN 
 { 
@@ -489,10 +490,18 @@ SKIP:
         # print "x $status\n";
         last if $status == Z_STREAM_END or $status != Z_OK ;
     }
-     
-    cmp_ok $status, '==', Z_DATA_ERROR ;
-    is $GOT, $goodbye ;
 
+    # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0)
+    {
+        cmp_ok $status, '==', Z_STREAM_END ;
+    }
+    else
+    {
+        cmp_ok $status, '==', Z_DATA_ERROR ;
+    }
+
+    is $GOT, $goodbye ;
 
     # Check inflateSync leaves good data in buffer
     my $rest = $Answer ;
@@ -514,7 +523,17 @@ SKIP:
     is length($rest), $len2, "expected compressed output";
     
     $GOT = ''; 
-    cmp_ok $k->inflate($rest, $GOT), '==', Z_DATA_ERROR, "inflate returns Z_DATA_ERROR";
+    $status = $k->inflate($rest, $GOT);
+    # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0)
+    {
+        cmp_ok $status, '==', Z_STREAM_END ;
+    }
+    else
+    {
+        cmp_ok $status, '==', Z_DATA_ERROR ;
+    }
+
     is $GOT, $goodbye ;
 }
 
