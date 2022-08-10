@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.146 2022/08/09 09:02:26 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.147 2022/08/10 10:27:03 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -731,7 +731,7 @@ int	mkpathat(int, const char *);
 #define MAX_CONN_TIMEOUT	15
 
 /* How long to wait for IO from a remote server. */
-#define MAX_IO_TIMEOUT		180
+#define MAX_IO_TIMEOUT		30
 
 /* Maximum allowd repositories per tal */
 #define MAX_REPO_PER_TAL	1000
