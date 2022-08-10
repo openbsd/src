@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.25 2022/02/10 23:40:09 bluhm Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.26 2022/08/10 07:58:04 tb Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -699,8 +699,8 @@ decompress(const char *buf, size_t size, off_t len)
 		goto exit;
 	}
 
-	if (stream.total_out != len) {
-		warnx("decompression failed: %llu != %llu",
+	if (len < 0 || (uintmax_t)stream.total_out != (uintmax_t)len) {
+		warnx("decompression failed: %lu != %lld",
 		    stream.total_out, len);
 		goto exit;
 	}
