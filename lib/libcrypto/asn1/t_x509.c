@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.38 2022/08/10 11:15:08 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.39 2022/08/10 16:51:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,7 +118,6 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	X509_CINF *ci;
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey = NULL;
-	const char *neg;
 
 	if ((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 		mlch = '\n';
@@ -155,18 +154,15 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		l = -1;
 		if (bs->length <= (int)sizeof(long))
 			l = ASN1_INTEGER_get(bs);
-		if (l != -1) {
-			if (bs->type == V_ASN1_NEG_INTEGER) {
-				l = -l;
-				neg = "-";
-			} else
-				neg = "";
-			if (BIO_printf(bp, " %s%lu (%s0x%lx)\n",
-			    neg, l, neg, l) <= 0)
+		if (l >= 0) {
+			if (BIO_printf(bp, " %ld (0x%lx)\n", l, l) <= 0)
 				goto err;
 		} else {
-			neg = (bs->type == V_ASN1_NEG_INTEGER) ?
-			    " (Negative)" : "";
+			const char *neg = "";
+
+			if (bs->type == V_ASN1_NEG_INTEGER)
+				neg = " (Negative)";
+
 			if (BIO_printf(bp, "\n%12s%s", "", neg) <= 0)
 				goto err;
 			for (i = 0; i < bs->length; i++) {
