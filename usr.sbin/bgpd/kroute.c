@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.287 2022/08/03 08:16:05 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.288 2022/08/10 14:21:24 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -621,7 +621,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 		bcopy(&lo6, &kf->nexthop.v6, sizeof(kf->nexthop.v6));
 
 	if ((kr6 = kroute6_find(kt, &kf->prefix, kf->prefixlen,
-	    kf->priority)) != NULL) {
+	    kf->priority)) == NULL) {
 		if (kroute_insert(kt, kf) == -1)
 			return (-1);
 	} else {
