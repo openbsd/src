@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.4 2022/04/06 18:59:26 naddy Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.5 2022/08/10 17:02:37 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,6 +36,8 @@ struct smmu_acpi_softc {
 
 int smmu_acpi_match(struct device *, void *, void *);
 void smmu_acpi_attach(struct device *, struct device *, void *);
+
+int smmu_acpi_foundqcom(struct aml_node *, void *);
 
 const struct cfattach smmu_acpi_ca = {
 	sizeof(struct smmu_acpi_softc), smmu_acpi_match, smmu_acpi_attach
@@ -97,6 +99,9 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (smmu->flags & ACPI_IORT_SMMU_COHERENT)
 		sc->sc_coherent = 1;
 
+	/* Check for QCOM devices to enable quirk. */
+	aml_find_node(acpi_softc->sc_root, "_HID", smmu_acpi_foundqcom, sc);
+
 	if (smmu_attach(sc) != 0)
 		return;
 
@@ -128,4 +133,19 @@ smmu_acpi_attach(struct device *parent, struct device *self, void *aux)
 	as->as_map = smmu_device_map;
 	as->as_reserve = smmu_reserve_region;
 	acpiiort_smmu_register(as);
+}
+
+int
+smmu_acpi_foundqcom(struct aml_node *node, void *arg)
+{
+	struct smmu_softc	*sc = (struct smmu_softc *)arg;
+	char			 cdev[32], dev[32];
+
+	if (acpi_parsehid(node, arg, cdev, dev, sizeof(dev)) != 0)
+		return 0;
+
+	if (strcmp(dev, "QCOM0609") == 0)
+		sc->sc_is_qcom = 1;
+
+	return 0;
 }

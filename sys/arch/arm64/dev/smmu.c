@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.18 2021/06/25 19:55:22 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.19 2022/08/10 17:02:37 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -242,13 +242,48 @@ smmu_attach(struct smmu_softc *sc)
 		break;
 	}
 
-	printf(": %u CBs (%u S2-only)\n",
+	printf(": %u CBs (%u S2-only)",
 	    sc->sc_num_context_banks, sc->sc_num_s2_context_banks);
+	if (sc->sc_is_qcom) {
+		/*
+		 * In theory we should check if bypass quirk is needed by
+		 * modifying S2CR and re-checking if the value is different.
+		 * This does not work on the last S2CR, but on the first,
+		 * which is in use.  Revisit this once we have other QCOM HW.
+		 */
+		sc->sc_bypass_quirk = 1;
+		printf(", bypass quirk");
+		/*
+		 * Create special context that is turned off.  This allows us
+		 * to map a stream to a context bank where translation is not
+		 * happening, and hence bypassed.
+		 */
+		sc->sc_cb[sc->sc_num_context_banks - 1] =
+		    malloc(sizeof(struct smmu_cb), M_DEVBUF, M_WAITOK | M_ZERO);
+		smmu_gr1_write_4(sc, SMMU_CBAR(sc->sc_num_context_banks - 1),
+		    SMMU_CBAR_TYPE_S1_TRANS_S2_BYPASS);
+	}
+	printf("\n");
 
 	/* Clear Global Fault Status Register */
 	smmu_gr0_write_4(sc, SMMU_SGFSR, smmu_gr0_read_4(sc, SMMU_SGFSR));
 
 	for (i = 0; i < sc->sc_num_streams; i++) {
+		/* On QCOM HW we need to keep current streams running. */
+		if (sc->sc_is_qcom && sc->sc_smr &&
+		    smmu_gr0_read_4(sc, SMMU_SMR(i)) & SMMU_SMR_VALID) {
+			sc->sc_smr[i] = malloc(sizeof(struct smmu_smr),
+			    M_DEVBUF, M_WAITOK | M_ZERO);
+			if (sc->sc_bypass_quirk) {
+				smmu_gr0_write_4(sc, SMMU_S2CR(i),
+				    SMMU_S2CR_TYPE_TRANS |
+				    sc->sc_num_context_banks - 1);
+			} else {
+				smmu_gr0_write_4(sc, SMMU_S2CR(i),
+				    SMMU_S2CR_TYPE_BYPASS | 0xff);
+			}
+			continue;
+		}
 #if 1
 		/* Setup all streams to fault by default */
 		smmu_gr0_write_4(sc, SMMU_S2CR(i), SMMU_S2CR_TYPE_FAULT);
