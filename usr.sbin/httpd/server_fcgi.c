@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.90 2022/03/02 11:10:43 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.91 2022/08/11 14:25:22 op Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -77,6 +77,7 @@ struct server_fcgi_param {
 };
 
 int	server_fcgi_header(struct client *, unsigned int);
+void	server_fcgi_error(struct bufferevent *, short, void *);
 void	server_fcgi_read(struct bufferevent *, void *);
 int	server_fcgi_writeheader(struct client *, struct kv *, void *);
 int	server_fcgi_writechunk(struct client *);
@@ -133,7 +134,7 @@ server_fcgi(struct httpd *env, struct client *clt)
 
 	clt->clt_srvbev_throttled = 0;
 	clt->clt_srvbev = bufferevent_new(fd, server_fcgi_read,
-	    NULL, server_file_error, clt);
+	    NULL, server_fcgi_error, clt);
 	if (clt->clt_srvbev == NULL) {
 		errstr = "failed to allocate fcgi buffer event";
 		goto fail;
@@ -479,6 +480,23 @@ fcgi_add_param(struct server_fcgi_param *p, const char *key,
 
 	h->content_len = htons(p->total_len);
 	return (0);
+}
+
+void
+server_fcgi_error(struct bufferevent *bev, short error, void *arg)
+{
+	struct client		*clt = arg;
+
+	if ((error & EVBUFFER_EOF) && !clt->clt_fcgi.headersdone) {
+		server_abort_http(clt, 500, "malformed or no headers");
+		return;
+	}
+
+	/* send the end marker if not already */
+	if (clt->clt_fcgi.chunked && !clt->clt_fcgi.end++)
+		server_bufferevent_print(clt, "0\r\n\r\n");
+
+	server_file_error(bev, error, arg);
 }
 
 void
