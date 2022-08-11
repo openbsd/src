@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.31 2021/10/27 21:21:35 jasper Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.32 2022/08/11 02:56:35 tb Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -547,8 +547,8 @@ db_ctf_decompress(const char *buf, size_t size, off_t len)
 		goto exit;
 	}
 
-	if (stream.total_out != len) {
-		db_printf("decompression failed: %llu != %llu",
+	if (len < 0 || (uintmax_t)stream.total_out != (uintmax_t)len) {
+		db_printf("decompression failed: %lu != %lld",
 		    stream.total_out, len);
 		goto exit;
 	}
