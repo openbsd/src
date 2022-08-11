@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.34 2022/08/05 16:59:50 miod Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.35 2022/08/11 09:22:38 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -1013,7 +1013,7 @@ ucc_add_key(struct ucc_softc *sc, int32_t usage, u_int bit)
 	if (ucc_usage_to_sym(usage, &us))
 		return 0;
 
-	if (sc->sc_maplen + 2 >= sc->sc_mapsiz)
+	if (sc->sc_maplen + 2 > sc->sc_mapsiz)
 		return ENOMEM;
 	sc->sc_map[sc->sc_maplen++] = KS_KEYCODE(sc->sc_isarray ? usage : bit);
 	sc->sc_map[sc->sc_maplen++] = us->us_key;
