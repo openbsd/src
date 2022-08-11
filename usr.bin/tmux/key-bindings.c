@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.143 2022/07/06 07:36:36 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.144 2022/08/11 09:11:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -616,6 +616,8 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi '{' { send -X previous-paragraph }",
 		"bind -Tcopy-mode-vi '}' { send -X next-paragraph }",
 		"bind -Tcopy-mode-vi % { send -X next-matching-bracket }",
+		"bind -Tcopy-mode-vi Home { send -X start-of-line }",
+		"bind -Tcopy-mode-vi End { send -X end-of-line }",
 		"bind -Tcopy-mode-vi MouseDown1Pane { select-pane }",
 		"bind -Tcopy-mode-vi MouseDrag1Pane { select-pane; send -X begin-selection }",
 		"bind -Tcopy-mode-vi MouseDragEnd1Pane { send -X copy-pipe-and-cancel }",
