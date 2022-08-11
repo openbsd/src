@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.376 2022/08/08 12:06:30 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.377 2022/08/11 09:13:21 claudio Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -275,6 +275,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		}
 	}
 	tcpstat_pkt(tcps_rcvoopack, tcps_rcvoobyte, *tlen);
+	tp->t_rcvoopack++;
 
 	/*
 	 * While we overlap succeeding segments trim them or,
@@ -947,6 +948,7 @@ findpcb:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte,
 				    acked);
+				tp->t_rcvacktime = tcp_now;
 				ND6_HINT(tp);
 				sbdrop(so, &so->so_snd, acked);
 
@@ -1681,6 +1683,7 @@ trimthenstep6:
 		}
 		acked = th->th_ack - tp->snd_una;
 		tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte, acked);
+		tp->t_rcvacktime = tcp_now;
 
 		/*
 		 * If we have a timestamp reply, update smoothed
@@ -3620,6 +3623,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
 	tp->t_rcvtime = tcp_now;
+	tp->t_sndtime = tcp_now;
+	tp->t_rcvacktime = tcp_now;
+	tp->t_sndacktime = tcp_now;
 	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 	tcpstat_inc(tcps_accepts);
 

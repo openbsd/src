@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.292 2022/08/08 01:53:01 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.293 2022/08/11 09:13:21 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1370,7 +1370,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		switch (optname) {
 		case SO_RCVBUF:
 		case SO_ERROR:
-			return 0;
+			return (0);
 		}
 		break;
 	}
@@ -1392,7 +1392,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 	case SOL_SOCKET:
 		switch (optname) {
 		case SO_TIMESTAMP:
-			return 0;
+			return (0);
 		}
 		break;
 	}
@@ -1430,6 +1430,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		case TCP_SACK_ENABLE:
 		case TCP_MAXSEG:
 		case TCP_NOPUSH:
+		case TCP_INFO:
 			return (0);
 		}
 		break;

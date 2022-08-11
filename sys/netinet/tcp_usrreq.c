@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.184 2022/08/08 12:06:30 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.185 2022/08/11 09:13:21 claudio Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -78,7 +78,9 @@
 #include <sys/sysctl.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#include <sys/pledge.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -132,7 +134,8 @@ const struct sysctl_bounded_args tcpctl_vars[] = {
 
 struct	inpcbtable tcbtable;
 
-int tcp_ident(void *, size_t *, void *, size_t, int);
+int	tcp_fill_info(struct tcpcb *, struct socket *, struct mbuf *);
+int	tcp_ident(void *, size_t *, void *, size_t, int);
 
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
@@ -425,6 +428,103 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	return (error);
 }
 
+/*
+ * Export internal TCP state information via a struct tcp_info without
+ * leaking any sensitive information. Sequence numbers are reported
+ * relative to the initial sequence number.
+ */
+int
+tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
+{
+	struct proc *p = curproc;
+	struct tcp_info *ti;
+	u_int t = 1000000 / PR_SLOWHZ;
+
+	if (sizeof(*ti) > MLEN) {
+		MCLGETL(m, M_WAITOK, sizeof(*ti));
+		if (!ISSET(m->m_flags, M_EXT))
+			return ENOMEM;
+	}
+	ti = mtod(m, struct tcp_info *);
+	m->m_len = sizeof(*ti);
+	memset(ti, 0, sizeof(*ti));
+
+	ti->tcpi_state = tp->t_state;
+	if ((tp->t_flags & TF_REQ_TSTMP) && (tp->t_flags & TF_RCVD_TSTMP))
+		ti->tcpi_options |= TCPI_OPT_TIMESTAMPS;
+	if (tp->t_flags & TF_SACK_PERMIT)
+		ti->tcpi_options |= TCPI_OPT_SACK;
+	if ((tp->t_flags & TF_REQ_SCALE) && (tp->t_flags & TF_RCVD_SCALE)) {
+		ti->tcpi_options |= TCPI_OPT_WSCALE;
+		ti->tcpi_snd_wscale = tp->snd_scale;
+		ti->tcpi_rcv_wscale = tp->rcv_scale;
+	}
+#ifdef TCP_ECN
+	if (tp->t_flags & TF_ECN_PERMIT)
+		ti->tcpi_options |= TCPI_OPT_ECN;
+#endif
+
+	ti->tcpi_rto = tp->t_rxtcur * t;
+	ti->tcpi_snd_mss = tp->t_maxseg;
+	ti->tcpi_rcv_mss = tp->t_peermss;
+
+	ti->tcpi_last_data_sent = (tcp_now - tp->t_sndtime) * t;
+	ti->tcpi_last_ack_sent = (tcp_now - tp->t_sndacktime) * t;
+	ti->tcpi_last_data_recv = (tcp_now - tp->t_rcvtime) * t;
+	ti->tcpi_last_ack_recv = (tcp_now - tp->t_rcvacktime) * t;
+
+	ti->tcpi_rtt = ((uint64_t)tp->t_srtt * t) >>
+	    (TCP_RTT_SHIFT + TCP_RTT_BASE_SHIFT);
+	ti->tcpi_rttvar = ((uint64_t)tp->t_rttvar * t) >>
+	    (TCP_RTTVAR_SHIFT + TCP_RTT_BASE_SHIFT);
+	ti->tcpi_snd_ssthresh = tp->snd_ssthresh;
+	ti->tcpi_snd_cwnd = tp->snd_cwnd;
+
+	ti->tcpi_rcv_space = tp->rcv_wnd;
+
+	/*
+	 * Provide only minimal information for unprivileged processes.
+	 */
+	if (suser(p) != 0)
+		return 0;
+
+	/* FreeBSD-specific extension fields for tcp_info.  */
+	ti->tcpi_snd_wnd = tp->snd_wnd;
+	ti->tcpi_snd_nxt = tp->snd_nxt - tp->iss;
+	ti->tcpi_rcv_nxt = tp->rcv_nxt - tp->irs;
+	/* missing tcpi_toe_tid */
+	ti->tcpi_snd_rexmitpack = tp->t_sndrexmitpack;
+	ti->tcpi_rcv_ooopack = tp->t_rcvoopack;
+	ti->tcpi_snd_zerowin = tp->t_sndzerowin;
+
+	/* OpenBSD extensions */
+	ti->tcpi_rttmin = tp->t_rttmin * t;
+	ti->tcpi_max_sndwnd = tp->max_sndwnd;
+	ti->tcpi_rcv_adv = tp->rcv_adv - tp->irs;
+	ti->tcpi_rcv_up = tp->rcv_up - tp->irs;
+	ti->tcpi_snd_una = tp->snd_una - tp->iss;
+	ti->tcpi_snd_up = tp->snd_up - tp->iss;
+	ti->tcpi_snd_wl1 = tp->snd_wl1 - tp->iss;
+	ti->tcpi_snd_wl2 = tp->snd_wl2 - tp->iss;
+	ti->tcpi_snd_max = tp->snd_max - tp->iss;
+
+	ti->tcpi_ts_recent = tp->ts_recent; /* XXX value from the wire */
+	ti->tcpi_ts_recent_age = (tcp_now - tp->ts_recent_age) * t;
+	ti->tcpi_rfbuf_cnt = tp->rfbuf_cnt;
+	ti->tcpi_rfbuf_ts = (tcp_now - tp->rfbuf_ts) * t;
+
+	ti->tcpi_so_rcv_sb_cc = so->so_rcv.sb_cc;
+	ti->tcpi_so_rcv_sb_hiwat = so->so_rcv.sb_hiwat;
+	ti->tcpi_so_rcv_sb_lowat = so->so_rcv.sb_lowat;
+	ti->tcpi_so_rcv_sb_wat = so->so_rcv.sb_wat;
+	ti->tcpi_so_snd_sb_cc = so->so_snd.sb_cc;
+	ti->tcpi_so_snd_sb_hiwat = so->so_snd.sb_hiwat;
+	ti->tcpi_so_snd_sb_lowat = so->so_snd.sb_lowat;
+	ti->tcpi_so_snd_sb_wat = so->so_snd.sb_wat;
+
+	return 0;
+}
+
 int
 tcp_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf *m)
@@ -541,23 +641,29 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		break;
 
 	case PRCO_GETOPT:
-		m->m_len = sizeof(int);
-
 		switch (optname) {
 		case TCP_NODELAY:
+			m->m_len = sizeof(int);
 			*mtod(m, int *) = tp->t_flags & TF_NODELAY;
 			break;
 		case TCP_NOPUSH:
+			m->m_len = sizeof(int);
 			*mtod(m, int *) = tp->t_flags & TF_NOPUSH;
 			break;
 		case TCP_MAXSEG:
+			m->m_len = sizeof(int);
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
 		case TCP_SACK_ENABLE:
+			m->m_len = sizeof(int);
 			*mtod(m, int *) = tp->sack_enable;
+			break;
+		case TCP_INFO:
+			error = tcp_fill_info(tp, so, m);
 			break;
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
+			m->m_len = sizeof(int);
 			*mtod(m, int *) = tp->t_flags & TF_SIGNATURE;
 			break;
 #endif

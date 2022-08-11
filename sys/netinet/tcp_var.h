@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.139 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.140 2022/08/11 09:13:21 claudio Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ struct tcpcb {
  * "Variance" is actually smoothed difference.
  */
 	uint32_t t_rcvtime;		/* time last segment received */
+	uint32_t t_rcvacktime;		/* time last ack received */
+	uint32_t t_sndtime;		/* time last segment sent */
+	uint32_t t_sndacktime;		/* time last ack sent */
 	uint32_t t_rtttime;		/* time we started measuring rtt */
 	tcp_seq	t_rtseq;		/* sequence number being timed */
 	short	t_srtt;			/* smoothed round-trip time */
@@ -182,7 +185,7 @@ struct tcpcb {
 	u_char	requested_s_scale;
 	u_int32_t ts_recent;		/* timestamp echo data */
 	u_int32_t ts_modulate;		/* modulation on timestamp */
-	u_int32_t ts_recent_age;		/* when last updated */
+	u_int32_t ts_recent_age;	/* when last updated */
 	tcp_seq	last_ack_sent;
 
 /* pointer for syn cache entries*/
@@ -197,6 +200,11 @@ struct tcpcb {
 	u_short	t_pmtud_ip_hl;		/* IP header length from ICMP payload */
 
 	int pf;
+
+/* maintain a few stats per connection: */
+	u_int	t_rcvoopack;		/* out-of-order packets received */
+	u_int	t_sndrexmitpack;	/* retransmit packets sent */
+	u_int	t_sndzerowin;		/* zero-window updates sent */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)

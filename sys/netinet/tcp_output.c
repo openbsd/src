@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.131 2021/11/25 13:46:02 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.132 2022/08/11 09:13:21 claudio Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -636,6 +636,7 @@ send:
 		else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
 			tcpstat_pkt(tcps_sndrexmitpack, tcps_sndrexmitbyte,
 			    len);
+			tp->t_sndrexmitpack++;
 		} else {
 			tcpstat_pkt(tcps_sndpack, tcps_sndbyte, len);
 		}
@@ -690,6 +691,7 @@ send:
 		 */
 		if (off + len == so->so_snd.sb_cc && !soissending(so))
 			flags |= TH_PUSH;
+		tp->t_sndtime = tcp_now;
 	} else {
 		if (tp->t_flags & TF_ACKNOW)
 			tcpstat_inc(tcps_sndacks);
@@ -821,6 +823,8 @@ send:
 	if (flags & TH_RST)
 		win = 0;
 	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
+	if (th->th_win == 0)
+		tp->t_sndzerowin++;
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
 		if (urp > IP_MAXPACKET)
@@ -1119,6 +1123,7 @@ out:
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
+	tp->t_sndacktime = tcp_now;
 	tp->t_flags &= ~TF_ACKNOW;
 	TCP_TIMER_DISARM(tp, TCPT_DELACK);
 	if (sendalot)
