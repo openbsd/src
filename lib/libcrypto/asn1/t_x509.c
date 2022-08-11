@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.39 2022/08/10 16:51:26 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.40 2022/08/11 10:36:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -470,9 +470,8 @@ int
 X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 {
 	char *s, *c, *b;
-	int ret = 0, l, i;
-
-	l = 80 - 2 - obase;
+	int i;
+	int ret = 0;
 
 	b = X509_NAME_oneline(name, NULL, 0);
 	if (b == NULL)
@@ -497,12 +496,10 @@ X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 				if (BIO_write(bp, ", ", 2) != 2)
 					goto err;
 			}
-			l--;
 		}
 		if (*s == '\0')
 			break;
 		s++;
-		l--;
 	}
 
 	ret = 1;
