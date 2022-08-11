@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2022/08/09 04:40:08 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2022/08/11 17:15:21 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -57,6 +57,9 @@ tb_get_timecount(struct timecounter *tc)
 void
 cpu_initclocks(void)
 {
+	tb_timecounter.tc_frequency = tb_freq;
+	tc_init(&tb_timecounter);
+
 	tick_increment = tb_freq / hz;
 
 	stathz = 100;
@@ -68,9 +71,6 @@ cpu_initclocks(void)
 	evcount_attach(&stat_count, "stat", NULL);
 
 	cpu_startclock();
-
-	tb_timecounter.tc_frequency = tb_freq;
-	tc_init(&tb_timecounter);
 }
 
 void
