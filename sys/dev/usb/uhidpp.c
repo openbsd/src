@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.26 2022/02/05 07:31:40 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.27 2022/08/11 07:32:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -199,12 +199,12 @@ struct uhidpp_device {
 #define UHIDPP_DEVICE_FEATURE_BATTERY		0x02
 
 	struct {
-		struct ksensor b_sens[UHIDPP_NSENSORS];
-		uint8_t b_feature_idx;
-		uint8_t b_level;
-		uint8_t b_status;
-		uint8_t b_nlevels;
-		uint8_t b_rechargeable;
+		struct ksensor sens[UHIDPP_NSENSORS];
+		uint8_t feature_idx;
+		uint8_t level;
+		uint8_t status;
+		uint8_t nlevels;
+		uint8_t rechargeable;
 	} d_battery;
 };
 
@@ -431,14 +431,14 @@ uhidpp_detach(struct device *self, int flags)
 
 	for (i = 0; i < UHIDPP_NDEVICES; i++) {
 		struct uhidpp_device *dev = &sc->sc_devices[i];
-		struct ksensor *sens = dev->d_battery.b_sens;
+		struct ksensor *sens = dev->d_battery.sens;
 
 		if (!dev->d_connected)
 			continue;
 
 		sensor_detach(&sc->sc_sensdev, &sens[0]);
 		sensor_detach(&sc->sc_sensdev, &sens[1]);
-		if (dev->d_battery.b_rechargeable)
+		if (dev->d_battery.rechargeable)
 			sensor_detach(&sc->sc_sensdev, &sens[2]);
 	}
 
@@ -593,7 +593,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 		error = hidpp20_root_get_feature(sc, dev->d_id,
 		    HIDPP20_FEAT_BATTERY_ID,
-		    &dev->d_battery.b_feature_idx, &feature_type);
+		    &dev->d_battery.feature_idx, &feature_type);
 		if (error) {
 			DPRINTF("%s: battery feature index failure: "
 			    "device_id=%d, error=%d\n",
@@ -602,8 +602,8 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		}
 
 		error = hidpp20_battery_get_capability(sc,
-		    dev->d_id, dev->d_battery.b_feature_idx,
-		    &dev->d_battery.b_nlevels, &dev->d_battery.b_rechargeable);
+		    dev->d_id, dev->d_battery.feature_idx,
+		    &dev->d_battery.nlevels, &dev->d_battery.rechargeable);
 		if (error) {
 			DPRINTF("%s: battery capability failure: device_id=%d, "
 			    "error=%d\n", __func__, dev->d_id, error);
@@ -615,20 +615,20 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 	dev->d_connected = 1;
 
-	sens = &dev->d_battery.b_sens[0];
+	sens = &dev->d_battery.sens[0];
 	strlcpy(sens->desc, "battery level", sizeof(sens->desc));
 	sens->type = SENSOR_PERCENT;
 	sens->flags = SENSOR_FUNKNOWN;
 	sensor_attach(&sc->sc_sensdev, sens);
 
-	sens = &dev->d_battery.b_sens[1];
+	sens = &dev->d_battery.sens[1];
 	strlcpy(sens->desc, "number of battery levels", sizeof(sens->desc));
 	sens->type = SENSOR_INTEGER;
-	sens->value = dev->d_battery.b_nlevels;
+	sens->value = dev->d_battery.nlevels;
 	sensor_attach(&sc->sc_sensdev, sens);
 
-	if (dev->d_battery.b_rechargeable) {
-		sens = &dev->d_battery.b_sens[2];
+	if (dev->d_battery.rechargeable) {
+		sens = &dev->d_battery.sens[2];
 		strlcpy(sens->desc, "charger", sizeof(sens->desc));
 		sens->type = SENSOR_INDICATOR;
 		sens->value = 0;
@@ -667,8 +667,8 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		int charging, error;
 
 		error = hidpp20_battery_get_level_status(sc, dev->d_id,
-		    dev->d_battery.b_feature_idx,
-		    &dev->d_battery.b_level, &dev->d_battery.b_status);
+		    dev->d_battery.feature_idx,
+		    &dev->d_battery.level, &dev->d_battery.status);
 		if (error) {
 			DPRINTF("%s: battery status failure: device_id=%d, "
 			    "error=%d\n",
@@ -677,11 +677,11 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		}
 
 		charging = hidpp20_battery_status_is_charging(
-		    dev->d_battery.b_status);
+		    dev->d_battery.status);
 
-		dev->d_battery.b_sens[0].value = dev->d_battery.b_level * 1000;
-		dev->d_battery.b_sens[0].flags &= ~SENSOR_FUNKNOWN;
-		if (dev->d_battery.b_nlevels < 10) {
+		dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
+		dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
+		if (dev->d_battery.nlevels < 10) {
 			/*
 			 * According to the HID++ 2.0 specification, less than
 			 * 10 levels should be mapped to the following 4 levels:
@@ -696,24 +696,24 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 			 * which the level cannot be trusted.
 			 */
 			if (charging)
-				dev->d_battery.b_sens[0].status = SENSOR_S_UNKNOWN;
-			else if (dev->d_battery.b_level <= 10)
-				dev->d_battery.b_sens[0].status = SENSOR_S_CRIT;
-			else if (dev->d_battery.b_level <= 30)
-				dev->d_battery.b_sens[0].status = SENSOR_S_WARN;
+				dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
+			else if (dev->d_battery.level <= 10)
+				dev->d_battery.sens[0].status = SENSOR_S_CRIT;
+			else if (dev->d_battery.level <= 30)
+				dev->d_battery.sens[0].status = SENSOR_S_WARN;
 			else
-				dev->d_battery.b_sens[0].status = SENSOR_S_OK;
+				dev->d_battery.sens[0].status = SENSOR_S_OK;
 		} else {
 			/*
 			 * XXX the device supports battery mileage. The current
 			 * level must be checked against resp.fap.params[3]
 			 * given by hidpp20_battery_get_capability().
 			 */
-			dev->d_battery.b_sens[0].status = SENSOR_S_UNKNOWN;
+			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
 		}
 
-		if (dev->d_battery.b_rechargeable)
-			dev->d_battery.b_sens[2].value = charging;
+		if (dev->d_battery.rechargeable)
+			dev->d_battery.sens[2].value = charging;
 	}
 }
 
