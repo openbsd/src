@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.94 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.95 2022/08/12 16:38:09 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -274,6 +274,10 @@ pflow_clone_destroy(struct ifnet *ifp)
 
 	error = 0;
 
+	NET_LOCK();
+	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
+	NET_UNLOCK();
+
 	if (timeout_initialized(&sc->sc_tmo))
 		timeout_del(&sc->sc_tmo);
 	if (timeout_initialized(&sc->sc_tmo6))
@@ -282,6 +286,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 		timeout_del(&sc->sc_tmo_tmpl);
 	pflow_flush(sc);
 	task_del(net_tq(ifp->if_index), &sc->sc_outputtask);
+	taskq_barrier(net_tq(ifp->if_index));
 	mq_purge(&sc->sc_outputqueue);
 	m_freem(sc->send_nam);
 	if (sc->so != NULL) {
@@ -293,9 +298,6 @@ pflow_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_flowsrc != NULL)
 		free(sc->sc_flowsrc, M_DEVBUF, sc->sc_flowsrc->sa_len);
 	if_detach(ifp);
-	NET_LOCK();
-	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
-	NET_UNLOCK();
 	free(sc, M_DEVBUF, sizeof(*sc));
 	return (error);
 }
