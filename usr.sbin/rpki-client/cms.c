@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.20 2022/05/31 18:41:43 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.21 2022/08/12 13:19:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -222,7 +222,11 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		    "want 1 signer, have %d", fn, sk_X509_num(certs));
 		goto out;
 	}
-	*xp = X509_dup(sk_X509_value(certs, 0));
+	*xp = sk_X509_value(certs, 0);
+	if (!X509_up_ref(*xp)) {
+		*xp = NULL;
+		goto out;
+	}
 
 	/* Cache X509v3 extensions, see X509_check_ca(3). */
 	if (X509_check_purpose(*xp, -1, -1) <= 0) {
