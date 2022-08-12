@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.251 2022/08/12 00:32:59 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.252 2022/08/12 20:05:49 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -743,11 +743,16 @@ spoofmbr(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 		}
 
 		for (i = 0; i < NDOSPART; i++) {
+			if (letoh32(dp[i].dp_start) > DL_GETDSIZE(lp))
+				continue;
+			if (letoh32(dp[i].dp_size) > DL_GETDSIZE(lp))
+				continue;
+			if (letoh32(dp[i].dp_size) == 0)
+				continue;
+
 			start = sector + letoh32(dp[i].dp_start);
 			end = start + letoh32(dp[i].dp_size);
 
-			if (start >= end || end > DL_GETDSIZE(lp))
-				continue;
 			parts++;
 			if (obsdfound == 0) {
 				labeloff = partoff + DOS_LABELSECTOR;
