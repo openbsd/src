@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.166 2022/05/15 12:49:55 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.167 2022/08/12 10:38:37 landry Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: May 15 2022 $
+.Dd $Mdocdate: August 12 2022 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -203,7 +203,7 @@ supports
 that is, a stem separated from flavors with a double dash.
 For instance, the previous ambiguity could be resolved by using
 .Sq Nm Ar vim--no_x11
-(matches only the gtk3 flavor)
+(matches only the no_x11 flavor)
 or
 .Sq Nm Ar vim--gtk3
 (matches only the gtk3 flavor).
