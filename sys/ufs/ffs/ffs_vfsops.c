@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.192 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.193 2022/08/12 14:30:53 visa Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1159,6 +1159,7 @@ ffs_sync_vnode(struct vnode *vp, void *arg)
 	struct ffs_sync_args *fsa = arg;
 	struct inode *ip;
 	int error, nlink0 = 0;
+	int s, skip = 0;
 
 	if (vp->v_type == VNON)
 		return (0);
@@ -1177,11 +1178,16 @@ ffs_sync_vnode(struct vnode *vp, void *arg)
 	if (ip->i_effnlink == 0)
 		nlink0 = 1;
 
+	s = splbio();
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
 	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
-		goto end;
+		skip = 1;
 	}
+	splx(s);
+
+	if (skip)
+		goto end;
 
 	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
 		fsa->inflight = MIN(fsa->inflight+1, 65536);

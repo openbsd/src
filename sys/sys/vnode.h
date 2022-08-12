@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.166 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.167 2022/08/12 14:30:53 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -104,18 +104,17 @@ struct vnode {
 	u_int   v_writecount;		/* reference count of writers */
 	u_int	v_lockcount;		/* [V] # threads waiting on lock */
 
-	/* Flags that can be read/written in interrupts */
-	u_int   v_bioflag;
-	u_int   v_holdcnt;			/* buffer references */
+	u_int   v_bioflag;		/* [B] flags accessed in interrupts */
+	u_int   v_holdcnt;		/* [B] buffer references */
 	u_int   v_id;				/* capability identifier */
 	struct	mount *v_mount;			/* ptr to vfs we are in */
-	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
+	TAILQ_ENTRY(vnode) v_freelist;	/* [B] vnode freelist */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
-	struct	buf_rb_bufs v_bufs_tree;	/* lookup of all bufs */
-	struct	buflists v_cleanblkhd;		/* clean blocklist head */
-	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
+	struct	buf_rb_bufs v_bufs_tree;/* [B] lookup of all bufs */
+	struct	buflists v_cleanblkhd;	/* [B] clean blocklist head */
+	struct	buflists v_dirtyblkhd;	/* [B] dirty blocklist head */
 	u_int   v_numoutput;		/* [B] num of writes in progress */
-	LIST_ENTRY(vnode) v_synclist;		/* vnode with dirty buffers */
+	LIST_ENTRY(vnode) v_synclist;	/* [B] vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */

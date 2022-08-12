@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.126 2021/01/02 02:41:42 cheloha Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.127 2022/08/12 14:30:53 visa Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -793,7 +793,8 @@ int
 nfs_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred, struct proc *p)
 {
 	struct vnode *vp;
-	int error, allerror = 0;
+	int allerror = 0;
+	int empty, error, s;
 
 	/*
 	 * Don't traverse the vnode list if we want to skip all of them.
@@ -812,7 +813,12 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || LIST_EMPTY(&vp->v_dirtyblkhd))
+		if (VOP_ISLOCKED(vp))
+			continue;
+		s = splbio();
+		empty = LIST_EMPTY(&vp->v_dirtyblkhd);
+		splx(s);
+		if (empty)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;

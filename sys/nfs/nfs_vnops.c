@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.189 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.190 2022/08/12 14:30:53 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -2849,7 +2849,7 @@ nfs_flush(struct vnode *vp, struct ucred *cred, int waitfor, struct proc *p,
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	uint64_t slptimeo = INFSLP;
 	int s, error = 0, slpflag = 0, retv, bvecpos;
-	int passone = 1;
+	int dirty, passone = 1;
 	u_quad_t off = (u_quad_t)-1, endoff = 0, toff;
 #ifndef NFS_COMMITBVECSIZ
 #define NFS_COMMITBVECSIZ	20
@@ -2982,8 +2982,8 @@ loop:
  loop2:
 		s = splbio();
 		error = vwaitforio(vp, slpflag, "nfs_fsync", slptimeo);
-		splx(s);
 		if (error) {
+			splx(s);
 			if (nfs_sigintr(nmp, NULL, p))
 				return (EINTR);
 			if (slpflag == PCATCH) {
@@ -2992,8 +2992,9 @@ loop:
 			}
 			goto loop2;
 		}
-
-		if (!LIST_EMPTY(&vp->v_dirtyblkhd) && commit) {
+		dirty = (!LIST_EMPTY(&vp->v_dirtyblkhd) && commit);
+		splx(s);
+		if (dirty) {
 #if 0
 			vprint("nfs_fsync: dirty", vp);
 #endif

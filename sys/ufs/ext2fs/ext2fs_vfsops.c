@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.116 2021/10/04 08:11:02 claudio Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.117 2022/08/12 14:30:53 visa Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -713,6 +713,7 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 	struct ext2fs_sync_args *esa = args;
 	struct inode *ip;
 	int error, nlink0 = 0;
+	int s, skip = 0;
 
 	if (vp->v_type == VNON)
 		return (0);
@@ -722,10 +723,15 @@ ext2fs_sync_vnode(struct vnode *vp, void *args)
 	if (ip->i_e2fs_nlink == 0)
 		nlink0 = 1;
 
+	s = splbio();
 	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0 &&
 	    LIST_EMPTY(&vp->v_dirtyblkhd)) {
-		goto end;
+		skip = 1;
 	}
+	splx(s);
+
+	if (skip)
+		goto end;
 
 	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT)) {
 		esa->inflight = MIN(esa->inflight+1, 65536);

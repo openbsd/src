@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.95 2021/11/13 18:18:59 kn Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.96 2022/08/12 14:30:52 visa Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -640,16 +640,22 @@ int
 msdosfs_sync_vnode(struct vnode *vp, void *arg)
 {
 	struct msdosfs_sync_arg *msa = arg;
-	int error;
 	struct denode *dep;
+	int error;
+	int s, skip = 0;
 
 	dep = VTODE(vp);
+	s = splbio();
 	if (vp->v_type == VNON ||
 	    ((dep->de_flag & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
 	      && LIST_EMPTY(&vp->v_dirtyblkhd)) ||
 	    msa->waitfor == MNT_LAZY) {
-		return (0);
+		skip = 1;
 	}
+	splx(s);
+
+	if (skip)
+		return (0);
 
 	if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT))
 		return (0);
