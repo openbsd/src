@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.29 2022/07/15 17:57:26 kettenis Exp $ */
+/* $OpenBSD: lunafb.c,v 1.30 2022/08/12 13:36:19 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -301,7 +301,8 @@ omfbmmap(void *v, off_t offset, int prot)
 	if (offset >= 0 && offset < OMFB_SIZE)
 		cookie = (paddr_t)(trunc_page(dc->dc_videobase) + offset);
 #else
-	if (offset >= 0 && offset < dc->dc_rowbytes * dc->dc_ht * hwplanebits)
+	if (offset >= 0 &&
+	    offset < dc->dc_rowbytes * dc->dc_ht * hwplanebits + PAGE_SIZE)
 		cookie = (paddr_t)(trunc_page(OMFB_FB_RADDR) + offset);
 #endif
 	return cookie;
