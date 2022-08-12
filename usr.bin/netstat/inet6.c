@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.55 2021/01/26 18:22:35 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.56 2022/08/12 14:49:15 bluhm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -481,6 +481,8 @@ ip6_stats(char *name)
 
 	p1(ip6s_forward_cachehit, "\t%llu forward cache hit\n");
 	p1(ip6s_forward_cachemiss, "\t%llu forward cache miss\n");
+	p(ip6s_idropped,
+	    "\t%llu input packet%s dropped due to no bufs, etc.\n");
 #undef p
 #undef p1
 }

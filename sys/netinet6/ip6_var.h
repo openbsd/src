@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.93 2022/06/29 22:45:24 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.94 2022/08/12 14:49:15 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ struct	ip6stat {
 	u_int64_t ip6s_redirectsent;	/* packets forwarded on same net */
 	u_int64_t ip6s_delivered;	/* datagrams delivered to upper level*/
 	u_int64_t ip6s_localout;	/* total ip packets generated here */
-	u_int64_t ip6s_odropped;	/* lost packets due to nobufs, etc. */
+	u_int64_t ip6s_odropped;	/* lost output due to nobufs, etc. */
 	u_int64_t ip6s_reassembled;	/* total packets reassembled ok */
 	u_int64_t ip6s_fragmented;	/* datagrams successfully fragmented */
 	u_int64_t ip6s_ofragments;	/* output fragments created */
@@ -198,7 +198,8 @@ struct	ip6stat {
 
 	u_int64_t ip6s_forward_cachehit;
 	u_int64_t ip6s_forward_cachemiss;
-	u_int64_t ip6s_wrongif;
+	u_int64_t ip6s_wrongif;		/* packet received on wrong interface */
+	u_int64_t ip6s_idropped;	/* lost input due to nobufs, etc. */
 };
 
 #ifdef _KERNEL
@@ -245,6 +246,8 @@ enum ip6stat_counters {
 	ip6s_forward_cachehit = ip6s_sources_deprecated + 16,
 	ip6s_forward_cachemiss,
 	ip6s_wrongif,
+	ip6s_idropped,
+
 	ip6s_ncounters,
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.377 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.378 2022/08/12 14:49:15 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1372,8 +1372,10 @@ save_rte(struct mbuf *m, u_char *option, struct in_addr dst)
 		return;
 
 	mtag = m_tag_get(PACKET_TAG_SRCROUTE, sizeof(*isr), M_NOWAIT);
-	if (mtag == NULL)
+	if (mtag == NULL) {
+		ipstat_inc(ips_idropped);
 		return;
+	}
 	isr = (struct ip_srcrt *)(mtag + 1);
 
 	memcpy(isr->isr_hdr, option, olen);
@@ -1406,8 +1408,10 @@ ip_srcroute(struct mbuf *m0)
 	if (isr->isr_nhops == 0)
 		return (NULL);
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
-	if (m == NULL)
+	if (m == NULL) {
+		ipstat_inc(ips_idropped);
 		return (NULL);
+	}
 
 #define OPTSIZ	(sizeof(isr->isr_nop) + sizeof(isr->isr_hdr))
 

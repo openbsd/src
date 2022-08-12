@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.173 2021/12/05 22:36:19 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.174 2022/08/12 14:49:15 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -612,6 +612,7 @@ ip_stats(char *name)
 	p(ips_outswcsum, "\t%lu output datagram%s software-checksummed\n");
 	p(ips_notmember, "\t%lu multicast packet%s which we don't join\n");
 	p(ips_wrongif, "\t%lu packet%s received on wrong interface\n");
+	p(ips_idropped, "\t%lu input packet%s dropped due to no bufs, etc.\n");
 #undef p
 #undef p1
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.95 2022/08/04 18:05:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.96 2022/08/12 14:49:15 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct	ipstat {
 	u_long	ips_noproto;		/* unknown or unsupported protocol */
 	u_long	ips_delivered;		/* datagrams delivered to upper level*/
 	u_long	ips_localout;		/* total ip packets generated here */
-	u_long	ips_odropped;		/* lost packets due to nobufs, etc. */
+	u_long	ips_odropped;		/* lost output due to nobufs, etc. */
 	u_long	ips_reassembled;	/* total packets reassembled ok */
 	u_long	ips_fragmented;		/* datagrams successfully fragmented */
 	u_long	ips_ofragments;		/* output fragments created */
@@ -88,6 +88,7 @@ struct	ipstat {
 	u_long	ips_outswcsum;		/* software checksummed on output */
 	u_long	ips_notmember;		/* multicasts for unregistered groups */
 	u_long	ips_wrongif;		/* packet received on wrong interface */
+	u_long	ips_idropped;		/* lost input due to nobufs, etc. */
 };
 
 struct ipoption {
@@ -115,7 +116,7 @@ enum ipstat_counters {
 	ips_noproto,		/* unknown or unsupported protocol */
 	ips_delivered,		/* datagrams delivered to upper level*/
 	ips_localout,		/* total ip packets generated here */
-	ips_odropped,		/* lost packets due to nobufs, etc. */
+	ips_odropped,		/* lost output packets due to nobufs, etc. */
 	ips_reassembled,	/* total packets reassembled ok */
 	ips_fragmented,		/* datagrams successfully fragmented */
 	ips_ofragments,		/* output fragments created */
@@ -133,6 +134,7 @@ enum ipstat_counters {
 	ips_outswcsum,		/* software checksummed on output */
 	ips_notmember,		/* multicasts for unregistered groups */
 	ips_wrongif,		/* packet received on wrong interface */
+	ips_idropped,		/* lost input packets due to nobufs, etc. */
 
 	ips_ncounters
 };
