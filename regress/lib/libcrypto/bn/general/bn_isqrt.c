@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.4 2022/07/28 20:06:01 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.5 2022/08/12 16:12:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -158,8 +158,8 @@ validate_tables(void)
 
 /*
  * Choose a random number n of bit length between LOWER_BITS and UPPER_BITS and
- * check that n == isqrt(n^2). Random numbers n^2 <= test < (n + 1)^2 are
- * checked to have isqrt(test) == n.
+ * check that n == isqrt(n^2). Random numbers n^2 <= testcase < (n + 1)^2 are
+ * checked to have isqrt(testcase) == n.
  */
 static int
 isqrt_test(void)
