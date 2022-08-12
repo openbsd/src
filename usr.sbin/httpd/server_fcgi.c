@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.91 2022/08/11 14:25:22 op Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.92 2022/08/12 06:41:41 op Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -486,6 +486,7 @@ void
 server_fcgi_error(struct bufferevent *bev, short error, void *arg)
 {
 	struct client		*clt = arg;
+	struct http_descriptor	*desc = clt->clt_descreq;
 
 	if ((error & EVBUFFER_EOF) && !clt->clt_fcgi.headersdone) {
 		server_abort_http(clt, 500, "malformed or no headers");
@@ -493,7 +494,8 @@ server_fcgi_error(struct bufferevent *bev, short error, void *arg)
 	}
 
 	/* send the end marker if not already */
-	if (clt->clt_fcgi.chunked && !clt->clt_fcgi.end++)
+	if (desc->http_method != HTTP_METHOD_HEAD && clt->clt_fcgi.chunked &&
+	    !clt->clt_fcgi.end++)
 		server_bufferevent_print(clt, "0\r\n\r\n");
 
 	server_file_error(bev, error, arg);
