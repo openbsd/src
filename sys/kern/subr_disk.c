@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.250 2022/08/11 20:22:27 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.251 2022/08/12 00:32:59 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -515,7 +515,8 @@ gpt_get_parts(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	partnum = letoh32(gh->gh_part_num);
 	partsize = letoh32(gh->gh_part_size);
 
-	sectors = (partnum * partsize + lp->d_secsize - 1) / lp->d_secsize;
+	sectors = ((uint64_t)partnum * partsize + lp->d_secsize - 1) /
+	    lp->d_secsize;
 
 	ngp = mallocarray(sectors, lp->d_secsize, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ngp == NULL) {
