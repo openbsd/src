@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.95 2022/08/12 16:38:09 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.96 2022/08/12 16:38:50 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -594,10 +594,7 @@ pflow_setmtu(struct pflow_softc *sc, int mtu_req)
 {
 	int	mtu;
 
-	if (sc->sc_pflow_ifp && sc->sc_pflow_ifp->if_mtu < mtu_req)
-		mtu = sc->sc_pflow_ifp->if_mtu;
-	else
-		mtu = mtu_req;
+	mtu = mtu_req;
 
 	switch (sc->sc_version) {
 	case PFLOW_PROTO_5:

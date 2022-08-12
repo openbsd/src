@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.17 2017/05/31 13:05:43 visa Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.18 2022/08/12 16:38:50 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -171,7 +171,6 @@ struct pflow_ipfix_flow6 {
 
 struct pflow_softc {
 	struct ifnet		 sc_if;
-	struct ifnet		*sc_pflow_ifp;
 
 	unsigned int		 sc_count;
 	unsigned int		 sc_count4;
@@ -190,7 +189,6 @@ struct pflow_softc {
 	struct mbuf		*send_nam;
 	struct sockaddr		*sc_flowsrc;
 	struct sockaddr		*sc_flowdst;
-	u_char			 sc_send_templates;
 	struct pflow_ipfix_tmpl	 sc_tmpl_ipfix;
 	u_int8_t		 sc_version;
 	struct mbuf		*sc_mbuf;	/* current cumulative mbuf */
