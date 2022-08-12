@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.157 2022/07/20 05:56:34 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.158 2022/08/12 17:19:52 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -272,6 +272,7 @@ trap(int type, struct trapframe *frame)
 		KERNEL_UNLOCK();
 #endif
 		/* pass to user debugger */
+		sv.sival_int = va;
 		trapsignal(p, SIGTRAP, type & ~T_USER, code, sv);
 		}
 		break;
@@ -282,6 +283,7 @@ trap(int type, struct trapframe *frame)
 		ss_clear_breakpoints(p);
 		KERNEL_UNLOCK();
 		/* pass to user debugger */
+		sv.sival_int = va;
 		trapsignal(p, SIGTRAP, type & ~T_USER, TRAP_TRACE, sv);
 		break;
 #endif

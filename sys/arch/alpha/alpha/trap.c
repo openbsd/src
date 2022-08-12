@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.101 2022/08/10 10:41:35 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.102 2022/08/12 17:19:52 miod Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -224,6 +224,7 @@ trap(a0, a1, a2, entry, framep)
 	p = curproc;
 	ucode = 0;
 	v = 0;
+	typ = SI_NOINFO;
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
 	if (user) {
