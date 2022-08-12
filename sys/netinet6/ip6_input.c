@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.250 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.251 2022/08/12 12:08:54 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -695,21 +695,23 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 	do {
 		switch (proto) {
 		case IPPROTO_ROUTING:
-			*offp = off;
 			if (rh_cnt++) {
 				/* more than one rh header present */
+				*offp = off;
 				return (1);
 			}
 
 			if (off + sizeof(rthdr) > lim) {
 				/* packet to short to make sense */
+				*offp = off;
 				return (1);
 			}
 
 			m_copydata(m, off, sizeof(rthdr), &rthdr);
 
 			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
-				*offp += offsetof(struct ip6_rthdr, ip6r_type);
+				*offp = off +
+				    offsetof(struct ip6_rthdr, ip6r_type);
 				return (1);
 			}
 
