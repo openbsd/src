@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.270 2022/08/08 23:00:51 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.271 2022/08/12 17:04:17 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -793,30 +793,31 @@ int
 ip6_fragment(struct mbuf *m0, struct mbuf_list *fml, int hlen,
     u_char nextproto, u_long mtu)
 {
-	struct mbuf	*m, *m_frgpart;
-	struct ip6_hdr	*mhip6;
-	struct ip6_frag	*ip6f;
-	u_int32_t	 id;
-	int		 tlen, len, off;
-	int		 error;
+	struct mbuf *m;
+	struct ip6_hdr *ip6;
+	u_int32_t id;
+	int tlen, len, off;
+	int error;
 
 	ml_init(fml);
 
+	ip6 = mtod(m0, struct ip6_hdr *);
 	tlen = m0->m_pkthdr.len;
 	len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
 	if (len < 8) {
 		error = EMSGSIZE;
 		goto bad;
 	}
-
 	id = htonl(ip6_randomid());
 
 	/*
-	 * Loop through length of segment after first fragment,
+	 * Loop through length of segment,
 	 * make new header and copy data of each part and link onto chain.
 	 */
 	for (off = hlen; off < tlen; off += len) {
 		struct mbuf *mlast;
+		struct ip6_hdr *mhip6;
+		struct ip6_frag *ip6f;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
@@ -824,29 +825,33 @@ ip6_fragment(struct mbuf *m0, struct mbuf_list *fml, int hlen,
 			goto bad;
 		}
 		ml_enqueue(fml, m);
+
 		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
 			goto bad;
 		m->m_data += max_linkhdr;
 		mhip6 = mtod(m, struct ip6_hdr *);
-		*mhip6 = *mtod(m0, struct ip6_hdr *);
-		m->m_len = sizeof(*mhip6);
+		*mhip6 = *ip6;
+		m->m_len = sizeof(struct ip6_hdr);
+
 		if ((error = ip6_insertfraghdr(m0, m, hlen, &ip6f)) != 0)
 			goto bad;
-		ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
+		ip6f->ip6f_offlg = htons((off - hlen) & ~7);
 		if (off + len >= tlen)
 			len = tlen - off;
 		else
 			ip6f->ip6f_offlg |= IP6F_MORE_FRAG;
-		mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
-		    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
-		if ((m_frgpart = m_copym(m0, off, len, M_DONTWAIT)) == NULL) {
+
+		m->m_pkthdr.len = hlen + sizeof(struct ip6_frag) + len;
+		mhip6->ip6_plen = htons(m->m_pkthdr.len -
+		    sizeof(struct ip6_hdr));
+		for (mlast = m; mlast->m_next; mlast = mlast->m_next)
+			;
+		mlast->m_next = m_copym(m0, off, len, M_DONTWAIT);
+		if (mlast->m_next == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
-		for (mlast = m; mlast->m_next; mlast = mlast->m_next)
-			;
-		mlast->m_next = m_frgpart;
-		m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
+
 		ip6f->ip6f_reserved = 0;
 		ip6f->ip6f_ident = id;
 		ip6f->ip6f_nxt = nextproto;

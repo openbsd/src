@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.381 2022/05/25 19:48:46 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.382 2022/08/12 17:04:16 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -677,73 +677,78 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 #endif /* IPSEC */
 
 int
-ip_fragment(struct mbuf *m, struct mbuf_list *fml, struct ifnet *ifp,
+ip_fragment(struct mbuf *m0, struct mbuf_list *fml, struct ifnet *ifp,
     u_long mtu)
 {
-	struct ip *ip, *mhip;
-	struct mbuf *m0;
-	int len, hlen, off;
-	int mhlen, firstlen;
+	struct mbuf *m;
+	struct ip *ip;
+	int firstlen, hlen, tlen, len, off;
 	int error;
 
 	ml_init(fml);
-	ml_enqueue(fml, m);
+	ml_enqueue(fml, m0);
 
-	ip = mtod(m, struct ip *);
+	ip = mtod(m0, struct ip *);
 	hlen = ip->ip_hl << 2;
+	tlen = m0->m_pkthdr.len;
 	len = (mtu - hlen) &~ 7;
 	if (len < 8) {
 		error = EMSGSIZE;
 		goto bad;
 	}
+	firstlen = len;
 
 	/*
 	 * If we are doing fragmentation, we can't defer TCP/UDP
 	 * checksumming; compute the checksum and clear the flag.
 	 */
-	in_proto_cksum_out(m, NULL);
-	firstlen = len;
+	in_proto_cksum_out(m0, NULL);
 
 	/*
 	 * Loop through length of segment after first fragment,
 	 * make new header and copy data of each part and link onto chain.
 	 */
-	m0 = m;
-	mhlen = sizeof (struct ip);
-	for (off = hlen + len; off < ntohs(ip->ip_len); off += len) {
+	for (off = hlen + firstlen; off < tlen; off += len) {
+		struct ip *mhip;
+		int mhlen;
+
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
 		ml_enqueue(fml, m);
+
 		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
 			goto bad;
 		m->m_data += max_linkhdr;
 		mhip = mtod(m, struct ip *);
 		*mhip = *ip;
-		if (hlen > sizeof (struct ip)) {
-			mhlen = ip_optcopy(ip, mhip) + sizeof (struct ip);
+		if (hlen > sizeof(struct ip)) {
+			mhlen = ip_optcopy(ip, mhip) + sizeof(struct ip);
 			mhip->ip_hl = mhlen >> 2;
-		}
+		} else
+			mhlen = sizeof(struct ip);
 		m->m_len = mhlen;
+
 		mhip->ip_off = ((off - hlen) >> 3) +
 		    (ntohs(ip->ip_off) & ~IP_MF);
 		if (ip->ip_off & htons(IP_MF))
 			mhip->ip_off |= IP_MF;
-		if (off + len >= ntohs(ip->ip_len))
-			len = ntohs(ip->ip_len) - off;
+		if (off + len >= tlen)
+			len = tlen - off;
 		else
 			mhip->ip_off |= IP_MF;
-		mhip->ip_len = htons((u_int16_t)(len + mhlen));
+		mhip->ip_off = htons(mhip->ip_off);
+
+		m->m_pkthdr.len = mhlen + len;
+		mhip->ip_len = htons(m->m_pkthdr.len);
 		m->m_next = m_copym(m0, off, len, M_NOWAIT);
 		if (m->m_next == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
-		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.ph_ifidx = 0;
-		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
+
 		mhip->ip_sum = 0;
 		if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
@@ -752,15 +757,16 @@ ip_fragment(struct mbuf *m, struct mbuf_list *fml, struct ifnet *ifp,
 			mhip->ip_sum = in_cksum(m, mhlen);
 		}
 	}
+
 	/*
 	 * Update first fragment by trimming what's been copied out
 	 * and updating header, then send each fragment (in order).
 	 */
 	m = m0;
-	m_adj(m, hlen + firstlen - ntohs(ip->ip_len));
-	m->m_pkthdr.len = hlen + firstlen;
-	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
+	m_adj(m, hlen + firstlen - tlen);
 	ip->ip_off |= htons(IP_MF);
+	ip->ip_len = htons(m->m_pkthdr.len);
+
 	ip->ip_sum = 0;
 	if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
