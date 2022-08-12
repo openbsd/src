@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.22 2019/11/07 14:44:52 mpi Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.23 2022/08/12 08:34:43 jsg Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
@@ -1308,7 +1308,7 @@ unitDasm(i, ofs, w)
 	OFS ofs;
 	int w;
 {
-	db_printf(unitDCond(Cond4(w)));
+	db_printf("%s", unitDCond(Cond4(w)));
 	if (Match("dcor") || Match("idcor"))
 		db_printf("\t%%r%d,%%r%d",Rsb(w),Rtc(w));
 	else
@@ -1768,11 +1768,11 @@ cbDasm(i, ofs, w)
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movb"))
-		db_printf(edDCond(Cond(w)));
+		db_printf("%s", edDCond(Cond(w)));
 	else if (Match("addb"))
-		db_printf(addDCond(Cond(w) << 1));
+		db_printf("%s", addDCond(Cond(w) << 1));
 	else
-		db_printf(subDCond(Cond(w) << 1));
+		db_printf("%s", subDCond(Cond(w) << 1));
 	db_printf("%s\t%%r%d,%%r%d,", Nu(w)?",n":"", Rsa(w), Rsb(w));
 	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
@@ -1788,11 +1788,11 @@ cbiDasm(i, ofs, w)
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 
 	if (Match("movib"))
-		db_printf(edDCond(Cond(w)));
+		db_printf("%s", edDCond(Cond(w)));
 	else if (Match("addib"))
-		db_printf(addDCond(Cond(w) << 1));
+		db_printf("%s", addDCond(Cond(w) << 1));
 	else
-		db_printf(subDCond(Cond(w) << 1));
+		db_printf("%s", subDCond(Cond(w) << 1));
 	db_printf("%s\t%d,%%r%d,", Nu(w)? ",n":"", Ima5(w), Rsb(w));
 	db_printsym((vaddr_t)tgtofs, DB_STGY_ANY, db_printf);
 	return (1);
@@ -1808,7 +1808,7 @@ bbDasm(i, ofs, w)
 	register OFS tgtofs = ofs + 8 + Cbdisp(w);
 	register const char *p;
 
-	db_printf(edDCond(Cond(w)));
+	db_printf("%s", edDCond(Cond(w)));
 	p = Nu(w)? ",n":"";
 	if (Match("bvb"))
 		db_printf("%s\t%%r%d,", p, Rta(w));
@@ -1850,7 +1850,7 @@ scDasm(i, ofs, w)
 			db_printf("mtctl\t%%r%d,%%cr%d",Rsa(w),Rtb(w));
 		return (1);
 	}
-	db_printf(i->mnem);
+	db_printf("%s", i->mnem);
 	if (Match("ssm") || Match("rsm"))
 		db_printf("\t%d,%%r%d",Ima5A(w),Rtc(w));
 	else if (Match("mtsm")) db_printf("\t%%r%d",Rsa(w));
@@ -2259,7 +2259,7 @@ diagDasm(i, ofs, w)
 	else if (0x0d0 == BitfR(w,19,8,_b198))	/* mfcpu */
 		db_printf("mfcpu\t%%dr%d,%%r%d", Rsb(w), Rta(w));
 	else {
-		db_printf(i->mnem);
+		db_printf("%s", i->mnem);
 		if (Match("diag"))
 			db_printf("\t0x%X",w & 0x03ffffff);
 		else
@@ -2343,7 +2343,7 @@ db_disasm(vaddr_t loc, int flag)
 				    i->dasmfcn != ariDasm &&
 				    i->dasmfcn != scDasm &&
 				    i->dasmfcn != ldDasm)
-					db_printf(i->mnem);
+					db_printf("%s", i->mnem);
 				if (i->dasmfcn)
 					ok = (*i->dasmfcn)(i, ofs, instruct);
 			}
