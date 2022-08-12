@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.38 2021/06/10 18:05:20 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.39 2022/08/12 20:17:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -580,9 +580,11 @@ efiopen(struct open_file *f, ...)
 			return EADAPT;
 		}
 
-		if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
+		if ((bv->sbv_level == 'C' || bv->sbv_level == 0x1C) &&
+		    bv->sbv_keys == NULL) {
 			if (sr_crypto_unlock_volume(bv) != 0)
 				return EPERM;
+		}
 
 		if (bv->sbv_diskinfo == NULL) {
 			dip = alloc(sizeof(struct diskinfo));

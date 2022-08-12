@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.4 2018/08/10 16:41:35 jsing Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.5 2022/08/12 20:17:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -66,7 +66,7 @@ sr_clear_keys(void)
 	struct sr_boot_keydisk *kd;
 
 	SLIST_FOREACH(bv, &sr_volumes, sbv_link) {
-		if (bv->sbv_level != 'C')
+		if (bv->sbv_level != 'C' && bv->sbv_level != 0x1C)
 			continue;
 		if (bv->sbv_keys != NULL) {
 			explicit_bzero(bv->sbv_keys, SR_CRYPTO_KEYBLOCK_BYTES);
