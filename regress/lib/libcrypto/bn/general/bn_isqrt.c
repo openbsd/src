@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.5 2022/08/12 16:12:39 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.6 2022/08/12 16:13:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -76,7 +76,7 @@ check_tables(int print)
 	for (i = 0; i < sizeof(fill) / sizeof(fill[0]); i++) {
 		memset(q, 0, sizeof(q));
 
-		for (j = 0; j <= fill[i]; j++)
+		for (j = 0; j < fill[i]; j++)
 			q[(j * j) % fill[i]] = 1;
 
 		if ((table = get_table(fill[i])) == NULL) {
