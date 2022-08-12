@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.121 2022/08/02 20:15:28 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.122 2022/08/12 08:31:06 jsg Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -156,7 +156,7 @@ panictrap(int type, struct trapframe *frame)
 	if (panicing++ == 0)
 		printtrap(type, frame);
 	if ((u_int)type < trap_types)
-		panic(trap_type[type]);
+		panic("%s", trap_type[type]);
 	else
 		panic("trap %d", type);
 	/*NOTREACHED*/
