@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.21 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: renice.c,v 1.22 2022/08/12 00:24:07 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2009, 2015 Todd C. Miller <millert@openbsd.org>
@@ -155,14 +155,14 @@ main(int argc, char **argv)
 static int
 renice(struct renice_param *p, struct renice_param *end)
 {
-	int new, old, errors = 0;
+	int new, old, error = 0;
 
 	for (; p < end; p++) {
 		errno = 0;
 		old = getpriority(p->id_type, p->id);
 		if (errno) {
 			warn("getpriority: %d", p->id);
-			errors++;
+			error = 1;
 			continue;
 		}
 		if (p->pri_type == RENICE_INCREMENT)
@@ -171,13 +171,13 @@ renice(struct renice_param *p, struct renice_param *end)
 		    p->pri < PRIO_MIN ? PRIO_MIN : p->pri;
 		if (setpriority(p->id_type, p->id, new) == -1) {
 			warn("setpriority: %d", p->id);
-			errors++;
+			error = 1;
 			continue;
 		}
 		printf("%d: old priority %d, new priority %d\n",
 		    p->id, old, new);
 	}
-	return (errors);
+	return error;
 }
 
 __dead void
