@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuvar.h,v 1.11 2021/05/16 04:33:05 jsg Exp $	*/
+/*	$OpenBSD: cpuvar.h,v 1.12 2022/08/12 02:20:36 cheloha Exp $	*/
 /* 	$NetBSD: cpuvar.h,v 1.1 2003/03/01 18:29:28 fvdl Exp $ */
 
 /*-
@@ -97,8 +97,7 @@ void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
 
-void tsc_sync_drift(int64_t);
-void tsc_sync_bp(struct cpu_info *);
-void tsc_sync_ap(struct cpu_info *);
+void tsc_test_sync_bp(struct cpu_info *);
+void tsc_test_sync_ap(struct cpu_info *);
 
 #endif

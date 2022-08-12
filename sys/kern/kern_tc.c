@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.76 2022/07/23 22:58:51 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.77 2022/08/12 02:20:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -456,6 +456,38 @@ tc_init(struct timecounter *tc)
 	enqueue_randomness(tc->tc_get_timecount(tc));
 
 	timecounter = tc;
+}
+
+/*
+ * Change the given timecounter's quality.  If it is the active
+ * counter and it is no longer the best counter, activate the
+ * best counter.
+ */
+void
+tc_reset_quality(struct timecounter *tc, int quality)
+{
+	struct timecounter *best = &dummy_timecounter, *tmp;
+
+	if (tc == &dummy_timecounter)
+		panic("%s: cannot change dummy counter quality", __func__);
+
+	tc->tc_quality = quality;
+	if (timecounter == tc) {
+		SLIST_FOREACH(tmp, &tc_list, tc_next) {
+			if (tmp->tc_quality < 0)
+				continue;
+			if (tmp->tc_quality < best->tc_quality)
+				continue;
+			if (tmp->tc_quality == best->tc_quality &&
+			    tmp->tc_frequency < best->tc_frequency)
+				continue;
+			best = tmp;
+		}
+		if (best != tc) {
+			enqueue_randomness(best->tc_get_timecount(best));
+			timecounter = best;
+		}
+	}
 }
 
 /* Report the frequency of the current timecounter. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.12 2020/07/06 13:33:09 pirofti Exp $ */
+/*	$OpenBSD: timetc.h,v 1.13 2022/08/12 02:20:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -120,6 +120,7 @@ extern struct timekeep *timekeep;
 u_int64_t tc_getfrequency(void);
 u_int64_t tc_getprecision(void);
 void	tc_init(struct timecounter *tc);
+void	tc_reset_quality(struct timecounter *, int);
 void	tc_setclock(const struct timespec *ts);
 void	tc_setrealtimeclock(const struct timespec *ts);
 void	tc_ticktock(void);
