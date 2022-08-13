@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2020/02/20 06:12:14 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2022/08/13 06:44:48 jsg Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -130,12 +130,10 @@ get_autoboot_device(void)
 		len = strlen(value);
 		if (len == 1) {
 			c = value[0];
-		} else if (len == 2) {
-			if (value[0] == '1') {
-				/* External spc (spc1) */
-				strlcpy(autoboot.cont, "spc1", sizeof(autoboot.cont));
-				c = value[1];
-			}
+		} else if (len == 2 && value[0] == '1') {
+			/* External spc (spc1) */
+			strlcpy(autoboot.cont, "spc1", sizeof(autoboot.cont));
+			c = value[1];
 		} else
 			c = -1;
 
