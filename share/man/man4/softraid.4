@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.47 2022/08/12 20:17:46 stsp Exp $
+.\"	$OpenBSD: softraid.4,v 1.48 2022/08/13 11:13:17 jmc Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2022 $
+.Dd $Mdocdate: August 13 2022 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -118,9 +118,9 @@ may be used to install
 in the boot storage area of the
 .Nm
 volume.
-Boot support is currently limited to the RAID 1C discipline on the
-amd64 platform, and the CRYPTO and RAID 1 disciplines
-on amd64, arm64, i386, and sparc64 platforms.
+Boot support is currently limited to the CRYPTO and RAID 1 disciplines
+on the amd64, arm64, i386, and sparc64 platforms.
+amd64 also has boot support for the RAID 1C discipline.
 On sparc64, bootable chunks must be RAID partitions using the letter
 .Sq a .
 At the
