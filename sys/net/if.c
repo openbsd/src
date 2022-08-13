@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.662 2022/08/06 15:57:58 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.663 2022/08/13 21:01:46 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2360,9 +2360,7 @@ forceup:
 			break;
 		/* FALLTHROUGH */
 	default:
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-			(struct mbuf *) cmd, (struct mbuf *) data,
-			(struct mbuf *) ifp, p));
+		error = pru_control(so, cmd, data, ifp, p);
 		if (error != EOPNOTSUPP)
 			break;
 		switch (cmd) {

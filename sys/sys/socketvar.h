@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.106 2022/07/15 17:20:24 deraadt Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.107 2022/08/13 21:01:46 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -31,6 +31,9 @@
  *
  *	@(#)socketvar.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_SOCKETVAR_H_
+#define _SYS_SOCKETVAR_H_
 
 #include <sys/selinfo.h>			/* for struct selinfo */
 #include <sys/queue.h>
@@ -370,3 +373,5 @@ void	sbcheck(struct socket *, struct sockbuf *);
 #endif /* SOCKBUF_DEBUG */
 
 #endif /* _KERNEL */
+
+#endif /* _SYS_SOCKETVAR_H_ */

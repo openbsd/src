@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.142 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.143 2022/08/13 21:01:46 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1177,11 +1177,9 @@ nfs_timer(void *arg)
 		    nmp->nm_sent < nmp->nm_cwnd) &&
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
-			    	error = (*so->so_proto->pr_usrreq)(so, PRU_SEND,
-				    m, NULL, NULL, curproc);
+				error = pru_send(so, m, NULL, NULL);
 			else
-			    	error = (*so->so_proto->pr_usrreq)(so, PRU_SEND,
-				    m, nmp->nm_nam, NULL, curproc);
+				error = pru_send(so, m, nmp->nm_nam, NULL);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
 					so->so_error = 0;

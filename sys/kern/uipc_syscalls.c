@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.199 2022/07/18 04:42:37 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.200 2022/08/13 21:01:46 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1100,7 +1100,7 @@ sys_getsockname(struct proc *p, void *v, register_t *retval)
 	}
 	m = m_getclr(M_WAIT, MT_SONAME);
 	solock(so);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_SOCKADDR, NULL, m, NULL, p);
+	error = pru_sockaddr(so, m);
 	sounlock(so);
 	if (error)
 		goto bad;
@@ -1147,7 +1147,7 @@ sys_getpeername(struct proc *p, void *v, register_t *retval)
 		goto bad;
 	m = m_getclr(M_WAIT, MT_SONAME);
 	solock(so);
-	error = (*so->so_proto->pr_usrreq)(so, PRU_PEERADDR, NULL, m, NULL, p);
+	error = pru_peeraddr(so, m);
 	sounlock(so);
 	if (error)
 		goto bad;
