@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2022/07/29 17:47:11 semarie Exp $
+# $OpenBSD: Makefile,v 1.2 2022/08/13 16:02:15 semarie Exp $
 
 SRCS +=		${.CURDIR}/../../../../sys/kern/subr_blist.c
 WARNINGS =	Yes
@@ -8,7 +8,8 @@ TESTS +=	\
 	test-2	1024 \
 	test-3	64 \
 	test-4	64 \
-	test-5	1024
+	test-5	1024 \
+	test-6	128
 
 .for t s in ${TESTS}
 run-$t: blist
@@ -27,7 +28,7 @@ CLEANFILES +=		$t.run
 .endfor
 
 blist: ${SRCS}
-	${CC} -o $@ ${CFLAGS} ${SRCS}
+	${CC} -g -o $@ ${CFLAGS} ${SRCS}
 CLEANFILES +=	blist blist.d
 
 regen: ${REGEN_TARGETS}

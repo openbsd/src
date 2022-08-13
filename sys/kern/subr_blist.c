@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_blist.c,v 1.2 2022/08/06 13:44:04 semarie Exp $ */
+/* $OpenBSD: subr_blist.c,v 1.3 2022/08/13 16:02:15 semarie Exp $ */
 /* DragonFlyBSD:7b80531f545c7d3c51c1660130c71d01f6bccbe0:/sys/kern/subr_blist.c */
 /*
  * BLIST.C -	Bitmap allocator/deallocator, using a radix tree with hinting
@@ -123,6 +123,7 @@
 #define mallocarray(n,s,t,f)	reallocarray(NULL, n, s)
 #define free(p,t,s)	free(p)
 #define KASSERT(exp)	assert(exp)
+#define KDASSERT(exp)	assert(exp)
 
 #include "../sys/blist.h"
 
@@ -248,8 +249,12 @@ blist_alloc(blist_t bl, swblk_t count)
 		else
 			blk = blst_meta_alloc(bl->bl_root, 0, 0, count,
 					      bl->bl_radix, bl->bl_skip);
-		if (blk != SWAPBLK_NONE)
+		if (blk != SWAPBLK_NONE) {
 			bl->bl_free -= count;
+
+			KDASSERT(blk < bl->bl_blocks);
+			KDASSERT(bl->bl_free <= bl->bl_blocks);
+		}
 	}
 	return(blk);
 }
@@ -260,16 +265,20 @@ blist_allocat(blist_t bl, swblk_t count, swblk_t blkat)
 	swblk_t blk = SWAPBLK_NONE;
 
 	if (bl) {
-		KASSERT(blkat < bl->bl_blocks);
-		KASSERT(blkat + count <= bl->bl_blocks);
+		KDASSERT(blkat < bl->bl_blocks);
+		KDASSERT(blkat + count <= bl->bl_blocks);
 
 		if (bl->bl_radix == BLIST_BMAP_RADIX)
 			blk = blst_leaf_alloc(bl->bl_root, blkat, 0, count);
 		else
 			blk = blst_meta_alloc(bl->bl_root, blkat, 0, count,
 					      bl->bl_radix, bl->bl_skip);
-		if (blk != SWAPBLK_NONE)
+		if (blk != SWAPBLK_NONE) {
 			bl->bl_free -= count;
+
+			KDASSERT(blk < bl->bl_blocks);
+			KDASSERT(bl->bl_free <= bl->bl_blocks);
+		}
 	}
 	return(blk);
 }
@@ -284,14 +293,16 @@ void
 blist_free(blist_t bl, swblk_t blkno, swblk_t count)
 {
 	if (bl) {
-		KASSERT(blkno < bl->bl_blocks);
-		KASSERT(blkno + count <= bl->bl_blocks);
+		KDASSERT(blkno < bl->bl_blocks);
+		KDASSERT(blkno + count <= bl->bl_blocks);
 
 		if (bl->bl_radix == BLIST_BMAP_RADIX)
 			blst_leaf_free(bl->bl_root, blkno, count);
 		else
 			blst_meta_free(bl->bl_root, blkno, count, bl->bl_radix, bl->bl_skip, 0);
 		bl->bl_free += count;
+
+		KDASSERT(bl->bl_free <= bl->bl_blocks);
 	}
 }
 
@@ -308,9 +319,9 @@ blist_fill(blist_t bl, swblk_t blkno, swblk_t count)
 	swblk_t filled;
 
 	if (bl) {
-		KASSERT(blkno < bl->bl_blocks);
-		KASSERT(blkno + count <= bl->bl_blocks);
-		
+		KDASSERT(blkno < bl->bl_blocks);
+		KDASSERT(blkno + count <= bl->bl_blocks);
+
 		if (bl->bl_radix == BLIST_BMAP_RADIX) {
 			filled = blst_leaf_fill(bl->bl_root, blkno, count);
 		} else {
@@ -318,6 +329,7 @@ blist_fill(blist_t bl, swblk_t blkno, swblk_t count)
 			    bl->bl_radix, bl->bl_skip, 0);
 		}
 		bl->bl_free -= filled;
+		KDASSERT(bl->bl_free <= bl->bl_blocks);
 		return (filled);
 	} else {
 		return 0;
@@ -384,9 +396,9 @@ blist_gapfind(blist_t bl, swblk_t *maxbp, swblk_t *maxep)
 		}
 	}
 
-	KASSERT(*maxbp <= *maxep);
-	KASSERT(*maxbp <  bl->bl_blocks);
-	KASSERT(*maxep <= bl->bl_blocks);
+	KDASSERT(*maxbp <= *maxep);
+	KDASSERT(*maxbp <  bl->bl_blocks);
+	KDASSERT(*maxep <= bl->bl_blocks);
 }
 
 /*
@@ -638,6 +650,17 @@ blst_meta_alloc(blmeta_t *scan, swblk_t blkat,
 	}
 
 	for (i = 1; i <= skip; i += next_skip) {
+		if (scan[i].bm_bighint == (swblk_t)-1) {
+			/*
+			 * Terminator
+			 *
+			 * note: check it first, as swblk_t may be unsigned.
+			 *   otherwise, the second if() might match and the
+			 *   Terminator will be ignored.
+			 */
+			break;
+		}
+
 		if (count <= scan[i].bm_bighint &&
 		    blk + (swblk_t)radix > blkat) {
 			/*
@@ -659,11 +682,6 @@ blst_meta_alloc(blmeta_t *scan, swblk_t blkat,
 				return(r);
 			}
 			/* bighint was updated by recursion */
-		} else if (scan[i].bm_bighint == (swblk_t)-1) {
-			/*
-			 * Terminator
-			 */
-			break;
 		} else if (count > (swblk_t)radix) {
 			/*
 			 * count does not fit in object even if it were
@@ -1231,10 +1249,16 @@ main(int ac, char **av)
 			if (sscanf(buf + 1, "%li %li", &count, &blkat) == 1) {
 				printf("count %lu\n", count);
 				swblk_t blk = blist_alloc(bl, count);
-				printf("    R=%04lx\n", blk);
+				if (blk == SWAPBLK_NONE)
+					printf("    R=SWAPBLK_NONE\n");
+				else
+					printf("    R=%04lx\n", blk);
 			} else if (sscanf(buf + 1, "%li %li", &count, &blkat) == 2) {
 				swblk_t blk = blist_allocat(bl, count, blkat);
-				printf("    R=%04lx\n", blk);
+				if (blk == SWAPBLK_NONE)
+					printf("    R=SWAPBLK_NONE\n");
+				else
+					printf("    R=%04lx\n", blk);
 			} else {
 				printf("?\n");
 			}
