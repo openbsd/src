@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.26 2022/03/14 14:15:33 stsp Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.27 2022/08/13 14:16:59 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1523,6 +1523,8 @@ struct r92c_rx_desc_usb {
 
 #define R92C_RXDW3_RATE_M	0x0000003f
 #define R92C_RXDW3_RATE_S	0
+#define R92E_RXDW3_RATE_M	0x0000007f
+#define R92E_RXDW3_RATE_S	0
 #define R92C_RXDW3_HT		0x00000040
 #define R92C_RXDW3_HTC		0x00000400
 #define R88E_RXDW3_RPT_M	0x0000c000

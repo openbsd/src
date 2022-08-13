@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.101 2022/06/26 15:38:11 jmatthew Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.102 2022/08/13 14:16:59 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1188,7 +1188,8 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen,
 		return;
 	}
 
-	rate = MS(rxdw3, R92C_RXDW3_RATE);
+	rate = (sc->sc_sc.chip & RTWN_CHIP_92E) ?
+	    MS(rxdw3, R92E_RXDW3_RATE) : MS(rxdw3, R92C_RXDW3_RATE);
 	infosz = MS(rxdw0, R92C_RXDW0_INFOSZ) * 8;
 
 	/* Get RSSI from PHY status descriptor if present. */
