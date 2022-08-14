@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.26 2022/08/10 07:58:04 tb Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.27 2022/08/14 15:01:18 millert Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -53,15 +53,15 @@ int		 isctf(const char *, size_t);
 __dead void	 usage(void);
 
 int		 ctf_dump(const char *, size_t, uint8_t);
-void		 ctf_dump_type(struct ctf_header *, const char *, off_t,
+void		 ctf_dump_type(struct ctf_header *, const char *, size_t,
 		     uint32_t, uint32_t *, uint32_t);
 const char	*ctf_kind2name(uint16_t);
 const char	*ctf_enc2name(uint16_t);
 const char	*ctf_fpenc2name(uint16_t);
-const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
+const char	*ctf_off2name(struct ctf_header *, const char *, size_t,
 		     uint32_t);
 
-char		*decompress(const char *, size_t, off_t);
+char		*decompress(const char *, size_t, size_t);
 int		 elf_dump(uint8_t);
 const char	*elf_idx2sym(size_t *, uint8_t);
 
@@ -274,7 +274,7 @@ int
 isctf(const char *p, size_t filesize)
 {
 	struct ctf_header	 cth;
-	off_t			 dlen;
+	size_t			 dlen;
 
 	if (filesize < sizeof(struct ctf_header)) {
 		warnx("file too small to be CTF");
@@ -285,8 +285,8 @@ isctf(const char *p, size_t filesize)
 	if (cth.cth_magic != CTF_MAGIC || cth.cth_version != CTF_VERSION)
 		return 0;
 
-	dlen = (off_t)cth.cth_stroff + cth.cth_strlen;
-	if (dlen > (off_t)filesize && !(cth.cth_flags & CTF_F_COMPRESS)) {
+	dlen = cth.cth_stroff + cth.cth_strlen;
+	if (dlen > filesize && !(cth.cth_flags & CTF_F_COMPRESS)) {
 		warnx("bogus file size");
 		return 0;
 	}
@@ -318,11 +318,11 @@ int
 ctf_dump(const char *p, size_t size, uint8_t flags)
 {
 	struct ctf_header	 cth;
-	off_t			 dlen;
+	size_t			 dlen;
 	char			*data;
 
 	memcpy(&cth, p, sizeof(struct ctf_header));
-	dlen = (off_t)cth.cth_stroff + cth.cth_strlen;
+	dlen = cth.cth_stroff + cth.cth_strlen;
 	if (cth.cth_flags & CTF_F_COMPRESS) {
 		data = decompress(p + sizeof(cth), size - sizeof(cth), dlen);
 		if (data == NULL)
@@ -451,7 +451,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 }
 
 void
-ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
+ctf_dump_type(struct ctf_header *cth, const char *data, size_t dlen,
     uint32_t stroff, uint32_t *offset, uint32_t idx)
 {
 	const char		*p = data + *offset;
@@ -642,7 +642,7 @@ ctf_fpenc2name(uint16_t enc)
 }
 
 const char *
-ctf_off2name(struct ctf_header *cth, const char *data, off_t dlen,
+ctf_off2name(struct ctf_header *cth, const char *data, size_t dlen,
     uint32_t offset)
 {
 	const char		*name;
@@ -664,7 +664,7 @@ ctf_off2name(struct ctf_header *cth, const char *data, off_t dlen,
 }
 
 char *
-decompress(const char *buf, size_t size, off_t len)
+decompress(const char *buf, size_t size, size_t len)
 {
 #ifdef ZLIB
 	z_stream		 stream;
@@ -699,8 +699,8 @@ decompress(const char *buf, size_t size, off_t len)
 		goto exit;
 	}
 
-	if (len < 0 || (uintmax_t)stream.total_out != (uintmax_t)len) {
-		warnx("decompression failed: %lu != %lld",
+	if (stream.total_out != len) {
+		warnx("decompression failed: %lu != %zu",
 		    stream.total_out, len);
 		goto exit;
 	}
