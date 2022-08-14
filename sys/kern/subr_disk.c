@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.252 2022/08/12 20:05:49 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.253 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/buf.h>
@@ -50,7 +49,6 @@
 #include <sys/time.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/lock.h>
 #include <sys/disk.h>
 #include <sys/reboot.h>
 #include <sys/dkio.h>
@@ -59,7 +57,6 @@
 #include <sys/stdint.h>
 
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <net/if.h>
 

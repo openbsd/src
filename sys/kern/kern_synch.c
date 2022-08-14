@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.189 2022/06/28 09:32:27 bluhm Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.190 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -42,15 +42,12 @@
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
-#include <sys/resourcevar.h>
 #include <sys/sched.h>
 #include <sys/timeout.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/pool.h>
 #include <sys/refcnt.h>
 #include <sys/atomic.h>
-#include <sys/witness.h>
 #include <sys/tracepoint.h>
 
 #include <ddb/db_output.h>

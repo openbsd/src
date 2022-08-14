@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.104 2022/07/10 20:16:15 mlarkin Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.105 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -45,11 +45,9 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/resourcevar.h>
-#include <sys/signalvar.h>
 #include <sys/sysctl.h>
 #include <sys/sched.h>
 #include <sys/timetc.h>
-
 
 #if defined(GPROF) || defined(DDBPROF)
 #include <sys/gmon.h>

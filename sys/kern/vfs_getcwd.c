@@ -1,4 +1,4 @@
-/* $OpenBSD: vfs_getcwd.c,v 1.36 2019/05/30 13:34:54 beck Exp $ */
+/* $OpenBSD: vfs_getcwd.c,v 1.37 2022/08/14 01:58:28 jsg Exp $ */
 /* $NetBSD: vfs_getcwd.c,v 1.3.2.3 1999/07/11 10:24:09 sommerfeld Exp $ */
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/filedesc.h>
-#include <sys/kernel.h>
 #include <sys/stat.h>
 #include <sys/lock.h>
 #include <sys/vnode.h>

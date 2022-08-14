@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.50 2018/04/29 17:26:31 anton Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.51 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/sched.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
-#include <sys/resourcevar.h>
 
 int
 uiomove(void *cp, size_t n, struct uio *uio)

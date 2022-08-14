@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.91 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.92 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -34,17 +34,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/acct.h>
 #include <sys/wait.h>
 #include <sys/rwlock.h>
-#include <ufs/ufs/quota.h>
-#include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/pool.h>

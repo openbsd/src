@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cache.c,v 1.57 2018/06/04 19:42:54 kn Exp $	*/
+/*	$OpenBSD: vfs_cache.c,v 1.58 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: vfs_cache.c,v 1.13 1996/02/04 02:18:09 christos Exp $	*/
 
 /*
@@ -34,8 +34,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/namei.h>

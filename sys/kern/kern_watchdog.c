@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.15 2021/01/09 20:59:23 gnezdo Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.16 2022/08/14 01:58:27 jsg Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -24,11 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/timeout.h>
 #include <sys/sysctl.h>
-#include <sys/time.h>
 
 void	wdog_tickle(void *arg);
 int	(*wdog_ctl_cb)(void *, int) = NULL;

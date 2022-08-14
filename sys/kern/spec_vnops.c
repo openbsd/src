@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.108 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.109 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -35,16 +35,13 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
-#include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
@@ -52,8 +49,6 @@
 #include <sys/malloc.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>
-
-#include <uvm/uvm_extern.h>
 
 #define v_lastr v_specinfo->si_lastr
 

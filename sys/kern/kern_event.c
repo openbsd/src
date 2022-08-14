@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.192 2022/07/09 12:48:21 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.193 2022/08/14 01:58:27 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -30,11 +30,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/pledge.h>
 #include <sys/malloc.h>
-#include <sys/unistd.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
@@ -43,10 +41,7 @@
 #include <sys/eventvar.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.47 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.48 2022/08/14 01:58:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -30,7 +30,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/time.h>
 
 #include <dev/cons.h>
 

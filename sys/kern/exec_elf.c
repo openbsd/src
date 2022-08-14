@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.166 2022/05/12 16:29:58 claudio Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.167 2022/08/14 01:58:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -68,7 +68,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -76,14 +75,11 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/core.h>
-#include <sys/syslog.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/fcntl.h>
 #include <sys/ptrace.h>
-#include <sys/syscall.h>
 #include <sys/signalvar.h>
-#include <sys/stat.h>
 #include <sys/pledge.h>
 
 #include <sys/mman.h>

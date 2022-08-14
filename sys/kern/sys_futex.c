@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.20 2021/11/22 14:57:17 visa Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.21 2022/08/14 01:58:28 jsg Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -19,7 +19,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/pool.h>

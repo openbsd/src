@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.148 2022/07/05 15:06:16 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.149 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
@@ -59,13 +57,10 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/sched.h>
 #include <sys/pledge.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * Debug values:

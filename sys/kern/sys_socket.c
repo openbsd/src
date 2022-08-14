@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.52 2022/08/13 21:01:46 mvs Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.53 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/fcntl.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 const struct fileops socketops = {
 	.fo_read	= soo_read,

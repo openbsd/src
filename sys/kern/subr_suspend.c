@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.10 2022/02/16 16:44:17 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.11 2022/08/14 01:58:28 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -19,10 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/reboot.h>
-#include <sys/proc.h>
 #include <sys/sensors.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>

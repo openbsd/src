@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.31 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.32 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -37,7 +37,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>

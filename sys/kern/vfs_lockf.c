@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.49 2022/06/02 05:32:28 anton Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.50 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -37,9 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>

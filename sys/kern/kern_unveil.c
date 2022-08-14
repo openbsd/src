@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.53 2022/01/11 07:31:50 semarie Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.54 2022/08/14 01:58:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -23,15 +23,12 @@
 #include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/pool.h>
 #include <sys/vnode.h>
-#include <sys/ktrace.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/tree.h>
 #include <sys/lock.h>
 
-#include <sys/conf.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>

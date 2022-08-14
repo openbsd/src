@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.293 2022/08/11 09:13:21 claudio Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.294 2022/08/14 01:58:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -23,12 +23,9 @@
 #include <sys/mutex.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
-#include <sys/filedesc.h>
 #include <sys/namei.h>
-#include <sys/pool.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
-#include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>

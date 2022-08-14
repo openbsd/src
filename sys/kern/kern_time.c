@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.156 2022/05/05 09:45:15 bluhm Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.157 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -33,14 +33,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/ktrace.h>
-#include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/stdint.h>
 #include <sys/pledge.h>

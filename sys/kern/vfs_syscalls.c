@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.359 2022/08/01 14:56:59 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.360 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -41,9 +41,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/filedesc.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/sysctl.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -55,8 +53,6 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/dkio.h>
-#include <sys/disklabel.h>
 #include <sys/ktrace.h>
 #include <sys/unistd.h>
 #include <sys/specdev.h>

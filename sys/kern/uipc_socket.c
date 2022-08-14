@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.281 2022/08/13 21:01:46 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.282 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -40,14 +40,12 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
-#include <sys/kernel.h>
 #include <sys/event.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/unpcb.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
-#include <net/if.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
 #include <sys/rwlock.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.141 2022/07/09 12:48:21 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.142 2022/08/14 01:58:28 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -39,7 +39,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/event.h>
-#include <sys/lock.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif

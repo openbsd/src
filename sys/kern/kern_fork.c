@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.241 2022/07/23 22:10:58 cheloha Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.242 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -40,11 +40,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/exec.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
@@ -57,7 +55,6 @@
 #include <sys/mman.h>
 #include <sys/ptrace.h>
 #include <sys/atomic.h>
-#include <sys/pledge.h>
 #include <sys/unistd.h>
 
 #include <sys/syscallargs.h>

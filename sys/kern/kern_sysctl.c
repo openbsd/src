@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.404 2022/07/26 14:53:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.405 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 #include <sys/buf.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

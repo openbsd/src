@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.316 2022/08/12 14:30:52 visa Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.317 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -46,9 +46,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
-#include <sys/time.h>
 #include <sys/fcntl.h>
-#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>

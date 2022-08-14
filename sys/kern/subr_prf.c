@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.105 2022/01/20 17:11:30 bluhm Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.106 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -39,16 +39,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
 

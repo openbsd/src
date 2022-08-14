@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.15 2021/11/24 13:17:37 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.16 2022/08/14 01:58:27 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -18,7 +18,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>

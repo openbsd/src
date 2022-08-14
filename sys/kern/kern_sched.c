@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.74 2022/01/20 11:06:57 bluhm Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.75 2022/08/14 01:58:27 jsg Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -21,9 +21,6 @@
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
-#include <sys/resourcevar.h>
-#include <sys/signalvar.h>
-#include <sys/mutex.h>
 #include <sys/task.h>
 #include <sys/smr.h>
 #include <sys/tracepoint.h>

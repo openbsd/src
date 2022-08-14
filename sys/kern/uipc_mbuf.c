@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.283 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.284 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -77,16 +77,12 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/kernel.h>
-#include <sys/syslog.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
 #include <sys/sysctl.h>
 
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <net/if.h>
 
 

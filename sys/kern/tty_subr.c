@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.35 2021/12/02 15:13:49 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.36 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/malloc.h>
 

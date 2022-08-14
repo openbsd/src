@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.120 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.121 2022/08/14 01:58:28 jsg Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
@@ -53,8 +52,6 @@
 #include <sys/vnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/cdio.h>
-#include <sys/filedesc.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>
 

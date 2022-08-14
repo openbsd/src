@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.203 2022/03/31 01:41:22 millert Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.204 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -39,16 +39,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/kernel.h>
-#include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sys/vnode.h>
-#include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
@@ -59,7 +54,6 @@
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
-#include <sys/pledge.h>
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif

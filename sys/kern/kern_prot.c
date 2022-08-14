@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.79 2022/03/17 14:23:34 visa Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.80 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/acct.h>
 #include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/ucred.h>

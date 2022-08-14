@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.298 2022/06/29 10:48:22 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.299 2022/08/14 01:58:27 jsg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 
 #include <sys/param.h>
 #include <sys/signalvar.h>
-#include <sys/resourcevar.h>
 #include <sys/queue.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -50,14 +49,11 @@
 #include <sys/acct.h>
 #include <sys/fcntl.h>
 #include <sys/filedesc.h>
-#include <sys/kernel.h>
 #include <sys/wait.h>
 #include <sys/ktrace.h>
 #include <sys/stat.h>
-#include <sys/core.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/ptrace.h>
 #include <sys/sched.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
