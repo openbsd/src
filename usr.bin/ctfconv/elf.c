@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.9 2017/11/14 09:14:50 mpi Exp $ */
+/*	$OpenBSD: elf.c,v 1.10 2022/08/14 14:54:13 millert Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -34,7 +34,7 @@ iself(const char *p, size_t filesize)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 
-	if (filesize < (off_t)sizeof(Elf_Ehdr)) {
+	if (filesize < sizeof(Elf_Ehdr)) {
 		warnx("file too small to be ELF");
 		return 0;
 	}
@@ -55,7 +55,8 @@ iself(const char *p, size_t filesize)
 		return 0;
 	}
 	if (eh->e_shoff > filesize) {
-		warnx("bogus section table offset 0x%llx", (off_t)eh->e_shoff);
+		warnx("bogus section table offset 0x%llx",
+		    (unsigned long long)eh->e_shoff);
 		return 0;
 	}
 	if (eh->e_shentsize < sizeof(Elf_Shdr)) {

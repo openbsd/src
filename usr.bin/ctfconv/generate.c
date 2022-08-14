@@ -1,4 +1,4 @@
-/*	$OpenBSD: generate.c,v 1.4 2017/09/26 08:16:18 mpi Exp $ */
+/*	$OpenBSD: generate.c,v 1.5 2022/08/14 14:54:13 millert Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -67,7 +67,7 @@ struct strentry {
 };
 
 #ifdef ZLIB
-char		*data_compress(const char *, size_t, off_t, size_t *);
+char		*data_compress(const char *, size_t, size_t, size_t *);
 #endif /* ZLIB */
 
 void
@@ -84,7 +84,7 @@ dbuf_realloc(struct dbuf *dbuf, size_t len)
 void
 dbuf_copy(struct dbuf *dbuf, void const *data, size_t len)
 {
-	off_t left;
+	size_t left;
 
 	assert(dbuf->cptr != NULL);
 	assert(dbuf->data != NULL);
@@ -94,7 +94,7 @@ dbuf_copy(struct dbuf *dbuf, void const *data, size_t len)
 		return;
 
 	left = dbuf->size - dbuf->coff;
-	if (left < (off_t)len)
+	if (left < len)
 		dbuf_realloc(dbuf, ROUNDUP((len - left), DBUF_CHUNKSZ));
 
 	memcpy(dbuf->cptr, data, len);
@@ -413,7 +413,7 @@ generate(const char *path, const char *label, int compress)
 
 #ifdef ZLIB
 char *
-data_compress(const char *buf, size_t size, off_t len, size_t *pclen)
+data_compress(const char *buf, size_t size, size_t len, size_t *pclen)
 {
 	z_stream		 stream;
 	char			*data;
