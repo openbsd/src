@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.32 2022/08/11 02:56:35 tb Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.33 2022/08/14 14:57:38 millert Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -53,7 +53,7 @@ struct ddb_ctf db_ctf;
 
 static const char	*db_ctf_off2name(uint32_t);
 static Elf_Sym		*db_ctf_idx2sym(size_t *, uint8_t);
-static char		*db_ctf_decompress(const char *, size_t, off_t);
+static char		*db_ctf_decompress(const char *, size_t, size_t);
 
 const struct ctf_type	*db_ctf_type_by_name(const char *, unsigned int);
 const struct ctf_type	*db_ctf_type_by_symbol(Elf_Sym *);
@@ -515,7 +515,7 @@ db_ctf_off2name(uint32_t offset)
 }
 
 static char *
-db_ctf_decompress(const char *buf, size_t size, off_t len)
+db_ctf_decompress(const char *buf, size_t size, size_t len)
 {
 	z_stream		 stream;
 	char			*data;
@@ -547,8 +547,8 @@ db_ctf_decompress(const char *buf, size_t size, off_t len)
 		goto exit;
 	}
 
-	if (len < 0 || (uintmax_t)stream.total_out != (uintmax_t)len) {
-		db_printf("decompression failed: %lu != %lld",
+	if (stream.total_out != len) {
+		db_printf("decompression failed: %lu != %zu",
 		    stream.total_out, len);
 		goto exit;
 	}
