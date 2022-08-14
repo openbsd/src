@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.11 2022/03/08 16:13:08 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.12 2022/08/14 21:10:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -550,12 +550,22 @@ cad_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct cad_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	int error = 0;
+	int error = 0, netlock_held = 1;
 	int s;
 
-	NET_UNLOCK();
+	switch (cmd) {
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+	case SIOCGIFSFFPAGE:
+		netlock_held = 0;
+		break;
+	}
+
+	if (netlock_held)
+		NET_UNLOCK();
 	rw_enter_write(&sc->sc_cfg_lock);
-	NET_LOCK();
+	if (netlock_held)
+		NET_LOCK();
 	s = splnet();
 
 	switch (cmd) {
