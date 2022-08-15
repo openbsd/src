@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.h,v 1.16 2022/08/11 02:56:34 tb Exp $ */
+/*	$OpenBSD: zlib.h,v 1.17 2022/08/15 13:29:05 tb Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.2.12, March 11th, 2022
@@ -545,8 +545,7 @@ ZEXTERN int ZEXPORT deflateInit2 OF((z_streamp strm,
                                      int  strategy));
 
      This is another version of deflateInit with more compression options.  The
-   fields next_in, zalloc, zfree and opaque must be initialized before by the
-   caller.
+   fields zalloc, zfree and opaque must be initialized before by the caller.
 
      The method parameter is the compression method.  It must be Z_DEFLATED in
    this version of the library.
