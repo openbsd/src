@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.31 2020/08/01 08:40:20 anton Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.32 2022/08/15 09:10:36 mvs Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -354,9 +354,6 @@ task_add(struct taskq *tq, struct task *w)
 {
 	int rv = 0;
 
-	if (ISSET(w->t_flags, TASK_ONQUEUE))
-		return (0);
-
 	mtx_enter(&tq->tq_mtx);
 	if (!ISSET(w->t_flags, TASK_ONQUEUE)) {
 		rv = 1;
@@ -378,9 +375,6 @@ int
 task_del(struct taskq *tq, struct task *w)
 {
 	int rv = 0;
-
-	if (!ISSET(w->t_flags, TASK_ONQUEUE))
-		return (0);
 
 	mtx_enter(&tq->tq_mtx);
 	if (ISSET(w->t_flags, TASK_ONQUEUE)) {
