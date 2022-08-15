@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.35 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.36 2022/08/15 10:48:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -464,7 +464,7 @@ BIO_puts(BIO *b, const char *in)
 int
 BIO_gets(BIO *b, char *in, int inl)
 {
-	size_t readbytes;
+	size_t readbytes = 0;
 	int ret;
 
 	if (b == NULL || b->method == NULL || b->method->bgets == NULL) {
