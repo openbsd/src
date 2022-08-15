@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.187 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.188 2022/08/15 14:44:18 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -142,6 +142,32 @@ struct	inpcbtable tcbtable;
 int	tcp_fill_info(struct tcpcb *, struct socket *, struct mbuf *);
 int	tcp_ident(void *, size_t *, void *, size_t, int);
 
+static inline int tcp_sogetpcb(struct socket *, struct inpcb **,
+                      struct tcpcb **);
+
+static inline int
+tcp_sogetpcb(struct socket *so, struct inpcb **rinp, struct tcpcb **rtp)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+
+	/*
+	 * When a TCP is attached to a socket, then there will be
+	 * a (struct inpcb) pointed at by the socket, and this
+	 * structure will point at a subsidiary (struct tcpcb).
+	 */
+	if ((inp = sotoinpcb(so)) == NULL || (tp = intotcpcb(inp)) == NULL) {
+		if (so->so_error)
+			return so->so_error;
+		return EINVAL;
+	}
+
+	*rinp = inp;
+	*rtp = tp;
+
+	return 0;
+}
+
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
  * then m is the mbuf chain of send data.  If this is a timer expiration
@@ -153,7 +179,7 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
 	struct inpcb *inp;
-	struct tcpcb *otp = NULL, *tp = NULL;
+	struct tcpcb *otp = NULL, *tp;
 	int error = 0;
 	short ostate;
 
@@ -175,22 +201,9 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		goto release;
 	}
 
-	inp = sotoinpcb(so);
-	/*
-	 * When a TCP is attached to a socket, then there will be
-	 * a (struct inpcb) pointed at by the socket, and this
-	 * structure will point at a subsidiary (struct tcpcb).
-	 */
-	if (inp == NULL) {
-		error = so->so_error;
-		if (error == 0)
-			error = EINVAL;
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
 		goto release;
-	}
-	tp = intotcpcb(inp);
-	/* tp might get 0 when using socket splicing */
-	if (tp == NULL)
-		goto release;
+
 	if (so->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
@@ -739,28 +752,15 @@ int
 tcp_detach(struct socket *so)
 {
 	struct inpcb *inp;
-	struct tcpcb *otp = NULL, *tp = NULL;
+	struct tcpcb *otp = NULL, *tp;
 	int error = 0;
 	short ostate;
 
 	soassertlocked(so);
 
-	inp = sotoinpcb(so);
-	/*
-	 * When a TCP is attached to a socket, then there will be
-	 * a (struct inpcb) pointed at by the socket, and this
-	 * structure will point at a subsidiary (struct tcpcb).
-	 */
-	if (inp == NULL) {
-		error = so->so_error;
-		if (error == 0)
-			error = EINVAL;
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
 		return (error);
-	}
-	tp = intotcpcb(inp);
-	/* tp might get 0 when using socket splicing */
-	if (tp == NULL)
-		return (0);
+
 	if (so->so_options & SO_DEBUG) {
 		otp = tp;
 		ostate = tp->t_state;
