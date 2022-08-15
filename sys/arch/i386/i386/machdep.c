@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.651 2022/07/27 01:44:25 daniel Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.652 2022/08/15 04:17:50 daniel Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -498,10 +498,6 @@ char	cpu_model[120];
  * We deal with the rest in a different way.
  */
 const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
-	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
-		NULL},				/* CPU_386SX */
-	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
-		NULL},				/* CPU_386   */
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
 		NULL},				/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
@@ -513,7 +509,6 @@ const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 };
 
 const char *classnames[] = {
-	"386",
 	"486",
 	"586",
 	"686"
@@ -1673,7 +1668,7 @@ void
 identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *token;
-	int class = CPUCLASS_386, vendor, i, max;
+	int class = CPUCLASS_486, vendor, i, max;
 	int family, model, step, modif, cachesize;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	char *brandstr_from, *brandstr_to;
@@ -2078,19 +2073,13 @@ identifycpu(struct cpu_info *ci)
 
 	cpu_class = class;
 
-	if (cpu_class == CPUCLASS_386) {
-		printf("WARNING: 386 (possibly unknown?) cpu class, assuming 486\n");
-		cpu_class = CPUCLASS_486;
-	}
-
 	ci->cpu_class = class;
 
 	if (cpu == CPU_486DLC)
 		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
 
 	/*
-	 * Enable ring 0 write protection (486 or above, but 386
-	 * no longer supported).
+	 * Enable ring 0 write protection.
 	 */
 	lcr0(rcr0() | CR0_WP);
 

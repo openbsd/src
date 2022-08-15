@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.12 2022/07/27 01:44:25 daniel Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.13 2022/08/15 04:17:51 daniel Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
  *	Classes of Processor
  */
 
-#define	CPUCLASS_386	0
 #define	CPUCLASS_486	1
 #define	CPUCLASS_586	2
 #define	CPUCLASS_686	3
@@ -42,8 +41,6 @@
  * that might not have a cpuid instruction.
  */
 
-#define	CPU_386SX	0	/* Intel 80386SX */
-#define	CPU_386		1	/* Intel 80386DX */
 #define	CPU_486SX	2	/* Intel 80486SX */
 #define	CPU_486		3	/* Intel 80486DX */
 #define	CPU_486DLC	4	/* Cyrix 486DLC */

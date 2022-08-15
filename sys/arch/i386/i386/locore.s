@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.194 2022/01/03 00:44:30 jsg Exp $	*/
+/*	$OpenBSD: locore.s,v 1.195 2022/08/15 04:17:50 daniel Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -266,7 +266,7 @@ _C_LABEL(lapic_tpr):
 	.long	0
 #endif
 
-_C_LABEL(cpu):		.long	0	# are we 386, 386sx, 486, 586 or 686
+_C_LABEL(cpu):		.long	0	# are we 486, 586 or 686
 _C_LABEL(cpu_id):	.long	0	# saved from 'cpuid' instruction
 _C_LABEL(cpu_pae):	.long	0	# are we using PAE paging mode?
 _C_LABEL(cpu_miscinfo):	.long	0	# misc info (apic/brand id) from 'cpuid'

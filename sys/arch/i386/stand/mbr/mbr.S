@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.25 2022/06/27 16:10:09 deraadt Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.26 2022/08/15 04:17:51 daniel Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -112,7 +112,7 @@ start:
 	 *
 	 * Accordingly, this code will fail on very early 8086/88s, but
 	 * nick@ will just have to live with it.  Others will note that
-	 * we require an 80386 (or compatible) or above processor, anyway.
+	 * we require at least a Pentium compatible processor anyway.
 	 */
 	/* cli */
 	movw	%ax, %ss

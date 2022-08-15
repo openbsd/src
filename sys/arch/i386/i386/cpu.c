@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.108 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.109 2022/08/15 04:17:50 daniel Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -406,8 +406,7 @@ cpu_init(struct cpu_info *ci)
 	patinit(ci);
  
 	/*
-	 * Enable ring 0 write protection (486 or above, but 386
-	 * no longer supported).
+	 * Enable ring 0 write protection.
 	 */
 	lcr0(rcr0() | CR0_WP);
 
