@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.140 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.141 2022/08/15 02:07:11 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -200,7 +200,6 @@ void tulip_print_abnormal_interrupt(tulip_softc_t * const sc, u_int32_t csr);
 void tulip_intr_handler(tulip_softc_t * const sc, int *progress_p);
 int tulip_intr_shared(void *arg);
 int tulip_intr_normal(void *arg);
-struct mbuf *tulip_mbuf_compress(struct mbuf *m);
 struct mbuf *tulip_txput(tulip_softc_t * const sc, struct mbuf *m, int);
 void tulip_txput_setup(tulip_softc_t * const sc);
 int tulip_ifioctl(struct ifnet * ifp, u_long cmd, caddr_t data);
@@ -3719,60 +3718,6 @@ tulip_intr_normal(void *arg)
     tulip_intr_handler(sc, &progress);
 
     return (progress);
-}
-
-struct mbuf *
-tulip_mbuf_compress(struct mbuf *m)
-{
-    struct mbuf *m0;
-#if MCLBYTES >= ETHERMTU + 18
-    MGETHDR(m0, M_DONTWAIT, MT_DATA);
-    if (m0 != NULL) {
-	if (m->m_pkthdr.len > MHLEN) {
-	    MCLGET(m0, M_DONTWAIT);
-	    if ((m0->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		m_freem(m0);
-		return (NULL);
-	    }
-	}
-	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
-	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
-    }
-#else
-    int mlen = MHLEN;
-    int len = m->m_pkthdr.len;
-    struct mbuf **mp = &m0;
-
-    while (len > 0) {
-	if (mlen == MHLEN)
-	    MGETHDR(*mp, M_DONTWAIT, MT_DATA);
-	else
-	    MGET(*mp, M_DONTWAIT, MT_DATA);
-	if (*mp == NULL) {
-	    m_freem(m0);
-	    m0 = NULL;
-	    break;
-	}
-	if (len > MLEN) {
-	    MCLGET(*mp, M_DONTWAIT);
-	    if (((*mp)->m_flags & M_EXT) == 0) {
-		m_freem(m0);
-		m0 = NULL;
-		break;
-	    }
-	    (*mp)->m_len = len <= MCLBYTES ? len : MCLBYTES;
-	else
-	    (*mp)->m_len = len <= mlen ? len : mlen;
-	m_copydata(m, m->m_pkthdr.len - len,
-		   (*mp)->m_len, mtod((*mp), caddr_t));
-	len -= (*mp)->m_len;
-	mp = &(*mp)->m_next;
-	mlen = MLEN;
-    }
-#endif
-    m_freem(m);
-    return (m0);
 }
 
 struct mbuf *
