@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.94 2022/08/15 10:29:03 claudio Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.95 2022/08/15 12:29:17 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -581,8 +581,7 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				}
 				/* Don't send content for HEAD requests */
 				if (clt->clt_fcgi.headerssent &&
-				    ((struct http_descriptor *)
-				    clt->clt_descreq)->http_method
+				    clt->clt_descreq->http_method
 				    == HTTP_METHOD_HEAD)
 					/* nothing */ ;
 				else if (server_fcgi_writechunk(clt) == -1) {
