@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.221 2022/06/07 09:51:03 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.222 2022/08/15 17:59:00 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -20,8 +20,9 @@
  */
 
 #define ASCII_NBRSP	 31  /* non-breaking space */
-#define	ASCII_HYPH	 30  /* breakable hyphen */
-#define	ASCII_BREAK	 29  /* breakable zero-width space */
+#define ASCII_NBRZW	 30  /* non-breaking zero-width space */
+#define ASCII_BREAK	 29  /* breakable zero-width space */
+#define ASCII_HYPH	 28  /* breakable hyphen */
 
 /*
  * Status level.  This refers to both internal status (i.e., whilst

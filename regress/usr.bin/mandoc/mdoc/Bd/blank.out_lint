@@ -1,8 +1,9 @@
 mandoc: blank.in:13:1: STYLE: whitespace at end of input line
 mandoc: blank.in:15:1: STYLE: whitespace at end of input line
 mandoc: blank.in:17:1: STYLE: whitespace at end of input line
-mandoc: blank.in:22:36: STYLE: whitespace at end of input line
-mandoc: blank.in:23:37: STYLE: whitespace at end of input line
-mandoc: blank.in:24:32: STYLE: whitespace at end of input line
-mandoc: blank.in:31:8: STYLE: whitespace at end of input line
-mandoc: blank.in:31:2: WARNING: empty block: Dl
+mandoc: blank.in:23:1: ERROR: unknown special character: \[foobar]
+mandoc: blank.in:30:36: STYLE: whitespace at end of input line
+mandoc: blank.in:31:37: STYLE: whitespace at end of input line
+mandoc: blank.in:32:32: STYLE: whitespace at end of input line
+mandoc: blank.in:39:8: STYLE: whitespace at end of input line
+mandoc: blank.in:39:2: WARNING: empty block: Dl

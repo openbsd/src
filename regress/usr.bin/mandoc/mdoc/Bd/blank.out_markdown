@@ -14,6 +14,14 @@ BD-BLANK(1) - General Commands Manual
 	
 	line containing space tab space:
 	
+	line containing a zero-width space:
+	
+	line containing an invalid numbered character escape:
+	<?>
+	line containing an invalid named character escape:
+	<?>
+	line containing a font escape:
+	
 	line starting with a blank character:
 	 x
 	line starting with two blank characters:

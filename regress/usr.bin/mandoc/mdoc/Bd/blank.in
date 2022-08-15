@@ -1,5 +1,5 @@
-.\" $OpenBSD: blank.in,v 1.6 2017/07/04 14:53:24 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: blank.in,v 1.7 2022/08/15 17:59:00 schwarze Exp $
+.Dd $Mdocdate: August 15 2022 $
 .Dt BD-BLANK 1
 .Os
 .Sh NAME
@@ -15,6 +15,14 @@ line containing two blank characters:
   
 line containing space tab space:
  	 
+line containing a zero-width space:
+\&
+line containing an invalid numbered character escape:
+\N'257'
+line containing an invalid named character escape:
+\[foobar]
+line containing a font escape:
+\fR
 line starting with a blank character:
  x
 line starting with two blank characters:

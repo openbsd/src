@@ -1,4 +1,4 @@
-/* $OpenBSD: term_ascii.c,v 1.52 2020/09/09 13:40:24 schwarze Exp $ */
+/* $OpenBSD: term_ascii.c,v 1.53 2022/08/15 17:59:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -186,7 +186,7 @@ terminal_sepline(void *arg)
 static size_t
 ascii_width(const struct termp *p, int c)
 {
-	return c != ASCII_BREAK;
+	return c != ASCII_BREAK && c != ASCII_NBRZW;
 }
 
 void
