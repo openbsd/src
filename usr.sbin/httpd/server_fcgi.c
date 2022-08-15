@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.93 2022/08/12 08:40:25 claudio Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.94 2022/08/15 10:29:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -584,11 +584,23 @@ server_fcgi_read(struct bufferevent *bev, void *arg)
 				    ((struct http_descriptor *)
 				    clt->clt_descreq)->http_method
 				    == HTTP_METHOD_HEAD)
-					break;
-				if (server_fcgi_writechunk(clt) == -1) {
+					/* nothing */ ;
+				else if (server_fcgi_writechunk(clt) == -1) {
 					server_abort_http(clt, 500,
 					    "encoding error");
 					return;
+				}
+				if (clt->clt_fcgi.type == FCGI_END_REQUEST) {
+					bufferevent_enable(clt->clt_bev,
+					    EV_READ|EV_WRITE);
+					if (clt->clt_persist)
+						clt->clt_toread =
+						    TOREAD_HTTP_HEADER;
+					else
+						clt->clt_toread =
+						    TOREAD_HTTP_NONE;
+					clt->clt_done = 0;
+					server_reset_http(clt);
 				}
 				break;
 			}
