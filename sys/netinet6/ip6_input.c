@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.252 2022/08/12 14:49:15 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.253 2022/08/15 16:15:37 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -167,6 +167,11 @@ ip6_init(void)
 #endif
 }
 
+struct ip6_offnxt {
+	int	ion_off;
+	int	ion_nxt;
+};
+
 /*
  * Enqueue packet for local delivery.  Queuing is used as a boundary
  * between the network layer (input/forward path) running with
@@ -175,9 +180,36 @@ ip6_init(void)
 int
 ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 {
+	/* ip6_hbhchcheck() may be run before, then off and nxt are set */
+	if (*offp == 0) {
+		nxt = ip6_hbhchcheck(mp, offp, NULL);
+		if (nxt == IPPROTO_DONE)
+			return IPPROTO_DONE;
+	}
+
 	/* We are already in a IPv4/IPv6 local deliver loop. */
 	if (af != AF_UNSPEC)
 		return ip6_local(mp, offp, nxt, af);
+
+	/* save values for later, use after dequeue */
+	if (*offp != sizeof(struct ip6_hdr)) {
+		struct m_tag *mtag;
+		struct ip6_offnxt *ion;
+
+		/* mbuf tags are expensive, but only used for header options */
+		mtag = m_tag_get(PACKET_TAG_IP6_OFFNXT, sizeof(*ion),
+		    M_NOWAIT);
+		if (mtag == NULL) {
+			ip6stat_inc(ip6s_idropped);
+			m_freemp(mp);
+			return IPPROTO_DONE;
+		}
+		ion = (struct ip6_offnxt *)(mtag + 1);
+		ion->ion_off = *offp;
+		ion->ion_nxt = nxt;
+
+		m_tag_prepend(*mp, mtag);
+	}
 
 	niq_enqueue(&ip6intrq, *mp);
 	*mp = NULL;
@@ -584,9 +616,27 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 int
 ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
-	nxt = ip6_hbhchcheck(mp, offp, NULL);
-	if (nxt == IPPROTO_DONE)
-		return IPPROTO_DONE;
+	if (*offp == 0) {
+		struct m_tag *mtag;
+
+		mtag = m_tag_find(*mp, PACKET_TAG_IP6_OFFNXT, NULL);
+		if (mtag != NULL) {
+			struct ip6_offnxt *ion;
+
+			ion = (struct ip6_offnxt *)(mtag + 1);
+			*offp = ion->ion_off;
+			nxt = ion->ion_nxt;
+
+			m_tag_delete(*mp, mtag);
+		} else {
+			struct ip6_hdr *ip6;
+
+			ip6 = mtod(*mp, struct ip6_hdr *);
+			*offp = sizeof(struct ip6_hdr);
+			nxt = ip6->ip6_nxt;
+			
+		}
+	}
 
 	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
 	if (af == AF_UNSPEC)

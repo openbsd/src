@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.254 2022/02/14 04:33:18 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.255 2022/08/15 16:15:37 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -479,6 +479,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_SRCROUTE		0x1000 /* IPv4 source routing options */
 #define PACKET_TAG_TUNNEL		0x2000	/* Tunnel endpoint address */
 #define PACKET_TAG_CARP_BAL_IP		0x4000  /* carp(4) ip balanced marker */
+#define PACKET_TAG_IP6_OFFNXT		0x8000  /* IPv6 offset and next proto */
 
 #define MTAG_BITS \
     ("\20\1IPSEC_IN_DONE\2IPSEC_OUT_DONE\3IPSEC_FLOWINFO" \
