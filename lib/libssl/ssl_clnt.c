@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.151 2022/07/03 14:52:39 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.152 2022/08/15 10:45:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1757,7 +1757,6 @@ ssl3_get_cert_status(SSL *s)
 	}
 
 	if (s->ctx->internal->tlsext_status_cb) {
-		int ret;
 		ret = s->ctx->internal->tlsext_status_cb(s,
 		    s->ctx->internal->tlsext_status_arg);
 		if (ret == 0) {
