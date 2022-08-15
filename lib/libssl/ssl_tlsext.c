@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.128 2022/08/04 09:27:36 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.129 2022/08/15 10:46:53 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -86,7 +86,7 @@ tlsext_alpn_check_format(CBS *cbs)
 static int
 tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 {
-	CBS alpn;
+	CBS alpn, selected_cbs;
 	const unsigned char *selected;
 	unsigned char selected_len;
 	int r;
@@ -111,11 +111,9 @@ tlsext_alpn_server_parse(SSL *s, uint16_t msg_types, CBS *cbs, int *alert)
 	    s->ctx->internal->alpn_select_cb_arg);
 
 	if (r == SSL_TLSEXT_ERR_OK) {
-		CBS cbs;
+		CBS_init(&selected_cbs, selected, selected_len);
 
-		CBS_init(&cbs, selected, selected_len);
-
-		if (!CBS_stow(&cbs, &s->s3->alpn_selected,
+		if (!CBS_stow(&selected_cbs, &s->s3->alpn_selected,
 		    &s->s3->alpn_selected_len)) {
 			*alert = SSL_AD_INTERNAL_ERROR;
 			return 0;
