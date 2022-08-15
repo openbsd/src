@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.33 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.34 2022/08/15 01:47:09 jsg Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -1047,54 +1047,4 @@ uniqdosname(struct denode *dep, struct componentname *cnp, u_char *cp)
 	}
 
 	return (EEXIST);
-}
-
-/*
- * Find any Win'95 long filename entry in directory dep
- */
-int
-findwin95(struct denode *dep)
-{
-	struct msdosfsmount *pmp = dep->de_pmp;
-	struct direntry *dentp;
-	int blsize;
-	uint32_t cn;
-	daddr_t bn;
-	struct buf *bp;
-
-	/*
-	 * Read through the directory looking for Win'95 entries
-	 * Note: Error currently handled just as EOF			XXX
-	 */
-	for (cn = 0;; cn++) {
-		if (pcbmap(dep, cn, &bn, 0, &blsize))
-			return 0;
-		if (bread(pmp->pm_devvp, bn, blsize, &bp)) {
-			brelse(bp);
-			return 0;
-		}
-		for (dentp = (struct direntry *)bp->b_data;
-		     (char *)dentp < bp->b_data + blsize;
-		     dentp++) {
-			if (dentp->deName[0] == SLOT_EMPTY) {
-				/*
-				 * Last used entry and not found
-				 */
-				brelse(bp);
-				return 0;
-			}
-			if (dentp->deName[0] == SLOT_DELETED) {
-				/*
-				 * Ignore deleted files
-				 * Note: might be an indication of Win'95 anyway	XXX
-				 */
-				continue;
-			}
-			if (dentp->deAttributes == ATTR_WIN95) {
-				brelse(bp);
-				return 1;
-			}
-		}
-		brelse(bp);
-	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.35 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: denode.h,v 1.36 2022/08/15 01:47:09 jsg Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -306,5 +306,4 @@ int readep(struct msdosfsmount *, uint32_t, uint32_t, struct buf **, struct dire
 void reinsert(struct denode *);
 int removede(struct denode *, struct denode *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
-int findwin95(struct denode *);
 #endif	/* _KERNEL */
