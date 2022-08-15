@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1179 2022/08/02 11:09:26 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1180 2022/08/15 08:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -514,6 +514,7 @@ enum tty_code_code {
 	TTYC_KUP6,
 	TTYC_KUP7,
 	TTYC_MS,
+	TTYC_NOBR,
 	TTYC_OL,
 	TTYC_OP,
 	TTYC_RECT,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.897 2022/08/02 11:09:26 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.898 2022/08/15 08:54:03 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2022 $
+.Dd $Mdocdate: August 15 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6430,6 +6430,10 @@ These are set automatically if the
 capability is present.
 .It Em \&Hls
 Set or clear a hyperlink annotation.
+.It Em \&Nobr
+Tell
+.Nm
+that the terminal does not use bright colors for bold display.
 .It Em \&Rect
 Tell
 .Nm

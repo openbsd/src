@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.423 2022/08/02 11:09:26 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.424 2022/08/15 08:54:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2690,12 +2690,14 @@ tty_check_fg(struct tty *tty, struct colour_palette *palette,
 
 	/*
 	 * Perform substitution if this pane has a palette. If the bright
-	 * attribute is set, use the bright entry in the palette by changing to
-	 * the aixterm colour.
+	 * attribute is set and Nobr is not present, use the bright entry in
+	 * the palette by changing to the aixterm colour
 	 */
 	if (~gc->flags & GRID_FLAG_NOPALETTE) {
 		c = gc->fg;
-		if (c < 8 && gc->attr & GRID_ATTR_BRIGHT)
+		if (c < 8 &&
+		    gc->attr & GRID_ATTR_BRIGHT &&
+		    !tty_term_has(tty->term, TTYC_NOBR))
 			c += 90;
 		if ((c = colour_palette_get(palette, c)) != -1)
 			gc->fg = c;
