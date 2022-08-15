@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.96 2022/08/12 14:49:15 bluhm Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.97 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -218,6 +218,8 @@ extern int ipmforwarding;		/* enable multicast forwarding */
 #endif
 extern int ipmultipath;			/* enable multipath routing */
 extern int la_hold_total;
+
+extern const struct pr_usrreqs rip_usrreqs;
 
 extern struct rttimer_queue ip_mtudisc_timeout_q;
 extern struct pool ipqent_pool;

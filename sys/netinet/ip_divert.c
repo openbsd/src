@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.68 2022/05/09 19:33:46 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.69 2022/08/15 09:11:39 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -60,6 +60,12 @@ u_int   divert_recvspace = DIVERT_RECVSPACE;
 const struct sysctl_bounded_args divertctl_vars[] = {
 	{ DIVERTCTL_RECVSPACE, &divert_recvspace, 0, INT_MAX },
 	{ DIVERTCTL_SENDSPACE, &divert_sendspace, 0, INT_MAX },
+};
+
+const struct pr_usrreqs divert_usrreqs = {
+	.pru_usrreq	= divert_usrreq,
+	.pru_attach	= divert_attach,
+	.pru_detach	= divert_detach,
 };
 
 int divbhashsize = DIVERTHASHSIZE;

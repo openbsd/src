@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.74 2022/06/26 15:50:21 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.75 2022/08/15 09:11:39 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -53,12 +53,19 @@
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <netinet/ip_gre.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
 
 #ifdef PIPEX
 #include <net/pipex.h>
 #endif
+
+const struct pr_usrreqs gre_usrreqs = {
+	.pru_usrreq	= gre_usrreq,
+	.pru_attach	= rip_attach,
+	.pru_detach	= rip_detach,
+};
 
 int
 gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,

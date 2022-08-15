@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.186 2022/08/13 19:13:45 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.187 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -110,6 +110,12 @@ u_int	tcp_sendspace = TCP_SENDSPACE;
 #endif
 u_int	tcp_recvspace = TCP_RECVSPACE;
 u_int	tcp_autorcvbuf_inc = 16 * 1024;
+
+const struct pr_usrreqs tcp_usrreqs = {
+	.pru_usrreq	= tcp_usrreq,
+	.pru_attach	= tcp_attach,
+	.pru_detach	= tcp_detach,
+};
 
 static int pr_slowhz = PR_SLOWHZ;
 const struct sysctl_bounded_args tcpctl_vars[] = {

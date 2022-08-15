@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.129 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.130 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -102,6 +102,12 @@ struct inpcbtable rawcbtable;
 /*
  * Raw interface to IP protocol.
  */
+
+const struct pr_usrreqs rip_usrreqs = {
+	.pru_usrreq	= rip_usrreq,
+	.pru_attach	= rip_attach,
+	.pru_detach	= rip_detach,
+};
 
 /*
  * Initialize raw connection block q.

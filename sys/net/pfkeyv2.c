@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.234 2022/06/06 14:45:41 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.235 2022/08/15 09:11:38 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -199,6 +199,12 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
 	return (0);
 }
 
+const struct pr_usrreqs pfkeyv2_usrreqs = {
+	.pru_usrreq	= pfkeyv2_usrreq,
+	.pru_attach	= pfkeyv2_attach,
+	.pru_detach	= pfkeyv2_detach,
+};
+
 const struct protosw pfkeysw[] = {
 {
   .pr_type      = SOCK_RAW,
@@ -206,9 +212,7 @@ const struct protosw pfkeysw[] = {
   .pr_protocol  = PF_KEY_V2,
   .pr_flags     = PR_ATOMIC | PR_ADDR,
   .pr_output    = pfkeyv2_output,
-  .pr_usrreq    = pfkeyv2_usrreq,
-  .pr_attach    = pfkeyv2_attach,
-  .pr_detach    = pfkeyv2_detach,
+  .pr_usrreqs   = &pfkeyv2_usrreqs,
   .pr_sysctl    = pfkeyv2_sysctl,
 }
 };

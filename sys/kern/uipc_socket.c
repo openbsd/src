@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.282 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.283 2022/08/15 09:11:38 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (prp == NULL || prp->pr_attach == NULL)
+	if (prp == NULL || prp->pr_usrreqs == NULL)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
@@ -1294,7 +1294,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((error = getsock(curproc, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
-	if (sosp->so_proto->pr_usrreq != so->so_proto->pr_usrreq) {
+	if (sosp->so_proto->pr_usrreqs != so->so_proto->pr_usrreqs) {
 		error = EPROTONOSUPPORT;
 		goto frele;
 	}

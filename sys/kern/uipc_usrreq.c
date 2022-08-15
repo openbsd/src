@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.167 2022/07/02 11:49:23 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.168 2022/08/15 09:11:38 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -125,6 +125,12 @@ ino_t	unp_ino;	/* [U] prototype for fake inode numbers */
 int	unp_rights;	/* [R] file descriptors in flight */
 int	unp_defer;	/* [G] number of deferred fp to close by the GC task */
 int	unp_gcing;	/* [G] GC task currently running */
+
+const struct pr_usrreqs uipc_usrreqs = {
+	.pru_usrreq	= uipc_usrreq,
+	.pru_attach	= uipc_attach,
+	.pru_detach	= uipc_detach,
+};
 
 void
 unp_init(void)

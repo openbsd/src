@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.94 2022/08/12 14:49:15 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.95 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -299,6 +299,8 @@ extern int ip6_auto_linklocal;
 
 #define	IP6_SOIIKEY_LEN 16
 extern uint8_t	ip6_soiikey[IP6_SOIIKEY_LEN];
+
+extern const struct pr_usrreqs rip6_usrreqs;
 
 struct in6pcb;
 struct inpcb;

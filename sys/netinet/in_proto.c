@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.98 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.99 2022/08/15 09:11:38 mvs Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -189,9 +189,7 @@ const struct protosw inetsw[] = {
   .pr_input	= udp_input,
   .pr_ctlinput	= udp_ctlinput,
   .pr_ctloutput	= ip_ctloutput,
-  .pr_usrreq	= udp_usrreq,
-  .pr_attach	= udp_attach,
-  .pr_detach	= udp_detach,
+  .pr_usrreqs	= &udp_usrreqs,
   .pr_init	= udp_init,
   .pr_sysctl	= udp_sysctl
 },
@@ -203,9 +201,7 @@ const struct protosw inetsw[] = {
   .pr_input	= tcp_input,
   .pr_ctlinput	= tcp_ctlinput,
   .pr_ctloutput	= tcp_ctloutput,
-  .pr_usrreq	= tcp_usrreq,
-  .pr_attach	= tcp_attach,
-  .pr_detach	= tcp_detach,
+  .pr_usrreqs	= &tcp_usrreqs,
   .pr_init	= tcp_init,
   .pr_slowtimo	= tcp_slowtimo,
   .pr_sysctl	= tcp_sysctl
@@ -217,9 +213,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= rip_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
 },
 {
   .pr_type	= SOCK_RAW,
@@ -228,9 +222,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= icmp_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_init	= icmp_init,
   .pr_sysctl	= icmp_sysctl
 },
@@ -245,9 +237,7 @@ const struct protosw inetsw[] = {
   .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= ipip_sysctl,
   .pr_init	= ipip_init
 },
@@ -263,9 +253,7 @@ const struct protosw inetsw[] = {
   .pr_input	= ipip_input,
 #endif
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq, /* XXX */
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs, /* XXX */
 },
 #endif
 #if defined(MPLS) && NGIF > 0
@@ -275,9 +263,7 @@ const struct protosw inetsw[] = {
   .pr_protocol	= IPPROTO_MPLS,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= in_gif_input,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
 },
 #endif /* MPLS && GIF */
 {
@@ -287,9 +273,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= igmp_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_init	= igmp_init,
   .pr_fasttimo	= igmp_fasttimo,
   .pr_slowtimo	= igmp_slowtimo,
@@ -304,9 +288,7 @@ const struct protosw inetsw[] = {
   .pr_input	= ah46_input,
   .pr_ctlinput	= ah4_ctlinput,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= ah_sysctl
 },
 {
@@ -317,9 +299,7 @@ const struct protosw inetsw[] = {
   .pr_input	= esp46_input,
   .pr_ctlinput	= esp4_ctlinput,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= esp_sysctl
 },
 {
@@ -329,9 +309,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= ipcomp46_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= ipcomp_sysctl
 },
 #endif /* IPSEC */
@@ -343,9 +321,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= gre_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= gre_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &gre_usrreqs,
   .pr_sysctl	= gre_sysctl
 },
 #endif /* NGRE > 0 */
@@ -357,9 +333,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= carp_proto_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= carp_sysctl
 },
 #endif /* NCARP > 0 */
@@ -371,9 +345,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= pfsync_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= pfsync_sysctl
 },
 #endif /* NPFSYNC > 0 */
@@ -384,9 +356,7 @@ const struct protosw inetsw[] = {
   .pr_protocol	= IPPROTO_DIVERT,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= divert_usrreq,
-  .pr_attach	= divert_attach,
-  .pr_detach	= divert_detach,
+  .pr_usrreqs	= &divert_usrreqs,
   .pr_init	= divert_init,
   .pr_sysctl	= divert_sysctl
 },
@@ -399,9 +369,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= ip_etherip_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= etherip_sysctl
 },
 #endif /* NETHERIP */
@@ -412,9 +380,7 @@ const struct protosw inetsw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_input	= rip_input,
   .pr_ctloutput	= rip_ctloutput,
-  .pr_usrreq	= rip_usrreq,
-  .pr_attach	= rip_attach,
-  .pr_detach	= rip_detach,
+  .pr_usrreqs	= &rip_usrreqs,
   .pr_init	= rip_init
 }
 };

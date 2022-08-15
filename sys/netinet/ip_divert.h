@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.h,v 1.15 2022/05/05 16:44:22 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.h,v 1.16 2022/08/15 09:11:39 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,6 +64,8 @@ divstat_inc(enum divstat_counters c)
 }
 
 extern struct	inpcbtable	divbtable;
+
+extern const struct pr_usrreqs divert_usrreqs;
 
 void	 divert_init(void);
 void	 divert_packet(struct mbuf *, int, u_int16_t);

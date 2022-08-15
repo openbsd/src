@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.334 2022/06/28 10:01:13 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.335 2022/08/15 09:11:38 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2401,6 +2401,12 @@ rt_setsource(unsigned int rtableid, struct sockaddr *src)
  * Definitions of protocols supported in the ROUTE domain.
  */
 
+const struct pr_usrreqs route_usrreqs = {
+	.pru_usrreq	= route_usrreq,
+	.pru_attach	= route_attach,
+	.pru_detach	= route_detach,
+};
+
 const struct protosw routesw[] = {
 {
   .pr_type	= SOCK_RAW,
@@ -2408,9 +2414,7 @@ const struct protosw routesw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_WANTRCVD,
   .pr_output	= route_output,
   .pr_ctloutput	= route_ctloutput,
-  .pr_usrreq	= route_usrreq,
-  .pr_attach	= route_attach,
-  .pr_detach	= route_detach,
+  .pr_usrreqs	= &route_usrreqs,
   .pr_init	= route_prinit,
   .pr_sysctl	= sysctl_rtable
 }

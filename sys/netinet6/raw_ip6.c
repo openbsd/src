@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.149 2022/08/08 12:06:31 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.150 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -104,6 +104,12 @@
 struct	inpcbtable rawin6pcbtable;
 
 struct cpumem *rip6counters;
+
+const struct pr_usrreqs rip6_usrreqs = {
+	.pru_usrreq	= rip6_usrreq,
+	.pru_attach	= rip6_attach,
+	.pru_detach	= rip6_detach,
+};
 
 /*
  * Initialize raw connection block queue.

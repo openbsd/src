@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.23 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.24 2022/08/15 09:11:38 mvs Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -48,27 +48,21 @@ const struct protosw unixsw[] = {
   .pr_domain	= &unixdomain,
   .pr_protocol	= PF_UNIX,
   .pr_flags	= PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
-  .pr_usrreq	= uipc_usrreq,
-  .pr_attach	= uipc_attach,
-  .pr_detach	= uipc_detach,
+  .pr_usrreqs	= &uipc_usrreqs,
 },
 {
   .pr_type	= SOCK_SEQPACKET,
   .pr_domain	= &unixdomain,
   .pr_protocol	= PF_UNIX,
   .pr_flags	= PR_ATOMIC|PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS,
-  .pr_usrreq	= uipc_usrreq,
-  .pr_attach	= uipc_attach,
-  .pr_detach	= uipc_detach,
+  .pr_usrreqs	= &uipc_usrreqs,
 },
 {
   .pr_type	= SOCK_DGRAM,
   .pr_domain	= &unixdomain,
   .pr_protocol	= PF_UNIX,
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_RIGHTS,
-  .pr_usrreq	= uipc_usrreq,
-  .pr_attach	= uipc_attach,
-  .pr_detach	= uipc_detach,
+  .pr_usrreqs	= &uipc_usrreqs,
 }
 };
 

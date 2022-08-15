@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.281 2022/08/08 12:06:30 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.282 2022/08/15 09:11:39 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -121,6 +121,12 @@ int	udpcksum = 1;
 u_int	udp_sendspace = 9216;		/* really max datagram size */
 u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
+
+const struct pr_usrreqs udp_usrreqs = {
+	.pru_usrreq	= udp_usrreq,
+	.pru_attach	= udp_attach,
+	.pru_detach	= udp_detach,
+};
 
 const struct sysctl_bounded_args udpctl_vars[] = {
 	{ UDPCTL_CHECKSUM, &udpcksum, 0, 1 },
