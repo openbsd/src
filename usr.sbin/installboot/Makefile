@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2022/02/03 10:21:13 visa Exp $
+#	$OpenBSD: Makefile,v 1.25 2022/08/15 17:06:43 kn Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -16,6 +16,10 @@ SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
 .elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64" || ${MACHINE} == "riscv64"
+.  if ${MACHINE} == "arm64"
+CFLAGS += -DSOFTRAID
+SRCS += efi_softraid.c
+.  endif
 SRCS += efi_installboot.c
 .elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
