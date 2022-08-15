@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2020/05/02 22:21:05 procter Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/08/15 09:06:54 claudio Exp $
 
 PROG=	tcpbench
-LDADD=	-lm -lkvm -levent
-DPADD=	${LIBM} ${LIBKVM} ${LIBEVENT}
+LDADD=	-lm -levent
+DPADD=	${LIBM} ${LIBEVENT}
 
 .include <bsd.prog.mk>

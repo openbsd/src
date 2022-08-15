@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.66 2022/08/06 23:35:30 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.67 2022/08/15 09:06:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -52,9 +52,6 @@
 #include <paths.h>
 #include <math.h>
 
-#include <kvm.h>
-#include <nlist.h>
-
 #define DEFAULT_PORT "12345"
 #define DEFAULT_STATS_INTERVAL 1000 /* ms */
 #define DEFAULT_BUF (256 * 1024)
@@ -74,9 +71,7 @@ struct {
 	int	  uflag;	/* UDP mode */
 	int	  Uflag;	/* UNIX (AF_LOCAL) mode */
 	int	  Rflag;	/* randomize client write size */
-	kvm_t	 *kvmh;		/* Kvm handler */
 	char	**kvars;	/* Kvm enabled vars */
-	u_long	  ktcbtab;	/* Ktcb */
 	char	 *dummybuf;	/* IO buffer */
 	size_t	  dummybuf_len;	/* IO buffer len */
 } tcpbench, *ptb;
@@ -98,7 +93,6 @@ struct statctx {
 	struct event ev;
 	/* TCP only */
 	struct tcpservsock *tcp_ts;
-	u_long tcp_tcbaddr;
 	/* UDP only */
 	u_long udp_slice_pkts;
 };
@@ -107,20 +101,15 @@ struct statctx *udp_sc; /* singleton */
 
 static void	signal_handler(int, short, void *);
 static void	saddr_ntop(const struct sockaddr *, socklen_t, char *, size_t);
-static void	drop_gid(void);
 static void	set_slice_timer(int);
 static void	print_tcp_header(void);
-static void	kget(u_long, void *, size_t);
-static u_long	kfind_tcb(int);
-static void	kupdate_stats(u_long, struct inpcb *, struct tcpcb *,
-    struct socket *);
 static void	list_kvars(void);
 static void	check_kvar(const char *);
 static char **	check_prepare_kvars(char *);
 static void	stats_prepare(struct statctx *);
 static void	summary_display(void);
 static void	tcp_stats_display(unsigned long long, long double, float,
-    struct statctx *, struct inpcb *, struct tcpcb *, struct socket *);
+    struct statctx *, struct tcp_info *);
 static void	tcp_process_slice(int, short, void *);
 static void	tcp_server_handle_sc(int, short, void *);
 static void	tcp_server_accept(int, short, void *);
@@ -157,38 +146,49 @@ static struct {
 
 /* When adding variables, also add to tcp_stats_display() */
 static const char *allowed_kvars[] = {
-	"inpcb.inp_flags",
-	"sockb.so_rcv.sb_cc",
-	"sockb.so_rcv.sb_hiwat",
-	"sockb.so_rcv.sb_wat",
-	"sockb.so_snd.sb_cc",
-	"sockb.so_snd.sb_hiwat",
-	"sockb.so_snd.sb_wat",
-	"tcpcb.last_ack_sent",
-	"tcpcb.max_sndwnd",
-	"tcpcb.rcv_adv",
-	"tcpcb.rcv_nxt",
-	"tcpcb.rcv_scale",
-	"tcpcb.rcv_wnd",
-	"tcpcb.rfbuf_cnt",
-	"tcpcb.rfbuf_ts",
-	"tcpcb.snd_cwnd",
-	"tcpcb.snd_max",
-	"tcpcb.snd_nxt",
-	"tcpcb.snd_scale",
-	"tcpcb.snd_ssthresh",
-	"tcpcb.snd_una",
-	"tcpcb.snd_wl1",
-	"tcpcb.snd_wl2",
-	"tcpcb.snd_wnd",
-	"tcpcb.t_rcvtime",
-	"tcpcb.t_rtseq",
-	"tcpcb.t_rttmin",
-	"tcpcb.t_rtttime",
-	"tcpcb.t_rttvar",
-	"tcpcb.t_srtt",
-	"tcpcb.ts_recent",
-	"tcpcb.ts_recent_age",
+	"last_ack_recv",
+	"last_ack_sent",
+	"last_data_recv",
+	"last_data_sent",
+	"max_sndwnd",
+	"options",
+	"rcv_adv",
+	"rcv_mss",
+	"rcv_nxt",
+	"rcv_ooopack",
+	"rcv_space",
+	"rcv_up",
+	"rcv_wscale",
+	"rcv_wscale",
+	"rfbuf_cnt",
+	"rfbuf_ts",
+	"rtt",
+	"rttmin",
+	"rttvar",
+	"snd_cwnd",
+	"snd_max",
+	"snd_mss",
+	"snd_nxt",
+	"snd_rexmitpack",
+	"snd_ssthresh",
+	"snd_una",
+	"snd_wl1",
+	"snd_wl2",
+	"snd_wnd",
+	"snd_wnd",
+	"snd_wscale",
+	"snd_wscale",
+	"snd_zerowin",
+	"so_rcv_sb_cc",
+	"so_rcv_sb_hiwat",
+	"so_rcv_sb_lowat",
+	"so_rcv_sb_wat",
+	"so_snd_sb_cc",
+	"so_snd_sb_hiwat",
+	"so_snd_sb_lowat",
+	"so_snd_sb_wat",
+	"ts_recent",
+	"ts_recent_age",
 	NULL
 };
 
@@ -255,16 +255,6 @@ saddr_ntop(const struct sockaddr *addr, socklen_t alen, char *buf, size_t len)
 }
 
 static void
-drop_gid(void)
-{
-	gid_t gid;
-
-	gid = getgid();
-	if (setresgid(gid, gid, gid) == -1)
-		err(1, "setresgid");
-}
-
-static void
 set_slice_timer(int on)
 {
 	struct timeval tv;
@@ -313,153 +303,6 @@ print_tcp_header(void)
 }
 
 static void
-kget(u_long addr, void *buf, size_t size)
-{
-	if (kvm_read(ptb->kvmh, addr, buf, size) != (ssize_t)size)
-		errx(1, "kvm_read: %s", kvm_geterr(ptb->kvmh));
-}
-
-static u_long
-kfind_tcb(int sock)
-{
-	struct inpcbtable tcbtab;
-	struct inpcb *next, *prev;
-	struct inpcb inpcb, prevpcb;
-	struct tcpcb tcpcb;
-
-	struct sockaddr_storage me, them;
-	socklen_t melen, themlen;
-	struct sockaddr_in *in4;
-	struct sockaddr_in6 *in6;
-	int nretry;
-
-	nretry = 10;
-	melen = themlen = sizeof(struct sockaddr_storage);
-	if (getsockname(sock, (struct sockaddr *)&me, &melen) == -1)
-		err(1, "getsockname");
-	if (getpeername(sock, (struct sockaddr *)&them, &themlen) == -1)
-		err(1, "getpeername");
-	if (me.ss_family != them.ss_family)
-		errx(1, "%s: me.ss_family != them.ss_family", __func__);
-	if (me.ss_family != AF_INET && me.ss_family != AF_INET6)
-		errx(1, "%s: unknown socket family", __func__);
-	if (ptb->vflag >= 2) {
-		char tmp1[NI_MAXHOST + 2 + NI_MAXSERV];
-		char tmp2[NI_MAXHOST + 2 + NI_MAXSERV];
-
-		saddr_ntop((struct sockaddr *)&me, me.ss_len,
-		    tmp1, sizeof(tmp1));
-		saddr_ntop((struct sockaddr *)&them, them.ss_len,
-		    tmp2, sizeof(tmp2));
-		fprintf(stderr, "Our socket local %s remote %s\n", tmp1, tmp2);
-	}
-	if (ptb->vflag >= 2)
-		fprintf(stderr, "Using PCB table at %lu\n", ptb->ktcbtab);
-retry:
-	kget(ptb->ktcbtab, &tcbtab, sizeof(tcbtab));
-	prev = NULL;
-	next = TAILQ_FIRST(&tcbtab.inpt_queue);
-
-	if (ptb->vflag >= 2)
-		fprintf(stderr, "PCB start at %p\n", next);
-	while (next != NULL) {
-		if (ptb->vflag >= 2)
-			fprintf(stderr, "Checking PCB %p\n", next);
-		kget((u_long)next, &inpcb, sizeof(inpcb));
-		if (prev != NULL) {
-			kget((u_long)prev, &prevpcb, sizeof(prevpcb));
-			if (TAILQ_NEXT(&prevpcb, inp_queue) != next) {
-				if (nretry--) {
-					warnx("PCB prev pointer insane");
-					goto retry;
-				} else
-					errx(1, "PCB prev pointer insane,"
-					    " all attempts exhaused");
-			}
-		}
-		prev = next;
-		next = TAILQ_NEXT(&inpcb, inp_queue);
-
-		if (me.ss_family == AF_INET) {
-			if ((inpcb.inp_flags & INP_IPV6) != 0) {
-				if (ptb->vflag >= 2)
-					fprintf(stderr, "Skip: INP_IPV6");
-				continue;
-			}
-			if (ptb->vflag >= 2) {
-				char tmp1[NI_MAXHOST];
-				char tmp2[NI_MAXHOST];
-
-				inet_ntop(AF_INET, &inpcb.inp_laddr,
-				    tmp1, sizeof(tmp1));
-				inet_ntop(AF_INET, &inpcb.inp_faddr,
-				    tmp2, sizeof(tmp2));
-				fprintf(stderr, "PCB %p local: [%s]:%d "
-				    "remote: [%s]:%d\n", prev,
-				    tmp1, inpcb.inp_lport,
-				    tmp2, inpcb.inp_fport);
-			}
-			in4 = (struct sockaddr_in *)&me;
-			if (memcmp(&in4->sin_addr, &inpcb.inp_laddr,
-			    sizeof(struct in_addr)) != 0 ||
-			    in4->sin_port != inpcb.inp_lport)
-				continue;
-			in4 = (struct sockaddr_in *)&them;
-			if (memcmp(&in4->sin_addr, &inpcb.inp_faddr,
-			    sizeof(struct in_addr)) != 0 ||
-			    in4->sin_port != inpcb.inp_fport)
-				continue;
-		} else {
-			if ((inpcb.inp_flags & INP_IPV6) == 0)
-				continue;
-			if (ptb->vflag >= 2) {
-				char tmp1[NI_MAXHOST];
-				char tmp2[NI_MAXHOST];
-
-				inet_ntop(AF_INET6, &inpcb.inp_laddr6,
-				    tmp1, sizeof(tmp1));
-				inet_ntop(AF_INET6, &inpcb.inp_faddr6,
-				    tmp2, sizeof(tmp2));
-				fprintf(stderr, "PCB %p local: [%s]:%d "
-				    "remote: [%s]:%d\n", prev,
-				    tmp1, inpcb.inp_lport,
-				    tmp2, inpcb.inp_fport);
-			}
-			in6 = (struct sockaddr_in6 *)&me;
-			if (memcmp(&in6->sin6_addr, &inpcb.inp_laddr6,
-			    sizeof(struct in6_addr)) != 0 ||
-			    in6->sin6_port != inpcb.inp_lport)
-				continue;
-			in6 = (struct sockaddr_in6 *)&them;
-			if (memcmp(&in6->sin6_addr, &inpcb.inp_faddr6,
-			    sizeof(struct in6_addr)) != 0 ||
-			    in6->sin6_port != inpcb.inp_fport)
-				continue;
-		}
-		kget((u_long)inpcb.inp_ppcb, &tcpcb, sizeof(tcpcb));
-		if (tcpcb.t_state != TCPS_ESTABLISHED) {
-			if (ptb->vflag >= 2)
-				fprintf(stderr, "Not established\n");
-			continue;
-		}
-		if (ptb->vflag >= 2)
-			fprintf(stderr, "Found PCB at %p\n", prev);
-		return ((u_long)prev);
-	}
-
-	errx(1, "No matching PCB found");
-}
-
-static void
-kupdate_stats(u_long tcbaddr, struct inpcb *inpcb,
-    struct tcpcb *tcpcb, struct socket *sockb)
-{
-	kget(tcbaddr, inpcb, sizeof(*inpcb));
-	kget((u_long)inpcb->inp_ppcb, tcpcb, sizeof(*tcpcb));
-	kget((u_long)inpcb->inp_socket, sockb, sizeof(*sockb));
-}
-
-static void
 check_kvar(const char *var)
 {
 	u_int i;
@@ -503,8 +346,6 @@ stats_prepare(struct statctx *sc)
 	sc->buf = ptb->dummybuf;
 	sc->buflen = ptb->dummybuf_len;
 
-	if (ptb->kvars)
-		sc->tcp_tcbaddr = kfind_tcb(sc->fd);
 	if (clock_gettime_tv(CLOCK_MONOTONIC, &sc->t_start) == -1)
 		err(1, "clock_gettime_tv");
 	sc->t_last = sc->t_start;
@@ -544,8 +385,7 @@ summary_display(void)
 
 static void
 tcp_stats_display(unsigned long long total_elapsed, long double mbps,
-    float bwperc, struct statctx *sc, struct inpcb *inpcb,
-    struct tcpcb *tcpcb, struct socket *sockb)
+    float bwperc, struct statctx *sc, struct tcp_info *tcpi)
 {
 	int j;
 
@@ -553,48 +393,54 @@ tcp_stats_display(unsigned long long total_elapsed, long double mbps,
 	    mbps, bwperc);
 
 	if (ptb->kvars != NULL) {
-		kupdate_stats(sc->tcp_tcbaddr, inpcb, tcpcb,
-		    sockb);
-
 		for (j = 0; ptb->kvars[j] != NULL; j++) {
 #define S(a) #a
 #define P(b, v, f)							\
-			if (strcmp(ptb->kvars[j], S(b.v)) == 0) {	\
-				printf("%s"f, j > 0 ? "," : "", b->v);	\
+			if (strcmp(ptb->kvars[j], S(v)) == 0) {		\
+				printf("%s"f, j > 0 ? "," : "", b->tcpi_##v); \
 				continue;				\
 			}
-			P(inpcb, inp_flags, "0x%08x")
-			P(sockb, so_rcv.sb_cc, "%lu")
-			P(sockb, so_rcv.sb_hiwat, "%lu")
-			P(sockb, so_rcv.sb_wat, "%lu")
-			P(sockb, so_snd.sb_cc, "%lu")
-			P(sockb, so_snd.sb_hiwat, "%lu")
-			P(sockb, so_snd.sb_wat, "%lu")
-			P(tcpcb, last_ack_sent, "%u")
-			P(tcpcb, max_sndwnd, "%lu")
-			P(tcpcb, rcv_adv, "%u")
-			P(tcpcb, rcv_nxt, "%u")
-			P(tcpcb, rcv_scale, "%u")
-			P(tcpcb, rcv_wnd, "%lu")
-			P(tcpcb, rfbuf_cnt, "%u")
-			P(tcpcb, rfbuf_ts, "%u")
-			P(tcpcb, snd_cwnd, "%lu")
-			P(tcpcb, snd_max, "%u")
-			P(tcpcb, snd_nxt, "%u")
-			P(tcpcb, snd_scale, "%u")
-			P(tcpcb, snd_ssthresh, "%lu")
-			P(tcpcb, snd_una, "%u")
-			P(tcpcb, snd_wl1, "%u")
-			P(tcpcb, snd_wl2, "%u")
-			P(tcpcb, snd_wnd, "%lu")
-			P(tcpcb, t_rcvtime, "%u")
-			P(tcpcb, t_rtseq, "%u")
-			P(tcpcb, t_rttmin, "%hu")
-			P(tcpcb, t_rtttime, "%u")
-			P(tcpcb, t_rttvar, "%hu")
-			P(tcpcb, t_srtt, "%hu")
-			P(tcpcb, ts_recent, "%u")
-			P(tcpcb, ts_recent_age, "%u")
+			P(tcpi, last_ack_recv, "%u")
+			P(tcpi, last_ack_sent, "%u")
+			P(tcpi, last_data_recv, "%u")
+			P(tcpi, last_data_sent, "%u")
+			P(tcpi, max_sndwnd, "%u")
+			P(tcpi, options, "%hhu")
+			P(tcpi, rcv_adv, "%u")
+			P(tcpi, rcv_mss, "%u")
+			P(tcpi, rcv_nxt, "%u")
+			P(tcpi, rcv_ooopack, "%u")
+			P(tcpi, rcv_space, "%u")
+			P(tcpi, rcv_up, "%u")
+			P(tcpi, rcv_wscale, "%hhu")
+			P(tcpi, rfbuf_cnt, "%u")
+			P(tcpi, rfbuf_ts, "%u")
+			P(tcpi, rtt, "%u")
+			P(tcpi, rttmin, "%u")
+			P(tcpi, rttvar, "%u")
+			P(tcpi, snd_cwnd, "%u")
+			P(tcpi, snd_max, "%u")
+			P(tcpi, snd_mss, "%u")
+			P(tcpi, snd_nxt, "%u")
+			P(tcpi, snd_rexmitpack, "%u")
+			P(tcpi, snd_ssthresh, "%u")
+			P(tcpi, snd_una, "%u")
+			P(tcpi, snd_wl1, "%u")
+			P(tcpi, snd_wl2, "%u")
+			P(tcpi, snd_wnd, "%u")
+			P(tcpi, snd_wnd, "%u")
+			P(tcpi, snd_wscale, "%hhu")
+			P(tcpi, snd_zerowin, "%u")
+			P(tcpi, so_rcv_sb_cc, "%u")
+			P(tcpi, so_rcv_sb_hiwat, "%u")
+			P(tcpi, so_rcv_sb_lowat, "%u")
+			P(tcpi, so_rcv_sb_wat, "%u")
+			P(tcpi, so_snd_sb_cc, "%u")
+			P(tcpi, so_snd_sb_hiwat, "%u")
+			P(tcpi, so_snd_sb_lowat, "%u")
+			P(tcpi, so_snd_sb_wat, "%u")
+			P(tcpi, ts_recent, "%u")
+			P(tcpi, ts_recent_age, "%u")
 #undef S
 #undef P
 		}
@@ -610,9 +456,8 @@ tcp_process_slice(int fd, short event, void *bula)
 	float bwperc;
 	struct statctx *sc;
 	struct timeval t_cur, t_diff;
-	struct inpcb inpcb;
-	struct tcpcb tcpcb;
-	struct socket sockb;
+	struct tcp_info tcpi;
+	socklen_t tcpilen;
 
 	if (TAILQ_EMPTY(&sc_queue))
 		return; /* don't pollute stats */
@@ -622,9 +467,12 @@ tcp_process_slice(int fd, short event, void *bula)
 	TAILQ_FOREACH(sc, &sc_queue, entry) {
 		if (clock_gettime_tv(CLOCK_MONOTONIC, &t_cur) == -1)
 			err(1, "clock_gettime_tv");
-		if (ptb->kvars != NULL) /* process kernel stats */
-			kupdate_stats(sc->tcp_tcbaddr, &inpcb, &tcpcb,
-			    &sockb);
+		if (ptb->kvars != NULL) { /* process kernel stats */
+			tcpilen = sizeof(tcpi);
+			if (getsockopt(sc->fd, IPPROTO_TCP, TCP_INFO,
+			    &tcpi, &tcpilen) == -1)
+				err(1, "get tcp_info");
+		}
 
 		timersub(&t_cur, &sc->t_start, &t_diff);
 		total_elapsed = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
@@ -636,8 +484,7 @@ tcp_process_slice(int fd, short event, void *bula)
 		mbps = (sc->bytes * 8) / (since_last * 1000.0);
 		slice_mbps += mbps;
 
-		tcp_stats_display(total_elapsed, mbps, bwperc, sc,
-		    &inpcb, &tcpcb, &sockb);
+		tcp_stats_display(total_elapsed, mbps, bwperc, sc, &tcpi);
 
 		sc->t_last = t_cur;
 		sc->bytes = 0;
@@ -1150,7 +997,6 @@ main(int argc, char **argv)
 	struct rlimit rl;
 	int ch, herr, nconn;
 	int family = PF_UNSPEC;
-	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
 	struct event ev_sigint, ev_sigterm, ev_sighup, ev_siginfo, ev_progtimer;
 	struct sockaddr_un sock_un;
@@ -1161,7 +1007,6 @@ main(int argc, char **argv)
 	ptb->dummybuf_len = 0;
 	ptb->Dflag = 0;
 	ptb->Sflag = ptb->sflag = ptb->vflag = ptb->Rflag = ptb->Uflag = 0;
-	ptb->kvmh  = NULL;
 	ptb->kvars = NULL;
 	ptb->rflag = DEFAULT_STATS_INTERVAL;
 	ptb->Tflag = -1;
@@ -1272,7 +1117,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (pledge("stdio unveil rpath dns inet unix id proc", NULL) == -1)
+	if (pledge("stdio unveil rpath dns inet unix id", NULL) == -1)
 		err(1, "pledge");
 
 	argv += optind;
@@ -1280,24 +1125,6 @@ main(int argc, char **argv)
 	if ((argc != (ptb->sflag && !ptb->Uflag ? 0 : 1)) ||
 	    (UDP_MODE && (ptb->kvars || nconn != 1)))
 		usage();
-
-	if (ptb->kvars) {
-		if (unveil(_PATH_MEM, "r") == -1)
-			err(1, "unveil %s", _PATH_MEM);
-		if (unveil(_PATH_KMEM, "r") == -1)
-			err(1, "unveil %s", _PATH_KMEM);
-		if (unveil(_PATH_KSYMS, "r") == -1)
-			err(1, "unveil %s", _PATH_KSYMS);
-
-		if ((ptb->kvmh = kvm_openfiles(NULL, NULL, NULL,
-		    O_RDONLY, kerr)) == NULL)
-			errx(1, "kvm_open: %s", kerr);
-		drop_gid();
-		if (kvm_nlist(ptb->kvmh, nl) < 0 || nl[0].n_type == 0)
-			errx(1, "kvm: no namelist");
-		ptb->ktcbtab = nl[0].n_value;
-	} else
-		drop_gid();
 
 	if (!ptb->sflag || ptb->Uflag)
 		mainstats.host = host = argv[0];
@@ -1421,7 +1248,7 @@ main(int argc, char **argv)
 		}
 		client_init(aitop, nconn, aib);
 
-		if (pledge("stdio", NULL) == -1)
+		if (pledge("stdio inet", NULL) == -1)
 			err(1, "pledge");
 	}
 
