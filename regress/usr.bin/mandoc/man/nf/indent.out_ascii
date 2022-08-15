@@ -9,13 +9,22 @@ DDEESSCCRRIIPPTTIIOONN
        two words
        and three words
        This is a very long line; because it is indented, it is a bit too long to fit.
-       blank line:
+       completely blank line:
 
-       line with only a zero-width space:
+       line containing a blank character:
 
-       line with only a normal space character:
+       line containing two blank characters:
 
+       line containing space tab space:
+
+       line containing a zero-width space:
+
+       line containing an invalid numbered character escape:
+
+       line containing an invalid named character escape:
+
+       line containing a font escape:
        end of literal
        He is some more regular text.
 
-OpenBSD                         January 4, 2011                   NF-INDENT(1)
+OpenBSD                         August 15, 2022                   NF-INDENT(1)

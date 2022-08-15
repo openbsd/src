@@ -1,5 +1,5 @@
-.\" $OpenBSD: indent.in,v 1.4 2017/07/04 14:53:24 schwarze Exp $
-.TH NF-INDENT 1 "January 4, 2011"
+.\" $OpenBSD: indent.in,v 1.5 2022/08/15 18:55:29 schwarze Exp $
+.TH NF-INDENT 1 "August 15, 2022"
 .SH NAME
 nf-indent \- indentation of literal blocks
 .SH DESCRIPTION
@@ -10,12 +10,22 @@ oneword
 two words
 and three words
 This is a very long line; because it is indented, it is a bit too long to fit.
-blank line:
+completely blank line:
 
-line with only a zero-width space:
+line containing a blank character:
+  
+line containing two blank characters:
+  
+line containing space tab space:
+ 	 
+line containing a zero-width space:
 \&
-line with only a normal space character:
- 
+line containing an invalid numbered character escape:
+\N'257'
+line containing an invalid named character escape:
+\[foobar]
+line containing a font escape:
+\fR
 end of literal
 .fi
 He is some more
