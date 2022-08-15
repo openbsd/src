@@ -1,4 +1,4 @@
-/* $OpenBSD: term.c,v 1.146 2022/04/27 13:30:19 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.147 2022/08/15 10:21:01 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -266,22 +266,11 @@ term_fill(struct termp *p, size_t *nbr, size_t *vbr, size_t vtarget)
 			vis -= (*p->width)(p, p->tcol->buf[ic - 1]);
 			continue;
 
-		case '\t':  /* Normal ASCII whitespace. */
 		case ' ':
 		case ASCII_BREAK:  /* Escape \: (breakpoint). */
-			switch (p->tcol->buf[ic]) {
-			case '\t':
-				vn = term_tab_next(vis);
-				break;
-			case ' ':
-				vn = vis + (*p->width)(p, ' ');
-				break;
-			case ASCII_BREAK:
-				vn = vis;
-				break;
-			default:
-				abort();
-			}
+			vn = vis;
+			if (p->tcol->buf[ic] == ' ')
+				vn += (*p->width)(p, ' ');
 			/* Can break at the end of a word. */
 			if (breakline || vn > vtarget)
 				break;
@@ -315,12 +304,19 @@ term_fill(struct termp *p, size_t *nbr, size_t *vbr, size_t vtarget)
 			*vbr = vis;
 			continue;
 
-		case ASCII_NBRSP:  /* Non-breakable space. */
-			p->tcol->buf[ic] = ' ';
-			/* FALLTHROUGH */
-		default:  /* Printable character. */
+		default:
+			switch (p->tcol->buf[ic]) {
+			case '\t':
+				vis = term_tab_next(vis);
+				break;
+			case ASCII_NBRSP:  /* Non-breakable space. */
+				p->tcol->buf[ic] = ' ';
+				/* FALLTHROUGH */
+			default:  /* Printable character. */
+				vis += (*p->width)(p, p->tcol->buf[ic]);
+				break;
+			}
 			graph = 1;
-			vis += (*p->width)(p, p->tcol->buf[ic]);
 			if (vis > vtarget && *nbr > 0)
 				return;
 			continue;
