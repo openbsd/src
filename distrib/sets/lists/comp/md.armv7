@@ -22,7 +22,6 @@
 ./usr/include/arm/fdt.h
 ./usr/include/arm/fenv.h
 ./usr/include/arm/fiq.h
-./usr/include/arm/fp.h
 ./usr/include/arm/frame.h
 ./usr/include/arm/ieee.h
 ./usr/include/arm/ieeefp.h
@@ -46,7 +45,6 @@
 ./usr/include/arm/signal.h
 ./usr/include/arm/softintr.h
 ./usr/include/arm/spinlock.h
-./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
 ./usr/include/arm/sysreg.h
 ./usr/include/arm/tcb.h
@@ -72,7 +70,6 @@
 ./usr/include/armv7/exec.h
 ./usr/include/armv7/fdt.h
 ./usr/include/armv7/fenv.h
-./usr/include/armv7/fp.h
 ./usr/include/armv7/frame.h
 ./usr/include/armv7/ieee.h
 ./usr/include/armv7/ieeefp.h
@@ -80,7 +77,6 @@
 ./usr/include/armv7/limits.h
 ./usr/include/armv7/loadfile_machdep.h
 ./usr/include/armv7/machine_reg.h
-./usr/include/armv7/math.h
 ./usr/include/armv7/mplock.h
 ./usr/include/armv7/mutex.h
 ./usr/include/armv7/openpromio.h
@@ -93,7 +89,6 @@
 ./usr/include/armv7/ptrace.h
 ./usr/include/armv7/reg.h
 ./usr/include/armv7/reloc.h
-./usr/include/armv7/rtc.h
 ./usr/include/armv7/setjmp.h
 ./usr/include/armv7/signal.h
 ./usr/include/armv7/spinlock.h
