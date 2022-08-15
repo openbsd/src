@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_arm64.c,v 1.3 2021/06/02 22:44:27 krw Exp $	*/
+/*	$OpenBSD: softraid_arm64.c,v 1.4 2022/08/15 13:13:41 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -285,6 +285,7 @@ srprobe(void)
 			break;
 
 		case 1:
+		case 0x1C:
 			if (bv->sbv_chunk_no == bv->sbv_chunks_found)
 				bv->sbv_state = BIOC_SVONLINE;
 			else if (bv->sbv_chunks_found > 0)
@@ -341,7 +342,7 @@ sr_strategy(struct sr_boot_volume *bv, int rw, daddr_t blk, size_t size,
 		/* XXX - If I/O failed we should try another chunk... */
 		return dip->strategy(dip, rw, blk, size, buf, rsize);
 
-	} else if (bv->sbv_level == 'C') {
+	} else if (bv->sbv_level == 'C' || bv->sbv_level == 0x1C) {
 
 		/* Select first online chunk. */
 		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
@@ -604,7 +605,8 @@ sropen(struct open_file *f, ...)
 		return EADAPT;
 	}
 
-	if (bv->sbv_level == 'C' && bv->sbv_keys == NULL)
+	if ((bv->sbv_level == 'C' || bv->sbv_level == 0x1C)
+	    && bv->sbv_keys == NULL)
 		if (sr_crypto_unlock_volume(bv) != 0)
 			return EPERM;
 
