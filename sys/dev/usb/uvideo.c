@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.217 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.218 2022/08/15 01:35:07 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -64,7 +64,6 @@ struct uvideo_softc {
 
 	struct device				*sc_videodev;
 
-	int					 sc_enabled;
 	int					 sc_max_ctrl_size;
 	int					 sc_max_fbuf_size;
 	int					 sc_negotiated_flag;
@@ -113,8 +112,6 @@ struct uvideo_softc {
 						    uint8_t *, int);
 };
 
-int		uvideo_enable(void *);
-void		uvideo_disable(void *);
 int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
 		    void *);
 int		uvideo_close(void *);
@@ -390,39 +387,6 @@ struct uvideo_devs {
 };
 #define uvideo_lookup(v, p) \
 	((struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
-
-int
-uvideo_enable(void *v)
-{
-	struct uvideo_softc *sc = v;
-
-	DPRINTF(1, "%s: uvideo_enable sc=%p\n", DEVNAME(sc), sc);
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (EIO);
-
-	if (sc->sc_enabled)
-		return (EBUSY);
-
-	sc->sc_enabled = 1;
-
-	return (0);
-}
-
-void
-uvideo_disable(void *v)
-{
-	struct uvideo_softc *sc = v;
-
-	DPRINTF(1, "%s: uvideo_disable sc=%p\n", DEVNAME(sc), sc);
-
-	if (!sc->sc_enabled) {
-		printf("uvideo_disable: already disabled!\n");
-		return;
-	}
-
-	sc->sc_enabled = 0;
-}
 
 int
 uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
