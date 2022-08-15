@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.293 2022/08/15 03:12:12 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.294 2022/08/15 15:53:45 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -230,38 +230,6 @@ void			 vmspace_validate(struct vm_map*);
 #define VM_MAP_KSIZE_INIT	(512 * (vaddr_t)PAGE_SIZE)
 #define VM_MAP_KSIZE_DELTA	(256 * (vaddr_t)PAGE_SIZE)
 #define VM_MAP_KSIZE_ALLOCMUL	4
-/*
- * When selecting a random free-space block, look at most FSPACE_DELTA blocks
- * ahead.
- */
-#define FSPACE_DELTA		8
-/*
- * Put allocations adjecent to previous allocations when the free-space tree
- * is larger than FSPACE_COMPACT entries.
- *
- * Alignment and PMAP_PREFER may still cause the entry to not be fully
- * adjecent. Note that this strategy reduces memory fragmentation (by leaving
- * a large space before or after the allocation).
- */
-#define FSPACE_COMPACT		128
-/*
- * Make the address selection skip at most this many bytes from the start of
- * the free space in which the allocation takes place.
- *
- * The main idea behind a randomized address space is that an attacker cannot
- * know where to target his attack. Therefore, the location of objects must be
- * as random as possible. However, the goal is not to create the most sparse
- * map that is possible.
- * FSPACE_MAXOFF pushes the considered range in bytes down to less insane
- * sizes, thereby reducing the sparseness. The biggest randomization comes
- * from fragmentation, i.e. FSPACE_COMPACT.
- */
-#define FSPACE_MAXOFF		((vaddr_t)32 * 1024 * 1024)
-/*
- * Allow for small gaps in the overflow areas.
- * Gap size is in bytes and does not have to be a multiple of page-size.
- */
-#define FSPACE_BIASGAP		((vaddr_t)32 * 1024)
 
 /* auto-allocate address lower bound */
 #define VMMAP_MIN_ADDR		PAGE_SIZE
