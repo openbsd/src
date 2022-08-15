@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.74 2022/03/04 01:46:07 deraadt Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.75 2022/08/15 09:40:14 op Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -507,14 +507,8 @@ server_file_index(struct httpd *env, struct client *clt)
 	if ((evb = evbuffer_new()) == NULL)
 		goto abort;
 
-	if ((namesize = scandir(path, &namelist, NULL, alphasort)) == -1)
-		goto abort;
-
-	/* Indicate failure but continue going through the list */
-	skip = 0;
-
 	if ((escapedpath = escape_html(desc->http_path)) == NULL)
-		goto fail;
+		goto abort;
 
 	/* A CSS stylesheet allows minimal customization by the user */
 	style = "body { background-color: white; color: black; font-family: "
@@ -535,10 +529,18 @@ server_file_index(struct httpd *env, struct client *clt)
 	    "<body>\n"
 	    "<h1>Index of %s</h1>\n"
 	    "<hr>\n<pre>\n",
-	    escapedpath, style, escapedpath) == -1)
-		skip = 1;
+	    escapedpath, style, escapedpath) == -1) {
+		free(escapedpath);
+		goto abort;
+	}
 
 	free(escapedpath);
+
+	if ((namesize = scandir(path, &namelist, NULL, alphasort)) == -1)
+		goto abort;
+
+	/* Indicate failure but continue going through the list */
+	skip = 0;
 
 	for (i = 0; i < namesize; i++) {
 		struct stat subst;
@@ -556,10 +558,17 @@ server_file_index(struct httpd *env, struct client *clt)
 		strftime(tmstr, sizeof(tmstr), "%d-%h-%Y %R", &tm);
 		namewidth = 51 - strlen(dp->d_name);
 
-		if ((escapeduri = url_encode(dp->d_name)) == NULL)
-			goto fail;
-		if ((escapedhtml = escape_html(dp->d_name)) == NULL)
-			goto fail;
+		if ((escapeduri = url_encode(dp->d_name)) == NULL) {
+			skip = 1;
+			free(dp);
+			continue;
+		}
+		if ((escapedhtml = escape_html(dp->d_name)) == NULL) {
+			skip = 1;
+			free(escapeduri);
+			free(dp);
+			continue;
+		}
 
 		if (dp->d_name[0] == '.' &&
 		    !(dp->d_name[1] == '.' && dp->d_name[2] == '\0')) {
