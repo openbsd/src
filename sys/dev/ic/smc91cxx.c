@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.51 2022/01/09 05:42:42 jsg Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.52 2022/08/15 01:59:00 jsg Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -1138,26 +1138,6 @@ smc91cxx_disable(struct smc91cxx_softc *sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_flags &= ~SMC_FLAGS_ENABLED;
 	}
-}
-
-int
-smc91cxx_activate(struct device *self, int act)
-{
-#if 0
-	struct smc91cxx_softc *sc = (struct smc91cxx_softc *)self;
-#endif
-	int rv = 0, s;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_DEACTIVATE:
-#if 0
-		if_deactivate(&sc->sc_ic.ic_if);
-#endif
-		break;
-	}
-	splx(s);
-	return(rv);
 }
 
 int
