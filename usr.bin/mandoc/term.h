@@ -1,4 +1,4 @@
-/* $OpenBSD: term.h,v 1.76 2021/10/04 18:56:24 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.77 2022/08/15 13:01:40 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017, 2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -56,6 +56,7 @@ struct	termp_col {
 	size_t		  col;		/* Byte in buf to be written. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  offset;	/* Current left margin. */
+	size_t		  taboff;	/* Offset for literal tabs. */
 };
 
 struct	termp {

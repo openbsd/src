@@ -1,4 +1,4 @@
-/* $OpenBSD: man_term.c,v 1.190 2022/04/27 17:04:15 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.191 2022/08/15 13:01:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -973,6 +973,7 @@ out:
 	    ! (p->flags & (TERMP_NOBREAK | TERMP_NONEWLINE)) &&
 	    (n->next == NULL || n->next->flags & NODE_LINE)) {
 		p->flags |= TERMP_BRNEVER | TERMP_NOSPACE;
+		p->tcol->taboff = 0;
 		if (n->string != NULL && *n->string != '\0')
 			term_flushln(p);
 		else
