@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.39 2022/01/01 18:52:36 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.40 2022/08/15 13:33:22 jsg Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -36,10 +36,6 @@
 #include <sys/signalvar.h>
 #include <sys/user.h>
 
-#ifdef KDB
-#include <sys/kdb.h>
-#endif
-
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
@@ -48,11 +44,6 @@
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/vmparam.h>
-
-
-#ifdef KDB
-#include <machine/db_machdep.h>
-#endif
 
 #ifdef DDB
 #include <ddb/db_output.h>
