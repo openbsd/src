@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.29 2021/03/16 09:14:58 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.30 2022/08/15 09:10:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -232,5 +232,18 @@ control_notify_session_window_changed(struct session *s)
 
 		control_write(c, "%%session-window-changed $%u @%u", s->id,
 		    s->curw->window->id);
+	}
+}
+
+void
+control_notify_paste_buffer_changed(const char *name)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			continue;
+
+		control_write(c, "%%paste-changed %s", name);
 	}
 }

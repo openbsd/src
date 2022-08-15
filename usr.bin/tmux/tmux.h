@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1180 2022/08/15 08:54:03 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1181 2022/08/15 09:10:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2154,6 +2154,7 @@ void	notify_winlink(const char *, struct winlink *);
 void	notify_session_window(const char *, struct session *, struct window *);
 void	notify_window(const char *, struct window *);
 void	notify_pane(const char *, struct window_pane *);
+void	notify_paste_buffer(const char *);
 
 /* options.c */
 struct options	*options_create(struct options *);
@@ -3174,6 +3175,7 @@ void	control_notify_session_renamed(struct session *);
 void	control_notify_session_created(struct session *);
 void	control_notify_session_closed(struct session *);
 void	control_notify_session_window_changed(struct session *);
+void	control_notify_paste_buffer_changed(const char *);
 
 /* session.c */
 extern struct sessions sessions;
