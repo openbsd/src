@@ -1,4 +1,4 @@
-/* $OpenBSD: man.c,v 1.136 2022/04/28 10:17:37 schwarze Exp $ */
+/* $OpenBSD: man.c,v 1.137 2022/08/16 22:59:48 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017-2019,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -74,16 +74,7 @@ man_hasc(char *start)
 void
 man_descope(struct roff_man *man, int line, int offs, char *start)
 {
-	/* Trailing \c keeps next-line scope open. */
-
-	if (start != NULL && man_hasc(start) != NULL)
-		return;
-
-	/*
-	 * Co-ordinate what happens with having a next-line scope open:
-	 * first close out the element scopes (if applicable),
-	 * then close out the block scope (also if applicable).
-	 */
+	/* First close out all next-line element scopes, if any. */
 
 	if (man->flags & MAN_ELINE) {
 		while (man->last->parent->type != ROFFT_ROOT &&
@@ -91,6 +82,14 @@ man_descope(struct roff_man *man, int line, int offs, char *start)
 			man_unscope(man, man->last->parent);
 		man->flags &= ~MAN_ELINE;
 	}
+
+	/* Trailing \c keeps next-line block scope open. */
+
+	if (start != NULL && man_hasc(start) != NULL)
+		return;
+
+	/* Close out the next-line block scope, if there is one. */
+
 	if ( ! (man->flags & MAN_BLINE))
 		return;
 	man_unscope(man, man->last->parent);
