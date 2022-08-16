@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.7 2021/10/25 19:54:29 kn Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.8 2022/08/16 16:18:16 kn Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -78,11 +78,8 @@ main(int argc, char **argv)
 
 	action = VND_CONFIG;
 
-	while ((ch = getopt(argc, argv, "ckK:lo:S:t:uv")) != -1) {
+	while ((ch = getopt(argc, argv, "kK:lo:S:t:uv")) != -1) {
 		switch (ch) {
-		case 'c':
-			/* backwards compat: delete in 2020 */
-			break;
 		case 'k':
 			opt_k = 1;
 			break;
