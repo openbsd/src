@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.266 2022/06/07 09:41:22 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.267 2022/08/16 17:29:18 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -37,14 +37,6 @@
 #include "roff_int.h"
 #include "tbl_parse.h"
 #include "eqn_parse.h"
-
-/*
- * ASCII_ESC is used to signal from roff_getarg() to roff_expand()
- * that an escape sequence resulted from copy-in processing and
- * needs to be checked or interpolated.  As it is used nowhere
- * else, it is defined here rather than in a header file.
- */
-#define	ASCII_ESC	27
 
 /* Maximum number of string expansions per line, to break infinite loops. */
 #define	EXPAND_LIMIT	1000
@@ -1638,8 +1630,13 @@ roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 				cp++;
 				break;
 			case '\\':
-				newesc = 1;
+				/*
+				 * Signal to roff_expand() that an escape
+				 * sequence resulted from copy-in processing
+				 * and needs to be checked or interpolated.
+				 */
 				cp[-pairs] = ASCII_ESC;
+				newesc = 1;
 				pairs++;
 				cp++;
 				break;
