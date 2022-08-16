@@ -1,6 +1,6 @@
-/* $OpenBSD: mdoc_term.c,v 1.279 2020/04/06 09:55:49 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.280 2022/08/16 17:44:53 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2020, 2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
@@ -318,8 +318,11 @@ print_mdoc_node(DECL_ARGS)
 		    (p->flags & TERMP_NONEWLINE) == 0)
 			term_newln(p);
 		p->flags |= TERMP_BRNEVER;
-	} else
+	} else {
+		if (n->flags & NODE_LINE)
+			term_tab_ref(p);
 		p->flags &= ~TERMP_BRNEVER;
+	}
 
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;

@@ -1,7 +1,7 @@
-/* $OpenBSD: term.h,v 1.77 2022/08/15 13:01:40 schwarze Exp $ */
+/* $OpenBSD: term.h,v 1.78 2022/08/16 17:44:53 schwarze Exp $ */
 /*
+ * Copyright (c) 2011-2015,2017,2019,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2015, 2017, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,6 +150,7 @@ size_t		  term_len(const struct termp *, size_t);
 
 void		  term_tab_set(const struct termp *, const char *);
 void		  term_tab_iset(size_t);
+void		  term_tab_ref(struct termp *);
 size_t		  term_tab_next(size_t);
 void		  term_tab_free(void);
 
