@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.48 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: sysctl.2,v 1.49 2022/08/16 13:29:52 visa Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 16 2022 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -460,7 +460,6 @@ information.
 .It Dv KERN_NGROUPS Ta "integer" Ta "no"
 .It Dv KERN_NOSUIDCOREDUMP Ta "integer" Ta "yes"
 .It Dv KERN_NPROCS Ta "integer" Ta "no"
-.It Dv KERN_NSELCOLL Ta "integer" Ta "no"
 .It Dv KERN_NTHREADS Ta "integer" Ta "no"
 .It Dv KERN_NUMVNODES Ta "integer" Ta "no"
 .It Dv KERN_OSRELEASE Ta "string" Ta "no"
@@ -716,10 +715,6 @@ Whether a process may dump core after changing user or group ID:
 .El
 .It Dv KERN_NPROCS Pq Va kern.nprocs
 The number of entries in the kernel process table.
-.It Dv KERN_NSELCOLL Pq Va kern.nselcoll
-Number of
-.Xr select 2
-collisions.
 .It Dv KERN_NTHREADS Pq Va kern.nthreads
 The number of entries in the kernel thread table.
 .It Dv KERN_NUMVNODES Pq Va kern.numvnodes
