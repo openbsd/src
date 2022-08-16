@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.43 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.44 2022/08/16 13:52:41 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -203,12 +203,13 @@ rm_tree(char **argv)
 		switch (p->fts_info) {
 		case FTS_DP:
 		case FTS_DNR:
-			if (!rmdir(p->fts_accpath) ||
-			    (fflag && errno == ENOENT)) {
+			if (!rmdir(p->fts_accpath)) {
 				if (vflag)
 					fprintf(stdout, "%s\n", p->fts_path);
 				continue;
 			}
+			if (fflag && errno == ENOENT)
+				continue;
 			break;
 
 		case FTS_F:
@@ -218,12 +219,13 @@ rm_tree(char **argv)
 				    FTS_NSOK ? NULL : p->fts_statp);
 			/* FALLTHROUGH */
 		default:
-			if (!unlink(p->fts_accpath) ||
-			    (fflag && errno == ENOENT)) {
+			if (!unlink(p->fts_accpath)) {
 				if (vflag)
 					fprintf(stdout, "%s\n", p->fts_path);
 				continue;
 			}
+			if (fflag && errno == ENOENT)
+				continue;
 		}
 		warn("%s", p->fts_path);
 		eval = 1;
@@ -271,7 +273,7 @@ rm_file(char **argv)
 		if (rval && (!fflag || errno != ENOENT)) {
 			warn("%s", f);
 			eval = 1;
-		} else if (vflag)
+		} else if (rval == 0 && vflag)
 			(void)fprintf(stdout, "%s\n", f);
 	}
 }
