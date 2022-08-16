@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.562 2022/08/10 14:17:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.563 2022/08/16 08:14:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3056,8 +3056,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 			kf.flags |= F_REJECT;
 		if (prefix_nhflags(p) == NEXTHOP_BLACKHOLE)
 			kf.flags |= F_BLACKHOLE;
-		memcpy(&kf.nexthop, &prefix_nexthop(p)->true_nexthop,
-		    sizeof(kf.nexthop));
+		kf.nexthop = prefix_nexthop(p)->exit_nexthop;
 		strlcpy(kf.label, rtlabel_id2name(prefix_aspath(p)->rtlabelid),
 		    sizeof(kf.label));
 	}
@@ -3072,13 +3071,6 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
 			if (!rde_l3vpn_import(prefix_communities(p), vpn))
 				continue;
-			/* must send exit_nexthop so that correct MPLS tunnel
-			 * is chosen
-			 */
-			if (type == IMSG_KROUTE_CHANGE)
-				memcpy(&kf.nexthop,
-				    &prefix_nexthop(p)->exit_nexthop,
-				    sizeof(kf.nexthop));
 			/* XXX not ideal but this will change */
 			kf.ifindex = if_nametoindex(vpn->ifmpe);
 			if (imsg_compose(ibuf_main, type, vpn->rtableid, 0, -1,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.288 2022/08/10 14:21:24 tb Exp $ */
+/*	$OpenBSD: kroute.c,v 1.289 2022/08/16 08:14:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -160,8 +160,10 @@ void		 kif_clear(void);
 
 int		 kroute_validate(struct kroute *);
 int		 kroute6_validate(struct kroute6 *);
+int		 knexthop_true_nexthop(struct ktable *, struct kroute_full *);
 void		 knexthop_validate(struct ktable *, struct knexthop *);
 void		 knexthop_track(struct ktable *, u_short);
+void		 knexthop_update(struct ktable *, struct kroute_full *);
 void		 knexthop_send_update(struct knexthop *);
 struct kroute	*kroute_match(struct ktable *, struct bgpd_addr *, int);
 struct kroute6	*kroute6_match(struct ktable *, struct bgpd_addr *, int);
@@ -453,6 +455,8 @@ kr_change(u_int rtableid, struct kroute_full *kf)
 		return (0);
 	kf->flags |= F_BGPD;
 	kf->priority = RTP_MINE;
+	if (!knexthop_true_nexthop(kt, kf))
+		return kroute_remove(kt, kf, 1);
 	switch (kf->prefix.aid) {
 	case AID_INET:
 		return (kr4_change(kt, kf));
@@ -1406,10 +1410,10 @@ kr6_tofull(struct kroute6 *kr6)
 	bzero(&kf, sizeof(kf));
 
 	kf.prefix.aid = AID_INET6;
-	memcpy(&kf.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	kf.prefix.v6 = kr6->prefix;
 	kf.prefix.scope_id = kr6->prefix_scope_id;
 	kf.nexthop.aid = AID_INET6;
-	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
+	kf.nexthop.v6 = kr6->nexthop;
 	kf.nexthop.scope_id = kr6->nexthop_scope_id;
 	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
 	kf.flags = kr6->flags;
@@ -2124,6 +2128,51 @@ kroute6_validate(struct kroute6 *kr)
 	return (kif->k.nh_reachable);
 }
 
+int
+knexthop_true_nexthop(struct ktable *kt, struct kroute_full *kf)
+{
+	struct bgpd_addr gateway = { 0 };
+	struct knexthop *kn;
+	struct kroute	*kr;
+	struct kroute6	*kr6;
+
+	/*
+	 * Ignore the nexthop for VPN routes. The gateway is forced
+	 * to an mpe(4) interface route using an MPLS label.
+	 */
+	switch (kf->prefix.aid) {
+	case AID_VPN_IPv4:
+	case AID_VPN_IPv6:
+		return 1;
+	}
+
+	kn = knexthop_find(kt, &kf->nexthop);
+	if (kn == NULL) {
+		log_warnx("%s: nexthop %s not found", __func__,
+		    log_addr(&kf->nexthop));
+		return 0;
+	}
+	if (kn->kroute == NULL)
+		return 0;
+
+	switch (kn->nexthop.aid) {
+	case AID_INET:
+		kr = kn->kroute;
+		gateway.aid = AID_INET;
+		gateway.v4.s_addr = kr->nexthop.s_addr;
+		break;
+	case AID_INET6:
+		kr6 = kn->kroute;
+		gateway.aid = AID_INET6;
+		gateway.v6 = kr6->nexthop;
+		gateway.scope_id = kr6->nexthop_scope_id;
+		break;
+	}
+
+	kf->nexthop = gateway;
+	return 1;
+}
+
 void
 knexthop_validate(struct ktable *kt, struct knexthop *kn)
 {
@@ -2150,7 +2199,7 @@ knexthop_validate(struct ktable *kt, struct knexthop *kn)
 		/*
 		 * Send update if nexthop route changed under us if
 		 * the route remains the same then the NH state has not
-		 * changed. State changes are tracked by knexthop_track().
+		 * changed.
 		 */
 		if (kr != oldk)
 			knexthop_send_update(kn);
@@ -2170,6 +2219,9 @@ knexthop_validate(struct ktable *kt, struct knexthop *kn)
 	}
 }
 
+/*
+ * Called on interface state change.
+ */
 void
 knexthop_track(struct ktable *kt, u_short ifindex)
 {
@@ -2180,6 +2232,20 @@ knexthop_track(struct ktable *kt, u_short ifindex)
 			knexthop_validate(kt, kn);
 }
 
+/*
+ * Called on route change.
+ */
+void
+knexthop_update(struct ktable *kt, struct kroute_full *kf)
+{
+	struct knexthop	*kn;
+
+	RB_FOREACH(kn, knexthop_tree, KT2KNT(kt))
+		if (prefix_compare(&kf->prefix, &kn->nexthop,
+		    kf->prefixlen) == 0)
+			knexthop_send_update(kn);
+}
+
 void
 knexthop_send_update(struct knexthop *kn)
 {
@@ -2187,8 +2253,8 @@ knexthop_send_update(struct knexthop *kn)
 	struct kroute		*kr;
 	struct kroute6		*kr6;
 
-	bzero(&n, sizeof(n));
-	memcpy(&n.nexthop, &kn->nexthop, sizeof(n.nexthop));
+	memset(&n, 0, sizeof(n));
+	n.nexthop = kn->nexthop;
 
 	if (kn->kroute == NULL) {
 		n.valid = 0;	/* NH is not valid */
@@ -2218,14 +2284,12 @@ knexthop_send_update(struct knexthop *kn)
 		if (memcmp(&kr6->nexthop, &in6addr_any,
 		    sizeof(struct in6_addr)) != 0) {
 			n.gateway.aid = AID_INET6;
-			memcpy(&n.gateway.v6, &kr6->nexthop,
-			    sizeof(struct in6_addr));
+			n.gateway.v6 = kr6->nexthop;
 			n.gateway.scope_id = kr6->nexthop_scope_id;
 		}
 		if (n.connected) {
 			n.net.aid = AID_INET6;
-			memcpy(&n.net.v6, &kr6->prefix,
-			    sizeof(struct in6_addr));
+			n.net.v6 = kr6->prefix;
 			n.net.scope_id = kr6->prefix_scope_id;
 			n.netlen = kr6->prefixlen;
 		}
@@ -3104,7 +3168,7 @@ kr_fib_change(struct ktable *kt, struct kroute_full *kf, int type, int mpath)
 					kr_redistribute(IMSG_NETWORK_ADD,
 					    kt, kr_tofull(kr));
 				if (kr->flags & F_NEXTHOP && changed)
-					knexthop_track(kt, kf->ifindex);
+					knexthop_update(kt, kf);
 			} else {
 				kr->flags &= ~F_BGPD_INSERTED;
 			}
@@ -3177,7 +3241,7 @@ add4:
 					    kt, kr6_tofull(kr6));
 
 				if (kr6->flags & F_NEXTHOP && changed)
-					knexthop_track(kt, kf->ifindex);
+					knexthop_update(kt, kf);
 			} else {
 				kr6->flags &= ~F_BGPD_INSERTED;
 			}
