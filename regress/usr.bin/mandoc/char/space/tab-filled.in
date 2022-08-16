@@ -1,0 +1,81 @@
+.\" $OpenBSD: tab-filled.in,v 1.1 2022/08/16 18:04:04 schwarze Exp $
+.TH SPACE-TAB-FILLED 1 "August 16, 2022"
+.SH NAME
+SPACE-TAB-FILLED \- tab characters in fill mode
+.SH DESCRIPTION
+.SS Tabs are relative to the beginning of the current input line.
+one	two
+.br
+\&\c
+\&	t
+.br
+\&
+\&	t
+.br
+a
+1	t
+.br
+a
+22	t
+.br
+a
+333	t
+.br
+a
+4444	t
+.br
+a
+55555	t
+.br
+ab
+1	t
+.br
+ab
+22	t
+.br
+ab
+333	t
+.br
+ab
+4444	t
+.br
+ab
+55555	t
+.SS Tab measurement continues onto the next output line.
+Using a line length of 5n=12n-7n and tab positions of 7n and 9n:
+.br
+.ll 12n
+.ta 7n 9n
+a 1	t
+.br
+a 22	t
+.br
+a 333	t
+.br
+a 4444	t
+.br
+a 55555	t
+.br
+ab 1	t
+.br
+ab 22	t
+.br
+ab 333	t
+.br
+ab 4444	t
+.br
+abc 1	t
+.br
+abc 22	t
+.br
+abc 333	t
+.br
+adcd 1	t
+.br
+abcd 22	t
+.br
+abcde 1	t
+.br
+abcdef 1	t
+.br
+.ll
