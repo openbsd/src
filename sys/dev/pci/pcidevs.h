@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2000 2022/08/02 05:35:01 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2001 2022/08/16 09:28:45 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4628,6 +4628,7 @@
 #define	PCI_PRODUCT_INTEL_6321ESB_HDA	0x269a		/* 6321ESB HD Audio */
 #define	PCI_PRODUCT_INTEL_6321ESB_SMB	0x269b		/* 6321ESB SMBus */
 #define	PCI_PRODUCT_INTEL_6321ESB_IDE	0x269e		/* 6321ESB IDE */
+#define	PCI_PRODUCT_INTEL_OPTANE_9	0x2700		/* Optane 9 */
 #define	PCI_PRODUCT_INTEL_WL_22500_1	0x2723		/* Wi-Fi 6 AX200 */
 #define	PCI_PRODUCT_INTEL_WL_22500_9	0x2725		/* Wi-Fi 6 AX210 */
 #define	PCI_PRODUCT_INTEL_WL_22500_10	0x2726		/* Wi-Fi 6 AX211 */
