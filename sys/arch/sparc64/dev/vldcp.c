@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.24 2022/07/10 08:33:00 visa Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.25 2022/08/17 15:26:56 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -617,6 +617,7 @@ filt_vldcpread(struct knote *kn, long hint)
 	} else {
 		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
 		    INTR_ENABLED);
+		kn->kn_data = 0;
 	}
 	splx(s);
 
@@ -641,6 +642,7 @@ filt_vldcwrite(struct knote *kn, long hint)
 	} else {
 		cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino,
 		    INTR_ENABLED);
+		kn->kn_data = 0;
 	}
 	splx(s);
 
