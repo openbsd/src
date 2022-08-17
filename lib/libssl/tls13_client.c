@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.97 2022/07/24 14:16:29 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.98 2022/08/17 07:39:19 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -553,9 +553,8 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	struct stack_st_X509 *certs = NULL;
 	SSL *s = ctx->ssl;
 	X509 *cert = NULL;
-	EVP_PKEY *pkey;
 	const uint8_t *p;
-	int alert_desc, cert_type;
+	int alert_desc;
 	int ret = 0;
 
 	if ((certs = sk_X509_new_null()) == NULL)
@@ -610,28 +609,11 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		    "failed to verify peer certificate", NULL);
 		goto err;
 	}
+	s->session->verify_result = s->verify_result;
 	ERR_clear_error();
 
-	cert = sk_X509_value(certs, 0);
-	X509_up_ref(cert);
-
-	if ((pkey = X509_get0_pubkey(cert)) == NULL)
+	if (!tls_process_peer_certs(s, certs))
 		goto err;
-	if (EVP_PKEY_missing_parameters(pkey))
-		goto err;
-	if ((cert_type = ssl_cert_type(pkey)) < 0)
-		goto err;
-
-	X509_up_ref(cert);
-	X509_free(s->session->peer_cert);
-	s->session->peer_cert = cert;
-	s->session->peer_cert_type = cert_type;
-
-	s->session->verify_result = s->verify_result;
-
-	sk_X509_pop_free(s->session->cert_chain, X509_free);
-	s->session->cert_chain = certs;
-	certs = NULL;
 
 	if (ctx->ocsp_status_recv_cb != NULL &&
 	    !ctx->ocsp_status_recv_cb(ctx))

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.300 2022/07/24 15:05:16 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.301 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -880,14 +880,17 @@ SSL_get_peer_certificate(const SSL *s)
 STACK_OF(X509) *
 SSL_get_peer_cert_chain(const SSL *s)
 {
-	if (s == NULL || s->session == NULL)
+	if (s == NULL)
 		return NULL;
 
 	/*
-	 * If we are a client, cert_chain includes the peer's own
-	 * certificate; if we are a server, it does not.
+	 * Achtung! Due to API inconsistency, a client includes the peer's leaf
+	 * certificate in the peer certificate chain, while a server does not.
 	 */
-	return s->session->cert_chain;
+	if (!s->server)
+		return s->s3->hs.peer_certs;
+
+	return s->s3->hs.peer_certs_no_leaf;
 }
 
 STACK_OF(X509) *

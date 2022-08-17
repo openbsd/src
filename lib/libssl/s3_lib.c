@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.235 2022/07/02 16:31:04 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.236 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1559,8 +1559,10 @@ ssl3_free(SSL *s)
 	tls1_cleanup_key_block(s);
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
-	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
 
+	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
+	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
+	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);
 	tls_key_share_free(s->s3->hs.key_share);
 
 	tls13_secrets_destroy(s->s3->hs.tls13.secrets);
@@ -1586,8 +1588,8 @@ ssl3_free(SSL *s)
 void
 ssl3_clear(SSL *s)
 {
-	unsigned char	*rp, *wp;
-	size_t		 rlen, wlen;
+	unsigned char *rp, *wp;
+	size_t rlen, wlen;
 
 	tls1_cleanup_key_block(s);
 	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
@@ -1597,6 +1599,11 @@ ssl3_clear(SSL *s)
 	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
 	s->s3->hs.sigalgs = NULL;
 	s->s3->hs.sigalgs_len = 0;
+
+	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
+	s->s3->hs.peer_certs = NULL;
+	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);
+	s->s3->hs.peer_certs_no_leaf = NULL;
 
 	tls_key_share_free(s->s3->hs.key_share);
 	s->s3->hs.key_share = NULL;

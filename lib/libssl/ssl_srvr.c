@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.148 2022/07/03 14:58:00 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.149 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2175,6 +2175,11 @@ ssl3_get_client_certificate(SSL *s)
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			goto fatal_err;
 		}
+
+		/*
+		 * If we asked for a client certificate and the client has none,
+		 * it must respond with a certificate list of length zero.
+		 */
 		if (s->s3->hs.tls12.cert_request != 0) {
 			SSLerror(s, SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST);
 			al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -2244,19 +2249,11 @@ ssl3_get_client_certificate(SSL *s)
 		SSLerror(s, SSL_R_NO_CERTIFICATE_RETURNED);
 		goto fatal_err;
 	}
-
-	X509_free(s->session->peer_cert);
-	s->session->peer_cert = sk_X509_shift(certs);
-
-	/*
-	 * Inconsistency alert: cert_chain does *not* include the
-	 * peer's own certificate, while we do include it in s3_clnt.c
-	 */
-	sk_X509_pop_free(s->session->cert_chain, X509_free);
-	s->session->cert_chain = certs;
-	certs = NULL;
-
 	s->session->verify_result = s->verify_result;
+	ERR_clear_error();
+
+	if (!tls_process_peer_certs(s, certs))
+		goto err;
 
  done:
 	ret = 1;

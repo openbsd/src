@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.417 2022/07/24 14:28:16 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.418 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,8 +518,6 @@ struct ssl_session_st {
 	 * not_resumable_session_cb to disable session caching and tickets. */
 	int not_resumable;
 
-	STACK_OF(X509) *cert_chain; /* as received from peer */
-
 	size_t tlsext_ecpointformatlist_length;
 	uint8_t *tlsext_ecpointformatlist; /* peer's list */
 	size_t tlsext_supportedgroups_length;
@@ -644,6 +642,10 @@ typedef struct ssl_handshake_st {
 	size_t finished_len;
 	uint8_t peer_finished[EVP_MAX_MD_SIZE];
 	size_t peer_finished_len;
+
+	/* List of certificates received from our peer. */
+	STACK_OF(X509) *peer_certs;
+	STACK_OF(X509) *peer_certs_no_leaf;
 
 	SSL_HANDSHAKE_TLS12 tls12;
 	SSL_HANDSHAKE_TLS13 tls13;
@@ -1565,6 +1567,8 @@ int srtp_find_profile_by_num(unsigned int profile_num,
     const SRTP_PROTECTION_PROFILE **pptr);
 
 #endif /* OPENSSL_NO_SRTP */
+
+int tls_process_peer_certs(SSL *s, STACK_OF(X509) *peer_certs);
 
 __END_HIDDEN_DECLS
 

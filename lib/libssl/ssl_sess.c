@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.116 2022/06/07 17:49:22 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.117 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,6 +229,8 @@ SSL_SESSION_new(void)
 	ss->prev = NULL;
 	ss->next = NULL;
 	ss->tlsext_hostname = NULL;
+
+	ss->peer_cert_type = -1;
 
 	ss->tlsext_ecpointformatlist_length = 0;
 	ss->tlsext_ecpointformatlist = NULL;
@@ -760,8 +762,6 @@ SSL_SESSION_free(SSL_SESSION *ss)
 
 	explicit_bzero(ss->master_key, sizeof ss->master_key);
 	explicit_bzero(ss->session_id, sizeof ss->session_id);
-
-	sk_X509_pop_free(ss->cert_chain, X509_free);
 
 	X509_free(ss->peer_cert);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.152 2022/08/15 10:45:25 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.153 2022/08/17 07:39:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1090,8 +1090,6 @@ ssl3_get_server_certificate(SSL *s)
 	STACK_OF(X509) *certs = NULL;
 	X509 *cert = NULL;
 	const uint8_t *p;
-	EVP_PKEY *pkey;
-	int cert_type;
 	int al, ret;
 
 	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
@@ -1156,37 +1154,11 @@ ssl3_get_server_certificate(SSL *s)
 		SSLerror(s, SSL_R_CERTIFICATE_VERIFY_FAILED);
 		goto fatal_err;
 	}
-	ERR_clear_error(); /* but we keep s->verify_result */
-
-	/*
-	 * Inconsistency alert: cert_chain does include the peer's
-	 * certificate, which we don't include in s3_srvr.c
-	 */
-	cert = sk_X509_value(certs, 0);
-	X509_up_ref(cert);
-
-	if ((pkey = X509_get0_pubkey(cert)) == NULL ||
-	    EVP_PKEY_missing_parameters(pkey)) {
-		al = SSL3_AL_FATAL;
-		SSLerror(s, SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS);
-		goto fatal_err;
-	}
-	if ((cert_type = ssl_cert_type(pkey)) < 0) {
-		al = SSL3_AL_FATAL;
-		SSLerror(s, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-		goto fatal_err;
-	}
-
-	X509_free(s->session->peer_cert);
-	X509_up_ref(cert);
-	s->session->peer_cert = cert;
-	s->session->peer_cert_type = cert_type;
-
 	s->session->verify_result = s->verify_result;
+	ERR_clear_error();
 
-	sk_X509_pop_free(s->session->cert_chain, X509_free);
-	s->session->cert_chain = certs;
-	certs = NULL;
+	if (!tls_process_peer_certs(s, certs))
+		goto err;
 
 	ret = 1;
 
