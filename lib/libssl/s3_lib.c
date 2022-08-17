@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.236 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.237 2022/08/17 18:51:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1656,6 +1656,39 @@ ssl3_clear(SSL *s)
 }
 
 long
+_SSL_get_shared_group(SSL *s, long n)
+{
+	size_t count;
+	int nid;
+
+	/* OpenSSL document that they return -1 for clients. They return 0. */
+	if (!s->server)
+		return 0;
+
+	if (n == -1) {
+		if (!tls1_count_shared_groups(s, &count))
+			return 0;
+
+		if (count > LONG_MAX)
+			count = LONG_MAX;
+
+		return count;
+	}
+
+	/* Undocumented special case added for Suite B profile support. */
+	if (n == -2)
+		n = 0;
+
+	if (n < 0)
+		return 0;
+
+	if (!tls1_get_shared_group_by_index(s, n, &nid))
+		return NID_undef;
+
+	return nid;
+}
+
+long
 _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 {
 	EVP_PKEY *pkey = NULL;
@@ -2074,6 +2107,9 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_SET_GROUPS_LIST:
 		return SSL_set1_groups_list(s, parg);
+
+	case SSL_CTRL_GET_SHARED_GROUP:
+		return _SSL_get_shared_group(s, larg);
 
 	/* XXX - rename to SSL_CTRL_GET_PEER_TMP_KEY and remove server check. */
 	case SSL_CTRL_GET_SERVER_TMP_KEY:
