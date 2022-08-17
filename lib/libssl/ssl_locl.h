@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.418 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.419 2022/08/17 18:41:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1313,6 +1313,7 @@ int ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
     int is_peer, int *out_error);
 int ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk,
     X509 *x509, int *out_error);
+int ssl_security_shared_group(const SSL *ssl, uint16_t group_id);
 int ssl_security_supported_group(const SSL *ssl, uint16_t group_id);
 
 int ssl_get_new_session(SSL *s, int session);
