@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.432 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: session.c,v 1.433 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -336,7 +336,7 @@ session_main(int debug, int verbose)
 			pfd_elms = new_cnt;
 		}
 
-		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
+		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_ROUTE], ibuf_rde);
@@ -892,7 +892,7 @@ change_state(struct peer *peer, enum session_state state,
 		free(peer->rbuf);
 		peer->rbuf = NULL;
 		peer->rpending = 0;
-		bzero(&peer->capa.peer, sizeof(peer->capa.peer));
+		memset(&peer->capa.peer, 0, sizeof(peer->capa.peer));
 		if (!peer->template)
 			imsg_compose(ibuf_main, IMSG_PFKEY_RELOAD,
 			    peer->conf.id, 0, -1, NULL, 0);
@@ -938,7 +938,7 @@ change_state(struct peer *peer, enum session_state state,
 			timer_stop(&peer->timers, Timer_IdleHoldReset);
 			session_close_connection(peer);
 			msgbuf_clear(&peer->wbuf);
-			bzero(&peer->capa.peer, sizeof(peer->capa.peer));
+			memset(&peer->capa.peer, 0, sizeof(peer->capa.peer));
 		}
 		break;
 	case STATE_ACTIVE:
@@ -1300,7 +1300,7 @@ session_tcp_established(struct peer *peer)
 void
 session_capa_ann_none(struct peer *peer)
 {
-	bzero(&peer->capa.ann, sizeof(peer->capa.ann));
+	memset(&peer->capa.ann, 0, sizeof(peer->capa.ann));
 }
 
 int
@@ -3296,7 +3296,7 @@ la_cmp(struct listen_addr *a, struct listen_addr *b)
 	case AF_INET6:
 		in6_a = (struct sockaddr_in6 *)&a->sa;
 		in6_b = (struct sockaddr_in6 *)&b->sa;
-		if (bcmp(&in6_a->sin6_addr, &in6_b->sin6_addr,
+		if (memcmp(&in6_a->sin6_addr, &in6_b->sin6_addr,
 		    sizeof(struct in6_addr)))
 			return (1);
 		if (in6_a->sin6_port != in6_b->sin6_port)
@@ -3457,7 +3457,7 @@ session_match_mask(struct peer *p, struct bgpd_addr *a)
 void
 session_down(struct peer *peer)
 {
-	bzero(&peer->capa.neg, sizeof(peer->capa.neg));
+	memset(&peer->capa.neg, 0, sizeof(peer->capa.neg));
 	peer->stats.last_updown = getmonotime();
 	/*
 	 * session_down is called in the exit code path so check

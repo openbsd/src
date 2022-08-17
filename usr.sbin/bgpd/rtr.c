@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.5 2022/01/20 18:06:20 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.6 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -158,7 +158,7 @@ rtr_main(int debug, int verbose)
 		if (timeout == -1)
 			fatalx("roa-set expire timer no longer runnning");
 
-		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
+		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_RDE], ibuf_rde);

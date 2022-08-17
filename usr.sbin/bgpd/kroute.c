@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.291 2022/08/17 10:54:52 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.292 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -272,7 +272,7 @@ ktable_new(u_int rtableid, u_int rdomid, char *name, int fs)
 		}
 		krt = xkrt;
 		krt_size = rtableid + 1;
-		bzero((char *)krt + oldsize,
+		memset((char *)krt + oldsize, 0,
 		    krt_size * sizeof(struct ktable *) - oldsize);
 	}
 
@@ -512,7 +512,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
-		bcopy(&lo6, &kf->nexthop.v6, sizeof(kf->nexthop.v6));
+		memcpy(&kf->nexthop.v6, &lo6, sizeof(kf->nexthop.v6));
 	/* nexthop to loopback -> ignore silently */
 	else if (IN6_IS_ADDR_LOOPBACK(&kf->nexthop.v6))
 		return (0);
@@ -618,7 +618,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
-		bcopy(&lo6, &kf->nexthop.v6, sizeof(kf->nexthop.v6));
+		memcpy(&kf->nexthop.v6, &lo6, sizeof(kf->nexthop.v6));
 
 	if ((kr6 = kroute6_find(kt, &kf->prefix, kf->prefixlen,
 	    kf->priority)) == NULL) {
@@ -840,7 +840,7 @@ kr_show_interface(struct kif *kif)
 	static struct ctl_show_interface iface;
 	uint64_t ifms_type;
 
-	bzero(&iface, sizeof(iface));
+	memset(&iface, 0, sizeof(iface));
 	strlcpy(iface.ifname, kif->ifname, sizeof(iface.ifname));
 
 	snprintf(iface.linkstate, sizeof(iface.linkstate),
@@ -957,7 +957,7 @@ kr_show_route(struct imsg *imsg)
 			break;
 		}
 		RB_FOREACH(h, knexthop_tree, KT2KNT(kt)) {
-			bzero(&snh, sizeof(snh));
+			memset(&snh, 0, sizeof(snh));
 			memcpy(&snh.addr, &h->nexthop, sizeof(snh.addr));
 			if (h->kroute != NULL) {
 				switch (h->nexthop.aid) {
@@ -1081,7 +1081,7 @@ kr_net_redist_del(struct ktable *kt, struct network_config *net, int dynamic)
 {
 	struct kredist_node *r, node;
 
-	bzero(&node, sizeof(node));
+	memset(&node, 0, sizeof(node));
 	node.prefix = net->prefix;
 	node.prefixlen = net->prefixlen;
 	node.rd = net->rd;
@@ -1214,7 +1214,7 @@ kr_redistribute(int type, struct ktable *kt, struct kroute_full *kf)
 	uint32_t		 a;
 	int			 loflag = 0;
 
-	bzero(&net, sizeof(net));
+	memset(&net, 0, sizeof(net));
 	net.prefix = kf->prefix;
 	net.prefixlen = kf->prefixlen;
 	net.rtlabel = rtlabel_name2id(kf->label);
@@ -1382,7 +1382,7 @@ kr_tofull(struct kroute *kr)
 {
 	static struct kroute_full	kf;
 
-	bzero(&kf, sizeof(kf));
+	memset(&kf, 0, sizeof(kf));
 
 	kf.prefix.aid = AID_INET;
 	kf.prefix.v4.s_addr = kr->prefix.s_addr;
@@ -1403,7 +1403,7 @@ kr6_tofull(struct kroute6 *kr6)
 {
 	static struct kroute_full	kf;
 
-	bzero(&kf, sizeof(kf));
+	memset(&kf, 0, sizeof(kf));
 
 	kf.prefix.aid = AID_INET6;
 	kf.prefix.v6 = kr6->prefix;
@@ -1952,7 +1952,7 @@ knexthop_find(struct ktable *kt, struct bgpd_addr *addr)
 {
 	struct knexthop	s;
 
-	bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	memcpy(&s.nexthop, addr, sizeof(s.nexthop));
 
 	return (RB_FIND(knexthop_tree, KT2KNT(kt), &s));
@@ -1995,7 +1995,7 @@ kif_find(int ifindex)
 {
 	struct kif	s;
 
-	bzero(&s, sizeof(s));
+	memset(&s, 0, sizeof(s));
 	s.ifindex = ifindex;
 
 	return (RB_FIND(kif_tree, &kit, &s));
@@ -2592,8 +2592,8 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 	if (s == -1)
 		return (-1);
 
-	bzero(&shim, sizeof(shim));
-	bzero(&ifr, sizeof(ifr));
+	memset(&shim, 0, sizeof(shim));
+	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&shim;
 
@@ -2639,7 +2639,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 		return (0);
 
 	/* initialize header */
-	bzero(&hdr, sizeof(hdr));
+	memset(&hdr, 0, sizeof(hdr));
 	hdr.rtm_version = RTM_VERSION;
 	hdr.rtm_type = action;
 	hdr.rtm_tableid = kt->rtableid;
@@ -2656,7 +2656,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 	iov[iovcnt].iov_base = &hdr;
 	iov[iovcnt++].iov_len = sizeof(hdr);
 
-	bzero(&prefix, sizeof(prefix));
+	memset(&prefix, 0, sizeof(prefix));
 	sa = addr2sa(&kf->prefix, 0, &salen);
 	sa->sa_len = salen;
 #ifdef __KAME__
@@ -2680,7 +2680,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 
 	/* XXX can we even have no nexthop ??? */
 	if (kf->nexthop.aid != AID_UNSPEC) {
-		bzero(&nexthop, sizeof(nexthop));
+		memset(&nexthop, 0, sizeof(nexthop));
 		sa = addr2sa(&kf->nexthop, 0, &salen);
 		sa->sa_len = salen;
 #ifdef __KAME__
@@ -2704,11 +2704,11 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 		iov[iovcnt++].iov_len = ROUNDUP(salen);
 	}
 
-	bzero(&netmask, sizeof(netmask));
+	memset(&netmask, 0, sizeof(netmask));
 	memset(&netmask.v6, 0xff, sizeof(netmask.v6));
 	netmask.aid = kf->prefix.aid;
 	applymask(&netmask, &netmask, kf->prefixlen);
-	bzero(&mask, sizeof(mask));
+	memset(&mask, 0, sizeof(mask));
 	sa = addr2sa(&netmask, 0, &salen);
 	sa->sa_len = salen;
 	memcpy(&mask, sa, salen);
@@ -2721,7 +2721,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 
 	if (kf->flags & F_MPLS) {
 		/* need to force interface for mpe(4) routes */
-		bzero(&ifp, sizeof(ifp));
+		memset(&ifp, 0, sizeof(ifp));
 		dl = (struct sockaddr_dl *)&ifp;
 		salen = sizeof(*dl);
 		dl->sdl_len = salen;
@@ -2734,7 +2734,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 		iov[iovcnt].iov_base = &ifp;
 		iov[iovcnt++].iov_len = ROUNDUP(salen);
 
-		bzero(&mpls, sizeof(mpls));
+		memset(&mpls, 0, sizeof(mpls));
 		mp = (struct sockaddr_mpls *)&mpls;
 		salen = sizeof(*mp);
 		mp->smpls_len = salen;
@@ -2753,7 +2753,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 	}
 
 	if (kf->label[0] != '\0') {
-		bzero(&label, sizeof(label));
+		memset(&label, 0, sizeof(label));
 		la = (struct sockaddr_rtlabel *)&label;
 		salen = sizeof(struct sockaddr_rtlabel);
 		label.ss_len = salen;

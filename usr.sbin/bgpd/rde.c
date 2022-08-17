@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.563 2022/08/16 08:14:58 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.564 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -230,7 +230,7 @@ rde_main(int debug, int verbose)
 			pfd_elms = PFD_PIPE_COUNT + rde_mrt_cnt;
 		}
 		timeout = -1;
-		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
+		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
@@ -425,7 +425,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE <
 			    sizeof(csr)) {
 				log_warnx("rde_dispatch: wrong imsg len");
-				bzero(&netconf_s, sizeof(netconf_s));
+				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
 			aslen = imsg.hdr.len - IMSG_HEADER_SIZE - sizeof(csr);
@@ -454,7 +454,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: bad network "
 				    "attribute");
 				rde_filterstate_clean(&netconf_state);
-				bzero(&netconf_s, sizeof(netconf_s));
+				memset(&netconf_s, 0, sizeof(netconf_s));
 				break;
 			}
 			break;
@@ -1239,7 +1239,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		}
 	}
 
-	bzero(&mpa, sizeof(mpa));
+	memset(&mpa, 0, sizeof(mpa));
 	rde_filterstate_prep(&state, NULL, NULL, NULL, 0);
 	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
 		/* parse path attributes */
@@ -1857,7 +1857,7 @@ bad_flags:
 			goto bad_list;
 		a->flags |= F_ATTR_NEXTHOP;
 
-		bzero(&nexthop, sizeof(nexthop));
+		memset(&nexthop, 0, sizeof(nexthop));
 		nexthop.aid = AID_INET;
 		UPD_READ(&nexthop.v4.s_addr, p, plen, 4);
 		/*
@@ -2212,7 +2212,7 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 	if (nhlen > len)
 		return (-1);
 
-	bzero(&nexthop, sizeof(nexthop));
+	memset(&nexthop, 0, sizeof(nexthop));
 	nexthop.aid = aid;
 	switch (aid) {
 	case AID_INET6:
@@ -3048,7 +3048,7 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 		p = new;
 	}
 
-	bzero(&kf, sizeof(kf));
+	memset(&kf, 0, sizeof(kf));
 	pt_getaddr(p->pt, &kf.prefix);
 	kf.prefixlen = p->pt->prefixlen;
 	if (type == IMSG_KROUTE_CHANGE) {
@@ -3158,7 +3158,7 @@ rde_update_queue_runner(void)
 			/* now bgp path attributes unless it is the EoR mark */
 			if (up_is_eor(peer, AID_INET)) {
 				eor = 1;
-				bzero(queue_buf + wpos, 2);
+				memset(queue_buf + wpos, 0, 2);
 				wpos += 2;
 			} else {
 				r = up_dump_attrnlri(queue_buf + wpos,
@@ -3293,7 +3293,7 @@ rde_pftable_send(uint16_t id, struct pt_entry *pt, int del)
 	if (rde_quit)
 		return;
 
-	bzero(&pfm, sizeof(pfm));
+	memset(&pfm, 0, sizeof(pfm));
 	strlcpy(pfm.pftable, pftable_id2name(id), sizeof(pfm.pftable));
 	pt_getaddr(pt, &pfm.addr);
 	pfm.len = pt->prefixlen;
@@ -4006,7 +4006,7 @@ rde_peer_send_eor(struct rde_peer *peer, uint8_t aid)
 	if (aid == AID_INET) {
 		u_char null[4];
 
-		bzero(&null, 4);
+		memset(&null, 0, 4);
 		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
 		    0, -1, &null, 4) == -1)
 			fatal("imsg_compose error while sending EoR");
@@ -4018,14 +4018,14 @@ rde_peer_send_eor(struct rde_peer *peer, uint8_t aid)
 			fatalx("peer_send_eor: bad AID");
 
 		i = 0;	/* v4 withdrawn len */
-		bcopy(&i, &buf[0], sizeof(i));
+		memcpy(&buf[0], &i, sizeof(i));
 		i = htons(6);	/* path attr len */
-		bcopy(&i, &buf[2], sizeof(i));
+		memcpy(&buf[2], &i, sizeof(i));
 		buf[4] = ATTR_OPTIONAL;
 		buf[5] = ATTR_MP_UNREACH_NLRI;
 		buf[6] = 3;	/* withdrawn len */
 		i = htons(afi);
-		bcopy(&i, &buf[7], sizeof(i));
+		memcpy(&buf[7], &i, sizeof(i));
 		buf[9] = safi;
 
 		if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,

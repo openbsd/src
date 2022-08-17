@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.41 2022/02/25 12:56:12 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.42 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -72,7 +72,7 @@ pt_shutdown(void)
 void
 pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 {
-	bzero(addr, sizeof(struct bgpd_addr));
+	memset(addr, 0, sizeof(struct bgpd_addr));
 	addr->aid = pte->aid;
 	switch (addr->aid) {
 	case AID_INET:
@@ -113,7 +113,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 
 	switch (prefix->aid) {
 	case AID_INET:
-		bzero(&pte4, sizeof(pte4));
+		memset(&pte4, 0, sizeof(pte4));
 		pte4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
@@ -121,7 +121,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte4.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte4);
 	case AID_INET6:
-		bzero(&pte6, sizeof(pte6));
+		memset(&pte6, 0, sizeof(pte6));
 		pte6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_fill: bad IPv6 prefixlen");
@@ -129,7 +129,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte6.prefixlen = prefixlen;
 		return ((struct pt_entry *)&pte6);
 	case AID_VPN_IPv4:
-		bzero(&pte_vpn4, sizeof(pte_vpn4));
+		memset(&pte_vpn4, 0, sizeof(pte_vpn4));
 		pte_vpn4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");

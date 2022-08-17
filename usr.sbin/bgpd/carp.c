@@ -1,4 +1,4 @@
-/*	$OpenBSD: carp.c,v 1.10 2019/08/08 20:06:29 claudio Exp $ */
+/*	$OpenBSD: carp.c,v 1.11 2022/08/17 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Henning Brauer <henning@openbsd.org>
@@ -113,7 +113,7 @@ carp_demote_get(char *group)
 		return (-1);
 	}
 
-	bzero(&ifgr, sizeof(ifgr));
+	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name));
 
 	if (ioctl(s, SIOCGIFGATTR, (caddr_t)&ifgr) == -1) {
@@ -167,7 +167,7 @@ carp_demote_ioctl(char *group, int demote)
 		return (-1);
 	}
 
-	bzero(&ifgr, sizeof(ifgr));
+	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, group, sizeof(ifgr.ifgr_name));
 	ifgr.ifgr_attrib.ifg_carp_demoted = demote;
 

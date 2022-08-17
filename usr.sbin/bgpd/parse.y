@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.434 2022/07/28 13:11:49 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.435 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1949,10 +1949,10 @@ espah		: ESP		{ $$ = 1; }
 		;
 
 encspec		: /* nada */	{
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 		}
 		| STRING STRING {
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc")) {
 				$$.enc_alg = AUTH_EALG_3DESCBC;
 				$$.enc_key_len = 21; /* XXX verify */
@@ -1990,7 +1990,7 @@ filterrule	: action quick filter_rib_h direction filter_peer_h
 			struct filter_rule	 r;
 			struct filter_rib_l	 *rb, *rbnext;
 
-			bzero(&r, sizeof(r));
+			memset(&r, 0, sizeof(r));
 			r.action = $1;
 			r.quick = $2;
 			r.dir = $4;
@@ -2317,10 +2317,10 @@ filter_as	: as4number_any		{
 		;
 
 filter_match_h	: /* empty */			{
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 		}
 		| {
-			bzero(&fmopts, sizeof(fmopts));
+			memset(&fmopts, 0, sizeof(fmopts));
 		}
 		    filter_match		{
 			memcpy(&$$, &fmopts, sizeof($$));
@@ -2568,15 +2568,15 @@ filter_elm	: filter_prefix_h	{
 		}
 		;
 
-prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
+prefixlenop	: /* empty */			{ memset(&$$, 0, sizeof($$)); }
 		| LONGER				{
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 			$$.op = OP_RANGE;
 			$$.len_min = -1;
 			$$.len_max = -1;
 		}
 		| MAXLEN NUMBER				{
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 			if ($2 < 0 || $2 > 128) {
 				yyerror("prefixlen must be >= 0 and <= 128");
 				YYERROR;
@@ -2589,7 +2589,7 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 		| PREFIXLEN unaryop NUMBER		{
 			int min, max;
 
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 			if ($3 < 0 || $3 > 128) {
 				yyerror("prefixlen must be >= 0 and <= 128");
 				YYERROR;
@@ -2630,7 +2630,7 @@ prefixlenop	: /* empty */			{ bzero(&$$, sizeof($$)); }
 			$$.len_max = max;
 		}
 		| PREFIXLEN NUMBER binaryop NUMBER	{
-			bzero(&$$, sizeof($$));
+			memset(&$$, 0, sizeof($$));
 			if ($2 < 0 || $2 > 128 || $4 < 0 || $4 > 128) {
 				yyerror("prefixlen must be < 128");
 				YYERROR;

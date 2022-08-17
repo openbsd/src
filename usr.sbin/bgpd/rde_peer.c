@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.20 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.21 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -99,7 +99,7 @@ peer_init(uint32_t hashsize)
 
 	peertable.peer_hashmask = hs - 1;
 
-	bzero(&pc, sizeof(pc));
+	memset(&pc, 0, sizeof(pc));
 	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
 	pc.id = PEER_ID_SELF;
 

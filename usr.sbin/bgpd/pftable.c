@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.16 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: pftable.c,v 1.17 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -66,7 +66,7 @@ pftable_change(struct pf_table *pft)
 	if (devpf == -1 && ((devpf = open("/dev/pf", O_RDWR|O_CLOEXEC)) == -1))
 		fatal("open(/dev/pf)");
 
-	bzero(&tio, sizeof(tio));
+	memset(&tio, 0, sizeof(tio));
 	strlcpy(tio.pfrio_table.pfrt_name, pft->name,
 	    sizeof(tio.pfrio_table.pfrt_name));
 	tio.pfrio_buffer = pft->worklist;
@@ -93,7 +93,7 @@ pftable_clear(const char *name)
 	if (devpf == -1 && ((devpf = open("/dev/pf", O_RDWR|O_CLOEXEC)) == -1))
 		fatal("open(/dev/pf)");
 
-	bzero(&tio, sizeof(tio));
+	memset(&tio, 0, sizeof(tio));
 	strlcpy(tio.pfrio_table.pfrt_name, name,
 	    sizeof(tio.pfrio_table.pfrt_name));
 
@@ -114,7 +114,7 @@ pftable_exists(const char *name)
 	if (devpf == -1 && ((devpf = open("/dev/pf", O_RDWR|O_CLOEXEC)) == -1))
 		fatal("open(/dev/pf)");
 
-	bzero(&tio, sizeof(tio));
+	memset(&tio, 0, sizeof(tio));
 	strlcpy(tio.pfrio_table.pfrt_name, name,
 	    sizeof(tio.pfrio_table.pfrt_name));
 	tio.pfrio_buffer = &dummy;
@@ -215,7 +215,7 @@ pftable_add_work(const char *table, struct bgpd_addr *addr,
 	pft->worklist = tmp;
 	pfa = &pft->worklist[pft->naddrs];
 
-	bzero(pfa, sizeof(*pfa));
+	memset(pfa, 0, sizeof(*pfa));
 	memcpy(&pfa->pfra_u, &addr->ba, (len + 7U) / 8);
 	pfa->pfra_af = aid2af(addr->aid);
 	pfa->pfra_net = len;

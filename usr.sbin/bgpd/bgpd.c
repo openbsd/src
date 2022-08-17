@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.253 2022/07/28 13:11:48 deraadt Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.254 2022/08/17 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -321,7 +321,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 			pfd = newp;
 			pfd_elms = PFD_CONNECT_START + connect_cnt;
 		}
-		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
+		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 
 		timeout = mrt_timeout(conf->mrt);
 

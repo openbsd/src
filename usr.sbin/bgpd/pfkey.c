@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.66 2022/07/28 13:11:50 deraadt Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.67 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -91,8 +91,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		pid = getpid();
 
 	/* we need clean sockaddr... no ports set */
-	bzero(&ssrc, sizeof(ssrc));
-	bzero(&smask, sizeof(smask));
+	memset(&ssrc, 0, sizeof(ssrc));
+	memset(&smask, 0, sizeof(smask));
 	if ((saptr = addr2sa(src, 0, &salen))) {
 		memcpy(&ssrc, saptr, salen);
 		ssrc.ss_len = salen;
@@ -114,8 +114,8 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	smask.ss_family = ssrc.ss_family;
 	smask.ss_len = ssrc.ss_len;
 
-	bzero(&sdst, sizeof(sdst));
-	bzero(&dmask, sizeof(dmask));
+	memset(&sdst, 0, sizeof(sdst));
+	memset(&dmask, 0, sizeof(dmask));
 	if ((saptr = addr2sa(dst, 0, &salen))) {
 		memcpy(&sdst, saptr, salen);
 		sdst.ss_len = salen;
@@ -137,7 +137,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	dmask.ss_family = sdst.ss_family;
 	dmask.ss_len = sdst.ss_len;
 
-	bzero(&smsg, sizeof(smsg));
+	memset(&smsg, 0, sizeof(smsg));
 	smsg.sadb_msg_version = PF_KEY_V2;
 	smsg.sadb_msg_seq = ++sadb_msg_seq;
 	smsg.sadb_msg_pid = pid;
@@ -147,7 +147,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 
 	switch (mtype) {
 	case SADB_GETSPI:
-		bzero(&sa_spirange, sizeof(sa_spirange));
+		memset(&sa_spirange, 0, sizeof(sa_spirange));
 		sa_spirange.sadb_spirange_exttype = SADB_EXT_SPIRANGE;
 		sa_spirange.sadb_spirange_len = sizeof(sa_spirange) / 8;
 		sa_spirange.sadb_spirange_min = 0x100;
@@ -157,7 +157,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	case SADB_ADD:
 	case SADB_UPDATE:
 	case SADB_DELETE:
-		bzero(&sa, sizeof(sa));
+		memset(&sa, 0, sizeof(sa));
 		sa.sadb_sa_exttype = SADB_EXT_SA;
 		sa.sadb_sa_len = sizeof(sa) / 8;
 		sa.sadb_sa_replay = 0;
@@ -166,13 +166,13 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		break;
 	case SADB_X_ADDFLOW:
 	case SADB_X_DELFLOW:
-		bzero(&sa_flowtype, sizeof(sa_flowtype));
+		memset(&sa_flowtype, 0, sizeof(sa_flowtype));
 		sa_flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
 		sa_flowtype.sadb_protocol_len = sizeof(sa_flowtype) / 8;
 		sa_flowtype.sadb_protocol_direction = dir;
 		sa_flowtype.sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE;
 
-		bzero(&sa_protocol, sizeof(sa_protocol));
+		memset(&sa_protocol, 0, sizeof(sa_protocol));
 		sa_protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
 		sa_protocol.sadb_protocol_len = sizeof(sa_protocol) / 8;
 		sa_protocol.sadb_protocol_direction = 0;
@@ -180,11 +180,11 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		break;
 	}
 
-	bzero(&sa_src, sizeof(sa_src));
+	memset(&sa_src, 0, sizeof(sa_src));
 	sa_src.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	sa_src.sadb_address_len = (sizeof(sa_src) + ROUNDUP(ssrc.ss_len)) / 8;
 
-	bzero(&sa_dst, sizeof(sa_dst));
+	memset(&sa_dst, 0, sizeof(sa_dst));
 	sa_dst.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	sa_dst.sadb_address_len = (sizeof(sa_dst) + ROUNDUP(sdst.ss_len)) / 8;
 
@@ -194,13 +194,13 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 	switch (mtype) {
 	case SADB_ADD:
 	case SADB_UPDATE:
-		bzero(&sa_akey, sizeof(sa_akey));
+		memset(&sa_akey, 0, sizeof(sa_akey));
 		sa_akey.sadb_key_exttype = SADB_EXT_KEY_AUTH;
 		sa_akey.sadb_key_len = (sizeof(sa_akey) +
 		    ((alen + 7) / 8) * 8) / 8;
 		sa_akey.sadb_key_bits = 8 * alen;
 
-		bzero(&sa_ekey, sizeof(sa_ekey));
+		memset(&sa_ekey, 0, sizeof(sa_ekey));
 		sa_ekey.sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
 		sa_ekey.sadb_key_len = (sizeof(sa_ekey) +
 		    ((elen + 7) / 8) * 8) / 8;
@@ -225,7 +225,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 		sa_src.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
 		sa_dst.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
 
-		bzero(&smask, sizeof(smask));
+		memset(&smask, 0, sizeof(smask));
 		switch (src->aid) {
 		case AID_INET:
 			smask.ss_len = sizeof(struct sockaddr_in);
@@ -252,7 +252,7 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 			}
 			break;
 		}
-		bzero(&dmask, sizeof(dmask));
+		memset(&dmask, 0, sizeof(dmask));
 		switch (dst->aid) {
 		case AID_INET:
 			dmask.ss_len = sizeof(struct sockaddr_in);
@@ -280,12 +280,12 @@ pfkey_send(int sd, uint8_t satype, uint8_t mtype, uint8_t dir,
 			break;
 		}
 
-		bzero(&sa_smask, sizeof(sa_smask));
+		memset(&sa_smask, 0, sizeof(sa_smask));
 		sa_smask.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
 		sa_smask.sadb_address_len =
 		    (sizeof(sa_smask) + ROUNDUP(smask.ss_len)) / 8;
 
-		bzero(&sa_dmask, sizeof(sa_dmask));
+		memset(&sa_dmask, 0, sizeof(sa_dmask));
 		sa_dmask.sadb_address_exttype = SADB_X_EXT_DST_MASK;
 		sa_dmask.sadb_address_len =
 		    (sizeof(sa_dmask) + ROUNDUP(dmask.ss_len)) / 8;
@@ -432,7 +432,7 @@ pfkey_read(int sd, struct sadb_msg *h)
 	if (hdr.sadb_msg_seq == sadb_msg_seq &&
 	    hdr.sadb_msg_pid == pid) {
 		if (h)
-			bcopy(&hdr, h, sizeof(hdr));
+			memcpy(h, &hdr, sizeof(hdr));
 		return (0);
 	}
 

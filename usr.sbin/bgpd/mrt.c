@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.108 2022/07/28 13:11:48 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.109 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -449,7 +449,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 
 	n = prefix_nexthop(p);
 	if (n == NULL) {
-		bzero(&nexthop, sizeof(struct bgpd_addr));
+		memset(&nexthop, 0, sizeof(struct bgpd_addr));
 		nexthop.aid = addr.aid;
 		nh = &nexthop;
 	} else
@@ -543,7 +543,7 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, uint16_t snum,
 
 	nexthop = prefix_nexthop(p);
 	if (nexthop == NULL) {
-		bzero(&addr, sizeof(struct bgpd_addr));
+		memset(&addr, 0, sizeof(struct bgpd_addr));
 		addr.aid = p->pt->aid;
 		nh = &addr;
 	} else
@@ -645,7 +645,7 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 
 		nexthop = prefix_nexthop(p);
 		if (nexthop == NULL) {
-			bzero(&addr, sizeof(struct bgpd_addr));
+			memset(&addr, 0, sizeof(struct bgpd_addr));
 			addr.aid = re->prefix->aid;
 			nh = &addr;
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.145 2022/07/11 17:08:21 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.146 2022/08/17 15:15:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -392,7 +392,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	 */
 	/* rde_apply_set(asp, peerself, peerself, set, af); */
 
-	bzero(&addr, sizeof(addr));
+	memset(&addr, 0, sizeof(addr));
 	addr.aid = aid;
 	p = prefix_adjout_lookup(peer, &addr, 0);
 
@@ -898,7 +898,7 @@ up_dump_mp_unreach(u_char *buf, int len, struct rde_peer *peer, uint8_t aid)
 	memcpy(attrbuf + 2, &attr_len, sizeof(attr_len));
 
 	/* write length fields */
-	bzero(buf, sizeof(uint16_t));	/* withdrawn routes len */
+	memset(buf, 0, sizeof(uint16_t));	/* withdrawn routes len */
 	attr_len = htons(wpos - 4);
 	memcpy(buf + 2, &attr_len, sizeof(attr_len));
 
@@ -934,7 +934,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 		 * an invalid bgp update.
 		 */
 done:
-		bzero(buf, 2);
+		memset(buf, 0, 2);
 		return (2);
 	}
 
@@ -998,7 +998,7 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		tmp = htons(tmp);
 		memcpy(attrbuf, &tmp, sizeof(tmp));
 		attrbuf[3] = sizeof(uint64_t) + sizeof(struct in_addr);
-		bzero(attrbuf + 4, sizeof(uint64_t));
+		memset(attrbuf + 4, 0, sizeof(uint64_t));
 		attrbuf[16] = 0; /* Reserved must be 0 */
 
 		/* write nexthop */
@@ -1016,7 +1016,7 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		tmp = htons(tmp);
 		memcpy(attrbuf, &tmp, sizeof(tmp));
 		attrbuf[3] = sizeof(uint64_t) + sizeof(struct in6_addr);
-		bzero(attrbuf + 4, sizeof(uint64_t));
+		memset(attrbuf + 4, 0, sizeof(uint64_t));
 		attrbuf[28] = 0; /* Reserved must be 0 */
 
 		/* write nexthop */
@@ -1080,7 +1080,7 @@ up_dump_mp_reach(u_char *buf, int len, struct rde_peer *peer, uint8_t aid)
 	wpos += r;
 
 	/* write length fields */
-	bzero(buf, sizeof(uint16_t));	/* withdrawn routes len */
+	memset(buf, 0, sizeof(uint16_t));	/* withdrawn routes len */
 	attr_len = htons(wpos - 4);
 	memcpy(buf + 2, &attr_len, sizeof(attr_len));
 

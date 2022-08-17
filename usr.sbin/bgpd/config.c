@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.103 2022/07/20 12:43:27 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.104 2022/08/17 15:15:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -409,7 +409,7 @@ host(const char *s, struct bgpd_addr *h, uint8_t *len)
 		p[0] = '\0';
 	}
 
-	bzero(h, sizeof(*h));
+	memset(h, 0, sizeof(*h));
 
 	if (host_ip(ps, h, len) == 0) {
 		free(ps);
@@ -429,7 +429,7 @@ host_ip(const char *s, struct bgpd_addr *h, uint8_t *len)
 	struct addrinfo		 hints, *res;
 	int			 bits;
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
