@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.85 2022/08/08 17:45:11 jeremy Exp $
+#	$OpenBSD: airport,v 1.86 2022/08/17 18:12:16 job Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1766,6 +1766,7 @@ UII:Utila, Honduras
 UIN:Baldwin Field, Quincy, Illinois, USA
 UIO:Mariscal, Quito, Ecuador
 UIP:Pluguffan, Quimper, France
+UKA:Ukunda Airstrip, Kwale County, Kenya
 UKS:Sevastopol International, Sevastopol, Ukraine
 ULN:Ulan Bator, Mongolia
 ULY:Ulyanovsk, Russia
