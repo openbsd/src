@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.147 2022/08/10 10:27:03 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.148 2022/08/17 11:57:46 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -702,9 +702,12 @@ int	mkpathat(int, const char *);
 #define DEFAULT_SKIPLIST_FILE	"/etc/rpki/skiplist"
 
 /* Maximum number of TAL files we'll load. */
-#define	TALSZ_MAX	8
+#define	TALSZ_MAX		8
 
-/* Maximum number of IP and AS ranges accepted in any single file */
+/*
+ * Maximum number of elements in the sbgp-ipAddrBlock (IP) and
+ * sbgp-autonomousSysNum (AS) X.509v3 extension of CA/EE certificates.
+ */
 #define MAX_IP_SIZE		200000
 #define MAX_AS_SIZE		200000
 
@@ -730,10 +733,10 @@ int	mkpathat(int, const char *);
 /* How many seconds to wait for a connection to succeed. */
 #define MAX_CONN_TIMEOUT	15
 
-/* How long to wait for IO from a remote server. */
+/* How many seconds to wait for IO from a remote server. */
 #define MAX_IO_TIMEOUT		30
 
-/* Maximum allowd repositories per tal */
+/* Maximum number of delegated hosting locations (repositories) for each TAL. */
 #define MAX_REPO_PER_TAL	1000
 
 /* Maximum number of delta files per RRDP notification file. */
