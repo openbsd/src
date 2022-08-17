@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.289 2022/08/16 08:14:58 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.290 2022/08/17 09:16:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2087,7 +2087,6 @@ kif_depend_state(struct kif *kif)
 	return LINK_STATE_IS_UP(kif->link_state);
 }
 
-
 int
 kroute_validate(struct kroute *kr)
 {
@@ -3167,6 +3166,7 @@ kr_fib_change(struct ktable *kt, struct kroute_full *kf, int type, int mpath)
 				    !(oflags & F_CONNECTED))
 					kr_redistribute(IMSG_NETWORK_ADD,
 					    kt, kr_tofull(kr));
+
 				if (kr->flags & F_NEXTHOP && changed)
 					knexthop_update(kt, kf);
 			} else {
