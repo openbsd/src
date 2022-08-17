@@ -1,4 +1,4 @@
-# $OpenBSD: asia,v 1.99 2022/08/12 16:50:57 millert Exp $
+# $OpenBSD: asia,v 1.100 2022/08/17 13:41:50 millert Exp $
 # tzdb data for Asia and environs
 
 # This file is in the public domain, so clarified as of
@@ -1517,8 +1517,8 @@ Zone Asia/Jayapura	9:22:48 -	LMT	1932 Nov
 # onwards (which was during the Islamic Republic).
 
 # From Francis Santoni (2022-06-01):
-# for Iran and 1977 the effective change is only 20 october
-# (UIT No. 143 17.XI.1977) and not 23 september (UIT No. 141 13.IX.1977).
+# for Iran and 1977 the effective change is only 20 October
+# (UIT No. 143 17.XI.1977) and not 23 September (UIT No. 141 13.IX.1977).
 # UIT is the Operational Bulletin of International Telecommunication Union.
 
 # From Roozbeh Pournader (2003-03-15):
