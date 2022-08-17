@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.194 2022/08/17 18:42:13 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.195 2022/08/17 18:45:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -441,6 +441,100 @@ tls1_get_group_list(const SSL *s, int client_groups, const uint16_t **pgroups,
 	}
 }
 
+static int
+tls1_get_group_lists(const SSL *ssl, const uint16_t **pref, size_t *preflen,
+    const uint16_t **supp, size_t *supplen)
+{
+	unsigned long server_pref;
+
+	/* Cannot do anything on the client side. */
+	if (!ssl->server)
+		return 0;
+
+	server_pref = (ssl->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
+	tls1_get_group_list(ssl, (server_pref == 0), pref, preflen);
+	tls1_get_group_list(ssl, (server_pref != 0), supp, supplen);
+
+	return 1;
+}
+
+static int
+tls1_group_id_present(uint16_t group_id, const uint16_t *list, size_t list_len)
+{
+	size_t i;
+
+	for (i = 0; i < list_len; i++) {
+		if (group_id == list[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+int
+tls1_count_shared_groups(const SSL *ssl, size_t *out_count)
+{
+	size_t count, preflen, supplen, i;
+	const uint16_t *pref, *supp;
+
+	if (!tls1_get_group_lists(ssl, &pref, &preflen, &supp, &supplen))
+		return 0;
+
+	count = 0;
+	for (i = 0; i < preflen; i++) {
+		if (!tls1_group_id_present(pref[i], supp, supplen))
+			continue;
+
+		if (!ssl_security_shared_group(ssl, pref[i]))
+			continue;
+
+		count++;
+	}
+
+	*out_count = count;
+
+	return 1;
+}
+
+static int
+tls1_group_by_index(const SSL *ssl, size_t n, int *out_nid,
+    int (*ssl_security_fn)(const SSL *, uint16_t))
+{
+	size_t count, preflen, supplen, i;
+	const uint16_t *pref, *supp;
+
+	if (!tls1_get_group_lists(ssl, &pref, &preflen, &supp, &supplen))
+		return 0;
+
+	count = 0;
+	for (i = 0; i < preflen; i++) {
+		if (!tls1_group_id_present(pref[i], supp, supplen))
+			continue;
+
+		if (!ssl_security_fn(ssl, pref[i]))
+			continue;
+
+		if (count++ == n)
+			return tls1_ec_group_id2nid(pref[i], out_nid);
+	}
+
+	return 0;
+}
+
+int
+tls1_get_shared_group_by_index(const SSL *ssl, size_t index, int *out_nid)
+{
+	return tls1_group_by_index(ssl, index, out_nid,
+	    ssl_security_shared_group);
+}
+
+int
+tls1_get_supported_group(const SSL *ssl, int *out_nid)
+{
+	return tls1_group_by_index(ssl, 0, out_nid,
+	    ssl_security_supported_group);
+}
+
 int
 tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const int *groups, size_t ngroups)
@@ -526,33 +620,6 @@ tls1_check_group(SSL *s, uint16_t group_id)
 			continue;
 		if (groups[i] == group_id)
 			return 1;
-	}
-	return 0;
-}
-
-int
-tls1_get_supported_group(SSL *s, int *out_nid)
-{
-	size_t preflen, supplen, i, j;
-	const uint16_t *pref, *supp;
-	unsigned long server_pref;
-
-	/* Cannot do anything on the client side. */
-	if (s->server == 0)
-		return 0;
-
-	/* Return first preference supported group. */
-	server_pref = (s->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
-	tls1_get_group_list(s, (server_pref == 0), &pref, &preflen);
-	tls1_get_group_list(s, (server_pref != 0), &supp, &supplen);
-
-	for (i = 0; i < preflen; i++) {
-		if (!ssl_security_supported_group(s, pref[i]))
-			continue;
-		for (j = 0; j < supplen; j++) {
-			if (pref[i] == supp[j])
-				return tls1_ec_group_id2nid(pref[i], out_nid);
-		}
 	}
 	return 0;
 }

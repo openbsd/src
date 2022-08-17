@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.420 2022/08/17 18:42:13 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.421 2022/08/17 18:45:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1527,7 +1527,9 @@ int tls1_ec_group_id2nid(uint16_t group_id, int *out_nid);
 int tls1_ec_group_id2bits(uint16_t group_id, int *out_bits);
 int tls1_ec_nid2group_id(int nid, uint16_t *out_group_id);
 int tls1_check_group(SSL *s, uint16_t group_id);
-int tls1_get_supported_group(SSL *s, int *group_nid);
+int tls1_count_shared_groups(const SSL *ssl, size_t *out_count);
+int tls1_get_shared_group_by_index(const SSL *ssl, size_t n, int *out_nid);
+int tls1_get_supported_group(const SSL *s, int *out_nid);
 
 int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);
