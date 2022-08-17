@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.17 2022/02/06 09:52:32 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.18 2022/08/17 15:16:12 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -58,7 +58,7 @@ mrt_read_msg(int fd, struct mrt_hdr *hdr)
 {
 	void *buf;
 
-	bzero(hdr, sizeof(*hdr));
+	memset(hdr, 0, sizeof(*hdr));
 	if (mrt_read_buf(fd, hdr, sizeof(*hdr)) != sizeof(*hdr))
 		return (NULL);
 

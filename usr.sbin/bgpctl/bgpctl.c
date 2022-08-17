@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.281 2022/07/28 10:40:25 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.282 2022/08/17 15:16:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 
-		bzero(&ribreq, sizeof(ribreq));
+		memset(&ribreq, 0, sizeof(ribreq));
 		if (res->as.type != AS_UNDEF)
 			ribreq.as = res->as;
 		if (res->addr.aid) {
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "control_init: socket");
 
-	bzero(&sa_un, sizeof(sa_un));
+	memset(&sa_un, 0, sizeof(sa_un));
 	sa_un.sun_family = AF_UNIX;
 	if (strlcpy(sa_un.sun_path, sockname, sizeof(sa_un.sun_path)) >=
 	    sizeof(sa_un.sun_path))
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 			    NULL, 0);
 		break;
 	case SHOW_RIB:
-		bzero(&ribreq, sizeof(ribreq));
+		memset(&ribreq, 0, sizeof(ribreq));
 		type = IMSG_CTL_SHOW_RIB;
 		if (res->addr.aid) {
 			ribreq.prefix = res->addr;
@@ -310,7 +310,7 @@ main(int argc, char *argv[])
 		break;
 	case NETWORK_ADD:
 	case NETWORK_REMOVE:
-		bzero(&net, sizeof(net));
+		memset(&net, 0, sizeof(net));
 		net.prefix = res->addr;
 		net.prefixlen = res->prefixlen;
 		net.rd = res->rd;
@@ -333,14 +333,14 @@ main(int argc, char *argv[])
 		done = 1;
 		break;
 	case NETWORK_SHOW:
-		bzero(&ribreq, sizeof(ribreq));
+		memset(&ribreq, 0, sizeof(ribreq));
 		ribreq.aid = res->aid;
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
 		break;
 	case NETWORK_MRT:
-		bzero(&ribreq, sizeof(ribreq));
+		memset(&ribreq, 0, sizeof(ribreq));
 		if (res->as.type != AS_UNDEF)
 			ribreq.as = res->as;
 		if (res->addr.aid) {
@@ -1076,7 +1076,7 @@ network_bulk(struct parse_result *res)
 			/* Stop processing after a comment */
 			if (*b == '#')
 				break;
-			bzero(&net, sizeof(net));
+			memset(&net, 0, sizeof(net));
 			if (parse_prefix(b, strlen(b), &h, &len) != 1)
 				errx(1, "bad prefix: %s", b);
 			net.prefix = h;
@@ -1145,7 +1145,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
-		bzero(&ctl, sizeof(ctl));
+		memset(&ctl, 0, sizeof(ctl));
 		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
 		if (mre->originated <= now)
@@ -1228,7 +1228,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	now = time(NULL);
 	for (i = 0; i < mr->nentries; i++) {
 		mre = &mr->entries[i];
-		bzero(&ctl, sizeof(ctl));
+		memset(&ctl, 0, sizeof(ctl));
 		ctl.prefix = mr->prefix;
 		ctl.prefixlen = mr->prefixlen;
 		if (mre->originated <= now)
@@ -1269,7 +1269,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 		    !match_aspath(mre->aspath, mre->aspath_len, &req->as))
 			continue;
 
-		bzero(&net, sizeof(net));
+		memset(&net, 0, sizeof(net));
 		net.prefix = ctl.prefix;
 		net.prefixlen = ctl.prefixlen;
 		net.type = NETWORK_MRTCLONE;

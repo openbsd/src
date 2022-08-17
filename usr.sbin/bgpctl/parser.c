@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.113 2022/06/22 12:27:46 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.114 2022/08/17 15:16:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -506,7 +506,7 @@ parse(int argc, char *argv[])
 	const struct token	*table = t_main;
 	const struct token	*match;
 
-	bzero(&res, sizeof(res));
+	memset(&res, 0, sizeof(res));
 	res.rtableid = getrtable();
 	TAILQ_INIT(&res.set);
 
@@ -907,8 +907,8 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct bgpd_addr));
-	bzero(&ina, sizeof(ina));
+	memset(addr, 0, sizeof(struct bgpd_addr));
+	memset(&ina, 0, sizeof(ina));
 
 	if (inet_net_pton(AF_INET, word, &ina, sizeof(ina)) != -1) {
 		addr->aid = AID_INET;
@@ -916,7 +916,7 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 		return (1);
 	}
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM; /*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
@@ -940,7 +940,7 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
 	if (word == NULL)
 		return (0);
 
-	bzero(addr, sizeof(struct bgpd_addr));
+	memset(addr, 0, sizeof(struct bgpd_addr));
 
 	if ((p = strrchr(word, '/')) != NULL) {
 		size_t plen = strlen(p);
