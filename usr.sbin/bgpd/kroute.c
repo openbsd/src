@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.290 2022/08/17 09:16:44 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.291 2022/08/17 10:54:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -98,6 +98,7 @@ struct kredist_node {
 };
 
 struct kif {
+	RB_ENTRY(kif)		 entry;
 	char			 ifname[IFNAMSIZ];
 	uint64_t		 baudrate;
 	u_int			 rdomain;
@@ -107,11 +108,6 @@ struct kif {
 	uint8_t			 link_state;
 	uint8_t			 nh_reachable;	/* for nexthop verification */
 	uint8_t			 depend_state;	/* for session depend on */
-};
-
-struct kif_node {
-	RB_ENTRY(kif_node)	 entry;
-	struct kif		 k;
 };
 
 int	ktable_new(u_int, u_int, char *, int);
@@ -134,7 +130,7 @@ int	kroute_compare(struct kroute *, struct kroute *);
 int	kroute6_compare(struct kroute6 *, struct kroute6 *);
 int	knexthop_compare(struct knexthop *, struct knexthop *);
 int	kredist_compare(struct kredist_node *, struct kredist_node *);
-int	kif_compare(struct kif_node *, struct kif_node *);
+int	kif_compare(struct kif *, struct kif *);
 
 struct kroute	*kroute_find(struct ktable *, const struct bgpd_addr *,
 		    uint8_t, uint8_t);
@@ -153,9 +149,9 @@ int		 knexthop_insert(struct ktable *, struct knexthop *);
 void		 knexthop_remove(struct ktable *, struct knexthop *);
 void		 knexthop_clear(struct ktable *);
 
-struct kif_node	*kif_find(int);
-int		 kif_insert(struct kif_node *);
-int		 kif_remove(struct kif_node *);
+struct kif	*kif_find(int);
+int		 kif_insert(struct kif *);
+int		 kif_remove(struct kif *);
 void		 kif_clear(void);
 
 int		 kroute_validate(struct kroute *);
@@ -199,9 +195,9 @@ RB_GENERATE(knexthop_tree, knexthop, entry, knexthop_compare)
 RB_PROTOTYPE(kredist_tree, kredist_node, entry, kredist_compare)
 RB_GENERATE(kredist_tree, kredist_node, entry, kredist_compare)
 
-RB_HEAD(kif_tree, kif_node)		kit;
-RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
-RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
+RB_HEAD(kif_tree, kif)		kit;
+RB_PROTOTYPE(kif_tree, kif, entry, kif_compare)
+RB_GENERATE(kif_tree, kif, entry, kif_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
 
@@ -874,7 +870,7 @@ kr_show_route(struct imsg *imsg)
 	sa_family_t		 af;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop		*h;
-	struct kif_node		*kif;
+	struct kif		*kif;
 	u_int			 i;
 	u_short			 ifindex = 0;
 
@@ -983,7 +979,7 @@ kr_show_route(struct imsg *imsg)
 				snh.kr.priority = kr_priority(&snh.kr);
 				if ((kif = kif_find(ifindex)) != NULL)
 					memcpy(&snh.iface,
-					    kr_show_interface(&kif->k),
+					    kr_show_interface(kif),
 					    sizeof(snh.iface));
 			}
 			send_imsg_session(IMSG_CTL_SHOW_NEXTHOP, imsg->hdr.pid,
@@ -993,7 +989,7 @@ kr_show_route(struct imsg *imsg)
 	case IMSG_CTL_SHOW_INTERFACE:
 		RB_FOREACH(kif, kif_tree, &kit)
 			send_imsg_session(IMSG_CTL_SHOW_INTERFACE,
-			    imsg->hdr.pid, kr_show_interface(&kif->k),
+			    imsg->hdr.pid, kr_show_interface(kif),
 			    sizeof(struct ctl_show_interface));
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
@@ -1034,11 +1030,11 @@ kr_send_dependon(struct kif *kif)
 void
 kr_ifinfo(char *ifname)
 {
-	struct kif_node	*kif;
+	struct kif	*kif;
 
 	RB_FOREACH(kif, kif_tree, &kit)
-		if (!strcmp(ifname, kif->k.ifname)) {
-			kr_send_dependon(&kif->k);
+		if (!strcmp(ifname, kif->ifname)) {
+			kr_send_dependon(kif);
 			return;
 		}
 }
@@ -1553,9 +1549,9 @@ kredist_compare(struct kredist_node *a, struct kredist_node *b)
 }
 
 int
-kif_compare(struct kif_node *a, struct kif_node *b)
+kif_compare(struct kif *a, struct kif *b)
 {
-	return (b->k.ifindex - a->k.ifindex);
+	return (b->ifindex - a->ifindex);
 }
 
 
@@ -1994,19 +1990,19 @@ knexthop_clear(struct ktable *kt)
 		knexthop_remove(kt, kn);
 }
 
-struct kif_node *
+struct kif *
 kif_find(int ifindex)
 {
-	struct kif_node	s;
+	struct kif	s;
 
 	bzero(&s, sizeof(s));
-	s.k.ifindex = ifindex;
+	s.ifindex = ifindex;
 
 	return (RB_FIND(kif_tree, &kit, &s));
 }
 
 int
-kif_insert(struct kif_node *kif)
+kif_insert(struct kif *kif)
 {
 	if (RB_INSERT(kif_tree, &kit, kif) != NULL) {
 		log_warnx("RB_INSERT(kif_tree, &kit, kif)");
@@ -2018,11 +2014,11 @@ kif_insert(struct kif_node *kif)
 }
 
 int
-kif_remove(struct kif_node *kif)
+kif_remove(struct kif *kif)
 {
 	struct ktable	*kt;
 
-	kif->k.flags &= ~IFF_UP;
+	kif->flags &= ~IFF_UP;
 
 	/*
 	 * TODO, remove all kroutes using this interface,
@@ -2030,8 +2026,8 @@ kif_remove(struct kif_node *kif)
 	 * here as well.
 	 */
 
-	if ((kt = ktable_get(kif->k.rdomain)) != NULL)
-		knexthop_track(kt, kif->k.ifindex);
+	if ((kt = ktable_get(kif->rdomain)) != NULL)
+		knexthop_track(kt, kif->ifindex);
 
 	RB_REMOVE(kif_tree, &kit, kif);
 	free(kif);
@@ -2041,7 +2037,7 @@ kif_remove(struct kif_node *kif)
 void
 kif_clear(void)
 {
-	struct kif_node	*kif;
+	struct kif	*kif;
 
 	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
 		kif_remove(kif);
@@ -2090,7 +2086,7 @@ kif_depend_state(struct kif *kif)
 int
 kroute_validate(struct kroute *kr)
 {
-	struct kif_node		*kif;
+	struct kif	*kif;
 
 	if (kr->flags & (F_REJECT | F_BLACKHOLE))
 		return (0);
@@ -2104,13 +2100,13 @@ kroute_validate(struct kroute *kr)
 		return (1);
 	}
 
-	return (kif->k.nh_reachable);
+	return (kif->nh_reachable);
 }
 
 int
 kroute6_validate(struct kroute6 *kr)
 {
-	struct kif_node		*kif;
+	struct kif	*kif;
 
 	if (kr->flags & (F_REJECT | F_BLACKHOLE))
 		return (0);
@@ -2124,7 +2120,7 @@ kroute6_validate(struct kroute6 *kr)
 		return (1);
 	}
 
-	return (kif->k.nh_reachable);
+	return (kif->nh_reachable);
 }
 
 int
@@ -2518,7 +2514,7 @@ void
 if_change(u_short ifindex, int flags, struct if_data *ifd)
 {
 	struct ktable		*kt;
-	struct kif_node		*kif;
+	struct kif		*kif;
 	uint8_t			 reachable;
 
 	if ((kif = kif_find(ifindex)) == NULL) {
@@ -2528,27 +2524,27 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	}
 
 	log_info("%s: %s: rdomain %u %s, %s, %s, %s",
-	    __func__, kif->k.ifname, ifd->ifi_rdomain,
+	    __func__, kif->ifname, ifd->ifi_rdomain,
 	    flags & IFF_UP ? "UP" : "DOWN",
 	    get_media_descr(ift2ifm(ifd->ifi_type)),
 	    get_linkstate(ifd->ifi_type, ifd->ifi_link_state),
 	    get_baudrate(ifd->ifi_baudrate, "bps"));
 
-	kif->k.flags = flags;
-	kif->k.link_state = ifd->ifi_link_state;
-	kif->k.if_type = ifd->ifi_type;
-	kif->k.rdomain = ifd->ifi_rdomain;
-	kif->k.baudrate = ifd->ifi_baudrate;
-	kif->k.depend_state = kif_depend_state(&kif->k);
+	kif->flags = flags;
+	kif->link_state = ifd->ifi_link_state;
+	kif->if_type = ifd->ifi_type;
+	kif->rdomain = ifd->ifi_rdomain;
+	kif->baudrate = ifd->ifi_baudrate;
+	kif->depend_state = kif_depend_state(kif);
 
-	kr_send_dependon(&kif->k);
+	kr_send_dependon(kif);
 
-	if ((reachable = kif_validate(&kif->k)) == kif->k.nh_reachable)
+	if ((reachable = kif_validate(kif)) == kif->nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */
 
-	kif->k.nh_reachable = reachable;
+	kif->nh_reachable = reachable;
 
-	kt = ktable_get(kif->k.rdomain);
+	kt = ktable_get(kif->rdomain);
 	if (kt == NULL)
 		return;
 
@@ -2559,7 +2555,7 @@ void
 if_announce(void *msg)
 {
 	struct if_announcemsghdr	*ifan;
-	struct kif_node			*kif;
+	struct kif			*kif;
 
 	ifan = msg;
 
@@ -2570,8 +2566,8 @@ if_announce(void *msg)
 			return;
 		}
 
-		kif->k.ifindex = ifan->ifan_index;
-		strlcpy(kif->k.ifname, ifan->ifan_name, sizeof(kif->k.ifname));
+		kif->ifindex = ifan->ifan_index;
+		strlcpy(kif->ifname, ifan->ifan_name, sizeof(kif->ifname));
 		kif_insert(kif);
 		break;
 	case IFAN_DEPARTURE:
@@ -2851,7 +2847,7 @@ fetchifs(int ifindex)
 	int			 mib[6];
 	char			*buf, *next, *lim;
 	struct if_msghdr	 ifm;
-	struct kif_node		*kif;
+	struct kif		*kif;
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
 	struct sockaddr_dl	*sdl;
 
@@ -2893,23 +2889,23 @@ fetchifs(int ifindex)
 			return (-1);
 		}
 
-		kif->k.ifindex = ifm.ifm_index;
-		kif->k.flags = ifm.ifm_flags;
-		kif->k.link_state = ifm.ifm_data.ifi_link_state;
-		kif->k.if_type = ifm.ifm_data.ifi_type;
-		kif->k.rdomain = ifm.ifm_data.ifi_rdomain;
-		kif->k.baudrate = ifm.ifm_data.ifi_baudrate;
-		kif->k.nh_reachable = kif_validate(&kif->k);
-		kif->k.depend_state = kif_depend_state(&kif->k);
+		kif->ifindex = ifm.ifm_index;
+		kif->flags = ifm.ifm_flags;
+		kif->link_state = ifm.ifm_data.ifi_link_state;
+		kif->if_type = ifm.ifm_data.ifi_type;
+		kif->rdomain = ifm.ifm_data.ifi_rdomain;
+		kif->baudrate = ifm.ifm_data.ifi_baudrate;
+		kif->nh_reachable = kif_validate(kif);
+		kif->depend_state = kif_depend_state(kif);
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
 				sdl = (struct sockaddr_dl *)sa;
-				if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
-					memcpy(kif->k.ifname, sdl->sdl_data,
-					    sizeof(kif->k.ifname) - 1);
+				if (sdl->sdl_nlen >= sizeof(kif->ifname))
+					memcpy(kif->ifname, sdl->sdl_data,
+					    sizeof(kif->ifname) - 1);
 				else if (sdl->sdl_nlen > 0)
-					memcpy(kif->k.ifname, sdl->sdl_data,
+					memcpy(kif->ifname, sdl->sdl_data,
 					    sdl->sdl_nlen);
 				/* string already terminated via calloc() */
 			}
