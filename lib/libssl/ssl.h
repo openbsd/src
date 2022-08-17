@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.222 2022/07/24 14:16:29 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.223 2022/08/17 18:43:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -930,7 +930,9 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 
 #define SSL_CTRL_SET_GROUPS				91
 #define SSL_CTRL_SET_GROUPS_LIST			92
-
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define SSL_CTRL_GET_SHARED_GROUP		93
+#endif
 #define SSL_CTRL_SET_ECDH_AUTO			94
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
@@ -1046,6 +1048,12 @@ const SSL_METHOD *SSL_CTX_get_ssl_method(const SSL_CTX *ctx);
 	SSL_CTX_ctrl(ctx, SSL_CTRL_GET_EXTRA_CHAIN_CERTS, 1, px509)
 #define SSL_CTX_clear_extra_chain_certs(ctx) \
 	SSL_CTX_ctrl(ctx, SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS, 0, NULL)
+
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define SSL_get_shared_group(s, n) \
+	SSL_ctrl((s), SSL_CTRL_GET_SHARED_GROUP, (n), NULL)
+#define SSL_get_shared_curve SSL_get_shared_group
+#endif
 
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
