@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.193 2022/07/03 08:15:52 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.194 2022/08/17 18:42:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,7 +395,7 @@ tls1_ec_nid2group_id(int nid, uint16_t *out_group_id)
  * exists, or the default formats if a custom list has not been specified.
  */
 void
-tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
+tls1_get_formatlist(const SSL *s, int client_formats, const uint8_t **pformats,
     size_t *pformatslen)
 {
 	if (client_formats != 0) {
@@ -418,7 +418,7 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
  * exists, or the default groups if a custom list has not been specified.
  */
 void
-tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
+tls1_get_group_list(const SSL *s, int client_groups, const uint16_t **pgroups,
     size_t *pgroupslen)
 {
 	if (client_groups != 0) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.419 2022/08/17 18:41:17 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.420 2022/08/17 18:42:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1513,10 +1513,10 @@ int tls12_derive_master_secret(SSL *s, uint8_t *premaster_secret,
 int ssl_using_ecc_cipher(SSL *s);
 int ssl_check_srvr_ecc_cert_and_alg(SSL *s, X509 *x);
 
-void tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
-    size_t *pformatslen);
-void tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
-    size_t *pgroupslen);
+void tls1_get_formatlist(const SSL *s, int client_formats,
+    const uint8_t **pformats, size_t *pformatslen);
+void tls1_get_group_list(const SSL *s, int client_groups,
+    const uint16_t **pgroups, size_t *pgroupslen);
 
 int tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const int *groups, size_t ngroups);
