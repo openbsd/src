@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.28 2022/01/22 00:34:48 inoguchi Exp $ */
+/* $OpenBSD: x509_req.c,v 1.29 2022/08/18 16:26:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,9 @@ X509_REQ_get_extensions(X509_REQ *req)
 		ext = X509_ATTRIBUTE_get0_type(attr, 0);
 		break;
 	}
-	if (ext == NULL || ext->type != V_ASN1_SEQUENCE)
+	if (ext == NULL)
+		return sk_X509_EXTENSION_new_null();
+	if (ext->type != V_ASN1_SEQUENCE)
 		return NULL;
 	p = ext->value.sequence->data;
 	return d2i_X509_EXTENSIONS(NULL, &p, ext->value.sequence->length);
