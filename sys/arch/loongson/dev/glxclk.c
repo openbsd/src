@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxclk.c,v 1.6 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: glxclk.c,v 1.7 2022/08/18 06:31:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -19,7 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -129,6 +129,13 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 		printf(" not configured\n");
 		return;
 	}
+
+	/*
+	 * MFGPT runs on powers of two, adjust the hz value accordingly.
+	 */
+	stathz = hz = 128;
+	tick = 1000000 / hz;
+	tick_nsec = 1000000000 / hz;
 
 	printf(": clock");
 
