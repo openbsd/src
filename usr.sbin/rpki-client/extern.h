@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.148 2022/08/17 11:57:46 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.149 2022/08/18 15:20:27 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -178,7 +178,6 @@ enum rtype {
 	RTYPE_CER,
 	RTYPE_CRL,
 	RTYPE_GBR,
-	RTYPE_ASPA,
 	RTYPE_REPO,
 	RTYPE_FILE,
 	RTYPE_RSC,

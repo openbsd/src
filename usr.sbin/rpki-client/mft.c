@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.72 2022/06/10 10:41:09 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.73 2022/08/18 15:20:27 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -164,8 +164,6 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_ROA;
 	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
 		return RTYPE_GBR;
-	if (strcasecmp(fn + sz - 4, ".asa") == 0)
-		return RTYPE_ASPA;
 	if (strcasecmp(fn + sz - 4, ".sig") == 0)
 		return RTYPE_RSC;
 
@@ -193,7 +191,7 @@ valid_mft_filename(const char *fn, size_t len)
 }
 
 /*
- * Check that the file is an ASPA, CER, CRL, GBR or a ROA.
+ * Check that the file is an CER, CRL, GBR or a ROA.
  * Returns corresponding rtype or RTYPE_INVALID on error.
  */
 static enum rtype
@@ -203,7 +201,6 @@ rtype_from_mftfile(const char *fn)
 
 	type = rtype_from_file_extension(fn);
 	switch (type) {
-	case RTYPE_ASPA:
 	case RTYPE_CER:
 	case RTYPE_CRL:
 	case RTYPE_GBR:
