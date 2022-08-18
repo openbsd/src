@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.15 2020/12/03 22:47:21 jmc Exp $
+.\"	$OpenBSD: BIO_ctrl.3,v 1.16 2022/08/18 18:42:13 tb Exp $
 .\"	OpenSSL b055fceb Thu Oct 20 09:56:18 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 3 2020 $
+.Dd $Mdocdate: August 18 2022 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@
 .Nm BIO_ctrl_wpending ,
 .Nm BIO_get_info_callback ,
 .Nm BIO_set_info_callback ,
-.Nm bio_info_cb
+.Nm BIO_info_cb
 .Nd BIO control operations
 .Sh SYNOPSIS
 .In openssl/bio.h
@@ -84,7 +84,7 @@
 .Fo BIO_callback_ctrl
 .Fa "BIO *b"
 .Fa "int cmd"
-.Fa "bio_info_cb cb"
+.Fa "BIO_info_cb cb"
 .Fc
 .Ft char *
 .Fo BIO_ptr_ctrl
@@ -148,21 +148,18 @@
 .Ft int
 .Fo BIO_get_info_callback
 .Fa "BIO *b"
-.Fa "bio_info_cb **cbp"
+.Fa "BIO_info_cb **cbp"
 .Fc
 .Ft int
 .Fo BIO_set_info_callback
 .Fa "BIO *b"
-.Fa "bio_info_cb *cb"
+.Fa "BIO_info_cb *cb"
 .Fc
-.Ft typedef void
-.Fo bio_info_cb
+.Ft typedef int
+.Fo BIO_info_cb
 .Fa "BIO *b"
-.Fa "int oper"
-.Fa "const char *ptr"
-.Fa "int arg1"
-.Fa "long arg2"
-.Fa "long arg3"
+.Fa "int state"
+.Fa "int res"
 .Fc
 .Sh DESCRIPTION
 .Fn BIO_ctrl ,
