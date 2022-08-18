@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.293 2022/08/18 12:14:00 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.294 2022/08/18 17:02:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -1607,6 +1607,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 	struct kroute6	*kr6, *kr6m;
 	struct knexthop	*n;
 	uint32_t	 mplslabel = 0;
+	int		 multipath = 0;
 
 	if (kf->prefix.aid == AID_VPN_IPv4 ||
 	    kf->prefix.aid == AID_VPN_IPv6) {
@@ -1648,6 +1649,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 			while (krm->next != NULL)
 				krm = krm->next;
 			krm->next = kr;
+			multipath = 1;
 		}
 
 		if (kf->flags & F_BGPD)
@@ -1684,6 +1686,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 			while (kr6m->next != NULL)
 				kr6m = kr6m->next;
 			kr6m->next = kr6;
+			multipath = 1;
 		}
 
 		if (kf->flags & F_BGPD)
@@ -1699,8 +1702,8 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 			    kf->prefixlen) == 0)
 				knexthop_validate(kt, n);
 
-		if (krm == NULL)
-			/* redistribute multipath routes only once */
+		/* redistribute multipath routes only once */
+		if (!multipath)
 			kr_redistribute(IMSG_NETWORK_ADD, kt, kf);
 	}
 
