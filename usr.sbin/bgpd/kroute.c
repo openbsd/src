@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.292 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.293 2022/08/18 12:14:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -175,7 +175,7 @@ void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
 
-int		send_rtmsg(int, int, struct ktable *, struct kroute_full *);
+int		send_rtmsg(int, struct ktable *, struct kroute_full *);
 int		dispatch_rtmsg(void);
 int		fetchtable(struct ktable *);
 int		fetchifs(int);
@@ -497,7 +497,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kf)
 		else
 			kr->flags &= ~F_REJECT;
 
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, kt, kf))
+		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr->flags |= F_BGPD_INSERTED;
 	}
 
@@ -535,7 +535,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kf)
 		else
 			kr6->flags &= ~F_REJECT;
 
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, kt, kf))
+		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr6->flags |= F_BGPD_INSERTED;
 	}
 
@@ -587,7 +587,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kf)
 		else
 			kr->flags &= ~F_REJECT;
 
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, kt, kf))
+		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr->flags |= F_BGPD_INSERTED;
 	}
 
@@ -640,7 +640,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 		else
 			kr6->flags &= ~F_REJECT;
 
-		if (send_rtmsg(kr_state.fd, RTM_CHANGE, kt, kf))
+		if (send_rtmsg(RTM_CHANGE, kt, kf))
 			kr6->flags |= F_BGPD_INSERTED;
 	}
 
@@ -714,14 +714,12 @@ kr_fib_couple(u_int rtableid)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if (kr->flags & F_BGPD) {
-			if (send_rtmsg(kr_state.fd, RTM_ADD, kt,
-			    kr_tofull(kr)))
+			if (send_rtmsg(RTM_ADD, kt, kr_tofull(kr)))
 				kr->flags |= F_BGPD_INSERTED;
 		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if (kr6->flags & F_BGPD) {
-			if (send_rtmsg(kr_state.fd, RTM_ADD, kt,
-			    kr6_tofull(kr6)))
+			if (send_rtmsg(RTM_ADD, kt, kr6_tofull(kr6)))
 				kr6->flags |= F_BGPD_INSERTED;
 		}
 	log_info("kernel routing table %u (%s) coupled", kt->rtableid,
@@ -752,14 +750,12 @@ kr_fib_decouple(u_int rtableid)
 
 	RB_FOREACH(kr, kroute_tree, &kt->krt)
 		if ((kr->flags & F_BGPD_INSERTED)) {
-			if (send_rtmsg(kr_state.fd, RTM_DELETE, kt,
-			    kr_tofull(kr)))
+			if (send_rtmsg(RTM_DELETE, kt, kr_tofull(kr)))
 				kr->flags &= ~F_BGPD_INSERTED;
 		}
 	RB_FOREACH(kr6, kroute6_tree, &kt->krt6)
 		if ((kr6->flags & F_BGPD_INSERTED)) {
-			if (send_rtmsg(kr_state.fd, RTM_DELETE, kt,
-			    kr6_tofull(kr6)))
+			if (send_rtmsg(RTM_DELETE, kt, kr6_tofull(kr6)))
 				kr6->flags &= ~F_BGPD_INSERTED;
 		}
 
@@ -1655,7 +1651,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 		}
 
 		if (kf->flags & F_BGPD)
-			if (send_rtmsg(kr_state.fd, RTM_ADD, kt, kf))
+			if (send_rtmsg(RTM_ADD, kt, kf))
 				kr->flags |= F_BGPD_INSERTED;
 		break;
 	case AID_INET6:
@@ -1691,7 +1687,7 @@ kroute_insert(struct ktable *kt, struct kroute_full *kf)
 		}
 
 		if (kf->flags & F_BGPD)
-			if (send_rtmsg(kr_state.fd, RTM_ADD, kt, kf))
+			if (send_rtmsg(RTM_ADD, kt, kf))
 				kr6->flags |= F_BGPD_INSERTED;
 		break;
 	}
@@ -1873,7 +1869,7 @@ kroute_remove(struct ktable *kt, struct kroute_full *kf, int any)
 		return (multipath + 1);
 
 	if (kf->flags & F_BGPD_INSERTED)
-		send_rtmsg(kr_state.fd, RTM_DELETE, kt, kf);
+		send_rtmsg(RTM_DELETE, kt, kf);
 
 	/* remove only once all multipath routes are gone */
 	if (!(kf->flags & F_BGPD) && !multipath)
@@ -2622,7 +2618,7 @@ get_mpe_config(const char *name, u_int *rdomain, u_int *label)
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
 
 int
-send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
+send_rtmsg(int action, struct ktable *kt, struct kroute_full *kf)
 {
 	struct iovec		 iov[7];
 	struct rt_msghdr	 hdr;
@@ -2767,7 +2763,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute_full *kf)
 	}
 
 retry:
-	if (writev(fd, iov, iovcnt) == -1) {
+	if (writev(kr_state.fd, iov, iovcnt) == -1) {
 		if (errno == ESRCH) {
 			if (hdr.rtm_type == RTM_CHANGE) {
 				hdr.rtm_type = RTM_ADD;
@@ -2832,7 +2828,7 @@ fetchtable(struct ktable *kt)
 			continue;
 
 		if (kf.priority == RTP_MINE)
-			send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kf);
+			send_rtmsg(RTM_DELETE, kt, &kf);
 		else
 			kroute_insert(kt, &kf);
 	}
