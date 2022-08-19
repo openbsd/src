@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.8,v 1.4 2021/08/23 18:09:05 florian Exp $
+.\"	$OpenBSD: dhcpleased.8,v 1.5 2022/08/19 08:09:42 kn Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2021 $
+.Dd $Mdocdate: August 19 2022 $
 .Dt DHCPLEASED 8
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ Multiple
 options increase the verbosity.
 .El
 .Sh FILES
-.Bl -tag -width "/dev/dhcpleased.sockXX" -compact
+.Bl -tag -width "/var/db/dhcpleased/<if>" -compact
 .It Pa /dev/dhcpleased.sock
 .Ux Ns -domain
 socket used for communication with
@@ -81,6 +81,8 @@ socket used for communication with
 Default
 .Nm
 configuration file.
+.It Pa /var/db/dhcpleased/ Ns Aq Ar if
+Interface specific lease files.
 .El
 .Sh SEE ALSO
 .Xr dhcpleased.conf 5 ,
