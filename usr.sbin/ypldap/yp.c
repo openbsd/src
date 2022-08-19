@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.20 2022/02/05 22:59:58 naddy Exp $ */
+/*	$OpenBSD: yp.c,v 1.21 2022/08/19 03:50:32 jmatthew Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/socket.h>
 #include <sys/select.h>
 #include <sys/tree.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -44,6 +45,8 @@
 
 #include "ypldap.h"
 
+#define BINDINGDIR		"/var/yp/binding"
+
 void	yp_dispatch(struct svc_req *, SVCXPRT *);
 void	yp_disable_events(void);
 void	yp_fd_event(int, short, void *);
@@ -51,6 +54,7 @@ int	yp_check(struct svc_req *);
 int	yp_valid_domain(char *, struct ypresp_val *);
 void	yp_make_val(struct ypresp_val *, char *, int);
 void	yp_make_keyval(struct ypresp_key_val *, char *, char *);
+int	yp_write_binding(int, int);
 
 static struct env	*env;
 
@@ -107,7 +111,9 @@ yp_fd_event(int fd, short event, void *p)
 void
 yp_init(struct env *x_env)
 {
-	struct yp_data	*yp;
+	struct sockaddr_in	 addr;
+	struct yp_data		*yp;
+	int			 s, udpport, tcpport;
 
 	if ((yp = calloc(1, sizeof(*yp))) == NULL)
 		fatal(NULL);
@@ -116,21 +122,122 @@ yp_init(struct env *x_env)
 	env = x_env;
 	env->sc_yp = yp;
 	
-	(void)pmap_unset(YPPROG, YPVERS);
+	switch (env->sc_bind_mode) {
+	case BIND_MODE_LOCAL:
+		addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		addr.sin_len = sizeof(struct sockaddr_in);
+		addr.sin_family = AF_INET;
 
-	if ((yp->yp_trans_udp = svcudp_create(RPC_ANYSOCK)) == NULL)
-		fatal("cannot create udp service");
-	if ((yp->yp_trans_tcp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL)
-		fatal("cannot create tcp service");
+		s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		if (s == -1)
+			fatal("cannot create udp socket");
+		addr.sin_port = 0;
+		if (bindresvport(s, &addr))
+			fatal("cannot bind udp socket");
+		if ((yp->yp_trans_udp = svcudp_create(s)) == NULL)
+			fatal("cannot create udp service");
+		udpport = ntohs(addr.sin_port);
 
-	if (!svc_register(yp->yp_trans_udp, YPPROG, YPVERS,
-	    yp_dispatch, IPPROTO_UDP)) {
-		fatal("unable to register (YPPROG, YPVERS, udp)");
+		s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (s == -1)
+			fatal("cannot create tcp socket");
+		addr.sin_port = 0;
+		if (bindresvport(s, &addr))
+			fatal("cannot bind tcp socket");
+		if ((yp->yp_trans_tcp = svctcp_create(s, 0, 0)) == NULL)
+			fatal("cannot create tcp service");
+		tcpport = ntohs(addr.sin_port);
+
+		/* protocol 0 means don't register with portmap */
+		if (!svc_register(yp->yp_trans_udp, YPPROG, YPVERS,
+		    yp_dispatch, 0)) {
+			fatal("unable to register (YPPROG, YPVERS, udp)");
+		}
+		if (!svc_register(yp->yp_trans_tcp, YPPROG, YPVERS,
+		    yp_dispatch, 0)) {
+			fatal("unable to register (YPPROG, YPVERS, tcp)");
+		}
+
+		if (yp_write_binding(udpport, tcpport))
+			fatal("cannot write yp binding file");
+
+		break;
+
+	case BIND_MODE_PORTMAP:
+		(void)pmap_unset(YPPROG, YPVERS);
+
+		if ((yp->yp_trans_udp = svcudp_create(RPC_ANYSOCK)) == NULL)
+			fatal("cannot create udp service");
+		if ((yp->yp_trans_tcp = svctcp_create(RPC_ANYSOCK, 0, 0)) ==
+		    NULL)
+			fatal("cannot create tcp service");
+
+		if (!svc_register(yp->yp_trans_udp, YPPROG, YPVERS,
+		    yp_dispatch, IPPROTO_UDP)) {
+			fatal("unable to register (YPPROG, YPVERS, udp)");
+		}
+		if (!svc_register(yp->yp_trans_tcp, YPPROG, YPVERS,
+		    yp_dispatch, IPPROTO_TCP)) {
+			fatal("unable to register (YPPROG, YPVERS, tcp)");
+		}
+		break;
 	}
-	if (!svc_register(yp->yp_trans_tcp, YPPROG, YPVERS,
-	    yp_dispatch, IPPROTO_TCP)) {
-		fatal("unable to register (YPPROG, YPVERS, tcp)");
+}
+
+int
+yp_write_binding(int udpport, int tcpport)
+{
+	char path[PATH_MAX];
+	struct ypbind_resp ybr;
+	struct iovec iov[3];
+	struct in_addr bindaddr;
+	u_short ypbind, ypserv_tcp, ypserv_udp;
+	ssize_t total;
+	int fd;
+
+	snprintf(path, sizeof path, "%s/%s.%ld", BINDINGDIR, env->sc_domainname,
+	    YPVERS);
+	fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
+	if (fd == -1) {
+		(void)mkdir(BINDINGDIR, 0755);
+		fd = open(path, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC,
+		    0644);
+		if (fd == -1)
+			return -1;
 	}
+
+	if (fchmod(fd, 0644) == -1)
+		return -1;
+
+	iov[0].iov_base = (caddr_t)&ypbind;
+	iov[0].iov_len = sizeof ypbind;
+	iov[1].iov_base = (caddr_t)&ybr;
+	iov[1].iov_len = sizeof ybr;
+	iov[2].iov_base = (caddr_t)&ypserv_tcp;
+	iov[2].iov_len = sizeof ypserv_tcp;
+
+	bindaddr.s_addr = htonl(INADDR_LOOPBACK);
+	ypserv_tcp = htons(tcpport);
+	ypserv_udp = htons(udpport);
+	ypbind = 0;
+	memset(&ybr, 0, sizeof ybr);
+	ybr.ypbind_status = YPBIND_SUCC_VAL;
+	memmove(&ybr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
+	    &bindaddr,
+	    sizeof(ybr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr));
+	memmove(&ybr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_port,
+	    &ypserv_udp,
+	    sizeof(ybr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_port));
+	
+	total = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
+	if (writev(fd, iov, sizeof(iov)/sizeof(iov[0])) !=
+	    total) {
+		close(fd);
+		unlink(path);
+		return -1;
+	}
+
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2021/10/15 15:01:29 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2022/08/19 03:50:32 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -108,6 +108,7 @@ typedef struct {
 %token	USER GROUP TO EXPIRE HOME SHELL GECOS UID GID INTERVAL
 %token	PASSWD NAME FIXED LIST GROUPNAME GROUPPASSWD GROUPGID MAP
 %token	INCLUDE DIRECTORY CLASS PORT ERROR GROUPMEMBERS LDAPS TLS CAFILE
+%token	BIND LOCAL PORTMAP 
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.number>	opcode attribute
@@ -407,7 +408,13 @@ main		: INTERVAL NUMBER			{
 		| CAFILE STRING				{
 			free(conf->sc_cafile);
 			conf->sc_cafile = $2;
-		} 
+		}
+		| BIND LOCAL				{
+			conf->sc_bind_mode = BIND_MODE_LOCAL;
+		}
+		| BIND PORTMAP				{
+			conf->sc_bind_mode = BIND_MODE_PORTMAP;
+		}
 		;
 
 diropts		: diropts diropt nl
@@ -450,6 +457,7 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "attribute",		ATTRIBUTE },
 		{ "basedn",		BASEDN },
+		{ "bind",		BIND },
 		{ "bindcred",		BINDCRED },
 		{ "binddn",		BINDDN },
 		{ "cafile",		CAFILE },
@@ -473,11 +481,13 @@ lookup(char *s)
 		{ "interval",		INTERVAL },
 		{ "ldaps",		LDAPS },
 		{ "list",		LIST },
+		{ "local",		LOCAL },
 		{ "map",		MAP },
 		{ "maps",		MAPS },
 		{ "name",		NAME },
 		{ "passwd",		PASSWD },
 		{ "port",		PORT },
+		{ "portmap",		PORTMAP },
 		{ "provide",		PROVIDE },
 		{ "server",		SERVER },
 		{ "shell",		SHELL },
@@ -850,6 +860,7 @@ parse_config(struct env *x_conf, const char *filename, int opts)
 		log_warn("%s", __func__);
 		return (-1);
 	}
+	conf->sc_bind_mode = BIND_MODE_PORTMAP;
 
 	errors = 0;
 

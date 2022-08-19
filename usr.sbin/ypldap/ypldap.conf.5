@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.24 2020/05/16 16:58:12 jmc Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.25 2022/08/19 03:50:32 jmatthew Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: August 19 2022 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -76,6 +76,33 @@ group.byname, group.bygid.
 Load CA certificates from the specified file to validate the server certificate.
 If not specified, CA certificates will be loaded from
 .Pa /etc/ssl/cert.pem .
+.It Ic bind Ar mode
+Specify how the domain is made available for binding.
+Valid options are:
+.Bl -tag -width portmap
+.It Ic portmap
+Register with
+.Xr portmap 8
+and allow
+.Xr ypbind 8
+discovery.
+This is the default mode.
+.It Ic local
+Create a YP binding file in
+.Pa /var/yp/binding
+to enable YP support in the
+.Xr passwd 5
+and
+.Xr group 5
+databases.
+In this mode it is not neccessary to run
+.Xr portmap 8 ,
+and
+.Xr ypbind 8
+must not be running.
+YP services are only available to the host running
+.Xr ypldap 8 .
+.El
 .El
 .Sh DIRECTORIES
 Directories are used to describe the LDAP schema and help
