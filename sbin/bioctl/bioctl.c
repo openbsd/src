@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.147 2021/02/08 19:05:05 stsp Exp $ */
+/* $OpenBSD: bioctl.c,v 1.148 2022/08/19 17:49:10 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -133,14 +133,15 @@ main(int argc, char *argv[])
 			func |= BIOC_CREATERAID;
 			if (strcmp(optarg, "1C") == 0) {
 				cr_level = 0x1C;
-			} else if (strlen(optarg) != 1) {
-				errx(1, "Invalid RAID level");
 			} else if (isdigit((unsigned char)*optarg)) {
 				cr_level = strtonum(optarg, 0, 10, &errstr);
 				if (errstr != NULL)
 					errx(1, "Invalid RAID level");
-			} else
+			} else if (strlen(optarg) == 1) {
 				cr_level = *optarg;
+			} else {
+				errx(1, "Invalid RAID level");
+			}
 			break;
 		case 'd':
 			/* delete volume */
@@ -863,7 +864,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 		min_disks = 1;
 		break;
 	default:
-		errx(1, "unsupported raid level");
+		errx(1, "unsupported RAID level");
 	}
 
 	if (no_dev < min_disks)
