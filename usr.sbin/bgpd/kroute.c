@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.294 2022/08/18 17:02:42 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.295 2022/08/19 09:11:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2152,11 +2152,15 @@ knexthop_true_nexthop(struct ktable *kt, struct kroute_full *kf)
 	switch (kn->nexthop.aid) {
 	case AID_INET:
 		kr = kn->kroute;
+		if (kr->flags & F_CONNECTED)
+			return 1;
 		gateway.aid = AID_INET;
 		gateway.v4.s_addr = kr->nexthop.s_addr;
 		break;
 	case AID_INET6:
 		kr6 = kn->kroute;
+		if (kr6->flags & F_CONNECTED)
+			return 1;
 		gateway.aid = AID_INET6;
 		gateway.v6 = kr6->nexthop;
 		gateway.scope_id = kr6->nexthop_scope_id;
