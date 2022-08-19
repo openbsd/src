@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.5 2021/07/20 14:51:56 kettenis Exp $
+.\"	$OpenBSD: installboot.8,v 1.6 2022/08/19 08:27:48 kn Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Joel Sing
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2021 $
+.Dd $Mdocdate: August 19 2022 $
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -22,10 +22,14 @@
 .Nd install bootstrap on a disk
 .Sh SYNOPSIS
 .Nm installboot
-.Op Fl npv
+.Op Fl nv
 .Op Fl r Ar root
 .Ar disk
 .Op Ar stage1 Op Ar stage2
+.Nm
+.Op Fl nv
+.Fl p
+.Ar disk
 .Sh DESCRIPTION
 .Nm
 installs bootstrap on the specified disk.
@@ -38,7 +42,7 @@ the beginning of the disk.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl n
-Perform a dry run - do not actually write any bootstrap to the disk.
+Perform a dry run - do not actually write to the disk.
 .It Fl p
 Prepare filesystem.
 This will create a new filesystem on the partition reserved for the

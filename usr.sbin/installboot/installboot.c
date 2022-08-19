@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.14 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.15 2022/08/19 08:27:48 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -31,17 +31,16 @@ int	prepare;
 int	stages;
 int	verbose;
 
-char	*root = "/";
+char	*root;
 char	*stage1;
 char	*stage2;
 
 static __dead void
 usage(void)
 {
-	extern char *__progname;
-
-	fprintf(stderr, "usage: %s [-npv] [-r root] disk [stage1%s]\n",
-	    __progname, (stages >= 2) ? " [stage2]" : "");
+	fprintf(stderr, "usage:\t%1$s [-nv] [-r root] disk [stage1%2$s]\n"
+	    "\t%1$s [-nv] -p disk\n",
+	    getprogname(), (stages >= 2) ? " [stage2]" : "");
 
 	exit(1);
 }
@@ -63,9 +62,7 @@ main(int argc, char **argv)
 			prepare = 1;
 			break;
 		case 'r':
-			root = strdup(optarg);
-			if (root == NULL)
-				err(1, "strdup");
+			root = optarg;
 			break;
 		case 'v':
 			verbose = 1;
@@ -80,6 +77,8 @@ main(int argc, char **argv)
 
 	if (argc < 1 || argc > stages + 1)
 		usage();
+	if (prepare && (root != NULL || argc > 1))
+		usage();
 
 	dev = argv[0];
 	if (argc > 1)
@@ -87,7 +86,18 @@ main(int argc, char **argv)
 	if (argc > 2)
 		stage2 = argv[2];
 
+	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
+	    &realdev)) == -1)
+		err(1, "open: %s", realdev);
+
+	if (prepare) {
+		md_prepareboot(devfd, realdev);
+		return 0;
+	}
+
 	/* Prefix stages with root, unless they were user supplied. */
+	if (root == NULL)
+		root = "/";
 	if (verbose)
 		fprintf(stderr, "Using %s as root\n", root);
 	if (argc <= 1 && stage1 != NULL) {
@@ -100,10 +110,6 @@ main(int argc, char **argv)
 		if (stage2 == NULL)
 			exit(1);
 	}
-
-	if ((devfd = opendev(dev, (nowrite ? O_RDONLY : O_RDWR), OPENDEV_PART,
-	    &realdev)) == -1)
-		err(1, "open: %s", realdev);
 
         if (verbose) {
 		fprintf(stderr, "%s bootstrap on %s\n",
@@ -118,11 +124,6 @@ main(int argc, char **argv)
 	}
 
 	md_loadboot();
-
-	if (prepare) {
-		md_prepareboot(devfd, realdev);
-		return 0;
-	}
 
 #ifdef SOFTRAID
 	sr_installboot(devfd, dev);
