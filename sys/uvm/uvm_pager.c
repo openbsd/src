@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.88 2022/08/15 03:21:04 jsg Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.89 2022/08/19 05:53:19 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ uvm_pseg_release(vaddr_t segaddr)
 	struct uvm_pseg *pseg;
 	vaddr_t va = 0;
 
+	mtx_enter(&uvm_pseg_lck);
 	for (pseg = &psegs[0]; pseg != &psegs[PSEG_NUMSEGS]; pseg++) {
 		if (pseg->start <= segaddr &&
 		    segaddr < pseg->start + MAX_PAGER_SEGS * MAXBSIZE)
@@ -222,7 +223,6 @@ uvm_pseg_release(vaddr_t segaddr)
 	/* test for no remainder */
 	KDASSERT(segaddr == pseg->start + id * MAXBSIZE);
 
-	mtx_enter(&uvm_pseg_lck);
 
 	KASSERT(UVM_PSEG_INUSE(pseg, id));
 
