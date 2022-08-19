@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.40 2022/06/10 10:36:43 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.41 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,19 +201,19 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
  * Returns 1 if valid, 0 otherwise.
  */
 int
-valid_roa(const char *fn, struct auth *a, struct roa *roa)
+valid_roa(const char *fn, struct cert *cert, struct roa *roa)
 {
 	size_t	 i;
 	char	 buf[64];
 
 	for (i = 0; i < roa->ipsz; i++) {
-		if (valid_ip(a, roa->ips[i].afi, roa->ips[i].min,
-		    roa->ips[i].max))
+		if (ip_addr_check_covered(roa->ips[i].afi, roa->ips[i].min,
+		    roa->ips[i].max, cert->ips, cert->ipsz) > 0)
 			continue;
-		ip_addr_print(&roa->ips[i].addr,
-		    roa->ips[i].afi, buf, sizeof(buf));
-		warnx("%s: RFC 6482: uncovered IP: "
-		    "%s", fn, buf);
+
+		ip_addr_print(&roa->ips[i].addr, roa->ips[i].afi, buf,
+		    sizeof(buf));
+		warnx("%s: RFC 6482: uncovered IP: %s", fn, buf);
 		return 0;
 	}
 
@@ -442,7 +442,7 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
  * Returns 1 if valid, 0 otherwise.
  */
 int
-valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
+valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 {
 	size_t		i;
 	uint32_t	min, max;
@@ -459,7 +459,7 @@ valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
 		max = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.max
 		    : rsc->as[i].id;
 
-		if (valid_as(a, min, max))
+		if (as_check_covered(min, max, cert->as, cert->asz) > 0)
 			continue;
 
 		switch (rsc->as[i].type) {
@@ -483,8 +483,8 @@ valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
 			return 0;
 		}
 
-		if (valid_ip(a, rsc->ips[i].afi, rsc->ips[i].min,
-		    rsc->ips[i].max))
+		if (ip_addr_check_covered(rsc->ips[i].afi, rsc->ips[i].min,
+		    rsc->ips[i].max, cert->ips, cert->ipsz) > 0)
 			continue;
 
 		switch (rsc->ips[i].type) {

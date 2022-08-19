@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.84 2022/05/31 18:51:35 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.85 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -568,6 +568,49 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
  out:
 	sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
 	return rc;
+}
+
+/*
+ * Lightweight version of cert_parse_pre() for ASPA, ROA, and RSC EE certs.
+ * This only parses the RFC 3779 extensions since these are necessary for
+ * validation.
+ * Returns cert on success and NULL on failure.
+ */
+struct cert *
+cert_parse_ee_cert(const char *fn, X509 *x)
+{
+	struct parse		 p;
+	X509_EXTENSION		*ext;
+	int			 index;
+
+	memset(&p, 0, sizeof(struct parse));
+	p.fn = fn;
+	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
+		err(1, NULL);
+
+	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!sbgp_ipaddrblk(&p, ext))
+			goto out;
+	}
+
+	index = X509_get_ext_by_NID(x, NID_sbgp_autonomousSysNum, -1);
+	if ((ext = X509_get_ext(x, index)) != NULL) {
+		if (!sbgp_assysnum(&p, ext))
+			goto out;
+	}
+
+	if (!X509_up_ref(x)) {
+		cryptowarnx("%s: X509_up_ref failed", fn);
+		goto out;
+	}
+
+	p.res->x509 = x;
+	return p.res;
+
+ out:
+	cert_free(p.res);
+	return NULL;
 }
 
 /*

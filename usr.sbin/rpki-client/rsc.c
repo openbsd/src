@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.12 2022/06/10 10:41:09 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.13 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -378,6 +378,7 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	unsigned char		*cms;
 	size_t			 cmsz;
 	const ASN1_TIME		*at;
+	struct cert		*cert = NULL;
 	int			 rc = 0;
 
 	memset(&p, 0, sizeof(struct parse));
@@ -412,8 +413,15 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
+	/* XXX - check that SIA is absent. */
+
 	if (!rsc_parse_econtent(cms, cmsz, &p))
 		goto out;
+
+	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+		goto out;
+
+	p.res->valid = valid_rsc(fn, cert, p.res);
 
 	rc = 1;
  out:
@@ -423,6 +431,7 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		X509_free(*x509);
 		*x509 = NULL;
 	}
+	cert_free(cert);
 	free(cms);
 	return p.res;
 }

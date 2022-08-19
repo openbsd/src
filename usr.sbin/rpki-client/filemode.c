@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.7 2022/05/11 14:42:01 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.8 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -392,9 +392,9 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 		if ((status = valid_x509(file, ctx, x509, a, c, 0))) {
 			if (type == RTYPE_ROA)
-				status = valid_roa(file, a, roa);
+				status = roa->valid;
 			else if (type == RTYPE_RSC)
-				status = valid_rsc(file, a, rsc);
+				status = rsc->valid;
 		}
 		if (status)
 			printf("OK");

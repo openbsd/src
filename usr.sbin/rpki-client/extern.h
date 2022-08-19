@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.149 2022/08/18 15:20:27 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.150 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -464,6 +464,7 @@ struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
+struct cert	*cert_parse_ee_cert(const char *, X509 *);
 struct cert	*cert_parse_pre(const char *, const unsigned char *, size_t);
 struct cert	*cert_parse(const char *, struct cert *);
 struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
@@ -508,7 +509,7 @@ struct auth	*valid_ski_aki(const char *, struct auth_tree *,
 int		 valid_ta(const char *, struct auth_tree *,
 		    const struct cert *);
 int		 valid_cert(const char *, struct auth *, const struct cert *);
-int		 valid_roa(const char *, struct auth *, struct roa *);
+int		 valid_roa(const char *, struct cert *, struct roa *);
 int		 valid_filehash(int, const char *, size_t);
 int		 valid_hash(unsigned char *, size_t, const char *, size_t);
 int		 valid_filename(const char *, size_t);
@@ -516,7 +517,7 @@ int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
 int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, int);
-int		 valid_rsc(const char *, struct auth *, struct rsc *);
+int		 valid_rsc(const char *, struct cert *, struct rsc *);
 int		 valid_econtent_version(const char *, const ASN1_INTEGER *);
 
 /* Working with CMS. */

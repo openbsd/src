@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.73 2022/04/21 12:59:03 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.74 2022/08/19 12:45:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -147,14 +147,6 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	X509_free(x509);
 
 	roa->talid = a->cert->talid;
-
-	/*
-	 * If the ROA isn't valid, we accept it anyway and depend upon
-	 * the code around roa_read() to check the "valid" field itself.
-	 */
-
-	if (valid_roa(file, a, roa))
-		roa->valid = 1;
 
 	/*
 	 * Check CRL to figure out the soonest transitive expiry moment
