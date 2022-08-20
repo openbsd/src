@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2022/07/30 16:40:23 jsing Exp $
+#	$OpenBSD: Makefile,v 1.8 2022/08/20 19:25:14 jsing Exp $
 
 PROG=	aeadtest
-LDADD=	-lcrypto
+LDADD=	${CRYPTO_INT}
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
