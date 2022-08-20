@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_lib.c,v 1.1 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: tls_lib.c,v 1.2 2022/08/20 21:48:25 tb Exp $ */
 /*
  * Copyright (c) 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -49,7 +49,7 @@ tls_process_peer_certs(SSL *s, STACK_OF(X509) *peer_certs)
 	X509_free(s->session->peer_cert);
 	s->session->peer_cert = peer_cert;
 	peer_cert = NULL;
-	
+
 	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
 	if ((s->s3->hs.peer_certs = X509_chain_up_ref(peer_certs)) == NULL)
 		goto err;
