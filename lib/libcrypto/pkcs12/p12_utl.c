@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.17 2022/08/03 20:16:06 tb Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.18 2022/08/20 09:16:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -61,6 +61,8 @@
 #include <string.h>
 
 #include <openssl/pkcs12.h>
+
+#include "pkcs12_local.h"
 
 /* Cheap and nasty Unicode stuff */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_asn.c,v 1.11 2022/07/24 18:48:04 tb Exp $ */
+/* $OpenBSD: p12_asn.c,v 1.12 2022/08/20 09:16:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,6 +60,8 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/pkcs12.h>
+
+#include "pkcs12_local.h"
 
 /* PKCS#12 ASN1 module */
 

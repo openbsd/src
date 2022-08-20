@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crt.c,v 1.19 2022/08/03 20:16:06 tb Exp $ */
+/* $OpenBSD: p12_crt.c,v 1.20 2022/08/20 09:16:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -60,6 +60,8 @@
 
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+
+#include "pkcs12_local.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG *bag);

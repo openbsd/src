@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_sbag.c,v 1.4 2022/08/03 20:16:06 tb Exp $ */
+/* $OpenBSD: p12_sbag.c,v 1.5 2022/08/20 09:16:18 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2018.
@@ -62,6 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
+#include "pkcs12_local.h"
 #include "x509_lcl.h"
 
 const ASN1_TYPE *

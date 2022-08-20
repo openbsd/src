@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.13 2022/01/20 11:18:49 inoguchi Exp $ */
+/* $OpenBSD: p12_init.c,v 1.14 2022/08/20 09:16:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,6 +60,8 @@
 
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+
+#include "pkcs12_local.h"
 
 /* Initialise a PKCS12 structure to take data */
 

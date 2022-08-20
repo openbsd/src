@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.18 2022/08/03 20:16:06 tb Exp $ */
+/* $OpenBSD: p12_add.c,v 1.19 2022/08/20 09:16:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,6 +60,8 @@
 
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+
+#include "pkcs12_local.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 
