@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.21 2019/03/27 15:34:01 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.22 2022/08/20 18:51:09 jsing Exp $ */
 
 /*
  * Copyright (c) 2015 Reyk Floter <reyk@openbsd.org>
@@ -124,20 +124,7 @@ aead_chacha20_poly1305_seal(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	unsigned char poly1305_key[32];
 	poly1305_state poly1305;
 	const unsigned char *iv;
-	const uint64_t in_len_64 = in_len;
 	uint64_t ctr;
-
-	/* The underlying ChaCha implementation may not overflow the block
-	 * counter into the second counter word. Therefore we disallow
-	 * individual operations that work on more than 2TB at a time.
-	 * in_len_64 is needed because, on 32-bit platforms, size_t is only
-	 * 32-bits and this produces a warning because it's always false.
-	 * Casting to uint64_t inside the conditional is not sufficient to stop
-	 * the warning. */
-	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
-		EVPerror(EVP_R_TOO_LARGE);
-		return 0;
-	}
 
 	if (max_out_len < in_len + c20_ctx->tag_len) {
 		EVPerror(EVP_R_BUFFER_TOO_SMALL);
@@ -188,24 +175,11 @@ aead_chacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	unsigned char poly1305_key[32];
 	const unsigned char *iv = nonce;
 	poly1305_state poly1305;
-	const uint64_t in_len_64 = in_len;
 	size_t plaintext_len;
 	uint64_t ctr = 0;
 
 	if (in_len < c20_ctx->tag_len) {
 		EVPerror(EVP_R_BAD_DECRYPT);
-		return 0;
-	}
-
-	/* The underlying ChaCha implementation may not overflow the block
-	 * counter into the second counter word. Therefore we disallow
-	 * individual operations that work on more than 2TB at a time.
-	 * in_len_64 is needed because, on 32-bit platforms, size_t is only
-	 * 32-bits and this produces a warning because it's always false.
-	 * Casting to uint64_t inside the conditional is not sufficient to stop
-	 * the warning. */
-	if (in_len_64 >= (1ULL << 32) * 64 - 64) {
-		EVPerror(EVP_R_TOO_LARGE);
 		return 0;
 	}
 
