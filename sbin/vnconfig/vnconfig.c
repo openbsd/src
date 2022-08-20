@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.9 2022/08/19 18:56:26 kn Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.10 2022/08/20 06:39:24 kn Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -356,11 +356,9 @@ __dead void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: vnconfig [-kv] [-K rounds] [-S saltfile] "
-	    "[-t disktype] [vnd_dev] image\n");
-	fprintf(stderr,
-	    "       vnconfig -l [vnd_dev]\n");
-	fprintf(stderr,
+	    "usage: vnconfig [-v] [-k | -K rounds [-S saltfile]] "
+	    "[-t disktype] [vnd_dev] image\n"
+	    "       vnconfig -l [vnd_dev]\n"
 	    "       vnconfig -u [-v] vnd_dev\n");
 	exit(1);
 }
