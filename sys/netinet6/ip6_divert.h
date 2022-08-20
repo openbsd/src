@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.14 2022/08/15 09:11:39 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.15 2022/08/20 23:48:58 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -74,6 +74,7 @@ int	 divert6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 int	 divert6_attach(struct socket *, int);
 int	 divert6_detach(struct socket *);
+int	 divert6_bind(struct socket *, struct mbuf *, struct proc *);
 #endif /* _KERNEL */
 
 #endif /* _IP6_DIVERT_H_ */

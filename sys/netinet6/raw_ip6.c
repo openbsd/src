@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.150 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.151 2022/08/20 23:48:58 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_usrreq	= rip6_usrreq,
 	.pru_attach	= rip6_attach,
 	.pru_detach	= rip6_detach,
+	.pru_bind	= rip6_bind,
 };
 
 /*
@@ -604,25 +605,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		in_pcbdetach(in6p);
 		break;
 
-	case PRU_BIND:
-	    {
-		struct sockaddr_in6 *addr;
-
-		if ((error = in6_nam2sin6(nam, &addr)))
-			break;
-		/*
-		 * Make sure to not enter in_pcblookup_local(), local ports
-		 * are non-sensical for raw sockets.
-		 */
-		addr->sin6_port = 0;
-
-		if ((error = in6_pcbaddrisavail(in6p, addr, 0, p)))
-			break;
-
-		in6p->inp_laddr6 = addr->sin6_addr;
-		break;
-	    }
-
 	case PRU_CONNECT:
 	{
 		struct sockaddr_in6 *addr;
@@ -772,6 +754,31 @@ rip6_detach(struct socket *so)
 
 	in_pcbdetach(in6p);
 
+	return (0);
+}
+
+int
+rip6_bind(struct socket *so, struct mbuf *nam, struct proc *p)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+	struct sockaddr_in6 *addr;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = in6_nam2sin6(nam, &addr)))
+		return (error);
+
+	/*
+	 * Make sure to not enter in_pcblookup_local(), local ports
+	 * are non-sensical for raw sockets.
+	 */
+	addr->sin6_port = 0;
+
+	if ((error = in6_pcbaddrisavail(in6p, addr, 0, p)))
+		return (error);
+
+	in6p->inp_laddr6 = addr->sin6_addr;
 	return (0);
 }
 

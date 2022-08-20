@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.282 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.283 2022/08/20 23:48:58 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_usrreq	= udp_usrreq,
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
+	.pru_bind	= udp_bind,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1074,10 +1075,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 */
 	switch (req) {
 
-	case PRU_BIND:
-		error = in_pcbbind(inp, addr, p);
-		break;
-
 	case PRU_LISTEN:
 		error = EOPNOTSUPP;
 		break;
@@ -1273,6 +1270,15 @@ udp_detach(struct socket *so)
 
 	in_pcbdetach(inp);
 	return (0);
+}
+
+int
+udp_bind(struct socket *so, struct mbuf *addr, struct proc *p)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+	return in_pcbbind(inp, addr, p);
 }
 
 /*

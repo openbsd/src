@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.130 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.131 2022/08/20 23:48:58 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_usrreq	= rip_usrreq,
 	.pru_attach	= rip_attach,
 	.pru_detach	= rip_detach,
+	.pru_bind	= rip_bind,
 };
 
 /*
@@ -485,23 +486,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		in_pcbdetach(inp);
 		break;
 
-	case PRU_BIND:
-	    {
-		struct sockaddr_in *addr;
-
-		if ((error = in_nam2sin(nam, &addr)))
-			break;
-		if (!((so->so_options & SO_BINDANY) ||
-		    addr->sin_addr.s_addr == INADDR_ANY ||
-		    addr->sin_addr.s_addr == INADDR_BROADCAST ||
-		    in_broadcast(addr->sin_addr, inp->inp_rtableid) ||
-		    ifa_ifwithaddr(sintosa(addr), inp->inp_rtableid))) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-		inp->inp_laddr = addr->sin_addr;
-		break;
-	    }
 	case PRU_CONNECT:
 	    {
 		struct sockaddr_in *addr;
@@ -635,5 +619,29 @@ rip_detach(struct socket *so)
 #endif
 	in_pcbdetach(inp);
 
+	return (0);
+}
+
+int
+rip_bind(struct socket *so, struct mbuf *nam, struct proc *p)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in *addr;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = in_nam2sin(nam, &addr)))
+		return (error);
+	
+	if (!((so->so_options & SO_BINDANY) ||
+	    addr->sin_addr.s_addr == INADDR_ANY ||
+	    addr->sin_addr.s_addr == INADDR_BROADCAST ||
+	    in_broadcast(addr->sin_addr, inp->inp_rtableid) ||
+	    ifa_ifwithaddr(sintosa(addr), inp->inp_rtableid)))
+		return (EADDRNOTAVAIL);
+
+	inp->inp_laddr = addr->sin_addr;
+	
 	return (0);
 }

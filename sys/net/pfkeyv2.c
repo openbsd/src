@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.235 2022/08/15 09:11:38 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.236 2022/08/20 23:48:57 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -358,7 +358,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 	switch (req) {
 	/* no connect, bind, accept. Socket is connected from the start */
 	case PRU_CONNECT:
-	case PRU_BIND:
 	case PRU_CONNECT2:
 	case PRU_LISTEN:
 	case PRU_ACCEPT:

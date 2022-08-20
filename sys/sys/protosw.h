@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.37 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.38 2022/08/20 23:48:58 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -66,6 +66,7 @@ struct pr_usrreqs {
 
 	int	(*pru_attach)(struct socket *, int);
 	int	(*pru_detach)(struct socket *);
+	int	(*pru_bind)(struct socket *, struct mbuf *, struct proc *);
 };
 
 struct protosw {
@@ -264,8 +265,9 @@ pru_detach(struct socket *so)
 static inline int
 pru_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 {
-	return (*so->so_proto->pr_usrreqs->pru_usrreq)(so,
-	    PRU_BIND, NULL, nam, NULL, p);
+	if (so->so_proto->pr_usrreqs->pru_bind)
+		return (*so->so_proto->pr_usrreqs->pru_bind)(so, nam, p);
+	return (EOPNOTSUPP);
 }
 
 static inline int

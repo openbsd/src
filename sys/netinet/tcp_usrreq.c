@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.188 2022/08/15 14:44:18 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.189 2022/08/20 23:48:58 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_usrreq	= tcp_usrreq,
 	.pru_attach	= tcp_attach,
 	.pru_detach	= tcp_detach,
+	.pru_bind	= tcp_bind,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -210,13 +211,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	/*
-	 * Give the socket an address.
-	 */
-	case PRU_BIND:
-		error = in_pcbbind(inp, nam, p);
-		break;
 
 	/*
 	 * Prepare to accept connections.
@@ -777,6 +771,32 @@ tcp_detach(struct socket *so)
 
 	if (otp)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_DETACH, 0);
+	return (error);
+}
+
+/*
+ * Give the socket an address.
+ */
+int
+tcp_bind(struct socket *so, struct mbuf *nam, struct proc *p)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG)
+		ostate = tp->t_state;
+
+	error = in_pcbbind(inp, nam, p);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_BIND, 0);
 	return (error);
 }
 
