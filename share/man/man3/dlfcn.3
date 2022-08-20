@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dlfcn.3,v 1.31 2021/06/02 07:29:03 semarie Exp $
+.\"	$OpenBSD: dlfcn.3,v 1.32 2022/08/20 14:14:24 sthen Exp $
 .\"	$NetBSD: dlfcn.3,v 1.3 1996/01/09 19:43:34 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 2 2021 $
+.Dd $Mdocdate: August 20 2022 $
 .Dt DLOPEN 3
 .Os
 .Sh NAME
@@ -130,6 +130,11 @@ Additionally, the following flag may be ORed into the mode argument:
 .It Sy RTLD_NODELETE
 Prevents unload of the loaded object on
 .Fn dlclose .
+.It Sy RTLD_NOLOAD
+Only return valid handle for the object if it is already loaded in
+the process address space, otherwise NULL is returned.
+Other mode flags may be specified, which will be applied for promotion
+for the found object.
 .El
 .Pp
 The main executable's symbols are normally invisible to
