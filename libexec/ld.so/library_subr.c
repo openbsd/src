@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.51 2022/01/08 06:49:41 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.52 2022/08/20 14:11:31 sthen Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -241,6 +241,18 @@ _dl_lookup_object(const char *req_name, struct sod *req_sod)
 	return(NULL);
 }
 
+void
+_dl_handle_already_loaded(elf_object_t *object, int flags)
+{
+	object->obj_flags |= flags & DF_1_GLOBAL;
+	if (_dl_loading_object == NULL)
+		_dl_loading_object = object;
+	if (object->load_object != _dl_objects &&
+	    object->load_object != _dl_loading_object) {
+		_dl_link_grpref(object->load_object, _dl_loading_object);
+	}
+}
+
 static elf_object_t *
 _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
 {
@@ -262,15 +274,8 @@ _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
 			    req_sod.sod_minor, orig_minor);
 	}
 
-	if (object) {	/* Already loaded */
-		object->obj_flags |= flags & DF_1_GLOBAL;
-		if (_dl_loading_object == NULL)
-			_dl_loading_object = object;
-		if (object->load_object != _dl_objects &&
-		    object->load_object != _dl_loading_object) {
-			_dl_link_grpref(object->load_object, _dl_loading_object);
-		}
-	}
+	if (object)
+		_dl_handle_already_loaded(object, flags);
 
 	return (object);
 }

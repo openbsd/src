@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.110 2022/01/08 17:28:49 deraadt Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.111 2022/08/20 14:11:31 sthen Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,6 +45,15 @@ static int _dl_real_close(void *handle);
 static lock_cb *_dl_thread_fnc = NULL;
 static elf_object_t *obj_from_addr(const void *addr);
 
+#define OK_FLAGS 	(0 \
+	| RTLD_TRACE	\
+	| RTLD_LAZY	\
+	| RTLD_NOW	\
+	| RTLD_GLOBAL	\
+	| RTLD_NODELETE	\
+	| RTLD_NOLOAD	\
+	)
+
 void *
 dlopen(const char *libname, int flags)
 {
@@ -53,7 +62,7 @@ dlopen(const char *libname, int flags)
 	int failed = 0;
 	int obj_flags;
 
-	if (flags & ~(RTLD_TRACE|RTLD_LAZY|RTLD_NOW|RTLD_GLOBAL|RTLD_NODELETE)) {
+	if (flags & ~OK_FLAGS) {
 		_dl_errno = DL_INVALID_MODE;
 		return NULL;
 	}
@@ -78,7 +87,9 @@ dlopen(const char *libname, int flags)
 	_dl_loading_object = NULL;
 
 	obj_flags = (flags & RTLD_NOW ? DF_1_NOW : 0)
-	    | (flags & RTLD_GLOBAL ? DF_1_GLOBAL : 0);
+	    | (flags & RTLD_GLOBAL ? DF_1_GLOBAL : 0)
+	    | (flags & RTLD_NOLOAD ? DF_1_NOOPEN : 0)
+	    ;
 	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, obj_flags);
 	if (object == 0) {
 		DL_DEB(("dlopen: failed to open %s\n", libname));
