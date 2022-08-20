@@ -1,4 +1,4 @@
-/* $OpenBSD: mount_ntfs.c,v 1.17 2019/06/28 13:32:45 deraadt Exp $ */
+/* $OpenBSD: mount_ntfs.c,v 1.18 2022/08/20 05:59:57 otto Exp $ */
 /* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
@@ -44,6 +44,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <grp.h>
+#include <pwd.h>
 
 #include <mntopts.h>
 
@@ -53,6 +55,8 @@ static const struct mntopt mopts[] = {
 };
 
 static __dead void usage(void);
+static gid_t a_gid(char *);
+static uid_t a_uid(char *);
 static mode_t a_mask(char *);
 
 int
@@ -69,15 +73,15 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "aiu:g:m:o:")) !=  -1) {
 		switch (c) {
 		case 'u':
-			args.uid = strtoul(optarg, NULL, 10);
+			args.uid = a_uid(optarg);
 			set_uid = 1;
 			break;
 		case 'g':
-			args.gid = strtoul(optarg, NULL, 10);
+			args.gid = a_gid(optarg);
 			set_gid = 1;
 			break;
 		case 'm':
-			args.mode =  a_mask(optarg);
+			args.mode = a_mask(optarg);
 			set_mask = 1;
 			break;
 		case 'i':
@@ -127,7 +131,37 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
-static mode_t
+gid_t
+a_gid(char *s)
+{
+	struct group *gr;
+	const char *errstr;
+	gid_t gid;
+
+	if ((gr = getgrnam(s)) != NULL)
+		return gr->gr_gid;
+	gid = strtonum(s, 0, GID_MAX, &errstr);
+	if (errstr)
+		errx(1, "group is %s: %s", errstr, s);
+	return (gid);
+}
+
+uid_t
+a_uid(char *s)
+{
+	struct passwd *pw;
+	const char *errstr;
+	uid_t uid;
+
+	if ((pw = getpwnam(s)) != NULL)
+		return pw->pw_uid;
+	uid = strtonum(s, 0, UID_MAX, &errstr);
+	if (errstr)
+		errx(1, "user is %s: %s", errstr, s);
+	return (uid);
+}
+
+mode_t
 a_mask(char *s)
 {
 	int done, rv;
