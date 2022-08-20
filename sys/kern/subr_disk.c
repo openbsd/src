@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.253 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.254 2022/08/20 13:10:45 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -740,12 +740,17 @@ spoofmbr(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 		}
 
 		for (i = 0; i < NDOSPART; i++) {
-			if (letoh32(dp[i].dp_start) > DL_GETDSIZE(lp))
-				continue;
-			if (letoh32(dp[i].dp_size) > DL_GETDSIZE(lp))
-				continue;
 			if (letoh32(dp[i].dp_size) == 0)
 				continue;
+			if (obsdfound && dp[i].dp_typ == DOSPTYP_OPENBSD)
+				continue;
+
+			if (dp[i].dp_typ != DOSPTYP_OPENBSD) {
+				if (letoh32(dp[i].dp_start) > DL_GETDSIZE(lp))
+					continue;
+				if (letoh32(dp[i].dp_size) > DL_GETDSIZE(lp))
+					continue;
+			}
 
 			start = sector + letoh32(dp[i].dp_start);
 			end = start + letoh32(dp[i].dp_size);
@@ -760,15 +765,13 @@ spoofmbr(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 
 			switch (dp[i].dp_typ) {
 			case DOSPTYP_OPENBSD:
-				if (obsdfound == 0) {
-					obsdfound = 1;
-					partoff = DL_SECTOBLK(lp, start);
-					labeloff = partoff + DOS_LABELSECTOR;
-					if (labeloff >= DL_SECTOBLK(lp, end))
-						partoff = -1;
-					DL_SETBSTART(lp, start);
-					DL_SETBEND(lp, end);
-				}
+				obsdfound = 1;
+				partoff = DL_SECTOBLK(lp, start);
+				labeloff = partoff + DOS_LABELSECTOR;
+				if (labeloff >= DL_SECTOBLK(lp, end))
+					partoff = -1;
+				DL_SETBSTART(lp, start);
+				DL_SETBEND(lp, end);
 				continue;
 			case DOSPTYP_EFI:
 				continue;
