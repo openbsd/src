@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.24 2022/01/07 11:13:54 tb Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.25 2022/08/20 17:55:08 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -529,6 +529,10 @@ asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 		len = 0;
 	}
 
+	/* Treat any other negative value as an error. */
+	if (len < 0)
+		return -1;
+
 	/* If not implicitly tagged get tag from underlying type */
 	if (tag == -1)
 		tag = utype;
@@ -537,7 +541,8 @@ asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 	if (out) {
 		if (usetag)
 			ASN1_put_object(out, ndef, len, tag, aclass);
-		asn1_ex_i2c(pval, *out, &utype, it);
+		if (asn1_ex_i2c(pval, *out, &utype, it) != len)
+			return -1;
 		if (ndef)
 			ASN1_put_eoc(out);
 		else
