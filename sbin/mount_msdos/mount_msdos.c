@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.34 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.35 2022/08/20 07:03:24 tb Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -202,6 +202,6 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: mount_msdos [-9ls] [-g gid] [-m mask] [-o options] [-u uid] special node\n");
+	    "usage: mount_msdos [-9ls] [-g group] [-m mask] [-o options] [-u user] special node\n");
 	exit(1);
 }
