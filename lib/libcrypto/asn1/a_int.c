@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.44 2022/07/13 20:07:44 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.45 2022/08/20 18:17:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -510,100 +510,6 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	return (ret);
 }
 
-/*
- * This converts an ASN1 INTEGER into its content encoding.
- * The internal representation is an ASN1_STRING whose data is a big endian
- * representation of the value, ignoring the sign. The sign is determined by
- * the type: V_ASN1_INTEGER for positive and V_ASN1_NEG_INTEGER for negative.
- *
- * Positive integers are no problem: they are almost the same as the DER
- * encoding, except if the first byte is >= 0x80 we need to add a zero pad.
- *
- * Negative integers are a bit trickier...
- * The DER representation of negative integers is in 2s complement form.
- * The internal form is converted by complementing each octet and finally
- * adding one to the result. This can be done less messily with a little trick.
- * If the internal form has trailing zeroes then they will become FF by the
- * complement and 0 by the add one (due to carry) so just copy as many trailing
- * zeros to the destination as there are in the source. The carry will add one
- * to the last none zero octet: so complement this octet and add one and finally
- * complement any left over until you get to the start of the string.
- *
- * Padding is a little trickier too. If the first bytes is > 0x80 then we pad
- * with 0xff. However if the first byte is 0x80 and one of the following bytes
- * is non-zero we pad with 0xff. The reason for this distinction is that 0x80
- * followed by optional zeros isn't padded.
- */
-
-int
-i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
-{
-	int pad = 0, ret, i, neg;
-	unsigned char *p, *n, pb = 0;
-
-	if (!ASN1_INTEGER_valid(a))
-		return 0;
-
-	neg = a->type & V_ASN1_NEG;
-	if (a->length == 0)
-		ret = 1;
-	else {
-		ret = a->length;
-		i = a->data[0];
-		if (!neg && (i > 127)) {
-			pad = 1;
-			pb = 0;
-		} else if (neg) {
-			if (i > 128) {
-				pad = 1;
-				pb = 0xFF;
-			} else if (i == 128) {
-				/*
-				 * Special case: if any other bytes non zero we pad:
-				 * otherwise we don't.
-				 */
-				for (i = 1; i < a->length; i++) if (a->data[i]) {
-					pad = 1;
-					pb = 0xFF;
-					break;
-				}
-			}
-		}
-		ret += pad;
-	}
-	if (pp == NULL)
-		return (ret);
-	p= *pp;
-
-	if (pad)
-		*(p++) = pb;
-	if (a->length == 0)
-		*(p++) = 0;
-	else if (!neg)
-		memcpy(p, a->data, a->length);
-	else {
-		/* Begin at the end of the encoding */
-		n = a->data + a->length - 1;
-		p += a->length - 1;
-		i = a->length;
-		/* Copy zeros to destination as long as source is zero */
-		while (!*n) {
-			*(p--) = 0;
-			n--;
-			i--;
-		}
-		/* Complement and increment next octet */
-		*(p--) = ((*(n--)) ^ 0xff) + 1;
-		i--;
-		/* Complement any octets left */
-		for (; i > 0; i--)
-			*(p--) = *(n--) ^ 0xff;
-	}
-
-	*pp += ret;
-	return (ret);
-}
-
 static void
 asn1_aint_twos_complement(uint8_t *data, size_t data_len)
 {
@@ -637,6 +543,103 @@ asn1_aint_keep_twos_padding(const uint8_t *data, size_t data_len)
 	return 1;
 }
 
+static int
+i2c_ASN1_INTEGER_cbb(ASN1_INTEGER *aint, CBB *cbb)
+{
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	uint8_t padding, val;
+	uint8_t msb;
+	CBS cbs;
+	int ret = 0;
+
+	if (aint->data == NULL || aint->length < 0)
+		goto err;
+
+	if ((aint->type & ~V_ASN1_NEG) != V_ASN1_ENUMERATED &&
+	    (aint->type & ~V_ASN1_NEG) != V_ASN1_INTEGER)
+		goto err;
+
+	CBS_init(&cbs, aint->data, aint->length);
+
+	/* Find the first non-zero byte. */
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_peek_u8(&cbs, &val))
+			goto err;
+		if (val != 0)
+			break;
+		if (!CBS_skip(&cbs, 1))
+			goto err;
+	}
+
+	/* A zero value is encoded as a single octet. */
+	if (CBS_len(&cbs) == 0) {
+		if (!CBB_add_u8(cbb, 0))
+			goto err;
+		goto done;
+	}
+
+	if (!CBS_stow(&cbs, &data, &data_len))
+		goto err;
+
+	if ((aint->type & V_ASN1_NEG) != 0)
+		asn1_aint_twos_complement(data, data_len);
+
+	/* Topmost bit indicates sign, padding is all zeros or all ones. */
+	msb = (data[0] >> 7);
+	padding = (msb - 1) & 0xff;
+
+	/* See if we need a padding octet to avoid incorrect sign. */
+	if (((aint->type & V_ASN1_NEG) == 0 && msb == 1) ||
+	    ((aint->type & V_ASN1_NEG) != 0 && msb == 0)) {
+		if (!CBB_add_u8(cbb, padding))
+			goto err;
+	}
+	if (!CBB_add_bytes(cbb, data, data_len))
+		goto err;
+
+ done:
+	ret = 1;
+
+ err:
+	freezero(data, data_len);
+
+	return ret;
+}
+
+int
+i2c_ASN1_INTEGER(ASN1_INTEGER *aint, unsigned char **pp)
+{
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	CBB cbb;
+	int ret = -3;
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!i2c_ASN1_INTEGER_cbb(aint, &cbb))
+		goto err;
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+	if (data_len > INT_MAX)
+		goto err;
+
+	if (pp != NULL) {
+		if ((uintptr_t)*pp > UINTPTR_MAX - data_len)
+			goto err;
+		memcpy(*pp, data, data_len);
+		*pp += data_len;
+	}
+
+	ret = data_len;
+
+ err:
+	freezero(data, data_len);
+	CBB_cleanup(&cbb);
+
+	return ret;
+}
+
 int
 c2i_ASN1_INTEGER_cbs(ASN1_INTEGER **out_aint, CBS *cbs)
 {
@@ -644,7 +647,7 @@ c2i_ASN1_INTEGER_cbs(ASN1_INTEGER **out_aint, CBS *cbs)
 	uint8_t *data = NULL;
 	size_t data_len = 0;
 	uint8_t padding, val;
-	uint8_t negative = 0;
+	uint8_t negative;
 	int ret = 0;
 
 	if (out_aint == NULL)
@@ -663,7 +666,7 @@ c2i_ASN1_INTEGER_cbs(ASN1_INTEGER **out_aint, CBS *cbs)
 	if (!CBS_peek_u8(cbs, &val))
 		goto err;
 
-	/* Top most bit indicates sign, padding is all zeros or all ones. */
+	/* Topmost bit indicates sign, padding is all zeros or all ones. */
 	negative = (val >> 7);
 	padding = ~(negative - 1) & 0xff;
 
