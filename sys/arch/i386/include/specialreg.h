@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.79 2022/02/21 10:06:35 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.80 2022/08/20 23:33:53 daniel Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -50,23 +50,6 @@
 #define CR0_AM	0x00040000	/* Alignment Mask (set to enable AC flag) */
 #define	CR0_NW	0x20000000	/* Not Write-through */
 #define	CR0_CD	0x40000000	/* Cache Disable */
-
-/*
- * Cyrix 486 DLC special registers, accessible as IO ports.
- */
-#define CCR0	0xc0		/* configuration control register 0 */
-#define CCR0_NC0	0x01	/* first 64K of each 1M memory region is non-cacheable */
-#define CCR0_NC1	0x02	/* 640K-1M region is non-cacheable */
-#define CCR0_A20M	0x04	/* enables A20M# input pin */
-#define CCR0_KEN	0x08	/* enables KEN# input pin */
-#define CCR0_FLUSH	0x10	/* enables FLUSH# input pin */
-#define CCR0_BARB	0x20	/* flushes internal cache when entering hold state */
-#define CCR0_CO		0x40	/* cache org: 1=direct mapped, 0=2x set assoc */
-#define CCR0_SUSPEND	0x80	/* enables SUSP# and SUSPA# pins */
-
-#define CCR1	0xc1		/* configuration control register 1 */
-#define CCR1_RPL	0x01	/* enables RPLSET and RPLVAL# pins */
-/* the remaining 7 bits of this register are reserved */
 
 /*
  * bits in CR3

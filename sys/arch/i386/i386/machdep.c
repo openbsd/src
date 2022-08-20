@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.653 2022/08/18 13:05:43 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.654 2022/08/20 23:33:53 daniel Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -498,14 +498,8 @@ char	cpu_model[120];
  * We deal with the rest in a different way.
  */
 const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
-	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
-		NULL},				/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
 		NULL},				/* CPU_486   */
-	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
-		NULL},				/* CPU_486DLC */
-	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
-		cyrix6x86_cpu_setup},		/* CPU_6x86 */
 };
 
 const char *classnames[] = {
@@ -2075,9 +2069,6 @@ identifycpu(struct cpu_info *ci)
 	cpu_class = class;
 
 	ci->cpu_class = class;
-
-	if (cpu == CPU_486DLC)
-		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
 
 	/*
 	 * Enable ring 0 write protection.

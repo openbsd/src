@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.13 2022/08/15 04:17:51 daniel Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.14 2022/08/20 23:33:53 daniel Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -37,19 +37,10 @@
 #define	CPUCLASS_686	3
 
 /*
- *	Kinds of Processor. Only the first 7 are used, as they are processors
- * that might not have a cpuid instruction.
+ *	Kind of Processor.
  */
 
-#define	CPU_486SX	2	/* Intel 80486SX */
-#define	CPU_486		3	/* Intel 80486DX */
-#define	CPU_486DLC	4	/* Cyrix 486DLC */
-#define CPU_6x86	5	/* Cyrix/IBM 6x86 */
-#define	CPU_586		7	/* Intel P.....m (I hate lawyers; it's TM) */
-#define CPU_AM586	8	/* AMD Am486 and Am5x86 */
-#define CPU_K5		9	/* AMD K5 */
-#define CPU_K6		10	/* AMD K6 */
-#define	CPU_686		11	/* Intel P.....m Pro */
+#define	CPU_486		0	/* Intel 80486DX */
 
 /*
  * CPU vendors

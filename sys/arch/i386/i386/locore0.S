@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.7 2022/08/15 04:17:50 daniel Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.8 2022/08/20 23:33:53 daniel Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -132,56 +132,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	testl	%eax,%eax
 	jnz	.Ltry586
 .Lis486:	movl	$CPU_486,RELOC(_C_LABEL(cpu))
-
-	/*
-	 * Check Cyrix CPU
-	 * Cyrix CPUs do not change the undefined flags following
-	 * execution of the divide instruction which divides 5 by 2.
-	 *
-	 * Note: CPUID is enabled on M2, so it passes another way.
-	 */
-	pushfl
-	movl	$0x5555, %eax
-	xorl	%edx, %edx
-	movl	$2, %ecx
-	clc
-	divl	%ecx
-	jnc	.Ltrycyrix486
-	popfl
-	jmp	2f
-.Ltrycyrix486:
-	movl	$CPU_6x86,RELOC(_C_LABEL(cpu))	# set CPU type
-	/*
-	 * Check for Cyrix 486 CPU by seeing if the flags change during a
-	 * divide.  This is documented in the Cx486SLC/e SMM Programmer's
-	 * Guide.
-	 */
-	xorl	%edx,%edx
-	cmpl	%edx,%edx		# set flags to known state
-	pushfl
-	popl	%ecx			# store flags in ecx
-	movl	$-1,%eax
-	movl	$4,%ebx
-	divl	%ebx			# do a long division
-	pushfl
-	popl	%eax
-	xorl	%ecx,%eax		# are the flags different?
-	testl	$0x8d5,%eax		# only check C|PF|AF|Z|N|V
-	jne	2f			# yes; must not be Cyrix CPU
-	movl	$CPU_486DLC,RELOC(_C_LABEL(cpu))	# set CPU type
-
-	/* Disable caching of the ISA hole only. */
-	invd
-	movb	$CCR0,%al		# Configuration Register index (CCR0)
-	outb	%al,$0x22
-	inb	$0x23,%al
-	orb	$(CCR0_NC1|CCR0_BARB),%al
-	movb	%al,%ah
-	movb	$CCR0,%al
-	outb	%al,$0x22
-	movb	%ah,%al
-	outb	%al,$0x23
-	invd
 
 	jmp	2f
 
