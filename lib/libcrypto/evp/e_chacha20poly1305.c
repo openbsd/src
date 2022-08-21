@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.23 2022/08/20 19:22:28 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.24 2022/08/21 10:47:09 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -461,7 +461,7 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 		memset(poly1305_key, 0, sizeof(poly1305_key));
 		ChaCha(&cpx->chacha, poly1305_key, poly1305_key,
-		   sizeof(poly1305_key));
+		    sizeof(poly1305_key));
 		CRYPTO_poly1305_init(&cpx->poly1305, poly1305_key);
 
 		/* Mark remaining key block as used. */
@@ -499,7 +499,7 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 		if (ctx->encrypt && out != NULL)
 			CRYPTO_poly1305_update(&cpx->poly1305, out, len);
-		else 
+		else
 			CRYPTO_poly1305_update(&cpx->poly1305, in, len);
 
 		return len;
