@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.226 2022/08/21 19:32:38 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.227 2022/08/21 19:42:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1743,6 +1743,41 @@ int SSL_set_quic_method(SSL *ssl, const SSL_QUIC_METHOD *quic_method);
 int SSL_is_quic(const SSL *ssl);
 
 /*
+ * SSL_quic_max_handshake_flight_len returns returns the maximum number of bytes
+ * that may be received at the given encryption level. This function should be
+ * used to limit buffering in the QUIC implementation. See RFC 9000 section 7.5.
+ */
+size_t SSL_quic_max_handshake_flight_len(const SSL *ssl,
+    enum ssl_encryption_level_t level);
+
+/*
+ * SSL_quic_read_level returns the current read encryption level.
+ */
+enum ssl_encryption_level_t SSL_quic_read_level(const SSL *ssl);
+
+/*
+ * SSL_quic_write_level returns the current write encryption level.
+ */
+enum ssl_encryption_level_t SSL_quic_write_level(const SSL *ssl);
+
+/*
+ * SSL_provide_quic_data provides data from QUIC at a particular encryption
+ * level |level|. It returns one on success and zero on error. Note this
+ * function will return zero if the handshake is not expecting data from |level|
+ * at this time. The QUIC implementation should then close the connection with
+ * an error.
+ */
+int SSL_provide_quic_data(SSL *ssl, enum ssl_encryption_level_t level,
+    const uint8_t *data, size_t len);
+
+/*
+ * SSL_process_quic_post_handshake processes any data that QUIC has provided
+ * after the handshake has completed. This includes NewSessionTicket messages
+ * sent by the server. It returns one on success and zero on error.
+ */
+int SSL_process_quic_post_handshake(SSL *ssl);
+
+/*
  * SSL_set_quic_transport_params configures |ssl| to send |params| (of length
  * |params_len|) in the quic_transport_parameters extension in either the
  * ClientHello or EncryptedExtensions handshake message. It is an error to set
@@ -1762,6 +1797,13 @@ int SSL_set_quic_transport_params(SSL *ssl, const uint8_t *params,
  */
 void SSL_get_peer_quic_transport_params(const SSL *ssl,
     const uint8_t **out_params, size_t *out_params_len);
+
+/*
+ * SSL_set_quic_use_legacy_codepoint configures whether to use the legacy QUIC
+ * extension codepoint 0xffa5 as opposed to the official value 57. This is
+ * unsupported in LibreSSL.
+ */
+void SSL_set_quic_use_legacy_codepoint(SSL *ssl, int use_legacy);
 
 #endif
 

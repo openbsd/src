@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.303 2022/08/21 19:32:38 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.304 2022/08/21 19:42:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2607,6 +2607,105 @@ SSL_set_quic_method(SSL *ssl, const SSL_QUIC_METHOD *quic_method)
 	return 1;
 }
 
+size_t
+SSL_quic_max_handshake_flight_len(const SSL *ssl,
+    enum ssl_encryption_level_t level)
+{
+	size_t flight_len;
+
+	/* Limit flights to 16K when there are no large certificate messages. */
+	flight_len = 16384;
+
+	switch (level) {
+	case ssl_encryption_initial:
+		return flight_len;
+
+	case ssl_encryption_early_data:
+		/* QUIC does not send EndOfEarlyData. */
+		return 0;
+
+	case ssl_encryption_handshake:
+		if (ssl->server) {
+			/*
+			 * Servers may receive Certificate message if configured
+			 * to request client certificates.
+			 */
+			if ((SSL_get_verify_mode(ssl) & SSL_VERIFY_PEER) != 0 &&
+			    ssl->internal->max_cert_list > flight_len)
+				flight_len = ssl->internal->max_cert_list;
+		} else {
+			/*
+			 * Clients may receive both Certificate message and a
+			 * CertificateRequest message.
+			 */
+			if (ssl->internal->max_cert_list * 2 > flight_len)
+				flight_len = ssl->internal->max_cert_list * 2;
+		}
+		return flight_len;
+	case ssl_encryption_application:
+		/*
+		 * Note there is not actually a bound on the number of
+		 * NewSessionTickets one may send in a row. This level may need
+		 * more involved flow control.
+		 */
+		return flight_len;
+	}
+
+	return 0;
+}
+
+enum ssl_encryption_level_t
+SSL_quic_read_level(const SSL *ssl)
+{
+	return ssl->s3->hs.tls13.quic_read_level;
+}
+
+enum ssl_encryption_level_t
+SSL_quic_write_level(const SSL *ssl)
+{
+	return ssl->s3->hs.tls13.quic_write_level;
+}
+
+int
+SSL_provide_quic_data(SSL *ssl, enum ssl_encryption_level_t level,
+    const uint8_t *data, size_t len)
+{
+	if (!SSL_is_quic(ssl)) {
+		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return 0;
+	}
+
+	if (level != SSL_quic_read_level(ssl)) {
+		SSLerror(ssl, SSL_R_WRONG_ENCRYPTION_LEVEL_RECEIVED);
+		return 0;
+	}
+
+	if (ssl->s3->hs.tls13.quic_read_buffer == NULL) {
+		ssl->s3->hs.tls13.quic_read_buffer = tls_buffer_new(0);
+		if (ssl->s3->hs.tls13.quic_read_buffer == NULL) {
+			SSLerror(ssl, ERR_R_MALLOC_FAILURE);
+			return 0;
+		}
+	}
+
+	/* XXX - note that this does not currently downsize. */
+	tls_buffer_set_capacity_limit(ssl->s3->hs.tls13.quic_read_buffer,
+	    SSL_quic_max_handshake_flight_len(ssl, level));
+
+	/*
+	 * XXX - an append that fails due to exceeding capacity should set
+	 * SSL_R_EXCESSIVE_MESSAGE_SIZE.
+	 */
+	return tls_buffer_append(ssl->s3->hs.tls13.quic_read_buffer, data, len);
+}
+
+int
+SSL_process_quic_post_handshake(SSL *ssl)
+{
+	/* XXX - this needs to run PHH received. */
+	return 1;
+}
+
 int
 SSL_do_handshake(SSL *s)
 {
@@ -3369,6 +3468,12 @@ SSL_get_peer_quic_transport_params(const SSL *ssl, const uint8_t **out_params,
 {
 	*out_params = ssl->s3->peer_quic_transport_params;
 	*out_params_len = ssl->s3->peer_quic_transport_params_len;
+}
+
+void
+SSL_set_quic_use_legacy_codepoint(SSL *ssl, int use_legacy)
+{
+	/* Not supported. */
 }
 
 static int
