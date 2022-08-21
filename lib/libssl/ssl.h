@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.223 2022/08/17 18:43:17 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.224 2022/08/21 17:54:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -823,15 +823,20 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 /* Offset to get an SSL_R_... value from an SSL_AD_... value. */
 #define SSL_AD_REASON_OFFSET			1000
 
-#define SSL_ERROR_NONE			0
-#define SSL_ERROR_SSL			1
-#define SSL_ERROR_WANT_READ		2
-#define SSL_ERROR_WANT_WRITE		3
-#define SSL_ERROR_WANT_X509_LOOKUP	4
-#define SSL_ERROR_SYSCALL		5 /* look at error stack/return value/errno */
-#define SSL_ERROR_ZERO_RETURN		6
-#define SSL_ERROR_WANT_CONNECT		7
-#define SSL_ERROR_WANT_ACCEPT		8
+#define SSL_ERROR_NONE				0
+#define SSL_ERROR_SSL				1
+#define SSL_ERROR_WANT_READ			2
+#define SSL_ERROR_WANT_WRITE			3
+#define SSL_ERROR_WANT_X509_LOOKUP		4
+#define SSL_ERROR_SYSCALL			5
+#define SSL_ERROR_ZERO_RETURN			6
+#define SSL_ERROR_WANT_CONNECT			7
+#define SSL_ERROR_WANT_ACCEPT			8
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define SSL_ERROR_WANT_ASYNC			9
+#define SSL_ERROR_WANT_ASYNC_JOB		10
+#define SSL_ERROR_WANT_CLIENT_HELLO_CB		11
+#endif
 
 #define SSL_CTRL_NEED_TMP_RSA			1
 #define SSL_CTRL_SET_TMP_RSA			2
