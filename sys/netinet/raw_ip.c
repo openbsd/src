@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.132 2022/08/21 17:30:21 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.133 2022/08/21 22:45:55 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_attach	= rip_attach,
 	.pru_detach	= rip_detach,
 	.pru_bind	= rip_bind,
+	.pru_connect	= rip_connect,
 };
 
 /*
@@ -486,17 +487,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		in_pcbdetach(inp);
 		break;
 
-	case PRU_CONNECT:
-	    {
-		struct sockaddr_in *addr;
-
-		if ((error = in_nam2sin(nam, &addr)))
-			break;
-		inp->inp_faddr = addr->sin_addr;
-		soisconnected(so);
-		break;
-	    }
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -642,5 +632,23 @@ rip_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 
 	inp->inp_laddr = addr->sin_addr;
 	
+	return (0);
+}
+
+int
+rip_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in *addr;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = in_nam2sin(nam, &addr)))
+		return (error);
+	
+	inp->inp_faddr = addr->sin_addr;
+	soisconnected(so);
+
 	return (0);
 }

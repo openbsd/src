@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.284 2022/08/21 17:30:21 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.285 2022/08/21 22:45:55 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
 	.pru_bind	= udp_bind,
+	.pru_connect	= udp_connect,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1075,28 +1076,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 */
 	switch (req) {
 
-	case PRU_CONNECT:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6) {
-			if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
-				error = EISCONN;
-				break;
-			}
-			error = in6_pcbconnect(inp, addr);
-		} else
-#endif /* INET6 */
-		{
-			if (inp->inp_faddr.s_addr != INADDR_ANY) {
-				error = EISCONN;
-				break;
-			}
-			error = in_pcbconnect(inp, addr);
-		}
-
-		if (error == 0)
-			soisconnected(so);
-		break;
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -1275,6 +1254,34 @@ udp_bind(struct socket *so, struct mbuf *addr, struct proc *p)
 
 	soassertlocked(so);
 	return in_pcbbind(inp, addr, p);
+}
+
+int
+udp_connect(struct socket *so, struct mbuf *addr)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error;
+
+	soassertlocked(so);
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6) {
+		if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+			return (EISCONN);
+		error = in6_pcbconnect(inp, addr);
+	} else
+#endif /* INET6 */
+	{
+		if (inp->inp_faddr.s_addr != INADDR_ANY)
+			return (EISCONN);
+		error = in_pcbconnect(inp, addr);
+	}
+
+	if (error)
+		return (error);
+
+	soisconnected(so);
+	return (0);
 }
 
 /*

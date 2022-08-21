@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.39 2022/08/20 23:48:58 mvs Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.40 2022/08/21 22:45:55 mvs Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -144,5 +144,6 @@ int	 udp_usrreq(struct socket *,
 int	 udp_attach(struct socket *, int);
 int	 udp_detach(struct socket *);
 int	 udp_bind(struct socket *, struct mbuf *, struct proc *);
+int	 udp_connect(struct socket *, struct mbuf *);
 #endif /* _KERNEL */
 #endif /* _NETINET_UDP_VAR_H_ */

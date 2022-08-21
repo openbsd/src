@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.190 2022/08/21 17:30:21 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.191 2022/08/21 22:45:55 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -117,6 +117,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_detach	= tcp_detach,
 	.pru_bind	= tcp_bind,
 	.pru_listen	= tcp_listen,
+	.pru_connect	= tcp_connect,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -212,67 +213,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	/*
-	 * Initiate connection to peer.
-	 * Create a template for use in transmissions on this connection.
-	 * Enter SYN_SENT state, and mark socket as connecting.
-	 * Start keep-alive timer, and seed output sequence space.
-	 * Send initial segment on connection.
-	 */
-	case PRU_CONNECT:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6) {
-			struct sockaddr_in6 *sin6;
-
-			if ((error = in6_nam2sin6(nam, &sin6)))
-				break;
-			if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
-			    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
-				error = EINVAL;
-				break;
-			}
-			error = in6_pcbconnect(inp, nam);
-		} else
-#endif /* INET6 */
-		{
-			struct sockaddr_in *sin;
-
-			if ((error = in_nam2sin(nam, &sin)))
-				break;
-			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
-			    (sin->sin_addr.s_addr == INADDR_BROADCAST) ||
-			    IN_MULTICAST(sin->sin_addr.s_addr) ||
-			    in_broadcast(sin->sin_addr, inp->inp_rtableid)) {
-				error = EINVAL;
-				break;
-			}
-			error = in_pcbconnect(inp, nam);
-		}
-		if (error)
-			break;
-
-		tp->t_template = tcp_template(tp);
-		if (tp->t_template == 0) {
-			in_pcbdisconnect(inp);
-			error = ENOBUFS;
-			break;
-		}
-
-		so->so_state |= SS_CONNECTOUT;
-
-		/* Compute window scaling to request.  */
-		tcp_rscale(tp, sb_max);
-
-		soisconnecting(so);
-		tcpstat_inc(tcps_connattempt);
-		tp->t_state = TCPS_SYN_SENT;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
-		tcp_set_iss_tsm(tp);
-		tcp_sendseqinit(tp);
-		tp->snd_last = tp->snd_una;
-		error = tcp_output(tp);
-		break;
 
 	/*
 	 * Create a TCP connection between two sockets.
@@ -825,6 +765,90 @@ out:
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_LISTEN, 0);
 	return (error);
 }
+
+/*
+ * Initiate connection to peer.
+ * Create a template for use in transmissions on this connection.
+ * Enter SYN_SENT state, and mark socket as connecting.
+ * Start keep-alive timer, and seed output sequence space.
+ * Send initial segment on connection.
+ */
+int
+tcp_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp, *otp = NULL;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6) {
+		struct sockaddr_in6 *sin6;
+
+		if ((error = in6_nam2sin6(nam, &sin6)))
+			goto out;
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			error = EINVAL;
+			goto out;
+		}
+		error = in6_pcbconnect(inp, nam);
+	} else
+#endif /* INET6 */
+	{
+		struct sockaddr_in *sin;
+
+		if ((error = in_nam2sin(nam, &sin)))
+			goto out;
+		if ((sin->sin_addr.s_addr == INADDR_ANY) ||
+		    (sin->sin_addr.s_addr == INADDR_BROADCAST) ||
+		    IN_MULTICAST(sin->sin_addr.s_addr) ||
+		    in_broadcast(sin->sin_addr, inp->inp_rtableid)) {
+			error = EINVAL;
+			goto out;
+		}
+		error = in_pcbconnect(inp, nam);
+	}
+	if (error)
+		goto out;
+
+	tp->t_template = tcp_template(tp);
+	if (tp->t_template == 0) {
+		in_pcbdisconnect(inp);
+		error = ENOBUFS;
+		goto out;
+	}
+
+	so->so_state |= SS_CONNECTOUT;
+
+	/* Compute window scaling to request.  */
+	tcp_rscale(tp, sb_max);
+
+	soisconnecting(so);
+	tcpstat_inc(tcps_connattempt);
+	tp->t_state = TCPS_SYN_SENT;
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
+	tcp_set_iss_tsm(tp);
+	tcp_sendseqinit(tp);
+	tp->snd_last = tp->snd_una;
+	error = tcp_output(tp);
+
+out:
+	if (otp)
+		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_CONNECT, 0);
+	return (error);
+}
+
 
 /*
  * Initiate (or continue) disconnect.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.152 2022/08/21 17:30:21 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.153 2022/08/21 22:45:55 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_attach	= rip6_attach,
 	.pru_detach	= rip6_detach,
 	.pru_bind	= rip6_bind,
+	.pru_connect	= rip6_connect,
 };
 
 /*
@@ -605,23 +606,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		in_pcbdetach(in6p);
 		break;
 
-	case PRU_CONNECT:
-	{
-		struct sockaddr_in6 *addr;
-		struct in6_addr *in6a = NULL;
-
-		if ((error = in6_nam2sin6(nam, &addr)))
-			break;
-		/* Source address selection. XXX: need pcblookup? */
-		error = in6_pcbselsrc(&in6a, addr, in6p, in6p->inp_outputopts6);
-		if (error)
-			break;
-		in6p->inp_laddr6 = *in6a;
-		in6p->inp_faddr6 = addr->sin6_addr;
-		soisconnected(so);
-		break;
-	}
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -778,6 +762,30 @@ rip6_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 		return (error);
 
 	in6p->inp_laddr6 = addr->sin6_addr;
+	return (0);
+}
+
+int
+rip6_connect(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+	struct sockaddr_in6 *addr;
+	struct in6_addr *in6a = NULL;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = in6_nam2sin6(nam, &addr)))
+		return (error);
+
+	/* Source address selection. XXX: need pcblookup? */
+	error = in6_pcbselsrc(&in6a, addr, in6p, in6p->inp_outputopts6);
+	if (error)
+		return (error);
+
+	in6p->inp_laddr6 = *in6a;
+	in6p->inp_faddr6 = addr->sin6_addr;
+	soisconnected(so);
 	return (0);
 }
 
