@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.189 2022/08/20 23:48:58 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.190 2022/08/21 17:30:21 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_attach	= tcp_attach,
 	.pru_detach	= tcp_detach,
 	.pru_bind	= tcp_bind,
+	.pru_listen	= tcp_listen,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -211,18 +212,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	/*
-	 * Prepare to accept connections.
-	 */
-	case PRU_LISTEN:
-		if (inp->inp_lport == 0)
-			error = in_pcbbind(inp, NULL, p);
-		/* If the in_pcbbind() above is called, the tp->pf
-		   should still be whatever it was before. */
-		if (error == 0)
-			tp->t_state = TCPS_LISTEN;
-		break;
 
 	/*
 	 * Initiate connection to peer.
@@ -797,6 +786,43 @@ tcp_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_BIND, 0);
+	return (error);
+}
+
+/*
+ * Prepare to accept connections.
+ */
+int
+tcp_listen(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp, *otp = NULL;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
+
+	if (inp->inp_lport == 0)
+		if ((error = in_pcbbind(inp, NULL, curproc)))
+			goto out;
+	
+	/*
+	 * If the in_pcbbind() above is called, the tp->pf
+	 * should still be whatever it was before.
+	 */
+	tp->t_state = TCPS_LISTEN;
+
+out:
+	if (otp)
+		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_LISTEN, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.283 2022/08/20 23:48:58 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.284 2022/08/21 17:30:21 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1074,10 +1074,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-
-	case PRU_LISTEN:
-		error = EOPNOTSUPP;
-		break;
 
 	case PRU_CONNECT:
 #ifdef INET6

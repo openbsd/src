@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.169 2022/08/20 23:48:57 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.170 2022/08/21 17:30:21 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_attach	= uipc_attach,
 	.pru_detach	= uipc_detach,
 	.pru_bind	= uipc_bind,
+	.pru_listen	= uipc_listen,
 };
 
 void
@@ -222,11 +223,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_LISTEN:
-		if (unp->unp_vnode == NULL)
-			error = EINVAL;
-		break;
 
 	case PRU_CONNECT:
 		error = unp_connect(so, nam, p);
@@ -540,6 +536,16 @@ uipc_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 	struct unpcb *unp = sotounpcb(so);
 
 	return unp_bind(unp, nam, p);
+}
+
+int
+uipc_listen(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	if (unp->unp_vnode == NULL)
+		return (EINVAL);
+	return (0);
 }
 
 int

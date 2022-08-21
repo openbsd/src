@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.151 2022/08/20 23:48:58 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.152 2022/08/21 17:30:21 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -676,7 +676,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	/*
 	 * Not supported.
 	 */
-	case PRU_LISTEN:
 	case PRU_ACCEPT:
 	case PRU_SENDOOB:
 	case PRU_RCVD:
