@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.301 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.302 2022/08/21 18:17:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1029,6 +1029,11 @@ SSL_read(SSL *s, void *buf, int num)
 		return -1;
 	}
 
+	if (SSL_is_quic(s)) {
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (-1);
+	}
+
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1068,6 +1073,11 @@ SSL_peek(SSL *s, void *buf, int num)
 		return -1;
 	}
 
+	if (SSL_is_quic(s)) {
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (-1);
+	}
+
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_UNINITIALIZED);
 		return (-1);
@@ -1104,6 +1114,11 @@ SSL_write(SSL *s, const void *buf, int num)
 	if (num < 0) {
 		SSLerror(s, SSL_R_BAD_LENGTH);
 		return -1;
+	}
+
+	if (SSL_is_quic(s)) {
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return (-1);
 	}
 
 	if (s->internal->handshake_func == NULL) {
