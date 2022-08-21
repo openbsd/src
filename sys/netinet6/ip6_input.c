@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.253 2022/08/15 16:15:37 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.254 2022/08/21 14:15:55 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ struct cpumem *ip6counters;
 uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
 
 int ip6_ours(struct mbuf **, int *, int, int);
-int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf **, int *, int *);
 int ip6_hopopts_input(struct mbuf **, int *, u_int32_t *, u_int32_t *);
@@ -189,7 +188,7 @@ ip6_ours(struct mbuf **mp, int *offp, int nxt, int af)
 
 	/* We are already in a IPv4/IPv6 local deliver loop. */
 	if (af != AF_UNSPEC)
-		return ip6_local(mp, offp, nxt, af);
+		return nxt;
 
 	/* save values for later, use after dequeue */
 	if (*offp != sizeof(struct ip6_hdr)) {
@@ -224,15 +223,32 @@ void
 ip6intr(void)
 {
 	struct mbuf *m;
-	int off, nxt;
 
 	while ((m = niq_dequeue(&ip6intrq)) != NULL) {
+		struct m_tag *mtag;
+		int off, nxt;
+
 #ifdef DIAGNOSTIC
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("ip6intr no HDR");
 #endif
-		off = 0;
-		nxt = ip6_local(&m, &off, IPPROTO_IPV6, AF_UNSPEC);
+		mtag = m_tag_find(m, PACKET_TAG_IP6_OFFNXT, NULL);
+		if (mtag != NULL) {
+			struct ip6_offnxt *ion;
+
+			ion = (struct ip6_offnxt *)(mtag + 1);
+			off = ion->ion_off;
+			nxt = ion->ion_nxt;
+
+			m_tag_delete(m, mtag);
+		} else {
+			struct ip6_hdr *ip6;
+
+			ip6 = mtod(m, struct ip6_hdr *);
+			off = sizeof(struct ip6_hdr);
+			nxt = ip6->ip6_nxt;
+		}
+		nxt = ip_deliver(&m, &off, nxt, AF_INET6);
 		KASSERT(nxt == IPPROTO_DONE);
 	}
 }
@@ -610,37 +626,6 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 	m_freemp(mp);
  out:
 	rtfree(rt);
-	return nxt;
-}
-
-int
-ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
-{
-	if (*offp == 0) {
-		struct m_tag *mtag;
-
-		mtag = m_tag_find(*mp, PACKET_TAG_IP6_OFFNXT, NULL);
-		if (mtag != NULL) {
-			struct ip6_offnxt *ion;
-
-			ion = (struct ip6_offnxt *)(mtag + 1);
-			*offp = ion->ion_off;
-			nxt = ion->ion_nxt;
-
-			m_tag_delete(*mp, mtag);
-		} else {
-			struct ip6_hdr *ip6;
-
-			ip6 = mtod(*mp, struct ip6_hdr *);
-			*offp = sizeof(struct ip6_hdr);
-			nxt = ip6->ip6_nxt;
-			
-		}
-	}
-
-	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
-	if (af == AF_UNSPEC)
-		nxt = ip_deliver(mp, offp, nxt, AF_INET6);
 	return nxt;
 }
 
