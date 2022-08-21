@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.27 2022/08/13 14:16:59 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.28 2022/08/21 07:56:31 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -351,6 +351,10 @@
 
 /* Bits for R88E_XCK_OUT_CTRL. */
 #define R88E_XCK_OUT_CTRL_EN		1
+
+/* Bits for R92C_AFE_CTRL3. */
+#define R92C_AFE_CTRL3_ADDR_M	0x00fff000
+#define R92C_AFE_CTRL3_ADDR_S	12
 
 /* Bits for R92C_EFUSE_CTRL. */
 #define R92C_EFUSE_CTRL_DATA_M	0x000000ff

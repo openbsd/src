@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.52 2022/01/09 05:42:39 jsg Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.53 2022/08/21 07:56:31 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -212,11 +212,8 @@ rtwn_attach(struct device *pdev, struct rtwn_softc *sc)
 	}
 
 	/* Determine number of Tx/Rx chains. */
-	if (sc->chip & RTWN_CHIP_92C) {
+	if (sc->chip & (RTWN_CHIP_92C | RTWN_CHIP_92E)) {
 		sc->ntxchains = (sc->chip & RTWN_CHIP_92C_1T2R) ? 1 : 2;
-		sc->nrxchains = 2;
-	} else if (sc->chip & RTWN_CHIP_92E) {
-		sc->ntxchains = 2;
 		sc->nrxchains = 2;
 	} else {
 		sc->ntxchains = 1;
@@ -1761,7 +1758,10 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 	/* Disable FW download. */
 	rtwn_write_1(sc, R92C_MCUFWDL,
 	    rtwn_read_1(sc, R92C_MCUFWDL) & ~R92C_MCUFWDL_EN);
-	rtwn_write_1(sc, R92C_MCUFWDL + 1, 0);
+
+	/* Reserved for fw extension. */
+	if (!(sc->chip & RTWN_CHIP_92E))
+		rtwn_write_1(sc, R92C_MCUFWDL + 1, 0);
 
 	reg = rtwn_read_4(sc, R92C_MCUFWDL);
 	reg = (reg & ~R92C_MCUFWDL_WINTINI_RDY) | R92C_MCUFWDL_RDY;
@@ -2332,13 +2332,10 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 	rtwn_set_txpower(sc, c, extc);
 
 	if (extc != NULL) {
-		uint32_t reg;
-
 		/* Is secondary channel below or above primary? */
 		int prichlo = c->ic_freq < extc->ic_freq;
 
 		if (sc->chip & RTWN_CHIP_92E) {
-			uint16_t reg;
 			reg = rtwn_read_2(sc, R92C_WMAC_TRXPTCL_CTL);
 			reg &= ~R92C_WMAC_TRXPTCL_CTL_BW_MASK;
 			reg |= R92C_WMAC_TRXPTCL_CTL_BW_40;
@@ -2385,7 +2382,6 @@ rtwn_set_chan(struct rtwn_softc *sc, struct ieee80211_channel *c,
 		}
 	} else {
 		if (sc->chip & RTWN_CHIP_92E) {
-			uint16_t reg;
 			reg = rtwn_read_2(sc, R92C_WMAC_TRXPTCL_CTL);
 			reg &= ~R92C_WMAC_TRXPTCL_CTL_BW_MASK;
 			rtwn_write_2(sc, R92C_WMAC_TRXPTCL_CTL, reg);
@@ -2953,6 +2949,8 @@ void
 rtwn_enable_intr(struct rtwn_softc *sc)
 {
 	if (sc->chip & RTWN_CHIP_92E) {
+		rtwn_write_4(sc, R88E_HISR, 0xffffffff);
+		rtwn_write_4(sc, R88E_HISRE, 0xffffffff);
 		rtwn_write_4(sc, R88E_HIMR, 0);
 		rtwn_write_4(sc, R88E_HIMRE, 0);
 	} else if (sc->chip & RTWN_CHIP_88E) {
@@ -3166,9 +3164,6 @@ rtwn_init(struct ifnet *ifp)
 	rtwn_write_1(sc, R92C_HWSEQ_CTRL, 0xff);
 
 	if (sc->chip & RTWN_CHIP_92E) {
-		rtwn_write_4(sc, R92C_BAR_MODE_CTRL, 0x0201ffff);
-		rtwn_write_1(sc, R92C_NAV_UPPER, 0);
-
 		rtwn_write_1(sc, R92C_QUEUE_CTRL,
 		    rtwn_read_1(sc, R92C_QUEUE_CTRL) & ~0x08);
 	}

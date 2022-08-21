@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.102 2022/08/13 14:16:59 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.103 2022/08/21 07:56:31 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -619,13 +619,16 @@ urtwn_close_pipes(struct urtwn_softc *sc)
 	int i;
 
 	/* Close Rx pipe. */
-	if (sc->rx_pipe != NULL)
+	if (sc->rx_pipe != NULL) {
 		usbd_close_pipe(sc->rx_pipe);
+		sc->rx_pipe = NULL;
+	}
 	/* Close Tx pipes. */
 	for (i = 0; i < R92C_MAX_EPOUT; i++) {
 		if (sc->tx_pipe[i] == NULL)
 			continue;
 		usbd_close_pipe(sc->tx_pipe[i]);
+		sc->tx_pipe[i] = NULL;
 	}
 }
 
@@ -2018,16 +2021,18 @@ urtwn_fw_loadpage(void *cookie, int page, uint8_t *buf, int len)
 {
 	struct urtwn_softc *sc = cookie;
 	uint32_t reg;
-	int off, mlen, error = 0;
+	int maxblksz, off, mlen, error = 0;
 
 	reg = urtwn_read_4(sc, R92C_MCUFWDL);
 	reg = RW(reg, R92C_MCUFWDL_PAGE, page);
 	urtwn_write_4(sc, R92C_MCUFWDL, reg);
 
+	maxblksz = (sc->sc_sc.chip & RTWN_CHIP_92E) ? 254 : 196;
+
 	off = R92C_FW_START_ADDR;
 	while (len > 0) {
-		if (len > 196)
-			mlen = 196;
+		if (len > maxblksz)
+			mlen = maxblksz;
 		else if (len > 4)
 			mlen = 4;
 		else
@@ -2190,20 +2195,15 @@ urtwn_aggr_init(void *cookie)
 	}
 
 	/* Tx aggregation setting. */
-	if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+	reg = urtwn_read_4(sc, R92C_TDECTRL);
+	reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, ndesc);
+	urtwn_write_4(sc, R92C_TDECTRL, reg);
+	if (sc->sc_sc.chip & RTWN_CHIP_92E)
 		urtwn_write_1(sc, R92E_DWBCN1_CTRL, ndesc << 1);
-	} else {
-		reg = urtwn_read_4(sc, R92C_TDECTRL);
-		reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, ndesc);
-		urtwn_write_4(sc, R92C_TDECTRL, reg);
-	}
 
 	/* Rx aggregation setting. */
-	if (!(sc->sc_sc.chip & RTWN_CHIP_92E)) {
-		urtwn_write_1(sc, R92C_TRXDMA_CTRL,
-		    urtwn_read_1(sc, R92C_TRXDMA_CTRL) |
-		    R92C_TRXDMA_CTRL_RXDMA_AGG_EN);
-	}
+	urtwn_write_1(sc, R92C_TRXDMA_CTRL,
+	    urtwn_read_1(sc, R92C_TRXDMA_CTRL) | R92C_TRXDMA_CTRL_RXDMA_AGG_EN);
 
 	urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH, dmasize);
 	if (sc->sc_sc.chip & (RTWN_CHIP_92C | RTWN_CHIP_88C))
@@ -2361,11 +2361,9 @@ urtwn_bb_init(void *cookie)
 		    RW(reg, R92C_AFE_XTAL_CTRL_ADDR, xtal | xtal << 6));
 	} else if (sc->sc_sc.chip & RTWN_CHIP_92E) {
 		xtal = sc->sc_sc.crystal_cap & 0x3f;
-		reg = urtwn_read_4(sc, R92C_AFE_CTRL3);
-		reg &= 0xff000fff;
-		reg |= (xtal | (xtal << 6)) << 12;
-		urtwn_write_4(sc, R92C_AFE_CTRL3, reg);
-
+		reg = urtwn_bb_read(sc, R92C_AFE_CTRL3);
+		urtwn_bb_write(sc, R92C_AFE_CTRL3,
+		    RW(reg, R92C_AFE_CTRL3_ADDR, xtal | xtal << 6));
 		urtwn_write_4(sc, R92C_AFE_XTAL_CTRL, 0x000f81fb);
 	}
 
@@ -2435,6 +2433,7 @@ urtwn_init(void *cookie)
 	struct urtwn_softc *sc = cookie;
 	int i, error;
 
+	/* Reset USB mode switch setting. */
 	if (sc->sc_sc.chip & RTWN_CHIP_92E)
 		urtwn_write_1(sc, R92C_ACLK_MON, 0);
 
