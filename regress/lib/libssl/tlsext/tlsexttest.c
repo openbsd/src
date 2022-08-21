@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.74 2022/08/05 17:19:09 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.75 2022/08/21 19:46:19 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2038,6 +2038,7 @@ static unsigned char tlsext_quic_transport_data[] = {
 static int
 test_tlsext_quic_transport_parameters_client(void)
 {
+	const SSL_QUIC_METHOD quic_method;
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
@@ -2089,7 +2090,7 @@ test_tlsext_quic_transport_parameters_client(void)
 		goto err;
 	}
 
-	ssl->quic_method = ssl->method; /* XXX */
+	ssl->quic_method = &quic_method;
 
 	if (!client_funcs->needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need QUIC\n");
@@ -2169,6 +2170,7 @@ test_tlsext_quic_transport_parameters_client(void)
 static int
 test_tlsext_quic_transport_parameters_server(void)
 {
+	const SSL_QUIC_METHOD quic_method;
 	unsigned char *data = NULL;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
@@ -2212,7 +2214,7 @@ test_tlsext_quic_transport_parameters_server(void)
 		goto err;
 	}
 
-	ssl->quic_method = ssl->method; /* XXX */
+	ssl->quic_method = &quic_method;
 
 	if (!server_funcs->needs(ssl, SSL_TLSEXT_MSG_EE)) {
 		FAIL("server should need QUIC\n");
@@ -2253,7 +2255,7 @@ test_tlsext_quic_transport_parameters_server(void)
 		goto err;
 	}
 
-	ssl->quic_method = ssl->method; /* XXX */
+	ssl->quic_method = &quic_method;
 
 	if (!client_funcs->parse(ssl, SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
 		FAIL("client_parse of QUIC from server failed\n");
