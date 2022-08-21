@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2001 2022/08/16 09:28:45 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2002 2022/08/21 04:03:47 daniel Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -31756,12 +31756,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "LongRun Northbridge",
 	},
 	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_MEM1,
-	    "Mem1",
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_SDRAM,
+	    "SDRAM",
 	},
 	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_MEM2,
-	    "Mem2",
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_BIOS,
+	    "BIOS",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,

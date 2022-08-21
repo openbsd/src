@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2001 2022/08/16 09:28:45 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2002 2022/08/21 04:03:47 daniel Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8891,8 +8891,8 @@
 /* Transmeta products */
 #define	PCI_PRODUCT_TRANSMETA_NB	0x0295		/* Northbridge */
 #define	PCI_PRODUCT_TRANSMETA_LONGRUN_NB	0x0395		/* LongRun Northbridge */
-#define	PCI_PRODUCT_TRANSMETA_MEM1	0x0396		/* Mem1 */
-#define	PCI_PRODUCT_TRANSMETA_MEM2	0x0397		/* Mem2 */
+#define	PCI_PRODUCT_TRANSMETA_SDRAM	0x0396		/* SDRAM */
+#define	PCI_PRODUCT_TRANSMETA_BIOS	0x0397		/* BIOS */
 
 /* Trident products */
 #define	PCI_PRODUCT_TRIDENT_4DWAVE_DX	0x2000		/* 4DWAVE DX */
