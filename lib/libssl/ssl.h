@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.225 2022/08/21 19:18:57 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.226 2022/08/21 19:32:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -360,6 +360,10 @@ typedef struct ssl_st *ssl_crock_st;
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
+
+#if defined(LIBRESSL_HAS_QUIC) || defined(LIBRESSL_INTERNAL)
+typedef struct ssl_quic_method_st SSL_QUIC_METHOD;
+#endif
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -1591,6 +1595,36 @@ int SSL_CTX_get_security_level(const SSL_CTX *ctx);
 
 #if defined(LIBRESSL_HAS_QUIC) || defined(LIBRESSL_INTERNAL)
 /*
+ * QUIC integration.
+ *
+ * QUIC acts as an underlying transport for the TLS 1.3 handshake. The following
+ * functions allow a QUIC implementation to serve as the underlying transport as
+ * described in RFC 9001.
+ *
+ * When configured for QUIC, |SSL_do_handshake| will drive the handshake as
+ * before, but it will not use the configured |BIO|. It will call functions on
+ * |SSL_QUIC_METHOD| to configure secrets and send data. If data is needed from
+ * the peer, it will return |SSL_ERROR_WANT_READ|. As the caller receives data
+ * it can decrypt, it calls |SSL_provide_quic_data|. Subsequent
+ * |SSL_do_handshake| calls will then consume that data and progress the
+ * handshake. After the handshake is complete, the caller should continue to
+ * call |SSL_provide_quic_data| for any post-handshake data, followed by
+ * |SSL_process_quic_post_handshake| to process it. It is an error to call
+ * |SSL_peek|, |SSL_read| and |SSL_write| in QUIC.
+ *
+ * To avoid DoS attacks, the QUIC implementation must limit the amount of data
+ * being queued up. The implementation can call
+ * |SSL_quic_max_handshake_flight_len| to get the maximum buffer length at each
+ * encryption level.
+ *
+ * QUIC implementations must additionally configure transport parameters with
+ * |SSL_set_quic_transport_params|. |SSL_get_peer_quic_transport_params| may be
+ * used to query the value received from the peer. This extension is handled
+ * as an opaque byte string, which the caller is responsible for serializing
+ * and parsing. See RFC 9000 section 7.4 for further details.
+ */
+
+/*
  * ssl_encryption_level_t specifies the QUIC encryption level used to transmit
  * handshake messages.
  */
@@ -1601,16 +1635,120 @@ typedef enum ssl_encryption_level_t {
 	ssl_encryption_application,
 } OSSL_ENCRYPTION_LEVEL;
 
+/*
+ * ssl_quic_method_st (aka |SSL_QUIC_METHOD|) describes custom QUIC hooks.
+ *
+ * Note that we provide both the new (BoringSSL) secrets interface
+ * (set_read_secret/set_write_secret) along with the old interface
+ * (set_encryption_secrets), which quictls is still using.
+ *
+ * Since some consumers fail to use named initialisers, the order of these
+ * functions is important. Hopefully all of these consumers use the old version.
+ */
+struct ssl_quic_method_st {
+	/*
+	 * set_encryption_secrets configures the read and write secrets for the
+	 * given encryption level. This function will always be called before an
+	 * encryption level other than |ssl_encryption_initial| is used.
+	 *
+	 * When reading packets at a given level, the QUIC implementation must
+	 * send ACKs at the same level, so this function provides read and write
+	 * secrets together. The exception is |ssl_encryption_early_data|, where
+	 * secrets are only available in the client to server direction. The
+	 * other secret will be NULL. The server acknowledges such data at
+	 * |ssl_encryption_application|, which will be configured in the same
+	 * |SSL_do_handshake| call.
+	 *
+	 * This function should use |SSL_get_current_cipher| to determine the TLS
+	 * cipher suite.
+	 */
+	int (*set_encryption_secrets)(SSL *ssl, enum ssl_encryption_level_t level,
+	    const uint8_t *read_secret, const uint8_t *write_secret,
+	    size_t secret_len);
+
+	/*
+	 * add_handshake_data adds handshake data to the current flight at the
+	 * given encryption level. It returns one on success and zero on error.
+	 * Callers should defer writing data to the network until |flush_flight|
+	 * to better pack QUIC packets into transport datagrams.
+	 *
+	 * If |level| is not |ssl_encryption_initial|, this function will not be
+	 * called before |level| is initialized with |set_write_secret|.
+	 */
+	int (*add_handshake_data)(SSL *ssl, enum ssl_encryption_level_t level,
+	    const uint8_t *data, size_t len);
+
+	/*
+	 * flush_flight is called when the current flight is complete and should
+	 * be written to the transport. Note a flight may contain data at
+	 * several encryption levels. It returns one on success and zero on
+	 * error.
+	 */
+	int (*flush_flight)(SSL *ssl);
+
+	/*
+	 * send_alert sends a fatal alert at the specified encryption level. It
+	 * returns one on success and zero on error.
+	 *
+	 * If |level| is not |ssl_encryption_initial|, this function will not be
+	 * called before |level| is initialized with |set_write_secret|.
+	 */
+	int (*send_alert)(SSL *ssl, enum ssl_encryption_level_t level,
+	    uint8_t alert);
+
+	/*
+	 * set_read_secret configures the read secret and cipher suite for the
+	 * given encryption level. It returns one on success and zero to
+	 * terminate the handshake with an error. It will be called at most once
+	 * per encryption level.
+	 *
+	 * Read keys will not be released before QUIC may use them. Once a level
+	 * has been initialized, QUIC may begin processing data from it.
+	 * Handshake data should be passed to |SSL_provide_quic_data| and
+	 * application data (if |level| is |ssl_encryption_early_data| or
+	 * |ssl_encryption_application|) may be processed according to the rules
+	 * of the QUIC protocol.
+	 */
+	int (*set_read_secret)(SSL *ssl, enum ssl_encryption_level_t level,
+	    const SSL_CIPHER *cipher, const uint8_t *secret, size_t secret_len);
+
+	/*
+	 * set_write_secret behaves like |set_read_secret| but configures the
+	 * write secret and cipher suite for the given encryption level. It will
+	 * be called at most once per encryption level.
+	 *
+	 * Write keys will not be released before QUIC may use them. If |level|
+	 * is |ssl_encryption_early_data| or |ssl_encryption_application|, QUIC
+	 * may begin sending application data at |level|.
+	 */
+	int (*set_write_secret)(SSL *ssl, enum ssl_encryption_level_t level,
+	    const SSL_CIPHER *cipher, const uint8_t *secret, size_t secret_len);
+};
+
+/*
+ * SSL_CTX_set_quic_method configures the QUIC hooks. This should only be
+ * configured with a minimum version of TLS 1.3. |quic_method| must remain valid
+ * for the lifetime of |ctx|. It returns one on success and zero on error.
+ */
+int SSL_CTX_set_quic_method(SSL_CTX *ctx, const SSL_QUIC_METHOD *quic_method);
+
+/*
+ * SSL_set_quic_method configures the QUIC hooks. This should only be
+ * configured with a minimum version of TLS 1.3. |quic_method| must remain valid
+ * for the lifetime of |ssl|. It returns one on success and zero on error.
+ */
+int SSL_set_quic_method(SSL *ssl, const SSL_QUIC_METHOD *quic_method);
+
+/* SSL_is_quic returns true if an SSL has been configured for use with QUIC. */
 int SSL_is_quic(const SSL *ssl);
 
 /*
  * SSL_set_quic_transport_params configures |ssl| to send |params| (of length
  * |params_len|) in the quic_transport_parameters extension in either the
- * ClientHello or EncryptedExtensions handshake message. This extension will
- * only be sent if the TLS version is at least 1.3, and for a server, only if
- * the client sent the extension. The buffer pointed to by |params| only need be
- * valid for the duration of the call to this function. This function returns 1
- *on success and 0 on failure.
+ * ClientHello or EncryptedExtensions handshake message. It is an error to set
+ * transport parameters if |ssl| is not configured for QUIC. The buffer pointed
+ * to by |params| only need be valid for the duration of the call to this
+ * function. This function returns 1 on success and 0 on failure.
  */
 int SSL_set_quic_transport_params(SSL *ssl, const uint8_t *params,
     size_t params_len);
@@ -1624,6 +1762,7 @@ int SSL_set_quic_transport_params(SSL *ssl, const uint8_t *params,
  */
 void SSL_get_peer_quic_transport_params(const SSL *ssl,
     const uint8_t **out_params, size_t *out_params_len);
+
 #endif
 
 void ERR_load_SSL_strings(void);

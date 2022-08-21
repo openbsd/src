@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.302 2022/08/21 18:17:11 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.303 2022/08/21 19:32:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,6 +339,7 @@ SSL_new(SSL_CTX *ctx)
 	s->verify_result = X509_V_OK;
 
 	s->method = ctx->method;
+	s->quic_method = ctx->quic_method;
 
 	if (!s->method->ssl_new(s))
 		goto err;
@@ -2582,6 +2583,28 @@ SSL_get_error(const SSL *s, int i)
 		return (SSL_ERROR_ZERO_RETURN);
 
 	return (SSL_ERROR_SYSCALL);
+}
+
+int
+SSL_CTX_set_quic_method(SSL_CTX *ctx, const SSL_QUIC_METHOD *quic_method)
+{
+	if (ctx->method->dtls)
+		return 0;
+
+	ctx->quic_method = quic_method;
+
+	return 1;
+}
+
+int
+SSL_set_quic_method(SSL *ssl, const SSL_QUIC_METHOD *quic_method)
+{
+	if (ssl->method->dtls)
+		return 0;
+
+	ssl->quic_method = quic_method;
+
+	return 1;
 }
 
 int

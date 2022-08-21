@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.422 2022/08/18 07:00:59 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.423 2022/08/21 19:32:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -882,6 +882,7 @@ typedef struct ssl_ctx_internal_st {
 
 struct ssl_ctx_st {
 	const SSL_METHOD *method;
+	const SSL_QUIC_METHOD *quic_method;
 
 	STACK_OF(SSL_CIPHER) *cipher_list;
 
@@ -1073,7 +1074,7 @@ struct ssl_st {
 	int version;
 
 	const SSL_METHOD *method;
-	const void *quic_method; /* XXX */
+	const SSL_QUIC_METHOD *quic_method;
 
 	/* There are 2 BIO's even though they are normally both the
 	 * same.  This is so data can be read and written to different
