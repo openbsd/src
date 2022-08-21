@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2001 2022/08/16 09:28:45 jsg Exp $
+$OpenBSD: pcidevs,v 1.2002 2022/08/21 04:03:47 daniel Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -8886,8 +8886,8 @@ product TOSHIBA2 SDCARD		0x0805	SD
 /* Transmeta products */
 product TRANSMETA NB		0x0295	Northbridge
 product TRANSMETA LONGRUN_NB	0x0395	LongRun Northbridge
-product TRANSMETA MEM1		0x0396	Mem1
-product TRANSMETA MEM2		0x0397	Mem2
+product TRANSMETA SDRAM		0x0396	SDRAM
+product TRANSMETA BIOS		0x0397	BIOS
 
 /* Trident products */
 product TRIDENT 4DWAVE_DX	0x2000	4DWAVE DX
