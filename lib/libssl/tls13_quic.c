@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.3 2022/08/21 19:18:57 jsing Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.4 2022/08/21 19:39:44 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -45,16 +45,20 @@ tls13_quic_wire_flush_cb(void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *ssl = ctx->ssl;
 
-	/* XXX - call flush_flight. */
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
-	return TLS13_IO_FAILURE;
+	if (!ssl->quic_method->flush_flight(ssl)) {
+		SSLerror(ssl, SSL_R_QUIC_INTERNAL_ERROR);
+		return TLS13_IO_FAILURE;
+	}
+
+	return TLS13_IO_SUCCESS;
 }
 
 static ssize_t
 tls13_quic_handshake_read_cb(void *buf, size_t n, void *arg)
 {
-	/* XXX - read handshake data. */
-	return TLS13_IO_FAILURE;
+	struct tls13_ctx *ctx = arg;
+
+	return tls_buffer_read(ctx->hs->tls13.quic_read_buffer, buf, n);
 }
 
 static ssize_t
@@ -63,9 +67,13 @@ tls13_quic_handshake_write_cb(const void *buf, size_t n, void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *ssl = ctx->ssl;
 
-	/* XXX - call add_handshake_data. */
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
-	return TLS13_IO_FAILURE;
+	if (!ssl->quic_method->add_handshake_data(ssl,
+	    ctx->hs->tls13.quic_write_level, buf, n)) {
+		SSLerror(ssl, SSL_R_QUIC_INTERNAL_ERROR);
+		return TLS13_IO_FAILURE;
+	}
+
+	return n;
 }
 
 static int
@@ -77,8 +85,18 @@ tls13_quic_set_read_traffic_key(struct tls13_secret *read_key,
 
 	ctx->hs->tls13.quic_read_level = read_level;
 
-	/* XXX - call set_read_secret. */
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
+	/* Handle both the new (BoringSSL) and old (quictls) APIs. */
+
+	if (ssl->quic_method->set_read_secret != NULL)
+		return ssl->quic_method->set_read_secret(ssl,
+		    ctx->hs->tls13.quic_read_level, ctx->hs->cipher,
+		    read_key->data, read_key->len);
+
+	if (ssl->quic_method->set_encryption_secrets != NULL)
+		return ssl->quic_method->set_encryption_secrets(ssl,
+		    ctx->hs->tls13.quic_read_level, read_key->data, NULL,
+		    read_key->len);
+
 	return 0;
 }
 
@@ -91,8 +109,18 @@ tls13_quic_set_write_traffic_key(struct tls13_secret *write_key,
 
 	ctx->hs->tls13.quic_write_level = write_level;
 
-	/* XXX - call set_write_secret. */
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
+	/* Handle both the new (BoringSSL) and old (quictls) APIs. */
+
+	if (ssl->quic_method->set_write_secret != NULL)
+		return ssl->quic_method->set_write_secret(ssl,
+		    ctx->hs->tls13.quic_write_level, ctx->hs->cipher,
+		    write_key->data, write_key->len);
+
+	if (ssl->quic_method->set_encryption_secrets != NULL)
+		return ssl->quic_method->set_encryption_secrets(ssl,
+		    ctx->hs->tls13.quic_write_level, NULL, write_key->data,
+		    write_key->len);
+
 	return 0;
 }
 
@@ -102,9 +130,13 @@ tls13_quic_alert_send_cb(int alert_desc, void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *ssl = ctx->ssl;
 
-	/* XXX - call send_alert. */
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
-	return TLS13_IO_FAILURE;
+	if (!ssl->quic_method->send_alert(ssl, ctx->hs->tls13.quic_write_level,
+	    alert_desc)) {
+		SSLerror(ssl, SSL_R_QUIC_INTERNAL_ERROR);
+		return TLS13_IO_FAILURE;
+	}
+
+	return TLS13_IO_SUCCESS;
 }
 
 static const struct tls13_record_layer_callbacks quic_rl_callbacks = {

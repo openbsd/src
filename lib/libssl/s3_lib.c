@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.237 2022/08/17 18:51:47 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.238 2022/08/21 19:39:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1569,6 +1569,8 @@ ssl3_free(SSL *s)
 	freezero(s->s3->hs.tls13.cookie, s->s3->hs.tls13.cookie_len);
 	tls13_clienthello_hash_clear(&s->s3->hs.tls13);
 
+	tls_buffer_free(s->s3->hs.tls13.quic_read_buffer);
+
 	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
 	sk_X509_pop_free(s->internal->verified_chain, X509_free);
 
@@ -1614,6 +1616,11 @@ ssl3_clear(SSL *s)
 	s->s3->hs.tls13.cookie = NULL;
 	s->s3->hs.tls13.cookie_len = 0;
 	tls13_clienthello_hash_clear(&s->s3->hs.tls13);
+
+	tls_buffer_free(s->s3->hs.tls13.quic_read_buffer);
+	s->s3->hs.tls13.quic_read_buffer = NULL;
+	s->s3->hs.tls13.quic_read_level = ssl_encryption_initial;
+	s->s3->hs.tls13.quic_write_level = ssl_encryption_initial;
 
 	s->s3->hs.extensions_seen = 0;
 
