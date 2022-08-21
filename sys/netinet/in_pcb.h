@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.129 2022/05/15 09:12:20 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.130 2022/08/21 11:44:53 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
  *	I	immutable after creation
  *	N	net lock
  *	t	inpt_mtx		pcb table mutex
+ *	p	inpcb_mtx		pcb mutex
  */
 
 struct pf_state_key;
@@ -121,6 +122,7 @@ struct inpcb {
 #define	inp_route	inp_ru.ru_route
 #define	inp_route6	inp_ru.ru_route6
 	struct    refcnt inp_refcnt;	/* refcount PCB, delay memory free */
+	struct	  mutex inp_mtx;	/* protect PCB and socket members */
 	int	  inp_flags;		/* generic IP/datagram flags */
 	union {				/* Header prototype. */
 		struct ip hu_ip;

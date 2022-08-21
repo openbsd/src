@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.270 2022/08/08 12:06:30 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.271 2022/08/21 11:44:53 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ in_pcballoc(struct socket *so, struct inpcbtable *table)
 	inp->inp_table = table;
 	inp->inp_socket = so;
 	refcnt_init_trace(&inp->inp_refcnt, DT_REFCNT_IDX_INPCB);
+	mtx_init(&inp->inp_mtx, IPL_SOFTNET);
 	inp->inp_seclevel[SL_AUTH] = IPSEC_AUTH_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_ESP_TRANS] = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
 	inp->inp_seclevel[SL_ESP_NETWORK] = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
