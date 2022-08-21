@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.29 2022/08/06 08:59:28 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.30 2022/08/21 12:52:10 jasper Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -1023,7 +1023,7 @@ OF_getpropint64array(int handle, char *prop, uint64_t *buf, int buflen)
 	if (len < 0 || (len % sizeof(uint64_t)))
 		return -1;
 
-	for (i = 0; i < len / sizeof(uint64_t); i++)
+	for (i = 0; i < min(len, buflen) / sizeof(uint64_t); i++)
 		buf[i] = betoh64(buf[i]);
 
 	return len;
