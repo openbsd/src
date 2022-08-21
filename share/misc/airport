@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.86 2022/08/17 18:12:16 job Exp $
+#	$OpenBSD: airport,v 1.87 2022/08/21 03:08:52 daniel Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -470,7 +470,7 @@ DUD:Momona, Dunedin, New Zealand
 DUJ:Jefferson County, Du Bois, Pennsylvania, USA
 DUQ:Quamichan Lake, Duncan / Quam, British Columbia, Canada
 DUR:King Shaka International, Durban, South Africa
-DUS:Dusseldorf, Germany
+DUS:Duesseldorf, Germany
 DUT:Dutch Harbor, Alaska, USA
 DVO:Mati, Davao, Philippines
 DXB:Dubai, UAE
@@ -656,7 +656,7 @@ HAD:Halmstad, Halland, Sweden
 HAH:Moroni (Hahaya), Comoros
 HAJ:Langenhagen, Hanover, Germany
 HAK:Haikou, China
-HAM:Fuhlsbuettel Hamburg, Germany
+HAM:Hamburg, Germany
 HAN:Noibai, Hanoi, Vietnam
 HAU:Karmoy, Haugesund, Norway
 HAV:Jose Marti, Havana, Cuba
@@ -940,7 +940,7 @@ LAW:Municipal, Lawton, Oklahoma, USA
 LAX:Los Angeles International, California, USA
 LBA:Leeds/Bradford, England, United Kingdom
 LBB:Lubbock, Texas, USA
-LBC:Lubeck, Germany
+LBC:Luebeck, Germany
 LBE:Westmoreland County, Latrobe, Pennsylvania, USA
 LBF:North Platte Lee Bird Field, Nebraska, USA
 LBL:Glenn L Martin Terminal, Liberal, Kansas, USA
@@ -1673,7 +1673,6 @@ TGM:Tirgu Mures, Romania
 TGU:Toncontin, Tegucigalpa, Honduras
 TGZ:Llano San Juan, Tuxtla Gutierrez, Chiapas, Mexico
 THE:Teresina, Piaui, Brazil
-THF:Tempelhof, Berlin, Germany
 THN:Trollhattan, Sweden
 THR:Mehrabad, Tehran, Iran
 THU:Thule, Pituffik, Greenland
@@ -1853,7 +1852,7 @@ XBR:Brockville, Ontario, Canada
 XCM:Chatham, Ontario, Canada
 XDM:Drummondville, Quebec, Canada
 XFD:Stratford, Ontario, Canada
-XFW:Flugplatz Hamburg-Finkenwerder, Hamburg, Germany
+XFW:Hamburg-Finkenwerder, Hamburg, Germany
 XIY:Xianyang, Xi An, China
 XLV:Niagara Falls, Ontario, Canada
 XLZ:Truro, Nova Scotia, Canada
