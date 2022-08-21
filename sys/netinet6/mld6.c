@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.56 2018/11/30 09:28:34 claudio Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.57 2022/08/21 23:04:45 bluhm Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -327,20 +327,21 @@ mld6_fasttimeo(void)
 {
 	struct ifnet *ifp;
 
-	NET_LOCK();
-
 	/*
 	 * Quick check to see if any work needs to be done, in order
 	 * to minimize the overhead of fasttimo processing.
+	 * Variable mld_timers_are_running is read atomically.  In case we
+	 * miss a fast timer due to MP races, just run it next time.
 	 */
 	if (!mld_timers_are_running)
-		goto out;
+		return;
+
+	NET_LOCK();
 
 	mld_timers_are_running = 0;
 	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		mld6_checktimer(ifp);
 
-out:
 	NET_UNLOCK();
 }
 

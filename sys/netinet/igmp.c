@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.78 2022/03/28 16:31:26 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.79 2022/08/21 23:04:45 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -526,23 +526,23 @@ igmp_fasttimo(void)
 {
 	struct ifnet *ifp;
 
-	NET_LOCK();
-
 	/*
 	 * Quick check to see if any work needs to be done, in order
 	 * to minimize the overhead of fasttimo processing.
+	 * Variable igmp_timers_are_running is read atomically.  In case we
+	 * miss a fast timer due to MP races, just run it next time.
 	 */
 	if (!igmp_timers_are_running)
-		goto out;
+		return;
+
+	NET_LOCK();
 
 	igmp_timers_are_running = 0;
 	TAILQ_FOREACH(ifp, &ifnet, if_list)
 		igmp_checktimer(ifp);
 
-out:
 	NET_UNLOCK();
 }
-
 
 void
 igmp_checktimer(struct ifnet *ifp)
