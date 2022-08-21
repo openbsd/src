@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.43 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.44 2022/08/21 19:18:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -341,6 +341,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_PUBLIC_KEY_ENCRYPT_ERROR), "public key encrypt error"},
 	{ERR_REASON(SSL_R_PUBLIC_KEY_IS_NOT_RSA) , "public key is not rsa"},
 	{ERR_REASON(SSL_R_PUBLIC_KEY_NOT_RSA)    , "public key not rsa"},
+	{ERR_REASON(SSL_R_QUIC_INTERNAL_ERROR)   , "QUIC: internal error"},
 	{ERR_REASON(SSL_R_READ_BIO_NOT_SET)      , "read bio not set"},
 	{ERR_REASON(SSL_R_READ_TIMEOUT_EXPIRED)  , "read timeout expired"},
 	{ERR_REASON(SSL_R_READ_WRONG_PACKET_TYPE), "read wrong packet type"},
@@ -456,6 +457,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_WRITE_BIO_NOT_SET)     , "write bio not set"},
 	{ERR_REASON(SSL_R_WRONG_CIPHER_RETURNED) , "wrong cipher returned"},
 	{ERR_REASON(SSL_R_WRONG_CURVE)           , "wrong curve"},
+	{ERR_REASON(SSL_R_WRONG_ENCRYPTION_LEVEL_RECEIVED), "QUIC: wrong encryption level received"},
 	{ERR_REASON(SSL_R_WRONG_MESSAGE_TYPE)    , "wrong message type"},
 	{ERR_REASON(SSL_R_WRONG_NUMBER_OF_KEY_BITS), "wrong number of key bits"},
 	{ERR_REASON(SSL_R_WRONG_SIGNATURE_LENGTH), "wrong signature length"},

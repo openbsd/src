@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.2 2022/07/24 14:31:37 jsing Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.3 2022/08/21 19:18:57 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,7 @@ tls13_quic_wire_read_cb(void *buf, size_t n, void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *ssl = ctx->ssl;
 
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
+	SSLerror(ssl, SSL_R_QUIC_INTERNAL_ERROR);
 	return TLS13_IO_FAILURE;
 }
 
@@ -35,7 +35,7 @@ tls13_quic_wire_write_cb(const void *buf, size_t n, void *arg)
 	struct tls13_ctx *ctx = arg;
 	SSL *ssl = ctx->ssl;
 
-	SSLerror(ssl, ERR_R_INTERNAL_ERROR);
+	SSLerror(ssl, SSL_R_QUIC_INTERNAL_ERROR);
 	return TLS13_IO_FAILURE;
 }
 
