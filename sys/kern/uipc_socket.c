@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.283 2022/08/15 09:11:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.284 2022/08/21 16:22:17 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ drop:
 			(void) soqremque(so2, 0);
 			if (persocket)
 				sounlock(so);
-			(void) soabort(so2);
+			soabort(so2);
 			if (persocket)
 				solock(so);
 		}
@@ -417,7 +417,7 @@ drop:
 			(void) soqremque(so2, 1);
 			if (persocket)
 				sounlock(so);
-			(void) soabort(so2);
+			soabort(so2);
 			if (persocket)
 				solock(so);
 		}
@@ -431,12 +431,11 @@ discard:
 	return (error);
 }
 
-int
+void
 soabort(struct socket *so)
 {
 	soassertlocked(so);
-
-	return pru_abort(so);
+	pru_abort(so);
 }
 
 int

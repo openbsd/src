@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.107 2022/08/13 21:01:46 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.108 2022/08/21 16:22:18 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -313,7 +313,7 @@ int	sbreserve(struct socket *, struct sockbuf *, u_long);
 int	sbwait(struct socket *, struct sockbuf *);
 int	sb_lock(struct sockbuf *);
 void	soinit(void);
-int	soabort(struct socket *);
+void	soabort(struct socket *);
 int	soaccept(struct socket *, struct mbuf *);
 int	sobind(struct socket *, struct mbuf *, struct proc *);
 void	socantrcvmore(struct socket *);

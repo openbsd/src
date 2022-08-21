@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.377 2022/08/11 09:13:21 claudio Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.378 2022/08/21 16:22:17 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3659,7 +3659,7 @@ resetandabort:
 abort:
 	m_freem(m);
 	if (so != NULL)
-		(void) soabort(so);
+		soabort(so);
 	syn_cache_put(sc);
 	tcpstat_inc(tcps_sc_aborted);
 	return ((struct socket *)(-1));
