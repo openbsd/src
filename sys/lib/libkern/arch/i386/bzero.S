@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.5 2014/11/29 18:51:23 tedu Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.6 2022/08/22 09:33:40 jsg Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,6 @@
 
 #include <machine/asm.h>
 
-#ifndef _KERNEL
 ENTRY(bzero)
 	pushl	%edi
 	movl	8(%esp),%edi
@@ -42,4 +41,3 @@ L1:	movl	%edx,%ecx		/* zero remainder by bytes */
 
 	popl	%edi
 	ret
-#endif
