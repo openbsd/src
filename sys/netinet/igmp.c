@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.79 2022/08/21 23:04:45 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.80 2022/08/22 21:02:44 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -96,7 +96,7 @@
 
 #define IP_MULTICASTOPTS	0
 
-int		igmp_timers_are_running;
+int	igmp_timers_are_running;	/* [N] shortcut for fast timer */
 static LIST_HEAD(, router_info) rti_head;
 static struct mbuf *router_alert;
 struct cpumem *igmpcounters;
@@ -529,8 +529,9 @@ igmp_fasttimo(void)
 	/*
 	 * Quick check to see if any work needs to be done, in order
 	 * to minimize the overhead of fasttimo processing.
-	 * Variable igmp_timers_are_running is read atomically.  In case we
-	 * miss a fast timer due to MP races, just run it next time.
+	 * Variable igmp_timers_are_running is read atomically, but without
+	 * lock intensionally.  In case it is not set due to MP races, we may
+	 * miss to check the timers.  Then run the loop at next fast timeout.
 	 */
 	if (!igmp_timers_are_running)
 		return;
