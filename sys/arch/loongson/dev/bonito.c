@@ -1,4 +1,4 @@
-/*	$OpenBSD: bonito.c,v 1.35 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: bonito.c,v 1.36 2022/08/22 00:35:07 cheloha Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -485,6 +485,11 @@ bonito_splx(int newipl)
 	/* Update masks to new ipl. Order highly important! */
 	ci->ci_ipl = newipl;
 	bonito_setintrmask(newipl);
+
+	/* Trigger deferred clock interrupt if it is now unmasked. */
+	if (ci->ci_clock_deferred && newipl < IPL_CLOCK)
+		md_triggerclock();
+
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcit.c,v 1.12 2019/09/01 12:16:01 visa Exp $	*/
+/*	$OpenBSD: octcit.c,v 1.13 2022/08/22 00:35:07 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2017, 2019 Visa Hankala
@@ -488,6 +488,10 @@ octcit_splx(int newipl)
 		CIU3_WR_8(sc, CIU3_IDT_PP(CIU3_IDT(core, 0)), 1ul << core);
 		(void)CIU3_RD_8(sc, CIU3_IDT_PP(CIU3_IDT(core, 0)));
 	}
+
+	/* Trigger deferred clock interrupt if it is now unmasked. */
+	if (ci->ci_clock_deferred && newipl < IPL_CLOCK)
+		md_triggerclock();
 
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)

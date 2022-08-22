@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp0access.S,v 1.23 2021/05/01 16:11:11 visa Exp $ */
+/*	$OpenBSD: cp0access.S,v 1.24 2022/08/22 00:35:06 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -198,3 +198,10 @@ LEAF(cpu_rnd_messybits, 0)
 	j	ra
 	 NOP
 END(cpu_rnd_messybits)
+
+LEAF(cp0_get_cause, 0)
+	MFC0	v0, COP_0_CAUSE_REG
+	MFC0_HAZARD
+	j	ra
+	 NOP
+END(cp0_get_cause)

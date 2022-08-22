@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.17 2019/09/01 12:16:01 visa Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.18 2022/08/22 00:35:07 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -587,6 +587,10 @@ octciu_splx(int newipl)
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh,
 		    scpu->scpu_ibank[2].en,
 		    scpu->scpu_intem[2] & ~scpu->scpu_imask[newipl][2]);
+
+	/* Trigger deferred clock interrupt if it is now unmasked. */
+	if (ci->ci_clock_deferred && newipl < IPL_CLOCK)
+		md_triggerclock();
 
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.45 2022/04/06 18:59:26 naddy Exp $ */
+/*	$OpenBSD: clock.c,v 1.46 2022/08/22 00:35:06 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -60,6 +60,7 @@ const struct cfattach clock_ca = {
 };
 
 void	cp0_startclock(struct cpu_info *);
+void	cp0_trigger_int5(void);
 uint32_t cp0_int5(uint32_t, struct trapframe *);
 
 int
@@ -86,19 +87,20 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	cp0_set_compare(cp0_get_count() - 1);
 
 	md_startclock = cp0_startclock;
+	md_triggerclock = cp0_trigger_int5;
 }
 
 /*
  *  Interrupt handler for targets using the internal count register
  *  as interval clock. Normally the system is run with the clock
  *  interrupt always enabled. Masking is done here and if the clock
- *  can not be run the tick is just counted and handled later when
- *  the clock is logically unmasked again.
+ *  cannot be run the tick is handled later when the clock is logically
+ *  unmasked again.
  */
 uint32_t
 cp0_int5(uint32_t mask, struct trapframe *tf)
 {
-	u_int32_t clkdiff;
+	u_int32_t clkdiff, pendingticks = 0;
 	struct cpu_info *ci = curcpu();
 
 	/*
@@ -113,15 +115,26 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 	}
 
 	/*
+	 * If the clock interrupt is logically masked, defer all
+	 * work until it is logically unmasked from splx(9).
+	 */
+	if (tf->ipl >= IPL_CLOCK) {
+		ci->ci_clock_deferred = 1;
+		cp0_set_compare(cp0_get_count() - 1);
+		return CR_INT_5;
+	}
+	ci->ci_clock_deferred = 0;
+
+	/*
 	 * Count how many ticks have passed since the last clock interrupt...
 	 */
 	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
 	while (clkdiff >= ci->ci_cpu_counter_interval) {
 		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
 		clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
-		ci->ci_pendingticks++;
+		pendingticks++;
 	}
-	ci->ci_pendingticks++;
+	pendingticks++;
 	ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
 
 	/*
@@ -132,32 +145,59 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
 	if ((int)clkdiff >= 0) {
 		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
-		ci->ci_pendingticks++;
+		pendingticks++;
 		cp0_set_compare(ci->ci_cpu_counter_last);
 	}
 
 	/*
-	 * Process clock interrupt unless it is currently masked.
+	 * Process clock interrupt.
 	 */
-	if (tf->ipl < IPL_CLOCK) {
 #ifdef MULTIPROCESSOR
-		register_t sr;
+	register_t sr;
 
-		sr = getsr();
-		ENABLEIPI();
+	sr = getsr();
+	ENABLEIPI();
 #endif
-		while (ci->ci_pendingticks) {
-			atomic_inc_long(
-			    (unsigned long *)&cp0_clock_count.ec_count);
-			hardclock(tf);
-			ci->ci_pendingticks--;
-		}
-#ifdef MULTIPROCESSOR
-		setsr(sr);
-#endif
+	while (pendingticks) {
+		atomic_inc_long((unsigned long *)&cp0_clock_count.ec_count);
+		hardclock(tf);
+		pendingticks--;
 	}
+#ifdef MULTIPROCESSOR
+	setsr(sr);
+#endif
 
 	return CR_INT_5;	/* Clock is always on 5 */
+}
+
+/*
+ * Trigger the clock interrupt.
+ * 
+ * We need to spin until either (a) INT5 is pending or (b) the compare
+ * register leads the count register, i.e. we know INT5 will be pending
+ * very soon.
+ *
+ * To ensure we don't spin forever, double the compensatory offset
+ * added to the compare value every time we miss the count register.
+ * The initial offset of 16 cycles was chosen experimentally.  It
+ * is the smallest power of two that doesn't require multiple loops
+ * to arm the timer on most Octeon hardware.
+ */
+void
+cp0_trigger_int5(void)
+{
+	uint32_t compare, offset = 16;
+	int leading = 0;
+	register_t sr;
+
+	sr = disableintr();
+	while (!leading && !ISSET(cp0_get_cause(), CR_INT_5)) {
+		compare = cp0_get_count() + offset;
+		cp0_set_compare(compare);
+		leading = (int32_t)(compare - cp0_get_count()) > 0;
+		offset *= 2;
+	}
+	setsr(sr);
 }
 
 /*

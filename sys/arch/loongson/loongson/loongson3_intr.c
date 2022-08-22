@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson3_intr.c,v 1.7 2018/02/24 11:42:31 visa Exp $	*/
+/*	$OpenBSD: loongson3_intr.c,v 1.8 2022/08/22 00:35:07 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2016 Visa Hankala
@@ -354,6 +354,10 @@ loongson3_splx(int newipl)
 	if (CPU_IS_PRIMARY(ci))
 		REGVAL(LS3_IRT_INTENSET(0)) =
 		    loongson3_intem & ~loongson3_imask[newipl];
+
+	/* Trigger deferred clock interrupt if it is now unmasked. */
+	if (ci->ci_clock_deferred && newipl < IPL_CLOCK)
+		md_triggerclock();
 
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
