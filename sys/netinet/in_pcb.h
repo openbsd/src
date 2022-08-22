@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.130 2022/08/21 11:44:53 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.131 2022/08/22 10:37:27 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/refcnt.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -79,6 +80,7 @@
  *	I	immutable after creation
  *	N	net lock
  *	t	inpt_mtx		pcb table mutex
+ *	y	inpt_notify		pcb table rwlock for notify
  *	p	inpcb_mtx		pcb mutex
  */
 
@@ -103,7 +105,7 @@ struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;		/* [t] local and foreign hash */
 	LIST_ENTRY(inpcb) inp_lhash;		/* [t] local port hash */
 	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
-	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [N] notify or udp append */
+	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [y] notify or udp append */
 	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* Foreign address. */
 	union	  inpaddru inp_laddru;		/* Local address. */
@@ -166,6 +168,7 @@ LIST_HEAD(inpcbhead, inpcb);
 
 struct inpcbtable {
 	struct mutex inpt_mtx;			/* protect queue and hash */
+	struct rwlock inpt_notify;		/* protect inp_notify list */
 	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* [t] inet PCB queue */
 	struct	inpcbhead *inpt_hashtbl;	/* [t] local and foreign hash */
 	struct	inpcbhead *inpt_lhashtbl;	/* [t] local port hash */

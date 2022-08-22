@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.119 2022/08/08 12:06:31 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.120 2022/08/22 10:37:27 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -387,8 +387,6 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 	u_int32_t flowinfo;
 	u_int rdomain;
 
-	NET_ASSERT_LOCKED_EXCLUSIVE();
-
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 
@@ -430,6 +428,7 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 
 	SIMPLEQ_INIT(&inpcblist);
 	rdomain = rtable_l2(rtable);
+	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 		if ((inp->inp_flags & INP_IPV6) == 0)
@@ -513,6 +512,7 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 		(*notify)(inp, errno);
 		in_pcbunref(inp);
 	}
+	rw_exit_write(&table->inpt_notify);
 }
 
 struct inpcb *

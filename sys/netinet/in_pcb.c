@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.271 2022/08/21 11:44:53 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.272 2022/08/22 10:37:27 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ void
 in_pcbinit(struct inpcbtable *table, int hashsize)
 {
 	mtx_init(&table->inpt_mtx, IPL_SOFTNET);
+	rw_init(&table->inpt_notify, "inpnotify");
 	TAILQ_INIT(&table->inpt_queue);
 	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK,
 	    &table->inpt_mask);
@@ -696,8 +697,6 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
 	struct in_addr faddr;
 	u_int rdomain;
 
-	NET_ASSERT_LOCKED_EXCLUSIVE();
-
 	if (dst->sa_family != AF_INET)
 		return;
 	faddr = satosin(dst)->sin_addr;
@@ -706,8 +705,18 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
 	if (notify == NULL)
 		return;
 
+	/*
+	 * Use a temporary notify list protected by rwlock to run over
+	 * selected PCB.  This is necessary as the list of all PCB is
+	 * protected by a mutex.  Notify may call ip_output() eventually
+	 * which may sleep as pf lock is a rwlock.  Also the SRP
+	 * implementation of the routing table might sleep.
+	 * The same inp_notify list entry and inpt_notify rwlock are
+	 * used for UDP multicast and raw IP delivery.
+	 */
 	SIMPLEQ_INIT(&inpcblist);
 	rdomain = rtable_l2(rtable);
+	rw_enter_write(&table->inpt_notify);
 	mtx_enter(&table->inpt_mtx);
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 #ifdef INET6
@@ -729,6 +738,7 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
 		(*notify)(inp, errno);
 		in_pcbunref(inp);
 	}
+	rw_exit_write(&table->inpt_notify);
 }
 
 /*

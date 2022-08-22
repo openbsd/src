@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.286 2022/08/22 08:08:46 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.287 2022/08/22 10:37:27 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -372,8 +372,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
 		 */
-		NET_ASSERT_LOCKED_EXCLUSIVE();
 		SIMPLEQ_INIT(&inpcblist);
+		rw_enter_write(&udbtable.inpt_notify);
 		mtx_enter(&udbtable.inpt_mtx);
 		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_socket->so_state & SS_CANTRCVMORE)
@@ -446,6 +446,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		mtx_leave(&udbtable.inpt_mtx);
 
 		if (SIMPLEQ_EMPTY(&inpcblist)) {
+			rw_exit_write(&udbtable.inpt_notify);
+
 			/*
 			 * No matching pcb found; discard datagram.
 			 * (No need to send an ICMP Port Unreachable
@@ -469,6 +471,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			}
 			in_pcbunref(inp);
 		}
+		rw_exit_write(&udbtable.inpt_notify);
+
 		return IPPROTO_DONE;
 	}
 	/*

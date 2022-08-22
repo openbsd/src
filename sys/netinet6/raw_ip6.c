@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.154 2022/08/22 08:08:46 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.155 2022/08/22 10:37:27 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -172,8 +172,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 #endif
-	NET_ASSERT_LOCKED_EXCLUSIVE();
 	SIMPLEQ_INIT(&inpcblist);
+	rw_enter_write(&rawin6pcbtable.inpt_notify);
 	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
@@ -224,6 +224,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		struct counters_ref ref;
 		uint64_t *counters;
 
+		rw_exit_write(&rawin6pcbtable.inpt_notify);
+
 		if (proto != IPPROTO_ICMPV6) {
 			rip6stat_inc(rip6s_nosock);
 			if (m->m_flags & M_MCAST)
@@ -240,6 +242,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		counters = counters_enter(&ref, ip6counters);
 		counters[ip6s_delivered]--;
 		counters_leave(&ref, ip6counters);
+
+		return IPPROTO_DONE;
 	}
 
 	while ((in6p = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
@@ -267,6 +271,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		in_pcbunref(in6p);
 	}
+	rw_exit_write(&rawin6pcbtable.inpt_notify);
+
 	return IPPROTO_DONE;
 }
 

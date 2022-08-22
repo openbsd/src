@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.134 2022/08/22 08:08:46 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.135 2022/08/22 10:37:27 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -160,8 +160,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 #endif
-	NET_ASSERT_LOCKED_EXCLUSIVE();
 	SIMPLEQ_INIT(&inpcblist);
+	rw_enter_write(&rawcbtable.inpt_notify);
 	mtx_enter(&rawcbtable.inpt_mtx);
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
@@ -189,6 +189,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	mtx_leave(&rawcbtable.inpt_mtx);
 
 	if (SIMPLEQ_EMPTY(&inpcblist)) {
+		rw_exit_write(&rawcbtable.inpt_notify);
+
 		if (ip->ip_p != IPPROTO_ICMP)
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 			    0, 0);
@@ -199,6 +201,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		counters[ips_noproto]++;
 		counters[ips_delivered]--;
 		counters_leave(&ref, ipcounters);
+
+		return IPPROTO_DONE;
 	}
 
 	while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
@@ -224,6 +228,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		in_pcbunref(inp);
 	}
+	rw_exit_write(&rawcbtable.inpt_notify);
+
 	return IPPROTO_DONE;
 }
 
