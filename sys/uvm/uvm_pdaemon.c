@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.101 2022/06/28 19:31:30 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.102 2022/08/22 12:03:32 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ extern void drmbackoff(long);
  */
 
 void		uvmpd_scan(struct uvm_pmalloc *);
-boolean_t	uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
+void		uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 
@@ -377,17 +377,16 @@ uvm_aiodone_daemon(void *arg)
  * => we handle the building of swap-backed clusters
  * => we return TRUE if we are exiting because we met our target
  */
-
-boolean_t
+void
 uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 {
-	boolean_t retval = FALSE;	/* assume we haven't hit target */
 	int free, result;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
 	int npages;
 	struct vm_page *swpps[SWCLUSTPAGES]; 	/* XXX: see below */
+	struct rwlock *slock;
 	int swnpages, swcpages;				/* XXX: see below */
 	int swslot;
 	struct vm_anon *anon;
@@ -402,7 +401,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 	 */
 	swslot = 0;
 	swnpages = swcpages = 0;
-	free = 0;
 	dirtyreacts = 0;
 	p = NULL;
 
@@ -431,18 +429,14 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 		 */
 		uobj = NULL;
 		anon = NULL;
-
 		if (p) {
 			/*
-			 * update our copy of "free" and see if we've met
-			 * our target
+			 * see if we've met our target
 			 */
 			free = uvmexp.free - BUFPAGES_DEFICIT;
 			if (((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
 			    (free + uvmexp.paging >= uvmexp.freetarg << 2)) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
-				retval = TRUE;
-
 				if (swslot == 0) {
 					/* exit now if no swap-i/o pending */
 					break;
@@ -450,9 +444,9 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 
 				/* set p to null to signal final swap i/o */
 				p = NULL;
+				nextpg = NULL;
 			}
 		}
-
 		if (p) {	/* if (we have a new page to consider) */
 			/*
 			 * we are below target and have a new page to consider.
@@ -460,11 +454,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			uvmexp.pdscans++;
 			nextpg = TAILQ_NEXT(p, pageq);
 
+			anon = p->uanon;
+			uobj = p->uobject;
 			if (p->pg_flags & PQ_ANON) {
-				anon = p->uanon;
 				KASSERT(anon != NULL);
-				if (rw_enter(anon->an_lock,
-				    RW_WRITE|RW_NOSLEEP)) {
+				slock = anon->an_lock;
+				if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
 					/* lock failed, skip this page */
 					continue;
 				}
@@ -474,23 +469,20 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 				 */
 				if (pmap_is_referenced(p)) {
 					uvm_pageactivate(p);
-					rw_exit(anon->an_lock);
+					rw_exit(slock);
 					uvmexp.pdreact++;
 					continue;
 				}
 				if (p->pg_flags & PG_BUSY) {
-					rw_exit(anon->an_lock);
+					rw_exit(slock);
 					uvmexp.pdbusy++;
-					/* someone else owns page, skip it */
 					continue;
 				}
 				uvmexp.pdanscan++;
 			} else {
-				uobj = p->uobject;
 				KASSERT(uobj != NULL);
-				if (rw_enter(uobj->vmobjlock,
-				    RW_WRITE|RW_NOSLEEP)) {
-					/* lock failed, skip this page */
+				slock = uobj->vmobjlock;
+				if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
 					continue;
 				}
 				/*
@@ -499,14 +491,13 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 				 */
 				if (pmap_is_referenced(p)) {
 					uvm_pageactivate(p);
-					rw_exit(uobj->vmobjlock);
+					rw_exit(slock);
 					uvmexp.pdreact++;
 					continue;
 				}
 				if (p->pg_flags & PG_BUSY) {
-					rw_exit(uobj->vmobjlock);
+					rw_exit(slock);
 					uvmexp.pdbusy++;
-					/* someone else owns page, skip it */
 					continue;
 				}
 				uvmexp.pdobscan++;
@@ -539,10 +530,8 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 
 					/* remove from object */
 					anon->an_page = NULL;
-					rw_exit(anon->an_lock);
-				} else {
-					rw_exit(uobj->vmobjlock);
 				}
+				rw_exit(slock);
 				continue;
 			}
 
@@ -552,11 +541,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			 */
 			if ((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
 			    (free + uvmexp.paging > uvmexp.freetarg << 2)) {
-				if (anon) {
-					rw_exit(anon->an_lock);
-				} else {
-					rw_exit(uobj->vmobjlock);
-				}
+				rw_exit(slock);
 				continue;
 			}
 
@@ -569,11 +554,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
-				if (anon) {
-					rw_exit(anon->an_lock);
-				} else {
-					rw_exit(uobj->vmobjlock);
-				}
+				rw_exit(slock);
 				continue;
 			}
 
@@ -640,11 +621,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 						    &p->pg_flags,
 						    PG_BUSY);
 						UVM_PAGE_OWN(p, NULL);
-						if (anon)
-							rw_exit(anon->an_lock);
-						else
-							rw_exit(
-							    uobj->vmobjlock);
+						rw_exit(slock);
 						continue;
 					}
 					swcpages = 0;	/* cluster is empty */
@@ -676,10 +653,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 		 */
 		if (swap_backed) {
 			if (p) {	/* if we just added a page to cluster */
-				if (anon)
-					rw_exit(anon->an_lock);
-				else
-					rw_exit(uobj->vmobjlock);
+				rw_exit(slock);
 
 				/* cluster not full yet? */
 				if (swcpages < swnpages)
@@ -791,10 +765,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 
 			/* !swap_backed case: already locked... */
 			if (swap_backed) {
-				if (anon)
-					rw_enter(anon->an_lock, RW_WRITE);
-				else
-					rw_enter(uobj->vmobjlock, RW_WRITE);
+				rw_enter(slock, RW_WRITE);
 			}
 
 #ifdef DIAGNOSTIC
@@ -855,10 +826,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			 * the inactive queue can't be re-queued [note: not
 			 * true for active queue]).
 			 */
-			if (anon)
-				rw_exit(anon->an_lock);
-			else if (uobj)
-				rw_exit(uobj->vmobjlock);
+			rw_exit(slock);
 
 			if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
 				nextpg = TAILQ_FIRST(pglst);	/* reload! */
@@ -877,7 +845,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			uvm_lock_pageq();
 		}
 	}
-	return (retval);
 }
 
 /*
@@ -925,10 +892,6 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 	 * to inactive ones.
 	 */
 
-	/*
-	 * alternate starting queue between swap and object based on the
-	 * low bit of uvmexp.pdrevs (which we bump by one each call).
-	 */
 	pages_freed = uvmexp.pdfreed;
 	(void) uvmpd_scan_inactive(pma, &uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
