@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.22 2021/01/27 07:21:55 deraadt Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.23 2022/08/22 08:02:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -202,7 +202,8 @@ main_create_user_groups(struct env *env)
 
 		pw_gid = (gid_t)strtonum(bp, 0, GID_MAX, &errstr);
 		if (errstr) {
-			log_warnx("main: failed to parse gid for uid: %d\n", ue->ue_uid);
+			log_warnx("main: failed to parse gid for uid: %d",
+			    ue->ue_uid);
 			return (-1);
 		}
 
@@ -244,7 +245,7 @@ main_create_user_groups(struct env *env)
 			if ((ue = RB_FIND(user_name_tree, env->sc_user_names_t,
 			    &ukey)) == NULL) {
 				/* User not found */
-				log_warnx("main: unknown user %s in group %s\n",
+				log_warnx("main: unknown user %s in group %s",
 				    ukey.ue_line, ge->ge_line);
 				if (bp != NULL)
 					*(bp-1) = ',';
