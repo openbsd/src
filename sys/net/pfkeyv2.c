@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.239 2022/08/22 08:08:46 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.240 2022/08/22 13:23:06 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -171,6 +171,7 @@ void pfkey_init(void);
 
 int pfkeyv2_attach(struct socket *, int);
 int pfkeyv2_detach(struct socket *);
+int pfkeyv2_disconnect(struct socket *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
@@ -203,6 +204,7 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_usrreq	= pfkeyv2_usrreq,
 	.pru_attach	= pfkeyv2_attach,
 	.pru_detach	= pfkeyv2_detach,
+	.pru_disconnect	= pfkeyv2_disconnect,
 };
 
 const struct protosw pfkeysw[] = {
@@ -333,6 +335,13 @@ pfkeyv2_detach(struct socket *so)
 }
 
 int
+pfkeyv2_disconnect(struct socket *so)
+{
+	soisdisconnected(so);
+	return (0);
+}
+
+int
 pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
@@ -361,7 +370,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_DISCONNECT:
 	case PRU_ABORT:
 		soisdisconnected(so);
 		break;

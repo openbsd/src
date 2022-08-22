@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.145 2022/08/22 08:08:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.146 2022/08/22 13:23:07 mvs Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -672,7 +672,7 @@ void	 tcp6_ctlinput(int, struct sockaddr *, u_int, void *);
 void	 tcp_ctlinput(int, struct sockaddr *, u_int, void *);
 int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf *);
 struct tcpcb *
-	 tcp_disconnect(struct tcpcb *);
+	 tcp_dodisconnect(struct tcpcb *);
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
@@ -718,6 +718,7 @@ int	 tcp_bind(struct socket *, struct mbuf *, struct proc *);
 int	 tcp_listen(struct socket *);
 int	 tcp_connect(struct socket *, struct mbuf *);
 int	 tcp_accept(struct socket *, struct mbuf *);
+int	 tcp_disconnect(struct socket *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);

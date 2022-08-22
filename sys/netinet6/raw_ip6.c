@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.155 2022/08/22 10:37:27 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.156 2022/08/22 13:23:07 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_detach	= rip6_detach,
 	.pru_bind	= rip6_bind,
 	.pru_connect	= rip6_connect,
+	.pru_disconnect	= rip6_disconnect,
 };
 
 /*
@@ -589,15 +590,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	case PRU_DISCONNECT:
-		if ((so->so_state & SS_ISCONNECTED) == 0) {
-			error = ENOTCONN;
-			break;
-		}
-		in6p->inp_faddr6 = in6addr_any;
-		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
-		break;
-
 	case PRU_ABORT:
 		soisdisconnected(so);
 		if (in6p == NULL)
@@ -791,6 +783,21 @@ rip6_connect(struct socket *so, struct mbuf *nam)
 	in6p->inp_laddr6 = *in6a;
 	in6p->inp_faddr6 = addr->sin6_addr;
 	soisconnected(so);
+	return (0);
+}
+
+int
+rip6_disconnect(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if ((so->so_state & SS_ISCONNECTED) == 0)
+		return (ENOTCONN);
+
+	in6p->inp_faddr6 = in6addr_any;
+	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 	return (0);
 }
 

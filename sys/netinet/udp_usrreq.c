@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.287 2022/08/22 10:37:27 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.288 2022/08/22 13:23:07 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_detach	= udp_detach,
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
+	.pru_disconnect	= udp_disconnect,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1084,33 +1085,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_DISCONNECT:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6) {
-			if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6)) {
-				error = ENOTCONN;
-				break;
-			}
-		} else
-#endif /* INET6 */
-		{
-			if (inp->inp_faddr.s_addr == INADDR_ANY) {
-				error = ENOTCONN;
-				break;
-			}
-		}
-
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			inp->inp_laddr6 = in6addr_any;
-		else
-#endif /* INET6 */
-			inp->inp_laddr.s_addr = INADDR_ANY;
-		in_pcbdisconnect(inp);
-
-		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
-		break;
-
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
 		break;
@@ -1284,6 +1258,37 @@ udp_connect(struct socket *so, struct mbuf *addr)
 	return (0);
 }
 
+int
+udp_disconnect(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6) {
+		if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
+			return (ENOTCONN);
+	} else
+#endif /* INET6 */
+	{
+		if (inp->inp_faddr.s_addr == INADDR_ANY)
+			return (ENOTCONN);
+	}
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+		inp->inp_laddr6 = in6addr_any;
+	else
+#endif /* INET6 */
+		inp->inp_laddr.s_addr = INADDR_ANY;
+
+	in_pcbdisconnect(inp);
+	so->so_state &= ~SS_ISCONNECTED;		/* XXX */
+
+	return (0);
+}
+	
 /*
  * Sysctl for udp variables.
  */

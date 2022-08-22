@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.135 2022/08/22 10:37:27 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.136 2022/08/22 13:23:07 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_detach	= rip_detach,
 	.pru_bind	= rip_bind,
 	.pru_connect	= rip_connect,
+	.pru_disconnect	= rip_disconnect,
 };
 
 /*
@@ -474,14 +475,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	switch (req) {
 
-	case PRU_DISCONNECT:
-		if ((so->so_state & SS_ISCONNECTED) == 0) {
-			error = ENOTCONN;
-			break;
-		}
-		soisdisconnected(so);
-		inp->inp_faddr.s_addr = INADDR_ANY;
-		break;
 	case PRU_ABORT:
 		soisdisconnected(so);
 		if (inp == NULL)
@@ -654,6 +647,22 @@ rip_connect(struct socket *so, struct mbuf *nam)
 	
 	inp->inp_faddr = addr->sin_addr;
 	soisconnected(so);
+
+	return (0);
+}
+
+int
+rip_disconnect(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	if ((so->so_state & SS_ISCONNECTED) == 0)
+		return (ENOTCONN);
+
+	soisdisconnected(so);
+	inp->inp_faddr.s_addr = INADDR_ANY;
 
 	return (0);
 }

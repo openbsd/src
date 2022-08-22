@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.192 2022/08/22 08:08:46 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.193 2022/08/22 13:23:07 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_listen	= tcp_listen,
 	.pru_connect	= tcp_connect,
 	.pru_accept	= tcp_accept,
+	.pru_disconnect	= tcp_disconnect,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -220,21 +221,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Initiate disconnect from peer.
-	 * If connection never passed embryonic stage, just drop;
-	 * else if don't need to let data drain, then can just drop anyways,
-	 * else have to begin TCP shutdown process: mark socket disconnecting,
-	 * drain unread data, state switch to reflect user close, and
-	 * send segment (e.g. FIN) to peer.  Socket will be really disconnected
-	 * when peer sends FIN and acks ours.
-	 *
-	 * SHOULD IMPLEMENT LATER PRU_CONNECT VIA REALLOC TCPCB.
-	 */
-	case PRU_DISCONNECT:
-		tp = tcp_disconnect(tp);
 		break;
 
 	/*
@@ -683,7 +669,7 @@ tcp_detach(struct socket *so)
 	 * which may finish later; embryonic TCB's can just
 	 * be discarded here.
 	 */
-	tp = tcp_disconnect(tp);
+	tp = tcp_dodisconnect(tp);
 
 	if (otp)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_DETACH, 0);
@@ -869,6 +855,42 @@ tcp_accept(struct socket *so, struct mbuf *nam)
 }
 
 /*
+ * Initiate disconnect from peer.
+ * If connection never passed embryonic stage, just drop;
+ * else if don't need to let data drain, then can just drop anyways,
+ * else have to begin TCP shutdown process: mark socket disconnecting,
+ * drain unread data, state switch to reflect user close, and
+ * send segment (e.g. FIN) to peer.  Socket will be really disconnected
+ * when peer sends FIN and acks ours.
+ *
+ * SHOULD IMPLEMENT LATER PRU_CONNECT VIA REALLOC TCPCB.
+ */
+int
+tcp_disconnect(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp, *otp = NULL;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
+
+	tp = tcp_dodisconnect(tp);
+
+	if (otp)
+		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_DISCONNECT, 0);
+	return (0);
+}
+
+/*
  * Initiate (or continue) disconnect.
  * If embryonic state, just send reset (once).
  * If in ``let data drain'' option and linger null, just drop.
@@ -877,7 +899,7 @@ tcp_accept(struct socket *so, struct mbuf *nam)
  * send segment to peer (with FIN).
  */
 struct tcpcb *
-tcp_disconnect(struct tcpcb *tp)
+tcp_dodisconnect(struct tcpcb *tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
