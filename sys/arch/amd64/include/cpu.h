@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.147 2022/08/12 02:20:36 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.148 2022/08/22 08:57:54 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -369,7 +369,6 @@ struct timeval;
 /* locore.S */
 extern int biosbasemem;
 extern int biosextmem;
-extern int cpu;
 extern int cpu_feature;
 extern int cpu_ebxfeature;
 extern int cpu_ecxfeature;
