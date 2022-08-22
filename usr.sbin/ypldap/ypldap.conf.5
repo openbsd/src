@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypldap.conf.5,v 1.26 2022/08/19 05:47:32 jmc Exp $
+.\"	$OpenBSD: ypldap.conf.5,v 1.27 2022/08/22 07:07:45 jmatthew Exp $
 .\"
 .\" Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2022 $
+.Dd $Mdocdate: August 22 2022 $
 .Dt YPLDAP.CONF 5
 .Os
 .Sh NAME
@@ -60,16 +60,16 @@ fixed attribute gecos $fixed_gecos
 Global settings concern the main behaviour of the daemon.
 .Pp
 .Bl -tag -width Ds -compact
-.It domain Ar string
+.It Ic domain Ar string
 Specify the name of the NIS domain
-.Nm
+.Xr ypldap 8
 will provide.
-.It interval Ar seconds
+.It Ic interval Ar seconds
 Specify the interval in seconds at which the whole directory will be pulled
 from LDAP.
-.It provide map Ar string
+.It Ic provide map Ar string
 Specify a map that should be provided by
-.Nm
+.Xr ypldap 8
 The currently implemented maps are: passwd.byname, passwd.byuid,
 group.byname, group.bygid.
 .It Ic cafile Ar filename
@@ -106,7 +106,7 @@ YP services are only available to the host running
 .El
 .Sh DIRECTORIES
 Directories are used to describe the LDAP schema and help
-.Nm
+.Xr ypldap 8
 convert LDAP entries to
 .Xr passwd 5 ,
 .Xr master.passwd 5 ,
