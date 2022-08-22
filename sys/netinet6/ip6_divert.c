@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.72 2022/08/21 22:45:55 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.73 2022/08/22 08:08:46 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -298,7 +298,6 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_CONNECT2:
-	case PRU_ACCEPT:
 	case PRU_DISCONNECT:
 	case PRU_SENDOOB:
 	case PRU_FASTTIMO:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.171 2022/08/21 22:45:55 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.172 2022/08/22 08:08:46 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_bind	= uipc_bind,
 	.pru_listen	= uipc_listen,
 	.pru_connect	= uipc_connect,
+	.pru_accept	= uipc_accept,
 };
 
 void
@@ -242,18 +243,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_DISCONNECT:
 		unp_disconnect(unp);
-		break;
-
-	case PRU_ACCEPT:
-		/*
-		 * Pass back name of connected socket,
-		 * if it was bound and we are still connected
-		 * (our peer may have closed already!).
-		 */
-		so2 = unp_solock_peer(so);
-		uipc_setaddr(unp->unp_conn, nam);
-		if (so2 != NULL && so2 != so)
-			sounlock(so2);
 		break;
 
 	case PRU_SHUTDOWN:
@@ -549,6 +538,24 @@ int
 uipc_connect(struct socket *so, struct mbuf *nam)
 {
 	return unp_connect(so, nam, curproc);
+}
+
+int
+uipc_accept(struct socket *so, struct mbuf *nam)
+{
+	struct socket *so2;
+	struct unpcb *unp = sotounpcb(so);
+
+	/*
+	 * Pass back name of connected socket, if it was bound and
+	 * we are still connected (our peer may have closed already!).
+	 */
+	so2 = unp_solock_peer(so);
+	uipc_setaddr(unp->unp_conn, nam);
+
+	if (so2 != NULL && so2 != so)
+		sounlock(so2);
+	return (0);
 }
 
 int

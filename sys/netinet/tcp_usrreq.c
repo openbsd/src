@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.191 2022/08/21 22:45:55 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.192 2022/08/22 08:08:46 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_bind	= tcp_bind,
 	.pru_listen	= tcp_listen,
 	.pru_connect	= tcp_connect,
+	.pru_accept	= tcp_accept,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -234,20 +235,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_DISCONNECT:
 		tp = tcp_disconnect(tp);
-		break;
-
-	/*
-	 * Accept a connection.  Essentially all the work is
-	 * done at higher levels; just return the address
-	 * of the peer, storing through addr.
-	 */
-	case PRU_ACCEPT:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			in6_setpeeraddr(inp, nam);
-		else
-#endif
-			in_setpeeraddr(inp, nam);
 		break;
 
 	/*
@@ -849,6 +836,37 @@ out:
 	return (error);
 }
 
+/*
+ * Accept a connection.  Essentially all the work is done at higher
+ * levels; just return the address of the peer, storing through addr.
+ */
+int
+tcp_accept(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG)
+		ostate = tp->t_state;
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+		in6_setpeeraddr(inp, nam);
+	else
+#endif
+		in_setpeeraddr(inp, nam);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_ACCEPT, 0);
+	return (error);
+}
 
 /*
  * Initiate (or continue) disconnect.

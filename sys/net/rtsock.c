@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.338 2022/08/21 22:45:55 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.339 2022/08/22 08:08:46 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -234,7 +234,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 	/* no connect, bind, accept. Socket is connected from the start */
 	case PRU_CONNECT2:
-	case PRU_ACCEPT:
 		error = EOPNOTSUPP;
 		break;
 

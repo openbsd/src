@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.285 2022/08/21 22:45:55 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.286 2022/08/22 08:08:46 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1077,10 +1077,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	switch (req) {
 
 	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_ACCEPT:
 		error = EOPNOTSUPP;
 		break;
 
