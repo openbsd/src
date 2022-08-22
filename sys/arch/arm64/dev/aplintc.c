@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.12 2022/07/13 09:28:18 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.13 2022/08/22 12:34:55 tobhe Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -118,6 +118,7 @@ struct aplintc_softc {
 	struct intrhand		**sc_irq_handler[AIC_MAXDIES];
 	int 			sc_nirq;
 	int			sc_ndie;
+	int			sc_ncells;
 	TAILQ_HEAD(, intrhand)	sc_irq_list[NIPL];
 
 	uint32_t		sc_cpuremap[AIC_MAXCPUS];
@@ -187,6 +188,12 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_version = 2;
 	else
 		sc->sc_version = 1;
+
+	sc->sc_ncells = OF_getpropint(faa->fa_node, "#interrupt-cells", 3);
+	if (sc->sc_ncells < 3 || sc->sc_ncells > 4) {
+		printf(": invalid number of cells\n");
+		return;
+	}
 
 	/*
 	 * AIC2 has the event register specified separately.  However
@@ -507,7 +514,7 @@ aplintc_intr_establish(void *cookie, int *cell, int level,
 	uint32_t type = cell[0];
 	uint32_t die, irq;
 
-	if (sc->sc_version == 1) {
+	if (sc->sc_ncells == 3) {
 		die = 0;
 		irq = cell[1];
 	} else {
