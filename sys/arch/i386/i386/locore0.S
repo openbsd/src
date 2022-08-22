@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.8 2022/08/20 23:33:53 daniel Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.9 2022/08/22 08:53:55 jsg Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -131,7 +131,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	testl	%eax,%eax
 	jnz	.Ltry586
-.Lis486:	movl	$CPU_486,RELOC(_C_LABEL(cpu))
+.Lis486:
 
 	jmp	2f
 

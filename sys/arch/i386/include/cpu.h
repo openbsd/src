@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.176 2022/07/12 05:45:49 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.177 2022/08/22 08:53:55 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -317,14 +317,6 @@ void	calibrate_cyclecounter(void);
  */
 #include <machine/cputypes.h>
 
-struct cpu_nocpuid_nameclass {
-	int cpu_vendor;
-	const char *cpu_vendorname;
-	const char *cpu_name;
-	int cpu_class;
-	void (*cpu_setup)(struct cpu_info *);
-};
-
 struct cpu_cpuid_nameclass {
 	const char *cpu_id;
 	int cpu_vendor;
@@ -342,7 +334,6 @@ struct cpu_cpuid_feature {
 };
 
 /* locore.s */
-extern int cpu;
 extern int cpu_id;
 extern char cpu_vendor[]; /* note: NOT nul-terminated */
 extern char cpu_brandstr[];
@@ -372,7 +363,6 @@ extern void cpu_tsx_disable(struct cpu_info *);
 extern int cpu_apmhalt;
 extern int cpu_class;
 extern char cpu_model[];
-extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 extern void (*cpu_idle_enter_fcn)(void);
 extern void (*cpu_idle_cycle_fcn)(void);

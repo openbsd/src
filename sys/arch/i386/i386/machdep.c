@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.654 2022/08/20 23:33:53 daniel Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.655 2022/08/22 08:53:55 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -492,15 +492,6 @@ i386_init_pcb_tss(struct cpu_info *ci)
  * Info for CTL_HW
  */
 char	cpu_model[120];
-
-/*
- * Note: these are just the ones that may not have a cpuid instruction.
- * We deal with the rest in a different way.
- */
-const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
-	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
-		NULL},				/* CPU_486   */
-};
 
 const char *classnames[] = {
 	"",
@@ -1672,18 +1663,13 @@ identifycpu(struct cpu_info *ci)
 	extern uint32_t cpu_meltdown;
 
 	if (cpuid_level == -1) {
-#ifdef DIAGNOSTIC
-		if (cpu < 0 || cpu >=
-		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
-			panic("unknown cpu type %d", cpu);
-#endif
-		name = i386_nocpuid_cpus[cpu].cpu_name;
-		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
-		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
+		name = "486DX";
+		vendor = CPUVENDOR_INTEL;
+		vendorname = "Intel";
 		model = -1;
 		step = -1;
-		class = i386_nocpuid_cpus[cpu].cpu_class;
-		ci->cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		class = CPUCLASS_486;
+		ci->cpu_setup = NULL;
 		modifier = "";
 		token = "";
 	} else {

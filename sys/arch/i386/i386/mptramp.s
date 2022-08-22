@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.25 2018/03/31 13:45:03 bluhm Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.26 2022/08/22 08:53:55 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 				MP_TRAMP_DATA
 #define _TRMP_DATA_OFFSET(a)  a = . - _C_LABEL(mp_tramp_data_start)
 
-	.globl	_C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
+	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 
 	.global _C_LABEL(cpu_spinup_trampoline)
