@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.136 2022/08/22 13:23:07 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.137 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_bind	= rip_bind,
 	.pru_connect	= rip_connect,
 	.pru_disconnect	= rip_disconnect,
+	.pru_shutdown	= rip_shutdown,
 };
 
 /*
@@ -491,13 +492,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	/*
-	 * Mark the connection as being incapable of further input.
-	 */
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
-
-	/*
 	 * Ship a packet out.  The appropriate raw output
 	 * routine handles any massaging necessary.
 	 */
@@ -664,5 +658,18 @@ rip_disconnect(struct socket *so)
 	soisdisconnected(so);
 	inp->inp_faddr.s_addr = INADDR_ANY;
 
+	return (0);
+}
+
+int
+rip_shutdown(struct socket *so)
+{
+	/*
+	 * Mark the connection as being incapable of further input.
+	 */
+
+	soassertlocked(so);
+	socantsendmore(so);
+	
 	return (0);
 }

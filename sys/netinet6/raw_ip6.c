@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.156 2022/08/22 13:23:07 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.157 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_bind	= rip6_bind,
 	.pru_connect	= rip6_connect,
 	.pru_disconnect	= rip6_disconnect,
+	.pru_shutdown	= rip6_shutdown,
 };
 
 /*
@@ -609,12 +610,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	/*
-	 * Mark the connection as being incapable of further input.
-	 */
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
-	/*
 	 * Ship a packet out. The appropriate raw output
 	 * routine handles any messaging necessary.
 	 */
@@ -798,6 +793,17 @@ rip6_disconnect(struct socket *so)
 
 	in6p->inp_faddr6 = in6addr_any;
 	so->so_state &= ~SS_ISCONNECTED;	/* XXX */
+	return (0);
+}
+
+int
+rip6_shutdown(struct socket *so)
+{
+	/*
+	 * Mark the connection as being incapable of further input.
+	 */
+	soassertlocked(so);
+	socantsendmore(so);
 	return (0);
 }
 

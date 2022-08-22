@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.193 2022/08/22 13:23:07 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.194 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_connect	= tcp_connect,
 	.pru_accept	= tcp_accept,
 	.pru_disconnect	= tcp_disconnect,
+	.pru_shutdown	= tcp_shutdown,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -221,18 +222,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Mark the connection as being incapable of further output.
-	 */
-	case PRU_SHUTDOWN:
-		if (so->so_state & SS_CANTSENDMORE)
-			break;
-		socantsendmore(so);
-		tp = tcp_usrclosed(tp);
-		if (tp)
-			error = tcp_output(tp);
 		break;
 
 	/*
@@ -888,6 +877,41 @@ tcp_disconnect(struct socket *so)
 	if (otp)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_DISCONNECT, 0);
 	return (0);
+}
+
+/*
+ * Mark the connection as being incapable of further output.
+ */
+int
+tcp_shutdown(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp, *otp = NULL;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
+
+	if (so->so_state & SS_CANTSENDMORE)
+		goto out;
+
+	socantsendmore(so);
+	tp = tcp_usrclosed(tp);
+	if (tp)
+		error = tcp_output(tp);
+
+out:
+	if (otp)
+		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_SHUTDOWN, 0);
+	return (error);
 }
 
 /*

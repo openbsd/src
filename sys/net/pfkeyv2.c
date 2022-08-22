@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.240 2022/08/22 13:23:06 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.241 2022/08/22 21:18:48 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -172,6 +172,7 @@ void pfkey_init(void);
 int pfkeyv2_attach(struct socket *, int);
 int pfkeyv2_detach(struct socket *);
 int pfkeyv2_disconnect(struct socket *);
+int pfkeyv2_shutdown(struct socket *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
@@ -205,6 +206,7 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_attach	= pfkeyv2_attach,
 	.pru_detach	= pfkeyv2_detach,
 	.pru_disconnect	= pfkeyv2_disconnect,
+	.pru_shutdown	= pfkeyv2_shutdown,
 };
 
 const struct protosw pfkeysw[] = {
@@ -342,6 +344,13 @@ pfkeyv2_disconnect(struct socket *so)
 }
 
 int
+pfkeyv2_shutdown(struct socket *so)
+{
+	socantsendmore(so);
+	return (0);
+}
+
+int
 pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
@@ -372,9 +381,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	case PRU_ABORT:
 		soisdisconnected(so);
-		break;
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
 		break;
 	case PRU_SENSE:
 		/* stat: don't bother with a blocksize. */

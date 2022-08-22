@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.340 2022/08/22 13:23:07 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.341 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	    struct mbuf *, struct proc *);
 int	route_disconnect(struct socket *);
+int	route_shutdown(struct socket *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -241,9 +242,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_ABORT:
 		soisdisconnected(so);
 		break;
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
 	case PRU_SENSE:
 		/* stat: don't bother with a blocksize. */
 		break;
@@ -366,6 +364,13 @@ int
 route_disconnect(struct socket *so)
 {
 	soisdisconnected(so);
+	return (0);
+}
+
+int
+route_shutdown(struct socket *so)
+{
+	socantsendmore(so);
 	return (0);
 }
 
@@ -2409,6 +2414,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_attach	= route_attach,
 	.pru_detach	= route_detach,
 	.pru_disconnect	= route_disconnect,
+	.pru_shutdown	= route_shutdown,
 };
 
 const struct protosw routesw[] = {

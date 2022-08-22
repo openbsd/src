@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.288 2022/08/22 13:23:07 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.289 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -129,6 +129,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
+	.pru_shutdown	= udp_shutdown,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1085,10 +1086,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		break;
-
 	case PRU_SEND:
 #ifdef PIPEX
 		if (inp->inp_pipex) {
@@ -1288,7 +1285,15 @@ udp_disconnect(struct socket *so)
 
 	return (0);
 }
-	
+
+int
+udp_shutdown(struct socket *so)
+{
+	soassertlocked(so);
+	socantsendmore(so);
+	return (0);
+}
+
 /*
  * Sysctl for udp variables.
  */

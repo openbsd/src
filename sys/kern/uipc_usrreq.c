@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.173 2022/08/22 13:23:06 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.174 2022/08/22 21:18:48 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -135,6 +135,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_connect	= uipc_connect,
 	.pru_accept	= uipc_accept,
 	.pru_disconnect	= uipc_disconnect,
+	.pru_shutdown	= uipc_shutdown,
 };
 
 void
@@ -240,11 +241,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_connid.pid = p->p_p->ps_pid;
 			unp2->unp_flags |= UNP_FEIDS;
 		}
-		break;
-
-	case PRU_SHUTDOWN:
-		socantsendmore(so);
-		unp_shutdown(unp);
 		break;
 
 	case PRU_RCVD:
@@ -561,6 +557,16 @@ uipc_disconnect(struct socket *so)
 	struct unpcb *unp = sotounpcb(so);
 
 	unp_disconnect(unp);
+	return (0);
+}
+
+int
+uipc_shutdown(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	socantsendmore(so);
+	unp_shutdown(unp);
 	return (0);
 }
 
