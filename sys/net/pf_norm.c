@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.223 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.224 2022/08/22 20:35:39 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -801,12 +801,9 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	key.fn_proto = ip->ip_p;
 	key.fn_direction = dir;
 
-	PF_FRAG_LOCK();
 	if ((frag = pf_fillup_fragment(&key, ip->ip_id, frent, reason))
-	    == NULL) {
-		PF_FRAG_UNLOCK();
+	    == NULL)
 		return (PF_DROP);
-	}
 
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
@@ -814,7 +811,6 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	if (frag->fr_holes) {
 		DPFPRINTF(LOG_DEBUG, "frag %d, holes %d",
 		    frag->fr_id, frag->fr_holes);
-		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
 
@@ -833,7 +829,6 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 	ip->ip_off &= ~(IP_MF|IP_OFFMASK);
 
 	if (hdrlen + total > IP_MAXPACKET) {
-		PF_FRAG_UNLOCK();
 		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", total);
 		ip->ip_len = 0;
 		REASON_SET(reason, PFRES_SHORT);
@@ -841,7 +836,6 @@ pf_reassemble(struct mbuf **m0, int dir, u_short *reason)
 		return (PF_DROP);
 	}
 
-	PF_FRAG_UNLOCK();
 	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip->ip_len));
 	return (PF_PASS);
 }
@@ -880,12 +874,9 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	key.fn_proto = 0;
 	key.fn_direction = dir;
 
-	PF_FRAG_LOCK();
 	if ((frag = pf_fillup_fragment(&key, fraghdr->ip6f_ident, frent,
-	    reason)) == NULL) {
-		PF_FRAG_UNLOCK();
+	    reason)) == NULL)
 		return (PF_DROP);
-	}
 
 	/* The mbuf is part of the fragment entry, no direct free or access */
 	m = *m0 = NULL;
@@ -893,7 +884,6 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 	if (frag->fr_holes) {
 		DPFPRINTF(LOG_DEBUG, "frag %#08x, holes %d",
 		    frag->fr_id, frag->fr_holes);
-		PF_FRAG_UNLOCK();
 		return (PF_PASS);  /* drop because *m0 is NULL, no error */
 	}
 
@@ -943,20 +933,17 @@ pf_reassemble6(struct mbuf **m0, struct ip6_frag *fraghdr,
 		ip6->ip6_nxt = proto;
 
 	if (hdrlen - sizeof(struct ip6_hdr) + total > IPV6_MAXPACKET) {
-		PF_FRAG_UNLOCK();
 		DPFPRINTF(LOG_NOTICE, "drop: too big: %d", total);
 		ip6->ip6_plen = 0;
 		REASON_SET(reason, PFRES_SHORT);
 		/* PF_DROP requires a valid mbuf *m0 in pf_test6() */
 		return (PF_DROP);
 	}
-	PF_FRAG_UNLOCK();
 
 	DPFPRINTF(LOG_INFO, "complete: %p(%d)", m, ntohs(ip6->ip6_plen));
 	return (PF_PASS);
 
 fail:
-	PF_FRAG_UNLOCK();
 	REASON_SET(reason, PFRES_MEMORY);
 	/* PF_DROP requires a valid mbuf *m0 in pf_test6(), will free later */
 	return (PF_DROP);
@@ -1060,8 +1047,12 @@ pf_normalize_ip(struct pf_pdesc *pd, u_short *reason)
 		return (PF_PASS);	/* no reassembly */
 
 	/* Returns PF_DROP or m is NULL or completely reassembled mbuf */
-	if (pf_reassemble(&pd->m, pd->dir, reason) != PF_PASS)
+	PF_FRAG_LOCK();
+	if (pf_reassemble(&pd->m, pd->dir, reason) != PF_PASS) {
+		PF_FRAG_UNLOCK();
 		return (PF_DROP);
+	}
+	PF_FRAG_UNLOCK();
 	if (pd->m == NULL)
 		return (PF_PASS);  /* packet has been reassembled, no error */
 
@@ -1092,9 +1083,13 @@ pf_normalize_ip6(struct pf_pdesc *pd, u_short *reason)
 		return (PF_PASS);	/* no reassembly */
 
 	/* Returns PF_DROP or m is NULL or completely reassembled mbuf */
+	PF_FRAG_LOCK();
 	if (pf_reassemble6(&pd->m, &frag, pd->fragoff + sizeof(frag),
-	    pd->extoff, pd->dir, reason) != PF_PASS)
+	    pd->extoff, pd->dir, reason) != PF_PASS) {
+		PF_FRAG_UNLOCK();
 		return (PF_DROP);
+	}
+	PF_FRAG_UNLOCK();
 	if (pd->m == NULL)
 		return (PF_PASS);  /* packet has been reassembled, no error */
 
