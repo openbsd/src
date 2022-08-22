@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.44 2022/02/05 22:59:58 naddy Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.45 2022/08/22 10:10:59 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -83,7 +83,7 @@ client_aldap_open(struct ypldap_addr_list *addr)
 		if (connect(fd, sa, SA_LEN(sa)) == 0)
 			break;
 
-		warn("connect to %s port %s (%s) failed", hbuf, sbuf, "tcp");
+		log_warn("connect to %s port %s failed", hbuf, sbuf);
 		close(fd);
 		fd = -1;
 	}
@@ -625,12 +625,15 @@ client_try_idm(struct env *env, struct idm *idm)
 		if (aldap_tls(al, idm->idm_tls_config, idm->idm_name) < 0) {
 			const char *err;
 			aldap_get_errno(al, &err);
-			log_debug("tls failed: %s", err);
+			log_warnx("TLS handshake with %s failed: %s",
+			    idm->idm_name, err);
 			goto bad;
 		}
 	}
 
 	if (idm->idm_flags & F_NEEDAUTH) {
+		int rc;
+
 		where = "binding";
 		if (aldap_bind(al, idm->idm_binddn, idm->idm_bindcred) == -1)
 			goto bad;
@@ -640,6 +643,14 @@ client_try_idm(struct env *env, struct idm *idm)
 			goto bad;
 		where = "verifying msgid";
 		if (al->msgid != m->msgid) {
+			aldap_freemsg(m);
+			goto bad;
+		}
+		where = "bind response";
+		rc = aldap_get_resultcode(m);
+		if (rc != LDAP_SUCCESS) {
+			log_warnx("LDAP bind with %s failed: result code %d",
+			    idm->idm_name, rc);
 			aldap_freemsg(m);
 			goto bad;
 		}
