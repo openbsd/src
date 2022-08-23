@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.14 2021/10/09 18:43:50 deraadt Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.15 2022/08/23 02:57:27 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -217,11 +217,12 @@ host_dns(const char *s, struct ypldap_addr_list *hn)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
 	error = getaddrinfo(s, NULL, &hints, &res0);
-	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
-			return (0);
-	if (error) {
-		log_warnx("could not parse \"%s\": %s", s,
+	if (error != 0) {
+		log_warnx("could not resolve \"%s\": %s", s,
 		    gai_strerror(error));
+		if (error == EAI_AGAIN || error == EAI_NODATA ||
+		    error == EAI_NONAME)
+			return (0);
 		return (-1);
 	}
 
