@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.15 2020/05/22 11:07:20 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.16 2022/08/23 13:18:59 aoyama Exp $
 
 machine		luna88k m88k
 maxusers	4
@@ -14,6 +14,7 @@ option		SCSITERSE
 
 option		FFS
 option		FFS2
+option		NFSCLIENT
 option		INET6
 
 config		bsd root rd0a swap on rd0b
