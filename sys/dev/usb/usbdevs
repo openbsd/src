@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.747 2022/06/23 00:31:37 jsg Exp $
+$OpenBSD: usbdevs,v 1.748 2022/08/23 08:10:35 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4147,6 +4147,7 @@ product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 
 /* Simcom products */
+product SIMCOM SIM5320		0x9000	SIM5320 modem
 product SIMCOM SIM7600E		0x9001	SIM7600E modem
 product SIMCOM SIM7600		0x9003	SIM7600 LTE
 
