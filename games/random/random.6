@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.6,v 1.7 2007/05/31 19:19:18 jmc Exp $
+.\"	$OpenBSD: random.6,v 1.8 2022/08/23 06:35:53 tb Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)random.6	8.2 (Berkeley) 3/31/94
 .\"
-.Dd $Mdocdate: May 31 2007 $
+.Dd $Mdocdate: August 23 2022 $
 .Dt RANDOM 6
 .Os
 .Sh NAME
@@ -43,9 +43,10 @@
 .Nm
 reads lines from the standard input and copies them to the standard
 output with a probability of 1/denominator.
-The default value for
+The
 .Ar denominator
-is 2.
+must be at least 1,
+its default value is 2.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -55,7 +56,7 @@ If the
 option is specified,
 .Nm
 does not read or write anything, and simply exits with a random
-exit value of 0 to
+exit value of 0 to the minimum of 255 and
 .Ar denominator
 \&- 1, inclusive.
 .It Fl r
