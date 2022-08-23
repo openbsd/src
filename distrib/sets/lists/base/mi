@@ -6389,6 +6389,7 @@
 ./usr/share/zoneinfo/zone1970.tab
 ./var
 ./var/account
+./var/agentx
 ./var/audit
 ./var/authpf
 ./var/backups
