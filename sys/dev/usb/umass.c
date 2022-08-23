@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.80 2021/01/29 17:12:19 sthen Exp $ */
+/*	$OpenBSD: umass.c,v 1.81 2022/08/23 15:58:57 anton Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -131,8 +131,6 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#undef KASSERT
-#define KASSERT(cond, msg)
 #include <machine/bus.h>
 
 #include <scsi/scsi_all.h>
@@ -888,10 +886,6 @@ umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
 void
 umass_bbb_reset(struct umass_softc *sc, int status)
 {
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
-		sc->sc_wire));
-
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
@@ -938,10 +932,6 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
 		sc->sc_dev.dv_xname, *(u_char *)cmd));
 
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
-		sc->sc_wire));
-
 	if (usbd_is_dying(sc->sc_udev)) {
 		sc->polled_xfer_status = USBD_IOERROR;
 		return;
@@ -969,27 +959,6 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	 * An error in any of those states will invoke
 	 * umass_bbb_reset.
 	 */
-
-	/* check the given arguments */
-	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",sc->sc_dev.dv_xname));
-	KASSERT(cmdlen <= CBWCDBLENGTH,
-		("%s: cmdlen exceeds CDB length in CBW (%d > %d)",
-			sc->sc_dev.dv_xname, cmdlen, CBWCDBLENGTH));
-	KASSERT(dir == DIR_NONE || datalen > 0,
-		("%s: datalen == 0 while direction is not NONE\n",
-			sc->sc_dev.dv_xname));
-	KASSERT(datalen == 0 || dir != DIR_NONE,
-		("%s: direction is NONE while datalen is not zero\n",
-			sc->sc_dev.dv_xname));
-	KASSERT(sizeof(struct umass_bbb_cbw) == UMASS_BBB_CBW_SIZE,
-		("%s: CBW struct does not have the right size (%d vs. %d)\n",
-			sc->sc_dev.dv_xname,
-			sizeof(struct umass_bbb_cbw), UMASS_BBB_CBW_SIZE));
-	KASSERT(sizeof(struct umass_bbb_csw) == UMASS_BBB_CSW_SIZE,
-		("%s: CSW struct does not have the right size (%d vs. %d)\n",
-			sc->sc_dev.dv_xname,
-			sizeof(struct umass_bbb_csw), UMASS_BBB_CSW_SIZE));
 
 	/*
 	 * Determine the direction of the data transfer and the length.
@@ -1053,10 +1022,6 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv, usbd_status err)
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
 	struct usbd_xfer *next_xfer;
-
-	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
-		("sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
-		sc->sc_wire));
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
@@ -1376,10 +1341,6 @@ int
 umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
     struct usbd_xfer *xfer)
 {
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
-		sc->sc_wire));
-
 	sc->sc_req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->sc_req.bRequest = UR_CBI_ADSC;
 	USETW(sc->sc_req.wValue, 0);
@@ -1395,10 +1356,6 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 {
 	int i;
 #	define SEND_DIAGNOSTIC_CMDLEN	12
-
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
-		sc->sc_wire));
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
@@ -1419,11 +1376,6 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 
 	DPRINTF(UDMASS_CBI, ("%s: CBI Reset\n",
 		sc->sc_dev.dv_xname));
-
-	KASSERT(sizeof(sc->cbl) >= SEND_DIAGNOSTIC_CMDLEN,
-		("%s: CBL struct is too small (%d < %d)\n",
-			sc->sc_dev.dv_xname,
-			sizeof(sc->cbl), SEND_DIAGNOSTIC_CMDLEN));
 
 	sc->transfer_state = TSTATE_CBI_RESET1;
 	sc->transfer_status = status;
@@ -1452,10 +1404,6 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
 		sc->sc_dev.dv_xname, *(u_char *)cmd, datalen));
 
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
-		sc->sc_wire));
-
 	if (usbd_is_dying(sc->sc_udev)) {
 		sc->polled_xfer_status = USBD_IOERROR;
 		return;
@@ -1480,13 +1428,6 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	 * An error in any of those states will invoke
 	 * umass_cbi_reset.
 	 */
-
-	/* check the given arguments */
-	KASSERT(datalen == 0 || data != NULL,
-		("%s: datalen > 0, but no buffer",sc->sc_dev.dv_xname));
-	KASSERT(datalen == 0 || dir != DIR_NONE,
-		("%s: direction is NONE while datalen is not zero\n",
-			sc->sc_dev.dv_xname));
 
 	/* store the details for the data transfer phase */
 	sc->transfer_dir = dir;
@@ -1517,10 +1458,6 @@ void
 umass_cbi_state(struct usbd_xfer *xfer, void *priv,  usbd_status err)
 {
 	struct umass_softc *sc = (struct umass_softc *) priv;
-
-	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		("sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
-		sc->sc_wire));
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
