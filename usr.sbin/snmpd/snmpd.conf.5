@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.60 2022/06/30 11:28:36 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.61 2022/08/23 08:56:21 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2022 $
+.Dd $Mdocdate: August 23 2022 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -151,6 +151,21 @@ Having
 set requires at least one
 .Ic trap handle
 statement.
+.It Ic agentx Oo Ic path Ar path Oc Oo Ic owner Ar owner Oc Oo group Ar group Oc Oo Ic mode Ar mode Oc
+Set up an agentx master socket at
+.Ar path 
+and defaults to
+.Pa /var/agentx/master .
+Socket owner, group, and permissions can be set with
+.Ar owner ,
+.Ar group ,
+and
+.Ar mode
+respectively and defaults to root, _agentx, and 660.
+Multiple
+.Ic agentx
+statements are supported.
+Only unix sockets are supported.
 .It Ic engineid Oo Ic pen Ar enterprise Oc Ar format
 Set the snmp engineid, used for instance identification and key
 generation for the

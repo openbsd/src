@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.76 2022/06/30 11:53:07 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.77 2022/08/23 08:56:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -41,6 +41,7 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <grp.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
@@ -48,6 +49,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <string.h>
 #include <syslog.h>
 
@@ -111,6 +113,7 @@ typedef struct {
 		struct host	*host;
 		struct timeval	 tv;
 		struct ber_oid	*oid;
+		struct agentx_master ax;
 		struct {
 			int		 type;
 			void		*data;
@@ -122,10 +125,17 @@ typedef struct {
 	int lineno;
 } YYSTYPE;
 
+#define axm_opts	axm_fd
+#define AXM_PATH	1 << 0
+#define AXM_OWNER	1 << 1
+#define AXM_GROUP	1 << 2
+#define AXM_MODE	1 << 3
+
 %}
 
 %token	INCLUDE
 %token	LISTEN ON READ WRITE NOTIFY SNMPV1 SNMPV2 SNMPV3
+%token	AGENTX PATH OWNER GROUP MODE
 %token	ENGINEID PEN OPENBSD IP4 IP6 MAC TEXT OCTETS AGENTID HOSTHASH
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
@@ -141,6 +151,7 @@ typedef struct {
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
 %type	<v.enc>		enc
+%type	<v.ax>		agentxopts agentxopt
 
 %%
 
@@ -203,6 +214,53 @@ yesno		:  STRING			{
 		;
 
 main		: LISTEN ON listen_udptcp
+		| AGENTX agentxopts {
+			struct agentx_master *master, *test;
+			struct group *grp;
+
+			if ((master = malloc(sizeof(*master))) == NULL) {
+				yyerror("malloc");
+				YYERROR;
+			}
+			master->axm_fd = -1;
+			master->axm_sun.sun_len = sizeof(master->axm_sun);
+			master->axm_sun.sun_family = AF_UNIX;
+			if ($2.axm_opts & AXM_PATH)
+				strlcpy(master->axm_sun.sun_path,
+				    $2.axm_sun.sun_path,
+				    sizeof(master->axm_sun.sun_path));
+			else
+				strlcpy(master->axm_sun.sun_path,
+				    AGENTX_MASTER_PATH,
+				    sizeof(master->axm_sun.sun_path));
+			master->axm_owner = $2.axm_opts & AXM_OWNER ?
+			    $2.axm_owner : 0;
+			if ($2.axm_opts & AXM_GROUP)
+				master->axm_group = $2.axm_group;
+			else {
+				if ((grp = getgrnam(AGENTX_GROUP)) == NULL) {
+					yyerror("agentx: group %s not found",
+					    AGENTX_GROUP);
+					YYERROR;
+				}
+				master->axm_group = grp->gr_gid;
+			}
+			master->axm_mode = $2.axm_opts & AXM_MODE ?
+			    $2.axm_mode : 0660;
+
+			TAILQ_FOREACH(test, &conf->sc_agentx_masters,
+			    axm_entry) {
+				if (strcmp(test->axm_sun.sun_path,
+				    master->axm_sun.sun_path) == 0) {
+					yyerror("agentx: duplicate entry: %s",
+					    test->axm_sun.sun_path);
+					YYERROR;
+				}
+			}
+
+			TAILQ_INSERT_TAIL(&conf->sc_agentx_masters, master,
+			    axm_entry);
+		}
 		| engineid_local {
 			if (conf->sc_engineid_len != 0) {
 				yyerror("Redefinition of engineid");
@@ -405,6 +463,112 @@ port		: /* empty */			{
 				YYERROR;
 			}
 			$$ = number;
+		}
+		;
+
+agentxopt	: PATH STRING			{
+			if ($2[0] != '/') {
+				yyerror("agentx path: must be absolute");
+				YYERROR;
+			}
+			if (strlcpy($$.axm_sun.sun_path, $2,
+			    sizeof($$.axm_sun.sun_path)) >=
+			    sizeof($$.axm_sun.sun_path)) {
+				yyerror("agentx path: too long");
+				YYERROR;
+			}
+			$$.axm_opts = AXM_PATH;
+		}
+		| OWNER NUMBER			{
+			if ($2 > UID_MAX) {
+				yyerror("agentx owner: too large");
+				YYERROR;
+			}
+			$$.axm_owner = $2;
+			$$.axm_opts = AXM_OWNER;
+		}
+		| OWNER STRING			{
+			struct passwd *pw;
+			const char *errstr;
+
+			$$.axm_owner = strtonum($2, 0, UID_MAX, &errstr);
+			if (errstr != NULL && errno == ERANGE) {
+				yyerror("agentx owner: %s", errstr);
+				YYERROR;
+			}
+			if ((pw = getpwnam($2)) == NULL) {
+				yyerror("agentx owner: user not found");
+				YYERROR;
+			}
+			$$.axm_owner = pw->pw_uid;
+			$$.axm_opts = AXM_OWNER;
+		}
+		| GROUP NUMBER			{
+			if ($2 > GID_MAX) {
+				yyerror("agentx group: too large");
+				YYERROR;
+			}
+			$$.axm_group = $2;
+			$$.axm_opts = AXM_GROUP;
+		}
+		| GROUP STRING			{
+			struct group *gr;
+			const char *errstr;
+
+			$$.axm_group = strtonum($2, 0, GID_MAX, &errstr);
+			if (errstr != NULL && errno == ERANGE) {
+				yyerror("agentx group: %s", errstr);
+				YYERROR;
+			}
+			if ((gr = getgrnam($2)) == NULL) {
+				yyerror("agentx group: group not found");
+				YYERROR;
+			}
+			$$.axm_group = gr->gr_gid;
+			$$.axm_opts = AXM_GROUP;
+		}
+		| MODE NUMBER			{
+			long mode;
+			char *endptr, str[21];
+
+			snprintf(str, sizeof(str), "%lld", $2);
+			errno = 0;
+			mode = strtol(str, &endptr, 8);
+			if (errno != 0 || endptr[0] != '\0' ||
+			    mode <= 0 || mode > 0777) {
+				yyerror("agentx mode: invalid");
+				YYERROR;
+			}
+			$$.axm_mode = mode;
+			$$.axm_opts = AXM_MODE;
+		}
+		;
+
+agentxopts	: /* empty */			{
+			bzero(&$$, sizeof($$));
+		}
+		| agentxopts agentxopt {
+			if ($$.axm_opts & $2.axm_opts) {
+				yyerror("agentx: duplicate option");
+				YYERROR;
+			}
+			switch ($2.axm_opts) {
+			case AXM_PATH:
+				strlcpy($$.axm_sun.sun_path,
+				    $2.axm_sun.sun_path,
+				    sizeof($$.axm_sun.sun_path));
+				break;
+			case AXM_OWNER:
+				$$.axm_owner = $2.axm_owner;
+				break;
+			case AXM_GROUP:
+				$$.axm_group = $2.axm_group;
+				break;
+			case AXM_MODE:
+				$$.axm_mode = $2.axm_mode;
+				break;
+			}
+			$$.axm_opts |= $2.axm_opts;
 		}
 		;
 
@@ -1024,6 +1188,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "agentid",			AGENTID },
+		{ "agentx",			AGENTX },
 		{ "auth",			AUTH },
 		{ "authkey",			AUTHKEY },
 		{ "blocklist",			BLOCKLIST },
@@ -1036,6 +1201,7 @@ lookup(char *s)
 		{ "engineid",			ENGINEID },
 		{ "filter-pf-addresses",	PFADDRFILTER },
 		{ "filter-routes",		RTFILTER },
+		{ "group",			GROUP },
 		{ "handle",			HANDLE },
 		{ "hosthash",			HOSTHASH },
 		{ "include",			INCLUDE },
@@ -1045,6 +1211,7 @@ lookup(char *s)
 		{ "listen",			LISTEN },
 		{ "location",			LOCATION },
 		{ "mac",			MAC },
+		{ "mode",			MODE },
 		{ "name",			NAME },
 		{ "none",			NONE },
 		{ "notify",			NOTIFY },
@@ -1052,6 +1219,8 @@ lookup(char *s)
 		{ "oid",			OBJECTID },
 		{ "on",				ON },
 		{ "openbsd",			OPENBSD },
+		{ "owner",			OWNER },
+		{ "path",			PATH },
 		{ "pen",			PEN },
 		{ "port",			PORT },
 		{ "read",			READ },
@@ -1448,6 +1617,7 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
+	TAILQ_INIT(&conf->sc_agentx_masters);
 	TAILQ_INIT(&conf->sc_trapreceivers);
 	conf->sc_min_seclevel = SNMP_MSGFLAG_AUTH | SNMP_MSGFLAG_PRIV;
 

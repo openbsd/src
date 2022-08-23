@@ -59,6 +59,7 @@ _ripd:*:88:
 _relayd:*:89:
 _ospf6d:*:90:
 _snmpd:*:91:
+_agentx:*:92:
 _ypldap:*:93:
 _rad:*:94:
 _smtpd:*:95:

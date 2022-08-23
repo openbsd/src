@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.82 2022/01/19 11:00:56 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.83 2022/08/23 08:56:21 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <string.h>
 #include <unistd.h>
 #include <pwd.h>
@@ -74,12 +75,17 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 	struct oid	*oid;
 #endif
 
+	if ((setlocale(LC_CTYPE, "en_US.UTF-8")) == NULL)
+		fatal("setlocale(LC_CTYPE, \"en_US.UTF-8\")");
+
 #ifdef DEBUG
 	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
 		smi_oid2string(&oid->o_id, buf, sizeof(buf), 0);
 		log_debug("oid %s", buf);
 	}
 #endif
+
+	appl();
 
 	/* bind SNMP UDP/TCP sockets */
 	TAILQ_FOREACH(h, &env->sc_addresses, entry)

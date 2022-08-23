@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.6 2022/06/30 11:28:36 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.7 2022/08/23 08:56:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -146,10 +146,17 @@ RB_PROTOTYPE_STATIC(appl_requests, appl_request_downstream, ard_entry,
 #define APPL_CONTEXT_NAME(ctx) (ctx->ac_name[0] == '\0' ? NULL : ctx->ac_name)
 
 void
+appl(void)
+{
+	appl_agentx();
+}
+
+void
 appl_init(void)
 {
 	appl_blocklist_init();
 	appl_legacy_init();
+	appl_agentx_init();
 }
 
 void
@@ -159,6 +166,7 @@ appl_shutdown(void)
 
 	appl_blocklist_shutdown();
 	appl_legacy_shutdown();
+	appl_agentx_shutdown();
 
 	TAILQ_FOREACH_SAFE(ctx, &contexts, ac_entries, tctx) {
 		assert(RB_EMPTY(&(ctx->ac_regions)));
@@ -1122,10 +1130,13 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 		log_warnx("Invalid error index");
 		invalid = 1;
 	}
+/* amavisd-snmp-subagent sets index to 1, no reason to crash over it. */
+#if PEDANTIC
 	if (error == APPL_ERROR_NOERROR && index != 0) {
 		log_warnx("error index with no error");
 		invalid = 1;
 	}
+#endif
 	if (vb == NULL && origvb != NULL) {
 		log_warnx("%s: Request %"PRIu32" returned less varbinds then "
 		    "requested", backend->ab_name, requestid);
