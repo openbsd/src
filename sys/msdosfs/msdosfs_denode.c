@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.66 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.67 2022/08/23 20:37:16 cheloha Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -545,7 +545,7 @@ deextend(struct denode *dep, uint32_t length, struct ucred *cred)
 		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
 		if (error) {
 			/* truncate the added clusters away again */
-			(void) detrunc(dep, dep->de_FileSize, 0, cred, NULL);
+			(void) detrunc(dep, dep->de_FileSize, 0, cred, curproc);
 			return (error);
 		}
 	}
@@ -652,7 +652,7 @@ msdosfs_inactive(void *v)
 	    MNT_RDONLY);
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		error = detrunc(dep, (uint32_t)0, 0, NOCRED, NULL);
+		error = detrunc(dep, (uint32_t)0, 0, NOCRED, ap->a_p);
 		dep->de_Name[0] = SLOT_DELETED;
 	}
 	deupdat(dep, 0);

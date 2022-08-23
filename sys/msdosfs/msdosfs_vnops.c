@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.138 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.139 2022/08/23 20:37:16 cheloha Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -745,11 +745,11 @@ msdosfs_write(void *v)
 errexit:
 	if (error) {
 		if (ioflag & IO_UNIT) {
-			detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, NULL);
+			detrunc(dep, osize, ioflag & IO_SYNC, NOCRED, curproc);
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		} else {
-			detrunc(dep, dep->de_FileSize, ioflag & IO_SYNC, NOCRED, NULL);
+			detrunc(dep, dep->de_FileSize, ioflag & IO_SYNC, NOCRED, curproc);
 			if (uio->uio_resid != resid)
 				error = 0;
 		}
