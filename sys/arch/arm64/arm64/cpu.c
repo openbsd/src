@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.66 2022/08/05 12:52:35 robert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.67 2022/08/23 11:39:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -95,6 +95,8 @@
 #define CPU_PART_FIRESTORM_PRO	0x025
 #define CPU_PART_ICESTORM_MAX	0x028
 #define CPU_PART_FIRESTORM_MAX	0x029
+#define CPU_PART_BLIZZARD	0x032
+#define CPU_PART_AVALANCHE	0x033
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -161,6 +163,8 @@ struct cpu_cores cpu_cores_apple[] = {
 	{ CPU_PART_FIRESTORM_PRO, "Firestorm Pro" },
 	{ CPU_PART_ICESTORM_MAX, "Icestorm Max" },
 	{ CPU_PART_FIRESTORM_MAX, "Firestorm Max" },
+	{ CPU_PART_BLIZZARD, "Blizzard" },
+	{ CPU_PART_AVALANCHE, "Avalanche" },
 	{ 0, NULL },
 };
 
