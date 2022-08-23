@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.899 2022/08/15 09:10:34 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.900 2022/08/23 08:14:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 15 2022 $
+.Dd $Mdocdate: August 23 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1808,6 +1808,7 @@ The following commands are supported in copy mode:
 .It Li "search-forward <for>" Ta "/" Ta ""
 .It Li "search-forward-incremental <for>" Ta "" Ta "C-s"
 .It Li "search-forward-text <for>" Ta "" Ta ""
+.It Li "scroll-middle" Ta "z" Ta ""
 .It Li "search-reverse" Ta "N" Ta "N"
 .It Li "select-line" Ta "V" Ta ""
 .It Li "select-word" Ta "" Ta ""
