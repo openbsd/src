@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.281 2022/06/17 07:28:05 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.282 2022/08/24 07:22:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1033,6 +1033,8 @@ window_pane_set_event(struct window_pane *wp)
 
 	wp->event = bufferevent_new(wp->fd, window_pane_read_callback,
 	    NULL, window_pane_error_callback, wp);
+	if (wp->event == NULL)
+		fatalx("out of memory");
 	wp->ictx = input_init(wp, wp->event, &wp->palette);
 
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);
