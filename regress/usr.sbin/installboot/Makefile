@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2022/08/24 15:58:06 kn Exp $
+#	$OpenBSD: Makefile,v 1.5 2022/08/24 20:31:06 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -24,7 +24,7 @@ REGRESS_SETUP_ONCE =	copy-bootstrap-to-softraid
 
 create-new-chunks:
 .for n in ${NCHUNKS}
-	dd if=/dev/zero  of=chunk${n}.img bs=1m count=0 seek=32 status=none
+	dd if=/dev/zero  of=chunk${n}.img bs=1m count=0 seek=64 status=none
 	${SUDO} vnconfig -- chunk${n}.img 1>vnd${n}.txt
 .endfor
 
