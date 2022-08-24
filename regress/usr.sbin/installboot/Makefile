@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2022/08/21 17:03:18 kn Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/08/24 14:57:52 kn Exp $
 
-INSTALLBOOT ?=		/usr/sbin/installboot -v
+INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
 REAL_RUN =		${INSTALLBOOT}
 
@@ -79,6 +79,15 @@ dry-root:
 # XXX fails with N > 1 on sparc64, 1 <= N <= 4 works on amd64
 root-installer:
 	${SUDO} installboot -r /mnt "$$(<${SRFILE})"
+
+root-explicit-stages:
+.if   ${MACHINE} == "amd64"	# assume BIOS/MBR
+	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/biosboot ${NEWROOT}/usr/mdec/boot
+.elif ${MACHINE} == "arm64"
+	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/BOOTAA64.EFI
+.elif ${MACHINE} == "sparc64"
+	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/bootblk ${NEWROOT}/usr/mdec/ofwboot
+.endif
 
 
 REGRESS_EXPECTED_FAILURES =	dry-prepare-root \
