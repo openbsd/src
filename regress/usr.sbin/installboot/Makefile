@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2022/08/24 14:57:52 kn Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/08/24 15:04:18 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -78,15 +78,15 @@ dry-root:
 # what the installer does, see /usr/src/distrib/$(machine)/ramdisk/install.md
 # XXX fails with N > 1 on sparc64, 1 <= N <= 4 works on amd64
 root-installer:
-	${SUDO} installboot -r /mnt "$$(<${SRFILE})"
+	${SUDO} installboot -r ${MOUNTPOINT} "$$(<${SRFILE})"
 
 root-explicit-stages:
 .if   ${MACHINE} == "amd64"	# assume BIOS/MBR
-	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/biosboot ${NEWROOT}/usr/mdec/boot
+	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/biosboot ${MOUNTPOINT}/usr/mdec/boot
 .elif ${MACHINE} == "arm64"
-	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/BOOTAA64.EFI
+	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/BOOTAA64.EFI
 .elif ${MACHINE} == "sparc64"
-	${SUDO} installboot -- "$$(<${SRFILE})" ${NEWROOT}/usr/mdec/bootblk ${NEWROOT}/usr/mdec/ofwboot
+	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/bootblk ${MOUNTPOINT}/usr/mdec/ofwboot
 .endif
 
 
@@ -117,7 +117,7 @@ REGRESS_CLEANUP =	cleanup
 
 # allow failure to always cleanup as much as possible
 cleanup:
-	-${SUDO} umount -- /mnt
+	-${SUDO} umount -- ${MOUNTPOINT}
 	-${SUDO} bioctl -d -- "$$(<${SRFILE})"
 .for devfile in ${DEVFILES}
 	-${SUDO} vnconfig -u -- "$$(<${devfile})"
