@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.8 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.9 2022/08/24 17:35:15 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -39,3 +39,10 @@ void	scif_cninit(struct consdev *);
 int	scif_cngetc(dev_t);
 void	scif_cnputc(dev_t, int);
 void	scif_init(unsigned int);
+
+int	tick_init();
+void	delay(int);
+
+void	devboot(dev_t, char *);
+void	machdep();
+void	run_loadfile(uint64_t *, int);

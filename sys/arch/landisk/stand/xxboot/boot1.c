@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.10 2021/10/24 17:49:19 deraadt Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.11 2022/08/24 17:35:15 miod Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ int raise(int sig);
 int blkdevstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int blkdevopen(struct open_file *, ...);
 int blkdevclose(struct open_file *);
-
+int readsects(int dev, uint32_t lba, void *buf, size_t size);
 
 extern struct disklabel ptn_disklabel;
 
