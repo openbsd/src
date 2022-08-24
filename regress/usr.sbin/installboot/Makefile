@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2022/08/24 15:04:18 kn Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/08/24 15:58:06 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -9,9 +9,16 @@ NCHUNKS ?=		1 2
 CHUNKFILES =		${NCHUNKS:=chunk%.img}
 DEVFILES =		${NCHUNKS:=vnd%.txt}
 SRFILE =		sr.txt
-# allow testing with real bootstrap, e.g. for size constraints or formats
-STAGEFILE ?=		stage.empty
-MOUNTPOINT ?=		/mnt
+MOUNTPOINT =		mnt
+STAGEDIR =		/usr/mdec
+.if   ${MACHINE} == "amd64"	# assume BIOS/MBR
+STAGENAMES =		biosboot boot
+.elif ${MACHINE} == "arm64"
+STAGENAMES =		BOOTAA64.EFI
+.elif ${MACHINE} == "sparc64"
+STAGENAMES =		bootblk ofwboot
+.endif
+STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
 
 REGRESS_SETUP_ONCE =	copy-bootstrap-to-softraid
 
@@ -38,14 +45,17 @@ create-new-softraid: format-new-chunks
 	    -cc -- softraid0 | \
 		awk -- '{ print $$NF }' 1>${SRFILE}
 
-format-new-softraid: create-new-softraid
+create-mountpoint:
+	mkdir -- ${MOUNTPOINT}
+
+format-new-softraid: create-new-softraid create-mountpoint
 	${SUDO} disklabel -Aw -- "$$(<${SRFILE})"
-	${SUDO} newfs -- "$$(<${SRFILE})"a
+	${SUDO} newfs -q -- "$$(<${SRFILE})"a 1>/dev/null
 	${SUDO} mount -- /dev/"$$(<${SRFILE})"a ${MOUNTPOINT}
 
 copy-bootstrap-to-softraid: format-new-softraid
 	${SUDO} mkdir -- ${MOUNTPOINT}/usr
-	${SUDO} cp -r -- /usr/mdec ${MOUNTPOINT}/usr/
+	${SUDO} cp -r -- ${STAGEDIR} ${MOUNTPOINT}/usr/
 
 
 # most but not all usages rquire the EFI filesystem to be usable
@@ -78,16 +88,10 @@ dry-root:
 # what the installer does, see /usr/src/distrib/$(machine)/ramdisk/install.md
 # XXX fails with N > 1 on sparc64, 1 <= N <= 4 works on amd64
 root-installer:
-	${SUDO} installboot -r ${MOUNTPOINT} "$$(<${SRFILE})"
+	${SUDO} ${REAL_RUN} -r ${MOUNTPOINT} "$$(<${SRFILE})"
 
 root-explicit-stages:
-.if   ${MACHINE} == "amd64"	# assume BIOS/MBR
-	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/biosboot ${MOUNTPOINT}/usr/mdec/boot
-.elif ${MACHINE} == "arm64"
-	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/BOOTAA64.EFI
-.elif ${MACHINE} == "sparc64"
-	${SUDO} installboot -- "$$(<${SRFILE})" ${MOUNTPOINT}/usr/mdec/bootblk ${MOUNTPOINT}/usr/mdec/ofwboot
-.endif
+	${SUDO} ${REAL_RUN} -- "$$(<${SRFILE})" ${STAGEFILES}
 
 
 REGRESS_EXPECTED_FAILURES =	dry-prepare-root \
@@ -100,24 +104,22 @@ dry-prepare-root:
 	${DRY_RUN} -p -r/ -- "$$(<${SRFILE})"
 
 dry-prepare-stage:
-	touch -- ${STAGEFILE}
-	${DRY_RUN} -p -- "$$(<${SRFILE})" ${STAGEFILE}
+	${DRY_RUN} -p -- "$$(<${SRFILE})" ${STAGEFILES}
 
 dry-nodisk-stage:
-	touch -- ${STAGEFILE}
-	${SUDO} ${DRY_RUN} -- ${STAGEFILE}
+	${SUDO} ${DRY_RUN} -- ${STAGEFILES}
 
 dry-toomany:
-	touch -- ${STAGEFILE}
 	${DRY_RUN} -- disk stage1 stage2 too many
 
 
-CLEANFILES =		${CHUNKFILES} ${DEVFILES} ${SRFILE} ${STAGEFILE}
+CLEANFILES =		${CHUNKFILES} ${DEVFILES} ${SRFILE} ${MOUNTPOINT}
 REGRESS_CLEANUP =	cleanup
 
 # allow failure to always cleanup as much as possible
 cleanup:
 	-${SUDO} umount -- ${MOUNTPOINT}
+	- rmdir -- ${MOUNTPOINT}
 	-${SUDO} bioctl -d -- "$$(<${SRFILE})"
 .for devfile in ${DEVFILES}
 	-${SUDO} vnconfig -u -- "$$(<${devfile})"
