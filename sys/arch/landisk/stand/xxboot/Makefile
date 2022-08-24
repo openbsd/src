@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2016/11/28 16:42:45 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2022/08/24 17:36:19 miod Exp $
 
 MAN=	xxboot.8
 
@@ -16,6 +16,7 @@ CPPFLAGS+=-D_STANDALONE
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR}/.. -I${.CURDIR}/../../../..
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000 -DXXBOOT_SECTORS=${XXBOOT_SECTORS}
 CFLAGS+=-m4-nofpu -fno-pie
+CFLAGS+=-Wall -Wimplicit-function-declaration -Werror
 AFLAGS+= -fno-pie
 
 OBJCOPY?=objcopy

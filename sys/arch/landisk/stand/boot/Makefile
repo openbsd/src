@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2019/11/28 00:17:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.17 2022/08/24 17:36:19 miod Exp $
 
 MAN=	boot.8
 
@@ -16,6 +16,7 @@ CPPFLAGS+=-DSH4
 CPPFLAGS+=-nostdinc -I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/.. -I${S}
 CPPFLAGS+=-DLOADADDRESS=0x8ff00000
 CFLAGS+=-m4-nofpu -fno-pie
+CFLAGS+=-Wall -Wimplicit-function-declaration -Werror
 AFLAGS+= -fno-pie
 
 .PATH:  ${S}/stand/boot
