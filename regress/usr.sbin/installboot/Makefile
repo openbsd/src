@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2022/08/24 20:31:06 kn Exp $
+#	$OpenBSD: Makefile,v 1.6 2022/08/24 20:38:03 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -64,9 +64,12 @@ REGRESS_TARGETS = prepare
 
 # what the installer does, see /usr/src/distrib/$(machine)/ramdisk/install.md
 # do this as regress target and not in format-new-chunks
-# XXX -p is not yet softraid(4) aware
 prepare:
 	${SUDO} ${REAL_RUN} -p -- "$$(<${SRFILE})"
+	# XXX -p is not yet softraid(4) aware, need to prepare chunks manually
+.  for devfile in ${DEVFILES}
+	${SUDO} ${REAL_RUN} -p -- "$$(<${devfile})"
+.  endfor
 .else
 REGRESS_TARGETS =	# empty
 .endif
