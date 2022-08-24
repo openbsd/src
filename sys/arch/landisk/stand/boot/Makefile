@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2022/08/24 17:36:19 miod Exp $
+#	$OpenBSD: Makefile,v 1.18 2022/08/24 19:36:05 miod Exp $
 
 MAN=	boot.8
 
@@ -29,6 +29,7 @@ SRCS+=	hexdump.c strtoll.c
 SRCS+=	getchar.c putchar.c strlen.c strlcpy.c
 SRCS+=	ashldi3.c ashrdi3.c moddi3.c sdivsi3.S udivsi3.S
 
+NO_NET=
 SAREL=
 SA_ZLIB=
 USE_LOADFILE=
