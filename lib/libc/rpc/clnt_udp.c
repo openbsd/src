@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.39 2022/07/15 17:33:28 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.40 2022/08/24 01:32:21 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -303,9 +303,15 @@ send_again:
 
 		do {
 			fromlen = sizeof(struct sockaddr);
-			inlen = recvfrom(cu->cu_sock, cu->cu_inbuf, 
-			    (int) cu->cu_recvsz, 0,
-			    (struct sockaddr *)&from, &fromlen);
+			if (cu->cu_connected) {
+				inlen = recv(cu->cu_sock, cu->cu_inbuf, 
+				    (int) cu->cu_recvsz, 0);
+			} else {
+
+				inlen = recvfrom(cu->cu_sock, cu->cu_inbuf, 
+				    (int) cu->cu_recvsz, 0,
+				    (struct sockaddr *)&from, &fromlen);
+			}
 		} while (inlen == -1 && errno == EINTR);
 		if (inlen == -1) {
 			if (errno == EWOULDBLOCK)
