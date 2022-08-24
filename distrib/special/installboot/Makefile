@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.16 2022/02/03 10:27:33 visa Exp $
+#	$OpenBSD: Makefile,v 1.17 2022/08/24 21:08:51 kn Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
 PROG=		installboot
 SRCS=		installboot.c util.c
-MAN=		installboot.8
 
 CPPFLAGS=	-I${.CURDIR}/../../../usr.sbin/installboot
 LDADD=		-lutil
@@ -16,6 +15,10 @@ SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
 .elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64" || ${MACHINE} == "riscv64"
+.  if ${MACHINE} == "arm64"
+CFLAGS += -DSOFTRAID
+SRCS += efi_softraid.c
+.  endif
 SRCS += efi_installboot.c
 .elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
