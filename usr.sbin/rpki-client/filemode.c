@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.8 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.9 2022/08/25 11:07:28 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -431,6 +431,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	roa_free(roa);
 	gbr_free(gbr);
 	tal_free(tal);
+	rsc_free(rsc);
 }
 
 /*
