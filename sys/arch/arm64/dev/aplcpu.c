@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.2 2022/05/26 23:32:18 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.3 2022/08/25 19:16:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,14 +31,16 @@
 #define DVFS_CMD			0x0020
 #define DVFS_CMD_BUSY			(1U << 31)
 #define DVFS_CMD_SET			(1 << 25)
-#define DVFS_CMD_PS2_MASK		(0xf << 12)
+#define DVFS_CMD_PS2_MASK		(0x1f << 12)
 #define DVFS_CMD_PS2_SHIFT		12
-#define DVFS_CMD_PS1_MASK		(0xf << 0)
+#define DVFS_CMD_PS1_MASK		(0x1f << 0)
 #define DVFS_CMD_PS1_SHIFT		0
 
 #define DVFS_STATUS			0x50
-#define DVFS_STATUS_CUR_PS_MASK		(0xf << 4)
-#define DVFS_STATUS_CUR_PS_SHIFT	4
+#define DVFS_T8103_STATUS_CUR_PS_MASK	(0xf << 4)
+#define DVFS_T8103_STATUS_CUR_PS_SHIFT	4
+#define DVFS_T8112_STATUS_CUR_PS_MASK	(0x1f << 5)
+#define DVFS_T8112_STATUS_CUR_PS_SHIFT	5
 
 struct opp {
 	uint64_t opp_hz;
@@ -67,6 +69,9 @@ struct aplcpu_softc {
 	u_int			sc_nclusters;
 	int			sc_perflevel;
 
+	uint32_t		sc_cur_ps_mask;
+	u_int			sc_cur_ps_shift;
+
 	LIST_HEAD(, opp_table)	sc_opp_tables;
 	struct opp_table	*sc_opp_table[APLCPU_MAX_CLUSTERS];
 	uint64_t		sc_opp_hz_min;
@@ -90,6 +95,7 @@ struct cfdriver aplcpu_cd = {
 };
 
 void	aplcpu_opp_init(struct aplcpu_softc *, int);
+uint32_t aplcpu_opp_level(struct aplcpu_softc *, int);
 int	aplcpu_clockspeed(int *);
 void	aplcpu_setperf(int level);
 void	aplcpu_refresh_sensors(void *);
@@ -137,6 +143,14 @@ aplcpu_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = faa->fa_node;
 	sc->sc_nclusters = faa->fa_nreg;
+
+	if (OF_is_compatible(sc->sc_node, "apple,t8103-soc-cpufreq")) {
+		sc->sc_cur_ps_mask = DVFS_T8103_STATUS_CUR_PS_MASK;
+		sc->sc_cur_ps_shift = DVFS_T8103_STATUS_CUR_PS_SHIFT;
+	} else if (OF_is_compatible(sc->sc_node, "apple,t8112-soc-cpufreq")) {
+		sc->sc_cur_ps_mask = DVFS_T8112_STATUS_CUR_PS_MASK;
+		sc->sc_cur_ps_shift = DVFS_T8112_STATUS_CUR_PS_SHIFT;
+	}
 
 	sc->sc_opp_hz_min = UINT64_MAX;
 	sc->sc_opp_hz_max = 0;
@@ -253,13 +267,33 @@ aplcpu_opp_init(struct aplcpu_softc *sc, int node)
 		sc->sc_opp_hz_max = ot->ot_opp_hz_max;
 }
 
+uint32_t
+aplcpu_opp_level(struct aplcpu_softc *sc, int cluster)
+{
+	uint32_t opp_level;
+	uint64_t pstate;
+
+	if (sc->sc_cur_ps_mask) {
+		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[cluster],
+		    DVFS_STATUS);
+		opp_level = (pstate & sc->sc_cur_ps_mask);
+		opp_level >>= sc->sc_cur_ps_shift;
+	} else {
+		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[cluster],
+		    DVFS_CMD);
+		opp_level = (pstate & DVFS_CMD_PS1_MASK);
+		opp_level >>= DVFS_CMD_PS1_SHIFT;
+	}
+
+	return opp_level;
+}
+
 int
 aplcpu_clockspeed(int *freq)
 {
 	struct aplcpu_softc *sc = aplcpu_sc;
 	struct opp_table *ot;
 	uint32_t opp_hz = 0, opp_level;
-	uint64_t pstate;
 	int i, j;
 
 	/*
@@ -271,10 +305,7 @@ aplcpu_clockspeed(int *freq)
 		if (sc->sc_opp_table[i] == NULL)
 			continue;
 
-		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[i],
-		    DVFS_STATUS);
-		opp_level = (pstate & DVFS_STATUS_CUR_PS_MASK);
-		opp_level >>= DVFS_STATUS_CUR_PS_SHIFT;
+		opp_level = aplcpu_opp_level(sc, i);
 
 		/* Translate P-state to frequency. */
 		ot = sc->sc_opp_table[i];
@@ -324,7 +355,7 @@ aplcpu_setperf(int level)
 			continue;
 
 		/* Translate performance level to a P-state. */
-		opp_level = 0;
+		opp_level = 1;
 		ot = sc->sc_opp_table[i];
 		for (j = 0; j < ot->ot_nopp; j++) {
 			if (ot->ot_opp[j].opp_hz <= level_hz &&
@@ -361,17 +392,13 @@ aplcpu_refresh_sensors(void *arg)
 	struct aplcpu_softc *sc = arg;
 	struct opp_table *ot;
 	uint32_t opp_level;
-	uint64_t pstate;
 	int i, j;
 
 	for (i = 0; i < sc->sc_nclusters; i++) {
 		if (sc->sc_opp_table[i] == NULL)
 			continue;
 
-		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[i],
-		    DVFS_STATUS);
-		opp_level = (pstate & DVFS_STATUS_CUR_PS_MASK);
-		opp_level >>= DVFS_STATUS_CUR_PS_SHIFT;
+		opp_level = aplcpu_opp_level(sc, i);
 
 		/* Translate P-state to frequency. */
 		ot = sc->sc_opp_table[i];
