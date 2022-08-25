@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.11 2022/08/25 17:31:26 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.12 2022/08/25 18:12:05 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,7 +40,6 @@
 
 #include "extern.h"
 
-extern int		 printpem;
 extern int		 verbose;
 
 static X509_STORE_CTX	*ctx;
@@ -436,7 +435,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				errx(1, "X509_print_fp");
 		}
 
-		if (printpem) {
+		if (verbose > 1) {
 			if (!PEM_write_X509(stdout, x509))
 				errx(1, "PEM_write_X509");
 		}

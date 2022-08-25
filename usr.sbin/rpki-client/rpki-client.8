@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.69 2022/08/25 17:31:26 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.70 2022/08/25 18:12:05 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -34,7 +34,7 @@
 .Nm
 .Op Fl Vv
 .Op Fl d Ar cachedir
-.Op Fl j | p
+.Op Fl j
 .Op Fl t Ar tal
 .Fl f
 .Ar
@@ -145,8 +145,6 @@ If the
 and
 .Fl j
 options are not specified this is the default.
-.It Fl p
-Print the encapsulated X.509 certificate in PEM format.
 .It Fl R
 Synchronize via RSYNC only.
 .It Fl r
@@ -199,8 +197,13 @@ will load all TAL files in
 .It Fl V
 Show the version and exit.
 .It Fl v
-Specified once, prints information about status.
-Twice, prints each filename as it's processed.
+Increase verbosity.
+Specify once for synchronisation status, twice to print the name of each file
+as it's processed.
+If
+.Fl f
+is given, specify once to print more information about the encapsulated X.509
+certificate, twice to print the certificate in PEM format.
 .It Ar outputdir
 The directory where
 .Nm

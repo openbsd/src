@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.210 2022/08/25 17:31:26 job Exp $ */
+/*	$OpenBSD: main.c,v 1.211 2022/08/25 18:12:05 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -64,7 +64,6 @@ const char	*bird_tablename = "ROAS";
 int	verbose;
 int	noop;
 int	filemode;
-int	printpem;
 int	rrdpon = 1;
 int	repo_timeout;
 
@@ -820,7 +819,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fjnoprRs:S:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:fjnorRs:S:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -849,9 +848,6 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			outformats |= FORMAT_OPENBGPD;
-			break;
-		case 'p':
-			printpem = 1;
 			break;
 		case 'R':
 			rrdpon = 0;
@@ -1282,7 +1278,7 @@ usage:
 	    " [-e rsync_prog]\n"
 	    "                   [-S skiplist] [-s timeout] [-T table] [-t tal]"
 	    " [outputdir]\n"
-	    "       rpki-client [-Vv] [-d cachedir] [-j | -p] [-t tal] -f file"
-	    " ...\n");
+	    "       rpki-client [-Vv] [-d cachedir] [-j] [-t tal] -f file ..."
+	    "\n");
 	return 1;
 }
