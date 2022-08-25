@@ -1,4 +1,4 @@
-#	$OpenBSD: BOOT,v 1.11 2022/01/08 05:40:19 visa Exp $
+#	$OpenBSD: BOOT,v 1.12 2022/08/25 16:10:15 miod Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -73,4 +73,3 @@ sd*		at scsibus?
 pseudo-device	etherip		# pulls ether in kernel
 pseudo-device	octboot
 pseudo-device	rd 1
-pseudo-device	wsmux 2
