@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.10 2022/08/25 17:11:34 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.11 2022/08/25 17:31:26 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -34,10 +34,14 @@
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+extern int		 printpem;
+extern int		 verbose;
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -419,9 +423,26 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	if (outformats & FORMAT_JSON)
 		printf("\"\n}\n");
-	else
+	else {
 		printf("\n");
 
+		if (x509 == NULL)
+			goto out;
+		if (type == RTYPE_TAL || type == RTYPE_CRL)
+			goto out;
+
+		if (verbose) {
+			if (!X509_print_fp(stdout, x509))
+				errx(1, "X509_print_fp");
+		}
+
+		if (printpem) {
+			if (!PEM_write_X509(stdout, x509))
+				errx(1, "PEM_write_X509");
+		}
+	}
+
+ out:
 	X509_free(x509);
 	cert_free(cert);
 	crl_free(crl);

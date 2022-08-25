@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.68 2022/06/30 10:27:52 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.69 2022/08/25 17:31:26 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2022 $
+.Dd $Mdocdate: August 25 2022 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -34,6 +34,7 @@
 .Nm
 .Op Fl Vv
 .Op Fl d Ar cachedir
+.Op Fl j | p
 .Op Fl t Ar tal
 .Fl f
 .Ar
@@ -144,6 +145,8 @@ If the
 and
 .Fl j
 options are not specified this is the default.
+.It Fl p
+Print the encapsulated X.509 certificate in PEM format.
 .It Fl R
 Synchronize via RSYNC only.
 .It Fl r
