@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.655 2022/08/22 08:53:55 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.656 2022/08/25 17:25:25 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3973,4 +3973,14 @@ cpu_rnd_messybits(void)
 
 	nanotime(&ts);
 	return (ts.tv_nsec ^ (ts.tv_sec << 20));
+}
+
+void
+delay_init(void(*fn)(int), int fn_quality)
+{
+	static int cur_quality = 0;
+	if (fn_quality > cur_quality) {
+		delay_func = fn;
+		cur_quality = fn_quality;
+	}
 }

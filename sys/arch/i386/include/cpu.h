@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.177 2022/08/22 08:53:55 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.178 2022/08/25 17:25:25 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -302,6 +302,7 @@ void signotify(struct proc *);
  * We need a machine-independent name for this.
  */
 extern void (*delay_func)(int);
+void delay_init(void(*)(int), int);
 struct timeval;
 
 #define	DELAY(x)		(*delay_func)(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.279 2022/08/07 23:56:06 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.280 2022/08/25 17:25:25 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -2068,4 +2068,14 @@ check_context(const struct reg *regs, struct trapframe *tf)
 		return EINVAL;
 
 	return 0;
+}
+
+void
+delay_init(void(*fn)(int), int fn_quality)
+{
+	static int cur_quality = 0;
+	if (fn_quality > cur_quality) {
+		delay_func = fn;
+		cur_quality = fn_quality;
+	}
 }
