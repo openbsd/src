@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.9 2022/08/25 11:07:28 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.10 2022/08/25 17:11:34 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -272,9 +272,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	int is_ta = 0;
 
 	if (num++ > 0) {
-		if (outformats & FORMAT_JSON)
-			printf("\n");
-		else
+		if ((outformats & FORMAT_JSON) == 0)
 			printf("--\n");
 	}
 
@@ -420,7 +418,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	}
 
 	if (outformats & FORMAT_JSON)
-		printf("\"\n}");
+		printf("\"\n}\n");
 	else
 		printf("\n");
 
