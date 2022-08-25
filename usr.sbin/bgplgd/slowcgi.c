@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.3 2022/08/12 13:24:30 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.4 2022/08/25 16:49:18 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -387,7 +387,7 @@ slowcgi_listen(char *path, struct passwd *pw)
 	    0)) == -1)
 		lerr(1, "slowcgi_listen: socket");
 
-	bzero(&sun, sizeof(sun));
+	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
 	    sizeof(sun.sun_path))
@@ -681,7 +681,7 @@ slowcgi_request(int fd, short events, void *arg)
 
 	/* Make space for further reads */
 	if (c->buf_len > 0) {
-		bcopy(c->buf + c->buf_pos, c->buf, c->buf_len);
+		memmove(c->buf, c->buf + c->buf_pos, c->buf_len);
 		c->buf_pos = 0;
 	}
 	return;
@@ -789,11 +789,11 @@ parse_params(uint8_t *buf, uint16_t n, struct request *c, uint16_t id)
 			return;
 		}
 
-		bcopy(buf, env_entry->key, name_len);
+		memcpy(env_entry->key, buf, name_len);
 		buf += name_len;
 		n -= name_len;
 		env_entry->key[name_len] = '\0';
-		bcopy(buf, env_entry->val, val_len);
+		memcpy(env_entry->val, buf, val_len);
 		buf += val_len;
 		n -= val_len;
 		env_entry->val[val_len] = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.1 2022/06/28 16:11:30 claudio Exp $ */
+/*	$OpenBSD: qs.c,v 1.2 2022/08/25 16:49:18 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -148,7 +148,7 @@ valid_prefix(char *str)
 		p[0] = '\0';
 	}
 
-	bzero(&hints, sizeof(hints));
+	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_NUMERICHOST;
