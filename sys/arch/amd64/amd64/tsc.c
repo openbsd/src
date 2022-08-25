@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.25 2022/08/12 02:20:36 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.26 2022/08/25 17:38:16 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -109,7 +109,7 @@ tsc_identify(struct cpu_info *ci)
 
 	tsc_frequency = tsc_freq_cpuid(ci);
 	if (tsc_frequency > 0)
-		delay_func = tsc_delay;
+		delay_init(tsc_delay, 5000);
 }
 
 static inline int

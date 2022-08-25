@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.60 2022/08/15 04:17:50 daniel Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.61 2022/08/25 17:38:16 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -592,8 +592,7 @@ skip_calibration:
 		 * Now that the timer's calibrated, use the apic timer routines
 		 * for all our timing needs..
 		 */
-		if (delay_func == i8254_delay)
-			delay_func = lapic_delay;
+		delay_init(lapic_delay, 3000);
 		initclock_func = lapic_initclocks;
 	}
 }

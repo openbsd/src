@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.49 2022/08/15 04:17:50 daniel Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.50 2022/08/25 17:38:16 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -395,7 +395,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 * Now that the timer's calibrated, use the apic timer routines
 		 * for all our timing needs..
 		 */
-		delay_func = lapic_delay;
+		delay_init(lapic_delay, 3000);
 		initclock_func = lapic_initclocks;
 	}
 }

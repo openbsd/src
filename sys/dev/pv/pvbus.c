@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.24 2021/11/05 11:38:29 mpi Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.25 2022/08/25 17:38:16 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -319,9 +319,8 @@ pvbus_hyperv(struct pvbus_hv *hv)
 	    HYPERV_VERSION_EBX_MINOR_S;
 
 #if NHYPERV > 0
-	if (hv->hv_features & CPUID_HV_MSR_TIME_REFCNT &&
-	    delay_func == i8254_delay)
-		delay_func = hv_delay;
+	if (hv->hv_features & CPUID_HV_MSR_TIME_REFCNT)
+		delay_init(hv_delay, 4000);
 #endif
 }
 
