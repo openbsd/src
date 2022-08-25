@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.15 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.16 2022/08/25 17:43:34 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -18,17 +18,27 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
+struct acpitimer_softc {
+	struct device		sc_dev;
+
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+};
+
 int acpitimermatch(struct device *, void *, void *);
 void acpitimerattach(struct device *, struct device *, void *);
-
+void acpitimer_delay(int);
 u_int acpi_get_timecount(struct timecounter *tc);
+uint32_t acpitimer_read(struct acpitimer_softc *);
 
 static struct timecounter acpi_timecounter = {
 	.tc_get_timecount = acpi_get_timecount,
@@ -39,13 +49,6 @@ static struct timecounter acpi_timecounter = {
 	.tc_quality = 1000,
 	.tc_priv = NULL,
 	.tc_user = 0,
-};
-
-struct acpitimer_softc {
-	struct device		sc_dev;
-
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
 };
 
 const struct cfattach acpitimer_ca = {
@@ -98,18 +101,43 @@ acpitimerattach(struct device *parent, struct device *self, void *aux)
 	acpi_timecounter.tc_priv = sc;
 	acpi_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&acpi_timecounter);
+
+	delay_init(acpitimer_delay, 1000);
+
 #if defined(__amd64__)
 	extern void cpu_recalibrate_tsc(struct timecounter *);
 	cpu_recalibrate_tsc(&acpi_timecounter);
 #endif
 }
 
+void
+acpitimer_delay(int usecs)
+{
+	uint64_t count = 0, cycles;
+	struct acpitimer_softc *sc = acpi_timecounter.tc_priv;
+	uint32_t mask = acpi_timecounter.tc_counter_mask;
+	uint32_t val1, val2;
+
+	val2 = acpitimer_read(sc);
+	cycles = usecs * acpi_timecounter.tc_frequency / 1000000;
+	while (count < cycles) {
+		CPU_BUSY_CYCLE();
+		val1 = val2;
+		val2 = acpitimer_read(sc);
+		count += (val2 - val1) & mask;
+	}
+}
 
 u_int
 acpi_get_timecount(struct timecounter *tc)
 {
-	struct acpitimer_softc *sc = tc->tc_priv;
-	u_int u1, u2, u3;
+	return acpitimer_read(tc->tc_priv);
+}
+
+uint32_t
+acpitimer_read(struct acpitimer_softc *sc)
+{
+	uint32_t u1, u2, u3;
 
 	u2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0);
 	u3 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0);
