@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.26 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.27 2022/08/25 17:54:33 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -18,9 +18,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -31,7 +33,7 @@ int acpihpet_attached;
 int acpihpet_match(struct device *, void *, void *);
 void acpihpet_attach(struct device *, struct device *, void *);
 int acpihpet_activate(struct device *, int);
-
+void acpihpet_delay(int);
 u_int acpihpet_gettime(struct timecounter *tc);
 
 uint64_t	acpihpet_r(bus_space_tag_t _iot, bus_space_handle_t _ioh,
@@ -266,11 +268,26 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 	hpet_timecounter.tc_priv = sc;
 	hpet_timecounter.tc_name = sc->sc_dev.dv_xname;
 	tc_init(&hpet_timecounter);
+
+	delay_init(acpihpet_delay, 2000);
+
 #if defined(__amd64__)
 	extern void cpu_recalibrate_tsc(struct timecounter *);
 	cpu_recalibrate_tsc(&hpet_timecounter);
 #endif
 	acpihpet_attached++;
+}
+
+void
+acpihpet_delay(int usecs)
+{
+	uint64_t c, s;
+	struct acpihpet_softc *sc = hpet_timecounter.tc_priv;
+
+	s = acpihpet_r(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
+	c = usecs * hpet_timecounter.tc_frequency / 1000000;
+	while (acpihpet_r(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER) - s < c)
+		CPU_BUSY_CYCLE();
 }
 
 u_int
