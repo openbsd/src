@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.243 2022/08/10 14:17:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.244 2022/08/25 08:10:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1739,12 +1739,10 @@ nexthop_update(struct kroute_nexthop *msg)
 		TAILQ_REMOVE(&nexthop_runners, nh, runner_l);
 	}
 
-	if (msg->connected) {
+	if (msg->connected)
 		nh->flags |= NEXTHOP_CONNECTED;
-		nh->true_nexthop = nh->exit_nexthop;
-	} else
-		nh->true_nexthop = msg->gateway;
 
+	nh->true_nexthop = msg->gateway;
 	nh->nexthop_net = msg->net;
 	nh->nexthop_netlen = msg->netlen;
 

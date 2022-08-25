@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.295 2022/08/19 09:11:18 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.296 2022/08/25 08:10:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2265,11 +2265,11 @@ knexthop_send_update(struct knexthop *kn)
 		kr = kn->kroute;
 		n.valid = kroute_validate(kr);
 		n.connected = kr->flags & F_CONNECTED;
-		if (kr->nexthop.s_addr != 0) {
+		if (!n.connected) {
 			n.gateway.aid = AID_INET;
 			n.gateway.v4.s_addr = kr->nexthop.s_addr;
-		}
-		if (n.connected) {
+		} else {
+			n.gateway = n.nexthop;
 			n.net.aid = AID_INET;
 			n.net.v4.s_addr = kr->prefix.s_addr;
 			n.netlen = kr->prefixlen;
@@ -2279,13 +2279,12 @@ knexthop_send_update(struct knexthop *kn)
 		kr6 = kn->kroute;
 		n.valid = kroute6_validate(kr6);
 		n.connected = kr6->flags & F_CONNECTED;
-		if (memcmp(&kr6->nexthop, &in6addr_any,
-		    sizeof(struct in6_addr)) != 0) {
+		if (!n.connected) {
 			n.gateway.aid = AID_INET6;
 			n.gateway.v6 = kr6->nexthop;
 			n.gateway.scope_id = kr6->nexthop_scope_id;
-		}
-		if (n.connected) {
+		} else {
+			n.gateway = n.nexthop;
 			n.net.aid = AID_INET6;
 			n.net.v6 = kr6->prefix;
 			n.net.scope_id = kr6->prefix_scope_id;
