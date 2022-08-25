@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.15 2011/06/30 15:04:58 jsing Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.16 2022/08/25 17:09:54 kn Exp $	*/
 
 /*
  * Copyright (c) 2000, Todd C. Miller.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/limits.h>
 #include <sys/disk.h>
 #include <sys/dkio.h>
+#include <sys/stat.h>
 
 #include "util.h"
 
@@ -63,8 +64,23 @@ opendev(const char *path, int oflags, int dflags, char **realpath)
 		prefix = "r";			/* character device */
 
 	if ((slash = strchr(path, '/'))) {
+		struct stat sb;
+
 		strlcpy(namebuf, path, sizeof(namebuf));
 		fd = open(namebuf, oflags);
+
+		if (fd != -1) {
+			if (fstat(fd, &sb) == -1) {
+				close(fd);
+				fd = -1;
+			} else if ((dflags & OPENDEV_BLCK) ?
+			    !S_ISBLK(sb.st_mode) :
+			    !S_ISCHR(sb.st_mode)) {
+				close(fd);
+				fd = -1;
+				errno = ENOTBLK;
+			}
+		}
 	} else if (isduid(path, dflags)) {
 		strlcpy(namebuf, path, sizeof(namebuf));
 		if ((fd = open("/dev/diskmap", oflags)) != -1) {
