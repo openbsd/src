@@ -1,4 +1,4 @@
-/*	$Id: test-rsc.c,v 1.2 2022/05/31 21:35:46 tb Exp $ */
+/*	$Id: test-rsc.c,v 1.3 2022/08/26 06:28:41 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,6 @@ main(int argc, char *argv[])
 {
 	int		 c, i, ppem = 0, verb = 0;
 	struct rsc	*p;
-	BIO		*bio_out = NULL;
 	X509		*xp = NULL;
 	unsigned char	*buf;
 	size_t		 len;
@@ -57,8 +56,6 @@ main(int argc, char *argv[])
 			if (ppem)
 				break;
 			ppem = 1;
-			if ((bio_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
-				errx(1, "BIO_new_fp");
 			break;
 		case 'v':
 			verb++;
@@ -82,7 +79,7 @@ main(int argc, char *argv[])
 		if (verb)
 			rsc_print(xp, p);
 		if (ppem) {
-			if (!PEM_write_bio_X509(bio_out, xp))
+			if (!PEM_write_X509(stdout, xp))
 				errx(1,
 				    "PEM_write_bio_X509: unable to write cert");
 		}
@@ -91,7 +88,6 @@ main(int argc, char *argv[])
 		X509_free(xp);
 	}
 
-	BIO_free(bio_out);
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
