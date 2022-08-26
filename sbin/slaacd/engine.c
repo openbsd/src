@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.83 2022/07/23 16:16:25 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.84 2022/08/26 00:02:08 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -309,6 +309,7 @@ int64_t			 proposal_id;
 
 #define	CASE(x) case x : return #x
 
+#ifndef SMALL
 static const char*
 if_state_name(enum if_state ifs)
 {
@@ -332,6 +333,7 @@ proposal_state_name(enum proposal_state ps)
 	CASE(PROPOSAL_STALE);
 	}
 }
+#endif
 
 void
 engine_sig_handler(int sig, short event, void *arg)
