@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.564 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.565 2022/08/26 14:10:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -358,10 +358,10 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct peer		 p;
-	struct peer_config	 pconf;
 	struct ctl_show_set	 cset;
 	struct ctl_show_rib	 csr;
 	struct ctl_show_rib_request	req;
+	struct session_up	 sup;
 	struct rde_peer		*peer;
 	struct rde_aspath	*asp;
 	struct rde_hashstats	 rdehash;
@@ -373,6 +373,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	size_t			 aslen;
 	int			 verbose;
 	uint16_t		 len;
+	uint8_t			 aid;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -382,11 +383,6 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 
 		switch (imsg.hdr.type) {
 		case IMSG_UPDATE:
-		case IMSG_SESSION_UP:
-		case IMSG_SESSION_DOWN:
-		case IMSG_SESSION_STALE:
-		case IMSG_SESSION_FLUSH:
-		case IMSG_SESSION_RESTARTED:
 		case IMSG_REFRESH:
 			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
 				log_warnx("rde_dispatch: unknown peer id %d",
@@ -396,13 +392,70 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			peer_imsg_push(peer, &imsg);
 			break;
 		case IMSG_SESSION_ADD:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(pconf))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(struct peer_config))
 				fatalx("incorrect size of session request");
-			memcpy(&pconf, imsg.data, sizeof(pconf));
-			peer_add(imsg.hdr.peerid, &pconf);
+			peer = peer_add(imsg.hdr.peerid, imsg.data);
 			/* make sure rde_eval_all is on if needed. */
-			if (pconf.flags & PEERFLAG_EVALUATE_ALL)
+			if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
 				rde_eval_all = 1;
+			break;
+		case IMSG_SESSION_UP:
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("%s: unknown peer id %d",
+				    "IMSG_SESSION_UP", imsg.hdr.peerid);
+				break;
+			}
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
+				fatalx("incorrect size of session request");
+			memcpy(&sup, imsg.data, sizeof(sup));
+			peer_up(peer, &sup);
+			/* make sure rde_eval_all is on if needed. */
+			if (peer_has_add_path(peer, AID_UNSPEC, CAPA_AP_SEND))
+				rde_eval_all = 1;
+			break;
+		case IMSG_SESSION_DOWN:
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("%s: unknown peer id %d",
+				    "IMSG_SESSION_DOWN", imsg.hdr.peerid);
+				break;
+			}
+			peer_down(peer, NULL);
+			break;
+		case IMSG_SESSION_STALE:
+		case IMSG_SESSION_NOGRACE:
+		case IMSG_SESSION_FLUSH:
+		case IMSG_SESSION_RESTARTED:
+			if ((peer = peer_get(imsg.hdr.peerid)) == NULL) {
+				log_warnx("%s: unknown peer id %d",
+				    "graceful restart", imsg.hdr.peerid);
+				break;
+			}
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
+				log_warnx("%s: wrong imsg len", __func__);
+				break;
+			}
+			memcpy(&aid, imsg.data, sizeof(aid));
+			if (aid >= AID_MAX) {
+				log_warnx("%s: bad AID", __func__);
+				break;
+			}
+
+			switch (imsg.hdr.type) {
+			case IMSG_SESSION_STALE:
+			case IMSG_SESSION_NOGRACE:
+				peer_stale(peer, aid,
+				    imsg.hdr.type == IMSG_SESSION_NOGRACE);
+				break;
+			case IMSG_SESSION_FLUSH:
+				peer_flush(peer, aid, peer->staletime[aid]);
+				break;
+			case IMSG_SESSION_RESTARTED:
+				if (peer->staletime[aid])
+					peer_flush(peer, aid,
+					    peer->staletime[aid]);
+				break;
+			}
 			break;
 		case IMSG_NETWORK_ADD:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -1069,9 +1122,7 @@ void
 rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 {
 	struct route_refresh rr;
-	struct session_up sup;
 	struct imsg imsg;
-	uint8_t aid;
 
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
@@ -1081,48 +1132,6 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		if (peer->state != PEER_UP)
 			break;
 		rde_update_dispatch(peer, &imsg);
-		break;
-	case IMSG_SESSION_UP:
-		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(sup))
-			fatalx("incorrect size of session request");
-		memcpy(&sup, imsg.data, sizeof(sup));
-		if (peer_up(peer, &sup) == -1) {
-			peer->state = PEER_DOWN;
-			imsg_compose(ibuf_se, IMSG_SESSION_DOWN, peer->conf.id,
-			    0, -1, NULL, 0);
-		}
-		/* make sure rde_eval_all is on if needed. */
-		if (peer_has_add_path(peer, AID_UNSPEC, CAPA_AP_SEND))
-			rde_eval_all = 1;
-		break;
-	case IMSG_SESSION_DOWN:
-		peer_down(peer, NULL);
-		break;
-	case IMSG_SESSION_STALE:
-	case IMSG_SESSION_FLUSH:
-	case IMSG_SESSION_RESTARTED:
-		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(aid)) {
-			log_warnx("%s: wrong imsg len", __func__);
-			break;
-		}
-		memcpy(&aid, imsg.data, sizeof(aid));
-		if (aid >= AID_MAX) {
-			log_warnx("%s: bad AID", __func__);
-			break;
-		}
-
-		switch (imsg.hdr.type) {
-		case IMSG_SESSION_STALE:
-			peer_stale(peer, aid);
-			break;
-		case IMSG_SESSION_FLUSH:
-			peer_flush(peer, aid, peer->staletime[aid]);
-			break;
-		case IMSG_SESSION_RESTARTED:
-			if (peer->staletime[aid])
-				peer_flush(peer, aid, peer->staletime[aid]);
-			break;
-		}
 		break;
 	case IMSG_REFRESH:
 		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rr)) {

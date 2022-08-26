@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.21 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.22 2022/08/26 14:10:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -104,9 +104,6 @@ peer_init(uint32_t hashsize)
 	pc.id = PEER_ID_SELF;
 
 	peerself = peer_add(PEER_ID_SELF, &pc);
-	if (peerself == NULL)
-		fatalx("peer_init add self");
-
 	peerself->state = PEER_UP;
 }
 
@@ -194,7 +191,7 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 
 	if ((peer = peer_get(id))) {
 		memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
-		return (NULL);
+		return (peer);
 	}
 
 	peer = calloc(1, sizeof(struct rde_peer));
@@ -408,7 +405,7 @@ rde_up_dump_done(void *ptr, uint8_t aid)
 /*
  * Session got established, bring peer up, load RIBs do initial table dump.
  */
-int
+void
 peer_up(struct rde_peer *peer, struct session_up *sup)
 {
 	uint8_t	 i;
@@ -418,6 +415,8 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		 * There is a race condition when doing PEER_ERR -> PEER_DOWN.
 		 * So just do a full reset of the peer here.
 		 */
+		rib_dump_terminate(peer);
+		peer_imsg_flush(peer);
 		if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
 		    peer_adjout_clear_upcall, NULL, NULL) == -1)
 			fatal("%s: prefix_dump_new", __func__);
@@ -448,8 +447,6 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		if (peer->capa.mp[i])
 			peer_dump(peer, i);
 	}
-
-	return (0);
 }
 
 /*
@@ -461,8 +458,12 @@ peer_down(struct rde_peer *peer, void *bula)
 {
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
-	/* stop all pending dumps which may depend on this peer */
+	/*
+	 * stop all pending dumps which may depend on this peer
+	 * and flush all pending imsg from the SE.
+	 */
 	rib_dump_terminate(peer);
+	peer_imsg_flush(peer);
 
 	/* flush Adj-RIB-Out */
 	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
@@ -473,8 +474,6 @@ peer_down(struct rde_peer *peer, void *bula)
 	peer_flush(peer, AID_UNSPEC, 0);
 	peer->prefix_cnt = 0;
 	peer->prefix_out_cnt = 0;
-
-	peer_imsg_flush(peer);
 
 	LIST_REMOVE(peer, hash_l);
 	LIST_REMOVE(peer, peer_l);
@@ -511,7 +510,7 @@ peer_flush(struct rde_peer *peer, uint8_t aid, time_t staletime)
  * is set to the current timestamp for identifying stale routes in Adj-RIB-In.
  */
 void
-peer_stale(struct rde_peer *peer, uint8_t aid)
+peer_stale(struct rde_peer *peer, uint8_t aid, int flushall)
 {
 	time_t now;
 
@@ -522,9 +521,19 @@ peer_stale(struct rde_peer *peer, uint8_t aid)
 	peer->staletime[aid] = now = getmonotime();
 	peer->state = PEER_DOWN;
 
+	/*
+	 * stop all pending dumps which may depend on this peer
+	 * and flush all pending imsg from the SE.
+	 */
+	rib_dump_terminate(peer);
+	peer_imsg_flush(peer);
+
+	if (flushall)
+		peer_flush(peer, aid, 0);
+
 	/* XXX this is not quite correct */
 	/* mark Adj-RIB-Out stale for this peer */
-	if (prefix_dump_new(peer, AID_UNSPEC, 0, NULL,
+	if (prefix_dump_new(peer, aid, 0, NULL,
 	    peer_adjout_stale_upcall, NULL, NULL) == -1)
 		fatal("%s: prefix_dump_new", __func__);
 

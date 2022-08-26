@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.433 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.434 2022/08/26 14:10:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1760,7 +1760,7 @@ session_graceful_restart(struct peer *p)
 			    aid2str(i));
 			p->capa.neg.grestart.flags[i] |= CAPA_GR_RESTARTING;
 		} else if (p->capa.neg.mp[i]) {
-			if (imsg_rde(IMSG_SESSION_FLUSH, p->conf.id,
+			if (imsg_rde(IMSG_SESSION_NOGRACE, p->conf.id,
 			    &i, sizeof(i)) == -1)
 				return (-1);
 			log_peer_warnx(&p->conf,
