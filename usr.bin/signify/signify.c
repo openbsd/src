@@ -1,4 +1,4 @@
-/* $OpenBSD: signify.c,v 1.135 2020/01/21 12:13:21 tb Exp $ */
+/* $OpenBSD: signify.c,v 1.136 2022/08/26 00:24:56 kn Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -751,13 +751,14 @@ verifyzdata(uint8_t *zdata, unsigned long long zdatalen,
 int
 main(int argc, char **argv)
 {
-	const char *pubkeyfile = NULL, *seckeyfile = NULL, *msgfile = NULL,
-	    *sigfile = NULL;
+	const char *pubkeyfile = NULL, *msgfile = NULL, *sigfile = NULL;
 	char sigfilebuf[PATH_MAX];
-	const char *comment = "signify";
 	char *keytype = NULL;
-	int ch;
+#ifndef VERIFYONLY
+	const char *seckeyfile = NULL, *comment = "signify";
 	int none = 0;
+#endif
+	int ch;
 	int embedded = 0;
 	int quiet = 0;
 	int gzip = 0;
@@ -790,6 +791,15 @@ main(int argc, char **argv)
 				usage(NULL);
 			verb = SIGN;
 			break;
+		case 'c':
+			comment = optarg;
+			break;
+		case 'n':
+			none = 1;
+			break;
+		case 's':
+			seckeyfile = optarg;
+			break;
 		case 'z':
 			gzip = 1;
 			break;
@@ -799,26 +809,17 @@ main(int argc, char **argv)
 				usage(NULL);
 			verb = VERIFY;
 			break;
-		case 'c':
-			comment = optarg;
-			break;
 		case 'e':
 			embedded = 1;
 			break;
 		case 'm':
 			msgfile = optarg;
 			break;
-		case 'n':
-			none = 1;
-			break;
 		case 'p':
 			pubkeyfile = optarg;
 			break;
 		case 'q':
 			quiet = 1;
-			break;
-		case 's':
-			seckeyfile = optarg;
 			break;
 		case 't':
 			keytype = optarg;
