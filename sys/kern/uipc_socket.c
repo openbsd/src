@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.284 2022/08/21 16:22:17 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.285 2022/08/26 16:17:38 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1156,7 +1156,7 @@ dontblock:
 		SBLASTRECORDCHK(&so->so_rcv, "soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			pru_rcvd(so, flags);
+			pru_rcvd(so);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
@@ -1521,7 +1521,7 @@ somove(struct socket *so, int wait)
 	if (m == NULL) {
 		sbdroprecord(so, &so->so_rcv);
 		if (so->so_proto->pr_flags & PR_WANTRCVD && so->so_pcb)
-			pru_rcvd(so, 0);
+			pru_rcvd(so);
 		goto nextpkt;
 	}
 
@@ -1627,7 +1627,7 @@ somove(struct socket *so, int wait)
 
 	/* Send window update to source peer as receive buffer has changed. */
 	if (so->so_proto->pr_flags & PR_WANTRCVD && so->so_pcb)
-		pru_rcvd(so, 0);
+		pru_rcvd(so);
 
 	/* Receive buffer did shrink by len bytes, adjust oob. */
 	state = so->so_state;

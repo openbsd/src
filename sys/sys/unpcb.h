@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.33 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.34 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ int	uipc_connect(struct socket *, struct mbuf *);
 int	uipc_accept(struct socket *, struct mbuf *);
 int	uipc_disconnect(struct socket *);
 int	uipc_shutdown(struct socket *);
+int	uipc_rcvd(struct socket *);
 
 void	unp_init(void);
 int	unp_bind(struct unpcb *, struct mbuf *, struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.341 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.342 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	    struct mbuf *, struct proc *);
 int	route_disconnect(struct socket *);
 int	route_shutdown(struct socket *);
+int	route_rcvd(struct socket *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -255,17 +256,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		nam->m_len = route_src.sa_len;
 		break;
 
-	case PRU_RCVD:
-		/*
-		 * If we are in a FLUSH state, check if the buffer is
-		 * empty so that we can clear the flag.
-		 */
-		if (((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0) &&
-		    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
-		    rop->rop_socket->so_rcv.sb_hiwat)))
-			rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
-		break;
-
 	case PRU_RCVOOB:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
@@ -371,6 +361,25 @@ int
 route_shutdown(struct socket *so)
 {
 	socantsendmore(so);
+	return (0);
+}
+
+int
+route_rcvd(struct socket *so)
+{
+	struct rtpcb *rop = sotortpcb(so);
+
+	soassertlocked(so);
+
+	/*
+	 * If we are in a FLUSH state, check if the buffer is
+	 * empty so that we can clear the flag.
+	 */
+	if (((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0) &&
+	    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
+	    rop->rop_socket->so_rcv.sb_hiwat)))
+		rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
+
 	return (0);
 }
 
@@ -2415,6 +2424,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_detach	= route_detach,
 	.pru_disconnect	= route_disconnect,
 	.pru_shutdown	= route_shutdown,
+	.pru_rcvd	= route_rcvd,
 };
 
 const struct protosw routesw[] = {

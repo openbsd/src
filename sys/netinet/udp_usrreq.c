@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.289 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.290 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1164,7 +1164,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
 	case PRU_PROTOSEND:
-	case PRU_RCVD:
 	case PRU_RCVOOB:
 		error =  EOPNOTSUPP;
 		break;

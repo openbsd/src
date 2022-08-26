@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.194 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.195 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -121,6 +121,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_accept	= tcp_accept,
 	.pru_disconnect	= tcp_disconnect,
 	.pru_shutdown	= tcp_shutdown,
+	.pru_rcvd	= tcp_rcvd,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -222,21 +223,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * After a receive, possibly send window update to peer.
-	 */
-	case PRU_RCVD:
-		/*
-		 * soreceive() calls this function when a user receives
-		 * ancillary data on a listening socket. We don't call
-		 * tcp_output in such a case, since there is no header
-		 * template for a listening socket and hence the kernel
-		 * will panic.
-		 */
-		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
-			(void) tcp_output(tp);
 		break;
 
 	/*
@@ -912,6 +898,40 @@ out:
 	if (otp)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_SHUTDOWN, 0);
 	return (error);
+}
+
+/*
+ * After a receive, possibly send window update to peer.
+ */
+int
+tcp_rcvd(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG)
+		ostate = tp->t_state;
+
+	/*
+	 * soreceive() calls this function when a user receives
+	 * ancillary data on a listening socket. We don't call
+	 * tcp_output in such a case, since there is no header
+	 * template for a listening socket and hence the kernel
+	 * will panic.
+	 */
+	if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
+		(void) tcp_output(tp);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_RCVD, 0);
+	return (0);
 }
 
 /*

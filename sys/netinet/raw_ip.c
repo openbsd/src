@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.137 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.138 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -537,7 +537,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 * Not supported.
 	 */
 	case PRU_SENDOOB:
-	case PRU_RCVD:
 	case PRU_RCVOOB:
 		error = EOPNOTSUPP;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.174 2022/08/22 21:18:48 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.175 2022/08/26 16:17:39 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -136,6 +136,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_accept	= uipc_accept,
 	.pru_disconnect	= uipc_disconnect,
 	.pru_shutdown	= uipc_shutdown,
+	.pru_rcvd	= uipc_rcvd,
 };
 
 void
@@ -240,32 +241,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_connid.gid = p->p_ucred->cr_gid;
 			unp2->unp_connid.pid = p->p_p->ps_pid;
 			unp2->unp_flags |= UNP_FEIDS;
-		}
-		break;
-
-	case PRU_RCVD:
-		switch (so->so_type) {
-
-		case SOCK_DGRAM:
-			panic("uipc 1");
-			/*NOTREACHED*/
-
-		case SOCK_STREAM:
-		case SOCK_SEQPACKET:
-			if ((so2 = unp_solock_peer(so)) == NULL)
-				break;
-			/*
-			 * Adjust backpressure on sender
-			 * and wakeup any waiting to write.
-			 */
-			so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
-			so2->so_snd.sb_cc = so->so_rcv.sb_cc;
-			sowwakeup(so2);
-			sounlock(so2);
-			break;
-
-		default:
-			panic("uipc 2");
 		}
 		break;
 
@@ -567,6 +542,37 @@ uipc_shutdown(struct socket *so)
 
 	socantsendmore(so);
 	unp_shutdown(unp);
+	return (0);
+}
+
+int
+uipc_rcvd(struct socket *so)
+{
+	struct socket *so2;
+
+	switch (so->so_type) {
+	case SOCK_DGRAM:
+		panic("uipc 1");
+		/*NOTREACHED*/
+
+	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
+		if ((so2 = unp_solock_peer(so)) == NULL)
+			break;
+		/*
+		 * Adjust backpressure on sender
+		 * and wakeup any waiting to write.
+		 */
+		so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
+		so2->so_snd.sb_cc = so->so_rcv.sb_cc;
+		sowwakeup(so2);
+		sounlock(so2);
+		break;
+
+	default:
+		panic("uipc 2");
+	}
+
 	return (0);
 }
 
