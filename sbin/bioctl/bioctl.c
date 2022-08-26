@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.148 2022/08/19 17:49:10 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.149 2022/08/26 09:14:00 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -290,8 +290,8 @@ usage(void)
 		"[-u channel:target[.lun]] "
 		"device\n"
 		"       %s [-dhiPqsv] "
-		"[-C flag[,flag,...]] [-c raidlevel] [-k keydisk]\n"
-		"\t[-l special[,special,...]] "
+		"[-C flag[,...]] [-c raidlevel] [-k keydisk]\n"
+		"\t[-l chunk[,...]] "
 		"[-O device | channel:target[.lun]]\n"
 		"\t[-p passfile] [-R chunk | channel:target[.lun]]\n"
 		"\t[-r rounds] "
