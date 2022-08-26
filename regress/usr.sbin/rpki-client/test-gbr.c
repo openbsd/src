@@ -1,4 +1,4 @@
-/*	$Id: test-gbr.c,v 1.10 2022/08/26 06:28:41 tb Exp $ */
+/*	$Id: test-gbr.c,v 1.11 2022/08/26 06:32:03 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -78,8 +78,7 @@ main(int argc, char *argv[])
 			gbr_print(xp, p);
 		if (ppem) {
 			if (!PEM_write_X509(stdout, xp))
-				errx(1,
-				    "PEM_write_bio_X509: unable to write cert");
+				errx(1, "PEM_write_X509: unable to write cert");
 		}
 		free(buf);
 		gbr_free(p);
