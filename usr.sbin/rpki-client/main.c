@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.211 2022/08/25 18:12:05 job Exp $ */
+/*	$OpenBSD: main.c,v 1.212 2022/08/26 11:04:13 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -674,16 +674,15 @@ load_skiplist(const char *slf)
 	struct skiplistentry	*sle;
 	FILE			*fp;
 	char			*line = NULL;
-	size_t			 linesize = 0, s;
-	ssize_t			 linelen;
+	size_t			 linesize = 0, linelen, s;
 
 	if ((fp = fopen(slf, "r")) == NULL) {
-		if (strcmp(slf, DEFAULT_SKIPLIST_FILE) != 0)
-			errx(1, "failed to open skiplist %s", slf);
-		return;
+		if (errno == ENOENT && strcmp(slf, DEFAULT_SKIPLIST_FILE) == 0)
+			return;
+		err(1, "failed to open %s", slf);
 	}
 
-	while ((linelen = getline(&line, &linesize, fp)) != -1) {
+	while (getline(&line, &linesize, fp) != -1) {
 		/* just eat comment lines or empty lines*/
 		if (line[0] == '#' || line[0] == '\n')
 			continue;
@@ -695,9 +694,10 @@ load_skiplist(const char *slf)
 		 * Ignore anything after comment sign, whitespaces,
 		 * also chop off LF or CR.
 		 */
-		line[strcspn(line, " #\r\n\t")] = 0;
+		linelen = strcspn(line, " #\r\n\t");
+		line[linelen] = '\0';
 
-		for (s = 0; s < strlen(line); s++)
+		for (s = 0; s < linelen; s++)
 			if (!isalnum((unsigned char)line[s]) &&
 			    !ispunct((unsigned char)line[s]))
 				errx(1, "invalid entry in skiplist: %s", line);
