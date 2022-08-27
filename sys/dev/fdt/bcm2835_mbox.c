@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_mbox.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
+/*     $OpenBSD: bcm2835_mbox.c,v 1.4 2022/08/27 20:31:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -74,7 +74,6 @@ struct bcmmbox_softc {
 
 	void *sc_ih;
 
-	struct mutex sc_lock;
 	struct mutex sc_intr_lock;
 	int sc_chan[BCMMBOX_NUM_CHANNELS];
 	uint32_t sc_mbox[BCMMBOX_NUM_CHANNELS];
@@ -119,7 +118,6 @@ bcmmbox_attach(struct device *parent, struct device *self, void *aux)
 	}
 	bcmmbox_sc = sc;
 
-	mtx_init(&sc->sc_lock, IPL_NONE);
 	mtx_init(&sc->sc_intr_lock, IPL_VM);
 
 	if (faa->fa_nreg < 1) {
