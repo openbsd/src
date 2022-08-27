@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_scalb.S,v 1.5 2016/09/12 19:47:02 guenther Exp $ */
+/*	$OpenBSD: e_scalb.S,v 1.6 2022/08/27 08:30:18 tb Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -6,7 +6,7 @@
 
 #include "DEFS.h"
 
-ENTRY(scalb)
+ENTRY_NB(scalb)
 	fldl	12(%esp)
 	fldl	4(%esp)
 	fscale
