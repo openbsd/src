@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.4 2022/08/21 19:39:44 jsing Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.5 2022/08/27 09:12:55 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -57,6 +57,9 @@ static ssize_t
 tls13_quic_handshake_read_cb(void *buf, size_t n, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
+
+	if (ctx->hs->tls13.quic_read_buffer == NULL)
+		return TLS13_IO_WANT_POLLIN;
 
 	return tls_buffer_read(ctx->hs->tls13.quic_read_buffer, buf, n);
 }
