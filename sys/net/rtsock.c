@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.342 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.343 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -117,6 +117,8 @@ int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 int	route_disconnect(struct socket *);
 int	route_shutdown(struct socket *);
 int	route_rcvd(struct socket *);
+int	route_send(struct socket *, struct mbuf *, struct mbuf *,
+	    struct mbuf *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -260,14 +262,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
-	case PRU_SEND:
-		if (nam) {
-			error = EISCONN;
-			break;
-		}
-		error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
-		m = NULL;
-		break;
 	default:
 		panic("route_usrreq");
 	}
@@ -381,6 +375,34 @@ route_rcvd(struct socket *so)
 		rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
 
 	return (0);
+}
+
+int
+route_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	int error;
+
+	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
+
+	if (nam) {
+		error = EISCONN;
+		goto out;
+	}
+
+	error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+	m = NULL;
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
 }
 
 int
@@ -2425,6 +2447,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_disconnect	= route_disconnect,
 	.pru_shutdown	= route_shutdown,
 	.pru_rcvd	= route_rcvd,
+	.pru_send	= route_send,
 };
 
 const struct protosw routesw[] = {

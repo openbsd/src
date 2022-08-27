@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.158 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.159 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_connect	= rip6_connect,
 	.pru_disconnect	= rip6_disconnect,
 	.pru_shutdown	= rip6_shutdown,
+	.pru_send	= rip6_send,
 };
 
 /*
@@ -609,42 +610,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	/*
-	 * Ship a packet out. The appropriate raw output
-	 * routine handles any messaging necessary.
-	 */
-	case PRU_SEND:
-	{
-		struct sockaddr_in6 dst;
-
-		/* always copy sockaddr to avoid overwrites */
-		memset(&dst, 0, sizeof(dst));
-		dst.sin6_family = AF_INET6;
-		dst.sin6_len = sizeof(dst);
-		if (so->so_state & SS_ISCONNECTED) {
-			if (nam) {
-				error = EISCONN;
-				break;
-			}
-			dst.sin6_addr = in6p->inp_faddr6;
-		} else {
-			struct sockaddr_in6 *addr6;
-
-			if (nam == NULL) {
-				error = ENOTCONN;
-				break;
-			}
-			if ((error = in6_nam2sin6(nam, &addr6)))
-				break;
-			dst.sin6_addr = addr6->sin6_addr;
-			dst.sin6_scope_id = addr6->sin6_scope_id;
-		}
-		error = rip6_output(m, so, sin6tosa(&dst), control);
-		control = NULL;
-		m = NULL;
-		break;
-	}
-
 	case PRU_SENSE:
 		/*
 		 * stat: don't bother with a blocksize
@@ -804,6 +769,54 @@ rip6_shutdown(struct socket *so)
 	soassertlocked(so);
 	socantsendmore(so);
 	return (0);
+}
+
+int
+rip6_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+	struct sockaddr_in6 dst;
+	int error;
+
+	soassertlocked(so);
+
+	/*
+	 * Ship a packet out. The appropriate raw output
+	 * routine handles any messaging necessary.
+	 */
+
+	/* always copy sockaddr to avoid overwrites */
+	memset(&dst, 0, sizeof(dst));
+	dst.sin6_family = AF_INET6;
+	dst.sin6_len = sizeof(dst);
+	if (so->so_state & SS_ISCONNECTED) {
+		if (nam) {
+			error = EISCONN;
+			goto out;
+		}
+		dst.sin6_addr = in6p->inp_faddr6;
+	} else {
+		struct sockaddr_in6 *addr6;
+
+		if (nam == NULL) {
+			error = ENOTCONN;
+			goto out;
+		}
+		if ((error = in6_nam2sin6(nam, &addr6)))
+			goto out;
+		dst.sin6_addr = addr6->sin6_addr;
+		dst.sin6_scope_id = addr6->sin6_scope_id;
+	}
+	error = rip6_output(m, so, sin6tosa(&dst), control);
+	control = NULL;
+	m = NULL;
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
 }
 
 int

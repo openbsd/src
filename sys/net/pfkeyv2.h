@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.92 2022/03/02 09:27:34 claudio Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.93 2022/08/27 20:28:01 mvs Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -412,7 +412,7 @@ int pfkeyv2_acquire(struct ipsec_policy *, union sockaddr_union *,
 
 int pfkeyv2_get(struct tdb *, void **, void **, int *, int *);
 int pfkeyv2_policy(struct ipsec_acquire *, void **, void **, int *);
-int pfkeyv2_send(struct socket *, void *, int);
+int pfkeyv2_dosend(struct socket *, void *, int);
 int pfkeyv2_sendmessage(void **, int, struct socket *, u_int8_t, int, u_int);
 int pfkeyv2_dump_policy(struct ipsec_policy *, void **, void **, int *);
 int pfkeyv2_dump_walker(struct tdb *, void *, int);

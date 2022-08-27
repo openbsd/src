@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.195 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.196 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_disconnect	= tcp_disconnect,
 	.pru_shutdown	= tcp_shutdown,
 	.pru_rcvd	= tcp_rcvd,
+	.pru_send	= tcp_send,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -223,15 +224,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Do a send by putting data in output queue and updating urgent
-	 * marker if URG set.  Possibly send more data.
-	 */
-	case PRU_SEND:
-		sbappendstream(so, &so->so_snd, m);
-		error = tcp_output(tp);
 		break;
 
 	/*
@@ -932,6 +924,42 @@ tcp_rcvd(struct socket *so)
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_RCVD, 0);
 	return (0);
+}
+
+/*
+ * Do a send by putting data in output queue and updating urgent
+ * marker if URG set.  Possibly send more data.
+ */
+int
+tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		goto out;
+
+	if (so->so_options & SO_DEBUG)
+		ostate = tp->t_state;
+
+	sbappendstream(so, &so->so_snd, m);
+	m = NULL;
+
+	error = tcp_output(tp);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_SEND, 0);
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
 }
 
 /*

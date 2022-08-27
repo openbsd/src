@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.175 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.176 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -137,6 +137,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_disconnect	= uipc_disconnect,
 	.pru_shutdown	= uipc_shutdown,
 	.pru_rcvd	= uipc_rcvd,
+	.pru_send	= uipc_send,
 };
 
 void
@@ -242,102 +243,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_connid.pid = p->p_p->ps_pid;
 			unp2->unp_flags |= UNP_FEIDS;
 		}
-		break;
-
-	case PRU_SEND:
-		if (control) {
-			sounlock(so);
-			error = unp_internalize(control, p);
-			solock(so);
-			if (error)
-				break;
-		}
-		switch (so->so_type) {
-
-		case SOCK_DGRAM: {
-			const struct sockaddr *from;
-
-			if (nam) {
-				if (unp->unp_conn) {
-					error = EISCONN;
-					break;
-				}
-				error = unp_connect(so, nam, p);
-				if (error)
-					break;
-			}
-
-			if ((so2 = unp_solock_peer(so)) == NULL) {
-				if (nam != NULL)
-					error = ECONNREFUSED;
-				else
-					error = ENOTCONN;
-				break;
-			}
-
-			if (unp->unp_addr)
-				from = mtod(unp->unp_addr, struct sockaddr *);
-			else
-				from = &sun_noname;
-			if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
-				sorwakeup(so2);
-				m = NULL;
-				control = NULL;
-			} else
-				error = ENOBUFS;
-
-			if (so2 != so)
-				sounlock(so2);
-
-			if (nam)
-				unp_disconnect(unp);
-			break;
-		}
-
-		case SOCK_STREAM:
-		case SOCK_SEQPACKET:
-			if (so->so_state & SS_CANTSENDMORE) {
-				error = EPIPE;
-				break;
-			}
-			if ((so2 = unp_solock_peer(so)) == NULL) {
-				error = ENOTCONN;
-				break;
-			}
-
-			/*
-			 * Send to paired receive port, and then raise
-			 * send buffer counts to maintain backpressure.
-			 * Wake up readers.
-			 */
-			if (control) {
-				if (sbappendcontrol(so2, &so2->so_rcv, m,
-				    control)) {
-					control = NULL;
-				} else {
-					sounlock(so2);
-					error = ENOBUFS;
-					break;
-				}
-			} else if (so->so_type == SOCK_SEQPACKET)
-				sbappendrecord(so2, &so2->so_rcv, m);
-			else
-				sbappend(so2, &so2->so_rcv, m);
-			so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
-			so->so_snd.sb_cc = so2->so_rcv.sb_cc;
-			if (so2->so_rcv.sb_cc > 0)
-				sorwakeup(so2);
-
-			sounlock(so2);
-			m = NULL;
-			break;
-
-		default:
-			panic("uipc 4");
-		}
-		/* we need to undo unp_internalize in case of errors */
-		if (control && error)
-			unp_dispose(control);
 		break;
 
 	case PRU_ABORT:
@@ -574,6 +479,115 @@ uipc_rcvd(struct socket *so)
 	}
 
 	return (0);
+}
+
+int
+uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
+	int error;
+
+	if (control) {
+		sounlock(so);
+		error = unp_internalize(control, curproc);
+		solock(so);
+		if (error)
+			goto out;
+	}
+
+	switch (so->so_type) {
+	case SOCK_DGRAM: {
+		const struct sockaddr *from;
+
+		if (nam) {
+			if (unp->unp_conn) {
+				error = EISCONN;
+				break;
+			}
+			error = unp_connect(so, nam, curproc);
+			if (error)
+				break;
+		}
+
+		if ((so2 = unp_solock_peer(so)) == NULL) {
+			if (nam != NULL)
+				error = ECONNREFUSED;
+			else
+				error = ENOTCONN;
+			break;
+		}
+
+		if (unp->unp_addr)
+			from = mtod(unp->unp_addr, struct sockaddr *);
+		else
+			from = &sun_noname;
+		if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
+			sorwakeup(so2);
+			m = NULL;
+			control = NULL;
+		} else
+			error = ENOBUFS;
+
+		if (so2 != so)
+			sounlock(so2);
+
+		if (nam)
+			unp_disconnect(unp);
+		break;
+	}
+
+	case SOCK_STREAM:
+	case SOCK_SEQPACKET:
+		if (so->so_state & SS_CANTSENDMORE) {
+			error = EPIPE;
+			break;
+		}
+		if ((so2 = unp_solock_peer(so)) == NULL) {
+			error = ENOTCONN;
+			break;
+		}
+
+		/*
+		 * Send to paired receive port, and then raise
+		 * send buffer counts to maintain backpressure.
+		 * Wake up readers.
+		 */
+		if (control) {
+			if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
+				control = NULL;
+			} else {
+				sounlock(so2);
+				error = ENOBUFS;
+				break;
+			}
+		} else if (so->so_type == SOCK_SEQPACKET)
+			sbappendrecord(so2, &so2->so_rcv, m);
+		else
+			sbappend(so2, &so2->so_rcv, m);
+		so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
+		so->so_snd.sb_cc = so2->so_rcv.sb_cc;
+		if (so2->so_rcv.sb_cc > 0)
+			sorwakeup(so2);
+
+		sounlock(so2);
+		m = NULL;
+		break;
+
+	default:
+		panic("uipc 4");
+	}
+
+	/* we need to undo unp_internalize in case of errors */
+	if (control && error)
+		unp_dispose(control);
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
 }
 
 int

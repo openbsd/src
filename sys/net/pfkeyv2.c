@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.242 2022/08/26 16:17:39 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.243 2022/08/27 20:28:01 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -173,6 +173,8 @@ int pfkeyv2_attach(struct socket *, int);
 int pfkeyv2_detach(struct socket *);
 int pfkeyv2_disconnect(struct socket *);
 int pfkeyv2_shutdown(struct socket *);
+int pfkeyv2_send(struct socket *, struct mbuf *, struct mbuf *,
+    struct mbuf *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
@@ -207,6 +209,7 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_detach	= pfkeyv2_detach,
 	.pru_disconnect	= pfkeyv2_disconnect,
 	.pru_shutdown	= pfkeyv2_shutdown,
+	.pru_send	= pfkeyv2_send,
 };
 
 const struct protosw pfkeysw[] = {
@@ -351,6 +354,34 @@ pfkeyv2_shutdown(struct socket *so)
 }
 
 int
+pfkeyv2_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	int error;
+
+	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
+	
+	if (nam) {
+		error = EISCONN;
+		goto out;
+	}
+
+	error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+	m = NULL;
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
+}
+
+int
 pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
@@ -399,14 +430,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
-	case PRU_SEND:
-		if (nam) {
-			error = EISCONN;
-			break;
-		}
-		error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
-		m = NULL;
-		break;
 	default:
 		panic("pfkeyv2_usrreq");
 	}
@@ -452,7 +475,7 @@ pfkeyv2_output(struct mbuf *mbuf, struct socket *so,
 	 */
 
 	sounlock(so);
-	error = pfkeyv2_send(so, message, mbuf->m_pkthdr.len);
+	error = pfkeyv2_dosend(so, message, mbuf->m_pkthdr.len);
 	solock(so);
 
 ret:
@@ -1134,7 +1157,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
  * Handle all messages from userland to kernel.
  */
 int
-pfkeyv2_send(struct socket *so, void *message, int len)
+pfkeyv2_dosend(struct socket *so, void *message, int len)
 {
 	int i, j, rval = 0, mode = PFKEYV2_SENDMESSAGE_BROADCAST;
 	int delflag = 0;

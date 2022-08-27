@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.138 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.139 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_connect	= rip_connect,
 	.pru_disconnect	= rip_disconnect,
 	.pru_shutdown	= rip_shutdown,
+	.pru_send	= rip_send,
 };
 
 /*
@@ -491,42 +492,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	/*
-	 * Ship a packet out.  The appropriate raw output
-	 * routine handles any massaging necessary.
-	 */
-	case PRU_SEND:
-	    {
-		struct sockaddr_in dst;
-
-		memset(&dst, 0, sizeof(dst));
-		dst.sin_family = AF_INET;
-		dst.sin_len = sizeof(dst);
-		if (so->so_state & SS_ISCONNECTED) {
-			if (nam) {
-				error = EISCONN;
-				break;
-			}
-			dst.sin_addr = inp->inp_faddr;
-		} else {
-			struct sockaddr_in *addr;
-
-			if (nam == NULL) {
-				error = ENOTCONN;
-				break;
-			}
-			if ((error = in_nam2sin(nam, &addr)))
-				break;
-			dst.sin_addr = addr->sin_addr;
-		}
-#ifdef IPSEC
-		/* XXX Find an IPsec TDB */
-#endif
-		error = rip_output(m, so, sintosa(&dst), NULL);
-		m = NULL;
-		break;
-	    }
-
 	case PRU_SENSE:
 		/*
 		 * stat: don't bother with a blocksize.
@@ -672,3 +637,51 @@ rip_shutdown(struct socket *so)
 	
 	return (0);
 }
+
+int
+rip_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	struct sockaddr_in dst;
+	int error;
+
+	soassertlocked(so);
+
+	/*
+	 * Ship a packet out.  The appropriate raw output
+	 * routine handles any massaging necessary.
+	 */
+	memset(&dst, 0, sizeof(dst));
+	dst.sin_family = AF_INET;
+	dst.sin_len = sizeof(dst);
+	if (so->so_state & SS_ISCONNECTED) {
+		if (nam) {
+			error = EISCONN;
+			goto out;
+		}
+		dst.sin_addr = inp->inp_faddr;
+	} else {
+		struct sockaddr_in *addr;
+
+		if (nam == NULL) {
+			error = ENOTCONN;
+			goto out;
+		}
+		if ((error = in_nam2sin(nam, &addr)))
+			goto out;
+		dst.sin_addr = addr->sin_addr;
+	}
+#ifdef IPSEC
+	/* XXX Find an IPsec TDB */
+#endif
+	error = rip_output(m, so, sintosa(&dst), NULL);
+	m = NULL;
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
+}
+

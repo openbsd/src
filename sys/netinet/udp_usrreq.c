@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.290 2022/08/26 16:17:39 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.291 2022/08/27 20:28:01 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
 	.pru_shutdown	= udp_shutdown,
+	.pru_send	= udp_send,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1086,46 +1087,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_SEND:
-#ifdef PIPEX
-		if (inp->inp_pipex) {
-			struct pipex_session *session;
-
-			if (addr != NULL)
-				session =
-				    pipex_l2tp_userland_lookup_session(m,
-					mtod(addr, struct sockaddr *));
-			else
-#ifdef INET6
-			if (inp->inp_flags & INP_IPV6)
-				session =
-				    pipex_l2tp_userland_lookup_session_ipv6(
-					m, inp->inp_faddr6);
-			else
-#endif
-				session =
-				    pipex_l2tp_userland_lookup_session_ipv4(
-					m, inp->inp_faddr);
-			if (session != NULL) {
-				m = pipex_l2tp_userland_output(m, session);
-				pipex_rele_session(session);
-
-				if (m == NULL) {
-					error = ENOMEM;
-					goto release;
-				}
-			}
-		}
-#endif
-
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			error = udp6_output(inp, m, addr, control);
-		else
-#endif
-			error = udp_output(inp, m, addr, control);
-		return (error);
-
 	case PRU_ABORT:
 		soisdisconnected(so);
 		in_pcbdetach(inp);
@@ -1291,6 +1252,56 @@ udp_shutdown(struct socket *so)
 	soassertlocked(so);
 	socantsendmore(so);
 	return (0);
+}
+
+int
+udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
+    struct mbuf *control)
+{
+	struct inpcb *inp = sotoinpcb(so);
+	int error;
+
+	soassertlocked(so);
+
+#ifdef PIPEX
+	if (inp->inp_pipex) {
+		struct pipex_session *session;
+
+		if (addr != NULL)
+			session =
+			    pipex_l2tp_userland_lookup_session(m,
+				mtod(addr, struct sockaddr *));
+		else
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			session =
+			    pipex_l2tp_userland_lookup_session_ipv6(
+				m, inp->inp_faddr6);
+		else
+#endif
+			session =
+			    pipex_l2tp_userland_lookup_session_ipv4(
+				m, inp->inp_faddr);
+		if (session != NULL) {
+			m = pipex_l2tp_userland_output(m, session);
+			pipex_rele_session(session);
+
+			if (m == NULL) {
+				m_freem(control);
+				return (ENOMEM);
+			}
+		}
+	}
+#endif
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+		error = udp6_output(inp, m, addr, control);
+	else
+#endif
+		error = udp_output(inp, m, addr, control);
+
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.79 2022/08/22 21:18:48 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.80 2022/08/27 20:28:01 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -69,16 +69,24 @@ const struct pr_usrreqs gre_usrreqs = {
 	.pru_connect	= rip_connect,
 	.pru_disconnect	= rip_disconnect,
 	.pru_shutdown	= rip_shutdown,
+	.pru_send	= gre_send,
 };
 
 int
 gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
+	return rip_usrreq(so, req, m, nam, control, p);
+}
+
+int
+gre_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
 #ifdef  PIPEX 
 	struct inpcb *inp = sotoinpcb(so);
 
-	if (inp != NULL && inp->inp_pipex && req == PRU_SEND) {
+	if (inp->inp_pipex) {
 		struct sockaddr_in *sin4;
 		struct in_addr *ina_dst;
 
@@ -103,10 +111,13 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			}
 		}
 
-		if (m == NULL)
+		if (m == NULL) {
+			m_freem(control);
 			return (ENOMEM);
+		}
 	}
 #endif
-	return rip_usrreq(so, req, m, nam, control, p);
+	return rip_send(so, m, nam, control);
 }
+
 #endif /* if NGRE > 0 */
