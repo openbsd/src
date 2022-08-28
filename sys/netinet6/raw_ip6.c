@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.159 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.160 2022/08/28 18:44:17 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_disconnect	= rip6_disconnect,
 	.pru_shutdown	= rip6_shutdown,
 	.pru_send	= rip6_send,
+	.pru_abort	= rip6_abort,
 };
 
 /*
@@ -592,20 +593,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	case PRU_ABORT:
-		soisdisconnected(so);
-		if (in6p == NULL)
-			panic("%s", __func__);
-#ifdef MROUTING
-		if (so == ip6_mrouter[in6p->inp_rtableid])
-			ip6_mrouter_done(so);
-#endif
-		free(in6p->inp_icmp6filt, M_PCB, sizeof(struct icmp6_filter));
-		in6p->inp_icmp6filt = NULL;
-
-		in_pcbdetach(in6p);
-		break;
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -817,6 +804,26 @@ out:
 	m_freem(m);
 
 	return (error);
+}
+
+int
+rip6_abort(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	soisdisconnected(so);
+#ifdef MROUTING
+	if (so == ip6_mrouter[in6p->inp_rtableid])
+		ip6_mrouter_done(so);
+#endif
+	free(in6p->inp_icmp6filt, M_PCB, sizeof(struct icmp6_filter));
+	in6p->inp_icmp6filt = NULL;
+
+	in_pcbdetach(in6p);
+
+	return (0);
 }
 
 int

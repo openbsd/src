@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.343 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.344 2022/08/28 18:44:16 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ int	route_shutdown(struct socket *);
 int	route_rcvd(struct socket *);
 int	route_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
+int	route_abort(struct socket *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -242,9 +243,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_ABORT:
-		soisdisconnected(so);
-		break;
 	case PRU_SENSE:
 		/* stat: don't bother with a blocksize. */
 		break;
@@ -403,6 +401,13 @@ out:
 	m_freem(m);
 
 	return (error);
+}
+
+int
+route_abort(struct socket *so)
+{
+	soisdisconnected(so);
+	return (0);
 }
 
 int
@@ -2448,6 +2453,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_shutdown	= route_shutdown,
 	.pru_rcvd	= route_rcvd,
 	.pru_send	= route_send,
+	.pru_abort	= route_abort,
 };
 
 const struct protosw routesw[] = {

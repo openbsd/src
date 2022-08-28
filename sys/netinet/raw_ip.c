@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.139 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.140 2022/08/28 18:44:16 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_disconnect	= rip_disconnect,
 	.pru_shutdown	= rip_shutdown,
 	.pru_send	= rip_send,
+	.pru_abort	= rip_abort,
 };
 
 /*
@@ -477,17 +478,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	switch (req) {
 
-	case PRU_ABORT:
-		soisdisconnected(so);
-		if (inp == NULL)
-			panic("rip_abort");
-#ifdef MROUTING
-		if (so == ip_mrouter[inp->inp_rtableid])
-			ip_mrouter_done(so);
-#endif
-		in_pcbdetach(inp);
-		break;
-
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
 		break;
@@ -685,3 +675,19 @@ out:
 	return (error);
 }
 
+int
+rip_abort(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	soisdisconnected(so);
+#ifdef MROUTING
+	if (so == ip_mrouter[inp->inp_rtableid])
+		ip_mrouter_done(so);
+#endif
+	in_pcbdetach(inp);
+
+	return (0);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.176 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.177 2022/08/28 18:44:16 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_shutdown	= uipc_shutdown,
 	.pru_rcvd	= uipc_rcvd,
 	.pru_send	= uipc_send,
+	.pru_abort	= uipc_abort,
 };
 
 void
@@ -243,11 +244,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_connid.pid = p->p_p->ps_pid;
 			unp2->unp_flags |= UNP_FEIDS;
 		}
-		break;
-
-	case PRU_ABORT:
-		unp_detach(unp);
-		sofree(so, 0);
 		break;
 
 	case PRU_SENSE: {
@@ -588,6 +584,17 @@ out:
 	m_freem(m);
 
 	return (error);
+}
+
+int
+uipc_abort(struct socket *so)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	unp_detach(unp);
+	sofree(so, 0);
+
+	return (0);
 }
 
 int

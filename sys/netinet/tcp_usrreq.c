@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.196 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.197 2022/08/28 18:44:16 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_shutdown	= tcp_shutdown,
 	.pru_rcvd	= tcp_rcvd,
 	.pru_send	= tcp_send,
+	.pru_abort	= tcp_abort,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -224,13 +225,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Abort the TCP.
-	 */
-	case PRU_ABORT:
-		tp = tcp_drop(tp, ECONNABORTED);
 		break;
 
 	case PRU_SENSE:
@@ -960,6 +954,34 @@ out:
 	m_freem(m);
 
 	return (error);
+}
+
+/*
+ * Abort the TCP.
+ */
+int
+tcp_abort(struct socket *so)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp, *otp = NULL;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if (so->so_options & SO_DEBUG) {
+		otp = tp;
+		ostate = tp->t_state;
+	}
+
+	tp = tcp_drop(tp, ECONNABORTED);
+
+	if (otp)
+		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_ABORT, 0);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.291 2022/08/27 20:28:01 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.292 2022/08/28 18:44:16 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -131,6 +131,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_disconnect	= udp_disconnect,
 	.pru_shutdown	= udp_shutdown,
 	.pru_send	= udp_send,
+	.pru_abort	= udp_abort,
 };
 
 const struct sysctl_bounded_args udpctl_vars[] = {
@@ -1087,11 +1088,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_ABORT:
-		soisdisconnected(so);
-		in_pcbdetach(inp);
-		break;
-
 	case PRU_SOCKADDR:
 #ifdef INET6
 		if (inp->inp_flags & INP_IPV6)
@@ -1302,6 +1298,19 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 		error = udp_output(inp, m, addr, control);
 
 	return (error);
+}
+
+int
+udp_abort(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	soassertlocked(so);
+
+	soisdisconnected(so);
+	in_pcbdetach(inp);
+
+	return (0);
 }
 
 /*
