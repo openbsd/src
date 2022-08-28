@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.160 2022/08/28 18:44:17 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.161 2022/08/28 21:35:12 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -597,11 +597,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		error = EOPNOTSUPP;
 		break;
 
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize
-		 */
-		break;
 	/*
 	 * Not supported.
 	 */

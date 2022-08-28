@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.245 2022/08/28 20:32:01 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.246 2022/08/28 21:35:11 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -415,10 +415,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 	/* no connect, bind, accept. Socket is connected from the start */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SENSE:
-		/* stat: don't bother with a blocksize. */
 		break;
 
 	/* minimal support, just implement a fake peer address */

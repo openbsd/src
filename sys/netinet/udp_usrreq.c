@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.292 2022/08/28 18:44:16 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.293 2022/08/28 21:35:12 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1104,16 +1104,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		else
 #endif /* INET6 */
 			in_setpeeraddr(inp, addr);
-		break;
-
-	case PRU_SENSE:
-		/*
-		 * stat: don't bother with a blocksize.
-		 */
-		/*
-		 * Perhaps Path MTU might be returned for a connected
-		 * UDP socket in this case.
-		 */
 		break;
 
 	case PRU_SENDOOB:

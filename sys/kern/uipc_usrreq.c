@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.177 2022/08/28 18:44:16 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.178 2022/08/28 21:35:11 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -139,6 +139,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_rcvd	= uipc_rcvd,
 	.pru_send	= uipc_send,
 	.pru_abort	= uipc_abort,
+	.pru_sense	= uipc_sense,
 };
 
 void
@@ -245,25 +246,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_flags |= UNP_FEIDS;
 		}
 		break;
-
-	case PRU_SENSE: {
-		struct stat *sb = (struct stat *)m;
-
-		sb->st_blksize = so->so_snd.sb_hiwat;
-		sb->st_dev = NODEV;
-		mtx_enter(&unp_ino_mtx);
-		if (unp->unp_ino == 0)
-			unp->unp_ino = unp_ino++;
-		mtx_leave(&unp_ino_mtx);
-		sb->st_atim.tv_sec =
-		    sb->st_mtim.tv_sec =
-		    sb->st_ctim.tv_sec = unp->unp_ctime.tv_sec;
-		sb->st_atim.tv_nsec =
-		    sb->st_mtim.tv_nsec =
-		    sb->st_ctim.tv_nsec = unp->unp_ctime.tv_nsec;
-		sb->st_ino = unp->unp_ino;
-		break;
-	}
 
 	case PRU_RCVOOB:
 	case PRU_SENDOOB:
@@ -593,6 +575,28 @@ uipc_abort(struct socket *so)
 
 	unp_detach(unp);
 	sofree(so, 0);
+
+	return (0);
+}
+
+int
+uipc_sense(struct socket *so, struct stat *sb)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	sb->st_blksize = so->so_snd.sb_hiwat;
+	sb->st_dev = NODEV;
+	mtx_enter(&unp_ino_mtx);
+	if (unp->unp_ino == 0)
+		unp->unp_ino = unp_ino++;
+	mtx_leave(&unp_ino_mtx);
+	sb->st_atim.tv_sec =
+	    sb->st_mtim.tv_sec =
+	    sb->st_ctim.tv_sec = unp->unp_ctime.tv_sec;
+	sb->st_atim.tv_nsec =
+	    sb->st_mtim.tv_nsec =
+	    sb->st_ctim.tv_nsec = unp->unp_ctime.tv_nsec;
+	sb->st_ino = unp->unp_ino;
 
 	return (0);
 }
