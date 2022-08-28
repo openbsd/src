@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.45 2022/08/20 18:17:33 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.46 2022/08/28 17:49:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -553,7 +553,9 @@ i2c_ASN1_INTEGER_cbb(ASN1_INTEGER *aint, CBB *cbb)
 	CBS cbs;
 	int ret = 0;
 
-	if (aint->data == NULL || aint->length < 0)
+	if (aint->length < 0)
+		goto err;
+	if (aint->data == NULL && aint->length != 0)
 		goto err;
 
 	if ((aint->type & ~V_ASN1_NEG) != V_ASN1_ENUMERATED &&
