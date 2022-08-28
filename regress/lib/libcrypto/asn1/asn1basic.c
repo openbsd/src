@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.9 2022/06/25 15:49:28 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.10 2022/08/28 17:59:57 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -678,6 +678,42 @@ asn1_integer_cmp_test(void)
 }
 
 static int
+asn1_integer_null_data_test(void)
+{
+	const uint8_t der[] = {0x02, 0x01, 0x00};
+	ASN1_INTEGER *aint = NULL;
+	uint8_t *p = NULL, *pp;
+	int len;
+	int failed = 0;
+
+	if ((aint = ASN1_INTEGER_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_new() == NULL\n");
+		goto failed;
+	}
+	if ((len = i2d_ASN1_INTEGER(aint, NULL)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if ((p = calloc(1, len)) == NULL)
+		errx(1, "calloc");
+	pp = p;
+	if ((len = i2d_ASN1_INTEGER(aint, &pp)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if (!asn1_compare_bytes("INTEGER NULL data", p, len, der, sizeof(der)))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(aint);
+	free(p);
+
+	return failed;
+}
+
+static int
 asn1_integer_test(void)
 {
 	struct asn1_integer_test *ait;
@@ -694,6 +730,7 @@ asn1_integer_test(void)
 	}
 
 	failed |= asn1_integer_cmp_test();
+	failed |= asn1_integer_null_data_test();
 	failed |= asn1_integer_set_val_test();
 
 	return failed;
