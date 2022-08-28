@@ -5,30 +5,30 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        default spacing:
-
        +------+
        |a   b |
        +------+
-       spacing 0:
 
+       spacing 0:
        +---+
        |ab |
        +---+
-       spacing 1:
 
+       spacing 1:
        +----+
        |a b |
        +----+
-       spacing 2:
 
+       spacing 2:
        +--+--+
        |a |b |
        +--+--+
-       spacing 5:
 
+       spacing 5:
        +---++---+
        |a  || b |
        +---++---+
+
        leaked tab settings:
        a    b    c    d    e    f
 

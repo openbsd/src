@@ -7,571 +7,471 @@ DDEESSCCRRIIPPTTIIOONN
      hline top left:
      ---- 12
      21   22
-
      hline top:
      11 ------ 13
      21   22   23
-
      double hline top:
      11 ----------- 13
      21   22   23   24
-
      hline top right:
      11 -----
      21   22
-
      hline in front:
      11   12
      ---- 22
      31   32
-
      vline in front:
       11   12
      |21   22
      |31   32
       41   42
-
      hline and vline in front:
      11   12
      21 | 22
      ---+ 32
      41   42
-
      vline and hline in front:
       11   12
      |21   22
      +---- 32
       41   42
-
      hline in the middle:
      11   12   13
      21 ------ 23
      31   32   33
-
      vline in the middle:
      11   12   13
      21 | 22   23
      31 | 32   33
      41   42   43
-
      vline and hline in the middle:
      11   12   13
      21 | 22   23
      31 +----- 33
      41   42   43
-
      hline and vline in the middle:
      11   12   13
      21   22 | 23
      31 -----+ 33
      41   42   43
-
      double hline in the middle:
      11   12   13   14
      21 ----------- 24
      31   32   33   34
-
      hline, vline, hline in the middle:
      11   12   13   14
      21   22 | 23   24
      31 -----+----- 34
      41   42   43   44
-
      hline at the end:
      11   12
      21 -----
      31   32
-
      vline at the end:
      11   12
      21   22 |
      31   32 |
      41   42
-
      vline and hline at the end:
      11   12
      21 | 22
      31 +----
      41   42
-
      hline and vline at the end:
      11   12
      21   22 |
      31 -----+
      41   42
-
      hline bottom left:
      11   12
      ---- 22
-
      vline bottom left:
       11   12
      |21   22
      |31   32
-
      hline and vline bottom left:
      11   12
      21 | 22
      ---+ 32
-
      vline and hline bottom left:
       11   12
      |21   22
      +---- 32
-
      double hline bottom:
      11   12   13   14
      21 ----------- 24
-
      hline, vline, hline bottom:
      11   12   13   14
      21   22 | 23   24
      31 -----+----- 34
-
      hline bottom right:
      11   12
      21 -----
-
      vline bottom right:
      11   12
      21   22 |
      31   32 |
-
      vline and hline bottom right:
      11   12
      21 | 22
      31 +----
-
      hline and vline bottom right:
      11   12
      21   22 |
      31 -----+
-
      double vline in front:
       11   12
      |21   22
      |31   32
       41   42
-
      hline and double vline in front:
      11   12
      21 ||22
      ---+|32
      41   42
-
      double vline and hline in front:
       11   12
      |21   22
      +---- 32
       41   42
-
      double vline in the middle:
      11   12   13
      21 ||22   23
      31 ||32   33
      41   42   43
-
      double vline and hline in the middle:
      11   12   13
      21 ||22   23
      31 ++---- 33
      41   42   43
-
      hline and doble vline in the middle:
      11   12   13
      21   22 ||23
      31 -----+|33
      41   42   43
-
      hline, double vline, hline in the middle:
      11   12   13   14
      21   22 ||23   24
      31 -----++---- 34
      41   42   43   44
-
      double vline at the end:
      11   12
      21   22 |
      31   32 |
      41   42
-
      double vline and hline at the end:
      11   12
      21 ||22
      31 ++---
      41   42
-
      hline and double vline at the end:
      11   12
      21   22 |
      31 -----+
      41   42
-
      double vline bottom left:
       11   12
      |21   22
      |31   32
-
      hline and double vline bottom left:
      11   12
      21 ||22
      ---+|32
-
      double vline and hline bottom left:
       11   12
      |21   22
      +---- 32
-
      hline, double vline, hline bottom:
      11   12   13   14
      21   22 ||23   24
      31 -----++---- 34
-
      double vline bottom right:
      11   12
      21   22 |
      31   32 |
-
      double vline and hline bottom right:
      11   12
      21 ||22
      31 ++---
-
      hline and double vline bottom right:
      11   12
      21   22 |
      31 -----+
-
      vline left below hline top left:
      +---- 12
      |21   22
       31   32
-
      vline right below hline top left:
      ---+ 12
      21 | 22
      31   32
-
      vline left below hline at the top:
      11 +----- 13
      21 | 22   23
      31   32   33
-
      vline right below hline at the top:
      11 -----+ 13
      21   22 | 23
      31   32   33
-
      vline below hline at the top:
      11 -----+----- 14
      21   22 | 23   24
      31   32   33   34
-
      vline left below hline top right:
      11 +----
      21 | 22
      31   32
-
      vline right below hline top right:
      11 -----+
      21   22 |
      31   32
-
      vline left below hline in front:
       11   12
      +---- 22
      |31   32
       41   42
-
      vline left above hline in front:
       11   12
      |21   22
      |31   32
      +---- 42
       51   52
-
      vline right below hline in front:
      11   12
      ---+ 22
      31 | 32
      41   42
-
      vline right above hline in front:
      11   12
      21 | 22
      31 | 32
      ---+ 42
      51   52
-
      vline left below hline in the middle:
      11   12   13
      21 +----- 23
      31 | 32   33
      41   42   43
-
      vline left above hline in the middle:
      11   12   13
      21 | 22   23
      31 | 32   33
      41 +----- 43
      51   52   53
-
      vline right below hline in the middle:
      11   12   13
      21 -----+ 23
      31   32 | 33
      41   42   43
-
      vline right above hline in the middle:
      11   12   13
      21   22 | 23
      31   32 | 33
      41 -----+ 43
      51   52   53
-
      vline below hline in the middle:
      11   12   13   14
      21 -----+----- 24
      31   32 | 33   34
      41   42   43   44
-
      vline above hline in the middle:
      11   12   13   14
      21   22 | 23   24
      31   32 | 33   34
      41 -----+----- 44
      51   52   53   54
-
      vline left below hline at the end:
      11   12
      21 +----
      31 | 32
      41   42
-
      vline left above hline at the end:
      11   12
      21 | 22
      31 | 32
      41 +----
      51   52
-
      vline right below hline at the end:
      11   12
      21 -----+
      31   32 |
      41   42
-
      vline right above hline at the end:
      11   12
      21   22 |
      31   32 |
      41 -----+
      51   52
-
      vline left above hline bottom left:
       11   12
      |21   22
      |31   32
      +---- 42
-
      vline right above hline bottom left:
      11   12
      21 | 22
      31 | 32
      ---+ 42
-
      vline left above hline at the bottom:
      11   12   13
      21 | 22   23
      31 | 32   33
      41 +----- 43
-
      vline right above hline at the bottom:
      11   12   13
      21   22 | 23
      31   32 | 33
      41 -----+ 43
-
      vline above hline at the bottom:
      11   12   13   14
      21   22 | 23   24
      31   32 | 33   34
      41 -----+----- 44
-
      vline left above hline bottom right:
      11   12
      21 | 22
      31 | 32
      41 +----
-
      vline right above hline bottom right:
      11   12
      21   22 |
      31   32 |
      41 -----+
-
      double vline left below hline top left:
      +---- 12
      |21   22
       31   32
-
      double vline right below hline top left:
      ---+|12
      21 ||22
      31   32
-
      double vline left below hline at the top:
      11 ++---- 13
      21 ||22   23
      31   32   33
-
      double vline right below hline at the top:
      11 -----+|13
      21   22 ||23
      31   32   33
-
      double vline below hline at the top:
      11 -----++---- 14
      21   22 ||23   24
      31   32   33   34
-
      double vline left below hline top right:
      11 ++---
      21 ||22
      31   32
-
      double vline right below hline top right:
      11 -----+
      21   22 |
      31   32
-
      double vline left below hline in front:
       11   12
      +---- 22
      |31   32
       41   42
-
      double vline left above hline in front:
       11   12
      |21   22
      |31   32
      +---- 42
       51   52
-
      double vline right below hline in front:
      11   12
      ---+|22
      31 ||32
      41   42
-
      double vline right above hline in front:
      11   12
      21 ||22
      31 ||32
      ---+|42
      51   52
-
      double vline left below hline in the middle:
      11   12   13
      21 ++---- 23
      31 ||32   33
      41   42   43
-
      double vline left above hline in the middle:
      11   12   13
      21 ||22   23
      31 ||32   33
      41 ++---- 43
      51   52   53
-
      double vline right below hline in the middle:
      11   12   13
      21 -----+|23
      31   32 ||33
      41   42   43
-
      double vline right above hline in the middle:
      11   12   13
      21   22 ||23
      31   32 ||33
      41 -----+|43
      51   52   53
-
      double vline below hline in the middle:
      11   12   13   14
      21 -----++---- 24
      31   32 ||33   34
      41   42   43   44
-
      double vline above hline in the middle:
      11   12   13   14
      21   22 ||23   24
      31   32 ||33   34
      41 -----++---- 44
      51   52   53   54
-
      double vline left below hline at the end:
      11   12
      21 ++---
      31 ||32
      41   42
-
      double vline left above hline at the end:
      11   12
      21 ||22
      31 ||32
      41 ++---
      51   52
-
      double vline right below hline at the end:
      11   12
      21 -----+
      31   32 |
      41   42
-
      double vline right above hline at the end:
      11   12
      21   22 |
      31   32 |
      41 -----+
      51   52
-
      double vline left above hline bottom left:
       11   12
      |21   22
      |31   32
      +---- 42
-
      double vline right above hline bottom left:
      11   12
      21 ||22
      31 ||32
      ---+|42
-
      double vline left above hline at the bottom:
      11   12   13
      21 ||22   23
      31 ||32   33
      41 ++---- 43
-
      double vline right above hline at the bottom:
      11   12   13
      21   22 ||23
      31   32 ||33
      41 -----+|43
-
      double vline above hline at the bottom:
      11   12   13   14
      21   22 ||23   24
      31   32 ||33   34
      41 -----++---- 44
-
      double vline left above hline bottom right:
      11   12
      21 ||22
      31 ||32
      41 ++---
-
      double vline right above hline bottom right:
      11   12
      21   22 |
@@ -4752,4 +4652,4 @@ DDOOUUBBLLEEBBOOXX AALLLLBBOOXX
      +---+----+
      +--------+
 
-OpenBSD                          July 4, 2017                          OpenBSD
+OpenBSD                         August 28, 2022                        OpenBSD

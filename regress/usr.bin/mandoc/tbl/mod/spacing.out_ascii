@@ -5,10 +5,10 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        normal text
-
        +--+--+--+----+----+------+------+-----+
        |ab|c |d | e  | f  |  g   |  h   |   i |
        |ab|c |d ||e    f  || g   |  h   ||  i |
        |ab|c |d ||e    f  || g   |  h   ||  i |
        +--+--+--++--------++-----+------++----+
+
 OpenBSD                          June 27, 2017              TBL-MOD-SPACING(1)

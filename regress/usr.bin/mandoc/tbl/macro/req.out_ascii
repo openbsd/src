@@ -5,7 +5,6 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        initial text
-
        +--+-----+
        |a | b   |
        +--+-----+
@@ -13,6 +12,7 @@ DDEESSCCRRIIPPTTIIOONN
        |f | g h |
        |i | j k |
        +--+-----+
+
        final text
 
 OpenBSD                         April 30, 2022                TBL-MACRO-REQ(1)

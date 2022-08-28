@@ -1,5 +1,5 @@
-.\" $OpenBSD: lines.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: lines.in,v 1.3 2022/08/28 11:45:27 schwarze Exp $
+.Dd $Mdocdate: August 28 2022 $
 .Dt TBL-LAYOUT-LINES 1
 .Os
 .Sh NAME
@@ -15,7 +15,6 @@ l l.
 :12
 21:22
 .TE
-.sp
 hline top:
 .TS
 tab(:);
@@ -24,7 +23,6 @@ l l l.
 11::13
 21:22:23
 .TE
-.sp
 double hline top:
 .TS
 tab(:);
@@ -33,7 +31,6 @@ l l l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 hline top right:
 .TS
 tab(:);
@@ -42,7 +39,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 hline in front:
 .TS
 tab(:);
@@ -53,7 +49,6 @@ l l.
 :22
 31:32
 .TE
-.sp
 vline in front:
 .TS
 tab(:);
@@ -66,7 +61,6 @@ tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and vline in front:
 .TS
 tab(:);
@@ -79,7 +73,6 @@ l  l.
 :32
 41:42
 .TE
-.sp
 vline and hline in front:
 .TS
 tab(:);
@@ -92,7 +85,6 @@ tab(:);
 :32
 41:42
 .TE
-.sp
 hline in the middle:
 .TS
 tab(:);
@@ -103,7 +95,6 @@ l l l.
 21::23
 31:32:33
 .TE
-.sp
 vline in the middle:
 .TS
 tab(:);
@@ -116,7 +107,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline and hline in the middle:
 .TS
 tab(:);
@@ -129,7 +119,6 @@ l  l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and vline in the middle:
 .TS
 tab(:);
@@ -142,7 +131,6 @@ l l  l.
 31::33
 41:42:43
 .TE
-.sp
 double hline in the middle:
 .TS
 tab(:);
@@ -153,7 +141,6 @@ l l l l.
 21:::24
 31:32:33:34
 .TE
-.sp
 hline, vline, hline in the middle:
 .TS
 tab(:);
@@ -166,7 +153,6 @@ l l  l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 hline at the end:
 .TS
 tab(:);
@@ -177,7 +163,6 @@ l l.
 21:
 31:32
 .TE
-.sp
 vline at the end:
 .TS
 tab(:);
@@ -190,7 +175,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline and hline at the end:
 .TS
 tab(:);
@@ -203,7 +187,6 @@ l  l.
 31:
 41:42
 .TE
-.sp
 hline and vline at the end:
 .TS
 tab(:);
@@ -216,7 +199,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 hline bottom left:
 .TS
 tab(:);
@@ -225,7 +207,6 @@ _ l.
 11:12
 :22
 .TE
-.sp
 vline bottom left:
 .TS
 tab(:);
@@ -236,7 +217,6 @@ tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and vline bottom left:
 .TS
 tab(:);
@@ -247,7 +227,6 @@ _| l.
 21:22
 :32
 .TE
-.sp
 vline and hline bottom left:
 .TS
 tab(:);
@@ -258,7 +237,6 @@ tab(:);
 21:22
 :32
 .TE
-.sp
 double hline bottom:
 .TS
 tab(:);
@@ -267,7 +245,6 @@ l _ _ l.
 11:12:13:14
 21:::24
 .TE
-.sp
 hline, vline, hline bottom:
 .TS
 tab(:);
@@ -278,7 +255,6 @@ l _| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 hline bottom right:
 .TS
 tab(:);
@@ -287,7 +263,6 @@ l _.
 11:12
 21:
 .TE
-.sp
 vline bottom right:
 .TS
 tab(:);
@@ -298,7 +273,6 @@ l l|.
 21:22
 31:32
 .TE
-.sp
 vline and hline bottom right:
 .TS
 tab(:);
@@ -309,7 +283,6 @@ l| _.
 21:22
 31:
 .TE
-.sp
 hline and vline bottom right:
 .TS
 tab(:);
@@ -320,7 +293,6 @@ l _|.
 21:22
 31:
 .TE
-.sp
 double vline in front:
 .TS
 tab(:);
@@ -333,7 +305,6 @@ tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and double vline in front:
 .TS
 tab(:);
@@ -346,7 +317,6 @@ l   l.
 :32
 41:42
 .TE
-.sp
 double vline and hline in front:
 .TS
 tab(:);
@@ -359,7 +329,6 @@ tab(:);
 :32
 41:42
 .TE
-.sp
 double vline in the middle:
 .TS
 tab(:);
@@ -372,7 +341,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline and hline in the middle:
 .TS
 tab(:);
@@ -385,7 +353,6 @@ l   l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and doble vline in the middle:
 .TS
 tab(:);
@@ -398,7 +365,6 @@ l l   l.
 31::33
 41:42:43
 .TE
-.sp
 hline, double vline, hline in the middle:
 .TS
 tab(:);
@@ -411,7 +377,6 @@ l l   l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 double vline at the end:
 .TS
 tab(:);
@@ -424,7 +389,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline and hline at the end:
 .TS
 tab(:);
@@ -437,7 +401,6 @@ l   l.
 31:
 41:42
 .TE
-.sp
 hline and double vline at the end:
 .TS
 tab(:);
@@ -450,7 +413,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 double vline bottom left:
 .TS
 tab(:);
@@ -461,7 +423,6 @@ tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and double vline bottom left:
 .TS
 tab(:);
@@ -472,7 +433,6 @@ _|| l.
 21:22
 :32
 .TE
-.sp
 double vline and hline bottom left:
 .TS
 tab(:);
@@ -483,7 +443,6 @@ tab(:);
 21:22
 :32
 .TE
-.sp
 hline, double vline, hline bottom:
 .TS
 tab(:);
@@ -494,7 +453,6 @@ l _|| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 double vline bottom right:
 .TS
 tab(:);
@@ -505,7 +463,6 @@ l l||.
 21:22
 31:32
 .TE
-.sp
 double vline and hline bottom right:
 .TS
 tab(:);
@@ -516,7 +473,6 @@ l|| _.
 21:22
 31:
 .TE
-.sp
 hline and double vline bottom right:
 .TS
 tab(:);
@@ -527,7 +483,6 @@ l _||.
 21:22
 31:
 .TE
-.sp
 vline left below hline top left:
 .TS
 tab(:);
@@ -538,7 +493,6 @@ tab(:);
 21:22
 31:32
 .TE
-.sp
 vline right below hline top left:
 .TS
 tab(:);
@@ -549,7 +503,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline at the top:
 .TS
 tab(:);
@@ -560,7 +513,6 @@ l  l l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline right below hline at the top:
 .TS
 tab(:);
@@ -571,7 +523,6 @@ l l  l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline below hline at the top:
 .TS
 tab(:);
@@ -582,7 +533,6 @@ l l  l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 vline left below hline top right:
 .TS
 tab(:);
@@ -593,7 +543,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline right below hline top right:
 .TS
 tab(:);
@@ -604,7 +553,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline in front:
 .TS
 tab(:);
@@ -617,7 +565,6 @@ tab(:);
 31:32
 41:42
 .TE
-.sp
 vline left above hline in front:
 .TS
 tab(:);
@@ -632,7 +579,6 @@ tab(:);
 :42
 51:52
 .TE
-.sp
 vline right below hline in front:
 .TS
 tab(:);
@@ -645,7 +591,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline in front:
 .TS
 tab(:);
@@ -660,7 +605,6 @@ l  l.
 :42
 51:52
 .TE
-.sp
 vline left below hline in the middle:
 .TS
 tab(:);
@@ -673,7 +617,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline left above hline in the middle:
 .TS
 tab(:);
@@ -688,7 +631,6 @@ l  l l.
 41::43
 51:52:53
 .TE
-.sp
 vline right below hline in the middle:
 .TS
 tab(:);
@@ -701,7 +643,6 @@ l l  l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline right above hline in the middle:
 .TS
 tab(:);
@@ -716,7 +657,6 @@ l l  l.
 41::43
 51:52:53
 .TE
-.sp
 vline below hline in the middle:
 .TS
 tab(:);
@@ -729,7 +669,6 @@ l l  l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 vline above hline in the middle:
 .TS
 tab(:);
@@ -744,7 +683,6 @@ l l  l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 vline left below hline at the end:
 .TS
 tab(:);
@@ -757,7 +695,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline left above hline at the end:
 .TS
 tab(:);
@@ -772,7 +709,6 @@ l  l.
 41:
 51:52
 .TE
-.sp
 vline right below hline at the end:
 .TS
 tab(:);
@@ -785,7 +721,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline at the end:
 .TS
 tab(:);
@@ -800,7 +735,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 vline left above hline bottom left:
 .TS
 tab(:);
@@ -813,7 +747,6 @@ tab(:);
 31:32
 :42
 .TE
-.sp
 vline right above hline bottom left:
 .TS
 tab(:);
@@ -826,7 +759,6 @@ _  l.
 31:32
 :42
 .TE
-.sp
 vline left above hline at the bottom:
 .TS
 tab(:);
@@ -839,7 +771,6 @@ l  _ l.
 31:32:33
 41::43
 .TE
-.sp
 vline right above hline at the bottom:
 .TS
 tab(:);
@@ -852,7 +783,6 @@ l _  l.
 31:32:33
 41::43
 .TE
-.sp
 vline above hline at the bottom:
 .TS
 tab(:);
@@ -865,7 +795,6 @@ l _  _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 vline left above hline bottom right:
 .TS
 tab(:);
@@ -878,7 +807,6 @@ l  _.
 31:32
 41:
 .TE
-.sp
 vline right above hline bottom right:
 .TS
 tab(:);
@@ -891,7 +819,6 @@ l _.
 31:32
 41:
 .TE
-.sp
 double vline left below hline top left:
 .TS
 tab(:);
@@ -902,7 +829,6 @@ tab(:);
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top left:
 .TS
 tab(:);
@@ -913,7 +839,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline at the top:
 .TS
 tab(:);
@@ -924,7 +849,6 @@ l   l l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline right below hline at the top:
 .TS
 tab(:);
@@ -935,7 +859,6 @@ l l   l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline below hline at the top:
 .TS
 tab(:);
@@ -946,7 +869,6 @@ l l   l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 double vline left below hline top right:
 .TS
 tab(:);
@@ -957,7 +879,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top right:
 .TS
 tab(:);
@@ -968,7 +889,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline in front:
 .TS
 tab(:);
@@ -981,7 +901,6 @@ tab(:);
 31:32
 41:42
 .TE
-.sp
 double vline left above hline in front:
 .TS
 tab(:);
@@ -996,7 +915,6 @@ tab(:);
 :42
 51:52
 .TE
-.sp
 double vline right below hline in front:
 .TS
 tab(:);
@@ -1009,7 +927,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline in front:
 .TS
 tab(:);
@@ -1024,7 +941,6 @@ l   l.
 :42
 51:52
 .TE
-.sp
 double vline left below hline in the middle:
 .TS
 tab(:);
@@ -1037,7 +953,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline left above hline in the middle:
 .TS
 tab(:);
@@ -1052,7 +967,6 @@ l   l l.
 41::43
 51:52:53
 .TE
-.sp
 double vline right below hline in the middle:
 .TS
 tab(:);
@@ -1065,7 +979,6 @@ l l   l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline right above hline in the middle:
 .TS
 tab(:);
@@ -1080,7 +993,6 @@ l l   l.
 41::43
 51:52:53
 .TE
-.sp
 double vline below hline in the middle:
 .TS
 tab(:);
@@ -1093,7 +1005,6 @@ l l   l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 double vline above hline in the middle:
 .TS
 tab(:);
@@ -1108,7 +1019,6 @@ l l   l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 double vline left below hline at the end:
 .TS
 tab(:);
@@ -1121,7 +1031,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline left above hline at the end:
 .TS
 tab(:);
@@ -1136,7 +1045,6 @@ l   l.
 41:
 51:52
 .TE
-.sp
 double vline right below hline at the end:
 .TS
 tab(:);
@@ -1149,7 +1057,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline at the end:
 .TS
 tab(:);
@@ -1164,7 +1071,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 double vline left above hline bottom left:
 .TS
 tab(:);
@@ -1177,7 +1083,6 @@ tab(:);
 31:32
 :42
 .TE
-.sp
 double vline right above hline bottom left:
 .TS
 tab(:);
@@ -1190,7 +1095,6 @@ _   l.
 31:32
 :42
 .TE
-.sp
 double vline left above hline at the bottom:
 .TS
 tab(:);
@@ -1203,7 +1107,6 @@ l   _ l.
 31:32:33
 41::43
 .TE
-.sp
 double vline right above hline at the bottom:
 .TS
 tab(:);
@@ -1216,7 +1119,6 @@ l _   l.
 31:32:33
 41::43
 .TE
-.sp
 double vline above hline at the bottom:
 .TS
 tab(:);
@@ -1229,7 +1131,6 @@ l _   _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 double vline left above hline bottom right:
 .TS
 tab(:);
@@ -1242,7 +1143,6 @@ l   _.
 31:32
 41:
 .TE
-.sp
 double vline right above hline bottom right:
 .TS
 tab(:);
@@ -1264,7 +1164,6 @@ box tab(:);
 11:12
 21:22
 .TE
-.sp
 hline and vline top left:
 .TS
 box tab(:);
@@ -1273,7 +1172,6 @@ l  l.
 :12
 21:22
 .TE
-.sp
 vline and hline top left:
 .TS
 box tab(:);
@@ -1282,7 +1180,6 @@ box tab(:);
 :12
 21:22
 .TE
-.sp
 vline top:
 .TS
 box tab(:);
@@ -1291,7 +1188,6 @@ l  l.
 11:12
 21:22
 .TE
-.sp
 vline and hline top:
 .TS
 box tab(:);
@@ -1300,7 +1196,6 @@ l  l l.
 11::13
 21:22:23
 .TE
-.sp
 hline and vline top:
 .TS
 box tab(:);
@@ -1309,7 +1204,6 @@ l l  l.
 11::13
 21:22:23
 .TE
-.sp
 hline, vline, hline top:
 .TS
 box tab(:);
@@ -1318,7 +1212,6 @@ l l  l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 vline top right:
 .TS
 box tab(:);
@@ -1327,7 +1220,6 @@ l l.
 11:12
 21:22
 .TE
-.sp
 vline and hline top right:
 .TS
 box tab(:);
@@ -1336,7 +1228,6 @@ l  l.
 11:
 21:22
 .TE
-.sp
 hline and vline top right:
 .TS
 box tab(:);
@@ -1345,7 +1236,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 double vline top left:
 .TS
 box tab(:);
@@ -1354,7 +1244,6 @@ box tab(:);
 11:12
 21:22
 .TE
-.sp
 hline and double vline top left:
 .TS
 box tab(:);
@@ -1363,7 +1252,6 @@ l   l.
 :12
 21:22
 .TE
-.sp
 double vline and hline top left:
 .TS
 box tab(:);
@@ -1372,7 +1260,6 @@ box tab(:);
 :12
 21:22
 .TE
-.sp
 double vline top:
 .TS
 box tab(:);
@@ -1381,7 +1268,6 @@ l   l.
 11:12
 21:22
 .TE
-.sp
 double vline and hline top:
 .TS
 box tab(:);
@@ -1390,7 +1276,6 @@ l   l l.
 11::13
 21:22:23
 .TE
-.sp
 hline and double vline top:
 .TS
 box tab(:);
@@ -1399,7 +1284,6 @@ l l   l.
 11::13
 21:22:23
 .TE
-.sp
 hline, double vline, hline top:
 .TS
 box tab(:);
@@ -1408,7 +1292,6 @@ l l   l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 double vline top right:
 .TS
 box tab(:);
@@ -1417,7 +1300,6 @@ l l.
 11:12
 21:22
 .TE
-.sp
 double vline and hline top right:
 .TS
 box tab(:);
@@ -1426,7 +1308,6 @@ l   l.
 11:
 21:22
 .TE
-.sp
 hline and double vline top right:
 .TS
 box tab(:);
@@ -1435,7 +1316,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 hline top left:
 .TS
 box tab(:);
@@ -1444,7 +1324,6 @@ l l.
 :12
 21:22
 .TE
-.sp
 hline top:
 .TS
 box tab(:);
@@ -1453,7 +1332,6 @@ l l l.
 11::13
 21:22:23
 .TE
-.sp
 double hline top:
 .TS
 box tab(:);
@@ -1462,7 +1340,6 @@ l l l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 hline top right:
 .TS
 box tab(:);
@@ -1471,7 +1348,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 hline in front:
 .TS
 box tab(:);
@@ -1482,7 +1358,6 @@ l l.
 :22
 31:32
 .TE
-.sp
 vline in front:
 .TS
 box tab(:);
@@ -1495,7 +1370,6 @@ box tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and vline in front:
 .TS
 box tab(:);
@@ -1508,7 +1382,6 @@ l  l.
 :32
 41:42
 .TE
-.sp
 vline and hline in front:
 .TS
 box tab(:);
@@ -1521,7 +1394,6 @@ box tab(:);
 :32
 41:42
 .TE
-.sp
 hline in the middle:
 .TS
 box tab(:);
@@ -1532,7 +1404,6 @@ l l l.
 21::23
 31:32:33
 .TE
-.sp
 vline in the middle:
 .TS
 box tab(:);
@@ -1545,7 +1416,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline and hline in the middle:
 .TS
 box tab(:);
@@ -1558,7 +1428,6 @@ l  l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and vline in the middle:
 .TS
 box tab(:);
@@ -1571,7 +1440,6 @@ l l  l.
 31::33
 41:42:43
 .TE
-.sp
 double hline in the middle:
 .TS
 box tab(:);
@@ -1582,7 +1450,6 @@ l l l l.
 21:::24
 31:32:33:34
 .TE
-.sp
 hline, vline, hline in the middle:
 .TS
 box tab(:);
@@ -1595,7 +1462,6 @@ l l  l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 hline at the end:
 .TS
 box tab(:);
@@ -1606,7 +1472,6 @@ l l.
 21:
 31:32
 .TE
-.sp
 vline at the end:
 .TS
 box tab(:);
@@ -1619,7 +1484,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline and hline at the end:
 .TS
 box tab(:);
@@ -1632,7 +1496,6 @@ l  l.
 31:
 41:42
 .TE
-.sp
 hline and vline at the end:
 .TS
 box tab(:);
@@ -1645,7 +1508,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 hline bottom left:
 .TS
 box tab(:);
@@ -1654,7 +1516,6 @@ _ l.
 11:12
 :22
 .TE
-.sp
 vline bottom left:
 .TS
 box tab(:);
@@ -1665,7 +1526,6 @@ box tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and vline bottom left:
 .TS
 box tab(:);
@@ -1676,7 +1536,6 @@ _| l.
 21:22
 :32
 .TE
-.sp
 vline and hline bottom left:
 .TS
 box tab(:);
@@ -1687,7 +1546,6 @@ box tab(:);
 21:22
 :32
 .TE
-.sp
 double hline bottom:
 .TS
 box tab(:);
@@ -1696,7 +1554,6 @@ l _ _ l.
 11:12:13:14
 21:::24
 .TE
-.sp
 hline, vline, hline bottom:
 .TS
 box tab(:);
@@ -1707,7 +1564,6 @@ l _| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 hline bottom right:
 .TS
 box tab(:);
@@ -1716,7 +1572,6 @@ l _.
 11:12
 21:
 .TE
-.sp
 vline bottom right:
 .TS
 box tab(:);
@@ -1727,7 +1582,6 @@ l l|.
 21:22
 31:32
 .TE
-.sp
 vline and hline bottom right:
 .TS
 box tab(:);
@@ -1738,7 +1592,6 @@ l| _.
 21:22
 31:
 .TE
-.sp
 hline and vline bottom right:
 .TS
 box tab(:);
@@ -1749,7 +1602,6 @@ l _|.
 21:22
 31:
 .TE
-.sp
 double vline in front:
 .TS
 box tab(:);
@@ -1762,7 +1614,6 @@ box tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and double vline in front:
 .TS
 box tab(:);
@@ -1775,7 +1626,6 @@ l   l.
 :32
 41:42
 .TE
-.sp
 double vline and hline in front:
 .TS
 box tab(:);
@@ -1788,7 +1638,6 @@ box tab(:);
 :32
 41:42
 .TE
-.sp
 double vline in the middle:
 .TS
 box tab(:);
@@ -1801,7 +1650,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline and hline in the middle:
 .TS
 box tab(:);
@@ -1814,7 +1662,6 @@ l   l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and doble vline in the middle:
 .TS
 box tab(:);
@@ -1827,7 +1674,6 @@ l l   l.
 31::33
 41:42:43
 .TE
-.sp
 hline, double vline, hline in the middle:
 .TS
 box tab(:);
@@ -1840,7 +1686,6 @@ l l   l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 double vline at the end:
 .TS
 box tab(:);
@@ -1853,7 +1698,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline and hline at the end:
 .TS
 box tab(:);
@@ -1866,7 +1710,6 @@ l   l.
 31:
 41:42
 .TE
-.sp
 hline and double vline at the end:
 .TS
 box tab(:);
@@ -1879,7 +1722,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 double vline bottom left:
 .TS
 box tab(:);
@@ -1890,7 +1732,6 @@ box tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and double vline bottom left:
 .TS
 box tab(:);
@@ -1901,7 +1742,6 @@ _|| l.
 21:22
 :32
 .TE
-.sp
 double vline and hline bottom left:
 .TS
 box tab(:);
@@ -1912,7 +1752,6 @@ box tab(:);
 21:22
 :32
 .TE
-.sp
 hline, double vline, hline bottom:
 .TS
 box tab(:);
@@ -1923,7 +1762,6 @@ l _|| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 double vline bottom right:
 .TS
 box tab(:);
@@ -1934,7 +1772,6 @@ l l||.
 21:22
 31:32
 .TE
-.sp
 double vline and hline bottom right:
 .TS
 box tab(:);
@@ -1945,7 +1782,6 @@ l|| _.
 21:22
 31:
 .TE
-.sp
 hline and double vline bottom right:
 .TS
 box tab(:);
@@ -1956,7 +1792,6 @@ l _||.
 21:22
 31:
 .TE
-.sp
 vline left below hline top left:
 .TS
 box tab(:);
@@ -1967,7 +1802,6 @@ box tab(:);
 21:22
 31:32
 .TE
-.sp
 vline right below hline top left:
 .TS
 box tab(:);
@@ -1978,7 +1812,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline at the top:
 .TS
 box tab(:);
@@ -1989,7 +1822,6 @@ l  l l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline right below hline at the top:
 .TS
 box tab(:);
@@ -2000,7 +1832,6 @@ l l  l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline below hline at the top:
 .TS
 box tab(:);
@@ -2011,7 +1842,6 @@ l l  l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 vline left below hline top right:
 .TS
 box tab(:);
@@ -2022,7 +1852,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline right below hline top right:
 .TS
 box tab(:);
@@ -2033,7 +1862,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline in front:
 .TS
 box tab(:);
@@ -2046,7 +1874,6 @@ box tab(:);
 31:32
 41:42
 .TE
-.sp
 vline left above hline in front:
 .TS
 box tab(:);
@@ -2061,7 +1888,6 @@ box tab(:);
 :42
 51:52
 .TE
-.sp
 vline right below hline in front:
 .TS
 box tab(:);
@@ -2074,7 +1900,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline in front:
 .TS
 box tab(:);
@@ -2089,7 +1914,6 @@ l  l.
 :42
 51:52
 .TE
-.sp
 vline left below hline in the middle:
 .TS
 box tab(:);
@@ -2102,7 +1926,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline left above hline in the middle:
 .TS
 box tab(:);
@@ -2117,7 +1940,6 @@ l  l l.
 41::43
 51:52:53
 .TE
-.sp
 vline right below hline in the middle:
 .TS
 box tab(:);
@@ -2130,7 +1952,6 @@ l l  l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline right above hline in the middle:
 .TS
 box tab(:);
@@ -2145,7 +1966,6 @@ l l  l.
 41::43
 51:52:53
 .TE
-.sp
 vline below hline in the middle:
 .TS
 box tab(:);
@@ -2158,7 +1978,6 @@ l l  l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 vline above hline in the middle:
 .TS
 box tab(:);
@@ -2173,7 +1992,6 @@ l l  l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 vline left below hline at the end:
 .TS
 box tab(:);
@@ -2186,7 +2004,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline left above hline at the end:
 .TS
 box tab(:);
@@ -2201,7 +2018,6 @@ l  l.
 41:
 51:52
 .TE
-.sp
 vline right below hline at the end:
 .TS
 box tab(:);
@@ -2214,7 +2030,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline at the end:
 .TS
 box tab(:);
@@ -2229,7 +2044,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 vline left above hline bottom left:
 .TS
 box tab(:);
@@ -2242,7 +2056,6 @@ box tab(:);
 31:32
 :42
 .TE
-.sp
 vline right above hline bottom left:
 .TS
 box tab(:);
@@ -2255,7 +2068,6 @@ _  l.
 31:32
 :42
 .TE
-.sp
 vline left above hline at the bottom:
 .TS
 box tab(:);
@@ -2268,7 +2080,6 @@ l  _ l.
 31:32:33
 41::43
 .TE
-.sp
 vline right above hline at the bottom:
 .TS
 box tab(:);
@@ -2281,7 +2092,6 @@ l _  l.
 31:32:33
 41::43
 .TE
-.sp
 vline above hline at the bottom:
 .TS
 box tab(:);
@@ -2294,7 +2104,6 @@ l _  _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 vline left above hline bottom right:
 .TS
 box tab(:);
@@ -2307,7 +2116,6 @@ l  _.
 31:32
 41:
 .TE
-.sp
 vline right above hline bottom right:
 .TS
 box tab(:);
@@ -2320,7 +2128,6 @@ l _.
 31:32
 41:
 .TE
-.sp
 double vline left below hline top left:
 .TS
 box tab(:);
@@ -2331,7 +2138,6 @@ box tab(:);
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top left:
 .TS
 box tab(:);
@@ -2342,7 +2148,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline at the top:
 .TS
 box tab(:);
@@ -2353,7 +2158,6 @@ l   l l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline right below hline at the top:
 .TS
 box tab(:);
@@ -2364,7 +2168,6 @@ l l   l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline below hline at the top:
 .TS
 box tab(:);
@@ -2375,7 +2178,6 @@ l l   l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 double vline left below hline top right:
 .TS
 box tab(:);
@@ -2386,7 +2188,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top right:
 .TS
 box tab(:);
@@ -2397,7 +2198,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline in front:
 .TS
 box tab(:);
@@ -2410,7 +2210,6 @@ box tab(:);
 31:32
 41:42
 .TE
-.sp
 double vline left above hline in front:
 .TS
 box tab(:);
@@ -2425,7 +2224,6 @@ box tab(:);
 :42
 51:52
 .TE
-.sp
 double vline right below hline in front:
 .TS
 box tab(:);
@@ -2438,7 +2236,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline in front:
 .TS
 box tab(:);
@@ -2453,7 +2250,6 @@ l   l.
 :42
 51:52
 .TE
-.sp
 double vline left below hline in the middle:
 .TS
 box tab(:);
@@ -2466,7 +2262,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline left above hline in the middle:
 .TS
 box tab(:);
@@ -2481,7 +2276,6 @@ l   l l.
 41::43
 51:52:53
 .TE
-.sp
 double vline right below hline in the middle:
 .TS
 box tab(:);
@@ -2494,7 +2288,6 @@ l l   l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline right above hline in the middle:
 .TS
 box tab(:);
@@ -2509,7 +2302,6 @@ l l   l.
 41::43
 51:52:53
 .TE
-.sp
 double vline below hline in the middle:
 .TS
 box tab(:);
@@ -2522,7 +2314,6 @@ l l   l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 double vline above hline in the middle:
 .TS
 box tab(:);
@@ -2537,7 +2328,6 @@ l l   l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 double vline left below hline at the end:
 .TS
 box tab(:);
@@ -2550,7 +2340,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline left above hline at the end:
 .TS
 box tab(:);
@@ -2565,7 +2354,6 @@ l   l.
 41:
 51:52
 .TE
-.sp
 double vline right below hline at the end:
 .TS
 box tab(:);
@@ -2578,7 +2366,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline at the end:
 .TS
 box tab(:);
@@ -2593,7 +2380,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 double vline left above hline bottom left:
 .TS
 box tab(:);
@@ -2606,7 +2392,6 @@ box tab(:);
 31:32
 :42
 .TE
-.sp
 double vline right above hline bottom left:
 .TS
 box tab(:);
@@ -2619,7 +2404,6 @@ _   l.
 31:32
 :42
 .TE
-.sp
 double vline left above hline at the bottom:
 .TS
 box tab(:);
@@ -2632,7 +2416,6 @@ l   _ l.
 31:32:33
 41::43
 .TE
-.sp
 double vline right above hline at the bottom:
 .TS
 box tab(:);
@@ -2645,7 +2428,6 @@ l _   l.
 31:32:33
 41::43
 .TE
-.sp
 double vline above hline at the bottom:
 .TS
 box tab(:);
@@ -2658,7 +2440,6 @@ l _   _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 double vline left above hline bottom right:
 .TS
 box tab(:);
@@ -2671,7 +2452,6 @@ l   _.
 31:32
 41:
 .TE
-.sp
 double vline right above hline bottom right:
 .TS
 box tab(:);
@@ -2684,7 +2464,6 @@ l _.
 31:32
 41:
 .TE
-.sp
 .Sh ALLBOX
 vline top left:
 .TS
@@ -2694,7 +2473,6 @@ allbox tab(:);
 11:12
 21:22
 .TE
-.sp
 hline and vline top left:
 .TS
 allbox tab(:);
@@ -2703,7 +2481,6 @@ l  l.
 :12
 21:22
 .TE
-.sp
 vline and hline top left:
 .TS
 allbox tab(:);
@@ -2712,7 +2489,6 @@ allbox tab(:);
 :12
 21:22
 .TE
-.sp
 vline top:
 .TS
 allbox tab(:);
@@ -2721,7 +2497,6 @@ l  l.
 11:12
 21:22
 .TE
-.sp
 vline and hline top:
 .TS
 allbox tab(:);
@@ -2730,7 +2505,6 @@ l  l l.
 11::13
 21:22:23
 .TE
-.sp
 hline and vline top:
 .TS
 allbox tab(:);
@@ -2739,7 +2513,6 @@ l l  l.
 11::13
 21:22:23
 .TE
-.sp
 hline, vline, hline top:
 .TS
 allbox tab(:);
@@ -2748,7 +2521,6 @@ l l  l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 vline top right:
 .TS
 allbox tab(:);
@@ -2757,7 +2529,6 @@ l l.
 11:12
 21:22
 .TE
-.sp
 vline and hline top right:
 .TS
 allbox tab(:);
@@ -2766,7 +2537,6 @@ l  l.
 11:
 21:22
 .TE
-.sp
 hline and vline top right:
 .TS
 allbox tab(:);
@@ -2775,7 +2545,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 double vline top left:
 .TS
 allbox tab(:);
@@ -2784,7 +2553,6 @@ allbox tab(:);
 11:12
 21:22
 .TE
-.sp
 hline and double vline top left:
 .TS
 allbox tab(:);
@@ -2793,7 +2561,6 @@ l   l.
 :12
 21:22
 .TE
-.sp
 double vline and hline top left:
 .TS
 allbox tab(:);
@@ -2802,7 +2569,6 @@ allbox tab(:);
 :12
 21:22
 .TE
-.sp
 double vline top:
 .TS
 allbox tab(:);
@@ -2811,7 +2577,6 @@ l   l.
 11:12
 21:22
 .TE
-.sp
 double vline and hline top:
 .TS
 allbox tab(:);
@@ -2820,7 +2585,6 @@ l   l l.
 11::13
 21:22:23
 .TE
-.sp
 hline and double vline top:
 .TS
 allbox tab(:);
@@ -2829,7 +2593,6 @@ l l   l.
 11::13
 21:22:23
 .TE
-.sp
 hline, double vline, hline top:
 .TS
 allbox tab(:);
@@ -2838,7 +2601,6 @@ l l   l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 double vline top right:
 .TS
 allbox tab(:);
@@ -2847,7 +2609,6 @@ l l.
 11:12
 21:22
 .TE
-.sp
 double vline and hline top right:
 .TS
 allbox tab(:);
@@ -2856,7 +2617,6 @@ l   l.
 11:
 21:22
 .TE
-.sp
 hline and double vline top right:
 .TS
 allbox tab(:);
@@ -2865,7 +2625,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 hline top left:
 .TS
 allbox tab(:);
@@ -2874,7 +2633,6 @@ l l.
 :12
 21:22
 .TE
-.sp
 hline top:
 .TS
 allbox tab(:);
@@ -2883,7 +2641,6 @@ l l l.
 11::13
 21:22:23
 .TE
-.sp
 double hline top:
 .TS
 allbox tab(:);
@@ -2892,7 +2649,6 @@ l l l l.
 11:::13
 21:22:23:24
 .TE
-.sp
 hline top right:
 .TS
 allbox tab(:);
@@ -2901,7 +2657,6 @@ l l.
 11:
 21:22
 .TE
-.sp
 hline in front:
 .TS
 allbox tab(:);
@@ -2912,7 +2667,6 @@ l l.
 :22
 31:32
 .TE
-.sp
 vline in front:
 .TS
 allbox tab(:);
@@ -2925,7 +2679,6 @@ allbox tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and vline in front:
 .TS
 allbox tab(:);
@@ -2938,7 +2691,6 @@ l  l.
 :32
 41:42
 .TE
-.sp
 vline and hline in front:
 .TS
 allbox tab(:);
@@ -2951,7 +2703,6 @@ allbox tab(:);
 :32
 41:42
 .TE
-.sp
 hline in the middle:
 .TS
 allbox tab(:);
@@ -2962,7 +2713,6 @@ l l l.
 21::23
 31:32:33
 .TE
-.sp
 vline in the middle:
 .TS
 allbox tab(:);
@@ -2975,7 +2725,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline and hline in the middle:
 .TS
 allbox tab(:);
@@ -2988,7 +2737,6 @@ l  l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and vline in the middle:
 .TS
 allbox tab(:);
@@ -3001,7 +2749,6 @@ l l  l.
 31::33
 41:42:43
 .TE
-.sp
 double hline in the middle:
 .TS
 allbox tab(:);
@@ -3012,7 +2759,6 @@ l l l l.
 21:::24
 31:32:33:34
 .TE
-.sp
 hline, vline, hline in the middle:
 .TS
 allbox tab(:);
@@ -3025,7 +2771,6 @@ l l  l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 hline at the end:
 .TS
 allbox tab(:);
@@ -3036,7 +2781,6 @@ l l.
 21:
 31:32
 .TE
-.sp
 vline at the end:
 .TS
 allbox tab(:);
@@ -3049,7 +2793,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline and hline at the end:
 .TS
 allbox tab(:);
@@ -3062,7 +2805,6 @@ l  l.
 31:
 41:42
 .TE
-.sp
 hline and vline at the end:
 .TS
 allbox tab(:);
@@ -3075,7 +2817,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 hline bottom left:
 .TS
 allbox tab(:);
@@ -3084,7 +2825,6 @@ _ l.
 11:12
 :22
 .TE
-.sp
 vline bottom left:
 .TS
 allbox tab(:);
@@ -3095,7 +2835,6 @@ allbox tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and vline bottom left:
 .TS
 allbox tab(:);
@@ -3106,7 +2845,6 @@ _| l.
 21:22
 :32
 .TE
-.sp
 vline and hline bottom left:
 .TS
 allbox tab(:);
@@ -3117,7 +2855,6 @@ allbox tab(:);
 21:22
 :32
 .TE
-.sp
 double hline bottom:
 .TS
 allbox tab(:);
@@ -3126,7 +2863,6 @@ l _ _ l.
 11:12:13:14
 21:::24
 .TE
-.sp
 hline, vline, hline bottom:
 .TS
 allbox tab(:);
@@ -3137,7 +2873,6 @@ l _| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 hline bottom right:
 .TS
 allbox tab(:);
@@ -3146,7 +2881,6 @@ l _.
 11:12
 21:
 .TE
-.sp
 vline bottom right:
 .TS
 allbox tab(:);
@@ -3157,7 +2891,6 @@ l l|.
 21:22
 31:32
 .TE
-.sp
 vline and hline bottom right:
 .TS
 allbox tab(:);
@@ -3168,7 +2901,6 @@ l| _.
 21:22
 31:
 .TE
-.sp
 hline and vline bottom right:
 .TS
 allbox tab(:);
@@ -3179,7 +2911,6 @@ l _|.
 21:22
 31:
 .TE
-.sp
 double vline in front:
 .TS
 allbox tab(:);
@@ -3192,7 +2923,6 @@ allbox tab(:);
 31:32
 41:42
 .TE
-.sp
 hline and double vline in front:
 .TS
 allbox tab(:);
@@ -3205,7 +2935,6 @@ l   l.
 :32
 41:42
 .TE
-.sp
 double vline and hline in front:
 .TS
 allbox tab(:);
@@ -3218,7 +2947,6 @@ allbox tab(:);
 :32
 41:42
 .TE
-.sp
 double vline in the middle:
 .TS
 allbox tab(:);
@@ -3231,7 +2959,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline and hline in the middle:
 .TS
 allbox tab(:);
@@ -3244,7 +2971,6 @@ l   l l.
 31::33
 41:42:43
 .TE
-.sp
 hline and doble vline in the middle:
 .TS
 allbox tab(:);
@@ -3257,7 +2983,6 @@ l l   l.
 31::33
 41:42:43
 .TE
-.sp
 hline, double vline, hline in the middle:
 .TS
 allbox tab(:);
@@ -3270,7 +2995,6 @@ l l   l l.
 31:::34
 41:42:43:44
 .TE
-.sp
 double vline at the end:
 .TS
 allbox tab(:);
@@ -3283,7 +3007,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline and hline at the end:
 .TS
 allbox tab(:);
@@ -3296,7 +3019,6 @@ l   l.
 31:
 41:42
 .TE
-.sp
 hline and double vline at the end:
 .TS
 allbox tab(:);
@@ -3309,7 +3031,6 @@ l l.
 31:
 41:42
 .TE
-.sp
 double vline bottom left:
 .TS
 allbox tab(:);
@@ -3320,7 +3041,6 @@ allbox tab(:);
 21:22
 31:32
 .TE
-.sp
 hline and double vline bottom left:
 .TS
 allbox tab(:);
@@ -3331,7 +3051,6 @@ _|| l.
 21:22
 :32
 .TE
-.sp
 double vline and hline bottom left:
 .TS
 allbox tab(:);
@@ -3342,7 +3061,6 @@ allbox tab(:);
 21:22
 :32
 .TE
-.sp
 hline, double vline, hline bottom:
 .TS
 allbox tab(:);
@@ -3353,7 +3071,6 @@ l _|| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp
 double vline bottom right:
 .TS
 allbox tab(:);
@@ -3364,7 +3081,6 @@ l l||.
 21:22
 31:32
 .TE
-.sp
 double vline and hline bottom right:
 .TS
 allbox tab(:);
@@ -3375,7 +3091,6 @@ l|| _.
 21:22
 31:
 .TE
-.sp
 hline and double vline bottom right:
 .TS
 allbox tab(:);
@@ -3386,7 +3101,6 @@ l _||.
 21:22
 31:
 .TE
-.sp
 vline left below hline top left:
 .TS
 allbox tab(:);
@@ -3397,7 +3111,6 @@ allbox tab(:);
 21:22
 31:32
 .TE
-.sp
 vline right below hline top left:
 .TS
 allbox tab(:);
@@ -3408,7 +3121,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline at the top:
 .TS
 allbox tab(:);
@@ -3419,7 +3131,6 @@ l  l l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline right below hline at the top:
 .TS
 allbox tab(:);
@@ -3430,7 +3141,6 @@ l l  l.
 21:22:23
 31:32:33
 .TE
-.sp
 vline below hline at the top:
 .TS
 allbox tab(:);
@@ -3441,7 +3151,6 @@ l l  l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 vline left below hline top right:
 .TS
 allbox tab(:);
@@ -3452,7 +3161,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp
 vline right below hline top right:
 .TS
 allbox tab(:);
@@ -3463,7 +3171,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 vline left below hline in front:
 .TS
 allbox tab(:);
@@ -3476,7 +3183,6 @@ allbox tab(:);
 31:32
 41:42
 .TE
-.sp
 vline left above hline in front:
 .TS
 allbox tab(:);
@@ -3491,7 +3197,6 @@ allbox tab(:);
 :42
 51:52
 .TE
-.sp
 vline right below hline in front:
 .TS
 allbox tab(:);
@@ -3504,7 +3209,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline in front:
 .TS
 allbox tab(:);
@@ -3519,7 +3223,6 @@ l  l.
 :42
 51:52
 .TE
-.sp
 vline left below hline in the middle:
 .TS
 allbox tab(:);
@@ -3532,7 +3235,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline left above hline in the middle:
 .TS
 allbox tab(:);
@@ -3547,7 +3249,6 @@ l  l l.
 41::43
 51:52:53
 .TE
-.sp
 vline right below hline in the middle:
 .TS
 allbox tab(:);
@@ -3560,7 +3261,6 @@ l l  l.
 31:32:33
 41:42:43
 .TE
-.sp
 vline right above hline in the middle:
 .TS
 allbox tab(:);
@@ -3575,7 +3275,6 @@ l l  l.
 41::43
 51:52:53
 .TE
-.sp
 vline below hline in the middle:
 .TS
 allbox tab(:);
@@ -3588,7 +3287,6 @@ l l  l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 vline above hline in the middle:
 .TS
 allbox tab(:);
@@ -3603,7 +3301,6 @@ l l  l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 vline left below hline at the end:
 .TS
 allbox tab(:);
@@ -3616,7 +3313,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp
 vline left above hline at the end:
 .TS
 allbox tab(:);
@@ -3631,7 +3327,6 @@ l  l.
 41:
 51:52
 .TE
-.sp
 vline right below hline at the end:
 .TS
 allbox tab(:);
@@ -3644,7 +3339,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 vline right above hline at the end:
 .TS
 allbox tab(:);
@@ -3659,7 +3353,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 vline left above hline bottom left:
 .TS
 allbox tab(:);
@@ -3672,7 +3365,6 @@ allbox tab(:);
 31:32
 :42
 .TE
-.sp
 vline right above hline bottom left:
 .TS
 allbox tab(:);
@@ -3685,7 +3377,6 @@ _  l.
 31:32
 :42
 .TE
-.sp
 vline left above hline at the bottom:
 .TS
 allbox tab(:);
@@ -3698,7 +3389,6 @@ l  _ l.
 31:32:33
 41::43
 .TE
-.sp
 vline right above hline at the bottom:
 .TS
 allbox tab(:);
@@ -3711,7 +3401,6 @@ l _  l.
 31:32:33
 41::43
 .TE
-.sp
 vline above hline at the bottom:
 .TS
 allbox tab(:);
@@ -3724,7 +3413,6 @@ l _  _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 vline left above hline bottom right:
 .TS
 allbox tab(:);
@@ -3737,7 +3425,6 @@ l  _.
 31:32
 41:
 .TE
-.sp
 vline right above hline bottom right:
 .TS
 allbox tab(:);
@@ -3750,7 +3437,6 @@ l _.
 31:32
 41:
 .TE
-.sp
 double vline left below hline top left:
 .TS
 allbox tab(:);
@@ -3761,7 +3447,6 @@ allbox tab(:);
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top left:
 .TS
 allbox tab(:);
@@ -3772,7 +3457,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline at the top:
 .TS
 allbox tab(:);
@@ -3783,7 +3467,6 @@ l   l l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline right below hline at the top:
 .TS
 allbox tab(:);
@@ -3794,7 +3477,6 @@ l l   l.
 21:22:23
 31:32:33
 .TE
-.sp
 double vline below hline at the top:
 .TS
 allbox tab(:);
@@ -3805,7 +3487,6 @@ l l   l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp
 double vline left below hline top right:
 .TS
 allbox tab(:);
@@ -3816,7 +3497,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp
 double vline right below hline top right:
 .TS
 allbox tab(:);
@@ -3827,7 +3507,6 @@ l l.
 21:22
 31:32
 .TE
-.sp
 double vline left below hline in front:
 .TS
 allbox tab(:);
@@ -3840,7 +3519,6 @@ allbox tab(:);
 31:32
 41:42
 .TE
-.sp
 double vline left above hline in front:
 .TS
 allbox tab(:);
@@ -3855,7 +3533,6 @@ allbox tab(:);
 :42
 51:52
 .TE
-.sp
 double vline right below hline in front:
 .TS
 allbox tab(:);
@@ -3868,7 +3545,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline in front:
 .TS
 allbox tab(:);
@@ -3883,7 +3559,6 @@ l   l.
 :42
 51:52
 .TE
-.sp
 double vline left below hline in the middle:
 .TS
 allbox tab(:);
@@ -3896,7 +3571,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline left above hline in the middle:
 .TS
 allbox tab(:);
@@ -3911,7 +3585,6 @@ l   l l.
 41::43
 51:52:53
 .TE
-.sp
 double vline right below hline in the middle:
 .TS
 allbox tab(:);
@@ -3924,7 +3597,6 @@ l l   l.
 31:32:33
 41:42:43
 .TE
-.sp
 double vline right above hline in the middle:
 .TS
 allbox tab(:);
@@ -3939,7 +3611,6 @@ l l   l.
 41::43
 51:52:53
 .TE
-.sp
 double vline below hline in the middle:
 .TS
 allbox tab(:);
@@ -3952,7 +3623,6 @@ l l   l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp
 double vline above hline in the middle:
 .TS
 allbox tab(:);
@@ -3967,7 +3637,6 @@ l l   l l.
 41:::44
 51:52:53:54
 .TE
-.sp
 double vline left below hline at the end:
 .TS
 allbox tab(:);
@@ -3980,7 +3649,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp
 double vline left above hline at the end:
 .TS
 allbox tab(:);
@@ -3995,7 +3663,6 @@ l   l.
 41:
 51:52
 .TE
-.sp
 double vline right below hline at the end:
 .TS
 allbox tab(:);
@@ -4008,7 +3675,6 @@ l l.
 31:32
 41:42
 .TE
-.sp
 double vline right above hline at the end:
 .TS
 allbox tab(:);
@@ -4023,7 +3689,6 @@ l l.
 41:
 51:52
 .TE
-.sp
 double vline left above hline bottom left:
 .TS
 allbox tab(:);
@@ -4036,7 +3701,6 @@ allbox tab(:);
 31:32
 :42
 .TE
-.sp
 double vline right above hline bottom left:
 .TS
 allbox tab(:);
@@ -4049,7 +3713,6 @@ _   l.
 31:32
 :42
 .TE
-.sp
 double vline left above hline at the bottom:
 .TS
 allbox tab(:);
@@ -4062,7 +3725,6 @@ l   _ l.
 31:32:33
 41::43
 .TE
-.sp
 double vline right above hline at the bottom:
 .TS
 allbox tab(:);
@@ -4075,7 +3737,6 @@ l _   l.
 31:32:33
 41::43
 .TE
-.sp
 double vline above hline at the bottom:
 .TS
 allbox tab(:);
@@ -4088,7 +3749,6 @@ l _   _ l.
 31:32:33:34
 41:::44
 .TE
-.sp
 double vline left above hline bottom right:
 .TS
 allbox tab(:);
@@ -4101,7 +3761,6 @@ l   _.
 31:32
 41:
 .TE
-.sp
 double vline right above hline bottom right:
 .TS
 allbox tab(:);
@@ -4114,7 +3773,6 @@ l _.
 31:32
 41:
 .TE
-.sp
 .Sh DOUBLEBOX
 vline top left:
 .TS
@@ -4124,7 +3782,6 @@ doublebox tab(:);
 11:12
 21:22
 .TE
-.sp 2v
 hline and vline top left:
 .TS
 doublebox tab(:);
@@ -4133,7 +3790,6 @@ l  l.
 :12
 21:22
 .TE
-.sp 2v
 vline and hline top left:
 .TS
 doublebox tab(:);
@@ -4142,7 +3798,6 @@ doublebox tab(:);
 :12
 21:22
 .TE
-.sp 2v
 vline top:
 .TS
 doublebox tab(:);
@@ -4151,7 +3806,6 @@ l  l.
 11:12
 21:22
 .TE
-.sp 2v
 vline and hline top:
 .TS
 doublebox tab(:);
@@ -4160,7 +3814,6 @@ l  l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline and vline top:
 .TS
 doublebox tab(:);
@@ -4169,7 +3822,6 @@ l l  l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline, vline, hline top:
 .TS
 doublebox tab(:);
@@ -4178,7 +3830,6 @@ l l  l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 vline top right:
 .TS
 doublebox tab(:);
@@ -4187,7 +3838,6 @@ l l.
 11:12
 21:22
 .TE
-.sp 2v
 vline and hline top right:
 .TS
 doublebox tab(:);
@@ -4196,7 +3846,6 @@ l  l.
 11:
 21:22
 .TE
-.sp 2v
 hline and vline top right:
 .TS
 doublebox tab(:);
@@ -4205,7 +3854,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 double vline top left:
 .TS
 doublebox tab(:);
@@ -4214,7 +3862,6 @@ doublebox tab(:);
 11:12
 21:22
 .TE
-.sp 2v
 hline and double vline top left:
 .TS
 doublebox tab(:);
@@ -4223,7 +3870,6 @@ l   l.
 :12
 21:22
 .TE
-.sp 2v
 double vline and hline top left:
 .TS
 doublebox tab(:);
@@ -4232,7 +3878,6 @@ doublebox tab(:);
 :12
 21:22
 .TE
-.sp 2v
 double vline top:
 .TS
 doublebox tab(:);
@@ -4241,7 +3886,6 @@ l   l.
 11:12
 21:22
 .TE
-.sp 2v
 double vline and hline top:
 .TS
 doublebox tab(:);
@@ -4250,7 +3894,6 @@ l   l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline and double vline top:
 .TS
 doublebox tab(:);
@@ -4259,7 +3902,6 @@ l l   l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline, double vline, hline top:
 .TS
 doublebox tab(:);
@@ -4268,7 +3910,6 @@ l l   l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 double vline top right:
 .TS
 doublebox tab(:);
@@ -4277,7 +3918,6 @@ l l.
 11:12
 21:22
 .TE
-.sp 2v
 double vline and hline top right:
 .TS
 doublebox tab(:);
@@ -4286,7 +3926,6 @@ l   l.
 11:
 21:22
 .TE
-.sp 2v
 hline and double vline top right:
 .TS
 doublebox tab(:);
@@ -4295,7 +3934,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 hline top left:
 .TS
 doublebox tab(:);
@@ -4304,7 +3942,6 @@ l l.
 :12
 21:22
 .TE
-.sp 2v
 hline top:
 .TS
 doublebox tab(:);
@@ -4313,7 +3950,6 @@ l l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 double hline top:
 .TS
 doublebox tab(:);
@@ -4322,7 +3958,6 @@ l l l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 hline top right:
 .TS
 doublebox tab(:);
@@ -4331,7 +3966,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 hline in front:
 .TS
 doublebox tab(:);
@@ -4342,7 +3976,6 @@ l l.
 :22
 31:32
 .TE
-.sp 2v
 vline in front:
 .TS
 doublebox tab(:);
@@ -4355,7 +3988,6 @@ doublebox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 hline and vline in front:
 .TS
 doublebox tab(:);
@@ -4368,7 +4000,6 @@ l  l.
 :32
 41:42
 .TE
-.sp 2v
 vline and hline in front:
 .TS
 doublebox tab(:);
@@ -4381,7 +4012,6 @@ doublebox tab(:);
 :32
 41:42
 .TE
-.sp 2v
 hline in the middle:
 .TS
 doublebox tab(:);
@@ -4392,7 +4022,6 @@ l l l.
 21::23
 31:32:33
 .TE
-.sp 2v
 vline in the middle:
 .TS
 doublebox tab(:);
@@ -4405,7 +4034,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline and hline in the middle:
 .TS
 doublebox tab(:);
@@ -4418,7 +4046,6 @@ l  l l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline and vline in the middle:
 .TS
 doublebox tab(:);
@@ -4431,7 +4058,6 @@ l l  l.
 31::33
 41:42:43
 .TE
-.sp 2v
 double hline in the middle:
 .TS
 doublebox tab(:);
@@ -4442,7 +4068,6 @@ l l l l.
 21:::24
 31:32:33:34
 .TE
-.sp 2v
 hline, vline, hline in the middle:
 .TS
 doublebox tab(:);
@@ -4455,7 +4080,6 @@ l l  l l.
 31:::34
 41:42:43:44
 .TE
-.sp 2v
 hline at the end:
 .TS
 doublebox tab(:);
@@ -4466,7 +4090,6 @@ l l.
 21:
 31:32
 .TE
-.sp 2v
 vline at the end:
 .TS
 doublebox tab(:);
@@ -4479,7 +4102,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 vline and hline at the end:
 .TS
 doublebox tab(:);
@@ -4492,7 +4114,6 @@ l  l.
 31:
 41:42
 .TE
-.sp 2v
 hline and vline at the end:
 .TS
 doublebox tab(:);
@@ -4505,7 +4126,6 @@ l l.
 31:
 41:42
 .TE
-.sp 2v
 hline bottom left:
 .TS
 doublebox tab(:);
@@ -4514,7 +4134,6 @@ _ l.
 11:12
 :22
 .TE
-.sp 2v
 vline bottom left:
 .TS
 doublebox tab(:);
@@ -4525,7 +4144,6 @@ doublebox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 hline and vline bottom left:
 .TS
 doublebox tab(:);
@@ -4536,7 +4154,6 @@ _| l.
 21:22
 :32
 .TE
-.sp 2v
 vline and hline bottom left:
 .TS
 doublebox tab(:);
@@ -4547,7 +4164,6 @@ doublebox tab(:);
 21:22
 :32
 .TE
-.sp 2v
 double hline bottom:
 .TS
 doublebox tab(:);
@@ -4556,7 +4172,6 @@ l _ _ l.
 11:12:13:14
 21:::24
 .TE
-.sp 2v
 hline, vline, hline bottom:
 .TS
 doublebox tab(:);
@@ -4567,7 +4182,6 @@ l _| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp 2v
 hline bottom right:
 .TS
 doublebox tab(:);
@@ -4576,7 +4190,6 @@ l _.
 11:12
 21:
 .TE
-.sp 2v
 vline bottom right:
 .TS
 doublebox tab(:);
@@ -4587,7 +4200,6 @@ l l|.
 21:22
 31:32
 .TE
-.sp 2v
 vline and hline bottom right:
 .TS
 doublebox tab(:);
@@ -4598,7 +4210,6 @@ l| _.
 21:22
 31:
 .TE
-.sp 2v
 hline and vline bottom right:
 .TS
 doublebox tab(:);
@@ -4609,7 +4220,6 @@ l _|.
 21:22
 31:
 .TE
-.sp 2v
 double vline in front:
 .TS
 doublebox tab(:);
@@ -4622,7 +4232,6 @@ doublebox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 hline and double vline in front:
 .TS
 doublebox tab(:);
@@ -4635,7 +4244,6 @@ l   l.
 :32
 41:42
 .TE
-.sp 2v
 double vline and hline in front:
 .TS
 doublebox tab(:);
@@ -4648,7 +4256,6 @@ doublebox tab(:);
 :32
 41:42
 .TE
-.sp 2v
 double vline in the middle:
 .TS
 doublebox tab(:);
@@ -4661,7 +4268,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline and hline in the middle:
 .TS
 doublebox tab(:);
@@ -4674,7 +4280,6 @@ l   l l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline and doble vline in the middle:
 .TS
 doublebox tab(:);
@@ -4687,7 +4292,6 @@ l l   l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline, double vline, hline in the middle:
 .TS
 doublebox tab(:);
@@ -4700,7 +4304,6 @@ l l   l l.
 31:::34
 41:42:43:44
 .TE
-.sp 2v
 double vline at the end:
 .TS
 doublebox tab(:);
@@ -4713,7 +4316,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline and hline at the end:
 .TS
 doublebox tab(:);
@@ -4726,7 +4328,6 @@ l   l.
 31:
 41:42
 .TE
-.sp 2v
 hline and double vline at the end:
 .TS
 doublebox tab(:);
@@ -4739,7 +4340,6 @@ l l.
 31:
 41:42
 .TE
-.sp 2v
 double vline bottom left:
 .TS
 doublebox tab(:);
@@ -4750,7 +4350,6 @@ doublebox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 hline and double vline bottom left:
 .TS
 doublebox tab(:);
@@ -4761,7 +4360,6 @@ _|| l.
 21:22
 :32
 .TE
-.sp 2v
 double vline and hline bottom left:
 .TS
 doublebox tab(:);
@@ -4772,7 +4370,6 @@ doublebox tab(:);
 21:22
 :32
 .TE
-.sp 2v
 hline, double vline, hline bottom:
 .TS
 doublebox tab(:);
@@ -4783,7 +4380,6 @@ l _|| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp 2v
 double vline bottom right:
 .TS
 doublebox tab(:);
@@ -4794,7 +4390,6 @@ l l||.
 21:22
 31:32
 .TE
-.sp 2v
 double vline and hline bottom right:
 .TS
 doublebox tab(:);
@@ -4805,7 +4400,6 @@ l|| _.
 21:22
 31:
 .TE
-.sp 2v
 hline and double vline bottom right:
 .TS
 doublebox tab(:);
@@ -4816,7 +4410,6 @@ l _||.
 21:22
 31:
 .TE
-.sp 2v
 vline left below hline top left:
 .TS
 doublebox tab(:);
@@ -4827,7 +4420,6 @@ doublebox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 vline right below hline top left:
 .TS
 doublebox tab(:);
@@ -4838,7 +4430,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp 2v
 vline left below hline at the top:
 .TS
 doublebox tab(:);
@@ -4849,7 +4440,6 @@ l  l l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 vline right below hline at the top:
 .TS
 doublebox tab(:);
@@ -4860,7 +4450,6 @@ l l  l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 vline below hline at the top:
 .TS
 doublebox tab(:);
@@ -4871,7 +4460,6 @@ l l  l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp 2v
 vline left below hline top right:
 .TS
 doublebox tab(:);
@@ -4882,7 +4470,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp 2v
 vline right below hline top right:
 .TS
 doublebox tab(:);
@@ -4893,7 +4480,6 @@ l l.
 21:22
 31:32
 .TE
-.sp 2v
 vline left below hline in front:
 .TS
 doublebox tab(:);
@@ -4906,7 +4492,6 @@ doublebox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 vline left above hline in front:
 .TS
 doublebox tab(:);
@@ -4921,7 +4506,6 @@ doublebox tab(:);
 :42
 51:52
 .TE
-.sp 2v
 vline right below hline in front:
 .TS
 doublebox tab(:);
@@ -4934,7 +4518,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp 2v
 vline right above hline in front:
 .TS
 doublebox tab(:);
@@ -4949,7 +4532,6 @@ l  l.
 :42
 51:52
 .TE
-.sp 2v
 vline left below hline in the middle:
 .TS
 doublebox tab(:);
@@ -4962,7 +4544,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline left above hline in the middle:
 .TS
 doublebox tab(:);
@@ -4977,7 +4558,6 @@ l  l l.
 41::43
 51:52:53
 .TE
-.sp 2v
 vline right below hline in the middle:
 .TS
 doublebox tab(:);
@@ -4990,7 +4570,6 @@ l l  l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline right above hline in the middle:
 .TS
 doublebox tab(:);
@@ -5005,7 +4584,6 @@ l l  l.
 41::43
 51:52:53
 .TE
-.sp 2v
 vline below hline in the middle:
 .TS
 doublebox tab(:);
@@ -5018,7 +4596,6 @@ l l  l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp 2v
 vline above hline in the middle:
 .TS
 doublebox tab(:);
@@ -5033,7 +4610,6 @@ l l  l l.
 41:::44
 51:52:53:54
 .TE
-.sp 2v
 vline left below hline at the end:
 .TS
 doublebox tab(:);
@@ -5046,7 +4622,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp 2v
 vline left above hline at the end:
 .TS
 doublebox tab(:);
@@ -5061,7 +4636,6 @@ l  l.
 41:
 51:52
 .TE
-.sp 2v
 vline right below hline at the end:
 .TS
 doublebox tab(:);
@@ -5074,7 +4648,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 vline right above hline at the end:
 .TS
 doublebox tab(:);
@@ -5089,7 +4662,6 @@ l l.
 41:
 51:52
 .TE
-.sp 2v
 vline left above hline bottom left:
 .TS
 doublebox tab(:);
@@ -5102,7 +4674,6 @@ doublebox tab(:);
 31:32
 :42
 .TE
-.sp 2v
 vline right above hline bottom left:
 .TS
 doublebox tab(:);
@@ -5115,7 +4686,6 @@ _  l.
 31:32
 :42
 .TE
-.sp 2v
 vline left above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5128,7 +4698,6 @@ l  _ l.
 31:32:33
 41::43
 .TE
-.sp 2v
 vline right above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5141,7 +4710,6 @@ l _  l.
 31:32:33
 41::43
 .TE
-.sp 2v
 vline above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5154,7 +4722,6 @@ l _  _ l.
 31:32:33:34
 41:::44
 .TE
-.sp 2v
 vline left above hline bottom right:
 .TS
 doublebox tab(:);
@@ -5167,7 +4734,6 @@ l  _.
 31:32
 41:
 .TE
-.sp 2v
 vline right above hline bottom right:
 .TS
 doublebox tab(:);
@@ -5180,7 +4746,6 @@ l _.
 31:32
 41:
 .TE
-.sp 2v
 double vline left below hline top left:
 .TS
 doublebox tab(:);
@@ -5191,7 +4756,6 @@ doublebox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 double vline right below hline top left:
 .TS
 doublebox tab(:);
@@ -5202,7 +4766,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline left below hline at the top:
 .TS
 doublebox tab(:);
@@ -5213,7 +4776,6 @@ l   l l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 double vline right below hline at the top:
 .TS
 doublebox tab(:);
@@ -5224,7 +4786,6 @@ l l   l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 double vline below hline at the top:
 .TS
 doublebox tab(:);
@@ -5235,7 +4796,6 @@ l l   l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp 2v
 double vline left below hline top right:
 .TS
 doublebox tab(:);
@@ -5246,7 +4806,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline right below hline top right:
 .TS
 doublebox tab(:);
@@ -5257,7 +4816,6 @@ l l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline left below hline in front:
 .TS
 doublebox tab(:);
@@ -5270,7 +4828,6 @@ doublebox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 double vline left above hline in front:
 .TS
 doublebox tab(:);
@@ -5285,7 +4842,6 @@ doublebox tab(:);
 :42
 51:52
 .TE
-.sp 2v
 double vline right below hline in front:
 .TS
 doublebox tab(:);
@@ -5298,7 +4854,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline right above hline in front:
 .TS
 doublebox tab(:);
@@ -5313,7 +4868,6 @@ l   l.
 :42
 51:52
 .TE
-.sp 2v
 double vline left below hline in the middle:
 .TS
 doublebox tab(:);
@@ -5326,7 +4880,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline left above hline in the middle:
 .TS
 doublebox tab(:);
@@ -5341,7 +4894,6 @@ l   l l.
 41::43
 51:52:53
 .TE
-.sp 2v
 double vline right below hline in the middle:
 .TS
 doublebox tab(:);
@@ -5354,7 +4906,6 @@ l l   l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline right above hline in the middle:
 .TS
 doublebox tab(:);
@@ -5369,7 +4920,6 @@ l l   l.
 41::43
 51:52:53
 .TE
-.sp 2v
 double vline below hline in the middle:
 .TS
 doublebox tab(:);
@@ -5382,7 +4932,6 @@ l l   l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp 2v
 double vline above hline in the middle:
 .TS
 doublebox tab(:);
@@ -5397,7 +4946,6 @@ l l   l l.
 41:::44
 51:52:53:54
 .TE
-.sp 2v
 double vline left below hline at the end:
 .TS
 doublebox tab(:);
@@ -5410,7 +4958,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline left above hline at the end:
 .TS
 doublebox tab(:);
@@ -5425,7 +4972,6 @@ l   l.
 41:
 51:52
 .TE
-.sp 2v
 double vline right below hline at the end:
 .TS
 doublebox tab(:);
@@ -5438,7 +4984,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline right above hline at the end:
 .TS
 doublebox tab(:);
@@ -5453,7 +4998,6 @@ l l.
 41:
 51:52
 .TE
-.sp 2v
 double vline left above hline bottom left:
 .TS
 doublebox tab(:);
@@ -5466,7 +5010,6 @@ doublebox tab(:);
 31:32
 :42
 .TE
-.sp 2v
 double vline right above hline bottom left:
 .TS
 doublebox tab(:);
@@ -5479,7 +5022,6 @@ _   l.
 31:32
 :42
 .TE
-.sp 2v
 double vline left above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5492,7 +5034,6 @@ l   _ l.
 31:32:33
 41::43
 .TE
-.sp 2v
 double vline right above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5505,7 +5046,6 @@ l _   l.
 31:32:33
 41::43
 .TE
-.sp 2v
 double vline above hline at the bottom:
 .TS
 doublebox tab(:);
@@ -5518,7 +5058,6 @@ l _   _ l.
 31:32:33:34
 41:::44
 .TE
-.sp 2v
 double vline left above hline bottom right:
 .TS
 doublebox tab(:);
@@ -5531,7 +5070,6 @@ l   _.
 31:32
 41:
 .TE
-.sp 2v
 double vline right above hline bottom right:
 .TS
 doublebox tab(:);
@@ -5544,7 +5082,6 @@ l _.
 31:32
 41:
 .TE
-.sp 2v
 .Sh DOUBLEBOX ALLBOX
 vline top left:
 .TS
@@ -5554,7 +5091,6 @@ doublebox allbox tab(:);
 11:12
 21:22
 .TE
-.sp 2v
 hline and vline top left:
 .TS
 doublebox allbox tab(:);
@@ -5563,7 +5099,6 @@ l  l.
 :12
 21:22
 .TE
-.sp 2v
 vline and hline top left:
 .TS
 doublebox allbox tab(:);
@@ -5572,7 +5107,6 @@ doublebox allbox tab(:);
 :12
 21:22
 .TE
-.sp 2v
 vline top:
 .TS
 doublebox allbox tab(:);
@@ -5581,7 +5115,6 @@ l  l.
 11:12
 21:22
 .TE
-.sp 2v
 vline and hline top:
 .TS
 doublebox allbox tab(:);
@@ -5590,7 +5123,6 @@ l  l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline and vline top:
 .TS
 doublebox allbox tab(:);
@@ -5599,7 +5131,6 @@ l l  l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline, vline, hline top:
 .TS
 doublebox allbox tab(:);
@@ -5608,7 +5139,6 @@ l l  l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 vline top right:
 .TS
 doublebox allbox tab(:);
@@ -5617,7 +5147,6 @@ l l.
 11:12
 21:22
 .TE
-.sp 2v
 vline and hline top right:
 .TS
 doublebox allbox tab(:);
@@ -5626,7 +5155,6 @@ l  l.
 11:
 21:22
 .TE
-.sp 2v
 hline and vline top right:
 .TS
 doublebox allbox tab(:);
@@ -5635,7 +5163,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 double vline top left:
 .TS
 doublebox allbox tab(:);
@@ -5644,7 +5171,6 @@ doublebox allbox tab(:);
 11:12
 21:22
 .TE
-.sp 2v
 hline and double vline top left:
 .TS
 doublebox allbox tab(:);
@@ -5653,7 +5179,6 @@ l   l.
 :12
 21:22
 .TE
-.sp 2v
 double vline and hline top left:
 .TS
 doublebox allbox tab(:);
@@ -5662,7 +5187,6 @@ doublebox allbox tab(:);
 :12
 21:22
 .TE
-.sp 2v
 double vline top:
 .TS
 doublebox allbox tab(:);
@@ -5671,7 +5195,6 @@ l   l.
 11:12
 21:22
 .TE
-.sp 2v
 double vline and hline top:
 .TS
 doublebox allbox tab(:);
@@ -5680,7 +5203,6 @@ l   l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline and double vline top:
 .TS
 doublebox allbox tab(:);
@@ -5689,7 +5211,6 @@ l l   l.
 11::13
 21:22:23
 .TE
-.sp 2v
 hline, double vline, hline top:
 .TS
 doublebox allbox tab(:);
@@ -5698,7 +5219,6 @@ l l   l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 double vline top right:
 .TS
 doublebox allbox tab(:);
@@ -5707,7 +5227,6 @@ l l.
 11:12
 21:22
 .TE
-.sp 2v
 double vline and hline top right:
 .TS
 doublebox allbox tab(:);
@@ -5716,7 +5235,6 @@ l   l.
 11:
 21:22
 .TE
-.sp 2v
 hline and double vline top right:
 .TS
 doublebox allbox tab(:);
@@ -5725,7 +5243,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 hline top left:
 .TS
 doublebox allbox tab(:);
@@ -5734,7 +5251,6 @@ l l.
 :12
 21:22
 .TE
-.sp 2v
 hline top:
 .TS
 doublebox allbox tab(:);
@@ -5743,7 +5259,6 @@ l l l.
 11::13
 21:22:23
 .TE
-.sp 2v
 double hline top:
 .TS
 doublebox allbox tab(:);
@@ -5752,7 +5267,6 @@ l l l l.
 11:::13
 21:22:23:24
 .TE
-.sp 2v
 hline top right:
 .TS
 doublebox allbox tab(:);
@@ -5761,7 +5275,6 @@ l l.
 11:
 21:22
 .TE
-.sp 2v
 hline in front:
 .TS
 doublebox allbox tab(:);
@@ -5772,7 +5285,6 @@ l l.
 :22
 31:32
 .TE
-.sp 2v
 vline in front:
 .TS
 doublebox allbox tab(:);
@@ -5785,7 +5297,6 @@ doublebox allbox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 hline and vline in front:
 .TS
 doublebox allbox tab(:);
@@ -5798,7 +5309,6 @@ l  l.
 :32
 41:42
 .TE
-.sp 2v
 vline and hline in front:
 .TS
 doublebox allbox tab(:);
@@ -5811,7 +5321,6 @@ doublebox allbox tab(:);
 :32
 41:42
 .TE
-.sp 2v
 hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5822,7 +5331,6 @@ l l l.
 21::23
 31:32:33
 .TE
-.sp 2v
 vline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5835,7 +5343,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline and hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5848,7 +5355,6 @@ l  l l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline and vline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5861,7 +5367,6 @@ l l  l.
 31::33
 41:42:43
 .TE
-.sp 2v
 double hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5872,7 +5377,6 @@ l l l l.
 21:::24
 31:32:33:34
 .TE
-.sp 2v
 hline, vline, hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -5885,7 +5389,6 @@ l l  l l.
 31:::34
 41:42:43:44
 .TE
-.sp 2v
 hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -5896,7 +5399,6 @@ l l.
 21:
 31:32
 .TE
-.sp 2v
 vline at the end:
 .TS
 doublebox allbox tab(:);
@@ -5909,7 +5411,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 vline and hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -5922,7 +5423,6 @@ l  l.
 31:
 41:42
 .TE
-.sp 2v
 hline and vline at the end:
 .TS
 doublebox allbox tab(:);
@@ -5935,7 +5435,6 @@ l l.
 31:
 41:42
 .TE
-.sp 2v
 hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -5944,7 +5443,6 @@ _ l.
 11:12
 :22
 .TE
-.sp 2v
 vline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -5955,7 +5453,6 @@ doublebox allbox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 hline and vline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -5966,7 +5463,6 @@ _| l.
 21:22
 :32
 .TE
-.sp 2v
 vline and hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -5977,7 +5473,6 @@ doublebox allbox tab(:);
 21:22
 :32
 .TE
-.sp 2v
 double hline bottom:
 .TS
 doublebox allbox tab(:);
@@ -5986,7 +5481,6 @@ l _ _ l.
 11:12:13:14
 21:::24
 .TE
-.sp 2v
 hline, vline, hline bottom:
 .TS
 doublebox allbox tab(:);
@@ -5997,7 +5491,6 @@ l _| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp 2v
 hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6006,7 +5499,6 @@ l _.
 11:12
 21:
 .TE
-.sp 2v
 vline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6017,7 +5509,6 @@ l l|.
 21:22
 31:32
 .TE
-.sp 2v
 vline and hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6028,7 +5519,6 @@ l| _.
 21:22
 31:
 .TE
-.sp 2v
 hline and vline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6039,7 +5529,6 @@ l _|.
 21:22
 31:
 .TE
-.sp 2v
 double vline in front:
 .TS
 doublebox allbox tab(:);
@@ -6052,7 +5541,6 @@ doublebox allbox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 hline and double vline in front:
 .TS
 doublebox allbox tab(:);
@@ -6065,7 +5553,6 @@ l   l.
 :32
 41:42
 .TE
-.sp 2v
 double vline and hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6078,7 +5565,6 @@ doublebox allbox tab(:);
 :32
 41:42
 .TE
-.sp 2v
 double vline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6091,7 +5577,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline and hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6104,7 +5589,6 @@ l   l l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline and doble vline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6117,7 +5601,6 @@ l l   l.
 31::33
 41:42:43
 .TE
-.sp 2v
 hline, double vline, hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6130,7 +5613,6 @@ l l   l l.
 31:::34
 41:42:43:44
 .TE
-.sp 2v
 double vline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6143,7 +5625,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline and hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6156,7 +5637,6 @@ l   l.
 31:
 41:42
 .TE
-.sp 2v
 hline and double vline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6169,7 +5649,6 @@ l l.
 31:
 41:42
 .TE
-.sp 2v
 double vline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6180,7 +5659,6 @@ doublebox allbox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 hline and double vline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6191,7 +5669,6 @@ _|| l.
 21:22
 :32
 .TE
-.sp 2v
 double vline and hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6202,7 +5679,6 @@ doublebox allbox tab(:);
 21:22
 :32
 .TE
-.sp 2v
 hline, double vline, hline bottom:
 .TS
 doublebox allbox tab(:);
@@ -6213,7 +5689,6 @@ l _|| _ l.
 21:22:23:24
 31:::34
 .TE
-.sp 2v
 double vline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6224,7 +5699,6 @@ l l||.
 21:22
 31:32
 .TE
-.sp 2v
 double vline and hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6235,7 +5709,6 @@ l|| _.
 21:22
 31:
 .TE
-.sp 2v
 hline and double vline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6246,7 +5719,6 @@ l _||.
 21:22
 31:
 .TE
-.sp 2v
 vline left below hline top left:
 .TS
 doublebox allbox tab(:);
@@ -6257,7 +5729,6 @@ doublebox allbox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 vline right below hline top left:
 .TS
 doublebox allbox tab(:);
@@ -6268,7 +5739,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp 2v
 vline left below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6279,7 +5749,6 @@ l  l l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 vline right below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6290,7 +5759,6 @@ l l  l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 vline below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6301,7 +5769,6 @@ l l  l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp 2v
 vline left below hline top right:
 .TS
 doublebox allbox tab(:);
@@ -6312,7 +5779,6 @@ l  l.
 21:22
 31:32
 .TE
-.sp 2v
 vline right below hline top right:
 .TS
 doublebox allbox tab(:);
@@ -6323,7 +5789,6 @@ l l.
 21:22
 31:32
 .TE
-.sp 2v
 vline left below hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6336,7 +5801,6 @@ doublebox allbox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 vline left above hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6351,7 +5815,6 @@ doublebox allbox tab(:);
 :42
 51:52
 .TE
-.sp 2v
 vline right below hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6364,7 +5827,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp 2v
 vline right above hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6379,7 +5841,6 @@ l  l.
 :42
 51:52
 .TE
-.sp 2v
 vline left below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6392,7 +5853,6 @@ l  l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline left above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6407,7 +5867,6 @@ l  l l.
 41::43
 51:52:53
 .TE
-.sp 2v
 vline right below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6420,7 +5879,6 @@ l l  l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 vline right above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6435,7 +5893,6 @@ l l  l.
 41::43
 51:52:53
 .TE
-.sp 2v
 vline below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6448,7 +5905,6 @@ l l  l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp 2v
 vline above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6463,7 +5919,6 @@ l l  l l.
 41:::44
 51:52:53:54
 .TE
-.sp 2v
 vline left below hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6476,7 +5931,6 @@ l  l.
 31:32
 41:42
 .TE
-.sp 2v
 vline left above hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6491,7 +5945,6 @@ l  l.
 41:
 51:52
 .TE
-.sp 2v
 vline right below hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6504,7 +5957,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 vline right above hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6519,7 +5971,6 @@ l l.
 41:
 51:52
 .TE
-.sp 2v
 vline left above hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6532,7 +5983,6 @@ doublebox allbox tab(:);
 31:32
 :42
 .TE
-.sp 2v
 vline right above hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6545,7 +5995,6 @@ _  l.
 31:32
 :42
 .TE
-.sp 2v
 vline left above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6558,7 +6007,6 @@ l  _ l.
 31:32:33
 41::43
 .TE
-.sp 2v
 vline right above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6571,7 +6019,6 @@ l _  l.
 31:32:33
 41::43
 .TE
-.sp 2v
 vline above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6584,7 +6031,6 @@ l _  _ l.
 31:32:33:34
 41:::44
 .TE
-.sp 2v
 vline left above hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6597,7 +6043,6 @@ l  _.
 31:32
 41:
 .TE
-.sp 2v
 vline right above hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6610,7 +6055,6 @@ l _.
 31:32
 41:
 .TE
-.sp 2v
 double vline left below hline top left:
 .TS
 doublebox allbox tab(:);
@@ -6621,7 +6065,6 @@ doublebox allbox tab(:);
 21:22
 31:32
 .TE
-.sp 2v
 double vline right below hline top left:
 .TS
 doublebox allbox tab(:);
@@ -6632,7 +6075,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline left below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6643,7 +6085,6 @@ l   l l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 double vline right below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6654,7 +6095,6 @@ l l   l.
 21:22:23
 31:32:33
 .TE
-.sp 2v
 double vline below hline at the top:
 .TS
 doublebox allbox tab(:);
@@ -6665,7 +6105,6 @@ l l   l l.
 21:22:23:24
 31:32:33:34
 .TE
-.sp 2v
 double vline left below hline top right:
 .TS
 doublebox allbox tab(:);
@@ -6676,7 +6115,6 @@ l   l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline right below hline top right:
 .TS
 doublebox allbox tab(:);
@@ -6687,7 +6125,6 @@ l l.
 21:22
 31:32
 .TE
-.sp 2v
 double vline left below hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6700,7 +6137,6 @@ doublebox allbox tab(:);
 31:32
 41:42
 .TE
-.sp 2v
 double vline left above hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6715,7 +6151,6 @@ doublebox allbox tab(:);
 :42
 51:52
 .TE
-.sp 2v
 double vline right below hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6728,7 +6163,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline right above hline in front:
 .TS
 doublebox allbox tab(:);
@@ -6743,7 +6177,6 @@ l   l.
 :42
 51:52
 .TE
-.sp 2v
 double vline left below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6756,7 +6189,6 @@ l   l l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline left above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6771,7 +6203,6 @@ l   l l.
 41::43
 51:52:53
 .TE
-.sp 2v
 double vline right below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6784,7 +6215,6 @@ l l   l.
 31:32:33
 41:42:43
 .TE
-.sp 2v
 double vline right above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6799,7 +6229,6 @@ l l   l.
 41::43
 51:52:53
 .TE
-.sp 2v
 double vline below hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6812,7 +6241,6 @@ l l   l l.
 31:32:33:34
 41:42:43:44
 .TE
-.sp 2v
 double vline above hline in the middle:
 .TS
 doublebox allbox tab(:);
@@ -6827,7 +6255,6 @@ l l   l l.
 41:::44
 51:52:53:54
 .TE
-.sp 2v
 double vline left below hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6840,7 +6267,6 @@ l   l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline left above hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6855,7 +6281,6 @@ l   l.
 41:
 51:52
 .TE
-.sp 2v
 double vline right below hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6868,7 +6293,6 @@ l l.
 31:32
 41:42
 .TE
-.sp 2v
 double vline right above hline at the end:
 .TS
 doublebox allbox tab(:);
@@ -6883,7 +6307,6 @@ l l.
 41:
 51:52
 .TE
-.sp 2v
 double vline left above hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6896,7 +6319,6 @@ doublebox allbox tab(:);
 31:32
 :42
 .TE
-.sp 2v
 double vline right above hline bottom left:
 .TS
 doublebox allbox tab(:);
@@ -6909,7 +6331,6 @@ _   l.
 31:32
 :42
 .TE
-.sp 2v
 double vline left above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6922,7 +6343,6 @@ l   _ l.
 31:32:33
 41::43
 .TE
-.sp 2v
 double vline right above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6935,7 +6355,6 @@ l _   l.
 31:32:33
 41::43
 .TE
-.sp 2v
 double vline above hline at the bottom:
 .TS
 doublebox allbox tab(:);
@@ -6948,7 +6367,6 @@ l _   _ l.
 31:32:33:34
 41:::44
 .TE
-.sp 2v
 double vline left above hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6961,7 +6379,6 @@ l   _.
 31:32
 41:
 .TE
-.sp 2v
 double vline right above hline bottom right:
 .TS
 doublebox allbox tab(:);
@@ -6974,4 +6391,3 @@ l _.
 31:32
 41:
 .TE
-.sp 2v

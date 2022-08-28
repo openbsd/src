@@ -12,6 +12,7 @@ DDEESSCCRRIIPPTTIIOONN
      |short               | This is an even longer |
      |                    | sentence.              |
      +--------------------+------------------------+
+
      +-----------+------------+
      |This is a  | short      |
      |very long  |            |
@@ -22,6 +23,7 @@ DDEESSCCRRIIPPTTIIOONN
      |           | longer     |
      |           | sentence.  |
      +-----------+------------+
+
      final text
 
 OpenBSD                          July 4, 2017                          OpenBSD

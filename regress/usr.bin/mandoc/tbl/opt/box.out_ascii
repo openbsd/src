@@ -5,33 +5,26 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        no boxing:
-
        a   b
        c   d
-
        automatic boxing:
-
        +------+
        |a   b |
        |c   d |
        +------+
        allbox:
-
        +--+---+
        |a | b |
        +--+---+
        |c | d |
        +--+---+
        manual boxing:
-
        +--++--+
        |a ||b |
        +--++--+
        |c ||d |
        +--++--+
-
        automatic and manual boxing:
-
        +--++--+
        |a ||b |
        +--++--+
@@ -39,7 +32,6 @@ DDEESSCCRRIIPPTTIIOONN
        +--++--+
        +--++--+
        allbox and manual boxing:
-
        +--++--+
        |a ||b |
        +--++--+
@@ -47,4 +39,5 @@ DDEESSCCRRIIPPTTIIOONN
        |c ||d |
        +--++--+
        +--++--+
-OpenBSD                          June 12, 2017                  TBL-OPT-BOX(1)
+
+OpenBSD                         August 28, 2022                 TBL-OPT-BOX(1)

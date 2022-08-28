@@ -5,14 +5,12 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        An empty line in the middle of a table joins with the next:
-
         table text
        +-----------
        |       bar
        |     right
 
        An empty line at the end of a table is discarded:
-
        table text
             right
        normal text

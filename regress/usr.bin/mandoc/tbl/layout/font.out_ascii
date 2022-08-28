@@ -5,12 +5,12 @@ NNAAMMEE
 
 DDEESSCCRRIIPPTTIIOONN
        BEGINTEST
-
        +---------------+
        |bboolldd     roman |
        +---------------+
        |roman   _i_t_a_l_i_c |
        +---------------+
+
        ENDTEST
 
 OpenBSD                          May 16, 2021               TBL-LAYOUT-FONT(1)

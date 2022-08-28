@@ -1,5 +1,5 @@
-.\" $OpenBSD: vspace.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
-.TH TBL-VSPACE 1 "May 27, 2012"
+.\" $OpenBSD: vspace.in,v 1.4 2022/08/28 11:45:27 schwarze Exp $
+.TH TBL-VSPACE 1 "August 28, 2022"
 .SH NAME
 tbl-vspace \- vertical spacing around tables
 .SH DESCRIPTION
@@ -14,18 +14,12 @@ box;
 L .
 table with box
 .TE
-.\" at least one vertical space is required here
-.\" or groff will clobber the box
-.sp 1v
 normal text after table with box
 .TS
 doublebox;
 L .
 table with double box
 .TE
-.\" at least two vertical spaces are required here
-.\" or groff will clobber the box
-.sp 2v
 normal text after table with double box
 .TS
 L .
@@ -36,13 +30,11 @@ box;
 L .
 table with box
 .TE
-.sp 1v
 .TS
 doublebox;
 L .
 table with double box
 .TE
-.sp 2v
 .TS
 L .
 table without box

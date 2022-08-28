@@ -7,7 +7,6 @@ DDEESSCCRRIIPPTTIIOONN
        lowest valid: <80>
 
    OOnnee--bbyyttee rraannggee
-
        U+0000   0x00   <NUL>?   lowest ASCII
        U+001f   0x1f   <US>?    highest ASCII control character
        U+007f   0x7f   <DEL>?   highest ASCII
@@ -15,7 +14,6 @@ DDEESSCCRRIIPPTTIIOONN
                 0xbf   ?        leading highest continuation
 
    TTwwoo--bbyyttee rraannggee
-
        U+0000   0xc080     ??         lowest obfuscated ASCII
        U+007f   0xc1bf     ??         highest obfuscated ASCII
        U+0080   0xc280     <80><80>   lowest two-byte
@@ -24,7 +22,6 @@ DDEESSCCRRIIPPTTIIOONN
                 0xc2c380   ?`A         start byte instead of continuation
 
    TThhrreeee--bbyyttee rraannggee
-
        U+0000   0xe08080   ???      lowest obfuscated ASCII
        U+007f   0xe081bf   ???      highest obfuscated ASCII
        U+0080   0xe08280   ???      lowest obfuscated two-byte
@@ -43,7 +40,6 @@ DDEESSCCRRIIPPTTIIOONN
        U+FFFF   0xefbfbf   <?><?>   highest three-byte
 
    FFoouurr--bbyyttee rraannggee
-
        U+0000     0xf0808080     ????     lowest obfuscated ASCII
        U+007f     0xf08081bf     ????     highest obfuscated ASCII
        U+0080     0xf0808280     ????     lowest obfuscated two-byte
