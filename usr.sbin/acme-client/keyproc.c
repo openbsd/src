@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.16 2021/09/17 20:02:24 sthen Exp $ */
+/*	$Id: keyproc.c,v 1.17 2022/08/28 17:51:46 jsing Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -146,6 +146,9 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 
 	if ((x = X509_REQ_new()) == NULL) {
 		warnx("X509_new");
+		goto out;
+	} else if (!X509_REQ_set_version(x, 0)) {
+		warnx("X509_set_version");
 		goto out;
 	} else if (!X509_REQ_set_pubkey(x, pkey)) {
 		warnx("X509_set_pubkey");
