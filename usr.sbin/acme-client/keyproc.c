@@ -1,4 +1,4 @@
-/*	$Id: keyproc.c,v 1.17 2022/08/28 17:51:46 jsing Exp $ */
+/*	$Id: keyproc.c,v 1.18 2022/08/28 18:30:29 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -145,13 +145,13 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 	 */
 
 	if ((x = X509_REQ_new()) == NULL) {
-		warnx("X509_new");
+		warnx("X509_REQ_new");
 		goto out;
 	} else if (!X509_REQ_set_version(x, 0)) {
-		warnx("X509_set_version");
+		warnx("X509_REQ_set_version");
 		goto out;
 	} else if (!X509_REQ_set_pubkey(x, pkey)) {
-		warnx("X509_set_pubkey");
+		warnx("X509_REQ_set_pubkey");
 		goto out;
 	}
 
@@ -233,13 +233,13 @@ keyproc(int netsock, const char *keyfile, const char **alts, size_t altsz,
 	/* Now, serialise to DER, then base64. */
 
 	if ((len = i2d_X509_REQ(x, NULL)) < 0) {
-		warnx("i2d_X509");
+		warnx("i2d_X509_REQ");
 		goto out;
 	} else if ((der = dercp = malloc(len)) == NULL) {
 		warn("malloc");
 		goto out;
 	} else if (len != i2d_X509_REQ(x, (u_char **)&dercp)) {
-		warnx("i2d_X509");
+		warnx("i2d_X509_REQ");
 		goto out;
 	} else if ((der64 = base64buf_url(der, len)) == NULL) {
 		warnx("base64buf_url");
