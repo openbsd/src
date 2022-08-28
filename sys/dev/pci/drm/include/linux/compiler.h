@@ -28,7 +28,7 @@
 #define __user
 #endif
 
-#define barrier()	__asm __volatile("" : : : "memory")
+#define barrier()	__asm volatile("" : : : "memory")
 
 #define __printf(x, y)	__attribute__((__format__(__kprintf__,x,y)))
 

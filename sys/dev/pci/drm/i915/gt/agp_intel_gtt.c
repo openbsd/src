@@ -25,9 +25,9 @@
 extern struct cfdriver inteldrm_cd;
 
 #ifdef __amd64__
-#define membar_producer_wc()	__asm __volatile("sfence":::"memory")
+#define membar_producer_wc()	__asm volatile("sfence":::"memory")
 #else
-#define membar_producer_wc()	__asm __volatile(\
+#define membar_producer_wc()	__asm volatile(\
 				"lock; addl $0,0(%%esp)":::"memory")
 #endif
 

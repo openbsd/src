@@ -31,7 +31,7 @@ struct rcu_head {
 
 #define kfree_rcu(objp, name)	do { free((void *)objp, M_DRM, 0); } while(0)
 
-#define rcu_barrier()		__asm __volatile("" : : : "memory")
+#define rcu_barrier()		__asm volatile("" : : : "memory")
 
 typedef void (*rcu_callback_t)(struct rcu_head *head);
 
