@@ -1,4 +1,4 @@
-/* $OpenBSD: tbl_term.c,v 1.65 2022/04/26 14:46:30 schwarze Exp $ */
+/* $OpenBSD: tbl_term.c,v 1.66 2022/08/28 10:57:52 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -544,15 +544,11 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 	tp->flags &= ~TERMP_MULTICOL;
 	tp->tcol->rmargin = tp->maxrmargin;
 	if (sp->next == NULL) {
-		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX)) {
+		if (sp->opts->opts & (TBL_OPT_DBOX | TBL_OPT_BOX))
 			tbl_hrule(tp, sp, sp, NULL, TBL_OPT_BOX);
-			tp->skipvsp = 1;
-		}
 		if (tp->enc == TERMENC_ASCII &&
-		    sp->opts->opts & TBL_OPT_DBOX) {
+		    sp->opts->opts & TBL_OPT_DBOX)
 			tbl_hrule(tp, sp, sp, NULL, TBL_OPT_DBOX);
-			tp->skipvsp = 2;
-		}
 		assert(tp->tbl.cols);
 		free(tp->tbl.cols);
 		tp->tbl.cols = NULL;
