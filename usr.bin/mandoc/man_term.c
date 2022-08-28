@@ -1,4 +1,4 @@
-/* $OpenBSD: man_term.c,v 1.193 2022/08/16 17:44:53 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.194 2022/08/28 09:55:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -949,7 +949,7 @@ print_man_node(DECL_ARGS)
 		return;
 	case ROFFT_TBL:
 		if (p->tbl.cols == NULL)
-			term_vspace(p);
+			term_newln(p);
 		term_tbl(p, n->span);
 		return;
 	default:
