@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.23 2019/08/11 14:35:57 jsing Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.24 2022/08/28 18:27:47 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -955,9 +955,12 @@ CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs, int algnid, int keysize)
 	ASN1_INTEGER *key = NULL;
 
 	if (keysize > 0) {
-		key = ASN1_INTEGER_new();
-		if (key == NULL || !ASN1_INTEGER_set(key, keysize))
+		if ((key = ASN1_INTEGER_new()) == NULL)
 			return 0;
+		if (!ASN1_INTEGER_set(key, keysize)) {
+			ASN1_INTEGER_free(key);
+			return 0;
+		}
 	}
 	alg = X509_ALGOR_new();
 	if (alg == NULL) {
