@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.244 2022/08/28 18:44:16 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.245 2022/08/28 20:32:01 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -178,8 +178,7 @@ int pfkeyv2_send(struct socket *, struct mbuf *, struct mbuf *,
 int pfkeyv2_abort(struct socket *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
-int pfkeyv2_output(struct mbuf *, struct socket *, struct sockaddr *,
-    struct mbuf *);
+int pfkeyv2_output(struct mbuf *, struct socket *);
 int pfkey_sendup(struct pkpcb *, struct mbuf *, int);
 int pfkeyv2_sa_flush(struct tdb *, void *, int);
 int pfkeyv2_policy_flush(struct ipsec_policy *, void *, unsigned int);
@@ -220,7 +219,6 @@ const struct protosw pfkeysw[] = {
   .pr_domain    = &pfkeydomain,
   .pr_protocol  = PF_KEY_V2,
   .pr_flags     = PR_ATOMIC | PR_ADDR,
-  .pr_output    = pfkeyv2_output,
   .pr_usrreqs   = &pfkeyv2_usrreqs,
   .pr_sysctl    = pfkeyv2_sysctl,
 }
@@ -373,7 +371,7 @@ pfkeyv2_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		goto out;
 	}
 
-	error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+	error = pfkeyv2_output(m, so);
 	m = NULL;
 
 out:
@@ -449,8 +447,7 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 }
 
 int
-pfkeyv2_output(struct mbuf *mbuf, struct socket *so,
-    struct sockaddr *dstaddr, struct mbuf *control)
+pfkeyv2_output(struct mbuf *mbuf, struct socket *so)
 {
 	void *message;
 	int error = 0;

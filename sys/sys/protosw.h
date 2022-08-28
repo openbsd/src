@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.46 2022/08/28 18:44:17 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.47 2022/08/28 20:32:02 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -43,8 +43,8 @@
  * every 500ms through the pr_slowtimo for timer based actions.
  *
  * Protocols pass data between themselves as chains of mbufs using
- * the pr_input and pr_output hooks.  Pr_input passes data up (towards
- * UNIX) and pr_output passes it down (towards the imps); control
+ * the pr_input and pr_send hooks.  Pr_input passes data up (towards
+ * UNIX) and pr_send passes it down (towards the imps); control
  * information passes up and down on pr_ctlinput and pr_ctloutput.
  * The protocol is responsible for the space occupied by any the
  * arguments to these entries and must dispose it.
@@ -87,9 +87,6 @@ struct protosw {
 /* protocol-protocol hooks */
 					/* input to protocol (from below) */
 	int	(*pr_input)(struct mbuf **, int *, int, int);
-					/* output to protocol (from above) */
-	int	(*pr_output)(struct mbuf *, struct socket *, struct sockaddr *,
-		    struct mbuf *);
 					/* control input (from below) */
 	void	(*pr_ctlinput)(int, struct sockaddr *, u_int, void *);
 					/* control output (from above) */

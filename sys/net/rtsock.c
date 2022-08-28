@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.344 2022/08/28 18:44:16 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.345 2022/08/28 20:32:01 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -109,8 +109,7 @@ struct walkarg {
 void	route_prinit(void);
 void	rcb_ref(void *, void *);
 void	rcb_unref(void *, void *);
-int	route_output(struct mbuf *, struct socket *, struct sockaddr *,
-	    struct mbuf *);
+int	route_output(struct mbuf *, struct socket *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
 	    struct mbuf *, struct proc *);
@@ -393,7 +392,7 @@ route_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		goto out;
 	}
 
-	error = (*so->so_proto->pr_output)(m, so, NULL, NULL);
+	error = route_output(m, so);
 	m = NULL;
 
 out:
@@ -727,8 +726,7 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 }
 
 int
-route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
-    struct mbuf *control)
+route_output(struct mbuf *m, struct socket *so)
 {
 	struct rt_msghdr	*rtm = NULL;
 	struct rtentry		*rt = NULL;
@@ -2461,7 +2459,6 @@ const struct protosw routesw[] = {
   .pr_type	= SOCK_RAW,
   .pr_domain	= &routedomain,
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_WANTRCVD,
-  .pr_output	= route_output,
   .pr_ctloutput	= route_ctloutput,
   .pr_usrreqs	= &route_usrreqs,
   .pr_init	= route_prinit,
