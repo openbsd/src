@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.380 2022/08/21 14:15:55 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.381 2022/08/29 14:43:56 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -682,18 +682,6 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 #endif /* INET6 */
 
 	NET_ASSERT_LOCKED_EXCLUSIVE();
-
-	/* pf might have modified stuff, might have to chksum */
-	switch (af) {
-	case AF_INET:
-		in_proto_cksum_out(*mp, NULL);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		in6_proto_cksum_out(*mp, NULL);
-		break;
-#endif /* INET6 */
-	}
 
 	/*
 	 * Tell launch routine the next header
