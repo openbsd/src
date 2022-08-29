@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.41 2022/08/03 13:36:51 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.42 2022/08/29 01:34:18 drahn Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -130,10 +130,10 @@
 #define SPI_BASE		32
 #define LPI_BASE		8192
 
-#define IRQ_TO_REG32(i)		(((i) >> 5) & 0x7)
+#define IRQ_TO_REG32(i)		(((i) >> 5) & 0x1f)
 #define IRQ_TO_REG32BIT(i)	((i) & 0x1f)
 
-#define IRQ_TO_REG16(i)		(((i) >> 4) & 0xf)
+#define IRQ_TO_REG16(i)		(((i) >> 4) & 0x3f)
 #define IRQ_TO_REG16BIT(i)	((i) & 0xf)
 
 #define IRQ_ENABLE	1
