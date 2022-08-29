@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.27 2022/05/05 08:48:05 tb Exp $ */
+/* $OpenBSD: err.h,v 1.28 2022/08/29 06:49:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -346,10 +346,10 @@ typedef struct err_state_st {
 #define	ERR_R_PASSED_NULL_PARAMETER		(3|ERR_R_FATAL)
 #define	ERR_R_INTERNAL_ERROR			(4|ERR_R_FATAL)
 #define	ERR_R_DISABLED				(5|ERR_R_FATAL)
+#define	ERR_R_INIT_FAIL				(6|ERR_R_FATAL)
 
 /* 99 is the maximum possible ERR_R_... code, higher values
  * are reserved for the individual libraries */
-
 
 typedef struct ERR_string_data_st {
 	unsigned long error;

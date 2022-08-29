@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.48 2019/10/17 14:28:53 jsing Exp $ */
+/* $OpenBSD: err.c,v 1.49 2022/08/29 06:49:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,6 +215,7 @@ static ERR_STRING_DATA ERR_str_reasons[] = {
 	{ERR_R_PASSED_NULL_PARAMETER,		"passed a null parameter"},
 	{ERR_R_INTERNAL_ERROR,			"internal error"},
 	{ERR_R_DISABLED	,			"called a function that was disabled at compile-time"},
+	{ERR_R_INIT_FAIL,			"initialization failure"},
 
 	{0, NULL},
 };
