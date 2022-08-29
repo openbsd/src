@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.127 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.128 2022/08/29 18:04:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -117,7 +117,7 @@ attr_init(uint32_t hashsize)
 		;
 	attrtable.hashtbl = calloc(hs, sizeof(struct attr_list));
 	if (attrtable.hashtbl == NULL)
-		fatal("attr_init");
+		fatal("%s", __func__);
 
 	for (i = 0; i < hs; i++)
 		LIST_INIT(&attrtable.hashtbl[i]);
@@ -209,7 +209,7 @@ attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
 	asp->others_len++;
 	if ((p = reallocarray(asp->others,
 	    asp->others_len, sizeof(struct attr *))) == NULL)
-		fatal("attr_optadd");
+		fatal("%s", __func__);
 	asp->others = p;
 
 	/* l stores the size of others before resize */
@@ -248,7 +248,7 @@ attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 	}
 
 	if ((t->others = calloc(s->others_len, sizeof(struct attr *))) == 0)
-		fatal("attr_copy");
+		fatal("%s", __func__);
 
 	for (l = 0; l < t->others_len; l++) {
 		if (s->others[l] == NULL)
@@ -362,7 +362,7 @@ attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len)
 
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
-		fatal("attr_optadd");
+		fatal("%s", __func__);
 	rdemem.attr_cnt++;
 
 	flags &= ~ATTR_DEFMASK;	/* normalize mask */
@@ -371,7 +371,7 @@ attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len)
 	a->len = len;
 	if (len != 0) {
 		if ((a->data = malloc(len)) == NULL)
-			fatal("attr_optadd");
+			fatal("%s", __func__);
 
 		rdemem.attr_dcnt++;
 		rdemem.attr_data += len;
@@ -592,7 +592,7 @@ aspath_deflate(u_char *data, uint16_t *len, int *flagnew)
 	}
 
 	if ((ndata = malloc(nlen)) == NULL)
-		fatal("aspath_deflate");
+		fatal("%s", __func__);
 
 	/* then copy the aspath */
 	seg = data;
@@ -638,7 +638,7 @@ aspath_merge(struct rde_aspath *a, struct attr *attr)
 	nlen = attr->len + difflen;
 
 	if ((np = malloc(nlen)) == NULL)
-		fatal("aspath_merge");
+		fatal("%s", __func__);
 
 	/* copy head from old aspath */
 	aspath_countcopy(a->aspath, diff, np, difflen, hroom);
@@ -1022,7 +1022,7 @@ aspath_prepend(struct aspath *asp, uint32_t as, int quantum, uint16_t *len)
 		/* no change needed but return a copy */
 		p = malloc(asp->len);
 		if (p == NULL)
-			fatal("aspath_prepend");
+			fatal("%s", __func__);
 		memcpy(p, asp->data, asp->len);
 		*len = asp->len;
 		return (p);
@@ -1040,7 +1040,7 @@ aspath_prepend(struct aspath *asp, uint32_t as, int quantum, uint16_t *len)
 
 	p = malloc(l);
 	if (p == NULL)
-		fatal("aspath_prepend");
+		fatal("%s", __func__);
 
 	/* first prepends */
 	as = htonl(as);
@@ -1083,7 +1083,7 @@ aspath_override(struct aspath *asp, uint32_t neighbor_as, uint32_t local_as,
 
 	p = malloc(asp->len);
 	if (p == NULL)
-		fatal("aspath_override");
+		fatal("%s", __func__);
 
 	seg = asp->data;
 	nseg = p;
