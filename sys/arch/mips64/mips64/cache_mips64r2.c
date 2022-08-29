@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_mips64r2.c,v 1.3 2017/08/26 13:53:46 visa Exp $	*/
+/*	$OpenBSD: cache_mips64r2.c,v 1.4 2022/08/29 02:08:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -43,7 +43,7 @@
 #define	HitWBInvalidate_S	0x17
 
 #define	cache(op,addr) \
-    __asm__ __volatile__ \
+    __asm__ volatile \
       ("cache %0, 0(%1)" :: "i"(op), "r"(addr) : "memory")
 
 static __inline__ void	mips64r2_hitinv_primary(vaddr_t, vsize_t, vsize_t);

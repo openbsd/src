@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.43 2022/01/08 06:49:41 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.44 2022/08/29 02:08:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -446,7 +446,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		register long arg1 __asm__("r25") = sizeof(buf);
 		register long arg2 __asm__("r24") = 0xffffffff & (cookie >> 32);
 		register long arg3 __asm__("r23") = 0xffffffff & cookie;
-		__asm__ __volatile__ ("ble 4(%%sr7, %%r1) ! ldi %0, %%r22"
+		__asm__ volatile ("ble 4(%%sr7, %%r1) ! ldi %0, %%r22"
 		    :
 		    : "i" (SYS_kbind), "r" (r1), "r"(arg0), "r"(arg1),
 		      "r"(arg2), "r"(arg3)

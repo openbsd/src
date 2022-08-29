@@ -408,8 +408,8 @@ hv_hypercall(struct hv_softc *sc, uint64_t control, void *input,
 	}
 
 #ifdef __amd64__
-	__asm__ __volatile__ ("mov %0, %%r8" : : "r" (output_pa) : "r8");
-	__asm__ __volatile__ ("call *%3" : "=a" (status) : "c" (control),
+	__asm__ volatile ("mov %0, %%r8" : : "r" (output_pa) : "r8");
+	__asm__ volatile ("call *%3" : "=a" (status) : "c" (control),
 	    "d" (input_pa), "m" (sc->sc_hc));
 #else  /* __i386__ */
 	{
@@ -418,7 +418,7 @@ hv_hypercall(struct hv_softc *sc, uint64_t control, void *input,
 		uint32_t status_hi = 1;
 		uint32_t status_lo = 1;
 
-		__asm__ __volatile__ ("call *%8" :
+		__asm__ volatile ("call *%8" :
 		    "=d" (status_hi), "=a"(status_lo) :
 		    "d" (control_hi), "a" (control_lo),
 		    "b" (0), "c" (input_pa), "D" (0), "S" (output_pa),
