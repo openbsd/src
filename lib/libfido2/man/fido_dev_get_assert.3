@@ -2,20 +2,20 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: August 29 2022 $
 .Dt FIDO_DEV_GET_ASSERT 3
 .Os
 .Sh NAME
 .Nm fido_dev_get_assert
-.Nd obtains an assertion from a FIDO device
+.Nd obtains an assertion from a FIDO2 device
 .Sh SYNOPSIS
 .In fido.h
 .Ft int
-.Fn fido_dev_get_assert "fido_dev_t *dev" " fido_assert_t *assert" "const char *pin"
+.Fn fido_dev_get_assert "fido_dev_t *dev" "fido_assert_t *assert" "const char *pin"
 .Sh DESCRIPTION
 The
 .Fn fido_dev_get_assert
-function asks the FIDO device represented by
+function asks the FIDO2 device represented by
 .Fa dev
 for an assertion according to the following parameters defined in
 .Fa assert :

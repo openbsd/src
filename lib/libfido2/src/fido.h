@@ -41,6 +41,7 @@ fido_dev_t *fido_dev_new(void);
 fido_dev_t *fido_dev_new_with_info(const fido_dev_info_t *);
 fido_dev_info_t *fido_dev_info_new(size_t);
 fido_cbor_info_t *fido_cbor_info_new(void);
+void *fido_dev_io_handle(const fido_dev_t *);
 
 void fido_assert_free(fido_assert_t **);
 void fido_cbor_info_free(fido_cbor_info_t **);
@@ -87,16 +88,17 @@ const char *fido_dev_info_product_string(const fido_dev_info_t *);
 const fido_dev_info_t *fido_dev_info_ptr(const fido_dev_info_t *, size_t);
 const uint8_t *fido_cbor_info_protocols_ptr(const fido_cbor_info_t *);
 const unsigned char *fido_cbor_info_aaguid_ptr(const fido_cbor_info_t *);
+const unsigned char *fido_cred_aaguid_ptr(const fido_cred_t *);
+const unsigned char *fido_cred_attstmt_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_authdata_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_authdata_raw_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_clientdata_hash_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_id_ptr(const fido_cred_t *);
-const unsigned char *fido_cred_aaguid_ptr(const fido_cred_t *);
-const unsigned char *fido_cred_user_id_ptr(const fido_cred_t *);
+const unsigned char *fido_cred_largeblob_key_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_pubkey_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_sig_ptr(const fido_cred_t *);
+const unsigned char *fido_cred_user_id_ptr(const fido_cred_t *);
 const unsigned char *fido_cred_x5c_ptr(const fido_cred_t *);
-const unsigned char *fido_cred_largeblob_key_ptr(const fido_cred_t *);
 
 int fido_assert_allow_cred(fido_assert_t *, const unsigned char *, size_t);
 int fido_assert_set_authdata(fido_assert_t *, size_t, const unsigned char *,
@@ -120,6 +122,7 @@ int fido_assert_verify(const fido_assert_t *, size_t, int, const void *);
 int fido_cbor_info_algorithm_cose(const fido_cbor_info_t *, size_t);
 int fido_cred_exclude(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_prot(const fido_cred_t *);
+int fido_cred_set_attstmt(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_authdata(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_authdata_raw(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_blob(fido_cred_t *, const unsigned char *, size_t);
@@ -129,6 +132,7 @@ int fido_cred_set_extensions(fido_cred_t *, int);
 int fido_cred_set_fmt(fido_cred_t *, const char *);
 int fido_cred_set_id(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_set_options(fido_cred_t *, bool, bool);
+int fido_cred_set_pin_minlen(fido_cred_t *, size_t);
 int fido_cred_set_prot(fido_cred_t *, int);
 int fido_cred_set_rk(fido_cred_t *, fido_opt_t);
 int fido_cred_set_rp(fido_cred_t *, const char *, const char *);
@@ -141,7 +145,9 @@ int fido_cred_set_user(fido_cred_t *, const unsigned char *, size_t,
 int fido_cred_set_x509(fido_cred_t *, const unsigned char *, size_t);
 int fido_cred_verify(const fido_cred_t *);
 int fido_cred_verify_self(const fido_cred_t *);
+#ifdef _FIDO_SIGSET_DEFINED
 int fido_dev_set_sigmask(fido_dev_t *, const fido_sigset_t *);
+#endif
 int fido_dev_cancel(fido_dev_t *);
 int fido_dev_close(fido_dev_t *);
 int fido_dev_get_assert(fido_dev_t *, fido_assert_t *, const char *);
@@ -151,6 +157,8 @@ int fido_dev_get_uv_retry_count(fido_dev_t *, int *);
 int fido_dev_get_touch_begin(fido_dev_t *);
 int fido_dev_get_touch_status(fido_dev_t *, int *, int);
 int fido_dev_info_manifest(fido_dev_info_t *, size_t, size_t *);
+int fido_dev_info_set(fido_dev_info_t *, size_t, const char *, const char *,
+    const char *, const fido_dev_io_t *, const fido_dev_transport_t *);
 int fido_dev_make_cred(fido_dev_t *, fido_cred_t *, const char *);
 int fido_dev_open_with_info(fido_dev_t *);
 int fido_dev_open(fido_dev_t *, const char *);
@@ -158,6 +166,7 @@ int fido_dev_reset(fido_dev_t *);
 int fido_dev_set_io_functions(fido_dev_t *, const fido_dev_io_t *);
 int fido_dev_set_pin(fido_dev_t *, const char *, const char *);
 int fido_dev_set_transport_functions(fido_dev_t *, const fido_dev_transport_t *);
+int fido_dev_set_timeout(fido_dev_t *, int);
 
 size_t fido_assert_authdata_len(const fido_assert_t *, size_t);
 size_t fido_assert_clientdata_hash_len(const fido_assert_t *);
@@ -175,16 +184,18 @@ size_t fido_cbor_info_options_len(const fido_cbor_info_t *);
 size_t fido_cbor_info_protocols_len(const fido_cbor_info_t *);
 size_t fido_cbor_info_transports_len(const fido_cbor_info_t *);
 size_t fido_cbor_info_versions_len(const fido_cbor_info_t *);
+size_t fido_cred_aaguid_len(const fido_cred_t *);
+size_t fido_cred_attstmt_len(const fido_cred_t *);
 size_t fido_cred_authdata_len(const fido_cred_t *);
 size_t fido_cred_authdata_raw_len(const fido_cred_t *);
 size_t fido_cred_clientdata_hash_len(const fido_cred_t *);
 size_t fido_cred_id_len(const fido_cred_t *);
-size_t fido_cred_aaguid_len(const fido_cred_t *);
-size_t fido_cred_user_id_len(const fido_cred_t *);
+size_t fido_cred_largeblob_key_len(const fido_cred_t *);
+size_t fido_cred_pin_minlen(const fido_cred_t *);
 size_t fido_cred_pubkey_len(const fido_cred_t *);
 size_t fido_cred_sig_len(const fido_cred_t *);
+size_t fido_cred_user_id_len(const fido_cred_t *);
 size_t fido_cred_x5c_len(const fido_cred_t *);
-size_t fido_cred_largeblob_key_len(const fido_cred_t *);
 
 uint8_t  fido_assert_flags(const fido_assert_t *, size_t);
 uint32_t fido_assert_sigcount(const fido_assert_t *, size_t);
@@ -197,19 +208,21 @@ uint8_t  fido_dev_build(const fido_dev_t *);
 uint8_t  fido_dev_flags(const fido_dev_t *);
 int16_t  fido_dev_info_vendor(const fido_dev_info_t *);
 int16_t  fido_dev_info_product(const fido_dev_info_t *);
-uint64_t fido_cbor_info_maxmsgsiz(const fido_cbor_info_t *);
 uint64_t fido_cbor_info_maxcredbloblen(const fido_cbor_info_t *);
 uint64_t fido_cbor_info_maxcredcntlst(const fido_cbor_info_t *);
 uint64_t fido_cbor_info_maxcredidlen(const fido_cbor_info_t *);
+uint64_t fido_cbor_info_maxlargeblob(const fido_cbor_info_t *);
+uint64_t fido_cbor_info_maxmsgsiz(const fido_cbor_info_t *);
 uint64_t fido_cbor_info_fwversion(const fido_cbor_info_t *);
 
 bool fido_dev_has_pin(const fido_dev_t *);
 bool fido_dev_has_uv(const fido_dev_t *);
 bool fido_dev_is_fido2(const fido_dev_t *);
 bool fido_dev_is_winhello(const fido_dev_t *);
-bool fido_dev_supports_pin(const fido_dev_t *);
-bool fido_dev_supports_cred_prot(const fido_dev_t *);
 bool fido_dev_supports_credman(const fido_dev_t *);
+bool fido_dev_supports_cred_prot(const fido_dev_t *);
+bool fido_dev_supports_permissions(const fido_dev_t *);
+bool fido_dev_supports_pin(const fido_dev_t *);
 bool fido_dev_supports_uv(const fido_dev_t *);
 
 int fido_dev_largeblob_get(fido_dev_t *, const unsigned char *, size_t,

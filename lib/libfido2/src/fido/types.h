@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2022 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -48,10 +48,14 @@ typedef enum {
 
 typedef void fido_log_handler_t(const char *);
 
+#undef  _FIDO_SIGSET_DEFINED
+#define _FIDO_SIGSET_DEFINED
 #ifdef _WIN32
 typedef int fido_sigset_t;
-#else
+#elif defined(SIG_BLOCK)
 typedef sigset_t fido_sigset_t;
+#else
+#undef _FIDO_SIGSET_DEFINED
 #endif
 
 #ifdef _FIDO_INTERNAL
@@ -107,8 +111,12 @@ typedef struct fido_attcred {
 } fido_attcred_t;
 
 typedef struct fido_attstmt {
-	fido_blob_t x5c; /* attestation certificate */
-	fido_blob_t sig; /* attestation signature */
+	fido_blob_t certinfo; /* tpm attestation TPMS_ATTEST structure */
+	fido_blob_t pubarea;  /* tpm attestation TPMT_PUBLIC structure */
+	fido_blob_t cbor;     /* cbor-encoded attestation statement */
+	fido_blob_t x5c;      /* attestation certificate */
+	fido_blob_t sig;      /* attestation signature */
+	int         alg;      /* attestation algorithm (cose) */
 } fido_attstmt_t;
 
 typedef struct fido_rp {
@@ -124,8 +132,9 @@ typedef struct fido_user {
 } fido_user_t;
 
 typedef struct fido_cred_ext {
-	int mask; /* enabled extensions */
-	int prot; /* protection policy */
+	int    mask;      /* enabled extensions */
+	int    prot;      /* protection policy */
+	size_t minpinlen; /* minimum pin length */
 } fido_cred_ext_t;
 
 typedef struct fido_cred {
@@ -146,13 +155,13 @@ typedef struct fido_cred {
 	fido_attcred_t    attcred;       /* returned credential (key + id) */
 	fido_attstmt_t    attstmt;       /* attestation statement (x509 + sig) */
 	fido_blob_t       largeblob_key; /* decoded large blob key */
-	fido_blob_t       blob;          /* FIDO 2.1 credBlob */
+	fido_blob_t       blob;          /* CTAP 2.1 credBlob */
 } fido_cred_t;
 
 typedef struct fido_assert_extattr {
 	int         mask;            /* decoded extensions */
 	fido_blob_t hmac_secret_enc; /* hmac secret, encrypted */
-	fido_blob_t blob;            /* decoded FIDO 2.1 credBlob */
+	fido_blob_t blob;            /* decoded CTAP 2.1 credBlob */
 } fido_assert_extattr_t;
 
 typedef struct _fido_assert_stmt {
@@ -211,18 +220,19 @@ typedef struct fido_algo_array {
 } fido_algo_array_t;
 
 typedef struct fido_cbor_info {
-	fido_str_array_t  versions;      /* supported versions: fido2|u2f */
-	fido_str_array_t  extensions;    /* list of supported extensions */
-	fido_str_array_t  transports;    /* list of supported transports */
-	unsigned char     aaguid[16];    /* aaguid */
-	fido_opt_array_t  options;       /* list of supported options */
-	uint64_t          maxmsgsiz;     /* maximum message size */
-	fido_byte_array_t protocols;     /* supported pin protocols */
-	fido_algo_array_t algorithms;    /* list of supported algorithms */
-	uint64_t          maxcredcntlst; /* max number of credentials in list */
-	uint64_t          maxcredidlen;  /* max credential ID length */
-	uint64_t          fwversion;     /* firmware version */
+	fido_str_array_t  versions;       /* supported versions: fido2|u2f */
+	fido_str_array_t  extensions;     /* list of supported extensions */
+	fido_str_array_t  transports;     /* list of supported transports */
+	unsigned char     aaguid[16];     /* aaguid */
+	fido_opt_array_t  options;        /* list of supported options */
+	uint64_t          maxmsgsiz;      /* maximum message size */
+	fido_byte_array_t protocols;      /* supported pin protocols */
+	fido_algo_array_t algorithms;     /* list of supported algorithms */
+	uint64_t          maxcredcntlst;  /* max credentials in list */
+	uint64_t          maxcredidlen;   /* max credential ID length */
+	uint64_t          fwversion;      /* firmware version */
 	uint64_t          maxcredbloblen; /* max credBlob length */
+	uint64_t          maxlargeblob;   /* max largeBlob array length */
 } fido_cbor_info_t;
 
 typedef struct fido_dev_info {
@@ -260,6 +270,7 @@ typedef struct fido_dev {
 	int                   flags;      /* internal flags; see FIDO_DEV_* */
 	fido_dev_transport_t  transport;  /* transport functions */
 	uint64_t	      maxmsgsize; /* max message size */
+	int		      timeout_ms; /* read timeout in ms */
 } fido_dev_t;
 
 #else
