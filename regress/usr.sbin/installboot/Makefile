@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2022/08/26 11:06:47 kn Exp $
+#	$OpenBSD: Makefile,v 1.8 2022/08/29 18:42:28 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -11,7 +11,8 @@ DEVFILES =		${NCHUNKS:=vnd%.txt}
 SRFILE =		sr.txt
 MOUNTPOINT =		mnt
 STAGEDIR =		/usr/mdec
-.if   ${MACHINE} == "amd64"	# assume BIOS/MBR
+.if   ${MACHINE} == "amd64" ||	\
+      ${MACHINE} == "i386"	# assume BIOS/MBR
 STAGENAMES =		biosboot boot
 .elif ${MACHINE} == "arm64"
 STAGENAMES =		BOOTAA64.EFI
@@ -31,7 +32,8 @@ create-new-chunks:
 # what the installer does, see /usr/src/distrib/$(machine)/ramdisk/install.md
 format-new-chunks: create-new-chunks
 .for devfile in ${DEVFILES}
-.if   ${MACHINE} == "amd64"	# assume BIOS/MBR
+.if   ${MACHINE} == "amd64" ||	\
+      ${MACHINE} == "i386"	# assume BIOS/MBR
 	${SUDO} fdisk -iy -- "$$(<${devfile})" 1>/dev/null
 .elif ${MACHINE} == "arm64"
 	${SUDO} fdisk -g -y -b32768 -- "$$(<${devfile})" 1>/dev/null
