@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.80 2022/06/01 17:47:18 dv Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.81 2022/08/29 02:58:13 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-inline static void
+static inline void
 pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
@@ -449,7 +449,7 @@ pmap_update_pg(vaddr_t va)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-inline static void
+static inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {
@@ -469,7 +469,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-inline static void
+static inline void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.90 2022/06/01 17:16:00 dv Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.91 2022/08/29 02:58:13 jsg Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ void pmap_flush_page_pae(paddr_t);
  *	Unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+static __inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {
@@ -412,7 +412,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	Unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void
+static __inline void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & PROT_WRITE) == 0) {
@@ -429,25 +429,25 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  * modules from both uvm_pmap.h and pmap.h. Since uvm_pmap.h defines these
  * as functions, inline them here to suppress linker warnings.
  */
-__inline static vaddr_t
+static __inline vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
 	return (*pmap_growkernel_p)(maxkvaddr);
 }
 
-__inline static int
+static __inline int
 pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	return (*pmap_enter_p)(pmap, va, pa, prot, flags);
 }
 
-__inline static void
+static __inline void
 pmap_enter_special(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 {
 	(*pmap_enter_special_p)(va, pa, prot, flags);
 }
 
-__inline static int
+static __inline int
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pa)
 {
 	return (*pmap_extract_p)(pmap, va, pa);

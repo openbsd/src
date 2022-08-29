@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_pool.c,v 1.10 2017/05/30 17:22:00 yasuoka Exp $ */
+/*	$OpenBSD: npppd_pool.c,v 1.11 2022/08/29 02:58:13 jsg Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -338,7 +338,7 @@ npppd_pool_get_dynamic(npppd_pool *_this, npppd_ppp *ppp)
 	return (uint32_t)0;
 }
 
-inline static int
+static inline int
 npppd_is_ifcace_ip4addr(npppd *_this, uint32_t ip4addr)
 {
 	int i;

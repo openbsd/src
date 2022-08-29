@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.178 2022/08/25 17:25:25 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.179 2022/08/29 02:58:13 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -217,7 +217,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-__inline static struct cpu_info *
+static __inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;

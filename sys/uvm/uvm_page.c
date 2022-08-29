@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.169 2022/08/01 14:15:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.170 2022/08/29 02:58:13 jsg Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ int uvm_page_owner_locked_p(struct vm_page *);
  * => call should have already set pg's object and offset pointers
  *    and bumped the version counter
  */
-inline static void
+static inline void
 uvm_pageinsert(struct vm_page *pg)
 {
 	struct vm_page	*dupe;
