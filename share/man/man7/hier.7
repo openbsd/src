@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.166 2022/05/17 16:50:30 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.167 2022/08/29 17:24:56 deraadt Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: May 17 2022 $
+.Dd $Mdocdate: August 29 2022 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -168,8 +168,8 @@ Default home directory for the superuser.
 .It /sbin/
 System programs and administration utilities
 fundamental to both single and multi-user environments.
-These programs are statically compiled and therefore do not depend on any
-system libraries to run.
+Most of these programs are statically compiled and therefore do not
+depend on any system libraries to run.
 .It /tmp/
 Temporary files that are
 .Em not
