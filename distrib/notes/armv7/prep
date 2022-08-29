@@ -1,12 +1,18 @@
-dnl	$OpenBSD: prep,v 1.19 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: prep,v 1.20 2022/08/29 17:05:38 fcambus Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
 To perform an installation you must be able to interact with the serial
-console of the machine.  USB OTG ports such as the one found on the
-BeagleBone will not function as a console.  You need to be able to
-interact with the firmware on the console.  Often this requires a 3.3V
-TTL level adapter connected to pins or a header on the board.
+console of the machine in most cases.  USB OTG ports such as the one
+found on the BeagleBone will not function as a console.  You need to be
+able to interact with the firmware on the console.  Often this requires
+a 3.3V TTL level adapter connected to pins or a header on the board.
+
+On systems supporting the simplefb(4) driver, such as the Cubieboard2,
+it is possible to install the system using the framebuffer console.
+You will need to enter the following at the ``boot>'' prompt:
+
+	boot> set tty fb0
 
 Firmware which provides an EFI interface with a Device Tree Blob (DTB)
 file is required to boot.  In most cases this is provided by images of
