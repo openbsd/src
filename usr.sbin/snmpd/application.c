@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.8 2022/08/29 13:19:05 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.9 2022/08/29 13:23:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -724,6 +724,7 @@ void
 appl_request_downstream_free(struct appl_request_downstream *dreq)
 {
 	struct appl_varbind_internal *vb;
+	int retry = 0;
 
 	if (dreq == NULL)
 		return;
@@ -731,9 +732,16 @@ appl_request_downstream_free(struct appl_request_downstream *dreq)
 	RB_REMOVE(appl_requests, &(dreq->ard_backend->ab_requests), dreq);
 	evtimer_del(&(dreq->ard_timer));
 
-	for (vb = dreq->ard_vblist; vb != NULL; vb = vb->avi_next)
+	for (vb = dreq->ard_vblist; vb != NULL; vb = vb->avi_next) {
 		vb->avi_request_downstream = NULL;
+		if (vb->avi_state == APPL_VBSTATE_PENDING) {
+			vb->avi_state = APPL_VBSTATE_NEW;
+			retry = 1;
+		}
+	}
 
+	if (retry)
+		appl_request_upstream_resolve(dreq->ard_request);
 	free(dreq);
 }
 
