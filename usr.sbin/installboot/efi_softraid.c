@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_softraid.c,v 1.1 2022/08/15 17:06:43 kn Exp $	*/
+/*	$OpenBSD: efi_softraid.c,v 1.2 2022/08/29 18:54:43 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2022 Klemens Nanni <kn@openbsd.org>
@@ -67,8 +67,8 @@ sr_install_bootblk(int devfd, int vol, int disk)
 		err(1, "open: %s", realdev);
 
 	if (verbose)
-		fprintf(stderr, "%s%c: installing boot blocks on %s\n",
-		    bd.bd_vendor, part, realdev);
+		fprintf(stderr, "%s%c: %s boot blocks on %s\n", bd.bd_vendor,
+		    part, (nowrite ? "would install" : "installing"), realdev);
 
 	/* Write boot blocks to device. */
 	md_installboot(diskfd, realdev);

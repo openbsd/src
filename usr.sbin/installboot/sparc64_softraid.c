@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.5 2020/06/08 19:17:12 kn Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.6 2022/08/29 18:54:43 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -68,8 +68,8 @@ sr_install_bootblk(int devfd, int vol, int disk)
 		err(1, "open: %s", realdev);
 
 	if (verbose)
-		fprintf(stderr, "%s%c: installing boot blocks on %s\n",
-		    bd.bd_vendor, part, realdev);
+		fprintf(stderr, "%s%c: %s boot blocks on %s\n", bd.bd_vendor,
+		    part, (nowrite ? "would install" : "installing"), realdev);
 
 	/* Write boot blocks to device. */
 	md_installboot(diskfd, realdev);
@@ -91,10 +91,10 @@ sr_install_bootldr(int devfd, char *dev)
 	bb.bb_bootldr = ldrstore;
 	bb.bb_bootldr_size = ldrsize;
 	strncpy(bb.bb_dev, dev, sizeof(bb.bb_dev));
+	if (verbose)
+		fprintf(stderr, "%s: %s boot loader on softraid volume\n", dev,
+		    (nowrite ? "would install" : "installing"));
 	if (!nowrite) {
-		if (verbose)
-			fprintf(stderr, "%s: installing boot loader on "
-			    "softraid volume\n", dev);
 		if (ioctl(devfd, BIOCINSTALLBOOT, &bb) == -1)
 			errx(1, "softraid installboot failed");
 		sr_status(&bb.bb_bio.bio_status);

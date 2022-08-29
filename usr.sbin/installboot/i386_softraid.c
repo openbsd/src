@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.18 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.19 2022/08/29 18:54:43 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -102,8 +102,9 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	sym_set_value(pbr_symbols, "_p_offset", poffset);
 
 	if (verbose)
-		fprintf(stderr, "%s%c: installing boot blocks on %s, "
-		    "part offset %u\n", bd.bd_vendor, part, dev, poffset);
+		fprintf(stderr, "%s%c: %s boot blocks on %s, part offset %u\n",
+		    bd.bd_vendor, part,
+		    (nowrite ? "would install" : "installing"), dev, poffset);
 
 	/* Write boot blocks to device. */
 	write_bootblocks(diskfd, dev, &dl);
@@ -172,10 +173,10 @@ sr_install_bootldr(int devfd, char *dev)
 	bb.bb_bootblk = "XXX";
 	bb.bb_bootblk_size = sizeof("XXX");
 	strncpy(bb.bb_dev, dev, sizeof(bb.bb_dev));
+	if (verbose)
+		fprintf(stderr, "%s: %s boot loader on softraid volume\n", dev,
+		    (nowrite ? "would install" : "installing"));
 	if (!nowrite) {
-		if (verbose)
-			fprintf(stderr, "%s: installing boot loader on "
-			    "softraid volume\n", dev);
 		if (ioctl(devfd, BIOCINSTALLBOOT, &bb) == -1)
 			errx(1, "softraid installboot failed");
 		sr_status(&bb.bb_bio.bio_status);
