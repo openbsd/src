@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.79 2022/06/28 15:35:24 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.80 2022/08/29 19:39:10 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -437,15 +437,16 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 	const struct unit_type	*ut;
 	char			*guidstr = NULL;
 	double			 size;
-	uint64_t		 sectors;
+	uint64_t		 end, start;
 	uint32_t		 status;
 
-	sectors = gp[pn].gp_lba_end - gp[pn].gp_lba_start + 1;
-	size = units_size(units, sectors, &ut);
+	start = gp[pn].gp_lba_start;
+	end = gp[pn].gp_lba_end;
+	size = units_size(units, (start > end) ? 0 : end - start + 1, &ut);
+
 	printf("%c%3u: %-36s [%12lld: %12.0f%s]\n",
 	    gp[pn].gp_attrs & GPTDOSACTIVE ? '*' : ' ', pn,
-	    PRT_uuid_to_sname(&gp[pn].gp_type), gp[pn].gp_lba_start,
-	    size, ut->ut_abbr);
+	    PRT_uuid_to_sname(&gp[pn].gp_type), start, size, ut->ut_abbr);
 
 	if (verbosity == VERBOSE) {
 		uuid_to_string(&gp[pn].gp_guid, &guidstr, &status);
@@ -456,6 +457,12 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 		printf("%-36s\n", name_to_string(pn));
 		free(guidstr);
 	}
+
+	if (start > end)
+		printf("partition %u first LBA is > last LBA\n", pn);
+	if (start < gh.gh_lba_start || end > gh.gh_lba_end)
+		printf("partition %u extends beyond usable LBA range of %s\n",
+		    pn, disk.dk_name);
 }
 
 int
