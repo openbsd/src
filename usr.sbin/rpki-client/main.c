@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.212 2022/08/26 11:04:13 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.213 2022/08/29 18:28:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -674,7 +674,7 @@ load_skiplist(const char *slf)
 	struct skiplistentry	*sle;
 	FILE			*fp;
 	char			*line = NULL;
-	size_t			 linesize = 0, linelen, s;
+	size_t			 linesize = 0, linelen;
 
 	if ((fp = fopen(slf, "r")) == NULL) {
 		if (errno == ENOENT && strcmp(slf, DEFAULT_SKIPLIST_FILE) == 0)
@@ -697,10 +697,8 @@ load_skiplist(const char *slf)
 		linelen = strcspn(line, " #\r\n\t");
 		line[linelen] = '\0';
 
-		for (s = 0; s < linelen; s++)
-			if (!isalnum((unsigned char)line[s]) &&
-			    !ispunct((unsigned char)line[s]))
-				errx(1, "invalid entry in skiplist: %s", line);
+		if (!valid_uri(line, linelen, NULL))
+			errx(1, "invalid entry in skiplist: %s", line);
 
 		if ((sle = malloc(sizeof(struct skiplistentry))) == NULL)
 			err(1, NULL);
