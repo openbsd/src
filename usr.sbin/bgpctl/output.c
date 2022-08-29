@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.27 2022/08/29 14:58:15 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.28 2022/08/29 18:19:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1003,9 +1003,7 @@ show_rib_mem(struct rde_memstats *stats)
 	printf("\t   and holding %lld references\n",
 	    stats->path_refs);
 	printf("%10lld BGP AS-PATH attribute entries using "
-	    "%s of memory\n\t   and holding %lld references\n",
-	    stats->aspath_cnt, fmt_mem(stats->aspath_size),
-	    stats->aspath_refs);
+	    "%s of memory\n", stats->aspath_cnt, fmt_mem(stats->aspath_size));
 	printf("%10lld entries for %lld BGP communities "
 	    "using %s of memory\n", stats->comm_cnt, stats->comm_nmemb,
 	    fmt_mem(stats->comm_cnt * sizeof(struct rde_community) +

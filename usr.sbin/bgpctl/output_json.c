@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.21 2022/08/29 14:58:15 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.22 2022/08/29 18:19:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -936,7 +936,7 @@ json_rib_mem(struct rde_memstats *stats)
 	    stats->path_cnt * sizeof(struct rde_aspath),
 	    stats->path_refs);
 	json_rib_mem_element("aspath", stats->aspath_cnt,
-	    stats->aspath_size, stats->aspath_refs);
+	    stats->aspath_size, UINT64_MAX);
 	json_rib_mem_element("community_entries", stats->comm_cnt,
 	    stats->comm_cnt * sizeof(struct rde_community), UINT64_MAX);
 	json_rib_mem_element("community", stats->comm_nmemb,
