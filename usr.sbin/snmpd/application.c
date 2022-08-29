@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.11 2022/08/29 18:02:37 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.12 2022/08/29 18:05:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -233,12 +233,14 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
 	 * This allows us to keep control of certain regions like system.
 	 */
 	region = appl_region_find(ctx, oid);
-	if (region != NULL && region->ar_subtree)
+	if (region != NULL && region->ar_subtree &&
+	    region->ar_backend != backend)
 		goto overlap;
 
 	search.ar_oid = *oid;
 	region = RB_NFIND(appl_regions, &(ctx->ac_regions), &search);
-	if (region != NULL && region->ar_subtree && (
+	if (region != NULL && region->ar_subtree && 
+	    region->ar_backend != backend && (
 	    appl_region_cmp(&search, region) == 0 ||
 	    appl_region_cmp(&search, region) == -2))
 		goto overlap;
