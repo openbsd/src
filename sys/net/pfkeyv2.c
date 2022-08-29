@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.246 2022/08/28 21:35:11 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.247 2022/08/29 08:08:17 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -426,7 +426,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 		nam->m_len = pfkey_addr.sa_len;
 		break;
 
-	case PRU_RCVOOB:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;

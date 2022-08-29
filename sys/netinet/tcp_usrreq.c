@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.198 2022/08/28 21:35:12 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.199 2022/08/29 08:08:17 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_send	= tcp_send,
 	.pru_abort	= tcp_abort,
 	.pru_sense	= tcp_sense,
+	.pru_rcvoob	= tcp_rcvoob,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -226,24 +227,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	case PRU_RCVOOB:
-		if ((so->so_oobmark == 0 &&
-		    (so->so_state & SS_RCVATMARK) == 0) ||
-		    so->so_options & SO_OOBINLINE ||
-		    tp->t_oobflags & TCPOOB_HADDATA) {
-			error = EINVAL;
-			break;
-		}
-		if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0) {
-			error = EWOULDBLOCK;
-			break;
-		}
-		m->m_len = 1;
-		*mtod(m, caddr_t) = tp->t_iobc;
-		if (((long)nam & MSG_PEEK) == 0)
-			tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		break;
 
 	case PRU_SENDOOB:
@@ -998,6 +981,39 @@ tcp_sense(struct socket *so, struct stat *ub)
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL, PRU_SENSE, 0);
 	return (0);
+}
+
+int
+tcp_rcvoob(struct socket *so, struct mbuf *m, int flags)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+	if ((so->so_oobmark == 0 &&
+	    (so->so_state & SS_RCVATMARK) == 0) ||
+	    so->so_options & SO_OOBINLINE ||
+	    tp->t_oobflags & TCPOOB_HADDATA) {
+		error = EINVAL;
+		goto out;
+	}
+	if ((tp->t_oobflags & TCPOOB_HAVEDATA) == 0) {
+		error = EWOULDBLOCK;
+		goto out;
+	}
+	m->m_len = 1;
+	*mtod(m, caddr_t) = tp->t_iobc;
+	if ((flags & MSG_PEEK) == 0)
+		tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
+out:
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL, PRU_RCVOOB, 0);
+	return (error);
 }
 
 /*

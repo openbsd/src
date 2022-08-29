@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.178 2022/08/28 21:35:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.179 2022/08/29 08:08:17 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -247,7 +247,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 		break;
 
-	case PRU_RCVOOB:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;

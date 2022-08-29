@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.347 2022/08/29 07:51:45 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.348 2022/08/29 08:08:17 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -251,7 +251,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		nam->m_len = route_src.sa_len;
 		break;
 
-	case PRU_RCVOOB:
 	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
