@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2021/01/24 18:29:15 florian Exp $
+#	$OpenBSD: Makefile,v 1.9 2022/08/29 17:00:30 deraadt Exp $
 
 PROG=	unwind
 SRCS=	control.c resolver.c frontend.c log.c unwind.c parse.y printconf.c
@@ -19,3 +19,6 @@ LDADD+=	-levent -lutil -lssl -lcrypto
 DPADD+= ${LIBEVENT} ${LIBUTIL} ${LIBSSL} ${LIBCRYPTO}
 
 .include <bsd.prog.mk>
+
+# Don't compile unwind as static binary by default
+LDSTATIC=       

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2019/11/07 08:45:31 florian Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/08/29 17:00:30 deraadt Exp $
 
 PROG=	slaacd
 SRCS=	control.c engine.c frontend.c log.c slaacd.c
@@ -17,3 +17,6 @@ LDADD+=	-levent -lutil
 DPADD+= ${LIBEVENT} ${LIBUTIL}
 
 .include <bsd.prog.mk>
+
+# Don't compile slaacd as static binary by default
+LDSTATIC=       

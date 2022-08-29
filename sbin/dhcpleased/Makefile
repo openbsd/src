@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2021/07/26 09:26:36 florian Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/08/29 17:00:29 deraadt Exp $
 
 PROG=	dhcpleased
 SRCS=	bpf.c checksum.c control.c dhcpleased.c engine.c frontend.c log.c
@@ -18,3 +18,6 @@ LDADD+=	-levent -lutil
 DPADD+= ${LIBEVENT} ${LIBUTIL}
 
 .include <bsd.prog.mk>
+
+# Don't compile dhcpleased as static binary by default
+LDSTATIC=       
