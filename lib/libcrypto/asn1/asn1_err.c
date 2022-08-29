@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_err.c,v 1.24 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: asn1_err.c,v 1.25 2022/08/29 06:48:58 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -176,6 +176,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_TOO_LONG)             , "too long"},
 	{ERR_REASON(ASN1_R_TOO_SMALL)            , "too small"},
 	{ERR_REASON(ASN1_R_TYPE_NOT_CONSTRUCTED) , "type not constructed"},
+	{ERR_REASON(ASN1_R_TYPE_NOT_PRIMITIVE)   , "type not primitive"},
 	{ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY), "unable to decode rsa key"},
 	{ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY), "unable to decode rsa private key"},
 	{ERR_REASON(ASN1_R_UNEXPECTED_EOC)       , "unexpected eoc"},

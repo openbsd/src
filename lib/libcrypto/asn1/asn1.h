@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.68 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: asn1.h,v 1.69 2022/08/29 06:48:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1180,6 +1180,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_TOO_LONG					 155
 #define ASN1_R_TOO_SMALL				 224
 #define ASN1_R_TYPE_NOT_CONSTRUCTED			 156
+#define ASN1_R_TYPE_NOT_PRIMITIVE			 231
 #define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 157
 #define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 158
 #define ASN1_R_UNEXPECTED_EOC				 159
