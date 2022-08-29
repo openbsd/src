@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfp.c,v 1.4 2019/03/13 09:28:21 patrick Exp $	*/
+/*	$OpenBSD: vfp.c,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
@@ -28,7 +28,7 @@
 static inline void
 set_vfp_fpexc(uint32_t val)
 {
-	__asm __volatile(
+	__asm volatile(
 	    ".fpu vfpv3\n"
 	    "vmsr fpexc, %0" :: "r" (val));
 }
@@ -37,7 +37,7 @@ static inline uint32_t
 get_vfp_fpexc(void)
 {
 	uint32_t val;
-	__asm __volatile(
+	__asm volatile(
 	    ".fpu vfpv3\n"
 	    "vmrs %0, fpexc" : "=r" (val));
 	return val;
@@ -67,7 +67,7 @@ vfp_store(struct fpreg *vfpsave)
 	uint32_t scratch;
 
 	if (get_vfp_fpexc() & VFPEXC_EN) {
-		__asm __volatile(
+		__asm volatile(
 		    ".fpu vfpv3\n"
 		    "vstmia	%1!, {d0-d15}\n"	/* d0-d15 */
 		    "vstmia	%1!, {d16-d31}\n"	/* d16-d31 */
@@ -151,7 +151,7 @@ vfp_load(struct proc *p)
 	/* enable to be able to load ctx */
 	set_vfp_fpexc(VFPEXC_EN);
 
-	__asm __volatile(
+	__asm volatile(
 	    ".fpu vfpv3\n"
 	    "vldmia	%1!, {d0-d15}\n"		/* d0-d15 */
 	    "vldmia	%1!, {d16-d31}\n"		/* d16-d31 */

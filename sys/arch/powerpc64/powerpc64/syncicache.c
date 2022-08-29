@@ -1,4 +1,4 @@
-/*	$OpenBSD: syncicache.c,v 1.3 2020/06/26 20:58:38 kettenis Exp $	*/
+/*	$OpenBSD: syncicache.c,v 1.4 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -58,7 +58,7 @@ __syncicache(void *from, size_t len)
 	__asm volatile ("sync");
 	p = (char *)from - off;
 	do {
-		__asm __volatile ("icbi 0,%0" :: "r"(p));
+		__asm volatile ("icbi 0,%0" :: "r"(p));
 		p += cacheline_size;
 		len -= cacheline_size;
 	} while (len + cacheline_size > cacheline_size);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2022/08/09 04:49:08 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -137,7 +137,7 @@ static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *__ci = NULL;
-	__asm __volatile("mv %0, tp" : "=&r"(__ci));
+	__asm volatile("mv %0, tp" : "=&r"(__ci));
 	return (__ci);
 }
 
@@ -238,7 +238,7 @@ void	savectx		(struct pcb *pcb);
 static inline void
 intr_enable(void)
 {
-	__asm __volatile("csrsi sstatus, %0" :: "i" (SSTATUS_SIE));
+	__asm volatile("csrsi sstatus, %0" :: "i" (SSTATUS_SIE));
 }
 
 static inline u_long
@@ -246,7 +246,7 @@ intr_disable(void)
 {
 	uint64_t ret;
 
-	__asm __volatile(
+	__asm volatile(
 	    "csrrci %0, sstatus, %1"
 	    : "=&r" (ret) : "i" (SSTATUS_SIE)
 	);
@@ -257,7 +257,7 @@ intr_disable(void)
 static inline void
 intr_restore(u_long s)
 {
-	__asm __volatile("csrs sstatus, %0" :: "r" (s));
+	__asm volatile("csrs sstatus, %0" :: "r" (s));
 }
 
 void	delay (unsigned);

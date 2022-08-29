@@ -1,11 +1,11 @@
-/* $OpenBSD: atomic.h,v 1.3 2017/05/12 08:48:31 mpi Exp $ */
+/* $OpenBSD: atomic.h,v 1.4 2022/08/29 02:01:18 jsg Exp $ */
 
 /* Public Domain */
 
 #ifndef _MACHINE_ATOMIC_H_
 #define _MACHINE_ATOMIC_H_
 
-#define __membar(_f) do { __asm __volatile(_f ::: "memory"); } while (0)
+#define __membar(_f) do { __asm volatile(_f ::: "memory"); } while (0)
 
 #define membar_enter()		__membar("dmb sy")
 #define membar_exit()		__membar("dmb sy")

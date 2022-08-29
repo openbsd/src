@@ -1,4 +1,4 @@
-/*	$OpenBSD: riscvreg.h,v 1.4 2021/07/06 19:09:57 patrick Exp $	*/
+/*	$OpenBSD: riscvreg.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -197,38 +197,38 @@
 
 #define csr_swap(csr, val)						\
 ({	if (CSR_ZIMM(val))						\
-		__asm __volatile("csrrwi %0, " #csr ", %1"		\
+		__asm volatile("csrrwi %0, " #csr ", %1"		\
 				: "=r" (val) : "i" (val));		\
 	else								\
-		__asm __volatile("csrrw %0, " #csr ", %1"		\
+		__asm volatile("csrrw %0, " #csr ", %1"		\
 				: "=r" (val) : "r" (val));		\
 	val;								\
 })
 
 #define csr_write(csr, val)						\
 ({	if (CSR_ZIMM(val))						\
-		__asm __volatile("csrwi " #csr ", %0" :: "i" (val));	\
+		__asm volatile("csrwi " #csr ", %0" :: "i" (val));	\
 	else								\
-		__asm __volatile("csrw " #csr ", %0" ::  "r" (val));	\
+		__asm volatile("csrw " #csr ", %0" ::  "r" (val));	\
 })
 
 #define csr_set(csr, val)						\
 ({	if (CSR_ZIMM(val))						\
-		__asm __volatile("csrsi " #csr ", %0" :: "i" (val));	\
+		__asm volatile("csrsi " #csr ", %0" :: "i" (val));	\
 	else								\
-		__asm __volatile("csrs " #csr ", %0" :: "r" (val));	\
+		__asm volatile("csrs " #csr ", %0" :: "r" (val));	\
 })
 
 #define csr_clear(csr, val)						\
 ({	if (CSR_ZIMM(val))						\
-		__asm __volatile("csrci " #csr ", %0" :: "i" (val));	\
+		__asm volatile("csrci " #csr ", %0" :: "i" (val));	\
 	else								\
-		__asm __volatile("csrc " #csr ", %0" :: "r" (val));	\
+		__asm volatile("csrc " #csr ", %0" :: "r" (val));	\
 })
 
 #define csr_read(csr)							\
 ({	u_long val;							\
-	__asm __volatile("csrr %0, " #csr : "=r" (val));		\
+	__asm volatile("csrr %0, " #csr : "=r" (val));		\
 	val;								\
 })
 

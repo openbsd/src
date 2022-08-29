@@ -1,4 +1,4 @@
-/* $OpenBSD: fenv.c,v 1.4 2020/07/09 22:13:29 kettenis Exp $ */
+/* $OpenBSD: fenv.c,v 1.5 2022/08/29 02:01:18 jsg Exp $ */
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
@@ -34,11 +34,11 @@
 #define	_FPUSW_SHIFT	8
 #define	_ENABLE_MASK	(FE_ALL_EXCEPT << _FPUSW_SHIFT)
 
-#define	__mrs_fpcr(r)	__asm __volatile("mrs %x0, fpcr" : "=r" (r))
-#define	__msr_fpcr(r)	__asm __volatile("msr fpcr, %x0" : : "r" (r))
+#define	__mrs_fpcr(r)	__asm volatile("mrs %x0, fpcr" : "=r" (r))
+#define	__msr_fpcr(r)	__asm volatile("msr fpcr, %x0" : : "r" (r))
 
-#define	__mrs_fpsr(r)	__asm __volatile("mrs %x0, fpsr" : "=r" (r))
-#define	__msr_fpsr(r)	__asm __volatile("msr fpsr, %x0" : : "r" (r))
+#define	__mrs_fpsr(r)	__asm volatile("mrs %x0, fpsr" : "=r" (r))
+#define	__msr_fpsr(r)	__asm volatile("msr fpsr, %x0" : : "r" (r))
 
 /*
  * The following constant represents the default floating-point environment

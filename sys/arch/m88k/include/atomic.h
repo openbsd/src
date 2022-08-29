@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.15 2021/05/04 14:05:12 aoyama Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.16 2022/08/29 02:01:18 jsg Exp $	*/
 
 /* Public Domain */
 
@@ -187,7 +187,7 @@ __sync_synchronize(void)
 
 /* trap numbers below 128 would cause a privileged instruction fault */
 #define	__membar() do {						\
-	__asm __volatile("tb1 0, %%r0, 128" ::: "memory");	\
+	__asm volatile("tb1 0, %%r0, 128" ::: "memory");	\
 } while (0)
 
 #endif	/* gcc < 4 */

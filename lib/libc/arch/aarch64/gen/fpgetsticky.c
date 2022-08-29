@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetsticky.c,v 1.2 2021/12/13 18:28:39 deraadt Exp $	*/
+/*	$OpenBSD: fpgetsticky.c,v 1.3 2022/08/29 02:01:18 jsg Exp $	*/
 /*
  * Copyright (C) 2014 Andrew Turner
  * All rights reserved.
@@ -40,7 +40,7 @@ fpgetsticky(void)
 {
 	fp_except old;
 
-	__asm __volatile("mrs %x0, fpcr" : "=&r"(old));
+	__asm volatile("mrs %x0, fpcr" : "=&r"(old));
 
 	return (old & FP_X_MASK);
 }

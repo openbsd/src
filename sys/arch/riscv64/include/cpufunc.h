@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.4 2021/05/18 09:14:49 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2014 Andrew Turner
@@ -49,19 +49,19 @@ breakpoint(void)
 static __inline void
 fence_i(void)
 {
-	__asm __volatile("fence.i" ::: "memory");
+	__asm volatile("fence.i" ::: "memory");
 }
 
 static __inline void
 sfence_vma(void)
 {
-	__asm __volatile("sfence.vma" ::: "memory");
+	__asm volatile("sfence.vma" ::: "memory");
 }
 
 static __inline void
 sfence_vma_page(uintptr_t addr)
 {
-	__asm __volatile("sfence.vma %0"
+	__asm volatile("sfence.vma %0"
 			:
 			: "r" (addr)
 			: "memory");
@@ -71,7 +71,7 @@ sfence_vma_page(uintptr_t addr)
 static __inline void
 sfence_vma_asid(uint64_t asid)
 {
-	__asm __volatile("sfence.vma x0, %0"
+	__asm volatile("sfence.vma x0, %0"
 			:
 			: "r" (asid)
 			: "memory");
@@ -80,7 +80,7 @@ sfence_vma_asid(uint64_t asid)
 static __inline void
 sfence_vma_page_asid(uintptr_t addr, uint64_t asid)
 {
-	__asm __volatile("sfence.vma %0, %1"
+	__asm volatile("sfence.vma %0, %1"
 			 :
 			 : "r" (addr), "r" (asid)
 			 : "memory");
@@ -96,7 +96,7 @@ extern void (*cpu_dcache_wb_range)(paddr_t, psize_t);
 static __inline void
 load_satp(uint64_t val)
 {
-	__asm __volatile("csrw satp, %0" :: "r"(val));
+	__asm volatile("csrw satp, %0" :: "r"(val));
 }
 
 #define	cpufunc_nullop()		riscv_nullop()

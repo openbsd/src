@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.27 2022/07/13 09:28:19 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.28 2022/08/29 02:01:18 jsg Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -158,7 +158,7 @@ static inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *__ci = NULL;
-	__asm __volatile("mrs %0, tpidr_el1" : "=r" (__ci));
+	__asm volatile("mrs %0, tpidr_el1" : "=r" (__ci));
 	return (__ci);
 }
 

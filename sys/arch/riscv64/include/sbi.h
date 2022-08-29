@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.h,v 1.4 2021/07/02 08:44:37 kettenis Exp $	*/
+/*	$OpenBSD: sbi.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2016-2017 Ruslan Bukin <br@bsdpad.com>
@@ -116,7 +116,7 @@ sbi_call(uint64_t arg7, uint64_t arg6, uint64_t arg0, uint64_t arg1,
 	register uintptr_t a6 __asm ("a6") = (uintptr_t)(arg6);
 	register uintptr_t a7 __asm ("a7") = (uintptr_t)(arg7);
 
-	__asm __volatile(			\
+	__asm volatile(			\
 		"ecall"				\
 		:"+r"(a0), "+r"(a1)		\
 		:"r"(a2), "r"(a3), "r"(a6), "r"(a7)	\

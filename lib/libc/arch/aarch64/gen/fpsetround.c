@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.3 2021/12/13 18:28:39 deraadt Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.4 2022/08/29 02:01:18 jsg Exp $	*/
 /*
  * Copyright (C) 2014 Andrew Turner
  * All rights reserved.
@@ -34,10 +34,10 @@ fpsetround(fp_rnd rnd_dir)
 {
 	uint32_t old, new;
 
-	__asm __volatile("mrs %x0, fpcr" : "=&r"(old));
+	__asm volatile("mrs %x0, fpcr" : "=&r"(old));
 	new = old & ~(3 << 22);
 	new |= rnd_dir << 22;
-	__asm __volatile("msr fpcr, %x0" : : "r"(new));
+	__asm volatile("msr fpcr, %x0" : : "r"(new));
 
 	return ((old >> 22) & 3);
 }

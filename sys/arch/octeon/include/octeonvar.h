@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.53 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.54 2022/08/29 02:01:18 jsg Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ ffs32(uint32_t val)
 {
 	int ret;
 
-	__asm __volatile ( \
+	__asm volatile ( \
 		_ASM_PROLOGUE_MIPS64
 		"	clz	%0, %1			\n"
 		_ASM_EPILOGUE
