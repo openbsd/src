@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.20 2022/07/28 10:40:25 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.21 2022/08/29 14:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -188,6 +188,11 @@ json_neighbor_stats(struct peer *p)
 	json_do_uint("updates", p->stats.prefix_rcvd_update);
 	json_do_uint("withdraws", p->stats.prefix_rcvd_withdraw);
 	json_do_uint("eor", p->stats.prefix_rcvd_eor);
+	json_do_end();
+
+	json_do_object("pending");
+	json_do_uint("updates", p->stats.pending_update);
+	json_do_uint("withdraws", p->stats.pending_withdraw);
 	json_do_end();
 
 	json_do_end();

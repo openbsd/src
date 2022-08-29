@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.26 2022/08/10 10:21:47 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.27 2022/08/29 14:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -221,13 +221,16 @@ show_neighbor_msgstats(struct peer *p)
 	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
 	    p->stats.msg_rcvd_rrefresh);
 	printf("  Update statistics:\n");
-	printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+	printf("  %-15s %-10s %-10s %-10s\n", "", "Sent", "Received",
+	    "Pending");
 	printf("  %-15s %10u %10u\n", "Prefixes",
 	    p->stats.prefix_out_cnt, p->stats.prefix_cnt);
-	printf("  %-15s %10llu %10llu\n", "Updates",
-	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update);
-	printf("  %-15s %10llu %10llu\n", "Withdraws",
-	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw);
+	printf("  %-15s %10llu %10llu %10u\n", "Updates",
+	    p->stats.prefix_sent_update, p->stats.prefix_rcvd_update,
+	    p->stats.pending_update);
+	printf("  %-15s %10llu %10llu %10u\n", "Withdraws",
+	    p->stats.prefix_sent_withdraw, p->stats.prefix_rcvd_withdraw,
+	    p->stats.pending_withdraw);
 	printf("  %-15s %10llu %10llu\n", "End-of-Rib",
 	    p->stats.prefix_sent_eor, p->stats.prefix_rcvd_eor);
 	printf("  Route Refresh statistics:\n");
