@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.12 2022/07/26 06:48:18 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.13 2022/08/29 18:20:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -63,9 +63,7 @@ struct rde_peer peer1_i = {
 union a {
 	struct aspath	a;
 	struct {
-		LIST_ENTRY(aspath) entry;
 		uint32_t source_as;
-		int refcnt;
 		uint16_t len;
 		uint16_t ascnt;
 		uint8_t d[6];
