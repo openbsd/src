@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.7 2022/08/23 08:56:20 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.8 2022/08/29 13:19:05 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -126,7 +126,7 @@ void appl_request_downstream_send(struct appl_request_downstream *);
 void appl_request_downstream_timeout(int, short, void *);
 void appl_request_upstream_reply(struct appl_request_upstream *);
 int appl_varbind_valid(struct appl_varbind *, struct appl_varbind *, int, int,
-    const char **);
+    int, const char **);
 int appl_varbind_backend(struct appl_varbind_internal *);
 void appl_varbind_error(struct appl_varbind_internal *, enum appl_error);
 void appl_report(struct snmp_message *, int32_t, struct ber_oid *,
@@ -549,7 +549,7 @@ appl_close(struct appl_backend *backend)
 
 	RB_FOREACH_SAFE(request, appl_requests,
 	    &(backend->ab_requests), trequest)
-	appl_request_downstream_free(request);
+		appl_request_downstream_free(request);
 }
 
 struct appl_region *
@@ -1033,14 +1033,13 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 {
 	struct appl_request_downstream *dreq, search;
 	struct appl_request_upstream *ureq = NULL;
-	struct appl_region *nregion;
 	const char *errstr;
 	char oidbuf[1024];
 	enum snmp_pdutype pdutype;
 	struct appl_varbind *vb;
 	struct appl_varbind_internal *origvb = NULL;
 	int invalid = 0;
-	int next = 0;
+	int next = 0, eomv;
 	int32_t i;
 
 	appl_pdu_log(backend, SNMP_C_RESPONSE, requestid, error, index, vblist);
@@ -1063,7 +1062,7 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 	for (i = 1; vb != NULL; vb = vb->av_next, i++) {
                 if (!appl_varbind_valid(vb, origvb == NULL ?
 		    NULL : &(origvb->avi_varbind), next,
-                    error != APPL_ERROR_NOERROR, &errstr)) {
+                    error != APPL_ERROR_NOERROR, backend->ab_range, &errstr)) {
 			smi_oid2string(&(vb->av_oid), oidbuf,
 			    sizeof(oidbuf), 0);
 			log_warnx("%s: %"PRIu32" %s: %s",
@@ -1076,35 +1075,36 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 				appl_varbind_error(origvb, error);
 			origvb->avi_state = APPL_VBSTATE_DONE;
 			origvb->avi_varbind.av_oid = vb->av_oid;
-			if (vb->av_value != NULL &&
+
+			eomv = vb->av_value != NULL &&
 			    vb->av_value->be_class == BER_CLASS_CONTEXT &&
-			    vb->av_value->be_type == APPL_EXC_ENDOFMIBVIEW) {
-				nregion = appl_region_next(ureq->aru_ctx,
-				    &(vb->av_oid), origvb->avi_region);
-				if (nregion != NULL) {
-					ober_free_elements(vb->av_value);
-					origvb->avi_varbind.av_oid =
-					    nregion->ar_oid;
-					origvb->avi_varbind.av_include = 1;
-					vb->av_value = NULL;
-					origvb->avi_state = APPL_VBSTATE_NEW;
-				}
-			}
+			    vb->av_value->be_type == APPL_EXC_ENDOFMIBVIEW;
+			/*
+			 * Treat results past av_oid_end for backends that
+			 * don't support searchranges as EOMV
+			 */
+			eomv |= !backend->ab_range && next &&
+			    ober_oid_cmp(&(vb->av_oid),
+			    &(origvb->avi_varbind.av_oid_end)) > 0;
 			/* RFC 3584 section 4.2.2.1 */
 			if (ureq->aru_pduversion == SNMP_V1 &&
 			    vb->av_value != NULL &&
 			    vb->av_value->be_class == BER_CLASS_APPLICATION &&
 			    vb->av_value->be_type == SNMP_COUNTER64) {
-				if (ureq->aru_pdu->be_type == SNMP_C_GETREQ) {
+				if (next)
+					eomv = 1;
+				else
 					appl_varbind_error(origvb,
 					    APPL_ERROR_NOSUCHNAME);
-				} else {
-					ober_free_elements(vb->av_value);
-					vb->av_value = NULL;
-					origvb->avi_varbind.av_oid = vb->av_oid;
-					origvb->avi_varbind.av_include = 0;
-					origvb->avi_state = APPL_VBSTATE_NEW;
-				}
+			}
+
+			if (eomv) {
+				ober_free_elements(vb->av_value);
+				origvb->avi_varbind.av_oid =
+				    origvb->avi_varbind.av_oid_end;
+				origvb->avi_varbind.av_include = 1;
+				vb->av_value = NULL;
+				origvb->avi_state = APPL_VBSTATE_NEW;
 			}
 			origvb->avi_varbind.av_value = vb->av_value;
 			if (origvb->avi_varbind.av_next == NULL &&
@@ -1161,7 +1161,7 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 
 int
 appl_varbind_valid(struct appl_varbind *varbind, struct appl_varbind *request,
-    int next, int null, const char **errstr)
+    int next, int null, int range, const char **errstr)
 {
 	int cmp;
 	int eomv = 0;
@@ -1255,6 +1255,11 @@ appl_varbind_valid(struct appl_varbind *varbind, struct appl_varbind *request,
 				*errstr = "oid not incrementing";
 				return 0;
 			}
+		}
+		if (range && ober_oid_cmp(&(varbind->av_oid),
+		    &(request->av_oid_end)) > 0) {
+			*errstr = "end oid not honoured";
+			return 0;
 		}
 	} else {
 		if (cmp != 0) {
