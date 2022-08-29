@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.9 2022/08/29 13:23:32 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.10 2022/08/29 13:25:18 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1284,6 +1284,7 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 	struct appl_request_upstream *ureq = ivb->avi_request_upstream;
 	struct appl_region search, *region, *pregion;
 	struct appl_varbind *vb = &(ivb->avi_varbind);
+	struct ber_oid oid;
 	int next, cmp;
 
 	next = ureq->aru_pdu->be_type == SNMP_C_GETNEXTREQ ||
@@ -1334,10 +1335,15 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 	}
 	ivb->avi_region = region;
 	if (next) {
+		oid = region->ar_oid;
 		do {
 			pregion = region;
-			region = appl_region_next(ureq->aru_ctx,
-			    &(region->ar_oid), pregion);
+			region = appl_region_next(ureq->aru_ctx, &oid, pregion);
+			if (region != NULL &&
+			    appl_region_cmp(region, pregion) > 0)
+				oid = region->ar_oid;
+			else
+				ober_oid_nextsibling(&oid);
 		} while (region != NULL &&
 		    region->ar_backend == pregion->ar_backend);
 		if (region == NULL) {
