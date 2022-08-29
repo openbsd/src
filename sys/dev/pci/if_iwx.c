@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.149 2022/05/14 05:42:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.150 2022/08/29 17:59:12 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1565,6 +1565,13 @@ iwx_read_firmware(struct iwx_softc *sc)
 			err = EINVAL;
 			goto parse_out;
 		}
+
+		/*
+		 * Check for size_t overflow and ignore missing padding at
+		 * end of firmware file.
+		 */
+		if (roundup(tlv_len, 4) > len)
+			break;
 
 		len -= roundup(tlv_len, 4);
 		data += roundup(tlv_len, 4);
@@ -3986,6 +3993,8 @@ iwx_pnvm_handle_section(struct iwx_softc *sc, const uint8_t *data,
 			break;
 		}
 
+		if (roundup(tlv_len, 4) > len)
+			break;
 		len -= roundup(tlv_len, 4);
 		data += roundup(tlv_len, 4);
 	}
@@ -4024,7 +4033,7 @@ iwx_pnvm_parse(struct iwx_softc *sc, const uint8_t *data, size_t len)
 		tlv_len = le32toh(tlv->length);
 		tlv_type = le32toh(tlv->type);
 
-		if (len < tlv_len)
+		if (len < tlv_len || roundup(tlv_len, 4) > len)
 			return EINVAL;
 
 		if (tlv_type == IWX_UCODE_TLV_PNVM_SKU) {
