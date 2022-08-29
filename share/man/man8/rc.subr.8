@@ -1,6 +1,6 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.45 2022/05/27 12:27:39 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.46 2022/08/29 19:14:02 ajacoutot Exp $
 .\"
-.\" Copyright (c) 2021 Antoine Jacoutot
+.\" Copyright (c) 2021, 2022 Antoine Jacoutot
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 27 2022 $
+.Dd $Mdocdate: August 29 2022 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -188,6 +188,17 @@ If it is running,
 call
 .Ic rc_reload .
 .El
+.It Ic rc_configtest
+Check daemon configuration before running
+.Cm start ,
+.Cm reload
+and
+.Cm restart .
+Defaults to
+.Sq return 0
+but can be overriden by the
+.Xr rc.d 8
+script.
 .It Ic rc_exec
 Execute argument using
 .Xr su 1
@@ -323,7 +334,7 @@ Signal sent to the daemon process
 by the default
 .Fn rc_reload
 function.
-Default to
+Defaults to
 .Em HUP .
 .It Va rc_stop_signal
 Signal sent to the daemon process
