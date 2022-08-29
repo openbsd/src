@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.10 2022/08/29 13:25:18 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.11 2022/08/29 18:02:37 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -218,6 +218,16 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
 	char oidbuf[1024], regionbuf[1024], subidbuf[11];
 	size_t i;
 
+	/* Don't use smi_oid2string, because appl_register can't use it */
+	oidbuf[0] = '\0';
+	for (i = 0; i < oid->bo_n; i++) {
+		if (i != 0)
+			strlcat(oidbuf, ".", sizeof(oidbuf));
+		snprintf(subidbuf, sizeof(subidbuf), "%"PRIu32,
+		    oid->bo_id[i]);
+		strlcat(oidbuf, subidbuf, sizeof(oidbuf));
+	}
+
 	/*
 	 * Don't allow overlap when subtree flag is set.
 	 * This allows us to keep control of certain regions like system.
@@ -233,15 +243,6 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
 	    appl_region_cmp(&search, region) == -2))
 		goto overlap;
 
-	/* Don't use smi_oid2string, because appl_register can't use it */
-	oidbuf[0] = '\0';
-	for (i = 0; i < oid->bo_n; i++) {
-		if (i != 0)
-			strlcat(oidbuf, ".", sizeof(oidbuf));
-		snprintf(subidbuf, sizeof(subidbuf), "%"PRIu32,
-		    oid->bo_id[i]);
-		strlcat(oidbuf, subidbuf, sizeof(oidbuf));
-	}
 	if ((nregion = malloc(sizeof(*nregion))) == NULL) {
 		log_warn("%s: Can't register %s: Processing error",
 		    backend->ab_name, oidbuf);
