@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.128 2022/08/29 18:04:51 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.129 2022/08/29 18:18:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -446,102 +446,57 @@ static uint32_t aspath_extract_origin(const void *, uint16_t);
 static uint16_t aspath_countlength(struct aspath *, uint16_t, int);
 static void	 aspath_countcopy(struct aspath *, uint16_t, uint8_t *,
 		    uint16_t, int);
-struct aspath	*aspath_lookup(const void *, uint16_t);
 
-struct aspath_table {
-	struct aspath_list	*hashtbl;
-	uint32_t		 hashmask;
-} astable;
-
-SIPHASH_KEY astablekey;
-
-#define ASPATH_HASH(x)				\
-	&astable.hashtbl[(x) & astable.hashmask]
-
-void
-aspath_init(uint32_t hashsize)
+int
+aspath_compare(struct aspath *a1, struct aspath *a2)
 {
-	uint32_t	hs, i;
+	int r;
 
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	astable.hashtbl = calloc(hs, sizeof(struct aspath_list));
-	if (astable.hashtbl == NULL)
-		fatal("aspath_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&astable.hashtbl[i]);
-
-	astable.hashmask = hs - 1;
-	arc4random_buf(&astablekey, sizeof(astablekey));
-}
-
-void
-aspath_shutdown(void)
-{
-	uint32_t	i;
-
-	for (i = 0; i <= astable.hashmask; i++)
-		if (!LIST_EMPTY(&astable.hashtbl[i]))
-			log_warnx("aspath_shutdown: free non-free table");
-
-	free(astable.hashtbl);
-}
-
-void
-aspath_hash_stats(struct rde_hashstats *hs)
-{
-	struct aspath		*a;
-	uint32_t		i;
-	int64_t			n;
-
-	memset(hs, 0, sizeof(*hs));
-	strlcpy(hs->name, "aspath hash", sizeof(hs->name));
-	hs->min = LLONG_MAX;
-	hs->num = astable.hashmask + 1;
-
-	for (i = 0; i <= astable.hashmask; i++) {
-		n = 0;
-		LIST_FOREACH(a, &astable.hashtbl[i], entry)
-			n++;
-		if (n < hs->min)
-			hs->min = n;
-		if (n > hs->max)
-			hs->max = n;
-		hs->sum += n;
-		hs->sumq += n * n;
-	}
+	if (a1->len > a2->len)
+		return (1);
+	if (a1->len < a2->len)
+		return (-1);
+	r = memcmp(a1->data, a2->data, a1->len);
+	if (r > 0)
+		return (1);
+	if (r < 0)
+		return (-1);
+	return (0);
 }
 
 struct aspath *
 aspath_get(void *data, uint16_t len)
 {
-	struct aspath_list	*head;
 	struct aspath		*aspath;
 
-	/* The aspath must already have been checked for correctness. */
-	aspath = aspath_lookup(data, len);
-	if (aspath == NULL) {
-		aspath = malloc(ASPATH_HEADER_SIZE + len);
-		if (aspath == NULL)
-			fatal("aspath_get");
+	aspath = malloc(ASPATH_HEADER_SIZE + len);
+	if (aspath == NULL)
+		fatal("%s", __func__);
 
-		rdemem.aspath_cnt++;
-		rdemem.aspath_size += ASPATH_HEADER_SIZE + len;
+	rdemem.aspath_cnt++;
+	rdemem.aspath_size += ASPATH_HEADER_SIZE + len;
 
-		aspath->refcnt = 0;
-		aspath->len = len;
-		aspath->ascnt = aspath_count(data, len);
-		aspath->source_as = aspath_extract_origin(data, len);
-		memcpy(aspath->data, data, len);
+	aspath->len = len;
+	aspath->ascnt = aspath_count(data, len);
+	aspath->source_as = aspath_extract_origin(data, len);
+	memcpy(aspath->data, data, len);
 
-		/* link */
-		head = ASPATH_HASH(SipHash24(&astablekey, aspath->data,
-		    aspath->len));
-		LIST_INSERT_HEAD(head, aspath, entry);
-	}
-	aspath->refcnt++;
-	rdemem.aspath_refs++;
+	return (aspath);
+}
+
+struct aspath *
+aspath_copy(struct aspath *a)
+{
+	struct aspath		*aspath;
+
+	aspath = malloc(ASPATH_HEADER_SIZE + a->len);
+	if (aspath == NULL)
+		fatal("%s", __func__);
+
+	rdemem.aspath_cnt++;
+	rdemem.aspath_size += ASPATH_HEADER_SIZE + a->len;
+
+	memcpy(aspath, a,  ASPATH_HEADER_SIZE + a->len);
 
 	return (aspath);
 }
@@ -551,15 +506,6 @@ aspath_put(struct aspath *aspath)
 {
 	if (aspath == NULL)
 		return;
-
-	rdemem.aspath_refs--;
-	if (--aspath->refcnt > 0) {
-		/* somebody still holds a reference */
-		return;
-	}
-
-	/* unlink */
-	LIST_REMOVE(aspath, entry);
 
 	rdemem.aspath_cnt--;
 	rdemem.aspath_size -= ASPATH_HEADER_SIZE + aspath->len;
@@ -849,41 +795,6 @@ aspath_loopfree(struct aspath *aspath, uint32_t myAS)
 	}
 	return (1);
 }
-
-int
-aspath_compare(struct aspath *a1, struct aspath *a2)
-{
-	int r;
-
-	if (a1->len > a2->len)
-		return (1);
-	if (a1->len < a2->len)
-		return (-1);
-	r = memcmp(a1->data, a2->data, a1->len);
-	if (r > 0)
-		return (1);
-	if (r < 0)
-		return (-1);
-	return (0);
-}
-
-struct aspath *
-aspath_lookup(const void *data, uint16_t len)
-{
-	struct aspath_list	*head;
-	struct aspath		*aspath;
-	uint32_t		 hash;
-
-	hash = SipHash24(&astablekey, data, len);
-	head = ASPATH_HASH(hash);
-
-	LIST_FOREACH(aspath, head, entry) {
-		if (len == aspath->len && memcmp(data, aspath->data, len) == 0)
-			return (aspath);
-	}
-	return (NULL);
-}
-
 
 static int
 as_compare(struct filter_as *f, uint32_t as, uint32_t neighas)

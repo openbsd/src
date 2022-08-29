@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.568 2022/08/29 16:44:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.569 2022/08/29 18:18:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,6 @@ rde_main(int debug, int verbose)
 
 	/* initialize the RIB structures */
 	pt_init();
-	aspath_init(pathhashsize);
 	attr_init(attrhashsize);
 	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
@@ -630,9 +629,6 @@ badnetdel:
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
-			aspath_hash_stats(&rdehash);
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
-			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
 			attr_hash_stats(&rdehash);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
 			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
@@ -1631,7 +1627,9 @@ pathid_assign(struct rde_peer *peer, uint32_t path_id,
 	struct prefix *p = NULL;
 	uint32_t path_id_tx;
 
-	/* Assign a send side path_id to all paths */
+	/*
+	 * Assign a send side path_id to all paths.
+	 */
 	re = rib_get(rib_byid(RIB_ADJ_IN), prefix, prefixlen);
 	if (re != NULL)
 		p = prefix_bypeer(re, peer, path_id);
@@ -4308,7 +4306,6 @@ rde_shutdown(void)
 	rib_shutdown();
 	nexthop_shutdown();
 	path_shutdown();
-	aspath_shutdown();
 	attr_shutdown();
 	pt_shutdown();
 	peer_shutdown();

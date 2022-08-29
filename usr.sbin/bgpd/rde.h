@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.265 2022/08/29 16:44:47 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.266 2022/08/29 18:18:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -71,7 +71,6 @@ struct rib {
  * Currently I assume that we can do that with the neighbor_ip...
  */
 LIST_HEAD(rde_peer_head, rde_peer);
-LIST_HEAD(aspath_list, aspath);
 LIST_HEAD(attr_list, attr);
 RB_HEAD(prefix_tree, prefix);
 RB_HEAD(prefix_index, prefix);
@@ -122,9 +121,7 @@ struct rde_peer {
 #define ASPATH_HEADER_SIZE	(offsetof(struct aspath, data))
 
 struct aspath {
-	LIST_ENTRY(aspath)	entry;
 	uint32_t		source_as;	/* cached source_as */
-	int			refcnt;	/* reference count */
 	uint16_t		len;	/* total length of aspath in octets */
 	uint16_t		ascnt;	/* number of AS hops in data */
 	u_char			data[1]; /* placeholder for actual data */
@@ -446,10 +443,8 @@ void		 attr_free(struct rde_aspath *, struct attr *);
 #define		 attr_optlen(x)	\
     ((x)->len > 255 ? (x)->len + 4 : (x)->len + 3)
 
-void		 aspath_init(uint32_t);
-void		 aspath_shutdown(void);
-void		 aspath_hash_stats(struct rde_hashstats *);
 struct aspath	*aspath_get(void *, uint16_t);
+struct aspath	*aspath_copy(struct aspath *);
 void		 aspath_put(struct aspath *);
 u_char		*aspath_deflate(u_char *, uint16_t *, int *);
 void		 aspath_merge(struct rde_aspath *, struct attr *);

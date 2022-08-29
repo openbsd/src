@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.245 2022/08/29 16:43:07 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.246 2022/08/29 18:18:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -678,11 +678,7 @@ path_unlink(struct rde_aspath *asp)
 struct rde_aspath *
 path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 {
-	dst->aspath = src->aspath;
-	if (dst->aspath != NULL) {
-		dst->aspath->refcnt++;
-		rdemem.aspath_refs++;
-	}
+	dst->aspath = aspath_copy(src->aspath);
 	dst->hash = 0;		/* not linked so no hash and no refcnt */
 	dst->refcnt = 0;
 	dst->flags = src->flags & ~F_ATTR_LINKED;
@@ -734,6 +730,7 @@ path_clean(struct rde_aspath *asp)
 	rtlabel_unref(asp->rtlabelid);
 	pftable_unref(asp->pftableid);
 	aspath_put(asp->aspath);
+	asp->aspath = NULL;
 	attr_freeall(asp);
 }
 
