@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.1 2022/08/23 08:56:20 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.2 2022/08/29 18:10:48 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -145,7 +145,7 @@ appl_agentx_listen(struct agentx_master *master)
 	    bind(master->axm_fd, (struct sockaddr *)&(master->axm_sun),
 	    sizeof(master->axm_sun)) == -1 ||
 	    listen(master->axm_fd, 5)) {
-		log_warn("Agentx: listen %s", master->axm_sun.sun_path);
+		log_warn("AgentX: listen %s", master->axm_sun.sun_path);
 		umask(mask);
 		return;
 	}
@@ -208,7 +208,7 @@ appl_agentx_accept(int masterfd, short event, void *cookie)
 	    appl_agentx_recv, conn);
 	event_add(&(conn->conn_rev), NULL);
 	event_set(&(conn->conn_wev), fd, EV_WRITE, appl_agentx_send, conn);
-	log_info("AgentX(%d): new connection", conn->conn_id);
+	log_info("AgentX(%"PRIu32"): new connection", conn->conn_id);
 
 	return;
  fail:
@@ -442,7 +442,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	if (asprintf(&(session->sess_backend.ab_name),
 	    "AgentX(%"PRIu32"/%"PRIu32")",
 	    conn->conn_id, session->sess_id) == -1) {
-		log_warn("AgentX(%d): asprintf: Open Failed",
+		log_warn("AgentX(%"PRIu32"): asprintf: Open Failed",
 		    conn->conn_id);
 		goto fail;
 	}
