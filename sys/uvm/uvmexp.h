@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvmexp.h,v 1.9 2021/03/04 09:00:03 mpi Exp $	*/
+/*	$OpenBSD: uvmexp.h,v 1.10 2022/08/29 11:09:31 mpi Exp $	*/
 
 #ifndef	_UVM_UVMEXP_
 #define	_UVM_UVMEXP_
@@ -45,6 +45,7 @@
  *	I	immutable after creation
  *	K	kernel lock
  *	F	uvm_lock_fpageq
+ *	S	uvm_swap_data_lock
  */
 struct uvmexp {
 	/* vm_page constants */
@@ -80,11 +81,11 @@ struct uvmexp {
 	int vnodeminpct;/* min percent vnode pages */
 
 	/* swap */
-	int nswapdev;	/* number of configured swap devices in system */
-	int swpages;	/* [K] number of PAGE_SIZE'ed swap pages */
-	int swpginuse;	/* number of swap pages in use */
+	int nswapdev;	/* [S] number of configured swap devices in system */
+	int swpages;	/* [S] number of PAGE_SIZE'ed swap pages */
+	int swpginuse;	/* [K] number of swap pages in use */
 	int swpgonly;	/* [a] number of swap pages in use, not also in RAM */
-	int nswget;	/* number of swap pages moved from disk to RAM */
+	int nswget;	/* [a] number of swap pages moved from disk to RAM */
 	int nanon;	/* XXX number total of anon's in system */
 	int unused05;	/* formerly nanonneeded */
 	int unused06;	/* formerly nfreeanon */
