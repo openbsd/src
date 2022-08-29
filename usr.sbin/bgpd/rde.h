@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.264 2022/08/29 16:43:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.265 2022/08/29 16:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -182,9 +182,9 @@ struct mpattr {
 };
 
 struct rde_community {
-	LIST_ENTRY(rde_community)	entry;
-	size_t				size;
-	size_t				nentries;
+	RB_ENTRY(rde_community)		entry;
+	int				size;
+	int				nentries;
 	int				flags;
 	int				refcnt;
 	struct community		*communities;
@@ -483,9 +483,7 @@ int	community_large_write(struct rde_community *, void *, uint16_t);
 int	community_ext_write(struct rde_community *, int, void *, uint16_t);
 int	community_writebuf(struct ibuf *, struct rde_community *);
 
-void			 communities_init(uint32_t);
 void			 communities_shutdown(void);
-void			 communities_hash_stats(struct rde_hashstats *);
 struct rde_community	*communities_lookup(struct rde_community *);
 struct rde_community	*communities_link(struct rde_community *);
 void			 communities_unlink(struct rde_community *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.7 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.8 2022/08/29 16:44:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -209,12 +209,12 @@ mask_match(struct community *a, struct community *b, struct community *m)
 static void
 insert_community(struct rde_community *comm, struct community *c)
 {
-	size_t l;
+	int l;
 	int r;
 
 	if (comm->nentries + 1 > comm->size) {
 		struct community *new;
-		size_t newsize = comm->size + 8;
+		int newsize = comm->size + 8;
 
 		if ((new = reallocarray(comm->communities, newsize,
 		    sizeof(struct community))) == NULL)
@@ -261,7 +261,7 @@ community_match(struct rde_community *comm, struct community *fc,
 struct rde_peer *peer)
 {
 	struct community test, mask;
-	size_t l;
+	int l;
 
 	if (fc->flags >> 8 == 0) {
 		/* fast path */
@@ -288,7 +288,7 @@ struct rde_peer *peer)
 int
 community_count(struct rde_community *comm, uint8_t type)
 {
-	size_t l;
+	int l;
 	int count = 0;
 
 	/* use the fact that the array is ordered by type */
@@ -351,7 +351,7 @@ struct rde_peer *peer)
 {
 	struct community test, mask;
 	struct community *match;
-	size_t l = 0;
+	int l = 0;
 
 	if (fc->flags >> 8 == 0) {
 		/* fast path */
@@ -501,8 +501,8 @@ community_write(struct rde_community *comm, void *buf, uint16_t len)
 {
 	uint8_t *b = buf;
 	uint16_t c;
-	size_t l, n = 0;
-	int r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+	size_t n = 0;
+	int l, r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
 
 	if (comm->flags & PARTIAL_COMMUNITIES)
 		flags |= ATTR_PARTIAL;
@@ -545,8 +545,8 @@ community_large_write(struct rde_community *comm, void *buf, uint16_t len)
 {
 	uint8_t *b = buf;
 	uint32_t c;
-	size_t l, n = 0;
-	int r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+	size_t n = 0;
+	int l, r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
 
 	if (comm->flags & PARTIAL_LARGE_COMMUNITIES)
 		flags |= ATTR_PARTIAL;
@@ -596,8 +596,8 @@ community_ext_write(struct rde_community *comm, int ebgp, void *buf,
 	struct community *cp;
 	uint8_t *b = buf;
 	uint64_t ext;
-	size_t l, n = 0;
-	int r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
+	size_t n = 0;
+	int l, r, flags = ATTR_OPTIONAL | ATTR_TRANSITIVE;
 
 	if (comm->flags & PARTIAL_EXT_COMMUNITIES)
 		flags |= ATTR_PARTIAL;
@@ -654,8 +654,8 @@ community_ext_write(struct rde_community *comm, int ebgp, void *buf,
 int
 community_writebuf(struct ibuf *buf, struct rde_community *comm)
 {
-	size_t l, basic_n = 0, large_n = 0, ext_n = 0;
-	int flags;
+	size_t basic_n = 0, large_n = 0, ext_n = 0;
+	int l, flags;
 
 	/* first count how many communities will be written */
 	for (l = 0; l < comm->nentries; l++)
@@ -764,113 +764,49 @@ community_writebuf(struct ibuf *buf, struct rde_community *comm)
 /*
  * Global RIB cache for communities
  */
-LIST_HEAD(commhead, rde_community);
-
-static struct comm_table {
-	struct commhead		*hashtbl;
-	uint64_t		 hashmask;
-} commtable;
-
-static SIPHASH_KEY commtablekey;
-
-static inline struct commhead *
-communities_hash(struct rde_community *comm)
+static inline int
+communities_compare(struct rde_community *a, struct rde_community *b)
 {
-	SIPHASH_CTX	ctx;
-	uint64_t	hash;
+	if (a->nentries != b->nentries)
+		return a->nentries > b->nentries ? 1 : -1;
+	if (a->flags != b->flags)
+		return a->flags > b->flags ? 1 : -1;
 
-	SipHash24_Init(&ctx, &commtablekey);
-	SipHash24_Update(&ctx, &comm->nentries, sizeof(comm->nentries));
-	SipHash24_Update(&ctx, &comm->flags, sizeof(comm->flags));
-	if (comm->nentries > 0)
-		SipHash24_Update(&ctx, comm->communities,
-		    comm->nentries * sizeof(*comm->communities));
-	hash = SipHash24_End(&ctx);
-
-	return &commtable.hashtbl[hash & commtable.hashmask];
+	return memcmp(a->communities, b->communities,
+	    a->nentries * sizeof(struct community));
 }
 
-void
-communities_init(uint32_t hashsize)
-{
-	uint32_t	hs, i;
-
-	arc4random_buf(&commtablekey, sizeof(commtablekey));
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	commtable.hashtbl = calloc(hs, sizeof(*commtable.hashtbl));
-	if (commtable.hashtbl == NULL)
-		fatal(__func__);
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&commtable.hashtbl[i]);
-	commtable.hashmask = hs - 1;
-}
+RB_HEAD(comm_tree, rde_community)	commtable = RB_INITIALIZER(&commtable);
+RB_GENERATE_STATIC(comm_tree, rde_community, entry, communities_compare);
 
 void
 communities_shutdown(void)
 {
-	uint64_t	i;
-
-	for (i = 0; i <= commtable.hashmask; i++)
-		if (!LIST_EMPTY(&commtable.hashtbl[i]))
-			log_warnx("%s: free non-free table", __func__);
-
-	free(commtable.hashtbl);
-}
-
-void
-communities_hash_stats(struct rde_hashstats *hs)
-{
-	struct rde_community *c;
-	uint64_t i;
-	int64_t n;
-
-	memset(hs, 0, sizeof(*hs));
-	strlcpy(hs->name, "comm hash", sizeof(hs->name));
-	hs->min = LLONG_MAX;
-	hs->num = commtable.hashmask + 1;
-
-	for (i = 0; i <= commtable.hashmask; i++) {
-		n = 0;
-		LIST_FOREACH(c, &commtable.hashtbl[i], entry)
-			n++;
-		if (n < hs->min)
-			hs->min = n;
-		if (n > hs->max)
-			hs->max = n;
-		hs->sum += n;
-		hs->sumq += n * n;
-	}
+	if (!RB_EMPTY(&commtable))
+		log_warnx("%s: free non-free table", __func__);
 }
 
 struct rde_community *
 communities_lookup(struct rde_community *comm)
 {
-	struct rde_community *c;
-	struct commhead *head;
-
-	head = communities_hash(comm);
-	LIST_FOREACH(c, head, entry) {
-		if (communities_equal(comm, c))
-			return c;
-	}
-	return NULL;
+	return RB_FIND(comm_tree, &commtable, comm);
 }
 
 struct rde_community *
 communities_link(struct rde_community *comm)
 {
-	struct rde_community *n;
-	struct commhead *head;
+	struct rde_community *n, *f;
 
 	if ((n = malloc(sizeof(*n))) == NULL)
 		fatal(__func__);
-
 	communities_copy(n, comm);
 
-	head = communities_hash(n);
-	LIST_INSERT_HEAD(head, n, entry);
+	if ((f = RB_INSERT(comm_tree, &commtable, n)) != NULL) {
+		log_warnx("duplicate communities collection inserted");
+		free(n->communities);
+		free(n);
+		return f;
+	}
 	n->refcnt = 1;	/* initial reference by the cache */
 
 	rdemem.comm_size += n->size;
@@ -886,7 +822,7 @@ communities_unlink(struct rde_community *comm)
 	if (comm->refcnt != 1)
 		fatalx("%s: unlinking still referenced communities", __func__);
 
-	LIST_REMOVE(comm, entry);
+	RB_REMOVE(comm_tree, &commtable, comm);
 
 	rdemem.comm_size -= comm->size;
 	rdemem.comm_nmemb -= comm->nentries;
