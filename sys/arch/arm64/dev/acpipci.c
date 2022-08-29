@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.35 2022/06/28 19:50:40 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.36 2022/08/29 15:42:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -145,6 +145,8 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	struct aml_value res;
 	uint64_t bbn = 0;
 	uint64_t seg = 0;
+	pcitag_t tag;
+	pcireg_t id;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -224,6 +226,15 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = sc->sc_bus;
 	if (sc->sc_msi_ic)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
+	/*
+	 * Qualcomm SC8280XP uses a non-standard MSI implementation.
+	 */
+	tag = pci_make_tag(sc->sc_pc, sc->sc_bus, 0, 0);
+	id = pci_conf_read(sc->sc_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(id) == PCI_VENDOR_QUALCOMM &&
+	    PCI_PRODUCT(id) == PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE)
+		pba.pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -455,12 +466,26 @@ int
 acpipci_intr_swizzle(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int dev, swizpin;
+	pcireg_t id;
 
 	if (pa->pa_bridgeih == NULL)
 		return -1;
 
 	pci_decompose_tag(pa->pa_pc, pa->pa_tag, NULL, &dev, NULL);
 	swizpin = PPB_INTERRUPT_SWIZZLE(pa->pa_rawintrpin, dev);
+
+	/*
+	 * Qualcomm SC8280XP Root Complex violates PCI bridge
+	 * interrupt swizzling rules.
+	 */
+	if (pa->pa_bridgetag) {
+		id = pci_conf_read(pa->pa_pc, *pa->pa_bridgetag, PCI_ID_REG);
+		if (PCI_VENDOR(id) == PCI_VENDOR_QUALCOMM &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE) {
+			swizpin = (((swizpin - 1) + 3) % 4) + 1;
+		}
+	}
+
 	if (pa->pa_bridgeih[swizpin - 1].ih_type == PCI_NONE)
 		return -1;
 
