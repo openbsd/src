@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.565 2022/08/26 14:10:52 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.566 2022/08/29 14:57:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -623,6 +623,8 @@ badnetdel:
 				    peer->prefix_sent_withdraw;
 				p.stats.prefix_sent_eor =
 				    peer->prefix_sent_eor;
+				p.stats.pending_update = peer->up_nlricnt;
+				p.stats.pending_withdraw = peer->up_wcnt;
 			}
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
 			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
