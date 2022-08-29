@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.199 2022/08/29 08:08:17 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.200 2022/08/29 09:50:38 mbuhl Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -914,6 +914,11 @@ tcp_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 	short ostate;
 
 	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EINVAL;
+		goto out;
+	}
 
 	if ((error = tcp_sogetpcb(so, &inp, &tp)))
 		goto out;
