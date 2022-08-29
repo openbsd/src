@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.155 2022/08/29 19:14:02 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.156 2022/08/29 19:37:32 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -175,7 +175,7 @@ rc_exec() {
 		${daemon_execdir:+cd ${daemon_execdir} && } \
 		$@ \
 		${daemon_logger:+ 2>&1 |
-			logger -ip ${daemon_logger} -t ${_name}}"
+			logger -isp ${daemon_logger} -t ${_name}}"
 }
 
 rc_start() {
