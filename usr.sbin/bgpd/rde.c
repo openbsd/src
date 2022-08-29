@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.566 2022/08/29 14:57:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.567 2022/08/29 16:43:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,6 @@ rde_main(int debug, int verbose)
 
 	/* initialize the RIB structures */
 	pt_init();
-	path_init(pathhashsize);
 	aspath_init(pathhashsize);
 	communities_init(attrhashsize);
 	attr_init(attrhashsize);
@@ -632,9 +631,6 @@ badnetdel:
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
-			path_hash_stats(&rdehash);
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
-			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));
 			aspath_hash_stats(&rdehash);
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_HASH, 0,
 			    imsg.hdr.pid, -1, &rdehash, sizeof(rdehash));

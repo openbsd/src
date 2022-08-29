@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.244 2022/08/25 08:10:25 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.245 2022/08/29 16:43:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -547,99 +547,10 @@ rib_dump_new(uint16_t id, uint8_t aid, unsigned int count, void *arg,
 /* path specific functions */
 
 static struct rde_aspath *path_lookup(struct rde_aspath *);
-static uint64_t path_hash(struct rde_aspath *);
 static void path_link(struct rde_aspath *);
 static void path_unlink(struct rde_aspath *);
 
-struct path_table {
-	struct aspath_head	*path_hashtbl;
-	uint64_t		 path_hashmask;
-} pathtable;
-
-SIPHASH_KEY pathtablekey;
-
-#define	PATH_HASH(x)	&pathtable.path_hashtbl[x & pathtable.path_hashmask]
-
-static inline struct rde_aspath *
-path_ref(struct rde_aspath *asp)
-{
-	if ((asp->flags & F_ATTR_LINKED) == 0)
-		fatalx("%s: unlinked object", __func__);
-	asp->refcnt++;
-	rdemem.path_refs++;
-
-	return asp;
-}
-
-static inline void
-path_unref(struct rde_aspath *asp)
-{
-	if (asp == NULL)
-		return;
-	if ((asp->flags & F_ATTR_LINKED) == 0)
-		fatalx("%s: unlinked object", __func__);
-	asp->refcnt--;
-	rdemem.path_refs--;
-	if (asp->refcnt <= 0)
-		path_unlink(asp);
-}
-
-void
-path_init(uint32_t hashsize)
-{
-	uint32_t	hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	pathtable.path_hashtbl = calloc(hs, sizeof(*pathtable.path_hashtbl));
-	if (pathtable.path_hashtbl == NULL)
-		fatal("path_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&pathtable.path_hashtbl[i]);
-
-	pathtable.path_hashmask = hs - 1;
-	arc4random_buf(&pathtablekey, sizeof(pathtablekey));
-}
-
-void
-path_shutdown(void)
-{
-	uint32_t	i;
-
-	for (i = 0; i <= pathtable.path_hashmask; i++)
-		if (!LIST_EMPTY(&pathtable.path_hashtbl[i]))
-			log_warnx("path_free: free non-free table");
-
-	free(pathtable.path_hashtbl);
-}
-
-void
-path_hash_stats(struct rde_hashstats *hs)
-{
-	struct rde_aspath	*a;
-	uint32_t		i;
-	int64_t			n;
-
-	memset(hs, 0, sizeof(*hs));
-	strlcpy(hs->name, "path hash", sizeof(hs->name));
-	hs->min = LLONG_MAX;
-	hs->num = pathtable.path_hashmask + 1;
-
-	for (i = 0; i <= pathtable.path_hashmask; i++) {
-		n = 0;
-		LIST_FOREACH(a, &pathtable.path_hashtbl[i], path_l)
-			n++;
-		if (n < hs->min)
-			hs->min = n;
-		if (n > hs->max)
-			hs->max = n;
-		hs->sum += n;
-		hs->sumq += n * n;
-	}
-}
-
-int
+static inline int
 path_compare(struct rde_aspath *a, struct rde_aspath *b)
 {
 	int		 r;
@@ -688,40 +599,44 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	return (attr_compare(a, b));
 }
 
-static uint64_t
-path_hash(struct rde_aspath *asp)
+RB_HEAD(path_tree, rde_aspath)	pathtable = RB_INITIALIZER(&pathtable);
+RB_GENERATE_STATIC(path_tree, rde_aspath, entry, path_compare);
+
+static inline struct rde_aspath *
+path_ref(struct rde_aspath *asp)
 {
-	SIPHASH_CTX	ctx;
-	uint64_t	hash;
+	if ((asp->flags & F_ATTR_LINKED) == 0)
+		fatalx("%s: unlinked object", __func__);
+	asp->refcnt++;
+	rdemem.path_refs++;
 
-	SipHash24_Init(&ctx, &pathtablekey);
-	SipHash24_Update(&ctx, &asp->aspath_hashstart,
-	    (char *)&asp->aspath_hashend - (char *)&asp->aspath_hashstart);
+	return asp;
+}
 
-	if (asp->aspath)
-		SipHash24_Update(&ctx, asp->aspath->data, asp->aspath->len);
+static inline void
+path_unref(struct rde_aspath *asp)
+{
+	if (asp == NULL)
+		return;
+	if ((asp->flags & F_ATTR_LINKED) == 0)
+		fatalx("%s: unlinked object", __func__);
+	asp->refcnt--;
+	rdemem.path_refs--;
+	if (asp->refcnt <= 0)
+		path_unlink(asp);
+}
 
-	hash = attr_hash(asp);
-	SipHash24_Update(&ctx, &hash, sizeof(hash));
-
-	return (SipHash24_End(&ctx));
+void
+path_shutdown(void)
+{
+	if (!RB_EMPTY(&pathtable))
+		log_warnx("path_free: free non-free table");
 }
 
 static struct rde_aspath *
 path_lookup(struct rde_aspath *aspath)
 {
-	struct aspath_head	*head;
-	struct rde_aspath	*asp;
-	uint64_t		 hash;
-
-	hash = path_hash(aspath);
-	head = PATH_HASH(hash);
-
-	LIST_FOREACH(asp, head, path_l) {
-		if (asp->hash == hash && path_compare(aspath, asp) == 0)
-			return (asp);
-	}
-	return (NULL);
+	return (RB_FIND(path_tree, &pathtable, aspath));
 }
 
 /*
@@ -731,12 +646,8 @@ path_lookup(struct rde_aspath *aspath)
 static void
 path_link(struct rde_aspath *asp)
 {
-	struct aspath_head	*head;
-
-	asp->hash = path_hash(asp);
-	head = PATH_HASH(asp->hash);
-
-	LIST_INSERT_HEAD(head, asp, path_l);
+	if (RB_INSERT(path_tree, &pathtable, asp) != NULL)
+		fatalx("%s: already linked object", __func__);
 	asp->flags |= F_ATTR_LINKED;
 }
 
@@ -754,7 +665,7 @@ path_unlink(struct rde_aspath *asp)
 	if (asp->refcnt != 0)
 		fatalx("%s: still holds references", __func__);
 
-	LIST_REMOVE(asp, path_l);
+	RB_REMOVE(path_tree, &pathtable, asp);
 	asp->flags &= ~F_ATTR_LINKED;
 
 	path_put(asp);

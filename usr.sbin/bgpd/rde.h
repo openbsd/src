@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.263 2022/08/26 14:10:52 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.264 2022/08/29 16:43:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -73,7 +73,6 @@ struct rib {
 LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_list, aspath);
 LIST_HEAD(attr_list, attr);
-LIST_HEAD(aspath_head, rde_aspath);
 RB_HEAD(prefix_tree, prefix);
 RB_HEAD(prefix_index, prefix);
 struct iq;
@@ -219,20 +218,18 @@ struct rde_community {
 #define DEFAULT_LPREF		100
 
 struct rde_aspath {
-	LIST_ENTRY(rde_aspath)		 path_l;
+	RB_ENTRY(rde_aspath)		 entry;
 	struct attr			**others;
 	struct aspath			*aspath;
 	uint64_t			 hash;
 	int				 refcnt;
 	uint32_t			 flags;		/* internally used */
-#define	aspath_hashstart	med
 	uint32_t			 med;		/* multi exit disc */
 	uint32_t			 lpref;		/* local pref */
 	uint32_t			 weight;	/* low prio lpref */
 	uint16_t			 rtlabelid;	/* route label id */
 	uint16_t			 pftableid;	/* pf table id */
 	uint8_t				 origin;
-#define	aspath_hashend		others_len
 	uint8_t				 others_len;
 };
 
@@ -594,10 +591,7 @@ re_rib(struct rib_entry *re)
 	return rib_byid(re->rib_id);
 }
 
-void		 path_init(uint32_t);
 void		 path_shutdown(void);
-void		 path_hash_stats(struct rde_hashstats *);
-int		 path_compare(struct rde_aspath *, struct rde_aspath *);
 uint32_t	 path_remove_stale(struct rde_aspath *, uint8_t, time_t);
 struct rde_aspath *path_copy(struct rde_aspath *, const struct rde_aspath *);
 struct rde_aspath *path_prep(struct rde_aspath *);
