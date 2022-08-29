@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.15 2021/03/26 19:00:21 kn Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.16 2022/08/29 07:51:45 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -128,6 +128,7 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
 
+	refcnt_init_trace(&sc->sc_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 
@@ -152,7 +153,10 @@ mpip_clone_destroy(struct ifnet *ifp)
 	ifq_barrier(&ifp->if_snd);
 
 	if_detach(ifp);
-
+	if (refcnt_rele(&sc->sc_ifa.ifa_refcnt) == 0) {
+		panic("%s: ifa refcnt has %u refs", __func__,
+		    sc->sc_ifa.ifa_refcnt.r_refs);
+	}
 	free(sc->sc_neighbor, M_DEVBUF, sizeof(*sc->sc_neighbor));
 	free(sc, M_DEVBUF, sizeof(*sc));
 

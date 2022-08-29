@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.175 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.176 2022/08/29 07:51:45 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -379,6 +379,7 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	}
 	if (ia == NULL) {
 		ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
+		refcnt_init_trace(&ia->ia_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
 		ia->ia_addr.sin_family = AF_INET;
 		ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
@@ -475,6 +476,8 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 
 		if (ia == NULL) {
 			ia = malloc(sizeof *ia, M_IFADDR, M_WAITOK | M_ZERO);
+			refcnt_init_trace(&ia->ia_ifa.ifa_refcnt,
+			    DT_REFCNT_IDX_IFADDR);
 			ia->ia_addr.sin_family = AF_INET;
 			ia->ia_addr.sin_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
@@ -745,7 +748,6 @@ in_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = ifatoia(ifa);
-	extern int ifatrash;
 
 	NET_ASSERT_LOCKED();
 
@@ -760,7 +762,6 @@ in_purgeaddr(struct ifaddr *ifa)
 		ia->ia_allhosts = NULL;
 	}
 
-	ifatrash++;
 	ia->ia_ifp = NULL;
 	ifafree(&ia->ia_ifa);
 }

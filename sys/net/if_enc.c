@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.78 2020/12/28 14:28:50 kn Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.79 2022/08/29 07:51:45 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -100,6 +100,7 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	 * and empty ifa of type AF_LINK for this purpose.
 	 */
 	if_alloc_sadl(ifp);
+	refcnt_init_trace(&sc->sc_ifa.ifa_refcnt, DT_REFCNT_IDX_IFADDR);
 	sc->sc_ifa.ifa_ifp = ifp;
 	sc->sc_ifa.ifa_addr = sdltosa(ifp->if_sadl);
 	sc->sc_ifa.ifa_netmask = NULL;
@@ -152,6 +153,10 @@ enc_clone_destroy(struct ifnet *ifp)
 	NET_UNLOCK();
 
 	if_detach(ifp);
+	if (refcnt_rele(&sc->sc_ifa.ifa_refcnt) == 0) {
+		panic("%s: ifa refcnt has %u refs", __func__,
+		    sc->sc_ifa.ifa_refcnt.r_refs);
+	}
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);

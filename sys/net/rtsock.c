@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.346 2022/08/28 21:35:12 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.347 2022/08/29 07:51:45 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1145,8 +1145,7 @@ rtm_output(struct rt_msghdr *rtm, struct rtentry **prt,
 				ifp->if_rtrequest(ifp, RTM_DELETE, rt);
 				ifafree(rt->rt_ifa);
 
-				ifa->ifa_refcnt++;
-				rt->rt_ifa = ifa;
+				rt->rt_ifa = ifaref(ifa);
 				rt->rt_ifidx = ifa->ifa_ifp->if_index;
 				/* recheck link state after ifp change */
 				rt_if_linkstate_change(rt, ifa->ifa_ifp,

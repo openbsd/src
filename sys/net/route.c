@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.413 2022/07/28 22:19:09 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.414 2022/08/29 07:51:45 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -146,7 +146,6 @@ extern unsigned int	rtmap_limit;
 
 struct cpumem *		rtcounters;
 int			rttrash;	/* routes not in table but not freed */
-int			ifatrash;	/* ifas not in ifp list but not free */
 
 struct pool	rtentry_pool;		/* pool for rtentry structures */
 struct pool	rttimer_pool;		/* pool for rttimer structures */
@@ -512,16 +511,19 @@ rtfree(struct rtentry *rt)
 	pool_put(&rtentry_pool, rt);
 }
 
+struct ifaddr *
+ifaref(struct ifaddr *ifa)
+{
+	refcnt_take(&ifa->ifa_refcnt);
+	return ifa;
+}
+
 void
 ifafree(struct ifaddr *ifa)
 {
-	if (ifa == NULL)
-		panic("ifafree");
-	if (ifa->ifa_refcnt == 0) {
-		ifatrash--;
-		free(ifa, M_IFADDR, 0);
-	} else
-		ifa->ifa_refcnt--;
+	if (refcnt_rele(&ifa->ifa_refcnt) == 0)
+		return;
+	free(ifa, M_IFADDR, 0);
 }
 
 /*
@@ -901,8 +903,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			rt_mpls_clear(rt);
 #endif
 
-		ifa->ifa_refcnt++;
-		rt->rt_ifa = ifa;
+		rt->rt_ifa = ifaref(ifa);
 		rt->rt_ifidx = ifp->if_index;
 		/*
 		 * Copy metrics and a back pointer from the cloned
@@ -1857,8 +1858,8 @@ db_print_ifa(struct ifaddr *ifa)
 	db_print_sa(ifa->ifa_dstaddr);
 	db_printf("  ifa_mask=");
 	db_print_sa(ifa->ifa_netmask);
-	db_printf("  flags=0x%x, refcnt=%d, metric=%d\n",
-	    ifa->ifa_flags, ifa->ifa_refcnt, ifa->ifa_metric);
+	db_printf("  flags=0x%x, refcnt=%u, metric=%d\n",
+	    ifa->ifa_flags, ifa->ifa_refcnt.r_refs, ifa->ifa_metric);
 }
 
 /*
