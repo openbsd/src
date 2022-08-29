@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.41 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.42 2022/08/29 06:08:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -287,7 +287,7 @@ cs4231_set_speed(struct cs4231_softc *sc, u_long *argp)
 	} speed_struct;
 	u_long arg = *argp;
 
-	const static speed_struct speed_table[] = {
+	static const speed_struct speed_table[] = {
 		{5510,	(0 << 1) | CLOCK_XTAL2},
 		{5510,	(0 << 1) | CLOCK_XTAL2},
 		{6620,	(7 << 1) | CLOCK_XTAL2},

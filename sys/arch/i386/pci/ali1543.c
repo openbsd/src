@@ -1,4 +1,4 @@
-/*	$OpenBSD: ali1543.c,v 1.4 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: ali1543.c,v 1.5 2022/08/29 06:08:03 jsg Exp $	*/
 /*	$NetBSD: ali1543.c,v 1.2 2001/09/13 14:00:52 tshiozak Exp $	*/
 
 /*
@@ -122,10 +122,10 @@ const struct pciintr_icu ali1543_icu = {
  * Linux source code (linux/arch/i386/kernel/pci-irq.c) says that the
  * irq order of ALi PCI ICU is shuffled.
  */
-const static int ali1543_intr_shuffle_get[16] = {
+static const int ali1543_intr_shuffle_get[16] = {
 	0, 9, 3, 10, 4, 5, 7, 6, 1, 11, 0, 12, 0, 14, 0, 15
 };
-const static int ali1543_intr_shuffle_set[16] = {
+static const int ali1543_intr_shuffle_set[16] = {
 	0, 8, 0, 2, 4, 5, 7, 6, 0, 1, 3, 9, 11, 0, 13, 15
 };
 

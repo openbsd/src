@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.8 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.9 2022/08/29 06:08:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -113,23 +113,23 @@ static u_int8_t natsemi_dma_recover[] =	{ 6,  8,  9 };
 #define SCx200_PIOFORMAT_SHIFT		31
 
 /* PIO mode timings */
-const static u_int32_t scx200_pio33[2][5] = {
+static const u_int32_t scx200_pio33[2][5] = {
     /* Format 0 */
     { 0x00009172, 0x00012171, 0x00020080, 0x00032010, 0x00040010 },
     /* Format 1 */
     { 0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010 }};
-const static u_int32_t scx200_pio66[2][5] = {
+static const u_int32_t scx200_pio66[2][5] = {
     /* Format 0 */
     { 0x0000f8e4, 0x000153f3, 0x000213f1, 0x00034231, 0x00041131 },
     /* Format 1 */
     { 0xf8e4f8e4, 0x53f3f353, 0x13f18141, 0x42314231, 0x11311131 }};
 
 /* DMA mode timings */
-const static u_int32_t scx200_dma33[] = { 0x00077771, 0x00012121, 0x00002020 };
-const static u_int32_t scx200_dma66[] = { 0x000ffff3, 0x00035352, 0x00015151 };
+static const u_int32_t scx200_dma33[] = { 0x00077771, 0x00012121, 0x00002020 };
+static const u_int32_t scx200_dma66[] = { 0x000ffff3, 0x00035352, 0x00015151 };
 
 /* UDMA mode timings */
-const static u_int32_t scx200_udma33[] = { 0x00921250, 0x00911140, 0x00911030 };
-const static u_int32_t scx200_udma66[] = { 0x009436a1, 0x00933481, 0x00923261 };
+static const u_int32_t scx200_udma33[] = { 0x00921250, 0x00911140, 0x00911030 };
+static const u_int32_t scx200_udma66[] = { 0x009436a1, 0x00933481, 0x00923261 };
 
 #endif	/* !_DEV_PCI_PCIIDE_NATSEMI_REG_H_ */

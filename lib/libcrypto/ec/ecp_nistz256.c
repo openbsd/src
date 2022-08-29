@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.10 2021/09/08 17:29:21 tb Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.11 2022/08/29 06:08:03 jsg Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -573,12 +573,12 @@ ecp_nistz256_windowed_mul(const EC_GROUP *group, P256_POINT *r,
 }
 
 /* Coordinates of G, for which we have precomputed tables */
-const static BN_ULONG def_xG[P256_LIMBS] = {
+static const BN_ULONG def_xG[P256_LIMBS] = {
 	TOBN(0x79e730d4, 0x18a9143c), TOBN(0x75ba95fc, 0x5fedb601),
 	TOBN(0x79fb732b, 0x77622510), TOBN(0x18905f76, 0xa53755c6)
 };
 
-const static BN_ULONG def_yG[P256_LIMBS] = {
+static const BN_ULONG def_yG[P256_LIMBS] = {
 	TOBN(0xddf25357, 0xce95560a), TOBN(0x8b4ab8e4, 0xba19e45c),
 	TOBN(0xd2e88688, 0xdd21f325), TOBN(0x8571ff18, 0x25885d85)
 };

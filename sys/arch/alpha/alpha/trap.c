@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.102 2022/08/12 17:19:52 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.103 2022/08/29 06:08:03 jsg Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -693,7 +693,7 @@ ast(framep)
 	userret(p);
 }
 
-const static int reg_to_framereg[32] = {
+static const int reg_to_framereg[32] = {
 	FRAME_V0,	FRAME_T0,	FRAME_T1,	FRAME_T2,
 	FRAME_T3,	FRAME_T4,	FRAME_T5,	FRAME_T6,
 	FRAME_T7,	FRAME_S0,	FRAME_S1,	FRAME_S2,

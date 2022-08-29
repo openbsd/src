@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.12 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.13 2022/08/29 06:08:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -58,7 +58,7 @@ const struct cfattach mtd_pci_ca = {
 	sizeof(struct mtd_softc), mtd_pci_match, mtd_pci_attach
 };
 
-const static struct pci_matchid mtd_pci_devices[] = {
+static const struct pci_matchid mtd_pci_devices[] = {
 	{ PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD800 },
 	{ PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803 },
 	{ PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD891 },

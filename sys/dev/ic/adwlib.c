@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.28 2022/08/01 20:35:25 miod Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.29 2022/08/29 06:08:03 jsg Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -95,7 +95,7 @@ void AdwDelayMicroSecond(u_int32_t);
  * Additional structure information can be found in adwlib.h where
  * the structure is defined.
  */
-const static ADW_EEPROM adw_3550_Default_EEPROM = {
+static const ADW_EEPROM adw_3550_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */
@@ -132,7 +132,7 @@ const static ADW_EEPROM adw_3550_Default_EEPROM = {
 	0			/* 35 saved_adw_err_addr */
 };
 
-const static ADW_EEPROM adw_38C0800_Default_EEPROM = {
+static const ADW_EEPROM adw_38C0800_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */
@@ -178,7 +178,7 @@ const static ADW_EEPROM adw_38C0800_Default_EEPROM = {
 	{ 0,0,0,0 }		/* 60-63 reserved2[4] */
 };
 
-const static ADW_EEPROM adw_38C1600_Default_EEPROM = {
+static const ADW_EEPROM adw_38C1600_Default_EEPROM = {
 	ADW_EEPROM_BIOS_ENABLE,	/* 00 cfg_lsw */
 	0x0000,			/* 01 cfg_msw */
 	0xFFFF,			/* 02 disc_enable */

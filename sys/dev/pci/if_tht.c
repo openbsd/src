@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.145 2022/03/11 18:00:48 mpi Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.146 2022/08/29 06:08:04 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -1549,7 +1549,7 @@ tht_fifo_write_dmap(struct tht_softc *sc, struct tht_fifo *tf,
 void
 tht_fifo_write_pad(struct tht_softc *sc, struct tht_fifo *tf, int bc)
 {
-	const static u_int32_t pad = 0x0;
+	static const u_int32_t pad = 0x0;
 
 	/* this assumes you'll only ever be writing multiples of 4 bytes */
 	if (bc % 8)
@@ -1570,7 +1570,7 @@ tht_fifo_post(struct tht_softc *sc, struct tht_fifo *tf)
 	    tf->tf_wptr, tf->tf_rptr);
 }
 
-const static bus_size_t tht_mac_regs[3] = {
+static const bus_size_t tht_mac_regs[3] = {
     THT_REG_RX_UNC_MAC2, THT_REG_RX_UNC_MAC1, THT_REG_RX_UNC_MAC0
 };
 

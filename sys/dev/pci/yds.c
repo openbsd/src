@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.59 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: yds.c,v 1.60 2022/08/29 06:08:04 jsg Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ static void yds_dump_play_slot(struct yds_softc *, int);
 #define	YDS_DUMP_PLAY_SLOT(n,sc,bank)
 #endif /* AUDIO_DEBUG */
 
-const static struct audio_hw_if yds_hw_if = {
+static const struct audio_hw_if yds_hw_if = {
 	yds_open,
 	yds_close,
 	yds_set_params,
@@ -224,7 +224,7 @@ const static struct audio_hw_if yds_hw_if = {
 	yds_trigger_input
 };
 
-const static struct {
+static const struct {
 	u_int	id;
 	u_int	flags;
 #define YDS_CAP_MCODE_1			0x0001
