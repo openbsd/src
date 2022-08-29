@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sshd,v 1.6 2020/01/25 12:05:08 sthen Exp $
+# $OpenBSD: sshd,v 1.7 2022/08/29 19:14:25 ajacoutot Exp $
 
 daemon="/usr/sbin/sshd"
 
@@ -8,8 +8,8 @@ daemon="/usr/sbin/sshd"
 
 pexp="sshd: ${daemon}${daemon_flags:+ ${daemon_flags}} \[listener\].*"
 
-rc_reload() {
-	${daemon} ${daemon_flags} -t && pkill -HUP -xf "${pexp}"
+rc_configtest() {
+	${daemon} ${daemon_flags} -t
 }
 
 rc_cmd $1

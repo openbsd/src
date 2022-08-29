@@ -1,13 +1,12 @@
 #!/bin/ksh
 #
-# $OpenBSD: relayd,v 1.7 2022/05/21 12:42:21 ajacoutot Exp $
+# $OpenBSD: relayd,v 1.8 2022/08/29 19:14:25 ajacoutot Exp $
 
 daemon="/usr/sbin/relayd"
 
 . /etc/rc.d/rc.subr
 
-# Child will not return a config parsing error to the parent.
-rc_pre() {
+rc_configtest() {
 	# use rc_exec here since daemon_flags may contain arguments with spaces
 	rc_exec "${daemon} -n ${daemon_flags}"
 }

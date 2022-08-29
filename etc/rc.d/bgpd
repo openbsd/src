@@ -1,13 +1,12 @@
 #!/bin/ksh
 #
-# $OpenBSD: bgpd,v 1.6 2022/05/21 12:42:21 ajacoutot Exp $
+# $OpenBSD: bgpd,v 1.7 2022/08/29 19:14:25 ajacoutot Exp $
 
 daemon="/usr/sbin/bgpd"
 
 . /etc/rc.d/rc.subr
 
-# child will not return a config parsing error to the parent
-rc_pre() {
+rc_configtest() {
 	# use rc_exec here since daemon_flags may contain arguments with spaces
 	rc_exec "${daemon} -n ${daemon_flags}"
 }
