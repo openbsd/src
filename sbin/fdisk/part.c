@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.130 2022/05/08 18:01:23 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.131 2022/08/29 07:19:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -422,6 +422,13 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 	    start.chs_cyl, start.chs_head, start.chs_sect,
 	    end.chs_cyl, end.chs_head, end.chs_sect,
 	    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
+
+	if (prt->prt_bs >= DL_GETDSIZE(&dl))
+		printf("partition %d starts beyond the end of %s\n", num,
+		    disk.dk_name);
+	else if (prt->prt_bs + prt->prt_ns > DL_GETDSIZE(&dl))
+		printf("partition %d extends beyond the end of %s\n", num,
+		    disk.dk_name);
 }
 
 int
