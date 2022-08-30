@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.185 2022/08/08 12:06:30 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.186 2022/08/30 11:53:04 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 		 * corresponding to the address in the ICMPv6 message
 		 * payload.
 		 */
-		inp = in6_pcbhashlookup(&tcbtable, &sa6->sin6_addr,
+		inp = in6_pcblookup(&tcbtable, &sa6->sin6_addr,
 		    th.th_dport, &sa6_src->sin6_addr, th.th_sport, rdomain);
 		if (cmd == PRC_MSGSIZE) {
 			/*
@@ -733,7 +733,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 		 */
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		seq = ntohl(th->th_seq);
-		inp = in_pcbhashlookup(&tcbtable,
+		inp = in_pcblookup(&tcbtable,
 		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
 		    rdomain);
 		if (inp && (tp = intotcpcb(inp)) &&
@@ -798,7 +798,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		inp = in_pcbhashlookup(&tcbtable,
+		inp = in_pcblookup(&tcbtable,
 		    ip->ip_dst, th->th_dport, ip->ip_src, th->th_sport,
 		    rdomain);
 		if (inp) {

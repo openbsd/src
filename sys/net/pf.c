@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1137 2022/08/08 12:06:30 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1138 2022/08/30 11:53:03 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3348,7 +3348,7 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		 * Fails when rtable is changed while evaluating the ruleset
 		 * The socket looked up will not match the one hit in the end.
 		 */
-		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport,
+		inp = in_pcblookup(tb, saddr->v4, sport, daddr->v4, dport,
 		    pd->rdomain);
 		if (inp == NULL) {
 			inp = in_pcblookup_listen(tb, daddr->v4, dport,
@@ -3359,7 +3359,7 @@ pf_socket_lookup(struct pf_pdesc *pd)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
+		inp = in6_pcblookup(tb, &saddr->v6, sport, &daddr->v6,
 		    dport, pd->rdomain);
 		if (inp == NULL) {
 			inp = in6_pcblookup_listen(tb, &daddr->v6, dport,

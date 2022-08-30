@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.295 2022/08/30 09:35:24 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.296 2022/08/30 11:53:04 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -488,12 +488,12 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (inp == NULL) {
 #ifdef INET6
 		if (ip6)
-			inp = in6_pcbhashlookup(&udbtable, &ip6->ip6_src,
+			inp = in6_pcblookup(&udbtable, &ip6->ip6_src,
 			    uh->uh_sport, &ip6->ip6_dst, uh->uh_dport,
 			    m->m_pkthdr.ph_rtableid);
 		else
 #endif /* INET6 */
-		inp = in_pcbhashlookup(&udbtable, ip->ip_src, uh->uh_sport,
+		inp = in_pcblookup(&udbtable, ip->ip_src, uh->uh_sport,
 		    ip->ip_dst, uh->uh_dport, m->m_pkthdr.ph_rtableid);
 	}
 	if (inp == NULL) {
@@ -789,7 +789,7 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			inp = in6_pcbhashlookup(&udbtable, &sa6.sin6_addr,
+			inp = in6_pcblookup(&udbtable, &sa6.sin6_addr,
 			    uh.uh_dport, &sa6_src.sin6_addr, uh.uh_sport,
 			    rdomain);
 #if 0
@@ -875,7 +875,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			return;
 		}
 #endif
-		inp = in_pcbhashlookup(&udbtable,
+		inp = in_pcblookup(&udbtable,
 		    ip->ip_dst, uhp->uh_dport, ip->ip_src, uhp->uh_sport,
 		    rdomain);
 		if (inp && inp->inp_socket != NULL)
