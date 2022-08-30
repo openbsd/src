@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.15 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: print.c,v 1.16 2022/08/30 23:41:53 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -591,7 +591,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 			printf(" }");
 			if (i + 1 < p->providersz)
 				printf(",");
-			printf("\n");	
+			printf("\n");
 		}
 		printf("\t],\n");
 	} else {
