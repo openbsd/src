@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2022/08/27 08:26:15 tb Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2022/08/30 16:26:29 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -81,12 +81,6 @@
 #define WEAK_ALIAS(alias,sym) \
 	.weak alias; \
 	alias = sym
-
-/*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced
- */
-#define WARN_REFERENCES(_sym,_msg)	\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT

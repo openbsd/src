@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 2018/11/11 20:15:24 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 2022/08/30 16:26:29 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
 
 /*-
@@ -187,8 +187,5 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak _C_LABEL(alias);						\
 	_C_LABEL(alias) = _C_LABEL(sym)
-
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning._sym; .ascii _msg; .previous
 
 #endif /* !_SH_ASM_H_ */

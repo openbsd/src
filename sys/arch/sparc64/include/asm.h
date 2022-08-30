@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2022/01/01 23:47:14 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.15 2022/08/30 16:26:29 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -106,16 +106,5 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-
-/*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced.
- */
-#ifdef __STDC__
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
-#else
-#define	WARN_REFERENCES(_sym,_msg)				\
-	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
-#endif /* __STDC__ */
 
 #endif /* _MACHINE_ASM_H_ */

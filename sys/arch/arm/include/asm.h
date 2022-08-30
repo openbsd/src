@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2022/05/24 17:15:22 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2022/08/30 16:26:29 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -93,15 +93,5 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-
-#ifdef __STDC__
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#else
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
-#endif /* __STDC__ */
 
 #endif /* !_ARM_ASM_H_ */

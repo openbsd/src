@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.21 2022/01/01 23:47:14 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.22 2022/08/30 16:26:29 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -178,17 +178,6 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-
-/* XXXfvdl do not use stabs here */
-#ifdef __STDC__
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#else
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(sym),1,0,0,0
-#endif /* __STDC__ */
 
 /* generic retpoline ("return trampoline") generator */
 #define	JMP_RETPOLINE(reg)		\
