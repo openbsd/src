@@ -29,6 +29,7 @@ SRCS_test-tal =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
 SRCS_test-bgpsec =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
 SRCS_test-rrdp =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
 SRCS_test-rsc =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
+SRCS_test-aspa =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
