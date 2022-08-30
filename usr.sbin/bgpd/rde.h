@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.266 2022/08/29 18:18:55 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.267 2022/08/30 18:50:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -238,7 +238,7 @@ enum nexthop_state {
 };
 
 struct nexthop {
-	LIST_ENTRY(nexthop)	nexthop_l;
+	RB_ENTRY(nexthop)	entry;
 	TAILQ_ENTRY(nexthop)	runner_l;
 	struct prefix_list	prefix_h;
 	struct prefix		*next_prefix;
@@ -677,7 +677,6 @@ prefix_re(struct prefix *p)
 	return (p->entry.list.re);
 }
 
-void		 nexthop_init(uint32_t);
 void		 nexthop_shutdown(void);
 int		 nexthop_pending(void);
 void		 nexthop_runner(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.246 2022/08/29 18:18:55 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.247 2022/08/30 18:50:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1515,7 +1515,6 @@ prefix_free(struct prefix *p)
 /*
  * nexthop functions
  */
-struct nexthop_head	*nexthop_hash(struct bgpd_addr *);
 struct nexthop		*nexthop_lookup(struct bgpd_addr *);
 
 /*
@@ -1527,56 +1526,28 @@ struct nexthop		*nexthop_lookup(struct bgpd_addr *);
  * may be passed to the external neighbor if the neighbor and the exit nexthop
  * reside in the same subnet -- directly connected.
  */
-struct nexthop_table {
-	LIST_HEAD(nexthop_head, nexthop)	*nexthop_hashtbl;
-	uint32_t				 nexthop_hashmask;
-} nexthoptable;
 
-SIPHASH_KEY nexthoptablekey;
+TAILQ_HEAD(nexthop_queue, nexthop)	nexthop_runners =
+				    TAILQ_HEAD_INITIALIZER(nexthop_runners);
 
-TAILQ_HEAD(nexthop_queue, nexthop)	nexthop_runners;
-
-void
-nexthop_init(uint32_t hashsize)
-{
-	uint32_t	 hs, i;
-
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	nexthoptable.nexthop_hashtbl = calloc(hs, sizeof(struct nexthop_head));
-	if (nexthoptable.nexthop_hashtbl == NULL)
-		fatal("nextop_init");
-
-	TAILQ_INIT(&nexthop_runners);
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&nexthoptable.nexthop_hashtbl[i]);
-	arc4random_buf(&nexthoptablekey, sizeof(nexthoptablekey));
-
-	nexthoptable.nexthop_hashmask = hs - 1;
-}
+RB_HEAD(nexthop_tree, nexthop)		nexthoptable =
+					    RB_INITIALIZER(&nexthoptree);
+RB_GENERATE_STATIC(nexthop_tree, nexthop, entry, nexthop_compare);
 
 void
 nexthop_shutdown(void)
 {
-	uint32_t		 i;
 	struct nexthop		*nh, *nnh;
 
-	for (i = 0; i <= nexthoptable.nexthop_hashmask; i++) {
-		for (nh = LIST_FIRST(&nexthoptable.nexthop_hashtbl[i]);
-		    nh != NULL; nh = nnh) {
-			nnh = LIST_NEXT(nh, nexthop_l);
-			nh->state = NEXTHOP_UNREACH;
-			nexthop_unref(nh);
-		}
-		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i])) {
-			nh = LIST_FIRST(&nexthoptable.nexthop_hashtbl[i]);
-			log_warnx("nexthop_shutdown: non-free table, "
-			    "nexthop %s refcnt %d",
-			    log_addr(&nh->exit_nexthop), nh->refcnt);
-		}
+	RB_FOREACH_SAFE(nh, nexthop_tree, &nexthoptable, nnh) {
+		nh->state = NEXTHOP_UNREACH;
+		nexthop_unref(nh);
 	}
 
-	free(nexthoptable.nexthop_hashtbl);
+	RB_FOREACH(nh, nexthop_tree, &nexthoptable) {
+		log_warnx("%s: nexthop %s refcnt %d", __func__,
+		    log_addr(&nh->exit_nexthop), nh->refcnt);
+	}
 }
 
 int
@@ -1758,8 +1729,8 @@ nexthop_get(struct bgpd_addr *nexthop)
 		nh->state = NEXTHOP_LOOKUP;
 		nexthop_ref(nh);	/* take reference for lookup */
 		nh->exit_nexthop = *nexthop;
-		LIST_INSERT_HEAD(nexthop_hash(nexthop), nh,
-		    nexthop_l);
+		if (RB_INSERT(nexthop_tree, &nexthoptable, nh) != NULL)
+			fatalx("nexthop tree inconsistency");
 
 		rde_send_nexthop(&nh->exit_nexthop, 1);
 	}
@@ -1791,7 +1762,7 @@ nexthop_unref(struct nexthop *nh)
 	if (nh->next_prefix)
 		fatalx("%s: next_prefix not NULL", __func__);
 
-	LIST_REMOVE(nh, nexthop_l);
+	RB_REMOVE(nexthop_tree, &nexthoptable, nh);
 	rde_send_nexthop(&nh->exit_nexthop, 0);
 
 	rdemem.nexthop_cnt--;
@@ -1835,32 +1806,8 @@ nexthop_compare(struct nexthop *na, struct nexthop *nb)
 struct nexthop *
 nexthop_lookup(struct bgpd_addr *nexthop)
 {
-	struct nexthop	*nh;
+	struct nexthop	needle = { 0 };
 
-	LIST_FOREACH(nh, nexthop_hash(nexthop), nexthop_l) {
-		if (memcmp(&nh->exit_nexthop, nexthop,
-		    sizeof(struct bgpd_addr)) == 0)
-			return (nh);
-	}
-	return (NULL);
-}
-
-struct nexthop_head *
-nexthop_hash(struct bgpd_addr *nexthop)
-{
-	uint32_t	 h = 0;
-
-	switch (nexthop->aid) {
-	case AID_INET:
-		h = SipHash24(&nexthoptablekey, &nexthop->v4.s_addr,
-		    sizeof(nexthop->v4.s_addr));
-		break;
-	case AID_INET6:
-		h = SipHash24(&nexthoptablekey, &nexthop->v6,
-		    sizeof(struct in6_addr));
-		break;
-	default:
-		fatalx("nexthop_hash: unsupported AID %d", nexthop->aid);
-	}
-	return (&nexthoptable.nexthop_hashtbl[h & nexthoptable.nexthop_hashmask]);
+	needle.exit_nexthop = *nexthop;
+	return RB_FIND(nexthop_tree, &nexthoptable, &needle);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.569 2022/08/29 18:18:55 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.570 2022/08/30 18:50:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -198,7 +198,6 @@ rde_main(int debug, int verbose)
 	/* initialize the RIB structures */
 	pt_init();
 	attr_init(attrhashsize);
-	nexthop_init(nexthophashsize);
 	peer_init(peerhashsize);
 
 	/* make sure the default RIBs are setup */
