@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.22 2022/05/09 19:19:33 jsing Exp $ */
+/* $OpenBSD: t_req.c,v 1.23 2022/08/30 08:45:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,7 +102,7 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 	X509_REQ_INFO *ri;
 	EVP_PKEY *pkey;
 	STACK_OF(X509_ATTRIBUTE) *sk;
-	STACK_OF(X509_EXTENSION) *exts;
+	STACK_OF(X509_EXTENSION) *exts = NULL;
 	char mlch = ' ';
 	int nmindent = 0;
 
@@ -238,6 +238,7 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 					goto err;
 			}
 			sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
+			exts = NULL;
 		}
 	}
 
@@ -249,6 +250,7 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 	return (1);
 
  err:
+	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	X509error(ERR_R_BUF_LIB);
 	return (0);
 }
