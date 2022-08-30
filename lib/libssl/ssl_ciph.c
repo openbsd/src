@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.129 2022/06/29 20:06:55 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.130 2022/08/30 20:20:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -696,9 +696,6 @@ ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
 			co_list[co_list_num].prev = NULL;
 			co_list[co_list_num].active = 0;
 			co_list_num++;
-			/*
-			if (!sk_push(ca_list,(char *)c)) goto err;
-			*/
 		}
 	}
 
