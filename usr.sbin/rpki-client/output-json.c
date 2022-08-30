@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.27 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.28 2022/08/30 23:40:37 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -158,7 +158,7 @@ output_aspa(FILE *out, struct vap_tree *vaps)
 
 	if (fprintf(out, "\n\t\t]\n\t}\n") < 0)
 		return -1;
-	
+
 	return 0;
 }
 
@@ -217,7 +217,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		return -1;
 
 	if (fprintf(out, "\n}\n") < 0)
-                return -1;
+		return -1;
 
 	return 0;
 }
