@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.115 2022/08/29 07:51:45 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.116 2022/08/30 18:23:58 kn Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -133,7 +133,6 @@ struct ifnet {				/* and the entries */
 	int	if_pcount;		/* [N] # of promiscuous listeners */
 	unsigned int if_bridgeidx;	/* [K] used by bridge ports */
 	caddr_t	if_bpf;			/* packet filter structure */
-	caddr_t if_switchport;		/* used by switch ports */
 	caddr_t if_mcast;		/* used by multicast code */
 	caddr_t if_mcast6;		/* used by IPv6 multicast code */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
