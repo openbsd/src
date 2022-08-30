@@ -860,7 +860,6 @@
 ./usr/include/dev/x86emu/x86emu.h
 ./usr/include/dev/x86emu/x86emu_regs.h
 ./usr/include/dirent.h
-./usr/include/disktab.h
 ./usr/include/dlfcn.h
 ./usr/include/elf.h
 ./usr/include/elf_abi.h
