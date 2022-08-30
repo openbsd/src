@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.102 2022/08/22 12:03:32 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.103 2022/08/30 08:30:58 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ void		uvmpd_scan(struct uvm_pmalloc *);
 void		uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
+void		uvmpd_dropswap(struct vm_page *);
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -367,6 +368,23 @@ uvm_aiodone_daemon(void *arg)
 }
 
 
+/*
+ * uvmpd_dropswap: free any swap allocated to this page.
+ *
+ * => called with owner locked.
+ */
+void
+uvmpd_dropswap(struct vm_page *pg)
+{
+	struct vm_anon *anon = pg->uanon;
+
+	if ((pg->pg_flags & PQ_ANON) && anon->an_swslot) {
+		uvm_swap_free(anon->an_swslot, 1);
+		anon->an_swslot = 0;
+	} else if (pg->pg_flags & PQ_AOBJ) {
+		uao_dropswap(pg->uobject, pg->offset >> PAGE_SHIFT);
+	}
+}
 
 /*
  * uvmpd_scan_inactive: scan an inactive list for pages to clean or free.
@@ -566,16 +584,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			KASSERT(uvmexp.swpginuse <= uvmexp.swpages);
 			if ((p->pg_flags & PQ_SWAPBACKED) &&
 			    uvmexp.swpginuse == uvmexp.swpages) {
-
-				if ((p->pg_flags & PQ_ANON) &&
-				    p->uanon->an_swslot) {
-					uvm_swap_free(p->uanon->an_swslot, 1);
-					p->uanon->an_swslot = 0;
-				}
-				if (p->pg_flags & PQ_AOBJ) {
-					uao_dropswap(p->uobject,
-						     p->offset >> PAGE_SHIFT);
-				}
+				uvmpd_dropswap(p);
 			}
 
 			/*
@@ -599,16 +608,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 			 */
 			if (swap_backed) {
 				/* free old swap slot (if any) */
-				if (anon) {
-					if (anon->an_swslot) {
-						uvm_swap_free(anon->an_swslot,
-						    1);
-						anon->an_swslot = 0;
-					}
-				} else {
-					uao_dropswap(uobj,
-						     p->offset >> PAGE_SHIFT);
-				}
+				uvmpd_dropswap(p);
 
 				/* start new cluster (if necessary) */
 				if (swslot == 0) {
