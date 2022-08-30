@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.18 2022/02/03 18:40:34 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.19 2022/08/30 20:40:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -914,8 +914,12 @@ verify_cookie_callback(SSL * ssl, const unsigned char *cookie,
 	}
 
 	/* Calculate HMAC of buffer using the secret */
-	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-	    buffer, length, result, &resultlength);
+	if (HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
+	    buffer, length, result, &resultlength) == NULL) {
+		free(buffer);
+		return 0;
+	}
+
 	free(buffer);
 
 	if (cookie_len == resultlength &&
