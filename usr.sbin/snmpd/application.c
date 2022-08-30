@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.13 2022/08/30 17:33:20 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.14 2022/08/30 17:37:03 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -214,7 +214,7 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
     struct ber_oid *oid, int instance, int subtree,
     struct appl_backend *backend)
 {
-	struct appl_region *region = NULL, *nregion, search;
+	struct appl_region *region = NULL, *nregion;
 	char oidbuf[1024], regionbuf[1024], subidbuf[11];
 	size_t i;
 
