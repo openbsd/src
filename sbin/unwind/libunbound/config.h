@@ -223,6 +223,10 @@
 /* Define to 1 if you have the `EVP_cleanup' function. */
 #define HAVE_EVP_CLEANUP 1
 
+/* Define to 1 if you have the `EVP_default_properties_is_fips_enabled'
+   function. */
+/* #undef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED */
+
 /* Define to 1 if you have the `EVP_DigestVerify' function. */
 #define HAVE_EVP_DIGESTVERIFY 1
 
@@ -548,7 +552,7 @@
 #define HAVE_SSL_CTX_SET_CIPHERSUITES 1
 
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
-/* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
+#define HAVE_SSL_CTX_SET_SECURITY_LEVEL 1
 
 /* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_evp_cb'
    function. */
@@ -760,7 +764,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.16.0"
+#define PACKAGE_STRING "unbound 1.16.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -769,7 +773,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.16.0"
+#define PACKAGE_VERSION "1.16.2"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -792,7 +796,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,16,0,0
+#define RSRC_PACKAGE_VERSION 1,16,2,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
