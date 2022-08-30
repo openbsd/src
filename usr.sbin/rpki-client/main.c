@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.214 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: main.c,v 1.215 2022/08/30 22:42:32 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1089,7 +1089,7 @@ main(int argc, char *argv[])
 
 		polltim = repo_check_timeout(INFTIM);
 
-		if ((c = poll(pfd, NPFD, polltim)) == -1) {
+		if (poll(pfd, NPFD, polltim) == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
