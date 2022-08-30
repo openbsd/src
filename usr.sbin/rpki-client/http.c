@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.64 2022/08/09 09:02:26 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.65 2022/08/30 14:33:26 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -353,7 +353,7 @@ recode_credentials(const char *userinfo)
 static void
 proxy_parse_uri(char *uri)
 {
-	char *host, *port = NULL, *cred, *cookie = NULL;
+	char *fullhost, *host, *port = NULL, *cred, *cookie = NULL;
 
 	if (uri == NULL)
 		return;
@@ -362,10 +362,10 @@ proxy_parse_uri(char *uri)
 		errx(1, "%s: http_proxy not using http schema", http_info(uri));
 
 	host = uri + 7;
-	if ((host = strndup(host, strcspn(host, "/"))) == NULL)
+	if ((fullhost = strndup(host, strcspn(host, "/"))) == NULL)
 		err(1, NULL);
 
-	cred = host;
+	cred = fullhost;
 	host = strchr(cred, '@');
 	if (host != NULL)
 		*host++ = '\0';
@@ -405,9 +405,12 @@ proxy_parse_uri(char *uri)
 		if ((cookie = strdup("")) == NULL)
 			err(1, NULL);
 
-	proxy.proxyhost = host;
+	if ((proxy.proxyhost = strdup(host)) == NULL)
+		err(1, NULL);
 	proxy.proxyport = port;
 	proxy.proxyauth = cookie;
+
+	free(fullhost);
 }
 
 /*
