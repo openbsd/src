@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.2 2022/08/29 18:10:48 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.3 2022/08/30 14:54:18 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -660,7 +660,7 @@ appl_agentx_getnext(struct appl_backend *backend, int32_t transactionid,
 			srl[i].asr_start.aoi_id[j] = vb->av_oid.bo_id[j];
 		srl[i].asr_stop.aoi_include = 0;
 		srl[i].asr_stop.aoi_idlen = vb->av_oid_end.bo_n;
-		for (j = 0; j < vb->av_oid.bo_n; j++)
+		for (j = 0; j < vb->av_oid_end.bo_n; j++)
 			srl[i].asr_stop.aoi_id[j] = vb->av_oid_end.bo_id[j];
 	}
 	if ((context = appl_agentx_string2ostring(ctx, &string)) == NULL) {
