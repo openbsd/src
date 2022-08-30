@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.5 2022/08/27 09:12:55 jsing Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.6 2022/08/30 18:23:40 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -175,7 +175,6 @@ tls13_quic_init(struct tls13_ctx *ctx)
 	if ((bio = BIO_new(BIO_s_null())) == NULL)
 		return 0;
 
-	BIO_up_ref(bio);
 	SSL_set_bio(ctx->ssl, bio, bio);
 	bio = NULL;
 
