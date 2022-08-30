@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.35 2022/07/17 10:32:45 jsg Exp $ */
+/*	$OpenBSD: repo.c,v 1.36 2022/08/30 12:45:13 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1396,12 +1396,24 @@ repo_cleanup(struct filepath_tree *tree, int cachefd)
 			}
 			rr = repo_is_rrdp(e->fts_parent->fts_pointer);
 			if (rr != NULL) {
+				struct stat st;
 				char *fn;
 
 				if (asprintf(&fn, "%s/%s", rr->basedir,
 				    path) == -1)
 					err(1, NULL);
 
+				/*
+				 * If the file exists in the rrdp dir
+				 * that file is newer and needs to be kept
+				 * so unlink this file instead of moving
+				 * it over the file in the rrdp dir.
+				 */
+				if (fstatat(cachefd, fn, &st, 0) == 0 &&
+				    S_ISREG(st.st_mode)) {
+					free(fn);
+					goto unlink;
+				}
 				if (repo_mkpath(cachefd, fn) == 0) {
 					if (renameat(AT_FDCWD, e->fts_accpath,
 					    cachefd, fn) == -1)
@@ -1413,6 +1425,7 @@ repo_cleanup(struct filepath_tree *tree, int cachefd)
 				}
 				free(fn);
 			} else {
+ unlink:
 				if (unlink(e->fts_accpath) == -1) {
 					warn("unlink %s", path);
 				} else {
