@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.149 2022/08/25 17:25:25 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.150 2022/08/30 17:09:21 dv Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@ struct svm {
 	uint32_t	svm_max_asid;
 	uint8_t		svm_flush_by_asid;
 	uint8_t		svm_vmcb_clean;
+	uint8_t		svm_decode_assist;
 };
 
 union vmm_cpu_cap {

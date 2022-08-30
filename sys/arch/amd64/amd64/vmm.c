@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.319 2022/08/07 23:56:06 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.320 2022/08/30 17:09:21 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4891,11 +4891,20 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				vcpu->vc_gueststate.vg_rax =
 				    vcpu->vc_exit.vei.vei_data;
 			break;
+		case VMX_EXIT_EPT_VIOLATION:
+			ret = vcpu_writeregs_vmx(vcpu, VM_RWREGS_GPRS, 0,
+			    &vcpu->vc_exit.vrs);
+			if (ret) {
+				printf("%s: vm %d vcpu %d failed to update "
+				    "registers\n", __func__,
+				    vcpu->vc_parent->vm_id, vcpu->vc_id);
+				return (EINVAL);
+			}
+			break;
 		case VM_EXIT_NONE:
 		case VMX_EXIT_HLT:
 		case VMX_EXIT_INT_WINDOW:
 		case VMX_EXIT_EXTINT:
-		case VMX_EXIT_EPT_VIOLATION:
 		case VMX_EXIT_CPUID:
 		case VMX_EXIT_XSETBV:
 			break;
@@ -4927,6 +4936,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			break;
 #endif /* VMM_DEBUG */
 		}
+		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 	}
 
 	setregion(&gdt, ci->ci_gdt, GDT_SIZE - 1);
@@ -5658,7 +5668,7 @@ vmm_get_guest_memtype(struct vm *vm, paddr_t gpa)
 
 	if (gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END) {
 		DPRINTF("guest mmio access @ 0x%llx\n", (uint64_t)gpa);
-		return (VMM_MEM_TYPE_REGULAR);
+		return (VMM_MEM_TYPE_MMIO);
 	}
 
 	/* XXX Use binary search? */
@@ -5782,17 +5792,30 @@ int
 svm_handle_np_fault(struct vcpu *vcpu)
 {
 	uint64_t gpa;
-	int gpa_memtype, ret;
+	int gpa_memtype, ret = 0;
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+	struct vm_exit_eptviolation *vee = &vcpu->vc_exit.vee;
+	struct cpu_info *ci = curcpu();
 
-	ret = 0;
+	memset(vee, 0, sizeof(*vee));
 
 	gpa = vmcb->v_exitinfo2;
 
 	gpa_memtype = vmm_get_guest_memtype(vcpu->vc_parent, gpa);
 	switch (gpa_memtype) {
 	case VMM_MEM_TYPE_REGULAR:
+		vee->vee_fault_type = VEE_FAULT_HANDLED;
 		ret = svm_fault_page(vcpu, gpa);
+		break;
+	case VMM_MEM_TYPE_MMIO:
+		vee->vee_fault_type = VEE_FAULT_MMIO_ASSIST;
+		if (ci->ci_vmm_cap.vcc_svm.svm_decode_assist) {
+			vee->vee_insn_len = vmcb->v_n_bytes_fetched;
+			memcpy(&vee->vee_insn_bytes, vmcb->v_guest_ins_bytes,
+			    sizeof(vee->vee_insn_bytes));
+			vee->vee_insn_info |= VEE_BYTES_VALID;
+		}
+		ret = EAGAIN;
 		break;
 	default:
 		printf("unknown memory type %d for GPA 0x%llx\n",
@@ -5862,10 +5885,12 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 int
 vmx_handle_np_fault(struct vcpu *vcpu)
 {
-	uint64_t gpa;
-	int gpa_memtype, ret;
+	uint64_t insn_len = 0, gpa;
+	int gpa_memtype, ret = 0;
+	struct vm_exit_eptviolation *vee = &vcpu->vc_exit.vee;
 
-	ret = 0;
+	memset(vee, 0, sizeof(*vee));
+
 	if (vmread(VMCS_GUEST_PHYSICAL_ADDRESS, &gpa)) {
 		printf("%s: cannot extract faulting pa\n", __func__);
 		return (EINVAL);
@@ -5874,7 +5899,21 @@ vmx_handle_np_fault(struct vcpu *vcpu)
 	gpa_memtype = vmm_get_guest_memtype(vcpu->vc_parent, gpa);
 	switch (gpa_memtype) {
 	case VMM_MEM_TYPE_REGULAR:
+		vee->vee_fault_type = VEE_FAULT_HANDLED;
 		ret = vmx_fault_page(vcpu, gpa);
+		break;
+	case VMM_MEM_TYPE_MMIO:
+		vee->vee_fault_type = VEE_FAULT_MMIO_ASSIST;
+		if (vmread(VMCS_INSTRUCTION_LENGTH, &insn_len) ||
+		    insn_len == 0 || insn_len > 15) {
+			printf("%s: failed to extract instruction length\n",
+			    __func__);
+			ret = EINVAL;
+		} else {
+			vee->vee_insn_len = (uint32_t)insn_len;
+			vee->vee_insn_info |= VEE_LEN_VALID;
+			ret = EAGAIN;
+		}
 		break;
 	default:
 		printf("unknown memory type %d for GPA 0x%llx\n",
@@ -7321,7 +7360,19 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 				    vcpu->vc_exit.vei.vei_data;
 				vmcb->v_rax = vcpu->vc_gueststate.vg_rax;
 			}
+			break;
+		case SVM_VMEXIT_NPF:
+			ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_GPRS,
+			    &vcpu->vc_exit.vrs);
+			if (ret) {
+				printf("%s: vm %d vcpu %d failed to update "
+				    "registers\n", __func__,
+				    vcpu->vc_parent->vm_id, vcpu->vc_id);
+				return (EINVAL);
+			}
+			break;
 		}
+		memset(&vcpu->vc_exit, 0, sizeof(vcpu->vc_exit));
 	}
 
 	while (ret == 0) {

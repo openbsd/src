@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.126 2022/08/07 23:56:06 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.127 2022/08/30 17:09:21 dv Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ cpu_hz_update_sensor(void *args)
 
 	if (mdelta > 0) {
 		val = (adelta * 1000000) / mdelta * tsc_frequency;
-		val = ((val + FREQ_50MHZ / 2) / FREQ_50MHZ) * FREQ_50MHZ; 
+		val = ((val + FREQ_50MHZ / 2) / FREQ_50MHZ) * FREQ_50MHZ;
 		ci->ci_hz_sensor.value = val;
 	}
 
@@ -1055,6 +1055,9 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 
 		if (edx & AMD_SVM_VMCB_CLEAN_CAP)
 			ci->ci_vmm_cap.vcc_svm.svm_vmcb_clean = 1;
+
+		if (edx & AMD_SVM_DECODE_ASSIST_CAP)
+			ci->ci_vmm_cap.vcc_svm.svm_decode_assist = 1;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.79 2022/06/30 13:17:58 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.80 2022/08/30 17:09:21 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -324,7 +324,9 @@ enum {
 };
 
 enum {
+	VEE_FAULT_INVALID = 0,
 	VEE_FAULT_HANDLED,
+	VEE_FAULT_MMIO_ASSIST,
 	VEE_FAULT_PROTECT,
 };
 
@@ -361,7 +363,12 @@ struct vm_exit_inout {
  *  vm_exit_eptviolation	: describes an EPT VIOLATION exit
  */
 struct vm_exit_eptviolation {
-	uint8_t		vee_fault_type;
+	uint8_t		vee_fault_type;		/* type of vm exit */
+	uint8_t		vee_insn_info;		/* bitfield */
+#define VEE_LEN_VALID		0x1		/* vee_insn_len is valid */
+#define VEE_BYTES_VALID		0x2		/* vee_insn_bytes is valid */
+	uint8_t		vee_insn_len;		/* [VMX] instruction length */
+	uint8_t		vee_insn_bytes[15];	/* [SVM] bytes at {R,E,}IP */
 };
 
 /*
@@ -709,6 +716,7 @@ enum {
 
 enum {
 	VMM_MEM_TYPE_REGULAR,
+	VMM_MEM_TYPE_MMIO,
 	VMM_MEM_TYPE_UNKNOWN
 };
 

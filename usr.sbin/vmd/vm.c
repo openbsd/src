@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.71 2022/06/29 17:39:54 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.72 2022/08/30 17:09:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1652,26 +1652,36 @@ vcpu_exit_inout(struct vm_run_params *vrp)
  *
  * Return values:
  *  0: no action required
- *  EAGAIN: a protection fault occured, kill the vm.
+ *  EFAULT: a protection fault occured, kill the vm.
  */
 int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
+	int ret = 0;
+	uint8_t fault_type;
 	struct vm_exit *ve = vrp->vrp_exit;
 
-	/*
-	 * vmd may be exiting to vmd to handle a pending interrupt
-	 * but last exit type may have been VMX_EXIT_EPT_VIOLATION,
-	 * check the fault_type to ensure we really are processing
-	 * a VMX_EXIT_EPT_VIOLATION.
-	 */
-	if (ve->vee.vee_fault_type == VEE_FAULT_PROTECT) {
-		log_debug("%s: EPT Violation: rip=0x%llx",
-		    __progname, vrp->vrp_exit->vrs.vrs_gprs[VCPU_REGS_RIP]);
-		return (EAGAIN);
+	fault_type = ve->vee.vee_fault_type;
+	switch (fault_type) {
+	case VEE_FAULT_HANDLED:
+		log_debug("%s: fault already handled", __func__);
+		break;
+	case VEE_FAULT_MMIO_ASSIST:
+		log_warnx("%s: mmio assist required: rip=0x%llx", __progname,
+		    ve->vrs.vrs_gprs[VCPU_REGS_RIP]);
+		ret = EFAULT;
+		break;
+	case VEE_FAULT_PROTECT:
+		log_debug("%s: EPT Violation: rip=0x%llx", __progname,
+		    ve->vrs.vrs_gprs[VCPU_REGS_RIP]);
+		ret = EFAULT;
+		break;
+	default:
+		fatalx("%s: invalid fault_type %d", __progname, fault_type);
+		/* UNREACHED */
 	}
 
-	return (0);
+	return (ret);
 }
 
 /*
@@ -1704,7 +1714,6 @@ vcpu_exit(struct vm_run_params *vrp)
 	case VMX_EXIT_CPUID:
 	case VMX_EXIT_EXTINT:
 	case SVM_VMEXIT_INTR:
-	case SVM_VMEXIT_NPF:
 	case SVM_VMEXIT_MSR:
 	case SVM_VMEXIT_CPUID:
 		/*
@@ -1715,11 +1724,11 @@ vcpu_exit(struct vm_run_params *vrp)
 		 * in more vmd log spam).
 		 */
 		break;
+	case SVM_VMEXIT_NPF:
 	case VMX_EXIT_EPT_VIOLATION:
 		ret = vcpu_exit_eptviolation(vrp);
 		if (ret)
 			return (ret);
-
 		break;
 	case VMX_EXIT_IO:
 	case SVM_VMEXIT_IOIO:
