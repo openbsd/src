@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.147 2022/07/25 08:28:42 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.148 2022/08/30 19:42:29 bluhm Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -277,12 +277,24 @@ pipex_init_session(struct pipex_session **rsession,
 	}
 #ifdef PIPEX_MPPE
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ACCEPTED) != 0) {
-		if (req->pr_mppe_recv.keylenbits <= 0)
+		switch (req->pr_mppe_recv.keylenbits) {
+		case 40:
+		case 56:
+		case 128:
+			break;
+		default:
 			return (EINVAL);
+		}
 	}
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_ENABLED) != 0) {
-		if (req->pr_mppe_send.keylenbits <= 0)
+		switch (req->pr_mppe_send.keylenbits) {
+		case 40:
+		case 56:
+		case 128:
+			break;
+		default:
 			return (EINVAL);
+		}
 	}
 	if ((req->pr_ppp_flags & PIPEX_PPP_MPPE_REQUIRED) != 0) {
 		if ((req->pr_ppp_flags &
