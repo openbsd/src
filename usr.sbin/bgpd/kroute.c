@@ -1,8 +1,8 @@
-/*	$OpenBSD: kroute.c,v 1.296 2022/08/25 08:10:25 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.297 2022/08/30 12:49:13 claudio Exp $ */
 
 /*
- * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,26 +18,27 @@
  */
 
 #include <sys/types.h>
+#include <sys/tree.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
-#include <sys/tree.h>
 #include <sys/uio.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netmpls/mpls.h>
-#include <err.h>
+
 #include <errno.h>
-#include <fcntl.h>
+#include <ifaddrs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <imsg.h>
 
 #include "bgpd.h"
 #include "log.h"
