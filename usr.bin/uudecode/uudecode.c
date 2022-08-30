@@ -1,4 +1,4 @@
-/*	$OpenBSD: uudecode.c,v 1.28 2022/08/30 15:57:19 yasuoka Exp $	*/
+/*	$OpenBSD: uudecode.c,v 1.29 2022/08/30 16:06:09 yasuoka Exp $	*/
 /*	$FreeBSD: uudecode.c,v 1.49 2003/05/03 19:44:46 obrien Exp $	*/
 
 /*-
@@ -190,7 +190,7 @@ decode2(void)
 	void *handle;
 	struct passwd *pw;
 	struct stat st;
-	char buf[PATH_MAX];
+	char buf[BUFSIZ];
 
 	base64 = 0;
 	/* search for header line */
@@ -342,7 +342,7 @@ uu_decode(void)
 {
 	int i, ch;
 	char *p;
-	char buf[PATH_MAX];
+	char buf[BUFSIZ];
 
 	/* for each input line */
 	for (;;) {
@@ -429,8 +429,8 @@ static int
 base64_decode(void)
 {
 	int n;
-	char inbuf[ROUNDDOWN(PATH_MAX, 4) + 1];
-	unsigned char outbuf[PATH_MAX * 4];
+	char inbuf[ROUNDDOWN(BUFSIZ, 4) + 1];
+	unsigned char outbuf[BUFSIZ * 4];
 
 	for (;;) {
 		switch (get_line(inbuf, sizeof(inbuf))) {
