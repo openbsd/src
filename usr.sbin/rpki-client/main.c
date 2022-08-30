@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.213 2022/08/29 18:28:35 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.214 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -475,13 +475,14 @@ queue_add_from_cert(const struct cert *cert)
  */
 static void
 entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
-    struct brk_tree *brktree)
+    struct brk_tree *brktree, struct vap_tree *vaptree)
 {
 	enum rtype	 type;
 	struct tal	*tal;
 	struct cert	*cert;
 	struct mft	*mft;
 	struct roa	*roa;
+	struct aspa	*aspa;
 	char		*file;
 	int		 c;
 
@@ -567,6 +568,21 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		st->gbrs++;
 		break;
 	case RTYPE_FILE:
+		break;
+	case RTYPE_ASPA:
+		st->aspas++;
+		io_read_buf(b, &c, sizeof(c));
+		if (c == 0) {
+			st->aspas_fail++;
+			break;
+		}
+		aspa = aspa_read(b);
+		if (aspa->valid)
+			aspa_insert_vaps(vaptree, aspa, &st->vaps,
+			    &st->vaps_uniqs);
+		else
+			st->aspas_invalid++;
+		aspa_free(aspa);
 		break;
 	default:
 		errx(1, "unknown entity type %d", type);
@@ -791,6 +807,7 @@ main(int argc, char *argv[])
 	const char	*skiplistfile = NULL;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
 	struct brk_tree	 brks = RB_INITIALIZER(&brks);
+	struct vap_tree	 vaps = RB_INITIALIZER(&vaps);
 	struct rusage	 ru;
 	struct timeval	 start_time, now_time;
 
@@ -1157,7 +1174,7 @@ main(int argc, char *argv[])
 		if ((pfd[0].revents & POLLIN)) {
 			b = io_buf_read(proc, &procbuf);
 			if (b != NULL) {
-				entity_process(b, &stats, &vrps, &brks);
+				entity_process(b, &stats, &vrps, &brks, &vaps);
 				ibuf_free(b);
 			}
 		}
@@ -1240,7 +1257,7 @@ main(int argc, char *argv[])
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
 
-	if (outputfiles(&vrps, &brks, &stats))
+	if (outputfiles(&vrps, &brks, &vaps, &stats))
 		rc = 1;
 
 	printf("Processing time %lld seconds "
@@ -1251,6 +1268,8 @@ main(int argc, char *argv[])
 	printf("Skiplist entries: %zu\n", stats.skiplistentries);
 	printf("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
+	printf("AS Provider Attestations: %zu (%zu failed parse, %zu invalid)\n",
+	    stats.aspas, stats.aspas_fail, stats.aspas_invalid);
 	printf("BGPsec Router Certificates: %zu\n", stats.brks);
 	printf("Certificates: %zu (%zu invalid)\n",
 	    stats.certs, stats.certs_fail);
@@ -1264,6 +1283,7 @@ main(int argc, char *argv[])
 	printf("Cleanup: removed %zu files, %zu directories, %zu superfluous\n",
 	    stats.del_files, stats.del_dirs, stats.extra_files);
 	printf("VRP Entries: %zu (%zu unique)\n", stats.vrps, stats.uniqs);
+	printf("VAP Entries: %zu (%zu unique)\n", stats.vaps, stats.vaps_uniqs);
 
 	/* Memory cleanup. */
 	repo_free();

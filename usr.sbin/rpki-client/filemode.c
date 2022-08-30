@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.12 2022/08/25 18:12:05 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.13 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -268,6 +268,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct gbr *gbr = NULL;
 	struct tal *tal = NULL;
 	struct rsc *rsc = NULL;
+	struct aspa *aspa = NULL;
 	char *aia = NULL, *aki = NULL;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
@@ -367,6 +368,14 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = rsc->aia;
 		aki = rsc->aki;
 		break;
+	case RTYPE_ASPA:
+		aspa = aspa_parse(&x509, file, buf, len);
+		if (aspa == NULL)
+			break;
+		aspa_print(x509, aspa);
+		aia = aspa->aia;
+		aki = aspa->aki;
+		break;
 	default:
 		printf("%s: unsupported file type\n", file);
 		break;
@@ -392,10 +401,19 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		c = crl_get(&crlt, a);
 
 		if ((status = valid_x509(file, ctx, x509, a, c, 0))) {
-			if (type == RTYPE_ROA)
+			switch (type) {
+			case RTYPE_ROA:
 				status = roa->valid;
-			else if (type == RTYPE_RSC)
+				break;
+			case RTYPE_RSC:
 				status = rsc->valid;
+				break;
+			case RTYPE_ASPA:
+				status = aspa->valid;
+				break;
+			default:
+				break;
+			}
 		}
 		if (status)
 			printf("OK");
@@ -450,6 +468,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	gbr_free(gbr);
 	tal_free(tal);
 	rsc_free(rsc);
+	aspa_free(aspa);
 }
 
 /*

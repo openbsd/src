@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.50 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.51 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -399,6 +399,8 @@ vrpcmp(struct vrp *a, struct vrp *b)
 		rv = memcmp(&a->addr.addr, &b->addr.addr, 16);
 		if (rv)
 			return rv;
+		break;
+	default:
 		break;
 	}
 	/* a smaller prefixlen is considered bigger, e.g. /8 vs /10 */

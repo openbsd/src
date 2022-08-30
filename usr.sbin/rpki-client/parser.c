@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.74 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.75 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -484,6 +484,43 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 }
 
 /*
+ * Parse an ASPA object
+ */
+static struct aspa *
+proc_parser_aspa(char *file, const unsigned char *der, size_t len)
+{
+	struct aspa		*aspa;
+	struct auth		*a;
+	struct crl		*crl;
+	X509			*x509;
+
+	if ((aspa = aspa_parse(&x509, file, der, len)) == NULL)
+		return NULL;
+
+	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki);
+	crl = crl_get(&crlt, a);
+
+	if (!valid_x509(file, ctx, x509, a, crl, 0)) {
+		X509_free(x509);
+		aspa_free(aspa);
+		return NULL;
+	}
+	X509_free(x509);
+
+	aspa->talid = a->cert->talid;
+
+	if (crl != NULL && aspa->expires > crl->expires)
+		aspa->expires = crl->expires;
+
+	for (; a != NULL; a = a->parent) {
+		if (aspa->expires > a->cert->expires)
+			aspa->expires = a->cert->expires;
+	}
+
+	return aspa;
+}
+
+/*
  * Load the file specified by the entity information.
  */
 static char *
@@ -514,6 +551,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct cert	*cert;
 	struct mft	*mft;
 	struct roa	*roa;
+	struct aspa	*aspa;
 	struct ibuf	*b;
 	unsigned char	*f;
 	size_t		 flen;
@@ -598,6 +636,16 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
 			proc_parser_gbr(file, f, flen);
+			break;
+		case RTYPE_ASPA:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
+			aspa = proc_parser_aspa(file, f, flen);
+			c = (aspa != NULL);
+			io_simple_buffer(b, &c, sizeof(int));
+			if (aspa != NULL)
+				aspa_buffer(b, aspa);
+			aspa_free(aspa);
 			break;
 		default:
 			errx(1, "unhandled entity type %d", entp->type);

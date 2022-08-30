@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.14 2022/07/14 13:24:56 job Exp $ */
+/*	$OpenBSD: print.c,v 1.15 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -567,4 +567,53 @@ rsc_print(const X509 *x, const struct rsc *p)
 
 	if (outformats & FORMAT_JSON)
 		printf("\t],\n");
+}
+
+void
+aspa_print(const X509 *x, const struct aspa *p)
+{
+	size_t	i;
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t\"type\": \"aspa\",\n");
+		printf("\t\"ski\": \"%s\",\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
+		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"customer_asid\": %u,\n", p->custasid);
+		printf("\t\"provider_set\": [\n");
+		for (i = 0; i < p->providersz; i++) {
+			printf("\t\t{ \"asid\": %u", p->providers[i].as);
+			if (p->providers[i].afi == AFI_IPV4)
+				printf(", \"afi_limit\": \"ipv4\"");
+			if (p->providers[i].afi == AFI_IPV6)
+				printf(", \"afi_limit\": \"ipv6\"");
+			printf(" }");
+			if (i + 1 < p->providersz)
+				printf(",");
+			printf("\n");	
+		}
+		printf("\t],\n");
+	} else {
+		printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+		printf("Authority info access: %s\n", p->aia);
+		printf("Customer AS: %u\n", p->custasid);
+		printf("Provider Set:\n");
+		for (i = 0; i < p->providersz; i++) {
+			printf("%5zu: AS: %d", i + 1, p->providers[i].as);
+			switch (p->providers[i].afi) {
+			case AFI_IPV4:
+				printf(" (IPv4 only)");
+				break;
+			case AFI_IPV6:
+				printf(" (IPv6 only)");
+				break;
+			default:
+				break;
+			}
+			printf("\n");
+		}
+	}
 }

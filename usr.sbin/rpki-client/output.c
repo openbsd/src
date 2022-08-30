@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.26 2022/04/20 15:29:24 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.27 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -65,7 +65,7 @@ static const struct outputs {
 	int	 format;
 	char	*name;
 	int	(*fn)(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 } outputs[] = {
 	{ FORMAT_OPENBGPD, "openbgpd", output_bgpd },
 	{ FORMAT_BIRD, "bird1v4", output_bird1v4 },
@@ -83,7 +83,8 @@ static void	 sig_handler(int);
 static void	 set_signal_handler(void);
 
 int
-outputfiles(struct vrp_tree *v, struct brk_tree *b, struct stats *st)
+outputfiles(struct vrp_tree *v, struct brk_tree *b, struct vap_tree *a,
+    struct stats *st)
 {
 	int i, rc = 0;
 
@@ -102,7 +103,7 @@ outputfiles(struct vrp_tree *v, struct brk_tree *b, struct stats *st)
 			rc = 1;
 			continue;
 		}
-		if ((*outputs[i].fn)(fout, v, b, st) != 0) {
+		if ((*outputs[i].fn)(fout, v, b, a, st) != 0) {
 			warn("output for %s format failed", outputs[i].name);
 			fclose(fout);
 			output_cleantmp();

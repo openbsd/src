@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.26 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.27 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -46,6 +46,9 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"roas\": %zu,\n"
 	    "\t\t\"failedroas\": %zu,\n"
 	    "\t\t\"invalidroas\": %zu,\n"
+	    "\t\t\"aspas\": %zu,\n"
+	    "\t\t\"failedaspas\": %zu,\n"
+	    "\t\t\"invalidaspas\": %zu,\n"
 	    "\t\t\"bgpsec_pubkeys\": %zu,\n"
 	    "\t\t\"certificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
@@ -55,6 +58,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
+	    st->aspas, st->aspas_fail, st->aspas_invalid,
 	    st->brks, st->certs, st->certs_fail,
 	    st->tals, talsz - st->tals) < 0)
 		return -1;
@@ -76,6 +80,8 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"repositories\": %zu,\n"
 	    "\t\t\"vrps\": %zu,\n"
 	    "\t\t\"uniquevrps\": %zu,\n"
+	    "\t\t\"vaps\": %zu,\n"
+	    "\t\t\"uniquevaps\": %zu,\n"
 	    "\t\t\"cachedir_del_files\": %zu,\n"
 	    "\t\t\"cachedir_superfluous_files\": %zu,\n"
 	    "\t\t\"cachedir_del_dirs\": %zu\n"
@@ -85,14 +91,81 @@ outputheader_json(FILE *out, struct stats *st)
 	    st->gbrs,
 	    st->repos,
 	    st->vrps, st->uniqs,
+	    st->vaps, st->vaps_uniqs,
 	    st->del_files, st->extra_files, st->del_dirs) < 0)
 		return -1;
 	return 0;
 }
 
+static int
+print_vap(FILE *out, struct vap *v)
+{
+	size_t i;
+
+	if (fprintf(out, "\t\t\t{ \"customer_asid\": %u, \"providers\": [",
+	    v->custasid) < 0)
+		return -1;
+	for (i = 0; i < v->providersz; i++) {
+		if (fprintf(out, "%u", v->providers[i]) < 0)
+			return -1;
+		if (i + 1 < v->providersz)
+			if (fprintf(out, ", ") < 0)
+				return -1;
+	}
+	if (fprintf(out, "], \"expires\": %lld }", (long long)v->expires) < 0)
+		return -1;
+
+	return 0;
+}
+
+static int
+output_aspa(FILE *out, struct vap_tree *vaps)
+{
+	struct vap	*v;
+	int		 first;
+
+	if (fprintf(out, "\n\t],\n\n\t\"provider_authorizations\": {\n"
+	    "\t\t\"ipv4\": [\n") < 0)
+		return -1;
+
+	first = 1;
+	RB_FOREACH(v, vap_tree, vaps)
+		if (v->afi == AFI_IPV4) {
+			if (!first) {
+				if (fprintf(out, ",\n") < 0)
+					return -1;
+			}
+			first = 0;
+			if (print_vap(out, v))
+				return -1;
+		}
+
+	if (fprintf(out, "\n\t\t],\n\t\t\"ipv6\": [\n") < 0)
+		return -1;
+
+	first = 1;
+	RB_FOREACH(v, vap_tree, vaps) {
+		if (v->afi == AFI_IPV6) {
+			if (!first) {
+				if (fprintf(out, ",\n") < 0)
+					return -1;
+			}
+			first = 0;
+			if (print_vap(out, v))
+				return -1;
+		}
+	}
+
+	if (fprintf(out, "\n\t\t]\n\t}\n") < 0)
+		return -1;
+	
+	return 0;
+}
+
+
 int
 output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct stats *st)
+    struct vap_tree *vaps, struct stats *st)
 {
 	char		 buf[64];
 	struct vrp	*v;
@@ -140,7 +213,11 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 			return -1;
 	}
 
-	if (fprintf(out, "\n\t]\n}\n") < 0)
+	if (output_aspa(out, vaps) < 0)
 		return -1;
+
+	if (fprintf(out, "\n}\n") < 0)
+                return -1;
+
 	return 0;
 }

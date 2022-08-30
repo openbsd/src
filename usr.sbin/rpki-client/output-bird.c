@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.14 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.15 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -22,7 +22,7 @@
 
 int
 output_bird1v4(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct stats *st)
+    struct vap_tree *vaps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	struct vrp	*v;
@@ -51,7 +51,7 @@ output_bird1v4(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 int
 output_bird1v6(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct stats *st)
+    struct vap_tree *vaps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	struct vrp	*v;
@@ -80,7 +80,7 @@ output_bird1v6(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 int
 output_bird2(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
-    struct stats *st)
+    struct vap_tree *vaps, struct stats *st)
 {
 	extern		const char *bird_tablename;
 	struct vrp	*v;

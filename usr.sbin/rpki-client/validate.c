@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.41 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.42 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -532,4 +532,21 @@ valid_econtent_version(const char *fn, const ASN1_INTEGER *aint)
 		warnx("%s: version %ld not supported (yet)", fn, version);
 		return 0;
 	}
+}
+
+/*
+ * Validate the ASPA: check that the customerASID is contained.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_aspa(const char *fn, struct cert *cert, struct aspa *aspa)
+{
+
+	if (as_check_covered(aspa->custasid, aspa->custasid,
+	    cert->as, cert->asz) > 0)
+		return 1;
+
+	warnx("%s: ASPA: uncovered Customer ASID: %u", fn, aspa->custasid);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.150 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.151 2022/08/30 18:56:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -181,6 +181,7 @@ enum rtype {
 	RTYPE_REPO,
 	RTYPE_FILE,
 	RTYPE_RSC,
+	RTYPE_ASPA,
 };
 
 enum location {
@@ -281,6 +282,45 @@ struct gbr {
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
 };
+
+struct aspa_provider {
+	uint32_t	 as;
+	enum afi	 afi;
+};
+
+/*
+ * A single ASPA record
+ */
+struct aspa {
+	int			 valid; /* contained in parent auth */
+	int			 talid; /* TAL the ASPA is chained up to */
+	char			*aia; /* AIA */
+	char			*aki; /* AKI */
+	char			*ski; /* SKI */
+	uint32_t	 	 custasid; /* the customerASID */
+	struct aspa_provider	*providers; /* the providers */
+	size_t			 providersz; /* number of providers */
+	time_t		 	 expires; /* NotAfter of the ASPA EE cert */
+};
+
+/*
+ * A Validated ASPA Payload (VAP) tree element.
+ * To ease transformation, this struct mimicks ASPA RTR PDU structure.
+ */
+struct vap {
+	RB_ENTRY(vap)		 entry;
+	enum afi		 afi;
+	uint32_t		 custasid;
+	uint32_t		*providers;
+	size_t			 providersz;
+	time_t			 expires;
+};
+
+/*
+ * Tree of VAPs sorted by afi, custasid, and provideras.
+ */
+RB_HEAD(vap_tree, vap);
+RB_PROTOTYPE(vap_tree, vap, entry, vapcmp);
 
 /*
  * A single VRP element (including ASID)
@@ -432,6 +472,11 @@ struct stats {
 	size_t	 rrdp_fails; /* failed rrdp repositories */
 	size_t	 crls; /* revocation lists */
 	size_t	 gbrs; /* ghostbuster records */
+	size_t	 aspas; /* ASPA objects */
+	size_t	 aspas_fail; /* ASPA objects failing syntactic parse */
+	size_t	 aspas_invalid; /* ASPAs with invalid customerASID */
+	size_t	 vaps; /* total number of Validated ASPA Payloads */
+	size_t	 vaps_uniqs; /* total number of unique VAPs */
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
 	size_t	 del_files; /* number of files removed in cleanup */
@@ -496,6 +541,14 @@ void		 rsc_free(struct rsc *);
 struct rsc	*rsc_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 
+void		 aspa_buffer(struct ibuf *, const struct aspa *);
+void		 aspa_free(struct aspa *);
+void		 aspa_insert_vaps(struct vap_tree *, struct aspa *, size_t *,
+		    size_t *);
+struct aspa	*aspa_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
+struct aspa	*aspa_read(struct ibuf *);
+
 /* crl.c */
 struct crl	*crl_parse(const char *, const unsigned char *, size_t);
 struct crl	*crl_get(struct crl_tree *, const struct auth *);
@@ -519,6 +572,7 @@ int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, int);
 int		 valid_rsc(const char *, struct cert *, struct rsc *);
 int		 valid_econtent_version(const char *, const ASN1_INTEGER *);
+int		 valid_aspa(const char *, struct cert *, struct aspa *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
@@ -664,6 +718,7 @@ void		 mft_print(const X509 *, const struct mft *);
 void		 roa_print(const X509 *, const struct roa *);
 void		 gbr_print(const X509 *, const struct gbr *);
 void		 rsc_print(const X509 *, const struct rsc *);
+void		 aspa_print(const X509 *, const struct aspa *);
 
 /* Output! */
 
@@ -674,20 +729,20 @@ extern int	 outformats;
 #define FORMAT_JSON	0x08
 
 int		 outputfiles(struct vrp_tree *v, struct brk_tree *b,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 outputheader(FILE *, struct stats *);
 int		 output_bgpd(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 output_bird1v4(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 output_bird1v6(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 output_bird2(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
-		    struct stats *);
+		    struct vap_tree *, struct stats *);
 
 void		logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
@@ -722,6 +777,9 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of FileAndHash entries per manifest. */
 #define MAX_MANIFEST_ENTRIES	100000
+
+/* Maximum number of Providers per ASPA object. */
+#define MAX_ASPA_PROVIDERS	10000
 
 /* Maximum depth of the RPKI tree. */
 #define MAX_CERT_DEPTH		12
