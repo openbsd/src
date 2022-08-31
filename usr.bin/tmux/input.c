@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.207 2022/08/02 11:09:26 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.208 2022/08/31 08:07:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1899,7 +1899,7 @@ input_csi_dispatch_winops(struct input_ctx *ictx)
 			}
 			break;
 		case 18:
-			input_reply(ictx, "\033[8;%u;%ut", x, y);
+			input_reply(ictx, "\033[8;%u;%ut", y, x);
 			break;
 		default:
 			log_debug("%s: unknown '%c'", __func__, ictx->ch);
