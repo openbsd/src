@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.12 2022/08/31 09:38:00 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.13 2022/08/31 09:39:59 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -340,7 +340,8 @@ test_builtin(BIO *out)
 			goto builtin_err;
 
 		sig_ptr2 = signature;
-		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
+		if ((sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2)) <= 0)
+			goto builtin_err;
 		if (ECDSA_verify(0, digest, 20, signature, sig_len,
 		    eckey) == 1) {
 			BIO_printf(out, " failed\n");
@@ -363,7 +364,8 @@ test_builtin(BIO *out)
 			goto builtin_err;
 
 		sig_ptr2 = signature;
-		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
+		if ((sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2)) <= 0)
+			goto builtin_err;
 		if (ECDSA_verify(0, digest, 20, signature, sig_len,
 		    eckey) != 1) {
 			BIO_printf(out, " failed\n");
