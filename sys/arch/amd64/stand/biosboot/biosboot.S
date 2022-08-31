@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.11 2022/08/31 09:20:57 krw Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.12 2022/08/31 10:46:33 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -233,14 +233,14 @@ main:
 	 * We're going to print our sign-on message.
 	 *
 	 * We're now LBA-aware, and will use LBA to load /boot if
-     * it's available.
+	 * it's available.
 	 */
 	movw	$load_msg, %si	/* "Loading" */
 	call	Lmessage /* Print pretty message */
 
 	/*
 	 * We will use LBA reads if we have LBA support, but don't even try
-     * on floppies.
+	 * on floppies.
 	 */
 	testb	$0x80, %dl
 	jz	no_lba
