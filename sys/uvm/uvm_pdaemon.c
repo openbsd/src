@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.103 2022/08/30 08:30:58 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.104 2022/08/31 09:26:04 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ extern void drmbackoff(long);
  * local prototypes
  */
 
+struct rwlock	*uvmpd_trylockowner(struct vm_page *);
 void		uvmpd_scan(struct uvm_pmalloc *);
 void		uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
 void		uvmpd_tune(void);
@@ -367,6 +368,34 @@ uvm_aiodone_daemon(void *arg)
 	}
 }
 
+/*
+ * uvmpd_trylockowner: trylock the page's owner.
+ *
+ * => return the locked rwlock on success.  otherwise, return NULL.
+ */
+struct rwlock *
+uvmpd_trylockowner(struct vm_page *pg)
+{
+
+	struct uvm_object *uobj = pg->uobject;
+	struct rwlock *slock;
+
+	if (uobj != NULL) {
+		slock = uobj->vmobjlock;
+	} else {
+		struct vm_anon *anon = pg->uanon;
+
+		KASSERT(anon != NULL);
+		slock = anon->an_lock;
+	}
+
+	if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
+		return NULL;
+	}
+
+	return slock;
+}
+
 
 /*
  * uvmpd_dropswap: free any swap allocated to this page.
@@ -474,51 +503,43 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 
 			anon = p->uanon;
 			uobj = p->uobject;
-			if (p->pg_flags & PQ_ANON) {
-				KASSERT(anon != NULL);
-				slock = anon->an_lock;
-				if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
-					/* lock failed, skip this page */
-					continue;
-				}
-				/*
-				 * move referenced pages back to active queue
-				 * and skip to next page.
-				 */
-				if (pmap_is_referenced(p)) {
-					uvm_pageactivate(p);
-					rw_exit(slock);
-					uvmexp.pdreact++;
-					continue;
-				}
-				if (p->pg_flags & PG_BUSY) {
-					rw_exit(slock);
-					uvmexp.pdbusy++;
-					continue;
-				}
-				uvmexp.pdanscan++;
-			} else {
-				KASSERT(uobj != NULL);
-				slock = uobj->vmobjlock;
-				if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
-					continue;
-				}
-				/*
-				 * move referenced pages back to active queue
-				 * and skip to next page.
-				 */
-				if (pmap_is_referenced(p)) {
-					uvm_pageactivate(p);
-					rw_exit(slock);
-					uvmexp.pdreact++;
-					continue;
-				}
-				if (p->pg_flags & PG_BUSY) {
-					rw_exit(slock);
-					uvmexp.pdbusy++;
-					continue;
-				}
+
+			/*
+			 * first we attempt to lock the object that this page
+			 * belongs to.  if our attempt fails we skip on to
+			 * the next page (no harm done).  it is important to
+			 * "try" locking the object as we are locking in the
+			 * wrong order (pageq -> object) and we don't want to
+			 * deadlock.
+			 */
+			slock = uvmpd_trylockowner(p);
+			if (slock == NULL) {
+				continue;
+			}
+
+			/*
+			 * move referenced pages back to active queue
+			 * and skip to next page.
+			 */
+			if (pmap_is_referenced(p)) {
+				uvm_pageactivate(p);
+				rw_exit(slock);
+				uvmexp.pdreact++;
+				continue;
+			}
+
+			if (p->pg_flags & PG_BUSY) {
+				rw_exit(slock);
+				uvmexp.pdbusy++;
+				continue;
+			}
+
+			/* does the page belong to an object? */
+			if (uobj != NULL) {
 				uvmexp.pdobscan++;
+			} else {
+				KASSERT(anon != NULL);
+				uvmexp.pdanscan++;
 			}
 
 			/*
@@ -858,14 +879,11 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 {
 	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
-	struct uvm_object *uobj;
-	struct vm_anon *anon;
 	struct rwlock *slock;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	uvmexp.pdrevs++;		/* counter */
-	uobj = NULL;
 
 	/*
 	 * get current "free" page count
@@ -926,19 +944,9 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 		/*
 		 * lock the page's owner.
 		 */
-		if (p->uobject != NULL) {
-			uobj = p->uobject;
-			slock = uobj->vmobjlock;
-			if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
-				continue;
-			}
-		} else {
-			anon = p->uanon;
-			KASSERT(p->uanon != NULL);
-			slock = anon->an_lock;
-			if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
-				continue;
-			}
+		slock = uvmpd_trylockowner(p);
+		if (slock == NULL) {
+			continue;
 		}
 
 		/*
