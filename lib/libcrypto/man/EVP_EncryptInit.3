@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.43 2022/03/31 17:27:16 naddy Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.44 2022/08/31 14:27:34 tb Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -71,7 +71,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 31 2022 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -443,8 +443,6 @@ object itself, such that it can be reused for another series of calls to
 .Fn EVP_CipherUpdate ,
 and
 .Fn EVP_CipherFinal .
-It is also suitable for cipher contexts on the stack that were used
-and are no longer needed.
 .Fn EVP_CIPHER_CTX_cleanup
 is a deprecated alias for
 .Fn EVP_CIPHER_CTX_reset .
@@ -478,11 +476,6 @@ for encryption with cipher
 from
 .Vt ENGINE
 .Fa impl .
-If
-.Fa ctx
-points to an unused object on the stack, it must be initialized with
-.Fn EVP_MD_CTX_init
-before calling this function.
 .Fa type
 is normally supplied by a function such as
 .Xr EVP_aes_256_cbc 3 .

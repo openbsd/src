@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.23 2022/03/31 17:27:16 naddy Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.24 2022/08/31 14:27:34 tb Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL a95d7574 Jul 2 12:16:38 2017 -0400
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 31 2022 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -267,8 +267,6 @@ cleans up
 and resets it to the state it had after
 .Fn EVP_MD_CTX_new ,
 such that it can be reused.
-It is also suitable for digest contexts on the stack that were
-used and are no longer needed.
 .Pp
 .Fn EVP_MD_CTX_free
 cleans up
@@ -316,11 +314,6 @@ is
 then the default implementation of digest
 .Fa type
 is used.
-If
-.Fa ctx
-points to an unused object on the stack, it must be initialized with
-.Fn EVP_MD_CTX_init
-before calling this function.
 .Pp
 .Fn EVP_DigestUpdate
 hashes
@@ -388,11 +381,6 @@ to
 .Fa out .
 This is useful if large amounts of data are to be hashed which only
 differ in the last few bytes.
-If
-.Fa out
-points to an unused object on the stack, it must be initialized with
-.Fn EVP_MD_CTX_init
-before calling this function.
 .Pp
 .Fn EVP_DigestInit
 is a deprecated function behaving like
