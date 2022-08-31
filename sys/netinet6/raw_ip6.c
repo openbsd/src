@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.163 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.164 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -594,13 +594,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	switch (req) {
 	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
-	/*
-	 * Not supported.
-	 */
-	case PRU_SENDOOB:
 		error = EOPNOTSUPP;
 		break;
 

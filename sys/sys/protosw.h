@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.49 2022/08/29 08:08:17 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.50 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -79,6 +79,8 @@ struct pr_usrreqs {
 	int	(*pru_abort)(struct socket *);
 	int	(*pru_sense)(struct socket *, struct stat *);
 	int	(*pru_rcvoob)(struct socket *, struct mbuf *, int);
+	int	(*pru_sendoob)(struct socket *, struct mbuf *, struct mbuf *,
+		    struct mbuf *);
 };
 
 struct protosw {
@@ -242,6 +244,7 @@ char	*prcorequests[] = {
 
 #ifdef _KERNEL
 
+#include <sys/mbuf.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
 
@@ -367,8 +370,12 @@ static inline int
 pru_sendoob(struct socket *so, struct mbuf *top, struct mbuf *addr,
     struct mbuf *control)
 {
-	return (*so->so_proto->pr_usrreqs->pru_usrreq)(so,
-	    PRU_SENDOOB, top, addr, control, curproc);
+	if (so->so_proto->pr_usrreqs->pru_sendoob)
+		return (*so->so_proto->pr_usrreqs->pru_sendoob)(so,
+		    top, addr, control);
+	m_freem(top);
+	m_freem(control);
+	return (EOPNOTSUPP);
 }
 
 static inline int

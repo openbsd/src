@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.201 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.202 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -126,6 +126,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_abort	= tcp_abort,
 	.pru_sense	= tcp_sense,
 	.pru_rcvoob	= tcp_rcvoob,
+	.pru_sendoob	= tcp_sendoob,
 };
 
 static int pr_slowhz = PR_SLOWHZ;
@@ -227,27 +228,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	 */
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		break;
-
-	case PRU_SENDOOB:
-		if (sbspace(so, &so->so_snd) < -512) {
-			m_freem(m);
-			error = ENOBUFS;
-			break;
-		}
-		/*
-		 * According to RFC961 (Assigned Protocols),
-		 * the urgent pointer points to the last octet
-		 * of urgent data.  We continue, however,
-		 * to consider it to indicate the first octet
-		 * of data past the urgent section.
-		 * Otherwise, snd_up should be one lower.
-		 */
-		sbappendstream(so, &so->so_snd, m);
-		tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
-		tp->t_force = 1;
-		error = tcp_output(tp);
-		tp->t_force = 0;
 		break;
 
 	case PRU_SOCKADDR:
@@ -1020,6 +1000,60 @@ out:
 		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL, PRU_RCVOOB, 0);
 	return (error);
 }
+
+int
+tcp_sendoob(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+	short ostate;
+
+	soassertlocked(so);
+
+	if (control && control->m_len) {
+		error = EINVAL;
+		goto release;
+	}
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		goto release;
+
+	if (so->so_options & SO_DEBUG)
+		ostate = tp->t_state;
+
+	if (sbspace(so, &so->so_snd) < -512) {
+		error = ENOBUFS;
+		goto out;
+	}
+
+	/*
+	 * According to RFC961 (Assigned Protocols),
+	 * the urgent pointer points to the last octet
+	 * of urgent data.  We continue, however,
+	 * to consider it to indicate the first octet
+	 * of data past the urgent section.
+	 * Otherwise, snd_up should be one lower.
+	 */
+	sbappendstream(so, &so->so_snd, m);
+	m = NULL;
+	tp->snd_up = tp->snd_una + so->so_snd.sb_cc;
+	tp->t_force = 1;
+	error = tcp_output(tp);
+	tp->t_force = 0;
+
+out:
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_SENDOOB, 0);
+
+release:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
+}
+
 
 /*
  * Initiate (or continue) disconnect.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.152 2022/08/29 08:08:17 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.153 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -727,6 +727,8 @@ int	 tcp_send(struct socket *, struct mbuf *, struct mbuf *,
 int	 tcp_abort(struct socket *);
 int	 tcp_sense(struct socket *, struct stat *);
 int	 tcp_rcvoob(struct socket *, struct mbuf *, int);
+int	 tcp_sendoob(struct socket *, struct mbuf *, struct mbuf *,
+	     struct mbuf *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);

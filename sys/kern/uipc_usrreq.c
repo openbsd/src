@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.180 2022/08/30 16:24:16 miod Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.181 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -245,10 +245,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			unp2->unp_connid.pid = p->p_p->ps_pid;
 			unp2->unp_flags |= UNP_FEIDS;
 		}
-		break;
-
-	case PRU_SENDOOB:
-		error = EOPNOTSUPP;
 		break;
 
 	case PRU_SOCKADDR:

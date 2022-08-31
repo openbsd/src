@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.296 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.297 2022/08/31 21:23:02 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1111,7 +1111,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 			in_setpeeraddr(inp, addr);
 		break;
 
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:

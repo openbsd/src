@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.81 2022/08/29 08:08:17 mvs Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.82 2022/08/31 21:23:02 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -280,7 +280,6 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		break;
 
 	case PRU_CONNECT2:
-	case PRU_SENDOOB:
 	case PRU_FASTTIMO:
 	case PRU_SLOWTIMO:
 	case PRU_PROTORCV:
