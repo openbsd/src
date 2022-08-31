@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2022/08/29 18:42:28 kn Exp $
+#	$OpenBSD: Makefile,v 1.9 2022/08/31 20:23:57 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -11,12 +11,16 @@ DEVFILES =		${NCHUNKS:=vnd%.txt}
 SRFILE =		sr.txt
 MOUNTPOINT =		mnt
 STAGEDIR =		/usr/mdec
+
 .if   ${MACHINE} == "amd64" ||	\
       ${MACHINE} == "i386"	# assume BIOS/MBR
+FORMAT_DISK =		fdisk -iy
 STAGENAMES =		biosboot boot
 .elif ${MACHINE} == "arm64"
+FORMAT_DISK =		fdisk -g -y -b32768
 STAGENAMES =		BOOTAA64.EFI
 .elif ${MACHINE} == "sparc64"
+FORMAT_DISK =		true	# NOOP
 STAGENAMES =		bootblk ofwboot
 .endif
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
@@ -32,12 +36,7 @@ create-new-chunks:
 # what the installer does, see /usr/src/distrib/$(machine)/ramdisk/install.md
 format-new-chunks: create-new-chunks
 .for devfile in ${DEVFILES}
-.if   ${MACHINE} == "amd64" ||	\
-      ${MACHINE} == "i386"	# assume BIOS/MBR
-	${SUDO} fdisk -iy -- "$$(<${devfile})" 1>/dev/null
-.elif ${MACHINE} == "arm64"
-	${SUDO} fdisk -g -y -b32768 -- "$$(<${devfile})" 1>/dev/null
-.endif
+	${SUDO} ${FORMAT_DISK} -- "$$(<${devfile})" 1>/dev/null
 	printf 'a\n\n\n\nRAID\nw\nq\n' | \
 		${SUDO} disklabel -E -- "$$(<${devfile})" 1>/dev/null
 .endfor
@@ -51,6 +50,7 @@ create-mountpoint:
 	mkdir -- ${MOUNTPOINT}
 
 format-new-softraid: create-new-softraid create-mountpoint
+	${SUDO} ${FORMAT_DISK} -- "$$(<${SRFILE})" 1>/dev/null
 	${SUDO} disklabel -Aw -- "$$(<${SRFILE})"
 	${SUDO} newfs -q -- "$$(<${SRFILE})"a 1>/dev/null
 	${SUDO} mount -- /dev/"$$(<${SRFILE})"a ${MOUNTPOINT}
