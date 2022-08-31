@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.9 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.10 2022/08/31 19:40:37 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -103,6 +103,9 @@ md_installboot(int devfd, char *dev)
 	bootldr = fileprefix(root, bootldr);
 	if (bootldr == NULL)
 		exit(1);
+	if (verbose)
+		fprintf(stderr, "%s %s to %s\n",
+		    (nowrite ? "would copy" : "copying"), stage2, bootldr);
 	if (!nowrite)
 		if (filecopy(stage2, bootldr) == -1)
 			exit(1);
