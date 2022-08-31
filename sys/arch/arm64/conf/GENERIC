@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.235 2022/08/31 14:47:22 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.236 2022/08/31 16:10:59 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -300,6 +300,11 @@ rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
+# Qualcomm SoCs
+qcgpio*		at acpi?
+qciic*		at acpi?
+iic*		at qciic?
+
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs
 gpio*		at sxipio?
@@ -506,6 +511,13 @@ dsxrtc*		at iic?			# DS3231 RTC
 escodec*	at iic?			# ES8316 audio codec
 fanpwr*		at iic?			# FAN53555 regulator
 fusbtc*		at iic?			# USB Type-C controller
+ihidev*		at iic?			# HID-over-I2C
+ikbd*		at ihidev?		# HID-over-I2C keyboard
+wskbd*		at ikbd? mux 1
+ims*		at ihidev?		# HID-over-I2C mouse/trackpad
+wsmouse*	at ims? mux 0
+imt*		at ihidev?		# HID-over-I2C multitouch trackpad
+wsmouse*	at imt? mux 0
 ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 maxrtc*		at iic?			# DS1307 RTC
