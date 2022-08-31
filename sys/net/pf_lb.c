@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.71 2022/08/03 08:16:04 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.72 2022/08/31 11:29:12 benno Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -519,13 +519,18 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			 * fall back to POOL_NONE if there is a single host
 			 * address in pool.
 			 */
-			if ((af == AF_INET &&
-			    rmask->addr32[0] == INADDR_BROADCAST) ||
-			    (af == AF_INET6 &&
-			    IN6_ARE_ADDR_EQUAL(&rmask->v6, &in6mask128))) {
+			if (af == AF_INET &&
+			    rmask->addr32[0] == INADDR_BROADCAST) {
 				pf_addrcpy(naddr, raddr, af);
 				break;
 			}
+#ifdef INET6
+			if (af == AF_INET6 &&
+			    IN6_ARE_ADDR_EQUAL(&rmask->v6, &in6mask128)) {
+				pf_addrcpy(naddr, raddr, af);
+				break;
+			}
+#endif
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
 
