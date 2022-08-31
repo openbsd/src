@@ -1,3 +1,5 @@
+/*	$OpenBSD: bgpctl.h,v 1.15 2022/08/31 12:13:59 claudio Exp $ */
+
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *

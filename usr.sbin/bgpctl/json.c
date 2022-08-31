@@ -1,3 +1,5 @@
+/*	$OpenBSD: json.c,v 1.3 2022/08/31 12:13:59 claudio Exp $ */
+
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
