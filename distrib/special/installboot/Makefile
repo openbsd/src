@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2022/08/24 21:08:51 kn Exp $
+#	$OpenBSD: Makefile,v 1.18 2022/08/31 18:46:06 miod Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -24,7 +24,6 @@ SRCS += efi_installboot.c
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
 .elif ${MACHINE} == "landisk"
-CFLAGS += -DBOOTSTRAP
 SRCS += landisk_installboot.c
 .elif ${MACHINE} == "loongson"
 SRCS += loongson_installboot.c
