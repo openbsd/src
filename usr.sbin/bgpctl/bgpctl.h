@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.15 2022/08/31 12:13:59 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.16 2022/08/31 15:00:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,6 @@ struct output {
 	void	(*communities)(u_char *, size_t, struct parse_result *);
 	void	(*rib)(struct ctl_show_rib *, u_char *, size_t,
 		    struct parse_result *);
-	void	(*rib_hash)(struct rde_hashstats *);
 	void	(*rib_mem)(struct rde_memstats *);
 	void	(*set)(struct ctl_show_set *);
 	void	(*rtr)(struct ctl_show_rtr *);

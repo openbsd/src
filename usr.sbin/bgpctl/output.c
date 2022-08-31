@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.28 2022/08/29 18:19:21 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.29 2022/08/31 15:00:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1030,20 +1030,6 @@ show_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data));
 	printf("Sets using %s of memory\n", fmt_mem(stats->aset_size +
 	    stats->pset_size));
-	printf("\nRDE hash statistics\n");
-}
-
-static void
-show_rib_hash(struct rde_hashstats *hash)
-{
-	double avg, dev;
-
-	printf("\t%s: size %lld, %lld entries\n", hash->name, hash->num,
-	    hash->sum);
-	avg = (double)hash->sum / (double)hash->num;
-	dev = sqrt(fmax(0, hash->sumq / hash->num - avg * avg));
-	printf("\t    min %lld max %lld avg/std-dev = %.3f/%.3f\n",
-	    hash->min, hash->max, avg, dev);
 }
 
 static void
@@ -1131,7 +1117,6 @@ const struct output show_output = {
 	.attr = show_attr,
 	.rib = show_rib,
 	.rib_mem = show_rib_mem,
-	.rib_hash = show_rib_hash,
 	.set = show_rib_set,
 	.rtr = show_rtr,
 	.result = show_result,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.22 2022/08/29 18:19:21 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.23 2022/08/31 15:00:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -966,28 +966,6 @@ json_rib_mem(struct rde_memstats *stats)
 }
 
 static void
-json_rib_hash(struct rde_hashstats *hash)
-{
-	double avg, dev;
-
-	json_do_array("hashtables");
-
-	avg = (double)hash->sum / (double)hash->num;
-	dev = sqrt(fmax(0, hash->sumq / hash->num - avg * avg));
-
-	json_do_object("hashtable");
-
-	json_do_printf("name", "%s", hash->name);
-	json_do_uint("size", hash->num);
-	json_do_uint("entries", hash->sum);
-	json_do_uint("min", hash->min);
-	json_do_uint("max", hash->max);
-	json_do_double("avg", avg);
-	json_do_double("std_dev", dev);
-	json_do_end();
-}
-
-static void
 json_rib_set(struct ctl_show_set *set)
 {
 	json_do_array("sets");
@@ -1076,7 +1054,6 @@ const struct output json_output = {
 	.attr = json_attr,
 	.rib = json_rib,
 	.rib_mem = json_rib_mem,
-	.rib_hash = json_rib_hash,
 	.set = json_rib_set,
 	.rtr = json_rtr,
 	.result = json_result,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.282 2022/08/17 15:16:12 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.283 2022/08/31 15:00:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -410,7 +410,6 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct ktable		*kt;
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
-	struct rde_hashstats	 hash;
 	u_char			*asdata;
 	u_int			 rescode, ilen;
 	size_t			 aslen;
@@ -478,13 +477,7 @@ show(struct imsg *imsg, struct parse_result *res)
 			errx(1, "wrong imsg len");
 		memcpy(&stats, imsg->data, sizeof(stats));
 		output->rib_mem(&stats);
-		break;
-	case IMSG_CTL_SHOW_RIB_HASH:
-		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(hash))
-			errx(1, "wrong imsg len");
-		memcpy(&hash, imsg->data, sizeof(hash));
-		output->rib_hash(&hash);
-		break;
+		return (1);
 	case IMSG_CTL_SHOW_SET:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(set))
 			errx(1, "wrong imsg len");
