@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.126 2022/08/01 14:15:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.127 2022/08/31 09:07:35 gnezdo Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -161,9 +161,9 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	 * we can bump the reference count, check to see if we need to
 	 * add it to the writeable list, and then return.
 	 */
+	rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
 	if (uvn->u_flags & UVM_VNODE_VALID) {	/* already active? */
 
-		rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
 		/* regain vref if we were persisting */
 		if (uvn->u_obj.uo_refs == 0) {
 			vref(vp);
@@ -181,6 +181,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 
 		return (&uvn->u_obj);
 	}
+	rw_exit(uvn->u_obj.vmobjlock);
 
 	/*
 	 * need to call VOP_GETATTR() to get the attributes, but that could
