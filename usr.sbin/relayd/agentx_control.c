@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.5 2021/08/31 13:19:29 martijn Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.6 2022/08/31 16:17:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -458,7 +458,7 @@ agentx_setsock(struct relayd *lenv, enum privsep_procid id)
 	proc_compose_imsg(lenv->sc_ps, id, -1, IMSG_AGENTXSOCK, -1, s, NULL, 0);
 }
 
-int
+void
 agentx_getsock(struct imsg *imsg)
 {
 	struct timeval		 tv = AGENTX_RECONNECT_TIMEOUT;
@@ -473,11 +473,9 @@ agentx_getsock(struct imsg *imsg)
 
 	agentx_connect(sa, imsg->fd);
 
-	return 0;
  retry:
 	evtimer_set(&env->sc_agentxev, agentx_sock, env);
 	evtimer_add(&env->sc_agentxev, &tv);
-	return 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.187 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.188 2022/08/31 16:17:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -431,7 +431,7 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 		parent_configure_done(env);
 		break;
 	case IMSG_AGENTXSOCK:
-		(void)agentx_setsock(env, p->p_id);
+		agentx_setsock(env, p->p_id);
 		break;
 	default:
 		return (-1);
