@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.11 2022/08/31 09:36:46 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.12 2022/08/31 09:38:00 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -251,7 +251,8 @@ test_builtin(BIO *out)
 		BIO_printf(out, ".");
 		(void)BIO_flush(out);
 		/* create signature */
-		sig_len = ECDSA_size(eckey);
+		if ((sig_len = ECDSA_size(eckey)) == 0)
+			goto builtin_err;
 		if ((signature = malloc(sig_len)) == NULL)
 			goto builtin_err;
 		if (!ECDSA_sign(0, digest, 20, signature, &sig_len, eckey)) {
@@ -332,6 +333,12 @@ test_builtin(BIO *out)
 		r = NULL;
 		s = NULL;
 
+		if ((sig_len = i2d_ECDSA_SIG(ecdsa_sig, NULL)) <= 0)
+			goto builtin_err;
+		free(signature);
+		if ((signature = calloc(1, sig_len)) == NULL)
+			goto builtin_err;
+
 		sig_ptr2 = signature;
 		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
 		if (ECDSA_verify(0, digest, 20, signature, sig_len,
@@ -348,6 +355,12 @@ test_builtin(BIO *out)
 			goto builtin_err;
 		r = NULL;
 		s = NULL;
+
+		if ((sig_len = i2d_ECDSA_SIG(ecdsa_sig, NULL)) <= 0)
+			goto builtin_err;
+		free(signature);
+		if ((signature = calloc(1, sig_len)) == NULL)
+			goto builtin_err;
 
 		sig_ptr2 = signature;
 		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
