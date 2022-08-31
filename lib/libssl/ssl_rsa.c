@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.47 2022/08/31 20:20:53 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.48 2022/08/31 20:49:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,9 +184,17 @@ ssl_set_pkey(SSL_CTX *ctx, SSL *ssl, EVP_PKEY *pkey)
 
 	if (c->pkeys[i].x509 != NULL) {
 		EVP_PKEY *pktmp;
-		pktmp = X509_get_pubkey(c->pkeys[i].x509);
+
+		if ((pktmp = X509_get0_pubkey(c->pkeys[i].x509)) == NULL)
+			return 0;
+
+		/*
+		 * Callers of EVP_PKEY_copy_parameters() can't distinguish
+		 * errors from the absence of a param_copy() method. So
+		 * pretend it can never fail.
+		 */
 		EVP_PKEY_copy_parameters(pktmp, pkey);
-		EVP_PKEY_free(pktmp);
+
 		ERR_clear_error();
 
 		/*
@@ -209,7 +217,7 @@ ssl_set_pkey(SSL_CTX *ctx, SSL *ssl, EVP_PKEY *pkey)
 	c->key = &(c->pkeys[i]);
 
 	c->valid = 0;
-	return (1);
+	return 1;
 }
 
 int
