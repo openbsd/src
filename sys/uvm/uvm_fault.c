@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.131 2022/06/28 10:45:55 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.132 2022/08/31 01:27:04 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1023,13 +1023,14 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
 
-#ifndef __HAVE_PMAP_MPSAFE_ENTER_COW
+#if defined(MULTIPROCESSOR) && !defined(__HAVE_PMAP_MPSAFE_ENTER_COW)
 		/*
 		 * If there are multiple threads, either uvm or the
 		 * pmap has to make sure no threads see the old RO
 		 * mapping once any have seen the new RW mapping.
 		 * uvm does it by inserting the new mapping RO and
 		 * letting it fault again.
+		 * This is only a problem on MP systems.
 		 */
 		if (P_HASSIBLING(curproc)) {
 			flt->enter_prot &= ~PROT_WRITE;
