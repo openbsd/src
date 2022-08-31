@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.13 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.14 2022/08/31 13:01:01 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -197,36 +197,33 @@ ecdsa_check(EC_KEY *key)
 int
 ECDSA_size(const EC_KEY *r)
 {
-	int ret, i;
-	ASN1_INTEGER bs;
-	BIGNUM	*order = NULL;
-	unsigned char buf[4];
+	BIGNUM *order = NULL;
 	const EC_GROUP *group;
+	ECDSA_SIG signature;
+	int ret = 0;
 
 	if (r == NULL)
-		return 0;
-	group = EC_KEY_get0_group(r);
-	if (group == NULL)
-		return 0;
+		goto err;
+
+	if ((group = EC_KEY_get0_group(r)) == NULL)
+		goto err;
 
 	if ((order = BN_new()) == NULL)
-		return 0;
-	if (!EC_GROUP_get_order(group, order, NULL)) {
-		BN_clear_free(order);
-		return 0;
-	}
-	i = BN_num_bits(order);
-	bs.length = (i + 7) / 8;
-	bs.data = buf;
-	bs.type = V_ASN1_INTEGER;
-	/* If the top bit is set the asn1 encoding is 1 larger. */
-	buf[0] = 0xff;
+		goto err;
 
-	i = i2d_ASN1_INTEGER(&bs, NULL);
-	i += i; /* r and s */
-	ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+	if (!EC_GROUP_get_order(group, order, NULL))
+		goto err;
+
+	signature.r = order;
+	signature.s = order;
+
+	if ((ret = i2d_ECDSA_SIG(&signature, NULL)) < 0)
+		ret = 0;
+
+ err:
 	BN_clear_free(order);
-	return (ret);
+
+	return ret;
 }
 
 int

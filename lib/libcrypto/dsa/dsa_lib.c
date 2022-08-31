@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.35 2022/06/27 12:28:46 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.36 2022/08/31 13:01:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,23 +220,15 @@ DSA_up_ref(DSA *r)
 int
 DSA_size(const DSA *r)
 {
-	int ret, i;
-	ASN1_INTEGER bs;
-	unsigned char buf[4];	/* 4 bytes looks really small.
-				   However, i2d_ASN1_INTEGER() will not look
-				   beyond the first byte, as long as the second
-				   parameter is NULL. */
+	DSA_SIG signature;
+	int ret = 0;
 
-	i = BN_num_bits(r->q);
-	bs.length = (i + 7) / 8;
-	bs.data = buf;
-	bs.type = V_ASN1_INTEGER;
-	/* If the top bit is set the asn1 encoding is 1 larger. */
-	buf[0] = 0xff;
+	signature.r = r->q;
+	signature.s = r->q;
 
-	i = i2d_ASN1_INTEGER(&bs, NULL);
-	i += i; /* r and s */
-	ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+	if ((ret = i2d_DSA_SIG(&signature, NULL)) < 0)
+		ret = 0;
+
 	return ret;
 }
 
