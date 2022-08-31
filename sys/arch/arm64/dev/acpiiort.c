@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.6 2022/04/06 18:59:26 naddy Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.7 2022/08/31 20:49:12 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -176,7 +176,7 @@ acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
 		return dmat;
 
 	node = (struct acpi_iort_node *)((char *)iort + offset);
-	if (node->type == ACPI_IORT_SMMU)
+	if (node->type == ACPI_IORT_SMMU || node->type == ACPI_IORT_SMMU_V3)
 		return acpiiort_smmu_map(node, rid, dmat);
 
 	return dmat;
