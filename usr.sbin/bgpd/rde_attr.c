@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.129 2022/08/29 18:18:55 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.130 2022/08/31 14:29:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -92,74 +92,21 @@ attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
 }
 
 /* optional attribute specific functions */
-int		 attr_diff(struct attr *, struct attr *);
-struct attr	*attr_alloc(uint8_t, uint8_t, const void *, uint16_t);
-struct attr	*attr_lookup(uint8_t, uint8_t, const void *, uint16_t);
+struct attr	*attr_alloc(uint8_t, uint8_t, void *, uint16_t);
+struct attr	*attr_lookup(uint8_t, uint8_t, void *, uint16_t);
 void		 attr_put(struct attr *);
 
-struct attr_table {
-	struct attr_list	*hashtbl;
-	uint64_t		 hashmask;
-} attrtable;
+static inline int	 attr_diff(struct attr *, struct attr *);
 
-SIPHASH_KEY attrtablekey;
+RB_HEAD(attr_tree, attr)	attrtable = RB_INITIALIZER(&attr);
+RB_GENERATE_STATIC(attr_tree, attr, entry, attr_diff);
 
-#define ATTR_HASH(x)				\
-	&attrtable.hashtbl[(x) & attrtable.hashmask]
-
-void
-attr_init(uint32_t hashsize)
-{
-	uint32_t	hs, i;
-
-	arc4random_buf(&attrtablekey, sizeof(attrtablekey));
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	attrtable.hashtbl = calloc(hs, sizeof(struct attr_list));
-	if (attrtable.hashtbl == NULL)
-		fatal("%s", __func__);
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&attrtable.hashtbl[i]);
-
-	attrtable.hashmask = hs - 1;
-}
 
 void
 attr_shutdown(void)
 {
-	uint64_t	i;
-
-	for (i = 0; i <= attrtable.hashmask; i++)
-		if (!LIST_EMPTY(&attrtable.hashtbl[i]))
-			log_warnx("%s: free non-free table", __func__);
-
-	free(attrtable.hashtbl);
-}
-
-void
-attr_hash_stats(struct rde_hashstats *hs)
-{
-	struct attr		*a;
-	uint64_t		i;
-	int64_t			n;
-
-	memset(hs, 0, sizeof(*hs));
-	strlcpy(hs->name, "attr hash", sizeof(hs->name));
-	hs->min = LLONG_MAX;
-	hs->num = attrtable.hashmask + 1;
-
-	for (i = 0; i <= attrtable.hashmask; i++) {
-		n = 0;
-		LIST_FOREACH(a, &attrtable.hashtbl[i], entry)
-			n++;
-		if (n < hs->min)
-			hs->min = n;
-		if (n > hs->max)
-			hs->max = n;
-		hs->sum += n;
-		hs->sumq += n * n;
-	}
+	if (!RB_EMPTY(&attrtable))
+		log_warnx("%s: free non-free attr table", __func__);
 }
 
 int
@@ -259,7 +206,7 @@ attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 	}
 }
 
-int
+static inline int
 attr_diff(struct attr *oa, struct attr *ob)
 {
 	int	r;
@@ -285,8 +232,7 @@ attr_diff(struct attr *oa, struct attr *ob)
 		return (1);
 	if (r < 0)
 		return (-1);
-
-	fatalx("attr_diff: equal attributes encountered");
+	return (0);
 }
 
 int
@@ -310,18 +256,6 @@ attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 	}
 
 	return (0);
-}
-
-uint64_t
-attr_hash(struct rde_aspath *a)
-{
-	uint64_t hash = 0;
-	uint8_t l;
-
-	for (l = 0; l < a->others_len; l++)
-		if (a->others[l] != NULL)
-			hash ^= a->others[l]->hash;
-	return (hash);
 }
 
 void
@@ -355,10 +289,9 @@ attr_freeall(struct rde_aspath *asp)
 }
 
 struct attr *
-attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len)
+attr_alloc(uint8_t flags, uint8_t type, void *data, uint16_t len)
 {
 	struct attr	*a;
-	SIPHASH_CTX	ctx;
 
 	a = calloc(1, sizeof(struct attr));
 	if (a == NULL)
@@ -379,42 +312,24 @@ attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len)
 	} else
 		a->data = NULL;
 
-	SipHash24_Init(&ctx, &attrtablekey);
-	SipHash24_Update(&ctx, &flags, sizeof(flags));
-	SipHash24_Update(&ctx, &type, sizeof(type));
-	SipHash24_Update(&ctx, &len, sizeof(len));
-	SipHash24_Update(&ctx, a->data, a->len);
-	a->hash = SipHash24_End(&ctx);
-	LIST_INSERT_HEAD(ATTR_HASH(a->hash), a, entry);
+	if (RB_INSERT(attr_tree, &attrtable, a) != NULL)
+		fatalx("corrupted attr tree");
 
 	return (a);
 }
 
 struct attr *
-attr_lookup(uint8_t flags, uint8_t type, const void *data, uint16_t len)
+attr_lookup(uint8_t flags, uint8_t type, void *data, uint16_t len)
 {
-	struct attr_list	*head;
-	struct attr		*a;
-	uint64_t		 hash;
-	SIPHASH_CTX		 ctx;
+	struct attr		needle;
 
 	flags &= ~ATTR_DEFMASK;	/* normalize mask */
 
-	SipHash24_Init(&ctx, &attrtablekey);
-	SipHash24_Update(&ctx, &flags, sizeof(flags));
-	SipHash24_Update(&ctx, &type, sizeof(type));
-	SipHash24_Update(&ctx, &len, sizeof(len));
-	SipHash24_Update(&ctx, data, len);
-	hash = SipHash24_End(&ctx);
-	head = ATTR_HASH(hash);
-
-	LIST_FOREACH(a, head, entry) {
-		if (hash == a->hash && type == a->type &&
-		    flags == a->flags && len == a->len &&
-		    memcmp(data, a->data, len) == 0)
-			return (a);
-	}
-	return (NULL);
+	needle.flags = flags;
+	needle.type = type;
+	needle.len = len;
+	needle.data = data;
+	return RB_FIND(attr_tree, &attrtable, &needle);
 }
 
 void
@@ -429,7 +344,7 @@ attr_put(struct attr *a)
 		return;
 
 	/* unlink */
-	LIST_REMOVE(a, entry);
+	RB_REMOVE(attr_tree, &attrtable, a);
 
 	if (a->len != 0)
 		rdemem.attr_dcnt--;

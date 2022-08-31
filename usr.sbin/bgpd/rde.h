@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.267 2022/08/30 18:50:21 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.268 2022/08/31 14:29:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -162,9 +162,8 @@ enum attrtypes {
 #define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
 
 struct attr {
-	LIST_ENTRY(attr)		 entry;
+	RB_ENTRY(attr)			 entry;
 	u_char				*data;
-	uint64_t			 hash;
 	int				 refcnt;
 	uint16_t			 len;
 	uint8_t				 flags;
@@ -429,9 +428,7 @@ int		 attr_write(void *, uint16_t, uint8_t, uint8_t, void *,
 		    uint16_t);
 int		 attr_writebuf(struct ibuf *, uint8_t, uint8_t, void *,
 		    uint16_t);
-void		 attr_init(uint32_t);
 void		 attr_shutdown(void);
-void		 attr_hash_stats(struct rde_hashstats *);
 int		 attr_optadd(struct rde_aspath *, uint8_t, uint8_t,
 		    void *, uint16_t);
 struct attr	*attr_optget(const struct rde_aspath *, uint8_t);
