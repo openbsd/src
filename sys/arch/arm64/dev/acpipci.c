@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.36 2022/08/29 15:42:25 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.37 2022/08/31 20:16:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -145,8 +145,6 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	struct aml_value res;
 	uint64_t bbn = 0;
 	uint64_t seg = 0;
-	pcitag_t tag;
-	pcireg_t id;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -226,15 +224,6 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = sc->sc_bus;
 	if (sc->sc_msi_ic)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
-
-	/*
-	 * Qualcomm SC8280XP uses a non-standard MSI implementation.
-	 */
-	tag = pci_make_tag(sc->sc_pc, sc->sc_bus, 0, 0);
-	id = pci_conf_read(sc->sc_pc, tag, PCI_ID_REG);
-	if (PCI_VENDOR(id) == PCI_VENDOR_QUALCOMM &&
-	    PCI_PRODUCT(id) == PCI_PRODUCT_QUALCOMM_SC8280XP_PCIE)
-		pba.pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
 }
@@ -841,6 +830,7 @@ acpipci_iort_map(struct acpi_iort *iort, uint32_t offset, uint32_t id)
 	case ACPI_IORT_ITS:
 		return id;
 	case ACPI_IORT_SMMU:
+	case ACPI_IORT_SMMU_V3:
 		return acpipci_iort_map_node(iort, node, id);
 	}
 
