@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.7 2022/08/31 20:49:12 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.8 2022/08/31 23:31:35 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -126,11 +126,9 @@ acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
 	struct acpi_iort_mapping *map;
 	struct acpi_iort_nc_node *nc;
 	struct acpi_q *entry;
-	const char *name;
+	struct aml_node *anc;
 	uint32_t rid, offset;
 	int i;
-
-	name = aml_nodename(root);
 
 	/* Look for IORT table. */
 	SIMPLEQ_FOREACH(entry, &acpi_softc->sc_tables, q_next) {
@@ -150,7 +148,9 @@ acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
 		node = (struct acpi_iort_node *)((char *)iort + offset);
 		if (node->type == ACPI_IORT_NAMED_COMPONENT) {
 			nc = (struct acpi_iort_nc_node *)&node[1];
-			if (strcmp(nc->device_object_name, name) == 0)
+			anc = aml_searchname(acpi_softc->sc_root,
+			    nc->device_object_name);
+			if (anc == root)
 				break;
 		}
 		offset += node->length;
