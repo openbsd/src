@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.19 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.20 2022/08/31 15:14:01 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -173,6 +173,7 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_release_bus = dwiic_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = dwiic_i2c_exec;
 	sc->sc_i2c_tag.ic_intr_establish = dwiic_i2c_intr_establish;
+	sc->sc_i2c_tag.ic_intr_disestablish = dwiic_i2c_intr_disestablish;
 	sc->sc_i2c_tag.ic_intr_string = dwiic_i2c_intr_string;
 
 	bzero(&sc->sc_iba, sizeof(sc->sc_iba));
@@ -310,6 +311,13 @@ dwiic_i2c_intr_establish(void *cookie, void *ih, int level,
 
 	return acpi_intr_establish(crs->irq_int, crs->irq_flags,
 	    level, func, arg, name);
+}
+
+void
+dwiic_i2c_intr_disestablish(void *cookie, void *ih)
+{
+	/* XXX GPIO interrupts */
+	acpi_intr_disestablish(ih);
 }
 
 const char *

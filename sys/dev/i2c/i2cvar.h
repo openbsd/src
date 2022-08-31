@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.18 2022/02/09 07:58:24 visa Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.19 2022/08/31 15:14:01 kettenis Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ typedef struct i2c_controller {
 
 	void	*(*ic_intr_establish)(void *, void *, int, int (*)(void *),
 		    void *, const char *);
+	void	(*ic_intr_disestablish)(void *, void *);
 	const char *(*ic_intr_string)(void *, void *);
 } *i2c_tag_t;
 
@@ -161,6 +162,8 @@ int	iic_smbus_receive_byte(i2c_tag_t, i2c_addr_t, uint8_t *, int);
 #define iic_intr_establish(ic, ih, level, func, arg, name)		\
 	(*(ic)->ic_intr_establish)((ic)->ic_cookie, (ih), (level),	\
 	    (func), (arg), (name))
+#define iic_intr_disestablish(ic, ih)					\
+	(*(ic)->ic_intr_disestablish)((ic)->ic_cookie, (ih))
 #define iic_intr_string(ic, ih)						\
 	(*(ic)->ic_intr_string)((ic)->ic_cookie, (ih))
 

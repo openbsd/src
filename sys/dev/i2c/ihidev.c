@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.27 2022/05/20 05:03:45 anton Exp $ */
+/* $OpenBSD: ihidev.c,v 1.28 2022/08/31 15:14:01 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -211,7 +211,7 @@ ihidev_detach(struct device *self, int flags)
 	struct ihidev_softc *sc = (struct ihidev_softc *)self;
 
 	if (sc->sc_ih != NULL) {
-		intr_disestablish(sc->sc_ih);
+		iic_intr_disestablish(sc->sc_tag, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiicvar.h,v 1.4 2020/02/18 12:13:39 mpi Exp $ */
+/* $OpenBSD: dwiicvar.h,v 1.5 2022/08/31 15:14:01 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -90,6 +90,7 @@ int		dwiic_intr(void *);
 
 void *		dwiic_i2c_intr_establish(void *, void *, int,
 		    int (*)(void *), void *, const char *);
+void		dwiic_i2c_intr_disestablish(void *, void *);
 const char *	dwiic_i2c_intr_string(void *, void *);
 int		dwiic_i2c_print(void *, const char *);
 
