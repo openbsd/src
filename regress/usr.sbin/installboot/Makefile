@@ -1,29 +1,42 @@
-#	$OpenBSD: Makefile,v 1.12 2022/08/31 23:10:01 kn Exp $
+#	$OpenBSD: Makefile,v 1.13 2022/08/31 23:53:22 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
 REAL_RUN =		${INSTALLBOOT}
 
-# installboot(8) behaviour for multi-chunk softraid(4) differs across platforms
-NDISKS ?=		1 2
-DISKFILES =		${NDISKS:=disk%.img}
-DISKDEVFILES =		${NDISKS:=diskdev%.txt}
-ROOTDEVFILE =		rootdev.txt
-MOUNTPOINT =		mnt
-STAGEDIR =		/usr/mdec
 
+# see distrib/${MACHINE}/ramdisk/install.md for FORMAT_DISK values
+# default to root on softraid(4) on all architectures that have
+# bootstrap + kernel + installboot(8) support for it
 .if   ${MACHINE} == "amd64" ||	\
       ${MACHINE} == "i386"	# assume BIOS/MBR
 FORMAT_DISK =		fdisk -iy
 STAGENAMES =		biosboot boot
+USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "arm64"
 FORMAT_DISK =		fdisk -g -y -b32768
 STAGENAMES =		BOOTAA64.EFI
+USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "sparc64"
 FORMAT_DISK =		true	# NOOP
 STAGENAMES =		bootblk ofwboot
+USE_SOFTRAID ?=		Yes
 .endif
+
+STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
+
+.if ${USE_SOFTRAID:L} == "yes"
+# installboot(8) behaviour for multi-chunk softraid(4) differs across platforms
+NDISKS ?=		1 2
+.else
+NDISKS =		1
+.endif
+DISKFILES =		${NDISKS:=disk%.img}
+DISKDEVFILES =		${NDISKS:=diskdev%.txt}
+ROOTDEVFILE =		rootdev.txt
+MOUNTPOINT =		mnt
+
 
 REGRESS_SETUP_ONCE =	copy-bootstrap-to-root
 
@@ -36,20 +49,28 @@ create-disks:
 format-disks: create-disks
 .for devfile in ${DISKDEVFILES}
 	${SUDO} ${FORMAT_DISK} -- "$$(<${devfile})" 1>/dev/null
+.  if ${USE_SOFTRAID:L} == "yes"
 	printf 'a\n\n\n\nRAID\nw\nq\n' | \
 		${SUDO} disklabel -E -- "$$(<${devfile})" 1>/dev/null
+.  endif
 .endfor
 
 create-root: format-disks
+.if ${USE_SOFTRAID:L} == "yes"
 	${SUDO} bioctl -l"$$(sed -- s/$$/a/ ${DISKDEVFILES} | paste -sd, -- -)" \
 	    -cc -- softraid0 | \
 		awk -- '{ print $$NF }' 1>${ROOTDEVFILE}
+.else
+	ln -s -- ${DISKDEVFILES} ${ROOTDEVFILE}
+.endif
 
 create-mountpoint:
 	mkdir -- ${MOUNTPOINT}
 
 format-root: create-root create-mountpoint
+.if ${USE_SOFTRAID:L} != "yes"
 	${SUDO} ${FORMAT_DISK} -- "$$(<${ROOTDEVFILE})" 1>/dev/null
+.endif
 	${SUDO} disklabel -Aw -- "$$(<${ROOTDEVFILE})"
 	${SUDO} newfs -q -- "$$(<${ROOTDEVFILE})"a 1>/dev/null
 	${SUDO} mount -- /dev/"$$(<${ROOTDEVFILE})"a ${MOUNTPOINT}
@@ -64,10 +85,12 @@ REGRESS_TARGETS = prepare
 
 prepare:
 	${SUDO} ${REAL_RUN} -p -- "$$(<${ROOTDEVFILE})"
+.if ${USE_SOFTRAID:L} == "yes"
 	# XXX -p is not yet softraid(4) aware, need to prepare chunks manually
-.for devfile in ${DISKDEVFILES}
+.  for devfile in ${DISKDEVFILES}
 	${SUDO} ${REAL_RUN} -p -- "$$(<${devfile})"
-.endfor
+.  endfor
+.endif
 
 REGRESS_TARGETS +=	dry-prepare \
 			dry-default \
@@ -118,7 +141,9 @@ REGRESS_CLEANUP =	cleanup
 cleanup:
 	-${SUDO} umount -- ${MOUNTPOINT} 2>/dev/null
 	-rmdir -- ${MOUNTPOINT} 2>/dev/null
+.if ${USE_SOFTRAID:L} == "yes"
 	-${SUDO} bioctl -d -- "$$(<${ROOTDEVFILE})" 2>/dev/null
+.endif
 .for devfile in ${DISKDEVFILES}
 	-${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
 .endfor
