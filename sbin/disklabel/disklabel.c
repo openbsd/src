@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.241 2022/07/31 14:29:19 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.242 2022/08/31 08:35:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1126,9 +1126,9 @@ checklabel(struct disklabel *lp)
 		if (DL_GETPOFFSET(pp) > DL_GETDSIZE(lp)) {
 			warnx("partition %c: offset past end of unit", part);
 			errors++;
-		}
-		if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) > DL_GETDSIZE(lp)) {
-			warnx("partition %c: partition extends past end of unit",
+		} else if (DL_GETPOFFSET(pp) + DL_GETPSIZE(pp) >
+		    DL_GETDSIZE(lp)) {
+			warnx("partition %c: extends past end of unit",
 			    part);
 			errors++;
 		}
