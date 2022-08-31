@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.19 2022/08/30 20:40:14 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.20 2022/08/31 07:12:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,6 +264,7 @@ ssl_print_tmp_key(BIO *out, SSL *s)
 	const char *cname;
 	EVP_PKEY *pkey;
 	EC_KEY *ec;
+	const EC_GROUP *group;
 	int nid;
 
 	if (!SSL_get_server_tmp_key(s, &pkey))
@@ -276,9 +277,12 @@ ssl_print_tmp_key(BIO *out, SSL *s)
 		break;
 
 	case EVP_PKEY_EC:
-		ec = EVP_PKEY_get1_EC_KEY(pkey);
-		nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-		EC_KEY_free(ec);
+		if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+			goto err;
+		if ((group = EC_KEY_get0_group(ec)) == NULL)
+			goto err;
+
+		nid = EC_GROUP_get_curve_name(group);
 
 		if ((cname = EC_curve_nid2nist(nid)) == NULL)
 			cname = OBJ_nid2sn(nid);
@@ -291,6 +295,7 @@ ssl_print_tmp_key(BIO *out, SSL *s)
 		    EVP_PKEY_bits(pkey));
 	}
 
+ err:
 	EVP_PKEY_free(pkey);
 	return 1;
 }
