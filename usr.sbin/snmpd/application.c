@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.14 2022/08/30 17:37:03 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.15 2022/08/31 09:19:22 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1279,7 +1279,7 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 	struct appl_request_upstream *ureq = ivb->avi_request_upstream;
 	struct appl_region search, *region, *pregion;
 	struct appl_varbind *vb = &(ivb->avi_varbind);
-	struct ber_oid oid;
+	struct ber_oid oid, nextsibling;
 	int next, cmp;
 
 	next = ureq->aru_pdu->be_type == SNMP_C_GETNEXTREQ ||
@@ -1330,33 +1330,41 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 	}
 	ivb->avi_region = region;
 	if (next) {
-		oid = region->ar_oid;
+		oid = vb->av_oid;
+		/*
+		 * For the searchrange end we only want contiguous regions.
+		 * This means directly connecting, or overlapping with the same
+		 * backend.
+		 */
 		do {
 			pregion = region;
 			region = appl_region_next(ureq->aru_ctx, &oid, pregion);
-			if (region != NULL &&
-			    appl_region_cmp(region, pregion) > 0)
-				oid = region->ar_oid;
-			else
+			if (region == NULL) {
+				oid = pregion->ar_oid;
 				ober_oid_nextsibling(&oid);
-		} while (region != NULL &&
-		    region->ar_backend == pregion->ar_backend);
-		if (region == NULL) {
-			vb->av_oid_end = pregion->ar_oid;
-			if (pregion->ar_instance &&
-			    vb->av_oid_end.bo_n < BER_MAX_OID_LEN)
-				vb->av_oid_end.bo_id[vb->av_oid_end.bo_n++] = 0;
-			else
-				ober_oid_nextsibling(&(vb->av_oid_end));
-		} else {
-			if (ober_oid_cmp(&(region->ar_oid),
-			    &(ivb->avi_region->ar_oid)) == 2)
-				vb->av_oid_end = region->ar_oid;
-			else {
-				vb->av_oid_end = ivb->avi_region->ar_oid;
-				ober_oid_nextsibling(&(vb->av_oid_end));
+				break;
 			}
-		}
+			cmp = ober_oid_cmp(&(region->ar_oid), &oid);
+			if (cmp == 2)
+				oid = region->ar_oid;
+			else if (cmp == 1) {
+				/* Break out if we find a gap */
+				nextsibling = pregion->ar_oid;
+				ober_oid_nextsibling(&nextsibling);
+				if (ober_oid_cmp(&(region->ar_oid),
+				    &nextsibling) != 0) {
+					oid = pregion->ar_oid;
+					ober_oid_nextsibling(&oid);
+					break;
+				}
+				oid = region->ar_oid;
+			} else if (cmp == -2) {
+				oid = pregion->ar_oid;
+				ober_oid_nextsibling(&oid);
+			} else
+				fatalx("We can't stop/move back on getnext");
+		} while (region->ar_backend == pregion->ar_backend);
+		vb->av_oid_end = oid;
 	}
 	return 0;
 
