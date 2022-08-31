@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_installboot.c,v 1.4 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: octeon_installboot.c,v 1.5 2022/08/31 20:52:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -116,7 +116,7 @@ md_installboot(int devfd, char *dev)
 static int
 create_filesystem(struct disklabel *dl, char part)
 {
-	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
+	static const char *newfsfmt = "/sbin/newfs -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	int rslt;
@@ -157,7 +157,7 @@ create_filesystem(struct disklabel *dl, char part)
 static void
 write_filesystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
+	static char *fsckfmt = "/sbin/fsck -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];

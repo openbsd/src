@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.40 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.41 2022/08/31 20:52:15 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -247,7 +247,7 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 int
 create_filesystem(struct disklabel *dl, char part)
 {
-	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
+	static const char *newfsfmt = "/sbin/newfs -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	int rslt;
@@ -288,7 +288,7 @@ create_filesystem(struct disklabel *dl, char part)
 void
 write_filesystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
+	static const char *fsckfmt = "/sbin/fsck -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];

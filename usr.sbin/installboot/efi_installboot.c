@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_installboot.c,v 1.2 2022/02/03 10:25:14 visa Exp $	*/
+/*	$OpenBSD: efi_installboot.c,v 1.3 2022/08/31 20:52:15 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -144,7 +144,7 @@ md_installboot(int devfd, char *dev)
 static int
 create_filesystem(struct disklabel *dl, char part)
 {
-	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
+	static const char *newfsfmt = "/sbin/newfs -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	int rslt;
@@ -185,7 +185,7 @@ create_filesystem(struct disklabel *dl, char part)
 static void
 write_filesystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
+	static const char *fsckfmt = "/sbin/fsck -t msdos %s >/dev/null";
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
