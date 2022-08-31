@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.6 2022/08/29 18:54:06 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.7 2022/08/31 21:34:14 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -303,6 +303,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 /*
  * Miller-Rabin primality test for base 2.
  */
+
 static int
 bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 {
