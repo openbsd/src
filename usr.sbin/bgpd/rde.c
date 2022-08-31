@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.570 2022/08/30 18:50:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.571 2022/08/31 11:25:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1083,6 +1083,7 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_ROA_SET:
 			/* start of update */
+			trie_free(&roa_new.th);	/* clear new roa */
 			break;
 		case IMSG_RECONF_ROA_ITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -3923,17 +3924,25 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 	}
 }
 
+static int roa_update_pending;
+
 static void
 rde_roa_softreload_done(void *arg, uint8_t aid)
 {
 	/* the roa update is done */
 	log_info("ROA softreload done");
+	roa_update_pending = 0;
 }
 
 static void
 rde_roa_reload(void)
 {
 	struct rde_prefixset roa_old;
+
+	if (roa_update_pending) {
+		log_info("ROA softreload skipped, old still running");
+		return;
+	}
 
 	roa_old = rde_roa;
 	rde_roa = roa_new;
@@ -3950,6 +3959,7 @@ rde_roa_reload(void)
 	trie_free(&roa_old.th);	/* old roa no longer needed */
 
 	log_debug("ROA change: reloading Adj-RIB-In");
+	roa_update_pending = 1;
 	if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC, RDE_RUNNER_ROUNDS,
 	    rib_byid(RIB_ADJ_IN), rde_roa_softreload,
 	    rde_roa_softreload_done, NULL) == -1)

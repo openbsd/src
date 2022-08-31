@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.15 2022/05/23 13:40:12 deraadt Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.16 2022/08/31 11:25:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -468,6 +468,7 @@ trie_free(struct trie_head *th)
 {
 	trie_free_v4(th->root_v4);
 	trie_free_v6(th->root_v6);
+	memset(th, 0, sizeof(*th));
 }
 
 static int

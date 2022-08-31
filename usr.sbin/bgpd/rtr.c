@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.6 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.7 2022/08/31 11:25:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -76,7 +76,7 @@ rtr_expire_roas(time_t now)
 		}
 	}
 	if (recalc != 0)
-		log_warnx("%u roa-set entries expired", recalc);
+		log_info("%u roa-set entries expired", recalc);
 	return recalc;
 }
 
