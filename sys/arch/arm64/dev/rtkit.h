@@ -15,4 +15,6 @@ int	rtkit_start_endpoint(struct rtkit_state *, uint32_t,
 	    void (*)(void *, uint64_t), void *);
 int	rtkit_send_endpoint(struct rtkit_state *, uint32_t, uint64_t);
 
+int	aplrtk_start(uint32_t);
 int	aplsart_map(uint32_t, bus_addr_t, bus_size_t);
+

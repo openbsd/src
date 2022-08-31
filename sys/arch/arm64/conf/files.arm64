@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.58 2022/08/03 13:42:16 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.59 2022/08/31 14:47:22 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -151,6 +151,14 @@ device	apldart
 attach	apldart at fdt
 file	arch/arm64/dev/apldart.c		apldart
 
+device	apldc: fdt
+attach	apldc at fdt
+device	apldchidev {}
+attach	apldchidev at fdt
+device	apldckbd: hid, hidkbd, wskbddev
+attach	apldckbd at apldchidev
+file	arch/arm64/dev/apldc.c			apldc
+
 device	apldma
 attach	apldma at fdt
 file	arch/arm64/dev/apldma.c			apldma
@@ -199,6 +207,10 @@ device	aplpmgr
 attach	aplpmgr at fdt
 file	arch/arm64/dev/aplpmgr.c		aplpmgr
 
+device	aplrtk
+attach	aplrtk at fdt
+file	arch/arm64/dev/aplrtk.c			aplrtk
+
 # Apple NVME Storage
 device	aplns {}: rtkit
 attach	aplns at fdt
@@ -207,7 +219,7 @@ file	arch/arm64/dev/aplns.c			aplns | nvme_ans
 
 device	aplsart
 attach	aplsart at fdt
-file	arch/arm64/dev/aplsart.c			aplsart | aplns
+file	arch/arm64/dev/aplsart.c		aplsart | aplns
 
 device	aplsmc
 attach	aplsmc at fdt

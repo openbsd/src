@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.234 2022/08/03 13:42:16 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.235 2022/08/31 14:47:22 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -145,6 +145,10 @@ aplaudio*	at fdt?
 audio*		at aplaudio?
 aplcpu*		at fdt?
 apldart*	at fdt? early 1
+apldc*		at fdt?
+apldchidev*	at fdt?
+apldckbd*	at apldchidev?
+wskbd*		at apldckbd? mux 1
 apldma*		at fdt?
 apldog*		at fdt? early 1
 apliic*		at fdt?
@@ -159,6 +163,7 @@ aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplpmgr*	at fdt? early 1
+aplrtk*		at fdt?
 aplsart*	at fdt?
 aplsmc*		at fdt?
 aplspi*		at fdt?

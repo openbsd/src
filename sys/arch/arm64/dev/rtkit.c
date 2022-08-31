@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.4 2022/06/12 16:00:12 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.5 2022/08/31 14:47:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -114,11 +114,25 @@ bus_addr_t
 rtkit_alloc(struct rtkit *rk, bus_size_t size)
 {
 	bus_dma_segment_t seg;
+	bus_dmamap_t map;
 	int nsegs;
 
 	if (bus_dmamem_alloc(rk->rk_dmat, size, 16384, 0,
 	    &seg, 1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO))
 		return (bus_addr_t)-1;
+
+	if (bus_dmamap_create(rk->rk_dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK, &map)) {
+		bus_dmamem_free(rk->rk_dmat, &seg, 1);
+		return (bus_addr_t)-1;
+	}
+	
+	if (bus_dmamap_load_raw(rk->rk_dmat, map, &seg, 1, size,
+	    BUS_DMA_WAITOK)) {
+		bus_dmamap_destroy(rk->rk_dmat, map);
+		bus_dmamem_free(rk->rk_dmat, &seg, 1);
+		return (bus_addr_t)-1;
+	}
 
 	return seg.ds_addr;
 }
@@ -233,10 +247,12 @@ rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
 			if (addr == (bus_addr_t)-1)
 				return ENOMEM;
-			error = rk->rk_map(rk->rk_cookie, addr,
-			    size << PAGE_SHIFT);
-			if (error)
-				return error;
+			if (rk->rk_map) {
+				error = rk->rk_map(rk->rk_cookie, addr,
+				    size << PAGE_SHIFT);
+				if (error)
+					return error;
+			}
 		}
 
 		error = rtkit_send(mc, RTKIT_EP_CRASHLOG, RTKIT_BUFFER_REQUEST,
@@ -273,10 +289,12 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
 			if (addr == (bus_addr_t)-1)
 				return ENOMEM;
-			error = rk->rk_map(rk->rk_cookie, addr,
-			    size << PAGE_SHIFT);
-			if (error)
-				return error;
+			if (rk->rk_map) {
+				error = rk->rk_map(rk->rk_cookie, addr,
+				    size << PAGE_SHIFT);
+				if (error)
+					return error;
+			}
 		}
 
 		error = rtkit_send(mc, RTKIT_EP_IOREPORT, RTKIT_BUFFER_REQUEST,
