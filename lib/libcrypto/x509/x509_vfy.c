@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.102 2022/06/27 14:10:22 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.103 2022/08/31 07:15:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,7 +186,7 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 static int
 check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
 {
-	size_t i, n;
+	int i, n;
 	char *name;
 
 	n = sk_OPENSSL_STRING_num(id->hosts);
