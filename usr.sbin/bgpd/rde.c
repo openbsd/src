@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.572 2022/08/31 14:29:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.573 2022/08/31 15:51:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,9 +146,6 @@ rde_sighdlr(int sig)
 }
 
 uint32_t	peerhashsize = 1024;
-uint32_t	pathhashsize = 128 * 1024;
-uint32_t	attrhashsize = 16 * 1024;
-uint32_t	nexthophashsize = 1024;
 
 void
 rde_main(int debug, int verbose)
@@ -626,8 +623,6 @@ badnetdel:
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
 			    imsg.hdr.pid, -1, &rdemem, sizeof(rdemem));
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, imsg.hdr.pid,
-			    -1, NULL, 0);
 			break;
 		case IMSG_CTL_SHOW_SET:
 			/* first roa set */
