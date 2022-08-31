@@ -1,19 +1,18 @@
-dnl	$OpenBSD: hardware,v 1.9 2021/03/26 02:28:43 dtucker Exp $
+dnl	$OpenBSD: hardware,v 1.10 2022/08/31 07:25:45 fcambus Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A10/A20
-		Cubieboard
+		Cubieboard and Cubieboard 2
 		LinkSprite pcDuino
 		Banana Pi
 	Allwinner A33/R16
 		Banana Pi M2 Magic
 	Allwinner A80
 		Cubieboard4
-	Allwinner H2+
-		Orange Pi Zero
-	Allwinner H3
+	Allwinner H2+/H3
 		Banana Pi M2+
 		Orange Pi One
+		Orange Pi Zero
 	Allwinner R40/V40
 		Banana Pi M2 Berry
 	Freescale/NXP i.MX6
