@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.47 2022/02/07 19:30:48 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.48 2022/09/01 07:26:56 jsg Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -142,8 +142,6 @@ struct exec_package {
  * functions used either by execve() or the various cpu-dependent execve()
  * hooks.
  */
-int	exec_makecmds(struct proc *, struct exec_package *);
-int	exec_runcmds(struct proc *, struct exec_package *);
 void	vmcmdset_extend(struct exec_vmcmd_set *);
 void	kill_vmcmds(struct exec_vmcmd_set *evsp);
 int	vmcmd_map_pagedvn(struct proc *, struct exec_vmcmd *);
