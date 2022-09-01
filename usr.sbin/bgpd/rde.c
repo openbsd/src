@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.573 2022/08/31 15:51:44 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.574 2022/09/01 13:23:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,8 +114,8 @@ struct rde_memstats	 rdemem;
 int			 softreconfig;
 static int		 rde_eval_all;
 
-extern struct rde_peer_head	 peerlist;
-extern struct rde_peer		*peerself;
+extern struct peer_tree	 peertable;
+extern struct rde_peer	*peerself;
 
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
@@ -144,8 +144,6 @@ rde_sighdlr(int sig)
 		break;
 	}
 }
-
-uint32_t	peerhashsize = 1024;
 
 void
 rde_main(int debug, int verbose)
@@ -194,7 +192,7 @@ rde_main(int debug, int verbose)
 
 	/* initialize the RIB structures */
 	pt_init();
-	peer_init(peerhashsize);
+	peer_init();
 
 	/* make sure the default RIBs are setup */
 	rib_new("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
@@ -2982,7 +2980,7 @@ rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 	}
 
 	if (ctx->mrt.type == MRT_TABLE_DUMP_V2)
-		mrt_dump_v2_hdr(&ctx->mrt, conf, &peerlist);
+		mrt_dump_v2_hdr(&ctx->mrt, conf);
 
 	if (rib_dump_new(rid, AID_UNSPEC, CTL_MSG_HIGH_MARK, &ctx->mrt,
 	    mrt_dump_upcall, rde_mrt_done, rde_mrt_throttled) == -1)
@@ -3105,7 +3103,7 @@ rde_update_queue_pending(void)
 	if (ibuf_se && ibuf_se->w.queued >= SESS_MSG_HIGH_MARK)
 		return 0;
 
-	LIST_FOREACH(peer, &peerlist, peer_l) {
+	RB_FOREACH(peer, peer_tree, &peertable) {
 		if (peer->conf.id == 0)
 			continue;
 		if (peer->state != PEER_UP)
@@ -3131,7 +3129,7 @@ rde_update_queue_runner(void)
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
 	do {
 		sent = 0;
-		LIST_FOREACH(peer, &peerlist, peer_l) {
+		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->conf.id == 0)
 				continue;
 			if (peer->state != PEER_UP)
@@ -3189,7 +3187,7 @@ rde_update6_queue_runner(uint8_t aid)
 	/* first withdraws ... */
 	do {
 		sent = 0;
-		LIST_FOREACH(peer, &peerlist, peer_l) {
+		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->conf.id == 0)
 				continue;
 			if (peer->state != PEER_UP)
@@ -3214,7 +3212,7 @@ rde_update6_queue_runner(uint8_t aid)
 	max = RDE_RUNNER_ROUNDS / 2;
 	do {
 		sent = 0;
-		LIST_FOREACH(peer, &peerlist, peer_l) {
+		RB_FOREACH(peer, peer_tree, &peertable) {
 			if (peer->conf.id == 0)
 				continue;
 			if (peer->state != PEER_UP)
@@ -3447,7 +3445,7 @@ rde_reload_done(void)
 	rde_eval_all = 0;
 
 	/* check if filter changed */
-	LIST_FOREACH(peer, &peerlist, peer_l) {
+	RB_FOREACH(peer, peer_tree, &peertable) {
 		if (peer->conf.id == 0)	/* ignore peerself */
 			continue;
 		peer->reconf_out = 0;
@@ -3533,7 +3531,7 @@ rde_reload_done(void)
 			break;
 		case RECONF_RELOAD:
 			if (rib_update(rib)) {
-				LIST_FOREACH(peer, &peerlist, peer_l) {
+				RB_FOREACH(peer, peer_tree, &peertable) {
 					/* ignore peerself */
 					if (peer->conf.id == 0)
 						continue;
@@ -3644,7 +3642,7 @@ rde_softreconfig_in_done(void *arg, uint8_t dummy)
 		}
 	}
 
-	LIST_FOREACH(peer, &peerlist, peer_l) {
+	RB_FOREACH(peer, peer_tree, &peertable) {
 		uint8_t aid;
 
 		if (peer->reconf_out) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.269 2022/09/01 13:19:11 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.270 2022/09/01 13:23:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -70,15 +70,13 @@ struct rib {
  * How do we identify peers between the session handler and the rde?
  * Currently I assume that we can do that with the neighbor_ip...
  */
-LIST_HEAD(rde_peer_head, rde_peer);
-LIST_HEAD(attr_list, attr);
+RB_HEAD(peer_tree, rde_peer);
 RB_HEAD(prefix_tree, prefix);
 RB_HEAD(prefix_index, prefix);
 struct iq;
 
 struct rde_peer {
-	LIST_ENTRY(rde_peer)		 hash_l; /* hash list over all peers */
-	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
+	RB_ENTRY(rde_peer)		 entry;
 	SIMPLEQ_HEAD(, iq)		 imsg_queue;
 	struct peer_config		 conf;
 	struct bgpd_addr		 remote_addr;
@@ -374,8 +372,7 @@ extern struct rde_memstats rdemem;
 
 /* prototypes */
 /* mrt.c */
-int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *,
-		    struct rde_peer_head *);
+int		mrt_dump_v2_hdr(struct mrt *, struct bgpd_config *);
 void		mrt_dump_upcall(struct rib_entry *, void *);
 
 /* rde.c */
@@ -403,7 +400,7 @@ int		 peer_has_as4byte(struct rde_peer *);
 int		 peer_has_add_path(struct rde_peer *, uint8_t, int);
 int		 peer_has_open_policy(struct rde_peer *, uint8_t *);
 int		 peer_accept_no_as_set(struct rde_peer *);
-void		 peer_init(uint32_t);
+void		 peer_init(void);
 void		 peer_shutdown(void);
 void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
 struct rde_peer	*peer_get(uint32_t);
@@ -421,6 +418,8 @@ void		 peer_imsg_push(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pop(struct rde_peer *, struct imsg *);
 int		 peer_imsg_pending(void);
 void		 peer_imsg_flush(struct rde_peer *);
+
+RB_PROTOTYPE(peer_tree, rde_peer, entry, peer_cmp);
 
 /* rde_attr.c */
 int		 attr_write(void *, uint16_t, uint8_t, uint8_t, void *,

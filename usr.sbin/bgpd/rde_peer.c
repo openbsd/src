@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.22 2022/08/26 14:10:52 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.23 2022/09/01 13:23:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -26,15 +26,7 @@
 #include "bgpd.h"
 #include "rde.h"
 
-struct peer_table {
-	struct rde_peer_head	*peer_hashtbl;
-	uint32_t		 peer_hashmask;
-} peertable;
-
-#define PEER_HASH(x)		\
-	&peertable.peer_hashtbl[(x) & peertable.peer_hashmask]
-
-struct rde_peer_head	 peerlist;
+struct peer_tree	 peertable;
 struct rde_peer		*peerself;
 
 CTASSERT(sizeof(peerself->recv_eor) * 8 > AID_MAX);
@@ -82,22 +74,11 @@ peer_accept_no_as_set(struct rde_peer *peer)
 }
 
 void
-peer_init(uint32_t hashsize)
+peer_init(void)
 {
 	struct peer_config pc;
-	uint32_t	 hs, i;
 
-	for (hs = 1; hs < hashsize; hs <<= 1)
-		;
-	peertable.peer_hashtbl = calloc(hs, sizeof(struct rde_peer_head));
-	if (peertable.peer_hashtbl == NULL)
-		fatal("peer_init");
-
-	for (i = 0; i < hs; i++)
-		LIST_INIT(&peertable.peer_hashtbl[i]);
-	LIST_INIT(&peerlist);
-
-	peertable.peer_hashmask = hs - 1;
+	RB_INIT(&peertable);
 
 	memset(&pc, 0, sizeof(pc));
 	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
@@ -110,13 +91,8 @@ peer_init(uint32_t hashsize)
 void
 peer_shutdown(void)
 {
-	uint32_t	i;
-
-	for (i = 0; i <= peertable.peer_hashmask; i++)
-		if (!LIST_EMPTY(&peertable.peer_hashtbl[i]))
-			log_warnx("peer_free: free non-free table");
-
-	free(peertable.peer_hashtbl);
+	if (!RB_EMPTY(&peertable))
+		log_warnx("%s: free non-free table", __func__);
 }
 
 /*
@@ -127,7 +103,7 @@ peer_foreach(void (*callback)(struct rde_peer *, void *), void *arg)
 {
 	struct rde_peer *peer, *np;
 
-	LIST_FOREACH_SAFE(peer, &peerlist, peer_l, np)
+	RB_FOREACH_SAFE(peer, peer_tree, &peertable, np)
 		callback(peer, arg);
 }
 
@@ -137,16 +113,10 @@ peer_foreach(void (*callback)(struct rde_peer *, void *), void *arg)
 struct rde_peer *
 peer_get(uint32_t id)
 {
-	struct rde_peer_head	*head;
-	struct rde_peer		*peer;
+	struct rde_peer	needle;
 
-	head = PEER_HASH(id);
-
-	LIST_FOREACH(peer, head, hash_l) {
-		if (peer->conf.id == id)
-			return (peer);
-	}
-	return (NULL);
+	needle.conf.id = id;
+	return RB_FIND(peer_tree, &peertable, &needle);
 }
 
 /*
@@ -157,28 +127,18 @@ peer_get(uint32_t id)
 struct rde_peer *
 peer_match(struct ctl_neighbor *n, uint32_t peerid)
 {
-	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
-	uint32_t		i = 0;
 
-	if (peerid != 0)
-		i = peerid & peertable.peer_hashmask;
+	if (peerid != 0) {
+		peer = peer_get(peerid);
+		if (peer)
+			peer = RB_NEXT(peer_tree, &peertable, peer);
+	} else
+		peer = RB_MIN(peer_tree, &peertable);
 
-	while (i <= peertable.peer_hashmask) {
-		head = &peertable.peer_hashtbl[i];
-		LIST_FOREACH(peer, head, hash_l) {
-			/* skip peers until peerid is found */
-			if (peerid == peer->conf.id) {
-				peerid = 0;
-				continue;
-			}
-			if (peerid != 0)
-				continue;
-
-			if (rde_match_peer(peer, n))
-				return (peer);
-		}
-		i++;
+	for (; peer != NULL; peer = RB_NEXT(peer_tree, &peertable, peer)) {
+		if (rde_match_peer(peer, n))
+			return (peer);
 	}
 	return (NULL);
 }
@@ -186,7 +146,6 @@ peer_match(struct ctl_neighbor *n, uint32_t peerid)
 struct rde_peer *
 peer_add(uint32_t id, struct peer_config *p_conf)
 {
-	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
 
 	if ((peer = peer_get(id))) {
@@ -209,13 +168,23 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);
 
-	head = PEER_HASH(id);
-
-	LIST_INSERT_HEAD(head, peer, hash_l);
-	LIST_INSERT_HEAD(&peerlist, peer, peer_l);
+	if (RB_INSERT(peer_tree, &peertable, peer) != NULL)
+		fatalx("rde peer table corrupted");
 
 	return (peer);
 }
+
+static inline int
+peer_cmp(struct rde_peer *a, struct rde_peer *b)
+{
+	if (a->conf.id > b->conf.id)
+		return 1;
+	if (a->conf.id < b->conf.id)
+		return -1;
+	return 0;
+}
+
+RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
 peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
@@ -276,7 +245,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
 	if (old == NULL && new == NULL)
 		return;
 
-	LIST_FOREACH(peer, &peerlist, peer_l)
+	RB_FOREACH(peer, peer_tree, &peertable)
 		peer_generate_update(peer, rib->id, new, old, mode);
 }
 
@@ -475,8 +444,7 @@ peer_down(struct rde_peer *peer, void *bula)
 	peer->prefix_cnt = 0;
 	peer->prefix_out_cnt = 0;
 
-	LIST_REMOVE(peer, hash_l);
-	LIST_REMOVE(peer, peer_l);
+	RB_REMOVE(peer_tree, &peertable, peer);
 	free(peer);
 }
 
