@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2022/09/01 08:52:30 kn Exp $
+#	$OpenBSD: Makefile,v 1.17 2022/09/01 17:23:36 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -17,9 +17,21 @@ USE_SOFTRAID ?=		Yes
 FORMAT_DISK =		fdisk -g -y -b32768
 STAGENAMES =		BOOTAA64.EFI
 USE_SOFTRAID ?=		Yes
+.elif ${MACHINE} == "armv7"
+FORMAT_DISK =		fdisk -g -y -b32768@32768:C
+STAGENAMES =		BOOTARM.EFI
+USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "macppc"	# assume MBR
 FORMAT_DISK =		fdisk -iy -b2048@1:06
 STAGENAMES =		ofwboot
+USE_SOFTRAID ?=		No
+.elif ${MACHINE} == "powerpc64"
+FORMAT_DISK =		fdisk -iy -b32768@32768:C
+STAGENAMES =		boot
+USE_SOFTRAID ?=		No
+.elif ${MACHINE} == "riscv64"
+FORMAT_DISK =		fdisk -g -y -b32768@32768:C
+STAGENAMES =		BOOTRISCV64.EFI
 USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "sparc64"
 FORMAT_DISK =		true	# NOOP
