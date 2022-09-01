@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: _elftc.h,v 1.2 2021/09/02 21:12:09 deraadt Exp $
+ * $Id: _elftc.h,v 1.3 2022/09/01 05:49:04 miod Exp $
  */
 
 /**
@@ -316,11 +316,7 @@ struct name {							\
 #endif
 
 #if defined(__OpenBSD__)
-#if defined(__GNUC__)
-#define	ELFTC_VCSID(ID)		__asm__(".ident\t\"" ID "\"")
-#else
-#define	ELFTC_VCSID(ID)		/**/
-#endif	/* __GNUC__ */
+#define	ELFTC_VCSID(ID)		/* intentionally disabled */
 #endif
 
 #endif	/* ELFTC_VCSID */
