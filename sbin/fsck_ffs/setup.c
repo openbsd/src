@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.68 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: setup.c,v 1.69 2022/09/01 13:37:57 krw Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -650,7 +650,6 @@ calcsb(char *dev, int devfd, struct fs *fs, struct disklabel *lp,
 	 */
 	fs->fs_size = DL_SECTOBLK(lp, DL_GETPSIZE(pp)) / fs->fs_nspf;
 	fs->fs_ncg = howmany(fs->fs_size, fs->fs_fpg);
-	/* we can't use lp->d_sbsize, it is the max sb size */
 	fs->fs_sblkno = roundup(
 		howmany(sblockloc + SBSIZE, fs->fs_fsize),
 		fs->fs_frag);
