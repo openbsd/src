@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.113 2022/05/26 11:27:03 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.114 2022/09/01 07:25:32 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -531,7 +531,7 @@ case ${action} in
 				rcctl_err "service ${svc} does not exist" 2
 		done
 		;;
-	disable|enable|start|stop|restart|reload|check)
+	disable|enable|start|stop|restart|reload|check|configtest)
 		shift 1
 		svcs="$*"
 		[ -z "${svcs}" ] && usage
@@ -632,7 +632,7 @@ case ${action} in
 		needs_root ${action}
 		svc_set ${svc} "${var}" "${args}"
 		;;
-	start|stop|restart|reload|check)
+	start|stop|restart|reload|check|configtest)
 		for svc in ${svcs}; do
 			if svc_is_special ${svc}; then
 				rcctl_err "\"${svc}\" is a special variable, no rc.d(8) script"

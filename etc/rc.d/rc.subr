@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.156 2022/08/29 19:37:32 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.157 2022/09/01 07:25:32 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -16,7 +16,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-_rc_actions="start stop restart reload check"
+_rc_actions="start stop restart reload check configtest"
 readonly _rc_actions
 
 _rc_check_name() {
@@ -219,6 +219,10 @@ rc_cmd() {
 		echo $_n "${INRC:+ }${_name}"
 		_rc_do rc_check && _rc_exit ok || _rc_exit failed
 		;;
+	configtest)
+		echo $_n "${INRC:+ }${_name}"
+		_rc_do rc_configtest && _rc_exit ok || _rc_exit failed
+		;;
 	start)
 		if [ X"${daemon_flags}" = X"NO" ]; then
 			_rc_err "$0: need -f to force $1 since ${_name}_flags=NO"
@@ -226,9 +230,9 @@ rc_cmd() {
 		[ -z "${INRC}" ] && _rc_do rc_check && exit 0
 		echo $_n "${INRC:+ }${_name}"
 		while true; do # no real loop, only needed to break
-			# mostly useful for daemons whose child will not return
-			# a config parsing error to the parent during startup
-			# e.g. bgpd, httpd...
+			# running during start is mostly useful for daemons
+			# whose child will not return a config parsing error to
+			# the parent during startup; e.g. bgpd, httpd...
 			_rc_do rc_configtest || break
 			if type rc_pre >/dev/null; then
 				_rc_do rc_pre || break
