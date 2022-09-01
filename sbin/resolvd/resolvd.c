@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.26 2022/05/21 13:54:19 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.27 2022/09/01 13:24:28 martijn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	if (unveil(_PATH_RESCONF_NEW, "rwc") == -1)
 		lerr(1, "unveil " _PATH_RESCONF_NEW);
 #ifndef SMALL
-	if (unveil(_PATH_UNWIND_SOCKET, "r") == -1)
+	if (unveil(_PATH_UNWIND_SOCKET, "w") == -1)
 		lerr(1, "unveil " _PATH_UNWIND_SOCKET);
 #endif
 
