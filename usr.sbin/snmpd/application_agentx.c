@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.3 2022/08/30 14:54:18 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.4 2022/09/01 14:34:17 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -41,6 +41,13 @@
 
 struct appl_agentx_connection {
 	uint32_t conn_id;
+	/*
+	 * A backend has several overruling properties:
+	 * - If it exits, snmpd crashes
+	 * - All registrations are priority 1
+	 * - All registrations own the subtree.
+	 */
+	int conn_backend;
 	struct ax *conn_ax;
 	struct event conn_rev;
 	struct event conn_wev;
@@ -193,6 +200,7 @@ appl_agentx_accept(int masterfd, short event, void *cookie)
 		goto fail;
 	}
 
+	conn->conn_backend = 0;
 	TAILQ_INIT(&(conn->conn_sessions));
 	if ((conn->conn_ax = ax_new(fd)) == NULL) {
 		log_warn(NULL);
@@ -217,6 +225,30 @@ appl_agentx_accept(int masterfd, short event, void *cookie)
 }
 
 void
+appl_agentx_backend(int fd)
+{
+	struct appl_agentx_connection *conn;
+
+	if ((conn = malloc(sizeof(*conn))) == NULL)
+		fatal(NULL);
+
+	conn->conn_backend = 1;
+	TAILQ_INIT(&(conn->conn_sessions));
+	if ((conn->conn_ax = ax_new(fd)) == NULL)
+		fatal("ax_new");
+
+	do {
+		conn->conn_id = arc4random();
+	} while (RB_INSERT(appl_agentx_conns,
+	    &appl_agentx_conns, conn) != NULL);
+
+	event_set(&(conn->conn_rev), fd, EV_READ | EV_PERSIST,
+	    appl_agentx_recv, conn);
+	event_add(&(conn->conn_rev), NULL);
+	event_set(&(conn->conn_wev), fd, EV_WRITE, appl_agentx_send, conn);
+}
+
+void
 appl_agentx_free(struct appl_agentx_connection *conn)
 {
 	struct appl_agentx_session *session;
@@ -234,6 +266,9 @@ appl_agentx_free(struct appl_agentx_connection *conn)
 
 	RB_REMOVE(appl_agentx_conns, &appl_agentx_conns, conn);
 	ax_free(conn->conn_ax);
+	if (conn->conn_backend)
+		fatalx("AgentX(%"PRIu32"): disappeared unexpected",
+		    conn->conn_id);
 	free(conn);
 }
 
@@ -529,12 +564,17 @@ appl_agentx_register(struct appl_agentx_session *session, struct ax_pdu *pdu)
 	uint32_t timeout;
 	struct ber_oid oid;
 	enum appl_error error;
+	int subtree = 0;
 
 	timeout = pdu->ap_payload.ap_register.ap_timeout;
 	timeout = timeout != 0 ? timeout : session->sess_timeout != 0 ?
 	    session->sess_timeout : AGENTX_DEFAULTTIMEOUT;
 	timeout *= 100;
 
+	if (session->sess_conn->conn_backend) {
+		pdu->ap_payload.ap_register.ap_priority = 1;
+		subtree = 1;
+	}
 	if (appl_agentx_oid2ber_oid(
 	    &(pdu->ap_payload.ap_register.ap_subtree), &oid) == NULL) {
 		log_warnx("%s: Failed to register: oid too small",
@@ -545,8 +585,8 @@ appl_agentx_register(struct appl_agentx_session *session, struct ax_pdu *pdu)
 
 	error = appl_register(pdu->ap_context.aos_string, timeout,
 	    pdu->ap_payload.ap_register.ap_priority, &oid, 
-	    pdu->ap_header.aph_flags & AX_PDU_FLAG_INSTANCE_REGISTRATION, 0,
-	    pdu->ap_payload.ap_register.ap_range_subid,
+	    pdu->ap_header.aph_flags & AX_PDU_FLAG_INSTANCE_REGISTRATION,
+	    subtree, pdu->ap_payload.ap_register.ap_range_subid,
 	    pdu->ap_payload.ap_register.ap_upper_bound,
 	    &(session->sess_backend));
 

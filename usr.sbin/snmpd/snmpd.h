@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.104 2022/08/23 08:56:21 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.105 2022/09/01 14:34:17 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@
 
 #define CONF_FILE		"/etc/snmpd.conf"
 #define SNMPD_SOCKET		"/var/run/snmpd.sock"
+#define SNMPD_BACKEND		"/usr/libexec/snmpd"                                                                                                                                                                                                                                                                        
 #define SNMPD_USER		"_snmpd"
 #define SNMP_PORT		"161"
 #define SNMPTRAP_PORT		"162"
@@ -96,7 +97,8 @@ enum imsg_type {
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_PROCFD,
-	IMSG_TRAP_EXEC
+	IMSG_TRAP_EXEC,
+	IMSG_AX_FD
 };
 
 struct imsgev {

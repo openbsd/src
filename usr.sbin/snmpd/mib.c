@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.103 2022/06/30 11:28:36 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.104 2022/09/01 14:34:17 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -3941,6 +3941,7 @@ mib_init(void)
 	/* SNMP-USER-BASED-SM-MIB */
 	smi_mibtree(usm_mib);
 
+#if 0
 	/* HOST-RESOURCES-MIB */
 	smi_mibtree(hr_mib);
 
@@ -3961,4 +3962,5 @@ mib_init(void)
 
 	/* OPENBSD-MIB */
 	smi_mibtree(openbsd_mib);
+#endif
 }
