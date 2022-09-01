@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.322 2022/08/23 08:56:20 martijn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.323 2022/09/01 14:22:55 martijn Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -171,6 +171,8 @@ usr
         lpr
         ..
         radiusd			type=dir uname=root gname=wheel mode=0755
+        ..
+        snmpd			type=dir uname=root gname=wheel mode=0755
         ..
     ..
 
