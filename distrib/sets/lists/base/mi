@@ -2495,6 +2495,8 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/security
 ./usr/libexec/sftp-server
+./usr/libexec/snmpd
+./usr/libexec/snmpd/snmpd_metrics
 ./usr/libexec/spamd
 ./usr/libexec/spamd-setup
 ./usr/libexec/spamlogd

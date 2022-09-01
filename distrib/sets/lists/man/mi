@@ -2600,6 +2600,7 @@
 ./usr/share/man/man8/smtpd.8
 ./usr/share/man/man8/sndiod.8
 ./usr/share/man/man8/snmpd.8
+./usr/share/man/man8/snmpd_metrics.8
 ./usr/share/man/man8/spamd-setup.8
 ./usr/share/man/man8/spamd.8
 ./usr/share/man/man8/spamdb.8
