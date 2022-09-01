@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.177 2021/12/23 10:09:16 bluhm Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.178 2022/09/01 12:28:53 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -455,10 +455,12 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		 * them.
 		 */
 		NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
+		nd.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 		rw = FREAD|FWRITE;
 		error = vn_open(&nd, FREAD|FWRITE, 0);
 		if (error == EROFS) {
 			NDINIT(&nd, 0, 0, UIO_SYSSPACE, name, p);
+			nd.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 			rw = FREAD;
 			error = vn_open(&nd, FREAD, 0);
 		}
