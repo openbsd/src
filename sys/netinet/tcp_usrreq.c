@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.202 2022/08/31 21:23:02 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.203 2022/09/01 18:21:23 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -222,13 +222,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	/*
-	 * Create a TCP connection between two sockets.
-	 */
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
 
 	case PRU_SOCKADDR:
 #ifdef INET6

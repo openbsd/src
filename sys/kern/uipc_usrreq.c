@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.181 2022/08/31 21:23:02 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.182 2022/09/01 18:21:22 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_send	= uipc_send,
 	.pru_abort	= uipc_abort,
 	.pru_sense	= uipc_sense,
+	.pru_connect2	= uipc_connect2,
 };
 
 void
@@ -215,7 +216,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control, struct proc *p)
 {
 	struct unpcb *unp = sotounpcb(so);
-	struct unpcb *unp2;
 	struct socket *so2;
 	int error = 0;
 
@@ -231,21 +231,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_CONNECT2:
-		error = unp_connect2(so, (struct socket *)nam);
-		if (!error) {
-			unp->unp_connid.uid = p->p_ucred->cr_uid;
-			unp->unp_connid.gid = p->p_ucred->cr_gid;
-			unp->unp_connid.pid = p->p_p->ps_pid;
-			unp->unp_flags |= UNP_FEIDS;
-			unp2 = sotounpcb((struct socket *)nam);
-			unp2->unp_connid.uid = p->p_ucred->cr_uid;
-			unp2->unp_connid.gid = p->p_ucred->cr_gid;
-			unp2->unp_connid.pid = p->p_p->ps_pid;
-			unp2->unp_flags |= UNP_FEIDS;
-		}
-		break;
 
 	case PRU_SOCKADDR:
 		uipc_setaddr(unp, nam);
@@ -592,6 +577,28 @@ uipc_sense(struct socket *so, struct stat *sb)
 	    sb->st_mtim.tv_nsec =
 	    sb->st_ctim.tv_nsec = unp->unp_ctime.tv_nsec;
 	sb->st_ino = unp->unp_ino;
+
+	return (0);
+}
+
+int
+uipc_connect2(struct socket *so, struct socket *so2)
+{
+	struct unpcb *unp = sotounpcb(so), *unp2;
+	int error;
+	
+	if ((error = unp_connect2(so, so2)))
+		return (error);
+
+	unp->unp_connid.uid = curproc->p_ucred->cr_uid;
+	unp->unp_connid.gid = curproc->p_ucred->cr_gid;
+	unp->unp_connid.pid = curproc->p_p->ps_pid;
+	unp->unp_flags |= UNP_FEIDS;
+	unp2 = sotounpcb(so2);
+	unp2->unp_connid.uid = curproc->p_ucred->cr_uid;
+	unp2->unp_connid.gid = curproc->p_ucred->cr_gid;
+	unp2->unp_connid.pid = curproc->p_p->ps_pid;
+	unp2->unp_flags |= UNP_FEIDS;
 
 	return (0);
 }

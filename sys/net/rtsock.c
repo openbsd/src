@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.349 2022/08/31 21:23:02 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.350 2022/09/01 18:21:23 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -237,11 +237,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	/* no connect, bind, accept. Socket is connected from the start */
-	case PRU_CONNECT2:
-		error = EOPNOTSUPP;
-		break;
-
 	/* minimal support, just implement a fake peer address */
 	case PRU_SOCKADDR:
 		error = EINVAL;
