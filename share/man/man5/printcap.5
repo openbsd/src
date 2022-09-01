@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.28 2020/02/10 13:18:20 schwarze Exp $
+.\"	$OpenBSD: printcap.5,v 1.29 2022/09/01 18:15:04 jmc Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: September 1 2022 $
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ blocks); 0=unlimited
 .It "sf" Ta "bool" Ta "false" Ta "suppress form feeds"
 .It "sh" Ta "bool" Ta "false" Ta "suppress printing of burst page header"
 .It "st" Ta "str" Ta Pa status Ta "status file name"
-.It "tf" Ta "str" Ta Dv NULL Ta "troff data filter (cat phototypesetter)"
+.It "tf" Ta "str" Ta Dv NULL Ta "troff data filter (C/A/T phototypesetter)"
 .It "tr" Ta "str" Ta Dv NULL Ta "trailer string to print when queue empties"
 .It "vf" Ta "str" Ta Dv NULL Ta "raster image filter"
 .El
