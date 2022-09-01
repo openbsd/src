@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.39 2022/08/12 20:17:46 stsp Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.40 2022/09/01 13:45:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -484,9 +484,6 @@ efi_getdisklabel_cd9660(efi_diskinfo_t ed, struct disklabel *label)
 
 	strncpy(label->d_packname, "fictitious", sizeof(label->d_packname));
 	DL_SETDSIZE(label, 100);
-
-	label->d_bbsize = 2048;
-	label->d_sbsize = 2048;
 
 	/* 'a' partition covering the "whole" disk */
 	DL_SETPOFFSET(&label->d_partitions[0], 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.26 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.27 2022/09/01 13:45:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -264,9 +264,6 @@ cdprobe(void)
 	strncpy(dip->disklabel.d_packname, "fictitious",
 	    sizeof(dip->disklabel.d_packname));
 	DL_SETDSIZE(&dip->disklabel, 100);
-
-	dip->disklabel.d_bbsize = 2048;
-	dip->disklabel.d_sbsize = 2048;
 
 	/* 'a' partition covering the "whole" disk */
 	DL_SETPOFFSET(&dip->disklabel.d_partitions[0], 0);

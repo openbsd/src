@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.254 2022/08/20 13:10:45 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.255 2022/09/01 13:45:27 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -154,8 +154,6 @@ initdisklabel(struct disklabel *lp)
 	DL_SETBSTART(lp, 0);
 	DL_SETBEND(lp, DL_GETDSIZE(lp));
 	lp->d_version = 1;
-	lp->d_bbsize = 8192;
-	lp->d_sbsize = 64*1024;			/* XXX ? */
 	return (0);
 }
 
@@ -236,8 +234,6 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 		dlp->d_magic2 = swap32(dlp->d_magic2);
 
 		dlp->d_npartitions = swap16(dlp->d_npartitions);
-		dlp->d_bbsize = swap32(dlp->d_bbsize);
-		dlp->d_sbsize = swap32(dlp->d_sbsize);
 
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			pp = &dlp->d_partitions[i];

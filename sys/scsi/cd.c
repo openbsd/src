@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.265 2022/01/11 23:10:11 jsg Exp $	*/
+/*	$OpenBSD: cd.c,v 1.266 2022/09/01 13:45:27 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1133,10 +1133,6 @@ cdgetdisklabel(dev_t dev, struct cd_softc *sc, struct disklabel *lp,
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	DL_SETDSIZE(lp, sc->params.disksize);
 	lp->d_version = 1;
-
-	/* XXX - these values for BBSIZE and SBSIZE assume ffs */
-	lp->d_bbsize = BBSIZE;
-	lp->d_sbsize = SBSIZE;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

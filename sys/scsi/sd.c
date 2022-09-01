@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.331 2022/02/27 02:27:55 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.332 2022/09/01 13:45:27 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1146,10 +1146,6 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 	DL_SETDSIZE(lp, sc->params.disksize);
 	lp->d_version = 1;
 	lp->d_flags = 0;
-
-	/* XXX - These values for BBSIZE and SBSIZE assume ffs. */
-	lp->d_bbsize = BBSIZE;
-	lp->d_sbsize = SBSIZE;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;

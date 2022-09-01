@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_subr.c,v 1.25 2014/12/16 18:30:03 tedu Exp $	*/
+/*	$OpenBSD: udf_subr.c,v 1.26 2022/09/01 13:45:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -173,8 +173,6 @@ udf_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_version = 1;
 
-	lp->d_bbsize = 8192;	/* Fake. */
-	lp->d_sbsize = 64*1024;	/* Fake. */
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
