@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.9 2022/08/03 16:54:30 job Exp $	*/
+/*	$OpenBSD: ts.c,v 1.10 2022/09/01 00:14:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <err.h>
@@ -27,13 +28,20 @@
 #include <unistd.h>
 #include <time.h>
 
+SIMPLEQ_HEAD(, usec) usec_queue = SIMPLEQ_HEAD_INITIALIZER(usec_queue);
+struct usec {
+	SIMPLEQ_ENTRY(usec) next;
+	char *pos;
+};
+
 static char		*format = "%b %d %H:%M:%S";
 static char		*buf;
 static char		*outbuf;
 static size_t		 bufsize;
 static size_t		 obsize;
 
-static void		 fmtfmt(const struct timespec *);
+static void		 fmtfmt(void);
+static void		 fmtprint(const struct timespec *);
 static void __dead	 usage(void);
 
 int
@@ -90,6 +98,8 @@ main(int argc, char *argv[])
 	if ((outbuf = calloc(1, obsize)) == NULL)
 		err(1, NULL);
 
+	fmtfmt();
+
 	/* force UTC for interval calculations */
 	if (iflag || sflag)
 		if (setenv("TZ", "UTC", 1) == -1)
@@ -108,7 +118,7 @@ main(int argc, char *argv[])
 				timespecadd(&now, &utc_offset, &ts);
 			else
 				ts = now;
-			fmtfmt(&ts);
+			fmtprint(&ts);
 			if (iflag)
 				start = now;
 		}
@@ -134,15 +144,11 @@ usage(void)
  * so you can format while you format
  */
 static void
-fmtfmt(const struct timespec *ts)
+fmtfmt(void)
 {
-	struct tm *tm;
-	char *f, us[7];
+	char *f;
+	struct usec *u;
 
-	if ((tm = localtime(&ts->tv_sec)) == NULL)
-		err(1, "localtime");
-
-	snprintf(us, sizeof(us), "%06ld", ts->tv_nsec / 1000);
 	strlcpy(buf, format, bufsize);
 	f = buf;
 
@@ -161,12 +167,34 @@ fmtfmt(const struct timespec *ts)
 			f[0] = f[1];
 			f[1] = '.';
 			f += 2;
+			u = malloc(sizeof u);
+			if (u == NULL)
+				err(1, NULL);
+			u->pos = f;
+			SIMPLEQ_INSERT_TAIL(&usec_queue, u, next);
 			l = strlen(f);
 			memmove(f + 6, f, l + 1);
-			memcpy(f, us, 6);
 			f += 6;
 		}
 	} while (*f != '\0');
+}
+
+static void
+fmtprint(const struct timespec *ts)
+{
+	char us[8];
+	struct tm *tm;
+	struct usec *u;
+
+	if ((tm = localtime(&ts->tv_sec)) == NULL)
+		err(1, "localtime");
+
+	/* Update any microsecond substrings in the format buffer. */
+	if (!SIMPLEQ_EMPTY(&usec_queue)) {
+		snprintf(us, sizeof(us), "%06ld", ts->tv_nsec / 1000);
+		SIMPLEQ_FOREACH(u, &usec_queue, next)
+			memcpy(u->pos, us, 6);
+	}
 
 	*outbuf = '\0';
 	if (*buf != '\0') {
