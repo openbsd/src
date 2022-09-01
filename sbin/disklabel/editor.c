@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.373 2022/07/31 14:29:19 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.374 2022/09/01 13:35:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -232,12 +232,6 @@ editor(int f)
 		    "nearest cylinder automatically.");
 	}
 #endif
-
-	/* Set d_bbsize and d_sbsize as necessary */
-	if (newlab.d_bbsize == 0)
-		newlab.d_bbsize = BBSIZE;
-	if (newlab.d_sbsize == 0)
-		newlab.d_sbsize = SBSIZE;
 
 	/* Save the (U|u)ndo labels and mountpoints. */
 	mpcopy(origmountpoints, mountpoints);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.242 2022/08/31 08:35:07 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.243 2022/09/01 13:35:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -824,8 +824,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	unsigned int part;
 
 	lp->d_version = 1;
-	lp->d_bbsize = BBSIZE;				/* XXX */
-	lp->d_sbsize = SBSIZE;				/* XXX */
 
 	if (!(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))))
 		errx(4, "out of memory");
@@ -1086,16 +1084,6 @@ checklabel(struct disklabel *lp)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (DL_GETDSIZE(lp) == 0)
 		DL_SETDSIZE(lp, (u_int64_t)lp->d_secpercyl * lp->d_ncylinders);
-	if (lp->d_bbsize == 0) {
-		warnx("boot block size %d", lp->d_bbsize);
-		errors++;
-	} else if (lp->d_bbsize % lp->d_secsize)
-		warnx("warning, boot block size %% sector-size != 0");
-	if (lp->d_sbsize == 0) {
-		warnx("super block size %d", lp->d_sbsize);
-		errors++;
-	} else if (lp->d_sbsize % lp->d_secsize)
-		warnx("warning, super block size %% sector-size != 0");
 	if (lp->d_npartitions > MAXPARTITIONS)
 		warnx("warning, number of partitions (%d) > MAXPARTITIONS (%d)",
 		    lp->d_npartitions, MAXPARTITIONS);
@@ -1160,8 +1148,6 @@ cmplabel(struct disklabel *lp1, struct disklabel *lp2)
 	lab1.d_magic = lab2.d_magic;
 	lab1.d_magic2 = lab2.d_magic2;
 	lab1.d_checksum = lab2.d_checksum;
-	lab1.d_bbsize = lab2.d_bbsize;
-	lab1.d_sbsize = lab2.d_sbsize;
 	lab1.d_bstart = lab2.d_bstart;
 	lab1.d_bstarth = lab2.d_bstarth;
 	lab1.d_bend = lab2.d_bend;
