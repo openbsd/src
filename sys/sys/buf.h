@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.112 2019/11/29 01:04:08 beck Exp $	*/
+/*	$OpenBSD: buf.h,v 1.113 2022/09/01 05:24:51 jsg Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -292,7 +292,6 @@ void bufcache_release(struct buf *);
 int buf_flip_high(struct buf *);
 void buf_flip_dma(struct buf *);
 struct buf *bufcache_getcleanbuf(int, int);
-struct buf *bufcache_getanycleanbuf(void);
 struct buf *bufcache_getdirtybuf(void);
 
 /*
@@ -305,7 +304,6 @@ struct buf *bufcache_getdirtybuf(void);
  */
 void	buf_mem_init(vsize_t);
 void	buf_acquire(struct buf *);
-void	buf_acquire_unmapped(struct buf *);
 void	buf_acquire_nomap(struct buf *);
 void	buf_map(struct buf *);
 void	buf_release(struct buf *);
@@ -325,10 +323,6 @@ void  buf_replacevnode(struct buf *, struct vnode *);
 void  buf_daemon(void *);
 void  buf_replacevnode(struct buf *, struct vnode *);
 int bread_cluster(struct vnode *, daddr_t, int, struct buf **);
-
-#ifdef DEBUG
-void buf_print(struct buf *);
-#endif
 
 static __inline void
 buf_start(struct buf *bp)
@@ -366,8 +360,6 @@ buf_countdeps(struct buf *bp, int i, int islocked)
 	else
 		return (0);
 }
-
-void	cluster_write(struct buf *, struct cluster_info *, u_quad_t);
 
 __END_DECLS
 #endif /* _KERNEL */
