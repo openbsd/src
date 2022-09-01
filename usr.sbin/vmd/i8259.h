@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.h,v 1.4 2018/04/27 12:15:10 mlarkin Exp $ */
+/* $OpenBSD: i8259.h,v 1.5 2022/09/01 22:01:40 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -19,8 +19,11 @@
 
 #include <machine/vmmvar.h>
 
-#define MASTER 0
-#define SLAVE 1
+#define MASTER			0
+#define SLAVE			1
+
+#define ELCR0			0x4D0
+#define ELCR1			0x4D1
 
 #define ICW1_ICW4		(0x1 << 0)
 #define ICW1_SNGL		(0x1 << 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.80 2022/08/30 17:09:21 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.81 2022/09/01 22:01:40 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -338,13 +338,6 @@ enum {
 	VMM_CPU_MODE_LONG,
 	VMM_CPU_MODE_UNKNOWN,
 };
-
-/*
- * Port definitions not found elsewhere
- */
-#define PCKBC_AUX	0x61
-#define ELCR0		0x4D0
-#define ELCR1		0x4D1
 
 /*
  * vm exit data

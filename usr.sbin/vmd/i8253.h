@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.h,v 1.9 2018/04/26 17:10:10 mlarkin Exp $ */
+/* $OpenBSD: i8253.h,v 1.10 2022/09/01 22:01:40 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #define TIMER_RB_C0	0x2	/* read back channel 0 */
 #define TIMER_RB_C1	0x4	/* read back channel 1 */
 #define TIMER_RB_C2	0x8	/* read back channel 1 */
+#define PCKBC_AUX	0x61	/* PC keyboard aux port for i8253 misc access */
 
 /* i8253 registers */
 struct i8253_channel {
