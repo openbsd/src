@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2022/09/01 01:09:19 kn Exp $
+#	$OpenBSD: Makefile,v 1.16 2022/09/01 08:52:30 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -69,7 +69,7 @@ create-root: format-disks
 .endif
 
 format-root: create-root
-.if ${USE_SOFTRAID:L} != "yes"
+.if ${USE_SOFTRAID:L} == "yes"
 	${SUDO} ${FORMAT_DISK} -- "$$(<${ROOTDEVFILE})" 1>/dev/null
 .endif
 	${SUDO} disklabel -Aw -- "$$(<${ROOTDEVFILE})"
