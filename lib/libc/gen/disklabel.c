@@ -92,8 +92,6 @@ getdiskbyname(const char *name)
 	/* XXX */
 	dp->d_secperunith = 0;
 	getnumdflt(dp->d_secperunit, "su", dp->d_secpercyl * dp->d_ncylinders);
-	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
-	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
 	strlcpy(psize, "px", sizeof psize);
 	strlcpy(pbsize, "bx", sizeof pbsize);
 	strlcpy(pfsize, "fx", sizeof pfsize);
