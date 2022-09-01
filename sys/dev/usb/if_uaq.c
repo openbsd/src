@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uaq.c,v 1.4 2022/06/26 15:25:03 jmatthew Exp $	*/
+/*	$OpenBSD: if_uaq.c,v 1.5 2022/09/01 17:07:09 mlarkin Exp $	*/
 /*-
  * Copyright (c) 2021 Jonathan Matthew <jonathan@d14n.org>
  * All rights reserved.
@@ -430,7 +430,7 @@ uaq_match(struct device *parent, void *match, void *aux)
 
 	if (uaa->iface == NULL || uaa->configno != 1)
 		return (UMATCH_NONE);
-	
+
 	return (usb_lookup(uaq_devs, uaa->vendor, uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT_CONF_IFACE : UMATCH_NONE);
 }
@@ -1091,7 +1091,7 @@ uaq_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct mbuf		*m;
 	int			pktlen, s;
 	int			count, offset;
-	
+
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
@@ -1118,10 +1118,10 @@ uaq_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		    sc->sc_dev.dv_xname, total_len);
 		goto done;
 	}
-	
+
 	pdesc = (uint64_t *)(buf + (total_len - sizeof(desc)));
 	desc = lemtoh64(pdesc);
-	
+
 	count = desc & UAQ_RX_HDR_COUNT_MASK;
 	if (count == 0)
 		goto done;
@@ -1154,7 +1154,7 @@ uaq_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			ifp->if_ierrors++;
 			goto done;
 		}
-		
+
 		m = m_devget(buf + 2, pktlen - 2, ETHER_ALIGN);
 		if (m == NULL) {
 			DPRINTFN(2, ("m_devget failed for this packet\n"));
