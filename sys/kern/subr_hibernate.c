@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.135 2022/07/29 17:47:12 semarie Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.136 2022/09/01 21:50:19 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -1271,7 +1271,6 @@ hibernate_unpack_image(union hibernate_info *hib)
 		    image_cur);
 
 		image_cur += chunks[fchunks[i]].compressed_size;
-
 	}
 
 	/*
