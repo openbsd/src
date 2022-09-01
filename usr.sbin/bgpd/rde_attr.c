@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.130 2022/08/31 14:29:36 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.131 2022/09/01 13:19:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -24,7 +24,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <siphash.h>
 
 #include "bgpd.h"
 #include "rde.h"

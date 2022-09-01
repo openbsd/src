@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.247 2022/08/30 18:50:21 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.248 2022/09/01 13:19:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,7 +22,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <siphash.h>
 #include <time.h>
 
 #include "bgpd.h"
@@ -640,7 +639,7 @@ path_lookup(struct rde_aspath *aspath)
 }
 
 /*
- * Link this aspath into the global hash table.
+ * Link this aspath into the global table.
  * The asp had to be alloced with path_get.
  */
 static void
@@ -679,7 +678,6 @@ struct rde_aspath *
 path_copy(struct rde_aspath *dst, const struct rde_aspath *src)
 {
 	dst->aspath = aspath_copy(src->aspath);
-	dst->hash = 0;		/* not linked so no hash and no refcnt */
 	dst->refcnt = 0;
 	dst->flags = src->flags & ~F_ATTR_LINKED;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.146 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.147 2022/09/01 13:19:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -22,7 +22,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <siphash.h>
 #include <stdio.h>
 
 #include "bgpd.h"

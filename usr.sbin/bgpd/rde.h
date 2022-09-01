@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.268 2022/08/31 14:29:36 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.269 2022/09/01 13:19:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -217,7 +217,6 @@ struct rde_aspath {
 	RB_ENTRY(rde_aspath)		 entry;
 	struct attr			**others;
 	struct aspath			*aspath;
-	uint64_t			 hash;
 	int				 refcnt;
 	uint32_t			 flags;		/* internally used */
 	uint32_t			 med;		/* multi exit disc */
@@ -434,7 +433,6 @@ int		 attr_optadd(struct rde_aspath *, uint8_t, uint8_t,
 struct attr	*attr_optget(const struct rde_aspath *, uint8_t);
 void		 attr_copy(struct rde_aspath *, const struct rde_aspath *);
 int		 attr_compare(struct rde_aspath *, struct rde_aspath *);
-uint64_t	 attr_hash(struct rde_aspath *);
 void		 attr_freeall(struct rde_aspath *);
 void		 attr_free(struct rde_aspath *, struct attr *);
 #define		 attr_optlen(x)	\
