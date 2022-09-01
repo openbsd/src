@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.27 2020/08/28 16:29:16 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.28 2022/09/01 15:21:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -38,7 +38,7 @@ typedef double	Awkfloat;
 
 typedef	unsigned char uschar;
 
-#define	xfree(a)	{ if ((a) != NULL) { free((void *)(intptr_t)(a)); (a) = NULL; } }
+#define	xfree(a)	{ free((void *)(intptr_t)(a)); (a) = NULL; }
 /*
  * We sometimes cheat writing read-only pointers to NUL-terminate them
  * and then put back the original value

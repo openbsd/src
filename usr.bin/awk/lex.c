@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.27 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.28 2022/09/01 15:21:28 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -536,7 +536,7 @@ int regexpr(void)
 	char *bp, *cstart;
 
 	if (buf == NULL && (buf = (char *) malloc(bufsz)) == NULL)
-		FATAL("out of space for rex expr");
+		FATAL("out of space for reg expr");
 	bp = buf;
 	for ( ; ((c = input()) != '/' || openclass > 0) && c != 0; ) {
 		if (!adjbuf(&buf, &bufsz, bp-buf+3, 500, &bp, "regexpr"))
@@ -579,7 +579,7 @@ int regexpr(void)
 	*bp = 0;
 	if (c == 0)
 		SYNTAX("non-terminated regular expression %.10s...", buf);
-	yylval.s = tostring(buf);
+	yylval.s = buf;
 	unput('/');
 	RET(REGEXPR);
 }

@@ -23,8 +23,11 @@ THIS SOFTWARE.
 ****************************************************************/
 
 This file lists all bug fixes, changes, etc., made since the AWK book
-was sent to the printers in August, 1987.
+was sent to the printers in August 1987.
 
+Aug 30, 2022:
+	Various leaks and use-after-free issues plugged/fixed.
+	Thanks to Miguel Pineiro Jr. <mpj@pineiro.cc>.
 
 May 23, 2022:
 	Memory leak when assigning a string to some of the built-in
@@ -326,7 +329,7 @@ Mar 3, 2019:
 	#12: Avoid undefined behaviour when using ctype(3) functions in
 	     relex(). Thanks to GitHub user iamleot.
 	#31: Make getline handle numeric strings, and update FIXES. Thanks
-	     to GitHub user arnoldrobbins.
+	     to GitHub user Arnold Robbins (arnoldrobbins)
 	#32: maketab: support build systems with read-only source. Thanks
 	     to GitHub user enh.
 
