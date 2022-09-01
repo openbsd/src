@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2022/09/01 00:43:15 kn Exp $
+#	$OpenBSD: Makefile,v 1.15 2022/09/01 01:09:19 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -68,18 +68,18 @@ create-root: format-disks
 	ln -s -- ${DISKDEVFILES} ${ROOTDEVFILE}
 .endif
 
-create-mountpoint:
-	mkdir -- ${MOUNTPOINT}
-
-format-root: create-root create-mountpoint
+format-root: create-root
 .if ${USE_SOFTRAID:L} != "yes"
 	${SUDO} ${FORMAT_DISK} -- "$$(<${ROOTDEVFILE})" 1>/dev/null
 .endif
 	${SUDO} disklabel -Aw -- "$$(<${ROOTDEVFILE})"
 	${SUDO} newfs -q -- "$$(<${ROOTDEVFILE})"a 1>/dev/null
+
+mount-root: format-root
+	mkdir -- ${MOUNTPOINT}
 	${SUDO} mount -- /dev/"$$(<${ROOTDEVFILE})"a ${MOUNTPOINT}
 
-copy-bootstrap-to-root: format-root
+copy-bootstrap-to-root: mount-root
 	${SUDO} mkdir -- ${MOUNTPOINT}/usr
 	${SUDO} cp -r -- ${STAGEDIR} ${MOUNTPOINT}/usr/
 
@@ -100,40 +100,39 @@ REGRESS_TARGETS +=	dry-prepare \
 			dry-default \
 			dry-root \
 			root \
-			root-explicit-stages
+			root-stages
 
 dry-prepare:
 	${SUDO} ${DRY_RUN} -p -- "$$(<${ROOTDEVFILE})"
-
 dry-default:
 	${SUDO} ${DRY_RUN} -- "$$(<${ROOTDEVFILE})"
-
 dry-root:
 	${SUDO} ${DRY_RUN} -r/ -- "$$(<${ROOTDEVFILE})"
 
 # XXX fails with NDISKS > 1 on sparc64, 1 <= NDISKS <= 4 works on amd64
 root:
 	${SUDO} ${REAL_RUN} -r ${MOUNTPOINT} "$$(<${ROOTDEVFILE})"
-
-root-explicit-stages:
+root-stages:
 	${SUDO} ${REAL_RUN} -- "$$(<${ROOTDEVFILE})" ${STAGEFILES}
 
 
 REGRESS_EXPECTED_FAILURES =	dry-prepare-root \
-				dry-prepare-stage \
-				dry-nodisk-stage \
+				dry-prepare-stages \
+				dry-nodisk-stages \
+				dry-toofew \
 				dry-toomany
 REGRESS_TARGETS +=		${REGRESS_EXPECTED_FAILURES}
 
 dry-prepare-root:
 	${DRY_RUN} -p -r/ -- "$$(<${ROOTDEVFILE})"
-
-dry-prepare-stage:
+dry-prepare-stages:
 	${DRY_RUN} -p -- "$$(<${ROOTDEVFILE})" ${STAGEFILES}
 
-dry-nodisk-stage:
+dry-nodisk-stages:
 	${SUDO} ${DRY_RUN} -- ${STAGEFILES}
 
+dry-toofew:
+	${DRY_RUN} --
 dry-toomany:
 	${DRY_RUN} -- disk stage1 stage2 too many
 
