@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.82 2022/02/15 23:16:00 rob Exp $	*/
+/*	$OpenBSD: print.c,v 1.83 2022/09/01 21:15:54 job Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -96,8 +96,9 @@ printheader(void)
 }
 
 void
-command(const struct kinfo_proc *kp, VARENT *ve)
+command(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	int left, wantspace = 0;
 	char **p;
@@ -138,6 +139,8 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 	}
 
 	if (needcomm) {
+		if (pi->prefix)
+			mbswprint(pi->prefix, left, 0);
 		if (!commandonly) {
 			char **argv = NULL;
 
@@ -186,14 +189,16 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-ucomm(const struct kinfo_proc *kp, VARENT *ve)
+ucomm(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	mbswprint(kp->p_comm, ve->var->width, ve->next != NULL);
 }
 
 void
-curwd(const struct kinfo_proc *kp, VARENT *ve)
+curwd(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	int name[] = { CTL_KERN, KERN_PROC_CWD, kp->p_pid };
 	char path[PATH_MAX];
 	size_t pathlen = sizeof path;
@@ -205,8 +210,9 @@ curwd(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-logname(const struct kinfo_proc *kp, VARENT *ve)
+logname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -223,8 +229,9 @@ logname(const struct kinfo_proc *kp, VARENT *ve)
 #define pgtok(a)	(((unsigned long long)(a)*getpagesize())/1024)
 
 void
-printstate(const struct kinfo_proc *kp, VARENT *ve)
+printstate(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	int flag;
 	char *cp, state = '\0';
 	VAR *v;
@@ -306,8 +313,9 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-printpledge(const struct kinfo_proc *kp, VARENT *ve)
+printpledge(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	int i;
 	VAR *v;
 	char buf[1024];
@@ -327,8 +335,9 @@ printpledge(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-pri(const struct kinfo_proc *kp, VARENT *ve)
+pri(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -336,44 +345,55 @@ pri(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-pnice(const struct kinfo_proc *kp, VARENT *ve)
+pnice(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
+
 	v = ve->var;
 	(void)printf("%*d", v->width, kp->p_nice - NZERO);
 }
 
 void
-euname(const struct kinfo_proc *kp, VARENT *ve)
+euname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
+
 	mbswprint(user_from_uid(kp->p_uid, 0), ve->var->width,
 	    ve->next != NULL);
 }
 
 void
-runame(const struct kinfo_proc *kp, VARENT *ve)
+runame(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
+
 	mbswprint(user_from_uid(kp->p_ruid, 0), ve->var->width,
 	    ve->next != NULL);
 }
 
 void
-gname(const struct kinfo_proc *kp, VARENT *ve)
+gname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
+
 	mbswprint(group_from_gid(kp->p_gid, 0), ve->var->width,
 	    ve->next != NULL);
 }
 
 void
-rgname(const struct kinfo_proc *kp, VARENT *ve)
+rgname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
+
 	mbswprint(group_from_gid(kp->p_rgid, 0), ve->var->width,
 	    ve->next != NULL);
 }
 
 void
-supgid(const struct kinfo_proc *kp, VARENT *ve)
+supgid(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	char buf[1024];
 	char *p = buf;
 	ssize_t size = sizeof(buf);
@@ -393,8 +413,9 @@ supgid(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-supgrp(const struct kinfo_proc *kp, VARENT *ve)
+supgrp(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	char buf[1024];
 	char *p = buf;
 	ssize_t size = sizeof(buf);
@@ -414,8 +435,9 @@ supgrp(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-tdev(const struct kinfo_proc *kp, VARENT *ve)
+tdev(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	dev_t dev;
 
@@ -433,8 +455,9 @@ tdev(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-tname(const struct kinfo_proc *kp, VARENT *ve)
+tname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	dev_t dev;
 	char *ttname;
@@ -452,8 +475,9 @@ tname(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-longtname(const struct kinfo_proc *kp, VARENT *ve)
+longtname(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	dev_t dev;
 	char *ttname;
@@ -467,8 +491,9 @@ longtname(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-started(const struct kinfo_proc *kp, VARENT *ve)
+started(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	static time_t now;
 	time_t startt;
@@ -498,8 +523,9 @@ started(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-lstarted(const struct kinfo_proc *kp, VARENT *ve)
+lstarted(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	time_t startt;
 	char buf[100];
@@ -515,8 +541,9 @@ lstarted(const struct kinfo_proc *kp, VARENT *ve)
 	(void)printf("%-*s", v->width, buf);
 }
 
-void elapsed(const struct kinfo_proc *kp, VARENT *ve)
+void elapsed(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	static time_t now;
 	time_t secs;
@@ -560,8 +587,9 @@ void elapsed(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-wchan(const struct kinfo_proc *kp, VARENT *ve)
+wchan(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -572,8 +600,9 @@ wchan(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-vsize(const struct kinfo_proc *kp, VARENT *ve)
+vsize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -582,8 +611,9 @@ vsize(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-rssize(const struct kinfo_proc *kp, VARENT *ve)
+rssize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -593,8 +623,9 @@ rssize(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-p_rssize(const struct kinfo_proc *kp, VARENT *ve)
+p_rssize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -603,8 +634,9 @@ p_rssize(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-cputime(const struct kinfo_proc *kp, VARENT *ve)
+cputime(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 	long secs;
 	long psecs;	/* "parts" of a second. first micro, then centi */
@@ -648,12 +680,12 @@ getpcpu(const struct kinfo_proc *kp)
 }
 
 void
-pcpu(const struct kinfo_proc *kp, VARENT *ve)
+pcpu(const struct pinfo *pi, VARENT *ve)
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*.1f", v->width, getpcpu(kp));
+	(void)printf("%*.1f", v->width, getpcpu(pi->ki));
 }
 
 double
@@ -672,17 +704,18 @@ getpmem(const struct kinfo_proc *kp)
 }
 
 void
-pmem(const struct kinfo_proc *kp, VARENT *ve)
+pmem(const struct pinfo *pi, VARENT *ve)
 {
 	VAR *v;
 
 	v = ve->var;
-	(void)printf("%*.1f", v->width, getpmem(kp));
+	(void)printf("%*.1f", v->width, getpmem(pi->ki));
 }
 
 void
-pagein(const struct kinfo_proc *kp, VARENT *ve)
+pagein(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -691,8 +724,9 @@ pagein(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-maxrss(const struct kinfo_proc *kp, VARENT *ve)
+maxrss(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -700,8 +734,9 @@ maxrss(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-tsize(const struct kinfo_proc *kp, VARENT *ve)
+tsize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -709,8 +744,9 @@ tsize(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-dsize(const struct kinfo_proc *kp, VARENT *ve)
+dsize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -718,8 +754,9 @@ dsize(const struct kinfo_proc *kp, VARENT *ve)
 }
 
 void
-ssize(const struct kinfo_proc *kp, VARENT *ve)
+ssize(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;
@@ -778,8 +815,9 @@ printval(char *bp, VAR *v)
 }
 
 void
-pvar(const struct kinfo_proc *kp, VARENT *ve)
+pvar(const struct pinfo *pi, VARENT *ve)
 {
+	const struct kinfo_proc *kp = pi->ki;
 	VAR *v;
 
 	v = ve->var;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.78 2021/12/01 18:21:23 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.79 2022/09/01 21:15:54 job Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -73,6 +73,7 @@ enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 static char	*kludge_oldps_options(char *);
 static int	 pscomp(const void *, const void *);
 static void	 scanvars(void);
+static void	 forest_sort(struct pinfo *, int);
 static void	 usage(void);
 
 char dfmt[] = "pid tt state time command";
@@ -90,7 +91,8 @@ int kvm_sysctl_only;
 int
 main(int argc, char *argv[])
 {
-	struct kinfo_proc *kp, **kinfo;
+	struct kinfo_proc *kp;
+	struct pinfo *pinfo;
 	struct varent *vent;
 	struct winsize ws;
 	dev_t ttydev;
@@ -98,6 +100,7 @@ main(int argc, char *argv[])
 	uid_t uid;
 	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, showthreads, wflag, kflag, what, Uflag, xflg;
+	int forest;
 	char *nlistf, *memf, *swapf, *cols, errbuf[_POSIX2_LINE_MAX];
 
 	setlocale(LC_CTYPE, "");
@@ -120,10 +123,11 @@ main(int argc, char *argv[])
 	all = fmt = prtheader = showthreads = wflag = kflag = Uflag = xflg = 0;
 	pid = -1;
 	uid = 0;
+	forest = 0;
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "AaCcegHhjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
+	    "AaCcefgHhjkLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch (ch) {
 		case 'A':
 			all = 1;
@@ -139,6 +143,9 @@ main(int argc, char *argv[])
 			break;
 		case 'e':			/* XXX set ufmt */
 			needenv = 1;
+			break;
+		case 'f':
+			forest = 1;
 			break;
 		case 'g':
 			break;			/* no-op */
@@ -349,26 +356,27 @@ main(int argc, char *argv[])
 	printheader();
 	if (nentries == 0)
 		exit(1);
-	/*
-	 * sort proc list, we convert from an array of structs to an array
-	 * of pointers to make the sort cheaper.
-	 */
-	if ((kinfo = reallocarray(NULL, nentries, sizeof(*kinfo))) == NULL)
-		err(1, "failed to allocate memory for proc pointers");
+
+	if ((pinfo = calloc(nentries, sizeof(struct pinfo))) == NULL)
+		err(1, NULL);
 	for (i = 0; i < nentries; i++)
-		kinfo[i] = &kp[i];
-	qsort(kinfo, nentries, sizeof(*kinfo), pscomp);
+		pinfo[i].ki = &kp[i];
+	qsort(pinfo, nentries, sizeof(struct pinfo), pscomp);
+
+	if (forest)
+		forest_sort(pinfo, nentries);
+
 	/*
 	 * for each proc, call each variable output function.
 	 */
 	for (i = lineno = 0; i < nentries; i++) {
-		if (xflg == 0 && ((int)kinfo[i]->p_tdev == NODEV ||
-		    (kinfo[i]->p_psflags & PS_CONTROLT ) == 0))
+		if (xflg == 0 && ((int)pinfo[i].ki->p_tdev == NODEV ||
+		    (pinfo[i].ki->p_psflags & PS_CONTROLT ) == 0))
 			continue;
-		if (showthreads && kinfo[i]->p_tid == -1)
+		if (showthreads && pinfo[i].ki->p_tid == -1)
 			continue;
 		for (vent = vhead; vent; vent = vent->next) {
-			(vent->var->oproc)(kinfo[i], vent);
+			(vent->var->oproc)(&pinfo[i], vent);
 			if (vent->next != NULL)
 				(void)putchar(' ');
 		}
@@ -406,8 +414,10 @@ scanvars(void)
 static int
 pscomp(const void *v1, const void *v2)
 {
-	const struct kinfo_proc *kp1 = *(const struct kinfo_proc **)v1;
-	const struct kinfo_proc *kp2 = *(const struct kinfo_proc **)v2;
+	const struct pinfo *p1 = (const struct pinfo *)v1;
+	const struct pinfo *p2 = (const struct pinfo *)v2;
+	const struct kinfo_proc *kp1 = p1->ki;
+	const struct kinfo_proc *kp2 = p2->ki;
 	int i;
 #define VSIZE(k) ((k)->p_vm_dsize + (k)->p_vm_ssize + (k)->p_vm_tsize)
 
@@ -484,12 +494,124 @@ kludge_oldps_options(char *s)
 }
 
 static void
+forest_sort(struct pinfo *ki, int items)
+{
+	int dst, lvl, maxlvl, n, ndst, nsrc, siblings, src;
+	unsigned char *path;
+	struct pinfo kn;
+
+	/*
+	 * First, sort the entries by forest, tracking the forest
+	 * depth in the level field.
+	 */
+	src = 0;
+	maxlvl = 0;
+	while (src < items) {
+		if (ki[src].level) {
+			src++;
+			continue;
+		}
+		for (nsrc = 1; src + nsrc < items; nsrc++)
+			if (!ki[src + nsrc].level)
+				break;
+
+		for (dst = 0; dst < items; dst++) {
+			if (ki[dst].ki->p_pid == ki[src].ki->p_pid)
+				continue;
+			if (ki[dst].ki->p_pid == ki[src].ki->p_ppid)
+				break;
+		}
+
+		if (dst == items) {
+			src += nsrc;
+			continue;
+		}
+
+		for (ndst = 1; dst + ndst < items; ndst++)
+			if (ki[dst + ndst].level <= ki[dst].level)
+				break;
+
+		for (n = src; n < src + nsrc; n++) {
+			ki[n].level += ki[dst].level + 1;
+			if (maxlvl < ki[n].level)
+				maxlvl = ki[n].level;
+		}
+
+		while (nsrc) {
+			if (src < dst) {
+				kn = ki[src];
+				memmove(ki + src, ki + src + 1,
+				    (dst - src + ndst - 1) * sizeof *ki);
+				ki[dst + ndst - 1] = kn;
+				nsrc--;
+				dst--;
+				ndst++;
+			} else if (src != dst + ndst) {
+				kn = ki[src];
+				memmove(ki + dst + ndst + 1, ki + dst + ndst,
+				    (src - dst - ndst) * sizeof *ki);
+				ki[dst + ndst] = kn;
+				ndst++;
+				nsrc--;
+				src++;
+			} else {
+				ndst += nsrc;
+				src += nsrc;
+				nsrc = 0;
+			}
+		}
+	}
+	/*
+	 * Now populate prefix (instead of level) with the command
+	 * prefix used to show descendancies.
+	 */
+	path = calloc(1, (maxlvl + 7) / 8);
+	if (path == NULL)
+		err(1, NULL);
+
+	for (src = 0; src < items; src++) {
+		if ((lvl = ki[src].level) == 0) {
+			ki[src].prefix = NULL;
+			continue;
+		}
+
+		if ((ki[src].prefix = malloc(lvl * 2 + 1)) == NULL)
+			err(1, NULL);
+
+		for (n = 0; n < lvl - 2; n++) {
+			ki[src].prefix[n * 2] =
+			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';
+			ki[src].prefix[n * 2 + 1] = ' ';
+
+		}
+		if (n == lvl - 2) {
+			/* Have I any more siblings? */
+			for (siblings = 0, dst = src + 1; dst < items; dst++) {
+				if (ki[dst].level > lvl)
+					continue;
+				if (ki[dst].level == lvl)
+					siblings = 1;
+				break;
+			}
+			if (siblings)
+				path[n / 8] |= 1 << (n % 8);
+			else
+				path[n / 8] &= ~(1 << (n % 8));
+			ki[src].prefix[n * 2] = siblings ? '|' : '`';
+			ki[src].prefix[n * 2 + 1] = '-';
+			n++;
+		}
+		strlcpy(ki[src].prefix + n * 2, "- ", (lvl - n) * 2 + 1);
+	}
+	free(path);
+}
+
+static void
 usage(void)
 {
-	(void)fprintf(stderr,
-	    "usage: %s [-AaceHhjkLlmrSTuvwx] [-M core] [-N system] [-O fmt] [-o fmt] [-p pid]\n",
-	    __progname);
-	(void)fprintf(stderr,
-	    "%-*s[-t tty] [-U username] [-W swap]\n", (int)strlen(__progname) + 8, "");
+	fprintf(stderr, "usage: %s [-AacefHhjkLlmrSTuvwx] [-M core] [-N system]"
+	    " [-O fmt] [-o fmt] [-p pid]\n", __progname);
+	fprintf(stderr, "%-*s[-t tty] [-U username] [-W swap]\n",
+	    (int)strlen(__progname) + 8, "");
 	exit(1);
 }

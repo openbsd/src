@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.126 2022/07/05 15:06:16 visa Exp $
+.\"	$OpenBSD: ps.1,v 1.127 2022/09/01 21:15:54 job Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ps.1	8.3 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: July 5 2022 $
+.Dd $Mdocdate: September 1 2022 $
 .Dt PS 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm ps
 .Sm off
-.Op Oo Fl Oc Cm AaceHhjkLlmrSTuvwx
+.Op Oo Fl Oc Cm AacefHhjkLlmrSTuvwx
 .Sm on
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -85,6 +85,15 @@ scripts will show as
 .Dq sh .
 .It Fl e
 Display the environment as well.
+.It Fl f
+Arrange processes into a tree, order and prefix each command with
+indentation text showing sibling and parent/child relationships.
+If either of the
+.Fl m
+and
+.Fl r
+options are also used, they control how sibling processes are sorted relative
+to each other.
 .It Fl H
 Also display information about kernel visible threads.
 .It Fl h
@@ -652,7 +661,7 @@ X/Open System Interfaces option of
 .St -p1003.1-2008 .
 .Pp
 The flags
-.Op Fl cHhjkLMmNOrSTvWwx
+.Op Fl cfHhjkLMmNOrSTvWwx
 are extensions to
 .St -p1003.1-2008 .
 .Pp

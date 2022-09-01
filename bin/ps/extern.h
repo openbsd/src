@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.23 2022/01/05 04:10:36 guenther Exp $	*/
+/*	$OpenBSD: extern.h,v 1.24 2022/09/01 21:15:54 job Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -44,44 +44,44 @@ extern VAR var[];
 extern VARENT *vhead;
 
 __BEGIN_DECLS
-void	 command(const struct kinfo_proc *, VARENT *);
-void	 cputime(const struct kinfo_proc *, VARENT *);
+void	 command(const struct pinfo *, VARENT *);
+void	 cputime(const struct pinfo *, VARENT *);
 int	 donlist(void);
-void	 elapsed(const struct kinfo_proc *, VARENT *);
+void	 elapsed(const struct pinfo *, VARENT *);
 double	 getpcpu(const struct kinfo_proc *);
 double	 getpmem(const struct kinfo_proc *);
-void	 gname(const struct kinfo_proc *, VARENT *);
-void	 supgid(const struct kinfo_proc *, VARENT *);
-void	 supgrp(const struct kinfo_proc *, VARENT *);
-void	 logname(const struct kinfo_proc *, VARENT *);
-void	 longtname(const struct kinfo_proc *, VARENT *);
-void	 lstarted(const struct kinfo_proc *, VARENT *);
-void	 maxrss(const struct kinfo_proc *, VARENT *);
+void	 gname(const struct pinfo *, VARENT *);
+void	 supgid(const struct pinfo *, VARENT *);
+void	 supgrp(const struct pinfo *, VARENT *);
+void	 logname(const struct pinfo *, VARENT *);
+void	 longtname(const struct pinfo *, VARENT *);
+void	 lstarted(const struct pinfo *, VARENT *);
+void	 maxrss(const struct pinfo *, VARENT *);
 void	 nlisterr(struct nlist *);
-void	 p_rssize(const struct kinfo_proc *, VARENT *);
-void	 pagein(const struct kinfo_proc *, VARENT *);
+void	 p_rssize(const struct pinfo *, VARENT *);
+void	 pagein(const struct pinfo *, VARENT *);
 void	 parsefmt(char *);
-void	 pcpu(const struct kinfo_proc *, VARENT *);
-void	 pmem(const struct kinfo_proc *, VARENT *);
-void	 pri(const struct kinfo_proc *, VARENT *);
+void	 pcpu(const struct pinfo *, VARENT *);
+void	 pmem(const struct pinfo *, VARENT *);
+void	 pri(const struct pinfo *, VARENT *);
 void	 printheader(void);
-void	 pvar(const struct kinfo_proc *kp, VARENT *);
-void	 pnice(const struct kinfo_proc *kp, VARENT *);
-void	 rgname(const struct kinfo_proc *, VARENT *);
-void	 rssize(const struct kinfo_proc *, VARENT *);
-void	 runame(const struct kinfo_proc *, VARENT *);
+void	 pvar(const struct pinfo *, VARENT *);
+void	 pnice(const struct pinfo *, VARENT *);
+void	 rgname(const struct pinfo *, VARENT *);
+void	 rssize(const struct pinfo *, VARENT *);
+void	 runame(const struct pinfo *, VARENT *);
 void	 showkey(void);
-void	 started(const struct kinfo_proc *, VARENT *);
-void	 printstate(const struct kinfo_proc *, VARENT *);
-void	 printpledge(const struct kinfo_proc *, VARENT *);
-void	 tdev(const struct kinfo_proc *, VARENT *);
-void	 tname(const struct kinfo_proc *, VARENT *);
-void	 tsize(const struct kinfo_proc *, VARENT *);
-void	 dsize(const struct kinfo_proc *, VARENT *);
-void	 ssize(const struct kinfo_proc *, VARENT *);
-void	 ucomm(const struct kinfo_proc *, VARENT *);
-void	 curwd(const struct kinfo_proc *, VARENT *);
-void	 euname(const struct kinfo_proc *, VARENT *);
-void	 vsize(const struct kinfo_proc *, VARENT *);
-void	 wchan(const struct kinfo_proc *, VARENT *);
+void	 started(const struct pinfo *, VARENT *);
+void	 printstate(const struct pinfo *, VARENT *);
+void	 printpledge(const struct pinfo *, VARENT *);
+void	 tdev(const struct pinfo *, VARENT *);
+void	 tname(const struct pinfo *, VARENT *);
+void	 tsize(const struct pinfo *, VARENT *);
+void	 dsize(const struct pinfo *, VARENT *);
+void	 ssize(const struct pinfo *, VARENT *);
+void	 ucomm(const struct pinfo *, VARENT *);
+void	 curwd(const struct pinfo *, VARENT *);
+void	 euname(const struct pinfo *, VARENT *);
+void	 vsize(const struct pinfo *, VARENT *);
+void	 wchan(const struct pinfo *, VARENT *);
 __END_DECLS
