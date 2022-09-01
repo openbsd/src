@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.44 2020/03/09 06:16:56 otto Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.45 2022/09/01 08:18:20 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -114,17 +114,10 @@
  *
  * All of these are patched directly into the code where they are used
  * (once only, each), to save space.
- *
- * One more symbol is exported, in anticipation of a "-c" flag in
- * installboot to force CHS reads:
- *
- * force_chs	uint8	set to the value 1 to force biosboot to use CHS
- *			reads (this will of course cause the boot sequence
- *			to fail if /boot is above 8 GB).
  */
 
 	.globl	inodeblk, inodedbl, fs_bsize_p, fsbtodb, p_offset, nblocks
-	.globl	fs_bsize_s, force_chs, blkincr
+	.globl	fs_bsize_s, blkincr
 	.type	inodeblk, @function
 	.type	inodedbl, @function
 	.type	fs_bsize_p, @function
@@ -132,7 +125,6 @@
 	.type	fsbtodb, @function
 	.type	p_offset, @function
 	.type	nblocks, @function
-	.type	force_chs, @function
 	.type	blkincr, @function
 
 
@@ -240,56 +232,17 @@ main:
 	/*
 	 * We're going to print our sign-on message.
 	 *
-	 * We're now LBA-aware, and will use LBA to load /boot if the
-	 * BIOS says it's available.  However, we have seen machines
-	 * where CHS is required even when LBA is available.  Therefore
-	 * we provide a way to force CHS use:
-	 *
-	 * If the SHIFT key is held down on entry, force CHS reads.
+	 * We're now LBA-aware, and will use LBA to load /boot if
+	 * it's available.
 	 */
-	movw	$load_msg+1, %si	/* "Loading" */
-	movb	%dl, %dh
+	movw	$load_msg, %si	/* "Loading" */
+	call	Lmessage /* Print pretty message */
 
 	/*
-	 * BIOS call "INT 0x16 Get Keyboard Shift Flags
-	 *	Call with	%ah = 0x02
-	 *	Return:
-	 *			%al = shift flags
-	 *			%ah - undefined by many BIOSes
+	 * We will use LBA reads if we have LBA support, but don't even try
+	 * on floppies.
 	 */
-	movb	$0x02, %ah
-	int	$0x16
-
-	/*
-	 * We provide the ability to force CHS use without having to hold
-	 * down the SHIFT key each boot.  Just set the byte at force_chs
-	 * to 1 (more accurately any value with either of the bottom two
-	 * bits set, but the use of 1 is recommended).
-	 */
-force_chs = .+1
-	orb	$0, %al
-
-	testb	$0x3, %al		/* Either shift key down? */
-	jz	no_force_chs
-
-	decw	%si			/* "!Loading" indicates forced CHS */
-	xorb	%dh, %dh		/* Pretend a floppy, so no LBA use */
-
-no_force_chs:
-	/* Print pretty message */
-	call	Lmessage
-
-	/*
-	 * We will use LBA reads if we have LBA support, so find out.
-	 */
-
-	/*
-	 * But don't even try on floppies, OR if forcing to CHS.
-	 *
-	 * (We're really testing %dl, but use %dh so we can force the
-	 * top bit to zero to force CHS boot.)
-	 */
-	testb	$0x80, %dh
+	testb	$0x80, %dl
 	jz	no_lba
 
 	/*
@@ -895,7 +848,7 @@ lba_sector:
 	.long	0, 0			/* sector number */
 
 load_msg:
-	.asciz	"!Loading"
+	.asciz	"Loading"
 err_txt_crlf:
 	.ascii	"\r\n"
 err_txt:
