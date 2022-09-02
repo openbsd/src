@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.255 2022/09/01 13:45:27 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.256 2022/09/02 12:24:26 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -484,8 +484,7 @@ gpt_get_hdr(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 
 	if (letoh64(ngh.gh_sig) == GPTSIGNATURE &&
 	    letoh32(ngh.gh_rev) == GPTREVISION &&
-	    size == GPTMINHDRSIZE && lbastart < lbaend &&
-	    lbastart < DL_GETDSIZE(lp) && lbaend < DL_GETDSIZE(lp) &&
+	    size == GPTMINHDRSIZE && lbastart <= lbaend &&
 	    partsize == GPTMINPARTSIZE && lp->d_secsize % partsize == 0 &&
 	    csum == ngh.gh_csum)
 		*gh = ngh;
