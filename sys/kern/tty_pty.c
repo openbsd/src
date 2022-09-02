@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.113 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.114 2022/09/02 07:37:57 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1110,7 +1110,7 @@ retry:
 		if ((error = check_pty(newdev)))
 			goto bad;
 		pti = pt_softc[minor(newdev)];
-		NDINIT(&cnd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+		NDINIT(&cnd, LOOKUP, NOFOLLOW|LOCKLEAF|KERNELPATH, UIO_SYSSPACE,
 		    pti->pty_pn, p);
 		cnd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
 		if ((error = ptm_vn_open(&cnd)) != 0) {
@@ -1137,10 +1137,9 @@ retry:
 		 * 2. Revoke all the users of the slave.
 		 * 3. open the slave.
 		 */
-		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF|KERNELPATH, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		snd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
-		snd.ni_unveil = UNVEIL_READ | UNVEIL_WRITE;
 		if ((error = namei(&snd)) != 0)
 			goto bad;
 		if ((snd.ni_vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
@@ -1172,10 +1171,9 @@ retry:
 		 */
 		vrele(snd.ni_vp);
 
-		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
+		NDINIT(&snd, LOOKUP, NOFOLLOW|LOCKLEAF|KERNELPATH, UIO_SYSSPACE,
 		    pti->pty_sn, p);
 		snd.ni_pledge = PLEDGE_RPATH | PLEDGE_WPATH;
-		snd.ni_unveil= UNVEIL_READ | UNVEIL_WRITE;
 		/* now open it */
 		if ((error = ptm_vn_open(&snd)) != 0)
 			goto bad;
