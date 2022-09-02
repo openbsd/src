@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/08 15:53:53 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/09/02 15:45:52 tb Exp $
 
-PROG=	rmdtest
+PROG=	rmd_test
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
