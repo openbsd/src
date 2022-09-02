@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.72 2022/03/02 11:10:43 florian Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.73 2022/09/02 07:38:14 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1080,9 +1080,9 @@ media_add(struct mediatypes *types, struct media_type *media)
 	struct media_type	*entry;
 
 	if ((entry = RB_FIND(mediatypes, types, media)) != NULL) {
-		log_debug("%s: duplicated entry for \"%s\"", __func__,
+		log_debug("%s: entry overwritten for \"%s\"", __func__,
 		    media->media_name);
-		return (NULL);
+		media_delete(types, entry);
 	}
 
 	if ((entry = malloc(sizeof(*media))) == NULL)

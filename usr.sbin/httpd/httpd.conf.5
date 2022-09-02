@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.121 2022/03/09 13:50:41 jsg Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.122 2022/09/02 07:38:14 benno Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2022 $
+.Dd $Mdocdate: September 2 2022 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -753,6 +753,7 @@ to the specified extension
 .Ar name .
 One or more names can be specified per line.
 Each line may end with an optional semicolon.
+Later lines overwrite earlier lines.
 .It Ic include Ar file
 Include types definitions from an external file, for example
 .Pa /usr/share/misc/mime.types .
