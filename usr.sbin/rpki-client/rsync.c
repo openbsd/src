@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.42 2022/09/02 13:04:16 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.43 2022/09/02 17:39:51 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,7 +137,6 @@ exec_rsync(const char *prog, const char *bind_addr, char *uri, char *dst,
 	char *args[32];
 	char *reldst;
 	int i;
-
 
 	if ((pid = fork()) == -1)
 		err(1, "fork");
