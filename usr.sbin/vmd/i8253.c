@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.34 2021/06/16 16:55:02 dv Exp $ */
+/* $OpenBSD: i8253.c,v 1.35 2022/09/02 21:33:51 cheloha Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -137,9 +137,9 @@ i8253_do_readback(uint32_t data)
 
 	/* !TIMER_RB_COUNT == enable counter readback */
 	if (data & ~TIMER_RB_COUNT) {
+		clock_gettime(CLOCK_MONOTONIC, &now);
 		for (i = 0; i < 3; i++) {
 			if (data & readback_channel[i]) {
-				clock_gettime(CLOCK_MONOTONIC, &now);
 				timespecsub(&now, &i8253_channel[i].ts, &delta);
 				ns = delta.tv_sec * 1000000000 + delta.tv_nsec;
 				ticks = ns / NS_PER_TICK;
