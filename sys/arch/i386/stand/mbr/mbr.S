@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.26 2022/08/15 04:17:51 daniel Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.27 2022/09/02 07:46:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -513,15 +513,7 @@ endofcode:
 /* partition table */
 /* flag, head, sec, cyl, type, ehead, esect, ecyl, start, len */
 	. = DOSPARTOFF	/* starting address of partition table */
-pt:
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
-	.byte	0x0,0,0,0,0,0,0,0
-	.long	0,0
+pt:	.fill	0x40,1,0
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = 0x1fe
 signature:
