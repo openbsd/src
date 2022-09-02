@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.27 2022/09/01 13:24:28 martijn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.28 2022/09/02 09:39:55 florian Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -569,7 +569,8 @@ solicit_dns_proposals(int routesock)
 void
 regen_resolvconf(char *why)
 {
-	int	 i, fd;
+	struct iovec	 iov[UIO_MAXIOV];
+	int		 i, fd, len, iovcnt = 0;
 
 	linfo("rebuilding: %s", why);
 
@@ -578,9 +579,18 @@ regen_resolvconf(char *why)
 		return;
 	}
 
+	memset(iov, 0, sizeof(iov));
+
 #ifndef SMALL
-	if (unwind_running)
-		dprintf(fd, "nameserver 127.0.0.1 # resolvd: unwind\n");
+	if (unwind_running) {
+		len = asprintf((char **)&iov[iovcnt].iov_base,
+		    "nameserver 127.0.0.1 # resolvd: unwind\n");
+		if (len < 0) {
+			lwarn("asprintf");
+			goto err;
+		}
+		iov[iovcnt++].iov_len = len;
+	}
 
 #endif /* SMALL */
 	for (i = 0; i < ASR_MAXNS; i++) {
@@ -589,7 +599,8 @@ regen_resolvconf(char *why)
 
 			ifnam = if_indextoname(learned[i].if_index,
 			    ifnambuf);
-			dprintf(fd, "%snameserver %s # resolvd: %s\n",
+			len = asprintf((char **)&iov[iovcnt].iov_base,
+			    "%snameserver %s # resolvd: %s\n",
 #ifndef SMALL
 			    unwind_running ? "#" : "",
 #else
@@ -597,6 +608,11 @@ regen_resolvconf(char *why)
 #endif
 			    learned[i].ip,
 			    ifnam ? ifnam : "");
+			if (len < 0) {
+				lwarn("asprintf");
+				goto err;
+			}
+			iov[iovcnt++].iov_len = len;
 		}
 	}
 
@@ -624,12 +640,31 @@ regen_resolvconf(char *why)
 				*end = '\0';
 			if (strstr(line, "# resolvd: "))
 				continue;
-			dprintf(fd, "%s\n", line);
+			len = asprintf((char **)&iov[iovcnt].iov_base, "%s\n",
+			    line);
+			if (len < 0) {
+				lwarn("asprintf");
+				goto err;
+			}
+			iov[iovcnt++].iov_len = len;
+			if (iovcnt >= UIO_MAXIOV) {
+				lwarnx("too many user-managed lines");
+				goto err;
+			}
 		}
 		free(line);
 		fclose(fp);
 	}
 
+	if (writev(fd, iov, iovcnt) == -1) {
+		lwarn("writev");
+		goto err;
+	}
+
+	if (fsync(fd) == -1) {
+		lwarn("fsync");
+		goto err;
+	}
 	if (rename(_PATH_RESCONF_NEW, _PATH_RESCONF) == -1)
 		goto err;
 
@@ -642,12 +677,16 @@ regen_resolvconf(char *why)
 	}
 
 	newkevent = 1;
-	return;
+	goto out;
 
  err:
 	if (fd != -1)
 		close(fd);
 	unlink(_PATH_RESCONF_NEW);
+ out:
+	for (i = 0; i < iovcnt; i++)
+		free(iov[i].iov_base);
+
 }
 
 int
