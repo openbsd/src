@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.48 2022/01/17 02:54:28 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.49 2022/09/02 09:02:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -425,14 +425,13 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 int
 hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 {
-	extern char __retguard_start_phys, __retguard_end_phys;
+	extern paddr_t retguard_start_phys, retguard_end_phys;
 
 	if (dest >= hib_info->piglet_pa &&
 	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
 		return (HIB_SKIP);
 
-	if (dest >= ((paddr_t)&__retguard_start_phys) &&
-	    dest <= ((paddr_t)&__retguard_end_phys))
+	if (dest >= retguard_start_phys && dest <= retguard_end_phys)
 		return (HIB_MOVE);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.17 2021/03/07 23:10:54 mortimer Exp $	*/
+/*	$OpenBSD: ld.script,v 1.18 2022/09/02 09:02:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -101,11 +101,9 @@ SECTIONS
 	.openbsd.randomdata : AT (__kernel_randomdata_phys)
 	{
 		__retguard_start = ABSOLUTE(.);
-		__retguard_start_phys = . + __kernel_virt_to_phys;
 		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
 		. = ALIGN(__ALIGN_SIZE);
 		__retguard_end = ABSOLUTE(.);
-		__retguard_end_phys = . + __kernel_virt_to_phys;
 		*(.openbsd.randomdata .openbsd.randomdata.*)
 	} :rodata :openbsd_randomize =0xcccccccc
 	. = ALIGN(0x1000);

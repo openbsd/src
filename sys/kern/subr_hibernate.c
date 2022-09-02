@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.136 2022/09/01 21:50:19 mlarkin Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.137 2022/09/02 09:02:37 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -101,6 +101,10 @@ int	hib_debug = 99;
 #ifndef NO_PROPOLICE
 extern long __guard_local;
 #endif /* ! NO_PROPOLICE */
+
+/* Retguard phys address (need to skip this region during unpack) */
+paddr_t retguard_start_phys, retguard_end_phys;
+extern char __retguard_start, __retguard_end;
 
 void hibernate_copy_chunk_to_piglet(paddr_t, vaddr_t, size_t);
 int hibernate_calc_rle(paddr_t, paddr_t);
@@ -1196,6 +1200,11 @@ hibernate_resume(void)
 		goto fail;
 	}
 
+	pmap_extract(pmap_kernel(), (vaddr_t)&__retguard_start,
+	    &retguard_start_phys);
+	pmap_extract(pmap_kernel(), (vaddr_t)&__retguard_end,
+	    &retguard_end_phys);
+
 	hibernate_preserve_entropy(&disk_hib);
 
 	printf("Unpacking image...\n");
@@ -1920,6 +1929,11 @@ hibernate_suspend(void)
 			end - start + 1);
 		return (1);
 	}
+
+	pmap_extract(pmap_kernel(), (vaddr_t)&__retguard_start,
+	    &retguard_start_phys);
+	pmap_extract(pmap_kernel(), (vaddr_t)&__retguard_end,
+	    &retguard_end_phys);
 
 	/* Calculate block offsets in swap */
 	hib.image_offset = ctod(start);
