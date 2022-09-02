@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.36 2022/08/30 12:45:13 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.37 2022/09/02 15:09:19 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1016,16 +1016,16 @@ ta_lookup(int id, struct tal *tal)
 	if ((rp->repouri = strdup(tal->descr)) == NULL)
 		err(1, NULL);
 
-	/* try to create base directory */
-	if (mkpath(rp->basedir) == -1)
-		warn("mkpath %s", rp->basedir);
-
 	/* check if sync disabled ... */
 	if (noop) {
 		logx("ta/%s: using cache", rp->repouri);
 		entityq_flush(&rp->queue, rp);
 		return rp;
 	}
+
+	/* try to create base directory */
+	if (mkpath(rp->basedir) == -1)
+		warn("mkpath %s", rp->basedir);
 
 	rp->ta = ta_get(tal);
 
@@ -1078,16 +1078,16 @@ repo_lookup(int talid, const char *uri, const char *notify)
 		nofetch = 1;
 	}
 
-	/* try to create base directory */
-	if (mkpath(rp->basedir) == -1)
-		warn("mkpath %s", rp->basedir);
-
 	/* check if sync disabled ... */
 	if (noop || nofetch) {
 		logx("%s: using cache", rp->basedir);
 		entityq_flush(&rp->queue, rp);
 		return rp;
 	}
+
+	/* try to create base directory */
+	if (mkpath(rp->basedir) == -1)
+		warn("mkpath %s", rp->basedir);
 
 	/* ... else try RRDP first if available then rsync */
 	if (notify != NULL)
