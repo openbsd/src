@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.29 2021/11/28 19:28:42 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.30 2022/09/02 15:21:40 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -145,16 +145,42 @@ cnt(const char *path)
 		fd = STDIN_FILENO;
 	}
 
-	if (!doword && !multibyte) {
+	if (!multibyte) {
 		if (bufsz < _MAXBSIZE &&
 		    (buf = realloc(buf, _MAXBSIZE)) == NULL)
 			err(1, NULL);
+
+		/*
+		 * According to POSIX, a word is a "maximal string of
+		 * characters delimited by whitespace."  Nothing is said
+		 * about a character being printing or non-printing.
+		 */
+		if (doword) {
+			gotsp = 1;
+			while ((len = read(fd, buf, _MAXBSIZE)) > 0) {
+				charct += len;
+				for (C = buf; len--; ++C) {
+					if (isspace((unsigned char)*C)) {
+						gotsp = 1;
+						if (*C == '\n')
+							++linect;
+					} else if (gotsp) {
+						gotsp = 0;
+						++wordct;
+					}
+				}
+			}
+			if (len == -1) {
+				warn("%s", file);
+				rval = 1;
+			}
+		}
 		/*
 		 * Line counting is split out because it's a lot
 		 * faster to get lines than to get words, since
 		 * the word count requires some logic.
 		 */
-		if (doline) {
+		else if (doline) {
 			while ((len = read(fd, buf, _MAXBSIZE)) > 0) {
 				charct += len;
 				for (C = buf; len--; ++C)
@@ -204,46 +230,26 @@ cnt(const char *path)
 			return;
 		}
 
-		/*
-		 * Do it the hard way.
-		 * According to POSIX, a word is a "maximal string of
-		 * characters delimited by whitespace."  Nothing is said
-		 * about a character being printing or non-printing.
-		 */
 		gotsp = 1;
 		while ((len = getline(&buf, &bufsz, stream)) > 0) {
-			if (multibyte) {
-				const char *end = buf + len;
-				for (C = buf; C < end; C += len) {
-					++charct;
-					len = mbtowc(&wc, C, MB_CUR_MAX);
-					if (len == -1) {
-						mbtowc(NULL, NULL,
-						    MB_CUR_MAX);
-						len = 1;
-						wc = L'?';
-					} else if (len == 0)
-						len = 1;
-					if (iswspace(wc)) {
-						gotsp = 1;
-						if (wc == L'\n')
-							++linect;
-					} else if (gotsp) {
-						gotsp = 0;
-						++wordct;
-					}
-				}
-			} else {
-				charct += len;
-				for (C = buf; len--; ++C) {
-					if (isspace((unsigned char)*C)) {
-						gotsp = 1;
-						if (*C == '\n')
-							++linect;
-					} else if (gotsp) {
-						gotsp = 0;
-						++wordct;
-					}
+			const char *end = buf + len;
+			for (C = buf; C < end; C += len) {
+				++charct;
+				len = mbtowc(&wc, C, MB_CUR_MAX);
+				if (len == -1) {
+					mbtowc(NULL, NULL,
+					    MB_CUR_MAX);
+					len = 1;
+					wc = L'?';
+				} else if (len == 0)
+					len = 1;
+				if (iswspace(wc)) {
+					gotsp = 1;
+					if (wc == L'\n')
+						++linect;
+				} else if (gotsp) {
+					gotsp = 0;
+					++wordct;
 				}
 			}
 		}
