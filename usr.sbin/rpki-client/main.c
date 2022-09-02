@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.217 2022/09/02 19:14:04 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.218 2022/09/02 21:56:45 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -66,6 +66,7 @@ int	noop;
 int	filemode;
 int	rrdpon = 1;
 int	repo_timeout;
+time_t	deadline;
 
 struct skiplist skiplist = LIST_HEAD_INITIALIZER(skiplist);
 
@@ -1044,6 +1045,10 @@ main(int argc, char *argv[])
 		 */
 		alarm(timeout);
 		signal(SIGALRM, suicide);
+
+		/* give up a bit before the hard timeout and try to finish up */
+		if (!noop)
+			deadline = getmonotime() + timeout - repo_timeout / 2;
 	}
 
 	if (pledge("stdio rpath wpath cpath fattr sendfd unveil", NULL) == -1)
