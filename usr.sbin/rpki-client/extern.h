@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.152 2022/09/02 18:37:17 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.153 2022/09/02 19:10:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -653,9 +653,11 @@ void		 rrdp_finish(unsigned int, int);
 
 void		 rsync_fetch(unsigned int, const char *, const char *,
 		    const char *);
+void		 rsync_abort(unsigned int);
 void		 http_fetch(unsigned int, const char *, const char *, int);
 void		 rrdp_fetch(unsigned int, const char *, const char *,
 		    struct rrdp_session *);
+void		 rrdp_abort(unsigned int);
 void		 rrdp_http_done(unsigned int, enum http_result, const char *);
 int		 repo_check_timeout(int);
 

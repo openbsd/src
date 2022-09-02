@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.37 2022/09/02 15:09:19 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.38 2022/09/02 19:10:37 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1204,6 +1204,20 @@ repo_fail(struct repo *rp)
 		errx(1, "%s: bad repo", rp->repouri);
 }
 
+static void
+repo_abort(struct repo *rp)
+{
+	/* reset the alarm */
+	rp->alarm = getmonotime() + repo_timeout;
+
+	if (rp->rsync)
+		rsync_abort(rp->rsync->id);
+	else if (rp->rrdp)
+		rrdp_abort(rp->rrdp->id);
+	else
+		repo_fail(rp);
+}
+
 int
 repo_check_timeout(int timeout)
 {
@@ -1217,7 +1231,7 @@ repo_check_timeout(int timeout)
 			if (rp->alarm <= now) {
 				warnx("%s: synchronisation timeout",
 				    rp->repouri);
-				repo_fail(rp);
+				repo_abort(rp);
 			} else {
 				int diff = rp->alarm - now;
 				diff *= 1000;

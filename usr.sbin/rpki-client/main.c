@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.215 2022/08/30 22:42:32 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.216 2022/09/02 19:10:37 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -256,6 +256,18 @@ rrdp_fetch(unsigned int id, const char *uri, const char *local,
 	io_close_buffer(&rrdpq, b);
 }
 
+void
+rrdp_abort(unsigned int id)
+{
+	enum rrdp_msg type = RRDP_ABORT;
+	struct ibuf *b;
+
+	b = io_new_buffer();
+	io_simple_buffer(b, &type, sizeof(type));
+	io_simple_buffer(b, &id, sizeof(id));
+	io_close_buffer(&rrdpq, b);
+}
+
 /*
  * Request a repository sync via rsync URI to directory local.
  */
@@ -270,6 +282,19 @@ rsync_fetch(unsigned int id, const char *uri, const char *local,
 	io_str_buffer(b, local);
 	io_str_buffer(b, base);
 	io_str_buffer(b, uri);
+	io_close_buffer(&rsyncq, b);
+}
+
+void
+rsync_abort(unsigned int id)
+{
+	struct ibuf	*b;
+
+	b = io_new_buffer();
+	io_simple_buffer(b, &id, sizeof(id));
+	io_str_buffer(b, NULL);
+	io_str_buffer(b, NULL);
+	io_str_buffer(b, NULL);
 	io_close_buffer(&rsyncq, b);
 }
 
