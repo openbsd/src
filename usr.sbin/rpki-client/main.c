@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.216 2022/09/02 19:10:37 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.217 2022/09/02 19:14:04 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1291,10 +1291,10 @@ main(int argc, char *argv[])
 	    (long long)stats.user_time.tv_sec,
 	    (long long)stats.system_time.tv_sec);
 	printf("Skiplist entries: %zu\n", stats.skiplistentries);
-	printf("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n",
-	    stats.roas, stats.roas_fail, stats.roas_invalid);
-	printf("AS Provider Attestations: %zu (%zu failed parse, %zu invalid)\n",
-	    stats.aspas, stats.aspas_fail, stats.aspas_invalid);
+	printf("Route Origin Authorizations: %zu (%zu failed parse, %zu "
+	    "invalid)\n", stats.roas, stats.roas_fail, stats.roas_invalid);
+	printf("AS Provider Attestations: %zu (%zu failed parse, %zu "
+	    "invalid)\n", stats.aspas, stats.aspas_fail, stats.aspas_invalid);
 	printf("BGPsec Router Certificates: %zu\n", stats.brks);
 	printf("Certificates: %zu (%zu invalid)\n",
 	    stats.certs, stats.certs_fail);
