@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.175 2022/08/31 16:10:59 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.176 2022/09/02 13:20:46 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -105,6 +105,10 @@ wsdisplay*	at simplefb?
 
 # Apple
 apldart*	at fdt? early 1
+apldc*		at fdt?
+apldchidev*	at fdt?
+apldckbd*	at apldchidev?
+wskbd*		at apldckbd? mux 1
 apldog*		at fdt? early 1
 apliic*		at fdt?
 iic*		at apliic?
@@ -116,6 +120,7 @@ aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplpmgr*	at fdt? early 1
+aplrtk*		at fdt?
 aplsart*	at fdt?
 aplsmc*		at fdt?
 aplspi*		at fdt?
