@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.15 2022/08/29 07:51:45 bluhm Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.16 2022/09/02 17:46:37 dv Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -75,6 +75,7 @@ DT_STATIC_PROBE4(vfs, cleaner, "long", "int", "long", "long");
  */
 DT_STATIC_PROBE2(vmm, guest_enter, "void *", "void *");
 DT_STATIC_PROBE3(vmm, guest_exit, "void *", "void *", "uint64_t");
+DT_STATIC_PROBE4(vmm, inout, "void *", "uint16_t", "uint8_t", "uint32_t");
 #endif /* __amd64__ */
 
 /*

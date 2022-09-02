@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.321 2022/09/01 22:01:40 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.322 2022/09/02 17:46:37 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6081,6 +6081,9 @@ svm_handle_inout(struct vcpu *vcpu)
 	/* Data */
 	vcpu->vc_exit.vei.vei_data = vmcb->v_rax;
 
+	TRACEPOINT(vmm, inout, vcpu, vcpu->vc_exit.vei.vei_port,
+	    vcpu->vc_exit.vei.vei_dir, vcpu->vc_exit.vei.vei_data);
+
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
 	return (0);
@@ -6136,6 +6139,9 @@ vmx_handle_inout(struct vcpu *vcpu)
 	vcpu->vc_exit.vei.vei_port = (exit_qual & 0xFFFF0000) >> 16;
 	/* Data */
 	vcpu->vc_exit.vei.vei_data = (uint32_t)vcpu->vc_gueststate.vg_rax;
+
+	TRACEPOINT(vmm, inout, vcpu, vcpu->vc_exit.vei.vei_port,
+	    vcpu->vc_exit.vei.vei_dir, vcpu->vc_exit.vei.vei_data);
 
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
