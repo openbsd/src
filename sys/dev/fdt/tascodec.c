@@ -1,4 +1,4 @@
-/*	$OpenBSD: tascodec.c,v 1.4 2022/07/25 16:35:41 kettenis Exp $	*/
+/*	$OpenBSD: tascodec.c,v 1.5 2022/09/02 16:53:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -49,7 +49,14 @@
 #define  TDM_CFG1_RX_EDGE		(1 << 0)
 #define TDM_CFG2			0x0c
 #define  TDM_CFG2_SCFG_MASK		(3 << 4)
+#define  TDM_CFG2_SCFG_MONO_LEFT	(1 << 4)
+#define  TDM_CFG2_SCFG_MONO_RIGHT	(2 << 4)
 #define  TDM_CFG2_SCFG_STEREO_DOWNMIX	(3 << 4)
+#define TDM_CFG3			0x0d
+#define  TDM_CFG3_RX_SLOT_R_MASK	0xf0
+#define  TDM_CFG3_RX_SLOT_R_SHIFT	4
+#define  TDM_CFG3_RX_SLOT_L_MASK	0x0f
+#define  TDM_CFG3_RX_SLOT_L_SHIFT	0
 
 struct tascodec_softc {
 	struct device		sc_dev;
@@ -74,6 +81,7 @@ struct cfdriver tascodec_cd = {
 };
 
 int	tascodec_set_format(void *, uint32_t, uint32_t, uint32_t);
+int	tascodec_set_tdm_slot(void *, int);
 
 int	tascodec_set_port(void *, mixer_ctrl_t *);
 int	tascodec_get_port(void *, mixer_ctrl_t *);
@@ -141,6 +149,7 @@ tascodec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dai.dd_cookie = sc;
 	sc->sc_dai.dd_hw_if = &tascodec_hw_if;
 	sc->sc_dai.dd_set_format = tascodec_set_format;
+	sc->sc_dai.dd_set_tdm_slot = tascodec_set_tdm_slot;
 	dai_register(&sc->sc_dai);
 }
 
@@ -201,6 +210,27 @@ tascodec_set_format(void *cookie, uint32_t fmt, uint32_t pol,
 
 	tascodec_write(sc, TDM_CFG0, cfg0);
 	tascodec_write(sc, TDM_CFG1, cfg1);
+
+	return 0;
+}
+
+int
+tascodec_set_tdm_slot(void *cookie, int slot)
+{
+	struct tascodec_softc *sc = cookie;
+	uint8_t cfg2, cfg3;
+
+	if (slot < 0 || slot >= 16)
+		return EINVAL;
+
+	cfg2 = tascodec_read(sc, TDM_CFG2);
+	cfg3 = tascodec_read(sc, TDM_CFG3);
+	cfg2 &= ~TDM_CFG2_SCFG_MASK;
+	cfg2 |= TDM_CFG2_SCFG_MONO_LEFT;
+	cfg3 &= ~TDM_CFG3_RX_SLOT_L_MASK;
+	cfg3 |= slot << TDM_CFG3_RX_SLOT_L_SHIFT;
+	tascodec_write(sc, TDM_CFG2, cfg2);
+	tascodec_write(sc, TDM_CFG3, cfg3);
 
 	return 0;
 }

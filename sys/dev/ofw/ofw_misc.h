@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.24 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.25 2022/09/02 16:53:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -194,6 +194,7 @@ struct dai_device {
 	const void *dd_hw_if;
 	int	(*dd_set_format)(void *, uint32_t, uint32_t, uint32_t);
 	int	(*dd_set_sysclk)(void *, uint32_t);
+	int	(*dd_set_tdm_slot)(void *, int);
 
 	LIST_ENTRY(dai_device) dd_list;
 	uint32_t dd_phandle;
