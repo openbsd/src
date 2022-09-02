@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.58 2022/01/17 02:54:28 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.59 2022/09/02 12:46:18 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -370,17 +370,26 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 
 /*
  * During inflate, certain pages that contain our bookkeeping information
- * (eg, the chunk table, scratch pages, etc) need to be skipped over and
- * not inflated into.
+ * (eg, the chunk table, scratch pages, retguard region, etc) need to be
+ * skipped over and not inflated into.
  *
- * Returns 1 if the physical page at dest should be skipped, 0 otherwise
+ * Return values:
+ *  HIB_MOVE: if the physical page at dest should be moved to the retguard save
+ *   region in the piglet
+ *  HIB_SKIP: if the physical page at dest should be skipped
+ *  0: otherwise (no special treatment needed)
  */
 int
 hibernate_inflate_skip(union hibernate_info *hib_info, paddr_t dest)
 {
+	extern paddr_t retguard_start_phys, retguard_end_phys;
+
 	if (dest >= hib_info->piglet_pa &&
 	    dest <= (hib_info->piglet_pa + 4 * HIBERNATE_CHUNK_SIZE))
-		return (1);
+		return (HIB_SKIP);
+
+	if (dest >= retguard_start_phys && dest <= retguard_end_phys)
+		return (HIB_MOVE);
 
 	return (0);
 }
