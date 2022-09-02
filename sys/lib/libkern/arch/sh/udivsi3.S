@@ -76,32 +76,5 @@ NENTRY(__udivsi3)
 	 mov	r4, r0
 
 div_by_zero:
-#ifdef _KERNEL
 	rts
 	 mov	#0, r0
-#else
-	mov.l	r14, @-r15
-	sts.l	pr, @-r15
-	mov	r15, r14
-
-	mov.l	L_raise, r1
-#ifdef PIC
-1:	bsrf	r1
-#else
-	jsr	@r1
-#endif
-	 mov	#8, r4		/* delay slot.  8 <- SIGFPE. */
-	mov	#0, r0
-
-	lds.l	@r15+, pr
-	rts
-	 mov.l	@r15+, r14
-
-	.align	2
-L_raise:
-#ifdef PIC
-	.long	_C_LABEL(raise)-(1b+4)
-#else
-	.long	_C_LABEL(raise)
-#endif
-#endif
