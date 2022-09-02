@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.c,v 1.5 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: softraid_sparc64.c,v 1.6 2022/09/02 08:13:03 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -290,6 +290,7 @@ srprobe(void)
 			break;
 
 		case 1:
+		case 0x1C:
 			if (bv->sbv_chunk_no == bv->sbv_chunks_found)
 				bv->sbv_state = BIOC_SVONLINE;
 			else if (bv->sbv_chunks_found > 0)
@@ -312,7 +313,8 @@ sr_vol_boot_chunk(struct sr_boot_volume *bv)
 {
 	struct sr_boot_chunk *bc = NULL;
 
-	if (bv->sbv_level == 1 || bv->sbv_level == 'C' ) { /* RAID1 or CRYPTO */
+	if (bv->sbv_level == 1 || bv->sbv_level == 'C' ||
+	    bv->sbv_level == 0x1C) {
 		/* Select first online chunk. */
 		SLIST_FOREACH(bc, &bv->sbv_chunks, sbc_link)
 			if (bc->sbc_state == BIOC_SDONLINE)
@@ -368,7 +370,7 @@ sr_strategy(struct sr_boot_volume *bv, int sr_handle, int rw, daddr_t blk,
 		err = strategy(&ofdev, rw, blk, size, buf, rsize);
 		return err;
 
-	} else if (bv->sbv_level == 'C') {
+	} else if (bv->sbv_level == 'C' || bv->sbv_level == 0x1C) {
 		/* XXX - select correct key. */
 		aes_xts_setkey(&ctx, (u_char *)bv->sbv_keys, 64);
 
