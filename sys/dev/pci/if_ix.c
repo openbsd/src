@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.188 2022/08/30 19:52:58 benno Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.189 2022/09/02 14:08:09 jan Exp $	*/
 
 /******************************************************************************
 
@@ -3110,7 +3110,7 @@ ixgbe_rxeof(struct rx_ring *rxr)
 	struct ixgbe_rx_buf	*rxbuf, *nxbuf;
 	union ixgbe_adv_rx_desc	*rxdesc;
 	size_t			 dsize = sizeof(union ixgbe_adv_rx_desc);
-	int			 i, nextp;
+	int			 i, nextp, rsccnt;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return FALSE;
@@ -3149,6 +3149,9 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		hashtype =
 		    lemtoh16(&rxdesc->wb.lower.lo_dword.hs_rss.pkt_info) &
 		    IXGBE_RXDADV_RSSTYPE_MASK;
+		rsccnt = lemtoh32(&rxdesc->wb.lower.lo_dword.data) &
+		    IXGBE_RXDADV_RSCCNT_MASK;
+		rsccnt >>= IXGBE_RXDADV_RSCCNT_SHIFT;
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
 			if (rxbuf->fmp) {
@@ -3168,12 +3171,16 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			    rxr->last_desc_filled);
 		}
 
-		/* Currently no HW RSC support of 82599 */
 		if (!eop) {
 			/*
 			 * Figure out the next descriptor of this frame.
 			 */
-			nextp = i + 1;
+			if (rsccnt) {
+				nextp = staterr & IXGBE_RXDADV_NEXTP_MASK;
+				nextp >>= IXGBE_RXDADV_NEXTP_SHIFT;
+			} else {
+				nextp = i + 1;
+			}
 			if (nextp == sc->num_rx_desc)
 				nextp = 0;
 			nxbuf = &rxr->rx_buffers[nextp];
