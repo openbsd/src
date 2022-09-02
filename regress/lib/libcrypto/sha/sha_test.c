@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha_test.c,v 1.3 2022/09/02 13:21:32 tb Exp $ */
+/*	$OpenBSD: sha_test.c,v 1.4 2022/09/02 13:23:05 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -452,7 +452,7 @@ static int
 sha_test(void)
 {
 	sha_hash_func sha_func;
-	struct sha_test *st;
+	const struct sha_test *st;
 	EVP_MD_CTX *hash = NULL;
 	const EVP_MD *md;
 	uint8_t out[EVP_MAX_MD_SIZE];
@@ -541,7 +541,7 @@ sha_test(void)
 static int
 sha_repetition_test(void)
 {
-	struct sha_repetition_test *st;
+	const struct sha_repetition_test *st;
 	EVP_MD_CTX *hash = NULL;
 	const EVP_MD *md;
 	uint8_t buf[1024];
