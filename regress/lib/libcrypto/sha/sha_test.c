@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha_test.c,v 1.2 2022/09/02 11:13:34 tb Exp $ */
+/*	$OpenBSD: sha_test.c,v 1.3 2022/09/02 13:21:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -28,7 +28,7 @@ struct sha_test {
 	const uint8_t out[EVP_MAX_MD_SIZE];
 };
 
-struct sha_test sha_tests[] = {
+static const struct sha_test sha_tests[] = {
 	/* SHA-1 */
 	{
 		.algorithm = NID_sha1,
@@ -305,15 +305,14 @@ struct sha_test sha_tests[] = {
 	},
 };
 
-struct sha_repetition_test
-{
+struct sha_repetition_test {
 	const int algorithm;
 	const uint8_t in;
 	const size_t in_repetitions;
 	const uint8_t out[EVP_MAX_MD_SIZE];
 };
 
-struct sha_repetition_test sha_repetition_tests[] = {
+static const struct sha_repetition_test sha_repetition_tests[] = {
 	/* SHA-1 */
 	{
 		.algorithm = NID_sha1,
