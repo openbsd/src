@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.241 2022/08/01 14:57:19 deraadt Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.242 2022/09/02 13:18:06 mbuhl Exp $	*/
 
 /*
  * System call names.
@@ -136,8 +136,8 @@ const char *const syscallnames[] = {
 	"#113 (unimplemented fktrace)",		/* 113 = unimplemented fktrace */
 	"unveil",			/* 114 = unveil */
 	"__realpath",			/* 115 = __realpath */
-	"#116 (obsolete t32_gettimeofday)",		/* 116 = obsolete t32_gettimeofday */
-	"#117 (obsolete t32_getrusage)",		/* 117 = obsolete t32_getrusage */
+	"recvmmsg",			/* 116 = recvmmsg */
+	"#117 (unimplemented sendmmsg)",		/* 117 = unimplemented sendmmsg */
 	"getsockopt",			/* 118 = getsockopt */
 	"thrkill",			/* 119 = thrkill */
 	"readv",			/* 120 = readv */

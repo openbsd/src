@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.243 2022/08/01 14:57:19 deraadt Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.244 2022/09/02 13:18:07 mbuhl Exp $	*/
 
 /*
  * System call argument lists.
@@ -593,6 +593,14 @@ struct sys_unveil_args {
 struct sys___realpath_args {
 	syscallarg(const char *) pathname;
 	syscallarg(char *) resolved;
+};
+
+struct sys_recvmmsg_args {
+	syscallarg(int) s;
+	syscallarg(struct mmsghdr *) mmsg;
+	syscallarg(unsigned int) vlen;
+	syscallarg(unsigned int) flags;
+	syscallarg(struct timespec *) timeout;
 };
 
 struct sys_getsockopt_args {
@@ -1302,6 +1310,7 @@ int	sys_sigsuspend(struct proc *, void *, register_t *);
 int	sys_sendsyslog(struct proc *, void *, register_t *);
 int	sys_unveil(struct proc *, void *, register_t *);
 int	sys___realpath(struct proc *, void *, register_t *);
+int	sys_recvmmsg(struct proc *, void *, register_t *);
 int	sys_getsockopt(struct proc *, void *, register_t *);
 int	sys_thrkill(struct proc *, void *, register_t *);
 int	sys_readv(struct proc *, void *, register_t *);

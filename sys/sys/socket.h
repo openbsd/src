@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.102 2022/02/22 01:01:02 guenther Exp $	*/
+/*	$OpenBSD: socket.h,v 1.103 2022/09/02 13:18:07 mbuhl Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -490,6 +490,13 @@ struct msghdr {
 	int		msg_flags;	/* flags on received message */
 };
 
+struct mmsghdr {
+	struct msghdr msg_hdr;
+	unsigned int msg_len;
+};
+
+struct timespec;
+
 #define	MSG_OOB			0x1	/* process out-of-band data */
 #define	MSG_PEEK		0x2	/* peek at incoming message */
 #define	MSG_DONTROUTE		0x4	/* send without using routing tables */
@@ -502,6 +509,7 @@ struct msghdr {
 #define	MSG_MCAST		0x200	/* this message rec'd as multicast */
 #define	MSG_NOSIGNAL		0x400	/* do not send SIGPIPE */
 #define	MSG_CMSG_CLOEXEC	0x800	/* set FD_CLOEXEC on received fds */
+#define	MSG_WAITFORONE		0x1000	/* nonblocking but wait for one msg */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
@@ -565,6 +573,8 @@ int	listen(int, int);
 ssize_t	recv(int, void *, size_t, int);
 ssize_t	recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t	recvmsg(int, struct msghdr *, int);
+int	recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int,
+	    struct timespec *);
 ssize_t	send(int, const void *, size_t, int);
 ssize_t	sendto(int, const void *,
 	    size_t, int, const struct sockaddr *, socklen_t);

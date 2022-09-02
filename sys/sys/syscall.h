@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.240 2022/08/01 14:57:19 deraadt Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.241 2022/09/02 13:18:07 mbuhl Exp $	*/
 
 /*
  * System call numbers.
@@ -352,8 +352,9 @@
 /* syscall: "__realpath" ret: "int" args: "const char *" "char *" */
 #define	SYS___realpath	115
 
-				/* 116 is obsolete t32_gettimeofday */
-				/* 117 is obsolete t32_getrusage */
+/* syscall: "recvmmsg" ret: "int" args: "int" "struct mmsghdr *" "unsigned int" "unsigned int" "struct timespec *" */
+#define	SYS_recvmmsg	116
+
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "socklen_t *" */
 #define	SYS_getsockopt	118
 

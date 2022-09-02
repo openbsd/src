@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.229 2022/08/01 14:56:59 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.230 2022/09/02 13:18:06 mbuhl Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -244,8 +244,10 @@
 			    const char *permissions); }
 115	STD		{ int sys___realpath(const char *pathname, \
 			    char *resolved); }
-116	OBSOL		t32_gettimeofday
-117	OBSOL		t32_getrusage
+116	STD NOLOCK	{ int sys_recvmmsg(int s, struct mmsghdr *mmsg, \
+			    unsigned int vlen, unsigned int flags, \
+			    struct timespec *timeout); }
+117	UNIMPL		sendmmsg
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, socklen_t *avalsize); }
 119	STD		{ int sys_thrkill(pid_t tid, int signum, void *tcb); }
