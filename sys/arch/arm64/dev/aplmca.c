@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.2 2022/08/06 09:42:13 kettenis Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.3 2022/09/02 17:54:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -256,6 +256,19 @@ aplmca_dai_init(struct aplmca_softc *sc, int port)
 	return 0;
 }
 
+void
+aplmca_dai_link(struct aplmca_softc *sc, int master, int port)
+{
+	struct aplmca_dai *ad = &sc->sc_ad[master];
+
+	HWRITE4(sc, MCA_PORT_CLOCK_SEL(port),
+	    (ad->ad_cluster + 1) << MCA_PORT_CLOCK_SEL_SHIFT);
+	HWRITE4(sc, MCA_PORT_DATA_SEL(port),
+	    MCA_PORT_DATA_SEL_TXA(ad->ad_cluster));
+	HWRITE4(sc, MCA_PORT_ENABLE(port),
+	    MCA_PORT_ENABLE_CLOCKS | MCA_PORT_ENABLE_TX_DATA);
+}
+
 uint32_t *
 aplmca_dai_next_dai(uint32_t *cells)
 {
@@ -276,9 +289,9 @@ aplmca_alloc_cluster(int node)
 	struct aplmca_softc *sc = aplmca_cd.cd_devs[0];
 	uint32_t *dais;
 	uint32_t *dai;
-	uint32_t port;
+	uint32_t ports[2];
 	int nports = 0;
-	int len;
+	int len, i;
 
 	len = OF_getproplen(node, "sound-dai");
 	if (len != 2 * sizeof(uint32_t) && len != 4 * sizeof(uint32_t))
@@ -289,11 +302,8 @@ aplmca_alloc_cluster(int node)
 
 	dai = dais;
 	while (dai && dai < dais + (len / sizeof(uint32_t))) {
-		if (dai[0] == sc->sc_phandle) {
-			port = dai[1];
-			nports++;
-			break;
-		}
+		if (dai[0] == sc->sc_phandle && nports < nitems(ports))
+			ports[nports++] = dai[1];
 		dai = aplmca_dai_next_dai(dai);
 	}
 
@@ -301,14 +311,27 @@ aplmca_alloc_cluster(int node)
 
 	if (nports == 0)
 		return NULL;
+	for (i = 0; i < nports; i++) {
+		if (ports[i] >= sc->sc_nclusters)
+			return NULL;
+	}
 
-	if (sc->sc_ad[port].ad_ac != NULL)
+	if (sc->sc_ad[ports[0]].ad_ac != NULL)
 		return NULL;
 
-	if (aplmca_dai_init(sc, port))
+	/* Setup the primary cluster. */
+	if (aplmca_dai_init(sc, ports[0]))
 		return NULL;
 
-	return &sc->sc_ad[port].ad_dai;
+	/*
+	 * Additional interfaces receive the same output as the
+	 * primary interface by linking the output port to the primary
+	 * cluster.
+	 */
+	for (i = 1; i < nports; i++)
+		aplmca_dai_link(sc, ports[0], ports[i]);
+
+	return &sc->sc_ad[ports[0]].ad_dai;
 }
 
 int
