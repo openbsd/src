@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2022/09/02 10:15:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -20,34 +20,24 @@
 #include <sys/param.h>
 #include <libsa.h>
 #include <lib/libsa/ufs.h>
-#ifdef notdef
-#include <lib/libsa/cd9660.h>
-#include <lib/libsa/fat.h>
-#include <lib/libsa/nfs.h>
-#include <lib/libsa/tftp.h>
-#include <lib/libsa/netif.h>
-#endif
+#include <lib/libsa/ufs2.h>
 #include <dev/cons.h>
 
-const char version[] = "1.10";
+const char version[] = "1.11";
+#ifdef DEBUG
 int	debug = 1;
+#endif
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
-#ifdef notdef
-	{ fat_open,    fat_close,    fat_read,    fat_write,    fat_seek,
-	  fat_stat,    fat_readdir    },
-	{ nfs_open,    nfs_close,    nfs_read,    nfs_write,    nfs_seek,
-	  nfs_stat,    nfs_readdir    },
-	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	  cd9660_stat, cd9660_readdir },
-#endif
+	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
+	  ufs2_stat,   ufs2_readdir, ufs2_fchmod }
 };
 int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
-	{ "dk", blkdevstrategy, blkdevopen, blkdevclose, noioctl },
+	{ "dk", blkdevstrategy, blkdevopen, blkdevclose, noioctl }
 };
 int ndevs = nitems(devsw);
 

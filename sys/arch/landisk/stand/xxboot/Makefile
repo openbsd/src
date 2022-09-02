@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.13 2022/08/24 19:36:05 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2022/09/02 10:15:35 miod Exp $
 
 MAN=	xxboot.8
 
 .if ${MACHINE} == "landisk"
 PROG=	xxboot
-SRCS=	pbr.S xxboot.S boot1.c
+SRCS=	pbr.S xxboot.S boot1.c ufs12.c
 LDFLAGS=-nostdlib -Ttext 0x8c201000 -N -x -Bstatic -e start -nopie -znorelro
 
 INSTALL_STRIP=
@@ -30,7 +30,8 @@ LDADD+= $(SALIB)
 
 .PATH:	${S}/lib/libkern/arch/sh ${S}/lib/libkern
 SRCS+=	strlen.c
-SRCS+=	ashldi3.c ashrdi3.c sdivsi3.S udivsi3.S
+#SRCS+=	ashldi3.c ashrdi3.c moddi3.c sdivsi3.S udivsi3.S
+SRCS+=	ashldi3.c ashrdi3.c moddi3.c udivsi3.S
 
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -o ${PROG}.sym ${LDFLAGS} \

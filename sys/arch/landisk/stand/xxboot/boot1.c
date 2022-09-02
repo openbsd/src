@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.11 2022/08/24 17:35:15 miod Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.12 2022/09/02 10:15:35 miod Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
+#include "ufs12.h"
 
 #include <sys/disklabel.h>
 
@@ -43,7 +43,6 @@ static uint32_t bios_sector;
 
 const char *boot1(uint32_t *);
 void putstr(const char *str);
-int raise(int sig);
 int blkdevstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int blkdevopen(struct open_file *, ...);
 int blkdevclose(struct open_file *);
@@ -52,8 +51,8 @@ int readsects(int dev, uint32_t lba, void *buf, size_t size);
 extern struct disklabel ptn_disklabel;
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek,
-	  ufs_stat, ufs_readdir, ufs_fchmod },
+	{ ufs12_open, ufs12_close, ufs12_read, ufs12_write, ufs12_seek,
+	  ufs12_stat, ufs12_readdir, ufs12_fchmod },
 };
 int nfsys = nitems(file_system);
 
@@ -133,14 +132,6 @@ blkdevstrategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf, si
 	if (size != 0 && readsects(0x40, bios_sector + dblk, buf,
 				   size / DEV_BSIZE) != 0)
 		return EIO;
-
-	return 0;
-}
-
-/* ARGUSED */
-int
-raise(int sig)
-{
 
 	return 0;
 }

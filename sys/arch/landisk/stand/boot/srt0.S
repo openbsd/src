@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.4 2014/07/17 13:14:06 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.5 2022/09/02 10:15:35 miod Exp $	*/
 /*	$NetBSD: boot.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -104,13 +104,6 @@ ENTRY(_rtt)
 	trapa	#0x3f
 	mov.l	.L.start, r0
 	jmp	@r0
-	 nop
-
-/*
- * int raise(int sig);
- */
-ENTRY(raise)
-	rts
 	 nop
 
 /*

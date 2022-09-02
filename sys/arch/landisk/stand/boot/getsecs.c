@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsecs.c,v 1.6 2022/08/24 19:36:55 miod Exp $	*/
+/*	$OpenBSD: getsecs.c,v 1.7 2022/09/02 10:15:35 miod Exp $	*/
 /*	$NetBSD: getsecs.c,v 1.4 2022/08/24 14:22:35 nonaka Exp $	*/
 
 /*-
@@ -47,7 +47,6 @@
  */
 
 uint8_t rtc_read(uint32_t addr);
-void rtc_write(uint32_t addr, uint8_t data);
 
 static void
 rtc_init(void)
@@ -159,35 +158,6 @@ rtc_read(uint32_t addr)
 	rtc_ce(0);
 
 	return data & 0xf;
-}
-
-void
-rtc_write(uint32_t addr, uint8_t data)
-{
-
-	rtc_init();
-	rtc_ce(1);
-
-	rtc_dir(1);
-	rtc_do(1);		/* Don't care */
-	rtc_do(0);		/* R/#W = 0(WRITE) */
-	rtc_do(1);		/* AD = 1 */
-	rtc_do(0);		/* DT = 0 */
-	rtc_do(addr & 0x8);	/* A3 */
-	rtc_do(addr & 0x4);	/* A2 */
-	rtc_do(addr & 0x2);	/* A1 */
-	rtc_do(addr & 0x1);	/* A0 */
-
-	rtc_do(1);		/* Don't care */
-	rtc_do(0);		/* R/#W = 0(WRITE) */
-	rtc_do(0);		/* AD = 0 */
-	rtc_do(1);		/* DT = 1 */
-	rtc_do(data & 0x8);	/* D3 */
-	rtc_do(data & 0x4);	/* D2 */
-	rtc_do(data & 0x2);	/* D1 */
-	rtc_do(data & 0x1);	/* D0 */
-
-	rtc_ce(0);
 }
 
 time_t
