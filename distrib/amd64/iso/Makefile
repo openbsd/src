@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.43 2021/02/13 18:48:23 semarie Exp $
+#	$OpenBSD: Makefile,v 1.44 2022/09/02 12:40:02 krw Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1359872
@@ -21,7 +21,6 @@ XBASE=		${RELXDIR}/xbase${OSrev}.tgz ${RELXDIR}/xfont${OSrev}.tgz \
 EFIBOOT?=	${DESTDIR}/usr/mdec/BOOTX64.EFI ${DESTDIR}/usr/mdec/BOOTIA32.EFI
 MSDOSSIZE=	960
 TOTALSIZE!=	expr ${FSSIZE} + ${MSDOSSIZE}
-TEMPLATE=	${.CURDIR}/template
 
 all: ${FS} ${CDROM}
 
@@ -29,16 +28,12 @@ ${FS}: ${BASE} ${XBASE} bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${TOTALSIZE}
 	vnconfig -v ${FS} > vnd
 	fdisk -yi -l ${FSSIZE} -b ${MSDOSSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
-.ifdef TEMPLATE
-	disklabel -wAT ${TEMPLATE} `cat vnd`
+	disklabel -wAT ${.CURDIR}/template `cat vnd`
 	newfs -t msdos /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp ${EFIBOOT} ${MOUNT_POINT}/efi/boot
 	umount ${MOUNT_POINT}
-.else
-	disklabel -w `cat vnd` ${FSTYPE}
-.endif
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	objcopy -S -R .comment ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
