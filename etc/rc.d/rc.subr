@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.157 2022/09/01 07:25:32 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.158 2022/09/02 22:11:57 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -93,6 +93,9 @@ _rc_quirks() {
 _rc_not_supported() {
 	local _a _enotsup _what=${1}
 	for _a in ${_rc_actions}; do
+		[ "${_what}" == "configtest" ] &&
+			! typeset -f rc_configtest >/dev/null && _enotsup=NO &&
+			break
 		[ "${_what}" == "restart" ] && _what="stop"
 		if [ "${_what}" == "${_a}" ]; then
 			eval _enotsup=\${rc_${_what}}
@@ -162,10 +165,6 @@ _rc_wait_for_start() {
 	return
 }
 
-rc_configtest() {
-	return 0
-}
-
 rc_exec() {
 	local _rcexec="su -fl -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
 	[ "${daemon_rtable}" -eq "$(id -R)" ] ||
@@ -233,8 +232,10 @@ rc_cmd() {
 			# running during start is mostly useful for daemons
 			# whose child will not return a config parsing error to
 			# the parent during startup; e.g. bgpd, httpd...
-			_rc_do rc_configtest || break
-			if type rc_pre >/dev/null; then
+			if typeset -f rc_configtest >/dev/null; then
+				_rc_do rc_configtest || break
+			fi
+			if typeset -f rc_pre >/dev/null; then
 				_rc_do rc_pre || break
 			fi
 			# prevent hanging the boot sequence
@@ -255,7 +256,7 @@ rc_cmd() {
 		done
 		# handle failure
 		_rc_do _rc_rm_runfile
-		type rc_post >/dev/null && _rc_do rc_post
+		typeset -f rc_post >/dev/null && _rc_do rc_post
 		_rc_exit failed
 		;;
 	stop)
@@ -280,7 +281,7 @@ rc_cmd() {
 		# KILL the process
 		_rc_do rc_check && _rc_do _rc_sendsig KILL && _exit="killed"
 		_rc_do _rc_rm_runfile
-		if type rc_post >/dev/null; then
+		if typeset -f rc_post >/dev/null; then
 			_rc_do rc_post || _exit=failed
 		fi
 		_rc_exit ${_exit:=ok}
@@ -288,7 +289,9 @@ rc_cmd() {
 	reload)
 		echo $_n "${INRC:+ }${_name}"
 		_rc_do rc_check || _rc_exit failed
-		_rc_do rc_configtest || _rc_exit failed
+		if typeset -f rc_configtest >/dev/null; then
+			_rc_do rc_configtest || _rc_exit failed
+		fi
 		_rc_do rc_reload & _timer=$!
 		while ((SECONDS < daemon_timeout)); do
 			pkill -0 -P "$$" 2>/dev/null || break
@@ -302,7 +305,9 @@ rc_cmd() {
 		_rc_exit ${_exit:=ok}
 		;;
 	restart)
-		_rc_do rc_configtest || _rc_exit failed
+		if typeset -f rc_configtest >/dev/null; then
+			_rc_do rc_configtest || _rc_exit failed
+		fi
 		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
 			$0 ${_RC_DEBUG} ${_RC_FORCE} start
 		;;

@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.47 2022/08/30 05:40:28 jmc Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.48 2022/09/02 22:11:57 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2021, 2022 Antoine Jacoutot
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 30 2022 $
+.Dd $Mdocdate: September 2 2022 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -193,10 +193,8 @@ Check daemon configuration before running
 .Cm start ,
 .Cm reload
 and
-.Cm restart .
-Defaults to
-.Sq return 0
-but can be overridden by the
+.Cm restart
+if implemented by the
 .Xr rc.d 8
 script.
 .It Ic rc_exec
@@ -210,6 +208,18 @@ according to
 and
 .Va daemon_logger
 values.
+.It Ic rc_post
+This function is run after
+.Cm stop
+if implemented by the
+.Xr rc.d 8
+script.
+.It Ic rc_pre
+This function is run before
+.Cm start
+if implemented by the
+.Xr rc.d 8
+script.
 .It Ic rc_reload
 Send the
 .Va rc_reload_signal
