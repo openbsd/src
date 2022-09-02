@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2016/05/30 05:18:52 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.7 2022/09/02 06:19:04 miod Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -64,7 +64,11 @@ ENTRY(brk)
 	bf	1f
 	mov	r0, r4
 1:
+#if SYS_break >= 128
 	mov.l	LSYS_break, r0
+#else
+	mov	#SYS_break, r0
+#endif
 	trapa	#0x80
 	bf	2f
 #ifdef __PIC__
@@ -81,7 +85,9 @@ ENTRY(brk)
 	SET_ERRNO_AND_RETURN
 
 	.align	2
+#if SYS_break >= 128
 LSYS_break:	.long	SYS_break
+#endif
 #ifdef __PIC__
 L_GOT:		.long	_GLOBAL_OFFSET_TABLE_
 Lminbrk:	.long	__minbrk@GOT

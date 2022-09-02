@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.3 2016/05/18 20:21:13 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.4 2022/09/02 06:19:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -24,8 +24,12 @@
  *			r4			r5		   r6		r7
  */
 ENTRY(__tfork_thread)
+#if SYS___tfork >= 128
 	mov.l	.LSYS___tfork, r0
-	.word	0xc380		/* trapa #0x80 */
+#else
+	mov	#SYS___tfork, r0
+#endif
+	trapa	#0x80
 	bf	9f
 
 	tst	r0, r0
@@ -44,8 +48,12 @@ ENTRY(__tfork_thread)
 	jsr	@r6
 	 mov	r7, r4
 
+#if SYS___threxit >= 128
 	mov.l	.LSYS___threxit, r0
-	.word	0xc380		/* trapa #0x80 */
+#else
+	mov	#SYS___threxit, r0
+#endif
+	trapa	#0x80
 
 9:
 	/*
@@ -54,7 +62,11 @@ ENTRY(__tfork_thread)
 	SET_ERRNO_AND_RETURN
 
 	.align 2
+#if SYS___tfork >= 128
 .LSYS___tfork:	.long SYS___tfork
+#endif
+#if SYS___threxit >= 128
 .LSYS___threxit:	.long SYS___threxit
+#endif
 
 	SET_ENTRY_SIZE(__tfork_thread)

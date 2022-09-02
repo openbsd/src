@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2016/05/18 20:21:13 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2022/09/02 06:19:04 miod Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -85,14 +85,30 @@
 #define	__END(x)					\
 	__END_HIDDEN(x); SET_ENTRY_SIZE(x)
 
+#ifdef __ASSEMBLER__
+/*
+ * If the system call number fits in a 8-bit signed value (i.e. fits in 7 bits),
+ * then we can use the #imm8 addressing mode.
+ */
+
+.macro systrap num
+.iflt \num - 128
+	mov	# \num, r0
+	trapa	#0x80
+.else
+	mov.l	903f, r0
+	trapa	#0x80
+	bra	904f
+	 nop
+	.align	2
+ 903:	.long	\num
+ 904:
+.endif
+.endm
+#endif
+
 #define SYSTRAP(x)					\
-		mov.l	903f, r0;			\
-		.word	0xc380;	/* trapa #0x80; */	\
-		bra	904f;				\
-		 nop;					\
-		.align	2;				\
-	903:	.long	(SYS_ ## x);			\
-	904:
+		systrap	SYS_ ## x
 
 #define _SYSCALL_NOERROR(x,y)				\
 		SYSENTRY(x);				\
