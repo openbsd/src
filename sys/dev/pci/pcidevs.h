@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2003 2022/08/29 15:39:55 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2004 2022/09/02 10:34:07 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5525,14 +5525,14 @@
 #define	PCI_PRODUCT_INTEL_ADL_S_TH	0x466f		/* Core 12G TH */
 #define	PCI_PRODUCT_INTEL_ADL_S_CL	0x467d		/* Core 12G CL */
 #define	PCI_PRODUCT_INTEL_ADL_S_VMD	0x467f		/* Core 12G VMD */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_1	0x4680		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_2	0x4682		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_3	0x4688		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_4	0x468a		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_5	0x4690		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_6	0x4691		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_7	0x4692		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT0_1	0x4693		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_1	0x4680		/* UHD Graphics 770 */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_2	0x4682		/* UHD Graphics 730 */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_3	0x4688		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_4	0x468a		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT0_1	0x468b		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_5	0x4690		/* UHD Graphics 770 */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_6	0x4692		/* UHD Graphics 730 */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_7	0x4693		/* UHD Graphics 710 */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_4	0x46a0		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_5	0x46a1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_6	0x46a2		/* Graphics */
