@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.151 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.152 2022/09/02 18:37:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -408,6 +408,7 @@ enum rrdp_msg {
 	RRDP_HTTP_REQ,
 	RRDP_HTTP_INI,
 	RRDP_HTTP_FIN,
+	RRDP_ABORT,
 };
 
 /*

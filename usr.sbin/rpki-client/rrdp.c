@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.25 2022/09/02 18:08:43 tb Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.26 2022/09/02 18:37:17 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -57,6 +57,7 @@ struct rrdp {
 	struct pollfd		*pfd;
 	int			 infd;
 	int			 state;
+	int			 aborted;
 	unsigned int		 file_pending;
 	unsigned int		 file_failed;
 	enum http_result	 res;
@@ -73,7 +74,7 @@ struct rrdp {
 	struct delta_xml	*dxml;
 };
 
-TAILQ_HEAD(, rrdp)	states = TAILQ_HEAD_INITIALIZER(states);
+static TAILQ_HEAD(, rrdp)	states = TAILQ_HEAD_INITIALIZER(states);
 
 char *
 xstrdup(const char *s)
@@ -254,7 +255,7 @@ rrdp_failed(struct rrdp *s)
 	/* reset file state before retrying */
 	s->file_failed = 0;
 
-	if (s->task == DELTA) {
+	if (s->task == DELTA && !s->aborted) {
 		/* fallback to a snapshot as per RFC8182 */
 		free_delta_xml(s->dxml);
 		s->dxml = NULL;
@@ -287,7 +288,7 @@ rrdp_finished(struct rrdp *s)
 	if (s->file_pending > 0)
 		return;
 
-	if (s->state & RRDP_STATE_PARSE_ERROR) {
+	if (s->state & RRDP_STATE_PARSE_ERROR || s->aborted) {
 		rrdp_failed(s);
 		return;
 	}
@@ -370,6 +371,34 @@ rrdp_finished(struct rrdp *s)
 }
 
 static void
+rrdp_abort_req(struct rrdp *s)
+{
+	unsigned int id = s->id;
+
+	s->aborted = 1;
+	if (s->state == RRDP_STATE_REQ) {
+		/* nothing is pending, just abort */
+		rrdp_free(s);
+		rrdp_done(id, 1);
+		return;
+	}
+	if (s->state == RRDP_STATE_WAIT)
+		/* wait for HTTP_INI which will progress the state */
+		return;
+
+	/*
+	 * RRDP_STATE_PARSE or later, close infd, abort parser but
+	 * wait for HTTP_FIN and file_pending to drop to 0.
+	 */
+	if (s->infd != -1) {
+		close(s->infd);
+		s->infd = -1;
+		s->state |= RRDP_STATE_PARSE_DONE | RRDP_STATE_PARSE_ERROR;
+	}
+	rrdp_finished(s);
+}
+
+static void
 rrdp_input_handler(int fd)
 {
 	static struct ibuf *inbuf;
@@ -406,12 +435,15 @@ rrdp_input_handler(int fd)
 			errx(1, "expected fd not received");
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %u does not exist", id);
+			errx(1, "http ini, rrdp session %u does not exist", id);
 		if (s->state != RRDP_STATE_WAIT)
 			errx(1, "%s: bad internal state", s->local);
-
 		s->infd = b->fd;
 		s->state = RRDP_STATE_PARSE;
+		if (s->aborted) {
+			rrdp_abort_req(s);
+			break;
+		}
 		break;
 	case RRDP_HTTP_FIN:
 		io_read_buf(b, &res, sizeof(res));
@@ -421,20 +453,19 @@ rrdp_input_handler(int fd)
 
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %u does not exist", id);
+			errx(1, "http fin, rrdp session %u does not exist", id);
 		if (!(s->state & RRDP_STATE_PARSE))
 			errx(1, "%s: bad internal state", s->local);
-
+		s->state |= RRDP_STATE_HTTP_DONE;
 		s->res = res;
 		free(s->last_mod);
 		s->last_mod = last_mod;
-		s->state |= RRDP_STATE_HTTP_DONE;
 		rrdp_finished(s);
 		break;
 	case RRDP_FILE:
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %u does not exist", id);
+			errx(1, "file, rrdp session %u does not exist", id);;
 		if (b->fd != -1)
 			errx(1, "received unexpected fd");
 		io_read_buf(b, &ok, sizeof(ok));
@@ -443,6 +474,13 @@ rrdp_input_handler(int fd)
 		s->file_pending--;
 		if (s->file_pending == 0)
 			rrdp_finished(s);
+		break;
+	case RRDP_ABORT:
+		if (b->fd != -1)
+			errx(1, "received unexpected fd");
+		s = rrdp_get(id);
+		if (s != NULL)
+			rrdp_abort_req(s);
 		break;
 	default:
 		errx(1, "unexpected message %d", type);
