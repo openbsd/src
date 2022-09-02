@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.74 2021/11/11 10:03:09 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.75 2022/09/02 20:06:56 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -267,7 +267,7 @@ getnulldev(void)
 	return makedev(mem_no, 2);
 }
 
-int chrtoblktbl[] = {
+const int chrtoblktbl[] = {
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,
@@ -290,7 +290,7 @@ int chrtoblktbl[] = {
 	/* 18 */	NODEV,
 	/* 19 */	14,		/* vnd */
 };
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2021/11/11 10:03:09 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2022/09/02 20:06:56 miod Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -205,7 +205,7 @@ getnulldev()
 	return makedev(mem_no, 2);
 }
 
-int chrtoblktbl[] = {
+const int chrtoblktbl[] = {
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,
@@ -228,4 +228,4 @@ int chrtoblktbl[] = {
 	/* 18 */	7,	/* rd */
 	/* 19 */	8,	/* vnd */
 };
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);

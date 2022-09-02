@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.106 2019/12/08 12:25:30 mpi Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.107 2022/09/02 20:06:55 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -260,7 +260,7 @@ diskconf(void)
 #endif /* HIBERNATE */
 }
 
-struct nam2blk nam2blk[] = {
+const struct nam2blk nam2blk[] = {
 	{ "wd",		0 },
 	{ "fd",		2 },
 	{ "sd",		4 },

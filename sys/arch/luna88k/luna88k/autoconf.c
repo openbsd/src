@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 2022/08/13 06:44:48 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 2022/09/02 20:06:56 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -175,7 +175,7 @@ device_register(struct device *dev, void *aux)
 	}
 }
 
-struct nam2blk nam2blk[] = {
+const struct nam2blk nam2blk[] = {
 	{ "sd",		4 },
 	{ "cd",		6 },
 	{ "rd",		7 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2018/01/27 22:55:23 naddy Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2022/09/02 20:06:56 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ diskconf(void)
 	dumpconf();
 }
 
-struct nam2blk nam2blk[] = {
+const struct nam2blk nam2blk[] = {
 	{ "wd",		16 },
 	{ "rd",		18 },
 	{ "vnd",	19 },

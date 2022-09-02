@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.16 2019/07/12 03:03:48 visa Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 2022/09/02 20:06:56 miod Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -56,14 +56,14 @@ struct devmap {
 enum devclass
 findtype(void)
 {
-	static struct devmap devmap[] = {
+	static const struct devmap devmap[] = {
 		{ "wd", DV_DISK },
 		{ "sd", DV_DISK },
 		{ "octcf", DV_DISK },
 		{ "amdcf", DV_DISK },
 		{ NULL, DV_IFNET }
 	};
-	struct devmap *dp = &devmap[0];
+	const struct devmap *dp = &devmap[0];
 
 	if (strlen(bootdev) < 2)
 		return DV_DISK;
@@ -166,7 +166,7 @@ device_register(struct device *dev, void *aux)
 	}
 }
 
-struct nam2blk nam2blk[] = {
+const struct nam2blk nam2blk[] = {
 	{ "sd",		0 },
 	{ "vnd",	2 },
 	{ "cd",		3 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.75 2022/06/28 14:43:50 visa Exp $	*/
+/*	$OpenBSD: conf.c,v 1.76 2022/09/02 20:06:55 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -331,7 +331,7 @@ getnulldev(void)
 	return makedev(mem_no, 2);
 }
 
-int chrtoblktbl[] = {
+const int chrtoblktbl[] = {
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
 	/*  1 */	NODEV,
@@ -383,7 +383,7 @@ int chrtoblktbl[] = {
 	/* 47 */	17,		/* rd */
 };
 
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);
 
 /*
  * In order to map BSD bdev numbers of disks to their BIOS equivalents

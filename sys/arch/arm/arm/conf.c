@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.58 2021/11/11 10:03:08 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.59 2022/09/02 20:06:55 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -415,7 +415,7 @@ iszerodev(dev_t dev)
 }
 
 
-int chrtoblktbl[] = {
+const int chrtoblktbl[] = {
     /*VCHR*/        /*VBLK*/
     /*  0 */        NODEV,
     /*  1 */        NODEV,
@@ -445,7 +445,7 @@ int chrtoblktbl[] = {
     /* 25 */        NODEV,
     /* 26 */        26,		/* cd */
 };
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);
 
 dev_t
 getnulldev(void)

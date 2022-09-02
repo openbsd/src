@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2021/11/11 10:03:09 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2022/09/02 20:06:56 miod Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -397,7 +397,7 @@ iszerodev(dev)
 }
 
 
-int chrtoblktbl[] = {
+const int chrtoblktbl[] = {
     /*VCHR*/        /*VBLK*/
     /*  0 */        NODEV,
     /*  1 */        NODEV,
@@ -427,7 +427,7 @@ int chrtoblktbl[] = {
     /* 25 */        NODEV,
     /* 26 */        26,			/* cd */
 };
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);
 
 
 dev_t

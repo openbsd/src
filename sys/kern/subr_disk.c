@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.258 2022/09/02 14:18:47 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.259 2022/09/02 20:06:56 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1664,7 +1664,7 @@ gotswap:
 	printf("\n");
 }
 
-extern struct nam2blk nam2blk[];
+extern const struct nam2blk nam2blk[];
 
 int
 findblkmajor(struct device *dv)

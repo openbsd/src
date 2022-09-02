@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2021/11/11 10:03:09 claudio Exp $ */
+/*	$OpenBSD: conf.c,v 1.28 2022/09/02 20:06:56 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -283,7 +283,7 @@ getnulldev()
 }
 
 
-int chrtoblktbl[] =  {
+const int chrtoblktbl[] =  {
 	/* VCHR         VBLK */
 	/* 0 */		NODEV,
 	/* 1 */		NODEV,
@@ -310,7 +310,7 @@ int chrtoblktbl[] =  {
 	/* 22 */	8		/* rd */
 };
 
-int nchrtoblktbl = nitems(chrtoblktbl);
+const int nchrtoblktbl = nitems(chrtoblktbl);
 
 #include <dev/cons.h>
 
