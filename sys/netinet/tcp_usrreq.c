@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.203 2022/09/01 18:21:23 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.204 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -127,7 +127,29 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_sense	= tcp_sense,
 	.pru_rcvoob	= tcp_rcvoob,
 	.pru_sendoob	= tcp_sendoob,
+	.pru_control	= in_control,
 };
+
+#ifdef INET6
+const struct pr_usrreqs tcp6_usrreqs = {
+	.pru_usrreq	= tcp_usrreq,
+	.pru_attach	= tcp_attach,
+	.pru_detach	= tcp_detach,
+	.pru_bind	= tcp_bind,
+	.pru_listen	= tcp_listen,
+	.pru_connect	= tcp_connect,
+	.pru_accept	= tcp_accept,
+	.pru_disconnect	= tcp_disconnect,
+	.pru_shutdown	= tcp_shutdown,
+	.pru_rcvd	= tcp_rcvd,
+	.pru_send	= tcp_send,
+	.pru_abort	= tcp_abort,
+	.pru_sense	= tcp_sense,
+	.pru_rcvoob	= tcp_rcvoob,
+	.pru_sendoob	= tcp_sendoob,
+	.pru_control	= in6_control,
+};
+#endif
 
 static int pr_slowhz = PR_SLOWHZ;
 const struct sysctl_bounded_args tcpctl_vars[] = {
@@ -194,17 +216,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct tcpcb *otp = NULL, *tp;
 	int error = 0;
 	short ostate;
-
-	if (req == PRU_CONTROL) {
-#ifdef INET6
-		if (sotopf(so) == PF_INET6)
-			return in6_control(so, (u_long)m, (caddr_t)nam,
-			    (struct ifnet *)control);
-		else
-#endif /* INET6 */
-			return (in_control(so, (u_long)m, (caddr_t)nam,
-			    (struct ifnet *)control));
-	}
 
 	soassertlocked(so);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.249 2022/09/01 18:21:23 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.250 2022/09/02 13:12:32 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -394,9 +394,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 {
 	struct pkpcb *kp;
 	int error = 0;
-
-	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
 
 	soassertlocked(so);
 

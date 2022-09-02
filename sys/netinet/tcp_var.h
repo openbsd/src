@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.153 2022/08/31 21:23:02 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.154 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -639,6 +639,11 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 }
 
 extern	const struct pr_usrreqs tcp_usrreqs;
+
+#ifdef INET6
+extern	const struct pr_usrreqs tcp6_usrreqs;
+#endif
+
 extern	struct pool tcpcb_pool;
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
 extern	u_int32_t tcp_now;		/* for RFC 1323 timestamps */

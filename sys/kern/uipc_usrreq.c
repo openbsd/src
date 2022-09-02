@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.182 2022/09/01 18:21:22 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.183 2022/09/02 13:12:31 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -219,8 +219,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct socket *so2;
 	int error = 0;
 
-	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
 	if (req != PRU_SEND && control && control->m_len) {
 		error = EOPNOTSUPP;
 		goto release;

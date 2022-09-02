@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.51 2022/09/01 18:21:23 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.52 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ struct socket;
 struct domain;
 struct proc;
 struct stat;
+struct ifnet;
 
 struct pr_usrreqs {
 					/* user request: see list below */
@@ -77,6 +78,8 @@ struct pr_usrreqs {
 	int	(*pru_send)(struct socket *, struct mbuf *, struct mbuf *,
 		    struct mbuf *);
 	int	(*pru_abort)(struct socket *);
+	int	(*pru_control)(struct socket *, u_long, caddr_t,
+		    struct ifnet *);
 	int	(*pru_sense)(struct socket *, struct stat *);
 	int	(*pru_rcvoob)(struct socket *, struct mbuf *, int);
 	int	(*pru_sendoob)(struct socket *, struct mbuf *, struct mbuf *,
@@ -343,12 +346,12 @@ pru_abort(struct socket *so)
 }
 
 static inline int
-pru_control(struct socket *so, u_long cmd, caddr_t data,
-    struct ifnet *ifp, struct proc *p)
+pru_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
-	return (*so->so_proto->pr_usrreqs->pru_usrreq)(so,
-	    PRU_CONTROL, (struct mbuf *)cmd, (struct mbuf *)data,
-	    (struct mbuf *)ifp, p);
+	if (so->so_proto->pr_usrreqs->pru_control)
+		return (*so->so_proto->pr_usrreqs->pru_control)(so,
+		    cmd, data, ifp);
+	return (EOPNOTSUPP);
 }
 
 static inline int

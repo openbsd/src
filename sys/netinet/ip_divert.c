@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.83 2022/09/01 18:21:23 mvs Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.84 2022/09/02 13:12:32 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -70,6 +70,7 @@ const struct pr_usrreqs divert_usrreqs = {
 	.pru_shutdown	= divert_shutdown,
 	.pru_send	= divert_send,
 	.pru_abort	= divert_abort,
+	.pru_control	= in_control,
 };
 
 int divbhashsize = DIVERTHASHSIZE;
@@ -257,11 +258,6 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-
-	if (req == PRU_CONTROL) {
-		return (in_control(so, (u_long)m, (caddr_t)addr,
-		    (struct ifnet *)control));
-	}
 
 	soassertlocked(so);
 

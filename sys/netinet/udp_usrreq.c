@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.298 2022/09/01 18:21:23 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.299 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -132,7 +132,23 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_shutdown	= udp_shutdown,
 	.pru_send	= udp_send,
 	.pru_abort	= udp_abort,
+	.pru_control	= in_control,
 };
+
+#ifdef INET6
+const struct pr_usrreqs udp6_usrreqs = {
+	.pru_usrreq	= udp_usrreq,
+	.pru_attach	= udp_attach,
+	.pru_detach	= udp_detach,
+	.pru_bind	= udp_bind,
+	.pru_connect	= udp_connect,
+	.pru_disconnect	= udp_disconnect,
+	.pru_shutdown	= udp_shutdown,
+	.pru_send	= udp_send,
+	.pru_abort	= udp_abort,
+	.pru_control	= in6_control,
+};
+#endif
 
 const struct sysctl_bounded_args udpctl_vars[] = {
 	{ UDPCTL_CHECKSUM, &udpcksum, 0, 1 },
@@ -1063,17 +1079,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp;
 	int error = 0;
-
-	if (req == PRU_CONTROL) {
-#ifdef INET6
-		if (sotopf(so) == PF_INET6)
-			return (in6_control(so, (u_long)m, (caddr_t)addr,
-			    (struct ifnet *)control));
-		else
-#endif /* INET6 */
-			return (in_control(so, (u_long)m, (caddr_t)addr,
-			    (struct ifnet *)control));
-	}
 
 	soassertlocked(so);
 

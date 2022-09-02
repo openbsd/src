@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.110 2022/08/15 09:11:39 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.111 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= udp_input,
   .pr_ctlinput	= udp6_ctlinput,
   .pr_ctloutput	= ip6_ctloutput,
-  .pr_usrreqs	= &udp_usrreqs,
+  .pr_usrreqs	= &udp6_usrreqs,
   .pr_sysctl	= udp_sysctl
 },
 {
@@ -151,7 +151,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= tcp_input,
   .pr_ctlinput	= tcp6_ctlinput,
   .pr_ctloutput	= tcp_ctloutput,
-  .pr_usrreqs	= &tcp_usrreqs,
+  .pr_usrreqs	= &tcp6_usrreqs,
   .pr_sysctl	= tcp_sysctl
 },
 {

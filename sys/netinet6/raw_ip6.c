@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.165 2022/09/01 18:21:23 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.166 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_shutdown	= rip6_shutdown,
 	.pru_send	= rip6_send,
 	.pru_abort	= rip6_abort,
+	.pru_control	= in6_control,
 };
 
 /*
@@ -579,10 +580,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 {
 	struct inpcb *in6p;
 	int error = 0;
-
-	if (req == PRU_CONTROL)
-		return (in6_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control));
 
 	soassertlocked(so);
 

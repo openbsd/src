@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.81 2022/08/28 18:44:16 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.82 2022/09/02 13:12:32 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -49,6 +49,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -56,6 +57,7 @@
 #include <netinet/ip_gre.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
 
 #ifdef PIPEX
 #include <net/pipex.h>
@@ -71,6 +73,7 @@ const struct pr_usrreqs gre_usrreqs = {
 	.pru_shutdown	= rip_shutdown,
 	.pru_send	= gre_send,
 	.pru_abort	= rip_abort,
+	.pru_control	= in_control,
 };
 
 int

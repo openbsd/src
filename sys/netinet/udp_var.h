@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_var.h,v 1.44 2022/08/28 18:44:16 mvs Exp $	*/
+/*	$OpenBSD: udp_var.h,v 1.45 2022/09/02 13:12:32 mvs Exp $	*/
 /*	$NetBSD: udp_var.h,v 1.12 1996/02/13 23:44:41 christos Exp $	*/
 
 /*
@@ -127,6 +127,10 @@ extern struct	inpcbtable udbtable;
 extern struct	udpstat udpstat;
 
 extern const struct pr_usrreqs udp_usrreqs;
+
+#ifdef INET6
+extern const struct pr_usrreqs udp6_usrreqs;
+#endif
 
 #ifdef INET6
 void	udp6_ctlinput(int, struct sockaddr *, u_int, void *);

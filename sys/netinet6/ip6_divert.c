@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.82 2022/09/01 18:21:23 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.83 2022/09/02 13:12:32 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -71,6 +71,7 @@ const struct pr_usrreqs divert6_usrreqs = {
 	.pru_shutdown	= divert6_shutdown,
 	.pru_send	= divert6_send,
 	.pru_abort	= divert6_abort,
+	.pru_control	= in6_control,
 };
 
 int divb6hashsize = DIVERTHASHSIZE;
@@ -263,11 +264,6 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
-
-	if (req == PRU_CONTROL) {
-		return (in6_control(so, (u_long)m, (caddr_t)addr,
-		    (struct ifnet *)control));
-	}
 
 	soassertlocked(so);
 
