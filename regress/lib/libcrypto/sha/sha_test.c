@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha_test.c,v 1.1 2022/09/01 14:02:41 tb Exp $ */
+/*	$OpenBSD: sha_test.c,v 1.2 2022/09/02 11:13:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -101,7 +101,8 @@ struct sha_test sha_tests[] = {
 	},
 	{
 		.algorithm = NID_sha224,
-		.in = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmno"
+		.in =
+		    "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmno"
 		    "mnopnopq",
 		.in_len = 56,
 		.out = {
@@ -304,12 +305,154 @@ struct sha_test sha_tests[] = {
 	},
 };
 
+struct sha_repetition_test
+{
+	const int algorithm;
+	const uint8_t in;
+	const size_t in_repetitions;
+	const uint8_t out[EVP_MAX_MD_SIZE];
+};
+
+struct sha_repetition_test sha_repetition_tests[] = {
+	/* SHA-1 */
+	{
+		.algorithm = NID_sha1,
+		.in = 'a',
+		.in_repetitions = 1000000,
+		.out = {
+			0x34, 0xaa, 0x97, 0x3c, 0xd4, 0xc4, 0xda, 0xa4,
+			0xf6, 0x1e, 0xeb, 0x2b, 0xdb, 0xad, 0x27, 0x31,
+			0x65, 0x34, 0x01, 0x6f,
+		}
+	},
+
+	/* SHA-224 */
+	{
+		.algorithm = NID_sha224,
+		.in = 'a',
+		.in_repetitions = 1000000,
+		.out = {
+			0x20, 0x79, 0x46, 0x55, 0x98, 0x0c, 0x91, 0xd8,
+			0xbb, 0xb4, 0xc1, 0xea, 0x97, 0x61, 0x8a, 0x4b,
+			0xf0, 0x3f, 0x42, 0x58, 0x19, 0x48, 0xb2, 0xee,
+			0x4e, 0xe7, 0xad, 0x67,
+		}
+	},
+
+	/* SHA-256 */
+	{
+		.algorithm = NID_sha256,
+		.in = 'a',
+		.in_repetitions = 1000000,
+		.out = {
+			0xcd, 0xc7, 0x6e, 0x5c, 0x99, 0x14, 0xfb, 0x92,
+			0x81, 0xa1, 0xc7, 0xe2, 0x84, 0xd7, 0x3e, 0x67,
+			0xf1, 0x80, 0x9a, 0x48, 0xa4, 0x97, 0x20, 0x0e,
+			0x04, 0x6d, 0x39, 0xcc, 0xc7, 0x11, 0x2c, 0xd0,
+		}
+	},
+
+	/* SHA-384 */
+	{
+		.algorithm = NID_sha384,
+		.in = 'a',
+		.in_repetitions = 1000000,
+		.out = {
+			0x9d, 0x0e, 0x18, 0x09, 0x71, 0x64, 0x74, 0xcb,
+			0x08, 0x6e, 0x83, 0x4e, 0x31, 0x0a, 0x4a, 0x1c,
+			0xed, 0x14, 0x9e, 0x9c, 0x00, 0xf2, 0x48, 0x52,
+			0x79, 0x72, 0xce, 0xc5, 0x70, 0x4c, 0x2a, 0x5b,
+			0x07, 0xb8, 0xb3, 0xdc, 0x38, 0xec, 0xc4, 0xeb,
+			0xae, 0x97, 0xdd, 0xd8, 0x7f, 0x3d, 0x89, 0x85,
+		}
+	},
+
+	/* SHA-512 */
+	{
+		.algorithm = NID_sha512,
+		.in = 'a',
+		.in_repetitions = 1000000,
+		.out = {
+			0xe7, 0x18, 0x48, 0x3d, 0x0c, 0xe7, 0x69, 0x64,
+			0x4e, 0x2e, 0x42, 0xc7, 0xbc, 0x15, 0xb4, 0x63,
+			0x8e, 0x1f, 0x98, 0xb1, 0x3b, 0x20, 0x44, 0x28,
+			0x56, 0x32, 0xa8, 0x03, 0xaf, 0xa9, 0x73, 0xeb,
+			0xde, 0x0f, 0xf2, 0x44, 0x87, 0x7e, 0xa6, 0x0a,
+			0x4c, 0xb0, 0x43, 0x2c, 0xe5, 0x77, 0xc3, 0x1b,
+			0xeb, 0x00, 0x9c, 0x5c, 0x2c, 0x49, 0xaa, 0x2e,
+			0x4e, 0xad, 0xb2, 0x17, 0xad, 0x8c, 0xc0, 0x9b,
+		}
+	},
+};
+
 #define N_SHA_TESTS (sizeof(sha_tests) / sizeof(sha_tests[0]))
+#define N_SHA_REPETITION_TESTS (sizeof(sha_repetition_tests) / sizeof(sha_repetition_tests[0]))
+
+typedef unsigned char *(*sha_hash_func)(const unsigned char *, size_t,
+    unsigned char *);
+
+static int
+sha_hash_from_algorithm(int algorithm, const char **out_label,
+    sha_hash_func *out_func, const EVP_MD **out_md, size_t *out_len)
+{
+	const char *label;
+	sha_hash_func sha_func;
+	const EVP_MD *md;
+	size_t len;
+
+	switch (algorithm) {
+	case NID_sha1:
+		label = SN_sha1;
+		sha_func = SHA1;
+		md = EVP_sha1();
+		len = SHA_DIGEST_LENGTH;
+		break;
+	case NID_sha224:
+		label = SN_sha224;
+		sha_func = SHA224;
+		md = EVP_sha224();
+		len = SHA224_DIGEST_LENGTH;
+		break;
+	case NID_sha256:
+		label = SN_sha256;
+		sha_func = SHA256;
+		md = EVP_sha256();
+		len = SHA256_DIGEST_LENGTH;
+		break;
+	case NID_sha384:
+		label = SN_sha384;
+		sha_func = SHA384;
+		md = EVP_sha384();
+		len = SHA384_DIGEST_LENGTH;
+		break;
+	case NID_sha512:
+		label = SN_sha512;
+		sha_func = SHA512;
+		md = EVP_sha512();
+		len = SHA512_DIGEST_LENGTH;
+		break;
+	default:
+		fprintf(stderr, "FAIL: unknown algorithm (%d)\n",
+		    algorithm);
+		return 0;
+	}
+
+	if (out_label != NULL)
+		*out_label = label;
+	if (out_func != NULL)
+		*out_func = sha_func;
+	if (out_md != NULL)
+		*out_md = md;
+	if (out_len != NULL)
+		*out_len = len;
+
+	return 1;
+}
 
 static int
 sha_test(void)
 {
-	unsigned char *(*sha_func)(const unsigned char *, size_t, unsigned char *);
+	sha_hash_func sha_func;
 	struct sha_test *st;
 	EVP_MD_CTX *hash = NULL;
 	const EVP_MD *md;
@@ -326,42 +469,9 @@ sha_test(void)
 
 	for (i = 0; i < N_SHA_TESTS; i++) {
 		st = &sha_tests[i];
-		switch (st->algorithm) {
-		case NID_sha1:
-			sha_func = SHA1;
-			md = EVP_sha1();
-			out_len = SHA_DIGEST_LENGTH;
-			label = SN_sha1;
-			break;
-		case NID_sha224:
-			sha_func = SHA224;
-			md = EVP_sha224();
-			out_len = SHA224_DIGEST_LENGTH;
-			label = SN_sha224;
-			break;
-		case NID_sha256:
-			sha_func = SHA256;
-			md = EVP_sha256();
-			out_len = SHA256_DIGEST_LENGTH;
-			label = SN_sha256;
-			break;
-		case NID_sha384:
-			sha_func = SHA384;
-			md = EVP_sha384();
-			out_len = SHA384_DIGEST_LENGTH;
-			label = SN_sha384;
-			break;
-		case NID_sha512:
-			sha_func = SHA512;
-			md = EVP_sha512();
-			out_len = SHA512_DIGEST_LENGTH;
-			label = SN_sha512;
-			break;
-		default:
-			fprintf(stderr, "FAIL: unknown algorithm (%d)\n",
-			    st->algorithm);
+		if (!sha_hash_from_algorithm(st->algorithm, &label, &sha_func,
+		    &md, &out_len))
 			goto failed;
-		}
 
 		/* Digest */
 		memset(out, 0, sizeof(out));
@@ -374,7 +484,8 @@ sha_test(void)
 		/* EVP single-shot digest */
 		memset(out, 0, sizeof(out));
 		if (!EVP_Digest(st->in, st->in_len, out, NULL, md, NULL)) {
-			fprintf(stderr, "FAIL (%s): EVP_Digest failed\n", label);
+			fprintf(stderr, "FAIL (%s): EVP_Digest failed\n",
+			    label);
 			goto failed;
 		}
 
@@ -428,12 +539,82 @@ sha_test(void)
 	return failed;
 }
 
+static int
+sha_repetition_test(void)
+{
+	struct sha_repetition_test *st;
+	EVP_MD_CTX *hash = NULL;
+	const EVP_MD *md;
+	uint8_t buf[1024];
+	uint8_t out[EVP_MAX_MD_SIZE];
+	size_t out_len, part_len;
+	size_t i, j;
+	const char *label;
+	int failed = 1;
+
+	if ((hash = EVP_MD_CTX_new()) == NULL) {
+		fprintf(stderr, "FAIL: EVP_MD_CTX_new() failed\n");
+		goto failed;
+	}
+
+	for (i = 0; i < N_SHA_REPETITION_TESTS; i++) {
+		st = &sha_repetition_tests[i];
+		if (!sha_hash_from_algorithm(st->algorithm, &label, NULL, &md,
+		    &out_len))
+			goto failed;
+
+		/* EVP digest */
+		if (!EVP_DigestInit_ex(hash, md, NULL)) {
+			fprintf(stderr,
+			    "FAIL (%s): EVP_DigestInit_ex failed\n",
+			    label);
+			goto failed;
+		}
+
+		memset(buf, st->in, sizeof(buf));
+
+		for (j = 0; j < st->in_repetitions;) {
+			part_len = arc4random_uniform(sizeof(buf));
+			if (part_len > st->in_repetitions - j)
+				part_len = st->in_repetitions - j;
+
+			if (!EVP_DigestUpdate(hash, buf, part_len)) {
+				fprintf(stderr,
+				    "FAIL (%s): EVP_DigestUpdate failed\n",
+				    label);
+				goto failed;
+			}
+
+			j += part_len;
+		}
+
+		if (!EVP_DigestFinal_ex(hash, out, NULL)) {
+			fprintf(stderr,
+			    "FAIL (%s): EVP_DigestFinal_ex failed\n",
+			    label);
+			goto failed;
+		}
+
+		if (memcmp(st->out, out, out_len) != 0) {
+			fprintf(stderr, "FAIL (%s): EVP mismatch\n", label);
+			goto failed;
+		}
+	}
+
+	failed = 0;
+
+ failed:
+	EVP_MD_CTX_free(hash);
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
 	failed |= sha_test();
+	failed |= sha_repetition_test();
 
 	return failed;
 }
