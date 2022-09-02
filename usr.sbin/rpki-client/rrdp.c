@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.24 2022/05/15 16:43:35 tb Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.25 2022/09/02 18:08:43 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -181,7 +181,7 @@ rrdp_publish_file(struct rrdp *s, struct publish_xml *pxml,
 	}
 }
 
-static struct rrdp *
+static void
 rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
     long long serial, char *last_mod)
 {
@@ -206,8 +206,6 @@ rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
 	    notify);
 
 	TAILQ_INSERT_TAIL(&states, s, entry);
-
-	return s;
 }
 
 static void
@@ -401,7 +399,7 @@ rrdp_input_handler(int fd)
 		if (b->fd != -1)
 			errx(1, "received unexpected fd");
 
-		s = rrdp_new(id, local, notify, session_id, serial, last_mod);
+		rrdp_new(id, local, notify, session_id, serial, last_mod);
 		break;
 	case RRDP_HTTP_INI:
 		if (b->fd == -1)
