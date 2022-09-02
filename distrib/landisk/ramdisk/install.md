@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2020/05/25 06:18:53 otto Exp $
+#	$OpenBSD: install.md,v 1.46 2022/09/02 10:16:51 miod Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,9 +30,6 @@
 #
 # machine dependent section of installation/upgrade script.
 #
-
-# FFS2 not supported for booting, use FFS1
-MDROOTFSOPT=-O1
 
 md_installboot() {
 	if ! installboot -r /mnt ${1}; then
