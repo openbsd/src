@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2022/02/23 10:28:05 martijn Exp $
+# $OpenBSD: Makefile,v 1.5 2022/09/02 07:07:45 martijn Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -845,31 +845,31 @@ getnext_multiple:
 REGRESS_TARGETS+=	bulkget_simple
 CLEANFILES+=		bulkget_simple.res bulkget_simple.exp
 bulkget_simple:
-	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done > $@.exp
-	${SNMPBULKGET} -v2c -cpublic 127.0.0.1 sysORDescr > $@.res
+	IDX=1; while [ $$IDX -le 4 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done > $@.exp
+	${SNMPBULKGET} -v2c -cpublic -Cr4 127.0.0.1 sysORDescr > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	bulkget_multi
 CLEANFILES+=		bulkget_multi.res bulkget_multi.exp
 bulkget_multi:
 	> $@.exp
-	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX sysORID.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
-	${SNMPBULKGET} -v2c -cpublic 127.0.0.1 sysORDescr sysORID > $@.res
+	IDX=1; while [ $$IDX -le 4 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX sysORID.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
+	${SNMPBULKGET} -v2c -cpublic -Cr4 127.0.0.1 sysORDescr sysORID > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	bulkget_nonrep
 CLEANFILES+=		bulkget_nonrep.res bulkget_nonrep.exp
 bulkget_nonrep:
 	${SNMPGET} -v2c -cpublic 127.0.0.1 sysDescr.0 > $@.exp
-	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
-	${SNMPBULKGET} -v2c -cpublic -Cn1 127.0.0.1 sysDescr sysORDescr > $@.res
+	IDX=1; while [ $$IDX -le 4 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
+	${SNMPBULKGET} -v2c -cpublic -Cn1 -Cr4 127.0.0.1 sysDescr sysORDescr > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	bulkget_maxrep
 CLEANFILES+=		bulkget_maxrep.res bulkget_maxrep.exp
 bulkget_maxrep:
-	IDX=1; while [ $$IDX -le 5 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done > $@.exp
-	${SNMPBULKGET} -v2c -cpublic -Cr5 127.0.0.1 sysORDescr > $@.res
+	IDX=1; while [ $$IDX -le 4 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done > $@.exp
+	${SNMPBULKGET} -v2c -cpublic -Cr4 127.0.0.1 sysORDescr > $@.res
 	diff -up $@.exp $@.res
 
 ### SNMP WALK
