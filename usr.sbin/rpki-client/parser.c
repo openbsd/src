@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.76 2022/09/03 13:30:27 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.77 2022/09/03 21:24:02 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -744,10 +744,13 @@ proc_parser(int fd)
 		entity_free(entp);
 	}
 
-	/* XXX free auths and crl tree */
+	auth_tree_free(&auths);
+	crl_tree_free(&crlt);
 
 	X509_STORE_CTX_free(ctx);
 	msgbuf_clear(&msgq);
+
+	ibuf_free(inbuf);
 
 	exit(0);
 }

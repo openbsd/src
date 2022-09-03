@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.155 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.156 2022/09/03 21:24:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -511,6 +511,7 @@ struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
+void		 auth_tree_free(struct auth_tree *);
 struct cert	*cert_parse_ee_cert(const char *, X509 *);
 struct cert	*cert_parse_pre(const char *, const unsigned char *, size_t);
 struct cert	*cert_parse(const char *, struct cert *);
@@ -556,6 +557,7 @@ struct crl	*crl_parse(const char *, const unsigned char *, size_t);
 struct crl	*crl_get(struct crl_tree *, const struct auth *);
 int		 crl_insert(struct crl_tree *, struct crl *);
 void		 crl_free(struct crl *);
+void		 crl_tree_free(struct crl_tree *);
 
 /* Validation of our objects. */
 

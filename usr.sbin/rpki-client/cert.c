@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.88 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.89 2022/09/03 21:24:02 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -977,6 +977,18 @@ authcmp(struct auth *a, struct auth *b)
 }
 
 RB_GENERATE_STATIC(auth_tree, auth, entry, authcmp);
+
+void
+auth_tree_free(struct auth_tree *auths)
+{
+	struct auth	*auth, *tauth;
+
+	RB_FOREACH_SAFE(auth, auth_tree, auths, tauth) {
+		RB_REMOVE(auth_tree, auths, auth);
+		cert_free(auth->cert);
+		free(auth);
+	}
+}
 
 struct auth *
 auth_find(struct auth_tree *auths, const char *aki)

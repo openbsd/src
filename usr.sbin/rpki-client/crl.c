@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.15 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.16 2022/09/03 21:24:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -117,4 +117,15 @@ crl_free(struct crl *crl)
 	free(crl->aki);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);
+}
+
+void
+crl_tree_free(struct crl_tree *crlt)
+{
+	struct crl	*crl, *tcrl;
+
+	RB_FOREACH_SAFE(crl, crl_tree, crlt, tcrl) {
+		RB_REMOVE(crl_tree, crlt, crl);
+		crl_free(crl);
+	}
 }
