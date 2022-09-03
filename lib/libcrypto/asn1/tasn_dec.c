@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.80 2022/09/03 18:52:18 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.81 2022/09/03 19:11:45 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -276,7 +276,7 @@ asn1_find_end(CBS *cbs, size_t length, int indefinite)
 static int
 asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 {
-	ASN1_STRING *stmp;
+	ASN1_STRING *astr;
 	ASN1_BOOLEAN *tbool;
 	uint8_t u8val;
 	int ret = 0;
@@ -361,21 +361,19 @@ asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *
 			}
 		}
 		/* All based on ASN1_STRING and handled the same way. */
-		if (*pval == NULL) {
-			if ((stmp = ASN1_STRING_type_new(utype)) == NULL) {
-				ASN1error(ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-			*pval = (ASN1_VALUE *)stmp;
-		} else {
-			stmp = (ASN1_STRING *)*pval;
-			stmp->type = utype;
-		}
-		if (!ASN1_STRING_set(stmp, CBS_data(content), CBS_len(content))) {
-			ASN1_STRING_free(stmp);
+		if (*pval != NULL) {
+			ASN1_STRING_free((ASN1_STRING *)*pval);
 			*pval = NULL;
+		}
+		if ((astr = ASN1_STRING_type_new(utype)) == NULL) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
+		if (!ASN1_STRING_set(astr, CBS_data(content), CBS_len(content))) {
+			ASN1_STRING_free(astr);
+			goto err;
+		}
+		*pval = (ASN1_VALUE *)astr;
 		break;
 	}
 
