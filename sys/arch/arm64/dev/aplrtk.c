@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplrtk.c,v 1.1 2022/08/31 14:47:22 kettenis Exp $	*/
+/*	$OpenBSD: aplrtk.c,v 1.2 2022/09/03 19:05:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -47,7 +47,7 @@ struct aplrtk_softc {
 	uint32_t		sc_phandle;
 
 	struct rtkit		sc_rtkit;
-	struct rtkit_state	*sc_rtkit_state;
+	struct rtkit_state	*sc_state;
 };
 
 int	aplrtk_match(struct device *, void *, void *);
@@ -98,17 +98,22 @@ int
 aplrtk_do_start(struct aplrtk_softc *sc)
 {
 	uint32_t ctrl;
+	int error;
 
 	ctrl = HREAD4(sc, CPU_CTRL);
 	HWRITE4(sc, CPU_CTRL, ctrl | CPU_CTRL_RUN);
 
 	sc->sc_rtkit.rk_cookie = sc;
 	sc->sc_rtkit.rk_dmat = sc->sc_dmat;
-	sc->sc_rtkit_state = rtkit_init(sc->sc_node, NULL, &sc->sc_rtkit);
-	if (sc->sc_rtkit_state == NULL)
+	sc->sc_state = rtkit_init(sc->sc_node, NULL, &sc->sc_rtkit);
+	if (sc->sc_state == NULL)
 		return EIO;
 
-	return rtkit_boot(sc->sc_rtkit_state);
+	error = rtkit_boot(sc->sc_state);
+	if (error)
+		return error;
+
+	return rtkit_set_ap_pwrstate(sc->sc_state, RTKIT_MGMT_PWR_STATE_ON);
 }
 
 int
