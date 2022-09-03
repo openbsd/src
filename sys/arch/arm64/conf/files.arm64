@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.59 2022/08/31 14:47:22 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.60 2022/09/03 08:44:56 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -157,7 +157,9 @@ device	apldchidev {}
 attach	apldchidev at fdt
 device	apldckbd: hid, hidkbd, wskbddev
 attach	apldckbd at apldchidev
-file	arch/arm64/dev/apldc.c			apldc
+device	apldcms: hid, hidms, wsmousedev
+attach	apldcms at apldchidev
+file	arch/arm64/dev/apldc.c			apldc | aplhidev | apldckbd | apldcms needs-flag
 
 device	apldma
 attach	apldma at fdt

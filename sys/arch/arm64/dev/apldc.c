@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.1 2022/08/31 14:47:22 kettenis Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.2 2022/09/03 08:44:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,12 +20,14 @@
 #include <sys/device.h>
 #include <sys/evcount.h>
 #include <sys/malloc.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -40,12 +42,16 @@
 #include <arm64/dev/rtkit.h>
 #include <arm64/dev/simplebusvar.h>
 
+#include "apldc.h"
+
 #define DC_IRQ_MASK		0x0000
 #define DC_IRQ_STAT		0x0004
 
 #define DC_CONFIG_TX_THRESH	0x0000
 #define DC_CONFIG_RX_THRESH	0x0004
 
+#define DC_DATA_TX8		0x0004
+#define DC_DATA_TX32		0x0010
 #define DC_DATA_TX_FREE		0x0014
 #define DC_DATA_RX8		0x001c
 #define  DC_DATA_RX8_COUNT(d)	((d) & 0x7f)
@@ -249,6 +255,17 @@ apldc_intr_barrier(void *cookie)
 
 #define APLDCHIDEV_DESC_MAX	512
 #define APLDCHIDEV_PKT_MAX	1024
+#define APLDCHIDEV_GPIO_MAX	4
+
+#define APLDCHIDEV_NUM_GPIOS	16
+
+struct apldchidev_gpio {
+	struct apldchidev_softc	*ag_sc;
+	uint8_t			ag_id;
+	uint8_t			ag_iface;
+	uint32_t		ag_gpio[APLDCHIDEV_GPIO_MAX];
+	struct task		ag_task;
+};
 
 struct apldchidev_softc {
 	struct device		sc_dev;
@@ -256,12 +273,42 @@ struct apldchidev_softc {
 	bus_space_handle_t	sc_cfg_ioh;
 	bus_space_handle_t	sc_data_ioh;
 
+	bus_dma_tag_t		sc_dmat;
+	int			sc_node;
+
 	void			*sc_rx_ih;
 
+	uint8_t			sc_seq_comm;
+
+	uint8_t			sc_iface_stm;
+	uint8_t			sc_seq_stm;
+	uint8_t			sc_stmdesc[APLDCHIDEV_DESC_MAX];
+	size_t			sc_stmdesclen;
+	int			sc_stm_ready;
+
 	uint8_t			sc_iface_kbd;
+	uint8_t			sc_seq_kbd;
 	struct device		*sc_kbd;
 	uint8_t			sc_kbddesc[APLDCHIDEV_DESC_MAX];
 	size_t			sc_kbddesclen;
+	int			sc_kbd_ready;
+
+	uint8_t			sc_iface_mt;
+	uint8_t			sc_seq_mt;
+	struct device		*sc_mt;
+	uint8_t			sc_mtdesc[APLDCHIDEV_DESC_MAX];
+	size_t			sc_mtdesclen;
+	int			sc_mt_ready;
+
+	struct apldchidev_gpio	sc_gpio[APLDCHIDEV_NUM_GPIOS];
+	u_int			sc_ngpios;
+	uint8_t			sc_gpio_cmd[APLDCHIDEV_PKT_MAX];
+	size_t			sc_gpio_cmd_len;
+
+	uint8_t			sc_cmd_iface;
+	uint8_t			sc_cmd_seq;
+	uint32_t		sc_retcode;
+	int			sc_busy;
 };
 
 int	apldchidev_match(struct device *, void *, void *);
@@ -275,7 +322,16 @@ struct cfdriver apldchidev_cd = {
 	NULL, "apldchidev", DV_DULL
 };
 
+void	apldchidev_attachhook(struct device *);
+void	apldchidev_cmd(struct apldchidev_softc *, uint8_t, uint8_t,
+	    void *, size_t);
+void	apldchidev_wait(struct apldchidev_softc *);
+int	apldchidev_send_firmware(struct apldchidev_softc *, int,
+	    void *, size_t);
+void	apldchidev_enable(struct apldchidev_softc *, uint8_t);
+void	apldchidev_reset(struct apldchidev_softc *, uint8_t, uint8_t);
 int	apldchidev_rx_intr(void *);
+void	apldchidev_gpio_task(void *);
 
 int
 apldchidev_match(struct device *parent, void *cfdata, void *aux)
@@ -311,6 +367,9 @@ apldchidev_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_dmat = faa->fa_dmat;
+	sc->sc_node = faa->fa_node;
+
 	idx = OF_getindex(faa->fa_node, "rx", "interrupt-names");
 	if (idx < 0) {
 		printf(": no rx interrupt\n");
@@ -334,15 +393,31 @@ apldchidev_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/* Poll until we have received the keyboard HID descriptor. */
+	/* Poll until we have received the STM HID descriptor. */
 	for (retry = 10; retry > 0; retry--) {
+		if (sc->sc_stmdesclen > 0)
+			break;
 		apldchidev_rx_intr(sc);
 		delay(1000);
+	}
+
+	if (sc->sc_stmdesclen > 0) {
+		/* Enable interface. */
+		apldchidev_enable(sc, sc->sc_iface_stm);
+	}
+
+	/* Poll until we have received the keyboard HID descriptor. */
+	for (retry = 10; retry > 0; retry--) {
 		if (sc->sc_kbddesclen > 0)
 			break;
+		apldchidev_rx_intr(sc);
+		delay(1000);
 	}
 
 	if (sc->sc_kbddesclen > 0) {
+		/* Enable interface. */
+		apldchidev_enable(sc, sc->sc_iface_kbd);
+
 		aa.aa_name = "keyboard";
 		aa.aa_desc = sc->sc_kbddesc;
 		aa.aa_desclen = sc->sc_kbddesclen;
@@ -351,6 +426,10 @@ apldchidev_attach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_cfg_ioh, DC_CONFIG_RX_THRESH, 8);
 	fdt_intr_enable(sc->sc_rx_ih);
+
+#if NAPLDCMS > 0
+	config_mountroot(self, apldchidev_attachhook);
+#endif
 }
 
 int
@@ -362,7 +441,8 @@ apldchidev_read(struct apldchidev_softc *sc, void *buf, size_t len,
 	int shift = 0;
 
 	while (len > 0) {
-		data = bus_space_read_4(sc->sc_iot, sc->sc_data_ioh, DC_DATA_RX8);
+		data = bus_space_read_4(sc->sc_iot, sc->sc_data_ioh,
+		    DC_DATA_RX8);
 		if (DC_DATA_RX8_COUNT(data) > 0) {
 			*dst++ = DC_DATA_RX8_DATA(data);
 			*checksum += (DC_DATA_RX8_DATA(data) << shift);
@@ -378,47 +458,152 @@ apldchidev_read(struct apldchidev_softc *sc, void *buf, size_t len,
 	return 0;
 }
 
-struct apldc_hdr {
+int
+apldchidev_write(struct apldchidev_softc *sc, const void *buf, size_t len,
+    uint32_t *checksum)
+{
+	const uint8_t *src = buf;
+	uint32_t free;
+	int shift = 0;
+
+	while (len > 0) {
+		free = bus_space_read_4(sc->sc_iot, sc->sc_data_ioh,
+		    DC_DATA_TX_FREE);
+		if (free > 0) {
+			if (checksum)
+				*checksum -= *src << shift;
+			bus_space_write_4(sc->sc_iot, sc->sc_data_ioh,
+			    DC_DATA_TX8, *src++);
+			shift += 8;
+			if (shift > 24)
+				shift = 0;
+			len--;
+		} else {
+			delay(10);
+		}
+	}
+
+	return 0;
+}
+
+struct mtp_hdr {
 	uint8_t hdr_len;
 	uint8_t chan;
+#define MTP_CHAN_CMD		0x11
+#define MTP_CHAN_REPORT		0x12
 	uint16_t pkt_len;
 	uint8_t seq;
 	uint8_t iface;
-#define APLDC_IFACE_COMM	0
+#define MTP_IFACE_COMM		0
 	uint16_t pad;
 } __packed;
 
-
-struct apldc_subhdr {
+struct mtp_subhdr {
 	uint8_t flags;
-#define APLDC_GROUP(x)		((x >> 5) & 0x3)
-#define APLDC_GROUP_INPUT	0
+#define MTP_GROUP_SHIFT	6
+#define MTP_GROUP(x)		((x >> 6) & 0x3)
+#define MTP_GROUP_INPUT	0
+#define MTP_GROUP_OUTPUT	1
+#define MTP_GROUP_CMD		2
+#define MTP_REQ_SHIFT		0
+#define MTP_REQ(x)		((x >> 0) & 0x3f)
+#define MTP_REQ_SET_REPORT	0
+#define MTP_REQ_GET_REPORT	1
 	uint8_t unk;
 	uint16_t len;
 	uint32_t retcode;
 } __packed;
 
-struct apldc_init_hdr {
+struct mtp_init_hdr {
 	uint8_t type;
-#define APLDC_EVENT_INIT	0xf0
+#define MTP_EVENT_GPIO_CMD	0xa0
+#define MTP_EVENT_INIT	0xf0
+#define MTP_EVENT_READY	0xf1
 	uint8_t unk1;
 	uint8_t unk2;
 	uint8_t iface;
 	char name[16];
 } __packed;
 
-struct apldc_init_block_hdr {
+struct mtp_init_block_hdr {
 	uint16_t type;
-#define APLDC_BLOCK_DESCRIPTOR	0
-#define APLDC_BLOCK_END		2
+#define MTP_BLOCK_DESCRIPTOR	0
+#define MTP_BLOCK_GPIO_REQ	1
+#define MTP_BLOCK_END		2
 	uint16_t subtype;
 	uint16_t len;
 } __packed;
 
+struct mtp_gpio_req {
+	uint16_t unk;
+	uint16_t id;
+	char name[32];
+} __packed;
+
+struct mtp_gpio_cmd {
+	uint8_t type;
+	uint8_t iface;
+	uint8_t id;
+	uint8_t unk;
+	uint8_t cmd;
+#define MTP_GPIO_CMD_TOGGLE	0x03
+} __packed;
+
+struct mtp_gpio_ack {
+	uint8_t type;
+	uint32_t retcode;
+	uint8_t cmd[512];
+} __packed;
+
+#define MTP_CMD_RESET_INTERFACE	0x40
+#define MTP_CMD_SEND_FIRMWARE		0x95
+#define MTP_CMD_ENABLE_INTERFACE	0xb4
+#define MTP_CMD_ACK_GPIO_CMD		0xa1
+
 void
-apldchidev_handle_init(struct apldchidev_softc *sc, void *buf, size_t len)
+apldchidev_handle_gpio_req(struct apldchidev_softc *sc, uint8_t iface,
+    void *buf, size_t len)
 {
-	struct apldc_init_block_hdr *bhdr = buf;
+	struct mtp_gpio_req *req = buf;
+	uint32_t gpio[APLDCHIDEV_GPIO_MAX];
+	char name[64];
+	int node = -1;
+
+	if (len < sizeof(*req))
+		return;
+
+	if (sc->sc_ngpios >= APLDCHIDEV_NUM_GPIOS)
+		return;
+
+	if (iface == sc->sc_iface_mt)
+		node = OF_getnodebyname(sc->sc_node, "multi-touch");
+	else if (iface == sc->sc_iface_stm)
+		node = OF_getnodebyname(sc->sc_node, "stm");
+	if (node == -1)
+		return;
+
+	snprintf(name, sizeof(name), "apple,%s-gpios", req->name);
+	len = OF_getproplen(node, name);
+	if (len <= 0 || len > sizeof(gpio))
+		return;
+	OF_getpropintarray(node, name, gpio, len);
+	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(gpio, 0);
+
+	sc->sc_gpio[sc->sc_ngpios].ag_sc = sc;
+	sc->sc_gpio[sc->sc_ngpios].ag_id = req->id;
+	sc->sc_gpio[sc->sc_ngpios].ag_iface = iface;
+	memcpy(sc->sc_gpio[sc->sc_ngpios].ag_gpio, gpio, len);
+	task_set(&sc->sc_gpio[sc->sc_ngpios].ag_task,
+	    apldchidev_gpio_task, &sc->sc_gpio[sc->sc_ngpios]);
+	sc->sc_ngpios++;
+}
+
+void
+apldchidev_handle_init(struct apldchidev_softc *sc, uint8_t iface,
+    void *buf, size_t len)
+{
+	struct mtp_init_block_hdr *bhdr = buf;
 
 	for (;;) {
 		if (len < sizeof(*bhdr))
@@ -430,13 +615,26 @@ apldchidev_handle_init(struct apldchidev_softc *sc, void *buf, size_t len)
 		len -= bhdr->len;
 
 		switch (bhdr->type) {
-		case APLDC_BLOCK_DESCRIPTOR:
-			if (bhdr->len <= sizeof(sc->sc_kbddesc)) {
+		case MTP_BLOCK_DESCRIPTOR:
+			if (iface == sc->sc_iface_kbd &&
+			    bhdr->len <= sizeof(sc->sc_kbddesc)) {
 				memcpy(sc->sc_kbddesc, bhdr + 1, bhdr->len);
 				sc->sc_kbddesclen = bhdr->len;
+			} else if (iface == sc->sc_iface_mt &&
+			    bhdr->len <= sizeof(sc->sc_mtdesc)) {
+				memcpy(sc->sc_mtdesc, bhdr + 1, bhdr->len);
+				sc->sc_mtdesclen = bhdr->len;
+			} else if (iface == sc->sc_iface_stm &&
+			    bhdr->len <= sizeof(sc->sc_stmdesc)) {
+				memcpy(sc->sc_stmdesc, bhdr + 1, bhdr->len);
+				sc->sc_stmdesclen = bhdr->len;
 			}
 			break;
-		case APLDC_BLOCK_END:
+		case MTP_BLOCK_GPIO_REQ:
+			apldchidev_handle_gpio_req(sc, iface,
+			    bhdr + 1, bhdr->len);
+			break;
+		case MTP_BLOCK_END:
 			return;
 		default:
 			printf("%s: unhandled block type 0x%04x\n",
@@ -444,7 +642,7 @@ apldchidev_handle_init(struct apldchidev_softc *sc, void *buf, size_t len)
 			break;
 		}
 
-		bhdr = (struct apldc_init_block_hdr *)
+		bhdr = (struct mtp_init_block_hdr *)
 		    ((uint8_t *)(bhdr + 1) + bhdr->len);
 	}
 }
@@ -452,15 +650,53 @@ apldchidev_handle_init(struct apldchidev_softc *sc, void *buf, size_t len)
 void
 apldchidev_handle_comm(struct apldchidev_softc *sc, void *buf, size_t len)
 {
-	struct apldc_init_hdr *ihdr = buf;
+	struct mtp_init_hdr *ihdr = buf;
+	struct mtp_gpio_cmd *cmd = buf;
+	uint8_t iface;
+	int i;
 
 	switch (ihdr->type) {
-	case APLDC_EVENT_INIT:
+	case MTP_EVENT_INIT:
 		if (strcmp(ihdr->name, "keyboard") == 0) {
 			sc->sc_iface_kbd = ihdr->iface;
-			apldchidev_handle_init(sc, ihdr + 1,
-			    len - sizeof(*ihdr));
+			apldchidev_handle_init(sc, ihdr->iface,
+			    ihdr + 1, len - sizeof(*ihdr));
 		}
+		if (strcmp(ihdr->name, "multi-touch") == 0) {
+			sc->sc_iface_mt = ihdr->iface;
+			apldchidev_handle_init(sc, ihdr->iface,
+			    ihdr + 1, len - sizeof(*ihdr));
+		}
+		if (strcmp(ihdr->name, "stm") == 0) {
+			sc->sc_iface_stm = ihdr->iface;
+			apldchidev_handle_init(sc, ihdr->iface,
+			    ihdr + 1, len - sizeof(*ihdr));
+		}
+		break;
+	case MTP_EVENT_READY:
+		iface = ihdr->unk1;
+		if (iface == sc->sc_iface_stm)
+			sc->sc_stm_ready = 1;
+		if (iface == sc->sc_iface_kbd)
+			sc->sc_kbd_ready = 1;
+		if (iface == sc->sc_iface_mt)
+			sc->sc_mt_ready = 1;
+		break;
+	case MTP_EVENT_GPIO_CMD:
+		for (i =0; i < sc->sc_ngpios; i++) {
+			if (cmd->id == sc->sc_gpio[i].ag_id &&
+			    cmd->iface == sc->sc_gpio[i].ag_iface &&
+			    cmd->cmd == MTP_GPIO_CMD_TOGGLE) {
+				/* Stash the command for the reply. */
+				KASSERT(len < sizeof(sc->sc_gpio_cmd));
+				memcpy(sc->sc_gpio_cmd, buf, len);
+				sc->sc_gpio_cmd_len = len;
+				task_add(systq, &sc->sc_gpio[i].ag_task);
+				return;
+			}
+		}
+		printf("%s: unhandled gpio id %d iface %d cmd 0x%02x\n",
+		       sc->sc_dev.dv_xname, cmd->id, cmd->iface, cmd->cmd);
 		break;
 	default:
 		printf("%s: unhandled comm event 0x%02x\n",
@@ -469,35 +705,358 @@ apldchidev_handle_comm(struct apldchidev_softc *sc, void *buf, size_t len)
 	}
 }
 
+void
+apldchidev_gpio_task(void *arg)
+{
+	struct apldchidev_gpio *ag = arg;
+	struct apldchidev_softc *sc = ag->ag_sc;
+	struct mtp_gpio_ack *ack;
+	uint8_t flags;
+	size_t len;
+
+	gpio_controller_set_pin(ag->ag_gpio, 1);
+	delay(10000);
+	gpio_controller_set_pin(ag->ag_gpio, 0);
+
+	len = sizeof(*ack) + sc->sc_gpio_cmd_len;
+	ack = malloc(len, M_TEMP, M_WAITOK);
+	ack->type = MTP_CMD_ACK_GPIO_CMD;
+	ack->retcode = 0;
+	memcpy(ack->cmd, sc->sc_gpio_cmd, sc->sc_gpio_cmd_len);
+
+	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_SET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, MTP_IFACE_COMM, flags, ack, len);
+
+	free(ack, M_TEMP, len);
+}
+
 void apldckbd_intr(struct device *, uint8_t *, size_t);
+void apldcms_intr(struct device *, uint8_t *, size_t);
 
 int
 apldchidev_rx_intr(void *arg)
 {
 	struct apldchidev_softc *sc = arg;
-	struct apldc_hdr hdr;
-	struct apldc_subhdr *shdr;
+	struct mtp_hdr hdr;
+	struct mtp_subhdr *shdr;
 	uint32_t checksum = 0;
 	char buf[APLDCHIDEV_PKT_MAX];
 
 	apldchidev_read(sc, &hdr, sizeof(hdr), &checksum);
 	apldchidev_read(sc, buf, hdr.pkt_len + 4, &checksum);
-	if (checksum != 0xffffffff)
+	if (checksum != 0xffffffff) {
+		printf("%s: packet checksum error\n", sc->sc_dev.dv_xname);
 		return 1;
-
-	if (hdr.pkt_len < sizeof(*shdr))
+	}
+	if (hdr.pkt_len < sizeof(*shdr)) {
+		printf("%s: packet too small\n", sc->sc_dev.dv_xname);
 		return 1;
+	}
 
-	shdr = (struct apldc_subhdr *)buf;
-	if (APLDC_GROUP(shdr->flags) != APLDC_GROUP_INPUT)
+	shdr = (struct mtp_subhdr *)buf;
+	if (MTP_GROUP(shdr->flags) == MTP_GROUP_OUTPUT ||
+	    MTP_GROUP(shdr->flags) == MTP_GROUP_CMD) {
+		if (hdr.iface != sc->sc_cmd_iface) {
+			printf("%s: got ack for unexpected iface\n",
+			    sc->sc_dev.dv_xname);
+		}
+		if (hdr.seq != sc->sc_cmd_seq) {
+			printf("%s: got ack with unexpected seq\n",
+			    sc->sc_dev.dv_xname);
+		}
+		sc->sc_retcode = shdr->retcode;
+		sc->sc_busy = 0;
+		wakeup(sc);
 		return 1;
+	}
+	if (MTP_GROUP(shdr->flags) != MTP_GROUP_INPUT) {
+		printf("%s: unhandled group 0x%02x\n",
+		    sc->sc_dev.dv_xname, shdr->flags);
+		return 1;
+	}
 
-	if (hdr.iface == APLDC_IFACE_COMM)
+	if (hdr.iface == MTP_IFACE_COMM)
 		apldchidev_handle_comm(sc, shdr + 1, shdr->len);
-	else if (hdr.iface == sc->sc_iface_kbd)
+	else if (hdr.iface == sc->sc_iface_kbd && sc->sc_kbd)
 		apldckbd_intr(sc->sc_kbd, (uint8_t *)(shdr + 1), shdr->len);
+	else if (hdr.iface == sc->sc_iface_mt && sc->sc_mt)
+		apldcms_intr(sc->sc_mt, (uint8_t *)(shdr + 1), shdr->len);
+	else {
+		printf("%s: unhandled iface %d\n",
+		    sc->sc_dev.dv_xname, hdr.iface);
+	}
 
+	wakeup(sc);
 	return 1;
+}
+
+void
+apldchidev_cmd(struct apldchidev_softc *sc, uint8_t iface, uint8_t flags,
+    void *data, size_t len)
+{
+	struct mtp_hdr hdr;
+	struct mtp_subhdr shdr;
+	uint32_t checksum = 0xffffffff;
+	uint8_t pad[4];
+
+	KASSERT(sc->sc_busy == 0);
+	sc->sc_busy = 1;
+
+	memset(&hdr, 0, sizeof(hdr));
+	hdr.hdr_len = sizeof(hdr);
+	hdr.chan = MTP_CHAN_CMD;
+	hdr.pkt_len = roundup(len, 4) + sizeof(shdr);
+	if (iface == MTP_IFACE_COMM)
+		hdr.seq = sc->sc_seq_comm++;
+	else if (iface == sc->sc_iface_kbd)
+		hdr.seq = sc->sc_seq_kbd++;
+	else if (iface == sc->sc_iface_mt)
+		hdr.seq = sc->sc_seq_mt++;
+	else if (iface == sc->sc_iface_stm)
+		hdr.seq = sc->sc_seq_stm++;
+	hdr.iface = iface;
+	sc->sc_cmd_iface = hdr.iface;
+	sc->sc_cmd_seq = hdr.seq;
+	memset(&shdr, 0, sizeof(shdr));
+	shdr.flags = flags;
+	shdr.len = len;
+	apldchidev_write(sc, &hdr, sizeof(hdr), &checksum);
+	apldchidev_write(sc, &shdr, sizeof(shdr), &checksum);
+	apldchidev_write(sc, data, len & ~3, &checksum);
+	if (len & 3) {
+		memset(pad, 0, sizeof(pad));
+		memcpy(pad, &data[len & ~3], len & 3);
+		apldchidev_write(sc, pad, sizeof(pad), &checksum);
+	}
+	apldchidev_write(sc, &checksum, sizeof(checksum), NULL);
+}
+
+void
+apldchidev_wait(struct apldchidev_softc *sc)
+{
+	int retry, error;
+
+	if (cold) {
+		for (retry = 10; retry > 0; retry--) {
+			if (sc->sc_busy == 0)
+				break;
+			apldchidev_rx_intr(sc);
+			delay(1000);
+		}
+		return;
+	}
+	
+	while (sc->sc_busy) {
+		error = tsleep_nsec(sc, PZERO, "apldcwt", SEC_TO_NSEC(1));
+		if (error == EWOULDBLOCK)
+			return;
+	}
+
+	if (sc->sc_retcode) {
+		printf("%s: command failed with error 0x%04x\n",
+		    sc->sc_dev.dv_xname, sc->sc_retcode);
+	}
+}
+
+void
+apldchidev_enable(struct apldchidev_softc *sc, uint8_t iface)
+{
+	uint8_t cmd[2] = { MTP_CMD_ENABLE_INTERFACE, iface };
+	uint8_t flags;
+
+	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_SET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, MTP_IFACE_COMM, flags, cmd, sizeof(cmd));
+	apldchidev_wait(sc);
+}
+
+void
+apldchidev_reset(struct apldchidev_softc *sc, uint8_t iface, uint8_t state)
+{
+	uint8_t cmd[4] = { MTP_CMD_RESET_INTERFACE, 1, iface, state };
+	uint8_t flags;
+
+	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_SET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, MTP_IFACE_COMM, flags, cmd, sizeof(cmd));
+	apldchidev_wait(sc);
+}
+
+#if NAPLDCMS > 0
+
+int
+apldchidev_send_firmware(struct apldchidev_softc *sc, int iface,
+    void *ucode, size_t ucode_size)
+{
+	bus_dmamap_t map;
+	bus_dma_segment_t seg;
+	uint8_t cmd[16] = {};
+	uint64_t addr;
+	uint32_t size;
+	uint8_t flags;
+	caddr_t buf;
+	int nsegs;
+	int error;
+
+	error = bus_dmamap_create(sc->sc_dmat, ucode_size, 1, ucode_size, 0,
+	    BUS_DMA_WAITOK, &map);
+	if (error)
+		return error;
+
+	error = bus_dmamem_alloc(sc->sc_dmat, ucode_size, 4 * PAGE_SIZE, 0,
+	    &seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error) {
+		bus_dmamap_destroy(sc->sc_dmat, map);
+		return error;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, 1, ucode_size, &buf,
+	    BUS_DMA_WAITOK);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, map);
+		return error;
+	}
+
+	error = bus_dmamap_load_raw(sc->sc_dmat, map, &seg, 1,
+	    ucode_size, BUS_DMA_WAITOK);
+	if (error) {
+		bus_dmamem_unmap(sc->sc_dmat, buf, ucode_size);
+		bus_dmamem_free(sc->sc_dmat, &seg, 1);
+		bus_dmamap_destroy(sc->sc_dmat, map);
+		return error;
+	}
+
+	memcpy(buf, ucode, ucode_size);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, ucode_size, BUS_DMASYNC_PREWRITE);
+
+	cmd[0] = MTP_CMD_SEND_FIRMWARE;
+	cmd[1] = 2;
+	cmd[2] = 0;
+	cmd[3] = iface;
+	addr = map->dm_segs[0].ds_addr;
+	memcpy(&cmd[4], &addr, sizeof(addr));
+	size = map->dm_segs[0].ds_len;
+	memcpy(&cmd[12], &size, sizeof(size));
+
+	flags = MTP_GROUP_CMD << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_SET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, MTP_IFACE_COMM, flags, cmd, sizeof(cmd));
+	apldchidev_wait(sc);
+
+	bus_dmamap_unload(sc->sc_dmat, map);
+	bus_dmamem_unmap(sc->sc_dmat, buf, ucode_size);
+	bus_dmamem_free(sc->sc_dmat, &seg, 1);
+	bus_dmamap_destroy(sc->sc_dmat, map);
+
+	return 0;
+}
+
+struct mtp_fwhdr {
+	uint32_t magic;
+#define MTP_FW_MAGIC	0x46444948
+	uint32_t version;
+#define MTP_FW_VERSION	1
+	uint32_t hdr_len;
+	uint32_t data_len;
+	uint32_t iface_off;
+};
+
+void
+apldchidev_attachhook(struct device *self)
+{
+	struct apldchidev_softc *sc = (struct apldchidev_softc *)self;
+	struct apldchidev_attach_args aa;
+	uint8_t *ucode;
+	size_t ucode_size;
+	uint8_t *data;
+	size_t size;
+	int error;
+
+	/* Wait until we have received the multi-touch HID descriptor. */
+	while (sc->sc_mtdesclen == 0) {
+		error = tsleep_nsec(sc, PZERO, "apldcmt", SEC_TO_NSEC(1));
+		if (error == EWOULDBLOCK)
+			return;
+	}
+
+	if (sc->sc_mtdesclen > 0) {
+		struct mtp_fwhdr *hdr;
+		char *firmware_name;
+		int node, len;
+
+		/* Enable interface. */
+		apldchidev_enable(sc, sc->sc_iface_mt);
+
+		node = OF_getnodebyname(sc->sc_node, "multi-touch");
+		if (node == -1)
+			return;
+		len = OF_getproplen(node, "firmware-name");
+		if (len <= 0)
+			return;
+		firmware_name = malloc(len, M_DEVBUF, M_WAITOK);
+		OF_getprop(node, "firmware-name", firmware_name, len);
+
+		error = loadfirmware(firmware_name, &ucode, &ucode_size);
+		if (error) {
+			printf("%s: error %d, could not read firmware %s\n",
+			    sc->sc_dev.dv_xname, error, firmware_name);
+			return;
+		}
+
+		hdr = (struct mtp_fwhdr *)ucode;
+		if (sizeof(hdr) > ucode_size ||
+		    hdr->hdr_len + hdr->data_len > ucode_size) {
+			printf("%s: loaded firmware is too small\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		if (hdr->magic != MTP_FW_MAGIC) {
+			printf("%s: wrong firmware magic number 0x%08x\n",
+			    sc->sc_dev.dv_xname, hdr->magic);
+			return;
+		}
+		if (hdr->version != MTP_FW_VERSION) {
+			printf("%s: wrong firmware version %d\n",
+			    sc->sc_dev.dv_xname, hdr->version);
+			return;
+		}
+		data = ucode + hdr->hdr_len;
+		if (hdr->iface_off)
+			data[hdr->iface_off] = sc->sc_iface_mt;
+		size = hdr->data_len;
+
+		apldchidev_send_firmware(sc, sc->sc_iface_mt, data, size);
+		apldchidev_reset(sc, sc->sc_iface_mt, 0);
+		apldchidev_reset(sc, sc->sc_iface_mt, 2);
+
+		/* Wait until ready. */
+		while (sc->sc_mt_ready == 0) {
+			error = tsleep_nsec(sc, PZERO, "apldcmt",
+			    SEC_TO_NSEC(10));
+			if (error == EWOULDBLOCK)
+				return;
+		}
+
+		aa.aa_name = "multi-touch";
+		aa.aa_desc = sc->sc_mtdesc;
+		aa.aa_desclen = sc->sc_mtdesclen;
+		sc->sc_mt = config_found(self, &aa, NULL);
+	}
+}
+
+#endif
+
+void
+apldchidev_set_leds(struct apldchidev_softc *sc, uint8_t leds)
+{
+	uint8_t report[2] = { 1, leds };
+	uint8_t flags;
+
+	flags = MTP_GROUP_OUTPUT << MTP_GROUP_SHIFT;
+	flags |= MTP_REQ_SET_REPORT << MTP_REQ_SHIFT;
+	apldchidev_cmd(sc, sc->sc_iface_kbd, flags, report, sizeof(report));
 }
 
 /* Keyboard */
@@ -612,14 +1171,12 @@ apldckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 void
 apldckbd_set_leds(void *v, int leds)
 {
-#if 0
 	struct apldckbd_softc *sc = v;
 	struct hidkbd *kbd = &sc->sc_kbd;
 	uint8_t res;
 
 	if (hidkbd_set_leds(kbd, leds, &res))
-		aplhidev_set_leds(sc->sc_hidev, res);
-#endif
+		apldchidev_set_leds(sc->sc_hidev, res);
 }
 
 /* Console interface. */
@@ -654,3 +1211,226 @@ apldckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 	hidkbd_bell(pitch, period, volume, 1);
 }
+
+#if NAPLDCMS > 0
+
+/* Touchpad */
+
+/*
+ * The contents of the touchpad event packets is identical to those
+ * used by the ubcmtp(4) driver.  The relevant definitions and the
+ * code to decode the packets is replicated here.
+ */
+
+struct ubcmtp_finger {
+	uint16_t	origin;
+	uint16_t	abs_x;
+	uint16_t	abs_y;
+	uint16_t	rel_x;
+	uint16_t	rel_y;
+	uint16_t	tool_major;
+	uint16_t	tool_minor;
+	uint16_t	orientation;
+	uint16_t	touch_major;
+	uint16_t	touch_minor;
+	uint16_t	unused[2];
+	uint16_t	pressure;
+	uint16_t	multi;
+} __packed __attribute((aligned(2)));
+
+#define UBCMTP_MAX_FINGERS	16
+
+#define UBCMTP_TYPE4_TPOFF	(20 * sizeof(uint16_t))
+#define UBCMTP_TYPE4_BTOFF	23
+#define UBCMTP_TYPE4_FINGERPAD	(1 * sizeof(uint16_t))
+
+/* Use a constant, synaptics-compatible pressure value for now. */
+#define DEFAULT_PRESSURE	40
+
+struct apldcms_softc {
+	struct device	sc_dev;
+	struct device	*sc_wsmousedev;
+
+	int		sc_enabled;
+
+	int		tp_offset;
+	int		tp_fingerpad;
+
+	struct mtpoint	frame[UBCMTP_MAX_FINGERS];
+	int		contacts;
+	int		btn;
+};
+
+int	apldcms_enable(void *);
+void	apldcms_disable(void *);
+int	apldcms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+
+const struct wsmouse_accessops apldcms_accessops = {
+	.enable = apldcms_enable,
+	.disable = apldcms_disable,
+	.ioctl = apldcms_ioctl,
+};
+
+int	 apldcms_match(struct device *, void *, void *);
+void	 apldcms_attach(struct device *, struct device *, void *);
+
+const struct cfattach apldcms_ca = {
+	sizeof(struct apldcms_softc), apldcms_match, apldcms_attach
+};
+
+struct cfdriver apldcms_cd = {
+	NULL, "apldcms", DV_DULL
+};
+
+int	apldcms_configure(struct apldcms_softc *);
+
+int
+apldcms_match(struct device *parent, void *match, void *aux)
+{
+	struct apldchidev_attach_args *aa = aux;
+
+	return strcmp(aa->aa_name, "multi-touch") == 0;
+}
+
+void
+apldcms_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct apldcms_softc *sc = (struct apldcms_softc *)self;
+	struct wsmousedev_attach_args aa;
+
+	printf("\n");
+
+	sc->tp_offset = UBCMTP_TYPE4_TPOFF;
+	sc->tp_fingerpad = UBCMTP_TYPE4_FINGERPAD;
+
+	aa.accessops = &apldcms_accessops;
+	aa.accesscookie = sc;
+
+	sc->sc_wsmousedev = config_found(self, &aa, wsmousedevprint);
+	if (sc->sc_wsmousedev != NULL && apldcms_configure(sc))
+		apldcms_disable(sc);
+}
+
+int
+apldcms_configure(struct apldcms_softc *sc)
+{
+	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+
+	/* The values below are for the MacBookPro17,1 */
+	hw->type = WSMOUSE_TYPE_TOUCHPAD;
+	hw->hw_type = WSMOUSEHW_CLICKPAD;
+	hw->x_min = -6046;
+	hw->x_max = 6536;
+	hw->y_min = -164;
+	hw->y_max = 7439;
+	hw->mt_slots = UBCMTP_MAX_FINGERS;
+	hw->flags = WSMOUSEHW_MT_TRACKING;
+
+	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
+}
+
+void
+apldcms_intr(struct device *self, uint8_t *packet, size_t packetlen)
+{
+	struct apldcms_softc *sc = (struct apldcms_softc *)self;
+	struct ubcmtp_finger *finger;
+	int off, s, btn, contacts;
+
+	if (!sc->sc_enabled)
+		return;
+
+	contacts = 0;
+	for (off = sc->tp_offset; off < packetlen;
+	    off += (sizeof(struct ubcmtp_finger) + sc->tp_fingerpad)) {
+		finger = (struct ubcmtp_finger *)(packet + off);
+
+		if ((int16_t)letoh16(finger->touch_major) == 0)
+			continue; /* finger lifted */
+
+		sc->frame[contacts].x = (int16_t)letoh16(finger->abs_x);
+		sc->frame[contacts].y = (int16_t)letoh16(finger->abs_y);
+		sc->frame[contacts].pressure = DEFAULT_PRESSURE;
+		contacts++;
+	}
+
+	btn = sc->btn;
+	sc->btn = !!((int16_t)letoh16(packet[UBCMTP_TYPE4_BTOFF]));
+
+	if (contacts || sc->contacts || sc->btn != btn) {
+		sc->contacts = contacts;
+		s = spltty();
+		wsmouse_buttons(sc->sc_wsmousedev, sc->btn);
+		wsmouse_mtframe(sc->sc_wsmousedev, sc->frame, contacts);
+		wsmouse_input_sync(sc->sc_wsmousedev);
+		splx(s);
+	}
+}
+
+int
+apldcms_enable(void *v)
+{
+	struct apldcms_softc *sc = v;
+
+	if (sc->sc_enabled)
+		return EBUSY;
+
+	sc->sc_enabled = 1;
+	return 0;
+}
+
+void
+apldcms_disable(void *v)
+{
+	struct apldcms_softc *sc = v;
+
+	sc->sc_enabled = 0;
+}
+
+int
+apldcms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct apldcms_softc *sc = v;
+	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+	int wsmode;
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = hw->type;
+		break;
+
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = hw->x_min;
+		wsmc->maxx = hw->x_max;
+		wsmc->miny = hw->y_min;
+		wsmc->maxy = hw->y_max;
+		wsmc->swapxy = 0;
+		wsmc->resx = 0;
+		wsmc->resy = 0;
+		break;
+
+	case WSMOUSEIO_SETMODE:
+		wsmode = *(u_int *)data;
+		if (wsmode != WSMOUSE_COMPAT && wsmode != WSMOUSE_NATIVE) {
+			printf("%s: invalid mode %d\n", sc->sc_dev.dv_xname,
+			    wsmode);
+			return (EINVAL);
+		}
+		wsmouse_set_mode(sc->sc_wsmousedev, wsmode);
+		break;
+
+	default:
+		return -1;
+	}
+
+	return 0;
+}
+
+#else
+
+void
+apldcms_intr(struct device *self, uint8_t *packet, size_t packetlen)
+{
+}
+
+#endif
