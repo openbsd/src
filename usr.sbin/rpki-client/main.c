@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.218 2022/09/02 21:56:45 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.219 2022/09/03 09:22:25 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -359,12 +359,14 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
  * These are always relative to the directory in which "mft" sits.
  */
 static void
-queue_add_from_mft(const struct mft *mft, struct repo *rp)
+queue_add_from_mft(const struct mft *mft)
 {
 	size_t			 i;
+	struct repo		*rp;
 	const struct mftfile	*f;
 	char			*nfile, *npath = NULL;
 
+	rp = repo_byid(mft->repoid);
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
 
@@ -568,7 +570,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		mft = mft_read(b);
 		if (!mft->stale)
-			queue_add_from_mft(mft, repo_byid(mft->repoid));
+			queue_add_from_mft(mft);
 		else
 			st->mfts_stale++;
 		mft_free(mft);
