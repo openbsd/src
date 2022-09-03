@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.414 2022/08/10 16:58:16 patrick Exp $ */
+/* $OpenBSD: acpi.c,v 1.415 2022/09/03 18:05:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1157,6 +1157,11 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 		wakeup_dev_ct++;
 	}
 	printf("\n");
+
+#ifdef SUSPEND
+	if (wakeup_dev_ct > 0)
+		device_register_wakeup(&sc->sc_dev);
+#endif
 
 	/*
 	 * ACPI is enabled now -- attach timer

@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.15 2022/07/16 11:26:13 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.16 2022/09/03 18:05:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -569,6 +569,12 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 		axppmic_sc = sc;
 		powerdownfn = axp209_powerdown;
 	}
+#endif
+
+#ifdef SUSPEND
+	/* AXP803 can wake us up. */
+	if (strcmp(name, "x-powers,axp803") == 0)
+		device_register_wakeup(&sc->sc_dev);
 #endif
 }
 

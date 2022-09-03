@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.11 2022/08/14 01:58:28 jsg Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.12 2022/09/03 18:05:10 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -32,6 +32,15 @@
 #include "softraid.h"
 #include "wsdisplay.h"
 
+/* Number of (active) wakeup devices in the system. */
+u_int wakeup_devices;
+
+void
+device_register_wakeup(struct device *dev)
+{
+	wakeup_devices++;
+}
+
 int
 sleep_state(void *v, int sleepmode)
 {
@@ -47,6 +56,9 @@ top:
 	error = ENXIO;
 	rndbuf = NULL;
 	rndbuflen = 0;
+
+	if (sleepmode == SLEEP_SUSPEND && wakeup_devices == 0)
+		return EOPNOTSUPP;
 
 	if (sleep_showstate(v, sleepmode))
 		return EOPNOTSUPP;
