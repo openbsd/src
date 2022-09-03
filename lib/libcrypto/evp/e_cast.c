@@ -1,4 +1,4 @@
-/* $OpenBSD: e_cast.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_cast.c,v 1.8 2022/09/03 19:51:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,12 +75,168 @@ typedef struct {
 	CAST_KEY ks;
 } EVP_CAST_KEY;
 
-#define data(ctx)	EVP_C_DATA(EVP_CAST_KEY,ctx)
+#define data(ctx)	((EVP_CAST_KEY *)(ctx)->cipher_data)
 
-IMPLEMENT_BLOCK_CIPHER(cast5, ks, CAST, EVP_CAST_KEY,
-    NID_cast5, 8, CAST_KEY_LENGTH, 8, 64,
-    EVP_CIPH_VARIABLE_LENGTH, cast_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
+static int
+cast5_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		CAST_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		CAST_cbc_encrypt(in, out, (long)inl, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+cast5_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (64 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		CAST_cfb64_encrypt(in, out, (long)((64 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+cast5_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		CAST_ecb_encrypt(in + i, out + i, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+cast5_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		CAST_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		CAST_ofb64_encrypt(in, out, (long)inl, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER cast5_cbc = {
+	.nid = NID_cast5_cbc,
+	.block_size = 8,
+	.key_len = CAST_KEY_LENGTH,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CBC_MODE,
+	.init = cast_init_key,
+	.do_cipher = cast5_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAST_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_cast5_cbc(void)
+{
+	return &cast5_cbc;
+}
+
+static const EVP_CIPHER cast5_cfb64 = {
+	.nid = NID_cast5_cfb64,
+	.block_size = 1,
+	.key_len = CAST_KEY_LENGTH,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CFB_MODE,
+	.init = cast_init_key,
+	.do_cipher = cast5_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAST_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_cast5_cfb64(void)
+{
+	return &cast5_cfb64;
+}
+
+static const EVP_CIPHER cast5_ofb = {
+	.nid = NID_cast5_ofb64,
+	.block_size = 1,
+	.key_len = CAST_KEY_LENGTH,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_OFB_MODE,
+	.init = cast_init_key,
+	.do_cipher = cast5_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAST_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_cast5_ofb(void)
+{
+	return &cast5_ofb;
+}
+
+static const EVP_CIPHER cast5_ecb = {
+	.nid = NID_cast5_ecb,
+	.block_size = 8,
+	.key_len = CAST_KEY_LENGTH,
+	.iv_len = 0,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_ECB_MODE,
+	.init = cast_init_key,
+	.do_cipher = cast5_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAST_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_cast5_ecb(void)
+{
+	return &cast5_ecb;
+}
 
 static int
 cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
