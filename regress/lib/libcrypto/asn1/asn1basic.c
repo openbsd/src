@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.10 2022/08/28 17:59:57 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.11 2022/09/03 18:54:36 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -359,6 +360,18 @@ struct asn1_integer_test asn1_integer_tests[] = {
 		.der_len = 11,
 		.want_error = 1,
 	},
+	{
+		/* Invalid encoding (constructed with definite length). */
+		.der = {0x22, 0x03, 0x02, 0x01, 0x01},
+		.der_len = 5,
+		.want_error = 1,
+	},
+	{
+		/* Invalid encoding (constructed with indefinite length). */
+		.der = {0x22, 0x80, 0x02, 0x01, 0x01, 0x00, 0x00},
+		.der_len = 7,
+		.want_error = 1,
+	},
 };
 
 #define N_ASN1_INTEGER_TESTS \
@@ -492,6 +505,7 @@ asn1_integer_decode_test(struct asn1_integer_test *ait)
 		}
 	} else if (ait->want_error == 0) {
 		fprintf(stderr, "FAIL: INTEGER failed to decode\n");
+		ERR_print_errors_fp(stderr);
 		goto failed;
 	}
 
