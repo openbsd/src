@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.48 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.49 2022/09/03 13:06:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -549,12 +549,6 @@ x509_location(const char *fn, const char *descr, const char *proto,
 {
 	ASN1_IA5STRING	*uri;
 
-	if (*out != NULL) {
-		warnx("%s: RFC 6487 section 4.8: %s already specified", fn,
-		    descr);
-		return 0;
-	}
-
 	if (location->type != GEN_URI) {
 		warnx("%s: RFC 6487 section 4.8: %s not URI", fn, descr);
 		return 0;
@@ -565,6 +559,12 @@ x509_location(const char *fn, const char *descr, const char *proto,
 	if (!valid_uri(uri->data, uri->length, proto)) {
 		warnx("%s: RFC 6487 section 4.8: %s bad location", fn, descr);
 		return 0;
+	}
+
+	if (*out != NULL) {
+		warnx("%s: RFC 6487 section 4.8: multiple %s specified, "
+		    "using the first one", fn, descr);
+		return 1;
 	}
 
 	if ((*out = strndup(uri->data, uri->length)) == NULL)
