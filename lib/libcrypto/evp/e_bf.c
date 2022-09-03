@@ -1,4 +1,4 @@
-/* $OpenBSD: e_bf.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_bf.c,v 1.9 2022/09/03 19:43:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,11 +75,169 @@ typedef struct {
 	BF_KEY ks;
 } EVP_BF_KEY;
 
-#define data(ctx)	EVP_C_DATA(EVP_BF_KEY,ctx)
+#define data(ctx)	((EVP_BF_KEY *)(ctx)->cipher_data)
 
-IMPLEMENT_BLOCK_CIPHER(bf, ks, BF, EVP_BF_KEY, NID_bf, 8, 16, 8, 64,
-    EVP_CIPH_VARIABLE_LENGTH, bf_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
+static int
+bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		BF_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		BF_cbc_encrypt(in, out, (long)inl, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+bf_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (64 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		BF_cfb64_encrypt(in, out, (long)((64 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		BF_ecb_encrypt(in + i, out + i, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		BF_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		BF_ofb64_encrypt(in, out, (long)inl, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER bf_cbc = {
+	.nid = NID_bf_cbc,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CBC_MODE,
+	.init = bf_init_key,
+	.do_cipher = bf_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_BF_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_bf_cbc(void)
+{
+	return &bf_cbc;
+}
+
+static const EVP_CIPHER bf_cfb64 = {
+	.nid = NID_bf_cfb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_CFB_MODE,
+	.init = bf_init_key,
+	.do_cipher = bf_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_BF_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_bf_cfb64(void)
+{
+	return &bf_cfb64;
+}
+
+static const EVP_CIPHER bf_ofb = {
+	.nid = NID_bf_ofb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_OFB_MODE,
+	.init = bf_init_key,
+	.do_cipher = bf_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_BF_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_bf_ofb(void)
+{
+	return &bf_ofb;
+}
+
+static const EVP_CIPHER bf_ecb = {
+	.nid = NID_bf_ecb,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 0,
+	.flags = EVP_CIPH_VARIABLE_LENGTH | EVP_CIPH_ECB_MODE,
+	.init = bf_init_key,
+	.do_cipher = bf_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_BF_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_bf_ecb(void)
+{
+	return &bf_ecb;
+}
+
 
 static int
 bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
