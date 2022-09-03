@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.20 2019/05/14 15:40:44 beck Exp $ */
+/* $OpenBSD: e_des3.c,v 1.21 2022/09/03 20:12:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,8 +84,6 @@ typedef struct {
 } DES_EDE_KEY;
 
 #define data(ctx) ((DES_EDE_KEY *)(ctx)->cipher_data)
-
-/* Because of various casts and different args can't use IMPLEMENT_BLOCK_CIPHER */
 
 static int
 des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

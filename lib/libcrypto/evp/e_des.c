@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.14 2015/10/12 06:05:52 guenther Exp $ */
+/* $OpenBSD: e_des.c,v 1.15 2022/09/03 20:12:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,8 +71,6 @@
 static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
 static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
-
-/* Because of various casts and different names can't use IMPLEMENT_BLOCK_CIPHER */
 
 static int
 des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,

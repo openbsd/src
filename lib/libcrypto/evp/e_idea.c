@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.11 2022/09/03 20:12:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,8 +84,6 @@ idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	idea_ecb_encrypt(in + i, out + i, ctx->cipher_data);
 	return 1;
 }
-
-/* Can't use IMPLEMENT_BLOCK_CIPHER because idea_ecb_encrypt is different */
 
 typedef struct {
 	IDEA_KEY_SCHEDULE ks;

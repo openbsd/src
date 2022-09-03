@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.23 2022/05/05 08:42:27 tb Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.24 2022/09/03 20:12:24 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -370,15 +370,6 @@ static const EVP_CIPHER cname##_ecb = {\
 };\
 const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 */
-
-#define IMPLEMENT_BLOCK_CIPHER(cname, ksched, cprefix, kstruct, nid, \
-			       block_size, key_len, iv_len, cbits, \
-			       flags, init_key, \
-			       cleanup, set_asn1, get_asn1, ctrl) \
-	BLOCK_CIPHER_all_funcs(cname, cprefix, cbits, kstruct, ksched) \
-	BLOCK_CIPHER_defs(cname, kstruct, nid, block_size, key_len, iv_len, \
-			  cbits, flags, init_key, cleanup, set_asn1, \
-			  get_asn1, ctrl)
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
 
