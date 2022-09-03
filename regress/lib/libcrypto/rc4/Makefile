@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/08 15:53:53 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/09/03 17:43:14 tb Exp $
 
-PROG=	rc4test
+PROG=	rc4_test
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
