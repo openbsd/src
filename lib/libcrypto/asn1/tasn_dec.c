@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.82 2022/09/03 19:14:25 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.83 2022/09/03 19:15:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -999,7 +999,9 @@ asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 }
 
 static void
-asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals, const ASN1_TEMPLATE *at) {
+asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals,
+    const ASN1_TEMPLATE *at)
+{
 	ASN1_VALUE *aval;
 
 	if (avals == NULL)
@@ -1079,8 +1081,8 @@ asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
 			eoc_needed = 0;
 			break;
 		}
-		if (!asn1_item_d2i(&aval, &cbs_object_content, at->item,
-		    -1, 0, 0, depth)) {
+		if (!asn1_item_d2i(&aval, &cbs_object_content, at->item, -1, 0,
+		    0, depth)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
