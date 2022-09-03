@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.79 2022/09/03 18:45:51 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.80 2022/09/03 18:52:18 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -467,11 +467,12 @@ asn1_d2i_primitive_content(ASN1_VALUE **pval, CBS *cbs, CBS *cbs_object,
 	CBS_dup(cbs, &cbs_initial);
 	CBS_init(&cbs_content, NULL, 0);
 
-	/* XXX - check primitive vs constructed based on utype. */
-
-	/* SEQUENCE and SET must be constructed. */
-	if ((utype == V_ASN1_SEQUENCE || utype == V_ASN1_SET) && !constructed) {
+	if (asn1_must_be_constructed(utype) && !constructed) {
 		ASN1error(ASN1_R_TYPE_NOT_CONSTRUCTED);
+		goto err;
+	}
+	if (asn1_must_be_primitive(utype) && constructed) {
+		ASN1error(ASN1_R_TYPE_NOT_PRIMITIVE);
 		goto err;
 	}
 

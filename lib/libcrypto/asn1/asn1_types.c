@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_types.c,v 1.1 2021/12/14 17:35:21 jsing Exp $ */
+/* $OpenBSD: asn1_types.c,v 1.2 2022/09/03 18:52:18 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,14 @@
 
 #include <openssl/asn1.h>
 
+#define ASN1_ENCODING_CONSTRUCTED_ONLY	1
+#define ASN1_ENCODING_PRIMITIVE_ONLY	2
+
 struct asn1_type {
 	const char *name;
 	uint32_t bit_value;
 	int char_width;
+	int encoding;
 };
 
 /*
@@ -40,12 +44,14 @@ static const struct asn1_type asn1_types[31] = {
 		.name = "BOOLEAN",
 		.bit_value = 0,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[2] = {
 		/* Tag 2 (0x02) - Integer */
 		.name = "INTEGER",
 		.bit_value = 0,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[3] = {
 		/* Tag 3 (0x03) - BitString */
@@ -64,12 +70,14 @@ static const struct asn1_type asn1_types[31] = {
 		.name = "NULL",
 		.bit_value = 0,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[6] = {
 		/* Tag 6 (0x06) - Object Identifier */
 		.name = "OBJECT",
 		.bit_value = 0,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[7] = {
 		/* Tag 7 (0x07) - Object Descriptor */
@@ -88,12 +96,14 @@ static const struct asn1_type asn1_types[31] = {
 		.name = "REAL",
 		.bit_value = B_ASN1_UNKNOWN,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[10] = {
 		/* Tag 10 (0x0a) - Enumerated */
 		.name = "ENUMERATED",
 		.bit_value = B_ASN1_UNKNOWN,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[11] = {
 		/* Tag 11 (0x0b) - Embedded PDV */
@@ -112,12 +122,14 @@ static const struct asn1_type asn1_types[31] = {
 		.name = "<ASN1 13 RELATIVE OID>",
 		.bit_value = B_ASN1_UNKNOWN,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[14] = {
 		/* Tag 14 (0x0e) - Time */
 		.name = "<ASN1 14 TIME>",
 		.bit_value = B_ASN1_UNKNOWN,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_PRIMITIVE_ONLY,
 	},
 	[15] = {
 		/* Tag 15 (0x0f) - Reserved */
@@ -130,12 +142,14 @@ static const struct asn1_type asn1_types[31] = {
 		.name = "SEQUENCE",
 		.bit_value = B_ASN1_SEQUENCE,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_CONSTRUCTED_ONLY,
 	},
 	[17] = {
 		/* Tag 17 (0x11) - Set */
 		.name = "SET",
 		.bit_value = 0,
 		.char_width = -1,
+		.encoding = ASN1_ENCODING_CONSTRUCTED_ONLY,
 	},
 	[18] = {
 		/* Tag 18 (0x12) - NumericString */
@@ -224,6 +238,32 @@ asn1_type_by_tag(int tag)
 		return NULL;
 
 	return &asn1_types[tag];
+}
+
+int
+asn1_must_be_constructed(int tag)
+{
+	const struct asn1_type *at;
+
+	if (tag == V_ASN1_NEG_INTEGER || tag == V_ASN1_NEG_ENUMERATED)
+		tag &= ~V_ASN1_NEG;
+	if ((at = asn1_type_by_tag(tag)) != NULL)
+		return at->encoding == ASN1_ENCODING_CONSTRUCTED_ONLY;
+
+	return 0;
+}
+
+int
+asn1_must_be_primitive(int tag)
+{
+	const struct asn1_type *at;
+
+	if (tag == V_ASN1_NEG_INTEGER || tag == V_ASN1_NEG_ENUMERATED)
+		tag &= ~V_ASN1_NEG;
+	if ((at = asn1_type_by_tag(tag)) != NULL)
+		return at->encoding == ASN1_ENCODING_PRIMITIVE_ONLY;
+
+	return 0;
 }
 
 int
