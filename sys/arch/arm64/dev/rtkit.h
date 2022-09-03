@@ -1,5 +1,9 @@
 /* public domain */
 
+#define RTKIT_MGMT_PWR_STATE_SLEEP	0x0001
+#define RTKIT_MGMT_PWR_STATE_QUIESCED	0x0010
+#define RTKIT_MGMT_PWR_STATE_ON		0x0020
+
 struct rtkit_state;
 
 struct rtkit {
@@ -10,6 +14,7 @@ struct rtkit {
 
 struct rtkit_state *rtkit_init(int, const char *, struct rtkit *);
 int	rtkit_boot(struct rtkit_state *);
+int	rtkit_set_ap_pwrstate(struct rtkit_state *, uint16_t);
 int	rtkit_poll(struct rtkit_state *);
 int	rtkit_start_endpoint(struct rtkit_state *, uint32_t,
 	    void (*)(void *, uint64_t), void *);
