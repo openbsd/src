@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.85 2022/08/19 12:45:53 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.86 2022/09/03 13:01:43 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -735,6 +735,13 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			warnx("%s: unexpected IP resources in BGPsec cert",
 			    p.fn);
 			goto out;
+		}
+		for (i = 0; i < p.res->asz; i++) {
+			if (p.res->as[i].type == CERT_AS_INHERIT) {
+				warnx("%s: inherited AS numbers in BGPsec cert",
+				    p.fn);
+				goto out;
+			}
 		}
 		if (sia_present) {
 			warnx("%s: unexpected SIA extension in BGPsec cert",
