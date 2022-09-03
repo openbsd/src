@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.204 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.205 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_rcvoob	= tcp_rcvoob,
 	.pru_sendoob	= tcp_sendoob,
 	.pru_control	= in_control,
+	.pru_sockaddr	= tcp_sockaddr,
 };
 
 #ifdef INET6
@@ -148,6 +149,7 @@ const struct pr_usrreqs tcp6_usrreqs = {
 	.pru_rcvoob	= tcp_rcvoob,
 	.pru_sendoob	= tcp_sendoob,
 	.pru_control	= in6_control,
+	.pru_sockaddr	= tcp_sockaddr,
 };
 #endif
 
@@ -233,15 +235,6 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_SOCKADDR:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			in6_setsockaddr(inp, nam);
-		else
-#endif
-			in_setsockaddr(inp, nam);
-		break;
 
 	case PRU_PEERADDR:
 #ifdef INET6
@@ -1058,6 +1051,30 @@ release:
 	return (error);
 }
 
+int
+tcp_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+		in6_setsockaddr(inp, nam);
+	else
+#endif
+		in_setsockaddr(inp, nam);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL,
+		    PRU_SOCKADDR, 0);
+	return (0);
+}
 
 /*
  * Initiate (or continue) disconnect.

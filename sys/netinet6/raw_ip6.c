@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.166 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.167 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ const struct pr_usrreqs rip6_usrreqs = {
 	.pru_send	= rip6_send,
 	.pru_abort	= rip6_abort,
 	.pru_control	= in6_control,
+	.pru_sockaddr	= in6_sockaddr,
 };
 
 /*
@@ -590,10 +591,6 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-	case PRU_SOCKADDR:
-		in6_setsockaddr(in6p, nam);
-		break;
-
 	case PRU_PEERADDR:
 		in6_setpeeraddr(in6p, nam);
 		break;

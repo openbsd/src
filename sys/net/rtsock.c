@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.351 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.352 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -119,6 +119,7 @@ int	route_rcvd(struct socket *);
 int	route_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 int	route_abort(struct socket *);
+int	route_sockaddr(struct socket *, struct mbuf *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -235,9 +236,6 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	switch (req) {
 	/* minimal support, just implement a fake peer address */
-	case PRU_SOCKADDR:
-		error = EINVAL;
-		break;
 	case PRU_PEERADDR:
 		bcopy(&route_src, mtod(nam, caddr_t), route_src.sa_len);
 		nam->m_len = route_src.sa_len;
@@ -391,6 +389,12 @@ route_abort(struct socket *so)
 {
 	soisdisconnected(so);
 	return (0);
+}
+
+int
+route_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	return (EINVAL);
 }
 
 int
@@ -2435,6 +2439,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_rcvd	= route_rcvd,
 	.pru_send	= route_send,
 	.pru_abort	= route_abort,
+	.pru_sockaddr	= route_sockaddr,
 };
 
 const struct protosw routesw[] = {

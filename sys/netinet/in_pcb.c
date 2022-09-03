@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.273 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.274 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -663,6 +663,17 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_port = inp->inp_fport;
 	sin->sin_addr = inp->inp_faddr;
+}
+
+int
+in_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+
+	inp = sotoinpcb(so);
+	in_setsockaddr(inp, nam);
+
+	return (0);
 }
 
 /*

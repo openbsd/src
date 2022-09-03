@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.299 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.300 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_send	= udp_send,
 	.pru_abort	= udp_abort,
 	.pru_control	= in_control,
+	.pru_sockaddr	= in_sockaddr,
 };
 
 #ifdef INET6
@@ -147,6 +148,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pru_send	= udp_send,
 	.pru_abort	= udp_abort,
 	.pru_control	= in6_control,
+	.pru_sockaddr	= in6_sockaddr,
 };
 #endif
 
@@ -1093,15 +1095,6 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	 * the udp pcb queue and/or pcb addresses.
 	 */
 	switch (req) {
-
-	case PRU_SOCKADDR:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			in6_setsockaddr(inp, addr);
-		else
-#endif /* INET6 */
-			in_setsockaddr(inp, addr);
-		break;
 
 	case PRU_PEERADDR:
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.52 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.53 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ struct pr_usrreqs {
 	int	(*pru_sendoob)(struct socket *, struct mbuf *, struct mbuf *,
 		    struct mbuf *);
 	int	(*pru_connect2)(struct socket *, struct socket *);
+	int	(*pru_sockaddr)(struct socket *, struct mbuf *);
 };
 
 struct protosw {
@@ -385,8 +386,7 @@ pru_sendoob(struct socket *so, struct mbuf *top, struct mbuf *addr,
 static inline int
 pru_sockaddr(struct socket *so, struct mbuf *addr)
 {
-	return (*so->so_proto->pr_usrreqs->pru_usrreq)(so,
-	    PRU_SOCKADDR, NULL, addr, NULL, curproc);
+	return (*so->so_proto->pr_usrreqs->pru_sockaddr)(so, addr);
 }
 
 static inline int

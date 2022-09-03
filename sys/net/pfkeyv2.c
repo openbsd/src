@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.250 2022/09/02 13:12:32 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.251 2022/09/03 18:48:50 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -176,6 +176,7 @@ int pfkeyv2_shutdown(struct socket *);
 int pfkeyv2_send(struct socket *, struct mbuf *, struct mbuf *,
     struct mbuf *);
 int pfkeyv2_abort(struct socket *);
+int pfkeyv2_sockaddr(struct socket *, struct mbuf *);
 int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
     struct mbuf *, struct proc *);
 int pfkeyv2_output(struct mbuf *, struct socket *);
@@ -211,6 +212,7 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_shutdown	= pfkeyv2_shutdown,
 	.pru_send	= pfkeyv2_send,
 	.pru_abort	= pfkeyv2_abort,
+	.pru_sockaddr	= pfkeyv2_sockaddr,
 };
 
 const struct protosw pfkeysw[] = {
@@ -389,6 +391,12 @@ pfkeyv2_abort(struct socket *so)
 }
 
 int
+pfkeyv2_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	return (EINVAL);
+}
+
+int
 pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
     struct mbuf *nam, struct mbuf *control, struct proc *p)
 {
@@ -410,9 +418,6 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 
 	switch (req) {
 	/* minimal support, just implement a fake peer address */
-	case PRU_SOCKADDR:
-		error = EINVAL;
-		break;
 	case PRU_PEERADDR:
 		bcopy(&pfkey_addr, mtod(nam, caddr_t), pfkey_addr.sa_len);
 		nam->m_len = pfkey_addr.sa_len;

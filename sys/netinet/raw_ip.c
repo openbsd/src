@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.145 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.146 2022/09/03 18:48:50 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_send	= rip_send,
 	.pru_abort	= rip_abort,
 	.pru_control	= in_control,
+	.pru_sockaddr	= in_sockaddr,
 };
 
 /*
@@ -474,10 +475,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_SOCKADDR:
-		in_setsockaddr(inp, nam);
-		break;
 
 	case PRU_PEERADDR:
 		in_setpeeraddr(inp, nam);

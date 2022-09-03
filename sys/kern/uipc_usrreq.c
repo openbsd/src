@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.183 2022/09/02 13:12:31 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.184 2022/09/03 18:48:49 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_send	= uipc_send,
 	.pru_abort	= uipc_abort,
 	.pru_sense	= uipc_sense,
+	.pru_sockaddr	= uipc_sockaddr,
 	.pru_connect2	= uipc_connect2,
 };
 
@@ -229,10 +230,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	switch (req) {
-
-	case PRU_SOCKADDR:
-		uipc_setaddr(unp, nam);
-		break;
 
 	case PRU_PEERADDR:
 		so2 = unp_solock_peer(so);
@@ -576,6 +573,15 @@ uipc_sense(struct socket *so, struct stat *sb)
 	    sb->st_ctim.tv_nsec = unp->unp_ctime.tv_nsec;
 	sb->st_ino = unp->unp_ino;
 
+	return (0);
+}
+
+int
+uipc_sockaddr(struct socket *so, struct mbuf *nam)
+{
+	struct unpcb *unp = sotounpcb(so);
+
+	uipc_setaddr(unp, nam);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.82 2022/09/02 13:12:32 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.83 2022/09/03 18:48:50 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -74,6 +74,7 @@ const struct pr_usrreqs gre_usrreqs = {
 	.pru_send	= gre_send,
 	.pru_abort	= rip_abort,
 	.pru_control	= in_control,
+	.pru_sockaddr	= in_sockaddr,
 };
 
 int
