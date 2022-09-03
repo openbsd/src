@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.59 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.60 2022/09/03 15:29:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -56,6 +56,7 @@ void	sdmmc_attach(struct device *, struct device *, void *);
 int	sdmmc_detach(struct device *, int);
 int	sdmmc_activate(struct device *, int);
 
+int	sdmmc_holds_root_device(struct sdmmc_softc *);
 void	sdmmc_create_thread(void *);
 void	sdmmc_task_thread(void *);
 void	sdmmc_discover_task(void *);
@@ -195,7 +196,8 @@ sdmmc_activate(struct device *self, int act)
 		rv = config_activate_children(self, act);
 		/* If card in slot, cause a detach/re-attach */
 		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT) &&
-		    !ISSET(sc->sc_caps, SMC_CAPS_NONREMOVABLE))
+		    !ISSET(sc->sc_caps, SMC_CAPS_NONREMOVABLE) &&
+		    !sdmmc_holds_root_device(sc))
 			sc->sc_dying = -1;
 		break;
 	case DVACT_RESUME:
@@ -207,6 +209,16 @@ sdmmc_activate(struct device *self, int act)
 		break;
 	}
 	return (rv);
+}
+
+int
+sdmmc_holds_root_device(struct sdmmc_softc *sc)
+{
+	if (rootdv && rootdv->dv_parent &&
+	    rootdv->dv_parent->dv_parent == &sc->sc_dev)
+		return 1;
+
+	return 0;
 }
 
 void

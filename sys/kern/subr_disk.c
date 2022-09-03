@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.259 2022/09/02 20:06:56 miod Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.260 2022/09/03 15:29:43 kettenis Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -87,6 +87,8 @@ int	disk_change;		/* set if a disk has been attached/detached
 
 u_char	bootduid[DUID_SIZE];	/* DUID of boot disk. */
 u_char	rootduid[DUID_SIZE];	/* DUID of root disk. */
+
+struct device *rootdv;
 
 /* softraid callback, do not use! */
 void (*softraid_disk_attach)(struct disk *, int);
@@ -1407,7 +1409,7 @@ setroot(struct device *bootdv, int part, int exitflags)
 {
 	int majdev, unit, len, s, slept = 0;
 	struct swdevt *swp;
-	struct device *rootdv, *dv;
+	struct device *dv;
 	dev_t nrootdev, nswapdev = NODEV, temp = NODEV;
 	struct ifnet *ifp = NULL;
 	struct disk *dk;

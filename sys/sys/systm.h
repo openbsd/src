@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.158 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: systm.h,v 1.159 2022/09/03 15:29:44 kettenis Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -101,6 +101,7 @@ extern dev_t rootdev;		/* root device */
 extern u_char bootduid[8];	/* boot device disklabel uid */
 extern u_char rootduid[8];	/* root device disklabel uid */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
+extern struct device *rootdv;	/* device equivalent to above */
 
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
