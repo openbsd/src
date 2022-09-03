@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.9 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.10 2022/09/03 20:06:43 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -73,26 +73,491 @@ typedef struct {
 } EVP_CAMELLIA_KEY;
 
 /* Attribute operation for Camellia */
-#define data(ctx)	EVP_C_DATA(EVP_CAMELLIA_KEY,ctx)
+#define data(ctx)	((EVP_CAMELLIA_KEY *)(ctx)->cipher_data)
 
-IMPLEMENT_BLOCK_CIPHER(camellia_128, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_128, 16, 16, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
-IMPLEMENT_BLOCK_CIPHER(camellia_192, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_192, 16, 24, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
-IMPLEMENT_BLOCK_CIPHER(camellia_256, ks, Camellia, EVP_CAMELLIA_KEY,
-    NID_camellia_256, 16, 32, 16, 128,
-    0, camellia_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    NULL)
+static int
+camellia_128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_cbc_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_128_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (128 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+camellia_128_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		Camellia_ecb_encrypt(in + i, out + i, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_128_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_ofb128_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_ofb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER camellia_128_cbc = {
+	.nid = NID_camellia_128_cbc,
+	.block_size = 16,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CBC_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_128_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_128_cbc(void)
+{
+	return &camellia_128_cbc;
+}
+
+static const EVP_CIPHER camellia_128_cfb128 = {
+	.nid = NID_camellia_128_cfb128,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_128_cfb128_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_128_cfb128(void)
+{
+	return &camellia_128_cfb128;
+}
+
+static const EVP_CIPHER camellia_128_ofb = {
+	.nid = NID_camellia_128_ofb128,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_OFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_128_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_128_ofb(void)
+{
+	return &camellia_128_ofb;
+}
+
+static const EVP_CIPHER camellia_128_ecb = {
+	.nid = NID_camellia_128_ecb,
+	.block_size = 16,
+	.key_len = 16,
+	.iv_len = 0,
+	.flags = 0 | EVP_CIPH_ECB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_128_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_128_ecb(void)
+{
+	return &camellia_128_ecb;
+}
+
+static int
+camellia_192_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_cbc_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_192_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (128 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+camellia_192_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		Camellia_ecb_encrypt(in + i, out + i, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_192_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_ofb128_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_ofb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER camellia_192_cbc = {
+	.nid = NID_camellia_192_cbc,
+	.block_size = 16,
+	.key_len = 24,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CBC_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_192_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_192_cbc(void)
+{
+	return &camellia_192_cbc;
+}
+
+static const EVP_CIPHER camellia_192_cfb128 = {
+	.nid = NID_camellia_192_cfb128,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_192_cfb128_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_192_cfb128(void)
+{
+	return &camellia_192_cfb128;
+}
+
+static const EVP_CIPHER camellia_192_ofb = {
+	.nid = NID_camellia_192_ofb128,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_OFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_192_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_192_ofb(void)
+{
+	return &camellia_192_ofb;
+}
+
+static const EVP_CIPHER camellia_192_ecb = {
+	.nid = NID_camellia_192_ecb,
+	.block_size = 16,
+	.key_len = 24,
+	.iv_len = 0,
+	.flags = 0 | EVP_CIPH_ECB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_192_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_192_ecb(void)
+{
+	return &camellia_192_ecb;
+}
+
+static int
+camellia_256_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_cbc_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_256_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (128 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+camellia_256_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		Camellia_ecb_encrypt(in + i, out + i, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+camellia_256_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		Camellia_ofb128_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		Camellia_ofb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER camellia_256_cbc = {
+	.nid = NID_camellia_256_cbc,
+	.block_size = 16,
+	.key_len = 32,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CBC_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_256_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_256_cbc(void)
+{
+	return &camellia_256_cbc;
+}
+
+static const EVP_CIPHER camellia_256_cfb128 = {
+	.nid = NID_camellia_256_cfb128,
+	.block_size = 1,
+	.key_len = 32,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_CFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_256_cfb128_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_256_cfb128(void)
+{
+	return &camellia_256_cfb128;
+}
+
+static const EVP_CIPHER camellia_256_ofb = {
+	.nid = NID_camellia_256_ofb128,
+	.block_size = 1,
+	.key_len = 32,
+	.iv_len = 16,
+	.flags = 0 | EVP_CIPH_OFB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_256_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_256_ofb(void)
+{
+	return &camellia_256_ofb;
+}
+
+static const EVP_CIPHER camellia_256_ecb = {
+	.nid = NID_camellia_256_ecb,
+	.block_size = 16,
+	.key_len = 32,
+	.iv_len = 0,
+	.flags = 0 | EVP_CIPH_ECB_MODE,
+	.init = camellia_init_key,
+	.do_cipher = camellia_256_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_CAMELLIA_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_camellia_256_ecb(void)
+{
+	return &camellia_256_ecb;
+}
+
 
 #define IMPLEMENT_CAMELLIA_CFBR(ksize,cbits)	IMPLEMENT_CFBR(camellia,Camellia,EVP_CAMELLIA_KEY,ks,ksize,cbits,16)
 
