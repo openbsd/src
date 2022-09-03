@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.42 2021/12/30 20:38:43 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.43 2022/09/03 20:07:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -37,7 +37,7 @@
 #include "relayd.h"
 
 void	 proc_exec(struct privsep *, struct privsep_proc *, unsigned int, int,
-	    int, char **);
+	    char **);
 void	 proc_setup(struct privsep *, struct privsep_proc *, unsigned int);
 void	 proc_open(struct privsep *, int, int);
 void	 proc_accept(struct privsep *, int, enum privsep_procid,
@@ -81,7 +81,7 @@ proc_getid(struct privsep_proc *procs, unsigned int nproc,
 
 void
 proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
-    int debug, int argc, char **argv)
+    int argc, char **argv)
 {
 	unsigned int		 proc, nargc, i, proc_i;
 	char			**nargv;
@@ -130,10 +130,6 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 				fatal("%s: fork", __func__);
 				break;
 			case 0:
-				/* First create a new session */
-				if (setsid() == -1)
-					fatal("setsid");
-
 				/* Prepare parent socket. */
 				if (fd != PROC_PARENT_SOCK_FILENO) {
 					if (dup2(fd, PROC_PARENT_SOCK_FILENO)
@@ -141,16 +137,6 @@ proc_exec(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 						fatal("dup2");
 				} else if (fcntl(fd, F_SETFD, 0) == -1)
 					fatal("fcntl");
-
-				/* Daemons detach from terminal. */
-				if (!debug && (fd =
-				    open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-					(void)dup2(fd, STDIN_FILENO);
-					(void)dup2(fd, STDOUT_FILENO);
-					(void)dup2(fd, STDERR_FILENO);
-					if (fd > 2)
-						(void)close(fd);
-				}
 
 				execvp(argv[0], nargv);
 				fatal("%s: execvp", __func__);
@@ -218,6 +204,9 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		privsep_process = PROC_PARENT;
 		proc_setup(ps, procs, nproc);
 
+		if (!debug && daemon(1, 0) == -1)
+			fatal("failed to daemonize");
+
 		/*
 		 * Create the children sockets so we can use them
 		 * to distribute the rest of the socketpair()s using
@@ -242,7 +231,7 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 		}
 
 		/* Engage! */
-		proc_exec(ps, procs, nproc, debug, argc, argv);
+		proc_exec(ps, procs, nproc, argc, argv);
 		return;
 	}
 
@@ -536,9 +525,6 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	struct control_sock	*rcs;
 
 	log_procinit(p->p_title);
-
-	/* Set the process group of the current process */
-	setpgid(0, 0);
 
 	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
 		if (control_init(ps, &ps->ps_csock) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.188 2022/08/31 16:17:18 dv Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.189 2022/09/03 20:07:31 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -218,8 +218,6 @@ main(int argc, char *argv[])
 	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
 
 	log_procinit("parent");
-	if (!debug && daemon(1, 0) == -1)
-		err(1, "failed to daemonize");
 
 	if (ps->ps_noaction == 0)
 		log_info("startup");
