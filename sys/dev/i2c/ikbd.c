@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikbd.c,v 1.1 2016/01/14 21:01:49 kettenis Exp $	*/
+/*	$OpenBSD: ikbd.c,v 1.2 2022/09/03 15:48:16 kettenis Exp $	*/
 /*
  * HID-over-i2c keyboard driver
  *
@@ -37,9 +37,20 @@
 struct ikbd_softc {
 	struct ihidev	sc_hdev;
 	struct hidkbd	sc_kbd;
+	int		sc_spl;
 };
 
 void	ikbd_intr(struct ihidev *addr, void *ibuf, u_int len);
+
+void	ikbd_cngetc(void *, u_int *, int *);
+void	ikbd_cnpollc(void *, int);
+void	ikbd_cnbell(void *, u_int, u_int, u_int);
+
+const struct wskbd_consops ikbd_consops = {
+	ikbd_cngetc,
+	ikbd_cnpollc,
+	ikbd_cnbell,
+};
 
 int	ikbd_enable(void *, int);
 void	ikbd_set_leds(void *, int);
@@ -100,10 +111,18 @@ ikbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_osize = hid_report_size(desc, dlen, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, dlen, hid_feature, repid);
 
-	if (hidkbd_attach(self, kbd, 0, 0, repid, desc, dlen) != 0)
+	if (hidkbd_attach(self, kbd, 1, 0, repid, desc, dlen) != 0)
 		return;
 
 	printf("\n");
+
+	if (kbd->sc_console_keyboard) {
+		extern struct wskbd_mapdata ukbd_keymapdata;
+
+		ukbd_keymapdata.layout = KB_US | KB_DEFAULT;
+		wskbd_cnattach(&ikbd_consops, sc, &ukbd_keymapdata);
+		ikbd_enable(sc, 1);
+	}
 
 	hidkbd_attach_wskbd(kbd, KB_US | KB_DEFAULT, &ikbd_accessops);
 }
@@ -169,4 +188,37 @@ ikbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		else
 			return hidkbd_ioctl(kbd, cmd, data, flag, p);
 	}
+}
+
+/* Console interface. */
+void
+ikbd_cngetc(void *v, u_int *type, int *data)
+{
+	struct ikbd_softc *sc = v;
+	struct hidkbd *kbd = &sc->sc_kbd;
+
+	kbd->sc_polling = 1;
+	while (kbd->sc_npollchar <= 0) {
+		ihidev_poll(sc->sc_hdev.sc_parent);
+		delay(1000);
+	}
+	kbd->sc_polling = 0;
+	hidkbd_cngetc(kbd, type, data);
+}
+
+void
+ikbd_cnpollc(void *v, int on)
+{
+	struct ikbd_softc *sc = v;
+
+	if (on)
+		sc->sc_spl = spltty();
+	else
+		splx(sc->sc_spl);
+}
+
+void
+ikbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
+{
+	hidkbd_bell(pitch, period, volume, 1);
 }

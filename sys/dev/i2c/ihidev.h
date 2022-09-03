@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.h,v 1.8 2020/07/09 21:01:56 jcs Exp $ */
+/* $OpenBSD: ihidev.h,v 1.9 2022/09/03 15:48:16 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -135,3 +135,5 @@ int ihidev_ioctl(struct ihidev *, u_long, caddr_t, int, struct proc *);
 int ihidev_report_type_conv(int);
 int ihidev_set_report(struct device *, int, int, void *, int);
 int ihidev_get_report(struct device *, int, int, void *, int);
+
+void ihidev_poll(void *);
