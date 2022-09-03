@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.231 2022/09/03 12:33:44 mbuhl Exp $
+;	$OpenBSD: syscalls.master,v 1.232 2022/09/03 21:13:48 mbuhl Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -245,11 +245,10 @@
 115	STD		{ int sys___realpath(const char *pathname, \
 			    char *resolved); }
 116	STD NOLOCK	{ int sys_recvmmsg(int s, struct mmsghdr *mmsg, \
-			    unsigned int vlen, unsigned int flags, \
+			    unsigned int vlen, int flags, \
 			    struct timespec *timeout); }
-117	STD NOLOCK	{ int sys_sendmmsg(int s,  \
-			    struct mmsghdr *mmsg, unsigned int vlen, \
-			    unsigned int flags); }
+117	STD NOLOCK	{ int sys_sendmmsg(int s,  struct mmsghdr *mmsg,\
+			    unsigned int vlen, int flags); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, socklen_t *avalsize); }
 119	STD		{ int sys_thrkill(pid_t tid, int signum, void *tcb); }

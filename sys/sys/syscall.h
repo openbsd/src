@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.244 2022/09/03 12:35:29 mbuhl Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.245 2022/09/03 21:13:48 mbuhl Exp $	*/
 
 /*
  * System call numbers.
@@ -352,10 +352,10 @@
 /* syscall: "__realpath" ret: "int" args: "const char *" "char *" */
 #define	SYS___realpath	115
 
-/* syscall: "recvmmsg" ret: "int" args: "int" "struct mmsghdr *" "unsigned int" "unsigned int" "struct timespec *" */
+/* syscall: "recvmmsg" ret: "int" args: "int" "struct mmsghdr *" "unsigned int" "int" "struct timespec *" */
 #define	SYS_recvmmsg	116
 
-/* syscall: "sendmmsg" ret: "int" args: "int" "struct mmsghdr *" "unsigned int" "unsigned int" */
+/* syscall: "sendmmsg" ret: "int" args: "int" "struct mmsghdr *" "unsigned int" "int" */
 #define	SYS_sendmmsg	117
 
 /* syscall: "getsockopt" ret: "int" args: "int" "int" "int" "void *" "socklen_t *" */

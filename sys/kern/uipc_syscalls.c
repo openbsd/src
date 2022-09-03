@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.203 2022/09/03 12:33:44 mbuhl Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.204 2022/09/03 21:13:48 mbuhl Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -612,14 +612,17 @@ sys_sendmmsg(struct proc *p, void *v, register_t *retval)
 		syscallarg(int)			s;
 		syscallarg(struct mmsghdr *)	mmsg;
 		syscallarg(unsigned int)	vlen;
-		syscallarg(unsigned int)	flags;
+		syscallarg(int)			flags;
 	} */ *uap = v;
 	struct mmsghdr mmsg, *mmsgp;
 	struct iovec aiov[UIO_SMALLIOV], *iov = aiov, *uiov;
 	size_t iovlen = UIO_SMALLIOV;
 	register_t retsnd;
 	unsigned int vlen, dgrams;
-	int error = 0;
+	int error = 0, flags, s;
+
+	s = SCARG(uap, s);
+	flags = SCARG(uap, flags);
 
 	/* Arbitrarily capped at 1024 datagrams. */
 	vlen = SCARG(uap, vlen);
@@ -668,8 +671,7 @@ sys_sendmmsg(struct proc *p, void *v, register_t *retval)
 		mmsg.msg_hdr.msg_iov = iov;
 		mmsg.msg_hdr.msg_flags = 0;
 
-		error = sendit(p, SCARG(uap, s), &mmsg.msg_hdr,
-		    SCARG(uap, flags), &retsnd);
+		error = sendit(p, s, &mmsg.msg_hdr, flags, &retsnd);
 		if (error)
 			break;
 
@@ -686,9 +688,10 @@ sys_sendmmsg(struct proc *p, void *v, register_t *retval)
 
 	*retval = dgrams;
 
-	if (dgrams)
-		return 0;
-	return error;
+	if (error && dgrams > 0)
+		error = 0;
+
+	return (error);
 }
 
 int
@@ -897,38 +900,34 @@ sys_recvmmsg(struct proc *p, void *v, register_t *retval)
 		syscallarg(int)			s;
 		syscallarg(struct mmsghdr *)	mmsg;
 		syscallarg(unsigned int)	vlen;
-		syscallarg(unsigned int)	flags;
+		syscallarg(int)			flags;
 		syscallarg(struct timespec *)	timeout;
 	} */ *uap = v;
 	struct mmsghdr mmsg, *mmsgp;
-	struct timespec ts, now;
+	struct timespec ts, now, *timeout;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov = aiov;
-	struct file *fp;
-	struct socket *so;
-	struct timespec *timeout;
 	size_t iovlen = UIO_SMALLIOV;
 	register_t retrec;
 	unsigned int vlen, dgrams;
 	int error = 0, flags, s;
 
-	s = SCARG(uap, s);
-	if ((error = getsock(p, s, &fp)))
-		return (error);
-	so = (struct socket *)fp->f_data;
-
 	timeout = SCARG(uap, timeout);
 	if (timeout != NULL) {
 		error = copyin(timeout, &ts, sizeof(ts));
 		if (error)
-			return error;
+			return (error);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
+		if (!timespecisvalid(&ts))
+			return (EINVAL);
+
 		getnanotime(&now);
 		timespecadd(&now, &ts, &ts);
 	}
 
+	s = SCARG(uap, s);
 	flags = SCARG(uap, flags);
 
 	/* Arbitrarily capped at 1024 datagrams. */
@@ -966,7 +965,7 @@ sys_recvmmsg(struct proc *p, void *v, register_t *retval)
 
 		uiov = mmsg.msg_hdr.msg_iov;
 		mmsg.msg_hdr.msg_iov = iov;
-		mmsg.msg_hdr.msg_flags = flags;
+		mmsg.msg_hdr.msg_flags = flags & ~MSG_WAITFORONE;
 
 		error = recvit(p, s, &mmsg.msg_hdr, NULL, &retrec);
 		if (error) {
@@ -975,10 +974,8 @@ sys_recvmmsg(struct proc *p, void *v, register_t *retval)
 			break;
 		}
 
-		if (dgrams == 0 && flags & MSG_WAITFORONE) {
-			flags &= ~MSG_WAITFORONE;
+		if (flags & MSG_WAITFORONE)
 			flags |= MSG_DONTWAIT;
-		}
 
 		mmsg.msg_hdr.msg_iov = uiov;
 		mmsg.msg_len = retrec;
@@ -1016,11 +1013,18 @@ sys_recvmmsg(struct proc *p, void *v, register_t *retval)
 	 * will catch it next time.
 	 */
 	if (error && dgrams > 0) {
-		so->so_error = error;
+		struct file *fp;
+		struct socket *so;
+
+		if (getsock(p, s, &fp) == 0) {
+			so = (struct socket *)fp->f_data;
+			so->so_error = error;
+
+			FRELE(fp, p);
+		}
 		error = 0;
 	}
 
-	FRELE(fp, p);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.104 2022/09/03 12:33:45 mbuhl Exp $	*/
+/*	$OpenBSD: socket.h,v 1.105 2022/09/03 21:13:48 mbuhl Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -573,13 +573,12 @@ int	listen(int, int);
 ssize_t	recv(int, void *, size_t, int);
 ssize_t	recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t	recvmsg(int, struct msghdr *, int);
-int	recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int,
-	    struct timespec *);
+int	recvmmsg(int, struct mmsghdr *, unsigned int, int, struct timespec *);
 ssize_t	send(int, const void *, size_t, int);
 ssize_t	sendto(int, const void *,
 	    size_t, int, const struct sockaddr *, socklen_t);
 ssize_t	sendmsg(int, const struct msghdr *, int);
-int	sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
+int	sendmmsg(int, struct mmsghdr *, unsigned int, int);
 int	setsockopt(int, int, int, const void *, socklen_t);
 int	shutdown(int, int);
 int	sockatmark(int);

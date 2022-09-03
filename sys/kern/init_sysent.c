@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.247 2022/09/03 12:35:29 mbuhl Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.248 2022/09/03 21:13:48 mbuhl Exp $	*/
 
 /*
  * System call switch table.
