@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.44 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.45 2022/09/03 14:41:47 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -430,11 +430,6 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 	char		buf1[64], buf2[64];
 
 	for (i = 0; i < rsc->asz; i++) {
-		if (rsc->as[i].type == CERT_AS_INHERIT) {
-			warnx("%s: RSC ResourceBlock: illegal inherit", fn);
-			return 0;
-		}
-
 		min = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.min
 		    : rsc->as[i].id;
 		max = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.max
@@ -459,11 +454,6 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 	}
 
 	for (i = 0; i < rsc->ipsz; i++) {
-		if (rsc->ips[i].type == CERT_IP_INHERIT) {
-			warnx("%s: RSC ResourceBlock: illegal inherit", fn);
-			return 0;
-		}
-
 		if (ip_addr_check_covered(rsc->ips[i].afi, rsc->ips[i].min,
 		    rsc->ips[i].max, cert->ips, cert->ipsz) > 0)
 			continue;
