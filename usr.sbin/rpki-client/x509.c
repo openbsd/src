@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.49 2022/09/03 13:06:15 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.50 2022/09/03 14:40:09 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -352,7 +352,7 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
 }
 
 /*
- * Check whether the RFC 3779 extensions are set to inherit.
+ * Check whether all RFC 3779 extensions are set to inherit.
  * Return 1 if both AS & IP are set to inherit.
  * Return 0 on failure (such as missing extensions or no inheritance).
  */
@@ -391,6 +391,32 @@ x509_inherits(X509 *x)
 
 	rc = 1;
  out:
+	ASIdentifiers_free(asidentifiers);
+	sk_IPAddressFamily_pop_free(addrblk, IPAddressFamily_free);
+	return rc;
+}
+
+/*
+ * Check whether at least one RFC 3779 extension is set to inherit.
+ * Return 1 if an inherit element is encountered in AS or IP.
+ * Return 0 otherwise.
+ */
+int
+x509_any_inherits(X509 *x)
+{
+	STACK_OF(IPAddressFamily)	*addrblk = NULL;
+	ASIdentifiers			*asidentifiers = NULL;
+	int				 rc = 0;
+
+	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
+	if (X509v3_addr_inherits(addrblk))
+		rc = 1;
+
+	asidentifiers = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, NULL,
+	    NULL);
+	if (X509v3_asid_inherits(asidentifiers))
+		rc = 1;
+
 	ASIdentifiers_free(asidentifiers);
 	sk_IPAddressFamily_pop_free(addrblk, IPAddressFamily_free);
 	return rc;

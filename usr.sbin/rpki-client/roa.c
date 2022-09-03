@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.51 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.52 2022/09/03 14:40:09 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -242,6 +242,11 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!roa_parse_econtent(cms, cmsz, &p))
 		goto out;
+
+	if (x509_any_inherits(*x509)) {
+		warnx("%s: inherit elements not allowed", fn);
+		goto out;
+	}
 
 	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
 		goto out;

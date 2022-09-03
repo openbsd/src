@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.14 2022/08/22 10:25:58 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.15 2022/09/03 14:40:09 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -415,6 +415,11 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {
 		warnx("%s: RSC: EE cert must not have an SIA extension", fn);
+		goto out;
+	}
+
+	if (x509_any_inherits(*x509)) {
+		warnx("%s: inherit elements not allowed", fn);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.43 2022/09/03 13:01:43 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.44 2022/09/03 14:40:09 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -106,28 +106,12 @@ valid_ski_aki(const char *fn, struct auth_tree *auths,
 }
 
 /*
- * Authenticate a trust anchor by making sure its resources are not
- * inheriting and that the SKI is unique.
+ * Validate a trust anchor by making sure that the SKI is unique.
  * Returns 1 if valid, 0 otherwise.
  */
 int
 valid_ta(const char *fn, struct auth_tree *auths, const struct cert *cert)
 {
-	size_t	 i;
-
-	/* AS and IP resources must not inherit. */
-	if (cert->asz && cert->as[0].type == CERT_AS_INHERIT) {
-		warnx("%s: RFC 6487 (trust anchor): "
-		    "inheriting AS resources", fn);
-		return 0;
-	}
-	for (i = 0; i < cert->ipsz; i++)
-		if (cert->ips[i].type == CERT_IP_INHERIT) {
-			warnx("%s: RFC 6487 (trust anchor): "
-			    "inheriting IP resources", fn);
-			return 0;
-		}
-
 	/* SKI must not be a dupe. */
 	if (auth_find(auths, cert->ski) != NULL) {
 		warnx("%s: RFC 6487: duplicate SKI", fn);
