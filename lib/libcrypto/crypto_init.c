@@ -19,17 +19,21 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#include <openssl/objects.h>
 #include <openssl/conf.h>
-#include <openssl/evp.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 
 #include "cryptlib.h"
+#include "x509_issuer_cache.h"
 
 int OpenSSL_config(const char *);
 int OpenSSL_no_config(void);
 
+static pthread_once_t crypto_init_once = PTHREAD_ONCE_INIT;
 static pthread_t crypto_init_thread;
+static int crypto_init_cleaned_up;
 
 static void
 OPENSSL_init_crypto_internal(void)
@@ -45,12 +49,15 @@ OPENSSL_init_crypto_internal(void)
 int
 OPENSSL_init_crypto(uint64_t opts, const void *settings)
 {
-	static pthread_once_t once = PTHREAD_ONCE_INIT;
+	if (crypto_init_cleaned_up) {
+		CRYPTOerror(ERR_R_INIT_FAIL);
+		return 0;
+	}
 
 	if (pthread_equal(pthread_self(), crypto_init_thread))
 		return 1; /* don't recurse */
 
-	if (pthread_once(&once, OPENSSL_init_crypto_internal) != 0)
+	if (pthread_once(&crypto_init_once, OPENSSL_init_crypto_internal) != 0)
 		return 0;
 
 	if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) &&
@@ -62,4 +69,17 @@ OPENSSL_init_crypto(uint64_t opts, const void *settings)
 		return 0;
 
 	return 1;
+}
+
+void
+OPENSSL_cleanup(void)
+{
+	/* This currently calls init... */
+	ERR_free_strings();
+
+	ENGINE_cleanup();
+	EVP_cleanup();
+	x509_issuer_cache_free();
+
+	crypto_init_cleaned_up = 1;
 }
