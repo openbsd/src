@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.75 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.76 2022/09/03 13:30:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -596,8 +596,10 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				cert = proc_parser_cert(file, f, flen);
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
-			if (cert != NULL)
+			if (cert != NULL) {
+				cert->repoid = entp->repoid;
 				cert_buffer(b, cert);
+			}
 			/*
 			 * The parsed certificate data "cert" is now
 			 * managed in the "auths" table, so don't free

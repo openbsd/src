@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.153 2022/09/02 19:10:36 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.154 2022/09/03 13:30:27 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,6 +137,7 @@ struct cert {
 	struct cert_as	*as; /* list of AS numbers and ranges */
 	size_t		 asz; /* length of "asz" */
 	int		 talid; /* cert is covered by which TAL */
+	unsigned int	 repoid; /* repository of this cert file */
 	char		*repo; /* CA repository (rsync:// uri) */
 	char		*mft; /* manifest (rsync:// uri) */
 	char		*notify; /* RRDP notify (https:// uri) */
