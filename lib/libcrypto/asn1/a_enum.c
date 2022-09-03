@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.26 2022/08/10 12:06:28 tb Exp $ */
+/* $OpenBSD: a_enum.c,v 1.27 2022/09/03 18:45:51 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -343,6 +343,28 @@ a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
  err:
 	free(s);
 	return (ret);
+}
+
+int
+c2i_ASN1_ENUMERATED_cbs(ASN1_ENUMERATED **out_aenum, CBS *cbs)
+{
+	ASN1_ENUMERATED *aenum = NULL;
+
+	if (out_aenum == NULL)
+		return 0;
+
+	if (*out_aenum != NULL) {
+		ASN1_INTEGER_free(*out_aenum);
+		*out_aenum = NULL;
+	}
+
+	if (!c2i_ASN1_INTEGER_cbs((ASN1_INTEGER **)&aenum, cbs))
+		return 0;
+
+	aenum->type = V_ASN1_ENUMERATED | (aenum->type & V_ASN1_NEG);
+	*out_aenum = aenum;
+
+	return 1;
 }
 
 int

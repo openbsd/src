@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.78 2022/06/29 08:56:44 beck Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.79 2022/09/03 18:45:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -277,7 +277,6 @@ static int
 asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 {
 	ASN1_STRING *stmp;
-	ASN1_INTEGER **tint;
 	ASN1_BOOLEAN *tbool;
 	uint8_t u8val;
 	int ret = 0;
@@ -318,13 +317,14 @@ asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *
 			goto err;
 		break;
 
-	case V_ASN1_INTEGER:
 	case V_ASN1_ENUMERATED:
-		tint = (ASN1_INTEGER **)pval;
-		if (!c2i_ASN1_INTEGER_cbs(tint, content))
+		if (!c2i_ASN1_ENUMERATED_cbs((ASN1_ENUMERATED **)pval, content))
 			goto err;
-		/* Fixup type to match the expected form */
-		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
+		break;
+
+	case V_ASN1_INTEGER:
+		if (!c2i_ASN1_INTEGER_cbs((ASN1_INTEGER **)pval, content))
+			goto err;
 		break;
 
 	case V_ASN1_OCTET_STRING:
