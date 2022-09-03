@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.69 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.70 2022/09/03 19:22:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -55,11 +55,16 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcp_seq.h>
 
+/*
+ * Locks used to protect struct members in this file:
+ *	T	tcp_timer_mtx		global tcp timer data structures
+ */
+
 int	tcp_always_keepalive;
 int	tcp_keepidle;
 int	tcp_keepintvl;
 int	tcp_maxpersistidle;	/* max idle time in persist */
-int	tcp_maxidle;
+int	tcp_maxidle;		/* [T] max idle time for keep alive */
 
 /*
  * Time to delay the ACK.  This is initialized in tcp_init(), unless
@@ -144,13 +149,11 @@ tcp_timer_delack(void *arg)
 void
 tcp_slowtimo(void)
 {
-	NET_LOCK();
-
+	mtx_enter(&tcp_timer_mtx);
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	tcp_iss += TCP_ISSINCR2/PR_SLOWHZ;		/* increment iss */
 	tcp_now++;					/* for timestamps */
-
-	NET_UNLOCK();
+	mtx_leave(&tcp_timer_mtx);
 }
 
 /*
@@ -392,6 +395,7 @@ tcp_timer_persist(void *arg)
 	struct tcpcb *otp = NULL, *tp = arg;
 	uint32_t rto;
 	short ostate;
+	uint32_t now;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -418,9 +422,10 @@ tcp_timer_persist(void *arg)
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
 		rto = tp->t_rttmin;
+	now = READ_ONCE(tcp_now);
 	if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
-	    ((tcp_now - tp->t_rcvtime) >= tcp_maxpersistidle ||
-	    (tcp_now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
+	    ((now - tp->t_rcvtime) >= tcp_maxpersistidle ||
+	    (now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
 		tcpstat_inc(tcps_persistdrop);
 		tp = tcp_drop(tp, ETIMEDOUT);
 		goto out;
@@ -458,8 +463,13 @@ tcp_timer_keep(void *arg)
 	if ((tcp_always_keepalive ||
 	    tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE) &&
 	    tp->t_state <= TCPS_CLOSING) {
-		if ((tcp_maxidle > 0) &&
-		    ((tcp_now - tp->t_rcvtime) >= tcp_keepidle + tcp_maxidle))
+		int maxidle;
+		uint32_t now;
+
+		maxidle = READ_ONCE(tcp_maxidle);
+		now = READ_ONCE(tcp_now);
+		if ((maxidle > 0) &&
+		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle))
 			goto dropit;
 		/*
 		 * Send a packet designed to force a response
@@ -475,7 +485,7 @@ tcp_timer_keep(void *arg)
 		 */
 		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
-		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0);
+		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0, now);
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
@@ -496,6 +506,8 @@ tcp_timer_2msl(void *arg)
 {
 	struct tcpcb *otp = NULL, *tp = arg;
 	short ostate;
+	int maxidle;
+	uint32_t now;
 
 	NET_LOCK();
 	/* Ignore canceled timeouts or timeouts that have been rescheduled. */
@@ -510,8 +522,10 @@ tcp_timer_2msl(void *arg)
 	}
 	tcp_timer_freesack(tp);
 
+	maxidle = READ_ONCE(tcp_maxidle);
+	now = READ_ONCE(tcp_now);
 	if (tp->t_state != TCPS_TIME_WAIT &&
-	    ((tcp_maxidle == 0) || ((tcp_now - tp->t_rcvtime) <= tcp_maxidle)))
+	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= maxidle)))
 		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 	else
 		tp = tcp_close(tp);

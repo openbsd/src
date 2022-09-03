@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1139 2022/09/03 14:57:54 yasuoka Exp $ */
+/*	$OpenBSD: pf.c,v 1.1140 2022/09/03 19:22:19 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3580,7 +3580,7 @@ pf_tcp_iss(struct pf_pdesc *pd)
 	}
 	SHA512Final(digest.bytes, &ctx);
 	pf_tcp_iss_off += 4096;
-	return (digest.words[0] + tcp_iss + pf_tcp_iss_off);
+	return (digest.words[0] + READ_ONCE(tcp_iss) + pf_tcp_iss_off);
 }
 
 void

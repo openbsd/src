@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.379 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.380 2022/09/03 19:22:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -190,7 +190,7 @@ void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
 void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
-int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint32_t);
 void	 syn_cache_timer(void *);
 void	 syn_cache_reaper(void *);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
@@ -198,10 +198,10 @@ void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, u_int);
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *, struct tcphdr *,
 		unsigned int, struct socket *, struct mbuf *, u_char *, int,
-		struct tcp_opt_info *, tcp_seq *);
+		struct tcp_opt_info *, tcp_seq *, uint32_t);
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int, struct socket *,
-		struct mbuf *);
+		struct mbuf *, uint32_t);
 struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
 		struct syn_cache_head **, u_int);
 
@@ -375,6 +375,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	short ostate;
 	caddr_t saveti;
 	tcp_seq iss, *reuse = NULL;
+	uint32_t now;
 	u_long tiwin;
 	struct tcp_opt_info opti;
 	struct tcphdr *th;
@@ -389,6 +390,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	opti.ts_present = 0;
 	opti.maxseg = 0;
+	now = READ_ONCE(tcp_now);
 
 	/*
 	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
@@ -698,7 +700,7 @@ findpcb:
 
 			case TH_ACK:
 				so = syn_cache_get(&src.sa, &dst.sa,
-					th, iphlen, tlen, so, m);
+				    th, iphlen, tlen, so, m, now);
 				if (so == NULL) {
 					/*
 					 * We don't have a SYN for
@@ -830,7 +832,8 @@ findpcb:
 				 */
 				if (so->so_qlen > so->so_qlimit ||
 				    syn_cache_add(&src.sa, &dst.sa, th, iphlen,
-				    so, m, optp, optlen, &opti, reuse) == -1) {
+				    so, m, optp, optlen, &opti, reuse, now)
+				    == -1) {
 					tcpstat_inc(tcps_dropsyn);
 					goto drop;
 				}
@@ -857,7 +860,7 @@ findpcb:
 	 * Segment received on connection.
 	 * Reset idle time and keep-alive timer.
 	 */
-	tp->t_rcvtime = tcp_now;
+	tp->t_rcvtime = now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
@@ -873,7 +876,7 @@ findpcb:
 	if (optp)
 #endif
 		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti,
-		    m->m_pkthdr.ph_rtableid))
+		    m->m_pkthdr.ph_rtableid, now))
 			goto drop;
 
 	if (opti.ts_present && opti.ts_ecr) {
@@ -883,7 +886,7 @@ findpcb:
 		opti.ts_ecr -= tp->ts_modulate;
 
 		/* make sure ts_ecr is sensible */
-		rtt_test = tcp_now - opti.ts_ecr;
+		rtt_test = now - opti.ts_ecr;
 		if (rtt_test < 0 || rtt_test > TCP_RTT_MAX)
 			opti.ts_ecr = 0;
 	}
@@ -926,7 +929,7 @@ findpcb:
 		 * Fix from Braden, see Stevens p. 870
 		 */
 		if (opti.ts_present && SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
-			tp->ts_recent_age = tcp_now;
+			tp->ts_recent_age = now;
 			tp->ts_recent = opti.ts_val;
 		}
 
@@ -940,15 +943,14 @@ findpcb:
 				 */
 				tcpstat_inc(tcps_predack);
 				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp, tcp_now - opti.ts_ecr);
+					tcp_xmit_timer(tp, now - opti.ts_ecr);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
-					tcp_xmit_timer(tp,
-					    tcp_now - tp->t_rtttime);
+					tcp_xmit_timer(tp, now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte,
 				    acked);
-				tp->t_rcvacktime = tcp_now;
+				tp->t_rcvacktime = now;
 				ND6_HINT(tp);
 				sbdrop(so, &so->so_snd, acked);
 
@@ -1189,7 +1191,7 @@ findpcb:
 			 * use its rtt as our initial srtt & rtt var.
 			 */
 			if (tp->t_rtttime)
-				tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
+				tcp_xmit_timer(tp, now - tp->t_rtttime);
 			/*
 			 * Since new data was acked (the SYN), open the
 			 * congestion window by one MSS.  We do this
@@ -1270,7 +1272,7 @@ trimthenstep6:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if ((int)(tcp_now - tp->ts_recent_age) > TCP_PAWS_IDLE) {
+		if ((int)(now - tp->ts_recent_age) > TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
@@ -1380,7 +1382,7 @@ trimthenstep6:
 	 */
 	if (opti.ts_present && TSTMP_GEQ(opti.ts_val, tp->ts_recent) &&
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
-		tp->ts_recent_age = tcp_now;
+		tp->ts_recent_age = now;
 		tp->ts_recent = opti.ts_val;
 	}
 
@@ -1683,7 +1685,7 @@ trimthenstep6:
 		}
 		acked = th->th_ack - tp->snd_una;
 		tcpstat_pkt(tcps_rcvackpack, tcps_rcvackbyte, acked);
-		tp->t_rcvacktime = tcp_now;
+		tp->t_rcvacktime = now;
 
 		/*
 		 * If we have a timestamp reply, update smoothed
@@ -1695,9 +1697,9 @@ trimthenstep6:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, tcp_now - opti.ts_ecr);
+			tcp_xmit_timer(tp, now - opti.ts_ecr);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
-			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
+			tcp_xmit_timer(tp, now - tp->t_rtttime);
 
 		/*
 		 * If all outstanding data is acked, stop retransmit
@@ -2092,12 +2094,12 @@ dropwithreset:
 		goto drop;
 	if (tiflags & TH_ACK) {
 		tcp_respond(tp, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack,
-		    TH_RST, m->m_pkthdr.ph_rtableid);
+		    TH_RST, m->m_pkthdr.ph_rtableid, now);
 	} else {
 		if (tiflags & TH_SYN)
 			tlen++;
 		tcp_respond(tp, mtod(m, caddr_t), th, th->th_seq + tlen,
-		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.ph_rtableid);
+		    (tcp_seq)0, TH_RST|TH_ACK, m->m_pkthdr.ph_rtableid, now);
 	}
 	m_freem(m);
 	in_pcbunref(inp);
@@ -2118,7 +2120,7 @@ drop:
 int
 tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
     struct mbuf *m, int iphlen, struct tcp_opt_info *oi,
-    u_int rtableid)
+    u_int rtableid, uint32_t now)
 {
 	u_int16_t mss = 0;
 	int opt, optlen;
@@ -2187,7 +2189,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 			 */
 			tp->t_flags |= TF_RCVD_TSTMP;
 			tp->ts_recent = oi->ts_val;
-			tp->ts_recent_age = tcp_now;
+			tp->ts_recent_age = now;
 			break;
 
 		case TCPOPT_SACK_PERMITTED:
@@ -3169,8 +3171,6 @@ do {									\
 	timeout_add(&(sc)->sc_timer, (sc)->sc_rxtcur * (hz / PR_SLOWHZ)); \
 } while (/*CONSTCOND*/0)
 
-#define	SYN_CACHE_TIMESTAMP(sc)	tcp_now + (sc)->sc_modulate
-
 void
 syn_cache_init(void)
 {
@@ -3335,10 +3335,13 @@ void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
+	uint32_t now;
 
 	NET_LOCK();
 	if (sc->sc_flags & SCF_DEAD)
 		goto out;
+
+	now = READ_ONCE(tcp_now);
 
 	if (__predict_false(sc->sc_rxtshift == TCP_MAXRXTSHIFT)) {
 		/* Drop it -- too many retransmissions. */
@@ -3355,7 +3358,7 @@ syn_cache_timer(void *arg)
 		goto dropit;
 
 	tcpstat_inc(tcps_sc_retransmitted);
-	(void) syn_cache_respond(sc, NULL);
+	(void) syn_cache_respond(sc, NULL, now);
 
 	/* Advance the timer back-off. */
 	sc->sc_rxtshift++;
@@ -3466,7 +3469,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
-    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m)
+    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m, uint32_t now)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3488,7 +3491,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	if ((th->th_ack != sc->sc_iss + 1) ||
 	    SEQ_LEQ(th->th_seq, sc->sc_irs) ||
 	    SEQ_GT(th->th_seq, sc->sc_irs + 1 + sc->sc_win)) {
-		(void) syn_cache_respond(sc, m);
+		(void) syn_cache_respond(sc, m, now);
 		return ((struct socket *)(-1));
 	}
 
@@ -3622,10 +3625,10 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #endif
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
-	tp->t_rcvtime = tcp_now;
-	tp->t_sndtime = tcp_now;
-	tp->t_rcvacktime = tcp_now;
-	tp->t_sndacktime = tcp_now;
+	tp->t_rcvtime = now;
+	tp->t_sndtime = now;
+	tp->t_rcvacktime = now;
+	tp->t_sndacktime = now;
 	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 	tcpstat_inc(tcps_accepts);
 
@@ -3655,7 +3658,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 
 resetandabort:
 	tcp_respond(NULL, mtod(m, caddr_t), th, (tcp_seq)0, th->th_ack, TH_RST,
-	    m->m_pkthdr.ph_rtableid);
+	    m->m_pkthdr.ph_rtableid, now);
 abort:
 	m_freem(m);
 	if (so != NULL)
@@ -3741,7 +3744,7 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
     u_int iphlen, struct socket *so, struct mbuf *m, u_char *optp, int optlen,
-    struct tcp_opt_info *oi, tcp_seq *issp)
+    struct tcp_opt_info *oi, tcp_seq *issp, uint32_t now)
 {
 	struct tcpcb tb, *tp;
 	long win;
@@ -3779,7 +3782,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #endif
 		tb.t_state = TCPS_LISTEN;
 		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi,
-		    sotoinpcb(so)->inp_rtableid))
+		    sotoinpcb(so)->inp_rtableid, now))
 			return (-1);
 	}
 
@@ -3811,7 +3814,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 			sc->sc_ipopts = ipopts;
 		}
 		sc->sc_timestamp = tb.ts_recent;
-		if (syn_cache_respond(sc, m) == 0) {
+		if (syn_cache_respond(sc, m, now) == 0) {
 			tcpstat_inc(tcps_sndacks);
 			tcpstat_inc(tcps_sndtotal);
 		}
@@ -3895,7 +3898,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_flags |= SCF_SIGNATURE;
 #endif
 	sc->sc_tp = tp;
-	if (syn_cache_respond(sc, m) == 0) {
+	if (syn_cache_respond(sc, m, now) == 0) {
 		syn_cache_insert(sc, tp);
 		tcpstat_inc(tcps_sndacks);
 		tcpstat_inc(tcps_sndtotal);
@@ -3908,7 +3911,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 }
 
 int
-syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
+syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint32_t now)
 {
 	u_int8_t *optp;
 	int optlen, error;
@@ -4034,7 +4037,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		u_int32_t *lp = (u_int32_t *)(optp);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(SYN_CACHE_TIMESTAMP(sc));
+		*lp++ = htonl(now + sc->sc_modulate);
 		*lp   = htonl(sc->sc_timestamp);
 		optp += TCPOLEN_TSTAMP_APPA;
 	}

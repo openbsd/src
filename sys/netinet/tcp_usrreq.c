@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.205 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.206 2022/09/03 19:22:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -271,6 +271,7 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	struct proc *p = curproc;
 	struct tcp_info *ti;
 	u_int t = 1000000 / PR_SLOWHZ;
+	uint32_t now;
 
 	if (sizeof(*ti) > MLEN) {
 		MCLGETL(m, M_WAITOK, sizeof(*ti));
@@ -280,6 +281,7 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti = mtod(m, struct tcp_info *);
 	m->m_len = sizeof(*ti);
 	memset(ti, 0, sizeof(*ti));
+	now = READ_ONCE(tcp_now);
 
 	ti->tcpi_state = tp->t_state;
 	if ((tp->t_flags & TF_REQ_TSTMP) && (tp->t_flags & TF_RCVD_TSTMP))
@@ -300,10 +302,10 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti->tcpi_snd_mss = tp->t_maxseg;
 	ti->tcpi_rcv_mss = tp->t_peermss;
 
-	ti->tcpi_last_data_sent = (tcp_now - tp->t_sndtime) * t;
-	ti->tcpi_last_ack_sent = (tcp_now - tp->t_sndacktime) * t;
-	ti->tcpi_last_data_recv = (tcp_now - tp->t_rcvtime) * t;
-	ti->tcpi_last_ack_recv = (tcp_now - tp->t_rcvacktime) * t;
+	ti->tcpi_last_data_sent = (now - tp->t_sndtime) * t;
+	ti->tcpi_last_ack_sent = (now - tp->t_sndacktime) * t;
+	ti->tcpi_last_data_recv = (now - tp->t_rcvtime) * t;
+	ti->tcpi_last_ack_recv = (now - tp->t_rcvacktime) * t;
 
 	ti->tcpi_rtt = ((uint64_t)tp->t_srtt * t) >>
 	    (TCP_RTT_SHIFT + TCP_RTT_BASE_SHIFT);
@@ -341,9 +343,9 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti->tcpi_snd_max = tp->snd_max - tp->iss;
 
 	ti->tcpi_ts_recent = tp->ts_recent; /* XXX value from the wire */
-	ti->tcpi_ts_recent_age = (tcp_now - tp->ts_recent_age) * t;
+	ti->tcpi_ts_recent_age = (now - tp->ts_recent_age) * t;
 	ti->tcpi_rfbuf_cnt = tp->rfbuf_cnt;
-	ti->tcpi_rfbuf_ts = (tcp_now - tp->rfbuf_ts) * t;
+	ti->tcpi_rfbuf_ts = (now - tp->rfbuf_ts) * t;
 
 	ti->tcpi_so_rcv_sb_cc = so->so_rcv.sb_cc;
 	ti->tcpi_so_rcv_sb_hiwat = so->so_rcv.sb_hiwat;

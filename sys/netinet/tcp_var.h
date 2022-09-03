@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.155 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.156 2022/09/03 19:22:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -638,6 +638,7 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 	counters_pkt(tcpcounters, pcounter, bcounter, v);
 }
 
+extern	struct mutex tcp_timer_mtx;
 extern	const struct pr_usrreqs tcp_usrreqs;
 
 #ifdef INET6
@@ -646,7 +647,7 @@ extern	const struct pr_usrreqs tcp6_usrreqs;
 
 extern	struct pool tcpcb_pool;
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-extern	u_int32_t tcp_now;		/* for RFC 1323 timestamps */
+extern	uint32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcptv_keep_init;	/* time to keep alive the initial SYN packet */
 extern	int tcp_mssdflt;	/* default maximum segment size */
@@ -682,7 +683,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-		struct mbuf *, int, struct tcp_opt_info *, u_int);
+		struct mbuf *, int, struct tcp_opt_info *, u_int, uint32_t);
 void	 tcp_init(void);
 int	 tcp_input(struct mbuf **, int *, int, int);
 int	 tcp_mss(struct tcpcb *, int);
@@ -702,7 +703,7 @@ void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
 int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 void	 tcp_rscale(struct tcpcb *, u_long);
 void	 tcp_respond(struct tcpcb *, caddr_t, struct tcphdr *, tcp_seq,
-		tcp_seq, int, u_int);
+		tcp_seq, int, u_int, uint32_t);
 void	 tcp_setpersist(struct tcpcb *);
 void	 tcp_update_sndspace(struct tcpcb *);
 void	 tcp_update_rcvspace(struct tcpcb *);

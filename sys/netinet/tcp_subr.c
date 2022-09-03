@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.186 2022/08/30 11:53:04 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.187 2022/09/03 19:22:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
@@ -98,6 +99,14 @@
 #include <crypto/md5.h>
 #include <crypto/sha2.h>
 
+/*
+ * Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	T	tcp_timer_mtx		global tcp timer data structures
+ */
+
+struct mutex tcp_timer_mtx;
+
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
 int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
@@ -110,8 +119,6 @@ int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 int	tcp_do_ecn = 0;		/* RFC3168 ECN enabled/disabled? */
 #endif
 int	tcp_do_rfc3390 = 2;	/* Increase TCP's Initial Window to 10*mss */
-
-u_int32_t	tcp_now = 1;
 
 #ifndef TCB_INITIAL_HASH_SIZE
 #define	TCB_INITIAL_HASH_SIZE	128
@@ -126,9 +133,10 @@ struct pool sackhl_pool;
 
 struct cpumem *tcpcounters;		/* tcp statistics */
 
-u_char   tcp_secret[16];
-SHA2_CTX tcp_secret_ctx;
-tcp_seq  tcp_iss;
+u_char		tcp_secret[16];	/* [I] */
+SHA2_CTX	tcp_secret_ctx;	/* [I] */
+tcp_seq		tcp_iss;	/* [T] updated by timer and connection */
+uint32_t	tcp_now;	/* [T] incremented by slow timer */
 
 /*
  * Tcp initialization
@@ -137,6 +145,7 @@ void
 tcp_init(void)
 {
 	tcp_iss = 1;		/* wrong */
+	tcp_now = 1;
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, IPL_SOFTNET, 0,
 	    "tcpcb", NULL);
 	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, IPL_SOFTNET, 0,
@@ -281,7 +290,7 @@ tcp_template(struct tcpcb *tp)
  */
 void
 tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
-    tcp_seq ack, tcp_seq seq, int flags, u_int rtableid)
+    tcp_seq ack, tcp_seq seq, int flags, u_int rtableid, uint32_t now)
 {
 	int tlen;
 	int win = 0;
@@ -362,7 +371,7 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
 		u_int32_t *lp = (u_int32_t *)(th + 1);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(tcp_now + tp->ts_modulate);
+		*lp++ = htonl(now + tp->ts_modulate);
 		*lp   = htonl(tp->ts_recent);
 		tlen += TCPOLEN_TSTAMP_APPA;
 		th->th_off = (sizeof(struct tcphdr) + TCPOLEN_TSTAMP_APPA) >> 2;
@@ -913,6 +922,12 @@ tcp_set_iss_tsm(struct tcpcb *tp)
 		uint32_t words[2];
 	} digest;
 	u_int rdomain = rtable_l2(tp->t_inpcb->inp_rtableid);
+	tcp_seq iss;
+
+	mtx_enter(&tcp_timer_mtx);
+	tcp_iss += TCP_ISS_CONN_INC;
+	iss = tcp_iss;
+	mtx_leave(&tcp_timer_mtx);
 
 	ctx = tcp_secret_ctx;
 	SHA512Update(&ctx, &rdomain, sizeof(rdomain));
@@ -930,8 +945,7 @@ tcp_set_iss_tsm(struct tcpcb *tp)
 		    sizeof(struct in_addr));
 	}
 	SHA512Final(digest.bytes, &ctx);
-	tcp_iss += TCP_ISS_CONN_INC;
-	tp->iss = digest.words[0] + tcp_iss;
+	tp->iss = digest.words[0] + iss;
 	tp->ts_modulate = digest.words[1];
 }
 
