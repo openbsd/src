@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.374 2022/09/01 13:35:02 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.375 2022/09/03 13:59:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -675,9 +675,12 @@ again:
 		/* Everything seems ok so configure the partition. */
 		DL_SETPSIZE(pp, secs);
 		DL_SETPOFFSET(pp, chunkstart);
-		if (ap->mp[0] != '/')
-			pp->p_fstype = FS_SWAP;
-		else {
+		if (ap->mp[0] != '/') {
+			if (strcasecmp(ap->mp, "raid") == 0)
+				pp->p_fstype = FS_RAID;
+			else
+				pp->p_fstype = FS_SWAP;
+		} else {
 			pp->p_fstype = FS_BSDFFS;
 			pp->p_fragblock = 0;
 			if (get_fsize(lp, partno) == 1 ||
@@ -1700,6 +1703,8 @@ mpsave(struct disklabel *lp)
 		for (i = 0; i < MAXPARTITIONS; i++) {
 			j =  mi[i].partno;
 			fstype = lp->d_partitions[j].p_fstype;
+			if (fstype == FS_RAID)
+				continue;
 			if (fstype == FS_SWAP) {
 				fprintf(fp, "%s%c none swap sw\n", bdev, 'a'+j);
 			} else if (mi[i].mountpoint) {
@@ -2165,7 +2170,8 @@ parse_autotable(char *filename)
 
 		buf = line;
 		if ((sa->mp = get_token(&buf)) == NULL ||
-		    (sa->mp[0] != '/' && strcmp(sa->mp, "swap")))
+		    (sa->mp[0] != '/' && strcasecmp(sa->mp, "swap") &&
+		    strcasecmp(sa->mp, "raid")))
 			errx(1, "%s: parse error on line %u", filename, idx);
 		if ((t = get_token(&buf)) == NULL ||
 		    parse_sizerange(t, &sa->minsz, &sa->maxsz) == -1)
