@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.509 2022/07/20 09:33:11 mbuhl Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.510 2022/09/03 14:57:54 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -784,6 +784,7 @@ struct pf_state {
 #define	PFSTATE_RANDOMID	0x0080
 #define	PFSTATE_SCRUB_TCP	0x0100
 #define	PFSTATE_SETPRIO		0x0200
+#define	PFSTATE_INP_UNLINKED	0x0400
 #define	PFSTATE_SCRUBMASK (PFSTATE_NODF|PFSTATE_RANDOMID|PFSTATE_SCRUB_TCP)
 #define	PFSTATE_SETMASK   (PFSTATE_SETTOS|PFSTATE_SETPRIO)
 	u_int8_t		 log;
