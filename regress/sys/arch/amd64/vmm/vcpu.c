@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.2 2022/04/21 19:21:05 bluhm Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.3 2022/09/03 23:12:36 tb Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -34,6 +34,8 @@
 #define KIB		1024
 #define MIB		(1 << 20)
 #define VMM_NODE	"/dev/vmm"
+
+#define PCKBC_AUX	0x61
 
 const char 		*VM_NAME = "regress";
 
