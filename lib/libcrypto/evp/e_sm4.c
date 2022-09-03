@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.1 2019/03/17 17:42:37 tb Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.2 2022/09/03 20:02:17 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -74,14 +74,172 @@ sm4_ofb128_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 	    (block128_f)SM4_encrypt);
 }
 
-IMPLEMENT_BLOCK_CIPHER(sm4, ks, sm4, EVP_SM4_KEY, NID_sm4, 16, 16, 16, 128,
-    EVP_CIPH_FLAG_DEFAULT_ASN1, sm4_init_key, NULL, 0, 0, 0)
+static int
+sm4_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		sm4_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		sm4_cbc_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (128 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		sm4_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+static int
+sm4_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
+		sm4_ecb_encrypt(in + i, out + i, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+sm4_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		sm4_ofb128_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		sm4_ofb128_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static const EVP_CIPHER sm4_cbc = {
+	.nid = NID_sm4_cbc,
+	.block_size = 16,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CBC_MODE,
+	.init = sm4_init_key,
+	.do_cipher = sm4_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_SM4_KEY),
+	.set_asn1_parameters = 0,
+	.get_asn1_parameters = 0,
+	.ctrl = 0,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_sm4_cbc(void)
+{
+	return &sm4_cbc;
+}
+
+static const EVP_CIPHER sm4_cfb128 = {
+	.nid = NID_sm4_cfb128,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CFB_MODE,
+	.init = sm4_init_key,
+	.do_cipher = sm4_cfb128_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_SM4_KEY),
+	.set_asn1_parameters = 0,
+	.get_asn1_parameters = 0,
+	.ctrl = 0,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_sm4_cfb128(void)
+{
+	return &sm4_cfb128;
+}
+
+static const EVP_CIPHER sm4_ofb = {
+	.nid = NID_sm4_ofb128,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 16,
+	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_OFB_MODE,
+	.init = sm4_init_key,
+	.do_cipher = sm4_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_SM4_KEY),
+	.set_asn1_parameters = 0,
+	.get_asn1_parameters = 0,
+	.ctrl = 0,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_sm4_ofb(void)
+{
+	return &sm4_ofb;
+}
+
+static const EVP_CIPHER sm4_ecb = {
+	.nid = NID_sm4_ecb,
+	.block_size = 16,
+	.key_len = 16,
+	.iv_len = 0,
+	.flags = EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_ECB_MODE,
+	.init = sm4_init_key,
+	.do_cipher = sm4_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(EVP_SM4_KEY),
+	.set_asn1_parameters = 0,
+	.get_asn1_parameters = 0,
+	.ctrl = 0,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_sm4_ecb(void)
+{
+	return &sm4_ecb;
+}
 
 static int
 sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
     size_t len)
 {
-	EVP_SM4_KEY *key = EVP_C_DATA(EVP_SM4_KEY, ctx);
+	EVP_SM4_KEY *key = ((EVP_SM4_KEY *)(ctx)->cipher_data);
 
 	CRYPTO_ctr128_encrypt(in, out, len, &key->ks, ctx->iv, ctx->buf,
 	    &ctx->num, (block128_f)SM4_encrypt);
