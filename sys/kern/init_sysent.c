@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.245 2022/09/02 13:23:33 mbuhl Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.246 2022/09/03 12:33:44 mbuhl Exp $	*/
 
 /*
  * System call switch table.
@@ -266,8 +266,8 @@ const struct sysent sysent[] = {
 	    sys___realpath },			/* 115 = __realpath */
 	{ 5, s(struct sys_recvmmsg_args), SY_NOLOCK | 0,
 	    sys_recvmmsg },			/* 116 = recvmmsg */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 117 = unimplemented sendmmsg */
+	{ 4, s(struct sys_sendmmsg_args), SY_NOLOCK | 0,
+	    sys_sendmmsg },			/* 117 = sendmmsg */
 	{ 5, s(struct sys_getsockopt_args), 0,
 	    sys_getsockopt },			/* 118 = getsockopt */
 	{ 3, s(struct sys_thrkill_args), 0,

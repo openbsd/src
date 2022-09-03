@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.243 2022/09/02 13:23:33 mbuhl Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.244 2022/09/03 12:33:44 mbuhl Exp $	*/
 
 /*
  * System call names.
@@ -137,7 +137,7 @@ const char *const syscallnames[] = {
 	"unveil",			/* 114 = unveil */
 	"__realpath",			/* 115 = __realpath */
 	"recvmmsg",			/* 116 = recvmmsg */
-	"#117 (unimplemented sendmmsg)",		/* 117 = unimplemented sendmmsg */
+	"sendmmsg",			/* 117 = sendmmsg */
 	"getsockopt",			/* 118 = getsockopt */
 	"thrkill",			/* 119 = thrkill */
 	"readv",			/* 120 = readv */
