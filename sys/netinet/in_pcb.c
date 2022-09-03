@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.274 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.275 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -672,6 +672,17 @@ in_sockaddr(struct socket *so, struct mbuf *nam)
 
 	inp = sotoinpcb(so);
 	in_setsockaddr(inp, nam);
+
+	return (0);
+}
+
+int
+in_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+
+	inp = sotoinpcb(so);
+	in_setpeeraddr(inp, nam);
 
 	return (0);
 }

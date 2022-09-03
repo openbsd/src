@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.53 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.54 2022/09/03 22:43:39 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -62,10 +62,6 @@ struct stat;
 struct ifnet;
 
 struct pr_usrreqs {
-					/* user request: see list below */
-	int	(*pru_usrreq)(struct socket *, int, struct mbuf *,
-		    struct mbuf *, struct mbuf *, struct proc *);
-
 	int	(*pru_attach)(struct socket *, int);
 	int	(*pru_detach)(struct socket *);
 	int	(*pru_bind)(struct socket *, struct mbuf *, struct proc *);
@@ -84,8 +80,9 @@ struct pr_usrreqs {
 	int	(*pru_rcvoob)(struct socket *, struct mbuf *, int);
 	int	(*pru_sendoob)(struct socket *, struct mbuf *, struct mbuf *,
 		    struct mbuf *);
-	int	(*pru_connect2)(struct socket *, struct socket *);
 	int	(*pru_sockaddr)(struct socket *, struct mbuf *);
+	int	(*pru_peeraddr)(struct socket *, struct mbuf *);
+	int	(*pru_connect2)(struct socket *, struct socket *);
 };
 
 struct protosw {
@@ -392,8 +389,7 @@ pru_sockaddr(struct socket *so, struct mbuf *addr)
 static inline int
 pru_peeraddr(struct socket *so, struct mbuf *addr)
 {
-	return (*so->so_proto->pr_usrreqs->pru_usrreq)(so,
-	    PRU_PEERADDR, NULL, addr, NULL, curproc);
+	return (*so->so_proto->pr_usrreqs->pru_peeraddr)(so, addr);
 }
 
 static inline int

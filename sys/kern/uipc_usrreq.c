@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.184 2022/09/03 18:48:49 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.185 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -127,7 +127,6 @@ int	unp_defer;	/* [G] number of deferred fp to close by the GC task */
 int	unp_gcing;	/* [G] GC task currently running */
 
 const struct pr_usrreqs uipc_usrreqs = {
-	.pru_usrreq	= uipc_usrreq,
 	.pru_attach	= uipc_attach,
 	.pru_detach	= uipc_detach,
 	.pru_bind	= uipc_bind,
@@ -141,6 +140,7 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_abort	= uipc_abort,
 	.pru_sense	= uipc_sense,
 	.pru_sockaddr	= uipc_sockaddr,
+	.pru_peeraddr	= uipc_peeraddr,
 	.pru_connect2	= uipc_connect2,
 };
 
@@ -210,46 +210,6 @@ uipc_setaddr(const struct unpcb *unp, struct mbuf *nam)
 		memcpy(mtod(nam, struct sockaddr *), &sun_noname,
 		    nam->m_len);
 	}
-}
-
-int
-uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	struct unpcb *unp = sotounpcb(so);
-	struct socket *so2;
-	int error = 0;
-
-	if (req != PRU_SEND && control && control->m_len) {
-		error = EOPNOTSUPP;
-		goto release;
-	}
-	if (unp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
-
-	case PRU_PEERADDR:
-		so2 = unp_solock_peer(so);
-		uipc_setaddr(unp->unp_conn, nam);
-		if (so2 != NULL && so2 != so)
-			sounlock(so2);
-		break;
-
-	case PRU_SLOWTIMO:
-		break;
-
-	default:
-		panic("uipc_usrreq");
-	}
-release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
 }
 
 /*
@@ -582,6 +542,19 @@ uipc_sockaddr(struct socket *so, struct mbuf *nam)
 	struct unpcb *unp = sotounpcb(so);
 
 	uipc_setaddr(unp, nam);
+	return (0);
+}
+
+int
+uipc_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
+
+	so2 = unp_solock_peer(so);
+	uipc_setaddr(unp->unp_conn, nam);
+	if (so2 != NULL && so2 != so)
+		sounlock(so2);
 	return (0);
 }
 

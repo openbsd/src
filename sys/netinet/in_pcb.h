@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.133 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.134 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -309,6 +309,7 @@ int	 in6_pcbconnect(struct inpcb *, struct mbuf *);
 void	 in6_setsockaddr(struct inpcb *, struct mbuf *);
 void	 in6_setpeeraddr(struct inpcb *, struct mbuf *);
 int	 in6_sockaddr(struct socket *, struct mbuf *);
+int	 in6_peeraddr(struct socket *, struct mbuf *);
 #endif /* INET6 */
 void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
@@ -320,6 +321,7 @@ void	 in_rtchange(struct inpcb *, int);
 void	 in_setpeeraddr(struct inpcb *, struct mbuf *);
 void	 in_setsockaddr(struct inpcb *, struct mbuf *);
 int	 in_sockaddr(struct socket *, struct mbuf *);
+int	 in_peeraddr(struct socket *, struct mbuf *);
 int	 in_baddynamic(u_int16_t, u_int16_t);
 int	 in_rootonly(u_int16_t, u_int16_t);
 int	 in_pcbselsrc(struct in_addr *, struct sockaddr_in *, struct inpcb *);

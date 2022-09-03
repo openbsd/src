@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.146 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.147 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ struct inpcbtable rawcbtable;
  */
 
 const struct pr_usrreqs rip_usrreqs = {
-	.pru_usrreq	= rip_usrreq,
 	.pru_attach	= rip_attach,
 	.pru_detach	= rip_detach,
 	.pru_bind	= rip_bind,
@@ -115,6 +114,7 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_abort	= rip_abort,
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
+	.pru_peeraddr	= in_peeraddr,
 };
 
 /*
@@ -457,39 +457,6 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 
 u_long	rip_sendspace = RIPSNDQ;
 u_long	rip_recvspace = RIPRCVQ;
-
-/*ARGSUSED*/
-int
-rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	struct inpcb *inp;
-	int error = 0;
-
-	soassertlocked(so);
-
-	inp = sotoinpcb(so);
-	if (inp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
-
-	case PRU_PEERADDR:
-		in_setpeeraddr(inp, nam);
-		break;
-
-	default:
-		panic("rip_usrreq");
-	}
-release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
-}
 
 int
 rip_attach(struct socket *so, int proto)

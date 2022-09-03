@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.300 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.301 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -123,7 +123,6 @@ u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
 const struct pr_usrreqs udp_usrreqs = {
-	.pru_usrreq	= udp_usrreq,
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
 	.pru_bind	= udp_bind,
@@ -134,11 +133,11 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_abort	= udp_abort,
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
+	.pru_peeraddr	= in_peeraddr,
 };
 
 #ifdef INET6
 const struct pr_usrreqs udp6_usrreqs = {
-	.pru_usrreq	= udp_usrreq,
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
 	.pru_bind	= udp_bind,
@@ -149,6 +148,7 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pru_abort	= udp_abort,
 	.pru_control	= in6_control,
 	.pru_sockaddr	= in6_sockaddr,
+	.pru_peeraddr	= in6_peeraddr,
 };
 #endif
 
@@ -1072,55 +1072,6 @@ bail:
 release:
 	m_freem(m);
 	goto bail;
-}
-
-/*ARGSUSED*/
-int
-udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
-    struct mbuf *control, struct proc *p)
-{
-	struct inpcb *inp;
-	int error = 0;
-
-	soassertlocked(so);
-
-	inp = sotoinpcb(so);
-	if (inp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	/*
-	 * Note: need to block udp_input while changing
-	 * the udp pcb queue and/or pcb addresses.
-	 */
-	switch (req) {
-
-	case PRU_PEERADDR:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			in6_setpeeraddr(inp, addr);
-		else
-#endif /* INET6 */
-			in_setpeeraddr(inp, addr);
-		break;
-
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error =  EOPNOTSUPP;
-		break;
-
-	default:
-		panic("udp_usrreq");
-	}
-release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
 }
 
 int

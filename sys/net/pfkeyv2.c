@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.251 2022/09/03 18:48:50 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.252 2022/09/03 22:43:38 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -177,8 +177,7 @@ int pfkeyv2_send(struct socket *, struct mbuf *, struct mbuf *,
     struct mbuf *);
 int pfkeyv2_abort(struct socket *);
 int pfkeyv2_sockaddr(struct socket *, struct mbuf *);
-int pfkeyv2_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct proc *);
+int pfkeyv2_peeraddr(struct socket *, struct mbuf *);
 int pfkeyv2_output(struct mbuf *, struct socket *);
 int pfkey_sendup(struct pkpcb *, struct mbuf *, int);
 int pfkeyv2_sa_flush(struct tdb *, void *, int);
@@ -205,7 +204,6 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
 }
 
 const struct pr_usrreqs pfkeyv2_usrreqs = {
-	.pru_usrreq	= pfkeyv2_usrreq,
 	.pru_attach	= pfkeyv2_attach,
 	.pru_detach	= pfkeyv2_detach,
 	.pru_disconnect	= pfkeyv2_disconnect,
@@ -213,6 +211,7 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_send	= pfkeyv2_send,
 	.pru_abort	= pfkeyv2_abort,
 	.pru_sockaddr	= pfkeyv2_sockaddr,
+	.pru_peeraddr	= pfkeyv2_peeraddr,
 };
 
 const struct protosw pfkeysw[] = {
@@ -397,42 +396,12 @@ pfkeyv2_sockaddr(struct socket *so, struct mbuf *nam)
 }
 
 int
-pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
-    struct mbuf *nam, struct mbuf *control, struct proc *p)
+pfkeyv2_peeraddr(struct socket *so, struct mbuf *nam)
 {
-	struct pkpcb *kp;
-	int error = 0;
-
-	soassertlocked(so);
-
-	if (control && control->m_len) {
-		error = EOPNOTSUPP;
-		goto release;
-	}
-
-	kp = sotokeycb(so);
-	if (kp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
 	/* minimal support, just implement a fake peer address */
-	case PRU_PEERADDR:
-		bcopy(&pfkey_addr, mtod(nam, caddr_t), pfkey_addr.sa_len);
-		nam->m_len = pfkey_addr.sa_len;
-		break;
-
-	default:
-		panic("pfkeyv2_usrreq");
-	}
-
- release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
+	bcopy(&pfkey_addr, mtod(nam, caddr_t), pfkey_addr.sa_len);
+	nam->m_len = pfkey_addr.sa_len;
+	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.352 2022/09/03 18:48:50 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.353 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -111,8 +111,6 @@ void	rcb_ref(void *, void *);
 void	rcb_unref(void *, void *);
 int	route_output(struct mbuf *, struct socket *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
-int	route_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
-	    struct mbuf *, struct proc *);
 int	route_disconnect(struct socket *);
 int	route_shutdown(struct socket *);
 int	route_rcvd(struct socket *);
@@ -120,6 +118,7 @@ int	route_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 int	route_abort(struct socket *);
 int	route_sockaddr(struct socket *, struct mbuf *);
+int	route_peeraddr(struct socket *, struct mbuf *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
 int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
@@ -212,45 +211,6 @@ rcb_unref(void *null, void *v)
 	struct rtpcb *rop = v;
 
 	refcnt_rele_wake(&rop->rop_refcnt);
-}
-
-int
-route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	struct rtpcb	*rop;
-	int		 error = 0;
-
-	soassertlocked(so);
-
-	if (control && control->m_len) {
-		error = EOPNOTSUPP;
-		goto release;
-	}
-
-	rop = sotortpcb(so);
-	if (rop == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-
-	switch (req) {
-	/* minimal support, just implement a fake peer address */
-	case PRU_PEERADDR:
-		bcopy(&route_src, mtod(nam, caddr_t), route_src.sa_len);
-		nam->m_len = route_src.sa_len;
-		break;
-
-	default:
-		panic("route_usrreq");
-	}
-
- release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
 }
 
 int
@@ -395,6 +355,15 @@ int
 route_sockaddr(struct socket *so, struct mbuf *nam)
 {
 	return (EINVAL);
+}
+
+int
+route_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	/* minimal support, just implement a fake peer address */
+	bcopy(&route_src, mtod(nam, caddr_t), route_src.sa_len);
+	nam->m_len = route_src.sa_len;
+	return (0);
 }
 
 int
@@ -2431,7 +2400,6 @@ rt_setsource(unsigned int rtableid, struct sockaddr *src)
  */
 
 const struct pr_usrreqs route_usrreqs = {
-	.pru_usrreq	= route_usrreq,
 	.pru_attach	= route_attach,
 	.pru_detach	= route_detach,
 	.pru_disconnect	= route_disconnect,
@@ -2440,6 +2408,7 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_send	= route_send,
 	.pru_abort	= route_abort,
 	.pru_sockaddr	= route_sockaddr,
+	.pru_peeraddr	= route_peeraddr,
 };
 
 const struct protosw routesw[] = {

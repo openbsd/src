@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.206 2022/09/03 19:22:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.207 2022/09/03 22:43:38 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ u_int	tcp_recvspace = TCP_RECVSPACE;
 u_int	tcp_autorcvbuf_inc = 16 * 1024;
 
 const struct pr_usrreqs tcp_usrreqs = {
-	.pru_usrreq	= tcp_usrreq,
 	.pru_attach	= tcp_attach,
 	.pru_detach	= tcp_detach,
 	.pru_bind	= tcp_bind,
@@ -129,11 +128,11 @@ const struct pr_usrreqs tcp_usrreqs = {
 	.pru_sendoob	= tcp_sendoob,
 	.pru_control	= in_control,
 	.pru_sockaddr	= tcp_sockaddr,
+	.pru_peeraddr	= tcp_peeraddr,
 };
 
 #ifdef INET6
 const struct pr_usrreqs tcp6_usrreqs = {
-	.pru_usrreq	= tcp_usrreq,
 	.pru_attach	= tcp_attach,
 	.pru_detach	= tcp_detach,
 	.pru_bind	= tcp_bind,
@@ -150,6 +149,7 @@ const struct pr_usrreqs tcp6_usrreqs = {
 	.pru_sendoob	= tcp_sendoob,
 	.pru_control	= in6_control,
 	.pru_sockaddr	= tcp_sockaddr,
+	.pru_peeraddr	= tcp_peeraddr,
 };
 #endif
 
@@ -202,62 +202,6 @@ tcp_sogetpcb(struct socket *so, struct inpcb **rinp, struct tcpcb **rtp)
 	*rtp = tp;
 
 	return 0;
-}
-
-/*
- * Process a TCP user request for TCP tb.  If this is a send request
- * then m is the mbuf chain of send data.  If this is a timer expiration
- * (called from the software clock routine), then timertype tells which timer.
- */
-/*ARGSUSED*/
-int
-tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	struct inpcb *inp;
-	struct tcpcb *otp = NULL, *tp;
-	int error = 0;
-	short ostate;
-
-	soassertlocked(so);
-
-	if (control && control->m_len) {
-		error = EINVAL;
-		goto release;
-	}
-
-	if ((error = tcp_sogetpcb(so, &inp, &tp)))
-		goto release;
-
-	if (so->so_options & SO_DEBUG) {
-		otp = tp;
-		ostate = tp->t_state;
-	}
-
-	switch (req) {
-
-	case PRU_PEERADDR:
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			in6_setpeeraddr(inp, nam);
-		else
-#endif
-			in_setpeeraddr(inp, nam);
-		break;
-
-	default:
-		panic("tcp_usrreq");
-	}
-	if (otp)
-		tcp_trace(TA_USER, ostate, tp, otp, NULL, req, 0);
-	return (error);
-
- release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
 }
 
 /*
@@ -1075,6 +1019,31 @@ tcp_sockaddr(struct socket *so, struct mbuf *nam)
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL,
 		    PRU_SOCKADDR, 0);
+	return (0);
+}
+
+int
+tcp_peeraddr(struct socket *so, struct mbuf *nam)
+{
+	struct inpcb *inp;
+	struct tcpcb *tp;
+	int error;
+
+	soassertlocked(so);
+
+	if ((error = tcp_sogetpcb(so, &inp, &tp)))
+		return (error);
+
+#ifdef INET6
+	if (inp->inp_flags & INP_IPV6)
+		in6_setpeeraddr(inp, nam);
+	else
+#endif
+		in_setpeeraddr(inp, nam);
+
+	if (so->so_options & SO_DEBUG)
+		tcp_trace(TA_USER, tp->t_state, tp, tp, NULL,
+		    PRU_PEERADDR, 0);
 	return (0);
 }
 

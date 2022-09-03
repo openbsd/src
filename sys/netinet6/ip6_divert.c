@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.84 2022/09/03 18:48:50 mvs Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.85 2022/09/03 22:43:38 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -64,7 +64,6 @@ const struct sysctl_bounded_args divert6ctl_vars[] = {
 };
 
 const struct pr_usrreqs divert6_usrreqs = {
-	.pru_usrreq	= divert6_usrreq,
 	.pru_attach	= divert6_attach,
 	.pru_detach	= divert6_detach,
 	.pru_bind	= divert6_bind,
@@ -73,6 +72,7 @@ const struct pr_usrreqs divert6_usrreqs = {
 	.pru_abort	= divert6_abort,
 	.pru_control	= in6_control,
 	.pru_sockaddr	= in6_sockaddr,
+	.pru_peeraddr	= in6_peeraddr,
 };
 
 int divb6hashsize = DIVERTHASHSIZE;
@@ -256,45 +256,6 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	if (inp != NULL)
 		in_pcbunref(inp);
 	m_freem(m);
-}
-
-/*ARGSUSED*/
-int
-divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
-    struct mbuf *control, struct proc *p)
-{
-	struct inpcb *inp = sotoinpcb(so);
-	int error = 0;
-
-	soassertlocked(so);
-
-	if (inp == NULL) {
-		error = EINVAL;
-		goto release;
-	}
-	switch (req) {
-
-	case PRU_PEERADDR:
-		in6_setpeeraddr(inp, addr);
-		break;
-
-	case PRU_FASTTIMO:
-	case PRU_SLOWTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error =  EOPNOTSUPP;
-		break;
-
-	default:
-		panic("%s", __func__);
-	}
-
-release:
-	if (req != PRU_RCVD && req != PRU_RCVOOB && req != PRU_SENSE) {
-		m_freem(control);
-		m_freem(m);
-	}
-	return (error);
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.83 2022/09/03 18:48:50 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.84 2022/09/03 22:43:38 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -64,7 +64,6 @@
 #endif
 
 const struct pr_usrreqs gre_usrreqs = {
-	.pru_usrreq	= gre_usrreq,
 	.pru_attach	= rip_attach,
 	.pru_detach	= rip_detach,
 	.pru_bind	= rip_bind,
@@ -75,14 +74,8 @@ const struct pr_usrreqs gre_usrreqs = {
 	.pru_abort	= rip_abort,
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
+	.pru_peeraddr	= in_peeraddr,
 };
-
-int
-gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
-    struct mbuf *control, struct proc *p)
-{
-	return rip_usrreq(so, req, m, nam, control, p);
-}
 
 int
 gre_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
