@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.21 2022/05/12 19:11:14 jsing Exp $ */
+/* $OpenBSD: asn1t.h,v 1.22 2022/09/03 16:01:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -882,10 +882,13 @@ extern const ASN1_ITEM ASN1_BOOLEAN_it;
 extern const ASN1_ITEM ASN1_TBOOLEAN_it;
 extern const ASN1_ITEM ASN1_FBOOLEAN_it;
 extern const ASN1_ITEM ASN1_SEQUENCE_it;
-extern const ASN1_ITEM CBIGNUM_it;
 extern const ASN1_ITEM BIGNUM_it;
 extern const ASN1_ITEM LONG_it;
 extern const ASN1_ITEM ZLONG_it;
+
+#ifndef LIBRESSL_INTERNAL
+extern const ASN1_ITEM CBIGNUM_it;
+#endif
 
 DECLARE_STACK_OF(ASN1_VALUE)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.24 2022/01/14 08:29:06 tb Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.25 2022/09/03 16:01:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -97,14 +97,14 @@ static const ASN1_TEMPLATE DSA_SIG_seq_tt[] = {
 		.tag = 0,
 		.offset = offsetof(DSA_SIG, r),
 		.field_name = "r",
-		.item = &CBIGNUM_it,
+		.item = &BIGNUM_it,
 	},
 	{
 		.flags = 0,
 		.tag = 0,
 		.offset = offsetof(DSA_SIG, s),
 		.field_name = "s",
-		.item = &CBIGNUM_it,
+		.item = &BIGNUM_it,
 	},
 };
 
