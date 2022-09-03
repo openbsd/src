@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.81 2022/09/03 19:11:45 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.82 2022/09/03 19:14:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -276,16 +276,16 @@ asn1_find_end(CBS *cbs, size_t length, int indefinite)
 static int
 asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 {
+	ASN1_BOOLEAN *abool;
 	ASN1_STRING *astr;
-	ASN1_BOOLEAN *tbool;
-	uint8_t u8val;
+	uint8_t val;
 	int ret = 0;
 
 	if (it->funcs != NULL)
-		return 0;
+		goto err;
 
 	if (CBS_len(content) > INT_MAX)
-		return 0;
+		goto err;
 
 	switch (utype) {
 	case V_ASN1_OBJECT:
@@ -302,14 +302,14 @@ asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *
 		break;
 
 	case V_ASN1_BOOLEAN:
-		tbool = (ASN1_BOOLEAN *)pval;
+		abool = (ASN1_BOOLEAN *)pval;
 		if (CBS_len(content) != 1) {
 			ASN1error(ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
 			goto err;
 		}
-		if (!CBS_get_u8(content, &u8val))
+		if (!CBS_get_u8(content, &val))
 			goto err;
-		*tbool = u8val;
+		*abool = val;
 		break;
 
 	case V_ASN1_BIT_STRING:
