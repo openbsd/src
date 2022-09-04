@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.62 2017/06/22 13:21:10 tom Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.63 2022/09/04 06:49:11 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -261,7 +261,7 @@
  * EF_SR3
  *   A place to save the exception-time SR3 from just after the
  *   time when an exception is raised until just after the FPU
- *   has been restarted.  This does not necessarly conflict with
+ *   has been restarted.  This does not necessarily conflict with
  *   the general registers (though it can if you're not careful)
  *   and so we can use a spot later used to save a general register.
  */
@@ -792,7 +792,7 @@ ASLOCAL(badaddr_switch)
 	br	_ASM_LABEL(badaddr__return_nonzero)
 
 	/*
-	 * The load attemps below will either fault or not. If they fault,
+	 * The load attempts below will either fault or not. If they fault,
 	 * execution will go to data_access_handler, then to
 	 * ignore_data_exception, then to badaddr__return_nonzero, which
 	 * will return to the calling function.
@@ -1374,7 +1374,7 @@ ASLOCAL(m88100_setup_phase_two)
 	 *   Other data pipeline control registers, if appropriate.
 	 *   FPU control registers, if appropriate.
 	 *   Exception SR3, if appropriate.
-	 *   Held temporarly in the exception frame:
+	 *   Held temporarily in the exception frame:
 	 *   Return address to the calling exception handler.
 	 *
 	 * immediate goal:
@@ -1508,7 +1508,7 @@ ASLOCAL(m88100_fpu_enable)
 #endif
 
 	/* turn interrupts back on unless they were not enabled when the
-	   trap occured */
+	   trap occurred */
 	bb1.n	PSR_INTERRUPT_DISABLE_BIT, %r6, 7f
 	 ld	%r3,  %r30, EF_DMT0
 
@@ -1867,7 +1867,7 @@ ASLOCAL(m88110_setup_phase_one)
 	NOP
 
 	/*
-	 * If we were in the kernel when the exception occured, we have
+	 * If we were in the kernel when the exception occurred, we have
 	 * a valid stack. Keep using it, and build the frame on it.
 	 *
 	 * Note that if this exception is an NMI, we might be currently
@@ -2110,7 +2110,7 @@ ASLOCAL(m88110_shadow_enable)
 	ld	%r14, %r30, EF_RET
 
 	/* don't turn interrupts back on unless they were enabled when the
-	   trap occured */
+	   trap occurred */
 	bb1	PSR_INTERRUPT_DISABLE_BIT, %r6, 8f
 
 	ld	%r2,  %r30, EF_VECTOR

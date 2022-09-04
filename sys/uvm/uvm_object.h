@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.29 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.30 2022/09/04 06:49:11 jsg Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct uvm_object {
  * memory objects don't have reference counts -- they never die).
  *
  * this value is used to detected kernel object mappings at uvm_unmap()
- * time.   normally when an object is unmapped its pages eventaully become
+ * time.   normally when an object is unmapped its pages eventually become
  * deactivated and then paged out and/or freed.    this is not useful
  * for kernel objects... when a kernel object is unmapped we always want
  * to free the resources associated with the mapping.   UVM_OBJ_KERN

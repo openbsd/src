@@ -258,7 +258,7 @@ _C_LABEL(acpi_protected_mode_resume):
 
 	/*
 	 * Shortly, we'll restore the TSS for the task that was running
-	 * immediately before suspend occured. Since that task was the
+	 * immediately before suspend occurred. Since that task was the
 	 * running task, it's TSS busy flag will have been set. We need
 	 * to clear that bit (since we're effectively "restarting" the OS)
 	 * in order to convince the processor that the task is no longer

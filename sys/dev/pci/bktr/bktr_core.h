@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.h,v 1.4 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: bktr_core.h,v 1.5 2022/09/04 06:49:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp $ */
 
 /*
@@ -72,7 +72,7 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
 /* device name for printf */
 const char *bktr_name(bktr_ptr_t bktr);
 
-/* Prototypes for attatch and interrupt functions */
+/* Prototypes for attach and interrupt functions */
 void	common_bktr_attach( bktr_ptr_t bktr, int unit,
 			u_int pci_id, u_int rev );
 int	common_bktr_intr( void *arg );

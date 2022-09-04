@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.58 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: locore.S,v 1.59 2022/09/04 06:49:11 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -632,7 +632,7 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 #endif  /* DDB */
 
 /*
- * If this interrupt occured between the runqueue check and the setting
+ * If this interrupt occurred between the runqueue check and the setting
  * of the POW bit, do no enter to sleep.  We do that in order to process
  * the result of this interrupt directly and not when coming back from
  * sleep, when the next clock tick or interrupt will fire.

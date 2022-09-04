@@ -1,4 +1,4 @@
-/*	$OpenBSD: mld6.c,v 1.58 2022/08/22 21:02:44 bluhm Exp $	*/
+/*	$OpenBSD: mld6.c,v 1.59 2022/09/04 06:49:11 jsg Exp $	*/
 /*	$KAME: mld6.c,v 1.26 2001/02/16 14:50:35 itojun Exp $	*/
 
 /*
@@ -331,7 +331,7 @@ mld6_fasttimeo(void)
 	 * Quick check to see if any work needs to be done, in order
 	 * to minimize the overhead of fasttimo processing.
 	 * Variable mld6_timers_are_running is read atomically, but without
-	 * lock intensionally.  In case it is not set due to MP races, we may
+	 * lock intentionally.  In case it is not set due to MP races, we may
 	 * miss to check the timers.  Then run the loop at next fast timeout.
 	 */
 	if (!mld6_timers_are_running)
