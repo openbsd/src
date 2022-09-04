@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.26 2022/09/04 09:52:22 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.27 2022/09/04 09:56:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -185,8 +185,6 @@ struct evp_Encode_Ctx_st {
 } /* EVP_ENCODE_CTX */;
 
 #define EVP_MAXCHUNK ((size_t)1<<(sizeof(long)*8-2))
-
-#define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
 
 struct evp_pkey_ctx_st {
 	/* Method associated with this operation */
