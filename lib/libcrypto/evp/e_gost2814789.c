@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.7 2022/09/04 13:17:18 jsing Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.8 2022/09/04 13:55:39 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -209,14 +209,11 @@ gost2814789_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (64 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Gost2814789_cfb64_encrypt(in, out, (long)((64 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_GOST2814789_CTX *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Gost2814789_cfb64_encrypt(in, out, (long)inl, &((EVP_GOST2814789_CTX *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;

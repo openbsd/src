@@ -1,4 +1,4 @@
-/* $OpenBSD: e_cast.c,v 1.9 2022/09/04 13:17:18 jsing Exp $ */
+/* $OpenBSD: e_cast.c,v 1.10 2022/09/04 13:55:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,14 +103,11 @@ cast5_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char 
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (64 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		CAST_cfb64_encrypt(in, out, (long)((64 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		CAST_cfb64_encrypt(in, out, (long)inl, &((EVP_CAST_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
