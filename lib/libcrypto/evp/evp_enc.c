@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.45 2022/07/26 19:50:06 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.46 2022/09/04 13:34:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,8 +73,6 @@
 #endif
 
 #include "evp_locl.h"
-
-#define M_do_cipher(ctx, out, in, inl) ctx->cipher->do_cipher(ctx, out, in, inl)
 
 int
 EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -309,7 +307,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 1;
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-		i = M_do_cipher(ctx, out, in, inl);
+		i = ctx->cipher->do_cipher(ctx, out, in, inl);
 		if (i < 0)
 			return 0;
 		else
@@ -318,7 +316,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	}
 
 	if (ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0) {
-		if (M_do_cipher(ctx, out, in, inl)) {
+		if (ctx->cipher->do_cipher(ctx, out, in, inl)) {
 			*outl = inl;
 			return 1;
 		} else {
@@ -353,7 +351,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 				return 0;
 			}
 			memcpy(&(ctx->buf[i]), in, j);
-			if (!M_do_cipher(ctx, out, ctx->buf, bl))
+			if (!ctx->cipher->do_cipher(ctx, out, ctx->buf, bl))
 				return 0;
 			inl -= j;
 			in += j;
@@ -365,7 +363,7 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	i = inl&(bl - 1);
 	inl -= i;
 	if (inl > 0) {
-		if (!M_do_cipher(ctx, out, in, inl))
+		if (!ctx->cipher->do_cipher(ctx, out, in, inl))
 			return 0;
 		*outl += inl;
 	}
@@ -395,7 +393,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	unsigned int i, b, bl;
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-		ret = M_do_cipher(ctx, out, NULL, 0);
+		ret = ctx->cipher->do_cipher(ctx, out, NULL, 0);
 		if (ret < 0)
 			return 0;
 		else
@@ -425,7 +423,7 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	n = b - bl;
 	for (i = bl; i < b; i++)
 		ctx->buf[i] = n;
-	ret = M_do_cipher(ctx, out, ctx->buf, b);
+	ret = ctx->cipher->do_cipher(ctx, out, ctx->buf, b);
 
 
 	if (ret)
@@ -450,7 +448,7 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 		return 1;
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-		fix_len = M_do_cipher(ctx, out, in, inl);
+		fix_len = ctx->cipher->do_cipher(ctx, out, in, inl);
 		if (fix_len < 0) {
 			*outl = 0;
 			return 0;
@@ -524,7 +522,7 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	*outl = 0;
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
-		i = M_do_cipher(ctx, out, NULL, 0);
+		i = ctx->cipher->do_cipher(ctx, out, NULL, 0);
 		if (i < 0)
 			return 0;
 		else
