@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.15 2022/09/03 20:12:24 jsing Exp $ */
+/* $OpenBSD: e_des.c,v 1.16 2022/09/04 08:18:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,7 +76,16 @@ static int
 des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
-	BLOCK_CIPHER_ecb_loop()
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
 		DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
 		    ctx->cipher_data, ctx->encrypt);
 	return 1;
@@ -181,21 +190,140 @@ des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-BLOCK_CIPHER_defs(des, DES_key_schedule, NID_des, 8, 8, 8, 64,
-    EVP_CIPH_RAND_KEY, des_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    des_ctrl)
+static const EVP_CIPHER des_cbc = {
+	.nid = NID_des_cbc,
+	.block_size = 8,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CBC_MODE,
+	.init = des_init_key,
+	.do_cipher = des_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
 
-BLOCK_CIPHER_def_cfb(des, DES_key_schedule, NID_des, 8, 8, 1,
-    EVP_CIPH_RAND_KEY, des_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv, des_ctrl)
+const EVP_CIPHER *
+EVP_des_cbc(void)
+{
+	return &des_cbc;
+}
 
-BLOCK_CIPHER_def_cfb(des, DES_key_schedule, NID_des, 8, 8, 8,
-    EVP_CIPH_RAND_KEY, des_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv, des_ctrl)
+static const EVP_CIPHER des_cfb64 = {
+	.nid = NID_des_cfb64,
+	.block_size = 1,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_init_key,
+	.do_cipher = des_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_cfb64(void)
+{
+	return &des_cfb64;
+}
+
+static const EVP_CIPHER des_ofb = {
+	.nid = NID_des_ofb64,
+	.block_size = 1,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_OFB_MODE,
+	.init = des_init_key,
+	.do_cipher = des_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ofb(void)
+{
+	return &des_ofb;
+}
+
+static const EVP_CIPHER des_ecb = {
+	.nid = NID_des_ecb,
+	.block_size = 8,
+	.key_len = 8,
+	.iv_len = 0,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_ECB_MODE,
+	.init = des_init_key,
+	.do_cipher = des_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ecb(void)
+{
+	return &des_ecb;
+}
+
+
+static const EVP_CIPHER des_cfb1 = {
+	.nid = NID_des_cfb1,
+	.block_size = 1,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_init_key,
+	.do_cipher = des_cfb1_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_cfb1(void)
+{
+	return &des_cfb1;
+}
+
+
+static const EVP_CIPHER des_cfb8 = {
+	.nid = NID_des_cfb8,
+	.block_size = 1,
+	.key_len = 8,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_init_key,
+	.do_cipher = des_cfb8_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_key_schedule),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_cfb8(void)
+{
+	return &des_cfb8;
+}
+
 
 static int
 des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
