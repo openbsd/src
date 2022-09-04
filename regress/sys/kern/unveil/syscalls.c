@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.33 2022/09/01 14:23:25 benno Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.34 2022/09/04 10:10:20 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -127,10 +127,8 @@ runcompare_internal(int (*func)(int), int fail_ok)
 		printf("[FAIL] unveil = %d, nonunveil = %d\n", unveil, nonunveil);
 		goto fail;
 	}
-	if (unveil == nonunveil) {
-		printf("[SUCCESS] unveil = %d, nonunveil = %d\n", unveil, nonunveil);
+	if (unveil == nonunveil)
 		return 0;
-	}
 	printf("[FAIL] unveil = %d, nonunveil = %d\n", unveil, nonunveil);
  fail:
 	return 1;
