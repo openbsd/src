@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.287 2022/09/03 13:29:33 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.288 2022/09/04 09:04:27 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1293,7 +1293,8 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if ((error = getsock(curproc, fd, &fp)) != 0)
 		return (error);
 	sosp = fp->f_data;
-	if (sosp->so_proto->pr_type != so->so_proto->pr_type) {
+	if (sosp->so_proto->pr_usrreqs->pru_send !=
+	    so->so_proto->pr_usrreqs->pru_send) {
 		error = EPROTONOSUPPORT;
 		goto frele;
 	}
