@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: iked,v 1.9 2022/08/29 19:14:25 ajacoutot Exp $
+# $OpenBSD: iked,v 1.10 2022/09/04 06:57:13 ajacoutot Exp $
 
 daemon="/sbin/iked"
 
@@ -15,6 +15,7 @@ rc_configtest() {
 rc_pre() {
 	[[ ${sasyncd_flags} != NO ]] &&
 		daemon_flags="-S ${daemon_flags}"
+	return 0
 }
 
 rc_cmd $1
