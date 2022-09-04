@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.21 2022/09/03 20:12:24 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.22 2022/09/04 08:54:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,7 +89,16 @@ static int
 des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
-	BLOCK_CIPHER_ecb_loop()
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
 	DES_ecb3_encrypt((const_DES_cblock *)(in + i), (DES_cblock *)(out + i),
 	    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3, ctx->encrypt);
 	return 1;
@@ -195,34 +204,234 @@ des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
-    EVP_CIPH_RAND_KEY, des_ede_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    des3_ctrl)
+static const EVP_CIPHER des_ede_cbc = {
+	.nid = NID_des_ede_cbc,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CBC_MODE,
+	.init = des_ede_init_key,
+	.do_cipher = des_ede_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede_cbc(void)
+{
+	return &des_ede_cbc;
+}
+
+static const EVP_CIPHER des_ede_cfb64 = {
+	.nid = NID_des_ede_cfb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_ede_init_key,
+	.do_cipher = des_ede_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede_cfb64(void)
+{
+	return &des_ede_cfb64;
+}
+
+static const EVP_CIPHER des_ede_ofb = {
+	.nid = NID_des_ede_ofb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_OFB_MODE,
+	.init = des_ede_init_key,
+	.do_cipher = des_ede_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede_ofb(void)
+{
+	return &des_ede_ofb;
+}
+
+static const EVP_CIPHER des_ede_ecb = {
+	.nid = NID_des_ede_ecb,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 0,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_ECB_MODE,
+	.init = des_ede_init_key,
+	.do_cipher = des_ede_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede_ecb(void)
+{
+	return &des_ede_ecb;
+}
+
 
 #define des_ede3_cfb64_cipher des_ede_cfb64_cipher
 #define des_ede3_ofb_cipher des_ede_ofb_cipher
 #define des_ede3_cbc_cipher des_ede_cbc_cipher
 #define des_ede3_ecb_cipher des_ede_ecb_cipher
 
-BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
-    EVP_CIPH_RAND_KEY, des_ede3_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    des3_ctrl)
+static const EVP_CIPHER des_ede3_cbc = {
+	.nid = NID_des_ede3_cbc,
+	.block_size = 8,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CBC_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
 
-BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 1,
-    EVP_CIPH_RAND_KEY, des_ede3_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    des3_ctrl)
+const EVP_CIPHER *
+EVP_des_ede3_cbc(void)
+{
+	return &des_ede3_cbc;
+}
 
-BLOCK_CIPHER_def_cfb(des_ede3, DES_EDE_KEY, NID_des_ede3, 24, 8, 8,
-    EVP_CIPH_RAND_KEY, des_ede3_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv,
-    EVP_CIPHER_get_asn1_iv,
-    des3_ctrl)
+static const EVP_CIPHER des_ede3_cfb64 = {
+	.nid = NID_des_ede3_cfb64,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede3_cfb64(void)
+{
+	return &des_ede3_cfb64;
+}
+
+static const EVP_CIPHER des_ede3_ofb = {
+	.nid = NID_des_ede3_ofb64,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_OFB_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede3_ofb(void)
+{
+	return &des_ede3_ofb;
+}
+
+static const EVP_CIPHER des_ede3_ecb = {
+	.nid = NID_des_ede3_ecb,
+	.block_size = 8,
+	.key_len = 24,
+	.iv_len = 0,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_ECB_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede3_ecb(void)
+{
+	return &des_ede3_ecb;
+}
+
+
+static const EVP_CIPHER des_ede3_cfb1 = {
+	.nid = NID_des_ede3_cfb1,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_cfb1_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede3_cfb1(void)
+{
+	return &des_ede3_cfb1;
+}
+
+
+static const EVP_CIPHER des_ede3_cfb8 = {
+	.nid = NID_des_ede3_cfb8,
+	.block_size = 1,
+	.key_len = 24,
+	.iv_len = 8,
+	.flags = EVP_CIPH_RAND_KEY | EVP_CIPH_CFB_MODE,
+	.init = des_ede3_init_key,
+	.do_cipher = des_ede3_cfb8_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(DES_EDE_KEY),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = des3_ctrl,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_des_ede3_cfb8(void)
+{
+	return &des_ede3_cfb8;
+}
+
 
 static int
 des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
