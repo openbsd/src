@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.11 2022/09/03 20:12:24 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.12 2022/09/04 08:57:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,7 +80,16 @@ static int
 idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
-	BLOCK_CIPHER_ecb_loop()
+	size_t i, bl;
+
+	bl = ctx->cipher->block_size;
+
+	if (inl < bl)
+		return 1;
+
+	inl -= bl;
+
+	for (i = 0; i <= inl; i += bl)
 	idea_ecb_encrypt(in + i, out + i, ctx->cipher_data);
 	return 1;
 }
@@ -89,13 +98,150 @@ typedef struct {
 	IDEA_KEY_SCHEDULE ks;
 } EVP_IDEA_KEY;
 
-BLOCK_CIPHER_func_cbc(idea, idea, EVP_IDEA_KEY, ks)
-BLOCK_CIPHER_func_ofb(idea, idea, 64, EVP_IDEA_KEY, ks)
-BLOCK_CIPHER_func_cfb(idea, idea, 64, EVP_IDEA_KEY, ks)
+static int
+idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		idea_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
 
-BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
-    0, idea_init_key, NULL,
-    EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
+	if (inl)
+		idea_cbc_encrypt(in, out, (long)inl, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+
+	return 1;
+}
+
+static int
+idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	while (inl >= EVP_MAXCHUNK) {
+		idea_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= EVP_MAXCHUNK;
+		in += EVP_MAXCHUNK;
+		out += EVP_MAXCHUNK;
+	}
+
+	if (inl)
+		idea_ofb64_encrypt(in, out, (long)inl, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+
+	return 1;
+}
+
+static int
+idea_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
+{
+	size_t chunk = EVP_MAXCHUNK;
+
+	if (64 == 1)
+		chunk >>= 3;
+
+	if (inl < chunk)
+		chunk = inl;
+
+	while (inl && inl >= chunk) {
+		idea_cfb64_encrypt(in, out, (long)((64 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
+		if (inl < chunk)
+			chunk = inl;
+	}
+
+	return 1;
+}
+
+
+static const EVP_CIPHER idea_cbc = {
+	.nid = NID_idea_cbc,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = 0 | EVP_CIPH_CBC_MODE,
+	.init = idea_init_key,
+	.do_cipher = idea_cbc_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(IDEA_KEY_SCHEDULE),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_idea_cbc(void)
+{
+	return &idea_cbc;
+}
+
+static const EVP_CIPHER idea_cfb64 = {
+	.nid = NID_idea_cfb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = 0 | EVP_CIPH_CFB_MODE,
+	.init = idea_init_key,
+	.do_cipher = idea_cfb64_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(IDEA_KEY_SCHEDULE),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_idea_cfb64(void)
+{
+	return &idea_cfb64;
+}
+
+static const EVP_CIPHER idea_ofb = {
+	.nid = NID_idea_ofb64,
+	.block_size = 1,
+	.key_len = 16,
+	.iv_len = 8,
+	.flags = 0 | EVP_CIPH_OFB_MODE,
+	.init = idea_init_key,
+	.do_cipher = idea_ofb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(IDEA_KEY_SCHEDULE),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_idea_ofb(void)
+{
+	return &idea_ofb;
+}
+
+static const EVP_CIPHER idea_ecb = {
+	.nid = NID_idea_ecb,
+	.block_size = 8,
+	.key_len = 16,
+	.iv_len = 0,
+	.flags = 0 | EVP_CIPH_ECB_MODE,
+	.init = idea_init_key,
+	.do_cipher = idea_ecb_cipher,
+	.cleanup = NULL,
+	.ctx_size = sizeof(IDEA_KEY_SCHEDULE),
+	.set_asn1_parameters = EVP_CIPHER_set_asn1_iv,
+	.get_asn1_parameters = EVP_CIPHER_get_asn1_iv,
+	.ctrl = NULL,
+	.app_data = NULL,
+};
+
+const EVP_CIPHER *
+EVP_idea_ecb(void)
+{
+	return &idea_ecb;
+}
+
 
 static int
 idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
