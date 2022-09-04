@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.3 2022/09/04 13:17:18 jsing Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.4 2022/09/04 15:56:51 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -95,14 +95,11 @@ sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (128 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		sm4_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		sm4_cfb128_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
