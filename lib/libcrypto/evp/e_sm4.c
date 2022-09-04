@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.2 2022/09/03 20:02:17 jsing Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.3 2022/09/04 13:17:18 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -267,5 +267,4 @@ EVP_sm4_ctr(void)
 {
 	return &sm4_ctr_mode;
 }
-
 #endif

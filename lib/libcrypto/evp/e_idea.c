@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.12 2022/09/04 08:57:32 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.13 2022/09/04 13:17:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,12 +69,32 @@
 
 #include "evp_locl.h"
 
-static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-
 /* NB idea_ecb_encrypt doesn't take an 'encrypt' argument so we treat it as a special
  * case
  */
+
+static int
+idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	if (!enc) {
+		if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE)
+			enc = 1;
+		else if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB_MODE)
+			enc = 1;
+	}
+	if (enc)
+		idea_set_encrypt_key(key, ctx->cipher_data);
+	else {
+		IDEA_KEY_SCHEDULE tmp;
+
+		idea_set_encrypt_key(key, &tmp);
+		idea_set_decrypt_key(&tmp, ctx->cipher_data);
+		explicit_bzero((unsigned char *)&tmp,
+		    sizeof(IDEA_KEY_SCHEDULE));
+	}
+	return 1;
+}
 
 static int
 idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -241,29 +261,4 @@ EVP_idea_ecb(void)
 {
 	return &idea_ecb;
 }
-
-
-static int
-idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	if (!enc) {
-		if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE)
-			enc = 1;
-		else if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CFB_MODE)
-			enc = 1;
-	}
-	if (enc)
-		idea_set_encrypt_key(key, ctx->cipher_data);
-	else {
-		IDEA_KEY_SCHEDULE tmp;
-
-		idea_set_encrypt_key(key, &tmp);
-		idea_set_decrypt_key(&tmp, ctx->cipher_data);
-		explicit_bzero((unsigned char *)&tmp,
-		    sizeof(IDEA_KEY_SCHEDULE));
-	}
-	return 1;
-}
-
 #endif

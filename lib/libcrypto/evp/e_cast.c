@@ -1,4 +1,4 @@
-/* $OpenBSD: e_cast.c,v 1.8 2022/09/03 19:51:53 jsing Exp $ */
+/* $OpenBSD: e_cast.c,v 1.9 2022/09/04 13:17:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,14 +68,19 @@
 
 #include "evp_locl.h"
 
-static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-
 typedef struct {
 	CAST_KEY ks;
 } EVP_CAST_KEY;
 
 #define data(ctx)	((EVP_CAST_KEY *)(ctx)->cipher_data)
+
+static int
+cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	CAST_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
+	return 1;
+}
 
 static int
 cast5_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -236,13 +241,5 @@ const EVP_CIPHER *
 EVP_cast5_ecb(void)
 {
 	return &cast5_ecb;
-}
-
-static int
-cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	CAST_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx), key);
-	return 1;
 }
 #endif

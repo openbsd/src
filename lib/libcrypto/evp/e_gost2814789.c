@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.6 2022/09/04 09:48:23 jsing Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.7 2022/09/04 13:17:18 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -66,6 +66,15 @@ typedef struct {
 } EVP_GOST2814789_CTX;
 
 static int
+gost2814789_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	EVP_GOST2814789_CTX *c = ctx->cipher_data;
+
+	return Gost2814789_set_key(&c->ks, key, ctx->key_len * 8);
+}
+
+static int
 gost2814789_ctl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 	EVP_GOST2814789_CTX *c = ctx->cipher_data;
@@ -87,15 +96,6 @@ gost2814789_ctl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	default:
 		return -1;
 	}
-}
-
-static int
-gost2814789_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	EVP_GOST2814789_CTX *c = ctx->cipher_data;
-
-	return Gost2814789_set_key(&c->ks, key, ctx->key_len * 8);
 }
 
 int
@@ -227,7 +227,6 @@ gost2814789_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 	return 1;
 }
 
-
 static int
 gost2814789_cnt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
@@ -316,5 +315,4 @@ EVP_gost2814789_cnt(void)
 {
 	return &gost2814789_cnt;
 }
-
 #endif

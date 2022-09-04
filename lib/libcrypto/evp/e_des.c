@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.16 2022/09/04 08:18:07 jsing Exp $ */
+/* $OpenBSD: e_des.c,v 1.17 2022/09/04 13:17:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,9 +68,29 @@
 
 #include "evp_locl.h"
 
-static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
+static int
+des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	DES_cblock *deskey = (DES_cblock *)key;
+
+	DES_set_key_unchecked(deskey, ctx->cipher_data);
+	return 1;
+}
+
+static int
+des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+{
+	switch (type) {
+	case EVP_CTRL_RAND_KEY:
+		if (DES_random_key((DES_cblock *)ptr) == 0)
+			return 0;
+		return 1;
+
+	default:
+		return -1;
+	}
+}
 
 static int
 des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -278,7 +298,6 @@ EVP_des_ecb(void)
 	return &des_ecb;
 }
 
-
 static const EVP_CIPHER des_cfb1 = {
 	.nid = NID_des_cfb1,
 	.block_size = 1,
@@ -301,7 +320,6 @@ EVP_des_cfb1(void)
 	return &des_cfb1;
 }
 
-
 static const EVP_CIPHER des_cfb8 = {
 	.nid = NID_des_cfb8,
 	.block_size = 1,
@@ -323,30 +341,4 @@ EVP_des_cfb8(void)
 {
 	return &des_cfb8;
 }
-
-
-static int
-des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	DES_cblock *deskey = (DES_cblock *)key;
-
-	DES_set_key_unchecked(deskey, ctx->cipher_data);
-	return 1;
-}
-
-static int
-des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
-{
-	switch (type) {
-	case EVP_CTRL_RAND_KEY:
-		if (DES_random_key((DES_cblock *)ptr) == 0)
-			return 0;
-		return 1;
-
-	default:
-		return -1;
-	}
-}
-
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.11 2022/09/04 07:54:59 jsing Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.12 2022/09/04 13:17:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -64,9 +64,6 @@
 
 #include "evp_locl.h"
 
-static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-
 /* Camellia subkey Structure */
 typedef struct {
 	CAMELLIA_KEY ks;
@@ -74,6 +71,22 @@ typedef struct {
 
 /* Attribute operation for Camellia */
 #define data(ctx)	((EVP_CAMELLIA_KEY *)(ctx)->cipher_data)
+
+static int
+camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	int ret;
+
+	ret = Camellia_set_key(key, ctx->key_len * 8, ctx->cipher_data);
+
+	if (ret < 0) {
+		EVPerror(EVP_R_CAMELLIA_KEY_SETUP_FAILED);
+		return 0;
+	}
+
+	return 1;
+}
 
 static int
 camellia_128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -827,22 +840,5 @@ const EVP_CIPHER *
 EVP_camellia_256_cfb8(void)
 {
 	return &camellia_256_cfb8;
-}
-
-/* The subkey for Camellia is generated. */
-static int
-camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	int ret;
-
-	ret = Camellia_set_key(key, ctx->key_len * 8, ctx->cipher_data);
-
-	if (ret < 0) {
-		EVPerror(EVP_R_CAMELLIA_KEY_SETUP_FAILED);
-		return 0;
-	}
-
-	return 1;
 }
 #endif

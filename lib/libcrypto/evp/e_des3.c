@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.22 2022/09/04 08:54:16 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.23 2022/09/04 13:17:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,14 +69,6 @@
 
 #include "evp_locl.h"
 
-static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-
-static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc);
-
-static int des3_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr);
-
 typedef struct {
     DES_key_schedule ks1;/* key schedule */
     DES_key_schedule ks2;/* key schedule (for ede) */
@@ -84,6 +76,52 @@ typedef struct {
 } DES_EDE_KEY;
 
 #define data(ctx) ((DES_EDE_KEY *)(ctx)->cipher_data)
+
+static int
+des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	DES_cblock *deskey = (DES_cblock *)key;
+
+	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
+	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
+	memcpy(&data(ctx)->ks3, &data(ctx)->ks1,
+	    sizeof(data(ctx)->ks1));
+	return 1;
+}
+
+static int
+des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	DES_cblock *deskey = (DES_cblock *)key;
+
+
+	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
+	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
+	DES_set_key_unchecked(&deskey[2], &data(ctx)->ks3);
+	return 1;
+}
+
+static int
+des3_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+{
+	DES_cblock *deskey = ptr;
+
+	switch (type) {
+	case EVP_CTRL_RAND_KEY:
+		if (DES_random_key(deskey) == 0)
+			return 0;
+		if (c->key_len >= 16 && DES_random_key(deskey + 1) == 0)
+			return 0;
+		if (c->key_len >= 24 && DES_random_key(deskey + 2) == 0)
+			return 0;
+		return 1;
+
+	default:
+		return -1;
+	}
+}
 
 static int
 des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -430,53 +468,6 @@ const EVP_CIPHER *
 EVP_des_ede3_cfb8(void)
 {
 	return &des_ede3_cfb8;
-}
-
-
-static int
-des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	DES_cblock *deskey = (DES_cblock *)key;
-
-	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
-	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
-	memcpy(&data(ctx)->ks3, &data(ctx)->ks1,
-	    sizeof(data(ctx)->ks1));
-	return 1;
-}
-
-static int
-des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-    const unsigned char *iv, int enc)
-{
-	DES_cblock *deskey = (DES_cblock *)key;
-
-
-	DES_set_key_unchecked(&deskey[0], &data(ctx)->ks1);
-	DES_set_key_unchecked(&deskey[1], &data(ctx)->ks2);
-	DES_set_key_unchecked(&deskey[2], &data(ctx)->ks3);
-	return 1;
-}
-
-static int
-des3_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
-{
-	DES_cblock *deskey = ptr;
-
-	switch (type) {
-	case EVP_CTRL_RAND_KEY:
-		if (DES_random_key(deskey) == 0)
-			return 0;
-		if (c->key_len >= 16 && DES_random_key(deskey + 1) == 0)
-			return 0;
-		if (c->key_len >= 24 && DES_random_key(deskey + 2) == 0)
-			return 0;
-		return 1;
-
-	default:
-		return -1;
-	}
 }
 
 const EVP_CIPHER *
