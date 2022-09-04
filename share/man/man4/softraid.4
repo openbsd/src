@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.48 2022/08/13 11:13:17 jmc Exp $
+.\"	$OpenBSD: softraid.4,v 1.49 2022/09/04 08:06:40 kn Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 13 2022 $
+.Dd $Mdocdate: September 4 2022 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -183,9 +183,10 @@ Initialize the partition tables of all disks:
 .Pp
 Now create RAID partitions on all disks:
 .Bd -literal -offset indent
-# printf "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd1
-# printf "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd2
-# printf "a\en\en\en\enRAID\enw\enq\en" | disklabel -E wd3
+$ echo 'RAID 1M-* 100%' > template
+# disklabel -wAT template wd1
+# disklabel -wAT template wd2
+# disklabel -wAT template wd3
 .Ed
 .Pp
 Assemble the RAID volume:
