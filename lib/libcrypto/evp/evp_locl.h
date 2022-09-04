@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.24 2022/09/03 20:12:24 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.25 2022/09/04 08:06:02 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -372,15 +372,6 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 */
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
-
-#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len) \
-	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
-	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
-			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
-			     0, cipher##_init_key, NULL, \
-			     EVP_CIPHER_set_asn1_iv, \
-			     EVP_CIPHER_get_asn1_iv, \
-			     NULL)
 
 struct evp_pkey_ctx_st {
 	/* Method associated with this operation */
