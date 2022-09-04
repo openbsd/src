@@ -1,4 +1,4 @@
-/*	$OpenBSD: octdwctwo.c,v 1.14 2021/07/24 14:43:53 mglocker Exp $	*/
+/*	$OpenBSD: octdwctwo.c,v 1.15 2022/09/04 08:42:39 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -76,9 +76,9 @@ struct cfdriver dwctwo_cd = {
 };
 
 static struct dwc2_core_params octdwctwo_params = {
-	.otg_cap = 2,
-	.otg_ver = 0,
-	.dma_enable = 1,
+	.otg_caps.hnp_support = 0,
+	.otg_caps.srp_support = 0,
+	.host_dma = 1,
 	.dma_desc_enable = 0,
 	.speed = 0,
 	.enable_dynamic_fifo = 1,
@@ -101,8 +101,7 @@ static struct dwc2_core_params octdwctwo_params = {
 	.reload_ctl = 0,
 	.ahbcfg = 0x7,
 	.uframe_sched = 1,
-	.external_id_pin_ctl = -1,
-	.hibernation = -1,
+	.external_id_pin_ctl = 0,
 };
 
 /*
@@ -223,7 +222,7 @@ octdwctwo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dwc2.sc_child = config_found(&sc->sc_dwc2.sc_bus.bdev,
 	    &sc->sc_dwc2.sc_bus, usbctlprint);
 
-	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_USB | IPL_MPSAFE,
+	sc->sc_ih = octeon_intr_establish(CIU_INT_USB, IPL_VM | IPL_MPSAFE,
 	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	KASSERT(sc->sc_ih != NULL);
 }

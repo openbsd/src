@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.82 2022/04/12 19:41:11 naddy Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.83 2022/09/04 08:42:39 mglocker Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -79,6 +79,7 @@ struct usbd_pipe_methods {
 
 struct usbd_tt {
 	struct usbd_hub	       *hub;
+	void		       *hcpriv;
 };
 
 struct usbd_port {
@@ -100,6 +101,7 @@ struct usbd_hub {
 	int			nports;
 	u_int8_t		powerdelay;
 	u_int8_t		ttthink;
+	u_int8_t		multi;
 };
 
 struct usbd_bus {

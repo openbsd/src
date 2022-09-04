@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.3 2021/07/24 06:04:44 mglocker Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.4 2022/09/04 08:42:39 mglocker Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
@@ -57,9 +57,9 @@ struct cfdriver dwctwo_cd = {
 };
 
 static struct dwc2_core_params bcm_dwctwo_params = {
-	.otg_cap			= 0,	/* HNP/SRP capable */
-	.otg_ver			= 0,	/* 1.3 */
-	.dma_enable			= 1,
+	.otg_caps.hnp_support		= 0,	/* HNP/SRP capable */
+	.otg_caps.srp_support		= 0,
+	.host_dma			= 1,
 	.dma_desc_enable		= 0,
 	.speed				= 0,	/* High Speed */
 	.enable_dynamic_fifo		= 1,
@@ -82,8 +82,7 @@ static struct dwc2_core_params bcm_dwctwo_params = {
 	.reload_ctl			= 0,
 	.ahbcfg				= 0x10,
 	.uframe_sched			= 1,
-	.external_id_pin_ctl		= -1,
-	.hibernation			= -1,
+	.external_id_pin_ctl		= 0,
 };
 
 int
@@ -117,8 +116,9 @@ bcm_dwctwo_attach(struct device *parent, struct device *self, void *aux)
 	if (idx == -1)
 		idx = 1;
 
-	sc->sc_ih = fdt_intr_establish_idx(faa->fa_node, idx, IPL_USB,
-	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
+	sc->sc_ih = fdt_intr_establish_idx(faa->fa_node, idx,
+	    IPL_VM | IPL_MPSAFE, dwc2_intr, (void *)&sc->sc_dwc2,
+	    sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL)
 		panic("%s: intr_establish failed!", __func__);
 

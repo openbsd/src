@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.96 2022/07/10 20:15:31 mlarkin Exp $ */
+/*	$OpenBSD: uhub.c,v 1.97 2022/09/04 08:42:39 mglocker Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -224,6 +224,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 	hub->nports = nports;
 	hub->powerdelay = powerdelay;
 	hub->ttthink = ttthink >> 5;
+	hub->multi = UHUB_IS_SINGLE_TT(sc) ? 0 : 1;
 
 	if (!dev->self_powered && dev->powersrc->parent != NULL &&
 	    !dev->powersrc->parent->self_powered) {
@@ -307,6 +308,7 @@ uhub_attach(struct device *parent, struct device *self, void *aux)
 		if (UHUB_IS_HIGH_SPEED(sc)) {
 			up->tt = &tts[UHUB_IS_SINGLE_TT(sc) ? 0 : p];
 			up->tt->hub = hub;
+			up->tt->hcpriv = NULL;
 		} else {
 			up->tt = NULL;
 		}

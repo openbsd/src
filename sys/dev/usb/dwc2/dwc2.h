@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.h,v 1.15 2021/07/22 18:32:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.h,v 1.16 2022/09/04 08:42:39 mglocker Exp $	*/
 /*	$NetBSD: dwc2.h,v 1.4 2014/12/23 16:20:06 macallan Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@
 
 #define STATIC
 
+// #define DWC2_DEBUG
 // #define VERBOSE_DEBUG
-// #define DWC2_DUMP_FRREM
 // #define CONFIG_USB_DWC2_TRACK_MISSED_SOFS
 
 #define CONFIG_USB_DWC2_HOST		1
@@ -62,15 +62,8 @@ typedef int irqreturn_t;
 
 #define	dma_addr_t	bus_addr_t
 
-#define DWC2_READ_4(hsotg, reg) \
-    bus_space_read_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg))
-#define DWC2_WRITE_4(hsotg, reg, data)  \
-    bus_space_write_4((hsotg)->hsotg_sc->sc_iot, (hsotg)->hsotg_sc->sc_ioh, (reg), (data));
-
 #ifdef DWC2_DEBUG
 extern int dwc2debug;
-#define WARN_ON(x)	KASSERT(!(x))
-
 #define	dev_info(d,fmt,...) do {			\
 	printf("%s: " fmt, device_xname(d), 		\
 	    ## __VA_ARGS__);				\
@@ -96,7 +89,6 @@ extern int dwc2debug;
 	}						\
 } while (0)
 #else
-#define WARN_ON(x)
 #define	dev_info(...) do { } while (0)
 #define	dev_warn(...) do { } while (0)
 #define	dev_err(...) do { } while (0)
@@ -114,15 +106,15 @@ enum usb_otg_state {
 	OTG_STATE_B_PERIPHERAL,
 };
 
-#define usleep_range(l, u)	do { DELAY(u); } while (0)
-
 #define spinlock_t		struct mutex
-#define spin_lock_init(lock)	mtx_init(lock, IPL_USB)
+#define spin_lock_init(lock)	mtx_init(lock, IPL_VM)
 #define spin_lock(l)		do { mtx_enter(l); } while (0)
 #define spin_unlock(l)		do { mtx_leave(l); } while (0)
 
 #define	spin_lock_irqsave(l, f)		\
 	do { mtx_enter(l); (void)(f); } while (0)
+
+#define	spin_trylock_irqsave(l, f)	mtx_enter_try(l)
 
 #define	spin_unlock_irqrestore(l, f)	\
 	do { mtx_leave(l); (void)(f); } while (0)
@@ -241,22 +233,28 @@ usb_disabled(void)
 static inline void
 udelay(unsigned long usecs)
 {
-
 	DELAY(usecs);
 }
 
 static inline void
-ndelay(unsigned long nsecs)
+mdelay(unsigned long msecs)
 {
-
-	DELAY(nsecs / 1000);
+	int loops = msecs;
+	while (loops--)
+		DELAY(1000);
 }
+
+static inline void
+usleep_range(unsigned long min, unsigned long max)
+{
+	DELAY((min + max) / 2);
+}
+
+#define dwc2_msleep(x)	mdelay(x)
 
 #define	EREMOTEIO	EIO
 #define	ECOMM		EIO
 #define	ENOTSUPP	ENOTSUP
-
-#define NS_TO_US(ns)	((ns + 500L) / 1000L)
 
 void dw_timeout(void *);
 

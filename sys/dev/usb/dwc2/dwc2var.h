@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.22 2021/07/30 18:05:24 mglocker Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.23 2022/09/04 08:42:40 mglocker Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -125,15 +125,55 @@ dwc2_root_intr(dwc2_softc_t *sc)
 /*
  * XXX Compat
  */
+#define USB_MAXCHILDREN		31	/* XXX: Include in to our USB stack */
 #define DWC2_MAXISOCPACKETS	40	/* XXX: Fix nframes handling */
 #define ENOSR			90
 #define device_xname(d)		((d)->dv_xname)
 #define jiffies			hardclock_ticks
-#define mstohz(ms) \
-	(__predict_false((ms) >= 0x20000) ? \
-	    ((ms +0u) / 1000u) * hz : \
-	    ((ms +0u) * hz) / 1000u)
-#define msecs_to_jiffies	mstohz
+#define msecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000)
 #define IS_ENABLED(option)	(option)
+#define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
+#define NS_TO_US(ns)		DIV_ROUND_UP(ns, 1000L)
+#define BitTime(bytecount)	(7 * 8 * bytecount / 6)
+#define BITS_PER_LONG		64
+#define unlikely(x)		 __builtin_expect(!!(x), 0)
+
+#define USB2_HOST_DELAY		5
+#define HS_NSECS(bytes)		(((55 * 8 * 2083)		\
+	+ (2083UL * (3 + BitTime(bytes))))/1000			\
+	+ USB2_HOST_DELAY)
+#define HS_NSECS_ISO(bytes)	(((38 * 8 * 2083)		\
+	+ (2083UL * (3 + BitTime(bytes))))/1000			\
+	+ USB2_HOST_DELAY)
+#define HS_USECS(bytes)		NS_TO_US(HS_NSECS(bytes))
+#define HS_USECS_ISO(bytes)	NS_TO_US(HS_NSECS_ISO(bytes))
+
+#define min_t(t, a, b) ({					\
+	t __min_a = (a);					\
+	t __min_b = (b);					\
+	__min_a < __min_b ? __min_a : __min_b; })
+#define max_t(t, a, b) ({					\
+        t __max_a = (a);					\
+        t __max_b = (b);					\
+        __max_a > __max_b ? __max_a : __max_b; })
+
+#define _WARN_STR(x)		#x
+#define WARN_ON(condition) ({					\
+	int __ret = !!(condition);				\
+	if (__ret)						\
+		printf("WARNING %s failed at %s:%d\n",		\
+		    _WARN_STR(condition), __FILE__, __LINE__);	\
+	unlikely(__ret);					\
+})
+#define WARN_ON_ONCE(condition) ({				\
+	static int __warned;					\
+	int __ret = !!(condition);				\
+	if (__ret && !__warned) {				\
+		printf("WARNING %s failed at %s:%d\n",		\
+		    _WARN_STR(condition), __FILE__, __LINE__);	\
+		__warned = 1;					\
+	}							\
+	unlikely(__ret);					\
+})
 
 #endif	/* _DWC_OTGVAR_H_ */
