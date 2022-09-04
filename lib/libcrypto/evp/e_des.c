@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.17 2022/09/04 13:17:18 jsing Exp $ */
+/* $OpenBSD: e_des.c,v 1.18 2022/09/04 15:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -98,6 +99,9 @@ des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t i, bl;
 
+	if (inl > LONG_MAX)
+		return 0;
+
 	bl = ctx->cipher->block_size;
 
 	if (inl < bl)
@@ -108,6 +112,7 @@ des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	for (i = 0; i <= inl; i += bl)
 		DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
 		    ctx->cipher_data, ctx->encrypt);
+
 	return 1;
 }
 
@@ -115,6 +120,9 @@ static int
 des_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, ctx->cipher_data,
 		    (DES_cblock *)ctx->iv, &ctx->num);
@@ -132,6 +140,9 @@ static int
 des_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ncbc_encrypt(in, out, (long)EVP_MAXCHUNK, ctx->cipher_data,
 		    (DES_cblock *)ctx->iv, ctx->encrypt);
@@ -149,6 +160,9 @@ static int
 des_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_cfb64_encrypt(in, out, (long)EVP_MAXCHUNK, ctx->cipher_data,
 		    (DES_cblock *)ctx->iv, &ctx->num, ctx->encrypt);
@@ -170,6 +184,9 @@ des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t n, chunk = EVP_MAXCHUNK/8;
 	unsigned char c[1], d[1];
+
+	if (inl > LONG_MAX)
+		return 0;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -197,6 +214,9 @@ static int
 des_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_cfb_encrypt(in, out, 8, (long)EVP_MAXCHUNK,
 		    ctx->cipher_data, (DES_cblock *)ctx->iv, ctx->encrypt);

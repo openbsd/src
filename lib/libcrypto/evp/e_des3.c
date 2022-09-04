@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.23 2022/09/04 13:17:18 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.24 2022/09/04 15:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -129,6 +130,9 @@ des_ede_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t i, bl;
 
+	if (inl > LONG_MAX)
+		return 0;
+
 	bl = ctx->cipher->block_size;
 
 	if (inl < bl)
@@ -146,6 +150,9 @@ static int
 des_ede_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ede3_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK,
 		    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
@@ -166,6 +173,9 @@ static int
 des_ede_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ede3_cbc_encrypt(in, out, (long)EVP_MAXCHUNK,
 		    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
@@ -185,6 +195,9 @@ static int
 des_ede_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ede3_cfb64_encrypt(in, out, (long)EVP_MAXCHUNK,
 		    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,
@@ -208,6 +221,10 @@ des_ede3_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t n;
 	unsigned char c[1], d[1];
+
+	if (inl > LONG_MAX)
+		return 0;
+
 	if (!(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS))
 		inl *= 8;
 
@@ -227,6 +244,9 @@ static int
 des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		DES_ede3_cfb_encrypt(in, out, 8, (long)EVP_MAXCHUNK,
 		    &data(ctx)->ks1, &data(ctx)->ks2, &data(ctx)->ks3,

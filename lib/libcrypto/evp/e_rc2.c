@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.16 2022/09/04 13:55:39 jsing Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.17 2022/09/04 15:45:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -87,6 +88,9 @@ typedef struct {
 static int
 rc2_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		RC2_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_RC2_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
 		inl -= EVP_MAXCHUNK;
@@ -104,6 +108,9 @@ static int
 rc2_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
 	size_t chunk = EVP_MAXCHUNK;
+
+	if (inl > LONG_MAX)
+		return 0;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -125,6 +132,9 @@ rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
 {
 	size_t i, bl;
 
+	if (inl > LONG_MAX)
+		return 0;
+
 	bl = ctx->cipher->block_size;
 
 	if (inl < bl)
@@ -141,6 +151,9 @@ rc2_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
 static int
 rc2_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
+	if (inl > LONG_MAX)
+		return 0;
+
 	while (inl >= EVP_MAXCHUNK) {
 		RC2_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_RC2_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
 		inl -= EVP_MAXCHUNK;
