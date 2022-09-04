@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.12 2022/09/04 13:17:18 jsing Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.13 2022/09/04 15:54:42 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -109,14 +109,11 @@ camellia_128_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsign
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (128 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -270,14 +267,11 @@ camellia_192_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsign
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (128 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -431,14 +425,11 @@ camellia_256_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsign
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (128 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb128_encrypt(in, out, (long)((128 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb128_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -576,8 +567,7 @@ camellia_128_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (1 == 1)
-		chunk >>= 3;
+	chunk >>= 3;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -621,8 +611,7 @@ camellia_192_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (1 == 1)
-		chunk >>= 3;
+	chunk >>= 3;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -666,8 +655,7 @@ camellia_256_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (1 == 1)
-		chunk >>= 3;
+	chunk >>= 3;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -712,14 +700,11 @@ camellia_128_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (8 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb8_encrypt(in, out, (long)((8 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb8_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -757,14 +742,11 @@ camellia_192_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (8 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb8_encrypt(in, out, (long)((8 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb8_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -802,14 +784,11 @@ camellia_256_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned
 {
 	size_t chunk = EVP_MAXCHUNK;
 
-	if (8 == 1)
-		chunk >>= 3;
-
 	if (inl < chunk)
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		Camellia_cfb8_encrypt(in, out, (long)((8 == 1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ? inl * 8 : inl), &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		Camellia_cfb8_encrypt(in, out, (long)inl, &((EVP_CAMELLIA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
