@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc64.8,v 1.17 2022/08/04 09:16:53 kn Exp $
+.\"	$OpenBSD: boot_sparc64.8,v 1.18 2022/09/05 10:29:28 kn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)boot_sparc.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 4 2022 $
+.Dd $Mdocdate: September 5 2022 $
 .Dt BOOT_SPARC64 8 sparc64
 .Os
 .Sh NAME
@@ -65,10 +65,6 @@ and
 respectively.
 The second-stage boot program commonly resides in the root directory as
 .Pa /ofwboot .
-.Pp
-System boot blocks are installed using
-.Xr installboot 8 ,
-which prepares an FFS filesystem partition for boot-strapping from the PROM.
 .Pp
 The boot program attempts to load the kernel from the selected
 boot device, which must currently be an SCSI
