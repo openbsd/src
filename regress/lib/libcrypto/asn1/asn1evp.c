@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1evp.c,v 1.4 2021/04/06 16:30:27 tb Exp $ */
+/* $OpenBSD: asn1evp.c,v 1.5 2022/09/05 21:06:31 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -84,12 +84,12 @@ main(int argc, char **argv)
 		goto done;
 	}
 	if (at->type != V_ASN1_SEQUENCE) {
-		fprintf(stderr, "FAIL: not a V_ASN1_SEQUENCE (%i != %i)\n",
+		fprintf(stderr, "FAIL: not a V_ASN1_SEQUENCE (%d != %d)\n",
 		    at->type, V_ASN1_SEQUENCE);
 		goto done;
 	}
 	if (at->value.sequence->type != V_ASN1_OCTET_STRING) {
-		fprintf(stderr, "FAIL: not a V_ASN1_OCTET_STRING (%i != %i)\n",
+		fprintf(stderr, "FAIL: not a V_ASN1_OCTET_STRING (%d != %d)\n",
 		    at->type, V_ASN1_OCTET_STRING);
 		goto done;
 	}
@@ -106,7 +106,7 @@ main(int argc, char **argv)
 		goto done;
 	}
 	if (num != TEST_NUM) {
-		fprintf(stderr, "FAIL: got num %li, want %li\n", num, TEST_NUM);
+		fprintf(stderr, "FAIL: got num %ld, want %ld\n", num, TEST_NUM);
 		goto done;
 	}
 	if (compare_data("octet string", data, len,
@@ -126,11 +126,11 @@ main(int argc, char **argv)
 		goto done;
 	}
 	if (num != TEST_NUM) {
-		fprintf(stderr, "FAIL: got num %li, want %li\n", num, TEST_NUM);
+		fprintf(stderr, "FAIL: got num %ld, want %ld\n", num, TEST_NUM);
 		goto done;
 	}
 	if (len != sizeof(test_octetstring)) {
-		fprintf(stderr, "FAIL: got length mismatch (%i != %zu)\n",
+		fprintf(stderr, "FAIL: got length mismatch (%d != %zu)\n",
 		    len, sizeof(test_octetstring));
 		goto done;
 	}

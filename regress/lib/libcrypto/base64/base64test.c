@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64test.c,v 1.9 2021/03/21 14:06:29 tb Exp $	*/
+/*	$OpenBSD: base64test.c,v 1.10 2022/09/05 21:06:31 tb Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -304,13 +304,13 @@ base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 
 	len = BIO_write(bio_mem, bt->in, bt->in_len);
 	if (len != bt->in_len) {
-		fprintf(stderr, "FAIL: test %i - only wrote %zi out of %zi "
+		fprintf(stderr, "FAIL: test %d - only wrote %zd out of %zd "
 		    "characters\n", test_no, len, bt->in_len);
 		failure = 1;
 		goto done;
 	}
 	if (BIO_flush(bio_mem) < 0) {
-		fprintf(stderr, "FAIL: test %i - flush failed\n", test_no);
+		fprintf(stderr, "FAIL: test %d - flush failed\n", test_no);
 		failure = 1;
 		goto done;
 	}
@@ -333,14 +333,14 @@ base64_encoding_test(int test_no, struct base64_test *bt, int test_nl)
 		goto done;
 
 	if (len != b64len) {
-		fprintf(stderr, "FAIL: test %i - encoding resulted in %zi "
-		    "characters instead of %zi\n", test_no, len, b64len);
+		fprintf(stderr, "FAIL: test %d - encoding resulted in %zd "
+		    "characters instead of %zd\n", test_no, len, b64len);
 		failure = 1;
 		goto done;
 	}
 
 	if (memcmp(buf, out, b64len) != 0) {
-		fprintf(stderr, "FAIL: test %i - encoding differs:\n", test_no);
+		fprintf(stderr, "FAIL: test %d - encoding differs:\n", test_no);
 		fprintf(stderr, "  encoding: ");
 		for (i = 0; i < len; i++)
 			fprintf(stderr, "%c", out[i]);
@@ -400,8 +400,8 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 	 */
 	len = BIO_read(bio_mem, buf, BUF_SIZE);
 	if (len != bt->valid_len && (bt->in_len != 0 || len != -1)) {
-		fprintf(stderr, "FAIL: test %i - decoding resulted in %zi "
-		    "characters instead of %zi\n", test_no, len, bt->valid_len);
+		fprintf(stderr, "FAIL: test %d - decoding resulted in %zd "
+		    "characters instead of %zd\n", test_no, len, bt->valid_len);
 		fprintf(stderr, "  input: ");
 		for (i = 0; i < inlen; i++)
 			fprintf(stderr, "%c", input[i]);
@@ -419,7 +419,7 @@ base64_decoding_test(int test_no, struct base64_test *bt, int test_nl)
 		goto done;
 
 	if (memcmp(bt->in, buf, bt->in_len) != 0) {
-		fprintf(stderr, "FAIL: test %i - decoding differs:\n", test_no);
+		fprintf(stderr, "FAIL: test %d - decoding differs:\n", test_no);
 		fprintf(stderr, "  decoding: ");
 		for (i = 0; i < len; i++)
 			fprintf(stderr, "0x%x ", buf[i]);

@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.5 2022/02/20 13:47:53 jsing Exp $ */
+/* $OpenBSD: objectstest.c,v 1.6 2022/09/05 21:06:31 tb Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -38,7 +38,7 @@ obj_compare_bytes(const char *label, const unsigned char *d1, int len1,
 {
 	if (len1 != len2) {
 		fprintf(stderr, "FAIL: %s - byte lengths differ "
-		    "(%i != %i)\n", label, len1, len2);
+		    "(%d != %d)\n", label, len1, len2);
 		fprintf(stderr, "Got:\n");
 		hexdump(d1, len1);
 		fprintf(stderr, "Want:\n");

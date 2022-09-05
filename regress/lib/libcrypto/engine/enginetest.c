@@ -1,4 +1,4 @@
-/*	$OpenBSD: enginetest.c,v 1.8 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: enginetest.c,v 1.9 2022/09/05 21:06:31 tb Exp $	*/
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -73,7 +73,7 @@ static void display_engine_list(void)
 	loop = 0;
 	printf("listing available engine types\n");
 	while (h) {
-		printf("engine %i, id = \"%s\", name = \"%s\"\n",
+		printf("engine %d, id = \"%s\", name = \"%s\"\n",
 		    loop++, ENGINE_get_id(h), ENGINE_get_name(h));
 		h = ENGINE_get_next(h);
 	}
@@ -188,9 +188,9 @@ int main(int argc, char *argv[])
 
 	printf("About to beef up the engine-type list\n");
 	for (loop = 0; loop < 512; loop++) {
-		if (asprintf(&id, "id%i", loop) == -1)
+		if (asprintf(&id, "id%d", loop) == -1)
 			goto end;
-		if (asprintf(&name, "Fake engine type %i", loop) == -1)
+		if (asprintf(&name, "Fake engine type %d", loop) == -1)
 			goto end;
 
 		if (((block[loop] = ENGINE_new()) == NULL) ||
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
 	for (loop = 0; loop < 512; loop++) {
 		if (!ENGINE_add(block[loop])) {
-			printf("\nAdding stopped at %i, (%s,%s)\n",
+			printf("\nAdding stopped at %d, (%s,%s)\n",
 				loop, ENGINE_get_id(block[loop]),
 				ENGINE_get_name(block[loop]));
 			break;

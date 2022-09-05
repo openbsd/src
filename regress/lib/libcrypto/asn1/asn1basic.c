@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.11 2022/09/03 18:54:36 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.12 2022/09/05 21:06:31 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -41,7 +41,7 @@ asn1_compare_bytes(const char *label, const unsigned char *d1, int len1,
 {
 	if (len1 != len2) {
 		fprintf(stderr, "FAIL: %s - byte lengths differ "
-		    "(%i != %i)\n", label, len1, len2);
+		    "(%d != %d)\n", label, len1, len2);
 		fprintf(stderr, "Got:\n");
 		hexdump(d1, len1);
 		fprintf(stderr, "Want:\n");

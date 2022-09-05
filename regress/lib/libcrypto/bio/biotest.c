@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.8 2022/02/19 16:00:57 jsing Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.9 2022/09/05 21:06:31 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -97,14 +97,14 @@ do_bio_get_host_ip_tests(void)
 
 		ret = BIO_get_host_ip(bgit->input, ip.c);
 		if (ret != bgit->ret) {
-			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
+			fprintf(stderr, "FAIL: test %zd (\"%s\") %s, want %s\n",
 			    i, bgit->input, ret ? "success" : "failure",
 			    bgit->ret ? "success" : "failure");
 			failed = 1;
 			continue;
 		}
 		if (ret && ntohl(ip.i) != bgit->ip) {
-			fprintf(stderr, "FAIL: test %zi (\"%s\") returned ip "
+			fprintf(stderr, "FAIL: test %zd (\"%s\") returned ip "
 			    "%x != %x\n", i, bgit->input,
 			    ntohl(ip.i), bgit->ip);
 			failed = 1;
@@ -129,14 +129,14 @@ do_bio_get_port_tests(void)
 
 		ret = BIO_get_port(bgpt->input, &port);
 		if (ret != bgpt->ret) {
-			fprintf(stderr, "FAIL: test %zi (\"%s\") %s, want %s\n",
+			fprintf(stderr, "FAIL: test %zd (\"%s\") %s, want %s\n",
 			    i, bgpt->input, ret ? "success" : "failure",
 			    bgpt->ret ? "success" : "failure");
 			failed = 1;
 			continue;
 		}
 		if (ret && port != bgpt->port) {
-			fprintf(stderr, "FAIL: test %zi (\"%s\") returned port "
+			fprintf(stderr, "FAIL: test %zd (\"%s\") returned port "
 			    "%u != %u\n", i, bgpt->input, port, bgpt->port);
 			failed = 1;
 		}

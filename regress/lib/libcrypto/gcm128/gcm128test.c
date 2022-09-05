@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcm128test.c,v 1.6 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: gcm128test.c,v 1.7 2022/09/05 21:06:31 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -880,12 +880,12 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 	if (tv->P_len > 0)
 		CRYPTO_gcm128_encrypt(&ctx, tv->P, out, out_len);
 	if (CRYPTO_gcm128_finish(&ctx, tv->T, 16)) {
-		fprintf(stderr, "TEST %i: CRYPTO_gcm128_finish failed\n",
+		fprintf(stderr, "TEST %d: CRYPTO_gcm128_finish failed\n",
 		    test_no);
 		goto fail;
 	}
 	if (tv->C_len > 0 && memcmp(out, tv->C, out_len)) {
-		fprintf(stderr, "TEST %i: encrypt failed\n", test_no);
+		fprintf(stderr, "TEST %d: encrypt failed\n", test_no);
 		goto fail;
 	}
 
@@ -897,12 +897,12 @@ do_gcm128_test(int test_no, struct gcm128_test *tv)
 	if (tv->C_len > 0)
 		CRYPTO_gcm128_decrypt(&ctx, tv->C, out, out_len);
 	if (CRYPTO_gcm128_finish(&ctx, tv->T, 16)) {
-		fprintf(stderr, "TEST %i: CRYPTO_gcm128_finish failed\n",
+		fprintf(stderr, "TEST %d: CRYPTO_gcm128_finish failed\n",
 		    test_no);
 		goto fail;
 	}
 	if (tv->P_len > 0 && memcmp(out, tv->P, out_len)) {
-		fprintf(stderr, "TEST %i: decrypt failed\n", test_no);
+		fprintf(stderr, "TEST %d: decrypt failed\n", test_no);
 		goto fail;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1complex.c,v 1.3 2022/04/28 18:36:38 jsing Exp $ */
+/* $OpenBSD: asn1complex.c,v 1.4 2022/09/05 21:06:31 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -40,7 +40,7 @@ asn1_compare_bytes(const char *label, const unsigned char *d1, int len1,
 {
 	if (len1 != len2) {
 		fprintf(stderr, "FAIL: %s - byte lengths differ "
-		    "(%i != %i)\n", label, len1, len2);
+		    "(%d != %d)\n", label, len1, len2);
 		return 0;
 	}
 	if (memcmp(d1, d2, len1) != 0) {

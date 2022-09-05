@@ -1,4 +1,4 @@
-/*	$OpenBSD: bntest.c,v 1.24 2021/12/29 23:00:32 tb Exp $	*/
+/*	$OpenBSD: bntest.c,v 1.25 2022/09/05 21:06:31 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2133,7 +2133,7 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 		}
 	}
 	if (s == 0) {
-		fprintf(stderr, "All %i tests of GF(2^m) modular solve quadratic resulted in no roots;\n", num0);
+		fprintf(stderr, "All %d tests of GF(2^m) modular solve quadratic resulted in no roots;\n", num0);
 		fprintf(stderr, "this is very unlikely and probably indicates an error.\n");
 		goto err;
 	}
