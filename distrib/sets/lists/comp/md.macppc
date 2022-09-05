@@ -24,8 +24,6 @@
 ./usr/include/macppc/ieee.h
 ./usr/include/macppc/ieeefp.h
 ./usr/include/macppc/intr.h
-./usr/include/macppc/ipkdb.h
-./usr/include/macppc/kbio.h
 ./usr/include/macppc/kcore.h
 ./usr/include/macppc/limits.h
 ./usr/include/macppc/loadfile_machdep.h
@@ -71,7 +69,6 @@
 ./usr/include/powerpc/ieee.h
 ./usr/include/powerpc/ieeefp.h
 ./usr/include/powerpc/intr.h
-./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
 ./usr/include/powerpc/mplock.h
