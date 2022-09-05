@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.64 2022/09/05 09:00:33 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.65 2022/09/05 20:11:44 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -337,8 +337,6 @@ dwc2_timeout(void *addr)
 	struct usbd_xfer *xfer = addr;
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 
-	DPRINTF("xfer=%p\n", xfer);
-
 	if (sc->sc_bus.dying) {
 		dwc2_timeout_task(addr);
 		return;
@@ -355,8 +353,6 @@ dwc2_timeout_task(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
 	int s;
-
-	DPRINTF("xfer=%p\n", xfer);
 
 	s = splusb();
 	dwc2_abort_xfer(xfer, USBD_TIMEOUT);
@@ -543,11 +539,8 @@ dwc2_noop(struct usbd_pipe *pipe)
 STATIC void
 dwc2_device_clear_toggle(struct usbd_pipe *pipe)
 {
-
 	DPRINTF("toggle %d -> 0", pipe->endpoint->savedtoggle);
 }
-
-/***********************************************************************/
 
 /*
  * Data structures and routines to emulate the root hub.
@@ -1187,9 +1180,6 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		dwc2_urb->interval = ival;
 	}
 
-	/* XXXNH bring down from callers?? */
-// 	mtx_enter(&sc->sc_lock);
-
 	xfer->actlen = 0;
 
 	KASSERT(xfertype != UE_ISOCHRONOUS ||
@@ -1312,16 +1302,13 @@ dwc2_interrupt(struct dwc2_softc *sc)
 {
 	int ret = 0;
 
-	if (sc->sc_hcdenabled) {
+	if (sc->sc_hcdenabled)
 		ret |= dwc2_handle_hcd_intr(sc->sc_hsotg);
-	}
 
 	ret |= dwc2_handle_common_intr(sc->sc_hsotg);
 
 	return ret;
 }
-
-/***********************************************************************/
 
 int
 dwc2_detach(struct dwc2_softc *sc, int flags)
@@ -1334,11 +1321,11 @@ dwc2_detach(struct dwc2_softc *sc, int flags)
 	return rv;
 }
 
-/***********************************************************************/
 int
 dwc2_init(struct dwc2_softc *sc)
 {
-	int err = 0;
+	int retval, err = 0;
+	struct dwc2_hsotg *hsotg;
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 	sc->sc_bus.methods = &dwc2_bus_methods;
@@ -1363,22 +1350,8 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_hsotg->hsotg_sc = sc;
 	sc->sc_hsotg->dev = &sc->sc_bus.bdev;
 	sc->sc_hcdenabled = true;
+	hsotg = sc->sc_hsotg;
 
-	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-	int retval;
-#if 0
-	if (sc->sc_params == NULL) {
-		/* Default all params to autodetect */
-		dwc2_set_all_params(&defparams, -1);
-		sc->sc_params = &defparams;
-
-		/*
-		 * Disable descriptor dma mode by default as the HW can support
-		 * it, but does not support it for SPLIT transactions.
-		 */
-		defparams.dma_desc_enable = 0;
-	}
-#endif
 	hsotg->dr_mode = USB_DR_MODE_HOST;
 
 	/*
