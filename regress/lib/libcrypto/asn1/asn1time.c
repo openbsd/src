@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.14 2022/07/05 04:49:02 anton Exp $ */
+/* $OpenBSD: asn1time.c,v 1.15 2022/09/05 20:53:01 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -319,7 +319,7 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 		int64_t a = timegm(&tm);
 		int64_t b = att->time;
 		fprintf(stderr, "FAIL: test %i - times don't match, expected %lld got %lld\n",
-		    test_no, b, a);
+		    test_no, (long long)b, (long long)a);
 		goto done;
 	}
 
