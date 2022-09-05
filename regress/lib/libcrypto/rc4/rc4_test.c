@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc4_test.c,v 1.1 2022/09/03 17:43:14 tb Exp $ */
+/*	$OpenBSD: rc4_test.c,v 1.2 2022/09/05 21:34:23 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -395,6 +395,11 @@ rc4_test(void)
 			goto failed;
 		}
 
+		if (!EVP_CIPHER_CTX_reset(ctx)) {
+			fprintf(stderr, "FAIL: EVP_CIPHER_CTX_reset failed\n");
+			goto failed;
+		}
+
 		if (memcmp(rt->out, out, rt->len) != 0) {
 			fprintf(stderr, "FAIL: EVP encryption mismatch\n");
 			goto failed;
@@ -424,6 +429,11 @@ rc4_test(void)
 
 		if (!EVP_DecryptFinal_ex(ctx, out, &out_len)) {
 			fprintf(stderr, "FAIL: EVP_DecryptFinal_ex failed\n");
+			goto failed;
+		}
+
+		if (!EVP_CIPHER_CTX_reset(ctx)) {
+			fprintf(stderr, "FAIL: EVP_CIPHER_CTX_reset failed\n");
 			goto failed;
 		}
 
