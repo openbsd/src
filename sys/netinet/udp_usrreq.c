@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.301 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.302 2022/09/05 14:56:09 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -125,6 +125,8 @@ u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 const struct pr_usrreqs udp_usrreqs = {
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
+	.pru_lock	= udp_lock,
+	.pru_unlock	= udp_unlock,
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
@@ -140,6 +142,8 @@ const struct pr_usrreqs udp_usrreqs = {
 const struct pr_usrreqs udp6_usrreqs = {
 	.pru_attach	= udp_attach,
 	.pru_detach	= udp_detach,
+	.pru_lock	= udp_lock,
+	.pru_unlock	= udp_unlock,
 	.pru_bind	= udp_bind,
 	.pru_connect	= udp_connect,
 	.pru_disconnect	= udp_disconnect,
@@ -1110,6 +1114,24 @@ udp_detach(struct socket *so)
 
 	in_pcbdetach(inp);
 	return (0);
+}
+
+void
+udp_lock(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_enter(&inp->inp_mtx);
+}
+
+void
+udp_unlock(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_leave(&inp->inp_mtx);
 }
 
 int

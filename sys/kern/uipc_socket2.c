@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.127 2022/08/13 21:01:46 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.128 2022/09/05 14:56:09 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -360,6 +360,24 @@ solock(struct socket *so)
 	}
 }
 
+void
+solock_shared(struct socket *so)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		if (so->so_proto->pr_usrreqs->pru_lock != NULL) {
+			NET_LOCK_SHARED();
+			pru_lock(so);
+		} else
+			NET_LOCK();
+		break;
+	default:
+		rw_enter_write(&so->so_lock);
+		break;
+	}
+}
+
 int
 solock_persocket(struct socket *so)
 {
@@ -403,6 +421,24 @@ sounlock(struct socket *so)
 }
 
 void
+sounlock_shared(struct socket *so)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		if (so->so_proto->pr_usrreqs->pru_unlock != NULL) {
+			pru_unlock(so);
+			NET_UNLOCK_SHARED();
+		} else
+			NET_UNLOCK();
+		break;
+	default:
+		rw_exit_write(&so->so_lock);
+		break;
+	}
+}
+
+void
 soassertlocked(struct socket *so)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
@@ -425,7 +461,15 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
 	case PF_INET6:
+		if (so->so_proto->pr_usrreqs->pru_unlock != NULL &&
+		    rw_status(&netlock) == RW_READ) {
+			pru_unlock(so);
+		}
 		ret = rwsleep_nsec(ident, &netlock, prio, wmesg, nsecs);
+		if (so->so_proto->pr_usrreqs->pru_lock != NULL &&
+		    rw_status(&netlock) == RW_READ) {
+			pru_lock(so);
+		}
 		break;
 	default:
 		ret = rwsleep_nsec(ident, &so->so_lock, prio, wmesg, nsecs);
