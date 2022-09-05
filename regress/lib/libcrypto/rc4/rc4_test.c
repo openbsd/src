@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc4_test.c,v 1.2 2022/09/05 21:34:23 tb Exp $ */
+/*	$OpenBSD: rc4_test.c,v 1.3 2022/09/05 21:36:46 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -177,7 +177,7 @@ static const struct rc4_test rc4_tests[] = {
 			0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
 		},
 		.key_len = 8,
-		.len = 10,
+		.len = 512,
 		.in = {
 			0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
 			0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
