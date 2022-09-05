@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.34 2022/01/08 06:49:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.35 2022/09/05 20:09:24 miod Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -38,6 +38,8 @@
 
 #include "util.h"
 #include "resolve.h"
+
+#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
@@ -218,99 +220,6 @@ static const int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/* 163	GLOB_DAT */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 164	JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),	/* 165 RELATIVE */
-	_RF_E,						/* 166	R_SH_GOTOFF */
-	_RF_E,						/* 167	R_SH_GOTPC */
-	_RF_E,						/* 168	R_SH_GOTPLT32 */
-	_RF_E,						/* 169	R_SH_GOT_LOW16 */
-	_RF_E,						/* 170	R_SH_GOT_MEDLOW16 */
-	_RF_E,						/* 171	R_SH_GOT_MEDHI16 */
-	_RF_E,						/* 172	R_SH_GOT_HI16 */
-	_RF_E,						/* 173	R_SH_GOTPLT_LOW16 */
-	_RF_E,						/* 174	R_SH_GOTPLT_MEDLOW16 */
-	_RF_E,						/* 175	R_SH_GOTPLT_MEDHI16 */
-	_RF_E,						/* 176	R_SH_GOTPLT_HI16 */
-	_RF_E,						/* 177	R_SH_PLT_LOW16 */
-	_RF_E,						/* 178	R_SH_PLT_MEDLOW16 */
-	_RF_E,						/* 179	R_SH_PLT_MEDHI16 */
-	_RF_E,						/* 180	R_SH_PLT_HI16 */
-	_RF_E,						/* 181	R_SH_GOTOFF_LOW16 */
-	_RF_E,						/* 182	R_SH_GOTOFF_MEDLOW16 */
-	_RF_E,						/* 183	R_SH_GOTOFF_MEDHI16 */
-	_RF_E,						/* 184	R_SH_GOTOFF_HI16 */
-	_RF_E,						/* 185	R_SH_GOTPC_LOW16 */
-	_RF_E,						/* 186	R_SH_GOTPC_MEDLOW16 */
-	_RF_E,						/* 187	R_SH_GOTPC_MEDHI16 */
-	_RF_E,						/* 188	R_SH_GOTPC_HI16 */
-	_RF_E,						/* 189	R_SH_GOT10BY4 */
-	_RF_E,						/* 190	R_SH_GOTPLT10BY4 */
-	_RF_E,						/* 191	R_SH_GOT10BY8 */
-	_RF_E,						/* 192	R_SH_GOTPLT10BY8 */
-#ifdef SH_SUPPORT_64_BIT
-	_RF_E,						/* 193	R_SH_COPY64 */
-	_RF_E,						/* 194	R_SH_GLOB_DAT64 */
-	_RF_E,						/* 195	R_SH_JMP_SLOT64 */
-	_RF_E,						/* 196	R_SH_RELATIVE64 */
-	_RF_E,						/* 197	Unused */
-	_RF_E,						/* 198	Unused */
-	_RF_E,						/* 199	Unused */
-	_RF_E,						/* 200	Unused */
-	_RF_E,						/* 201	Unused */
-	_RF_E,						/* 202	Unused */
-	_RF_E,						/* 203	Unused */
-	_RF_E,						/* 204	Unused */
-	_RF_E,						/* 205	Unused */
-	_RF_E,						/* 206	Unused */
-	_RF_E,						/* 207	Unused */
-	_RF_E,						/* 208	Unused */
-	_RF_E,						/* 209	Unused */
-	_RF_E,						/* 210	Unused */
-	_RF_E,						/* 211	Unused */
-	_RF_E,						/* 212	Unused */
-	_RF_E,						/* 213	Unused */
-	_RF_E,						/* 214	Unused */
-	_RF_E,						/* 215	Unused */
-	_RF_E,						/* 216	Unused */
-	_RF_E,						/* 217	Unused */
-	_RF_E,						/* 218	Unused */
-	_RF_E,						/* 219	Unused */
-	_RF_E,						/* 220	Unused */
-	_RF_E,						/* 221	Unused */
-	_RF_E,						/* 222	Unused */
-	_RF_E,						/* 223	Unused */
-	_RF_E,						/* 224	Unused */
-	_RF_E,						/* 225	Unused */
-	_RF_E,						/* 226	Unused */
-	_RF_E,						/* 227	Unused */
-	_RF_E,						/* 228	Unused */
-	_RF_E,						/* 229	Unused */
-	_RF_E,						/* 230	Unused */
-	_RF_E,						/* 231	Unused */
-	_RF_E,						/* 232	Unused */
-	_RF_E,						/* 233	Unused */
-	_RF_E,						/* 234	Unused */
-	_RF_E,						/* 235	Unused */
-	_RF_E,						/* 236	Unused */
-	_RF_E,						/* 237	Unused */
-	_RF_E,						/* 238	Unused */
-	_RF_E,						/* 239	Unused */
-	_RF_E,						/* 240	Unused */
-	_RF_E,						/* 241	Unused */
-	_RF_E,						/* 242	R_SH_SHMEDIA_CODE */
-	_RF_E,						/* 243	R_SH_PT_16 */
-	_RF_E,						/* 244	R_SH_IMMS16 */
-	_RF_E,						/* 245	R_SH_IMMU16 */
-	_RF_E,						/* 246	R_SH_IMM_LOW16 */
-	_RF_E,						/* 247	R_SH_IMM_LOW16_PCREL */
-	_RF_E,						/* 248	R_SH_IMM_MEDLOW16 */
-	_RF_E,						/* 249	R_SH_IMM_MEDLOW16_PCREL */
-	_RF_E,						/* 250	R_SH_IMM_MEDHI16 */
-	_RF_E,						/* 251	R_SH_IMM_MEDHI16_PCREL */
-	_RF_E,						/* 252	R_SH_IMM_HI16 */
-	_RF_E,						/* 253	R_SH_IMM_HI16_PCREL */
-	_RF_E,						/* 254	R_SH_64 */
-	_RF_E,						/* 255	R_SH_64_PCREL */
-	0
-#endif
 };
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
@@ -319,6 +228,9 @@ static const int reloc_target_flags[] = {
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
+#define RELOC_ERROR(t) \
+	((t) >= nitems(reloc_target_flags) || (reloc_target_flags[t] & _RF_E))
+
 static const int reloc_target_bitmask[] = {
 #define _BM(x)  (x == 32? ~0 : ~(-(1UL << (x))))
 	_BM(0),		/* 0	R_SH_NONE */
@@ -487,98 +399,6 @@ static const int reloc_target_bitmask[] = {
 	_BM(32),	/* 163	R_SH_GLOB_DAT */
 	_BM(0),		/* 164	R_SH_JMP_SLOT */
 	_BM(32),	/* 165	R_SH_RELATIVE */
-	_BM(0),		/* 166	R_SH_GOTOFF */
-	_BM(0),		/* 167	R_SH_GOTPC */
-	_BM(0),		/* 168	R_SH_GOTPLT32 */
-	_BM(0),		/* 169	R_SH_GOT_LOW16 */
-	_BM(0),		/* 170	R_SH_GOT_MEDLOW16 */
-	_BM(0),		/* 171	R_SH_GOT_MEDHI16 */
-	_BM(0),		/* 172	R_SH_GOT_HI16 */
-	_BM(0),		/* 173	R_SH_GOTPLT_LOW16 */
-	_BM(0),		/* 174	R_SH_GOTPLT_MEDLOW16 */
-	_BM(0),		/* 175	R_SH_GOTPLT_MEDHI16 */
-	_BM(0),		/* 176	R_SH_GOTPLT_HI16 */
-	_BM(0),		/* 177	R_SH_PLT_LOW16 */
-	_BM(0),		/* 178	R_SH_PLT_MEDLOW16 */
-	_BM(0),		/* 179	R_SH_PLT_MEDHI16 */
-	_BM(0),		/* 180	R_SH_PLT_HI16 */
-	_BM(0),		/* 181	R_SH_GOTOFF_LOW16 */
-	_BM(0),		/* 182	R_SH_GOTOFF_MEDLOW16 */
-	_BM(0),		/* 183	R_SH_GOTOFF_MEDHI16 */
-	_BM(0),		/* 184	R_SH_GOTOFF_HI16 */
-	_BM(0),		/* 185	R_SH_GOTPC_LOW16 */
-	_BM(0),		/* 186	R_SH_GOTPC_MEDLOW16 */
-	_BM(0),		/* 187	R_SH_GOTPC_MEDHI16 */
-	_BM(0),		/* 188	R_SH_GOTPC_HI16 */
-	_BM(0),		/* 189	R_SH_GOT10BY4 */
-	_BM(0),		/* 190	R_SH_GOTPLT10BY4 */
-	_BM(0),		/* 191	R_SH_GOT10BY8 */
-	_BM(0),		/* 192	R_SH_GOTPLT10BY8 */
-#ifdef SH_SUPPORT_64_BIT
-	_BM(0),		/* 193	R_SH_COPY64 */
-	_BM(0),		/* 194	R_SH_GLOB_DAT64 */
-	_BM(0),		/* 195	R_SH_JMP_SLOT64 */
-	_BM(0),		/* 196	R_SH_RELATIVE64 */
-	_BM(0),		/* 197 xxx */
-	_BM(0),		/* 198 xxx */
-	_BM(0),		/* 199 xxx */
-	_BM(0),		/* 200 xxx */
-	_BM(0),		/* 201 xxx */
-	_BM(0),		/* 202 xxx */
-	_BM(0),		/* 203 xxx */
-	_BM(0),		/* 204 xxx */
-	_BM(0),		/* 205 xxx */
-	_BM(0),		/* 206 xxx */
-	_BM(0),		/* 207 xxx */
-	_BM(0),		/* 208 xxx */
-	_BM(0),		/* 209 xxx */
-	_BM(0),		/* 210 xxx */
-	_BM(0),		/* 211 xxx */
-	_BM(0),		/* 212 xxx */
-	_BM(0),		/* 213 xxx */
-	_BM(0),		/* 214 xxx */
-	_BM(0),		/* 215 xxx */
-	_BM(0),		/* 216 xxx */
-	_BM(0),		/* 217 xxx */
-	_BM(0),		/* 218 xxx */
-	_BM(0),		/* 219 xxx */
-	_BM(0),		/* 220 xxx */
-	_BM(0),		/* 221 xxx */
-	_BM(0),		/* 222 xxx */
-	_BM(0),		/* 223 xxx */
-	_BM(0),		/* 224 xxx */
-	_BM(0),		/* 225 xxx */
-	_BM(0),		/* 226 xxx */
-	_BM(0),		/* 227 xxx */
-	_BM(0),		/* 228 xxx */
-	_BM(0),		/* 229  xxx */
-	_BM(0),		/* 230 xxx */
-	_BM(0),		/* 231 xxx */
-	_BM(0),		/* 232 xxx */
-	_BM(0),		/* 233 xxx */
-	_BM(0),		/* 234 xxx */
-	_BM(0),		/* 235 xxx */
-	_BM(0),		/* 236 xxx */
-	_BM(0),		/* 237 xxx */
-	_BM(0),		/* 238 xxx */
-	_BM(0),		/* 239 xxx */
-	_BM(0),		/* 240 xxx */
-	_BM(0),		/* 241 xxx */
-	_BM(0),		/* 242	R_SH_SHMEDIA_CODE */
-	_BM(0),		/* 243	R_SH_PT_16 */
-	_BM(0),		/* 244	R_SH_IMMS16 */
-	_BM(0),		/* 245	R_SH_IMMU16 */
-	_BM(0),		/* 246	R_SH_IMM_LOW16 */
-	_BM(0),		/* 247	R_SH_IMM_LOW16_PCREL */
-	_BM(0),		/* 248	R_SH_IMM_MEDLOW16 */
-	_BM(0),		/* 249	R_SH_IMM_MEDLOW16_PCREL */
-	_BM(0),		/* 250	R_SH_IMM_MEDHI16 */
-	_BM(0),		/* 251	R_SH_IMM_MEDHI16_PCREL */
-	_BM(0),		/* 252	R_SH_IMM_HI16 */
-	_BM(0),		/* 253	R_SH_IMM_HI16_PCREL */
-	_BM(0),		/* 254	R_SH_64 */
-	_BM(0),		/* 255	R_SH_64_PCREL */
-#endif
 #undef _BM
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
@@ -631,7 +451,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		type = ELF_R_TYPE(rels->r_info);
 
-		if (reloc_target_flags[type] & _RF_E)
+		if (RELOC_ERROR(type))
 			_dl_die("bad relocation obj %s %ld %d",
 			    object->load_name, i, type);
 
