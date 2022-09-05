@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.34 2022/09/04 10:10:20 anton Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.35 2022/09/05 05:34:25 anton Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -16,65 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <err.h>
 #include <fcntl.h>
-#include <errno.h>
-#include <sys/errno.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
 #include <sys/mount.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 
-pid_t child;
-char uv_dir1[] = "/tmp/uvdir1.XXXXXX"; /* unveiled */
-char uv_dir2[] = "/tmp/uvdir2.XXXXXX"; /* not unveiled */
-char uv_file1[] = "/tmp/uvfile1.XXXXXX"; /* unveiled */
-char uv_file2[] = "/tmp/uvfile2.XXXXXX"; /* not unveiled */
-
-#define UV_SHOULD_SUCCEED(A, B) do {					\
-	if (A) {							\
-		err(1, "%s:%d - %s", __FILE__, __LINE__, B);		\
-	}								\
-} while (0)
-
-#define UV_SHOULD_ENOENT(A, B) do {					\
-	if (A) {				 			\
-		if (do_uv && errno != ENOENT)				\
-			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
-	} else {							\
-		if (do_uv)						\
-			errx(1, "%s:%d - %s worked when it should not "	\
-			    "have",  __FILE__, __LINE__, B);		\
-	}								\
-} while(0)
-
-#define UV_SHOULD_EACCES(A, B) do {					\
-	if (A) {				 			\
-		if (do_uv && errno != EACCES)				\
-			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
-	} else {							\
-		if (do_uv)						\
-			errx(1, "%s:%d - %s worked when it should not "	\
-			    "have",  __FILE__, __LINE__, B);		\
-	}								\
-} while(0)
-
-#define UV_SHOULD_EPERM(A, B) do {					\
-	if (A) {				 			\
-		if (do_uv && errno != EPERM)				\
-			err(1, "%s:%d - %s", __FILE__, __LINE__, B);	\
-	} else {							\
-		if (do_uv)						\
-			errx(1, "%s:%d - %s worked when it should not "	\
-			    "have",  __FILE__, __LINE__, B);		\
-	}								\
-} while(0)
+#include "unveil.h"
 
 /* all the things unless we override */
 const char *uv_flags = "rwxc";
@@ -94,52 +42,6 @@ do_unveil2(void)
 	if (unveil(uv_dir1, uv_flags) == -1)
                 err(1, "%s:%d - unveil", __FILE__, __LINE__);
 }
-
-static int
-runcompare_internal(int (*func)(int), int fail_ok)
-{
-	int unveil = 0, nonunveil = 0, status;
-	pid_t pid = fork();
-	if (pid == 0) {
-		exit(func(0));
-	}
-	status = 0;
-	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		nonunveil = WEXITSTATUS(status);
-	if (WIFSIGNALED(status)) {
-		printf("[FAIL] nonunveil exited with signal %d\n", WTERMSIG(status));
-		goto fail;
-	}
-	pid = fork();
-	if (pid == 0) {
-		exit(func(1));
-	}
-	status = 0;
-	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		unveil = WEXITSTATUS(status);
-	if (WIFSIGNALED(status)) {
-		printf("[FAIL] nonunveil exited with signal %d\n", WTERMSIG(status));
-		goto fail;
-	}
-	if (!fail_ok && (unveil || nonunveil)) {
-		printf("[FAIL] unveil = %d, nonunveil = %d\n", unveil, nonunveil);
-		goto fail;
-	}
-	if (unveil == nonunveil)
-		return 0;
-	printf("[FAIL] unveil = %d, nonunveil = %d\n", unveil, nonunveil);
- fail:
-	return 1;
-}
-
-static int
-runcompare(int (*func)(int))
-{
-	return runcompare_internal(func, 1);
-}
-
 
 static int
 test_openat(int do_uv)
@@ -1007,115 +909,12 @@ test_noaccess_node(int do_uv)
 	return 0;
 }
 
-static int
-test_bind_unix_socket(int do_uv)
-{
-	struct sockaddr_un	sun1, sun2, sun3;
-
-	int			fd1, c_fd1, fd2, c_fd2, fd3;
-	char			*path1, *path2, *path3;
-
-	char uv_dir3[] = "/tmp/uvdir3.XXXXXX";
-
-	if (asprintf(&path1, "%s/1.sock", uv_dir1) == -1)
-		err(1, NULL);
-	if (asprintf(&path2, "%s/2.sock", uv_dir2) == -1)
-		err(1, NULL);
-	if (asprintf(&path3, "%s/3.sock", uv_dir3) == -1)
-		err(1, NULL);
-
-	memset(&sun1, 0, sizeof(sun1));
-	sun1.sun_family = AF_UNIX;
-	strlcpy(sun1.sun_path, path1, sizeof(sun1.sun_path));
-
-	memset(&sun2, 0, sizeof(sun2));
-	sun2.sun_family = AF_UNIX;
-	strlcpy(sun2.sun_path, path2, sizeof(sun2.sun_path));
-
-	memset(&sun3, 0, sizeof(sun3));
-	sun3.sun_family = AF_UNIX;
-	strlcpy(sun3.sun_path, path3, sizeof(sun3.sun_path));
-
-	if (unlink(path1) == -1)
-		if (errno != ENOENT) {
-			warn("%s: unlink %s", __func__, path1);
-			return (-1);
-		}
-	if (unlink(path2) == -1)
-		if (errno != ENOENT) {
-			warn("%s: unlink %s", __func__, path2);
-			return (-1);
-		}
-	if (unlink(path3) == -1)
-		if (errno != ENOENT) {
-			warn("%s: unlink %s", __func__, path3);
-			return (-1);
-		}
-
-	if (do_uv) {
-		printf("testing bind and connect on unix socket\n");
-		/* printf("testing bind on unix socket %s and %s\n", path1, path2); */
-		if (unveil(uv_dir1, "wc") == -1) /* both bind and connect work */
-			err(1, "unveil");
-		if (unveil(uv_dir2, "c") == -1) /*  bind works, connect fails */
-			err(1, "unveil");
-		if (unveil(uv_dir3, "") == -1) /* no bind, dont test anything else */
-			err(1, "unveil");
-	}
-
-	if ((fd1 = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "%s: socket", __func__);
-	UV_SHOULD_SUCCEED((bind(fd1, (struct sockaddr *)&sun1, sizeof(sun1)) == -1), "bind");
-	if (listen(fd1, 5) == -1)
-		err(1, "%s: listen", __func__);
-
-	if ((fd2 = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "%s: socket", __func__);
-	UV_SHOULD_SUCCEED((bind(fd2, (struct sockaddr *)&sun2, sizeof(sun2)) == -1), "bind");
-	if (listen(fd2, 5) == -1)
-		err(1, "%s: listen", __func__);
-
-	if ((fd3 = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "%s: socket", __func__);
-	UV_SHOULD_ENOENT((bind(fd3, (struct sockaddr *)&sun3, sizeof(sun3)) == -1), "bind");
-
-	/* Connect to control socket. */
-
-	if ((c_fd1 = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "socket");
-	UV_SHOULD_SUCCEED((connect(c_fd1, (struct sockaddr *)&sun1, sizeof(sun1)) == -1), "connect");
-
-	if ((c_fd2 = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		err(1, "socket");
-	UV_SHOULD_EACCES((connect(c_fd2, (struct sockaddr *)&sun2, sizeof(sun2)) == -1), "connect");
-
-	close(fd1);
-	close(c_fd1);
-	close(fd2);
-	close(c_fd2);
-	return 0;
-}
-
-
-
-
 int
-main (int argc, char *argv[])
+main(int argc, char *argv[])
 {
-	int fd1, fd2, failures = 0;
-	char filename[256];
+	int failures = 0;
 
-	UV_SHOULD_SUCCEED((mkdtemp(uv_dir1) == NULL), "mkdtmp");
-	UV_SHOULD_SUCCEED((mkdtemp(uv_dir2) == NULL), "mkdtmp");
-	UV_SHOULD_SUCCEED(((fd1 = mkstemp(uv_file1)) == -1), "mkstemp");
-	close(fd1);
-	UV_SHOULD_SUCCEED((chmod(uv_file1, S_IRWXU) == -1), "chmod");
-	UV_SHOULD_SUCCEED(((fd2 = mkstemp(uv_file2)) == -1), "mkstemp");
-	(void) snprintf(filename, sizeof(filename), "/%s/subdir", uv_dir1);
-	UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
-	(void) snprintf(filename, sizeof(filename), "/%s/subdir", uv_dir2);
-	UV_SHOULD_SUCCEED((mkdir(filename, 0777) == -1), "mkdir");
-	close(fd2);
+	test_setup();
 
 	failures += runcompare(test_open);
 	failures += runcompare(test_openat);
@@ -1151,6 +950,5 @@ main (int argc, char *argv[])
 	failures += runcompare(test_fork_locked);
 	failures += runcompare(test_intermediate_node);
 	failures += runcompare(test_noaccess_node);
-	failures += runcompare(test_bind_unix_socket);
 	exit(failures);
 }
