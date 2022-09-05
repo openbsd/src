@@ -1,4 +1,4 @@
-/* $OpenBSD: rfc5280time.c,v 1.6 2022/09/05 21:08:08 tb Exp $ */
+/* $OpenBSD: rfc5280time.c,v 1.7 2022/09/05 21:12:08 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2015 Bob Beck <beck@opebsd.org>
@@ -325,14 +325,14 @@ rfc5280_utctime_test(int test_no, struct rfc5280_time_test *att)
 
 	if ((i = X509_cmp_time(ut, &att->time)) != -1) {
 		fprintf(stderr, "FAIL: test %d - X509_cmp_time failed - returned %d compared to %lld\n",
-		    test_no, i, att->time);
+		    test_no, i, (long long)att->time);
 		goto done;
 	}
 
 	att->time--;
 	if ((i = X509_cmp_time(ut, &att->time)) != 1) {
 		fprintf(stderr, "FAIL: test %d - X509_cmp_time failed - returned %d compared to %lld\n",
-		    test_no, i, att->time);
+		    test_no, i, (long long)att->time);
 		goto done;
 	}
 	att->time++;
