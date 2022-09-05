@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.353 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.354 2022/09/05 10:31:25 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -111,6 +111,8 @@ void	rcb_ref(void *, void *);
 void	rcb_unref(void *, void *);
 int	route_output(struct mbuf *, struct socket *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
+int	route_attach(struct socket *, int);
+int	route_detach(struct socket *);
 int	route_disconnect(struct socket *);
 int	route_shutdown(struct socket *);
 int	route_rcvd(struct socket *);
