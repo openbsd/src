@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.294 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.295 2022/09/05 16:37:47 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -167,6 +167,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_pwrite] = PLEDGE_STDIO,
 	[SYS_pwritev] = PLEDGE_STDIO,
 	[SYS_recvmsg] = PLEDGE_STDIO,
+	[SYS_recvmmsg] = PLEDGE_STDIO,
 	[SYS_recvfrom] = PLEDGE_STDIO,
 	[SYS_ftruncate] = PLEDGE_STDIO,
 	[SYS_lseek] = PLEDGE_STDIO,
@@ -195,6 +196,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	 * "unix", "dns".  SCM_RIGHTS requires "sendfd" or "recvfd".
 	 */
 	[SYS_sendmsg] = PLEDGE_STDIO,
+	[SYS_sendmmsg] = PLEDGE_STDIO,
 
 	/* Common signal operations */
 	[SYS_nanosleep] = PLEDGE_STDIO,
