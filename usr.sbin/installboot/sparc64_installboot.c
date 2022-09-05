@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_installboot.c,v 1.10 2022/08/31 19:40:37 kn Exp $	*/
+/*	$OpenBSD: sparc64_installboot.c,v 1.11 2022/09/05 11:12:20 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -97,10 +97,17 @@ md_prepareboot(int devfd, char *dev)
 void
 md_installboot(int devfd, char *dev)
 {
+	static int prefixed = 0;
+
 	/* XXX - is this necessary? */
 	sync();
 
-	bootldr = fileprefix(root, bootldr);
+	/*
+	 * sr_install_bootblk() calls md_installboot() for every softraid chunk
+	 * but the path must be prefixed only once.
+	 */
+	if (!prefixed++)
+		bootldr = fileprefix(root, bootldr);
 	if (bootldr == NULL)
 		exit(1);
 	if (verbose)

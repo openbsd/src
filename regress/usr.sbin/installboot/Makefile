@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2022/09/04 08:24:09 kn Exp $
+#	$OpenBSD: Makefile,v 1.19 2022/09/05 11:12:20 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -43,7 +43,6 @@ STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
 
 .if ${USE_SOFTRAID:L} == "yes"
-# installboot(8) behaviour for multi-chunk softraid(4) differs across platforms
 NDISKS ?=		1 2
 .else
 NDISKS =		1
@@ -121,7 +120,6 @@ dry-default:
 dry-root:
 	${SUDO} ${DRY_RUN} -r/ -- "$$(<${ROOTDEVFILE})"
 
-# XXX fails with NDISKS > 1 on sparc64, 1 <= NDISKS <= 4 works on amd64
 root:
 	${SUDO} ${REAL_RUN} -r ${MOUNTPOINT} "$$(<${ROOTDEVFILE})"
 root-stages:
