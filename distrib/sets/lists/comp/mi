@@ -743,6 +743,7 @@
 ./usr/include/dev/usb/dwc2/dwc2_hcd.h
 ./usr/include/dev/usb/dwc2/dwc2_hw.h
 ./usr/include/dev/usb/dwc2/dwc2var.h
+./usr/include/dev/usb/dwc2/gcd.h
 ./usr/include/dev/usb/dwc2/list.h
 ./usr/include/dev/usb/ehcireg.h
 ./usr/include/dev/usb/ehcivar.h
