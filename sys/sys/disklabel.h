@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.79 2022/09/01 15:48:51 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.80 2022/09/06 14:14:44 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -323,26 +323,6 @@ static char *fstypesnames[] = {
  */
 #define		D_BADSECT	0x04		/* supports bad sector forw. */
 #define		D_VENDOR	0x08		/* vendor disklabel */
-
-/*
- * Drive data for SMD.
- */
-#define	d_smdflags	d_drivedata[0]
-#define		D_SSE		0x1		/* supports skip sectoring */
-#define	d_mindist	d_drivedata[1]
-#define	d_maxdist	d_drivedata[2]
-#define	d_sdist		d_drivedata[3]
-
-/*
- * Drive data for ST506.
- */
-#define d_precompcyl	d_drivedata[0]
-#define d_gap3		d_drivedata[1]		/* used only when formatting */
-
-/*
- * Drive data for SCSI.
- */
-#define	d_blind		d_drivedata[0]
 
 #ifndef _LOCORE
 /*
