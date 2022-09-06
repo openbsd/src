@@ -1,4 +1,4 @@
-/*	$OpenBSD: e_sm4.c,v 1.4 2022/09/04 15:56:51 jsing Exp $	*/
+/*	$OpenBSD: e_sm4.c,v 1.5 2022/09/06 06:17:11 jsing Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -78,14 +78,14 @@ static int
 sm4_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
 	while (inl >= EVP_MAXCHUNK) {
-		sm4_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		sm4_cbc_encrypt(in, out, EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
 		inl -= EVP_MAXCHUNK;
 		in += EVP_MAXCHUNK;
 		out += EVP_MAXCHUNK;
 	}
 
 	if (inl)
-		sm4_cbc_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		sm4_cbc_encrypt(in, out, inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
 
 	return 1;
 }
@@ -99,7 +99,7 @@ sm4_cfb128_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		sm4_cfb128_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		sm4_cfb128_encrypt(in, out, inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
@@ -132,14 +132,14 @@ static int
 sm4_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
 	while (inl >= EVP_MAXCHUNK) {
-		sm4_ofb128_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		sm4_ofb128_encrypt(in, out, EVP_MAXCHUNK, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
 		inl -= EVP_MAXCHUNK;
 		in += EVP_MAXCHUNK;
 		out += EVP_MAXCHUNK;
 	}
 
 	if (inl)
-		sm4_ofb128_encrypt(in, out, (long)inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		sm4_ofb128_encrypt(in, out, inl, &((EVP_SM4_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
 
 	return 1;
 }
