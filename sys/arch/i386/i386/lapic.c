@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.50 2022/08/25 17:38:16 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.51 2022/09/06 17:26:27 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -244,10 +244,40 @@ u_int32_t lapic_tval;
 /*
  * this gets us up to a 4GHz busclock....
  */
-u_int32_t lapic_per_second;
+u_int32_t lapic_per_second = 0;
 u_int32_t lapic_frac_usec_per_cycle;
 u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
+
+void lapic_timer_oneshot(uint32_t, uint32_t);
+void lapic_timer_periodic(uint32_t, uint32_t);
+
+/*
+ * Start the local apic countdown timer.
+ *
+ * First set the mode, mask, and vector.  Then set the
+ * divisor.  Last, set the cycle count: this restarts
+ * the countdown.
+ */
+static inline void
+lapic_timer_start(uint32_t mode, uint32_t mask, uint32_t cycles)
+{
+	i82489_writereg(LAPIC_LVTT, mode | mask | LAPIC_TIMER_VECTOR);
+	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	i82489_writereg(LAPIC_ICR_TIMER, cycles);
+}
+
+void
+lapic_timer_oneshot(uint32_t mask, uint32_t cycles)
+{
+	lapic_timer_start(LAPIC_LVTT_TM_ONESHOT, mask, cycles);
+}
+
+void
+lapic_timer_periodic(uint32_t mask, uint32_t cycles)
+{
+	lapic_timer_start(LAPIC_LVTT_TM_PERIODIC, mask, cycles);
+}
 
 void
 lapic_clockintr(void *arg)
@@ -262,17 +292,7 @@ lapic_clockintr(void *arg)
 void
 lapic_startclock(void)
 {
-	/*
-	 * Start local apic countdown timer running, in repeated mode.
-	 *
-	 * Mask the clock interrupt and set mode,
-	 * then set divisor,
-	 * then unmask and set the vector.
-	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
+	lapic_timer_periodic(0, lapic_tval);
 }
 
 void
@@ -284,6 +304,7 @@ lapic_initclocks(void)
 }
 
 extern int gettick(void);	/* XXX put in header file */
+extern u_long rtclock_tval; /* XXX put in header file */
 
 static __inline void
 wait_next_cycle(void)
@@ -325,38 +346,45 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
-	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
-	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
+	lapic_timer_oneshot(LAPIC_LVTT_M, 0x80000000);
 
-	s = intr_disable();
+	if (delay_func == i8254_delay) {
+		s = intr_disable();
 
-	/* wait for current cycle to finish */
-	wait_next_cycle();
-
-	startapic = lapic_gettick();
-
-	/* wait the next hz cycles */
-	for (i = 0; i < hz; i++)
+		/* wait for current cycle to finish */
 		wait_next_cycle();
 
-	endapic = lapic_gettick();
+		startapic = lapic_gettick();
 
-	intr_restore(s);
+		/* wait the next hz cycles */
+		for (i = 0; i < hz; i++)
+			wait_next_cycle();
 
-	dtick = hz * TIMER_DIV(hz);
-	dapic = startapic-endapic;
+		endapic = lapic_gettick();
 
-	/*
-	 * there are TIMER_FREQ ticks per second.
-	 * in dtick ticks, there are dapic bus clocks.
-	 */
-	tmp = (TIMER_FREQ * dapic) / dtick;
+		intr_restore(s);
 
-	lapic_per_second = tmp;
+		dtick = hz * rtclock_tval;
+		dapic = startapic-endapic;
 
-	printf("%s: apic clock running at %lldMHz\n",
-	    ci->ci_dev->dv_xname, tmp / (1000 * 1000));
+		/*
+		 * there are TIMER_FREQ ticks per second.
+		 * in dtick ticks, there are dapic bus clocks.
+		 */
+		tmp = (TIMER_FREQ * dapic) / dtick;
+
+		lapic_per_second = tmp;
+	} else {
+		s = intr_disable();
+		startapic = lapic_gettick();
+		delay(1 * 1000 * 1000);
+		endapic = lapic_gettick();
+		intr_restore(s);
+		lapic_per_second = startapic - endapic;
+	}
+
+	printf("%s: apic clock running at %dMHz\n",
+	    ci->ci_dev->dv_xname, lapic_per_second / (1000 * 1000));
 
 	if (lapic_per_second != 0) {
 		/*
@@ -366,10 +394,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 
-		i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M |
-		    LAPIC_TIMER_VECTOR);
-		i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-		i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
+		lapic_timer_periodic(LAPIC_LVTT_M, lapic_tval);
 
 		/*
 		 * Compute fixed-point ratios between cycles and
@@ -426,6 +451,8 @@ lapic_delay(int usec)
 		else
 			deltat -= otick - tick;
 		otick = tick;
+
+		CPU_BUSY_CYCLE();
 	}
 }
 
