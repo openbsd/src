@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2022/09/05 19:32:50 kn Exp $
+#	$OpenBSD: Makefile,v 1.21 2022/09/06 19:35:21 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -43,7 +43,12 @@ STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
 
 .if ${USE_SOFTRAID:L} == "yes"
+# install on multi-chunk RAID 1C with keydisk so installboot(8) must
+# - iterate over chunks
+# - ignore the keydisk/not install to it
 NDISKS ?=		1 2
+KEYDISKFILE =		keydisk.img
+KEYDEVFILE =		keydev.txt
 .else
 NDISKS =		1
 .endif
@@ -60,6 +65,10 @@ create-disks:
 	dd if=/dev/zero  of=disk${n}.img bs=1m count=0 seek=64 status=none
 	${SUDO} vnconfig -- disk${n}.img 1>diskdev${n}.txt
 .endfor
+.if ${USE_SOFTRAID:L} == "yes"
+	dd if=/dev/zero  of=${KEYDISKFILE} bs=1m count=0 seek=2 status=none
+	${SUDO} vnconfig -- ${KEYDISKFILE} 1>${KEYDEVFILE}
+.endif
 
 format-disks: create-disks
 .for devfile in ${DISKDEVFILES}
@@ -69,11 +78,15 @@ format-disks: create-disks
 		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${devfile})" 1>/dev/null
 .  endif
 .endfor
+.if ${USE_SOFTRAID:L} == "yes"
+	echo 'RAID 1M' | \
+		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${KEYDEVFILE})" 1>/dev/null
+.endif
 
 create-root: format-disks
 .if ${USE_SOFTRAID:L} == "yes"
 	${SUDO} bioctl -l"$$(sed -- s/$$/a/ ${DISKDEVFILES} | paste -sd, -- -)" \
-	    -cc -- softraid0 | \
+	    -c1C -k"$$(<${KEYDEVFILE})"a -- softraid0 | \
 		awk -- '{ print $$NF }' 1>${ROOTDEVFILE}
 .else
 	ln -s -- ${DISKDEVFILES} ${ROOTDEVFILE}
@@ -148,6 +161,9 @@ dry-toomany:
 
 
 CLEANFILES =		${DISKFILES} ${DISKDEVFILES} ${ROOTDEVFILE}
+.if ${USE_SOFTRAID:L} == "yes"
+CLEANFILES +=		${KEYDISKFILE} ${KEYDEVFILE}
+.endif
 REGRESS_CLEANUP =	cleanup
 
 # allow failure to always cleanup as much as possible
@@ -156,6 +172,7 @@ cleanup:
 	-rmdir -- ${MOUNTPOINT} 2>/dev/null
 .if ${USE_SOFTRAID:L} == "yes"
 	-${SUDO} bioctl -d -- "$$(<${ROOTDEVFILE})" 2>/dev/null
+	-${SUDO} vnconfig -u -- "$$(<${KEYDEVFILE})" 2>/dev/null
 .endif
 .for devfile in ${DISKDEVFILES}
 	-${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
