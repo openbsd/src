@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.237 2022/09/03 08:44:56 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.238 2022/09/06 13:52:50 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -156,7 +156,7 @@ apldog*		at fdt? early 1
 apliic*		at fdt?
 iic*		at apliic?
 aplintc*	at fdt? early 1
-aplmbox*	at fdt?
+aplmbox*	at fdt? early 1
 aplmca*		at fdt?
 aplnco*		at fdt?
 aplns*		at fdt?			# Apple NVME Storage controllers
