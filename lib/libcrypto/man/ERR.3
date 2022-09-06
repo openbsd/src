@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ERR.3,v 1.9 2022/07/12 14:42:49 kn Exp $
+.\"	$OpenBSD: ERR.3,v 1.10 2022/09/06 10:22:31 kn Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2022 $
+.Dd $Mdocdate: September 6 2022 $
 .Dt ERR 3
 .Os
 .Sh NAME
@@ -113,61 +113,10 @@ to the
 .Fn ERR_load_crypto_strings
 function (in
 .Sy /usr/src/lib/libcrypto/err/err_all.c ) .
-Finally, add an entry
-.Pp
-.Dl L XXX xxx.h xxx_err.c
-.Pp
-to
-.Sy /usr/src/lib/libcrypto/err/openssl.ec ,
-and add
+Finally, add
 .Pa xxx_err.c
 to the
 .Pa Makefile .
-Running
-.Sy make errors
-will then generate a file
-.Pa xxx_err.c ,
-and add all error codes used in the library to
-.Pa xxx.h .
-.Pp
-Additionally the library include file must have a certain form.
-Typically it will initially look like this:
-.Bd -literal -offset indent
-#ifndef HEADER_XXX_H
-#define HEADER_XXX_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Include files */
-
-#include <openssl/bio.h>
-#include <openssl/x509.h>
-
-/* Macros, structures and function prototypes */
-
-/* BEGIN ERROR CODES */
-.Ed
-.Pp
-The
-.Sy BEGIN ERROR CODES
-sequence is used by the error code generation script as the point to
-place new error codes.
-Any text after this point will be overwritten when
-.Sy make errors
-is run.
-The closing #endif etc. will be automatically added by the script.
-.Pp
-The generated C error code file
-.Pa xxx_err.c
-will load the header files
-.In stdio.h ,
-.In openssl/err.h
-and
-.In openssl/xxx.h
-so the header file must load any additional header files containing any
-definitions it uses.
 .Sh USING ERROR CODES IN EXTERNAL LIBRARIES
 It is also possible to use OpenSSL's error code scheme in external
 libraries.
