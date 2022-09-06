@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.46 2022/08/04 08:06:48 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.47 2022/09/06 06:38:26 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1868,8 +1868,6 @@ aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-#define aes_xts_cleanup NULL
-
 #define XTS_FLAGS \
     ( EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV | \
       EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
@@ -1884,7 +1882,7 @@ static const EVP_CIPHER aesni_128_xts = {
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
 	.do_cipher = aes_xts_cipher,
-	.cleanup = aes_xts_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
 };
@@ -1898,7 +1896,7 @@ static const EVP_CIPHER aes_128_xts = {
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aes_xts_init_key,
 	.do_cipher = aes_xts_cipher,
-	.cleanup = aes_xts_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
 };
@@ -1922,7 +1920,7 @@ static const EVP_CIPHER aesni_256_xts = {
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aesni_xts_init_key,
 	.do_cipher = aes_xts_cipher,
-	.cleanup = aes_xts_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
 };
@@ -1936,7 +1934,7 @@ static const EVP_CIPHER aes_256_xts = {
 	.flags = XTS_FLAGS | EVP_CIPH_XTS_MODE,
 	.init = aes_xts_init_key,
 	.do_cipher = aes_xts_cipher,
-	.cleanup = aes_xts_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_XTS_CTX),
 	.ctrl = aes_xts_ctrl,
 };
@@ -2109,9 +2107,6 @@ aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 }
 
-#define aes_ccm_cleanup NULL
-
-
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_ccm = {
 	.nid = NID_aes_128_ccm,
@@ -2121,7 +2116,7 @@ static const EVP_CIPHER aesni_128_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
@@ -2135,7 +2130,7 @@ static const EVP_CIPHER aes_128_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
@@ -2159,7 +2154,7 @@ static const EVP_CIPHER aesni_192_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
@@ -2173,7 +2168,7 @@ static const EVP_CIPHER aes_192_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
@@ -2197,7 +2192,7 @@ static const EVP_CIPHER aesni_256_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aesni_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
@@ -2211,7 +2206,7 @@ static const EVP_CIPHER aes_256_ccm = {
 	.flags = CUSTOM_FLAGS | EVP_CIPH_CCM_MODE,
 	.init = aes_ccm_init_key,
 	.do_cipher = aes_ccm_cipher,
-	.cleanup = aes_ccm_cleanup,
+	.cleanup = NULL,
 	.ctx_size = sizeof(EVP_AES_CCM_CTX),
 	.ctrl = aes_ccm_ctrl,
 };
