@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.22 2022/09/06 19:40:10 kn Exp $
+#	$OpenBSD: Makefile,v 1.23 2022/09/06 20:30:00 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
 REAL_RUN =		${INSTALLBOOT}
 
+# whether to show commands and run with -v
+VERBOSE ?=		No
 
 # see distrib/${MACHINE}/ramdisk/install.md for FORMAT_DISK values
 # default to root on softraid(4) on all architectures that have
@@ -167,15 +169,23 @@ CLEANFILES +=		${KEYDISKFILE} ${KEYDEVFILE}
 REGRESS_CLEANUP =	cleanup
 
 # allow failure to always cleanup as much as possible
+.IGNORE: cleanup
 cleanup:
-	-${SUDO} umount -- ${MOUNTPOINT} 2>/dev/null
-	-rmdir -- ${MOUNTPOINT} 2>/dev/null
+	${SUDO} umount -- ${MOUNTPOINT} 2>/dev/null
+	rmdir -- ${MOUNTPOINT} 2>/dev/null
 .if ${USE_SOFTRAID:L} == "yes"
-	-${SUDO} bioctl -d -- "$$(<${ROOTDEVFILE})" 2>/dev/null
-	-${SUDO} vnconfig -u -- "$$(<${KEYDEVFILE})" 2>/dev/null
+	${SUDO} bioctl -d -- "$$(<${ROOTDEVFILE})" 2>/dev/null
+	${SUDO} vnconfig -u -- "$$(<${KEYDEVFILE})" 2>/dev/null
 .endif
 .for devfile in ${DISKDEVFILES}
-	-${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
+	${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
 .endfor
+
+
+.if ${VERBOSE:L} == "yes"
+INSTALLBOOT +=		-v
+.else
+.SILENT: ${REGRESS_CLEANUP} clean
+.endif
 
 .include <bsd.regress.mk>
