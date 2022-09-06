@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.13 2022/08/30 18:56:49 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.14 2022/09/06 11:16:51 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -593,8 +593,11 @@ proc_filemode(int fd)
 		entity_free(entp);
 	}
 
-	/* XXX free auths and crl tree */
+	auth_tree_free(&auths);
+	crl_tree_free(&crlt);
+
 	X509_STORE_CTX_free(ctx);
+	ibuf_free(inbuf);
 
 	exit(0);
 }
