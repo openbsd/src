@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2022/09/06 19:35:21 kn Exp $
+#	$OpenBSD: Makefile,v 1.22 2022/09/06 19:40:10 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -147,17 +147,17 @@ REGRESS_EXPECTED_FAILURES =	dry-prepare-root \
 REGRESS_TARGETS +=		${REGRESS_EXPECTED_FAILURES}
 
 dry-prepare-root:
-	${DRY_RUN} -p -r/ -- "$$(<${ROOTDEVFILE})"
+	${DRY_RUN} -p -r/ -- "$$(<${ROOTDEVFILE})" 2>/dev/null
 dry-prepare-stages:
-	${DRY_RUN} -p -- "$$(<${ROOTDEVFILE})" ${STAGEFILES}
+	${DRY_RUN} -p -- "$$(<${ROOTDEVFILE})" ${STAGEFILES} 2>/dev/null
 
 dry-nodisk-stages:
-	${SUDO} ${DRY_RUN} -- ${STAGEFILES}
+	${SUDO} ${DRY_RUN} -- ${STAGEFILES} 2>/dev/null
 
 dry-toofew:
-	${DRY_RUN} --
+	${DRY_RUN} -- 2>/dev/null
 dry-toomany:
-	${DRY_RUN} -- disk stage1 stage2 too many
+	${DRY_RUN} -- disk stage1 stage2 too many 2>/dev/null
 
 
 CLEANFILES =		${DISKFILES} ${DISKDEVFILES} ${ROOTDEVFILE}
