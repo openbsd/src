@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.123 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: arc.c,v 1.124 2022/09/06 15:22:11 kn Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1462,7 +1462,7 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 		case ARC_HBA_TYPE_A:
 		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RA_PCI_BAR);
 		if (pci_mapreg_map(pa, ARC_RA_PCI_BAR, memtype, 0, &sc->sc_iot,
-	    	&sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+		    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 			printf(": unable to map ARC_HBA_TYPE_A system"
 				" interface register\n");
 			return(1);
@@ -1471,7 +1471,7 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 		case ARC_HBA_TYPE_C:
 		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RC_PCI_BAR);
 		if (pci_mapreg_map(pa, ARC_RC_PCI_BAR, memtype, 0, &sc->sc_iot,
-	    	&sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+		    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 			printf(": unable to map ARC_HBA_TYPE_C system"
 				" interface register\n");
 			return(1);
@@ -1480,7 +1480,7 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 		case ARC_HBA_TYPE_D:
 		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RD_PCI_BAR);
 		if (pci_mapreg_map(pa, ARC_RD_PCI_BAR, memtype, 0, &sc->sc_iot,
-	    	&sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
+		    &sc->sc_ioh, NULL, &sc->sc_ios, 0) != 0) {
 			printf(": unable to map ARC_HBA_TYPE_D system"
 				" interface register\n");
 			return(1);
@@ -2787,7 +2787,7 @@ arc_msg0(struct arc_softc *sc, u_int32_t m)
 		arc_write(sc, ARC_RA_INB_MSG0, m);
 		/* wait for the fw to do it */
 		if (arc_wait_eq(sc, ARC_RA_INTRSTAT, ARC_RA_INTRSTAT_MSG0,
-	    	ARC_RA_INTRSTAT_MSG0) != 0)
+		    ARC_RA_INTRSTAT_MSG0) != 0)
 			return (1);
 
 		/* ack it */
@@ -2800,7 +2800,7 @@ arc_msg0(struct arc_softc *sc, u_int32_t m)
 		arc_write(sc, ARC_RC_INB_DOORBELL, ARC_RC_D2I_MSG_CMD_DONE);
 		/* wait for the fw to do it */
 		if (arc_wait_eq(sc, ARC_RC_OUTB_DOORBELL, ARC_RC_I2D_MSG_CMD_DONE,
-	    	ARC_RC_I2D_MSG_CMD_DONE) != 0)
+		    ARC_RC_I2D_MSG_CMD_DONE) != 0)
 			return (1);
 
 		/* ack it */
@@ -2812,7 +2812,7 @@ arc_msg0(struct arc_softc *sc, u_int32_t m)
 		arc_write(sc, ARC_RD_INB_MSGADDR0, m);
 		/* wait for the fw to do it */
 		if (arc_wait_eq(sc, ARC_RD_OUTB_DOORBELL, ARC_RD_I2D_MSG_CMD_DONE,
-	    	ARC_RD_I2D_MSG_CMD_DONE) != 0)
+		    ARC_RD_I2D_MSG_CMD_DONE) != 0)
 			return (1);
 
 		/* ack it */
