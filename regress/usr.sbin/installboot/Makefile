@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2022/09/06 20:30:00 kn Exp $
+#	$OpenBSD: Makefile,v 1.24 2022/09/06 20:54:37 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -64,7 +64,7 @@ REGRESS_SETUP_ONCE =	copy-bootstrap-to-root
 
 create-disks:
 .for n in ${NDISKS}
-	dd if=/dev/zero  of=disk${n}.img bs=1m count=0 seek=64 status=none
+	dd if=/dev/zero  of=disk${n}.img bs=1m count=0 seek=128 status=none
 	${SUDO} vnconfig -- disk${n}.img 1>diskdev${n}.txt
 .endfor
 .if ${USE_SOFTRAID:L} == "yes"
