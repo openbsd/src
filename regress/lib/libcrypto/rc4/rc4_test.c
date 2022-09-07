@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc4_test.c,v 1.3 2022/09/05 21:36:46 tb Exp $ */
+/*	$OpenBSD: rc4_test.c,v 1.4 2022/09/07 21:17:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -323,7 +323,7 @@ rc4_test(void)
 	EVP_CIPHER_CTX *ctx = NULL;
 	const EVP_CIPHER *cipher;
 	uint8_t out[512];
-	int in_len, out_len;
+	int in_len, out_len, total_len;
 	size_t i;
 	int j;
 	int failed = 1;
@@ -369,6 +369,7 @@ rc4_test(void)
 		}
 
 		/* EVP encryption */
+		total_len = 0;
 		memset(out, 0, sizeof(out));
 		if (!EVP_EncryptInit(ctx, cipher, rt->key, NULL)) {
 			fprintf(stderr, "FAIL: EVP_EncryptInit failed\n");
@@ -380,7 +381,7 @@ rc4_test(void)
 			if (in_len > rt->len - j)
 				in_len = rt->len - j;
 
-			if (!EVP_EncryptUpdate(ctx, out + j, &out_len,
+			if (!EVP_EncryptUpdate(ctx, out + total_len, &out_len,
 			    rt->in + j, in_len)) {
 				fprintf(stderr,
 				    "FAIL: EVP_EncryptUpdate failed\n");
@@ -388,15 +389,23 @@ rc4_test(void)
 			}
 
 			j += in_len;
+			total_len += out_len;
 		}
 
-		if (!EVP_EncryptFinal_ex(ctx, out, &out_len)) {
+		if (!EVP_EncryptFinal_ex(ctx, out + total_len, &out_len)) {
 			fprintf(stderr, "FAIL: EVP_EncryptFinal_ex failed\n");
 			goto failed;
 		}
+		total_len += out_len;
 
 		if (!EVP_CIPHER_CTX_reset(ctx)) {
 			fprintf(stderr, "FAIL: EVP_CIPHER_CTX_reset failed\n");
+			goto failed;
+		}
+
+		if (total_len != rt->len) {
+			fprintf(stderr,
+			    "FAIL: EVP encryption length mismatch\n");
 			goto failed;
 		}
 
@@ -406,6 +415,7 @@ rc4_test(void)
 		}
 
 		/* EVP decryption */
+		total_len = 0;
 		memset(out, 0, sizeof(out));
 		if (!EVP_DecryptInit(ctx, cipher, rt->key, NULL)) {
 			fprintf(stderr, "FAIL: EVP_DecryptInit failed\n");
@@ -417,7 +427,7 @@ rc4_test(void)
 			if (in_len > rt->len - j)
 				in_len = rt->len - j;
 
-			if (!EVP_DecryptUpdate(ctx, out + j, &out_len,
+			if (!EVP_DecryptUpdate(ctx, out + total_len, &out_len,
 			    rt->in + j, in_len)) {
 				fprintf(stderr,
 				    "FAIL: EVP_DecryptUpdate failed\n");
@@ -425,15 +435,23 @@ rc4_test(void)
 			}
 
 			j += in_len;
+			total_len += out_len;
 		}
 
-		if (!EVP_DecryptFinal_ex(ctx, out, &out_len)) {
+		if (!EVP_DecryptFinal_ex(ctx, out + total_len, &out_len)) {
 			fprintf(stderr, "FAIL: EVP_DecryptFinal_ex failed\n");
 			goto failed;
 		}
+		total_len += out_len;
 
 		if (!EVP_CIPHER_CTX_reset(ctx)) {
 			fprintf(stderr, "FAIL: EVP_CIPHER_CTX_reset failed\n");
+			goto failed;
+		}
+
+		if (total_len != rt->len) {
+			fprintf(stderr,
+			    "FAIL: EVP decryption length mismatch\n");
 			goto failed;
 		}
 
