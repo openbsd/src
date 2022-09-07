@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.322 2022/09/02 17:46:37 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.323 2022/09/07 18:44:09 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3522,7 +3522,9 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
+	
 	vmx_setmsrbr(vcpu, MSR_MISC_ENABLE);
+	vmx_setmsrbr(vcpu, MSR_TSC);
 
 	/* XXX CR0 shadow */
 	/* XXX CR4 shadow */
