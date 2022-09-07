@@ -1,11 +1,8 @@
-#	$OpenBSD: Makefile,v 1.24 2022/09/06 20:54:37 kn Exp $
+#	$OpenBSD: Makefile,v 1.25 2022/09/07 10:07:39 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
 REAL_RUN =		${INSTALLBOOT}
-
-# whether to show commands and run with -v
-VERBOSE ?=		No
 
 # see distrib/${MACHINE}/ramdisk/install.md for FORMAT_DISK values
 # default to root on softraid(4) on all architectures that have
@@ -180,12 +177,5 @@ cleanup:
 .for devfile in ${DISKDEVFILES}
 	${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
 .endfor
-
-
-.if ${VERBOSE:L} == "yes"
-INSTALLBOOT +=		-v
-.else
-.SILENT: ${REGRESS_CLEANUP} clean
-.endif
 
 .include <bsd.regress.mk>
