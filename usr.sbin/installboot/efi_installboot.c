@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_installboot.c,v 1.3 2022/08/31 20:52:15 krw Exp $	*/
+/*	$OpenBSD: efi_installboot.c,v 1.4 2022/09/07 10:21:03 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -76,6 +76,8 @@ static int	findmbrfat(int, struct disklabel *);
 void
 md_init(void)
 {
+	stages = 1;
+	stage1 = "/usr/mdec/" BOOTEFI_SRC;
 }
 
 void
