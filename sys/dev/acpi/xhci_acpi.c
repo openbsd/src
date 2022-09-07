@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.8 2022/07/04 20:03:15 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.9 2022/09/07 20:06:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -53,8 +53,14 @@ const struct cfattach xhci_acpi_ca = {
 const char *xhci_hids[] = {
 	"PNP0D10",
 	"PNP0D15",
-	"QCOM068B",
+	"QCOM0304",		/* SDM845 URS */
+	"QCOM0305",
+	"QCOM0497",		/* SC8180 URS */
+	"QCOM0498",
+	"QCOM068B",		/* SC8280 URS */
 	"QCOM068C",
+	"QCOM24B6",		/* SDM850 URS */
+	"QCOM24B7",
 	NULL
 };
 
@@ -86,8 +92,14 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 	 * child node.  Find it and parse its resources to find the
 	 * interrupt.
 	 */
-	if (strcmp(aaa->aaa_dev, "QCOM068B") == 0 ||
-	    strcmp(aaa->aaa_dev, "QCOM068C") == 0) {
+	if (strcmp(aaa->aaa_dev, "QCOM0304") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0305") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0497") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM0498") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM068B") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM068C") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM24B6") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM24B7") == 0) {
 		SIMPLEQ_FOREACH(node, &sc->sc_node->son, sib) {
 			if (strncmp(node->name, "USB", 3) == 0) {
 				aaa->aaa_node = node;
