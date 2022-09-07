@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc2_test.c,v 1.1 2022/09/06 15:36:25 tb Exp $ */
+/*	$OpenBSD: rc2_test.c,v 1.2 2022/09/07 21:25:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -168,6 +168,7 @@ static const struct rc2_test rc2_tests[] = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		},
 		.key_len = 16,
+		.key_bits = 1024,
 		.len = 8,
 		.in = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -183,6 +184,7 @@ static const struct rc2_test rc2_tests[] = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
 		},
 		.key_len = 16,
+		.key_bits = 1024,
 		.len = 8,
 		.in = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -198,6 +200,7 @@ static const struct rc2_test rc2_tests[] = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		},
 		.key_len = 16,
+		.key_bits = 1024,
 		.len = 8,
 		.in = {
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -213,6 +216,7 @@ static const struct rc2_test rc2_tests[] = {
 			0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 		},
 		.key_len = 16,
+		.key_bits = 1024,
 		.len = 8,
 		.in = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -257,9 +261,193 @@ rc2_ecb_test(size_t test_number, const struct rc2_test *rt)
 }
 
 static int
+rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label, const EVP_CIPHER *cipher)
+{
+	EVP_CIPHER_CTX *ctx;
+	uint8_t out[512];
+	int in_len, out_len, total_len;
+	int i;
+	int success = 0;
+
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_CIPHER_CTX_new failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	/* EVP encryption */
+	total_len = 0;
+	memset(out, 0, sizeof(out));
+	if (!EVP_EncryptInit(ctx, cipher, NULL, NULL)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_EncryptInit failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS,
+	    rt->key_bits, NULL) <= 0) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_CIPHER_CTX_ctrl failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_CIPHER_CTX_set_key_length(ctx, rt->key_len)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_set_key_length failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_CIPHER_CTX_set_padding(ctx, 0)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_set_padding failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_EncryptInit(ctx, NULL, rt->key, NULL)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_EncryptInit failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	for (i = 0; i < rt->len;) {
+		in_len = arc4random_uniform(sizeof(rt->len / 2));
+		if (in_len > rt->len - i)
+			in_len = rt->len - i;
+
+		if (!EVP_EncryptUpdate(ctx, out + total_len, &out_len,
+			rt->in + i, in_len)) {
+			fprintf(stderr,
+			    "FAIL (%s:%zu): EVP_EncryptUpdate failed\n",
+			    label, test_number);
+			goto failed;
+		}
+
+		i += in_len;
+		total_len += out_len;
+	}
+
+	if (!EVP_EncryptFinal_ex(ctx, out + out_len, &out_len)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_EncryptFinal_ex failed\n",
+		    label, test_number);
+		goto failed;
+	}
+	total_len += out_len;
+
+	if (!EVP_CIPHER_CTX_reset(ctx)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_reset failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (total_len != rt->len) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP encryption length mismatch\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (memcmp(rt->out, out, rt->len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP encryption mismatch\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	/* EVP decryption */
+	total_len = 0;
+	memset(out, 0, sizeof(out));
+	if (!EVP_DecryptInit(ctx, cipher, NULL, NULL)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_DecryptInit failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_RC2_KEY_BITS,
+	    rt->key_bits, NULL) <= 0) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_CIPHER_CTX_ctrl failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_CIPHER_CTX_set_key_length(ctx, rt->key_len)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_set_key_length failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_CIPHER_CTX_set_padding(ctx, 0)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_set_padding failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (!EVP_DecryptInit(ctx, NULL, rt->key, NULL)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_DecryptInit failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	for (i = 0; i < rt->len;) {
+		in_len = arc4random_uniform(sizeof(rt->len / 2));
+		if (in_len > rt->len - i)
+			in_len = rt->len - i;
+
+		if (!EVP_DecryptUpdate(ctx, out + total_len, &out_len,
+			rt->out + i, in_len)) {
+			fprintf(stderr,
+			    "FAIL (%s:%zu): EVP_DecryptUpdate failed\n",
+			    label, test_number);
+			goto failed;
+		}
+
+		i += in_len;
+		total_len += out_len;
+	}
+
+	if (!EVP_DecryptFinal_ex(ctx, out + total_len, &out_len)) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP_DecryptFinal_ex failed\n",
+		    label, test_number);
+		goto failed;
+	}
+	total_len += out_len;
+
+	if (!EVP_CIPHER_CTX_reset(ctx)) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP_CIPHER_CTX_reset failed\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (total_len != rt->len) {
+		fprintf(stderr,
+		    "FAIL (%s:%zu): EVP decryption length mismatch\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	if (memcmp(rt->in, out, rt->len) != 0) {
+		fprintf(stderr, "FAIL (%s:%zu): EVP decryption mismatch\n",
+		    label, test_number);
+		goto failed;
+	}
+
+	success = 1;
+
+ failed:
+	EVP_CIPHER_CTX_free(ctx);
+	return success;
+}
+
+static int
 rc2_test(void)
 {
 	const struct rc2_test *rt;
+	const char *label;
+	const EVP_CIPHER *cipher;
 	size_t i;
 	int failed = 1;
 
@@ -267,6 +455,8 @@ rc2_test(void)
 		rt = &rc2_tests[i];
 		switch (rt->mode) {
 		case NID_rc2_ecb:
+			label = SN_rc2_ecb;
+			cipher = EVP_rc2_ecb();
 			if (!rc2_ecb_test(i, rt))
 				goto failed;
 			break;
@@ -275,6 +465,9 @@ rc2_test(void)
 			    rt->mode);
 			goto failed;
 		}
+
+		if (!rc2_evp_test(i, rt, label, cipher))
+			goto failed;
 	}
 
 	failed = 0;
