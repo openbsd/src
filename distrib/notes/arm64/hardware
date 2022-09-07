@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2022/09/03 05:44:04 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.19 2022/09/07 10:30:03 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6
@@ -45,6 +45,8 @@ The following machines are targeted by OpenBSD/MACHINE:
 		GL.iNet Brume
 	Marvell ARMADA 7K/8K
 		SolidRun/Marvell MACCHIATObin
+	Qualcomm Snapdragon 8cx Gen 3 (SC8280XP)
+		Lenovo ThinkPad X13s Gen 1
 	Rockchip RK3328/RK3399(pro)
 		Pine64 ROCK64
 		Pine64 ROCKPro64
