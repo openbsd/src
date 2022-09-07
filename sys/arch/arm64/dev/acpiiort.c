@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.8 2022/08/31 23:31:35 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.9 2022/09/07 18:25:08 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -169,6 +169,16 @@ acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
 			rid = map[i].output_base;
 			break;
 		}
+	}
+
+	/*
+	 * The IORT spec allows NCs to use implementation-defined IDs, whose
+	 * interpretation is up to the device driver.  For now simply take the
+	 * mapping if there's a single one.  This might change in the future.
+	 */
+	if (i >= node->number_of_mappings && node->number_of_mappings == 1) {
+		i = 0;
+		rid = map[i].output_base;
 	}
 
 	/* No mapping found? Even weirder. */
