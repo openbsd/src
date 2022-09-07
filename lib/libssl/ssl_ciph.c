@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.132 2022/09/04 07:55:32 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.133 2022/09/07 21:34:22 millert Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1011,7 +1011,8 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 				 */
 				SSLerrorx(SSL_R_INVALID_COMMAND);
 				retval = found = 0;
-				l++;
+				if (ch != '\0')
+					l++;
 				break;
 			}
 
