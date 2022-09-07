@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.34 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: disk.9,v 1.35 2022/09/07 05:36:59 jsg Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: September 7 2022 $
 .Dt DISK_INIT 9
 .Os
 .Sh NAME
@@ -210,9 +210,7 @@ disk driver, the following would be performed in the autoconfiguration
 routine:
 .Bd -literal
 void
-fooattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fooattach(struct device *parent, struct device *self, void *aux)
 {
 	struct foo_softc *sc = (struct foo_softc *)self;
 	[ . . . ]
@@ -255,8 +253,7 @@ routine should be called immediately before a command to the disk is
 sent, e.g.:
 .Bd -literal
 void
-foostart(sc)
-	struct foo_softc *sc;
+foostart(struct foo_softc *sc)
 {
 	[ . . . ]
 
@@ -301,8 +298,7 @@ A byte count is also added to the disk's running total, and if greater than
 zero, the number of transfers the disk has performed is incremented.
 .Bd -literal
 void
-foodone(xfer)
-	struct foo_xfer *xfer;
+foodone(struct foo_xfer *xfer)
 {
 	struct foo_softc = (struct foo_softc *)xfer->xf_softc;
 	struct buf *bp = xfer->xf_buf;
