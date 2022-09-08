@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.66 2022/09/08 09:48:02 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.67 2022/09/08 13:52:36 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1273,8 +1273,10 @@ http_get_line(struct http_connection *conn)
 		return NULL;
 
 	len = end - conn->buf;
-	while (len > 0 && conn->buf[len - 1] == '\r')
+	while (len > 0 && (conn->buf[len - 1] == '\r' ||
+	    conn->buf[len - 1] == ' ' || conn->buf[len - 1] == '\t'))
 		--len;
+
 	if ((line = strndup(conn->buf, len)) == NULL)
 		err(1, NULL);
 
@@ -1303,8 +1305,8 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	if (*header == '\0')
 		return 1;
 
-	/* strip CRLF and any optional chunk extension */
-	header[strcspn(header, ";\r\n")] = '\0';
+	/* strip any optional chunk extension */
+	header[strcspn(header, "; \t")] = '\0';
 	errno = 0;
 	chunksize = strtoul(header, &end, 16);
 	if (header[0] == '\0' || *end != '\0' || (errno == ERANGE &&
