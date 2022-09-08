@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.49 2022/07/24 00:28:09 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.50 2022/09/08 03:06:33 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -243,6 +243,9 @@ cpu_initclocks(void)
 #endif
 	}
 
+	tb_timecounter.tc_frequency = ticks_per_sec;
+	tc_init(&tb_timecounter);
+
 	rtc_todr.todr_gettime = rtc_gettime;
 	rtc_todr.todr_settime = rtc_settime;
 	todr_handle = &rtc_todr;
@@ -268,8 +271,6 @@ cpu_initclocks(void)
 
 	cpu_startclock();
 
-	tb_timecounter.tc_frequency = ticks_per_sec;
-	tc_init(&tb_timecounter);
 	ppc_intr_enable(intrstate);
 }
 
