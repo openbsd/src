@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.208 2021/11/10 07:32:55 kn Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.209 2022/09/08 11:12:44 claudio Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -905,12 +905,11 @@ noslash:
 
 		/* Look for some headers */
 		cp = buf;
-#define CONTENTLEN "Content-Length: "
+#define CONTENTLEN "Content-Length:"
 		if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
-			size_t s;
 			cp += sizeof(CONTENTLEN) - 1;
-			if ((s = strcspn(cp, " \t")))
-				*(cp+s) = 0;
+			cp += strspn(cp, " \t");
+			cp[strcspn(cp, " \t")] = '\0';
 			filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				goto improper;
@@ -918,10 +917,11 @@ noslash:
 			if (restart_point)
 				filesize += restart_point;
 #endif /* !SMALL */
-#define LOCATION "Location: "
+#define LOCATION "Location:"
 		} else if (isredirect &&
 		    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
 			cp += sizeof(LOCATION) - 1;
+			cp += strspn(cp, " \t");
 			/*
 			 * If there is a colon before the first slash, this URI
 			 * is not relative. RFC 3986 4.2
@@ -974,25 +974,26 @@ noslash:
 			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
 			goto cleanup_url_get;
-#define RETRYAFTER "Retry-After: "
+#define RETRYAFTER "Retry-After:"
 		} else if (isunavail &&
 		    strncasecmp(cp, RETRYAFTER, sizeof(RETRYAFTER) - 1) == 0) {
 			size_t s;
 			cp += sizeof(RETRYAFTER) - 1;
-			if ((s = strcspn(cp, " \t")))
-				cp[s] = '\0';
+			cp += strspn(cp, " \t");
+			cp[strcspn(cp, " \t")] = '\0';
 			retryafter = strtonum(cp, 0, 0, &errstr);
 			if (errstr != NULL)
 				retryafter = -1;
-#define TRANSFER_ENCODING "Transfer-Encoding: "
+#define TRANSFER_ENCODING "Transfer-Encoding:"
 		} else if (strncasecmp(cp, TRANSFER_ENCODING,
 			    sizeof(TRANSFER_ENCODING) - 1) == 0) {
 			cp += sizeof(TRANSFER_ENCODING) - 1;
+			cp += strspn(cp, " \t");
 			cp[strcspn(cp, " \t")] = '\0';
 			if (strcasecmp(cp, "chunked") == 0)
 				chunked = 1;
 #ifndef SMALL
-#define LAST_MODIFIED "Last-Modified: "
+#define LAST_MODIFIED "Last-Modified:"
 		} else if (strncasecmp(cp, LAST_MODIFIED,
 			    sizeof(LAST_MODIFIED) - 1) == 0) {
 			cp += sizeof(LAST_MODIFIED) - 1;
