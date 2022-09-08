@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic.c,v 1.1 2022/08/31 16:10:59 kettenis Exp $	*/
+/*	$OpenBSD: qciic.c,v 1.2 2022/09/08 06:33:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -429,8 +429,7 @@ qciic_acpi_found_hid(struct aml_node *node, void *arg)
 
 	acpi_attach_deps(acpi_softc, node->parent);
 
-	if (strcmp(dev, "ELAN0674") == 0 ||
-	    strcmp(dev, "ELAN06F0") == 0)
+	if (strcmp(dev, "PNP0C50") == 0 || strcmp(cdev, "PNP0C50") == 0)
 		return qciic_acpi_found_ihidev(sc, node, dev, crs);
 
 	memset(&ia, 0, sizeof(ia));
