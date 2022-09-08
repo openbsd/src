@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.158 2022/09/02 22:11:57 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.159 2022/09/08 13:17:30 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,10 +63,6 @@ _rc_parse_conf() {
 		done < $_rcfile
 	done
 
-	_rc_do _rc_quirks
-}
-
-_rc_quirks() {
 	# special care needed for spamlogd to avoid starting it up and failing
 	# all the time
 	if [ X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
