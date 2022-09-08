@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.118 2021/03/15 17:28:45 florian Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.119 2022/09/08 10:22:07 kn Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ in6_get_ifid(struct ifnet *ifp0, struct in6_addr *in6)
 	}
 
 	/* next, try to get it from some other hardware interface */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp == ifp0)
 			continue;
 		if (in6_get_hw_ifid(ifp, in6) == 0)

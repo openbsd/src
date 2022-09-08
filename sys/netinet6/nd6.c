@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.246 2022/08/09 21:10:03 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.247 2022/09/08 10:22:07 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -489,7 +489,7 @@ nd6_expire(void *unused)
 	KERNEL_LOCK();
 	NET_LOCK();
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		struct ifaddr *ifa, *nifa;
 		struct in6_ifaddr *ia6;
 
@@ -1303,7 +1303,7 @@ nd6_slowtimo(void *ignored_arg)
 
 	timeout_add_sec(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL);
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.136 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.137 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ mrt_sysctl_vif(void *oldp, size_t *oldlenp)
 	given = *oldlenp;
 	needed = 0;
 	memset(&vinfo, 0, sizeof vinfo);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if ((vifp = (struct vif *)ifp->if_mcast) == NULL)
 			continue;
 
@@ -560,7 +560,7 @@ ip_mrouter_done(struct socket *so)
 	} while (error == EAGAIN);
 
 	/* Unregister all interfaces in the domain. */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
 
@@ -607,7 +607,7 @@ set_api_config(struct socket *so, struct mbuf *m)
 	 *  - there are no vifs installed
 	 *  - the MFC table is empty
 	 */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
 		if (ifp->if_mcast == NULL)
@@ -1284,7 +1284,7 @@ if_lookupbyvif(vifi_t vifi, unsigned int rtableid)
 	struct vif	*v;
 	struct ifnet	*ifp;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
 		if ((v = (struct vif *)ifp->if_mcast) == NULL)

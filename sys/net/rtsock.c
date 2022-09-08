@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.354 2022/09/05 10:31:25 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.355 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -850,7 +850,7 @@ route_output(struct mbuf *m, struct socket *so)
 		 */
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
 			NET_LOCK();
-			TAILQ_FOREACH(ifp, &ifnet, if_list) {
+			TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 				ifp->if_rtrequest(ifp, RTM_PROPOSAL, NULL);
 			}
 			NET_UNLOCK();
@@ -2027,7 +2027,7 @@ sysctl_iflist(int af, struct walkarg *w)
 	int			 len, error = 0;
 
 	bzero(&info, sizeof(info));
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		/* Copy the link-layer address first */
@@ -2085,7 +2085,7 @@ sysctl_ifnames(struct walkarg *w)
 	int error = 0;
 
 	/* XXX ignore tableid for now */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
 		w->w_needed += sizeof(ifn);

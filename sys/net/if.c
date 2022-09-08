@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.664 2022/09/02 13:12:31 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.665 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ static struct if_idxmap if_idxmap = {
 struct srp_gc if_ifp_gc = SRP_GC_INITIALIZER(if_ifp_dtor, NULL);
 struct srp_gc if_map_gc = SRP_GC_INITIALIZER(if_map_dtor, NULL);
 
-struct ifnet_head ifnet = TAILQ_HEAD_INITIALIZER(ifnet);
+struct ifnet_head ifnetlist = TAILQ_HEAD_INITIALIZER(ifnetlist);
 
 void
 if_idxmap_init(unsigned int limit)
@@ -566,7 +566,7 @@ if_attachhead(struct ifnet *ifp)
 {
 	if_attach_common(ifp);
 	NET_LOCK();
-	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
+	TAILQ_INSERT_HEAD(&ifnetlist, ifp, if_list);
 	if_attachsetup(ifp);
 	NET_UNLOCK();
 }
@@ -576,7 +576,7 @@ if_attach(struct ifnet *ifp)
 {
 	if_attach_common(ifp);
 	NET_LOCK();
-	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	TAILQ_INSERT_TAIL(&ifnetlist, ifp, if_list);
 	if_attachsetup(ifp);
 	NET_UNLOCK();
 }
@@ -1014,7 +1014,7 @@ if_remove(struct ifnet *ifp)
 {
 	/* Remove the interface from the list of all interfaces. */
 	NET_LOCK();
-	TAILQ_REMOVE(&ifnet, ifp, if_list);
+	TAILQ_REMOVE(&ifnetlist, ifp, if_list);
 	NET_UNLOCK();
 
 	/* Remove the interface from the interface index map. */
@@ -1256,7 +1256,7 @@ if_clone_destroy(const char *name)
 
 	rw_enter_write(&if_cloners_lock);
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (strcmp(ifp->if_xname, name) == 0)
 			break;
 	}
@@ -1422,7 +1422,7 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 
 	rdomain = rtable_l2(rtableid);
 	KERNEL_LOCK();
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
 
@@ -1451,7 +1451,7 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 
 	rdomain = rtable_l2(rdomain);
 	KERNEL_LOCK();
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
 		if (ifp->if_flags & IFF_POINTOPOINT) {
@@ -1608,7 +1608,7 @@ if_downall(void)
 	struct ifnet *ifp;
 
 	NET_LOCK();
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if ((ifp->if_flags & IFF_UP) == 0)
 			continue;
 		if_down(ifp);
@@ -1763,7 +1763,7 @@ if_unit(const char *name)
 
 	KERNEL_ASSERT_LOCKED();
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (strcmp(ifp->if_xname, name) == 0) {
 			if_ref(ifp);
 			return (ifp);
@@ -2615,7 +2615,7 @@ ifconf(caddr_t data)
 
 	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
 	if (space == 0) {
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 			struct sockaddr *sa;
 
 			if (TAILQ_EMPTY(&ifp->if_addrlist))
@@ -2635,7 +2635,7 @@ ifconf(caddr_t data)
 	}
 
 	ifrp = ifc->ifc_req;
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (space < sizeof(ifr))
 			break;
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
@@ -3173,7 +3173,7 @@ ifa_print_all(void)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			char addr[INET6_ADDRSTRLEN];
 

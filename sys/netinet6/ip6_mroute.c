@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.134 2022/08/09 21:10:03 kn Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.135 2022/09/08 10:22:07 kn Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -328,7 +328,7 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 	given = *oldlenp;
 	needed = 0;
 	memset(&minfo, 0, sizeof minfo);
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL)
 			continue;
 
@@ -533,7 +533,7 @@ ip6_mrouter_done(struct socket *so)
 	} while (error == EAGAIN);
 
 	/* Unregister all interfaces in the domain. */
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
 
@@ -1185,7 +1185,7 @@ mrt6_iflookupbymif(mifi_t mifi, unsigned int rtableid)
 	struct mif6	*m6;
 	struct ifnet	*ifp;
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rtableid)
 			continue;
 		if ((m6 = (struct mif6 *)ifp->if_mcast6) == NULL)

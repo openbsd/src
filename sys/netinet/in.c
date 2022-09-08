@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.176 2022/08/29 07:51:45 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.177 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -829,7 +829,7 @@ in_broadcast(struct in_addr in, u_int rtableid)
 	rdomain = rtable_l2(rtableid);
 
 #define ia (ifatoia(ifa))
-	TAILQ_FOREACH(ifn, &ifnet, if_list) {
+	TAILQ_FOREACH(ifn, &ifnetlist, if_list) {
 		if (ifn->if_rdomain != rdomain)
 			continue;
 		if ((ifn->if_flags & IFF_BROADCAST) == 0)

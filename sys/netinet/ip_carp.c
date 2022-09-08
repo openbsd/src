@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.354 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.355 2022/09/08 10:22:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1004,7 +1004,7 @@ carp_send_ad_all(void)
 	if (carp_send_all_recur > 0)
 		return;
 	++carp_send_all_recur;
-	TAILQ_FOREACH(ifp0, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp0, &ifnetlist, if_list) {
 		if (ifp0->if_type != IFT_ETHER)
 			continue;
 

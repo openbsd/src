@@ -873,7 +873,7 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 	KERNEL_LOCK();
 	s = splnet();
 
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (!memcmp(LLADDR(ifp->if_sadl), enaddr, ETHER_ADDR_LEN))
 			break;
 	}

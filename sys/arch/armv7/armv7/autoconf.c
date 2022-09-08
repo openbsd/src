@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2022/09/02 20:06:55 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ diskconf(void)
 	if (bootmac) {
 		struct ifnet *ifp;
 
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 			if (ifp->if_type == IFT_ETHER &&
 			    memcmp(bootmac, ((struct arpcom *)ifp)->ac_enaddr,
 			    ETHER_ADDR_LEN) == 0)

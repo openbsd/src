@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2022/09/02 20:06:56 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2022/09/08 10:22:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -54,7 +54,7 @@ diskconf(void)
 	if (bootmac) {
 		struct ifnet *ifp;
 
-		TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 			if (ifp->if_type == IFT_ETHER &&
 			    memcmp(bootmac, ((struct arpcom *)ifp)->ac_enaddr,
 			    ETHER_ADDR_LEN) == 0)

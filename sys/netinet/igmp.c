@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.81 2022/09/04 06:49:11 jsg Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.82 2022/09/08 10:22:06 kn Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -539,7 +539,7 @@ igmp_fasttimo(void)
 	NET_LOCK();
 
 	igmp_timers_are_running = 0;
-	TAILQ_FOREACH(ifp, &ifnet, if_list)
+	TAILQ_FOREACH(ifp, &ifnetlist, if_list)
 		igmp_checktimer(ifp);
 
 	NET_UNLOCK();
