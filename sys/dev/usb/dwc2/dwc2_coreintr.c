@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.12 2022/09/04 08:42:40 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.13 2022/09/08 19:18:46 mglocker Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -402,7 +402,7 @@ static void dwc2_wakeup_from_lpm_l1(struct dwc2_hsotg *hsotg)
 	hsotg->lx_state = DWC2_L0;
 
 	/* Inform gadget to exit from L1 */
-//	call_gadget(hsotg, resume);
+	call_gadget(hsotg, resume);
 }
 
 /*
@@ -442,7 +442,7 @@ STATIC void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 					dev_err(hsotg->dev,
 						"exit partial_power_down failed\n");
 
-//				call_gadget(hsotg, resume);
+				call_gadget(hsotg, resume);
 			}
 #if 0
 			/* Exit gadget mode clock gating. */
@@ -581,7 +581,7 @@ STATIC void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 			hsotg->lx_state = DWC2_L2;
 
 			/* Call gadget suspend callback */
-//			call_gadget(hsotg, suspend);
+			call_gadget(hsotg, suspend);
 		}
 	} else {
 		if (hsotg->op_state == OTG_STATE_A_PERIPHERAL) {
@@ -657,7 +657,7 @@ static void dwc2_handle_lpm_intr(struct dwc2_hsotg *hsotg)
 				"Core is in L1 sleep glpmcfg=%08x\n", glpmcfg);
 
 			/* Inform gadget that we are in L1 state */
-//			call_gadget(hsotg, suspend);
+			call_gadget(hsotg, suspend);
 		}
 	}
 }
@@ -796,7 +796,7 @@ static int dwc2_handle_gpwrdn_intr(struct dwc2_hsotg *hsotg)
 				if (ret)
 					dev_err(hsotg->dev,
 						"exit hibernation failed.\n");
-//				call_gadget(hsotg, resume);
+				call_gadget(hsotg, resume);
 			} else {
 				ret = dwc2_exit_hibernation(hsotg, 1, 0, 1);
 				if (ret)
