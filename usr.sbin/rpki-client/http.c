@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.65 2022/08/30 14:33:26 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.66 2022/09/08 09:48:02 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1164,11 +1164,11 @@ http_redirect(struct http_connection *conn)
 static int
 http_parse_header(struct http_connection *conn, char *buf)
 {
-#define CONTENTLEN "Content-Length: "
-#define LOCATION "Location: "
-#define CONNECTION "Connection: "
-#define TRANSFER_ENCODING "Transfer-Encoding: "
-#define LAST_MODIFIED "Last-Modified: "
+#define CONTENTLEN "Content-Length:"
+#define LOCATION "Location:"
+#define CONNECTION "Connection:"
+#define TRANSFER_ENCODING "Transfer-Encoding:"
+#define LAST_MODIFIED "Last-Modified:"
 	const char *errstr;
 	char *cp, *redirurl;
 	char *locbase, *loctail;
@@ -1178,10 +1178,9 @@ http_parse_header(struct http_connection *conn, char *buf)
 	if (*cp == '\0')
 		return 0;
 	else if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
-		size_t s;
 		cp += sizeof(CONTENTLEN) - 1;
-		if ((s = strcspn(cp, " \t")) != 0)
-			*(cp + s) = 0;
+		cp += strspn(cp, " \t");
+		cp[strcspn(cp, " \t")] = '\0';
 		conn->iosz = strtonum(cp, 0, MAX_CONTENTLEN, &errstr);
 		if (errstr != NULL) {
 			warnx("Content-Length of %s is %s",
@@ -1191,6 +1190,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (http_isredirect(conn) &&
 	    strncasecmp(cp, LOCATION, sizeof(LOCATION) - 1) == 0) {
 		cp += sizeof(LOCATION) - 1;
+		cp += strspn(cp, " \t");
 		/*
 		 * If there is a colon before the first slash, this URI
 		 * is not relative. RFC 3986 4.2
@@ -1232,11 +1232,13 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (strncasecmp(cp, TRANSFER_ENCODING,
 	    sizeof(TRANSFER_ENCODING) - 1) == 0) {
 		cp += sizeof(TRANSFER_ENCODING) - 1;
+		cp += strspn(cp, " \t");
 		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "chunked") == 0)
 			conn->chunked = 1;
 	} else if (strncasecmp(cp, CONNECTION, sizeof(CONNECTION) - 1) == 0) {
 		cp += sizeof(CONNECTION) - 1;
+		cp += strspn(cp, " \t");
 		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "close") == 0)
 			conn->keep_alive = 0;
@@ -1245,6 +1247,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (strncasecmp(cp, LAST_MODIFIED,
 	    sizeof(LAST_MODIFIED) - 1) == 0) {
 		cp += sizeof(LAST_MODIFIED) - 1;
+		cp += strspn(cp, " \t");
 		free(conn->last_modified);
 		if ((conn->last_modified = strdup(cp)) == NULL)
 			err(1, NULL);
