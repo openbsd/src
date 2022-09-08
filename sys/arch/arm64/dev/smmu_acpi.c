@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.6 2022/08/11 14:49:42 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.7 2022/09/08 19:30:05 kettenis Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -150,7 +150,9 @@ smmu_acpi_foundqcom(struct aml_node *node, void *arg)
 	if (acpi_parsehid(node, arg, cdev, dev, sizeof(dev)) != 0)
 		return 0;
 
-	if (strcmp(dev, "QCOM0609") == 0)
+	if (strcmp(dev, "QCOM0409") == 0 || /* SC8180X/XP */
+	    strcmp(dev, "QCOM0609") == 0 || /* SC8280XP */
+	    strcmp(dev, "QCOM0809") == 0)   /* SC7180 */
 		sc->sc_is_qcom = 1;
 
 	return 0;
