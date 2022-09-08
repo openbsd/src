@@ -2410,6 +2410,11 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	dev_priv->id = id;
 	info = (struct intel_device_info *)id->driver_data;
 
+	/* Device parameters start as a copy of module parameters. */
+	i915_params_copy(&dev_priv->params, &i915_modparams);
+	dev_priv->params.enable_guc = 0;
+	dev_priv->params.request_timeout_ms = 0;
+
 	/* Setup the write-once "constant" device info */
 	device_info = mkwrite_device_info(dev_priv);
 	memcpy(device_info, info, sizeof(*device_info));
