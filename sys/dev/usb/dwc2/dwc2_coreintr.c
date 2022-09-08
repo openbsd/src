@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_coreintr.c,v 1.13 2022/09/08 19:18:46 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_coreintr.c,v 1.14 2022/09/08 19:32:54 mglocker Exp $	*/
 /*	$NetBSD: dwc2_coreintr.c,v 1.8 2014/04/04 05:40:57 skrll Exp $	*/
 
 /*
@@ -441,15 +441,13 @@ STATIC void dwc2_handle_wakeup_detected_intr(struct dwc2_hsotg *hsotg)
 				if (ret)
 					dev_err(hsotg->dev,
 						"exit partial_power_down failed\n");
-
 				call_gadget(hsotg, resume);
 			}
-#if 0
+
 			/* Exit gadget mode clock gating. */
 			if (hsotg->params.power_down ==
 			    DWC2_POWER_DOWN_PARAM_NONE && hsotg->bus_suspended)
 				dwc2_gadget_exit_clock_gating(hsotg, 0);
-#endif
 		} else {
 			/* Change to L0 state */
 			hsotg->lx_state = DWC2_L0;
@@ -567,11 +565,8 @@ STATIC void dwc2_handle_usb_suspend_intr(struct dwc2_hsotg *hsotg)
 				 * If neither hibernation nor partial power down are supported,
 				 * clock gating is used to save power.
 				 */
-#if 0
 				if (!hsotg->params.no_clock_gating)
 					dwc2_gadget_enter_clock_gating(hsotg);
-#endif
-				break;
 			}
 
 			/*
