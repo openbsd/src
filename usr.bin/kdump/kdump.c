@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.149 2022/07/20 05:56:36 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.150 2022/09/08 16:04:31 mbuhl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -720,6 +720,8 @@ static const formatter scargs[][8] = {
     [SYS_ptrace]	= { Ptracedecode, Ppid_t, Pptr, Pdecint },
     [SYS_recvmsg]	= { Pfd, Pptr, Sendrecvflagsname },
     [SYS_sendmsg]	= { Pfd, Pptr, Sendrecvflagsname },
+    [SYS_recvmmsg]	= { Pfd, Pptr, Pucount, Sendrecvflagsname, Pptr },
+    [SYS_sendmmsg]	= { Pfd, Pptr, Pucount, Sendrecvflagsname },
     [SYS_recvfrom]	= { Pfd, Pptr, Pbigsize, Sendrecvflagsname },
     [SYS_accept]	= { Pfd, Pptr, Pptr },
     [SYS_getpeername]	= { Pfd, Pptr, Pptr },

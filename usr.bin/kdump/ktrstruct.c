@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.29 2020/12/21 07:47:37 otto Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.30 2022/09/08 16:04:31 mbuhl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -398,6 +398,18 @@ ktrquota(const struct dqblk *quota)
 }
 
 static void
+ktrmmsghdr(const struct mmsghdr *mmsg)
+{
+	printf("struct mmsghdr { msg_hdr = { name=%p, namelen=%u, "
+	    "iov=%p, iovlen=%u, control=%p, controllen=%u, flags=",
+	    mmsg->msg_hdr.msg_name, mmsg->msg_hdr.msg_namelen,
+	    mmsg->msg_hdr.msg_iov, mmsg->msg_hdr.msg_iovlen,
+	    mmsg->msg_hdr.msg_control, mmsg->msg_hdr.msg_controllen);
+	sendrecvflagsname(mmsg->msg_hdr.msg_flags);
+	printf(" }, msg_len = %u }\n", mmsg->msg_len);
+}
+
+static void
 ktrmsghdr(const struct msghdr *msg)
 {
 	printf("struct msghdr { name=%p, namelen=%u, iov=%p, iovlen=%u,"
@@ -649,6 +661,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&msg, data, datalen);
 		ktrmsghdr(&msg);
+	} else if (strcmp(name, "mmsghdr") == 0) {
+		struct mmsghdr mmsg;
+
+		if (datalen != sizeof(mmsg))
+			goto invalid;
+		memcpy(&mmsg, data, datalen);
+		ktrmmsghdr(&mmsg);
 	} else if (strcmp(name, "iovec") == 0) {
 		if (datalen % sizeof(struct iovec))
 			goto invalid;
