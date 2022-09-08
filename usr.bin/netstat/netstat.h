@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.76 2021/01/26 18:22:45 deraadt Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.77 2022/09/08 13:18:47 kn Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ extern int qflag;		/* only display non-zero values for output */
 extern int	rflag;		/* show routing tables (or routing stats) */
 extern int	Rflag;		/* show rdomain and rtable summary */
 extern int	sflag;		/* show protocol statistics */
-extern int	tflag;		/* show i/f watchdog timers */
 extern int	vflag;		/* be verbose */
 extern int	Wflag;		/* show net80211 protocol statistics */
 

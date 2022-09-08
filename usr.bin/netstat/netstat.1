@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.94 2022/06/19 13:59:22 claudio Exp $
+.\"	$OpenBSD: netstat.1,v 1.95 2022/09/08 13:18:47 kn Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: June 19 2022 $
+.Dd $Mdocdate: September 8 2022 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -49,10 +49,10 @@
 .Fl m
 .Nm
 .Fl I Ar interface | Fl i
-.Op Fl bdehnqt
+.Op Fl bdehnq
 .Nm
 .Fl w Ar wait
-.Op Fl bdehnqt
+.Op Fl bdehnq
 .Op Fl c Ar count
 .Op Fl I Ar interface
 .Nm
@@ -277,10 +277,6 @@ If this option is repeated, counters with a value of zero are suppressed.
 .It Fl T Ar rtable
 Select an alternate routing table to query.
 The default is to use the current routing table.
-.It Fl t
-With the
-.Fl i
-option, display the current value of the watchdog timer function.
 .It Fl u
 Limit statistics or address control block reports to the
 .Dv AF_UNIX

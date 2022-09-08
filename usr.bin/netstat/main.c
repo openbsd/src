@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.121 2021/01/26 18:22:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.122 2022/09/08 13:18:47 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -125,7 +125,6 @@ int     qflag;          /* only display non-zero values for output */
 int     rflag;          /* show routing tables (or routing stats) */
 int     Rflag;          /* show rdomain and rtable summary */
 int     sflag;          /* show protocol statistics */
-int     tflag;          /* show i/f watchdog timers */
 int     vflag;          /* be verbose */
 int     Wflag;          /* show net80211 protocol statistics */
 
@@ -156,7 +155,7 @@ main(int argc, char *argv[])
 	tableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
-	    "AaBbc:deFf:ghI:iLlM:mN:np:P:qRrsT:tuvW:w:")) != -1)
+	    "AaBbc:deFf:ghI:iLlM:mN:np:P:qRrsT:uvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -268,9 +267,6 @@ main(int argc, char *argv[])
 			if (errstr)
 				errx(1, "invalid table id: %s", errstr);
 			Tflag = 1;
-			break;
-		case 't':
-			tflag = 1;
 			break;
 		case 'u':
 			af = AF_UNIX;
@@ -485,8 +481,8 @@ usage(void)
 	    "usage: netstat [-AaBln] [-M core] [-N system] [-p protocol] [-T rtable]\n"
 	    "       netstat -W interface\n"
 	    "       netstat -m\n"
-	    "       netstat -I interface | -i [-bdehnqt]\n"
-	    "       netstat -w wait [-bdehnqt] [-c count] [-I interface]\n"
+	    "       netstat -I interface | -i [-bdehnq]\n"
+	    "       netstat -w wait [-bdehnq] [-c count] [-I interface]\n"
 	    "       netstat -s [-gru] [-f address_family] [-p protocol]\n"
 	    "       netstat -g [-lnu] [-f address_family]\n"
 	    "       netstat -R\n"
