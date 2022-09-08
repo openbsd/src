@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.49 2019/12/19 17:53:27 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.50 2022/09/08 10:21:45 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -645,24 +645,12 @@ extern uint32_t pmap_alias_bits;
 struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
-	u_int uro_mappings;
-	u_int urw_mappings;
-	union {
-		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
-		u_int i_mappings;
-	} k_u;
-#define	kro_mappings	k_u.s_mappings[0]
-#define	krw_mappings	k_u.s_mappings[1]
-#define	k_mappings	k_u.i_mappings
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 	(pg)->mdpage.pvh_attrs = 0;					\
-	(pg)->mdpage.uro_mappings = 0;					\
-	(pg)->mdpage.urw_mappings = 0;					\
-	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
 #endif /* _LOCORE */
 
