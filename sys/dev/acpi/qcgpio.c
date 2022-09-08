@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.1 2022/08/31 16:10:59 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.2 2022/09/08 06:32:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -147,12 +147,6 @@ qcgpio_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-#if 0
-	/* XXX */
-	HWRITE4(sc, 0x0008 + 0x1000 * 104, 0x71);
-	HWRITE4(sc, 0x0008 + 0x1000 * 182, 0x71);
-#endif
-
 	acpi_register_gpio(sc->sc_acpi, sc->sc_node);
 	return;
 
@@ -168,6 +162,9 @@ int
 qcgpio_pin_map(int pin)
 {
 	switch (pin) {
+	case 107:
+	case 175:
+		return pin;
 	case 832:
 		return 104;
 	case 896:
