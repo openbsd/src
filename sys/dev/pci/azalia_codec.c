@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.188 2022/08/03 05:54:50 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.189 2022/09/08 01:35:39 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -97,6 +97,9 @@ azalia_codec_init_vtbl(codec_t *this)
 			this->name = "Realtek ALC3204";
 		else
 			this->name = "Realtek ALC236";
+		break;
+	case 0x10ec0245:
+		this->name = "Realtek ALC245";
 		break;
 	case 0x10ec0255:
 		this->name = "Realtek ALC255";
