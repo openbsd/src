@@ -1,6 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.104 2022/01/02 23:39:48 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.105 2022/09/08 17:44:48 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
-#undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -69,15 +68,12 @@
 
 paddr_t cpu0paddr;/* XXXXXXXXXXXXXXXX */
 
-extern int64_t asmptechk(int64_t *pseg[], int addr); /* DEBUG XXXXX */
-
 /* These routines are in assembly to allow access thru physical mappings */
 extern int64_t pseg_get(struct pmap*, vaddr_t addr);
 extern int pseg_set(struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare);
 
-/* XXX - temporary workaround for pmap_{copy,zero}_page api change */
-void pmap_zero_phys(paddr_t pa);
-void pmap_copy_phys(paddr_t src, paddr_t dst);
+extern void pmap_zero_phys(paddr_t pa);
+extern void pmap_copy_phys(paddr_t src, paddr_t dst);
 
 /*
  * Diatribe on ref/mod counting:
@@ -103,24 +99,14 @@ void pmap_copy_phys(paddr_t src, paddr_t dst);
  * and collect/clear all the ref/mod information and copy it into the pv_entry.
  */
 
-#ifdef NO_VCACHE
-#define FORCE_ALIAS	1
-#else
-#define FORCE_ALIAS	0
-#endif
-
 #define	PV_ALIAS	0x1LL
 #define PV_REF		0x2LL
 #define PV_MOD		0x4LL
-#define PV_NVC		0x8LL
-#define PV_NC		0x10LL
-#define PV_WE		0x20LL		/* Debug -- track if this page was ever writable */
 #define PV_MASK		(0x03fLL)
 #define PV_VAMASK	(~(NBPG - 1))
 #define PV_MATCH(pv,va)	(!((((pv)->pv_va) ^ (va)) & PV_VAMASK))
 #define PV_SETVA(pv,va) ((pv)->pv_va = (((va) & PV_VAMASK) | (((pv)->pv_va) & PV_MASK)))
 
-pv_entry_t	pv_table;	/* array of entries, one per page */
 static struct pool pv_pool;
 static struct pool pmap_pool;
 
@@ -133,8 +119,6 @@ void	pmap_bootstrap_cpu(paddr_t);
 void	pmap_pinit(struct pmap *);
 void	pmap_release(struct pmap *);
 pv_entry_t pa_to_pvh(paddr_t);
-
-u_int64_t first_phys_addr;
 
 pv_entry_t
 pa_to_pvh(paddr_t pa)
@@ -197,7 +181,6 @@ struct tsb_desc *tsb_desc;
 
 struct pmap kernel_pmap_;
 
-extern int physmem;
 /*
  * Virtual and physical addresses of the start and end of kernel text
  * and data segments.
@@ -211,7 +194,6 @@ paddr_t kdatap;
 vaddr_t ekdata;
 paddr_t ekdatap;
 
-static int npgs;
 static struct mem_region memlist[8]; /* Pick a random size here */
 
 vaddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
@@ -278,12 +260,12 @@ void pmap_free_page(paddr_t, struct pmap *);
  * page bits.  That is: these are the bits between 8K pages and
  * larger page sizes that cause aliasing.
  */
-struct page_size_map page_size_map[] = {
+const struct page_size_map page_size_map[] = {
 	{ (4*1024*1024-1) & ~(8*1024-1), PGSZ_4M },
 	{ (512*1024-1) & ~(8*1024-1), PGSZ_512K  },
 	{ (64*1024-1) & ~(8*1024-1), PGSZ_64K  },
 	{ (8*1024-1) & ~(8*1024-1), PGSZ_8K  },
-	{ 0, PGSZ_8K&0  }
+	{ 0, 0  }
 };
 
 /*
@@ -878,7 +860,6 @@ remap_data:
 	}
 #endif
 
-	first_phys_addr = mem->start;
 	BDPRINTF(PDB_BOOT1, ("firstaddr after pmap=%08lx\r\n", 
 		(u_long)firstaddr));
 
@@ -943,7 +924,6 @@ remap_data:
 	 * Now we need to remove the area we valloc'ed from the available
 	 * memory lists.  (NB: we may have already alloc'ed the entire space).
 	 */
-	npgs = 0;
 	for (mp = avail; mp->size; mp++) {
 		/*
 		 * Check whether this region holds all of the kernel.
@@ -996,7 +976,6 @@ remap_data:
 		}
 		s = mp->start;
 		sz = mp->size;
-		npgs += atop(sz);
 		for (mp1 = avail; mp1 < mp; mp1++)
 			if (s < mp1->start)
 				break;
@@ -1079,7 +1058,7 @@ remap_data:
 			1 /* priv */,
 			1 /* Write */,
 			1 /* Cacheable */,
-			FORCE_ALIAS /* ALIAS -- Disable D$ */,
+			0 /* ALIAS -- Disable D$ */,
 			1 /* valid */,
 			0 /* IE */);
 		pmap_enter_kpage(va, data);
@@ -1145,7 +1124,7 @@ remap_data:
 				1 /* priv */,
 				1 /* Write */,
 				1 /* Cacheable */,
-				FORCE_ALIAS /* ALIAS -- Disable D$ */,
+				0 /* ALIAS -- Disable D$ */,
 				1 /* valid */,
 				0 /* IE */);
 			pmap_enter_kpage(vmmap, data);
@@ -1184,7 +1163,7 @@ remap_data:
 				1 /* priv */,
 				1 /* Write */,
 				1 /* Cacheable */,
-				FORCE_ALIAS /* ALIAS -- Disable D$ */,
+				0 /* ALIAS -- Disable D$ */,
 				1 /* valid */,
 				0 /* IE */);
 			pmap_enter_kpage(vmmap, data);
@@ -1258,7 +1237,7 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 
 	index = 15; /* XXX */
 	for (va = ktext, pa = ktextp; va < ektext; va += 4*MEG, pa += 4*MEG) {
-		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, FORCE_ALIAS, 1, 0);
+		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 0, 1, 0, 1, 0);
 		data |= SUN4U_TLB_L;
 		prom_itlb_load(index, data, va);
 		prom_dtlb_load(index, data, va);
@@ -1266,7 +1245,7 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 	}
 
 	for (va = kdata, pa = kdatap; va < ekdata; va += 4*MEG, pa += 4*MEG) {
-		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, FORCE_ALIAS, 1, 0);
+		data = SUN4U_TSB_DATA(0, PGSZ_4M, pa, 1, 1, 1, 0, 1, 0);
 		data |= SUN4U_TLB_L;
 		prom_dtlb_load(index, data, va);
 		index--;
@@ -1289,7 +1268,7 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 		if ((CPU_JUPITERID % 2) == 1)
 			index--;
 
-		data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
+		data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, 0, 1, 0);
 		data |= SUN4U_TLB_L;
 		prom_dtlb_load(index, data, va - (CPUINFO_VA - INTSTACK));
 
@@ -1302,7 +1281,7 @@ sun4u_bootstrap_cpu(paddr_t intstack)
 	 * Establish the 64KB locked mapping for the interrupt stack.
 	 */
 
-	data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, FORCE_ALIAS, 1, 0);
+	data = SUN4U_TSB_DATA(0, PGSZ_64K, intstack, 1, 1, 1, 0, 1, 0);
 	data |= SUN4U_TLB_L;
 	prom_dtlb_load(index, data, INTSTACK);
 
@@ -1805,7 +1784,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
 		mtx_enter(&pg->mdpage.pvmtx);
-		aliased = (pv->pv_va & (PV_ALIAS|PV_NVC));
+		aliased = (pv->pv_va & PV_ALIAS);
 #ifdef DIAGNOSTIC
 		if ((flags & PROT_MASK) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
@@ -1822,9 +1801,6 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 	if (pa & PMAP_NVC)
 		aliased = 1;
-#ifdef NO_VCACHE
-	aliased = 1; /* Disable D$ */
-#endif
 	if (CPU_ISSUN4V) {
 		tte.data = SUN4V_TSB_DATA(0, size, pa, pm == pmap_kernel(),
 		    (flags & PROT_WRITE), (!(pa & PMAP_NC)), 
@@ -2250,9 +2226,10 @@ pmap_clear_modify(struct vm_page *pg)
 	/* Clear all mappings */
 	mtx_enter(&pg->mdpage.pvmtx);
 	pv = pa_to_pvh(pa);
-	if (pv->pv_va & PV_MOD)
+	if (pv->pv_va & PV_MOD) {
 		changed |= 1;
-	pv->pv_va &= ~(PV_MOD);
+		pv->pv_va &= ~PV_MOD;
+	}
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2283,9 +2260,10 @@ pmap_clear_modify(struct vm_page *pg)
 				    pv->pv_pmap->pm_ctx);
 			}
 			/* Then clear the mod bit in the pv */
-			if (pv->pv_va & PV_MOD)
+			if (pv->pv_va & PV_MOD) {
 				changed |= 1;
-			pv->pv_va &= ~(PV_MOD);
+				pv->pv_va &= ~PV_MOD;
+			}
 			dcache_flush_page(pa);
 		}
 	}
@@ -2304,9 +2282,10 @@ pmap_clear_reference(struct vm_page *pg)
 	/* Clear all references */
 	mtx_enter(&pg->mdpage.pvmtx);
 	pv = pa_to_pvh(pa);
-	if (pv->pv_va & PV_REF)
+	if (pv->pv_va & PV_REF) {
 		changed = 1;
-	pv->pv_va &= ~(PV_REF);
+		pv->pv_va &= ~PV_REF;
+	}
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			int64_t data;
@@ -2335,9 +2314,10 @@ pmap_clear_reference(struct vm_page *pg)
 					pv->pv_pmap->pm_ctx);
 */
 			}
-			if (pv->pv_va & PV_REF)
+			if (pv->pv_va & PV_REF) {
 				changed = 1;
-			pv->pv_va &= ~(PV_REF);
+				pv->pv_va &= ~PV_REF;
+			}
 		}
 	}
 	/* Stupid here will take a cache hit even on unmapped pages 8^( */
@@ -2366,9 +2346,10 @@ pmap_is_modified(struct vm_page *pg)
 			if (pmap_tte2flags(data) & PV_MOD)
 				mod = 1;
 			/* Migrate modify info to head pv */
-			if (npv->pv_va & PV_MOD)
+			if (npv->pv_va & PV_MOD) {
 				mod = 1;
-			npv->pv_va &= ~PV_MOD;
+				npv->pv_va &= ~PV_MOD;
+			}
 		}
 	}
 	/* Save modify info */
@@ -2398,9 +2379,10 @@ pmap_is_referenced(struct vm_page *pg)
 			if (pmap_tte2flags(data) & PV_REF)
 				ref = 1;
 			/* Migrate modify info to head pv */
-			if (npv->pv_va & PV_REF)
+			if (npv->pv_va & PV_REF) {
 				ref = 1;
-			npv->pv_va &= ~PV_REF;
+				npv->pv_va &= ~PV_REF;
+			}
 		}
 	}
 	/* Save ref info */
@@ -2687,9 +2669,6 @@ pmap_enter_pv(struct pmap *pmap, pv_entry_t npv, vaddr_t va, paddr_t pa)
 		 * remove all mappings, flush the cache and set page
 		 * to be mapped uncached. Caching will be restored
 		 * when pages are mapped compatible again.
-		 * XXX - caching is not currently being restored, but
-		 * XXX - I haven't seen the pages uncached since
-		 * XXX - using pmap_prefer().	mhitch
 		 */
 		if ((pv->pv_va ^ va) & VA_ALIAS_MASK) {
 			pv->pv_va |= PV_ALIAS;
@@ -2719,6 +2698,7 @@ pmap_remove_pv(struct pmap *pmap, vaddr_t va, paddr_t pa)
 	pv_entry_t pv, opv, npv = NULL;
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 	int64_t data = 0LL;
+	int alias;
 
 	opv = pv = &pg->mdpage.pvent;
 	mtx_enter(&pg->mdpage.pvmtx);
@@ -2775,14 +2755,17 @@ found:
 
 	/* Check to see if the alias went away */
 	if (opv->pv_va & PV_ALIAS) {
-		opv->pv_va &= ~PV_ALIAS;
+		alias = 0;
 		for (pv = opv; pv; pv = pv->pv_next) {
 			if ((pv->pv_va ^ opv->pv_va) & VA_ALIAS_MASK) {
-				opv->pv_va |= PV_ALIAS;
+				alias = 1;
+				break;
 			}
 		}
-		if (!(opv->pv_va & PV_ALIAS))
+		if (alias == 0) {
+			opv->pv_va &= ~PV_ALIAS;
 			pmap_page_cache(pmap, pa, 1);
+		}
 	}
 
 	mtx_leave(&pg->mdpage.pvmtx);
@@ -2813,16 +2796,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 		vaddr_t va;
 
 		va = (pv->pv_va & PV_VAMASK);
-		if (pv->pv_va & PV_NC) {
-			/* Non-cached -- I/O mapping */
-			if (pseg_set(pv->pv_pmap, va,
-			    pseg_get(pv->pv_pmap, va) & ~(SUN4U_TLB_CV|SUN4U_TLB_CP),
-				     0)) {
-				printf("pmap_page_cache: aliased pseg empty!\n");
-				db_enter();
-				/* panic? */
-			}
-		} else if (mode && (!(pv->pv_va & PV_NVC))) {
+		if (mode) {
 			/* Enable caching */
 			if (pseg_set(pv->pv_pmap, va,
 			    pseg_get(pv->pv_pmap, va) | SUN4U_TLB_CV, 0)) {

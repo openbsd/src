@@ -106,7 +106,7 @@ struct page_size_map {
 	u_int64_t use;
 #endif
 };
-extern struct page_size_map page_size_map[];
+extern const struct page_size_map page_size_map[];
 
 struct pmap {
 	struct mutex pm_mtx;

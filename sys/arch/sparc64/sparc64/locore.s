@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.191 2022/01/02 23:34:15 jsg Exp $	*/
+/*	$OpenBSD: locore.s,v 1.192 2022/09/08 17:44:48 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -57,10 +57,6 @@
  */
 
 #define HORRID_III_HACK
-
-#undef	NO_VCACHE		/* Map w/D$ disabled */
-#undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
-#undef	NO_TSB			/* Don't use TSB */
 
 .register %g2,
 .register %g3,
@@ -205,29 +201,6 @@ _C_LABEL(sun4u_mtp_patch_end):
 	wrpr	%g0, 1, %gl			;\
 	.previous
 
-
-/*
- * This macro will clear out a cache line before an explicit
- * access to that location.  It's mostly used to make certain
- * loads bypassing the D$ do not get stale D$ data.
- *
- * It uses a register with the address to clear and a temporary
- * which is destroyed.
- */
-	.macro DLFLUSH a,t
-#ifdef DCACHE_BUG
-	andn	\a, 0x1f, \t
-	stxa	%g0, [ \t ] ASI_DCACHE_TAG
-	membar	#Sync
-#endif	/* DCACHE_BUG */
-	.endm
-/* The following can be used if the pointer is 16-byte aligned */
-	.macro DLFLUSH2 t
-#ifdef DCACHE_BUG
-	stxa	%g0, [ \t ] ASI_DCACHE_TAG
-	membar	#Sync
-#endif	/* DCACHE_BUG */
-	.endm
 
 /*
  * A handy macro for maintaining instrumentation counters.
@@ -1585,9 +1558,7 @@ dmmu_write_fault:
 	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g6, %g4, %g4
-	DLFLUSH %g4,%g6
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
-	DLFLUSH2 %g6
 	srlx	%g3, PTSHIFT, %g6			! Convert to ptab offset
 	and	%g6, PTMASK, %g6
 	add	%g5, %g4, %g5
@@ -2025,27 +1996,21 @@ winfixspill:
 	and	%g7, STMASK, %g7
 	sll	%g7, 3, %g7
 	add	%g7, %g1, %g1
-	DLFLUSH %g1,%g7
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
-	DLFLUSH2 %g7
 
 	srlx	%g6, PDSHIFT, %g7			! Do page directory
 	and	%g7, PDMASK, %g7
 	sll	%g7, 3, %g7
 	brz,pn	%g1, 0f
 	 add	%g7, %g1, %g1
-	DLFLUSH %g1,%g7
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1
-	DLFLUSH2 %g7
 
 	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
 	and	%g7, PTMASK, %g7
 	brz	%g1, 0f
 	 sll	%g7, 3, %g7
 	add	%g1, %g7, %g7
-	DLFLUSH %g7,%g1
 	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
-	DLFLUSH2 %g1
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
@@ -2073,9 +2038,7 @@ winfixspill:
 	mov	%g7, %g1
 	CHKPT %g5,%g7,0x13
 	add	%g6, PCB_NSAVED, %g7
-	DLFLUSH %g7,%g5
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Start incrementing pcb_nsaved
-	DLFLUSH2 %g5
 
 #ifdef DEBUG
 	wrpr	%g0, 5, %tl
@@ -6233,7 +6196,6 @@ ENTRY(probeget)
 	sub	%o3, 0x1d, %o3
 	brz,a	%o3, 0f
 	 mov	%g0, %o5
-	DLFLUSH %o0,%o5		!	flush cache line
 					! }
 0:
 	btst	1, %o4
@@ -6259,7 +6221,6 @@ ENTRY(probeget)
 	membar	#Sync
 	brz	%o5, 1f			! if (cache flush addr != 0)
 	 nop
-	DLFLUSH2 %o5			!	flush cache line again
 1:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
 	stx	%g0, [%o2 + PCB_ONFAULT]
@@ -6282,7 +6243,7 @@ END(Lfsprobe)
 #endif	/* DDB */
 
 /*
- * pmap_zero_page(pa)
+ * pmap_zero_phys(pa)
  *
  * Zero one page physically addressed
  *
@@ -6316,12 +6277,12 @@ dlflush5:
  END(pmap_zero_phys)
 
 /*
- * pmap_copy_page(src, dst)
+ * pmap_copy_phys(src, dst)
  *
  * Copy one page physically addressed
  *
  * We also need to blast the D$ and flush like
- * pmap_zero_page.
+ * pmap_zero_phys.
  */
 ENTRY(pmap_copy_phys)
 	set	NBPG, %o3
@@ -6356,27 +6317,21 @@ ENTRY(pseg_get)
 	and	%o3, STMASK, %o3			! Index into pm_segs
 	sll	%o3, 3, %o3
 	add	%o2, %o3, %o2
-	DLFLUSH %o2,%o3
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page directory pointer
-	DLFLUSH2 %o3
 
 	srlx	%o1, PDSHIFT, %o3
 	and	%o3, PDMASK, %o3
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
-	DLFLUSH %o2,%o3
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page table pointer
-	DLFLUSH2 %o3
 
 	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
 	and	%o3, PTMASK, %o3
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
-	DLFLUSH %o2,%o3
 	ldxa	[%o2] ASI_PHYS_CACHED, %o0
-	DLFLUSH2 %o3
 	brgez,pn %o0, 1f				! Entry invalid?  Punt
 	 nop
 	retl
@@ -6426,9 +6381,7 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
 2:
-	DLFLUSH %o4,%g1
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
-	DLFLUSH2 %g1
 
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -6436,7 +6389,6 @@ ENTRY(pseg_set)
 	 mov	%o3, %o5
 	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
 	brnz,pn	%o5, 2b					! Something changed?
-	DLFLUSH %o4, %o5
 	mov	%o3, %o4
 	clr	%o3					! Mark spare as used
 0:
@@ -6445,9 +6397,7 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
 2:
-	DLFLUSH %o4,%g1
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
-	DLFLUSH2 %g1
 
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -6455,7 +6405,6 @@ ENTRY(pseg_set)
 	 mov	%o3, %o5
 	casxa	[%o4] ASI_PHYS_CACHED, %g0, %o5
 	brnz,pn	%o5, 2b					! Something changed?
-	DLFLUSH %o4, %o4
 	mov	%o3, %o4
 	clr	%o3					! Mark spare as used
 0:
@@ -6464,7 +6413,6 @@ ENTRY(pseg_set)
 	sll	%o5, 3, %o5
 	add	%o5, %o4, %o4
 	stxa	%o2, [%o4] ASI_PHYS_CACHED		! Easier than shift+or
-	DLFLUSH %o4, %o4
 	mov	2, %o0					! spare unused?
 	retl
 	 movrz	%o3, %g0, %o0				! No. return 0
