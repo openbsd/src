@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.574 2022/09/01 13:23:24 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.575 2022/09/09 13:33:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2641,6 +2641,8 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 	struct rde_dump_ctx	*ctx = ptr;
 	struct prefix		*p;
 
+	if (re == NULL)
+		return;
 	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
 		rde_dump_filter(p, &ctx->req, 0);
 }
@@ -2776,7 +2778,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	struct rib_entry	*re;
 	struct prefix		*p;
 	u_int			 error;
-	uint8_t			 hostplen;
+	uint8_t			 hostplen, plen;
 	uint16_t		 rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
@@ -2814,7 +2816,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				goto nomem;
 			break;
 		case IMSG_CTL_SHOW_RIB_PREFIX:
-			if (req->flags & (F_LONGER|F_SHORTER)) {
+			if (req->flags & F_LONGER) {
 				if (prefix_dump_new(peer, ctx->req.aid,
 				    CTL_MSG_HIGH_MARK, ctx,
 				    rde_dump_adjout_prefix_upcall,
@@ -2836,12 +2838,27 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			}
 
 			do {
-				if (req->prefixlen == hostplen)
+				if (req->flags & F_SHORTER) {
+					for (plen = 0; plen <= req->prefixlen;
+					    plen++) {
+						p = prefix_adjout_lookup(peer,
+						    &req->prefix, plen);
+						/* dump all matching paths */
+						while (p != NULL) {
+							rde_dump_adjout_upcall(
+							    p, ctx);
+							p = prefix_adjout_next(
+							    peer, p);
+						}
+					}
+					p = NULL;
+				} else if (req->prefixlen == hostplen) {
 					p = prefix_adjout_match(peer,
 					    &req->prefix);
-				else
+				} else {
 					p = prefix_adjout_lookup(peer,
 					    &req->prefix, req->prefixlen);
+				}
 				/* dump all matching paths */
 				while (p != NULL) {
 					rde_dump_adjout_upcall(p, ctx);
@@ -2882,7 +2899,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 			goto nomem;
 		break;
 	case IMSG_CTL_SHOW_RIB_PREFIX:
-		if (req->flags & (F_LONGER|F_SHORTER)) {
+		if (req->flags & F_LONGER) {
 			if (rib_dump_new(rid, ctx->req.aid,
 			    CTL_MSG_HIGH_MARK, ctx, rde_dump_prefix_upcall,
 			    rde_dump_done, rde_dump_throttled) == -1)
@@ -2901,13 +2918,20 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 		default:
 			fatalx("%s: unknown af", __func__);
 		}
-		if (req->prefixlen == hostplen)
+
+		if (req->flags & F_SHORTER) {
+			for (plen = 0; plen <= req->prefixlen; plen++) {
+				re = rib_get(rib_byid(rid), &req->prefix, plen);
+				rde_dump_upcall(re, ctx);
+			}
+		} else if (req->prefixlen == hostplen) {
 			re = rib_match(rib_byid(rid), &req->prefix);
-		else
+			rde_dump_upcall(re, ctx);
+		} else {
 			re = rib_get(rib_byid(rid), &req->prefix,
 			    req->prefixlen);
-		if (re)
 			rde_dump_upcall(re, ctx);
+		}
 		imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, ctx->req.pid,
 		    -1, NULL, 0);
 		free(ctx);
