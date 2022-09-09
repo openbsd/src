@@ -738,6 +738,7 @@
 ./usr/include/dev/tc/zs_ioasicvar.h
 ./usr/include/dev/usb
 ./usr/include/dev/usb/dwc2
+./usr/include/dev/usb/dwc2/bitmap.h
 ./usr/include/dev/usb/dwc2/dwc2.h
 ./usr/include/dev/usb/dwc2/dwc2_core.h
 ./usr/include/dev/usb/dwc2/dwc2_hcd.h
