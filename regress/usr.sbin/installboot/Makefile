@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2022/09/07 10:07:39 kn Exp $
+#	$OpenBSD: Makefile,v 1.26 2022/09/09 12:55:43 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -23,6 +23,10 @@ USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "macppc"	# assume MBR
 FORMAT_DISK =		fdisk -iy -b '2048@1:06'
 STAGENAMES =		ofwboot
+USE_SOFTRAID ?=		No
+.elif ${MACHINE} == "octeon"
+FORMAT_DISK =		fdisk -iy -b '65536@64:C'
+STAGENAMES =		boot
 USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "powerpc64"
 FORMAT_DISK =		fdisk -iy -b '32768@32768:C'
