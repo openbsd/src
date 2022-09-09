@@ -81,4 +81,10 @@ devm_of_find_backlight(struct device *dev)
 	return NULL;
 }
 
+static inline struct backlight_device *
+backlight_device_get_by_name(const char *name)
+{
+	return NULL;
+}
+
 #endif
