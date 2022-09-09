@@ -1,4 +1,4 @@
-.\"	$OpenBSD: send.2,v 1.34 2019/01/11 06:10:13 jsg Exp $
+.\"	$OpenBSD: send.2,v 1.35 2022/09/09 13:52:59 mbuhl Exp $
 .\"	$NetBSD: send.2,v 1.6 1996/01/15 01:17:18 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,13 +30,14 @@
 .\"
 .\"     @(#)send.2	8.2 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: January 11 2019 $
+.Dd $Mdocdate: September 9 2022 $
 .Dt SEND 2
 .Os
 .Sh NAME
 .Nm send ,
 .Nm sendto ,
-.Nm sendmsg
+.Nm sendmsg ,
+.Nm sendmmsg
 .Nd send a message from a socket
 .Sh SYNOPSIS
 .In sys/socket.h
@@ -46,19 +47,23 @@
 .Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "socklen_t tolen"
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
+.Ft int
+.Fn sendmmsg "int s" "const struct mmsghdr *mmsg" "unsigned int vlen" "int flags"
 .Sh DESCRIPTION
 .Fn send ,
 .Fn sendto ,
+.Fn sendmsg ,
 and
-.Fn sendmsg
+.Fn sendmmsg
 are used to transmit a message to another socket.
 .Fn send
 may be used only when the socket is in a
 .Em connected
 state, while
-.Fn sendto
+.Fn sendto ,
+.Fn sendmsg ,
 and
-.Fn sendmsg
+.Fn sendmmsg
 may be used at any time.
 .Pp
 The address of the target is given by
@@ -127,10 +132,21 @@ See
 .Xr recv 2
 for a description of the
 .Fa msghdr
-structure.
+and
+.Fa mmsghdr
+structures.
 .Sh RETURN VALUES
-The call returns the number of characters sent, or \-1
+The
+.Fn send ,
+.Fn sendto ,
+and
+.Fn sendmsg
+calls return the number of characters sent, or \-1
 if an error occurred.
+The
+.Fn sendmmsg
+call returns the number of messages sent, or \-1
+if an error occurred before the first message has been sent.
 .Sh ERRORS
 .Fn send ,
 .Fn sendto ,
@@ -267,3 +283,7 @@ The
 .Fn send
 function call appeared in
 .Bx 4.1c .
+The
+.Fn sendmmsg
+syscall first appeared in Linux 3.0 and was added to
+.Ox 7.2 .

@@ -175,6 +175,7 @@ _thread_sys_readlinkat
 _thread_sys_readv
 _thread_sys_reboot
 _thread_sys_recvfrom
+_thread_sys_recvmmsg
 _thread_sys_recvmsg
 _thread_sys_rename
 _thread_sys_renameat
@@ -184,6 +185,7 @@ _thread_sys_sched_yield
 _thread_sys_select
 _thread_sys_semget
 _thread_sys_semop
+_thread_sys_sendmmsg
 _thread_sys_sendmsg
 _thread_sys_sendsyslog
 _thread_sys_sendto
@@ -372,6 +374,7 @@ readlinkat
 readv
 reboot
 recvfrom
+recvmmsg
 recvmsg
 rename
 renameat
@@ -383,6 +386,7 @@ select
 semctl
 semget
 semop
+sendmmsg
 sendmsg
 sendsyslog
 sendto

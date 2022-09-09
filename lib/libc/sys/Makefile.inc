@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.163 2022/07/17 03:04:27 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.164 2022/09/09 13:52:59 mbuhl Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -34,8 +34,8 @@ CANCEL=	accept accept4 \
 	nanosleep \
 	open openat \
 	poll ppoll pread preadv pselect pwrite pwritev \
-	read readv recvfrom recvmsg \
-	select sendmsg sendto \
+	read readv recvfrom recvmmsg recvmsg \
+	select sendmmsg sendmsg sendto \
 	wait4 write writev
 SRCS+=	${CANCEL:%=w_%.c}
 

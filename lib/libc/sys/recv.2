@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.48 2021/11/21 23:44:55 jan Exp $
+.\"	$OpenBSD: recv.2,v 1.49 2022/09/09 13:52:59 mbuhl Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: September 9 2022 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -46,14 +46,34 @@
 .Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "socklen_t *fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
+.Ft int
+.Fn recvmmsg "int s" "struct mmsghdr *mmsg" "unsigned int vlen" "int flags" "struct timespec *timeout"
 .Sh DESCRIPTION
-.Fn recvfrom
+.Fn recv ,
+.Fn recvfrom ,
+.Fn recvmsg ,
 and
-.Fn recvmsg
+.Fn recvmmsg
 are used to receive messages from a socket,
-.Fa s ,
-and may be used to receive
+.Fa s .
+.Fn recv
+is normally used only on a
+.Em connected
+socket (see
+.Xr connect 2 ).
+.Fn recvfrom ,
+.Fn recvmsg ,
+and
+.Fn recvmmsg
+may be used to receive
 data on a socket whether or not it is connection-oriented.
+.Pp
+.Fn recv
+is identical to
+.Fn recvfrom
+with a null
+.Fa from
+parameter.
 .Pp
 If
 .Fa from
@@ -65,25 +85,6 @@ the buffer associated with
 .Fa from ,
 and modified on return to indicate the actual size of the
 address stored there.
-.Pp
-The
-.Fn recv
-call is normally used only on a
-.Em connected
-socket (see
-.Xr connect 2 )
-and is identical to
-.Fn recvfrom
-with a null
-.Fa from
-parameter.
-.Pp
-On successful completion, all three routines return the number of
-message bytes read.
-If a message is too long to fit in the supplied
-buffer, excess bytes may be discarded depending on the type of socket
-the message is received from (see
-.Xr socket 2 ) .
 .Pp
 If no messages are available at the socket, the
 receive call waits for a message to arrive, unless
@@ -158,6 +159,8 @@ The
 .Dv MSG_CMSG_CLOEXEC
 requests that any file descriptors received as ancillary data with
 .Fn recvmsg
+and
+.Fn recvmmsg
 (see below)
 have their close-on-exec flag set.
 .Pp
@@ -249,13 +252,67 @@ Indicates that the packet was received as broadcast.
 .It Dv MSG_MCAST
 Indicates that the packet was received as multicast.
 .El
+.Pp
+The
+.Fn recvmmsg
+call uses an array of the
+.Fa mmsghdr
+structure of length
+.Fa vlen
+to group multiple
+.Fa msghdr
+structures into a single system call.
+.Fa vlen
+is capped at maximum
+.Dv 1024
+messages that are received in a single call.
+The
+.Fa flags
+field allows setting
+.Dv MSG_WAITFORONE
+to wait for one
+.Fa msghdr ,
+and set
+.Dv MSG_DONTWAIT
+for all subsequent messages.
+A provided
+.Fa timeout
+limits the time spent in the function but it does not limit the
+time spent in lower parts of the kernel.
+.Pp
+The
+.Fa mmsghdr
+structure has the following form, as defined in
+.In sys/socket.h :
+.Bd -literal
+struct mmsghdr {
+	struct msghdr msg_hdr;
+	unsigned int msg_len;
+};
+.Ed
+.Pp
+Here
+.Fa msg_len
+indicated the number of bytes received for each
+.Fa msg_hdr
+member.
 .Sh RETURN VALUES
-These calls return the number of bytes received, or \-1 if an error occurred.
-.Sh ERRORS
+The
 .Fn recv ,
 .Fn recvfrom ,
 and
 .Fn recvmsg
+calls return the number of bytes received, or \-1 if an error occurred.
+The
+.Fn recvmmsg
+call returns the number of messages received, or \-1
+if an error occurred before the first message has been received.
+.Sh ERRORS
+.Fn recv ,
+.Fn recvfrom ,
+.Fn recvmsg ,
+and
+.Fn recvmmsg
 fail if:
 .Bl -tag -width "[EHOSTUNREACH]"
 .It Bq Er EBADF
@@ -310,6 +367,8 @@ was larger than
 .Pp
 And
 .Fn recvmsg
+and
+.Fn recvmmsg
 may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -364,6 +423,10 @@ The
 .Fn recv
 function call appeared in
 .Bx 4.1c .
+The
+.Fn recvmmsg
+syscall first appeared in Linux 2.6.33 and was added to
+.Ox 7.2 .
 .Sh CAVEATS
 Calling
 .Fn recvmsg
