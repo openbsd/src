@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.67 2022/09/08 13:52:36 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.68 2022/09/09 08:11:06 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -91,6 +91,7 @@ enum http_state {
 	STATE_RESPONSE_HEADER,
 	STATE_RESPONSE_DATA,
 	STATE_RESPONSE_CHUNKED_HEADER,
+	STATE_RESPONSE_CHUNKED_CRLF,
 	STATE_RESPONSE_CHUNKED_TRAILER,
 	STATE_WRITE_DATA,
 	STATE_IDLE,
@@ -1291,7 +1292,6 @@ http_get_line(struct http_connection *conn)
 /*
  * Parse the header between data chunks during chunked transfers.
  * Returns 0 if a new chunk size could be correctly read.
- * Returns 1 for the empty trailer lines.
  * If the chuck size could not be converted properly -1 is returned.
  */
 static int
@@ -1300,10 +1300,6 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	char *header = buf;
 	char *end;
 	unsigned long chunksize;
-
-	/* empty lines are used as trailer */
-	if (*header == '\0')
-		return 1;
 
 	/* strip any optional chunk extension */
 	header[strcspn(header, "; \t")] = '\0';
@@ -1446,7 +1442,7 @@ again:
 				conn->bufpos = 0;
 			}
 			if (conn->chunked)
-				conn->state = STATE_RESPONSE_CHUNKED_TRAILER;
+				conn->state = STATE_RESPONSE_CHUNKED_CRLF;
 			else
 				conn->state = STATE_RESPONSE_DATA;
 			goto read_more;
@@ -1471,31 +1467,36 @@ again:
 		 * check if transfer is done, in which case the last trailer
 		 * still needs to be processed.
 		 */
-		if (conn->iosz == 0) {
-			conn->chunked = 0;
+		if (conn->iosz == 0)
 			conn->state = STATE_RESPONSE_CHUNKED_TRAILER;
-			goto again;
-		}
-
-		conn->state = STATE_RESPONSE_DATA;
+		else
+			conn->state = STATE_RESPONSE_DATA;
 		goto again;
-	case STATE_RESPONSE_CHUNKED_TRAILER:
+	case STATE_RESPONSE_CHUNKED_CRLF:
 		buf = http_get_line(conn);
 		if (buf == NULL)
 			goto read_more;
-		if (http_parse_chunked(conn, buf) != 1) {
+		/* expect empty line to finish a chunk of data */
+		if (*buf != '\0') {
 			warnx("%s: bad chunk encoding", http_info(conn->host));
 			free(buf);
 			return http_failed(conn);
 		}
 		free(buf);
-
-		/* if chunked got cleared then the transfer is over */
-		if (conn->chunked == 0)
-			return http_done(conn, HTTP_OK);
-
 		conn->state = STATE_RESPONSE_CHUNKED_HEADER;
 		goto again;
+	case STATE_RESPONSE_CHUNKED_TRAILER:
+		buf = http_get_line(conn);
+		if (buf == NULL)
+			goto read_more;
+		/* the trailer may include extra headers, just ignore them */
+		if (*buf != '\0') {
+			free(buf);
+			goto again;
+		}
+		free(buf);
+		conn->chunked = 0;
+		return http_done(conn, HTTP_OK);
 	default:
 		errx(1, "unexpected http state");
 	}
@@ -1695,7 +1696,7 @@ data_write(struct http_connection *conn)
 	/* all data written, switch back to read */
 	if (conn->bufpos == 0 || conn->iosz == 0) {
 		if (conn->chunked && conn->iosz == 0)
-			conn->state = STATE_RESPONSE_CHUNKED_TRAILER;
+			conn->state = STATE_RESPONSE_CHUNKED_CRLF;
 		else
 			conn->state = STATE_RESPONSE_DATA;
 		return http_read(conn);
@@ -1734,6 +1735,7 @@ http_handle(struct http_connection *conn)
 	case STATE_RESPONSE_HEADER:
 	case STATE_RESPONSE_DATA:
 	case STATE_RESPONSE_CHUNKED_HEADER:
+	case STATE_RESPONSE_CHUNKED_CRLF:
 	case STATE_RESPONSE_CHUNKED_TRAILER:
 		return http_read(conn);
 	case STATE_WRITE_DATA:
