@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc64_installboot.c,v 1.4 2022/08/31 20:52:15 krw Exp $	*/
+/*	$OpenBSD: powerpc64_installboot.c,v 1.5 2022/09/09 15:53:16 kn Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -87,8 +88,8 @@ md_prepareboot(int devfd, char *dev)
 
 	part = findmbrfat(devfd, &dl);
 	if (part != -1) {
-		create_filesystem(&dl, (char)part);
-		return;
+		if (create_filesystem(&dl, (char)part) == -1)
+			exit(1);
 	}
 }
 
@@ -156,6 +157,8 @@ create_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			return rslt;
 		}
+		if (WIFEXITED(rslt) && WEXITSTATUS(rslt))
+			return -1;
 	}
 
 	return 0;
@@ -208,6 +211,10 @@ write_filesystem(struct disklabel *dl, char part)
 		rslt = system(cmd);
 		if (rslt == -1) {
 			warn("system('%s') failed", cmd);
+			goto rmdir;
+		}
+		if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
+			rslt = -1;
 			goto rmdir;
 		}
 		if (mount(MOUNT_MSDOS, dir, 0, &args) == -1) {

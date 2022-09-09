@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson_installboot.c,v 1.4 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.5 2022/09/09 15:53:16 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -89,8 +90,8 @@ md_installboot(int devfd, char *dev)
 
 	part = findmbrfat(devfd, &dl);
 	if (part != -1) {
-		write_filesystem(&dl, (char)part);
-		return;
+		if (write_filesystem(&dl, (char)part) == -1)
+			exit(1);
 	}
 }
 
@@ -143,6 +144,10 @@ write_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			goto rmdir;
 		}
+		if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
+			rslt = -1;
+			goto rmdir;
+		}
 		if (mount(MOUNT_EXT2FS, dst, 0, &args) == -1) {
 			/* Try newfs'ing it. */
 			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
@@ -155,6 +160,10 @@ write_filesystem(struct disklabel *dl, char part)
 			rslt = system(cmd);
 			if (rslt == -1) {
 				warn("system('%s') failed", cmd);
+				goto rmdir;
+			}
+			if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
+				rslt = -1;
 				goto rmdir;
 			}
 			rslt = mount(MOUNT_EXT2FS, dst, 0, &args);

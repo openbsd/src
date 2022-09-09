@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.41 2022/08/31 20:52:15 krw Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.42 2022/09/09 15:53:16 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
@@ -146,8 +147,8 @@ md_prepareboot(int devfd, char *dev)
 
 	part = findgptefisys(devfd, &dl);
 	if (part != -1) {
-		create_filesystem(&dl, (char)part);
-		return;
+		if (create_filesystem(&dl, (char)part) == -1)
+			exit(1);
 	}
 }
 
@@ -280,6 +281,8 @@ create_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			return rslt;
 		}
+		if (WIFEXITED(rslt) && WEXITSTATUS(rslt))
+			return -1;
 	}
 
 	return 0;
@@ -331,6 +334,10 @@ write_filesystem(struct disklabel *dl, char part)
 		rslt = system(cmd);
 		if (rslt == -1) {
 			warn("system('%s') failed", cmd);
+			goto rmdir;
+		}
+		if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
+			rslt = -1;
 			goto rmdir;
 		}
 		if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
