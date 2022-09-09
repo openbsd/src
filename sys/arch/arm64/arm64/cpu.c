@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.68 2022/08/24 22:01:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.69 2022/09/09 18:15:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -48,6 +48,7 @@
 #define CPU_IMPL_ARM		0x41
 #define CPU_IMPL_CAVIUM		0x43
 #define CPU_IMPL_AMCC		0x50
+#define CPU_IMPL_QCOM		0x51
 #define CPU_IMPL_APPLE		0x61
 
 /* ARM */
@@ -87,6 +88,10 @@
 
 /* Applied Micro */
 #define CPU_PART_X_GENE		0x000
+
+/* Qualcomm */
+#define CPU_PART_KRYO400_GOLD	0x804
+#define CPU_PART_KRYO400_SILVER	0x805
 
 /* Apple */
 #define CPU_PART_ICESTORM	0x022
@@ -156,6 +161,12 @@ struct cpu_cores cpu_cores_amcc[] = {
 	{ 0, NULL },
 };
 
+struct cpu_cores cpu_cores_qcom[] = {
+	{ CPU_PART_KRYO400_GOLD, "Kryo 400 Gold" },
+	{ CPU_PART_KRYO400_SILVER, "Kryo 400 Silver" },
+	{ 0, NULL },
+};
+
 struct cpu_cores cpu_cores_apple[] = {
 	{ CPU_PART_ICESTORM, "Icestorm" },
 	{ CPU_PART_FIRESTORM, "Firestorm" },
@@ -177,6 +188,7 @@ const struct implementers {
 	{ CPU_IMPL_ARM,	"ARM", cpu_cores_arm },
 	{ CPU_IMPL_CAVIUM, "Cavium", cpu_cores_cavium },
 	{ CPU_IMPL_AMCC, "Applied Micro", cpu_cores_amcc },
+	{ CPU_IMPL_QCOM, "Qualcomm", cpu_cores_qcom },
 	{ CPU_IMPL_APPLE, "Apple", cpu_cores_apple },
 	{ 0, NULL },
 };
