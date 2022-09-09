@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.900 2022/08/23 08:14:19 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.901 2022/09/09 11:02:23 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2022 $
+.Dd $Mdocdate: September 9 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3873,6 +3873,10 @@ For how to specify
 see the
 .Sx STYLES
 section.
+.It Xo Ic message-line
+.Op Ic 0 | 1 | 2 | 3 | 4
+.Xc
+Set line on which status line messages and the command prompt are shown.
 .It Ic message-style Ar style
 Set status line message style.
 This is used for messages and for the command prompt.
