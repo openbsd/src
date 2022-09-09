@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.27 2022/09/04 08:42:40 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.28 2022/09/09 21:16:54 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -1944,8 +1944,6 @@ STATIC int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 
 	if (!qtd)
 		return -EINVAL;
-
-	memset(qtd, 0, sizeof(*qtd)); /* Required for OpenBSD */
 
 	dwc2_hcd_qtd_init(qtd, urb);
 	retval = dwc2_hcd_qtd_add(hsotg, qtd, qh);

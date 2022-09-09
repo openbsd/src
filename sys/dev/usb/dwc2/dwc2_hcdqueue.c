@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdqueue.c,v 1.14 2022/09/08 18:16:26 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdqueue.c,v 1.15 2022/09/09 21:16:54 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
 
 /*
@@ -1657,7 +1657,7 @@ struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 		return NULL;
 
 	/* Allocate memory */
-	qh = pool_get(&sc->sc_qhpool, PR_ZERO | PR_NOWAIT);
+	qh = pool_get(&sc->sc_qhpool, PR_NOWAIT | PR_ZERO);
 	if (!qh)
 		return NULL;
 

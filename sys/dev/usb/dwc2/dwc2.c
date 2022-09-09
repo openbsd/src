@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.65 2022/09/05 20:11:44 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.66 2022/09/09 21:16:54 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -230,9 +230,8 @@ dwc2_allocx(struct usbd_bus *bus)
 	DPRINTFN(10, "\n");
 
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolget);
-	dxfer = pool_get(&sc->sc_xferpool, PR_WAITOK);
+	dxfer = pool_get(&sc->sc_xferpool, PR_NOWAIT | PR_ZERO);
 	if (dxfer != NULL) {
-		memset(dxfer, 0, sizeof(*dxfer));
 		dxfer->urb = dwc2_hcd_urb_alloc(sc->sc_hsotg,
 		    DWC2_MAXISOCPACKETS, M_NOWAIT);
 #ifdef DIAGNOSTIC
@@ -1212,12 +1211,11 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		qh_allocated = true;
 	}
 
-	qtd = pool_get(&sc->sc_qtdpool, PR_NOWAIT);
+	qtd = pool_get(&sc->sc_qtdpool, PR_NOWAIT | PR_ZERO);
 	if (!qtd) {
 		retval = -ENOMEM;
 		goto fail1;
 	}
-	memset(qtd, 0, sizeof(*qtd));
 
 	/* might need to check cpu_intr_p */
 	mtx_enter(&hsotg->lock);
