@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.247 2022/09/08 10:22:07 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.248 2022/09/09 12:05:52 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -496,7 +496,7 @@ nd6_expire(void *unused)
 		TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, nifa) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
-			ia6 = ifatoia6(ifa);
+			ia6 = ifatoia6(ifaref(ifa));
 			/* check address lifetime */
 			if (IFA6_IS_INVALID(ia6)) {
 				in6_purgeaddr(&ia6->ia_ifa);
@@ -805,10 +805,10 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	if (req == RTM_RESOLVE && nd6_need_cache(ifp) == 0) {
 		/*
 		 * For routing daemons like ospf6d we allow neighbor discovery
-		 * based on the cloning route only.  This allows us to sent
+		 * based on the cloning route only.  This allows us to send
 		 * packets directly into a network without having an address
 		 * with matching prefix on the interface.  If the cloning
-		 * route is used for an stf interface, we would mistakenly
+		 * route is used for an 6to4 interface, we would mistakenly
 		 * make a neighbor cache for the host route, and would see
 		 * strange neighbor solicitation for the corresponding
 		 * destination.  In order to avoid confusion, we check if the
@@ -905,8 +905,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		 * If we have too many cache entries, initiate immediate
 		 * purging for some "less recently used" entries.  Note that
 		 * we cannot directly call nd6_free() here because it would
-		 * cause re-entering rtable related routines triggering an LOR
-		 * problem for FreeBSD.
+		 * cause re-entering rtable related routines triggering
+		 * lock-order-reversal problems.
 		 */
 		if (ip6_neighborgcthresh >= 0 &&
 		    nd6_inuse >= ip6_neighborgcthresh) {
@@ -1375,8 +1375,8 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 	/*
 	 * The first time we send a packet to a neighbor whose entry is
-	 * STALE, we have to change the state to DELAY and a sets a timer to
-	 * expire in DELAY_FIRST_PROBE_TIME seconds to ensure do
+	 * STALE, we have to change the state to DELAY and set a timer to
+	 * expire in DELAY_FIRST_PROBE_TIME seconds to ensure we do
 	 * neighbor unreachability detection on expiration.
 	 * (RFC 2461 7.3.3)
 	 */
