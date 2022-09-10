@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.62 2022/08/25 20:43:17 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.63 2022/09/10 01:30:14 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -463,9 +463,8 @@ lapic_startclock(void)
 void
 lapic_initclocks(void)
 {
-	lapic_startclock();
-
 	i8254_inittimecounter_simple();
+	lapic_startclock();
 }
 
 
