@@ -1,4 +1,4 @@
-.\"     $OpenBSD: divert.4,v 1.19 2022/03/31 17:27:20 naddy Exp $
+.\"     $OpenBSD: divert.4,v 1.20 2022/09/10 10:22:46 jsg Exp $
 .\"
 .\" Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
 .\" Copyright (c) 2012-2014 Lawrence Teo <lteo@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 10 2022 $
 .Dt DIVERT 4
 .Os
 .Sh NAME
@@ -75,7 +75,7 @@ Outbound packets provide the unspecified address.
 When reinjecting, use this address as argument to
 .Xr sendto 2 .
 This allows the kernel to guess the original incoming interface and
-and process it as an incoming packet.
+process it as an incoming packet.
 If no interface IP address is given, the reinjected packet is treated
 as an outgoing packet.
 Since the userspace application could have modified the packets, upon

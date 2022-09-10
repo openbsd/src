@@ -1,4 +1,4 @@
-.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.2 2021/11/23 13:52:27 schwarze Exp $
+.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.3 2022/09/10 10:22:46 jsg Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2021 $
+.Dd $Mdocdate: September 10 2022 $
 .Dt I2A_ASN1_STRING 3
 .Os
 .Sh NAME
@@ -121,7 +121,7 @@ Both lower-case and upper-case hexadecimal digits are accepted.
 Every pair of input digits is converted into one output byte.
 .Pp
 On every input line, the trailing newline character and an optional
-carrier return character character preceding it are ignored.
+carrier return character preceding it are ignored.
 The trailing newline need not be present on the last line.
 If there is a backslash character before the newline character,
 parsing is continued on the next input line.
