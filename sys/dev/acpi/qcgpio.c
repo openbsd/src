@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.3 2022/09/10 13:14:39 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.4 2022/09/10 14:32:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -183,6 +183,10 @@ qcgpio_sc7180_pin_map(int pin, bus_size_t *off)
 	case 0x180:
 		*off = QCGPIO_SC7180_NORTH;
 		return 33;
+	case 94:
+	case 0x1c0:
+		*off = QCGPIO_SC7180_SOUTH;
+		return 94;
 	default:
 		return -1;
 	}
