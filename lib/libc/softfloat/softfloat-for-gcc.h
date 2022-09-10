@@ -1,4 +1,4 @@
-/*	$OpenBSD: softfloat-for-gcc.h,v 1.2 2017/12/26 15:11:17 kettenis Exp $	*/
+/*	$OpenBSD: softfloat-for-gcc.h,v 1.3 2022/09/10 06:48:31 miod Exp $	*/
 /* $NetBSD: softfloat-for-gcc.h,v 1.6 2003/07/26 19:24:51 salo Exp $ */
 
 /*
@@ -61,6 +61,8 @@ __strong_alias(__aeabi_f2lz, __fixsfdi);
 __strong_alias(__aeabi_d2lz, __fixdfdi);
 __strong_alias(__aeabi_f2uiz, __fixunssfsi);
 __strong_alias(__aeabi_d2uiz, __fixunsdfsi);
+__strong_alias(__aeabi_f2ulz, __fixunssfdi);
+__strong_alias(__aeabi_d2ulz, __fixunsdfdi);
 __strong_alias(__aeabi_f2d, __extendsfdf2);
 __strong_alias(__aeabi_d2f, __truncdfsf2);
 #endif
