@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.58 2022/03/26 15:05:53 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.59 2022/09/10 15:37:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -690,6 +690,7 @@ ssl3_read_alert(SSL *s)
 {
 	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
 	uint8_t alert_level, alert_descr;
+	CBS cbs;
 
 	/*
 	 * TLSv1.2 permits an alert to be fragmented across multiple records or
@@ -713,10 +714,15 @@ ssl3_read_alert(SSL *s)
 		return 1;
 	}
 
-	ssl_msg_callback(s, 0, SSL3_RT_ALERT, s->s3->alert_fragment, 2);
+	CBS_init(&cbs, s->s3->alert_fragment, sizeof(s->s3->alert_fragment));
 
-	alert_level = s->s3->alert_fragment[0];
-	alert_descr = s->s3->alert_fragment[1];
+	ssl_msg_callback_cbs(s, 0, SSL3_RT_ALERT, &cbs);
+
+	if (!CBS_get_u8(&cbs, &alert_level))
+		return -1;
+	if (!CBS_get_u8(&cbs, &alert_descr))
+		return -1;
+
 	s->s3->alert_fragment_len = 0;
 
 	ssl_info_callback(s, SSL_CB_READ_ALERT,
