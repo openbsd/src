@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.304 2022/08/21 19:42:15 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.305 2022/09/10 15:29:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2939,9 +2939,17 @@ void
 ssl_msg_callback(SSL *s, int is_write, int content_type,
     const void *msg_buf, size_t msg_len)
 {
-	if (s->internal->msg_callback != NULL)
-		s->internal->msg_callback(is_write, s->version, content_type,
-		    msg_buf, msg_len, s, s->internal->msg_callback_arg);
+	if (s->internal->msg_callback == NULL)
+		return;
+
+	s->internal->msg_callback(is_write, s->version, content_type,
+	    msg_buf, msg_len, s, s->internal->msg_callback_arg);
+}
+
+void
+ssl_msg_callback_cbs(SSL *s, int is_write, int content_type, CBS *cbs)
+{
+	ssl_msg_callback(s, is_write, content_type, CBS_data(cbs), CBS_len(cbs));
 }
 
 /* Fix this function so that it takes an optional type parameter */

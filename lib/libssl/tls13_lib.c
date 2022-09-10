@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.70 2022/07/24 14:28:16 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.71 2022/09/10 15:29:33 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -162,7 +162,7 @@ tls13_legacy_handshake_message_recv_cb(void *arg)
 		return;
 
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-	ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE, CBS_data(&cbs), CBS_len(&cbs));
+	ssl_msg_callback_cbs(s, 0, SSL3_RT_HANDSHAKE, &cbs);
 }
 
 static void
@@ -176,7 +176,7 @@ tls13_legacy_handshake_message_sent_cb(void *arg)
 		return;
 
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-	ssl_msg_callback(s, 1, SSL3_RT_HANDSHAKE, CBS_data(&cbs), CBS_len(&cbs));
+	ssl_msg_callback_cbs(s, 1, SSL3_RT_HANDSHAKE, &cbs);
 }
 
 static void

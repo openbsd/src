@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.424 2022/08/21 19:39:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.425 2022/09/10 15:29:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1290,6 +1290,7 @@ int ssl_clear_bad_session(SSL *s);
 void ssl_info_callback(const SSL *s, int type, int value);
 void ssl_msg_callback(SSL *s, int is_write, int content_type,
     const void *msg_buf, size_t msg_len);
+void ssl_msg_callback_cbs(SSL *s, int is_write, int content_type, CBS *cbs);
 
 SSL_CERT *ssl_cert_new(void);
 SSL_CERT *ssl_cert_dup(SSL_CERT *cert);
