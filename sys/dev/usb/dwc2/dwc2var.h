@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2var.h,v 1.23 2022/09/04 08:42:40 mglocker Exp $	*/
+/*	$OpenBSD: dwc2var.h,v 1.24 2022/09/10 08:13:16 mglocker Exp $	*/
 /*	$NetBSD: dwc2var.h,v 1.3 2013/10/22 12:57:40 skrll Exp $	*/
 
 /*-
@@ -126,7 +126,6 @@ dwc2_root_intr(dwc2_softc_t *sc)
  * XXX Compat
  */
 #define USB_MAXCHILDREN		31	/* XXX: Include in to our USB stack */
-#define DWC2_MAXISOCPACKETS	40	/* XXX: Fix nframes handling */
 #define ENOSR			90
 #define device_xname(d)		((d)->dv_xname)
 #define jiffies			hardclock_ticks
