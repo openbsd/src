@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.106 2020/08/26 16:21:28 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.107 2022/09/10 16:58:51 cheloha Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -560,7 +560,7 @@ restart:
 		    proc_compares[order_index]);
 
 		/* display the load averages */
-		i_loadave(system_info.last_pid, system_info.load_avg);
+		i_loadave(system_info.load_avg);
 
 		/* display the current time */
 		/* this method of getting the time SHOULD be fairly portable */

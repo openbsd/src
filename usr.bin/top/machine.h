@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.31 2020/08/26 16:21:28 kn Exp $	 */
+/* $OpenBSD: machine.h,v 1.32 2022/09/10 16:58:51 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -49,7 +49,6 @@ struct statics {
  */
 
 struct system_info {
-	pid_t           last_pid;
 	double          load_avg[NUM_AVERAGES];
 	int             p_total;
 	int             p_active;	/* number of procs considered

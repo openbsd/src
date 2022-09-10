@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.66 2022/08/08 16:54:09 cheloha Exp $	 */
+/* $OpenBSD: display.c,v 1.67 2022/09/10 16:58:51 cheloha Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -234,7 +234,7 @@ format_uptime(char *buf, size_t buflen)
 
 
 void
-i_loadave(pid_t mpid, double *avenrun)
+i_loadave(double *avenrun)
 {
 	if (screen_length > 1 || !smart_terminal) {
 		int i;
@@ -243,10 +243,6 @@ i_loadave(pid_t mpid, double *avenrun)
 		clrtoeol();
 
 		addstrp("load averages");
-		/* mpid == -1 implies this system doesn't have an _mpid */
-		if (mpid != -1)
-			printwp("last pid: %5ld;  ", (long) mpid);
-
 		for (i = 0; i < 3; i++)
 			printwp("%c %5.2f", i == 0 ? ':' : ',', avenrun[i]);
 	}

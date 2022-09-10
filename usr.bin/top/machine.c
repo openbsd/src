@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.111 2022/02/22 17:35:01 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.112 2022/09/10 16:58:51 cheloha Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -306,7 +306,6 @@ get_system_info(struct system_info *si)
 	si->cpustates = cpu_states;
 	si->cpuonline = cpu_online;
 	si->memory = memory_stats;
-	si->last_pid = -1;
 }
 
 static struct handle handle;
