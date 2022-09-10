@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.235 2022/09/09 11:02:23 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.236 2022/09/10 17:01:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -271,7 +271,7 @@ status_prompt_line_at(struct client *c)
 
 	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (1);
-	return (options_get_number(s->options, "status-prompt-line"));
+	return (options_get_number(s->options, "message-line"));
 }
 
 /* Get window at window list position. */
