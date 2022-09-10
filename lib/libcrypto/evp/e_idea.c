@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.15 2022/09/04 15:45:25 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.16 2022/09/10 17:39:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,7 +172,7 @@ idea_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		idea_cfb64_encrypt(in, out, (long)inl, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		idea_cfb64_encrypt(in, out, (long)chunk, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;

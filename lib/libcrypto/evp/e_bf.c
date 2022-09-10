@@ -1,4 +1,4 @@
-/* $OpenBSD: e_bf.c,v 1.12 2022/09/04 15:45:25 jsing Exp $ */
+/* $OpenBSD: e_bf.c,v 1.13 2022/09/10 17:39:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,7 @@ bf_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in
 		chunk = inl;
 
 	while (inl && inl >= chunk) {
-		BF_cfb64_encrypt(in, out, (long)inl, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
+		BF_cfb64_encrypt(in, out, (long)chunk, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num, ctx->encrypt);
 		inl -= chunk;
 		in += chunk;
 		out += chunk;
