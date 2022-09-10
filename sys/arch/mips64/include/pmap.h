@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.49 2021/05/01 16:11:11 visa Exp $ */
+/*      $OpenBSD: pmap.h,v 1.50 2022/09/10 20:35:28 miod Exp $ */
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -169,6 +169,8 @@ void	pmap_page_cache(vm_page_t, u_int);
 #define	__HAVE_PMAP_DIRECT
 vaddr_t	pmap_map_direct(vm_page_t);
 vm_page_t pmap_unmap_direct(vaddr_t);
+
+#define	__HAVE_PMAP_COLLECT
 
 /*
  * MD flags to pmap_enter:

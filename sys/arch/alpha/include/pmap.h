@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.40 2016/04/20 05:24:18 landry Exp $ */
+/* $OpenBSD: pmap.h,v 1.41 2022/09/10 20:35:28 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -196,6 +196,8 @@ extern	pt_entry_t *VPT;		/* Virtual Page Table */
 #define	__HAVE_PMAP_DIRECT
 
 paddr_t vtophys(vaddr_t);
+
+#define	__HAVE_PMAP_COLLECT
 
 /* Machine-specific functions. */
 void	pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids);

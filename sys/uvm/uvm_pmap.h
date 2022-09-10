@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmap.h,v 1.30 2022/08/07 19:39:25 miod Exp $	*/
+/*	$OpenBSD: uvm_pmap.h,v 1.31 2022/09/10 20:35:29 miod Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
@@ -126,7 +126,7 @@ boolean_t	 pmap_clear_modify(struct vm_page *);
 boolean_t	 pmap_clear_reference(struct vm_page *);
 #endif
 
-#if !defined(pmap_collect)
+#if !defined(pmap_collect) && defined(__HAVE_PMAP_COLLECT)
 void		 pmap_collect(pmap_t);
 #endif
 #if !defined(pmap_copy)

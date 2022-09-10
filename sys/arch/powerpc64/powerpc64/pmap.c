@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2021/10/12 18:06:15 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.58 2022/09/10 20:35:28 miod Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1462,11 +1462,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
 	PMAP_VP_UNLOCK(pm);
-}
-
-void
-pmap_collect(pmap_t pm)
-{
 }
 
 void

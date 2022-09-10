@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.104 2022/08/31 09:26:04 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.105 2022/09/10 20:35:29 miod Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -890,7 +890,7 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 	 */
 	free = uvmexp.free - BUFPAGES_DEFICIT;
 
-#ifndef __SWAP_BROKEN
+#ifdef __HAVE_PMAP_COLLECT
 	/*
 	 * swap out some processes if we are below our free target.
 	 * we need to unlock the page queues for this.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.177 2021/09/14 16:16:51 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.178 2022/09/10 20:35:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -732,13 +732,6 @@ pmap_reference(struct pmap *pmap)
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
 
 	atomic_inc_int(&pmap->pm_obj.uo_refs);
-}
-
-void
-pmap_collect(struct pmap *pmap)
-{
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_collect(%p)\n", pmap));
-	/* nothing yet */
 }
 
 int

@@ -177,6 +177,8 @@ void pmap_bootstrap(u_long, u_long, u_int, u_int);
 
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 
+#define	__HAVE_PMAP_COLLECT
+
 /* SPARC specific? */
 void		pmap_redzone(void);
 int             pmap_dumpsize(void);

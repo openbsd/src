@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.83 2022/03/12 08:11:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.84 2022/09/10 20:35:29 miod Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -321,6 +321,8 @@ uvm_init_limits(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
 }
 
+#ifdef __HAVE_PMAP_COLLECT
+
 #ifdef DEBUG
 int	enableswap = 1;
 int	swapdebug = 0;
@@ -413,6 +415,8 @@ next_process:	;
 		pmap_collect(outpr->ps_vmspace->vm_map.pmap);
 	}
 }
+
+#endif	/* __HAVE_PMAP_COLLECT */
 
 /*
  * uvm_atopg: convert KVAs back to their page structures.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2022/09/08 17:44:48 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2022/09/10 20:35:29 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1546,7 +1546,6 @@ pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr,
 void
 pmap_collect(struct pmap *pm)
 {
-#if 1
 	int i, j, k, n, m, s;
 	paddr_t *pdir, *ptbl;
 	/* This is a good place to scan the pmaps for page tables with
@@ -1584,7 +1583,6 @@ pmap_collect(struct pmap *pm)
 		}
 	}
 	splx(s);
-#endif
 }
 
 void

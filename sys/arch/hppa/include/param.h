@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.47 2018/09/14 13:58:20 claudio Exp $	*/
+/*	$OpenBSD: param.h,v 1.48 2022/09/10 20:35:28 miod Exp $	*/
 
 /*
  * Copyright (c) 1988-1994, The University of Utah and
@@ -66,6 +66,5 @@
 #endif /* _KERNEL */
 
 #define	MACHINE_STACK_GROWS_UP	1		/* stack grows to higher addresses */
-#define	__SWAP_BROKEN
 
 #endif /* _MACHINE_PARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.153 2022/06/30 13:51:24 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.154 2022/09/10 20:35:28 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2206,6 +2206,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 #endif
 }
 
+#if 0
 /*
  * pmap_collect: free resources held by a pmap
  *
@@ -2221,10 +2222,10 @@ pmap_collect(struct pmap *pmap)
 	 * for its entire address space.
 	 */
 
-/*	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
+	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
 	    PMAP_REMOVE_SKIPWIRED);
-*/
 }
+#endif
 
 /*
  * pmap_copy: copy mappings from one pmap to another

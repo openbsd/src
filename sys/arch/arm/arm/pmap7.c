@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.63 2022/02/21 19:15:58 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.64 2022/09/10 20:35:28 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1740,21 +1740,6 @@ dab_access(trapframe_t *tf, u_int fsr, u_int far, struct proc *p)
 	*ptep = pte;
 	PTE_SYNC(ptep);
 	return 0;
-}
-
-/*
- * pmap_collect: free resources held by a pmap
- *
- * => optional function.
- * => called when a process is swapped out to free memory.
- */
-void
-pmap_collect(pmap_t pm)
-{
-	/*
-	 * Nothing to do.
-	 * We don't even need to free-up the process' L1.
-	 */
 }
 
 /*

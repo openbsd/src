@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.84 2022/01/10 09:20:27 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.85 2022/09/10 20:35:28 miod Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -853,24 +853,6 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 
 	pted->pted_pte = pa & PTE_RPGN;
 	pted->pted_pte |= flags & (PROT_READ|PROT_WRITE|PROT_EXEC);
-}
-
-/*
- * Garbage collects the physical map system for pages which are
- * no longer used. Success need not be guaranteed -- that is, there
- * may well be pages which are not referenced, but others may be collected
- * Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pm)
-{
-	/* This could return unused v->p table layers which
-	 * are empty.
-	 * could malicious programs allocate memory and eat
-	 * these wired pages? These are allocated via pool.
-	 * Are there pool functions which could be called
-	 * to lower the pool usage here?
-	 */
 }
 
 /*
