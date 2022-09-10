@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.71 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.72 2022/09/10 00:49:47 cheloha Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -176,7 +176,8 @@ void setsecuritylevel(int);
 void setprocresources(char *);
 int getsecuritylevel(void);
 int setupargv(session_t *, struct ttyent *);
-int clang;
+
+volatile sig_atomic_t clang;
 
 void clear_session_logs(session_t *);
 
