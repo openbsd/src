@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.41 2022/02/13 21:27:51 jmc Exp $	*/
+/*	$OpenBSD: apm.c,v 1.42 2022/09/10 10:10:09 sdk Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -376,8 +376,15 @@ balony:
 		} else if (domin) {
 			if (reply.batterystate.battery_state ==
 			    APM_BATT_CHARGING)
-				printf(", %d minutes recharge time estimate\n",
-				    reply.batterystate.minutes_left);
+			{
+				if (reply.batterystate.minutes_left ==
+				    (u_int)-1)
+					printf(", unknown");
+				else
+					printf(", %d minutes",
+					    reply.batterystate.minutes_left);
+				printf(" recharge time estimate\n");
+			}
 			else if (reply.batterystate.minutes_left == 0 &&
 			    reply.batterystate.battery_life > 10)
 				printf(", unknown life estimate\n");
