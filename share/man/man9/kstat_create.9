@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_create.9,v 1.6 2022/04/19 03:51:47 dlg Exp $
+.\" $OpenBSD: kstat_create.9,v 1.7 2022/09/10 08:50:53 jsg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2022 $
+.Dd $Mdocdate: September 10 2022 $
 .Dt KSTAT_CREATE 9
 .Os
 .Sh NAME
@@ -168,7 +168,7 @@ structure fields and calls to the
 .Fa ks_read
 and
 .Fa ks_copy
-handlers by the kstat subsystem are serialised by the the locking primitive
+handlers by the kstat subsystem are serialised by the locking primitive
 referenced by
 .Fa ks_lock .
 By default

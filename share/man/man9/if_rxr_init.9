@@ -1,4 +1,4 @@
-.\"	$OpenBSD: if_rxr_init.9,v 1.9 2020/05/12 20:47:58 jmc Exp $
+.\"	$OpenBSD: if_rxr_init.9,v 1.10 2022/09/10 08:50:53 jsg Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2020 $
+.Dd $Mdocdate: September 10 2022 $
 .Dt IF_RXR_INIT 9
 .Os
 .Sh NAME
@@ -91,10 +91,10 @@ returns
 receive descriptor slots to the ring.
 .Pp
 .Fn if_rxr_livelocked
-can signal that that receive ring is generating too much load.
+can signal that the receive ring is generating too much load.
 .Pp
 .Fn if_rxr_needrefill
-signals that that receive ring runs below the low watermark of descriptors.
+signals that the receive ring runs below the low watermark of descriptors.
 .Pp
 .Fn if_rxr_inuse
 can be used to determine how many descriptor slots have been allocated
