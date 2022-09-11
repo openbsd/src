@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.261 2022/09/11 11:47:55 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.262 2022/09/11 19:34:40 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1130,7 +1130,6 @@ disk_attach_callback(void *xdat)
 	/* Read disklabel. */
 	if (disk_readlabel(&dl, dk->dk_devno, errbuf, sizeof(errbuf)) == NULL) {
 		enqueue_randomness(dl.d_checksum);
-		dk->dk_flags |= DKF_LABELVALID;
 	}
 
 done:
@@ -1449,14 +1448,14 @@ setroot(struct device *bootdv, int part, int exitflags)
 		TAILQ_FOREACH(dk, &disklist, dk_link)
 			if (dk->dk_device == bootdv)
 				break;
-		if (dk && (dk->dk_flags & DKF_LABELVALID))
+		if (dk)
 			bcopy(dk->dk_label->d_uid, bootduid, sizeof(bootduid));
 	} else if (bootdv == NULL) {
 		/* Locate boot disk based on the provided DUID. */
 		TAILQ_FOREACH(dk, &disklist, dk_link)
 			if (duid_equal(dk->dk_label->d_uid, bootduid))
 				break;
-		if (dk && (dk->dk_flags & DKF_LABELVALID))
+		if (dk)
 			bootdv = dk->dk_device;
 	}
 	bcopy(bootduid, rootduid, sizeof(rootduid));
@@ -1570,8 +1569,7 @@ gotswap:
 		if (bootdv->dv_class == DV_DISK) {
 			if (!duid_iszero(rootduid)) {
 				TAILQ_FOREACH(dk, &disklist, dk_link)
-					if ((dk->dk_flags & DKF_LABELVALID) &&
-					    dk->dk_label && duid_equal(
+					if (dk->dk_label && duid_equal(
 					    dk->dk_label->d_uid, rootduid))
 						break;
 				if (dk == NULL)
@@ -1797,7 +1795,8 @@ disk_map(char *path, char *mappath, int size, int flags)
 
 	mdk = NULL;
 	TAILQ_FOREACH(dk, &disklist, dk_link) {
-		if ((dk->dk_flags & DKF_LABELVALID) && dk->dk_label &&
+		if (dk->dk_label &&
+		    !duid_iszero(dk->dk_label->d_uid) &&
 		    memcmp(dk->dk_label->d_uid, uid,
 		    sizeof(dk->dk_label->d_uid)) == 0) {
 			/* Fail if there are duplicate UIDs! */

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.426 2022/08/29 19:01:52 stsp Exp $ */
+/* $OpenBSD: softraid.c,v 1.427 2022/09/11 19:34:40 miod Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3690,13 +3690,11 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 		}
 	}
 
-	bzero(duid, sizeof(duid));
 	TAILQ_FOREACH(dk, &disklist,  dk_link)
 		if (!strncmp(dk->dk_name, bb->bb_dev, sizeof(bb->bb_dev)))
 			break;
 	if (dk == NULL || dk->dk_label == NULL ||
-	    (dk->dk_flags & DKF_LABELVALID) == 0 ||
-	    bcmp(dk->dk_label->d_uid, &duid, sizeof(duid)) == 0) {
+	    duid_iszero(dk->dk_label->d_uid)) {
 		sr_error(sc, "failed to get DUID for softraid volume");
 		goto done;
 	}
