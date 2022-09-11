@@ -139,6 +139,7 @@ SSL_CTX_set_next_protos_advertised_cb
 SSL_CTX_set_num_tickets
 SSL_CTX_set_post_handshake_auth
 SSL_CTX_set_purpose
+SSL_CTX_set_quic_method
 SSL_CTX_set_quiet_shutdown
 SSL_CTX_set_security_level
 SSL_CTX_set_session_id_context
@@ -246,6 +247,7 @@ SSL_get_num_tickets
 SSL_get_peer_cert_chain
 SSL_get_peer_certificate
 SSL_get_peer_finished
+SSL_get_peer_quic_transport_params
 SSL_get_privatekey
 SSL_get_quiet_shutdown
 SSL_get_rbio
@@ -270,6 +272,7 @@ SSL_get_wbio
 SSL_get_wfd
 SSL_has_matching_session_id
 SSL_is_dtls
+SSL_is_quic
 SSL_is_server
 SSL_library_init
 SSL_load_client_CA_file
@@ -278,6 +281,11 @@ SSL_new
 SSL_peek
 SSL_peek_ex
 SSL_pending
+SSL_process_quic_post_handshake
+SSL_provide_quic_data
+SSL_quic_max_handshake_flight_len
+SSL_quic_read_level
+SSL_quic_write_level
 SSL_read
 SSL_read_early_data
 SSL_read_ex
@@ -316,6 +324,9 @@ SSL_set_num_tickets
 SSL_set_post_handshake_auth
 SSL_set_psk_use_session_callback
 SSL_set_purpose
+SSL_set_quic_method
+SSL_set_quic_transport_params
+SSL_set_quic_use_legacy_codepoint
 SSL_set_quiet_shutdown
 SSL_set_read_ahead
 SSL_set_rfd
