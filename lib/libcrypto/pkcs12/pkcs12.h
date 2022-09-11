@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.h,v 1.26 2022/08/03 20:16:06 tb Exp $ */
+/* $OpenBSD: pkcs12.h,v 1.27 2022/09/11 17:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -96,43 +96,16 @@ extern "C" {
 #define KEY_EX	0x10
 #define KEY_SIG 0x80
 
-typedef struct {
-	X509_SIG *dinfo;
-	ASN1_OCTET_STRING *salt;
-	ASN1_INTEGER *iter;	/* defaults to 1 */
-} PKCS12_MAC_DATA;
+typedef struct PKCS12_MAC_DATA_st PKCS12_MAC_DATA;
 
-typedef struct {
-	ASN1_INTEGER *version;
-	PKCS12_MAC_DATA *mac;
-	PKCS7 *authsafes;
-} PKCS12;
+typedef struct PKCS12_st PKCS12;
 
-typedef struct {
-	ASN1_OBJECT *type;
-	union {
-	struct pkcs12_bag_st *bag; /* secret, crl and certbag */
-	struct pkcs8_priv_key_info_st	*keybag; /* keybag */
-	X509_SIG *shkeybag; /* shrouded key bag */
-		STACK_OF(PKCS12_SAFEBAG) *safes;
-		ASN1_TYPE *other;
-	} value;
-	STACK_OF(X509_ATTRIBUTE) *attrib;
-} PKCS12_SAFEBAG;
+typedef struct PKCS12_SAFEBAG_st PKCS12_SAFEBAG;
 
 DECLARE_STACK_OF(PKCS12_SAFEBAG)
 DECLARE_PKCS12_STACK_OF(PKCS12_SAFEBAG)
 
-typedef struct pkcs12_bag_st {
-	ASN1_OBJECT *type;
-	union {
-		ASN1_OCTET_STRING *x509cert;
-		ASN1_OCTET_STRING *x509crl;
-		ASN1_OCTET_STRING *octet;
-		ASN1_IA5STRING *sdsicert;
-		ASN1_TYPE *other; /* Secret or other bag */
-	} value;
-} PKCS12_BAGS;
+typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 #define PKCS12_ERROR	0
 #define PKCS12_OK	1
@@ -155,15 +128,7 @@ typedef struct pkcs12_bag_st {
 #define M_PKCS12_decrypt_skey PKCS12_decrypt_skey
 #define M_PKCS8_decrypt PKCS8_decrypt
 
-#if !defined(LIBRESSL_NEXT_API)
-#define M_PKCS12_bag_type(bg) OBJ_obj2nid((bg)->type)
-#define M_PKCS12_cert_bag_type(bg) OBJ_obj2nid((bg)->value.bag->type)
-#define M_PKCS12_crl_bag_type M_PKCS12_cert_bag_type
-#endif
-
 #endif /* !LIBRESSL_INTERNAL */
-
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 
 #define M_PKCS12_bag_type	PKCS12_bag_type
 #define M_PKCS12_cert_bag_type	PKCS12_cert_bag_type
@@ -209,28 +174,6 @@ const X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag);
 const STACK_OF(PKCS12_SAFEBAG) *
     PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag);
 const ASN1_OBJECT *PKCS12_SAFEBAG_get0_type(const PKCS12_SAFEBAG *bag);
-
-#else /* !LIBRESSL_NEXT_API && !LIBRESSL_INTERNAL*/
-
-#define PKCS12_get_attr(bag, attr_nid) \
-			 PKCS12_get_attr_gen(bag->attrib, attr_nid)
-
-#define PKCS8_get_attr(p8, attr_nid) \
-		PKCS12_get_attr_gen(p8->attributes, attr_nid)
-
-#define PKCS12_mac_present(p12) ((p12)->mac ? 1 : 0)
-
-PKCS12_SAFEBAG *PKCS12_x5092certbag(X509 *x509);
-PKCS12_SAFEBAG *PKCS12_x509crl2certbag(X509_CRL *crl);
-X509 *PKCS12_certbag2x509(PKCS12_SAFEBAG *bag);
-X509_CRL *PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag);
-
-PKCS12_SAFEBAG *PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8);
-PKCS12_SAFEBAG *PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass,
-    int passlen, unsigned char *salt, int saltlen, int iter,
-    PKCS8_PRIV_KEY_INFO *p8);
-
-#endif /* !LIBRESSL_NEXT_API && !LIBRESSL_INTERNAL */
 
 PKCS12_SAFEBAG *PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it,
     int nid1, int nid2);

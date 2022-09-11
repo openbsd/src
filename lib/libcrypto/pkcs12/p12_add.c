@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.19 2022/08/20 09:16:18 tb Exp $ */
+/* $OpenBSD: p12_add.c,v 1.20 2022/09/11 17:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -90,58 +90,6 @@ PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it, int nid1, int nid2)
 	safebag->type = OBJ_nid2obj(nid2);
 	return safebag;
 }
-
-#if !defined(LIBRESSL_NEXT_API)
-#undef PKCS12_MAKE_KEYBAG
-#undef PKCS12_MAKE_SHKEYBAG
-/* Turn PKCS8 object into a keybag */
-
-PKCS12_SAFEBAG *
-PKCS12_MAKE_KEYBAG(PKCS8_PRIV_KEY_INFO *p8)
-{
-	PKCS12_SAFEBAG *bag;
-
-	if (!(bag = PKCS12_SAFEBAG_new())) {
-		PKCS12error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	bag->type = OBJ_nid2obj(NID_keyBag);
-	bag->value.keybag = p8;
-	return bag;
-}
-
-/* Turn PKCS8 object into a shrouded keybag */
-
-PKCS12_SAFEBAG *
-PKCS12_MAKE_SHKEYBAG(int pbe_nid, const char *pass, int passlen,
-    unsigned char *salt, int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8)
-{
-	PKCS12_SAFEBAG *bag;
-	const EVP_CIPHER *pbe_ciph;
-
-	/* Set up the safe bag */
-	if (!(bag = PKCS12_SAFEBAG_new())) {
-		PKCS12error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-
-	bag->type = OBJ_nid2obj(NID_pkcs8ShroudedKeyBag);
-
-	pbe_ciph = EVP_get_cipherbynid(pbe_nid);
-
-	if (pbe_ciph)
-		pbe_nid = -1;
-
-	if (!(bag->value.shkeybag = PKCS8_encrypt(pbe_nid, pbe_ciph, pass,
-	    passlen, salt, saltlen, iter, p8))) {
-		PKCS12error(ERR_R_MALLOC_FAILURE);
-		PKCS12_SAFEBAG_free(bag);
-		return NULL;
-	}
-
-	return bag;
-}
-#endif
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
 PKCS7 *

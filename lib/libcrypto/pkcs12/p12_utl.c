@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.18 2022/08/20 09:16:18 tb Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.19 2022/09/11 17:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -149,46 +149,3 @@ d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
 	    return ASN1_item_d2i_fp(&PKCS12_it, fp, p12);
 }
-
-#if !defined(LIBRESSL_NEXT_API)
-#undef PKCS12_x5092certbag
-#undef PKCS12_x509crl2certbag
-#undef PKCS12_certbag2x509
-#undef PKCS12_certbag2x509crl
-
-PKCS12_SAFEBAG *
-PKCS12_x5092certbag(X509 *x509)
-{
-	return PKCS12_item_pack_safebag(x509, &X509_it,
-	    NID_x509Certificate, NID_certBag);
-}
-
-PKCS12_SAFEBAG *
-PKCS12_x509crl2certbag(X509_CRL *crl)
-{
-	return PKCS12_item_pack_safebag(crl, &X509_CRL_it,
-	    NID_x509Crl, NID_crlBag);
-}
-
-X509 *
-PKCS12_certbag2x509(PKCS12_SAFEBAG *bag)
-{
-	if (OBJ_obj2nid(bag->type) != NID_certBag)
-		return NULL;
-	if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Certificate)
-		return NULL;
-	return ASN1_item_unpack(bag->value.bag->value.octet,
-	    &X509_it);
-}
-
-X509_CRL *
-PKCS12_certbag2x509crl(PKCS12_SAFEBAG *bag)
-{
-	if (OBJ_obj2nid(bag->type) != NID_crlBag)
-		return NULL;
-	if (OBJ_obj2nid(bag->value.bag->type) != NID_x509Crl)
-		return NULL;
-	return ASN1_item_unpack(bag->value.bag->value.octet,
-	    &X509_CRL_it);
-}
-#endif

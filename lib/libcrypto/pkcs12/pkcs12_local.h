@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12_local.h,v 1.1 2022/08/20 09:16:18 tb Exp $ */
+/* $OpenBSD: pkcs12_local.h,v 1.2 2022/09/11 17:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -60,6 +60,41 @@
 #define HEADER_PKCS12_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
+
+struct PKCS12_MAC_DATA_st {
+	X509_SIG *dinfo;
+	ASN1_OCTET_STRING *salt;
+	ASN1_INTEGER *iter;	/* defaults to 1 */
+};
+
+struct PKCS12_st {
+	ASN1_INTEGER *version;
+	PKCS12_MAC_DATA *mac;
+	PKCS7 *authsafes;
+};
+
+struct PKCS12_SAFEBAG_st {
+	ASN1_OBJECT *type;
+	union {
+	struct pkcs12_bag_st *bag; /* secret, crl and certbag */
+	struct pkcs8_priv_key_info_st	*keybag; /* keybag */
+	X509_SIG *shkeybag; /* shrouded key bag */
+		STACK_OF(PKCS12_SAFEBAG) *safes;
+		ASN1_TYPE *other;
+	} value;
+	STACK_OF(X509_ATTRIBUTE) *attrib;
+};
+
+struct pkcs12_bag_st {
+	ASN1_OBJECT *type;
+	union {
+		ASN1_OCTET_STRING *x509cert;
+		ASN1_OCTET_STRING *x509crl;
+		ASN1_OCTET_STRING *octet;
+		ASN1_IA5STRING *sdsicert;
+		ASN1_TYPE *other; /* Secret or other bag */
+	} value;
+};
 
 __END_HIDDEN_DECLS
 
