@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.23 2022/06/30 11:17:50 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.24 2022/09/11 18:13:30 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -176,6 +176,14 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	if (!ssl_clamp_tls_version_range(&min_version, &max_version,
 	    s->internal->min_tls_version, s->internal->max_tls_version))
 		return 0;
+
+	/* QUIC requires a minimum of TLSv1.3. */
+	if (SSL_is_quic(s)) {
+		if (max_version < TLS1_3_VERSION)
+			return 0;
+		if (min_version < TLS1_3_VERSION)
+			min_version = TLS1_3_VERSION;
+	}
 
 	if (min_ver != NULL)
 		*min_ver = min_version;
