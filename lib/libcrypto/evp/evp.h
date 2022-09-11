@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.106 2022/09/11 17:28:33 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.107 2022/09/11 17:29:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -696,10 +696,8 @@ const EVP_CIPHER *EVP_aes_256_ccm(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_wrap(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 const EVP_CIPHER *EVP_chacha20_poly1305(void);
-#endif
 #endif
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
