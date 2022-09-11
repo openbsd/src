@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.105 2022/08/27 09:10:10 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.106 2022/09/11 17:28:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,7 +282,6 @@ extern "C" {
 /* Length of tag for TLS */
 #define EVP_GCM_TLS_TAG_LEN				16
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /* CCM TLS constants */
 /* Length of fixed part of IV derived from PRF */
 #define EVP_CCM_TLS_FIXED_IV_LEN			4
@@ -297,7 +296,6 @@ extern "C" {
 
 /* Length of tag for TLS */
 #define EVP_CHACHAPOLY_TLS_TAG_LEN			16
-#endif
 
 typedef struct evp_cipher_info_st {
 	const EVP_CIPHER *cipher;
