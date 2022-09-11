@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.69 2022/08/29 06:48:58 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.70 2022/09/11 17:22:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -547,8 +547,6 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 ASN1_OBJECT *ASN1_OBJECT_new(void);
 void ASN1_OBJECT_free(ASN1_OBJECT *a);
 int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp);
-ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
-    long length);
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
     long length);
 
@@ -577,9 +575,6 @@ void ASN1_BIT_STRING_free(ASN1_BIT_STRING *a);
 ASN1_BIT_STRING *d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len);
 int i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_BIT_STRING_it;
-int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp);
-ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
-    const unsigned char **pp, long length);
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
@@ -599,9 +594,6 @@ void ASN1_INTEGER_free(ASN1_INTEGER *a);
 ASN1_INTEGER *d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len);
 int i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_INTEGER_it;
-int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp);
-ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
-    long length);
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
     long length);
 ASN1_INTEGER *	ASN1_INTEGER_dup(const ASN1_INTEGER *x);
