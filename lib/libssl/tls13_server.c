@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.101 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.102 2022/09/11 14:39:44 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -174,6 +174,15 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	/* Ensure we send subsequent alerts with the correct record version. */
 	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
 
+	/*
+	 * Ensure that the client has not requested middlebox compatibility mode
+	 * if it is prohibited from doing so.
+	 */
+	if (!ctx->middlebox_compat && CBS_len(&session_id) != 0) {
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		goto err;
+	}
+
 	/* Add decoded values to the current ClientHello hash */
 	if (!tls13_clienthello_hash_init(ctx)) {
 		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
@@ -234,8 +243,14 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	}
 
-	/* Store legacy session identifier so we can echo it. */
-	if (CBS_len(&session_id) > sizeof(ctx->hs->tls13.legacy_session_id)) {
+	/*
+	 * The legacy session identifier must either be zero length or a 32 byte
+	 * value (in which case the client is requesting middlebox compatibility
+	 * mode), as per RFC 8446 section 4.1.2. If it is valid, store the value
+	 * so that we can echo it back to the client.
+	 */
+	if (CBS_len(&session_id) != 0 &&
+	    CBS_len(&session_id) != sizeof(ctx->hs->tls13.legacy_session_id)) {
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
@@ -303,8 +318,9 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if (ctx->hs->key_share != NULL)
 		ctx->handshake_stage.hs_type |= NEGOTIATED | WITHOUT_HRR;
 
-	/* XXX - check this is the correct point */
-	tls13_record_layer_allow_ccs(ctx->rl, 1);
+	/* Only allow CCS if client requested middlebox compatibility mode. */
+	if (ctx->hs->tls13.legacy_session_id_len > 0)
+		tls13_record_layer_allow_ccs(ctx->rl, 1);
 
 	return 1;
 
