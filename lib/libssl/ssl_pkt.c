@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.59 2022/09/10 15:37:13 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.60 2022/09/11 13:51:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -762,17 +762,20 @@ int
 ssl3_read_change_cipher_spec(SSL *s)
 {
 	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
+	const uint8_t ccs[] = { SSL3_MT_CCS };
+	CBS cbs;
 
 	/*
 	 * 'Change Cipher Spec' is just a single byte, so we know exactly what
 	 * the record payload has to look like.
 	 */
-	if (rr->length != 1 || rr->off != 0) {
+	CBS_init(&cbs, rr->data, rr->length);
+	if (rr->off != 0 || CBS_len(&cbs) != sizeof(ccs)) {
 		SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		return -1;
 	}
-	if (rr->data[0] != SSL3_MT_CCS) {
+	if (!CBS_mem_equal(&cbs, ccs, sizeof(ccs))) {
 		SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		return -1;
@@ -780,7 +783,7 @@ ssl3_read_change_cipher_spec(SSL *s)
 
 	/* XDTLS: check that epoch is consistent */
 
-	ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
+	ssl_msg_callback_cbs(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, &cbs);
 
 	/* Check that we have a cipher to change to. */
 	if (s->s3->hs.cipher == NULL) {
