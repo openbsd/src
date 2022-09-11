@@ -1,4 +1,4 @@
-/*	$OpenBSD: atf-c.h,v 1.4 2022/05/28 18:39:39 mbuhl Exp $	*/
+/*	$OpenBSD: atf-c.h,v 1.5 2022/09/11 20:51:44 mbuhl Exp $	*/
 /*
  * Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
  *
@@ -76,6 +76,7 @@ ATF_TC_FUNCTIONS(fn)
 #define ATF_CHECK		ATF_REQUIRE
 #define ATF_CHECK_MSG		ATF_REQUIRE_MSG
 #define ATF_CHECK_EQ		ATF_REQUIRE_EQ
+#define ATF_CHECK_EQ_MSG	ATF_REQUIRE_EQ_MSG
 #define ATF_CHECK_ERRNO		ATF_REQUIRE_ERRNO
 #define ATF_CHECK_STREQ	ATF_REQUIRE_STREQ
 

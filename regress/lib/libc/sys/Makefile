@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2022/01/06 03:30:15 guenther Exp $
+#	$OpenBSD: Makefile,v 1.16 2022/09/11 20:51:44 mbuhl Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -54,8 +54,10 @@ PROGS +=	t_pipe2
 PROGS +=	t_poll
 PROGS +=	t_ppoll
 PROGS +=	t_ptrace
+PROGS +=	t_recvmmsg
 PROGS +=	t_revoke
 PROGS +=	t_select
+PROGS +=	t_sendmmsg
 PROGS +=	t_sendrecv
 PROGS +=	t_setrlimit
 PROGS +=	t_setuid
