@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.260 2022/09/03 15:29:43 kettenis Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.261 2022/09/11 11:47:55 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -641,6 +641,11 @@ spoofgpt(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 	partoff = DL_SECTOBLK(lp, lbastart);
 	obsdfound = 0;
 	for (i = 0; i < partnum; i++) {
+		if (letoh64(gp[i].gp_attrs) & GPTPARTATTR_REQUIRED) {
+			DPRINTF("spoofgpt: Skipping partition %u (REQUIRED)\n");
+			continue;
+		}
+
 		start = letoh64(gp[i].gp_lba_start);
 		if (start > lbaend || start < lbastart)
 			continue;

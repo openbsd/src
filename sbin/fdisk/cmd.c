@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.164 2022/07/25 17:45:16 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.165 2022/09/11 11:47:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -488,7 +488,7 @@ Xflag(const char *args, struct mbr *mbr)
 		if (gh.gh_sig == GPTSIGNATURE) {
 			for (i = 0; i < gh.gh_part_num; i++) {
 				if (i == pn)
-					gp[i].gp_attrs = GPTDOSACTIVE;
+					gp[i].gp_attrs = GPTPARTATTR_BOOTABLE;
 				else
 					gp[i].gp_attrs = 0;
 			}
