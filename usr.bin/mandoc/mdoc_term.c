@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_term.c,v 1.280 2022/08/16 17:44:53 schwarze Exp $ */
+/* $OpenBSD: mdoc_term.c,v 1.281 2022/09/11 09:12:47 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020, 2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -567,8 +567,8 @@ a2width(const struct termp *p, const char *v)
 
 	end = a2roffsu(v, &su, SCALE_MAX);
 	if (end == NULL || *end != '\0') {
-		SCALE_HS_INIT(&su, term_strlen(p, v));
-		su.scale /= term_strlen(p, "0");
+		su.unit = SCALE_EN;
+		su.scale = term_strlen(p, v) / term_strlen(p, "0");
 	}
 	return term_hen(p, &su);
 }
@@ -704,9 +704,9 @@ termp_it_pre(DECL_ARGS)
 		for (i = 0, nn = n->prev;
 		    nn->prev && i < (int)ncols;
 		    nn = nn->prev, i++) {
-			SCALE_HS_INIT(&su,
-			    term_strlen(p, bl->norm->Bl.cols[i]));
-			su.scale /= term_strlen(p, "0");
+			su.unit = SCALE_EN;
+			su.scale = term_strlen(p, bl->norm->Bl.cols[i]) /
+			    term_strlen(p, "0");
 			offset += term_hen(p, &su) + dcol;
 		}
 
@@ -723,8 +723,9 @@ termp_it_pre(DECL_ARGS)
 		 * Use the declared column widths, extended as explained
 		 * in the preceding paragraph.
 		 */
-		SCALE_HS_INIT(&su, term_strlen(p, bl->norm->Bl.cols[i]));
-		su.scale /= term_strlen(p, "0");
+		su.unit = SCALE_EN;
+		su.scale = term_strlen(p, bl->norm->Bl.cols[i]) /
+		    term_strlen(p, "0");
 		width = term_hen(p, &su) + dcol;
 		break;
 	default:
