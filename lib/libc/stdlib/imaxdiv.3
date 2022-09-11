@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: imaxdiv.3,v 1.7 2016/08/14 23:18:03 guenther Exp $
+.\"	$OpenBSD: imaxdiv.3,v 1.8 2022/09/11 06:38:11 jmc Exp $
 .\"
-.Dd $Mdocdate: August 14 2016 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt IMAXDIV 3
 .Os
 .Sh NAME
@@ -47,9 +47,9 @@ The
 function computes the value
 .Fa num Ns / Ns Fa denom
 and returns the quotient and remainder in a structure named
-.Li imaxdiv_t
+.Vt imaxdiv_t
 that contains two
-.Li intmax_t
+.Vt intmax_t
 members named
 .Fa quot
 and

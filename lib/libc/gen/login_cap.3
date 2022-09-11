@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.22 2022/03/23 14:52:25 millert Exp $
+.\" $OpenBSD: login_cap.3,v 1.23 2022/09/11 06:38:10 jmc Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
-.Dd $Mdocdate: March 23 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt LOGIN_GETCLASS 3
 .Os
 .Sh NAME
@@ -86,12 +86,12 @@ or the empty string) from
 (see
 .Xr login.conf 5 ) .
 If the entry is found, a
-.Li login_cap_t
+.Vt login_cap_t
 pointer is returned.
 .Dv NULL
 is returned if the user class is not found.
 When the
-.Li login_cap_t
+.Vt login_cap_t
 structure is no longer needed, it should be freed by the
 .Fn login_close
 function.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.60 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.61 2022/09/11 06:38:10 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ must be non-null.
 .Pp
 .Fa hints
 is an optional pointer to a
-.Li struct addrinfo ,
+.Vt struct addrinfo ,
 as defined by
 .In netdb.h :
 .Bd -literal
@@ -139,7 +139,7 @@ will return a NUL-terminated string containing the canonical name
 of the specified host name in the
 .Fa ai_canonname
 element of the first
-.Li addrinfo
+.Vt addrinfo
 structure returned.
 .It Dv AI_FQDN
 If the
@@ -150,7 +150,7 @@ will return a NUL-terminated string containing the fully qualified domain name
 of the specified host name in the
 .Fa ai_canonname
 element of the first
-.Li addrinfo
+.Vt addrinfo
 structure returned.
 .Pp
 This is different from the
@@ -215,7 +215,7 @@ is not set.
 .El
 .Pp
 All other elements of the
-.Li addrinfo
+.Vt addrinfo
 structure passed via
 .Fa hints
 must be zero or the null pointer.
@@ -225,7 +225,7 @@ If
 is the null pointer,
 .Fn getaddrinfo
 behaves as if the caller provided a
-.Li struct addrinfo
+.Vt struct addrinfo
 with
 .Fa ai_family
 set to
@@ -240,12 +240,12 @@ After a successful call to
 .Fn getaddrinfo ,
 .Fa *res
 is a pointer to a linked list of one or more
-.Li addrinfo
+.Vt addrinfo
 structures.
 The list can be traversed by following the
 .Fa ai_next
 pointer in each
-.Li addrinfo
+.Vt addrinfo
 structure until a null pointer is encountered.
 The three members
 .Fa ai_family ,
@@ -253,11 +253,11 @@ The three members
 and
 .Fa ai_protocol
 in each returned
-.Li addrinfo
+.Vt addrinfo
 structure are suitable for a call to
 .Xr socket 2 .
 For each
-.Li addrinfo
+.Vt addrinfo
 structure in the list, the
 .Fa ai_addr
 member points to a filled-in socket address structure of length
@@ -298,10 +298,10 @@ the interface and link, which is not necessarily true from the specification.
 All of the information returned by
 .Fn getaddrinfo
 is dynamically allocated: the
-.Li addrinfo
+.Vt addrinfo
 structures themselves as well as the socket address structures and
 the canonical host name strings included in the
-.Li addrinfo
+.Vt addrinfo
 structures.
 .Pp
 Memory allocated for the dynamically allocated structures created by
@@ -313,7 +313,7 @@ function.
 The
 .Fa ai
 pointer should be an
-.Li addrinfo
+.Vt addrinfo
 structure created by a call to
 .Fn getaddrinfo .
 .Sh RETURN VALUES
@@ -324,7 +324,7 @@ if an error occurs.
 If an error occurs, no memory is allocated by
 .Fn getaddrinfo ,
 therefore it is not necessary to release the
-.Li addrinfo
+.Vt addrinfo
 structure(s).
 .Sh EXAMPLES
 The following code tries to connect to

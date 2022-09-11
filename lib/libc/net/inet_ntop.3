@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_ntop.3,v 1.5 2021/09/01 15:59:22 claudio Exp $
+.\"	$OpenBSD: inet_ntop.3,v 1.6 2022/09/11 06:38:10 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 1 2021 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt INET_NTOP 3
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ The
 .Fn inet_pton
 function converts a presentation format address (that is, printable form
 as held in a character string) to network format (usually a
-.Li struct in_addr
+.Vt struct in_addr
 or some other internal binary representation, in network byte order).
 It returns 1 if the address was valid for the specified address family;
 0 if the address wasn't parseable in the specified address family; or \-1

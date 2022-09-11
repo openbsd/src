@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.28 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.29 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getrlimit.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt GETRLIMIT 2
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ or
 respectively by
 .Fn getrlimit
 if the value for the current or maximum resource limit cannot be stored in an
-.Li rlim_t .
+.Vt rlim_t .
 The values
 .Dv RLIM_SAVED_CUR
 and

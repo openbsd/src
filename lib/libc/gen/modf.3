@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modf.3,v 1.12 2013/06/05 03:39:22 tedu Exp $
+.\"	$OpenBSD: modf.3,v 1.13 2022/09/11 06:38:10 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt MODF 3
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ function breaks the argument
 into integral and fractional parts, each of which has the
 same sign as the argument.
 It stores the integral part as a
-.Li double
+.Vt double
 in the object pointed to by
 .Fa iptr .
 The

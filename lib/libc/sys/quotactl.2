@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.15 2015/01/19 15:54:11 millert Exp $
+.\"	$OpenBSD: quotactl.2,v 1.16 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)quotactl.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 19 2015 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ Get disk quota limits and current usage for the user or group
 .Fa id .
 .Fa addr
 is a pointer to a
-.Li struct dqblk
+.Vt struct dqblk
 structure.
 .It Dv Q_SETQUOTA
 Set disk quota limits for the user or group
@@ -114,10 +114,10 @@ Set disk quota limits for the user or group
 .Fa id .
 .Fa addr
 is a pointer to a
-.Li struct dqblk
+.Vt struct dqblk
 structure.
 The usage fields of
-.Li struct dqblk
+.Vt struct dqblk
 structure are ignored.
 This call is restricted to the superuser.
 .It Dv Q_SETUSE
@@ -126,7 +126,7 @@ Set disk usage limits for the user or group
 .Fa id .
 .Fa addr
 is a pointer to a
-.Li struct dqblk
+.Vt struct dqblk
 structure.
 Only the usage fields are used.
 This call is restricted to the superuser.

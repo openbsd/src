@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.18 2016/02/07 20:50:24 mmcc Exp $
+.\" $OpenBSD: strtonum.3,v 1.19 2022/09/11 06:38:11 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 7 2016 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt STRTONUM 3
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@ The
 function converts the string in
 .Fa nptr
 to a
-.Li long long
+.Vt long long
 value.
 The
 .Fn strtonum
@@ -56,7 +56,7 @@ or
 sign.
 .Pp
 The remainder of the string is converted to a
-.Li long long
+.Vt long long
 value according to base 10.
 .Pp
 The value obtained is then checked against the provided

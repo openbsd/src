@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.103 2022/07/29 17:47:11 semarie Exp $
+.\"	$OpenBSD: ddb.4,v 1.104 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: July 29 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -628,7 +628,7 @@ command.
 .Ar addr
 .Xc
 Prints the
-.Li struct buf
+.Vt struct buf
 at
 .Ar addr .
 If the
@@ -669,13 +669,13 @@ modifier is specified, the complete map is printed.
 .\" --------------------
 .It Ic show mbuf Ar addr
 Prints the
-.Li struct mbuf
+.Vt struct mbuf
 header at
 .Ar addr .
 Depending on the mbuf flags
-.Li struct pkthdr
+.Vt struct pkthdr
 and
-.Li struct m_ext
+.Vt struct m_ext
 are printed as well.
 .\" --------------------
 .It Xo
@@ -684,7 +684,7 @@ are printed as well.
 .Ar addr
 .Xc
 Prints the
-.Li struct mount
+.Vt struct mount
 at
 .Ar addr .
 If the
@@ -705,7 +705,7 @@ on all those vnodes.
 .Ar addr
 .Xc
 Prints the
-.Li struct nfsnode
+.Vt struct nfsnode
 at
 .Ar addr .
 If the
@@ -719,7 +719,7 @@ information as well.
 .Ar addr
 .Xc
 Prints the
-.Li struct nfsreq
+.Vt struct nfsreq
 at
 .Ar addr .
 If the
@@ -773,7 +773,7 @@ Print the pagelist for this pool.
 .\" --------------------
 .It Ic show proc Op Ar addr
 Prints the
-.Li struct proc
+.Vt struct proc
 at
 .Ar addr .
 If an optional address is not specified,
@@ -793,17 +793,17 @@ incorrect information may be displayed.
 .\" --------------------
 .It Ic show route Ar addr
 Prints the
-.Li struct rtentry
+.Vt struct rtentry
 at
 .Ar addr .
 .\" --------------------
 .It Ic show socket Ar addr
 Prints the
-.Li struct socket
+.Vt struct socket
 at
 .Ar addr .
 If the socket is spliced, the
-.Li struct sosplice
+.Vt struct sosplice
 associated with the socket is printed as well.
 .\" --------------------
 .It Xo
@@ -827,7 +827,7 @@ Prints a detailed list of all swaps.
 .Ar addr
 .Xc
 Prints the
-.Li struct tdb
+.Vt struct tdb
 at
 .Ar addr .
 If the
@@ -843,7 +843,7 @@ Displays a selection of uvm counters and statistics.
 .Ar addr
 .Xc
 Prints the
-.Li struct vnode
+.Vt struct vnode
 at
 .Ar addr .
 If the

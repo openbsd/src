@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ether_aton.3,v 1.2 2022/03/29 18:15:52 naddy Exp $
+.\"	$OpenBSD: ether_aton.3,v 1.3 2022/09/11 06:38:10 jmc Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt ETHER_ATON 3
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ The
 function parses a line from the
 .Pa /etc/ethers
 file and fills in the passed
-.Li struct ether_addr
+.Vt struct ether_addr
 and character buffer with the Ethernet address and host name on the line.
 It returns zero if the line was successfully parsed and \-1 if not.
 The character buffer should be

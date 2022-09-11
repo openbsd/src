@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.26 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getpeername.2,v 1.27 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getpeername.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt GETPEERNAME 2
 .Os
 .Sh NAME
@@ -59,19 +59,19 @@ contains the file descriptor of the socket whose peer should be looked up.
 .Pp
 .Fa name
 points to a
-.Li sockaddr
+.Vt sockaddr
 structure that will hold the address information for the connected peer.
 Normal use requires one to use a structure
 specific to the protocol family in use, such as
-.Li sockaddr_in
+.Vt sockaddr_in
 (IPv4) or
-.Li sockaddr_in6
+.Vt sockaddr_in6
 (IPv6), cast to a (struct sockaddr *).
 .Pp
 For greater portability, especially with the newer protocol families, the new
-.Li struct sockaddr_storage
+.Vt struct sockaddr_storage
 should be used.
-.Li sockaddr_storage
+.Vt sockaddr_storage
 is large enough to hold any of the other sockaddr_* variants.
 On return, it can be cast to the correct sockaddr type,
 based on the protocol family contained in its ss_family field.

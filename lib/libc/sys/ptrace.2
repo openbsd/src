@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.42 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: ptrace.2,v 1.43 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ Also, any setuid or setgid bits on the executable being executed will
 be ignored.
 .It Dv PT_READ_I , Dv PT_READ_D
 These requests read a single
-.Li int
+.Vt int
 of data from the traced process' address space.
 Traditionally,
 .Fn ptrace
@@ -494,7 +494,7 @@ pointed to by
 This request reads the traced process'
 .Sq window cookie
 into the
-.Li int
+.Vt int
 pointed to by
 .Fa addr .
 The window cookie needs to be

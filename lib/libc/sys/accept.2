@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.29 2019/05/26 09:47:28 krw Exp $
+.\"	$OpenBSD: accept.2,v 1.30 2022/09/11 06:38:11 jmc Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt ACCEPT 2
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ The exact format of the
 parameter is determined by the domain in which the communication
 is occurring.
 The structure
-.Li sockaddr_storage
+.Vt sockaddr_storage
 exists for greater portability.
 It is large enough to hold any of the types that may be returned in the
 .Fa addr
@@ -136,7 +136,7 @@ Otherwise, a value of \-1 is returned and
 is set to indicate the error.
 .Sh EXAMPLES
 The following code uses struct
-.Li sockaddr_storage
+.Vt sockaddr_storage
 to allocate enough space for the returned address:
 .Bd -literal -offset indent
 #include <sys/types.h>

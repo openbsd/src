@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.43 2020/09/30 19:25:40 tb Exp $
+.\"	$OpenBSD: bpf.4,v 1.44 2022/09/11 06:38:11 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: September 30 2020 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -247,7 +247,7 @@ Returns the name of the hardware interface that the file is listening on.
 The name is returned in the
 .Fa ifr_name
 field of the
-.Li struct ifreq .
+.Vt struct ifreq .
 All other fields are undefined.
 .Pp
 .It Dv BIOCSETIF Fa "struct ifreq *"
@@ -256,7 +256,7 @@ This command must be performed before any packets can be read.
 The device is indicated by name using the
 .Fa ifr_name
 field of the
-.Li struct ifreq .
+.Vt struct ifreq .
 Additionally, performs the actions of
 .Dv BIOCFLUSH .
 .Pp
@@ -316,7 +316,7 @@ struct bpf_program {
 The filter program is pointed to by the
 .Fa bf_insns
 field, while its length in units of
-.Li struct bpf_insn
+.Vt struct bpf_insn
 is given by the
 .Fa bf_len
 field.
@@ -512,7 +512,7 @@ and the network layer header will be word aligned.
 Suitable precautions must be taken when accessing the link layer protocol
 fields on alignment restricted machines.
 (This isn't a problem on an Ethernet, since the type field is a
-.Li short
+.Vt short
 falling on an even offset, and the addresses are probably accessed in a
 bytewise fashion).
 .Pp

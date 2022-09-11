@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zdump.8,v 1.2 2020/01/16 16:46:47 schwarze Exp $
-.Dd $Mdocdate: January 16 2020 $
+.\"	$OpenBSD: zdump.8,v 1.3 2022/09/11 06:38:12 jmc Exp $
+.Dd $Mdocdate: September 11 2022 $
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ otherwise.
 The
 .Fl v
 option may not be used on systems with floating-point
-.Li time_t
+.Vt time_t
 values that are neither float nor double.
 .Pp
 Time discontinuities are found by sampling the results returned by localtime

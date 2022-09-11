@@ -1,7 +1,7 @@
-.\"	$OpenBSD: ctime.3,v 1.46 2020/04/30 18:36:12 schwarze Exp $
+.\"	$OpenBSD: ctime.3,v 1.47 2022/09/11 06:38:11 jmc Exp $
 .\"
 .\"
-.Dd $Mdocdate: April 30 2020 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@
 The
 .Fn ctime
 function converts a
-.Li time_t ,
+.Vt time_t ,
 pointed to by
 .Fa clock ,
 representing the time in seconds since
@@ -92,13 +92,13 @@ The
 and
 .Fn gmtime
 functions return pointers to
-.Li tm
+.Vt tm
 structures, described below.
 .Fn localtime
 corrects for the time zone and any time zone adjustments
 (such as Daylight Saving Time in the United States).
 After filling in the
-.Li tm
+.Vt tm
 structure,
 .Fn localtime
 sets the
@@ -133,7 +133,7 @@ the reentrant version is not required to set
 .Pp
 .Fn asctime
 converts a time value contained in a
-.Li tm
+.Vt tm
 structure to a string,
 as shown in the above example,
 and returns a pointer to the string.
@@ -214,12 +214,12 @@ returns the difference between two calendar times,
 expressed in seconds.
 .Pp
 Declarations of all the functions and externals, and the
-.Li tm
+.Vt tm
 structure, are in the
 .In time.h
 header file.
 The structure (of type)
-.Li struct tm
+.Vt struct tm
 includes the following fields:
 .Bd -literal -offset indent
 	int tm_sec;	/* seconds (0 \- 60) */
@@ -361,7 +361,7 @@ the data is overwritten by each call.
 The
 .Fa tm_zone
 field of a returned
-.Li struct tm
+.Vt struct tm
 points to a static array of characters, which
 will also be overwritten at the next call
 (and by calls to

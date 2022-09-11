@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.29 2022/08/06 19:04:49 schwarze Exp $
+.\"	$OpenBSD: regex.3,v 1.30 2022/09/11 06:38:10 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)regex.3	8.4 (Berkeley) 3/20/94
 .\"
-.Dd $Mdocdate: August 6 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt REGEXEC 3
 .Os
 .Sh NAME
@@ -80,13 +80,13 @@ of an RE.
 The header
 .In regex.h
 declares two structure types,
-.Li regex_t
+.Vt regex_t
 and
-.Li regmatch_t ,
+.Vt regmatch_t ,
 the former for compiled internal forms and the latter for match reporting.
 It also declares the four functions,
 a type
-.Li regoff_t ,
+.Vt regoff_t ,
 and a number of constants with names starting with
 .Dv REG_ .
 .Pp
@@ -97,7 +97,7 @@ string,
 subject to the flags in
 .Fa cflags ,
 and places the results in the
-.Li regex_t
+.Vt regex_t
 structure pointed to by
 .Fa preg .
 The
@@ -323,7 +323,7 @@ Otherwise,
 points to an array of
 .Fa nmatch
 structures of type
-.Li regmatch_t .
+.Vt regmatch_t .
 Such a structure has at least the members
 .Fa rm_so
 and
@@ -331,9 +331,9 @@ and
 both of type
 .Fa regoff_t
 (a signed arithmetic type at least as large as an
-.Li off_t
+.Vt off_t
 and a
-.Li ssize_t ) ,
+.Vt ssize_t ) ,
 containing respectively the offset of the first character of a substring
 and the offset of the first character after the end of the substring.
 Offsets are measured from the beginning of the
@@ -381,7 +381,7 @@ If
 is specified,
 .Fa pmatch
 must point to at least one
-.Li regmatch_t
+.Vt regmatch_t
 (even if
 .Fa nmatch
 is 0 or
@@ -414,7 +414,7 @@ If
 is non-NULL,
 the error code should have arisen from use of
 the
-.Li regex_t
+.Vt regex_t
 pointed to by
 .Fa preg ,
 and if the error code came from
@@ -422,11 +422,11 @@ and if the error code came from
 it should have been the result from the most recent
 .Fn regcomp
 using that
-.Li regex_t .
+.Vt regex_t .
 .Pf ( Fn regerror
 may be able to supply a more detailed message using information
 from the
-.Li regex_t . )
+.Vt regex_t . )
 .Fn regerror
 places the NUL-terminated message into the buffer pointed to by
 .Fa errbuf ,
@@ -487,7 +487,7 @@ frees any dynamically allocated storage associated with the compiled RE
 pointed to by
 .Fa preg .
 The remaining
-.Li regex_t
+.Vt regex_t
 is no longer a valid compiled RE
 and the effect of supplying it to
 .Fn regexec

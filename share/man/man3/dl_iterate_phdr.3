@@ -1,4 +1,4 @@
-.\"   $OpenBSD: dl_iterate_phdr.3,v 1.5 2018/08/24 13:14:14 edd Exp $
+.\"   $OpenBSD: dl_iterate_phdr.3,v 1.6 2022/09/11 06:38:11 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Mark Kettenis
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2018 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt DL_ITERATE_PHDR 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ struct dl_phdr_info {
 .Ed
 .Pp
 The members of
-.Li struct dl_phdr_info
+.Vt struct dl_phdr_info
 have the following meaning:
 .Bl -tag -width XXXdlpi_phdr
 .It Fa dlpi_addr

@@ -1,4 +1,4 @@
-.\" $OpenBSD: radius_new_request_packet.3,v 1.5 2016/08/05 08:10:51 jmc Exp $
+.\" $OpenBSD: radius_new_request_packet.3,v 1.6 2022/09/11 06:38:11 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 5 2016 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt RADIUS_NEW_REQUEST_PACKET 3
 .Os
 .Sh NAME
@@ -254,17 +254,17 @@ are vendor-specific versions of raw attribute accessors.
 To make code simple, there are many typed attribute accessors.
 .Nm radius
 provides typed accessors for
-.Li uint16_t ,
-.Li uint32_t ,
-.Li uint64_t ,
-.Li struct in_addr
+.Vt uint16_t ,
+.Vt uint32_t ,
+.Vt uint64_t ,
+.Vt struct in_addr
 and
-.Li struct in6_addr .
+.Vt struct in6_addr .
 Byte endian may be appropriately swapped for
-.Li uint16_t ,
-.Li uint32_t
+.Vt uint16_t ,
+.Vt uint32_t
 and
-.Li uint64_t .
+.Vt uint64_t .
 .Pp
 These typed accessors do not requires
 .Fa length

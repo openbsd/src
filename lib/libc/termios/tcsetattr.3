@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.17 2014/01/21 03:15:45 schwarze Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.18 2022/09/11 06:38:11 jmc Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt TCSETATTR 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ The
 and
 .Fn tcsetattr
 functions are provided for getting and setting the
-.Li termios
+.Vt termios
 structure.
 .Pp
 The
@@ -77,14 +77,14 @@ and
 .Fn cfsetspeed
 functions are provided for getting and setting the baud rate values in
 the
-.Li termios
+.Vt termios
 structure.
 The effects of the functions on the terminal as described below
 do not become effective, nor are all errors detected, until the
 .Fn tcsetattr
 function is called.
 Certain values for baud rates set in the
-.Li termios
+.Vt termios
 structure and passed to
 .Fn tcsetattr
 have special meanings.
@@ -93,10 +93,10 @@ These are discussed in the portion of the manual page that describes the
 function.
 .Sh GETTING AND SETTING THE BAUD RATE
 The input and output baud rates are found in the
-.Li termios
+.Vt termios
 structure.
 The unsigned integer
-.Li speed_t
+.Vt speed_t
 is typedef'd in the include file
 .In termios.h .
 On
@@ -131,14 +131,14 @@ symbolic value for maximum portability.
 The
 .Fn cfgetispeed
 function returns the input baud rate in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp .
 .Pp
 The
 .Fn cfsetispeed
 function sets the input baud rate in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp
 to
@@ -147,14 +147,14 @@ to
 The
 .Fn cfgetospeed
 function returns the output baud rate in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp .
 .Pp
 The
 .Fn cfsetospeed
 function sets the output baud rate in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp
 to
@@ -163,7 +163,7 @@ to
 The
 .Fn cfsetspeed
 function sets both the input and output baud rate in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp
 to
@@ -203,7 +203,7 @@ file descriptor.
 The
 .Fn cfmakeraw
 function sets the flags stored in the
-.Li termios
+.Vt termios
 structure to a state disabling
 all input and output processing, giving a
 .Dq raw I/O path .
@@ -226,7 +226,7 @@ function copies the parameters associated with the terminal referenced
 by
 .Fa fd
 in the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp .
 This function is allowed from a background process, although the terminal
@@ -235,7 +235,7 @@ attributes may be subsequently changed by a foreground process.
 The
 .Fn tcsetattr
 function sets the parameters associated with the terminal from the
-.Li termios
+.Vt termios
 structure referenced by
 .Fa tp .
 The
@@ -321,7 +321,7 @@ argument to the
 .Fn tcsetattr
 function was not valid, or an attempt was made to change an attribute
 represented in the
-.Li termios
+.Vt termios
 structure to an unsupported value.
 .It Bq Er ENOTTY
 The file associated with the

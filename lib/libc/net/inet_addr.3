@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_addr.3,v 1.5 2019/08/30 20:06:07 jmc Exp $
+.\"	$OpenBSD: inet_addr.3,v 1.6 2022/09/11 06:38:10 jmc Exp $
 .\"	$NetBSD: inet.3,v 1.7 1997/06/18 02:25:24 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt INET_ADDR 3
 .Os
 .Sh NAME
@@ -179,7 +179,7 @@ cannot return that value without indicating failure.
 Also,
 .Fn inet_addr
 should have been designed to return a
-.Li struct in_addr .
+.Vt struct in_addr .
 The newer
 .Fn inet_aton
 function does not share these problems, and almost all existing code

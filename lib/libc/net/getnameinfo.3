@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.48 2019/08/30 20:20:51 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.49 2022/09/11 06:38:10 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.37 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt GETNAMEINFO 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 The
 .Fn getnameinfo
 function is used to convert a
-.Li sockaddr
+.Vt sockaddr
 structure to a pair of host name and service strings.
 It is a replacement for and provides more flexibility than the
 .Xr gethostbyaddr 3
@@ -44,13 +44,13 @@ functions and is the converse of the
 function.
 .Pp
 The
-.Li sockaddr
+.Vt sockaddr
 structure
 .Fa sa
 should point to either a
-.Li sockaddr_in
+.Vt sockaddr_in
 or
-.Li sockaddr_in6
+.Vt sockaddr_in6
 structure (for IPv4 or IPv6 respectively) that is
 .Fa salen
 bytes long.

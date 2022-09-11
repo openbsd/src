@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.21 2019/08/30 20:20:51 jmc Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.22 2022/09/11 06:38:10 jmc Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -15,7 +15,7 @@
 .\" NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 .\" WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt GETRRSETBYNAME 3
 .Os
 .Sh NAME
@@ -46,11 +46,11 @@ After a successful call to
 .Fn getrrsetbyname ,
 .Fa *res
 is a pointer to an
-.Li rrsetinfo
+.Vt rrsetinfo
 structure, containing a list of one or more
-.Li rdatainfo
+.Vt rdatainfo
 structures containing resource records and potentially another list of
-.Li rdatainfo
+.Vt rdatainfo
 structures containing SIG resource records associated with those records.
 The members
 .Li rri_rdclass
@@ -97,12 +97,12 @@ struct  rrsetinfo {
 All of the information returned by
 .Fn getrrsetbyname
 is dynamically allocated: the
-.Li rrsetinfo
+.Vt rrsetinfo
 and
-.Li rdatainfo
+.Vt rdatainfo
 structures,
 and the canonical host name strings pointed to by the
-.Li rrsetinfo
+.Vt rrsetinfo
 structure.
 Memory allocated for the dynamically allocated structures created by
 a successful call to
@@ -111,7 +111,7 @@ is released by
 .Fn freerrset .
 .Li rrset
 is a pointer to a
-.Li struct rrsetinfo
+.Vt struct rrsetinfo
 created by a call to
 .Fn getrrsetbyname .
 .\" .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.25 2016/05/23 00:18:56 guenther Exp $
+.\"	$OpenBSD: setjmp.3,v 1.26 2022/09/11 06:38:10 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 23 2016 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt SETJMP 3
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@ All accessible objects have values as of the time the
 .Fn longjmp
 routine was called, except that the values of objects of automatic storage
 invocation duration that do not have the
-.Li volatile
+.Vt volatile
 type and have been changed between the
 .Fn setjmp
 invocation and
