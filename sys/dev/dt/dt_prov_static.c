@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.16 2022/09/02 17:46:37 dv Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.17 2022/09/11 19:05:44 dv Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -127,6 +127,7 @@ struct dt_probe *const dtps_static[] = {
 	/* VMM */
 	&_DT_STATIC_P(vmm, guest_enter),
 	&_DT_STATIC_P(vmm, guest_exit),
+	&_DT_STATIC_P(vmm, inout),
 #endif /* __amd64__ */
 	/* SMR */
 	&_DT_STATIC_P(smr, call),
