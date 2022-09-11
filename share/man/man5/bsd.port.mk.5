@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.569 2022/09/11 06:41:36 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.570 2022/09/11 08:51:51 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2537,7 +2537,19 @@ command, with possible options.
 .It Ev PKG_ARCH
 Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
-Use * for arch-independent packages.
+.Pp
+For instance:
+.Li Ev MACHINE_ARCH Ns = Ns Ar powerpc ,
+.Li Ev ARCH Ns = Ns Ar macppc .
+.Pp
+Most (if not all packages) will install correctly according to
+.Ev MACHINE_ARCH .
+.Pp
+Use * for arch-independent packages
+.Po
+see also
+.Sx THE DEBUG_PACKAGES INFRASTRUCTURE
+.Pc .
 .It Ev PKG_ARGS
 Special arguments to pass to
 .Xr pkg_create 1 ,
