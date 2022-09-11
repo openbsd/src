@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.19 2022/08/10 17:02:37 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.20 2022/09/11 10:18:54 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -260,6 +260,8 @@ smmu_attach(struct smmu_softc *sc)
 		 */
 		sc->sc_cb[sc->sc_num_context_banks - 1] =
 		    malloc(sizeof(struct smmu_cb), M_DEVBUF, M_WAITOK | M_ZERO);
+		smmu_cb_write_4(sc, sc->sc_num_context_banks - 1,
+		    SMMU_CB_SCTLR, 0);
 		smmu_gr1_write_4(sc, SMMU_CBAR(sc->sc_num_context_banks - 1),
 		    SMMU_CBAR_TYPE_S1_TRANS_S2_BYPASS);
 	}
@@ -272,8 +274,13 @@ smmu_attach(struct smmu_softc *sc)
 		/* On QCOM HW we need to keep current streams running. */
 		if (sc->sc_is_qcom && sc->sc_smr &&
 		    smmu_gr0_read_4(sc, SMMU_SMR(i)) & SMMU_SMR_VALID) {
+			reg = smmu_gr0_read_4(sc, SMMU_SMR(i));
 			sc->sc_smr[i] = malloc(sizeof(struct smmu_smr),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
+			sc->sc_smr[i]->ss_id = (reg >> SMMU_SMR_ID_SHIFT) &
+			    SMMU_SMR_ID_MASK;
+			sc->sc_smr[i]->ss_mask = (reg >> SMMU_SMR_MASK_SHIFT) &
+			    SMMU_SMR_MASK_MASK;
 			if (sc->sc_bypass_quirk) {
 				smmu_gr0_write_4(sc, SMMU_S2CR(i),
 				    SMMU_S2CR_TYPE_TRANS |
@@ -603,10 +610,22 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 	/* Stream mapping is a bit more effort */
 	if (sc->sc_smr) {
 		for (i = 0; i < sc->sc_num_streams; i++) {
+			/* Take over QCOM SMRs */
+			if (sc->sc_is_qcom && sc->sc_smr[i] != NULL &&
+			    sc->sc_smr[i]->ss_dom == NULL &&
+			    sc->sc_smr[i]->ss_id == sid &&
+			    sc->sc_smr[i]->ss_mask == 0) {
+				free(sc->sc_smr[i], M_DEVBUF,
+				    sizeof(struct smmu_smr));
+				sc->sc_smr[i] = NULL;
+			}
 			if (sc->sc_smr[i] != NULL)
 				continue;
 			sc->sc_smr[i] = malloc(sizeof(struct smmu_smr),
 			    M_DEVBUF, M_WAITOK | M_ZERO);
+			sc->sc_smr[i]->ss_dom = dom;
+			sc->sc_smr[i]->ss_id = sid;
+			sc->sc_smr[i]->ss_mask = 0;
 			dom->sd_smr_idx = i;
 			break;
 		}

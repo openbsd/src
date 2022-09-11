@@ -1,4 +1,4 @@
-/* $OpenBSD: smmureg.h,v 1.1 2021/02/28 21:39:31 patrick Exp $ */
+/* $OpenBSD: smmureg.h,v 1.2 2022/09/11 10:18:54 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -122,8 +122,11 @@
 #define SMMU_STLBGSTATUS		0x074
 #define  SMMU_STLBGSTATUS_GSACTIVE		(1 << 0)
 #define SMMU_SMR(x)			(0x800 + (x) * 0x4) /* 0 - 127 */
+#define  SMMU_SMR_ID_SHIFT			0
+#define  SMMU_SMR_ID_MASK			0x7fff
+#define  SMMU_SMR_MASK_SHIFT			16
+#define  SMMU_SMR_MASK_MASK			0x7fff
 #define  SMMU_SMR_VALID				(1U << 31)
-#define  SMMU_SMR_MASK				(0x7fff << 16)
 #define SMMU_S2CR(x)			(0xc00 + (x) * 0x4) /* 0 - 127 */
 #define  SMMU_S2CR_EXIDVALID			(1 << 10)
 #define  SMMU_S2CR_TYPE_TRANS			(0 << 16)

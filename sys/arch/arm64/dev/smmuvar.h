@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.7 2022/08/10 17:02:37 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.8 2022/09/11 10:18:54 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -44,8 +44,9 @@ struct smmu_cb_irq {
 };
 
 struct smmu_smr {
-	uint16_t mask;
-	uint16_t id;
+	struct smmu_domain		*ss_dom;
+	uint16_t			 ss_id;
+	uint16_t			 ss_mask;
 };
 
 struct smmu_softc {
