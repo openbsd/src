@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.55 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: bio.h,v 1.56 2022/09/11 17:26:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -276,8 +276,9 @@ void BIO_set_callback_arg(BIO *b, char *arg);
 const char *BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
-typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
 typedef int BIO_info_cb(BIO *, int, int);
+/* Compatibility with OpenSSL's backward compatibility. */
+typedef BIO_info_cb bio_info_cb;
 
 typedef struct bio_method_st BIO_METHOD;
 
