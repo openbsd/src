@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2022/02/07 15:21:38 krw Exp $
+#	$OpenBSD: Makefile,v 1.33 2022/09/11 11:12:39 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		18432
@@ -24,7 +24,7 @@ ${FS}: bsd.strip
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:83" `cat vnd` > /dev/null
-	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
+	disklabel -wd `cat vnd` > /dev/null
 	newfs_ext2fs /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel bsd.strip ${MOUNT_POINT}/bsd
