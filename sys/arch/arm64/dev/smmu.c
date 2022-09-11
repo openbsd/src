@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.20 2022/09/11 10:18:54 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.21 2022/09/11 10:28:56 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -23,6 +23,7 @@
 #include <sys/atomic.h>
 
 #include <machine/bus.h>
+#include <machine/cpufunc.h>
 
 #include <uvm/uvm_extern.h>
 #include <arm64/vmparam.h>
@@ -852,6 +853,7 @@ VP_Lx(paddr_t pa)
 void
 smmu_set_l1(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *l1_va)
 {
+	struct smmu_softc *sc = dom->sd_sc;
 	uint64_t pg_entry;
 	paddr_t l1_pa;
 	int idx0;
@@ -867,12 +869,17 @@ smmu_set_l1(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *l1_va)
 	idx0 = VP_IDX0(va);
 	dom->sd_vp.l0->vp[idx0] = l1_va;
 	dom->sd_vp.l0->l0[idx0] = pg_entry;
+	membar_producer(); /* XXX bus dma sync? */
+	if (!sc->sc_coherent)
+		cpu_dcache_wb_range((vaddr_t)&dom->sd_vp.l0->l0[idx0],
+		    sizeof(dom->sd_vp.l0->l0[idx0]));
 }
 
 void
 smmu_set_l2(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *vp1,
     struct smmuvp2 *l2_va)
 {
+	struct smmu_softc *sc = dom->sd_sc;
 	uint64_t pg_entry;
 	paddr_t l2_pa;
 	int idx1;
@@ -888,12 +895,17 @@ smmu_set_l2(struct smmu_domain *dom, uint64_t va, struct smmuvp1 *vp1,
 	idx1 = VP_IDX1(va);
 	vp1->vp[idx1] = l2_va;
 	vp1->l1[idx1] = pg_entry;
+	membar_producer(); /* XXX bus dma sync? */
+	if (!sc->sc_coherent)
+		cpu_dcache_wb_range((vaddr_t)&vp1->l1[idx1],
+		    sizeof(vp1->l1[idx1]));
 }
 
 void
 smmu_set_l3(struct smmu_domain *dom, uint64_t va, struct smmuvp2 *vp2,
     struct smmuvp3 *l3_va)
 {
+	struct smmu_softc *sc = dom->sd_sc;
 	uint64_t pg_entry;
 	paddr_t l3_pa;
 	int idx2;
@@ -909,6 +921,10 @@ smmu_set_l3(struct smmu_domain *dom, uint64_t va, struct smmuvp2 *vp2,
 	idx2 = VP_IDX2(va);
 	vp2->vp[idx2] = l3_va;
 	vp2->l2[idx2] = pg_entry;
+	membar_producer(); /* XXX bus dma sync? */
+	if (!sc->sc_coherent)
+		cpu_dcache_wb_range((vaddr_t)&vp2->l2[idx2],
+		    sizeof(vp2->l2[idx2]));
 }
 
 int
@@ -1042,6 +1058,7 @@ smmu_fill_pte(struct smmu_domain *dom, vaddr_t va, paddr_t pa,
 void
 smmu_pte_update(struct smmu_domain *dom, uint64_t pted, uint64_t *pl3)
 {
+	struct smmu_softc *sc = dom->sd_sc;
 	uint64_t pte, access_bits;
 	uint64_t attr = 0;
 
@@ -1104,6 +1121,9 @@ smmu_pte_update(struct smmu_domain *dom, uint64_t pted, uint64_t *pl3)
 
 	pte = (pted & PTE_RPGN) | attr | access_bits | L3_P;
 	*pl3 = pte;
+	membar_producer(); /* XXX bus dma sync? */
+	if (!sc->sc_coherent)
+		cpu_dcache_wb_range((vaddr_t)pl3, sizeof(*pl3));
 }
 
 void
@@ -1111,6 +1131,7 @@ smmu_pte_remove(struct smmu_domain *dom, vaddr_t va)
 {
 	/* put entry into table */
 	/* need to deal with ref/change here */
+	struct smmu_softc *sc = dom->sd_sc;
 	struct smmuvp1 *vp1;
 	struct smmuvp2 *vp2;
 	struct smmuvp3 *vp3;
@@ -1134,6 +1155,10 @@ smmu_pte_remove(struct smmu_domain *dom, vaddr_t va)
 		    va, dom);
 	}
 	vp3->l3[VP_IDX3(va)] = 0;
+	membar_producer(); /* XXX bus dma sync? */
+	if (!sc->sc_coherent)
+		cpu_dcache_wb_range((vaddr_t)&vp3->l3[VP_IDX3(va)],
+		    sizeof(vp3->l3[VP_IDX3(va)]));
 }
 
 int
@@ -1170,7 +1195,6 @@ smmu_map(struct smmu_domain *dom, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	/* Insert updated information */
 	smmu_pte_update(dom, pted, pl3);
-	membar_producer(); /* XXX bus dma sync? */
 }
 
 void
@@ -1185,7 +1209,6 @@ smmu_unmap(struct smmu_domain *dom, vaddr_t va)
 
 	/* Remove mapping from pagetable */
 	smmu_pte_remove(dom, va);
-	membar_producer(); /* XXX bus dma sync? */
 
 	/* Invalidate IOTLB */
 	if (dom->sd_stage == 1)
