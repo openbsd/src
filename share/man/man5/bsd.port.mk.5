@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.568 2022/09/10 05:50:40 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.569 2022/09/11 06:41:36 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 10 2022 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -3477,297 +3477,6 @@ GNU-configure would always try to use bison otherwise, which leads to
 unreproducible builds.
 Set to bison if needed.
 .El
-.Sh DIAGNOSTICS
-Note that some of these messages are actually emitted by some other external
-commands, but grouped here for convenience: easier to look for in
-.Xr dpb 1 Ns 's
-logs.
-.Bl -diag
-.It "/bin/sh: cd .../pkg - No such file or directory"
-Emitted during
-.Cm generate-readmes .
-.Pa ${PKGDIR}
-must point to an existing directory, so that
-.Nm
-can be certain there are no
-.Pa MESSAGEs
-or
-other files pertinent to the package.
-.It "Discovered old directory in ..."
-This message comes from
-.Xr update-plist 1 .
-A directory was found in the packing-list file mentioned in the diagnostic.
-That directory line used to be needed but is no longer,
-because it's now accounted for through dependencies.
-Indicates the old directory has been removed.
-.It "Error: change in plist between ..."
-Error message comes from
-.Xr register-plist 1 .
-.It "Error: duplicate item in packing-list"
-Error message comes from
-.Xr pkg_create 1 ,
-and will result from incorrect packing-lists, such as including several
-fragments with the same file, or having incorrect
-.Ev PKG_ARGS-sub .
-.It "Error: Libraries in packing-lists...and libraries from installed packages don't match"
-The ports tree and the installed packages are out-of-sync.
-Mixing library information from both sources might produce packages that can't
-be installed elsewhere.
-Cleanest fix is to update the out-of-date source (e.g., update the ports tree,
-or build and install new packages).
-Developers may use
-.Ev PKG_CREATE_NO_CHECKS
-instead, assuming they understand the implications.
-See
-.Cm print-package-args Pq Cm wantlib-args
-for details.
-.It "Fatal: can't flavor a SUBDIR"
-A dependency mentions top_subdir,flavor.
-Flavor would then be ignored, as it is only applied to individual ports.
-.It "Fatal: can't subpackage a SUBDIR"
-A dependency mentions top_subdir,-sub.
-Subpackage would then be ignored, as it is only applied to individual ports.
-.It "Fatal: flavor should never start with a digit"
-This would utterly confuse
-.Xr pkg_add 1 .
-See
-.Xr packages-specs 7 .
-.It "Fatal: inclusion of <file> from <file>"
-.Pa bsd.port.mk
-or
-.Pa bsd.port.subdir.mk
-has been included from a
-.Ev MODULE
-or from
-.Pa Makefile.inc ,
-resulting in a double inclusion.
-This would lead to weird results, such as
-.Ev PKG_ARGS
-being defined twice.
-.It "Fatal: SUBPACKAGES should always begin with -: <offending list>"
-That is the only way to differentiate between
-.Ev FLAVOR
-and
-.Ev SUBPACKAGE
-in
-.Xr pkgpath 7
-specifications.
-.It "Fatal: building ports requires correctly installed X11"
-All file sets of the base OS, including xenocara, must be installed
-before building ports.
-.It "Fatal: /usr/local/lib/X11/app-defaults should exist and be a symlink"
-/usr/local/lib/X11/app-defaults is distributed as a symlink in the
-xshare*.tgz file set.
-If xenocara was not fully installed before packages were added, it may
-have been created as a directory instead.
-.It "Fatal: the licensing info for <pkgname> is incomplete..."
-Every port must have explicit defines of all
-.Ev PERMIT_*
-values.
-.It "Fatal: Use 'env FLAVOR=flavor make' instead"
-Arguments specified after
-.Xr make 1
-are hardcoded for all recursive sub-makes, and very difficult to override.
-Thus,
-.Ev FLAVOR
-must be specified in the environment instead.
-.It "Fatal: Use 'env SUBPACKAGE=-sub make' instead"
-Arguments specified after
-.Xr make 1
-are hardcoded for all recursive sub-makes, and very difficult to override.
-Thus,
-.Ev SUBPACKAGE
-must be specified in the environment instead.
-.It "ldconfig: <dir>: No such file or directory"
-Usually produced by
-.Xr pkg_add 1
-running
-.Xr ldconfig 8 .
-Some tools such as GNU libtool will add directories living under
-.Pa ${WRKINST}
-to the shared library path during the
-.Cm fake
-stage.
-Of course,
-.Xr ldconfig 8
-will later complain after the directory no longer exists.
-The bogus tool should be fixed to conform to
-.Ox
-usage.
-.It LIB_DEPENDS <spec> not needed for <FULLPKGPATH>
-There doesn't seem to be any WANTLIB to match the given LIB_DEPENDS.
-Thus, the LIB_DEPENDS won't turn into a @depends line in the created package.
-This is often because of confusion between LIB_DEPENDS and RUN_DEPENDS:
-RUN_DEPENDS is needed for dlopen'd libraries.
-.Pp
-Might be intentional sometimes, if some compile flavors create static binaries,
-for instance.
-Also, will happen for multi-packages, where one sets LIB_DEPENDS to have
-a given build dependency (and corresponding WANTLIB for a given SUBPACKAGE).
-.Pp
-See
-.Cm print-package-args Pq Cm lib-depends-args
-for details.
-.It "Warning: FULLPKGNAME-sub defined but not FULLPKGPATH-sub"
-.Ev FULLPKGNAME-sub
-has been explicitly defined by the port, instead of relying on the default,
-but no value of
-.Ev FULLPKGPATH-sub
-has been given.
-This is often an error.
-.It "Warning: no debug-info in ..."
-Port uses
-.Ev DEBUG_PACKAGES
-so the
-.Xr build-debug-info 1
-script expects debug information on all binaries and libraries.
-Most probably, the build machinery for that specific port omitted -g
-somewhere, or it runs strips during fake anyway.
-It can also occur if
-.Ev DEBUG_PACKAGES
-includes subpackages with no files holding debug info.
-.It "Warning: symlink(s) point to non existent file."
-Warning message comes from
-.Xr pkg_create 1 .
-The symlink resides in the fake area, under
-.Pa ${WRKINST} .
-This is only a warning because the symlink may point to a run-time dependency,
-which obviously won't exist under
-.Pa ${WRKINST}
-at the time
-.Ql make package
-is run.
-.It "Warning: @option no-default-conflict with no @conflict"
-Warning message comes from
-.Xr pkg_create 1 .
-Most packages that waive "default-conflict" will have explicit conflict markers
-instead.
-Otherwise, the package will only conflict with the exact same version, with
-some possible
-.Ev REVISION
-bumps.
-Any other version or
-.Ev FLAVOR
-won't conflict.
-This is generally an error, apart from very few ports like
-.Pa devel/autoconf/* .
-.It "groff produced empty result for <manpage>..."
-Warning message comes from
-.Xr pkg_create 1 .
-Manpages are automatically formatted with
-.Xr groff 1
-if
-.Ev USE_GROFF
-is set.
-The above message denotes an actual problem while formatting the page,
-which should be addressed.
-In the meantime,
-.Xr pkg_create 1
-still produces a package, but leaves the manpage unformatted, in the hope
-that something will be able to make sense of it.
-.El
-.Sh FILES
-.Bl -tag -width Ds
-.It Pa ../Makefile.inc
-Common Makefile fragment for a set of ports, included automatically.
-.It Pa /cdrom/distfiles
-Default path to a CD-ROM (or other media) full of distribution files.
-.It Pa ${PORTSDIR}/distfiles
-Default setup of ${DISTDIR}.
-.It Pa ${DISTDIR}
-Cache of all distribution files.
-.It Pa distinfo
-Checksum file.
-Holds the output of
-.Xr cksum 1 ,
-using
-.Xr sha256 1
-for the port's ${DISTFILES} and ${PATCHFILES},
-as well as the sizes of these files.
-.It Pa ${DISTDIR}/${CHECKSUMFILES}
-Cache of normal distribution files for a given port.
-.It Pa ${DISTDIR}/${MAKESUMFILES}
-Cache of all distribution files for a given port.
-.It Pa ${PORTSDIR}/infrastructure/mk/*.mk
-Actual location of the
-.Xr make 1
-glue for the ports tree.
-.Xr make 1
-looks for
-.Pa bsd.port.mk
-.Po
-and
-.Pa bsd.port.subdir.mk
-.Pc
-under
-.Pa /usr/share/mk/bsd.port.mk ,
-but that file is just a stub that redirects to the real location.
-.It Pa ${PKGDIR}/DESCR
-Description for the port.
-Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
-(see SUBST_VARS).
-Multi-package ports will use DESCR${SUBPACKAGE}.
-.It Pa ${PKGDIR}/README
-.Ox
-specific documentation for a port, that will be installed as
-.Pa ${LOCALBASE}/share/doc/pkg-readmes/${PKGSTEM}
-at the end of
-.Cm fake .
-Variables from
-.Ev SUBST_VARS
-will be expanded.
-Multi-package ports will use
-.Pa README${SUBPACKAGE} .
-.It Pa ${PKGDIR}/<foo>.login
-login.conf.d file for class <foo>.
-Will be installed as
-.Ar ${PREFIX}/share/examples/login.conf.d/foo
-at the end of
-.Cm fake .
-When a port provides a daemon started by
-.Xr rc.d 8
-requiring non-default
-.Xr login.conf 5
-attributes, a sample file should be provided
-and used as a template by adding
-.Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
-to the packing list.
-.It Pa ${PKGDIR}/<foo>.rc
-Startup script for <foo>.
-Will be installed as
-.Ar ${RCDIR}/<foo>
-at the end of
-.Cm fake .
-Variables from
-.Ev SUBST_VARS
-will be expanded.
-.It Pa ${PORTSDIR}/plist
-Default setup of ${PLIST_REPOSITORY}.
-.It Pa ${PORTSDIR}/packages
-Default setup of ${PACKAGE_REPOSITORY}.
-.It Pa ${PACKAGE_REPOSITORY}/no-arch
-Location of arch-independent packages.
-.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all
-Location of all built packages.
-.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache
-Location of packages retrieved through the network.
-.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cksums
-Location of checksums, see
-.Ev CHECKSUM_PACKAGES .
-.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom
-Location of packages suitable for the CD.
-.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp
-Location of packages suitable for FTP.
-.It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
-Default setup of ${BULK_COOKIES_DIR}.
-.It Pa ${PORTSDIR}/update/${MACHINE_ARCH}
-Default setup of ${UPDATE_COOKIES_DIR}.
-.It Pa ${PORTSDIR}/mystuff
-Extra directory used to store local ports before committing them.
-All depend targets will normally look there after the normal lookup fails.
-See
-.Ev PORTSDIR_PATH .
-.El
 .Sh THE FAKE FRAMEWORK
 The
 .Cm fake
@@ -4344,6 +4053,297 @@ See also
 and
 .Ev EXTRACT_SUFX .
 .El
+.Sh FILES
+.Bl -tag -width Ds
+.It Pa ../Makefile.inc
+Common Makefile fragment for a set of ports, included automatically.
+.It Pa /cdrom/distfiles
+Default path to a CD-ROM (or other media) full of distribution files.
+.It Pa ${PORTSDIR}/distfiles
+Default setup of ${DISTDIR}.
+.It Pa ${DISTDIR}
+Cache of all distribution files.
+.It Pa distinfo
+Checksum file.
+Holds the output of
+.Xr cksum 1 ,
+using
+.Xr sha256 1
+for the port's ${DISTFILES} and ${PATCHFILES},
+as well as the sizes of these files.
+.It Pa ${DISTDIR}/${CHECKSUMFILES}
+Cache of normal distribution files for a given port.
+.It Pa ${DISTDIR}/${MAKESUMFILES}
+Cache of all distribution files for a given port.
+.It Pa ${PORTSDIR}/infrastructure/mk/*.mk
+Actual location of the
+.Xr make 1
+glue for the ports tree.
+.Xr make 1
+looks for
+.Pa bsd.port.mk
+.Po
+and
+.Pa bsd.port.subdir.mk
+.Pc
+under
+.Pa /usr/share/mk/bsd.port.mk ,
+but that file is just a stub that redirects to the real location.
+.It Pa ${PKGDIR}/DESCR
+Description for the port.
+Variables such as ${HOMEPAGE} and ${MAINTAINER} will be expanded
+(see SUBST_VARS).
+Multi-package ports will use DESCR${SUBPACKAGE}.
+.It Pa ${PKGDIR}/README
+.Ox
+specific documentation for a port, that will be installed as
+.Pa ${LOCALBASE}/share/doc/pkg-readmes/${PKGSTEM}
+at the end of
+.Cm fake .
+Variables from
+.Ev SUBST_VARS
+will be expanded.
+Multi-package ports will use
+.Pa README${SUBPACKAGE} .
+.It Pa ${PKGDIR}/<foo>.login
+login.conf.d file for class <foo>.
+Will be installed as
+.Ar ${PREFIX}/share/examples/login.conf.d/foo
+at the end of
+.Cm fake .
+When a port provides a daemon started by
+.Xr rc.d 8
+requiring non-default
+.Xr login.conf 5
+attributes, a sample file should be provided
+and used as a template by adding
+.Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
+to the packing list.
+.It Pa ${PKGDIR}/<foo>.rc
+Startup script for <foo>.
+Will be installed as
+.Ar ${RCDIR}/<foo>
+at the end of
+.Cm fake .
+Variables from
+.Ev SUBST_VARS
+will be expanded.
+.It Pa ${PORTSDIR}/plist
+Default setup of ${PLIST_REPOSITORY}.
+.It Pa ${PORTSDIR}/packages
+Default setup of ${PACKAGE_REPOSITORY}.
+.It Pa ${PACKAGE_REPOSITORY}/no-arch
+Location of arch-independent packages.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all
+Location of all built packages.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cache
+Location of packages retrieved through the network.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cksums
+Location of checksums, see
+.Ev CHECKSUM_PACKAGES .
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/cdrom
+Location of packages suitable for the CD.
+.It Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp
+Location of packages suitable for FTP.
+.It Pa ${PORTSDIR}/bulk/${MACHINE_ARCH}
+Default setup of ${BULK_COOKIES_DIR}.
+.It Pa ${PORTSDIR}/update/${MACHINE_ARCH}
+Default setup of ${UPDATE_COOKIES_DIR}.
+.It Pa ${PORTSDIR}/mystuff
+Extra directory used to store local ports before committing them.
+All depend targets will normally look there after the normal lookup fails.
+See
+.Ev PORTSDIR_PATH .
+.El
+.Sh DIAGNOSTICS
+Note that some of these messages are actually emitted by some other external
+commands, but grouped here for convenience: easier to look for in
+.Xr dpb 1 Ns 's
+logs.
+.Bl -diag
+.It "/bin/sh: cd .../pkg - No such file or directory"
+Emitted during
+.Cm generate-readmes .
+.Pa ${PKGDIR}
+must point to an existing directory, so that
+.Nm
+can be certain there are no
+.Pa MESSAGEs
+or
+other files pertinent to the package.
+.It "Discovered old directory in ..."
+This message comes from
+.Xr update-plist 1 .
+A directory was found in the packing-list file mentioned in the diagnostic.
+That directory line used to be needed but is no longer,
+because it's now accounted for through dependencies.
+Indicates the old directory has been removed.
+.It "Error: change in plist between ..."
+Error message comes from
+.Xr register-plist 1 .
+.It "Error: duplicate item in packing-list"
+Error message comes from
+.Xr pkg_create 1 ,
+and will result from incorrect packing-lists, such as including several
+fragments with the same file, or having incorrect
+.Ev PKG_ARGS-sub .
+.It "Error: Libraries in packing-lists...and libraries from installed packages don't match"
+The ports tree and the installed packages are out-of-sync.
+Mixing library information from both sources might produce packages that can't
+be installed elsewhere.
+Cleanest fix is to update the out-of-date source (e.g., update the ports tree,
+or build and install new packages).
+Developers may use
+.Ev PKG_CREATE_NO_CHECKS
+instead, assuming they understand the implications.
+See
+.Cm print-package-args Pq Cm wantlib-args
+for details.
+.It "Fatal: can't flavor a SUBDIR"
+A dependency mentions top_subdir,flavor.
+Flavor would then be ignored, as it is only applied to individual ports.
+.It "Fatal: can't subpackage a SUBDIR"
+A dependency mentions top_subdir,-sub.
+Subpackage would then be ignored, as it is only applied to individual ports.
+.It "Fatal: flavor should never start with a digit"
+This would utterly confuse
+.Xr pkg_add 1 .
+See
+.Xr packages-specs 7 .
+.It "Fatal: inclusion of <file> from <file>"
+.Pa bsd.port.mk
+or
+.Pa bsd.port.subdir.mk
+has been included from a
+.Ev MODULE
+or from
+.Pa Makefile.inc ,
+resulting in a double inclusion.
+This would lead to weird results, such as
+.Ev PKG_ARGS
+being defined twice.
+.It "Fatal: SUBPACKAGES should always begin with -: <offending list>"
+That is the only way to differentiate between
+.Ev FLAVOR
+and
+.Ev SUBPACKAGE
+in
+.Xr pkgpath 7
+specifications.
+.It "Fatal: building ports requires correctly installed X11"
+All file sets of the base OS, including xenocara, must be installed
+before building ports.
+.It "Fatal: /usr/local/lib/X11/app-defaults should exist and be a symlink"
+/usr/local/lib/X11/app-defaults is distributed as a symlink in the
+xshare*.tgz file set.
+If xenocara was not fully installed before packages were added, it may
+have been created as a directory instead.
+.It "Fatal: the licensing info for <pkgname> is incomplete..."
+Every port must have explicit defines of all
+.Ev PERMIT_*
+values.
+.It "Fatal: Use 'env FLAVOR=flavor make' instead"
+Arguments specified after
+.Xr make 1
+are hardcoded for all recursive sub-makes, and very difficult to override.
+Thus,
+.Ev FLAVOR
+must be specified in the environment instead.
+.It "Fatal: Use 'env SUBPACKAGE=-sub make' instead"
+Arguments specified after
+.Xr make 1
+are hardcoded for all recursive sub-makes, and very difficult to override.
+Thus,
+.Ev SUBPACKAGE
+must be specified in the environment instead.
+.It "ldconfig: <dir>: No such file or directory"
+Usually produced by
+.Xr pkg_add 1
+running
+.Xr ldconfig 8 .
+Some tools such as GNU libtool will add directories living under
+.Pa ${WRKINST}
+to the shared library path during the
+.Cm fake
+stage.
+Of course,
+.Xr ldconfig 8
+will later complain after the directory no longer exists.
+The bogus tool should be fixed to conform to
+.Ox
+usage.
+.It LIB_DEPENDS <spec> not needed for <FULLPKGPATH>
+There doesn't seem to be any WANTLIB to match the given LIB_DEPENDS.
+Thus, the LIB_DEPENDS won't turn into a @depends line in the created package.
+This is often because of confusion between LIB_DEPENDS and RUN_DEPENDS:
+RUN_DEPENDS is needed for dlopen'd libraries.
+.Pp
+Might be intentional sometimes, if some compile flavors create static binaries,
+for instance.
+Also, will happen for multi-packages, where one sets LIB_DEPENDS to have
+a given build dependency (and corresponding WANTLIB for a given SUBPACKAGE).
+.Pp
+See
+.Cm print-package-args Pq Cm lib-depends-args
+for details.
+.It "Warning: FULLPKGNAME-sub defined but not FULLPKGPATH-sub"
+.Ev FULLPKGNAME-sub
+has been explicitly defined by the port, instead of relying on the default,
+but no value of
+.Ev FULLPKGPATH-sub
+has been given.
+This is often an error.
+.It "Warning: no debug-info in ..."
+Port uses
+.Ev DEBUG_PACKAGES
+so the
+.Xr build-debug-info 1
+script expects debug information on all binaries and libraries.
+Most probably, the build machinery for that specific port omitted -g
+somewhere, or it runs strips during fake anyway.
+It can also occur if
+.Ev DEBUG_PACKAGES
+includes subpackages with no files holding debug info.
+.It "Warning: symlink(s) point to non existent file."
+Warning message comes from
+.Xr pkg_create 1 .
+The symlink resides in the fake area, under
+.Pa ${WRKINST} .
+This is only a warning because the symlink may point to a run-time dependency,
+which obviously won't exist under
+.Pa ${WRKINST}
+at the time
+.Ql make package
+is run.
+.It "Warning: @option no-default-conflict with no @conflict"
+Warning message comes from
+.Xr pkg_create 1 .
+Most packages that waive "default-conflict" will have explicit conflict markers
+instead.
+Otherwise, the package will only conflict with the exact same version, with
+some possible
+.Ev REVISION
+bumps.
+Any other version or
+.Ev FLAVOR
+won't conflict.
+This is generally an error, apart from very few ports like
+.Pa devel/autoconf/* .
+.It "groff produced empty result for <manpage>..."
+Warning message comes from
+.Xr pkg_create 1 .
+Manpages are automatically formatted with
+.Xr groff 1
+if
+.Ev USE_GROFF
+is set.
+The above message denotes an actual problem while formatting the page,
+which should be addressed.
+In the meantime,
+.Xr pkg_create 1
+still produces a package, but leaves the manpage unformatted, in the hope
+that something will be able to make sense of it.
+.El
 .Sh SEE ALSO
 .Xr clean-old-distfiles 1 ,
 .Xr ftp 1 ,
@@ -4380,7 +4380,7 @@ Most recent additions do not come from another
 .Bx .
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
-.Sh BUGS AND LIMITATIONS
+.Sh BUGS
 .Ev LOCALBASE ,
 .Ev X11BASE ,
 .Ev BASESYSCONFDIR ,
