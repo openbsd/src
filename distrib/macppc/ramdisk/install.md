@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.75 2022/08/31 19:38:42 kn Exp $
+#	$OpenBSD: install.md,v 1.76 2022/09/11 04:38:28 gkoehler Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -106,8 +106,7 @@ __EOT
 		esac
 	done
 
-	disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-	newfs -t msdos ${_disk}i
+	installboot -p $_disk
 }
 
 md_prep_HFS() {

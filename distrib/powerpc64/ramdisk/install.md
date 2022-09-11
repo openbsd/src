@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.9 2022/02/10 15:12:57 krw Exp $
+#	$OpenBSD: install.md,v 1.10 2022/09/11 04:38:28 gkoehler Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #
 
 NCPU=$(sysctl -n hw.ncpufound)
-NEWFSARGS_msdos="-F 16 -L boot"
 
 md_installboot() {
 	if ! installboot -r /mnt ${1}; then
@@ -50,7 +49,6 @@ md_prep_fdisk() {
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
 	local bootfstype="msdos"
-	local newfs_args=${NEWFSARGS_msdos}
 
 	while :; do
 		_d=whole
@@ -65,8 +63,7 @@ md_prep_fdisk() {
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
+			installboot -p $_disk
 			return ;;
 		[eE]*)
 			# Manually configure the MBR.
