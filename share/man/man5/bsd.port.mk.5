@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.570 2022/09/11 08:51:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.571 2022/09/11 11:56:28 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2539,8 +2539,8 @@ Comma-separated list of architectures on which this package may install.
 Defaults to ${MACHINE_ARCH},${ARCH}.
 .Pp
 For instance:
-.Li Ev MACHINE_ARCH Ns = Ns Ar powerpc ,
-.Li Ev ARCH Ns = Ns Ar macppc .
+.Ev MACHINE_ARCH Ns = Ns Ar powerpc ,
+.Ev ARCH Ns = Ns Ar macppc .
 .Pp
 Most (if not all packages) will install correctly according to
 .Ev MACHINE_ARCH .
