@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmm.4,v 1.8 2021/11/26 03:34:14 jsg Exp $
+.\"	$OpenBSD: vmm.4,v 1.9 2022/09/11 11:41:04 jsg Exp $
 .\"
 .\"Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: September 11 2022 $
 .Dt VMM 4 amd64
 .Os
 .Sh NAME
@@ -97,7 +97,7 @@ Signal a pending interrupt for a VCPU.
 Read registers of a VCPU.
 .It Dv VMM_IOC_WRITEREGS Fa "struct vm_rwregs_params *"
 Write register values of a VCPU.
-.It Dv VMM_IOC_READVMPARAMS Fa "struct vm_revmparams_params *"
+.It Dv VMM_IOC_READVMPARAMS Fa "struct vm_rwvmparams_params *"
 Read paravirtualized hardware parameters (such as
 .Xr pvclock 4
 version) for a VM.
