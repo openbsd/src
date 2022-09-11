@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.98 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.99 2022/09/11 14:33:07 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -148,12 +148,12 @@ tls13_client_hello_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_client_hello_sent(struct tls13_ctx *ctx)
 {
-	tls13_record_layer_allow_ccs(ctx->rl, 1);
-
 	tls1_transcript_freeze(ctx->ssl);
 
-	if (ctx->middlebox_compat)
+	if (ctx->middlebox_compat) {
+		tls13_record_layer_allow_ccs(ctx->rl, 1);
 		ctx->send_dummy_ccs = 1;
+	}
 
 	return 1;
 }
