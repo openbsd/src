@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.176 2022/09/02 13:20:46 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.177 2022/09/11 10:37:54 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -365,3 +365,6 @@ pseudo-device	trunk
 pseudo-device	bpfilter 1
 pseudo-device	rd 1
 pseudo-device	bio 1
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
