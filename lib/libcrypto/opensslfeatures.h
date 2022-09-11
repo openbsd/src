@@ -3,6 +3,7 @@
  * are enabled, rather than not being able to tell when things are
  * enabled (or possibly not yet not implemented, or removed!).
  */
+#define LIBRESSL_HAS_QUIC
 #define LIBRESSL_HAS_TLS1_3
 #define LIBRESSL_HAS_DTLS1_2
 
