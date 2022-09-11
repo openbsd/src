@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.227 2022/08/21 19:42:15 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.228 2022/09/11 17:38:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -836,11 +836,9 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 #define SSL_ERROR_ZERO_RETURN			6
 #define SSL_ERROR_WANT_CONNECT			7
 #define SSL_ERROR_WANT_ACCEPT			8
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #define SSL_ERROR_WANT_ASYNC			9
 #define SSL_ERROR_WANT_ASYNC_JOB		10
 #define SSL_ERROR_WANT_CLIENT_HELLO_CB		11
-#endif
 
 #define SSL_CTRL_NEED_TMP_RSA			1
 #define SSL_CTRL_SET_TMP_RSA			2
