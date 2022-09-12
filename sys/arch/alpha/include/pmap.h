@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.41 2022/09/10 20:35:28 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.42 2022/09/12 19:35:20 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -133,18 +133,9 @@ typedef struct pv_entry {
 	pt_entry_t	*pv_pte;	/* PTE that maps the VA */
 } *pv_entry_t;
 
-/* pvh_attrs */
-#define	PGA_MODIFIED		0x01		/* modified */
-#define	PGA_REFERENCED		0x02		/* referenced */
-
-/* pvh_usage */
-#define	PGU_NORMAL		0		/* free or normal use */
-#define	PGU_PVENT		1		/* PV entries */
-#define	PGU_L1PT		2		/* level 1 page table */
-#define	PGU_L2PT		3		/* level 2 page table */
-#define	PGU_L3PT		4		/* level 3 page table */
-
-#define	PGU_ISPTPAGE(pgu)	((pgu) >= PGU_L1PT)
+/* pg_flags extra flags */
+#define	PG_PMAP_MOD		PG_PMAP0	/* modified */
+#define	PG_PMAP_REF		PG_PMAP1	/* referenced */
 
 #if defined(NEW_SCC_DRIVER)
 #if defined(DEC_KN8AE)
@@ -306,14 +297,12 @@ do {									\
 struct vm_page_md {
 	struct mutex pvh_mtx;
 	struct pv_entry *pvh_list;	/* pv entry list */
-	int pvh_attrs;			/* page attributes */
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	mtx_init(&(pg)->mdpage.pvh_mtx, IPL_VM);			\
 	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_attrs = 0;					\
 } while (0)
 
 #endif /* _PMAP_MACHINE_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.87 2021/03/11 11:16:54 jsg Exp $ */
+/* $OpenBSD: pmap.c,v 1.88 2022/09/12 19:35:20 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -454,6 +454,13 @@ boolean_t pmap_physpage_alloc(int, paddr_t *);
 void	pmap_physpage_free(paddr_t);
 int	pmap_physpage_addref(void *);
 int	pmap_physpage_delref(void *);
+
+/* pmap_physpage_alloc() page usage */
+#define	PGU_NORMAL		0		/* free or normal use */
+#define	PGU_PVENT		1		/* PV entries */
+#define	PGU_L1PT		2		/* level 1 page table */
+#define	PGU_L2PT		3		/* level 2 page table */
+#define	PGU_L3PT		4		/* level 3 page table */
 
 /*
  * PMAP_ISACTIVE{,_TEST}:
@@ -1752,17 +1759,18 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			panic("pmap_enter: access type exceeds prot");
 #endif
 		if (flags & PROT_WRITE)
-			pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+			atomic_setbits_int(&pg->pg_flags,
+			    PG_PMAP_REF | PG_PMAP_MOD);
 		else if (flags & PROT_MASK)
-			pg->mdpage.pvh_attrs |= PGA_REFERENCED;
-		attrs = pg->mdpage.pvh_attrs;
+			atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 
 		/*
 		 * Set up referenced/modified emulation for new mapping.
 		 */
-		if ((attrs & PGA_REFERENCED) == 0)
+		attrs = pg->pg_flags;
+		if ((attrs & PG_PMAP_REF) == 0)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
-		else if ((attrs & PGA_MODIFIED) == 0)
+		else if ((attrs & PG_PMAP_MOD) == 0)
 			npte |= PG_FOW;
 
 		/*
@@ -2246,10 +2254,10 @@ pmap_clear_modify(struct vm_page *pg)
 #endif
 
 	mtx_enter(&pg->mdpage.pvh_mtx);
-	if (pg->mdpage.pvh_attrs & PGA_MODIFIED) {
+	if (pg->pg_flags & PG_PMAP_MOD) {
 		rv = TRUE;
 		pmap_changebit(pg, PG_FOW, ~0, cpu_id);
-		pg->mdpage.pvh_attrs &= ~PGA_MODIFIED;
+		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_MOD);
 	}
 	mtx_leave(&pg->mdpage.pvh_mtx);
 
@@ -2273,10 +2281,10 @@ pmap_clear_reference(struct vm_page *pg)
 #endif
 
 	mtx_enter(&pg->mdpage.pvh_mtx);
-	if (pg->mdpage.pvh_attrs & PGA_REFERENCED) {
+	if (pg->pg_flags & PG_PMAP_REF) {
 		rv = TRUE;
 		pmap_changebit(pg, PG_FOR | PG_FOW | PG_FOE, ~0, cpu_id);
-		pg->mdpage.pvh_attrs &= ~PGA_REFERENCED;
+		atomic_clearbits_int(&pg->pg_flags, PG_PMAP_REF);
 	}
 	mtx_leave(&pg->mdpage.pvh_mtx);
 
@@ -2294,7 +2302,7 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	boolean_t rv;
 
-	rv = ((pg->mdpage.pvh_attrs & PGA_REFERENCED) != 0);
+	rv = ((pg->pg_flags & PG_PMAP_REF) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_referenced(%p) -> %c\n", pg, "FT"[rv]);
@@ -2314,7 +2322,7 @@ pmap_is_modified(struct vm_page *pg)
 {
 	boolean_t rv;
 
-	rv = ((pg->mdpage.pvh_attrs & PGA_MODIFIED) != 0);
+	rv = ((pg->pg_flags & PG_PMAP_MOD) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
@@ -2670,10 +2678,10 @@ pmap_emulate_reference(struct proc *p, vaddr_t v, int user, int type)
 
 	mtx_enter(&pg->mdpage.pvh_mtx);
 	if (type == ALPHA_MMCSR_FOW) {
-		pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF | PG_PMAP_MOD);
 		faultoff = PG_FOR | PG_FOW;
 	} else {
-		pg->mdpage.pvh_attrs |= PGA_REFERENCED;
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 		faultoff = PG_FOR;
 		if (exec) {
 			faultoff |= PG_FOE;
@@ -2699,7 +2707,8 @@ pmap_pv_dump(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->mdpage.pvh_attrs);
+	printf("pa 0x%lx (attrs = 0x%x):\n",
+	    pa, pg->pg_flags & (PG_PMAP_REF | PG_PMAP_MOD));
 	mtx_enter(&pg->mdpage.pvh_mtx);
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next)
 		printf("     pmap %p, va 0x%lx\n",
