@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.416 2022/09/10 13:18:31 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.417 2022/09/12 17:42:31 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -857,35 +857,59 @@ acpi_pciroots_attach(struct device *dev, void *aux, cfprint_t pr)
 
 struct acpi_gpio_event {
 	struct aml_node *node;
+	uint16_t tflags;
 	uint16_t pin;
 };
 
 void
 acpi_gpio_event_task(void *arg0, int arg1)
 {
-	struct aml_node *node = arg0;
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_gpio_event *ev = arg0;
+	struct acpi_gpio *gpio = ev->node->gpio;
 	struct aml_value evt;
 	uint16_t pin = arg1;
 	char name[5];
 
 	if (pin < 256) {
-		snprintf(name, sizeof(name), "_E%.2X", pin);
-		if (aml_evalname(acpi_softc, node, name, 0, NULL, NULL) == 0)
-			return;
+		if ((ev->tflags & LR_GPIO_MODE) == LR_GPIO_LEVEL) {
+			snprintf(name, sizeof(name), "_L%.2X", pin);
+			if (aml_evalname(sc, ev->node, name, 0, NULL, NULL)) {
+				if (gpio->intr_enable)
+					gpio->intr_enable(gpio->cookie, pin);
+				return;
+			}
+		} else {
+			snprintf(name, sizeof(name), "_E%.2X", pin);
+			if (aml_evalname(sc, ev->node, name, 0, NULL, NULL)) {
+				if (gpio->intr_enable)
+					gpio->intr_enable(gpio->cookie, pin);
+				return;
+			}
+		}
 	}
 
 	memset(&evt, 0, sizeof(evt));
 	evt.v_integer = pin;
 	evt.type = AML_OBJTYPE_INTEGER;
-	aml_evalname(acpi_softc, node, "_EVT", 1, &evt, NULL);
+	aml_evalname(sc, ev->node, "_EVT", 1, &evt, NULL);
+	if ((ev->tflags & LR_GPIO_MODE) == LR_GPIO_LEVEL) {
+		if (gpio->intr_enable)
+			gpio->intr_enable(gpio->cookie, pin);
+	}
 }
 
 int
 acpi_gpio_event(void *arg)
 {
 	struct acpi_gpio_event *ev = arg;
+	struct acpi_gpio *gpio = ev->node->gpio;
 
-	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev->node, ev->pin);
+	if ((ev->tflags & LR_GPIO_MODE) == LR_GPIO_LEVEL) {
+		if(gpio->intr_disable)
+			gpio->intr_disable(gpio->cookie, ev->pin);
+	}
+	acpi_addtask(acpi_softc, acpi_gpio_event_task, ev, ev->pin);
 	acpi_wakeup(acpi_softc);
 	return 1;
 }
@@ -909,6 +933,7 @@ acpi_gpio_parse_events(int crsidx, union acpi_resource *crs, void *arg)
 
 			ev = malloc(sizeof(*ev), M_DEVBUF, M_WAITOK);
 			ev->node = devnode;
+			ev->tflags = crs->lr_gpio.tflags;
 			ev->pin = pin;
 			gpio->intr_establish(gpio->cookie, pin,
 			    crs->lr_gpio.tflags, acpi_gpio_event, ev);

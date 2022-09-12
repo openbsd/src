@@ -1,4 +1,4 @@
-/* $OpenBSD: amltypes.h,v 1.48 2019/01/10 18:50:32 kettenis Exp $ */
+/* $OpenBSD: amltypes.h,v 1.49 2022/09/12 17:42:31 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -369,6 +369,8 @@ struct acpi_gpio {
 	int	(*read_pin)(void *, int);
 	void	(*write_pin)(void *, int, int);
 	void	(*intr_establish)(void *, int, int, int (*)(void *), void *);
+	void	(*intr_enable)(void *, int);
+	void	(*intr_disable)(void *, int);
 };
 
 struct i2c_controller;

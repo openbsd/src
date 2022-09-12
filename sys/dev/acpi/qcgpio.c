@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.4 2022/09/10 14:32:53 kettenis Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.5 2022/09/12 17:42:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -102,6 +102,8 @@ int	qcgpio_sc8280xp_pin_map(int, bus_size_t *);
 int	qcgpio_read_pin(void *, int);
 void	qcgpio_write_pin(void *, int, int);
 void	qcgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	qcgpio_intr_enable(void *, int);
+void	qcgpio_intr_disable(void *, int);
 int	qcgpio_pin_intr(struct qcgpio_softc *, int);
 int	qcgpio_intr(void *);
 
@@ -161,6 +163,8 @@ qcgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = qcgpio_read_pin;
 	sc->sc_gpio.write_pin = qcgpio_write_pin;
 	sc->sc_gpio.intr_establish = qcgpio_intr_establish;
+	sc->sc_gpio.intr_enable = qcgpio_intr_enable;
+	sc->sc_gpio.intr_disable = qcgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	printf("\n");
@@ -179,6 +183,9 @@ int
 qcgpio_sc7180_pin_map(int pin, bus_size_t *off)
 {
 	switch (pin) {
+	case 30:
+		*off = QCGPIO_SC7180_SOUTH;
+		return 30;
 	case 33:
 	case 0x180:
 		*off = QCGPIO_SC7180_NORTH;
@@ -291,6 +298,34 @@ qcgpio_intr_establish(void *cookie, int pin, int flags,
 	reg |= TLMM_GPIO_INTR_CFG_INTR_RAW_STATUS_EN;
 	reg |= TLMM_GPIO_INTR_CFG_INTR_ENABLE;
 	HWRITE4(sc, off + TLMM_GPIO_INTR_CFG(pin), reg);
+}
+
+void
+qcgpio_intr_enable(void *cookie, int pin)
+{
+	struct qcgpio_softc *sc = cookie;
+	bus_size_t off = 0;
+
+	pin = sc->sc_pin_map(pin, &off);
+	if (pin < 0 || pin >= sc->sc_npins)
+		return;
+
+	HSET4(sc, off + TLMM_GPIO_INTR_CFG(pin),
+	    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
+}
+
+void
+qcgpio_intr_disable(void *cookie, int pin)
+{
+	struct qcgpio_softc *sc = cookie;
+	bus_size_t off = 0;
+
+	pin = sc->sc_pin_map(pin, &off);
+	if (pin < 0 || pin >= sc->sc_npins)
+		return;
+
+	HCLR4(sc, off + TLMM_GPIO_INTR_CFG(pin),
+	    TLMM_GPIO_INTR_CFG_INTR_ENABLE);
 }
 
 int
