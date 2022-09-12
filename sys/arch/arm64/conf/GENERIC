@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.238 2022/09/06 13:52:50 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.239 2022/09/12 20:31:53 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -39,6 +39,8 @@ apm0		at mainbus?
 efi0		at mainbus?
 smbios0		at efi?
 acpi0		at mainbus?
+acpiac*		at acpi?
+acpibat*	at acpi?
 acpibtn*	at acpi?
 acpiec*		at acpi?
 acpige*		at acpi?
