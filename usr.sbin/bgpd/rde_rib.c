@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.248 2022/09/01 13:19:11 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.249 2022/09/12 10:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -58,8 +58,10 @@ struct rib_context {
 	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
+	struct bgpd_addr		 ctx_subtree;
 	unsigned int			 ctx_count;
 	uint8_t				 ctx_aid;
+	uint8_t				 ctx_subtreelen;
 };
 LIST_HEAD(, rib_context) rib_dumps = LIST_HEAD_INITIALIZER(rib_dumps);
 
@@ -396,16 +398,17 @@ rib_empty(struct rib_entry *re)
 static struct rib_entry *
 rib_restart(struct rib_context *ctx)
 {
-	struct rib_entry *re;
+	struct rib_entry *re = NULL;
 
-	re = re_unlock(ctx->ctx_re);
+	if (ctx->ctx_re)
+		re = re_unlock(ctx->ctx_re);
 
 	/* find first non empty element */
 	while (re && rib_empty(re))
 		re = RB_NEXT(rib_tree, unused, re);
 
 	/* free the previously locked rib element if empty */
-	if (rib_empty(ctx->ctx_re))
+	if (ctx->ctx_re && rib_empty(ctx->ctx_re))
 		rib_remove(ctx->ctx_re);
 	ctx->ctx_re = NULL;
 	return (re);
@@ -422,7 +425,7 @@ rib_dump_r(struct rib_context *ctx)
 	if (rib == NULL)
 		fatalx("%s: rib id %u gone", __func__, ctx->ctx_id);
 
-	if (ctx->ctx_re == NULL)
+	if (ctx->ctx_re == NULL && ctx->ctx_subtree.aid == AID_UNSPEC)
 		re = RB_MIN(rib_tree, rib_tree(rib));
 	else
 		re = rib_restart(ctx);
@@ -435,6 +438,14 @@ rib_dump_r(struct rib_context *ctx)
 		if (ctx->ctx_aid != AID_UNSPEC &&
 		    ctx->ctx_aid != re->prefix->aid)
 			continue;
+		if (ctx->ctx_subtree.aid != AID_UNSPEC) {
+			struct bgpd_addr addr;
+			pt_getaddr(re->prefix, &addr);
+			if (prefix_compare(&ctx->ctx_subtree, &addr,
+			   ctx->ctx_subtreelen) != 0)
+				/* left subtree, walk is done */
+				break;
+		}
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
 		    !re_is_locked(re)) {
 			/* store and lock last element */
@@ -535,6 +546,42 @@ rib_dump_new(uint16_t id, uint8_t aid, unsigned int count, void *arg,
 	ctx->ctx_throttle = throttle;
 
 	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	/* requested a sync traversal */
+	if (count == 0)
+		rib_dump_r(ctx);
+
+	return 0;
+}
+
+int
+rib_dump_subtree(uint16_t id, struct bgpd_addr *subtree, uint8_t subtreelen,
+    unsigned int count, void *arg, void (*upcall)(struct rib_entry *, void *),
+    void (*done)(void *, uint8_t), int (*throttle)(void *))
+{
+	struct rib_context *ctx;
+	struct rib_entry xre;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return -1;
+	ctx->ctx_id = id;
+	ctx->ctx_aid = subtree->aid;
+	ctx->ctx_count = count;
+	ctx->ctx_arg = arg;
+	ctx->ctx_rib_call = upcall;
+	ctx->ctx_done = done;
+	ctx->ctx_throttle = throttle;
+	ctx->ctx_subtree = *subtree;
+	ctx->ctx_subtreelen = subtreelen;
+
+	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	/* lookup start of subtree */
+	memset(&xre, 0, sizeof(xre));
+	xre.prefix = pt_fill(subtree, subtreelen);
+	ctx->ctx_re = RB_NFIND(rib_tree, rib_tree(rib_byid(id)), &xre);
+	if (ctx->ctx_re)
+		re_lock(ctx->ctx_re);
 
 	/* requested a sync traversal */
 	if (count == 0)
@@ -1253,11 +1300,12 @@ prefix_adjout_destroy(struct prefix *p)
 static struct prefix *
 prefix_restart(struct rib_context *ctx)
 {
-	struct prefix *p;
+	struct prefix *p = NULL;
 
-	p = prefix_unlock(ctx->ctx_p);
+	if (ctx->ctx_p)
+		p = prefix_unlock(ctx->ctx_p);
 
-	if (prefix_is_dead(p)) {
+	if (p && prefix_is_dead(p)) {
 		struct prefix *next;
 
 		next = RB_NEXT(prefix_index, unused, p);
@@ -1278,7 +1326,7 @@ prefix_dump_r(struct rib_context *ctx)
 	if ((peer = peer_get(ctx->ctx_id)) == NULL)
 		goto done;
 
-	if (ctx->ctx_p == NULL)
+	if (ctx->ctx_p == NULL && ctx->ctx_subtree.aid == AID_UNSPEC)
 		p = RB_MIN(prefix_index, &peer->adj_rib_out);
 	else
 		p = prefix_restart(ctx);
@@ -1290,6 +1338,14 @@ prefix_dump_r(struct rib_context *ctx)
 		if (ctx->ctx_aid != AID_UNSPEC &&
 		    ctx->ctx_aid != p->pt->aid)
 			continue;
+		if (ctx->ctx_subtree.aid != AID_UNSPEC) {
+			struct bgpd_addr addr;
+			pt_getaddr(p->pt, &addr);
+			if (prefix_compare(&ctx->ctx_subtree, &addr,
+			   ctx->ctx_subtreelen) != 0)
+				/* left subtree, walk is done */
+				break;
+		}
 		if (ctx->ctx_count && i++ >= ctx->ctx_count &&
 		    !prefix_is_locked(p)) {
 			/* store and lock last element */
@@ -1324,6 +1380,43 @@ prefix_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
 	ctx->ctx_throttle = throttle;
 
 	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	/* requested a sync traversal */
+	if (count == 0)
+		prefix_dump_r(ctx);
+
+	return 0;
+}
+
+int
+prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
+    uint8_t subtreelen, unsigned int count, void *arg,
+    void (*upcall)(struct prefix *, void *), void (*done)(void *, uint8_t),
+    int (*throttle)(void *))
+{
+	struct rib_context *ctx;
+	struct prefix xp;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return -1;
+	ctx->ctx_id = peer->conf.id;
+	ctx->ctx_aid = subtree->aid;
+	ctx->ctx_count = count;
+	ctx->ctx_arg = arg;
+	ctx->ctx_prefix_call = upcall;
+	ctx->ctx_done = done;
+	ctx->ctx_throttle = throttle;
+	ctx->ctx_subtree = *subtree;
+	ctx->ctx_subtreelen = subtreelen;
+
+	LIST_INSERT_HEAD(&rib_dumps, ctx, entry);
+
+	/* lookup start of subtree */
+	memset(&xp, 0, sizeof(xp));
+	xp.pt = pt_fill(subtree, subtreelen);
+	ctx->ctx_p = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
+	if (ctx->ctx_p)
+		prefix_lock(ctx->ctx_p);
 
 	/* requested a sync traversal */
 	if (count == 0)

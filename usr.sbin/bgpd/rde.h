@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.270 2022/09/01 13:23:24 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.271 2022/09/12 10:03:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -570,6 +570,11 @@ int		 rib_dump_new(uint16_t, uint8_t, unsigned int, void *,
 		    void (*)(struct rib_entry *, void *),
 		    void (*)(void *, uint8_t),
 		    int (*)(void *));
+int		 rib_dump_subtree(uint16_t, struct bgpd_addr *, uint8_t,
+		    unsigned int count, void *arg,
+		    void (*)(struct rib_entry *, void *),
+		    void (*)(void *, uint8_t),
+		    int (*)(void *));
 void		 rib_dump_terminate(void *);
 
 static inline struct rib *
@@ -611,6 +616,10 @@ void		 prefix_adjout_dump(struct rde_peer *, void *,
 		    void (*)(struct prefix *, void *));
 int		 prefix_dump_new(struct rde_peer *, uint8_t, unsigned int,
 		    void *, void (*)(struct prefix *, void *),
+		    void (*)(void *, uint8_t), int (*)(void *));
+int		 prefix_dump_subtree(struct rde_peer *, struct bgpd_addr *,
+		    uint8_t, unsigned int, void *,
+		    void (*)(struct prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
 int		 prefix_write(u_char *, int, struct bgpd_addr *, uint8_t, int);
 int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, uint8_t);
