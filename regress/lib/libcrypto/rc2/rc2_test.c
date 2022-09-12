@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc2_test.c,v 1.3 2022/09/12 04:12:39 tb Exp $ */
+/*	$OpenBSD: rc2_test.c,v 1.4 2022/09/12 13:09:01 tb Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -261,7 +261,8 @@ rc2_ecb_test(size_t test_number, const struct rc2_test *rt)
 }
 
 static int
-rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label, const EVP_CIPHER *cipher)
+rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label,
+    const EVP_CIPHER *cipher)
 {
 	EVP_CIPHER_CTX *ctx;
 	uint8_t out[512];
@@ -317,7 +318,7 @@ rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label, c
 			in_len = rt->len - i;
 
 		if (!EVP_EncryptUpdate(ctx, out + total_len, &out_len,
-			rt->in + i, in_len)) {
+		    rt->in + i, in_len)) {
 			fprintf(stderr,
 			    "FAIL (%s:%zu): EVP_EncryptUpdate failed\n",
 			    label, test_number);
@@ -397,7 +398,7 @@ rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label, c
 			in_len = rt->len - i;
 
 		if (!EVP_DecryptUpdate(ctx, out + total_len, &out_len,
-			rt->out + i, in_len)) {
+		    rt->out + i, in_len)) {
 			fprintf(stderr,
 			    "FAIL (%s:%zu): EVP_DecryptUpdate failed\n",
 			    label, test_number);
