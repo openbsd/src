@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.15 2022/04/06 23:01:05 kettenis Exp $
+dnl	$OpenBSD: prep,v 1.16 2022/09/12 10:16:09 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -125,7 +125,7 @@ Install on systems without a supported miniroot:
  	cp /usr/local/share/dtb/arm64/vendor/board.dtb /mnt/vendor/
  	umount /mnt
 
-  For systems based on Allwinner Axx Socs:
+  For systems based on Allwinner Axx SoCs:
 
  	dd if=/usr/local/share/u-boot/board/u-boot-sunxi-with-spl.bin \
  	    of=/dev/sdXc bs=1024 seek=8
