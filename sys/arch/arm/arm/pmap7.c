@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.64 2022/09/10 20:35:28 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.65 2022/09/12 19:28:19 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -950,13 +950,6 @@ pmap_clean_page(struct vm_page *pg)
 		/* inline !pmap_is_current(pv->pv_pmap) */
 		if (pv->pv_pmap != pmap_kernel() && pv->pv_pmap != pm)
 			continue;
-
-		/*
-		 * The page is mapped non-cacheable in 
-		 * this map.  No need to flush the cache.
-		 */
-		if (pv->pv_flags & PVF_NC) /* XXX ought to be pg attr */
-			break;
 
 		if (PV_BEEN_EXECD(pv->pv_flags))
 			cpu_icache_sync_range(pv->pv_va, PAGE_SIZE);

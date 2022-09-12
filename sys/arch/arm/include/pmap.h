@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.50 2022/09/08 10:21:45 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.51 2022/09/12 19:28:19 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -212,21 +212,15 @@ typedef struct pv_addr {
  * Flags that indicate attributes of pages or mappings of pages.
  *
  * The PVF_MOD and PVF_REF flags are stored in the mdpage for each
- * page.  PVF_WIRED, PVF_WRITE, and PVF_NC are kept in individual
- * pv_entry's for each page.  They live in the same "namespace" so
- * that we can clear multiple attributes at a time.
- *
- * Note the "non-cacheable" flag generally means the page has
- * multiple mappings in a given address space.
+ * page.  PVF_WIRED and PVF_WRITE are kept in individual pv_entry's
+ * for each page.  They live in the same "namespace" so that we can
+ * clear multiple attributes at a time.
  */
 #define	PVF_MOD		0x01		/* page is modified */
 #define	PVF_REF		0x02		/* page is referenced */
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
 #define	PVF_EXEC	0x10		/* mapping is executable */
-#define	PVF_UNC		0x20		/* mapping is 'user' non-cacheable */
-#define	PVF_KNC		0x40		/* mapping is 'kernel' non-cacheable */
-#define	PVF_NC		(PVF_UNC|PVF_KNC)
 
 /*
  * Commonly referenced structures
