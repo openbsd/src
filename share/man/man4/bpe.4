@@ -1,4 +1,4 @@
-.\" $OpenBSD: bpe.4,v 1.5 2022/01/01 08:01:27 jsg Exp $
+.\" $OpenBSD: bpe.4,v 1.6 2022/09/12 09:15:29 jsg Exp $
 .\"
 .\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2022 $
+.Dd $Mdocdate: September 12 2022 $
 .Dt BPE 4
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ administratively down.
 .It Dv SIOCSVNETID Fa "struct ifreq *"
 Set the virtual network identifier.
 Valid identifiers are 24-bit values in the range 0 to 16777215.
-.It Dv SIOCGVNETID Fa "struct if_parent *"
+.It Dv SIOCGVNETID Fa "struct ifreq *"
 Get the currently configured virtual network identifier.
 .El
 .Sh SEE ALSO
