@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.15 2022/09/10 20:35:29 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.16 2022/09/12 19:33:34 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -101,21 +101,19 @@ boolean_t __pmap_pte_load(pmap_t, vaddr_t, int);
 
 #endif /* !_KERNEL */
 
-#define	PVH_REFERENCED		1
-#define	PVH_MODIFIED		2
+#define	PG_PMAP_REF		PG_PMAP0
+#define	PG_PMAP_MOD		PG_PMAP1
 
 #ifndef _LOCORE
 struct pv_entry;
 struct vm_page_md {
 	SLIST_HEAD(, pv_entry) pvh_head;
-	int pvh_flags;
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	struct vm_page_md *pvh = &(pg)->mdpage;				\
 	SLIST_INIT(&pvh->pvh_head);					\
-	pvh->pvh_flags = 0;						\
 } while (/*CONSTCOND*/0)
 #endif /* _LOCORE */
 

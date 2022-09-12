@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2021/12/23 18:50:32 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2022/09/12 19:33:34 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -347,15 +347,15 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	switch (tf->tf_expevt) {
 	case EXPEVT_TLB_MISS_LD:
-		track = PVH_REFERENCED;
+		track = PG_PMAP_REF;
 		access_type = PROT_READ;
 		break;
 	case EXPEVT_TLB_MISS_ST:
-		track = PVH_REFERENCED;
+		track = PG_PMAP_REF;
 		access_type = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_MOD:
-		track = PVH_REFERENCED | PVH_MODIFIED;
+		track = PG_PMAP_REF | PG_PMAP_MOD;
 		access_type = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_PROT_LD:

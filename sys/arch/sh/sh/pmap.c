@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2016/10/19 08:28:20 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2022/09/12 19:33:34 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 2006/08/07 23:19:36 tsutsui Exp $	*/
 
 /*-
@@ -291,7 +291,6 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	struct vm_page *pg;
-	struct vm_page_md *pvh;
 	pt_entry_t entry, *pte;
 	boolean_t kva = (pmap == pmap_kernel());
 
@@ -304,20 +303,20 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		entry |= _PG_WIRED;
 
 	if (pg != NULL) {	/* memory-space */
-		pvh = &pg->mdpage;
 		entry |= PG_C;	/* always cached */
 
 		/* Modified/reference tracking */
 		if (flags & PROT_WRITE) {
 			entry |= PG_V | PG_D;
-			pvh->pvh_flags |= PVH_MODIFIED | PVH_REFERENCED;
+			atomic_setbits_int(&pg->pg_flags,
+			    PG_PMAP_MOD | PG_PMAP_REF);
 		} else if (flags & PROT_MASK) {
 			entry |= PG_V;
-			pvh->pvh_flags |= PVH_REFERENCED;
+			atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 		}
 
 		/* Protection */
-		if ((prot & PROT_WRITE) && (pvh->pvh_flags & PVH_MODIFIED)) {
+		if ((prot & PROT_WRITE) && (pg->pg_flags & PG_PMAP_MOD)) {
 			if (kva)
 				entry |= PG_PR_KRW | PG_SH;
 			else
@@ -526,7 +525,7 @@ __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)
 		if (pv->pv_pmap == pmap && pv->pv_va == vaddr) {
 			if (SH_HAS_VIRTUAL_ALIAS ||
 			    (SH_HAS_WRITEBACK_CACHE &&
-				(pg->mdpage.pvh_flags & PVH_MODIFIED))) {
+				(pg->pg_flags & PG_PMAP_MOD))) {
 				/*
 				 * Always use index ops. since I don't want to
 				 * worry about address space.
@@ -798,7 +797,7 @@ pmap_copy_page(vm_page_t srcpg, vm_page_t dstpg)
 boolean_t
 pmap_is_referenced(struct vm_page *pg)
 {
-	return ((pg->mdpage.pvh_flags & PVH_REFERENCED) ? TRUE : FALSE);
+	return ((pg->pg_flags & PG_PMAP_REF) ? TRUE : FALSE);
 }
 
 boolean_t
@@ -811,10 +810,10 @@ pmap_clear_reference(struct vm_page *pg)
 	vaddr_t va;
 	int s;
 
-	if ((pg->mdpage.pvh_flags & PVH_REFERENCED) == 0)
+	if ((pg->pg_flags & PG_PMAP_REF) == 0)
 		return (FALSE);
 
-	pg->mdpage.pvh_flags &= ~PVH_REFERENCED;
+	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_REF);
 
 	s = splvm();
 	/* Restart reference bit emulation */
@@ -839,7 +838,7 @@ pmap_clear_reference(struct vm_page *pg)
 boolean_t
 pmap_is_modified(struct vm_page *pg)
 {
-	return ((pg->mdpage.pvh_flags & PVH_MODIFIED) ? TRUE : FALSE);
+	return ((pg->pg_flags & PG_PMAP_MOD) ? TRUE : FALSE);
 }
 
 boolean_t
@@ -853,11 +852,11 @@ pmap_clear_modify(struct vm_page *pg)
 	vaddr_t va;
 	int s;
 
-	modified = pvh->pvh_flags & PVH_MODIFIED;
+	modified = pg->pg_flags & PG_PMAP_MOD;
 	if (!modified)
 		return (FALSE);
 
-	pvh->pvh_flags &= ~PVH_MODIFIED;
+	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_MOD);
 
 	s = splvm();
 	if (SLIST_EMPTY(&pvh->pvh_head)) {/* no map on this page */
@@ -1041,14 +1040,11 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 
 	/* Emulate reference/modified tracking for managed page. */
 	if (flags != 0 && (pg = PHYS_TO_VM_PAGE(entry & PG_PPN)) != NULL) {
-		if (flags & PVH_REFERENCED) {
-			pg->mdpage.pvh_flags |= PVH_REFERENCED;
+		if (flags & PG_PMAP_REF)
 			entry |= PG_V;
-		}
-		if (flags & PVH_MODIFIED) {
-			pg->mdpage.pvh_flags |= PVH_MODIFIED;
+		if (flags & PG_PMAP_MOD)
 			entry |= PG_D;
-		}
+		atomic_setbits_int(&pg->pg_flags, flags);
 		*pte = entry;
 	}
 
