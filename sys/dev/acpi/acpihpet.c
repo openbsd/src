@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.28 2022/08/25 18:01:54 cheloha Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.29 2022/09/12 10:58:05 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -281,13 +281,19 @@ acpihpet_attach(struct device *parent, struct device *self, void *aux)
 void
 acpihpet_delay(int usecs)
 {
-	uint64_t c, s;
+	uint64_t count = 0, cycles;
 	struct acpihpet_softc *sc = hpet_timecounter.tc_priv;
+	uint32_t val1, val2;
 
-	s = acpihpet_r(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
-	c = usecs * hpet_timecounter.tc_frequency / 1000000;
-	while (acpihpet_r(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER) - s < c)
+	val2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, HPET_MAIN_COUNTER);
+	cycles = usecs * hpet_timecounter.tc_frequency / 1000000;
+	while (count < cycles) {
 		CPU_BUSY_CYCLE();
+		val1 = val2;
+		val2 = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    HPET_MAIN_COUNTER);
+		count += val2 - val1;
+	}
 }
 
 u_int
