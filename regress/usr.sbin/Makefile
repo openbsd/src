@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2022/09/01 00:43:14 kn Exp $
+#	$OpenBSD: Makefile,v 1.32 2022/09/12 13:10:03 kn Exp $
 
 SUBDIR += acme-client
 SUBDIR += arp
@@ -21,8 +21,13 @@ SUBDIR += vmd
 .endif
 
 .if ${MACHINE} == "amd64" || \
+    ${MACHINE} == "arm64" || \
+    ${MACHINE} == "armv7" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "macppc" || \
+    ${MACHINE} == "octeon" || \
+    ${MACHINE} == "powerpc64" || \
+    ${MACHINE} == "riscv64" || \
     ${MACHINE} == "sparc64"
 SUBDIR += installboot
 .endif
