@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.17 2022/03/29 14:27:59 naddy Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.18 2022/09/12 14:33:47 tb Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: September 12 2022 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -24,7 +24,6 @@
 .Nm i2d_ASN1_BIT_STRING ,
 .Nm d2i_ASN1_INTEGER ,
 .Nm i2d_ASN1_INTEGER ,
-.Nm i2c_ASN1_INTEGER ,
 .Nm d2i_ASN1_UINTEGER ,
 .Nm d2i_ASN1_ENUMERATED ,
 .Nm i2d_ASN1_ENUMERATED ,
@@ -56,9 +55,6 @@
 .Nm i2d_ASN1_UTCTIME ,
 .Nm d2i_ASN1_TIME ,
 .Nm i2d_ASN1_TIME
-.\" i2c_ASN1_BIT_STRING, c2i_ASN1_BIT_STRING, and c2i_ASN1_INTEGER
-.\" are intentionally undocumented because they are unused in
-.\" real-world software and were removed from the OpenSSL 1.1.1 API
 .Nd decode and encode ASN1_STRING objects
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -92,11 +88,6 @@
 .Fc
 .Ft int
 .Fo i2d_ASN1_INTEGER
-.Fa "ASN1_INTEGER *val_in"
-.Fa "unsigned char **der_out"
-.Fc
-.Ft int
-.Fo i2c_ASN1_INTEGER
 .Fa "ASN1_INTEGER *val_in"
 .Fa "unsigned char **der_out"
 .Fc
@@ -301,27 +292,6 @@ The identifier bytes and corresponding ASN.1 types are as follows:
 .It Vt ASN1_UTCTIME         Ta 0x17 Ta UTCTime
 .El
 .Pp
-.Fn i2c_ASN1_INTEGER
-writes only the content bytes of
-.Fa val_in
-to
-.Pf * Fa der_out
-and advances
-.Pf * Fa der_out
-to the byte after the last one written.
-The identifier and content length bytes are not written.
-It is the responsibility of the caller to make sure that the buffer
-pointed to by
-.Pf * Fa der_out
-is long enough, such that no buffer overflow can occur.
-This function does not support automatic memory allocation.
-If
-.Fa der_out
-is a
-.Dv NULL
-pointer, the function only calculates the number of content bytes
-that would be written, without writing them anywhere.
-.Pp
 .Fn d2i_DIRECTORYSTRING
 and
 .Fn i2d_DIRECTORYSTRING
@@ -419,14 +389,6 @@ The
 encoding functions return the number of bytes successfully encoded
 or a negative value if an error occurs.
 .Pp
-.Fn i2c_ASN1_INTEGER
-returns the number of content bytes that were or would be written or 0 if
-.Fa val_in
-is a
-.Dv NULL
-pointer or if its
-.Xr ASN1_STRING_length 3
-is negative.
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_STRING_new 3
@@ -483,10 +445,6 @@ and
 first appeared in OpenSSL 0.9.3.
 These functions have been available since
 .Ox 2.6 .
-.Pp
-.Fn i2c_ASN1_INTEGER
-first appeared in OpenSSL 0.9.6 and has been available since
-.Ox 2.9 .
 .Pp
 .Fn d2i_ASN1_UNIVERSALSTRING ,
 .Fn i2d_ASN1_UNIVERSALSTRING ,

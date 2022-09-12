@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.12 2022/03/29 17:41:20 schwarze Exp $
+.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.13 2022/09/12 14:33:47 tb Exp $
 .\"
 .\" Copyright (c) 2017, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,14 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: September 12 2022 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
 .Nm d2i_ASN1_OBJECT ,
 .Nm i2d_ASN1_OBJECT
-.\" c2i_ASN1_OBJECT is intentionally undocumented because it is unused
-.\" in real-world software and was removed from the OpenSSL 1.1.1 API
 .Nd decode and encode ASN.1 object identifiers
 .Sh SYNOPSIS
 .In openssl/asn1.h
