@@ -2414,6 +2414,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 	i915_params_copy(&dev_priv->params, &i915_modparams);
 	dev_priv->params.enable_guc = 0;
 	dev_priv->params.request_timeout_ms = 0;
+	dev_priv->params.enable_psr = 0;
 
 	/* Setup the write-once "constant" device info */
 	device_info = mkwrite_device_info(dev_priv);
