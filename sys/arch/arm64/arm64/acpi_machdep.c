@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.19 2022/02/09 23:54:55 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.20 2022/09/13 17:14:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -22,6 +22,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/apmvar.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
@@ -32,6 +33,8 @@
 #include <dev/acpi/dsdt.h>
 
 #include <arm64/dev/acpiiort.h>
+
+#include "apm.h"
 
 int	lid_action;
 int	pwr_action = 1;
@@ -134,7 +137,9 @@ acpi_release_glk(uint32_t *lock)
 void
 acpi_attach_machdep(struct acpi_softc *sc)
 {
-	/* Nothing to do. */
+#if NAPM > 0
+	apm_setinfohook(acpi_apminfo);
+#endif
 }
 
 void *

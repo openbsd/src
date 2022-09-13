@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.121 2022/08/10 16:58:16 patrick Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.122 2022/09/13 17:14:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -383,6 +383,9 @@ uint64_t acpi_getpropint(struct aml_node *, const char *, uint64_t);
 void	acpi_indicator(struct acpi_softc *, int);
 void	acpi_disable_allgpes(struct acpi_softc *);
 void	acpi_enable_wakegpes(struct acpi_softc *, int);
+
+struct apm_power_info;
+int	acpi_apminfo(struct apm_power_info *);
 
 int	acpi_record_event(struct acpi_softc *, u_int);
 

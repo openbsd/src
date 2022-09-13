@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.417 2022/09/12 17:42:31 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.418 2022/09/13 17:14:54 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3244,6 +3244,109 @@ acpi_foundsbs(struct aml_node *node, void *arg)
 }
 
 int
+acpi_apminfo(struct apm_power_info *pi)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_ac *ac;
+	struct acpi_bat *bat;
+	struct acpi_sbs *sbs;
+	int bats;
+	unsigned int capacity, remaining, minutes, rate;
+
+	/* A/C */
+	pi->ac_state = APM_AC_UNKNOWN;
+// XXX replace with new power code
+	SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
+		if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
+			pi->ac_state = APM_AC_ON;
+		else if (ac->aac_softc->sc_ac_stat == PSR_OFFLINE)
+			if (pi->ac_state == APM_AC_UNKNOWN)
+				pi->ac_state = APM_AC_OFF;
+	}
+
+	/* battery */
+	pi->battery_state = APM_BATT_UNKNOWN;
+	pi->battery_life = 0;
+	pi->minutes_left = 0;
+	bats = 0;
+	capacity = 0;
+	remaining = 0;
+	minutes = 0;
+	rate = 0;
+	SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
+		if (bat->aba_softc->sc_bat_present == 0)
+			continue;
+
+		if (bat->aba_softc->sc_bix.bix_last_capacity == 0)
+			continue;
+
+		bats++;
+		capacity += bat->aba_softc->sc_bix.bix_last_capacity;
+		remaining += min(bat->aba_softc->sc_bst.bst_capacity,
+		    bat->aba_softc->sc_bix.bix_last_capacity);
+
+		if (bat->aba_softc->sc_bst.bst_state & BST_CHARGE)
+			pi->battery_state = APM_BATT_CHARGING;
+
+		if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
+			continue;
+		else if (bat->aba_softc->sc_bst.bst_rate > 1)
+			rate = bat->aba_softc->sc_bst.bst_rate;
+
+		minutes += bat->aba_softc->sc_bst.bst_capacity;
+	}
+
+	SLIST_FOREACH(sbs, &sc->sc_sbs, asbs_link) {
+		if (sbs->asbs_softc->sc_batteries_present == 0)
+			continue;
+
+		if (sbs->asbs_softc->sc_battery.rel_charge == 0)
+			continue;
+
+		bats++;
+		capacity += 100;
+		remaining += min(100,
+		    sbs->asbs_softc->sc_battery.rel_charge);
+
+		if (sbs->asbs_softc->sc_battery.run_time ==
+		    ACPISBS_VALUE_UNKNOWN)
+			continue;
+
+		rate = 60; /* XXX */
+		minutes += sbs->asbs_softc->sc_battery.run_time;
+	}
+
+	if (bats == 0) {
+		pi->battery_state = APM_BATTERY_ABSENT;
+		pi->battery_life = 0;
+		pi->minutes_left = (unsigned int)-1;
+		return 0;
+	}
+
+	if (rate == 0)
+		pi->minutes_left = (unsigned int)-1;
+	else if (pi->battery_state == APM_BATT_CHARGING)
+		pi->minutes_left = 60 * (capacity - remaining) / rate;
+	else
+		pi->minutes_left = 60 * minutes / rate;
+
+	pi->battery_life = remaining * 100 / capacity;
+
+	if (pi->battery_state == APM_BATT_CHARGING)
+		return 0;
+
+	/* running on battery */
+	if (pi->battery_life > 50)
+		pi->battery_state = APM_BATT_HIGH;
+	else if (pi->battery_life > 25)
+		pi->battery_state = APM_BATT_LOW;
+	else
+		pi->battery_state = APM_BATT_CRITICAL;
+
+	return 0;
+}
+
+int
 acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error = 0;
@@ -3314,12 +3417,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 	struct acpi_softc *sc;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-	struct acpi_sbs *sbs;
 	struct apm_power_info *pi = (struct apm_power_info *)data;
-	int bats;
-	unsigned int capacity, remaining, minutes, rate;
 	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
@@ -3355,96 +3453,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 #endif
 	case APM_IOC_GETPOWER:
-		/* A/C */
-		pi->ac_state = APM_AC_UNKNOWN;
-// XXX replace with new power code
-		SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
-			if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
-				pi->ac_state = APM_AC_ON;
-			else if (ac->aac_softc->sc_ac_stat == PSR_OFFLINE)
-				if (pi->ac_state == APM_AC_UNKNOWN)
-					pi->ac_state = APM_AC_OFF;
-		}
-
-		/* battery */
-		pi->battery_state = APM_BATT_UNKNOWN;
-		pi->battery_life = 0;
-		pi->minutes_left = 0;
-		bats = 0;
-		capacity = 0;
-		remaining = 0;
-		minutes = 0;
-		rate = 0;
-		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
-			if (bat->aba_softc->sc_bat_present == 0)
-				continue;
-
-			if (bat->aba_softc->sc_bix.bix_last_capacity == 0)
-				continue;
-
-			bats++;
-			capacity += bat->aba_softc->sc_bix.bix_last_capacity;
-			remaining += min(bat->aba_softc->sc_bst.bst_capacity,
-			    bat->aba_softc->sc_bix.bix_last_capacity);
-
-			if (bat->aba_softc->sc_bst.bst_state & BST_CHARGE)
-				pi->battery_state = APM_BATT_CHARGING;
-
-			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
-				continue;
-			else if (bat->aba_softc->sc_bst.bst_rate > 1)
-				rate = bat->aba_softc->sc_bst.bst_rate;
-
-			minutes += bat->aba_softc->sc_bst.bst_capacity;
-		}
-
-		SLIST_FOREACH(sbs, &sc->sc_sbs, asbs_link) {
-			if (sbs->asbs_softc->sc_batteries_present == 0)
-				continue;
-
-			if (sbs->asbs_softc->sc_battery.rel_charge == 0)
-				continue;
-
-			bats++;
-			capacity += 100;
-			remaining += min(100,
-			    sbs->asbs_softc->sc_battery.rel_charge);
-
-			if (sbs->asbs_softc->sc_battery.run_time ==
-			    ACPISBS_VALUE_UNKNOWN)
-				continue;
-
-			rate = 60; /* XXX */
-			minutes += sbs->asbs_softc->sc_battery.run_time;
-		}
-
-		if (bats == 0) {
-			pi->battery_state = APM_BATTERY_ABSENT;
-			pi->battery_life = 0;
-			pi->minutes_left = (unsigned int)-1;
-			break;
-		}
-
-		if (rate == 0)
-			pi->minutes_left = (unsigned int)-1;
-		else if (pi->battery_state == APM_BATT_CHARGING)
-			pi->minutes_left = 60 * (capacity - remaining) / rate;
-		else
-			pi->minutes_left = 60 * minutes / rate;
-
-		pi->battery_life = remaining * 100 / capacity;
-
-		if (pi->battery_state == APM_BATT_CHARGING)
-			break;
-
-		/* running on battery */
-		if (pi->battery_life > 50)
-			pi->battery_state = APM_BATT_HIGH;
-		else if (pi->battery_life > 25)
-			pi->battery_state = APM_BATT_LOW;
-		else
-			pi->battery_state = APM_BATT_CRITICAL;
-
+		error = acpi_apminfo(pi);
 		break;
 
 	default:
