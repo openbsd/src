@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.62 2022/09/13 10:28:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#include <agentx.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -119,7 +120,8 @@ typedef struct {
 
 
 %token	INCLUDE ERROR
-%token	ADD ALLOW BOOT CDROM DEVICE DISABLE DISK DOWN ENABLE FORMAT GROUP
+%token	ADD AGENTX ALLOW BOOT CDROM CONTEXT DEVICE DISABLE DISK DOWN ENABLE
+%token	FORMAT GROUP
 %token	INET6 INSTANCE INTERFACE LLADDR LOCAL LOCKED MEMORY NET NIFS OWNER
 %token	PATH PREFIX RDOMAIN SIZE SOCKET SWITCH UP VM VMID STAGGERED START
 %token  PARALLEL DELAY
@@ -216,6 +218,18 @@ main		: LOCAL INET6 {
 		| SOCKET OWNER owner_id {
 			env->vmd_ps.ps_csock.cs_uid = $3.uid;
 			env->vmd_ps.ps_csock.cs_gid = $3.gid == -1 ? 0 : $3.gid;
+		}
+		| AGENTX {
+			env->vmd_cfg.cfg_agentx.ax_enabled = 1;
+		} agentxopts {
+			if (env->vmd_cfg.cfg_agentx.ax_path[0] == '\0')
+				if (strlcpy(env->vmd_cfg.cfg_agentx.ax_path,
+				    AGENTX_MASTER_PATH,
+				    sizeof(env->vmd_cfg.cfg_agentx.ax_path)) >=
+				    sizeof(env->vmd_cfg.cfg_agentx.ax_path)) {
+					yyerror("invalid agentx path");
+					YYERROR;
+				}
 		}
 		| STAGGERED START PARALLEL NUMBER DELAY NUMBER {
 			env->vmd_cfg.cfg_flags |= VMD_CFG_STAGGERED_START;
@@ -595,6 +609,35 @@ owner_id	: NUMBER		{
 		}
 		;
 
+agentxopt	: CONTEXT STRING {
+			if (strlcpy(env->vmd_cfg.cfg_agentx.ax_context, $2,
+			    sizeof(env->vmd_cfg.cfg_agentx.ax_context)) >=
+			    sizeof(env->vmd_cfg.cfg_agentx.ax_context)) {
+				yyerror("agentx context too large");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| PATH STRING {
+			if (strlcpy(env->vmd_cfg.cfg_agentx.ax_path, $2,
+			    sizeof(env->vmd_cfg.cfg_agentx.ax_path)) >=
+			    sizeof(env->vmd_cfg.cfg_agentx.ax_path)) {
+				yyerror("agentx path too large");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+			if (env->vmd_cfg.cfg_agentx.ax_path[0] != '/') {
+				yyerror("agentx path is not absolute");
+				YYERROR;
+			}
+		}
+
+agentxopts	: /* none */
+		| agentxopts agentxopt
+		;
+
 image_format	: /* none 	*/	{
 			$$ = 0;
 		}
@@ -769,9 +812,11 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "add",		ADD },
+		{ "agentx",		AGENTX },
 		{ "allow",		ALLOW },
 		{ "boot",		BOOT },
 		{ "cdrom",		CDROM },
+		{ "context",		CONTEXT},
 		{ "delay",		DELAY },
 		{ "device",		DEVICE },
 		{ "disable",		DISABLE },
@@ -793,6 +838,7 @@ lookup(char *s)
 		{ "net",		NET },
 		{ "owner",		OWNER },
 		{ "parallel",		PARALLEL },
+		{ "path",		PATH },
 		{ "prefix",		PREFIX },
 		{ "rdomain",		RDOMAIN },
 		{ "size",		SIZE },
@@ -1148,6 +1194,10 @@ parse_config(const char *filename)
 
 	/* Set the default switch type */
 	(void)strlcpy(vsw_type, VMD_SWITCH_TYPE, sizeof(vsw_type));
+
+	env->vmd_cfg.cfg_agentx.ax_enabled = 0;
+	env->vmd_cfg.cfg_agentx.ax_context[0] = '\0';
+	env->vmd_cfg.cfg_agentx.ax_path[0] = '\0';
 
 	yyparse();
 	errors = file->errors;

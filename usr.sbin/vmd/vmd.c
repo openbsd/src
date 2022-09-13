@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.131 2022/05/08 14:44:54 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.132 2022/09/13 10:28:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -57,6 +57,7 @@ void	 vmd_shutdown(void);
 int	 vmd_control_run(void);
 int	 vmd_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_vmm(int, struct privsep_proc *, struct imsg *);
+int	 vmd_dispatch_agentx(int, struct privsep_proc *, struct imsg *);
 int	 vmd_dispatch_priv(int, struct privsep_proc *, struct imsg *);
 int	 vmd_check_vmh(struct vm_dump_header *);
 
@@ -73,6 +74,7 @@ static struct privsep_proc procs[] = {
 	{ "priv",	PROC_PRIV,	vmd_dispatch_priv, priv },
 	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm, vmm_shutdown },
+	{ "agentx", 	PROC_AGENTX,	vmd_dispatch_agentx, vm_agentx, vm_agentx_shutdown, "/" }
 };
 
 enum privsep_procid privsep_process;
@@ -501,7 +503,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			vir.vir_uid = vm->vm_uid;
 			vir.vir_gid = vm->vm_params.vmc_owner.gid;
 		}
-		if (proc_compose_imsg(ps, PROC_CONTROL, -1, imsg->hdr.type,
+		if (proc_compose_imsg(ps,
+		    imsg->hdr.peerid == IMSG_AGENTX_PEERID ?
+		    PROC_AGENTX : PROC_CONTROL, -1, imsg->hdr.type,
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
 			log_debug("%s: GET_INFO_VM failed for vm %d, removing",
 			    __func__, vm->vm_vmid);
@@ -533,7 +537,9 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				log_debug("%s: vm: %d, vm_state: 0x%x",
 				    __func__, vm->vm_vmid, vm->vm_state);
 				vir.vir_state = vm->vm_state;
-				if (proc_compose_imsg(ps, PROC_CONTROL, -1,
+				if (proc_compose_imsg(ps,
+				    imsg->hdr.peerid == IMSG_AGENTX_PEERID ?
+				    PROC_AGENTX : PROC_CONTROL, -1,
 				    IMSG_VMDOP_GET_INFO_VM_DATA,
 				    imsg->hdr.peerid, -1, &vir,
 				    sizeof(vir)) == -1) {
@@ -545,13 +551,30 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			}
 		}
 		IMSG_SIZE_CHECK(imsg, &res);
-		proc_forward_imsg(ps, imsg, PROC_CONTROL, -1);
+		proc_forward_imsg(ps, imsg,
+		    imsg->hdr.peerid == IMSG_AGENTX_PEERID ?
+		    PROC_AGENTX : PROC_CONTROL, -1);
 		break;
 	default:
 		return (-1);
 	}
 
 	return (0);
+}
+
+int
+vmd_dispatch_agentx(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct privsep			*ps = p->p_ps;
+
+	switch (imsg->hdr.type) {
+	case IMSG_VMDOP_GET_INFO_VM_REQUEST:
+		proc_forward_imsg(ps, imsg, PROC_VMM, -1);
+		return (0);
+	default:
+		break;
+	}
+	return (-1);
 }
 
 int
@@ -1236,24 +1259,24 @@ vm_claimid(const char *name, int uid, uint32_t *id)
 
 	if (++env->vmd_nvm == 0) {
 		log_warnx("too many vms");
-		return -1;
+		return (-1);
 	}
 	if ((n2i = calloc(1, sizeof(struct name2id))) == NULL) {
 		log_warnx("could not alloc vm name");
-		return -1;
+		return (-1);
 	}
 	n2i->id = env->vmd_nvm;
 	n2i->uid = uid;
 	if (strlcpy(n2i->name, name, sizeof(n2i->name)) >= sizeof(n2i->name)) {
 		log_warnx("vm name too long");
 		free(n2i);
-		return -1;
+		return (-1);
 	}
 	TAILQ_INSERT_TAIL(env->vmd_known, n2i, entry);
 
 out:
 	*id = n2i->id;
-	return 0;
+	return (0);
 }
 
 int

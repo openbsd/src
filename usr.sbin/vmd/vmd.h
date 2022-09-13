@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.109 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.110 2022/09/13 10:28:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/un.h>
 #include <sys/socket.h>
 
 #include <machine/vmmvar.h>
@@ -77,6 +78,8 @@
 #define VMD_CDROM_MISSING	1005
 #define VMD_CDROM_INVALID	1006
 #define VMD_PARENT_INVALID	1007
+
+#define IMSG_AGENTX_PEERID	(uint32_t)-2
 
 /* Image file signatures */
 #define VM_MAGIC_QCOW		"QFI\xfb"
@@ -330,6 +333,17 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
+#define SUN_PATH_LEN		(sizeof(((struct sockaddr_un *)NULL)->sun_path))
+struct vmd_agentx {
+	int			 ax_enabled;
+	char			 ax_path[SUN_PATH_LEN];
+	/*
+	 * SNMP-VIEW-BASED-ACM-MIB:vacmContextName
+	 * Should probably be a define in agentx.h
+	 */
+	char			 ax_context[32 + 1];
+};
+
 struct vmd_config {
 	unsigned int		 cfg_flags;
 #define VMD_CFG_INET6		0x01
@@ -340,6 +354,7 @@ struct vmd_config {
 	int			 parallelism;
 	struct address		 cfg_localprefix;
 	struct address		 cfg_localprefix6;
+	struct vmd_agentx	 cfg_agentx;
 };
 
 struct vmd {
@@ -480,6 +495,10 @@ int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 int	 config_getcdrom(struct privsep *, struct imsg *);
+
+/* vm_agentx.c */
+void vm_agentx(struct privsep *, struct privsep_proc *);
+void vm_agentx_shutdown(void);
 
 /* parse.y */
 int	 parse_config(const char *);

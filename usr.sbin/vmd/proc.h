@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.20 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.21 2022/09/13 10:28:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -79,6 +79,7 @@ TAILQ_HEAD(ctl_connlist, ctl_conn);
 enum privsep_procid {
 	PROC_PARENT	= 0,
 	PROC_CONTROL,
+	PROC_AGENTX,
 	PROC_VMM,
 	PROC_PRIV,
 	PROC_MAX,
