@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.168 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.169 2022/09/13 09:05:02 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -108,6 +108,8 @@ struct cpumem *rip6counters;
 const struct pr_usrreqs rip6_usrreqs = {
 	.pru_attach	= rip6_attach,
 	.pru_detach	= rip6_detach,
+	.pru_lock	= rip6_lock,
+	.pru_unlock	= rip6_unlock,
 	.pru_bind	= rip6_bind,
 	.pru_connect	= rip6_connect,
 	.pru_disconnect	= rip6_disconnect,
@@ -261,13 +263,20 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		else
 			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		if (n != NULL) {
+			int ret;
+
 			if (in6p->inp_flags & IN6P_CONTROLOPTS)
 				ip6_savecontrol(in6p, n, &opts);
 			/* strip intermediate headers */
 			m_adj(n, *offp);
-			if (sbappendaddr(in6p->inp_socket,
+
+			mtx_enter(&in6p->inp_mtx);
+			ret = sbappendaddr(in6p->inp_socket,
 			    &in6p->inp_socket->so_rcv,
-			    sin6tosa(&rip6src), n, opts) == 0) {
+			    sin6tosa(&rip6src), n, opts);
+			mtx_leave(&in6p->inp_mtx);
+
+			if (ret == 0) {
 				/* should notify about lost packet */
 				m_freem(n);
 				m_freem(opts);
@@ -627,6 +636,24 @@ rip6_detach(struct socket *so)
 	in_pcbdetach(in6p);
 
 	return (0);
+}
+
+void
+rip6_lock(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_enter(&in6p->inp_mtx);
+}
+
+void
+rip6_unlock(struct socket *so)
+{
+	struct inpcb *in6p = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_leave(&in6p->inp_mtx);
 }
 
 int

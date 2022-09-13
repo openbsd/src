@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.147 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.148 2022/09/13 09:05:02 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -106,6 +106,8 @@ struct inpcbtable rawcbtable;
 const struct pr_usrreqs rip_usrreqs = {
 	.pru_attach	= rip_attach,
 	.pru_detach	= rip_detach,
+	.pru_lock	= rip_lock,
+	.pru_unlock	= rip_unlock,
 	.pru_bind	= rip_bind,
 	.pru_connect	= rip_connect,
 	.pru_disconnect	= rip_disconnect,
@@ -220,12 +222,19 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		else
 			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 		if (n != NULL) {
+			int ret;
+
 			if (inp->inp_flags & INP_CONTROLOPTS ||
 			    inp->inp_socket->so_options & SO_TIMESTAMP)
 				ip_savecontrol(inp, &opts, ip, n);
-			if (sbappendaddr(inp->inp_socket,
+
+			mtx_enter(&inp->inp_mtx);
+			ret = sbappendaddr(inp->inp_socket,
 			    &inp->inp_socket->so_rcv,
-			    sintosa(&ripsrc), n, opts) == 0) {
+			    sintosa(&ripsrc), n, opts);
+			mtx_leave(&inp->inp_mtx);
+
+			if (ret == 0) {
 				/* should notify about lost packet */
 				m_freem(n);
 				m_freem(opts);
@@ -498,6 +507,24 @@ rip_detach(struct socket *so)
 	in_pcbdetach(inp);
 
 	return (0);
+}
+
+void
+rip_lock(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_enter(&inp->inp_mtx);
+}
+
+void
+rip_unlock(struct socket *so)
+{
+	struct inpcb *inp = sotoinpcb(so);
+
+	NET_ASSERT_LOCKED();
+	mtx_leave(&inp->inp_mtx);
 }
 
 int
