@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.18 2022/09/12 09:18:30 jsg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.19 2022/09/13 01:38:31 jsg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 12 2022 $
+.Dd $Mdocdate: September 13 2022 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -152,7 +152,7 @@ The parent interface may only be configured for interfaces in
 learning mode, and while the interface is down.
 .It Dv SIOCGIFPARENT Fa "struct if_parent *"
 Get the name of the interface used for multicast communication.
-.It Dv SIOCGIFPARENT Fa "struct if_parent *"
+.It Dv SIOCDIFPARENT Fa "struct ifreq *"
 Remove the configuration of the interface used for multicast
 communication.
 .El

@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.82 2022/09/12 09:18:30 jsg Exp $
+.\" $OpenBSD: gre.4,v 1.83 2022/09/13 01:38:31 jsg Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2022 $
+.Dd $Mdocdate: September 13 2022 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -349,7 +349,7 @@ The parent interface may only be configured while the interface is
 down.
 .It Dv SIOCGIFPARENT Fa "struct if_parent *"
 Get the name of the interface used for multicast communication.
-.It Dv SIOCGIFPARENT Fa "struct if_parent *"
+.It Dv SIOCDIFPARENT Fa "struct ifreq *"
 Remove the configuration of the interface used for multicast
 communication.
 .\" bridge(4) ioctls should go here too.
