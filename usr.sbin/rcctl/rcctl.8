@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.41 2022/07/13 13:36:12 ajacoutot Exp $
+.\"	$OpenBSD: rcctl.8,v 1.42 2022/09/13 06:20:38 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: September 13 2022 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -27,7 +27,7 @@
 .Nm rcctl
 .Op Fl df
 .Sm off
-.Cm check | reload | restart | stop | start
+.Cm check | configtest | reload | restart | start | stop
 .Sm on
 .Ar daemon ...
 .Nm rcctl
@@ -36,7 +36,7 @@
 .Nm rcctl
 .Cm ls
 .Sm off
-.Cm all | failed | on | off | rogue | started | stopped
+.Cm all | failed | off | on | rogue | started | stopped
 .Sm on
 .Sh DESCRIPTION
 The
