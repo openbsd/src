@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.25 2022/08/30 19:33:26 tb Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.26 2022/09/13 04:59:18 jsing Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -530,14 +530,12 @@ chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return len;
 }
 
-static int
+static void
 chacha20_poly1305_cleanup(EVP_CIPHER_CTX *ctx)
 {
 	struct chacha20_poly1305_ctx *cpx = ctx->cipher_data;
 
 	explicit_bzero(cpx, sizeof(*cpx));
-
-	return 1;
 }
 
 static int

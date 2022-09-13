@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.46 2022/09/04 13:34:13 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.47 2022/09/13 04:59:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -601,18 +601,21 @@ int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 {
 	if (c->cipher != NULL) {
-		if (c->cipher->cleanup && !c->cipher->cleanup(c))
-			return 0;
-		/* Cleanse cipher context data */
-		if (c->cipher_data)
+		if (c->cipher->cleanup != NULL)
+			c->cipher->cleanup(c);
+		if (c->cipher_data != NULL)
 			explicit_bzero(c->cipher_data, c->cipher->ctx_size);
 	}
+
 	/* XXX - store size of cipher_data so we can always freezero(). */
 	free(c->cipher_data);
+
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(c->engine);
 #endif
+
 	explicit_bzero(c, sizeof(EVP_CIPHER_CTX));
+
 	return 1;
 }
 

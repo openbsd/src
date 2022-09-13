@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.48 2022/09/10 17:45:10 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.49 2022/09/13 04:59:18 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1255,15 +1255,15 @@ EVP_aes_256_ctr(void)
 #endif
 }
 
-static int
+static void
 aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 {
 	EVP_AES_GCM_CTX *gctx = c->cipher_data;
 
 	if (gctx->iv != c->iv)
 		free(gctx->iv);
+
 	explicit_bzero(gctx, sizeof(*gctx));
-	return 1;
 }
 
 /* increment counter (64-bit int) by 1 */
