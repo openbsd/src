@@ -63,9 +63,9 @@ static StringRef Stem;
 
 const char RanlibHelp[] = R"(OVERVIEW: LLVM Ranlib (llvm-ranlib)
 
-  This program generates an index to speed access to archives
+  Generate an index for archives
 
-USAGE: llvm-ranlib <archive-file>
+USAGE: llvm-ranlib archive...
 
 OPTIONS:
   -h --help             - Display available options
@@ -1224,7 +1224,7 @@ static int ar_main(int argc, char **argv) {
 }
 
 static int ranlib_main(int argc, char **argv) {
-  bool ArchiveSpecified = false;
+  std::vector<StringRef> Archives;
   for (int i = 1; i < argc; ++i) {
     StringRef arg(argv[i]);
     if (handleGenericOption(arg)) {
@@ -1253,16 +1253,16 @@ static int ranlib_main(int argc, char **argv) {
         arg = arg.drop_front(1);
       }
     } else {
-      if (ArchiveSpecified)
-        fail("exactly one archive should be specified");
-      ArchiveSpecified = true;
-      ArchiveName = arg.str();
+      Archives.push_back(arg);
     }
   }
-  if (!ArchiveSpecified) {
-    badUsage("an archive name must be specified");
+  for (StringRef Archive : Archives) {
+    ArchiveName = Archive.str();
+    performOperation(CreateSymTab, nullptr);
   }
-  return performOperation(CreateSymTab, nullptr);
+  if (Archives.empty())
+    badUsage("an archive name must be specified");
+  return 0;
 }
 
 int main(int argc, char **argv) {
