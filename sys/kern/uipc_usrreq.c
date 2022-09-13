@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.185 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.186 2022/09/13 09:05:47 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ uipc_shutdown(struct socket *so)
 	return (0);
 }
 
-int
+void
 uipc_rcvd(struct socket *so)
 {
 	struct socket *so2;
@@ -390,8 +390,6 @@ uipc_rcvd(struct socket *so)
 	default:
 		panic("uipc 2");
 	}
-
-	return (0);
 }
 
 int

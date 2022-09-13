@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.207 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.208 2022/09/13 09:05:47 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -792,18 +792,17 @@ out:
 /*
  * After a receive, possibly send window update to peer.
  */
-int
+void
 tcp_rcvd(struct socket *so)
 {
 	struct inpcb *inp;
 	struct tcpcb *tp;
-	int error;
 	short ostate;
 
 	soassertlocked(so);
 
-	if ((error = tcp_sogetpcb(so, &inp, &tp)))
-		return (error);
+	if (tcp_sogetpcb(so, &inp, &tp))
+		return;
 
 	if (so->so_options & SO_DEBUG)
 		ostate = tp->t_state;
@@ -820,7 +819,6 @@ tcp_rcvd(struct socket *so)
 
 	if (so->so_options & SO_DEBUG)
 		tcp_trace(TA_USER, ostate, tp, tp, NULL, PRU_RCVD, 0);
-	return (0);
 }
 
 /*

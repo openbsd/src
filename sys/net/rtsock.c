@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.355 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.356 2022/09/13 09:05:47 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ int	route_attach(struct socket *, int);
 int	route_detach(struct socket *);
 int	route_disconnect(struct socket *);
 int	route_shutdown(struct socket *);
-int	route_rcvd(struct socket *);
+void	route_rcvd(struct socket *);
 int	route_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
 int	route_abort(struct socket *);
@@ -299,7 +299,7 @@ route_shutdown(struct socket *so)
 	return (0);
 }
 
-int
+void
 route_rcvd(struct socket *so)
 {
 	struct rtpcb *rop = sotortpcb(so);
@@ -314,8 +314,6 @@ route_rcvd(struct socket *so)
 	    ((sbspace(rop->rop_socket, &rop->rop_socket->so_rcv) ==
 	    rop->rop_socket->so_rcv.sb_hiwat)))
 		rop->rop_flags &= ~ROUTECB_FLAG_FLUSH;
-
-	return (0);
 }
 
 int

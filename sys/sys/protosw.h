@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.55 2022/09/05 14:56:09 bluhm Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.56 2022/09/13 09:05:47 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ struct pr_usrreqs {
 	int	(*pru_accept)(struct socket *, struct mbuf *);
 	int	(*pru_disconnect)(struct socket *);
 	int	(*pru_shutdown)(struct socket *);
-	int	(*pru_rcvd)(struct socket *);
+	void	(*pru_rcvd)(struct socket *);
 	int	(*pru_send)(struct socket *, struct mbuf *, struct mbuf *,
 		    struct mbuf *);
 	int	(*pru_abort)(struct socket *);
@@ -336,12 +336,10 @@ pru_shutdown(struct socket *so)
 	return (*so->so_proto->pr_usrreqs->pru_shutdown)(so);
 }
 
-static inline int
+static inline void
 pru_rcvd(struct socket *so)
 {
-	if (so->so_proto->pr_usrreqs->pru_rcvd)
-		return (*so->so_proto->pr_usrreqs->pru_rcvd)(so);
-	return (EOPNOTSUPP);
+	(*so->so_proto->pr_usrreqs->pru_rcvd)(so);
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.157 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.158 2022/09/13 09:05:47 mvs Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -725,7 +725,7 @@ int	 tcp_connect(struct socket *, struct mbuf *);
 int	 tcp_accept(struct socket *, struct mbuf *);
 int	 tcp_disconnect(struct socket *);
 int	 tcp_shutdown(struct socket *);
-int	 tcp_rcvd(struct socket *);
+void	 tcp_rcvd(struct socket *);
 int	 tcp_send(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
 int	 tcp_abort(struct socket *);
