@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.16 2022/08/29 12:17:24 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.17 2022/09/13 10:20:22 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -2575,8 +2575,8 @@ static void
 agentx_get_finalize(struct agentx_get *axg)
 {
 	struct agentx_context *axc = axg->axg_axc;
-	struct agentx_session *axs = axc->axc_axs;
-	struct agentx *ax = axs->axs_ax;
+	struct agentx_session *axs;
+	struct agentx *ax;
 	size_t i, j, nvarbind = 0;
 	uint16_t error = 0, index = 0;
 	struct ax_varbind *vbl;
@@ -2591,10 +2591,13 @@ agentx_get_finalize(struct agentx_get *axg)
 		}
 	}
 
-	if (axg->axg_axc == NULL) {
+	if (axc == NULL) {
 		agentx_get_free(axg);
 		return;
 	}
+
+	axs = axc->axc_axs;
+	ax = axs->axs_ax;
 
 	if ((vbl = calloc(nvarbind, sizeof(*vbl))) == NULL) {
 		agentx_log_axg_warn(axg, "Couldn't parse request");
@@ -2655,12 +2658,14 @@ agentx_get_free(struct agentx_get *axg)
 {
 	struct agentx_varbind *axv;
 	struct agentx_object *axo;
-	struct agentx *ax = axg->axg_axc->axc_axs->axs_ax;
+	struct agentx *ax;
 	struct agentx_varbind_index *index;
 	size_t i, j;
 
-	if (axg->axg_axc != NULL)
+	if (axg->axg_axc != NULL) {
+		ax = axg->axg_axc->axc_axs->axs_ax;
 		TAILQ_REMOVE(&(ax->ax_getreqs), axg, axg_ax_getreqs);
+	}
 
 	for (i = 0; i < axg->axg_nvarbind; i++) {
 		axv = &(axg->axg_varbind[i]);
@@ -2701,6 +2706,11 @@ agentx_varbind_start(struct agentx_varbind *axv)
 		agentx_log_axg_fatalx(axv->axv_axg,
 		    "%s: axv_initialized not set", __func__);
 #endif
+
+	if (axc == NULL) {
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
 
 	bcopy(&(axv->axv_vb.avb_oid), &(axo_search.axo_oid),
 	    sizeof(axo_search.axo_oid));
