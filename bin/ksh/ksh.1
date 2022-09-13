@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.216 2022/03/31 17:27:14 naddy Exp $
+.\"	$OpenBSD: ksh.1,v 1.217 2022/09/13 20:26:26 kn Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: September 13 2022 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -745,9 +745,10 @@ Operators (e.g.\&
 must be unquoted.
 .It
 The second operand of the
-.Sq !=
+.Sq = ,
+.Sq ==
 and
-.Sq =
+.Sq !=
 expressions are patterns (e.g. the comparison
 .Ic [[ foobar = f*r ]]
 succeeds).
