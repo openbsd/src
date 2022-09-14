@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2022/09/14 10:09:48 kn Exp $
+#	$OpenBSD: Makefile,v 1.32 2022/09/14 13:37:03 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -13,29 +13,20 @@ FORMAT_DISK =		fdisk -iy
 STAGENAMES =		biosboot boot
 USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "arm64"
-FORMAT_DISK =		fdisk -iy -b '32768@32768:C'
 STAGENAMES =		BOOTAA64.EFI
 USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "armv7"
-FORMAT_DISK =		fdisk -iy -b '32768@32768:C'
 STAGENAMES =		BOOTARM.EFI
-USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "macppc"	# assume MBR
 FORMAT_DISK =		fdisk -iy -b '2048@1:06'
 STAGENAMES =		ofwboot
-USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "octeon"
 FORMAT_DISK =		fdisk -iy -b '65536@64:C'
 STAGENAMES =		boot
-USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "powerpc64"
-FORMAT_DISK =		fdisk -iy -b '32768@32768:C'
 STAGENAMES =		boot
-USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "riscv64"
-FORMAT_DISK =		fdisk -iy -b '32768@32768:C'
 STAGENAMES =		BOOTRISCV64.EFI
-USE_SOFTRAID ?=		No
 .elif ${MACHINE} == "sparc64"
 FORMAT_DISK =		true	# NOOP
 STAGENAMES =		bootblk ofwboot
@@ -43,8 +34,10 @@ USE_SOFTRAID ?=		Yes
 .endif
 # missing: alpha, hppa, landisk, loongson, luna88k
 
+FORMAT_DISK ?=		fdisk -iy -b '32768@32768:C'
 STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
+USE_SOFTRAID ?=		No
 
 .if ${USE_SOFTRAID:L} == "yes"
 # install on multi-chunk RAID 1C with keydisk so installboot(8) must
@@ -61,6 +54,7 @@ DISKFILES !=		jot -w disk%d.img    -- ${NDISKS}
 DISKDEVFILES !=		jot -w diskdev%d.txt -- ${NDISKS}
 ROOTDEVFILE =		rootdev.txt
 MOUNTPOINT =		mnt
+
 
 REGRESS_SETUP_ONCE =	create-root
 
@@ -160,9 +154,8 @@ cleanup:
 	rmdir -- ${MOUNTPOINT} 2>/dev/null
 .if ${USE_SOFTRAID:L} == "yes"
 	${SUDO} bioctl -d -- "$$(<${ROOTDEVFILE})" 2>/dev/null
-	${SUDO} vnconfig -u -- "$$(<${KEYDEVFILE})" 2>/dev/null
 .endif
-.for devfile in ${DISKDEVFILES}
+.for _ devfile in ${FILETUPLES}
 	${SUDO} vnconfig -u -- "$$(<${devfile})" 2>/dev/null
 .endfor
 
