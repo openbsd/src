@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2022/09/14 09:57:47 kn Exp $
+#	$OpenBSD: Makefile,v 1.30 2022/09/14 10:06:14 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -74,30 +74,14 @@ create-disks:
 .for diskfile devfile in ${FILETUPLES}
 	dd if=/dev/zero  of=${diskfile} bs=1m count=0 seek=128 status=none
 	${SUDO} vnconfig -- ${diskfile} 1>${devfile}
-.endfor
-
-format-disks: create-disks
-.for devfile in ${DISKDEVFILES}
 	${SUDO} ${FORMAT_DISK} -- "$$(<${devfile})" 1>/dev/null
 .  if ${USE_SOFTRAID:L} == "yes"
 	echo 'RAID 1M-* 100%' | \
 		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${devfile})" 1>/dev/null
 .  endif
 .endfor
-.if ${USE_SOFTRAID:L} == "yes"
-	# XXX installboot(8) does not skip keydisks yet, so ensure the expected
-	# MBR/GPT to avoid failing with
-	# "installboot: invalid boot record signature (0x0000) @ sector 0"
-	#
-	# bioctl(8) and softraid(4) don't care about partition tables, they
-	# just require a disklabel(5);  remove the next command or merge this
-	# block into above DISKDEVFILES loop once installboot skips keydisks.
-	${SUDO} ${FORMAT_DISK} -- "$$(<${KEYDEVFILE})" 1>/dev/null
-	echo 'RAID 1M' | \
-		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${KEYDEVFILE})" 1>/dev/null
-.endif
 
-create-root: format-disks
+create-root: create-disks
 .if ${USE_SOFTRAID:L} == "yes"
 	${SUDO} bioctl -l"$$(sed -- s/$$/a/ ${DISKDEVFILES} | paste -sd, -- -)" \
 	    -c1C -k"$$(<${KEYDEVFILE})"a -- softraid0 | \
