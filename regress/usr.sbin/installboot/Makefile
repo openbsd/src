@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2022/09/12 13:10:04 kn Exp $
+#	$OpenBSD: Makefile,v 1.28 2022/09/14 08:52:47 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -83,6 +83,14 @@ format-disks: create-disks
 .  endif
 .endfor
 .if ${USE_SOFTRAID:L} == "yes"
+	# XXX installboot(8) does not skip keydisks yet, so ensure the expected
+	# MBR/GPT to avoid failing with
+	# "installboot: invalid boot record signature (0x0000) @ sector 0"
+	#
+	# bioctl(8) and softraid(4) don't care about partition tables, they
+	# just require a disklabel(5);  remove the next command or merge this
+	# block into above DISKDEVFILES loop once installboot skips keydisks.
+	${SUDO} ${FORMAT_DISK} -- "$$(<${KEYDEVFILE})" 1>/dev/null
 	echo 'RAID 1M' | \
 		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${KEYDEVFILE})" 1>/dev/null
 .endif
