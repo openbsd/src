@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.61 2022/08/03 08:16:50 jsg Exp $
+.\"	$OpenBSD: sed.1,v 1.62 2022/09/14 07:14:02 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: August 3 2022 $
+.Dd $Mdocdate: September 14 2022 $
 .Dt SED 1
 .Os
 .Sh NAME
@@ -172,8 +172,8 @@ that match the address.
 A command line with two addresses selects the inclusive range from
 the first pattern space that matches the first address through the next
 pattern space that matches the second.
-(If the second address is a number less than or equal to the line number
-first selected, only that line is selected.)
+If the second address is a number less than or equal to the line number
+first selected, only the first address is selected.
 Starting at the first line following the selected range,
 .Nm
 starts looking again for the first address.
