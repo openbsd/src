@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson_installboot.c,v 1.6 2022/09/11 07:38:33 miod Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.7 2022/09/14 16:43:00 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -144,10 +143,6 @@ write_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			goto rmdir;
 		}
-		if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
-			rslt = -1;
-			goto rmdir;
-		}
 		if (mount(MOUNT_EXT2FS, dst, 0, &args) == -1) {
 			/* Try newfs'ing it. */
 			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
@@ -160,10 +155,6 @@ write_filesystem(struct disklabel *dl, char part)
 			rslt = system(cmd);
 			if (rslt == -1) {
 				warn("system('%s') failed", cmd);
-				goto rmdir;
-			}
-			if (WIFEXITED(rslt) && WEXITSTATUS(rslt)) {
-				rslt = -1;
 				goto rmdir;
 			}
 			rslt = mount(MOUNT_EXT2FS, dst, 0, &args);
