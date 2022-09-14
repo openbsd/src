@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.22 2022/09/11 18:07:46 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.23 2022/09/14 16:31:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -891,7 +891,6 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass, int passlen,
 	EVP_PKEY *pkey;
 	const STACK_OF(X509_ATTRIBUTE) *attrs;
 	X509 *x509;
-
 
 	attrs = PKCS12_SAFEBAG_get0_attrs(bag);
 
