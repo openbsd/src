@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.350 2022/07/22 15:53:33 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.351 2022/09/14 13:07:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6391,6 +6391,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct ibuf		*spibuf = NULL;
 	struct ibuf		*flowbuf = NULL;
 	char			*buf;
+	char			 prenat_mask[10];
 	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
 	size_t			 encrlen = 0, integrlen = 0;
 	int			 esn = 0;
@@ -6505,10 +6506,22 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 
 		/* append flow to log buffer */
 		if (flow->flow_dir == IPSP_DIRECTION_OUT &&
-		    asprintf(&buf, "%s-%s/%d=%s/%d(%u)%s",
+		    flow->flow_prenat.addr_af != 0)
+			snprintf(prenat_mask, sizeof(prenat_mask), "%d",
+			    flow->flow_prenat.addr_mask);
+		else
+			prenat_mask[0] = '\0';
+		if (flow->flow_dir == IPSP_DIRECTION_OUT &&
+		    asprintf(&buf, "%s-%s/%d%s%s%s%s%s=%s/%d(%u)%s",
 		    print_map(flow->flow_saproto, ikev2_saproto_map),
 		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
 		    flow->flow_src.addr_mask,
+		    flow->flow_prenat.addr_af != 0 ? "[": "",
+		    flow->flow_prenat.addr_af != 0 ? print_host((struct sockaddr *)
+		    &flow->flow_prenat.addr, NULL, 0) : "",
+		    flow->flow_prenat.addr_af != 0 ? "/" : "",
+		    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
+		    flow->flow_prenat.addr_af != 0 ? "]": "",
 		    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
 		    flow->flow_dst.addr_mask,
 		    flow->flow_ipproto,
@@ -7448,17 +7461,30 @@ ikev2_info_csa(struct iked *env, int dolog, const char *msg, struct iked_childsa
 void
 ikev2_info_flow(struct iked *env, int dolog, const char *msg, struct iked_flow *flow)
 {
+	char		prenat_mask[10];
 	char		*buf;
 	int		buflen;
 
+	if (flow->flow_prenat.addr_af != 0)
+		snprintf(prenat_mask, sizeof(prenat_mask), "%d",
+		    flow->flow_prenat.addr_mask);
+	else
+		prenat_mask[0] = '\0';
+
 	buflen = asprintf(&buf,
-	    "%s: %p %s %s %s/%d -> %s/%d [%u]@%d (%s) @%p\n", msg, flow,
+	    "%s: %p %s %s %s/%d -> %s/%d %s%s%s%s%s[%u]@%d (%s) @%p\n", msg, flow,
 	    print_map(flow->flow_saproto, ikev2_saproto_map),
 	    flow->flow_dir == IPSP_DIRECTION_IN ? "in" : "out",
 	    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
 	    flow->flow_src.addr_mask,
 	    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
 	    flow->flow_dst.addr_mask,
+	    flow->flow_prenat.addr_af != 0 ? "[": "",
+	    flow->flow_prenat.addr_af != 0 ? print_host((struct sockaddr *)
+	    &flow->flow_prenat.addr, NULL, 0) : "",
+	    flow->flow_prenat.addr_af != 0 ? "/" : "",
+	    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
+	    flow->flow_prenat.addr_af != 0 ? "] ": "",
 	    flow->flow_ipproto,
 	    flow->flow_rdomain,
 	    flow->flow_loaded ? "L" : "",
