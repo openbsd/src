@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2022/09/14 08:52:47 kn Exp $
+#	$OpenBSD: Makefile,v 1.29 2022/09/14 09:57:47 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -50,29 +50,31 @@ STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
 # install on multi-chunk RAID 1C with keydisk so installboot(8) must
 # - iterate over chunks
 # - ignore the keydisk/not install to it
-NDISKS ?=		1 2
+NDISKS ?=		2
 KEYDISKFILE =		keydisk.img
 KEYDEVFILE =		keydev.txt
 .else
 NDISKS =		1
 .endif
-DISKFILES =		${NDISKS:=disk%.img}
-DISKDEVFILES =		${NDISKS:=diskdev%.txt}
+
+DISKFILES !=		jot -w disk%d.img    -- ${NDISKS}
+DISKDEVFILES !=		jot -w diskdev%d.txt -- ${NDISKS}
 ROOTDEVFILE =		rootdev.txt
 MOUNTPOINT =		mnt
 
-
 REGRESS_SETUP_ONCE =	copy-bootstrap-to-root
 
+# |1.img ... n.img|    |1.img 1.txt|
+# |1.txt ... n.txt| => |...   ...  |
+#                      |n.img n.txt|
+FILETUPLES !=		{ echo ${DISKFILES}    ${KEYDISKFILE}; \
+			  echo ${DISKDEVFILES} ${KEYDEVFILE} ; } | \
+				rs -T -- $$((${NDISKS} + 1)) 2
 create-disks:
-.for n in ${NDISKS}
-	dd if=/dev/zero  of=disk${n}.img bs=1m count=0 seek=128 status=none
-	${SUDO} vnconfig -- disk${n}.img 1>diskdev${n}.txt
+.for diskfile devfile in ${FILETUPLES}
+	dd if=/dev/zero  of=${diskfile} bs=1m count=0 seek=128 status=none
+	${SUDO} vnconfig -- ${diskfile} 1>${devfile}
 .endfor
-.if ${USE_SOFTRAID:L} == "yes"
-	dd if=/dev/zero  of=${KEYDISKFILE} bs=1m count=0 seek=2 status=none
-	${SUDO} vnconfig -- ${KEYDISKFILE} 1>${KEYDEVFILE}
-.endif
 
 format-disks: create-disks
 .for devfile in ${DISKDEVFILES}
@@ -172,10 +174,7 @@ dry-toomany:
 	${DRY_RUN} -- disk stage1 stage2 too many 2>/dev/null
 
 
-CLEANFILES =		${DISKFILES} ${DISKDEVFILES} ${ROOTDEVFILE}
-.if ${USE_SOFTRAID:L} == "yes"
-CLEANFILES +=		${KEYDISKFILE} ${KEYDEVFILE}
-.endif
+CLEANFILES =		*.txt *.img
 REGRESS_CLEANUP =	cleanup
 
 # allow failure to always cleanup as much as possible
