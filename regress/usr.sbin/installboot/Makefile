@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2022/09/14 10:06:14 kn Exp $
+#	$OpenBSD: Makefile,v 1.31 2022/09/14 10:09:48 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -62,7 +62,7 @@ DISKDEVFILES !=		jot -w diskdev%d.txt -- ${NDISKS}
 ROOTDEVFILE =		rootdev.txt
 MOUNTPOINT =		mnt
 
-REGRESS_SETUP_ONCE =	copy-bootstrap-to-root
+REGRESS_SETUP_ONCE =	create-root
 
 # |1.img ... n.img|    |1.img 1.txt|
 # |1.txt ... n.txt| => |...   ...  |
@@ -86,22 +86,14 @@ create-root: create-disks
 	${SUDO} bioctl -l"$$(sed -- s/$$/a/ ${DISKDEVFILES} | paste -sd, -- -)" \
 	    -c1C -k"$$(<${KEYDEVFILE})"a -- softraid0 | \
 		awk -- '{ print $$NF }' 1>${ROOTDEVFILE}
+	${SUDO} ${FORMAT_DISK} -- "$$(<${ROOTDEVFILE})" 1>/dev/null
 .else
 	ln -s -- ${DISKDEVFILES} ${ROOTDEVFILE}
 .endif
-
-format-root: create-root
-.if ${USE_SOFTRAID:L} == "yes"
-	${SUDO} ${FORMAT_DISK} -- "$$(<${ROOTDEVFILE})" 1>/dev/null
-.endif
 	${SUDO} disklabel -Aw -- "$$(<${ROOTDEVFILE})"
 	${SUDO} newfs -q -- "$$(<${ROOTDEVFILE})"a 1>/dev/null
-
-mount-root: format-root
 	mkdir -- ${MOUNTPOINT}
 	${SUDO} mount -- /dev/"$$(<${ROOTDEVFILE})"a ${MOUNTPOINT}
-
-copy-bootstrap-to-root: mount-root
 	${SUDO} mkdir -- ${MOUNTPOINT}/usr
 	${SUDO} cp -r -- ${STAGEDIR} ${MOUNTPOINT}/usr/
 
