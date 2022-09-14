@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Mon Nov 21 07:02:00 MST 2022
+From deraadt@do-not-reply.openbsd.org Thu Oct 20 07:02:00 MDT 2022
 Return-Path: root
-Date: Nov 21 07:02:00 MST 2022
+Date: Oct 20 07:02:00 MDT 2022
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 7.2!
