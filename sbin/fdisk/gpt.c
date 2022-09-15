@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.82 2022/09/15 10:10:14 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.83 2022/09/15 15:05:58 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -436,7 +436,7 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 {
 	const uint8_t		 gpt_uuid_msdos[] = GPT_UUID_MSDOS;
 	const struct unit_type	*ut;
-	struct uuid		 uuid_msdos;
+	struct uuid		 uuid;
 	char			*guidstr = NULL;
 	double			 size;
 	uint64_t		 attrs, end, start;
@@ -466,9 +466,8 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 				printf("Ignore ");
 			if (attrs & GPTPARTATTR_BOOTABLE)
 				printf("Bootable ");
-			uuid_dec_be(gpt_uuid_msdos, &uuid_msdos);
-			if (uuid_compare(&uuid_msdos, &gp[pn].gp_type, NULL) ==
-			    0) {
+			uuid_dec_be(gpt_uuid_msdos, &uuid);
+			if (uuid_compare(&uuid, &gp[pn].gp_type, NULL) == 0) {
 				if (attrs & GPTPARTATTR_MS_READONLY)
 					printf("ReadOnly " );
 				if (attrs & GPTPARTATTR_MS_SHADOW)
