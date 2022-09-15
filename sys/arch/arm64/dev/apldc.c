@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.2 2022/09/03 08:44:56 kettenis Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.3 2022/09/15 14:45:49 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1066,6 +1066,22 @@ struct apldckbd_softc {
 	struct apldchidev_softc	*sc_hidev;
 	struct hidkbd		sc_kbd;
 	int			sc_spl;
+	struct hid_location	sc_fn;
+	int			sc_has_fn;
+};
+
+struct apldckbd_translation {
+	uint8_t original;
+	uint8_t translation;
+};
+
+static const struct apldckbd_translation apldckbd_trans_table[] = {
+	{ 40, 73 },	/* return -> insert */
+	{ 42, 76 },	/* backspace -> delete */
+	{ 79, 77 },	/* right -> end */
+	{ 80, 74 },	/* left -> home */
+	{ 81, 78 },	/* down -> page down */
+	{ 82, 75 }	/* up -> page up */
 };
 
 void	apldckbd_cngetc(void *, u_int *, int *);
@@ -1122,6 +1138,9 @@ apldckbd_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	sc->sc_has_fn = hid_locate(aa->aa_desc, aa->aa_desclen,
+	    HID_USAGE2(HUP_APPLE, HUG_FN_KEY), 1, hid_input, &sc->sc_fn, NULL);
+
 	if (kbd->sc_console_keyboard) {
 		extern struct wskbd_mapdata ukbd_keymapdata;
 
@@ -1134,13 +1153,40 @@ apldckbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
+apldckbd_munge(void *v, uint8_t *ibuf, size_t ilen)
+{
+	struct apldckbd_softc *sc = v;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t *pos, *spos, *epos;
+	const struct apldckbd_translation *tbl;
+	size_t tsize;
+
+	if (!hid_get_data(ibuf, ilen, &sc->sc_fn))
+		return;
+
+	spos = ibuf + kbd->sc_keycodeloc.pos / 8;
+	epos = spos + kbd->sc_nkeycode;
+
+	for (pos = spos; pos != epos; pos++) {
+		tbl = apldckbd_trans_table;
+		tsize = nitems(apldckbd_trans_table);
+		for (; tsize != 0; tbl++, tsize--)
+			if (tbl->original == *pos)
+				*pos = tbl->translation;
+	}
+}
+
+void
 apldckbd_intr(struct device *self, uint8_t *packet, size_t packetlen)
 {
 	struct apldckbd_softc *sc = (struct apldckbd_softc *)self;
 	struct hidkbd *kbd = &sc->sc_kbd;
 
-	if (kbd->sc_enabled)
+	if (kbd->sc_enabled) {
+		if (sc->sc_has_fn)
+			apldckbd_munge(sc, &packet[1], packetlen - 1);
 		hidkbd_input(kbd, &packet[1], packetlen - 1);
+	}
 }
 
 int
