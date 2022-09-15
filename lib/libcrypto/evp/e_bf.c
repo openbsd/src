@@ -1,4 +1,4 @@
-/* $OpenBSD: e_bf.c,v 1.13 2022/09/10 17:39:47 jsing Exp $ */
+/* $OpenBSD: e_bf.c,v 1.14 2022/09/15 07:04:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,14 +86,13 @@ bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 static int
 bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
-	while (inl >= EVP_MAXCHUNK) {
-		BF_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
-		inl -= EVP_MAXCHUNK;
-		in += EVP_MAXCHUNK;
-		out += EVP_MAXCHUNK;
+	while (inl >= chunk) {
+		BF_cbc_encrypt(in, out, (long)chunk, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
 	}
 
 	if (inl)
@@ -105,10 +104,7 @@ bf_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, 
 static int
 bf_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	size_t chunk = EVP_MAXCHUNK;
-
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
 	if (inl < chunk)
 		chunk = inl;
@@ -130,9 +126,6 @@ bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, 
 {
 	size_t i, bl;
 
-	if (inl > LONG_MAX)
-		return 0;
-
 	bl = ctx->cipher->block_size;
 
 	if (inl < bl)
@@ -149,14 +142,13 @@ bf_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, 
 static int
 bf_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
-	while (inl >= EVP_MAXCHUNK) {
-		BF_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
-		inl -= EVP_MAXCHUNK;
-		in += EVP_MAXCHUNK;
-		out += EVP_MAXCHUNK;
+	while (inl >= chunk) {
+		BF_ofb64_encrypt(in, out, (long)chunk, &((EVP_BF_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
 	}
 
 	if (inl)

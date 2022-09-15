@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.16 2022/09/10 17:39:47 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.17 2022/09/15 07:04:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,9 +103,6 @@ idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	size_t i, bl;
 
-	if (inl > LONG_MAX)
-		return 0;
-
 	bl = ctx->cipher->block_size;
 
 	if (inl < bl)
@@ -114,7 +111,8 @@ idea_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	inl -= bl;
 
 	for (i = 0; i <= inl; i += bl)
-	idea_ecb_encrypt(in + i, out + i, ctx->cipher_data);
+		idea_ecb_encrypt(in + i, out + i, ctx->cipher_data);
+
 	return 1;
 }
 
@@ -125,14 +123,13 @@ typedef struct {
 static int
 idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
-	while (inl >= EVP_MAXCHUNK) {
-		idea_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
-		inl -= EVP_MAXCHUNK;
-		in += EVP_MAXCHUNK;
-		out += EVP_MAXCHUNK;
+	while (inl >= chunk) {
+		idea_cbc_encrypt(in, out, (long)chunk, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, ctx->encrypt);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
 	}
 
 	if (inl)
@@ -144,14 +141,13 @@ idea_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in
 static int
 idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
-	while (inl >= EVP_MAXCHUNK) {
-		idea_ofb64_encrypt(in, out, (long)EVP_MAXCHUNK, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
-		inl -= EVP_MAXCHUNK;
-		in += EVP_MAXCHUNK;
-		out += EVP_MAXCHUNK;
+	while (inl >= chunk) {
+		idea_ofb64_encrypt(in, out, (long)chunk, &((EVP_IDEA_KEY *)ctx->cipher_data)->ks, ctx->iv, &ctx->num);
+		inl -= chunk;
+		in += chunk;
+		out += chunk;
 	}
 
 	if (inl)
@@ -163,10 +159,7 @@ idea_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in
 static int
 idea_cfb64_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
 {
-	size_t chunk = EVP_MAXCHUNK;
-
-	if (inl > LONG_MAX)
-		return 0;
+	size_t chunk = LONG_MAX & ~0xff;
 
 	if (inl < chunk)
 		chunk = inl;
