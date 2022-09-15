@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.95 2021/02/02 12:58:42 robert Exp $	*/
+/*	$OpenBSD: util.c,v 1.96 2022/09/15 12:47:10 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -1075,6 +1075,84 @@ controlediting(void)
 	}
 }
 #endif /* !SMALL */
+
+/*
+ * connect(2) with an optional timeout if secs > 0.
+ */
+int
+timed_connect(int s, const struct sockaddr *name, socklen_t namelen, int secs)
+{
+	struct timespec now, target, timebuf, *timeout = NULL;
+	int flags, nready, optval, ret = -1;
+	socklen_t optlen;
+	struct pollfd pfd;
+
+	if (secs > 0) {
+		timebuf.tv_sec = secs;
+		timebuf.tv_nsec = 0;
+		timeout = &timebuf;
+		clock_gettime(CLOCK_MONOTONIC, &target);
+		timespecadd(&target, timeout, &target);
+	}
+
+	flags = fcntl(s, F_GETFL, 0);
+	if (flags == -1) {
+		warn("fcntl(F_GETFL)");
+		return -1;
+	}
+	if (!(flags & O_NONBLOCK)) {
+		if (fcntl(s, F_SETFL, flags | O_NONBLOCK) == -1) {
+			warn("fcntl(F_SETFL)");
+			return -1;
+		}
+	}
+
+	ret = connect(s, name, namelen);
+	if (ret == 0 || errno != EINPROGRESS)
+		goto done;
+
+	for (;;) {
+		pfd.fd = s;
+		pfd.events = POLLOUT;
+		nready = ppoll(&pfd, 1, timeout, NULL);
+		switch (nready) {
+		case -1:
+			if (errno != EINTR && errno != EAGAIN) {
+				warn("ppoll");
+				goto done;
+			}
+			if (timeout == NULL)
+				continue;
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			timespecsub(&now, &target, timeout);
+			if (timeout->tv_sec >= 0)
+				continue;
+			/* FALLTHROUGH */
+		case 0:
+			errno = ETIMEDOUT;
+			goto done;
+		default:
+			optlen = sizeof(optval);
+			ret = getsockopt(s, SOL_SOCKET, SO_ERROR, &optval,
+			    &optlen);
+			if (ret == 0 && optval != 0) {
+				ret = -1;
+				errno = optval;
+			}
+			goto done;
+		}
+	}
+
+done:
+	if (!(flags & O_NONBLOCK)) {
+		if (fcntl(s, F_SETFL, flags) == -1) {
+			warn("fcntl(F_SETFL)");
+			ret = -1;
+		}
+	}
+
+	return ret;
+}
 
 /*
  * Wait for an asynchronous connect(2) attempt to finish.

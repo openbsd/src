@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.52 2021/02/02 12:58:42 robert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.53 2022/09/15 12:47:10 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 
 void	abort_remote(FILE *);
 void	abortpt(int);
@@ -75,7 +76,6 @@ void	cmdabort(int);
 void	cmdscanner(int);
 int	command(const char *, ...);
 int	confirm(const char *, const char *);
-int	connect_wait(int);
 FILE   *dataconn(const char *);
 int	foregroundproc(void);
 int	fileindir(const char *, const char *);
@@ -109,6 +109,7 @@ void	sethash(int, char **);
 void	setpeer(int, char **);
 void	setttywidth(int);
 char   *slurpstring(void);
+int	timed_connect(int s, const struct sockaddr *, socklen_t, int);
 
 __dead void	usage(void);
 

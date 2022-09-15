@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.209 2022/09/08 11:12:44 claudio Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.210 2022/09/15 12:47:10 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -171,14 +171,6 @@ url_encode(const char *path)
 
 	*epathp = '\0';
 	return (epath);
-}
-
-/* ARGSUSED */
-static void
-tooslow(int signo)
-{
-	dprintf(STDERR_FILENO, "%s: connect taking too long\n", __progname);
-	_exit(2);
 }
 
 /*
@@ -604,14 +596,8 @@ noslash:
 		}
 #endif /* !SMALL */
 
-		if (connect_timeout) {
-			(void)signal(SIGALRM, tooslow);
-			alarmtimer(connect_timeout);
-		}
-
-		for (error = connect(fd, res->ai_addr, res->ai_addrlen);
-		    error != 0 && errno == EINTR; error = connect_wait(fd))
-			continue;
+		error = timed_connect(fd, res->ai_addr, res->ai_addrlen,
+		    connect_timeout);
 		if (error != 0) {
 			save_errno = errno;
 			close(fd);
@@ -699,11 +685,6 @@ noslash:
 		}
 	}
 #endif
-
-	if (connect_timeout) {
-		signal(SIGALRM, SIG_DFL);
-		alarmtimer(0);
-	}
 
 	/*
 	 * Construct and send the request. Proxy requests don't want leading /.
@@ -1242,7 +1223,6 @@ aborthttp(int signo)
 {
 	const char errmsg[] = "\nfetch aborted.\n";
 
-	alarmtimer(0);
 	write(fileno(ttyout), errmsg, sizeof(errmsg) - 1);
 	longjmp(httpabort, 1);
 }

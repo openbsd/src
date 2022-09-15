@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.123 2022/03/27 20:09:12 naddy Exp $
+.\"	$OpenBSD: ftp.1,v 1.124 2022/09/15 12:47:10 millert Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: March 27 2022 $
+.Dd $Mdocdate: September 15 2022 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -320,9 +320,9 @@ Forces
 to show all responses from the remote server, as well
 as report on data transfer statistics.
 .It Fl w Ar seconds
-For URL format connections to HTTP/HTTPS servers, abort a
-slow connection after
-.Ar seconds .
+Wait for
+.Ar seconds
+for the remote server to connect before giving up.
 .El
 .Pp
 The host with which
