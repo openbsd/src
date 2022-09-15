@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2004 2022/09/02 10:34:07 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2005 2022/09/15 04:28:07 kmos Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4013,6 +4013,9 @@
 #define	PCI_PRODUCT_INTEL_I219_V7	0x15bc		/* I219-V */
 #define	PCI_PRODUCT_INTEL_I219_LM6	0x15bd		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V6	0x15be		/* I219-V */
+#define	PCI_PRODUCT_INTEL_JHL6240	0x15bf		/* JHL6240 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL6240_PCIE	0x15c0		/* JHL6240 Thunderbolt 3 */
+#define	PCI_PRODUCT_INTEL_JHL6240_XHCI	0x15c1		/* JHL6240 Thunderbolt 3 */
 #define	PCI_PRODUCT_INTEL_X550EM_A_KR	0x15c2		/* X553 Backplane */
 #define	PCI_PRODUCT_INTEL_X550EM_A_KR_L	0x15c3		/* X553 Backplane */
 #define	PCI_PRODUCT_INTEL_X550EM_A_SFP_N	0x15c4		/* X553 SFP+ */
