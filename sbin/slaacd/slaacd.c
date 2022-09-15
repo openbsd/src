@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.65 2022/07/12 16:54:59 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.66 2022/09/15 07:59:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -687,7 +687,8 @@ delete_address(struct imsg_configure_address *address)
 
 	log_debug("%s: %s", __func__, if_name);
 
-	if (ioctl(ioctl_sock, SIOCDIFADDR_IN6, &in6_ridreq) == -1)
+	if (ioctl(ioctl_sock, SIOCDIFADDR_IN6, &in6_ridreq) == -1 &&
+	    errno != EADDRNOTAVAIL)
 		log_warn("%s: cannot remove address", __func__);
 
 }
