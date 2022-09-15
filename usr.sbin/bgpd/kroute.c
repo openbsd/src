@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.298 2022/08/30 16:00:21 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.299 2022/09/15 08:20:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -136,14 +136,14 @@ int	kif_compare(struct kif *, struct kif *);
 
 struct kroute	*kroute_find(struct ktable *, const struct bgpd_addr *,
 		    uint8_t, uint8_t);
-struct kroute	*kroute_matchgw(struct kroute *, struct bgpd_addr *);
+struct kroute	*kroute_matchgw(struct kroute *, struct kroute_full *);
 int		 kroute_insert(struct ktable *, struct kroute_full *);
 int		 kroute_remove(struct ktable *, struct kroute_full *, int);
 void		 kroute_clear(struct ktable *);
 
 struct kroute6	*kroute6_find(struct ktable *, const struct bgpd_addr *,
 		    uint8_t, uint8_t);
-struct kroute6	*kroute6_matchgw(struct kroute6 *, struct bgpd_addr *);
+struct kroute6	*kroute6_matchgw(struct kroute6 *, struct kroute_full *);
 void		 kroute6_clear(struct ktable *);
 
 struct knexthop	*knexthop_find(struct ktable *, struct bgpd_addr *);
@@ -1583,16 +1583,20 @@ kroute_find(struct ktable *kt, const struct bgpd_addr *prefix,
 }
 
 struct kroute *
-kroute_matchgw(struct kroute *kr, struct bgpd_addr *gw)
+kroute_matchgw(struct kroute *kr, struct kroute_full *kf)
 {
 	in_addr_t	nexthop;
 
-	if (gw->aid != AID_INET) {
-		log_warnx("%s: no nexthop defined", __func__);
+	if (kf->flags & F_CONNECTED) {
+		do {
+			if (kr->ifindex == kf->ifindex)
+				return (kr);
+			kr = kr->next;
+		} while (kr);
 		return (NULL);
 	}
-	nexthop = gw->v4.s_addr;
 
+	nexthop = kf->nexthop.v4.s_addr;
 	do {
 		if (kr->nexthop.s_addr == nexthop)
 			return (kr);
@@ -1735,7 +1739,7 @@ kroute4_remove(struct ktable *kt, struct kroute_full *kf, int any)
 	/* get the correct route to remove */
 	krm = kr;
 	if (!any) {
-		if ((krm = kroute_matchgw(kr, &kf->nexthop)) == NULL) {
+		if ((krm = kroute_matchgw(kr, kf)) == NULL) {
 			log_warnx("delete %s/%u: route not found",
 			    log_addr(&kf->prefix), kf->prefixlen);
 			return (-2);
@@ -1805,7 +1809,7 @@ kroute6_remove(struct ktable *kt, struct kroute_full *kf, int any)
 	/* get the correct route to remove */
 	krm = kr;
 	if (!any) {
-		if ((krm = kroute6_matchgw(kr, &kf->nexthop)) == NULL) {
+		if ((krm = kroute6_matchgw(kr, kf)) == NULL) {
 			log_warnx("delete %s/%u: route not found",
 			    log_addr(&kf->prefix), kf->prefixlen);
 			return (-2);
@@ -1919,19 +1923,23 @@ kroute6_find(struct ktable *kt, const struct bgpd_addr *prefix,
 }
 
 struct kroute6 *
-kroute6_matchgw(struct kroute6 *kr, struct bgpd_addr *gw)
+kroute6_matchgw(struct kroute6 *kr, struct kroute_full *kf)
 {
 	struct in6_addr	nexthop;
 
-	if (gw->aid != AID_INET6) {
-		log_warnx("%s: no nexthop defined", __func__);
+	if (kf->flags & F_CONNECTED) {
+		do {
+			if (kr->ifindex == kf->ifindex)
+				return (kr);
+			kr = kr->next;
+		} while (kr);
 		return (NULL);
 	}
-	nexthop = gw->v6;
 
+	nexthop = kf->nexthop.v6;
 	do {
 		if (memcmp(&kr->nexthop, &nexthop, sizeof(nexthop)) == 0 &&
-		    kr->nexthop_scope_id == gw->scope_id)
+		    kr->nexthop_scope_id == kf->nexthop.scope_id)
 			return (kr);
 		kr = kr->next;
 	} while (kr);
@@ -3117,8 +3125,7 @@ kr_fib_change(struct ktable *kt, struct kroute_full *kf, int type, int mpath)
 			if (!(kf->flags & F_BGPD)) {
 				/* get the correct route */
 				if (mpath && type == RTM_CHANGE &&
-				    (kr = kroute_matchgw(kr, &kf->nexthop)) ==
-				    NULL) {
+				    (kr = kroute_matchgw(kr, kf)) == NULL) {
 					log_warnx("%s[change]: "
 					    "mpath route not found", __func__);
 					goto add4;
@@ -3183,8 +3190,7 @@ add4:
 			if (!(kf->flags & F_BGPD)) {
 				/* get the correct route */
 				if (mpath && type == RTM_CHANGE &&
-				    (kr6 = kroute6_matchgw(kr6, &kf->nexthop))
-				    == NULL) {
+				    (kr6 = kroute6_matchgw(kr6, kf)) == NULL) {
 					log_warnx("%s[change]: IPv6 mpath "
 					    "route not found", __func__);
 					goto add6;
