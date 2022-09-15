@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.158 2022/08/12 02:20:36 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.159 2022/09/15 19:30:51 cheloha Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -854,16 +854,6 @@ cpu_start_secondary(struct cpu_info *ci)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		db_enter();
 #endif
-	} else {
-		/*
-		 * Test if TSCs are synchronized.  Invalidate cache to
-		 * minimize possible cache effects.  Disable interrupts to
-		 * try to rule out external interference.
-		 */
-		s = intr_disable();
-		wbinvd();
-		tsc_test_sync_bp(ci);
-		intr_restore(s);
 	}
 
 	if ((ci->ci_flags & CPUF_IDENTIFIED) == 0) {
@@ -876,6 +866,18 @@ cpu_start_secondary(struct cpu_info *ci)
 		if (ci->ci_flags & CPUF_IDENTIFY)
 			printf("%s: failed to identify\n",
 			    ci->ci_dev->dv_xname);
+	}
+
+	if (ci->ci_flags & CPUF_IDENTIFIED) {
+		/*
+		 * Test if TSCs are synchronized.  Invalidate cache to
+		 * minimize possible cache effects.  Disable interrupts to
+		 * try to rule out external interference.
+		 */
+		s = intr_disable();
+		wbinvd();
+		tsc_test_sync_bp(curcpu());
+		intr_restore(s);
 	}
 
 	CPU_START_CLEANUP(ci);
@@ -905,7 +907,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 		/* Test if TSCs are synchronized again. */
 		s = intr_disable();
 		wbinvd();
-		tsc_test_sync_bp(ci);
+		tsc_test_sync_bp(curcpu());
 		intr_restore(s);
 	}
 }
@@ -930,14 +932,7 @@ cpu_hatch(void *v)
 	if (ci->ci_flags & CPUF_PRESENT)
 		panic("%s: already running!?", ci->ci_dev->dv_xname);
 #endif
-
-	/*
-	 * Test if our TSC is synchronized for the first time.
-	 * Note that interrupts are off at this point.
-	 */
-	wbinvd();
 	atomic_setbits_int(&ci->ci_flags, CPUF_PRESENT);
-	tsc_test_sync_ap(ci);
 
 	lapic_enable();
 	lapic_startclock();
@@ -959,6 +954,13 @@ cpu_hatch(void *v)
 		/* Prevent identifycpu() from running again */
 		atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
 	}
+
+	/*
+	 * Test if our TSC is synchronized for the first time.
+	 * Note that interrupts are off at this point.
+	 */
+	wbinvd();
+	tsc_test_sync_ap(ci);
 
 	while ((ci->ci_flags & CPUF_GO) == 0)
 		delay(10);

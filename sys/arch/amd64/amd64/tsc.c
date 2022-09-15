@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.26 2022/08/25 17:38:16 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.27 2022/09/15 19:30:51 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -301,8 +301,8 @@ volatile u_int tsc_ingress_barrier;	/* [a] Test start barrier */
 volatile u_int tsc_test_rounds;		/* [p] Remaining test rounds */
 int tsc_is_synchronized = 1;		/* [p] Have we ever failed the test? */
 
+void tsc_adjust_reset(struct cpu_info *, struct tsc_test_status *);
 void tsc_report_test_results(void);
-void tsc_reset_adjust(struct tsc_test_status *);
 void tsc_test_ap(void);
 void tsc_test_bp(void);
 
@@ -317,7 +317,7 @@ tsc_test_sync_bp(struct cpu_info *ci)
 		return;
 #endif
 	/* Reset IA32_TSC_ADJUST if it exists. */
-	tsc_reset_adjust(&tsc_bp_status);
+	tsc_adjust_reset(ci, &tsc_bp_status);
 
 	/* Reset the test cycle limit and round count. */
 	tsc_test_cycles = TSC_TEST_MSECS * tsc_frequency / 1000;
@@ -384,7 +384,7 @@ tsc_test_sync_ap(struct cpu_info *ci)
 		    __func__, ci->ci_dev->dv_xname, tsc_ap_name);
 	}
 
-	tsc_reset_adjust(&tsc_ap_status);
+	tsc_adjust_reset(ci, &tsc_ap_status);
 
 	/*
 	 * The AP is only responsible for running the test and
@@ -433,24 +433,14 @@ tsc_report_test_results(void)
 
 /*
  * Reset IA32_TSC_ADJUST if we have it.
- *
- * XXX We should rearrange cpu_hatch() so that the feature
- * flags are already set before we get here.  Check CPUID
- * by hand until then.
  */
 void
-tsc_reset_adjust(struct tsc_test_status *tts)
+tsc_adjust_reset(struct cpu_info *ci, struct tsc_test_status *tts)
 {
-	uint32_t eax, ebx, ecx, edx;
-
-	CPUID(0, eax, ebx, ecx, edx);
-	if (eax >= 7) {
-		CPUID_LEAF(7, 0, eax, ebx, ecx, edx);
-		if (ISSET(ebx, SEFF0EBX_TSC_ADJUST)) {
-			tts->adj = rdmsr(MSR_TSC_ADJUST);
-			if (tts->adj != 0)
-				wrmsr(MSR_TSC_ADJUST, 0);
-		}
+	if (ISSET(ci->ci_feature_sefflags_ebx, SEFF0EBX_TSC_ADJUST)) {
+		tts->adj = rdmsr(MSR_TSC_ADJUST);
+		if (tts->adj != 0)
+			wrmsr(MSR_TSC_ADJUST, 0);
 	}
 }
 
