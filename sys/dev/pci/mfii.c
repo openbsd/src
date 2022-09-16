@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.85 2022/04/16 19:19:59 naddy Exp $ */
+/* $OpenBSD: mfii.c,v 1.86 2022/09/16 12:08:28 stsp Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -407,6 +407,7 @@ void			mfii_put_ccb(void *, void *);
 int			mfii_init_ccb(struct mfii_softc *);
 void			mfii_scrub_ccb(struct mfii_ccb *);
 
+int			mfii_reset_hard(struct mfii_softc *);
 int			mfii_transition_firmware(struct mfii_softc *);
 int			mfii_initialise_firmware(struct mfii_softc *);
 int			mfii_get_info(struct mfii_softc *);
@@ -1397,10 +1398,57 @@ mfii_aen_unregister(struct mfii_softc *sc)
 }
 
 int
+mfii_reset_hard(struct mfii_softc *sc)
+{
+	u_int16_t		i;
+
+	mfii_write(sc, MFI_OSTS, 0);
+
+	/* enable diagnostic register */
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_FLUSH);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_1);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_2);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_3);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_4);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_5);
+	mfii_write(sc, MPII_WRITESEQ, MPII_WRITESEQ_6);
+
+	delay(100);
+
+	if ((mfii_read(sc, MPII_HOSTDIAG) & MPII_HOSTDIAG_DWRE) == 0) {
+		printf("%s: failed to enable diagnostic read/write\n",
+		    DEVNAME(sc));
+		return(1);
+	}
+
+	/* reset ioc */
+	mfii_write(sc, MPII_HOSTDIAG, MPII_HOSTDIAG_RESET_ADAPTER);
+
+	/* 240 milliseconds */
+	delay(240000);
+
+	for (i = 0; i < 30000; i++) {
+		if ((mfii_read(sc, MPII_HOSTDIAG) &
+		    MPII_HOSTDIAG_RESET_ADAPTER) == 0)
+			break;
+		delay(10000);
+	}
+	if (i >= 30000) {
+		printf("%s: failed to reset device\n", DEVNAME(sc));
+		return (1);
+	}
+
+	/* disable diagnostic register */
+	mfii_write(sc, MPII_WRITESEQ, 0xff);
+
+	return(0);
+}
+
+int
 mfii_transition_firmware(struct mfii_softc *sc)
 {
 	int32_t			fw_state, cur_state;
-	int			max_wait, i;
+	int			max_wait, i, reset_on_fault = 1;
 
 	fw_state = mfii_fw_state(sc) & MFI_STATE_MASK;
 
@@ -1408,8 +1456,17 @@ mfii_transition_firmware(struct mfii_softc *sc)
 		cur_state = fw_state;
 		switch (fw_state) {
 		case MFI_STATE_FAULT:
-			printf("%s: firmware fault\n", DEVNAME(sc));
-			return (1);
+			if (!reset_on_fault) {
+				printf("%s: firmware fault\n", DEVNAME(sc));
+				return (1);
+			}
+			printf("%s: firmware fault; attempting full device "
+			    "reset, this can take some time\n", DEVNAME(sc));
+			if (mfii_reset_hard(sc))
+				return (1);
+			max_wait = 20;
+			reset_on_fault = 0;
+			break;
 		case MFI_STATE_WAIT_HANDSHAKE:
 			mfii_write(sc, MFI_SKINNY_IDB,
 			    MFI_INIT_CLEAR_HANDSHAKE);
@@ -1421,15 +1478,20 @@ mfii_transition_firmware(struct mfii_softc *sc)
 			break;
 		case MFI_STATE_UNDEFINED:
 		case MFI_STATE_BB_INIT:
-			max_wait = 2;
-			break;
-		case MFI_STATE_FW_INIT:
-		case MFI_STATE_DEVICE_SCAN:
-		case MFI_STATE_FLUSH_CACHE:
 			max_wait = 20;
 			break;
+		case MFI_STATE_FW_INIT:
+		case MFI_STATE_FW_INIT_2:
+		case MFI_STATE_DEVICE_SCAN:
+		case MFI_STATE_FLUSH_CACHE:
+			max_wait = 40;
+			break;
+		case MFI_STATE_BOOT_MESSAGE_PENDING:
+			mfii_write(sc, MFI_SKINNY_IDB, MFI_INIT_HOTPLUG);
+			max_wait = 10;
+			break;
 		default:
-			printf("%s: unknown firmware state %d\n",
+			printf("%s: unknown firmware state %#x\n",
 			    DEVNAME(sc), fw_state);
 			return (1);
 		}
@@ -1444,6 +1506,10 @@ mfii_transition_firmware(struct mfii_softc *sc)
 			printf("%s: firmware stuck in state %#x\n",
 			    DEVNAME(sc), fw_state);
 			return (1);
+		} else {
+			DPRINTF("%s: firmware state change %#x -> %#x after "
+			    "%d iterations\n",
+			    DEVNAME(sc), cur_state, fw_state, i);
 		}
 	}
 
