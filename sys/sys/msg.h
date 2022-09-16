@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.h,v 1.19 2014/11/23 04:31:42 guenther Exp $	*/
+/*	$OpenBSD: msg.h,v 1.20 2022/09/16 15:57:23 mbuhl Exp $	*/
 /*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
 
 /*
@@ -169,9 +169,6 @@ __END_DECLS
 struct proc;
 
 void	msginit(void);
-int	msgctl1(struct proc *, int, int, caddr_t,
-	    int (*)(const void *, void *, size_t),
-	    int (*)(const void *, void *, size_t));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

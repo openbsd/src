@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.24 2016/09/01 08:33:40 tom Exp $	*/
+/*	$OpenBSD: sem.h,v 1.25 2022/09/16 15:57:23 mbuhl Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -180,10 +180,6 @@ struct proc;
 void	seminit(void);
 void	semexit(struct process *);
 int	sysctl_sysvsem(int *, u_int, void *, size_t *, void *, size_t);
-int	semctl1(struct proc *, int, int, int, union semun *, register_t *,
-	    int (*)(const void *, void *, size_t),
-	    int (*)(const void *, void *, size_t));
-
 #endif /* _KERNEL */
 
 #ifndef _KERNEL

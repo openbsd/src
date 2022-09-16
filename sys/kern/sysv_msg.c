@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.39 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.40 2022/09/16 15:57:23 mbuhl Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -98,20 +98,12 @@ sys_msgctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
-
-	return (msgctl1(p, SCARG(uap, msqid), SCARG(uap, cmd),
-	    (caddr_t)SCARG(uap, buf), copyin, copyout));
-}
-
-int
-msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
-    int (*ds_copyin)(const void *, void *, size_t),
-    int (*ds_copyout)(const void *, void *, size_t))
-{
-	struct msqid_ds tmp;
+	struct msqid_ds tmp, *umsq = SCARG(uap, buf);
 	struct ucred *cred = p->p_ucred;
 	struct que *que;
-	int error = 0;
+	int msqid = SCARG(uap, msqid);
+	int cmd = SCARG(uap, cmd);
+	int error;
 
 	if ((que = que_lookup(msqid)) == NULL)
 		return (EINVAL);
@@ -141,7 +133,7 @@ msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
 	case IPC_SET:
 		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_M)))
 			goto out;
-		if ((error = ds_copyin(buf, &tmp, sizeof(struct msqid_ds))))
+		if ((error = copyin(umsq, &tmp, sizeof(struct msqid_ds))))
 			goto out;
 
 		/* only superuser can bump max bytes in queue */
@@ -173,8 +165,7 @@ msgctl1(struct proc *p, int msqid, int cmd, caddr_t buf,
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &que->msqid_ds.msg_perm, IPC_R)))
 			goto out;
-		error = ds_copyout(&que->msqid_ds, buf,
-		    sizeof(struct msqid_ds));
+		error = copyout(&que->msqid_ds, umsq, sizeof(struct msqid_ds));
 		break;
 
 	default:

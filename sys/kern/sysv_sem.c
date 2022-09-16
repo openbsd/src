@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.61 2021/04/30 13:52:48 bluhm Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.62 2022/09/16 15:57:23 mbuhl Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -229,8 +229,15 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) cmd;
 		syscallarg(union semun *) arg;
 	} */ *uap = v;
-	union semun arg;
-	int error = 0, cmd = SCARG(uap, cmd);
+	struct ucred *cred = p->p_ucred;
+	int semid = SCARG(uap, semid);
+	int semnum = SCARG(uap, semnum);
+	int cmd = SCARG(uap, cmd);
+	union semun arg, *uarg = SCARG(uap, arg);
+	struct semid_ds sbuf;
+	struct semid_ds *semaptr;
+	unsigned short *semval = NULL;
+	int i, ix, error;
 
 	switch (cmd) {
 	case IPC_SET:
@@ -238,28 +245,11 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 	case GETALL:
 	case SETVAL:
 	case SETALL:
-		error = copyin(SCARG(uap, arg), &arg, sizeof(arg));
-		break;
+		if ((error = copyin(uarg, &arg, sizeof(union semun))))
+			return (error);
 	}
-	if (error == 0) {
-		error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum),
-		    cmd, &arg, retval, copyin, copyout);
-	}
-	return (error);
-}
 
-int
-semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
-    register_t *retval, int (*ds_copyin)(const void *, void *, size_t),
-    int (*ds_copyout)(const void *, void *, size_t))
-{
-	struct ucred *cred = p->p_ucred;
-	int i, ix, error = 0;
-	struct semid_ds sbuf;
-	struct semid_ds *semaptr;
-	unsigned short *semval = NULL;
-
-	DPRINTF(("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg));
+	DPRINTF(("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, uarg));
 
 	ix = IPCID_TO_IX(semid);
 	if (ix < 0 || ix >= seminfo.semmni)
@@ -287,7 +277,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 	case IPC_SET:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
 			return (error);
-		if ((error = ds_copyin(arg->buf, &sbuf, sizeof(sbuf))) != 0)
+		if ((error = copyin(arg.buf, &sbuf, sizeof(sbuf))) != 0)
 			return (error);
 		semaptr->sem_perm.uid = sbuf.sem_perm.uid;
 		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
@@ -301,7 +291,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 			return (error);
 		memcpy(&sbuf, semaptr, sizeof sbuf);
 		sbuf.sem_base = NULL;
-		error = ds_copyout(&sbuf, arg->buf, sizeof(struct semid_ds));
+		error = copyout(&sbuf, arg.buf, sizeof(struct semid_ds));
 		break;
 
 	case GETNCNT:
@@ -332,8 +322,8 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = ds_copyout(&semaptr->sem_base[i].semval,
-			    &arg->array[i], sizeof(arg->array[0]));
+			error = copyout(&semaptr->sem_base[i].semval,
+			    &arg.array[i], sizeof(arg.array[0]));
 			if (error != 0)
 				break;
 		}
@@ -352,9 +342,9 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 			return (error);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return (EINVAL);
-		if (arg->val > seminfo.semvmx)
+		if (arg.val > seminfo.semvmx)
 			return (ERANGE);
-		semaptr->sem_base[semnum].semval = arg->val;
+		semaptr->sem_base[semnum].semval = arg.val;
 		semundo_clear(ix, semnum);
 		wakeup(&sema[ix]);
 		break;
@@ -362,11 +352,11 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 	case SETALL:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
 			return (error);
-		semval = mallocarray(semaptr->sem_nsems, sizeof(arg->array[0]),
+		semval = mallocarray(semaptr->sem_nsems, sizeof(arg.array[0]),
 		    M_TEMP, M_WAITOK);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = ds_copyin(&arg->array[i], &semval[i],
-			    sizeof(arg->array[0]));
+			error = copyin(&arg.array[i], &semval[i],
+			    sizeof(arg.array[0]));
 			if (error != 0)
 				goto error;
 			if (semval[i] > seminfo.semvmx) {
@@ -387,7 +377,7 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 error:
 	if (semval)
 		free(semval, M_TEMP,
-		    semaptr->sem_nsems * sizeof(arg->array[0]));
+		    semaptr->sem_nsems * sizeof(arg.array[0]));
 
 	return (error);
 }
