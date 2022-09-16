@@ -41,6 +41,7 @@ struct dma_fence_ops {
 	bool (*signaled)(struct dma_fence *);
 	long (*wait)(struct dma_fence *, bool, long);
 	void (*release)(struct dma_fence *);
+	bool use_64bit_seqno;
 };
 
 struct dma_fence_cb;
@@ -84,10 +85,30 @@ dma_fence_free(struct dma_fence *fence)
 	free(fence, M_DRM, 0);
 }
 
+/*
+ * is a later than b
+ * if a and b are the same, should return false to avoid unwanted work
+ */
+static inline bool
+__dma_fence_is_later(uint64_t a, uint64_t b, const struct dma_fence_ops *ops)
+{
+	uint32_t al, bl;
+
+	if (ops->use_64bit_seqno)
+		return a > b;
+
+	al = a & 0xffffffff;
+	bl = b & 0xffffffff;
+
+	return (int)(al - bl) > 0;
+}
+
 static inline bool
 dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 {
-	return (a->seqno > b->seqno);
+	if (a->context != b->context)
+		return false;
+	return __dma_fence_is_later(a->seqno, b->seqno, a->ops);
 }
 
 static inline void

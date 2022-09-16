@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.93 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.94 2022/09/16 01:48:07 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -2084,7 +2084,7 @@ dma_fence_chain_init(struct dma_fence_chain *chain, struct dma_fence *prev,
 
 	/* if prev is a chain */
 	if (to_dma_fence_chain(prev) != NULL) {
-		if (seqno > prev->seqno) {
+		if (__dma_fence_is_later(seqno, prev->seqno, prev->ops)) {
 			chain->prev_seqno = prev->seqno;
 			context = prev->context;
 		} else {
@@ -2240,6 +2240,7 @@ const struct dma_fence_ops dma_fence_chain_ops = {
 	.enable_signaling = dma_fence_chain_enable_signaling,
 	.signaled = dma_fence_chain_signaled,
 	.release = dma_fence_chain_release,
+	.use_64bit_seqno = true,
 };
 
 int
