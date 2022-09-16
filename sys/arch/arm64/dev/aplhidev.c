@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.6 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.7 2022/09/16 16:30:10 robert Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -458,6 +458,10 @@ aplkbd_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	printf("\n");
+
+	if (hid_locate(aa->aa_desc, aa->aa_desclen, HID_USAGE2(HUP_APPLE, HUG_FN_KEY),
+	    1, hid_input, &kbd->sc_fn, NULL))
+		kbd->sc_munge = hidkbd_apple_munge;
 
 	if (kbd->sc_console_keyboard) {
 		extern struct wskbd_mapdata ukbd_keymapdata;

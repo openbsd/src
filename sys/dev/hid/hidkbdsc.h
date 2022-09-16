@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdsc.h,v 1.1 2016/01/08 15:54:13 jcs Exp $	*/
+/*	$OpenBSD: hidkbdsc.h,v 1.2 2022/09/16 16:30:10 robert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -69,6 +69,9 @@ struct hidkbd {
 	struct hid_location sc_compose;
 	int sc_leds;
 
+	/* optional extra input source used by sc_munge */
+	struct hid_location sc_fn;
+
 	/* state information */
 	struct device *sc_device;
 	struct device *sc_wskbddev;
@@ -88,6 +91,13 @@ struct hidkbd {
 	int sc_polling;
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
+
+	void (*sc_munge)(void *, uint8_t *, u_int);
+};
+
+struct hidkbd_translation {
+	uint8_t original;
+	uint8_t translation;
 };
 
 int	hidkbd_attach(struct device *, struct hidkbd *, int, uint32_t,
@@ -101,5 +111,10 @@ int	hidkbd_enable(struct hidkbd *, int);
 void	hidkbd_input(struct hidkbd *, uint8_t *, u_int);
 int	hidkbd_ioctl(struct hidkbd *, u_long, caddr_t, int, struct proc *);
 int	hidkbd_set_leds(struct hidkbd *, int, uint8_t *);
+uint8_t	hidkbd_translate(const struct hidkbd_translation *, size_t, uint8_t);
+void	hidkbd_apple_munge(void *, uint8_t *, u_int);
+void	hidkbd_apple_iso_munge(void *, uint8_t *, u_int);
+void	hidkbd_apple_mba_munge(void *, uint8_t *, u_int);
+void	hidkbd_apple_iso_mba_munge(void *, uint8_t *, u_int);
 
 extern int hidkbd_is_console;
