@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.102 2022/09/11 14:39:44 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.103 2022/09/17 17:14:06 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -318,9 +318,7 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if (ctx->hs->key_share != NULL)
 		ctx->handshake_stage.hs_type |= NEGOTIATED | WITHOUT_HRR;
 
-	/* Only allow CCS if client requested middlebox compatibility mode. */
-	if (ctx->hs->tls13.legacy_session_id_len > 0)
-		tls13_record_layer_allow_ccs(ctx->rl, 1);
+	tls13_record_layer_allow_ccs(ctx->rl, 1);
 
 	return 1;
 
