@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.34 2021/10/23 11:22:49 mestre Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.35 2022/09/17 10:32:05 florian Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -78,6 +78,9 @@ main(int argc, char *argv[])
 	int xbase;
 	int ybase;
 	int wintoosmall;
+	char *tz;
+
+	tz = getenv("TZ");
 
 	scrol = wintoosmall = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1) {
@@ -139,6 +142,16 @@ main(int argc, char *argv[])
 		alarm(n);
 	}
 	do {
+		mask = 0;
+		tm = localtime(&now.tv_sec);
+		set(tm->tm_sec % 10, 0);
+		set(tm->tm_sec / 10, 4);
+		set(tm->tm_min % 10, 10);
+		set(tm->tm_min / 10, 14);
+		set(tm->tm_hour % 10, 20);
+		set(tm->tm_hour / 10, 24);
+		set(10, 7);
+		set(10, 17);
 		if (sigwinched) {
 			sigwinched = 0;
 			wintoosmall = 0;
@@ -171,21 +184,17 @@ main(int argc, char *argv[])
 				move(ybase, xbase + XLENGTH);
 				vline(ACS_VLINE, YDEPTH);
 
+				if (tz != NULL) {
+					move(ybase - 1, xbase);
+					printw("[ %s %+d ]", tz,
+					    tm->tm_gmtoff / 60 / 60 );
+				}
+
 				attrset(COLOR_PAIR(2));
 			}
 			for (k = 0; k < 6; k++)
 				old[k] = 0;
 		}
-		mask = 0;
-		tm = localtime(&now.tv_sec);
-		set(tm->tm_sec % 10, 0);
-		set(tm->tm_sec / 10, 4);
-		set(tm->tm_min % 10, 10);
-		set(tm->tm_min / 10, 14);
-		set(tm->tm_hour % 10, 20);
-		set(tm->tm_hour / 10, 24);
-		set(10, 7);
-		set(10, 17);
 		if (wintoosmall) {
 			move(0, 0);
 			printw("%02d:%02d:%02d", tm->tm_hour, tm->tm_min,
