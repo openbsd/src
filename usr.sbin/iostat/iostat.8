@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.27 2018/09/07 12:54:44 solene Exp $
+.\"	$OpenBSD: iostat.8,v 1.28 2022/09/17 11:39:09 jmc Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 7 2018 $
+.Dd $Mdocdate: September 17 2022 $
 .Dt IOSTAT 8
 .Os
 .Sh NAME
@@ -150,8 +150,9 @@ Transfers per second
 .It MB/s
 Megabytes transferred per second
 .El
-The alternate display format, (selected with
-.Fl D ) ,
+.Pp
+The alternate display format, selected with
+.Fl D ,
 presents the following values:
 .Pp
 .Bl -tag -width indent -compact
