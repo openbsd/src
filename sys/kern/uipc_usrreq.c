@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.187 2022/09/14 22:28:52 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.188 2022/09/17 12:40:52 deraadt Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -802,6 +802,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, soun->sun_path, p);
 	nd.ni_pledge = PLEDGE_UNIX;
+	nd.ni_unveil = UNVEIL_WRITE;
 
 	unp->unp_flags |= UNP_CONNECTING;
 
