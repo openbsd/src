@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.13 2012/09/02 08:16:40 mpi Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.14 2022/09/18 21:36:41 gkoehler Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.7 2005/01/07 04:59:58 briggs Exp $	*/
 
 /*
@@ -94,6 +94,8 @@ void pmu_fileserver_mode(int);
 
 #define PMU_SMART_BATTERY_STATE	0x6f	/* Read battery state */
 
+#define PMU_ADB_CMD		0x20	/* Send ADB packet */
+#define PMU_INT_ACK		0x78	/* Read interrupt bits */
 #define PMU_I2C			0x9a	/* I2C */
 
 /* Bits in PMU interrupt and interrupt mask bytes */

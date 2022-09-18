@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.30 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.31 2022/09/18 21:36:41 gkoehler Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ pm_intr(void)
 
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
 						/* ask PM what happened */
-	pmdata.command = 0x78;
+	pmdata.command = PMU_INT_ACK;
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];
 	pmdata.r_buf = &pmdata.data[2];
@@ -604,7 +604,7 @@ pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
-	pmdata.command = 0x20;
+	pmdata.command = PMU_ADB_CMD;
 	pmdata.num_data = 4;
 	pmdata.s_buf = pmdata.data;
 	pmdata.r_buf = pmdata.data;
