@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.77 2022/08/12 02:20:36 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.78 2022/09/18 20:47:09 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -486,6 +486,8 @@ tc_reset_quality(struct timecounter *tc, int quality)
 		if (best != tc) {
 			enqueue_randomness(best->tc_get_timecount(best));
 			timecounter = best;
+			printf("timecounter: active counter changed: %s -> %s\n",
+			    tc->tc_name, best->tc_name);
 		}
 	}
 }
