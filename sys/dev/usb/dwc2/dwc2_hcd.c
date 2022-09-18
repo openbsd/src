@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcd.c,v 1.28 2022/09/09 21:16:54 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcd.c,v 1.29 2022/09/18 21:12:19 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcd.c,v 1.15 2014/11/24 10:14:14 skrll Exp $	*/
 
 /*
@@ -4312,6 +4312,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 					xfer);
 	}
 
+	dwc2_hcd_urb_free(sc->sc_hsotg, dxfer->urb, xfer->nframes);
 	qtd->urb = NULL;
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);

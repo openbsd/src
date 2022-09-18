@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.67 2022/09/10 08:13:16 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.68 2022/09/18 21:12:19 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -242,7 +242,6 @@ dwc2_allocx(struct usbd_bus *bus)
 void
 dwc2_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct dwc2_xfer *dxfer = DWC2_XFER2DXFER(xfer);
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 
 	DPRINTFN(10, "\n");
@@ -255,7 +254,6 @@ dwc2_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->busy_free = XFER_FREE;
 #endif
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolput);
-	dwc2_hcd_urb_free(sc->sc_hsotg, dxfer->urb, xfer->nframes);
 	pool_put(&sc->sc_xferpool, xfer);
 }
 
