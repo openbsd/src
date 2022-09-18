@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.27 2022/09/15 19:30:51 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.28 2022/09/18 20:38:50 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -267,8 +267,6 @@ tsc_delay(int usecs)
 
 #ifdef MULTIPROCESSOR
 
-#define TSC_DEBUG 1
-
 /*
  * Protections for global variables in this code:
  *
@@ -405,6 +403,7 @@ tsc_test_sync_ap(struct cpu_info *ci)
 void
 tsc_report_test_results(void)
 {
+#ifdef TSC_DEBUG
 	u_int round = TSC_TEST_ROUNDS - tsc_test_rounds + 1;
 
 	if (tsc_bp_status.adj != 0) {
@@ -429,6 +428,10 @@ tsc_report_test_results(void)
 		    tsc_ap_name, tsc_ap_name, tsc_ap_status.lag_count,
 		    tsc_ap_status.lag_max);
 	}
+#else
+	if (tsc_ap_status.lag_count > 0 || tsc_bp_status.lag_count > 0)
+		printf("tsc: cpu0/%s: sync test failed\n", tsc_ap_name);
+#endif /* TSC_DEBUG */
 }
 
 /*
