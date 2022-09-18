@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.31 2022/09/11 08:33:03 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.32 2022/09/18 14:41:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -882,33 +882,16 @@ int
 OF_getnodebyname(int handle, const char *name)
 {
 	void *node = (char *)tree.header + handle;
-	void *child;
-	char *data;
-	int len;
 
 	if (handle == 0)
 		node = fdt_find_node("/");
 
-	for (child = fdt_child_node(node); child;
-	     child = fdt_next_node(child)) {
-		if (strcmp(name, fdt_node_name(child)) == 0)
+	for (node = fdt_child_node(node); node; node = fdt_next_node(node)) {
+		if (strcmp(name, fdt_node_name(node)) == 0)
 			break;
 	}
-	if (child)
-		return (char *)child - (char *)tree.header;
 
-	len = strlen(name);
-	for (child = fdt_child_node(node); child;
-	     child = fdt_next_node(node)) {
-		data = fdt_node_name(child);
-		if (strncmp(name, data, len) == 0 &&
-		    strlen(data) > len && data[len] == '@')
-			break;
-	}
-	if (child)
-		return (char *)child - (char *)tree.header;
-
-	return 0;
+	return node ? ((char *)node - (char *)tree.header) : 0;
 }
 
 int
