@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.86 2022/07/08 19:51:11 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.87 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -60,6 +60,7 @@ config_new_sa(struct iked *env, int initiator)
 	gettimeofday(&sa->sa_timecreated, NULL);
 	memcpy(&sa->sa_timeused, &sa->sa_timecreated, sizeof(sa->sa_timeused));
 
+	ikestat_inc(env, ikes_sa_created);
 	return (sa);
 }
 
@@ -181,6 +182,11 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	free(sa->sa_cp_dns);
 
 	free(sa->sa_tag);
+
+	if (sa->sa_state == IKEV2_STATE_ESTABLISHED)
+		ikestat_dec(env, ikes_sa_established_current);
+	ikestat_inc(env, ikes_sa_removed);
+
 	free(sa);
 }
 
@@ -333,6 +339,7 @@ config_free_childsas(struct iked *env, struct iked_childsas *head,
 			childsa_free(ipcomp);
 		}
 		childsa_free(csa);
+		ikestat_inc(env, ikes_csa_removed);
 	}
 }
 

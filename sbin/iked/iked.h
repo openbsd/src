@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.206 2022/07/22 15:53:33 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.207 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -540,6 +540,41 @@ RB_HEAD(iked_dstid_sas, iked_sa);
 RB_HEAD(iked_addrpool, iked_sa);
 RB_HEAD(iked_addrpool6, iked_sa);
 
+/* stats */
+
+struct iked_stats {
+	uint64_t	ikes_sa_created;
+	uint64_t	ikes_sa_established_total;
+	uint64_t	ikes_sa_established_current;	/* gauge */
+	uint64_t	ikes_sa_established_failures;
+	uint64_t	ikes_sa_proposals_negotiate_failures;
+	uint64_t	ikes_sa_rekeyed;
+	uint64_t	ikes_sa_removed;
+	uint64_t	ikes_csa_created;
+	uint64_t	ikes_csa_removed;
+	uint64_t	ikes_msg_sent;
+	uint64_t	ikes_msg_send_failures;
+	uint64_t	ikes_msg_rcvd;
+	uint64_t	ikes_msg_rcvd_busy;
+	uint64_t	ikes_msg_rcvd_dropped;
+	uint64_t	ikes_retransmit_request;
+	uint64_t	ikes_retransmit_response;
+	uint64_t	ikes_retransmit_limit;
+	uint64_t	ikes_frag_sent;
+	uint64_t	ikes_frag_send_failures;
+	uint64_t	ikes_frag_rcvd;
+	uint64_t	ikes_frag_rcvd_drop;
+	uint64_t	ikes_frag_reass_ok;
+	uint64_t	ikes_frag_reass_drop;
+	uint64_t	ikes_update_addresses_sent;
+	uint64_t	ikes_dpd_sent;
+	uint64_t	ikes_keepalive_sent;
+};
+
+#define ikestat_add(env, c, n)	do { env->sc_stats.c += (n); } while(0)
+#define ikestat_inc(env, c)	ikestat_add(env, c, 1)
+#define ikestat_dec(env, c)	ikestat_add(env, c, -1)
+
 struct iked_certreq {
 	struct ibuf			*cr_data;
 	uint8_t				 cr_type;
@@ -764,6 +799,8 @@ struct iked {
 	struct iked_activesas		 sc_activesas;
 	struct iked_flows		 sc_activeflows;
 	struct iked_users		 sc_users;
+
+	struct iked_stats		 sc_stats;
 
 	void				*sc_priv;	/* per-process */
 

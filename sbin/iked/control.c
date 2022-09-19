@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.32 2021/11/21 22:44:08 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.33 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -311,6 +311,7 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
 			break;
 		case IMSG_CTL_SHOW_SA:
+		case IMSG_CTL_SHOW_STATS:
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
 			c->flags |= CTL_CONN_NOTIFY;
 			break;
@@ -346,6 +347,7 @@ control_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_SA:
+	case IMSG_CTL_SHOW_STATS:
 		control_imsg_forward(imsg);
 		return (0);
 	default:

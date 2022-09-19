@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.124 2022/07/04 09:23:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.125 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1605,6 +1605,7 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	size_t				 frag_num, frag_total;
 	size_t				 len;
 	int				 ret = -1;
+	int				 processed = 0;
 	ssize_t				 elen;
 
 	buf = msgbuf + offset;
@@ -1615,6 +1616,8 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	offset += sizeof(frag);
 	buf = msgbuf + offset;
 	len = left - sizeof(frag);
+
+	ikestat_inc(env, ikes_frag_rcvd);
 
 	/* Limit number of total fragments to avoid DOS */
 	if (frag_total > IKED_FRAG_TOTAL_MAX ) {
@@ -1701,10 +1704,15 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	} else {
 		ret = 0;
 	}
+	processed = 1;
+
 done:
+	if (!processed)
+		ikestat_inc(env, ikes_frag_rcvd_drop);
 	ibuf_release(e);
 	return (ret);
 dropall:
+	ikestat_add(env, ikes_frag_rcvd_drop, sa_frag->frag_count + 1);
 	config_free_fragments(sa_frag);
 	ibuf_release(e);
 	return -1;
@@ -1722,6 +1730,7 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 	size_t				 i;
 	struct iked_message		 emsg;
 	int				 ret = -1;
+	int				 processed = 0;
 
 	/* Reassemble fragments to single buffer */
 	if ((e = ibuf_new(NULL, sa_frag->frag_total_size)) == NULL) {
@@ -1765,7 +1774,12 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 
 	ret = ikev2_pld_payloads(env, &emsg, 0, ibuf_size(e),
 	    sa_frag->frag_nextpayload);
+	processed = 1;
 done:
+	if (processed)
+		ikestat_add(env, ikes_frag_reass_ok, sa_frag->frag_total);
+	else
+		ikestat_add(env, ikes_frag_reass_drop, sa_frag->frag_total);
 	config_free_fragments(sa_frag);
 	ibuf_release(e);
 

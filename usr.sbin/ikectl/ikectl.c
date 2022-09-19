@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.27 2021/11/21 22:44:08 tobhe Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.28 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -49,6 +49,7 @@ void		 monitor_id(struct imsg *);
 int		 monitor(struct imsg *);
 
 int		 show_string(struct imsg *);
+int		 show_stats(struct imsg *, int);
 
 int		 ca_opt(struct parse_result *);
 
@@ -303,6 +304,10 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SA, 0, 0, -1, NULL, 0);
 		done = 0;
 		break;
+	case SHOW_STATS:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_STATS, 0, 0, -1, NULL, 0);
+		done = 0;
+		break;
 	case SHOW_CERTSTORE:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_CERTSTORE, 0, 0, -1, NULL, 0);
 		done = 0;
@@ -353,6 +358,9 @@ main(int argc, char *argv[])
 			switch (res->action) {
 			case MONITOR:
 				done = monitor(&imsg);
+				break;
+			case SHOW_STATS:
+				done = show_stats(&imsg, quiet);
 				break;
 			case SHOW_SA:
 			case SHOW_CERTSTORE:
@@ -419,5 +427,57 @@ show_string(struct imsg *imsg)
 	else
 		done = 1;
 
+	return (done);
+}
+
+static char *
+plural(u_int64_t n)
+{
+        return (n != 1 ? "s" : "");
+}
+
+/*
+ * Dump IKE statistics structure.
+ */
+int
+show_stats(struct imsg *imsg, int quiet)
+{
+	struct iked_stats *stat;
+	int		 done = 1;
+
+	if (IMSG_DATA_SIZE(imsg) != sizeof(*stat))
+		return (done);
+	stat = imsg->data;
+	printf("ike:\n");
+#define p(f, m) if (stat->f || !quiet) \
+	printf(m, stat->f, plural(stat->f))
+
+	p(ikes_sa_created, "\t%llu IKE SA%s created\n");
+	p(ikes_sa_established_total, "\t%llu IKE SA%s established\n");
+	p(ikes_sa_established_current, "\t%llu IKE SA%s currently established\n");
+	p(ikes_sa_established_failures, "\t%llu IKE SA%s failed to establish\n");
+	p(ikes_sa_proposals_negotiate_failures, "\t%llu failed proposal negotiation%s\n");
+	p(ikes_sa_rekeyed, "\t%llu IKE SA%s rekeyed\n");
+	p(ikes_sa_removed, "\t%llu IKE SA%s removed\n");
+	p(ikes_csa_created, "\t%llu Child SA%s created\n");
+	p(ikes_csa_removed, "\t%llu Child SA%s removed\n");
+	p(ikes_msg_sent, "\t%llu message%s sent\n");
+	p(ikes_msg_send_failures, "\t%llu message%s could not be sent\n");
+	p(ikes_msg_rcvd, "\t%llu message%s received\n");
+	p(ikes_msg_rcvd_dropped, "\t%llu message%s dropped\n");
+	p(ikes_msg_rcvd_busy, "\t%llu request%s dropped, response being worked on\n");
+	p(ikes_retransmit_response, "\t%llu response%s retransmitted\n");
+	p(ikes_retransmit_request, "\t%llu request%s retransmitted\n");
+	p(ikes_retransmit_limit, "\t%llu request%s timed out\n");
+	p(ikes_frag_sent, "\t%llu fragment%s sent\n");
+	p(ikes_frag_send_failures, "\t%llu fragment%s could not be sent\n");
+	p(ikes_frag_rcvd, "\t%llu fragment%s received\n");
+	p(ikes_frag_rcvd_drop, "\t%llu fragment%s dropped\n");
+	p(ikes_frag_reass_ok, "\t%llu fragment%s reassembled\n");
+	p(ikes_frag_reass_drop, "\t%llu fragment%s could not be reassembled\n");
+	p(ikes_update_addresses_sent, "\t%llu update addresses request%s sent\n");
+	p(ikes_dpd_sent, "\t%llu dpd request%s sent\n");
+	p(ikes_keepalive_sent, "\t%llu keepalive message%s sent\n");
+#undef p
 	return (done);
 }

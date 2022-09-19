@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.85 2022/03/14 12:58:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.86 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -307,7 +307,9 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 			timer_add(env, &sa->sa_timer,
 			    IKED_IKE_SA_DELETE_TIMEOUT);
 		}
-	}
+		ikestat_inc(env, ikes_msg_send_failures);
+	} else
+		ikestat_inc(env, ikes_msg_sent);
 
 	if (sa == NULL)
 		return (0);
@@ -892,6 +894,8 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		if (ikev2_msg_send(env, &resp) == -1)
 			goto done;
 
+		ikestat_inc(env, ikes_frag_sent);
+
 		offset += MINIMUM(left, max_len);
 		left -= MINIMUM(left, max_len);
 		frag_num++;
@@ -908,6 +912,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 done:
 	ikev2_msg_cleanup(env, &resp);
 	ibuf_release(e);
+	ikestat_inc(env, ikes_frag_send_failures);
 	return ret;
 }
 
@@ -1268,6 +1273,7 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 		    (struct sockaddr *)&m->msg_peer, m->msg_peerlen,
 		    (struct sockaddr *)&m->msg_local, m->msg_locallen) == -1) {
 			log_warn("%s: sendtofrom", __func__);
+			ikestat_inc(env, ikes_msg_send_failures);
 			return (-1);
 		}
 		log_info("%sretransmit %s res %u local %s peer %s",
@@ -1279,6 +1285,7 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 	}
 
 	timer_add(env, &mr->mrt_timer, IKED_RESPONSE_TIMEOUT);
+	ikestat_inc(env, ikes_retransmit_response);
 	return (0);
 }
 
@@ -1309,6 +1316,7 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 				log_warn("%s: sendtofrom", __func__);
 				ikev2_ike_sa_setreason(sa, "retransmit failed");
 				sa_free(env, sa);
+				ikestat_inc(env, ikes_msg_send_failures);
 				return;
 			}
 			log_info("%sretransmit %d %s req %u peer %s "
@@ -1321,10 +1329,12 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 		/* Exponential timeout */
 		timer_add(env, &mr->mrt_timer,
 		    IKED_RETRANSMIT_TIMEOUT * (2 << (mr->mrt_tries++)));
+		ikestat_inc(env, ikes_retransmit_request);
 	} else {
 		log_debug("%s: retransmit limit reached for req %u",
 		    __func__, msg->msg_msgid);
 		ikev2_ike_sa_setreason(sa, "retransmit limit reached");
+		ikestat_inc(env, ikes_retransmit_limit);
 		sa_free(env, sa);
 	}
 }

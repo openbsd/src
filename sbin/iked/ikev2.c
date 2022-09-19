@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.351 2022/09/14 13:07:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.352 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -187,6 +187,7 @@ int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 
 void	ikev2_ctl_reset_id(struct iked *, struct imsg *, unsigned int);
 void	ikev2_ctl_show_sa(struct iked *);
+void	ikev2_ctl_show_stats(struct iked *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -519,6 +520,9 @@ ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_SHOW_SA:
 		ikev2_ctl_show_sa(env);
 		break;
+	case IMSG_CTL_SHOW_STATS:
+		ikev2_ctl_show_stats(env);
+		break;
 	default:
 		return (-1);
 	}
@@ -577,6 +581,13 @@ void
 ikev2_ctl_show_sa(struct iked *env)
 {
 	ikev2_info(env, 0);
+}
+
+void
+ikev2_ctl_show_stats(struct iked *env)
+{
+	proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_STATS,
+	    &env->sc_stats, sizeof(env->sc_stats));
 }
 
 struct iked_sa *
@@ -642,6 +653,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	    (betoh32(hdr->ike_length) - msg->msg_offset))
 		return;
 
+	ikestat_inc(env, ikes_msg_rcvd);
+
 	initiator = (hdr->ike_flags & IKEV2_FLAG_INITIATOR) ? 0 : 1;
 	msg->msg_response = (hdr->ike_flags & IKEV2_FLAG_RESPONSE) ? 1 : 0;
 	msg->msg_exchange = hdr->ike_exchange;
@@ -649,8 +662,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
 	msg->msg_msgid = betoh32(hdr->ike_msgid);
-	if (policy_lookup(env, msg, NULL, NULL, 0) != 0)
+	if (policy_lookup(env, msg, NULL, NULL, 0) != 0) {
+		ikestat_inc(env, ikes_msg_rcvd_dropped);
 		return;
+	}
 
 	logit(hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL ?
 	    LOG_DEBUG : LOG_INFO,
@@ -679,20 +694,28 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	if (hdr->ike_exchange != IKEV2_EXCHANGE_IKE_SA_INIT &&
 	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SK &&
-	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SKF)
+	    hdr->ike_nextpayload != IKEV2_PAYLOAD_SKF) {
+		ikestat_inc(env, ikes_msg_rcvd_dropped);
 		return;
+	}
 
 	if (msg->msg_response) {
-		if (msg->msg_msgid > sa->sa_reqid)
+		if (msg->msg_msgid > sa->sa_reqid) {
+			ikestat_inc(env, ikes_msg_rcvd_dropped);
 			return;
+		}
 		mr = ikev2_msg_lookup(env, &sa->sa_requests, msg,
 		    hdr->ike_exchange);
 		if (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
-		    mr == NULL && sa->sa_fragments.frag_count == 0)
+		    mr == NULL && sa->sa_fragments.frag_count == 0) {
+			ikestat_inc(env, ikes_msg_rcvd_dropped);
 			return;
+		}
 		if (flag) {
-			if ((sa->sa_stateflags & flag) == 0)
+			if ((sa->sa_stateflags & flag) == 0) {
+				ikestat_inc(env, ikes_msg_rcvd_dropped);
 				return;
+			}
 			/*
 			 * We have initiated this exchange, even if
 			 * we are not the initiator of the IKE SA.
@@ -723,8 +746,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			msg->msg_sa = sa = NULL;
 			goto done;
 		}
-		if (msg->msg_msgid < sa->sa_msgid)
+		if (msg->msg_msgid < sa->sa_msgid) {
+			ikestat_inc(env, ikes_msg_rcvd_dropped);
 			return;
+		}
 		if (flag)
 			initiator = 0;
 		/*
@@ -745,6 +770,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			 * Response is being worked on, most likely we're
 			 * waiting for the CA process to get back to us
 			 */
+			ikestat_inc(env, ikes_msg_rcvd_busy);
 			return;
 		}
 		sa->sa_msgid_current = msg->msg_msgid;
@@ -753,8 +779,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (sa_address(sa, &sa->sa_peer, (struct sockaddr *)&msg->msg_peer)
 	    == -1 ||
 	    sa_address(sa, &sa->sa_local, (struct sockaddr *)&msg->msg_local)
-	    == -1)
+	    == -1) {
+		ikestat_inc(env, ikes_msg_rcvd_dropped);
 		return;
+	}
 
 	sa->sa_fd = msg->msg_fd;
 
@@ -1033,6 +1061,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		    0, -1) != 0) {
 			log_info("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
+			ikestat_inc(env, ikes_sa_proposals_negotiate_failures);
 			return (-1);
 		} else
 			sa_stateflags(sa, IKED_REQ_SA);
@@ -4378,6 +4407,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (proposals_negotiate(&sa->sa_proposals, &sa->sa_proposals,
 	    &msg->msg_proposals, 1, -1) != 0) {
 		log_info("%s: no proposal chosen", SPI_SA(sa, __func__));
+		ikestat_inc(env, ikes_sa_proposals_negotiate_failures);
 		return (-1);
 	}
 
@@ -4710,6 +4740,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	ikev2_enable_timer(env, nsa);
 
+	ikestat_inc(env, ikes_sa_rekeyed);
+
 	nsa->sa_stateflags = nsa->sa_statevalid; /* XXX */
 
 	/* unregister DPD keep alive timer & rekey first */
@@ -4887,6 +4919,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		    1, msg->msg_dhgroup) != 0) {
 			log_info("%s: no proposal chosen", __func__);
 			msg->msg_error = IKEV2_N_NO_PROPOSAL_CHOSEN;
+			ikestat_inc(env, ikes_sa_proposals_negotiate_failures);
 			goto fail;
 		}
 
@@ -5176,6 +5209,7 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 		ikev2_send_ike_e(env, sa, NULL, IKEV2_PAYLOAD_NONE,
 		    IKEV2_EXCHANGE_INFORMATIONAL, 0);
 		sa->sa_stateflags |= IKED_REQ_INF;
+		ikestat_inc(env, ikes_dpd_sent);
 	}
 
 	/* re-register */
@@ -5199,6 +5233,7 @@ ikev2_ike_sa_keepalive(struct iked *env, void *arg)
 		log_debug("%s: peer %s local %s", __func__,
 		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
 		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
+	ikestat_inc(env, ikes_keepalive_sent);
 	timer_add(env, &sa->sa_keepalive, IKED_IKE_SA_KEEPALIVE_TIMEOUT);
 }
 
@@ -5399,6 +5434,7 @@ ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa, struct iked_mess
 	if (proposals_negotiate(&sa->sa_proposals,
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0, -1) != 0) {
 		log_info("%s: proposals_negotiate", __func__);
+		ikestat_inc(env, ikes_sa_proposals_negotiate_failures);
 		return (-1);
 	}
 	if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
@@ -6361,6 +6397,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 
 		TAILQ_INSERT_TAIL(&sa->sa_childsas, csa, csa_entry);
 		TAILQ_INSERT_TAIL(&sa->sa_childsas, csb, csa_entry);
+		ikestat_add(env, ikes_csa_created, 2);
 
 		csa->csa_peersa = csb;
 		csb->csa_peersa = csa;
@@ -6609,6 +6646,7 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
 			childsa_free(ipcomp);
 		}
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
+		ikestat_inc(env, ikes_csa_removed);
 		childsa_free(csa);
 	}
 

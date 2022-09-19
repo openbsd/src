@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.90 2022/09/14 13:07:50 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.91 2022/09/19 20:54:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -414,6 +414,28 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 		}
 	}
 
+	if (ostate != sa->sa_state) {
+		switch (sa->sa_state) {
+		case IKEV2_STATE_ESTABLISHED:
+			ikestat_inc(env, ikes_sa_established_total);
+			ikestat_inc(env, ikes_sa_established_current);
+			break;
+		case IKEV2_STATE_CLOSED:
+		case IKEV2_STATE_CLOSING:
+			switch (ostate) {
+			case IKEV2_STATE_ESTABLISHED:
+				ikestat_dec(env, ikes_sa_established_current);
+				break;
+			case IKEV2_STATE_CLOSED:
+			case IKEV2_STATE_CLOSING:
+				break;
+			default:
+				ikestat_inc(env, ikes_sa_established_failures);
+				break;
+			}
+			break;
+		}
+	}
 }
 
 void
