@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.17 2018/07/25 17:12:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2022/09/19 10:46:00 djm Exp $
 
 .PATH:		${.CURDIR}/..
 
-SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
+SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c sftp-usergroup.c
 SRCS+=	atomicio.c cleanup.c fatal.c progressmeter.c utf8.c
 SRCS+=	${SRCS_BASE}
 
