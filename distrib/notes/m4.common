@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.133 2022/03/24 20:46:56 krw Exp $
+dnl	$OpenBSD: m4.common,v 1.134 2022/09/19 12:37:02 jsg Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -103,7 +103,8 @@ define({:-OpenBSDbase-:},
 {:-	base{:--:}OSrev	 The OpenBSD/MACHINE OSREV base binary distribution.  You MUST
 		 install this distribution set.  It contains the base OpenBSD
 		 utilities that are necessary for the system to run and be
-		 minimally functional.
+		 minimally functional.  This includes parts of the toolchain
+		 required to relink a kernel.
 		 ifelse(MDSO,,{:-It excludes everything described below.-:},{:-It includes shared library support, and excludes everything
 		 described below.-:})showsize($1,$2)-:})dnl
 dnl
@@ -114,7 +115,7 @@ dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools relating
 		 to C and C++ are supported.  This set includes the system
-		 {:-include-:} files (/usr/{:-include-:}), the linker, the compiler
+		 {:-include-:} files (/usr/{:-include-:}), the compiler
 		 toolchain, and the various system libraries{:--:}ifelse(MDSO,,.,{:- (except the
 		 shared libraries, which are included as part of the base set).-:})
 		 This set also includes the manual pages for all of the
