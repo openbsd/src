@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1204 2022/08/23 16:08:09 kn Exp $
+#	$OpenBSD: install.sub,v 1.1205 2022/09/19 15:40:36 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3137,13 +3137,12 @@ do_install() {
 	# than 120 seconds, ask if the user wants to adjust the time.
 	if _time=$(http_time) && _now=$(date +%s) &&
 		(( _now - _time > 120 || _time - _now > 120 )); then
-		_tz=/mnt/usr/share/zoneinfo/$TZ
-		if ask_yn "Time appears wrong.  Set to '$(TZ=$_tz date -r "$(http_time)")'?" yes; then
-			# We do not need to specify TZ below since both date
-			# invocations use the same one.
+		ln -sf /mnt/usr/share/zoneinfo/$TZ /etc/localtime
+		if ask_yn "Time appears wrong.  Set to '$(date -r "$(http_time)")'?" yes; then
 			date $(date -r "$(http_time)" "+%Y%m%d%H%M.%S") >/dev/null
 			# N.B. This will screw up SECONDS.
 		fi
+		rm -f /etc/localtime
 	fi
 
 	# If we managed to talk to the cgi server before, tell it what
