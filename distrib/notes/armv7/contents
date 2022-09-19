@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.14 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.15 2022/09/19 04:29:55 jsg Exp $
 TopPart
 
 	miniroot-am335x-{:--:}OSrev.img
@@ -35,18 +35,18 @@ dnl OpenBSDcd
 
 DistributionDescription(eight)
 
-OpenBSDbase(68715468,173885440)
+OpenBSDbase(136862910,362610688)
 
-OpenBSDcomp(42949501,137019392)
+OpenBSDcomp(41828513,156442624)
 
-OpenBSDgame(2771982,6610944)
+OpenBSDgame(2764737,6557696)
 
-OpenBSDman(7329340,31418368)
+OpenBSDman(7793692,32841728)
 
-OpenBSDxbase(15783615,48916480)
+OpenBSDxbase(44241736,120922112)
 
-OpenBSDxfont(40298028,59377664)
+OpenBSDxfont(23519673,38381568)
 
-OpenBSDxserv(6773457,16584704)
+OpenBSDxserv(8312280,21817344)
 
-OpenBSDxshare(4525411,30216192)
+OpenBSDxshare(4670382,30439424)

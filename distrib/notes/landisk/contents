@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.17 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.18 2022/09/19 04:29:56 jsg Exp $
 TopPart
 
 dnl can't use OpenBSDminiroot here - comment is inappropriate
@@ -17,18 +17,18 @@ dnl XXX describe boot, mbr, and xxboot. Or stop providing them?
 
 DistributionDescription(eight)
 
-OpenBSDbase(72127587,173871104)
+OpenBSDbase(75439139,182810624)
 
-OpenBSDcomp(46248369,143251456)
+OpenBSDcomp(45929157,148951040)
 
-OpenBSDgame(2808368,6561792)
+OpenBSDgame(2831003,6621184)
 
-OpenBSDman(7330567,31416320)
+OpenBSDman(7798923,32849920)
 
-OpenBSDxbase(16977724,47939584)
+OpenBSDxbase(11132858,28342272)
 
-OpenBSDxfont(40302860,59377664)
+OpenBSDxfont(23521099,38381568)
 
-OpenBSDxserv(5653986,11743232)
+OpenBSDxserv(1934592,3678208)
 
-OpenBSDxshare(4527624,30216192)
+OpenBSDxshare(4668997,30420992)

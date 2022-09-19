@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.35 2020/05/17 17:04:28 deraadt Exp $
+dnl	$OpenBSD: contents,v 1.36 2022/09/19 04:29:55 jsg Exp $
 TopPart
 
 OpenBSDdistsets
@@ -20,18 +20,18 @@ OpenBSDcd
 
 DistributionDescription(eight)
 
-OpenBSDbase(96145315,208807936)
+OpenBSDbase(101778147,219666432)
 
-OpenBSDcomp(49030413,144975872)
+OpenBSDcomp(48708293,150892544)
 
-OpenBSDgame(2900867,6977536)
+OpenBSDgame(2933657,7032832)
 
-OpenBSDman(7329439,31418368)
+OpenBSDman(7800052,32860160)
 
-OpenBSDxbase(17948961,53549056)
+OpenBSDxbase(11670468,32118784)
 
-OpenBSDxfont(40296586,59377664)
+OpenBSDxfont(23519059,38381568)
 
-OpenBSDxserv(7680590,18825216)
+OpenBSDxserv(3575302,8116224)
 
-OpenBSDxshare(4525402,30216192)
+OpenBSDxshare(4670407,30439424)
