@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.96 2022/09/15 12:47:10 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.97 2022/09/19 21:14:38 millert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -1152,30 +1152,6 @@ done:
 	}
 
 	return ret;
-}
-
-/*
- * Wait for an asynchronous connect(2) attempt to finish.
- */
-int
-connect_wait(int s)
-{
-	struct pollfd pfd[1];
-	int error = 0;
-	socklen_t len = sizeof(error);
-
-	pfd[0].fd = s;
-	pfd[0].events = POLLOUT;
-
-	if (poll(pfd, 1, -1) == -1)
-		return -1;
-	if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) == -1)
-		return -1;
-	if (error != 0) {
-		errno = error;
-		return -1;
-	}
-	return 0;
 }
 
 #ifndef SMALL
