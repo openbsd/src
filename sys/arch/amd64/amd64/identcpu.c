@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.127 2022/08/30 17:09:21 dv Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.128 2022/09/20 14:28:27 robert Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -698,47 +698,6 @@ identifycpu(struct cpu_info *ci)
 
 	replacemeltdown();
 	x86_print_cacheinfo(ci);
-
-	/*
-	 * "Mitigation G-2" per AMD's Whitepaper "Software Techniques
-	 * for Managing Speculation on AMD Processors"
-	 *
-	 * By setting MSR C001_1029[1]=1, LFENCE becomes a dispatch
-	 * serializing instruction.
-	 *
-	 * This MSR is available on all AMD families >= 10h, except 11h
-	 * where LFENCE is always serializing.
-	 */
-	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
-		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11) {
-			uint64_t msr;
-
-			msr = rdmsr(MSR_DE_CFG);
-			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
-				msr |= DE_CFG_SERIALIZE_LFENCE;
-				wrmsr(MSR_DE_CFG, msr);
-			}
-		}
-	}
-
-	/*
-	 * Attempt to disable Silicon Debug and lock the configuration
-	 * if it's enabled and unlocked.
-	 */
-	if (!strcmp(cpu_vendor, "GenuineIntel") &&
-	    (cpu_ecxfeature & CPUIDECX_SDBG)) {
-		uint64_t msr;
-
-		msr = rdmsr(IA32_DEBUG_INTERFACE);
-		if ((msr & IA32_DEBUG_INTERFACE_ENABLE) &&
-		    (msr & IA32_DEBUG_INTERFACE_LOCK) == 0) {
-			msr &= IA32_DEBUG_INTERFACE_MASK;
-			msr |= IA32_DEBUG_INTERFACE_LOCK;
-			wrmsr(IA32_DEBUG_INTERFACE, msr);
-		} else if (msr & IA32_DEBUG_INTERFACE_ENABLE)
-			printf("%s: cannot disable silicon debug\n",
-			    ci->ci_dev->dv_xname);
-	}
 
 	if (CPU_IS_PRIMARY(ci)) {
 #ifndef SMALL_KERNEL
