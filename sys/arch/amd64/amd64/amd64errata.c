@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.9 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.10 2022/09/20 07:54:27 jsg Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ typedef enum cpurev {
 	BH_E4, CH_CG, CH_D0, DH_CG, DH_D0, DH_E3, DH_E6, JH_E1,
 	JH_E6, SH_B0, SH_B3, SH_C0, SH_CG, SH_D0, SH_E4, SH_E5,
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
-	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0,
+	DA_C3, HY_D0, HY_D1, PH_E0, LN_B0,
 	OINK
 } cpurev_t;
 
@@ -81,7 +81,7 @@ static const u_int cpurevs[] = {
 	DR_BA, 0x0100f2a, DR_B2, 0x0100f22, DR_B3, 0x0100f23,
 	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
 	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
-	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1_G34R1, 0x0100f91,
+	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1, 0x0100f91,
 	PH_E0, 0x0100fa0, LN_B0, 0x0300f10,
 	OINK
 };
@@ -128,7 +128,7 @@ static const uint8_t amd64_errata_set8[] = {
 
 static const uint8_t amd64_errata_set9[] = {
 	DR_BA, DR_B2, DR_B3, RB_C2, RB_C3, BL_C2, BL_C3, DA_C2,
-	DA_C3, HY_D0, HY_D1, HY_D1_G34R1,  PH_E0, LN_B0, OINK
+	DA_C3, HY_D0, HY_D1, PH_E0, LN_B0, OINK
 };
 
 int amd64_errata_setmsr(struct cpu_info *, errata_t *);
