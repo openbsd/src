@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.68 2022/09/09 08:11:06 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.69 2022/09/20 08:53:27 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1429,7 +1429,7 @@ again:
 		    conn->iosz > (off_t)conn->bufpos)
 			goto read_more;
 
-		/* got a full buffer full of data */
+		/* got a buffer full of data */
 		if (conn->req == NULL) {
 			/*
 			 * After redirects all data needs to be discarded.
