@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.188 2022/09/17 12:40:52 deraadt Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.189 2022/09/20 10:10:11 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -995,13 +995,6 @@ unp_shutdown(struct unpcb *unp)
 		break;
 	}
 }
-
-#ifdef notdef
-unp_drain(void)
-{
-
-}
-#endif
 
 static struct unpcb *
 fptounp(struct file *fp)
