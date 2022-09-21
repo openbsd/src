@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.152 2022/09/01 20:36:25 tb Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.153 2022/09/21 05:55:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -474,12 +474,9 @@ server_read_http(struct bufferevent *bev, void *arg)
 			/* HTTP request payload */
 			if (clt->clt_toread > 0)
 				bev->readcb = server_read_httpcontent;
-
-			/* Single-pass HTTP body */
-			if (clt->clt_toread < 0) {
-				clt->clt_toread = TOREAD_UNLIMITED;
-				bev->readcb = server_read;
-			}
+			if (clt->clt_toread < 0 && !desc->http_chunked)
+				/* 7. of RFC 9112 Section 6.3 */
+				clt->clt_toread = 0;
 			break;
 		default:
 			server_abort_http(clt, 405, "method not allowed");
