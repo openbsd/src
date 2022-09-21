@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.62 2022/08/25 13:32:13 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.63 2022/09/21 15:57:49 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -317,28 +317,33 @@ tzload(const char *name, struct state *sp, int doextend)
 		return -1;
 
 	sp->goback = sp->goahead = FALSE;
-	if (name != NULL && issetugid() != 0) {
-		if ((name[0] == ':' && (strchr(name, '/') || strstr(name, ".."))) ||
-		    name[0] == '/' || strchr(name, '.'))
+
+	if (name != NULL) {
+		/*
+		 * POSIX section 8 says that names starting with a ':' are
+		 * "implementation-defined".  We treat them as timezone paths.
+		 */
+		if (name[0] == ':')
+			name++;
+		/* Ignore absolute paths or names that might contain "..". */
+		if (name[0] == '/' || strchr(name, '.'))
 			name = NULL;
 	}
-	if (name == NULL && (name = TZDEFAULT) == NULL)
-		goto oops;
-
-	if (name[0] == ':')
-		++name;
-	if (name[0] != '/') {
-		if ((p = TZDIR) == NULL)
+	if (name == NULL) {
+		name = TZDEFAULT;
+	} else {
+		/* Time zone data path is relative to TZDIR. */
+		i = snprintf(fullname, sizeof(fullname), "%s/%s", TZDIR, name);
+		if (i < 0 || i >= sizeof(fullname)) {
+			errno = ENAMETOOLONG;
 			goto oops;
-		if ((strlen(p) + strlen(name) + 1) >= sizeof fullname)
-			goto oops;
-		strlcpy(fullname, p, sizeof fullname);
-		strlcat(fullname, "/", sizeof fullname);
-		strlcat(fullname, name, sizeof fullname);
+		}
 		name = fullname;
 	}
-	if ((fid = open(name, O_RDONLY)) == -1)
+	if ((fid = open(name, O_RDONLY)) == -1) {
+		/* Could be a POSIX section 8-style TZ string. */
 		goto oops;
+	}
 
 	nread = read(fid, up->buf, sizeof up->buf);
 	if (close(fid) == -1 || nread <= 0)
@@ -1115,8 +1120,7 @@ tzset_basic(void)
 {
 	const char *	name;
 
-	name = getenv("TZ");
-	if (name == NULL) {
+	if (issetugid() || (name = getenv("TZ")) == NULL) {
 		tzsetwall_basic();
 		return;
 	}

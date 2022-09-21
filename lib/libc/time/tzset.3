@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzset.3,v 1.23 2018/03/16 16:58:26 schwarze Exp $
-.Dd $Mdocdate: March 16 2018 $
+.\"	$OpenBSD: tzset.3,v 1.24 2022/09/21 15:57:49 millert Exp $
+.Dd $Mdocdate: September 21 2022 $
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -21,6 +21,7 @@ to set time conversion information used by
 If
 .Ev TZ
 does not appear in the environment,
+or if the calling process has changed its user or group ID,
 the best available approximation to local wall clock time, as specified
 by the
 .Xr tzfile 5
@@ -38,7 +39,7 @@ correction).
 If
 .Ev TZ
 appears in the environment and its value begins with a colon,
-it is used as a pathname of a file
+it is used as the pathname of a file
 from which to read the time conversion information.
 .Pp
 If
@@ -51,10 +52,18 @@ the time conversion information.
 .Pp
 When
 .Ev TZ
-is used as a pathname, if it begins with a slash,
-it is used as an absolute pathname; otherwise,
-it is used as a pathname relative to a system time conversion information
-directory.
+is used as a pathname, it must be relative to the system time
+conversion information directory,
+.Pa /usr/share/zoneinfo .
+If
+.Ev TZ
+begins with a
+.Ql /
+or contains a
+.Ql \&.
+character, it is ignored and the system local time zone file,
+.Pa /etc/localtime ,
+is used instead.
 The file must be in the format specified in
 .Xr tzfile 5 .
 .Pp
