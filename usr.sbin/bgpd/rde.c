@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.576 2022/09/12 10:03:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.577 2022/09/21 10:39:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1607,28 +1607,38 @@ pathid_conflict(struct rib_entry *re, uint32_t pathid)
 	return 0;
 }
 
+/*
+ * Assign a send side path_id to all paths.
+ */
 static uint32_t
 pathid_assign(struct rde_peer *peer, uint32_t path_id,
     struct bgpd_addr *prefix, uint8_t prefixlen)
 {
 	struct rib_entry *re;
-	struct prefix *p = NULL;
 	uint32_t path_id_tx;
 
-	/*
-	 * Assign a send side path_id to all paths.
-	 */
+	/* If peer has no add-path use the per peer path_id */
+	if (!peer_has_add_path(peer, prefix->aid, CAPA_AP_RECV))
+		return peer->path_id_tx;
+
+	/* peer uses add-path, therefore new path_ids need to be assigned */
 	re = rib_get(rib_byid(RIB_ADJ_IN), prefix, prefixlen);
-	if (re != NULL)
+	if (re != NULL) {
+		struct prefix *p;
+
 		p = prefix_bypeer(re, peer, path_id);
-	if (p != NULL)
-		path_id_tx = p->path_id_tx;
-	else {
-		do {
-			/* assign new local path_id */
-			path_id_tx = arc4random();
-		} while (pathid_conflict(re, path_id_tx));
+		if (p != NULL)
+			return p->path_id_tx;
 	}
+
+	/*
+	 * Assign new local path_id, must be an odd number.
+	 * Even numbers are used by the per peer path_id_tx.
+	 */
+	do {
+		path_id_tx = arc4random() | 1;
+	} while (pathid_conflict(re, path_id_tx));
+
 	return path_id_tx;
 }
 

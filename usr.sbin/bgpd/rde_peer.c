@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.23 2022/09/01 13:23:24 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.24 2022/09/21 10:39:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -147,6 +147,7 @@ struct rde_peer *
 peer_add(uint32_t id, struct peer_config *p_conf)
 {
 	struct rde_peer		*peer;
+	int			 conflict;
 
 	if ((peer = peer_get(id))) {
 		memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
@@ -167,6 +168,23 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 	peer->export_type = peer->conf.export_type;
 	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);
+
+	/*
+	 * Assign an even random unique transmit path id.
+	 * Odd path_id_tx numbers are for peers using add-path recv.
+	 */
+	do {
+		struct rde_peer *p;
+
+		conflict = 0;
+		peer->path_id_tx = arc4random() << 1;
+		RB_FOREACH(p, peer_tree, &peertable) {
+			if (p->path_id_tx == peer->path_id_tx) {
+				conflict = 1;
+				break;
+			}
+		}
+	} while (conflict);
 
 	if (RB_INSERT(peer_tree, &peertable, peer) != NULL)
 		fatalx("rde peer table corrupted");
