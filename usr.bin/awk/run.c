@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.73 2022/09/01 15:21:28 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.74 2022/09/21 01:42:59 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1198,8 +1198,10 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 
 	x = execute(a[0]);
 	n1 = strlen(getsval(x));
-	adjbuf(&s, &ssz, n1, recsize, 0, "cat1");
+	adjbuf(&s, &ssz, n1 + 1, recsize, 0, "cat1");
 	memcpy(s, x->sval, n1);
+
+	tempfree(x);
 
 	y = execute(a[1]);
 	n2 = strlen(getsval(y));
@@ -1207,7 +1209,6 @@ Cell *cat(Node **a, int q)	/* a[0] cat a[1] */
 	memcpy(s + n1, y->sval, n2);
 	s[n1 + n2] = '\0';
 
-	tempfree(x);
 	tempfree(y);
 
 	z = gettemp();

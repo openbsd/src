@@ -25,6 +25,11 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August 1987.
 
+Sep 12, 2022:
+	adjbuf minlen error (cannot be 0) in cat, resulting in NULL pbuf.
+	discovered by todd miller. also use-after-free issue with
+	tempfree in cat, thanks to Miguel Pineiro Jr and valgrind.
+
 Aug 30, 2022:
 	Various leaks and use-after-free issues plugged/fixed.
 	Thanks to Miguel Pineiro Jr. <mpj@pineiro.cc>.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.35 2022/06/03 19:46:09 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.36 2022/09/21 01:42:59 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -566,7 +566,6 @@ Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
 
 char *qstring(const char *is, int delim)	/* collect string up to next delim */
 {
-	const char *os = is;
 	int c, n;
 	const uschar *s = (const uschar *) is;
 	uschar *buf, *bp;
@@ -575,7 +574,7 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')
-			SYNTAX( "newline in string %.20s...", os );
+			SYNTAX( "newline in string %.20s...", is );
 		else if (c != '\\')
 			*bp++ = c;
 		else {	/* \something */
