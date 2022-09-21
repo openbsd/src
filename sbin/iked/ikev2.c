@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.352 2022/09/19 20:54:02 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.353 2022/09/21 22:32:10 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -754,9 +754,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 			initiator = 0;
 		/*
 		 * See if we have responded to this request before
+		 * For return values 0 and -1 we have.
 		 */
 		if ((r = ikev2_msg_retransmit_response(env, sa, msg,
-		    hdr->ike_exchange)) != 0) {
+		    hdr->ike_exchange)) != -2) {
 			if (r == -1) {
 				log_warn("%s: failed to retransmit a "
 				    "response", __func__);

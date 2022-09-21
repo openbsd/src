@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.86 2022/09/19 20:54:02 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.87 2022/09/21 22:32:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1265,7 +1265,7 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 
 	if ((mr = ikev2_msg_lookup(env, &sa->sa_responses, msg, exchange))
 	    == NULL)
-		return (0);
+		return (-2);	/* not found */
 
 	TAILQ_FOREACH(m, &mr->mrt_frags, msg_entry) {
 		if (sendtofrom(m->msg_fd, ibuf_data(m->msg_data),
