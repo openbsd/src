@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.19 2022/09/10 16:14:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.20 2022/09/21 07:32:59 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -68,6 +68,7 @@ struct uvm_vnode {
  * u_flags values
  */
 #define UVM_VNODE_VALID		0x001	/* we are attached to the vnode */
+#define UVM_VNODE_CANPERSIST	0x002	/* we can persist after ref == 0 */
 #define UVM_VNODE_ALOCK		0x004	/* uvn_attach is locked out */
 #define UVM_VNODE_DYING		0x008	/* final detach/terminate in 
 					   progress */

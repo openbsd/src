@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.128 2022/09/10 16:14:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.129 2022/09/21 07:32:59 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -163,8 +163,11 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	 */
 	rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
 	if (uvn->u_flags & UVM_VNODE_VALID) {	/* already active? */
-		KASSERT(uvn->u_obj.uo_refs > 0);
 
+		/* regain vref if we were persisting */
+		if (uvn->u_obj.uo_refs == 0) {
+			vref(vp);
+		}
 		uvn->u_obj.uo_refs++;		/* bump uvn ref! */
 		rw_exit(uvn->u_obj.vmobjlock);
 
@@ -232,7 +235,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	KASSERT(uvn->u_obj.uo_refs == 0);
 	uvn->u_obj.uo_refs++;
 	oldflags = uvn->u_flags;
-	uvn->u_flags = UVM_VNODE_VALID;
+	uvn->u_flags = UVM_VNODE_VALID|UVM_VNODE_CANPERSIST;
 	uvn->u_nio = 0;
 	uvn->u_size = used_vnode_size;
 
@@ -245,7 +248,7 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	/*
 	 * add a reference to the vnode.   this reference will stay as long
 	 * as there is a valid mapping of the vnode.   dropped when the
-	 * reference count goes to zero.
+	 * reference count goes to zero [and we either free or persist].
 	 */
 	vref(vp);
 	if (oldflags & UVM_VNODE_WANTED)
@@ -318,6 +321,16 @@ uvn_detach(struct uvm_object *uobj)
 	 */
 	vp->v_flag &= ~VTEXT;
 
+	/*
+	 * we just dropped the last reference to the uvn.   see if we can
+	 * let it "stick around".
+	 */
+	if (uvn->u_flags & UVM_VNODE_CANPERSIST) {
+		/* won't block */
+		uvn_flush(uobj, 0, 0, PGO_DEACTIVATE|PGO_ALLPAGES);
+		goto out;
+	}
+
 	/* its a goner! */
 	uvn->u_flags |= UVM_VNODE_DYING;
 
@@ -367,6 +380,7 @@ uvn_detach(struct uvm_object *uobj)
 	/* wake up any sleepers */
 	if (oldflags & UVM_VNODE_WANTED)
 		wakeup(uvn);
+out:
 	rw_exit(uobj->vmobjlock);
 
 	/* drop our reference to the vnode. */
@@ -482,8 +496,8 @@ uvm_vnp_terminate(struct vnode *vp)
 	}
 
 	/*
-	 * done.   now we free the uvn if its reference count is zero.
-	 * however, if we are
+	 * done.   now we free the uvn if its reference count is zero
+	 * (true if we are zapping a persisting uvn).   however, if we are
 	 * terminating a uvn with active mappings we let it live ... future
 	 * calls down to the vnode layer will fail.
 	 */
@@ -491,14 +505,14 @@ uvm_vnp_terminate(struct vnode *vp)
 	if (uvn->u_obj.uo_refs) {
 		/*
 		 * uvn must live on it is dead-vnode state until all references
-		 * are gone.   restore flags.
+		 * are gone.   restore flags.    clear CANPERSIST state.
 		 */
 		uvn->u_flags &= ~(UVM_VNODE_DYING|UVM_VNODE_VNISLOCKED|
-		      UVM_VNODE_WANTED);
+		      UVM_VNODE_WANTED|UVM_VNODE_CANPERSIST);
 	} else {
 		/*
 		 * free the uvn now.   note that the vref reference is already
-		 * gone.
+		 * gone [it is dropped when we enter the persist state].
 		 */
 		if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
 			panic("uvm_vnp_terminate: io sync wanted bit set");
@@ -1335,13 +1349,45 @@ uvm_vnp_uncache(struct vnode *vp)
 	}
 
 	/*
-	 * we have a valid, non-blocked uvn.
+	 * we have a valid, non-blocked uvn.   clear persist flag.
 	 * if uvn is currently active we can return now.
 	 */
+	uvn->u_flags &= ~UVM_VNODE_CANPERSIST;
 	if (uvn->u_obj.uo_refs) {
 		rw_exit(uobj->vmobjlock);
 		return FALSE;
 	}
+
+	/*
+	 * uvn is currently persisting!   we have to gain a reference to
+	 * it so that we can call uvn_detach to kill the uvn.
+	 */
+	vref(vp);			/* seems ok, even with VOP_LOCK */
+	uvn->u_obj.uo_refs++;		/* value is now 1 */
+	rw_exit(uobj->vmobjlock);
+
+#ifdef VFSLCKDEBUG
+	/*
+	 * carry over sanity check from old vnode pager: the vnode should
+	 * be VOP_LOCK'd, and we confirm it here.
+	 */
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("uvm_vnp_uncache: vnode not locked!");
+#endif
+
+	/*
+	 * now drop our reference to the vnode.   if we have the sole
+	 * reference to the vnode then this will cause it to die [as we
+	 * just cleared the persist flag].   we have to unlock the vnode
+	 * while we are doing this as it may trigger I/O.
+	 *
+	 * XXX: it might be possible for uvn to get reclaimed while we are
+	 * unlocked causing us to return TRUE when we should not.   we ignore
+	 * this as a false-positive return value doesn't hurt us.
+	 */
+	VOP_UNLOCK(vp);
+	uvn_detach(&uvn->u_obj);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	return TRUE;
 }
@@ -1437,9 +1483,11 @@ uvm_vnp_sync(struct mount *mp)
 			continue;
 
 		/*
-		 * gain reference.
+		 * gain reference.   watch out for persisting uvns (need to
+		 * regain vnode REF).
 		 */
-		KASSERT(uvn->u_obj.uo_refs > 0);
+		if (uvn->u_obj.uo_refs == 0)
+			vref(vp);
 		uvn->u_obj.uo_refs++;
 
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);
