@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.452 2022/08/31 15:51:44 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.453 2022/09/21 21:12:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1281,6 +1281,8 @@ RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 
 /* kroute.c */
 int		 kr_init(int *, uint8_t);
+int		 kr_default_prio(void);
+int		 kr_check_prio(long long);
 int		 ktable_update(u_int, char *, int);
 void		 ktable_preload(void);
 void		 ktable_postload(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.435 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.436 2022/09/21 21:12:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -708,9 +708,8 @@ conf_main	: AS as4number		{
 			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 		}
 		| FIBPRIORITY NUMBER		{
-			if ($2 <= RTP_LOCAL || $2 > RTP_MAX) {
-				yyerror("fib-priority %lld must be between "
-				    "%u and %u", $2, RTP_LOCAL + 1, RTP_MAX);
+			if (!kr_check_prio($2)) {
+				yyerror("fib-priority %lld out of range", $2);
 				YYERROR;
 			}
 			conf->fib_priority = $2;
@@ -1046,9 +1045,8 @@ network		: NETWORK prefix filter_set	{
 		}
 		| NETWORK family PRIORITY NUMBER filter_set	{
 			struct network	*n;
-			if ($4 <= RTP_LOCAL && $4 > RTP_MAX) {
-				yyerror("priority %lld must be between "
-				    "%u and %u", $4, RTP_LOCAL + 1, RTP_MAX);
+			if (!kr_check_prio($4)) {
+				yyerror("priority %lld out of range", $4);
 				YYERROR;
 			}
 
@@ -3598,7 +3596,7 @@ init_config(struct bgpd_config *c)
 	c->holdtime = INTERVAL_HOLD;
 	c->connectretry = INTERVAL_CONNECTRETRY;
 	c->bgpid = get_bgpid();
-	c->fib_priority = RTP_BGP;
+	c->fib_priority = kr_default_prio();
 	c->default_tableid = getrtable();
 	if (!ktable_exists(c->default_tableid, &rdomid))
 		fatalx("current routing table %u does not exist",

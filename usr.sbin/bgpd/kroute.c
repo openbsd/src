@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.299 2022/09/15 08:20:14 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.300 2022/09/21 21:12:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -255,6 +255,20 @@ kr_init(int *fd, uint8_t fib_prio)
 
 	*fd = kr_state.fd;
 	return (0);
+}
+
+int
+kr_default_prio(void)
+{
+	return RTP_BGP;
+}
+
+int
+kr_check_prio(long long prio)
+{
+	if (prio <= RTP_LOCAL || prio > RTP_MAX)
+		return 0;
+	return 1;
 }
 
 int
