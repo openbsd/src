@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.4 2021/07/25 22:58:39 jca Exp $ */
+/*	$OpenBSD: usertc.c,v 1.5 2022/09/22 04:57:07 robert Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -26,12 +26,23 @@ rdtsc_lfence(void)
 	return ((uint64_t)lo)|(((uint64_t)hi)<<32);
 }
 
+static inline u_int
+rdtscp(void)
+{
+	uint32_t hi, lo;
+	__asm volatile("rdtscp" : "=a"(lo), "=d"(hi) : : "ecx");
+	return ((uint64_t)lo)|(((uint64_t)hi)<<32);
+}
+
 static int
 tc_get_timecount(struct timekeep *tk, u_int *tc)
 {
 	switch (tk->tk_user) {
-	case TC_TSC:
+	case TC_TSC_LFENCE:
 		*tc = rdtsc_lfence();
+		return 0;
+	case TC_TSC_RDTSCP:
+		*tc = rdtscp();
 		return 0;
 	}
 
