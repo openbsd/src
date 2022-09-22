@@ -1,4 +1,4 @@
-# $OpenBSD: protocols,v 1.24 2014/07/12 14:38:38 ajacoutot Exp $
+# $OpenBSD: protocols,v 1.25 2022/09/22 17:44:20 deraadt Exp $
 #
 # Internet (IP) protocols, RFC 1340
 # https://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt
@@ -137,7 +137,6 @@ sps	130	SPS		# Secure Packet Shield
 pipe	131	PIPE		# Private IP Encapsulation within IP
 sctp	132	SCTP		# Stream Control Transmission Protocol
 fc	133	FC		# Fibre Channel
-rsvp-e2e-ignore	134	RSVP-E2E-IGNORE # Aggregation of RSVP for IP reservations
 rsvp-e2e-ignore	134	RSVP-E2E-IGNORE	# Aggregation of RSVP for IP reservations
 mobility-header	135	Mobility-Header	# Mobility Support in IPv6
 udplite	136	UDPLite	#	The UDP-Lite Protocol
