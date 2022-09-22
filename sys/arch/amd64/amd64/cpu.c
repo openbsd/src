@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.160 2022/09/20 14:28:27 robert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.161 2022/09/22 04:36:37 robert Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1146,17 +1146,20 @@ cpu_fix_msrs(struct cpu_info *ci)
 		}
 	}
 
-	/*
-	 * "Mitigation G-2" per AMD's Whitepaper "Software Techniques
-	 * for Managing Speculation on AMD Processors"
-	 *
-	 * By setting MSR C001_1029[1]=1, LFENCE becomes a dispatch
-	 * serializing instruction.
-	 *
-	 * This MSR is available on all AMD families >= 10h, except 11h
-	 * where LFENCE is always serializing.
-	 */
 	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
+		/* Apply AMD errata */
+		amd64_errata(ci);
+
+		/*
+		 * "Mitigation G-2" per AMD's Whitepaper "Software Techniques
+		 * for Managing Speculation on AMD Processors"
+		 *
+		 * By setting MSR C001_1029[1]=1, LFENCE becomes a dispatch
+		 * serializing instruction.
+		 *
+		 * This MSR is available on all AMD families >= 10h, except 11h
+		 * where LFENCE is always serializing.
+		 */
 		if (family >= 0x10 && family != 0x11) {
 			msr = rdmsr(MSR_DE_CFG);
 			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
