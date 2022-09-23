@@ -1,4 +1,4 @@
-/*	$OpenBSD: localtime.c,v 1.63 2022/09/21 15:57:49 millert Exp $ */
+/*	$OpenBSD: localtime.c,v 1.64 2022/09/23 17:29:22 millert Exp $ */
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson.
@@ -325,8 +325,8 @@ tzload(const char *name, struct state *sp, int doextend)
 		 */
 		if (name[0] == ':')
 			name++;
-		/* Ignore absolute paths or names that might contain "..". */
-		if (name[0] == '/' || strchr(name, '.'))
+		/* Ignore absolute paths or names that contain "../". */
+		if (name[0] == '/' || strstr(name, "../") != NULL)
 			name = NULL;
 	}
 	if (name == NULL) {

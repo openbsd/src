@@ -1,5 +1,5 @@
-.\"	$OpenBSD: tzset.3,v 1.24 2022/09/21 15:57:49 millert Exp $
-.Dd $Mdocdate: September 21 2022 $
+.\"	$OpenBSD: tzset.3,v 1.25 2022/09/23 17:29:22 millert Exp $
+.Dd $Mdocdate: September 23 2022 $
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -59,9 +59,9 @@ If
 .Ev TZ
 begins with a
 .Ql /
-or contains a
-.Ql \&.
-character, it is ignored and the system local time zone file,
+or contains
+.Ql \&../ ,
+it is ignored and the system local time zone file,
 .Pa /etc/localtime ,
 is used instead.
 The file must be in the format specified in
