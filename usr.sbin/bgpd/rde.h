@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.272 2022/09/21 10:39:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.273 2022/09/23 15:49:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -390,7 +390,8 @@ void		rde_pftable_del(uint16_t, struct prefix *);
 
 int		rde_evaluate_all(void);
 void		rde_generate_updates(struct rib *, struct prefix *,
-		    struct prefix *, enum eval_mode);
+		    struct prefix *, struct prefix *, struct prefix *,
+		    enum eval_mode);
 uint32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 void		rde_peer_send_rrefresh(struct rde_peer *, uint8_t, uint8_t);
@@ -700,6 +701,9 @@ void		 up_generate_updates(struct filter_head *, struct rde_peer *,
 		    struct prefix *, struct prefix *);
 void		 up_generate_addpath(struct filter_head *, struct rde_peer *,
 		    struct prefix *, struct prefix *);
+void		 up_generate_addpath_all(struct filter_head *,
+		    struct rde_peer *, struct prefix *, struct prefix *,
+		    struct prefix *);
 void		 up_generate_default(struct filter_head *, struct rde_peer *,
 		    uint8_t);
 int		 up_is_eor(struct rde_peer *, uint8_t);

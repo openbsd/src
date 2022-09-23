@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.24 2022/09/21 10:39:17 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.25 2022/09/23 15:49:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -206,14 +206,20 @@ RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
 peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
-    struct prefix *new, struct prefix *old, enum eval_mode mode)
+    struct prefix *newbest, struct prefix *oldbest,
+    struct prefix *newpath, struct prefix *oldpath,
+    enum eval_mode mode)
 {
 	uint8_t		 aid;
 
-	if (new != NULL)
-		aid = new->pt->aid;
-	else if (old != NULL)
-		aid = old->pt->aid;
+	if (newbest != NULL)
+		aid = newbest->pt->aid;
+	else if (oldbest != NULL)
+		aid = oldbest->pt->aid;
+	else if (newpath != NULL)
+		aid = newpath->pt->aid;
+	else if (oldpath != NULL)
+		aid = oldpath->pt->aid;
 	else
 		return;
 
@@ -239,32 +245,38 @@ peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
 
 	/* handle peers with add-path */
 	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
-		up_generate_addpath(out_rules, peer, new, old);
+		if (peer->eval.mode == ADDPATH_EVAL_ALL)
+			up_generate_addpath_all(out_rules, peer, newbest,
+			    newpath, oldpath);
+		else
+			up_generate_addpath(out_rules, peer, newbest, oldbest);
 		return;
 	}
 
 	/* skip regular peers if the best path didn't change */
 	if (mode == EVAL_ALL && (peer->flags & PEERFLAG_EVALUATE_ALL) == 0)
 		return;
-	up_generate_updates(out_rules, peer, new, old);
+	up_generate_updates(out_rules, peer, newbest, oldbest);
 }
 
 void
-rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
+rde_generate_updates(struct rib *rib, struct prefix *newbest,
+    struct prefix *oldbest, struct prefix *newpath, struct prefix *oldpath,
     enum eval_mode mode)
 {
 	struct rde_peer	*peer;
 
 	/*
-	 * If old is != NULL we know it was active and should be removed.
-	 * If new is != NULL we know it is reachable and then we should
+	 * If oldbest is != NULL we know it was active and should be removed.
+	 * If newbest is != NULL we know it is reachable and then we should
 	 * generate an update.
 	 */
-	if (old == NULL && new == NULL)
+	if (oldbest == NULL && newbest == NULL)
 		return;
 
 	RB_FOREACH(peer, peer_tree, &peertable)
-		peer_generate_update(peer, rib->id, new, old, mode);
+		peer_generate_update(peer, rib->id, newbest, oldbest, newpath,
+		    oldpath, mode);
 }
 
 /*
@@ -372,10 +384,10 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 	struct rde_peer		*peer = ptr;
 	struct prefix		*p;
 
-	/* no eligible prefix, not even for 'evaluate all' */
 	if ((p = prefix_best(re)) == NULL)
+		/* no eligible prefix, not even for 'evaluate all' */
 		return;
-	peer_generate_update(peer, re->rib_id, p, NULL, 0);
+	peer_generate_update(peer, re->rib_id, p, NULL, NULL, NULL, 0);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.97 2022/07/25 16:37:55 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.98 2022/09/23 15:49:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -556,7 +556,8 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 * but remember that newbest may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(rib, newbest, oldbest, EVAL_DEFAULT);
+		rde_generate_updates(rib, newbest, oldbest, new, old,
+		    EVAL_DEFAULT);
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
 		return;
@@ -569,7 +570,8 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
-			rde_generate_updates(rib, newbest, NULL, EVAL_ALL);
+			rde_generate_updates(rib, newbest, NULL, new, old,
+			    EVAL_ALL);
 }
 
 void
@@ -628,7 +630,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 		 * but remember that newbest may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(rib, newbest, oldbest, EVAL_DEFAULT);
+		rde_generate_updates(rib, newbest, oldbest, p, p, EVAL_DEFAULT);
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
 		return;
@@ -640,5 +642,5 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	 * rde_generate_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all())
-		rde_generate_updates(rib, newbest, NULL, EVAL_ALL);
+		rde_generate_updates(rib, newbest, NULL, p, p, EVAL_ALL);
 }
