@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.13 2022/09/20 07:54:27 jsg Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.14 2022/09/23 01:25:39 jsg Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
-
 
 typedef struct errata {
 	u_short		e_num;
@@ -295,6 +294,7 @@ amd64_errata(struct cpu_info *ci)
 	int found = 0;
 	int corrected = 0;
 	u_int32_t regs[4];
+	static int printed = 0;
 
 	cpuid(0x80000001, regs);
 
@@ -363,17 +363,22 @@ amd64_errata(struct cpu_info *ci)
 		int first = 1;
 
 		/* Print out found and corrected */
-		printf("%s: AMD %s", ci->ci_dev->dv_xname,
-		    (corrected == 1) ? "erratum" : "errata");
+		if (!printed) {
+			printf("%s: AMD %s", ci->ci_dev->dv_xname,
+			    (corrected == 1) ? "erratum" : "errata");
+		}
 		for (e = errata; e < ex; e++) {
 			if (e->e_reported == 2) {
-				if (! first)
-					printf(",");
-				printf(" %d", e->e_num);
+				if (!printed) {
+					if (! first)
+						printf(",");
+					printf(" %d", e->e_num);
+				}
 				first = 0;
 			}
 		}
-		printf(" detected and fixed\n");
+		if (!printed)
+			printf(" detected and fixed\n");
 	}
 #endif
 
@@ -381,16 +386,24 @@ amd64_errata(struct cpu_info *ci)
 		int first = 1;
 
 		/* Print out found but not corrected */
-		printf("%s: AMD %s", ci->ci_dev->dv_xname,
-		    (found == 1) ? "erratum" : "errata");
+		if (!printed) {
+			printf("%s: AMD %s", ci->ci_dev->dv_xname,
+			    (found == 1) ? "erratum" : "errata");
+		}
 		for (e = errata; e < ex; e++) {
 			if (e->e_reported == 1) {
-				if (! first)
-					printf(",");
-				printf(" %d", e->e_num);
+				if (!printed) {
+					if (! first)
+						printf(",");
+					printf(" %d", e->e_num);
+				}
 				first = 0;
 			}
 		}
-		printf(" present, BIOS upgrade may be required\n");
+		if (!printed)
+			printf(" present, BIOS upgrade may be required\n");
 	}
+
+	/* Print only one time for the first CPU */
+	printed = 1;
 }
