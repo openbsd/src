@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.263 2022/09/15 09:08:29 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.264 2022/09/23 12:32:50 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -330,23 +330,18 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 
 #ifdef DEBUG
 	char			 devname[32];
+	const char		*blkname;
 
-	switch (major(bp->b_dev)) {
-	case 13:
-	case 4:
-		snprintf(devname, sizeof(devname), "sd%d",
-		    minor(bp->b_dev) / MAXPARTITIONS);
-		break;
-	case 41:
-	case 14:
-		snprintf(devname, sizeof(devname), "vnd%d",
-		    minor(bp->b_dev) / MAXPARTITIONS);
-		break;
-	default:
-		snprintf(devname, sizeof(devname), "<%d,%d>",
-		    major(bp->b_dev), minor(bp->b_dev));
-		break;
-	}
+	blkname = findblkname(major(bp->b_dev));
+	if (blkname == NULL)
+		 blkname = findblkname(major(chrtoblk(bp->b_dev)));
+	if (blkname == NULL)
+		snprintf(devname, sizeof(devname), "<%d, %d>", major(bp->b_dev),
+		    minor(bp->b_dev));
+	else
+		snprintf(devname, sizeof(devname), "%s%d", blkname,
+		    DISKUNIT(bp->b_dev));
+
 	printf("readdoslabel enter: %s, spoofonly %d, partoffp %sNULL\n",
 	    devname, spoofonly, (partoffp == NULL) ? "" : "not ");
 #endif /* DEBUG */
