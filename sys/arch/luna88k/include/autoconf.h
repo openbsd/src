@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2017/11/03 06:55:08 aoyama Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2022/09/23 02:35:46 aoyama Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -36,10 +36,6 @@
 
 #ifndef _MACHINE_AUTOCONF_H_
 #define _MACHINE_AUTOCONF_H_
-
-/* the following are from the prom/bootblocks */
-extern void	*bootaddr;	/* PA of boot device */
-extern int	bootpart;	/* boot partition (disk) */
 
 struct mainbus_attach_args {
 	const char *ma_name;
