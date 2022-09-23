@@ -1,5 +1,5 @@
-7 February 2022: Wouter
-	- Fix that TCP interface does not use TLS when TLS is also configured.
+21 September 2022: Wouter
+	- Patch for CVE-2022-3204 Non-Responsive Delegation Attack.
 
 1 August 2022: Wouter
 	- Fix the novel ghost domain issues CVE-2022-30698 and CVE-2022-30699.
