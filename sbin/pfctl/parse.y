@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.711 2021/10/25 14:50:29 sashan Exp $	*/
+/*	$OpenBSD: parse.y,v 1.712 2022/09/23 21:33:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3684,7 +3684,7 @@ pool_opt	: BITMASK	{
 			pool_opts.staticport = 1;
 		}
 		| STICKYADDRESS	{
-			if (filter_opts.marker & POM_STICKYADDRESS) {
+			if (pool_opts.marker & POM_STICKYADDRESS) {
 				yyerror("sticky-address cannot be redefined");
 				YYERROR;
 			}
