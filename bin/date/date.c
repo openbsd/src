@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.58 2022/09/19 15:36:20 florian Exp $	*/
+/*	$OpenBSD: date.c,v 1.59 2022/09/23 16:58:33 florian Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 		argc--;
 	}
 
-	if (pledge("stdio rpath", NULL) == -1)
+	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
 	if (*argv && **argv == '+') {
@@ -145,11 +145,9 @@ setthetime(char *p, const char *pformat)
 	time_t now;
 	int yearset = 0;
 
-	if (unveil("/", "r") == -1)
-		err(1, "unveil /");
 	/* Let us set the time even if logwtmp would fail. */
 	unveil("/var/log/wtmp", "w");
-	if (pledge("stdio settime rpath wpath", NULL) == -1)
+	if (pledge("stdio settime wpath", NULL) == -1)
 		err(1, "pledge");
 
 	lt = localtime(&tval);
