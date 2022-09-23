@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.453 2022/09/21 21:12:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.454 2022/09/23 15:50:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
-#include <net/route.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -41,6 +40,7 @@
 #define	PEER_DESCR_LEN			32
 #define	REASON_LEN			256	/* includes NUL terminator */
 #define	PFTABLE_LEN			32
+#define	ROUTELABEL_LEN			32
 #define	TCP_MD5_KEY_LEN			80
 #define	IPSEC_ENC_KEY_LEN		32
 #define	IPSEC_AUTH_KEY_LEN		20
@@ -705,7 +705,7 @@ struct ktable {
 struct kroute_full {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	nexthop;
-	char			label[RTLABEL_LEN];
+	char			label[ROUTELABEL_LEN];
 	uint32_t		mplslabel;
 	uint16_t		flags;
 	u_short			ifindex;
@@ -1117,7 +1117,7 @@ struct filter_set {
 		struct nexthop			*nh_ref;
 		struct community		 community;
 		char				 pftable[PFTABLE_LEN];
-		char				 rtlabel[RTLABEL_LEN];
+		char				 rtlabel[ROUTELABEL_LEN];
 		uint8_t				 origin;
 	}				action;
 	enum action_types		type;
