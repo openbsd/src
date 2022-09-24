@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.59 2022/09/13 10:28:19 martijn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.60 2022/09/24 15:22:59 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2022 $
+.Dd $Mdocdate: September 24 2022 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -25,8 +25,7 @@
 .Nm
 is the configuration file to configure the virtual machine monitor
 (VMM) subsystem.
-A VMM manages virtual machines (VMs) on a
-.Ar host .
+A VMM manages virtual machines (VMs) on a host.
 The VMM subsystem is responsible for creating, destroying, and
 executing VMs.
 .Pp
@@ -45,8 +44,7 @@ Configuration for each individual virtual machine.
 Configuration for virtual switches.
 .El
 .Pp
-Within the sections,
-the
+Within the sections, the
 .Ar bytes
 argument can be specified with a human-readable scale,
 using the format described in
@@ -91,7 +89,7 @@ vm "vm1.example.com" {
 .Sh GLOBAL CONFIGURATION
 The following setting can be configured globally:
 .Bl -tag -width Ds
-.It Ic agentx Oo Ic context Ar context Oc Oo Ic path Ar path Oc
+.It Ic agentx Oo Ic context Ar context Oc Op Ic path Ar path
 Export vm metrics via an AgentX compatible
 .Pq snmp
 daemon by connecting to
@@ -102,32 +100,29 @@ If
 .Ar path
 is omitted it will default to
 .Pa /var/agentx/master .
-.Ar Context
+.Ar context
 is the SNMPv3 context and can usually be omitted.
-.It Ic local prefix Ar address Ns Li / Ns Ar prefix
+.It Ic local prefix Ar address Ns / Ns Ar prefix
 Set the network prefix that is used to allocate subnets for
 local interfaces, see
 .Ic local interface
 in the
 .Sx VM CONFIGURATION
 section below.
-The default is
-.Ar 100.64.0.0/10 .
-.It Ic local inet6 Op Ic prefix Ar address Ns Li / Ns Ar prefix
+The default is 100.64.0.0/10.
+.It Ic local inet6 Op Ic prefix Ar address Ns / Ns Ar prefix
 Enable IPv6 on local interfaces and allocate routable subnets.
 If the prefix is not specified,
 a random prefix from the
 .Dq unique local
-network range
-.Ar fd00::/8
-will be generated on startup.
+network range fd00::/8 will be generated on startup.
 The specified prefix length must be /64 or smaller.
 .It Cm socket owner Ar user : Ns Ar group
 Set the control socket owner to the specified user and group.
 Users with access to the control socket will be allowed to use
-.Nm vmctl
+.Xr vmctl 8
 for restricted access to
-.Nm vmd .
+.Xr vmd 8 .
 If only
 .Ar user
 is given,
@@ -136,8 +131,7 @@ If only
 .Pf : Ar group
 is given,
 only the group is set.
-The default is
-.Ar root : Ns Ar wheel .
+The default is root:wheel.
 .It Ic staggered start parallel Ar parallelism Ic delay Ar seconds
 Start all configured VMs in a staggered fashion with
 .Ar parallelism
@@ -295,7 +289,7 @@ If the global
 option is enabled, a routable IPv6 gateway address will be generated
 on the host side.
 Unlike the IPv4 option,
-.Nm vmd
+.Xr vmd 8
 does not respond to DHCPv6 or router solicitation messages itself.
 Use
 .Xr rad 8
@@ -343,7 +337,7 @@ except for exclusive options such as
 .Ic disk ,
 .Ic interface lladdr ,
 or
-.Ic interface name .
+.Ic interface Ar name .
 The configuration options are identical to the
 .Sx VM CONFIGURATION ,
 but restricted to the allowed instance options.
@@ -431,7 +425,7 @@ is specified.
 .It Cm locked lladdr
 If this option is specified,
 .Xr vmd 8
-will drop packets with altered sources addresses that do not match the
+will drop packets with altered source addresses that do not match the
 link layer addresses (MAC addresses) of the VM interfaces in this switch.
 .It Cm disable
 Do not configure this switch.
@@ -470,7 +464,7 @@ Stop the switch from forwarding packets.
 Create a new VM with 1GB memory, 1 network interface connected to
 .Dq uplink ,
 with one disk image
-.Sq /home/joe/vm2-disk.img ,
+.Pa /home/joe/vm2-disk.img ,
 owned by user
 .Sq joe :
 .Bd -literal -offset indent
