@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.35 2022/09/17 10:32:05 florian Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.36 2022/09/24 16:07:26 florian Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -78,9 +79,14 @@ main(int argc, char *argv[])
 	int xbase;
 	int ybase;
 	int wintoosmall;
+	int tz_len = 0;
+	int h, m;
+	int prev_tm_gmtoff;
 	char *tz;
 
 	tz = getenv("TZ");
+	if (tz != NULL)
+		tz_len = strlen(tz);
 
 	scrol = wintoosmall = 0;
 	while ((i = getopt(argc, argv, "sh")) != -1) {
@@ -135,6 +141,7 @@ main(int argc, char *argv[])
 
 	curs_set(0);
 	sigwinched = 1;	/* force initial sizing */
+	prev_tm_gmtoff = 24 * 3600; /* force initial header printing */
 
 	clock_gettime(CLOCK_REALTIME, &now);
 	if (n) {
@@ -152,9 +159,11 @@ main(int argc, char *argv[])
 		set(tm->tm_hour / 10, 24);
 		set(10, 7);
 		set(10, 17);
-		if (sigwinched) {
+		/* force repaint if window size changed or DST changed */
+		if (sigwinched || prev_tm_gmtoff != tm->tm_gmtoff) {
 			sigwinched = 0;
 			wintoosmall = 0;
+			prev_tm_gmtoff = tm->tm_gmtoff;
 			getwinsize(&i, &j);
 			if (i >= XLENGTH + 2)
 				xbase = (i - XLENGTH) / 2;
@@ -184,11 +193,19 @@ main(int argc, char *argv[])
 				move(ybase, xbase + XLENGTH);
 				vline(ACS_VLINE, YDEPTH);
 
-				if (tz != NULL) {
-					move(ybase - 1, xbase);
-					printw("[ %s %+d ]", tz,
-					    tm->tm_gmtoff / 60 / 60 );
-				}
+				move(ybase - 1, xbase);
+
+				h = tm->tm_gmtoff / 3600;
+				m = abs((int)tm->tm_gmtoff % 3600 / 60);
+
+				if (tz_len > 0 && tz_len <= XLENGTH -
+				    strlen("[  () +0000 ]") -
+				    strlen(tm->tm_zone))
+					printw("[ %s (%s) %+2.2d%02d ]", tz,
+					    tm->tm_zone, h, m);
+				else
+					printw("[ %s %+2.2d%02d ]",
+					    tm->tm_zone, h, m);
 
 				attrset(COLOR_PAIR(2));
 			}

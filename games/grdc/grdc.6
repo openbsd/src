@@ -1,8 +1,8 @@
-.\"	$OpenBSD: grdc.6,v 1.13 2022/09/17 10:32:05 florian Exp $
+.\"	$OpenBSD: grdc.6,v 1.14 2022/09/24 16:07:26 florian Exp $
 .\"
 .\" Copyright 2002 Amos Shapir.  Public domain.
 .\"
-.Dd $Mdocdate: September 17 2022 $
+.Dd $Mdocdate: September 24 2022 $
 .Dt GRDC 6
 .Os
 .Sh NAME
@@ -34,8 +34,11 @@ key exits the program.
 .Bl -tag -width Ds
 .It Ev TZ
 The time zone to use for displaying the time.
-It is specified as a pathname relative to
-.Pa /usr/share/zoneinfo .
+It is normally specified as a pathname relative to
+.Pa /usr/share/zoneinfo ,
+though see
+.Xr tzset 3
+for more information.
 If this variable is not set, the time zone is determined based on
 .Pa /etc/localtime .
 .El
