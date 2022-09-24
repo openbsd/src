@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.14 2022/09/23 01:25:39 jsg Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.15 2022/09/24 12:22:31 jsg Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ static const u_int cpurevs[] = {
 	RB_C2, 0x0100f42, RB_C3, 0x0100f43, BL_C2, 0x0100f52,
 	BL_C3, 0x0100f53, DA_C2, 0x0100f62, DA_C3, 0x0100f63,
 	HY_D0, 0x0100f80, HY_D1, 0x0100f81, HY_D1, 0x0100f91,
-	PH_E0, 0x0100fa0, LN_B0, 0x0300f10,
+	PH_E0, 0x0100fa0, LN_B0, 0x0300f10, SH_B0, 0x0000f50,
 	OINK
 };
 
