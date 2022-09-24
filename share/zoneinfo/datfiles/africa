@@ -1,4 +1,4 @@
-# $OpenBSD: africa,v 1.69 2022/08/12 16:50:57 millert Exp $
+# $OpenBSD: africa,v 1.70 2022/09/24 14:33:28 millert Exp $
 # tzdb data for Africa and environs
 
 # This file is in the public domain, so clarified as of
@@ -1471,7 +1471,7 @@ Zone	Africa/Freetown	-0:53:00 -	LMT	1882
 			-0:53:00 -	FMT	1913 Jul  1 # Freetown MT
 			-1:00	SL	%s	1939 Sep  5
 			-1:00	-	-01	1941 Dec  6 24:00
-			 0:00	SL	GMT/+01
+			 0:00	-	GMT
 
 # Somalia
 # Zone	NAME		STDOFF	RULES	FORMAT	[UNTIL]

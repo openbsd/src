@@ -1,4 +1,4 @@
-# $OpenBSD: zone.tab,v 1.71 2022/08/12 16:50:57 millert Exp $
+# $OpenBSD: zone.tab,v 1.72 2022/09/24 14:33:28 millert Exp $
 # tzdb timezone descriptions (deprecated version)
 #
 # This file is in the public domain, so clarified as of
@@ -402,8 +402,6 @@ TV	-0831+17913	Pacific/Funafuti
 TW	+2503+12130	Asia/Taipei
 TZ	-0648+03917	Africa/Dar_es_Salaam
 UA	+5026+03031	Europe/Kyiv	Ukraine (most areas)
-UA	+4837+02218	Europe/Uzhgorod	Transcarpathia
-UA	+4750+03510	Europe/Zaporozhye	Zaporozhye and east Lugansk
 UG	+0019+03225	Africa/Kampala
 UM	+2813-17722	Pacific/Midway	Midway Islands
 UM	+1917+16637	Pacific/Wake	Wake Island

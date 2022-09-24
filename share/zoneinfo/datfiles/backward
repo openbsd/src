@@ -1,4 +1,4 @@
-# $OpenBSD: backward,v 1.41 2022/08/12 16:50:57 millert Exp $
+# $OpenBSD: backward,v 1.42 2022/09/24 14:33:28 millert Exp $
 # tzdb links for backward compatibility
 
 # This file is in the public domain, so clarified as of
@@ -91,6 +91,8 @@ Link	Etc/UTC			Etc/UCT
 Link	Europe/London		Europe/Belfast
 Link	Europe/Kyiv		Europe/Kiev
 Link	Europe/Chisinau		Europe/Tiraspol
+Link	Europe/Kyiv		Europe/Uzhgorod
+Link	Europe/Kyiv		Europe/Zaporozhye
 Link	Europe/London		GB
 Link	Europe/London		GB-Eire
 Link	Etc/GMT			GMT+0
