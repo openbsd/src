@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.167 2022/08/29 17:24:56 deraadt Exp $
+.\"	$OpenBSD: hier.7,v 1.168 2022/09/25 20:54:07 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 29 2022 $
+.Dd $Mdocdate: September 25 2022 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -133,6 +133,9 @@ List of radius servers and their associated shared secrets for
 .Xr packages 7
 start/stop scripts and subroutines for
 .Xr rc 8 .
+.It rpki/
+TAL and configuration files for
+.Xr rpki-client 8 .
 .It signify/
 Key files used by
 .Xr signify 1 .
