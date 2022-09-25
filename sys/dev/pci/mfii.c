@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.86 2022/09/16 12:08:28 stsp Exp $ */
+/* $OpenBSD: mfii.c,v 1.87 2022/09/25 08:15:43 stsp Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -1476,10 +1476,10 @@ mfii_transition_firmware(struct mfii_softc *sc)
 			mfii_write(sc, MFI_SKINNY_IDB, MFI_INIT_READY);
 			max_wait = 10;
 			break;
-		case MFI_STATE_UNDEFINED:
 		case MFI_STATE_BB_INIT:
 			max_wait = 20;
 			break;
+		case MFI_STATE_UNDEFINED:
 		case MFI_STATE_FW_INIT:
 		case MFI_STATE_FW_INIT_2:
 		case MFI_STATE_DEVICE_SCAN:
