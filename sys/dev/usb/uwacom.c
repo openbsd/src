@@ -1,4 +1,4 @@
-/*	$OpenBSD: uwacom.c,v 1.5 2021/11/22 11:29:18 anton Exp $	*/
+/*	$OpenBSD: uwacom.c,v 1.6 2022/09/26 06:14:21 sdk Exp $	*/
 
 /*
  * Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
@@ -35,10 +35,14 @@
 
 #include <dev/hid/hidmsvar.h>
 
+#define	UWACOM_USE_PRESSURE	0x0001 /* button 0 is flaky, use tip pressure */
+#define	UWACOM_BIG_ENDIAN	0x0002 /* XY reporting byte order */
+
 struct uwacom_softc {
 	struct uhidev		sc_hdev;
 	struct hidms		sc_ms;
 	struct hid_location	sc_loc_tip_press;
+	int			sc_flags;
 };
 
 struct cfdriver uwacom_cd = {
@@ -47,7 +51,8 @@ struct cfdriver uwacom_cd = {
 
 
 const struct usb_devno uwacom_devs[] = {
-	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_INTUOS_DRAW }
+	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_INTUOS_DRAW },
+	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_ONE_S }
 };
 
 int	uwacom_match(struct device *, void *, void *);
@@ -110,6 +115,7 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
+
 	sc->sc_hdev.sc_isize = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_hdev.sc_osize = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_hdev.sc_fsize = hid_report_size(desc, size, hid_feature, repid);
@@ -118,15 +124,14 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 	ms->sc_rawmode = 1;
 	ms->sc_flags = HIDMS_ABSX | HIDMS_ABSY;
 	ms->sc_num_buttons = 3;
+
 	ms->sc_loc_x.pos = 8;
 	ms->sc_loc_x.size = 16;
 	ms->sc_loc_y.pos = 24;
 	ms->sc_loc_y.size = 16;
 
 	ms->sc_tsscale.minx = 0;
-	ms->sc_tsscale.maxx = 7600;
 	ms->sc_tsscale.miny = 0;
-	ms->sc_tsscale.maxy = 4750;
 
 	ms->sc_loc_btn[0].pos = 0;
 	ms->sc_loc_btn[0].size = 1;
@@ -135,8 +140,21 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 	ms->sc_loc_btn[2].pos = 2;
 	ms->sc_loc_btn[2].size = 1;
 
-	sc->sc_loc_tip_press.pos = 43;
-	sc->sc_loc_tip_press.size = 8;
+	if (uha->uaa->product == USB_PRODUCT_WACOM_ONE_S) {
+		static uByte reportbuf[2] = { 0x02, 0x02 };
+		uhidev_set_report(uha->parent, UHID_FEATURE_REPORT, 2,
+		    &reportbuf, 2);
+		ms->sc_tsscale.maxx = 15200;
+		ms->sc_tsscale.maxy = 9500;
+	}
+
+	if (uha->uaa->product == USB_PRODUCT_WACOM_INTUOS_DRAW) {
+		sc->sc_flags = UWACOM_USE_PRESSURE | UWACOM_BIG_ENDIAN;
+		sc->sc_loc_tip_press.pos = 43;
+		sc->sc_loc_tip_press.size = 8;
+		ms->sc_tsscale.maxx = 7600;
+		ms->sc_tsscale.maxy = 4750;
+	}
 
 	hidms_attach(ms, &uwacom_accessops);
 }
@@ -166,19 +184,25 @@ uwacom_intr(struct uhidev *addr, void *buf, u_int len)
 	if ((data[0] & 0xf0) == 0xc0)
 		return;
 
-	x = be16toh(hid_get_data(data, len, &ms->sc_loc_x));
-	y = be16toh(hid_get_data(data, len, &ms->sc_loc_y));
-	pressure = hid_get_data(data, len, &sc->sc_loc_tip_press);
+	x = hid_get_data(data, len, &ms->sc_loc_x);
+	y = hid_get_data(data, len, &ms->sc_loc_y);
+
+	if (sc->sc_flags & UWACOM_BIG_ENDIAN) {
+		x = be16toh(x);
+		y = be16toh(y);
+	}
 
 	for (i = 0; i < ms->sc_num_buttons; i++)
 		if (hid_get_data(data, len, &ms->sc_loc_btn[i]))
 			buttons |= (1 << i);
 
-	/* button 0 reporting is flaky, use tip pressure for it */
-	if (pressure > 10)
-		buttons |= 1;
-	else
-		buttons &= ~1;
+	if (sc->sc_flags & UWACOM_USE_PRESSURE) {
+		pressure = hid_get_data(data, len, &sc->sc_loc_tip_press);
+		if (pressure > 10)
+			buttons |= 1;
+		else
+			buttons &= ~1;
+	}
 
 	if (x != 0 || y != 0 || buttons != ms->sc_buttons) {
 		wsmouse_position(ms->sc_wsmousedev, x, y);

@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.748 2022/08/23 08:10:35 jsg Exp $
+$OpenBSD: usbdevs,v 1.749 2022/09/26 06:14:21 sdk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4613,6 +4613,7 @@ product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM INTUOS_DRAW	0x033b	Intuos Draw (CTL-490)
+product WACOM ONE_S		0x037a	One S (CTL-472)
 product WACOM INTUOS_PRO_S	0x0392	Intuos Pro S
 
 /* WAGO Kontakttechnik products */
