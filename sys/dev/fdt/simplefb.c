@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.16 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.17 2022/09/26 15:49:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -298,10 +298,10 @@ simplefb_wsmmap(void *v, off_t off, int prot)
 	struct rasops_info *ri = v;
 	struct simplefb_softc *sc = ri->ri_hw;
 
-	if (off < 0 || off >= sc->sc_psize)
+	if (off < 0 || off >= (sc->sc_psize + (sc->sc_paddr & PAGE_MASK)))
 		return -1;
 
-	return ((sc->sc_paddr + off) | PMAP_NOCACHE);
+	return (((sc->sc_paddr & ~PAGE_MASK) + off) | PMAP_NOCACHE);
 }
 
 int
