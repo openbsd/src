@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.34 2022/09/03 21:16:05 kn Exp $
+#	$OpenBSD: install.md,v 1.35 2022/09/26 00:20:14 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -222,10 +222,10 @@ md_consoleinfo() {
 			rm -rf /etc/firmware/brcm /etc/firmware/apple-bwfm
 			if [[ -s /mnt2/vendorfw/firmware.tar ]]; then
 				tar -x -C /etc/firmware \
-				    -f /mnt2/vendorfw/firmware.tar "*$_fw*"
+				    -f /mnt2/vendorfw/firmware.tar "*$_fw*" 2>/dev/null
 				tar -x -C /etc/firmware \
-				    -f /mnt2/vendorfw/firmware.tar "*$_fw2*"
-				mv /etc/firmware/brcm /etc/firmware/apple-bwfm
+				    -f /mnt2/vendorfw/firmware.tar "*$_fw2*" 2>/dev/null
+				mv /etc/firmware/brcm /etc/firmware/apple-bwfm 2>/dev/null
 			fi
 			umount /mnt2
 		fi
