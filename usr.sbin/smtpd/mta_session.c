@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.146 2022/02/18 17:02:06 millert Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.147 2022/09/26 08:48:52 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1212,6 +1212,8 @@ mta_io(struct io *io, int evt, void *arg)
 		if (s->use_smtps) {
 			io_set_write(io);
 			mta_tls_init(s);
+			if (s->flags & MTA_FREE)
+				mta_free(s);
 		}
 		else {
 			mta_enter_state(s, MTA_BANNER);
@@ -1568,7 +1570,7 @@ mta_tls_init(struct mta_session *s)
 
 	if ((tls = tls_client()) == NULL) {
 		log_info("%016"PRIx64" mta closing reason=tls-failure", s->id);
-		mta_free(s);
+		s->flags |= MTA_FREE;
 		return;
 	}
 
@@ -1582,14 +1584,14 @@ mta_tls_init(struct mta_session *s)
 	if (tls_configure(tls, remote->tls_config) == -1) {
 		log_info("%016"PRIx64" mta closing reason=tls-failure", s->id);
 		tls_free(tls);
-		mta_free(s);
+		s->flags |= MTA_FREE;
 		return;
 	}
 
 	if (io_connect_tls(s->io, tls, s->mxname) == -1) {
 		log_info("%016"PRIx64" mta closing reason=tls-connect-failed", s->id);
 		tls_free(tls);
-		mta_free(s);
+		s->flags |= MTA_FREE;
 	}
 }
 
