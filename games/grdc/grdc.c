@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.36 2022/09/24 16:07:26 florian Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.37 2022/09/27 03:01:42 deraadt Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 			clear();
 			refresh();
 			endwin();
-			errx(1, "terminated by signal %d", sigtermed);
+			exit(0);
 		}
 	} while (!sigalrmed);
 	standend();
