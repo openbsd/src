@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1205 2022/09/19 15:40:36 florian Exp $
+#	$OpenBSD: install.sub,v 1.1206 2022/09/27 12:22:29 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3183,10 +3183,9 @@ do_install() {
 
 	# Note we may have no hosts file if no interfaces were configured.
 	if [[ -f /tmp/i/hosts ]]; then
-		# Remove the entry for ftplist*.openbsd.org
-		sed -i '/ ftplist[0-9]\.openbsd\.org$/d' /tmp/i/hosts
 		_dn=$(get_fqdn)
 		while read _addr _hn _aliases; do
+			[[ $_hn == ftplist[0-9].openbsd.org ]] && continue
 			if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
 				echo "$_addr\t$_hn $_aliases"
 			else
