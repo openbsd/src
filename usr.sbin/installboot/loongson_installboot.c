@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson_installboot.c,v 1.7 2022/09/14 16:43:00 kn Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.8 2022/09/27 11:48:57 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -59,6 +59,8 @@ static int	findmbrfat(int, struct disklabel *);
 void
 md_init(void)
 {
+	stages = 1;
+	stage1 = "/usr/mdec/boot";
 }
 
 void
@@ -103,11 +105,8 @@ write_filesystem(struct disklabel *dl, char part)
 	struct ufs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
-	char *src;
-	size_t mntlen, pathlen, srclen;
+	size_t mntlen, pathlen;
 	int rslt;
-
-	src = NULL;
 
 	/* Create directory for temporary mount point. */
 	strlcpy(dst, "/tmp/installboot.XXXXXXXXXX", sizeof(dst));
@@ -186,17 +185,11 @@ write_filesystem(struct disklabel *dl, char part)
 		warn("unable to build /boot path");
 		goto umount;
 	}
-	src = fileprefix(root, "/usr/mdec/boot");
-	if (src == NULL) {
-		rslt = -1;
-		goto umount;
-	}
-	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
-		    (nowrite ? "would copy" : "copying"), src, dst);
+		    (nowrite ? "would copy" : "copying"), stage1, dst);
 	if (!nowrite) {
-		rslt = filecopy(src, dst);
+		rslt = filecopy(stage1, dst);
 		if (rslt == -1)
 			goto umount;
 	}
@@ -213,8 +206,6 @@ rmdir:
 	dst[mntlen] = '\0';
 	if (rmdir(dst) == -1)
 		err(1, "rmdir('%s') failed", dst);
-
-	free(src);
 
 	if (rslt == -1)
 		exit(1);
