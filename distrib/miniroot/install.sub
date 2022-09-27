@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1206 2022/09/27 12:22:29 kn Exp $
+#	$OpenBSD: install.sub,v 1.1207 2022/09/27 12:28:25 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1434,7 +1434,7 @@ select_sets() {
 	# account for 4 spaces added to the sets list
 	let COLUMNS=_col-8
 
-	cat <<__EOT
+	cat <<'__EOT'
 
 Select sets by entering a set name, a file name pattern or 'all'. De-select
 sets by prepending a '-', e.g.: '-game*'. Selected sets are labelled '[X]'.
@@ -2902,18 +2902,18 @@ finish_up() {
 	# Run syspatch -c on reboot if the arch is supported and if it is a
 	# release system (not -stable or -current). List uninstalled syspatches
 	# on the console and in the rc.firsttime output mail.
-	isin "$ARCH" $_syspatch_archs && cat <<__EOT >>/mnt/etc/rc.firsttime
-set -A _KERNV -- \$(sysctl -n kern.version |
+	isin "$ARCH" $_syspatch_archs && cat <<'__EOT' >>/mnt/etc/rc.firsttime
+set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
-if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
-	_CKPATCH=\$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
+if ((${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
+    _CKPATCH=$(mktemp /tmp/_ckpatch.XXXXXXXXXX); then
 	echo "Checking for available binary patches..."
-	syspatch -c > \$_CKPATCH
-	if [[ -s \$_CKPATCH ]]; then
+	syspatch -c > $_CKPATCH
+	if [[ -s $_CKPATCH ]]; then
 		echo "Run syspatch(8) to install:"
-		column -xc 80 \$_CKPATCH
+		column -xc 80 $_CKPATCH
 	fi
-	rm -f \$_CKPATCH
+	rm -f $_CKPATCH
 fi
 __EOT
 
@@ -3496,7 +3496,7 @@ export COLUMNS=$(stty -a </dev/console |
 
 # Interactive or automatic installation?
 if ! $AI; then
-	cat <<__EOT
+	cat <<'__EOT'
 At any prompt except password prompts you can escape to a shell by
 typing '!'. Default answers are shown in []'s and are selected by
 pressing RETURN.  You can exit this program at any time by pressing
