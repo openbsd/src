@@ -1,4 +1,4 @@
-/*	$OpenBSD: setvbuf.c,v 1.14 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: setvbuf.c,v 1.15 2022/09/28 16:44:14 gnezdo Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
@@ -52,7 +53,7 @@ setvbuf(FILE *fp, char *buf, int mode, size_t size)
 	 * when setting _IONBF.
 	 */
 	if (mode != _IONBF)
-		if ((mode != _IOFBF && mode != _IOLBF) || (int)size < 0)
+		if ((mode != _IOFBF && mode != _IOLBF) || size > INT_MAX)
 			return (EOF);
 
 	/*
