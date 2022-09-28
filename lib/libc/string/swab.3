@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: swab.3,v 1.9 2014/12/12 20:06:13 schwarze Exp $
+.\"	$OpenBSD: swab.3,v 1.10 2022/09/28 20:27:12 jmc Exp $
 .\"
-.Dd $Mdocdate: December 12 2014 $
+.Dd $Mdocdate: September 28 2022 $
 .Dt SWAB 3
 .Os
 .Sh NAME
@@ -42,9 +42,9 @@
 .Fa "ssize_t len"
 .Fc
 .Sh DESCRIPTION
-The function
+The
 .Fn swab
-copies
+function copies
 .Fa len
 bytes from the location referenced by
 .Fa src
@@ -55,7 +55,7 @@ swapping adjacent bytes.
 If
 .Fa len
 is zero or less,
-.Nm
+.Fn swab
 does nothing.
 If it is odd, what happens to the last byte is unspecified.
 If
@@ -68,7 +68,7 @@ overlap, behaviour is undefined.
 .Xr memset 3
 .Sh STANDARDS
 The
-.Nm
+.Fn swab
 function is compliant with the X/Open System Interfaces option of the
 .St -p1003.1-2008
 specification.
