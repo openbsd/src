@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.901 2022/09/09 11:02:23 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.902 2022/09/28 07:55:29 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 9 2022 $
+.Dd $Mdocdate: September 28 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -2011,7 +2011,7 @@ but a different format may be specified with
 .Fl F .
 .Tg capturep
 .It Xo Ic capture-pane
-.Op Fl aepPqCJN
+.Op Fl aAepPqCJN
 .Op Fl b Ar buffer-name
 .Op Fl E Ar end-line
 .Op Fl S Ar start-line
@@ -2036,10 +2036,15 @@ is given, the output includes escape sequences for text and background
 attributes.
 .Fl C
 also escapes non-printable characters as octal \exxx.
+.Fl T
+ignores trailing positions that do not contain a character.
 .Fl N
 preserves trailing spaces at each line's end and
 .Fl J
-preserves trailing spaces and joins any wrapped lines.
+preserves trailing spaces and joins any wrapped lines;
+.Fl J
+implies
+.Fl T .
 .Fl P
 captures only any output that the pane has received that is the beginning of an
 as-yet incomplete escape sequence.

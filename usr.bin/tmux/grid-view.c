@@ -1,4 +1,4 @@
-/* $OpenBSD: grid-view.c,v 1.35 2022/07/06 07:36:36 nicm Exp $ */
+/* $OpenBSD: grid-view.c,v 1.36 2022/09/28 07:55:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -231,5 +231,5 @@ grid_view_string_cells(struct grid *gd, u_int px, u_int py, u_int nx)
 	px = grid_view_x(gd, px);
 	py = grid_view_y(gd, py);
 
-	return (grid_string_cells(gd, px, py, nx, NULL, 0, 0, 0, NULL));
+	return (grid_string_cells(gd, px, py, nx, NULL, 0, NULL));
 }
