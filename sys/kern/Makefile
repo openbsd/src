@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2021/08/31 23:53:42 kn Exp $
+#	$OpenBSD: Makefile,v 1.52 2022/10/01 23:49:38 deraadt Exp $
 
 # Makefile for kernel tags files, init_sysent, etc.
 
@@ -12,9 +12,9 @@ all:
 
 syscalls:	init_sysent.c
 
-SYSCALLSRC = makesyscalls.sh syscalls.conf syscalls.master
+SYSCALLSRC = makesyscalls.sh syscalls.master
 init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscallargs.h: ${SYSCALLSRC}
-	sh makesyscalls.sh syscalls.conf syscalls.master
+	sh makesyscalls.sh syscalls.master
 
 # Kernel tags:
 # tags files are built in the top-level directory for each architecture.

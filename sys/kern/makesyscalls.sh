@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.16 2022/05/01 22:59:49 tedu Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.17 2022/10/01 23:49:38 deraadt Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -36,21 +36,27 @@
 set -e
 
 case $# in
-    2)	;;
-    *)	echo "Usage: $0 config-file input-file" 1>&2
+    1)	;;
+    *)	echo "Usage: $0 input-file" 1>&2
 	exit 1
 	;;
 esac
 
-# source the config file.
-case $1 in
-    /*)	. $1
-	;;
-    *)	. ./$1
-	;;
-esac
+sysnames="syscalls.c"
+sysnumhdr="../sys/syscall.h"
+syssw="init_sysent.c"
+sysarghdr="../sys/syscallargs.h"
 
-# the config file sets the following variables:
+# Any additions to the next line for options that are required for the
+# (new) kernel to boot an existing userland must be coordinated with
+# the snapshot builders
+compatopts=""
+
+switchname="sysent"
+namesname="syscallnames"
+constprefix="SYS_"
+
+# this script sets the following variables:
 #	sysnames	the syscall names file
 #	sysnumhdr	the syscall numbers file
 #	syssw		the syscall switch file
@@ -89,7 +95,7 @@ s/\$//g
 2,${
 	/^#/!s/\([{}()*,]\)/ \1 /g
 }
-' < $2 | awk "
+' < $1 | awk "
 BEGIN {
 	# to allow nested #if/#else/#endif sets
 	savedepth = 0
@@ -105,7 +111,7 @@ BEGIN {
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
-	infile = \"$2\"
+	infile = \"$1\"
 
 	compatopts = \"$compatopts\"
 	"'
