@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.425 2022/09/10 15:29:33 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.426 2022/10/01 16:23:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1357,16 +1357,10 @@ int ssl_verify_alarm_type(long type);
 int SSL_SESSION_ticket(SSL_SESSION *ss, unsigned char **out, size_t *out_len);
 
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
-int ssl3_send_server_certificate(SSL *s);
-int ssl3_send_newsession_ticket(SSL *s);
-int ssl3_send_cert_status(SSL *s);
-int ssl3_get_finished(SSL *s, int state_a, int state_b);
-int ssl3_send_change_cipher_spec(SSL *s, int state_a, int state_b);
 int ssl3_do_write(SSL *s, int type);
 int ssl3_send_alert(SSL *s, int level, int desc);
 int ssl3_get_req_cert_types(SSL *s, CBB *cbb);
 int ssl3_get_message(SSL *s, int st1, int stn, int mt, long max);
-int ssl3_send_finished(SSL *s, int state_a, int state_b);
 int ssl3_num_ciphers(void);
 const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 const SSL_CIPHER *ssl3_get_cipher_by_id(unsigned int id);
@@ -1423,35 +1417,6 @@ int ssl3_packet_extend(SSL *s, int plen);
 int ssl_server_legacy_first_packet(SSL *s);
 int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     unsigned int len);
-
-/* some client-only functions */
-int ssl3_send_client_hello(SSL *s);
-int ssl3_get_dtls_hello_verify(SSL *s);
-int ssl3_get_server_hello(SSL *s);
-int ssl3_get_certificate_request(SSL *s);
-int ssl3_get_new_session_ticket(SSL *s);
-int ssl3_get_cert_status(SSL *s);
-int ssl3_get_server_done(SSL *s);
-int ssl3_send_client_verify(SSL *s);
-int ssl3_send_client_certificate(SSL *s);
-int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey);
-int ssl3_send_client_key_exchange(SSL *s);
-int ssl3_get_server_key_exchange(SSL *s);
-int ssl3_get_server_certificate(SSL *s);
-int ssl3_check_cert_and_algorithm(SSL *s);
-int ssl3_check_finished(SSL *s);
-
-/* some server-only functions */
-int ssl3_get_client_hello(SSL *s);
-int ssl3_send_dtls_hello_verify_request(SSL *s);
-int ssl3_send_server_hello(SSL *s);
-int ssl3_send_hello_request(SSL *s);
-int ssl3_send_server_key_exchange(SSL *s);
-int ssl3_send_certificate_request(SSL *s);
-int ssl3_send_server_done(SSL *s);
-int ssl3_get_client_certificate(SSL *s);
-int ssl3_get_client_key_exchange(SSL *s);
-int ssl3_get_cert_verify(SSL *s);
 
 int ssl_kex_generate_dhe(DH *dh, DH *dh_params);
 int ssl_kex_generate_dhe_params_auto(DH *dh, size_t key_len);

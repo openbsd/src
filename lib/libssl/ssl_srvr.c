@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.149 2022/08/17 07:39:19 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.150 2022/10/01 16:23:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -148,6 +148,7 @@
  * OTHERWISE.
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/bn.h>
@@ -170,6 +171,23 @@
 #include "ssl_locl.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
+
+static int ssl3_get_client_hello(SSL *s);
+static int ssl3_send_dtls_hello_verify_request(SSL *s);
+static int ssl3_send_server_hello(SSL *s);
+static int ssl3_send_hello_request(SSL *s);
+static int ssl3_send_server_certificate(SSL *s);
+static int ssl3_send_server_key_exchange(SSL *s);
+static int ssl3_send_certificate_request(SSL *s);
+static int ssl3_send_server_done(SSL *s);
+static int ssl3_get_client_certificate(SSL *s);
+static int ssl3_get_client_key_exchange(SSL *s);
+static int ssl3_get_cert_verify(SSL *s);
+static int ssl3_send_newsession_ticket(SSL *s);
+static int ssl3_send_cert_status(SSL *s);
+static int ssl3_send_server_change_cipher_spec(SSL *s);
+static int ssl3_send_server_finished(SSL *s);
+static int ssl3_get_client_finished(SSL *s);
 
 int
 ssl3_accept(SSL *s)
@@ -605,8 +623,7 @@ ssl3_accept(SSL *s)
 				s->d1->change_cipher_spec_ok = 1;
 			else
 				s->s3->flags |= SSL3_FLAGS_CCS_OK;
-			ret = ssl3_get_finished(s, SSL3_ST_SR_FINISHED_A,
-			    SSL3_ST_SR_FINISHED_B);
+			ret = ssl3_get_client_finished(s);
 			if (ret <= 0)
 				goto end;
 			if (SSL_is_dtls(s))
@@ -640,8 +657,7 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
-			ret = ssl3_send_change_cipher_spec(s,
-			    SSL3_ST_SW_CHANGE_A, SSL3_ST_SW_CHANGE_B);
+			ret = ssl3_send_server_change_cipher_spec(s);
 			if (ret <= 0)
 				goto end;
 			s->s3->hs.state = SSL3_ST_SW_FINISHED_A;
@@ -660,8 +676,7 @@ ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_FINISHED_A:
 		case SSL3_ST_SW_FINISHED_B:
-			ret = ssl3_send_finished(s, SSL3_ST_SW_FINISHED_A,
-			    SSL3_ST_SW_FINISHED_B);
+			ret = ssl3_send_server_finished(s);
 			if (ret <= 0)
 				goto end;
 			s->s3->hs.state = SSL3_ST_SW_FLUSH;
@@ -748,7 +763,7 @@ ssl3_accept(SSL *s)
 	return (ret);
 }
 
-int
+static int
 ssl3_send_hello_request(SSL *s)
 {
 	CBB cbb, hello;
@@ -774,7 +789,7 @@ ssl3_send_hello_request(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_get_client_hello(SSL *s)
 {
 	CBS cbs, client_random, session_id, cookie, cipher_suites;
@@ -1167,7 +1182,7 @@ ssl3_get_client_hello(SSL *s)
 	return (ret);
 }
 
-int
+static int
 ssl3_send_dtls_hello_verify_request(SSL *s)
 {
 	CBB cbb, verify, cookie;
@@ -1211,7 +1226,7 @@ ssl3_send_dtls_hello_verify_request(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_send_server_hello(SSL *s)
 {
 	CBB cbb, server_hello, session_id;
@@ -1290,7 +1305,7 @@ ssl3_send_server_hello(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_send_server_done(SSL *s)
 {
 	CBB cbb, done;
@@ -1413,7 +1428,7 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 	return 0;
 }
 
-int
+static int
 ssl3_send_server_key_exchange(SSL *s)
 {
 	CBB cbb, cbb_params, cbb_signature, server_kex;
@@ -1552,7 +1567,7 @@ ssl3_send_server_key_exchange(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_send_certificate_request(SSL *s)
 {
 	CBB cbb, cert_request, cert_types, sigalgs, cert_auth, dn;
@@ -1868,7 +1883,7 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	return 0;
 }
 
-int
+static int
 ssl3_get_client_key_exchange(SSL *s)
 {
 	unsigned long alg_k;
@@ -1919,7 +1934,7 @@ ssl3_get_client_key_exchange(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_get_cert_verify(SSL *s)
 {
 	CBS cbs, signature;
@@ -2153,7 +2168,7 @@ ssl3_get_cert_verify(SSL *s)
 	return (ret);
 }
 
-int
+static int
 ssl3_get_client_certificate(SSL *s)
 {
 	CBS cbs, cert_list, cert_data;
@@ -2271,7 +2286,7 @@ ssl3_get_client_certificate(SSL *s)
 	return (ret);
 }
 
-int
+static int
 ssl3_send_server_certificate(SSL *s)
 {
 	CBB cbb, server_cert;
@@ -2310,7 +2325,7 @@ ssl3_send_server_certificate(SSL *s)
 }
 
 /* send a new session ticket (not necessarily for a new session) */
-int
+static int
 ssl3_send_newsession_ticket(SSL *s)
 {
 	CBB cbb, session_ticket, ticket;
@@ -2443,7 +2458,7 @@ ssl3_send_newsession_ticket(SSL *s)
 	return (-1);
 }
 
-int
+static int
 ssl3_send_cert_status(SSL *s)
 {
 	CBB cbb, certstatus, ocspresp;
@@ -2468,6 +2483,139 @@ ssl3_send_cert_status(SSL *s)
 	}
 
 	/* SSL3_ST_SW_CERT_STATUS_B */
+	return (ssl3_handshake_write(s));
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return (-1);
+}
+
+static int
+ssl3_send_server_change_cipher_spec(SSL *s)
+{
+	size_t outlen;
+	CBB cbb;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (s->s3->hs.state == SSL3_ST_SW_CHANGE_A) {
+		if (!CBB_init_fixed(&cbb, s->internal->init_buf->data,
+		    s->internal->init_buf->length))
+			goto err;
+		if (!CBB_add_u8(&cbb, SSL3_MT_CCS))
+			goto err;
+		if (!CBB_finish(&cbb, NULL, &outlen))
+			goto err;
+
+		if (outlen > INT_MAX)
+			goto err;
+
+		s->internal->init_num = (int)outlen;
+		s->internal->init_off = 0;
+
+		if (SSL_is_dtls(s)) {
+			s->d1->handshake_write_seq =
+			    s->d1->next_handshake_write_seq;
+			dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
+			    s->d1->handshake_write_seq, 0, 0);
+			dtls1_buffer_message(s, 1);
+		}
+
+		s->s3->hs.state = SSL3_ST_SW_CHANGE_B;
+	}
+
+	/* SSL3_ST_SW_CHANGE_B */
+	return ssl3_record_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return -1;
+}
+
+static int
+ssl3_get_client_finished(SSL *s)
+{
+	int al, md_len, ret;
+	CBS cbs;
+
+	/* should actually be 36+4 :-) */
+	if ((ret = ssl3_get_message(s, SSL3_ST_SR_FINISHED_A,
+	    SSL3_ST_SR_FINISHED_B, SSL3_MT_FINISHED, 64)) <= 0)
+		return ret;
+
+	/* If this occurs, we have missed a message */
+	if (!s->s3->change_cipher_spec) {
+		al = SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerror(s, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
+		goto fatal_err;
+	}
+	s->s3->change_cipher_spec = 0;
+
+	md_len = TLS1_FINISH_MAC_LENGTH;
+
+	if (s->internal->init_num < 0) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
+		goto fatal_err;
+	}
+
+	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
+
+	if (s->s3->hs.peer_finished_len != md_len ||
+	    CBS_len(&cbs) != md_len) {
+		al = SSL_AD_DECODE_ERROR;
+		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
+		goto fatal_err;
+	}
+
+	if (!CBS_mem_equal(&cbs, s->s3->hs.peer_finished, CBS_len(&cbs))) {
+		al = SSL_AD_DECRYPT_ERROR;
+		SSLerror(s, SSL_R_DIGEST_CHECK_FAILED);
+		goto fatal_err;
+	}
+
+	/* Copy finished so we can use it for renegotiation checks. */
+	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
+	memcpy(s->s3->previous_client_finished,
+	    s->s3->hs.peer_finished, md_len);
+	s->s3->previous_client_finished_len = md_len;
+
+	return (1);
+ fatal_err:
+	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+	return (0);
+}
+
+static int
+ssl3_send_server_finished(SSL *s)
+{
+	CBB cbb, finished;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (s->s3->hs.state == SSL3_ST_SW_FINISHED_A) {
+		if (!tls12_derive_finished(s))
+			goto err;
+
+		/* Copy finished so we can use it for renegotiation checks. */
+		memcpy(s->s3->previous_server_finished,
+		    s->s3->hs.finished, s->s3->hs.finished_len);
+		s->s3->previous_server_finished_len = s->s3->hs.finished_len;
+
+		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
+		    SSL3_MT_FINISHED))
+                        goto err;
+		if (!CBB_add_bytes(&finished, s->s3->hs.finished,
+		    s->s3->hs.finished_len))
+			goto err;
+		if (!ssl3_handshake_msg_finish(s, &cbb))
+			goto err;
+
+		s->s3->hs.state = SSL3_ST_SW_FINISHED_B;
+	}
+
 	return (ssl3_handshake_write(s));
 
  err:
