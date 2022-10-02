@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.17 2022/02/08 19:06:56 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.18 2022/10/02 16:38:23 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -214,8 +214,8 @@ test_ssl_enabled_version_range(void)
 		SSL_set_options(ssl, vrt->options);
 
 		minver = maxver = 0xffff;
-		ssl->internal->min_tls_version = vrt->minver;
-		ssl->internal->max_tls_version = vrt->maxver;
+		ssl->min_tls_version = vrt->minver;
+		ssl->max_tls_version = vrt->maxver;
 
 		if (ssl_enabled_tls_version_range(ssl, &minver, &maxver) != 1) {
 			if (vrt->want_minver != 0 || vrt->want_maxver != 0) {
@@ -516,8 +516,8 @@ test_ssl_max_shared_version(void)
 		SSL_set_options(ssl, svt->options);
 
 		maxver = 0;
-		ssl->internal->min_tls_version = svt->minver;
-		ssl->internal->max_tls_version = svt->maxver;
+		ssl->min_tls_version = svt->minver;
+		ssl->max_tls_version = svt->maxver;
 
 		if (!ssl_max_shared_version(ssl, svt->peerver, &maxver)) {
 			if (svt->want_maxver != 0) {

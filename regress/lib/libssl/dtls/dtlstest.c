@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.15 2022/01/07 09:07:00 tb Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.16 2022/10/02 16:38:23 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -972,10 +972,8 @@ dtlstest(const struct dtls_test *dt)
 	if ((server = dtls_server(server_sock, dt->ssl_options, dt->mtu)) == NULL)
 		goto failure;
 
-	tls12_record_layer_set_initial_epoch(client->internal->rl,
-	    dt->initial_epoch);
-	tls12_record_layer_set_initial_epoch(server->internal->rl,
-	    dt->initial_epoch);
+	tls12_record_layer_set_initial_epoch(client->rl, dt->initial_epoch);
+	tls12_record_layer_set_initial_epoch(server->rl, dt->initial_epoch);
 
 	if (dt->client_bbio_off)
 		SSL_set_info_callback(client, dtls_info_callback);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ext_alpn.c,v 1.7 2020/07/03 04:14:10 tb Exp $	*/
+/*	$OpenBSD: tls_ext_alpn.c,v 1.8 2022/10/02 16:38:23 jsing Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  *
@@ -344,8 +344,8 @@ check_valid_alpn(SSL *s)
 	SSL_CTX_set_alpn_select_cb(s->ctx, dummy_alpn_cb, NULL);
 
 	/* Prerequisites to test these. */
-	CHECK(s->internal->alpn_client_proto_list != NULL);
-	CHECK(s->ctx->internal->alpn_select_cb != NULL);
+	CHECK(s->alpn_client_proto_list != NULL);
+	CHECK(s->ctx->alpn_select_cb != NULL);
 	//CHECK(s->s3->tmp.finish_md_len == 0);
 
 	CHECK_BOTH(1, 1, proto_single);
@@ -376,8 +376,8 @@ check_invalid_alpn(SSL *s)
 	SSL_CTX_set_alpn_select_cb(s->ctx, dummy_alpn_cb, NULL);
 
 	/* Prerequisites to test these. */
-	CHECK(s->internal->alpn_client_proto_list != NULL);
-	CHECK(s->ctx->internal->alpn_select_cb != NULL);
+	CHECK(s->alpn_client_proto_list != NULL);
+	CHECK(s->ctx->alpn_select_cb != NULL);
 	//CHECK(s->s3->tmp.finish_md_len == 0);
 
 	/* None of these are valid for client or server */
