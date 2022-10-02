@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2022/08/27 09:16:29 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/10/02 16:40:56 jsing Exp $
 
 PROG=	quictest
-LDADD=	${SSL_INT} -lcrypto
+LDADD=	-lssl -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 
 WARNINGS=	Yes
