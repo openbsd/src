@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfconv.c,v 1.19 2021/07/12 15:09:19 beck Exp $ */
+/*	$OpenBSD: ctfconv.c,v 1.20 2022/10/02 11:56:43 mpi Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -44,7 +44,6 @@
 
 #define DEBUG_ABBREV	".debug_abbrev"
 #define DEBUG_INFO	".debug_info"
-#define DEBUG_LINE	".debug_line"
 #define DEBUG_STR	".debug_str"
 
 __dead void	 usage(void);
