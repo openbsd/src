@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.7 2022/09/16 16:30:10 robert Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.8 2022/10/02 19:00:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -51,6 +51,7 @@
 #define APLHIDEV_TP_DEVICE	2
 #define APLHIDEV_INFO_DEVICE	208
 
+#define APLHIDEV_GET_INFO	0x0120
 #define APLHIDEV_GET_DESCRIPTOR	0x1020
 #define  APLHIDEV_DESC_MAX	512
 #define APLHIDEV_KBD_REPORT	0x0110
@@ -88,6 +89,17 @@ struct aplhidev_msghdr {
 	uint16_t	cmdlen;
 };
 
+struct aplhidev_info_hdr {
+	uint16_t	unknown[2];
+	uint16_t	num_devices;
+	uint16_t	vendor;
+	uint16_t	product;
+	uint16_t	version;
+	uint16_t	vendor_str[2];
+	uint16_t	product_str[2];
+	uint16_t	serial_str[2];
+};
+
 struct aplhidev_get_desc {
 	struct aplhidev_msghdr	hdr;
 	uint16_t		crc;
@@ -119,6 +131,9 @@ struct aplhidev_softc {
 	uint32_t		*sc_gpio;
 	int			sc_gpiolen;
 
+	uint16_t		sc_vendor;
+	uint16_t		sc_product;
+
 	struct device 		*sc_kbd;
 	uint8_t			sc_kbddesc[APLHIDEV_DESC_MAX];
 	size_t			sc_kbddesclen;
@@ -139,6 +154,7 @@ struct cfdriver aplhidev_cd = {
 	NULL, "aplhidev", DV_DULL
 };
 
+void	aplhidev_get_info(struct aplhidev_softc *);
 void	aplhidev_get_descriptor(struct aplhidev_softc *, uint8_t);
 void	aplhidev_set_leds(struct aplhidev_softc *, uint8_t);
 void	aplhidev_set_mode(struct aplhidev_softc *, uint8_t);
@@ -196,6 +212,14 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 	fdt_intr_establish(sc->sc_node, IPL_TTY,
 	    aplhidev_intr, sc, sc->sc_dev.dv_xname);
 
+	aplhidev_get_info(sc);
+	for (retry = 10; retry > 0; retry--) {
+		aplhidev_intr(sc);
+		delay(1000);
+		if (sc->sc_vendor != 0 && sc->sc_product != 0)
+			break;
+	}
+
 	aplhidev_get_descriptor(sc, APLHIDEV_KBD_DEVICE);
 	for (retry = 10; retry > 0; retry--) {
 		aplhidev_intr(sc);
@@ -229,6 +253,39 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 		aa.aa_desclen = sc->sc_tpdesclen;
 		sc->sc_ms = config_found(self, &aa, NULL);
 	}
+}
+
+void
+aplhidev_get_info(struct aplhidev_softc *sc)
+{
+	struct aplhidev_spi_packet packet;
+	struct aplhidev_get_desc *msg;
+	struct aplhidev_spi_status status;
+
+	memset(&packet, 0, sizeof(packet));
+	packet.flags = APLHIDEV_WRITE_PACKET;
+	packet.device = APLHIDEV_INFO_DEVICE;
+	packet.len = sizeof(*msg);
+
+	msg = (void *)&packet.data[0];
+	msg->hdr.type = APLHIDEV_GET_INFO;
+	msg->hdr.device = APLHIDEV_INFO_DEVICE;
+	msg->hdr.msgid = sc->sc_msgid++;
+	msg->hdr.cmdlen = 0;
+	msg->hdr.rsplen = APLHIDEV_DESC_MAX;
+	msg->crc = crc16(0, (void *)msg, sizeof(*msg) - 2);
+
+	packet.crc = crc16(0, (void *)&packet, sizeof(packet) - 2);
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	spi_transfer(sc->sc_spi_tag, (char *)&packet, NULL, sizeof(packet),
+	    SPI_KEEP_CS);
+	delay(100);
+	spi_read(sc->sc_spi_tag, (char *)&status, sizeof(status));
+	spi_release_bus(sc->sc_spi_tag, 0);
+
+	delay(1000);
 }
 
 void
@@ -376,6 +433,15 @@ aplhidev_intr(void *arg)
 	}
 
 	/* Replies to commands we sent. */
+	if (packet.flags == APLHIDEV_WRITE_PACKET &&
+	    packet.device == APLHIDEV_INFO_DEVICE &&
+	    hdr->type == APLHIDEV_GET_INFO) {
+		struct aplhidev_info_hdr *info =
+		    (struct aplhidev_info_hdr *)&packet.data[8];
+		sc->sc_vendor = info->vendor;
+		sc->sc_product = info->product;
+		return 1;
+	}
 	if (packet.flags == APLHIDEV_WRITE_PACKET &&
 	    packet.device == APLHIDEV_INFO_DEVICE &&
 	    hdr->type == APLHIDEV_GET_DESCRIPTOR) {
