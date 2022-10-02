@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.426 2022/10/01 16:23:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.427 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -713,7 +713,42 @@ typedef void (ssl_info_callback_fn)(const SSL *s, int type, int val);
 typedef void (ssl_msg_callback_fn)(int is_write, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg);
 
-typedef struct ssl_ctx_internal_st {
+struct ssl_ctx_st {
+	const SSL_METHOD *method;
+	const SSL_QUIC_METHOD *quic_method;
+
+	STACK_OF(SSL_CIPHER) *cipher_list;
+
+	struct x509_store_st /* X509_STORE */ *cert_store;
+
+	/* If timeout is not 0, it is the default timeout value set
+	 * when SSL_new() is called.  This has been put in to make
+	 * life easier to set things up */
+	long session_timeout;
+
+	int references;
+
+	/* Default values to use in SSL structures follow (these are copied by SSL_new) */
+
+	STACK_OF(X509) *extra_certs;
+
+	int verify_mode;
+	size_t sid_ctx_length;
+	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
+
+	X509_VERIFY_PARAM *param;
+
+	/*
+	 * XXX
+	 * default_passwd_cb used by python and openvpn, need to keep it until we
+	 * add an accessor
+	 */
+	/* Default password callback. */
+	pem_password_cb *default_passwd_callback;
+
+	/* Default password callback user data. */
+	void *default_passwd_callback_userdata;
+
 	uint16_t min_tls_version;
 	uint16_t max_tls_version;
 
@@ -879,48 +914,72 @@ typedef struct ssl_ctx_internal_st {
 	uint16_t *tlsext_supportedgroups; /* our list */
 	SSL_CTX_keylog_cb_func keylog_callback; /* Unused. For OpenSSL compatibility. */
 	size_t num_tickets; /* Unused, for OpenSSL compatibility */
-} SSL_CTX_INTERNAL;
+};
 
-struct ssl_ctx_st {
+struct ssl_st {
+	/* protocol version
+	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
+	 */
+	int version;
+
 	const SSL_METHOD *method;
 	const SSL_QUIC_METHOD *quic_method;
 
-	STACK_OF(SSL_CIPHER) *cipher_list;
+	/* There are 2 BIO's even though they are normally both the
+	 * same.  This is so data can be read and written to different
+	 * handlers */
 
-	struct x509_store_st /* X509_STORE */ *cert_store;
+	BIO *rbio; /* used by SSL_read */
+	BIO *wbio; /* used by SSL_write */
+	BIO *bbio; /* used during session-id reuse to concatenate
+		    * messages */
+	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
-	/* If timeout is not 0, it is the default timeout value set
-	 * when SSL_new() is called.  This has been put in to make
-	 * life easier to set things up */
-	long session_timeout;
-
-	int references;
-
-	/* Default values to use in SSL structures follow (these are copied by SSL_new) */
-
-	STACK_OF(X509) *extra_certs;
-
-	int verify_mode;
-	size_t sid_ctx_length;
-	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
+	struct ssl3_state_st *s3; /* SSLv3 variables */
+	struct dtls1_state_st *d1; /* DTLSv1 variables */
 
 	X509_VERIFY_PARAM *param;
 
-	/*
-	 * XXX
-	 * default_passwd_cb used by python and openvpn, need to keep it until we
-	 * add an accessor
-	 */
-	/* Default password callback. */
-	pem_password_cb *default_passwd_callback;
+	/* crypto */
+	STACK_OF(SSL_CIPHER) *cipher_list;
 
-	/* Default password callback user data. */
-	void *default_passwd_callback_userdata;
+	/* This is used to hold the server certificate used */
+	SSL_CERT *cert;
 
-	struct ssl_ctx_internal_st *internal;
-};
+	/* the session_id_context is used to ensure sessions are only reused
+	 * in the appropriate context */
+	size_t sid_ctx_length;
+	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
-typedef struct ssl_internal_st {
+	/* This can also be in the session once a session is established */
+	SSL_SESSION *session;
+
+	/* Used in SSL2 and SSL3 */
+	int verify_mode;	/* 0 don't care about verify failure.
+				 * 1 fail if verify fails */
+	int error;		/* error bytes to be written */
+	int error_code;		/* actual code */
+
+	SSL_CTX *ctx;
+
+	long verify_result;
+
+	int references;
+
+	int client_version;	/* what was passed, used for
+				 * SSLv3/TLS rollback check */
+
+	unsigned int max_send_fragment;
+
+	char *tlsext_hostname;
+
+	/* certificate status request info */
+	/* Status type or -1 if no status type */
+	int tlsext_status_type;
+
+	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
+#define session_ctx initial_ctx
+
 	struct tls13_ctx *tls13;
 
 	uint16_t min_tls_version;
@@ -1066,73 +1125,6 @@ typedef struct ssl_internal_st {
 
 	size_t num_tickets; /* Unused, for OpenSSL compatibility */
 	STACK_OF(X509) *verified_chain;
-} SSL_INTERNAL;
-
-struct ssl_st {
-	/* protocol version
-	 * (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION, DTLS1_VERSION)
-	 */
-	int version;
-
-	const SSL_METHOD *method;
-	const SSL_QUIC_METHOD *quic_method;
-
-	/* There are 2 BIO's even though they are normally both the
-	 * same.  This is so data can be read and written to different
-	 * handlers */
-
-	BIO *rbio; /* used by SSL_read */
-	BIO *wbio; /* used by SSL_write */
-	BIO *bbio; /* used during session-id reuse to concatenate
-		    * messages */
-	int server;	/* are we the server side? - mostly used by SSL_clear*/
-
-	struct ssl3_state_st *s3; /* SSLv3 variables */
-	struct dtls1_state_st *d1; /* DTLSv1 variables */
-
-	X509_VERIFY_PARAM *param;
-
-	/* crypto */
-	STACK_OF(SSL_CIPHER) *cipher_list;
-
-	/* This is used to hold the server certificate used */
-	SSL_CERT *cert;
-
-	/* the session_id_context is used to ensure sessions are only reused
-	 * in the appropriate context */
-	size_t sid_ctx_length;
-	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
-
-	/* This can also be in the session once a session is established */
-	SSL_SESSION *session;
-
-	/* Used in SSL2 and SSL3 */
-	int verify_mode;	/* 0 don't care about verify failure.
-				 * 1 fail if verify fails */
-	int error;		/* error bytes to be written */
-	int error_code;		/* actual code */
-
-	SSL_CTX *ctx;
-
-	long verify_result;
-
-	int references;
-
-	int client_version;	/* what was passed, used for
-				 * SSLv3/TLS rollback check */
-
-	unsigned int max_send_fragment;
-
-	char *tlsext_hostname;
-
-	/* certificate status request info */
-	/* Status type or -1 if no status type */
-	int tlsext_status_type;
-
-	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
-#define session_ctx initial_ctx
-
-	struct ssl_internal_st *internal;
 };
 
 typedef struct ssl3_record_internal_st {

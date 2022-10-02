@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.43 2022/10/01 16:23:15 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.44 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +128,7 @@
 #include "ssl_locl.h"
 
 /*
- * Send s->internal->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
+ * Send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC).
  */
 int
@@ -136,8 +136,8 @@ ssl3_do_write(SSL *s, int type)
 {
 	int ret;
 
-	ret = ssl3_write_bytes(s, type, &s->internal->init_buf->data[s->internal->init_off],
-	    s->internal->init_num);
+	ret = ssl3_write_bytes(s, type, &s->init_buf->data[s->init_off],
+	    s->init_num);
 	if (ret < 0)
 		return (-1);
 
@@ -147,16 +147,16 @@ ssl3_do_write(SSL *s, int type)
 		 * we'll ignore the result anyway.
 		 */
 		tls1_transcript_record(s,
-		    (unsigned char *)&s->internal->init_buf->data[s->internal->init_off], ret);
+		    (unsigned char *)&s->init_buf->data[s->init_off], ret);
 
-	if (ret == s->internal->init_num) {
-		ssl_msg_callback(s, 1, type, s->internal->init_buf->data,
-		    (size_t)(s->internal->init_off + s->internal->init_num));
+	if (ret == s->init_num) {
+		ssl_msg_callback(s, 1, type, s->init_buf->data,
+		    (size_t)(s->init_off + s->init_num));
 		return (1);
 	}
 
-	s->internal->init_off += ret;
-	s->internal->init_num -= ret;
+	s->init_off += ret;
+	s->init_num -= ret;
 
 	return (0);
 }
@@ -207,7 +207,7 @@ ssl3_output_cert_chain(SSL *s, CBB *cbb, SSL_CERT_PKEY *cpk)
 	if ((chain = cpk->chain) == NULL)
 		chain = s->ctx->extra_certs;
 
-	if (chain != NULL || (s->internal->mode & SSL_MODE_NO_AUTO_CHAIN)) {
+	if (chain != NULL || (s->mode & SSL_MODE_NO_AUTO_CHAIN)) {
 		if (!ssl3_add_cert(&cert_list, cpk->x509))
 			goto err;
 	} else {
@@ -269,27 +269,27 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
-		s->internal->init_msg = s->internal->init_buf->data +
+		s->init_msg = s->init_buf->data +
 		    SSL3_HM_HEADER_LENGTH;
-		s->internal->init_num = (int)s->s3->hs.tls12.message_size;
+		s->init_num = (int)s->s3->hs.tls12.message_size;
 		return 1;
 	}
 
-	p = (unsigned char *)s->internal->init_buf->data;
+	p = (unsigned char *)s->init_buf->data;
 
 	if (s->s3->hs.state == st1) {
 		int skip_message;
 
 		do {
-			while (s->internal->init_num < SSL3_HM_HEADER_LENGTH) {
+			while (s->init_num < SSL3_HM_HEADER_LENGTH) {
 				i = s->method->ssl_read_bytes(s,
-				    SSL3_RT_HANDSHAKE, &p[s->internal->init_num],
-				    SSL3_HM_HEADER_LENGTH - s->internal->init_num, 0);
+				    SSL3_RT_HANDSHAKE, &p[s->init_num],
+				    SSL3_HM_HEADER_LENGTH - s->init_num, 0);
 				if (i <= 0) {
-					s->internal->rwstate = SSL_READING;
+					s->rwstate = SSL_READING;
 					return i;
 				}
-				s->internal->init_num += i;
+				s->init_num += i;
 			}
 
 			skip_message = 0;
@@ -301,7 +301,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 				 * correct.  Does not count for 'Finished' MAC.
 				 */
 				if (p[1] == 0 && p[2] == 0 &&p[3] == 0) {
-					s->internal->init_num = 0;
+					s->init_num = 0;
 					skip_message = 1;
 
 					ssl_msg_callback(s, 0,
@@ -330,7 +330,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 			SSLerror(s, SSL_R_EXCESSIVE_MESSAGE_SIZE);
 			goto fatal_err;
 		}
-		if (l && !BUF_MEM_grow_clean(s->internal->init_buf,
+		if (l && !BUF_MEM_grow_clean(s->init_buf,
 		    l + SSL3_HM_HEADER_LENGTH)) {
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
@@ -338,33 +338,33 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 		s->s3->hs.tls12.message_size = l;
 		s->s3->hs.state = stn;
 
-		s->internal->init_msg = s->internal->init_buf->data +
+		s->init_msg = s->init_buf->data +
 		    SSL3_HM_HEADER_LENGTH;
-		s->internal->init_num = 0;
+		s->init_num = 0;
 	}
 
 	/* next state (stn) */
-	p = s->internal->init_msg;
-	n = s->s3->hs.tls12.message_size - s->internal->init_num;
+	p = s->init_msg;
+	n = s->s3->hs.tls12.message_size - s->init_num;
 	while (n > 0) {
 		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
-		    &p[s->internal->init_num], n, 0);
+		    &p[s->init_num], n, 0);
 		if (i <= 0) {
-			s->internal->rwstate = SSL_READING;
+			s->rwstate = SSL_READING;
 			return i;
 		}
-		s->internal->init_num += i;
+		s->init_num += i;
 		n -= i;
 	}
 
 	/* Feed this message into MAC computation. */
-	if (s->internal->mac_packet) {
-		tls1_transcript_record(s, (unsigned char *)s->internal->init_buf->data,
-		    s->internal->init_num + SSL3_HM_HEADER_LENGTH);
+	if (s->mac_packet) {
+		tls1_transcript_record(s, (unsigned char *)s->init_buf->data,
+		    s->init_num + SSL3_HM_HEADER_LENGTH);
 
 		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
-		    s->internal->init_buf->data,
-		    (size_t)s->internal->init_num + SSL3_HM_HEADER_LENGTH);
+		    s->init_buf->data,
+		    (size_t)s->init_num + SSL3_HM_HEADER_LENGTH);
 	}
 
 	return 1;
@@ -459,7 +459,7 @@ ssl3_setup_init_buffer(SSL *s)
 {
 	BUF_MEM *buf = NULL;
 
-	if (s->internal->init_buf != NULL)
+	if (s->init_buf != NULL)
 		return (1);
 
 	if ((buf = BUF_MEM_new()) == NULL)
@@ -467,7 +467,7 @@ ssl3_setup_init_buffer(SSL *s)
 	if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH))
 		goto err;
 
-	s->internal->init_buf = buf;
+	s->init_buf = buf;
 	return (1);
 
  err:
@@ -478,11 +478,11 @@ ssl3_setup_init_buffer(SSL *s)
 void
 ssl3_release_init_buffer(SSL *s)
 {
-	BUF_MEM_free(s->internal->init_buf);
-	s->internal->init_buf = NULL;
-	s->internal->init_msg = NULL;
-	s->internal->init_num = 0;
-	s->internal->init_off = 0;
+	BUF_MEM_free(s->init_buf);
+	s->init_buf = NULL;
+	s->init_msg = NULL;
+	s->init_num = 0;
+	s->init_off = 0;
 }
 
 int
@@ -507,7 +507,7 @@ ssl3_setup_read_buffer(SSL *s)
 		s->s3->rbuf.len = len;
 	}
 
-	s->internal->packet = s->s3->rbuf.buf;
+	s->packet = s->s3->rbuf.buf;
 	return 1;
 
  err:
@@ -531,7 +531,7 @@ ssl3_setup_write_buffer(SSL *s)
 	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
-		if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
 			len += headerlen + align +
 			    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 

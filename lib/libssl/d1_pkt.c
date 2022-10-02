@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.123 2022/03/26 15:05:53 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.124 2022/10/02 16:36:41 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -193,8 +193,8 @@ dtls1_copy_record(SSL *s, DTLS1_RECORD_DATA_INTERNAL *rdata)
 {
 	ssl3_release_buffer(&s->s3->rbuf);
 
-	s->internal->packet = rdata->packet;
-	s->internal->packet_length = rdata->packet_length;
+	s->packet = rdata->packet;
+	s->packet_length = rdata->packet_length;
 	memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
 	memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
@@ -216,15 +216,15 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	if (rdata == NULL || item == NULL)
 		goto init_err;
 
-	rdata->packet = s->internal->packet;
-	rdata->packet_length = s->internal->packet_length;
+	rdata->packet = s->packet;
+	rdata->packet_length = s->packet_length;
 	memcpy(&(rdata->rbuf), &(s->s3->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
 	memcpy(&(rdata->rrec), &(s->s3->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
 	item->data = rdata;
 
-	s->internal->packet = NULL;
-	s->internal->packet_length = 0;
+	s->packet = NULL;
+	s->packet_length = 0;
 	memset(&(s->s3->rbuf), 0, sizeof(SSL3_BUFFER_INTERNAL));
 	memset(&(s->s3->rrec), 0, sizeof(SSL3_RECORD_INTERNAL));
 
@@ -271,13 +271,13 @@ dtls1_process_buffered_record(SSL *s)
 {
 	/* Check if epoch is current. */
 	if (s->d1->unprocessed_rcds.epoch !=
-	    tls12_record_layer_read_epoch(s->internal->rl))
+	    tls12_record_layer_read_epoch(s->rl))
 		return (0);
 
 	/* Update epoch once all unprocessed records have been processed. */
 	if (pqueue_peek(s->d1->unprocessed_rcds.q) == NULL) {
 		s->d1->unprocessed_rcds.epoch =
-		    tls12_record_layer_read_epoch(s->internal->rl) + 1;
+		    tls12_record_layer_read_epoch(s->rl) + 1;
 		return (0);
 	}
 
@@ -298,11 +298,11 @@ dtls1_process_record(SSL *s)
 	uint8_t *out;
 	size_t out_len;
 
-	tls12_record_layer_set_version(s->internal->rl, s->version);
+	tls12_record_layer_set_version(s->rl, s->version);
 
-	if (!tls12_record_layer_open_record(s->internal->rl, s->internal->packet,
-	    s->internal->packet_length, &out, &out_len)) {
-		tls12_record_layer_alert(s->internal->rl, &alert_desc);
+	if (!tls12_record_layer_open_record(s->rl, s->packet,
+	    s->packet_length, &out, &out_len)) {
+		tls12_record_layer_alert(s->rl, &alert_desc);
 
 		if (alert_desc == 0)
 			goto err;
@@ -327,7 +327,7 @@ dtls1_process_record(SSL *s)
 	rr->length = out_len;
 	rr->off = 0;
 
-	s->internal->packet_length = 0;
+	s->packet_length = 0;
 
 	return (1);
 
@@ -341,9 +341,9 @@ dtls1_process_record(SSL *s)
  * It will return <= 0 if more data is needed, normally due to an error
  * or non-blocking IO.
  * When it finishes, one packet has been decoded and can be found in
- * ssl->s3->internal->rrec.type    - is the type of record
- * ssl->s3->internal->rrec.data, 	 - data
- * ssl->s3->internal->rrec.length, - number of bytes
+ * ssl->s3->rrec.type    - is the type of record
+ * ssl->s3->rrec.data, 	 - data
+ * ssl->s3->rrec.length, - number of bytes
  */
 /* used only by dtls1_read_bytes */
 int
@@ -364,12 +364,12 @@ dtls1_get_record(SSL *s)
  again:
 		/* dump this record on all retries */
 		rr->length = 0;
-		s->internal->packet_length = 0;
+		s->packet_length = 0;
 	}
 
 	/* check if we have the header */
-	if ((s->internal->rstate != SSL_ST_READ_BODY) ||
-	    (s->internal->packet_length < DTLS1_RT_HEADER_LENGTH)) {
+	if ((s->rstate != SSL_ST_READ_BODY) ||
+	    (s->packet_length < DTLS1_RT_HEADER_LENGTH)) {
 		CBS header, seq_no;
 		uint16_t epoch, len, ssl_version;
 		uint8_t type;
@@ -382,9 +382,9 @@ dtls1_get_record(SSL *s)
 		if (n != DTLS1_RT_HEADER_LENGTH)
 			goto again;
 
-		s->internal->rstate = SSL_ST_READ_BODY;
+		s->rstate = SSL_ST_READ_BODY;
 
-		CBS_init(&header, s->internal->packet, s->internal->packet_length);
+		CBS_init(&header, s->packet, s->packet_length);
 
 		/* Pull apart the header into the DTLS1_RECORD */
 		if (!CBS_get_u8(&header, &type))
@@ -409,7 +409,7 @@ dtls1_get_record(SSL *s)
 		rr->length = len;
 
 		/* unexpected version, silently discard */
-		if (!s->internal->first_packet && ssl_version != s->version)
+		if (!s->first_packet && ssl_version != s->version)
 			goto again;
 
 		/* wrong version, silently discard record */
@@ -420,11 +420,11 @@ dtls1_get_record(SSL *s)
 		if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
 			goto again;
 
-		/* now s->internal->rstate == SSL_ST_READ_BODY */
+		/* now s->rstate == SSL_ST_READ_BODY */
 		p = (unsigned char *)CBS_data(&header);
 	}
 
-	/* s->internal->rstate == SSL_ST_READ_BODY, get and decode the data */
+	/* s->rstate == SSL_ST_READ_BODY, get and decode the data */
 
 	n = ssl3_packet_extend(s, DTLS1_RT_HEADER_LENGTH + rr->length);
 	if (n <= 0)
@@ -434,7 +434,7 @@ dtls1_get_record(SSL *s)
 	if (n != DTLS1_RT_HEADER_LENGTH + rr->length)
 		goto again;
 
-	s->internal->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
+	s->rstate = SSL_ST_READ_HEADER; /* set state for later operations */
 
 	/* match epochs.  NULL means the packet is dropped on the floor */
 	bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
@@ -463,7 +463,7 @@ dtls1_get_record(SSL *s)
 	 * anything while listening.
 	 */
 	if (is_next_epoch) {
-		if ((SSL_in_init(s) || s->internal->in_handshake) && !s->d1->listen) {
+		if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen) {
 			if (dtls1_buffer_record(s, &(s->d1->unprocessed_rcds),
 			    rr->seq_num) < 0)
 				return (-1);
@@ -490,7 +490,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 	CBS cbs;
 	int ret;
 
-	if (s->internal->in_handshake) {
+	if (s->in_handshake) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return -1;
 	}
@@ -506,7 +506,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 		return -1; /* XXX - probably should drop/continue. */
 
 	/* This may just be a stale retransmit. */
-	if (rr->epoch != tls12_record_layer_read_epoch(s->internal->rl)) {
+	if (rr->epoch != tls12_record_layer_read_epoch(s->rl)) {
 		rr->length = 0;
 		return 1;
 	}
@@ -556,7 +556,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 		s->d1->handshake_read_seq++;
 
 		/* XXX - why is this set here but not in ssl3? */
-		s->internal->new_session = 1;
+		s->new_session = 1;
 
 		if (!ssl3_renegotiate(s))
 			return 1;
@@ -589,7 +589,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 			return -1;
 		}
 
-		if ((s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0) {
+		if ((s->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_NO_RENEGOTIATION);
 			return -1;
@@ -609,8 +609,8 @@ dtls1_read_handshake_unexpected(SSL *s)
 		}
 
 		s->s3->hs.state = SSL_ST_ACCEPT;
-		s->internal->renegotiate = 1;
-		s->internal->new_session = 1;
+		s->renegotiate = 1;
+		s->new_session = 1;
 
 	} else if (hs_msg_hdr.type == SSL3_MT_FINISHED && s->server) {
 		/*
@@ -634,14 +634,14 @@ dtls1_read_handshake_unexpected(SSL *s)
 		return -1;
 	}
 
-	if ((ret = s->internal->handshake_func(s)) < 0)
+	if ((ret = s->handshake_func(s)) < 0)
 		return ret;
 	if (ret == 0) {
 		SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
 		return -1;
 	}
 
-	if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+	if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
 		if (s->s3->rbuf.left == 0) {
 			ssl_force_want_read(s);
 			return -1;
@@ -710,8 +710,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return -1;
 	}
 
-	if (SSL_in_init(s) && !s->internal->in_handshake) {
-		if ((ret = s->internal->handshake_func(s)) < 0)
+	if (SSL_in_init(s) && !s->in_handshake) {
+		if ((ret = s->handshake_func(s)) < 0)
 			return ret;
 		if (ret == 0) {
 			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
@@ -733,7 +733,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return -1;
 	}
 
-	s->internal->rwstate = SSL_NOTHING;
+	s->rwstate = SSL_NOTHING;
 
 	rr = &s->s3->rrec;
 
@@ -747,7 +747,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	if (dtls1_handle_timeout(s) > 0)
 		goto start;
 
-	if (rr->length == 0 || s->internal->rstate == SSL_ST_READ_BODY) {
+	if (rr->length == 0 || s->rstate == SSL_ST_READ_BODY) {
 		if ((ret = dtls1_get_record(s)) <= 0) {
 			/* Anything other than a timeout is an error. */
 			if ((ret = dtls1_read_failed(s, ret)) <= 0)
@@ -783,8 +783,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 * If the other end has shut down, throw anything we read away (even in
 	 * 'peek' mode).
 	 */
-	if (s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) {
-		s->internal->rwstate = SSL_NOTHING;
+	if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
+		s->rwstate = SSL_NOTHING;
 		rr->length = 0;
 		return 0;
 	}
@@ -796,7 +796,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		 * are doing a handshake for the first time.
 		 */
 		if (SSL_in_init(s) && type == SSL3_RT_APPLICATION_DATA &&
-		    !tls12_record_layer_read_protected(s->internal->rl)) {
+		    !tls12_record_layer_read_protected(s->rl)) {
 			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_UNEXPECTED_MESSAGE);
@@ -817,7 +817,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			rr->length -= n;
 			rr->off += n;
 			if (rr->length == 0) {
-				s->internal->rstate = SSL_ST_READ_HEADER;
+				s->rstate = SSL_ST_READ_HEADER;
 				rr->off = 0;
 			}
 		}
@@ -836,8 +836,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		goto start;
 	}
 
-	if (s->internal->shutdown & SSL_SENT_SHUTDOWN) {
-		s->internal->rwstate = SSL_NOTHING;
+	if (s->shutdown & SSL_SENT_SHUTDOWN) {
+		s->rwstate = SSL_NOTHING;
 		rr->length = 0;
 		return (0);
 	}
@@ -891,9 +891,9 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 {
 	int i;
 
-	if (SSL_in_init(s) && !s->internal->in_handshake)
+	if (SSL_in_init(s) && !s->in_handshake)
 	{
-		i = s->internal->handshake_func(s);
+		i = s->handshake_func(s);
 		if (i < 0)
 			return (i);
 		if (i == 0) {
@@ -920,7 +920,7 @@ dtls1_write_bytes(SSL *s, int type, const void *buf, int len)
 	int i;
 
 	OPENSSL_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH);
-	s->internal->rwstate = SSL_NOTHING;
+	s->rwstate = SSL_NOTHING;
 	i = do_dtls1_write(s, type, buf, len);
 	return i;
 }
@@ -959,9 +959,9 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (!CBB_init_fixed(&cbb, wb->buf, wb->len))
 		goto err;
 
-	tls12_record_layer_set_version(s->internal->rl, s->version);
+	tls12_record_layer_set_version(s->rl, s->version);
 
-	if (!tls12_record_layer_seal_record(s->internal->rl, type, buf, len, &cbb))
+	if (!tls12_record_layer_seal_record(s->rl, type, buf, len, &cbb))
 		goto err;
 
 	if (!CBB_finish(&cbb, NULL, &out_len))
@@ -1035,7 +1035,7 @@ dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr, unsigned int *is_next_epoch)
 
 	*is_next_epoch = 0;
 
-	read_epoch = tls12_record_layer_read_epoch(s->internal->rl);
+	read_epoch = tls12_record_layer_read_epoch(s->rl);
 	read_epoch_next = read_epoch + 1;
 
 	/* In current epoch, accept HM, CCS, DATA, & ALERT */

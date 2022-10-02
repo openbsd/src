@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.25 2022/08/17 18:41:17 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.26 2022/10/02 16:36:41 jsing Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -224,8 +224,8 @@ ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int secop, int bits,
 static int
 ssl_ctx_security(const SSL_CTX *ctx, int secop, int bits, int nid, void *other)
 {
-	return ctx->internal->cert->security_cb(NULL, ctx, secop, bits, nid,
-	    other, ctx->internal->cert->security_ex_data);
+	return ctx->cert->security_cb(NULL, ctx, secop, bits, nid,
+	    other, ctx->cert->security_ex_data);
 }
 
 static int

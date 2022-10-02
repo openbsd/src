@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_packet.c,v 1.13 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_packet.c,v 1.14 2022/10/02 16:36:41 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -84,7 +84,7 @@ ssl_convert_sslv2_client_hello(SSL *s)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	CBS_init(&cbs, s->internal->packet, SSL3_RT_HEADER_LENGTH);
+	CBS_init(&cbs, s->packet, SSL3_RT_HEADER_LENGTH);
 
 	if (!CBS_get_u16(&cbs, &record_length) ||
 	    !CBS_get_u8(&cbs, &message_type) ||
@@ -119,17 +119,17 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	if (n != record_length + 2)
 		return n;
 
-	tls1_transcript_record(s, s->internal->packet + 2,
-	    s->internal->packet_length - 2);
-	s->internal->mac_packet = 0;
+	tls1_transcript_record(s, s->packet + 2,
+	    s->packet_length - 2);
+	s->mac_packet = 0;
 
-	if (s->internal->msg_callback)
-		s->internal->msg_callback(0, SSL2_VERSION, 0,
-		    s->internal->packet + 2, s->internal->packet_length - 2, s,
-		    s->internal->msg_callback_arg);
+	if (s->msg_callback)
+		s->msg_callback(0, SSL2_VERSION, 0,
+		    s->packet + 2, s->packet_length - 2, s,
+		    s->msg_callback_arg);
 
 	/* Decode the SSLv2 record containing the client hello. */
-	CBS_init(&cbs, s->internal->packet, s->internal->packet_length);
+	CBS_init(&cbs, s->packet, s->packet_length);
 
 	if (!CBS_get_u16(&cbs, &record_length))
 		return -1;
@@ -212,9 +212,9 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	if (data_len > s->s3->rbuf.len)
 		goto err;
 
-	s->internal->packet = s->s3->rbuf.buf;
-	s->internal->packet_length = data_len;
-	memcpy(s->internal->packet, data, data_len);
+	s->packet = s->s3->rbuf.buf;
+	s->packet_length = data_len;
+	memcpy(s->packet, data, data_len);
 	ret = 1;
 
  err:
@@ -240,7 +240,7 @@ ssl_server_legacy_first_packet(SSL *s)
 	if (SSL_is_dtls(s))
 		return 1;
 
-	CBS_init(&header, s->internal->packet, SSL3_RT_HEADER_LENGTH);
+	CBS_init(&header, s->packet, SSL3_RT_HEADER_LENGTH);
 
 	if (ssl_is_sslv3_handshake(&header) == 1)
 		return 1;

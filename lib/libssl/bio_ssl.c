@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.33 2022/01/14 09:12:53 tb Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.34 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -294,10 +294,10 @@ ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_RESET:
 		SSL_shutdown(ssl);
 
-		if (ssl->internal->handshake_func ==
+		if (ssl->handshake_func ==
 		    ssl->method->ssl_connect)
 			SSL_set_connect_state(ssl);
-		else if (ssl->internal->handshake_func ==
+		else if (ssl->handshake_func ==
 		    ssl->method->ssl_accept)
 			SSL_set_accept_state(ssl);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.103 2022/07/07 13:04:39 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.104 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,7 +304,7 @@ ssl_get0_cert(SSL_CTX *ctx, SSL *ssl)
 	if (ssl != NULL)
 		return ssl->cert;
 
-	return ctx->internal->cert;
+	return ctx->cert;
 }
 
 int
@@ -430,21 +430,21 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *certs)
 	 */
 	X509_VERIFY_PARAM_set1(param, s->param);
 
-	if (s->internal->verify_callback)
-		X509_STORE_CTX_set_verify_cb(ctx, s->internal->verify_callback);
+	if (s->verify_callback)
+		X509_STORE_CTX_set_verify_cb(ctx, s->verify_callback);
 
-	if (s->ctx->internal->app_verify_callback != NULL)
-		ret = s->ctx->internal->app_verify_callback(ctx,
-		    s->ctx->internal->app_verify_arg);
+	if (s->ctx->app_verify_callback != NULL)
+		ret = s->ctx->app_verify_callback(ctx,
+		    s->ctx->app_verify_arg);
 	else
 		ret = X509_verify_cert(ctx);
 
 	s->verify_result = X509_STORE_CTX_get_error(ctx);
-	sk_X509_pop_free(s->internal->verified_chain, X509_free);
-	s->internal->verified_chain = NULL;
+	sk_X509_pop_free(s->verified_chain, X509_free);
+	s->verified_chain = NULL;
 	if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
-		s->internal->verified_chain = X509_STORE_CTX_get1_chain(ctx);
-		if (s->internal->verified_chain == NULL) {
+		s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
+		if (s->verified_chain == NULL) {
 			SSLerrorx(ERR_R_MALLOC_FAILURE);
 			ret = 0;
 		}
@@ -491,19 +491,19 @@ SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 void
 SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 {
-	set_client_CA_list(&(s->internal->client_CA), name_list);
+	set_client_CA_list(&(s->client_CA), name_list);
 }
 
 void
 SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
 {
-	set_client_CA_list(&(ctx->internal->client_CA), name_list);
+	set_client_CA_list(&(ctx->client_CA), name_list);
 }
 
 STACK_OF(X509_NAME) *
 SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 {
-	return (ctx->internal->client_CA);
+	return (ctx->client_CA);
 }
 
 STACK_OF(X509_NAME) *
@@ -516,10 +516,10 @@ SSL_get_client_CA_list(const SSL *s)
 		else
 			return (NULL);
 	} else {
-		if (s->internal->client_CA != NULL)
-			return (s->internal->client_CA);
+		if (s->client_CA != NULL)
+			return (s->client_CA);
 		else
-			return (s->ctx->internal->client_CA);
+			return (s->ctx->client_CA);
 	}
 }
 
@@ -546,13 +546,13 @@ add_client_CA(STACK_OF(X509_NAME) **sk, X509 *x)
 int
 SSL_add_client_CA(SSL *ssl, X509 *x)
 {
-	return (add_client_CA(&(ssl->internal->client_CA), x));
+	return (add_client_CA(&(ssl->client_CA), x));
 }
 
 int
 SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 {
-	return (add_client_CA(&(ctx->internal->client_CA), x));
+	return (add_client_CA(&(ctx->client_CA), x));
 }
 
 static int

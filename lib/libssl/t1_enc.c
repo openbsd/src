@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.154 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.155 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -311,13 +311,13 @@ tls1_change_cipher_state(SSL *s, int is_write)
 	}
 
 	if (!is_write) {
-		if (!tls12_record_layer_change_read_cipher_state(s->internal->rl,
+		if (!tls12_record_layer_change_read_cipher_state(s->rl,
 		    &mac_key, &key, &iv))
 			goto err;
 		if (SSL_is_dtls(s))
 			dtls1_reset_read_seq_numbers(s);
 	} else {
-		if (!tls12_record_layer_change_write_cipher_state(s->internal->rl,
+		if (!tls12_record_layer_change_write_cipher_state(s->rl,
 		    &mac_key, &key, &iv))
 			goto err;
 	}
@@ -375,8 +375,8 @@ tls1_setup_key_block(SSL *s)
 	if (!ssl_get_handshake_evp_md(s, &handshake_hash))
 		return (0);
 
-	tls12_record_layer_set_aead(s->internal->rl, aead);
-	tls12_record_layer_set_cipher_hash(s->internal->rl, cipher,
+	tls12_record_layer_set_aead(s->rl, aead);
+	tls12_record_layer_set_cipher_hash(s->rl, cipher,
 	    handshake_hash, mac_hash);
 
 	if ((key_block = tls12_key_block_new()) == NULL)
@@ -387,7 +387,7 @@ tls1_setup_key_block(SSL *s)
 	s->s3->hs.tls12.key_block = key_block;
 	key_block = NULL;
 
-	if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
+	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
 	    s->method->version <= TLS1_VERSION) {
 		/*
 		 * Enable vulnerability countermeasure for CBC ciphers with

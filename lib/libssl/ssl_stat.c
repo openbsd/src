@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.18 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.19 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -325,7 +325,7 @@ SSL_rstate_string_long(const SSL *s)
 {
 	const char *str;
 
-	switch (s->internal->rstate) {
+	switch (s->rstate) {
 	case SSL_ST_READ_HEADER:
 		str = "read header";
 		break;
@@ -771,7 +771,7 @@ SSL_rstate_string(const SSL *s)
 {
 	const char *str;
 
-	switch (s->internal->rstate) {
+	switch (s->rstate) {
 	case SSL_ST_READ_HEADER:
 		str = "RH";
 		break;

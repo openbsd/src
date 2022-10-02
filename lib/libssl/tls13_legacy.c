@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.38 2022/07/17 15:49:20 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.39 2022/10/02 16:36:42 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -30,7 +30,7 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
-	ssl->internal->rwstate = SSL_READING;
+	ssl->rwstate = SSL_READING;
 	errno = 0;
 
 	if ((n = BIO_read(ssl->rbio, buf, len)) <= 0) {
@@ -46,7 +46,7 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 	}
 
 	if (n == len)
-		ssl->internal->rwstate = SSL_NOTHING;
+		ssl->rwstate = SSL_NOTHING;
 
 	return n;
 }
@@ -69,7 +69,7 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 		return TLS13_IO_FAILURE;
 	}
 
-	ssl->internal->rwstate = SSL_WRITING;
+	ssl->rwstate = SSL_WRITING;
 	errno = 0;
 
 	if ((n = BIO_write(ssl->wbio, buf, len)) <= 0) {
@@ -83,7 +83,7 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 	}
 
 	if (n == len)
-		ssl->internal->rwstate = SSL_NOTHING;
+		ssl->rwstate = SSL_NOTHING;
 
 	return n;
 }
@@ -123,7 +123,7 @@ tls13_legacy_wire_flush_cb(void *arg)
 static void
 tls13_legacy_error(SSL *ssl)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	int reason = SSL_R_UNKNOWN;
 
 	/* If we received a fatal alert we already put an error on the stack. */
@@ -171,7 +171,7 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 	if (ret > 0)
 		return ret;
 
-	ssl->internal->rwstate = SSL_NOTHING;
+	ssl->rwstate = SSL_NOTHING;
 
 	switch (ret) {
 	case TLS13_IO_EOF:
@@ -187,12 +187,12 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 
 	case TLS13_IO_WANT_POLLIN:
 		BIO_set_retry_read(ssl->rbio);
-		ssl->internal->rwstate = SSL_READING;
+		ssl->rwstate = SSL_READING;
 		return -1;
 
 	case TLS13_IO_WANT_POLLOUT:
 		BIO_set_retry_write(ssl->wbio);
-		ssl->internal->rwstate = SSL_WRITING;
+		ssl->rwstate = SSL_WRITING;
 		return -1;
 
 	case TLS13_IO_WANT_RETRY:
@@ -207,7 +207,7 @@ tls13_legacy_return_code(SSL *ssl, ssize_t ret)
 int
 tls13_legacy_pending(const SSL *ssl)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	ssize_t ret;
 
 	if (ctx == NULL)
@@ -223,11 +223,11 @@ tls13_legacy_pending(const SSL *ssl)
 int
 tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int peek)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	ssize_t ret;
 
 	if (ctx == NULL || !ctx->handshake_completed) {
-		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
+		if ((ret = ssl->handshake_func(ssl)) <= 0)
 			return ret;
 		if (len == 0)
 			return 0;
@@ -235,7 +235,7 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 	}
 
 	tls13_record_layer_set_retry_after_phh(ctx->rl,
-	    (ctx->ssl->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
+	    (ctx->ssl->mode & SSL_MODE_AUTO_RETRY) != 0);
 
 	if (type != SSL3_RT_APPLICATION_DATA) {
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -257,13 +257,13 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 int
 tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	const uint8_t *buf = vbuf;
 	size_t n, sent;
 	ssize_t ret;
 
 	if (ctx == NULL || !ctx->handshake_completed) {
-		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
+		if ((ret = ssl->handshake_func(ssl)) <= 0)
 			return ret;
 		if (len == 0)
 			return 0;
@@ -283,7 +283,7 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 	 * The TLSv1.3 record layer write behaviour is the same as
 	 * SSL_MODE_ENABLE_PARTIAL_WRITE.
 	 */
-	if (ssl->internal->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) {
+	if (ssl->mode & SSL_MODE_ENABLE_PARTIAL_WRITE) {
 		ret = tls13_write_application_data(ctx->rl, buf, len);
 		return tls13_legacy_return_code(ssl, ret);
 	}
@@ -352,18 +352,18 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 		s->s3->rbuf.left = CBS_len(&cbs);
 		s->s3->rrec.type = SSL3_RT_HANDSHAKE;
 		s->s3->rrec.length = CBS_len(&cbs);
-		s->internal->rstate = SSL_ST_READ_BODY;
-		s->internal->packet = s->s3->rbuf.buf;
-		s->internal->packet_length = SSL3_RT_HEADER_LENGTH;
-		s->internal->mac_packet = 1;
+		s->rstate = SSL_ST_READ_BODY;
+		s->packet = s->s3->rbuf.buf;
+		s->packet_length = SSL3_RT_HEADER_LENGTH;
+		s->mac_packet = 1;
 	}
 
 	/* Stash the current handshake message. */
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-	if (!BUF_MEM_grow_clean(s->internal->init_buf, CBS_len(&cbs)))
+	if (!BUF_MEM_grow_clean(s->init_buf, CBS_len(&cbs)))
 		goto err;
-	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data,
-	    s->internal->init_buf->length, NULL))
+	if (!CBS_write_bytes(&cbs, s->init_buf->data,
+	    s->init_buf->length, NULL))
 		goto err;
 
 	s->s3->hs.tls12.reuse_message = 1;
@@ -386,7 +386,7 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 	if (!tls13_use_legacy_stack(ctx))
 		return 0;
 
-	s->internal->handshake_func = s->method->ssl_connect;
+	s->handshake_func = s->method->ssl_connect;
 	s->version = s->method->max_tls_version;
 
 	return 1;
@@ -400,7 +400,7 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 	if (!tls13_use_legacy_stack(ctx))
 		return 0;
 
-	s->internal->handshake_func = s->method->ssl_accept;
+	s->handshake_func = s->method->ssl_accept;
 	s->version = s->method->max_tls_version;
 	s->server = 1;
 
@@ -410,7 +410,7 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 int
 tls13_legacy_accept(SSL *ssl)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	int ret;
 
 	if (ctx == NULL) {
@@ -442,7 +442,7 @@ tls13_legacy_accept(SSL *ssl)
 int
 tls13_legacy_connect(SSL *ssl)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	int ret;
 
 	if (ctx == NULL) {
@@ -474,7 +474,7 @@ tls13_legacy_connect(SSL *ssl)
 int
 tls13_legacy_shutdown(SSL *ssl)
 {
-	struct tls13_ctx *ctx = ssl->internal->tls13;
+	struct tls13_ctx *ctx = ssl->tls13;
 	uint8_t buf[512]; /* XXX */
 	ssize_t ret;
 
@@ -484,15 +484,15 @@ tls13_legacy_shutdown(SSL *ssl)
 	 * alerts. All other cases, including EOF, return -1 and set internal
 	 * state appropriately.
 	 */
-	if (ctx == NULL || ssl->internal->quiet_shutdown) {
-		ssl->internal->shutdown = SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
+	if (ctx == NULL || ssl->quiet_shutdown) {
+		ssl->shutdown = SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN;
 		return 1;
 	}
 
 	if (!ctx->close_notify_sent) {
 		/* Enqueue and send close notify. */
-		if (!(ssl->internal->shutdown & SSL_SENT_SHUTDOWN)) {
-			ssl->internal->shutdown |= SSL_SENT_SHUTDOWN;
+		if (!(ssl->shutdown & SSL_SENT_SHUTDOWN)) {
+			ssl->shutdown |= SSL_SENT_SHUTDOWN;
 			if ((ret = tls13_send_alert(ctx->rl,
 			    TLS13_ALERT_CLOSE_NOTIFY)) < 0)
 				return tls13_legacy_return_code(ssl, ret);
@@ -533,13 +533,13 @@ tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert)
 	SSL_CTX *ssl_ctx = ctx->ssl->ctx;
 	SSL *s = ctx->ssl;
 
-	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
+	if (ssl_ctx->tlsext_servername_callback == NULL)
 		ssl_ctx = s->initial_ctx;
-	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
+	if (ssl_ctx->tlsext_servername_callback == NULL)
 		return 1;
 
-	ret = ssl_ctx->internal->tlsext_servername_callback(s, &legacy_alert,
-	    ssl_ctx->internal->tlsext_servername_arg);
+	ret = ssl_ctx->tlsext_servername_callback(s, &legacy_alert,
+	    ssl_ctx->tlsext_servername_arg);
 
 	/*
 	 * Ignore SSL_TLSEXT_ERR_ALERT_WARNING returns to match OpenSSL's

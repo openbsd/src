@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.30 2022/01/28 13:11:56 inoguchi Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.31 2022/10/02 16:36:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,13 +227,13 @@ ssl_ctx_make_profiles(const char *profiles_string,
 int
 SSL_CTX_set_tlsext_use_srtp(SSL_CTX *ctx, const char *profiles)
 {
-	return ssl_ctx_make_profiles(profiles, &ctx->internal->srtp_profiles);
+	return ssl_ctx_make_profiles(profiles, &ctx->srtp_profiles);
 }
 
 int
 SSL_set_tlsext_use_srtp(SSL *s, const char *profiles)
 {
-	return ssl_ctx_make_profiles(profiles, &s->internal->srtp_profiles);
+	return ssl_ctx_make_profiles(profiles, &s->srtp_profiles);
 }
 
 
@@ -241,11 +241,11 @@ STACK_OF(SRTP_PROTECTION_PROFILE) *
 SSL_get_srtp_profiles(SSL *s)
 {
 	if (s != NULL) {
-		if (s->internal->srtp_profiles != NULL) {
-			return s->internal->srtp_profiles;
+		if (s->srtp_profiles != NULL) {
+			return s->srtp_profiles;
 		} else if ((s->ctx != NULL) &&
-		    (s->ctx->internal->srtp_profiles != NULL)) {
-			return s->ctx->internal->srtp_profiles;
+		    (s->ctx->srtp_profiles != NULL)) {
+			return s->ctx->srtp_profiles;
 		}
 	}
 
@@ -256,7 +256,7 @@ SRTP_PROTECTION_PROFILE *
 SSL_get_selected_srtp_profile(SSL *s)
 {
 	/* XXX cast away the const */
-	return (SRTP_PROTECTION_PROFILE *)s->internal->srtp_profile;
+	return (SRTP_PROTECTION_PROFILE *)s->srtp_profile;
 }
 
 #endif

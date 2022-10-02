@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.195 2022/08/17 18:45:25 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.196 2022/10/02 16:36:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,7 +139,7 @@ tls1_free(SSL *s)
 	if (s == NULL)
 		return;
 
-	free(s->internal->tlsext_session_ticket);
+	free(s->tlsext_session_ticket);
 	ssl3_free(s);
 }
 
@@ -404,8 +404,8 @@ tls1_get_formatlist(const SSL *s, int client_formats, const uint8_t **pformats,
 		return;
 	}
 
-	*pformats = s->internal->tlsext_ecpointformatlist;
-	*pformatslen = s->internal->tlsext_ecpointformatlist_length;
+	*pformats = s->tlsext_ecpointformatlist;
+	*pformatslen = s->tlsext_ecpointformatlist_length;
 	if (*pformats == NULL) {
 		*pformats = ecformats_default;
 		*pformatslen = sizeof(ecformats_default);
@@ -427,8 +427,8 @@ tls1_get_group_list(const SSL *s, int client_groups, const uint16_t **pgroups,
 		return;
 	}
 
-	*pgroups = s->internal->tlsext_supportedgroups;
-	*pgroupslen = s->internal->tlsext_supportedgroups_length;
+	*pgroups = s->tlsext_supportedgroups;
+	*pgroupslen = s->tlsext_supportedgroups_length;
 	if (*pgroups != NULL)
 		return;
 
@@ -451,7 +451,7 @@ tls1_get_group_lists(const SSL *ssl, const uint16_t **pref, size_t *preflen,
 	if (!ssl->server)
 		return 0;
 
-	server_pref = (ssl->internal->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
+	server_pref = (ssl->options & SSL_OP_CIPHER_SERVER_PREFERENCE);
 	tls1_get_group_list(ssl, (server_pref == 0), pref, preflen);
 	tls1_get_group_list(ssl, (server_pref != 0), supp, supplen);
 
@@ -738,12 +738,12 @@ ssl_check_clienthello_tlsext_early(SSL *s)
 	 * ssl3_choose_cipher in s3_lib.c.
 	 */
 
-	if (s->ctx != NULL && s->ctx->internal->tlsext_servername_callback != 0)
-		ret = s->ctx->internal->tlsext_servername_callback(s, &al,
-		    s->ctx->internal->tlsext_servername_arg);
-	else if (s->initial_ctx != NULL && s->initial_ctx->internal->tlsext_servername_callback != 0)
-		ret = s->initial_ctx->internal->tlsext_servername_callback(s, &al,
-		    s->initial_ctx->internal->tlsext_servername_arg);
+	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
+		ret = s->ctx->tlsext_servername_callback(s, &al,
+		    s->ctx->tlsext_servername_arg);
+	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
+		ret = s->initial_ctx->tlsext_servername_callback(s, &al,
+		    s->initial_ctx->tlsext_servername_arg);
 
 	switch (ret) {
 	case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -770,32 +770,32 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 	 * has been chosen because this may influence which certificate is sent
  	 */
 	if ((s->tlsext_status_type != -1) &&
-	    s->ctx && s->ctx->internal->tlsext_status_cb) {
+	    s->ctx && s->ctx->tlsext_status_cb) {
 		int r;
 		SSL_CERT_PKEY *certpkey;
 		certpkey = ssl_get_server_send_pkey(s);
 		/* If no certificate can't return certificate status */
 		if (certpkey == NULL) {
-			s->internal->tlsext_status_expected = 0;
+			s->tlsext_status_expected = 0;
 			return 1;
 		}
 		/* Set current certificate to one we will use so
 		 * SSL_get_certificate et al can pick it up.
 		 */
 		s->cert->key = certpkey;
-		r = s->ctx->internal->tlsext_status_cb(s,
-		    s->ctx->internal->tlsext_status_arg);
+		r = s->ctx->tlsext_status_cb(s,
+		    s->ctx->tlsext_status_arg);
 		switch (r) {
 			/* We don't want to send a status request response */
 		case SSL_TLSEXT_ERR_NOACK:
-			s->internal->tlsext_status_expected = 0;
+			s->tlsext_status_expected = 0;
 			break;
 			/* status request response should be sent */
 		case SSL_TLSEXT_ERR_OK:
-			if (s->internal->tlsext_ocsp_resp)
-				s->internal->tlsext_status_expected = 1;
+			if (s->tlsext_ocsp_resp)
+				s->tlsext_status_expected = 1;
 			else
-				s->internal->tlsext_status_expected = 0;
+				s->tlsext_status_expected = 0;
 			break;
 			/* something bad happened */
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -804,7 +804,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 			goto err;
 		}
 	} else
-		s->internal->tlsext_status_expected = 0;
+		s->tlsext_status_expected = 0;
 
  err:
 	switch (ret) {
@@ -827,26 +827,26 @@ ssl_check_serverhello_tlsext(SSL *s)
 
 	ret = SSL_TLSEXT_ERR_OK;
 
-	if (s->ctx != NULL && s->ctx->internal->tlsext_servername_callback != 0)
-		ret = s->ctx->internal->tlsext_servername_callback(s, &al,
-		    s->ctx->internal->tlsext_servername_arg);
-	else if (s->initial_ctx != NULL && s->initial_ctx->internal->tlsext_servername_callback != 0)
-		ret = s->initial_ctx->internal->tlsext_servername_callback(s, &al,
-		    s->initial_ctx->internal->tlsext_servername_arg);
+	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
+		ret = s->ctx->tlsext_servername_callback(s, &al,
+		    s->ctx->tlsext_servername_arg);
+	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
+		ret = s->initial_ctx->tlsext_servername_callback(s, &al,
+		    s->initial_ctx->tlsext_servername_arg);
 
 	/* If we've requested certificate status and we wont get one
  	 * tell the callback
  	 */
-	if ((s->tlsext_status_type != -1) && !(s->internal->tlsext_status_expected) &&
-	    s->ctx && s->ctx->internal->tlsext_status_cb) {
+	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected) &&
+	    s->ctx && s->ctx->tlsext_status_cb) {
 		int r;
 
-		free(s->internal->tlsext_ocsp_resp);
-		s->internal->tlsext_ocsp_resp = NULL;
-		s->internal->tlsext_ocsp_resp_len = 0;
+		free(s->tlsext_ocsp_resp);
+		s->tlsext_ocsp_resp = NULL;
+		s->tlsext_ocsp_resp_len = 0;
 
-		r = s->ctx->internal->tlsext_status_cb(s,
-		    s->ctx->internal->tlsext_status_arg);
+		r = s->ctx->tlsext_status_cb(s,
+		    s->ctx->tlsext_status_arg);
 		if (r == 0) {
 			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
 			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -878,27 +878,27 @@ ssl_check_serverhello_tlsext(SSL *s)
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  *
- * If s->internal->tls_session_secret_cb is set then we are expecting a pre-shared key
+ * If s->tls_session_secret_cb is set then we are expecting a pre-shared key
  * ciphersuite, in which case we have no use for session tickets and one will
- * never be decrypted, nor will s->internal->tlsext_ticket_expected be set to 1.
+ * never be decrypted, nor will s->tlsext_ticket_expected be set to 1.
  *
  * Returns:
  *    TLS1_TICKET_FATAL_ERROR: error from parsing or decrypting the ticket.
  *    TLS1_TICKET_NONE: no ticket was found (or was ignored, based on settings).
  *    TLS1_TICKET_EMPTY: a zero length extension was found, indicating that the
  *       client supports session tickets but doesn't currently have one to offer.
- *    TLS1_TICKET_NOT_DECRYPTED: either s->internal->tls_session_secret_cb was
+ *    TLS1_TICKET_NOT_DECRYPTED: either s->tls_session_secret_cb was
  *       set, or a ticket was offered but couldn't be decrypted because of a
  *       non-fatal error.
  *    TLS1_TICKET_DECRYPTED: a ticket was successfully decrypted and *ret was set.
  *
  * Side effects:
- *   Sets s->internal->tlsext_ticket_expected to 1 if the server will have to issue
+ *   Sets s->tlsext_ticket_expected to 1 if the server will have to issue
  *   a new session ticket to the client because the client indicated support
- *   (and s->internal->tls_session_secret_cb is NULL) but the client either doesn't have
+ *   (and s->tls_session_secret_cb is NULL) but the client either doesn't have
  *   a session ticket or we couldn't use the one it gave us, or if
  *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
- *   Otherwise, s->internal->tlsext_ticket_expected is set to 0.
+ *   Otherwise, s->tlsext_ticket_expected is set to 0.
  */
 int
 tls1_process_ticket(SSL *s, CBS *ext_block, int *alert, SSL_SESSION **ret)
@@ -906,7 +906,7 @@ tls1_process_ticket(SSL *s, CBS *ext_block, int *alert, SSL_SESSION **ret)
 	CBS extensions, ext_data;
 	uint16_t ext_type = 0;
 
-	s->internal->tlsext_ticket_expected = 0;
+	s->tlsext_ticket_expected = 0;
 	*ret = NULL;
 
 	/*
@@ -947,11 +947,11 @@ tls1_process_ticket(SSL *s, CBS *ext_block, int *alert, SSL_SESSION **ret)
 		 * The client will accept a ticket but does not currently
 		 * have one.
 		 */
-		s->internal->tlsext_ticket_expected = 1;
+		s->tlsext_ticket_expected = 1;
 		return TLS1_TICKET_EMPTY;
 	}
 
-	if (s->internal->tls_session_secret_cb != NULL) {
+	if (s->tls_session_secret_cb != NULL) {
 		/*
 		 * Indicate that the ticket could not be decrypted rather than
 		 * generating the session from ticket now, trigger abbreviated
@@ -1004,7 +1004,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 	if ((hctx = HMAC_CTX_new()) == NULL)
 		goto err;
 
-	if (tctx->internal->tlsext_ticket_key_cb != NULL) {
+	if (tctx->tlsext_ticket_key_cb != NULL) {
 		int rv;
 
 		/*
@@ -1016,7 +1016,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 		if (CBS_len(ticket) < EVP_MAX_IV_LENGTH)
 			goto derr;
 
-		if ((rv = tctx->internal->tlsext_ticket_key_cb(s,
+		if ((rv = tctx->tlsext_ticket_key_cb(s,
 		    (unsigned char *)CBS_data(&ticket_name),
 		    (unsigned char *)CBS_data(ticket), cctx, hctx, 0)) < 0)
 			goto err;
@@ -1024,7 +1024,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 			goto derr;
 		if (rv == 2) {
 			/* Renew ticket. */
-			s->internal->tlsext_ticket_expected = 1;
+			s->tlsext_ticket_expected = 1;
 		}
 
 		/*
@@ -1037,17 +1037,17 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 	} else {
 		/* Check that the key name matches. */
 		if (!CBS_mem_equal(&ticket_name,
-		    tctx->internal->tlsext_tick_key_name,
-		    sizeof(tctx->internal->tlsext_tick_key_name)))
+		    tctx->tlsext_tick_key_name,
+		    sizeof(tctx->tlsext_tick_key_name)))
 			goto derr;
 		if (!CBS_get_bytes(ticket, &ticket_iv,
 		    EVP_CIPHER_iv_length(EVP_aes_128_cbc())))
 			goto derr;
 		if (!EVP_DecryptInit_ex(cctx, EVP_aes_128_cbc(), NULL,
-		    tctx->internal->tlsext_tick_aes_key, CBS_data(&ticket_iv)))
+		    tctx->tlsext_tick_aes_key, CBS_data(&ticket_iv)))
 			goto err;
-		if (!HMAC_Init_ex(hctx, tctx->internal->tlsext_tick_hmac_key,
-		    sizeof(tctx->internal->tlsext_tick_hmac_key), EVP_sha256(),
+		if (!HMAC_Init_ex(hctx, tctx->tlsext_tick_hmac_key,
+		    sizeof(tctx->tlsext_tick_hmac_key), EVP_sha256(),
 		    NULL))
 			goto err;
 	}
@@ -1113,7 +1113,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 
  derr:
 	ERR_clear_error();
-	s->internal->tlsext_ticket_expected = 1;
+	s->tlsext_ticket_expected = 1;
 	ret = TLS1_TICKET_NOT_DECRYPTED;
 	goto done;
 

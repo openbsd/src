@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.15 2022/07/02 16:31:04 tb Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.16 2022/10/02 16:36:41 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -79,7 +79,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 	}
 
 	/* Add SCSV if there are other ciphers and we're not renegotiating. */
-	if (num_ciphers > 0 && !s->internal->renegotiate) {
+	if (num_ciphers > 0 && !s->renegotiate) {
 		if (!CBB_add_u16(cbb, SSL3_CK_SCSV & SSL3_CK_VALUE_MASK))
 			return 0;
 	}
@@ -118,7 +118,7 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 			 * TLS_EMPTY_RENEGOTIATION_INFO_SCSV is fatal if
 			 * renegotiating.
 			 */
-			if (s->internal->renegotiate) {
+			if (s->renegotiate) {
 				SSLerror(s, SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
 				ssl3_send_alert(s, SSL3_AL_FATAL,
 				    SSL_AD_HANDSHAKE_FAILURE);

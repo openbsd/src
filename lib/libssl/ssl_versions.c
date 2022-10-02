@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.24 2022/09/11 18:13:30 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.25 2022/10/02 16:36:41 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -140,13 +140,13 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 
 	min_version = 0;
 	max_version = TLS1_3_VERSION;
-	options = s->internal->options;
+	options = s->options;
 
 	if (SSL_is_dtls(s)) {
 		options = 0;
-		if (s->internal->options & SSL_OP_NO_DTLSv1)
+		if (s->options & SSL_OP_NO_DTLSv1)
 			options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
-		if (s->internal->options & SSL_OP_NO_DTLSv1_2)
+		if (s->options & SSL_OP_NO_DTLSv1_2)
 			options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2;
 	}
 
@@ -174,7 +174,7 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 
 	/* Limit to configured version range. */
 	if (!ssl_clamp_tls_version_range(&min_version, &max_version,
-	    s->internal->min_tls_version, s->internal->max_tls_version))
+	    s->min_tls_version, s->max_tls_version))
 		return 0;
 
 	/* QUIC requires a minimum of TLSv1.3. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.71 2022/09/10 15:29:33 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.72 2022/10/02 16:36:42 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -110,7 +110,7 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
-		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
+		ctx->ssl->shutdown |= SSL_RECEIVED_SHUTDOWN;
 		ctx->ssl->s3->warn_alert = alert_desc;
 		return;
 	}
@@ -158,7 +158,7 @@ tls13_legacy_handshake_message_recv_cb(void *arg)
 	SSL *s = ctx->ssl;
 	CBS cbs;
 
-	if (s->internal->msg_callback == NULL)
+	if (s->msg_callback == NULL)
 		return;
 
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
@@ -172,7 +172,7 @@ tls13_legacy_handshake_message_sent_cb(void *arg)
 	SSL *s = ctx->ssl;
 	CBS cbs;
 
-	if (s->internal->msg_callback == NULL)
+	if (s->msg_callback == NULL)
 		return;
 
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
@@ -195,11 +195,11 @@ tls13_legacy_ocsp_status_recv_cb(void *arg)
 	SSL *s = ctx->ssl;
 	int ret;
 
-	if (s->ctx->internal->tlsext_status_cb == NULL)
+	if (s->ctx->tlsext_status_cb == NULL)
 		return 1;
 
-	ret = s->ctx->internal->tlsext_status_cb(s,
-	    s->ctx->internal->tlsext_status_arg);
+	ret = s->ctx->tlsext_status_cb(s,
+	    s->ctx->tlsext_status_arg);
 	if (ret < 0) {
 		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
@@ -413,7 +413,7 @@ tls13_ctx_new(int mode, SSL *ssl)
 
 	ctx->middlebox_compat = 1;
 
-	ssl->internal->tls13 = ctx;
+	ssl->tls13 = ctx;
 
 	if (SSL_is_quic(ssl)) {
 		if (!tls13_quic_init(ctx))
