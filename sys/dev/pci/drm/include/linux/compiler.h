@@ -22,6 +22,7 @@
 #define __maybe_unused	__attribute__((__unused__))
 #define __always_inline	inline __attribute__((__always_inline__))
 #define noinline	__attribute__((__noinline__))
+#define noinline_for_stack	 __attribute__((__noinline__))
 #define fallthrough	do {} while (0)
 
 #ifndef __user
