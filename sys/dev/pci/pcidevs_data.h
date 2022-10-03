@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2005 2022/09/15 04:28:07 kmos Exp 
+ *	OpenBSD: pcidevs,v 1.2006 2022/10/03 05:39:07 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3050,6 +3050,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_1,
 	    "Yellow Carp",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAPHAEL,
+	    "Raphael",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_2,

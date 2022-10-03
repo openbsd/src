@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2005 2022/09/15 04:28:07 kmos Exp 
+ *	OpenBSD: pcidevs,v 1.2006 2022/10/03 05:39:07 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1228,6 +1228,7 @@
 #define	PCI_PRODUCT_ATI_VANGOGH	0x163f		/* Van Gogh */
 #define	PCI_PRODUCT_ATI_LUCIENNE	0x164c		/* Lucienne */
 #define	PCI_PRODUCT_ATI_YELLOW_CARP_1	0x164d		/* Yellow Carp */
+#define	PCI_PRODUCT_ATI_RAPHAEL	0x164e		/* Raphael */
 #define	PCI_PRODUCT_ATI_YELLOW_CARP_2	0x1681		/* Yellow Carp */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
