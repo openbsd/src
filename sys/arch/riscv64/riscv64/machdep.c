@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2022/03/22 06:48:36 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2022/10/03 19:32:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -49,7 +49,7 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 
-#include <dev/acpi/efi.h>
+#include <dev/efi/efi.h>
 
 #include "softraid.h"
 #if NSOFTRAID > 0

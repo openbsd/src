@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.14 2022/07/30 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.1 2022/10/03 19:32:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -30,7 +30,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
-#include <dev/acpi/efi.h>
+#include <dev/efi/efi.h>
 
 #include <dev/clock_subr.h>
 
