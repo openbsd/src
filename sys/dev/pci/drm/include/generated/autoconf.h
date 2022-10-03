@@ -39,6 +39,7 @@
 #include "pci.h"
 #if NPCI > 0
 #define CONFIG_PCI				1
+#define CONFIG_PCIEASPM				1
 #endif
 
 #include "agp.h"

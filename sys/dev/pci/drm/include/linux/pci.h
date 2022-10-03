@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.11 2022/04/11 03:02:40 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.12 2022/10/03 10:07:01 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -67,6 +67,7 @@ struct pci_dev {
 	int		irq;
 	int		msi_enabled;
 	uint8_t		no_64bit_msi;
+	uint8_t		ltr_path;
 
 	struct pci_acpi dev;
 };
