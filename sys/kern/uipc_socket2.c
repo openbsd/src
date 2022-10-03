@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.128 2022/09/05 14:56:09 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.129 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ soisdisconnected(struct socket *so)
  * Connstatus may be 0 or SS_ISCONNECTED.
  */
 struct socket *
-sonewconn(struct socket *head, int connstatus)
+sonewconn(struct socket *head, int connstatus, int wait)
 {
 	struct socket *so;
 	int persocket = solock_persocket(head);
@@ -185,7 +185,7 @@ sonewconn(struct socket *head, int connstatus)
 		return (NULL);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return (NULL);
-	so = soalloc(PR_NOWAIT | PR_ZERO);
+	so = soalloc(wait);
 	if (so == NULL)
 		return (NULL);
 	so->so_type = head->so_type;
@@ -238,7 +238,7 @@ sonewconn(struct socket *head, int connstatus)
 		sounlock(head);
 	}
 
-	error = pru_attach(so, 0);
+	error = pru_attach(so, 0, wait);
 
 	if (persocket) {
 		sounlock(so);

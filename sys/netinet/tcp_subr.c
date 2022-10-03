@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.188 2022/09/03 22:11:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.189 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -420,12 +420,13 @@ tcp_respond(struct tcpcb *tp, caddr_t template, struct tcphdr *th0,
  * protocol control block.
  */
 struct tcpcb *
-tcp_newtcpcb(struct inpcb *inp)
+tcp_newtcpcb(struct inpcb *inp, int wait)
 {
 	struct tcpcb *tp;
 	int i;
 
-	tp = pool_get(&tcpcb_pool, PR_NOWAIT|PR_ZERO);
+	tp = pool_get(&tcpcb_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
+	    PR_ZERO);
 	if (tp == NULL)
 		return (NULL);
 	TAILQ_INIT(&tp->t_segq);

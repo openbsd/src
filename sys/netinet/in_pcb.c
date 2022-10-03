@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.275 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.276 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -226,11 +226,12 @@ in_rootonly(u_int16_t port, u_int16_t proto)
 }
 
 int
-in_pcballoc(struct socket *so, struct inpcbtable *table)
+in_pcballoc(struct socket *so, struct inpcbtable *table, int wait)
 {
 	struct inpcb *inp;
 
-	inp = pool_get(&inpcb_pool, PR_NOWAIT|PR_ZERO);
+	inp = pool_get(&inpcb_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
+	    PR_ZERO);
 	if (inp == NULL)
 		return (ENOBUFS);
 	inp->inp_table = table;

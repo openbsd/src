@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.158 2022/09/13 09:05:47 mvs Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.159 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -696,7 +696,7 @@ void	tcp6_mtudisc(struct inpcb *, int);
 void	tcp6_mtudisc_callback(struct sockaddr_in6 *, u_int);
 #endif
 struct tcpcb *
-	 tcp_newtcpcb(struct inpcb *);
+	 tcp_newtcpcb(struct inpcb *, int);
 void	 tcp_notify(struct inpcb *, int);
 int	 tcp_output(struct tcpcb *);
 void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
@@ -717,7 +717,7 @@ void	 tcp_trace(short, short, struct tcpcb *, struct tcpcb *, caddr_t,
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	 tcp_attach(struct socket *, int);
+int	 tcp_attach(struct socket *, int, int);
 int	 tcp_detach(struct socket *);
 int	 tcp_bind(struct socket *, struct mbuf *, struct proc *);
 int	 tcp_listen(struct socket *);

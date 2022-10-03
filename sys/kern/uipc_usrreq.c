@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.189 2022/09/20 10:10:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.190 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ const struct sysctl_bounded_args unpdgctl_vars[] = {
 };
 
 int
-uipc_attach(struct socket *so, int proto)
+uipc_attach(struct socket *so, int proto, int wait)
 {
 	struct unpcb *unp;
 	int error;
@@ -270,7 +270,8 @@ uipc_attach(struct socket *so, int proto)
 		if (error)
 			return (error);
 	}
-	unp = pool_get(&unpcb_pool, PR_NOWAIT|PR_ZERO);
+	unp = pool_get(&unpcb_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
+	    PR_ZERO);
 	if (unp == NULL)
 		return (ENOBUFS);
 	refcnt_init(&unp->unp_refcnt);
@@ -839,7 +840,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 		solock(so2);
 
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
-		    (so3 = sonewconn(so2, 0)) == NULL) {
+		    (so3 = sonewconn(so2, 0, M_WAIT)) == NULL) {
 			error = ECONNREFUSED;
 		}
 

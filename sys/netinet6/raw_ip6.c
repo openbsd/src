@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.169 2022/09/13 09:05:02 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.170 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -585,7 +585,7 @@ extern	u_long rip6_sendspace;
 extern	u_long rip6_recvspace;
 
 int
-rip6_attach(struct socket *so, int proto)
+rip6_attach(struct socket *so, int proto, int wait)
 {
 	struct inpcb *in6p;
 	int error;
@@ -600,15 +600,15 @@ rip6_attach(struct socket *so, int proto)
 	if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)))
 		return error;
 	NET_ASSERT_LOCKED();
-	if ((error = in_pcballoc(so, &rawin6pcbtable)))
+	if ((error = in_pcballoc(so, &rawin6pcbtable, wait)))
 		return error;
 
 	in6p = sotoinpcb(so);
 	in6p->inp_ipv6.ip6_nxt = proto;
 	in6p->inp_cksum6 = -1;
 
-	in6p->inp_icmp6filt = malloc(sizeof(struct icmp6_filter),
-	    M_PCB, M_NOWAIT);
+	in6p->inp_icmp6filt = malloc(sizeof(struct icmp6_filter), M_PCB,
+	    wait == M_WAIT ? M_WAITOK : M_NOWAIT);
 	if (in6p->inp_icmp6filt == NULL) {
 		in_pcbdetach(in6p);
 		return ENOMEM;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.252 2022/09/03 22:43:38 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.253 2022/10/03 16:43:52 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -169,7 +169,7 @@ static int npromisc = 0;
 
 void pfkey_init(void);
 
-int pfkeyv2_attach(struct socket *, int);
+int pfkeyv2_attach(struct socket *, int, int);
 int pfkeyv2_detach(struct socket *);
 int pfkeyv2_disconnect(struct socket *);
 int pfkeyv2_shutdown(struct socket *);
@@ -269,7 +269,7 @@ pfkey_init(void)
  * Attach a new PF_KEYv2 socket.
  */
 int
-pfkeyv2_attach(struct socket *so, int proto)
+pfkeyv2_attach(struct socket *so, int proto, int wait)
 {
 	struct pkpcb *kp;
 	int error;
@@ -281,7 +281,10 @@ pfkeyv2_attach(struct socket *so, int proto)
 	if (error)
 		return (error);
 
-	kp = pool_get(&pkpcb_pool, PR_WAITOK|PR_ZERO);
+	kp = pool_get(&pkpcb_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
+	    PR_ZERO);
+	if (kp == NULL)
+		return (ENOBUFS);
 	so->so_pcb = kp;
 	refcnt_init(&kp->kcb_refcnt);
 	kp->kcb_socket = so;

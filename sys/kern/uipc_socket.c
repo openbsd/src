@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.289 2022/09/05 14:56:08 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.290 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -138,11 +138,12 @@ soinit(void)
 }
 
 struct socket *
-soalloc(int prflags)
+soalloc(int wait)
 {
 	struct socket *so;
 
-	so = pool_get(&socket_pool, prflags);
+	so = pool_get(&socket_pool, (wait == M_WAIT ? PR_WAITOK : PR_NOWAIT) |
+	    PR_ZERO);
 	if (so == NULL)
 		return (NULL);
 	rw_init_flags(&so->so_lock, "solock", RWL_DUPOK);
@@ -174,7 +175,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	so = soalloc(PR_WAITOK | PR_ZERO);
+	so = soalloc(M_WAIT);
 	klist_init(&so->so_rcv.sb_sel.si_note, &socket_klistops, so);
 	klist_init(&so->so_snd.sb_sel.si_note, &socket_klistops, so);
 	sigio_init(&so->so_sigio);
@@ -193,7 +194,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 
 	solock(so);
-	error = pru_attach(so, proto);
+	error = pru_attach(so, proto, M_WAIT);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		/* sofree() calls sounlock(). */

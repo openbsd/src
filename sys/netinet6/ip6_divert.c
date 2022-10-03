@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.86 2022/09/05 14:56:09 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.87 2022/10/03 16:43:52 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -261,7 +261,7 @@ divert6_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 }
 
 int
-divert6_attach(struct socket *so, int proto)
+divert6_attach(struct socket *so, int proto, int wait)
 {
 	int error;
 
@@ -271,7 +271,7 @@ divert6_attach(struct socket *so, int proto)
 	if ((so->so_state & SS_PRIV) == 0)
 		return EACCES;
 
-	error = in_pcballoc(so, &divb6table);
+	error = in_pcballoc(so, &divb6table, wait);
 	if (error)
 		return (error);
 

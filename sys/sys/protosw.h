@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.56 2022/09/13 09:05:47 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.57 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ struct stat;
 struct ifnet;
 
 struct pr_usrreqs {
-	int	(*pru_attach)(struct socket *, int);
+	int	(*pru_attach)(struct socket *, int, int);
 	int	(*pru_detach)(struct socket *);
 	void	(*pru_lock)(struct socket *);
 	void	(*pru_unlock)(struct socket *);
@@ -267,9 +267,9 @@ extern const struct protosw inet6sw[];
 #endif /* INET6 */
 
 static inline int
-pru_attach(struct socket *so, int proto)
+pru_attach(struct socket *so, int proto, int wait)
 {
-	return (*so->so_proto->pr_usrreqs->pru_attach)(so, proto);
+	return (*so->so_proto->pr_usrreqs->pru_attach)(so, proto, wait);
 }
 
 static inline int

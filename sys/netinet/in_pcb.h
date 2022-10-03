@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.134 2022/09/03 22:43:38 mvs Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.135 2022/10/03 16:43:52 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ extern int in_pcbnotifymiss;
 
 void	 in_init(void);
 void	 in_losing(struct inpcb *);
-int	 in_pcballoc(struct socket *, struct inpcbtable *);
+int	 in_pcballoc(struct socket *, struct inpcbtable *, int);
 int	 in_pcbbind(struct inpcb *, struct mbuf *, struct proc *);
 int	 in_pcbaddrisavail(struct inpcb *, struct sockaddr_in *, int,
 	    struct proc *);
