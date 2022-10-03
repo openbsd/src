@@ -1,4 +1,4 @@
-/*	$OpenBSD: dapmic.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: dapmic.c,v 1.3 2022/10/03 21:02:02 jca Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,6 +19,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/task.h>
+#include <sys/proc.h>
+#include <sys/signalvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_regulator.h>
@@ -28,11 +31,31 @@
 
 #include <dev/clock_subr.h>
 
+#include <machine/fdt.h>
+
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
 
 /* Registers */
+#define FAULT_LOG		0x05
 #define EVENT_A			0x06
+#define  EVENT_A_EVENTS_D		(1 << 7)
+#define  EVENT_A_EVENTS_C		(1 << 6)
+#define  EVENT_A_EVENTS_B		(1 << 5)
+#define  EVENT_A_E_nONKEY		(1 << 0)
+#define EVENT_B			0x07
+#define EVENT_C			0x08
+#define EVENT_D			0x09
+#define IRQ_MASK_A		0x0a
+#define  IRQ_MASK_A_M_RESERVED		((1 << 7) | (1 << 6) | (1 << 5))
+#define  IRQ_MASK_A_M_SEQ_RDY		(1 << 4)
+#define  IRQ_MASK_A_M_ADC_RDY		(1 << 3)
+#define  IRQ_MASK_A_M_TICK		(1 << 2)
+#define  IRQ_MASK_A_M_ALARM		(1 << 1)
+#define  IRQ_MASK_A_M_nONKEY		(1 << 0)
+#define IRQ_MASK_B		0x0b
+#define IRQ_MASK_C		0x0c
+#define IRQ_MASK_D		0x0d
 #define CONTROL_F		0x13
 #define  CONTROL_F_WAKE_UP		(1 << 2)
 #define  CONTROL_F_SHUTDOWN		(1 << 1)
@@ -55,10 +78,19 @@ extern void (*powerdownfn)(void);
 #define ALARM_Y			0x4b
 #define  ALARM_Y_TICK_ON		(1 << 7)
 
+#ifdef DAPMIC_DEBUG
+# define DPRINTF(args) do { printf args; } while (0)
+#else
+# define DPRINTF(args) do {} while (0)
+#endif
+
 struct dapmic_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
+
+	int (*sc_ih)(void *);
+	struct task sc_task;
 
 	struct todr_chip_handle sc_todr;
 };
@@ -80,8 +112,11 @@ int	dapmic_clock_read(struct dapmic_softc *, struct clock_ymdhms *);
 int	dapmic_clock_write(struct dapmic_softc *, struct clock_ymdhms *);
 int	dapmic_gettime(struct todr_chip_handle *, struct timeval *);
 int	dapmic_settime(struct todr_chip_handle *, struct timeval *);
+void	dapmic_reset_irq_mask(struct dapmic_softc *);
 void	dapmic_reset(void);
 void	dapmic_powerdown(void);
+int	dapmic_intr(void *);
+void	dapmic_shutdown_task(void *);
 
 int
 dapmic_match(struct device *parent, void *match, void *aux)
@@ -96,6 +131,7 @@ dapmic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dapmic_softc *sc = (struct dapmic_softc *)self;
 	struct i2c_attach_args *ia = aux;
+	int node = *(int *)ia->ia_cookie;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -105,12 +141,35 @@ dapmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_settime = dapmic_settime;
 	todr_attach(&sc->sc_todr);
 
-	printf("\n");
-
 	if (cpuresetfn == NULL)
 		cpuresetfn = dapmic_reset;
 	if (powerdownfn == NULL)
 		powerdownfn = dapmic_powerdown;
+
+	task_set(&sc->sc_task, dapmic_shutdown_task, sc);
+
+	/* Mask away events we don't care about */
+	dapmic_reg_write(sc, IRQ_MASK_A,
+	    0xff & ~(IRQ_MASK_A_M_RESERVED | IRQ_MASK_A_M_nONKEY));
+	dapmic_reg_write(sc, IRQ_MASK_B, 0xff);
+	dapmic_reg_write(sc, IRQ_MASK_C, 0xff);
+	dapmic_reg_write(sc, IRQ_MASK_D, 0xff);
+
+	/* Clear past faults and events. */
+	dapmic_reg_write(sc, FAULT_LOG, dapmic_reg_read(sc, FAULT_LOG));
+	dapmic_reg_write(sc, EVENT_A, dapmic_reg_read(sc, EVENT_A));
+	dapmic_reg_write(sc, EVENT_B, dapmic_reg_read(sc, EVENT_B));
+	dapmic_reg_write(sc, EVENT_C, dapmic_reg_read(sc, EVENT_C));
+	dapmic_reg_write(sc, EVENT_D, dapmic_reg_read(sc, EVENT_D));
+
+	if (node != 0) {
+                sc->sc_ih = fdt_intr_establish_idx(node, 0, IPL_CLOCK,
+		    dapmic_intr, sc, sc->sc_dev.dv_xname);
+                if (sc->sc_ih == NULL)
+                        printf(", can't establish interrupt");
+        }
+
+	printf("\n");
 }
 
 uint8_t
@@ -239,10 +298,22 @@ dapmic_settime(struct todr_chip_handle *handle, struct timeval *tv)
 }
 
 void
+dapmic_reset_irq_mask(struct dapmic_softc *sc)
+{
+	dapmic_reg_write(sc, IRQ_MASK_A, 0);
+	dapmic_reg_write(sc, IRQ_MASK_B, 0);
+	dapmic_reg_write(sc, IRQ_MASK_C, 0);
+	dapmic_reg_write(sc, IRQ_MASK_D, 0);
+}
+
+void
 dapmic_reset(void)
 {
 	struct dapmic_softc *sc = dapmic_cd.cd_devs[0];
 	uint8_t reg;
+
+	/* Re-enable irqs and the associated wake-up events. */
+	dapmic_reset_irq_mask(sc);
 
 	/* Enable tick alarm wakeup with a one second interval. */
 	reg = dapmic_reg_read(sc, ALARM_MO);
@@ -266,10 +337,85 @@ dapmic_powerdown(void)
 	struct dapmic_softc *sc = dapmic_cd.cd_devs[0];
 	uint8_t reg;
 
+	/* Re-enable irqs and the associated wake-up events. */
+	dapmic_reset_irq_mask(sc);
+
 	/* Disable tick function such that it doesn't wake us up. */
 	reg = dapmic_reg_read(sc, ALARM_Y);
 	reg &= ~ALARM_Y_TICK_ON;
 	dapmic_reg_write(sc, ALARM_Y, reg);
 
 	dapmic_reg_write(sc, CONTROL_F, CONTROL_F_SHUTDOWN);
+}
+
+void
+dapmic_shutdown_task(void *arg)
+{
+	extern int allowpowerdown;
+
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
+		prsignal(initprocess, SIGUSR2);
+	}
+}
+
+int
+dapmic_intr(void *arg)
+{
+	struct dapmic_softc *sc = arg;
+	uint8_t event_a, event_b, event_c, event_d, fault;
+
+	event_b = event_c = event_d = 0;
+
+	event_a = dapmic_reg_read(sc, EVENT_A);
+	DPRINTF(("%s: %s: event_a %#02.2hhx", sc->sc_dev.dv_xname, __func__,
+	    event_a));
+
+	/* Acknowledge all events. */
+	if (event_a & EVENT_A_EVENTS_B) {
+		event_b = dapmic_reg_read(sc, EVENT_B);
+		DPRINTF((", event_b %#02.2hhx", event_b));
+		if (event_b != 0)
+			dapmic_reg_write(sc, EVENT_B, event_b);
+	}
+	if (event_a & EVENT_A_EVENTS_C) {
+		event_c = dapmic_reg_read(sc, EVENT_C);
+		DPRINTF((", event_c %#02.2hhx", event_c));
+		if (event_c != 0)
+			dapmic_reg_write(sc, EVENT_C, event_c);
+	}
+	if (event_a & EVENT_A_EVENTS_D) {
+		event_d = dapmic_reg_read(sc, EVENT_D);
+		DPRINTF((", event_d %#02.2hhx", event_d));
+		if (event_d != 0)
+			dapmic_reg_write(sc, EVENT_D, event_d);
+	}
+	event_a &= ~(EVENT_A_EVENTS_B|EVENT_A_EVENTS_C|EVENT_A_EVENTS_D);
+	if (event_a != 0)
+		dapmic_reg_write(sc, EVENT_A, event_a);
+
+	DPRINTF(("\n"));
+
+	fault = dapmic_reg_read(sc, FAULT_LOG);
+	if (fault != 0) {
+		static int warned;
+		if (!warned) {
+			warned = 1;
+			printf("%s: FAULT_LOG %#02.2hhx\n", sc->sc_dev.dv_xname,
+			    fault);
+		}
+		/*
+		 * Don't blindly acknowledge the fault log bits, else we may
+		 * prevent legit behavior like a forced poweroff with a long
+		 * power button press.
+		 */
+	}
+
+	if (event_a & EVENT_A_E_nONKEY)
+		task_add(systq, &sc->sc_task);
+
+	if (event_a | event_b | event_c | event_d)
+		return 1;
+
+	return 0;
 }
