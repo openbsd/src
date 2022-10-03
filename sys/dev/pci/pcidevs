@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2005 2022/09/15 04:28:07 kmos Exp $
+$OpenBSD: pcidevs,v 1.2006 2022/10/03 05:39:07 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1223,6 +1223,7 @@ product ATI CEZANNE		0x1638	Cezanne
 product ATI VANGOGH		0x163f	Van Gogh
 product ATI LUCIENNE		0x164c	Lucienne
 product ATI YELLOW_CARP_1	0x164d	Yellow Carp
+product ATI RAPHAEL		0x164e	Raphael
 product ATI YELLOW_CARP_2	0x1681	Yellow Carp
 product ATI RADEON_HD6500D_HDA	0x1714	Radeon HD 6500D HD Audio
 product ATI RADEON_M241P	0x3150	Mobility Radeon X600
