@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.9 2021/03/10 10:21:47 jsg Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.10 2022/10/03 14:10:53 bluhm Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -213,6 +213,7 @@ counters_zero(struct cpumem *cm, unsigned int n)
 	unsigned int i;
 
 	counters = cpumem_first(&cmi, cm);
+	membar_producer();
 	do {
 		for (i = 0; i < n; i++)
 			counters[i] = 0;
