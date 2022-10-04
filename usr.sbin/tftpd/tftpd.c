@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.47 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.48 2022/10/04 07:05:28 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -391,8 +391,13 @@ main(int argc, char *argv[])
 	if (!debug && rdaemon(devnull) == -1)
 		err(1, "unable to daemonize");
 
-	if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
-		lerr(1, "pledge");
+	if (cancreate) {
+		if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
+			lerr(1, "pledge");
+	} else {
+		if (pledge("stdio rpath wpath fattr dns inet", NULL) == -1)
+			lerr(1, "pledge");
+	}
 
 	event_init();
 
