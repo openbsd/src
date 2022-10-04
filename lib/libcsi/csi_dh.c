@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_dh.c,v 1.3 2022/01/10 23:03:07 tb Exp $ */
+/* $OpenBSD: csi_dh.c,v 1.4 2022/10/04 20:46:13 tb Exp $ */
 /*
  * Copyright (c) 2000, 2001, 2015 Markus Friedl <markus@openbsd.org>
  * Copyright (c) 2006, 2016 Damien Miller <djm@openbsd.org>
@@ -388,7 +388,7 @@ csi_dh_derive_shared_key(struct csi_dh *cdh, struct csi_dh_shared **cdhs)
 	key_len = (size_t)len;
 	if ((key = calloc(1, key_len)) == NULL)
 		goto errmem;
-	if (DH_compute_key(key, cdh->peer_pubkey, cdh->dh) != len) {
+	if (DH_compute_key(key, cdh->peer_pubkey, cdh->dh) < 0) {
 		csi_err_setx(&cdh->err, CSI_ERR_CRYPTO, "failed to derive key");
 		goto err;
 	}
