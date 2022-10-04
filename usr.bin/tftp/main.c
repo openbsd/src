@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2018/09/20 11:42:42 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2022/10/04 07:03:27 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -602,7 +602,8 @@ command(void)
 	struct cmd	*c;
 
 	for (;;) {
-		printf("%s> ", prompt);
+		if (isatty(STDIN_FILENO))
+			printf("%s> ", prompt);
 		if (readcmd(line, LBUFLEN, stdin) < 1)
 			continue;
 		if ((line[0] == 0) || (line[0] == '\n'))
