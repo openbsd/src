@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2022/10/04 07:03:27 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2022/10/04 08:03:26 kn Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -109,23 +109,6 @@ int			 opt_tsize = 0;
 int			 opt_tout = 0;
 int			 opt_blksize = 0;
 
-char	vhelp[] = "toggle verbose mode";
-char	thelp[] = "toggle packet tracing";
-char	chelp[] = "connect to remote tftp";
-char	qhelp[] = "exit tftp";
-char	hhelp[] = "print help information";
-char	shelp[] = "send file";
-char	rhelp[] = "receive file";
-char	mhelp[] = "set file transfer mode";
-char	sthelp[] = "show current status";
-char	xhelp[] = "set per-packet retransmission timeout";
-char	ihelp[] = "set total retransmission timeout";
-char	ashelp[] = "set mode to netascii";
-char	bnhelp[] = "set mode to octet";
-char	oshelp[] = "toggle tsize option";
-char	othelp[] = "toggle timeout option";
-char	obhelp[] = "set alternative blksize option";
-
 struct cmd {
 	char	*name;
 	char	*help;
@@ -133,23 +116,23 @@ struct cmd {
 };
 
 struct cmd cmdtab[] = {
-	{ "connect",	chelp,	parsearg },
-	{ "mode",       mhelp,	modecmd },
-	{ "put",	shelp,	put },
-	{ "get",	rhelp,	get },
-	{ "quit",	qhelp,	quit },
-	{ "verbose",	vhelp,	setverbose },
-	{ "trace",	thelp,	settrace },
-	{ "status",	sthelp,	status },
-	{ "binary",     bnhelp,	setbinary },
-	{ "ascii",      ashelp,	setascii },
-	{ "rexmt",	xhelp,	setrexmt },
-	{ "timeout",	ihelp,	settimeout },
-	{ "tsize",	oshelp, settsize },
-	{ "tout",	othelp, settout },
-	{ "blksize",	obhelp,	setblksize },
-	{ "help",	hhelp,	help },
-	{ "?",		hhelp,	help },
+	{ "?",		"print help information",	help },
+	{ "ascii",	"set mode to netascii",	setascii },
+	{ "binary",	"set mode to octet",	setbinary },
+	{ "blksize",	"set alternative blksize option",	setblksize },
+	{ "connect",	"connect to remote tftp",	parsearg },
+	{ "get",	"receive file",	get },
+	{ "help",	"print help information",	help },
+	{ "mode",       "set file transfer mode",	modecmd },
+	{ "put",	"send file",	put },
+	{ "quit",	"exit tftp",	quit },
+	{ "rexmt",	"set per-packet retransmission timeout", setrexmt },
+	{ "status",	"show current status",	status },
+	{ "timeout",	"set total retransmission timeout",	settimeout },
+	{ "tout",	"toggle timeout option",	settout },
+	{ "trace",	"toggle packet tracing",	settrace },
+	{ "tsize",	"toggle tsize option",	settsize },
+	{ "verbose",	"toggle verbose mode",	setverbose },
 	{ NULL,		NULL,	NULL }
 };
 
