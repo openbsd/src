@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.11 2022/09/01 01:52:08 kn Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.12 2022/10/04 06:52:52 kn Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -284,11 +284,12 @@ config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
 	struct vnd_ioctl vndio;
 	char *rdev;
 	int fd, rv = -1;
-	int unit;
+	int unit, print_dev = 0;
 
 	if (dev == NULL) {
 		if (getinfo(NULL, &unit) == -1)
 			err(1, "no devices available");
+		print_dev = 1;
 		asprintf(&dev, "vnd%d", unit);
 	}
 
@@ -312,7 +313,8 @@ config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
 	if (rv)
 		warn("VNDIOCSET");
 	else {
-		printf("%s\n", dev);
+		if (print_dev)
+			printf("%s\n", dev);
 		if (verbose)
 			fprintf(stderr, "%s: %llu bytes on %s\n", dev,
 			    vndio.vnd_size, file);
