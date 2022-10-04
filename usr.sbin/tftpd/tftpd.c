@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.48 2022/10/04 07:05:28 kn Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.49 2022/10/04 23:33:22 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -283,12 +283,13 @@ __dead void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [-46cdiv] [-l address] [-p port] [-r socket]"
+	fprintf(stderr, "usage: %s [-46cdivw] [-l address] [-p port] [-r socket]"
 	    " directory\n", __progname);
 	exit(1);
 }
 
 int		  cancreate = 0;
+int		  canwrite = 0;
 int		  verbose = 0;
 int		  debug = 0;
 int		  iflag = 0;
@@ -309,7 +310,7 @@ main(int argc, char *argv[])
 	int family = AF_UNSPEC;
 	int devnull = -1;
 
-	while ((c = getopt(argc, argv, "46cdil:p:r:v")) != -1) {
+	while ((c = getopt(argc, argv, "46cdil:p:r:vw")) != -1) {
 		switch (c) {
 		case '4':
 			family = AF_INET;
@@ -318,7 +319,7 @@ main(int argc, char *argv[])
 			family = AF_INET6;
 			break;
 		case 'c':
-			cancreate = 1;
+			canwrite = cancreate = 1;
 			break;
 		case 'd':
 			verbose = debug = 1;
@@ -341,6 +342,9 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'w':
+			canwrite = 1;
 			break;
 		default:
 			usage();
@@ -394,8 +398,11 @@ main(int argc, char *argv[])
 	if (cancreate) {
 		if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
 			lerr(1, "pledge");
-	} else {
+	} else if (canwrite) {
 		if (pledge("stdio rpath wpath fattr dns inet", NULL) == -1)
+			lerr(1, "pledge");
+	} else {
+		if (pledge("stdio rpath dns inet", NULL) == -1)
 			lerr(1, "pledge");
 	}
 
@@ -969,6 +976,9 @@ validate_access(struct tftp_client *client, const char *requested)
 	int		 fd, wmode;
 	const char	*errstr, *filename;
 	char		 rewritten[PATH_MAX];
+
+	if (!canwrite && mode != RRQ)
+		return (EACCESS);
 
 	if (strcmp(requested, SEEDPATH) == 0) {
 		char *buf;

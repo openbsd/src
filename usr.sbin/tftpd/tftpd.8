@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.8 2019/03/04 01:06:03 dlg Exp $
+.\"   $OpenBSD: tftpd.8,v 1.9 2022/10/04 23:33:22 kn Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
 .\"
-.Dd $Mdocdate: March 4 2019 $
+.Dd $Mdocdate: October 4 2022 $
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd Trivial File Transfer Protocol daemon
 .Sh SYNOPSIS
 .Nm tftpd
-.Op Fl 46cdiv
+.Op Fl 46cdivw
 .Op Fl l Ar address
 .Op Fl p Ar port
 .Op Fl r Ar socket
@@ -53,11 +53,13 @@ does not require an account or password on the remote system.
 Due to the lack of authentication information,
 .Nm
 will allow only publicly readable files to be accessed.
+By default files may only be read, unless the
+.Fl w
+option is specified.
 Files may be written only if they already exist and are publicly writable,
 unless the
 .Fl c
-flag is specified
-.Pq see below .
+flag is specified.
 Note that this extends the concept of
 .Dq public
 to include
@@ -93,6 +95,9 @@ Allow new files to be created;
 otherwise uploaded files must already exist.
 Files are created with default permissions
 allowing anyone to read or write to them.
+.Pp
+This option implies
+.Fl w .
 .It Fl d
 Do not daemonize.
 If this option is specified,
@@ -145,6 +150,8 @@ to
 on startup;
 the remote host is not expected to pass the directory
 as part of the file name to transfer.
+.It Fl w
+Allow files to be written to.
 .El
 .Sh SEE ALSO
 .Xr tftp 1 ,
