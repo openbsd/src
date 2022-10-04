@@ -103,7 +103,6 @@
 ./usr/include/dev/acpi/amd_iommu.h
 ./usr/include/dev/acpi/amltypes.h
 ./usr/include/dev/acpi/dsdt.h
-./usr/include/dev/acpi/efi.h
 ./usr/include/dev/acpi/smbus.h
 ./usr/include/dev/adb
 ./usr/include/dev/adb/adb.h
@@ -132,6 +131,8 @@
 ./usr/include/dev/dec/mcclockvar.h
 ./usr/include/dev/dt
 ./usr/include/dev/dt/dtvar.h
+./usr/include/dev/efi
+./usr/include/dev/efi/efi.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
