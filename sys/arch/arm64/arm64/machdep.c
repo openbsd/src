@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.73 2022/10/03 19:32:22 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.74 2022/10/04 19:41:21 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -433,7 +433,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_sp = stack;
 	tf->tf_lr = pack->ep_entry;
 	tf->tf_elr = pack->ep_entry; /* ??? */
-	tf->tf_spsr = PSR_M_EL0t;
+	tf->tf_spsr = PSR_M_EL0t | PSR_DIT;
 
 	retval[1] = 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.70 2022/09/15 01:57:52 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.71 2022/10/04 19:41:21 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -756,6 +756,7 @@ void
 cpu_init(void)
 {
 	uint64_t id_aa64mmfr1, sctlr;
+	uint64_t id_aa64pfr0;
 	uint64_t tcr;
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
@@ -774,6 +775,11 @@ cpu_init(void)
 		sctlr &= ~SCTLR_SPAN;
 		WRITE_SPECIALREG(sctlr_el1, sctlr);
 	}
+
+	/* Enable DIT. */
+	id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_DIT(id_aa64pfr0) >= ID_AA64PFR0_DIT_IMPL)
+		__asm volatile (".arch armv8.4-a; msr dit, #1");
 
 	/* Initialize debug registers. */
 	WRITE_SPECIALREG(mdscr_el1, DBG_MDSCR_TDCC);
