@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.19 2022/01/14 09:25:42 tb Exp $ */
+/* $OpenBSD: genrsa.c,v 1.20 2022/10/04 15:31:02 espie Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -346,7 +346,7 @@ genrsa_main(int argc, char **argv)
 	if ((rsa_e_dec = BN_bn2dec(RSA_get0_e(rsa))) == NULL)
 		goto err;
 
-	BIO_printf(bio_err, "e is %s (0x%s)\n", rsa_e_hex, rsa_e_dec);
+	BIO_printf(bio_err, "e is %s (0x%s)\n", rsa_e_dec, rsa_e_hex);
 	{
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
