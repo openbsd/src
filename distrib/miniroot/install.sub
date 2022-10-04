@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1207 2022/09/27 12:28:25 kn Exp $
+#	$OpenBSD: install.sub,v 1.1208 2022/10/04 19:34:44 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2927,10 +2927,10 @@ __EOT
 		mkdir -m 700 -p $_kernel_dir
 		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
 		rm -f $_kernel_dir.tgz
-		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
-			make newbsd; \
-			[ -f /etc/bsd.re-config ] && \
-			    config -e -c /etc/bsd.re-config -f bsd; \
+		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel
+			make newbsd
+			[ -f /etc/bsd.re-config ] &&
+				config -e -c /etc/bsd.re-config -f bsd
 			make newinstall"
 		) >/dev/null 2>&1 && echo " done." || echo " failed."
 	fi
