@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_softraid.c,v 1.2 2022/08/29 18:54:43 kn Exp $	*/
+/*	$OpenBSD: efi_softraid.c,v 1.3 2022/10/05 09:58:43 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2022 Klemens Nanni <kn@openbsd.org>
@@ -50,6 +50,13 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	/* Check disk status. */
 	if (bd.bd_status != BIOC_SDONLINE && bd.bd_status != BIOC_SDREBUILD) {
 		fprintf(stderr, "softraid chunk %u not online - skipping...\n",
+		    disk);
+		return;
+	}
+
+	/* Keydisks always have a size of zero. */
+	if (bd.bd_size == 0) {
+		fprintf(stderr, "softraid chunk %u is keydisk - skipping...\n",
 		    disk);
 		return;
 	}
