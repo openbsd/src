@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1209 2022/10/04 19:59:10 kn Exp $
+#	$OpenBSD: install.sub,v 1.1210 2022/10/05 19:30:47 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3315,20 +3315,19 @@ check_unattendedupgrade() {
 	local _d=$(get_dkdevs_root) _rc=1
 
 	_d=${_d%% *}
-	(
-		if [[ -n $_d ]]; then
-			make_dev $_d
-			if mount -t ffs -r /dev/${_d}a /mnt; then
-				[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
-				_rc=$?
-				((_rc == 0)) && cp /mnt/auto_upgrade.conf /
-				echo "Which disk is the root disk = ${_d}" >> /auto_upgrade.conf
-				umount /mnt
-			fi
-			rm -f /dev/{r,}$_d?
+	if [[ -n $_d ]]; then
+		make_dev $_d
+		if mount -t ffs -r /dev/${_d}a /mnt; then
+			[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
+			_rc=$?
+			((_rc == 0)) && cp /mnt/auto_upgrade.conf /
+			echo "Which disk is the root disk = ${_d}" >> /auto_upgrade.conf
+			umount /mnt
 		fi
-		return $_rc
-	) > /dev/null 2>&1
+		rm -f /dev/{r,}$_d?
+	fi >/dev/null 2>&1
+
+	return $_rc
 }
 
 WATCHDOG_PERIOD_SEC=$((30 * 60))
