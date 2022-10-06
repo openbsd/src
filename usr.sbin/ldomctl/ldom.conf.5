@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.17 2022/03/31 17:27:30 naddy Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.18 2022/10/06 21:35:52 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 6 2022 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -50,8 +50,13 @@ Declare the amount of memory assigned to a domain, in bytes.
 can be specified with a human-readable scale, using the format described in
 .Xr scan_scaled 3 ,
 e.g. 512M.
-.It Ic iodevice Ar path
+.It Ic iodevice Ar device
 Assign the specified PCIe device to the guest domain.
+.Ar device
+may be either a device path
+.Pq Pa /@400/@2/@0/@8
+or a pseudonym
+.Pq Pa /SYS/MB/PCIE0 .
 This keyword can be used multiple times.
 .It Ic variable Ar name Ns = Ns Ar value
 Set the specified NVRAM variable for the domain.

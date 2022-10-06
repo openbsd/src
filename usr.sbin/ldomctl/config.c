@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.42 2021/01/31 05:14:24 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.43 2022/10/06 21:35:52 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -2645,7 +2645,7 @@ guest_add_variable(struct guest *guest, const char *name, const char *str)
 }
 
 void
-guest_add_iodev(struct guest *guest, const char *path)
+guest_add_iodev(struct guest *guest, const char *dev)
 {
 	struct component *component;
 	struct subdevice *subdevice;
@@ -2654,17 +2654,18 @@ guest_add_iodev(struct guest *guest, const char *path)
 		errx(1, "direct I/O not supported by hypervisor");
 
 	TAILQ_FOREACH(component, &components, link) {
-		if (strcmp(component->path, path) == 0)
+		if (strcmp(component->nac, dev) == 0 ||
+		    strcmp(component->path, dev) == 0)
 			break;
 	}
 
 	if (component == NULL)
-		errx(1, "incorrect device path %s", path);
+		errx(1, "incorrect device path %s", dev);
 	if (component->assigned)
-		errx(1, "device path %s already assigned", path);
+		errx(1, "device path %s already assigned", dev);
 
 	subdevice = xzalloc(sizeof(*subdevice));
-	subdevice->path = path;
+	subdevice->path = component->path;
 	TAILQ_INSERT_TAIL(&guest->subdevice_list, subdevice, link);
 	component->assigned = 1;
 }
@@ -2873,7 +2874,7 @@ build_config(const char *filename, int noaction)
 		SIMPLEQ_FOREACH(var, &domain->var_list, entry)
 			guest_add_variable(guest, var->name, var->str);
 		SIMPLEQ_FOREACH(iodev, &domain->iodev_list, entry)
-			guest_add_iodev(guest, iodev->path);
+			guest_add_iodev(guest, iodev->dev);
 
 		guest_finalize(guest);
 	}

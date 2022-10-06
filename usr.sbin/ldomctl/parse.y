@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2021/10/15 15:01:28 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2022/10/06 21:35:52 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -220,13 +220,13 @@ domainopts	: VCPU vcpu {
 			struct iodev *iodev;
 			SIMPLEQ_FOREACH(odomain, &conf->domain_list, entry)
 				SIMPLEQ_FOREACH(iodev, &odomain->iodev_list, entry)
-					if (strcmp(iodev->path, $2) == 0) {
+					if (strcmp(iodev->dev, $2) == 0) {
 						yyerror("iodevice %s already"
 						    " assigned", $2);
 						YYERROR;
 					}
 			iodev = xmalloc(sizeof(struct iodev));
-			iodev->path = $2;
+			iodev->dev = $2;
 			SIMPLEQ_INSERT_TAIL(&domain->iodev_list, iodev, entry);
 		}
 		;
