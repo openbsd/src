@@ -1,6 +1,6 @@
 define(MACHINE,sparc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.99 2022/01/07 01:13:15 jsg Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.100 2022/10/06 21:43:01 kn Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -182,4 +182,4 @@ twrget(all, vcc, ttyV, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, a, b, c, d, e, f)dnl
 twrget(all, vldc_hvctl, hvctl)dnl
 twrget(all, vldc_spds, spds)dnl
 twrget(all, vldc_ldom, ldom, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)dnl
-target(all, vdsp, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)dnl
+target(all, vdsp, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23)dnl
