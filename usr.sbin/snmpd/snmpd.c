@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.47 2022/09/01 14:34:17 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.48 2022/10/06 14:41:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -228,11 +228,6 @@ main(int argc, char *argv[])
 	gettimeofday(&env->sc_starttime, NULL);
 	env->sc_engine_boots = 0;
 
-/* Remove after 7.2 */
-#if 0
-	pf_init();
-#endif
-
 	proc_init(ps, procs, nitems(procs), debug, argc0, argv0, proc_id);
 	if (!debug && daemon(0, 0) == -1)
 		err(1, "failed to daemonize");
@@ -306,8 +301,6 @@ snmpd_dispatch_snmpe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	switch (imsg->hdr.type) {
 	case IMSG_TRAP_EXEC:
 		return (traphandler_priv_recvmsg(p, imsg));
-	case IMSG_CTL_RELOAD:
-		/* XXX notyet */
 	default:
 		break;
 	}

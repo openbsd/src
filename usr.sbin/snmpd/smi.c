@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.31 2022/06/30 09:42:19 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.32 2022/10/06 14:41:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -220,7 +220,6 @@ smi_mibtree(struct oid *oids)
 			fatalx("smi_mibtree: undeclared MIB");
 		decl->o_flags = oid->o_flags;
 		decl->o_get = oid->o_get;
-		decl->o_set = oid->o_set;
 		decl->o_table = oid->o_table;
 		decl->o_val = oid->o_val;
 		decl->o_data = oid->o_data;
@@ -701,8 +700,7 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 	 * or a MIB registered by a subagent
 	 * (it will match any sub-elements)
 	 */
-	if ((b->o_flags & OID_TABLE ||
-	    b->o_flags & OID_REGISTERED) &&
+	if (b->o_flags & OID_TABLE &&
 	    (a->o_flags & OID_KEY) == 0 &&
 	    (a->o_oidlen > b->o_oidlen))
 		return (0);

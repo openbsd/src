@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.84 2022/09/01 14:34:17 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.85 2022/10/06 14:41:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -103,11 +103,6 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	struct snmpd		*env = ps->ps_env;
 	struct address		*h;
 
-/* Remove after 7.2 */
-#if 0
-	kr_init();
-	timer_init();
-#endif
 	usm_generate_keys();
 	appl_init();
 
@@ -147,10 +142,6 @@ snmpe_shutdown(void)
 			event_del(&h->evt);
 		close(h->fd);
 	}
-/* Remove after 7.2 */
-#if 0
-	kr_shutdown();
-#endif
 	appl_shutdown();
 }
 
@@ -492,115 +483,8 @@ badversion:
 int
 snmpe_parsevarbinds(struct snmp_message *msg)
 {
-	struct snmp_stats	*stats = &snmpd_env->sc_stats;
-	struct ber_element	*varbind, *value, *rvarbind = NULL;
-	struct ber_element	*pvarbind = NULL, *end;
-	char			 buf[BUFSIZ];
-	struct ber_oid		 o;
-	int			 i;
-
 	appl_processpdu(msg, msg->sm_ctxname, msg->sm_version, msg->sm_pdu);
 	return 0;
-	/*
-	 * Leave code here for now so it's easier to switch back in case of
-	 * issues.
-	 */
-
-	msg->sm_errstr = "invalid varbind element";
-
-	varbind = msg->sm_varbind;
-	msg->sm_varbindresp = NULL;
-	end = NULL;
-
-	for (i = 1; varbind != NULL && i < SNMPD_MAXVARBIND;
-	    varbind = varbind->be_next, i++) {
-		if (ober_scanf_elements(varbind, "{oeS$}", &o, &value) == -1) {
-			stats->snmp_inasnparseerrs++;
-			msg->sm_errstr = "invalid varbind";
-			goto varfail;
-		}
-		if (o.bo_n < BER_MIN_OID_LEN || o.bo_n > BER_MAX_OID_LEN)
-			goto varfail;
-
-		log_debug("%s: %s:%hd: oid %s", __func__, msg->sm_host,
-		    msg->sm_port, smi_oid2string(&o, buf, sizeof(buf), 0));
-
-		/*
-		 * XXX intotalreqvars should only be incremented after all are
-		 * succeeded
-		 */
-		switch (msg->sm_pdutype) {
-		case SNMP_C_GETNEXTREQ:
-			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
-				goto varfail;
-			if (mps_getnextreq(msg, rvarbind, &o) != 0) {
-				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-				ober_free_elements(rvarbind);
-				goto varfail;
-			}
-			stats->snmp_intotalreqvars++;
-			break;
-		case SNMP_C_GETREQ:
-			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
-				goto varfail;
-			if (mps_getreq(msg, rvarbind, &o,
-			    msg->sm_version) != 0) {
-				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-				ober_free_elements(rvarbind);
-				goto varfail;
-			}
-			stats->snmp_intotalreqvars++;
-			break;
-		case SNMP_C_SETREQ:
-			/*
-			 * XXX A set varbind should only be committed if
-			 * all variables are staged
-			 */
-			if (mps_setreq(msg, value, &o) == 0) {
-				stats->snmp_intotalsetvars++;
-				break;
-			}
-			msg->sm_error = SNMP_ERROR_READONLY;
-			goto varfail;
-		case SNMP_C_GETBULKREQ:
-			rvarbind = NULL;
-			if (mps_getbulkreq(msg, &rvarbind, &end, &o,
-			    (i <= msg->sm_nonrepeaters)
-			    ? 1 : msg->sm_maxrepetitions) != 0) {
-				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-				goto varfail;
-			}
-			/*
-			 * XXX This should be the amount of returned
-			 * vars
-			 */
-			stats->snmp_intotalreqvars++;
-			break;
-
-		default:
-			goto varfail;
-		}
-		if (rvarbind == NULL)
-			break;
-		if (pvarbind == NULL)
-			msg->sm_varbindresp = rvarbind;
-		else
-			ober_link_elements(pvarbind, rvarbind);
-		pvarbind = end == NULL ? rvarbind : end;
-	}
-
-	msg->sm_errstr = "none";
-	msg->sm_error = 0;
-	msg->sm_errorindex = 0;
-
-	return 0;
- varfail:
-	log_debug("%s: %s:%hd: %s, error index %d", __func__,
-	    msg->sm_host, msg->sm_port, msg->sm_errstr, i);
-	if (msg->sm_error == 0)
-		msg->sm_error = SNMP_ERROR_GENERR;
-	msg->sm_errorindex = i;
-	return -1;
 }
 
 void

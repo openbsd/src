@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.29 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: mps.c,v 1.30 2022/10/06 14:41:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -60,44 +60,9 @@ mps_getstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 }
 
 int
-mps_setstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct ber_element	*ber = *elm;
-	char			*s, *v;
-
-	if ((oid->o_flags & OID_WR) == 0)
-		return (-1);
-
-	if (ber->be_class != BER_CLASS_UNIVERSAL ||
-	    ber->be_type != BER_TYPE_OCTETSTRING)
-		return (-1);
-	if (ober_get_string(ber, &s) == -1)
-		return (-1);
-	if ((v = (void *)strdup(s)) == NULL)
-		return (-1);
-	free(oid->o_data);
-	oid->o_data = v;
-	oid->o_val = strlen(v);
-
-	return (0);
-}
-
-int
 mps_getint(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 {
 	*elm = ober_add_integer(*elm, oid->o_val);
-	return (0);
-}
-
-int
-mps_setint(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	long long	 i;
-
-	if (ober_get_integer(*elm, &i) == -1)
-		return (-1);
-	oid->o_val = i;
-
 	return (0);
 }
 
@@ -154,26 +119,6 @@ fail:
 	elm = ober_add_null(elm);
 	ober_set_header(elm, BER_CLASS_CONTEXT, error_type);
 	return (0);
-}
-
-int
-mps_setreq(struct snmp_message *msg, struct ber_element *ber,
-    struct ber_oid *o)
-{
-	struct oid		 key, *value;
-
-	smi_oidlen(o);
-	if (o->bo_n > BER_MAX_OID_LEN)
-		return (-1);
-	bzero(&key, sizeof(key));
-	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	value = smi_find(&key);
-	if (value == NULL)
-		return (-1);
-	if ((value->o_flags & OID_WR) == 0 ||
-	    value->o_set == NULL)
-		return (-1);
-	return (value->o_set(value, o, &ber));
 }
 
 int
@@ -379,41 +324,4 @@ mps_table(struct oid *oid, struct ber_oid *o, struct ber_oid *no)
 	smi_oidlen(no);
 
 	return (no);
-}
-
-void
-mps_encodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
-{
-	u_int32_t	 a, i;
-
-	o->bo_n = offset;
-	if (addr != NULL) {
-		a = htole32(addr->s_addr);
-		o->bo_id[o->bo_n++] = a & 0xff;
-		o->bo_id[o->bo_n++] = (a >> 8) & 0xff;
-		o->bo_id[o->bo_n++] = (a >> 16) & 0xff;
-		o->bo_id[o->bo_n++] = (a >> 24) & 0xff;
-	} else {
-		/* Create an invalid "last address" marker (5 bytes) */
-		for (i = 0; i < 5; i++)
-			o->bo_id[o->bo_n++] = 0xff;
-	}
-}
-
-int
-mps_decodeinaddr(struct ber_oid *o, struct in_addr *addr, int offset)
-{
-	u_int32_t	 a;
-
-	a = ((o->bo_id[offset] & 0xff)) |
-	    ((o->bo_id[offset + 1] & 0xff) << 8) |
-	    ((o->bo_id[offset + 2] & 0xff) << 16) |
-	    ((o->bo_id[offset + 3] & 0xff) << 24);
-	addr->s_addr = letoh32(a);
-
-	/* Detect invalid address */
-	if ((o->bo_n - offset) > 4)
-		return (-1);
-
-	return (0);
 }

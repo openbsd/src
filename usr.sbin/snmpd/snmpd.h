@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.105 2022/09/01 14:34:17 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.106 2022/10/06 14:41:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -49,7 +49,6 @@
  */
 
 #define CONF_FILE		"/etc/snmpd.conf"
-#define SNMPD_SOCKET		"/var/run/snmpd.sock"
 #define SNMPD_BACKEND		"/usr/libexec/snmpd"                                                                                                                                                                                                                                                                        
 #define SNMPD_USER		"_snmpd"
 #define SNMP_PORT		"161"
@@ -90,12 +89,7 @@
 
 enum imsg_type {
 	IMSG_NONE,
-	IMSG_CTL_OK,		/* answer to snmpctl requests */
-	IMSG_CTL_FAIL,
-	IMSG_CTL_END,
-	IMSG_CTL_NOTIFY,
 	IMSG_CTL_VERBOSE,
-	IMSG_CTL_RELOAD,
 	IMSG_CTL_PROCFD,
 	IMSG_TRAP_EXEC,
 	IMSG_AX_FD
@@ -124,9 +118,6 @@ enum privsep_procid {
 };
 
 extern enum privsep_procid privsep_process;
-
-/* Attach the control socket to the following process */
-#define PROC_CONTROL	PROC_SNMPE
 
 struct privsep_pipes {
 	int			*pp_pipes[PROC_MAX];
@@ -184,106 +175,6 @@ struct privsep_fd {
 #endif
 
 /*
- * kroute
- */
-
-struct kroute_node;
-struct kroute6_node;
-RB_HEAD(kroute_tree, kroute_node);
-RB_HEAD(kroute6_tree, kroute6_node);
-
-struct ktable {
-	struct kroute_tree	 krt;
-	struct kroute6_tree	 krt6;
-	u_int			 rtableid;
-	u_int			 rdomain;
-};
-
-union kaddr {
-	struct sockaddr		sa;
-	struct sockaddr_in	sin;
-	struct sockaddr_in6	sin6;
-	struct sockaddr_dl	sdl;
-	char			pad[32];
-};
-
-struct kroute {
-	struct in_addr	prefix;
-	struct in_addr	nexthop;
-	u_long		ticks;
-	u_int16_t	flags;
-	u_short		if_index;
-	u_int8_t	prefixlen;
-	u_int8_t	priority;
-};
-
-struct kroute6 {
-	struct in6_addr	prefix;
-	struct in6_addr	nexthop;
-	u_long		ticks;
-	u_int16_t	flags;
-	u_short		if_index;
-	u_int8_t	prefixlen;
-	u_int8_t	priority;
-};
-
-struct kif_addr {
-	u_short			 if_index;
-	union kaddr		 addr;
-	union kaddr		 mask;
-	union kaddr		 dstbrd;
-
-	TAILQ_ENTRY(kif_addr)	 entry;
-	RB_ENTRY(kif_addr)	 node;
-};
-
-struct kif_arp {
-	u_short			 flags;
-	u_short			 if_index;
-	union kaddr		 addr;
-	union kaddr		 target;
-
-	TAILQ_ENTRY(kif_arp)	 entry;
-};
-
-struct kif {
-	char			 if_name[IF_NAMESIZE];
-	char			 if_descr[IFDESCRSIZE];
-	u_int8_t		 if_lladdr[ETHER_ADDR_LEN];
-	struct if_data		 if_data;
-	u_long			 if_ticks;
-	int			 if_flags;
-	u_short			 if_index;
-};
-#define	if_mtu		if_data.ifi_mtu
-#define	if_type		if_data.ifi_type
-#define	if_addrlen	if_data.ifi_addrlen
-#define	if_hdrlen	if_data.ifi_hdrlen
-#define	if_metric	if_data.ifi_metric
-#define	if_link_state	if_data.ifi_link_state
-#define	if_baudrate	if_data.ifi_baudrate
-#define	if_ipackets	if_data.ifi_ipackets
-#define	if_ierrors	if_data.ifi_ierrors
-#define	if_opackets	if_data.ifi_opackets
-#define	if_oerrors	if_data.ifi_oerrors
-#define	if_collisions	if_data.ifi_collisions
-#define	if_ibytes	if_data.ifi_ibytes
-#define	if_obytes	if_data.ifi_obytes
-#define	if_imcasts	if_data.ifi_imcasts
-#define	if_omcasts	if_data.ifi_omcasts
-#define	if_iqdrops	if_data.ifi_iqdrops
-#define	if_oqdrops	if_data.ifi_oqdrops
-#define	if_noproto	if_data.ifi_noproto
-#define	if_lastchange	if_data.ifi_lastchange
-#define	if_capabilities	if_data.ifi_capabilities
-
-#define F_CONNECTED		0x0001
-#define F_STATIC		0x0002
-#define F_BLACKHOLE		0x0004
-#define F_REJECT		0x0008
-#define F_DYNAMIC		0x0010
-
-/*
  * Message Processing Subsystem (mps)
  */
 
@@ -298,23 +189,16 @@ struct oid {
 
 	int			 (*o_get)(struct oid *, struct ber_oid *,
 				    struct ber_element **);
-	int			 (*o_set)(struct oid *, struct ber_oid *,
-				    struct ber_element **);
 	struct ber_oid		*(*o_table)(struct oid *, struct ber_oid *,
 				    struct ber_oid *);
 
 	long long		 o_val;
 	void			*o_data;
 
-	struct ctl_conn		*o_session;
-
 	RB_ENTRY(oid)		 o_element;
 	RB_ENTRY(oid)		 o_keyword;
-	TAILQ_ENTRY(oid)	 o_list;
 };
-TAILQ_HEAD(oidlist, oid);
 
-#define OID_ROOT		0x00
 #define OID_RD			0x01
 #define OID_WR			0x02
 #define OID_IFSET		0x04	/* only if user-specified value */
@@ -322,19 +206,10 @@ TAILQ_HEAD(oidlist, oid);
 #define OID_TABLE		0x10	/* dynamic sub-elements */
 #define OID_MIB			0x20	/* root-OID of a supported MIB */
 #define OID_KEY			0x40	/* lookup tables */
-#define	OID_REGISTERED		0x80	/* OID registered by subagent */
 
 #define OID_RS			(OID_RD|OID_IFSET)
-#define OID_WS			(OID_WR|OID_IFSET)
-#define OID_RW			(OID_RD|OID_WR)
-#define OID_RWS			(OID_RW|OID_IFSET)
 
 #define OID_TRD			(OID_RD|OID_TABLE)
-#define OID_TWR			(OID_WR|OID_TABLE)
-#define OID_TRS			(OID_RD|OID_IFSET|OID_TABLE)
-#define OID_TWS			(OID_WR|OID_IFSET|OID_TABLE)
-#define OID_TRW			(OID_RD|OID_WR|OID_TABLE)
-#define OID_TRWS		(OID_RW|OID_IFSET|OID_TABLE)
 
 #define OID_NOTSET(_oid)						\
 	(((_oid)->o_flags & OID_IFSET) &&				\
@@ -344,40 +219,6 @@ TAILQ_HEAD(oidlist, oid);
 #define MIBDECL(...)		{ { MIB_##__VA_ARGS__ } }, #__VA_ARGS__
 #define MIB(...)		{ { MIB_##__VA_ARGS__ } }, NULL
 #define MIBEND			{ { 0 } }, NULL
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	 entry;
-	u_int8_t		 flags;
-#define CTL_CONN_NOTIFY		 0x01
-#define CTL_CONN_LOCKED		 0x02	/* restricted mode */
-	struct imsgev		 iev;
-	struct oidlist		 oids;
-};
-
-/*
- * pf
- */
-
-enum {	PFRB_TABLES = 1, PFRB_TSTATS, PFRB_ADDRS, PFRB_ASTATS,
-	PFRB_IFACES, PFRB_TRANS, PFRB_MAX };
-
-enum {  IN, OUT };
-enum {  IPV4, IPV6 };
-enum {  PASS, BLOCK };
-
-enum {  PFI_IFTYPE_GROUP, PFI_IFTYPE_INSTANCE };
-
-struct pfr_buffer {
-	int	 pfrb_type;	/* type of content, see enum above */
-	int	 pfrb_size;	/* number of objects in buffer */
-	int	 pfrb_msize;	/* maximum number of objects in buffer */
-	void	*pfrb_caddr;	/* malloc'ated memory area */
-};
-
-#define PFRB_FOREACH(var, buf)				\
-	for ((var) = pfr_buf_next((buf), NULL);		\
-	    (var) != NULL;				\
-	    (var) = pfr_buf_next((buf), (var)))
 
 /*
  * daemon structures
@@ -609,8 +450,6 @@ struct snmpd {
 
 	struct trap_addresslist	 sc_trapreceivers;
 
-	int			 sc_ncpu;
-	int64_t			*sc_cpustates;
 	struct ber_oid		*sc_blocklist;
 	size_t			 sc_nblocklist;
 	int			 sc_rtfilter;
@@ -640,26 +479,6 @@ extern struct snmpd *snmpd_env;
 struct snmpd	*parse_config(const char *, u_int);
 int		 cmdline_symset(char *);
 
-/* kroute.c */
-void		 kr_init(void);
-void		 kr_shutdown(void);
-
-u_int		 kr_ifnumber(void);
-u_long		 kr_iflastchange(void);
-int		 kr_updateif(u_int);
-u_long		 kr_routenumber(void);
-
-struct kif	*kr_getif(u_short);
-struct kif	*kr_getnextif(u_short);
-struct kif_addr *kr_getaddr(struct sockaddr *);
-struct kif_addr *kr_getnextaddr(struct sockaddr *);
-
-struct kroute	*kroute_first(void);
-struct kroute	*kroute_getaddr(in_addr_t, u_int8_t, u_int8_t, int);
-
-struct kif_arp	*karp_first(u_short);
-struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
-
 /* snmpe.c */
 void		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
@@ -680,43 +499,13 @@ int		 mps_getnextreq(struct snmp_message *, struct ber_element *,
 		    struct ber_oid *);
 int		 mps_getbulkreq(struct snmp_message *, struct ber_element **,
 		    struct ber_element **, struct ber_oid *, int);
-int		 mps_setreq(struct snmp_message *, struct ber_element *,
-		    struct ber_oid *);
 int		 mps_set(struct ber_oid *, void *, long long);
 int		 mps_getstr(struct oid *, struct ber_oid *,
 		    struct ber_element **);
-int		 mps_setstr(struct oid *, struct ber_oid *,
-		    struct ber_element **);
 int		 mps_getint(struct oid *, struct ber_oid *,
-		    struct ber_element **);
-int		 mps_setint(struct oid *, struct ber_oid *,
 		    struct ber_element **);
 int		 mps_getts(struct oid *, struct ber_oid *,
 		    struct ber_element **);
-void		 mps_encodeinaddr(struct ber_oid *, struct in_addr *, int);
-int		 mps_decodeinaddr(struct ber_oid *, struct in_addr *, int);
-struct ber_oid	*mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
-
-/* pf.c */
-void			 pf_init(void);
-int			 pf_get_stats(struct pf_status *);
-int			 pfr_get_astats(struct pfr_table *, struct pfr_astats *,
-			    int *, int);
-int			 pfr_get_tstats(struct pfr_table *, struct pfr_tstats *,
-			    int *, int);
-int			 pfr_buf_grow(struct pfr_buffer *, int);
-const void		*pfr_buf_next(struct pfr_buffer *, const void *);
-int			 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
-int			 pfi_get(struct pfr_buffer *, const char *);
-int			 pfi_count(void);
-int			 pfi_get_if(struct pfi_kif *, int);
-int			 pft_get(struct pfr_buffer *, struct pfr_table *);
-int			 pft_count(void);
-int			 pft_get_table(struct pfr_tstats *, int);
-int			 pfta_get(struct pfr_buffer *, struct pfr_table *);
-int			 pfta_get_addr(struct pfr_astats *, int);
-int			 pfta_get_nextaddr(struct pfr_astats *, int *);
-int			 pfta_get_first(struct pfr_astats *);
 
 /* smi.c */
 int		 smi_init(void);
@@ -735,9 +524,6 @@ int		 smi_oid_cmp(struct oid *, struct oid *);
 int		 smi_key_cmp(struct oid *, struct oid *);
 unsigned int	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
-
-/* timer.c */
-void		 timer_init(void);
 
 /* snmpd.c */
 int		 snmpd_socket_af(struct sockaddr_storage *, int);
@@ -802,7 +588,6 @@ ssize_t	 sendtofrom(int, void *, size_t, int, struct sockaddr *,
 	    socklen_t, struct sockaddr *, socklen_t);
 ssize_t	 recvfromto(int, void *, size_t, int, struct sockaddr *,
 	    socklen_t *, struct sockaddr *, socklen_t *);
-const char *log_in6addr(const struct in6_addr *);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 char	*tohexstr(u_int8_t *, int);
 uint8_t *fromhexstr(uint8_t *, const char *, size_t);

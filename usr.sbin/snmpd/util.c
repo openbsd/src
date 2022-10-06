@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2021/08/09 18:14:53 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2022/10/06 14:41:08 martijn Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -152,31 +152,6 @@ recvfromto(int s, void *buf, size_t len, int flags, struct sockaddr *from,
 	}
 
 	return (ret);
-}
-
-const char *
-log_in6addr(const struct in6_addr *addr)
-{
-	static char		buf[NI_MAXHOST];
-	struct sockaddr_in6	sa_in6;
-	u_int16_t		tmp16;
-
-	bzero(&sa_in6, sizeof(sa_in6));
-	sa_in6.sin6_len = sizeof(sa_in6);
-	sa_in6.sin6_family = AF_INET6;
-	memcpy(&sa_in6.sin6_addr, addr, sizeof(sa_in6.sin6_addr));
-
-	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
-		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
-		sa_in6.sin6_scope_id = ntohs(tmp16);
-		sa_in6.sin6_addr.s6_addr[2] = 0;
-		sa_in6.sin6_addr.s6_addr[3] = 0;
-	}
-
-	return (print_host((struct sockaddr_storage *)&sa_in6, buf,
-	    NI_MAXHOST));
 }
 
 const char *
