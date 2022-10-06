@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.99 2022/01/07 01:13:15 jsg Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.100 2022/10/06 21:43:01 kn Exp 
 #	OpenBSD: MAKEDEV.common,v 1.115 2022/01/07 01:13:15 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -649,7 +649,8 @@ local)
 
 all)
 	R vdsp0 vdsp1 vdsp2 vdsp3 vdsp4 vdsp5 vdsp6 vdsp7 vdsp8 vdsp9
-	R vdsp10 vdsp11 vdsp12 vdsp13 vdsp14 vdsp15 ldom0 ldom1 ldom2
+	R vdsp10 vdsp11 vdsp12 vdsp13 vdsp14 vdsp15 vdsp16 vdsp17
+	R vdsp18 vdsp19 vdsp20 vdsp21 vdsp22 vdsp23 ldom0 ldom1 ldom2
 	R ldom3 ldom4 ldom5 ldom6 ldom7 ldom8 ldom9 ldom10 ldom11
 	R ldom12 ldom13 ldom14 ldom15 spds hvctl ttyV0 ttyV1 ttyV2
 	R ttyV3 ttyV4 ttyV5 ttyV6 ttyV7 ttyV8 ttyV9 ttyVa ttyVb ttyVc
