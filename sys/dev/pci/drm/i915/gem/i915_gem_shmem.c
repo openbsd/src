@@ -654,13 +654,11 @@ i915_gem_object_create_shmem(struct drm_i915_private *i915,
 }
 
 /* Allocate a new GEM object and fill it with the supplied data */
+#ifdef __linux__
 struct drm_i915_gem_object *
 i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
 				       const void *data, resource_size_t size)
 {
-	STUB();
-	return NULL;
-#ifdef notyet
 	struct drm_i915_gem_object *obj;
 	struct file *file;
 	resource_size_t offset;
@@ -706,8 +704,59 @@ i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
 fail:
 	i915_gem_object_put(obj);
 	return ERR_PTR(err);
-#endif
 }
+#else /* !__linux__ */
+struct drm_i915_gem_object *
+i915_gem_object_create_shmem_from_data(struct drm_i915_private *dev_priv,
+				       const void *data, resource_size_t size)
+{
+	struct drm_i915_gem_object *obj;
+	struct uvm_object *uao;
+	resource_size_t offset;
+	int err;
+
+	GEM_WARN_ON(IS_DGFX(dev_priv));
+	obj = i915_gem_object_create_shmem(dev_priv, round_up(size, PAGE_SIZE));
+	if (IS_ERR(obj))
+		return obj;
+
+	GEM_BUG_ON(obj->write_domain != I915_GEM_DOMAIN_CPU);
+
+	uao = obj->base.uao;
+	offset = 0;
+	do {
+		unsigned int len = min_t(typeof(size), size, PAGE_SIZE);
+		struct vm_page *page;
+		void *pgdata, *vaddr;
+		struct pglist plist;
+
+		TAILQ_INIT(&plist);
+		if (uvm_obj_wire(uao, trunc_page(offset),
+		    trunc_page(offset) + PAGE_SIZE, &plist)) {
+			err = -ENOMEM;
+			goto fail;
+		}
+		page = TAILQ_FIRST(&plist);
+
+		vaddr = kmap(page);
+		memcpy(vaddr, data, len);
+		kunmap_va(vaddr);
+
+		uvm_obj_unwire(uao, trunc_page(offset),
+		    trunc_page(offset) + PAGE_SIZE);
+
+		size -= len;
+		data += len;
+		offset += len;
+	} while (size);
+
+	return obj;
+
+fail:
+	i915_gem_object_put(obj);
+	return ERR_PTR(err);
+}
+#endif
 
 static int init_shmem(struct intel_memory_region *mem)
 {
