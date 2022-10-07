@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.94 2021/12/25 01:25:51 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.95 2022/10/07 03:20:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -305,6 +305,7 @@ typedef struct {
 #define ELF_SYMTAB      ".symtab"	/* symbol table */
 #define ELF_TEXT        ".text"		/* code */
 #define ELF_OPENBSDRANDOMDATA ".openbsd.randomdata" /* constant randomdata */
+#define ELF_OPENBSDMUTABLE ".openbsd.mutable" /* mutable bss */
 
 
 /* Section Attribute Flags - sh_flags */
@@ -476,6 +477,7 @@ typedef struct {
 #define PT_GNU_EH_FRAME		0x6474e550	/* Exception handling info */
 #define PT_GNU_RELRO		0x6474e552	/* Read-only after relocation */
 
+#define PT_OPENBSD_MUTABLE	0x65a3dbe5	/* like bss, but not immutable */
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6	/* fill with random data */
 #define PT_OPENBSD_WXNEEDED	0x65a3dbe7	/* program performs W^X violations */
 #define PT_OPENBSD_BOOTDATA	0x65a41be6	/* section for boot arguments */
@@ -484,6 +486,7 @@ typedef struct {
 #define PF_X		0x1		/* Executable */
 #define PF_W		0x2		/* Writable */
 #define PF_R		0x4		/* Readable */
+#define PF_MUTABLE	0x08000000	/* Mutable */
 #define PF_MASKPROC	0xf0000000	/* reserved bits for processor */
 					/*  specific segment flags */
 
