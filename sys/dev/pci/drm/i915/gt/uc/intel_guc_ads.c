@@ -204,8 +204,6 @@ static int guc_mmio_reg_cmp(const void *a, const void *b)
 static void guc_mmio_reg_add(struct temp_regset *regset,
 			     u32 offset, u32 flags)
 {
-	STUB();
-#ifdef notyet
 	u32 count = regset->used;
 	struct guc_mmio_reg reg = {
 		.offset = offset,
@@ -236,7 +234,6 @@ static void guc_mmio_reg_add(struct temp_regset *regset,
 
 		swap(slot[1], slot[0]);
 	}
-#endif
 }
 
 #define GUC_MMIO_REG_ADD(regset, reg, masked) \
