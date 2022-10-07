@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.159 2022/02/28 15:49:57 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.160 2022/10/07 14:59:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -616,7 +616,7 @@ fault_common_no_miss:
 				KERNEL_UNLOCK();
 				(void)uvm_map_protect(map, p->p_md.md_fppgva,
 				    p->p_md.md_fppgva + PAGE_SIZE,
-				    PROT_NONE, FALSE);
+				    PROT_NONE, FALSE, FALSE);
 				return;
 			}
 			/* FALLTHROUGH */
@@ -1587,7 +1587,8 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	 */
 
 	rc = uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_WRITE, FALSE,
+	    FALSE);
 	if (rc != 0) {
 #ifdef DEBUG
 		printf("%s: uvm_map_protect on %p failed: %d\n",
@@ -1626,7 +1627,7 @@ fpe_branch_emulate(struct proc *p, struct trapframe *tf, uint32_t insn,
 	}
 
 	(void)uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_EXEC, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_READ | PROT_EXEC, FALSE, FALSE);
 	p->p_md.md_fpbranchva = dest;
 	p->p_md.md_fpslotva = (vaddr_t)tf->pc + 4;
 	p->p_md.md_flags |= MDP_FPUSED;
@@ -1640,7 +1641,7 @@ err:
 	KERNEL_UNLOCK();
 err2:
 	(void)uvm_map_protect(map, p->p_md.md_fppgva,
-	    p->p_md.md_fppgva + PAGE_SIZE, PROT_NONE, FALSE);
+	    p->p_md.md_fppgva + PAGE_SIZE, PROT_NONE, FALSE, FALSE);
 	return rc;
 }
 #endif

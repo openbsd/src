@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.231 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.232 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -466,13 +466,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #ifdef MACHINE_STACK_GROWS_UP
 	pr->ps_strings = (vaddr_t)vm->vm_maxsaddr + sgap;
         if (uvm_map_protect(&vm->vm_map, (vaddr_t)vm->vm_maxsaddr,
-            trunc_page(pr->ps_strings), PROT_NONE, TRUE))
+            trunc_page(pr->ps_strings), PROT_NONE, TRUE, TRUE))
                 goto exec_abort;
 #else
 	pr->ps_strings = (vaddr_t)vm->vm_minsaddr - sizeof(arginfo) - sgap;
         if (uvm_map_protect(&vm->vm_map,
             round_page(pr->ps_strings + sizeof(arginfo)),
-            (vaddr_t)vm->vm_minsaddr, PROT_NONE, TRUE))
+            (vaddr_t)vm->vm_minsaddr, PROT_NONE, TRUE, TRUE))
                 goto exec_abort;
 #endif
 

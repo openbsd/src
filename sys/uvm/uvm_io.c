@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_io.c,v 1.29 2022/03/12 08:11:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_io.c,v 1.30 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: uvm_io.c,v 1.12 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ uvm_io(vm_map_t map, struct uio *uio, int flags)
 		vm_map_lock(kernel_map);
 		TAILQ_INIT(&dead_entries);
 		uvm_unmap_remove(kernel_map, kva, kva+chunksz,
-		    &dead_entries, FALSE, TRUE);
+		    &dead_entries, FALSE, TRUE, FALSE);
 		vm_map_unlock(kernel_map);
 		uvm_unmap_detach(&dead_entries, AMAP_REFALL);
 

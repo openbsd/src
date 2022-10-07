@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.172 2022/08/01 14:56:59 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.173 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -569,7 +569,11 @@ sys_munmap(struct proc *p, void *v, register_t *retval)
 	}
 
 	TAILQ_INIT(&dead_entries);
-	uvm_unmap_remove(map, addr, addr + size, &dead_entries, FALSE, TRUE);
+	if (uvm_unmap_remove(map, addr, addr + size, &dead_entries,
+	    FALSE, TRUE, TRUE) != 0) {
+		vm_map_unlock(map);
+		return EPERM;	/* immutable entries found */
+	}
 	vm_map_unlock(map);	/* and unlock */
 
 	uvm_unmap_detach(&dead_entries, 0);
@@ -619,7 +623,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 		return EINVAL;		/* disallow wrap-around. */
 
 	return (uvm_map_protect(&p->p_vmspace->vm_map, addr, addr+size,
-	    prot, FALSE));
+	    prot, FALSE, TRUE));
 }
 
 /*
@@ -646,6 +650,32 @@ sys_msyscall(struct proc *p, void *v, register_t *retval)
 		return EINVAL;		/* disallow wrap-around. */
 
 	return uvm_map_syscall(&p->p_vmspace->vm_map, addr, addr+size);
+}
+
+/*
+ * sys_mimmutable: the mimmutable system call
+ */
+int
+sys_mimmutable(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_mimmutable_args /* {
+		immutablearg(void *) addr;
+		immutablearg(size_t) len;
+	} */ *uap = v;
+	vaddr_t addr;
+	vsize_t size, pageoff;
+
+	addr = (vaddr_t)SCARG(uap, addr);
+	size = (vsize_t)SCARG(uap, len);
+
+	/*
+	 * align the address to a page boundary, and adjust the size accordingly
+	 */
+	ALIGN_ADDR(addr, size, pageoff);
+	if (addr > SIZE_MAX - size)
+		return EINVAL;		/* disallow wrap-around. */
+
+	return uvm_map_immutable(&p->p_vmspace->vm_map, addr, addr+size, 1, "sys");
 }
 
 /*
@@ -1228,7 +1258,8 @@ redo:
 			if (kva != 0) {
 				vm_map_lock(kernel_map);
 				uvm_unmap_remove(kernel_map, kva,
-				    kva+PAGE_SIZE, &dead_entries, FALSE, TRUE);
+				    kva+PAGE_SIZE, &dead_entries,
+				    FALSE, TRUE, FALSE);	/* XXX */
 				vm_map_unlock(kernel_map);
 				kva = 0;
 			}
@@ -1255,7 +1286,7 @@ redo:
 	if (kva != 0) {
 		vm_map_lock(kernel_map);
 		uvm_unmap_remove(kernel_map, kva, kva+PAGE_SIZE,
-		    &dead_entries, FALSE, TRUE);
+		    &dead_entries, FALSE, TRUE, FALSE);		/* XXX */
 		vm_map_unlock(kernel_map);
 	}
 	uvm_unmap_detach(&dead_entries, AMAP_REFALL);

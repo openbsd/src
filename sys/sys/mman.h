@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.34 2019/03/01 01:46:18 cheloha Exp $	*/
+/*	$OpenBSD: mman.h,v 1.35 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ int	munlockall(void);
 #if __BSD_VISIBLE
 int	madvise(void *, size_t, int);
 int	minherit(void *, size_t, int);
+int	mimmutable(void *, size_t);
 void *	mquery(void *, size_t, int, int, int, off_t);
 #endif
 int	posix_madvise(void *, size_t, int);

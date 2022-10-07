@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.75 2022/03/12 08:11:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.76 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -350,6 +350,7 @@ struct vm_map *	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 vaddr_t		uvm_map_pie(vaddr_t);
 vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t, vaddr_t, vaddr_t);
 int		uvm_map_syscall(struct vm_map *, vaddr_t, vaddr_t);
+int		uvm_map_immutable(struct vm_map *, vaddr_t, vaddr_t, int, char *);
 int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
@@ -365,8 +366,8 @@ int		uvm_map_submap(struct vm_map *, vaddr_t, vaddr_t,
 		    struct vm_map *);
 void		uvm_unmap(struct vm_map *, vaddr_t, vaddr_t);
 void		uvm_unmap_detach(struct uvm_map_deadq *, int);
-void		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
-		    struct uvm_map_deadq *, boolean_t, boolean_t);
+int		uvm_unmap_remove(struct vm_map*, vaddr_t, vaddr_t,
+		    struct uvm_map_deadq *, boolean_t, boolean_t, boolean_t);
 void		uvm_map_set_uaddr(struct vm_map*, struct uvm_addr_state**,
 		    struct uvm_addr_state*);
 int		uvm_map_mquery(struct vm_map*, vaddr_t*, vsize_t, voff_t, int);

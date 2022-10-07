@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.163 2022/08/15 03:21:04 jsg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.164 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
 boolean_t		uvm_map_checkprot(vm_map_t, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(vm_map_t, vaddr_t, 
-			    vaddr_t, vm_prot_t, boolean_t);
+			    vaddr_t, vm_prot_t, boolean_t, boolean_t);
 struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t,
 			    boolean_t, boolean_t);
 void			uvmspace_init(struct vmspace *, struct pmap *,

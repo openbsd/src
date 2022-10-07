@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.295 2022/09/05 16:37:47 mbuhl Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.296 2022/10/07 14:59:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -150,6 +150,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_minherit] = PLEDGE_STDIO,
 	[SYS_mmap] = PLEDGE_STDIO,
 	[SYS_mprotect] = PLEDGE_STDIO,
+	[SYS_mimmutable] = PLEDGE_STDIO,
 	[SYS_mquery] = PLEDGE_STDIO,
 	[SYS_munmap] = PLEDGE_STDIO,
 	[SYS_msync] = PLEDGE_STDIO,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.294 2022/08/15 15:53:45 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.295 2022/10/07 14:59:39 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -797,7 +797,11 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 				error = EINVAL;
 				goto unlock;
 			}
-			uvm_unmap_remove(map, *addr, *addr + sz, &dead, FALSE, TRUE);
+			if (uvm_unmap_remove(map, *addr, *addr + sz, &dead,
+			    FALSE, TRUE, TRUE) != 0) {
+				error = EPERM;	/* immutable entries found */
+				goto unlock;
+			}
 		}
 		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
 			error = ENOMEM;
@@ -1038,8 +1042,13 @@ uvm_map(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 		}
 
 		/* Check that the space is available. */
-		if (flags & UVM_FLAG_UNMAP)
-			uvm_unmap_remove(map, *addr, *addr + sz, &dead, FALSE, TRUE);
+		if (flags & UVM_FLAG_UNMAP) {
+			if (uvm_unmap_remove(map, *addr, *addr + sz, &dead,
+			    FALSE, TRUE, TRUE) != 0) {
+				error = EPERM;	/* immutable entries found */
+				goto unlock;
+			}
+		}
 		if (!uvm_map_isavail(map, NULL, &first, &last, *addr, sz)) {
 			error = ENOMEM;
 			goto unlock;
@@ -1817,7 +1826,7 @@ uvm_unmap(struct vm_map *map, vaddr_t start, vaddr_t end)
 	    (end & (vaddr_t)PAGE_MASK) == 0);
 	TAILQ_INIT(&dead);
 	vm_map_lock(map);
-	uvm_unmap_remove(map, start, end, &dead, FALSE, TRUE);
+	uvm_unmap_remove(map, start, end, &dead, FALSE, TRUE, FALSE);
 	vm_map_unlock(map);
 
 	if (map->flags & VM_MAP_INTRSAFE)
@@ -1959,17 +1968,17 @@ uvm_unmap_kill_entry(struct vm_map *map, struct vm_map_entry *entry)
  * If markfree, entry will be properly marked free, otherwise, no replacement
  * entry will be put in the tree (corrupting the tree).
  */
-void
+int
 uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
     struct uvm_map_deadq *dead, boolean_t remove_holes,
-    boolean_t markfree)
+    boolean_t markfree, boolean_t checkimmutable)
 {
 	struct vm_map_entry *prev_hint, *next, *entry;
 
 	start = MAX(start, map->min_offset);
 	end = MIN(end, map->max_offset);
 	if (start >= end)
-		return;
+		return 0;
 
 	if ((map->flags & VM_MAP_INTRSAFE) == 0)
 		splassert(IPL_NONE);
@@ -1979,6 +1988,19 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	/* Find first affected entry. */
 	entry = uvm_map_entrybyaddr(&map->addr, start);
 	KDASSERT(entry != NULL && entry->start <= start);
+
+	if (checkimmutable) {
+		struct vm_map_entry *entry1 = entry;
+
+		/* Refuse to unmap if any entries are immutable */
+		for (; entry1 != NULL && entry1->start < end; entry1 = next) {
+			KDASSERT(entry1->start >= start);
+			next = RBT_NEXT(uvm_map_addr, entry1);
+			if (entry1->etype & UVM_ET_IMMUTABLE)
+				return EPERM;
+		}
+	}
+
 	if (entry->end <= start && markfree)
 		entry = RBT_NEXT(uvm_map_addr, entry);
 	else
@@ -2043,6 +2065,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			KDASSERT(uvm_map_entrybyaddr(&map->addr, a) == NULL);
 	}
 #endif
+	return 0;
 }
 
 /*
@@ -3063,7 +3086,7 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
  */
 int
 uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_prot_t new_prot, boolean_t set_max)
+    vm_prot_t new_prot, boolean_t set_max, boolean_t checkimmutable)
 {
 	struct vm_map_entry *first, *iter;
 	vm_prot_t old_prot;
@@ -3098,6 +3121,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter))
 			continue;
 
+		if (checkimmutable &&
+		    (iter->etype & UVM_ET_IMMUTABLE)) {
+			error = EPERM;
+			goto out;
+		}
 		old_prot = iter->protection;
 		if (old_prot == PROT_NONE && new_prot != old_prot) {
 			dused += uvmspace_dused(
@@ -3356,7 +3384,7 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 		 * (as in, not replace them with free-memory entries).
 		 */
 		uvm_unmap_remove(map, map->min_offset, map->max_offset,
-		    &dead_entries, TRUE, FALSE);
+		    &dead_entries, TRUE, FALSE, FALSE);
 
 		KDASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 
@@ -3529,7 +3557,7 @@ uvm_share(struct vm_map *dstmap, vaddr_t dstaddr, vm_prot_t prot,
 	}
 
 	ret = EINVAL;
-	uvm_unmap_remove(dstmap, dstaddr, unmap_end, &dead, FALSE, TRUE);
+	uvm_unmap_remove(dstmap, dstaddr, unmap_end, &dead, FALSE, TRUE, FALSE);
 
 exit_unlock:
 	vm_map_unlock_read(srcmap);
@@ -4088,7 +4116,7 @@ uvm_map_deallocate(vm_map_t map)
 	TAILQ_INIT(&dead);
 	uvm_tree_sanity(map, __FILE__, __LINE__);
 	uvm_unmap_remove(map, map->min_offset, map->max_offset, &dead,
-	    TRUE, FALSE);
+	    TRUE, FALSE, FALSE);
 	pmap_destroy(map->pmap);
 	KASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 	free(map, M_VMMAP, sizeof *map);
@@ -4179,6 +4207,45 @@ uvm_map_syscall(struct vm_map *map, vaddr_t start, vaddr_t end)
 
 	map->wserial++;
 	map->flags |= VM_MAP_SYSCALL_ONCE;
+	vm_map_unlock(map);
+	return (0);
+}
+
+/* 
+ * uvm_map_immutable: block mapping/mprotect for range of addrs in map.
+ *
+ * => map must be unlocked
+ */
+int
+uvm_map_immutable(struct vm_map *map, vaddr_t start, vaddr_t end, int imut, char *name)
+{
+	struct vm_map_entry *entry;
+
+	if (start > end)
+		return EINVAL;
+	start = MAX(start, map->min_offset);
+	end = MIN(end, map->max_offset);
+	if (start >= end)
+		return 0;
+
+	vm_map_lock(map);
+
+	entry = uvm_map_entrybyaddr(&map->addr, start);
+	if (entry->end > start)
+		UVM_MAP_CLIP_START(map, entry, start);
+	else
+		entry = RBT_NEXT(uvm_map_addr, entry);
+
+	while (entry != NULL && entry->start < end) {
+		UVM_MAP_CLIP_END(map, entry, end);
+		if (imut)
+			entry->etype |= UVM_ET_IMMUTABLE;
+		else
+			entry->etype &= ~UVM_ET_IMMUTABLE;
+		entry = RBT_NEXT(uvm_map_addr, entry);
+	}
+
+	map->wserial++;
 	vm_map_unlock(map);
 	return (0);
 }
@@ -4367,7 +4434,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 fail2_unmap:
 	if (error) {
 		uvm_unmap_remove(kernel_map, dstaddr, dstaddr + len, &dead,
-		    FALSE, TRUE);
+		    FALSE, TRUE, FALSE);
 	}
 
 	/* Release maps, release dead entries. */
