@@ -2158,6 +2158,7 @@ get_segment_type (unsigned long p_type)
 			return "GNU_EH_FRAME";
     case PT_GNU_STACK:	return "STACK";
     case PT_OPENBSD_RANDOMIZE: return "OPENBSD_RANDOMIZE";
+    case PT_OPENBSD_MUTABLE: return "OPENBSD_MUTABLE";
 
     default:
       if ((p_type >= PT_LOPROC) && (p_type <= PT_HIPROC))

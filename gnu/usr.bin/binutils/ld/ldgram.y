@@ -1021,6 +1021,8 @@ phdr_type:
 			    $$ = exp_intop (0x6474e551);
 			  else if (strcmp (s, "PT_OPENBSD_RANDOMIZE") == 0)
 			    $$ = exp_intop (0x65a3dbe6);
+			  else if (strcmp (s, "PT_OPENBSD_MUTABLE") == 0)
+			    $$ = exp_intop (0x65a3dbe5);
 			  else
 			    {
 			      einfo (_("\

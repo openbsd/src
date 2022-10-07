@@ -969,6 +969,7 @@ _bfd_elf_print_private_bfd_data (bfd *abfd, void *farg)
 	    case PT_GNU_EH_FRAME: pt = "EH_FRAME"; break;
 	    case PT_GNU_STACK: pt = "STACK"; break;
 	    case PT_OPENBSD_RANDOMIZE: pt = "OPENBSD_RANDOMIZE"; break;
+	    case PT_OPENBSD_MUTABLE: pt = "OPENBSD_MUTABLE"; break;
 	    default: sprintf (buf, "0x%lx", p->p_type); pt = buf; break;
 	    }
 	  fprintf (f, "%8s off    0x", pt);
@@ -2296,6 +2297,10 @@ bfd_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int index)
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
 					      "openbsd_randomize");
 
+    case PT_OPENBSD_MUTABLE:
+      return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
+					      "openbsd_mutable");
+
     default:
       /* Check for any processor-specific program segment types.
          If no handler for them, default to making "segment" sections.  */
@@ -3199,7 +3204,7 @@ map_sections_to_segments (bfd *abfd)
   bfd_boolean writable;
   int tls_count = 0;
   asection *first_tls = NULL;
-  asection *dynsec, *eh_frame_hdr, *randomdata;
+  asection *dynsec, *eh_frame_hdr, *randomdata, *mutabledata;
   bfd_size_type amt;
 
   if (elf_tdata (abfd)->segment_map != NULL)
@@ -3539,6 +3544,24 @@ map_sections_to_segments (bfd *abfd)
       m->p_type = PT_OPENBSD_RANDOMIZE;
       m->count = 1;
       m->sections[0] = randomdata->output_section;
+
+      *pm = m;
+      pm = &m->next;
+    }
+
+  /* If there is a .openbsd.mutable section, throw in a PT_OPENBSD_MUTABLE
+     segment.  */
+  mutabledata = bfd_get_section_by_name (abfd, ".openbsd.mutable");
+  if (mutabledata != NULL && (mutabledata->flags & SEC_LOAD) != 0)
+    {
+      amt = sizeof (struct elf_segment_map);
+      m = bfd_zalloc (abfd, amt);
+      if (m == NULL)
+	goto error_return;
+      m->next = NULL;
+      m->p_type = PT_OPENBSD_MUTABLE;
+      m->count = 1;
+      m->sections[0] = mutabledata->output_section;
 
       *pm = m;
       pm = &m->next;
@@ -4166,6 +4189,12 @@ get_program_header_size (bfd *abfd)
   if (bfd_get_section_by_name (abfd, ".openbsd.randomdata") != NULL)
     {
       /* We need a PT_OPENBSD_RANDOMIZE segment.  */
+      ++segs;
+    }
+
+  if (bfd_get_section_by_name (abfd, ".openbsd.mutable") != NULL)
+    {
+      /* We need a PT_OPENBSD_MUTABLE segment.  */
       ++segs;
     }
 

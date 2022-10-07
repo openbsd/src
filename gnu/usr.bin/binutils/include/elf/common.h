@@ -294,6 +294,7 @@
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551)
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6
+#define PT_OPENBSD_MUTABLE	0x65a3dbe5
 
 
 /* Program segment permissions, in program header p_flags field.  */

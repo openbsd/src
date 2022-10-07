@@ -146,7 +146,7 @@ StringRef elf::getOutputSectionName(const InputSectionBase *s) {
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.rel.ro.",
         ".bss.", ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
         ".gcc_except_table.", ".tdata.", ".ARM.exidx.", ".ARM.extab.",
-        ".openbsd.randomdata."})
+        ".openbsd.randomdata.", ".openbsd.mutable." })
     if (isSectionPrefix(v, s->name))
       return v.drop_back();
 
@@ -2469,6 +2469,12 @@ std::vector<PhdrEntry *> Writer<ELFT>::createPhdrs(Partition &part) {
       part.ehFrame->getParent() && part.ehFrameHdr->getParent())
     addHdr(PT_GNU_EH_FRAME, part.ehFrameHdr->getParent()->getPhdrFlags())
         ->add(part.ehFrameHdr->getParent());
+
+  // PT_OPENBSD_MUTABLE is an OpenBSD-specific feature. That makes
+  // the dynamic linker fill the segment with zero data, like bss, but
+  // it can be treated differently.
+  if (OutputSection *cmd = findSection(".openbsd.mutable", partNo))
+    addHdr(PT_OPENBSD_MUTABLE, cmd->getPhdrFlags())->add(cmd);
 
   // PT_OPENBSD_RANDOMIZE is an OpenBSD-specific feature. That makes
   // the dynamic linker fill the segment with random data.
