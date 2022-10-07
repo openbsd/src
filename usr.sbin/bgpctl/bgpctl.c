@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.283 2022/08/31 15:00:53 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.284 2022/10/07 09:20:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -989,19 +989,19 @@ fmt_ext_community(uint8_t *data)
 		ext = be64toh(ext) & 0xffffffffffffLL;
 		switch (ext) {
 		case EXT_COMMUNITY_OVS_VALID:
-			snprintf(buf, sizeof(buf), "%s valid ",
+			snprintf(buf, sizeof(buf), "%s valid",
 			    log_ext_subtype(type, subtype));
 			return buf;
 		case EXT_COMMUNITY_OVS_NOTFOUND:
-			snprintf(buf, sizeof(buf), "%s not-found ",
+			snprintf(buf, sizeof(buf), "%s not-found",
 			    log_ext_subtype(type, subtype));
 			return buf;
 		case EXT_COMMUNITY_OVS_INVALID:
-			snprintf(buf, sizeof(buf), "%s invalid ",
+			snprintf(buf, sizeof(buf), "%s invalid",
 			    log_ext_subtype(type, subtype));
 			return buf;
 		default:
-			snprintf(buf, sizeof(buf), "%s 0x%llx ",
+			snprintf(buf, sizeof(buf), "%s 0x%llx",
 			    log_ext_subtype(type, subtype),
 			    (unsigned long long)ext);
 			return buf;
