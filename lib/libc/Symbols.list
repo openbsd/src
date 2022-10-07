@@ -131,6 +131,7 @@ _thread_sys_lseek
 _thread_sys_lstat
 _thread_sys_madvise
 _thread_sys_minherit
+_thread_sys_mimmutable
 _thread_sys_mkdir
 _thread_sys_mkdirat
 _thread_sys_mkfifo
@@ -327,6 +328,7 @@ listen
 lseek
 lstat
 madvise
+mimmutable
 minherit
 mkdir
 mkdirat

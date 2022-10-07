@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.26 2021/06/30 18:46:49 schwarze Exp $
+.\"	$OpenBSD: mprotect.2,v 1.27 2022/10/07 15:21:04 deraadt Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: June 30 2021 $
+.Dd $Mdocdate: October 7 2022 $
 .Dt MPROTECT 2
 .Os
 .Sh NAME
@@ -111,6 +111,13 @@ for more information).
 The
 .Fa prot
 argument is invalid or the specified address range would wrap around.
+.It Bq Er EPERM
+The
+.Fa addr
+and
+.Fa len
+parameters
+specify a region which contains at least one page marked immutable.
 .El
 .Sh SEE ALSO
 .Xr madvise 2 ,
