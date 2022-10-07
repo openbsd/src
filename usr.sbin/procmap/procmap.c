@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.69 2022/02/22 17:35:01 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.70 2022/10/07 15:22:10 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -497,7 +497,7 @@ process_map(kvm_t *kd, pid_t pid, struct kinfo_proc *proc, struct sum *sum)
 		    (int)sizeof(int) * 2 - 1,  "Size ");
 #endif
 	if (print_all)
-		printf("%-*s %-*s %*s %-*s rwxSepc  RWX  I/W/A Dev  %*s - File\n",
+		printf("%-*s %-*s %*s %-*s rwxSeIpc  RWX  I/W/A Dev  %*s - File\n",
 		    (int)sizeof(long) * 2, "Start",
 		    (int)sizeof(long) * 2, "End",
 		    (int)sizeof(int)  * 2, "Size ",
@@ -719,7 +719,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	name = findname(kd, vmspace, vme, vp, vfs, uvm_obj);
 
 	if (print_map) {
-		printf("0x%-*lx 0x%-*lx %c%c%c%c%c %c%c%c %s %s %d %d %d",
+		printf("0x%-*lx 0x%-*lx %c%c%c%c%c%c %c%c%c %s %s %d %d %d",
 		    (int)sizeof(long) * 2 + 0, vme->start,
 		    (int)sizeof(long) * 2 + 0, vme->end,
 		    (vme->protection & PROT_READ) ? 'r' : '-',
@@ -727,6 +727,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    (vme->protection & PROT_EXEC) ? 'x' : '-',
 		    (vme->etype & UVM_ET_STACK) ? 'S' : '-',
 		    (vme->etype & UVM_ET_SYSCALL) ? 'e' : '-',
+		    (vme->etype & UVM_ET_IMMUTABLE) ? 'I' : '-',
 		    (vme->max_protection & PROT_READ) ? 'r' : '-',
 		    (vme->max_protection & PROT_WRITE) ? 'w' : '-',
 		    (vme->max_protection & PROT_EXEC) ? 'x' : '-',
@@ -746,7 +747,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 	}
 
 	if (print_maps)
-		printf("0x%-*lx 0x%-*lx %c%c%c%c%c%c %0*lx %02x:%02x %llu     %s\n",
+		printf("0x%-*lx 0x%-*lx %c%c%c%c%c%c%c %0*lx %02x:%02x %llu     %s\n",
 		    (int)sizeof(void *) * 2, vme->start,
 		    (int)sizeof(void *) * 2, vme->end,
 		    (vme->protection & PROT_READ) ? 'r' : '-',
@@ -754,6 +755,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    (vme->protection & PROT_EXEC) ? 'x' : '-',
 		    (vme->etype & UVM_ET_STACK) ? 'S' : '-',
 		    (vme->etype & UVM_ET_SYSCALL) ? 'e' : '-',
+		    (vme->etype & UVM_ET_IMMUTABLE) ? 'I' : '-',
 		    (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
 		    (int)sizeof(void *) * 2,
 		    (unsigned long)vme->offset,
@@ -767,13 +769,14 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    vme->object.uvm_obj, (unsigned long)vme->offset,
 		    vme->aref.ar_amap, vme->aref.ar_pageoff);
 		printf("\tsubmap=%c, cow=%c, nc=%c, stack=%c, "
-		    "syscall=%c, prot(max)=%d/%d, inh=%d, "
+		    "syscall=%c, immutable=%c, prot(max)=%d/%d, inh=%d, "
 		    "wc=%d, adv=%d\n",
 		    (vme->etype & UVM_ET_SUBMAP) ? 'T' : 'F',
 		    (vme->etype & UVM_ET_COPYONWRITE) ? 'T' : 'F',
 		    (vme->etype & UVM_ET_NEEDSCOPY) ? 'T' : 'F',
 		    (vme->etype & UVM_ET_STACK) ? 'T' : 'F',
 		    (vme->etype & UVM_ET_SYSCALL) ? 'T' : 'F',
+		    (vme->etype & UVM_ET_IMMUTABLE) ? 'T' : 'F',
 		    vme->protection, vme->max_protection,
 		    vme->inheritance, vme->wired_count, vme->advice);
 		if (inode && verbose)
@@ -813,7 +816,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		}
 
 		sz = (size_t)((vme->end - vme->start) / 1024);
-		printf("%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s",
+		printf("%0*lx-%0*lx %7luk %0*lx %c%c%c%c%c%c%c%c (%c%c%c) %d/%d/%d %02u:%02u %7llu - %s",
 		    (int)sizeof(void *) * 2, vme->start, (int)sizeof(void *) * 2,
 		    vme->end - (vme->start != vme->end ? 1 : 0), (unsigned long)sz,
 		    (int)sizeof(void *) * 2, (unsigned long)vme->offset,
@@ -822,6 +825,7 @@ dump_vm_map_entry(kvm_t *kd, struct kbit *vmspace,
 		    (vme->protection & PROT_EXEC) ? 'x' : '-',
 		    (vme->etype & UVM_ET_STACK) ? 'S' : '-',
 		    (vme->etype & UVM_ET_SYSCALL) ? 'e' : '-',
+		    (vme->etype & UVM_ET_IMMUTABLE) ? 'I' : '-',
 		    (vme->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
 		    (vme->etype & UVM_ET_NEEDSCOPY) ? '+' : '-',
 		    (vme->max_protection & PROT_READ) ? 'r' : '-',

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.23 2018/03/31 17:26:13 otto Exp $
+.\"	$OpenBSD: procmap.1,v 1.24 2022/10/07 15:22:10 deraadt Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2018 $
+.Dd $Mdocdate: October 7 2022 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -223,7 +223,7 @@ MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
         #ent=8, sz=34041856, ref=1, version=20, flags=0x21
         pmap=0xcf44cee0(resident=\*(Ltunknown\*(Gt)
  - 0xcfa3a358: 0x8048000-\*(Gt0x80b1000: obj=0xcf45a8e8/0x0, amap=0x0/0
-        submap=F, cow=T, nc=T, prot(max)=5/7, inh=1, wc=0, adv=0
+        submap=F, cow=T, nc=T, stack=F, syscall=F, immutable=F, prot(max)=5/7, inh=1, wc=0, adv=0
 \&...
 .Ed
 .Pp
@@ -274,17 +274,17 @@ file system
 appear as follows:
 .Bd -literal -offset indent
 $ procmap -m
-0x8048000 0x80b1000 r-x rwx COW NC 1 0 0
-0x80b1000 0x80b3000 rw- rwx COW NC 1 0 0
-0x80b3000 0x80ba000 rw- rwx COW NNC 1 0 0
-0x80ba000 0x80be000 rwx rwx COW NNC 1 0 0
+0x8048000 0x80b1000 r-x--I rwx COW NC 1 0 0
+0xdecf000 0xd018000 r-x--I rwx COW NC 1 0 0
+0x80b1000 0x80b3000 rw---I rwx COW NC 1 0 0
+0x80b3000 0x80ba000 rw---I rwx COW NNC 1 0 0
+0x80ba000 0x80be000 rwx--I rwx COW NNC 1 0 0
 \&...
 
 $ procmap -l
-08048000-080b1000 r-xp 00000000 00:00 70173     /bin/sh
-080b1000-080b3000 rw-p 00068000 00:00 70173     /bin/sh
-080b3000-080ba000 rw-p 00000000 00:00 0
-080ba000-080be000 rwxp 00000000 00:00 0
+0x08048000	0x080b1000	r-x--Ip 00000000 00:00 70173     /bin/sh
+0x080b1000	0x080b3000	rw---Ip 00068000 00:00 70173     /bin/sh
+0x080b3000	0x080ba000	rw---Ip 00000000 00:00 0
 \&...
 .Ed
 .Pp
