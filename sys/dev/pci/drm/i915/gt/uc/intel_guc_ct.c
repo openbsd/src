@@ -661,9 +661,6 @@ static int ct_send(struct intel_guc_ct *ct,
 		   u32 response_buf_size,
 		   u32 *status)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct intel_guc_ct_buffer *ctb = &ct->ctbs.send;
 	struct ct_request request;
 	unsigned long flags;
@@ -751,7 +748,6 @@ unlink:
 	spin_unlock_irqrestore(&ct->requests.lock, flags);
 
 	return err;
-#endif
 }
 
 /*

@@ -126,9 +126,6 @@ static inline int intel_guc_send_busy_loop(struct intel_guc *guc,
 					   u32 g2h_len_dw,
 					   bool loop)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	int err;
 	unsigned int sleep_period_ms = 1;
 	bool not_atomic = !in_atomic() && !irqs_disabled();
@@ -157,7 +154,6 @@ retry:
 	}
 
 	return err;
-#endif
 }
 
 static inline void intel_guc_to_host_event_handler(struct intel_guc *guc)
