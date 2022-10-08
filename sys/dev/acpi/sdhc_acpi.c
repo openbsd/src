@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.21 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.22 2022/10/08 19:46:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -61,6 +61,7 @@ const char *sdhc_hids[] = {
 	"BRCME88C",	/* Raspberry Pi4 "emmc2" controller */
 	"INT33BB",
 	"PNP0FFF",
+	"QCOM24BF",
 	NULL
 };
 
