@@ -1,4 +1,4 @@
-/*	$OpenBSD: uwacom.c,v 1.6 2022/09/26 06:14:21 sdk Exp $	*/
+/*	$OpenBSD: uwacom.c,v 1.7 2022/10/08 06:53:06 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
@@ -52,7 +52,8 @@ struct cfdriver uwacom_cd = {
 
 const struct usb_devno uwacom_devs[] = {
 	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_INTUOS_DRAW },
-	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_ONE_S }
+	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_ONE_S },
+	{ USB_VENDOR_WACOM, USB_PRODUCT_WACOM_ONE_M }
 };
 
 int	uwacom_match(struct device *, void *, void *);
