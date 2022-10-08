@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.233 2022/10/08 16:58:34 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.234 2022/10/08 17:03:09 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -475,6 +475,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
             (vaddr_t)vm->vm_minsaddr, PROT_NONE, TRUE, TRUE))
                 goto exec_abort;
 #endif
+
+	uvm_map_immutable(&p->p_vmspace->vm_map, (vaddr_t)vm->vm_maxsaddr,
+	    (vaddr_t)vm->vm_minsaddr, 1, "stack");
 
 	memset(&arginfo, 0, sizeof(arginfo));
 
