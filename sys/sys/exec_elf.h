@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.95 2022/10/07 03:20:58 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.96 2022/10/08 16:42:41 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -486,9 +486,12 @@ typedef struct {
 #define PF_X		0x1		/* Executable */
 #define PF_W		0x2		/* Writable */
 #define PF_R		0x4		/* Readable */
-#define PF_MUTABLE	0x08000000	/* Mutable */
+#define PF_MASKOS	0x0ff00000	/* reserved bits for OS */
+					/*  specific segment flags */
 #define PF_MASKPROC	0xf0000000	/* reserved bits for processor */
 					/*  specific segment flags */
+
+#define PF_OPENBSD_MUTABLE	0x08000000	/* Mutable */
 
 /* Dynamic structure */
 typedef struct {
