@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.49 2022/10/04 23:33:22 kn Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.50 2022/10/09 23:04:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@uq.edu.au>
@@ -399,7 +399,7 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath wpath cpath fattr dns inet", NULL) == -1)
 			lerr(1, "pledge");
 	} else if (canwrite) {
-		if (pledge("stdio rpath wpath fattr dns inet", NULL) == -1)
+		if (pledge("stdio rpath wpath dns inet", NULL) == -1)
 			lerr(1, "pledge");
 	} else {
 		if (pledge("stdio rpath dns inet", NULL) == -1)
