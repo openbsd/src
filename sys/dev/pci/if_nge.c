@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.96 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.97 2022/10/09 02:32:02 kevlo Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -768,14 +768,14 @@ nge_attach(struct device *parent, struct device *self, void *aux)
 		       sc->sc_dv.dv_xname, sizeof(struct nge_list_data));
 		goto fail_3;
 	}
-	DPRINTFN(5, ("%s: bus_dmamem_create\n", sc->sc_dv.dv_xname));
+	DPRINTFN(5, ("%s: bus_dmamap_create\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct nge_list_data), 1,
 			      sizeof(struct nge_list_data), 0,
 			      BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
 		goto fail_4;
 	}
-	DPRINTFN(5, ("%s: bus_dmamem_load\n", sc->sc_dv.dv_xname));
+	DPRINTFN(5, ("%s: bus_dmamap_load\n", sc->sc_dv.dv_xname));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
 			    sizeof(struct nge_list_data), NULL,
 			    BUS_DMA_NOWAIT)) {

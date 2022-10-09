@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.78 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.79 2022/10/09 02:32:02 kevlo Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -475,14 +475,14 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 		       sc->sc_dv.dv_xname, sizeof(struct lge_list_data));
 		goto fail_3;
 	}
-	DPRINTFN(5, ("bus_dmamem_create\n"));
+	DPRINTFN(5, ("bus_dmamap_create\n"));
 	if (bus_dmamap_create(sc->sc_dmatag, sizeof(struct lge_list_data), 1,
 			      sizeof(struct lge_list_data), 0,
 			      BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dv.dv_xname);
 		goto fail_4;
 	}
-	DPRINTFN(5, ("bus_dmamem_load\n"));
+	DPRINTFN(5, ("bus_dmamap_load\n"));
 	if (bus_dmamap_load(sc->sc_dmatag, dmamap, kva,
 			    sizeof(struct lge_list_data), NULL,
 			    BUS_DMA_NOWAIT)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.398 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.399 2022/10/09 02:32:02 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2961,14 +2961,14 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 		    sizeof(struct bge_ring_data));
 		goto fail_3;
 	}
-	DPRINTFN(5, ("bus_dmamem_create\n"));
+	DPRINTFN(5, ("bus_dmamap_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
 	    sizeof(struct bge_ring_data), 0,
 	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
 		printf(": can't create dma map\n");
 		goto fail_4;
 	}
-	DPRINTFN(5, ("bus_dmamem_load\n"));
+	DPRINTFN(5, ("bus_dmamap_load\n"));
 	if (bus_dmamap_load(sc->bge_dmatag, sc->bge_ring_map, kva,
 			    sizeof(struct bge_ring_data), NULL,
 			    BUS_DMA_NOWAIT)) {
