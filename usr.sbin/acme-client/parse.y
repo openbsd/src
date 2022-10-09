@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.43 2021/10/15 15:01:27 naddy Exp $ */
+/*	$OpenBSD: parse.y,v 1.44 2022/10/09 09:59:31 op Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -177,8 +177,8 @@ optnl		: '\n' optnl
 nl		: '\n' optnl		/* one newline or more */
 		;
 
-comma		: ','
-		| /*empty*/
+optcommanl	: ',' optnl
+		| optnl
 		;
 
 authority	: AUTHORITY STRING {
@@ -287,7 +287,7 @@ domainopts_l	: domainopts_l domainoptsl nl
 		| domainoptsl optnl
 		;
 
-domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
+domainoptsl	: ALTERNATIVE NAMES '{' optnl altname_l '}'
 		| DOMAIN NAME STRING {
 			char *s;
 			if (domain->domain != NULL) {
@@ -395,8 +395,8 @@ domainoptsl	: ALTERNATIVE NAMES '{' altname_l '}'
 		}
 		;
 
-altname_l	: altname comma altname_l
-		| altname
+altname_l	: altname optcommanl altname_l
+		| altname optnl
 		;
 
 altname		: STRING {
