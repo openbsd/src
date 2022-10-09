@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.62 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.63 2022/10/09 20:31:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -170,6 +170,23 @@
 #define RK3399_PMUCRU_PPLL_CON(i)	(0x0000 + (i) * 4)
 #define RK3399_PMUCRU_CLKSEL_CON(i)	(0x0080 + (i) * 4)
 
+/* RK3568 registers */
+#define RK3568_CRU_APLL_CON(i)		(0x0000 + (i) * 4)
+#define RK3568_CRU_DPLL_CON(i)		(0x0020 + (i) * 4)
+#define RK3568_CRU_GPLL_CON(i)		(0x0040 + (i) * 4)
+#define RK3568_CRU_CPLL_CON(i)		(0x0060 + (i) * 4)
+#define RK3568_CRU_NPLL_CON(i)		(0x0080 + (i) * 4)
+#define RK3568_CRU_VPLL_CON(i)		(0x00a0 + (i) * 4)
+#define RK3568_CRU_MODE_CON		0x00c0
+#define RK3568_CRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define RK3568_CRU_GATE_CON(i)		(0x0300 + (i) * 4)
+#define RK3568_CRU_SOFTRST_CON(i)	(0x0400 + (i) * 4)
+
+#define RK3568_PMUCRU_PPLL_CON(i)	(0x0000 + (i) * 4)
+#define RK3568_PMUCRU_HPLL_CON(i)	(0x0040 + (i) * 4)
+#define RK3568_PMUCRU_MODE_CON		0x0080
+#define RK3568_PMUCRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+
 #include "rkclock_clocks.h"
 
 struct rkclock {
@@ -253,6 +270,18 @@ int	rk3399_pmu_set_frequency(void *, uint32_t *, uint32_t);
 void	rk3399_pmu_enable(void *, uint32_t *, int);
 void	rk3399_pmu_reset(void *, uint32_t *, int);
 
+void	rk3568_init(struct rkclock_softc *);
+uint32_t rk3568_get_frequency(void *, uint32_t *);
+int	rk3568_set_frequency(void *, uint32_t *, uint32_t);
+void	rk3568_enable(void *, uint32_t *, int);
+void	rk3568_reset(void *, uint32_t *, int);
+
+void	rk3568_pmu_init(struct rkclock_softc *);
+uint32_t rk3568_pmu_get_frequency(void *, uint32_t *);
+int	rk3568_pmu_set_frequency(void *, uint32_t *, uint32_t);
+void	rk3568_pmu_enable(void *, uint32_t *, int);
+void	rk3568_pmu_reset(void *, uint32_t *, int);
+
 struct rkclock_compat {
 	const char *compat;
 	int	assign;
@@ -294,9 +323,21 @@ const struct rkclock_compat rkclock_compat[] = {
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
 		rk3399_pmu_set_frequency, NULL,
 		rk3399_pmu_reset
+	},
+	{
+		"rockchip,rk3568-cru", 1, rk3568_init,
+		rk3568_enable, rk3568_get_frequency,
+		rk3568_set_frequency, NULL,
+		rk3568_reset
+	},
+	{
+		"rockchip,rk3568-pmucru", 1, rk3568_pmu_init,
+		rk3568_pmu_enable, rk3568_pmu_get_frequency,
+		rk3568_pmu_set_frequency, NULL,
+		rk3568_pmu_reset
 	}
 };
-	
+
 int
 rkclock_match(struct device *parent, void *match, void *aux)
 {
@@ -445,6 +486,7 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 	const struct rkclock *clk;
 	uint32_t reg, mux, div_con;
 	uint32_t best_freq, best_mux, f;
+	uint32_t parent;
 	int sel_shift, div_shift, i;
 
 	clk = rkclock_lookup(sc, idx);
@@ -466,13 +508,32 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 	}
 
 	if (clk->flags & SET_PARENT) {
-		idx = clk->parents[mux];
-		sc->sc_cd.cd_set_frequency(sc, &idx, freq);
+		parent = clk->parents[mux];
+		sc->sc_cd.cd_set_frequency(sc, &parent, freq);
 		if (clk->div_mask == 0)
 			return 0;
 	}
 
+	/*
+	 * If there is no divider, see if we have a parent with the
+	 * right frequency.
+	 */
 	if (clk->div_mask == 0) {
+		parent = clk->parents[mux];
+		if (freq == sc->sc_cd.cd_get_frequency(sc, &parent))
+			return 0;
+
+		for (i = 0; i < nitems(clk->parents); i++) {
+			if (clk->parents[i] == 0)
+				continue;
+			parent = clk->parents[i];
+			if (freq == sc->sc_cd.cd_get_frequency(sc, &parent)) {
+				HWRITE4(sc, clk->reg,
+				    clk->sel_mask << 16 | i << sel_shift);
+				return 0;
+			}
+		}
+
 		printf("%s: 0x%08x\n", __func__, idx);
 		return -1;
 	}
@@ -2933,6 +2994,448 @@ rk3399_pmu_enable(void *cookie, uint32_t *cells, int on)
 
 void
 rk3399_pmu_reset(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: 0x%08x\n", __func__, idx);
+}
+
+/* 
+ * Rockchip RK3568 
+ */
+
+const struct rkclock rk3568_clocks[] = {
+	{
+		RK3568_CLK_SDMMC0, RK3568_CRU_CLKSEL_CON(30),
+		SEL(10, 8), 0,
+		{ RK3568_XIN24M, RK3568_GPLL_400M, RK3568_GPLL_300M,
+		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
+	},
+	{
+		RK3568_CLK_SDMMC1, RK3568_CRU_CLKSEL_CON(30),
+		SEL(14, 12), 0,
+		{ RK3568_XIN24M, RK3568_GPLL_400M, RK3568_GPLL_300M,
+		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
+	},
+	{
+		RK3568_SCLK_UART1, RK3568_CRU_CLKSEL_CON(52),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART2, RK3568_CRU_CLKSEL_CON(54),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART3, RK3568_CRU_CLKSEL_CON(56),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART4, RK3568_CRU_CLKSEL_CON(58),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART5, RK3568_CRU_CLKSEL_CON(60),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART6, RK3568_CRU_CLKSEL_CON(62),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART7, RK3568_CRU_CLKSEL_CON(64),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART8, RK3568_CRU_CLKSEL_CON(66),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_SCLK_UART9, RK3568_CRU_CLKSEL_CON(68),
+		SEL(13, 12), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_I2C, RK3568_CRU_CLKSEL_CON(71),
+		SEL(9, 8), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_I2C1, 0, 0, 0,
+		{ RK3568_CLK_I2C }
+	},
+	{
+		RK3568_CLK_I2C2, 0, 0, 0,
+		{ RK3568_CLK_I2C }
+	},
+	{
+		RK3568_CLK_I2C3, 0, 0, 0,
+		{ RK3568_CLK_I2C }
+	},
+	{
+		RK3568_CLK_I2C4, 0, 0, 0,
+		{ RK3568_CLK_I2C }
+	},
+	{
+		RK3568_CLK_I2C5, 0, 0, 0,
+		{ RK3568_CLK_I2C }
+	},
+	{
+		RK3568_CPLL_50M, RK3568_CRU_CLKSEL_CON(81),
+		0, DIV(4, 0),
+		{ RK3568_PLL_CPLL }
+	},
+	{
+		RK3568_CPLL_100M, RK3568_CRU_CLKSEL_CON(82),
+		0, DIV(4, 0),
+		{ RK3568_PLL_CPLL }
+	},
+	{
+		RK3568_GPLL_400M, RK3568_CRU_CLKSEL_CON(75),
+		0, DIV(4, 0),
+		{ RK3568_PLL_GPLL }
+	},
+	{
+		RK3568_GPLL_300M, RK3568_CRU_CLKSEL_CON(75),
+		0, DIV(12, 8),
+		{ RK3568_PLL_GPLL }
+	},
+	{
+		RK3568_CLK_OSC0_DIV_750K, RK3568_CRU_CLKSEL_CON(82),
+		0, DIV(13, 8),
+		{ RK3568_XIN24M }
+	},
+	{
+		/* Sentinel */
+	}
+};
+
+void
+rk3568_init(struct rkclock_softc *sc)
+{
+	int i;
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i <= 35; i++) {
+		if (HREAD4(sc, RK3568_CRU_GATE_CON(i)) != 0x00000000) {
+			printf("CRU_GATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3568_CRU_GATE_CON(i)));
+		}
+	}
+
+	sc->sc_clocks = rk3568_clocks;
+}
+
+int
+rk3568_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	int mode_shift = -1;
+
+	switch (base) {
+	case RK3568_CRU_APLL_CON(0):
+		mode_shift = 0;
+		break;
+	case RK3568_CRU_DPLL_CON(0):
+		mode_shift = 2;
+		break;
+	case RK3568_CRU_CPLL_CON(0):
+		mode_shift = 4;
+		break;
+	case RK3568_CRU_GPLL_CON(0):
+		mode_shift = 6;
+		break;
+	case RK3568_CRU_NPLL_CON(0):
+		mode_shift = 10;
+		break;
+	case RK3568_CRU_VPLL_CON(0):
+		mode_shift = 12;
+		break;
+	}
+	KASSERT(mode_shift != -1);
+
+	/*
+	 * It is not clear whether all combinations of the clock
+	 * dividers result in a stable clock.  Therefore this function
+	 * only supports a limited set of PLL clock rates.
+	 */
+	switch (freq) {
+	case 1200000000U:
+		postdiv1 = 2; postdiv2 = refdiv = 1;
+		break;
+	default:
+		printf("%s: %u Hz\n", __func__, freq);
+		return -1;
+	}
+
+	/* Calculate feedback divider. */
+	fbdiv = freq * postdiv1 * postdiv2 * refdiv / 24000000;
+
+	/*
+	 * Select slow mode to guarantee a stable clock while we're
+	 * adjusting the PLL.
+	 */
+	HWRITE4(sc, RK3568_CRU_MODE_CON,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_SLOW) << mode_shift);
+
+	/* Set PLL rate. */
+	HWRITE4(sc, base + 0x0000,
+	    RK3328_CRU_PLL_POSTDIV1_MASK << 16 |
+	    postdiv1 << RK3328_CRU_PLL_POSTDIV1_SHIFT |
+	    RK3328_CRU_PLL_FBDIV_MASK << 16 |
+	    fbdiv << RK3328_CRU_PLL_FBDIV_SHIFT);
+	HWRITE4(sc, base + 0x0004,
+	    RK3328_CRU_PLL_DSMPD << 16 | RK3328_CRU_PLL_DSMPD |
+	    RK3328_CRU_PLL_POSTDIV2_MASK << 16 |
+	    postdiv2 << RK3328_CRU_PLL_POSTDIV2_SHIFT |
+	    RK3328_CRU_PLL_REFDIV_MASK << 16 |
+	    refdiv << RK3328_CRU_PLL_REFDIV_SHIFT);
+
+	/* Wait for PLL to stabilize. */
+	while ((HREAD4(sc, base + 0x0004) & RK3328_CRU_PLL_PLL_LOCK) == 0)
+		delay(10);
+
+	/* Switch back to normal mode. */
+	HWRITE4(sc, RK3568_CRU_MODE_CON,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_NORMAL) << mode_shift);
+
+	return 0;
+}
+
+uint32_t
+rk3568_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3568_PLL_APLL:
+		return rk3328_get_pll(sc, RK3568_CRU_APLL_CON(0));
+		break;
+	case RK3568_PLL_DPLL:
+		return rk3328_get_pll(sc, RK3568_CRU_DPLL_CON(0));
+		break;
+	case RK3568_PLL_CPLL:
+		return rk3328_get_pll(sc, RK3568_CRU_CPLL_CON(0));
+		break;
+	case RK3568_PLL_GPLL:
+		return rk3328_get_pll(sc, RK3568_CRU_GPLL_CON(0));
+		break;
+	case RK3568_PLL_NPLL:
+		return rk3328_get_pll(sc, RK3568_CRU_NPLL_CON(0));
+		break;
+	case RK3568_PLL_VPLL:
+		return rk3328_get_pll(sc, RK3568_CRU_VPLL_CON(0));
+		break;
+	case RK3568_XIN24M:
+		return 24000000;
+	default:
+		break;
+	}
+
+	return rkclock_get_frequency(sc, idx);
+}
+
+int
+rk3568_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3568_PLL_GPLL:
+		return rk3568_set_pll(sc, RK3568_CRU_GPLL_CON(0), freq);
+	default:
+		break;
+	}
+
+	return rkclock_set_frequency(sc, idx, freq);
+}
+
+void
+rk3568_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	/* All clocks are enabled upon hardware reset. */
+	if (!on) {
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+}
+
+void
+rk3568_reset(void *cookie, uint32_t *cells, int on)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t mask = (1 << (idx % 16));
+
+	HWRITE4(sc, RK3568_CRU_SOFTRST_CON(idx / 16),
+	    mask << 16 | (on ? mask : 0));
+}
+
+/* PMUCRU */
+
+const struct rkclock rk3568_pmu_clocks[] = {
+	{
+		RK3568_CLK_I2C0, RK3568_PMUCRU_CLKSEL_CON(3),
+		0, DIV(15, 7),
+		{ RK3568_CLK_PDPMU }
+	},
+	{
+		RK3568_SCLK_UART0, RK3568_PMUCRU_CLKSEL_CON(4),
+		SEL(11, 10), 0,
+		{ 0, 0, RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_PDPMU, RK3568_PMUCRU_CLKSEL_CON(2),
+		SEL(15, 15), 0,
+		{ RK3568_PLL_PPLL, 0 }
+	},
+	{
+		/* Sentinel */
+	}
+};
+
+void
+rk3568_pmu_init(struct rkclock_softc *sc)
+{
+	sc->sc_clocks = rk3568_pmu_clocks;
+}
+
+int
+rk3568_pmu_set_pll(struct rkclock_softc *sc, bus_size_t base, uint32_t freq)
+{
+	uint32_t fbdiv, postdiv1, postdiv2, refdiv;
+	int mode_shift = -1;
+
+	switch (base) {
+	case RK3568_PMUCRU_PPLL_CON(0):
+		mode_shift = 0;
+		break;
+	case RK3568_PMUCRU_HPLL_CON(0):
+		mode_shift = 2;
+		break;
+	}
+	KASSERT(mode_shift != -1);
+
+	/*
+	 * It is not clear whether all combinations of the clock
+	 * dividers result in a stable clock.  Therefore this function
+	 * only supports a limited set of PLL clock rates.
+	 */
+	switch (freq) {
+	case 200000000U:
+		postdiv1 = 3; postdiv2 = 4; refdiv = 1;
+		break;
+	default:
+		printf("%s: %u Hz\n", __func__, freq);
+		return -1;
+	}
+
+	/* Calculate feedback divider. */
+	fbdiv = freq * postdiv1 * postdiv2 * refdiv / 24000000;
+
+	/*
+	 * Select slow mode to guarantee a stable clock while we're
+	 * adjusting the PLL.
+	 */
+	HWRITE4(sc, RK3568_PMUCRU_MODE_CON,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_SLOW) << mode_shift);
+
+	/* Set PLL rate. */
+	HWRITE4(sc, base + 0x0000,
+	    RK3328_CRU_PLL_POSTDIV1_MASK << 16 |
+	    postdiv1 << RK3328_CRU_PLL_POSTDIV1_SHIFT |
+	    RK3328_CRU_PLL_FBDIV_MASK << 16 |
+	    fbdiv << RK3328_CRU_PLL_FBDIV_SHIFT);
+	HWRITE4(sc, base + 0x0004,
+	    RK3328_CRU_PLL_DSMPD << 16 | RK3328_CRU_PLL_DSMPD |
+	    RK3328_CRU_PLL_POSTDIV2_MASK << 16 |
+	    postdiv2 << RK3328_CRU_PLL_POSTDIV2_SHIFT |
+	    RK3328_CRU_PLL_REFDIV_MASK << 16 |
+	    refdiv << RK3328_CRU_PLL_REFDIV_SHIFT);
+
+	/* Wait for PLL to stabilize. */
+	while ((HREAD4(sc, base + 0x0004) & RK3328_CRU_PLL_PLL_LOCK) == 0)
+		delay(10);
+
+	/* Switch back to normal mode. */
+	HWRITE4(sc, RK3568_PMUCRU_MODE_CON,
+	   (RK3328_CRU_CRU_MODE_MASK << 16 |
+	   RK3328_CRU_CRU_MODE_NORMAL) << mode_shift);
+
+	return 0;
+}
+
+uint32_t
+rk3568_pmu_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3568_PLL_PPLL:
+		return rk3328_get_pll(sc, RK3568_PMUCRU_PPLL_CON(0));
+	case RK3568_PLL_HPLL:
+		return rk3328_get_pll(sc, RK3568_PMUCRU_HPLL_CON(0));
+	case RK3568_XIN24M:
+		return 24000000;
+	default:
+		break;
+	}
+
+	return rkclock_get_frequency(sc, idx);
+}
+
+int
+rk3568_pmu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	struct rkclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3568_PLL_PPLL:
+		return rk3568_pmu_set_pll(sc, RK3568_PMUCRU_PPLL_CON(0), freq);
+	case RK3568_PLL_HPLL:
+		return rk3568_pmu_set_pll(sc, RK3568_PMUCRU_HPLL_CON(0), freq);
+	default:
+		break;
+	}
+
+	return rkclock_set_frequency(sc, idx, freq);
+}
+
+void
+rk3568_pmu_enable(void *cookie, uint32_t *cells, int on)
+{
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case RK3568_CLK_I2C0:
+	case RK3568_SCLK_UART0:
+	case RK3568_PCLK_I2C0:
+		/* Enabled by default. */
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		break;
+	}
+}
+
+void
+rk3568_pmu_reset(void *cookie, uint32_t *cells, int on)
 {
 	uint32_t idx = cells[0];
 
