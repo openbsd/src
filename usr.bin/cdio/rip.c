@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.19 2022/10/07 19:59:19 krw Exp $	*/
+/*	$OpenBSD: rip.c,v 1.20 2022/10/10 14:52:02 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -402,6 +402,7 @@ read_track(struct track *ti)
 			    (sio_write(ti->hdl, sec, blksize) == 0)) {
 				sio_close(ti->hdl);
 				ti->hdl = NULL;
+				free(sec);
 				fprintf(stderr, "\nerror while writing to audio "
 				    "output\n");
 				return (-1);
