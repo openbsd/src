@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.10 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.11 2022/10/10 17:45:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -229,6 +229,33 @@ const struct rkpmic_regdata rk809_regdata[] = {
 	{ }
 };
 
+/*
+ * Used by RK817 for BOOST
+ *  0-7: 4.7V-5.4V,step=100mV
+ */
+const struct rkpmic_vsel_range rk817_boost_range[] = {
+	{ 4700000, 100000, 0, 7 },
+	{}
+};
+
+const struct rkpmic_regdata rk817_regdata[] = {
+	{ "DCDC_REG1", 0xbb, 0x7f, rk809_vsel_range1 },
+	{ "DCDC_REG2", 0xbe, 0x7f, rk809_vsel_range1 },
+	{ "DCDC_REG3", 0xc1, 0x7f, rk809_vsel_range1 },
+	{ "DCDC_REG4", 0xc4, 0x7f, rk809_vsel_range2 },
+	{ "LDO_REG1", 0xcc, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG2", 0xce, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG3", 0xd0, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG4", 0xd2, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG5", 0xd4, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG6", 0xd6, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG7", 0xd8, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG8", 0xda, 0x7f, rk809_vsel_range4 },
+	{ "LDO_REG9", 0xdc, 0x7f, rk809_vsel_range4 },
+	{ "BOOST", 0xde, 0x07, rk817_boost_range },
+	{ }
+};
+
 struct rkpmic_softc {
 	struct device sc_dev;
 	i2c_tag_t sc_tag;
@@ -265,7 +292,8 @@ rkpmic_match(struct device *parent, void *match, void *aux)
 
 	return (strcmp(ia->ia_name, "rockchip,rk805") == 0 ||
 	    strcmp(ia->ia_name, "rockchip,rk808") == 0 ||
-	    strcmp(ia->ia_name, "rockchip,rk809") == 0);
+	    strcmp(ia->ia_name, "rockchip,rk809") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk817") == 0);
 }
 
 void
@@ -295,11 +323,16 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rtc_ctrl_reg = RK808_RTC_CTRL;
 		sc->sc_rtc_status_reg = RK808_RTC_STATUS;
 		sc->sc_regdata = rk808_regdata;
-	} else {
+	} else if (OF_is_compatible(node, "rockchip,rk809")) {
 		chip = "RK809";
 		sc->sc_rtc_ctrl_reg = RK809_RTC_CTRL;
 		sc->sc_rtc_status_reg = RK809_RTC_STATUS;
 		sc->sc_regdata = rk809_regdata;
+	} else {
+		chip = "RK817";
+		sc->sc_rtc_ctrl_reg = RK809_RTC_CTRL;
+		sc->sc_rtc_status_reg = RK809_RTC_STATUS;
+		sc->sc_regdata = rk817_regdata;
 	}
 	printf(": %s\n", chip);
 
