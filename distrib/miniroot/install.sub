@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1210 2022/10/05 19:30:47 kn Exp $
+#	$OpenBSD: install.sub,v 1.1211 2022/10/10 11:04:17 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3317,7 +3317,7 @@ check_unattendedupgrade() {
 	_d=${_d%% *}
 	if [[ -n $_d ]]; then
 		make_dev $_d
-		if mount -t ffs -r /dev/${_d}a /mnt; then
+		if mount -t ffs -r /dev/${_d}a /mnt 2>/dev/null; then
 			[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
 			_rc=$?
 			((_rc == 0)) && cp /mnt/auto_upgrade.conf /
@@ -3325,7 +3325,7 @@ check_unattendedupgrade() {
 			umount /mnt
 		fi
 		rm -f /dev/{r,}$_d?
-	fi >/dev/null 2>&1
+	fi
 
 	return $_rc
 }
