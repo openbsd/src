@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd64errata.c,v 1.15 2022/09/24 12:22:31 jsg Exp $	*/
+/*	$OpenBSD: amd64errata.c,v 1.16 2022/10/10 03:01:11 jsg Exp $	*/
 /*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
 
 /*-
@@ -37,9 +37,21 @@
  * BIOS can patch via MSR, but it is not known if the OS can patch these
  * yet.  The list is expected to grow over time.
  *
- * The data here are from: Revision Guide for AMD Athlon 64 and
- * AMD Opteron Processors, Publication #25759, Revision: 3.69,
- * Issue Date: September 2006
+ * The data here is from:
+ *
+ * Revision Guide for AMD Athlon 64 and AMD Opteron Processors (0Fh)
+ * Publication #25759, Revision: 3.79, Issue Date: July 2009
+ * BH-E4, CH-CG, CH-D0, DH-CG, DH-D0, DH-E3, DH-E6, JH-E1, JH-E6, SH-B0,
+ * SH-B3, SH-C0, SH-CG, SH-D0, SH-E4, SH-E5
+ *
+ * Revision Guide for AMD Family 10h Processors
+ * Publication #41322, Revision: 3.92, Issue Date: March 2012
+ * BL-C2, BL-C3, DA-C2, DA-C3, DR-B2, DR-B3, DR-BA, HY-D0, HY-D1,
+ * HY-D1-G34R1, PH-E0, RB-C2, RB-C3
+ *
+ * Revision Guide for AMD Family 12h Processors
+ * Publication #44739, Revision: 3.10, Issue Date: March 2012
+ * LN-B0
  */
 
 #include <sys/param.h>
