@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.353 2022/09/21 22:32:10 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.354 2022/10/10 11:33:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -267,14 +267,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if (old != sa->sa_policy) {
 				/* Cleanup old policy */
 				TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-				if (old->pol_flags & IKED_POLICY_REFCNT)
-					policy_unref(env, old);
-
-				if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT) {
-					log_info("%s: sa %p old pol %p pol_refcnt %d",
-					    __func__, sa, sa->sa_policy, sa->sa_policy->pol_refcnt);
-					policy_ref(env, sa->sa_policy);
-				}
+				policy_unref(env, old);
+				policy_ref(env, sa->sa_policy);
 				TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers, sa, sa_peer_entry);
 			}
 		}
@@ -978,15 +972,13 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			    SPI_SA(sa, __func__));
 			ikev2_send_auth_failed(env, sa);
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-			if (old->pol_flags & IKED_POLICY_REFCNT)
-				policy_unref(env, old);
+			policy_unref(env, old);
 			return (-1);
 		}
 		if (msg->msg_policy != old) {
 			/* Clean up old policy */
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-			if (old->pol_flags & IKED_POLICY_REFCNT)
-				policy_unref(env, old);
+			policy_unref(env, old);
 
 			/* Update SA with new policy*/
 			if (sa_new(env, sa->sa_hdr.sh_ispi,
@@ -1018,8 +1010,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			log_warnx("%s: policy mismatch", SPI_SA(sa, __func__));
 			ikev2_send_auth_failed(env, sa);
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-			if (old->pol_flags & IKED_POLICY_REFCNT)
-				policy_unref(env, old);
+			policy_unref(env, old);
 			return (-1);
 		}
 		/* restore */
@@ -5613,10 +5604,8 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 		TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
 		TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers,
 		    sa, sa_peer_entry);
-		if (old->pol_flags & IKED_POLICY_REFCNT)
-			policy_unref(env, old);
-		if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT)
-			policy_ref(env, sa->sa_policy);
+		policy_unref(env, old);
+		policy_ref(env, sa->sa_policy);
 	}
 
 	sa_state(env, sa, IKEV2_STATE_SA_INIT);
