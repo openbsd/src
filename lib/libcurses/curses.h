@@ -1,4 +1,4 @@
-/* $OpenBSD: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
+/* $OpenBSD: curses.h,v 1.63 2022/10/10 09:03:08 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -34,7 +34,7 @@
  *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
-/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
+/* $Id: curses.h,v 1.63 2022/10/10 09:03:08 nicm Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -149,10 +149,26 @@ typedef unsigned long mmask_t;
 
 #include <stdio.h>
 #include <unctrl.h>
-#include <stdarg.h>	/* we need va_list */
-#ifdef _XOPEN_SOURCE_EXTENDED
-#include <stddef.h>	/* we want wchar_t */
-#endif /* _XOPEN_SOURCE_EXTENDED */
+
+/*
+ * With XPG4, you must define _XOPEN_SOURCE_EXTENDED, it is redundant (or
+ * conflicting) when _XOPEN_SOURCE is 500 or greater.  If NCURSES_WIDECHAR is
+ * not already defined, e.g., if the platform relies upon nonstandard feature
+ * test macros, define it at this point if the standard feature test macros
+ * indicate that it should be defined.
+ */
+#ifndef NCURSES_WIDECHAR
+#if defined(_XOPEN_SOURCE_EXTENDED) || (defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0 >= 500))
+#define NCURSES_WIDECHAR 1
+#else
+#define NCURSES_WIDECHAR 0
+#endif
+#endif /* NCURSES_WIDECHAR */
+
+#include <stdarg.h>     /* we need va_list */
+#if NCURSES_WIDECHAR
+#include <stddef.h>     /* we want wchar_t */
+#endif
 
 /* X/Open and SVr4 specify that curses implements 'bool'.  However, C++ may also
  * implement it.  If so, we must use the C++ compiler's type to avoid conflict
@@ -333,7 +349,7 @@ typedef struct _win_st WINDOW;
 
 typedef	chtype	attr_t;		/* ...must be at least as wide as chtype */
 
-#ifdef _XOPEN_SOURCE_EXTENDED
+#if NCURSES_WIDECHAR
 
 #if 0
 #ifdef mblen			/* libutf8.h defines it w/o undefining first */
@@ -367,7 +383,7 @@ typedef struct
 }
 cchar_t;
 
-#endif /* _XOPEN_SOURCE_EXTENDED */
+#endif /* NCURSES_WIDECHAR */
 
 #if !NCURSES_OPAQUE
 struct ldat;
@@ -419,7 +435,7 @@ struct _win_st
 
 	NCURSES_SIZE_T _yoffset; /* real begy is _begy + _yoffset */
 
-#ifdef _XOPEN_SOURCE_EXTENDED
+#if NCURSES_WIDECHAR
 	cchar_t  _bkgrnd;	/* current background char/attribute pair */
 #if 0
 	int	_color;		/* current color-pair for non-space character */
@@ -831,7 +847,7 @@ extern NCURSES_EXPORT(int) getpary (const WINDOW *);			/* generated */
 /*
  * vid_attr() was implemented originally based on a draft of X/Open curses.
  */
-#ifndef _XOPEN_SOURCE_EXTENDED
+#if !NCURSES_WIDECHAR
 #define vid_attr(a,pair,opts) vidattr(a)
 #endif
 
@@ -979,7 +995,7 @@ extern NCURSES_EXPORT(int) wgetscrreg (const WINDOW *, int *, int *); /* generat
 #define wattroff(win,at)	wattr_off(win, NCURSES_CAST(attr_t, at), NULL)
 
 #if !NCURSES_OPAQUE
-#if defined(_XOPEN_SOURCE_EXTENDED) && 0
+#if NCURSES_WIDECHAR && 0
 #define wattrset(win,at)	((win)->_color = PAIR_NUMBER(at), \
 				 (win)->_attrs = (at))
 #else
@@ -1121,7 +1137,7 @@ extern NCURSES_EXPORT(int) wgetscrreg (const WINDOW *, int *, int *); /* generat
 #define slk_attr_on(a,v)		((v) ? ERR : slk_attron(a))
 
 #if !NCURSES_OPAQUE
-#if defined(_XOPEN_SOURCE_EXTENDED) && 0
+#if NCURSES_WIDECHAR && 0
 #define wattr_set(win,a,p,opts)		((win)->_attrs = ((a) & ~A_COLOR), \
 					 (win)->_color = (p), \
 					 OK)
@@ -1334,13 +1350,13 @@ extern NCURSES_EXPORT_VAR(int) TABSIZE;
 #define KEY_EVENT	0633		/* We were interrupted by an event */
 
 #define KEY_MAX		0777		/* Maximum key value is 0633 */
-/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
+/* $Id: curses.h,v 1.63 2022/10/10 09:03:08 nicm Exp $ */
 /*
  * vile:cmode:
  * This file is part of ncurses, designed to be appended after curses.h.in
  * (see that file for the relevant copyright).
  */
-#ifdef _XOPEN_SOURCE_EXTENDED
+#if NCURSES_WIDECHAR
 
 extern NCURSES_EXPORT_VAR(cchar_t *) _nc_wacs;
 
@@ -1585,8 +1601,8 @@ extern NCURSES_EXPORT(const char *) _nc_viswbuf(const wchar_t *);
 extern NCURSES_EXPORT(const char *) _nc_viswibuf(const wint_t *);
 #endif
 
-#endif /* _XOPEN_SOURCE_EXTENDED */
-/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
+#endif /* NCURSES_WIDECHAR */
+/* $Id: curses.h,v 1.63 2022/10/10 09:03:08 nicm Exp $ */
 /*
  * vile:cmode:
  * This file is part of ncurses, designed to be appended after curses.h.in
@@ -1707,7 +1723,7 @@ extern NCURSES_EXPORT(char *) _nc_tracebits (void);
 extern NCURSES_EXPORT(char *) _tracechar (int);
 extern NCURSES_EXPORT(char *) _tracechtype (chtype);
 extern NCURSES_EXPORT(char *) _tracechtype2 (int, chtype);
-#ifdef _XOPEN_SOURCE_EXTENDED
+#if NCURSES_WIDECHAR
 #define _tracech_t		_tracecchar_t
 extern NCURSES_EXPORT(char *) _tracecchar_t (const cchar_t *);
 #define _tracech_t2		_tracecchar_t2
