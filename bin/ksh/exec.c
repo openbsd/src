@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.75 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.76 2022/10/10 14:57:48 kn Exp $	*/
 
 /*
  * execute command tree
@@ -114,10 +114,12 @@ execute(struct op *volatile t,
 		for (iowp = t->ioact; *iowp != NULL; iowp++) {
 			if (iosetup(*iowp, tp) < 0) {
 				exstat = rv = 1;
-				/* Redirection failures for special commands
+				/* Except in the permanent case (exec 2>afile),
+				 * redirection failures for special commands
 				 * cause (non-interactive) shell to exit.
 				 */
-				if (tp && tp->type == CSHELL &&
+				if (tp && tp->val.f != c_exec &&
+				    tp->type == CSHELL &&
 				    (tp->flag & SPEC_BI))
 					errorf(NULL);
 				/* Deal with FERREXIT, quitenv(), etc. */
