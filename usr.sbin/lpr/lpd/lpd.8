@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpd.8,v 1.31 2021/03/08 02:47:29 jsg Exp $
+.\"	$OpenBSD: lpd.8,v 1.32 2022/10/10 09:13:43 jsg Exp $
 .\"	$NetBSD: lpd.8,v 1.23 2002/02/08 01:38:50 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lpd.8	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: October 10 2022 $
 .Dt LPD 8
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ Use of this option silently overrides the
 .Fl s
 option if it is also present on the command line.
 .Ar bind-address
-can be a numeric host name in IPV4 or IPV6 notation, or a symbolic host
+can be a numeric host name in IPv4 or IPv6 notation, or a symbolic host
 name which will be looked up in the normal way.
 .It Fl d
 The
