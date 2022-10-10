@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.134 2022/09/19 12:37:02 jsg Exp $
+dnl	$OpenBSD: m4.common,v 1.135 2022/10/10 10:42:42 jsg Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -746,8 +746,8 @@ installation system detects that it booted from the network, and
 isn't interrupted within 5 seconds, it attempts a fully-automatic
 installation.
 
-The installer autoconfigures a DHCP ipv4 address on the network interface the system
-booted from, or in case of multiple interfaces it will ask which one
+The installer autoconfigures a DHCP IPv4 address on the network interface the
+system booted from, or in case of multiple interfaces it will ask which one
 to use. Upon success, it retrieves a response file via HTTP. If that
 fails, the installer asks for the response file location, which can be
 either a URL or a local path, and retrieves the response file from
