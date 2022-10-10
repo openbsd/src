@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1140 2022/09/03 19:22:19 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1141 2022/10/10 16:43:12 bket Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -164,7 +164,7 @@ void			 pf_add_threshold(struct pf_threshold *);
 int			 pf_check_threshold(struct pf_threshold *);
 int			 pf_check_tcp_cksum(struct mbuf *, int, int,
 			    sa_family_t);
-static __inline void	 pf_cksum_fixup(u_int16_t *, u_int16_t, u_int16_t,
+__inline void		 pf_cksum_fixup(u_int16_t *, u_int16_t, u_int16_t,
 			    u_int8_t);
 void			 pf_cksum_fixup_a(u_int16_t *, const struct pf_addr *,
 			    const struct pf_addr *, sa_family_t, u_int8_t);
@@ -1937,7 +1937,7 @@ pf_addr_wrap_neq(struct pf_addr_wrap *aw1, struct pf_addr_wrap *aw2)
  * Note: this serves also as a reduction step for at most one add (as the
  * trailing mod 2^16 prevents further reductions by destroying carries).
  */
-static __inline void
+__inline void
 pf_cksum_fixup(u_int16_t *cksum, u_int16_t was, u_int16_t now,
     u_int8_t proto)
 {
