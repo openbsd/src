@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip.c,v 1.20 2022/10/10 14:52:02 krw Exp $	*/
+/*	$OpenBSD: rip.c,v 1.21 2022/10/11 16:32:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2007 Alexey Vatchenko <av@bsdua.org>
@@ -394,8 +394,9 @@ read_track(struct track *ti)
 			if (ti->fd >= 0 &&
 			    (write_sector(ti->fd, sec, blksize) != 0)) {
 				free(sec);
-				fprintf(stderr, "\nerror while writing to the "
-				    "%s file\n", ti->name);
+				fprintf(stderr, "\n");
+				warnx("error while writing to the %s file",
+				    ti->name);
 				return (-1);
 			}
 			if (ti->hdl != NULL &&
@@ -403,15 +404,16 @@ read_track(struct track *ti)
 				sio_close(ti->hdl);
 				ti->hdl = NULL;
 				free(sec);
-				fprintf(stderr, "\nerror while writing to audio "
-				    "output\n");
+				fprintf(stderr, "\n");
+				warnx("error while writing to audio output");
 				return (-1);
 			}
 
 			i++;
 		} else if (error != EAGAIN) {
 			free(sec);
-			fprintf(stderr, "\nerror while reading from device\n");
+			fprintf(stderr, "\n");
+			warnx("error while reading from device");
 			return (-1);
 		}
 	}
@@ -567,7 +569,7 @@ rip_tracks_loop(struct track_pair *tp, u_int n_tracks,
 					info.fd = -1;
 				}
 				if (error != 0) {
-					fprintf(stderr, "can't rip track %u\n",
+					warnx("can't rip track %u",
 					    toc_buffer[i].track);
 					break;
 				}
