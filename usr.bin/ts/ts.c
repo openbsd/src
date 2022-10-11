@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.10 2022/09/01 00:14:36 cheloha Exp $	*/
+/*	$OpenBSD: ts.c,v 1.11 2022/10/11 07:36:27 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -167,7 +167,7 @@ fmtfmt(void)
 			f[0] = f[1];
 			f[1] = '.';
 			f += 2;
-			u = malloc(sizeof u);
+			u = malloc(sizeof *u);
 			if (u == NULL)
 				err(1, NULL);
 			u->pos = f;
