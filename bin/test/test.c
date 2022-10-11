@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.19 2018/04/02 06:47:43 tobias Exp $	*/
+/*	$OpenBSD: test.c,v 1.20 2022/10/11 13:40:38 jsg Exp $	*/
 /*	$NetBSD: test.c,v 1.15 1995/03/21 07:04:06 cgd Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ char **t_wp;
 struct t_op const *t_wp_op;
 
 static enum token t_lex(char *);
-static enum token t_lex_type(char *);
+static enum token_types t_lex_type(char *);
 static int oexpr(enum token n);
 static int aexpr(enum token n);
 static int nexpr(enum token n);
@@ -402,7 +402,7 @@ binop(void)
 	syntax(op->op_text, "not a binary operator");
 }
 
-static enum token
+static enum token_types
 t_lex_type(char *s)
 {
 	struct t_op const *op = ops;
