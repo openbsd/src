@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.164 2022/08/29 11:09:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.165 2022/10/11 11:46:58 jsg Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1962,8 +1962,10 @@ swapmount(void)
 		goto gotit;
 	} else
 #endif
-	if (bdevvp(swap_dev, &vp))
+	if (bdevvp(swap_dev, &vp)) {
+		rw_exit_write(&swap_syscall_lock);	
 		return;
+	}
 
 	/* Construct a potential path to swap */
 	if ((nam = findblkname(major(swap_dev))))
