@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.21 2021/12/13 16:56:50 deraadt Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.22 2022/10/11 05:45:41 anton Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -37,6 +37,12 @@
 #include <limits.h>
 #include <errno.h>
 #include <err.h>
+#include <pthread.h>
+
+struct context {
+	char **argv;
+	int argc;
+};
 
 volatile sig_atomic_t fail;
 int page_size;
@@ -177,9 +183,10 @@ usage(void)
 	exit(2);
 }
 
-int
-main(int argc, char *argv[])
+static void *
+worker(void *arg)
 {
+	struct context *ctx = arg;
 	u_int64_t stack[TESTSZ/8];	/* assuming the testfly() will fit */
 	struct sigaction sa;
 	int (*func)(void *, size_t);
@@ -198,7 +205,7 @@ main(int argc, char *argv[])
 	pflags = MAP_PRIVATE|MAP_ANON|MAP_FIXED;
 	func = &noexec;
 	size = TESTSZ;
-	while ((ch = getopt(argc, argv, "TDBHSmps:")) != -1) {
+	while ((ch = getopt(ctx->argc, ctx->argv, "TDBHSmps:")) != -1) {
 		if (p == NULL) {
 			switch (ch) {
 			case 'T':
@@ -267,10 +274,10 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	ctx->argc -= optind;
+	ctx->argv += optind;
 
-	if (argc > 0)
+	if (ctx->argc > 0)
 		usage();
 
 	if (p == NULL)
@@ -287,4 +294,20 @@ main(int argc, char *argv[])
 	}
 
 	exit((*func)(p, size));
+	/* NOTREACHED */
+	return NULL;
+}
+
+int
+main(int argc, char *argv[])
+{
+	struct context ctx = {.argc = argc, .argv = argv};
+	pthread_t th;
+	int error;
+
+	if ((error = pthread_create(&th, NULL, worker, (void *)&ctx)))
+		errc(1, error, "pthread_create");
+	if ((error = pthread_join(th, NULL)))
+		errc(1, error, "pthread_join");
+	return 0;
 }
