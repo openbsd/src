@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.29 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: chio.c,v 1.30 2022/10/11 03:37:14 jsg Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -865,8 +865,6 @@ bits_to_string(int v, const char *cp)
 static void
 usage(void)
 {
-	int i;
-
 	fprintf(stderr, "usage: %s [-f changer] command [arg ...]\n",
 	    __progname);
 	exit(1);
