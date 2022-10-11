@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.6 2022/08/12 16:13:40 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.7 2022/10/11 13:51:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -148,9 +148,7 @@ validate_tables(void)
 				    fill[i]);
 				failed |= 1;
 			}
-
 		}
-
 	}
 
 	return failed;
@@ -251,7 +249,8 @@ isqrt_test(void)
 		if (!bn_isqrt(isqrt, &is_perfect_square, testcase, ctx))
 			errx(1, "bn_isqrt testcase");
 
-		if ((cmp = BN_cmp(n, isqrt)) != 0 || is_perfect_square) {
+		if ((cmp = BN_cmp(n, isqrt)) != 0 ||
+		    (is_perfect_square && BN_cmp(n_sqr, testcase) != 0)) {
 			fprintf(stderr, "n = ");
 			BN_print_fp(stderr, n);
 			fprintf(stderr, "\ntestcase = ");
