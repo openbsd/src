@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.73 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.74 2022/10/11 23:39:08 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.13 2000/12/17 22:39:18 pk Exp $ */
 
 /*
@@ -39,7 +39,8 @@
 
 #include "cd.h"
 
-static	int disklabel_sun_to_bsd(struct sun_disklabel *, struct disklabel *);
+static	int disklabel_sun_to_bsd(dev_t dev, struct sun_disklabel *,
+    struct disklabel *);
 static	int disklabel_bsd_to_sun(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
@@ -99,11 +100,12 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
-		error = disklabel_sun_to_bsd(slp, lp);
+		error = disklabel_sun_to_bsd(bp->b_dev, slp, lp);
 		goto done;
 	}
 
-	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0, DL_GETDSIZE(lp));
+	error = checkdisklabel(bp->b_dev, bp->b_data + LABELOFFSET, lp, 0,
+	    DL_GETDSIZE(lp));
 	if (error == 0)
 		goto done;
 
@@ -218,7 +220,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  * The BSD label is cleared out before this is called.
  */
 static int
-disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
+disklabel_sun_to_bsd(dev_t dev, struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct sun_preamble *preamble = (struct sun_preamble *)sl;
 	struct sun_partinfo *ppp;
@@ -369,7 +371,7 @@ disklabel_sun_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-	return (checkdisklabel(lp, lp, 0, DL_GETDSIZE(lp)));
+	return (checkdisklabel(dev, lp, lp, 0, DL_GETDSIZE(lp)));
 }
 
 /*

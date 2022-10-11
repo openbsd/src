@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.90 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.91 2022/10/11 23:39:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -210,7 +210,8 @@ finished:
 	if (error)
 		goto done;
 
-	error = checkdisklabel(bp->b_data, lp, openbsdstart, DL_GETDSIZE(lp));
+	error = checkdisklabel(bp->b_dev, bp->b_data, lp, openbsdstart,
+	    DL_GETDSIZE(lp));
 
 done:
 	return (error);

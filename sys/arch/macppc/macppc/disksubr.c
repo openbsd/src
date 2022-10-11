@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.82 2017/02/28 10:49:37 natano Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.83 2022/10/11 23:39:08 krw Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -172,8 +172,8 @@ readdpmelabel(struct buf *bp, void (*strat)(struct buf *),
 	if (error)
 		return (error);
 
-	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, hfspartoff,
-	    hfspartend);
+	error = checkdisklabel(bp->b_dev, bp->b_data + LABELOFFSET, lp,
+	    hfspartoff, hfspartend);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: disksubr.c,v 1.60 2022/09/01 13:45:26 krw Exp $ */
+/* $OpenBSD: disksubr.c,v 1.61 2022/10/11 23:39:07 krw Exp $ */
 /* $NetBSD: disksubr.c,v 1.12 2002/02/19 17:09:44 wiz Exp $ */
 
 /*
@@ -88,7 +88,7 @@
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-int disklabel_om_to_bsd(struct sun_disklabel *, struct disklabel *);
+int disklabel_om_to_bsd(dev_t, struct sun_disklabel *, struct disklabel *);
 int disklabel_bsd_to_om(struct disklabel *, struct sun_disklabel *);
 static __inline u_int sun_extended_sum(struct sun_disklabel *, void *);
 
@@ -125,11 +125,11 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	slp = (struct sun_disklabel *)bp->b_data;
 	if (slp->sl_magic == SUN_DKMAGIC) {
-		error = disklabel_om_to_bsd(slp, lp);
+		error = disklabel_om_to_bsd(bp->b_dev, slp, lp);
 		goto done;
 	}
 
-	error = checkdisklabel(bp->b_data + LABELOFFSET, lp, 0,
+	error = checkdisklabel(bp->b_dev, bp->b_data + LABELOFFSET, lp, 0,
 	    DL_GETDSIZE(lp));
 	if (error == 0)
 		goto done;
@@ -240,7 +240,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
  * The BSD label is cleared out before this is called.
  */
 int
-disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
+disklabel_om_to_bsd(dev_t dev, struct sun_disklabel *sl, struct disklabel *lp)
 {
 	struct partition *npp;
 	struct sun_dkpart *spp;
@@ -361,7 +361,7 @@ disklabel_om_to_bsd(struct sun_disklabel *sl, struct disklabel *lp)
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
-	return (checkdisklabel(lp, lp, 0, DL_GETDSIZE(lp)));
+	return (checkdisklabel(dev, lp, lp, 0, DL_GETDSIZE(lp)));
 }
 
 /*

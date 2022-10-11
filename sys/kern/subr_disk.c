@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.264 2022/09/23 12:32:50 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.265 2022/10/11 23:39:08 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -164,12 +164,13 @@ initdisklabel(struct disklabel *lp)
  * a newer version if needed, etc etc.
  */
 int
-checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
+checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
     u_int64_t boundend)
 {
 	struct disklabel *dlp = rlp;
 	struct __partitionv0 *v0pp;
 	struct partition *pp;
+	const char *blkname;
 	u_int64_t disksize;
 	int error = 0;
 	int i;
@@ -265,6 +266,12 @@ checkdisklabel(void *rlp, struct disklabel *lp, u_int64_t boundstart,
 		*lp = *dlp;
 
 	if (lp->d_version == 0) {
+		blkname = findblkname(major(dev));
+		if (blkname == NULL)
+			blkname = findblkname(major(chrtoblk(dev)));
+		printf("%s%d has legacy label, please rewrite using "
+		    "disklabel(8)\n", blkname, DISKUNIT(dev));
+
 		lp->d_version = 1;
 		lp->d_secperunith = 0;
 
@@ -409,7 +416,8 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 	}
 
 	rlp = (struct disklabel *)(bp->b_data + DL_BLKOFFSET(lp, partoff));
-	error = checkdisklabel(rlp, lp, DL_GETBSTART(rlp), DL_GETBEND(rlp));
+	error = checkdisklabel(bp->b_dev, rlp, lp, DL_GETBSTART(rlp),
+	    DL_GETBEND(rlp));
 
 	DPRINTF("readdoslabel return: %s, %d, checkdisklabel() of daddr_t "
 	    "%lld %s\n", devname, error, partoff, error ? "failed" : "ok");
