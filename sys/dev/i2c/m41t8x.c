@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8x.c,v 1.2 2020/10/23 20:55:15 patrick Exp $	*/
+/*	$OpenBSD: m41t8x.c,v 1.3 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -75,6 +75,7 @@ m41t8xrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = m41t8xrtc_gettime;
 	sc->sc_todr.todr_settime = m41t8xrtc_settime;
+	sc->sc_todr.todr_quality = 1000;
 	todr_attach(&sc->sc_todr);
 
 	printf("\n");

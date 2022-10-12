@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.13 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: opal.c,v 1.14 2022/10/12 13:39:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -146,6 +146,7 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_todr.todr_gettime = opal_gettime;
 	sc->sc_todr.todr_settime = opal_settime;
+	sc->sc_todr.todr_quality = 0;
 	todr_attach(&sc->sc_todr);
 
 	node = OF_getnodebyname(faa->fa_node, "power-mgt");

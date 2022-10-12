@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.157 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.158 2022/10/12 13:39:50 kettenis Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -951,7 +951,9 @@ resettodr(void)
 void
 todr_attach(struct todr_chip_handle *todr)
 {
-	todr_handle = todr;
+	if (todr_handle == NULL ||
+	    todr->todr_quality > todr_handle->todr_quality)
+		todr_handle = todr;
 }
 
 #define RESETTODR_PERIOD	1800

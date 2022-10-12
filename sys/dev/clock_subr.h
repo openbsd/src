@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock_subr.h,v 1.7 2021/04/24 10:15:15 mpi Exp $	*/
+/*	$OpenBSD: clock_subr.h,v 1.8 2022/10/12 13:39:50 kettenis Exp $	*/
 /*	$NetBSD: clock_subr.h,v 1.2 1997/03/15 18:11:17 is Exp $	*/
 
 /*-
@@ -45,6 +45,7 @@ struct todr_chip_handle {
 	void	*cookie;        /* Device specific data */
 	void	*bus_cookie;    /* Bus specific data */
 
+	int	todr_quality;
 	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_setwen)(struct todr_chip_handle *, int);

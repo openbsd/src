@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock.c,v 1.4 2020/05/25 13:16:06 visa Exp $	*/
+/*	$OpenBSD: mcclock.c,v 1.5 2022/10/12 13:39:50 kettenis Exp $	*/
 /*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ mcclock_attach(sc, busfns)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = mcclock_gettime;
 	sc->sc_todr.todr_settime = mcclock_settime;
+	sc->sc_todr.todr_quality = 0;
 	todr_attach(&sc->sc_todr);
 }
 

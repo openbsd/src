@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtc.c,v 1.12 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: rtc.c,v 1.13 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,9 +164,9 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	handle->cookie = sc;
 	handle->todr_gettime = rtc_gettime;
 	handle->todr_settime = rtc_settime;
-
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
+	handle->todr_quality = 0;
 	todr_handle = handle;
 
 	/* The bq4802 is not compatible with the mc146818. */

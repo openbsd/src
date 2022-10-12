@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c372.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: rs5c372.c,v 1.8 2022/10/12 13:39:50 kettenis Exp $	*/
 /*	$NetBSD: rs5c372.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
 
 /*
@@ -181,20 +181,13 @@ ricohrtc_attach(struct device *parent, struct device *self, void *arg)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = ricohrtc_gettime;
 	sc->sc_todr.todr_settime = ricohrtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
-
-#if 0
+	sc->sc_todr.todr_quality = 1000;
 	todr_attach(&sc->sc_todr);
-#else
-	/* XXX */
-	{
-	extern todr_chip_handle_t todr_handle;
-	todr_handle = &sc->sc_todr;
-	}
-#endif
 
 	/* Initialize RTC */
 	ricohrtc_reg_write(sc, RICOHRTC_CONTROL2, RICOHRTC_CONTROL2_24HRS);

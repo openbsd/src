@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.1 2022/10/03 19:32:22 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.2 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -39,8 +39,6 @@
  * memory on some machines.
  */
 #define EFI_SPACE_BITS	48
-
-extern todr_chip_handle_t todr_handle;
 
 extern uint32_t mmap_size;
 extern uint32_t mmap_desc_size;
@@ -162,10 +160,17 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	if (status != EFI_SUCCESS)
 		return;
 
+	/*
+	 * EDK II implementations provide an implementation of
+	 * GetTime() that returns a fixed compiled-in time on hardware
+	 * without a (supported) RTC.  So only use this interface as a
+	 * last resort.
+	 */
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = efi_gettime;
 	sc->sc_todr.todr_settime = efi_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = -1000;
+	todr_attach(&sc->sc_todr);
 }
 
 void

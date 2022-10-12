@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8523.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: pcf8523.c,v 1.8 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -126,20 +126,13 @@ pcfrtc_attach(struct device *parent, struct device *self, void *arg)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = pcfrtc_gettime;
 	sc->sc_todr.todr_settime = pcfrtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
-
-#if 0
+	sc->sc_todr.todr_quality = 1000;
 	todr_attach(&sc->sc_todr);
-#else
-	/* XXX */
-	{
-	extern todr_chip_handle_t todr_handle;
-	todr_handle = &sc->sc_todr;
-	}
-#endif
 
 	/*
 	 * Enable battery switch-over and battery low detection in

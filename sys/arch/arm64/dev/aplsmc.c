@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.13 2022/08/27 16:56:25 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.14 2022/10/12 13:39:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -266,6 +266,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_todr.cookie = sc;
 		sc->sc_todr.todr_gettime = aplsmc_gettime;
 		sc->sc_todr.todr_settime = aplsmc_settime;
+		sc->sc_todr.todr_quality = 1000;
 		todr_attach(&sc->sc_todr);
 	}
 

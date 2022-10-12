@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf85063.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: pcf85063.c,v 1.3 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -110,9 +110,11 @@ pcyrtc_attach(struct device *parent, struct device *self, void *arg)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = pcyrtc_gettime;
 	sc->sc_todr.todr_settime = pcyrtc_settime;
+	sc->sc_todr.todr_quality = 1000;
 	todr_attach(&sc->sc_todr);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk48txx.c,v 1.8 2021/04/24 10:15:15 mpi Exp $	*/
+/*	$OpenBSD: mk48txx.c,v 1.9 2022/10/12 13:39:50 kettenis Exp $	*/
 /*	$NetBSD: mk48txx.c,v 1.7 2001/04/08 17:05:10 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ mk48txx_attach(bt, bh, model, year0)
 	handle->todr_gettime = mk48txx_gettime;
 	handle->todr_settime = mk48txx_settime;
 	handle->todr_setwen = NULL;
+	handle->todr_quality = 0;
 	mk->mk_bt = bt;
 	mk->mk_bh = bh;
 	mk->mk_nvramsz = nvramsz;

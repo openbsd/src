@@ -1,4 +1,4 @@
-/*	$OpenBSD: dapmic.c,v 1.3 2022/10/03 21:02:02 jca Exp $	*/
+/*	$OpenBSD: dapmic.c,v 1.4 2022/10/12 13:39:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -139,6 +139,7 @@ dapmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = dapmic_gettime;
 	sc->sc_todr.todr_settime = dapmic_settime;
+	sc->sc_todr.todr_quality = 0;
 	todr_attach(&sc->sc_todr);
 
 	if (cpuresetfn == NULL)

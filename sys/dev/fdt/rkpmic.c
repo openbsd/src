@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.11 2022/10/10 17:45:35 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.12 2022/10/12 13:39:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,8 +27,6 @@
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/clock_subr.h>
-
-extern todr_chip_handle_t todr_handle;
 
 #define RK80X_SECONDS		0x00
 #define RK80X_MINUTES		0x01
@@ -310,8 +308,8 @@ rkpmic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = rkpmic_gettime;
 	sc->sc_todr.todr_settime = rkpmic_settime;
-	if (todr_handle == NULL)
-		todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 0;
+	todr_attach(&sc->sc_todr);
 
 	if (OF_is_compatible(node, "rockchip,rk805")) {
 		chip = "RK805";

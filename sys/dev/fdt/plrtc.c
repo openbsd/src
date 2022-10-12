@@ -1,4 +1,4 @@
-/*	$OpenBSD: plrtc.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: plrtc.c,v 1.3 2022/10/12 13:39:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Jonathan Gray <jsg@openbsd.org>
@@ -120,6 +120,7 @@ plrtc_attach(struct device *parent, struct device *self, void *aux)
 	handle->cookie = sc;
 	handle->todr_gettime = plrtc_gettime;
 	handle->todr_settime = plrtc_settime;
+	handle->todr_quality = 0;
 	todr_handle = handle;
 
 	/* enable the rtc */

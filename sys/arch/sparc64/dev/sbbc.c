@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbbc.c,v 1.14 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: sbbc.c,v 1.15 2022/10/12 13:39:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -330,9 +330,9 @@ sbbc_attach_tod(struct sbbc_softc *sc, uint32_t offset)
 	handle->cookie = tod;
 	handle->todr_gettime = sbbc_tod_gettime;
 	handle->todr_settime = sbbc_tod_settime;
-
 	handle->bus_cookie = NULL;
 	handle->todr_setwen = NULL;
+	handle->todr_quality = 0;
 	todr_handle = handle;
 }
 
