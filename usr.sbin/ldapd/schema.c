@@ -1,4 +1,4 @@
-/*	$OpenBSD: schema.c,v 1.19 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: schema.c,v 1.20 2022/10/12 11:57:40 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -834,6 +834,7 @@ schema_parse_attributetype(struct schema *schema)
 			goto fail;
 		}
 		free(kw);
+		kw = NULL;
 	}
 
 	/* Check that a syntax is defined, either directly or
@@ -972,6 +973,7 @@ schema_parse_objectclass(struct schema *schema)
 			goto fail;
 		}
 		free(kw);
+		kw = NULL;
 	}
 
 	/* Verify the subclassing is allowed.
