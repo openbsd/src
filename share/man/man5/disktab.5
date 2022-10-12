@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disktab.5,v 1.21 2022/09/01 13:56:21 krw Exp $
+.\"	$OpenBSD: disktab.5,v 1.22 2022/10/12 23:11:32 krw Exp $
 .\"	$NetBSD: disktab.5,v 1.4 1994/11/30 19:31:15 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)disktab.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: September 1 2022 $
+.Dd $Mdocdate: October 12 2022 $
 .Dt DISKTAB 5
 .Os
 .Sh NAME
@@ -67,7 +67,6 @@ The following list indicates the normal values stored for each disk entry:
 .It \&su Ta num Ta "Number of sectors per unit (default: sc*nc)."
 .It \&se Ta num Ta "Sector size in bytes (default:"
 .Dv DEV_BSIZE ) .
-.It \&sf Ta bool Ta "Controller supports bad144-style bad sector forwarding."
 .It \&d[0-4] Ta num Ta "Drive-type-dependent parameters."
 .Pp
 .It \&ba Ta num Ta "Block size for partition"

@@ -71,9 +71,6 @@ getdiskbyname(const char *name)
 		cq++, cp++;
 	*cq = '\0';
 
-	if (cgetcap(buf, "sf", ':') != NULL)
-		dp->d_flags |= D_BADSECT;
-
 #define getnumdflt(field, dname, dflt) \
 	{ long f; (field) = (cgetnum(buf, dname, &f) == -1) ? (dflt) : f; }
 #define	getnum(field, dname) \

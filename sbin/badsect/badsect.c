@@ -1,4 +1,4 @@
-/*	$OpenBSD: badsect.c,v 1.28 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: badsect.c,v 1.29 2022/10/12 23:11:32 krw Exp $	*/
 /*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
 
 /*
@@ -35,8 +35,7 @@
  *
  * Badsect takes a list of file-system relative sector numbers
  * and makes files containing the blocks of which these sectors are a part.
- * It can be used to contain sectors which have problems if these sectors
- * are not part of the bad file for the pack (see bad144).  For instance,
+ * It can be used to contain sectors which have problems. For instance,
  * this program can be used if the driver for the file system in question
  * does not support bad block forwarding.
  */

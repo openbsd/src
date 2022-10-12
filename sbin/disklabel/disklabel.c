@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.244 2022/09/06 14:14:44 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.245 2022/10/12 23:11:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -572,8 +572,6 @@ display(FILE *f, struct disklabel *lp, char unit, int all)
 	    lp->d_uid[0], lp->d_uid[1], lp->d_uid[2], lp->d_uid[3],
 	    lp->d_uid[4], lp->d_uid[5], lp->d_uid[6], lp->d_uid[7]);
 	fprintf(f, "flags:");
-	if (lp->d_flags & D_BADSECT)
-		fprintf(f, " badsect");
 	if (lp->d_flags & D_VENDOR)
 		fprintf(f, " vendor");
 	putc('\n', f);
@@ -865,7 +863,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			for (v = 0; (cp = tp) && *cp != '\0';) {
 				tp = word(cp);
 				if (!strcmp(cp, "badsect"))
-					v |= D_BADSECT;
+					; /* Ignore obsolete flag. */
 				else if (!strcmp(cp, "vendor"))
 					v |= D_VENDOR;
 				else {

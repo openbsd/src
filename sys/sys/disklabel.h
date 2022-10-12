@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.84 2022/10/11 23:39:08 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.85 2022/10/12 23:11:33 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -321,7 +321,6 @@ static char *fstypesnames[] = {
 /*
  * flags shared by various drives:
  */
-#define		D_BADSECT	0x04		/* supports bad sector forw. */
 #define		D_VENDOR	0x08		/* vendor disklabel */
 
 #ifndef _LOCORE
