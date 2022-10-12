@@ -1,10 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.13 2016/11/06 16:04:20 tb Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 2022/10/12 10:48:33 kn Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/09/30 16:34:59 ws Exp $
 
 .if !defined(__stand_makefile_inc)
 __stand_makefile_inc=1
-
-KERN_AS=	library
 
 S=$(.CURDIR)/../../../$(R)
 
@@ -16,7 +14,6 @@ S=$(.CURDIR)/../../../$(R)
 
 #
 EXTRACFLAGS=	-msoft-float
-REAL_VIRT?=	-v
 ENTRY?=	_start
 
 INCLUDES+=	-I. -I$(.OBJDIR) -I$(.CURDIR)/.. -I$(S)/arch -I$(S)
