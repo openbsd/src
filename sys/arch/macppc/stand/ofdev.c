@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.27 2022/09/05 10:03:50 kn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.28 2022/10/12 09:23:45 kn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -127,6 +127,7 @@ devclose(struct open_file *of)
 
 	OF_close(op->handle);
 	free(op, sizeof *op);
+	return 0;
 }
 
 struct devsw devsw[1] = {
