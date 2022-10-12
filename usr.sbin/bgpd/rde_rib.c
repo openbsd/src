@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.249 2022/09/12 10:03:17 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.250 2022/10/12 11:26:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -147,7 +147,7 @@ rib_new(char *name, u_int rtableid, uint16_t flags)
 
 	if (id >= rib_size) {
 		if ((ribs = recallocarray(ribs, id, id + 8,
-		    sizeof(struct rib))) == NULL)
+		    sizeof(struct rib *))) == NULL)
 			fatal(NULL);
 		rib_size = id + 8;
 	}
