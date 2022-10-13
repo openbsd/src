@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.42 2022/08/29 01:34:18 drahn Exp $ */
+/* $OpenBSD: agintc.c,v 1.43 2022/10/13 07:04:53 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -70,9 +70,12 @@
 #define  GICD_CTLR_ARE_NS		(1 << 4)
 #define  GICD_CTLR_DS			(1 << 6)
 #define GICD_TYPER		0x0004
+#define  GICD_TYPER_MBIS		(1 << 16)
 #define  GICD_TYPER_LPIS		(1 << 17)
 #define  GICD_TYPER_ITLINE_M		0x1f
 #define GICD_IIDR		0x0008
+#define GICD_SETSPI_NSR		0x0040
+#define GICD_CLRSPI_NSR		0x0048
 #define GICD_IGROUPR(i)		(0x0080 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ISENABLER(i)	(0x0100 + (IRQ_TO_REG32(i) * 4))
 #define GICD_ICENABLER(i)	(0x0180 + (IRQ_TO_REG32(i) * 4))
@@ -139,6 +142,12 @@
 #define IRQ_ENABLE	1
 #define IRQ_DISABLE	0
 
+struct agintc_mbi_range {
+	int			  mr_base;
+	int			  mr_span;
+	void			**mr_mbi;
+};
+
 struct agintc_softc {
 	struct simplebus_softc	 sc_sbus;
 	struct intrq		*sc_handler;
@@ -152,6 +161,9 @@ struct agintc_softc {
 	int			 sc_cpuremap[MAXCPUS];
 	int			 sc_nintr;
 	int			 sc_nlpi;
+	bus_addr_t		 sc_mbi_addr;
+	int			 sc_mbi_nranges;
+	struct agintc_mbi_range	*sc_mbi_ranges;
 	int			 sc_prio_shift;
 	int			 sc_pmr_shift;
 	int			 sc_rk3399_quirk;
@@ -206,6 +218,7 @@ void		agintc_dmamem_free(bus_dma_tag_t, struct agintc_dmamem *);
 
 int		agintc_match(struct device *, void *, void *);
 void		agintc_attach(struct device *, struct device *, void *);
+void		agintc_mbiinit(struct agintc_softc *, int, bus_addr_t);
 void		agintc_cpuinit(void);
 int		agintc_spllower(int);
 void		agintc_splx(int);
@@ -217,6 +230,8 @@ void		*agintc_intr_establish(int, int, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
 void		*agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 		    struct cpu_info *, int (*func)(void *), void *arg, char *name);
+void		*agintc_intr_establish_mbi(void *, uint64_t *, uint64_t *,
+		    int , struct cpu_info *, int (*)(void *), void *, char *);
 void		agintc_intr_disestablish(void *);
 void		agintc_irq_handler(void *);
 uint32_t	agintc_iack(void);
@@ -327,6 +342,9 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		/* Minimum number of LPIs supported by any implementation. */
 		sc->sc_nlpi = 8192;
 	}
+
+	if (typer & GICD_TYPER_MBIS)
+		agintc_mbiinit(sc, faa->fa_node, faa->fa_reg[0].addr);
 
 	/*
 	 * We are guaranteed to have at least 16 priority levels, so
@@ -628,6 +646,8 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_route = agintc_route_irq;
 	sc->sc_ic.ic_cpu_enable = agintc_cpuinit;
 	sc->sc_ic.ic_barrier = agintc_intr_barrier;
+	if (sc->sc_mbi_nranges > 0)
+		sc->sc_ic.ic_establish_msi = agintc_intr_establish_mbi;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	intr_restore(psw);
@@ -654,6 +674,42 @@ unmap:
 
 	bus_space_unmap(sc->sc_iot, sc->sc_redist_base, faa->fa_reg[1].size);
 	bus_space_unmap(sc->sc_iot, sc->sc_d_ioh, faa->fa_reg[0].size);
+}
+
+void
+agintc_mbiinit(struct agintc_softc *sc, int node, bus_addr_t addr)
+{
+	uint32_t *ranges;
+	int i, len;
+
+	if (OF_getproplen(node, "msi-controller") != 0)
+		return;
+
+	len = OF_getproplen(node, "mbi-ranges");
+	if (len <= 0 || len % 2 * sizeof(uint32_t) != 0)
+		return;
+
+	ranges = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "mbi-ranges", ranges, len);
+
+	sc->sc_mbi_nranges = len / (2 * sizeof(uint32_t));
+	sc->sc_mbi_ranges = mallocarray(sc->sc_mbi_nranges,
+	    sizeof(struct agintc_mbi_range), M_DEVBUF, M_WAITOK);
+
+	for (i = 0; i < sc->sc_mbi_nranges; i++) {
+		sc->sc_mbi_ranges[i].mr_base = ranges[2 * i + 0];
+		sc->sc_mbi_ranges[i].mr_span = ranges[2 * i + 1];
+		sc->sc_mbi_ranges[i].mr_mbi =
+		    mallocarray(sc->sc_mbi_ranges[i].mr_span,
+			sizeof(void *), M_DEVBUF, M_WAITOK | M_ZERO);
+	}
+
+	free(ranges, M_TEMP, len);
+
+	addr = OF_getpropint64(node, "mbi-alias", addr);
+	sc->sc_mbi_addr = addr + GICD_SETSPI_NSR;
+
+	printf(" mbi");
 }
 
 /* Initialize redistributors on each core. */
@@ -1126,6 +1182,8 @@ agintc_intr_disestablish(void *cookie)
 	struct intrhand		*ih = cookie;
 	int			 irqno = ih->ih_irq;
 	u_long			 psw;
+	struct agintc_mbi_range	*mr;
+	int			 i;
 
 	psw = intr_disable();
 
@@ -1135,9 +1193,55 @@ agintc_intr_disestablish(void *cookie)
 
 	agintc_calc_irq(sc, irqno);
 
+	/* In case this is an MBI, free it */
+	for (i = 0; i < sc->sc_mbi_nranges; i++) {
+		mr = &sc->sc_mbi_ranges[i];
+		if (irqno < mr->mr_base)
+			continue;
+		if (irqno >= mr->mr_base + mr->mr_span)
+			break;
+		if (mr->mr_mbi[irqno - mr->mr_base] != NULL)
+		    mr->mr_mbi[irqno - mr->mr_base] = NULL;
+	}
+
 	intr_restore(psw);
 
 	free(ih, M_DEVBUF, 0);
+}
+
+void *
+agintc_intr_establish_mbi(void *self, uint64_t *addr, uint64_t *data,
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
+{
+	struct agintc_softc *sc = agintc_sc;
+	struct agintc_mbi_range *mr;
+	void *cookie;
+	int i, j, hwcpu;
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+	hwcpu = agintc_sc->sc_cpuremap[ci->ci_cpuid];
+
+	for (i = 0; i < sc->sc_mbi_nranges; i++) {
+		mr = &sc->sc_mbi_ranges[i];
+		for (j = 0; j < mr->mr_span; j++) {
+			if (mr->mr_mbi[j] != NULL)
+				continue;
+
+			cookie = agintc_intr_establish(mr->mr_base + j,
+			    IST_EDGE_RISING, level, ci, func, arg, name);
+			if (cookie == NULL)
+				return NULL;
+
+			*addr = sc->sc_mbi_addr;
+			*data = mr->mr_base + j;
+
+			mr->mr_mbi[j] = cookie;
+			return cookie;
+		}
+	}
+
+	return NULL;
 }
 
 void
