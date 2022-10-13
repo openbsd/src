@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tset.1,v 1.23 2022/03/31 17:27:28 naddy Exp $
+.\"	$OpenBSD: tset.1,v 1.24 2022/10/13 21:37:05 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)tset.1	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 13 2022 $
 .Dt TSET 1
 .Os
 .Sh NAME
@@ -275,7 +275,7 @@ and
 .Ql \&!
 inverts the sense of the test.
 The baud rate is specified as a number and is compared with the speed
-of the standard error output (which should be the control terminal).
+of the standard error output (which should be the controlling terminal).
 The terminal type is a string.
 .Pp
 If the terminal type is not specified on the command line, the

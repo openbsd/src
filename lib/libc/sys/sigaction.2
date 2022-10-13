@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.76 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: sigaction.2,v 1.77 2022/10/13 21:37:05 jmc Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 13 2022 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -327,8 +327,8 @@ with names as in the include file
 .It Dv SIGTSTP Ta "stop process" Ta "stop signal generated from keyboard"
 .It Dv SIGCONT Ta "discard signal" Ta "continue after stop"
 .It Dv SIGCHLD Ta "discard signal" Ta "child status has changed"
-.It Dv SIGTTIN Ta "stop process" Ta "background read attempted from control terminal"
-.It Dv SIGTTOU Ta "stop process" Ta "background write attempted to control terminal"
+.It Dv SIGTTIN Ta "stop process" Ta "background read attempted from controlling terminal"
+.It Dv SIGTTOU Ta "stop process" Ta "background write attempted to controlling terminal"
 .It Dv SIGIO Ta "discard signal" Ta "I/O is possible on a descriptor (see"
 .Xr fcntl 2 )
 .It Dv SIGXCPU Ta "terminate process" Ta "CPU time limit exceeded (see"

@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.36 2022/03/31 17:27:15 naddy Exp $
+.\"	$OpenBSD: sigvec.3,v 1.37 2022/10/13 21:37:05 jmc Exp $
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 13 2022 $
 .Dt SIGVEC 3
 .Os
 .Sh NAME
@@ -243,8 +243,8 @@ with names as in the include file
 .It Dv SIGTSTP Ta "stop process" Ta "stop signal generated from keyboard"
 .It Dv SIGCONT Ta "discard signal" Ta "continue after stop"
 .It Dv SIGCHLD Ta "discard signal" Ta "child status has changed"
-.It Dv SIGTTIN Ta "stop process" Ta "background read attempted from control terminal"
-.It Dv SIGTTOU Ta "stop process" Ta "background write attempted to control terminal"
+.It Dv SIGTTIN Ta "stop process" Ta "background read attempted from controlling terminal"
+.It Dv SIGTTOU Ta "stop process" Ta "background write attempted to controlling terminal"
 .It Dv SIGIO Ta "discard signal" Ta "I/O is possible on a descriptor (see"
 .Xr fcntl 2 )
 .It Dv SIGXCPU Ta "terminate process" Ta "CPU time limit exceeded (see"

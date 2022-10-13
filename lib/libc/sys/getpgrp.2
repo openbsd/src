@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.18 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.19 2022/10/13 21:37:05 jmc Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getpgrp.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: October 13 2022 $
 .Dt GETPGRP 2
 .Os
 .Sh NAME
@@ -71,8 +71,7 @@ The
 .Fn tcgetpgrp
 and
 .Fn tcsetpgrp
-calls
-are used to get/set the process group of the control terminal.
+calls are used to get/set the process group of the controlling terminal.
 .Sh ERRORS
 .Fn getpgrp
 always succeeds, however

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.57 2022/09/24 15:21:21 jmc Exp $
+.\"	$OpenBSD: execve.2,v 1.58 2022/10/13 21:37:05 jmc Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: September 24 2022 $
+.Dd $Mdocdate: October 13 2022 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ The process will be started without the new permissions.
 The new process also inherits the following attributes from
 the calling process:
 .Pp
-.Bl -tag -width parent_process_ID -offset indent -compact
+.Bl -tag -width controlling_terminal -offset indent -compact
 .It process ID
 see
 .Xr getpid 2
@@ -178,7 +178,7 @@ see
 .It root directory
 see
 .Xr chroot 2
-.It control terminal
+.It controlling terminal
 see
 .Xr termios 4
 .It resource usages
