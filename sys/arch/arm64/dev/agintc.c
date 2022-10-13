@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.43 2022/10/13 07:04:53 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.44 2022/10/13 18:34:56 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1167,7 +1167,8 @@ agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 		    GICR_PROP_GROUP1 | GICR_PROP_ENABLE;
 
 		/* Make globally visible. */
-		cpu_dcache_wb_range((vaddr_t)prop, 1);
+		cpu_dcache_wb_range((vaddr_t)&prop[irqno - LPI_BASE],
+		    sizeof(*prop));
 		__asm volatile("dsb sy");
 	}
 
@@ -1187,22 +1188,34 @@ agintc_intr_disestablish(void *cookie)
 
 	psw = intr_disable();
 
-	TAILQ_REMOVE(&sc->sc_handler[irqno].iq_list, ih, ih_list);
+	if (irqno < LPI_BASE) {
+		TAILQ_REMOVE(&sc->sc_handler[irqno].iq_list, ih, ih_list);
+		agintc_calc_irq(sc, irqno);
+
+		/* In case this is an MBI, free it */
+		for (i = 0; i < sc->sc_mbi_nranges; i++) {
+			mr = &sc->sc_mbi_ranges[i];
+			if (irqno < mr->mr_base)
+				continue;
+			if (irqno >= mr->mr_base + mr->mr_span)
+				break;
+			if (mr->mr_mbi[irqno - mr->mr_base] != NULL)
+				mr->mr_mbi[irqno - mr->mr_base] = NULL;
+		}
+	} else {
+		uint8_t *prop = AGINTC_DMA_KVA(sc->sc_prop);
+
+		sc->sc_lpi_handler[irqno - LPI_BASE] = NULL;
+		prop[irqno - LPI_BASE] = 0;
+
+		/* Make globally visible. */
+		cpu_dcache_wb_range((vaddr_t)&prop[irqno - LPI_BASE],
+		    sizeof(*prop));
+		__asm volatile("dsb sy");
+	}
+
 	if (ih->ih_name != NULL)
 		evcount_detach(&ih->ih_count);
-
-	agintc_calc_irq(sc, irqno);
-
-	/* In case this is an MBI, free it */
-	for (i = 0; i < sc->sc_mbi_nranges; i++) {
-		mr = &sc->sc_mbi_ranges[i];
-		if (irqno < mr->mr_base)
-			continue;
-		if (irqno >= mr->mr_base + mr->mr_span)
-			break;
-		if (mr->mr_mbi[irqno - mr->mr_base] != NULL)
-		    mr->mr_mbi[irqno - mr->mr_base] = NULL;
-	}
 
 	intr_restore(psw);
 
