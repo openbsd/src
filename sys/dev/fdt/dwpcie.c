@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.36 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.37 2022/10/13 09:07:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -250,14 +250,16 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "amlogic,g12a-pcie") ||
-	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-pcie"));
 }
 
 void	dwpcie_attach_deferred(struct device *);
 
+void	dwpcie_atu_disable(struct dwpcie_softc *, int);
 void	dwpcie_atu_config(struct dwpcie_softc *, int, int,
 	    uint64_t, uint64_t, uint64_t);
 void	dwpcie_link_config(struct dwpcie_softc *);
@@ -274,6 +276,7 @@ int	dwpcie_imx8mq_init(struct dwpcie_softc *);
 int	dwpcie_imx8mq_intr(void *);
 
 int	dwpcie_fu740_init(struct dwpcie_softc *);
+int	dwpcie_rk3568_init(struct dwpcie_softc *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -433,6 +436,8 @@ dwpcie_attach_deferred(struct device *self)
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(sc->sc_node, "fsl,imx8mq-pcie"))
 		error = dwpcie_imx8mq_init(sc);
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie"))
+		error = dwpcie_rk3568_init(sc);
 	if (OF_is_compatible(sc->sc_node, "sifive,fu740-pcie"))
 		error = dwpcie_fu740_init(sc);
 	if (error != 0) {
@@ -483,6 +488,9 @@ dwpcie_attach_deferred(struct device *self)
 	 */
 	if (sc->sc_num_viewport < 4)
 		sc->sc_pmem_size = 0;
+
+	for (i = 0; i < sc->sc_num_viewport; i++)
+		dwpcie_atu_disable(sc, i);
 
 	dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX0,
 	    IATU_REGION_CTRL_1_TYPE_MEM, sc->sc_mem_base,
@@ -605,7 +613,8 @@ dwpcie_attach_deferred(struct device *self)
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
-	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie"))
+	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie"))
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
@@ -1051,6 +1060,28 @@ dwpcie_fu740_init(struct dwpcie_softc *sc)
 	sc->sc_num_viewport = 8;
 
 	return 0;
+}
+
+int
+dwpcie_rk3568_init(struct dwpcie_softc *sc)
+{
+	sc->sc_num_viewport = 8;
+
+	return 0;
+}
+
+void
+dwpcie_atu_disable(struct dwpcie_softc *sc, int index)
+{
+	uint32_t off;
+
+	off = sc->sc_atu_base + IATU_OFFSET_UNROLL(index);
+	if (!sc->sc_atu_unroll) {
+		off = IATU_OFFSET_VIEWPORT;
+		HWRITE4(sc, IATU_VIEWPORT, index);
+	}
+
+	HWRITE4(sc, off + IATU_REGION_CTRL_2, 0);
 }
 
 void
