@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.223 2022/02/06 17:24:58 rob Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.224 2022/10/13 08:38:53 tb Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -94,8 +94,7 @@
  */
 
 /*
- * Stirring polynomials over GF(2) for various pool sizes. Used in
- * add_entropy_words() below.
+ * Stirring polynomial over GF(2). Used in add_entropy_words() below.
  *
  * The polynomial terms are chosen to be evenly spaced (minimum RMS
  * distance from evenly spaced; except for the last tap, which is 1 to
