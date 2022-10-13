@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.4 2022/09/05 18:07:04 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.5 2022/10/13 04:43:32 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -71,7 +71,7 @@ typedef struct {
 } ASProviderAttestation;
 
 ASN1_SEQUENCE(ASProviderAttestation) = {
-	ASN1_IMP_OPT(ASProviderAttestation, version, ASN1_INTEGER, 0),
+	ASN1_EXP_OPT(ASProviderAttestation, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(ASProviderAttestation, customerASID, ASN1_INTEGER),
 	ASN1_SEQUENCE_OF(ASProviderAttestation, providers, ProviderAS),
 } ASN1_SEQUENCE_END(ASProviderAttestation);

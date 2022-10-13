@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.15 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.16 2022/10/13 04:43:32 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -114,7 +114,7 @@ typedef struct {
 } RpkiSignedChecklist;
 
 ASN1_SEQUENCE(RpkiSignedChecklist) = {
-	ASN1_IMP_OPT(RpkiSignedChecklist, version, ASN1_INTEGER, 0),
+	ASN1_EXP_OPT(RpkiSignedChecklist, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(RpkiSignedChecklist, resources, ResourceBlock),
 	ASN1_SIMPLE(RpkiSignedChecklist, digestAlgorithm, X509_ALGOR),
 	ASN1_SEQUENCE_OF(RpkiSignedChecklist, checkList, FileNameAndHash),

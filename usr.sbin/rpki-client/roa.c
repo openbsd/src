@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.52 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.53 2022/10/13 04:43:32 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -86,7 +86,7 @@ ASN1_SEQUENCE(ROAIPAddressFamily) = {
 } ASN1_SEQUENCE_END(ROAIPAddressFamily);
 
 ASN1_SEQUENCE(RouteOriginAttestation) = {
-	ASN1_IMP_OPT(RouteOriginAttestation, version, ASN1_INTEGER, 0),
+	ASN1_EXP_OPT(RouteOriginAttestation, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(RouteOriginAttestation, asid, ASN1_INTEGER),
 	ASN1_SEQUENCE_OF(RouteOriginAttestation, ipAddrBlocks,
 	    ROAIPAddressFamily),
