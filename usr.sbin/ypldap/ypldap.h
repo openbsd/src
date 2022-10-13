@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.22 2022/08/19 03:50:32 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.23 2022/10/13 04:55:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -101,7 +101,9 @@ struct idm {
 	u_int32_t			 idm_list;
 	struct ypldap_addr_list		 idm_addr;
 	in_port_t			 idm_port;
+	int				 idm_bindext;
 	char				 idm_binddn[LINE_WIDTH];
+	char				 idm_bindextid[LINE_WIDTH];
 	char				 idm_bindcred[LINE_WIDTH];
 	char				 idm_basedn[LINE_WIDTH];
 	char				 idm_groupdn[LINE_WIDTH];

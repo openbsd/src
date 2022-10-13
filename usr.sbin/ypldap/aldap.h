@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.h,v 1.14 2019/05/11 17:46:02 rob Exp $ */
+/*	$OpenBSD: aldap.h,v 1.15 2022/10/13 04:55:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -31,6 +31,8 @@
 #define LDAPS_PORT 		636
 #define LDAP_PAGED_OID		"1.2.840.113556.1.4.319"
 #define LDAP_STARTTLS_OID	"1.3.6.1.4.1.1466.20037"
+
+#define LDAP_SASL_MECH_EXTERNAL	"EXTERNAL"
 
 struct aldap {
 #define ALDAP_ERR_SUCCESS		0
@@ -137,6 +139,7 @@ enum deref_aliases {
 
 enum authentication_choice {
 	LDAP_AUTH_SIMPLE	= 0,
+	LDAP_AUTH_SASL		= 3,
 };
 
 enum scope {
@@ -222,6 +225,7 @@ void			 aldap_freemsg(struct aldap_message *);
 int	 		 aldap_req_starttls(struct aldap *);
 
 int	 aldap_bind(struct aldap *, char *, char *);
+int	 aldap_bind_sasl_external(struct aldap *, char *);
 int	 aldap_unbind(struct aldap *);
 int	 aldap_search(struct aldap *, char *, enum scope, char *, char **, int, int, int, struct aldap_page_control *);
 int	 aldap_get_errno(struct aldap *, const char **);

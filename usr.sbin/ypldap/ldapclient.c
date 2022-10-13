@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.45 2022/08/22 10:10:59 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.46 2022/10/13 04:55:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -635,7 +635,11 @@ client_try_idm(struct env *env, struct idm *idm)
 		int rc;
 
 		where = "binding";
-		if (aldap_bind(al, idm->idm_binddn, idm->idm_bindcred) == -1)
+		if (idm->idm_bindext != 0)
+			rc = aldap_bind_sasl_external(al, idm->idm_bindextid);
+		else
+			rc = aldap_bind(al, idm->idm_binddn, idm->idm_bindcred);
+		if (rc == -1)
 			goto bad;
 
 		where = "parsing";

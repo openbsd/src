@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.48 2022/03/31 09:06:55 martijn Exp $ */
+/*	$OpenBSD: aldap.c,v 1.49 2022/10/13 04:55:33 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -214,6 +214,42 @@ aldap_bind(struct aldap *ldap, char *binddn, char *bindcred)
 fail:
 	if (root != NULL)
 		ober_free_elements(root);
+
+	ldap->err = ALDAP_ERR_OPERATION_FAILED;
+	return (-1);
+}
+
+int
+aldap_bind_sasl_external(struct aldap *ldap, char *bindid)
+{
+	struct ber_element *root = NULL, *elm;
+
+	if ((root = ober_add_sequence(NULL)) == NULL)
+		goto fail;
+
+	elm = ober_printf_elements(root, "d{tds{ts", ++ldap->msgid,
+	    BER_CLASS_APP, LDAP_REQ_BIND, VERSION, "",
+	    BER_CLASS_CONTEXT, LDAP_AUTH_SASL, LDAP_SASL_MECH_EXTERNAL);
+	if (elm == NULL)
+		goto fail;
+
+	if (bindid == NULL)
+		elm = ober_add_null(elm);
+	else
+		elm = ober_add_string(elm, bindid);
+
+	if (elm == NULL)
+		goto fail;
+
+	LDAP_DEBUG("aldap_bind_sasl_external", root);
+
+	if (aldap_send(ldap, root) == -1) {
+		root = NULL;
+		goto fail;
+	}
+	return (ldap->msgid);
+fail:
+	ober_free_elements(root);
 
 	ldap->err = ALDAP_ERR_OPERATION_FAILED;
 	return (-1);
