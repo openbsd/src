@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.60 2022/09/24 15:22:59 jmc Exp $
+.\" $OpenBSD: vm.conf.5,v 1.61 2022/10/14 06:43:26 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 24 2022 $
+.Dd $Mdocdate: October 14 2022 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -117,8 +117,11 @@ a random prefix from the
 .Dq unique local
 network range fd00::/8 will be generated on startup.
 The specified prefix length must be /64 or smaller.
-.It Cm socket owner Ar user : Ns Ar group
-Set the control socket owner to the specified user and group.
+.It Ic socket owner Ar user : Ns Ar group
+Set the control socket owner to the specified
+.Ar user
+and
+.Ar group .
 Users with access to the control socket will be allowed to use
 .Xr vmctl 8
 for restricted access to
@@ -160,28 +163,28 @@ Typically this is a hostname.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm allow instance Brq ...
+.It Ic allow instance Brq ...
 Set the permissions to create VM instances.
 See
 .Sx VM INSTANCES .
-.It Cm boot Ar path
+.It Ic boot Ar path
 Kernel or BIOS image to load when booting the VM.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
-.It Cm boot device Ar device
+.It Ic boot device Ar device
 Force VM to boot from
 .Ar device .
 Valid values are:
 .Bl -tag -width "cdrom"
-.It Ar cdrom
+.It Cm cdrom
 Boot the ISO image file specified using the
 .Ic cdrom
 parameter.
-.It Ar disk
+.It Cm disk
 Boot from the disk image file specified using the
 .Ic disk
 parameter.
-.It Ar net
+.It Cm net
 Boot the kernel specified using the
 .Ic boot
 parameter as if the VM was network booted.
@@ -195,45 +198,45 @@ but rather a simulated network boot.
 .El
 .Pp
 Currently
-.Ar disk
+.Cm disk
 and
-.Ar cdrom
+.Cm cdrom
 only work with VMs booted using BIOS.
-.It Cm cdrom Ar path
+.It Ic cdrom Ar path
 ISO image file.
-.It Cm enable
+.It Ic enable
 Automatically start the VM.
 This is the default if neither
-.Cm enable
+.Ic enable
 nor
-.Cm disable
+.Ic disable
 is specified.
-.It Cm disable
+.It Ic disable
 Do not start this VM.
-.It Cm disk Ar path Op Cm format Ar fmt
+.It Ic disk Ar path Op Ic format Ar fmt
 Disk image file (may be specified multiple times to add multiple disk images).
 The format may be specified as either
-.Ar qcow2
+.Cm qcow2
 or
-.Ar raw .
+.Cm raw .
 If left unspecified, the format defaults to
-.Pa raw
+.Cm raw
 if it cannot be derived automatically.
-.It Oo Cm local Oc Cm interface Oo name Oc Op Brq ...
+.It Oo Ic local Oc Ic interface Oo Ar name Oc Op Brq ...
 Network interface to add to the VM.
 The optional
 .Ar name
 can be either
-.Sq tap
+.Cm tap
 to select the next available
 .Xr tap 4
 interface on the VM host side (the default) or
-.Ar tapN
+.Cm tap Ns Ar N
 to select a specific one.
 .Pp
 Valid options are:
 .Bl -tag -width Ds
-.It Cm group Ar group-name
+.It Ic group Ar group-name
 Assign the interface to a specific interface
 .Dq group .
 For example, this can be used to write
@@ -244,13 +247,13 @@ The
 must not be longer than 15 characters or end with a digit,
 as described in
 .Xr ifconfig 8 .
-.It Oo Cm locked Oc Cm lladdr Op Ar etheraddr
+.It Oo Ic locked Oc Ic lladdr Op Ar etheraddr
 Change the link layer address (MAC address) of the interface on the
 VM guest side.
 If not specified, a randomized address will be assigned by
 .Xr vmd 8 .
 If the
-.Cm locked
+.Ic locked
 keyword is specified,
 .Xr vmd 8
 will drop packets from the VM with altered source addresses.
@@ -262,30 +265,29 @@ If attaching to a switch that also has an
 set, the
 .Ar rdomainid
 configured for the interface takes precedence.
-.It Cm switch Ar name
-Set the virtual switch
-by
+.It Ic switch Ar name
+Set the virtual switch by
 .Ar name .
 See the
 .Sx SWITCH CONFIGURATION
 section about virtual switches.
 This option is ignored if a switch with a matching name cannot be found.
-.It Cm up
+.It Ic up
 Start the interface forwarding packets.
 This is the default.
-.It Cm down
+.It Ic down
 Stop the interface from forwarding packets.
 .El
 .Pp
 A
-.Cm local
+.Ic local
 interface will auto-generate an IPv4 subnet for the interface,
 configure a gateway address on the VM host side,
 and run a simple DHCP/BOOTP server for the VM.
 This option can be used for layer 3 mode without configuring a switch.
 .Pp
 If the global
-.Cm local inet6
+.Ic local inet6
 option is enabled, a routable IPv6 gateway address will be generated
 on the host side.
 Unlike the IPv4 option,
@@ -294,20 +296,23 @@ does not respond to DHCPv6 or router solicitation messages itself.
 Use
 .Xr rad 8
 listening on the interface group, e.g.\&
-.Ar interface tap
+.Ic interface Cm tap
 for auto-configuring the VMs accordingly.
-.It Cm interfaces Ar count
+.It Ic interfaces Ar count
 Optional minimum number of network interfaces to add to the VM.
 If the
 .Ar count
 is greater than the number of
 .Ic interface
 statements, additional default interfaces will be added.
-.It Cm memory Ar bytes
+.It Ic memory Ar bytes
 Memory size of the VM, in bytes, rounded to megabytes.
 The default is 512M.
-.It Cm owner Ar user : Ns Ar group
-Set the owner of the VM to the specified user and group.
+.It Ic owner Ar user : Ns Ar group
+Set the owner of the VM to the specified
+.Ar user
+and
+.Ar group .
 The owner will be allowed to start or stop the VM, pause or unpause the VM,
 and open the VM's console.
 If only
@@ -346,7 +351,7 @@ The allowed instance options are configured in the
 .Ar parent
 VM:
 .Bl -tag -width Ds
-.It Cm allow instance Brq ...
+.It Ic allow instance Brq ...
 Allow users to use this VM as a template for VM instances.
 By default, the root user can always create instances without
 restrictions and users or non-root owners cannot create instances.
@@ -356,28 +361,28 @@ if permitted, will be allowed to configure individual VM options.
 .Pp
 Valid options are:
 .Bl -tag -width Ds
-.It Cm boot
+.It Ic boot
 Allow user to configure the kernel or BIOS image.
 The user needs read access to the image.
-.It Cm cdrom
+.It Ic cdrom
 Allow user to configure the ISO file.
 The user needs read access to the file.
-.It Cm disk
+.It Ic disk
 Allow user to configure the disk images.
 The user needs read and write access to image and instances are not
 allowed to reuse disks from the parent VM.
-.It Cm instance
+.It Ic instance
 Allow user to create additional instances from the instances.
-.It Cm interface
+.It Ic interface
 Allow user to change network interface settings.
-.It Cm memory
+.It Ic memory
 Allow user to configure the memory size.
-.It Cm owner Ar user Ns Op : Ns Ar group
+.It Ic owner Ar user Ns Op : Ns Ar group
 Allow the specified user or group to create the instances.
 The owner will be allowed to create VM instances, start or stop the
 instances, pause or unpause the instances, and open the instances'
 consoles.
-.It Cm owner Pf : Ar group
+.It Ic owner Pf : Ar group
 Set the owner to the specified group.
 .El
 .Sh SWITCH CONFIGURATION
@@ -415,21 +420,21 @@ This name can be any string, and is typically a network name.
 .Pp
 Followed by a block of parameters that is enclosed in curly brackets:
 .Bl -tag -width Ds
-.It Cm enable
+.It Ic enable
 Automatically configure the switch.
 This is the default if neither
-.Cm enable
+.Ic enable
 nor
-.Cm disable
+.Ic disable
 is specified.
-.It Cm locked lladdr
+.It Ic locked lladdr
 If this option is specified,
 .Xr vmd 8
 will drop packets with altered source addresses that do not match the
 link layer addresses (MAC addresses) of the VM interfaces in this switch.
-.It Cm disable
+.It Ic disable
 Do not configure this switch.
-.It Cm group Ar group-name
+.It Ic group Ar group-name
 Assign each interface to a specific interface
 .Dq group .
 For example, this can be used to write
@@ -440,19 +445,19 @@ The
 must not be longer than 15 characters or end with a digit,
 as described in
 .Xr ifconfig 8 .
-.It Cm interface Ar name
+.It Ic interface Ar name
 Set the
 .Xr bridge 4
 or
 .Xr veb 4
 network interface of this switch.
-.It Cm rdomain Ar rdomainid
+.It Ic rdomain Ar rdomainid
 Set the routing domain of the switch and all of its VM interfaces to
 .Ar rdomainid .
-.It Cm up
+.It Ic up
 Start the switch forwarding packets.
 This is the default.
-.It Cm down
+.It Ic down
 Stop the switch from forwarding packets.
 .El
 .Sh FILES
