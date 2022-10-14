@@ -1,10 +1,15 @@
 #!/bin/ksh
 #
-# $OpenBSD: smtpd,v 1.7 2018/01/11 19:52:12 rpe Exp $
+# $OpenBSD: smtpd,v 1.8 2022/10/14 11:02:43 kn Exp $
 
 daemon="/usr/sbin/smtpd"
 
 . /etc/rc.d/rc.subr
+
+rc_configtest() {
+	# use rc_exec here since daemon_flags may contain arguments with spaces
+	rc_exec "${daemon} -n ${daemon_flags}"
+}
 
 rc_reload=NO
 
