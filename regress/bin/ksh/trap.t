@@ -1,4 +1,4 @@
-#	$OpenBSD: trap.t,v 1.2 2022/10/14 22:56:13 kn Exp $
+#	$OpenBSD: trap.t,v 1.3 2022/10/14 23:51:16 kn Exp $
 
 #
 # Check that I/O redirection failure triggers the ERR trap.
@@ -49,12 +49,15 @@ expected-exit: e != 0
 ---
 
 #
-# Check that the errexit option does not interfere with running traps.
+# Check that the errexit option
+# a) does not interfere with running traps and
+# b) propagates a non-zero exit status from traps.
+# Check that traps are run in the same order in which they were triggered.
 #
 
 name: EXIT-always-runs
 description:
-	Check that the EXIT trap runs under errexit even if the ERR trap failed.
+	Check that EXIT runs under errexit even if ERR failed.
 arguments: !-e!
 stdin:
 	trap 'echo ERR ; false' ERR
@@ -81,3 +84,35 @@ expected-stdout:
 	EXIT
 expected-exit: e == 0
 ---
+
+
+name: errexit-aborts-EXIT
+# XXX remove once bin/ksh/main.c r1.52 is backed out
+expected-fail: yes
+description:
+	Check that errexit makes EXIT exit early.
+arguments: !-e!
+stdin:
+	trap 'echo ERR' ERR
+	trap 'false ; echo EXIT' EXIT
+expected-stdout:
+	ERR
+expected-exit: e != 0
+---
+
+
+name: EXIT-triggers-ERR
+# XXX remove once bin/ksh/main.c r1.52 is backed out *AND* and a new fix is in
+expected-fail: yes
+description:
+	Check that ERR runs under errexit if EXIT failed.
+arguments: !-e!
+stdin:
+	trap 'echo ERR' ERR
+	trap 'echo EXIT ; false' EXIT
+	true
+expected-stdout:
+	EXIT
+	ERR
+expected-exit: e != 0
+ ---
