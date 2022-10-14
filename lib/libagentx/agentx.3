@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.8 2022/03/31 17:27:15 naddy Exp $
+.\" $OpenBSD: agentx.3,v 1.9 2022/10/14 15:26:58 martijn Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 14 2022 $
 .Dt AGENTX 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm agentx_log_debug ,
 .Nm agentx ,
 .Nm agentx_connect ,
+.Nm agentx_retry ,
 .Nm agentx_read ,
 .Nm agentx_write ,
 .Nm agentx_wantwrite ,
@@ -94,6 +95,8 @@
 .Fn agentx "void (*nofd)(struct agentx *, void *, int)" "void *cookie"
 .Ft void
 .Fn agentx_connect "struct agentx *sa" "int fd"
+.Ft void
+.Fn agentx_retry "struct agentx *sa"
 .Ft void
 .Fn agentx_read "struct agentx *sa"
 .Ft void
@@ -366,6 +369,12 @@ Once
 is ready for a write, the function
 .Fn agentx_write
 should be called.
+.Pp
+If any of the session, agentcaps, region, index, or objects failed to enable
+correctly
+.Pq as can be seen by the admin through the logs
+they can be retried through
+.Fn agentx_retry.
 .Pp
 .Fa sa
 can be freed via

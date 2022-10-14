@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.h,v 1.6 2021/10/24 18:03:27 martijn Exp $ */
+/*	$OpenBSD: agentx.h,v 1.7 2022/10/14 15:26:58 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -55,6 +55,7 @@ extern void (*agentx_log_debug)(const char *, ...)
 
 struct agentx *agentx(void (*)(struct agentx *, void *, int), void *);
 void agentx_connect(struct agentx *, int);
+void agentx_retry(struct agentx *);
 void agentx_read(struct agentx *);
 void agentx_write(struct agentx *);
 extern void (*agentx_wantwrite)(struct agentx *, int);

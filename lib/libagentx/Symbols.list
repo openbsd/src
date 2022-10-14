@@ -4,6 +4,7 @@ agentx_log_info
 agentx_log_debug
 agentx
 agentx_connect
+agentx_retry
 agentx_read
 agentx_write
 agentx_wantwrite
