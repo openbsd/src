@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.4 2022/08/08 11:27:18 aoyama Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.5 2022/10/14 20:53:18 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -121,10 +121,12 @@ ASLOCAL(main_start)
 	cmp	%r11, %r2,  %r10
 	bb1	ne,   %r11, 1f
 
-	or.u	%r4,  %r0,  %hi16(_C_LABEL(esym))
-	st	%r3,  %r4,  %lo16(_C_LABEL(esym))
+	or.u	%r10, %r0,  %hi16(_C_LABEL(esym))
+	st	%r3,  %r10, %lo16(_C_LABEL(esym))
 1:
 #endif
+	or	%r24, %r0,  %r4		/* save bootdev */
+	or	%r25, %r0,  %r5		/* save boothowto */
 
 	bsr	_ASM_LABEL(setup_psr)
 
@@ -194,6 +196,11 @@ ASLOCAL(main_init)
 1:
 	or.u	%r5, %r0, %hi16(_C_LABEL(first_addr))
 	st	%r4, %r5, %lo16(_C_LABEL(first_addr))
+
+	or.u	%r5,  %r0, %hi16(_C_LABEL(bootdev))
+	st	%r24, %r5, %lo16(_C_LABEL(bootdev))
+	or.u	%r5,  %r0, %hi16(_C_LABEL(boothowto))
+	st	%r25, %r5, %lo16(_C_LABEL(boothowto))
 
 	/*
 	 * Have curcpu() point to a valid cpuinfo structure,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2022/09/23 02:35:46 aoyama Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2022/10/14 20:53:18 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -62,6 +62,7 @@ void	dumpconf(void);
 void	get_autoboot_device(void);
 
 int cold = 1;		/* 1 if still booting */
+dev_t bootdev;		/* set by bootloader, retrieved in locore0.S */
 struct device *bootdv;	/* set by device drivers (if found) */
 
 /*
@@ -117,6 +118,38 @@ get_autoboot_device(void)
 	char *value, c;
 	int i, len, part;
 	extern char *nvram_by_symbol(char *);		/* machdep.c */
+
+	if ((bootdev & B_MAGICMASK) == B_DEVMAGIC) {
+#ifdef DEBUG
+		printf("bootdev = 0x%08x (t:%d, a:%d, c:%d, u:%d, p:%d)\n",
+		    bootdev, B_TYPE(bootdev), B_ADAPTOR(bootdev),
+		    B_CONTROLLER(bootdev), B_UNIT(bootdev),
+		    B_PARTITION(bootdev));
+#endif
+		switch (B_TYPE(bootdev)) {
+		case 0:
+			snprintf(autoboot.cont, sizeof(autoboot.cont),
+			    "spc%d", B_CONTROLLER(bootdev));
+			break;
+#if 0	/* not yet */
+		case 1:
+			snprintf(autoboot.cont, sizeof(autoboot.cont),
+			    "le%d", B_CONTROLLER(bootdev));
+			break;
+#endif
+		default:
+			goto use_nvram_info;
+		}
+		autoboot.targ = B_UNIT(bootdev);
+		autoboot.part = B_PARTITION(bootdev);
+		return;
+	}
+
+use_nvram_info:
+	/*
+	 * Use old method if we can not get bootdev information from boot loader
+	 */
+	printf("%s: no bootdev information, use NVRAM setting\n", __func__);
 
 	/* Assume default controller is internal spc (spc0) */
 	strlcpy(autoboot.cont, "spc0", sizeof(autoboot.cont));

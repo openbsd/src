@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.10 2020/05/26 13:47:29 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.11 2022/10/14 20:53:18 aoyama Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -96,9 +96,11 @@ int	loadrandom(const char *, char *, size_t);
 static int get_boot_device(const char *, int *, int *, int *);
 #endif
 
-void (*cpu_boot)(uint32_t, uint32_t);
+void (*cpu_boot)(uint32_t, uint32_t, uint32_t, uint32_t);
 uint32_t cpu_bootarg1;
 uint32_t cpu_bootarg2;
+uint32_t cpu_bootarg3;
+uint32_t cpu_bootarg4;
 
 char rnddata[BOOTRANDOM_MAX];
 struct rc4_ctx randomctx;
@@ -215,9 +217,16 @@ bootunix(char *line)
 
 		cpu_bootarg1 = BOOT_MAGIC;
 		cpu_bootarg2 = (uint32_t)marks[MARK_END];
-		cpu_boot = (void (*)(uint32_t, uint32_t))
+		/* cpu_bootarg3 is set in devopen() */
+		cpu_bootarg4 = RB_AUTOBOOT;
+#ifdef DEBUG
+		printf("bootarg: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
+		    cpu_bootarg1, cpu_bootarg2, cpu_bootarg3, cpu_bootarg4);
+#endif
+		cpu_boot = (void (*)(uint32_t, uint32_t, uint32_t, uint32_t))
 		    (uint32_t)marks[MARK_ENTRY];
-		(*cpu_boot)(cpu_bootarg1, cpu_bootarg2);
+		(*cpu_boot)(cpu_bootarg1, cpu_bootarg2, cpu_bootarg3,
+		    cpu_bootarg4);
 	}
 	printf("Booting kernel failed. (%s)\n", strerror(errno));
 

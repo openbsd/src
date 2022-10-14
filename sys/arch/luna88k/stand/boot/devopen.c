@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 2022/10/14 20:53:18 aoyama Exp $	*/
 /*	$NetBSD: devopen.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/reboot.h>
 #include <lib/libkern/libkern.h>
 #include <luna88k/stand/boot/samachdep.h>
 #include <machine/disklabel.h>
@@ -117,6 +118,9 @@ devopen(struct open_file *f, const char *fname, char **file)
 #endif
 
 	f->f_dev = dp;
+
+	/* Save boot device information to pass to the kernel */
+	cpu_bootarg3 = MAKEBOOTDEV(dev, 0, unit / 10, 6 - unit % 10, part);
 
 	return 0;
 }

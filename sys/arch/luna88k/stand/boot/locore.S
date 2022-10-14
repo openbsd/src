@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2022/10/14 20:53:19 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -128,6 +128,10 @@ ASLOCAL(cpu_park)
 	ld	%r2,  %r2, %lo16(_C_LABEL(cpu_bootarg1))
 	or.u	%r3,  %r0, %hi16(_C_LABEL(cpu_bootarg2))
 	ld	%r3,  %r3, %lo16(_C_LABEL(cpu_bootarg2))
+	or.u	%r4,  %r0, %hi16(_C_LABEL(cpu_bootarg3))
+	ld	%r4,  %r4, %lo16(_C_LABEL(cpu_bootarg3))
+	or.u	%r5,  %r0, %hi16(_C_LABEL(cpu_bootarg4))
+	ld	%r5,  %r5, %lo16(_C_LABEL(cpu_bootarg4))
 
 	jmp	%r1
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.4 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.5 2022/10/14 20:53:19 aoyama Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -70,9 +70,11 @@ extern int howto;
 int boot(int, char **);
 int bootunix(char *);
 
-extern void (*cpu_boot)(uint32_t, uint32_t);
+extern void (*cpu_boot)(uint32_t, uint32_t, uint32_t, uint32_t);
 extern uint32_t cpu_bootarg1;
 extern uint32_t cpu_bootarg2;
+extern uint32_t cpu_bootarg3;
+extern uint32_t cpu_bootarg4;
 #define	BOOT_MAGIC	0xf1abde3f
 
 /* cons.c */
