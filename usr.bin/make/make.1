@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.136 2022/08/03 07:54:47 jsg Exp $
+.\"	$OpenBSD: make.1,v 1.137 2022/10/14 11:26:19 kn Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: August 3 2022 $
+.Dd $Mdocdate: October 14 2022 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -600,9 +600,9 @@ If the variable name contains only a single letter, the surrounding
 braces or parentheses are not required.
 This shorter form is not recommended.
 .Pp
-Variable substitution occurs at two distinct times, depending on where
-the variable is being used.
-Variables in dependency lines are expanded as the line is read.
+Variable substitution occurs at distinct times, depending on the type of line.
+Variables in dependency lines, conditional directives and include statements
+are expanded as the line is read.
 Variables in shell commands are expanded when the shell command is
 executed.
 .Pp
