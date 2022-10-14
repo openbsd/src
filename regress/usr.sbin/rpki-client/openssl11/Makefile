@@ -1,9 +1,3 @@
-.if ! exists(/usr/local/bin/eopenssl11)
-regress:
-	@echo 'Run "pkg_add openssl--%1.1" to run tests against OpenSSL 1.1'
-	@echo SKIPPED
-.endif
-
 LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl11 -L/usr/local/lib/eopenssl11
 CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/eopenssl11/
 CFLAGS +=	-DLIBRESSL_INTERNAL
