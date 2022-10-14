@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.9 2022/10/14 15:26:58 martijn Exp $
+.\" $OpenBSD: agentx.3,v 1.10 2022/10/14 21:44:06 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -355,7 +355,8 @@ but must always be done as a result of a call to
 .Fn nofd .
 Once
 .Fn agentx_connect
-has been called, the application is responsible for retrieving data when available
+has been called,
+the application is responsible for retrieving data when available
 on
 .Fa fd
 by calling
@@ -374,7 +375,7 @@ If any of the session, agentcaps, region, index, or objects failed to enable
 correctly
 .Pq as can be seen by the admin through the logs
 they can be retried through
-.Fn agentx_retry.
+.Fn agentx_retry .
 .Pp
 .Fa sa
 can be freed via
