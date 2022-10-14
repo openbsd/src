@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.375 2022/09/03 13:59:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.376 2022/10/14 16:36:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -751,7 +751,7 @@ editor_resize(struct disklabel *lp, char *p)
 	}
 
 #ifdef SUN_CYLCHECK
-	if (lp->d_secpercyl & D_VENDOR) {
+	if (lp->d_flags & D_VENDOR) {
 		u_int64_t cylsecs;
 		cylsecs = lp->d_secpercyl;
 		ui = ((ui + cylsecs - 1) / cylsecs) * cylsecs;
