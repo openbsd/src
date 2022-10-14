@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.274 2022/06/30 17:15:48 guenther Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.275 2022/10/14 04:38:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -228,7 +228,8 @@ struct malloc_readonly {
 static union {
 	struct malloc_readonly mopts;
 	u_char _pad[MALLOC_PAGESIZE];
-} malloc_readonly __attribute__((aligned(MALLOC_PAGESIZE)));
+} malloc_readonly __attribute__((aligned(MALLOC_PAGESIZE)))
+		__attribute__((section(".openbsd.mutable")));
 #define mopts	malloc_readonly.mopts
 
 char		*malloc_options;	/* compile-time options */
