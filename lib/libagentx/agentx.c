@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.17 2022/09/13 10:20:22 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.18 2022/10/14 15:20:33 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -444,7 +444,7 @@ agentx_session_finalize(struct ax_pdu *pdu, void *cookie)
 	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
 		agentx_log_ax_warnx(ax, "failed to open session: %s",
 		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
-		agentx_reset(ax);
+		axs->axs_cstate = AX_CSTATE_CLOSE;
 		return -1;
 	}
 
@@ -1112,8 +1112,6 @@ agentx_region_finalize(struct ax_pdu *pdu, void *cookie)
 {
 	struct agentx_region *axr = cookie;
 	struct agentx_context *axc = axr->axr_axc;
-	struct agentx_session *axs = axc->axc_axs;
-	struct agentx *ax = axs->axs_ax;
 	struct agentx_index *axi;
 	struct agentx_object *axo;
 
@@ -1140,22 +1138,11 @@ agentx_region_finalize(struct ax_pdu *pdu, void *cookie)
 		agentx_log_axc_info(axc, "region %s: duplicate, can't "
 		    "reduce priority, ignoring",
 		    ax_oid2string(&(axr->axr_oid)));
-	} else if (pdu->ap_payload.ap_response.ap_error ==
-	    AX_PDU_ERROR_REQUESTDENIED) {
+	} else {
 		axr->axr_cstate = AX_CSTATE_CLOSE;
 		agentx_log_axc_warnx(axc, "region %s: %s",
 		     ax_oid2string(&(axr->axr_oid)),
 		     ax_error2string(pdu->ap_payload.ap_response.ap_error));
-		/*
-		 * If we can't register a region, related objects are useless.
-		 * But no need to retry.
-		 */
-		return 0;
-	} else {
-		agentx_log_axc_info(axc, "region %s: %s",
-		    ax_oid2string(&(axr->axr_oid)),
-		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
-		agentx_reset(ax);
 		return -1;
 	}
 
@@ -1648,8 +1635,6 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 	struct agentx_index *axi = cookie;
 	struct agentx_region *axr = axi->axi_axr;
 	struct agentx_context *axc = axr->axr_axc;
-	struct agentx_session *axs = axc->axc_axs;
-	struct agentx *ax = axs->axs_ax;
 	struct ax_pdu_response *resp;
 	size_t i;
 
@@ -1675,20 +1660,20 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 	if (resp->ap_nvarbind != 1) {
 		agentx_log_axc_warnx(axc, "index %s: unexpected number of "
 		    "indices", ax_oid2string(&(axr->axr_oid)));
-		agentx_reset(ax);
+		axi->axi_cstate = AX_CSTATE_CLOSE;
 		return -1;
 	}
 	if (resp->ap_varbindlist[0].avb_type != axi->axi_vb.avb_type) {
 		agentx_log_axc_warnx(axc, "index %s: unexpected index type",
 		    ax_oid2string(&(axr->axr_oid)));
-		agentx_reset(ax);
+		axi->axi_cstate = AX_CSTATE_CLOSE;
 		return -1;
 	}
 	if (ax_oid_cmp(&(resp->ap_varbindlist[0].avb_oid),
 	    &(axi->axi_vb.avb_oid)) != 0) {
 		agentx_log_axc_warnx(axc, "index %s: unexpected oid",
 		    ax_oid2string(&(axr->axr_oid)));
-		agentx_reset(ax);
+		axi->axi_cstate = AX_CSTATE_CLOSE;
 		return -1;
 	}
 
@@ -1702,7 +1687,7 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 		    resp->ap_varbindlist[0].avb_data.avb_int32) {
 			agentx_log_axc_warnx(axc, "index %s: unexpected "
 			    "index value", ax_oid2string(&(axr->axr_oid)));
-			agentx_reset(ax);
+			axi->axi_cstate = AX_CSTATE_CLOSE;
 			return -1;
 		}
 		agentx_log_axc_info(axc, "index %s: allocated '%d'",
