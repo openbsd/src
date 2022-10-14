@@ -1,3 +1,5 @@
+# $OpenBSD: Makefile,v 1.12 2022/10/14 17:17:13 tb Exp $
+
 LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl11 -L/usr/local/lib/eopenssl11
 CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/eopenssl11/
 CFLAGS +=	-DLIBRESSL_INTERNAL

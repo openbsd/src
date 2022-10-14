@@ -1,3 +1,5 @@
+# $OpenBSD: Makefile,v 1.7 2022/10/14 17:17:13 tb Exp $
+
 PROGS += test-http
 
 SRCS_test-http=   test-http.c http.c io.c encoding.c
