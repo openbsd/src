@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.15 2022/07/07 17:09:45 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.16 2022/10/14 06:56:33 tb Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -175,7 +175,11 @@ tls13_hkdf_expand_label_with_length(struct tls13_secret *out,
 	int ret;
 
 	if (!CBB_init(&cbb, 256))
-		return 0;
+		goto err;
+
+	if (out->data == NULL || out->len == 0)
+		goto err;
+
 	if (!CBB_add_u16(&cbb, out->len))
 		goto err;
 	if (!CBB_add_u8_length_prefixed(&cbb, &child))
