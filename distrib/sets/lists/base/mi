@@ -734,7 +734,7 @@
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
-./usr/lib/libagentx.so.1.0
+./usr/lib/libagentx.so.1.1
 ./usr/lib/libc.so.96.3
 ./usr/lib/libcbor.so.1.0
 ./usr/lib/libcrypto.so.50.0
