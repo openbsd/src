@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.87 2022/09/02 20:06:56 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.88 2022/10/15 10:12:13 jsg Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -320,16 +320,14 @@ dev_t	swapdev = makedev(4, 0);
  * A minimal stub routine can always return 0.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
 
 	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
 	return (major(dev) == mem_no && minor(dev) == 12);
 }

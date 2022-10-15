@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 2022/09/02 20:06:56 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 2022/10/15 10:12:13 jsg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -380,8 +380,7 @@ dev_t	swapdev = makedev(1, 0);
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
 int
-iskmemdev(dev)
-	dev_t dev;
+iskmemdev(dev_t dev)
 {
 	return (major(dev) == mem_no && minor(dev) < 2);
 }
@@ -390,8 +389,7 @@ iskmemdev(dev)
  * Returns true if dev is /dev/zero.
  */
 int
-iszerodev(dev)
-	dev_t dev;
+iszerodev(dev_t dev)
 {
 	return (major(dev) == mem_no && minor(dev) == 3);
 }
