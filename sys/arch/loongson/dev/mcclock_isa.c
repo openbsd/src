@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock_isa.c,v 1.3 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: mcclock_isa.c,v 1.4 2022/10/15 14:58:54 jsg Exp $	*/
 /*	$NetBSD: mcclock_isa.c,v 1.5 1996/12/05 01:39:29 cgd Exp $	*/
 
 /*
@@ -64,10 +64,7 @@ const struct mcclock_busfns mcclock_isa_busfns = {
 };
 
 int
-mcclock_isa_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+mcclock_isa_match(struct device *parent, void *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -90,9 +87,7 @@ mcclock_isa_match(parent, match, aux)
 }
 
 void
-mcclock_isa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)self;
@@ -106,9 +101,7 @@ mcclock_isa_attach(parent, self, aux)
 }
 
 void
-mcclock_isa_write(mcsc, reg, datum)
-	struct mcclock_softc *mcsc;
-	u_int reg, datum;
+mcclock_isa_write(struct mcclock_softc *mcsc, u_int reg, u_int datum)
 {
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -119,9 +112,7 @@ mcclock_isa_write(mcsc, reg, datum)
 }
 
 u_int
-mcclock_isa_read(mcsc, reg)
-	struct mcclock_softc *mcsc;
-	u_int reg;
+mcclock_isa_read(struct mcclock_softc *mcsc, u_int reg)
 {
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)mcsc;
 	bus_space_tag_t iot = sc->sc_iot;
