@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.100 2021/05/02 14:13:17 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.101 2022/10/15 17:01:14 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -1185,7 +1185,7 @@ gotofile(char *fpth)
 		ewprintf("File not found %s", fname);
 		return (FALSE);
 	} else {
-		ewprintf("");
+		eerase();
 		return (TRUE);
 	}
 }

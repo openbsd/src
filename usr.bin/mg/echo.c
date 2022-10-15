@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.68 2021/03/02 15:03:35 lum Exp $	*/
+/*	$OpenBSD: echo.c,v 1.69 2022/10/15 17:01:14 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -67,15 +67,15 @@ eyorn(const char *sp)
 	for (;;) {
 		s = getkey(FALSE);
 		if (s == 'y' || s == 'Y' || s == ' ') {
-			ewprintf("");
+			eerase();
 			return (TRUE);
 		}
 		if (s == 'n' || s == 'N' || s == CCHR('M')) {
-			ewprintf("");
+			eerase();
 			return (FALSE);
 		}
 		if (s == CCHR('G')) {
-			ewprintf("");
+			eerase();
 			return (ctrlg(FFRAND, 1));
 		}
 		ewprintf("Please answer y or n.  %s? (y or n) ", sp);
@@ -101,19 +101,19 @@ eynorr(const char *sp)
 	for (;;) {
 		s = getkey(FALSE);
 		if (s == 'y' || s == 'Y' || s == ' ') {
-			ewprintf("");
+			eerase();
 			return (TRUE);
 		}
 		if (s == 'n' || s == 'N' || s == CCHR('M')) {
-			ewprintf("");
+			eerase();
 			return (FALSE);
 		}
 		if (s == 'r' || s == 'R') {
-			ewprintf("");
+			eerase();
 			return (REVERT);
 		}
 		if (s == CCHR('G')) {
-			ewprintf("");
+			eerase();
 			return (ctrlg(FFRAND, 1));
 		}
 		ewprintf("Please answer y, n or r.");
@@ -137,7 +137,7 @@ eyesno(const char *sp)
 	    EFNUL | EFNEW | EFCR, sp);
 	for (;;) {
 		if (rep == NULL) {
-			ewprintf("");
+			eerase();
 			return (ABORT);
 		}
 		if (rep[0] != '\0') {
@@ -149,11 +149,11 @@ eyesno(const char *sp)
 				free(lp);
 			}
 			if (strcasecmp(rep, "yes") == 0) {
-				ewprintf("");
+				eerase();
 				return (TRUE);
 			}
 			if (strcasecmp(rep, "no") == 0) {
-				ewprintf("");
+				eerase();
 				return (FALSE);
 			}
 		}
