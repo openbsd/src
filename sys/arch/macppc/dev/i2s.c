@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.34 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.35 2022/10/15 08:41:18 jsg Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -127,8 +127,7 @@ i2s_attach(struct device *parent, struct i2s_softc *sc, struct confargs *ca)
 }
 
 int
-i2s_intr(v)
-	void *v;
+i2s_intr(void *v)
 {
 	struct i2s_softc *sc = v;
 	struct dbdma_command *cmd = sc->sc_odmap;
@@ -162,8 +161,7 @@ i2s_intr(v)
 }
 
 int
-i2s_iintr(v)
-	void *v;
+i2s_iintr(void *v)
 {
 	struct i2s_softc *sc = v;
 	struct dbdma_command *cmd = sc->sc_idmap;
@@ -197,9 +195,7 @@ i2s_iintr(v)
 }
 
 int
-i2s_open(h, flags)
-	void *h;
-	int flags;
+i2s_open(void *h, int flags)
 {
 	return 0;
 }
@@ -208,8 +204,7 @@ i2s_open(h, flags)
  * Close function is called at splaudio().
  */
 void
-i2s_close(h)
-	void *h;
+i2s_close(void *h)
 {
 	struct i2s_softc *sc = h;
 
@@ -221,10 +216,8 @@ i2s_close(h)
 }
 
 int
-i2s_set_params(h, setmode, usemode, play, rec)
-	void *h;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+i2s_set_params(void *h, int setmode, int usemode, struct audio_params *play,
+    struct audio_params  *rec)
 {
 	struct i2s_softc *sc = h;
 	struct audio_params *p;
@@ -276,9 +269,7 @@ i2s_set_params(h, setmode, usemode, play, rec)
 }
 
 int
-i2s_round_blocksize(h, size)
-	void *h;
-	int size;
+i2s_round_blocksize(void *h, int size)
 {
 	if (size < NBPG)
 		size = NBPG;
@@ -286,8 +277,7 @@ i2s_round_blocksize(h, size)
 }
 
 int
-i2s_halt_output(h)
-	void *h;
+i2s_halt_output(void *h)
 {
 	struct i2s_softc *sc = h;
 
@@ -297,8 +287,7 @@ i2s_halt_output(h)
 }
 
 int
-i2s_halt_input(h)
-	void *h;
+i2s_halt_input(void *h)
 {
 	struct i2s_softc *sc = h;
 
@@ -584,10 +573,7 @@ i2s_query_devinfo(void *h, mixer_devinfo_t *dip)
 }
 
 size_t
-i2s_round_buffersize(h, dir, size)
-	void *h;
-	int dir;
-	size_t size;
+i2s_round_buffersize(void *h, int dir, size_t size)
 {
 	if (size > 65536)
 		size = 65536;
@@ -595,20 +581,14 @@ i2s_round_buffersize(h, dir, size)
 }
 
 int
-i2s_get_props(h)
-	void *h;
+i2s_get_props(void *h)
 {
 	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
 }
 
 int
-i2s_trigger_output(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+i2s_trigger_output(void *h, void *start, void *end, int bsize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct i2s_softc *sc = h;
 	struct i2s_dma *p;
@@ -648,13 +628,8 @@ i2s_trigger_output(h, start, end, bsize, intr, arg, param)
 }
 
 int
-i2s_trigger_input(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+i2s_trigger_input(void *h, void *start, void *end, int bsize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct i2s_softc *sc = h;
 	struct i2s_dma *p;
@@ -702,9 +677,7 @@ i2s_trigger_input(h, start, end, bsize, intr, arg, param)
  * rate = SCLK / 64    ( = LRCLK = fs)
  */
 int
-i2s_set_rate(sc, rate)
-	struct i2s_softc *sc;
-	int rate;
+i2s_set_rate(struct i2s_softc *sc, int rate)
 {
 	u_int reg = 0;
 	int MCLK;

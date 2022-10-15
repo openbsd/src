@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.20 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.21 2022/10/15 08:41:18 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -89,9 +89,7 @@ const struct cfattach wi_obio_ca = {
 
 
 int
-wi_obio_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+wi_obio_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -102,9 +100,7 @@ wi_obio_match(parent, match, aux)
 }
 
 void
-wi_obio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wi_obio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wi_obio_softc	*psc = (struct wi_obio_softc *)self;
 	struct wi_softc		*sc = &psc->sc_wi;
@@ -135,9 +131,7 @@ wi_obio_attach(parent, self, aux)
 }
 
 int
-wi_obio_detach(dev, flags)
-	struct device *dev;
-	int flags;
+wi_obio_detach(struct device *dev, int flags)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
@@ -156,9 +150,7 @@ wi_obio_detach(dev, flags)
 }
 
 int
-wi_obio_activate(dev, act)
-	struct device *dev;
-	int act;
+wi_obio_activate(struct device *dev, int act)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
@@ -181,8 +173,7 @@ wi_obio_activate(dev, act)
 /* THIS IS CRAP */
 
 int
-wi_obio_enable(sc)
-	struct wi_softc *sc;
+wi_obio_enable(struct wi_softc *sc)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)sc;
 	const u_int keywest = psc->keywest;	/* XXX */
@@ -224,8 +215,7 @@ wi_obio_enable(sc)
 }
 
 void
-wi_obio_disable(sc)
-	struct wi_softc *sc;
+wi_obio_disable(struct wi_softc *sc)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)sc;
 	const u_int keywest = psc->keywest;	/* XXX */

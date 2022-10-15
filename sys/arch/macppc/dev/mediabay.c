@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.8 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.9 2022/10/15 08:41:18 jsg Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -86,10 +86,7 @@ struct cfdriver mediabay_cd = {
 #define MEDIABAY_ID_NONE	7
 
 int
-mediabay_match(parent, v, aux)
-	struct device *parent;
-	void *v;
-	void *aux;
+mediabay_match(struct device *parent, void *v, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -104,9 +101,7 @@ mediabay_match(parent, v, aux)
  * Attach all the sub-devices we can find
  */
 void
-mediabay_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mediabay_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mediabay_softc *sc = (struct mediabay_softc *)self;
 	struct confargs *ca = aux;
@@ -139,8 +134,7 @@ mediabay_attach(parent, self, aux)
 }
 
 void
-mediabay_attach_content(sc)
-	struct mediabay_softc *sc;
+mediabay_attach_content(struct mediabay_softc *sc)
 {
 	int child;
 	u_int fcr;
@@ -195,9 +189,7 @@ mediabay_attach_content(sc)
 }
 
 int
-mediabay_print(aux, mediabay)
-	void *aux;
-	const char *mediabay;
+mediabay_print(void *aux, const char *mediabay)
 {
 	struct confargs *ca = aux;
 
@@ -208,8 +200,7 @@ mediabay_print(aux, mediabay)
 }
 
 int
-mediabay_intr(v)
-	void *v;
+mediabay_intr(void *v)
 {
 	struct mediabay_softc *sc = v;
 
@@ -218,8 +209,7 @@ mediabay_intr(v)
 }
 
 void
-mediabay_create_kthread(v)
-	void *v;
+mediabay_create_kthread(void *v)
 {
 	struct mediabay_softc *sc = v;
 
@@ -228,8 +218,7 @@ mediabay_create_kthread(v)
 }
 
 void
-mediabay_kthread(v)
-	void *v;
+mediabay_kthread(void *v)
 {
 	struct mediabay_softc *sc = v;
 	u_int x, fcr;
