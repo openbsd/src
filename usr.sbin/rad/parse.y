@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.20 2022/10/15 13:26:15 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.21 2022/10/15 13:27:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -941,7 +941,7 @@ copy_dns_options(const struct ra_options_conf *src, struct ra_options_conf *dst)
 	if (SIMPLEQ_EMPTY(&dst->ra_rdnss_list)) {
 		SIMPLEQ_FOREACH(ra_rdnss, &src->ra_rdnss_list, entry) {
 			if ((nra_rdnss = calloc(1, sizeof(*nra_rdnss))) == NULL)
-				errx(1, "%s", __func__);
+				err(1, "%s", __func__);
 			memcpy(nra_rdnss, ra_rdnss, sizeof(*nra_rdnss));
 			SIMPLEQ_INSERT_TAIL(&dst->ra_rdnss_list, nra_rdnss,
 			    entry);
@@ -951,7 +951,7 @@ copy_dns_options(const struct ra_options_conf *src, struct ra_options_conf *dst)
 	if (SIMPLEQ_EMPTY(&dst->ra_dnssl_list)) {
 		SIMPLEQ_FOREACH(ra_dnssl, &src->ra_dnssl_list, entry) {
 			if ((nra_dnssl = calloc(1, sizeof(*nra_dnssl))) == NULL)
-				errx(1, "%s", __func__);
+				err(1, "%s", __func__);
 			memcpy(nra_dnssl, ra_dnssl, sizeof(*nra_dnssl));
 			SIMPLEQ_INSERT_TAIL(&dst->ra_dnssl_list, nra_dnssl,
 			    entry);
@@ -1063,7 +1063,7 @@ conf_get_ra_prefix(struct in6_addr *addr, int prefixlen)
 
 	prefix = calloc(1, sizeof(*prefix));
 	if (prefix == NULL)
-		errx(1, "%s: calloc", __func__);
+		err(1, "%s", __func__);
 	prefix->prefixlen = prefixlen;
 	prefix->vltime = ADV_VALID_LIFETIME;
 	prefix->pltime = ADV_PREFERRED_LIFETIME;
