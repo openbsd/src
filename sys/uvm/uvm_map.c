@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.296 2022/10/15 03:23:50 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.297 2022/10/15 05:56:01 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1764,8 +1764,6 @@ uvm_map_make_stack(struct proc *p, vaddr_t addr, vsize_t sz)
 		entry->etype |= UVM_ET_STACK;
 		entry = RBT_NEXT(uvm_map_addr, entry);
 	}
-	printf("map stack for pid %s/%d %lx/%lx changed\n",
-	    p->p_p->ps_comm, p->p_p->ps_pid, addr, sz);
 	map->sserial++;
 	error = 0;
 out:
