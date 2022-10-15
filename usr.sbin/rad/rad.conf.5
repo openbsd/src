@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.19 2022/10/15 13:26:15 florian Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.20 2022/10/15 15:18:15 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -96,7 +96,7 @@ The MTU option is used in Router Advertisement messages to ensure that all
 nodes on a link use the same MTU value in those cases where the link MTU
 is not well known.
 The default is 0, meaning unspecified by this router.
-.It Ic nat64 prefix Ar prefix Oc Brq nat64 options
+.It Ic nat64 prefix Ar prefix Op Brq nat64 options
 Add a PREF64 router advertisement option to communicate prefixes used
 for Network Address and Protocol Translation from IPv6 to IPv4 (NAT64).
 If
