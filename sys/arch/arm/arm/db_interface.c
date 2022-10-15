@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.19 2022/04/14 19:47:10 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.20 2022/10/15 08:04:02 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -182,10 +182,7 @@ db_validate_address(vaddr_t addr)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t	addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 

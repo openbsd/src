@@ -1,5 +1,5 @@
 /*	$NetBSD: db_memrw.c,v 1.4 2001/05/18 20:38:27 matt Exp $	*/
-/*	$OpenBSD: db_memrw.c,v 1.5 2003/10/15 01:06:13 drahn Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.6 2022/10/15 08:04:02 jsg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -53,10 +53,7 @@
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t		addr;
-	size_t	size;
-	char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*src = (char *)addr;
 	faultbuf env;
@@ -83,10 +80,7 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t		addr;
-	size_t	size;
-	char	*data;
+db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
 	char	*dst = (char *)addr;
 	faultbuf env;
