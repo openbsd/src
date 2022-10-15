@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.299 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.300 2022/10/15 03:23:50 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -575,7 +575,7 @@ sys_sigaltstack(struct proc *p, void *v, register_t *retval)
 	if (ss.ss_size < MINSIGSTKSZ)
 		return (ENOMEM);
 
-	error = uvm_map_remap_as_stack(p, (vaddr_t)ss.ss_sp, ss.ss_size);
+	error = uvm_map_make_stack(p, (vaddr_t)ss.ss_sp, (vsize_t)ss.ss_size);
 	if (error)
 		return (error);
 

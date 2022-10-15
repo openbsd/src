@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.295 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.296 2022/10/15 03:23:50 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -792,11 +792,6 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 
 		/* Check that the space is available. */
 		if (flags & UVM_FLAG_UNMAP) {
-			if ((flags & UVM_FLAG_STACK) &&
-			    !uvm_map_is_stack_remappable(map, *addr, sz)) {
-				error = EINVAL;
-				goto unlock;
-			}
 			if (uvm_unmap_remove(map, *addr, *addr + sz, &dead,
 			    FALSE, TRUE, TRUE) != 0) {
 				error = EPERM;	/* immutable entries found */
@@ -1690,27 +1685,40 @@ uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr,
 }
 
 /*
- * Check whether the given address range can be converted to a MAP_STACK
- * mapping.
- *
- * Must be called with map locked.
+ * If the region already exists as contigious read-write anonymous memory
+ * without special attributes, also mark it as stack for use by sigaltstack(2),
+ * otherwise fail.
  */
-boolean_t
-uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz)
+int
+uvm_map_make_stack(struct proc *p, vaddr_t addr, vsize_t sz)
 {
-	vaddr_t end = addr + sz;
-	struct vm_map_entry *first, *iter, *prev = NULL;
+	vm_map_t map = &p->p_vmspace->vm_map;
+	struct vm_map_entry *entry, *iter, *prev = NULL;
+	vaddr_t start, end;
+	int error = EINVAL;
 
-	if (!uvm_map_lookup_entry(map, addr, &first)) {
+	start = round_page(addr);
+	end = trunc_page(addr + sz);
+#ifdef MACHINE_STACK_GROWS_UP
+	if (end == addr + sz)
+		end -= PAGE_SIZE;
+#else
+	if (start == addr)
+		start += PAGE_SIZE;
+#endif
+
+	vm_map_lock(map);
+
+	if (!uvm_map_lookup_entry(map, start, &entry)) {
 		printf("map stack 0x%lx-0x%lx of map %p failed: no mapping\n",
-		    addr, end, map);
-		return FALSE;
+		    start, end, map);
+		goto out;
 	}
 
 	/*
 	 * Check that the address range exists and is contiguous.
 	 */
-	for (iter = first; iter != NULL && iter->start < end;
+	for (iter = entry; iter != NULL && iter->start < end;
 	    prev = iter, iter = RBT_NEXT(uvm_map_addr, iter)) {
 		/*
 		 * Make sure that we do not have holes in the range.
@@ -1725,57 +1733,46 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz)
 
 		if (prev != NULL && prev->end != iter->start) {
 			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
-			return FALSE;
+			    "hole in range\n", start, end, map);
+			goto out;
 		}
 		if (iter->start == iter->end || UVM_ET_ISHOLE(iter)) {
 			printf("map stack 0x%lx-0x%lx of map %p failed: "
-			    "hole in range\n", addr, end, map);
-			return FALSE;
+			    "hole in range\n", start, end, map);
+			goto out;
+		}
+		if (iter->etype & UVM_ET_SYSCALL) {
+			printf("in syscall range, not allowed\n");
+			goto out;
+		}
+		if (iter->protection != (PROT_READ | PROT_WRITE)) {
+			printf("prot %x, not allowed\n", iter->protection);
+			goto out;
 		}
 	}
 
-	return TRUE;
-}
+	/*
+	 * Mark the specified range as stack
+	 */
+	if (entry->end > start)
+		UVM_MAP_CLIP_START(map, entry, start);
+	else
+		entry = RBT_NEXT(uvm_map_addr, entry);
 
-/*
- * Remap the middle-pages of an existing mapping as a stack range.
- * If there exists a previous contiguous mapping with the given range
- * [addr, addr + sz), with protection PROT_READ|PROT_WRITE, then the
- * mapping is dropped, and a new anon mapping is created and marked as
- * a stack.
- *
- * Must be called with map unlocked.
- */
-int
-uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
-{
-	vm_map_t map = &p->p_vmspace->vm_map;
-	vaddr_t start, end;
-	int error;
-	int flags = UVM_MAPFLAG(PROT_READ | PROT_WRITE,
-	    PROT_READ | PROT_WRITE | PROT_EXEC,
-	    MAP_INHERIT_COPY, MADV_NORMAL,
-	    UVM_FLAG_STACK | UVM_FLAG_FIXED | UVM_FLAG_UNMAP |
-	    UVM_FLAG_COPYONW);
-
-	start = round_page(addr);
-	end = trunc_page(addr + sz);
-#ifdef MACHINE_STACK_GROWS_UP
-	if (end == addr + sz)
-		end -= PAGE_SIZE;
-#else
-	if (start == addr)
-		start += PAGE_SIZE;
-#endif
-
-	if (start < map->min_offset || end >= map->max_offset || end < start)
-		return EINVAL;
-
-	error = uvm_mapanon(map, &start, end - start, 0, flags);
+	while (entry != NULL && entry->start < end) {
+		UVM_MAP_CLIP_END(map, entry, end);
+		entry->etype |= UVM_ET_STACK;
+		entry = RBT_NEXT(uvm_map_addr, entry);
+	}
+	printf("map stack for pid %s/%d %lx/%lx changed\n",
+	    p->p_p->ps_comm, p->p_p->ps_pid, addr, sz);
+	map->sserial++;
+	error = 0;
+out:
+	vm_map_unlock(map);
 	if (error != 0)
-		printf("map stack for pid %d failed\n", p->p_p->ps_pid);
-
+		printf("map stack for pid %s/%d %lx/%lx failed\n",
+		    p->p_p->ps_comm, p->p_p->ps_pid, addr, sz);
 	return error;
 }
 
