@@ -1,4 +1,4 @@
-/*	$OpenBSD: isl1208.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: isl1208.c,v 1.5 2022/10/15 18:22:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,8 +22,6 @@
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/clock_subr.h>
-
-extern todr_chip_handle_t todr_handle;
 
 #define ISL1208_SC		0x00
 #define ISL1208_MN		0x01
@@ -90,7 +88,8 @@ islrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = islrtc_gettime;
 	sc->sc_todr.todr_settime = islrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 1000;
+	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }

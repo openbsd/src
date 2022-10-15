@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds3231.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: ds3231.c,v 1.3 2022/10/15 18:22:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -22,8 +22,6 @@
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/clock_subr.h>
-
-extern todr_chip_handle_t todr_handle;
 
 #define DS3231_SC		0x00
 #define DS3231_MN		0x01
@@ -91,7 +89,8 @@ dsxrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = dsxrtc_gettime;
 	sc->sc_todr.todr_settime = dsxrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 1000;
+	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }

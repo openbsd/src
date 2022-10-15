@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.8 2022/10/15 18:22:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -27,8 +27,6 @@
 #if defined(__HAVE_FDT)
 #include <dev/ofw/openfirm.h>
 #endif
-
-extern todr_chip_handle_t todr_handle;
 
 #define ABX8XX_HTH		0x00
 #define ABX8XX_SC		0x01
@@ -129,7 +127,8 @@ abcrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = abcrtc_gettime;
 	sc->sc_todr.todr_settime = abcrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 1000;
+	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }
