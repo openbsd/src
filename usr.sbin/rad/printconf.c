@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.6 2021/01/19 17:38:41 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.7 2022/10/15 13:26:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -48,6 +48,7 @@ print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 {
 	struct ra_rdnss_conf	*ra_rdnss;
 	struct ra_dnssl_conf	*ra_dnssl;
+	struct ra_pref64_conf	*pref64;
 	char			 buf[INET6_ADDRSTRLEN];
 
 	printf("%sdefault router %s\n", indent, yesno(ra_options->dfr));
@@ -84,6 +85,13 @@ print_ra_options(const char *indent, const struct ra_options_conf *ra_options)
 		}
 		printf("%s}\n", indent);
 	}
+	SIMPLEQ_FOREACH(pref64, &ra_options->ra_pref64_list, entry) {
+		printf("%snat64 prefix %s/%d {\n", indent, inet_ntop(AF_INET6,
+		    &pref64->prefix, buf, sizeof(buf)), pref64->prefixlen);
+		printf("%s\tlifetime %u\n", indent, pref64->ltime);
+		printf("%s}\n", indent);
+	}
+
 }
 
 void

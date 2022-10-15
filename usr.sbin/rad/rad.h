@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.22 2022/03/23 15:26:08 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.23 2022/10/15 13:26:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -55,6 +55,7 @@ enum imsg_type {
 	IMSG_RECONF_RA_PREFIX,
 	IMSG_RECONF_RA_RDNSS,
 	IMSG_RECONF_RA_DNSSL,
+	IMSG_RECONF_RA_PREF64,
 	IMSG_RECONF_END,
 	IMSG_ICMP6SOCK,
 	IMSG_OPEN_ICMP6SOCK,
@@ -78,6 +79,14 @@ struct ra_dnssl_conf {
 	char				search[MAX_SEARCH];
 };
 
+/* RFC 8781 Section 4 */
+struct ra_pref64_conf {
+	SIMPLEQ_ENTRY(ra_pref64_conf)	 entry;
+	struct in6_addr			 prefix;	/* prefix */
+	int				 prefixlen;	/* prefix length */
+	uint32_t			 ltime;		/* lifetime */
+};
+
 /* RFC 4861 Sections 4.2 and 4.6.4 */
 struct ra_options_conf {
 	int		dfr;			/* is default router? */
@@ -93,6 +102,7 @@ struct ra_options_conf {
 	int		rdnss_count;
 	SIMPLEQ_HEAD(, ra_dnssl_conf)		 ra_dnssl_list;
 	int		dnssl_len;
+	SIMPLEQ_HEAD(, ra_pref64_conf)		 ra_pref64_list;
 };
 
 /* RFC 4861 Section 4.6.2 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.27 2021/02/27 10:35:20 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.28 2022/10/15 13:26:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -573,6 +573,7 @@ main_imsg_send_config(struct rad_conf *xconf)
 	struct ra_prefix_conf	*ra_prefix_conf;
 	struct ra_rdnss_conf	*ra_rdnss_conf;
 	struct ra_dnssl_conf	*ra_dnssl_conf;
+	struct ra_pref64_conf	*pref64;
 
 	/* Send fixed part of config to children. */
 	if (main_sendboth(IMSG_RECONF_CONF, xconf, sizeof(*xconf)) == -1)
@@ -589,6 +590,14 @@ main_imsg_send_config(struct rad_conf *xconf)
 	    entry) {
 		if (main_sendboth(IMSG_RECONF_RA_DNSSL, ra_dnssl_conf,
 		    sizeof(*ra_dnssl_conf)) == -1)
+			return (-1);
+	}
+
+	/* send global pref64 list to children */
+	SIMPLEQ_FOREACH(pref64, &xconf->ra_options.ra_pref64_list,
+	    entry) {
+		if (main_sendboth(IMSG_RECONF_RA_PREF64, pref64,
+		    sizeof(*pref64)) == -1)
 			return (-1);
 	}
 
@@ -621,6 +630,12 @@ main_imsg_send_config(struct rad_conf *xconf)
 			    sizeof(*ra_dnssl_conf)) == -1)
 				return (-1);
 		}
+		SIMPLEQ_FOREACH(pref64,
+		    &ra_iface_conf->ra_options.ra_pref64_list, entry) {
+			if (main_sendboth(IMSG_RECONF_RA_PREF64, pref64,
+			    sizeof(*pref64)) == -1)
+				return (-1);
+		}
 	}
 
 	/* Tell children the revised config is now complete. */
@@ -644,6 +659,7 @@ void
 free_ra_iface_conf(struct ra_iface_conf *ra_iface_conf)
 {
 	struct ra_prefix_conf	*prefix;
+	struct ra_pref64_conf	*pref64;
 
 	if (!ra_iface_conf)
 		return;
@@ -657,6 +673,13 @@ free_ra_iface_conf(struct ra_iface_conf *ra_iface_conf)
 	}
 
 	free_dns_options(&ra_iface_conf->ra_options);
+
+	while ((pref64 =
+	    SIMPLEQ_FIRST(&ra_iface_conf->ra_options.ra_pref64_list)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&ra_iface_conf->ra_options.ra_pref64_list,
+		    entry);
+		free(pref64);
+	}
 
 	free(ra_iface_conf);
 }
@@ -684,6 +707,7 @@ void
 merge_config(struct rad_conf *conf, struct rad_conf *xconf)
 {
 	struct ra_iface_conf	*ra_iface_conf;
+	struct ra_pref64_conf	*pref64;
 
 	/* Remove & discard existing interfaces. */
 	while ((ra_iface_conf = SIMPLEQ_FIRST(&conf->ra_iface_list)) != NULL) {
@@ -692,9 +716,16 @@ merge_config(struct rad_conf *conf, struct rad_conf *xconf)
 	}
 	free_dns_options(&conf->ra_options);
 
+	while ((pref64 = SIMPLEQ_FIRST(&conf->ra_options.ra_pref64_list))
+	    != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&conf->ra_options.ra_pref64_list, entry);
+		free(pref64);
+	}
+
 	conf->ra_options = xconf->ra_options;
 	SIMPLEQ_INIT(&conf->ra_options.ra_rdnss_list);
 	SIMPLEQ_INIT(&conf->ra_options.ra_dnssl_list);
+	SIMPLEQ_INIT(&conf->ra_options.ra_pref64_list);
 
 	/* Add new interfaces. */
 	SIMPLEQ_CONCAT(&conf->ra_iface_list, &xconf->ra_iface_list);
@@ -704,6 +735,8 @@ merge_config(struct rad_conf *conf, struct rad_conf *xconf)
 	    &xconf->ra_options.ra_rdnss_list);
 	SIMPLEQ_CONCAT(&conf->ra_options.ra_dnssl_list,
 	    &xconf->ra_options.ra_dnssl_list);
+	SIMPLEQ_CONCAT(&conf->ra_options.ra_pref64_list,
+	    &xconf->ra_options.ra_pref64_list);
 	free(xconf);
 }
 
@@ -729,6 +762,7 @@ config_new_empty(void)
 	xconf->ra_options.rdns_lifetime = DEFAULT_RDNS_LIFETIME;
 	SIMPLEQ_INIT(&xconf->ra_options.ra_rdnss_list);
 	SIMPLEQ_INIT(&xconf->ra_options.ra_dnssl_list);
+	SIMPLEQ_INIT(&xconf->ra_options.ra_pref64_list);
 
 	return (xconf);
 }

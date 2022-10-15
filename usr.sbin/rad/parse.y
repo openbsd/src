@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.19 2021/10/15 15:01:28 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.20 2022/10/15 13:26:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -96,10 +96,14 @@ static int			 errors;
 
 static struct ra_iface_conf	*ra_iface_conf;
 static struct ra_prefix_conf	*ra_prefix_conf;
+static struct ra_pref64_conf	*ra_pref64_conf;
 
 struct ra_prefix_conf	*conf_get_ra_prefix(struct in6_addr*, int);
+struct ra_pref64_conf	*conf_get_ra_pref64(struct in6_addr*, int);
 struct ra_iface_conf	*conf_get_ra_iface(char *);
 void			 copy_dns_options(const struct ra_options_conf *,
+			    struct ra_options_conf *);
+void			 copy_pref64_options(const struct ra_options_conf *,
 			    struct ra_options_conf *);
 
 typedef struct {
@@ -116,7 +120,7 @@ typedef struct {
 %token	DEFAULT ROUTER HOP LIMIT MANAGED ADDRESS
 %token	CONFIGURATION OTHER LIFETIME REACHABLE TIME RETRANS TIMER
 %token	AUTO PREFIX VALID PREFERRED LIFETIME ONLINK AUTONOMOUS
-%token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH MTU
+%token	ADDRESS_CONFIGURATION DNS NAMESERVER SEARCH MTU NAT64
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -215,6 +219,51 @@ ra_opt_block	: DEFAULT ROUTER yesno {
 		| MTU NUMBER {
 			ra_options->mtu = $2;
 		}
+		| NAT64 PREFIX STRING {
+			struct in6_addr	 addr;
+			int		 prefixlen;
+			char		*p;
+			const char	*errstr;
+
+			memset(&addr, 0, sizeof(addr));
+			p = strchr($3, '/');
+			if (p != NULL) {
+				*p++ = '\0';
+				prefixlen = strtonum(p, 0, 128, &errstr);
+				if (errstr != NULL) {
+					yyerror("error parsing prefix "
+					    "\"%s/%s\"", $3, p);
+					free($3);
+					YYERROR;
+				}
+			} else
+				prefixlen = 96;
+
+			switch (prefixlen) {
+			case 96:
+			case 64:
+			case 56:
+			case 48:
+			case 40:
+			case 32:
+				break;
+			default:
+				yyerror("invalid nat64 prefix length: %d",
+				    prefixlen);
+				YYERROR;
+				break;
+			}
+			if(inet_pton(AF_INET6, $3, &addr) == 0) {
+				yyerror("error parsing prefix \"%s/%d\"", $3,
+				    prefixlen);
+				free($3);
+				YYERROR;
+			}
+			mask_prefix(&addr, prefixlen);
+			ra_pref64_conf = conf_get_ra_pref64(&addr, prefixlen);
+		} ra_pref64_block {
+			ra_pref64_conf = NULL;
+		}
 		| DNS dns_block
 		;
 
@@ -312,6 +361,26 @@ ra_prefixoptsl	: VALID LIFETIME NUMBER {
 			ra_prefix_conf->aflag = $3;
 		}
 		;
+
+ra_pref64_block	: '{' optnl ra_pref64opts_l '}'
+		| '{' optnl '}'
+		| /* empty */
+		;
+
+ra_pref64opts_l	: ra_pref64opts_l ra_pref64optsl nl
+		| ra_pref64optsl optnl
+		;
+
+ra_pref64optsl	: LIFETIME NUMBER {
+			if ($2 < 0 || $2 > 65528) {
+				yyerror("Invalid nat64 prefix lifetime: %lld",
+				    $2);
+				YYERROR;
+			}
+			ra_pref64_conf->ltime = $2;
+		}
+		;
+
 dns_block	: '{' optnl dnsopts_l '}'
 		| '{' optnl '}'
 		| /* empty */
@@ -446,6 +515,7 @@ lookup(char *s)
 		{"managed",		MANAGED},
 		{"mtu",			MTU},
 		{"nameserver",		NAMESERVER},
+		{"nat64",		NAT64},
 		{"no",			NO},
 		{"on-link",		ONLINK},
 		{"other",		OTHER},
@@ -853,6 +923,12 @@ parse_config(char *filename)
 			    &iface->ra_options);
 	}
 
+	if (!SIMPLEQ_EMPTY(&conf->ra_options.ra_pref64_list)) {
+		SIMPLEQ_FOREACH(iface, &conf->ra_iface_list, entry)
+			copy_pref64_options(&conf->ra_options,
+			    &iface->ra_options);
+	}
+
 	return (conf);
 }
 
@@ -881,6 +957,20 @@ copy_dns_options(const struct ra_options_conf *src, struct ra_options_conf *dst)
 			    entry);
 		}
 		dst->dnssl_len = src->dnssl_len;
+	}
+}
+
+void
+copy_pref64_options(const struct ra_options_conf *src, struct ra_options_conf
+    *dst)
+{
+	struct ra_pref64_conf	*pref64, *npref64;
+
+	SIMPLEQ_FOREACH(pref64, &src->ra_pref64_list, entry) {
+		if ((npref64 = calloc(1, sizeof(*npref64))) == NULL)
+			err(1, "%s", __func__);
+		memcpy(npref64, pref64, sizeof(*npref64));
+		SIMPLEQ_INSERT_TAIL(&dst->ra_pref64_list, npref64, entry);
 	}
 }
 
@@ -991,6 +1081,28 @@ conf_get_ra_prefix(struct in6_addr *addr, int prefixlen)
 	return (prefix);
 }
 
+struct ra_pref64_conf *
+conf_get_ra_pref64(struct in6_addr *addr, int prefixlen)
+{
+	struct ra_pref64_conf	*pref64;
+
+	SIMPLEQ_FOREACH(pref64, &ra_options->ra_pref64_list, entry) {
+		if (pref64->prefixlen == prefixlen && memcmp(addr,
+		    &pref64->prefix, sizeof(*addr)) == 0)
+			return (pref64);
+	}
+
+	pref64 = calloc(1, sizeof(*pref64));
+	if (pref64 == NULL)
+		err(1, "%s", __func__);
+	pref64->prefixlen = prefixlen;
+	pref64->ltime = ADV_DEFAULT_LIFETIME;
+	pref64->prefix = *addr;
+	SIMPLEQ_INSERT_TAIL(&ra_options->ra_pref64_list, pref64, entry);
+
+	return (pref64);
+}
+
 struct ra_iface_conf *
 conf_get_ra_iface(char *name)
 {
@@ -1017,6 +1129,7 @@ conf_get_ra_iface(char *name)
 	iface->ra_options.rdnss_count = 0;
 	SIMPLEQ_INIT(&iface->ra_options.ra_dnssl_list);
 	iface->ra_options.dnssl_len = 0;
+	SIMPLEQ_INIT(&iface->ra_options.ra_pref64_list);
 
 	SIMPLEQ_INSERT_TAIL(&conf->ra_iface_list, iface, entry);
 

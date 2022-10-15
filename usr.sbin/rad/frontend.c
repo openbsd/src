@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.40 2022/01/17 18:04:35 naddy Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.41 2022/10/15 13:26:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -111,6 +111,14 @@ struct ra_iface {
 	int				 prefix_count;
 	size_t				 datalen;
 	uint8_t				 data[RA_MAX_SIZE];
+};
+
+#define ND_OPT_PREF64	38
+struct nd_opt_pref64 {
+	u_int8_t	nd_opt_pref64_type;
+	u_int8_t	nd_opt_pref64_len;
+	u_int16_t	nd_opt_pref64_sltime_plc;
+	u_int8_t	nd_opt_pref64[12];
 };
 
 TAILQ_HEAD(, ra_iface)	ra_interfaces;
@@ -300,6 +308,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 	struct ra_prefix_conf		*ra_prefix_conf;
 	struct ra_rdnss_conf		*ra_rdnss_conf;
 	struct ra_dnssl_conf		*ra_dnssl_conf;
+	struct ra_pref64_conf		*pref64;
 	int				 n, shut = 0, icmp6sock, rdomain;
 
 	if (event & EV_READ) {
@@ -361,6 +370,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&nconf->ra_iface_list);
 			SIMPLEQ_INIT(&nconf->ra_options.ra_rdnss_list);
 			SIMPLEQ_INIT(&nconf->ra_options.ra_dnssl_list);
+			SIMPLEQ_INIT(&nconf->ra_options.ra_pref64_list);
 			ra_options = &nconf->ra_options;
 			break;
 		case IMSG_RECONF_RA_IFACE:
@@ -377,6 +387,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			SIMPLEQ_INIT(&ra_iface_conf->ra_prefix_list);
 			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_rdnss_list);
 			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_dnssl_list);
+			SIMPLEQ_INIT(&ra_iface_conf->ra_options.ra_pref64_list);
 			SIMPLEQ_INSERT_TAIL(&nconf->ra_iface_list,
 			    ra_iface_conf, entry);
 			ra_options = &ra_iface_conf->ra_options;
@@ -432,6 +443,18 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			    ra_dnssl_conf));
 			SIMPLEQ_INSERT_TAIL(&ra_options->ra_dnssl_list,
 			    ra_dnssl_conf, entry);
+			break;
+		case IMSG_RECONF_RA_PREF64:
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct
+			    ra_pref64_conf))
+				fatalx("%s: IMSG_RECONF_RA_PREF64 wrong length: "
+				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
+			if ((pref64 = malloc(sizeof(struct ra_pref64_conf))) ==
+			    NULL)
+				fatal(NULL);
+			memcpy(pref64, imsg.data, sizeof(struct ra_pref64_conf));
+			SIMPLEQ_INSERT_TAIL(&ra_options->ra_pref64_list, pref64,
+			    entry);
 			break;
 		case IMSG_RECONF_END:
 			if (nconf == NULL)
@@ -1084,8 +1107,10 @@ build_packet(struct ra_iface *ra_iface)
 	struct ra_prefix_conf		*ra_prefix_conf;
 	struct nd_opt_rdnss		*ndopt_rdnss;
 	struct nd_opt_dnssl		*ndopt_dnssl;
+	struct nd_opt_pref64		*ndopt_pref64;
 	struct ra_rdnss_conf		*ra_rdnss;
 	struct ra_dnssl_conf		*ra_dnssl;
+	struct ra_pref64_conf		*pref64;
 	size_t				 len, label_len;
 	uint8_t				*p, buf[RA_MAX_SIZE];
 	char				*label_start, *label_end;
@@ -1107,6 +1132,10 @@ build_packet(struct ra_iface *ra_iface)
 		/* round up to 8 byte boundary */
 		len += sizeof(*ndopt_dnssl) +
 		    ((ra_iface_conf->ra_options.dnssl_len + 7) & ~7);
+
+	SIMPLEQ_FOREACH(pref64, &ra_iface_conf->ra_options.ra_pref64_list,
+	    entry)
+		len += sizeof(struct nd_opt_pref64);
 
 	if (len > sizeof(ra_iface->data))
 		fatalx("%s: packet too big", __func__); /* XXX send multiple */
@@ -1205,6 +1234,46 @@ build_packet(struct ra_iface *ra_iface)
 		/* zero pad */
 		while (((uintptr_t)p) % 8 != 0)
 			*p++ = '\0';
+	}
+
+	SIMPLEQ_FOREACH(pref64, &ra_iface_conf->ra_options.ra_pref64_list,
+	    entry) {
+		uint16_t	sltime_plc;
+
+		/* scaled lifetime in units of 8 seconds */
+		sltime_plc = pref64->ltime / 8;
+		sltime_plc = sltime_plc << 3;
+		/* encode prefix lenght in lower 3 bits */
+		switch (pref64->prefixlen) {
+		case 96:
+			sltime_plc |= 0;
+			break;
+		case 64:
+			sltime_plc |= 1;
+			break;
+		case 56:
+			sltime_plc |= 2;
+			break;
+		case 48:
+			sltime_plc |= 3;
+			break;
+		case 40:
+			sltime_plc |= 4;
+			break;
+		case 32:
+			sltime_plc |= 5;
+			break;
+		default:
+			fatalx("%s: invalid pref64 length: %d", __func__,
+			    pref64->prefixlen);
+		}
+		ndopt_pref64 = (struct nd_opt_pref64 *)p;
+		ndopt_pref64->nd_opt_pref64_type = ND_OPT_PREF64;
+		ndopt_pref64->nd_opt_pref64_len = 2;
+		ndopt_pref64->nd_opt_pref64_sltime_plc = htons(sltime_plc);
+		memcpy(ndopt_pref64->nd_opt_pref64, &pref64->prefix,
+		    sizeof(ndopt_pref64->nd_opt_pref64));
+		p += sizeof(struct nd_opt_pref64);
 	}
 
 	if (len != ra_iface->datalen || memcmp(buf, ra_iface->data, len)
