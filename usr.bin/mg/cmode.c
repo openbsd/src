@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.18 2022/05/24 16:24:31 op Exp $ */
+/* $OpenBSD: cmode.c,v 1.19 2022/10/15 09:54:29 op Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -86,7 +86,7 @@ static struct KEYMAPE (3) cmodemap = {
 	}
 };
 
-/* Funtion, Mode hooks */
+/* Function, Mode hooks */
 
 void
 cmode_init(void)
