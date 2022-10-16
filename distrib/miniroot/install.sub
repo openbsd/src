@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1211 2022/10/10 11:04:17 kn Exp $
+#	$OpenBSD: install.sub,v 1.1212 2022/10/16 08:47:20 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2905,7 +2905,7 @@ finish_up() {
 	isin "$ARCH" $_syspatch_archs && cat <<'__EOT' >>/mnt/etc/rc.firsttime
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
-if ((${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]]; then
+if ((${#_KERNV[*]} == 1)); then
 	echo "Checking for available binary patches..."
 	_CKPATCH=$(syspatch -c)
 	if [[ -n $_CKPATCH ]]; then
