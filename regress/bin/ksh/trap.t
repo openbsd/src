@@ -1,4 +1,4 @@
-#	$OpenBSD: trap.t,v 1.4 2022/10/15 15:29:45 kn Exp $
+#	$OpenBSD: trap.t,v 1.5 2022/10/16 10:19:02 kn Exp $
 
 #
 # Check that I/O redirection failure triggers the ERR trap.
@@ -55,7 +55,7 @@ expected-exit: e != 0
 # Check that traps are run in the same order in which they were triggered.
 #
 
-name: EXIT-always-runs
+name: failed-ERR-runs-EXIT
 # XXX remove once bin/ksh/main.c r1.52 is backed out *AND* a new fix is in
 # XXX enable once bin/ksh/main.c r1.52 is backed out
 #expected-fail: yes
@@ -70,22 +70,6 @@ expected-stdout:
 	ERR
 	EXIT
 expected-exit: e != 0
----
-
-
-name: signal-handling-is-no-error
-description:
-	Check that gracefully handling a signal is not treated as error.
-arguments: !-e!
-stdin:
-	trap 'echo ERR' ERR
-	trap 'echo EXIT' EXIT
-	trap 'echo USR1' USR1
-	kill -USR1 $$
-expected-stdout:
-	USR1
-	EXIT
-expected-exit: e == 0
 ---
 
 
@@ -118,4 +102,23 @@ expected-stdout:
 	EXIT
 	ERR
 expected-exit: e != 0
- ---
+---
+
+#
+# Check that the errexit option does not interfere with signal handler traps.
+#
+
+name: handled-signal-is-no-error
+description:
+	Check that gracefully handling a signal is not treated as error.
+arguments: !-e!
+stdin:
+	trap 'echo ERR' ERR
+	trap 'echo EXIT' EXIT
+	trap 'echo USR1' USR1
+	kill -USR1 $$
+expected-stdout:
+	USR1
+	EXIT
+expected-exit: e == 0
+---
