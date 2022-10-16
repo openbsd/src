@@ -1,4 +1,4 @@
-#	$OpenBSD: trap.t,v 1.5 2022/10/16 10:19:02 kn Exp $
+#	$OpenBSD: trap.t,v 1.6 2022/10/16 10:44:06 kn Exp $
 
 #
 # Check that I/O redirection failure triggers the ERR trap.
@@ -121,4 +121,26 @@ expected-stdout:
 	USR1
 	EXIT
 expected-exit: e == 0
+---
+
+
+name: failed-INTR-runs-EXIT
+description:
+	Check that EXIT runs under errexit even if interrupt handling failed.
+	SIGINT, SIGQUIT, SIGTERM and SIGHUP are handled specially.
+	XXX Find/explain the difference if the busy loop runs directly, i.e. not
+	inside a subshell or process ($PROG -c "...").
+# XXX should always be passed like PROG
+arguments: !-e!
+env-setup: !ARGS=-e!
+stdin:
+	exec timeout --preserve-status -s INT -- 0.1s $PROG $ARGS -c '
+		trap "echo EXIT" EXIT
+		trap "echo INT ; false" INT
+		(while : ; do : ; done)
+	'
+expected-stdout:
+	INT
+	EXIT
+expected-exit: e != 0
 ---
