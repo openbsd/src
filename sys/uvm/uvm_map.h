@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.77 2022/10/15 03:23:50 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.78 2022/10/16 16:16:37 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -355,7 +355,8 @@ int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t, vm_inherit_t);
 int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
 boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t, vm_map_entry_t *);
-int		uvm_map_make_stack(struct proc *, vaddr_t, vsize_t);
+boolean_t	uvm_map_is_stack_remappable(struct vm_map *, vaddr_t, vsize_t, int);
+int		uvm_map_remap_as_stack(struct proc *, vaddr_t, vsize_t);
 int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
 		    vm_map_entry_t, int);
 int		uvm_map_reserve(struct vm_map *, vsize_t, vaddr_t, vsize_t,
