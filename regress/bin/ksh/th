@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: th,v 1.3 2021/09/02 07:14:15 jasper Exp $
+#	$OpenBSD: th,v 1.4 2022/10/16 08:49:03 kn Exp $
 
 
 #
@@ -56,9 +56,11 @@
 #					missing, NAME is removed from the
 #					environment.  Programs are run with
 #					the following minimal environment:
-#					    USER, LOGNAME, HOME, PATH, SHELL
+#					    USER, LOGNAME, HOME, PATH, SHELL,
+#					    PROG
 #					(values from the current environment
 #					takes higher precedence).
+#					PROG always contains the -p argument.
 #	file-setup		    mps Used to create files, directories
 #					and symlinks.  First word is either
 #					file, dir or symlink; second word is
@@ -139,7 +141,7 @@ $os = defined $^O ? $^O : 'unknown';
 ($prog = $0) =~ s#.*/##;
 
 $Usage = <<EOF ;
-Usage: $prog [-s test-set] [-C category] [-p prog] [-v] [-e e=v] test-name ...
+Usage: $prog -p prog -s test-set [-v] [-C category] [-e e=v] test-name ...
 	-p p	Use p as the program to test
 	-C c	Specify the comma separated list of categories the program
 		belongs to (see category field).
@@ -233,7 +235,7 @@ $all_tests = @ARGV == 0;
 
 # Set up a very minimal environment
 %new_env = ();
-foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL')) {
+foreach $env (('USER', 'LOGNAME', 'HOME', 'PATH', 'SHELL', 'PROG')) {
     $new_env{$env} = $ENV{$env} if defined $ENV{$env};
 }
 if (defined $opt_e) {
@@ -470,6 +472,7 @@ run_test
     if (!$pid) {
 	@SIG{@trap_sigs} = ('DEFAULT') x @trap_sigs;
 	$SIG{'ALRM'} = 'DEFAULT';
+	$ENV{'PROG'} = $test_prog;
 	if (defined $test{'env-setup'}) {
 	    local($var, $val, $i);
 
