@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.280 2022/08/25 17:25:25 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.281 2022/10/16 15:03:39 kettenis Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -126,6 +126,11 @@ extern int db_console;
 #include <dev/ic/comreg.h>
 #endif
 
+#include "efi.h"
+#if NEFI > 0
+#include <dev/efi/efi.h>
+#endif
+
 #include "softraid.h"
 #if NSOFTRAID > 0
 #include <dev/softraidvar.h>
@@ -243,6 +248,10 @@ bios_memmap_t	*bios_memmap;
 u_int32_t	bios_cksumlen;
 bios_efiinfo_t	*bios_efiinfo;
 bios_ucode_t	*bios_ucode;
+
+#if NEFI > 0
+EFI_MEMORY_DESCRIPTOR *mmap;
+#endif
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -1537,6 +1546,16 @@ init_x86_64(paddr_t first_avail)
 	 * We must do this before loading pages into the VM system.
 	 */
 	first_avail = pmap_bootstrap(first_avail, trunc_page(avail_end));
+
+#if NEFI > 0
+	/* Relocate the EFI memory map. */
+	if (bios_efiinfo && bios_efiinfo->mmap_start) {
+		mmap = (EFI_MEMORY_DESCRIPTOR *)PMAP_DIRECT_MAP(first_avail);
+		memcpy(mmap, (void *)PMAP_DIRECT_MAP(bios_efiinfo->mmap_start),
+		    bios_efiinfo->mmap_size);
+		first_avail += round_page(bios_efiinfo->mmap_size);
+	}
+#endif
 
 	/* Allocate these out of the 640KB base memory */
 	if (avail_start != PAGE_SIZE)

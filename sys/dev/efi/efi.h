@@ -1,9 +1,15 @@
-/* $OpenBSD: efi.h,v 1.1 2022/10/03 19:32:22 kettenis Exp $ */
+/* $OpenBSD: efi.h,v 1.2 2022/10/16 15:03:39 kettenis Exp $ */
 
 /* Public Domain */
 
 #ifndef _MACHINE_EFI_H_
 #define _MACHINE_EFI_H_
+
+#ifdef __amd64__
+#define EFIAPI		__attribute__((ms_abi))
+#else
+#define EFIAPI
+#endif
 
 typedef uint8_t		UINT8;
 typedef int16_t		INT16;
@@ -111,9 +117,9 @@ typedef struct {
 
 typedef VOID		*EFI_TIME_CAPABILITIES;
 
-typedef EFI_STATUS (*EFI_GET_TIME)(EFI_TIME *, EFI_TIME_CAPABILITIES *);
-typedef EFI_STATUS (*EFI_SET_TIME)(EFI_TIME *);
-typedef EFI_STATUS (*EFI_SET_VIRTUAL_ADDRESS_MAP)(UINTN, UINTN, UINT32, EFI_MEMORY_DESCRIPTOR *);
+typedef EFI_STATUS (EFIAPI *EFI_GET_TIME)(EFI_TIME *, EFI_TIME_CAPABILITIES *);
+typedef EFI_STATUS (EFIAPI *EFI_SET_TIME)(EFI_TIME *);
+typedef EFI_STATUS (EFIAPI *EFI_SET_VIRTUAL_ADDRESS_MAP)(UINTN, UINTN, UINT32, EFI_MEMORY_DESCRIPTOR *);
 
 typedef struct {
 	EFI_TABLE_HEADER		Hdr;

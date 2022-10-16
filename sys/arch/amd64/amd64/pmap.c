@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.154 2022/09/10 20:35:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.155 2022/10/16 15:03:39 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2834,7 +2834,7 @@ enter_now:
 	if (nocache)
 		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
-		npte |= PG_u;
+		npte |= ((flags & PMAP_EFI) ? 0 : PG_u);
 	else if (va < VM_MAX_ADDRESS)
 		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
 	if (pmap == pmap_kernel())
