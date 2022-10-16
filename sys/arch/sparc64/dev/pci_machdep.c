@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.51 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.52 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -77,10 +77,8 @@ static int pci_bus_frequency(int node);
  */
 
 void
-pci_attach_hook(parent, self, pba)
-	struct device *parent;
-	struct device *self;
-	struct pcibus_attach_args *pba;
+pci_attach_hook(struct device *parent, struct device *self,
+    struct pcibus_attach_args *pba)
 {
 	/* Don't do anything */
 }
@@ -126,20 +124,14 @@ pci_probe_device_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
 }
 
 int
-pci_bus_maxdevs(pc, busno)
-	pci_chipset_tag_t pc;
-	int busno;
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
 
 	return 32;
 }
 
 pcitag_t
-pci_make_tag(pc, b, d, f)
-	pci_chipset_tag_t pc;
-	int b;
-	int d;
-	int f;
+pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 {
 	struct ofw_pci_register reg;
 	pcitag_t tag;
@@ -226,10 +218,7 @@ pci_make_tag(pc, b, d, f)
 }
 
 void
-pci_decompose_tag(pc, tag, bp, dp, fp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int *bp, *dp, *fp;
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
 {
 
 	if (bp != NULL)
@@ -387,9 +376,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
  * XXX: how does this deal with multiple interrupts for a device?
  */
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	pcitag_t tag = pa->pa_tag;
 	int interrupts[4], ninterrupts;
@@ -490,9 +477,7 @@ pci_intr_line(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 }
 
 const char *
-pci_intr_string(pc, ih)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
+pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char str[16];
 	const char *rv = str;
@@ -515,13 +500,8 @@ pci_intr_string(pc, ih)
 }
 
 void *
-pci_intr_establish(pc, ih, level, func, arg, what)
-	pci_chipset_tag_t pc;
-	pci_intr_handle_t ih;
-	int level;
-	int (*func)(void *);
-	void *arg;
-	const char *what;
+pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
+    int (*func)(void *), void *arg, const char *what)
 {
 	return (pci_intr_establish_cpu(pc, ih, level, NULL, func, arg, what));
 }
@@ -549,9 +529,7 @@ pci_intr_establish_cpu(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 }
 
 void
-pci_intr_disestablish(pc, cookie)
-	pci_chipset_tag_t pc;
-	void *cookie;
+pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
 	DPRINTF(SPDB_INTR, ("pci_intr_disestablish: cookie %p\n", cookie));

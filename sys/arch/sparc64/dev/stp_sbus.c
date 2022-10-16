@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.12 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.13 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -68,10 +68,7 @@ const struct cfattach stp_sbus_ca = {
 };
 
 int
-stpmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+stpmatch(struct device *parent, void *match, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -82,9 +79,7 @@ stpmatch(parent, match, aux)
  * Attach all the sub-devices we can find
  */
 void
-stpattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+stpattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct stp4020_sbus_softc *ssc = (void *)self;

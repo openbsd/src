@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxio.c,v 1.9 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: auxio.c,v 1.10 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -73,10 +73,7 @@ struct cfdriver auxio_cd = {
 void auxio_led_blink(void *, int);
 
 int
-auxio_ebus_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+auxio_ebus_match(struct device *parent, void *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -84,9 +81,7 @@ auxio_ebus_match(parent, cf, aux)
 }
 
 void
-auxio_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxio_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
@@ -134,10 +129,7 @@ auxio_ebus_attach(parent, self, aux)
 }
 
 int
-auxio_sbus_match(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+auxio_sbus_match(struct device *parent, void *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -145,9 +137,7 @@ auxio_sbus_match(parent, cf, aux)
 }
 
 void
-auxio_sbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+auxio_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -176,8 +166,7 @@ auxio_sbus_attach(parent, self, aux)
 }
 
 void
-auxio_attach_common(sc)
-	struct auxio_softc *sc;
+auxio_attach_common(struct auxio_softc *sc)
 {
 	sc->sc_blink.bl_func = auxio_led_blink;
 	sc->sc_blink.bl_arg = sc;

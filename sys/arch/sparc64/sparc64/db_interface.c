@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.58 2022/04/14 19:47:12 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.59 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -237,8 +237,7 @@ void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kbd_trap(tf)
-	struct trapframe64 *tf;
+kdb_kbd_trap(struct trapframe64 *tf)
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
@@ -250,9 +249,7 @@ kdb_kbd_trap(tf)
  *  db_ktrap - field a TRACE or BPT trap
  */
 int
-db_ktrap(type, tf)
-	int	type;
-	register struct trapframe64 *tf;
+db_ktrap(int type, register struct trapframe64 *tf)
 {
 	int s, tl;
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];
@@ -573,11 +570,7 @@ db_enter(void)
 }
 
 void
-db_prom_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_prom_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	OF_enter();
 }
@@ -638,11 +631,7 @@ void db_print_itlb_entry(int entry, int i, int endc)
 }
 
 void
-db_dump_dtlb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_dtlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	/* extern void print_dtlb(void); -- locore.s; no longer used here */
 
@@ -681,11 +670,7 @@ printf ("Usage: mach dtlb 0,2\n");
 }
 
 void
-db_dump_itlb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_itlb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int i;
 	if (!have_addr) {
@@ -712,11 +697,7 @@ db_dump_itlb(addr, have_addr, count, modif)
 }
 
 void
-db_pload_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_pload_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	static paddr_t oldaddr = -1;
 	int asi = ASI_PHYS_CACHED;
@@ -751,8 +732,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 int64_t pseg_get(struct pmap *, vaddr_t);
 
 void
-db_dump_pmap(pm)
-struct pmap* pm;
+db_dump_pmap(struct pmap* pm)
 {
 	/* print all valid pages in the kernel pmap */
 	long i, j, k, n;
@@ -787,11 +767,7 @@ struct pmap* pm;
 }
 
 void
-db_pmap_kernel(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_pmap_kernel(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	extern struct pmap kernel_pmap_;
 	int i, j, full = 0;
@@ -833,11 +809,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 
 
 void
-db_pmap_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_pmap_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct pmap* pm=NULL;
 	int i, j=0, full = 0;
@@ -872,11 +844,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 
 
 void
-db_lock(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_lock(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 #if 0
 	struct lock *l;
@@ -898,11 +866,7 @@ db_lock(addr, have_addr, count, modif)
 }
 
 void
-db_dump_dtsb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_dtsb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	extern pte_t *tsb_dmmu;
 	extern int tsbsize;
@@ -925,11 +889,7 @@ db_dump_dtsb(addr, have_addr, count, modif)
 
 void db_page_cmd(db_expr_t, int, db_expr_t, char *);
 void
-db_page_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_page_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 
 	if (!have_addr) {
@@ -943,11 +903,7 @@ db_page_cmd(addr, have_addr, count, modif)
 
 
 void
-db_proc_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct proc *p;
 
@@ -975,11 +931,7 @@ db_proc_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_ctx_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_ctx_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct proc *p;
 
@@ -1000,11 +952,7 @@ db_ctx_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_dump_pcb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct pcb *pcb;
 	int i;
@@ -1046,11 +994,7 @@ db_dump_pcb(addr, have_addr, count, modif)
 
 
 void
-db_setpcb(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_setpcb(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct proc *p;
 
@@ -1079,11 +1023,7 @@ db_setpcb(addr, have_addr, count, modif)
  * Use physical or virtual watchpoint registers -- ugh
  */
 void
-db_watch(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
+db_watch(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	int phys = 0;
 

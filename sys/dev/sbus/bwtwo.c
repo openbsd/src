@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.21 2022/07/15 17:57:27 kettenis Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.22 2022/10/16 01:22:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -126,9 +126,7 @@ struct cfdriver bwtwo_cd = {
 };
 
 int
-bwtwomatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf, *aux;
+bwtwomatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -137,9 +135,7 @@ bwtwomatch(parent, vcf, aux)
 }
 
 void    
-bwtwoattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+bwtwoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct sbus_attach_args *sa = aux;
@@ -206,12 +202,7 @@ fail:
 }
 
 int
-bwtwo_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+bwtwo_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct bwtwo_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
@@ -254,10 +245,7 @@ bwtwo_ioctl(v, cmd, data, flags, p)
 }
 
 paddr_t
-bwtwo_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+bwtwo_mmap(void *v, off_t offset, int prot)
 {
 	struct bwtwo_softc *sc = v;
 
@@ -272,8 +260,7 @@ bwtwo_mmap(v, offset, prot)
 }
 
 int
-bwtwo_is_console(node)
-	int node;
+bwtwo_is_console(int node)
 {
 	extern int fbnode;
 
@@ -281,9 +268,7 @@ bwtwo_is_console(node)
 }
 
 void
-bwtwo_burner(vsc, on, flags)
-	void *vsc;
-	u_int on, flags;
+bwtwo_burner(void *vsc, u_int on, u_int flags)
 {
 	struct bwtwo_softc *sc = vsc;
 	int s;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mk48txx.c,v 1.9 2022/10/12 13:39:50 kettenis Exp $	*/
+/*	$OpenBSD: mk48txx.c,v 1.10 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: mk48txx.c,v 1.7 2001/04/08 17:05:10 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,11 +71,8 @@ struct {
 };
 
 todr_chip_handle_t
-mk48txx_attach(bt, bh, model, year0)
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
-	const char *model;
-	int year0;
+mk48txx_attach(bus_space_tag_t bt, bus_space_handle_t bh, const char *model,
+    int year0)
 {
 	todr_chip_handle_t handle;
 	struct mk48txx *mk;
@@ -125,9 +122,7 @@ mk48txx_attach(bt, bh, model, year0)
  * Return 0 on success; an error number otherwise.
  */
 int
-mk48txx_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+mk48txx_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mk48txx *mk = handle->cookie;
 	bus_space_tag_t bt = mk->mk_bt;
@@ -180,9 +175,7 @@ mk48txx_gettime(handle, tv)
  * Return 0 on success; an error number otherwise.
  */
 int
-mk48txx_settime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+mk48txx_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct mk48txx *mk = handle->cookie;
 	bus_space_tag_t bt = mk->mk_bt;
@@ -222,9 +215,7 @@ mk48txx_settime(handle, tv)
 }
 
 int
-mk48txx_get_nvram_size(handle, vp)
-	todr_chip_handle_t handle;
-	bus_size_t *vp;
+mk48txx_get_nvram_size(todr_chip_handle_t handle, bus_size_t *vp)
 {
 	struct mk48txx *mk = handle->cookie;
 	*vp = mk->mk_nvramsz;

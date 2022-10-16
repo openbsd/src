@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.21 2017/08/10 19:39:38 mpi Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.22 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -41,8 +41,7 @@
 #define min(x,y)	((x<y)?(x):(y))
 
 int
-OF_peer(phandle)
-	int phandle;
+OF_peer(int phandle)
 {
 	struct {
 		cell_t name;
@@ -62,8 +61,7 @@ OF_peer(phandle)
 }
 
 int
-OF_child(phandle)
-	int phandle;
+OF_child(int phandle)
 {
 	struct {
 		cell_t name;
@@ -83,8 +81,7 @@ OF_child(phandle)
 }
 
 int
-OF_parent(phandle)
-	int phandle;
+OF_parent(int phandle)
 {
 	struct {
 		cell_t name;
@@ -104,8 +101,7 @@ OF_parent(phandle)
 }
 
 int
-OF_instance_to_package(ihandle)
-	int ihandle;
+OF_instance_to_package(int ihandle)
 {
 	static struct {
 		cell_t name;
@@ -126,9 +122,7 @@ OF_instance_to_package(ihandle)
 
 /* Should really return a `long' */
 int
-OF_getproplen(handle, prop)
-	int handle;
-	char *prop;
+OF_getproplen(int handle, char *prop)
 {
 	struct {
 		cell_t name;
@@ -150,11 +144,7 @@ OF_getproplen(handle, prop)
 }
 
 int
-OF_getprop(handle, prop, buf, buflen)
-	int handle;
-	char *prop;
-	void *buf;
-	int buflen;
+OF_getprop(int handle, char *prop, void *buf, int buflen)
 {
 	struct {
 		cell_t name;
@@ -182,11 +172,7 @@ OF_getprop(handle, prop, buf, buflen)
 }
 
 int
-OF_setprop(handle, prop, buf, buflen)
-	int handle;
-	char *prop;
-	const void *buf;
-	int buflen;
+OF_setprop(int handle, char *prop, const void *buf, int buflen)
 {
 	struct {
 		cell_t name;
@@ -214,10 +200,7 @@ OF_setprop(handle, prop, buf, buflen)
 }
 
 int
-OF_nextprop(handle, prop, buf)
-	int handle;
-	char *prop;
-	void *buf;
+OF_nextprop(int handle, char *prop, void *buf)
 {
 	struct {
 		cell_t name;
@@ -241,8 +224,7 @@ OF_nextprop(handle, prop, buf)
 }
 
 int
-OF_finddevice(name)
-char *name;
+OF_finddevice(char *name)
 {
 	struct {
 		cell_t name;
@@ -262,10 +244,7 @@ char *name;
 }
 
 int
-OF_instance_to_path(ihandle, buf, buflen)
-	int ihandle;
-	char *buf;
-	int buflen;
+OF_instance_to_path(int ihandle, char *buf, int buflen)
 {
 	struct {
 		cell_t name;
@@ -291,10 +270,7 @@ OF_instance_to_path(ihandle, buf, buflen)
 }
 
 int
-OF_package_to_path(phandle, buf, buflen)
-	int phandle;
-	char *buf;
-	int buflen;
+OF_package_to_path(int phandle, char *buf, int buflen)
 {
 	struct {
 		cell_t name;
@@ -393,8 +369,7 @@ OF_call_method_1(char *method, int ihandle, int nargs, ...)
 }
 
 int
-OF_open(dname)
-	char *dname;
+OF_open(char *dname)
 {
 	struct {
 		cell_t name;
@@ -417,8 +392,7 @@ OF_open(dname)
 }
 
 void
-OF_close(handle)
-	int handle;
+OF_close(int handle)
 {
 	struct {
 		cell_t name;
@@ -435,8 +409,7 @@ OF_close(handle)
 }
 
 int
-OF_test(service)
-	char *service;
+OF_test(char *service)
 {
 	struct {
 		cell_t name;
@@ -456,9 +429,7 @@ OF_test(service)
 }
 
 int
-OF_test_method(service, method)
-	int service;
-	char *method;
+OF_test_method(int service, char *method)
 {
 	struct {
 		cell_t name;
@@ -484,10 +455,7 @@ OF_test_method(service, method)
  * This assumes that character devices don't read in multiples of NBPG.
  */
 int
-OF_read(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_read(int handle, void *addr, int len)
 {
 	struct {
 		cell_t name;
@@ -526,10 +494,7 @@ OF_read(handle, addr, len)
 void prom_printf(const char *fmt, ...);	/* XXX for below */
 
 int
-OF_write(handle, addr, len)
-	int handle;
-	void *addr;
-	int len;
+OF_write(int handle, void *addr, int len)
 {
 	struct {
 		cell_t name;
@@ -563,9 +528,7 @@ OF_write(handle, addr, len)
 
 
 int
-OF_seek(handle, pos)
-	int handle;
-	u_quad_t pos;
+OF_seek(int handle, u_quad_t pos)
 {
 	struct {
 		cell_t name;
@@ -589,8 +552,7 @@ OF_seek(handle, pos)
 }
 
 void
-OF_boot(bootspec)
-	char *bootspec;
+OF_boot(char *bootspec)
 {
 	struct {
 		cell_t name;
@@ -657,8 +619,7 @@ OF_poweroff(void)
 }
 
 void
-(*OF_set_callback(newfunc))(void *)
-	void (*newfunc)(void *);
+(*OF_set_callback(void (*newfunc)(void *)))(void *)
 {
 	struct {
 		cell_t name;
@@ -678,9 +639,7 @@ void
 }
 
 void 
-OF_set_symbol_lookup(s2v, v2s)
-	void (*s2v)(void *);
-	void (*v2s)(void *);
+OF_set_symbol_lookup(void (*s2v)(void *), void (*v2s)(void *))
 {
 	struct {
 		cell_t name;
@@ -755,8 +714,8 @@ OF_milliseconds(void)
 
 int obp_symbol_debug = 0;
 
-void OF_sym2val(cells)
-	void *cells;
+void
+OF_sym2val(void *cells)
 {
 	struct args {
 		cell_t service;
@@ -791,8 +750,8 @@ void OF_sym2val(cells)
 	args->value = ADR2CELL(value);
 }
 
-void OF_val2sym(cells)
-	void *cells;
+void
+OF_val2sym(void *cells)
 {
 	struct args {
 		cell_t service;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_div.c,v 1.3 2013/11/26 20:33:15 deraadt Exp $	*/
+/*	$OpenBSD: fpu_div.c,v 1.4 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu_div.c,v 1.2 1994/11/20 20:52:38 deraadt Exp $ */
 
 /*
@@ -148,8 +148,7 @@
  */
 
 struct fpn *
-fpu_div(fe)
-	register struct fpemu *fe;
+fpu_div(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	register u_int q, bit;

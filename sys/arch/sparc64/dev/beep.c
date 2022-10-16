@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.10 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: beep.c,v 1.11 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -102,9 +102,7 @@ beep_match(struct device *parent, void *match, void *aux)
 }
 
 void
-beep_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+beep_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct beep_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;

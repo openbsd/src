@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.42 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: qe.c,v 1.43 2022/10/16 01:22:40 jsg Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -157,10 +157,7 @@ struct cfdriver qe_cd = {
 };
 
 int
-qematch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+qematch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -169,9 +166,7 @@ qematch(parent, vcf, aux)
 }
 
 void
-qeattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *qec = (struct qec_softc *)parent;
@@ -310,9 +305,7 @@ qeattach(parent, self, aux)
  * we copy into clusters.
  */
 struct mbuf *
-qe_get(sc, idx, totlen)
-	struct qe_softc *sc;
-	int idx, totlen;
+qe_get(struct qe_softc *sc, int idx, int totlen)
 {
 	struct mbuf *m;
 	struct mbuf *top, **mp;
@@ -361,10 +354,7 @@ qe_get(sc, idx, totlen)
  * network buffer memory.
  */
 __inline__ int
-qe_put(sc, idx, m)
-	struct qe_softc *sc;
-	int idx;
-	struct mbuf *m;
+qe_put(struct qe_softc *sc, int idx, struct mbuf *m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
@@ -390,9 +380,7 @@ qe_put(sc, idx, m)
  * Pass a packet to the higher levels.
  */
 __inline__ void
-qe_read(sc, idx, len)
-	struct qe_softc *sc;
-	int idx, len;
+qe_read(struct qe_softc *sc, int idx, int len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
@@ -431,8 +419,7 @@ qe_read(sc, idx, len)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-qestart(ifp)
-	struct ifnet *ifp;
+qestart(struct ifnet *ifp)
 {
 	struct qe_softc *sc = (struct qe_softc *)ifp->if_softc;
 	struct qec_xd *txd = sc->sc_rb.rb_txd;
@@ -486,9 +473,8 @@ qestart(ifp)
 }
 
 void
-qestop(sc)
-	struct qe_softc *sc;
-{	
+qestop(struct qe_softc *sc)
+{
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mr = sc->sc_mr;
 	bus_space_handle_t cr = sc->sc_cr;
@@ -517,8 +503,7 @@ qestop(sc)
  * Reset interface.
  */
 void
-qereset(sc)
-	struct qe_softc *sc;
+qereset(struct qe_softc *sc)
 {
 	int s;
 
@@ -529,8 +514,7 @@ qereset(sc)
 }
 
 void
-qewatchdog(ifp)
-	struct ifnet *ifp;
+qewatchdog(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 
@@ -544,8 +528,7 @@ qewatchdog(ifp)
  * Interrupt dispatch.
  */
 int
-qeintr(arg)
-	void *arg;
+qeintr(void *arg)
 {
 	struct qe_softc *sc = (struct qe_softc *)arg;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -609,8 +592,7 @@ qeintr(arg)
  * Transmit interrupt.
  */
 int
-qe_tint(sc)
-	struct qe_softc *sc;
+qe_tint(struct qe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	unsigned int bix, txflags;
@@ -652,8 +634,7 @@ qe_tint(sc)
  * Receive interrupt.
  */
 int
-qe_rint(sc)
-	struct qe_softc *sc;
+qe_rint(struct qe_softc *sc)
 {
 	struct qec_xd *xd = sc->sc_rb.rb_rxd;
 	unsigned int bix, len;
@@ -702,9 +683,7 @@ qe_rint(sc)
  * Error interrupt.
  */
 int
-qe_eint(sc, why)
-	struct qe_softc *sc;
-	u_int32_t why;
+qe_eint(struct qe_softc *sc, u_int32_t why)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int r = 0, rst = 0;
@@ -872,10 +851,7 @@ qe_eint(sc, why)
 }
 
 int
-qeioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -939,8 +915,7 @@ qeioctl(ifp, cmd, data)
 
 
 void
-qeinit(sc)
-	struct qe_softc *sc;
+qeinit(struct qe_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t t = sc->sc_bustag;
@@ -1044,8 +1019,7 @@ qeinit(sc)
  * Reset multicast filter.
  */
 void
-qe_mcreset(sc)
-	struct qe_softc *sc;
+qe_mcreset(struct qe_softc *sc)
 {
 	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
@@ -1115,9 +1089,7 @@ qe_mcreset(sc)
  * Get current media settings.
  */
 void
-qe_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+qe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	u_int8_t phycc;
@@ -1137,8 +1109,7 @@ qe_ifmedia_sts(ifp, ifmr)
  * Set media options.
  */
 int
-qe_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+qe_ifmedia_upd(struct ifnet *ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	uint64_t media = sc->sc_ifmedia.ifm_media;

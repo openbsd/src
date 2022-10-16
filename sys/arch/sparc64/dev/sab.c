@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.39 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: sab.c,v 1.40 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -209,9 +209,7 @@ struct sabtty_rate sabtty_baudtable[] = {
 };
 
 int
-sab_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sab_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	char *compat;
@@ -226,10 +224,7 @@ sab_match(parent, match, aux)
 }
 
 void
-sab_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sab_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sab_softc *sc = (struct sab_softc *)self;
 	struct ebus_attach_args *ea = aux;
@@ -324,9 +319,7 @@ sabtty_activate(struct device *self, int act)
 }
 
 int
-sab_print(args, name)
-	void *args;
-	const char *name;
+sab_print(void *args, const char *name)
 {
 	struct sabtty_attach_args *sa = args;
 
@@ -337,8 +330,7 @@ sab_print(args, name)
 }
 
 int
-sab_intr(vsc)
-	void *vsc;
+sab_intr(void *vsc)
 {
 	struct sab_softc *sc = vsc;
 	int r = 0, needsoft = 0;
@@ -363,8 +355,7 @@ sab_intr(vsc)
 }
 
 void
-sab_softintr(vsc)
-	void *vsc;
+sab_softintr(void *vsc)
 {
 	struct sab_softc *sc = vsc;
 
@@ -375,9 +366,7 @@ sab_softintr(vsc)
 }
 
 int
-sabtty_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+sabtty_match(struct device *parent, void *match, void *aux)
 {
 	struct sabtty_attach_args *sa = aux;
 
@@ -387,10 +376,7 @@ sabtty_match(parent, match, aux)
 }
 
 void
-sabtty_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+sabtty_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sabtty_softc *sc = (struct sabtty_softc *)self;
 	struct sabtty_attach_args *sa = aux;
@@ -480,9 +466,7 @@ sabtty_attach(parent, self, aux)
 }
 
 int
-sabtty_intr(sc, needsoftp)
-	struct sabtty_softc *sc;
-	int *needsoftp;
+sabtty_intr(struct sabtty_softc *sc, int *needsoftp)
 {
 	u_int8_t isr0, isr1;
 	int i, len = 0, needsoft = 0, r = 0, clearfifo = 0;
@@ -591,8 +575,7 @@ sabtty_intr(sc, needsoftp)
 }
 
 void
-sabtty_softintr(sc)
-	struct sabtty_softc *sc;
+sabtty_softintr(struct sabtty_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
 	int s, flags;
@@ -645,10 +628,7 @@ sabtty_softintr(sc)
 }
 
 int
-sabttyopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+sabttyopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct sab_softc *bc;
 	struct sabtty_softc *sc;
@@ -763,10 +743,7 @@ sabttyopen(dev, flags, mode, p)
 }
 
 int
-sabttyclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+sabttyclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(dev)];
@@ -806,10 +783,7 @@ sabttyclose(dev, flags, mode, p)
 }
 
 int
-sabttyread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sabttyread(dev_t dev, struct uio *uio, int flags)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(dev)];
@@ -819,10 +793,7 @@ sabttyread(dev, uio, flags)
 }
 
 int
-sabttywrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+sabttywrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(dev)];
@@ -832,12 +803,7 @@ sabttywrite(dev, uio, flags)
 }
 
 int
-sabttyioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+sabttyioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(dev)];
@@ -900,8 +866,7 @@ sabttyioctl(dev, cmd, data, flags, p)
 }
 
 struct tty *
-sabttytty(dev)
-	dev_t dev;
+sabttytty(dev_t dev)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(dev)];
@@ -910,9 +875,7 @@ sabttytty(dev)
 }
 
 int
-sabttystop(tp, flags)
-	struct tty *tp;
-	int flags;
+sabttystop(struct tty *tp, int flags)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
@@ -931,9 +894,7 @@ sabttystop(tp, flags)
 }
 
 int
-sabtty_mdmctrl(sc, bits, how)
-	struct sabtty_softc *sc;
-	int bits, how;
+sabtty_mdmctrl(struct sabtty_softc *sc, int bits, int how)
 {
 	u_int8_t r;
 	int s;
@@ -1004,10 +965,7 @@ sabtty_mdmctrl(sc, bits, how)
 }
 
 int
-sabttyparam(sc, tp, t)
-	struct sabtty_softc *sc;
-	struct tty *tp;
-	struct termios *t;
+sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 {
 	int s, ospeed;
 	tcflag_t cflag;
@@ -1091,9 +1049,7 @@ sabttyparam(sc, tp, t)
 }
 
 int
-sabtty_param(tp, t)
-	struct tty *tp;
-	struct termios *t;
+sabtty_param(struct tty *tp, struct termios *t)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
@@ -1102,8 +1058,7 @@ sabtty_param(tp, t)
 }
 
 void
-sabtty_start(tp)
-	struct tty *tp;
+sabtty_start(struct tty *tp)
 {
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
@@ -1152,8 +1107,7 @@ sabtty_tec_wait(struct sabtty_softc *sc)
 }
 
 void
-sabtty_reset(sc)
-	struct sabtty_softc *sc;
+sabtty_reset(struct sabtty_softc *sc)
 {
 	/* power down */
 	SAB_WRITE(sc, SAB_CCR0, 0);
@@ -1178,8 +1132,7 @@ sabtty_reset(sc)
 }
 
 void
-sabtty_flush(sc)
-	struct sabtty_softc *sc;
+sabtty_flush(struct sabtty_softc *sc)
 {
 	/* clear rx fifo */
 	sabtty_cec_wait(sc);
@@ -1191,8 +1144,7 @@ sabtty_flush(sc)
 }
 
 int
-sabtty_speed(rate)
-	int rate;
+sabtty_speed(int rate)
 {
 	int i, len, r;
 
@@ -1210,9 +1162,7 @@ sabtty_speed(rate)
 }
 
 void
-sabtty_cnputc(sc, c)
-	struct sabtty_softc *sc;
-	int c;
+sabtty_cnputc(struct sabtty_softc *sc, int c)
 {
 	sabtty_tec_wait(sc);
 	SAB_WRITE(sc, SAB_TIC, c);
@@ -1220,8 +1170,7 @@ sabtty_cnputc(sc, c)
 }
 
 int
-sabtty_cngetc(sc)
-	struct sabtty_softc *sc;
+sabtty_cngetc(struct sabtty_softc *sc)
 {
 	u_int8_t r, len, ipc;
 
@@ -1261,9 +1210,7 @@ again:
 }
 
 void
-sabtty_cnpollc(sc, on)
-	struct sabtty_softc *sc;
-	int on;
+sabtty_cnpollc(struct sabtty_softc *sc, int on)
 {
 	u_int8_t r;
 
@@ -1289,9 +1236,7 @@ sabtty_cnpollc(sc, on)
 }
 
 void
-sab_cnputc(dev, c)
-	dev_t dev;
-	int c;
+sab_cnputc(dev_t dev, int c)
 {
 	struct sabtty_softc *sc = sabtty_cons_output;
 
@@ -1301,9 +1246,7 @@ sab_cnputc(dev, c)
 }
 
 void
-sab_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+sab_cnpollc(dev_t dev, int on)
 {
 	struct sabtty_softc *sc = sabtty_cons_input;
 
@@ -1311,8 +1254,7 @@ sab_cnpollc(dev, on)
 }
 
 int
-sab_cngetc(dev)
-	dev_t dev;
+sab_cngetc(dev_t dev)
 {
 	struct sabtty_softc *sc = sabtty_cons_input;
 
@@ -1322,8 +1264,7 @@ sab_cngetc(dev)
 }
 
 void
-sabtty_console_flags(sc)
-	struct sabtty_softc *sc;
+sabtty_console_flags(struct sabtty_softc *sc)
 {
 	int node, channel, options, cookie;
 	char buf[255];
@@ -1362,8 +1303,7 @@ sabtty_console_flags(sc)
 }
 
 void
-sabtty_console_speed(sc)
-	struct sabtty_softc *sc;
+sabtty_console_speed(struct sabtty_softc *sc)
 {
 	char *name;
 	int node, channel, options;
@@ -1386,8 +1326,7 @@ sabtty_console_speed(sc)
 }
 
 void
-sabtty_abort(sc)
-	struct sabtty_softc *sc;
+sabtty_abort(struct sabtty_softc *sc)
 {
 
 	if (sc->sc_flags & SABTTYF_CONS_IN) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.9 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: power.c,v 1.10 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -71,10 +71,7 @@ struct cfdriver power_cd = {
 };
 
 int
-power_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+power_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -84,9 +81,7 @@ power_match(parent, match, aux)
 }
 
 void
-power_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+power_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct power_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;

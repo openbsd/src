@@ -1,4 +1,4 @@
-/*	$OpenBSD: central.c,v 1.11 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: central.c,v 1.12 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -60,9 +60,7 @@ int _central_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
 
 int
-central_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+central_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -72,9 +70,7 @@ central_match(parent, match, aux)
 }
 
 void
-central_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+central_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct central_softc *sc = (struct central_softc *)self;
 	struct mainbus_attach_args *ma = aux;

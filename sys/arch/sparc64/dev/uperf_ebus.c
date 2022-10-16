@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_ebus.c,v 1.8 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: uperf_ebus.c,v 1.9 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -110,10 +110,7 @@ struct uperf_src uperf_ebus_srcs[] = {
 	{ -1, -1, 0 }
 };
 int
-uperf_ebus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+uperf_ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -121,9 +118,7 @@ uperf_ebus_match(parent, match, aux)
 }
 
 void
-uperf_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uperf_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uperf_ebus_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
@@ -170,9 +165,7 @@ uperf_ebus_attach(parent, self, aux)
  * Read an indirect register.
  */
 u_int32_t
-uperf_ebus_read_reg(sc, r)
-	struct uperf_ebus_softc *sc;
-	bus_size_t r;
+uperf_ebus_read_reg(struct uperf_ebus_softc *sc, bus_size_t r)
 {
 	u_int32_t v;
 	int s;
@@ -211,10 +204,7 @@ uperf_ebus_read_reg(sc, r)
  * Write an indirect register.
  */
 void
-uperf_ebus_write_reg(sc, r, v)
-	struct uperf_ebus_softc *sc;
-	bus_size_t r;
-	u_int32_t v;
+uperf_ebus_write_reg(struct uperf_ebus_softc *sc, bus_size_t r, u_int32_t v)
 {
 	int s;
 
@@ -248,9 +238,7 @@ uperf_ebus_write_reg(sc, r, v)
 }
 
 int
-uperf_ebus_clrcnt(vsc, flags)
-	void *vsc;
-	int flags;
+uperf_ebus_clrcnt(void *vsc, int flags)
 {
 	struct uperf_ebus_softc *sc = vsc;
 	u_int32_t clr = 0, oldsrc;
@@ -267,10 +255,7 @@ uperf_ebus_clrcnt(vsc, flags)
 }
 
 int
-uperf_ebus_setcntsrc(vsc, flags, src0, src1)
-	void *vsc;
-	int flags;
-	u_int src0, src1;
+uperf_ebus_setcntsrc(void *vsc, int flags, u_int src0, u_int src1)
 {
 	struct uperf_ebus_softc *sc = vsc;
 	u_int32_t src;
@@ -289,10 +274,7 @@ uperf_ebus_setcntsrc(vsc, flags, src0, src1)
 }
 
 int
-uperf_ebus_getcntsrc(vsc, flags, srcp0, srcp1)
-	void *vsc;
-	int flags;
-	u_int *srcp0, *srcp1;
+uperf_ebus_getcntsrc(void *vsc, int flags, u_int *srcp0, u_int *srcp1)
 {
 	struct uperf_ebus_softc *sc = vsc;
 	u_int32_t src;
@@ -306,10 +288,7 @@ uperf_ebus_getcntsrc(vsc, flags, srcp0, srcp1)
 }
 
 int
-uperf_ebus_getcnt(vsc, flags, cntp0, cntp1)
-	void *vsc;
-	int flags;
-	u_int32_t *cntp0, *cntp1;
+uperf_ebus_getcnt(void *vsc, int flags, u_int32_t *cntp0, u_int32_t *cntp1)
 {
 	struct uperf_ebus_softc *sc = vsc;
 	u_int32_t c0, c1;

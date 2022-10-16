@@ -1,4 +1,4 @@
-/*	$OpenBSD: beeper.c,v 1.14 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: beeper.c,v 1.15 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -82,10 +82,7 @@ void beeper_bell(void *, u_int, u_int, u_int, int);
 #endif
 
 int
-beeper_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+beeper_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -95,9 +92,7 @@ beeper_match(parent, match, aux)
 }
 
 void
-beeper_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+beeper_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct beeper_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
@@ -127,8 +122,7 @@ beeper_attach(parent, self, aux)
 
 #if NPCKBD > 0
 void
-beeper_stop(vsc)
-	void *vsc;
+beeper_stop(void *vsc)
 {
 	struct beeper_softc *sc = vsc;
 	int s;
@@ -141,10 +135,7 @@ beeper_stop(vsc)
 }
 
 void
-beeper_bell(vsc, pitch, period, volume, poll)
-	void *vsc;
-	u_int pitch, period, volume;
-	int poll;
+beeper_bell(void *vsc, u_int pitch, u_int period, u_int volume, int poll)
 {
 	struct beeper_softc *sc = vsc;
 	int s;

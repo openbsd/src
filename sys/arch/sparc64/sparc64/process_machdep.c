@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2009/03/05 19:52:23 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -76,9 +76,7 @@
 #endif
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
-process_read_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_read_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe64* tf = p->p_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
@@ -113,9 +111,7 @@ process_read_regs(p, regs)
 }
 
 int
-process_read_fpregs(p, regs)
-	struct proc	*p;
-	struct fpreg	*regs;
+process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
 	extern struct fpstate64	initfpstate;
 	struct fpstate64 *statep = &initfpstate;
@@ -143,9 +139,7 @@ process_read_fpregs(p, regs)
 #ifdef PTRACE
 
 int
-process_write_regs(p, regs)
-	struct proc *p;
-	struct reg *regs;
+process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe64* tf = p->p_md.md_tf;
 	struct reg32* regp = (struct reg32*)regs;
@@ -182,9 +176,7 @@ process_write_regs(p, regs)
 
 #ifdef PT_STEP
 int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
+process_sstep(struct proc *p, int sstep)
 {
 	if (sstep)
 		return EINVAL;
@@ -193,9 +185,7 @@ process_sstep(p, sstep)
 #endif
 
 int
-process_set_pc(p, addr)
-	struct proc *p;
-	caddr_t addr;
+process_set_pc(struct proc *p, caddr_t addr)
 {
 	p->p_md.md_tf->tf_pc = (vaddr_t)addr;
 	p->p_md.md_tf->tf_npc = (vaddr_t)addr + 4;
@@ -203,9 +193,7 @@ process_set_pc(p, addr)
 }
 
 int
-process_write_fpregs(p, regs)
-	struct proc	*p;
-	struct fpreg	*regs;
+process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
 	struct fpreg32 *regp = (struct fpreg32 *)regs;
 	int i;

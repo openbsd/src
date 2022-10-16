@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.15 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.16 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -72,10 +72,7 @@ const struct cfattach pckbc_ebus_ca = {
 int pckbc_ebus_is_console(struct pckbc_ebus_softc *);
 
 int
-pckbc_ebus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pckbc_ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -85,9 +82,7 @@ pckbc_ebus_match(parent, match, aux)
 }
 
 void
-pckbc_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pckbc_ebus_softc *sc = (void *)self;
 	struct pckbc_softc *psc = &sc->sc_pckbc;
@@ -183,8 +178,7 @@ pckbc_ebus_attach(parent, self, aux)
 }
 
 int
-pckbc_ebus_is_console(sc)
-	struct pckbc_ebus_softc *sc;
+pckbc_ebus_is_console(struct pckbc_ebus_softc *sc)
 {
 	char *name;
 	int node;

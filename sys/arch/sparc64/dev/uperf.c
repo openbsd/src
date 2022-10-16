@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: uperf.c,v 1.9 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -55,10 +55,7 @@ int uperf_findbysrc(struct uperf_softc *, int, int, u_int32_t *);
 int uperf_setcntsrc(struct uperf_softc *, struct uperf_io *);
 
 int
-uperfopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+uperfopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	if (minor(dev) >= uperf_cd.cd_ndevs)
 		return (ENXIO);
@@ -68,21 +65,13 @@ uperfopen(dev, flags, mode, p)
 }
 
 int
-uperfclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+uperfclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	return (0);
 }
 
 int
-uperfioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+uperfioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct uperf_softc *usc = uperf_cd.cd_devs[minor(dev)];
 	struct uperf_io *io = (struct uperf_io *)data;
@@ -108,9 +97,7 @@ uperfioctl(dev, cmd, data, flags, p)
 }
 
 int
-uperf_getcntsrc(usc, io)
-	struct uperf_softc *usc;
-	struct uperf_io *io;
+uperf_getcntsrc(struct uperf_softc *usc, struct uperf_io *io)
 {
 	u_int cnt0_src, cnt1_src;
 	int error;
@@ -137,11 +124,7 @@ uperf_getcntsrc(usc, io)
 }
 
 int
-uperf_findbyval(usc, cnt, uval, rval)
-	struct uperf_softc *usc;
-	int cnt;
-	u_int uval;
-	int *rval;
+uperf_findbyval(struct uperf_softc *usc, int cnt, u_int uval, int *rval)
 {
 	struct uperf_src *srcs = usc->usc_srcs;
 
@@ -159,9 +142,7 @@ uperf_findbyval(usc, cnt, uval, rval)
 }
 
 int
-uperf_setcntsrc(usc, io)
-	struct uperf_softc *usc;
-	struct uperf_io *io;
+uperf_setcntsrc(struct uperf_softc *usc, struct uperf_io *io)
 {
 	u_int32_t cnt0_src, cnt1_src;
 	int error;
@@ -185,10 +166,7 @@ uperf_setcntsrc(usc, io)
 }
 
 int
-uperf_findbysrc(usc, cnt, src, rval)
-	struct uperf_softc *usc;
-	int cnt, src;
-	u_int32_t *rval;
+uperf_findbysrc(struct uperf_softc *usc, int cnt, int src, u_int32_t *rval)
 {
 	struct uperf_src *srcs = usc->usc_srcs;
 

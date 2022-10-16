@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.18 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.19 2022/10/16 01:22:40 jsg Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -137,9 +137,7 @@ dmamatch_sbus(struct device *parent, void *vcf, void *aux)
 }
 
 void
-dmaattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmaattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct dma_softc *dsc = (void *)self;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.22 2019/10/20 16:27:19 kettenis Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.23 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -69,20 +69,14 @@ static int openpromcheckid(int, int);
 static int openpromgetstr(int, char *, char **);
 
 int
-openpromopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+openpromopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	return (0);
 }
 
 int
-openpromclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+openpromclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 
 	return (0);
@@ -142,8 +136,7 @@ openpromread(dev_t dev, struct uio *uio, int flags)
  * listed from node ID sid forward.
  */
 static int
-openpromcheckid(sid, tid)
-	int sid, tid;
+openpromcheckid(int sid, int tid)
 {
 	for (; sid != 0; sid = OF_peer(sid))
 		if (sid == tid || openpromcheckid(OF_child(sid), tid))
@@ -153,9 +146,7 @@ openpromcheckid(sid, tid)
 }
 
 static int
-openpromgetstr(len, user, cpp)
-	int len;
-	char *user, **cpp;
+openpromgetstr(int len, char *user, char **cpp)
 {
 	int error;
 	char *cp;
@@ -171,12 +162,7 @@ openpromgetstr(len, user, cpp)
 }
 
 int
-openpromioctl(dev, cmd, data, flags, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct opiocdesc *op;
 	int node, len, ok, error, s;

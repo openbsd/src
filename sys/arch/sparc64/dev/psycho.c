@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.80 2022/02/21 11:09:52 jsg Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.81 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -721,9 +721,7 @@ psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
  * grovel the OBP for various psycho properties
  */
 void
-psycho_get_bus_range(node, brp)
-	int node;
-	int *brp;
+psycho_get_bus_range(int node, int *brp)
 {
 	int n, error;
 

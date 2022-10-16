@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.55 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: creator.c,v 1.56 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -82,9 +82,7 @@ const struct cfattach creator_ca = {
 };
 
 int
-creator_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+creator_match(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -95,9 +93,7 @@ creator_match(parent, match, aux)
 }
 
 void
-creator_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+creator_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct creator_softc *sc = (struct creator_softc *)self;
 	struct mainbus_attach_args *ma = aux;
@@ -219,12 +215,7 @@ unmap_dfb24:
 }
 
 int
-creator_ioctl(v, cmd, data, flags, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flags;
-	struct proc *p;
+creator_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct creator_softc *sc = v;
 	struct wsdisplay_cursor *curs;
@@ -489,10 +480,7 @@ const struct creator_mappings {
 #define	CREATOR_NMAPPINGS       nitems(creator_map)
 
 paddr_t
-creator_mmap(vsc, off, prot)
-	void *vsc;
-	off_t off;
-	int prot;
+creator_mmap(void *vsc, off_t off, int prot)
 {
 	paddr_t x;
 	struct creator_softc *sc = vsc;
@@ -541,9 +529,7 @@ creator_mmap(vsc, off, prot)
 }
 
 void
-creator_ras_fifo_wait(sc, n)
-	struct creator_softc *sc;
-	int n;
+creator_ras_fifo_wait(struct creator_softc *sc, int n)
 {
 	int32_t cache = sc->sc_fifo_cache;
 
@@ -557,8 +543,7 @@ creator_ras_fifo_wait(sc, n)
 }
 
 void
-creator_ras_wait(sc)
-	struct creator_softc *sc;
+creator_ras_wait(struct creator_softc *sc)
 {
 	u_int32_t ucsr, r;
 
@@ -573,8 +558,7 @@ creator_ras_wait(sc)
 }
 
 void
-creator_ras_init(sc)
-	struct creator_softc *sc;
+creator_ras_init(struct creator_softc *sc)
 {
 	creator_ras_fifo_wait(sc, 7);
 	FBC_WRITE(sc, FFB_FBC_PPC,
@@ -593,10 +577,7 @@ creator_ras_init(sc)
 }
 
 int
-creator_ras_eraserows(cookie, row, n, attr)
-	void *cookie;
-	int row, n;
-	uint32_t attr;
+creator_ras_eraserows(void *cookie, int row, int n, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
@@ -633,10 +614,7 @@ creator_ras_eraserows(cookie, row, n, attr)
 }
 
 int
-creator_ras_erasecols(cookie, row, col, n, attr)
-	void *cookie;
-	int row, col, n;
-	uint32_t attr;
+creator_ras_erasecols(void *cookie, int row, int col, int n, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
@@ -670,8 +648,7 @@ creator_ras_erasecols(cookie, row, col, n, attr)
 }
 
 void
-creator_ras_fill(sc)
-	struct creator_softc *sc;
+creator_ras_fill(struct creator_softc *sc)
 {
 	creator_ras_fifo_wait(sc, 2);
 	FBC_WRITE(sc, FFB_FBC_ROP, FBC_ROP_NEW);
@@ -680,9 +657,7 @@ creator_ras_fill(sc)
 }
 
 int
-creator_ras_copyrows(cookie, src, dst, n)
-	void *cookie;
-	int src, dst, n;
+creator_ras_copyrows(void *cookie, int src, int dst, int n)
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
@@ -722,9 +697,7 @@ creator_ras_copyrows(cookie, src, dst, n)
 }
 
 void
-creator_ras_setfg(sc, fg)
-	struct creator_softc *sc;
-	int32_t fg;
+creator_ras_setfg(struct creator_softc *sc, int32_t fg)
 {
 	creator_ras_fifo_wait(sc, 1);
 	if (fg == sc->sc_fg_cache)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.35 2022/01/04 20:41:44 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.36 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -327,12 +327,8 @@ void bus_space_render_tag(bus_space_tag_t, char*, size_t);
 #define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 static inline void
-bus_space_barrier(t, h, o, s, f)
-	bus_space_tag_t t;
-	bus_space_handle_t h;
-	bus_size_t o;
-	bus_size_t s;
-	int f;
+bus_space_barrier(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
+    bus_size_t s, int f)
 {
 #ifdef notyet
 	switch (f) {

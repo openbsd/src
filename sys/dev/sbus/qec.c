@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.16 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: qec.c,v 1.17 2022/10/16 01:22:40 jsg Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -76,9 +76,7 @@ struct cfdriver qec_cd = {
 };
 
 int
-qecprint(aux, busname)
-	void *aux;
-	const char *busname;
+qecprint(void *aux, const char *busname)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t t = sa->sa_bustag;
@@ -91,10 +89,7 @@ qecprint(aux, busname)
 }
 
 int
-qecmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+qecmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -106,9 +101,7 @@ qecmatch(parent, vcf, aux)
  * Attach all the sub-devices we can find
  */
 void
-qecattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qecattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct qec_softc *sc = (void *)self;
@@ -225,13 +218,8 @@ qecattach(parent, self, aux)
 }
 
 int
-qec_bus_map(t, t0, addr, size, flags, hp)
-	bus_space_tag_t t;
-	bus_space_tag_t t0;
-	bus_addr_t addr;
-	bus_size_t size;
-	int	flags;
-	bus_space_handle_t *hp;
+qec_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t addr,
+    bus_size_t size, int flags, bus_space_handle_t *hp)
 {
 	struct qec_softc *sc = t->cookie;
 	int slot = BUS_ADDR_IOSPACE(addr);
@@ -271,15 +259,8 @@ qec_bus_map(t, t0, addr, size, flags, hp)
 }
 
 void *
-qec_intr_establish(t, t0, pri, level, flags, handler, arg, what)
-	bus_space_tag_t t;
-	bus_space_tag_t t0;
-	int pri;
-	int level;
-	int flags;
-	int (*handler)(void *);
-	void *arg;
-	const char *what;
+qec_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
+    int flags, int (*handler)(void *), void *arg, const char *what)
 {
 	struct qec_softc *sc = t->cookie;
 
@@ -308,8 +289,7 @@ qec_intr_establish(t, t0, pri, level, flags, handler, arg, what)
 }
 
 void
-qec_init(sc)
-	struct qec_softc *sc;
+qec_init(struct qec_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t qr = sc->sc_regs;
@@ -356,9 +336,7 @@ qec_init(sc)
  * Called from be & qe drivers.
  */
 void
-qec_meminit(qr, pktbufsz)
-	struct qec_ring *qr;
-	unsigned int pktbufsz;
+qec_meminit(struct qec_ring *qr, unsigned int pktbufsz)
 {
 	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_mul.c,v 1.2 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_mul.c,v 1.3 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu_mul.c,v 1.2 1994/11/20 20:52:44 deraadt Exp $ */
 
 /*
@@ -97,8 +97,7 @@
  * until we reach a nonzero word.
  */
 struct fpn *
-fpu_mul(fe)
-	register struct fpemu *fe;
+fpu_mul(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2;
 	register u_int a3, a2, a1, a0, x3, x2, x1, x0, bit, m;

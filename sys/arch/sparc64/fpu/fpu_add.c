@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_add.c,v 1.2 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: fpu_add.c,v 1.3 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu_add.c,v 1.3 1996/03/14 19:41:52 christos Exp $ */
 
 /*
@@ -60,8 +60,7 @@
 #include <sparc64/fpu/fpu_extern.h>
 
 struct fpn *
-fpu_add(fe)
-	register struct fpemu *fe;
+fpu_add(register struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1, *y = &fe->fe_f2, *r;
 	register u_int r0, r1, r2, r3;

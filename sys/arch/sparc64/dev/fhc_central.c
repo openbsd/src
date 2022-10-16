@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_central.c,v 1.7 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: fhc_central.c,v 1.8 2022/10/16 01:22:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -49,9 +49,7 @@ const struct cfattach fhc_central_ca = {
 };
 
 int
-fhc_central_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+fhc_central_match(struct device *parent, void *match, void *aux)
 {
 	struct central_attach_args *ca = aux;
 
@@ -61,9 +59,7 @@ fhc_central_match(parent, match, aux)
 }
 
 void
-fhc_central_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fhc_central_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fhc_softc *sc = (struct fhc_softc *)self;
 	struct central_attach_args *ca = aux;

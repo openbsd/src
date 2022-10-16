@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.26 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.27 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -148,10 +148,7 @@ extern struct consdev *cn_tab;
 cons_decl(prom_);
 
 int
-pconsmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+pconsmatch(struct device *parent, void *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -163,9 +160,7 @@ pconsmatch(parent, match, aux)
 void pcons_poll(void *);
 
 void
-pconsattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pconsattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pconssoftc *sc = (struct pconssoftc *) self;
 #if NWSDISPLAY > 0
@@ -206,10 +201,7 @@ void pconsstart(struct tty *);
 int pconsparam(struct tty *, struct termios *);
 
 int
-pconsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pconsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pconssoftc *sc;
 	int unit = minor(dev);
@@ -253,10 +245,7 @@ pconsopen(dev, flag, mode, p)
 }
 
 int
-pconsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pconsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -269,10 +258,7 @@ pconsclose(dev, flag, mode, p)
 }
 
 int
-pconsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pconsread(dev_t dev, struct uio *uio, int flag)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -281,10 +267,7 @@ pconsread(dev, uio, flag)
 }
 
 int
-pconswrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pconswrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -293,12 +276,7 @@ pconswrite(dev, uio, flag)
 }
 
 int
-pconsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pconsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
@@ -312,8 +290,7 @@ pconsioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-pconstty(dev)
-	dev_t dev;
+pconstty(dev_t dev)
 {
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 
@@ -321,16 +298,13 @@ pconstty(dev)
 }
 
 int
-pconsstop(tp, flag)
-	struct tty *tp;
-	int flag;
+pconsstop(struct tty *tp, int flag)
 {
 	return 0;
 }
 
 void
-pconsstart(tp)
-	struct tty *tp;
+pconsstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
@@ -363,9 +337,7 @@ pconsstart(tp)
 }
 
 int
-pconsparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+pconsparam(struct tty *tp, struct termios *t)
 {
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
@@ -374,8 +346,7 @@ pconsparam(tp, t)
 }
 
 void
-pcons_poll(aux)
-	void *aux;
+pcons_poll(void *aux)
 {
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
@@ -402,9 +373,7 @@ pconsprobe(void)
 }
 
 void
-pcons_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+pcons_cnpollc(dev_t dev, int on)
 {
 	struct pconssoftc *sc = NULL;
 

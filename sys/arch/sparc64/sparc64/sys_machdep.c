@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.3 2000/12/13 18:13:11 jdolecek Exp $ */
 
 /*
@@ -54,10 +54,7 @@
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;

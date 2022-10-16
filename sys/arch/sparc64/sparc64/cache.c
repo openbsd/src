@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.4 2016/03/07 13:21:51 naddy Exp $	*/
+/*	$OpenBSD: cache.c,v 1.5 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: cache.c,v 1.5 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -94,8 +94,7 @@ cache_enable(void)
  * To get the E$ we read to each cache line.  
  */
 int
-cache_flush_page(pa)
-	paddr_t pa;
+cache_flush_page(paddr_t pa)
 {
 	register int i, j, ls;
 	register char *p;
@@ -138,9 +137,7 @@ cache_flush_page(pa)
 #define CACHE_FLUSH_MAGIC	(cacheinfo.ec_totalsize / NBPG)
 
 int
-cache_flush(base, len)
-	vaddr_t base;
-	size_t len;
+cache_flush(vaddr_t base, size_t len)
 {
 	int i, j, ls;
 	vaddr_t baseoff;

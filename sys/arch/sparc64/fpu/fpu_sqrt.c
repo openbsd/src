@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_sqrt.c,v 1.5 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: fpu_sqrt.c,v 1.6 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu_sqrt.c,v 1.2 1994/11/20 20:52:46 deraadt Exp $ */
 
 /*
@@ -184,8 +184,7 @@
  * this, so we have some justification in assuming it.
  */
 struct fpn *
-fpu_sqrt(fe)
-	struct fpemu *fe;
+fpu_sqrt(struct fpemu *fe)
 {
 	register struct fpn *x = &fe->fe_f1;
 	register u_int bit, q, tt;

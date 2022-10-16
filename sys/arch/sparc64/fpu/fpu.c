@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.21 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.22 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -166,9 +166,7 @@ static int fpu_types[] = {
 };
 
 void
-fpu_fcopy(src, dst, type)
-	u_int *src, *dst;
-	int type;
+fpu_fcopy(u_int *src, u_int *dst, int type)
 {
 	*dst++ = *src++;
 	if (type == FTYPE_SNG || type == FTYPE_INT)
@@ -187,9 +185,7 @@ fpu_fcopy(src, dst, type)
  * unknown FPops do enter the queue, however.
  */
 void
-fpu_cleanup(p, fs)
-	register struct proc *p;
-	register struct fpstate64 *fs;
+fpu_cleanup(register struct proc *p, register struct fpstate64 *fs)
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
@@ -287,8 +283,7 @@ out:
  * 5 in the register offset for long, double, and quad types.
  */
 int
-fpu_regoffset(rx, type)
-	int rx, type;
+fpu_regoffset(int rx, int type)
 {
 	if (type == FTYPE_LNG || type == FTYPE_DBL || type == FTYPE_EXT) {
 		rx |= (rx & 1) << 5;
@@ -305,10 +300,7 @@ fpu_regoffset(rx, type)
  * modified to reflect the setting the hardware would have left.
  */
 int
-fpu_execute(p, fe, instr)
-	struct proc *p;
-	struct fpemu *fe;
-	union instr instr;
+fpu_execute(struct proc *p, struct fpemu *fe, union instr instr)
 {
 	struct fpstate *fs;
 	int opf, rdtype, rd, err, mask, cx, fsr;
@@ -454,10 +446,7 @@ fpu_execute(p, fe, instr)
  * Handler for FMOV[SDQ] emulation.
  */
 int
-fpu_insn_fmov(fs, fe, instr)
-	struct fpstate64 *fs;
-	struct fpemu *fe;
-	union instr instr;
+fpu_insn_fmov(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -477,10 +466,7 @@ fpu_insn_fmov(fs, fe, instr)
  * Handler for FABS[SDQ] emulation.
  */
 int
-fpu_insn_fabs(fs, fe, instr)
-	struct fpstate64 *fs;
-	struct fpemu *fe;
-	union instr instr;
+fpu_insn_fabs(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -501,10 +487,7 @@ fpu_insn_fabs(fs, fe, instr)
  * Handler for FNEG[SDQ] emulation.
  */
 int
-fpu_insn_fneg(fs, fe, instr)
-	struct fpstate64 *fs;
-	struct fpemu *fe;
-	union instr instr;
+fpu_insn_fneg(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -525,11 +508,8 @@ fpu_insn_fneg(fs, fe, instr)
  * Handler for F[XI]TO[SDQ] emulation.
  */
 int
-fpu_insn_itof(fe, instr, rstype, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	u_int *space;
-	int rstype, *rdp, *rdtypep;
+fpu_insn_itof(struct fpemu *fe, union instr instr, int rstype, int *rdp,
+    int *rdtypep, u_int *space)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rdtype;
 
@@ -555,11 +535,8 @@ fpu_insn_itof(fe, instr, rstype, rdp, rdtypep, space)
  * Handler for F[SDQ]TO[XI] emulation.
  */
 int
-fpu_insn_ftoi(fe, instr, rdp, rdtype, space)
-	struct fpemu *fe;
-	union instr instr;
-	u_int *space;
-	int *rdp, rdtype;
+fpu_insn_ftoi(struct fpemu *fe, union instr instr, int *rdp, int rdtype,
+    u_int *space)
 {
 	int opf = instr.i_opf.i_opf, rd, rstype, rs;
 
@@ -581,11 +558,8 @@ fpu_insn_ftoi(fe, instr, rdp, rdtype, space)
  * Handler for F[SDQ]TO[SDQ] emulation.
  */
 int
-fpu_insn_ftof(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	u_int *space;
-	int *rdp, *rdtypep;
+fpu_insn_ftof(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	int opf = instr.i_opf.i_opf, rd, rs, rdtype, rstype;
 
@@ -614,11 +588,8 @@ fpu_insn_ftof(fe, instr, rdp, rdtypep, space)
  * Handler for FQSRT[SDQ] emulation.
  */
 int
-fpu_insn_fsqrt(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	u_int *space;
-	int *rdp, *rdtypep;
+fpu_insn_fsqrt(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	int opf = instr.i_opf.i_opf, rd, rs, rtype;
 	struct fpn *fp;
@@ -643,11 +614,8 @@ fpu_insn_fsqrt(fe, instr, rdp, rdtypep, space)
  * Handler for FCMP{E}[SDQ] emulation.
  */
 int
-fpu_insn_fcmp(fs, fe, instr, cmpe)
-	struct fpstate64 *fs;
-	struct fpemu *fe;
-	union instr instr;
-	int cmpe;
+fpu_insn_fcmp(struct fpstate64 *fs, struct fpemu *fe, union instr instr,
+    int cmpe)
 {
 	int opf = instr.i_opf.i_opf, rs1, rs2, rtype, cx, fsr;
 
@@ -685,11 +653,8 @@ fpu_insn_fcmp(fs, fe, instr, cmpe)
  * Handler for FMUL[SDQ] emulation.
  */
 int
-fpu_insn_fmul(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	int *rdp, *rdtypep;
-	u_int *space;
+fpu_insn_fmul(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	struct fpn *fp;
 	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
@@ -717,11 +682,8 @@ fpu_insn_fmul(fe, instr, rdp, rdtypep, space)
  * Handler for FSMULD, FDMULQ emulation.
  */
 int
-fpu_insn_fmulx(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	int *rdp, *rdtypep;
-	u_int *space;
+fpu_insn_fmulx(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	struct fpn *fp;
 	int opf = instr.i_opf.i_opf, rd, rdtype, rstype, rs1, rs2;
@@ -750,11 +712,8 @@ fpu_insn_fmulx(fe, instr, rdp, rdtypep, space)
  * Handler for FDIV[SDQ] emulation.
  */
 int
-fpu_insn_fdiv(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	int *rdp, *rdtypep;
-	u_int *space;
+fpu_insn_fdiv(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	struct fpn *fp;
 	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
@@ -782,11 +741,8 @@ fpu_insn_fdiv(fe, instr, rdp, rdtypep, space)
  * Handler for FADD[SDQ] emulation.
  */
 int
-fpu_insn_fadd(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	int *rdp, *rdtypep;
-	u_int *space;
+fpu_insn_fadd(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	struct fpn *fp;
 	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
@@ -814,11 +770,8 @@ fpu_insn_fadd(fe, instr, rdp, rdtypep, space)
  * Handler for FSUB[SDQ] emulation.
  */
 int
-fpu_insn_fsub(fe, instr, rdp, rdtypep, space)
-	struct fpemu *fe;
-	union instr instr;
-	int *rdp, *rdtypep;
-	u_int *space;
+fpu_insn_fsub(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
+    u_int *space)
 {
 	struct fpn *fp;
 	int opf = instr.i_opf.i_opf, rd, rtype, rs1, rs2;
@@ -846,10 +799,7 @@ fpu_insn_fsub(fe, instr, rdp, rdtypep, space)
  * Handler for FMOV[SDQ][cond] emulation.
  */
 int
-fpu_insn_fmovcc(p, fs, instr)
-	struct proc *p;
-	struct fpstate64 *fs;
-	union instr instr;
+fpu_insn_fmovcc(struct proc *p, struct fpstate64 *fs, union instr instr)
 {
 	int rtype, rd, rs, cond;
 
@@ -898,10 +848,7 @@ fpu_insn_fmovcc(p, fs, instr)
  * Handler for FMOVR[icond][SDQ] emulation.
  */
 int
-fpu_insn_fmovr(p, fs, instr)
-	struct proc *p;
-	struct fpstate64 *fs;
-	union instr instr;
+fpu_insn_fmovr(struct proc *p, struct fpstate64 *fs, union instr instr)
 {
 	int rtype, rd, rs2, rs1;
 

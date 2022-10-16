@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_explode.c,v 1.5 2019/06/26 14:34:03 jca Exp $	*/
+/*	$OpenBSD: fpu_explode.c,v 1.6 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: fpu_explode.c,v 1.5 2000/08/03 18:32:08 eeh Exp $ */
 
 /*
@@ -80,9 +80,7 @@
  * int -> fpn.
  */
 int
-fpu_itof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_itof(register struct fpn *fp, register u_int i)
 {
 
 	if (i == 0)
@@ -106,9 +104,7 @@ fpu_itof(fp, i)
  * 64-bit int -> fpn.
  */
 int
-fpu_xtof(fp, i)
-	register struct fpn *fp;
-	register u_int64_t i;
+fpu_xtof(register struct fpn *fp, register u_int64_t i)
 {
 	if (i == 0)
 		return (FPC_ZERO);
@@ -169,9 +165,7 @@ fpu_xtof(fp, i)
  * format: i.e., needs at most fp_mant[0] and fp_mant[1].
  */
 int
-fpu_stof(fp, i)
-	register struct fpn *fp;
-	register u_int i;
+fpu_stof(register struct fpn *fp, register u_int i)
 {
 	register int exp;
 	register u_int frac, f0, f1;
@@ -189,9 +183,7 @@ fpu_stof(fp, i)
  * We assume this uses at most (96-FP_LG) bits.
  */
 int
-fpu_dtof(fp, i, j)
-	register struct fpn *fp;
-	register u_int i, j;
+fpu_dtof(register struct fpn *fp, register u_int i, register u_int j)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2;
@@ -210,9 +202,8 @@ fpu_dtof(fp, i, j)
  * 128-bit extended -> fpn.
  */
 int
-fpu_qtof(fp, i, j, k, l)
-	register struct fpn *fp;
-	register u_int i, j, k, l;
+fpu_qtof(register struct fpn *fp, register u_int i, register u_int j,
+    register u_int k, register u_int l)
 {
 	register int exp;
 	register u_int frac, f0, f1, f2, f3;
@@ -238,10 +229,8 @@ fpu_qtof(fp, i, j, k, l)
  * operations are performed.)
  */
 void
-fpu_explode(fe, fp, type, reg)
-	register struct fpemu *fe;
-	register struct fpn *fp;
-	int type, reg;
+fpu_explode(register struct fpemu *fe, register struct fpn *fp, int type,
+    int reg)
 {
 	register u_int s, *space;
 	u_int64_t l, *xspace;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsi64854.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: lsi64854.c,v 1.12 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: lsi64854.c,v 1.18 2001/06/04 20:56:51 mrg Exp $ */
 
 /*-
@@ -81,8 +81,7 @@ int lsi64854debug = 0;
  *	sc_client (one of SCSI, ENET, PP `soft_c' pointers)
  */
 int
-lsi64854_attach(sc)
-	struct lsi64854_softc *sc;
+lsi64854_attach(struct lsi64854_softc *sc)
 {
 	u_int32_t csr;
 	int rc;
@@ -206,8 +205,7 @@ lsi64854_attach(sc)
 } while(0)
 
 void
-lsi64854_reset(sc)
-	struct lsi64854_softc *sc;
+lsi64854_reset(struct lsi64854_softc *sc)
 {
 	u_int32_t csr;
 
@@ -285,12 +283,8 @@ lsi64854_reset(sc)
  * setup a dma transfer
  */
 int
-lsi64854_setup(sc, addr, len, datain, dmasize)
-	struct lsi64854_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;	/* IN-OUT */
+lsi64854_setup(struct lsi64854_softc *sc, caddr_t *addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	u_int32_t csr;
 
@@ -376,8 +370,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
  * return 1 if it was a DMA continue.
  */
 int
-lsi64854_scsi_intr(arg)
-	void *arg;
+lsi64854_scsi_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	struct ncr53c9x_softc *nsc = sc->sc_client;
@@ -502,8 +495,7 @@ lsi64854_scsi_intr(arg)
  * Pseudo (chained) interrupt to le driver to handle DMA errors.
  */
 int
-lsi64854_enet_intr(arg)
-	void	*arg;
+lsi64854_enet_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	char bits[64];
@@ -543,12 +535,8 @@ lsi64854_enet_intr(arg)
  * setup a dma transfer
  */
 int
-lsi64854_setup_pp(sc, addr, len, datain, dmasize)
-	struct lsi64854_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;	/* IN-OUT */
+lsi64854_setup_pp(struct lsi64854_softc *sc, caddr_t *addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	u_int32_t csr;
 
@@ -616,8 +604,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
  * Parallel port DMA interrupt.
  */
 int
-lsi64854_pp_intr(arg)
-	void *arg;
+lsi64854_pp_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	int ret, trans, resid = 0;

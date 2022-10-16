@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.11 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.12 2022/10/16 01:22:39 jsg Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -56,10 +56,7 @@ const struct cfattach lpt_ebus_ca = {
 };
 
 int
-lpt_ebus_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+lpt_ebus_match(struct device *parent, void *match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -70,9 +67,7 @@ lpt_ebus_match(parent, match, aux)
 }
 
 void
-lpt_ebus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_ebus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_ebus_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
