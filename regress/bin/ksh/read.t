@@ -1,4 +1,4 @@
-#	$OpenBSD: read.t,v 1.1 2013/12/02 20:39:44 millert Exp $
+#	$OpenBSD: read.t,v 1.2 2022/10/16 12:34:13 kn Exp $
 
 #
 # To test:
@@ -56,3 +56,16 @@ expected-stdout:
 	[abc]
 ---
 
+name: signal-aborts-endless-read
+description:
+	Check that an endless read can be interrupted.
+# XXX ^C does nothing, needs uncatchable SIGKILL to stop
+expected-fail: yes
+stdin:
+	exec timeout --preserve-status -s INT -k 0.5s -- 0.1s $PROG -c '
+		read < /dev/zero
+	'
+# 2/9 == INT/KILL
+# XXX using signal expressions like 's == 2' only works with ksh
+expected-exit: e == 128 + 2
+---
