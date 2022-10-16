@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.69 2022/07/02 08:50:42 visa Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.70 2022/10/16 18:23:44 bru Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1662,11 +1662,11 @@ wsmouse_configure(struct device *sc,
 			    "Initialization failed.\n");
 			return (-1);
 		}
+		input->flags |= CONFIGURED;
 		if (params != NULL) {
 			if ((error = wsmouse_set_params(sc, params, nparams)))
 				return (error);
 		}
-		input->flags |= CONFIGURED;
 	}
 	if (IS_TOUCHPAD(input))
 		wsmouse_set_mode(sc, WSMOUSE_COMPAT);
