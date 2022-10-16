@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.1.1.1 2022/09/01 14:20:34 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.2 2022/10/16 13:33:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -3325,7 +3325,7 @@ main(int argc, char *argv[])
 	if ((hrDeviceIndex = agentx_object(host, AGENTX_OID(HRDEVICEINDEX),
 	    &hrDeviceIdx, 1, 0, mib_hrdevice)) == NULL ||
 	    (hrDeviceType = agentx_object(host, AGENTX_OID(HRDEVICETYPE),
-	    &hrDeviceIdx, 1, 0, mib_hrdevice)) == NULL |
+	    &hrDeviceIdx, 1, 0, mib_hrdevice)) == NULL ||
 	    (hrDeviceDescr = agentx_object(host, AGENTX_OID(HRDEVICEDESCR),
 	    &hrDeviceIdx, 1, 0, mib_hrdevice)) == NULL ||
 	    (hrDeviceID = agentx_object(host, AGENTX_OID(HRDEVICEID),
