@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.22 2021/07/11 20:18:07 beck Exp $ */
+/* $OpenBSD: b_dump.c,v 1.23 2022/10/17 18:26:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,11 +80,11 @@ int
 BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
     void *u, const char *s, int len, int indent)
 {
-	int ret = 0;
 	char buf[288 + 1], tmp[20], str[128 + 1];
 	int i, j, rows, trc, written;
 	unsigned char ch;
 	int dump_width;
+	int ret = 0;
 
 	trc = 0;
 
@@ -95,14 +95,13 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 
 	if (indent < 0)
 		indent = 0;
-	if (indent) {
-		if (indent > 128)
-			indent = 128;
-		memset(str, ' ', indent);
-	}
+	if (indent > 64)
+		indent = 64;
+	memset(str, ' ', indent);
 	str[indent] = '\0';
 
-	dump_width = DUMP_WIDTH_LESS_INDENT(indent);
+	if ((dump_width = DUMP_WIDTH_LESS_INDENT(indent)) <= 0)
+		return -1;
 	rows = (len / dump_width);
 	if ((rows * dump_width) < len)
 		rows++;
