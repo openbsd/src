@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.16 2022/08/31 15:00:53 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.17 2022/10/17 12:01:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -37,7 +37,7 @@ struct output {
 	void	(*tail)(void);
 };
 
-extern const struct output show_output, json_output;
+extern const struct output show_output, json_output, ometric_output;
 extern const size_t pt_sizes[];
 
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')

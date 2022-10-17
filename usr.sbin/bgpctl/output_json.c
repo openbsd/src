@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.23 2022/08/31 15:00:53 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.24 2022/10/17 12:01:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1057,5 +1057,5 @@ const struct output json_output = {
 	.set = json_rib_set,
 	.rtr = json_rtr,
 	.result = json_result,
-	.tail = json_tail
+	.tail = json_tail,
 };
