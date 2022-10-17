@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.16 2018/12/31 11:44:57 claudio Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.17 2022/10/17 18:55:20 kettenis Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 static vaddr_t OF_claim_virt(vaddr_t vaddr, int len);
 static vaddr_t OF_alloc_virt(int len, int align);
 static int OF_free_virt(vaddr_t vaddr, int len);
-static vaddr_t OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode);
+static int OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode);
 static paddr_t OF_alloc_phys(int len, int align);
 static int OF_free_phys(paddr_t paddr, int len);
 
@@ -438,7 +438,7 @@ OF_free_virt(vaddr_t vaddr, int len)
  *
  * Only works while the prom is actively mapping us.
  */
-static vaddr_t
+static int
 OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 {
 	struct {
@@ -452,13 +452,11 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 		cell_t vaddr;
 		cell_t paddr_hi;
 		cell_t paddr_lo;
-		cell_t status;
-		cell_t retaddr;
 	} args;
 
 	args.name = ADR2CELL("call-method");
 	args.nargs = 7;
-	args.nreturns = 1;
+	args.nreturns = 0;
 	args.method = ADR2CELL("map");
 	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
@@ -466,12 +464,7 @@ OF_map_phys(paddr_t paddr, off_t size, vaddr_t vaddr, int mode)
 	args.vaddr = ADR2CELL(vaddr);
 	args.paddr_hi = HDQ2CELL_HI(paddr);
 	args.paddr_lo = HDQ2CELL_LO(paddr);
-
-	if (openfirmware(&args) == -1)
-		return -1;
-	if (args.status)
-		return -1;
-	return (vaddr_t)args.retaddr;
+	return openfirmware(&args);
 }
 
 
