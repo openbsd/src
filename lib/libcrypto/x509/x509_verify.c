@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.60 2022/08/05 14:46:52 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.61 2022/10/17 18:56:54 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -494,6 +494,15 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 	if (!x509_verify_ctx_validate_legacy_chain(ctx, chain, depth))
 		return 0;
 
+	/* Verify the leaf certificate and store any resulting error. */
+	if (!x509_verify_cert_valid(ctx, leaf, NULL))
+		return 0;
+	if (!x509_verify_cert_hostname(ctx, leaf, name))
+		return 0;
+	if (ctx->error_depth == 0 &&
+	    ctx->error != X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
+		chain->cert_errors[0] = ctx->error;
+
 	/*
 	 * In the non-legacy code, extensions and purpose are dealt
 	 * with as the chain is built.
@@ -508,16 +517,11 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 		return x509_verify_cert_error(ctx, last, depth,
 		    X509_V_ERR_OUT_OF_MEM, 0);
 	}
-
-	if (!x509_verify_cert_valid(ctx, leaf, NULL))
-		return 0;
-
-	if (!x509_verify_cert_hostname(ctx, leaf, name))
-		return 0;
-
 	ctx->chains_count++;
+
 	ctx->error = X509_V_OK;
 	ctx->error_depth = depth;
+
 	return 1;
 }
 
