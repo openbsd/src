@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvrtc.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: mvrtc.c,v 1.3 2022/10/17 19:09:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,8 +27,6 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/clock_subr.h>
-
-extern todr_chip_handle_t todr_handle;
 
 /* Registers. */
 #define RTC_STATUS		0x0000
@@ -123,7 +121,8 @@ mvrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = mvrtc_gettime;
 	sc->sc_todr.todr_settime = mvrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 0;
+	todr_attach(&sc->sc_todr);
 }
 
 int

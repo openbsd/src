@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfrtc.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: gfrtc.c,v 1.3 2022/10/17 19:09:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2021 Jonathan Gray <jsg@openbsd.org>
@@ -37,8 +37,6 @@
 #define TIME_HIGH	0x04
 #define ALARM_LOW	0x0c
 #define CLEAR_INTERRUPT	0x10
-
-extern todr_chip_handle_t todr_handle;
 
 struct gfrtc_softc {
 	struct device		 sc_dev;
@@ -113,7 +111,8 @@ gfrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = gfrtc_gettime;
 	sc->sc_todr.todr_settime = gfrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 1000;
+	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }

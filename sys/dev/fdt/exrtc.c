@@ -1,4 +1,4 @@
-/*	$OpenBSD: exrtc.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: exrtc.c,v 1.5 2022/10/17 19:09:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,8 +27,6 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/clock_subr.h>
-
-extern todr_chip_handle_t todr_handle;
 
 #define RTCCTRL		0x40
 #define RTCCTRL_RTCEN	(1 << 0)
@@ -91,7 +89,8 @@ exrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = exrtc_gettime;
 	sc->sc_todr.todr_settime = exrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 0;
+	todr_attach(&sc->sc_todr);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acrtc.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: acrtc.c,v 1.6 2022/10/17 19:09:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,8 +29,6 @@
 #include <dev/clock_subr.h>
 
 #define isleap(y) ((((y) % 4) == 0 && ((y) % 100) != 0) || ((y) % 400) == 0)
-
-extern todr_chip_handle_t todr_handle;
 
 #define CK32K_OUT_CTRL1			0xc1
 #define  CK32K_OUT_CTRL_PRE_DIV_MASK	(0x7 << 5)
@@ -112,7 +110,8 @@ acrtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime = acrtc_gettime;
 	sc->sc_todr.todr_settime = acrtc_settime;
-	todr_handle = &sc->sc_todr;
+	sc->sc_todr.todr_quality = 1000;
+	todr_attach(&sc->sc_todr);
 
 	node = OF_getnodebyname(ra->ra_node, "rtc");
 	if (node == 0)
