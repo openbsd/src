@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.25 2022/08/20 17:55:08 jsing Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.26 2022/10/17 18:03:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -494,7 +494,7 @@ static int
 asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
     const ASN1_ITEM *it, int tag, int aclass)
 {
-	int len;
+	int olen, len;
 	int utype;
 	int usetag;
 	int ndef = 0;
@@ -505,7 +505,7 @@ asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 	 * out the underlying type.
 	 */
 
-	len = asn1_ex_i2c(pval, NULL, &utype, it);
+	olen = len = asn1_ex_i2c(pval, NULL, &utype, it);
 
 	/* If SEQUENCE, SET or OTHER then header is
 	 * included in pseudo content octets so don't
@@ -541,7 +541,7 @@ asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
 	if (out) {
 		if (usetag)
 			ASN1_put_object(out, ndef, len, tag, aclass);
-		if (asn1_ex_i2c(pval, *out, &utype, it) != len)
+		if (asn1_ex_i2c(pval, *out, &utype, it) != olen)
 			return -1;
 		if (ndef)
 			ASN1_put_eoc(out);
