@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgd.c,v 1.1 2022/06/28 16:11:30 claudio Exp $ */
+/*	$OpenBSD: bgplgd.c,v 1.2 2022/10/17 13:23:31 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -26,12 +26,15 @@
 #include "bgplgd.h"
 
 #define NCMDARGS	4
+#define OMETRIC_TYPE	\
+	    "application/openmetrics-text; version=1.0.0; charset=utf-8"
 
 const struct cmd {
 	const char	*path;
 	char		*args[NCMDARGS];
 	unsigned int	qs_mask;
 	int		barenbr;
+	const char	*content_type;
 } cmds[] = {
 	{ "/interfaces", { "show", "interfaces", NULL }, 0 },
 	{ "/memory", { "show", "rib", "memory", NULL }, 0 },
@@ -41,6 +44,7 @@ const struct cmd {
 	{ "/rtr", { "show", "rtr", NULL }, 0 },
 	{ "/sets", { "show", "sets", NULL }, 0 },
 	{ "/summary", { "show", NULL }, 0 },
+	{ "/metrics", { "show", "metric", NULL }, 0, 0, OMETRIC_TYPE },
 	{ NULL }
 };
 
@@ -107,7 +111,10 @@ bgpctl_call(struct lg_ctx *ctx)
 	signal(SIGPIPE, SIG_DFL);
 
 	/* Write server header first */
-	printf("Content-type: application/json\r\n\r\n");
+	if (ctx->command->content_type == NULL)
+		printf("Content-type: application/json\r\n\r\n");
+	else
+		printf("Content-type: %s\r\n\r\n", ctx->command->content_type);
 	fflush(stdout);
 
 	execvp(bgpctlpath, argv);
