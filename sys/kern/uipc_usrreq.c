@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.190 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.191 2022/10/17 14:49:01 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -502,15 +502,13 @@ out:
 	return (error);
 }
 
-int
+void
 uipc_abort(struct socket *so)
 {
 	struct unpcb *unp = sotounpcb(so);
 
 	unp_detach(unp);
 	sofree(so, 0);
-
-	return (0);
 }
 
 int

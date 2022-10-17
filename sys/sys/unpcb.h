@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.42 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.43 2022/10/17 14:49:02 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ int	uipc_shutdown(struct socket *);
 void	uipc_rcvd(struct socket *);
 int	uipc_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
-int	uipc_abort(struct socket *);
+void	uipc_abort(struct socket *);
 int	uipc_sense(struct socket *, struct stat *);
 int	uipc_sockaddr(struct socket *, struct mbuf *);
 int	uipc_peeraddr(struct socket *, struct mbuf *);

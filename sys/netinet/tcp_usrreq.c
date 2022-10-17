@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.209 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.210 2022/10/17 14:49:02 mvs Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -865,18 +865,17 @@ out:
 /*
  * Abort the TCP.
  */
-int
+void
 tcp_abort(struct socket *so)
 {
 	struct inpcb *inp;
 	struct tcpcb *tp, *otp = NULL;
-	int error;
 	short ostate;
 
 	soassertlocked(so);
 
-	if ((error = tcp_sogetpcb(so, &inp, &tp)))
-		return (error);
+	if (tcp_sogetpcb(so, &inp, &tp))
+		return;
 
 	if (so->so_options & SO_DEBUG) {
 		otp = tp;
@@ -887,7 +886,6 @@ tcp_abort(struct socket *so)
 
 	if (otp)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_ABORT, 0);
-	return (0);
 }
 
 int

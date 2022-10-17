@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.149 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.150 2022/10/17 14:49:02 mvs Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ const struct pr_usrreqs rip_usrreqs = {
 	.pru_disconnect	= rip_disconnect,
 	.pru_shutdown	= rip_shutdown,
 	.pru_send	= rip_send,
-	.pru_abort	= rip_abort,
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
 	.pru_peeraddr	= in_peeraddr,
@@ -643,21 +642,4 @@ out:
 	m_freem(m);
 
 	return (error);
-}
-
-int
-rip_abort(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	soassertlocked(so);
-
-	soisdisconnected(so);
-#ifdef MROUTING
-	if (so == ip_mrouter[inp->inp_rtableid])
-		ip_mrouter_done(so);
-#endif
-	in_pcbdetach(inp);
-
-	return (0);
 }

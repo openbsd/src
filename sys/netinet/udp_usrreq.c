@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.303 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.304 2022/10/17 14:49:02 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ const struct pr_usrreqs udp_usrreqs = {
 	.pru_disconnect	= udp_disconnect,
 	.pru_shutdown	= udp_shutdown,
 	.pru_send	= udp_send,
-	.pru_abort	= udp_abort,
 	.pru_control	= in_control,
 	.pru_sockaddr	= in_sockaddr,
 	.pru_peeraddr	= in_peeraddr,
@@ -149,7 +148,6 @@ const struct pr_usrreqs udp6_usrreqs = {
 	.pru_disconnect	= udp_disconnect,
 	.pru_shutdown	= udp_shutdown,
 	.pru_send	= udp_send,
-	.pru_abort	= udp_abort,
 	.pru_control	= in6_control,
 	.pru_sockaddr	= in6_sockaddr,
 	.pru_peeraddr	= in6_peeraddr,
@@ -1258,19 +1256,6 @@ udp_send(struct socket *so, struct mbuf *m, struct mbuf *addr,
 		error = udp_output(inp, m, addr, control);
 
 	return (error);
-}
-
-int
-udp_abort(struct socket *so)
-{
-	struct inpcb *inp = sotoinpcb(so);
-
-	soassertlocked(so);
-
-	soisdisconnected(so);
-	in_pcbdetach(inp);
-
-	return (0);
 }
 
 /*

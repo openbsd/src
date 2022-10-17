@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.357 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.358 2022/10/17 14:49:02 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ int	route_shutdown(struct socket *);
 void	route_rcvd(struct socket *);
 int	route_send(struct socket *, struct mbuf *, struct mbuf *,
 	    struct mbuf *);
-int	route_abort(struct socket *);
 int	route_sockaddr(struct socket *, struct mbuf *);
 int	route_peeraddr(struct socket *, struct mbuf *);
 void	route_input(struct mbuf *m0, struct socket *, sa_family_t);
@@ -345,13 +344,6 @@ out:
 	m_freem(m);
 
 	return (error);
-}
-
-int
-route_abort(struct socket *so)
-{
-	soisdisconnected(so);
-	return (0);
 }
 
 int
@@ -2409,7 +2401,6 @@ const struct pr_usrreqs route_usrreqs = {
 	.pru_shutdown	= route_shutdown,
 	.pru_rcvd	= route_rcvd,
 	.pru_send	= route_send,
-	.pru_abort	= route_abort,
 	.pru_sockaddr	= route_sockaddr,
 	.pru_peeraddr	= route_peeraddr,
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.253 2022/10/03 16:43:52 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.254 2022/10/17 14:49:01 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -175,7 +175,6 @@ int pfkeyv2_disconnect(struct socket *);
 int pfkeyv2_shutdown(struct socket *);
 int pfkeyv2_send(struct socket *, struct mbuf *, struct mbuf *,
     struct mbuf *);
-int pfkeyv2_abort(struct socket *);
 int pfkeyv2_sockaddr(struct socket *, struct mbuf *);
 int pfkeyv2_peeraddr(struct socket *, struct mbuf *);
 int pfkeyv2_output(struct mbuf *, struct socket *);
@@ -209,7 +208,6 @@ const struct pr_usrreqs pfkeyv2_usrreqs = {
 	.pru_disconnect	= pfkeyv2_disconnect,
 	.pru_shutdown	= pfkeyv2_shutdown,
 	.pru_send	= pfkeyv2_send,
-	.pru_abort	= pfkeyv2_abort,
 	.pru_sockaddr	= pfkeyv2_sockaddr,
 	.pru_peeraddr	= pfkeyv2_peeraddr,
 };
@@ -383,13 +381,6 @@ out:
 	m_freem(m);
 
 	return (error);
-}
-
-int
-pfkeyv2_abort(struct socket *so)
-{
-	soisdisconnected(so);
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.h,v 1.23 2022/10/03 16:43:52 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.h,v 1.24 2022/10/17 14:49:02 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -78,6 +78,5 @@ int	 divert_bind(struct socket *, struct mbuf *, struct proc *);
 int	 divert_shutdown(struct socket *);
 int	 divert_send(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
-int	 divert_abort(struct socket *);
 #endif /* _KERNEL */
 #endif /* _IP_DIVERT_H_ */
