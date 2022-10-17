@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.285 2022/10/17 12:01:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.286 2022/10/17 16:51:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -256,7 +256,7 @@ main(int argc, char *argv[])
 	case SHOW_RIB_MEM:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB_MEM, 0, 0, -1, NULL, 0);
 		break;
-	case SHOW_METRIC:
+	case SHOW_METRICS:
 		output = &ometric_output;
 		numdone = 2;
 		imsg_compose(ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
@@ -400,7 +400,7 @@ main(int argc, char *argv[])
 
 	}
 
-	if (res->action == SHOW_METRIC && --numdone > 0) {
+	if (res->action == SHOW_METRICS && --numdone > 0) {
 		done = 0;
 		goto again;
 	}
