@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.101 2022/09/01 22:24:40 job Exp $
+.\" $OpenBSD: bgpctl.8,v 1.102 2022/10/17 15:04:12 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2022 $
+.Dd $Mdocdate: October 17 2022 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -211,6 +211,8 @@ instead of the default routing table with ID 0.
 .El
 .It Cm show interfaces
 Show the interface states.
+.It Cm show metrics
+Dump various BGP statistics in OpenMetrics format.
 .It Xo
 .Cm show mrt
 .Op Ar options
