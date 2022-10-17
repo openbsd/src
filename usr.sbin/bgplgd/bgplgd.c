@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgplgd.c,v 1.2 2022/10/17 13:23:31 claudio Exp $ */
+/*	$OpenBSD: bgplgd.c,v 1.3 2022/10/17 15:42:19 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -44,7 +44,7 @@ const struct cmd {
 	{ "/rtr", { "show", "rtr", NULL }, 0 },
 	{ "/sets", { "show", "sets", NULL }, 0 },
 	{ "/summary", { "show", NULL }, 0 },
-	{ "/metrics", { "show", "metric", NULL }, 0, 0, OMETRIC_TYPE },
+	{ "/metrics", { "show", "metrics", NULL }, 0, 0, OMETRIC_TYPE },
 	{ NULL }
 };
 
