@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.9 2021/10/31 08:27:15 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.10 2022/10/17 18:36:52 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -102,15 +103,20 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 
 static void
 verify_cert(const char *roots_dir, const char *roots_file,
-    const char *bundle_file, int *chains, int mode)
+    const char *bundle_file, int *chains, int *error, int *error_depth,
+    int mode)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
 	X509_STORE *store = NULL;
-	int verify_err, use_dir;
 	X509 *leaf = NULL;
+	int use_dir;
+	int ret;
 
 	*chains = 0;
+	*error = 0;
+	*error_depth = 0;
+
 	use_dir = (mode == MODE_MODERN_VFY_DIR);
 
 	if (!use_dir && !certs_from_file(roots_file, &roots))
@@ -143,18 +149,22 @@ verify_cert(const char *roots_dir, const char *roots_file,
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
 	if (!use_dir)
 		X509_STORE_CTX_set0_trusted_stack(xsc, roots);
-	if (X509_verify_cert(xsc) == 1) {
+
+	ret = X509_verify_cert(xsc);
+
+	*error = X509_STORE_CTX_get_error(xsc);
+	*error_depth = X509_STORE_CTX_get_error_depth(xsc);
+
+	if (ret == 1) {
 		*chains = 1; /* XXX */
 		goto done;
 	}
 
-	verify_err = X509_STORE_CTX_get_error(xsc);
-	if (verify_err == 0)
+	if (*error == 0)
 		errx(1, "Error unset on failure!\n");
 
 	fprintf(stderr, "failed to verify at %d: %s\n",
-	    X509_STORE_CTX_get_error_depth(xsc),
-	    X509_verify_cert_error_string(verify_err));
+	    *error_depth, X509_verify_cert_error_string(*error));
 
  done:
 	sk_X509_pop_free(roots, X509_free);
@@ -163,12 +173,6 @@ verify_cert(const char *roots_dir, const char *roots_file,
 	X509_STORE_CTX_free(xsc);
 	X509_free(leaf);
 }
-
-struct verify_cert_test {
-	const char *id;
-	int want_chains;
-	int failing;
-};
 
 static void
 verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
@@ -231,6 +235,16 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
 	x509_verify_ctx_free(ctx);
 }
 
+struct verify_cert_test {
+	const char *id;
+	int want_chains;
+	int want_error;
+	int want_error_depth;
+	int want_legacy_error;
+	int want_legacy_error_depth;
+	int failing;
+};
+
 struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "1a",
@@ -243,6 +257,10 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "2b",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "2c",
@@ -255,14 +273,26 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "3b",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_error_depth = 2,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 2,
 	},
 	{
 		.id = "3c",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_error_depth = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 	},
 	{
 		.id = "3d",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "3e",
@@ -279,6 +309,8 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "4c",
 		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 		.failing = 1,
 	},
 	{
@@ -296,6 +328,8 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "4g",
 		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 		.failing = 1,
 	},
 	{
@@ -309,6 +343,8 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "5b",
 		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 2,
 		.failing = 1,
 	},
 	{
@@ -322,6 +358,8 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "5e",
 		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 		.failing = 1,
 	},
 	{
@@ -339,6 +377,8 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "5i",
 		.want_chains = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 		.failing = 1,
 	},
 	{
@@ -348,11 +388,19 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "6b",
 		.want_chains = 1,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_legacy_error_depth = 2,
 		.failing = 1,
 	},
 	{
 		.id = "7a",
 		.want_chains = 1,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_legacy_error_depth = 3,
 		.failing = 1,
 	},
 	{
@@ -362,14 +410,24 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "8a",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "9a",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 1,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "10a",
 		.want_chains = 1,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
 	},
 	{
 		.id = "10b",
@@ -378,6 +436,10 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "11a",
 		.want_chains = 1,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY,
+		.want_legacy_error_depth = 1,
 		.failing = 1,
 	},
 	{
@@ -391,6 +453,10 @@ struct verify_cert_test verify_cert_tests[] = {
 	{
 		.id = "13a",
 		.want_chains = 1,
+		.want_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_CERT_HAS_EXPIRED,
+		.want_legacy_error_depth = 2,
 		.failing = 1,
 	},
 };
@@ -403,8 +469,8 @@ verify_cert_test(const char *certs_path, int mode)
 {
 	char *roots_file, *bundle_file, *roots_dir;
 	struct verify_cert_test *vct;
+	int chains, error, error_depth;
 	int failed = 0;
-	int chains;
 	size_t i;
 
 	for (i = 0; i < N_VERIFY_CERT_TESTS; i++) {
@@ -419,11 +485,16 @@ verify_cert_test(const char *certs_path, int mode)
 		if (asprintf(&roots_dir, "./%s/roots", vct->id) == -1)
 			errx(1, "asprintf");
 
+		error = 0;
+		error_depth = 0;
+
 		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
 		if (mode == MODE_VERIFY)
 			verify_cert_new(roots_file, bundle_file, &chains);
 		else
-			verify_cert(roots_dir, roots_file, bundle_file, &chains, mode);
+			verify_cert(roots_dir, roots_file, bundle_file, &chains,
+			    &error, &error_depth, mode);
+
 		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {
@@ -437,6 +508,32 @@ verify_cert_test(const char *certs_path, int mode)
 			if (!vct->failing)
 				failed |= 1;
 		}
+
+		if (mode == MODE_LEGACY_VFY) {
+			if (error != vct->want_legacy_error) {
+				fprintf(stderr, "FAIL: Got legacy error %d, "
+				    "want %d\n", error, vct->want_legacy_error);
+				failed |= 1;
+			}
+			if (error_depth != vct->want_legacy_error_depth) {
+				fprintf(stderr, "FAIL: Got legacy error depth "
+				    "%d, want %d\n", error_depth,
+				    vct->want_legacy_error_depth);
+				failed |= 1;
+			}
+		} else if (mode == MODE_MODERN_VFY || mode == MODE_MODERN_VFY_DIR) {
+			if (error != vct->want_error) {
+				fprintf(stderr, "FAIL: Got error %d, want %d\n",
+				    error, vct->want_error);
+				failed |= 1;
+			}
+			if (error_depth != vct->want_error_depth) {
+				fprintf(stderr, "FAIL: Got error depth %d, want"
+				    " %d\n", error_depth, vct->want_error_depth);
+				failed |= 1;
+			}
+		}
+
 		fprintf(stderr, "\n");
 
 		free(roots_file);
