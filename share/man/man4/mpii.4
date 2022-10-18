@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mpii.4,v 1.15 2018/06/19 10:43:21 jmatthew Exp $
+.\"	$OpenBSD: mpii.4,v 1.16 2022/10/18 07:04:20 kn Exp $
 .\"
 .\" Copyright (c) 2010 Marco Peereboom <marco@openbsd.org>
 .\" Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2018 $
+.Dd $Mdocdate: October 18 2022 $
 .Dt MPII 4
 .Os
 .Sh NAME
@@ -59,11 +59,12 @@ Lenovo N2215, ThinkSystem 430
 LSI SAS 9200-8e, SAS 9207-8i, SAS 9211-4i, SAS 9211-8i
 .It
 Broadcom SAS 9300, HBA 9400
+.It
+Oracle SPARC T Series Platforms
 .El
 .Pp
 Some models of these controllers carry an Integrated RAID (IR) firmware
-providing support for RAID 0, RAID 1, RAID10 or RAID5 using SAS or SATA
-drives.
+providing support for RAID levels 0, 1, 1E, 5 or 10 using SAS or SATA drives.
 All RAID configuration is done through the controllers' BIOSes.
 .Sh SEE ALSO
 .Xr bio 4 ,
