@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.69 2022/09/20 08:53:27 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.70 2022/10/18 14:03:39 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -408,7 +408,8 @@ proxy_parse_uri(char *uri)
 
 	if ((proxy.proxyhost = strdup(host)) == NULL)
 		err(1, NULL);
-	proxy.proxyport = port;
+	if ((proxy.proxyport = strdup(port)) == NULL)
+		err(1, NULL);
 	proxy.proxyauth = cookie;
 
 	free(fullhost);
