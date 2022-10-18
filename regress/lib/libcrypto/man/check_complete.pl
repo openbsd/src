@@ -51,15 +51,14 @@ my %obsolete = (
 	V_ASN1_PRIMATIVE_TAG
 	X509_algor_st
     )],
+    bn => [qw(
+	BN_set_params BN_get_params
+    )],
     objects => [qw(
 	_DECLARE_OBJ_BSEARCH_CMP_FN
 	DECLARE_OBJ_BSEARCH_CMP_FN DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN
 	IMPLEMENT_OBJ_BSEARCH_CMP_FN IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN
     )],
-    x509 => [qw(
-	X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
-	X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
-    )]
 );
 
 my %postponed = (
