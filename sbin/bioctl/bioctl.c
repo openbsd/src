@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.149 2022/08/26 09:14:00 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.150 2022/10/18 06:56:42 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -492,25 +492,23 @@ bio_inq(char *name)
 			else
 				snprintf(size, sizeof size, "%14llu",
 				    bv.bv_size);
+			printf("%11s %-10s %14s %-7s ",
+			    volname, status, size, bv.bv_dev);
 			switch (bv.bv_level) {
 			case 'C':
-				printf("%11s %-10s %14s %-7s CRYPTO%s%s\n",
-				    volname, status, size, bv.bv_dev,
+				printf("CRYPTO%s%s\n",
 				    percent, seconds);
 				break;
 			case 'c':
-				printf("%11s %-10s %14s %-7s CONCAT%s%s\n",
-				    volname, status, size, bv.bv_dev,
+				printf("CONCAT%s%s\n",
 				    percent, seconds);
 				break;
 			case 0x1C:
-				printf("%11s %-10s %14s %-7s RAID%X%s%s %s\n",
-				    volname, status, size, bv.bv_dev,
+				printf("RAID%X%s%s %s\n",
 				    bv.bv_level, percent, seconds, cache);
 				break;
 			default:
-				printf("%11s %-10s %14s %-7s RAID%u%s%s %s\n",
-				    volname, status, size, bv.bv_dev,
+				printf("RAID%u%s%s %s\n",
 				    bv.bv_level, percent, seconds, cache);
 				break;
 			}
