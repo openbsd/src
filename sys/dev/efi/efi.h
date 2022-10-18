@@ -1,4 +1,4 @@
-/* $OpenBSD: efi.h,v 1.2 2022/10/16 15:03:39 kettenis Exp $ */
+/* $OpenBSD: efi.h,v 1.3 2022/10/18 10:17:56 kettenis Exp $ */
 
 /* Public Domain */
 
@@ -47,6 +47,10 @@ typedef struct {
   { 0xf2fd1544, 0x9794, 0x4a2c, \
     { 0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94 } }
 
+#define EFI_GLOBAL_VARIABLE \
+  { 0x8be4df61, 0x93ca, 0x11d2, \
+    { 0xaa,0x0d,0x00,0xe0,0x98,0x03,0x2b,0x8c } }
+
 typedef enum {
 	EfiReservedMemoryType,
 	EfiLoaderCode,
@@ -93,6 +97,13 @@ typedef struct {
 #define NextMemoryDescriptor(Ptr, Size) \
 	((EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)Ptr) + Size))
 
+typedef enum {
+	EfiResetCold,
+	EfiResetWarm,
+	EfiResetShutdown,
+	EfiResetPlatformSpecific
+} EFI_RESET_TYPE;
+
 typedef struct {
 	UINT64				Signature;
 	UINT32				Revision;
@@ -120,6 +131,10 @@ typedef VOID		*EFI_TIME_CAPABILITIES;
 typedef EFI_STATUS (EFIAPI *EFI_GET_TIME)(EFI_TIME *, EFI_TIME_CAPABILITIES *);
 typedef EFI_STATUS (EFIAPI *EFI_SET_TIME)(EFI_TIME *);
 typedef EFI_STATUS (EFIAPI *EFI_SET_VIRTUAL_ADDRESS_MAP)(UINTN, UINTN, UINT32, EFI_MEMORY_DESCRIPTOR *);
+typedef EFI_STATUS (EFIAPI *EFI_GET_VARIABLE)(CHAR16 *, EFI_GUID *, UINT32 *, UINTN *, VOID *);
+typedef EFI_STATUS (EFIAPI *EFI_GET_NEXT_VARIABLE_NAME)(UINTN *, CHAR16 *, EFI_GUID *);
+typedef EFI_STATUS (EFIAPI *EFI_SET_VARIABLE)(CHAR16 *, EFI_GUID *, UINT32, UINTN, VOID *);
+typedef VOID (EFIAPI *EFI_RESET_SYSTEM)(EFI_RESET_TYPE, EFI_STATUS, UINTN, VOID *);
 
 typedef struct {
 	EFI_TABLE_HEADER		Hdr;
@@ -129,6 +144,14 @@ typedef struct {
 	VOID				*SetWakeupTime;
 
 	EFI_SET_VIRTUAL_ADDRESS_MAP	SetVirtualAddressMap;
+	VOID				*ConvertPointer;
+
+	EFI_GET_VARIABLE		GetVariable;
+	EFI_GET_NEXT_VARIABLE_NAME	GetNextVariableName;
+	EFI_SET_VARIABLE		SetVariable;
+
+	VOID				*GetNextHighMonotonicCount;
+	EFI_RESET_SYSTEM		ResetSystem;
 } EFI_RUNTIME_SERVICES;
 
 typedef struct {
