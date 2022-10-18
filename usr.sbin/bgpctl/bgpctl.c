@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.286 2022/10/17 16:51:36 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.287 2022/10/18 09:30:29 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1374,7 +1374,7 @@ print_afi(u_char *p, uint8_t len)
 	/* safi, 1 byte */
 	memcpy(&safi, p, sizeof(safi));
 	if (afi2aid(afi, safi, &aid) == -1)
-		printf("unkown afi %u safi %u", afi, safi);
+		printf("unknown afi %u safi %u", afi, safi);
 	else
 		printf("%s", aid2str(aid));
 }
@@ -1498,7 +1498,7 @@ show_mrt_capabilities(u_char *p, uint16_t len)
 		len -= capa_len;
 	}
 	if (len != 0) {
-		printf("length missmatch while capability parsing");
+		printf("length mismatch while capability parsing");
 		return (-1);
 	}
 	return (totlen);

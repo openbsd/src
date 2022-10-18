@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.7 2022/08/31 11:25:36 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.8 2022/10/18 09:30:29 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -156,7 +156,7 @@ rtr_main(int debug, int verbose)
 		/* run the expire timeout every EXPIRE_TIMEOUT seconds */
 		timeout = timer_nextduein(&expire_timer, getmonotime());
 		if (timeout == -1)
-			fatalx("roa-set expire timer no longer runnning");
+			fatalx("roa-set expire timer no longer running");
 
 		memset(pfd, 0, sizeof(struct pollfd) * pfd_elms);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.300 2022/09/21 21:12:03 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.301 2022/10/18 09:30:29 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1084,7 +1084,7 @@ kr_net_redist_add(struct ktable *kt, struct network_config *net,
 	}
 
 	if (send_network(IMSG_NETWORK_ADD, net, attr) == -1)
-		log_warnx("%s: faild to send network update", __func__);
+		log_warnx("%s: failed to send network update", __func__);
 	return 1;
 }
 
@@ -1110,7 +1110,7 @@ kr_net_redist_del(struct ktable *kt, struct network_config *net, int dynamic)
 	free(r);
 
 	if (send_network(IMSG_NETWORK_REMOVE, net, NULL) == -1)
-		log_warnx("%s: faild to send network removal", __func__);
+		log_warnx("%s: failed to send network removal", __func__);
 }
 
 int

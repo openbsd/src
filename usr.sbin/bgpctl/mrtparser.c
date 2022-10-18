@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.18 2022/08/17 15:16:12 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.19 2022/10/18 09:30:29 job Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -126,7 +126,7 @@ mrt_parse(int fd, struct mrt_parser *p, int verbose)
 		case MSG_PROTOCOL_OSPFV3_ET:
 		case MSG_PROTOCOL_OSPFV3:
 			if (verbose)
-				printf("unsuported MRT type %d\n",
+				printf("unsupported MRT type %d\n",
 				    ntohs(h.type));
 			break;
 		case MSG_TABLE_DUMP:
@@ -443,7 +443,7 @@ mrt_parse_v2_rib(struct mrt_hdr *hdr, void *msg, int verbose)
 			goto fail;
 		break;
 	default:
-		errx(1, "unknonw subtype %hd", ntohs(hdr->subtype));
+		errx(1, "unknown subtype %hd", ntohs(hdr->subtype));
 	}
 
 	/* adjust length */
