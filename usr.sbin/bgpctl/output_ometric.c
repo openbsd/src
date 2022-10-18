@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.1 2022/10/17 12:01:19 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.2 2022/10/18 12:28:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -33,8 +33,8 @@
 #include "ometric.h"
 
 struct ometric *bgpd_info, *bgpd_scrape_time;
-struct ometric *peer_info, *peer_state, *peer_state_raw, *peer_up_time,
-		    *peer_down_time, *peer_last_read, *peer_last_write;
+struct ometric *peer_info, *peer_state, *peer_state_raw, *peer_last_change,
+		    *peer_last_read, *peer_last_write;
 struct ometric *peer_prefixes_transmit, *peer_prefixes_receive;
 struct ometric *peer_message_transmit, *peer_message_recieve;
 struct ometric *peer_update_transmit, *peer_update_pending,
@@ -91,10 +91,9 @@ ometric_head(struct parse_result *arg)
 	    "peer session state");
 	peer_state_raw = ometric_new(OMT_GAUGE, "bgpd_peer_state_raw",
 	    "peer session state raw int value");
-	peer_up_time = ometric_new(OMT_GAUGE, "bgpd_peer_up_seconds",
-	    "peer session up time in seconds");
-	peer_down_time = ometric_new(OMT_GAUGE, "bgpd_peer_down_seconds",
-	    "peer session down time in seconds");
+	peer_last_change = ometric_new(OMT_GAUGE,
+	    "bgpd_peer_last_change_seconds",
+	    "time in seconds since peer's last up/down state change");
 	peer_last_read = ometric_new(OMT_GAUGE, "bgpd_peer_last_read_seconds",
 	    "peer time since last read in seconds");
 	peer_last_write = ometric_new(OMT_GAUGE, "bgpd_peer_last_write_seconds",
@@ -193,16 +192,15 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_state(peer_state, statenames[p->state], ol);
 	ometric_set_int(peer_state_raw, p->state, ol);
 
+	ometric_set_int(peer_last_change, get_monotime(p->stats.last_updown),
+	    ol);
+
 	if (p->state == STATE_ESTABLISHED) {
-		ometric_set_int(peer_up_time,
-		    get_monotime(p->stats.last_updown), ol);
 		ometric_set_int(peer_last_read,
 		    get_monotime(p->stats.last_read), ol);
 		ometric_set_int(peer_last_write,
 		    get_monotime(p->stats.last_write), ol);
-	} else if (p->stats.last_updown != 0)
-		ometric_set_int(peer_down_time,
-		    get_monotime(p->stats.last_updown), ol);
+	}
 
 	ometric_set_int(peer_prefixes_transmit, p->stats.prefix_out_cnt, ol);
 	ometric_set_int(peer_prefixes_receive, p->stats.prefix_cnt, ol);
