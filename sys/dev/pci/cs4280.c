@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.57 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.58 2022/10/18 08:22:19 kn Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -1062,7 +1062,7 @@ cs4280_round_blocksize(void *hdl, int blk)
 int
 cs4280_get_props(void *hdl)
 {
-	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX); 
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

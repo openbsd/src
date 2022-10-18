@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.40 2022/03/21 19:22:41 miod Exp $ */
+/*      $OpenBSD: sv.c,v 1.41 2022/10/18 08:22:19 kn Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -1311,5 +1311,5 @@ sv_free(void *addr, void *ptr, int pool)
 int
 sv_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.58 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.59 2022/10/18 08:22:19 kn Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -2269,8 +2269,7 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 int
 emuxki_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-		AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

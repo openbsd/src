@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.20 2022/03/21 19:22:40 miod Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.21 2022/10/18 08:22:19 kn Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -627,7 +627,7 @@ auglx_round_buffersize(void *v, int direction, size_t size)
 int
 auglx_get_props(void *v)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

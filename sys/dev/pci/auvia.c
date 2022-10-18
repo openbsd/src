@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.63 2022/03/21 19:22:41 miod Exp $ */
+/*	$OpenBSD: auvia.c,v 1.64 2022/10/18 08:22:19 kn Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -801,11 +801,7 @@ auvia_round_buffersize(void *addr, int direction, size_t bufsize)
 int
 auvia_get_props(void *addr)
 {
-	int props;
-
-	props = AUDIO_PROP_MMAP|AUDIO_PROP_INDEPENDENT|AUDIO_PROP_FULLDUPLEX;
-
-	return  props;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 

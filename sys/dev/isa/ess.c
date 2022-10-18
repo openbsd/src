@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.28 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: ess.c,v 1.29 2022/10/18 08:22:18 kn Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -2074,13 +2074,13 @@ ess_round_buffersize(void *addr, int direction, size_t size)
 int
 ess_1788_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT);
+	return (0);
 }
 
 int
 ess_1888_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 /* ============================================

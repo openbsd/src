@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.84 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: envy.c,v 1.85 2022/10/18 08:22:19 kn Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2442,7 +2442,7 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 int
 envy_get_props(void *self)
 {
-	return AUDIO_PROP_FULLDUPLEX | AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 #if NMIDI > 0

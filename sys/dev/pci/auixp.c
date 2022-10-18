@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.48 2022/03/21 19:22:40 miod Exp $ */
+/* $OpenBSD: auixp.c,v 1.49 2022/10/18 08:22:19 kn Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -449,7 +449,7 @@ int
 auixp_get_props(void *hdl)
 {
 
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 

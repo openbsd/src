@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.25 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.26 2022/10/18 08:22:18 kn Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -642,8 +642,7 @@ auacer_round_buffersize(void *v, int direction, size_t size)
 int
 auacer_get_props(void *v)
 {
-	return (AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX |
-	    AUDIO_PROP_MMAP);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.33 2022/03/21 19:22:41 miod Exp $ */
+/*	$OpenBSD: fms.c,v 1.34 2022/10/18 08:22:19 kn Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -635,8 +635,7 @@ fms_free(void *addr, void *ptr, int pool)
 int
 fms_get_props(void *addr)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | 
-	       AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

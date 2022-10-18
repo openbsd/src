@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.40 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.41 2022/10/18 08:22:18 kn Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2116,8 +2116,7 @@ int
 sbdsp_get_props(void *addr)
 {
 	struct sbdsp_softc *sc = addr;
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	       (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
+	return (sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
 }
 
 #if NMIDI > 0

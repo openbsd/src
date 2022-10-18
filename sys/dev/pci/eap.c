@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.61 2022/03/21 19:22:41 miod Exp $ */
+/*      $OpenBSD: eap.c,v 1.62 2022/10/18 08:22:19 kn Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -1498,8 +1498,7 @@ eap_free(void *addr, void *ptr, int pool)
 int
 eap_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-	    AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 enum ac97_host_flags

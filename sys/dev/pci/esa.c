@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.38 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: esa.c,v 1.39 2022/10/18 08:22:19 kn Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -497,8 +497,7 @@ esa_round_buffersize(void *hdl, int direction, size_t bufsize)
 int
 esa_get_props(void *hdl)
 {
-
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

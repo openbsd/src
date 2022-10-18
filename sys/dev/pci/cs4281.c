@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.42 2022/03/21 19:22:41 miod Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.43 2022/10/18 08:22:19 kn Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1195,13 +1195,7 @@ cs4281_round_buffersize(void *addr, int direction, size_t size)
 int
 cs4281_get_props(void *addr)
 {
-	int retval;
-
-	retval = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
-#ifdef MMAP_READY
-	retval |= AUDIO_PROP_MMAP;
-#endif
-	return (retval);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 /* AC97 */

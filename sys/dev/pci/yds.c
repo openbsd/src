@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.60 2022/08/29 06:08:04 jsg Exp $	*/
+/*	$OpenBSD: yds.c,v 1.61 2022/10/18 08:22:19 kn Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -1570,8 +1570,7 @@ yds_round_buffersize(void *addr, int direction, size_t size)
 int
 yds_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | 
-		AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.35 2022/10/15 08:41:18 jsg Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.36 2022/10/18 08:22:18 kn Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -583,7 +583,7 @@ i2s_round_buffersize(void *h, int dir, size_t size)
 int
 i2s_get_props(void *h)
 {
-	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

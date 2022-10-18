@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.9 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: bba.c,v 1.10 2022/10/18 08:22:19 kn Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -584,7 +584,7 @@ bba_intr(void *v)
 int
 bba_get_props(void *v)
 {
-	return AUDIO_PROP_MMAP | am7930_get_props(v);
+	return am7930_get_props(v);
 }
 
 int

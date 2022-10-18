@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.47 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: autri.c,v 1.48 2022/10/18 08:22:19 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -1034,8 +1034,7 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 int
 autri_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-		AUDIO_PROP_FULLDUPLEX);
+	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 void

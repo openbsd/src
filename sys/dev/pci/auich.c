@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.116 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: auich.c,v 1.117 2022/10/18 08:22:19 kn Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -927,7 +927,7 @@ auich_round_buffersize(void *v, int direction, size_t size)
 int
 auich_get_props(void *v)
 {
-	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
+	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int
