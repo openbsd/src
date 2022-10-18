@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.435 2022/08/31 15:51:44 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.436 2022/10/18 12:24:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -581,6 +581,8 @@ init_peer(struct peer *p)
 		timer_stop(&p->timers, Timer_IdleHold); /* no autostart */
 	else
 		timer_set(&p->timers, Timer_IdleHold, 0); /* start ASAP */
+
+	p->stats.last_updown = getmonotime();
 
 	/*
 	 * on startup, demote if requested.
