@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.3 2022/08/25 19:16:29 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.4 2022/10/18 15:12:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -105,9 +105,7 @@ aplcpu_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	/* XXX Remove "apple,cluster-cpufreq" after OpenBSD 7.2 release. */
-	return OF_is_compatible(faa->fa_node, "apple,soc-cpufreq") ||
-	    OF_is_compatible(faa->fa_node, "apple,cluster-cpufreq");
+	return OF_is_compatible(faa->fa_node, "apple,soc-cpufreq");
 }
 
 void
