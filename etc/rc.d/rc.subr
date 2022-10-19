@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.159 2022/09/08 13:17:30 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.160 2022/10/19 21:04:45 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -374,5 +374,3 @@ unset _rcexecdir _rcflags _rclogger _rcrtable _rctimeout _rcuser
 # the shell will strip the quotes from daemon_flags when starting a daemon;
 # make sure pexp matches the process (i.e. doesn't include the quotes)
 pexp="$(eval echo ${daemon}${daemon_flags:+ ${daemon_flags}})"
-# XXX old construct compatibility; remove after OPENBSD_7_2_RELEASE
-rcexec=rc_exec
