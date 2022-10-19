@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.25 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.26 2022/10/19 18:29:36 deraadt Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 19 2022 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -93,18 +93,6 @@ if the thread is currently on a signal stack and
 .Dv SS_DISABLE
 if the signal stack is currently disabled.
 .Pp
-To permit the space to operate as a stack, a page-aligned
-inner region will be zeroed and have
-.Dv MAP_STACK
-(see
-.Xr mmap 2 )
-enabled.
-Once the sigaltstack is disabled,
-.Dv MAP_STACK
-remains on the memory, so it is best to deallocate the memory
-via a method that results in
-.Xr munmap 2 .
-.Sh NOTES
 The value
 .Dv SIGSTKSZ
 is defined to be the number of bytes/chars that would be used to cover
@@ -138,6 +126,28 @@ are not
 automatically as is done for the normal stack.
 If the stack overflows and this space is not protected,
 unpredictable results may occur.
+.Pp
+On
+.Ox
+some additional restrictions prevent dangerous address space modifications.
+The proposed space at
+.Fa ss_sp
+is verified to be contiguously mapped for read-write permissions
+(no execute)
+and incapable of syscall entry
+(see
+.Xr msyscall 2 ) .
+If those conditions are met, a page-aligned inner region will be freshly mapped
+(all zero) with
+.Dv MAP_STACK
+(see
+.Xr mmap 2 ) ,
+destroying the pre-existing data in the region.
+Once the sigaltstack is disabled, the
+.Dv MAP_STACK
+attribute remains on the memory, so it is best to deallocate the memory
+via a method that results in
+.Xr munmap 2 .
 .Sh RETURN VALUES
 .Rv -std
 .Sh ERRORS
@@ -159,6 +169,9 @@ member pointed to by the
 .Fa ss
 argument contains flags other than
 .Dv SS_DISABLE .
+.It Bq Er EINVAL
+The memory region is not acceptable for use as a stack;
+see above.
 .It Bq Er ENOMEM
 Size of alternate stack area is less than or equal to
 .Dv MINSIGSTKSZ .
