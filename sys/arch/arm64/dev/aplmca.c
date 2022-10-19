@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.3 2022/09/02 17:54:42 kettenis Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.4 2022/10/19 07:59:26 kn Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -135,7 +135,7 @@ int	aplmca_trigger_input(void *, void *, void *, int,
 int	aplmca_halt_output(void *);
 int	aplmca_halt_input(void *);
 
-struct audio_hw_if aplmca_hw_if = {
+const struct audio_hw_if aplmca_hw_if = {
 	.set_params = aplmca_set_params,
 	.get_props = aplmca_get_props,
 	.allocm = aplmca_allocm,
