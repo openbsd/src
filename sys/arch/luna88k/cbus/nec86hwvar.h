@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hwvar.h,v 1.3 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: nec86hwvar.h,v 1.4 2022/10/19 15:34:02 kn Exp $	*/
 /*	$NecBSD: nec86hwvar.h,v 1.10 1998/03/14 07:04:55 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -152,8 +152,6 @@ int	nec86hw_set_in_port(void *, int);
 int	nec86hw_get_in_port(void *);
 
 int	nec86hw_commit_settings(void *);
-
-int	nec86hw_setfd(void *, int);
 
 int	nec86hw_mixer_set_port(void *, mixer_ctrl_t *);
 int	nec86hw_mixer_get_port(void *, mixer_ctrl_t *);
