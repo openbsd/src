@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1212 2022/10/16 08:47:20 kn Exp $
+#	$OpenBSD: install.sub,v 1.1213 2022/10/19 08:24:14 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2309,21 +2309,20 @@ set_timezone() {
 is_rootdisk() {
 	local _d=$1 _rc=1
 
-	(
-		make_dev $_d
-		if disklabel $_d | grep -q '^  a: .*4\.2BSD ' &&
-			mount -t ffs -r /dev/${_d}a /mnt; then
-			if $UU; then
-				ls -d /mnt/{auto_upgrade.conf,bin,dev,etc,home,sbin,tmp,usr,var}
-			else
-				ls -d /mnt/{bin,dev,etc,home,sbin,tmp,usr,var}
-			fi
-			_rc=$?
-			umount /mnt
+	make_dev $_d
+	if disklabel $_d | grep -q '^  a: .*4\.2BSD ' &&
+		mount -t ffs -r /dev/${_d}a /mnt; then
+		if $UU; then
+			ls -d /mnt/{auto_upgrade.conf,bin,dev,etc,home,sbin,tmp,usr,var}
+		else
+			ls -d /mnt/{bin,dev,etc,home,sbin,tmp,usr,var}
 		fi
-		rm -f /dev/{r,}$_d?
-		return $_rc
-	) >/dev/null 2>&1
+		_rc=$?
+		umount /mnt
+	fi >/dev/null 2>&1
+	rm -f /dev/{r,}$_d?
+
+	return $_rc
 }
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
