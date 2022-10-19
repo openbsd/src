@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.29 2022/10/18 08:22:18 kn Exp $	*/
+/*	$OpenBSD: ess.c,v 1.30 2022/10/19 07:57:49 kn Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ void	ess_clear_mreg_bits(struct ess_softc *, u_char, u_char);
 void	ess_set_mreg_bits(struct ess_softc *, u_char, u_char);
 void	ess_read_multi_mix_reg(struct ess_softc *, u_char, u_int8_t *, bus_size_t);
 
-static char *essmodel[] = {
+static const char *essmodel[] = {
 	"unsupported",
 	"1888",
 	"1887",
