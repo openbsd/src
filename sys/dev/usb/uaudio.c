@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.169 2022/03/21 19:22:42 miod Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.170 2022/10/19 09:11:26 kn Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -501,7 +501,7 @@ const struct audio_hw_if uaudio_hw_if = {
  * don't care about continuous sample rates or other "advanced"
  * features which complicate implementation.
  */
-int uaudio_rates[] = {
+const int uaudio_rates[] = {
 	8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000,
 	64000, 88200, 96000, 128000, 176400, 192000
 };

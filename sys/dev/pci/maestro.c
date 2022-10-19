@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.47 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.48 2022/10/19 09:11:26 kn Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -552,7 +552,7 @@ const struct audio_hw_if maestro_hw_if = {
 	maestro_trigger_input
 };
 
-struct {
+const struct {
 	u_short vendor, product;
 	int flags;
 } maestro_pcitab[] = {
