@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.49 2022/10/18 08:22:19 kn Exp $ */
+/* $OpenBSD: auixp.c,v 1.50 2022/10/19 19:14:16 kn Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -155,28 +155,21 @@ void	auixp_update_busbusy(struct auixp_softc *);
 #endif
 
 const struct audio_hw_if auixp_hw_if = {
-	auixp_open,
-	auixp_close,
-	auixp_set_params,
-	auixp_round_blocksize,
-	auixp_commit_settings,
-	NULL,			/* init_output  */
-	NULL,			/* init_input   */
-	NULL,			/* start_output */
-	NULL,			/* start_input  */
-	auixp_halt_output,
-	auixp_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* getfd */
-	auixp_set_port,
-	auixp_get_port,
-	auixp_query_devinfo,
-	auixp_malloc,
-	auixp_free,
-	NULL,			/* round_buffersize */
-	auixp_get_props,
-	auixp_trigger_output,
-	auixp_trigger_input
+	.open = auixp_open,
+	.close = auixp_close,
+	.set_params = auixp_set_params,
+	.round_blocksize = auixp_round_blocksize,
+	.commit_settings = auixp_commit_settings,
+	.halt_output = auixp_halt_output,
+	.halt_input = auixp_halt_input,
+	.set_port = auixp_set_port,
+	.get_port = auixp_get_port,
+	.query_devinfo = auixp_query_devinfo,
+	.allocm = auixp_malloc,
+	.freem = auixp_free,
+	.get_props = auixp_get_props,
+	.trigger_output = auixp_trigger_output,
+	.trigger_input = auixp_trigger_input,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.50 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.51 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -150,28 +150,21 @@ int cmpci_trigger_input(void *, void *, void *, int,
 				    struct audio_params *);
 
 const struct audio_hw_if cmpci_hw_if = {
-	cmpci_open,		/* open */
-	cmpci_close,		/* close */
-	cmpci_set_params,	/* set_params */
-	cmpci_round_blocksize,	/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	cmpci_halt_output,	/* halt_output */
-	cmpci_halt_input,	/* halt_input */
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	cmpci_set_port,		/* set_port */
-	cmpci_get_port,		/* get_port */
-	cmpci_query_devinfo,	/* query_devinfo */
-	cmpci_malloc,		/* malloc */
-	cmpci_free,		/* free */
-	cmpci_round_buffersize,/* round_buffersize */
-	cmpci_get_props,	/* get_props */
-	cmpci_trigger_output,	/* trigger_output */
-	cmpci_trigger_input	/* trigger_input */
+	.open = cmpci_open,
+	.close = cmpci_close,
+	.set_params = cmpci_set_params,
+	.round_blocksize = cmpci_round_blocksize,
+	.halt_output = cmpci_halt_output,
+	.halt_input = cmpci_halt_input,
+	.set_port = cmpci_set_port,
+	.get_port = cmpci_get_port,
+	.query_devinfo = cmpci_query_devinfo,
+	.allocm = cmpci_malloc,
+	.freem = cmpci_free,
+	.round_buffersize = cmpci_round_buffersize,
+	.get_props = cmpci_get_props,
+	.trigger_output = cmpci_trigger_output,
+	.trigger_input = cmpci_trigger_input,
 };
 
 /*

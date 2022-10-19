@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.38 2022/10/18 08:22:19 kn Exp $       */
+/*      $OpenBSD: neo.c,v 1.39 2022/10/19 19:14:17 kn Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -238,32 +238,21 @@ static int samplerates[9] = {
 /* -------------------------------------------------------------------- */
 
 const struct audio_hw_if neo_hw_if = {
-	neo_open,
-	neo_close,
-	neo_set_params,
-#if 1
-	neo_round_blocksize,
-#else
-	NULL,
-#endif
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	neo_halt_output,
-	neo_halt_input,
-	NULL,
-	NULL,
-	neo_mixer_set_port,
-	neo_mixer_get_port,
-	neo_query_devinfo,
-	neo_malloc,
-	neo_free,
-	neo_round_buffersize,
-	neo_get_props,
-	neo_trigger_output,
-	neo_trigger_input
+	.open = neo_open,
+	.close = neo_close,
+	.set_params = neo_set_params,
+	.round_blocksize = neo_round_blocksize,
+	.halt_output = neo_halt_output,
+	.halt_input = neo_halt_input,
+	.set_port = neo_mixer_set_port,
+	.get_port = neo_mixer_get_port,
+	.query_devinfo = neo_query_devinfo,
+	.allocm = neo_malloc,
+	.freem = neo_free,
+	.round_buffersize = neo_round_buffersize,
+	.get_props = neo_get_props,
+	.trigger_output = neo_trigger_output,
+	.trigger_input = neo_trigger_input,
 
 };
 

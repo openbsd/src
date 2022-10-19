@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.58 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.59 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -234,28 +234,20 @@ int	cs4280_midi_output(void *, int);
 #endif
 
 const struct audio_hw_if cs4280_hw_if = {
-	cs4280_open,
-	cs4280_close,
-	cs4280_set_params,
-	cs4280_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	cs4280_halt_output,
-	cs4280_halt_input,
-	NULL,
-	NULL,
-	cs4280_mixer_set_port,
-	cs4280_mixer_get_port,
-	cs4280_query_devinfo,
-	cs4280_malloc,
-	cs4280_free,
-	NULL,
-	cs4280_get_props,
-	cs4280_trigger_output,
-	cs4280_trigger_input
+	.open = cs4280_open,
+	.close = cs4280_close,
+	.set_params = cs4280_set_params,
+	.round_blocksize = cs4280_round_blocksize,
+	.halt_output = cs4280_halt_output,
+	.halt_input = cs4280_halt_input,
+	.set_port = cs4280_mixer_set_port,
+	.get_port = cs4280_mixer_get_port,
+	.query_devinfo = cs4280_query_devinfo,
+	.allocm = cs4280_malloc,
+	.freem = cs4280_free,
+	.get_props = cs4280_get_props,
+	.trigger_output = cs4280_trigger_output,
+	.trigger_input = cs4280_trigger_input,
 };
 
 #if NMIDI > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.34 2022/10/18 08:22:19 kn Exp $ */
+/*	$OpenBSD: fms.c,v 1.35 2022/10/19 19:14:17 kn Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -100,28 +100,20 @@ const struct cfattach fms_ca = {
 };
 
 const struct audio_hw_if fms_hw_if = {
-	fms_open,
-	fms_close,
-	fms_set_params,
-	fms_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	fms_halt_output,
-	fms_halt_input,
-	NULL,
-	NULL,
-	fms_set_port,
-	fms_get_port,
-	fms_query_devinfo,
-	fms_malloc,
-	fms_free,
-	NULL,
-	fms_get_props,
-	fms_trigger_output,
-	fms_trigger_input
+	.open = fms_open,
+	.close = fms_close,
+	.set_params = fms_set_params,
+	.round_blocksize = fms_round_blocksize,
+	.halt_output = fms_halt_output,
+	.halt_input = fms_halt_input,
+	.set_port = fms_set_port,
+	.get_port = fms_get_port,
+	.query_devinfo = fms_query_devinfo,
+	.allocm = fms_malloc,
+	.freem = fms_free,
+	.get_props = fms_get_props,
+	.trigger_output = fms_trigger_output,
+	.trigger_input = fms_trigger_input,
 };
 
 int	fms_attach_codec(void *, struct ac97_codec_if *);

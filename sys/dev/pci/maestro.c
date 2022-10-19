@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.48 2022/10/19 09:11:26 kn Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.49 2022/10/19 19:14:17 kn Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -528,28 +528,20 @@ const struct cfattach maestro_ca = {
 };
 
 const struct audio_hw_if maestro_hw_if = {
-	maestro_open,
-	maestro_close,
-	maestro_set_params,
-	maestro_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	maestro_halt_output,
-	maestro_halt_input,
-	NULL,
-	NULL,
-	maestro_set_port,
-	maestro_get_port,
-	maestro_query_devinfo,
-	maestro_malloc,
-	maestro_free,
-	NULL,
-	maestro_get_props,
-	maestro_trigger_output,
-	maestro_trigger_input
+	.open = maestro_open,
+	.close = maestro_close,
+	.set_params = maestro_set_params,
+	.round_blocksize = maestro_round_blocksize,
+	.halt_output = maestro_halt_output,
+	.halt_input = maestro_halt_input,
+	.set_port = maestro_set_port,
+	.get_port = maestro_get_port,
+	.query_devinfo = maestro_query_devinfo,
+	.allocm = maestro_malloc,
+	.freem = maestro_free,
+	.get_props = maestro_get_props,
+	.trigger_output = maestro_trigger_output,
+	.trigger_input = maestro_trigger_input,
 };
 
 const struct {

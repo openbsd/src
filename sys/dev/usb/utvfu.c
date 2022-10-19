@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.17 2022/03/21 19:22:42 miod Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.18 2022/10/19 19:14:17 kn Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -843,28 +843,17 @@ const struct video_hw_if utvfu_vid_hw_if = {
 };
 
 const struct audio_hw_if utvfu_au_hw_if = {
-	utvfu_audio_open,		/* open hardware */
-	utvfu_audio_close,		/* close hardware */
-	utvfu_audio_set_params,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	utvfu_audio_halt_out,
-	utvfu_audio_halt_in,
-	NULL,
-	NULL,
-	utvfu_audio_mixer_set_port,
-	utvfu_audio_mixer_get_port,
-	utvfu_audio_query_devinfo,
-	NULL,
-	NULL,
-	NULL,
-	utvfu_audio_get_props,
-	utvfu_audio_trigger_output,
-	utvfu_audio_trigger_input
+	.open = utvfu_audio_open,
+	.close = utvfu_audio_close,
+	.set_params = utvfu_audio_set_params,
+	.halt_output = utvfu_audio_halt_out,
+	.halt_input = utvfu_audio_halt_in,
+	.set_port = utvfu_audio_mixer_set_port,
+	.get_port = utvfu_audio_mixer_get_port,
+	.query_devinfo = utvfu_audio_query_devinfo,
+	.get_props = utvfu_audio_get_props,
+	.trigger_output = utvfu_audio_trigger_output,
+	.trigger_input = utvfu_audio_trigger_input,
 };
 
 int

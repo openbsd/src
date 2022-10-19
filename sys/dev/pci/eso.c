@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.51 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: eso.c,v 1.52 2022/10/19 19:14:17 kn Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -124,28 +124,21 @@ int	eso_trigger_input(void *, void *, void *, int,
 void	eso_setup(struct eso_softc *, int, int);
 
 const struct audio_hw_if eso_hw_if = {
-	eso_open,
-	eso_close,
-	eso_set_params,
-	eso_round_blocksize,
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	eso_halt_output,
-	eso_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	eso_set_port,
-	eso_get_port,
-	eso_query_devinfo,
-	eso_allocm,
-	eso_freem,
-	eso_round_buffersize,
-	eso_get_props,
-	eso_trigger_output,
-	eso_trigger_input
+	.open = eso_open,
+	.close = eso_close,
+	.set_params = eso_set_params,
+	.round_blocksize = eso_round_blocksize,
+	.halt_output = eso_halt_output,
+	.halt_input = eso_halt_input,
+	.set_port = eso_set_port,
+	.get_port = eso_get_port,
+	.query_devinfo = eso_query_devinfo,
+	.allocm = eso_allocm,
+	.freem = eso_freem,
+	.round_buffersize = eso_round_buffersize,
+	.get_props = eso_get_props,
+	.trigger_output = eso_trigger_output,
+	.trigger_input = eso_trigger_input,
 };
 
 const char * const eso_rev2model[] = {

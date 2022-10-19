@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.48 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: autri.c,v 1.49 2022/10/19 19:14:16 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -140,28 +140,20 @@ int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
 int	autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
 
 const struct audio_hw_if autri_hw_if = {
-	autri_open,
-	autri_close,
-	autri_set_params,
-	autri_round_blocksize,
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	autri_halt_output,
-	autri_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	autri_mixer_set_port,
-	autri_mixer_get_port,
-	autri_query_devinfo,
-	autri_malloc,
-	autri_free,
-	NULL,
-	autri_get_props,
-	autri_trigger_output,
-	autri_trigger_input
+	.open = autri_open,
+	.close = autri_close,
+	.set_params = autri_set_params,
+	.round_blocksize = autri_round_blocksize,
+	.halt_output = autri_halt_output,
+	.halt_input = autri_halt_input,
+	.set_port = autri_mixer_set_port,
+	.get_port = autri_mixer_get_port,
+	.query_devinfo = autri_query_devinfo,
+	.allocm = autri_malloc,
+	.freem = autri_free,
+	.get_props = autri_get_props,
+	.trigger_output = autri_trigger_output,
+	.trigger_input = autri_trigger_input,
 };
 
 #if NMIDI > 0

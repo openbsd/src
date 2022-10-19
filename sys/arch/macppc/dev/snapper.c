@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.42 2022/03/21 19:22:39 miod Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.43 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -78,28 +78,20 @@ struct cfdriver snapper_cd = {
 };
 
 const struct audio_hw_if snapper_hw_if = {
-	i2s_open,
-	i2s_close,
-	i2s_set_params,
-	i2s_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	i2s_halt_output,
-	i2s_halt_input,
-	NULL,
-	NULL,
-	i2s_set_port,
-	i2s_get_port,
-	i2s_query_devinfo,
-	i2s_allocm,		/* allocm */
-	NULL,
-	i2s_round_buffersize,
-	i2s_get_props,
-	i2s_trigger_output,
-	i2s_trigger_input
+	.open = i2s_open,
+	.close = i2s_close,
+	.set_params = i2s_set_params,
+	.round_blocksize = i2s_round_blocksize,
+	.halt_output = i2s_halt_output,
+	.halt_input = i2s_halt_input,
+	.set_port = i2s_set_port,
+	.get_port = i2s_get_port,
+	.query_devinfo = i2s_query_devinfo,
+	.allocm = i2s_allocm,
+	.round_buffersize = i2s_round_buffersize,
+	.get_props = i2s_get_props,
+	.trigger_output = i2s_trigger_output,
+	.trigger_input = i2s_trigger_input,
 };
 
 const uint8_t snapper_trebletab[] = {

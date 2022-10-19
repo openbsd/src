@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.39 2022/03/21 19:22:39 miod Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.40 2022/10/19 19:14:16 kn Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -151,28 +151,21 @@ int	ce4231_trigger_input(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
 
 const struct audio_hw_if ce4231_sa_hw_if = {
-	ce4231_open,
-	ce4231_close,
-	ce4231_set_params,
-	ce4231_round_blocksize,
-	ce4231_commit_settings,
-	0,
-	0,
-	0,
-	0,
-	ce4231_halt_output,
-	ce4231_halt_input,
-	0,
-	0,
-	ce4231_set_port,
-	ce4231_get_port,
-	ce4231_query_devinfo,
-	ce4231_alloc,
-	ce4231_free,
-	0,
-	ce4231_get_props,
-	ce4231_trigger_output,
-	ce4231_trigger_input
+	.open = ce4231_open,
+	.close = ce4231_close,
+	.set_params = ce4231_set_params,
+	.round_blocksize = ce4231_round_blocksize,
+	.commit_settings = ce4231_commit_settings,
+	.halt_output = ce4231_halt_output,
+	.halt_input = ce4231_halt_input,
+	.set_port = ce4231_set_port,
+	.get_port = ce4231_get_port,
+	.query_devinfo = ce4231_query_devinfo,
+	.allocm = ce4231_alloc,
+	.freem = ce4231_free,
+	.get_props = ce4231_get_props,
+	.trigger_output = ce4231_trigger_output,
+	.trigger_input = ce4231_trigger_input,
 };
 
 const struct cfattach audioce_ca = {

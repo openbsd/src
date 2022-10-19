@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.117 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: auich.c,v 1.118 2022/10/19 19:14:16 kn Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -316,28 +316,21 @@ void auich_freemem(struct auich_softc *, struct auich_dma *);
 void auich_resume(struct auich_softc *);
 
 const struct audio_hw_if auich_hw_if = {
-	auich_open,
-	auich_close,
-	auich_set_params,
-	auich_round_blocksize,
-	NULL,			/* commit_setting */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	auich_halt_output,
-	auich_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* getfd */
-	auich_set_port,
-	auich_get_port,
-	auich_query_devinfo,
-	auich_allocm,
-	auich_freem,
-	auich_round_buffersize,
-	auich_get_props,
-	auich_trigger_output,
-	auich_trigger_input
+	.open = auich_open,
+	.close = auich_close,
+	.set_params = auich_set_params,
+	.round_blocksize = auich_round_blocksize,
+	.halt_output = auich_halt_output,
+	.halt_input = auich_halt_input,
+	.set_port = auich_set_port,
+	.get_port = auich_get_port,
+	.query_devinfo = auich_query_devinfo,
+	.allocm = auich_allocm,
+	.freem = auich_freem,
+	.round_buffersize = auich_round_buffersize,
+	.get_props = auich_get_props,
+	.trigger_output = auich_trigger_output,
+	.trigger_input = auich_trigger_input,
 };
 
 int  auich_attach_codec(void *, struct ac97_codec_if *);

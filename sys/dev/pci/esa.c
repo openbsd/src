@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.39 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: esa.c,v 1.40 2022/10/19 19:14:16 kn Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -152,28 +152,22 @@ void		esa_suspend(struct esa_softc *);
 void		esa_resume(struct esa_softc *);
 
 const struct audio_hw_if esa_hw_if = {
-	esa_open,
-	esa_close,
-	esa_set_params,
-	esa_round_blocksize,
-	esa_commit_settings,
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	esa_halt_output,
-	esa_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* getfd */
-	esa_set_port,
-	esa_get_port,
-	esa_query_devinfo,
-	esa_malloc,
-	esa_free,
-	esa_round_buffersize,
-	esa_get_props,
-	esa_trigger_output,
-	esa_trigger_input
+	.open = esa_open,
+	.close = esa_close,
+	.set_params = esa_set_params,
+	.round_blocksize = esa_round_blocksize,
+	.commit_settings = esa_commit_settings,
+	.halt_output = esa_halt_output,
+	.halt_input = esa_halt_input,
+	.set_port = esa_set_port,
+	.get_port = esa_get_port,
+	.query_devinfo = esa_query_devinfo,
+	.allocm = esa_malloc,
+	.freem = esa_free,
+	.round_buffersize = esa_round_buffersize,
+	.get_props = esa_get_props,
+	.trigger_output = esa_trigger_output,
+	.trigger_input = esa_trigger_input,
 };
 
 struct cfdriver esa_cd = {

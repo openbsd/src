@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.38 2022/03/21 19:22:39 miod Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.39 2022/10/19 19:14:16 kn Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -74,28 +74,22 @@ int     harmony_trigger_input(void *, void *, void *, int,
     void (*intr)(void *), void *, struct audio_params *);
 
 const struct audio_hw_if harmony_sa_hw_if = {
-	harmony_open,
-	harmony_close,
-	harmony_set_params,
-	harmony_round_blocksize,
-	harmony_commit_settings,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	harmony_halt_output,
-	harmony_halt_input,
-	NULL,
-	NULL,
-	harmony_set_port,
-	harmony_get_port,
-	harmony_query_devinfo,
-	harmony_allocm,
-	harmony_freem,
-	harmony_round_buffersize,
-	harmony_get_props,
-	harmony_trigger_output,
-	harmony_trigger_input
+	.open = harmony_open,
+	.close = harmony_close,
+	.set_params = harmony_set_params,
+	.round_blocksize = harmony_round_blocksize,
+	.commit_settings = harmony_commit_settings,
+	.halt_output = harmony_halt_output,
+	.halt_input = harmony_halt_input,
+	.set_port = harmony_set_port,
+	.get_port = harmony_get_port,
+	.query_devinfo = harmony_query_devinfo,
+	.allocm = harmony_allocm,
+	.freem = harmony_freem,
+	.round_buffersize = harmony_round_buffersize,
+	.get_props = harmony_get_props,
+	.trigger_output = harmony_trigger_output,
+	.trigger_input = harmony_trigger_input,
 };
 
 int harmony_match(struct device *, void *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.277 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.278 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -290,32 +290,22 @@ struct cfdriver azalia_cd = {
 };
 
 const struct audio_hw_if azalia_hw_if = {
-	azalia_open,
-	azalia_close,
-	azalia_set_params,
-	NULL,			/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	azalia_halt_output,
-	azalia_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	azalia_set_port,
-	azalia_get_port,
-	azalia_query_devinfo,
-	azalia_allocm,
-	azalia_freem,
-	azalia_round_buffersize,
-	azalia_get_props,
-	azalia_trigger_output,
-	azalia_trigger_input,
-	NULL,			/* copy_output */
-	NULL,			/* underrun */
-	azalia_set_blksz,
-	azalia_set_nblks
+	.open = azalia_open,
+	.close = azalia_close,
+	.set_params = azalia_set_params,
+	.halt_output = azalia_halt_output,
+	.halt_input = azalia_halt_input,
+	.set_port = azalia_set_port,
+	.get_port = azalia_get_port,
+	.query_devinfo = azalia_query_devinfo,
+	.allocm = azalia_allocm,
+	.freem = azalia_freem,
+	.round_buffersize = azalia_round_buffersize,
+	.get_props = azalia_get_props,
+	.trigger_output = azalia_trigger_output,
+	.trigger_input = azalia_trigger_input,
+	.set_blksz = azalia_set_blksz,
+	.set_nblks = azalia_set_nblks,
 };
 
 static const char *pin_devices[16] = {

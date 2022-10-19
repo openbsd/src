@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.85 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: envy.c,v 1.86 2022/10/19 19:14:16 kn Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -180,28 +180,20 @@ struct cfdriver envy_cd = {
 };
 
 const struct audio_hw_if envy_hw_if = {
-	envy_open,		/* open */
-	envy_close,		/* close */
-	envy_set_params,	/* set_params */
-	envy_round_blocksize,	/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	envy_halt_output,	/* halt_output */
-	envy_halt_input,	/* halt_input */
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	envy_set_port,		/* set_port */
-	envy_get_port,		/* get_port */
-	envy_query_devinfo,	/* query_devinfo */
-	envy_allocm,		/* malloc */
-	envy_freem,		/* free */
-	NULL,			/* round_buffersize */
-	envy_get_props,		/* get_props */
-	envy_trigger_output,	/* trigger_output */
-	envy_trigger_input	/* trigger_input */
+	.open = envy_open,
+	.close = envy_close,
+	.set_params = envy_set_params,
+	.round_blocksize = envy_round_blocksize,
+	.halt_output = envy_halt_output,
+	.halt_input = envy_halt_input,
+	.set_port = envy_set_port,
+	.get_port = envy_get_port,
+	.query_devinfo = envy_query_devinfo,
+	.allocm = envy_allocm,
+	.freem = envy_freem,
+	.get_props = envy_get_props,
+	.trigger_output = envy_trigger_output,
+	.trigger_input = envy_trigger_input,
 };
 
 #if NMIDI > 0

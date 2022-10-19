@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.32 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: sb.c,v 1.33 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -94,28 +94,22 @@ const struct midi_hw_if sb_mpu401_hw_if = {
  */
 
 const struct audio_hw_if sb_hw_if = {
-	sbdsp_open,
-	sbdsp_close,
-	sbdsp_set_params,
-	sbdsp_round_blocksize,
-	0,
-	0,
-	0,
-	0,
-	0,
-	sbdsp_haltdma,
-	sbdsp_haltdma,
-	sbdsp_speaker_ctl,
-	0,
-	sbdsp_mixer_set_port,
-	sbdsp_mixer_get_port,
-	sbdsp_mixer_query_devinfo,
-	sb_malloc,
-	sb_free,
-	sb_round,
-	sbdsp_get_props,
-	sbdsp_trigger_output,
-	sbdsp_trigger_input
+	.open = sbdsp_open,
+	.close = sbdsp_close,
+	.set_params = sbdsp_set_params,
+	.round_blocksize = sbdsp_round_blocksize,
+	.halt_output = sbdsp_haltdma,
+	.halt_input = sbdsp_haltdma,
+	.speaker_ctl = sbdsp_speaker_ctl,
+	.set_port = sbdsp_mixer_set_port,
+	.get_port = sbdsp_mixer_get_port,
+	.query_devinfo = sbdsp_mixer_query_devinfo,
+	.allocm = sb_malloc,
+	.freem = sb_free,
+	.round_buffersize = sb_round,
+	.get_props = sbdsp_get_props,
+	.trigger_output = sbdsp_trigger_output,
+	.trigger_input = sbdsp_trigger_input,
 };
 
 #ifdef AUDIO_DEBUG

@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.41 2022/10/18 08:22:19 kn Exp $ */
+/*      $OpenBSD: sv.c,v 1.42 2022/10/19 19:14:17 kn Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -147,28 +147,22 @@ int	sv_get_props(void *);
 void    sv_dumpregs(struct sv_softc *sc);
 
 const struct audio_hw_if sv_hw_if = {
-	sv_open,
-	sv_close,
-	sv_set_params,
-	sv_round_blocksize,
-	NULL,
-	sv_dma_init_output,
-	sv_dma_init_input,
-	sv_dma_output,
-	sv_dma_input,
-	sv_halt_out_dma,
-	sv_halt_in_dma,
-	NULL,
-	NULL,
-	sv_mixer_set_port,
-	sv_mixer_get_port,
-	sv_query_devinfo,
-	sv_malloc,
-	sv_free,
-	NULL,
-	sv_get_props,
-	NULL,
-	NULL
+	.open = sv_open,
+	.close = sv_close,
+	.set_params = sv_set_params,
+	.round_blocksize = sv_round_blocksize,
+	.init_output = sv_dma_init_output,
+	.init_input = sv_dma_init_input,
+	.start_output = sv_dma_output,
+	.start_input = sv_dma_input,
+	.halt_output = sv_halt_out_dma,
+	.halt_input = sv_halt_in_dma,
+	.set_port = sv_mixer_set_port,
+	.get_port = sv_mixer_get_port,
+	.query_devinfo = sv_query_devinfo,
+	.allocm = sv_malloc,
+	.freem = sv_free,
+	.get_props = sv_get_props,
 };
 
 

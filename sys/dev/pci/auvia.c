@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.64 2022/10/18 08:22:19 kn Exp $ */
+/*	$OpenBSD: auvia.c,v 1.65 2022/10/19 19:14:16 kn Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -179,28 +179,21 @@ const struct cfattach auvia_ca = {
 #define TIMEOUT	50
 
 const struct audio_hw_if auvia_hw_if = {
-	auvia_open,
-	auvia_close,
-	auvia_set_params,
-	auvia_round_blocksize,
-	NULL, /* commit_settings */
-	NULL, /* init_output */
-	NULL, /* init_input */
-	NULL, /* start_output */
-	NULL, /* start_input */
-	auvia_halt_output,
-	auvia_halt_input,
-	NULL, /* speaker_ctl */
-	NULL, /* setfd */
-	auvia_set_port,
-	auvia_get_port,
-	auvia_query_devinfo,
-	auvia_malloc,
-	auvia_free,
-	auvia_round_buffersize,
-	auvia_get_props,
-	auvia_trigger_output,
-	auvia_trigger_input
+	.open = auvia_open,
+	.close = auvia_close,
+	.set_params = auvia_set_params,
+	.round_blocksize = auvia_round_blocksize,
+	.halt_output = auvia_halt_output,
+	.halt_input = auvia_halt_input,
+	.set_port = auvia_set_port,
+	.get_port = auvia_get_port,
+	.query_devinfo = auvia_query_devinfo,
+	.allocm = auvia_malloc,
+	.freem = auvia_free,
+	.round_buffersize = auvia_round_buffersize,
+	.get_props = auvia_get_props,
+	.trigger_output = auvia_trigger_output,
+	.trigger_input = auvia_trigger_input,
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);

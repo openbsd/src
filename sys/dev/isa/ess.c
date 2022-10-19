@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.30 2022/10/19 07:57:49 kn Exp $	*/
+/*	$OpenBSD: ess.c,v 1.31 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -198,53 +198,41 @@ static const char *essmodel[] = {
  */
 
 const struct audio_hw_if ess_1788_hw_if = {
-	ess_open,
-	ess_1788_close,
-	ess_set_params,
-	ess_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ess_audio1_halt,
-	ess_audio1_halt,
-	ess_speaker_ctl,
-	NULL,
-	ess_set_port,
-	ess_get_port,
-	ess_query_devinfo,
-	ess_malloc,
-	ess_free,
-	ess_round_buffersize,
-	ess_1788_get_props,
-	ess_audio1_trigger_output,
-	ess_audio1_trigger_input
+	.open = ess_open,
+	.close = ess_1788_close,
+	.set_params = ess_set_params,
+	.round_blocksize = ess_round_blocksize,
+	.halt_output = ess_audio1_halt,
+	.halt_input = ess_audio1_halt,
+	.speaker_ctl = ess_speaker_ctl,
+	.set_port = ess_set_port,
+	.get_port = ess_get_port,
+	.query_devinfo = ess_query_devinfo,
+	.allocm = ess_malloc,
+	.freem = ess_free,
+	.round_buffersize = ess_round_buffersize,
+	.get_props = ess_1788_get_props,
+	.trigger_output = ess_audio1_trigger_output,
+	.trigger_input = ess_audio1_trigger_input,
 };
 
 const struct audio_hw_if ess_1888_hw_if = {
-	ess_open,
-	ess_1888_close,
-	ess_set_params,
-	ess_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	ess_audio2_halt,
-	ess_audio1_halt,
-	ess_speaker_ctl,
-	NULL,
-	ess_set_port,
-	ess_get_port,
-	ess_query_devinfo,
-	ess_malloc,
-	ess_free,
-	ess_round_buffersize,
-	ess_1888_get_props,
-	ess_audio2_trigger_output,
-	ess_audio1_trigger_input
+	.open = ess_open,
+	.close = ess_1888_close,
+	.set_params = ess_set_params,
+	.round_blocksize = ess_round_blocksize,
+	.halt_output = ess_audio2_halt,
+	.halt_input = ess_audio1_halt,
+	.speaker_ctl = ess_speaker_ctl,
+	.set_port = ess_set_port,
+	.get_port = ess_get_port,
+	.query_devinfo = ess_query_devinfo,
+	.allocm = ess_malloc,
+	.freem = ess_free,
+	.round_buffersize = ess_round_buffersize,
+	.get_props = ess_1888_get_props,
+	.trigger_output = ess_audio2_trigger_output,
+	.trigger_input = ess_audio1_trigger_input,
 };
 
 #ifdef AUDIO_DEBUG

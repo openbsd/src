@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.43 2022/10/18 08:22:19 kn Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.44 2022/10/19 19:14:16 kn Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -195,28 +195,21 @@ int cs4281_debug = 5;
 #endif
 
 const struct audio_hw_if cs4281_hw_if = {
-	cs4281_open,
-	cs4281_close,
-	cs4281_set_params,
-	cs4281_round_blocksize,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	cs4281_halt_output,
-	cs4281_halt_input,
-	NULL,
-	NULL,
-	cs4281_mixer_set_port,
-	cs4281_mixer_get_port,
-	cs4281_query_devinfo,
-	cs4281_malloc,
-	cs4281_free,
-	cs4281_round_buffersize,
-	cs4281_get_props,
-	cs4281_trigger_output,
-	cs4281_trigger_input
+	.open = cs4281_open,
+	.close = cs4281_close,
+	.set_params = cs4281_set_params,
+	.round_blocksize = cs4281_round_blocksize,
+	.halt_output = cs4281_halt_output,
+	.halt_input = cs4281_halt_input,
+	.set_port = cs4281_mixer_set_port,
+	.get_port = cs4281_mixer_get_port,
+	.query_devinfo = cs4281_query_devinfo,
+	.allocm = cs4281_malloc,
+	.freem = cs4281_free,
+	.round_buffersize = cs4281_round_buffersize,
+	.get_props = cs4281_get_props,
+	.trigger_output = cs4281_trigger_output,
+	.trigger_input = cs4281_trigger_input,
 };
 
 #if NMIDI > 0

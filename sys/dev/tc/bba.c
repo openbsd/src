@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.10 2022/10/18 08:22:19 kn Exp $	*/
+/*	$OpenBSD: bba.c,v 1.11 2022/10/19 19:14:17 kn Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -153,28 +153,22 @@ int	bba_trigger_input(void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *);
 
 const struct audio_hw_if bba_hw_if = {
-	am7930_open,
-	am7930_close,
-	am7930_set_params,
-	bba_round_blocksize,		/* md */
-	am7930_commit_settings,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	bba_halt_output,		/* md */
-	bba_halt_input,			/* md */
-	NULL,
-	NULL,
-	am7930_set_port,
-	am7930_get_port,
-	am7930_query_devinfo,
-	bba_allocm,			/* md */
-	bba_freem,			/* md */
-	bba_round_buffersize,		/* md */
-	bba_get_props,
-	bba_trigger_output,		/* md */
-	bba_trigger_input		/* md */
+	.open = am7930_open,
+	.close = am7930_close,
+	.set_params = am7930_set_params,
+	.round_blocksize = bba_round_blocksize,
+	.commit_settings = am7930_commit_settings,
+	.halt_output = bba_halt_output,
+	.halt_input = bba_halt_input,
+	.set_port = am7930_set_port,
+	.get_port = am7930_get_port,
+	.query_devinfo = am7930_query_devinfo,
+	.allocm = bba_allocm,
+	.freem = bba_freem,
+	.round_buffersize = bba_round_buffersize,
+	.get_props = bba_get_props,
+	.trigger_output = bba_trigger_output,
+	.trigger_input = bba_trigger_input,
 };
 
 int	bba_intr(void *);

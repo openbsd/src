@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.38 2022/10/18 08:22:18 kn Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.39 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -127,28 +127,20 @@ struct cfdriver awacs_cd = {
 };
 
 const struct audio_hw_if awacs_hw_if = {
-	awacs_open,
-	awacs_close,
-	awacs_set_params,
-	awacs_round_blocksize,
-	NULL,			/* commit_setting */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	awacs_halt_output,
-	awacs_halt_input,
-	NULL,			/* speaker_ctl */
-	NULL,			/* getfd */
-	awacs_set_port,
-	awacs_get_port,
-	awacs_query_devinfo,
-	awacs_allocm,		/* allocm */
-	NULL,			/* freem */
-	awacs_round_buffersize,	/* round_buffersize */
-	awacs_get_props,
-	awacs_trigger_output,
-	awacs_trigger_input
+	.open = awacs_open,
+	.close = awacs_close,
+	.set_params = awacs_set_params,
+	.round_blocksize = awacs_round_blocksize,
+	.halt_output = awacs_halt_output,
+	.halt_input = awacs_halt_input,
+	.set_port = awacs_set_port,
+	.get_port = awacs_get_port,
+	.query_devinfo = awacs_query_devinfo,
+	.allocm = awacs_allocm,
+	.round_buffersize = awacs_round_buffersize,
+	.get_props = awacs_get_props,
+	.trigger_output = awacs_trigger_output,
+	.trigger_input = awacs_trigger_input,
 };
 
 /* register offset */

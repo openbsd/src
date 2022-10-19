@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.34 2022/10/19 07:57:49 kn Exp $	*/
+/*	$OpenBSD: pas.c,v 1.35 2022/10/19 19:14:16 kn Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -109,28 +109,22 @@ void	pasconf(int, int, int, int);
  */
 
 const struct audio_hw_if pas_hw_if = {
-	sbdsp_open,
-	sbdsp_close,
-	sbdsp_set_params,
-	sbdsp_round_blocksize,
-	0,
-	0,
-	0,
-	0,
-	0,
-	sbdsp_haltdma,
-	sbdsp_haltdma,
-	sbdsp_speaker_ctl,
-	0,
-	sbdsp_mixer_set_port,
-	sbdsp_mixer_get_port,
-	sbdsp_mixer_query_devinfo,
-	sb_malloc,
-	sb_free,
-	sb_round,
-	sbdsp_get_props,
-	sbdsp_trigger_output,
-	sbdsp_trigger_input
+	.open = sbdsp_open,
+	.close = sbdsp_close,
+	.set_params = sbdsp_set_params,
+	.round_blocksize = sbdsp_round_blocksize,
+	.halt_output = sbdsp_haltdma,
+	.halt_input = sbdsp_haltdma,
+	.speaker_ctl = sbdsp_speaker_ctl,
+	.set_port = sbdsp_mixer_set_port,
+	.get_port = sbdsp_mixer_get_port,
+	.query_devinfo = sbdsp_mixer_query_devinfo,
+	.allocm = sb_malloc,
+	.freem = sb_free,
+	.round_buffersize = sb_round,
+	.get_props = sbdsp_get_props,
+	.trigger_output = sbdsp_trigger_output,
+	.trigger_input = sbdsp_trigger_input,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to

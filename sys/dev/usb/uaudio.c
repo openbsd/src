@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.170 2022/10/19 09:11:26 kn Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.171 2022/10/19 19:14:17 kn Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -469,31 +469,20 @@ const struct cfattach uaudio_ca = {
 };
 
 const struct audio_hw_if uaudio_hw_if = {
-	uaudio_open,		/* open */
-	uaudio_close,		/* close */
-	uaudio_set_params,	/* set_params */
-	NULL,			/* round_blocksize */
-	NULL,			/* commit_settings */
-	NULL,			/* init_output */
-	NULL,			/* init_input */
-	NULL,			/* start_output */
-	NULL,			/* start_input */
-	uaudio_halt_output,	/* halt_output */
-	uaudio_halt_input,	/* halt_input */
-	NULL,			/* speaker_ctl */
-	NULL,			/* setfd */
-	uaudio_set_port,	/* set_port */
-	uaudio_get_port,	/* get_port */
-	uaudio_query_devinfo,	/* query_devinfo */
-	NULL,			/* malloc, we use bounce buffers :'( */
-	NULL,			/* free */
-	NULL,			/* round_buffersize */
-	uaudio_get_props,	/* get_props */
-	uaudio_trigger_output,	/* trigger_output */
-	uaudio_trigger_input,	/* trigger_input */
-	uaudio_copy_output,	/* copy_output */
-	uaudio_underrun,	/* underrun */
-	uaudio_set_blksz	/* set_blksz */
+	.open = uaudio_open,
+	.close = uaudio_close,
+	.set_params = uaudio_set_params,
+	.halt_output = uaudio_halt_output,
+	.halt_input = uaudio_halt_input,
+	.set_port = uaudio_set_port,
+	.get_port = uaudio_get_port,
+	.query_devinfo = uaudio_query_devinfo,
+	.get_props = uaudio_get_props,
+	.trigger_output = uaudio_trigger_output,
+	.trigger_input = uaudio_trigger_input,
+	.copy_output = uaudio_copy_output,
+	.underrun = uaudio_underrun,
+	.set_blksz = uaudio_set_blksz,
 };
 
 /*
