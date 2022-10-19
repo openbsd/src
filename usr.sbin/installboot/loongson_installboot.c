@@ -1,4 +1,4 @@
-/*	$OpenBSD: loongson_installboot.c,v 1.8 2022/09/27 11:48:57 kn Exp $	*/
+/*	$OpenBSD: loongson_installboot.c,v 1.9 2022/10/19 19:08:25 kn Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -100,8 +100,8 @@ md_installboot(int devfd, char *dev)
 static void
 write_filesystem(struct disklabel *dl, char part)
 {
-	static char *fsckfmt = "/sbin/fsck_ext2fs %s >/dev/null";
-	static char *newfsfmt ="/sbin/newfs_ext2fs %s >/dev/null";
+	static const char *fsckfmt = "/sbin/fsck -t ext2fs %s >/dev/null";
+	static const char *newfsfmt = "/sbin/newfs -t ext2fs %s >/dev/null";
 	struct ufs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
