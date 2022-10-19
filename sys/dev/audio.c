@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.200 2022/07/31 03:31:36 visa Exp $	*/
+/*	$OpenBSD: audio.c,v 1.201 2022/10/19 19:59:06 kn Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1498,11 +1498,6 @@ audio_open(struct audio_softc *sc, int flags)
 		if (!(props & AUDIO_PROP_FULLDUPLEX)) {
 			error = ENOTTY;
 			goto bad;
-		}
-		if (sc->ops->setfd) {
-			error = sc->ops->setfd(sc->arg, 1);
-			if (error)
-				goto bad;
 		}
 	}
 
