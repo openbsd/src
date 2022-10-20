@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.9 2022/06/27 08:00:31 mlarkin Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.10 2022/10/20 20:40:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -92,6 +92,8 @@ const char *amdgpio_hids[] = {
 int	amdgpio_read_pin(void *, int);
 void	amdgpio_write_pin(void *, int, int);
 void	amdgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	amdgpio_intr_enable(void *, int);
+void	amdgpio_intr_disable(void *, int);
 int	amdgpio_pin_intr(struct amdgpio_softc *, int);
 int	amdgpio_intr(void *);
 void	amdgpio_save_pin(struct amdgpio_softc *, int pin);
@@ -163,6 +165,8 @@ amdgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = amdgpio_read_pin;
 	sc->sc_gpio.write_pin = amdgpio_write_pin;
 	sc->sc_gpio.intr_establish = amdgpio_intr_establish;
+	sc->sc_gpio.intr_enable = amdgpio_intr_enable;
+	sc->sc_gpio.intr_disable = amdgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	printf(", %d pins\n", sc->sc_npins);
@@ -275,6 +279,32 @@ amdgpio_intr_establish(void *cookie, int pin, int flags,
 	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTBOTH)
 		reg |= AMDGPIO_CONF_ACTBOTH;
 	reg |= (AMDGPIO_CONF_INT_MASK | AMDGPIO_CONF_INT_EN);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4, reg);
+}
+
+void
+amdgpio_intr_enable(void *cookie, int pin)
+{
+	struct amdgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin != 63 && pin < sc->sc_npins);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
+	reg |= (AMDGPIO_CONF_INT_MASK | AMDGPIO_CONF_INT_EN);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4, reg);
+}
+
+void
+amdgpio_intr_disable(void *cookie, int pin)
+{
+	struct amdgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin != 63 && pin < sc->sc_npins);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, pin * 4);
+	reg &= ~(AMDGPIO_CONF_INT_MASK | AMDGPIO_CONF_INT_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4, reg);
 }
 

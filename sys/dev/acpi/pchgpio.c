@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.13 2022/06/29 01:05:18 jsg Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.14 2022/10/20 20:40:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -325,6 +325,8 @@ struct pchgpio_match pchgpio_devices[] = {
 int	pchgpio_read_pin(void *, int);
 void	pchgpio_write_pin(void *, int, int);
 void	pchgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	pchgpio_intr_enable(void *, int);
+void	pchgpio_intr_disable(void *, int);
 int	pchgpio_intr(void *);
 void	pchgpio_save(struct pchgpio_softc *);
 void	pchgpio_restore(struct pchgpio_softc *);
@@ -406,6 +408,8 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = pchgpio_read_pin;
 	sc->sc_gpio.write_pin = pchgpio_write_pin;
 	sc->sc_gpio.intr_establish = pchgpio_intr_establish;
+	sc->sc_gpio.intr_enable = pchgpio_intr_enable;
+	sc->sc_gpio.intr_disable = pchgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	printf(", %d pins\n", sc->sc_npins);
@@ -534,6 +538,58 @@ pchgpio_intr_establish(void *cookie, int pin, int flags,
 	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
 	    sc->sc_device->gpi_ie + bank * 4);
 	reg |= (1 << (pin - group->gpiobase));
+	bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_device->gpi_ie + bank * 4, reg);
+}
+
+void
+pchgpio_intr_enable(void *cookie, int pin)
+{
+	struct pchgpio_softc *sc = cookie;
+	const struct pchgpio_group *group;
+	uint32_t reg;
+	uint16_t pad;
+	uint8_t bank, bar;
+
+	KASSERT(pin >= 0);
+
+	group = pchgpio_find_group(sc, pin);
+	if (group == NULL)
+		return;
+
+	bar = group->bar;
+	bank = group->bank;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
+
+	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_device->gpi_ie + bank * 4);
+	reg |= (1 << (pin - group->gpiobase));
+	bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_device->gpi_ie + bank * 4, reg);
+}
+
+void
+pchgpio_intr_disable(void *cookie, int pin)
+{
+	struct pchgpio_softc *sc = cookie;
+	const struct pchgpio_group *group;
+	uint32_t reg;
+	uint16_t pad;
+	uint8_t bank, bar;
+
+	KASSERT(pin >= 0);
+
+	group = pchgpio_find_group(sc, pin);
+	if (group == NULL)
+		return;
+
+	bar = group->bar;
+	bank = group->bank;
+	pad = group->base + (pin - group->gpiobase) - sc->sc_padbase[bar];
+
+	reg = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+	    sc->sc_device->gpi_ie + bank * 4);
+	reg &= ~(1 << (pin - group->gpiobase));
 	bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
 	    sc->sc_device->gpi_ie + bank * 4, reg);
 }

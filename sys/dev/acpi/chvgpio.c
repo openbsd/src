@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.12 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.13 2022/10/20 20:40:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -146,6 +146,8 @@ int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
 void	chvgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	chvgpio_intr_enable(void *, int);
+void	chvgpio_intr_disable(void *, int);
 int	chvgpio_intr(void *);
 int	chvgpio_opreg_handler(void *, int, uint64_t, int, uint64_t *);
 
@@ -224,6 +226,8 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = chvgpio_read_pin;
 	sc->sc_gpio.write_pin = chvgpio_write_pin;
 	sc->sc_gpio.intr_establish = chvgpio_intr_establish;
+	sc->sc_gpio.intr_enable = chvgpio_intr_enable;
+	sc->sc_gpio.intr_disable = chvgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	/* Mask and ack all interrupts. */
@@ -334,6 +338,44 @@ chvgpio_intr_establish(void *cookie, int pin, int flags,
 	bus_space_write_4(sc->sc_memt, sc->sc_memh,
 	    CHVGPIO_INTERRUPT_MASK, reg | (1 << line));
 }
+
+void
+chvgpio_intr_enable(void *cookie, int pin)
+{
+	struct chvgpio_softc *sc = cookie;
+	uint32_t reg;
+	int line;
+
+	KASSERT(chvgpio_check_pin(sc, pin) == 0);
+
+	reg = chvgpio_read_pad_cfg0(sc, pin);
+	reg &= CHVGPIO_PAD_CFG0_INTSEL_MASK;
+	line = reg >> CHVGPIO_PAD_CFG0_INTSEL_SHIFT;
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	    CHVGPIO_INTERRUPT_MASK);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh,
+	    CHVGPIO_INTERRUPT_MASK, reg | (1 << line));
+}	
+
+void
+chvgpio_intr_disable(void *cookie, int pin)
+{
+	struct chvgpio_softc *sc = cookie;
+	uint32_t reg;
+	int line;
+
+	KASSERT(chvgpio_check_pin(sc, pin) == 0);
+
+	reg = chvgpio_read_pad_cfg0(sc, pin);
+	reg &= CHVGPIO_PAD_CFG0_INTSEL_MASK;
+	line = reg >> CHVGPIO_PAD_CFG0_INTSEL_SHIFT;
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	    CHVGPIO_INTERRUPT_MASK);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh,
+	    CHVGPIO_INTERRUPT_MASK, reg & ~(1 << line));
+}	
 
 int
 chvgpio_intr(void *arg)

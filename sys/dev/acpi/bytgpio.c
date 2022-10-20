@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytgpio.c,v 1.17 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: bytgpio.c,v 1.18 2022/10/20 20:40:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -40,6 +40,7 @@
 struct bytgpio_intrhand {
 	int (*ih_func)(void *);
 	void *ih_arg;
+	int ih_tflags;
 };
 
 struct bytgpio_softc {
@@ -102,6 +103,8 @@ const int byt_sus_pins[] = {
 int	bytgpio_read_pin(void *, int);
 void	bytgpio_write_pin(void *, int, int);
 void	bytgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	bytgpio_intr_enable(void *, int);
+void	bytgpio_intr_disable(void *, int);
 int	bytgpio_intr(void *);
 
 int
@@ -177,6 +180,8 @@ bytgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = bytgpio_read_pin;
 	sc->sc_gpio.write_pin = bytgpio_write_pin;
 	sc->sc_gpio.intr_establish = bytgpio_intr_establish;
+	sc->sc_gpio.intr_enable = bytgpio_intr_enable;
+	sc->sc_gpio.intr_disable = bytgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	/* Mask all interrupts. */
@@ -233,12 +238,26 @@ bytgpio_intr_establish(void *cookie, int pin, int flags,
     int (*func)(void *), void *arg)
 {
 	struct bytgpio_softc *sc = cookie;
-	uint32_t reg;
 
 	KASSERT(pin >= 0 && pin < sc->sc_npins);
 
 	sc->sc_pin_ih[pin].ih_func = func;
 	sc->sc_pin_ih[pin].ih_arg = arg;
+	sc->sc_pin_ih[pin].ih_tflags = flags;
+
+	bytgpio_intr_enable(cookie, pin);
+}
+
+void
+bytgpio_intr_enable(void *cookie, int pin)
+{
+	struct bytgpio_softc *sc = cookie;
+	uint32_t reg;
+	int flags;
+
+	KASSERT(pin >= 0 && pin < sc->sc_npins);
+
+	flags = sc->sc_pin_ih[pin].ih_tflags;
 
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16);
 	reg &= ~BYTGPIO_CONF_GD_MASK;
@@ -250,6 +269,19 @@ bytgpio_intr_establish(void *cookie, int pin, int flags,
 		reg |= BYTGPIO_CONF_GD_TPE;
 	if ((flags & LR_GPIO_POLARITY) == LR_GPIO_ACTBOTH)
 		reg |= BYTGPIO_CONF_GD_TNE | BYTGPIO_CONF_GD_TPE;
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16, reg);
+}
+
+void
+bytgpio_intr_disable(void *cookie, int pin)
+{
+	struct bytgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin < sc->sc_npins);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16);
+	reg &= ~BYTGPIO_CONF_GD_MASK;
 	bus_space_write_4(sc->sc_memt, sc->sc_memh, sc->sc_pins[pin] * 16, reg);
 }
 

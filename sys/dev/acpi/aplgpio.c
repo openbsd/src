@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplgpio.c,v 1.5 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: aplgpio.c,v 1.6 2022/10/20 20:40:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -76,6 +76,8 @@ const char *aplgpio_hids[] = {
 int	aplgpio_read_pin(void *, int);
 void	aplgpio_write_pin(void *, int, int);
 void	aplgpio_intr_establish(void *, int, int, int (*)(void *), void *);
+void	aplgpio_intr_enable(void *, int);
+void	aplgpio_intr_disable(void *, int);
 int	aplgpio_intr(void *);
 
 int
@@ -150,6 +152,8 @@ aplgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpio.read_pin = aplgpio_read_pin;
 	sc->sc_gpio.write_pin = aplgpio_write_pin;
 	sc->sc_gpio.intr_establish = aplgpio_intr_establish;
+	sc->sc_gpio.intr_enable = aplgpio_intr_enable;
+	sc->sc_gpio.intr_disable = aplgpio_intr_disable;
 	sc->sc_node->gpio = &sc->sc_gpio;
 
 	/* Mask and clear all interrupts. */
@@ -227,6 +231,36 @@ aplgpio_intr_establish(void *cookie, int pin, int flags,
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
 	    APLGPIO_IRQ_EN + (pin / 32) * 4);
 	reg |= (1 << (pin % 32));
+	bus_space_write_4(sc->sc_memt, sc->sc_memh,
+	    APLGPIO_IRQ_EN + (pin / 32) * 4, reg);
+}
+
+void
+aplgpio_intr_enable(void *cookie, int pin)
+{
+	struct aplgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin < sc->sc_npins);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	    APLGPIO_IRQ_EN + (pin / 32) * 4);
+	reg |= (1 << (pin % 32));
+	bus_space_write_4(sc->sc_memt, sc->sc_memh,
+	    APLGPIO_IRQ_EN + (pin / 32) * 4, reg);
+}
+
+void
+aplgpio_intr_disable(void *cookie, int pin)
+{
+	struct aplgpio_softc *sc = cookie;
+	uint32_t reg;
+
+	KASSERT(pin >= 0 && pin < sc->sc_npins);
+
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	    APLGPIO_IRQ_EN + (pin / 32) * 4);
+	reg &= ~(1 << (pin % 32));
 	bus_space_write_4(sc->sc_memt, sc->sc_memh,
 	    APLGPIO_IRQ_EN + (pin / 32) * 4, reg);
 }
