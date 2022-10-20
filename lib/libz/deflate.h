@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.h,v 1.12 2022/05/08 14:04:22 tb Exp $ */
+/*	$OpenBSD: deflate.h,v 1.13 2022/10/20 15:35:31 tb Exp $ */
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2018 Jean-loup Gailly
@@ -329,8 +329,8 @@ void ZLIB_INTERNAL _tr_stored_block OF((deflate_state *s, charf *buf,
 # define _tr_tally_dist(s, distance, length, flush) \
   { uch len = (uch)(length); \
     ush dist = (ush)(distance); \
-    s->sym_buf[s->sym_next++] = dist; \
-    s->sym_buf[s->sym_next++] = dist >> 8; \
+    s->sym_buf[s->sym_next++] = (uch)dist; \
+    s->sym_buf[s->sym_next++] = (uch)(dist >> 8); \
     s->sym_buf[s->sym_next++] = len; \
     dist--; \
     s->dyn_ltree[_length_code[len]+LITERALS+1].Freq++; \

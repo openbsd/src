@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzwrite.c,v 1.2 2022/05/08 14:04:22 tb Exp $ */
+/*	$OpenBSD: gzwrite.c,v 1.3 2022/10/20 15:35:31 tb Exp $ */
 /* gzwrite.c -- zlib functions for writing gzip files
  * Copyright (C) 2004-2019 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -475,7 +475,7 @@ int ZEXPORTVA gzprintf(gzFile file, const char *format, ...)
 #else /* !STDC && !Z_HAVE_STDARG_H */
 
 /* -- see zlib.h -- */
-int ZEXPORTVA gzprintf (file, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
+int ZEXPORTVA gzprintf(file, format, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10,
                        a11, a12, a13, a14, a15, a16, a17, a18, a19, a20)
     gzFile file;
     const char *format;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uncompr.c,v 1.6 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: uncompr.c,v 1.7 2022/10/20 15:35:31 tb Exp $ */
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2003, 2010, 2014, 2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -23,7 +23,7 @@
    Z_DATA_ERROR if the input data was corrupted, including if the input data is
    an incomplete zlib stream.
 */
-int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress2(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;
@@ -82,7 +82,7 @@ int ZEXPORT uncompress2 (dest, destLen, source, sourceLen)
            err;
 }
 
-int ZEXPORT uncompress (dest, destLen, source, sourceLen)
+int ZEXPORT uncompress(dest, destLen, source, sourceLen)
     Bytef *dest;
     uLongf *destLen;
     const Bytef *source;

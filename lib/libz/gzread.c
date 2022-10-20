@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzread.c,v 1.2 2022/05/08 14:04:22 tb Exp $ */
+/*	$OpenBSD: gzread.c,v 1.3 2022/10/20 15:35:31 tb Exp $ */
 /* gzread.c -- zlib functions for reading gzip files
  * Copyright (C) 2004-2017 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -158,11 +158,9 @@ local int gz_look(state)
        the output buffer is larger than the input buffer, which also assures
        space for gzungetc() */
     state->x.next = state->out;
-    if (strm->avail_in) {
-        memcpy(state->x.next, strm->next_in, strm->avail_in);
-        state->x.have = strm->avail_in;
-        strm->avail_in = 0;
-    }
+    memcpy(state->x.next, strm->next_in, strm->avail_in);
+    state->x.have = strm->avail_in;
+    strm->avail_in = 0;
     state->how = COPY;
     state->direct = 1;
     return 0;

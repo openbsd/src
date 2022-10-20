@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.h,v 1.12 2022/05/08 14:04:22 tb Exp $ */
+/*	$OpenBSD: zutil.h,v 1.13 2022/10/20 15:35:31 tb Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2022 Jean-loup Gailly, Mark Adler
@@ -197,6 +197,7 @@ extern z_const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
     (!defined(_LARGEFILE64_SOURCE) || _LFS64_LARGEFILE-0 == 0)
     ZEXTERN uLong ZEXPORT adler32_combine64 OF((uLong, uLong, z_off_t));
     ZEXTERN uLong ZEXPORT crc32_combine64 OF((uLong, uLong, z_off_t));
+    ZEXTERN uLong ZEXPORT crc32_combine_gen64 OF((z_off_t));
 #endif
 
         /* common defaults */
