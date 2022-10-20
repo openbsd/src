@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.155 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.156 2022/10/20 15:18:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1647,6 +1647,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	 * assumptions elsewhere in OpenSSL. The session ID is set
 	 * to the SHA256 hash of the ticket.
 	 */
+	/* XXX - ensure this doesn't overflow session_id if hash is changed. */
 	if (!EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
 	    s->session->session_id, &session_id_length, EVP_sha256(), NULL)) {
 		al = SSL_AD_INTERNAL_ERROR;
