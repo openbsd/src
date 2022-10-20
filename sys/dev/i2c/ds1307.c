@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1307.c,v 1.7 2022/10/18 16:07:59 mglocker Exp $ */
+/*	$OpenBSD: ds1307.c,v 1.8 2022/10/20 10:35:35 mglocker Exp $ */
 
 /*
  * Copyright (c) 2016 Marcus Glocker <mglocker@openbsd.org>
@@ -94,8 +94,7 @@ maxrtc_match(struct device *parent, void *v, void *arg)
 
 	if (strcmp(ia->ia_name, "dallas,ds1307") == 0 ||
 	    strcmp(ia->ia_name, "ds1307") == 0 ||
-	    strcmp(ia->ia_name, "dallas,ds1339") == 0 ||
-	    strcmp(ia->ia_name, "ds1339") == 0)
+	    strcmp(ia->ia_name, "dallas,ds1339") == 0)
 		return (1);
 
 	return (0);
