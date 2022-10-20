@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.126 2022/03/31 17:27:25 naddy Exp $
+.\"	$OpenBSD: mg.1,v 1.127 2022/10/20 18:59:24 op Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 20 2022 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -331,6 +331,8 @@ scroll-down
 copy-region-as-kill
 .It M-x
 execute-extended-command
+.It M-z
+zap-to-char
 .It M-{
 backward-paragraph
 .It M-|
@@ -986,6 +988,11 @@ Unlike emacs, the
 kill buffer consists only
 of the most recent kill.
 It is not a ring.
+.It zap-to-char
+Ask for a character and delete text from the current cursor position
+until the next instance of that character, including it.
+.It zap-up-to-char
+Like zap-to-char but doesn't delete the target character.
 .El
 .Sh MG DIRED KEY BINDINGS
 Specific key bindings are available in dired mode.

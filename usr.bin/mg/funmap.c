@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.63 2021/04/22 19:50:55 lum Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.64 2022/10/20 18:59:24 op Exp $	*/
 
 /* This file is in the public domain */
 
@@ -138,6 +138,8 @@ static struct funmap functnames[] = {
 	{killbuffer_cmd, "kill-buffer", 1},
 	{killline, "kill-line", 1},
 	{killpara, "kill-paragraph", 1},
+	{zaptochar, "zap-to-char", 1},
+	{zapuptochar, "zap-up-to-char", 1},
 	{killregion, "kill-region", 0},
 	{delfword, "kill-word", 1},
 	{toggleleavetmp, "leave-tmpdir-backups", 0},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.47 2018/07/11 12:21:37 krw Exp $	*/
+/*	$OpenBSD: search.c,v 1.48 2022/10/20 18:59:24 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -852,4 +852,75 @@ readpattern(char *r_prompt)
 	} else
 		retval = FALSE;
 	return (retval);
+}
+
+/*
+ * Prompt for a character and kill until its next occurrence,
+ * including it.  Mark is cleared afterwards.
+ */
+int
+zaptochar(int f, int n)
+{
+	return (zap(TRUE, n));
+}
+
+/* Like zaptochar but stops before the character. */
+int
+zapuptochar(int f, int n)
+{
+	return (zap(FALSE, n));
+}
+
+/*
+ * Prompt for a charcter and deletes from the point up to, optionally
+ * including, the first instance of that charcters.  Marks is cleared
+ * afterwards.
+ */
+int
+zap(int including, int n)
+{
+	int	s, backward;
+
+	backward = n < 0;
+	if (backward)
+		n = -n;
+
+	if (including)
+		ewprintf("Zap to char: ");
+	else
+		ewprintf("Zap up to char: ");
+
+	s = getkey(FALSE);
+	eerase();
+	if (s == ABORT || s == CCHR('G'))
+		return (FALSE);
+
+	if (n == 0)
+		return (TRUE);
+
+	pat[0] = (char)s;
+	pat[1] = '\0';
+
+	isetmark();
+	while (n--) {
+		s = backward ? backsrch() : forwsrch();
+		if (s != TRUE) {
+			dobeep();
+			ewprintf("Search failed: \"%s\"", pat);
+			swapmark(FFARG, 0);
+			clearmark(FFARG, 0);
+			return (s);
+		}
+	}
+
+	if (!including) {
+		if (backward)
+			forwchar(FFARG, 1);
+		else
+			backchar(FFARG, 1);
+	}
+
+	killregion(FFARG, 0);
+	clearmark(FFARG, 0);
+	return (TRUE);
 }

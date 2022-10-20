@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.176 2021/05/06 14:16:12 lum Exp $	*/
+/*	$OpenBSD: def.h,v 1.177 2022/10/20 18:59:24 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -651,6 +651,9 @@ int		 queryrepl(int, int);
 int		 forwsrch(void);
 int		 backsrch(void);
 int		 readpattern(char *);
+int		 zapuptochar(int, int);
+int		 zaptochar(int, int);
+int		 zap(int, int);
 
 /* spawn.c X */
 int		 spawncli(int, int);
