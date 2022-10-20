@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.72 2022/10/02 16:36:42 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.73 2022/10/20 15:23:43 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -23,6 +23,13 @@
 #include "ssl_locl.h"
 #include "ssl_tlsext.h"
 #include "tls13_internal.h"
+
+/*
+ * RFC 8446, section 4.6.1. Servers must not indicate a lifetime longer than
+ * 7 days and clients must not cache tickets for longer than 7 days.
+ */
+
+#define TLS13_MAX_TICKET_LIFETIME	(7 * 24 * 3600)
 
 /*
  * Downgrade sentinels - RFC 8446 section 4.1.3, magic values which must be set
