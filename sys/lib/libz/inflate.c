@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.20 2022/08/15 12:29:19 tb Exp $ */
+/*	$OpenBSD: inflate.c,v 1.21 2022/10/20 15:36:47 tb Exp $ */
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2022 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -169,6 +169,8 @@ int windowBits;
 
     /* extract wrap request from windowBits parameter */
     if (windowBits < 0) {
+        if (windowBits < -15)
+            return Z_STREAM_ERROR;
         wrap = 0;
         windowBits = -windowBits;
     }
