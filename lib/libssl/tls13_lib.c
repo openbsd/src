@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.73 2022/10/20 15:23:43 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.74 2022/10/20 15:26:25 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -335,6 +335,107 @@ tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 	return tls13_send_alert(ctx->rl, alert);
 }
 
+/* RFC 8446 section 4.6.1 */
+static ssize_t
+tls13_new_session_ticket_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	struct tls13_secrets *secrets = ctx->hs->tls13.secrets;
+	struct tls13_secret nonce;
+	uint32_t ticket_lifetime, ticket_age_add;
+	CBS ticket_nonce, ticket;
+	SSL_SESSION *sess = NULL;
+	int alert, session_id_length;
+	ssize_t ret = 0;
+
+	memset(&nonce, 0, sizeof(nonce));
+
+	if (ctx->mode != TLS13_HS_CLIENT) {
+		alert = TLS13_ALERT_UNEXPECTED_MESSAGE;
+		goto err;
+	}
+
+	alert = TLS13_ALERT_DECODE_ERROR;
+
+	if (!CBS_get_u32(cbs, &ticket_lifetime))
+		goto err;
+	if (!CBS_get_u32(cbs, &ticket_age_add))
+		goto err;
+	if (!CBS_get_u8_length_prefixed(cbs, &ticket_nonce))
+		goto err;
+	if (!CBS_get_u16_length_prefixed(cbs, &ticket))
+		goto err;
+	/* Extensions can only contain early_data, which we currently ignore. */
+	if (!tlsext_client_parse(ctx->ssl, SSL_TLSEXT_MSG_NST, cbs, &alert))
+		goto err;
+
+	if (CBS_len(cbs) != 0)
+		goto err;
+
+	/* Zero indicates that the ticket should be discarded immediately. */
+	if (ticket_lifetime == 0) {
+		ret = TLS13_IO_SUCCESS;
+		goto done;
+	}
+
+	/* Servers MUST NOT use any value larger than 7 days. */
+	if (ticket_lifetime > TLS13_MAX_TICKET_LIFETIME) {
+		alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		goto err;
+	}
+
+	alert = TLS13_ALERT_INTERNAL_ERROR;
+
+	/*
+	 * Create new session instead of modifying the current session.
+	 * The current session could already be in the session cache.
+	 */
+	if ((sess = ssl_session_dup(ctx->ssl->session, 0)) == NULL)
+		goto err;
+
+	sess->time = time(NULL);
+
+	sess->tlsext_tick_lifetime_hint = ticket_lifetime;
+	sess->tlsext_tick_age_add = ticket_age_add;
+
+	if (!CBS_stow(&ticket, &sess->tlsext_tick, &sess->tlsext_ticklen))
+		goto err;
+
+	/* XXX - ensure this doesn't overflow session_id if hash is changed. */
+	if (!EVP_Digest(CBS_data(&ticket), CBS_len(&ticket),
+	    sess->session_id, &session_id_length, EVP_sha256(), NULL))
+		goto err;
+	sess->session_id_length = session_id_length;
+
+	if (!CBS_stow(&ticket_nonce, &nonce.data, &nonce.len))
+		goto err;
+
+	if (!tls13_secret_init(&sess->resumption_master_secret, 256))
+		goto err;
+
+	if (!tls13_derive_secret(&sess->resumption_master_secret,
+	    secrets->digest, &secrets->resumption_master, "resumption",
+	    &nonce))
+		goto err;
+
+	SSL_SESSION_free(ctx->ssl->session);
+	ctx->ssl->session = sess;
+	sess = NULL;
+
+	ssl_update_cache(ctx->ssl, SSL_SESS_CACHE_CLIENT);
+
+	ret = TLS13_IO_SUCCESS;
+	goto done;
+
+ err:
+	ret = tls13_send_alert(ctx->rl, alert);
+
+ done:
+	tls13_secret_cleanup(&nonce);
+	SSL_SESSION_free(sess);
+
+	return ret;
+}
+
 ssize_t
 tls13_phh_received_cb(void *cb_arg)
 {
@@ -361,7 +462,7 @@ tls13_phh_received_cb(void *cb_arg)
 		ret = tls13_key_update_recv(ctx, &cbs);
 		break;
 	case TLS13_MT_NEW_SESSION_TICKET:
-		/* XXX do nothing for now and ignore this */
+		ret = tls13_new_session_ticket_recv(ctx, &cbs);
 		break;
 	case TLS13_MT_CERTIFICATE_REQUEST:
 		/* XXX add support if we choose to advertise this */
