@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.432 2021/07/01 07:42:16 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.433 2022/10/20 01:16:04 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2732,6 +2732,7 @@ static void
 smtp_message_begin(struct smtp_tx *tx)
 {
 	struct smtp_session *s;
+	struct smtp_rcpt *rcpt;
 	int	(*m_printf)(struct smtp_tx *, const char *, ...);
 
 	m_printf = smtp_message_printf;
@@ -2781,9 +2782,10 @@ smtp_message_begin(struct smtp_tx *tx)
 	}
 
 	if (tx->rcptcount == 1) {
+		rcpt = TAILQ_FIRST(&tx->rcpts);
 		m_printf(tx, "\n\tfor <%s@%s>",
-		    tx->evp.rcpt.user,
-		    tx->evp.rcpt.domain);
+		    rcpt->maddr.user,
+		    rcpt->maddr.domain);
 	}
 
 	m_printf(tx, ";\n\t%s\n", time_to_text(time(&tx->time)));
