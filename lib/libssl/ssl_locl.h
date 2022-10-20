@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.427 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.428 2022/10/20 15:20:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -502,10 +502,12 @@ struct ssl_session_st {
 
 	char *tlsext_hostname;
 
-	/* RFC4507 info */
+	/* Session resumption - RFC 5077 and RFC 8446. */
 	unsigned char *tlsext_tick;		/* Session ticket */
 	size_t tlsext_ticklen;			/* Session ticket length */
 	uint32_t tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
+	uint32_t tlsext_tick_age_add; /* TLSv1.3 ticket age obfuscation (in ms) */
+	struct tls13_secret resumption_master_secret;
 
 	CRYPTO_EX_DATA ex_data; /* application specific data */
 
