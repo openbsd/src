@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.4 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.5 2022/10/20 16:08:13 kn Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -75,7 +75,7 @@ struct asmc_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 
-	struct asmc_prod	*sc_prod;
+	const struct asmc_prod	*sc_prod;
 	uint8_t			 sc_nfans;	/* number of fans */
 	uint8_t			 sc_lightlen;	/* light data len */
 	uint8_t			 sc_backlight;	/* keyboard backlight value */
@@ -119,7 +119,7 @@ const char *asmc_hids[] = {
 	"APP0001", NULL
 };
 
-static struct asmc_prod asmc_prods[] = {
+static const struct asmc_prod asmc_prods[] = {
 	{ "MacBookAir", 1, {
 		"TB0T", "TB1S", "TB1T", "TB2S", "TB2T", "TBXT", "TC0C", "TC0D",
 		"TC0E", "TC0F", "TC0P", "TC1C", "TC1E", "TC2C", "TCFP", "TCGC",
