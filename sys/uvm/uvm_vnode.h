@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.h,v 1.20 2022/09/21 07:32:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.h,v 1.21 2022/10/20 13:31:52 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.h,v 1.9 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -44,24 +44,27 @@
  * vnode handle into the VM system.
  */
 
-/*
- * the uvm_vnode structure.
- */
-
 struct vnode;
 
+/*
+ * the uvm_vnode structure.
+ *
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	K	kernel lock
+ *	S	uvn_sync_lock
+ *	v	u_obj's vmobjlock
+ */
 struct uvm_vnode {
 	struct uvm_object u_obj;	/* the actual VM object */
-	struct vnode *u_vnode;		/* pointer back to vnode */
-	int u_flags;			/* flags */
-	int u_nio;			/* number of running I/O requests */
-	voff_t u_size;			/* size of object */
+	struct vnode *u_vnode;		/* [I] pointer back to vnode */
+	int u_flags;			/* [v] flags */
+	int u_nio;			/* [v] number of running I/O requests */
+	voff_t u_size;			/* [v] size of object */
 
-	/* the following entry is locked by uvn_wl_lock */
-	LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */
+	LIST_ENTRY(uvm_vnode) u_wlist;	/* [K] list of writeable vnode objs */
 
-	/* the following entry is locked by uvn_sync_lock */
-	SIMPLEQ_ENTRY(uvm_vnode) u_syncq; /* vnode objects due for a "sync" */
+	SIMPLEQ_ENTRY(uvm_vnode) u_syncq; /* [S] vnode objs due for a "sync" */
 };
 
 /*
