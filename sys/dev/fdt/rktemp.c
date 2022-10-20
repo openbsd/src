@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.10 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.11 2022/10/20 20:35:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,6 +51,10 @@
 #define  TSADC_INT_EN_TSHUT_2GPIO_EN_SRC1	(1 << 5)
 #define  TSADC_INT_EN_TSHUT_2GPIO_EN_SRC0	(1 << 4)
 #define TSADC_INT_PD		0x000c
+#define  TSADC_INT_PD_TSHUT_O_SRC0		(1 << 4)
+#define  TSADC_INT_PD_TSHUT_O_SRC1		(1 << 5)
+#define  TSADC_INT_PD_TSHUT_O_SRC2		(1 << 6)
+#define  TSADC_INT_PD_TSHUT_O_SRC3		(1 << 7)
 #define TSADC_DATA0		0x0020
 #define TSADC_DATA1		0x0024
 #define TSADC_DATA2		0x0028
@@ -196,6 +200,46 @@ const struct rktemp_entry rk3399_temps[] = {
 
 const char *const rk3399_names[] = { "CPU", "GPU" };
 
+/* RK3568 conversion table. */
+const struct rktemp_entry rk3568_temps[] = {
+	{ -40000, 1584 },
+	{ -35000, 1620 },
+	{ -30000, 1652 },
+	{ -25000, 1688 },
+	{ -20000, 1720 },
+	{ -15000, 1756 },
+	{ -10000, 1788 },
+	{  -5000, 1824 },
+	{      0, 1856 },
+	{   5000, 1892 },
+	{  10000, 1924 },
+	{  15000, 1956 },
+	{  20000, 1992 },
+	{  25000, 2024 },
+	{  30000, 2060 },
+	{  35000, 2092 },
+	{  40000, 2128 },
+	{  45000, 2160 },
+	{  50000, 2196 },
+	{  55000, 2228 },
+	{  60000, 2264 },
+	{  65000, 2300 },
+	{  70000, 2332 },
+	{  75000, 2368 },
+	{  80000, 2400 },
+	{  85000, 2436 },
+	{  90000, 2468 },
+	{  95000, 2500 },
+	{ 100000, 2536 },
+	{ 105000, 2572 },
+	{ 110000, 2604 },
+	{ 115000, 2636 },
+	{ 120000, 2672 },
+	{ 125000, 2704 },
+};
+
+const char *const rk3568_names[] = { "CPU", "GPU" };
+
 struct rktemp_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -236,7 +280,8 @@ rktemp_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-tsadc") ||
-	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-tsadc"));
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-tsadc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-tsadc"));
 }
 
 void
@@ -279,11 +324,16 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ntemps = nitems(rk3328_temps);
 		sc->sc_nsensors = 1;
 		names = rk3328_names;
-	} else {
+	} else if (OF_is_compatible(node, "rockchip,rk3399-tsadc")) {
 		sc->sc_temps = rk3399_temps;
 		sc->sc_ntemps = nitems(rk3399_temps);
 		sc->sc_nsensors = 2;
 		names = rk3399_names;
+	} else {
+		sc->sc_temps = rk3568_temps;
+		sc->sc_ntemps = nitems(rk3568_temps);
+		sc->sc_nsensors = 2;
+		names = rk3568_names;
 	}
 
 	pinctrl_byname(node, "init");
@@ -307,6 +357,18 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		auto_con |= TSADC_AUTO_CON_TSHUT_POLARITY;
 	HWRITE4(sc, TSADC_AUTO_CON, auto_con);
 
+	/* Set shutdown limit. */
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		HWRITE4(sc, TSADC_COMP0_SHUT + i * 4,
+		    rktemp_calc_code(sc, temp));
+		auto_con |= (TSADC_AUTO_CON_SRC0_EN << i);
+	}
+	HWRITE4(sc, TSADC_AUTO_CON, auto_con);
+
+	/* Clear shutdown output status. */
+	for (i = 0; i < sc->sc_nsensors; i++)
+		HWRITE4(sc, TSADC_INT_PD, (TSADC_INT_PD_TSHUT_O_SRC0 << i));
+
 	/* Configure mode. */
 	int_en = HREAD4(sc, TSADC_INT_EN);
 	for (i = 0; i < sc->sc_nsensors; i++) {
@@ -316,14 +378,6 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 			int_en |= (TSADC_INT_EN_TSHUT_2CRU_EN_SRC0 << i);
 	}
 	HWRITE4(sc, TSADC_INT_EN, int_en);
-
-	/* Set shutdown limit. */
-	for (i = 0; i < sc->sc_nsensors; i++) {
-		HWRITE4(sc, TSADC_COMP0_SHUT + i * 4,
-		    rktemp_calc_code(sc, temp));
-		auto_con |= (TSADC_AUTO_CON_SRC0_EN << i);
-	}
-	HWRITE4(sc, TSADC_AUTO_CON, auto_con);
 
 	pinctrl_byname(faa->fa_node, "default");
 
