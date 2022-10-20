@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.119 2022/10/20 15:21:22 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.120 2022/10/20 15:22:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,6 +240,111 @@ SSL_SESSION_new(void)
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
 	return (ss);
+}
+
+SSL_SESSION *
+ssl_session_dup(SSL_SESSION *sess, int include_ticket)
+{
+	SSL_SESSION *copy;
+	CBS cbs;
+
+	if ((copy = calloc(1, sizeof(*copy))) == NULL) {
+		SSLerrorx(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	copy->ssl_version = sess->ssl_version;
+
+	CBS_init(&cbs, sess->master_key, sess->master_key_length);
+	if (!CBS_write_bytes(&cbs, copy->master_key, sizeof(copy->master_key),
+	    &copy->master_key_length))
+		goto err;
+
+	CBS_init(&cbs, sess->session_id, sess->session_id_length);
+	if (!CBS_write_bytes(&cbs, copy->session_id, sizeof(copy->session_id),
+	    &copy->session_id_length))
+		goto err;
+
+	CBS_init(&cbs, sess->sid_ctx, sess->sid_ctx_length);
+	if (!CBS_write_bytes(&cbs, copy->sid_ctx, sizeof(copy->sid_ctx),
+	    &copy->sid_ctx_length))
+		goto err;
+
+	if (sess->peer_cert != NULL) {
+		if (!X509_up_ref(sess->peer_cert))
+			goto err;
+		copy->peer_cert = sess->peer_cert;
+	}
+	copy->peer_cert_type = sess->peer_cert_type;
+
+	copy->verify_result = sess->verify_result;
+
+	copy->timeout = sess->timeout;
+	copy->time = sess->time;
+	copy->references = 1;
+
+	copy->cipher = sess->cipher;
+	copy->cipher_id = sess->cipher_id;
+
+	if (sess->ciphers != NULL) {
+		if ((copy->ciphers = sk_SSL_CIPHER_dup(sess->ciphers)) == NULL)
+			goto err;
+	}
+
+	if (sess->tlsext_hostname != NULL) {
+		copy->tlsext_hostname = strdup(sess->tlsext_hostname);
+		if (copy->tlsext_hostname == NULL)
+			goto err;
+	}
+
+	if (include_ticket) {
+		CBS_init(&cbs, sess->tlsext_tick, sess->tlsext_ticklen);
+		if (!CBS_stow(&cbs, &copy->tlsext_tick, &copy->tlsext_ticklen))
+			goto err;
+		copy->tlsext_tick_lifetime_hint =
+		    sess->tlsext_tick_lifetime_hint;
+
+		/*
+		 * XXX - copy sess->resumption_master_secret and all other
+		 * TLSv1.3 info here.
+		 */
+	}
+
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, copy,
+	    &copy->ex_data))
+		goto err;
+
+	if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, &copy->ex_data,
+	    &sess->ex_data))
+		goto err;
+
+	/* Omit prev/next: the new session gets its own slot in the cache. */
+
+	copy->not_resumable = sess->not_resumable;
+
+	CBS_init(&cbs, sess->tlsext_ecpointformatlist,
+	    sess->tlsext_ecpointformatlist_length);
+	if (!CBS_stow(&cbs, &copy->tlsext_ecpointformatlist,
+	    &copy->tlsext_ecpointformatlist_length))
+		goto err;
+
+	if (sess->tlsext_supportedgroups != NULL) {
+		if ((copy->tlsext_supportedgroups = calloc(sizeof(uint16_t),
+		    sess->tlsext_supportedgroups_length)) == NULL)
+			goto err;
+		memcpy(copy->tlsext_supportedgroups,
+		    sess->tlsext_supportedgroups,
+		    sizeof(uint16_t) * sess->tlsext_supportedgroups_length);
+		copy->tlsext_supportedgroups_length =
+		    sess->tlsext_supportedgroups_length;
+	}
+
+	return copy;
+
+ err:
+	SSL_SESSION_free(copy);
+
+	return NULL;
 }
 
 const unsigned char *
