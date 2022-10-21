@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.201 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.202 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -265,7 +265,7 @@ void
 setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
     register_t *retval)
 {
-	struct trapframe64 *tf = p->p_md.md_tf;
+	struct trapframe *tf = p->p_md.md_tf;
 	int64_t tstate;
 	int pstate = PSTATE_USER;
 	Elf_Ehdr *eh = pack->ep_hdr;
@@ -324,7 +324,7 @@ setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_proc(p, 0);
-		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate64));
+		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate));
 		p->p_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
@@ -405,7 +405,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 {
 	struct proc *p = curproc;
 	struct sigframe *fp;
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	vaddr_t addr, oldsp, newsp;
 	struct sigframe sf;
 
@@ -507,7 +507,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 	int error = EINVAL;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
@@ -832,12 +832,12 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 	}
 }
 
-void trapdump(struct trapframe64*);
+void trapdump(struct trapframe *);
 /*
  * dump out a trapframe.
  */
 void
-trapdump(struct trapframe64* tf)
+trapdump(struct trapframe *tf)
 {
 	printf("TRAPFRAME: tstate=%llx pc=%llx npc=%llx y=%x\n",
 	       (unsigned long long)tf->tf_tstate, (unsigned long long)tf->tf_pc,
@@ -867,36 +867,24 @@ trapdump(struct trapframe64* tf)
 void
 stackdump(void)
 {
-	struct frame32 *fp = (struct frame32 *)getfp(), *sfp;
-	struct frame64 *fp64;
+	struct frame *sfp = getfp(), *fp64;
 
-	sfp = fp;
-	printf("Frame pointer is at %p\n", fp);
+	fp64 = sfp = v9next_frame(sfp);
+	printf("Frame pointer is at %p\n", fp64);
 	printf("Call traceback:\n");
-	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
-		if( ((long)fp) & 1 ) {
-			fp64 = (struct frame64*)(((char *)fp)+BIAS);
-			/* 64-bit frame */
-			printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) "
-			    "fp = %llx\n",
-			       (unsigned long long)fp64->fr_pc,
-			       (unsigned long long)fp64->fr_arg[0],
-			       (unsigned long long)fp64->fr_arg[1],
-			       (unsigned long long)fp64->fr_arg[2],
-			       (unsigned long long)fp64->fr_arg[3],
-			       (unsigned long long)fp64->fr_arg[4],
-			       (unsigned long long)fp64->fr_arg[5],	
-			       (unsigned long long)fp64->fr_arg[6],
-			       (unsigned long long)fp64->fr_fp);
-			fp = (struct frame32 *)(u_long)fp64->fr_fp;
-		} else {
-			/* 32-bit frame */
-			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x) "
-			    "fp = %x\n", fp->fr_pc, fp->fr_arg[0],
-			    fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
-			    fp->fr_arg[4], fp->fr_arg[5], fp->fr_fp);
-			fp = (struct frame32*)(u_long)(u_short)fp->fr_fp;
-		}
+	while (fp64 && ((u_long)fp64 >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
+		printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) "
+		    "fp = %llx\n",
+		       (unsigned long long)fp64->fr_pc,
+		       (unsigned long long)fp64->fr_arg[0],
+		       (unsigned long long)fp64->fr_arg[1],
+		       (unsigned long long)fp64->fr_arg[2],
+		       (unsigned long long)fp64->fr_arg[3],
+		       (unsigned long long)fp64->fr_arg[4],
+		       (unsigned long long)fp64->fr_arg[5],	
+		       (unsigned long long)fp64->fr_arg[6],
+		       (unsigned long long)fp64->fr_fp);
+		fp64 = v9next_frame(fp64);
 	}
 }
 

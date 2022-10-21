@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.62 2020/12/28 14:23:30 mpi Exp $	*/
+/*	$OpenBSD: intr.c,v 1.63 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -67,9 +67,9 @@ struct intrhand *intrlev[MAXINTNUM];
 
 #define INTR_DEVINO	0x8000
 
-void	strayintr(const struct trapframe64 *, int);
+void	strayintr(const struct trapframe *, int);
 int	softintr(void *);
-int	intr_handler(struct trapframe64 *, struct intrhand *);
+int	intr_handler(struct trapframe *, struct intrhand *);
 int	intr_list_handler(void *);
 void	intr_ack(struct intrhand *);
 
@@ -81,7 +81,7 @@ int ignore_stray = 1;
 int straycnt[16];
 
 void
-strayintr(const struct trapframe64 *fp, int vectored)
+strayintr(const struct trapframe *fp, int vectored)
 {
 	static int straytime, nstray;
 	int timesince;
@@ -116,7 +116,7 @@ strayintr(const struct trapframe64 *fp, int vectored)
 }
 
 int
-intr_handler(struct trapframe64 *tf, struct intrhand *ih)
+intr_handler(struct trapframe *tf, struct intrhand *ih)
 {
 	int rc;
 #ifdef MULTIPROCESSOR

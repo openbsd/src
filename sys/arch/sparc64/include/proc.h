@@ -44,7 +44,7 @@
  * Machine-dependent part of the proc structure for SPARC.
  */
 struct mdproc {
-	struct	trapframe64 *md_tf;	/* trap/syscall registers */
-	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
+	struct	trapframe *md_tf;	/* trap/syscall registers */
+	struct	fpstate *md_fpstate;	/* fpu state, if any; always resident */
 	volatile int md_astpending;
 };

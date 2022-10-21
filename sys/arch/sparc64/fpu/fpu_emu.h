@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emu.h,v 1.5 2006/06/21 19:24:38 jason Exp $	*/
+/*	$OpenBSD: fpu_emu.h,v 1.6 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: fpu_emu.h,v 1.4 2000/08/03 18:32:07 eeh Exp $ */
 
 /*
@@ -136,7 +136,7 @@ struct fpn {
  * Emulator state.
  */
 struct fpemu {
-	struct	fpstate64 *fe_fpstate;	/* registers, etc */
+	struct	fpstate *fe_fpstate;	/* registers, etc */
 	int	fe_fsr;			/* fsr copy (modified during op) */
 	int	fe_cx;			/* exceptions */
 	struct	fpn fe_f1;		/* operand 1 */
@@ -181,7 +181,7 @@ void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
 #define	FPE_STATE	0x4
 extern int fpe_debug;
 void	fpu_dumpfpn(struct fpn *);
-void	fpu_dumpstate(struct fpstate64 *);
+void	fpu_dumpstate(struct fpstate *);
 #define	DPRINTF(x, y)	if (fpe_debug & (x)) printf y
 #define DUMPFPN(x, f)	if (fpe_debug & (x)) fpu_dumpfpn((f))
 #define	DUMPSTATE(x, s)	if (fpe_debug & (x)) fpu_dumpstate((s))

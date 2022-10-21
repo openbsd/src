@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.22 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.23 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -81,22 +81,22 @@
 #include <sparc64/fpu/fpu_extern.h>
 
 int fpu_regoffset(int, int);
-int fpu_insn_fmov(struct fpstate64 *, struct fpemu *, union instr);
-int fpu_insn_fabs(struct fpstate64 *, struct fpemu *, union instr);
-int fpu_insn_fneg(struct fpstate64 *, struct fpemu *, union instr);
+int fpu_insn_fmov(struct fpstate *, struct fpemu *, union instr);
+int fpu_insn_fabs(struct fpstate *, struct fpemu *, union instr);
+int fpu_insn_fneg(struct fpstate *, struct fpemu *, union instr);
 int fpu_insn_itof(struct fpemu *, union instr, int, int *,
     int *, u_int *);
 int fpu_insn_ftoi(struct fpemu *, union instr, int *, int, u_int *);
 int fpu_insn_ftof(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fsqrt(struct fpemu *, union instr, int *, int *, u_int *);
-int fpu_insn_fcmp(struct fpstate64 *, struct fpemu *, union instr, int);
+int fpu_insn_fcmp(struct fpstate *, struct fpemu *, union instr, int);
 int fpu_insn_fmul(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fmulx(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fdiv(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fadd(struct fpemu *, union instr, int *, int *, u_int *);
 int fpu_insn_fsub(struct fpemu *, union instr, int *, int *, u_int *);
-int fpu_insn_fmovcc(struct proc *, struct fpstate64 *, union instr);
-int fpu_insn_fmovr(struct proc *, struct fpstate64 *, union instr);
+int fpu_insn_fmovcc(struct proc *, struct fpstate *, union instr);
+int fpu_insn_fmovr(struct proc *, struct fpstate *, union instr);
 void fpu_fcopy(u_int *, u_int *, int);
 
 #ifdef DEBUG
@@ -115,7 +115,7 @@ fpu_dumpfpn(struct fpn *fp)
 	    fp->fp_mant[2], fp->fp_mant[3], fp->fp_exp);
 }
 void
-fpu_dumpstate(struct fpstate64 *fs)
+fpu_dumpstate(struct fpstate *fs)
 {
 	int i;
 
@@ -185,7 +185,7 @@ fpu_fcopy(u_int *src, u_int *dst, int type)
  * unknown FPops do enter the queue, however.
  */
 void
-fpu_cleanup(register struct proc *p, register struct fpstate64 *fs)
+fpu_cleanup(register struct proc *p, register struct fpstate *fs)
 {
 	register int i, fsr = fs->fs_fsr, error;
 	union instr instr;
@@ -446,7 +446,7 @@ fpu_execute(struct proc *p, struct fpemu *fe, union instr instr)
  * Handler for FMOV[SDQ] emulation.
  */
 int
-fpu_insn_fmov(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
+fpu_insn_fmov(struct fpstate *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -466,7 +466,7 @@ fpu_insn_fmov(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
  * Handler for FABS[SDQ] emulation.
  */
 int
-fpu_insn_fabs(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
+fpu_insn_fabs(struct fpstate *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -487,7 +487,7 @@ fpu_insn_fabs(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
  * Handler for FNEG[SDQ] emulation.
  */
 int
-fpu_insn_fneg(struct fpstate64 *fs, struct fpemu *fe, union instr instr)
+fpu_insn_fneg(struct fpstate *fs, struct fpemu *fe, union instr instr)
 {
 	int opf = instr.i_opf.i_opf, rs, rd, rtype;
 
@@ -614,7 +614,7 @@ fpu_insn_fsqrt(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
  * Handler for FCMP{E}[SDQ] emulation.
  */
 int
-fpu_insn_fcmp(struct fpstate64 *fs, struct fpemu *fe, union instr instr,
+fpu_insn_fcmp(struct fpstate *fs, struct fpemu *fe, union instr instr,
     int cmpe)
 {
 	int opf = instr.i_opf.i_opf, rs1, rs2, rtype, cx, fsr;
@@ -799,7 +799,7 @@ fpu_insn_fsub(struct fpemu *fe, union instr instr, int *rdp, int *rdtypep,
  * Handler for FMOV[SDQ][cond] emulation.
  */
 int
-fpu_insn_fmovcc(struct proc *p, struct fpstate64 *fs, union instr instr)
+fpu_insn_fmovcc(struct proc *p, struct fpstate *fs, union instr instr)
 {
 	int rtype, rd, rs, cond;
 
@@ -848,7 +848,7 @@ fpu_insn_fmovcc(struct proc *p, struct fpstate64 *fs, union instr instr)
  * Handler for FMOVR[icond][SDQ] emulation.
  */
 int
-fpu_insn_fmovr(struct proc *p, struct fpstate64 *fs, union instr instr)
+fpu_insn_fmovr(struct proc *p, struct fpstate *fs, union instr instr)
 {
 	int rtype, rd, rs2, rs1;
 

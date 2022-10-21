@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.38 2019/06/11 15:23:41 mpi Exp $
+#	$OpenBSD: genassym.cf,v 1.39 2022/10/21 18:55:42 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -157,13 +157,13 @@ member	ci_mutex_level
 endif
 
 # FPU state
-struct	fpstate64
+struct	fpstate
 member	fs_regs
 member	fs_fsr
 member	fs_gsr
 member	fs_qsize
 member	fs_queue
-define	FS_SIZE		sizeof(struct fpstate64)
+define	FS_SIZE		sizeof(struct fpstate)
 export	FSR_QNE
 export	FPRS_FEF
 export	FPRS_DU
@@ -193,8 +193,8 @@ member	pcb_pc
 member	PCB_LASTCALL	lastcall
 define	PCB_SIZE	sizeof(struct pcb)
 
-# trapframe64 fields
-struct	trapframe64
+# trapframe fields
+struct	trapframe
 member	tf_tstate
 member	tf_pc
 member	tf_npc
@@ -213,7 +213,7 @@ member	TF_G		tf_global
 member	TF_O		tf_out
 member	TF_L		tf_local
 member	TF_I		tf_in
-define	TF_SIZE		sizeof(struct trapframe64)
+define	TF_SIZE		sizeof(struct trapframe)
 
 ifdef notyet
 # clockframe fields 

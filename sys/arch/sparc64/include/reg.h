@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.5 2008/12/22 23:01:31 kettenis Exp $	*/
+/*	$OpenBSD: reg.h,v 1.6 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.8 2001/06/19 12:59:16 wiz Exp $ */
 
 /*
@@ -44,80 +44,7 @@
 #ifndef _MACHINE_REG_H_
 #define	_MACHINE_REG_H_
 
-/*
- * Registers passed to trap/syscall/etc.
- * This structure is known to occupy exactly 80 bytes (see locore.s).
- * Note, tf_global[0] is not actually written (since g0 is always 0).
- * (The slot tf_global[0] is used to send a copy of %wim to kernel gdb.
- * This is known as `cheating'.)
- */
-struct trapframe32 {
-	int	tf_psr;		/* psr */
-	int	tf_pc;		/* return pc */
-	int	tf_npc;		/* return npc */
-	int	tf_y;		/* %y register */
-	int	tf_global[8];	/* global registers in trap's caller */
-	int	tf_out[8];	/* output registers in trap's caller */
-};
-
-/*
- * The v9 trapframe is a bit more complex.  Since we don't get a free 
- * register window with each trap we need some way to keep track of
- * pending traps.  We use tf_fault to save the faulting address for
- * memory faults and tf_kstack to thread trapframes on the kernel
- * stack(s).  If tf_kstack == 0 then this is the lowest level trap;
- * we came from user mode.
- */
-struct trapframe64 {
-	int64_t		tf_tstate;	/* tstate register */
-	int64_t		tf_pc;		/* return pc */
-	int64_t		tf_npc;		/* return npc */
-	int64_t		tf_fault;	/* faulting addr -- need somewhere to save it */
-	int64_t		tf_kstack;	/* kernel stack of prev tf */
-	int		tf_y;		/* %y register -- 32-bits */
-	short		tf_tt;		/* What type of trap this was */
-	char		tf_pil;		/* What IRQ we're handling */
-	char		tf_oldpil;	/* What our old SPL was */
-	int64_t		tf_global[8];	/* global registers in trap's caller */
-	int64_t		tf_out[8];	/* output registers in trap's caller */
-	int64_t		tf_local[8];	/* local registers in trap's caller */
-	int64_t		tf_in[8];	/* in registers in trap's caller (for debug) */
-};
-
-/*
- * Register windows.  Each stack pointer (%o6 aka %sp) in each window
- * must ALWAYS point to some place at which it is safe to scribble on
- * 64 bytes.  (If not, your process gets mangled.)  Furthermore, each
- * stack pointer should be aligned on an 8-byte boundary for v8 stacks
- * or a 16-byte boundary (plus the BIAS) for v9 stacks (the kernel
- * as currently coded allows arbitrary alignment, but with a hefty
- * performance penalty).
- */
-struct rwindow32 {
-	int	rw_local[8];		/* %l0..%l7 */
-	int	rw_in[8];		/* %i0..%i7 */
-};
-
-/* Don't forget the BIAS!! */
-struct rwindow64 {
-	int64_t	rw_local[8];		/* %l0..%l7 */
-	int64_t	rw_in[8];		/* %i0..%i7 */
-};
-
-/*
- * Clone trapframe for now; this seems to be the more useful
- * than the old struct reg above.
- */
-struct reg32 {
-	int	r_psr;		/* psr */
-	int	r_pc;		/* return pc */
-	int	r_npc;		/* return npc */
-	int	r_y;		/* %y register */
-	int	r_global[8];	/* global registers in trap's caller */
-	int	r_out[8];	/* output registers in trap's caller */
-};
-
-struct reg64 {
+struct reg {
 	int64_t	r_tstate;	/* tstate register */
 	int64_t	r_pc;		/* return pc */
 	int64_t	r_npc;		/* return npc */
@@ -142,27 +69,17 @@ struct reg64 {
  * XXXX UltraSPARC processors don't implement a floating point queue.
  */
 #define	FP_QSIZE	16
-#define ALIGNFPSTATE(f)		((struct fpstate64 *)(((long)(f))&(~BLOCK_ALIGN)))
+#define ALIGNFPSTATE(f)		((struct fpstate *)(((long)(f))&(~BLOCK_ALIGN)))
 
 struct fp_qentry {
 	int	*fq_addr;		/* the instruction's address */
 	int	fq_instr;		/* the instruction itself */
 };
 
-struct fpstate64 {
+struct fpstate {
 	u_int	fs_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fs_fsr;			/* %fsr */
 	int	fs_gsr;			/* graphics state reg */
-	int	fs_qsize;		/* actual queue depth */
-	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
-};
-
-/* 
- * For 32-bit emulations.
- */
-struct fpstate32 {
-	u_int	fs_regs[32];		/* our view is 32 32-bit registers */
-	int	fs_fsr;			/* %fsr */
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
 };
@@ -172,25 +89,10 @@ struct fpstate32 {
  * a `struct fpreg'; <arch/sparc64/sparc64/process_machdep.c> relies on the
  * fact that `fpreg' is a prefix of `fpstate'.
  */
-struct fpreg64 {
+struct fpreg {
 	u_int	fr_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fr_fsr;			/* %fsr */
 	int	fr_gsr;			/* graphics state reg */
 };
-
-/*
- * 32-bit fpreg used by 32-bit sparc CPUs
- */
-struct fpreg32 {
-	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
-	int	fr_fsr;			/* %fsr */
-};
-
-/* Here we gotta do naughty things to let gdb work on 32-bit binaries */
-#define reg		reg64
-#define fpreg		fpreg64
-#define fpstate		fpstate64
-#define trapframe	trapframe64
-#define rwindow		rwindow64
 
 #endif /* _MACHINE_REG_H_ */

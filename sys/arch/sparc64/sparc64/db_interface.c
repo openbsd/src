@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.59 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.60 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -200,7 +200,7 @@ extern label_t	*db_recover;
 
 extern char *trap_type[];
 
-void kdb_kbd_trap(struct trapframe64 *);
+void kdb_kbd_trap(struct trapframe *);
 void db_prom_cmd(db_expr_t, int, db_expr_t, char *);
 void db_proc_cmd(db_expr_t, int, db_expr_t, char *);
 void db_ctx_cmd(db_expr_t, int, db_expr_t, char *);
@@ -237,7 +237,7 @@ void db_ddbproc_cmd(db_expr_t, int, db_expr_t, char *);
  * Received keyboard interrupt sequence.
  */
 void
-kdb_kbd_trap(struct trapframe64 *tf)
+kdb_kbd_trap(struct trapframe *tf)
 {
 	if (db_active == 0 /* && (boothowto & RB_KDB) */) {
 		printf("\n\nkernel: keyboard interrupt tf=%p\n", tf);
@@ -249,7 +249,7 @@ kdb_kbd_trap(struct trapframe64 *tf)
  *  db_ktrap - field a TRACE or BPT trap
  */
 int
-db_ktrap(int type, register struct trapframe64 *tf)
+db_ktrap(int type, register struct trapframe *tf)
 {
 	int s, tl;
 	struct trapstate *ts = &ddb_regs.ddb_ts[0];

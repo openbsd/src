@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.56 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: creator.c,v 1.57 2022/10/21 18:55:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -33,8 +33,9 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/fsr.h>
 #include <machine/openfirm.h>
 
 #include <dev/wscons/wsconsio.h>

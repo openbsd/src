@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.22 2021/08/30 08:11:12 jasper Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.23 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -53,11 +53,11 @@ struct trapstate {
 };
 #if 1
 typedef struct {
-	struct trapframe64	ddb_tf;
-	struct frame64		ddb_fr;
+	struct trapframe	ddb_tf;
+	struct frame		ddb_fr;
 	struct trapstate	ddb_ts[5];
 	int			ddb_tl;
-	struct fpstate64	ddb_fpstate;
+	struct fpstate		ddb_fpstate;
 } db_regs_t;
 #else
 typedef struct db_regs {
@@ -129,7 +129,7 @@ vaddr_t		db_branch_taken(int inst, vaddr_t pc, db_regs_t *regs);
 #define DB_MACHINE_COMMANDS
 
 void db_machine_init(void);
-int db_ktrap(int, struct trapframe64 *);
+int db_ktrap(int, struct trapframe *);
 
 int db_enter_ddb(void);
 void db_startcpu(struct cpu_info *);

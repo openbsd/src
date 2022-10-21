@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.98 2021/07/06 09:34:07 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.99 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -74,7 +74,7 @@
 
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
+#include <machine/frame.h>
 #include <machine/intr.h>
 
 #include <sys/sched.h>
@@ -144,7 +144,7 @@ struct cpu_info {
 	paddr_t			ci_paddr;	/* Phys addr of this structure. */
 
 #ifdef SUN4V
-	struct rwindow64	ci_rw;
+	struct rwindow		ci_rw;
 	u_int64_t		ci_rwsp;
 
 	paddr_t			ci_mmfsa;
@@ -271,7 +271,7 @@ do {									\
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  */
 struct clockframe {
-	struct trapframe64 t;
+	struct trapframe t;
 	int saved_intr_level;
 };
 
@@ -316,9 +316,9 @@ struct timeval;
 int	clockintr(void *);/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
 /* locore.s */
-struct fpstate64;
-void	savefpstate(struct fpstate64 *);
-void	loadfpstate(struct fpstate64 *);
+struct fpstate;
+void	savefpstate(struct fpstate *);
+void	loadfpstate(struct fpstate *);
 void	clearfpstate(void);
 u_int64_t	probeget(paddr_t, int, int);
 #define	 write_all_windows() __asm volatile("flushw" : : )
@@ -344,11 +344,13 @@ int	cnrom(void);
 void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
 /* fb.c */
 void	fb_unblank(void);
+/* ltc.c */
+void	ltc_full_blast(void);
 /* tda.c */
 void	tda_full_blast(void);
 /* emul.c */
-int	emul_qf(int32_t, struct proc *, union sigval, struct trapframe64 *);
-int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe64 *);
+int	emul_qf(int32_t, struct proc *, union sigval, struct trapframe *);
+int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe *);
 
 /*
  *

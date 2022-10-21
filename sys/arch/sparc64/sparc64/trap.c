@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.110 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.111 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -117,7 +117,7 @@ int rftkcnt[5] = { 0, 0, 0, 0, 0 };
  * seems to imply that we should do this, and it does make sense.
  */
 __asm(".align 64");
-struct	fpstate64 initfpstate = {
+struct	fpstate initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
 };
@@ -309,18 +309,18 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static inline void share_fpu(struct proc *, struct trapframe64 *);
+static inline void share_fpu(struct proc *, struct trapframe *);
 
-void trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate);
-void data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+void trap(struct trapframe *tf, unsigned type, vaddr_t pc, long tstate);
+void data_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
 	vaddr_t va, vaddr_t sfva, u_long sfsr);
-void data_access_error(struct trapframe64 *tf, unsigned type,
+void data_access_error(struct trapframe *tf, unsigned type,
 	vaddr_t afva, u_long afsr, vaddr_t sfva, u_long sfsr);
-void text_access_fault(struct trapframe64 *tf, unsigned type,
+void text_access_fault(struct trapframe *tf, unsigned type,
 	vaddr_t pc, u_long sfsr);
-void text_access_error(struct trapframe64 *tf, unsigned type,
+void text_access_error(struct trapframe *tf, unsigned type,
 	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr);
-void syscall(struct trapframe64 *, register_t code, register_t pc);
+void syscall(struct trapframe *, register_t code, register_t pc);
 
 /*
  * If someone stole the FPU while we were away, do not enable it
@@ -331,7 +331,7 @@ void syscall(struct trapframe64 *, register_t code, register_t pc);
  * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
 static inline void
-share_fpu(struct proc *p, struct trapframe64 *tf)
+share_fpu(struct proc *p, struct trapframe *tf)
 {
 	if (!(tf->tf_tstate & TSTATE_PRIV) &&
 	    (tf->tf_tstate & TSTATE_PEF) && fpproc != p)
@@ -343,7 +343,7 @@ share_fpu(struct proc *p, struct trapframe64 *tf)
  * (MMU-related traps go through mem_access_fault, below.)
  */
 void
-trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
+trap(struct trapframe *tf, unsigned type, vaddr_t pc, long tstate)
 {
 	struct proc *p;
 	struct pcb *pcb;
@@ -498,7 +498,7 @@ dopanic:
 		break;
 
 	case T_FPDISABLED: {
-		struct fpstate64 *fs = p->p_md.md_fpstate;
+		struct fpstate *fs = p->p_md.md_fpstate;
 
 		if (fs == NULL) {
 			KERNEL_LOCK();
@@ -697,7 +697,7 @@ rwindow_save(struct proc *p)
 	for (i = 0; i < pcb->pcb_nsaved; i++) {
 		pcb->pcb_rw[i].rw_in[7] ^= pcb->pcb_wcookie;
 		if (copyout(&pcb->pcb_rw[i], (void *)(pcb->pcb_rwsp[i] + BIAS),
-		    sizeof(struct rwindow64)))
+		    sizeof(struct rwindow)))
 			return (-1);
 	}
 
@@ -738,7 +738,7 @@ accesstype(unsigned int type, u_long sfsr)
  * of them could be recoverable through uvm_fault.
  */
 void
-data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+data_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
     vaddr_t addr, vaddr_t sfva, u_long sfsr)
 {
 	struct proc *p = curproc;
@@ -858,7 +858,7 @@ out:
  * special PEEK/POKE code sequence.
  */
 void
-data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
+data_access_error(struct trapframe *tf, unsigned type, vaddr_t afva,
     u_long afsr, vaddr_t sfva, u_long sfsr)
 {
 	struct proc *p = curproc;
@@ -926,7 +926,7 @@ out:
  * of them could be recoverable through uvm_fault.
  */
 void
-text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+text_access_fault(struct trapframe *tf, unsigned type, vaddr_t pc,
     u_long sfsr)
 {
 	struct proc *p = curproc;
@@ -1004,7 +1004,7 @@ out:
  * special PEEK/POKE code sequence.
  */
 void
-text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
+text_access_error(struct trapframe *tf, unsigned type, vaddr_t pc,
     u_long sfsr, vaddr_t afva, u_long afsr)
 {
 	struct proc *p = curproc;
@@ -1100,7 +1100,7 @@ out:
  * thing that made the system call, and are named that way here.
  */
 void
-syscall(struct trapframe64 *tf, register_t code, register_t pc)
+syscall(struct trapframe *tf, register_t code, register_t pc)
 {
 	int i, nap;
 	int64_t *ap;
@@ -1119,7 +1119,7 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 		panic("syscall from kernel");
 	if (curpcb != &p->p_addr->u_pcb)
 		panic("syscall: cpcb/ppcb mismatch");
-	if (tf != (struct trapframe64 *)((caddr_t)curpcb + USPACE) - 1)
+	if (tf != (struct trapframe *)((caddr_t)curpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
 	p->p_md.md_tf = tf;
@@ -1161,7 +1161,7 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 				panic("syscall nargs");
 			/* Read the whole block in */
 			if ((error = copyin((caddr_t)tf->tf_out[6]
-			    + BIAS + offsetof(struct frame64, fr_argx),
+			    + BIAS + offsetof(struct frame, fr_argx),
 			    &args[nap], (i - nap) * sizeof(register_t))))
 				goto bad;
 			i = nap;
@@ -1227,7 +1227,7 @@ void
 child_return(void *arg)
 {
 	struct proc *p = arg;
-	struct trapframe64 *tf = p->p_md.md_tf;
+	struct trapframe *tf = p->p_md.md_tf;
 	vaddr_t dest;
 
 	/* Duplicate efforts of syscall(), but slightly differently */

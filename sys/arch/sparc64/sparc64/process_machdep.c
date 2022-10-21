@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.13 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.14 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -71,52 +71,32 @@
 #include <machine/frame.h>
 #include <sys/ptrace.h>
 
-#ifndef P_32
-#define P_32 0
-#endif
 /* Unfortunately we need to convert v9 trapframe to v8 regs */
 int
 process_read_regs(struct proc *p, struct reg *regs)
 {
-	struct trapframe64* tf = p->p_md.md_tf;
-	struct reg32* regp = (struct reg32*)regs;
+	struct trapframe *tf = p->p_md.md_tf;
 	int i;
 
-	if (!(curproc->p_flag & P_32)) {
-		/* 64-bit mode -- copy out regs */
-		regs->r_tstate = tf->tf_tstate;
-		regs->r_pc = tf->tf_pc;
-		regs->r_npc = tf->tf_npc;
-		regs->r_y = tf->tf_y;
-		for (i = 0; i < 8; i++) {
-			regs->r_global[i] = tf->tf_global[i];
-			regs->r_out[i] = tf->tf_out[i];
-			regs->r_local[i] = tf->tf_local[i];
-			regs->r_in[i] = tf->tf_in[i];
-		}
-		return (0);
-	}
-
-	/* 32-bit mode -- copy out & convert 32-bit regs */
-	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
-	regp->r_pc = tf->tf_pc;
-	regp->r_npc = tf->tf_npc;
-	regp->r_y = tf->tf_y;
+	/* copy out regs */
+	regs->r_tstate = tf->tf_tstate;
+	regs->r_pc = tf->tf_pc;
+	regs->r_npc = tf->tf_npc;
+	regs->r_y = tf->tf_y;
 	for (i = 0; i < 8; i++) {
-		regp->r_global[i] = tf->tf_global[i];
-		regp->r_out[i] = tf->tf_out[i];
+		regs->r_global[i] = tf->tf_global[i];
+		regs->r_out[i] = tf->tf_out[i];
+		regs->r_local[i] = tf->tf_local[i];
+		regs->r_in[i] = tf->tf_in[i];
 	}
-	/* We should also write out the ins and locals.  See signal stuff */
 	return (0);
 }
 
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
-	extern struct fpstate64	initfpstate;
-	struct fpstate64 *statep = &initfpstate;
-	struct fpreg32 *regp = (struct fpreg32 *)regs;
-	int i;
+	extern struct fpstate	initfpstate;
+	struct fpstate *statep = &initfpstate;
 
 	/* NOTE: struct fpreg == struct fpstate */
 	if (p->p_md.md_fpstate) {
@@ -124,15 +104,8 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 		statep = p->p_md.md_fpstate;
 	}
 
-	if (!(curproc->p_flag & P_32)) {
-		/* 64-bit mode -- copy in fregs */
-		bcopy(statep, regs, sizeof(struct fpreg64));
-		return 0;
-	}
-	/* 32-bit mode -- copy out & convert 32-bit fregs */
-	for (i = 0; i < 32; i++)
-		regp->fr_regs[i] = statep->fs_regs[i];
-
+	/* copy in fregs */
+	bcopy(statep, regs, sizeof(struct fpreg));
 	return 0;
 }
 
@@ -141,36 +114,20 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 int
 process_write_regs(struct proc *p, struct reg *regs)
 {
-	struct trapframe64* tf = p->p_md.md_tf;
-	struct reg32* regp = (struct reg32*)regs;
+	struct trapframe *tf = p->p_md.md_tf;
 	int i;
 
-	if (!(curproc->p_flag & P_32)) {
-		/* 64-bit mode -- copy in regs */
-		tf->tf_pc = regs->r_pc;
-		tf->tf_npc = regs->r_npc;
-		tf->tf_y = regs->r_y;
-		for (i = 0; i < 8; i++) {
-			tf->tf_global[i] = regs->r_global[i];
-			tf->tf_out[i] = regs->r_out[i];
-		}
-		/* We should also read in the ins and locals.  See signal stuff */
-		tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) | 
-			(regs->r_tstate & TSTATE_CCR);
-		return (0);
-	}
-
-	/* 32-bit mode -- copy in & convert 32-bit regs */
-	tf->tf_pc = regp->r_pc;
-	tf->tf_npc = regp->r_npc;
-	tf->tf_y = regp->r_y;
+	/* copy in regs */
+	tf->tf_pc = regs->r_pc;
+	tf->tf_npc = regs->r_npc;
+	tf->tf_y = regs->r_y;
 	for (i = 0; i < 8; i++) {
-		tf->tf_global[i] = regp->r_global[i];
-		tf->tf_out[i] = regp->r_out[i];
+		tf->tf_global[i] = regs->r_global[i];
+		tf->tf_out[i] = regs->r_out[i];
 	}
 	/* We should also read in the ins and locals.  See signal stuff */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | 
-		PSRCC_TO_TSTATE(regp->r_psr);
+	tf->tf_tstate = (tf->tf_tstate & ~TSTATE_CCR) | 
+		(regs->r_tstate & TSTATE_CCR);
 	return (0);
 }
 
@@ -195,27 +152,15 @@ process_set_pc(struct proc *p, caddr_t addr)
 int
 process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
-	struct fpreg32 *regp = (struct fpreg32 *)regs;
-	int i;
-
 	if (p->p_md.md_fpstate == NULL) {
-		p->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		p->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 	} else
 		fpusave_proc(p, 1);
 
-	if (!(curproc->p_flag & P_32)) {
-		/* 64-bit mode -- copy in fregs */
-		bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg64));
-		p->p_md.md_fpstate->fs_qsize = 0;
-		return 0;
-	}
-	/* 32-bit mode -- copy in & convert 32-bit fregs */
-	for (i = 0; i < 32; i++)
-		p->p_md.md_fpstate->fs_regs[i] = regp->fr_regs[i];
-	p->p_md.md_fpstate->fs_fsr = regp->fr_fsr;
+	/* copy in fregs */
+	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
 	p->p_md.md_fpstate->fs_qsize = 0;
-
 	return 0;
 }
 

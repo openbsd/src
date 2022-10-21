@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.22 2020/04/18 04:45:20 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.23 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -104,13 +104,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		db_expr_t	offset;
 		char		*name;
 		vaddr_t		pc;
-		struct frame64	*f64;
+		struct frame	*f64;
 
 		/*
 		 * Switch to frame that contains arguments
 		 */
 
-		f64 = (struct frame64 *)(frame + BIAS);
+		f64 = (struct frame *)(frame + BIAS);
 		pc = (vaddr_t)KLOAD(f64->fr_pc);
 
 		frame = KLOAD(f64->fr_fp);
@@ -145,7 +145,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		 * Print %i0..%i5; hope these still reflect the
 		 * actual arguments somewhat...
 		 */
-		f64 = (struct frame64 *)(frame + BIAS);
+		f64 = (struct frame *)(frame + BIAS);
 		for (i = 0; i < 5; i++)
 			(*pr)("%lx, ", (long)KLOAD(f64->fr_arg[i]));
 		(*pr)("%lx) at ", (long)KLOAD(f64->fr_arg[i]));
@@ -157,7 +157,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 void
 stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 {
-	struct frame64	*f64;
+	struct frame	*f64;
 	vaddr_t		pc;
 	vaddr_t		frame;
 
@@ -169,7 +169,7 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 
 	st->st_count = 0;
 	while (st->st_count < STACKTRACE_MAX) {
-		f64 = (struct frame64 *)(frame + BIAS);
+		f64 = (struct frame *)(frame + BIAS);
 		pc = (vaddr_t)KLOAD(f64->fr_pc);
 
 		frame = KLOAD(f64->fr_fp);
@@ -202,7 +202,7 @@ db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	for (i = 0; i < addr && frame; i++) {
 		if ((frame & 1) == 0)
 			break;
-		frame = ((struct frame64 *)(frame + BIAS))->fr_fp;
+		frame = ((struct frame *)(frame + BIAS))->fr_fp;
 	}
 
 	if ((frame & 1) == 0) {
@@ -217,9 +217,9 @@ db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_print_window(u_int64_t frame)
 {
-	struct frame64 *f = (struct frame64 *)(frame + BIAS);
+	struct frame *f = (struct frame *)(frame + BIAS);
 
-	db_printf("frame64 %p locals, ins:\n", f);
+	db_printf("frame %p locals, ins:\n", f);
 	if (INKERNEL(f)) {
 		db_printf("%llx %llx %llx %llx ",
 			  (unsigned long long)f->fr_local[0],
@@ -245,7 +245,7 @@ db_print_window(u_int64_t frame)
 		db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 		db_printf("\n");
 	} else {
-		struct frame64 fr;
+		struct frame fr;
 
 		if (copyin(f, &fr, sizeof(fr)))
 			return;
@@ -309,15 +309,15 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		}
 
 		frame += BIAS;
-		if (!INKERNEL(((struct frame64 *)frame))
+		if (!INKERNEL(((struct frame *)frame))
 		    && kernel_only) break;
 		db_printf("Window %x ", i);
 		db_print_window(frame - BIAS);
-		if (!INKERNEL(((struct frame64 *)frame))) {
-			copyin(&((struct frame64 *)frame)->fr_fp, &frame,
+		if (!INKERNEL(((struct frame *)frame))) {
+			copyin(&((struct frame *)frame)->fr_fp, &frame,
 			    sizeof(frame));
 		} else
-			frame = ((struct frame64 *)frame)->fr_fp;
+			frame = ((struct frame *)frame)->fr_fp;
 	}
 
 }
@@ -326,7 +326,7 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	struct trapframe64 *tf;
+	struct trapframe *tf;
 
 	/* Use our last trapframe? */
 	tf = &ddb_regs.ddb_tf;
@@ -339,7 +339,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		tf = (struct trapframe64 *)addr;
+		tf = (struct trapframe *)addr;
 
 	db_printf("Trapframe %p:\ttstate: %llx\tpc: %llx\tnpc: %llx\n",
 		  tf, (unsigned long long)tf->tf_tstate,
@@ -409,13 +409,13 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	struct fpstate64 *fpstate;
+	struct fpstate *fpstate;
 
 	/* Use our last trapframe? */
 	fpstate = &ddb_regs.ddb_fpstate;
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		fpstate = (struct fpstate64 *)addr;
+		fpstate = (struct fpstate *)addr;
 
 	db_printf("fpstate %p: fsr = %llx gsr = %lx\nfpregs:\n",
 		fpstate, (unsigned long long)fpstate->fs_fsr,

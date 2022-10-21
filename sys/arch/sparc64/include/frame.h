@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.6 2011/03/23 16:54:37 pirofti Exp $	*/
+/*	$OpenBSD: frame.h,v 1.7 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2001/03/04 09:28:35 mrg Exp $ */
 
 /*
@@ -45,39 +45,6 @@
 #define _MACHINE_FRAME_H_
 
 /*
- * Sparc stack frame format.
- *
- * Note that the contents of each stack frame may be held only in
- * machine register windows.  In order to get an accurate picture
- * of the frame, you must first force the kernel to write any such
- * windows to the stack.
- */
-#ifndef _LOCORE
-struct frame32 {
-	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
-	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
-	u_int32_t	fr_fp;	/* space to save frame pointer (%i6) */
-	u_int32_t	fr_pc;	/* space to save return pc (%i7) */
-	/*
-	 * SunOS reserves another 8 words here; this is pointless
-	 * but we do it for compatibility.
-	 */
-	int32_t	fr_xxx;		/* `structure return pointer' (unused) */
-	int32_t	fr_argd[6];	/* `arg dump area' (lunacy) */
-	int32_t	fr_argx[1];	/* arg extension (args 7..n; variable size) */
-};
-#endif
-
-/*
- * CCFSZ (C Compiler Frame SiZe) is the size of a stack frame required if
- * a function is to call C code.  It should be just 64, but Sun defined
- * their frame with space to hold arguments 0 through 5 (plus some junk),
- * and varargs routines (such as kprintf) demand this, and gcc uses this
- * area at times anyway.
- */
-#define CCFSZ		96
-
-/*
  * Sparc v9 stack frame format.
  *
  * Note that the contents of each stack frame may be held only in
@@ -89,7 +56,7 @@ struct frame32 {
  * a v8 frame by testing the stack pointer's lsb.
  */
 #if !defined(_LOCORE) && !defined(_LIBC)
-struct frame64 {
+struct frame {
 	int64_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int64_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
 	u_int64_t	fr_fp;		/* space to save frame pointer (%i6) */
@@ -101,7 +68,7 @@ struct frame64 {
 	int64_t	fr_argx[0];	/* arg extension (args 7..n; variable size) */
 };
 
-#define v9next_frame(f)		((struct frame64*)(f->fr_fp+BIAS))
+#define v9next_frame(f)		((struct frame*)(f->fr_fp+BIAS))
 #endif
 
 /*
@@ -115,5 +82,43 @@ struct frame64 {
  * detect it by testing the register for an odd value.  Why 2K-1 I don't know.
  */
 #define BIAS	(2048-1)
+
+#ifndef _LOCORE
+/*
+ * The v9 trapframe.  Since we don't get a free register window with
+ * each trap we need some way to keep track of pending traps.  We use
+ * tf_fault to save the faulting address for memory faults and tf_kstack
+ * to thread trapframes on the kernel stack(s).  If tf_kstack == 0 then
+ * this is the lowest level trap; we came from user mode.
+ */
+struct trapframe {
+	int64_t		tf_tstate;	/* tstate register */
+	int64_t		tf_pc;		/* return pc */
+	int64_t		tf_npc;		/* return npc */
+	int64_t		tf_fault;	/* faulting addr -- need somewhere to save it */
+	int64_t		tf_kstack;	/* kernel stack of prev tf */
+	int		tf_y;		/* %y register -- 32-bits */
+	short		tf_tt;		/* What type of trap this was */
+	char		tf_pil;		/* What IRQ we're handling */
+	char		tf_oldpil;	/* What our old SPL was */
+	int64_t		tf_global[8];	/* global registers in trap's caller */
+	int64_t		tf_out[8];	/* output registers in trap's caller */
+	int64_t		tf_local[8];	/* local registers in trap's caller */
+	int64_t		tf_in[8];	/* in registers in trap's caller (for debug) */
+};
+
+/*
+ * The v9 register window.  Each stack pointer (%o6 aka %sp) in each window
+ * must ALWAYS point to some place at which it is safe to scribble on
+ * 64 bytes.  (If not, your process gets mangled.)  Furthermore, each
+ * stack pointer should be aligned on a 16-byte boundary (plus the BIAS)
+ * for v9 stacks (the kernel as currently coded allows arbitrary alignment,
+ * but with a hefty performance penalty).
+ */
+struct rwindow {
+	int64_t	rw_local[8];		/* %l0..%l7 */
+	int64_t	rw_in[8];		/* %i0..%i7 */
+};
+#endif
 
 #endif /* _MACHINE_FRAME_H_ */

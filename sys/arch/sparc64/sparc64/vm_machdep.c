@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.40 2022/05/27 18:55:30 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.41 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -140,10 +140,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
 		fpusave_proc(p1, 1);
-		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
-		    sizeof(struct fpstate64));
+		    sizeof(struct fpstate));
 	} else
 		p2->p_md.md_fpstate = NULL;
 
@@ -265,7 +265,7 @@ cpu_exit(struct proc *p)
 {
 	if (p->p_md.md_fpstate != NULL) {
 		fpusave_proc(p, 0);
-		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate64));
+		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate));
 	}
 
 	pmap_deactivate(p);

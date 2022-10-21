@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.192 2022/09/08 17:44:48 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.193 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -2183,7 +2183,7 @@ winfixsave:
 	dec	%g7					! Make it into a mask
 	andncc	%g2, %g7, %g0				! XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
 	movz	%xcc, %g1, %g6				! Stay on interrupt stack?
-	add	%g6, -CCFSZ, %g6			! Allocate a stack frame
+	add	%g6, -CC64FSZ, %g6			! Allocate a stack frame
 	mov	%sp, %l6				! XXXXX Save old stack pointer
 	mov	%g6, %sp
 	ta	1; nop					! Enter debugger

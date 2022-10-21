@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.26 2020/09/14 13:30:33 deraadt Exp $	*/
+/*	$OpenBSD: emul.c,v 1.27 2022/10/21 18:55:42 miod Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -67,8 +67,8 @@ swap_quad(int64_t *p)
 int
 emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 {
-	extern struct fpstate64 initfpstate;
-	struct fpstate64 *fs = p->p_md.md_fpstate;
+	extern struct fpstate initfpstate;
+	struct fpstate *fs = p->p_md.md_fpstate;
 	int64_t addr, buf[2];
 	union instr ins;
 	int freg, isload, err;
