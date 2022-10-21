@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.33 2022/01/12 21:41:06 guenther Exp $ */
+/*	$OpenBSD: boot.h,v 1.34 2022/10/21 18:14:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,6 +50,7 @@ void _dl_exit(int);
  */
 #define REDIRECT_SYSCALL(x)	typeof(x) x asm("_libc_"#x) __dso_hidden
 REDIRECT_SYSCALL(mprotect);
+REDIRECT_SYSCALL(mimmutable);
 
 #if RELOC_TAG == DT_RELA
 typedef	Elf_RelA	RELOC_TYPE;
@@ -63,8 +64,10 @@ static void *relro_addr;
 static size_t relro_size;
 #define RCRT0_RELRO()							\
 	do {								\
-		if (relro_addr != NULL && relro_size != 0)		\
+		if (relro_addr != NULL && relro_size != 0) {		\
 			mprotect(relro_addr, relro_size, PROT_READ);	\
+			mimmutable(relro_addr, relro_size);		\
+		}							\
 	} while (0)
 
 /*
