@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.61 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.62 2022/10/21 15:48:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,9 +158,12 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	if (n <= 0)
 		return n;
 
-	if (rb->buf == NULL)
+	if (rb->buf == NULL) {
 		if (!ssl3_setup_read_buffer(s))
 			return -1;
+	}
+	if (rb->buf == NULL)
+		return -1;
 
 	left = rb->left;
 	align = (size_t)rb->buf + SSL3_RT_HEADER_LENGTH;
