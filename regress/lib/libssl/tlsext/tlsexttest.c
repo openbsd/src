@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.76 2022/10/02 16:38:23 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.77 2022/10/21 14:55:54 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2028,9 +2028,7 @@ test_tlsext_sni_server(void)
  * QUIC transport parameters extension - RFC 90210 :)
  */
 
-#define TEST_QUIC_TRANSPORT_DATA "0123456789abcdef"
-
-static unsigned char tlsext_quic_transport_data[] = {
+static const unsigned char tlsext_quic_transport_data[] = {
 	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
 	0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 };
@@ -2072,7 +2070,7 @@ test_tlsext_quic_transport_parameters_client(void)
 	}
 
 	if (!SSL_set_quic_transport_params(ssl,
-	    TEST_QUIC_TRANSPORT_DATA, strlen(TEST_QUIC_TRANSPORT_DATA))) {
+	    tlsext_quic_transport_data, sizeof(tlsext_quic_transport_data))) {
 		FAIL("client failed to set QUIC parametes\n");
 		goto err;
 	}
@@ -2138,14 +2136,14 @@ test_tlsext_quic_transport_parameters_client(void)
 
 	SSL_get_peer_quic_transport_params(ssl, &out_bytes, &out_bytes_len);
 
-	if (out_bytes_len != strlen(TEST_QUIC_TRANSPORT_DATA)) {
+	if (out_bytes_len != sizeof(tlsext_quic_transport_data)) {
 		FAIL("server_parse QUIC length differs, got %zu want %zu\n",
 		    out_bytes_len,
 		    sizeof(tlsext_quic_transport_data));
 		goto err;
 	}
 
-	if (memcmp(out_bytes, TEST_QUIC_TRANSPORT_DATA,
+	if (memcmp(out_bytes, tlsext_quic_transport_data,
 	    out_bytes_len) != 0) {
 		FAIL("server_parse QUIC differs from sent:\n");
 		fprintf(stderr, "received:\n");
@@ -2204,7 +2202,7 @@ test_tlsext_quic_transport_parameters_server(void)
 	}
 
 	if (!SSL_set_quic_transport_params(ssl,
-	    TEST_QUIC_TRANSPORT_DATA, strlen(TEST_QUIC_TRANSPORT_DATA))) {
+	    tlsext_quic_transport_data, sizeof(tlsext_quic_transport_data))) {
 		FAIL("server failed to set QUIC parametes\n");
 		goto err;
 	}
@@ -2268,14 +2266,14 @@ test_tlsext_quic_transport_parameters_server(void)
 
 	SSL_get_peer_quic_transport_params(ssl, &out_bytes, &out_bytes_len);
 
-	if (out_bytes_len != strlen(TEST_QUIC_TRANSPORT_DATA)) {
+	if (out_bytes_len != sizeof(tlsext_quic_transport_data)) {
 		FAIL("client QUIC length differs, got %zu want %zu\n",
 		    out_bytes_len,
 		    sizeof(tlsext_quic_transport_data));
 		goto err;
 	}
 
-	if (memcmp(out_bytes, TEST_QUIC_TRANSPORT_DATA, out_bytes_len) != 0) {
+	if (memcmp(out_bytes, tlsext_quic_transport_data, out_bytes_len) != 0) {
 		FAIL("client QUIC differs from sent:\n");
 		fprintf(stderr, "received:\n");
 		hexdump(data, dlen);
