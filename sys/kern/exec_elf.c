@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.168 2022/08/29 16:53:46 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.169 2022/10/21 18:10:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -189,11 +189,18 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	 * initially.  The dynamic linker will make these read-only
 	 * and add back X permission after relocation processing.
 	 * Static executables with W|X segments will probably crash.
+	 * Apply immutability as much as possible, but not for RELRO
+	 * or PT_OPENBSD_MUTABLE sections, or LOADS marked
+	 * PF_OPENBSD_MUTABLE, or LOADS which violate W^X. Userland
+	 * (meaning crt0 or ld.so) will repair those regions.
 	 */
 	*prot |= (ph->p_flags & PF_R) ? PROT_READ : 0;
 	*prot |= (ph->p_flags & PF_W) ? PROT_WRITE : 0;
 	if ((ph->p_flags & PF_W) == 0)
 		*prot |= (ph->p_flags & PF_X) ? PROT_EXEC : 0;
+	if ((ph->p_flags & (PF_X | PF_W)) != (PF_X | PF_W) &&
+	    (ph->p_flags & PF_OPENBSD_MUTABLE) == 0)
+		flags |= VMCMD_IMMUTABLE;
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
@@ -432,6 +439,12 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			    ph[i].p_memsz, ph[i].p_vaddr + pos, NULLVP, 0, 0);
 			break;
 
+		case PT_GNU_RELRO:
+		case PT_OPENBSD_MUTABLE:
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
+			    ph[i].p_memsz, ph[i].p_vaddr + pos, NULLVP, 0, 0);
+			break;
+
 		default:
 			break;
 		}
@@ -652,6 +665,12 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			}
 			randomizequota -= ph[i].p_memsz;
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_randomize,
+			    ph[i].p_memsz, ph[i].p_vaddr + exe_base, NULLVP, 0, 0);
+			break;
+
+		case PT_GNU_RELRO:
+		case PT_OPENBSD_MUTABLE:
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
 			    ph[i].p_memsz, ph[i].p_vaddr + exe_base, NULLVP, 0, 0);
 			break;
 

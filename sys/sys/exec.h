@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.48 2022/09/01 07:26:56 jsg Exp $	*/
+/*	$OpenBSD: exec.h,v 1.49 2022/10/21 18:10:52 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -93,9 +93,10 @@ struct exec_vmcmd {
 #define VMCMD_BASE      0x0002  /* marks a base entry */
 #define VMCMD_STACK     0x0004  /* create with UVM_FLAG_STACK */
 #define VMCMD_SYSCALL   0x0008  /* create with UVM_FLAG_SYSCALL */
+#define VMCMD_IMMUTABLE	0x0010  /* create with UVM_ET_IMMUTABLE */
 };
 
-#define	EXEC_DEFAULT_VMCMD_SETSIZE	8	/* # of cmds in set to start */
+#define	EXEC_DEFAULT_VMCMD_SETSIZE	12	/* # of cmds in set to start */
 
 /* exec vmspace-creation command set; see below */
 struct exec_vmcmd_set {
@@ -147,6 +148,7 @@ void	kill_vmcmds(struct exec_vmcmd_set *evsp);
 int	vmcmd_map_pagedvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_readvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_zero(struct proc *, struct exec_vmcmd *);
+int	vmcmd_mutable(struct proc *, struct exec_vmcmd *);
 int	vmcmd_randomize(struct proc *, struct exec_vmcmd *);
 int	copyargs(struct exec_package *, struct ps_strings *, void *, void *);
 void	setregs(struct proc *, struct exec_package *, u_long, register_t *);
