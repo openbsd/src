@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.37 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.38 2022/10/21 17:45:40 kn Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.37 2022/01/09 05:42:38 jsg Exp $
+ * $Id: aic7xxxvar.h,v 1.38 2022/10/21 17:45:40 kn Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -1161,7 +1161,7 @@ struct ahc_pci_identity {
 	uint64_t		 id_mask;
 	ahc_device_setup_t	*setup;
 };
-extern struct ahc_pci_identity ahc_pci_ident_table[];
+extern const struct ahc_pci_identity ahc_pci_ident_table[];
 
 /***************************** VL/EISA Declarations ***************************/
 struct aic7770_identity {

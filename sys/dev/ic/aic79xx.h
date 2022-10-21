@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.29 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.30 2022/10/21 17:45:40 kn Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1316,7 +1316,7 @@ struct ahd_pci_identity {
 	uint64_t		 id_mask;
 	ahd_device_setup_t	*setup;
 };
-extern struct ahd_pci_identity ahd_pci_ident_table [];
+extern const struct ahd_pci_identity ahd_pci_ident_table[];
 extern const u_int ahd_num_pci_devs;
 
 /*************************** Function Declarations ****************************/

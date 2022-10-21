@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.28 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.29 2022/10/21 17:45:40 kn Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -146,7 +146,7 @@ ahd_device_setup_t ahd_aic7901A_setup;
 ahd_device_setup_t ahd_aic7902_setup;
 ahd_device_setup_t ahd_aic790X_setup;
 
-struct ahd_pci_identity ahd_pci_ident_table [] =
+const struct ahd_pci_identity ahd_pci_ident_table[] =
 {
 	/* aic7901 based controllers */
 	{

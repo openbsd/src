@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.62 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.63 2022/10/21 17:45:40 kn Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.62 2022/03/11 18:00:45 mpi Exp $
+ * $Id: ahc_pci.c,v 1.63 2022/10/21 17:45:40 kn Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -261,7 +261,7 @@ static ahc_device_setup_t ahc_aha394XX_setup;
 static ahc_device_setup_t ahc_aha494XX_setup;
 static ahc_device_setup_t ahc_aha398XX_setup;
 
-struct ahc_pci_identity ahc_pci_ident_table [] =
+const struct ahc_pci_identity ahc_pci_ident_table [] =
 {
 	/* aic7850 based controllers */
 	{
