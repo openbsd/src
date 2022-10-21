@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.61 2022/10/21 19:13:31 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.62 2022/10/21 20:46:40 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -213,8 +213,8 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 		uobj->pgops->pgo_detach(uobj);
 	} else {
 		if (cmd->ev_flags & VMCMD_IMMUTABLE)
-			uvm_map_immutable(&p->p_vmspace->vm_map,
-			    cmd->ev_addr, round_page(cmd->ev_len), 1);
+			uvm_map_immutable(&p->p_vmspace->vm_map, cmd->ev_addr,
+			    round_page(cmd->ev_addr + cmd->ev_len), 1);
 	}
 
 	return (error);
@@ -265,11 +265,9 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		    prot, FALSE, TRUE));
 	}
 	if (error == 0) {
-		if (cmd->ev_flags & VMCMD_IMMUTABLE) {
-			//printf("imut readvn\n");
-			uvm_map_immutable(&p->p_vmspace->vm_map,
-			    cmd->ev_addr, round_page(cmd->ev_len), 1);
-		}
+		if (cmd->ev_flags & VMCMD_IMMUTABLE)
+			uvm_map_immutable(&p->p_vmspace->vm_map, cmd->ev_addr,
+			    round_page(cmd->ev_addr + cmd->ev_len), 1);
 	}
 	return (error);
 }
@@ -293,11 +291,9 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	    UVM_MAPFLAG(cmd->ev_prot, PROT_MASK, MAP_INHERIT_COPY,
 	    MADV_NORMAL, UVM_FLAG_FIXED|UVM_FLAG_COPYONW |
 	    (cmd->ev_flags & VMCMD_STACK ? UVM_FLAG_STACK : 0)));
-	if (cmd->ev_flags & VMCMD_IMMUTABLE) {
-		//printf("imut zero\n");
-		uvm_map_immutable(&p->p_vmspace->vm_map,
-		    cmd->ev_addr, round_page(cmd->ev_len), 1);
-	}
+	if (cmd->ev_flags & VMCMD_IMMUTABLE)
+		uvm_map_immutable(&p->p_vmspace->vm_map, cmd->ev_addr,
+		    round_page(cmd->ev_addr + cmd->ev_len), 1);
 	return error;
 }
 
