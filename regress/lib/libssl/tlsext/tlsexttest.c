@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.77 2022/10/21 14:55:54 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.78 2022/10/21 14:58:53 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -517,7 +517,7 @@ test_tlsext_alpn_server(void)
  * This extension is only used by the client.
  */
 
-static uint8_t tlsext_supportedgroups_client_default[] = {
+static const uint8_t tlsext_supportedgroups_client_default[] = {
 	0x00, 0x08,
 	0x00, 0x1d,  /* X25519 (29) */
 	0x00, 0x17,  /* secp256r1 (23) */
@@ -525,20 +525,20 @@ static uint8_t tlsext_supportedgroups_client_default[] = {
 	0x00, 0x19,  /* secp521r1 (25) */
 };
 
-static uint16_t tlsext_supportedgroups_client_secp384r1_val[] = {
+static const uint16_t tlsext_supportedgroups_client_secp384r1_val[] = {
 	0x0018   /* tls1_ec_nid2group_id(NID_secp384r1) */
 };
-static uint8_t tlsext_supportedgroups_client_secp384r1[] = {
+static const uint8_t tlsext_supportedgroups_client_secp384r1[] = {
 	0x00, 0x02,
 	0x00, 0x18  /* secp384r1 (24) */
 };
 
 /* Example from RFC 4492 section 5.1.1 */
-static uint16_t tlsext_supportedgroups_client_nistp192and224_val[] = {
+static const uint16_t tlsext_supportedgroups_client_nistp192and224_val[] = {
 	0x0013,  /* tls1_ec_nid2group_id(NID_X9_62_prime192v1) */
 	0x0015   /* tls1_ec_nid2group_id(NID_secp224r1) */
 };
-static uint8_t tlsext_supportedgroups_client_nistp192and224[] = {
+static const uint8_t tlsext_supportedgroups_client_nistp192and224[] = {
 	0x00, 0x04,
 	0x00, 0x13, /* secp192r1 aka NIST P-192 */
 	0x00, 0x15  /* secp224r1 aka NIST P-224 */
@@ -859,25 +859,25 @@ test_tlsext_supportedgroups_server(void)
  * parse but the needs differ.
  */
 
-static uint8_t tlsext_ecpf_hello_uncompressed_val[] = {
+static const uint8_t tlsext_ecpf_hello_uncompressed_val[] = {
 	TLSEXT_ECPOINTFORMAT_uncompressed
 };
-static uint8_t tlsext_ecpf_hello_uncompressed[] = {
+static const uint8_t tlsext_ecpf_hello_uncompressed[] = {
 	0x01,
 	0x00 /* TLSEXT_ECPOINTFORMAT_uncompressed */
 };
 
-static uint8_t tlsext_ecpf_hello_prime[] = {
+static const uint8_t tlsext_ecpf_hello_prime[] = {
 	0x01,
 	0x01 /* TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime */
 };
 
-static uint8_t tlsext_ecpf_hello_prefer_order_val[] = {
+static const uint8_t tlsext_ecpf_hello_prefer_order_val[] = {
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
 	TLSEXT_ECPOINTFORMAT_uncompressed,
 	TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2
 };
-static uint8_t tlsext_ecpf_hello_prefer_order[] = {
+static const uint8_t tlsext_ecpf_hello_prefer_order[] = {
 	0x03,
 	0x01, /* TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime */
 	0x00, /* TLSEXT_ECPOINTFORMAT_uncompressed */
@@ -1340,23 +1340,23 @@ test_tlsext_ecpf_server(void)
  * Renegotiation Indication - RFC 5746.
  */
 
-static unsigned char tlsext_ri_prev_client[] = {
+static const unsigned char tlsext_ri_prev_client[] = {
 	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
 };
 
-static unsigned char tlsext_ri_prev_server[] = {
+static const unsigned char tlsext_ri_prev_server[] = {
 	0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88,
 	0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00,
 };
 
-static unsigned char tlsext_ri_client[] = {
+static const unsigned char tlsext_ri_client[] = {
 	0x10,
 	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
 };
 
-static unsigned char tlsext_ri_server[] = {
+static const unsigned char tlsext_ri_server[] = {
 	0x20,
 	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
 	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
@@ -1608,7 +1608,7 @@ test_tlsext_ri_server(void)
  * Signature Algorithms - RFC 5246 section 7.4.1.4.1.
  */
 
-static unsigned char tlsext_sigalgs_client[] = {
+static const unsigned char tlsext_sigalgs_client[] = {
 	0x00, 0x16, 0x08, 0x06, 0x06, 0x01, 0x06, 0x03,
 	0x08, 0x05, 0x05, 0x01, 0x05, 0x03, 0x08, 0x04,
 	0x04, 0x01, 0x04, 0x03, 0x02, 0x01, 0x02, 0x03,
@@ -1766,13 +1766,13 @@ test_tlsext_sigalgs_server(void)
 
 #define TEST_SNI_SERVERNAME "www.libressl.org"
 
-static unsigned char tlsext_sni_client[] = {
+static const unsigned char tlsext_sni_client[] = {
 	0x00, 0x13, 0x00, 0x00, 0x10, 0x77, 0x77, 0x77,
 	0x2e, 0x6c, 0x69, 0x62, 0x72, 0x65, 0x73, 0x73,
 	0x6c, 0x2e, 0x6f, 0x72, 0x67,
 };
 
-static unsigned char tlsext_sni_server[] = {
+static const unsigned char tlsext_sni_server[] = {
 };
 
 static int
@@ -2294,7 +2294,7 @@ test_tlsext_quic_transport_parameters_server(void)
 	return (failure);
 }
 
-static unsigned char tls_ocsp_client_default[] = {
+static const unsigned char tls_ocsp_client_default[] = {
 	0x01, 0x00, 0x00, 0x00, 0x00
 };
 
