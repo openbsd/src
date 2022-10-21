@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpicpu.4,v 1.9 2018/01/12 04:36:44 deraadt Exp $
+.\"	$OpenBSD: acpicpu.4,v 1.10 2022/10/21 04:02:16 guenther Exp $
 .\"
 .\" Copyright (c) 2006 Michael Knudsen <mk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: October 21 2022 $
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -33,6 +33,26 @@ power usage and extend battery life through the
 .Va hw.setperf
 .Xr sysctl 2
 mechanism.
+.Pp
+.Nm
+reports the C-states offered by ACPI using the format
+.Dl C%d(%d@%d %s.%x@%#x)
+where the respective fields are the ACPI state,
+the reported power consumption,
+the reported latency,
+the method,
+the flags on the method,
+and the address for the method.
+Inapplicable or unspecified fields are elided.
+If the state won't be used for any reason then the entry will have a
+.Sq !\&
+prefix.
+If the state is the fallback state used when no valid C-state entries were
+found then flags will be a
+.Sq !\& .
+For the
+.Va mwait
+method the address is the hints value for the instruction.
 .Sh SEE ALSO
 .Xr sysctl 2 ,
 .Xr acpi 4 ,
