@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.72 2022/07/24 00:28:09 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.73 2022/10/21 21:26:49 gkoehler Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -209,26 +209,23 @@ extern char *bootpath;
 #endif
 
 static __inline void
-syncicache(void *from, int len)
+syncicache(void *from, size_t len)
 {
-	int l;
-	char *p = from;
+	size_t	by, i;
 
-	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
-	l = len;
-
+	by = CACHELINESIZE;
+	i = 0;
 	do {
-		__asm volatile ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
+		__asm volatile ("dcbst %0,%1" :: "r"(from), "r"(i));
+		i += by;
+	} while (i < len);
 	__asm volatile ("sync");
-	p = from;
-	l = len;
+	i = 0;
 	do {
-		__asm volatile ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm volatile ("isync");
+		__asm volatile ("icbi %0,%1" :: "r"(from), "r"(i));
+		i += by;
+	} while (i < len);
+	__asm volatile ("sync; isync");
 }
 
 static __inline void

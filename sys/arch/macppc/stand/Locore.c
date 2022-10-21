@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.17 2019/09/02 23:40:29 kettenis Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.18 2022/10/21 21:26:49 gkoehler Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -32,17 +32,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <lib/libsa/stand.h>
 #include <macppc/stand/openfirm.h>
-#include <dev/cons.h>   
-     
+#include <dev/cons.h>
 
-/*
-#include "machine/cpu.h"
-*/
+#include "libsa.h"
 
 int main(void);
-void syncicache(void *, int);
 
 #define ENABLE_DECREMENTER_WORKAROUND
 void bat_init(void);
