@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.298 2022/10/16 16:16:37 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.299 2022/10/21 19:13:32 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4233,7 +4233,7 @@ uvm_map_syscall(struct vm_map *map, vaddr_t start, vaddr_t end)
  * => map must be unlocked
  */
 int
-uvm_map_immutable(struct vm_map *map, vaddr_t start, vaddr_t end, int imut, char *name)
+uvm_map_immutable(struct vm_map *map, vaddr_t start, vaddr_t end, int imut)
 {
 	struct vm_map_entry *entry;
 

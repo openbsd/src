@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.236 2022/10/21 18:11:55 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.237 2022/10/21 19:13:31 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -864,7 +864,7 @@ exec_sigcode_map(struct process *pr)
 		return (ENOMEM);
 	}
 	uvm_map_immutable(&pr->ps_vmspace->vm_map, pr->ps_sigcode,
-	    pr->ps_sigcode + round_page(sz), 1, "sig");
+	    pr->ps_sigcode + round_page(sz), 1);
 
 	/* Calculate PC at point of sigreturn entry */
 	pr->ps_sigcoderet = pr->ps_sigcode + (sigcoderet - sigcode);
@@ -914,7 +914,7 @@ exec_timekeep_map(struct process *pr)
 		return (ENOMEM);
 	}
 	uvm_map_immutable(&pr->ps_vmspace->vm_map, pr->ps_timekeep,
-	    pr->ps_timekeep + timekeep_sz, 1, "time");
+	    pr->ps_timekeep + timekeep_sz, 1);
 
 	return (0);
 }

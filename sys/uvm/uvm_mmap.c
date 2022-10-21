@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.173 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.174 2022/10/21 19:13:33 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -675,7 +675,7 @@ sys_mimmutable(struct proc *p, void *v, register_t *retval)
 	if (addr > SIZE_MAX - size)
 		return EINVAL;		/* disallow wrap-around. */
 
-	return uvm_map_immutable(&p->p_vmspace->vm_map, addr, addr+size, 1, "sys");
+	return uvm_map_immutable(&p->p_vmspace->vm_map, addr, addr+size, 1);
 }
 
 /*

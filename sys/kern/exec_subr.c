@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.60 2022/10/21 18:11:55 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.61 2022/10/21 19:13:31 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -214,8 +214,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	} else {
 		if (cmd->ev_flags & VMCMD_IMMUTABLE)
 			uvm_map_immutable(&p->p_vmspace->vm_map,
-			    cmd->ev_addr, round_page(cmd->ev_len),
-			    1, "pagedvn");
+			    cmd->ev_addr, round_page(cmd->ev_len), 1);
 	}
 
 	return (error);
@@ -269,8 +268,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		if (cmd->ev_flags & VMCMD_IMMUTABLE) {
 			//printf("imut readvn\n");
 			uvm_map_immutable(&p->p_vmspace->vm_map,
-			    cmd->ev_addr, round_page(cmd->ev_len),
-			    1, "readvn");
+			    cmd->ev_addr, round_page(cmd->ev_len), 1);
 		}
 	}
 	return (error);
@@ -298,8 +296,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	if (cmd->ev_flags & VMCMD_IMMUTABLE) {
 		//printf("imut zero\n");
 		uvm_map_immutable(&p->p_vmspace->vm_map,
-		    cmd->ev_addr, round_page(cmd->ev_len),
-		    1, "zero");
+		    cmd->ev_addr, round_page(cmd->ev_len), 1);
 	}
 	return error;
 }
@@ -317,7 +314,7 @@ vmcmd_mutable(struct proc *p, struct exec_vmcmd *cmd)
 	
 	/* ev_addr, ev_len may be misaligned, so maximize the region */
 	uvm_map_immutable(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
-	    round_page(cmd->ev_addr + cmd->ev_len), 0, "mutable");
+	    round_page(cmd->ev_addr + cmd->ev_len), 0);
 	return 0;
 }
 
