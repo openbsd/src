@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.46 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: adb.c,v 1.47 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -89,6 +89,7 @@
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/task.h>
 #include <sys/timeout.h>
 #include <sys/systm.h>
 
@@ -241,6 +242,11 @@ void	setsoftadb(void);
 int	adb_intr(void *arg);
 void	adb_cuda_autopoll(void);
 void 	adb_cuda_fileserver_mode(void);
+
+#ifndef SMALL_KERNEL
+void	adb_shutdown(void *);
+struct	task adb_shutdown_task = TASK_INITIALIZER(adb_shutdown, NULL);
+#endif
 
 #ifdef ADB_DEBUG
 /*
@@ -829,6 +835,49 @@ adb_soft_intr(void)
 		}
 
 	}
+}
+
+#ifndef SMALL_KERNEL
+void
+adb_shutdown(void *arg)
+{
+	extern int allowpowerdown;
+
+	if (allowpowerdown == 1) {
+		allowpowerdown = 0;
+		prsignal(initprocess, SIGUSR2);
+	}
+}
+#endif /* !SMALL_KERNEL */
+
+void
+adb_lid_closed_intr(void)
+{
+#ifndef SMALL_KERNEL
+	switch (lid_action) {
+	case 1:
+		/* Suspend. */
+		break;
+	case 2:
+		/* Hibernate. */
+		break;
+	}
+#endif
+}
+
+void
+adb_power_button_intr(void)
+{
+#ifndef SMALL_KERNEL
+	switch (pwr_action) {
+	case 1:
+		task_add(systq, &adb_shutdown_task);
+		break;
+	case 2:
+		/* Suspend. */
+		break;
+	}
+#endif
 }
 
 
@@ -1597,6 +1646,7 @@ adbattach(struct device *parent, struct device *self, void *aux)
 		adbHardware = ADB_HW_CUDA;
 	else if (strcmp(ca->ca_name, "via-pmu") == 0) {
 		adbHardware = ADB_HW_PMU;
+		pm_in_adbattach(sc->sc_dev.dv_xname);
 
 		/*
 		 * Bus reset can take a long time if no adb devices are

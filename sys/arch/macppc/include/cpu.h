@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2013/10/09 17:43:50 mpi Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -39,12 +39,16 @@
  */
 #define CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
 #define CPU_ALTIVEC		2	/* altivec is present */
-#define CPU_MAXID		3	/* number of valid machdep ids */
+#define CPU_LIDACTION		3	/* action caused by lid close */
+#define CPU_PWRACTION		4	/* action caused by power button */
+#define CPU_MAXID		5	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "allowaperture", CTLTYPE_INT }, \
 	{ "altivec", CTLTYPE_INT }, \
+	{ "lidaction", CTLTYPE_INT }, \
+	{ "pwraction", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -64,6 +68,9 @@ extern void (*ppc64_slew_voltage)(u_int);
 
 extern u_int32_t	ticks_per_sec;
 extern u_int32_t 	ns_per_tick;
+
+extern int		lid_action;
+extern int		pwr_action;
 
 #endif /* _KERNEL */
 #endif /* _MACHINE_CPU_H_ */

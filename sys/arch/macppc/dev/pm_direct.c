@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.31 2022/09/18 21:36:41 gkoehler Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.32 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/sensors.h>
 
 #include <machine/cpu.h>
 
@@ -142,6 +143,9 @@ signed char pm_receive_cmd_type[] = {
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 };
 
+int pm_old_env;
+struct ksensor pm_lid_sens;
+struct ksensordev pm_sensdev;
 
 /*
  * Define the private functions
@@ -161,6 +165,10 @@ int	pm_send(u_char);
 void	pm_adb_get_TALK_result(PMData *);
 void	pm_adb_get_ADB_data(PMData *);
 
+void	pm_env_intr(PMData *);
+
+
+extern int	hw_power;
 
 /*
  * These variables are in adb_direct.c.
@@ -413,6 +421,21 @@ pmgrop(PMData *pmdata)
 	return rval;
 }
 
+void
+pm_in_adbattach(const char *devname)
+{
+	/* A PowerBook (including iBook) has a lid. */
+	if (strncmp(hw_prod, "PowerBook", 9) == 0) {
+		strlcpy(pm_sensdev.xname, devname,
+		    sizeof(pm_sensdev.xname));
+		strlcpy(pm_lid_sens.desc, "lid open",
+		    sizeof(pm_lid_sens.desc));
+		pm_lid_sens.type = SENSOR_INDICATOR;
+		sensor_attach(&pm_sensdev, &pm_lid_sens);
+		sensordev_install(&pm_sensdev);
+		pm_lid_sens.value = 1; /* This is a guess. */
+	}
+}
 
 /*
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
@@ -456,8 +479,10 @@ pm_intr(void)
 	case 0x16:		/* ADB device event */
 	case 0x18:
 	case 0x1e:
-	case PMU_INT_WAKEUP:
 		pm_adb_get_ADB_data(&pmdata);
+		break;
+	case PMU_INT_ENVIRONMENT:
+		pm_env_intr(&pmdata);
 		break;
 	default:
 #ifdef ADB_DEBUG
@@ -664,6 +689,33 @@ pm_adb_get_ADB_data(PMData *pmdata)
 }
 
 void
+pm_env_intr(PMData *pmdata)
+{
+	int env, old;
+
+	/* We might have 3 bytes data[3..5], but use only data[3]. */
+	if (pmdata->num_data < 3)
+		return;
+	env = pmdata->data[3];
+	old = pm_old_env;
+
+	pm_lid_sens.value = !(env & PMU_ENV_LID_CLOSED);
+	if (!(old & PMU_ENV_LID_CLOSED) && (env & PMU_ENV_LID_CLOSED))
+		adb_lid_closed_intr();
+
+	hw_power = !!(env & PMU_ENV_AC_POWER);
+
+	/*
+	 * Act if one presses and releases the power button on a Mac
+	 * with no ADB keyboard.
+	 */
+	if ((old & PMU_ENV_POWER_BUTTON) && !(env & PMU_ENV_POWER_BUTTON))
+		adb_power_button_intr();
+
+	pm_old_env = env;
+}
+
+void
 pm_adb_restart(void)
 {
 	PMData p;
@@ -753,6 +805,7 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 	pmgrop(&p);
 
 	info->flags = p.data[1];
+	hw_power = !!(info->flags & PMU_PWR_AC_PRESENT);
 
 	switch (p.data[0]) {
 	case 3:

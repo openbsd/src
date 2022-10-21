@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.15 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.16 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
@@ -467,13 +467,14 @@ akbd_processevent(struct akbd_softc *sc, adb_event_t *event)
 	case 2:
 		/*
 		 * The reset (or power) key sends 0x7f7f on press and
-		 * 0xffff on release, and we ignore it.
+		 * 0xffff on release.
 		 */
 		if (event->bytes[0] == event->bytes[1] &&
 		    ADBK_KEYVAL(event->bytes[0]) == ADBK_RESET) {
-			if (event->bytes[0] == ADBK_KEYDOWN(ADBK_RESET))
+			if (event->bytes[0] == ADBK_KEYDOWN(ADBK_RESET)) {
 				SET(sc->sc_caps, CL_DOWN_RESET);
-			else {
+				adb_power_button_intr();
+			} else {
 				if (ISSET(sc->sc_caps, CL_DOWN_RESET))
 					CLR(sc->sc_caps, CL_DOWN_RESET);
 				else if (ISSET(sc->sc_caps, CL_DOWN_ADB)) {

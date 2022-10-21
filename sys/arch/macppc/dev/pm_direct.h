@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.h,v 1.14 2022/09/18 21:36:41 gkoehler Exp $	*/
+/*	$OpenBSD: pm_direct.h,v 1.15 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: pm_direct.h,v 1.7 2005/01/07 04:59:58 briggs Exp $	*/
 
 /*
@@ -49,6 +49,7 @@ typedef	struct	{
 }	PMData;
 
 int	pmgrop(PMData *);
+void	pm_in_adbattach(const char *);
 int	pm_adb_op(u_char *, void *, void *, int);
 void	pm_adb_restart(void);
 void	pm_adb_poweroff(void);
@@ -104,7 +105,7 @@ void pmu_fileserver_mode(int);
 #define PMU_INT_SNDBRT		0x08	/* sound/brightness up/down buttons */
 #define PMU_INT_ADB		0x10	/* ADB autopoll or reply data */
 #define PMU_INT_BATTERY		0x20
-#define PMU_INT_WAKEUP		0x40
+#define PMU_INT_ENVIRONMENT	0x40
 #define PMU_INT_TICK		0x80	/* 1-second tick interrupt */
 #define PMU_INT_ALL		0xff	/* Mask of all interrupts */
 
@@ -119,6 +120,13 @@ void pmu_fileserver_mode(int);
 #define PMU_POW_CHARGER		0x02	/* battery charger power */
 #define PMU_POW_IRLED		0x04	/* IR led power (on wallstreet) */
 #define PMU_POW_MEDIABAY	0x08	/* media bay power (wallstreet/lombard ?) */
+
+/* Bits from PMU_INT_ENVIRONMENT */
+#define PMU_ENV_LID_CLOSED	0x01	/* The lid is closed */
+#define PMU_ENV_AC_POWER	0x04	/* AC is plugged in */
+#define PMU_ENV_POWER_BUTTON	0x08	/* power button on ADB-less Macs */
+#define PMU_ENV_BATTERY		0x10
+#define PMU_ENV_OVER_TEMP	0x20
 
 /* PMU PMU_POWER_EVENTS commands */
 enum {

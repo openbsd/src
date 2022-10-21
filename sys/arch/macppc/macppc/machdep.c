@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.197 2022/10/21 21:26:49 gkoehler Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.198 2022/10/21 22:42:36 gkoehler Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -117,6 +117,8 @@ void * startsym, *endsym;
 #ifdef APERTURE
 int allowaperture = 0;
 #endif
+int lid_action = 1;
+int pwr_action = 1;
 
 void dumpsys(void);
 int lcsplx(int ipl);	/* called from LCore */
@@ -533,9 +535,14 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	return EJUSTRETURN;
 }
 
+const struct sysctl_bounded_args cpuctl_vars[] = {
+	{ CPU_ALTIVEC, &ppc_altivec, SYSCTL_INT_READONLY },
+	{ CPU_LIDACTION, &lid_action, 0, 2 },
+	{ CPU_PWRACTION, &pwr_action, 0, 2 },
+};
+
 /*
  * Machine dependent system variables.
- * None for now.
  */
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
@@ -556,10 +563,9 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
-	case CPU_ALTIVEC:
-		return (sysctl_rdint(oldp, oldlenp, newp, ppc_altivec));
 	default:
-		return EOPNOTSUPP;
+		return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 }
 
