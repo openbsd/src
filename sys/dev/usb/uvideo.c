@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.218 2022/08/15 01:35:07 jsg Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.219 2022/10/21 18:29:37 kn Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -106,7 +106,7 @@ struct uvideo_softc {
 	uint8_t					*sc_uplayer_fbuffer;
 	void					 (*sc_uplayer_intr)(void *);
 
-	struct uvideo_devs			*sc_quirk;
+	const struct uvideo_devs		*sc_quirk;
 	usbd_status				(*sc_decode_stream_header)
 						    (struct uvideo_softc *,
 						    uint8_t *, int);
@@ -303,7 +303,7 @@ const struct video_hw_if uvideo_hw_if = {
 #define UVIDEO_FLAG_REATTACH			0x2
 #define UVIDEO_FLAG_VENDOR_CLASS		0x4
 #define UVIDEO_FLAG_NOATTACH			0x8
-struct uvideo_devs {
+const struct uvideo_devs {
 	struct usb_devno	 uv_dev;
 	char			*ucode_name;
 	usbd_status		 (*ucode_loader)(struct uvideo_softc *);
@@ -386,7 +386,7 @@ struct uvideo_devs {
 	},
 };
 #define uvideo_lookup(v, p) \
-	((struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
+	((const struct uvideo_devs *)usb_lookup(uvideo_devs, v, p))
 
 int
 uvideo_open(void *addr, int flags, int *size, uint8_t *buffer,
@@ -440,7 +440,7 @@ uvideo_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
-	struct uvideo_devs *quirk;
+	const struct uvideo_devs *quirk;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
