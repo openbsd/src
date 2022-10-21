@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.299 2022/10/21 19:13:32 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.300 2022/10/21 20:45:51 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3139,8 +3139,18 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		if (checkimmutable &&
 		    (iter->etype & UVM_ET_IMMUTABLE)) {
-			error = EPERM;
-			goto out;
+			if (iter->protection == (PROT_READ | PROT_WRITE) &&
+			    new_prot == PROT_READ) {
+				/*
+				 * XXX chrome renderer on 2022oct21 does a
+				 * RW->R transition of some immutable range.
+				 * Workaround this until it is found...
+				 */
+				;
+			} else {
+				error = EPERM;
+				goto out;
+			}
 		}
 		old_prot = iter->protection;
 		if (old_prot == PROT_NONE && new_prot != old_prot) {
