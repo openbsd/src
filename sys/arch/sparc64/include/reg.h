@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: reg.h,v 1.7 2022/10/22 20:09:41 miod Exp $	*/
 /*	$NetBSD: reg.h,v 1.8 2001/06/19 12:59:16 wiz Exp $ */
 
 /*
@@ -43,6 +43,19 @@
 
 #ifndef _MACHINE_REG_H_
 #define	_MACHINE_REG_H_
+
+/*
+ * The v9 register window.  Each stack pointer (%o6 aka %sp) in each window
+ * must ALWAYS point to some place at which it is safe to scribble on
+ * 64 bytes.  (If not, your process gets mangled.)  Furthermore, each
+ * stack pointer should be aligned on a 16-byte boundary (plus the BIAS)
+ * for v9 stacks (the kernel as currently coded allows arbitrary alignment,
+ * but with a hefty performance penalty).
+ */
+struct rwindow {
+	int64_t	rw_local[8];		/* %l0..%l7 */
+	int64_t	rw_in[8];		/* %i0..%i7 */
+};
 
 struct reg {
 	int64_t	r_tstate;	/* tstate register */

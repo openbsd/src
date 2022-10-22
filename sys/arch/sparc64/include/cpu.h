@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.99 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.100 2022/10/22 20:09:41 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -73,9 +73,10 @@
  */
 
 #include <machine/ctlreg.h>
-#include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/intr.h>
+#include <machine/psl.h>
+#include <machine/reg.h>
 
 #include <sys/sched.h>
 #include <sys/srp.h>
