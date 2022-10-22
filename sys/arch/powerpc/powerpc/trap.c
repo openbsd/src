@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.125 2022/01/21 14:07:06 tobhe Exp $	*/
+/*	$OpenBSD: trap.c,v 1.126 2022/10/22 00:58:56 gkoehler Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -67,6 +67,8 @@ void trap(struct trapframe *frame);
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
 
 #ifdef ALTIVEC
+static int altivec_assist(void *);
+
 /*
  * Save state of the vector processor, This is done lazily in the hope
  * that few processes in the system will be using the vector unit
@@ -511,7 +513,14 @@ brain_damage:
 		break;
 #endif
 
-	case EXC_VECAST|EXC_USER:
+	case EXC_VECAST_G4|EXC_USER:
+	case EXC_VECAST_G5|EXC_USER:
+#ifdef ALTIVEC
+		if (altivec_assist((void *)frame->srr0) == 0) {
+			frame->srr0 += 4;
+			break;
+		}
+#endif
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
 		break;
@@ -638,3 +647,85 @@ fix_unaligned(struct proc *p, struct trapframe *frame)
 	}
 	return -1;
 }
+
+#ifdef ALTIVEC
+static int
+altivec_assist(void *user_pc)
+{
+	/* These labels are in vecast.S */
+	void vecast_asm(uint32_t, void *);
+	void vecast_vaddfp(void);
+	void vecast_vsubfp(void);
+	void vecast_vmaddfp(void);
+	void vecast_vnmsubfp(void);
+	void vecast_vrefp(void);
+	void vecast_vrsqrtefp(void);
+	void vecast_vlogefp(void);
+	void vecast_vexptefp(void);
+	void vecast_vctuxs(void);
+	void vecast_vctsxs(void);
+
+	uint32_t insn, op, va, vc, lo;
+	void (*lab)(void);
+
+	if (copyin(user_pc, &insn, sizeof(insn)) != 0)
+		return -1;
+	op = (insn & 0xfc000000) >> 26;	/* primary opcode */
+	va = (insn & 0x001f0000) >> 16;	/* vector A */
+	vc = (insn & 0x000007c0) >>  6;	/* vector C or extended opcode */
+	lo =  insn & 0x0000003f;	/* extended opcode */
+
+	/* Stop if this isn't an altivec instruction. */
+	if (op != 4)
+		return -1;
+
+	/* Decide which instruction to emulate. */
+	lab = NULL;
+	switch (lo) {
+	case 10:
+		switch (vc) {
+		case 0:
+			lab = vecast_vaddfp;
+			break;
+		case 1:
+			lab = vecast_vsubfp;
+			break;
+		case 4:
+			if (va == 0)
+				lab = vecast_vrefp;
+			break;
+		case 5:
+			if (va == 0)
+				lab = vecast_vrsqrtefp;
+			break;
+		case 6:
+			if (va == 0)
+				lab = vecast_vexptefp;
+			break;
+		case 7:
+			if (va == 0)
+				lab = vecast_vlogefp;
+			break;
+		case 14:
+			lab = vecast_vctuxs;
+			break;
+		case 15:
+			lab = vecast_vctsxs;
+			break;
+		}
+		break;
+	case 46:
+		lab = vecast_vmaddfp;
+		break;
+	case 47:
+		lab = vecast_vnmsubfp;
+		break;
+	}
+
+	if (lab) {
+		vecast_asm(insn, lab);	/* Emulate it. */
+		return 0;
+	} else
+		return -1;
+}
+#endif

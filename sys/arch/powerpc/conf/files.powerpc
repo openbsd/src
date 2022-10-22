@@ -1,4 +1,4 @@
-#	$OpenBSD: files.powerpc,v 1.55 2018/01/25 15:06:29 mpi Exp $
+#	$OpenBSD: files.powerpc,v 1.56 2022/10/22 00:58:56 gkoehler Exp $
 #
 
 file	arch/powerpc/powerpc/setjmp.S			ddb
@@ -16,6 +16,7 @@ file	arch/powerpc/powerpc/vm_machdep.c
 file	arch/powerpc/powerpc/lock_machdep.c		multiprocessor
 file	arch/powerpc/powerpc/intr.c
 file	arch/powerpc/powerpc/softintr.c
+file	arch/powerpc/powerpc/vecast.S			altivec
 
 file	arch/powerpc/ddb/db_memrw.c			ddb
 file	arch/powerpc/ddb/db_disasm.c			ddb
