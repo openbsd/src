@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.27 2017/12/16 20:06:56 guenther Exp $ */
+/*	$OpenBSD: atexit.c,v 1.28 2022/10/22 15:21:25 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -67,7 +67,7 @@ struct atfork_listhead _atfork_list = TAILQ_HEAD_INITIALIZER(_atfork_list);
 int
 __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 {
-	struct atexit *p = __atexit;
+	struct atexit *p;
 	struct atexit_fn *fnp;
 	int pgsize = getpagesize();
 	int ret = -1;
