@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.169 2022/10/21 18:10:56 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.170 2022/10/22 15:06:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -201,6 +201,9 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	if ((ph->p_flags & (PF_X | PF_W)) != (PF_X | PF_W) &&
 	    (ph->p_flags & PF_OPENBSD_MUTABLE) == 0)
 		flags |= VMCMD_IMMUTABLE;
+#if defined (__mips__)
+	flags &= ~VMCMD_IMMUTABLE;	/* DT_DEBUG is not ready on mips */
+#endif
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
