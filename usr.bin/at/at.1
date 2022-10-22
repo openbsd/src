@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.55 2018/03/16 16:58:26 schwarze Exp $
+.\" $OpenBSD: at.1,v 1.56 2022/10/22 06:41:04 jmc Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2018 $
+.Dd $Mdocdate: October 22 2022 $
 .Dt AT 1
 .Os
 .Sh NAME
@@ -167,21 +167,21 @@ It accepts times of the form
 .Ar HHMM
 or
 .Ar HH:MM
-to run a job at a specific time of day.
-(If that time is already past, the next day is assumed.)
-You may also specify
+to run a job at a specific time of day
+(if that time is already past, the next day is assumed).
+It is also possible to specify
 .Cm midnight ,
 .Cm noon ,
 or
 .Cm teatime
-(4pm)
-and you can have a time-of-day suffixed with
+(4pm),
+or have a time-of-day suffixed with
 .Cm AM
 or
 .Cm PM
 for running in the morning or the evening.
-You can also say what day the job will be run,
-by giving a date in the form
+To say what day the job will be run,
+give a date in the form
 .Ar \%month-name day
 with an optional
 .Ar year ,
@@ -202,8 +202,9 @@ a typo.
 .Pp
 The specification of a date must follow the specification of
 the time of day.
-You can also give times like
-.Oo Cm now Oc Cm + Ar count time-units ,
+A time like
+.Oo Cm now Oc Cm + Ar count time-units
+may be given,
 where the time-units can be
 .Cm minutes ,
 .Cm hours ,
@@ -213,24 +214,25 @@ where the time-units can be
 or
 .Cm years
 (the singular forms are also accepted).
-You can tell
+To tell
 .Nm at
-to run the job today by suffixing the time with
+to run the job today or tomorrow,
+suffix the time with
 .Cm today
-and to run the job tomorrow by suffixing the time with
+or
 .Cm tomorrow .
 The
 .Cm next
 keyword may be used as an alias for
 .Cm + 1 .
 .Pp
-For example, to run a job at 4pm three days from now, you would do
+For example, to run a job at 4pm three days from now, use
 .Ic at 4pm + 3 days .
-To run a job at 10:00am on July 31, you would do
+To run a job at 10:00am on July 31, use
 .Ic at 10am Jul 31 .
-To run a job at 1am tomorrow, you would do
+To run a job at 1am tomorrow, use
 .Ic at 1am tomorrow .
-To run a job at midnight in one week's time, you would do
+To run a job at midnight in one week's time, use
 .Ic at midnight next week .
 .Pp
 The
@@ -386,6 +388,6 @@ and
 .Nm batch
 as presently implemented are not suitable when users are competing for
 resources.
-If this is the case for your site, you might want to consider another
-batch system, such as
+If this is the case consider another batch system,
+such as
 .Nm nqs .
