@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.24 2022/10/07 15:22:10 deraadt Exp $
+.\"	$OpenBSD: procmap.1,v 1.25 2022/10/22 06:39:12 jmc Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 7 2022 $
+.Dd $Mdocdate: October 22 2022 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -52,6 +52,7 @@ depending on the options given, other information such as the end
 address, the underlying file's device and inode numbers, and various
 protection information will be displayed, along with the path to the
 file, if such data is available.
+The various output formats are explained in greater detail below.
 .Pp
 .Nm
 requires the ability to open
@@ -186,15 +187,13 @@ and
 .Fl p
 options override each other, so the last one to appear on the command
 line takes effect.
-If you do wish to see information about
+To see information about
 .Nm
-and another process as the same time, simply omit the
+and another process at the same time, simply omit the
 .Fl p
 and place the extra PID at the end of the command line.
-.Sh EXIT STATUS
-.Ex -std procmap
-.Sh EXAMPLES
-While the meaning most of the output is self-evident, some pieces of
+.Sh OUTPUT FORMAT
+While the meaning of most of the output is self-evident, some pieces of
 it may appear to be a little inscrutable.
 .Pp
 Here a portion of the default output from
@@ -205,7 +204,7 @@ prompt shows the starting address of the map entry, the size of the
 map entry, the current protection level of the map entry, and either
 the name of the file backing the entry or some other descriptive text.
 .Bd -literal -offset indent
-$ procmap
+# procmap
 08048000    420K read/exec         /bin/sh
 080B1000      8K read/write        /bin/sh
 080B3000     28K read/write          [ anon ]
@@ -218,7 +217,7 @@ When the
 output style is selected, the first thing printed is the contents of
 the vm_map structure, followed by the individual map entries.
 .Bd -literal -offset indent
-$ procmap -d
+# procmap -d
 MAP 0xcf7cac84: [0x0-\*(Gt0xbfbfe000]
         #ent=8, sz=34041856, ref=1, version=20, flags=0x21
         pmap=0xcf44cee0(resident=\*(Ltunknown\*(Gt)
@@ -239,17 +238,10 @@ VM_MAP_WANTLOCK		0x10	rw: want to write-lock
 .Ed
 .Pp
 The
-.Dq submap ,
-.Dq cow ,
-and
-.Dq nc
-fields are true or false, and indicate whether the map is a submap,
-whether it is marked for copy on write, and whether it needs a copy.
-The
 .Dq prot
 (or protection) field, along with
 .Dq max
-(maximum protection allowed) are made up of the following flags from
+(maximum protection allowed), are made up of the following flags from
 .In uvm/uvm_extern.h :
 .\" this column width specifically chosen so that all the header file
 .\" excerpts appear to line up cleanly
@@ -273,7 +265,7 @@ The two output styles that mirror the contents of the
 file system
 appear as follows:
 .Bd -literal -offset indent
-$ procmap -m
+# procmap -m
 0x8048000 0x80b1000 r-x--I rwx COW NC 1 0 0
 0xdecf000 0xd018000 r-x--I rwx COW NC 1 0 0
 0x80b1000 0x80b3000 rw---I rwx COW NC 1 0 0
@@ -281,7 +273,7 @@ $ procmap -m
 0x80ba000 0x80be000 rwx--I rwx COW NNC 1 0 0
 \&...
 
-$ procmap -l
+# procmap -l
 0x08048000	0x080b1000	r-x--Ip 00000000 00:00 70173     /bin/sh
 0x080b1000	0x080b3000	rw---Ip 00068000 00:00 70173     /bin/sh
 0x080b3000	0x080ba000	rw---Ip 00000000 00:00 0
@@ -295,6 +287,7 @@ and
 .Sq x
 characters, indicating read permission, write permission, and execute
 permission, respectively.
+The remaining fields of this column are described below.
 The
 .Dq COW ,
 .Dq NC ,
@@ -320,32 +313,45 @@ on write or not), and the numbers are the offset into the underlying
 object, the device and numbers of the object if it is a file, and the
 path to the file (if available).
 .Pp
-As noted above (see section
-.Sx DESCRIPTION ) ,
-the
+As noted above, the
 .Dq all
 output format is an amalgam of the previous output formats.
 .Bd -literal -offset indent
-$ procmap -a
-Start    End         Size  Offset   rwxpc  RWX  I/W/A ...
-08048000-080b0fff     420k 00000000 r-xp+ (rwx) 1/0/0 ...
+# procmap -a
+Start    End         Size  Offset   rwxSeIpc  RWX  I/W/A ...
+08048000-080b0fff     420k 00000000 r-x---p+ (rwx) 1/0/0 ...
 \&...
 .Ed
 .Pp
-In this format, the column labeled
-.Dq rwxpc
-contains the permissions for the mapping along with the shared/private
-flag, and a character indicating whether the mapping needs to be
-copied on write
+In this format the column labeled
+.Dq rwxSeIpc
+comprises:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It rwx
+permissions for the mapping
+.It S
+mapping is marked stack
+.It e
+mapping is allowed system call entry points
+.It I
+mapping is immutable (rwx protection may not be changed)
+.It p
+shared/private flag
+.It c
+mapping needs to be copied on write
 .Pq Sq +
 or has already been copied
 .Pq Sq -
-and is followed by a column that indicates the maximum permissions for
-the map entry.
-The column labeled
-.Dq I/W/A
-indicates the inheritance, wired, and advice values for the map entry,
+.El
+.Pp
+It is followed by the RWX column,
+which indicates the maximum permissions for the map entry.
+The column labeled I/W/A indicates the inheritance,
+wired, and advice values for the map entry,
 as previously described.
+.Sh EXIT STATUS
+.Ex -std procmap
 .Sh SEE ALSO
 .Xr ls 1 ,
 .\" .Xr stat 1 ,
