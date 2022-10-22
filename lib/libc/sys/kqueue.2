@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.46 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: kqueue.2,v 1.47 2022/10/22 06:27:46 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: October 22 2022 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ is zero,
 .Fn kevent
 will return immediately even if there is a
 .Fa timeout
-specified unlike
+specified, unlike
 .Xr select 2 .
 If
 .Fa timeout
@@ -481,7 +481,8 @@ descriptor.
 The events to monitor are:
 .Bl -tag -width XXNOTE_CHANGE
 .It Dv NOTE_CHANGE
-A device change event has occurred, e.g. an HDMI cable has been plugged in to a port.
+A device change event has occurred,
+e.g. an HDMI cable has been plugged in to a port.
 .El
 .Pp
 On return,
