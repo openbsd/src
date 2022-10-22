@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.15 2022/03/14 21:52:08 solene Exp $
+.\"	$OpenBSD: gzip.1,v 1.16 2022/10/22 14:41:27 millert Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: March 14 2022 $
+.Dd $Mdocdate: October 22 2022 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -83,10 +83,11 @@ utility restores compressed files to their original form, renaming the
 files by removing the extension (or by using the stored name if the
 .Fl N
 flag is specified).
-It has the ability to restore files compressed by both
-.Nm
-and
+It has the ability to restore files compressed by
+.Nm ,
 .Xr compress 1 ,
+and
+.Xr zip 1 ,
 recognising the following extensions:
 .Dq .Z ,
 .Dq -Z ,
@@ -101,12 +102,17 @@ recognising the following extensions:
 .Dq -taz ,
 and
 .Dq _taz .
+The
+.Fl S
+option can be used to support other file extensions.
 Extensions ending in
 .Dq tgz
 and
 .Dq taz
 are not removed when decompressing, instead they are converted to
 .Dq tar .
+Files in zip format are only supported if they contain a single member
+either compressed with the deflate scheme or stored uncompressed.
 .Pp
 The
 .Nm gzcat
@@ -242,7 +248,12 @@ Recursive mode:
 .Nm
 will descend into specified directories.
 .It Fl S Ar suffix
-Set the suffix for compressed files.
+When compressing, use the specified
+.Ar suffix
+as the extension when creating output files.
+When uncompressing, recognize file names with the specified
+.Ar suffix
+as compressed files.
 .It Fl t
 Test the integrity of each file leaving any files intact.
 .It Fl V

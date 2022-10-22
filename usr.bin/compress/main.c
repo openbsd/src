@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.101 2022/08/29 19:42:01 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.102 2022/10/22 14:41:27 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,9 @@
 
 enum program_mode pmode;
 
-int cat, decomp, pipin, force, verbose, testmode, list, recurse, storename;
-int kflag;
+static int cat, decomp, kflag, pipin, force, verbose, testmode, list, recurse;
+static int storename;
+static char suffix[16];
 extern char *__progname;
 
 const struct compressor {
@@ -101,6 +102,20 @@ const struct compressor {
 		z_wopen,
 		zwrite,
 		z_close
+	},
+#define M_UNZIP (&c_table[2])
+	{
+		"unzip",
+		".zip",
+		"PK",
+		NULL,
+		"cfhkLlNno:qrtVv",
+		"fhqr",
+		zip_ropen,
+		zip_read,
+		NULL,
+		NULL,
+		zip_close
 	},
 #endif /* SMALL */
   { NULL }
@@ -167,7 +182,7 @@ main(int argc, char *argv[])
 	const struct compressor *method;
 	const char *optstr, *s;
 	char *p, *infile;
-	char outfile[PATH_MAX], _infile[PATH_MAX], suffix[16];
+	char outfile[PATH_MAX], _infile[PATH_MAX];
 	int bits, ch, error, rc, cflag, oflag;
 
 	if (pledge("stdio rpath wpath cpath fattr chown", NULL) == -1)
@@ -312,7 +327,6 @@ main(int argc, char *argv[])
 			if (optarg[0] != '.')
 				*p++ = '.';
 			strlcpy(p, optarg, sizeof(suffix) - (p - suffix));
-			p = optarg;
 			break;
 		case 't':
 			testmode = 1;
@@ -700,6 +714,8 @@ dodecompress(const char *in, char *out, struct stat *sb)
 				}
 			}
 			ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
+			if (ofd != -1)
+				oreg = 1;
 		}
 		if (ofd == -1) {
 			if (verbose >= 0)
@@ -725,10 +741,21 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		error = errno == EINVAL ? WARNING : FAILURE;
 	}
 
-	if (method->close(cookie, &info, NULL, NULL)) {
-		if (!error && verbose >= 0)
-			warnx("%s", in);
-		error = FAILURE;
+	if (method->close(cookie, &info, NULL, NULL) && !error) {
+#ifdef M_UNZIP
+		if (errno == EEXIST) {
+			if (verbose >= 0) {
+				warnx("more than one entry in %s: %s", in,
+				    cat ? "ignoring the rest" : "unchanged");
+			}
+			error = cat ? WARNING : FAILURE;
+		} else
+#endif
+		{
+			if (verbose >= 0)
+				warn("%s", in);
+			error = FAILURE;
+		}
 	}
 	if (storename && !cat) {
 		if (info.mtime != 0) {
@@ -736,10 +763,9 @@ dodecompress(const char *in, char *out, struct stat *sb)
 			    sb->st_atimespec.tv_sec = info.mtime;
 			sb->st_mtimespec.tv_nsec =
 			    sb->st_atimespec.tv_nsec = 0;
-		} else
-			storename = 0;		/* no timestamp to restore */
+		}
 	}
-	if (error == SUCCESS)
+	if (error != FAILURE)
 		setfile(out, ofd, sb);
 
 	if (ofd != -1 && close(ofd)) {
@@ -748,7 +774,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		error = FAILURE;
 	}
 
-	if (!error) {
+	if (error != FAILURE) {
 		if (list) {
 			if (info.mtime == 0)
 				info.mtime = (u_int32_t)sb->st_mtime;
@@ -760,7 +786,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 	}
 
 	/* On error, clean up the file we created but preserve errno. */
-	if (error && oreg)
+	if (error == FAILURE && oreg)
 		unlink(out);
 
 	return (error);
@@ -829,14 +855,17 @@ const char *
 check_suffix(const char *infile)
 {
 	int i;
-	char *suf, *sep, *separators = ".-_";
-	static char *suffixes[] = { "Z", "gz", "z", "tgz", "taz", NULL };
+	const char *suf, *sep;
+	const char separators[] = ".-_";
+	const char *suffixes[] = { "Z", "gz", "z", "tgz", "taz", NULL };
 
 	for (sep = separators; *sep != '\0'; sep++) {
 		if ((suf = strrchr(infile, *sep)) == NULL)
 			continue;
 		suf++;
 
+		if (strcmp(suf, suffix + 1) == 0)
+			return (suf - 1);
 		for (i = 0; suffixes[i] != NULL; i++) {
 			if (strcmp(suf, suffixes[i]) == 0)
 				return (suf - 1);
