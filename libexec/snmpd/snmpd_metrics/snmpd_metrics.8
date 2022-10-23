@@ -1,4 +1,4 @@
-.\"	$OpenBSD: snmpd_metrics.8,v 1.3 2022/10/23 01:15:33 jsg Exp $
+.\"	$OpenBSD: snmpd_metrics.8,v 1.4 2022/10/23 06:12:06 jmc Exp $
 .\"
 .\" Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm snmpd_metrics
-.Nd Export snmpd MIB data
+.Nd export snmpd MIB data
 .Sh SYNOPSIS
 .Nm
 .Op Fl dv
@@ -36,6 +36,7 @@ daemon:
 HOST-RESOURCES-MIB, IF-MIB, OPENBSD-PF-MIB, OPENBSD-SENSORS-MIB,
 OPENBSD-CARP-MIB, OPENBSD-MEM-MIB, IP-MIB, IP-FORWARD-MIB,
 UCD-DISKIO-MIB, and BRIDGE-MIB.
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl C Ar option
