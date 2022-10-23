@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.102 2022/10/22 14:41:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.103 2022/10/23 19:06:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,9 +61,7 @@ const struct compressor {
 	const char *name;
 	const char *suffix;
 	const u_char *magic;
-	const char *comp_opts;
-	const char *decomp_opts;
-	const char *cat_opts;
+	const char *opts;
 	void *(*ropen)(int, char *, int);
 	int (*read)(void *, char *, int);
 #ifndef SMALL
@@ -78,8 +76,6 @@ const struct compressor {
 		".gz",
 		"\037\213",
 		"123456789ab:cdfhkLlNnOo:qrS:tVv",
-		"cfhkLlNno:qrtVv",
-		"fhqr",
 		gz_ropen,
 		gz_read,
 #ifndef SMALL
@@ -95,8 +91,6 @@ const struct compressor {
 		".Z",
 		"\037\235",
 		"123456789ab:cdfghlNnOo:qrS:tv",
-		"cfhlNno:qrtv",
-		"fghqr",
 		z_ropen,
 		zread,
 		z_wopen,
@@ -109,8 +103,6 @@ const struct compressor {
 		".zip",
 		"PK",
 		NULL,
-		"cfhkLlNno:qrtVv",
-		"fhqr",
 		zip_ropen,
 		zip_read,
 		NULL,
@@ -127,8 +119,6 @@ const struct compressor null_method = {
 	".nul",
 	"XX",
 	"123456789ab:cdfghlNnOo:qrS:tv",
-	"cfhlNno:qrtv",
-	"fghqr",
 	null_ropen,
 	null_read,
 	null_wopen,
@@ -137,19 +127,19 @@ const struct compressor null_method = {
 };
 #endif /* SMALL */
 
-int permission(const char *);
-__dead void usage(int);
-int docompress(const char *, char *, const struct compressor *,
+static int permission(const char *);
+static __dead void usage(int);
+static int docompress(const char *, char *, const struct compressor *,
     int, struct stat *);
-int dodecompress(const char *, char *, struct stat *);
-const struct compressor *check_method(int);
-const char *check_suffix(const char *);
-char *set_outfile(const char *, char *, size_t);
-void list_stats(const char *, const struct compressor *, struct z_info *);
-void verbose_info(const char *, off_t, off_t, u_int32_t);
+static int dodecompress(const char *, char *, struct stat *);
+static const char *check_suffix(const char *);
+static char *set_outfile(const char *, char *, size_t);
+static void list_stats(const char *, const struct compressor *,
+    struct z_info *);
+static void verbose_info(const char *, off_t, off_t, u_int32_t);
 
-const struct option longopts[] = {
 #ifndef SMALL
+const struct option longopts[] = {
 	{ "ascii",	no_argument,		0, 'a' },
 	{ "stdout",	no_argument,		0, 'c' },
 	{ "to-stdout",	no_argument,		0, 'c' },
@@ -170,9 +160,11 @@ const struct option longopts[] = {
 	{ "version",	no_argument,		0, 'V' },
 	{ "fast",	no_argument,		0, '1' },
 	{ "best",	no_argument,		0, '9' },
-#endif /* SMALL */
 	{ NULL }
 };
+#else /* SMALL */
+const struct option *longopts = NULL;
+#endif /* SMALL */
 
 int
 main(int argc, char *argv[])
@@ -202,7 +194,7 @@ main(int argc, char *argv[])
 		method = M_COMPRESS;
 #endif /* SMALL */
 	}
-	optstr = method->comp_opts;
+	optstr = method->opts;
 
 	decomp = 0;
 	pmode = MODE_COMP;
@@ -617,7 +609,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 #endif
 }
 
-const struct compressor *
+static const struct compressor *
 check_method(int fd)
 {
 	const struct compressor *method;
@@ -640,7 +632,7 @@ check_method(int fd)
 	return (NULL);
 }
 
-int
+static int
 dodecompress(const char *in, char *out, struct stat *sb)
 {
 	const struct compressor *method;
@@ -690,7 +682,7 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		return (FAILURE);
 	}
 	if (storename && oldname[0] != '\0') {
-		char *oldbase = basename(oldname);
+		const char *oldbase = basename(oldname);
 		char *cp = strrchr(out, '/');
 		if (cp != NULL) {
 			*(cp + 1) = '\0';
@@ -834,7 +826,7 @@ setfile(const char *name, int fd, struct stat *fs)
 		warn("futimens: %s", name);
 }
 
-int
+static int
 permission(const char *fname)
 {
 	int ch, first;
@@ -851,7 +843,7 @@ permission(const char *fname)
 /*
  * Check infile for a known suffix and return the suffix portion or NULL.
  */
-const char *
+static const char *
 check_suffix(const char *infile)
 {
 	int i;
@@ -878,7 +870,7 @@ check_suffix(const char *infile)
  * Set outfile based on the suffix.  In most cases we just strip
  * off the suffix but things like .tgz and .taz are special.
  */
-char *
+static char *
 set_outfile(const char *infile, char *outfile, size_t osize)
 {
 	const char *s;
@@ -905,7 +897,7 @@ set_outfile(const char *infile, char *outfile, size_t osize)
 /*
  * Print output for the -l option.
  */
-void
+static void
 list_stats(const char *name, const struct compressor *method,
     struct z_info *info)
 {
@@ -954,7 +946,7 @@ list_stats(const char *name, const struct compressor *method,
 	}
 }
 
-void
+static void
 verbose_info(const char *file, off_t compressed, off_t uncompressed,
     u_int32_t hlen)
 {
@@ -973,7 +965,7 @@ verbose_info(const char *file, off_t compressed, off_t uncompressed,
 	    (long long)(decomp ? uncompressed : compressed));
 }
 
-__dead void
+static __dead void
 usage(int status)
 {
 	const bool gzip = (__progname[0] == 'g');
