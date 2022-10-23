@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.8 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.9 2022/10/23 19:33:39 krw Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -381,7 +381,6 @@ amdcfgetdisklabel(dev_t dev, struct amdcf_softc *sc, struct disklabel *lp,
 	lp->d_type = DTYPE_SCSI;	/* bogus type, can be anything */
 	strlcpy(lp->d_packname, "CFI Disk", sizeof(lp->d_packname));
 	DL_SETDSIZE(lp, sc->sc_size / DEV_BSIZE);
-	lp->d_flags = 0;
 	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
