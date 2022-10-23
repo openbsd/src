@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.71 2022/03/21 19:46:56 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.72 2022/10/23 13:45:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -2472,7 +2472,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
 	splx(s);
 
-	tsleep_nsec(ctl, PWAIT, "bwfm", SEC_TO_NSEC(1));
+	tsleep_nsec(ctl, PWAIT, "bwfm", SEC_TO_NSEC(5));
 	TAILQ_REMOVE(&sc->sc_ioctlq, ctl, next);
 
 	if (ctl->m == NULL) {
