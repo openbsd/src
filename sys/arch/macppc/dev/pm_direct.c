@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.32 2022/10/21 22:42:36 gkoehler Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.33 2022/10/23 08:00:10 kn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 #endif
 
 /* these values shows that number of data returned after 'send' cmd is sent */
-signed char pm_send_cmd_type[] = {
+const signed char pm_send_cmd_type[] = {
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -108,7 +108,7 @@ signed char pm_send_cmd_type[] = {
 };
 
 /* these values shows that number of data returned after 'receive' cmd is sent */
-signed char pm_receive_cmd_type[] = {
+const signed char pm_receive_cmd_type[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
