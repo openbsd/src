@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.128 2022/09/13 05:48:54 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.129 2022/10/23 18:43:00 mglocker Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 13 2022 $
+.Dd $Mdocdate: October 23 2022 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -244,6 +244,8 @@ NXP PCF8523 real-time clock
 NXP PCF8563 real-time clock
 .It Xr pcyrtc 4
 NXP PCF85063A/TP real-time clock
+.It Xr pijuice 4
+PiJuice HAT UPS
 .It Xr ricohrtc 4
 Ricoh RS5C372 real-time clock
 .It Xr rkpmic 4

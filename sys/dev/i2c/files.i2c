@@ -1,4 +1,4 @@
-# $OpenBSD: files.i2c,v 1.69 2021/11/22 20:20:20 kettenis Exp $
+# $OpenBSD: files.i2c,v 1.70 2022/10/23 18:43:00 mglocker Exp $
 #	$NetBSD: files.i2c,v 1.3 2003/10/20 16:24:10 briggs Exp $
 
 define	i2c {[addr = -1], [size = -1]}
@@ -263,3 +263,8 @@ file	dev/i2c/m41t8x.c			mfokrtc
 device	titmp
 attach	titmp at i2c
 file	dev/i2c/tmp451.c			titmp
+
+# PiJuice
+device	pijuice
+attach	pijuice at i2c
+file	dev/i2c/pijuice.c			pijuice
