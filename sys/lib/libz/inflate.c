@@ -1,4 +1,3 @@
-/*	$OpenBSD: inflate.c,v 1.21 2022/10/20 15:36:47 tb Exp $ */
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2022 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

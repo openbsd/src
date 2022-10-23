@@ -1,4 +1,3 @@
-/*	$OpenBSD: trees.c,v 1.7 2022/10/20 15:36:47 tb Exp $ */
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2021 Jean-loup Gailly
  * detect_data_type() function provided freely by Cosmin Truta, 2006

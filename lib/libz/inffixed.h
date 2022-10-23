@@ -1,5 +1,3 @@
-/*	$OpenBSD: inffixed.h,v 1.5 2021/07/04 17:41:23 tb Exp $ */
-
     /* inffixed.h -- table for decoding fixed codes
      * Generated automatically by makefixed().
      */

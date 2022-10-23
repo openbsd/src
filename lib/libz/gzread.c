@@ -1,4 +1,3 @@
-/*	$OpenBSD: gzread.c,v 1.3 2022/10/20 15:35:31 tb Exp $ */
 /* gzread.c -- zlib functions for reading gzip files
  * Copyright (C) 2004-2017 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

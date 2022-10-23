@@ -1,5 +1,3 @@
-/*	$OpenBSD: zconf.h,v 1.15 2022/10/20 15:36:47 tb Exp $ */
-
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2016 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

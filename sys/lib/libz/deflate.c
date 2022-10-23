@@ -1,4 +1,3 @@
-/*	$OpenBSD: deflate.c,v 1.10 2022/10/20 15:36:47 tb Exp $ */
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2022 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

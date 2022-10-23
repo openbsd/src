@@ -1,5 +1,3 @@
-/*	$OpenBSD: trees.h,v 1.3 2021/07/04 17:41:23 tb Exp $ */
-
 /* header created automatically with -DGEN_TREES_H */
 
 local const ct_data static_ltree[L_CODES+2] = {

@@ -1,4 +1,3 @@
-/*	$OpenBSD: zutil.c,v 1.5 2022/10/20 15:36:47 tb Exp $ */
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2017 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h

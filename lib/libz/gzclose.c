@@ -1,4 +1,3 @@
-/*	$OpenBSD: gzclose.c,v 1.1 2021/07/04 14:24:49 tb Exp $ */
 /* gzclose.c -- zlib gzclose() function
  * Copyright (C) 2004, 2010 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

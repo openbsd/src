@@ -1,4 +1,3 @@
-/*	$OpenBSD: infback.c,v 1.9 2022/10/20 15:35:31 tb Exp $ */
 /* infback.c -- inflate using a call-back interface
  * Copyright (C) 1995-2022 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

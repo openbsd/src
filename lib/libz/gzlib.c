@@ -1,4 +1,3 @@
-/*	$OpenBSD: gzlib.c,v 1.3 2022/10/20 15:35:31 tb Exp $ */
 /* gzlib.c -- zlib functions common to reading and writing gzip files
  * Copyright (C) 2004-2019 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h

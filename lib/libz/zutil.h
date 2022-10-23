@@ -1,5 +1,3 @@
-/*	$OpenBSD: zutil.h,v 1.13 2022/10/20 15:35:31 tb Exp $ */
-
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2022 Jean-loup Gailly, Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
