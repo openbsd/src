@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.33 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: apm.c,v 1.34 2022/10/23 03:43:03 gkoehler Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -131,6 +131,10 @@ apmattach(struct device *parent, struct device *self, void *aux)
 
 	printf(": battery flags 0x%X, ", info.flags);
 	printf("%d%% charged\n", ((info.cur_charge * 100) / info.max_charge));
+
+#ifdef SUSPEND
+	device_register_wakeup(self);
+#endif
 }
 
 int
@@ -352,7 +356,6 @@ sleep_showstate(void *v, int sleepmode)
 {
 	switch (sleepmode) {
 	case SLEEP_SUSPEND:
-		/* TODO blink the light */
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -362,7 +365,6 @@ sleep_showstate(void *v, int sleepmode)
 int
 sleep_setstate(void *v)
 {
-	printf("TODO sleep_setstate\n");
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.47 2022/10/21 22:42:36 gkoehler Exp $	*/
+/*	$OpenBSD: adb.c,v 1.48 2022/10/23 03:43:03 gkoehler Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -246,6 +246,11 @@ void 	adb_cuda_fileserver_mode(void);
 #ifndef SMALL_KERNEL
 void	adb_shutdown(void *);
 struct	task adb_shutdown_task = TASK_INITIALIZER(adb_shutdown, NULL);
+#ifdef SUSPEND
+void	adb_suspend(void *);
+struct	task adb_suspend_task = TASK_INITIALIZER(adb_suspend, NULL);
+struct	taskq *adb_suspendq;
+#endif
 #endif
 
 #ifdef ADB_DEBUG
@@ -848,6 +853,17 @@ adb_shutdown(void *arg)
 		prsignal(initprocess, SIGUSR2);
 	}
 }
+
+#ifdef SUSPEND
+void
+adb_suspend(void *arg)
+{
+	extern struct cfdriver apm_cd;
+
+	if (apm_cd.cd_ndevs > 0)
+		sleep_state(apm_cd.cd_devs[0], SLEEP_SUSPEND);
+}
+#endif
 #endif /* !SMALL_KERNEL */
 
 void
@@ -855,9 +871,11 @@ adb_lid_closed_intr(void)
 {
 #ifndef SMALL_KERNEL
 	switch (lid_action) {
+#ifdef SUSPEND
 	case 1:
-		/* Suspend. */
+		task_add(adb_suspendq, &adb_suspend_task);
 		break;
+#endif
 	case 2:
 		/* Hibernate. */
 		break;
@@ -873,9 +891,11 @@ adb_power_button_intr(void)
 	case 1:
 		task_add(systq, &adb_shutdown_task);
 		break;
+#ifdef SUSPEND
 	case 2:
-		/* Suspend. */
+		task_add(adb_suspendq, &adb_suspend_task);
 		break;
+#endif
 	}
 #endif
 }
@@ -1636,6 +1656,14 @@ adbattach(struct device *parent, struct device *self, void *aux)
 	struct adb_attach_args aa_args;
 	int totaladbs;
 	int adbindex, adbaddr;
+
+#if !defined(SMALL_KERNEL) && defined(SUSPEND)
+	adb_suspendq = taskq_create(sc->sc_dev.dv_xname, 1, IPL_TTY, 0);
+	if (adb_suspendq == NULL) {
+		printf(": can't create taskq\n");
+		return;
+	}
+#endif
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
