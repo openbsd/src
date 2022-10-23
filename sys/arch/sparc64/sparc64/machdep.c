@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.202 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.203 2022/10/23 23:39:41 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -279,7 +279,7 @@ setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
 
 	/* The cookie needs to guarantee invalid alignment after the XOR. */
 	switch (p->p_addr->u_pcb.pcb_wcookie % 3) {
-	case 0: /* Two lsb's already both set except if the cookie is 0. */
+	case 0: /* Set two lsbs. */
 		p->p_addr->u_pcb.pcb_wcookie |= 0x3;
 		break;
 	case 1: /* Set the lsb. */
