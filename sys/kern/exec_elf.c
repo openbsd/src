@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.170 2022/10/22 15:06:47 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.171 2022/10/23 02:53:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -201,9 +201,6 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	if ((ph->p_flags & (PF_X | PF_W)) != (PF_X | PF_W) &&
 	    (ph->p_flags & PF_OPENBSD_MUTABLE) == 0)
 		flags |= VMCMD_IMMUTABLE;
-#if defined (__mips__)
-	flags &= ~VMCMD_IMMUTABLE;	/* DT_DEBUG is not ready on mips */
-#endif
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
@@ -427,7 +424,6 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			addr += size;
 			break;
 
-		case PT_DYNAMIC:
 		case PT_PHDR:
 		case PT_NOTE:
 			break;
@@ -442,6 +438,13 @@ elf_load_file(struct proc *p, char *path, struct exec_package *epp,
 			    ph[i].p_memsz, ph[i].p_vaddr + pos, NULLVP, 0, 0);
 			break;
 
+		case PT_DYNAMIC:
+#if defined (__mips__)
+			/* DT_DEBUG is not ready on mips */
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
+			    ph[i].p_memsz, ph[i].p_vaddr + pos, NULLVP, 0, 0);
+#endif
+			break;
 		case PT_GNU_RELRO:
 		case PT_OPENBSD_MUTABLE:
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
@@ -652,7 +655,6 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 
 		case PT_INTERP:
 			/* Already did this one */
-		case PT_DYNAMIC:
 		case PT_NOTE:
 			break;
 
@@ -671,6 +673,13 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			    ph[i].p_memsz, ph[i].p_vaddr + exe_base, NULLVP, 0, 0);
 			break;
 
+		case PT_DYNAMIC:
+#if defined (__mips__)
+			/* DT_DEBUG is not ready on mips */
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
+			    ph[i].p_memsz, ph[i].p_vaddr + exe_base, NULLVP, 0, 0);
+#endif
+			break;
 		case PT_GNU_RELRO:
 		case PT_OPENBSD_MUTABLE:
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_mutable,
