@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.129 2022/04/06 18:59:27 naddy Exp $ */
+/*	$OpenBSD: wd.c,v 1.130 2022/10/23 14:39:19 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -728,7 +728,6 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	}
 	/* XXX - user viscopy() like sd.c */
 	strncpy(lp->d_packname, wd->sc_params.atap_model, sizeof lp->d_packname);
-	lp->d_flags = 0;
 	lp->d_version = 1;
 
 	lp->d_magic = DISKMAGIC;
