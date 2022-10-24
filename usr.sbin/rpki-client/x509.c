@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.50 2022/09/03 14:40:09 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.51 2022/10/24 10:26:59 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -46,45 +46,78 @@ ASN1_OBJECT	*bin_sign_time_oid;	/* pkcs-9 id-aa-binarySigningTime */
 ASN1_OBJECT	*rsc_oid;	/* id-ct-signedChecklist */
 ASN1_OBJECT	*aspa_oid;	/* id-ct-ASPA */
 
+static const struct {
+	const char	 *oid;
+	ASN1_OBJECT	**ptr;
+} oid_table[] = {
+	{
+		.oid = "1.3.6.1.5.5.7.14.2",
+		.ptr = &certpol_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.48.5",
+		.ptr = &carepo_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.48.10",
+		.ptr = &manifest_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.48.13",
+		.ptr = &notify_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.24",
+		.ptr = &roa_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.26",
+		.ptr = &mft_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.35",
+		.ptr = &gbr_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.3.30",
+		.ptr = &bgpsec_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.3",
+		.ptr = &cnt_type_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.4",
+		.ptr = &msg_dgst_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.5",
+		.ptr = &sign_time_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.2.46",
+		.ptr = &bin_sign_time_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.48",
+		.ptr = &rsc_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.49",
+		.ptr = &aspa_oid,
+	},
+};
+
 void
 x509_init_oid(void)
 {
+	size_t	i;
 
-	if ((certpol_oid = OBJ_txt2obj("1.3.6.1.5.5.7.14.2", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.14.2");
-	if ((carepo_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.5", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.5");
-	if ((manifest_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.10", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.10");
-	if ((notify_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.13", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.13");
-	if ((roa_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.24", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.1.24");
-	if ((mft_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.26", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.1.26");
-	if ((gbr_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.35", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.1.35");
-	if ((bgpsec_oid = OBJ_txt2obj("1.3.6.1.5.5.7.3.30", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.3.30");
-	if ((cnt_type_oid = OBJ_txt2obj("1.2.840.113549.1.9.3", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.3");
-	if ((msg_dgst_oid = OBJ_txt2obj("1.2.840.113549.1.9.4", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.4");
-	if ((sign_time_oid = OBJ_txt2obj("1.2.840.113549.1.9.5", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.5");
-	if ((bin_sign_time_oid =
-	    OBJ_txt2obj("1.2.840.113549.1.9.16.2.46", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.2.46");
-	if ((rsc_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.48", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.1.48");
-	if ((aspa_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.49", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed",
-		    "1.2.840.113549.1.9.16.1.49");
+	for (i = 0; i < sizeof(oid_table) / sizeof(oid_table[0]); i++) {
+		*oid_table[i].ptr = OBJ_txt2obj(oid_table[i].oid, 1);
+		if (*oid_table[i].ptr == NULL)
+			errx(1, "OBJ_txt2obj for %s failed", oid_table[i].oid);
+	}
 }
 
 /*
