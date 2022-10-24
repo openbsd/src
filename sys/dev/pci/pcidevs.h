@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2006 2022/10/03 05:39:07 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2007 2022/10/24 04:54:47 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -839,6 +839,7 @@
 #define	PCI_PRODUCT_AMD_15_0X_MISC	0x1603		/* 15/0xh Misc Cfg */
 #define	PCI_PRODUCT_AMD_15_0X_CPU_PM	0x1604		/* 15/0xh CPU Power */
 #define	PCI_PRODUCT_AMD_15_0X_HB	0x1605		/* 15/0xh Host */
+#define	PCI_PRODUCT_AMD_17_90_XHCI_1	0x162c		/* 17h/90h xHCI */
 #define	PCI_PRODUCT_AMD_17_6X_RC	0x1630		/* 17h/6xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_6X_IOMMU	0x1631		/* 17h/6xh IOMMU */
 #define	PCI_PRODUCT_AMD_17_6X_HB	0x1632		/* 17h/6xh Host */
@@ -846,6 +847,19 @@
 #define	PCI_PRODUCT_AMD_17_6X_PCIE_2	0x1634		/* 17h/6xh PCIE */
 #define	PCI_PRODUCT_AMD_17_6X_PCIE_3	0x1635		/* 17h/6xh PCIE */
 #define	PCI_PRODUCT_AMD_17_6X_XHCI	0x1639		/* 17h/6xh xHCI */
+#define	PCI_PRODUCT_AMD_17_90_XHCI_2	0x163b		/* 17h/90h xHCI */
+#define	PCI_PRODUCT_AMD_17_90_HB	0x1645		/* 17h/90h Host */
+#define	PCI_PRODUCT_AMD_17_90_PCIE_1	0x1647		/* 17h/90h PCIE */
+#define	PCI_PRODUCT_AMD_17_90_PCIE_2	0x1648		/* 17h/90h PCIE */
+#define	PCI_PRODUCT_AMD_17_90_CCP	0x1649		/* 17h/90h Crypto */
+#define	PCI_PRODUCT_AMD_17_90_DF_0	0x1660		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_1	0x1661		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_2	0x1662		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_3	0x1663		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_4	0x1664		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_5	0x1665		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_6	0x1666		/* 17h/90h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_90_DF_7	0x1667		/* 17h/90h Data Fabric */
 #define	PCI_PRODUCT_AMD_19_5X_DF_0	0x166a		/* 19h/5xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_5X_DF_1	0x166b		/* 19h/5xh Data Fabric */
 #define	PCI_PRODUCT_AMD_19_5X_DF_2	0x166c		/* 19h/5xh Data Fabric */
@@ -1226,6 +1240,7 @@
 #define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
 #define	PCI_PRODUCT_ATI_CEZANNE	0x1638		/* Cezanne */
 #define	PCI_PRODUCT_ATI_VANGOGH	0x163f		/* Van Gogh */
+#define	PCI_PRODUCT_ATI_VANGOGH_HDA	0x1640		/* Van Gogh HD Audio */
 #define	PCI_PRODUCT_ATI_LUCIENNE	0x164c		/* Lucienne */
 #define	PCI_PRODUCT_ATI_YELLOW_CARP_1	0x164d		/* Yellow Carp */
 #define	PCI_PRODUCT_ATI_RAPHAEL	0x164e		/* Raphael */

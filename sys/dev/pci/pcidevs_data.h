@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2006 2022/10/03 05:39:07 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2007 2022/10/24 04:54:47 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1620,6 +1620,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "15/0xh Host",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_XHCI_1,
+	    "17h/90h xHCI",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_RC,
 	    "17h/6xh Root Complex",
 	},
@@ -1646,6 +1650,58 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_XHCI,
 	    "17h/6xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_XHCI_2,
+	    "17h/90h xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_HB,
+	    "17h/90h Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_PCIE_1,
+	    "17h/90h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_PCIE_2,
+	    "17h/90h PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_CCP,
+	    "17h/90h Crypto",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_0,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_1,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_2,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_3,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_4,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_5,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_6,
+	    "17h/90h Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_DF_7,
+	    "17h/90h Data Fabric",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_0,
@@ -3042,6 +3098,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VANGOGH,
 	    "Van Gogh",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_VANGOGH_HDA,
+	    "Van Gogh HD Audio",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_LUCIENNE,
