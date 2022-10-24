@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.6 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.7 2022/10/24 04:57:29 jsg Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -48,6 +48,7 @@ static const struct pci_matchid ccp_pci_devices[] = {
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_CCP_2 },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_1X_CCP },
 	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_3X_CCP },
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_17_90_CCP },
 };
 
 int
