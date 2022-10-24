@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.94 2022/08/30 17:09:21 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.95 2022/10/24 00:56:33 cheloha Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -540,6 +540,10 @@
  */
 #define	MSR_HWCR	0xc0010015
 #define		HWCR_FFDIS		0x00000040
+#define		HWCR_TSCFREQSEL		0x01000000
+
+#define	MSR_PSTATEDEF(_n)	(0xc0010064 + (_n))
+#define		PSTATEDEF_EN		0x8000000000000000ULL
 
 #define	MSR_NB_CFG	0xc001001f
 #define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL

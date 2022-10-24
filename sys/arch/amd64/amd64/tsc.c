@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.29 2022/09/22 04:57:08 robert Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.30 2022/10/24 00:56:33 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -100,6 +100,67 @@ tsc_freq_cpuid(struct cpu_info *ci)
 	return (0);
 }
 
+uint64_t
+tsc_freq_msr(struct cpu_info *ci)
+{
+	uint64_t base, def, divisor, multiplier;
+
+	if (strcmp(cpu_vendor, "AuthenticAMD") != 0)
+		return 0;
+
+	/*
+	 * All 10h+ CPUs have Core::X86::Msr:HWCR and the TscFreqSel
+	 * bit.  If TscFreqSel hasn't been set, the TSC isn't advancing
+	 * at the core P0 frequency and we need to calibrate by hand.
+	 */
+	if (ci->ci_family < 0x10)
+		return 0;
+	if (!ISSET(rdmsr(MSR_HWCR), HWCR_TSCFREQSEL))
+		return 0;
+
+	/*
+	 * In 10h+ CPUs, Core::X86::Msr::PStateDef defines the voltage
+	 * and frequency for each core P-state.  We want the P0 frequency.
+	 * If the En bit isn't set, the register doesn't define a valid
+	 * P-state.
+	 */
+	def = rdmsr(MSR_PSTATEDEF(0));
+	if (!ISSET(def, PSTATEDEF_EN))
+		return 0;
+
+	switch (ci->ci_family) {
+	case 0x17:
+	case 0x19:
+		/*
+		 * PPR for AMD Family 17h [...]:
+		 * Models 01h,08h B2, Rev 3.03, pp. 33, 139-140
+		 * Model 18h B1, Rev 3.16, pp. 36, 143-144
+		 * Model 60h A1, Rev 3.06, pp. 33, 155-157
+		 * Model 71h B0, Rev 3.06, pp. 28, 150-151
+		 *
+		 * PPR for AMD Family 19h [...]:
+		 * Model 21h B0, Rev 3.05, pp. 33, 166-167
+		 *
+		 * OSRR for AMD Family 17h processors,
+		 * Models 00h-2Fh, Rev 3.03, pp. 130-131
+		 */
+		base = 200000000;			/* 200.0 MHz */
+		divisor = (def >> 8) & 0x3f;
+		if (divisor <= 0x07 || divisor >= 0x2d)
+			return 0;			/* reserved */
+		if (divisor >= 0x1b && divisor % 2 == 1)
+			return 0;			/* reserved */
+		multiplier = def & 0xff;
+		if (multiplier <= 0x0f)
+			return 0;			/* reserved */
+		break;
+	default:
+		return 0;
+	}
+
+	return base * multiplier / divisor;
+}
+
 void
 tsc_identify(struct cpu_info *ci)
 {
@@ -118,6 +179,8 @@ tsc_identify(struct cpu_info *ci)
 	tsc_is_invariant = 1;
 
 	tsc_frequency = tsc_freq_cpuid(ci);
+	if (tsc_frequency == 0)
+		tsc_frequency = tsc_freq_msr(ci);
 	if (tsc_frequency > 0)
 		delay_init(tsc_delay, 5000);
 }
