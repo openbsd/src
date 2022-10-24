@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.28 2022/10/21 12:04:51 kn Exp $
+.\"	$OpenBSD: netstart.8,v 1.29 2022/10/24 17:58:43 kn Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,14 +25,14 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 21 2022 $
+.Dd $Mdocdate: October 24 2022 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
 .Nm netstart
 .Nd command script for network startup
 .Sh SYNOPSIS
-.Nm /etc/netstart
+.Cm sh Pa /etc/netstart
 .Op Fl n
 .Op Ar interface ...
 .Sh DESCRIPTION
