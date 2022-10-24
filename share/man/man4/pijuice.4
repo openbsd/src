@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pijuice.4,v 1.1 2022/10/23 18:43:00 mglocker Exp $
+.\"	$OpenBSD: pijuice.4,v 1.2 2022/10/24 03:47:57 jsg Exp $
 .\"
 .\" Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2022 $
+.Dd $Mdocdate: October 24 2022 $
 .Dt PIJUICE 4
 .Os
 .Sh NAME
@@ -48,5 +48,6 @@ driver was written by
 .An Marcus Glocker Aq Mt mglocker@openbsd.org .
 .Sh CAVEATS
 The PiJuice HAT EEPROM currently doesn't contain the device tree information
-to match and attach this device.  It requires a custom device tree blob overlay
-which gets loaded during the bootstrapping process.
+to match and attach this device.
+It requires a custom device tree blob overlay which gets loaded during the
+bootstrapping process.
