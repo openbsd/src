@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.354 2022/10/10 11:33:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.355 2022/10/24 15:52:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4156,7 +4156,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 	len = ibuf_size(nonce);
 
 	if ((xform = config_findtransform(&pol->pol_proposals, IKEV2_XFORMTYPE_DH,
-	    protoid)) && group_get(xform->xform_id) != IKEV2_XFORMDH_NONE) {
+	    protoid)) && xform->xform_id != IKEV2_XFORMDH_NONE) {
 		log_debug("%s: enable PFS", __func__);
 		ikev2_sa_cleanup_dh(sa);
 		if (proposed_group) {
