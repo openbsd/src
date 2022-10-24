@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.300 2022/10/21 20:45:51 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.301 2022/10/24 15:11:56 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2009,9 +2009,14 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		struct vm_map_entry *entry1 = entry;
 
 		/* Refuse to unmap if any entries are immutable */
+		if (entry1->end <= start)
+			entry1 = RBT_NEXT(uvm_map_addr, entry1);
 		for (; entry1 != NULL && entry1->start < end; entry1 = next) {
 			KDASSERT(entry1->start >= start);
 			next = RBT_NEXT(uvm_map_addr, entry1);
+			/* Treat memory holes as free space. */
+			if (entry1->start == entry1->end || UVM_ET_ISHOLE(entry1))
+				continue;
 			if (entry1->etype & UVM_ET_IMMUTABLE)
 				return EPERM;
 		}
@@ -3141,11 +3146,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		    (iter->etype & UVM_ET_IMMUTABLE)) {
 			if (iter->protection == (PROT_READ | PROT_WRITE) &&
 			    new_prot == PROT_READ) {
-				/*
-				 * XXX chrome renderer on 2022oct21 does a
-				 * RW->R transition of some immutable range.
-				 * Workaround this until it is found...
-				 */
+				/* Permit RW to R as a data-locking mechanism */
 				;
 			} else {
 				error = EPERM;
