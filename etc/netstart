@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.221 2022/10/24 17:58:43 kn Exp $
+#	$OpenBSD: netstart,v 1.222 2022/10/24 20:51:07 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -391,7 +391,7 @@ else
 fi
 
 # If interface autoconf exists, pause a little for at least one default route
-wait_autoconf_default
+$PRINT_ONLY || wait_autoconf_default
 
 # Configure interfaces that rely on routing
 ifmstart "tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"
