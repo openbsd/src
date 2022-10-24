@@ -1,4 +1,4 @@
-/*	$OpenBSD: pijuice.c,v 1.1 2022/10/23 18:43:00 mglocker Exp $ */
+/*	$OpenBSD: pijuice.c,v 1.2 2022/10/24 04:28:01 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -360,7 +360,7 @@ pijuice_apminfo(struct apm_power_info *info)
 		DPRINTF(("%s: Battery Charge Level=%d\n", __func__, val8));
 
 		info->battery_life = val8;
-		/* On "normal load" we suck 1% battery in 30 sconds. */
+		/* On "normal load" we suck 1% battery in 30 seconds. */
 		info->minutes_left = (val8 * 30) / 60;
 	}
 
