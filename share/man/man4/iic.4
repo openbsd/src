@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.129 2022/10/23 18:43:00 mglocker Exp $
+.\"	$OpenBSD: iic.4,v 1.130 2022/10/24 20:43:23 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 23 2022 $
+.Dd $Mdocdate: October 24 2022 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -52,8 +52,7 @@
 .Cd "iic* at mpfiic?                # riscv64"
 .Cd "iic* at ociic?                 # riscv64"
 .Sh DESCRIPTION
-.Tn I2C
-is a two-wire bus developed by Philips used for connecting
+I2C is a two-wire bus developed by Philips used for connecting
 integrated circuits.
 It is commonly used for connecting devices such as EEPROMs,
 temperature sensors, fan controllers, real-time clocks, tuners,
@@ -62,21 +61,14 @@ and other types of integrated circuits.
 The
 .Nm
 driver provides a uniform programming interface layer between
-.Tn I2C
-master controllers and various
-.Tn I2C
-slave devices.
-Each
-.Tn I2C
-master controller attaches an
+I2C master controllers and various I2C slave devices.
+Each I2C master controller attaches an
 .Nm
 framework; several slave devices can then be attached to the
 .Nm
 bus.
 .Pp
-All
-.Tn I2C
-slave devices are uniquely identified by the address on the bus.
+All I2C slave devices are uniquely identified by the address on the bus.
 The master accesses a particular slave device using its address.
 Devices are found on the bus using a sophisticated scanning routine
 which attempts to identify commonly available devices.
@@ -84,9 +76,7 @@ On other machines (such as sparc64 and macppc) where the machine ROM
 supplies a list of I2C devices, that list is used instead.
 .Pp
 System Management Bus (SMBus) protocol is also supported by emulating
-it with the
-.Tn I2C
-commands.
+it with the I2C commands.
 .Sh SUPPORTED MASTERS
 .Bl -tag -width 13n -compact
 .It Xr alipm 4
@@ -221,7 +211,7 @@ National Semiconductor LM75/LM76/LM77 temperature sensor
 .It Xr maxds 4
 Maxim DS1624/DS1631/DS1721 temperature sensor
 .It Xr maxrtc 4
-Maxim DS1307 real-time clock
+Maxim DS1307/DS1339 real-time clock
 .It Xr maxtmp 4
 Maxim MAX6642/MAX6690 temperature sensor
 .It Xr mcprtc 4
@@ -280,9 +270,7 @@ Winbond W83793G temperature, voltage, and fan sensor
 .Xr intro 4 ,
 .Xr iic 9
 .Sh HISTORY
-The
-.Tn I2C
-framework first appeared in
+The I2C framework first appeared in
 .Nx 2.0 .
 .Ox
 support was added in
@@ -290,10 +278,11 @@ support was added in
 I2C bus scanning was added in
 .Ox 3.9 .
 .Sh AUTHORS
-The
-.Tn I2C
-framework was written by
-Steve C. Woodford and Jason R. Thorpe for
+The I2C framework was written by
+.An Steve C. Woodford
+and
+.An Jason R. Thorpe
+for
 .Nx
 and then ported to
 .Ox
