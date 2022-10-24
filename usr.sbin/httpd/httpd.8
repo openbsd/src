@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.53 2016/09/15 20:57:07 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.54 2022/10/24 15:02:01 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2016 $
+.Dd $Mdocdate: October 24 2022 $
 .Dt HTTPD 8
 .Os
 .Sh NAME
@@ -75,10 +75,6 @@ Default configuration file.
 Default SSL/TLS server key.
 .It Pa /etc/ssl/server.crt
 Default SSL/TLS server certificate.
-.It Pa /var/run/httpd.sock
-.Ux Ns -domain
-socket used for communication with
-.Nm .
 .It Pa /var/www/logs/access.log
 Default access log file.
 .It Pa /var/www/logs/error.log

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.161 2022/08/15 12:29:17 claudio Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.162 2022/10/24 15:02:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -44,7 +44,6 @@
 #endif
 
 #define CONF_FILE		"/etc/httpd.conf"
-#define HTTPD_SOCKET		"/var/run/httpd.sock"
 #define HTTPD_USER		"www"
 #define HTTPD_SERVERNAME	"OpenBSD httpd"
 #define HTTPD_DOCROOT		"/htdocs"
