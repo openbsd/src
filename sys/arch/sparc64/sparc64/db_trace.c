@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.23 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.24 2022/10/25 06:00:34 guenther Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -389,21 +389,6 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		  (unsigned long long)tf->tf_in[5],
 		  (unsigned long long)tf->tf_in[6],
 		  (unsigned long long)tf->tf_in[7]);
-#if 0
-	if (tf == curproc->p_md.md_tf) {
-		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);
-		db_printf("ins (from stack):\n%016llx %016llx %016llx %016llx\n",
-			  (int64_t)kstack->rw_local[0],
-			  (int64_t)kstack->rw_local[1],
-			  (int64_t)kstack->rw_local[2],
-			  (int64_t)kstack->rw_local[3]);
-		db_printf("%016llx %016llx %016llx %016llx\n",
-			  (int64_t)kstack->rw_local[4],
-			  (int64_t)kstack->rw_local[5],
-			  (int64_t)kstack->rw_local[6],
-			  (int64_t)kstack->rw_local[7]);
-	}
-#endif
 }
 
 void
