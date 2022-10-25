@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.204 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.205 2022/10/25 16:08:26 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -468,68 +468,53 @@ reaper(void *arg)
 }
 
 int
-sys_wait4(struct proc *q, void *v, register_t *retval)
-{
-	struct sys_wait4_args /* {
-		syscallarg(pid_t) pid;
-		syscallarg(int *) status;
-		syscallarg(int) options;
-		syscallarg(struct rusage *) rusage;
-	} */ *uap = v;
-	struct rusage ru;
-	int status, error;
-
-	error = dowait4(q, SCARG(uap, pid),
-	    SCARG(uap, status) ? &status : NULL,
-	    SCARG(uap, options), SCARG(uap, rusage) ? &ru : NULL, retval);
-	if (error == 0 && retval[0] > 0 && SCARG(uap, status)) {
-		error = copyout(&status, SCARG(uap, status), sizeof(status));
-	}
-	if (error == 0 && retval[0] > 0 && SCARG(uap, rusage)) {
-		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
-#ifdef KTRACE
-		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
-			ktrrusage(q, &ru);
-#endif
-	}
-	return (error);
-}
-
-int
-dowait4(struct proc *q, pid_t pid, int *statusp, int options,
-    struct rusage *rusage, register_t *retval)
+dowait6(struct proc *q, idtype_t idtype, id_t id, int *statusp, int options,
+    struct rusage *rusage, siginfo_t *info, register_t *retval)
 {
 	int nfound;
 	struct process *pr;
 	struct proc *p;
 	int error;
 
-	if (pid == 0)
-		pid = -q->p_p->ps_pgid;
-	if (options &~ (WUNTRACED|WNOHANG|WCONTINUED))
-		return (EINVAL);
+	if (info != NULL)
+		memset(info, 0, sizeof(*info));
 
 loop:
 	nfound = 0;
 	LIST_FOREACH(pr, &q->p_p->ps_children, ps_sibling) {
 		if ((pr->ps_flags & PS_NOZOMBIE) ||
-		    (pid != WAIT_ANY &&
-		    pr->ps_pid != pid &&
-		    pr->ps_pgid != -pid))
+		    (idtype == P_PID && id != pr->ps_pid) ||
+		    (idtype == P_PGID && id != pr->ps_pgid))
 			continue;
 
 		p = pr->ps_mainproc;
 
 		nfound++;
-		if (pr->ps_flags & PS_ZOMBIE) {
+		if ((options & WEXITED) && (pr->ps_flags & PS_ZOMBIE)) {
 			retval[0] = pr->ps_pid;
+			if (info != NULL) {
+				info->si_pid = pr->ps_pid;
+				info->si_uid = pr->ps_ucred->cr_uid;
+				info->si_signo = SIGCHLD;
+				if (pr->ps_xsig == 0) {
+					info->si_code = CLD_EXITED;
+					info->si_status = pr->ps_xexit;
+				} else if (WCOREDUMP(pr->ps_xsig)) {
+					info->si_code = CLD_DUMPED;
+					info->si_status = _WSTATUS(pr->ps_xsig);
+				} else {
+					info->si_code = CLD_KILLED;
+					info->si_status = _WSTATUS(pr->ps_xsig);
+				}
+			}
 
 			if (statusp != NULL)
 				*statusp = W_EXITCODE(pr->ps_xexit,
 				    pr->ps_xsig);
 			if (rusage != NULL)
 				memcpy(rusage, pr->ps_ru, sizeof(*rusage));
-			proc_finish_wait(q, p);
+			if ((options & WNOWAIT) == 0)
+				proc_finish_wait(q, p);
 			return (0);
 		}
 		if (pr->ps_flags & PS_TRACED &&
@@ -539,8 +524,17 @@ loop:
 			if (single_thread_wait(pr, 0))
 				goto loop;
 
-			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
+			if ((options & WNOWAIT) == 0)
+				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
+
 			retval[0] = pr->ps_pid;
+			if (info != NULL) {
+				info->si_pid = pr->ps_pid;
+				info->si_uid = pr->ps_ucred->cr_uid;
+				info->si_signo = SIGCHLD;
+				info->si_code = CLD_TRAPPED;
+				info->si_status = pr->ps_xsig;
+			}
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(pr->ps_xsig);
@@ -553,8 +547,17 @@ loop:
 		    (p->p_flag & P_SUSPSINGLE) == 0 &&
 		    (pr->ps_flags & PS_TRACED ||
 		    options & WUNTRACED)) {
-			atomic_setbits_int(&pr->ps_flags, PS_WAITED);
+			if ((options & WNOWAIT) == 0)
+				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
+
 			retval[0] = pr->ps_pid;
+			if (info != 0) {
+				info->si_pid = pr->ps_pid;
+				info->si_uid = pr->ps_ucred->cr_uid;
+				info->si_signo = SIGCHLD;
+				info->si_code = CLD_STOPPED;
+				info->si_status = pr->ps_xsig;
+			}
 
 			if (statusp != NULL)
 				*statusp = W_STOPCODE(pr->ps_xsig);
@@ -563,8 +566,17 @@ loop:
 			return (0);
 		}
 		if ((options & WCONTINUED) && (p->p_flag & P_CONTINUED)) {
-			atomic_clearbits_int(&p->p_flag, P_CONTINUED);
+			if ((options & WNOWAIT) == 0)
+				atomic_clearbits_int(&p->p_flag, P_CONTINUED);
+
 			retval[0] = pr->ps_pid;
+			if (info != NULL) {
+				info->si_pid = pr->ps_pid;
+				info->si_uid = pr->ps_ucred->cr_uid;
+				info->si_signo = SIGCHLD;
+				info->si_code = CLD_CONTINUED;
+				info->si_status = SIGCONT;
+			}
 
 			if (statusp != NULL)
 				*statusp = _WCONTINUED;
@@ -588,9 +600,8 @@ loop:
 	if (nfound == 0) {
 		LIST_FOREACH(pr, &q->p_p->ps_orphans, ps_orphan) {
 			if ((pr->ps_flags & PS_NOZOMBIE) ||
-			    (pid != WAIT_ANY &&
-			    pr->ps_pid != pid &&
-			    pr->ps_pgid != -pid))
+			    (idtype == P_PID && id != pr->ps_pid) ||
+			    (idtype == P_PGID && id != pr->ps_pgid))
 				continue;
 			nfound++;
 			break;
@@ -605,6 +616,82 @@ loop:
 	if ((error = tsleep_nsec(q->p_p, PWAIT | PCATCH, "wait", INFSLP)) != 0)
 		return (error);
 	goto loop;
+}
+
+int
+sys_wait4(struct proc *q, void *v, register_t *retval)
+{
+	struct sys_wait4_args /* {
+		syscallarg(pid_t) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap = v;
+	struct rusage ru;
+	pid_t pid = SCARG(uap, pid);
+	int options = SCARG(uap, options);
+	int status, error;
+	idtype_t idtype;
+	id_t id;
+
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WCONTINUED))
+		return (EINVAL);
+	
+	if (SCARG(uap, pid) == WAIT_MYPGRP) {
+		idtype = P_PGID;
+		id = -q->p_p->ps_pgid;
+	} else if (SCARG(uap, pid) == WAIT_ANY) {
+		idtype = P_ALL;
+		id = 0;
+	} else {
+		idtype = P_PID;
+		id = pid;
+	}
+
+	error = dowait6(q, idtype, id,
+	    SCARG(uap, status) ? &status : NULL, options | WEXITED,
+	    SCARG(uap, rusage) ? &ru : NULL, NULL, retval);
+	if (error == 0 && retval[0] > 0 && SCARG(uap, status)) {
+		error = copyout(&status, SCARG(uap, status), sizeof(status));
+	}
+	if (error == 0 && retval[0] > 0 && SCARG(uap, rusage)) {
+		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
+			ktrrusage(q, &ru);
+#endif
+	}
+	return (error);
+}
+
+int
+sys_waitid(struct proc *q, void *v, register_t *retval)
+{
+	struct sys_waitid_args /* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) id;
+		syscallarg(siginfo_t) info;
+		syscallarg(int) options;
+	} */ *uap = v;
+	siginfo_t info;
+	idtype_t idtype = SCARG(uap, idtype);
+	int options = SCARG(uap, options);
+	int error;
+
+	if (options &~ (WSTOPPED|WCONTINUED|WEXITED|WNOHANG|WNOWAIT))
+		return (EINVAL);
+	if ((options & (WSTOPPED|WCONTINUED|WEXITED)) == 0)
+		return (EINVAL);
+	if (idtype != P_ALL && idtype != P_PID && idtype != P_PGID)
+		return (EINVAL);
+
+	error = dowait6(q, idtype, SCARG(uap, id), NULL,
+	    options, NULL, &info, retval);
+	if (error == 0)
+		error = copyout(&info, SCARG(uap, info), sizeof(info));
+	if (error == 0)
+		retval[0] = 0;
+	return (error);
 }
 
 void

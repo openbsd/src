@@ -1,4 +1,4 @@
-/*	$OpenBSD: siginfo.h,v 1.12 2017/04/07 04:48:44 guenther Exp $	*/
+/*	$OpenBSD: siginfo.h,v 1.13 2022/10/25 16:08:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 Theo de Raadt
@@ -137,9 +137,9 @@ typedef struct {
 		int	_pad[SI_PAD];		/* for future growth */
 		struct {			/* kill(), SIGCHLD */
 			pid_t	_pid;		/* process ID */
+			uid_t	_uid;
 			union {
 				struct {
-					uid_t	_uid;
 					union sigval	_value;
 				} _kill;
 				struct {
@@ -173,11 +173,11 @@ typedef struct {
 } siginfo_t;
 
 #define si_pid		_data._proc._pid
+#define si_uid		_data._proc._uid
 
 #define si_status	_data._proc._pdata._cld._status
 #define si_stime	_data._proc._pdata._cld._stime
 #define si_utime	_data._proc._pdata._cld._utime
-#define si_uid		_data._proc._pdata._kill._uid
 #define si_value	_data._proc._pdata._kill._value
 #define si_addr		_data._fault._addr
 #define si_trapno	_data._fault._trapno

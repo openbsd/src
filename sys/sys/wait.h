@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.18 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.19 2022/10/25 16:08:26 kettenis Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #define _SYS_WAIT_H_
 
 #include <sys/cdefs.h>
+#include <sys/siginfo.h>
 
 /*
  * This file holds definitions relevant to the wait4 system call
@@ -71,11 +72,25 @@
  * indicates that the caller should receive status about untraced children
  * which stop due to signals.  If children are stopped and a wait without
  * this option is done, it is as though they were still running... nothing
- * about them is returned.
+ * about them is returned. WNOWAIT only requests information about zombie,
+ * leaving the proc around, available for later waits.
  */
 #define WNOHANG		1	/* don't hang in wait */
 #define WUNTRACED	2	/* tell about stopped, untraced children */
+#define WSTOPPED	WUNTRACED
 #define	WCONTINUED	8	/* report a job control continued process */
+#if __POSIX_VISIBLE >= 200809 || _XPG_VISIBLE
+#define WEXITED		4	/* wait for exited processes */
+#define WNOWAIT		16	/* poll only */
+#endif
+
+#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE
+typedef enum {
+	P_ALL,
+	P_PGID,
+	P_PID
+} idtype_t;
+#endif
 
 #if __BSD_VISIBLE
 /*
@@ -93,6 +108,9 @@ struct rusage;	/* forward declaration */
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
+#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE
+int	waitid(idtype_t, id_t, siginfo_t *, int);
+#endif
 #if __BSD_VISIBLE
 pid_t	wait3(int *, int, struct rusage *);
 pid_t	wait4(pid_t, int *, int, struct rusage *);
