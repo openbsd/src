@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.203 2022/10/23 23:39:41 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.204 2022/10/25 06:05:57 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -255,10 +255,7 @@ cpu_startup(void)
  * Set up registers on exec.
  */
 
-#define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
-#undef CCFSZ
-#define CCFSZ	CC64FSZ
 
 /* ARGSUSED */
 void
@@ -333,7 +330,7 @@ setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
 	tf->tf_npc = tf->tf_pc + 4;
 	tf->tf_global[2] = tf->tf_pc;
 	stack -= sizeof(struct rwindow);
-	tf->tf_out[6] = stack - STACK_OFFSET;
+	tf->tf_out[6] = stack - BIAS;
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
@@ -410,7 +407,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	struct sigframe sf;
 
 	tf = p->p_md.md_tf;
-	oldsp = tf->tf_out[6] + STACK_OFFSET;
+	oldsp = tf->tf_out[6] + BIAS;
 
 	/*
 	 * Compute new user stack addresses, subtract off
@@ -485,7 +482,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = newsp - STACK_OFFSET;
+	tf->tf_out[6] = newsp - BIAS;
 
 	return 0;
 }
