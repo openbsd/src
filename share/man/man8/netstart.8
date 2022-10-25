@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.29 2022/10/24 17:58:43 kn Exp $
+.\"	$OpenBSD: netstart.8,v 1.30 2022/10/25 08:40:25 kn Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 24 2022 $
+.Dd $Mdocdate: October 25 2022 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@ it performs network initialization.
 .Pp
 The
 .Nm
-script can also be used to start newly created interfaces or bridges.
+script can also be used to start newly created interfaces.
 The behaviour of this script is (or can be) controlled to some
 extent by variables defined in
 .Xr rc.conf 8 ,
@@ -88,19 +88,17 @@ and
 .Xr wg 4 .
 .El
 .Pp
-After the system is completely initialized, it is possible to start a
-newly created interface or bridges or apply the configuration from a
+After the system is completely initialized, it is possible to start
+newly created interfaces or apply configuration from
 .Xr hostname.if 5
-file to an existing interface, by invoking the following, where
-.Ar foo0
-is the interface or bridge name:
+files to an existing interfaces.
 .Pp
-.D1 # sh /etc/netstart foo0
-.Pp
-Using the
-.Fl n
-option reports the steps that would be taken,
-without actually configuring the interface.
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Reports the steps that would be taken,
+without actually configuring anything.
+.El
 .Sh SEE ALSO
 .Xr multicast 4 ,
 .Xr defaultdomain 5 ,
