@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.48 2021/09/10 08:52:46 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.49 2022/10/25 09:12:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1086,7 +1086,8 @@ cmd_parse_from_arguments(struct args_value *values, u_int count,
 				arg->type = CMD_PARSE_STRING;
 				arg->string = copy;
 				TAILQ_INSERT_TAIL(&cmd->arguments, arg, entry);
-			}
+			} else
+				free(copy);
 		} else if (values[i].type == ARGS_COMMANDS) {
 			arg = xcalloc(1, sizeof *arg);
 			arg->type = CMD_PARSE_PARSED_COMMANDS;
