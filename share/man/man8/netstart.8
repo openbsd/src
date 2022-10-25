@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.30 2022/10/25 08:40:25 kn Exp $
+.\"	$OpenBSD: netstart.8,v 1.31 2022/10/25 17:10:13 kn Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -30,25 +30,24 @@
 .Os
 .Sh NAME
 .Nm netstart
-.Nd command script for network startup
+.Nd network startup script
 .Sh SYNOPSIS
 .Cm sh Pa /etc/netstart
 .Op Fl n
 .Op Ar interface ...
 .Sh DESCRIPTION
 .Nm
-is the command script that is invoked by
+is a
+.Xr sh 1
+script invoked by
 .Xr rc 8
 during an automatic reboot and after single-user mode is exited;
 it performs network initialization.
 .Pp
-The
 .Nm
-script can also be used to start newly created interfaces.
-The behaviour of this script is (or can be) controlled to some
-extent by variables defined in
-.Xr rc.conf 8 ,
-which specifies which daemons and services are to be run.
+can also be used to start newly created interfaces.
+Its behaviour is controlled to some extent by variables defined in
+.Xr rc.conf 8 .
 .Pp
 During the system boot,
 .Nm
