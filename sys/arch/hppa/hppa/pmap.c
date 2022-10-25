@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.178 2022/09/10 20:35:28 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.179 2022/10/25 18:44:36 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -101,8 +101,16 @@ u_int	hppa_prot[8];
 #define	pmap_sid(pmap, va) \
 	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
 
-#define	pmap_pvh_attrs(a) \
-	(((a) & PTE_PROT(TLB_DIRTY)) | ((a) ^ PTE_PROT(TLB_REFTRAP)))
+static inline int
+pmap_pvh_attrs(pt_entry_t pte)
+{
+	int attrs = 0;
+	if (pte & PTE_PROT(TLB_DIRTY))
+		attrs |= PG_PMAP_MOD;
+	if ((pte & PTE_PROT(TLB_REFTRAP)) == 0)
+		attrs |= PG_PMAP_REF;
+	return attrs;
+}
 
 struct vm_page	*pmap_pagealloc(struct uvm_object *obj, voff_t off);
 void		 pmap_pte_flush(struct pmap *pmap, vaddr_t va, pt_entry_t pte);
@@ -779,9 +787,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 		if (pg != NULL) {
 			pve = pmap_pv_remove(pg, pmap, va);
-			mtx_enter(&pg->mdpage.pvh_mtx);
-			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
-			mtx_leave(&pg->mdpage.pvh_mtx);
+			atomic_setbits_int(&pg->pg_flags, pmap_pvh_attrs(pte));
 		}
 	} else {
 		DPRINTF(PDB_ENTER,
@@ -869,9 +875,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 
 			if (pmap_initialized &&
 			    (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
-				mtx_enter(&pg->mdpage.pvh_mtx);
-				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
-				mtx_leave(&pg->mdpage.pvh_mtx);
+				atomic_setbits_int(&pg->pg_flags,
+				    pmap_pvh_attrs(pte));
 				if ((pve = pmap_pv_remove(pg, pmap, sva)))
 					pmap_pv_free(pve);
 			} else {
@@ -925,9 +930,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 			pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 			if (pg != NULL) {
-				mtx_enter(&pg->mdpage.pvh_mtx);
-				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
-				mtx_leave(&pg->mdpage.pvh_mtx);
+				atomic_setbits_int(&pg->pg_flags,
+				    pmap_pvh_attrs(pte));
 			}
 
 			pmap_pte_flush(pmap, sva, pte);
@@ -977,8 +981,8 @@ pmap_page_remove(struct vm_page *pg)
 
 		pmap_destroy(pmap);
 		pmap_pv_free(pve);
+		atomic_setbits_int(&pg->pg_flags, attrs);
 		mtx_enter(&pg->mdpage.pvh_mtx);
-		pg->mdpage.pvh_attrs |= attrs;
 	}
 	mtx_leave(&pg->mdpage.pvh_mtx);
 
@@ -1018,12 +1022,14 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 {
 	struct pv_entry *pve;
 	pt_entry_t res;
+	int attrs;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS,
 	    ("pmap_changebit(%p, %x, %x)\n", pg, set, clear));
 
+	res = 0;
+	attrs = 0;
 	mtx_enter(&pg->mdpage.pvh_mtx);
-	res = pg->mdpage.pvh_attrs = 0;
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		struct pmap *pmap = pve->pv_pmap;
 		vaddr_t va = pve->pv_va;
@@ -1041,7 +1047,7 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 #endif
 			pte &= ~clear;
 			pte |= set;
-			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+			attrs |= pmap_pvh_attrs(pte);
 			res |= pmap_pvh_attrs(opte);
 
 			if (opte != pte) {
@@ -1051,12 +1057,17 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 		}
 	}
 	mtx_leave(&pg->mdpage.pvh_mtx);
+	if (attrs != (PG_PMAP_REF | PG_PMAP_MOD))
+		atomic_clearbits_int(&pg->pg_flags,
+		    attrs ^(PG_PMAP_REF | PG_PMAP_MOD));
+	if (attrs != 0)
+		atomic_setbits_int(&pg->pg_flags, attrs);
 
 	return ((res & (clear | set)) != 0);
 }
 
 boolean_t
-pmap_testbit(struct vm_page *pg, u_int bit)
+pmap_testbit(struct vm_page *pg, int bit)
 {
 	struct pv_entry *pve;
 	pt_entry_t pte;
@@ -1065,13 +1076,13 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	DPRINTF(PDB_FOLLOW|PDB_BITS, ("pmap_testbit(%p, %x)\n", pg, bit));
 
 	mtx_enter(&pg->mdpage.pvh_mtx);
-	for (pve = pg->mdpage.pvh_list; !(pg->mdpage.pvh_attrs & bit) && pve;
+	for (pve = pg->mdpage.pvh_list; !(pg->pg_flags & bit) && pve;
 	    pve = pve->pv_next) {
 		pte = pmap_vp_find(pve->pv_pmap, pve->pv_va);
-		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+		atomic_setbits_int(&pg->pg_flags, pmap_pvh_attrs(pte));
 	}
-	ret = ((pg->mdpage.pvh_attrs & bit) != 0);
 	mtx_leave(&pg->mdpage.pvh_mtx);
+	ret = ((pg->pg_flags & bit) != 0);
 
 	return ret;
 }
@@ -1231,9 +1242,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		pmap_pte_flush(pmap_kernel(), va, pte);
 		pmap_pte_set(pde, va, 0);
 		if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte)))) {
-			mtx_enter(&pg->mdpage.pvh_mtx);
-			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
-			mtx_leave(&pg->mdpage.pvh_mtx);
+			atomic_setbits_int(&pg->pg_flags, pmap_pvh_attrs(pte));
 			/* just in case we have enter/kenter mismatch */
 			if ((pve = pmap_pv_remove(pg, pmap_kernel(), va)))
 				pmap_pv_free(pve);

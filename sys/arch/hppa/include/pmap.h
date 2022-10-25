@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.51 2015/07/27 03:36:38 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.52 2022/10/25 18:44:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -112,17 +112,20 @@ pmap_prefer(vaddr_t offs, vaddr_t hint)
 #define	pmap_update(pm)			(void)(pm)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 
+#define	PG_PMAP_MOD		PG_PMAP0	/* modified */
+#define	PG_PMAP_REF		PG_PMAP1	/* referenced */
+
 #define pmap_clear_modify(pg)	pmap_changebit(pg, 0, PTE_PROT(TLB_DIRTY))
 #define pmap_clear_reference(pg) pmap_changebit(pg, PTE_PROT(TLB_REFTRAP), 0)
-#define pmap_is_modified(pg)	pmap_testbit(pg, PTE_PROT(TLB_DIRTY))
-#define pmap_is_referenced(pg)	pmap_testbit(pg, PTE_PROT(TLB_REFTRAP))
+#define pmap_is_modified(pg)	pmap_testbit(pg, PG_PMAP_MOD)
+#define pmap_is_referenced(pg)	pmap_testbit(pg, PG_PMAP_REF)
 
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
 void pmap_bootstrap(vaddr_t);
 boolean_t pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
-boolean_t pmap_testbit(struct vm_page *, pt_entry_t);
+boolean_t pmap_testbit(struct vm_page *, int);
 void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
@@ -163,13 +166,11 @@ struct pv_entry;
 struct vm_page_md {
 	struct mutex pvh_mtx;
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_mtx) */
-	u_int		pvh_attrs;	/* to preserve ref/mod */
 };
 
 #define	VM_MDPAGE_INIT(pg) do {				\
 	mtx_init(&(pg)->mdpage.pvh_mtx, IPL_VM);	\
 	(pg)->mdpage.pvh_list = NULL;			\
-	(pg)->mdpage.pvh_attrs = 0;			\
 } while (0)
 #endif
 
