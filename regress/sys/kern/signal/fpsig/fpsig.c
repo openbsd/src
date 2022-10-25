@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsig.c,v 1.2 2005/07/15 07:28:33 otto Exp $	*/
+/*	$OpenBSD: fpsig.c,v 1.3 2022/10/25 19:55:31 miod Exp $	*/
 
 /*
  * Public domain.  2005, Otto Moerbeek
@@ -11,8 +11,9 @@
 #include <err.h>
 #include <signal.h>
 #include <unistd.h>
+#include <sys/time.h>
 
-#define LIMIT	10.0
+#define LIMIT	11.1
 
 volatile sig_atomic_t count;
 
@@ -24,10 +25,8 @@ handler(int signo)
 {
 	double a, b, c = 0.0;
 
-	if (signo)
-		alarm(1);
-	for (a = 0.0; a < LIMIT; a++)
-		for (b = 0.0; b < LIMIT; b++)
+	for (a = 0.0; a < LIMIT; a += 1.1)
+		for (b = 0.0; b < LIMIT; b += 1.1)
 			c += a * a + b * b;
 
 	if (signo) {
@@ -40,14 +39,30 @@ handler(int signo)
 int
 main()
 {
-	signal(SIGALRM, handler);
+	struct itimerval it = {
+		.it_interval =  { .tv_sec = 0, .tv_usec = 10000 },
+		.it_value =  { .tv_sec = 0, .tv_usec = 10000 }
+	};
+
 	/* initialize global vars */
 	handler(0);
 	handler(1);
+
+	signal(SIGALRM, handler);
+	setitimer(ITIMER_REAL, &it, NULL);
 	
-	while (count < 10) {
+	while (count < 10000) {
 		handler(0);
-		if (g1 != g2)
+	double a, b, h1 = g1, h2 = g2;
+
+	for (a = 0.0; a < LIMIT; a += 1.1)
+		for (b = 0.0; b < LIMIT; b += 1.1)
+			h1 += a * a + b * b;
+	for (a = 0.0; a < LIMIT; a += 1.1)
+		for (b = 0.0; b < LIMIT; b += 1.1)
+			h2 += a * a + b * b;
+
+		if (h1 != h2)
 			errx(1, "%f %f", g1, g2);
 	}
 	return (0);
