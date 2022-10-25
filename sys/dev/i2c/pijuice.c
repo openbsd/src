@@ -1,4 +1,4 @@
-/*	$OpenBSD: pijuice.c,v 1.2 2022/10/24 04:28:01 mglocker Exp $ */
+/*	$OpenBSD: pijuice.c,v 1.3 2022/10/25 19:32:18 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -380,6 +380,8 @@ pijuice_apminfo(struct apm_power_info *info)
 		case PIJUICE_STATUS_BATT_CHARGE_AC:
 		case PIJUICE_STATUS_BATT_CHARGE_5V:
 			info->battery_state = APM_BATT_CHARGING;
+			info->minutes_left =
+			    ((99 * 30) / 60) - info->minutes_left;
 			break;
 		case PIJUICE_STATUS_BATT_ABSENT:
 			info->battery_state = APM_BATTERY_ABSENT;
