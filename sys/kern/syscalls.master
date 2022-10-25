@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.233 2022/10/07 14:59:39 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.234 2022/10/25 16:10:31 kettenis Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -308,7 +308,8 @@
 157	OBSOL		statfs25
 158	OBSOL		fstatfs25
 159	STD		{ int sys_mimmutable(void *addr, size_t len); }
-160	UNIMPL
+160	STD		{ int sys_waitid(int idtype, id_t id, \
+			    siginfo_t *info, int options); }
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
 162	OBSOL		ogetdomainname
 163	OBSOL		osetdomainname
