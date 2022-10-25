@@ -1,4 +1,4 @@
-/*	$OpenBSD: _time.h,v 1.9 2017/12/18 05:51:53 cheloha Exp $	*/
+/*	$OpenBSD: _time.h,v 1.10 2022/10/25 16:30:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,12 +32,8 @@
 #ifndef _SYS__TIME_H_
 #define _SYS__TIME_H_
 
-#define CLOCK_REALTIME			0
-#define CLOCK_PROCESS_CPUTIME_ID	2
-#define CLOCK_MONOTONIC			3
-#define CLOCK_THREAD_CPUTIME_ID		4
-#define CLOCK_UPTIME			5
-#define CLOCK_BOOTTIME			6
+/* Frequency of ticks reported by clock().  */
+#define CLOCKS_PER_SEC  100
 
 #if __BSD_VISIBLE
 /*
@@ -48,6 +44,29 @@
 #define __CLOCK_TYPE(c)			((c) & 0xfff)
 #define __CLOCK_PTID(c)			(((c) >> 12) & 0xfffff)
 #endif
+
+#if __POSIX_VISIBLE >= 199309 || __ISO_C_VISIBLE >= 2011
+#ifndef _TIME_T_DEFINED_
+#define _TIME_T_DEFINED_
+typedef __time_t	time_t;
+#endif
+
+#ifndef _TIMESPEC_DECLARED
+#define _TIMESPEC_DECLARED
+struct timespec {
+	time_t	tv_sec;		/* seconds */
+	long	tv_nsec;	/* and nanoseconds */
+};
+#endif
+#endif
+
+#if __POSIX_VISIBLE >= 199309
+#define CLOCK_REALTIME			0
+#define CLOCK_PROCESS_CPUTIME_ID	2
+#define CLOCK_MONOTONIC			3
+#define CLOCK_THREAD_CPUTIME_ID		4
+#define CLOCK_UPTIME			5
+#define CLOCK_BOOTTIME			6
 
 /*
  * Structure defined by POSIX 1003.1b to be like a itimerval,
@@ -60,5 +79,7 @@ struct  itimerspec {
 
 #define TIMER_RELTIME	0x0	/* relative timer */
 #define TIMER_ABSTIME	0x1	/* absolute timer */
+
+#endif
 
 #endif /* !_SYS__TIME_H_ */
