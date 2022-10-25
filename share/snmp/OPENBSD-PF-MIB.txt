@@ -1,4 +1,4 @@
--- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.7 2021/03/23 19:37:51 sthen Exp $
+-- $OpenBSD: OPENBSD-PF-MIB.txt,v 1.8 2022/10/25 09:54:24 martijn Exp $
 --
 -- Copyright (c) 2004-2013 Joel Knight <knight.joel@gmail.com>
 -- 
@@ -36,7 +36,7 @@ IMPORTS
 		FROM SNMPv2-CONF;
 
 pfMIBObjects MODULE-IDENTITY
-    LAST-UPDATED "202103231933Z"
+    LAST-UPDATED "202210190830Z"
     ORGANIZATION "OpenBSD"
     CONTACT-INFO "
                   Author:     Joel Knight
@@ -46,6 +46,8 @@ pfMIBObjects MODULE-IDENTITY
     DESCRIPTION "The MIB module for gathering information from
 		OpenBSD's packet filter.
                 "
+    REVISION "202210190830Z"
+    DESCRIPTION "Fix description of several objects from bytes to the obviously intended packets"
     REVISION "202103231933Z"
     DESCRIPTION "Use DisplayString/SnmpAdminString not OCTET STRING where appropriate"
     REVISION "201506091728Z"
@@ -794,7 +796,7 @@ pfIfOut4PassPkts OBJECT-TYPE
 	MAX-ACCESS	read-only
 	STATUS		current
 	DESCRIPTION
-	"The number of IPv4 bytes passed out."
+	"The number of IPv4 packets passed out."
 	::= { pfIfEntry 10 }
 
 pfIfOut4PassBytes OBJECT-TYPE
@@ -810,7 +812,7 @@ pfIfOut4BlockPkts OBJECT-TYPE
 	MAX-ACCESS	read-only
 	STATUS		current
 	DESCRIPTION
-	"The number of outgoing IPv4 bytes blocked."
+	"The number of outgoing IPv4 packets blocked."
 	::= { pfIfEntry 12 }
 
 pfIfOut4BlockBytes OBJECT-TYPE
@@ -858,7 +860,7 @@ pfIfOut6PassPkts OBJECT-TYPE
 	MAX-ACCESS	read-only
 	STATUS		current
 	DESCRIPTION
-	"The number of IPv6 bytes passed out."
+	"The number of IPv6 packets passed out."
 	::= { pfIfEntry 18 }
 
 pfIfOut6PassBytes OBJECT-TYPE
@@ -874,7 +876,7 @@ pfIfOut6BlockPkts OBJECT-TYPE
 	MAX-ACCESS	read-only
 	STATUS		current
 	DESCRIPTION
-	"The number of outgoing IPv6 bytes blocked."
+	"The number of outgoing IPv6 packets blocked."
 	::= { pfIfEntry 20 }
 
 pfIfOut6BlockBytes OBJECT-TYPE
