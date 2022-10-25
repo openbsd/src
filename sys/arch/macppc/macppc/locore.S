@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.59 2022/09/04 06:49:11 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.60 2022/10/25 15:15:38 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -842,9 +842,9 @@ rfi1:	rfi
  * Child comes here at the end of a fork.
  * Mostly similar to the above.
  */
-	.globl	_C_LABEL(fork_trampoline)
-	.type	_C_LABEL(fork_trampoline),@function
-_C_LABEL(fork_trampoline):
+	.globl	_C_LABEL(proc_trampoline)
+	.type	_C_LABEL(proc_trampoline),@function
+_C_LABEL(proc_trampoline):
 #ifdef MULTIPROCESSOR
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif

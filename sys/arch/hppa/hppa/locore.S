@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.203 2021/02/22 23:17:50 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.204 2022/10/25 15:15:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2695,7 +2695,7 @@ LEAF_ENTRY(cpu_idle_leave)
 	nop
 EXIT(cpu_idle_leave)
 
-ENTRY(switch_trampoline,0)
+ENTRY(proc_trampoline,0)
 	copy	r0, r3
 #ifdef MULTIPROCESSOR
 	copy	t4, r5
@@ -2716,7 +2716,7 @@ ENTRY(switch_trampoline,0)
 	.call
 	b	$syscall_return
 	ldw	P_MD_REGS(t2), t3
-EXIT(switch_trampoline)
+EXIT(proc_trampoline)
 
 #ifdef MULTIPROCESSOR
 /*

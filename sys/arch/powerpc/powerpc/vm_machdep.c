@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.53 2022/02/21 19:17:51 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.54 2022/10/25 15:15:38 guenther Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct callframe *cf;
 	struct switchframe *sf;
 	caddr_t stktop1, stktop2;
-	extern void fork_trampoline(void);
+	extern void proc_trampoline(void);
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct cpu_info *ci = curcpu();
 
@@ -106,7 +106,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 * There happens to be a callframe, too.
 	 */
 	cf = (struct callframe *)stktop2;
-	cf->lr = (int)fork_trampoline;
+	cf->lr = (int)proc_trampoline;
 	
 	/*
 	 * Below the trap frame, there is another call frame:

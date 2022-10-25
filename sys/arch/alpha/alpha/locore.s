@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.48 2020/05/17 13:48:29 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.49 2022/10/25 15:15:38 guenther Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -767,7 +767,7 @@ LEAF(cpu_idle_leave, 0)
 	END(cpu_idle_leave)
 
 /*
- * switch_trampoline()
+ * proc_trampoline()
  *
  * Arrange for a function to be invoked neatly, after a cpu_fork().
  *
@@ -775,7 +775,7 @@ LEAF(cpu_idle_leave, 0)
  * address specified by the s1 register and with one argument specified
  * by the s2 register.
  */
-LEAF(switch_trampoline, 0)
+LEAF(proc_trampoline, 0)
 #if defined(MULTIPROCESSOR)
 	CALL(proc_trampoline_mp)
 #endif
@@ -783,7 +783,7 @@ LEAF(switch_trampoline, 0)
 	mov	s1, ra
 	mov	s2, a0
 	jmp	zero, (pv)
-	END(switch_trampoline)
+	END(proc_trampoline)
 
 /**************************************************************************/
 

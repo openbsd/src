@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.84 2022/05/21 23:43:31 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.85 2022/10/25 15:15:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -114,7 +114,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 */
 	sp += HPPA_FRAME_SIZE;
 	*(register_t*)(sp - HPPA_FRAME_SIZE) = 0;
-	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
+	*(register_t*)(sp + HPPA_FRAME_CRP) = (register_t)&proc_trampoline;
 	*(register_t*)(sp) = (sp - HPPA_FRAME_SIZE);
 
 	sp += HPPA_FRAME_SIZE + 16*4; /* frame + callee-saved registers */

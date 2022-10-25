@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.66 2022/08/10 10:41:35 miod Exp $ */
+/* $OpenBSD: cpu.h,v 1.67 2022/10/25 15:15:38 guenther Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -140,11 +140,11 @@ void	machine_check(unsigned long, struct trapframe *, unsigned long,
 	    unsigned long);
 u_int64_t hwrpb_checksum(void);
 void	hwrpb_restart_setup(void);
+void	proc_trampoline(void);					/* MAGIC */
 void	regdump(struct trapframe *);
 void	regtoframe(struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
 void    switch_exit(struct proc *);				/* MAGIC */
-void	switch_trampoline(void);				/* MAGIC */
 void	syscall(u_int64_t, struct trapframe *);
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
