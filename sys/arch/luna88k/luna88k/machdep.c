@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.139 2022/10/14 20:53:18 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.140 2022/10/25 11:39:33 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -859,6 +859,17 @@ luna88k_ext_int(struct trapframe *eframe)
 			if (CPU_IS_PRIMARY(ci))
 				isrdispatch_autovec(cur_int_level);
 			break;
+#ifdef MULTIPROCESSOR
+		case 1:
+			/*
+			 * Another processor may have sent us an IPI
+			 * while we were servicing a device interrupt.
+			 */
+			set_psr(get_psr() | PSR_IND);
+			luna88k_ipi_handler(eframe);
+			set_psr(get_psr() & ~PSR_IND);
+			break;
+#endif
 		default:
 			printf("%s: cpu%d level %d interrupt.\n",
 				__func__, ci->ci_cpuid, cur_int_level);
