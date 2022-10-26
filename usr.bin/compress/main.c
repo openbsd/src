@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.103 2022/10/23 19:06:35 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.104 2022/10/26 00:40:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -488,54 +488,91 @@ main(int argc, char *argv[])
 	exit(rc);
 }
 
-int
+static int
+open_input(const char *in)
+{
+	int fd;
+
+	fd = pipin ? dup(STDIN_FILENO) : open(in, O_RDONLY);
+	if (fd == -1) {
+		if (verbose >= 0)
+			warn("%s", in);
+		return -1;
+	}
+	if (decomp && !force && isatty(fd)) {
+		if (verbose >= 0)
+			warnx("%s: won't read compressed data from terminal",
+			    in);
+		close(fd);
+		return -1;
+	}
+
+	return fd;
+}
+
+static int
+open_output(const char *out, int *errorp, int *oreg)
+{
+	struct stat sb;
+	int fd, error = FAILURE;
+
+	if (cat) {
+		fd = dup(STDOUT_FILENO);
+		if (fd == -1)
+			goto bad;
+		sb.st_mode = 0;
+	} else {
+		fd = open(out, O_WRONLY, S_IWUSR);
+		if (fd != -1) {
+			if (fstat(fd, &sb) == -1)
+				goto bad;
+			if (!force && S_ISREG(sb.st_mode) && !permission(out)) {
+				error = WARNING;
+				goto bad;
+			}
+			if (ftruncate(fd, 0) == -1)
+				goto bad;
+		} else {
+			fd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
+			if (fd == -1 || fstat(fd, &sb) == -1)
+				goto bad;
+		}
+	}
+
+	*oreg = S_ISREG(sb.st_mode);
+	*errorp = SUCCESS;
+	return fd;
+bad:
+	if (error == FAILURE && verbose >= 0)
+		warn("%s", out);
+	if (fd != -1)
+		close(fd);
+	*errorp = FAILURE;
+	return -1;
+}
+
+static int
 docompress(const char *in, char *out, const struct compressor *method,
     int bits, struct stat *sb)
 {
 #ifndef SMALL
 	u_char buf[Z_BUFSIZE];
 	char namebuf[PATH_MAX];
-	char *name;
+	char *name = NULL;
 	int error, ifd, ofd, oreg;
 	void *cookie;
 	ssize_t nr;
-	u_int32_t mtime;
+	u_int32_t mtime = 0;
 	struct z_info info;
-	struct stat osb;
 
-	mtime = 0;
-	oreg = 0;
-	error = SUCCESS;
-	name = NULL;
-	cookie  = NULL;
-
-	if (pipin)
-		ifd = dup(STDIN_FILENO);
-	else
-		ifd = open(in, O_RDONLY);
-	if (ifd == -1) {
-		if (verbose >= 0)
-			warn("%s", in);
+	ifd = open_input(in);
+	if (ifd == -1)
 		return (FAILURE);
-	}
 
-	if (cat)
-		ofd = dup(STDOUT_FILENO);
-	else {
-		if (stat(out, &osb) == 0) {
-			oreg = S_ISREG(osb.st_mode);
-			if (!force && oreg && !permission(out)) {
-				(void) close(ifd);
-				return (WARNING);
-			}
-		}
-		ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
-	}
+	ofd = open_output(out, &error, &oreg);
 	if (ofd == -1) {
-		if (verbose >= 0)
-			warn("%s", out);
-		(void) close(ifd);
-		return (FAILURE);
+		close(ifd);
+		return error;
 	}
 
 	if (method != M_COMPRESS && !force && isatty(ofd)) {
@@ -642,29 +679,10 @@ dodecompress(const char *in, char *out, struct stat *sb)
 	void *cookie;
 	ssize_t nr;
 	struct z_info info;
-	struct stat osb;
 
-	oreg = 0;
-	error = SUCCESS;
-	cookie = NULL;
-
-	if (pipin)
-		ifd = dup(STDIN_FILENO);
-	else
-		ifd = open(in, O_RDONLY);
-	if (ifd == -1) {
-		if (verbose >= 0)
-			warn("%s", in);
-		return -1;
-	}
-
-	if (!force && isatty(ifd)) {
-		if (verbose >= 0)
-			warnx("%s: won't read compressed data from terminal",
-			    in);
-		close (ifd);
-		return -1;
-	}
+	ifd = open_input(in);
+	if (ifd == -1)
+		return (FAILURE);
 
 	if ((method = check_method(ifd)) == NULL) {
 		if (verbose >= 0)
@@ -692,28 +710,15 @@ dodecompress(const char *in, char *out, struct stat *sb)
 		cat = 0;			/* XXX should -c override? */
 	}
 
-	if (testmode)
+	if (testmode) {
 		ofd = -1;
-	else {
-		if (cat)
-			ofd = dup(STDOUT_FILENO);
-		else {
-			if (stat(out, &osb) == 0) {
-				oreg = S_ISREG(osb.st_mode);
-				if (!force && oreg && !permission(out)) {
-					(void) close(ifd);
-					return (WARNING);
-				}
-			}
-			ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR);
-			if (ofd != -1)
-				oreg = 1;
-		}
+		oreg = 0;
+		error = SUCCESS;
+	} else {
+		ofd = open_output(out, &error, &oreg);
 		if (ofd == -1) {
-			if (verbose >= 0)
-				warn("%s", in);
 			method->close(cookie, NULL, NULL, NULL);
-			return (FAILURE);
+			return error;
 		}
 	}
 
