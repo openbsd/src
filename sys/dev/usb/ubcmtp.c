@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.23 2021/11/22 22:12:37 jcs Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.24 2022/10/26 16:07:28 kn Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -135,7 +135,7 @@ struct ubcmtp_dev {
 	struct ubcmtp_limit l_orientation;
 };
 
-static struct ubcmtp_dev ubcmtp_devices[] = {
+static const struct ubcmtp_dev ubcmtp_devices[] = {
 	/* type 1 devices with separate buttons */
 	{
 		USB_VENDOR_APPLE,
@@ -312,7 +312,7 @@ static struct ubcmtp_dev ubcmtp_devices[] = {
 struct ubcmtp_softc {
 	struct device		sc_dev;		/* base device */
 
-	struct ubcmtp_dev	*dev_type;
+	const struct ubcmtp_dev	*dev_type;
 
 	struct usbd_device	*sc_udev;
 	struct device		*sc_wsmousedev;
