@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.16 2022/10/02 16:38:23 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.17 2022/10/26 20:31:38 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -365,6 +365,12 @@ poll_timeout(SSL *client, SSL *server)
 	if (DTLSv1_get_timeout(server, &timeout))
 		server_timeout = timeout.tv_sec * 1000 + timeout.tv_usec / 1000;
 
+	if (client_timeout < 10)
+		client_timeout = 10;
+	if (server_timeout < 10)
+		server_timeout = 10;
+
+	/* XXX */
 	if (client_timeout <= 0)
 		return server_timeout;
 	if (client_timeout > 0 && server_timeout <= 0)
