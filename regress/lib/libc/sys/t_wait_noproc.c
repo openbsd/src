@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_wait_noproc.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_wait_noproc.c,v 1.3 2022/10/26 23:18:01 kettenis Exp $	*/
 /* $NetBSD: t_wait_noproc.c,v 1.5 2016/11/09 17:50:19 kamil Exp $ */
 
 /*-
@@ -68,7 +68,6 @@ ATF_TC_BODY(waitpid, tc)
 	ATF_REQUIRE_ERRNO(ECHILD, waitpid(WAIT_ANY, NULL, TWAIT_OPTION) == -1);
 }
 
-#ifndef __OpenBSD__
 ATF_TC(waitid);
 ATF_TC_HEAD(waitid, tc)
 {
@@ -81,9 +80,8 @@ ATF_TC_BODY(waitid, tc)
 {
 	ATF_REQUIRE_ERRNO(ECHILD,
 	    waitid(P_ALL, 0, NULL,
-	        WTRAPPED | WEXITED | TWAIT_OPTION) == -1);
+	        WEXITED | TWAIT_OPTION) == -1);
 }
-#endif
 
 ATF_TC(wait3);
 ATF_TC_HEAD(wait3, tc)
@@ -128,6 +126,7 @@ ATF_TC_BODY(wait4, tc)
  * 	        WTRAPPED | WEXITED | TWAIT_OPTION, NULL, NULL) == -1);
  * }
  */
+#endif
 
 /*
  * Generator of valid combinations of options
@@ -148,7 +147,9 @@ get_options6(size_t pos)
 		WEXITED,
 		WUNTRACED,
 		WSTOPPED,	// SUS compatibility, equal to WUNTRACED
+#ifndef __OpenBSD__
 		WTRAPPED,
+#endif
 		WCONTINUED
 	};
 
@@ -166,7 +167,6 @@ get_options6(size_t pos)
 
 	return rv;
 }
-#endif
 
 /*
  * Generator of valid combinations of options
@@ -243,7 +243,6 @@ ATF_TC_BODY(waitpid_options, tc)
 	}
 }
 
-#ifndef __OpenBSD__
 ATF_TC(waitid_options);
 ATF_TC_HEAD(waitid_options, tc)
 {
@@ -265,7 +264,6 @@ ATF_TC_BODY(waitid_options, tc)
 		    waitid(P_ALL, 0, NULL, o | TWAIT_OPTION) == -1);
 	}
 }
-#endif
 
 ATF_TC(wait3_options);
 ATF_TC_HEAD(wait3_options, tc)
@@ -338,9 +336,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, wait);
 #endif
 	ATF_TP_ADD_TC(tp, waitpid);
-#ifndef __OpenBSD__
 	ATF_TP_ADD_TC(tp, waitid);
-#endif
 	ATF_TP_ADD_TC(tp, wait3);
 	ATF_TP_ADD_TC(tp, wait4);
 #ifndef __OpenBSD__
@@ -348,9 +344,7 @@ ATF_TP_ADD_TCS(tp)
 #endif
 
 	ATF_TP_ADD_TC(tp, waitpid_options);
-#ifndef __OpenBSD__
 	ATF_TP_ADD_TC(tp, waitid_options);
-#endif
 	ATF_TP_ADD_TC(tp, wait3_options);
 	ATF_TP_ADD_TC(tp, wait4_options);
 #ifndef __OpenBSD__

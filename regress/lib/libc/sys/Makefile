@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2022/09/11 20:51:44 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.17 2022/10/26 23:18:01 kettenis Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -69,6 +69,7 @@ PROGS +=	t_stat
 PROGS +=	t_truncate
 PROGS +=	t_umask t_unlink
 PROGS +=	t_vfork
+PROGS +=	t_waitid
 PROGS +=	t_wait_noproc
 PROGS +=	t_wait_noproc_wnohang
 PROGS +=	t_write
