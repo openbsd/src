@@ -240,6 +240,7 @@ _thread_sys_utimes
 _thread_sys_utrace
 _thread_sys_vfork
 _thread_sys_wait4
+_thread_sys_waitid
 _thread_sys_write
 _thread_sys_writev
 accept4
@@ -448,6 +449,7 @@ utimes
 utrace
 vfork
 wait4
+waitid
 write
 writev
 

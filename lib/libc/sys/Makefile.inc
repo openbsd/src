@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.165 2022/10/07 15:21:04 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.166 2022/10/26 23:16:24 kettenis Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -36,7 +36,7 @@ CANCEL=	accept accept4 \
 	poll ppoll pread preadv pselect pwrite pwritev \
 	read readv recvfrom recvmmsg recvmsg \
 	select sendmmsg sendmsg sendto \
-	wait4 write writev
+	wait4 waitid write writev
 SRCS+=	${CANCEL:%=w_%.c}
 
 # modules with default implementations on all architectures, unless overridden

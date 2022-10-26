@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.3 2022/10/26 23:16:24 kettenis Exp $	*/
+/*	$OpenBSD: w_waitid.c,v 1.1 2022/10/26 23:16:24 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -15,15 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LIBC_SYS_WAIT_H_
-#define _LIBC_SYS_WAIT_H_
+#include <sys/wait.h>
+#include "cancel.h"
 
-#include_next <sys/wait.h>
+int
+waitid(idtype_t idtype, id_t id, siginfo_t *info, int options)
+{
+	int ret;
 
-PROTO_DEPRECATED(wait);
-PROTO_NORMAL(waitpid);
-PROTO_DEPRECATED(wait3);
-PROTO_CANCEL(wait4);
-PROTO_CANCEL(waitid);
-
-#endif /* !_LIBC_SYS_WAIT_H_ */
+	ENTER_CANCEL_POINT(1);
+	ret = HIDDEN(waitid)(idtype, id, info, options);
+	LEAVE_CANCEL_POINT(ret <= 0);
+	return (ret);
+}
+DEF_CANCEL(waitid);
