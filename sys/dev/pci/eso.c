@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.52 2022/10/19 19:14:17 kn Exp $	*/
+/*	$OpenBSD: eso.c,v 1.53 2022/10/26 20:19:08 kn Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ int	eso_query_devinfo(void *, mixer_devinfo_t *);
 void *	eso_allocm(void *, int, size_t, int, int);
 void	eso_freem(void *, void *, int);
 size_t	eso_round_buffersize(void *, int, size_t);
-int	eso_get_props(void *);
 int	eso_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
 int	eso_trigger_input(void *, void *, void *, int,
@@ -136,7 +135,6 @@ const struct audio_hw_if eso_hw_if = {
 	.allocm = eso_allocm,
 	.freem = eso_freem,
 	.round_buffersize = eso_round_buffersize,
-	.get_props = eso_get_props,
 	.trigger_output = eso_trigger_output,
 	.trigger_input = eso_trigger_input,
 };
@@ -1558,13 +1556,6 @@ eso_round_buffersize(void *hdl, int direction, size_t bufsize)
 		bufsize = maxsize;
 
 	return (bufsize);
-}
-
-/* ARGSUSED */
-int
-eso_get_props(void *hdl)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

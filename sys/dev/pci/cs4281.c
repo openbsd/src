@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.44 2022/10/19 19:14:16 kn Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.45 2022/10/26 20:19:08 kn Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -166,7 +166,6 @@ int cs4281_init(struct cs4281_softc *);
 int cs4281_open(void *, int);
 void cs4281_close(void *);
 int cs4281_round_blocksize(void *, int);
-int cs4281_get_props(void *);
 int cs4281_attach_codec(void *, struct ac97_codec_if *);
 int cs4281_read_codec(void *, u_int8_t , u_int16_t *);
 int cs4281_write_codec(void *, u_int8_t, u_int16_t);
@@ -207,7 +206,6 @@ const struct audio_hw_if cs4281_hw_if = {
 	.allocm = cs4281_malloc,
 	.freem = cs4281_free,
 	.round_buffersize = cs4281_round_buffersize,
-	.get_props = cs4281_get_props,
 	.trigger_output = cs4281_trigger_output,
 	.trigger_input = cs4281_trigger_input,
 };
@@ -1183,12 +1181,6 @@ size_t
 cs4281_round_buffersize(void *addr, int direction, size_t size)
 {
 	return (DMA_SIZE);
-}
-
-int
-cs4281_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 /* AC97 */

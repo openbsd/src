@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.43 2022/10/19 19:14:17 kn Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.44 2022/10/26 20:19:09 kn Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -145,7 +145,6 @@ int	cs4231_get_port(void *, mixer_ctrl_t *);
 int	cs4231_query_devinfo(void *, mixer_devinfo_t *);
 void *	cs4231_alloc(void *, int, size_t, int, int);
 void	cs4231_free(void *, void *, int);
-int	cs4231_get_props(void *);
 int	cs4231_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 int	cs4231_trigger_input(void *, void *, void *, int,
@@ -164,7 +163,6 @@ const struct audio_hw_if cs4231_sa_hw_if = {
 	.query_devinfo = cs4231_query_devinfo,
 	.allocm = cs4231_alloc,
 	.freem = cs4231_free,
-	.get_props = cs4231_get_props,
 	.trigger_output = cs4231_trigger_output,
 	.trigger_input = cs4231_trigger_input,
 };
@@ -1177,12 +1175,6 @@ cs4231_query_devinfo(void *vsc, mixer_devinfo_t *dip)
 	}
 
 	return (err);
-}
-
-int
-cs4231_get_props(void *vsc)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 /*

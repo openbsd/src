@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.22 2022/10/19 19:14:16 kn Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.23 2022/10/26 20:19:08 kn Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -223,7 +223,6 @@ int auglx_query_devinfo(void *, mixer_devinfo_t *);
 void *auglx_allocm(void *, int, size_t, int, int);
 void auglx_freem(void *, void *, int);
 size_t auglx_round_buffersize(void *, int, size_t);
-int auglx_get_props(void *);
 int auglx_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
 int auglx_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -247,7 +246,6 @@ const struct audio_hw_if auglx_hw_if = {
 	.allocm = auglx_allocm,
 	.freem = auglx_freem,
 	.round_buffersize = auglx_round_buffersize,
-	.get_props = auglx_get_props,
 	.trigger_output = auglx_trigger_output,
 	.trigger_input = auglx_trigger_input,
 };
@@ -615,12 +613,6 @@ auglx_round_buffersize(void *v, int direction, size_t size)
 		size = AUGLX_DMASEG_MAX;
 
 	return size;
-}
-
-int
-auglx_get_props(void *v)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

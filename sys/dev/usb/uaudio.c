@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.171 2022/10/19 19:14:17 kn Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.172 2022/10/26 20:19:09 kn Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -430,7 +430,6 @@ int uaudio_halt_input(void *);
 int uaudio_query_devinfo(void *, struct mixer_devinfo *);
 int uaudio_get_port(void *, struct mixer_ctrl *);
 int uaudio_set_port(void *, struct mixer_ctrl *);
-int uaudio_get_props(void *);
 
 int uaudio_process_unit(struct uaudio_softc *,
     struct uaudio_unit *, int,
@@ -477,7 +476,6 @@ const struct audio_hw_if uaudio_hw_if = {
 	.set_port = uaudio_set_port,
 	.get_port = uaudio_get_port,
 	.query_devinfo = uaudio_query_devinfo,
-	.get_props = uaudio_get_props,
 	.trigger_output = uaudio_trigger_output,
 	.trigger_input = uaudio_trigger_input,
 	.copy_output = uaudio_copy_output,
@@ -4172,12 +4170,6 @@ uaudio_halt_input(void *self)
 	uaudio_stream_close(sc, AUMODE_RECORD);
 	sc->trigger_mode &= ~AUMODE_RECORD;
 	return 0;
-}
-
-int
-uaudio_get_props(void *self)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

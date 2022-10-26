@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.39 2022/10/19 19:14:17 kn Exp $       */
+/*      $OpenBSD: neo.c,v 1.40 2022/10/26 20:19:08 kn Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -199,7 +199,6 @@ int	neo_query_devinfo(void *, mixer_devinfo_t *);
 void   *neo_malloc(void *, int, size_t, int, int);
 void	neo_free(void *, void *, int);
 size_t	neo_round_buffersize(void *, int, size_t);
-int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
 
 struct cfdriver neo_cd = {
@@ -250,7 +249,6 @@ const struct audio_hw_if neo_hw_if = {
 	.allocm = neo_malloc,
 	.freem = neo_free,
 	.round_buffersize = neo_round_buffersize,
-	.get_props = neo_get_props,
 	.trigger_output = neo_trigger_output,
 	.trigger_input = neo_trigger_input,
 
@@ -924,11 +922,4 @@ size_t
 neo_round_buffersize(void *addr, int direction, size_t size)
 {
 	return (NM_BUFFSIZE);
-}
-
-
-int
-neo_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2s.c,v 1.36 2022/10/18 08:22:18 kn Exp $	*/
+/*	$OpenBSD: i2s.c,v 1.37 2022/10/26 20:19:07 kn Exp $	*/
 /*	$NetBSD: i2s.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -578,12 +578,6 @@ i2s_round_buffersize(void *h, int dir, size_t size)
 	if (size > 65536)
 		size = 65536;
 	return size;
-}
-
-int
-i2s_get_props(void *h)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.201 2022/10/19 19:59:06 kn Exp $	*/
+/*	$OpenBSD: audio.c,v 1.202 2022/10/26 20:19:07 kn Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1209,8 +1209,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	    ops->halt_input == 0 ||
 	    ops->set_port == 0 ||
 	    ops->get_port == 0 ||
-	    ops->query_devinfo == 0 ||
-	    ops->get_props == 0) {
+	    ops->query_devinfo == 0) {
 		printf("%s: missing method\n", DEVNAME(sc));
 		sc->ops = 0;
 		return;
@@ -1477,7 +1476,6 @@ int
 audio_open(struct audio_softc *sc, int flags)
 {
 	int error;
-	int props;
 
 	if (sc->mode)
 		return EBUSY;
@@ -1493,11 +1491,13 @@ audio_open(struct audio_softc *sc, int flags)
 		sc->mode |= AUMODE_PLAY;
 	if (flags & FREAD)
 		sc->mode |= AUMODE_RECORD;
-	props = sc->ops->get_props(sc->arg);
-	if (sc->mode == (AUMODE_PLAY | AUMODE_RECORD)) {
-		if (!(props & AUDIO_PROP_FULLDUPLEX)) {
-			error = ENOTTY;
-			goto bad;
+	if (sc->ops->get_props) {
+		int props = sc->ops->get_props(sc->arg);
+		if (sc->mode == (AUMODE_PLAY | AUMODE_RECORD)) {
+			if (!(props & AUDIO_PROP_FULLDUPLEX)) {
+				error = ENOTTY;
+				goto bad;
+			}
 		}
 	}
 

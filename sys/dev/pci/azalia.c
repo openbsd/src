@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.279 2022/10/24 05:59:17 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.280 2022/10/26 20:19:08 kn Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -264,7 +264,6 @@ int	azalia_query_devinfo(void *, mixer_devinfo_t *);
 void	*azalia_allocm(void *, int, size_t, int, int);
 void	azalia_freem(void *, void *, int);
 size_t	azalia_round_buffersize(void *, int, size_t);
-int	azalia_get_props(void *);
 int	azalia_trigger_output(void *, void *, void *, int,
 	void (*)(void *), void *, audio_params_t *);
 int	azalia_trigger_input(void *, void *, void *, int,
@@ -301,7 +300,6 @@ const struct audio_hw_if azalia_hw_if = {
 	.allocm = azalia_allocm,
 	.freem = azalia_freem,
 	.round_buffersize = azalia_round_buffersize,
-	.get_props = azalia_get_props,
 	.trigger_output = azalia_trigger_output,
 	.trigger_input = azalia_trigger_input,
 	.set_blksz = azalia_set_blksz,
@@ -4135,12 +4133,6 @@ azalia_round_buffersize(void *v, int dir, size_t size)
 	if (size <= 0)
 		size = 128;
 	return size;
-}
-
-int
-azalia_get_props(void *v)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

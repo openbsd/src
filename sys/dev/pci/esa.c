@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.40 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: esa.c,v 1.41 2022/10/26 20:19:08 kn Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -110,7 +110,6 @@ int		esa_query_devinfo(void *, mixer_devinfo_t *);
 void *		esa_malloc(void *, int, size_t, int, int);
 void		esa_free(void *, void *, int);
 size_t		esa_round_buffersize(void *, int, size_t);
-int		esa_get_props(void *);
 int		esa_trigger_output(void *, void *, void *, int,
 				   void (*)(void *), void *,
 				   struct audio_params *);
@@ -165,7 +164,6 @@ const struct audio_hw_if esa_hw_if = {
 	.allocm = esa_malloc,
 	.freem = esa_free,
 	.round_buffersize = esa_round_buffersize,
-	.get_props = esa_get_props,
 	.trigger_output = esa_trigger_output,
 	.trigger_input = esa_trigger_input,
 };
@@ -486,12 +484,6 @@ esa_round_buffersize(void *hdl, int direction, size_t bufsize)
 	vc->play.bufsize = vc->rec.bufsize = 65536;
 
 	return (vc->play.bufsize);
-}
-
-int
-esa_get_props(void *hdl)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

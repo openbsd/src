@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.27 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.28 2022/10/26 20:19:07 kn Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -162,7 +162,6 @@ int	auacer_query_devinfo(void *, mixer_devinfo_t *);
 void	*auacer_allocm(void *, int, size_t, int, int);
 void	auacer_freem(void *, void *, int);
 size_t	auacer_round_buffersize(void *, int, size_t);
-int	auacer_get_props(void *);
 int	auacer_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	auacer_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -192,7 +191,6 @@ const struct audio_hw_if auacer_hw_if = {
 	.allocm = auacer_allocm,
 	.freem = auacer_freem,
 	.round_buffersize = auacer_round_buffersize,
-	.get_props = auacer_get_props,
 	.trigger_output = auacer_trigger_output,
 	.trigger_input = auacer_trigger_input,
 };
@@ -630,12 +628,6 @@ auacer_round_buffersize(void *v, int direction, size_t size)
 		size = ALI_DMALIST_MAX * ALI_DMASEG_MAX;
 
 	return size;
-}
-
-int
-auacer_get_props(void *v)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 static void

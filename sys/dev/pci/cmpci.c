@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.51 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.52 2022/10/26 20:19:08 kn Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ int cmpci_query_devinfo(void *, mixer_devinfo_t *);
 void *cmpci_malloc(void *, int, size_t, int, int);
 void cmpci_free(void *, void *, int);
 size_t cmpci_round_buffersize(void *, int, size_t);
-int cmpci_get_props(void *);
 int cmpci_trigger_output(void *, void *, void *, int,
 				     void (*)(void *), void *,
 				     struct audio_params *);
@@ -162,7 +161,6 @@ const struct audio_hw_if cmpci_hw_if = {
 	.allocm = cmpci_malloc,
 	.freem = cmpci_free,
 	.round_buffersize = cmpci_round_buffersize,
-	.get_props = cmpci_get_props,
 	.trigger_output = cmpci_trigger_output,
 	.trigger_input = cmpci_trigger_input,
 };
@@ -1755,13 +1753,6 @@ cmpci_round_buffersize(void *handle, int direction, size_t bufsize)
 		bufsize = 0x10000;
 
 	return bufsize;
-}
-
-/* ARGSUSED */
-int
-cmpci_get_props(void *handle)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

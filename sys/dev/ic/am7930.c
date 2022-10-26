@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930.c,v 1.7 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: am7930.c,v 1.8 2022/10/26 20:19:07 kn Exp $	*/
 /*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
 
 /*
@@ -178,6 +178,10 @@ am7930_init(struct am7930_softc *sc, int flag)
 	}
 }
 
+/*
+ * XXX chip is full-duplex, but really attach-dependent.
+ * For now we know of no half-duplex attachments.
+ */
 int
 am7930_open(void *addr, int flags)
 {
@@ -314,16 +318,6 @@ am7930_halt_input(void *addr)
 	    AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
 	sc->sc_locked = 0;
 	return 0;
-}
-
-/*
- * XXX chip is full-duplex, but really attach-dependent.
- * For now we know of no half-duplex attachments.
- */
-int
-am7930_get_props(void *addr)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 /*

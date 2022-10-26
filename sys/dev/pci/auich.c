@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.118 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: auich.c,v 1.119 2022/10/26 20:19:08 kn Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -302,7 +302,6 @@ int auich_query_devinfo(void *, mixer_devinfo_t *);
 void *auich_allocm(void *, int, size_t, int, int);
 void auich_freem(void *, void *, int);
 size_t auich_round_buffersize(void *, int, size_t);
-int auich_get_props(void *);
 void auich_trigger_pipe(struct auich_softc *, int, struct auich_ring *);
 void auich_intr_pipe(struct auich_softc *, int, struct auich_ring *);
 int auich_trigger_output(void *, void *, void *, int, void (*)(void *),
@@ -328,7 +327,6 @@ const struct audio_hw_if auich_hw_if = {
 	.allocm = auich_allocm,
 	.freem = auich_freem,
 	.round_buffersize = auich_round_buffersize,
-	.get_props = auich_get_props,
 	.trigger_output = auich_trigger_output,
 	.trigger_input = auich_trigger_input,
 };
@@ -915,12 +913,6 @@ auich_round_buffersize(void *v, int direction, size_t size)
 		size = AUICH_DMALIST_MAX * AUICH_DMASEG_MAX;
 
 	return size;
-}
-
-int
-auich_get_props(void *v)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7930var.h,v 1.5 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: am7930var.h,v 1.6 2022/10/26 20:19:07 kn Exp $	*/
 /*	$NetBSD: am7930var.h,v 1.10 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
@@ -112,7 +112,6 @@ int	am7930_commit_settings(void *);
 int	am7930_round_blocksize(void *, int);
 int	am7930_halt_output(void *);
 int	am7930_halt_input(void *);
-int	am7930_get_props(void *);
 int	am7930_set_port(void *, mixer_ctrl_t *);
 int	am7930_get_port(void *, mixer_ctrl_t *);
 int	am7930_query_devinfo(void *, mixer_devinfo_t *);

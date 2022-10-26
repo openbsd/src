@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.39 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.40 2022/10/26 20:19:07 kn Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -108,7 +108,6 @@ int awacs_set_port(void *, mixer_ctrl_t *);
 int awacs_get_port(void *, mixer_ctrl_t *);
 int awacs_query_devinfo(void *, mixer_devinfo_t *);
 size_t awacs_round_buffersize(void *, int, size_t);
-int awacs_get_props(void *);
 void *awacs_allocm(void *, int, size_t, int, int);
 
 static inline u_int awacs_read_reg(struct awacs_softc *, int);
@@ -138,7 +137,6 @@ const struct audio_hw_if awacs_hw_if = {
 	.query_devinfo = awacs_query_devinfo,
 	.allocm = awacs_allocm,
 	.round_buffersize = awacs_round_buffersize,
-	.get_props = awacs_get_props,
 	.trigger_output = awacs_trigger_output,
 	.trigger_input = awacs_trigger_input,
 };
@@ -860,12 +858,6 @@ awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 	sc->sc_dmas = p;
 
 	return p->addr;
-}
-
-int
-awacs_get_props(void *h)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

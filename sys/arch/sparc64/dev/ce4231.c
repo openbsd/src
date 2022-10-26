@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.40 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.41 2022/10/26 20:19:07 kn Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -144,7 +144,6 @@ int	ce4231_get_port(void *, mixer_ctrl_t *);
 int	ce4231_query_devinfo(void *addr, mixer_devinfo_t *);
 void *	ce4231_alloc(void *, int, size_t, int, int);
 void	ce4231_free(void *, void *, int);
-int	ce4231_get_props(void *);
 int	ce4231_trigger_output(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
 int	ce4231_trigger_input(void *, void *, void *, int,
@@ -163,7 +162,6 @@ const struct audio_hw_if ce4231_sa_hw_if = {
 	.query_devinfo = ce4231_query_devinfo,
 	.allocm = ce4231_alloc,
 	.freem = ce4231_free,
-	.get_props = ce4231_get_props,
 	.trigger_output = ce4231_trigger_output,
 	.trigger_input = ce4231_trigger_input,
 };
@@ -1049,12 +1047,6 @@ onoff:
 	}
 
 	return (err);
-}
-
-int
-ce4231_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 /*

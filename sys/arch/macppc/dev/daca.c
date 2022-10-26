@@ -1,4 +1,4 @@
-/*	$OpenBSD: daca.c,v 1.14 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: daca.c,v 1.15 2022/10/26 20:19:07 kn Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -83,7 +83,6 @@ const struct audio_hw_if daca_hw_if = {
 	.query_devinfo = i2s_query_devinfo,
 	.allocm = i2s_allocm,
 	.round_buffersize = i2s_round_buffersize,
-	.get_props = i2s_get_props,
 	.trigger_output = i2s_trigger_output,
 	.trigger_input = i2s_trigger_input,
 };

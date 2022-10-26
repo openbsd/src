@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.63 2022/10/19 19:14:16 kn Exp $ */
+/*      $OpenBSD: eap.c,v 1.64 2022/10/26 20:19:08 kn Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -176,7 +176,6 @@ int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
 void   *eap_malloc(void *, int, size_t, int, int);
 void	eap_free(void *, void *, int);
-int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
 u_int32_t eap1371_src_wait(struct eap_softc *sc);
 void	eap1371_src_write(struct eap_softc *sc, int a, int d);
@@ -206,7 +205,6 @@ const struct audio_hw_if eap1370_hw_if = {
 	.query_devinfo = eap1370_query_devinfo,
 	.allocm = eap_malloc,
 	.freem = eap_free,
-	.get_props = eap_get_props,
 	.trigger_output = eap_trigger_output,
 	.trigger_input = eap_trigger_input,
 };
@@ -223,7 +221,6 @@ const struct audio_hw_if eap1371_hw_if = {
 	.query_devinfo = eap1371_query_devinfo,
 	.allocm = eap_malloc,
 	.freem = eap_free,
-	.get_props = eap_get_props,
 	.trigger_output = eap_trigger_output,
 	.trigger_input = eap_trigger_input,
 };
@@ -1477,12 +1474,6 @@ eap_free(void *addr, void *ptr, int pool)
 			return;
 		}
 	}
-}
-
-int
-eap_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 enum ac97_host_flags

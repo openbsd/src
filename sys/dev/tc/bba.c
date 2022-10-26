@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.11 2022/10/19 19:14:17 kn Exp $	*/
+/*	$OpenBSD: bba.c,v 1.12 2022/10/26 20:19:09 kn Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -146,7 +146,6 @@ int	bba_halt_input(void *);
 void	*bba_allocm(void *, int, size_t, int, int);
 void	bba_freem(void *, void *, int);
 size_t	bba_round_buffersize(void *, int, size_t);
-int	bba_get_props(void *);
 int	bba_trigger_output(void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *);
 int	bba_trigger_input(void *, void *, void *, int,
@@ -166,7 +165,6 @@ const struct audio_hw_if bba_hw_if = {
 	.allocm = bba_allocm,
 	.freem = bba_freem,
 	.round_buffersize = bba_round_buffersize,
-	.get_props = bba_get_props,
 	.trigger_output = bba_trigger_output,
 	.trigger_input = bba_trigger_input,
 };
@@ -573,12 +571,6 @@ bba_intr(void *v)
 	mtx_leave(&audio_lock);
 
 	return 0;
-}
-
-int
-bba_get_props(void *v)
-{
-	return am7930_get_props(v);
 }
 
 int

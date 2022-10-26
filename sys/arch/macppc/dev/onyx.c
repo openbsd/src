@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.16 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.17 2022/10/26 20:19:07 kn Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -92,7 +92,6 @@ const struct audio_hw_if onyx_hw_if = {
 	.query_devinfo = i2s_query_devinfo,
 	.allocm = i2s_allocm,
 	.round_buffersize = i2s_round_buffersize,
-	.get_props = i2s_get_props,
 	.trigger_output = i2s_trigger_output,
 	.trigger_input = i2s_trigger_input,
 };

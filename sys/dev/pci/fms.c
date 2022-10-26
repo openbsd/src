@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.35 2022/10/19 19:14:17 kn Exp $ */
+/*	$OpenBSD: fms.c,v 1.36 2022/10/26 20:19:08 kn Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ int	fms_get_port(void *, mixer_ctrl_t *);
 int	fms_query_devinfo(void *, mixer_devinfo_t *);
 void	*fms_malloc(void *, int, size_t, int, int);
 void	fms_free(void *, void *, int);
-int	fms_get_props(void *);
 int	fms_trigger_output(void *, void *, void *, int, void (*)(void *),
 			   void *, struct audio_params *);
 int	fms_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -111,7 +110,6 @@ const struct audio_hw_if fms_hw_if = {
 	.query_devinfo = fms_query_devinfo,
 	.allocm = fms_malloc,
 	.freem = fms_free,
-	.get_props = fms_get_props,
 	.trigger_output = fms_trigger_output,
 	.trigger_input = fms_trigger_input,
 };
@@ -622,12 +620,6 @@ fms_free(void *addr, void *ptr, int pool)
 		}
 
 	panic("fms_free: trying to free unallocated memory");
-}
-
-int
-fms_get_props(void *addr)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 int

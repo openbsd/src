@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.42 2022/10/19 19:14:17 kn Exp $ */
+/*      $OpenBSD: sv.c,v 1.43 2022/10/26 20:19:08 kn Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -142,7 +142,6 @@ int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 int	sv_query_devinfo(void *, mixer_devinfo_t *);
 void   *sv_malloc(void *, int, size_t, int, int);
 void	sv_free(void *, void *, int);
-int	sv_get_props(void *);
 
 void    sv_dumpregs(struct sv_softc *sc);
 
@@ -162,7 +161,6 @@ const struct audio_hw_if sv_hw_if = {
 	.query_devinfo = sv_query_devinfo,
 	.allocm = sv_malloc,
 	.freem = sv_free,
-	.get_props = sv_get_props,
 };
 
 
@@ -1300,10 +1298,4 @@ sv_free(void *addr, void *ptr, int pool)
                         return;
                 }
         }
-}
-
-int
-sv_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }

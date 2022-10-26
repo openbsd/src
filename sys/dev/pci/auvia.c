@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.65 2022/10/19 19:14:16 kn Exp $ */
+/*	$OpenBSD: auvia.c,v 1.66 2022/10/26 20:19:08 kn Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -87,7 +87,6 @@ int	auvia_query_devinfo(void *, mixer_devinfo_t *);
 void *	auvia_malloc(void *, int, size_t, int, int);
 void	auvia_free(void *, void *, int);
 size_t	auvia_round_buffersize(void *, int, size_t);
-int	auvia_get_props(void *);
 int	auvia_build_dma_ops(struct auvia_softc *, struct auvia_softc_chan *,
 	struct auvia_dma *, void *, void *, int);
 int	auvia_trigger_output(void *, void *, void *, int, void (*)(void *),
@@ -191,7 +190,6 @@ const struct audio_hw_if auvia_hw_if = {
 	.allocm = auvia_malloc,
 	.freem = auvia_free,
 	.round_buffersize = auvia_round_buffersize,
-	.get_props = auvia_get_props,
 	.trigger_output = auvia_trigger_output,
 	.trigger_input = auvia_trigger_input,
 };
@@ -789,12 +787,6 @@ auvia_round_buffersize(void *addr, int direction, size_t bufsize)
 
 	sc->bufsize = bufsize;
 	return bufsize;
-}
-
-int
-auvia_get_props(void *addr)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 

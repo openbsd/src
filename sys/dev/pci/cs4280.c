@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.59 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.60 2022/10/26 20:19:08 kn Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ int	cs4280_mixer_get_port(void *, mixer_ctrl_t *);
 int	cs4280_query_devinfo(void *addr, mixer_devinfo_t *dip);
 void   *cs4280_malloc(void *, int, size_t, int, int);
 void	cs4280_free(void *, void *, int);
-int	cs4280_get_props(void *);
 int	cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *);
 int	cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -245,7 +244,6 @@ const struct audio_hw_if cs4280_hw_if = {
 	.query_devinfo = cs4280_query_devinfo,
 	.allocm = cs4280_malloc,
 	.freem = cs4280_free,
-	.get_props = cs4280_get_props,
 	.trigger_output = cs4280_trigger_output,
 	.trigger_input = cs4280_trigger_input,
 };
@@ -1049,12 +1047,6 @@ int
 cs4280_round_blocksize(void *hdl, int blk)
 {
 	return (blk < CS4280_ICHUNK ? CS4280_ICHUNK : blk & -CS4280_ICHUNK);
-}
-
-int
-cs4280_get_props(void *hdl)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

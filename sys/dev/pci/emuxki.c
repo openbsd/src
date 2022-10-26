@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.60 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.61 2022/10/26 20:19:08 kn Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -178,8 +178,6 @@ int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 void   *emuxki_allocm(void *, int, size_t, int, int);
 void	emuxki_freem(void *, void *, int);
 
-int	emuxki_get_props(void *);
-
 /* Interrupt handler */
 int  emuxki_intr(void *);
 
@@ -224,7 +222,6 @@ const struct audio_hw_if emuxki_hw_if = {
 	.allocm = emuxki_allocm,
 	.freem = emuxki_freem,
 	.round_buffersize = emuxki_round_buffersize,
-	.get_props = emuxki_get_props,
 	.trigger_output = emuxki_trigger_output,
 	.trigger_input = emuxki_trigger_input,
 };
@@ -2257,12 +2254,6 @@ emuxki_round_buffersize(void *addr, int direction, size_t bsize)
 	}
 
 	return (bsize);
-}
-
-int
-emuxki_get_props(void *addr)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int

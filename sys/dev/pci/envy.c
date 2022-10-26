@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.86 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: envy.c,v 1.87 2022/10/26 20:19:08 kn Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -111,7 +111,6 @@ int envy_halt_input(void *);
 int envy_query_devinfo(void *, struct mixer_devinfo *);
 int envy_get_port(void *, struct mixer_ctrl *);
 int envy_set_port(void *, struct mixer_ctrl *);
-int envy_get_props(void *);
 #if NMIDI > 0
 int envy_midi_open(void *, int, void (*)(void *, int),
     void (*)(void *), void *);
@@ -191,7 +190,6 @@ const struct audio_hw_if envy_hw_if = {
 	.query_devinfo = envy_query_devinfo,
 	.allocm = envy_allocm,
 	.freem = envy_freem,
-	.get_props = envy_get_props,
 	.trigger_output = envy_trigger_output,
 	.trigger_input = envy_trigger_input,
 };
@@ -2429,12 +2427,6 @@ envy_set_port(void *self, struct mixer_ctrl *ctl)
 	if (idx < ndev)
 		return sc->card->dac->set(sc, ctl, idx);
 	return ENXIO;
-}
-
-int
-envy_get_props(void *self)
-{
-	return AUDIO_PROP_FULLDUPLEX;
 }
 
 #if NMIDI > 0

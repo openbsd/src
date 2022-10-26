@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2svar.h,v 1.9 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: i2svar.h,v 1.10 2022/10/26 20:19:07 kn Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -104,7 +104,6 @@ int i2s_set_port(void *, mixer_ctrl_t *);
 int i2s_get_port(void *, mixer_ctrl_t *);
 int i2s_query_devinfo(void *, mixer_devinfo_t *);
 size_t i2s_round_buffersize(void *, int, size_t);
-int i2s_get_props(void *);
 int i2s_trigger_output(void *, void *, void *, int, void (*)(void *),
     void *, struct audio_params *);
 int i2s_trigger_input(void *, void *, void *, int, void (*)(void *),

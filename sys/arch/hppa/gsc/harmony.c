@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.39 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.40 2022/10/26 20:19:06 kn Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -67,7 +67,6 @@ int     harmony_query_devinfo(void *addr, mixer_devinfo_t *);
 void *  harmony_allocm(void *, int, size_t, int, int);
 void    harmony_freem(void *, void *, int);
 size_t  harmony_round_buffersize(void *, int, size_t);
-int     harmony_get_props(void *);
 int     harmony_trigger_output(void *, void *, void *, int,
     void (*intr)(void *), void *, struct audio_params *);
 int     harmony_trigger_input(void *, void *, void *, int,
@@ -87,7 +86,6 @@ const struct audio_hw_if harmony_sa_hw_if = {
 	.allocm = harmony_allocm,
 	.freem = harmony_freem,
 	.round_buffersize = harmony_round_buffersize,
-	.get_props = harmony_get_props,
 	.trigger_output = harmony_trigger_output,
 	.trigger_input = harmony_trigger_input,
 };
@@ -876,12 +874,6 @@ size_t
 harmony_round_buffersize(void *vsc, int direction, size_t size)
 {
 	return ((size + HARMONY_BUFSIZE - 1) & (size_t)(-HARMONY_BUFSIZE));
-}
-
-int
-harmony_get_props(void *vsc)
-{
-	return (AUDIO_PROP_FULLDUPLEX);
 }
 
 int
