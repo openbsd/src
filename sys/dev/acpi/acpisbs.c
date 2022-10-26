@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisbs.c,v 1.10 2020/06/10 22:26:40 jca Exp $ */
+/* $OpenBSD: acpisbs.c,v 1.11 2022/10/26 16:06:42 kn Exp $ */
 /*
  * Smart Battery subsystem device driver
  * ACPI 5.0 spec section 10
@@ -58,7 +58,7 @@
 	(SMBUS_READ_##kind == SMBUS_READ_BLOCK ? SMBUS_DATA_SIZE : 2), \
 	#val, senst, sens }
 
-struct acpisbs_battery_check {
+const struct acpisbs_battery_check {
 	uint8_t	mode;
 	uint8_t command;
 	size_t	offset;
@@ -230,7 +230,8 @@ acpisbs_read(struct acpisbs_softc *sc)
 	int i;
 
 	for (i = 0; i < nitems(acpisbs_battery_checks); i++) {
-		struct acpisbs_battery_check check = acpisbs_battery_checks[i];
+		const struct acpisbs_battery_check check =
+		    acpisbs_battery_checks[i];
 		void *p = (void *)&sc->sc_battery + check.offset;
 
 		acpi_smbus_read(sc, check.mode, check.command, check.len, p);
@@ -273,7 +274,8 @@ acpisbs_setup_sensors(struct acpisbs_softc *sc)
 	    nitems(acpisbs_battery_checks), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < nitems(acpisbs_battery_checks); i++) {
-		struct acpisbs_battery_check check = acpisbs_battery_checks[i];
+		const struct acpisbs_battery_check check =
+		    acpisbs_battery_checks[i];
 
 		if (check.sensor_type < 0)
 			continue;
@@ -301,7 +303,8 @@ acpisbs_refresh_sensors(struct acpisbs_softc *sc)
 	int i;
 
 	for (i = 0; i < nitems(acpisbs_battery_checks); i++) {
-		struct acpisbs_battery_check check = acpisbs_battery_checks[i];
+		const struct acpisbs_battery_check check =
+		    acpisbs_battery_checks[i];
 		void *p = (void *)&sc->sc_battery + check.offset;
 		uint16_t *ival = (uint16_t *)p;
 
