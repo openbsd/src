@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.205 2022/10/25 16:08:26 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.206 2022/10/26 13:31:06 kettenis Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -639,10 +639,13 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	
 	if (SCARG(uap, pid) == WAIT_MYPGRP) {
 		idtype = P_PGID;
-		id = -q->p_p->ps_pgid;
+		id = q->p_p->ps_pgid;
 	} else if (SCARG(uap, pid) == WAIT_ANY) {
 		idtype = P_ALL;
 		id = 0;
+	} else if (pid < 0) {
+		idtype = P_PGID;
+		id = -pid;
 	} else {
 		idtype = P_PID;
 		id = pid;
