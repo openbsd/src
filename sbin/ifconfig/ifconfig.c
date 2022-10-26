@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.456 2022/07/08 07:04:54 jsg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.457 2022/10/26 17:06:31 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -363,7 +363,7 @@ void	unsetwgpeer(const char *, int);
 void	unsetwgpeerpsk(const char *, int);
 void	unsetwgpeerall(const char *, int);
 
-void	wg_status();
+void	wg_status(int);
 #else
 void	setignore(const char *, int);
 #endif
@@ -679,7 +679,7 @@ void	printgroupattribs(char *);
 void	printif(char *, int);
 void	printb_status(unsigned short, unsigned char *);
 const char *get_linkstate(int, int);
-void	status(int, struct sockaddr_dl *, int);
+void	status(int, struct sockaddr_dl *, int, int);
 __dead void	usage(void);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 int	len_string(const u_int8_t *, int);
@@ -1195,7 +1195,7 @@ printif(char *name, int ifaliases)
 				continue;
 			ifdata = ifa->ifa_data;
 			status(1, (struct sockaddr_dl *)ifa->ifa_addr,
-			    ifdata->ifi_link_state);
+			    ifdata->ifi_link_state, ifaliases);
 			count++;
 			noinet = 1;
 			continue;
@@ -3316,7 +3316,7 @@ get_linkstate(int mt, int link_state)
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(int link, struct sockaddr_dl *sdl, int ls)
+status(int link, struct sockaddr_dl *sdl, int ls, int ifaliases)
 {
 	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
@@ -3391,7 +3391,7 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	mpls_status();
 	pflow_status();
 	umb_status();
-	wg_status();
+	wg_status(ifaliases);
 #endif
 	trunk_status();
 	getifgroups();
@@ -5907,7 +5907,7 @@ process_wg_commands(void)
 }
 
 void
-wg_status(void)
+wg_status(int ifaliases)
 {
 	size_t			 i, j, last_size;
 	struct timespec		 now;
@@ -5942,45 +5942,47 @@ wg_status(void)
 		printf("\twgpubkey %s\n", key);
 	}
 
-	wg_peer = &wg_interface->i_peers[0];
-	for (i = 0; i < wg_interface->i_peers_count; i++) {
-		b64_ntop(wg_peer->p_public, WG_KEY_LEN,
-		    key, sizeof(key));
-		printf("\twgpeer %s\n", key);
+	if (ifaliases) {
+		wg_peer = &wg_interface->i_peers[0];
+		for (i = 0; i < wg_interface->i_peers_count; i++) {
+			b64_ntop(wg_peer->p_public, WG_KEY_LEN,
+			    key, sizeof(key));
+			printf("\twgpeer %s\n", key);
 
-		if (wg_peer->p_flags & WG_PEER_HAS_PSK)
-			printf("\t\twgpsk (present)\n");
+			if (wg_peer->p_flags & WG_PEER_HAS_PSK)
+				printf("\t\twgpsk (present)\n");
 
-		if (wg_peer->p_flags & WG_PEER_HAS_PKA && wg_peer->p_pka)
-			printf("\t\twgpka %u (sec)\n", wg_peer->p_pka);
+			if (wg_peer->p_flags & WG_PEER_HAS_PKA && wg_peer->p_pka)
+				printf("\t\twgpka %u (sec)\n", wg_peer->p_pka);
 
-		if (wg_peer->p_flags & WG_PEER_HAS_ENDPOINT) {
-			if (getnameinfo(&wg_peer->p_sa, wg_peer->p_sa.sa_len,
-			    hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
-			    NI_NUMERICHOST | NI_NUMERICSERV) == 0)
-				printf("\t\twgendpoint %s %s\n", hbuf, sbuf);
-			else
-				printf("\t\twgendpoint unable to print\n");
+			if (wg_peer->p_flags & WG_PEER_HAS_ENDPOINT) {
+				if (getnameinfo(&wg_peer->p_sa, wg_peer->p_sa.sa_len,
+				    hbuf, sizeof(hbuf), sbuf, sizeof(sbuf),
+				    NI_NUMERICHOST | NI_NUMERICSERV) == 0)
+					printf("\t\twgendpoint %s %s\n", hbuf, sbuf);
+				else
+					printf("\t\twgendpoint unable to print\n");
+			}
+
+			printf("\t\ttx: %llu, rx: %llu\n",
+			    wg_peer->p_txbytes, wg_peer->p_rxbytes);
+
+			if (wg_peer->p_last_handshake.tv_sec != 0) {
+				timespec_get(&now, TIME_UTC);
+				printf("\t\tlast handshake: %lld seconds ago\n",
+				    now.tv_sec - wg_peer->p_last_handshake.tv_sec);
+			}
+
+
+			wg_aip = &wg_peer->p_aips[0];
+			for (j = 0; j < wg_peer->p_aips_count; j++) {
+				inet_ntop(wg_aip->a_af, &wg_aip->a_addr,
+				    hbuf, sizeof(hbuf));
+				printf("\t\twgaip %s/%d\n", hbuf, wg_aip->a_cidr);
+				wg_aip++;
+			}
+			wg_peer = (struct wg_peer_io *)wg_aip;
 		}
-
-		printf("\t\ttx: %llu, rx: %llu\n",
-		    wg_peer->p_txbytes, wg_peer->p_rxbytes);
-
-		if (wg_peer->p_last_handshake.tv_sec != 0) {
-			timespec_get(&now, TIME_UTC);
-			printf("\t\tlast handshake: %lld seconds ago\n",
-			    now.tv_sec - wg_peer->p_last_handshake.tv_sec);
-		}
-
-
-		wg_aip = &wg_peer->p_aips[0];
-		for (j = 0; j < wg_peer->p_aips_count; j++) {
-			inet_ntop(wg_aip->a_af, &wg_aip->a_addr,
-			    hbuf, sizeof(hbuf));
-			printf("\t\twgaip %s/%d\n", hbuf, wg_aip->a_cidr);
-			wg_aip++;
-		}
-		wg_peer = (struct wg_peer_io *)wg_aip;
 	}
 out:
 	free(wgdata.wgd_interface);
