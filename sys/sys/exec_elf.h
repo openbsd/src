@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.96 2022/10/08 16:42:41 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.97 2022/10/27 23:17:18 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -716,7 +716,7 @@ enum AuxID {
 	AUX_phent = 4,			/* sizeof(phdr[0]) */
 	AUX_phnum = 5,			/* # phdr entries */
 	AUX_pagesz = 6,			/* PAGESIZE */
-	AUX_base = 7,			/* ld.so base addr */
+	AUX_base = 7,			/* base addr for ld.so or static PIE */
 	AUX_flags = 8,			/* processor flags */
 	AUX_entry = 9,			/* a.out entry */
 	AUX_sun_uid = 2000,		/* euid */
