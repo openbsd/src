@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.171 2022/10/23 02:53:14 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.172 2022/10/27 16:01:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -567,7 +567,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 	 */
 	for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
 		Elf_Addr addr, size = 0;
-		int prot = 0;
+		int prot = 0, syscall = 0;
 		int flags = 0;
 
 		switch (pp->p_type) {
@@ -586,7 +586,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			/* Permit system calls in specific main-programs */
 			if (interp == NULL) {
 				/* statics. Also block the ld.so syscall-grant */
-				flags |= VMCMD_SYSCALL;
+				syscall = VMCMD_SYSCALL;
 				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
 			}
 
@@ -598,7 +598,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			 * for DATA_PLT, is fine for TEXT_PLT.
 			 */
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
-			    pp, &addr, &size, &prot, flags);
+			    pp, &addr, &size, &prot, flags | syscall);
 
 			/*
 			 * Update exe_base in case alignment was off.
