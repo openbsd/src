@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.49 2022/10/21 18:10:52 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.50 2022/10/27 22:48:17 deraadt Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -94,6 +94,7 @@ struct exec_vmcmd {
 #define VMCMD_STACK     0x0004  /* create with UVM_FLAG_STACK */
 #define VMCMD_SYSCALL   0x0008  /* create with UVM_FLAG_SYSCALL */
 #define VMCMD_IMMUTABLE	0x0010  /* create with UVM_ET_IMMUTABLE */
+#define VMCMD_TEXTREL	0x0020  /* terrible binary contains terrible textrel */
 };
 
 #define	EXEC_DEFAULT_VMCMD_SETSIZE	12	/* # of cmds in set to start */
