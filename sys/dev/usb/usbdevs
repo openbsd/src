@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.750 2022/10/08 06:53:06 mglocker Exp $
+$OpenBSD: usbdevs,v 1.751 2022/10/27 13:19:42 patrick Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3148,6 +3148,7 @@ product MICROSOFT SURFETH	0x0927	Surface Ethernet
 product MICROSOFT TYPECOVER	0x096f	Surface Go Type Cover
 product MICROSOFT TYPECOVER2	0x09b5	Surface Go Type Cover
 product MICROSOFT TYPECOVER3	0x09c0	Surface Pro Type Cover
+product MICROSOFT WINDEVETH	0x0c5e
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	SCSI-DB25
