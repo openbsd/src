@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.h,v 1.2 2022/01/12 21:41:06 guenther Exp $ */
+/*	$OpenBSD: boot_md.h,v 1.3 2022/10/27 19:40:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -50,6 +50,7 @@ void _dl_exit(int);
  */
 #define REDIRECT_SYSCALL(x)	typeof(x) x asm("_libc_"#x) __dso_hidden
 REDIRECT_SYSCALL(mprotect);
+REDIRECT_SYSCALL(mimmutable);
 
 #define	DT_PROC(n)	((n) - DT_LOPROC)
 
@@ -76,6 +77,7 @@ static size_t relro_size;
 	do {								\
 		if (relro_addr != NULL && relro_size != 0)		\
 			mprotect(relro_addr, relro_size, PROT_READ);	\
+			mimmutable(relro_addr, relro_size);		\
 	} while (0)
 
 /*
