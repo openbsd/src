@@ -519,6 +519,7 @@ msk*	at mskc?			#  each port of above
 em*	at pci?				# Intel Pro/1000 ethernet
 ixgb*	at pci?				# Intel Pro/10Gb ethernet
 ix*	at pci?				# Intel 82598EB 10Gb ethernet
+ixv*	at pci?				# Virtual Function of Intel 82598EB
 myx*	at pci?				# Myricom Myri-10G 10Gb ethernet
 oce*	at pci?				# Emulex OneConnect 10Gb ethernet
 txp*	at pci?				# 3com 3CR990

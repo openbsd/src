@@ -361,6 +361,7 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	struct ixgbe_phy_info *phy = &hw->phy;
 	struct ixgbe_eeprom_info *eeprom = &hw->eeprom;
 	int32_t ret_val;
+	int i;
 
 	DEBUGFUNC("ixgbe_init_ops_82599");
 
@@ -414,7 +415,8 @@ int32_t ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	mac->arc_subsystem_valid = !!(IXGBE_READ_REG(hw, IXGBE_FWSM_BY_MAC(hw))
 				      & IXGBE_FWSM_MODE_MASK);
 
-	hw->mbx.ops.init_params = ixgbe_init_mbx_params_pf;
+	for (i = 0; i < 64; i++)
+		hw->mbx.ops[i].init_params = ixgbe_init_mbx_params_pf;
 
 	/* EEPROM */
 	eeprom->ops.read = ixgbe_read_eeprom_82599;

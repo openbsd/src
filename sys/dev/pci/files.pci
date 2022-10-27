@@ -351,12 +351,18 @@ file	dev/pci/ixgb_hw.c		ixgb
 device	ix: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach	ix at pci
 file	dev/pci/if_ix.c			ix
-file	dev/pci/ixgbe.c			ix
+file	dev/pci/ixgbe.c			ix | ixv
 file	dev/pci/ixgbe_82598.c		ix
 file	dev/pci/ixgbe_82599.c		ix
 file	dev/pci/ixgbe_x540.c		ix
 file	dev/pci/ixgbe_x550.c		ix
 file	dev/pci/ixgbe_phy.c		ix
+
+# Virtual Function of i82599.
+device	ixv: ether, ifnet, ifmedia, intrmap, stoeplitz
+attach	ixv at pci
+file	dev/pci/if_ixv.c		ixv
+file	dev/pci/ixgbe_vf.c		ixv
 
 # Intel Ethernet 700 Series
 device	ixl: ether, ifnet, ifmedia, intrmap, stoeplitz
