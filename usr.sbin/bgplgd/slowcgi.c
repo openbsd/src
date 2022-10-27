@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.4 2022/08/25 16:49:18 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.5 2022/10/27 13:24:22 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -505,7 +505,7 @@ slowcgi_timeout(int fd, short events, void *arg)
 	if (c->script_flags & SCRIPT_DONE)
 		return;
 
-	ldebug("timeout fired");
+	ldebug("timeout fired for pid %d", c->command_pid);
 
 	if (c->timeout_fired)
 		sig = SIGKILL;
@@ -556,7 +556,7 @@ slowcgi_sig_handler(int sig, short event, void *arg)
 			else
 				c->command_status = WEXITSTATUS(status);
 
-			ldebug("exit %s%d",
+			ldebug("pid %d exit %s%d", pid,
 			    WIFSIGNALED(status) ? "signal " : "",
 			    c->command_status);
 
