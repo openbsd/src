@@ -1621,6 +1621,7 @@ get_mips_dynamic_type (unsigned long type)
     case DT_MIPS_COMPACT_SIZE: return "MIPS_COMPACT_SIZE";
     case DT_MIPS_GP_VALUE: return "MIPS_GP_VALUE";
     case DT_MIPS_AUX_DYNAMIC: return "MIPS_AUX_DYNAMIC";
+    case DT_MIPS_RLD_MAP_REL: return "MIPS_RLD_MAP_REL";
     default:
       return NULL;
     }
