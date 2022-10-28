@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsig.c,v 1.3 2022/10/25 19:55:31 miod Exp $	*/
+/*	$OpenBSD: fpsig.c,v 1.4 2022/10/28 16:06:54 miod Exp $	*/
 
 /*
  * Public domain.  2005, Otto Moerbeek
@@ -53,14 +53,15 @@ main()
 	
 	while (count < 10000) {
 		handler(0);
-	double a, b, h1 = g1, h2 = g2;
 
-	for (a = 0.0; a < LIMIT; a += 1.1)
-		for (b = 0.0; b < LIMIT; b += 1.1)
-			h1 += a * a + b * b;
-	for (a = 0.0; a < LIMIT; a += 1.1)
-		for (b = 0.0; b < LIMIT; b += 1.1)
-			h2 += a * a + b * b;
+		double a, b, h1 = g1, h2 = g2;
+
+		for (a = 0.0; a < LIMIT; a += 1.1)
+			for (b = 0.0; b < LIMIT; b += 1.1)
+				h1 += a * a + b * b;
+		for (a = 0.0; a < LIMIT; a += 1.1)
+			for (b = 0.0; b < LIMIT; b += 1.1)
+				h2 += a * a + b * b;
 
 		if (h1 != h2)
 			errx(1, "%f %f", g1, g2);
