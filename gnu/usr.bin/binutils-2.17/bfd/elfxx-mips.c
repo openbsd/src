@@ -5943,7 +5943,7 @@ _bfd_mips_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
     }
 
   if ((IRIX_COMPAT (abfd) == ict_irix5 || IRIX_COMPAT (abfd) == ict_none)
-      && !info->shared
+      && info->executable
       && bfd_get_section_by_name (abfd, ".rld_map") == NULL)
     {
       s = bfd_make_section_with_flags (abfd, ".rld_map",
@@ -6020,6 +6020,11 @@ _bfd_mips_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 
       if (! bfd_elf_link_record_dynamic_symbol (info, h))
 	return FALSE;
+    }
+
+  if (info->executable)
+    {
+      const char *name;
 
       if (! mips_elf_hash_table (info)->use_rld_obj_head)
 	{
@@ -7421,7 +7426,7 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
 	     of .text section.  So put a dummy.  XXX  */
 	  s->size += htab->function_stub_size;
 	}
-      else if (! info->shared
+      else if (info->executable
 	       && ! mips_elf_hash_table (info)->use_rld_obj_head
 	       && strncmp (name, ".rld_map", 8) == 0)
 	{
@@ -7489,6 +7494,16 @@ _bfd_mips_elf_size_dynamic_sections (bfd *output_bfd,
 	  /* SGI object has the equivalence of DT_DEBUG in the
 	     DT_MIPS_RLD_MAP entry.  */
 	  if (!MIPS_ELF_ADD_DYNAMIC_ENTRY (info, DT_MIPS_RLD_MAP, 0))
+	    return FALSE;
+	  if (!SGI_COMPAT (output_bfd))
+	    {
+	      if (!MIPS_ELF_ADD_DYNAMIC_ENTRY (info, DT_DEBUG, 0))
+		return FALSE;
+	    }
+	}
+      else if (info->pie)
+        {
+	  if (!MIPS_ELF_ADD_DYNAMIC_ENTRY (info, DT_MIPS_RLD_MAP_REL, 0))
 	    return FALSE;
 	  if (!SGI_COMPAT (output_bfd))
 	    {
@@ -8246,7 +8261,7 @@ _bfd_mips_elf_finish_dynamic_symbol (bfd *output_bfd,
   if (IRIX_COMPAT (output_bfd) == ict_irix6)
     mips_elf_irix6_finish_dynamic_symbol (output_bfd, name, sym);
 
-  if (! info->shared)
+  if (info->executable)
     {
       if (! mips_elf_hash_table (info)->use_rld_obj_head
 	  && (strcmp (name, "__rld_map") == 0
@@ -8695,6 +8710,7 @@ _bfd_mips_elf_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_MIPS_RLD_MAP:
+	    case DT_MIPS_RLD_MAP_REL:
 	      dyn.d_un.d_ptr = mips_elf_hash_table (info)->rld_value;
 	      break;
 
