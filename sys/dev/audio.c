@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.202 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: audio.c,v 1.203 2022/10/28 15:13:59 kn Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1491,15 +1491,6 @@ audio_open(struct audio_softc *sc, int flags)
 		sc->mode |= AUMODE_PLAY;
 	if (flags & FREAD)
 		sc->mode |= AUMODE_RECORD;
-	if (sc->ops->get_props) {
-		int props = sc->ops->get_props(sc->arg);
-		if (sc->mode == (AUMODE_PLAY | AUMODE_RECORD)) {
-			if (!(props & AUDIO_PROP_FULLDUPLEX)) {
-				error = ENOTTY;
-				goto bad;
-			}
-		}
-	}
 
 	if (sc->ops->speaker_ctl) {
 		/*

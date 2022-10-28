@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.32 2022/10/19 19:59:06 kn Exp $
+.\"	$OpenBSD: audio.9,v 1.33 2022/10/28 15:13:59 kn Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 19 2022 $
+.Dd $Mdocdate: October 28 2022 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -72,7 +72,6 @@ struct audio_hw_if {
 	void	*(*allocm)(void *, int, size_t, int, int);
 	void	(*freem)(void *, void *, int);
 	size_t	(*round_buffersize)(void *, int, size_t);
-	int 	(*get_props)(void *);
 
 	int	(*trigger_output)(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
@@ -344,10 +343,6 @@ Note that the buffer size is always a multiple of the block size, so
 and
 .Fn round_buffersize
 must be consistent.
-.It Ft int Fn (*get_props) "void *hdl"
-This function returns a combination of
-.Dv AUDIO_PROP_xxx
-properties.
 .It Ft int Fn (*trigger_output) "void *hdl" "void *start" "void *end" "int blksize" \
 "void (*intr)(void *)" "void *intrarg" "struct audio_params *param"
 This function is optional.
