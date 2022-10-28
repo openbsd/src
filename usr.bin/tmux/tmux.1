@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.903 2022/09/28 07:59:50 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.904 2022/10/28 13:00:02 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2022 $
+.Dd $Mdocdate: October 28 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6612,6 +6612,10 @@ has changed mode.
 Paste buffer
 .Ar name
 has been changed.
+.It Ic %paste-buffer-deleted Ar name
+Paste buffer
+.Ar name
+has been deleted.
 .It Ic %pause Ar pane-id
 The pane has been paused (if the
 .Ar pause-after

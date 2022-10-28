@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.30 2022/08/15 09:10:34 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.31 2022/10/28 13:00:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -244,6 +244,19 @@ control_notify_paste_buffer_changed(const char *name)
 		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
 			continue;
 
-		control_write(c, "%%paste-changed %s", name);
+		control_write(c, "%%paste-buffer-changed %s", name);
+	}
+}
+
+void
+control_notify_paste_buffer_deleted(const char *name)
+{
+	struct client	*c;
+
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c))
+			continue;
+
+		control_write(c, "%%paste-buffer-deleted %s", name);
 	}
 }
