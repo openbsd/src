@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.18 2022/10/19 19:14:17 kn Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.19 2022/10/28 15:02:20 kn Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -795,7 +795,6 @@ int		utvfu_audio_halt_in(void *);
 int		utvfu_audio_mixer_set_port(void *, struct mixer_ctrl *);
 int		utvfu_audio_mixer_get_port(void *, struct mixer_ctrl *);
 int		utvfu_audio_query_devinfo(void *, struct mixer_devinfo *);
-int		utvfu_audio_get_props(void *);
 int		utvfu_audio_trigger_output(void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *);
 int		utvfu_audio_trigger_input(void *, void *, void *, int,
@@ -851,7 +850,6 @@ const struct audio_hw_if utvfu_au_hw_if = {
 	.set_port = utvfu_audio_mixer_set_port,
 	.get_port = utvfu_audio_mixer_get_port,
 	.query_devinfo = utvfu_audio_query_devinfo,
-	.get_props = utvfu_audio_get_props,
 	.trigger_output = utvfu_audio_trigger_output,
 	.trigger_input = utvfu_audio_trigger_input,
 };
@@ -1992,12 +1990,6 @@ utvfu_audio_query_devinfo(void *v, struct mixer_devinfo *mi)
 	strlcpy(mi->un.e.member[1].label.name, AudioNon,
 	    sizeof(mi->un.e.member[1].label.name));
 
-	return (0);
-}
-
-int
-utvfu_audio_get_props(void *v)
-{
 	return (0);
 }
 
