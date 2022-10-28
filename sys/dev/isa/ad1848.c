@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.47 2022/10/18 08:22:18 kn Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.48 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/fcntl.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -1040,6 +1041,9 @@ ad1848_open(void *addr, int flags)
 
 	DPRINTF(("ad1848_open: sc=%p\n", sc));
 
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD) && sc->mode != 2)
+		return ENXIO;
+
 	sc->sc_pintr = sc->sc_parg = NULL;
 	sc->sc_rintr = sc->sc_rarg = NULL;
 
@@ -1457,12 +1461,4 @@ ad1848_round(void *addr, int direction, size_t size)
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
 	return size;
-}
-
-int
-ad1848_get_props(void *addr)
-{
-	struct ad1848_softc *sc = addr;
-
-	return (sc->mode == 2 ? AUDIO_PROP_FULLDUPLEX : 0);
 }

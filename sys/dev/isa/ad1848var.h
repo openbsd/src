@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.16 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.17 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -209,7 +209,5 @@ void     ad1848_mute_channel(struct ad1848_softc *, int device, int mute);
 void   *ad1848_malloc(void *, int, size_t, int, int);
 void	ad1848_free(void *, void *, int);
 size_t	ad1848_round(void *, int, size_t);
-
-int	ad1848_get_props(void *);
 
 #endif

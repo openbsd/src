@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.53 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: gus.c,v 1.54 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -277,7 +277,6 @@ const struct audio_hw_if gus_hw_if = {
 	.allocm = gus_malloc,
 	.freem = gus_free,
 	.round_buffersize = gus_round,
-	.get_props = gus_get_props,
 };
 
 static const struct audio_hw_if gusmax_hw_if = {
@@ -297,7 +296,6 @@ static const struct audio_hw_if gusmax_hw_if = {
 	.allocm = ad1848_malloc,
 	.freem = ad1848_free,
 	.round_buffersize = ad1848_round,
-	.get_props = gusmax_get_props,
 };
 
 int
@@ -306,6 +304,10 @@ gusopen(void *addr, int flags)
 	struct gus_softc *sc = addr;
 
 	DPRINTF(("gusopen() called\n"));
+
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD) &&
+	    sc->sc_recdrq == sc->sc_drq)
+		return ENXIO;
 
 	if (sc->sc_flags & GUS_OPEN)
 		return EBUSY;
@@ -2669,20 +2671,6 @@ gus_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 	    /*NOTREACHED*/
 	}
 	return error;
-}
-
-int
-gus_get_props(void *addr)
-{
-	struct gus_softc *sc = addr;
-	return (sc->sc_recdrq == sc->sc_drq ? 0 : AUDIO_PROP_FULLDUPLEX);
-}
-
-int
-gusmax_get_props(void *addr)
-{
-	struct ad1848_softc *ac = addr;
-	return gus_get_props(ac->parent);
 }
 
 int

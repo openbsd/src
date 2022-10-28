@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.11 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.12 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -371,8 +371,6 @@ int	gusmax_mixer_query_devinfo(void *, mixer_devinfo_t *);
 void   *gus_malloc(void *, int, size_t, int, int);
 void	gus_free(void *, void *, int);
 size_t	gus_round(void *, int, size_t);
-int	gus_get_props(void *);
-int	gusmax_get_props(void *);
 
 void	gusics_master_mute(struct ics2101_softc *, int);
 void	gusics_dac_mute(struct ics2101_softc *, int);

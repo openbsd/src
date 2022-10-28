@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.33 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: sb.c,v 1.34 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,6 @@ const struct audio_hw_if sb_hw_if = {
 	.allocm = sb_malloc,
 	.freem = sb_free,
 	.round_buffersize = sb_round,
-	.get_props = sbdsp_get_props,
 	.trigger_output = sbdsp_trigger_output,
 	.trigger_input = sbdsp_trigger_input,
 };

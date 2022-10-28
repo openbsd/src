@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.35 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: pas.c,v 1.36 2022/10/28 14:55:46 kn Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ const struct audio_hw_if pas_hw_if = {
 	.allocm = sb_malloc,
 	.freem = sb_free,
 	.round_buffersize = sb_round,
-	.get_props = sbdsp_get_props,
 	.trigger_output = sbdsp_trigger_output,
 	.trigger_input = sbdsp_trigger_input,
 };
