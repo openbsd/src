@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.9 2017/08/13 14:56:09 visa Exp $	*/
+/*	$OpenBSD: exec.h,v 1.10 2022/10/28 15:07:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996-2004 Per Fogelstrom, Opsycon AB
@@ -63,8 +63,9 @@
 #define DT_MIPS_GOTSYM       0x70000013 /* First GOT entry in .dynsym */
 #define DT_MIPS_HIPAGENO     0x70000014 /* Number of GOT page table entries */
 #define DT_MIPS_RLD_MAP      0x70000016 /* Address of debug map pointer */
+#define DT_MIPS_RLD_MAP_REL  0x70000035 /* Relative address of debug map ptr */
 
-#define DT_PROCNUM (DT_MIPS_RLD_MAP - DT_LOPROC + 1)
+#define DT_PROCNUM (DT_MIPS_RLD_MAP_REL - DT_LOPROC + 1)
 
 /*
  * Legal values for e_flags field of Elf32_Ehdr.
