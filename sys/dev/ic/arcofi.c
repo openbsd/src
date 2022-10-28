@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.20 2022/06/27 20:14:51 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.21 2022/10/28 15:09:45 kn Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -35,6 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
+#include <sys/fcntl.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -196,7 +197,6 @@ int	arcofi_set_param(struct arcofi_softc *, int, int, int,
 void	arcofi_close(void *);
 int	arcofi_commit_settings(void *);
 int	arcofi_get_port(void *, mixer_ctrl_t *);
-int	arcofi_get_props(void *);
 int	arcofi_halt_input(void *);
 int	arcofi_halt_output(void *);
 int	arcofi_open(void *, int);
@@ -221,7 +221,6 @@ const struct audio_hw_if arcofi_hw_if = {
 	.set_port = arcofi_set_port,
 	.get_port = arcofi_get_port,
 	.query_devinfo = arcofi_query_devinfo,
-	.get_props = arcofi_get_props,
 };
 
 /* mixer items */
@@ -272,6 +271,8 @@ arcofi_open(void *v, int flags)
 {
 	struct arcofi_softc *sc = (struct arcofi_softc *)v;
 
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
+		return ENXIO;
 	if (sc->sc_open)
 		return EBUSY;
 	sc->sc_open = 1;
@@ -886,12 +887,6 @@ mute:
 		break;
 	}
 
-	return 0;
-}
-
-int
-arcofi_get_props(void *v)
-{
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplaudio.c,v 1.3 2022/09/02 17:54:42 kettenis Exp $	*/
+/*	$OpenBSD: aplaudio.c,v 1.4 2022/10/28 15:09:45 kn Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -55,7 +55,6 @@ void	aplaudio_freem(void *, void *, int);
 int	aplaudio_set_port(void *, mixer_ctrl_t *);
 int	aplaudio_get_port(void *, mixer_ctrl_t *);
 int	aplaudio_query_devinfo(void *, mixer_devinfo_t *);
-int	aplaudio_get_props(void *);
 int	aplaudio_round_blocksize(void *, int);
 size_t	aplaudio_round_buffersize(void *, int, size_t);
 int	aplaudio_trigger_output(void *, void *, void *, int,
@@ -74,7 +73,6 @@ const struct audio_hw_if aplaudio_hw_if = {
 	.set_port = aplaudio_set_port,
 	.get_port = aplaudio_get_port,
 	.query_devinfo = aplaudio_query_devinfo,
-	.get_props = aplaudio_get_props,
 	.round_blocksize = aplaudio_round_blocksize,
 	.round_buffersize = aplaudio_round_buffersize,
 	.trigger_output = aplaudio_trigger_output,
@@ -399,19 +397,6 @@ aplaudio_query_devinfo(void *cookie, mixer_devinfo_t *dip)
 	}
 
 	return ENXIO;
-}
-
-int
-aplaudio_get_props(void *cookie)
-{
-	struct aplaudio_softc *sc = cookie;
-	struct dai_device *dai = sc->sc_dai_cpu;
-	const struct audio_hw_if *hwif = dai->dd_hw_if;
-
-	if (hwif->get_props)
-		return hwif->get_props(dai->dd_cookie);
-
-	return 0;
 }
 
 int

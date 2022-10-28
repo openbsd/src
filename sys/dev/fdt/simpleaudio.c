@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleaudio.c,v 1.6 2022/08/01 09:50:02 kettenis Exp $	*/
+/*	$OpenBSD: simpleaudio.c,v 1.7 2022/10/28 15:09:45 kn Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -57,7 +57,6 @@ void simpleaudio_freem(void *, void *, int);
 int simpleaudio_set_port(void *, mixer_ctrl_t *);
 int simpleaudio_get_port(void *, mixer_ctrl_t *);
 int simpleaudio_query_devinfo(void *, mixer_devinfo_t *);
-int simpleaudio_get_props(void *);
 int simpleaudio_round_blocksize(void *, int);
 size_t simpleaudio_round_buffersize(void *, int, size_t);
 int simpleaudio_trigger_output(void *, void *, void *, int,
@@ -76,7 +75,6 @@ const struct audio_hw_if simpleaudio_hw_if = {
 	.set_port = simpleaudio_set_port,
 	.get_port = simpleaudio_get_port,
 	.query_devinfo = simpleaudio_query_devinfo,
-	.get_props = simpleaudio_get_props,
 	.round_blocksize = simpleaudio_round_blocksize,
 	.round_buffersize = simpleaudio_round_buffersize,
 	.trigger_output = simpleaudio_trigger_output,
@@ -405,19 +403,6 @@ simpleaudio_query_devinfo(void *cookie, mixer_devinfo_t *dip)
 		return hwif->query_devinfo(dai->dd_cookie, dip);
 
 	return ENXIO;
-}
-
-int
-simpleaudio_get_props(void *cookie)
-{
-	struct simpleaudio_softc *sc = cookie;
-	struct dai_device *dai = sc->sc_dai_cpu;
-	const struct audio_hw_if *hwif = dai->dd_hw_if;
-
-	if (hwif->get_props)
-		return hwif->get_props(dai->dd_cookie);
-
-	return 0;
 }
 
 int

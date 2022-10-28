@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.49 2022/10/19 19:14:17 kn Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.50 2022/10/28 15:09:46 kn Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -476,7 +476,6 @@ int	maestro_get_port(void *, mixer_ctrl_t *);
 int	maestro_query_devinfo(void *, mixer_devinfo_t *);
 void	*maestro_malloc(void *, int, size_t, int, int);
 void	maestro_free(void *, void *, int);
-int	maestro_get_props(void *);
 int	maestro_trigger_output(void *, void *, void *, int, void (*)(void *),
 				void *, struct audio_params *);
 int	maestro_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -539,7 +538,6 @@ const struct audio_hw_if maestro_hw_if = {
 	.query_devinfo = maestro_query_devinfo,
 	.allocm = maestro_malloc,
 	.freem = maestro_free,
-	.get_props = maestro_get_props,
 	.trigger_output = maestro_trigger_output,
 	.trigger_input = maestro_trigger_input,
 };
@@ -840,14 +838,6 @@ maestro_free(void *self, void *ptr, int pool)
 }
 
 int
-maestro_get_props(void *self)
-{
-	/* struct maestro_softc *sc = (struct maestro_softc *)self; */
-
-	return (0); /* XXX */
-}
-
-int
 maestro_set_port(void *self, mixer_ctrl_t *cp)
 {
 	struct ac97_codec_if *c = ((struct maestro_softc *)self)->codec_if;
@@ -998,6 +988,9 @@ maestro_open(void *hdl, int flags)
 {
 	struct maestro_softc *sc = (struct maestro_softc *)hdl;
 	DPRINTF(("%s: open(%d)\n", sc->dev.dv_xname, flags));
+
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
+		return ENXIO;	/* XXX */
 
 /* XXX work around VM brokeness */
 #if 0

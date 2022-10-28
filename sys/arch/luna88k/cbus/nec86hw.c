@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.7 2022/10/19 15:34:02 kn Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.8 2022/10/28 15:09:45 kn Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -52,6 +52,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/fcntl.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -168,6 +169,9 @@ nec86hw_open(void *arg, int flags)
 {
 	struct nec86hw_softc *sc = arg;
 	DPRINTF(("nec86hw_open: sc=%p\n", sc));
+
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
+		return ENXIO;
 
 	if (sc->sc_open != 0 || nec86hw_reset(sc) != 0)
 		return ENXIO;
@@ -1315,10 +1319,4 @@ nec86hw_intr(void *arg)
 
     	mtx_leave(&audio_lock);
 	return 1;
-}
-
-int
-nec86_get_props(void *addr)
-{
-	return 0; 
 }

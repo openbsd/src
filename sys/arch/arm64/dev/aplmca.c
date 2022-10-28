@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.4 2022/10/19 07:59:26 kn Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.5 2022/10/28 15:09:45 kn Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/audioio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -123,11 +124,11 @@ struct aplmca_softc {
 int	aplmca_set_format(void *, uint32_t, uint32_t, uint32_t);
 int	aplmca_set_sysclk(void *, uint32_t);
 
+int	aplmca_open(void *, int);
 int	aplmca_set_params(void *, int, int,
 	    struct audio_params *, struct audio_params *);
 void	*aplmca_allocm(void *, int, size_t, int, int);
 void	aplmca_freem(void *, void *, int);
-int	aplmca_get_props(void *);
 int	aplmca_trigger_output(void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *);
 int	aplmca_trigger_input(void *, void *, void *, int,
@@ -136,8 +137,8 @@ int	aplmca_halt_output(void *);
 int	aplmca_halt_input(void *);
 
 const struct audio_hw_if aplmca_hw_if = {
+	.open = aplmca_open,
 	.set_params = aplmca_set_params,
-	.get_props = aplmca_get_props,
 	.allocm = aplmca_allocm,
 	.freem = aplmca_freem,
 	.trigger_output = aplmca_trigger_output,
@@ -381,6 +382,15 @@ aplmca_set_sysclk(void *cookie, uint32_t rate)
 }
 
 int
+aplmca_open(void *cookie, int flags)
+{
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
+		return ENXIO;
+
+	return 0;
+}
+
+int
 aplmca_set_params(void *cookie, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
@@ -393,12 +403,6 @@ aplmca_set_params(void *cookie, int setmode, int usemode,
 		play->channels = 2;
 	}
 
-	return 0;
-}
-
-int
-aplmca_get_props(void *cookie)
-{
 	return 0;
 }
 

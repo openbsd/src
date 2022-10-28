@@ -1,4 +1,4 @@
-/* $OpenBSD: rkiis.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: rkiis.c,v 1.4 2022/10/28 15:09:45 kn Exp $ */
 /* $NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $ */
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -144,12 +145,10 @@ int rkiis_set_format(void *, uint32_t, uint32_t, uint32_t);
 int rkiis_set_sysclk(void *, uint32_t);
 
 int rkiis_open(void *, int);
-void rkiis_close(void *);
 int rkiis_set_params(void *, int, int,
     struct audio_params *, struct audio_params *);
 void *rkiis_allocm(void *, int, size_t, int, int);
 void rkiis_freem(void *, void *, int);
-int rkiis_get_props(void *);
 int rkiis_trigger_output(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 int rkiis_trigger_input(void *, void *, void *, int,
@@ -201,8 +200,8 @@ struct rkiis_softc {
 };
 
 const struct audio_hw_if rkiis_hw_if = {
+	.open = rkiis_open,
 	.set_params = rkiis_set_params,
-	.get_props = rkiis_get_props,
 	.allocm = rkiis_allocm,
 	.freem = rkiis_freem,
 	.trigger_output = rkiis_trigger_output,
@@ -426,6 +425,15 @@ rkiis_set_sysclk(void *cookie, uint32_t rate)
 }
 
 int
+rkiis_open(void *cookie, int flags)
+{
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD))
+		return ENXIO;
+
+	return 0;
+}
+
+int
 rkiis_set_params(void *cookie, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
@@ -499,12 +507,6 @@ rkiis_set_params(void *cookie, int setmode, int usemode,
 		p->sample_rate = RK_I2S_SAMPLE_RATE;
 	}
 
-	return 0;
-}
-
-int
-rkiis_get_props(void *cookie)
-{
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86.c,v 1.7 2022/10/19 19:14:16 kn Exp $	*/
+/*	$OpenBSD: nec86.c,v 1.8 2022/10/28 15:09:45 kn Exp $	*/
 /*	$NecBSD: nec86.c,v 1.11 1999/07/23 11:04:39 honda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -83,7 +83,6 @@ const struct audio_hw_if nec86_hw_if = {
 	.set_port	= nec86hw_mixer_set_port,
 	.get_port	= nec86hw_mixer_get_port,
 	.query_devinfo	= nec86hw_mixer_query_devinfo,
-	.get_props	= nec86_get_props,
 };
 
 /*

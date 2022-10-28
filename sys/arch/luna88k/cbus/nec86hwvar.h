@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hwvar.h,v 1.4 2022/10/19 15:34:02 kn Exp $	*/
+/*	$OpenBSD: nec86hwvar.h,v 1.5 2022/10/28 15:09:45 kn Exp $	*/
 /*	$NecBSD: nec86hwvar.h,v 1.10 1998/03/14 07:04:55 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -210,8 +210,6 @@ void	nec86fifo_input_stereo_16_resamp(struct nec86hw_softc *, int);
 void	nec86fifo_padding(struct nec86hw_softc *, int);
 
 int	nec86hw_intr(void *);
-
-int 	nec86_get_props(void *);
 
 #endif	/* _KERNEL */
 #endif	/* !_NEC86HWVAR_H_ */

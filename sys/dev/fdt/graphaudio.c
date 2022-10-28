@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphaudio.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: graphaudio.c,v 1.5 2022/10/28 15:09:45 kn Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -55,7 +55,6 @@ void	graphaudio_freem(void *, void *, int);
 int	graphaudio_set_port(void *, mixer_ctrl_t *);
 int	graphaudio_get_port(void *, mixer_ctrl_t *);
 int	graphaudio_query_devinfo(void *, mixer_devinfo_t *);
-int	graphaudio_get_props(void *);
 int	graphaudio_round_blocksize(void *, int);
 size_t	graphaudio_round_buffersize(void *, int, size_t);
 int	graphaudio_trigger_output(void *, void *, void *, int,
@@ -74,7 +73,6 @@ const struct audio_hw_if graphaudio_hw_if = {
 	.set_port = graphaudio_set_port,
 	.get_port = graphaudio_get_port,
 	.query_devinfo = graphaudio_query_devinfo,
-	.get_props = graphaudio_get_props,
 	.round_blocksize = graphaudio_round_blocksize,
 	.round_buffersize = graphaudio_round_buffersize,
 	.trigger_output = graphaudio_trigger_output,
@@ -365,19 +363,6 @@ graphaudio_query_devinfo(void *cookie, mixer_devinfo_t *dip)
 		return hwif->query_devinfo(dai->dd_cookie, dip);
 
 	return ENXIO;
-}
-
-int
-graphaudio_get_props(void *cookie)
-{
-	struct graphaudio_softc *sc = cookie;
-	struct dai_device *dai = sc->sc_dai_cpu;
-	const struct audio_hw_if *hwif = dai->dd_hw_if;
-
-	if (hwif->get_props)
-		return hwif->get_props(dai->dd_cookie);
-
-	return 0;
 }
 
 int
