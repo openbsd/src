@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.3 2022/10/20 18:43:35 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.4 2022/10/29 20:35:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -138,11 +138,14 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < st->NumberOfTableEntries; i++) {
 		EFI_CONFIGURATION_TABLE *ct = &st->ConfigurationTable[i];
 		static EFI_GUID acpi_guid = EFI_ACPI_20_TABLE_GUID;
-		static EFI_GUID smbios_guid = SMBIOS3_TABLE_GUID;
+		static EFI_GUID smbios_guid = SMBIOS_TABLE_GUID;
+		static EFI_GUID smbios3_guid = SMBIOS3_TABLE_GUID;
 
 		if (efi_guidcmp(&acpi_guid, &ct->VendorGuid) == 0)
 			efi_acpi_table = (uint64_t)ct->VendorTable;
 		if (efi_guidcmp(&smbios_guid, &ct->VendorGuid) == 0)
+			efi_smbios_table = (uint64_t)ct->VendorTable;
+		if (efi_guidcmp(&smbios3_guid, &ct->VendorGuid) == 0)
 			efi_smbios_table = (uint64_t)ct->VendorTable;
 	}
 	efi_leave(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smbios.c,v 1.7 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: smbios.c,v 1.8 2022/10/29 20:35:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -76,42 +76,96 @@ smbios_attach(struct device *parent, struct device *self, void *aux)
 	struct smbios_struct_bios *sb;
 	struct smbtable bios;
 	char scratch[64];
+	char sig[5];
 	char *sminfop;
 	bus_addr_t addr;
 	bus_size_t size;
 	bus_space_handle_t ioh;
-	struct smb3hdr *hdr;
-	uint8_t *p, checksum = 0;
-	int i;
 
 	sc->sc_iot = faa->fa_iot;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, sizeof(*hdr),
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, sizeof(sig),
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &ioh)) {
 		printf(": can't map SMBIOS entry point structure\n");
 		return;
 	}
+	bus_space_read_region_1(sc->sc_iot, ioh, 0, sig, sizeof(sig));
+	bus_space_unmap(sc->sc_iot, ioh, sizeof(sig));
 
-	hdr = bus_space_vaddr(sc->sc_iot, ioh);
-	if (strncmp(hdr->sig, "_SM3_", sizeof(hdr->sig)) != 0)
-		goto fail;
-	if (hdr->len != sizeof(*hdr) || hdr->epr != 0x01)
-		goto fail;
-	for (i = 0, p = (uint8_t *)hdr; i < hdr->len; i++)
-		checksum += p[i];
-	if (checksum != 0)
-		goto fail;
+	if (strncmp(sig, "_SM_", 4) == 0) {
+		struct smbhdr *hdr;
+		uint8_t *p, checksum = 0;
+		int i;
 
-	printf(": SMBIOS %d.%d.%d", hdr->majrev, hdr->minrev, hdr->docrev);
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, sizeof(*hdr),
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &ioh)) {
+			printf(": can't map SMBIOS entry point structure\n");
+			return;
+		}
 
-	smbios_entry.len = hdr->size;
-	smbios_entry.mjr = hdr->majrev;
-	smbios_entry.min = hdr->minrev;
-	smbios_entry.count = -1;
+		hdr = bus_space_vaddr(sc->sc_iot, ioh);
+		if (hdr->len != sizeof(*hdr)) {
+			bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+			printf("\n");
+			return;
+		}
+		for (i = 0, p = (uint8_t *)hdr; i < hdr->len; i++)
+			checksum += p[i];
+		if (checksum != 0) {
+			bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+			printf("\n");
+			return;
+		}
 
-	addr = hdr->addr;
-	size = hdr->size;
+		printf(": SMBIOS %d.%d", hdr->majrev, hdr->minrev);
 
-	bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+		smbios_entry.len = hdr->size;
+		smbios_entry.mjr = hdr->majrev;
+		smbios_entry.min = hdr->minrev;
+		smbios_entry.count = hdr->count;
+
+		addr = hdr->addr;
+		size = hdr->size;
+		bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+	} else if (strncmp(sig, "_SM3_", 5) == 0) {
+		struct smb3hdr *hdr;
+		uint8_t *p, checksum = 0;
+		int i;
+
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, sizeof(*hdr),
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &ioh)) {
+			printf(": can't map SMBIOS entry point structure\n");
+			return;
+		}
+
+		hdr = bus_space_vaddr(sc->sc_iot, ioh);
+		if (hdr->len != sizeof(*hdr) || hdr->epr != 0x01) {
+			bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+			printf("\n");
+			return;
+		}
+		for (i = 0, p = (uint8_t *)hdr; i < hdr->len; i++)
+			checksum += p[i];
+		if (checksum != 0) {
+			bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+			printf("\n");
+			return;
+		}
+
+		printf(": SMBIOS %d.%d.%d", hdr->majrev, hdr->minrev,
+		    hdr->docrev);
+
+		smbios_entry.len = hdr->size;
+		smbios_entry.mjr = hdr->majrev;
+		smbios_entry.min = hdr->minrev;
+		smbios_entry.count = -1;
+
+		addr = hdr->addr;
+		size = hdr->size;
+		bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
+	} else {
+		printf(": unsupported SMBIOS entry point\n");
+		return;
+	}
 
 	if (bus_space_map(sc->sc_iot, addr, size,
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE, &ioh)) {
@@ -150,9 +204,6 @@ smbios_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	return;
-
-fail:
-	bus_space_unmap(sc->sc_iot, ioh, sizeof(*hdr));
 }
 
 /*
