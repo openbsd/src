@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.70 2019/10/15 10:05:43 mpi Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.71 2022/10/30 17:43:39 guenther Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -112,11 +112,8 @@ int   safepri = IPL_NONE;
  * Clear all except sp and pc.
  */
 void
-setregs(p, pack, stack, retval)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t retval[2];
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf = (struct trapframe *)USER_REGS(p);
 
@@ -131,7 +128,7 @@ setregs(p, pack, stack, retval)
 	__asm__ volatile ("fstcr %r0, %fcr62");
 	__asm__ volatile ("fstcr %r0, %fcr63");
 
-	bzero((caddr_t)tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 
 #ifdef M88110
 	if (CPU_IS88110) {
@@ -171,38 +168,29 @@ setregs(p, pack, stack, retval)
 	 */
 #ifdef M88110
 	if (CPU_IS88110) {
-		/*
-		 * m88110_syscall() will resume at exip + 8... which
-		 * really is the first instruction we want to run.
-		 */
-		tf->tf_exip = pack->ep_entry & XIP_ADDR;
+                /*
+                 * The first instruction we want to run is at
+                 * ep_entry + 8. m88110_syscall() returning EJUSTRETURN
+                 * will resume at exip + 4, so make it point to
+                 * ep_entry + 4.
+                 */
+		tf->tf_exip = (pack->ep_entry & XIP_ADDR) + 4;
 	}
 #endif
 #ifdef M88100
 	if (CPU_IS88100) {
-		/*
-		 * m88100_syscall() will resume at sfip / sfip + 4...
-		 */
-		tf->tf_sfip = ((pack->ep_entry + 8) & FIP_ADDR) | FIP_V;
-
-		/*
-		 * ... unless we are starting init, in which case we
-		 * won't be returning through the regular path, and
-		 * need to explicitly set up nip and fip (note that
-		 * 88110 do not need such a test).
-		 * Note that this isn't 100% correct, as it mishandles
-		 * a real execve() from userspace by process 1.  However
-		 * our init will never do that, so it's okay.
-		 */
-		if (p->p_p->ps_pid == 1) {
-			tf->tf_snip = tf->tf_sfip;
-			tf->tf_sfip += 4;
-		}
+                /*
+                 * The first instruction we want to run is at
+                 * ep_entry + 8. m88100_syscall() returning EJUSTRETURN
+                 * will resume at snip, so make it point to
+                 * ep_entry + 8.
+                 */
+		tf->tf_snip = ((pack->ep_entry + 8) & FIP_ADDR) | FIP_V;
+		tf->tf_sfip = tf->tf_snip + 4;
 	}
 #endif
-	tf->tf_r[2] = retval[0] = stack;
+	tf->tf_r[2] = stack;
 	tf->tf_r[31] = stack;
-	retval[1] = 0;
 }
 
 int

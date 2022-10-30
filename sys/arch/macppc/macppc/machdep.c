@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.198 2022/10/21 22:42:36 gkoehler Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.199 2022/10/30 17:43:39 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -418,24 +418,21 @@ consinit(void)
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	u_int32_t newstack;
 	u_int32_t pargs;
-	u_int32_t args[4];
-
 	struct trapframe *tf = trapframe(p);
+
 	pargs = -roundup(-stack + 8, 16);
 	newstack = (u_int32_t)(pargs - 32);
 
-	copyin ((void *)p->p_p->ps_strings, &args, 0x10);
-
-	bzero(tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->fixreg[1] = newstack;
-	tf->fixreg[3] = retval[0] = args[1];	/* XXX */
-	tf->fixreg[4] = retval[1] = args[0];	/* XXX */
-	tf->fixreg[5] = args[2];		/* XXX */
-	tf->fixreg[6] = args[3];		/* XXX */
+	tf->fixreg[3] = arginfo->ps_nargvstr;
+	tf->fixreg[4] = (register_t)arginfo->ps_argvstr;
+	tf->fixreg[5] = (register_t)arginfo->ps_envstr;
+	tf->fixreg[6] = arginfo->ps_nenvstr;
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.198 2022/08/10 10:41:35 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.199 2022/10/30 17:43:39 guenther Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1595,11 +1595,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tfp = p->p_md.md_tf;
 #ifdef DEBUG
@@ -1619,9 +1616,9 @@ setregs(p, pack, stack, retval)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
 	tfp->tf_regs[FRAME_A1] = 0;
 #else
-	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
+	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
-	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
+	memset(&p->p_addr->u_pcb.pcb_fp, 0, sizeof p->p_addr->u_pcb.pcb_fp);
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
@@ -1639,8 +1636,6 @@ setregs(p, pack, stack, retval)
 #endif
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-
-	retval[1] = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.317 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.318 2022/10/30 17:43:40 guenther Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -710,7 +710,7 @@ start_init(void *arg)
 		 * Now try to exec the program.  If can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
-		if ((error = sys_execve(p, &args, retval)) == 0) {
+		if ((error = sys_execve(p, &args, retval)) == EJUSTRETURN) {
 			KERNEL_UNLOCK();
 			return;
 		}

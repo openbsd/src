@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.38 2022/08/22 00:35:06 cheloha Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.39 2022/10/30 17:43:39 guenther Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -137,21 +137,21 @@ register_t protosr = SR_FR_32 | SR_XX | SR_UX | SR_KSU_USER | SR_EXL |
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct cpu_info *ci = curcpu();
+	struct trapframe *tf = p->p_md.md_regs;
 
-	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trapframe));
-	p->p_md.md_regs->sp = stack;
-	p->p_md.md_regs->pc = pack->ep_entry & ~3;
-	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
-	p->p_md.md_regs->sr = protosr | (idle_mask & SR_INT_MASK);
+	memset(tf, 0, sizeof *tf);
+	tf->sp = stack;
+	tf->pc = pack->ep_entry & ~3;
+	tf->t9 = pack->ep_entry & ~3; /* abicall req */
+	tf->sr = protosr | (idle_mask & SR_INT_MASK);
+
 	if (CPU_HAS_FPU(ci))
 		p->p_md.md_flags &= ~MDP_FPUSED;
 	if (ci->ci_fpuproc == p)
 		ci->ci_fpuproc = NULL;
-
-	retval[1] = 0;
 }
 
 int

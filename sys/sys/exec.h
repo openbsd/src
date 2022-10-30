@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.50 2022/10/27 22:48:17 deraadt Exp $	*/
+/*	$OpenBSD: exec.h,v 1.51 2022/10/30 17:43:40 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -152,7 +152,8 @@ int	vmcmd_map_zero(struct proc *, struct exec_vmcmd *);
 int	vmcmd_mutable(struct proc *, struct exec_vmcmd *);
 int	vmcmd_randomize(struct proc *, struct exec_vmcmd *);
 int	copyargs(struct exec_package *, struct ps_strings *, void *, void *);
-void	setregs(struct proc *, struct exec_package *, u_long, register_t *);
+void	setregs(struct proc *, struct exec_package *, u_long,
+	    struct ps_strings *);
 int	check_exec(struct proc *, struct exec_package *);
 int	exec_setup_stack(struct proc *, struct exec_package *);
 int	exec_process_vmcmds(struct proc *, struct exec_package *);

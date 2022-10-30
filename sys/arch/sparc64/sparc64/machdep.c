@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.204 2022/10/25 06:05:57 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.205 2022/10/30 17:43:40 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -257,10 +257,9 @@ cpu_startup(void)
 
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 
-/* ARGSUSED */
 void
-setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
-    register_t *retval)
+setregs(struct proc *p, struct exec_package *pack, u_long stack,
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf = p->p_md.md_tf;
 	int64_t tstate;
@@ -324,18 +323,16 @@ setregs(struct proc *p, struct exec_package *pack, vaddr_t stack,
 		free(p->p_md.md_fpstate, M_SUBPROC, sizeof(struct fpstate));
 		p->p_md.md_fpstate = NULL;
 	}
-	bzero((caddr_t)tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->tf_tstate = tstate;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
-	tf->tf_global[2] = tf->tf_pc;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack - BIAS;
 #ifdef NOTDEF_DEBUG
 	printf("setregs: setting tf %p sp %p pc %p\n", (long)tf, 
 	       (long)tf->tf_out[6], (long)tf->tf_pc);
 #endif
-	retval[1] = 0;
 }
 
 struct sigframe {

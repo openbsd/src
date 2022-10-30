@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.656 2022/08/25 17:25:25 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.657 2022/10/30 17:43:39 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2858,7 +2858,7 @@ dumpsys(void)
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
@@ -2906,8 +2906,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-
-	retval[1] = 0;
 }
 
 /*

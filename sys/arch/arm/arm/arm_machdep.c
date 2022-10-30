@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm_machdep.c,v 1.6 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: arm_machdep.c,v 1.7 2022/10/30 17:43:39 guenther Exp $	*/
 /*	$NetBSD: arm_machdep.c,v 1.7 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ vaddr_t	vector_page;
 
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf;
 
@@ -110,13 +110,11 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 	tf = p->p_addr->u_pcb.pcb_tf;
 
-	memset(tf, 0, sizeof(*tf));
+	memset(tf, 0, sizeof *tf);
 /*	tf->tf_r0 = (u_int)p->p_proc->p_psstr; */
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
 	tf->tf_pc = pack->ep_entry;
 	tf->tf_spsr = PSR_USR32_MODE;
-
-	retval[1] = 0;
 }

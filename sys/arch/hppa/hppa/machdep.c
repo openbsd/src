@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.266 2022/08/10 03:18:19 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.267 2022/10/30 17:43:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1158,12 +1158,13 @@ setstack(struct trapframe *tf, u_long stack, register_t old_r3)
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fpreg = &pcb->pcb_fpstate->hfp_regs;
 
-	bzero(tf, sizeof(*tf));
+	memset(tf, 0, sizeof *tf);
 	tf->tf_flags = TFF_SYS|TFF_LAST;
 	tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
@@ -1190,16 +1191,10 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 	/* clear the FPU */
 	fpu_proc_flush(p);
-	bzero(&pcb->pcb_fpstate->hfp_regs, sizeof(pcb->pcb_fpstate->hfp_regs));
-	pcb->pcb_fpstate->hfp_regs.fpr_regs[0] =
-	    ((u_int64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpstate->hfp_regs.fpr_regs[1] = 0;
-	pcb->pcb_fpstate->hfp_regs.fpr_regs[2] = 0;
-	pcb->pcb_fpstate->hfp_regs.fpr_regs[3] = 0;
+	memset(fpreg, 0, sizeof *fpreg);
+	fpreg->fpr_regs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
 
 	p->p_md.md_bpva = 0;
-
-	retval[1] = 0;
 }
 
 /*

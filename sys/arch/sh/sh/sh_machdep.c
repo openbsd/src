@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.54 2022/02/21 10:51:36 jsg Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.55 2022/10/30 17:43:40 guenther Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -561,7 +561,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t rval[2])
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf;
 	struct pcb *pcb = p->p_md.md_pcb;
@@ -578,9 +578,9 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
 	tf->tf_r3 = 0;
-	copyin((caddr_t)stack, &tf->tf_r4, sizeof(register_t));	/* argc */
-	tf->tf_r5 = stack + 4;			/* argv */
-	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
+	tf->tf_r4 = arginfo->ps_nargvstr;
+	tf->tf_r5 = (register_t)arginfo->ps_argvstr;
+	tf->tf_r6 = (register_t)arginfo->ps_envstr;
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
 	tf->tf_r9 = (int)p->p_p->ps_strings;
@@ -603,8 +603,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 		fpu_restore(&pcb->pcb_fp);
 	}
 #endif
-
-	rval[1] = 0;
 }
 
 /*

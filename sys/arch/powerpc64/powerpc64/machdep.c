@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2022/05/19 05:43:48 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.73 2022/10/30 17:43:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -887,19 +887,16 @@ parse_bootmac(const char *bootarg)
 
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct trapframe *frame = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct ps_strings arginfo;
-
-	copyin((void *)p->p_p->ps_strings, &arginfo, sizeof(arginfo));
 
 	memset(frame, 0, sizeof(*frame));
 	frame->fixreg[1] = stack;
-	frame->fixreg[3] = retval[0] = arginfo.ps_nargvstr;
-	frame->fixreg[4] = retval[1] = (register_t)arginfo.ps_argvstr;
-	frame->fixreg[5] = (register_t)arginfo.ps_envstr;
+	frame->fixreg[3] = arginfo->ps_nargvstr;
+	frame->fixreg[4] = (register_t)arginfo->ps_argvstr;
+	frame->fixreg[5] = (register_t)arginfo->ps_envstr;
 	frame->fixreg[6] = (register_t)pack->ep_auxinfo;
 	frame->fixreg[12] = pack->ep_entry;
 	frame->srr0 = pack->ep_entry;

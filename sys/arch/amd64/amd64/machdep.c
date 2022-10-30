@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.281 2022/10/16 15:03:39 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.282 2022/10/30 17:43:39 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1138,7 +1138,7 @@ reset_segs(void)
  */
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
-    register_t *retval)
+    struct ps_strings *arginfo)
 {
 	struct trapframe *tf;
 
@@ -1161,28 +1161,12 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_addr->u_pcb.pcb_fsbase = 0;
 
 	tf = p->p_md.md_regs;
-	tf->tf_rdi = 0;
-	tf->tf_rsi = 0;
-	tf->tf_rbp = 0;
-	tf->tf_rbx = 0;
-	tf->tf_rdx = 0;
-	tf->tf_rcx = 0;
-	tf->tf_rax = 0;
-	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
-	tf->tf_r10 = 0;
-	tf->tf_r11 = 0;
-	tf->tf_r12 = 0;
-	tf->tf_r13 = 0;
-	tf->tf_r14 = 0;
-	tf->tf_r15 = 0;
+	memset(tf, 0, sizeof *tf);
 	tf->tf_rip = pack->ep_entry;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-
-	retval[1] = 0;
 }
 
 /*
