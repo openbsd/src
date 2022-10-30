@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.10 2022/09/09 08:30:32 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.11 2022/10/30 15:34:54 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -87,6 +87,14 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
+
+	/* XXX: Attaching on that specific controller resets the X13s */
+	extern char *hw_ver;
+	if (hw_ver && strcmp(hw_ver, "ThinkPad X13s Gen 1") == 0 &&
+	    strncmp(sc->sc_node->name, "USB2", 4) == 0) {
+		printf(": disabled\n");
+		return;
+	}
 
 	/*
 	 * The Qualcomm dual role controller has the interrupt on a
