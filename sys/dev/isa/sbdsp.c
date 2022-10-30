@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.42 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.43 2022/10/30 10:55:52 kn Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -761,6 +761,9 @@ sbdsp_open(void *addr, int flags)
 
         DPRINTF(("sbdsp_open: sc=%p\n", sc));
 
+	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD) &&
+	    !sc->sc_fullduplex)
+		return ENXIO;
 	if (sc->sc_open != SB_CLOSED)
 		return EBUSY;
 	if (sbdsp_reset(sc) != 0)
@@ -2126,9 +2129,6 @@ sbdsp_midi_open(void *addr, int flags, void (*iintr)(void *, int),
 
         DPRINTF(("sbdsp_midi_open: sc=%p\n", sc));
 
-	if ((flags & (FWRITE | FREAD)) == (FWRITE | FREAD) &&
-	    !sc->sc_fullduplex)
-		return ENXIO;
 	if (sc->sc_open != SB_CLOSED)
 		return EBUSY;
 	if (sbdsp_reset(sc) != 0)
