@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.11 2022/10/30 13:23:49 kn Exp $	*/
+/*	$OpenBSD: constraints.c,v 1.12 2022/10/30 13:27:15 kn Exp $	*/
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
