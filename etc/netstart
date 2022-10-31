@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.222 2022/10/24 20:51:07 kn Exp $
+#	$OpenBSD: netstart,v 1.223 2022/10/31 19:25:16 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -313,6 +313,7 @@ _rc_parse_conf
 PRINT_ONLY=false
 V4_AUTOCONF=false
 V6_AUTOCONF=false
+IP6KERNEL=false
 
 while getopts ":n" opt; do
 	case $opt in
@@ -321,6 +322,11 @@ while getopts ":n" opt; do
 	esac
 done
 shift $((OPTIND-1))
+
+if ifconfig lo0 inet6 >/dev/null 2>&1; then
+	IP6KERNEL=true
+	ip6routes
+fi
 
 # Load key material for the generation of IPv6 Semantically Opaque Interface
 # Identifiers (SOII) used for link local and SLAAC addresses.
@@ -347,14 +353,6 @@ if $PRINT_ONLY; then
 	print -r -- "ifconfig lo0 inet 127.0.0.1/8"
 else
 	ifconfig lo0 inet 127.0.0.1/8
-fi
-
-# IPv6 configuration.
-if ifconfig lo0 inet6 >/dev/null 2>&1; then
-	ip6kernel=YES
-	ip6routes
-else
-	ip6kernel=NO
 fi
 
 # Create all the pseudo interfaces up front.
@@ -396,7 +394,7 @@ $PRINT_ONLY || wait_autoconf_default
 # Configure interfaces that rely on routing
 ifmstart "tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"
 
-if [[ $ip6kernel == YES ]]; then
+if $IP6KERNEL; then
 	# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
 	count=0
 	while ((count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
