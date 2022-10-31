@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.301 2022/10/24 15:11:56 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.302 2022/10/31 10:46:24 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2815,7 +2815,7 @@ vmspace_validate(struct vm_map *map)
 		imin = imax = iter->start;
 
 		if (UVM_ET_ISHOLE(iter) || iter->object.uvm_obj != NULL ||
-		    iter->prot != PROT_NONE)
+		    iter->protection != PROT_NONE)
 			continue;
 
 		/*
@@ -2847,7 +2847,7 @@ vmspace_validate(struct vm_map *map)
 		printf("vmspace stack range: 0x%lx-0x%lx\n",
 		    stack_begin, stack_end);
 		panic("vmspace_validate: vmspace.vm_dused invalid, "
-		    "expected %ld pgs, got %ld pgs in map %p",
+		    "expected %ld pgs, got %d pgs in map %p",
 		    heap, vm->vm_dused,
 		    map);
 	}
