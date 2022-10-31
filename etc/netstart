@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.224 2022/10/31 19:48:50 kn Exp $
+#	$OpenBSD: netstart,v 1.225 2022/10/31 20:14:45 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -325,7 +325,6 @@ shift $((OPTIND-1))
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	IP6KERNEL=true
-	ip6routes
 fi
 
 # Load key material for the generation of IPv6 Semantically Opaque Interface
@@ -353,6 +352,10 @@ if $PRINT_ONLY; then
 	print -r -- "ifconfig lo0 inet 127.0.0.1/8"
 else
 	ifconfig lo0 inet 127.0.0.1/8
+fi
+
+if $IP6KERNEL && ! $PRINT_ONLY; then
+	ip6routes
 fi
 
 # Create all the pseudo interfaces up front.
