@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.65 2022/05/08 14:44:54 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.66 2022/10/31 14:02:11 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -97,12 +97,6 @@ config_init(struct vmd *env)
 		    sizeof(*env->vmd_switches))) == NULL)
 			return (-1);
 		TAILQ_INIT(env->vmd_switches);
-	}
-	if (what & CONFIG_USERS) {
-		if ((env->vmd_users = calloc(1,
-		    sizeof(*env->vmd_users))) == NULL)
-			return (-1);
-		TAILQ_INIT(env->vmd_users);
 	}
 
 	return (0);
@@ -236,13 +230,6 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	if (vm->vm_state & VM_STATE_RUNNING) {
 		log_warnx("%s: vm is already running", __func__);
 		return (EALREADY);
-	}
-
-	/* increase the user reference counter and check user limits */
-	if (vm->vm_user != NULL && user_get(vm->vm_user->usr_id.uid) != NULL) {
-		user_inc(vcp, vm->vm_user, 1);
-		if (user_checklimit(vm->vm_user, vcp) == -1)
-			return (EPERM);
 	}
 
 	/*
