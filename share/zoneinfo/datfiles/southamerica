@@ -1,4 +1,4 @@
-# $OpenBSD: southamerica,v 1.76 2022/09/24 14:33:28 millert Exp $
+# $OpenBSD: southamerica,v 1.77 2022/10/31 15:35:12 millert Exp $
 # tzdb data for South America and environs
 
 # This file is in the public domain, so clarified as of
@@ -1444,14 +1444,6 @@ Zone	America/Curacao	-4:35:47 -	LMT	1912 Feb 12 # Willemstad
 
 Link	America/Curacao	America/Kralendijk
 Link	America/Curacao	America/Lower_Princes
-#
-# From Arthur David Olson (2011-06-15):
-# use links for places with new iso3166 codes.
-# The name "Lower Prince's Quarter" is both longer than fourteen characters
-# and contains an apostrophe; use "Lower_Princes"....
-# From Paul Eggert (2021-09-29):
-# These backward-compatibility links now are in the 'northamerica' file.
-
 # Ecuador
 #
 # Milne says the Central and South American Telegraph Company used -5:24:15.

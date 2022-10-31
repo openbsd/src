@@ -1,4 +1,4 @@
-# $OpenBSD: antarctica,v 1.45 2022/08/12 16:50:57 millert Exp $
+# $OpenBSD: antarctica,v 1.46 2022/10/31 15:35:12 millert Exp $
 # tzdb data for Antarctica and environs
 
 # This file is in the public domain, so clarified as of
@@ -322,4 +322,4 @@ Zone Antarctica/Rothera	0	-	-00	1976 Dec  1
 # we have to go around and set them back 5 minutes or so.
 # Maybe if we let them run fast all of the time, we'd get to leave here sooner!!
 #
-# See 'australasia' for Antarctica/McMurdo.
+# See Pacific/Auckland.
