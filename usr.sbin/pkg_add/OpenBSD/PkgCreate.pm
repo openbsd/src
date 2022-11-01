@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.182 2022/06/28 09:01:45 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.183 2022/11/01 17:25:33 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -127,8 +127,9 @@ sub handle_options
 	} 
 
 	$state->{base} = $base;
-	$state->{silent} = defined $state->opt('n') && defined $state->opt('n')
-	    || defined $state->opt('S');
+	# switch to silent mode for *any* introspection option
+	$state->{silent} = defined $state->opt('n') || defined $state->opt('q')
+	    || defined $state->opt('Q') || defined $state->opt('S');
 	if (defined $state->opt('u')) {
 		$state->{userlist} = $state->parse_userdb($state->opt('u'));
 	}
