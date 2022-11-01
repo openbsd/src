@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.19 2022/10/14 15:26:58 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.20 2022/11/01 13:34:44 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -3426,6 +3426,8 @@ agentx_varbind_endofmibview(struct agentx_varbind *axv)
 		return;
 	}
 
+	bcopy(&(axv->axv_start), &(axv->axv_vb.avb_oid),
+	    sizeof(axv->axv_start));
 	axv->axv_vb.avb_type = AX_DATA_TYPE_ENDOFMIBVIEW;
 
 	if (axv->axv_axo != NULL)
