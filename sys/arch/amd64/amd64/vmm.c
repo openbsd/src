@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.323 2022/09/07 18:44:09 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.324 2022/11/01 01:01:14 cheloha Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2704,6 +2704,10 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 
 	/* allow reading TSC */
 	svm_setmsrbr(vcpu, MSR_TSC);
+
+	/* allow reading HWCR and PSTATEDEF to determine TSC frequency */
+	svm_setmsrbr(vcpu, MSR_HWCR);
+	svm_setmsrbr(vcpu, MSR_PSTATEDEF(0));
 
 	/* Guest VCPU ASID */
 	if (vmm_alloc_vpid(&asid)) {
