@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.60 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.61 2022/11/01 13:59:00 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -646,7 +646,6 @@ rtcsettime(struct todr_chip_handle *handle, struct timeval *tv)
 	return 0;
 }
 
-extern todr_chip_handle_t todr_handle;
 struct todr_chip_handle rtc_todr;
 
 void
@@ -654,7 +653,8 @@ rtcinit(void)
 {
 	rtc_todr.todr_gettime = rtcgettime;
 	rtc_todr.todr_settime = rtcsettime;
-	todr_handle = &rtc_todr;
+	rtc_todr.todr_quality = 0;
+	todr_attach(&rtc_todr);
 }
 
 void
