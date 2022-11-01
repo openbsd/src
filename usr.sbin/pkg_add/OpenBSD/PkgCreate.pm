@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.183 2022/11/01 17:25:33 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.184 2022/11/01 17:41:19 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1476,7 +1476,10 @@ sub create_plist
 		$state->fatal(OpenBSD::Temp->last_error);
 	}
 	$plist->set_infodir($dir);
-	if (!defined $state->opt('S')) {
+	# XXX optimization: we want -S to be fast even if we don't check
+	# everything, e.g., we don't need the actual packing-list to
+	# print a signature if that's all we do.
+	if (!(defined $state->opt('S') && defined $state->opt('n'))) {
 		$self->read_all_fragments($state, $plist);
 	}
 	$self->add_elements($plist, $state);
@@ -1725,7 +1728,8 @@ sub run_command
 
 	if (defined $state->opt('S')) {
 		print $plist->signature->string, "\n";
-		exit 0;
+		# no need to check anything else if we're running -n
+		exit 0 if defined $state->opt('n');
 	}
 	$plist->discover_directories($state);
 	my $ordered = [];
