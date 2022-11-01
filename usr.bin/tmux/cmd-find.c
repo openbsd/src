@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.81 2022/07/06 08:32:28 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.82 2022/11/01 09:46:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -588,22 +588,22 @@ cmd_find_get_pane_with_window(struct cmd_find_state *fs, const char *pane)
 			return (-1);
 		return (0);
 	} else if (strcmp(pane, "{up-of}") == 0) {
-		fs->wp = window_pane_find_up(fs->current->wp);
+		fs->wp = window_pane_find_up(fs->w->active);
 		if (fs->wp == NULL)
 			return (-1);
 		return (0);
 	} else if (strcmp(pane, "{down-of}") == 0) {
-		fs->wp = window_pane_find_down(fs->current->wp);
+		fs->wp = window_pane_find_down(fs->w->active);
 		if (fs->wp == NULL)
 			return (-1);
 		return (0);
 	} else if (strcmp(pane, "{left-of}") == 0) {
-		fs->wp = window_pane_find_left(fs->current->wp);
+		fs->wp = window_pane_find_left(fs->w->active);
 		if (fs->wp == NULL)
 			return (-1);
 		return (0);
 	} else if (strcmp(pane, "{right-of}") == 0) {
-		fs->wp = window_pane_find_right(fs->current->wp);
+		fs->wp = window_pane_find_right(fs->w->active);
 		if (fs->wp == NULL)
 			return (-1);
 		return (0);
@@ -615,7 +615,7 @@ cmd_find_get_pane_with_window(struct cmd_find_state *fs, const char *pane)
 			n = strtonum(pane + 1, 1, INT_MAX, NULL);
 		else
 			n = 1;
-		wp = fs->current->wp;
+		wp = fs->w->active;
 		if (pane[0] == '+')
 			fs->wp = window_pane_next_by_number(fs->w, wp, n);
 		else
