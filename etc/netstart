@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.225 2022/10/31 20:14:45 kn Exp $
+#	$OpenBSD: netstart,v 1.226 2022/11/01 10:45:53 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -290,13 +290,23 @@ ip6routes() {
 
 # wait for autoconf interfaces
 wait_autoconf_default() {
+	local _count=0
+
 	if ifconfig | grep -q ': flags=.*<.*AUTOCONF.*>'; then
-		count=0
-		while ((count++ < 20)); do
+		while ((_count++ < 20)); do
 			route -n show | grep -q ^default && break
 			sleep .5
 		done
 	fi
+}
+
+# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
+wait_dad() {
+	local _count=0
+
+	while ((_count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
+		sleep 1
+	done
 }
 
 # Make sure the invoking user has the right privileges.  Check for presence of
@@ -397,10 +407,6 @@ $PRINT_ONLY || wait_autoconf_default
 # Configure interfaces that rely on routing
 ifmstart "tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"
 
-if $IP6KERNEL; then
-	# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
-	count=0
-	while ((count++ < 10 && $(sysctl -n net.inet6.ip6.dad_pending) != 0)); do
-		sleep 1
-	done
+if $IP6KERNEL && ! $PRINT_ONLY; then
+	wait_dad
 fi
