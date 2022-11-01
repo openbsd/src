@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1183 2022/10/28 13:00:02 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1184 2022/11/01 09:54:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -137,6 +137,7 @@ struct winlink;
 #define KEYC_IMPLIED_META    0x08000000000000ULL
 #define KEYC_BUILD_MODIFIERS 0x10000000000000ULL
 #define KEYC_VI              0x20000000000000ULL
+#define KEYC_EXTENDED        0x40000000000000ULL
 
 /* Masks for key bits. */
 #define KEYC_MASK_MODIFIERS  0x00f00000000000ULL

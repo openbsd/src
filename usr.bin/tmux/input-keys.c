@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.90 2022/05/30 13:02:55 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.91 2022/11/01 09:54:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -307,6 +307,20 @@ static struct input_key_entry input_key_defaults[] = {
 	},
 	{ .key = KEYC_DC|KEYC_BUILD_MODIFIERS,
 	  .data = "\033[3;_~"
+	},
+
+	/* Tab and modifiers. */
+	{ .key = '\011'|KEYC_CTRL,
+	  .data = "\011"
+	},
+	{ .key = '\011'|KEYC_CTRL|KEYC_EXTENDED,
+	  .data = "\033[9;5u"
+	},
+	{ .key = '\011'|KEYC_CTRL|KEYC_SHIFT,
+	  .data = "\011"
+	},
+	{ .key = '\011'|KEYC_CTRL|KEYC_SHIFT|KEYC_EXTENDED,
+	  .data = "\033[1;5Z"
 	}
 };
 static const key_code input_key_modifiers[] = {
@@ -469,6 +483,8 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		key &= ~KEYC_KEYPAD;
 	if (~s->mode & MODE_KCURSOR)
 		key &= ~KEYC_CURSOR;
+	if (~s->mode & MODE_KEXTENDED)
+		key &= ~KEYC_EXTENDED;
 	ike = input_key_get(key);
 	if (ike == NULL && (key & KEYC_META) && (~key & KEYC_IMPLIED_META))
 		ike = input_key_get(key & ~KEYC_META);
@@ -476,6 +492,8 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		ike = input_key_get(key & ~KEYC_CURSOR);
 	if (ike == NULL && (key & KEYC_KEYPAD))
 		ike = input_key_get(key & ~KEYC_KEYPAD);
+	if (ike == NULL && (key & KEYC_EXTENDED))
+		ike = input_key_get(key & ~KEYC_EXTENDED);
 	if (ike != NULL) {
 		log_debug("found key 0x%llx: \"%s\"", key, ike->data);
 		if ((key & KEYC_META) && (~key & KEYC_IMPLIED_META))
