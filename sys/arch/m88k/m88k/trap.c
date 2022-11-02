@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2022/08/12 08:31:06 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2022/11/02 07:20:07 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1397,7 +1397,6 @@ child_return(arg)
 
 	tf = (struct trapframe *)USER_REGS(p);
 	tf->tf_r[2] = 0;
-	tf->tf_r[3] = 0;
 	tf->tf_epsr &= ~PSR_C;
 	/* skip br instruction as in syscall() */
 #ifdef M88100

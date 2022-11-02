@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.111 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.112 2022/11/02 07:20:08 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1175,7 +1175,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	}
 
 	rval[0] = 0;
-	rval[1] = tf->tf_out[1];
+	rval[1] = 0;
 
 	error = mi_syscall(p, code, callp, args, rval);
 
@@ -1184,7 +1184,6 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	case 0:
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
-		tf->tf_out[1] = rval[1];
 		if (new) {
 			/* jmp %g2 on success */
 			dest = tf->tf_global[2];
@@ -1247,7 +1246,6 @@ child_return(void *arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 	tf->tf_out[0] = 0;
-	tf->tf_out[1] = 0;
 
 	KERNEL_UNLOCK();
 

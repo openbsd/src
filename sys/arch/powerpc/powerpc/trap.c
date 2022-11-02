@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.126 2022/10/22 00:58:56 gkoehler Exp $	*/
+/*	$OpenBSD: trap.c,v 1.127 2022/11/02 07:20:07 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -563,7 +563,6 @@ child_return(void *arg)
 
 	tf->fixreg[0] = 0;
 	tf->fixreg[FIRSTARG] = 0;
-	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
 	/* Disable FPU, VECT, as we can't be fpuproc */
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);

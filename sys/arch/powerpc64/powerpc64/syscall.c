@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.8 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.9 2022/11/02 07:20:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -64,7 +64,7 @@ syscall(struct trapframe *frame)
 	}
 
 	rval[0] = 0;
-	rval[1] = frame->fixreg[4];
+	rval[1] = 0;
 
 	error = mi_syscall(p, code, callp, args, rval);
 
@@ -72,7 +72,6 @@ syscall(struct trapframe *frame)
 	case 0:
 		frame->fixreg[0] = 0;
 		frame->fixreg[3] = rval[0];
-		frame->fixreg[4] = rval[1];
 		frame->cr &= ~0x10000000;
 		break;
 
@@ -102,7 +101,6 @@ child_return(void *arg)
 
 	frame->fixreg[0] = 0;
 	frame->fixreg[3] = 0;
-	frame->fixreg[4] = 1;
 	frame->cr &= ~0x10000000;
 
 	KERNEL_UNLOCK();

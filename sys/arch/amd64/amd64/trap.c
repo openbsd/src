@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.90 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.91 2022/11/02 07:20:07 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -580,14 +580,13 @@ syscall(struct trapframe *frame)
 	}
 
 	rval[0] = 0;
-	rval[1] = frame->tf_rdx;
+	rval[1] = 0;
 
 	error = mi_syscall(p, code, callp, argp, rval);
 
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
-		frame->tf_rdx = rval[1];
 		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
@@ -614,7 +613,6 @@ child_return(void *arg)
 	struct trapframe *tf = p->p_md.md_regs;
 
 	tf->tf_rax = 0;
-	tf->tf_rdx = 1;
 	tf->tf_rflags &= ~PSL_C;
 
 	KERNEL_UNLOCK();

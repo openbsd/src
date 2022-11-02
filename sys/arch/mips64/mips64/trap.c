@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.160 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.161 2022/11/02 07:20:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -477,7 +477,7 @@ fault_common_no_miss:
 		}
 
 		rval[0] = 0;
-		rval[1] = locr0->v1;
+		rval[1] = 0;
 
 #if defined(DDB) || defined(DEBUG)
 		trapdebug[TRAPSIZE * ci->ci_cpuid + (trppos[ci->ci_cpuid] == 0 ?
@@ -489,7 +489,6 @@ fault_common_no_miss:
 		switch (error) {
 		case 0:
 			locr0->v0 = rval[0];
-			locr0->v1 = rval[1];
 			locr0->a3 = 0;
 			break;
 
@@ -839,7 +838,6 @@ child_return(void *arg)
 
 	trapframe = p->p_md.md_regs;
 	trapframe->v0 = 0;
-	trapframe->v1 = 1;
 	trapframe->a3 = 0;
 
 	KERNEL_UNLOCK();

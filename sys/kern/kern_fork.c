@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.242 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.243 2022/11/02 07:20:07 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -502,10 +502,8 @@ fork1(struct proc *curp, int flags, void (*func)(void *), void *arg,
 	/*
 	 * Return child pid to parent process
 	 */
-	if (retval != NULL) {
-		retval[0] = pr->ps_pid;
-		retval[1] = 0;
-	}
+	if (retval != NULL)
+		*retval = pr->ps_pid;
 	return (0);
 }
 
@@ -574,8 +572,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	/*
 	 * Return tid to parent thread and copy it out to userspace
 	 */
-	retval[0] = tid = p->p_tid + THREAD_PID_OFFSET;
-	retval[1] = 0;
+	*retval = tid = p->p_tid + THREAD_PID_OFFSET;
 	if (tidptr != NULL) {
 		if (copyout(&tid, tidptr, sizeof(tid)))
 			psignal(curp, SIGSEGV);

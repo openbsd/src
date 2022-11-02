@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.10 2022/01/01 18:52:36 kettenis Exp $ */
+/* $OpenBSD: syscall.c,v 1.11 2022/11/02 07:20:08 guenther Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -82,15 +82,13 @@ svc_handler(trapframe_t *frame)
 	}
 
 	rval[0] = 0;
-	rval[1] = frame->tf_x[1];
+	rval[1] = 0;
 
 	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
 		frame->tf_x[0] = rval[0];
-		frame->tf_x[1] = rval[1];
-
 		frame->tf_spsr &= ~PSR_C;	/* carry bit */
 		break;
 
@@ -122,7 +120,6 @@ child_return(void *arg)
 	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
 
 	frame->tf_x[0] = 0;
-	frame->tf_x[1] = 1;
 	frame->tf_spsr &= ~PSR_C;	/* carry bit */
 
 	KERNEL_UNLOCK();

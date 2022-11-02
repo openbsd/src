@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.12 2022/02/22 13:34:23 visa Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.13 2022/11/02 07:20:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -84,14 +84,13 @@ svc_handler(trapframe_t *frame)
 	}
 
 	rval[0] = 0;
-	rval[1] = frame->tf_a[1];
+	rval[1] = 0;
 
 	error = mi_syscall(p, code, callp, args, rval);
 
 	switch (error) {
 	case 0:
 		frame->tf_a[0] = rval[0];
-		frame->tf_a[1] = rval[1];
 		frame->tf_t[0] = 0;		/* syscall succeeded */
 		break;
 
@@ -119,7 +118,6 @@ child_return(void *arg)
 	struct trapframe *frame = process_frame(p);
 
 	frame->tf_a[0] = 0;
-	frame->tf_a[1] = 1;
 	frame->tf_t[0] = 0;			/* no error */
 
 	KERNEL_UNLOCK();
