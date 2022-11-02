@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.89 2022/09/03 21:24:02 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.90 2022/11/02 23:20:59 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -689,13 +689,18 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			break;
 		case NID_ext_key_usage:
 			break;
+		case NID_basic_constraints:
+			break;
+		case NID_key_usage:
+			break;
 		default:
-			/* {
+			/* unexpected extensions warrant investigation */
+			{
 				char objn[64];
 				OBJ_obj2txt(objn, sizeof(objn), obj, 0);
 				warnx("%s: ignoring %s (NID %d)",
-					p.fn, objn, OBJ_obj2nid(obj));
-			} */
+				    p.fn, objn, OBJ_obj2nid(obj));
+			}
 			break;
 		}
 	}
