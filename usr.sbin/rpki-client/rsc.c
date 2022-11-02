@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.17 2022/11/02 10:04:41 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.18 2022/11/02 12:46:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -42,7 +42,7 @@ struct	parse {
 extern ASN1_OBJECT	*rsc_oid;
 
 /*
- * Types and templates for RSC eContent - draft-ietf-sidrops-rpki-rsc-08
+ * Types and templates for RSC eContent - RFC 9323
  */
 
 typedef struct {
@@ -263,7 +263,7 @@ rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
 }
 
 /*
- * Parse the FileNameAndHash sequence, draft-ietf-sidrops-rpki-rsc, section 4.4.
+ * Parse the FileNameAndHash sequence, RFC 9323, section 4.4.
  * Return zero on failure, non-zero on success.
  */
 static int
@@ -319,7 +319,7 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 
 /*
  * Parses the eContent segment of an RSC file
- * draft-ietf-sidrops-rpki-rsc, section 4
+ * RFC 9323, section 4
  * Returns zero on failure, non-zero on success.
  */
 static int
@@ -330,7 +330,7 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int			 rc = 0;
 
 	/*
-	 * draft-ietf-sidrops-rpki-rsc section 4
+	 * RFC 9323 section 4
 	 */
 
 	if ((rsc = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
@@ -368,7 +368,7 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 }
 
 /*
- * Parse a full draft-ietf-sidrops-rpki-rsc file.
+ * Parse a full RFC 9323 file.
  * Returns the RSC or NULL if the object was malformed.
  */
 struct rsc *
