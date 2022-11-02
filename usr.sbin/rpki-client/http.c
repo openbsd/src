@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.72 2022/11/02 11:44:19 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.73 2022/11/02 16:50:51 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -215,23 +215,30 @@ http_info(const char *uri)
 static const char *
 ip_info(const struct http_connection *conn)
 {
-	static char	buf[NI_MAXHOST + 3];
-	char		ipbuf[NI_MAXHOST];
-	int		ret;
-
-	assert(conn->state == STATE_CONNECT);
+	static char	ipbuf[NI_MAXHOST];
 
 	if (conn->res == NULL)
-		return (" (unknown)");
+		return "unknown";
 
 	if (getnameinfo(conn->res->ai_addr, conn->res->ai_addrlen, ipbuf,
 	    sizeof(ipbuf), NULL, 0, NI_NUMERICHOST) != 0)
-		return (" (unknown)");
+		return "unknown";
 
-	ret = snprintf(buf, sizeof(buf), " (%s)", ipbuf);
-	if (ret < 0 || (size_t)ret >= sizeof(buf))
-		err(1, NULL);
+	return ipbuf;
+}
 
+static const char *
+conn_info(const struct http_connection *conn)
+{
+	static char	 buf[100 + NI_MAXHOST];
+	const char	*uri;
+
+	if (conn->req == NULL)
+		uri = conn->host;
+	else
+		uri = conn->req->uri;
+
+	snprintf(buf, sizeof(buf), "%s (%s)", http_info(uri), ip_info(conn));
 	return buf;
 }
 
@@ -817,8 +824,7 @@ http_do(struct http_connection *conn, enum res (*f)(struct http_connection *))
 		conn->events = POLLOUT;
 		break;
 	default:
-		errx(1, "%s: unexpected function return",
-		    http_info(conn->host));
+		errx(1, "%s: unexpected function return", conn_info(conn));
 	}
 }
 
@@ -840,6 +846,7 @@ static enum res
 http_connect(struct http_connection *conn)
 {
 	const char *cause = NULL;
+	struct addrinfo *res;
 
 	assert(conn->fd == -1);
 	conn->state = STATE_CONNECT;
@@ -850,9 +857,9 @@ http_connect(struct http_connection *conn)
 	else
 		conn->res = conn->res->ai_next;
 	for (; conn->res != NULL; conn->res = conn->res->ai_next) {
-		struct addrinfo *res = conn->res;
 		int fd, save_errno;
 
+		res = conn->res;
 		fd = socket(res->ai_family,
 		    res->ai_socktype | SOCK_NONBLOCK, res->ai_protocol);
 		if (fd == -1) {
@@ -891,8 +898,10 @@ http_connect(struct http_connection *conn)
 	}
 
 	if (conn->fd == -1) {
-		if (cause != NULL)
-			warn("%s: %s", http_info(conn->req->uri), cause);
+		if (cause != NULL) {
+			conn->res = res;
+			warn("%s: %s", conn_info(conn), cause);
+		}
 		return http_failed(conn);
 	}
 
@@ -910,12 +919,12 @@ http_finish_connect(struct http_connection *conn)
 
 	len = sizeof(error);
 	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
-		warn("%s: getsockopt SO_ERROR", http_info(conn->req->uri));
+		warn("%s: getsockopt SO_ERROR", conn_info(conn));
 		return http_connect_failed(conn);
 	}
 	if (error != 0) {
 		errno = error;
-		warn("%s: connect", http_info(conn->req->uri));
+		warn("%s: connect", conn_info(conn));
 		return http_connect_failed(conn);
 	}
 
@@ -936,12 +945,12 @@ http_tls_connect(struct http_connection *conn)
 		return http_failed(conn);
 	}
 	if (tls_configure(conn->tls, tls_config) == -1) {
-		warnx("%s: TLS configuration: %s\n", http_info(conn->req->uri),
+		warnx("%s: TLS configuration: %s\n", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	}
 	if (tls_connect_socket(conn->tls, conn->fd, conn->host) == -1) {
-		warnx("%s: TLS connect: %s\n", http_info(conn->req->uri),
+		warnx("%s: TLS connect: %s\n", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	}
@@ -957,7 +966,7 @@ http_tls_handshake(struct http_connection *conn)
 {
 	switch (tls_handshake(conn->tls)) {
 	case -1:
-		warnx("%s: TLS handshake: %s", http_info(conn->req->uri),
+		warnx("%s: TLS handshake: %s", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	case TLS_WANT_POLLIN:
@@ -1089,7 +1098,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 
 	cp = strchr(buf, ' ');
 	if (cp == NULL) {
-		warnx("Improper response from %s", http_info(conn->host));
+		warnx("Improper response from %s", conn_info(conn));
 		return -1;
 	} else
 		cp++;
@@ -1098,7 +1107,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 	status = strtonum(ststr, 100, 599, &errstr);
 	if (errstr != NULL) {
 		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
-		warnx("Error retrieving %s: %s", http_info(conn->host),
+		warnx("Error retrieving %s: %s", conn_info(conn),
 		    gerror);
 		return -1;
 	}
@@ -1111,7 +1120,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 	case 308:	/* Redirect: permanent redirect */
 		if (conn->req->redirect_loop++ > 10) {
 			warnx("%s: Too many redirections requested",
-			    http_info(conn->host));
+			    conn_info(conn));
 			return -1;
 		}
 		/* FALLTHROUGH */
@@ -1125,7 +1134,7 @@ http_parse_status(struct http_connection *conn, char *buf)
 		break;
 	default:
 		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
-		warnx("Error retrieving %s: %s", http_info(conn->host),
+		warnx("Error retrieving %s: %s", conn_info(conn),
 		    gerror);
 		return -1;
 	}
@@ -1202,7 +1211,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 		conn->iosz = strtonum(cp, 0, MAX_CONTENTLEN, &errstr);
 		if (errstr != NULL) {
 			warnx("Content-Length of %s is %s",
-			    http_info(conn->req->uri), errstr);
+			    conn_info(conn), errstr);
 			return -1;
 		}
 	} else if (http_isredirect(conn) &&
@@ -1344,7 +1353,7 @@ read_more:
 	s = tls_read(conn->tls, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
-		warnx("%s: TLS read: %s", http_info(conn->host),
+		warnx("%s: TLS read: %s", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	} else if (s == TLS_WANT_POLLIN) {
@@ -1356,7 +1365,7 @@ read_more:
 	if (s == 0) {
 		if (conn->req)
 			warnx("%s: short read, connection closed",
-			    http_info(conn->req->uri));
+			    conn_info(conn));
 		return http_failed(conn);
 	}
 
@@ -1474,7 +1483,7 @@ again:
 		if (buf == NULL)
 			goto read_more;
 		if (http_parse_chunked(conn, buf) != 0) {
-			warnx("%s: bad chunk encoding", http_info(conn->host));
+			warnx("%s: bad chunk encoding", conn_info(conn));
 			free(buf);
 			return http_failed(conn);
 		}
@@ -1495,7 +1504,7 @@ again:
 			goto read_more;
 		/* expect empty line to finish a chunk of data */
 		if (*buf != '\0') {
-			warnx("%s: bad chunk encoding", http_info(conn->host));
+			warnx("%s: bad chunk encoding", conn_info(conn));
 			free(buf);
 			return http_failed(conn);
 		}
@@ -1533,7 +1542,7 @@ http_write(struct http_connection *conn)
 		s = tls_write(conn->tls, conn->buf + conn->bufpos,
 		    conn->bufsz - conn->bufpos);
 		if (s == -1) {
-			warnx("%s: TLS write: %s", http_info(conn->host),
+			warnx("%s: TLS write: %s", conn_info(conn),
 			    tls_error(conn->tls));
 			return http_failed(conn);
 		} else if (s == TLS_WANT_POLLIN) {
@@ -1568,14 +1577,14 @@ proxy_read(struct http_connection *conn)
 	s = read(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
-		warn("%s: read", http_info(conn->host));
+		warn("%s: read", conn_info(conn));
 		return http_failed(conn);
 	}
 
 	if (s == 0) {
 		if (conn->req)
 			warnx("%s: short read, connection closed",
-			    http_info(conn->host));
+			    conn_info(conn));
 		return http_failed(conn);
 	}
 
@@ -1629,7 +1638,7 @@ proxy_write(struct http_connection *conn)
 	s = write(conn->fd, conn->buf + conn->bufpos,
 	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
-		warn("%s: write", http_info(conn->host));
+		warn("%s: write", conn_info(conn));
 		return http_failed(conn);
 	}
 	conn->bufpos += s;
@@ -1692,13 +1701,13 @@ data_write(struct http_connection *conn)
 
 	s = write(conn->req->outfd, conn->buf, bsz);
 	if (s == -1) {
-		warn("%s: data write", http_info(conn->req->uri));
+		warn("%s: data write", conn_info(conn));
 		return http_failed(conn);
 	}
 
 	conn->totalsz += s;
 	if (conn->totalsz > MAX_CONTENTLEN) {
-		warn("%s: too much data offered", http_info(conn->req->uri));
+		warn("%s: too much data offered", conn_info(conn));
 		return http_failed(conn);
 	}
 
@@ -1946,13 +1955,12 @@ proc_http(char *bind_addr, int fd)
 				http_do(conn, http_handle);
 			else if (conn->io_time <= now) {
 				if (conn->state == STATE_CONNECT) {
-					warnx("%s%s: connect timeout",
-					    ip_info(conn),
-					    http_info(conn->host));
+					warnx("%s: connect timeout",
+					    conn_info(conn));
 					http_do(conn, http_connect_failed);
 				} else {
 					warnx("%s: timeout, connection closed",
-					    http_info(conn->host));
+					    conn_info(conn));
 					http_do(conn, http_failed);
 				}
 			}
