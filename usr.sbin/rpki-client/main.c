@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.219 2022/09/03 09:22:25 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.220 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -611,6 +611,9 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		else
 			st->aspas_invalid++;
 		aspa_free(aspa);
+		break;
+	case RTYPE_TAK:
+		st->taks++;
 		break;
 	default:
 		errx(1, "unknown entity type %d", type);
@@ -1311,6 +1314,7 @@ main(int argc, char *argv[])
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	printf("Certificate revocation lists: %zu\n", stats.crls);
 	printf("Ghostbuster records: %zu\n", stats.gbrs);
+	printf("Trust Anchor Keys: %zu\n", stats.taks);
 	printf("Repositories: %zu\n", stats.repos);
 	printf("Cleanup: removed %zu files, %zu directories, %zu superfluous\n",
 	    stats.del_files, stats.del_dirs, stats.extra_files);

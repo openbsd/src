@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.77 2022/09/03 21:24:02 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.78 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -521,6 +521,42 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 }
 
 /*
+ * Parse a TAK object.
+ */
+static struct tak *
+proc_parser_tak(char *file, const unsigned char *der, size_t len)
+{
+	struct tak		*tak;
+	X509			*x509;
+	struct crl		*crl;
+	struct auth		*a;
+	int			 rc = 0;
+
+	if ((tak = tak_parse(&x509, file, der, len)) == NULL)
+		return NULL;
+
+	a = valid_ski_aki(file, &auths, tak->ski, tak->aki);
+	crl = crl_get(&crlt, a);
+
+	if (!valid_x509(file, ctx, x509, a, crl, 0))
+		goto out;
+
+	/* TAK EE must be signed by self-signed CA */
+	if (a->parent != NULL)
+		goto out;
+
+	tak->talid = a->cert->talid;
+	rc = 1;
+ out:
+	if (rc == 0) {
+		tak_free(tak);
+		tak = NULL;
+	}
+	X509_free(x509);
+	return tak;
+}
+
+/*
  * Load the file specified by the entity information.
  */
 static char *
@@ -648,6 +684,11 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			if (aspa != NULL)
 				aspa_buffer(b, aspa);
 			aspa_free(aspa);
+			break;
+		case RTYPE_TAK:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
+			proc_parser_tak(file, f, flen);
 			break;
 		default:
 			errx(1, "unhandled entity type %d", entp->type);

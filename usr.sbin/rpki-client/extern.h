@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.156 2022/09/03 21:24:02 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.157 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -183,6 +183,7 @@ enum rtype {
 	RTYPE_FILE,
 	RTYPE_RSC,
 	RTYPE_ASPA,
+	RTYPE_TAK,
 };
 
 enum location {
@@ -272,6 +273,33 @@ struct rsc {
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
 	time_t		 expires; /* Not After of the RSC EE */
+};
+
+/*
+ * Datastructure representing the TAKey sequence inside TAKs.
+ */
+struct takey {
+	char		**comments; /* Comments */
+	size_t		 commentsz; /* number of Comments */
+	char		**uris; /* CertificateURI */
+	size_t		 urisz; /* number of CertificateURIs */
+	unsigned char	*pubkey; /* DER encoded SubjectPublicKeyInfo */
+	size_t		 pubkeysz;
+	char		*ski; /* hex encoded SubjectKeyIdentifier of pubkey */
+};
+
+/*
+ * A Signed TAL (TAK) draft-ietf-sidrops-signed-tal-12
+ */
+struct tak {
+	int		 talid; /* TAK covered by what TAL */
+	struct takey	*current;
+	struct takey	*predecessor;
+	struct takey	*successor;
+	char		*aia; /* AIA */
+	char		*aki; /* AKI */
+	char		*ski; /* SKI */
+	time_t		 expires; /* Not After of the TAK EE */
 };
 
 /*
@@ -474,6 +502,7 @@ struct stats {
 	size_t	 rrdp_fails; /* failed rrdp repositories */
 	size_t	 crls; /* revocation lists */
 	size_t	 gbrs; /* ghostbuster records */
+	size_t	 taks; /* signed TAL objects */
 	size_t	 aspas; /* ASPA objects */
 	size_t	 aspas_fail; /* ASPA objects failing syntactic parse */
 	size_t	 aspas_invalid; /* ASPAs with invalid customerASID */
@@ -543,6 +572,12 @@ struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
 void		 rsc_free(struct rsc *);
 struct rsc	*rsc_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
+
+void		 takey_free(struct takey *);
+void		 tak_free(struct tak *);
+struct tak	*tak_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
+struct tak	*tak_read(struct ibuf *);
 
 void		 aspa_buffer(struct ibuf *, const struct aspa *);
 void		 aspa_free(struct aspa *);
@@ -726,6 +761,7 @@ void		 roa_print(const X509 *, const struct roa *);
 void		 gbr_print(const X509 *, const struct gbr *);
 void		 rsc_print(const X509 *, const struct rsc *);
 void		 aspa_print(const X509 *, const struct aspa *);
+void		 tak_print(const X509 *, const struct tak *);
 
 /* Output! */
 

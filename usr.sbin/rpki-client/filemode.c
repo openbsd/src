@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.14 2022/09/06 11:16:51 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.15 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -269,6 +269,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct tal *tal = NULL;
 	struct rsc *rsc = NULL;
 	struct aspa *aspa = NULL;
+	struct tak *tak = NULL;
 	char *aia = NULL, *aki = NULL;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
@@ -376,6 +377,14 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = aspa->aia;
 		aki = aspa->aki;
 		break;
+	case RTYPE_TAK:
+		tak = tak_parse(&x509, file, buf, len);
+		if (tak == NULL)
+			break;
+		tak_print(x509, tak);
+		aia = tak->aia;
+		aki = tak->aki;
+		break;
 	default:
 		printf("%s: unsupported file type\n", file);
 		break;
@@ -469,6 +478,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	tal_free(tal);
 	rsc_free(rsc);
 	aspa_free(aspa);
+	tak_free(tak);
 }
 
 /*

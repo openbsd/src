@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.52 2022/11/02 10:04:41 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.53 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -45,6 +45,7 @@ ASN1_OBJECT	*sign_time_oid;	/* pkcs-9 id-signingTime */
 ASN1_OBJECT	*bin_sign_time_oid;	/* pkcs-9 id-aa-binarySigningTime */
 ASN1_OBJECT	*rsc_oid;	/* id-ct-signedChecklist */
 ASN1_OBJECT	*aspa_oid;	/* id-ct-ASPA */
+ASN1_OBJECT	*tak_oid;	/* id-ct-SignedTAL */
 
 static const struct {
 	const char	 *oid;
@@ -105,6 +106,10 @@ static const struct {
 	{
 		.oid = "1.2.840.113549.1.9.16.1.49",
 		.ptr = &aspa_oid,
+	},
+	{
+		.oid = "1.2.840.113549.1.9.16.1.50",
+		.ptr = &tak_oid,
 	},
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.28 2022/08/30 23:40:37 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.29 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -52,6 +52,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"bgpsec_pubkeys\": %zu,\n"
 	    "\t\t\"certificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
+	    "\t\t\"taks\": %zu,\n"
 	    "\t\t\"tals\": %zu,\n"
 	    "\t\t\"invalidtals\": %zu,\n"
 	    "\t\t\"talfiles\": [\n",
@@ -59,7 +60,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
 	    st->aspas, st->aspas_fail, st->aspas_invalid,
-	    st->brks, st->certs, st->certs_fail,
+	    st->brks, st->certs, st->certs_fail, st->taks,
 	    st->tals, talsz - st->tals) < 0)
 		return -1;
 

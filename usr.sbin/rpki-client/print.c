@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.16 2022/08/30 23:41:53 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.17 2022/11/02 12:43:02 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -616,4 +616,96 @@ aspa_print(const X509 *x, const struct aspa *p)
 			printf("\n");
 		}
 	}
+}
+
+static void
+takey_print(char *name, const struct takey *t)
+{
+	char	*spki = NULL;
+	size_t	 i, j = 0;
+
+	if (base64_encode(t->pubkey, t->pubkeysz, &spki) != 0)
+		errx(1, "base64_encode failed in %s", __func__);
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t\t{\n\t\t\t\"name\": \"%s\",\n", name);
+		printf("\t\t\t\"comments\": [");
+		for (i = 0; i < t->commentsz; i++) {
+			printf("\"%s\"", t->comments[i]);
+			if (i + 1 < t->commentsz)
+				printf(", ");
+		}
+		printf("],\n");
+		printf("\t\t\t\"uris\": [");
+		for (i = 0; i < t->urisz; i++) {
+			printf("\"%s\"", t->uris[i]);
+			if (i + 1 < t->urisz)
+				printf(", ");
+		}
+		printf("],\n");
+		printf("\t\t\t\"spki\": \"%s\"\n\t\t}", spki);
+	} else {
+		printf("TAL derived from the '%s' Trust Anchor Key:\n\n", name);
+
+		for (i = 0; i < t->commentsz; i++) {
+			printf("\t# %s\n", t->comments[i]);
+		}
+
+		for (i = 0; i < t->urisz; i++) {
+			printf("\t%s\n\n\t", t->uris[i]);
+		}
+
+		for (i = 0; i < strlen(spki); i++) {
+			printf("%c", spki[i]);
+			j++;
+			if (j == 64) {
+				printf("\n\t");
+				j = 0;
+			}
+		}
+
+		printf("\n\n");
+	}
+
+	free(spki);
+}
+
+void
+tak_print(const X509 *x, const struct tak *p)
+{
+	char	tbuf[21];
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t\"type\": \"tak\",\n");
+		printf("\t\"ski\": \"%s\",\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
+		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
+		printf("\t\"takeys\": [\n");
+	} else {
+		strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
+		printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+		printf("Authority info access: %s\n", p->aia);
+		printf("TAK EE certificate valid until: %s\n", tbuf);
+	}
+
+	takey_print("current", p->current);
+
+	if (p->predecessor != NULL) {
+		if (outformats & FORMAT_JSON)
+			printf(",\n");
+		takey_print("predecessor", p->predecessor);
+	}
+
+	if (p->successor != NULL) {
+		if (outformats & FORMAT_JSON)
+			printf(",\n");
+		takey_print("successor", p->successor);
+	}
+
+	if (outformats & FORMAT_JSON)
+		printf("\n\t],\n");
 }
