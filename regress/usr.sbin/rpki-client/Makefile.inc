@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.25 2022/08/30 22:48:16 job Exp $
+# $OpenBSD: Makefile.inc,v 1.26 2022/11/02 12:56:38 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -11,6 +11,7 @@ PROGS += test-rsc
 PROGS += test-tal
 PROGS += test-rrdp
 PROGS += test-aspa
+PROGS += test-tak
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -64,6 +65,11 @@ SRCS_test-aspa+=	test-aspa.c aspa.c cms.c x509.c ip.c as.c io.c log.c \
 		encoding.c print.c validate.c cert.c mft.c
 run-regress-test-aspa: test-aspa
 	./test-aspa -v ${.CURDIR}/../aspa/*.asa
+
+SRCS_test-tak+=	test-tak.c tak.c cms.c x509.c ip.c as.c io.c log.c \
+		encoding.c print.c validate.c cert.c mft.c
+run-regress-test-tak: test-tak
+	./test-tak -v ${.CURDIR}/../tak/*.tak
 
 SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c \
 			rrdp_snapshot.c rrdp_util.c \
