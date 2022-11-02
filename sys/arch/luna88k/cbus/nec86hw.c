@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86hw.c,v 1.8 2022/10/28 15:09:45 kn Exp $	*/
+/*	$OpenBSD: nec86hw.c,v 1.9 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NecBSD: nec86hw.c,v 1.13 1998/03/14 07:04:54 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -175,6 +175,8 @@ nec86hw_open(void *arg, int flags)
 
 	if (sc->sc_open != 0 || nec86hw_reset(sc) != 0)
 		return ENXIO;
+
+	nec86hw_speaker_ctl(sc, (flags & FWRITE) ? SPKR_ON : SPKR_OFF);
 
 	sc->sc_open = 1;
 	sc->sc_intr = NULL;

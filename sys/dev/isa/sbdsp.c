@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.43 2022/10/30 10:55:52 kn Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.44 2022/11/02 10:41:34 kn Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -768,6 +768,8 @@ sbdsp_open(void *addr, int flags)
 		return EBUSY;
 	if (sbdsp_reset(sc) != 0)
 		return EIO;
+
+	sbdsp_speaker_ctl(sc, (flags & FWRITE) ? SPKR_ON : SPKR_OFF);
 
 	sc->sc_open = SB_OPEN_AUDIO;
 	sc->sc_openflags = flags;

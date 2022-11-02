@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.54 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: gus.c,v 1.55 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -270,7 +270,6 @@ const struct audio_hw_if gus_hw_if = {
 	.start_input = gus_dma_input,
 	.halt_output = gus_halt_out_dma,
 	.halt_input = gus_halt_in_dma,
-	.speaker_ctl = gus_speaker_ctl,
 	.set_port = gus_mixer_set_port,
 	.get_port = gus_mixer_get_port,
 	.query_devinfo = gus_mixer_query_devinfo,
@@ -289,7 +288,6 @@ static const struct audio_hw_if gusmax_hw_if = {
 	.start_input = gusmax_dma_input,
 	.halt_output = gusmax_halt_out_dma,
 	.halt_input = gusmax_halt_in_dma,
-	.speaker_ctl = gusmax_speaker_ctl,
 	.set_port = gusmax_mixer_set_port,
 	.get_port = gusmax_mixer_get_port,
 	.query_devinfo = gusmax_mixer_query_devinfo,
@@ -311,6 +309,8 @@ gusopen(void *addr, int flags)
 
 	if (sc->sc_flags & GUS_OPEN)
 		return EBUSY;
+
+	gus_speaker_ctl(sc, (flags & FWRITE) ? SPKR_ON : SPKR_OFF);
 
 	/*
 	 * Some initialization
@@ -1679,16 +1679,9 @@ gus_set_recrate(struct gus_softc *sc, u_long rate)
 }
 
 /*
- * Interface to the audio layer - turn the output on or off.  Note that some
+ * Turn the output on or off.  Note that some
  * of these bits are flipped in the register
  */
-
-int
-gusmax_speaker_ctl(void *addr, int newstate)
-{
-	struct ad1848_softc *sc = addr;
-	return gus_speaker_ctl(sc->parent, newstate);
-}
 
 int
 gus_speaker_ctl(void *addr, int newstate)

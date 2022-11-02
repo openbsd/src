@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.34 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: sb.c,v 1.35 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ const struct audio_hw_if sb_hw_if = {
 	.round_blocksize = sbdsp_round_blocksize,
 	.halt_output = sbdsp_haltdma,
 	.halt_input = sbdsp_haltdma,
-	.speaker_ctl = sbdsp_speaker_ctl,
 	.set_port = sbdsp_mixer_set_port,
 	.get_port = sbdsp_mixer_get_port,
 	.query_devinfo = sbdsp_mixer_query_devinfo,

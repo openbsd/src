@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.32 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: ess.c,v 1.33 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ const struct audio_hw_if ess_1788_hw_if = {
 	.round_blocksize = ess_round_blocksize,
 	.halt_output = ess_audio1_halt,
 	.halt_input = ess_audio1_halt,
-	.speaker_ctl = ess_speaker_ctl,
 	.set_port = ess_set_port,
 	.get_port = ess_get_port,
 	.query_devinfo = ess_query_devinfo,
@@ -222,7 +221,6 @@ const struct audio_hw_if ess_1888_hw_if = {
 	.round_blocksize = ess_round_blocksize,
 	.halt_output = ess_audio2_halt,
 	.halt_input = ess_audio1_halt,
-	.speaker_ctl = ess_speaker_ctl,
 	.set_port = ess_set_port,
 	.get_port = ess_get_port,
 	.query_devinfo = ess_query_devinfo,
@@ -1000,6 +998,8 @@ ess_open(void *addr, int flags)
 		return ENXIO;
 
 	ess_setup(sc);		/* because we did a reset */
+
+	ess_speaker_ctl(sc, (flags & FWRITE) ? SPKR_ON : SPKR_OFF);
 
 	sc->sc_open = 1;
 

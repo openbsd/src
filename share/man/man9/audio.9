@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.33 2022/10/28 15:13:59 kn Exp $
+.\"	$OpenBSD: audio.9,v 1.34 2022/11/02 10:41:34 kn Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 28 2022 $
+.Dd $Mdocdate: November 2 2022 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -59,10 +59,6 @@ struct audio_hw_if {
 		    void (*)(void *), void *);
 	int	(*halt_output)(void *);
 	int	(*halt_input)(void *);
-
-	int	(*speaker_ctl)(void *, int);
-#define SPKR_ON  1
-#define SPKR_OFF 0
 
 	int	(*set_port)(void *, struct mixer_ctrl *);
 	int	(*get_port)(void *, struct mixer_ctrl *);
@@ -274,12 +270,6 @@ This function returns 0 on success, otherwise an error code.
 This function is called to abort the input transfer (started by
 .Fn start_input )
 in progress.
-This function returns 0 on success, otherwise an error code.
-.It Ft int Fn (*speaker_ctl) "void *hdl" "int on"
-This function is optional.
-If supplied, it is called when a half duplex device changes between
-playing and recording.
-It can, e.g., be used to turn the speaker on and off.
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*set_port) "void *hdl" "struct mixer_ctrl *mc"
 This function is called when the

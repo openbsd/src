@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86.c,v 1.8 2022/10/28 15:09:45 kn Exp $	*/
+/*	$OpenBSD: nec86.c,v 1.9 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NecBSD: nec86.c,v 1.11 1999/07/23 11:04:39 honda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -79,7 +79,6 @@ const struct audio_hw_if nec86_hw_if = {
 	.start_input	= nec86hw_pdma_input,
 	.halt_output	= nec86hw_halt_pdma,
 	.halt_input	= nec86hw_halt_pdma,
-	.speaker_ctl	= nec86hw_speaker_ctl,
 	.set_port	= nec86hw_mixer_set_port,
 	.get_port	= nec86hw_mixer_get_port,
 	.query_devinfo	= nec86hw_mixer_query_devinfo,

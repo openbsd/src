@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.41 2022/10/28 15:13:59 kn Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.42 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ struct audio_hw_if {
 	int	(*halt_output)(void *);
 	int	(*halt_input)(void *);
 
-	int	(*speaker_ctl)(void *, int);
 #define SPKR_ON		1
 #define SPKR_OFF	0
 

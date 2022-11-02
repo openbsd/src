@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.12 2022/10/28 14:55:46 kn Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.13 2022/11/02 10:41:34 kn Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -328,7 +328,6 @@ int	gusmax_dma_output(void *, void *, int, void (*)(void *), void *);
 int	gusmax_dma_input(void *, void *, int, void (*)(void *), void *);
 int	gusmax_halt_out_dma(void *);
 int	gusmax_halt_in_dma(void *);
-int	gusmax_speaker_ctl(void *, int);
 
 void	gus_deinterleave(struct gus_softc *, void *, int);
 
