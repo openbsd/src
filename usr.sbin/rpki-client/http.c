@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.71 2022/11/02 10:41:43 job Exp $ */
+/*	$OpenBSD: http.c,v 1.72 2022/11/02 11:44:19 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -828,10 +828,6 @@ http_do(struct http_connection *conn, enum res (*f)(struct http_connection *))
 static enum res
 http_connect_done(struct http_connection *conn)
 {
-	freeaddrinfo(conn->res0);
-	conn->res0 = NULL;
-	conn->res = NULL;
-
 	if (proxy.proxyhost != NULL)
 		return proxy_connect(conn);
 	return http_tls_connect(conn);
@@ -915,21 +911,15 @@ http_finish_connect(struct http_connection *conn)
 	len = sizeof(error);
 	if (getsockopt(conn->fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
 		warn("%s: getsockopt SO_ERROR", http_info(conn->req->uri));
-		goto fail;
+		return http_connect_failed(conn);
 	}
 	if (error != 0) {
 		errno = error;
 		warn("%s: connect", http_info(conn->req->uri));
-		goto fail;
+		return http_connect_failed(conn);
 	}
 
 	return http_connect_done(conn);
-
-fail:
-	close(conn->fd);
-	conn->fd = -1;
-
-	return http_connect(conn);
 }
 
 /*
