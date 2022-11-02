@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.51 2022/10/24 10:26:59 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.52 2022/11/02 10:04:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -377,7 +377,7 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
 		warnx("%s: X509_get0_notafter failed", fn);
 		return 0;
 	}
-	if (x509_get_time(at, tt) == -1) {
+	if (!x509_get_time(at, tt)) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		return 0;
 	}

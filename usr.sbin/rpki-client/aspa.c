@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.5 2022/10/13 04:43:32 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.6 2022/11/02 10:04:41 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -225,7 +225,7 @@ aspa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_get0_notAfter failed", fn);
 		goto out;
 	}
-	if (x509_get_time(at, &p.res->expires) == -1) {
+	if (!x509_get_time(at, &p.res->expires)) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;
 	}
