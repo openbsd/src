@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.70 2022/10/18 14:03:39 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.71 2022/11/02 10:41:43 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -205,6 +205,32 @@ http_info(const char *uri)
 		/* overflow, add indicator */
 		memcpy(buf + sizeof buf - 4, "...", 4);
 	}
+
+	return buf;
+}
+
+/*
+ * Return IP address in presentation format.
+ */
+static const char *
+ip_info(const struct http_connection *conn)
+{
+	static char	buf[NI_MAXHOST + 3];
+	char		ipbuf[NI_MAXHOST];
+	int		ret;
+
+	assert(conn->state == STATE_CONNECT);
+
+	if (conn->res == NULL)
+		return (" (unknown)");
+
+	if (getnameinfo(conn->res->ai_addr, conn->res->ai_addrlen, ipbuf,
+	    sizeof(ipbuf), NULL, 0, NI_NUMERICHOST) != 0)
+		return (" (unknown)");
+
+	ret = snprintf(buf, sizeof(buf), " (%s)", ipbuf);
+	if (ret < 0 || (size_t)ret >= sizeof(buf))
+		err(1, NULL);
 
 	return buf;
 }
@@ -1930,7 +1956,8 @@ proc_http(char *bind_addr, int fd)
 				http_do(conn, http_handle);
 			else if (conn->io_time <= now) {
 				if (conn->state == STATE_CONNECT) {
-					warnx("%s: connect timeout",
+					warnx("%s%s: connect timeout",
+					    ip_info(conn),
 					    http_info(conn->host));
 					http_do(conn, http_connect_failed);
 				} else {
