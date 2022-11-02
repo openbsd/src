@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.159 2022/11/01 09:54:13 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.160 2022/11/02 07:36:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -210,7 +210,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[201~", KEYC_PASTE_END },
 
 	/* Extended keys. */
-	{ "\033[1;5Z", '\011'|KEYC_CTRL|KEYC_SHIFT|KEYC_EXTENDED },
+	{ "\033[1;5Z", '\011'|KEYC_CTRL|KEYC_SHIFT },
 };
 
 /* Default xterm keys. */
@@ -977,7 +977,7 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 		log_debug("%s: extended key %.*s is %llx (%s)", c->name,
 		    (int)*size, buf, nkey, key_string_lookup_key(nkey, 1));
 	}
-	*key = nkey|KEYC_EXTENDED;
+	*key = nkey;
 	return (0);
 }
 
