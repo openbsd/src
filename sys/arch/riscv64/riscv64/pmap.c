@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2022/10/17 19:51:54 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2022/11/03 23:26:49 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -41,8 +41,6 @@ pmap_is_active(struct pmap *pm, struct cpu_info *ci)
 }
 
 #endif
-
-int sifive_cip_1200_errata;
 
 void
 do_tlb_flush_page(pmap_t pm, vaddr_t va)
