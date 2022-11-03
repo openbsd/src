@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.36 2022/05/30 12:55:25 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.37 2022/11/03 08:41:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -508,6 +508,11 @@ window_buffer_key(struct window_mode_entry *wme, struct client *c,
 	struct window_buffer_itemdata	*item;
 	int				 finished;
 
+	if (paste_get_top(NULL) == NULL) {
+		finished = 1;
+		goto out;
+	}
+
 	finished = mode_tree_key(mtd, c, &key, m, NULL, NULL);
 	switch (key) {
 	case 'e':
@@ -534,6 +539,8 @@ window_buffer_key(struct window_mode_entry *wme, struct client *c,
 		finished = 1;
 		break;
 	}
+
+out:
 	if (finished || paste_get_top(NULL) == NULL)
 		window_pane_reset_mode(wp);
 	else {
