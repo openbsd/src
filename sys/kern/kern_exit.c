@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.206 2022/10/26 13:31:06 kettenis Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.207 2022/11/03 04:56:47 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -491,7 +491,7 @@ loop:
 
 		nfound++;
 		if ((options & WEXITED) && (pr->ps_flags & PS_ZOMBIE)) {
-			retval[0] = pr->ps_pid;
+			*retval = pr->ps_pid;
 			if (info != NULL) {
 				info->si_pid = pr->ps_pid;
 				info->si_uid = pr->ps_ucred->cr_uid;
@@ -527,7 +527,7 @@ loop:
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 
-			retval[0] = pr->ps_pid;
+			*retval = pr->ps_pid;
 			if (info != NULL) {
 				info->si_pid = pr->ps_pid;
 				info->si_uid = pr->ps_ucred->cr_uid;
@@ -550,7 +550,7 @@ loop:
 			if ((options & WNOWAIT) == 0)
 				atomic_setbits_int(&pr->ps_flags, PS_WAITED);
 
-			retval[0] = pr->ps_pid;
+			*retval = pr->ps_pid;
 			if (info != 0) {
 				info->si_pid = pr->ps_pid;
 				info->si_uid = pr->ps_ucred->cr_uid;
@@ -569,7 +569,7 @@ loop:
 			if ((options & WNOWAIT) == 0)
 				atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 
-			retval[0] = pr->ps_pid;
+			*retval = pr->ps_pid;
 			if (info != NULL) {
 				info->si_pid = pr->ps_pid;
 				info->si_uid = pr->ps_ucred->cr_uid;
@@ -610,7 +610,7 @@ loop:
 	if (nfound == 0)
 		return (ECHILD);
 	if (options & WNOHANG) {
-		retval[0] = 0;
+		*retval = 0;
 		return (0);
 	}
 	if ((error = tsleep_nsec(q->p_p, PWAIT | PCATCH, "wait", INFSLP)) != 0)
@@ -654,10 +654,10 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	error = dowait6(q, idtype, id,
 	    SCARG(uap, status) ? &status : NULL, options | WEXITED,
 	    SCARG(uap, rusage) ? &ru : NULL, NULL, retval);
-	if (error == 0 && retval[0] > 0 && SCARG(uap, status)) {
+	if (error == 0 && *retval > 0 && SCARG(uap, status)) {
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
 	}
-	if (error == 0 && retval[0] > 0 && SCARG(uap, rusage)) {
+	if (error == 0 && *retval > 0 && SCARG(uap, rusage)) {
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 #ifdef KTRACE
 		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
@@ -693,7 +693,7 @@ sys_waitid(struct proc *q, void *v, register_t *retval)
 	if (error == 0)
 		error = copyout(&info, SCARG(uap, info), sizeof(info));
 	if (error == 0)
-		retval[0] = 0;
+		*retval = 0;
 	return (error);
 }
 
