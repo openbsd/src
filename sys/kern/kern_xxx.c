@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.39 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.40 2022/11/03 04:52:41 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -143,9 +143,12 @@ scdebug_ret(struct proc *p, register_t code, int error,
 	printf("proc %d (%s): num ", pr->ps_pid, pr->ps_comm);
 	if (code < 0 || code >= SYS_MAXSYSCALL)
 		printf("OUT OF RANGE (%ld)", code);
+	else if (code == SYS_lseek)
+		printf("%ld ret: err = %d, rv = 0x%llx", code,
+		    error, *(off_t *)retval);
 	else
-		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", code,
-		    error, retval[0], retval[1]);
+		printf("%ld ret: err = %d, rv = 0x%lx", code,
+		    error, *retval);
 	printf("\n");
 }
 #endif /* SYSCALL_DEBUG */
