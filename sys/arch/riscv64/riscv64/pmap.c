@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2022/11/03 23:26:49 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2022/11/03 23:30:55 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -57,8 +57,23 @@ do_tlb_flush_page(pmap_t pm, vaddr_t va)
 			hart_mask |= (1UL << ci->ci_hartid);
 	}
 
-	if (hart_mask != 0)
+	/*
+	 * From the RISC-V privileged spec:
+	 *
+	 * SFENCE.VMA orders only the local hart's implicit references
+	 * to the memory-management data structures. Consequently, other
+	 * harts must be notified separately when the memory-management
+	 * data structures have been modified. One approach is to use 1)
+	 * a local data fence to ensure local writes are visible
+	 * globally, then 2) an interprocessor interrupt to the other
+	 * thread, then 3) a local SFENCE.VMA in the interrupt handler
+	 * of the remote thread, and finally 4) signal back to
+	 * originating thread that operation is complete.
+	 */
+	if (hart_mask != 0) {
+		membar_sync();
 		sbi_remote_sfence_vma(&hart_mask, va, PAGE_SIZE);
+	}
 #endif
 
 	sfence_vma_page(va);
@@ -79,8 +94,23 @@ do_tlb_flush(pmap_t pm)
 			hart_mask |= (1UL << ci->ci_hartid);
 	}
 
-	if (hart_mask != 0)
+	/*
+	 * From the RISC-V privileged spec:
+	 *
+	 * SFENCE.VMA orders only the local hart's implicit references
+	 * to the memory-management data structures. Consequently, other
+	 * harts must be notified separately when the memory-management
+	 * data structures have been modified. One approach is to use 1)
+	 * a local data fence to ensure local writes are visible
+	 * globally, then 2) an interprocessor interrupt to the other
+	 * thread, then 3) a local SFENCE.VMA in the interrupt handler
+	 * of the remote thread, and finally 4) signal back to
+	 * originating thread that operation is complete.
+	 */
+	if (hart_mask != 0) {
+		membar_sync();
 		sbi_remote_sfence_vma(&hart_mask, 0, -1);
+	}
 #endif
 
 	sfence_vma();
