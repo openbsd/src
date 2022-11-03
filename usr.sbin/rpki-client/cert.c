@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.90 2022/11/02 23:20:59 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.91 2022/11/03 00:00:53 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -721,6 +721,11 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	switch (p.res->purpose) {
 	case CERT_PURPOSE_CA:
+		if (X509_get_key_usage(x) != (KU_KEY_CERT_SIGN | KU_CRL_SIGN)) {
+			warnx("%s: RFC 6487 section 4.8.4: key usage violation",
+			    p.fn);
+			goto out;
+		}
 		if (p.res->mft == NULL) {
 			warnx("%s: RFC 6487 section 4.8.8: missing SIA", p.fn);
 			goto out;
