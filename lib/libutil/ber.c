@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.23 2021/10/21 08:17:33 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.24 2022/11/03 17:58:10 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1375,7 +1375,7 @@ ober_read_element(struct ber *ber, struct ber_element *elm)
 		break;
 	case BER_TYPE_SEQUENCE:
 	case BER_TYPE_SET:
-		if (elm->be_sub == NULL) {
+		if (len > 0 && elm->be_sub == NULL) {
 			if ((elm->be_sub = ober_get_element(0)) == NULL)
 				return -1;
 		}
@@ -1390,13 +1390,21 @@ ober_read_element(struct ber *ber, struct ber_element *elm)
 				return -1;
 			}
 			r = ober_read_element(ber, next);
-			if (r == -1)
+			if (r == -1) {
+				/* sub-element overflows sequence/set */
+				if (errno == ECANCELED)
+					errno = EINVAL;
 				return -1;
+			}
+			if (r > len) {
+				errno = EINVAL;
+				return -1;
+			}
 			elements++;
 			len -= r;
 			if (len > 0 && next->be_next == NULL) {
-				if ((next->be_next = ober_get_element(0)) ==
-				    NULL)
+				next->be_next = ober_get_element(0);
+				if (next->be_next == NULL)
 					return -1;
 			}
 			next = next->be_next;
