@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.904 2022/10/28 13:00:02 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.905 2022/11/03 08:33:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2022 $
+.Dd $Mdocdate: November 3 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5887,7 +5887,7 @@ The following keys are also available:
 .El
 .Tg display
 .It Xo Ic display-message
-.Op Fl aINpv
+.Op Fl aIlNpv
 .Op Fl c Ar target-client
 .Op Fl d Ar delay
 .Op Fl t Ar target-pane
@@ -5909,7 +5909,12 @@ is not given, the
 option is used; a delay of zero waits for a key press.
 .Ql N
 ignores key presses and closes only after the delay expires.
-The format of
+If
+.Fl l
+is given,
+.Ar message
+is printed unchanged.
+Otherwise, the format of
 .Ar message
 is described in the
 .Sx FORMATS
