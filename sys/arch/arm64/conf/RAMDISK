@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.177 2022/09/11 10:37:54 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.178 2022/11/03 17:41:22 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -34,6 +34,7 @@ mainbus0	at root
 softraid0	at root
 cpu0		at mainbus?
 efi0		at mainbus?
+smbios0		at efi?
 acpi0		at mainbus?
 acpiec*		at acpi?
 acpimcfg*	at acpi?
