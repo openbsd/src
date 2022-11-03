@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.91 2022/11/03 00:00:53 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.92 2022/11/03 10:39:19 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -588,6 +588,18 @@ cert_parse_ee_cert(const char *fn, X509 *x)
 	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
+	if (X509_get_key_usage(x) != KU_DIGITAL_SIGNATURE) {
+		warnx("%s: RFC 6487 section 4.8.4: KU must be digitalSignature",
+		    fn);
+		goto out;
+	}
+
+	/* EKU may be allowed for some purposes in the future. */
+	if (X509_get_extended_key_usage(x) != UINT32_MAX) {
+		warnx("%s: RFC 6487 section 4.8.5: EKU not allowed", fn);
+		goto out;
+	}
+
 	index = X509_get_ext_by_NID(x, NID_sbgp_ipAddrBlock, -1);
 	if ((ext = X509_get_ext(x, index)) != NULL) {
 		if (!sbgp_ipaddrblk(&p, ext))
@@ -726,6 +738,14 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			    p.fn);
 			goto out;
 		}
+
+		/* EKU may be allowed for some purposes in the future. */
+		if (X509_get_extended_key_usage(x) != UINT32_MAX) {
+			warnx("%s: RFC 6487 section 4.8.5: EKU not allowed",
+			    fn);
+			goto out;
+		}
+
 		if (p.res->mft == NULL) {
 			warnx("%s: RFC 6487 section 4.8.8: missing SIA", p.fn);
 			goto out;
