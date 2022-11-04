@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.157 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.158 2022/11/04 09:43:13 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -213,6 +213,7 @@ struct mft {
 	char		*seqnum; /* manifestNumber */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 	char		*crl; /* CRL file name */
 	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
@@ -248,6 +249,7 @@ struct roa {
 	int		 valid; /* validated resources */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 	time_t		 expires; /* do not use after */
 };
@@ -298,6 +300,7 @@ struct tak {
 	struct takey	*successor;
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*sia; /* SIA signed Object */
 	char		*ski; /* SKI */
 	time_t		 expires; /* Not After of the TAK EE */
 };
@@ -309,6 +312,7 @@ struct gbr {
 	char		*vcard;
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 };
 
@@ -325,6 +329,7 @@ struct aspa {
 	int			 talid; /* TAL the ASPA is chained up to */
 	char			*aia; /* AIA */
 	char			*aki; /* AKI */
+	char			*sia; /* SIA signedObject */
 	char			*ski; /* SKI */
 	uint32_t	 	 custasid; /* the customerASID */
 	struct aspa_provider	*providers; /* the providers */
@@ -737,6 +742,7 @@ struct ibuf	*io_buf_recvfd(int, struct ibuf **);
 void		 x509_init_oid(void);
 int		 x509_get_aia(X509 *, const char *, char **);
 int		 x509_get_aki(X509 *, const char *, char **);
+int		 x509_get_sia(X509 *, const char *, char **);
 int		 x509_get_ski(X509 *, const char *, char **);
 int		 x509_get_expire(X509 *, const char *, time_t *);
 int		 x509_get_crl(X509 *, const char *, char **);

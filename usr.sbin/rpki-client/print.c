@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.17 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: print.c,v 1.18 2022/11/04 09:43:13 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -337,6 +337,7 @@ mft_print(const X509 *x, const struct mft *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"manifest_number\": \"%s\",\n", p->seqnum);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->valid_since);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->valid_until);
@@ -345,6 +346,7 @@ mft_print(const X509 *x, const struct mft *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		x509_print(x);
 		printf("Authority info access: %s\n", p->aia);
+		printf("Subject info access: %s\n", p->sia);
 		printf("Manifest Number: %s\n", p->seqnum);
 		printf("Manifest valid since: %s\n", time2str(p->valid_since));
 		printf("Manifest valid until: %s\n", time2str(p->valid_until));
@@ -388,14 +390,17 @@ roa_print(const X509 *x, const struct roa *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 	} else {
 		printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 		x509_print(x);
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access: %s\n", p->aia);
+		printf("Subject info access: %s\n", p->sia);
 		printf("ROA valid until: %s\n", time2str(p->expires));
 		printf("asID: %u\n", p->asid);
+		printf("IP address blocks:\n");
 	}
 
 	for (i = 0; i < p->ipsz; i++) {
@@ -432,6 +437,7 @@ gbr_print(const X509 *x, const struct gbr *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"vcard\": \"");
 		for (i = 0; i < strlen(p->vcard); i++) {
 			if (p->vcard[i] == '"')
@@ -449,6 +455,7 @@ gbr_print(const X509 *x, const struct gbr *p)
 		x509_print(x);
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access: %s\n", p->aia);
+		printf("Subject info access: %s\n", p->sia);
 		printf("vcard:\n%s", p->vcard);
 	}
 }
@@ -580,6 +587,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"customer_asid\": %u,\n", p->custasid);
 		printf("\t\"provider_set\": [\n");
 		for (i = 0; i < p->providersz; i++) {
@@ -599,6 +607,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		x509_print(x);
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access: %s\n", p->aia);
+		printf("Subject info access: %s\n", p->sia);
 		printf("Customer AS: %u\n", p->custasid);
 		printf("Provider Set:\n");
 		for (i = 0; i < p->providersz; i++) {
@@ -681,6 +690,7 @@ tak_print(const X509 *x, const struct tak *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"takeys\": [\n");
 	} else {
@@ -689,6 +699,7 @@ tak_print(const X509 *x, const struct tak *p)
 		x509_print(x);
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access: %s\n", p->aia);
+		printf("Subject info access: %s\n", p->sia);
 		printf("TAK EE certificate valid until: %s\n", tbuf);
 	}
 

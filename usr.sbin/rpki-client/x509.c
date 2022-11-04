@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.53 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.54 2022/11/04 09:43:13 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -34,6 +34,7 @@
 ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
+ASN1_OBJECT	*signedobj_oid;	/* 1.3.6.1.5.5.7.48.11 (signedObject) */
 ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 ASN1_OBJECT	*roa_oid;	/* id-ct-routeOriginAuthz CMS content type */
 ASN1_OBJECT	*mft_oid;	/* id-ct-rpkiManifest CMS content type */
@@ -62,6 +63,10 @@ static const struct {
 	{
 		.oid = "1.3.6.1.5.5.7.48.10",
 		.ptr = &manifest_oid,
+	},
+	{
+		.oid = "1.3.6.1.5.5.7.48.11",
+		.ptr = &signedobj_oid,
 	},
 	{
 		.oid = "1.3.6.1.5.5.7.48.13",
@@ -365,6 +370,55 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 	rc = 1;
 
 out:
+	AUTHORITY_INFO_ACCESS_free(info);
+	return rc;
+}
+
+/*
+ * Parse the Subject Information Access (SIA) extension
+ * See RFC 6487, section 4.8.8 for details.
+ * Returns NULL on failure, on success returns the SIA signedObject URI
+ * (which has to be freed after use).
+ */
+int
+x509_get_sia(X509 *x, const char *fn, char **sia)
+{
+	ACCESS_DESCRIPTION		*ad;
+	AUTHORITY_INFO_ACCESS		*info;
+	ASN1_OBJECT			*oid;
+	int				 i, crit, rc = 0;
+
+	*sia = NULL;
+
+	info = X509_get_ext_d2i(x, NID_sinfo_access, &crit, NULL);
+	if (info == NULL)
+		return 1;
+
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.8: "
+		    "SIA: extension not non-critical", fn);
+		goto out;
+	}
+
+	/*
+	 * RFC 6487 4.8.8.2 disallows other accessMethods, however they
+	 * do exist in the wild.
+	 */
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(info); i++) {
+		ad = sk_ACCESS_DESCRIPTION_value(info, i);
+		oid = ad->method;
+
+		if (OBJ_cmp(oid, signedobj_oid) != 0)
+			continue;
+
+		/* XXX: correctly deal with other (non-rsync) protocols. */
+		if (!x509_location(fn, "SIA: signedObject", "rsync://",
+		    ad->location, sia))
+			goto out;
+	}
+
+	rc = 1;
+ out:
 	AUTHORITY_INFO_ACCESS_free(info);
 	return rc;
 }
