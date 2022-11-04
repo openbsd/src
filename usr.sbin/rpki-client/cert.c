@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.93 2022/11/04 09:45:19 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.94 2022/11/04 10:09:09 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -433,6 +433,7 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
 	ASN1_OBJECT		*oid;
+	const char		*mftfilename;
 	int			 i, rc = 0;
 
 	if (X509_EXTENSION_get_critical(ext)) {
@@ -473,6 +474,14 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
+	mftfilename = strrchr(p->res->mft, '/');
+	if (mftfilename == NULL || !valid_filename(mftfilename + 1,
+	    strlen(mftfilename) - 1)) {
+		warnx("%s: SIA: rpkiManifest filename contains invalid "
+		    "characters", p->fn);
+		goto out;
+	}
+	
 	if (strstr(p->res->mft, p->res->repo) != p->res->mft) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "conflicting URIs for caRepository and rpkiManifest",
