@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.15 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.16 2022/11/04 17:39:36 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -300,8 +300,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		printf("{\n\t\"file\": \"%s\",\n", file);
 		printf("\t\"hash_id\": \"%s\",\n", hash);
 	} else {
-		printf("File: %s\n", file);
-		printf("Hash identifier: %s\n", hash);
+		printf("File:                     %s\n", file);
+		printf("Hash identifier:          %s\n", hash);
 	}
 
 	free(hash);
