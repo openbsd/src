@@ -37,7 +37,7 @@ our %args = (
 	    qr/syslogd  CALL  setresuid(.*"_syslogd".*){3}/ => 1,
 	    qr/syslogd  CALL  setresgid(.*"_syslogd".*){3}/ => 1,
 	    qr/syslogd  CALL  setsid/ => 0,
-	    qr/syslogd  RET   execve \d+/ => 2,
+	    qr/syslogd  RET   execve JUSTRETURN/ => 2,
 	    qr/\[\d\] = "-P"/ => 1,
 	},
     },
