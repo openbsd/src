@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.128 2022/08/07 23:56:06 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.129 2022/11/04 16:49:31 kettenis Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -105,6 +105,7 @@
  */
 
 #include "assym.h"
+#include "efi.h"
 #include "lapic.h"
 #include "ksyms.h"
 #include "xen.h"
@@ -271,7 +272,7 @@ NENTRY(lgdt)
 	lretq
 END(lgdt)
 
-#ifdef DDB
+#if defined(DDB) || NEFI > 0
 ENTRY(setjmp)
 	RETGUARD_SETUP(setjmp, r11)
 	/*
@@ -313,7 +314,7 @@ ENTRY(longjmp)
 	ret
 	lfence
 END(longjmp)
-#endif /* DDB */
+#endif /* DDB || NEFI > 0 */
 
 /*****************************************************************************/
 

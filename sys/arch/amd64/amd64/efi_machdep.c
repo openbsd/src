@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.2 2022/10/20 18:43:35 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.3 2022/11/04 16:49:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
@@ -59,6 +59,11 @@ void	efi_enter(struct efi_softc *);
 void	efi_leave(struct efi_softc *);
 int	efi_gettime(struct todr_chip_handle *, struct timeval *);
 int	efi_settime(struct todr_chip_handle *, struct timeval *);
+
+label_t efi_jmpbuf;
+
+#define efi_enter_check(sc) (setjmp(&efi_jmpbuf) ? \
+    (efi_leave(sc), EFAULT) : (efi_enter(sc), 0))
 
 int
 efi_match(struct device *parent, void *match, void *aux)
@@ -134,7 +139,8 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	efi_leave(sc);
 
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return;
 	status = sc->sc_rs->GetTime(&time, NULL);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
@@ -226,6 +232,12 @@ efi_map_runtime(struct efi_softc *sc)
 }
 
 void
+efi_fault(void)
+{
+	longjmp(&efi_jmpbuf);
+}
+
+void
 efi_enter(struct efi_softc *sc)
 {
 	sc->sc_psw = intr_disable();
@@ -233,11 +245,15 @@ efi_enter(struct efi_softc *sc)
 	lcr3(sc->sc_pm->pm_pdirpa | (pmap_use_pcid ? PCID_EFI : 0));
 
 	fpu_kernel_enter();
+
+	curpcb->pcb_onfault = (void *)efi_fault;
 }
 
 void
 efi_leave(struct efi_softc *sc)
 {
+	curpcb->pcb_onfault = NULL;
+
 	fpu_kernel_exit();
 
 	lcr3(sc->sc_cr3);
@@ -252,7 +268,8 @@ efi_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 	EFI_TIME time;
 	EFI_STATUS status;
 
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return EFAULT;
 	status = sc->sc_rs->GetTime(&time, NULL);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
@@ -296,7 +313,8 @@ efi_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	time.TimeZone = 0;
 	time.Daylight = 0;
 
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return EFAULT;
 	status = sc->sc_rs->SetTime(&time);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
