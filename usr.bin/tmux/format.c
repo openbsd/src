@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.309 2022/07/19 06:46:57 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.310 2022/11/04 08:03:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3575,7 +3575,32 @@ found:
 	return (found);
 }
 
-/* Remove escaped characters from string. */
+/* Unescape escaped characters. */
+static char *
+format_unescape(const char *s)
+{
+	char	*out, *cp;
+	int	 brackets = 0;
+
+	cp = out = xmalloc(strlen(s) + 1);
+	for (; *s != '\0'; s++) {
+		if (*s == '#' && s[1] == '{')
+			brackets++;
+		if (brackets == 0 &&
+		    *s == '#' &&
+		    strchr(",#{}:", s[1]) != NULL) {
+			*cp++ = *++s;
+ 			continue;
+		}
+		if (*s == '}')
+			brackets--;
+		*cp++ = *s;
+	}
+	*cp = '\0';
+	return (out);
+}
+
+/* Remove escaped characters. */
 static char *
 format_strip(const char *s)
 {
@@ -4338,7 +4363,8 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 
 	/* Is this a literal string? */
 	if (modifiers & FORMAT_LITERAL) {
-		value = xstrdup(copy);
+		format_log(es, "literal string is '%s'", copy);
+		value = format_unescape(copy);
 		goto done;
 	}
 
