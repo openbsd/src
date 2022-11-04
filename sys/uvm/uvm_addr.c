@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.31 2022/02/21 10:26:20 jsg Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.32 2022/11/04 09:36:44 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -415,6 +415,8 @@ uvm_addr_invoke(struct vm_map *map, struct uvm_addr_state *uaddr,
 	if (hint != 0 &&
 	    !(hint >= uaddr->uaddr_minaddr && hint < uaddr->uaddr_maxaddr))
 		return ENOMEM;
+
+	vm_map_assert_anylock(map);
 
 	error = (*uaddr->uaddr_functions->uaddr_select)(map, uaddr,
 	    entry_out, addr_out, sz, align, offset, prot, hint);

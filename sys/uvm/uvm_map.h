@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.79 2022/10/21 19:13:33 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.80 2022/11/04 09:36:44 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -420,6 +420,8 @@ void		vm_map_downgrade_ln(struct vm_map*, char*, int);
 void		vm_map_upgrade_ln(struct vm_map*, char*, int);
 void		vm_map_busy_ln(struct vm_map*, char*, int);
 void		vm_map_unbusy_ln(struct vm_map*, char*, int);
+void		vm_map_assert_anylock_ln(struct vm_map*, char*, int);
+void		vm_map_assert_wrlock_ln(struct vm_map*, char*, int);
 
 #ifdef DIAGNOSTIC
 #define vm_map_lock_try(map)	vm_map_lock_try_ln(map, __FILE__, __LINE__)
@@ -431,6 +433,10 @@ void		vm_map_unbusy_ln(struct vm_map*, char*, int);
 #define vm_map_upgrade(map)	vm_map_upgrade_ln(map, __FILE__, __LINE__)
 #define vm_map_busy(map)	vm_map_busy_ln(map, __FILE__, __LINE__)
 #define vm_map_unbusy(map)	vm_map_unbusy_ln(map, __FILE__, __LINE__)
+#define vm_map_assert_anylock(map)	\
+		vm_map_assert_anylock_ln(map, __FILE__, __LINE__)
+#define vm_map_assert_wrlock(map)	\
+		vm_map_assert_wrlock_ln(map, __FILE__, __LINE__)
 #else
 #define vm_map_lock_try(map)	vm_map_lock_try_ln(map, NULL, 0)
 #define vm_map_lock(map)	vm_map_lock_ln(map, NULL, 0)
@@ -441,6 +447,8 @@ void		vm_map_unbusy_ln(struct vm_map*, char*, int);
 #define vm_map_upgrade(map)	vm_map_upgrade_ln(map, NULL, 0)
 #define vm_map_busy(map)	vm_map_busy_ln(map, NULL, 0)
 #define vm_map_unbusy(map)	vm_map_unbusy_ln(map, NULL, 0)
+#define vm_map_assert_anylock(map)	vm_map_assert_anylock_ln(map, NULL, 0)
+#define vm_map_assert_wrlock(map)	vm_map_assert_wrlock_ln(map, NULL, 0)
 #endif
 
 void		uvm_map_lock_entry(struct vm_map_entry *);

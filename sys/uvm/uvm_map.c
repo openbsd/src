@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.302 2022/10/31 10:46:24 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.303 2022/11/04 09:36:44 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -491,6 +491,8 @@ uvmspace_dused(struct vm_map *map, vaddr_t min, vaddr_t max)
 	vaddr_t stack_begin, stack_end; /* Position of stack. */
 
 	KASSERT(map->flags & VM_MAP_ISVMSPACE);
+	vm_map_assert_anylock(map);
+
 	vm = (struct vmspace *)map;
 	stack_begin = MIN((vaddr_t)vm->vm_maxsaddr, (vaddr_t)vm->vm_minsaddr);
 	stack_end = MAX((vaddr_t)vm->vm_maxsaddr, (vaddr_t)vm->vm_minsaddr);
@@ -569,6 +571,8 @@ uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
 
 	if (addr + sz < addr)
 		return 0;
+
+	vm_map_assert_anylock(map);
 
 	/*
 	 * Kernel memory above uvm_maxkaddr is considered unavailable.
@@ -1457,6 +1461,8 @@ uvm_map_mkentry(struct vm_map *map, struct vm_map_entry *first,
 	entry->guard = 0;
 	entry->fspace = 0;
 
+	vm_map_assert_wrlock(map);
+
 	/* Reset free space in first. */
 	free = uvm_map_uaddr_e(map, first);
 	uvm_mapent_free_remove(map, free, first);
@@ -1584,6 +1590,8 @@ boolean_t
 uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
     struct vm_map_entry **entry)
 {
+	vm_map_assert_anylock(map);
+
 	*entry = uvm_map_entrybyaddr(&map->addr, address);
 	return *entry != NULL && !UVM_ET_ISHOLE(*entry) &&
 	    (*entry)->start <= address && (*entry)->end > address;
@@ -1703,6 +1711,8 @@ uvm_map_is_stack_remappable(struct vm_map *map, vaddr_t addr, vaddr_t sz,
 {
 	vaddr_t end = addr + sz;
 	struct vm_map_entry *first, *iter, *prev = NULL;
+
+	vm_map_assert_anylock(map);
 
 	if (!uvm_map_lookup_entry(map, addr, &first)) {
 		printf("map stack 0x%lx-0x%lx of map %p failed: no mapping\n",
@@ -1868,6 +1878,8 @@ uvm_mapent_mkfree(struct vm_map *map, struct vm_map_entry *entry,
 	vaddr_t			 addr;	/* Start of freed range. */
 	vaddr_t			 end;	/* End of freed range. */
 
+	UVM_MAP_REQ_WRITE(map);
+
 	prev = *prev_ptr;
 	if (prev == entry)
 		*prev_ptr = prev = NULL;
@@ -1996,10 +2008,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (start >= end)
 		return 0;
 
-	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		splassert(IPL_NONE);
-	else
-		splassert(IPL_VM);
+	vm_map_assert_wrlock(map);
 
 	/* Find first affected entry. */
 	entry = uvm_map_entrybyaddr(&map->addr, start);
@@ -2531,6 +2540,8 @@ uvm_map_teardown(struct vm_map *map)
 
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
 
+	vm_map_lock(map);
+
 	/* Remove address selectors. */
 	uvm_addr_destroy(map->uaddr_exe);
 	map->uaddr_exe = NULL;
@@ -2571,6 +2582,8 @@ uvm_map_teardown(struct vm_map *map)
 		/* Update wave-front. */
 		entry = TAILQ_NEXT(entry, dfree.deadq);
 	}
+
+	vm_map_unlock(map);
 
 #ifdef VMMAP_DEBUG
 	numt = numq = 0;
@@ -4082,6 +4095,8 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 {
 	struct vm_map_entry *entry;
 
+	vm_map_assert_anylock(map);
+
 	if (start < map->min_offset || end > map->max_offset || start > end)
 		return FALSE;
 	if (start == end)
@@ -4142,8 +4157,10 @@ uvm_map_deallocate(vm_map_t map)
 	 */
 	TAILQ_INIT(&dead);
 	uvm_tree_sanity(map, __FILE__, __LINE__);
+	vm_map_lock(map);
 	uvm_unmap_remove(map, map->min_offset, map->max_offset, &dead,
 	    TRUE, FALSE, FALSE);
+	vm_map_unlock(map);
 	pmap_destroy(map->pmap);
 	KASSERT(RBT_EMPTY(uvm_map_addr, &map->addr));
 	free(map, M_VMMAP, sizeof *map);
@@ -4980,6 +4997,7 @@ uvm_map_freelist_update(struct vm_map *map, struct uvm_map_deadq *dead,
     vaddr_t b_start, vaddr_t b_end, vaddr_t s_start, vaddr_t s_end, int flags)
 {
 	KDASSERT(b_end >= b_start && s_end >= s_start);
+	vm_map_assert_wrlock(map);
 
 	/* Clear all free lists. */
 	uvm_map_freelist_update_clear(map, dead);
@@ -5038,6 +5056,8 @@ uvm_map_fix_space(struct vm_map *map, struct vm_map_entry *entry,
 	KDASSERT(min <= max);
 	KDASSERT((entry != NULL && VMMAP_FREE_END(entry) == min) ||
 	    min == map->min_offset);
+
+	UVM_MAP_REQ_WRITE(map);
 
 	/*
 	 * During the function, entfree will always point at the uaddr state
@@ -5402,6 +5422,27 @@ vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 	mtx_leave(&map->flags_lock);
 	if (oflags & VM_MAP_WANTLOCK)
 		wakeup(&map->flags);
+}
+
+void
+vm_map_assert_anylock_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert read or write locked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		rw_assert_anylock(&map->lock);
+	else
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+}
+
+void
+vm_map_assert_wrlock_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert write locked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
+		splassert(IPL_NONE);
+		rw_assert_wrlock(&map->lock);
+	} else
+		MUTEX_ASSERT_LOCKED(&map->mtx);
 }
 
 #ifndef SMALL_KERNEL
