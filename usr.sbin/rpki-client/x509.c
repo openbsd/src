@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.54 2022/11/04 09:43:13 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.55 2022/11/04 23:42:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -400,16 +400,25 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 		goto out;
 	}
 
-	/*
-	 * RFC 6487 4.8.8.2 disallows other accessMethods, however they
-	 * do exist in the wild.
-	 */
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(info); i++) {
 		ad = sk_ACCESS_DESCRIPTION_value(info, i);
 		oid = ad->method;
 
-		if (OBJ_cmp(oid, signedobj_oid) != 0)
+		/*
+		 * XXX: RFC 6487 4.8.8.2 disallows other accessMethods, however
+		 * they do exist in the wild.  Consider making this an error.
+		 * See also https://www.rfc-editor.org/errata/eid7239.
+		 */
+		if (OBJ_cmp(oid, signedobj_oid) != 0) {
+			if (verbose > 1) {
+				char buf[128];
+
+				OBJ_obj2txt(buf, sizeof(buf), oid, 0);
+				warnx("%s: RFC 6487 section 4.8.8.2: unexpected"
+				    " accessMethod: %s", fn, buf);
+			}
 			continue;
+		}
 
 		/* XXX: correctly deal with other (non-rsync) protocols. */
 		if (!x509_location(fn, "SIA: signedObject", "rsync://",
