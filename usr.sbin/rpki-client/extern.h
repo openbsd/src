@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.158 2022/11/04 09:43:13 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.159 2022/11/04 12:05:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -331,10 +331,10 @@ struct aspa {
 	char			*aki; /* AKI */
 	char			*sia; /* SIA signedObject */
 	char			*ski; /* SKI */
-	uint32_t	 	 custasid; /* the customerASID */
+	uint32_t		 custasid; /* the customerASID */
 	struct aspa_provider	*providers; /* the providers */
 	size_t			 providersz; /* number of providers */
-	time_t		 	 expires; /* NotAfter of the ASPA EE cert */
+	time_t			 expires; /* NotAfter of the ASPA EE cert */
 };
 
 /*
@@ -754,7 +754,7 @@ char		*x509_convert_seqnum(const char *, const ASN1_INTEGER *);
 int		 x509_location(const char *, const char *, const char *,
 		    GENERAL_NAME *, char **);
 int		 x509_inherits(X509 *);
-int	 	 x509_any_inherits(X509 *);
+int		 x509_any_inherits(X509 *);
 
 /* printers */
 char		*time2str(time_t);
