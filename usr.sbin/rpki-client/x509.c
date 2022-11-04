@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.55 2022/11/04 23:42:56 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.56 2022/11/04 23:52:59 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -386,7 +386,7 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 	ACCESS_DESCRIPTION		*ad;
 	AUTHORITY_INFO_ACCESS		*info;
 	ASN1_OBJECT			*oid;
-	int				 i, crit, rc = 0;
+	int				 i, crit, rsync_found = 0;
 
 	*sia = NULL;
 
@@ -420,16 +420,26 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 			continue;
 		}
 
-		/* XXX: correctly deal with other (non-rsync) protocols. */
-		if (!x509_location(fn, "SIA: signedObject", "rsync://",
-		    ad->location, sia))
+		/* Don't fail on non-rsync URI, so check this afterward. */
+		if (!x509_location(fn, "SIA: signedObject", NULL, ad->location,
+		    sia))
 			goto out;
+
+		if (rsync_found)
+			continue;
+
+		if (strncasecmp(*sia, "rsync://", 8) == 0) {
+			rsync_found = 1;
+			continue;
+		}
+
+		free(*sia);
+		*sia = NULL;
 	}
 
-	rc = 1;
  out:
 	AUTHORITY_INFO_ACCESS_free(info);
-	return rc;
+	return rsync_found;
 }
 
 /*
@@ -537,7 +547,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 	DIST_POINT		*dp;
 	GENERAL_NAMES		*names;
 	GENERAL_NAME		*name;
-	int			 i, crit, rc = 0;
+	int			 i, crit, rsync_found = 0;
 
 	*crl = NULL;
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
@@ -572,14 +582,17 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 	names = dp->distpoint->name.fullname;
 	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
 		name = sk_GENERAL_NAME_value(names, i);
-		/* Don't warn on non-rsync URI, so check this afterward. */
+
+		/* Don't fail on non-rsync URI, so check this afterward. */
 		if (!x509_location(fn, "CRL distribution point", NULL, name,
 		    crl))
 			goto out;
+
 		if (strncasecmp(*crl, "rsync://", 8) == 0) {
-			rc = 1;
+			rsync_found = 1;
 			goto out;
 		}
+
 		free(*crl);
 		*crl = NULL;
 	}
@@ -589,7 +602,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 
  out:
 	CRL_DIST_POINTS_free(crldp);
-	return rc;
+	return rsync_found;
 }
 
 /*
