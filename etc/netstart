@@ -1,13 +1,13 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.227 2022/11/01 11:18:06 kn Exp $
+#	$OpenBSD: netstart,v 1.228 2022/11/05 12:03:58 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
 
 # Show usage of the netstart script and exit.
 usage() {
-	print -u2 "usage: sh ${0##*/} [-n] [interface ...]"
+	print -u2 "usage: sh $0 [-n] [interface ...]"
 	exit 1
 }
 
