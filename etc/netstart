@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.228 2022/11/05 12:03:58 kn Exp $
+#	$OpenBSD: netstart,v 1.229 2022/11/05 12:06:05 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -312,7 +312,7 @@ wait_dad() {
 # Make sure the invoking user has the right privileges.  Check for presence of
 # id(1) to avoid problems with diskless setups.
 if [[ -x /usr/bin/id ]] && (($(id -u) != 0)); then
-	echo "${0##*/}: need root privileges"
+	print -u2 "${0##*/}: need root privileges"
 	exit 1
 fi
 
