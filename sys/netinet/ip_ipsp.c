@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.273 2022/08/06 15:57:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.274 2022/11/05 22:33:11 jan Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1081,7 +1081,7 @@ tdb_free(struct tdb *tdbp)
 		tdbp->tdb_xform = NULL;
 	}
 
-#if NPFSYNC > 0
+#if NPFSYNC > 0 && defined(IPSEC)
 	/* Cleanup pfsync references */
 	pfsync_delete_tdb(tdbp);
 #endif

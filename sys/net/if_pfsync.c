@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.305 2022/04/21 15:22:49 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.306 2022/11/05 22:33:11 jan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1576,7 +1576,9 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 	int q;
 	struct pf_state *st;
 	struct pfsync_upd_req_item *ur;
+#if defined(IPSEC)
 	struct tdb *tdb;
+#endif
 
 	sn->sn_sc = sc;
 
@@ -1602,6 +1604,7 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 	}
 
 	TAILQ_INIT(&sn->sn_tdb_q);
+#if defined(IPSEC)
 	while ((tdb = TAILQ_FIRST(&sc->sc_tdb_q)) != NULL) {
 		TAILQ_REMOVE(&sc->sc_tdb_q, tdb, tdb_sync_entry);
 		TAILQ_INSERT_TAIL(&sn->sn_tdb_q, tdb, tdb_sync_snap);
@@ -1611,6 +1614,7 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 		SET(tdb->tdb_flags, TDBF_PFSYNC_SNAPPED);
 		mtx_leave(&tdb->tdb_mtx);
 	}
+#endif
 
 	sn->sn_len = sc->sc_len;
 	sc->sc_len = PFSYNC_MINPKT;
@@ -1630,7 +1634,9 @@ pfsync_drop_snapshot(struct pfsync_snapshot *sn)
 {
 	struct pf_state *st;
 	struct pfsync_upd_req_item *ur;
+#if defined(IPSEC)
 	struct tdb *t;
+#endif
 	int q;
 
 	for (q = 0; q < PFSYNC_S_COUNT; q++) {
@@ -1652,6 +1658,7 @@ pfsync_drop_snapshot(struct pfsync_snapshot *sn)
 		pool_put(&sn->sn_sc->sc_pool, ur);
 	}
 
+#if defined(IPSEC)
 	while ((t = TAILQ_FIRST(&sn->sn_tdb_q)) != NULL) {
 		TAILQ_REMOVE(&sn->sn_tdb_q, t, tdb_sync_snap);
 		mtx_enter(&t->tdb_mtx);
@@ -1660,6 +1667,7 @@ pfsync_drop_snapshot(struct pfsync_snapshot *sn)
 		CLR(t->tdb_flags, TDBF_PFSYNC);
 		mtx_leave(&t->tdb_mtx);
 	}
+#endif
 }
 
 int
@@ -1748,7 +1756,6 @@ pfsync_sendout(void)
 	struct pfsync_subheader *subh;
 	struct pf_state *st;
 	struct pfsync_upd_req_item *ur;
-	struct tdb *t;
 	int offset;
 	int q, count = 0;
 
@@ -1842,7 +1849,10 @@ pfsync_sendout(void)
 		sn.sn_plus = NULL;	/* XXX memory leak ? */
 	}
 
+#if defined(IPSEC)
 	if (!TAILQ_EMPTY(&sn.sn_tdb_q)) {
+		struct tdb *t;
+
 		subh = (struct pfsync_subheader *)(m->m_data + offset);
 		offset += sizeof(*subh);
 
@@ -1865,6 +1875,7 @@ pfsync_sendout(void)
 		subh->len = sizeof(struct pfsync_tdb) >> 2;
 		subh->count = htons(count);
 	}
+#endif
 
 	/* walk the queues */
 	for (q = 0; q < PFSYNC_S_COUNT; q++) {
@@ -2486,6 +2497,7 @@ pfsync_q_del(struct pf_state *st)
 	pf_state_unref(st);
 }
 
+#if defined(IPSEC)
 void
 pfsync_update_tdb(struct tdb *t, int output)
 {
@@ -2540,7 +2552,9 @@ pfsync_update_tdb(struct tdb *t, int output)
 		CLR(t->tdb_flags, TDBF_PFSYNC_RPL);
 	mtx_leave(&t->tdb_mtx);
 }
+#endif
 
+#if defined(IPSEC)
 void
 pfsync_delete_tdb(struct tdb *t)
 {
@@ -2576,6 +2590,7 @@ pfsync_delete_tdb(struct tdb *t)
 
 	tdb_unref(t);
 }
+#endif
 
 void
 pfsync_out_tdb(struct tdb *t, void *buf)
