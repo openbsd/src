@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.173 2022/10/27 22:48:17 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.174 2022/11/05 10:31:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -196,15 +196,17 @@ elf_load_psection(struct exec_vmcmd_set *vcset, struct vnode *vp,
 		*prot |= (ph->p_flags & PF_X) ? PROT_EXEC : 0;
 
 	/*
-	 * Apply immutability as much as possible, but not text-segments
-	 * of textrel binaries, or RELRO or PT_OPENBSD_MUTABLE sections,
-	 * or LOADS marked PF_OPENBSD_MUTABLE, or LOADS which violate W^X.
+	 * Apply immutability as much as possible, but not text/rodata
+	 * segments of textrel binaries, or RELRO or PT_OPENBSD_MUTABLE
+	 * sections, or LOADS marked PF_OPENBSD_MUTABLE, or LOADS which
+	 * violate W^X.
 	 * Userland (meaning crt0 or ld.so) will repair those regions.
 	 */
 	if ((ph->p_flags & (PF_X | PF_W)) != (PF_X | PF_W) &&
-	    ((ph->p_flags & PF_OPENBSD_MUTABLE) == 0) &&
-	    ((flags & VMCMD_TEXTREL) == 0 && (ph->p_flags & PF_X) == 0))
+	    ((ph->p_flags & PF_OPENBSD_MUTABLE) == 0))
 		flags |= VMCMD_IMMUTABLE;
+	if ((flags & VMCMD_TEXTREL) && (ph->p_flags & PF_W) == 0)
+		flags &= ~VMCMD_IMMUTABLE;
 
 	msize = ph->p_memsz + diff;
 	offset = ph->p_offset - bdiff;
