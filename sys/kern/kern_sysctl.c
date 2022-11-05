@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.406 2022/08/16 13:29:52 visa Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.407 2022/11/05 19:29:46 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 #include <sys/buf.h>
+#include <sys/clockintr.h>
 #include <sys/tty.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -426,6 +427,11 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	case KERN_CPUSTATS:
 		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
 		    newp, newlen));
+#ifdef __HAVE_CLOCKINTR
+	case KERN_CLOCKINTR:
+		return sysctl_clockintr(name, namelen, oldp, oldlenp, newp,
+		    newlen);
+#endif
 	default:
 		return (ENOTDIR);	/* overloaded */
 	}

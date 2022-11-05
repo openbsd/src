@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.229 2022/08/16 13:29:53 visa Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.230 2022/11/05 19:29:46 cheloha Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -191,7 +191,8 @@ struct ctlname {
 #define	KERN_TIMEOUT_STATS	87	/* struct: timeout status and stats */
 #define	KERN_UTC_OFFSET		88	/* int: adjust RTC time to UTC */
 #define	KERN_VIDEO		89	/* struct: video properties */
-#define	KERN_MAXID		90	/* number of valid kern ids */
+#define	KERN_CLOCKINTR		90	/* node: clockintr */
+#define	KERN_MAXID		91	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -284,6 +285,7 @@ struct ctlname {
 	{ "timeout_stats", CTLTYPE_STRUCT }, \
 	{ "utc_offset", CTLTYPE_INT }, \
 	{ "video", CTLTYPE_STRUCT }, \
+ 	{ "clockintr", CTLTYPE_NODE }, \
 }
 
 /*
@@ -878,6 +880,17 @@ struct kinfo_file {
 	{ "timestepwarnings", CTLTYPE_INT }, \
 	{ "hardware", CTLTYPE_STRING }, \
 	{ "choice", CTLTYPE_STRING }, \
+}
+
+/*
+ * KERN_CLOCKINTR
+ */
+#define KERN_CLOCKINTR_STATS		1	/* struct: stats */
+#define KERN_CLOCKINTR_MAXID		2
+
+#define CTL_KERN_CLOCKINTR_NAMES { \
+	{ 0, 0 }, \
+	{ "stats", CTLTYPE_STRUCT }, \
 }
 
 /*

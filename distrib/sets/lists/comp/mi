@@ -1286,6 +1286,7 @@
 ./usr/include/sys/cdefs.h
 ./usr/include/sys/cdio.h
 ./usr/include/sys/chio.h
+./usr/include/sys/clockintr.h
 ./usr/include/sys/conf.h
 ./usr/include/sys/core.h
 ./usr/include/sys/ctf.h
@@ -3071,6 +3072,7 @@
 ./usr/share/man/man9/bufq_init.9
 ./usr/share/man/man9/bus_dma.9
 ./usr/share/man/man9/bus_space.9
+./usr/share/man/man9/clockintr.9
 ./usr/share/man/man9/cond_init.9
 ./usr/share/man/man9/config_attach.9
 ./usr/share/man/man9/config_defer.9
