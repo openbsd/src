@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.36 2022/01/08 06:49:41 guenther Exp $	*/
+/*	$OpenBSD: sod.c,v 1.37 2022/11/05 18:48:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -185,6 +185,8 @@ _dl_maphints(void)
 	hstrtab = (char *)(addr + hheader->hh_strtab);
 	if (hheader->hh_version >= LD_HINTS_VERSION_2)
 		_dl_hint_search_path = _dl_split_path(hstrtab + hheader->hh_dirlist);
+
+	_dl_mimmutable(addr, hsize);
 
 	/* close the file descriptor, leaving the hints mapped */
 	_dl_close(hfd);
