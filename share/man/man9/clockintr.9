@@ -1,4 +1,4 @@
-.\" $OpenBSD: clockintr.9,v 1.1 2022/11/05 19:29:45 cheloha Exp $
+.\" $OpenBSD: clockintr.9,v 1.2 2022/11/05 23:18:03 jmc Exp $
 .\"
 .\" Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
 .\"
@@ -18,9 +18,9 @@
 .Dt CLOCKINTR 9
 .Os
 .Sh NAME
+.Nm clockintr_init ,
 .Nm clockintr_cpu_init ,
 .Nm clockintr_dispatch ,
-.Nm clockintr_init ,
 .Nm clockintr_setstatclockrate ,
 .Nm clockintr_trigger
 .Nd clock interrupt scheduler
@@ -312,7 +312,7 @@ otherwise it returns zero.
 .%A Steven McCanne
 .%A Chris Torek
 .%T A Randomized Sampling Clock for CPU Utilization Estimation and Code Profiling
-.%B In Proc. Winter 1993 USENIX Conference
+.%B \&In Proc. Winter 1993 USENIX Conference
 .%D 1993
 .%P pp. 387\(en394
 .%I USENIX Association
