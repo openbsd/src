@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.19 2022/04/20 17:26:53 tb Exp $ */
+/*	$Id: test-cert.c,v 1.20 2022/11/05 10:32:51 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,6 +34,7 @@
 
 int outformats;
 int verbose;
+int filemode;
 
 int
 main(int argc, char *argv[])
