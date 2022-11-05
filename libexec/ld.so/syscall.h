@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.2 2022/01/08 06:49:41 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.3 2022/11/05 18:44:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -52,6 +52,7 @@ int	_dl_mprotect(const void *, size_t, int);
 void   *_dl_mquery(void *, size_t, int, int, int, off_t);
 int	_dl_msyscall(void *addr, size_t len);
 int	_dl_munmap(const void *, size_t);
+int	_dl_mimmutable(const void *, size_t);
 int	_dl_open(const char *, int);
 int	_dl_pledge(const char *, const char **);
 ssize_t	_dl_read(int, const char *, size_t);
