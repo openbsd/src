@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.6 2022/09/15 18:03:52 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.7 2022/11/06 15:33:58 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -79,11 +79,11 @@ struct qcgpio_softc {
 	struct acpi_gpio sc_gpio;
 };
 
-int	qcgpio_match(struct device *, void *, void *);
-void	qcgpio_attach(struct device *, struct device *, void *);
+int	qcgpio_acpi_match(struct device *, void *, void *);
+void	qcgpio_acpi_attach(struct device *, struct device *, void *);
 
-const struct cfattach qcgpio_ca = {
-	sizeof(struct qcgpio_softc), qcgpio_match, qcgpio_attach
+const struct cfattach qcgpio_acpi_ca = {
+	sizeof(struct qcgpio_softc), qcgpio_acpi_match, qcgpio_acpi_attach
 };
 
 struct cfdriver qcgpio_cd = {
@@ -108,7 +108,7 @@ int	qcgpio_pin_intr(struct qcgpio_softc *, int);
 int	qcgpio_intr(void *);
 
 int
-qcgpio_match(struct device *parent, void *match, void *aux)
+qcgpio_acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
@@ -119,7 +119,7 @@ qcgpio_match(struct device *parent, void *match, void *aux)
 }
 
 void
-qcgpio_attach(struct device *parent, struct device *self, void *aux)
+qcgpio_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct qcgpio_softc *sc = (struct qcgpio_softc *)self;

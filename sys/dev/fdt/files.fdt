@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.165 2022/11/06 12:12:45 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.166 2022/11/06 15:33:58 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -624,3 +624,7 @@ file	dev/fdt/tascodec.c		tascodec
 device	qcdwusb: fdt
 attach	qcdwusb at fdt
 file	dev/fdt/qcdwusb.c		qcdwusb
+
+# Qualcomm GPIO controller
+attach	qcgpio at fdt with qcgpio_fdt
+file	dev/fdt/qcgpio_fdt.c		qcgpio
