@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.242 2022/11/06 15:33:58 patrick Exp $
+# $OpenBSD: GENERIC,v 1.243 2022/11/06 15:36:13 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -309,6 +309,7 @@ qcdwusb*	at fdt?
 qcgpio*		at acpi?
 qcgpio*		at fdt?
 qciic*		at acpi?
+qciic*		at fdt?
 iic*		at qciic?
 
 # Sunxi SoCs

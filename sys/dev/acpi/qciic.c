@@ -1,4 +1,4 @@
-/*	$OpenBSD: qciic.c,v 1.4 2022/09/11 18:07:26 kettenis Exp $	*/
+/*	$OpenBSD: qciic.c,v 1.5 2022/11/06 15:36:13 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,11 +76,11 @@ struct qciic_crs {
 	struct aml_node *node;
 };
 
-int	qciic_match(struct device *, void *, void *);
-void	qciic_attach(struct device *, struct device *, void *);
+int	qciic_acpi_match(struct device *, void *, void *);
+void	qciic_acpi_attach(struct device *, struct device *, void *);
 
-const struct cfattach qciic_ca = {
-	sizeof (struct qciic_softc), qciic_match, qciic_attach
+const struct cfattach qciic_acpi_ca = {
+	sizeof (struct qciic_softc), qciic_acpi_match, qciic_acpi_attach
 };
 
 struct cfdriver qciic_cd = {
@@ -111,7 +111,7 @@ const char *qciic_hids[] = {
 };
 
 int
-qciic_match(struct device *parent, void *match, void *aux)
+qciic_acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
@@ -122,7 +122,7 @@ qciic_match(struct device *parent, void *match, void *aux)
 }
 
 void
-qciic_attach(struct device *parent, struct device *self, void *aux)
+qciic_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct qciic_softc *sc = (struct qciic_softc *)self;
 	struct acpi_attach_args *aaa = aux;
