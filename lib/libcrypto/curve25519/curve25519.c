@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.6 2022/02/08 16:44:23 tb Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.7 2022/11/06 16:31:19 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -28,10 +28,7 @@
 #include <string.h>
 
 #include <openssl/curve25519.h>
-
-#ifdef ED25519
 #include <openssl/sha.h>
-#endif
 
 #include "curve25519_internal.h"
 
@@ -979,7 +976,6 @@ void x25519_ge_tobytes(uint8_t *s, const ge_p2 *h) {
   s[31] ^= fe_isnegative(x) << 7;
 }
 
-#ifdef ED25519
 static void ge_p3_tobytes(uint8_t *s, const ge_p3 *h) {
   fe recip;
   fe x;
@@ -991,7 +987,6 @@ static void ge_p3_tobytes(uint8_t *s, const ge_p3 *h) {
   fe_tobytes(s, y);
   s[31] ^= fe_isnegative(x) << 7;
 }
-#endif
 
 static const fe d = {-10913610, 13857413, -15372611, 6949391,   114729,
                      -8787816,  -6275908, -3247719,  -18696448, -12055116};
@@ -1146,7 +1141,6 @@ static void ge_madd(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
   fe_sub(r->T, t0, r->T);
 }
 
-#ifdef ED25519
 /* r = p - q */
 static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
   fe t0;
@@ -1162,7 +1156,6 @@ static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
   fe_sub(r->Z, t0, r->T);
   fe_add(r->T, t0, r->T);
 }
-#endif
 
 /* r = p + q */
 void x25519_ge_add(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
@@ -3624,7 +3617,6 @@ void x25519_ge_scalarmult(ge_p2 *r, const uint8_t *scalar, const ge_p3 *A) {
   }
 }
 
-#ifdef ED25519
 static void slide(signed char *r, const uint8_t *a) {
   int i;
   int b;
@@ -3799,7 +3791,6 @@ ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
     x25519_ge_p1p1_to_p2(r, &t);
   }
 }
-#endif
 
 /* The set of scalars is \Z/l
  * where l = 2^252 + 27742317777372353535851937790883648493. */
@@ -4145,7 +4136,6 @@ x25519_sc_reduce(uint8_t *s) {
   s[31] = s11 >> 17;
 }
 
-#ifdef ED25519
 /* Input:
  *   a[0]+256*a[1]+...+256^31*a[31] = a
  *   b[0]+256*b[1]+...+256^31*b[31] = b
@@ -4636,9 +4626,7 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
   s[30] = s11 >> 9;
   s[31] = s11 >> 17;
 }
-#endif
 
-#ifdef ED25519
 void ED25519_keypair(uint8_t out_public_key[32], uint8_t out_private_key[64]) {
   uint8_t seed[32];
   arc4random_buf(seed, 32);
@@ -4728,7 +4716,6 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
 
   return timingsafe_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
 }
-#endif
 
 /* Replace (f,g) with (g,f) if b == 1;
  * replace (f,g) with (f,g) if b == 0.
