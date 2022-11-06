@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.386 2022/11/06 13:03:52 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.387 2022/11/06 18:05:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1882,7 +1882,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		NET_LOCK();
 		PF_LOCK();
-		error = pfsync_state_import(sp, PFSYNC_SI_IOCTL);
+		error = pf_state_import(sp, PFSYNC_SI_IOCTL);
 		PF_UNLOCK();
 		NET_UNLOCK();
 		break;

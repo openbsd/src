@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.306 2022/11/05 22:33:11 jan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.307 2022/11/06 18:05:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -265,8 +265,6 @@ struct cpumem		*pfsynccounters;
 void	pfsyncattach(int);
 int	pfsync_clone_create(struct if_clone *, int);
 int	pfsync_clone_destroy(struct ifnet *);
-int	pfsync_alloc_scrub_memory(struct pfsync_state_peer *,
-	    struct pf_state_peer *);
 void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
@@ -503,230 +501,10 @@ pfsync_ifdetach(void *arg)
 	sc->sc_sync_ifidx = 0;
 }
 
-int
-pfsync_alloc_scrub_memory(struct pfsync_state_peer *s,
-    struct pf_state_peer *d)
-{
-	if (s->scrub.scrub_flag && d->scrub == NULL) {
-		d->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT | PR_ZERO);
-		if (d->scrub == NULL)
-			return (ENOMEM);
-	}
-
-	return (0);
-}
-
 void
 pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
 {
 	pf_state_export(sp, st);
-}
-
-int
-pfsync_state_import(struct pfsync_state *sp, int flags)
-{
-	struct pf_state	*st = NULL;
-	struct pf_state_key *skw = NULL, *sks = NULL;
-	struct pf_rule *r = NULL;
-	struct pfi_kif	*kif;
-	int pool_flags;
-	int error = ENOMEM;
-	int n = 0;
-
-	if (sp->creatorid == 0) {
-		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
-		    "invalid creator id: %08x", ntohl(sp->creatorid));
-		return (EINVAL);
-	}
-
-	if ((kif = pfi_kif_get(sp->ifname, NULL)) == NULL) {
-		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
-		    "unknown interface: %s", sp->ifname);
-		if (flags & PFSYNC_SI_IOCTL)
-			return (EINVAL);
-		return (0);	/* skip this state */
-	}
-
-	if (sp->af == 0)
-		return (0);	/* skip this state */
-
-	/*
-	 * If the ruleset checksums match or the state is coming from the ioctl,
-	 * it's safe to associate the state with the rule of that number.
-	 */
-	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) &&
-	    (flags & (PFSYNC_SI_IOCTL | PFSYNC_SI_CKSUM)) && ntohl(sp->rule) <
-	    pf_main_ruleset.rules.active.rcount) {
-		TAILQ_FOREACH(r, pf_main_ruleset.rules.active.ptr, entries)
-			if (ntohl(sp->rule) == n++)
-				break;
-	} else
-		r = &pf_default_rule;
-
-	if ((r->max_states && r->states_cur >= r->max_states))
-		goto cleanup;
-
-	if (flags & PFSYNC_SI_IOCTL)
-		pool_flags = PR_WAITOK | PR_LIMITFAIL | PR_ZERO;
-	else
-		pool_flags = PR_NOWAIT | PR_LIMITFAIL | PR_ZERO;
-
-	if ((st = pool_get(&pf_state_pl, pool_flags)) == NULL)
-		goto cleanup;
-
-	if ((skw = pf_alloc_state_key(pool_flags)) == NULL)
-		goto cleanup;
-
-	if ((sp->key[PF_SK_WIRE].af &&
-	    (sp->key[PF_SK_WIRE].af != sp->key[PF_SK_STACK].af)) ||
-	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[0],
-	    &sp->key[PF_SK_STACK].addr[0], sp->af) ||
-	    PF_ANEQ(&sp->key[PF_SK_WIRE].addr[1],
-	    &sp->key[PF_SK_STACK].addr[1], sp->af) ||
-	    sp->key[PF_SK_WIRE].port[0] != sp->key[PF_SK_STACK].port[0] ||
-	    sp->key[PF_SK_WIRE].port[1] != sp->key[PF_SK_STACK].port[1] ||
-	    sp->key[PF_SK_WIRE].rdomain != sp->key[PF_SK_STACK].rdomain) {
-		if ((sks = pf_alloc_state_key(pool_flags)) == NULL)
-			goto cleanup;
-	} else
-		sks = skw;
-
-	/* allocate memory for scrub info */
-	if (pfsync_alloc_scrub_memory(&sp->src, &st->src) ||
-	    pfsync_alloc_scrub_memory(&sp->dst, &st->dst))
-		goto cleanup;
-
-	/* copy to state key(s) */
-	skw->addr[0] = sp->key[PF_SK_WIRE].addr[0];
-	skw->addr[1] = sp->key[PF_SK_WIRE].addr[1];
-	skw->port[0] = sp->key[PF_SK_WIRE].port[0];
-	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
-	skw->rdomain = ntohs(sp->key[PF_SK_WIRE].rdomain);
-	PF_REF_INIT(skw->refcnt);
-	skw->proto = sp->proto;
-	if (!(skw->af = sp->key[PF_SK_WIRE].af))
-		skw->af = sp->af;
-	if (sks != skw) {
-		sks->addr[0] = sp->key[PF_SK_STACK].addr[0];
-		sks->addr[1] = sp->key[PF_SK_STACK].addr[1];
-		sks->port[0] = sp->key[PF_SK_STACK].port[0];
-		sks->port[1] = sp->key[PF_SK_STACK].port[1];
-		sks->rdomain = ntohs(sp->key[PF_SK_STACK].rdomain);
-		PF_REF_INIT(sks->refcnt);
-		if (!(sks->af = sp->key[PF_SK_STACK].af))
-			sks->af = sp->af;
-		if (sks->af != skw->af) {
-			switch (sp->proto) {
-			case IPPROTO_ICMP:
-				sks->proto = IPPROTO_ICMPV6;
-				break;
-			case IPPROTO_ICMPV6:
-				sks->proto = IPPROTO_ICMP;
-				break;
-			default:
-				sks->proto = sp->proto;
-			}
-		} else
-			sks->proto = sp->proto;
-
-		if (((sks->af != AF_INET) && (sks->af != AF_INET6)) ||
-		    ((skw->af != AF_INET) && (skw->af != AF_INET6))) {
-			error = EINVAL;
-			goto cleanup;
-		}
-
-	} else if ((sks->af != AF_INET) && (sks->af != AF_INET6)) {
-		error = EINVAL;
-		goto cleanup;
-	}
-	st->rtableid[PF_SK_WIRE] = ntohl(sp->rtableid[PF_SK_WIRE]);
-	st->rtableid[PF_SK_STACK] = ntohl(sp->rtableid[PF_SK_STACK]);
-
-	/* copy to state */
-	st->rt_addr = sp->rt_addr;
-	st->rt = sp->rt;
-	st->creation = getuptime() - ntohl(sp->creation);
-	st->expire = getuptime();
-	if (ntohl(sp->expire)) {
-		u_int32_t timeout;
-
-		timeout = r->timeout[sp->timeout];
-		if (!timeout)
-			timeout = pf_default_rule.timeout[sp->timeout];
-
-		/* sp->expire may have been adaptively scaled by export. */
-		st->expire -= timeout - ntohl(sp->expire);
-	}
-
-	st->direction = sp->direction;
-	st->log = sp->log;
-	st->timeout = sp->timeout;
-	st->state_flags = ntohs(sp->state_flags);
-	st->max_mss = ntohs(sp->max_mss);
-	st->min_ttl = sp->min_ttl;
-	st->set_tos = sp->set_tos;
-	st->set_prio[0] = sp->set_prio[0];
-	st->set_prio[1] = sp->set_prio[1];
-
-	st->id = sp->id;
-	st->creatorid = sp->creatorid;
-	pf_state_peer_ntoh(&sp->src, &st->src);
-	pf_state_peer_ntoh(&sp->dst, &st->dst);
-
-	st->rule.ptr = r;
-	st->anchor.ptr = NULL;
-
-	st->pfsync_time = getuptime();
-	st->sync_state = PFSYNC_S_NONE;
-
-	refcnt_init(&st->refcnt);
-
-	/* XXX when we have anchors, use STATE_INC_COUNTERS */
-	r->states_cur++;
-	r->states_tot++;
-
-	if (!ISSET(flags, PFSYNC_SI_IOCTL))
-		SET(st->state_flags, PFSTATE_NOSYNC);
-
-	/*
-	 * We just set PFSTATE_NOSYNC bit, which prevents
-	 * pfsync_insert_state() to insert state to pfsync.
-	 */
-	if (pf_state_insert(kif, &skw, &sks, st) != 0) {
-		/* XXX when we have anchors, use STATE_DEC_COUNTERS */
-		r->states_cur--;
-		error = EEXIST;
-		goto cleanup_state;
-	}
-
-	if (!ISSET(flags, PFSYNC_SI_IOCTL)) {
-		CLR(st->state_flags, PFSTATE_NOSYNC);
-		if (ISSET(st->state_flags, PFSTATE_ACK)) {
-			pfsync_q_ins(st, PFSYNC_S_IACK);
-			schednetisr(NETISR_PFSYNC);
-		}
-	}
-	CLR(st->state_flags, PFSTATE_ACK);
-
-	return (0);
-
- cleanup:
-	if (skw == sks)
-		sks = NULL;
-	if (skw != NULL)
-		pool_put(&pf_state_key_pl, skw);
-	if (sks != NULL)
-		pool_put(&pf_state_key_pl, sks);
-
- cleanup_state:	/* pf_state_insert frees the state keys */
-	if (st) {
-		if (st->dst.scrub)
-			pool_put(&pf_state_scrub_pl, st->dst.scrub);
-		if (st->src.scrub)
-			pool_put(&pf_state_scrub_pl, st->src.scrub);
-		pool_put(&pf_state_pl, st);
-	}
-	return (error);
 }
 
 int
@@ -892,7 +670,7 @@ pfsync_in_ins(caddr_t buf, int len, int count, int flags)
 			continue;
 		}
 
-		if (pfsync_state_import(sp, flags) == ENOMEM) {
+		if (pf_state_import(sp, flags) == ENOMEM) {
 			/* drop out, but process the rest of the actions */
 			break;
 		}
@@ -996,7 +774,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		if (st == NULL) {
 			/* insert the update */
 			PF_LOCK();
-			error = pfsync_state_import(sp, flags);
+			error = pf_state_import(sp, flags);
 			if (error)
 				pfsyncstat_inc(pfsyncs_badstate);
 			PF_UNLOCK();
@@ -1027,7 +805,7 @@ pfsync_in_upd(caddr_t buf, int len, int count, int flags)
 		}
 
 		if (sync < 2) {
-			pfsync_alloc_scrub_memory(&sp->dst, &st->dst);
+			pf_state_alloc_scrub_memory(&sp->dst, &st->dst);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
 			st->expire = getuptime();
 			st->timeout = sp->timeout;
@@ -1106,7 +884,7 @@ pfsync_in_upd_c(caddr_t buf, int len, int count, int flags)
 				pf_state_peer_ntoh(&up->dst, &st->dst);
 		}
 		if (sync < 2) {
-			pfsync_alloc_scrub_memory(&up->dst, &st->dst);
+			pf_state_alloc_scrub_memory(&up->dst, &st->dst);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
 			st->expire = getuptime();
 			st->timeout = up->timeout;
@@ -2424,6 +2202,13 @@ pfsync_clear_states(u_int32_t creatorid, const char *ifname)
 	r.clr.creatorid = creatorid;
 
 	pfsync_send_plus(&r, sizeof(r));
+}
+
+void
+pfsync_iack(struct pf_state *st)
+{
+	pfsync_q_ins(st, PFSYNC_S_IACK);
+	schednetisr(NETISR_PFSYNC);
 }
 
 void

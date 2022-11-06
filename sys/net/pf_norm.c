@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.225 2022/10/10 16:43:12 bket Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.226 2022/11/06 18:05:05 dlg Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1099,6 +1099,16 @@ no_fragment:
 #endif /* INET6 */
 
 int
+pf_normalize_tcp_alloc(struct pf_state_peer *src)
+{
+	src->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT | PR_ZERO);
+	if (src->scrub == NULL)
+		return (ENOMEM);
+
+	return (0);
+}
+
+int
 pf_normalize_tcp(struct pf_pdesc *pd)
 {
 	struct tcphdr	*th = &pd->hdr.tcp;
@@ -1165,10 +1175,8 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 
 	KASSERT(src->scrub == NULL);
 
-	src->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT);
-	if (src->scrub == NULL)
+	if (pf_normalize_tcp_alloc(src) != 0)
 		return (1);
-	memset(src->scrub, 0, sizeof(*src->scrub));
 
 	switch (pd->af) {
 	case AF_INET: {

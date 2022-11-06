@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.511 2022/10/10 16:43:12 bket Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.512 2022/11/06 18:05:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1741,6 +1741,11 @@ extern struct pf_state		*pf_find_state_all(struct pf_state_key_cmp *,
 				    u_int, int *);
 extern void			 pf_state_export(struct pfsync_state *,
 				    struct pf_state *);
+int				 pf_state_import(const struct pfsync_state *,
+				     int);
+int				 pf_state_alloc_scrub_memory(
+				     const struct pfsync_state_peer *,
+				     struct pf_state_peer *);
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
 extern void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
@@ -1791,6 +1796,7 @@ int	pf_normalize_ip6(struct pf_pdesc *, u_short *);
 int	pf_normalize_tcp(struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);
 int	pf_normalize_tcp_init(struct pf_pdesc *, struct pf_state_peer *);
+int	pf_normalize_tcp_alloc(struct pf_state_peer *);
 int	pf_normalize_tcp_stateful(struct pf_pdesc *, u_short *,
 	    struct pf_state *, struct pf_state_peer *, struct pf_state_peer *,
 	    int *);
