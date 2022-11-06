@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.385 2022/08/06 15:57:58 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.386 2022/11/06 13:03:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -54,6 +54,7 @@
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/syslog.h>
+#include <sys/specdev.h>
 #include <uvm/uvm_extern.h>
 
 #include <crypto/md5.h>
@@ -265,16 +266,17 @@ pfattach(int num)
 int
 pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	if (minor(dev) >= 1)
+	int unit = minor(dev);
+
+	if (unit & ((1 << CLONE_SHIFT) - 1))
 		return (ENXIO);
+
 	return (0);
 }
 
 int
 pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	if (minor(dev) >= 1)
-		return (ENXIO);
 	return (0);
 }
 
