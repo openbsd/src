@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.307 2022/11/06 18:05:05 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.308 2022/11/06 21:31:24 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -499,12 +499,6 @@ pfsync_ifdetach(void *arg)
 	if_put(ifp);
 
 	sc->sc_sync_ifidx = 0;
-}
-
-void
-pfsync_state_export(struct pfsync_state *sp, struct pf_state *st)
-{
-	pf_state_export(sp, st);
 }
 
 int
@@ -1312,7 +1306,7 @@ pfsync_out_state(struct pf_state *st, void *buf)
 {
 	struct pfsync_state *sp = buf;
 
-	pfsync_state_export(sp, st);
+	pf_state_export(sp, st);
 }
 
 void
