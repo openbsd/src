@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.5 2022/04/06 18:59:26 naddy Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.6 2022/11/06 12:14:52 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -83,8 +83,15 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_is_mmu500 = 1;
 	if (OF_is_compatible(faa->fa_node, "marvell,ap806-smmu-500"))
 		sc->sc_is_ap806 = 1;
+	if (OF_is_compatible(faa->fa_node, "qcom,sc8280xp-smmu-500"))
+		sc->sc_is_qcom = 1;
 	if (OF_getproplen(faa->fa_node, "dma-coherent") == 0)
 		sc->sc_coherent = 1;
+
+	if (sc->sc_is_qcom) {
+		printf(": disabled\n");
+		return;
+	}
 
 	if (smmu_attach(sc) != 0)
 		return;
