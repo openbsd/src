@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.i386/MAKEDEV.md,v 1.95 2022/01/07 01:13:15 jsg Exp 
-#	OpenBSD: MAKEDEV.common,v 1.115 2022/01/07 01:13:15 jsg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.116 2022/11/06 18:30:22 kn Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -85,7 +85,7 @@
 #	nvram	NVRAM access
 #	pci*	PCI bus devices
 #	pctr*	PC Performance Tuning Register access device
-#	pf*	Packet Filter
+#	pf	Packet Filter
 #	pppx*	PPP Multiplexer
 #	pppac*	PPP Access Concentrator
 #	radio*	FM tuner devices
@@ -311,7 +311,7 @@ pppx*)
 	M pppx$U c 92 $U 600
 	;;
 
-pf*)
+pf)
 	M pf c 73 0 600
 	;;
 

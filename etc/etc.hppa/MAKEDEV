@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.68 2021/11/11 09:47:33 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.114 2021/11/11 09:47:32 claudio Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.69 2022/06/27 14:11:44 visa Exp 
+#	OpenBSD: MAKEDEV.common,v 1.116 2022/11/06 18:30:22 kn Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -74,7 +74,7 @@
 #	hotplug	devices hot plugging
 #	pci*	PCI bus devices
 #	pdc	PDC device
-#	pf*	Packet Filter
+#	pf	Packet Filter
 #	pppx*	PPP Multiplexer
 #	pppac*	PPP Access Concentrator
 #	*random	In-kernel random data source
@@ -269,7 +269,7 @@ pppx*)
 	M pppx$U c 57 $U 600
 	;;
 
-pf*)
+pf)
 	M pf c 21 0 600
 	;;
 
