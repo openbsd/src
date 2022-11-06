@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/08 15:53:52 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/11/06 14:56:08 joshua Exp $
 
-PROG=	bftest
+PROG=	bf_test
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
