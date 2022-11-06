@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.9 2020/07/16 17:47:09 tedu Exp $ */
+/*	$OpenBSD: init.c,v 1.10 2022/11/06 09:25:39 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -137,6 +137,23 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 	/* static libc in a static link? */
 	if (cb == NULL)
 		setup_static_tib(phdr, phnum);
+
+	/*
+	 * If a static binary has text relocations (DT_TEXT), then un-writeable
+	 * segments were not made immutable by the kernel.  Textrel and RELRO
+	 * changes have now been completed and permissions corrected, so these
+	 * regions can become immutable.
+	 */
+	if (phdr) {
+		int i;
+
+		for (i = 0; i < phnum; i++) {
+			if (phdr[i].p_type == PT_LOAD &&
+			    (phdr[i].p_flags & PF_W) == 0)
+				mimmutable((void *)(_static_phdr_info.dlpi_addr +
+				    phdr[i].p_vaddr), phdr[i].p_memsz);
+		}
+	}
 #endif /* !PIC */
 }
 
