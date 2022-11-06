@@ -1,4 +1,4 @@
-.\"	$OpenBSD: proot.1,v 1.9 2021/10/04 13:42:53 espie Exp $
+.\"	$OpenBSD: proot.1,v 1.10 2022/11/06 09:26:29 tb Exp $
 .\"
 .\" Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2021 $
+.Dd $Mdocdate: November 6 2022 $
 .Dt PROOT 1
 .Os
 .Sh NAME
@@ -174,11 +174,13 @@ Who to fetch as (defaults to _pfetch)
 .It Cm LOG_USER
 Who to write log as (defaults to
 .Cm BUILD_USER )
+.It Cm LOGDIR
+Where to write logs (defaults to
+.Pa ${PORTSDIR}/logs )
 .It Cm PORTSDIR
 .It Cm DISTDIR
 .It Cm PACKAGE_REPOSITORY
 .It Cm PLIST_REPOSITORY
-.It Cm LOGDIR
 .It Cm LOCKDIR
 .It Cm WRKOBJDIR
 same as in
