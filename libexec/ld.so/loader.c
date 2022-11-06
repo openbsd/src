@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.198 2022/11/06 11:38:54 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.199 2022/11/06 11:43:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -436,6 +436,8 @@ _dl_self_relro(long loff)
 		case PT_GNU_RELRO:
 			_dl_mprotect((void *)(phdp->p_vaddr + loff),
 			    phdp->p_memsz, PROT_READ);
+			_dl_mimmutable((void *)(phdp->p_vaddr + loff),
+			    phdp->p_memsz);
 			break;
 		}
 	}
