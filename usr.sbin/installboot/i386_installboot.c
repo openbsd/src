@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.43 2022/09/14 16:43:00 kn Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.44 2022/11/06 12:33:41 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -267,6 +267,7 @@ create_filesystem(struct disklabel *dl, char part)
 	rslt = snprintf(cmd, sizeof(cmd), newfsfmt, args.fspec);
 	if (rslt >= sizeof(cmd)) {
 		warnx("can't build newfs command");
+		free(args.fspec);
 		rslt = -1;
 		return rslt;
 	}
@@ -278,10 +279,12 @@ create_filesystem(struct disklabel *dl, char part)
 		rslt = system(cmd);
 		if (rslt == -1) {
 			warn("system('%s') failed", cmd);
+			free(args.fspec);
 			return rslt;
 		}
 	}
 
+	free(args.fspec);
 	return 0;
 }
 

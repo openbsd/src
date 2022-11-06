@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_installboot.c,v 1.8 2022/09/27 11:42:16 kn Exp $	*/
+/*	$OpenBSD: octeon_installboot.c,v 1.9 2022/11/06 12:33:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -138,6 +138,7 @@ create_filesystem(struct disklabel *dl, char part)
 	rslt = snprintf(cmd, sizeof(cmd), newfsfmt, args.fspec);
 	if (rslt >= sizeof(cmd)) {
 		warnx("can't build newfs command");
+		free(args.fspec);
 		rslt = -1;
 		return rslt;
 	}
@@ -149,10 +150,12 @@ create_filesystem(struct disklabel *dl, char part)
 		rslt = system(cmd);
 		if (rslt == -1) {
 			warn("system('%s') failed", cmd);
+			free(args.fspec);
 			return rslt;
 		}
 	}
 
+	free(args.fspec);
 	return 0;
 }
 
