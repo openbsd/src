@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mimmutable.2,v 1.1 2022/10/07 15:21:04 deraadt Exp $
+.\"	$OpenBSD: mimmutable.2,v 1.2 2022/11/06 19:28:48 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mimmutable.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: October 7 2022 $
+.Dd $Mdocdate: November 6 2022 $
 .Dt MIMMUTABLE 2
 .Os
 .Sh NAME
@@ -81,3 +81,17 @@ The
 .Fn mimmutable
 function first appeared in
 .Ox 7.3 .
+.Sh CAVEATS
+.Pp
+At present,
+.Xr mprotect 2
+may reduce permissions on immutable pages marked
+.Dv PROT_READ | PROT_WRITE
+to the less permissive
+.Dv PROT_READ .
+This one-way operation is permitted for an introductory period to observe how
+software uses this mechanism.
+It may change to require explicit mutable region annotation with
+.Va __attribute__((section(".openbsd.mutable")))
+and explicit calls to
+.Fn mimmutable .
