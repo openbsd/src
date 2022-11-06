@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.197 2022/11/06 11:34:50 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.198 2022/11/06 11:38:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -795,6 +795,10 @@ _dl_relro(elf_object_t *object)
 		DL_DEB(("protect RELRO [0x%lx,0x%lx) in %s\n",
 		    addr, addr + object->relro_size, object->load_name));
 		_dl_mprotect((void *)addr, object->relro_size, PROT_READ);
+
+		/* if library will never be unloaded, RELRO can be immutable */
+		if ((object->obj_flags & DF_1_NODELETE))
+			_dl_mimmutable((void *)addr, object->relro_size);
 	}
 }
 
