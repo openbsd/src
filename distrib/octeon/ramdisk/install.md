@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2022/02/06 15:52:23 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2022/11/06 10:53:34 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,8 +62,7 @@ md_prep_fdisk() {
 			echo -n "Creating a FAT partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -iy -b "65536@64:C" ${_disk} >/dev/null
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t msdos ${_disk}i
+			installboot -p $_disk
 			return ;;
 		[eE]*)
 			# Manually configure the MBR.
