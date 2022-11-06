@@ -31,11 +31,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.362 2022/06/23 09:38:28 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.363 2022/11/06 18:17:56 mbuhl Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
 #include <dev/pci/if_em_soc.h>
+
+#include <netinet/ip6.h>
 
 /*********************************************************************
  *  Driver version
@@ -278,6 +280,8 @@ void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 			 struct mbuf *);
 u_int	em_transmit_checksum_setup(struct em_queue *, struct mbuf *, u_int,
 	    u_int32_t *, u_int32_t *);
+u_int	em_tx_ctx_setup(struct em_queue *, struct mbuf *, u_int, u_int32_t *,
+	    u_int32_t *);
 void em_iff(struct em_softc *);
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(struct em_queue *, int);
@@ -1220,10 +1224,9 @@ em_encap(struct em_queue *que, struct mbuf *m)
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
 
-	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
-	    sc->hw.mac_type != em_82576 &&
-	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
-	    sc->hw.mac_type != em_i350) {
+	if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210) {
+		used += em_tx_ctx_setup(que, m, head, &txd_upper, &txd_lower);
+	} else if (sc->hw.mac_type >= em_82543) {
 		used += em_transmit_checksum_setup(que, m, head,
 		    &txd_upper, &txd_lower);
 	} else {
@@ -1278,7 +1281,8 @@ em_encap(struct em_queue *que, struct mbuf *m)
 
 #if NVLAN > 0
 	/* Find out if we are in VLAN mode */
-	if (m->m_flags & M_VLANTAG) {
+	if (m->m_flags & M_VLANTAG && (sc->hw.mac_type < em_82575 ||
+	    sc->hw.mac_type > em_i210)) {
 		/* Set the VLAN id */
 		desc->upper.fields.special = htole16(m->m_pkthdr.ether_vtag);
 
@@ -1964,17 +1968,16 @@ em_setup_interface(struct em_softc *sc)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 #if NVLAN > 0
-	if (sc->hw.mac_type != em_82575 && sc->hw.mac_type != em_82580 &&
-	    sc->hw.mac_type != em_82576 &&
-	    sc->hw.mac_type != em_i210 && sc->hw.mac_type != em_i350)
-		ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
-	if (sc->hw.mac_type >= em_82543 && sc->hw.mac_type != em_82575 &&
-	    sc->hw.mac_type != em_82576 &&
-	    sc->hw.mac_type != em_82580 && sc->hw.mac_type != em_i210 &&
-	    sc->hw.mac_type != em_i350)
+	if (sc->hw.mac_type >= em_82543) {
 		ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	}
+	if (sc->hw.mac_type >= em_82575 && sc->hw.mac_type <= em_i210) {
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+	}
 
 	/* 
 	 * Specify the media types supported by this adapter and register
@@ -2389,6 +2392,108 @@ em_free_transmit_structures(struct em_softc *sc)
 		    0, que->tx.sc_tx_dma.dma_map->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	}
+}
+
+u_int
+em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
+    u_int32_t *olinfo_status, u_int32_t *cmd_type_len)
+{
+	struct e1000_adv_tx_context_desc *TD;
+	struct ether_header *eh = mtod(mp, struct ether_header *);
+	struct mbuf *m;
+	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0, mss_l4len_idx = 0;
+	int off = 0, hoff;
+	uint8_t ipproto, iphlen;
+
+	*olinfo_status = 0;
+	*cmd_type_len = 0;
+	TD = (struct e1000_adv_tx_context_desc *)&que->tx.sc_tx_desc_ring[head];
+	
+#if NVLAN > 0
+	if (ISSET(mp->m_flags, M_VLANTAG)) {
+		uint16_t vtag = htole16(mp->m_pkthdr.ether_vtag);
+		vlan_macip_lens |= vtag << E1000_ADVTXD_VLAN_SHIFT;
+		*cmd_type_len |= E1000_ADVTXD_DCMD_VLE;
+		off = 1;
+	}
+#endif
+
+	vlan_macip_lens |= (sizeof(*eh) << E1000_ADVTXD_MACLEN_SHIFT);
+	
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP: {
+		struct ip *ip;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
+
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV4;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
+			*olinfo_status |= E1000_TXD_POPTS_IXSM << 8;
+			off = 1;
+		}
+
+		break;
+	}
+#ifdef INET6
+	case ETHERTYPE_IPV6: {
+		struct ip6_hdr *ip6;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = sizeof(*ip6);
+		ipproto = ip6->ip6_nxt;
+
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV6;
+		break;
+	}
+#endif
+	default:
+		iphlen = 0;
+		ipproto = 0;
+		break;
+	}
+
+	*cmd_type_len |= E1000_ADVTXD_DTYP_DATA | E1000_ADVTXD_DCMD_IFCS;
+	*cmd_type_len |= E1000_ADVTXD_DCMD_DEXT;
+	*olinfo_status |= mp->m_pkthdr.len << E1000_ADVTXD_PAYLEN_SHIFT;
+	vlan_macip_lens |= iphlen;
+	type_tucmd_mlhl |= E1000_ADVTXD_DCMD_DEXT | E1000_ADVTXD_DTYP_CTXT;
+
+	switch (ipproto) {
+	case IPPROTO_TCP:
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_L4T_TCP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+			*olinfo_status |= E1000_TXD_POPTS_TXSM << 8;
+			off = 1;
+		}
+		break;
+	case IPPROTO_UDP:
+		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_L4T_UDP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+			*olinfo_status |= E1000_TXD_POPTS_TXSM << 8;
+			off = 1;
+		}
+		break;
+	}
+
+	if (!off)
+		return (0);
+
+	/* 82575 needs the queue index added */
+	if (que->sc->hw.mac_type == em_82575)
+		mss_l4len_idx |= (que->me & 0xff) << 4;
+
+	htolem32(&TD->vlan_macip_lens, vlan_macip_lens);
+	htolem32(&TD->type_tucmd_mlhl, type_tucmd_mlhl);
+	htolem32(&TD->u.seqnum_seed, 0);
+	htolem32(&TD->mss_l4len_idx, mss_l4len_idx);
+
+	return (1);
 }
 
 /*********************************************************************

@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.87 2022/06/23 09:38:28 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.88 2022/11/06 18:17:56 mbuhl Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -2122,6 +2122,33 @@ struct em_hw {
 #define E1000_RXCSUM_IPV6OFL   0x00000400   /* IPv6 checksum offload */
 #define E1000_RXCSUM_IPPCSE    0x00001000   /* IP payload checksum enable */
 #define E1000_RXCSUM_PCSD      0x00002000   /* packet checksum disabled */
+
+/* Context descriptors */
+struct e1000_adv_tx_context_desc {
+        uint32_t vlan_macip_lens;
+        union {
+                uint32_t launch_time;
+                uint32_t seqnum_seed;
+        } u;
+        uint32_t type_tucmd_mlhl;
+        uint32_t mss_l4len_idx;
+};
+
+/* Adv Transmit Descriptor Config Masks */
+#define E1000_ADVTXD_DTYP_CTXT	0x00200000 /* Advanced Context Descriptor */
+#define E1000_ADVTXD_DTYP_DATA	0x00300000 /* Advanced Data Descriptor */
+#define E1000_ADVTXD_DCMD_IFCS	0x02000000 /* Insert FCS (Ethernet CRC) */
+#define E1000_ADVTXD_DCMD_DEXT	0x20000000 /* Descriptor extension (1=Adv) */
+#define E1000_ADVTXD_DCMD_VLE	0x40000000 /* VLAN pkt enable */
+#define E1000_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shift */
+
+/* Adv Transmit Descriptor Config Masks */
+#define E1000_ADVTXD_MACLEN_SHIFT	9  /* Adv ctxt desc mac len shift */
+#define E1000_ADVTXD_VLAN_SHIFT		16  /* Adv ctxt vlan tag shift */
+#define E1000_ADVTXD_TUCMD_IPV4		0x00000400  /* IP Packet Type: 1=IPv4 */
+#define E1000_ADVTXD_TUCMD_IPV6		0x00000000  /* IP Packet Type: 0=IPv6 */
+#define E1000_ADVTXD_TUCMD_L4T_UDP	0x00000000  /* L4 Packet TYPE of UDP */
+#define E1000_ADVTXD_TUCMD_L4T_TCP	0x00000800  /* L4 Packet TYPE of TCP */
 
 /* Multiple Receive Queue Control */
 #define E1000_MRQC_ENABLE_MASK              0x00000003
