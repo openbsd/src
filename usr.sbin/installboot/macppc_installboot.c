@@ -1,4 +1,4 @@
-/*	$OpenBSD: macppc_installboot.c,v 1.9 2022/11/06 12:33:41 krw Exp $	*/
+/*	$OpenBSD: macppc_installboot.c,v 1.10 2022/11/06 20:03:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -166,7 +166,7 @@ write_filesystem(struct disklabel *dl, char part)
 	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
-	size_t mntlen, pathlen;
+	size_t mntlen;
 	int rslt;
 
 	/* Create directory for temporary mount point. */
@@ -220,7 +220,6 @@ write_filesystem(struct disklabel *dl, char part)
 	/*
 	 * Copy /usr/mdec/ofwboot to $FS/ofwboot.
 	 */
-	pathlen = strlen(dst);
 	if (strlcat(dst, "/ofwboot", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
 		warn("unable to build /ofwboot path");
