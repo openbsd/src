@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.61 2022/10/03 19:32:22 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.62 2022/11/06 11:44:30 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -65,7 +65,7 @@ file	arch/arm64/dev/simplebus.c		simplebus
 
 device	efi {}
 attach	efi at fdt
-file	arch/arm64/dev/efi_machdep.c		efi
+file	arch/arm64/dev/efi_machdep.c		efi needs-flag
 
 device	smbios
 attach	smbios at efi

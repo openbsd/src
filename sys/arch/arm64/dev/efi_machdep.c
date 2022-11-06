@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.4 2022/10/29 20:35:50 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.5 2022/11/06 11:44:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/fpu.h>
+#include <machine/pcb.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -74,6 +75,11 @@ void	efi_enter(struct efi_softc *);
 void	efi_leave(struct efi_softc *);
 int	efi_gettime(struct todr_chip_handle *, struct timeval *);
 int	efi_settime(struct todr_chip_handle *, struct timeval *);
+
+label_t efi_jmpbuf;
+
+#define efi_enter_check(sc) (setjmp(&efi_jmpbuf) ? \
+    (efi_leave(sc), EFAULT) : (efi_enter(sc), 0))
 
 int
 efi_match(struct device *parent, void *match, void *aux)
@@ -161,7 +167,8 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &fa, NULL);
 	}
 	
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return;
 	status = sc->sc_rs->GetTime(&time, NULL);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
@@ -253,6 +260,12 @@ efi_map_runtime(struct efi_softc *sc)
 }
 
 void
+efi_fault(void)
+{
+	longjmp(&efi_jmpbuf);
+}
+
+void
 efi_enter(struct efi_softc *sc)
 {
 	struct pmap *pm = sc->sc_pm;
@@ -268,6 +281,8 @@ efi_enter(struct efi_softc *sc)
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
 
 	fpu_kernel_enter();
+
+	curcpu()->ci_curpcb->pcb_onfault = (void *)efi_fault;
 }
 
 void
@@ -275,6 +290,8 @@ efi_leave(struct efi_softc *sc)
 {
 	struct pmap *pm = curcpu()->ci_curpm;
 	uint64_t tcr;
+
+	curcpu()->ci_curpcb->pcb_onfault = NULL;
 
 	fpu_kernel_exit();
 
@@ -296,7 +313,8 @@ efi_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 	EFI_TIME time;
 	EFI_STATUS status;
 
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return EFAULT;
 	status = sc->sc_rs->GetTime(&time, NULL);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
@@ -340,7 +358,8 @@ efi_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	time.TimeZone = 0;
 	time.Daylight = 0;
 
-	efi_enter(sc);
+	if (efi_enter_check(sc))
+		return EFAULT;
 	status = sc->sc_rs->SetTime(&time);
 	efi_leave(sc);
 	if (status != EFI_SUCCESS)
