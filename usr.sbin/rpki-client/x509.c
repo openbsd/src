@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.56 2022/11/04 23:52:59 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.57 2022/11/06 14:50:51 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -405,19 +405,24 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 		oid = ad->method;
 
 		/*
-		 * XXX: RFC 6487 4.8.8.2 disallows other accessMethods, however
-		 * they do exist in the wild.  Consider making this an error.
+		 * XXX: RFC 6487 4.8.8.2 states that the accessMethod MUST be
+		 * signedObject. However, rpkiNotify accessMethods currently
+		 * exist in the wild. Consider removing this special case.
 		 * See also https://www.rfc-editor.org/errata/eid7239.
 		 */
-		if (OBJ_cmp(oid, signedobj_oid) != 0) {
-			if (verbose > 1) {
-				char buf[128];
-
-				OBJ_obj2txt(buf, sizeof(buf), oid, 0);
-				warnx("%s: RFC 6487 section 4.8.8.2: unexpected"
-				    " accessMethod: %s", fn, buf);
-			}
+		if (OBJ_cmp(oid, notify_oid) == 0) {
+			if (verbose > 1)
+				warnx("%s: RFC 6487 section 4.8.8.2: SIA should"
+				    " not contain rpkiNotify accessMethod", fn);
 			continue;
+		}
+		if (OBJ_cmp(oid, signedobj_oid) != 0) {
+			char buf[128];
+
+			OBJ_obj2txt(buf, sizeof(buf), oid, 0);
+			warnx("%s: RFC 6487 section 4.8.8.2: unexpected"
+			    " accessMethod: %s", fn, buf);
+			goto out;
 		}
 
 		/* Don't fail on non-rsync URI, so check this afterward. */
@@ -437,9 +442,17 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 		*sia = NULL;
 	}
 
- out:
+	if (!rsync_found)
+		goto out;
+
 	AUTHORITY_INFO_ACCESS_free(info);
-	return rsync_found;
+	return 1;
+
+ out:
+	free(*sia);
+	*sia = NULL;
+	AUTHORITY_INFO_ACCESS_free(info);
+	return 0;
 }
 
 /*
