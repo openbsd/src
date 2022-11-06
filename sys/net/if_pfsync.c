@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.308 2022/11/06 21:31:24 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.309 2022/11/06 21:34:01 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -118,7 +118,7 @@ int	pfsync_in_error(caddr_t, int, int, int);
 
 void	pfsync_update_state_locked(struct pf_state *);
 
-struct {
+const struct {
 	int	(*in)(caddr_t, int, int, int);
 	size_t	len;
 } pfsync_acts[] = {
