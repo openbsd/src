@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.30 2022/08/12 13:36:19 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.31 2022/11/06 13:01:22 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -542,11 +542,13 @@ omfb_set_gfxmode(struct omfb_softc *sc, struct wsdisplay_gfx_mode *wsd_gfxmode)
 		/* all frame buffer support this */
 		sc->sc_dc->dc_depth = 1;
 		sc->sc_dc->dc_cmsize = 0;
+		setup_omrasops1(&sc->sc_dc->dc_ri);
 		break;
 	case 4:
 		if ((hwplanebits == 4) || (hwplanebits == 8)) {
 			sc->sc_dc->dc_depth = 4;
 			sc->sc_dc->dc_cmsize = 16;
+			setup_omrasops4(&sc->sc_dc->dc_ri);
 			break;
 		} else
 			return -1;
@@ -554,6 +556,7 @@ omfb_set_gfxmode(struct omfb_softc *sc, struct wsdisplay_gfx_mode *wsd_gfxmode)
 		if (hwplanebits == 8) {
 			sc->sc_dc->dc_depth = 8;
 			sc->sc_dc->dc_cmsize = 256;
+			setup_omrasops4(&sc->sc_dc->dc_ri);
 			break;
 		} else
 			return -1;

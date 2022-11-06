@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.17 2021/07/31 05:22:36 aoyama Exp $ */
+/* $OpenBSD: omrasops.c,v 1.18 2022/11/06 13:01:22 aoyama Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -75,6 +75,7 @@ int	om4_windowmove(struct rasops_info *, u_int16_t, u_int16_t, u_int16_t,
 
 /* MI function in src/sys/dev/rasops/rasops.c */
 int     rasops_pack_cattr(void *, int, int, int, uint32_t *);
+int     rasops_pack_mattr(void *, int, int, int, uint32_t *);
 
 static int (*om_windowmove)(struct rasops_info *, u_int16_t, u_int16_t,
 		u_int16_t, u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
@@ -522,6 +523,7 @@ setup_omrasops1(struct rasops_info *ri)
 	ri->ri_ops.putchar = om1_putchar;
 	omfb_stdscreen.capabilities
 		= ri->ri_caps & ~WSSCREEN_UNDERLINE;
+	ri->ri_ops.pack_attr = rasops_pack_mattr;
 }
 
 void
