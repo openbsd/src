@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.196 2022/10/28 15:07:25 kettenis Exp $ */
+/*	$OpenBSD: loader.c,v 1.197 2022/11/06 11:34:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -325,6 +325,10 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 
 		/* propagate DF_1_NOW to deplibs (can be set by dynamic tags) */
 		depflags = flags | (dynobj->obj_flags & DF_1_NOW);
+
+		/* Startup libraries are never unmapped and can be immutable */
+		if (booting)
+			depflags |= DF_1_NODELETE;
 
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
