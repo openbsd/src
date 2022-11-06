@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.240 2022/10/23 18:43:00 mglocker Exp $
+# $OpenBSD: GENERIC,v 1.241 2022/11/06 12:12:45 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -305,6 +305,7 @@ dwmmc*		at fdt?
 sdmmc*		at dwmmc?
 
 # Qualcomm SoCs
+qcdwusb*	at fdt?
 qcgpio*		at acpi?
 qciic*		at acpi?
 iic*		at qciic?
