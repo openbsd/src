@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1213 2022/10/19 08:24:14 kn Exp $
+#	$OpenBSD: install.sub,v 1.1214 2022/11/06 21:32:54 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2951,13 +2951,16 @@ __EOT
 CONGRATULATIONS! Your OpenBSD $MODE has been successfully completed!
 
 __EOT
-	[[ $MODE == install ]] && cat <<__EOT
+	if [[ $MODE == install ]]; then
+		cat <<'__EOT'
 When you login to your new system the first time, please read your mail
 using the 'mail' command.
 
 __EOT
 
-	md_congrats
+		md_congrats
+	fi
+
 	$AI && >/tmp/ai/ai.done
 }
 
