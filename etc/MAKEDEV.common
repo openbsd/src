@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.115 2022/01/07 01:13:15 jsg Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.116 2022/11/06 18:30:22 kn Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -455,8 +455,8 @@ _mkdev(fdesc, fd, {-RMlist[${#RMlist[*]}]=";mkdir -p fd;rm -f" n=0
 	MKlist[${#MKlist[*]}]=";chmod 555 fd"-})dnl
 __devitem(oppr, openprom,PROM settings,openprom)dnl
 _cdev(oppr, openprom, 70, 0)dnl
-__devitem(pf, pf*, Packet Filter)dnl
-_mkdev(pf, {-pf*-}, {-M pf c major_pf_c 0 600-})dnl
+__devitem(pf, pf, Packet Filter)dnl
+_mkdev(pf, {-pf-}, {-M pf c major_pf_c 0 600-})dnl
 __devitem(bpf, bpf, Berkeley Packet Filter)dnl
 _mkdev(bpf, bpf, {-M bpf c major_bpf_c 0 600
 	M bpf0 c major_bpf_c 0 600-})dnl
