@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.15 2021/12/06 19:38:39 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.16 2022/11/06 12:01:52 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -59,6 +59,10 @@ simplebus_match(struct device *parent, void *cfdata, void *aux)
 
 	if (fa->fa_node == 0)
 		return (0);
+
+	/* Qualcomm GENI can mostly be treated as simple-bus. */
+	if (OF_is_compatible(fa->fa_node, "qcom,geni-se-qup"))
+		return (1);
 
 	if (!OF_is_compatible(fa->fa_node, "simple-bus"))
 		return (0);
