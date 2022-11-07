@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_key_schedule.c,v 1.1 2021/05/05 10:05:27 jsing Exp $ */
+/* $OpenBSD: tls12_key_schedule.c,v 1.2 2022/11/07 11:58:45 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,7 @@
 
 #include "bytestring.h"
 #include "ssl_locl.h"
+#include "tls12_internal.h"
 
 struct tls12_key_block {
 	CBS client_write_mac_key;
@@ -172,4 +173,123 @@ tls12_key_block_generate(struct tls12_key_block *kb, SSL *s,
 	freezero(key_block, key_block_len);
 
 	return 0;
+}
+
+struct tls12_reserved_label {
+	const char *label;
+	size_t label_len;
+};
+
+/*
+ * RFC 5705 section 6.
+ */
+static const struct tls12_reserved_label tls12_reserved_labels[] = {
+	{
+		.label = TLS_MD_CLIENT_FINISH_CONST,
+		.label_len = TLS_MD_CLIENT_FINISH_CONST_SIZE,
+	},
+	{
+		.label = TLS_MD_SERVER_FINISH_CONST,
+		.label_len = TLS_MD_SERVER_FINISH_CONST_SIZE,
+	},
+	{
+		.label = TLS_MD_MASTER_SECRET_CONST,
+		.label_len = TLS_MD_MASTER_SECRET_CONST_SIZE,
+	},
+	{
+		.label = TLS_MD_KEY_EXPANSION_CONST,
+		.label_len = TLS_MD_KEY_EXPANSION_CONST_SIZE,
+	},
+	{
+		.label = NULL,
+		.label_len = 0,
+	},
+};
+
+int
+tls12_exporter(SSL *s, const uint8_t *label, size_t label_len,
+    const uint8_t *context_value, size_t context_value_len, int use_context,
+    uint8_t *out, size_t out_len)
+{
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	CBB cbb, context;
+	CBS seed;
+	size_t i;
+	int ret = 0;
+
+	/*
+	 * RFC 5705 - Key Material Exporters for TLS.
+	 */
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (!SSL_is_init_finished(s)) {
+		SSLerror(s, SSL_R_BAD_STATE);
+		goto err;
+	}
+
+	if (s->s3->hs.negotiated_tls_version >= TLS1_3_VERSION)
+		goto err;
+
+	/*
+	 * Due to exceptional design choices, we need to build a concatenation
+	 * of the label and the seed value, before checking for reserved
+	 * labels. This prevents a reserved label from being split across the
+	 * label and the seed (that includes the client random), which are
+	 * concatenated by the PRF.
+	 */
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&cbb, label, label_len))
+		goto err;
+	if (!CBB_add_bytes(&cbb, s->s3->client_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (!CBB_add_bytes(&cbb, s->s3->server_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (use_context) {
+		if (!CBB_add_u16_length_prefixed(&cbb, &context))
+			goto err;
+		if (context_value_len > 0) {
+			if (!CBB_add_bytes(&context, context_value,
+			    context_value_len))
+				goto err;
+		}
+	}
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+
+	/*
+	 * Ensure that the block (label + seed) does not start with a reserved
+	 * label - in an ideal world we would ensure that the label has an
+	 * explicitly permitted prefix instead, but of course this also got
+	 * messed up by the standards.
+	 */
+	for (i = 0; tls12_reserved_labels[i].label != NULL; i++) {
+		/* XXX - consider adding/using CBS_has_prefix(). */
+		if (tls12_reserved_labels[i].label_len > data_len)
+			goto err;
+		if (memcmp(data, tls12_reserved_labels[i].label,
+		    tls12_reserved_labels[i].label_len) == 0) {
+			SSLerror(s, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
+			goto err;
+		}
+	}
+
+	CBS_init(&seed, data, data_len);
+	if (!CBS_skip(&seed, label_len))
+		goto err;
+
+	if (!tls1_PRF(s, s->session->master_key, s->session->master_key_length,
+	    label, label_len, CBS_data(&seed), CBS_len(&seed), NULL, 0, NULL, 0,
+	    NULL, 0, out, out_len))
+		goto err;
+
+	ret = 1;
+
+ err:
+	freezero(data, data_len);
+	CBB_cleanup(&cbb);
+
+	return ret;
 }

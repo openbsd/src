@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.306 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.307 2022/11/07 11:58:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,6 +163,7 @@
 #include "ssl_locl.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
+#include "tls12_internal.h"
 
 const char *SSL_version_str = OPENSSL_VERSION_TEXT;
 
@@ -1867,21 +1868,21 @@ SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb)
 }
 
 int
-SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
-    const char *label, size_t llen, const unsigned char *p, size_t plen,
-    int use_context)
+SSL_export_keying_material(SSL *s, unsigned char *out, size_t out_len,
+    const char *label, size_t label_len, const unsigned char *context,
+    size_t context_len, int use_context)
 {
 	if (s->tls13 != NULL && s->version == TLS1_3_VERSION) {
 		if (!use_context) {
-			p = NULL;
-			plen = 0;
+			context = NULL;
+			context_len = 0;
 		}
-		return tls13_exporter(s->tls13, label, llen, p, plen,
-		    out, olen);
+		return tls13_exporter(s->tls13, label, label_len, context,
+		    context_len, out, out_len);
 	}
 
-	return (tls1_export_keying_material(s, out, olen, label, llen, p, plen,
-	    use_context));
+	return tls12_exporter(s, label, label_len, context, context_len,
+	    use_context, out, out_len);
 }
 
 static unsigned long
