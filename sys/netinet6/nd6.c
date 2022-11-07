@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.248 2022/09/09 12:05:52 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.249 2022/11/07 10:45:39 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -446,8 +446,6 @@ nd6_expire_timer_update(struct in6_ifaddr *ia6)
 	time_t expire_time = INT64_MAX;
 	int secs;
 
-	KERNEL_ASSERT_LOCKED();
-
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME)
 		expire_time = ia6->ia6_lifetime.ia6t_expire;
 
@@ -486,7 +484,6 @@ nd6_expire(void *unused)
 {
 	struct ifnet *ifp;
 
-	KERNEL_LOCK();
 	NET_LOCK();
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
@@ -509,7 +506,6 @@ nd6_expire(void *unused)
 	}
 
 	NET_UNLOCK();
-	KERNEL_UNLOCK();
 }
 
 void
