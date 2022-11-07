@@ -55,7 +55,6 @@ getdiskbyname(const char *name)
 	char	*cp, *cq;
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
-	u_int32_t *dx;
 
 	if (cgetent(&buf, db_array, (char *) name) < 0)
 		return NULL;
@@ -127,12 +126,6 @@ getdiskbyname(const char *name)
 		}
 	}
 	dp->d_npartitions = max + 1 - 'a';
-	(void)strlcpy(psize, "dx", sizeof psize);
-	dx = dp->d_drivedata;
-	for (p = '0'; p < '0' + NDDATA; p++, dx++) {
-		psize[1] = p;
-		getnumdflt(*dx, psize, 0);
-	}
 	dp->d_magic = DISKMAGIC;
 	dp->d_magic2 = DISKMAGIC;
 	free(buf);

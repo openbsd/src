@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.265 2022/10/11 23:39:08 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.266 2022/11/07 10:21:17 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -224,9 +224,6 @@ checkdisklabel(dev_t dev, void *rlp, struct disklabel *lp, u_int64_t boundstart,
 		dlp->d_acylinders = swap32(dlp->d_acylinders);
 
 		dlp->d_flags = swap32(dlp->d_flags);
-
-		for (i = 0; i < NDDATA; i++)
-			dlp->d_drivedata[i] = swap32(dlp->d_drivedata[i]);
 
 		dlp->d_secperunith = swap16(dlp->d_secperunith);
 		dlp->d_version = swap16(dlp->d_version);
