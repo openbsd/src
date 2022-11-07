@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.14 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: copy.S,v 1.15 2022/11/07 01:41:57 guenther Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -43,6 +43,11 @@
 
 #include <machine/asm.h>
 #include <machine/codepatch.h>
+
+#define	DECLARE_ONFAULT(x)		\
+	.pushsection .nofault.0, "a"	;\
+	.quad	x			;\
+	.popsection
 
 /*
  * Copy routines from and to userland, plus a few more. See the
@@ -183,6 +188,7 @@ ENTRY(copyin)
 	lfence
 
 NENTRY(copy_fault)
+DECLARE_ONFAULT(copy_fault)
 	SMAP_CLAC
 	movq	CPUVAR(CURPCB),%rdx
 	popq	PCB_ONFAULT(%rdx)
@@ -277,6 +283,7 @@ ENTRY(copyinstr)
 	jmp	copystr_return
 
 ENTRY(copystr_fault)
+DECLARE_ONFAULT(copystr_fault)
 	movl	$EFAULT,%eax
 copystr_return:
 	SMAP_CLAC

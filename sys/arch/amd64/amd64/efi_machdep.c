@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.3 2022/11/04 16:49:31 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.4 2022/11/07 01:41:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
@@ -236,6 +236,7 @@ efi_fault(void)
 {
 	longjmp(&efi_jmpbuf);
 }
+__asm(".pushsection .nofault, \"a\"; .quad efi_fault; .popsection");
 
 void
 efi_enter(struct efi_softc *sc)

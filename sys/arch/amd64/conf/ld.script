@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.18 2022/09/02 09:02:37 mlarkin Exp $	*/
+/*	$OpenBSD: ld.script,v 1.19 2022/11/07 01:41:57 guenther Exp $	*/
 
 /*
  * Copyright (c) 2009 Tobias Weingartner <weingart@tepid.org>
@@ -85,6 +85,10 @@ SECTIONS
 	{
 		__rodata_start = ABSOLUTE(.);
 		*(.rodata .rodata.*)
+		. = ALIGN(8);
+		__nofault_start = ABSOLUTE(.);
+		*(.nofault.*) *(.nofault)
+		__nofault_end = ABSOLUTE(.);
 		*(.codepatch)
 		*(.codepatchend)
 	} :rodata =0xcccccccc
