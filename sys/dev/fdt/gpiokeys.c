@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.1 2021/11/09 16:16:11 kn Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.2 2022/11/07 20:28:23 patrick Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -94,7 +94,8 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 	struct gpiokeys_key	*key;
 	char			*label;
 	uint32_t		 code;
-	int			 node, len, gpios_len, have_sensors = 0;
+	int			 node, len, gpios_len;
+	int			 have_labels = 0, have_sensors = 0;
 
 	SLIST_INIT(&sc->sc_keys);
 
@@ -106,13 +107,14 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 		gpios_len = OF_getproplen(node, "gpios");
 		if (gpios_len <= 0)
 			continue;
+		label = NULL;
 		len = OF_getproplen(node, "label");
-		if (len <= 0)
-			continue;
-		label = malloc(len, M_TEMP, M_WAITOK);
-		if (OF_getprop(node, "label", label, len) != len) {
-			free(label, M_TEMP, len);
-			continue;
+		if (len > 0) {
+			label = malloc(len, M_TEMP, M_WAITOK);
+			if (OF_getprop(node, "label", label, len) != len) {
+				free(label, M_TEMP, len);
+				continue;
+			}
 		}
 		key = malloc(sizeof(*key), M_DEVBUF, M_WAITOK | M_ZERO);
 		key->key_input_type = OF_getpropint(node, "linux,input-type",
@@ -137,9 +139,11 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 
-		printf("%s \"%s\"", SLIST_EMPTY(&sc->sc_keys) ? ":" : ",",
-		    label);
-		free(label, M_TEMP, len);
+		if (label) {
+			printf("%s \"%s\"", have_labels ? ":" : ",", label);
+			free(label, M_TEMP, len);
+			have_labels = 1;
+		}
 
 		SLIST_INSERT_HEAD(&sc->sc_keys, key, entries);
 	}
