@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.15 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: x509v3.h,v 1.16 2022/11/07 19:42:24 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -335,17 +335,15 @@ typedef struct POLICY_CONSTRAINTS_st {
 } POLICY_CONSTRAINTS;
 
 /* Proxy certificate structures, see RFC 3820 */
-typedef struct PROXY_POLICY_st
-	{
+typedef struct PROXY_POLICY_st {
 	ASN1_OBJECT *policyLanguage;
 	ASN1_OCTET_STRING *policy;
-	} PROXY_POLICY;
+} PROXY_POLICY;
 
-typedef struct PROXY_CERT_INFO_EXTENSION_st
-	{
+typedef struct PROXY_CERT_INFO_EXTENSION_st {
 	ASN1_INTEGER *pcPathLengthConstraint;
 	PROXY_POLICY *proxyPolicy;
-	} PROXY_CERT_INFO_EXTENSION;
+} PROXY_CERT_INFO_EXTENSION;
 
 PROXY_POLICY *PROXY_POLICY_new(void);
 void PROXY_POLICY_free(PROXY_POLICY *a);
@@ -358,15 +356,14 @@ PROXY_CERT_INFO_EXTENSION *d2i_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSI
 int i2d_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION *a, unsigned char **out);
 extern const ASN1_ITEM PROXY_CERT_INFO_EXTENSION_it;
 
-struct ISSUING_DIST_POINT_st
-	{
+struct ISSUING_DIST_POINT_st {
 	DIST_POINT_NAME *distpoint;
 	int onlyuser;
 	int onlyCA;
 	ASN1_BIT_STRING *onlysomereasons;
 	int indirectCRL;
 	int onlyattr;
-	};
+};
 
 /* Values in idp_flags field */
 /* IDP present */
@@ -527,11 +524,11 @@ int i2d_SXNETID(SXNETID *a, unsigned char **out);
 extern const ASN1_ITEM SXNETID_it;
 
 int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user,
-    int userlen); 
+    int userlen);
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
-    int userlen); 
+    int userlen);
 int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
-    int userlen); 
+    int userlen);
 
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
@@ -594,7 +591,7 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value);
 void *GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype);
 int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
 				ASN1_OBJECT *oid, ASN1_TYPE *value);
-int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen, 
+int GENERAL_NAME_get0_otherName(GENERAL_NAME *gen,
 				ASN1_OBJECT **poid, ASN1_TYPE **pvalue);
 
 char *i2s_ASN1_OCTET_STRING(X509V3_EXT_METHOD *method,
