@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.96 2022/04/07 09:37:32 tb Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.97 2022/11/07 14:25:44 robert Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -105,6 +105,11 @@ struct mutex autoconf_attdet_mtx = MUTEX_INITIALIZER(IPL_HIGH);
  * thread which tries to attach will sleep.
  */
 int	autoconf_attdet;
+
+/*
+ * Versioned state of the devices tree so that changes can be detected.
+ */
+unsigned int autoconf_serial = 0;
 
 /*
  * Initialize autoconfiguration data structures.  This occurs before console
@@ -419,6 +424,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	mtx_enter(&autoconf_attdet_mtx);
 	if (--autoconf_attdet == 0)
 		wakeup(&autoconf_attdet);
+	autoconf_serial++;
 	mtx_leave(&autoconf_attdet_mtx);
 	return (dev);
 }
@@ -642,6 +648,7 @@ done:
 	mtx_enter(&autoconf_attdet_mtx);
 	if (++autoconf_attdet == 0)
 		wakeup(&autoconf_attdet);
+	autoconf_serial++;
 	mtx_leave(&autoconf_attdet_mtx);
 	return (rv);
 }

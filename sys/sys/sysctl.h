@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.230 2022/11/05 19:29:46 cheloha Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.231 2022/11/07 14:25:44 robert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -192,7 +192,8 @@ struct ctlname {
 #define	KERN_UTC_OFFSET		88	/* int: adjust RTC time to UTC */
 #define	KERN_VIDEO		89	/* struct: video properties */
 #define	KERN_CLOCKINTR		90	/* node: clockintr */
-#define	KERN_MAXID		91	/* number of valid kern ids */
+#define	KERN_AUTOCONF_SERIAL	91	/* int: kernel device tree state serial */
+#define	KERN_MAXID		92	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -286,6 +287,7 @@ struct ctlname {
 	{ "utc_offset", CTLTYPE_INT }, \
 	{ "video", CTLTYPE_STRUCT }, \
  	{ "clockintr", CTLTYPE_NODE }, \
+	{ "autoconf_serial", CTLTYPE_INT }, \
 }
 
 /*

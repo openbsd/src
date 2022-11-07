@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.407 2022/11/05 19:29:46 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.408 2022/11/07 14:25:44 robert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -126,6 +126,7 @@ extern long numvnodes;
 extern int allowdt;
 extern int audio_record_enable;
 extern int video_record_enable;
+extern int autoconf_serial;
 
 int allowkmem;
 
@@ -341,6 +342,7 @@ const struct sysctl_bounded_args kern_vars[] = {
 #ifdef PTRACE
 	{KERN_GLOBAL_PTRACE, &global_ptrace, 0, 1},
 #endif
+	{KERN_AUTOCONF_SERIAL, &autoconf_serial, SYSCTL_INT_READONLY},
 };
 
 int
