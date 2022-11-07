@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.37 2022/10/13 09:07:26 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.38 2022/11/07 20:15:44 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -196,6 +196,10 @@ struct dwpcie_softc {
 	bus_size_t		sc_glue_size;
 	bus_space_handle_t	sc_glue_ioh;
 
+	bus_addr_t		sc_atu_base;
+	bus_size_t		sc_atu_size;
+	bus_space_handle_t	sc_atu_ioh;
+
 	bus_addr_t		sc_io_base;
 	bus_addr_t		sc_io_bus_addr;
 	bus_size_t		sc_io_size;
@@ -221,8 +225,8 @@ struct dwpcie_softc {
 	int			sc_bus;
 
 	int			sc_num_viewport;
-	bus_addr_t		sc_atu_base;
 	int			sc_atu_unroll;
+	int			sc_atu_viewport;
 
 	void			*sc_ih;
 };
@@ -253,6 +257,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie") ||
 	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
+	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc8280xp") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-pcie"));
 }
@@ -277,6 +282,7 @@ int	dwpcie_imx8mq_intr(void *);
 
 int	dwpcie_fu740_init(struct dwpcie_softc *);
 int	dwpcie_rk3568_init(struct dwpcie_softc *);
+int	dwpcie_sc8280xp_init(struct dwpcie_softc *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -310,7 +316,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
-	int config, glue;
+	int atu, config, ctrl, glue;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -320,6 +326,12 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctrl_base = faa->fa_reg[0].addr;
 	sc->sc_ctrl_size = faa->fa_reg[0].size;
 
+	ctrl = OF_getindex(faa->fa_node, "dbi", "reg-names");
+	if (ctrl >= 0 && ctrl < faa->fa_nreg) {
+		sc->sc_ctrl_base = faa->fa_reg[ctrl].addr;
+		sc->sc_ctrl_size = faa->fa_reg[ctrl].size;
+	}
+
 	config = OF_getindex(faa->fa_node, "config", "reg-names");
 	if (config < 0 || config >= faa->fa_nreg) {
 		printf(": no config registers\n");
@@ -328,6 +340,15 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_conf_base = faa->fa_reg[config].addr;
 	sc->sc_conf_size = faa->fa_reg[config].size;
+
+	sc->sc_atu_base = sc->sc_ctrl_base + 0x300000;
+	sc->sc_atu_size = sc->sc_ctrl_size - 0x300000;
+
+	atu = OF_getindex(faa->fa_node, "atu", "reg-names");
+	if (atu >= 0 && atu < faa->fa_nreg) {
+		sc->sc_atu_base = faa->fa_reg[atu].addr;
+		sc->sc_atu_size = faa->fa_reg[atu].size;
+	}
 
 	if (OF_is_compatible(faa->fa_node, "amlogic,g12a-pcie")) {
 		glue = OF_getindex(faa->fa_node, "cfg", "reg-names");
@@ -436,6 +457,8 @@ dwpcie_attach_deferred(struct device *self)
 	if (OF_is_compatible(sc->sc_node, "fsl,imx8mm-pcie") ||
 	    OF_is_compatible(sc->sc_node, "fsl,imx8mq-pcie"))
 		error = dwpcie_imx8mq_init(sc);
+	if (OF_is_compatible(sc->sc_node, "qcom,pcie-sc8280xp"))
+		error = dwpcie_sc8280xp_init(sc);
 	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie"))
 		error = dwpcie_rk3568_init(sc);
 	if (OF_is_compatible(sc->sc_node, "sifive,fu740-pcie"))
@@ -450,9 +473,21 @@ dwpcie_attach_deferred(struct device *self)
 		return;
 	}
 
+	sc->sc_atu_viewport = -1;
 	if (HREAD4(sc, IATU_VIEWPORT) == 0xffffffff) {
-		sc->sc_atu_base = 0x300000;
 		sc->sc_atu_unroll = 1;
+		if (bus_space_map(sc->sc_iot, sc->sc_atu_base,
+		    sc->sc_atu_size, 0, &sc->sc_atu_ioh)) {
+			bus_space_unmap(sc->sc_iot, sc->sc_conf_ioh,
+			    sc->sc_conf_size);
+			bus_space_unmap(sc->sc_iot, sc->sc_ioh,
+			    sc->sc_ctrl_size);
+			free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
+			    sizeof(struct dwpcie_range));
+			printf("%s: can't map atu registers\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 	}
 
 	/* Set up address translation for I/O space. */
@@ -1070,43 +1105,72 @@ dwpcie_rk3568_init(struct dwpcie_softc *sc)
 	return 0;
 }
 
+int
+dwpcie_sc8280xp_init(struct dwpcie_softc *sc)
+{
+	sc->sc_num_viewport = 8;
+
+	return 0;
+}
+
+void
+dwpcie_atu_write(struct dwpcie_softc *sc, int index, off_t reg,
+    uint32_t val)
+{
+	if (sc->sc_atu_unroll) {
+		bus_space_write_4(sc->sc_iot, sc->sc_atu_ioh,
+		    IATU_OFFSET_UNROLL(index) + reg, val);
+		return;
+	}
+
+	if (sc->sc_atu_viewport != index) {
+		HWRITE4(sc, IATU_VIEWPORT, index);
+		sc->sc_atu_viewport = index;
+	}
+
+	HWRITE4(sc, IATU_OFFSET_VIEWPORT + reg, val);
+}
+
+uint32_t
+dwpcie_atu_read(struct dwpcie_softc *sc, int index, off_t reg)
+{
+	if (sc->sc_atu_unroll) {
+		return bus_space_read_4(sc->sc_iot, sc->sc_atu_ioh,
+		    IATU_OFFSET_UNROLL(index) + reg);
+	}
+
+	if (sc->sc_atu_viewport != index) {
+		HWRITE4(sc, IATU_VIEWPORT, index);
+		sc->sc_atu_viewport = index;
+	}
+
+	return HREAD4(sc, IATU_OFFSET_VIEWPORT + reg);
+}
+
 void
 dwpcie_atu_disable(struct dwpcie_softc *sc, int index)
 {
-	uint32_t off;
-
-	off = sc->sc_atu_base + IATU_OFFSET_UNROLL(index);
-	if (!sc->sc_atu_unroll) {
-		off = IATU_OFFSET_VIEWPORT;
-		HWRITE4(sc, IATU_VIEWPORT, index);
-	}
-
-	HWRITE4(sc, off + IATU_REGION_CTRL_2, 0);
+	dwpcie_atu_write(sc, index, IATU_REGION_CTRL_2, 0);
 }
 
 void
 dwpcie_atu_config(struct dwpcie_softc *sc, int index, int type,
     uint64_t cpu_addr, uint64_t pci_addr, uint64_t size)
 {
-	uint32_t reg, off;
+	uint32_t reg;
 	int timo;
 
-	off = sc->sc_atu_base + IATU_OFFSET_UNROLL(index);
-	if (!sc->sc_atu_unroll) {
-		off = IATU_OFFSET_VIEWPORT;
-		HWRITE4(sc, IATU_VIEWPORT, index);
-	}
-
-	HWRITE4(sc, off + IATU_LWR_BASE_ADDR, cpu_addr);
-	HWRITE4(sc, off + IATU_UPPER_BASE_ADDR, cpu_addr >> 32);
-	HWRITE4(sc, off + IATU_LIMIT_ADDR, cpu_addr + size - 1);
-	HWRITE4(sc, off + IATU_LWR_TARGET_ADDR, pci_addr);
-	HWRITE4(sc, off + IATU_UPPER_TARGET_ADDR, pci_addr >> 32);
-	HWRITE4(sc, off + IATU_REGION_CTRL_1, type);
-	HWRITE4(sc, off + IATU_REGION_CTRL_2, IATU_REGION_CTRL_2_REGION_EN);
+	dwpcie_atu_write(sc, index, IATU_LWR_BASE_ADDR, cpu_addr);
+	dwpcie_atu_write(sc, index, IATU_UPPER_BASE_ADDR, cpu_addr >> 32);
+	dwpcie_atu_write(sc, index, IATU_LIMIT_ADDR, cpu_addr + size - 1);
+	dwpcie_atu_write(sc, index, IATU_LWR_TARGET_ADDR, pci_addr);
+	dwpcie_atu_write(sc, index, IATU_UPPER_TARGET_ADDR, pci_addr >> 32);
+	dwpcie_atu_write(sc, index, IATU_REGION_CTRL_1, type);
+	dwpcie_atu_write(sc, index, IATU_REGION_CTRL_2,
+	    IATU_REGION_CTRL_2_REGION_EN);
 
 	for (timo = 5; timo > 0; timo--) {
-		reg = HREAD4(sc, off + IATU_REGION_CTRL_2);
+		reg = dwpcie_atu_read(sc, index, IATU_REGION_CTRL_2);
 		if (reg & IATU_REGION_CTRL_2_REGION_EN)
 			break;
 		delay(9000);
