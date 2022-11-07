@@ -1,4 +1,4 @@
-/*	$OpenBSD: bf_test.c,v 1.1 2022/11/06 14:56:08 joshua Exp $ */
+/*	$OpenBSD: bf_test.c,v 1.2 2022/11/07 23:04:25 joshua Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -981,13 +981,13 @@ static const struct bf_test bf_tests[] = {
 static int
 bf_ecb_test(size_t test_number, const struct bf_test *bt)
 {
+	BF_KEY key;
+	uint8_t out[8];
+
 	if (bt->padding) {
 		/* XXX - Handle padding */
 		return 1;
 	}
-
-	BF_KEY key;
-	uint8_t out[8];
 
 	/* Encryption */
 	memset(out, 0, sizeof(out));
@@ -1017,14 +1017,14 @@ bf_ecb_test(size_t test_number, const struct bf_test *bt)
 static int
 bf_cbc_test(size_t test_number, const struct bf_test *bt)
 {
+	BF_KEY key;
+	uint8_t out[512];
+	uint8_t iv[64];
+
 	if (bt->padding) {
 		/* XXX - Handle padding */
 		return 1;
 	}
-
-	BF_KEY key;
-	uint8_t out[512];
-	uint8_t iv[64];
 
 	/* Encryption */
 	memset(out, 0, sizeof(out));
@@ -1056,15 +1056,15 @@ bf_cbc_test(size_t test_number, const struct bf_test *bt)
 static int
 bf_cfb64_test(size_t test_number, const struct bf_test *bt)
 {
-	if (bt->padding) {
-		/* XXX - Handle padding */
-		return 1;
-	}
-
 	BF_KEY key;
 	uint8_t out[512];
 	uint8_t iv[64];
 	int remainder = 0;
+
+	if (bt->padding) {
+		/* XXX - Handle padding */
+		return 1;
+	}
 
 	/* Encryption */
 	memset(out, 0, sizeof(out));
@@ -1097,15 +1097,15 @@ bf_cfb64_test(size_t test_number, const struct bf_test *bt)
 static int
 bf_ofb64_test(size_t test_number, const struct bf_test *bt)
 {
-	if (bt->padding) {
-		/* XXX - Handle padding */
-		return 1;
-	}
-
 	BF_KEY key;
 	uint8_t out[512];
 	uint8_t iv[64];
 	int remainder = 0;
+
+	if (bt->padding) {
+		/* XXX - Handle padding */
+		return 1;
+	}
 
 	/* Encryption */
 	memset(out, 0, sizeof(out));
