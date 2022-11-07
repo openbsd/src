@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.71 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.72 2022/11/07 11:33:24 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -184,7 +184,7 @@ log_rtr_error(enum rtr_error err)
 	case UNSUPP_PDU_TYPE:
 		return "Unsupported PDU Type";
 	case UNK_REC_WDRAWL:
-		return "Withdrawl of Unknown Record";
+		return "Withdrawal of Unknown Record";
 	case DUP_REC_RECV:
 		return "Duplicate Announcement Received";
 	case UNEXP_PROTOCOL_VERS:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.2 2022/10/18 12:28:36 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.3 2022/11/07 11:33:24 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -108,7 +108,7 @@ ometric_head(struct parse_result *arg)
 
 	peer_message_transmit = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_message_transmit_total",
-	    "per message type count of tranmitted messages");
+	    "per message type count of transmitted messages");
 	peer_message_recieve = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_message_receive_total",
 	    "per message type count of received messages");
@@ -125,7 +125,7 @@ ometric_head(struct parse_result *arg)
 
 	peer_withdraw_transmit = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_withdraw_transmit_total",
-	    "number of witdrawn prefixes sent to peer");
+	    "number of withdrawn prefixes sent to peer");
 	peer_withdraw_pending = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_withdraw_pending_total",
 	    "number of pending withdrawn prefixes");

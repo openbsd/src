@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.30 2022/10/17 12:01:19 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.31 2022/11/07 11:33:24 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -669,7 +669,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 	int		 i, pos, e2, e4;
 
 	if (len < 3) {
-		warnx("Too short BGP attrbute");
+		warnx("Too short BGP attribute");
 		return;
 	}
 
@@ -679,7 +679,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 	/* get the attribute length */
 	if (flags & ATTR_EXTLEN) {
 		if (len < 4) {
-			warnx("Too short BGP attrbute");
+			warnx("Too short BGP attribute");
 			return;
 		}
 		memcpy(&alen, data+2, sizeof(uint16_t));
@@ -694,7 +694,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 
 	/* bad imsg len how can that happen!? */
 	if (alen > len) {
-		warnx("Bad BGP attrbute length");
+		warnx("Bad BGP attribute length");
 		return;
 	}
 
