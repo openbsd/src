@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.85 2022/10/12 23:11:33 krw Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.86 2022/11/07 10:33:22 krw Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct disklabel {
 	u_int32_t d_bend;		/* end of useable region */
 	u_int32_t d_flags;		/* generic flags */
 #define NDDATA 5
-	u_int32_t d_drivedata[NDDATA];	/* drive-type specific information */
+	u_int32_t d_spare4[NDDATA];
 	u_int16_t d_secperunith;	/* # of data sectors (high part) */
 	u_int16_t d_version;		/* version # (1=48 bit addressing) */
 #define NSPARE 4
