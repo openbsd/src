@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.77 2022/11/04 09:43:13 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.78 2022/11/07 16:23:32 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -392,14 +392,20 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		    "missing CRL distribution point extension", fn);
 		goto out;
 	}
-	if ((crlfile = strrchr(crldp, '/')) == NULL ||
-	    !valid_mft_filename(crlfile + 1, strlen(crlfile + 1)) ||
-	    rtype_from_file_extension(crlfile + 1) != RTYPE_CRL) {
+	crlfile = strrchr(crldp, '/');
+	if (crlfile == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: "
+		    "invalid CRL distribution point", fn);
+		goto out;
+	}
+	crlfile++;
+	if (!valid_mft_filename(crlfile, strlen(crlfile)) ||
+	    rtype_from_file_extension(crlfile) != RTYPE_CRL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "bad CRL distribution point extension", fn);
 		goto out;
 	}
-	if ((p.res->crl = strdup(crlfile + 1)) == NULL)
+	if ((p.res->crl = strdup(crlfile)) == NULL)
 		err(1, NULL);
 
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
