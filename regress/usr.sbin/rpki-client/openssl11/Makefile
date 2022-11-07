@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2022/11/02 12:56:38 job Exp $
+# $OpenBSD: Makefile,v 1.14 2022/11/07 18:55:35 tb Exp $
 
 LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl11 -L/usr/local/lib/eopenssl11
 CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/eopenssl11/
@@ -16,17 +16,21 @@ a_time_tm_gen.c: a_time_tm.c
 
 CLEANFILES += a_time_tm_gen.c a_time_tm_gen.c.tmp
 
-SRCS_test-ip =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-mft =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-roa =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-cert =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-gbr =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-tal =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-bgpsec =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-rrdp =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-rsc =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-aspa =	a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
-SRCS_test-tak =		a_time_tm_gen.c o_time.c bs_ber.c bs_cbb.c bs_cbs.c
+LIBCRYPTO_COMPAT +=	a_time_tm_gen.c o_time.c
+LIBCRYPTO_COMPAT +=	bs_ber.c bs_cbb.c bs_cbs.c
+
+SRCS_test-ip =		${LIBCRYPTO_COMPAT}
+SRCS_test-mft =		${LIBCRYPTO_COMPAT}
+SRCS_test-roa =		${LIBCRYPTO_COMPAT}
+SRCS_test-cert =	${LIBCRYPTO_COMPAT}
+SRCS_test-gbr =		${LIBCRYPTO_COMPAT}
+SRCS_test-tal =		${LIBCRYPTO_COMPAT}
+SRCS_test-bgpsec =	${LIBCRYPTO_COMPAT}
+SRCS_test-rrdp =	${LIBCRYPTO_COMPAT}
+SRCS_test-rsc =		${LIBCRYPTO_COMPAT}
+SRCS_test-aspa =	${LIBCRYPTO_COMPAT}
+SRCS_test-tak =		${LIBCRYPTO_COMPAT}
+
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
