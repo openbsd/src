@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.57 2022/11/06 14:50:51 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.58 2022/11/07 09:18:14 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -229,11 +229,18 @@ out:
 enum cert_purpose
 x509_get_purpose(X509 *x, const char *fn)
 {
+	BASIC_CONSTRAINTS		*bc = NULL;
 	EXTENDED_KEY_USAGE		*eku = NULL;
 	int				 crit;
 	enum cert_purpose		 purpose = CERT_PURPOSE_INVALID;
 
 	if (X509_check_ca(x) == 1) {
+		bc = X509_get_ext_d2i(x, NID_basic_constraints, &crit, NULL);
+		if (bc->pathlen != NULL) {
+			warnx("%s: RFC 6487 section 4.8.1: Path Length "
+			    "Constraint must be absent", fn);
+			goto out;
+		}
 		purpose = CERT_PURPOSE_CA;
 		goto out;
 	}
@@ -264,6 +271,7 @@ x509_get_purpose(X509 *x, const char *fn)
 	}
 
  out:
+	BASIC_CONSTRAINTS_free(bc);
 	EXTENDED_KEY_USAGE_free(eku);
 	return purpose;
 }
