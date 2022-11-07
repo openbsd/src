@@ -1,4 +1,4 @@
-/*	$OpenBSD: aes_test.c,v 1.1 2022/11/07 17:41:40 joshua Exp $ */
+/*	$OpenBSD: aes_test.c,v 1.2 2022/11/07 23:09:25 joshua Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -529,7 +529,8 @@ static const struct aes_test aes_tests[] = {
 #define N_AES_TESTS (sizeof(aes_tests) / sizeof(aes_tests[0]))
 
 static int
-aes_ecb_test(size_t test_number, const char *label, int key_bits, const struct aes_test *at)
+aes_ecb_test(size_t test_number, const char *label, int key_bits,
+    const struct aes_test *at)
 {
 	AES_KEY key;
 	uint8_t out[64];
@@ -566,7 +567,8 @@ aes_ecb_test(size_t test_number, const char *label, int key_bits, const struct a
 
 
 static int
-aes_cbc_test(size_t test_number, const char *label, int key_bits, const struct aes_test *at)
+aes_cbc_test(size_t test_number, const char *label, int key_bits,
+    const struct aes_test *at)
 {
 	AES_KEY key;
 	uint8_t out[64];
