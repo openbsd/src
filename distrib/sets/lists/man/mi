@@ -1259,6 +1259,7 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
+./usr/share/man/man4/arm64/qcdwusb.4
 ./usr/share/man/man4/arm64/qcgpio.4
 ./usr/share/man/man4/arm64/qciic.4
 ./usr/share/man/man4/arm64/smbios.4
