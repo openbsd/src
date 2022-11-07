@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.13 2022/08/22 12:34:55 tobhe Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.14 2022/11/07 18:56:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -635,6 +635,9 @@ aplintc_handle_ipi(struct aplintc_softc *sc)
 #ifdef DDB
 		db_enter();
 #endif
+	} else if (sc->sc_ipi_reason[ci->ci_cpuid] == ARM_IPI_HALT) {
+		sc->sc_ipi_reason[ci->ci_cpuid] = ARM_IPI_NOP;
+		cpu_halt();
 	}
 
 	sc->sc_ipi_count.ec_count++;
