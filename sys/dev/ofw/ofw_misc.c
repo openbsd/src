@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.36 2022/03/25 15:49:29 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.37 2022/11/07 19:07:31 patrick Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -1016,12 +1016,13 @@ iommu_device_do_map(uint32_t phandle, uint32_t *cells, bus_dma_tag_t dmat)
 }
 
 int
-iommu_device_lookup(int node, uint32_t *phandle, uint32_t *sid)
+iommu_device_lookup(int node, uint32_t *phandle, uint32_t *cells)
 {
 	uint32_t *cell;
 	uint32_t *map;
 	int len, icells, ncells;
 	int ret = 1;
+	int i;
 
 	len = OF_getproplen(node, "iommus");
 	if (len <= 0)
@@ -1041,10 +1042,11 @@ iommu_device_lookup(int node, uint32_t *phandle, uint32_t *sid)
 		if (ncells < icells + 1)
 			goto out;
 
-		KASSERT(icells == 1);
+		KASSERT(icells <= 2);
 
 		*phandle = cell[0];
-		*sid = cell[1];
+		for (i = 0; i < icells; i++)
+			cells[i] = cell[1 + i];
 		ret = 0;
 		break;
 
@@ -1060,7 +1062,7 @@ out:
 
 int
 iommu_device_lookup_pci(int node, uint32_t rid, uint32_t *phandle,
-    uint32_t *sid)
+    uint32_t *cells)
 {
 	uint32_t sid_base;
 	uint32_t *cell;
@@ -1096,7 +1098,7 @@ iommu_device_lookup_pci(int node, uint32_t rid, uint32_t *phandle,
 		sid_base = cell[2];
 		length = cell[3];
 		if (rid >= rid_base && rid < rid_base + length) {
-			*sid = sid_base + (rid - rid_base);
+			cells[0] = sid_base + (rid - rid_base);
 			*phandle = cell[1];
 			ret = 0;
 			break;
@@ -1115,23 +1117,23 @@ out:
 bus_dma_tag_t
 iommu_device_map(int node, bus_dma_tag_t dmat)
 {
-	uint32_t phandle, sid;
+	uint32_t phandle, cells[2] = {0};
 
-	if (iommu_device_lookup(node, &phandle, &sid))
+	if (iommu_device_lookup(node, &phandle, &cells[0]))
 		return dmat;
 
-	return iommu_device_do_map(phandle, &sid, dmat);
+	return iommu_device_do_map(phandle, &cells[0], dmat);
 }
 
 bus_dma_tag_t
 iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 {
-	uint32_t phandle, sid;
+	uint32_t phandle, cells[2] = {0};
 
-	if (iommu_device_lookup_pci(node, rid, &phandle, &sid))
+	if (iommu_device_lookup_pci(node, rid, &phandle, &cells[0]))
 		return dmat;
 
-	return iommu_device_do_map(phandle, &sid, dmat);
+	return iommu_device_do_map(phandle, &cells[0], dmat);
 }
 
 void
@@ -1155,12 +1157,12 @@ void
 iommu_reserve_region_pci(int node, uint32_t rid, bus_addr_t addr,
     bus_size_t size)
 {
-	uint32_t phandle, sid;
+	uint32_t phandle, cells[2] = {0};
 
-	if (iommu_device_lookup_pci(node, rid, &phandle, &sid))
+	if (iommu_device_lookup_pci(node, rid, &phandle, &cells[0]))
 		return;
 
-	return iommu_device_do_reserve(phandle, &sid, addr, size);
+	return iommu_device_do_reserve(phandle, &cells[0], addr, size);
 }
 
 /*
