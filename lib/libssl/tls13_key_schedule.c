@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.16 2022/10/14 06:56:33 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.17 2022/11/07 11:53:39 jsing Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include <openssl/hkdf.h>
 
 #include "bytestring.h"
+#include "ssl_locl.h"
 #include "tls13_internal.h"
 
 int
@@ -384,4 +385,74 @@ tls13_update_server_traffic_secret(struct tls13_secrets *secrets)
 	return tls13_hkdf_expand_label(&secrets->server_application_traffic,
 	    secrets->digest, &secrets->server_application_traffic,
 	    "traffic upd", &context);
+}
+
+int
+tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
+    const uint8_t *context_value, size_t context_value_len, uint8_t *out,
+    size_t out_len)
+{
+	struct tls13_secret context, export_out, export_secret;
+	struct tls13_secrets *secrets = ctx->hs->tls13.secrets;
+	EVP_MD_CTX *md_ctx = NULL;
+	unsigned int md_out_len;
+	int md_len;
+	int ret = 0;
+
+	/*
+	 * RFC 8446 Section 7.5.
+	 */
+
+	memset(&context, 0, sizeof(context));
+	memset(&export_secret, 0, sizeof(export_secret));
+
+	export_out.data = out;
+	export_out.len = out_len;
+
+	if (!ctx->handshake_completed)
+		return 0;
+
+	md_len = EVP_MD_size(secrets->digest);
+	if (md_len <= 0 || md_len > EVP_MAX_MD_SIZE)
+		goto err;
+
+	if (!tls13_secret_init(&export_secret, md_len))
+		goto err;
+	if (!tls13_secret_init(&context, md_len))
+		goto err;
+
+	/* In TLSv1.3 no context is equivalent to an empty context. */
+	if (context_value == NULL) {
+		context_value = "";
+		context_value_len = 0;
+	}
+
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestInit_ex(md_ctx, secrets->digest, NULL))
+		goto err;
+	if (!EVP_DigestUpdate(md_ctx, context_value, context_value_len))
+		goto err;
+	if (!EVP_DigestFinal_ex(md_ctx, context.data, &md_out_len))
+		goto err;
+	if (md_len != md_out_len)
+		goto err;
+
+	if (!tls13_derive_secret_with_label_length(&export_secret,
+	    secrets->digest, &secrets->exporter_master, label, label_len,
+	    &secrets->empty_hash))
+		goto err;
+
+	if (!tls13_hkdf_expand_label(&export_out, secrets->digest,
+	    &export_secret, "exporter", &context))
+		goto err;
+
+	ret = 1;
+
+ err:
+	EVP_MD_CTX_free(md_ctx);
+	tls13_secret_cleanup(&context);
+	tls13_secret_cleanup(&export_secret);
+
+	return ret;
 }
