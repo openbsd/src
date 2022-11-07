@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.5 2020/06/08 19:17:12 kn Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.6 2022/11/07 15:56:09 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -15,14 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
 
 #include <dev/biovar.h>
 
 #include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <util.h>
 
 #include "installboot.h"
 
@@ -107,4 +111,47 @@ sr_status(struct bio_status *bs)
 		else
 			exit(1);
 	}
+}
+
+int
+sr_open_chunk(int devfd, int vol, int disk, struct bioc_disk *bd,
+    char **realdev, char *part)
+{
+	int diskfd;
+
+	/* Get device name for this disk/chunk. */
+	memset(bd, 0, sizeof(*bd));
+	bd->bd_volid = vol;
+	bd->bd_diskid = disk;
+	if (ioctl(devfd, BIOCDISK, bd) == -1)
+		err(1, "BIOCDISK");
+
+	/* Check disk status. */
+	if (bd->bd_status != BIOC_SDONLINE &&
+	    bd->bd_status != BIOC_SDREBUILD) {
+		fprintf(stderr, "softraid chunk %u not online - skipping...\n",
+		    disk);
+		return -1;
+	}
+
+	/* Keydisks always have a size of zero. */
+	if (bd->bd_size == 0) {
+		fprintf(stderr, "softraid chunk %u is keydisk - skipping...\n",
+		    disk);
+		return -1;
+	}
+
+	if (strlen(bd->bd_vendor) < 1)
+		errx(1, "invalid disk name");
+	*part = bd->bd_vendor[strlen(bd->bd_vendor) - 1];
+	if (*part < 'a' || *part >= 'a' + MAXPARTITIONS)
+		errx(1, "invalid partition %c\n", *part);
+	bd->bd_vendor[strlen(bd->bd_vendor) - 1] = '\0';
+
+	/* Open device. */
+	if ((diskfd = opendev(bd->bd_vendor, (nowrite ? O_RDONLY : O_RDWR),
+	    OPENDEV_PART, realdev)) == -1)
+		err(1, "open: %s", *realdev);
+
+	return diskfd;
 }

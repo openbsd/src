@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.14 2022/02/03 10:25:14 visa Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.15 2022/11/07 15:56:09 kn Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -43,6 +43,7 @@ void	md_prepareboot(int, char *);
 void	md_installboot(int, char *);
 
 #ifdef SOFTRAID
+int	sr_open_chunk(int, int, int, struct bioc_disk *, char **, char *);
 void	sr_installboot(int, char *);
 void	sr_install_bootblk(int, int, int);
 void	sr_install_bootldr(int, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.20 2022/10/05 09:58:43 kn Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.21 2022/11/07 15:56:09 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -32,7 +32,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "installboot.h"
 #include "i386_installboot.h"
@@ -51,38 +50,9 @@ sr_install_bootblk(int devfd, int vol, int disk)
 	char part, efipart;
 	int diskfd;
 
-	/* Get device name for this disk/chunk. */
-	memset(&bd, 0, sizeof(bd));
-	bd.bd_volid = vol;
-	bd.bd_diskid = disk;
-	if (ioctl(devfd, BIOCDISK, &bd) == -1)
-		err(1, "BIOCDISK");
-
-	/* Check disk status. */
-	if (bd.bd_status != BIOC_SDONLINE && bd.bd_status != BIOC_SDREBUILD) {
-		fprintf(stderr, "softraid chunk %u not online - skipping...\n",
-		    disk);
+	diskfd = sr_open_chunk(devfd, vol, disk, &bd, &dev, &part);
+	if (diskfd == -1)
 		return;
-	}
-
-	/* Keydisks always have a size of zero. */
-	if (bd.bd_size == 0) {
-		fprintf(stderr, "softraid chunk %u is keydisk - skipping...\n",
-		    disk);
-		return;
-	}
-
-	if (strlen(bd.bd_vendor) < 1)
-		errx(1, "invalid disk name");
-	part = bd.bd_vendor[strlen(bd.bd_vendor) - 1];
-	if (part < 'a' || part >= 'a' + MAXPARTITIONS)
-		errx(1, "invalid partition %c\n", part);
-	bd.bd_vendor[strlen(bd.bd_vendor) - 1] = '\0';
-
-	/* Open this device and check its disklabel. */
-	if ((diskfd = opendev(bd.bd_vendor, (nowrite? O_RDONLY:O_RDWR),
-	    OPENDEV_PART, &dev)) == -1)
-		err(1, "open: %s", dev);
 
 	/* Get and check disklabel. */
 	if (ioctl(diskfd, DIOCGDINFO, &dl) == -1)
