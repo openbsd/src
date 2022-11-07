@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.88 2022/07/08 19:51:11 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.89 2022/11/07 22:39:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -683,7 +683,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			if (subj_name == NULL)
 				return (-1);
 			log_debug("%s: found CA %s", __func__, subj_name);
-			free(subj_name);
+			OPENSSL_free(subj_name);
 
 			chain_len = ca_chain_by_issuer(store, subj, &id,
 			    chain, nitems(chain));
@@ -746,7 +746,7 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			return (-1);
 		log_debug("%s: found local certificate %s", __func__,
 		    subj_name);
-		free(subj_name);
+		OPENSSL_free(subj_name);
 
 		if ((buf = ca_x509_serialize(cert)) == NULL)
 			return (-1);
@@ -921,7 +921,7 @@ ca_reload(struct iked *env)
 		if (subj_name == NULL)
 			return (-1);
 		log_debug("%s: %s", __func__, subj_name);
-		free(subj_name);
+		OPENSSL_free(subj_name);
 
 		if (ibuf_add(env->sc_certreq, md, len) != 0) {
 			ibuf_release(env->sc_certreq);
@@ -1195,10 +1195,10 @@ ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 	if (buflen == 0)
 		return (-1);
 	if (!EVP_Digest(buf, buflen, md, size, EVP_sha1(), NULL)) {
-		free(buf);
+		OPENSSL_free(buf);
 		return (-1);
 	}
-	free(buf);
+	OPENSSL_free(buf);
 
 	return (0);
 }
@@ -1225,7 +1225,7 @@ ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
 		    (name = X509_NAME_oneline(subject, NULL, 0)) == NULL)
 			continue;
 		buflen = asprintf(&buf, "%s: %s\n", msg, name);
-		free(name);
+		OPENSSL_free(name);
 		if (buflen == -1)
 			continue;
 		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
@@ -1478,6 +1478,10 @@ ca_privkey_to_method(struct iked_id *privkey)
 	return (method);
 }
 
+/*
+ * Return dynamically allocated buffer containing certificate name.
+ * The resulting buffer must be freed with OpenSSL_free().
+ */
 char *
 ca_asn1_name(uint8_t *asn1, size_t len)
 {
@@ -1795,7 +1799,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		if (subj_name == NULL)
 			goto err;
 		log_debug("%s: %s %.100s", __func__, subj_name, errstr);
-		free(subj_name);
+		OPENSSL_free(subj_name);
 	}
  err:
 

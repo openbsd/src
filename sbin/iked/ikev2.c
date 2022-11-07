@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.356 2022/11/06 11:11:47 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.357 2022/11/07 22:39:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6963,10 +6963,10 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 		if ((str = ca_asn1_name(ptr, len)) == NULL)
 			return (-1);
 		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {
-			free(str);
+			OPENSSL_free(str);
 			return (-1);
 		}
-		free(str);
+		OPENSSL_free(str);
 		break;
 	default:
 		/* XXX test */

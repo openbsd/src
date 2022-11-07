@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.39 2021/12/13 17:35:34 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.40 2022/11/07 22:39:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1193,11 +1193,11 @@ dsa_verify_final(struct iked_dsa *dsa, void *buf, size_t len)
 		if (_dsa_verify_prepare(dsa, &ptr, &len, &freeme) < 0)
 			return (-1);
 		if (EVP_DigestVerifyFinal(dsa->dsa_ctx, ptr, len) != 1) {
-			free(freeme);
+			OPENSSL_free(freeme);
 			ca_sslerror(__func__);
 			return (-1);
 		}
-		free(freeme);
+		OPENSSL_free(freeme);
 	}
 
 	return (0);
