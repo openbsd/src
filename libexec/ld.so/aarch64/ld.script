@@ -23,6 +23,7 @@ SECTIONS
     /* TEXT */
     . = ALIGN(0x10000);
     .text	: { *(.text .text.*) } :text
+    . = ALIGN(0x1000);
     .boot.text	:
     {
 	. = ALIGN(0x1000);
