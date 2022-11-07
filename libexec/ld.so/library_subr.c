@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.52 2022/08/20 14:11:31 sthen Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.53 2022/11/07 10:35:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -310,7 +310,8 @@ _dl_find_loaded_shlib(const char *req_name, struct sod req_sod, int flags)
  */
 
 elf_object_t *
-_dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags)
+_dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags,
+    int nodelete)
 {
 	int try_any_minor, ignore_hints;
 	struct sod sod, req_sod;
@@ -423,7 +424,7 @@ done:
 			    "using it anyway\n",
 			    sod.sod_name, sod.sod_major,
 			    req_sod.sod_minor, sod.sod_minor);
-		object = _dl_tryload_shlib(hint, type, flags);
+		object = _dl_tryload_shlib(hint, type, flags, nodelete);
 	}
 	_dl_free((char *)sod.sod_name);
 	return(object);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.87 2022/08/20 14:11:31 sthen Exp $ */
+/*	$OpenBSD: library.c,v 1.88 2022/11/07 10:35:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -96,7 +96,7 @@ unload:
 }
 
 elf_object_t *
-_dl_tryload_shlib(const char *libname, int type, int flags)
+_dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 {
 	int	libfile, i;
 	struct load_list *next_load, *load_list = NULL;
@@ -315,6 +315,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags)
 		object->dev = sb.st_dev;
 		object->inode = sb.st_ino;
 		object->obj_flags |= flags;
+		object->nodelete = nodelete;
 		object->relro_addr = relro_addr;
 		object->relro_size = relro_size;
 		_dl_set_sod(object->load_name, &object->sod);

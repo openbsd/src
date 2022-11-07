@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.101 2022/08/20 14:11:31 sthen Exp $ */
+/*	$OpenBSD: resolve.h,v 1.102 2022/11/07 10:35:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -76,6 +76,12 @@ struct object_vector {
 	elf_object_t 	**vec;
 };
 void	object_vec_grow(struct object_vector *_vec, int _more);
+
+struct mutate {
+	vaddr_t start;
+	vaddr_t end;
+	int valid;
+};
 
 /*
  *  Structure describing a loaded object.
@@ -163,6 +169,7 @@ struct elf_object {
 #define	OBJTYPE_LIB	3
 #define	OBJTYPE_DLO	4
 	int		obj_flags;	/* c.f. <sys/exec_elf.h> DF_1_* */
+	int		nodelete;
 
 	/* shared by ELF and GNU hash */
 	u_int32_t	nbuckets;
@@ -256,8 +263,10 @@ void	_dl_remove_object(elf_object_t *object);
 void	_dl_cleanup_objects(void);
 
 void _dl_handle_already_loaded(elf_object_t *_object, int _flags);
-elf_object_t *_dl_load_shlib(const char *, elf_object_t *, int, int);
-elf_object_t *_dl_tryload_shlib(const char *libname, int type, int flags);
+elf_object_t *_dl_load_shlib(const char *, elf_object_t *,
+    int, int, int nodelete);
+elf_object_t *_dl_tryload_shlib(const char *libname, int type,
+    int flags, int nodelete);
 
 int _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 int _dl_md_reloc_got(elf_object_t *object, int lazy);

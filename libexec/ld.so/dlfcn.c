@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.111 2022/08/20 14:11:31 sthen Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.112 2022/11/07 10:35:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -90,7 +90,7 @@ dlopen(const char *libname, int flags)
 	    | (flags & RTLD_GLOBAL ? DF_1_GLOBAL : 0)
 	    | (flags & RTLD_NOLOAD ? DF_1_NOOPEN : 0)
 	    ;
-	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, obj_flags);
+	object = _dl_load_shlib(libname, _dl_objects, OBJTYPE_DLO, obj_flags, 0);
 	if (object == 0) {
 		DL_DEB(("dlopen: failed to open %s\n", libname));
 		failed = 1;

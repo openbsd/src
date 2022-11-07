@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.200 2022/11/06 12:00:20 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.201 2022/11/07 10:35:26 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -247,7 +247,7 @@ _dl_dopreload(char *paths)
 	dp = paths;
 	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
 		shlib = _dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB,
-		    _dl_objects->obj_flags);
+		    _dl_objects->obj_flags, 1);
 		if (shlib == NULL)
 			_dl_die("can't preload library '%s'", cp);
 		_dl_add_object(shlib);
@@ -326,10 +326,6 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 		/* propagate DF_1_NOW to deplibs (can be set by dynamic tags) */
 		depflags = flags | (dynobj->obj_flags & DF_1_NOW);
 
-		/* Startup libraries are never unmapped and can be immutable */
-		if (booting)
-			depflags |= DF_1_NODELETE;
-
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
 				libcount++;
@@ -379,7 +375,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				DL_DEB(("loading: %s required by %s\n", libname,
 				    dynobj->load_name));
 				depobj = _dl_load_shlib(libname, dynobj,
-				    OBJTYPE_LIB, depflags);
+				    OBJTYPE_LIB, depflags, booting);
 				if (depobj == 0) {
 					if (booting) {
 						_dl_die(
@@ -811,7 +807,7 @@ _dl_relro(elf_object_t *object)
 		_dl_mprotect((void *)addr, object->relro_size, PROT_READ);
 
 		/* if library will never be unloaded, RELRO can be immutable */
-		if ((object->obj_flags & DF_1_NODELETE))
+		if (object->nodelete)
 			_dl_mimmutable((void *)addr, object->relro_size);
 	}
 }
