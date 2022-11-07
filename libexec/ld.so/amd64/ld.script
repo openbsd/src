@@ -2,6 +2,7 @@ PHDRS
 {
 	rodata	PT_LOAD FILEHDR PHDRS FLAGS (4);
 	text	PT_LOAD;
+	btext	PT_LOAD FLAGS (0x08000005);
 	data	PT_LOAD;
 	random	PT_OPENBSD_RANDOMIZE;
 	relro	PT_GNU_RELRO;
@@ -20,14 +21,15 @@ SECTIONS
     .eh_frame	: { *(.eh_frame) } :rodata
 
     /* TEXT */
-    . = ALIGN(0x100000) + (. & (0x100000 - 1)) +   0;
+    . = ALIGN(0x1000);
     .boot.text	:
     {
+	. = ALIGN(0x1000);
 	boot_text_start = .;
 	*(.boot.text)
+	. = ALIGN(0x1000);
 	boot_text_end = .;
-    } :text =0xcccccccc
-    . = ALIGN(0x1000);
+    } :btext =0xcccccccc
     .text	: { *(.text .text.*) } :text =0xcccccccc
 
     /* RELRO DATA */
