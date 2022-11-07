@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.41 2022/11/06 11:44:30 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.42 2022/11/07 09:43:04 mpi Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -243,6 +243,7 @@ do_el1h_sync(struct trapframe *frame)
 		/* XXX */
 		int db_trapper (u_int, u_int, trapframe_t *, int);
 		db_trapper(frame->tf_elr, 0/*XXX*/, frame, exception);
+		break;
 		}
 #endif
 		panic("Unknown kernel exception %x esr_el1 %llx lr %lxpc %lx",

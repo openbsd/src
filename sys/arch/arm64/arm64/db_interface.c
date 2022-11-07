@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.13 2022/10/15 08:04:02 jsg Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.14 2022/11/07 09:43:04 mpi Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -34,28 +34,28 @@
 /*
  * Interface to new debugger.
  */
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h>	/* just for boothowto */
-#include <sys/exec.h>
+#include <sys/systm.h>
 #include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm64/db_machdep.h>
+#include <dev/cons.h>
+
+#include <machine/cpufunc.h>
+#include <machine/db_machdep.h>
 #include <machine/pmap.h>
-#include <ddb/db_access.h>
+
+#include <ddb/db_sym.h>
 #include <ddb/db_command.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_variables.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_interface.h>
-#include <dev/cons.h>
 
-//static long nil;
 
 int db_access_und_sp (struct db_variable *, db_expr_t *, int);
 int db_access_abt_sp (struct db_variable *, db_expr_t *, int);
@@ -230,14 +230,48 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 	}
 }
 
-#if 0
+/*
+ * Write bytes somewhere in the kernel text.  Make the text
+ * pages writable temporarily.
+ */
 static void
 db_write_text(vaddr_t addr, size_t size, char *data)
 {
-	// Implement
-	return ;
+	vaddr_t pgva;
+	size_t limit;
+	char *dst;
+
+	if (size == 0)
+		return;
+
+	dst = (char *)addr;
+
+	do {
+		/*
+		 * Get the VA for the page.
+		 */
+		pgva = trunc_page((vaddr_t)dst);
+
+		/*
+		 * Compute number of bytes that can be written
+		 * with this mapping and subtract it from the
+		 * total size.
+		 */
+		limit = PAGE_SIZE - ((vaddr_t)dst & PGOFSET);
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+		pmap_page_rw(pmap_kernel(), pgva);
+
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/* Restore protection */
+		pmap_page_ro(pmap_kernel(), pgva, PROT_READ|PROT_EXEC);
+
+	} while (size != 0);
 }
-#endif
 
 /*
  * Write bytes to kernel address space for debugger.
@@ -245,14 +279,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, char *data)
 {
-#if 0
 	extern char etext[];
-	extern char kernel_text[];
 	char *dst;
 	size_t loop;
 
 	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= (vaddr_t) kernel_text && addr < (vaddr_t) etext) {
+	if (addr >= KERNBASE && addr < (vaddr_t)&etext) {
 		db_write_text(addr, size, data);
 		return;
 	}
@@ -270,9 +302,7 @@ db_write_bytes(vaddr_t addr, size_t size, char *data)
 	cpu_icache_sync_range(addr, size);
 
 	/* In case the current page tables have been modified ... */
-	cpu_tlb_flushID();
-	cpu_cpwait();
-#endif
+	cpu_tlb_flush();
 }
 
 void

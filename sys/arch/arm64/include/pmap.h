@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.19 2022/02/04 18:15:40 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.20 2022/11/07 09:43:04 mpi Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -97,6 +97,7 @@ vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
     long kernelend, long ram_start, long ram_end);
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
+void pmap_page_rw(pmap_t pm, vaddr_t va);
 
 paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 void pmap_avail_fixup(void);

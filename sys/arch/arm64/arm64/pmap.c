@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.85 2022/09/10 20:35:28 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.86 2022/11/07 09:43:04 mpi Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1539,6 +1539,26 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 	pmap_pte_update(pted, pl3);
 	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 }
+
+#ifdef DDB
+void
+pmap_page_rw(pmap_t pm, vaddr_t va)
+{
+	struct pte_desc *pted;
+	uint64_t *pl3;
+
+	/* Every VA needs a pted, even unmanaged ones. */
+	pted = pmap_vp_lookup(pm, va, &pl3);
+	if (!pted || !PTED_VALID(pted)) {
+		return;
+	}
+
+	pted->pted_va |= PROT_WRITE;
+	pted->pted_pte |= PROT_WRITE;
+	pmap_pte_update(pted, pl3);
+	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
+}
+#endif /* DDB */
 
 /*
  * Lower the protection on the specified physical page.
