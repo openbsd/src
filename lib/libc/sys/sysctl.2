@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.50 2022/11/07 11:22:55 yasuoka Exp $
+.\"	$OpenBSD: sysctl.2,v 1.51 2022/11/07 15:32:24 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -545,7 +545,8 @@ A
 structure is returned.
 This structure contains the time that the system was booted.
 .It Dv KERN_CACHEPCT Pq Va kern.bufcachepercent
-The maximum percentage of DMA-reachable physical memory the buffer cache may use.
+The maximum percentage of DMA-reachable physical memory
+the buffer cache may use.
 .It Dv KERN_CCPU Pq Va kern.ccpu
 The scheduler exponential decay value.
 .It Dv KERN_CLOCKRATE Pq Va kern.clockrate
@@ -813,7 +814,8 @@ Return the entire process VM map entries.
 An array of
 .Vt struct kinfo_vmentry
 structures is returned,
-whose size depends on the current number of VM map entries of the selected process.
+whose size depends on the current number of VM map entries
+of the selected process.
 Iteration is possible by setting the base address in the first element of
 .Vt struct kinfo_vmentry .
 .It Dv KERN_PROF Pq Va kern.profiling
@@ -1487,7 +1489,8 @@ indicating the host is acting as a router.
 If set to 2, IP forwarding is restricted to traffic that has been
 IPsec encapsulated or decapsulated by the host.
 Enabling packet forwarding (values either 1 or 2) relaxes the requirements
-on incoming packets, so that its destination address must match just any IP address
+on incoming packets,
+so that its destination address must match just any IP address
 bound to the host.
 The default value is 0.
 .It Li ip.ipsec-allocs Pq Va net.inet.ip.ipsec-allocs
@@ -1691,7 +1694,6 @@ Time in seconds to keep alive the initial SYN packet of a TCP handshake.
 .It Li tcp.keepintvl Pq Va net.inet.tcp.keepintvl
 Time in seconds after a keepalive probe is sent until, in the absence of any
 response, another probe is sent.
-See also tcp.slowhz.
 .It Li tcp.always_keepalive Pq Va net.inet.tcp.always_keepalive
 Act as if the option
 .Dv SO_KEEPALIVE
@@ -1900,8 +1902,9 @@ may cause serious trouble.
 Hence, this variable should only be set at bootstrap time.
 As with IPv4, if forwarding is disabled then the destination address of
 incoming packets must match the IP address bound to the interface.
-If forwarding is enabled, the check is relaxed so that the destination IP address of
-incoming packets must match just any address bound to the host.
+If forwarding is enabled, the check is relaxed
+so that the destination IP address of incoming packets must match
+just any address bound to the host.
 .Pp
 .It Li ip6.hdrnestlimit Pq Va net.inet6.ip6.hdrnestlimit
 The number of IPv6 extension headers permitted on incoming IPv6 packets.
