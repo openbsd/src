@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.49 2022/08/16 13:29:52 visa Exp $
+.\"	$OpenBSD: sysctl.2,v 1.50 2022/11/07 11:22:55 yasuoka Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 16 2022 $
+.Dd $Mdocdate: November 7 2022 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -1329,7 +1329,6 @@ The currently defined protocols and names are:
 .It tcp Ta rootonly Ta array Ta yes
 .It tcp Ta rstppslimit Ta integer Ta yes
 .It tcp Ta sack Ta integer Ta yes
-.It tcp Ta slowhz Ta integer Ta no
 .It tcp Ta stats Ta structure Ta no
 .It tcp Ta synbucketlimit Ta integer Ta yes
 .It tcp Ta syncachelimit Ta integer Ta yes
@@ -1685,14 +1684,13 @@ both set to \-1.
 .It Li tcp.keepidle Pq Va net.inet.tcp.keepidle
 If the socket option
 .Dv SO_KEEPALIVE
-has been set on a socket, then this value specifies how much time a
-connection needs to be idle before keepalives are sent.
-See also tcp.slowhz.
+has been set on a socket, then this value specifies how much time in seconds
+a connection needs to be idle before keepalives are sent.
 .It Li tcp.keepinittime Pq Va net.inet.tcp.keepinittime
-Time to keep alive the initial SYN packet of a TCP handshake.
+Time in seconds to keep alive the initial SYN packet of a TCP handshake.
 .It Li tcp.keepintvl Pq Va net.inet.tcp.keepintvl
-Time after a keepalive probe is sent until, in the absence of any response,
-another probe is sent.
+Time in seconds after a keepalive probe is sent until, in the absence of any
+response, another probe is sent.
 See also tcp.slowhz.
 .It Li tcp.always_keepalive Pq Va net.inet.tcp.always_keepalive
 Act as if the option
@@ -1729,11 +1727,6 @@ and will not go out from the node.
 A negative value disables rate limitation.
 .It Li tcp.sack Pq Va net.inet.tcp.sack
 Returns 1 if RFC 2018 Selective Acknowledgements are enabled.
-.It Li tcp.slowhz Pq Va net.inet.tcp.slowhz
-The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
-of a clock that ticks tcp.slowhz times per second.
-(That is, their values must be divided by the tcp.slowhz value to get times
-in seconds.)
 .It Li tcp.stats Pq Va net.inet.tcp.stats
 Returns the TCP statistics in a struct tcpstat.
 .It Li tcp.synbucketlimit Pq Va net.inet.tcp.synbucketlimit

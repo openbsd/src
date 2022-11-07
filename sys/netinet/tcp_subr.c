@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.189 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.190 2022/11/07 11:22:55 yasuoka Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ struct mutex tcp_timer_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
-int	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
+int	tcp_rttdflt = TCPTV_SRTTDFLT;
 
 /* values controllable via sysctl */
 int	tcp_do_rfc1323 = 1;
@@ -136,7 +136,6 @@ struct cpumem *tcpcounters;		/* tcp statistics */
 u_char		tcp_secret[16];	/* [I] */
 SHA2_CTX	tcp_secret_ctx;	/* [I] */
 tcp_seq		tcp_iss;	/* [T] updated by timer and connection */
-uint32_t	tcp_now;	/* [T] incremented by slow timer */
 
 /*
  * Tcp initialization
@@ -145,7 +144,6 @@ void
 tcp_init(void)
 {
 	tcp_iss = 1;		/* wrong */
-	tcp_now = 1;
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, IPL_SOFTNET, 0,
 	    "tcpcb", NULL);
 	pool_init(&tcpqe_pool, sizeof(struct tcpqent), 0, IPL_SOFTNET, 0,
@@ -445,7 +443,7 @@ tcp_newtcpcb(struct inpcb *inp, int wait)
 	 * reasonable initial retransmit time.
 	 */
 	tp->t_srtt = TCPTV_SRTTBASE;
-	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ <<
+	tp->t_rttvar = tcp_rttdflt <<
 	    (TCP_RTTVAR_SHIFT + TCP_RTT_BASE_SHIFT - 1);
 	tp->t_rttmin = TCPTV_MIN;
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),

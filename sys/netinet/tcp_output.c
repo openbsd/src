@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.133 2022/09/03 19:22:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.134 2022/11/07 11:22:55 yasuoka Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ tcp_output(struct tcpcb *tp)
 		return (EINVAL);
 #endif /* defined(TCP_SIGNATURE) && defined(DIAGNOSTIC) */
 
-	now = READ_ONCE(tcp_now);
+	now = tcp_now();
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -545,11 +545,11 @@ send:
 		*lp++ = htonl(now + tp->ts_modulate);
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
-
-		/* Set receive buffer autosizing timestamp. */
-		if (tp->rfbuf_ts == 0)
-			tp->rfbuf_ts = now;
-
+	}
+	/* Set receive buffer autosizing timestamp. */
+	if (tp->rfbuf_ts == 0) {
+		tp->rfbuf_ts = now;
+		tp->rfbuf_cnt = 0;
 	}
 
 #ifdef TCP_SIGNATURE
@@ -1105,7 +1105,7 @@ out:
 
 		/* Restart the delayed ACK timer, if necessary. */
 		if (TCP_TIMER_ISARMED(tp, TCPT_DELACK))
-			TCP_TIMER_ARM_MSEC(tp, TCPT_DELACK, tcp_delack_msecs);
+			TCP_TIMER_ARM(tp, TCPT_DELACK, tcp_delack_msecs);
 
 		return (error);
 	}
@@ -1138,7 +1138,7 @@ void
 tcp_setpersist(struct tcpcb *tp)
 {
 	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + TCP_RTT_BASE_SHIFT);
-	int nticks;
+	int msec;
 
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
 		panic("tcp_output REXMT");
@@ -1147,9 +1147,9 @@ tcp_setpersist(struct tcpcb *tp)
 	 */
 	if (t < tp->t_rttmin)
 		t = tp->t_rttmin;
-	TCPT_RANGESET(nticks, t * tcp_backoff[tp->t_rxtshift],
+	TCPT_RANGESET(msec, t * tcp_backoff[tp->t_rxtshift],
 	    TCPTV_PERSMIN, TCPTV_PERSMAX);
-	TCP_TIMER_ARM(tp, TCPT_PERSIST, nticks);
+	TCP_TIMER_ARM(tp, TCPT_PERSIST, msec);
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
 }

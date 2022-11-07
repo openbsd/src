@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.70 2022/09/03 19:22:19 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.71 2022/11/07 11:22:55 yasuoka Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -152,7 +152,6 @@ tcp_slowtimo(void)
 	mtx_enter(&tcp_timer_mtx);
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	tcp_iss += TCP_ISSINCR2/PR_SLOWHZ;		/* increment iss */
-	tcp_now++;					/* for timestamps */
 	mtx_leave(&tcp_timer_mtx);
 }
 
@@ -422,9 +421,9 @@ tcp_timer_persist(void *arg)
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
 		rto = tp->t_rttmin;
-	now = READ_ONCE(tcp_now);
+	now = tcp_now();
 	if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
-	    ((now - tp->t_rcvtime) >= tcp_maxpersistidle ||
+	    ((now - tp->t_rcvtime) >= TCP_TIME(tcp_maxpersistidle) ||
 	    (now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
 		tcpstat_inc(tcps_persistdrop);
 		tp = tcp_drop(tp, ETIMEDOUT);
@@ -467,9 +466,9 @@ tcp_timer_keep(void *arg)
 		uint32_t now;
 
 		maxidle = READ_ONCE(tcp_maxidle);
-		now = READ_ONCE(tcp_now);
-		if ((maxidle > 0) &&
-		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle))
+		now = tcp_now();
+		if ((maxidle > 0) && ((now - tp->t_rcvtime) >=
+		    TCP_TIME(tcp_keepidle + maxidle)))
 			goto dropit;
 		/*
 		 * Send a packet designed to force a response
@@ -486,9 +485,9 @@ tcp_timer_keep(void *arg)
 		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
 		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0, now);
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepintvl));
 	} else
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepidle));
 	if (otp)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
@@ -523,10 +522,10 @@ tcp_timer_2msl(void *arg)
 	tcp_timer_freesack(tp);
 
 	maxidle = READ_ONCE(tcp_maxidle);
-	now = READ_ONCE(tcp_now);
+	now = tcp_now();
 	if (tp->t_state != TCPS_TIME_WAIT &&
-	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= maxidle)))
-		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
+	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= TCP_TIME(maxidle))))
+		TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(tcp_keepintvl));
 	else
 		tp = tcp_close(tp);
 	if (otp)

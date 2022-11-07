@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.210 2022/10/17 14:49:02 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.211 2022/11/07 11:22:55 yasuoka Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -153,9 +153,7 @@ const struct pr_usrreqs tcp6_usrreqs = {
 };
 #endif
 
-static int pr_slowhz = PR_SLOWHZ;
 const struct sysctl_bounded_args tcpctl_vars[] = {
-	{ TCPCTL_SLOWHZ, &pr_slowhz, SYSCTL_INT_READONLY },
 	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
 	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3 * TCPTV_KEEP_INIT },
 	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5 * TCPTV_KEEP_IDLE },
@@ -214,7 +212,7 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 {
 	struct proc *p = curproc;
 	struct tcp_info *ti;
-	u_int t = 1000000 / PR_SLOWHZ;
+	u_int t = 1000;		/* msec => usec */
 	uint32_t now;
 
 	if (sizeof(*ti) > MLEN) {
@@ -225,7 +223,7 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	ti = mtod(m, struct tcp_info *);
 	m->m_len = sizeof(*ti);
 	memset(ti, 0, sizeof(*ti));
-	now = READ_ONCE(tcp_now);
+	now = tcp_now();
 
 	ti->tcpi_state = tp->t_state;
 	if ((tp->t_flags & TF_REQ_TSTMP) && (tp->t_flags & TF_RCVD_TSTMP))
@@ -674,7 +672,7 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 	soisconnecting(so);
 	tcpstat_inc(tcps_connattempt);
 	tp->t_state = TCPS_SYN_SENT;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcptv_keep_init));
 	tcp_set_iss_tsm(tp);
 	tcp_sendseqinit(tp);
 	tp->snd_last = tp->snd_una;
@@ -1112,7 +1110,7 @@ tcp_usrclosed(struct tcpcb *tp)
 		 * not left in FIN_WAIT_2 forever.
 		 */
 		if (tp->t_state == TCPS_FIN_WAIT_2)
-			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
+			TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(tcp_maxidle));
 	}
 	return (tp);
 }
