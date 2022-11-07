@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.325 2022/11/06 19:00:37 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.326 2022/11/07 12:29:12 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2233,7 +2233,7 @@ vcpu_readregs_svm(struct vcpu *vcpu, uint64_t regmask,
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
 	if (regmask & VM_RWREGS_GPRS) {
-		gprs[VCPU_REGS_RAX] = vcpu->vc_gueststate.vg_rax;
+		gprs[VCPU_REGS_RAX] = vmcb->v_rax;
 		gprs[VCPU_REGS_RBX] = vcpu->vc_gueststate.vg_rbx;
 		gprs[VCPU_REGS_RCX] = vcpu->vc_gueststate.vg_rcx;
 		gprs[VCPU_REGS_RDX] = vcpu->vc_gueststate.vg_rdx;
@@ -2536,6 +2536,7 @@ vcpu_writeregs_svm(struct vcpu *vcpu, uint64_t regmask,
 		vcpu->vc_gueststate.vg_rbp = gprs[VCPU_REGS_RBP];
 		vcpu->vc_gueststate.vg_rip = gprs[VCPU_REGS_RIP];
 
+		vmcb->v_rax = gprs[VCPU_REGS_RAX];
 		vmcb->v_rip = gprs[VCPU_REGS_RIP];
 		vmcb->v_rsp = gprs[VCPU_REGS_RSP];
 		vmcb->v_rflags = gprs[VCPU_REGS_RFLAGS];
