@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.48 2022/09/02 13:45:18 tb Exp $
+#	$OpenBSD: Makefile,v 1.49 2022/11/07 17:42:08 joshua Exp $
 
 SUBDIR += aead
+SUBDIR += aes
 SUBDIR += aeswrap
 SUBDIR += asn1
 SUBDIR += base64
