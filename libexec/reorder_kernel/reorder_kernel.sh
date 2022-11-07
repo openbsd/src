@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.12 2022/11/07 11:03:14 kn Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.13 2022/11/07 15:55:56 kn Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -20,15 +20,15 @@ set -o errexit
 
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-# Skip if /usr/share is on a nfs mounted filesystem.
-df -t nfs /usr/share >/dev/null 2>&1 && exit 1
-
 KERNEL=$(sysctl -n kern.osversion)
 KERNEL=${KERNEL%#*}
 KERNEL_DIR=/usr/share/relink/kernel
 LOGFILE=$KERNEL_DIR/$KERNEL/relink.log
 PROGNAME=${0##*/}
 SHA256=/var/db/kernel.SHA256
+
+# Silently skip if on a NFS mounted filesystem.
+df -t nonfs $KERNEL_DIR >/dev/null 2>&1
 
 # Install trap handlers to inform about success or failure via syslog.
 ERRMSG='failed'
