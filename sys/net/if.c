@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.669 2022/11/08 17:57:47 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.670 2022/11/08 18:43:22 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -228,8 +228,9 @@ void	if_idxmap_remove(struct ifnet *);
 
 TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
 
-LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
-int if_cloners_count;
+LIST_HEAD(, if_clone) if_cloners =
+	LIST_HEAD_INITIALIZER(if_cloners); /* [I] list of clonable interfaces */
+int if_cloners_count;	/* [I] number of clonable interfaces */
 
 struct rwlock if_cloners_lock = RWLOCK_INITIALIZER("clonelk");
 

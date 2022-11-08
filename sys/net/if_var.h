@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.117 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.118 2022/11/08 18:43:22 kn Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -73,6 +73,18 @@
  * interfaces.  These routines live in the files if.c and route.c
  */
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	d	protection left do the driver
+ *	c	only used in ioctl or routing socket contexts (kernel lock)
+ *	K	kernel lock
+ *	N	net lock
+ *
+ *  For SRP related structures that allow lock-free reads, the write lock
+ *  is indicated below.
+ */
+
 struct rtentry;
 struct ifnet;
 struct task;
@@ -82,7 +94,7 @@ struct cpumem;
  * Structure describing a `cloning' interface.
  */
 struct if_clone {
-	LIST_ENTRY(if_clone)	 ifc_list;	/* on list of cloners */
+	LIST_ENTRY(if_clone)	 ifc_list;	/* [I] on list of cloners */
 	const char		*ifc_name;	/* name of device, e.g. `gif' */
 	size_t			 ifc_namelen;	/* length of name */
 
@@ -99,17 +111,6 @@ struct if_clone {
   .ifc_destroy	= destroy,						\
 }
 
-/*
- *  Locks used to protect struct members in this file:
- *	I	immutable after creation
- *	d	protection left do the driver
- *	c	only used in ioctl or routing socket contexts (kernel lock)
- *	K	kernel lock
- *	N	net lock
- *
- *  For SRP related structures that allow lock-free reads, the write lock
- *  is indicated below.
- */
 /*
  * Structure defining a queue for a network interface.
  *
