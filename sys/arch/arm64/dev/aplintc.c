@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.15 2022/11/08 11:40:47 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.16 2022/11/08 14:01:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -22,6 +22,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
+#include <machine/armreg.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/intr.h>
@@ -38,10 +39,6 @@
 #define APL_IPI_GLOBAL_RR_EL1	s3_5_c15_c0_1
 #define APL_IPI_SR_EL1		s3_5_c15_c1_1
 #define  APL_IPI_SR_EL1_PENDING	(1 << 0)
-
-#define CNTV_CTL_ENABLE		(1 << 0)
-#define CNTV_CTL_IMASK		(1 << 1)
-#define CNTV_CTL_ISTATUS	(1 << 2)
 
 #define AIC_INFO		0x0004
 #define  AIC_INFO_NDIE(val)	(((val) >> 24) & 0xf)

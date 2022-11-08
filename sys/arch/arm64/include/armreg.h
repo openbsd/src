@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.22 2022/10/04 19:36:20 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.23 2022/11/08 14:01:13 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -71,6 +71,11 @@
 
 /* CNTKCTL_EL1 - Counter-timer Kernel Control Register */
 #define	CNTKCTL_EL0VCTEN	(1 << 1) /* Allow EL0 virtual counter access */
+
+/* CNTV_CTL_EL0 */
+#define	CNTV_CTL_ENABLE		(1 << 0)
+#define	CNTV_CTL_IMASK		(1 << 1)
+#define	CNTV_CTL_ISTATUS	(1 << 2)
 
 /* CPACR_EL1 */
 #define	CPACR_FPEN_MASK		(0x3 << 20)
