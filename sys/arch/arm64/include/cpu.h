@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.29 2022/11/08 17:56:38 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.30 2022/11/08 20:41:36 mlarkin Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -22,7 +22,7 @@
  * User-visible definitions
  */
 
-/* 
+/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_COMPATIBLE		1	/* compatible property */
@@ -121,7 +121,7 @@ struct cpu_info {
 
 	uint64_t		ci_ttbr1;
 	vaddr_t			ci_el1_stkend;
-	
+
 	struct opp_table	*ci_opp_table;
 	volatile int		ci_opp_idx;
 	volatile int		ci_opp_max;
