@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.20 2022/03/07 14:17:47 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.21 2022/11/08 12:41:00 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -1656,7 +1656,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 
 	*intr = 0xFF;
 
-	DPRINTF("%s: request %s reg %u,%s sz %u", __func__,
+	DPRINTF("%s: request %s reg %u, %s sz %u", __func__,
 	    dir ? "READ" : "WRITE", reg, vioscsi_reg_name(reg), sz);
 
 	if (dir == 0) {
