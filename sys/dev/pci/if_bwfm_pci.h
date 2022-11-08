@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.h,v 1.8 2021/12/31 09:24:18 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.h,v 1.9 2022/11/08 18:28:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -114,7 +114,12 @@
 #define  BWFM_SHARED_INFO_VERSION_MASK			0x00FF
 #define  BWFM_SHARED_INFO_DMA_INDEX			0x10000
 #define  BWFM_SHARED_INFO_DMA_2B_IDX			0x100000
+#define  BWFM_SHARED_INFO_USE_MAILBOX			0x2000000
+#define  BWFM_SHARED_INFO_TIMESTAMP_DB0			0x8000000
 #define  BWFM_SHARED_INFO_HOSTRDY_DB1			0x10000000
+#define  BWFM_SHARED_INFO_NO_OOB_DW			0x20000000
+#define  BWFM_SHARED_INFO_INBAND_DS			0x40000000
+#define  BWFM_SHARED_INFO_SHARED_DAR			0x80000000
 #define BWFM_SHARED_CONSOLE_ADDR		0x14
 #define BWFM_SHARED_MAX_RXBUFPOST		0x22
 #define  BWFM_SHARED_MAX_RXBUFPOST_DEFAULT		255
@@ -136,6 +141,11 @@
 #define BWFM_SHARED_DMA_RINGUPD_LEN		0x40
 #define BWFM_SHARED_DMA_RINGUPD_ADDR_LOW	0x44
 #define BWFM_SHARED_DMA_RINGUPD_ADDR_HIGH	0x48
+#define BWFM_SHARED_HOST_CAP			0x54
+#define  BWFM_SHARED_HOST_CAP_H2D_ENABLE_HOSTRDY	0x00000400
+#define  BWFM_SHARED_HOST_CAP_DS_NO_OOB_DW		0x00001000
+#define  BWFM_SHARED_HOST_CAP_H2D_DAR			0x00010000
+#define BWFM_SHARED_HOST_CAP2			0x70
 
 #define BWFM_RING_MAX_ITEM			0x04
 #define BWFM_RING_LEN_ITEMS			0x06
@@ -200,6 +210,8 @@ struct bwfm_pci_ringinfo {
 #define MSGBUF_TYPE_RX_CMPLT			0x12
 #define MSGBUF_TYPE_LPBK_DMAXFER		0x13
 #define MSGBUF_TYPE_LPBK_DMAXFER_CMPLT		0x14
+#define MSGBUF_TYPE_H2D_MAILBOX_DATA		0x23
+#define MSGBUF_TYPE_D2H_MAILBOX_DATA		0x24
 
 struct msgbuf_common_hdr {
 	uint8_t			msgtype;
@@ -335,4 +347,17 @@ struct msgbuf_flowring_flush_resp {
 	struct msgbuf_common_hdr	msg;
 	struct msgbuf_completion_hdr	compl_hdr;
 	uint32_t			rsvd0[3];
+};
+
+struct msgbuf_h2d_mailbox_data {
+	struct msgbuf_common_hdr	msg;
+	uint32_t			data;
+	uint32_t			rsvd0[7];
+};
+
+struct msgbuf_d2h_mailbox_data {
+	struct msgbuf_common_hdr	msg;
+	struct msgbuf_completion_hdr	compl_hdr;
+	uint32_t			data;
+	uint32_t			rsvd0[2];
 };

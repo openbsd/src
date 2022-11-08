@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.72 2022/10/23 13:45:32 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.73 2022/11/08 18:28:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -187,6 +187,7 @@ struct bwfm_pci_softc {
 
 	uint8_t			 sc_mbdata_done;
 	uint8_t			 sc_pcireg64;
+	uint8_t			 sc_mb_via_ctl;
 };
 
 struct bwfm_pci_dmamem {
@@ -305,6 +306,8 @@ int		 bwfm_pci_msgbuf_set_dcmd(struct bwfm_softc *, int,
 		    int, char *, size_t);
 void		 bwfm_pci_msgbuf_rxioctl(struct bwfm_pci_softc *,
 		    struct msgbuf_ioctl_resp_hdr *);
+int		 bwfm_pci_msgbuf_h2d_mb_write(struct bwfm_pci_softc *,
+		    uint32_t);
 
 struct bwfm_buscore_ops bwfm_pci_buscore_ops = {
 	.bc_read = bwfm_pci_buscore_read,
@@ -531,6 +534,25 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		printf("%s: PCIe version %d unsupported\n",
 		    DEVNAME(sc), sc->sc_shared_version);
 		return 1;
+	}
+
+	if (sc->sc_shared_version >= 6) {
+		uint32_t host_cap;
+
+		if ((sc->sc_shared_flags & BWFM_SHARED_INFO_USE_MAILBOX) == 0)
+			sc->sc_mb_via_ctl = 1;
+
+		host_cap = sc->sc_shared_version;
+		if (sc->sc_shared_flags & BWFM_SHARED_INFO_HOSTRDY_DB1)
+			host_cap |= BWFM_SHARED_HOST_CAP_H2D_ENABLE_HOSTRDY;
+		if (sc->sc_shared_flags & BWFM_SHARED_INFO_SHARED_DAR)
+			host_cap |= BWFM_SHARED_HOST_CAP_H2D_DAR;
+		host_cap |= BWFM_SHARED_HOST_CAP_DS_NO_OOB_DW;
+
+		bus_space_write_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+		    sc->sc_shared_address + BWFM_SHARED_HOST_CAP, host_cap);
+		bus_space_write_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+		    sc->sc_shared_address + BWFM_SHARED_HOST_CAP2, 0);
 	}
 
 	sc->sc_dma_idx_sz = 0;
@@ -1408,7 +1430,7 @@ void
 bwfm_pci_ring_bell(struct bwfm_pci_softc *sc,
     struct bwfm_pci_msgring *ring)
 {
-	if (sc->sc_pcireg64)
+	if (sc->sc_shared_flags & BWFM_SHARED_INFO_SHARED_DAR)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_0, 1);
 	else
@@ -1641,6 +1663,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 	struct msgbuf_tx_status *tx;
 	struct msgbuf_rx_complete *rx;
 	struct msgbuf_rx_event *event;
+	struct msgbuf_d2h_mailbox_data *d2h;
 	struct msgbuf_common_hdr *msg;
 	struct msgbuf_flowring_create_resp *fcr;
 	struct msgbuf_flowring_delete_resp *fdr;
@@ -1754,6 +1777,13 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 		bwfm_rx(&sc->sc_sc, m, ml);
 		if_rxr_put(&sc->sc_rxbuf_ring, 1);
 		bwfm_pci_fill_rx_rings(sc);
+		break;
+	case MSGBUF_TYPE_D2H_MAILBOX_DATA:
+		d2h = (struct msgbuf_d2h_mailbox_data *)buf;
+		if (d2h->data & BWFM_PCI_D2H_DEV_D3_ACK) {
+			sc->sc_mbdata_done = 1;
+			wakeup(&sc->sc_mbdata_done);
+		}
 		break;
 	default:
 		printf("%s: msgtype 0x%08x\n", __func__, msg->msgtype);
@@ -2099,6 +2129,10 @@ bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
 	splx(s);
+
+	tsleep_nsec(ring, PCATCH, DEVNAME(sc), SEC_TO_NSEC(2));
+	if (ring->status != RING_CLOSED)
+		printf("%s: flowring not closing\n", DEVNAME(sc));
 }
 
 void
@@ -2111,6 +2145,7 @@ bwfm_pci_flowring_delete_cb(struct bwfm_softc *bwfm, void *arg)
 	ring = &sc->sc_flowrings[cmd->flowid];
 	bwfm_pci_dmamem_free(sc, ring->ring);
 	ring->status = RING_CLOSED;
+	wakeup(ring);
 }
 
 void
@@ -2224,6 +2259,9 @@ bwfm_pci_send_mb_data(struct bwfm_pci_softc *sc, uint32_t htod_mb_data)
 	struct bwfm_core *core;
 	uint32_t reg;
 	int i;
+
+	if (sc->sc_mb_via_ctl)
+		return bwfm_pci_msgbuf_h2d_mb_write(sc, htod_mb_data);
 
 	for (i = 0; i < 100; i++) {
 		reg = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
@@ -2405,7 +2443,7 @@ bwfm_pci_hostready(struct bwfm_pci_softc *sc)
 	if ((sc->sc_shared_flags & BWFM_SHARED_INFO_HOSTRDY_DB1) == 0)
 		return;
 
-	if (sc->sc_pcireg64)
+	if (sc->sc_shared_flags & BWFM_SHARED_INFO_SHARED_DAR)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_1, 1);
 	else
@@ -2523,4 +2561,29 @@ bwfm_pci_msgbuf_rxioctl(struct bwfm_pci_softc *sc,
 	}
 
 	m_freem(m);
+}
+
+int
+bwfm_pci_msgbuf_h2d_mb_write(struct bwfm_pci_softc *sc, uint32_t data)
+{
+	struct msgbuf_h2d_mailbox_data *req;
+	int s;
+
+	s = splnet();
+	req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
+	if (req == NULL) {
+		splx(s);
+		return ENOBUFS;
+	}
+
+	req->msg.msgtype = MSGBUF_TYPE_H2D_MAILBOX_DATA;
+	req->msg.ifidx = -1;
+	req->msg.flags = 0;
+	req->msg.request_id = 0;
+	req->data = data;
+
+	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
+	splx(s);
+
+	return 0;
 }
