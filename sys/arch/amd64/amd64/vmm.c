@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.326 2022/11/07 12:29:12 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.327 2022/11/08 18:08:43 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -894,9 +894,7 @@ vm_intr_pending(struct vm_intr_params *vip)
 		goto out;
 	}
 
-	rw_enter_write(&vcpu->vc_lock);
 	vcpu->vc_intr = vip->vip_intr;
-	rw_exit_write(&vcpu->vc_lock);
 
 	refcnt_rele_wake(&vcpu->vc_refcnt);
 out:
@@ -3526,7 +3524,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbrw(vcpu, MSR_FSBASE);
 	vmx_setmsrbrw(vcpu, MSR_GSBASE);
 	vmx_setmsrbrw(vcpu, MSR_KERNELGSBASE);
-	
+
 	vmx_setmsrbr(vcpu, MSR_MISC_ENABLE);
 	vmx_setmsrbr(vcpu, MSR_TSC);
 
