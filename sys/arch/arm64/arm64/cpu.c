@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.71 2022/10/04 19:41:21 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.72 2022/11/08 16:53:40 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -935,18 +935,47 @@ void
 cpu_halt(void)
 {
 	struct cpu_info *ci = curcpu();
+	int count = 0;
 
 	KERNEL_ASSERT_UNLOCKED();
 	SCHED_ASSERT_UNLOCKED();
 
 	intr_disable();
-	ci->ci_flags &= ~CPUF_RUNNING;
+
+	atomic_clearbits_int(&ci->ci_flags,
+	    CPUF_RUNNING | CPUF_PRESENT | CPUF_GO);
+
 #if NPSCI > 0
 	psci_cpu_off();
 #endif
-	for (;;)
-		__asm volatile("wfi");
-	/* NOTREACHED */
+
+	/*
+	 * If we failed to turn ourselves off using PSCI, declare that
+	 * we're still present and spin in a low power state until
+	 * we're told to wake up again by the primary CPU.
+	 */
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_PRESENT);
+
+	/* Mask clock interrupts. */
+	WRITE_SPECIALREG(cntv_ctl_el0,
+	    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
+
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		__asm volatile("wfe");
+		count++;
+	}
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
+	__asm volatile("dsb sy; sev" ::: "memory");
+
+	intr_enable();
+
+	/* Unmask clock interrupts. */
+	WRITE_SPECIALREG(cntv_ctl_el0,
+	    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
+
+	printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
 }
 
 void
@@ -997,6 +1026,48 @@ cpu_suspend_primary(void)
 	paddr_t startaddr, data;
 	uint64_t ttbr1;
 
+	if (!psci_can_suspend()) {
+		int count = 0;
+
+		/*
+		 * If PSCI doesn't support SYSTEM_SUSPEND, spin in a
+		 * low power state waiting for an interrupt that wakes
+		 * us up again.
+		 */
+
+		/* Mask clock interrupts. */
+		WRITE_SPECIALREG(cntv_ctl_el0,
+		    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
+
+		/*
+		 * All non-wakeup interrupts should be masked at this
+		 * point; re-enable interrupts such that wakeup
+		 * interrupts actually wake us up.  Set a flag such
+		 * that drivers can tell we're suspended and change
+		 * their behaviour accordingly.  They can wake us up
+		 * by clearing the flag.
+		 */
+		cpu_suspended = 1;
+		arm_intr_func.setipl(IPL_NONE);
+		intr_enable();
+
+		while (cpu_suspended) {
+			__asm volatile("wfi");
+			count++;
+		}
+
+		intr_disable();
+		arm_intr_func.setipl(IPL_HIGH);
+
+		/* Unmask clock interrupts. */
+		WRITE_SPECIALREG(cntv_ctl_el0,
+		    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
+
+		printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
+
+		return 0;
+	}
+
 	cpu_suspended = 0;
 	setjmp(&cpu_suspend_jmpbuf);
 	if (cpu_suspended) {
@@ -1033,13 +1104,15 @@ cpu_resume_secondary(struct cpu_info *ci)
 	struct switchframe *sf;
 	int timeout = 10000;
 
+	if (ci->ci_flags & CPUF_PRESENT)
+		return;
+
 	ci->ci_curproc = NULL;
 	ci->ci_curpcb = NULL;
 	ci->ci_curpm = NULL;
 	ci->ci_cpl = IPL_NONE;
 	ci->ci_ipending = 0;
 	ci->ci_idepth = 0;
-	ci->ci_flags &= ~CPUF_PRESENT;
 
 #ifdef DIAGNOSTIC
 	ci->ci_mutex_level = 0;
