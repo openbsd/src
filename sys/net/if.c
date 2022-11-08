@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.666 2022/11/08 11:25:01 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.667 2022/11/08 15:20:24 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1979,9 +1979,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGIFRDOMAIN:
 	case SIOCGIFGROUP:
 	case SIOCGIFLLPRIO:
-		KERNEL_LOCK();
 		error = ifioctl_get(cmd, data);
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -2428,6 +2426,8 @@ ifioctl_get(u_long cmd, caddr_t data)
 	size_t bytesdone;
 	const char *label;
 
+	KERNEL_LOCK();
+
 	switch(cmd) {
 	case SIOCGIFCONF:
 		NET_LOCK_SHARED();
@@ -2455,8 +2455,10 @@ ifioctl_get(u_long cmd, caddr_t data)
 	}
 
 	ifp = if_unit(ifr->ifr_name);
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		KERNEL_UNLOCK();
 		return (ENXIO);
+	}
 
 	NET_LOCK_SHARED();
 
@@ -2527,6 +2529,8 @@ ifioctl_get(u_long cmd, caddr_t data)
 	}
 
 	NET_UNLOCK_SHARED();
+
+	KERNEL_UNLOCK();
 
 	if_put(ifp);
 
