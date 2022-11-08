@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.657 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.658 2022/11/08 14:49:20 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3973,12 +3973,22 @@ cpu_rnd_messybits(void)
 	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }
 
+int i386_delay_quality;
+
 void
 delay_init(void(*fn)(int), int fn_quality)
 {
-	static int cur_quality = 0;
-	if (fn_quality > cur_quality) {
+	if (fn_quality > i386_delay_quality) {
 		delay_func = fn;
-		cur_quality = fn_quality;
+		i386_delay_quality = fn_quality;
+	}
+}
+
+void
+delay_fini(void (*fn)(int))
+{
+	if (delay_func == fn) {
+		delay_func = i8254_delay;
+		i386_delay_quality = 0;
 	}
 }
