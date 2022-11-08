@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.28 2022/08/29 02:01:18 jsg Exp $ */
+/* $OpenBSD: cpu.h,v 1.29 2022/11/08 17:56:38 cheloha Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -81,6 +81,7 @@ void	arm32_vector_init(vaddr_t, int);
  * Per-CPU information.  For now we assume one CPU.
  */
 
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
@@ -142,7 +143,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam	*ci_gmon;
 #endif
-
+	struct clockintr_queue	ci_queue;
 	char			ci_panicbuf[512];
 };
 
