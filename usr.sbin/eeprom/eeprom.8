@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.22 2020/01/08 14:45:36 kn Exp $
+.\"	$OpenBSD: eeprom.8,v 1.23 2022/11/08 12:11:13 kn Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 8 2020 $
+.Dd $Mdocdate: November 8 2022 $
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ one is likely to see on a system with an OpenPROM.
 NOTE: this list
 may be incomplete or incorrect due to differences between revisions
 of the OpenPROM.
-.Bl -tag -width "last-hardware-update  "
+.Bl -tag -width "network-boot-arguments  "
 .It Ar sunmon-compat?
 If true, the old EEPROM-style interface will be used while in the monitor,
 rather than the OpenPROM-style interface.
@@ -298,6 +298,8 @@ or
 specifying the default console output device.
 .It Ar keyboard-click?
 If true, the keys click annoyingly.
+.It Ar network-boot-arguments
+Comma separated list of arguments for booting over RARP or BOOTP/DHCP and TFTP.
 .It Ar sd-targets
 A string in the format
 .Dq 31204567
