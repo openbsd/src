@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.327 2022/11/08 18:08:43 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.328 2022/11/08 19:18:47 dlg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -878,6 +878,7 @@ vm_intr_pending(struct vm_intr_params *vip)
 {
 	struct vm *vm;
 	struct vcpu *vcpu;
+	struct cpu_info *ci;
 	int error, ret = 0;
 
 	/* Find the desired VM */
@@ -895,6 +896,9 @@ vm_intr_pending(struct vm_intr_params *vip)
 	}
 
 	vcpu->vc_intr = vip->vip_intr;
+	ci = READ_ONCE(vcpu->vc_curcpu);
+	if (ci != NULL)
+		x86_send_ipi(ci, X86_IPI_NOP);
 
 	refcnt_rele_wake(&vcpu->vc_refcnt);
 out:
@@ -4559,6 +4563,7 @@ vm_run(struct vm_run_params *vrp)
 		}
 	}
 
+	WRITE_ONCE(vcpu->vc_curcpu, curcpu());
 	/* Run the VCPU specified in vrp */
 	if (vcpu->vc_virt_mode == VMM_MODE_VMX ||
 	    vcpu->vc_virt_mode == VMM_MODE_EPT) {
@@ -4567,6 +4572,7 @@ vm_run(struct vm_run_params *vrp)
 		   vcpu->vc_virt_mode == VMM_MODE_RVI) {
 		ret = vcpu_run_svm(vcpu, vrp);
 	}
+	WRITE_ONCE(vcpu->vc_curcpu, NULL);
 
 	atomic_dec_int(&vm->vm_vcpus_running);
 	if (ret == 0 || ret == EAGAIN) {
