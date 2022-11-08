@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.667 2022/11/08 15:20:24 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.668 2022/11/08 17:57:14 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2426,33 +2426,43 @@ ifioctl_get(u_long cmd, caddr_t data)
 	size_t bytesdone;
 	const char *label;
 
-	KERNEL_LOCK();
-
 	switch(cmd) {
 	case SIOCGIFCONF:
+		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = ifconf(data);
 		NET_UNLOCK_SHARED();
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCIFGCLONERS:
+		KERNEL_LOCK();
 		error = if_clone_list((struct if_clonereq *)data);
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGMEMB:
+		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgroupmembers(data);
 		NET_UNLOCK_SHARED();
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGATTR:
+		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgroupattribs(data);
 		NET_UNLOCK_SHARED();
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGLIST:
+		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgrouplist(data);
 		NET_UNLOCK_SHARED();
+		KERNEL_UNLOCK();
 		return (error);
 	}
+
+	KERNEL_LOCK();
 
 	ifp = if_unit(ifr->ifr_name);
 	if (ifp == NULL) {
