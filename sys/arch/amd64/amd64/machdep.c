@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.282 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.283 2022/11/08 14:46:51 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -2073,12 +2073,22 @@ check_context(const struct reg *regs, struct trapframe *tf)
 	return 0;
 }
 
+int amd64_delay_quality;
+
 void
 delay_init(void(*fn)(int), int fn_quality)
 {
-	static int cur_quality = 0;
-	if (fn_quality > cur_quality) {
+	if (fn_quality > amd64_delay_quality) {
 		delay_func = fn;
-		cur_quality = fn_quality;
+		amd64_delay_quality = fn_quality;
+	}
+}
+
+void
+delay_fini(void (*fn)(int))
+{
+	if (fn == delay_func) {
+		delay_func = i8254_delay;
+		amd64_delay_quality = 0;
 	}
 }
