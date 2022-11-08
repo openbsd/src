@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.9 2022/11/08 17:01:57 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.10 2022/11/08 17:07:17 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -4618,20 +4618,7 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 void ED25519_keypair(uint8_t out_public_key[32], uint8_t out_private_key[64]) {
   uint8_t seed[32];
   arc4random_buf(seed, 32);
-
-  uint8_t az[SHA512_DIGEST_LENGTH];
-  SHA512(seed, 32, az);
-
-  az[0] &= 248;
-  az[31] &= 63;
-  az[31] |= 64;
-
-  ge_p3 A;
-  x25519_ge_scalarmult_base(&A, az);
-  ge_p3_tobytes(out_public_key, &A);
-
-  memcpy(out_private_key, seed, 32);
-  memmove(out_private_key + 32, out_public_key, 32);
+  ED25519_keypair_from_seed(out_public_key, out_private_key, seed);
 }
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
@@ -4703,6 +4690,24 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   x25519_ge_tobytes(rcheck, &R);
 
   return timingsafe_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
+}
+
+void ED25519_keypair_from_seed(uint8_t out_public_key[32],
+			       uint8_t out_private_key[64],
+			       const uint8_t seed[32]) {
+  uint8_t az[SHA512_DIGEST_LENGTH];
+  SHA512(seed, 32, az);
+
+  az[0] &= 248;
+  az[31] &= 63;
+  az[31] |= 64;
+
+  ge_p3 A;
+  x25519_ge_scalarmult_base(&A, az);
+  ge_p3_tobytes(out_public_key, &A);
+
+  memcpy(out_private_key, seed, 32);
+  memcpy(out_private_key + 32, out_public_key, 32);
 }
 
 /* Replace (f,g) with (g,f) if b == 1;

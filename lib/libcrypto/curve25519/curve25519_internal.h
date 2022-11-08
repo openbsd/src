@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519_internal.h,v 1.3 2019/05/11 15:55:52 tb Exp $ */
+/*	$OpenBSD: curve25519_internal.h,v 1.4 2022/11/08 17:07:17 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -93,6 +93,9 @@ void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
     const uint8_t point[32]);
 void x25519_scalar_mult_generic(uint8_t out[32], const uint8_t scalar[32],
     const uint8_t point[32]);
+
+void ED25519_keypair_from_seed(uint8_t out_public_key[32],
+    uint8_t out_private_key[64], const uint8_t seed[32]);
 
 __END_HIDDEN_DECLS
 
