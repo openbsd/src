@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.7 2022/11/06 16:31:19 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.8 2022/11/08 16:50:29 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -641,9 +641,6 @@ static void fe_invert(fe out, const fe z) {
   int i;
 
   fe_sq(t0, z);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t0, t0);
-  }
   fe_sq(t1, t0);
   for (i = 1; i < 2; ++i) {
     fe_sq(t1, t1);
@@ -651,9 +648,6 @@ static void fe_invert(fe out, const fe z) {
   fe_mul(t1, z, t1);
   fe_mul(t0, t0, t1);
   fe_sq(t2, t0);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t2, t2);
-  }
   fe_mul(t1, t1, t2);
   fe_sq(t2, t1);
   for (i = 1; i < 5; ++i) {
@@ -908,9 +902,6 @@ static void fe_pow22523(fe out, const fe z) {
   int i;
 
   fe_sq(t0, z);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t0, t0);
-  }
   fe_sq(t1, t0);
   for (i = 1; i < 2; ++i) {
     fe_sq(t1, t1);
@@ -918,9 +909,6 @@ static void fe_pow22523(fe out, const fe z) {
   fe_mul(t1, z, t1);
   fe_mul(t0, t0, t1);
   fe_sq(t0, t0);
-  for (i = 1; i < 1; ++i) {
-    fe_sq(t0, t0);
-  }
   fe_mul(t0, t1, t0);
   fe_sq(t1, t0);
   for (i = 1; i < 5; ++i) {
