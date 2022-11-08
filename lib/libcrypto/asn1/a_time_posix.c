@@ -1,3 +1,4 @@
+/* $OpenBSD: a_time_posix.c,v 1.2 2022/11/08 14:42:42 beck Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  * Copyright (c) 2022, Bob Beck <beck@obtuse.com>
