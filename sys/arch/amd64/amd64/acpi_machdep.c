@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.105 2022/09/20 14:28:27 robert Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.106 2022/11/08 17:34:12 cheloha Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -17,6 +17,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -469,8 +470,6 @@ acpi_resume_cpu(struct acpi_softc *sc, int state)
 
 #if NLAPIC > 0
 	lapic_enable();
-	if (initclock_func == lapic_initclocks)
-		lapic_startclock();
 	lapic_set_lvt();
 #endif
 

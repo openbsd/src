@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.37 2022/11/01 13:59:00 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.38 2022/11/08 17:34:13 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -90,6 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
@@ -169,10 +170,8 @@ startclocks(void)
 }
 
 int
-clockintr(void *arg)
+clockintr(void *frame)
 {
-	struct clockframe *frame = arg;
-
 	if (timecounter->tc_get_timecount == i8254_get_timecount) {
 		if (i8254_ticked) {
 			i8254_ticked = 0;
@@ -182,25 +181,25 @@ clockintr(void *arg)
 		}
 	}
 
-	hardclock(frame);
+	clockintr_dispatch(frame);
 
 	return 1;
 }
 
 int
-rtcintr(void *arg)
+rtcintr(void *frame)
 {
-	struct clockframe *frame = arg;
 	u_int stat = 0;
 
 	/*
 	 * If rtcintr is 'late', next intr may happen immediately.
 	 * Get them all. (Also, see comment in cpu_initclocks().)
 	 */
-	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF) {
-		statclock(frame);
+	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		stat = 1;
-	}
+
+	if (stat)
+		clockintr_dispatch(frame);
 
 	return (stat);
 }
@@ -281,8 +280,13 @@ rtcdrain(void *v)
 void
 i8254_initclocks(void)
 {
+	i8254_inittimecounter();	/* hook the interrupt-based i8254 tc */
+
 	stathz = 128;
-	profhz = 1024;
+	profhz = 1024;		/* XXX does not divide into 1 billion */
+	clockintr_init(0);
+
+	clockintr_cpu_init(NULL);
 
 	/*
 	 * While the clock interrupt handler isn't really MPSAFE, the
@@ -294,8 +298,6 @@ i8254_initclocks(void)
 	    rtcintr, 0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */
-
-	i8254_inittimecounter();	/* hook the interrupt-based i8254 tc */
 }
 
 void
@@ -518,6 +520,7 @@ setstatclockrate(int arg)
 			mc146818_write(NULL, MC_REGA,
 			    MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	}
+	clockintr_setstatclockrate(arg);
 }
 
 void
