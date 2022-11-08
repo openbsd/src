@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.328 2022/11/08 19:18:47 dlg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.329 2022/11/08 19:38:34 dlg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -95,7 +95,6 @@ struct vm {
 
 	struct vcpu_head	 vm_vcpu_list;		/* [v] */
 	uint32_t		 vm_vcpu_ct;		/* [v] */
-	u_int			 vm_vcpus_running;	/* [a] */
 	struct rwlock		 vm_vcpu_lock;
 
 	SLIST_ENTRY(vm)		 vm_link;		/* [V] */
@@ -1778,7 +1777,6 @@ vm_create(struct vm_create_params *vcp, struct proc *p)
 	}
 
 	vm->vm_vcpu_ct = 0;
-	vm->vm_vcpus_running = 0;
 
 	/* Initialize each VCPU defined in 'vcp' */
 	for (i = 0; i < vcp->vcp_ncpus; i++) {
@@ -4547,7 +4545,6 @@ vm_run(struct vm_run_params *vrp)
 		ret = EBUSY;
 		goto out_unlock;
 	}
-	atomic_inc_int(&vm->vm_vcpus_running);
 
 	/*
 	 * We may be returning from userland helping us from the last exit.
@@ -4574,7 +4571,6 @@ vm_run(struct vm_run_params *vrp)
 	}
 	WRITE_ONCE(vcpu->vc_curcpu, NULL);
 
-	atomic_dec_int(&vm->vm_vcpus_running);
 	if (ret == 0 || ret == EAGAIN) {
 		/* If we are exiting, populate exit data so vmd can help. */
 		vrp->vrp_exit_reason = (ret == 0) ? VM_EXIT_NONE
