@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio_fdt.c,v 1.1 2022/11/06 15:33:58 patrick Exp $	*/
+/*	$OpenBSD: qcgpio_fdt.c,v 1.2 2022/11/08 11:51:34 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,6 +26,8 @@
 #include <dev/ofw/fdt.h>
 
 /* Registers. */
+#define TLMM_GPIO_CFG(pin)		(0x0000 + 0x1000 * (pin))
+#define  TLMM_GPIO_CFG_OUT_EN				(1 << 9)
 #define TLMM_GPIO_IN_OUT(pin)		(0x0004 + 0x1000 * (pin))
 #define  TLMM_GPIO_IN_OUT_GPIO_IN			(1 << 0)
 #define  TLMM_GPIO_IN_OUT_GPIO_OUT			(1 << 1)
@@ -70,6 +72,7 @@ struct qcgpio_softc {
 	uint32_t		sc_npins;
 	struct qcgpio_intrhand	*sc_pin_ih;
 
+	struct gpio_controller	sc_gc;
 	struct interrupt_controller sc_ic;
 };
 
@@ -80,8 +83,10 @@ const struct cfattach qcgpio_fdt_ca = {
 	sizeof(struct qcgpio_softc), qcgpio_fdt_match, qcgpio_fdt_attach
 };
 
-int	qcgpio_fdt_read_pin(void *, int);
-void	qcgpio_fdt_write_pin(void *, int, int);
+void	qcgpio_fdt_config_pin(void *, uint32_t *, int);
+int	qcgpio_fdt_get_pin(void *, uint32_t *);
+void	qcgpio_fdt_set_pin(void *, uint32_t *, int);
+
 void	*qcgpio_fdt_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	qcgpio_fdt_intr_disestablish(void *);
@@ -123,6 +128,13 @@ qcgpio_fdt_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	sc->sc_gc.gc_node = faa->fa_node;
+	sc->sc_gc.gc_cookie = sc;
+	sc->sc_gc.gc_config_pin = qcgpio_fdt_config_pin;
+	sc->sc_gc.gc_get_pin = qcgpio_fdt_get_pin;
+	sc->sc_gc.gc_set_pin = qcgpio_fdt_set_pin;
+	gpio_controller_register(&sc->sc_gc);
+
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish = qcgpio_fdt_intr_establish;
@@ -142,26 +154,52 @@ unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 }
 
-int
-qcgpio_fdt_read_pin(void *cookie, int pin)
+void
+qcgpio_fdt_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct qcgpio_softc *sc = cookie;
-	uint32_t reg;
+	uint32_t pin = cells[0];
 
-	if (pin < 0 || pin >= sc->sc_npins)
+	if (pin >= sc->sc_npins)
+		return;
+
+	if (config & GPIO_CONFIG_OUTPUT)
+		HSET4(sc, TLMM_GPIO_CFG(pin), TLMM_GPIO_CFG_OUT_EN);
+	else
+		HCLR4(sc, TLMM_GPIO_CFG(pin), TLMM_GPIO_CFG_OUT_EN);
+}
+
+int
+qcgpio_fdt_get_pin(void *cookie, uint32_t *cells)
+{
+	struct qcgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t reg;
+	int val;
+
+	if (pin >= sc->sc_npins)
 		return 0;
 
 	reg = HREAD4(sc, TLMM_GPIO_IN_OUT(pin));
-	return !!(reg & TLMM_GPIO_IN_OUT_GPIO_IN);
+	val = !!(reg & TLMM_GPIO_IN_OUT_GPIO_IN);
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	return val;
 }
 
 void
-qcgpio_fdt_write_pin(void *cookie, int pin, int val)
+qcgpio_fdt_set_pin(void *cookie, uint32_t *cells, int val)
 {
 	struct qcgpio_softc *sc = cookie;
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
 
-	if (pin < 0 || pin >= sc->sc_npins)
+	if (pin >= sc->sc_npins)
 		return;
+
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
 
 	if (val) {
 		HSET4(sc, TLMM_GPIO_IN_OUT(pin),
