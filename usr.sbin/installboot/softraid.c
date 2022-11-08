@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.6 2022/11/07 15:56:09 kn Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.7 2022/11/08 12:08:53 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -26,11 +26,46 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 #include "installboot.h"
 
 static int sr_volume(int, char *, int *, int *);
+
+static void
+sr_prepare_chunk(int devfd, int vol, int disk)
+{
+	struct bioc_disk bd;
+	char *realdev;
+	char part;
+	int diskfd;
+
+	diskfd = sr_open_chunk(devfd, vol, disk, &bd, &realdev, &part);
+	if (diskfd == -1)
+		return;
+
+	/* Prepare file system on device. */
+	md_prepareboot(diskfd, realdev);
+
+	close(diskfd);
+}
+
+void
+sr_prepareboot(int devfd, char *dev)
+{
+	int vol = -1, ndisks = 0, disk;
+
+	/* Use the normal process if this is not a softraid volume. */
+	if (!sr_volume(devfd, dev, &vol, &ndisks)) {
+		md_prepareboot(devfd, dev);
+		return;
+	}
+
+	/* Prepare file system on each disk that is part of this volume. */
+	for (disk = 0; disk < ndisks; disk++)
+		sr_prepare_chunk(devfd, vol, disk);
+}
 
 void
 sr_installboot(int devfd, char *dev)

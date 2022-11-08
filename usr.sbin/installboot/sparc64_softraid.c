@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.8 2022/11/07 15:56:09 kn Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.9 2022/11/08 12:08:53 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -15,19 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 
 #include <dev/biovar.h>
-#include <dev/softraidvar.h>
 
 #include <err.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
-#include <util.h>
 #include <unistd.h>
 
 #include "installboot.h"

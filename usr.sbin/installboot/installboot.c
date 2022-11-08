@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.15 2022/08/19 08:27:48 kn Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.16 2022/11/08 12:08:53 kn Exp $	*/
 
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
@@ -91,7 +91,11 @@ main(int argc, char **argv)
 		err(1, "open: %s", realdev);
 
 	if (prepare) {
+#if SOFTRAID
+		sr_prepareboot(devfd, dev);
+#else
 		md_prepareboot(devfd, realdev);
+#endif
 		return 0;
 	}
 
