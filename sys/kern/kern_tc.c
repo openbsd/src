@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.78 2022/09/18 20:47:09 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.79 2022/11/08 18:17:51 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -552,7 +552,6 @@ void
 tc_setclock(const struct timespec *ts)
 {
 	struct bintime new_naptime, old_naptime, uptime, utc;
-	struct timespec tmp;
 	static int first = 1;
 #ifndef SMALL_KERNEL
 	struct bintime elapsed;
@@ -582,12 +581,6 @@ tc_setclock(const struct timespec *ts)
 	new_naptime = timehands->th_naptime;
 
 	mtx_leave(&windup_mtx);
-
-	if (bintimecmp(&old_naptime, &new_naptime, ==)) {
-		BINTIME_TO_TIMESPEC(&uptime, &tmp);
-		printf("%s: cannot rewind uptime to %lld.%09ld\n",
-		    __func__, (long long)tmp.tv_sec, tmp.tv_nsec);
-	}
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
