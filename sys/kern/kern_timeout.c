@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.85 2021/06/19 02:05:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.86 2022/11/08 19:09:53 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -166,7 +166,6 @@ struct lock_type timeout_spinlock_type = {
 	((needsproc) ? &timeout_sleeplock_obj : &timeout_spinlock_obj)
 #endif
 
-void kclock_nanotime(int, struct timespec *);
 void softclock(void *);
 void softclock_create_thread(void *);
 void softclock_process_kclock_timeout(struct timeout *, int);
@@ -428,30 +427,6 @@ timeout_at_ts(struct timeout *to, const struct timespec *abstime)
 	mtx_leave(&timeout_mutex);
 
 	return ret;
-}
-
-int
-timeout_in_nsec(struct timeout *to, uint64_t nsecs)
-{
-	struct timespec abstime, interval, now;
-
-	kclock_nanotime(to->to_kclock, &now);
-	NSEC_TO_TIMESPEC(nsecs, &interval);
-	timespecadd(&now, &interval, &abstime);
-
-	return timeout_at_ts(to, &abstime);
-}
-
-void
-kclock_nanotime(int kclock, struct timespec *now)
-{
-	switch (kclock) {
-	case KCLOCK_UPTIME:
-		nanouptime(now);
-		break;
-	default:
-		panic("invalid kclock: 0x%x", kclock);
-	}
 }
 
 int

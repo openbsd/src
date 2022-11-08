@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.43 2021/07/13 17:50:19 mvs Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.44 2022/11/08 19:09:53 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -120,7 +120,6 @@ int timeout_add_usec(struct timeout *, int);
 int timeout_add_nsec(struct timeout *, int);
 
 int timeout_at_ts(struct timeout *, const struct timespec *);
-int timeout_in_nsec(struct timeout *, uint64_t);
 
 int timeout_del(struct timeout *);
 int timeout_del_barrier(struct timeout *);
