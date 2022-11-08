@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.62 2022/11/06 11:44:30 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.63 2022/11/08 19:52:40 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -227,7 +227,6 @@ device	aplsmc
 attach	aplsmc at fdt
 file	arch/arm64/dev/aplsmc.c			aplsmc
 
-define	spmi {}
 device	aplpmu
 attach	aplpmu at spmi
 file	arch/arm64/dev/aplpmu.c			aplpmu
