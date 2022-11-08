@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.14 2022/11/07 18:56:20 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.15 2022/11/08 11:40:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -246,7 +246,9 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_barrier = aplintc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_ic);
 
+#ifdef MULTIPROCESSOR
 	intr_send_ipi_func = aplintc_send_ipi;
+#endif
 
 	if (sc->sc_version == 2)
 		HSET4(sc, AIC2_CONFIG, AIC2_CONFIG_ENABLE);
@@ -402,12 +404,14 @@ aplintc_fiq_handler(void *frame)
 	uint64_t reg;
 	int s;
 
+#ifdef MULTIPROCESSOR
 	/* Handle IPIs. */
 	reg = READ_SPECIALREG(APL_IPI_SR_EL1);
 	if (reg & APL_IPI_SR_EL1_PENDING) {
 		WRITE_SPECIALREG(APL_IPI_SR_EL1, APL_IPI_SR_EL1_PENDING);
 		aplintc_handle_ipi(sc);
 	}
+#endif
 
 	/* Handle timer interrupts. */
 	reg = READ_SPECIALREG(cntv_ctl_el0);
@@ -599,6 +603,8 @@ aplintc_intr_disestablish(void *cookie)
 	free(ih, M_DEVBUF, sizeof(*ih));
 }
 
+#ifdef MULTIPROCESSOR
+
 void
 aplintc_send_ipi(struct cpu_info *ci, int reason)
 {
@@ -642,3 +648,5 @@ aplintc_handle_ipi(struct aplintc_softc *sc)
 
 	sc->sc_ipi_count.ec_count++;
 }
+
+#endif
