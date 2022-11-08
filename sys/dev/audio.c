@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.204 2022/11/02 10:41:34 kn Exp $	*/
+/*	$OpenBSD: audio.c,v 1.205 2022/11/08 17:53:01 kn Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -592,7 +592,7 @@ audio_rintr(void *addr)
 
 	sc->rec.pos += sc->rec.blksz;
 	if ((sc->record_enable == MIXER_RECORD_ENABLE_SYSCTL &&
-		!audio_record_enable) ||
+	    !audio_record_enable) ||
 	    sc->record_enable == MIXER_RECORD_ENABLE_OFF) {
 		ptr = audio_buf_wgetblk(&sc->rec, &count);
 		audio_fill_sil(sc, ptr, sc->rec.blksz);
