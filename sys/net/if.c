@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.671 2022/11/08 18:47:58 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.672 2022/11/08 21:07:33 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1980,7 +1980,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGIFRDOMAIN:
 	case SIOCGIFGROUP:
 	case SIOCGIFLLPRIO:
+		KERNEL_LOCK();
 		error = ifioctl_get(cmd, data);
+		KERNEL_UNLOCK();
 		return (error);
 	}
 
@@ -2429,45 +2431,33 @@ ifioctl_get(u_long cmd, caddr_t data)
 
 	switch(cmd) {
 	case SIOCGIFCONF:
-		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = ifconf(data);
 		NET_UNLOCK_SHARED();
-		KERNEL_UNLOCK();
 		return (error);
 	case SIOCIFGCLONERS:
 		error = if_clone_list((struct if_clonereq *)data);
 		return (error);
 	case SIOCGIFGMEMB:
-		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgroupmembers(data);
 		NET_UNLOCK_SHARED();
-		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGATTR:
-		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgroupattribs(data);
 		NET_UNLOCK_SHARED();
-		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGLIST:
-		KERNEL_LOCK();
 		NET_LOCK_SHARED();
 		error = if_getgrouplist(data);
 		NET_UNLOCK_SHARED();
-		KERNEL_UNLOCK();
 		return (error);
 	}
 
-	KERNEL_LOCK();
-
 	ifp = if_unit(ifr->ifr_name);
-	if (ifp == NULL) {
-		KERNEL_UNLOCK();
+	if (ifp == NULL)
 		return (ENXIO);
-	}
 
 	NET_LOCK_SHARED();
 
@@ -2538,8 +2528,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 	}
 
 	NET_UNLOCK_SHARED();
-
-	KERNEL_UNLOCK();
 
 	if_put(ifp);
 
