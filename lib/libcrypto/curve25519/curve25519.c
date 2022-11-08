@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.8 2022/11/08 16:50:29 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.9 2022/11/08 17:01:57 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -3494,7 +3494,7 @@ static void table_select(ge_precomp *t, int pos, signed char b) {
  *
  * Preconditions:
  *   a[31] <= 127 */
-void x25519_ge_scalarmult_base(ge_p3 *h, const uint8_t a[32]) {
+void x25519_ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
   signed char e[64];
   signed char carry;
   ge_p1p1 r;
