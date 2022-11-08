@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.92 2022/11/02 07:36:07 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.93 2022/11/08 10:04:31 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -317,7 +317,7 @@ static struct input_key_entry input_key_defaults[] = {
 	  .data = "\033[9;5u"
 	},
 	{ .key = '\011'|KEYC_CTRL|KEYC_SHIFT,
-	  .data = "\011"
+	  .data = "\033[Z"
 	},
 	{ .key = '\011'|KEYC_CTRL|KEYC_SHIFT|KEYC_EXTENDED,
 	  .data = "\033[1;5Z"
