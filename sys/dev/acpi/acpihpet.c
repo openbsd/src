@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.29 2022/09/12 10:58:05 cheloha Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.30 2022/11/08 14:54:47 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -109,6 +109,8 @@ acpihpet_activate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_SUSPEND:
+		delay_fini(acpihpet_delay);
+
 		/* stop, then save */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, sc->sc_conf);
@@ -169,6 +171,8 @@ acpihpet_activate(struct device *self, int act)
 		    HPET_TIMER2_COMPARE, sc->sc_save.timers[2].compare);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    HPET_CONFIGURATION, sc->sc_conf | 1);
+
+		delay_init(acpihpet_delay, 2000);
 		break;
 	}
 
