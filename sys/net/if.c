@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.665 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.666 2022/11/08 11:25:01 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1942,19 +1942,25 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCIFCREATE:
 		if ((error = suser(p)) != 0)
 			return (error);
+		KERNEL_LOCK();
 		error = if_clone_create(ifr->ifr_name, 0);
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCIFDESTROY:
 		if ((error = suser(p)) != 0)
 			return (error);
+		KERNEL_LOCK();
 		error = if_clone_destroy(ifr->ifr_name);
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCSIFGATTR:
 		if ((error = suser(p)) != 0)
 			return (error);
+		KERNEL_LOCK();
 		NET_LOCK();
 		error = if_setgroupattribs(data);
 		NET_UNLOCK();
+		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFCONF:
 	case SIOCIFGCLONERS:
@@ -1973,12 +1979,19 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCGIFRDOMAIN:
 	case SIOCGIFGROUP:
 	case SIOCGIFLLPRIO:
-		return (ifioctl_get(cmd, data));
+		KERNEL_LOCK();
+		error = ifioctl_get(cmd, data);
+		KERNEL_UNLOCK();
+		return (error);
 	}
 
+	KERNEL_LOCK();
+
 	ifp = if_unit(ifr->ifr_name);
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		KERNEL_UNLOCK();
 		return (ENXIO);
+	}
 	oif_flags = ifp->if_flags;
 	oif_xflags = ifp->if_xflags;
 
@@ -2396,6 +2409,8 @@ forceup:
 
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0)
 		getmicrotime(&ifp->if_lastchange);
+
+	KERNEL_UNLOCK();
 
 	if_put(ifp);
 
