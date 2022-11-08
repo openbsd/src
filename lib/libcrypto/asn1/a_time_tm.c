@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.24 2022/07/04 14:39:43 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.25 2022/11/08 12:56:00 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -25,7 +25,7 @@
 #include <openssl/err.h>
 
 #include "bytestring.h"
-#include "o_time.h"
+#include "asn1_locl.h"
 
 #define RFC5280 0
 #define GENTIME_LENGTH 15
@@ -68,7 +68,7 @@ ASN1_time_tm_clamp_notafter(struct tm *tm)
 	struct tm broken_os_epoch_tm;
 	time_t broken_os_epoch_time = INT_MAX;
 
-	if (gmtime_r(&broken_os_epoch_time, &broken_os_epoch_tm) == NULL)
+	if (!OPENSSL_gmtime(&broken_os_epoch_time, &broken_os_epoch_tm))
 		return 0;
 
 	if (ASN1_time_tm_cmp(tm, &broken_os_epoch_tm) == 1)
@@ -379,7 +379,7 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 {
 	struct tm tm;
 
-	if (gmtime_r(&t, &tm) == NULL)
+	if (!asn1_time_time_t_to_tm(&t, &tm))
 		return (NULL);
 
 	if (offset_day != 0 || offset_sec != 0) {
@@ -410,7 +410,7 @@ ASN1_TIME_set_tm(ASN1_TIME *s, struct tm *tm)
 {
 	time_t t;
 
-	if ((t = timegm(tm)) == -1)
+	if (!asn1_time_tm_to_time_t(tm, &t))
 		return NULL;
 	return (ASN1_TIME_adj(s, t, 0, 0));
 }
@@ -475,7 +475,7 @@ ASN1_TIME_cmp_time_t_internal(const ASN1_TIME *s, time_t t2, int mode)
 	if (ASN1_time_parse(s->data, s->length, &tm1, mode) == -1)
 		return -2;
 
-	if (gmtime_r(&t2, &tm2) == NULL)
+	if (!asn1_time_time_t_to_tm(&t2, &tm2))
 		return -2;
 
 	return ASN1_time_tm_cmp(&tm1, &tm2);

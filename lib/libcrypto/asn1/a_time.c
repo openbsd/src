@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.34 2022/06/27 13:54:57 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.35 2022/11/08 12:56:00 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,6 @@
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
 
-#include "o_time.h"
 #include "asn1_locl.h"
 
 const ASN1_ITEM ASN1_TIME_it = {
@@ -103,7 +102,7 @@ ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 	time(&now);
 	memset(tm, 0, sizeof(*tm));
 
-	return gmtime_r(&now, tm) != NULL;
+	return asn1_time_time_t_to_tm(&now, tm);
 }
 
 int
