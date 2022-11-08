@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.296 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.297 2022/11/08 19:17:58 robert Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -964,6 +964,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			case KERN_NGROUPS:	/* kern.ngroups */
 			case KERN_SYSVSHM:	/* kern.sysvshm */
 			case KERN_POSIX1:	/* kern.posix1version */
+			case KERN_AUTOCONF_SERIAL:	/* kern.autoconf_serial */
 				return (0);
 			}
 			break;
