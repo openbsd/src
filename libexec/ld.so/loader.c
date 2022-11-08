@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.201 2022/11/07 10:35:26 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.202 2022/11/08 06:47:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -219,9 +219,13 @@ _dl_clean_boot(void)
 	extern char boot_data_start[], boot_data_end[];
 #endif
 
-	_dl_munmap(boot_text_start, boot_text_end - boot_text_start);
+	_dl_mmap(boot_text_start, boot_text_end - boot_text_start,
+	    PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+	_dl_mimmutable(boot_text_start, boot_text_end - boot_text_start);
 #if 0	/* XXX breaks boehm-gc?!? */
-	_dl_munmap(boot_data_start, boot_data_end - boot_data_start);
+	_dl_mmap(boot_data_start, boot_data_end - boot_data_start,
+	    PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
+	_dl_mimmutable(boot_data_start, boot_data_end - boot_data_start);
 #endif
 }
 #endif /* DO_CLEAN_BOOT */
