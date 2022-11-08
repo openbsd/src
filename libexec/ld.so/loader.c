@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.202 2022/11/08 06:47:31 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.203 2022/11/08 13:47:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -567,6 +567,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	}
 	exe_obj->load_list = load_list;
 	exe_obj->obj_flags |= DF_1_GLOBAL;
+	exe_obj->nodelete = 1;
 	exe_obj->load_size = maxva - minva;
 	exe_obj->relro_addr = relro_addr;
 	exe_obj->relro_size = relro_size;
