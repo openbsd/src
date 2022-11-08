@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.376 2022/10/14 16:36:36 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.377 2022/11/08 17:52:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1287,7 +1287,7 @@ void
 edit_parms(struct disklabel *lp)
 {
 	char *p;
-	u_int64_t freesectors, ui;
+	u_int64_t ui;
 	struct disklabel oldlabel = *lp;
 
 	printf("Changing disk type and label description for %s:\n", specname);
