@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.244 2022/11/08 19:07:34 tobhe Exp $
+# $OpenBSD: GENERIC,v 1.245 2022/11/08 19:49:34 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -308,10 +308,15 @@ sdmmc*		at dwmmc?
 # Qualcomm SoCs
 qcdwusb*	at fdt?
 qcgpio*		at acpi?
-qcgpio*		at fdt?
+qcgpio*		at fdt? early 1
 qciic*		at acpi?
 qciic*		at fdt?
 iic*		at qciic?
+qcspmi*		at fdt?
+qcpmic*		at qcspmi?
+qcpmicgpio*	at qcpmic?
+qcpon*		at qcpmic?
+qcrtc*		at qcpmic?
 
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs

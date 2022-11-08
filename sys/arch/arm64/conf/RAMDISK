@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.181 2022/11/06 15:36:13 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.182 2022/11/08 19:49:34 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -235,10 +235,15 @@ sdmmc*		at dwmmc?
 # Qualcomm SoCs
 qcdwusb*	at fdt?
 qcgpio*		at acpi?
-qcgpio*		at fdt?
+qcgpio*		at fdt? early 1
 qciic*		at acpi?
 qciic*		at fdt?
 iic*		at qciic?
+qcspmi*		at fdt?
+qcpmic*		at qcspmi?
+qcpmicgpio*	at qcpmic?
+qcpon*		at qcpmic?
+qcrtc*		at qcpmic?
 
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs

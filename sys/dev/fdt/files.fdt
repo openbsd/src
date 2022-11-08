@@ -1,7 +1,9 @@
-#	$OpenBSD: files.fdt,v 1.168 2022/11/08 19:06:57 tobhe Exp $
+#	$OpenBSD: files.fdt,v 1.169 2022/11/08 19:49:34 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
+
+define	spmi {}
 
 device	iicmux: i2cbus
 attach	iicmux at fdt
@@ -636,3 +638,28 @@ file	dev/fdt/qcgpio_fdt.c		qcgpio
 # Qualcomm I2C controller
 attach	qciic at fdt with qciic_fdt
 file	dev/fdt/qciic_fdt.c		qciic
+
+# Qualcomm SPMI controller
+device	qcspmi: spmi
+attach	qcspmi at fdt
+file	dev/fdt/qcspmi.c		qcspmi
+
+# Qualcomm PMIC
+device	qcpmic: spmi
+attach	qcpmic at spmi
+file	dev/fdt/qcpmic.c		qcpmic
+
+# Qualcomm PMIC GPIO
+device	qcpmicgpio
+attach	qcpmicgpio at spmi
+file	dev/fdt/qcpmicgpio.c		qcpmicgpio
+
+# Qualcomm PMIC PON
+device	qcpon
+attach	qcpon at spmi
+file	dev/fdt/qcpon.c			qcpon
+
+# Qualcomm PMIC RTC
+device	qcrtc
+attach	qcrtc at spmi
+file	dev/fdt/qcrtc.c			qcrtc
