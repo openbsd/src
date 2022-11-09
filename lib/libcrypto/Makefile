@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.81 2022/11/09 22:52:51 tb Exp $
+# $OpenBSD: Makefile,v 1.82 2022/11/09 23:33:08 joshua Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -52,27 +52,92 @@ VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 # crypto/
-SRCS+= cryptlib.c malloc-wrapper.c mem_dbg.c cversion.c ex_data.c cpt_err.c
-SRCS+= o_str.c o_init.c o_fips.c
-SRCS+= mem_clr.c crypto_init.c crypto_lock.c
+SRCS+= cpt_err.c
+SRCS+= cryptlib.c
+SRCS+= crypto_init.c
+SRCS+= crypto_lock.c
+SRCS+= cversion.c
+SRCS+= ex_data.c
+SRCS+= malloc-wrapper.c
+SRCS+= mem_clr.c
+SRCS+= mem_dbg.c
+SRCS+= o_fips.c
+SRCS+= o_init.c
+SRCS+= o_str.c
 
 # aes/
-SRCS+= aes_misc.c aes_ecb.c aes_cfb.c aes_ofb.c
-SRCS+= aes_ctr.c aes_ige.c aes_wrap.c
+SRCS+= aes_cfb.c
+SRCS+= aes_ctr.c
+SRCS+= aes_ecb.c
+SRCS+= aes_ige.c
+SRCS+= aes_misc.c
+SRCS+= aes_ofb.c
+SRCS+= aes_wrap.c
 
 # asn1/
-SRCS+= a_object.c a_bitstr.c a_time.c a_int.c a_octet.c a_pkey.c a_pubkey.c
-SRCS+= a_print.c a_type.c a_string.c
-SRCS+= a_enum.c a_utf8.c a_mbstr.c a_strex.c
-SRCS+= x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c
-SRCS+= x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c
-SRCS+= t_req.c t_x509.c t_x509a.c t_crl.c t_pkey.c t_spki.c
-SRCS+= tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c
-SRCS+= tasn_prn.c ameth_lib.c
-SRCS+= x_pkey.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c
-SRCS+= asn1_gen.c asn1_par.c asn1_old_lib.c asn1_err.c a_strnid.c
-SRCS+= p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
-SRCS+= a_time_tm.c asn1_item.c asn1_old.c asn1_types.c asn1_lib.c a_time_posix.c
+SRCS+= a_bitstr.c
+SRCS+= a_enum.c
+SRCS+= a_int.c
+SRCS+= a_mbstr.c
+SRCS+= a_object.c
+SRCS+= a_octet.c
+SRCS+= a_pkey.c
+SRCS+= a_print.c
+SRCS+= a_pubkey.c
+SRCS+= a_strex.c
+SRCS+= a_string.c
+SRCS+= a_strnid.c
+SRCS+= a_time.c
+SRCS+= a_time_posix.c
+SRCS+= a_time_tm.c
+SRCS+= a_type.c
+SRCS+= a_utf8.c
+SRCS+= ameth_lib.c
+SRCS+= asn1_err.c
+SRCS+= asn1_gen.c
+SRCS+= asn1_item.c
+SRCS+= asn1_lib.c
+SRCS+= asn1_old.c
+SRCS+= asn1_old_lib.c
+SRCS+= asn1_par.c
+SRCS+= asn1_types.c
+SRCS+= asn_mime.c
+SRCS+= asn_moid.c
+SRCS+= bio_asn1.c
+SRCS+= bio_ndef.c
+SRCS+= nsseq.c
+SRCS+= p5_pbe.c
+SRCS+= p5_pbev2.c
+SRCS+= p8_pkey.c
+SRCS+= t_crl.c
+SRCS+= t_pkey.c
+SRCS+= t_req.c
+SRCS+= t_spki.c
+SRCS+= t_x509.c
+SRCS+= t_x509a.c
+SRCS+= tasn_dec.c
+SRCS+= tasn_enc.c
+SRCS+= tasn_fre.c
+SRCS+= tasn_new.c
+SRCS+= tasn_prn.c
+SRCS+= tasn_typ.c
+SRCS+= tasn_utl.c
+SRCS+= x_algor.c
+SRCS+= x_attrib.c
+SRCS+= x_bignum.c
+SRCS+= x_crl.c
+SRCS+= x_exten.c
+SRCS+= x_info.c
+SRCS+= x_long.c
+SRCS+= x_name.c
+SRCS+= x_pkey.c
+SRCS+= x_pubkey.c
+SRCS+= x_req.c
+SRCS+= x_sig.c
+SRCS+= x_spki.c
+SRCS+= x_val.c
+SRCS+= x_x509.c
+SRCS+= x_x509a.c
 
 # bf/
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c
