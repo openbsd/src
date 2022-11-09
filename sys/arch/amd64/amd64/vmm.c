@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.330 2022/11/09 06:32:58 stsp Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.331 2022/11/09 10:19:20 dlg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -896,8 +896,8 @@ vm_intr_pending(struct vm_intr_params *vip)
 		goto out;
 	}
 
-#ifdef MULTIPROCESSOR
 	vcpu->vc_intr = vip->vip_intr;
+#ifdef MULTIPROCESSOR
 	ci = READ_ONCE(vcpu->vc_curcpu);
 	if (ci != NULL)
 		x86_send_ipi(ci, X86_IPI_NOP);
