@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiobl.c,v 1.1 2022/11/08 19:06:57 tobhe Exp $	*/
+/*	$OpenBSD: gpiobl.c,v 1.2 2022/11/09 22:56:44 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Tobias Heider <tobhe@openbsd.org>
  *
@@ -31,6 +31,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
+extern void (*simplefb_burn_hook)(u_int);
+
 struct gpiobl_softc {
 	struct device		sc_dev;
 	int			sc_on;
@@ -51,9 +53,8 @@ struct cfdriver gpiobl_cd = {
 	NULL, "gpiobl", DV_DULL
 };
 
+void gpiobl_set(u_int);
 void gpiobl_task(void *);
-int gpiobl_get_param(struct wsdisplay_param *);
-int gpiobl_set_param(struct wsdisplay_param *);
 
 int
 gpiobl_match(struct device *parent, void *match, void *aux)
@@ -81,9 +82,18 @@ gpiobl_attach(struct device *parent, struct device *self, void *aux)
 	sc_gpiobl = sc;
 
 	task_set(&sc->sc_task, gpiobl_task, sc);
-	ws_get_param = gpiobl_get_param;
-	ws_set_param = gpiobl_set_param;
+
+	simplefb_burn_hook = gpiobl_set;
+
 	printf("\n");
+}
+
+void
+gpiobl_set(u_int on)
+{
+	struct gpiobl_softc *sc = (struct gpiobl_softc *)sc_gpiobl;
+	sc->sc_on = on;
+	task_add(systq, &sc->sc_task);
 }
 
 void
@@ -91,37 +101,4 @@ gpiobl_task(void *args)
 {
 	struct gpiobl_softc *sc = args;
 	gpio_controller_set_pin(&sc->sc_gpio[0], sc->sc_on);
-}
-
-int
-gpiobl_get_param(struct wsdisplay_param *dp)
-{
-	struct gpiobl_softc *sc = (struct gpiobl_softc *)sc_gpiobl;
-
-	switch (dp->param) {
-	case WSDISPLAYIO_PARAM_BRIGHTNESS:
-		dp->min = 0;
-		dp->max = 1;
-		dp->curval = sc->sc_on;
-		return 0;
-	default:
-		return -1;
-	}
-}
-
-int
-gpiobl_set_param(struct wsdisplay_param *dp)
-{
-	struct gpiobl_softc *sc = (struct gpiobl_softc *)sc_gpiobl;
-
-	switch (dp->param) {
-	case WSDISPLAYIO_PARAM_BRIGHTNESS:
-		if (dp->curval == sc->sc_on)
-			return 0;
-		sc->sc_on = !sc->sc_on;
-		task_add(systq, &sc->sc_task);
-		return 0;
-	default:
-		return -1;
-	}
 }

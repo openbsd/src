@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.18 2022/11/09 22:12:40 kn Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.19 2022/11/09 22:56:44 tobhe Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -74,6 +74,8 @@ struct simplefb_softc {
 	psize_t			sc_psize;
 };
 
+void (*simplefb_burn_hook)(u_int) = NULL;
+
 struct rasops_info simplefb_ri;
 struct wsscreen_descr simplefb_wsd = { "std" };
 struct wsdisplay_charcell simplefb_bs[SIMPLEFB_WIDTH * SIMPLEFB_HEIGHT];
@@ -95,6 +97,7 @@ int	simplefb_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	simplefb_wsmmap(void *, off_t, int);
 int	simplefb_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, uint32_t *);
+void	simplefb_burn_screen(void *, u_int, u_int);
 
 struct wsdisplay_accessops simplefb_accessops = {
 	.ioctl = simplefb_wsioctl,
@@ -105,7 +108,8 @@ struct wsdisplay_accessops simplefb_accessops = {
 	.getchar = rasops_getchar,
 	.load_font = rasops_load_font,
 	.list_font = rasops_list_font,
-	.scrollback = rasops_scrollback
+	.scrollback = rasops_scrollback,
+	.burn_screen = simplefb_burn_screen,
 };
 
 int
@@ -309,6 +313,13 @@ simplefb_alloc_screen(void *v, const struct wsscreen_descr *type,
     void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
+} 
+
+void
+simplefb_burn_screen(void *v, u_int on, u_int flags)
+{
+	if (simplefb_burn_hook != NULL)
+		simplefb_burn_hook(on);
 }
 
 #include "ukbd.h"
