@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.23 2022/11/09 02:01:13 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.24 2022/11/09 11:31:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,8 +116,6 @@
 
 #include "bn_lcl.h"
 
-#define LIBRESSL_HAS_BPSW
-
 /* NB: these functions have been "upgraded", the deprecated versions (which are
  * compatibility wrappers using these functions) are in bn_depr.c.
  * - Geoff
@@ -164,9 +162,9 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 {
 	BIGNUM *t;
 	int found = 0;
-	int i, j, c1 = 0;
+	int loops = 0;
+	int j;
 	BN_CTX *ctx;
-	int checks = 1;
 
 	if (bits < 2 || (bits == 2 && safe)) {
 		/*
@@ -177,18 +175,13 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 		return 0;
 	}
 
-	ctx = BN_CTX_new();
-	if (ctx == NULL)
+	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 	BN_CTX_start(ctx);
 	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-#ifndef LIBRESSL_HAS_BPSW
-	checks = BN_prime_checks_for_size(bits);
-#endif
-
-loop:
+ loop:
 	/* make a random number and set the top and bottom bits */
 	if (add == NULL) {
 		if (!probable_prime(ret, bits))
@@ -202,16 +195,15 @@ loop:
 				goto err;
 		}
 	}
-	/* if (BN_mod_word(ret,(BN_ULONG)3) == 1) goto loop; */
-	if (!BN_GENCB_call(cb, 0, c1++))
-		/* aborted */
+
+	if (!BN_GENCB_call(cb, 0, loops++))
 		goto err;
 
 	if (!safe) {
-		i = BN_is_prime_fasttest_ex(ret, checks, ctx, 0, cb);
-		if (i == -1)
+		j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
+		if (j == -1)
 			goto err;
-		if (i == 0)
+		if (j == 0)
 			goto loop;
 	} else {
 		/* for "safe prime" generation,
@@ -221,33 +213,31 @@ loop:
 		if (!BN_rshift1(t, ret))
 			goto err;
 
-		for (i = 0; i < checks; i++) {
-			j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
-			if (j == -1)
-				goto err;
-			if (j == 0)
-				goto loop;
+		j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
+		if (j == -1)
+			goto err;
+		if (j == 0)
+			goto loop;
 
-			j = BN_is_prime_fasttest_ex(t, 1, ctx, 0, cb);
-			if (j == -1)
-				goto err;
-			if (j == 0)
-				goto loop;
+		j = BN_is_prime_fasttest_ex(t, 1, ctx, 0, cb);
+		if (j == -1)
+			goto err;
+		if (j == 0)
+			goto loop;
 
-			if (!BN_GENCB_call(cb, 2, c1 - 1))
-				goto err;
-			/* We have a safe prime test pass */
-		}
+		if (!BN_GENCB_call(cb, 2, loops - 1))
+			goto err;
+
+		/* We have a safe prime test pass */
 	}
-	/* we have a prime :-) */
+
 	found = 1;
 
-err:
-	if (ctx != NULL) {
-		BN_CTX_end(ctx);
-		BN_CTX_free(ctx);
-	}
+ err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	bn_check_top(ret);
+
 	return found;
 }
 
