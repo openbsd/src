@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.126 2022/11/01 10:50:05 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.127 2022/11/09 10:10:53 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 1 2022 $
+.Dd $Mdocdate: November 9 2022 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -224,6 +224,14 @@ see
 and a
 .Ar default
 package name, in case there is no listing of available packages.
+.Pp
+As a special case,
+.Sq =
+may be used as a
+.Ar pkgspec ,
+to match the
+.Ar default
+version exactly.
 .It Fl p Ar prefix
 Set
 .Ar prefix
