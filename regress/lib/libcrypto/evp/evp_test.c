@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.1 2022/11/09 16:13:39 jsing Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.2 2022/11/09 17:15:59 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -21,7 +21,7 @@
 #include "evp_locl.h"
 
 static int
-evp_meth_find_test(void)
+evp_asn1_method_test(void)
 {
 	const EVP_PKEY_ASN1_METHOD *method;
 	int count, pkey_id, i;
@@ -101,12 +101,49 @@ evp_meth_find_test(void)
 	return failed;
 }
 
+static int
+evp_pkey_method_test(void)
+{
+	const EVP_PKEY_METHOD *method;
+	int pkey_id;
+	int failed = 1;
+
+	if ((method = EVP_PKEY_meth_find(EVP_PKEY_RSA)) == NULL) {
+		fprintf(stderr, "FAIL: failed to find RSA method\n");
+		goto failure;
+	}
+	EVP_PKEY_meth_get0_info(&pkey_id, NULL, method);
+	if (pkey_id != EVP_PKEY_RSA) {
+		fprintf(stderr, "FAIL: method ID mismatch (%d != %d)\n",
+		    pkey_id, EVP_PKEY_RSA);
+		goto failure;
+	}
+
+	if ((method = EVP_PKEY_meth_find(EVP_PKEY_RSA_PSS)) == NULL) {
+		fprintf(stderr, "FAIL: failed to find RSA-PSS method\n");
+		goto failure;
+	}
+	EVP_PKEY_meth_get0_info(&pkey_id, NULL, method);
+	if (pkey_id != EVP_PKEY_RSA_PSS) {
+		fprintf(stderr, "FAIL: method ID mismatch (%d != %d)\n",
+		    pkey_id, EVP_PKEY_RSA_PSS);
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
-	failed |= evp_meth_find_test();
+	failed |= evp_asn1_method_test();
+	failed |= evp_pkey_method_test();
 
 	return failed;
 }
