@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.23 2022/01/06 14:30:30 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.24 2022/11/09 23:14:51 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -80,11 +80,9 @@ int CBS_stow(const CBS *cbs, uint8_t **out_ptr, size_t *out_len);
 /*
  * CBS_strdup copies the current contents of |cbs| into |*out_ptr| as a
  * NUL-terminated C string. If |*out_ptr| is not NULL, the contents are freed
- * with free. It returns one on success and zero on allocation
- * failure. On success, |*out_ptr| should be freed with free.
- *
- * NOTE: If |cbs| contains NUL bytes, the string will be truncated. Call
- * |CBS_contains_zero_byte(cbs)| to check for NUL bytes.
+ * with free. It returns one on success and zero on failure. On success,
+ * |*out_ptr| should be freed with free. If |cbs| contains NUL bytes,
+ * CBS_strdup will fail.
  */
 int CBS_strdup(const CBS *cbs, char **out_ptr);
 
