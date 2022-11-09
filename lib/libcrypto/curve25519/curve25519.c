@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.11 2022/11/09 17:39:29 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.12 2022/11/09 17:40:51 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -4841,7 +4841,7 @@ x25519_scalar_mult_generic(uint8_t out[32], const uint8_t scalar[32],
 
 #ifdef unused
 void
-x25519_public_from_private_generic(uint8_t out_public_value[32],
+x25519_public_from_private_generic(uint8_t out_public_key[32],
     const uint8_t private_key[32])
 {
   uint8_t e[32];
@@ -4861,21 +4861,21 @@ x25519_public_from_private_generic(uint8_t out_public_value[32],
   fe_sub(zminusy, A.Z, A.Y);
   fe_invert(zminusy_inv, zminusy);
   fe_mul(zplusy, zplusy, zminusy_inv);
-  fe_tobytes(out_public_value, zplusy);
+  fe_tobytes(out_public_key, zplusy);
 }
 #endif
 
 void
-x25519_public_from_private(uint8_t out_public_value[32],
+x25519_public_from_private(uint8_t out_public_key[32],
     const uint8_t private_key[32])
 {
   static const uint8_t kMongomeryBasePoint[32] = {9};
 
-  x25519_scalar_mult(out_public_value, private_key, kMongomeryBasePoint);
+  x25519_scalar_mult(out_public_key, private_key, kMongomeryBasePoint);
 }
 
 void
-X25519_keypair(uint8_t out_public_value[X25519_KEY_LENGTH],
+X25519_keypair(uint8_t out_public_key[X25519_KEY_LENGTH],
     uint8_t out_private_key[X25519_KEY_LENGTH])
 {
   /* All X25519 implementations should decode scalars correctly (see
@@ -4897,17 +4897,17 @@ X25519_keypair(uint8_t out_public_value[X25519_KEY_LENGTH],
   out_private_key[31] &= 63;
   out_private_key[31] |= 128;
 
-  x25519_public_from_private(out_public_value, out_private_key);
+  x25519_public_from_private(out_public_key, out_private_key);
 }
 
 int
 X25519(uint8_t out_shared_key[X25519_KEY_LENGTH],
     const uint8_t private_key[X25519_KEY_LENGTH],
-    const uint8_t peer_public_value[X25519_KEY_LENGTH])
+    const uint8_t peer_public_key[X25519_KEY_LENGTH])
 {
   static const uint8_t kZeros[32] = {0};
 
-  x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
+  x25519_scalar_mult(out_shared_key, private_key, peer_public_key);
 
   /* The all-zero output results when the input is a point of small order. */
   return timingsafe_memcmp(kZeros, out_shared_key, 32) != 0;
