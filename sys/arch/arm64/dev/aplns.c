@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.12 2022/06/12 16:00:12 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.13 2022/11/09 18:17:00 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -32,6 +32,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_power.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
 #include <scsi/scsi_all.h>
@@ -83,10 +84,8 @@ struct ans_nvmmu_tcb {
 int	aplns_match(struct device *, void *, void *);
 void	aplns_attach(struct device *, struct device *, void *);
 
-const struct cfattach	aplns_ca = {
-	sizeof(struct device),
-	aplns_match,
-	aplns_attach
+const struct cfattach aplns_ca = {
+	sizeof(struct device), aplns_match, aplns_attach
 };
 
 struct cfdriver aplns_cd = {
@@ -118,6 +117,7 @@ struct nvme_ans_softc {
 	struct nvme_softc	 asc_nvme;
 	bus_space_tag_t		 asc_iot;
 	bus_space_handle_t	 asc_ioh;
+	int			 asc_node;
 
 	uint32_t		 asc_sart;
 	struct rtkit		 asc_rtkit;
@@ -127,13 +127,15 @@ struct nvme_ans_softc {
 
 int	nvme_ans_match(struct device *, void *, void *);
 void	nvme_ans_attach(struct device *, struct device *, void *);
+int	nvme_ans_activate(struct device *, int act);
 
 const struct cfattach nvme_ans_ca = {
-	sizeof(struct nvme_ans_softc),
-	nvme_ans_match,
-	nvme_ans_attach,
+	sizeof(struct nvme_ans_softc), nvme_ans_match, nvme_ans_attach, NULL,
+	nvme_ans_activate
 };
 
+int		nvme_ans_init(struct nvme_ans_softc *sc);
+void		nvme_ans_shutdown(struct nvme_ans_softc *sc);
 void		nvme_ans_enable(struct nvme_softc *);
 
 int		nvme_ans_q_alloc(struct nvme_softc *,
@@ -178,7 +180,6 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	struct nvme_ans_softc *asc = (struct nvme_ans_softc *)self;
 	struct nvme_softc *sc = &asc->asc_nvme;
 	struct fdt_attach_args *faa = aux;
-	uint32_t ctrl, status;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -200,8 +201,6 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	power_domain_enable(faa->fa_node);
-
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    nvme_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
@@ -209,39 +208,23 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	asc->asc_node = faa->fa_node;
 	asc->asc_sart = OF_getpropint(faa->fa_node, "apple,sart", 0);
 	asc->asc_rtkit.rk_cookie = asc;
 	asc->asc_rtkit.rk_dmat = faa->fa_dmat;
 	asc->asc_rtkit.rk_map = nvme_ans_sart_map;
 
-	asc->asc_rtkit_state = rtkit_init(faa->fa_node, NULL, &asc->asc_rtkit);
+	asc->asc_rtkit_state =
+	     rtkit_init(faa->fa_node, NULL, &asc->asc_rtkit);
 	if (asc->asc_rtkit_state == NULL) {
 		printf(": can't map mailbox channel\n");
 		goto disestablish;
 	}
 
-	ctrl = bus_space_read_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL);
-	bus_space_write_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL,
-	    ctrl | ANS_CPU_CTRL_RUN);
-
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
-	if (status != ANS_BOOT_STATUS_OK)
-		rtkit_boot(asc->asc_rtkit_state);
-
-	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
-	if (status != ANS_BOOT_STATUS_OK) {
+	if (nvme_ans_init(asc)) {
 		printf(": firmware not ready\n");
 		goto disestablish;
 	}
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_LINEAR_SQ_CTRL,
-	    ANS_LINEAR_SQ_CTRL_EN);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_MAX_PEND_CMDS_CTRL,
-	    (ANS_MAX_QUEUE_DEPTH << 16) | ANS_MAX_QUEUE_DEPTH);
-
-	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL,
-	    ctrl & ~ANS_PRP_NULL_CHECK);
 
 	printf(": ");
 
@@ -265,6 +248,84 @@ unmap:
 	bus_space_unmap(asc->asc_iot, asc->asc_ioh, faa->fa_reg[1].size);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 	sc->sc_ios = 0;
+}
+
+int
+nvme_ans_activate(struct device *self, int act)
+{
+	struct nvme_ans_softc *asc = (struct nvme_ans_softc *)self;
+	struct nvme_softc *sc = &asc->asc_nvme;
+	int rv;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		rv = nvme_activate(&asc->asc_nvme, act);
+		nvme_ans_shutdown(asc);
+		break;
+	case DVACT_RESUME:
+		rv = nvme_ans_init(asc);
+		if (rv) {
+			printf("%s: firmware not ready\n", DEVNAME(sc));
+			goto fail;
+		}
+		rv = nvme_activate(&asc->asc_nvme, act);
+		break;
+	default:
+		rv = nvme_activate(&asc->asc_nvme, act);
+		break;
+	}
+
+fail:
+	return rv;
+}
+
+int
+nvme_ans_init(struct nvme_ans_softc *asc)
+{
+	struct nvme_softc *sc = &asc->asc_nvme;
+	uint32_t ctrl, status;
+
+	power_domain_enable_all(asc->asc_node);
+
+	ctrl = bus_space_read_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL);
+	bus_space_write_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL,
+	    ctrl | ANS_CPU_CTRL_RUN);
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
+	if (status != ANS_BOOT_STATUS_OK)
+		rtkit_boot(asc->asc_rtkit_state);
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
+	if (status != ANS_BOOT_STATUS_OK)
+		return ENXIO;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_LINEAR_SQ_CTRL,
+	    ANS_LINEAR_SQ_CTRL_EN);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_MAX_PEND_CMDS_CTRL,
+	    (ANS_MAX_QUEUE_DEPTH << 16) | ANS_MAX_QUEUE_DEPTH);
+
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL,
+	    ctrl & ~ANS_PRP_NULL_CHECK);
+
+	return 0;
+}
+
+void
+nvme_ans_shutdown(struct nvme_ans_softc *asc)
+{
+	uint32_t ctrl;
+
+	rtkit_shutdown(asc->asc_rtkit_state);
+
+	ctrl = bus_space_read_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL);
+	bus_space_write_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL,
+	    ctrl & ~ANS_CPU_CTRL_RUN);
+
+	reset_assert_all(asc->asc_node);
+	reset_deassert_all(asc->asc_node);
+
+	power_domain_disable_all(asc->asc_node);
 }
 
 int

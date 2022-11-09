@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.6 2022/09/03 19:04:28 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.7 2022/11/09 18:17:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -470,6 +470,26 @@ rtkit_boot(struct rtkit_state *state)
 		rtkit_poll(state);
 
 	return 0;
+}
+
+
+void
+rtkit_shutdown(struct rtkit_state *state)
+{
+	struct mbox_channel *mc = state->mc;
+
+	if (state->ap_pwrstate != RTKIT_MGMT_PWR_STATE_QUIESCED)
+		rtkit_set_ap_pwrstate(state, RTKIT_MGMT_PWR_STATE_QUIESCED);
+
+	rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_IOP_PWR_STATE,
+		   RTKIT_MGMT_PWR_STATE_SLEEP);
+
+	while (state->iop_pwrstate != RTKIT_MGMT_PWR_STATE_SLEEP)
+		rtkit_poll(state);
+
+	KASSERT(state->iop_pwrstate == RTKIT_MGMT_PWR_STATE_SLEEP);
+	KASSERT(state->ap_pwrstate == RTKIT_MGMT_PWR_STATE_QUIESCED);
+	state->epmap = 0;
 }
 
 int
