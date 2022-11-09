@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc2_test.c,v 1.5 2022/09/12 13:11:36 tb Exp $ */
+/*	$OpenBSD: rc2_test.c,v 1.6 2022/11/09 12:13:08 joshua Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -724,7 +724,7 @@ rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label,
 	}
 
 	for (i = 0; i < rt->in_len;) {
-		in_len = arc4random_uniform(sizeof(rt->in_len) / 2);
+		in_len = arc4random_uniform(rt->in_len / 2);
 		if (in_len > rt->in_len - i)
 			in_len = rt->in_len - i;
 
@@ -804,7 +804,7 @@ rc2_evp_test(size_t test_number, const struct rc2_test *rt, const char *label,
 	}
 
 	for (i = 0; i < rt->out_len;) {
-		in_len = arc4random_uniform(sizeof(rt->out_len) / 2);
+		in_len = arc4random_uniform(rt->out_len / 2);
 		if (in_len > rt->out_len - i)
 			in_len = rt->out_len - i;
 
