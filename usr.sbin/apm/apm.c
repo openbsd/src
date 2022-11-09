@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.42 2022/09/10 10:10:09 sdk Exp $	*/
+/*	$OpenBSD: apm.c,v 1.43 2022/11/09 18:48:11 mbuhl Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -99,6 +99,8 @@ do_zzz(int fd, enum apm_action action)
 	char *msg;
 	int ret;
 
+	bzero(&reply, sizeof reply);
+
 	switch (action) {
 	case NONE:
 	case SUSPEND:
@@ -119,7 +121,7 @@ do_zzz(int fd, enum apm_action action)
 
 	printf("%s...\n", msg);
 	ret = send_command(fd, &command, &reply);
-	if (reply.error)
+	if (ret == 0 && reply.error)
 		errx(1, "%s: %s", apm_state(reply.newstate), strerror(reply.error));
 	exit(ret);
 }
