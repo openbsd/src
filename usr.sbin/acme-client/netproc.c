@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.31 2021/08/24 10:07:30 benno Exp $ */
+/*	$Id: netproc.c,v 1.32 2022/11/09 19:11:14 mbuhl Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -222,6 +222,7 @@ again:
 		if ((st = http_head_get("Location", g->head, g->headsz)) ==
 		    NULL) {
 			warnx("redirect without location header");
+			http_get_free(g);
 			return -1;
 		}
 
