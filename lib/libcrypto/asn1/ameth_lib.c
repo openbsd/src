@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.26 2022/06/27 12:36:05 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.27 2022/11/09 16:14:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -71,15 +71,15 @@
 #include "asn1_locl.h"
 #include "evp_locl.h"
 
+extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
-extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
-extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 
 /* Keep this sorted in type order !! */
 static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
