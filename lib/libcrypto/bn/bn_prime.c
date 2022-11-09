@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.24 2022/11/09 11:31:51 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.25 2022/11/09 15:33:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -160,11 +160,11 @@ int
 BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
     const BIGNUM *rem, BN_GENCB *cb)
 {
-	BIGNUM *t;
-	int found = 0;
-	int loops = 0;
-	int j;
 	BN_CTX *ctx;
+	BIGNUM *p;
+	int is_prime;
+	int loops = 0;
+	int found = 0;
 
 	if (bits < 2 || (bits == 2 && safe)) {
 		/*
@@ -178,11 +178,11 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 	BN_CTX_start(ctx);
-	if ((t = BN_CTX_get(ctx)) == NULL)
+	if ((p = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
  loop:
-	/* make a random number and set the top and bottom bits */
+	/* Make a random number and set the top and bottom bits. */
 	if (add == NULL) {
 		if (!probable_prime(ret, bits))
 			goto err;
@@ -200,35 +200,31 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
 		goto err;
 
 	if (!safe) {
-		j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
-		if (j == -1)
+		if (!bn_is_prime_bpsw(&is_prime, ret, ctx))
 			goto err;
-		if (j == 0)
+		if (!is_prime)
 			goto loop;
 	} else {
-		/* for "safe prime" generation,
-		 * check that (p-1)/2 is prime.
-		 * Since a prime is odd, We just
-		 * need to divide by 2 */
-		if (!BN_rshift1(t, ret))
+		if (!bn_is_prime_bpsw(&is_prime, ret, ctx))
 			goto err;
-
-		j = BN_is_prime_fasttest_ex(ret, 1, ctx, 0, cb);
-		if (j == -1)
-			goto err;
-		if (j == 0)
+		if (!is_prime)
 			goto loop;
 
-		j = BN_is_prime_fasttest_ex(t, 1, ctx, 0, cb);
-		if (j == -1)
+		/*
+		 * For safe prime generation, check that p = (ret-1)/2 is prime.
+		 * Since this prime has >= 3 bits, it is odd, and we can simply
+		 * divide by 2.
+		 */
+		if (!BN_rshift1(p, ret))
 			goto err;
-		if (j == 0)
+
+		if (!bn_is_prime_bpsw(&is_prime, p, ctx))
+			goto err;
+		if (!is_prime)
 			goto loop;
 
 		if (!BN_GENCB_call(cb, 2, loops - 1))
 			goto err;
-
-		/* We have a safe prime test pass */
 	}
 
 	found = 1;
