@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.107 2022/09/11 17:29:24 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.108 2022/11/09 19:18:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,24 +97,24 @@
 #define EVP_PKS_EC	0x0400
 #define EVP_PKT_EXP	0x1000 /* <= 512 bit key */
 
-#define EVP_PKEY_NONE	NID_undef
-#define EVP_PKEY_RSA	NID_rsaEncryption
-#define EVP_PKEY_RSA_PSS NID_rsassaPss
-#define EVP_PKEY_RSA2	NID_rsa
-#define EVP_PKEY_DSA	NID_dsa
-#define EVP_PKEY_DSA1	NID_dsa_2
-#define EVP_PKEY_DSA2	NID_dsaWithSHA
-#define EVP_PKEY_DSA3	NID_dsaWithSHA1
-#define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
-#define EVP_PKEY_DH	NID_dhKeyAgreement
-#define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
-#define EVP_PKEY_GOSTR01 NID_id_GostR3410_2001
-#define EVP_PKEY_GOSTIMIT NID_id_Gost28147_89_MAC
-#define EVP_PKEY_HMAC	NID_hmac
-#define EVP_PKEY_CMAC	NID_cmac
-#define EVP_PKEY_HKDF	NID_hkdf
-#define EVP_PKEY_GOSTR12_256 NID_id_tc26_gost3410_2012_256
-#define EVP_PKEY_GOSTR12_512 NID_id_tc26_gost3410_2012_512
+#define EVP_PKEY_NONE		NID_undef
+#define EVP_PKEY_RSA		NID_rsaEncryption
+#define EVP_PKEY_RSA_PSS	NID_rsassaPss
+#define EVP_PKEY_RSA2		NID_rsa
+#define EVP_PKEY_DSA		NID_dsa
+#define EVP_PKEY_DSA1		NID_dsa_2
+#define EVP_PKEY_DSA2		NID_dsaWithSHA
+#define EVP_PKEY_DSA3		NID_dsaWithSHA1
+#define EVP_PKEY_DSA4		NID_dsaWithSHA1_2
+#define EVP_PKEY_DH		NID_dhKeyAgreement
+#define EVP_PKEY_EC		NID_X9_62_id_ecPublicKey
+#define EVP_PKEY_GOSTR01	NID_id_GostR3410_2001
+#define EVP_PKEY_GOSTIMIT	NID_id_Gost28147_89_MAC
+#define EVP_PKEY_HMAC		NID_hmac
+#define EVP_PKEY_CMAC		NID_cmac
+#define EVP_PKEY_HKDF		NID_hkdf
+#define EVP_PKEY_GOSTR12_256	NID_id_tc26_gost3410_2012_256
+#define EVP_PKEY_GOSTR12_512	NID_id_tc26_gost3410_2012_512
 
 #ifdef	__cplusplus
 extern "C" {
