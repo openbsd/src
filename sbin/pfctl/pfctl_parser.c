@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.346 2021/02/01 00:31:04 dlg Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.347 2022/11/09 23:00:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1148,6 +1148,9 @@ print_rule(struct pf_rule *r, const char *anchor_call, int opts)
 		printf(" ");
 		print_pool(&r->route, 0, 0, r->af, PF_POOL_ROUTE, verbose);
 	}
+
+	if (r->rule_flag & PFRULE_EXPIRED)
+		printf(" # expired");
 }
 
 void

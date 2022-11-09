@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1145 2022/11/08 16:20:26 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1146 2022/11/09 23:00:00 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -316,9 +316,6 @@ RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree, pf_state_key, entry, pf_state_compare_key);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
-
-SLIST_HEAD(pf_rule_gcl, pf_rule)	pf_rule_gcl =
-	SLIST_HEAD_INITIALIZER(pf_rule_gcl);
 
 __inline int
 pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
@@ -1483,23 +1480,6 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 /* END state table stuff */
 
 void
-pf_purge_expired_rules(void)
-{
-	struct pf_rule	*r;
-
-	PF_ASSERT_LOCKED();
-
-	if (SLIST_EMPTY(&pf_rule_gcl))
-		return;
-
-	while ((r = SLIST_FIRST(&pf_rule_gcl)) != NULL) {
-		SLIST_REMOVE(&pf_rule_gcl, r, pf_rule, gcle);
-		KASSERT(r->rule_flag & PFRULE_EXPIRED);
-		pf_purge_rule(r);
-	}
-}
-
-void
 pf_purge_timeout(void *unused)
 {
 	/* XXX move to systqmp to avoid KERNEL_LOCK */
@@ -1526,10 +1506,8 @@ pf_purge(void *xnloops)
 
 	PF_LOCK();
 	/* purge other expired types every PFTM_INTERVAL seconds */
-	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
+	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL])
 		pf_purge_expired_src_nodes();
-		pf_purge_expired_rules();
-	}
 	PF_UNLOCK();
 
 	/*
@@ -3844,8 +3822,11 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 	struct pf_rule	*save_a;
 	struct pf_ruleset	*save_aruleset;
 
+retry:
 	r = TAILQ_FIRST(ruleset->rules.active.ptr);
 	while (r != NULL) {
+		PF_TEST_ATTRIB(r->rule_flag & PFRULE_EXPIRED,
+		    TAILQ_NEXT(r, entries));
 		r->evaluations++;
 		PF_TEST_ATTRIB(
 		    (pfi_kif_match(r->kif, ctx->pd->kif) == r->ifnot),
@@ -3970,6 +3951,19 @@ pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 		if (r->tag)
 			ctx->tag = r->tag;
 		if (r->anchor == NULL) {
+
+			if (r->rule_flag & PFRULE_ONCE) {
+				u_int32_t	rule_flag;
+
+				rule_flag = r->rule_flag;
+				if (((rule_flag & PFRULE_EXPIRED) == 0) &&
+				    atomic_cas_uint(&r->rule_flag, rule_flag,
+				    rule_flag | PFRULE_EXPIRED) == rule_flag)
+					r->exptime = gettime();
+				else
+					goto retry;
+			}
+
 			if (r->action == PF_MATCH) {
 				if ((ctx->ri = pool_get(&pf_rule_item_pl,
 				    PR_NOWAIT)) == NULL) {
@@ -4181,13 +4175,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	if (r->action == PF_DROP)
 		goto cleanup;
 
-	/*
-	 * If an expired "once" rule has not been purged, drop any new matching
-	 * packets.
-	 */
-	if (r->rule_flag & PFRULE_EXPIRED)
-		goto cleanup;
-
 	pf_tag_packet(pd->m, ctx.tag, ctx.act.rtableid);
 	if (ctx.act.rtableid >= 0 &&
 	    rtable_l2(ctx.act.rtableid) != pd->rdomain)
@@ -4256,22 +4243,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	/* copy back packet headers if needed */
 	if (rewrite && pd->hdrlen) {
 		m_copyback(pd->m, pd->off, pd->hdrlen, &pd->hdr, M_NOWAIT);
-	}
-
-	if (r->rule_flag & PFRULE_ONCE) {
-		u_int32_t	rule_flag;
-
-		/*
-		 * Use atomic_cas() to determine a clear winner, which will
-		 * insert an expired rule to gcl.
-		 */
-		rule_flag = r->rule_flag;
-		if (((rule_flag & PFRULE_EXPIRED) == 0) &&
-		    atomic_cas_uint(&r->rule_flag, rule_flag,
-			rule_flag | PFRULE_EXPIRED) == rule_flag) {
-			r->exptime = gettime();
-			SLIST_INSERT_HEAD(&pf_rule_gcl, r, gcle);
-		}
 	}
 
 #if NPFSYNC > 0
