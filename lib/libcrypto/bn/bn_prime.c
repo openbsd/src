@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.22 2022/07/19 16:19:19 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.23 2022/11/09 02:01:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -129,8 +129,6 @@
  */
 #include "bn_prime.h"
 
-static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
-    const BIGNUM *a1_odd, int k, BN_CTX *ctx, BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits);
 static int probable_prime_dh(BIGNUM *rnd, int bits,
     const BIGNUM *add, const BIGNUM *rem, BN_CTX *ctx);
@@ -263,14 +261,6 @@ int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     int do_trial_division, BN_GENCB *cb)
 {
-	BN_CTX *ctx = NULL;
-	BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
-	BN_MONT_CTX *mont = NULL;
-	const BIGNUM *A = NULL;
-	int i, j, k;
-	int ret = -1;
-
-#ifdef LIBRESSL_HAS_BPSW
 	int is_prime;
 
 	/* XXX - tickle BN_GENCB in bn_is_prime_bpsw(). */
@@ -278,131 +268,6 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 		return -1;
 
 	return is_prime;
-#endif
-
-	if (BN_cmp(a, BN_value_one()) <= 0)
-		return 0;
-
-	if (checks == BN_prime_checks)
-		checks = BN_prime_checks_for_size(BN_num_bits(a));
-
-	/* first look for small factors */
-	if (!BN_is_odd(a))
-		/* a is even => a is prime if and only if a == 2 */
-		return BN_is_word(a, 2);
-	if (do_trial_division) {
-		for (i = 1; i < NUMPRIMES; i++) {
-			BN_ULONG mod = BN_mod_word(a, primes[i]);
-			if (mod == (BN_ULONG)-1)
-				goto err;
-			if (mod == 0)
-				return BN_is_word(a, primes[i]);
-		}
-		if (!BN_GENCB_call(cb, 1, -1))
-			goto err;
-	}
-
-	if (ctx_passed != NULL)
-		ctx = ctx_passed;
-	else if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
-	BN_CTX_start(ctx);
-
-	/* A := abs(a) */
-	if (a->neg) {
-		BIGNUM *t;
-		if ((t = BN_CTX_get(ctx)) == NULL)
-			goto err;
-		BN_copy(t, a);
-		t->neg = 0;
-		A = t;
-	} else
-		A = a;
-	if ((A1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((A1_odd = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((check = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	/* compute A1 := A - 1 */
-	if (!BN_copy(A1, A))
-		goto err;
-	if (!BN_sub_word(A1, 1))
-		goto err;
-	if (BN_is_zero(A1)) {
-		ret = 0;
-		goto err;
-	}
-
-	/* write  A1  as  A1_odd * 2^k */
-	k = 1;
-	while (!BN_is_bit_set(A1, k))
-		k++;
-	if (!BN_rshift(A1_odd, A1, k))
-		goto err;
-
-	/* Montgomery setup for computations mod A */
-	mont = BN_MONT_CTX_new();
-	if (mont == NULL)
-		goto err;
-	if (!BN_MONT_CTX_set(mont, A, ctx))
-		goto err;
-
-	for (i = 0; i < checks; i++) {
-		if (!BN_pseudo_rand_range(check, A1))
-			goto err;
-		if (!BN_add_word(check, 1))
-			goto err;
-		/* now 1 <= check < A */
-
-		j = witness(check, A, A1, A1_odd, k, ctx, mont);
-		if (j == -1)
-			goto err;
-		if (j) {
-			ret = 0;
-			goto err;
-		}
-		if (!BN_GENCB_call(cb, 1, i))
-			goto err;
-	}
-	ret = 1;
-
-err:
-	if (ctx != NULL) {
-		BN_CTX_end(ctx);
-		if (ctx_passed == NULL)
-			BN_CTX_free(ctx);
-	}
-	BN_MONT_CTX_free(mont);
-
-	return (ret);
-}
-
-static int
-witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1, const BIGNUM *a1_odd,
-    int k, BN_CTX *ctx, BN_MONT_CTX *mont)
-{
-	if (!BN_mod_exp_mont_ct(w, w, a1_odd, a, ctx, mont))
-		/* w := w^a1_odd mod a */
-		return -1;
-	if (BN_is_one(w))
-		return 0; /* probably prime */
-	if (BN_cmp(w, a1) == 0)
-		return 0; /* w == -1 (mod a),  'a' is probably prime */
-	while (--k) {
-		if (!BN_mod_mul(w, w, w, a, ctx)) /* w := w^2 mod a */
-			return -1;
-		if (BN_is_one(w))
-			return 1; /* 'a' is composite, otherwise a previous 'w' would
-			           * have been == -1 (mod 'a') */
-		if (BN_cmp(w, a1) == 0)
-			return 0; /* w == -1 (mod a), 'a' is probably prime */
-	}
-	/* If we get here, 'w' is the (a-1)/2-th power of the original 'w',
-	 * and it is neither -1 nor +1 -- so 'a' cannot be prime */
-	bn_check_top(w);
-	return 1;
 }
 
 static int
