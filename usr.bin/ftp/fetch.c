@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.211 2022/11/09 16:29:58 claudio Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.212 2022/11/09 17:41:05 claudio Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -950,8 +950,13 @@ noslash:
 			loctail = strchr(redirurl, '#');
 			if (loctail != NULL)
 				*loctail = '\0';
-			if (verbose)
-				fprintf(ttyout, "Redirected to %s\n", redirurl);
+			if (verbose) {
+				char *visbuf;
+				if (stravis(&visbuf, redirurl, VIS_SAFE) == -1)
+					err(1, "Cannot vis redirect URL");
+				fprintf(ttyout, "Redirected to %s\n", visbuf);
+				free(visbuf);
+			}
 			ftp_close(&fin, &tls, &fd);
 			rval = url_get(redirurl, proxyenv, savefile, lastfile);
 			free(redirurl);
