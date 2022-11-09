@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.25 2022/11/09 15:33:13 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.26 2022/11/09 22:52:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -260,7 +260,7 @@ static int
 probable_prime(BIGNUM *rnd, int bits)
 {
 	int i;
-	prime_t mods[NUMPRIMES];
+	BN_ULONG mods[NUMPRIMES];
 	BN_ULONG delta, maxdelta;
 
 again:
@@ -268,10 +268,10 @@ again:
 		return (0);
 	/* we now have a random number 'rand' to test. */
 	for (i = 1; i < NUMPRIMES; i++) {
-		BN_ULONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
+		BN_ULONG mod = BN_mod_word(rnd, primes[i]);
 		if (mod == (BN_ULONG)-1)
 			return (0);
-		mods[i] = (prime_t)mod;
+		mods[i] = mod;
 	}
 	maxdelta = BN_MASK2 - primes[NUMPRIMES - 1];
 	delta = 0;
@@ -325,7 +325,7 @@ probable_prime_dh(BIGNUM *rnd, int bits, const BIGNUM *add, const BIGNUM *rem,
 loop:
 	for (i = 1; i < NUMPRIMES; i++) {
 		/* check that rnd is a prime */
-		BN_LONG mod = BN_mod_word(rnd, (BN_ULONG)primes[i]);
+		BN_LONG mod = BN_mod_word(rnd, primes[i]);
 		if (mod == (BN_ULONG)-1)
 			goto err;
 		if (mod <= 1) {
@@ -390,8 +390,8 @@ loop:
 		/* check that p and q are prime */
 		/* check that for p and q
 		 * gcd(p-1,primes) == 1 (except for 2) */
-		BN_ULONG pmod = BN_mod_word(p, (BN_ULONG)primes[i]);
-		BN_ULONG qmod = BN_mod_word(q, (BN_ULONG)primes[i]);
+		BN_ULONG pmod = BN_mod_word(p, primes[i]);
+		BN_ULONG qmod = BN_mod_word(q, primes[i]);
 		if (pmod == (BN_ULONG)-1 || qmod == (BN_ULONG)-1)
 			goto err;
 		if (pmod == 0 || qmod == 0) {
