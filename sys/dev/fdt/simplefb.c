@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.17 2022/09/26 15:49:59 kettenis Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.18 2022/11/09 22:12:40 kn Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -46,7 +46,7 @@ struct simplefb_format {
  * Supported pixel formats.  Layout omitted when it matches the
  * rasops defaults.
  */
-struct simplefb_format simplefb_formats[] = {
+const struct simplefb_format simplefb_formats[] = {
 	{ "r5g6b5", 16 },
 	{ "x1r5g5b5", 15 },
 	{ "a1r5g5b5", 15 },
@@ -198,7 +198,7 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 const char *
 simplefb_init(int node, struct rasops_info *ri)
 {
-	struct simplefb_format *fmt = NULL;
+	const struct simplefb_format *fmt = NULL;
 	static char format[16];
 	int i;
 
