@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.27 2022/11/09 16:14:15 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.28 2022/11/09 18:17:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -81,127 +81,89 @@ extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 
-/* Keep this sorted in type order !! */
-static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
-#ifndef OPENSSL_NO_RSA
-	&rsa_asn1_meths[0],
-	&rsa_asn1_meths[1],
-#endif
-#ifndef OPENSSL_NO_DH
+static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
+	&cmac_asn1_meth,
 	&dh_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_DSA
 	&dsa_asn1_meths[0],
 	&dsa_asn1_meths[1],
 	&dsa_asn1_meths[2],
 	&dsa_asn1_meths[3],
 	&dsa_asn1_meths[4],
-#endif
-#ifndef OPENSSL_NO_EC
 	&eckey_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_GOST
-	&gostr01_asn1_meths[0],
 	&gostimit_asn1_meth,
-#endif
-	&hmac_asn1_meth,
-	&cmac_asn1_meth,
-#ifndef OPENSSL_NO_RSA
-	&rsa_pss_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_GOST
+	&gostr01_asn1_meths[0],
 	&gostr01_asn1_meths[1],
 	&gostr01_asn1_meths[2],
-#endif
+	&hmac_asn1_meth,
+	&rsa_asn1_meths[0],
+	&rsa_asn1_meths[1],
+	&rsa_pss_asn1_meth,
 };
 
-typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
+static const size_t asn1_methods_count =
+    sizeof(asn1_methods) / sizeof(asn1_methods[0]);
+
 DECLARE_STACK_OF(EVP_PKEY_ASN1_METHOD)
-static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
-
-static int ameth_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *, const EVP_PKEY_ASN1_METHOD * const *);
-static const EVP_PKEY_ASN1_METHOD * *OBJ_bsearch_ameth(const EVP_PKEY_ASN1_METHOD * *key, const EVP_PKEY_ASN1_METHOD * const *base, int num);
-
-static int
-ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
-    const EVP_PKEY_ASN1_METHOD * const *b)
-{
-	return ((*a)->pkey_id - (*b)->pkey_id);
-}
-
-
-static int
-ameth_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
-{
-	const EVP_PKEY_ASN1_METHOD * const *a = a_;
-	const EVP_PKEY_ASN1_METHOD * const *b = b_;
-	return ameth_cmp(a, b);
-}
-
-static const EVP_PKEY_ASN1_METHOD * *
-OBJ_bsearch_ameth(const EVP_PKEY_ASN1_METHOD * *key, const EVP_PKEY_ASN1_METHOD * const *base, int num)
-{
-	return (const EVP_PKEY_ASN1_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const EVP_PKEY_ASN1_METHOD *),
-	    ameth_cmp_BSEARCH_CMP_FN);
-}
+static STACK_OF(EVP_PKEY_ASN1_METHOD) *asn1_app_methods = NULL;
 
 int
 EVP_PKEY_asn1_get_count(void)
 {
-	int num = sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *);
-	if (app_methods)
-		num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
+	int num = asn1_methods_count;
+
+	if (asn1_app_methods != NULL)
+		num += sk_EVP_PKEY_ASN1_METHOD_num(asn1_app_methods);
+
 	return num;
 }
 
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_get0(int idx)
 {
-	int num = sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *);
+	int num = asn1_methods_count;
+
 	if (idx < 0)
 		return NULL;
 	if (idx < num)
-		return standard_methods[idx];
+		return asn1_methods[idx];
+
 	idx -= num;
-	return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+
+	return sk_EVP_PKEY_ASN1_METHOD_value(asn1_app_methods, idx);
 }
 
 static const EVP_PKEY_ASN1_METHOD *
-pkey_asn1_find(int type)
+pkey_asn1_find(int pkey_id)
 {
-	EVP_PKEY_ASN1_METHOD tmp;
-	const EVP_PKEY_ASN1_METHOD *t = &tmp, **ret;
-	tmp.pkey_id = type;
-	if (app_methods) {
-		int idx;
-		idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
-		if (idx >= 0)
-			return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int i;
+
+	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
+		ameth = EVP_PKEY_asn1_get0(i);
+		if (ameth->pkey_id == pkey_id)
+			return ameth;
 	}
-	ret = OBJ_bsearch_ameth(&t, standard_methods,
-	    sizeof(standard_methods) / sizeof(EVP_PKEY_ASN1_METHOD *));
-	if (!ret || !*ret)
-		return NULL;
-	return *ret;
+
+	return NULL;
 }
 
-/* Find an implementation of an ASN1 algorithm. If 'pe' is not NULL
+/*
+ * Find an implementation of an ASN1 algorithm. If 'pe' is not NULL
  * also search through engines and set *pe to a functional reference
  * to the engine implementing 'type' or NULL if no engine implements
  * it.
  */
-
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_find(ENGINE **pe, int type)
 {
-	const EVP_PKEY_ASN1_METHOD *t;
+	const EVP_PKEY_ASN1_METHOD *mp;
 
 	for (;;) {
-		t = pkey_asn1_find(type);
-		if (!t || !(t->pkey_flags & ASN1_PKEY_ALIAS))
+		if ((mp = pkey_asn1_find(type)) == NULL)
 			break;
-		type = t->pkey_base_id;
+		if ((mp->pkey_flags & ASN1_PKEY_ALIAS) == 0)
+			break;
+		type = mp->pkey_base_id;
 	}
 	if (pe) {
 #ifndef OPENSSL_NO_ENGINE
@@ -215,14 +177,15 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 #endif
 		*pe = NULL;
 	}
-	return t;
+	return mp;
 }
 
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 {
-	int i;
 	const EVP_PKEY_ASN1_METHOD *ameth;
+	int i;
+
 	if (len == -1)
 		len = strlen(str);
 	if (pe) {
@@ -242,7 +205,7 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 #endif
 		*pe = NULL;
 	}
-	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
+	for (i = EVP_PKEY_asn1_get_count() - 1; i >= 0; i--) {
 		ameth = EVP_PKEY_asn1_get0(i);
 		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
 			continue;
@@ -256,14 +219,15 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 int
 EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
-	if (app_methods == NULL) {
-		app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
-		if (!app_methods)
+	if (asn1_app_methods == NULL) {
+		asn1_app_methods = sk_EVP_PKEY_ASN1_METHOD_new(NULL);
+		if (asn1_app_methods == NULL)
 			return 0;
 	}
-	if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
+
+	if (!sk_EVP_PKEY_ASN1_METHOD_push(asn1_app_methods, ameth))
 		return 0;
-	sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
+
 	return 1;
 }
 
@@ -273,8 +237,9 @@ EVP_PKEY_asn1_add_alias(int to, int from)
 	EVP_PKEY_ASN1_METHOD *ameth;
 
 	ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
-	if (!ameth)
+	if (ameth == NULL)
 		return 0;
+
 	ameth->pkey_base_id = to;
 	if (!EVP_PKEY_asn1_add0(ameth)) {
 		EVP_PKEY_asn1_free(ameth);
