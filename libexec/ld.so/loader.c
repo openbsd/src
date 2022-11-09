@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.203 2022/11/08 13:47:22 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.204 2022/11/09 19:50:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -320,7 +320,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 	Elf_Dyn *dynp;
 	unsigned int loop;
 	int libcount;
-	int depflags;
+	int depflags, nodelete = 0;
 
 	dynobj = object;
 	while (dynobj) {
@@ -329,6 +329,8 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 
 		/* propagate DF_1_NOW to deplibs (can be set by dynamic tags) */
 		depflags = flags | (dynobj->obj_flags & DF_1_NOW);
+		if (booting || object->nodelete)
+			nodelete = 1;
 
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
 			if (dynp->d_tag == DT_NEEDED) {
@@ -379,7 +381,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 				DL_DEB(("loading: %s required by %s\n", libname,
 				    dynobj->load_name));
 				depobj = _dl_load_shlib(libname, dynobj,
-				    OBJTYPE_LIB, depflags, booting);
+				    OBJTYPE_LIB, depflags, nodelete);
 				if (depobj == 0) {
 					if (booting) {
 						_dl_die(
