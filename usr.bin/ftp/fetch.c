@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.210 2022/09/15 12:47:10 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.211 2022/11/09 16:29:58 claudio Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -875,7 +875,8 @@ noslash:
 			goto cleanup_url_get;
 		}
 
-		while (len > 0 && (buf[len-1] == '\r' || buf[len-1] == '\n'))
+		while (len > 0 && (buf[len-1] == '\r' || buf[len-1] == '\n' ||
+		    buf[len-1] == ' ' || buf[len-1] == '\t'))
 			buf[--len] = '\0';
 		if (len == 0)
 			break;
@@ -1161,7 +1162,7 @@ save_chunked(FILE *fin, struct tls *tls, int out, char *buf, size_t buflen)
 		if (getline(&header, &hsize, fin) == -1)
 			break;
 		/* strip CRLF and any optional chunk extension */
-		header[strcspn(header, ";\r\n")] = '\0';
+		header[strcspn(header, "; \t\r\n")] = '\0';
 		errno = 0;
 		chunksize = strtoul(header, &end, 16);
 		if (errno || header[0] == '\0' || *end != '\0' ||
