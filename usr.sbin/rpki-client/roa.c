@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.55 2022/11/04 09:43:13 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.56 2022/11/09 18:17:23 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -111,6 +111,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	long				 maxlen;
 	struct ip_addr			 ipaddr;
 	struct roa_ip			*res;
+	int				 ipaddrblocksz;
 	int				 i, j, rc = 0;
 
 	if ((roa = d2i_RouteOriginAttestation(NULL, &d, dsz)) == NULL) {
@@ -128,7 +129,14 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	for (i = 0; i < sk_ROAIPAddressFamily_num(roa->ipAddrBlocks); i++) {
+	ipaddrblocksz = sk_ROAIPAddressFamily_num(roa->ipAddrBlocks);
+	if (ipaddrblocksz > 2) {
+		warnx("%s: draft-rfc6482bis: too many ipAddrBlocks "
+		    "(got %d, expected 1 or 2)", p->fn, ipaddrblocksz);
+		goto out;
+	}
+
+	for (i = 0; i < ipaddrblocksz; i++) {
 		addrfam = sk_ROAIPAddressFamily_value(roa->ipAddrBlocks, i);
 		addrs = addrfam->addresses;
 		addrsz = sk_ROAIPAddress_num(addrs);
