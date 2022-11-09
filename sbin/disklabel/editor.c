@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.378 2022/11/09 15:17:28 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.379 2022/11/09 22:25:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1373,8 +1373,6 @@ getdisktype(struct disklabel *lp, char *banner, char *dev)
 		{ "sd",   "SCSI" },
 		{ "wd",   "IDE" },
 		{ "fd",   "FLOPPY" },
-		{ "xd",   "SMD" },
-		{ "xy",   "SMD" },
 		{ "hd",   "HP-IB" },
 		{ "vnd",  "VND" },
 		{ "svnd", "VND" },
