@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.22 2022/05/05 08:51:21 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.23 2022/11/09 17:03:53 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -80,11 +80,16 @@ typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
 DECLARE_STACK_OF(EVP_PKEY_METHOD)
 STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
-extern const EVP_PKEY_METHOD rsa_pkey_meth, rsa_pss_pkey_meth;
-extern const EVP_PKEY_METHOD dh_pkey_meth, dsa_pkey_meth;
-extern const EVP_PKEY_METHOD ec_pkey_meth, hmac_pkey_meth, cmac_pkey_meth;
-extern const EVP_PKEY_METHOD gostimit_pkey_meth, gostr01_pkey_meth;
+extern const EVP_PKEY_METHOD cmac_pkey_meth;
+extern const EVP_PKEY_METHOD dh_pkey_meth;
+extern const EVP_PKEY_METHOD dsa_pkey_meth;
+extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD gostimit_pkey_meth;
+extern const EVP_PKEY_METHOD gostr01_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
+extern const EVP_PKEY_METHOD hmac_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pkey_meth;
+extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
 
 static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA
