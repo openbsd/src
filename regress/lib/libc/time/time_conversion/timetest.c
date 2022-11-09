@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetest.c,v 1.1 2022/11/06 12:57:08 beck Exp $ */
+/*	$OpenBSD: timetest.c,v 1.2 2022/11/09 18:11:45 beck Exp $ */
 
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
@@ -762,6 +762,130 @@ struct timetest timetests[] = {
 			.tm_isdst=0,
 			.tm_gmtoff=0,
 			.tm_zone="FAILURE"
+		},
+	},
+	{
+		.descr="maxint struct tm",
+		.timezone="right/America/Edmonton",
+		.time=67767976204675199,
+		.local_tm=		{
+                        .tm_year=2147481747,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=16,
+			.tm_min=59,
+			.tm_sec=32,
+			.tm_wday=4,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=-25200,
+			.tm_zone="MST"
+		},
+		.gmt_tm=		{
+                        .tm_year=2147481747,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=59,
+			.tm_wday=4,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="GMT"
+		},
+	},
+	{
+		.descr="minint struct tm",
+		.timezone="right/America/Edmonton",
+		.time=-67768038398073601,
+		.local_tm=		{
+                        .tm_year=-2147483578,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=16,
+			.tm_min=26,
+			.tm_sec=7,
+			.tm_wday=2,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=-27232,
+			.tm_zone="LMT"
+		},
+		.gmt_tm=		{
+                        .tm_year=-2147483578,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=59,
+			.tm_wday=2,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="GMT"
+		},
+	},
+	{
+		.descr="maxint struct tm",
+		.timezone="right/UTC",
+		.time=67767976204675199,
+		.local_tm=		{
+                        .tm_year=2147481747,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=32,
+			.tm_wday=4,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="UTC"
+		},
+		.gmt_tm=		{
+                        .tm_year=2147481747,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=59,
+			.tm_wday=4,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="GMT"
+		},
+	},
+	{
+		.descr="minint struct tm",
+		.timezone="right/UTC",
+		.time=-67768038398073601,
+		.local_tm=		{
+                        .tm_year=-2147483578,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=59,
+			.tm_wday=2,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="UTC"
+		},
+		.gmt_tm=		{
+                        .tm_year=-2147483578,
+			.tm_mon=0,
+			.tm_mday=31,
+			.tm_hour=23,
+			.tm_min=59,
+			.tm_sec=59,
+			.tm_wday=2,
+			.tm_yday=30,
+			.tm_isdst=0,
+			.tm_gmtoff=0,
+			.tm_zone="GMT"
 		},
 	},
 	{
