@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.23 2022/11/09 17:03:53 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.24 2022/11/09 18:25:36 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,10 +75,8 @@
 #include "asn1_locl.h"
 #include "evp_locl.h"
 
-typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
-
 DECLARE_STACK_OF(EVP_PKEY_METHOD)
-STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
+STACK_OF(EVP_PKEY_METHOD) *pkey_app_methods = NULL;
 
 extern const EVP_PKEY_METHOD cmac_pkey_meth;
 extern const EVP_PKEY_METHOD dh_pkey_meth;
@@ -91,75 +89,61 @@ extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
 
-static const EVP_PKEY_METHOD *standard_methods[] = {
-#ifndef OPENSSL_NO_RSA
-	&rsa_pkey_meth,
-#endif
-#ifndef OPENSSL_NO_DH
-	&dh_pkey_meth,
-#endif
-#ifndef OPENSSL_NO_DSA
-	&dsa_pkey_meth,
-#endif
-#ifndef OPENSSL_NO_EC
-	&ec_pkey_meth,
-#endif
-#ifndef OPENSSL_NO_GOST
-	&gostr01_pkey_meth,
-	&gostimit_pkey_meth,
-#endif
-	&hmac_pkey_meth,
+static const EVP_PKEY_METHOD *pkey_methods[] = {
 	&cmac_pkey_meth,
-#ifndef OPENSSL_NO_RSA
-	&rsa_pss_pkey_meth,
-#endif
+	&dh_pkey_meth,
+	&dsa_pkey_meth,
+	&ec_pkey_meth,
+	&gostimit_pkey_meth,
+	&gostr01_pkey_meth,
 	&hkdf_pkey_meth,
+	&hmac_pkey_meth,
+	&rsa_pkey_meth,
+	&rsa_pss_pkey_meth,
 };
 
-static int pmeth_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int pmeth_cmp(const EVP_PKEY_METHOD * const *, const EVP_PKEY_METHOD * const *);
-static const EVP_PKEY_METHOD * *OBJ_bsearch_pmeth(const EVP_PKEY_METHOD * *key, const EVP_PKEY_METHOD * const *base, int num);
+static const size_t pkey_methods_count =
+    sizeof(pkey_methods) / sizeof(pkey_methods[0]);
 
-static int
-pmeth_cmp(const EVP_PKEY_METHOD * const *a, const EVP_PKEY_METHOD * const *b)
+int
+evp_pkey_meth_get_count(void)
 {
-	return ((*a)->pkey_id - (*b)->pkey_id);
+	int num = pkey_methods_count;
+
+	if (pkey_app_methods != NULL)
+		num += sk_EVP_PKEY_METHOD_num(pkey_app_methods);
+
+	return num;
 }
 
-
-static int
-pmeth_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
+const EVP_PKEY_METHOD *
+evp_pkey_meth_get0(int idx)
 {
-	const EVP_PKEY_METHOD * const *a = a_;
-	const EVP_PKEY_METHOD * const *b = b_;
-	return pmeth_cmp(a, b);
-}
+	int num = pkey_methods_count;
 
-static const EVP_PKEY_METHOD * *
-OBJ_bsearch_pmeth(const EVP_PKEY_METHOD * *key, const EVP_PKEY_METHOD * const *base, int num)
-{
-	return (const EVP_PKEY_METHOD * *)OBJ_bsearch_(key, base, num, sizeof(const EVP_PKEY_METHOD *),
-	    pmeth_cmp_BSEARCH_CMP_FN);
+	if (idx < 0)
+		return NULL;
+	if (idx < num)
+		return pkey_methods[idx];
+
+	idx -= num;
+
+	return sk_EVP_PKEY_METHOD_value(pkey_app_methods, idx);
 }
 
 const EVP_PKEY_METHOD *
 EVP_PKEY_meth_find(int type)
 {
-	EVP_PKEY_METHOD tmp;
-	const EVP_PKEY_METHOD *t = &tmp, **ret;
+	const EVP_PKEY_METHOD *pmeth;
+	int i;
 
-	tmp.pkey_id = type;
-	if (app_pkey_methods) {
-		int idx;
-		idx = sk_EVP_PKEY_METHOD_find(app_pkey_methods, &tmp);
-		if (idx >= 0)
-			return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
+	for (i = evp_pkey_meth_get_count() - 1; i >= 0; i--) {
+		pmeth = evp_pkey_meth_get0(i);
+		if (pmeth->pkey_id == type)
+			return pmeth;
 	}
-	ret = OBJ_bsearch_pmeth(&t, standard_methods,
-	    sizeof(standard_methods)/sizeof(EVP_PKEY_METHOD *));
-	if (!ret || !*ret)
-		return NULL;
-	return *ret;
+
+	return NULL;
 }
 
 static EVP_PKEY_CTX *
@@ -331,14 +315,15 @@ EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 int
 EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 {
-	if (app_pkey_methods == NULL) {
-		app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
-		if (!app_pkey_methods)
+	if (pkey_app_methods == NULL) {
+		pkey_app_methods = sk_EVP_PKEY_METHOD_new(NULL);
+		if (pkey_app_methods == NULL)
 			return 0;
 	}
-	if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth))
+
+	if (!sk_EVP_PKEY_METHOD_push(pkey_app_methods, pmeth))
 		return 0;
-	sk_EVP_PKEY_METHOD_sort(app_pkey_methods);
+
 	return 1;
 }
 
