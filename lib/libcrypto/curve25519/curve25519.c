@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.12 2022/11/09 17:40:51 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.13 2022/11/09 17:45:55 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -4866,8 +4866,8 @@ x25519_public_from_private_generic(uint8_t out_public_key[32],
 #endif
 
 void
-x25519_public_from_private(uint8_t out_public_key[32],
-    const uint8_t private_key[32])
+X25519_public_from_private(uint8_t out_public_key[X25519_KEY_LENGTH],
+    const uint8_t private_key[X25519_KEY_LENGTH])
 {
   static const uint8_t kMongomeryBasePoint[32] = {9};
 
@@ -4897,7 +4897,7 @@ X25519_keypair(uint8_t out_public_key[X25519_KEY_LENGTH],
   out_private_key[31] &= 63;
   out_private_key[31] |= 128;
 
-  x25519_public_from_private(out_public_key, out_private_key);
+  X25519_public_from_private(out_public_key, out_private_key);
 }
 
 int

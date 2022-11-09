@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519_internal.h,v 1.5 2022/11/09 17:39:29 jsing Exp $ */
+/*	$OpenBSD: curve25519_internal.h,v 1.6 2022/11/09 17:45:55 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -95,6 +95,9 @@ void x25519_scalar_mult_generic(uint8_t out[32], const uint8_t scalar[32],
     const uint8_t point[32]);
 
 void ED25519_public_from_private(uint8_t out_public_key[32],
+    const uint8_t private_key[32]);
+
+void X25519_public_from_private(uint8_t out_public_key[32],
     const uint8_t private_key[32]);
 
 __END_HIDDEN_DECLS
