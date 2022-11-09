@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.751 2022/10/27 13:19:42 patrick Exp $
+$OpenBSD: usbdevs,v 1.752 2022/11/09 10:03:04 robert Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1002,6 +1002,7 @@ product APPLE WELLSPRING9_JIS	0x0274	Keyboard/Trackpad
 product APPLE WELLSPRING8_ANSI	0x0290	Keyboard/Trackpad
 product APPLE WELLSPRING8_ISO	0x0291	Keyboard/Trackpad
 product APPLE WELLSPRING8_JIS	0x0292	Keyboard/Trackpad
+product APPLE WELLSPRINGM1_J293	0x0341	Keyboard/Trackpad	
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE BLUETOOTH_HCI	0x1000	HID-proxy
 product APPLE SPEAKERS		0x1101	Speakers
