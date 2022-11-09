@@ -1,4 +1,4 @@
-/*	$OpenBSD: rc4_test.c,v 1.5 2022/09/12 04:26:38 tb Exp $ */
+/*	$OpenBSD: rc4_test.c,v 1.6 2022/11/09 12:10:17 joshua Exp $ */
 /*
  * Copyright (c) 2022 Joshua Sing <joshua@hypera.dev>
  *
@@ -377,7 +377,7 @@ rc4_test(void)
 		}
 
 		for (j = 0; j < rt->len;) {
-			in_len = arc4random_uniform(sizeof(rt->len) / 2);
+			in_len = arc4random_uniform(rt->len / 2);
 			if (in_len > rt->len - j)
 				in_len = rt->len - j;
 
@@ -423,7 +423,7 @@ rc4_test(void)
 		}
 
 		for (j = 0; j < rt->len;) {
-			in_len = arc4random_uniform(sizeof(rt->len) / 2);
+			in_len = arc4random_uniform(rt->len / 2);
 			if (in_len > rt->len - j)
 				in_len = rt->len - j;
 
