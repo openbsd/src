@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.109 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.110 2022/11/09 18:12:47 claudio Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -465,8 +465,11 @@ spec_close(void *v)
 	int mode, relock, xlocked, error;
 	int clone = 0;
 
-	switch (vp->v_type) {
+	mtx_enter(&vnode_mtx);
+	xlocked = (vp->v_lflag & VXLOCK);
+	mtx_leave(&vnode_mtx);
 
+	switch (vp->v_type) {
 	case VCHR:
 		/*
 		 * Hack: a tty device that is a controlling terminal
@@ -490,9 +493,6 @@ spec_close(void *v)
 			 * of forcibly closing the device, otherwise we only
 			 * close on last reference.
 			 */
-			mtx_enter(&vnode_mtx);
-			xlocked = (vp->v_lflag & VXLOCK);
-			mtx_leave(&vnode_mtx);
 			if (vcount(vp) > 1 && !xlocked)
 				return (0);
 		}
@@ -508,9 +508,6 @@ spec_close(void *v)
 		 * that, we must lock the vnode. If we are coming from
 		 * vclean(), the vnode is already locked.
 		 */
-		mtx_enter(&vnode_mtx);
-		xlocked = (vp->v_lflag & VXLOCK);
-		mtx_leave(&vnode_mtx);
 		if (!xlocked)
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, p, 0, INFSLP);
@@ -527,9 +524,6 @@ spec_close(void *v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		mtx_enter(&vnode_mtx);
-		xlocked = (vp->v_lflag & VXLOCK);
-		mtx_leave(&vnode_mtx);
 		if (vcount(vp) > 1 && !xlocked)
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
@@ -541,9 +535,6 @@ spec_close(void *v)
 	}
 
 	/* release lock if held and this isn't coming from vclean() */
-	mtx_enter(&vnode_mtx);
-	xlocked = (vp->v_lflag & VXLOCK);
-	mtx_leave(&vnode_mtx);
 	relock = VOP_ISLOCKED(vp) && !xlocked;
 	if (relock)
 		VOP_UNLOCK(vp);
