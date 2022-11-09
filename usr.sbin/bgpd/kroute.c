@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.301 2022/10/18 09:30:29 job Exp $ */
+/*	$OpenBSD: kroute.c,v 1.302 2022/11/09 14:26:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -580,6 +580,9 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kf)
 	    (kf->prefix.labelstack[2] << 8);
 	mplslabel = htonl(mplslabel);
 
+	kf->flags |= F_MPLS;
+	kf->mplslabel = mplslabel;
+
 	/* for blackhole and reject routes nexthop needs to be 127.0.0.1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
 		kf->nexthop.v4.s_addr = htonl(INADDR_LOOPBACK);
@@ -590,6 +593,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kf)
 			return (-1);
 	} else {
 		kr->mplslabel = mplslabel;
+		kr->flags |= F_MPLS;
 		kr->ifindex = kf->ifindex;
 		kr->nexthop.s_addr = kf->nexthop.v4.s_addr;
 		rtlabel_unref(kr->labelid);
@@ -632,6 +636,9 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 	    (kf->prefix.labelstack[2] << 8);
 	mplslabel = htonl(mplslabel);
 
+	kf->flags |= F_MPLS;
+	kf->mplslabel = mplslabel;
+
 	/* for blackhole and reject routes nexthop needs to be ::1 */
 	if (kf->flags & (F_BLACKHOLE|F_REJECT))
 		memcpy(&kf->nexthop.v6, &lo6, sizeof(kf->nexthop.v6));
@@ -642,6 +649,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kf)
 			return (-1);
 	} else {
 		kr6->mplslabel = mplslabel;
+		kr6->flags |= F_MPLS;
 		kr6->ifindex = kf->ifindex;
 		memcpy(&kr6->nexthop, &kf->nexthop.v6, sizeof(struct in6_addr));
 		kr6->nexthop_scope_id = kf->nexthop.scope_id;
@@ -1878,9 +1886,11 @@ kroute_remove(struct ktable *kt, struct kroute_full *kf, int any)
 
 	switch (kf->prefix.aid) {
 	case AID_INET:
+	case AID_VPN_IPv4:
 		multipath = kroute4_remove(kt, kf, any);
 		break;
 	case AID_INET6:
+	case AID_VPN_IPv6:
 		multipath = kroute6_remove(kt, kf, any);
 		break;
 	default:
