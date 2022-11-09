@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.14 2022/10/12 13:39:50 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.15 2022/11/09 19:18:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -212,7 +212,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_rs = rtkit_init(faa->fa_node, NULL, NULL);
+	sc->sc_rs = rtkit_init(faa->fa_node, NULL, RK_WAKEUP, NULL);
 	if (sc->sc_rs == NULL) {
 		printf(": can't map mailbox channel\n");
 		return;

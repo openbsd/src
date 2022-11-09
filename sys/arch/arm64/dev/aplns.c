@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.13 2022/11/09 18:17:00 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.14 2022/11/09 19:18:11 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -215,7 +215,7 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	asc->asc_rtkit.rk_map = nvme_ans_sart_map;
 
 	asc->asc_rtkit_state =
-	     rtkit_init(faa->fa_node, NULL, &asc->asc_rtkit);
+	     rtkit_init(faa->fa_node, NULL, 0, &asc->asc_rtkit);
 	if (asc->asc_rtkit_state == NULL) {
 		printf(": can't map mailbox channel\n");
 		goto disestablish;

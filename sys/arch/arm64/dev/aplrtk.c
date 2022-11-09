@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplrtk.c,v 1.2 2022/09/03 19:05:52 kettenis Exp $	*/
+/*	$OpenBSD: aplrtk.c,v 1.3 2022/11/09 19:18:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -105,7 +105,7 @@ aplrtk_do_start(struct aplrtk_softc *sc)
 
 	sc->sc_rtkit.rk_cookie = sc;
 	sc->sc_rtkit.rk_dmat = sc->sc_dmat;
-	sc->sc_state = rtkit_init(sc->sc_node, NULL, &sc->sc_rtkit);
+	sc->sc_state = rtkit_init(sc->sc_node, NULL, 0, &sc->sc_rtkit);
 	if (sc->sc_state == NULL)
 		return EIO;
 

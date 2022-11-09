@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.25 2022/07/27 20:26:17 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.26 2022/11/09 19:18:11 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -868,6 +868,16 @@ intr_barrier(void *cookie)
 	struct interrupt_controller *ic = ih->ih_ic;
 
 	ic->ic_barrier(ih->ih_ih);
+}
+
+void
+intr_enable_wakeup(void *cookie)
+{
+	struct machine_intr_handle *ih = cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	if (ic->ic_enable_wakeup)
+		ic->ic_enable_wakeup(ih->ih_ih);
 }
 
 /*

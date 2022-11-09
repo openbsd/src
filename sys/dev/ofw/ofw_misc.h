@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.25 2022/09/02 16:53:28 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.26 2022/11/09 19:18:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -262,6 +262,8 @@ void	iommu_reserve_region_pci(int, uint32_t, bus_addr_t, bus_size_t);
 struct mbox_client {
 	void	(*mc_rx_callback)(void *);
 	void	*mc_rx_arg;
+	int	mc_flags;
+#define MC_WAKEUP		0x00000001
 };
 
 struct mbox_channel;

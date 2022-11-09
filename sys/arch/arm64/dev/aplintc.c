@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.16 2022/11/08 14:01:13 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.17 2022/11/09 19:18:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -123,13 +123,51 @@ struct aplintc_softc {
 	struct evcount		sc_ipi_count;
 };
 
+static inline void
+aplintc_sw_clr(struct aplintc_softc *sc, int die, int irq)
+{
+	if (sc->sc_version == 1)
+		HWRITE4(sc, AIC_SW_CLR(irq), AIC_SW_BIT(irq));
+	else
+		HWRITE4(sc, AIC2_SW_CLR(die, irq), AIC_SW_BIT(irq));
+}
+
+static inline void
+aplintc_sw_set(struct aplintc_softc *sc, int die, int irq)
+{
+	if (sc->sc_version == 1)
+		HWRITE4(sc, AIC_SW_SET(irq), AIC_SW_BIT(irq));
+	else
+		HWRITE4(sc, AIC2_SW_SET(die, irq), AIC_SW_BIT(irq));
+}
+
+static inline void
+aplintc_mask_clr(struct aplintc_softc *sc, int die, int irq)
+{
+	if (sc->sc_version == 1)
+		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
+	else
+		HWRITE4(sc, AIC2_MASK_CLR(die, irq), AIC_MASK_BIT(irq));
+}
+
+static inline void
+aplintc_mask_set(struct aplintc_softc *sc, int die, int irq)
+{
+	if (sc->sc_version == 1)
+		HWRITE4(sc, AIC_MASK_SET(irq), AIC_MASK_BIT(irq));
+	else
+		HWRITE4(sc, AIC2_MASK_SET(die, irq), AIC_MASK_BIT(irq));
+}
+
 struct aplintc_softc *aplintc_sc;
 
 int	aplintc_match(struct device *, void *, void *);
 void	aplintc_attach(struct device *, struct device *, void *);
+int	aplintc_activate(struct device *, int act);
 
 const struct cfattach	aplintc_ca = {
-	sizeof (struct aplintc_softc), aplintc_match, aplintc_attach
+	sizeof (struct aplintc_softc), aplintc_match, aplintc_attach,
+	NULL, aplintc_activate
 };
 
 struct cfdriver aplintc_cd = {
@@ -148,6 +186,7 @@ void	aplintc_setipl(int);
 void 	*aplintc_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	aplintc_intr_disestablish(void *);
+void	aplintc_intr_enable_wakeup(void *);
 
 void	aplintc_send_ipi(struct cpu_info *, int);
 void	aplintc_handle_ipi(struct aplintc_softc *);
@@ -241,6 +280,7 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_disestablish = aplintc_intr_disestablish;
 	sc->sc_ic.ic_cpu_enable = aplintc_cpuinit;
 	sc->sc_ic.ic_barrier = aplintc_intr_barrier;
+	sc->sc_ic.ic_enable_wakeup = aplintc_intr_enable_wakeup;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 #ifdef MULTIPROCESSOR
@@ -249,6 +289,39 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_version == 2)
 		HSET4(sc, AIC2_CONFIG, AIC2_CONFIG_ENABLE);
+}
+
+int
+aplintc_activate(struct device *self, int act)
+{
+	struct aplintc_softc *sc = (struct aplintc_softc *)self;
+	struct intrhand *ih;
+	int die, irq;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		for (die = 0; die < sc->sc_ndie; die++) {
+			for (irq = 0; irq < sc->sc_nirq; irq++) {
+				ih = sc->sc_irq_handler[die][irq];
+				if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+					continue;
+				aplintc_mask_set(sc, die, irq);
+			}
+		}
+		break;
+	case DVACT_RESUME:
+		for (die = 0; die < sc->sc_ndie; die++) {
+			for (irq = 0; irq < sc->sc_nirq; irq++) {
+				ih = sc->sc_irq_handler[die][irq];
+				if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+					continue;
+				aplintc_mask_clr(sc, die, irq);
+			}
+		}
+		break;
+	}
+
+	return 0;
 }
 
 void
@@ -274,42 +347,6 @@ aplintc_cpuinit(void)
 		KASSERT(hwid < AIC_MAXCPUS);
 		sc->sc_cpuremap[ci->ci_cpuid] = hwid;
 	}
-}
-
-static inline void
-aplintc_sw_clr(struct aplintc_softc *sc, int die, int irq)
-{
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_SW_CLR(irq), AIC_SW_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_SW_CLR(die, irq), AIC_SW_BIT(irq));
-}
-
-static inline void
-aplintc_sw_set(struct aplintc_softc *sc, int die, int irq)
-{
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_SW_SET(irq), AIC_SW_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_SW_SET(die, irq), AIC_SW_BIT(irq));
-}
-
-static inline void
-aplintc_mask_clr(struct aplintc_softc *sc, int die, int irq)
-{
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_MASK_CLR(die, irq), AIC_MASK_BIT(irq));
-}
-
-static inline void
-aplintc_mask_set(struct aplintc_softc *sc, int die, int irq)
-{
-	if (sc->sc_version == 1)
-		HWRITE4(sc, AIC_MASK_SET(irq), AIC_MASK_BIT(irq));
-	else
-		HWRITE4(sc, AIC2_MASK_SET(die, irq), AIC_MASK_BIT(irq));
 }
 
 void
@@ -598,6 +635,14 @@ aplintc_intr_disestablish(void *cookie)
 	intr_restore(daif);
 
 	free(ih, M_DEVBUF, sizeof(*ih));
+}
+
+void
+aplintc_intr_enable_wakeup(void *cookie)
+{
+	struct intrhand *ih = cookie;
+
+	ih->ih_flags |= IPL_WAKEUP;
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.19 2022/07/13 09:28:19 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.20 2022/11/09 19:18:11 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -64,6 +64,7 @@
 #define	IPL_IRQMASK	0xf	/* priority only */
 #define	IPL_FLAGMASK	0xf00	/* flags only*/
 #define	IPL_MPSAFE	0x100	/* 'mpsafe' interrupt, no kernel lock */
+#define	IPL_WAKEUP	0x200	/* 'wakeup' interrupt */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -125,6 +126,7 @@ extern struct arm_intr_func arm_intr_func;
 #define	spl0()		spllower(IPL_NONE)
 
 void	 intr_barrier(void *);
+void	 intr_enable_wakeup(void *);
 
 void	 arm_init_smask(void); /* XXX */
 extern uint32_t arm_smask[NIPL];
@@ -150,6 +152,7 @@ struct interrupt_controller {
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 	void	 (*ic_cpu_enable)(void);
 	void	 (*ic_barrier)(void *);
+	void	 (*ic_enable_wakeup)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;

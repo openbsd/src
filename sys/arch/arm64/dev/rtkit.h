@@ -12,7 +12,9 @@ struct rtkit {
 	int (*rk_map)(void *, bus_addr_t, bus_size_t);
 };
 
-struct rtkit_state *rtkit_init(int, const char *, struct rtkit *);
+#define RK_WAKEUP	0x00000001
+
+struct rtkit_state *rtkit_init(int, const char *, int, struct rtkit *);
 int	rtkit_boot(struct rtkit_state *);
 void	rtkit_shutdown(struct rtkit_state *);
 int	rtkit_set_ap_pwrstate(struct rtkit_state *, uint16_t);
