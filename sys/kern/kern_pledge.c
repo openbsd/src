@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.297 2022/11/08 19:17:58 robert Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.298 2022/11/09 22:25:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1374,6 +1374,11 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 			return (0);
 		}
 		break;
+	case IPPROTO_TCP:
+		switch (optname) {
+		case TCP_NODELAY:
+			return (0);
+		break;
 	}
 
 	if ((pledge & PLEDGE_WROUTE)) {
@@ -1426,7 +1431,6 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 	switch (level) {
 	case IPPROTO_TCP:
 		switch (optname) {
-		case TCP_NODELAY:
 		case TCP_MD5SIG:
 		case TCP_SACK_ENABLE:
 		case TCP_MAXSEG:
