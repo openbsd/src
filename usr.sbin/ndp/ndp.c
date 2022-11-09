@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.103 2021/03/02 05:34:20 jsg Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.104 2022/11/09 18:00:02 kn Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -457,7 +457,10 @@ delete:
 	return 0;
 }
 
-#define W_ADDR	36
+/*
+ * strlen("2001:0db8:3333:4444:5555:6666:7777:8888") == 39
+ */
+#define W_ADDR	39
 #define W_LL	17
 #define W_IF	7
 

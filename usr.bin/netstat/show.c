@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.59 2022/06/19 13:59:22 claudio Exp $	*/
+/*	$OpenBSD: show.c,v 1.60 2022/11/09 18:00:02 kn Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -166,9 +166,9 @@ p_rttables(int af, u_int tableid)
 /*
  * column widths; each followed by one space
  * width of destination/gateway column
- * strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4
+ * strlen("2001:0db8:3333:4444:5555:6666:7777:8888") == 39
  */
-#define	WID_GW(af)	((af) == AF_INET6 ? 30 : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? 39 : 18)
 
 int
 WID_DST(int af)
@@ -178,7 +178,8 @@ WID_DST(int af)
 	case AF_MPLS:
 		return 9;
 	case AF_INET6:
-		return 34;
+		/* WID_GW() + strlen("/128")  == 4 */
+		return 43;
 	default:
 		return 18;
 	}
