@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpmicgpio.c,v 1.2 2022/11/09 13:46:11 patrick Exp $	*/
+/*	$OpenBSD: qcpmicgpio.c,v 1.3 2022/11/09 19:25:50 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -147,11 +147,25 @@ qcpmicgpio_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct qcpmicgpio_softc *sc = cookie;
 	uint32_t pin = cells[0];
+	uint8_t reg;
+	int val;
 
 	if (pin >= sc->sc_npins)
 		return;
 
-	printf("%s\n", __func__);
+	if (config & GPIO_CONFIG_OUTPUT)
+		val = GPIO_PIN_MODE_DIR_DIGITAL_OUT;
+	else
+		val = GPIO_PIN_MODE_DIR_DIGITAL_IN;
+
+	if (sc->sc_is_lv_mv) {
+		qcpmicgpio_write(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE, val);
+	} else {
+		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE);
+		reg &= ~(GPIO_PIN_MODE_DIR_MASK << GPIO_PIN_MODE_DIR_SHIFT);
+		reg |= val << GPIO_PIN_MODE_DIR_SHIFT;
+		qcpmicgpio_write(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE, reg);
+	}
 }
 
 int
@@ -213,8 +227,6 @@ qcpmicgpio_set_pin(void *cookie, uint32_t *cells, int val)
 		val = !val;
 
 	if (sc->sc_is_lv_mv) {
-		qcpmicgpio_write(sc, GPIO_PIN_OFF(pin) + GPIO_PIN_MODE,
-		    GPIO_PIN_MODE_DIR_DIGITAL_OUT);
 		reg = qcpmicgpio_read(sc, GPIO_PIN_OFF(pin) +
 		    GPIO_PIN_LVMV_DOUT_CTL);
 		reg &= ~GPIO_PIN_LVMV_DOUT_CTL_INVERT;
