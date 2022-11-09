@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.86 2022/11/07 09:43:04 mpi Exp $ */
+/* $OpenBSD: pmap.c,v 1.87 2022/11/09 07:11:30 miod Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -375,45 +375,6 @@ pmap_vp_lookup(pmap_t pm, vaddr_t va, uint64_t **pl3entry)
 }
 
 /*
- * Remove, and return, pted at specified address, NULL if not present
- */
-struct pte_desc *
-pmap_vp_remove(pmap_t pm, vaddr_t va)
-{
-	struct pmapvp1 *vp1;
-	struct pmapvp2 *vp2;
-	struct pmapvp3 *vp3;
-	struct pte_desc *pted;
-
-	PMAP_ASSERT_LOCKED(pm);
-	
-	if (pm->have_4_level_pt) {
-		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
-		if (vp1 == NULL) {
-			return NULL;
-		}
-	} else {
-		vp1 = pm->pm_vp.l1;
-	}
-
-	vp2 = vp1->vp[VP_IDX1(va)];
-	if (vp2 == NULL) {
-		return NULL;
-	}
-
-	vp3 = vp2->vp[VP_IDX2(va)];
-	if (vp3 == NULL) {
-		return NULL;
-	}
-
-	pted = vp3->vp[VP_IDX3(va)];
-	vp3->vp[VP_IDX3(va)] = NULL;
-
-	return pted;
-}
-
-
-/*
  * Create a V -> P mapping for the given pmap and virtual address
  * with reference to the pte descriptor that is used to map the page.
  * This code should track allocations of vp table allocations
@@ -494,23 +455,19 @@ pmap_vp_page_free(struct pool *pp, void *v)
 	km_free(v, pp->pr_pgsize, &kv_any, &kp_dirty);
 }
 
-u_int32_t PTED_MANAGED(struct pte_desc *pted);
-u_int32_t PTED_WIRED(struct pte_desc *pted);
-u_int32_t PTED_VALID(struct pte_desc *pted);
-
-u_int32_t
+static inline u_int32_t
 PTED_MANAGED(struct pte_desc *pted)
 {
 	return (pted->pted_va & PTED_VA_MANAGED_M);
 }
 
-u_int32_t
+static inline u_int32_t
 PTED_WIRED(struct pte_desc *pted)
 {
 	return (pted->pted_va & PTED_VA_WIRED_M);
 }
 
-u_int32_t
+static inline u_int32_t
 PTED_VALID(struct pte_desc *pted)
 {
 	return (pted->pted_pte != 0);
@@ -674,7 +631,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		if (pted == NULL)
 			continue;
 
-		if (pted->pted_va & PTED_VA_WIRED_M) {
+		if (PTED_WIRED(pted)) {
 			pm->pm_stats.wired_count--;
 			pted->pted_va &= ~PTED_VA_WIRED_M;
 		}
@@ -693,7 +650,7 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 {
 	pm->pm_stats.resident_count--;
 
-	if (pted->pted_va & PTED_VA_WIRED_M) {
+	if (PTED_WIRED(pted)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
@@ -733,8 +690,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	struct vm_page *pg;
 
 	pted = pmap_vp_lookup(pm, va, NULL);
-
-	/* Do not have pted for this, get one and put it in VP */
 	if (pted == NULL) {
 		panic("pted not preallocated in pmap_kernel() va %lx pa %lx",
 		    va, pa);
@@ -801,7 +756,7 @@ pmap_kremove_pg(vaddr_t va)
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);
 
-	if (pted->pted_va & PTED_VA_WIRED_M)
+	if (PTED_WIRED(pted))
 		pm->pm_stats.wired_count--;
 
 	/* invalidate pted; */
@@ -2007,7 +1962,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 
 	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
-	if ((pted != NULL) && (pted->pted_va & PTED_VA_WIRED_M)) {
+	if (pted != NULL && PTED_WIRED(pted)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
