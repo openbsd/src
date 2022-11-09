@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.116 2022/11/06 18:30:22 kn Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.117 2022/11/09 18:46:04 krw Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -128,7 +128,6 @@ target(all, std)dnl
 target(all, ra, 0, 1, 2, 3)dnl
 target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
-target(all, xd, 0, 1, 2, 3)dnl
 target(all, pctr)dnl
 target(all, pctr0)dnl
 target(all, pf)dnl
@@ -226,8 +225,6 @@ target(ramd, rd, 0)dnl
 dnl
 __devitem(rd, {-rd*-}, quote(rd)pseudo-disks)dnl
 _mkdev(rd, rd*, {-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
-__devitem(xd, xd*, Xylogic 753/7053 disks)dnl
-__devitem(xy, xy*, {-	Xylogic 450/451 disks-})dnl
 __devitem(flo, {-fd*-}, {-Floppy disk drives (3 1/2"{-,-} 5 1/4")-},fd)dnl
 _mkdev(flo, fd*,
 {-typnam=$U${i#fd[01]*}
@@ -270,8 +267,6 @@ disk_q({-hd-})dnl
 disk_q({-ra-})dnl
 disk_q({-rx-})dnl
 disk_q({-sd-})dnl
-disk_q({-xy-})dnl
-disk_q({-xd-})dnl
 disk_q({-wd-})dnl
 _mkdev({-disks-}, {-undefine({-C_ase-})show_disks()undefine({-C_ase-})-},
 {-case $i in
