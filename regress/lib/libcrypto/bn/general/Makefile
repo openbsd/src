@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2022/07/25 20:48:57 tb Exp $
+#	$OpenBSD: Makefile,v 1.15 2022/11/09 23:28:08 tb Exp $
 
 .include "../../Makefile.inc"
 
@@ -34,6 +34,7 @@ REGRESS_TARGETS += run-bn_mod_sqrt
 run-bn_mod_sqrt: bn_mod_sqrt
 	./bn_mod_sqrt
 
+LDADD_bn_primes = ${CRYPTO_INT}
 REGRESS_TARGETS += run-bn_primes
 run-bn_primes: bn_primes
 	./bn_primes

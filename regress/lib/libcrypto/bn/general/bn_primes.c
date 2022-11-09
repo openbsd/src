@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_primes.c,v 1.1 2022/06/18 19:53:19 tb Exp $ */
+/*	$OpenBSD: bn_primes.c,v 1.2 2022/11/09 23:28:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -24,7 +24,7 @@ test_bn_is_prime_fasttest(int do_trial_division)
 {
 	BIGNUM *n = NULL;
 	char *descr = NULL;
-	prime_t i, j, max;
+	uint16_t i, j, max;
 	int is_prime, ret;
 	int failed = 1;
 
