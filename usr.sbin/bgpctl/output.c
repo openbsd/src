@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.31 2022/11/07 11:33:24 mbuhl Exp $ */
+/*	$OpenBSD: output.c,v 1.32 2022/11/09 14:20:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -477,6 +477,8 @@ show_fib(struct kroute_full *kf)
 		printf("link#%u", kf->ifindex);
 	else
 		printf("%s", log_addr(&kf->nexthop));
+	if (kf->flags & F_MPLS)
+		printf(" mpls %d", ntohl(kf->mplslabel) >> MPLS_LABEL_OFFSET);
 	printf("\n");
 }
 

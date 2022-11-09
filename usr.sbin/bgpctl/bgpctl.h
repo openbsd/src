@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.17 2022/10/17 12:01:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.18 2022/11/09 14:20:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -58,3 +58,5 @@ const char	*fmt_community(uint16_t, uint16_t);
 const char	*fmt_large_community(uint32_t, uint32_t, uint32_t);
 const char	*fmt_ext_community(uint8_t *);
 const char	*fmt_set_type(struct ctl_show_set *);
+
+#define MPLS_LABEL_OFFSET 12

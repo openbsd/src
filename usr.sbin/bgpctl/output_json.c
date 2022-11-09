@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.25 2022/11/07 11:33:24 mbuhl Exp $ */
+/*	$OpenBSD: output_json.c,v 1.26 2022/11/09 14:20:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -385,6 +385,12 @@ json_fib(struct kroute_full *kf)
 	else
 		json_do_printf("nexthop", "%s", log_addr(&kf->nexthop));
 
+	if (kf->flags & F_MPLS) {
+		json_do_array("mplslabel");
+		json_do_uint("mplslabel", 
+		    ntohl(kf->mplslabel) >> MPLS_LABEL_OFFSET);
+		json_do_end();
+	}
 	json_do_end();
 }
 
