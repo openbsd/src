@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2020/01/09 19:33:19 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2022/11/09 07:20:12 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -45,13 +45,7 @@ static	void action(char *);
 static	void dump_prom(void);
 static	void usage(void);
 
-char	*path_eeprom = "/dev/eeprom";
 char	*path_openprom = "/dev/openprom";
-int	fix_checksum = 0;
-int	ignore_checksum = 0;
-int	update_checksums = 0;
-int	cksumfail = 0;
-u_short	writecount;
 int	eval = 0;
 int	print_tree = 0;
 int	verbose = 0;
@@ -63,35 +57,22 @@ main(int argc, char *argv[])
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
-	char *optstring = "cf:ipvN:-";
+	char *optstring = "f:pv-";
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)
 		switch (ch) {
 		case '-':
 			do_stdin = 1;
 			break;
-
-		case 'c':
-			fix_checksum = 1;
-			break;
-
 		case 'f':
-			path_eeprom = path_openprom = optarg;
+			path_openprom = optarg;
 			break;
-
-		case 'i':
-			ignore_checksum = 1;
-			break;
-
 		case 'p':
 			print_tree = 1;
 			break;
-
 		case 'v':
 			verbose = 1;
 			break;
-
-		case '?':
 		default:
 			usage();
 		}
@@ -116,7 +97,7 @@ main(int argc, char *argv[])
 	} else {
 		if (argc == 0) {
 			dump_prom();
-			exit(eval + cksumfail);
+			exit(eval);
 		}
 
 		while (argc) {
@@ -126,7 +107,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	exit(eval + cksumfail);
+	exit(eval);
 }
 
 /*
@@ -171,7 +152,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-cipv] [-f device] [field[=value] ...]\n",
+	    "usage: %s [-pv] [-f device] [field[=value] ...]\n",
 	    __progname);
 	exit(1);
 }

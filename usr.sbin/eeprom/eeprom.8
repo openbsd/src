@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.23 2022/11/08 12:11:13 kn Exp $
+.\"	$OpenBSD: eeprom.8,v 1.24 2022/11/09 07:20:12 miod Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,17 +28,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 8 2022 $
+.Dd $Mdocdate: November 9 2022 $
 .Dt EEPROM 8
 .Os
 .Sh NAME
 .Nm eeprom
-.Nd display or modify contents of the EEPROM or OpenPROM
+.Nd display or modify contents of the OpenPROM
 .Sh SYNOPSIS
 .Nm eeprom
-.Op Fl cipv
+.Op Fl pv
 .Op Fl f Ar device
-.Op Fl N Ar system
 .Oo
 .Ar field Ns Op = Ns Ar value
 .Ar ...
@@ -46,7 +45,7 @@
 .Sh DESCRIPTION
 .Nm eeprom
 provides an interface for displaying and changing the contents of the
-EEPROM or OpenPROM.
+OpenPROM.
 Without any arguments,
 .Nm eeprom
 will list all of the known fields and their corresponding values.
@@ -55,145 +54,26 @@ When given the name of a specific field,
 will display that value or set it if the field name is followed by
 .Sq =
 and a value.
-Only the superuser may modify the contents of the EEPROM or OpenPROM.
+Only the superuser may modify the contents of the OpenPROM.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl
 Commands are taken from stdin and displayed on stdout.
-.It Fl c
-.Nm eeprom
-will fix incorrect checksum values and exit.
-This flag is quietly ignored on systems with an OpenPROM.
 .It Fl f Ar device
-On systems with an EEPROM, use
-.Ar device
-instead of the default
-.Pa /dev/eeprom .
-On systems with an OpenPROM, use
+Use
 .Ar device
 instead of the default
 .Pa /dev/openprom .
-.It Fl i
-If checksum values are incorrect,
-.Nm eeprom
-will ignore them and continue after displaying a warning.
-This flag is quietly ignored on systems with an OpenPROM.
-.It Fl N Ar system
-Use the system image
-.Ar system
-instead of the default
-.Pa /bsd .
 .It Fl p
-On systems with an OpenPROM, display the tree derived from it and exit.
-This flag is quietly ignored on systems with an EEPROM.
+Display the tree derived from the OpenPROM and exit.
 .It Fl v
-On systems with an OpenPROM, be verbose when setting a value.
-Systems with an EEPROM are always verbose.
+Be verbose when setting a value.
 .El
 .Sh FIELDS AND VALUES
-The following fields and values are for systems with an EEPROM:
-.Bl -tag -width "watchdog_reboot  "
-.It Ar hwupdate
-A valid date, such as
-.Dq 7/12/95 .
-The strings
-.Dq today
-and
-.Dq now
-are also acceptable.
-.It Ar memsize
-How much memory, in megabytes, is installed in the system.
-.It Ar memtest
-How much memory, in megabytes, is to be tested upon power-up.
-.It Ar scrsize
-The size of the screen.
-Acceptable values are
-.Dq 1024x1024 ,
-.Dq 1152x900 ,
-.Dq 1600x1280 ,
-and
-.Dq 1440x1440 .
-.It Ar watchdog_reboot
-If true, the system will reboot upon reset.
-Otherwise, the system will fall into the monitor.
-.It Ar default_boot
-If true, the system will use the boot device stored in
-.Ar bootdev .
-.It Ar bootdev
-Specifies the default boot device in the form cc(x,x,x), where
-.Dq cc
-is a combination of two letters such as
-.Dq sd
-or
-.Dq le
-and each
-.Dq x
-is a hexadecimal number between 0 and ff, less the prepending
-.Dq 0x .
-.It Ar kbdtype
-This value is
-.Dq 0
-for all Sun keyboards.
-.It Ar console
-Specifies the console type.
-Valid values are
-.Dq b&w ,
-.Dq ttya ,
-.Dq ttyb ,
-.Dq color ,
-and
-.Dq p4opt .
-.It Ar keyclick
-If true, the keys click annoyingly.
-.It Ar diagdev
-This is a string very similar to that used by
-.Ar bootdev .
-It specifies the default boot device when the diagnostic switch is
-turned on.
-.It Ar diagpath
-A 40-character, NULL-terminated string specifying the kernel or stand-alone
-program to load when the diagnostic switch is turned on.
-.It Ar columns
-An 8-bit integer specifying the number of columns on the console.
-.It Ar rows
-An 8-bit integer specifying the number of rows on the console.
-.It Ar ttya_use_baud
-Use the baud rate stored in
-.Ar ttya_baud
-instead of the default 9600.
-.It Ar ttya_baud
-A 16-bit integer specifying the baud rate to use on ttya.
-.It Ar ttya_no_rtsdtr
-If true, disables RTS/DTR.
-.It Ar ttyb_use_baud
-Similar to
-.Ar ttya_use_baud ,
-but for ttyb.
-.It Ar ttyb_baud
-Similar to
-.Ar ttya_baud ,
-but for ttyb.
-.It Ar ttyb_no_rtsdtr
-Similar to
-.Ar ttya_no_rtsdtr ,
-but for ttyb.
-.It Ar banner
-An 80-character, NULL-terminated string to use at power-up instead
-of the default Sun banner.
-.El
-.Pp
-Note that the
-.Ar secure ,
-.Ar bad_login ,
-and
-.Ar password
-fields are not currently supported.
-.Pp
 Since the OpenPROM is designed such that the field names are arbitrary,
 explaining them here is dubious.
-Below are field names and values that
-one is likely to see on a system with an OpenPROM.
+Below are field names and values that one is likely to see.
 NOTE: this list
 may be incomplete or incorrect due to differences between revisions
 of the OpenPROM.
@@ -338,10 +218,8 @@ other hardware will not.
 .El
 .Sh FILES
 .Bl -tag -width "/dev/openprom" -compact
-.It /dev/eeprom
-the EEPROM device on systems with an EEPROM
 .It /dev/openprom
-the OpenPROM device on systems with an OpenPROM
+the OpenPROM device
 .El
 .Sh SEE ALSO
 .Xr openprom 4
@@ -350,12 +228,9 @@ The fields and their values are not necessarily well defined on
 systems with an OpenPROM.
 Your mileage may vary.
 .Pp
-There are a few fields known to exist in some revisions of the EEPROM
-and/or OpenPROM that are not yet supported.
+There are a few fields known to exist in some revisions of the
+OpenPROM that are not yet supported.
 Most notable are those
-relating to password protection of the EEPROM or OpenPROM.
-.Pp
-Avoid gratuitously changing the contents of the EEPROM.
-It has a limited number of write cycles.
+relating to password protection of the OpenPROM.
 .Pp
 The date parser isn't very intelligent.
