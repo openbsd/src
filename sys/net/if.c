@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.674 2022/11/09 13:08:36 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.675 2022/11/09 13:09:30 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2389,9 +2389,7 @@ ifioctl_get(u_long cmd, caddr_t data)
 		KERNEL_UNLOCK();
 		return (error);
 	case SIOCIFGCLONERS:
-		KERNEL_LOCK();
 		error = if_clone_list((struct if_clonereq *)data);
-		KERNEL_UNLOCK();
 		return (error);
 	case SIOCGIFGMEMB:
 		KERNEL_LOCK();
