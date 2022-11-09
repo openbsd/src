@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.10 2022/11/08 17:07:17 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.11 2022/11/09 17:39:29 jsing Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -4615,14 +4615,30 @@ sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
   s[31] = s11 >> 17;
 }
 
-void ED25519_keypair(uint8_t out_public_key[32], uint8_t out_private_key[64]) {
-  uint8_t seed[32];
-  arc4random_buf(seed, 32);
-  ED25519_keypair_from_seed(out_public_key, out_private_key, seed);
+void ED25519_public_from_private(uint8_t out_public_key[ED25519_PUBLIC_KEY_LENGTH],
+    const uint8_t private_key[ED25519_PRIVATE_KEY_LENGTH]) {
+  uint8_t az[SHA512_DIGEST_LENGTH];
+  SHA512(private_key, 32, az);
+
+  az[0] &= 248;
+  az[31] &= 63;
+  az[31] |= 64;
+
+  ge_p3 A;
+  x25519_ge_scalarmult_base(&A, az);
+  ge_p3_tobytes(out_public_key, &A);
+}
+
+void ED25519_keypair(uint8_t out_public_key[ED25519_PUBLIC_KEY_LENGTH],
+    uint8_t out_private_key[ED25519_PRIVATE_KEY_LENGTH]) {
+  arc4random_buf(out_private_key, 32);
+
+  ED25519_public_from_private(out_public_key, out_private_key);
 }
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t private_key[64]) {
+    const uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH],
+    const uint8_t private_key[ED25519_PRIVATE_KEY_LENGTH]) {
   uint8_t az[SHA512_DIGEST_LENGTH];
   SHA512(private_key, 32, az);
 
@@ -4644,7 +4660,7 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 
   SHA512_Init(&hash_ctx);
   SHA512_Update(&hash_ctx, out_sig, 32);
-  SHA512_Update(&hash_ctx, private_key + 32, 32);
+  SHA512_Update(&hash_ctx, public_key, 32);
   SHA512_Update(&hash_ctx, message, message_len);
   uint8_t hram[SHA512_DIGEST_LENGTH];
   SHA512_Final(hram, &hash_ctx);
@@ -4656,7 +4672,8 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 }
 
 int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32]) {
+    const uint8_t signature[ED25519_SIGNATURE_LENGTH],
+    const uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH]) {
   ge_p3 A;
   if ((signature[63] & 224) != 0 ||
       x25519_ge_frombytes_vartime(&A, public_key) != 0) {
@@ -4690,24 +4707,6 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   x25519_ge_tobytes(rcheck, &R);
 
   return timingsafe_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
-}
-
-void ED25519_keypair_from_seed(uint8_t out_public_key[32],
-			       uint8_t out_private_key[64],
-			       const uint8_t seed[32]) {
-  uint8_t az[SHA512_DIGEST_LENGTH];
-  SHA512(seed, 32, az);
-
-  az[0] &= 248;
-  az[31] &= 63;
-  az[31] |= 64;
-
-  ge_p3 A;
-  x25519_ge_scalarmult_base(&A, az);
-  ge_p3_tobytes(out_public_key, &A);
-
-  memcpy(out_private_key, seed, 32);
-  memcpy(out_private_key + 32, out_public_key, 32);
 }
 
 /* Replace (f,g) with (g,f) if b == 1;
