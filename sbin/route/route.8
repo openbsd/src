@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.104 2022/07/29 18:28:32 kn Exp $
+.\"	$OpenBSD: route.8,v 1.105 2022/11/09 10:23:01 sthen Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 29 2022 $
+.Dd $Mdocdate: November 9 2022 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -596,6 +596,13 @@ Delete the
 route to the 192.168.5.0/24 network:
 .Pp
 .Dl # route delete -inet 192.168.5.0/24
+Add a static
+.Xr inet6 4
+route to a host which is on the vio0 interface that is outside your prefix,
+and use that host as a default gateway, as used by some hosting providers:
+.Pp
+.Dl # route add -inet6 2001:db8:efef::1 -cloning -link -iface vio0
+.Dl # route add -inet6 default 2001:db8:efef::1
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "%s: gateway %s flags %x"
