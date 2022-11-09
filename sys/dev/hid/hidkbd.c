@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.7 2022/09/16 16:30:10 robert Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.8 2022/11/09 10:05:18 robert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -107,6 +107,21 @@ const u_int8_t hidkbd_trtab[256] = {
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* f8 - ff */
 };
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
+
+static const struct hidkbd_translation apple_tb_trans[] = {
+	{ 30, 58 },	/* 1 -> F1 */
+	{ 31, 59 },	/* 2 -> F2 */
+	{ 32, 60 },	/* 3 -> F3 */
+	{ 33, 61 },	/* 4 -> F4 */
+	{ 34, 62 },	/* 5 -> F5 */
+	{ 35, 63 },	/* 6 -> F6 */
+	{ 36, 64 },	/* 7 -> F7 */
+	{ 37, 65 },	/* 8 -> F8 */
+	{ 38, 66 },	/* 9 -> F9 */
+	{ 39, 67 },	/* 0 -> F10 */
+	{ 45, 68 },	/* - -> F11 */
+	{ 46, 69 }	/* = -> F12 */
+};
 
 static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 40, 73 },	/* return -> insert */
@@ -334,6 +349,20 @@ hidkbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 
 	hidkbd_apple_translate(vsc, ibuf, ilen, apple_fn_trans,
 	    nitems(apple_fn_trans));
+}
+
+void
+hidkbd_apple_tb_munge(void *vsc, uint8_t *ibuf, u_int ilen)
+{
+	struct hidkbd *kbd = vsc;
+
+	if (!hid_get_data(ibuf, ilen, &kbd->sc_fn))
+		return;
+
+	hidkbd_apple_munge(vsc, ibuf, ilen);
+
+	hidkbd_apple_translate(vsc, ibuf, ilen, apple_tb_trans,
+	    nitems(apple_tb_trans));
 }
 
 void

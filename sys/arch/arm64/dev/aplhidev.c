@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.8 2022/10/02 19:00:46 kettenis Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.9 2022/11/09 10:05:18 robert Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -32,6 +32,8 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+
+#include <dev/usb/usbdevs.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
@@ -526,8 +528,16 @@ aplkbd_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (hid_locate(aa->aa_desc, aa->aa_desclen, HID_USAGE2(HUP_APPLE, HUG_FN_KEY),
-	    1, hid_input, &kbd->sc_fn, NULL))
-		kbd->sc_munge = hidkbd_apple_munge;
+	    1, hid_input, &kbd->sc_fn, NULL)) {
+		switch (sc->sc_hidev->sc_product) {
+		case USB_PRODUCT_APPLE_WELLSPRINGM1_J293:
+			kbd->sc_munge = hidkbd_apple_tb_munge;
+			break;
+		default:
+			kbd->sc_munge = hidkbd_apple_munge;
+			break;
+		}
+	}
 
 	if (kbd->sc_console_keyboard) {
 		extern struct wskbd_mapdata ukbd_keymapdata;

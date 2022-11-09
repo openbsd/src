@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbdsc.h,v 1.2 2022/09/16 16:30:10 robert Exp $	*/
+/*	$OpenBSD: hidkbdsc.h,v 1.3 2022/11/09 10:05:18 robert Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -113,6 +113,7 @@ int	hidkbd_ioctl(struct hidkbd *, u_long, caddr_t, int, struct proc *);
 int	hidkbd_set_leds(struct hidkbd *, int, uint8_t *);
 uint8_t	hidkbd_translate(const struct hidkbd_translation *, size_t, uint8_t);
 void	hidkbd_apple_munge(void *, uint8_t *, u_int);
+void	hidkbd_apple_tb_munge(void *, uint8_t *, u_int);
 void	hidkbd_apple_iso_munge(void *, uint8_t *, u_int);
 void	hidkbd_apple_mba_munge(void *, uint8_t *, u_int);
 void	hidkbd_apple_iso_mba_munge(void *, uint8_t *, u_int);
