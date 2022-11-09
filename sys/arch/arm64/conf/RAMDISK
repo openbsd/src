@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.182 2022/11/08 19:49:34 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.183 2022/11/09 20:00:05 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -243,6 +243,7 @@ qcspmi*		at fdt?
 qcpmic*		at qcspmi?
 qcpmicgpio*	at qcpmic?
 qcpon*		at qcpmic?
+qcpwm*		at qcpmic?
 qcrtc*		at qcpmic?
 
 # Sunxi SoCs
