@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.266 2022/11/07 10:21:17 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.267 2022/11/09 10:26:37 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ int gpt_get_hdr(struct buf *, void (*)(struct buf *), struct disklabel *,
     uint64_t, struct gpt_header *);
 int gpt_get_parts(struct buf *, void (*)(struct buf *),
     struct disklabel *, const struct gpt_header *, struct gpt_partition **);
-int gpt_get_fstype(struct uuid *);
+int gpt_get_fstype(const struct uuid *);
 
 int duid_equal(u_char *, u_char *);
 
@@ -542,7 +542,7 @@ gpt_get_parts(struct buf *bp, void (*strat)(struct buf *), struct disklabel *lp,
 }
 
 int
-gpt_get_fstype(struct uuid *uuid_part)
+gpt_get_fstype(const struct uuid *uuid_part)
 {
 	static int init = 0;
 	static struct uuid uuid_openbsd, uuid_msdos, uuid_chromefs,
