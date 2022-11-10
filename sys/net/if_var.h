@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.118 2022/11/08 18:43:22 kn Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.119 2022/11/10 12:46:19 kn Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 /*
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
- *	d	protection left do the driver
+ *	d	protection left to the driver
  *	c	only used in ioctl or routing socket contexts (kernel lock)
  *	K	kernel lock
  *	N	net lock
