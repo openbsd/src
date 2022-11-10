@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.18 2022/11/10 11:23:21 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.19 2022/11/10 23:42:15 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -48,11 +48,6 @@
 #include <machine/cpu.h>
 #include <machine/acpiapm.h>
 #include <machine/apmvar.h>
-
-#include "psci.h"
-#if NPSCI > 0
-#include <dev/fdt/pscivar.h>
-#endif
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
