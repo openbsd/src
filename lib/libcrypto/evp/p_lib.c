@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.29 2022/06/27 12:36:05 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.30 2022/11/10 14:46:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -276,6 +276,96 @@ int
 EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
 	return pkey_set_type(pkey, NULL, type, NULL, -1);
+}
+
+EVP_PKEY *
+EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
+    const unsigned char *private_key, size_t len)
+{
+	EVP_PKEY *ret;
+
+	if ((ret = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	if (!pkey_set_type(ret, engine, type, NULL, -1))
+		goto err;
+
+	if (ret->ameth->set_priv_key == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		goto err;
+	}
+	if (!ret->ameth->set_priv_key(ret, private_key, len)) {
+		EVPerror(EVP_R_KEY_SETUP_FAILED);
+		goto err;
+	}
+
+	return ret;
+
+ err:
+	EVP_PKEY_free(ret);
+
+	return NULL;
+}
+
+EVP_PKEY *
+EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
+    const unsigned char *public_key, size_t len)
+{
+	EVP_PKEY *ret;
+
+	if ((ret = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	if (!pkey_set_type(ret, engine, type, NULL, -1))
+		goto err;
+
+	if (ret->ameth->set_pub_key == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		goto err;
+	}
+	if (!ret->ameth->set_pub_key(ret, public_key, len)) {
+		EVPerror(EVP_R_KEY_SETUP_FAILED);
+		goto err;
+	}
+
+	return ret;
+
+ err:
+	EVP_PKEY_free(ret);
+
+	return NULL;
+}
+
+int
+EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey,
+    unsigned char *out_private_key, size_t *out_len)
+{
+	if (pkey->ameth->get_priv_key == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return 0;
+	}
+	if (!pkey->ameth->get_priv_key(pkey, out_private_key, out_len)) {
+		EVPerror(EVP_R_GET_RAW_KEY_FAILED);
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey,
+    unsigned char *out_public_key, size_t *out_len)
+{
+	if (pkey->ameth->get_pub_key == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return 0;
+	}
+	if (!pkey->ameth->get_pub_key(pkey, out_public_key, out_len)) {
+		EVPerror(EVP_R_GET_RAW_KEY_FAILED);
+		return 0;
+	}
+
+	return 1;
 }
 
 EVP_PKEY *
@@ -581,4 +671,3 @@ EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 	return pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID,
 	    0, pnid);
 }
-

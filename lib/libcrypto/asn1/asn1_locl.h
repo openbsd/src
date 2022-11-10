@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.40 2022/11/08 12:56:00 beck Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.41 2022/11/10 14:46:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -142,6 +142,15 @@ struct evp_pkey_asn1_method_st {
 	int (*pkey_check)(const EVP_PKEY *pk);
 	int (*pkey_public_check)(const EVP_PKEY *pk);
 	int (*pkey_param_check)(const EVP_PKEY *pk);
+
+	int (*set_priv_key)(EVP_PKEY *pk, const unsigned char *private_key,
+	    size_t len);
+	int (*set_pub_key)(EVP_PKEY *pk, const unsigned char *public_key,
+	    size_t len);
+	int (*get_priv_key)(const EVP_PKEY *pk, unsigned char *out_private_key,
+	    size_t *out_len);
+	int (*get_pub_key)(const EVP_PKEY *pk, unsigned char *out_public_key,
+	    size_t *out_len);
 } /* EVP_PKEY_ASN1_METHOD */;
 
 /* Method to handle CRL access.

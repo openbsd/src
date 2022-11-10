@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.28 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: evp_err.c,v 1.29 2022/11/10 14:46:44 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -101,6 +101,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_EXPECTING_A_ECDSA_KEY) , "expecting a ecdsa key"},
 	{ERR_REASON(EVP_R_EXPECTING_A_EC_KEY)    , "expecting a ec key"},
 	{ERR_REASON(EVP_R_FIPS_MODE_NOT_SUPPORTED), "fips mode not supported"},
+	{ERR_REASON(EVP_R_GET_RAW_KEY_FAILED)    , "get raw key failed"},
 	{ERR_REASON(EVP_R_INITIALIZATION_ERROR)  , "initialization error"},
 	{ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED) , "input not initialized"},
 	{ERR_REASON(EVP_R_INVALID_DIGEST)        , "invalid digest"},
