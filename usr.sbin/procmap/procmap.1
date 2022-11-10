@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.25 2022/10/22 06:39:12 jmc Exp $
+.\"	$OpenBSD: procmap.1,v 1.26 2022/11/10 08:17:53 deraadt Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2022 $
+.Dd $Mdocdate: November 10 2022 $
 .Dt PROCMAP 1
 .Os
 .Sh NAME
@@ -82,7 +82,8 @@ information from the process's memory map.
 This output
 mode is an amalgam of the contents of the Solaris, Linux, and
 .Ox
-style output modes.
+style output modes, and attempts to maximize information displayed.
+This is the default output style.
 .It Fl D Ar number
 Enable various debug facilities.
 The
@@ -162,7 +163,6 @@ is optional.
 .It Fl s
 The Solaris style output format, modeled after the Solaris command
 .Dq pmap .
-This is the default output style.
 .It Fl v
 Verbose output.
 When used with

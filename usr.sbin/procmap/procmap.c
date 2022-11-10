@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.70 2022/10/07 15:22:10 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.71 2022/11/10 08:17:53 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 	/* apply default */
 	if (print_all + print_map + print_maps + print_solaris +
 	    print_ddb == 0)
-		print_solaris = 1;
+		print_all = 1;
 
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
