@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.28 2022/11/09 18:17:16 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.29 2022/11/10 16:37:51 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,11 +75,13 @@ extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD gostimit_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD gostr01_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD x25519_asn1_meth;
 
 static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&cmac_asn1_meth,
@@ -90,6 +92,7 @@ static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&dsa_asn1_meths[3],
 	&dsa_asn1_meths[4],
 	&eckey_asn1_meth,
+	&ed25519_asn1_meth,
 	&gostimit_asn1_meth,
 	&gostr01_asn1_meths[0],
 	&gostr01_asn1_meths[1],
@@ -98,6 +101,7 @@ static const EVP_PKEY_ASN1_METHOD *asn1_methods[] = {
 	&rsa_asn1_meths[0],
 	&rsa_asn1_meths[1],
 	&rsa_pss_asn1_meth,
+	&x25519_asn1_meth,
 };
 
 static const size_t asn1_methods_count =

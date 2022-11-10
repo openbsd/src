@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.110 2022/11/10 15:17:30 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.111 2022/11/10 16:37:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,6 +115,10 @@
 #define EVP_PKEY_HKDF		NID_hkdf
 #define EVP_PKEY_GOSTR12_256	NID_id_tc26_gost3410_2012_256
 #define EVP_PKEY_GOSTR12_512	NID_id_tc26_gost3410_2012_512
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define EVP_PKEY_ED25519	NID_ED25519
+#define EVP_PKEY_X25519		NID_X25519
+#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -296,6 +300,11 @@ extern "C" {
 
 /* Length of tag for TLS */
 #define EVP_CHACHAPOLY_TLS_TAG_LEN			16
+
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define ED25519_KEYLEN					32
+#define X25519_KEYLEN					32
+#endif
 
 typedef struct evp_cipher_info_st {
 	const EVP_CIPHER *cipher;

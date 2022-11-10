@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.24 2022/11/09 18:25:36 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.25 2022/11/10 16:37:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -82,24 +82,28 @@ extern const EVP_PKEY_METHOD cmac_pkey_meth;
 extern const EVP_PKEY_METHOD dh_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD ed25519_pkey_meth;
 extern const EVP_PKEY_METHOD gostimit_pkey_meth;
 extern const EVP_PKEY_METHOD gostr01_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
+extern const EVP_PKEY_METHOD x25519_pkey_meth;
 
 static const EVP_PKEY_METHOD *pkey_methods[] = {
 	&cmac_pkey_meth,
 	&dh_pkey_meth,
 	&dsa_pkey_meth,
 	&ec_pkey_meth,
+	&ed25519_pkey_meth,
 	&gostimit_pkey_meth,
 	&gostr01_pkey_meth,
 	&hkdf_pkey_meth,
 	&hmac_pkey_meth,
 	&rsa_pkey_meth,
 	&rsa_pss_pkey_meth,
+	&x25519_pkey_meth,
 };
 
 static const size_t pkey_methods_count =

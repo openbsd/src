@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.85 2022/11/10 16:00:34 joshua Exp $
+# $OpenBSD: Makefile,v 1.86 2022/11/10 16:37:51 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -33,6 +33,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/asn1
 CFLAGS+= -I${LCRYPTO_SRC}/bio
 CFLAGS+= -I${LCRYPTO_SRC}/bn
 CFLAGS+= -I${LCRYPTO_SRC}/bytestring
+CFLAGS+= -I${LCRYPTO_SRC}/curve25519
 CFLAGS+= -I${LCRYPTO_SRC}/dh
 CFLAGS+= -I${LCRYPTO_SRC}/dsa
 CFLAGS+= -I${LCRYPTO_SRC}/ec
@@ -361,6 +362,7 @@ SRCS+= ecp_nistp521.c
 SRCS+= ecp_nistputil.c
 SRCS+= ecp_oct.c
 SRCS+= ecp_smpl.c
+SRCS+= ecx_methods.c
 
 # ecdh/
 SRCS+= ecdh_kdf.c

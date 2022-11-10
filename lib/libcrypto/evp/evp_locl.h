@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.29 2022/11/10 15:17:30 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.30 2022/11/10 16:37:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -74,6 +74,15 @@ typedef int evp_verify_method(int type, const unsigned char *m,
     unsigned int m_length, const unsigned char *sigbuf, unsigned int siglen,
     void *key);
 
+struct ecx_key_st {
+	int nid;
+	int key_len;
+	uint8_t *priv_key;
+	size_t priv_key_len;
+	uint8_t *pub_key;
+	size_t pub_key_len;
+};
+
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do
  * arbitrary encryption.... */
@@ -96,6 +105,7 @@ struct evp_pkey_st {
 #endif
 #ifndef OPENSSL_NO_EC
 		struct ec_key_st *ec;	/* ECC */
+		struct ecx_key_st *ecx;	/* ECX */
 #endif
 #ifndef OPENSSL_NO_GOST
 		struct gost_key_st *gost; /* GOST */
