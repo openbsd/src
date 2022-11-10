@@ -1,4 +1,4 @@
-// $OpenBSD: utils_unittest.cc,v 1.3 2022/04/04 11:42:12 tb Exp $
+// $OpenBSD: utils_unittest.cc,v 1.4 2022/11/10 14:51:01 kn Exp $
 //
 // Copyright 2020 The Chromium Authors. All rights reserved.
 //
@@ -108,7 +108,7 @@ TEST(ZlibTest, CRCHashBitsCollision) {
   // of hash bits must be set higher, regardless of the memlevel parameter, when
   // using CRC32c hashing for string matching. See https://crbug.com/1113596
 
-  std::vector<uint8_t> src = {
+  const uint8_t srcdata[] = {
       // Random byte; zlib doesn't match at offset 0.
       123,
 
@@ -131,10 +131,13 @@ TEST(ZlibTest, CRCHashBitsCollision) {
       0x14,
       0x15,
   };
+  std::vector<uint8_t> src;
+  for (int i = 0; i < sizeof(srcdata) / sizeof(srcdata[0]); ++i)
+    src.push_back(srcdata[i]);
 
   z_stream stream;
-  stream.zalloc = nullptr;
-  stream.zfree = nullptr;
+  stream.zalloc = Z_NULL;
+  stream.zfree = Z_NULL;
 
   // Using a low memlevel to try to reduce the number of hash bits. Negative
   // windowbits means raw deflate, i.e. without the zlib header.
@@ -174,7 +177,7 @@ TEST(ZlibTest, CRCHashAssert) {
   // other four bytes also mismatch. This tests that zlib's assert handles this
   // case.
 
-  std::vector<uint8_t> src = {
+  const uint8_t srcdata[] = {
       // Random byte; zlib doesn't match at offset 0.
       123,
 
@@ -202,10 +205,13 @@ TEST(ZlibTest, CRCHashAssert) {
       0x12,
       0x34,
   };
+  std::vector<uint8_t> src;
+  for (int i = 0; i < sizeof(srcdata) / sizeof(srcdata[0]); ++i)
+    src.push_back(srcdata[i]);
 
   z_stream stream;
-  stream.zalloc = nullptr;
-  stream.zfree = nullptr;
+  stream.zalloc = Z_NULL;
+  stream.zfree = Z_NULL;
 
   int ret = deflateInit2(&stream, /*comp level*/ 5, /*method*/ Z_DEFLATED,
                          /*windowbits*/ -15, /*memlevel*/ 8,
@@ -331,8 +337,8 @@ static const uint8_t checkMatchCrashData[] = {
 TEST(ZlibTest, CheckMatchCrash) {
   // See https://crbug.com/1113142.
   z_stream stream;
-  stream.zalloc = nullptr;
-  stream.zfree = nullptr;
+  stream.zalloc = Z_NULL;
+  stream.zfree = Z_NULL;
 
   // Low windowbits to hit window sliding also with a relatively small input.
   int ret = deflateInit2(&stream, /*comp level*/ 5, /*method*/ Z_DEFLATED,
@@ -352,7 +358,7 @@ TEST(ZlibTest, CheckMatchCrash) {
     ASSERT_EQ(ret, Z_OK);
   }
 
-  stream.next_in = nullptr;
+  stream.next_in = NULL;
   stream.avail_in = 0;
   ASSERT_GT(stream.avail_out, 0U);
   ret = deflate(&stream, Z_FINISH);
@@ -385,7 +391,7 @@ TEST(ZlibTest, DeflateRLEUninitUse) {
   int windowBits = 9;
   int memLevel = 8;
   int strategy = Z_RLE;
-  const std::vector<uint8_t> src{
+  const uint8_t srcdata[] = {
       0x31, 0x64, 0x38, 0x32, 0x30, 0x32, 0x30, 0x36, 0x65, 0x35, 0x38, 0x35,
       0x32, 0x61, 0x30, 0x36, 0x65, 0x35, 0x32, 0x66, 0x30, 0x34, 0x38, 0x37,
       0x61, 0x31, 0x38, 0x36, 0x37, 0x37, 0x31, 0x39, 0x0a, 0x65, 0x62, 0x00,
@@ -451,6 +457,9 @@ TEST(ZlibTest, DeflateRLEUninitUse) {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
   };
+  std::vector<uint8_t> src;
+  for (int i = 0; i < sizeof(srcdata) / sizeof(srcdata[0]); ++i)
+    src.push_back(srcdata[i]);
 
   z_stream stream;
   stream.zalloc = Z_NULL;
@@ -463,7 +472,8 @@ TEST(ZlibTest, DeflateRLEUninitUse) {
   std::vector<uint8_t> compressed(src.size() * 2 + 1000);
   stream.next_out = compressed.data();
   stream.avail_out = compressed.size();
-  for (uint8_t b : src) {
+  for (std::vector<uint8_t>::size_type i = 0; i < src.size(); ++i) {
+    uint8_t b = src[i];
     stream.next_in = &b;
     stream.avail_in = 1;
     ret = deflate(&stream, Z_NO_FLUSH);
