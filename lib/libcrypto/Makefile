@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.82 2022/11/09 23:33:08 joshua Exp $
+# $OpenBSD: Makefile,v 1.83 2022/11/10 12:55:49 joshua Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -140,60 +140,144 @@ SRCS+= x_x509.c
 SRCS+= x_x509a.c
 
 # bf/
-SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c
+SRCS+= bf_cfb64.c
+SRCS+= bf_ecb.c
+SRCS+= bf_ofb64.c
+SRCS+= bf_skey.c
 
 # bio/
-SRCS+= bio_lib.c bio_cb.c bio_err.c bio_meth.c
-SRCS+= bss_mem.c bss_null.c bss_fd.c
-SRCS+= bss_file.c bss_sock.c bss_conn.c
-SRCS+= bf_null.c bf_buff.c b_print.c b_dump.c
-SRCS+= b_posix.c b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c
+SRCS+= b_dump.c
+SRCS+= b_posix.c
+SRCS+= b_print.c
+SRCS+= b_sock.c
+SRCS+= bf_buff.c
+SRCS+= bf_nbio.c
+SRCS+= bf_null.c
+SRCS+= bio_cb.c
+SRCS+= bio_err.c
+SRCS+= bio_lib.c
+SRCS+= bio_meth.c
+SRCS+= bss_acpt.c
+SRCS+= bss_bio.c
+SRCS+= bss_conn.c
 SRCS+= bss_dgram.c
+SRCS+= bss_fd.c
+SRCS+= bss_file.c
+SRCS+= bss_log.c
+SRCS+= bss_mem.c
+SRCS+= bss_null.c
+SRCS+= bss_sock.c
 
 # bn/
-SRCS+= bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c
-SRCS+= bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c
-SRCS+= bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c
-SRCS+= bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c
-SRCS+= bn_depr.c bn_const.c bn_x931p.c
-SRCS+= bn_bpsw.c bn_isqrt.c bn_small_primes.c
+SRCS+= bn_add.c
+SRCS+= bn_blind.c
+SRCS+= bn_bpsw.c
+SRCS+= bn_const.c
+SRCS+= bn_ctx.c
+SRCS+= bn_depr.c
+SRCS+= bn_div.c
+SRCS+= bn_err.c
+SRCS+= bn_exp.c
+SRCS+= bn_exp2.c
+SRCS+= bn_gcd.c
+SRCS+= bn_gf2m.c
+SRCS+= bn_isqrt.c
+SRCS+= bn_kron.c
+SRCS+= bn_lib.c
+SRCS+= bn_mod.c
+SRCS+= bn_mont.c
+SRCS+= bn_mpi.c
+SRCS+= bn_mul.c
+SRCS+= bn_nist.c
+SRCS+= bn_prime.c
+SRCS+= bn_print.c
+SRCS+= bn_rand.c
+SRCS+= bn_recp.c
+SRCS+= bn_shift.c
+SRCS+= bn_small_primes.c
+SRCS+= bn_sqr.c
+SRCS+= bn_sqrt.c
+SRCS+= bn_word.c
+SRCS+= bn_x931p.c
 
 # buffer/
-SRCS+= buffer.c buf_err.c buf_str.c
+SRCS+= buf_err.c
+SRCS+= buf_str.c
+SRCS+= buffer.c
 
 # bytestring/
-SRCS+= bs_ber.c bs_cbb.c bs_cbs.c
+SRCS+= bs_ber.c
+SRCS+= bs_cbb.c
+SRCS+= bs_cbs.c
 
 # camellia/
-SRCS+= cmll_cfb.c cmll_ctr.c cmll_ecb.c cmll_ofb.c
+SRCS+= cmll_cfb.c
+SRCS+= cmll_ctr.c
+SRCS+= cmll_ecb.c
+SRCS+= cmll_ofb.c
 
 # cast/
-SRCS+= c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c
+SRCS+= c_cfb64.c
+SRCS+= c_ecb.c
+SRCS+= c_enc.c
+SRCS+= c_ofb64.c
+SRCS+= c_skey.c
 
 # chacha/
 SRCS+= chacha.c
 
 # cmac/
-SRCS+= cmac.c cm_ameth.c cm_pmeth.c
+SRCS+= cm_ameth.c
+SRCS+= cm_pmeth.c
+SRCS+= cmac.c
 
 # cms/
-SRCS+= cms_asn1.c cms_att.c cms_cd.c cms_dd.c cms_enc.c cms_env.c cms_err.c
-SRCS+= cms_ess.c cms_io.c cms_kari.c cms_lcl.h cms_lib.c cms_pwri.c cms_sd.c
+SRCS+= cms_asn1.c
+SRCS+= cms_att.c
+SRCS+= cms_cd.c
+SRCS+= cms_dd.c
+SRCS+= cms_enc.c
+SRCS+= cms_env.c
+SRCS+= cms_err.c
+SRCS+= cms_ess.c
+SRCS+= cms_io.c
+SRCS+= cms_kari.c
+SRCS+= cms_lcl.h
+SRCS+= cms_lib.c
+SRCS+= cms_pwri.c
+SRCS+= cms_sd.c
 SRCS+= cms_smime.c
 
 # comp/
-SRCS+= comp_lib.c comp_err.c c_rle.c c_zlib.c
+SRCS+= c_rle.c
+SRCS+= c_zlib.c
+SRCS+= comp_err.c
+SRCS+= comp_lib.c
 
 # conf/
-SRCS+= conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c
-SRCS+= conf_mall.c conf_sap.c
+SRCS+= conf_api.c
+SRCS+= conf_def.c
+SRCS+= conf_err.c
+SRCS+= conf_lib.c
+SRCS+= conf_mall.c
+SRCS+= conf_mod.c
+SRCS+= conf_sap.c
 
 # ct/
-SRCS += ct_b64.c ct_err.c ct_log.c ct_oct.c ct_policy.c
-SRCS += ct_prn.c ct_sct.c ct_sct_ctx.c ct_vfy.c ct_x509v3.c
+SRCS+= ct_b64.c
+SRCS+= ct_err.c
+SRCS+= ct_log.c
+SRCS+= ct_oct.c
+SRCS+= ct_policy.c
+SRCS+= ct_prn.c
+SRCS+= ct_sct.c
+SRCS+= ct_sct_ctx.c
+SRCS+= ct_vfy.c
+SRCS+= ct_x509v3.c
 
 # curve25519/
-SRCS+= curve25519.c curve25519-generic.c
+SRCS+= curve25519-generic.c
+SRCS+= curve25519.c
 
 # des/
 SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c
