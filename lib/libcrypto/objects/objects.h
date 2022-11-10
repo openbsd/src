@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.18 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: objects.h,v 1.19 2022/11/10 16:04:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -955,6 +955,12 @@
 #define NID_OCSP_sign			180
 #define OBJ_OCSP_sign			OBJ_id_kp,9L
 #endif /* USE_OBJ_MAC */
+
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+#define SN_ED25519			SN_Ed25519
+#define NID_ED25519			NID_Ed25519
+#define OBJ_ED25519			OBJ_Ed25519
+#endif
 
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
