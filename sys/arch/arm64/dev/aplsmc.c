@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.16 2022/11/10 11:45:29 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.17 2022/11/10 23:21:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -347,9 +347,12 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 		switch (SMC_EV_SUBTYPE(data)) {
 		case SMC_PWRBTN_SHORT:
 			if (SMC_EV_DATA(data) == 1) {
+#ifdef SUSPEND
 				if (cpu_suspended) {
 					cpu_suspended = 0;
-				} else if (allowpowerdown) {
+				} else
+#endif
+				if (allowpowerdown) {
 					allowpowerdown = 0;
 					prsignal(initprocess, SIGUSR2);
 				}
