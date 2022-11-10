@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.62 2022/10/21 15:48:14 tb Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.63 2022/11/10 18:06:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -688,11 +688,32 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	}
 }
 
+static ssize_t
+ssl3_read_cb(void *buf, size_t n, void *cb_arg)
+{
+	SSL3_RECORD_INTERNAL *rr;
+	SSL *s = cb_arg;
+
+	rr = &s->s3->rrec;
+
+	if (n > rr->length)
+		n = rr->length;
+
+	memcpy(buf, &rr->data[rr->off], n);
+
+	rr->off += n;
+	rr->length -= n;
+
+	return n;
+}
+
+#define SSL3_ALERT_LENGTH	2
+
 int
 ssl3_read_alert(SSL *s)
 {
-	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
 	uint8_t alert_level, alert_descr;
+	ssize_t ret;
 	CBS cbs;
 
 	/*
@@ -702,13 +723,17 @@ ssl3_read_alert(SSL *s)
 	 * fragmented across multiple records, hence a full alert must be
 	 * available in the record.
 	 */
-	while (rr->length > 0 &&
-	    s->s3->alert_fragment_len < sizeof(s->s3->alert_fragment)) {
-		s->s3->alert_fragment[s->s3->alert_fragment_len++] =
-		    rr->data[rr->off++];
-		rr->length--;
+	if (s->s3->alert_fragment == NULL) {
+		if ((s->s3->alert_fragment = tls_buffer_new(0)) == NULL)
+			return -1;
+		tls_buffer_set_capacity_limit(s->s3->alert_fragment,
+		    SSL3_ALERT_LENGTH);
 	}
-	if (s->s3->alert_fragment_len < sizeof(s->s3->alert_fragment)) {
+	ret = tls_buffer_extend(s->s3->alert_fragment, SSL3_ALERT_LENGTH,
+	    ssl3_read_cb, s);
+	if (ret <= 0 && ret != TLS_IO_WANT_POLLIN)
+		return -1;
+	if (ret != SSL3_ALERT_LENGTH) {
 		if (SSL_is_dtls(s)) {
 			SSLerror(s, SSL_R_BAD_LENGTH);
 			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
@@ -717,7 +742,8 @@ ssl3_read_alert(SSL *s)
 		return 1;
 	}
 
-	CBS_init(&cbs, s->s3->alert_fragment, sizeof(s->s3->alert_fragment));
+	if (!tls_buffer_data(s->s3->alert_fragment, &cbs))
+		return -1;
 
 	ssl_msg_callback_cbs(s, 0, SSL3_RT_ALERT, &cbs);
 
@@ -726,7 +752,8 @@ ssl3_read_alert(SSL *s)
 	if (!CBS_get_u8(&cbs, &alert_descr))
 		return -1;
 
-	s->s3->alert_fragment_len = 0;
+	tls_buffer_free(s->s3->alert_fragment);
+	s->s3->alert_fragment = NULL;
 
 	ssl_info_callback(s, SSL_CB_READ_ALERT,
 	    (alert_level << 8) | alert_descr);
@@ -829,9 +856,9 @@ ssl3_read_change_cipher_spec(SSL *s)
 static int
 ssl3_read_handshake_unexpected(SSL *s)
 {
-	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
 	uint32_t hs_msg_length;
 	uint8_t hs_msg_type;
+	ssize_t ssret;
 	CBS cbs;
 	int ret;
 
@@ -840,14 +867,17 @@ ssl3_read_handshake_unexpected(SSL *s)
 	 * header - this may be in the same record or fragmented across multiple
 	 * records.
 	 */
-	while (rr->length > 0 &&
-	    s->s3->handshake_fragment_len < sizeof(s->s3->handshake_fragment)) {
-		s->s3->handshake_fragment[s->s3->handshake_fragment_len++] =
-		    rr->data[rr->off++];
-		rr->length--;
+	if (s->s3->handshake_fragment == NULL) {
+		if ((s->s3->handshake_fragment = tls_buffer_new(0)) == NULL)
+			return -1;
+		tls_buffer_set_capacity_limit(s->s3->handshake_fragment,
+		    SSL3_HM_HEADER_LENGTH);
 	}
-
-	if (s->s3->handshake_fragment_len < sizeof(s->s3->handshake_fragment))
+	ssret = tls_buffer_extend(s->s3->handshake_fragment, SSL3_HM_HEADER_LENGTH,
+	    ssl3_read_cb, s);
+	if (ssret <= 0 && ssret != TLS_IO_WANT_POLLIN)
+		return -1;
+	if (ssret != SSL3_HM_HEADER_LENGTH)
 		return 1;
 
 	if (s->in_handshake) {
@@ -862,7 +892,8 @@ ssl3_read_handshake_unexpected(SSL *s)
 	 */
 
 	/* Parse handshake message header. */
-	CBS_init(&cbs, s->s3->handshake_fragment, s->s3->handshake_fragment_len);
+	if (!tls_buffer_data(s->s3->handshake_fragment, &cbs))
+		return -1;
 	if (!CBS_get_u8(&cbs, &hs_msg_type))
 		return -1;
 	if (!CBS_get_u24(&cbs, &hs_msg_length))
@@ -888,10 +919,12 @@ ssl3_read_handshake_unexpected(SSL *s)
 			return -1;
 		}
 
-		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
-		    s->s3->handshake_fragment, s->s3->handshake_fragment_len);
+		if (!tls_buffer_data(s->s3->handshake_fragment, &cbs))
+			return -1;
+		ssl_msg_callback_cbs(s, 0, SSL3_RT_HANDSHAKE, &cbs);
 
-		s->s3->handshake_fragment_len = 0;
+		tls_buffer_free(s->s3->handshake_fragment);
+		s->s3->handshake_fragment = NULL;
 
 		/*
 		 * It should be impossible to hit this, but keep the safety
@@ -1045,24 +1078,21 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return -1;
 	}
 
-	if (type == SSL3_RT_HANDSHAKE && s->s3->handshake_fragment_len > 0) {
-		/* Partially satisfy request from fragment storage. */
-		unsigned char *src = s->s3->handshake_fragment;
-		unsigned char *dst = buf;
-		unsigned int k;
+	if (type == SSL3_RT_HANDSHAKE &&
+	    s->s3->handshake_fragment != NULL &&
+	    tls_buffer_remaining(s->s3->handshake_fragment) > 0) {
+		ssize_t ssn;
 
-		/* peek == 0 */
-		n = 0;
-		while (len > 0 && s->s3->handshake_fragment_len > 0) {
-			*dst++ = *src++;
-			len--;
-			s->s3->handshake_fragment_len--;
-			n++;
+		if ((ssn = tls_buffer_read(s->s3->handshake_fragment, buf,
+		    len)) <= 0)
+			return -1;
+
+		if (tls_buffer_remaining(s->s3->handshake_fragment) == 0) {
+			tls_buffer_free(s->s3->handshake_fragment);
+			s->s3->handshake_fragment = NULL;
 		}
-		/* move any remaining fragment bytes: */
-		for (k = 0; k < s->s3->handshake_fragment_len; k++)
-			s->s3->handshake_fragment[k] = *src++;
-		return n;
+
+		return (int)ssn;
 	}
 
 	if (SSL_in_init(s) && !s->in_handshake) {

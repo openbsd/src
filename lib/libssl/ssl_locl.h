@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.430 2022/11/07 11:58:45 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.431 2022/11/10 18:06:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1168,12 +1168,9 @@ typedef struct ssl3_state_st {
 
 	SSL3_RECORD_INTERNAL rrec;	/* each decoded record goes in here */
 
-	/* storage for Alert/Handshake protocol data received but not
-	 * yet processed by ssl3_read_bytes: */
-	unsigned char alert_fragment[2];
-	unsigned int alert_fragment_len;
-	unsigned char handshake_fragment[4];
-	unsigned int handshake_fragment_len;
+	/* Unprocessed Alert/Handshake protocol data. */
+	struct tls_buffer *alert_fragment;
+	struct tls_buffer *handshake_fragment;
 
 	/* partial write - check the numbers match */
 	unsigned int wnum;	/* number of bytes sent so far */

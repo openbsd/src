@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_buffer.c,v 1.3 2022/07/22 19:33:53 jsing Exp $ */
+/* $OpenBSD: tls_buffer.c,v 1.4 2022/11/10 18:06:37 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -153,6 +153,15 @@ tls_buffer_extend(struct tls_buffer *buf, size_t len,
 		if (buf->len == buf->capacity)
 			return buf->len;
 	}
+}
+
+size_t
+tls_buffer_remaining(struct tls_buffer *buf)
+{
+	if (buf->offset > buf->len)
+		return 0;
+
+	return buf->len - buf->offset;
 }
 
 ssize_t
