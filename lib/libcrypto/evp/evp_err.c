@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_err.c,v 1.29 2022/11/10 14:46:44 jsing Exp $ */
+/* $OpenBSD: evp_err.c,v 1.30 2022/11/10 15:17:30 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -123,6 +123,7 @@ static ERR_STRING_DATA EVP_str_reasons[] = {
 	{ERR_REASON(EVP_R_NO_OPERATION_SET)      , "no operation set"},
 	{ERR_REASON(EVP_R_NO_SIGN_FUNCTION_CONFIGURED), "no sign function configured"},
 	{ERR_REASON(EVP_R_NO_VERIFY_FUNCTION_CONFIGURED), "no verify function configured"},
+	{ERR_REASON(EVP_R_ONLY_ONESHOT_SUPPORTED), "only oneshot supported"},
 	{ERR_REASON(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE), "operation not supported for this keytype"},
 	{ERR_REASON(EVP_R_OPERATON_NOT_INITIALIZED), "operaton not initialized"},
 	{ERR_REASON(EVP_R_OUTPUT_ALIASES_INPUT)  , "output aliases input"},

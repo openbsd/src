@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.28 2022/09/13 04:59:18 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.29 2022/11/10 15:17:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -259,6 +259,11 @@ struct evp_pkey_method_st {
 
 	int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
 	int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value);
+
+	int (*digestsign)(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+	    const unsigned char *tbs, size_t tbslen);
+	int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+	    size_t siglen, const unsigned char *tbs, size_t tbslen);
 
 	int (*check)(EVP_PKEY *pkey);
 	int (*public_check)(EVP_PKEY *pkey);

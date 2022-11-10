@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.109 2022/11/10 14:46:44 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.110 2022/11/10 15:17:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1447,6 +1447,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_NO_OPERATION_SET				 149
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
+#define EVP_R_ONLY_ONESHOT_SUPPORTED			 177
 #define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE	 150
 #define EVP_R_OPERATON_NOT_INITIALIZED			 151
 #define EVP_R_OUTPUT_ALIASES_INPUT			 172

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.9 2021/05/09 14:25:40 tb Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.10 2022/11/10 15:17:30 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,6 +66,13 @@
 #include "evp_locl.h"
 
 static int
+update_oneshot_only(EVP_MD_CTX *ctx, const void *data, size_t datalen)
+{
+	EVPerror(EVP_R_ONLY_ONESHOT_SUPPORTED);
+	return 0;
+}
+
+static int
 do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
     ENGINE *e, EVP_PKEY *pkey, int ver)
 {
@@ -93,6 +100,9 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 			    ctx) <=0)
 				return 0;
 			ctx->pctx->operation = EVP_PKEY_OP_VERIFYCTX;
+		} else if (ctx->pctx->pmeth->digestverify != NULL) {
+			ctx->pctx->operation = EVP_PKEY_OP_VERIFY;
+			ctx->update = update_oneshot_only;
 		} else if (EVP_PKEY_verify_init(ctx->pctx) <= 0)
 			return 0;
 	} else {
@@ -100,6 +110,9 @@ do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 			if (ctx->pctx->pmeth->signctx_init(ctx->pctx, ctx) <= 0)
 				return 0;
 			ctx->pctx->operation = EVP_PKEY_OP_SIGNCTX;
+		} else if (ctx->pctx->pmeth->digestsign != NULL) {
+			ctx->pctx->operation = EVP_PKEY_OP_SIGN;
+			ctx->update = update_oneshot_only;
 		} else if (EVP_PKEY_sign_init(ctx->pctx) <= 0)
 			return 0;
 	}
@@ -190,6 +203,10 @@ int
 EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
     const unsigned char *tbs, size_t tbslen)
 {
+	if (ctx->pctx->pmeth->digestsign != NULL)
+		return ctx->pctx->pmeth->digestsign(ctx, sigret, siglen,
+		    tbs, tbslen);
+
 	if (sigret != NULL) {
 		if (EVP_DigestSignUpdate(ctx, tbs, tbslen) <= 0)
 			return 0;
@@ -229,6 +246,10 @@ int
 EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
     const unsigned char *tbs, size_t tbslen)
 {
+	if (ctx->pctx->pmeth->digestverify != NULL)
+		return ctx->pctx->pmeth->digestverify(ctx, sigret, siglen,
+		    tbs, tbslen);
+
 	if (EVP_DigestVerifyUpdate(ctx, tbs, tbslen) <= 0)
 		return -1;
 
