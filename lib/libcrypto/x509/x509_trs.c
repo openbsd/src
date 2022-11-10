@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.25 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.26 2022/11/10 16:52:19 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -322,7 +322,7 @@ static int
 obj_trust(int id, X509 *x, int flags)
 {
 	ASN1_OBJECT *obj;
-	int i;
+	int i, nid;
 	X509_CERT_AUX *ax;
 
 	ax = x->aux;
@@ -331,14 +331,16 @@ obj_trust(int id, X509 *x, int flags)
 	if (ax->reject) {
 		for (i = 0; i < sk_ASN1_OBJECT_num(ax->reject); i++) {
 			obj = sk_ASN1_OBJECT_value(ax->reject, i);
-			if (OBJ_obj2nid(obj) == id)
+			nid = OBJ_obj2nid(obj);
+			if (nid == id || nid == NID_anyExtendedKeyUsage)
 				return X509_TRUST_REJECTED;
 		}
 	}
 	if (ax->trust) {
 		for (i = 0; i < sk_ASN1_OBJECT_num(ax->trust); i++) {
 			obj = sk_ASN1_OBJECT_value(ax->trust, i);
-			if (OBJ_obj2nid(obj) == id)
+			nid = OBJ_obj2nid(obj);
+			if (nid == id || nid == NID_anyExtendedKeyUsage)
 				return X509_TRUST_TRUSTED;
 		}
 	}
