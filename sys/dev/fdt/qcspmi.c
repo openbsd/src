@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcspmi.c,v 1.1 2022/11/08 19:34:54 patrick Exp $	*/
+/*	$OpenBSD: qcspmi.c,v 1.2 2022/11/10 12:16:06 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/timeout.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -139,6 +138,7 @@ struct qcspmi_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh[QCSPMI_REG_MAX];
+	void			*sc_ih;
 
 	int			sc_ee;
 
@@ -149,8 +149,6 @@ struct qcspmi_softc {
 	struct interrupt_controller sc_ic;
 
 	TAILQ_HEAD(,qcspmi_intrhand) sc_intrq;
-
-	struct timeout		sc_tick;
 };
 
 int	qcspmi_match(struct device *, void *, void *);
@@ -169,8 +167,6 @@ void	qcspmi_intr_disable(void *);
 void	qcspmi_intr_barrier(void *);
 int	qcspmi_pin_intr(struct qcspmi_softc *, int);
 int	qcspmi_intr(void *);
-
-void	qcspmi_tick(void *);
 
 const struct cfattach qcspmi_ca = {
 	sizeof(struct qcspmi_softc), qcspmi_match, qcspmi_attach
@@ -232,6 +228,13 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->sc_intrq);
 
+	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_BIO, qcspmi_intr,
+	    sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": can't establish interrupt\n");
+		return;
+	}
+
 	printf("\n");
 
 	for (i = 0; i < SPMI_MAX_PERIPH; i++) {
@@ -290,10 +293,6 @@ qcspmi_attach(struct device *parent, struct device *self, void *aux)
 		sa.sa_node = node;
 		config_found(self, &sa, qcspmi_print);
 	}
-
-	/* TODO: implement interrupts */
-	timeout_set(&sc->sc_tick, qcspmi_tick, sc);
-	timeout_add_sec(&sc->sc_tick, 1);
 }
 
 int
@@ -557,12 +556,10 @@ qcspmi_intr_disable(void *cookie)
 void
 qcspmi_intr_barrier(void *cookie)
 {
-#if 0
 	struct qcspmi_intrhand *ih = cookie;
 	struct qcspmi_softc *sc = ih->ih_sc;
 
 	intr_barrier(sc->sc_ih);
-#endif
 }
 
 int
@@ -603,13 +600,4 @@ qcspmi_intr(void *arg)
 	}
 
 	return handled;
-}
-
-void
-qcspmi_tick(void *arg)
-{
-	struct qcspmi_softc *sc = arg;
-
-	qcspmi_intr(arg);
-	timeout_add_sec(&sc->sc_tick, 1);
 }
