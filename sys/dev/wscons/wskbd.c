@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.113 2022/07/02 08:50:42 visa Exp $ */
+/* $OpenBSD: wskbd.c,v 1.114 2022/11/10 12:10:54 matthieu Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -111,6 +111,11 @@
 #include "wskbd.h"
 #include "wsmux.h"
 
+#if NWSDISPLAY > 0
+#include <sys/atomic.h>
+#include <sys/task.h>
+#endif
+
 #ifdef WSKBD_DEBUG
 #define DPRINTF(x)	if (wskbddebug) printf x
 int	wskbddebug = 0;
@@ -171,6 +176,10 @@ struct wskbd_softc {
 
 #if NAUDIO > 0
 	void	*sc_audiocookie;
+#endif
+#if NWSDISPLAY > 0
+	struct task sc_brightness_task;
+	int	sc_brightness_steps;
 #endif
 };
 
@@ -240,6 +249,9 @@ void	wskbd_set_keymap(struct wskbd_softc *, struct wscons_keymap *, int);
 
 int	(*wskbd_get_backlight)(struct wskbd_backlight *);
 int	(*wskbd_set_backlight)(struct wskbd_backlight *);
+#if NWSDISPLAY > 0
+void	wskbd_brightness_task(void *);
+#endif
 
 struct cfdriver wskbd_cd = {
 	NULL, "wskbd", DV_TTY
@@ -396,6 +408,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 
 #if NWSDISPLAY > 0
 	timeout_set(&sc->sc_repeat_ch, wskbd_repeat, sc);
+	task_set(&sc->sc_brightness_task, wskbd_brightness_task, sc);
 #endif
 
 #if NAUDIO > 0
@@ -1527,10 +1540,12 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 #if NWSDISPLAY > 0
 	switch(ksym) {
 	case KS_Cmd_BrightnessUp:
-		wsdisplay_brightness_step(sc->sc_displaydv, 1);
+		atomic_add_int(&sc->sc_brightness_steps, 1);
+		task_add(systq, &sc->sc_brightness_task);
 		return (1);
 	case KS_Cmd_BrightnessDown:
-		wsdisplay_brightness_step(sc->sc_displaydv, -1);
+		atomic_sub_int(&sc->sc_brightness_steps, 1);
+		task_add(systq, &sc->sc_brightness_task);
 		return (1);
 	case KS_Cmd_BrightnessRotate:
 		wsdisplay_brightness_cycle(sc->sc_displaydv);
@@ -1876,3 +1891,20 @@ wskbd_set_keymap(struct wskbd_softc *sc, struct wscons_keymap *map, int maplen)
 	sc->sc_map = map;
 	sc->sc_maplen = maplen;
 }
+
+#if NWSDISPLAY > 0
+void
+wskbd_brightness_task(void *arg)
+{
+	struct wskbd_softc *sc = arg;
+	int steps = atomic_swap_uint(&sc->sc_brightness_steps, 0);
+	int dir = 1;
+
+	if (steps < 0) {
+		steps = -steps;
+		dir = -1;
+	}
+	while (steps--)
+		wsdisplay_brightness_step(NULL, dir);
+}
+#endif
