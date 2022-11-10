@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.39 2022/01/20 17:56:35 benno Exp $	*/
+/*	$OpenBSD: ca.c,v 1.40 2022/11/10 00:44:12 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -513,8 +513,10 @@ ca_engine_init(struct relayd *x_env)
 	if (rsa_default != NULL)
 		return;
 
-	if ((rsae_method = RSA_meth_new("RSA privsep engine", 0)) == NULL)
+	if ((rsae_method = RSA_meth_new("RSA privsep engine", 0)) == NULL) {
+		errstr = "RSA_meth_new";
 		goto fail;
+	}
 
 	RSA_meth_set_pub_enc(rsae_method, rsae_pub_enc);
 	RSA_meth_set_pub_dec(rsae_method, rsae_pub_dec);
