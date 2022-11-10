@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.15 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.16 2022/11/10 11:45:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -330,20 +330,29 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #endif
+
+#ifdef SUSPEND
+	device_register_wakeup(&sc->sc_dev);
+#endif
 }
 
 void
 aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 {
 	extern int allowpowerdown;
+	extern int cpu_suspended;
 
 	switch (SMC_EV_TYPE(data)) {
 	case SMC_EV_TYPE_BTN:
 		switch (SMC_EV_SUBTYPE(data)) {
 		case SMC_PWRBTN_SHORT:
-			if (SMC_EV_DATA(data) == 1 && allowpowerdown) {
-				allowpowerdown = 0;
-				prsignal(initprocess, SIGUSR2);
+			if (SMC_EV_DATA(data) == 1) {
+				if (cpu_suspended) {
+					cpu_suspended = 0;
+				} else if (allowpowerdown) {
+					allowpowerdown = 0;
+					prsignal(initprocess, SIGUSR2);
+				}
 			}
 			break;
 		case SMC_PWRBTN_LONG:
