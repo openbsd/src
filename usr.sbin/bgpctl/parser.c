@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.117 2022/10/17 16:51:36 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.118 2022/11/10 10:47:30 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -719,7 +719,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 		case RD:
 			if (word != NULL && wordlen > 0) {
 				char *p = strdup(word);
-				struct community ext;
+				struct community ext = { 0 };
 				uint64_t rd;
 
 				if (p == NULL)
