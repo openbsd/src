@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmgr.c,v 1.2 2022/11/09 16:23:51 kettenis Exp $	*/
+/*	$OpenBSD: aplpmgr.c,v 1.3 2022/11/10 11:44:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -50,6 +50,7 @@ struct aplpmgr_softc;
 struct aplpmgr_pwrstate {
 	struct aplpmgr_softc	*ps_sc;
 	bus_size_t		ps_offset;
+	int			ps_enablecount;
 	struct power_domain_device ps_pd;
 	struct reset_device	ps_rd;
 };
@@ -65,6 +66,7 @@ struct aplpmgr_softc {
 
 int	aplpmgr_match(struct device *, void *, void *);
 void	aplpmgr_attach(struct device *, struct device *, void *);
+int	aplpmgr_activate(struct device *, int act);
 
 const struct cfattach aplpmgr_ca = {
 	sizeof (struct aplpmgr_softc), aplpmgr_match, aplpmgr_attach
@@ -133,6 +135,8 @@ aplpmgr_attach(struct device *parent, struct device *self, void *aux)
 
 		ps->ps_sc = sc;
 		ps->ps_offset = reg[0];
+		if (OF_getpropbool(node, "apple,always-on"))
+			ps->ps_enablecount = 1;
 
 		ps->ps_pd.pd_node = node;
 		ps->ps_pd.pd_cookie = ps;
@@ -157,7 +161,25 @@ aplpmgr_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t val;
 	int timo;
 
-	power_domain_enable_all(ps->ps_pd.pd_node);
+	KASSERT(on || ps->ps_enablecount > 0);
+	KASSERT(!on || ps->ps_enablecount < INT_MAX);
+
+	if (on && ps->ps_enablecount > 0) {
+		power_domain_enable_all(ps->ps_pd.pd_node);
+		ps->ps_enablecount++;
+		return;
+	}
+	if (!on && ps->ps_enablecount > 1) {
+		power_domain_disable_all(ps->ps_pd.pd_node);
+		ps->ps_enablecount--;
+		return;
+	}
+
+	/* Enable parents before enabling ourselves. */
+	if (on) {
+		power_domain_enable_all(ps->ps_pd.pd_node);
+		ps->ps_enablecount++;
+	}
 
 	val = HREAD4(sc, ps->ps_offset);
 	val &= ~PMGR_PS_TARGET_MASK;
@@ -170,6 +192,12 @@ aplpmgr_enable(void *cookie, uint32_t *cells, int on)
 		if ((val >> PMGR_PS_ACTUAL_SHIFT) == pstate)
 			break;
 		delay(1);
+	}
+
+	/* Disable parents after disabling ourselves. */
+	if (!on) {
+		power_domain_disable_all(ps->ps_pd.pd_node);
+		ps->ps_enablecount--;
 	}
 }
 
