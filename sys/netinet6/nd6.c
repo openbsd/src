@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.249 2022/11/07 10:45:39 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.250 2022/11/10 16:00:17 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1033,8 +1033,8 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		 * XXX: KAME specific hack for scoped addresses
 		 *      XXXX: for other scopes than link-local?
 		 */
-		if (IN6_IS_ADDR_LINKLOCAL(&nbi->addr) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(&nbi->addr)) {
+		if (IN6_IS_ADDR_LINKLOCAL(&nb_addr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&nb_addr)) {
 			u_int16_t *idp = (u_int16_t *)&nb_addr.s6_addr[2];
 
 			if (*idp == 0)
