@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.83 2022/11/10 12:55:49 joshua Exp $
+# $OpenBSD: Makefile,v 1.84 2022/11/10 15:13:52 joshua Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -280,66 +280,192 @@ SRCS+= curve25519-generic.c
 SRCS+= curve25519.c
 
 # des/
-SRCS+= cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c
-SRCS+= ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c
-SRCS+= fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c
-SRCS+= qud_cksm.c rand_key.c set_key.c xcbc_enc.c
-SRCS+= str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c
+SRCS+= cbc_cksm.c
+SRCS+= cbc_enc.c
+SRCS+= cfb64ede.c
+SRCS+= cfb64enc.c
+SRCS+= cfb_enc.c
+SRCS+= ecb3_enc.c
+SRCS+= ecb_enc.c
+SRCS+= ede_cbcm_enc.c
+SRCS+= enc_read.c
+SRCS+= enc_writ.c
+SRCS+= fcrypt.c
+SRCS+= ofb64ede.c
+SRCS+= ofb64enc.c
+SRCS+= ofb_enc.c
+SRCS+= pcbc_enc.c
+SRCS+= qud_cksm.c
+SRCS+= rand_key.c
+SRCS+= set_key.c
+SRCS+= str2key.c
+SRCS+= xcbc_enc.c
 
 # dh/
-SRCS+= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c
-SRCS+= dh_ameth.c dh_pmeth.c dh_prn.c
+SRCS+= dh_ameth.c
+SRCS+= dh_asn1.c
+SRCS+= dh_check.c
+SRCS+= dh_depr.c
+SRCS+= dh_err.c
+SRCS+= dh_gen.c
+SRCS+= dh_key.c
+SRCS+= dh_lib.c
+SRCS+= dh_pmeth.c
+SRCS+= dh_prn.c
 
 # dsa/
-SRCS+= dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c
-SRCS+= dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
+SRCS+= dsa_ameth.c
+SRCS+= dsa_asn1.c
+SRCS+= dsa_depr.c
+SRCS+= dsa_err.c
+SRCS+= dsa_gen.c
+SRCS+= dsa_key.c
+SRCS+= dsa_lib.c
 SRCS+= dsa_meth.c
+SRCS+= dsa_ossl.c
+SRCS+= dsa_pmeth.c
+SRCS+= dsa_prn.c
+SRCS+= dsa_sign.c
+SRCS+= dsa_vrf.c
 
 # dso/
-SRCS+= dso_dlfcn.c dso_err.c dso_lib.c dso_null.c
+SRCS+= dso_dlfcn.c
+SRCS+= dso_err.c
+SRCS+= dso_lib.c
+SRCS+= dso_null.c
 SRCS+= dso_openssl.c
 
 # ec/
-SRCS+= ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c
-SRCS+= ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c
-SRCS+= ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c ec_kmeth.c eck_prn.c
-SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
-SRCS+= ecp_oct.c ec2_oct.c ec_oct.c
+SRCS+= ec2_mult.c
+SRCS+= ec2_oct.c
+SRCS+= ec2_smpl.c
+SRCS+= ec_ameth.c
+SRCS+= ec_asn1.c
+SRCS+= ec_check.c
+SRCS+= ec_curve.c
+SRCS+= ec_cvt.c
+SRCS+= ec_err.c
+SRCS+= ec_key.c
+SRCS+= ec_kmeth.c
+SRCS+= ec_lib.c
+SRCS+= ec_mult.c
+SRCS+= ec_oct.c
+SRCS+= ec_pmeth.c
+SRCS+= ec_print.c
+SRCS+= eck_prn.c
+SRCS+= ecp_mont.c
+SRCS+= ecp_nist.c
+SRCS+= ecp_nistp224.c
+SRCS+= ecp_nistp256.c
+SRCS+= ecp_nistp521.c
+SRCS+= ecp_nistputil.c
+SRCS+= ecp_oct.c
+SRCS+= ecp_smpl.c
 
 # ecdh/
-SRCS+= ech_lib.c ech_key.c ech_err.c ecdh_kdf.c
+SRCS+= ecdh_kdf.c
+SRCS+= ech_err.c
+SRCS+= ech_key.c
+SRCS+= ech_lib.c
 
 # ecdsa/
-SRCS+= ecs_lib.c ecs_asn1.c ecs_ossl.c ecs_sign.c ecs_vrf.c ecs_err.c
+SRCS+= ecs_asn1.c
+SRCS+= ecs_err.c
+SRCS+= ecs_lib.c
+SRCS+= ecs_ossl.c
+SRCS+= ecs_sign.c
+SRCS+= ecs_vrf.c
 
 # engine/
-SRCS+= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c
-SRCS+= eng_table.c eng_pkey.c eng_fat.c eng_all.c
-SRCS+= tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c
-SRCS+= tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c tb_eckey.c
-SRCS+= eng_openssl.c eng_cnf.c eng_dyn.c
+SRCS+= eng_all.c
+SRCS+= eng_cnf.c
+SRCS+= eng_ctrl.c
+SRCS+= eng_dyn.c
+SRCS+= eng_err.c
+SRCS+= eng_fat.c
+SRCS+= eng_init.c
+SRCS+= eng_lib.c
+SRCS+= eng_list.c
+SRCS+= eng_openssl.c
+SRCS+= eng_pkey.c
+SRCS+= eng_table.c
+SRCS+= tb_asnmth.c
+SRCS+= tb_cipher.c
+SRCS+= tb_dh.c
+SRCS+= tb_digest.c
+SRCS+= tb_dsa.c
+SRCS+= tb_ecdh.c
+SRCS+= tb_ecdsa.c
+SRCS+= tb_eckey.c
+SRCS+= tb_pkmeth.c
+SRCS+= tb_rand.c
+SRCS+= tb_rsa.c
+SRCS+= tb_store.c
 # XXX unnecessary? handled in EVP now...
 # SRCS+= eng_aesni.c # local addition
 
 # err/
-SRCS+= err.c err_all.c err_prn.c
+SRCS+= err.c
+SRCS+= err_all.c
+SRCS+= err_prn.c
 
 # evp/
-SRCS+= encode.c digest.c evp_enc.c evp_key.c
-SRCS+= e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c
-SRCS+= e_rc4.c e_aes.c names.c
-SRCS+= e_xcbc_d.c e_rc2.c e_cast.c
-SRCS+= m_null.c m_md4.c m_md5.c m_ripemd.c m_sha1.c m_sm3.c m_wp.c
-SRCS+= p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c
-SRCS+= bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c
-SRCS+= c_all.c evp_lib.c
-SRCS+= evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c
-SRCS+= e_old.c pmeth_lib.c pmeth_fn.c pmeth_gn.c m_sigver.c
-SRCS+= e_aes_cbc_hmac_sha1.c e_rc4_hmac_md5.c
-SRCS+= e_chacha.c evp_aead.c e_chacha20poly1305.c
-SRCS+= e_gost2814789.c m_gost2814789.c m_gostr341194.c m_streebog.c
+SRCS+= bio_b64.c
+SRCS+= bio_enc.c
+SRCS+= bio_md.c
+SRCS+= c_all.c
+SRCS+= digest.c
+SRCS+= e_aes.c
+SRCS+= e_aes_cbc_hmac_sha1.c
+SRCS+= e_bf.c
+SRCS+= e_camellia.c
+SRCS+= e_cast.c
+SRCS+= e_chacha.c
+SRCS+= e_chacha20poly1305.c
+SRCS+= e_des.c
+SRCS+= e_des3.c
+SRCS+= e_gost2814789.c
+SRCS+= e_idea.c
+SRCS+= e_null.c
+SRCS+= e_old.c
+SRCS+= e_rc2.c
+SRCS+= e_rc4.c
+SRCS+= e_rc4_hmac_md5.c
 SRCS+= e_sm4.c
+SRCS+= e_xcbc_d.c
+SRCS+= encode.c
+SRCS+= evp_aead.c
+SRCS+= evp_enc.c
+SRCS+= evp_err.c
+SRCS+= evp_key.c
+SRCS+= evp_lib.c
+SRCS+= evp_pbe.c
+SRCS+= evp_pkey.c
+SRCS+= m_gost2814789.c
+SRCS+= m_gostr341194.c
+SRCS+= m_md4.c
+SRCS+= m_md5.c
 SRCS+= m_md5_sha1.c
+SRCS+= m_null.c
+SRCS+= m_ripemd.c
+SRCS+= m_sha1.c
+SRCS+= m_sigver.c
+SRCS+= m_sm3.c
+SRCS+= m_streebog.c
+SRCS+= m_wp.c
+SRCS+= names.c
+SRCS+= p5_crpt.c
+SRCS+= p5_crpt2.c
+SRCS+= p_dec.c
+SRCS+= p_enc.c
+SRCS+= p_lib.c
+SRCS+= p_open.c
+SRCS+= p_seal.c
+SRCS+= p_sign.c
+SRCS+= p_verify.c
+SRCS+= pmeth_fn.c
+SRCS+= pmeth_gn.c
+SRCS+= pmeth_lib.c
 
 # gost/
 SRCS+= gost2814789.c gost89_keywrap.c gost89_params.c gost89imit_ameth.c
