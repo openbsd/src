@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1146 2022/11/09 23:00:00 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1147 2022/11/10 14:22:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -185,7 +185,8 @@ int			 pf_translate_icmp_af(struct pf_pdesc*, int, void *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int,
 			    sa_family_t, struct pf_rule *, u_int);
 void			 pf_detach_state(struct pf_state *);
-void			 pf_state_key_detach(struct pf_state *, int);
+void			 pf_state_key_detach(struct pf_state *,
+			    struct pf_state_key *);
 u_int32_t		 pf_tcp_iss(struct pf_pdesc *);
 void			 pf_rule_to_actions(struct pf_rule *,
 			    struct pf_rule_actions *);
@@ -776,7 +777,8 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 		s->key[idx] = sk;
 
 	if ((si = pool_get(&pf_state_item_pl, PR_NOWAIT)) == NULL) {
-		pf_state_key_detach(s, idx);
+		pf_state_key_detach(s, s->key[idx]);
+		s->key[idx] = NULL;
 		return (-1);
 	}
 	si->s = s;
@@ -796,42 +798,50 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 void
 pf_detach_state(struct pf_state *s)
 {
-	if (s->key[PF_SK_WIRE] == s->key[PF_SK_STACK])
-		s->key[PF_SK_WIRE] = NULL;
+	struct pf_state_key *key[2];
 
-	if (s->key[PF_SK_STACK] != NULL)
-		pf_state_key_detach(s, PF_SK_STACK);
+	mtx_enter(&s->mtx);
+	key[PF_SK_WIRE] = s->key[PF_SK_WIRE];
+	key[PF_SK_STACK] = s->key[PF_SK_STACK];
+	s->key[PF_SK_WIRE] = NULL;
+	s->key[PF_SK_STACK] = NULL;
+	mtx_leave(&s->mtx);
 
-	if (s->key[PF_SK_WIRE] != NULL)
-		pf_state_key_detach(s, PF_SK_WIRE);
+	if (key[PF_SK_WIRE] == key[PF_SK_STACK])
+		key[PF_SK_WIRE] = NULL;
+
+	if (key[PF_SK_STACK] != NULL)
+		pf_state_key_detach(s, key[PF_SK_STACK]);
+
+	if (key[PF_SK_WIRE] != NULL)
+		pf_state_key_detach(s, key[PF_SK_WIRE]);
 }
 
 void
-pf_state_key_detach(struct pf_state *s, int idx)
+pf_state_key_detach(struct pf_state *s, struct pf_state_key *key)
 {
 	struct pf_state_item	*si;
-	struct pf_state_key	*sk;
 
-	if (s->key[idx] == NULL)
+	PF_STATE_ASSERT_LOCKED();
+
+	if (key == NULL)
 		return;
 
-	si = TAILQ_FIRST(&s->key[idx]->states);
+	si = TAILQ_FIRST(&key->states);
 	while (si && si->s != s)
 	    si = TAILQ_NEXT(si, entry);
 
 	if (si) {
-		TAILQ_REMOVE(&s->key[idx]->states, si, entry);
+		TAILQ_REMOVE(&key->states, si, entry);
 		pool_put(&pf_state_item_pl, si);
 	}
 
-	sk = s->key[idx];
-	s->key[idx] = NULL;
-	if (TAILQ_EMPTY(&sk->states)) {
-		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
-		sk->removed = 1;
-		pf_state_key_unlink_reverse(sk);
-		pf_state_key_unlink_inpcb(sk);
-		pf_state_key_unref(sk);
+	if (TAILQ_EMPTY(&key->states)) {
+		RB_REMOVE(pf_state_tree, &pf_statetbl, key);
+		key->removed = 1;
+		pf_state_key_unlink_reverse(key);
+		pf_state_key_unlink_inpcb(key);
+		pf_state_key_unref(key);
 	}
 }
 
@@ -994,7 +1004,9 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
 		}
 		*skw = s->key[PF_SK_WIRE];
 		if (pf_state_key_attach(*sks, s, PF_SK_STACK)) {
-			pf_state_key_detach(s, PF_SK_WIRE);
+			pf_state_key_detach(s, s->key[PF_SK_WIRE]);
+			s->key[PF_SK_WIRE] = NULL;
+			*skw = NULL;
 			PF_STATE_EXIT_WRITE();
 			return (-1);
 		}
@@ -1426,6 +1438,7 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	st->sync_state = PFSYNC_S_NONE;
 
 	refcnt_init(&st->refcnt);
+	mtx_init(&st->mtx, IPL_NET);
 
 	/* XXX when we have anchors, use STATE_INC_COUNTERS */
 	r->states_cur++;
@@ -4319,6 +4332,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	 * pf_state_inserts() grabs reference for pfsync!
 	 */
 	refcnt_init(&s->refcnt);
+	mtx_init(&s->mtx, IPL_NET);
 
 	switch (pd->proto) {
 	case IPPROTO_TCP:
