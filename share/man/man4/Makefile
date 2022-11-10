@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.824 2022/11/10 12:57:08 patrick Exp $
+#	$OpenBSD: Makefile,v 1.825 2022/11/10 13:08:57 patrick Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -71,7 +71,8 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	pgt.4 piixpm.4 pijuice.4 pinctrl.4 pipex.4 plgpio.4 plrtc.4 pluart.4 \
 	pms.4 ppb.4 ppp.4 pppoe.4 pppx.4 psci.4 pty.4 puc.4 pvbus.4 \
 	pvclock.4 pwdog.4 pwmbl.4 pwmfan.4 pwmreg.4 \
-	qcdwusb.4 qcgpio.4 qciic.4 qcpdc.4 qcpmic.4 qcpmicgpio.4 qcspmi.4 \
+	qcdwusb.4 qcgpio.4 qciic.4 qcpdc.4 qcpmic.4 qcpmicgpio.4 qcpon.4 \
+	qcpwm.4 qcrtc.4 qcspmi.4 \
 	qla.4 qle.4 qlw.4 qsphy.4 \
 	radio.4 ral.4 random.4 rdomain.4 rd.4 rdac.4 re.4 rdcphy.4 rgephy.4 \
 	rge.4 ricohrtc.4 rkanxdp.4 rkclock.4 rkdrm.4 rkdwhdmi.4 rkdwusb.4 \

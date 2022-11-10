@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qcpmic.4,v 1.2 2022/11/10 13:08:57 patrick Exp $
+.\"	$OpenBSD: qcpon.4,v 1.1 2022/11/10 13:08:57 patrick Exp $
 .\"
 .\" Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -15,35 +15,25 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 10 2022 $
-.Dt QCPMIC 4
+.Dt QCPON 4
 .Os
 .Sh NAME
-.Nm qcpmic
-.Nd Qualcomm Power Management IC
+.Nm qcpon
+.Nd Qualcomm PON controller
 .Sh SYNOPSIS
-.Cd "qcpmic* at qcspmi?"
-.Cd "qcpmicgpio* at qcpmic?"
 .Cd "qcpon* at qcpmic?"
-.Cd "qcpwm* at qcpmic?"
-.Cd "qcrtc* at qcpmic?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the PMIC found on various Qualcomm
-Snapdragon SoCs.
-The functionality for the hardware blocks found in each PMIC is
-implemented in the children attaching to this driver.
+driver provides support for the PON controllers integrated on various
+Qualcomm Snapdragon SoCs.  This controller contains the power button.
 .Sh SEE ALSO
-.Xr qcspmi 4 ,
-.Xr qcpmicgpio 4 ,
-.Xr qcpon 4 ,
-.Xr qcpwm 4 ,
-.Xr qcrtc 4 ,
+.Xr qcpmic 4 ,
 .Xr intro 4
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
+device driver first appeared in
 .Ox 7.3 .
 .Sh AUTHORS
 .An -nosplit
