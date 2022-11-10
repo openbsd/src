@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.73 2022/09/01 22:01:40 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.74 2022/11/10 11:46:39 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -59,6 +59,7 @@
 #include "i8259.h"
 #include "loadfile.h"
 #include "mc146818.h"
+#include "mmio.h"
 #include "ns8250.h"
 #include "pci.h"
 #include "virtio.h"
@@ -67,6 +68,8 @@
 
 #define MB(x)	(x * 1024UL * 1024UL)
 #define GB(x)	(x * 1024UL * 1024UL * 1024UL)
+
+#define MMIO_NOTYET 0
 
 io_fn_t ioports_map[MAX_PORTS];
 
@@ -1633,6 +1636,24 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 	struct vm_exit *vei = vrp->vrp_exit;
 	uint8_t intr = 0xFF;
 
+	if (vei->vei.vei_rep || vei->vei.vei_string) {
+#ifdef MMIO_DEBUG
+		log_info("%s: %s%s%s %d-byte, enc=%d, data=0x%08x, port=0x%04x",
+		    __func__,
+		    vei->vei.vei_rep == 0 ? "" : "REP ",
+		    vei->vei.vei_dir == VEI_DIR_IN ? "IN" : "OUT",
+		    vei->vei.vei_string == 0 ? "" : "S",
+		    vei->vei.vei_size, vei->vei.vei_encoding,
+		    vei->vei.vei_data, vei->vei.vei_port);
+		log_info("%s: ECX = 0x%llx, RDX = 0x%llx, RSI = 0x%llx",
+		    __func__,
+		    vei->vrs.vrs_gprs[VCPU_REGS_RCX],
+		    vei->vrs.vrs_gprs[VCPU_REGS_RDX],
+		    vei->vrs.vrs_gprs[VCPU_REGS_RSI]);
+#endif /* MMIO_DEBUG */
+		fatalx("%s: can't emulate rep refix'd IN(s)/OUT(s)", __func__);
+	}
+
 	if (ioports_map[vei->vei.vei_port] != NULL)
 		intr = ioports_map[vei->vei.vei_port](vrp);
 	else if (vei->vei.vei_dir == VEI_DIR_IN)
@@ -1657,27 +1678,72 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 int
 vcpu_exit_eptviolation(struct vm_run_params *vrp)
 {
-	int ret = 0;
-	uint8_t fault_type;
 	struct vm_exit *ve = vrp->vrp_exit;
-
-	fault_type = ve->vee.vee_fault_type;
-	switch (fault_type) {
+	int ret = 0;
+#if MMIO_NOTYET
+	struct x86_insn insn;
+	uint64_t va, pa;
+	size_t len = 15;		/* Max instruction length in x86. */
+#endif /* MMIO_NOTYET */
+	switch (ve->vee.vee_fault_type) {
 	case VEE_FAULT_HANDLED:
 		log_debug("%s: fault already handled", __func__);
 		break;
+
+#if MMIO_NOTYET
 	case VEE_FAULT_MMIO_ASSIST:
-		log_warnx("%s: mmio assist required: rip=0x%llx", __progname,
-		    ve->vrs.vrs_gprs[VCPU_REGS_RIP]);
-		ret = EFAULT;
+		/* Intel VMX might give us the length of the instruction. */
+		if (ve->vee.vee_insn_info & VEE_LEN_VALID)
+			len = ve->vee.vee_insn_len;
+
+		if (len > 15)
+			fatalx("%s: invalid instruction length %lu", __func__,
+			    len);
+
+		/* If we weren't given instruction bytes, we need to fetch. */
+		if (!(ve->vee.vee_insn_info & VEE_BYTES_VALID)) {
+			memset(ve->vee.vee_insn_bytes, 0,
+			    sizeof(ve->vee.vee_insn_bytes));
+			va = ve->vrs.vrs_gprs[VCPU_REGS_RIP];
+
+			/* XXX Only support instructions that fit on 1 page. */
+			if ((va & PAGE_MASK) + len > PAGE_SIZE) {
+				log_warnx("%s: instruction might cross page "
+				    "boundary", __func__);
+				ret = EINVAL;
+				break;
+			}
+
+			ret = translate_gva(ve, va, &pa, PROT_EXEC);
+			if (ret != 0) {
+				log_warnx("%s: failed gva translation",
+				    __func__);
+				break;
+			}
+
+			ret = read_mem(pa, ve->vee.vee_insn_bytes, len);
+			if (ret != 0) {
+				log_warnx("%s: failed to fetch instruction "
+				    "bytes from 0x%llx", __func__, pa);
+				break;
+			}
+		}
+
+		ret = insn_decode(ve, &insn);
+		if (ret == 0)
+			ret = insn_emulate(ve, &insn);
 		break;
+#endif /* MMIO_NOTYET */
+
 	case VEE_FAULT_PROTECT:
 		log_debug("%s: EPT Violation: rip=0x%llx", __progname,
 		    ve->vrs.vrs_gprs[VCPU_REGS_RIP]);
 		ret = EFAULT;
 		break;
+
 	default:
-		fatalx("%s: invalid fault_type %d", __progname, fault_type);
+		fatalx("%s: invalid fault_type %d", __progname,
+		    ve->vee.vee_fault_type);
 		/* UNREACHED */
 	}
 
@@ -2113,10 +2179,11 @@ get_input_data(struct vm_exit *vei, uint32_t *data)
  * Translates a guest virtual address to a guest physical address by walking
  * the currently active page table (if needed).
  *
- * Note - this function can possibly alter the supplied VCPU state.
- *  Specifically, it may inject exceptions depending on the current VCPU
- *  configuration, and may alter %cr2 on #PF. Consequently, this function
- *  should only be used as part of instruction emulation.
+ * XXX ensure translate_gva updates the A bit in the PTE
+ * XXX ensure translate_gva respects segment base and limits in i386 mode
+ * XXX ensure translate_gva respects segment wraparound in i8086 mode
+ * XXX ensure translate_gva updates the A bit in the segment selector
+ * XXX ensure translate_gva respects CR4.LMSLE if available
  *
  * Parameters:
  *  exit: The VCPU this translation should be performed for (guest MMU settings
@@ -2221,7 +2288,7 @@ translate_gva(struct vm_exit* exit, uint64_t va, uint64_t* pa, int mode)
 			return (EIO);
 		}
 
-		/* XXX: EINVAL if in 32bit and  PG_PS is 1 but CR4.PSE is 0 */
+		/* XXX: EINVAL if in 32bit and PG_PS is 1 but CR4.PSE is 0 */
 		if (pte & PG_PS)
 			break;
 
