@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.octeon/MAKEDEV.md,v 1.22 2021/11/11 09:47:33 claudio Exp 
-#	OpenBSD: MAKEDEV.common,v 1.117 2022/11/09 18:46:04 krw Exp 
+#	OpenBSD: MAKEDEV.common,v 1.118 2022/11/10 09:50:00 krw Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
