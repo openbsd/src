@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.64 2022/11/08 17:34:13 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.65 2022/11/10 08:26:54 jmatthew Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -388,8 +388,10 @@ lapic_boot_init(paddr_t lapic_base)
 #endif
 
 	evcount_attach(&clk_count, "clock", &clk_irq);
+	evcount_percpu(&clk_count);
 #ifdef MULTIPROCESSOR
 	evcount_attach(&ipi_count, "ipi", &ipi_irq);
+	evcount_percpu(&ipi_count);
 #endif
 }
 
@@ -476,7 +478,7 @@ lapic_clockintr(void *arg, struct intrframe frame)
 	clockintr_dispatch(&frame);
 	ci->ci_handled_intr_level = floor;
 
-	clk_count.ec_count++;
+	evcount_inc(&clk_count);
 }
 
 void
