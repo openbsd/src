@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.86 2022/11/10 16:37:51 jsing Exp $
+# $OpenBSD: Makefile,v 1.87 2022/11/10 17:53:45 joshua Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -641,33 +641,94 @@ SRCS+= sm4.c
 SRCS+= stack.c
 
 # ts/
-SRCS+= ts_err.c ts_req_utils.c ts_req_print.c ts_rsp_utils.c ts_rsp_print.c
-SRCS+= ts_rsp_sign.c ts_rsp_verify.c ts_verify_ctx.c ts_lib.c ts_conf.c
 SRCS+= ts_asn1.c
+SRCS+= ts_conf.c
+SRCS+= ts_err.c
+SRCS+= ts_lib.c
+SRCS+= ts_req_print.c
+SRCS+= ts_req_utils.c
+SRCS+= ts_rsp_print.c
+SRCS+= ts_rsp_sign.c
+SRCS+= ts_rsp_utils.c
+SRCS+= ts_rsp_verify.c
+SRCS+= ts_verify_ctx.c
 
 # txt_db/
 SRCS+=txt_db.c
 
 # ui/
-SRCS+= ui_err.c ui_lib.c ui_openssl.c ui_util.c
+SRCS+= ui_err.c
+SRCS+= ui_lib.c
+SRCS+= ui_openssl.c
+SRCS+= ui_util.c
 
 # whrlpool/
 SRCS+= wp_dgst.c
 
 # x509/
-SRCS+= x509_addr.c x509_asid.c
-SRCS+= x509_def.c x509_d2.c x509_r2x.c x509_cmp.c
-SRCS+= x509_obj.c x509_req.c x509spki.c x509_vfy.c
-SRCS+= x509_set.c x509cset.c x509rset.c x509_err.c
-SRCS+= x509name.c x509_v3.c x509_ext.c x509_att.c
-SRCS+= x509type.c x509_lu.c x_all.c x509_txt.c
-SRCS+= x509_trs.c by_file.c by_dir.c by_mem.c x509_vpm.c
-SRCS+= x509_bcons.c x509_bitst.c x509_conf.c x509_extku.c x509_ia5.c x509_lib.c
-SRCS+= x509_prn.c x509_utl.c x509_genn.c x509_alt.c x509_skey.c x509_akey.c x509_pku.c
-SRCS+= x509_int.c x509_enum.c x509_sxnet.c x509_cpols.c x509_crld.c x509_purp.c x509_info.c
-SRCS+= x509_ocsp.c x509_akeya.c x509_pmaps.c x509_pcons.c x509_ncons.c x509_pcia.c x509_pci.c
-SRCS+= x509_issuer_cache.c x509_constraints.c x509_verify.c
-SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
+SRCS+= by_dir.c
+SRCS+= by_file.c
+SRCS+= by_mem.c
+SRCS+= pcy_cache.c
+SRCS+= pcy_data.c
+SRCS+= pcy_lib.c
+SRCS+= pcy_map.c
+SRCS+= pcy_node.c
+SRCS+= pcy_tree.c
+SRCS+= x509_addr.c
+SRCS+= x509_akey.c
+SRCS+= x509_akeya.c
+SRCS+= x509_alt.c
+SRCS+= x509_asid.c
+SRCS+= x509_att.c
+SRCS+= x509_bcons.c
+SRCS+= x509_bitst.c
+SRCS+= x509_cmp.c
+SRCS+= x509_conf.c
+SRCS+= x509_constraints.c
+SRCS+= x509_cpols.c
+SRCS+= x509_crld.c
+SRCS+= x509_d2.c
+SRCS+= x509_def.c
+SRCS+= x509_enum.c
+SRCS+= x509_err.c
+SRCS+= x509_ext.c
+SRCS+= x509_extku.c
+SRCS+= x509_genn.c
+SRCS+= x509_ia5.c
+SRCS+= x509_info.c
+SRCS+= x509_int.c
+SRCS+= x509_issuer_cache.c
+SRCS+= x509_lib.c
+SRCS+= x509_lu.c
+SRCS+= x509_ncons.c
+SRCS+= x509_obj.c
+SRCS+= x509_ocsp.c
+SRCS+= x509_pci.c
+SRCS+= x509_pcia.c
+SRCS+= x509_pcons.c
+SRCS+= x509_pku.c
+SRCS+= x509_pmaps.c
+SRCS+= x509_prn.c
+SRCS+= x509_purp.c
+SRCS+= x509_r2x.c
+SRCS+= x509_req.c
+SRCS+= x509_set.c
+SRCS+= x509_skey.c
+SRCS+= x509_sxnet.c
+SRCS+= x509_trs.c
+SRCS+= x509_txt.c
+SRCS+= x509_utl.c
+SRCS+= x509_v3.c
+SRCS+= x509_verify.c
+SRCS+= x509_vfy.c
+SRCS+= x509_vpm.c
+SRCS+= x509cset.c
+SRCS+= x509name.c
+SRCS+= x509rset.c
+SRCS+= x509spki.c
+SRCS+= x509type.c
+SRCS+= x_all.c
 
 .PATH:	${.CURDIR}/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC} \
