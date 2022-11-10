@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.17 2022/07/13 09:28:18 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.18 2022/11/10 11:23:21 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -388,10 +388,8 @@ resume_mp(void)
 int
 sleep_showstate(void *v, int sleepmode)
 {
-#if NPSCI > 0
-	if (sleepmode == SLEEP_SUSPEND && psci_can_suspend())
+	if (sleepmode == SLEEP_SUSPEND)
 		return 0;
-#endif
 
 	return EOPNOTSUPP;
 }
