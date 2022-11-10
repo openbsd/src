@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.267 2022/11/09 10:26:37 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.268 2022/11/10 16:12:05 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ int gpt_get_hdr(struct buf *, void (*)(struct buf *), struct disklabel *,
 int gpt_get_parts(struct buf *, void (*)(struct buf *),
     struct disklabel *, const struct gpt_header *, struct gpt_partition **);
 int gpt_get_fstype(const struct uuid *);
+int mbr_get_fstype(const uint8_t);
 
 int duid_equal(u_char *, u_char *);
 
@@ -703,6 +704,34 @@ spoofgpt(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 	return 0;
 }
 
+int
+mbr_get_fstype(const uint8_t dp_typ)
+{
+	switch (dp_typ) {
+	case DOSPTYP_OPENBSD:
+		return FS_BSDFFS;
+	case DOSPTYP_UNUSED:
+		return FS_UNUSED;
+	case DOSPTYP_LINUX:
+		return FS_EXT2FS;
+	case DOSPTYP_NTFS:
+		return FS_NTFS;
+	case DOSPTYP_EFISYS:
+	case DOSPTYP_FAT12:
+	case DOSPTYP_FAT16S:
+	case DOSPTYP_FAT16B:
+	case DOSPTYP_FAT16L:
+	case DOSPTYP_FAT32:
+	case DOSPTYP_FAT32L:
+		return FS_MSDOS;
+	case DOSPTYP_EFI:
+	case DOSPTYP_EXTEND:
+	case DOSPTYP_EXTENDL:
+	default:
+		return FS_OTHER;
+	}
+}
+
 void
 spoofmbr(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
     struct disklabel *lp, daddr_t *partoffp)
@@ -791,30 +820,11 @@ spoofmbr(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 				}
 				wander = 1;
 				continue;
-
-			case DOSPTYP_UNUSED:
-				fstype = FS_UNUSED;
-				break;
-			case DOSPTYP_LINUX:
-				fstype = FS_EXT2FS;
-				break;
-			case DOSPTYP_NTFS:
-				fstype = FS_NTFS;
-				break;
-			case DOSPTYP_EFISYS:
-			case DOSPTYP_FAT12:
-			case DOSPTYP_FAT16S:
-			case DOSPTYP_FAT16B:
-			case DOSPTYP_FAT16L:
-			case DOSPTYP_FAT32:
-			case DOSPTYP_FAT32L:
-				fstype = FS_MSDOS;
-				break;
 			default:
-				fstype = FS_OTHER;
 				break;
 			}
 
+			fstype = mbr_get_fstype(dp[i].dp_typ);
 			if (n < MAXPARTITIONS) {
 				pp = &lp->d_partitions[n++];
 				pp->p_fstype = fstype;
