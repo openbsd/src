@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.84 2022/11/10 15:13:52 joshua Exp $
+# $OpenBSD: Makefile,v 1.85 2022/11/10 16:00:34 joshua Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -468,75 +468,166 @@ SRCS+= pmeth_gn.c
 SRCS+= pmeth_lib.c
 
 # gost/
-SRCS+= gost2814789.c gost89_keywrap.c gost89_params.c gost89imit_ameth.c
-SRCS+= gost89imit_pmeth.c gost_asn1.c gost_err.c gostr341001.c
-SRCS+= gostr341001_ameth.c gostr341001_key.c gostr341001_params.c
-SRCS+= gostr341001_pmeth.c gostr341194.c streebog.c
+SRCS+= gost2814789.c
+SRCS+= gost89_keywrap.c
+SRCS+= gost89_params.c
+SRCS+= gost89imit_ameth.c
+SRCS+= gost89imit_pmeth.c
+SRCS+= gost_asn1.c
+SRCS+= gost_err.c
+SRCS+= gostr341001.c
+SRCS+= gostr341001_ameth.c
+SRCS+= gostr341001_key.c
+SRCS+= gostr341001_params.c
+SRCS+= gostr341001_pmeth.c
+SRCS+= gostr341194.c
+SRCS+= streebog.c
 
 # hkdf/
 SRCS+= hkdf.c
 
 # hmac/
-SRCS+= hmac.c hm_ameth.c hm_pmeth.c
+SRCS+= hm_ameth.c
+SRCS+= hm_pmeth.c
+SRCS+= hmac.c
 
 # idea/
-SRCS+= i_cbc.c i_cfb64.c i_ofb64.c i_ecb.c i_skey.c
+SRCS+= i_cbc.c
+SRCS+= i_cfb64.c
+SRCS+= i_ecb.c
+SRCS+= i_ofb64.c
+SRCS+= i_skey.c
 
 # kdf/
-SRCS+= hkdf_evp.c kdf_err.c
+SRCS+= hkdf_evp.c
+SRCS+= kdf_err.c
 
 # lhash/
-SRCS+= lhash.c lh_stats.c
+SRCS+= lh_stats.c
+SRCS+= lhash.c
 
 # md4/
-SRCS+= md4_dgst.c md4_one.c
+SRCS+= md4_dgst.c
+SRCS+= md4_one.c
 
 # md5/
-SRCS+= md5_dgst.c md5_one.c
+SRCS+= md5_dgst.c
+SRCS+= md5_one.c
 
 # modes/
-SRCS+= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c ccm128.c xts128.c
+SRCS+= cbc128.c
+SRCS+= ccm128.c
+SRCS+= cfb128.c
+SRCS+= ctr128.c
+SRCS+= cts128.c
+SRCS+= gcm128.c
+SRCS+= ofb128.c
+SRCS+= xts128.c
 
 # objects/
-SRCS+= o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
+SRCS+= o_names.c
+SRCS+= obj_dat.c
+SRCS+= obj_err.c
+SRCS+= obj_lib.c
+SRCS+= obj_xref.c
 
 # ocsp/
-SRCS+= ocsp_asn.c ocsp_ext.c ocsp_ht.c ocsp_lib.c ocsp_cl.c
-SRCS+= ocsp_srv.c ocsp_prn.c ocsp_vfy.c ocsp_err.c
+SRCS+= ocsp_asn.c
+SRCS+= ocsp_cl.c
+SRCS+= ocsp_err.c
+SRCS+= ocsp_ext.c
+SRCS+= ocsp_ht.c
+SRCS+= ocsp_lib.c
+SRCS+= ocsp_prn.c
+SRCS+= ocsp_srv.c
+SRCS+= ocsp_vfy.c
 
 # pem/
-SRCS+= pem_sign.c pem_info.c pem_lib.c pem_all.c pem_err.c
-SRCS+= pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
+SRCS+= pem_all.c
+SRCS+= pem_err.c
+SRCS+= pem_info.c
+SRCS+= pem_lib.c
+SRCS+= pem_oth.c
+SRCS+= pem_pk8.c
+SRCS+= pem_pkey.c
+SRCS+= pem_sign.c
+SRCS+= pem_x509.c
+SRCS+= pem_xaux.c
+SRCS+= pvkfmt.c
 
 # pkcs12/
-SRCS+= p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_decr.c
-SRCS+= p12_init.c p12_key.c p12_kiss.c p12_mutl.c p12_sbag.c
-SRCS+= p12_utl.c p12_npas.c pk12err.c p12_p8d.c p12_p8e.c
+SRCS+= p12_add.c
+SRCS+= p12_asn.c
+SRCS+= p12_attr.c
+SRCS+= p12_crpt.c
+SRCS+= p12_crt.c
+SRCS+= p12_decr.c
+SRCS+= p12_init.c
+SRCS+= p12_key.c
+SRCS+= p12_kiss.c
+SRCS+= p12_mutl.c
+SRCS+= p12_npas.c
+SRCS+= p12_p8d.c
+SRCS+= p12_p8e.c
+SRCS+= p12_sbag.c
+SRCS+= p12_utl.c
+SRCS+= pk12err.c
 
 # pkcs7/
-SRCS+= pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c
-SRCS+= pk7_mime.c bio_pk7.c
+SRCS+= bio_pk7.c
+SRCS+= pk7_asn1.c
+SRCS+= pk7_attr.c
+SRCS+= pk7_doit.c
+SRCS+= pk7_lib.c
+SRCS+= pk7_mime.c
+SRCS+= pk7_smime.c
+SRCS+= pkcs7err.c
 
 # poly1305/
 SRCS+= poly1305.c
 
 # rand/
-SRCS+= randfile.c rand_lib.c rand_err.c
+SRCS+= rand_err.c
+SRCS+= rand_lib.c
+SRCS+= randfile.c
 
 # rc2/
-SRCS+= rc2_ecb.c rc2_skey.c rc2_cbc.c rc2cfb64.c rc2ofb64.c
+SRCS+= rc2_cbc.c
+SRCS+= rc2_ecb.c
+SRCS+= rc2_skey.c
+SRCS+= rc2cfb64.c
+SRCS+= rc2ofb64.c
 
 # ripemd/
-SRCS+= rmd_dgst.c rmd_one.c
+SRCS+= rmd_dgst.c
+SRCS+= rmd_one.c
 
 # rsa/
-SRCS+= rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c
-SRCS+= rsa_pk1.c rsa_none.c rsa_oaep.c rsa_chk.c
-SRCS+= rsa_pss.c rsa_x931.c rsa_asn1.c rsa_depr.c rsa_ameth.c rsa_prn.c
-SRCS+= rsa_pmeth.c rsa_crpt.c rsa_meth.c
+SRCS+= rsa_ameth.c
+SRCS+= rsa_asn1.c
+SRCS+= rsa_chk.c
+SRCS+= rsa_crpt.c
+SRCS+= rsa_depr.c
+SRCS+= rsa_eay.c
+SRCS+= rsa_err.c
+SRCS+= rsa_gen.c
+SRCS+= rsa_lib.c
+SRCS+= rsa_meth.c
+SRCS+= rsa_none.c
+SRCS+= rsa_oaep.c
+SRCS+= rsa_pk1.c
+SRCS+= rsa_pmeth.c
+SRCS+= rsa_prn.c
+SRCS+= rsa_pss.c
+SRCS+= rsa_saos.c
+SRCS+= rsa_sign.c
+SRCS+= rsa_x931.c
 
 # sha/
-SRCS+= sha1dgst.c sha1_one.c sha256.c sha512.c
+SRCS+= sha1dgst.c
+SRCS+= sha1_one.c
+SRCS+= sha256.c
+SRCS+= sha512.c
 
 # sm3/
 SRCS+= sm3.c
