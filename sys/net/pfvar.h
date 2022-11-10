@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.516 2022/11/10 14:22:43 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.517 2022/11/10 16:29:20 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -741,49 +741,37 @@ struct pf_state_cmp {
 	u_int8_t		 pad[3];
 };
 
-/*
- * pf_state structure members require protection
- * either by state lock (a global rw-lock) or
- * need to be protected by mutex which is part
- * of state. The annotation goes as follows:
- *	- stateRW: means protected by exclusive state lock
- *	- mtx: protected by mutex (pf_state::state_mtx)
- *	- syncMTX: protected by mutex in pfsync
- *	- I: immutable since creation
- *	- ?: needs to be revisited
- */
 struct pf_state {
-	u_int64_t		 id;		/* I */
-	u_int32_t		 creatorid;	/* I */
-	u_int8_t		 direction;	/* I */
+	u_int64_t		 id;
+	u_int32_t		 creatorid;
+	u_int8_t		 direction;
 	u_int8_t		 pad[3];
 
-	TAILQ_ENTRY(pf_state)	 sync_list;	/* syncMTX */
-	TAILQ_ENTRY(pf_state)	 sync_snap;	/* syncMTX */
-	TAILQ_ENTRY(pf_state)	 entry_list;	/* stateRW */
-	SLIST_ENTRY(pf_state)	 gc_list;	/* syncMTX */
-	RB_ENTRY(pf_state)	 entry_id;	/* stateRW */
+	TAILQ_ENTRY(pf_state)	 sync_list;
+	TAILQ_ENTRY(pf_state)	 sync_snap;
+	TAILQ_ENTRY(pf_state)	 entry_list;
+	SLIST_ENTRY(pf_state)	 gc_list;
+	RB_ENTRY(pf_state)	 entry_id;
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
-	struct pf_rule_slist	 match_rules;	/* I */
-	union pf_rule_ptr	 rule;		/* I */
-	union pf_rule_ptr	 anchor;	/* I */
-	union pf_rule_ptr	 natrule;	/* I */
-	struct pf_addr		 rt_addr;	/* I */
-	struct pf_sn_head	 src_nodes;	/* I */
-	struct pf_state_key	*key[2];	/* mtx, stack and wire  */
-	struct pfi_kif		*kif;		/* I */
-	struct mutex		 mtx;
-	u_int64_t		 packets[2];	/* ? */
-	u_int64_t		 bytes[2];	/* ? */
-	int32_t			 creation;	/* I */
-	int32_t			 expire;	/* ? */
-	int32_t			 pfsync_time;	/* ? */
-	int			 rtableid[2];	/* I rtables stack and wire */
-	u_int16_t		 qid;		/* I */
-	u_int16_t		 pqid;		/* I */
-	u_int16_t		 tag;		/* I */
-	u_int16_t		 state_flags;	/* ? */
+	struct pf_rule_slist	 match_rules;
+	union pf_rule_ptr	 rule;
+	union pf_rule_ptr	 anchor;
+	union pf_rule_ptr	 natrule;
+	struct pf_addr		 rt_addr;
+	struct pf_sn_head	 src_nodes;
+	struct pf_state_key	*key[2];	/* addresses stack and wire  */
+	struct pfi_kif		*kif;
+	u_int64_t		 packets[2];
+	u_int64_t		 bytes[2];
+	int32_t			 creation;
+	int32_t			 expire;
+	int32_t			 pfsync_time;
+	int			 rtableid[2];	/* rtables stack and wire */
+	u_int16_t		 qid;
+	u_int16_t		 pqid;
+	u_int16_t		 tag;
+	u_int16_t		 state_flags;
 #define	PFSTATE_ALLOWOPTS	0x0001
 #define	PFSTATE_SLOPPY		0x0002
 #define	PFSTATE_PFLOW		0x0004
@@ -797,20 +785,20 @@ struct pf_state {
 #define	PFSTATE_INP_UNLINKED	0x0400
 #define	PFSTATE_SCRUBMASK (PFSTATE_NODF|PFSTATE_RANDOMID|PFSTATE_SCRUB_TCP)
 #define	PFSTATE_SETMASK   (PFSTATE_SETTOS|PFSTATE_SETPRIO)
-	u_int8_t		 log;		/* I */
-	u_int8_t		 timeout;	/* ? */
-	u_int8_t		 sync_state;	/* ? PFSYNC_S_x */
-	u_int8_t		 sync_updates;	/* ? */
-	u_int8_t		 min_ttl;	/* I */
-	u_int8_t		 set_tos;	/* I */
-	u_int8_t		 set_prio[2];	/* I */
-	u_int16_t		 max_mss;	/* I */
-	u_int16_t		 if_index_in;	/* I */
-	u_int16_t		 if_index_out;	/* I */
+	u_int8_t		 log;
+	u_int8_t		 timeout;
+	u_int8_t		 sync_state; /* PFSYNC_S_x */
+	u_int8_t		 sync_updates;
+	u_int8_t		 min_ttl;
+	u_int8_t		 set_tos;
+	u_int8_t		 set_prio[2];
+	u_int16_t		 max_mss;
+	u_int16_t		 if_index_in;
+	u_int16_t		 if_index_out;
 	pf_refcnt_t		 refcnt;
-	u_int16_t		 delay;		/* I */
-	u_int8_t		 rt;		/* I */
-	u_int8_t		 snapped;	/* syncMTX */
+	u_int16_t		 delay;
+	u_int8_t		 rt;
+	u_int8_t		 snapped;
 };
 
 /*
