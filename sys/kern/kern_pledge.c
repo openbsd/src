@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.298 2022/11/09 22:25:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.299 2022/11/10 00:14:11 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -1378,6 +1378,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 		switch (optname) {
 		case TCP_NODELAY:
 			return (0);
+		}
 		break;
 	}
 
