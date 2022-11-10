@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsart.c,v 1.2 2022/06/13 12:40:30 kettenis Exp $	*/
+/*	$OpenBSD: aplsart.c,v 1.3 2022/11/10 14:15:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_power.h>
 
 #define SART2_CONFIG(idx)	(0x0000 + 4 * (idx))
 #define  SART2_CONFIG_FLAGS_MASK	0xff000000
@@ -53,15 +54,18 @@ struct aplsart_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_node;
 	uint32_t		sc_phandle;
 	int			sc_version;
 };
 
 int	aplsart_match(struct device *, void *, void *);
 void	aplsart_attach(struct device *, struct device *, void *);
+int	aplsart_activate(struct device *, int);
 
 const struct cfattach aplsart_ca = {
-	sizeof (struct aplsart_softc), aplsart_match, aplsart_attach
+	sizeof (struct aplsart_softc), aplsart_match, aplsart_attach, NULL,
+	aplsart_activate
 };
 
 struct cfdriver aplsart_cd = {
@@ -95,14 +99,34 @@ aplsart_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_phandle = OF_getpropint(faa->fa_node, "phandle", 0);
 
-	if (OF_is_compatible(faa->fa_node, "apple,t8103-sart"))
+	if (OF_is_compatible(sc->sc_node, "apple,t8103-sart"))
 		sc->sc_version = 2;
-	if (OF_is_compatible(faa->fa_node, "apple,t6000-sart"))
+	if (OF_is_compatible(sc->sc_node, "apple,t6000-sart"))
 		sc->sc_version = 3;
 
+	power_domain_enable_all(sc->sc_node);
+
 	printf("\n");
+}
+
+int
+aplsart_activate(struct device *self, int act)
+{
+	struct aplsart_softc *sc = (struct aplsart_softc *)self;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		power_domain_disable_all(sc->sc_node);
+		break;
+	case DVACT_RESUME:
+		power_domain_enable_all(sc->sc_node);
+		break;
+	}
+
+	return 0;
 }
 
 int
