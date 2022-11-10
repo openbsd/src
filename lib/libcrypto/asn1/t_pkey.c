@@ -1,4 +1,4 @@
-/* $OpenBSD: t_pkey.c,v 1.17 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: t_pkey.c,v 1.18 2022/11/10 13:09:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -113,4 +113,33 @@ ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
 			return (0);
 	}
 	return (1);
+}
+
+#define ASN1_BUF_PRINT_WIDTH		15
+#define ASN1_BUF_PRINT_MAX_INDENT	64
+
+int
+ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent)
+{
+	size_t i;
+
+	for (i = 0; i < buflen; i++) {
+		if ((i % ASN1_BUF_PRINT_WIDTH) == 0) {
+			if (i > 0 && BIO_puts(bp, "\n") <= 0)
+				return 0;
+			if (!BIO_indent(bp, indent, ASN1_BUF_PRINT_MAX_INDENT))
+				return 0;
+		}
+		/*
+		 * Use colon separators for each octet for compatibility as
+		 * this function is used to print out key components.
+		 */
+		if (BIO_printf(bp, "%02x%s", buf[i],
+		    (i == buflen - 1) ? "" : ":") <= 0)
+			return 0;
+	}
+	if (BIO_write(bp, "\n", 1) <= 0)
+		return 0;
+
+	return 1;
 }

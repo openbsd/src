@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.70 2022/09/11 17:22:52 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.71 2022/11/10 13:09:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -838,6 +838,9 @@ int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
 int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
     unsigned char *buf, int off);
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent);
+#endif
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int dump);
 #endif
