@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.35 2022/09/02 21:33:51 cheloha Exp $ */
+/* $OpenBSD: i8253.c,v 1.36 2022/11/10 18:58:02 mbuhl Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -225,7 +225,7 @@ vcpu_exit_i8253_misc(struct vm_run_params *vrp)
 uint8_t
 vcpu_exit_i8253(struct vm_run_params *vrp)
 {
-	uint32_t out_data;
+	uint32_t out_data = 0;
 	uint8_t sel, rw, data;
 	uint64_t ns, ticks;
 	struct timespec now, delta;
