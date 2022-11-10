@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.73 2022/11/08 18:28:10 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.74 2022/11/10 12:14:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -979,6 +979,10 @@ bwfm_pci_activate(struct device *self, int act)
 			    BWFM_PCI_H2D_HOST_D0_INFORM) != 0) {
 				bwfm_cleanup(bwfm);
 				bwfm_pci_cleanup(sc);
+			} else {
+				bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
+				bwfm_pci_intr_enable(sc);
+				bwfm_pci_hostready(sc);
 			}
 		}
 		error = bwfm_activate(bwfm, act);
