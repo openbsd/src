@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.17 2021/04/20 17:12:43 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.18 2022/11/10 12:37:00 tobhe Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -121,11 +121,16 @@ int
 EC_KEY_print(BIO * bp, const EC_KEY * x, int off)
 {
 	EVP_PKEY *pk;
-	int ret;
-	pk = EVP_PKEY_new();
-	if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
-		return 0;
+	int ret = 0;
+
+	if ((pk = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
+		goto err;
+
 	ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+ err:
 	EVP_PKEY_free(pk);
 	return ret;
 }
@@ -134,11 +139,16 @@ int
 ECParameters_print(BIO * bp, const EC_KEY * x)
 {
 	EVP_PKEY *pk;
-	int ret;
-	pk = EVP_PKEY_new();
-	if (!pk || !EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
-		return 0;
+	int ret = 0;
+
+	if ((pk = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	if (!EVP_PKEY_set1_EC_KEY(pk, (EC_KEY *) x))
+		goto err;
+
 	ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
+ err:
 	EVP_PKEY_free(pk);
 	return ret;
 }

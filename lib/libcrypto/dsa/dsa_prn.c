@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_prn.c,v 1.7 2022/11/08 19:17:05 tobhe Exp $ */
+/* $OpenBSD: dsa_prn.c,v 1.8 2022/11/10 12:37:00 tobhe Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -116,12 +116,16 @@ int
 DSAparams_print(BIO *bp, const DSA *x)
 {
 	EVP_PKEY *pk;
-	int ret;
+	int ret = 0;
 
-	pk = EVP_PKEY_new();
-	if (!pk || !EVP_PKEY_set1_DSA(pk, (DSA *)x))
-		return 0;
+	if ((pk = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	if (!EVP_PKEY_set1_DSA(pk, (DSA *)x))
+		goto err;
+
 	ret = EVP_PKEY_print_params(bp, pk, 4, NULL);
+ err:
 	EVP_PKEY_free(pk);
 	return ret;
 }
