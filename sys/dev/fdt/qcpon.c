@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpon.c,v 1.1 2022/11/08 19:44:28 patrick Exp $	*/
+/*	$OpenBSD: qcpon.c,v 1.2 2022/11/10 16:20:54 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,6 +40,7 @@ struct qcpon_softc {
 	int8_t			sc_sid;
 
 	void			*sc_pwrkey_ih;
+	int			sc_pwrkey_debounce;
 	struct task		sc_powerdown_task;
 };
 
@@ -103,6 +104,11 @@ int
 qcpon_pwrkey_intr(void *arg)
 {
 	struct qcpon_softc *sc = arg;
+
+	/* Ignore presses, handle releases. */
+	sc->sc_pwrkey_debounce = (sc->sc_pwrkey_debounce + 1) % 2;
+	if (sc->sc_pwrkey_debounce == 1)
+		return 1;
 
 	task_add(systq, &sc->sc_powerdown_task);
 	return 1;
