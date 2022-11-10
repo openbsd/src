@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.117 2022/11/09 18:46:04 krw Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.118 2022/11/10 09:50:00 krw Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -125,8 +125,6 @@ divert(1)dnl
 twrget(all, fdesc, fd)dnl
 target(all, st, 0, 1)dnl
 target(all, std)dnl
-target(all, ra, 0, 1, 2, 3)dnl
-target(all, rx, 0, 1)dnl
 target(all, wd, 0, 1, 2, 3)dnl
 target(all, pctr)dnl
 target(all, pctr0)dnl
@@ -257,15 +255,10 @@ _mkdev(flo, fd*,
 __devitem(wd, {-wd*-}, {-quote(winchester)disk drives (ST506{-,-} IDE{-,-} ESDI{-,-} RLL{-,-} ...)-})dnl
 __devitem(vnd, vnd*, quote(file)pseudo-disk devices)dnl
 _mkdev(vnd, vnd*, {-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)-})dnl
-__devitem(ra, ra*, {-MSCP disks-})dnl
-__devitem(rx, rx*, {-RX02 floppy disks-})dnl
 dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).
 dnl
-disk_q({-hd-})dnl
-disk_q({-ra-})dnl
-disk_q({-rx-})dnl
 disk_q({-sd-})dnl
 disk_q({-wd-})dnl
 _mkdev({-disks-}, {-undefine({-C_ase-})show_disks()undefine({-C_ase-})-},
