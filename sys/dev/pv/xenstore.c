@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.46 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.47 2022/11/10 02:47:52 asou Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -118,6 +118,7 @@ struct xs_msg {
 	struct xs_msghdr	 xsm_hdr;
 	uint32_t		 xsm_read;
 	uint32_t		 xsm_dlen;
+	int			 xsm_error;
 	uint8_t			*xsm_data;
 	TAILQ_ENTRY(xs_msg)	 xsm_link;
 };
@@ -566,9 +567,7 @@ xs_intr(void *arg)
 	}
 
 	if (xsm->xsm_hdr.xmh_len > xsm->xsm_dlen)
-		panic("message too large: %d vs %d for type %d, rid %u",
-		    xsm->xsm_hdr.xmh_len, xsm->xsm_dlen, xsm->xsm_hdr.xmh_type,
-		    xsm->xsm_hdr.xmh_rid);
+		xsm->xsm_error = EMSGSIZE;
 
 	len = MIN(xsm->xsm_hdr.xmh_len - xsm->xsm_read, avail);
 	if (len) {
@@ -800,7 +799,9 @@ xs_cmd(struct xs_transaction *xst, int cmd, const char *path,
 		error = xs_geterror(xsm);
 		DPRINTF("%s: xenstore request %d \"%s\" error %s\n",
 		    xs->xs_sc->sc_dev.dv_xname, cmd, path, xsm->xsm_data);
-	} else if (mode == READ) {
+	} else if (xsm->xsm_error != 0)
+		error = xsm->xsm_error;
+	else if (mode == READ) {
 		KASSERT(iov && iov_cnt);
 		error = xs_parse(xst, xsm, iov, iov_cnt);
 	}
