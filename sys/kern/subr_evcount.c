@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.13 2022/08/14 01:58:28 jsg Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.14 2022/11/10 07:05:41 jmatthew Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -29,8 +29,12 @@
 #include <sys/evcount.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/percpu.h>
 
 static TAILQ_HEAD(,evcount) evcount_list = TAILQ_HEAD_INITIALIZER(evcount_list);
+static TAILQ_HEAD(,evcount) evcount_percpu_init_list =
+    TAILQ_HEAD_INITIALIZER(evcount_percpu_init_list);
+static int evcount_percpu_done;
 
 void
 evcount_attach(struct evcount *ec, const char *name, void *data)
@@ -45,9 +49,49 @@ evcount_attach(struct evcount *ec, const char *name, void *data)
 }
 
 void
+evcount_percpu(struct evcount *ec)
+{
+	if (evcount_percpu_done == 0) {
+		TAILQ_REMOVE(&evcount_list, ec, next);
+		TAILQ_INSERT_TAIL(&evcount_percpu_init_list, ec, next);
+	} else {
+		ec->ec_percpu = counters_alloc(1);
+		TAILQ_INSERT_TAIL(&evcount_list, ec, next);
+	}
+}
+
+void
+evcount_init_percpu(void)
+{
+	struct evcount *ec;
+
+	KASSERT(evcount_percpu_done == 0);
+	TAILQ_FOREACH(ec, &evcount_percpu_init_list, next) {
+		ec->ec_percpu = counters_alloc(1);
+		counters_add(ec->ec_percpu, 0, ec->ec_count);
+		ec->ec_count = 0;
+	}
+	TAILQ_CONCAT(&evcount_list, &evcount_percpu_init_list, next);
+	evcount_percpu_done = 1;
+}
+
+void
 evcount_detach(struct evcount *ec)
 {
 	TAILQ_REMOVE(&evcount_list, ec, next);
+	if (ec->ec_percpu != NULL) {
+		counters_free(ec->ec_percpu, 1);
+		ec->ec_percpu = NULL;
+	}
+}
+
+void
+evcount_inc(struct evcount *ec)
+{
+	if (ec->ec_percpu != NULL)
+		counters_inc(ec->ec_percpu, 0);
+	else
+		ec->ec_count++;
 }
 
 #ifndef	SMALL_KERNEL
@@ -85,9 +129,13 @@ evcount_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_INTRCNT_CNT:
 		if (ec == NULL)
 			return (ENOENT);
-		s = splhigh();
-		count = ec->ec_count;
-		splx(s);
+		if (ec->ec_percpu != NULL) {
+			counters_read(ec->ec_percpu, &count, 1);
+		} else {
+			s = splhigh();
+			count = ec->ec_count;
+			splx(s);
+		}
 		error = sysctl_rdquad(oldp, oldlenp, NULL, count);
 		break;
 	case KERN_INTRCNT_NAME:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: evcount.h,v 1.3 2010/09/20 06:33:46 matthew Exp $ */
+/*	$OpenBSD: evcount.h,v 1.4 2022/11/10 07:05:41 jmatthew Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -32,17 +32,23 @@
 
 #include <sys/queue.h>
 
+struct cpumem;
+
 struct evcount {
 	u_int64_t		ec_count;	/* main counter */
 	int			ec_id;		/* counter ID */
 	const char		*ec_name;	/* counter name */
 	void			*ec_data;	/* user data */
+	struct cpumem		*ec_percpu;	/* per-cpu counter */
 
 	TAILQ_ENTRY(evcount)	next;
 };
 
 void evcount_attach(struct evcount *, const char *, void *);
 void evcount_detach(struct evcount *);
+void evcount_inc(struct evcount *);
+void evcount_init_percpu(void);
+void evcount_percpu(struct evcount *);
 int evcount_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 #endif /* _KERNEL */

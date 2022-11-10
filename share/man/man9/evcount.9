@@ -1,18 +1,24 @@
-.\"	$OpenBSD: evcount.9,v 1.7 2018/04/23 10:31:24 dlg Exp $
+.\"	$OpenBSD: evcount.9,v 1.8 2022/11/10 07:05:41 jmatthew Exp $
 .\" Written by Jared Yanovich
 .\" This file belongs to the public domain, 11/02/2004.
-.Dd $Mdocdate: April 23 2018 $
+.Dd $Mdocdate: November 10 2022 $
 .Dt EVCOUNT 9
 .Os
 .Sh NAME
 .Nm evcount ,
 .Nm evcount_attach ,
-.Nm evcount_detach
+.Nm evcount_detach ,
+.Nm evcount_percpu ,
+.Nm evcount_inc
 .Nd generic interrupt and event counter kernel API
 .Sh SYNOPSIS
 .In sys/evcount.h
 .Ft void
 .Fn evcount_attach "struct evcount *ec" "const char *name" "void *data"
+.Ft void
+.Fn evcount_percpu "struct evcount *ec"
+.Ft void
+.Fn evcount_inc "struct evcount *ec"
 .Ft void
 .Fn evcount_detach "struct evcount *ec"
 .Sh DESCRIPTION
@@ -72,6 +78,7 @@ struct evcount {
 	int			ec_id;		/* counter ID */
 	const char		*ec_name;	/* counter name */
 	void			*ec_data;	/* user data */
+	struct cpumem		*ec_cpumem;	/* per-cpu counter */
 
 	TAILQ_ENTRY(evcount)	next;
 };
@@ -90,6 +97,22 @@ or
 provides a chunk of data that will be made available through the
 .Xr sysctl 2
 call.
+.Pp
+The
+.Fn evcount_percpu ec
+function configures
+.Fa ec
+with one counter for each CPU in the system.
+It should be used when
+.Fa ec Ns 's
+corresponding interrupt can occur simultaneously on multiple CPUs.
+It must be called immediately after
+.Fn evcount_attach
+is called for a given counter.
+.Pp
+The
+.Fn evcount_inc ec
+function increments the given counter.
 .Pp
 The
 .Fn evcount_detach ec
@@ -193,7 +216,8 @@ will be made aware of interrupt occurrence.
 .Xr queue 3 ,
 .Xr intro 4 ,
 .Xr vmstat 8 ,
-.Xr autoconf 9
+.Xr autoconf 9 ,
+.Xr counters_alloc 9
 .Sh AUTHORS
 .An -nosplit
 The

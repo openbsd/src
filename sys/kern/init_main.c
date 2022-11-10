@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.318 2022/10/30 17:43:40 guenther Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.319 2022/11/10 07:05:41 jmatthew Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -71,6 +71,7 @@
 #include <sys/pipe.h>
 #include <sys/witness.h>
 #include <sys/smr.h>
+#include <sys/evcount.h>
 
 #include <sys/syscallargs.h>
 
@@ -397,6 +398,7 @@ main(void *framep)
 	mbcpuinit();
 	kqueue_init_percpu();
 	uvm_init_percpu();
+	evcount_init_percpu();
 
 	/* init exec */
 	init_exec();
