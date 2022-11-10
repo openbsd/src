@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.189 2022/09/03 20:07:31 benno Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.190 2022/11/10 00:00:11 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -656,11 +656,13 @@ kv_set(struct kv *kv, char *fmt, ...)
 	va_list		  ap;
 	char		*value = NULL;
 	struct kv	*ckv;
+	int		 ret;
 
 	va_start(ap, fmt);
-	if (vasprintf(&value, fmt, ap) == -1)
-		return (-1);
+	ret = vasprintf(&value, fmt, ap);
 	va_end(ap);
+ 	if (ret == -1)
+		return (-1);
 
 	/* Remove all children */
 	while ((ckv = TAILQ_FIRST(&kv->kv_children)) != NULL) {
@@ -681,11 +683,13 @@ kv_setkey(struct kv *kv, char *fmt, ...)
 {
 	va_list  ap;
 	char	*key = NULL;
+	int	 ret;
 
 	va_start(ap, fmt);
-	if (vasprintf(&key, fmt, ap) == -1)
-		return (-1);
+	ret = vasprintf(&key, fmt, ap);
 	va_end(ap);
+	if (ret == -1)
+		return (-1);
 
 	free(kv->kv_key);
 	kv->kv_key = key;
