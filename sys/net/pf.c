@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1149 2022/11/11 11:02:35 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1150 2022/11/11 11:47:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4285,7 +4285,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 
 #if NPFSYNC > 0
 	if (*sm != NULL && !ISSET((*sm)->state_flags, PFSTATE_NOSYNC) &&
-	    pd->dir == PF_OUT && pfsync_up()) {
+	    pd->dir == PF_OUT && pfsync_is_up()) {
 		/*
 		 * We want the state created, but we dont
 		 * want to send this in case a partner

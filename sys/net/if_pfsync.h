@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.58 2022/11/06 18:05:05 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.59 2022/11/11 11:47:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -341,7 +341,7 @@ int			pfsync_defer(struct pf_state *, struct mbuf *,
 			    struct pfsync_deferral **);
 void			pfsync_undefer(struct pfsync_deferral *, int);
 
-int			pfsync_up(void);
+int			pfsync_is_up(void);
 int			pfsync_state_in_use(struct pf_state *);
 
 void			pfsync_iack(struct pf_state *);

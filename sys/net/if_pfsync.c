@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.310 2022/11/11 11:22:48 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.311 2022/11/11 11:47:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2571,7 +2571,7 @@ pfsync_send_plus(void *plus, size_t pluslen)
 }
 
 int
-pfsync_up(void)
+pfsync_is_up(void)
 {
 	struct pfsync_softc *sc = pfsyncif;
 
