@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidcc.c,v 1.2 2022/11/11 13:59:40 anton Exp $	*/
+/*	$OpenBSD: hidcc.c,v 1.3 2022/11/11 15:25:13 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2022 Anton Lindqvist <anton@openbsd.org>
@@ -30,7 +30,7 @@
 
 #define DEVNAME(sc)	((sc)->sc_dev->dv_xname)
 
-/* #define HIDCC_DEBUG */
+#define HIDCC_DEBUG
 #ifdef HIDCC_DEBUG
 #define DPRINTF(x...)	do { if (hidcc_debug) printf(x); } while (0)
 struct hidcc;
@@ -163,8 +163,8 @@ static const struct hidcc_keysym hidcc_keysyms[] = {
 	N(0x006C,	"Yellow Menu Button",				0,		0)
 	N(0x006D,	"Aspect",					0,		0)
 	N(0x006E,	"3D Mode Select",				0,		0)
-	N(0x006F,	"Display Brightness Increment",			0,		0)
-	N(0x0070,	"Display Brightness Decrement",			0,		0)
+	Y(0x006F,	"Display Brightness Increment",			KS_Cmd_BrightnessUp,		0)
+	Y(0x0070,	"Display Brightness Decrement",			KS_Cmd_BrightnessDown,		0)
 	N(0x0071,	"Display Brightness",				0,		0)
 	N(0x0072,	"Display Backlight Toggle",			0,		0)
 	N(0x0073,	"Display Set Brightness to Minimum",		0,		0)
