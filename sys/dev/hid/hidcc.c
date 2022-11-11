@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidcc.c,v 1.1 2022/11/11 06:46:48 anton Exp $	*/
+/*	$OpenBSD: hidcc.c,v 1.2 2022/11/11 13:59:40 anton Exp $	*/
 
 /*
  * Copyright (c) 2022 Anton Lindqvist <anton@openbsd.org>
@@ -696,12 +696,8 @@ hidcc_intr(struct hidcc *sc, void *data, u_int len)
 
 	hidcc_dump(sc, __func__, data, len);
 
-	if (len > sc->sc_input.i_bufsiz) {
-		DPRINTF("%s: too much data: len %d, bufsiz %d\n", DEVNAME(sc),
-		    len, sc->sc_input.i_bufsiz);
-		return;
-	}
-
+	if (len > sc->sc_input.i_bufsiz)
+		len = sc->sc_input.i_bufsiz;
 	error = hidcc_intr_slice(sc, data, buf, &len);
 	if (error) {
 		DPRINTF("%s: slice failure: error %d\n", DEVNAME(sc), error);
