@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1150 2022/11/11 11:47:12 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1151 2022/11/11 15:02:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1464,6 +1464,7 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	st->sync_state = PFSYNC_S_NONE;
 
 	refcnt_init(&st->refcnt);
+	mtx_init(&st->mtx, IPL_NET);
 
 	/* XXX when we have anchors, use STATE_INC_COUNTERS */
 	r->states_cur++;
@@ -4357,6 +4358,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	 * pf_state_inserts() grabs reference for pfsync!
 	 */
 	refcnt_init(&s->refcnt);
+	mtx_init(&s->mtx, IPL_NET);
 
 	switch (pd->proto) {
 	case IPPROTO_TCP:

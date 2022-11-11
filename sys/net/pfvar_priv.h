@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.18 2022/11/11 12:50:45 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.19 2022/11/11 15:02:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -43,6 +43,7 @@
 /*
  * Protection/ownership of pf_state members:
  *	I	immutable after creation
+ *	M	pf_state mtx
  *	P	PF_STATE_LOCK
  *	S	pfsync mutex
  *	L	pf_state_list
@@ -70,6 +71,8 @@ struct pf_state {
 	struct pf_sn_head	 src_nodes;	/* [I] */
 	struct pf_state_key	*key[2];	/* [ddresses stack and wire  */
 	struct pfi_kif		*kif;		/* [I] */
+	struct mutex		 mtx;
+	pf_refcnt_t		 refcnt;
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
 	int32_t			 creation;	/* [I] */
@@ -90,7 +93,6 @@ struct pf_state {
 	u_int16_t		 max_mss;	/* [I] */
 	u_int16_t		 if_index_in;	/* [I] */
 	u_int16_t		 if_index_out;	/* [I] */
-	pf_refcnt_t		 refcnt;
 	u_int16_t		 delay;		/* [I] */
 	u_int8_t		 rt;		/* [I] */
 	u_int8_t		 snapped;	/* [S] */
