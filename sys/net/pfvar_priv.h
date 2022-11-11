@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.13 2022/11/11 10:55:48 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.14 2022/11/11 11:02:35 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -311,6 +311,13 @@ extern struct rwlock	pf_state_lock;
 
 extern void			 pf_purge_timeout(void *);
 extern void			 pf_purge(void *);
+
+/* for copies to/from network byte order */
+void			pf_state_peer_hton(const struct pf_state_peer *,
+			    struct pfsync_state_peer *);
+void			pf_state_peer_ntoh(const struct pfsync_state_peer *,
+			    struct pf_state_peer *);
+
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_PRIV_H_ */
