@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2010 2022/10/24 09:12:09 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2011 2022/11/11 07:58:42 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1384,6 +1384,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "17h xHCI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_RC,
+	    "19h/4xh Root Complex",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_IOMMU,
+	    "19h/4xh IOMMU",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_HB_1,
+	    "19h/4xh Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_PCIE_1,
+	    "19h/4xh PCIE",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_PCIE_2,
+	    "19h/4xh PCIE",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_HB,
 	    "14h Host",
 	},
@@ -1532,6 +1552,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "17h/1xh PCIE",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_XHCI_4,
+	    "19h/4xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_XHCI_5,
+	    "19h/4xh xHCI",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_PCIE_2,
 	    "17h/1xh PCIE",
 	},
@@ -1618,6 +1646,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_15_0X_HB,
 	    "15/0xh Host",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_XHCI_1,
+	    "19h/4xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_XHCI_2,
+	    "19h/4xh xHCI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_XHCI_3,
+	    "19h/4xh xHCI",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_90_XHCI_1,
@@ -1734,6 +1774,38 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_5X_DF_7,
 	    "19h/5xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_0,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_1,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_2,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_3,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_4,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_5,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_6,
+	    "19h/4xh Data Fabric",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_DF_7,
+	    "19h/4xh Data Fabric",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_LINK,
