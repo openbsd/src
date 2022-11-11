@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.96 2022/08/12 16:38:50 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.97 2022/11/11 10:51:46 dlg Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -40,12 +40,14 @@
 #include <netinet/tcp.h>
 
 #include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 #include <netinet/in_pcb.h>
 
 #include <net/pfvar.h>
+#include <net/pfvar_priv.h>
 #include <net/if_pflow.h>
 
 #include "bpfilter.h"
