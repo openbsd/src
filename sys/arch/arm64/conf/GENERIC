@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.247 2022/11/10 12:13:22 patrick Exp $
+# $OpenBSD: GENERIC,v 1.248 2022/11/11 15:27:39 matthieu Exp $
 #
 # GENERIC machine description file
 #
@@ -529,6 +529,8 @@ fusbtc*		at iic?			# USB Type-C controller
 ihidev*		at iic?			# HID-over-I2C
 ikbd*		at ihidev?		# HID-over-I2C keyboard
 wskbd*		at ikbd? mux 1
+icc*		at ihidev?
+wskbd*		at icc? mux 1		# Consumer Control keyboards
 ims*		at ihidev?		# HID-over-I2C mouse/trackpad
 wsmouse*	at ims? mux 0
 imt*		at ihidev?		# HID-over-I2C multitouch trackpad
