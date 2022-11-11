@@ -1,49 +1,24 @@
-/* BIO glue */
 BIO_f_ssl
 BIO_new_buffer_ssl_connect
 BIO_new_ssl
 BIO_new_ssl_connect
 BIO_ssl_copy_session_id
 BIO_ssl_shutdown
-
-/* methods */
 DTLS_client_method
 DTLS_method
 DTLS_server_method
-DTLSv1_client_method
-DTLSv1_method
-DTLSv1_server_method
 DTLSv1_2_client_method
 DTLSv1_2_method
 DTLSv1_2_server_method
-SSLv23_client_method
-SSLv23_method
-SSLv23_server_method
-TLS_client_method
-TLS_method
-TLS_server_method
-TLSv1_1_client_method
-TLSv1_1_method
-TLSv1_1_server_method
-TLSv1_2_client_method
-TLSv1_2_method
-TLSv1_2_server_method
-TLSv1_client_method
-TLSv1_method
-TLSv1_server_method
-
-/* session import/export */
+DTLSv1_client_method
+DTLSv1_method
+DTLSv1_server_method
+ERR_load_SSL_strings
+OPENSSL_init_ssl
 PEM_read_SSL_SESSION
 PEM_read_bio_SSL_SESSION
 PEM_write_SSL_SESSION
 PEM_write_bio_SSL_SESSION
-d2i_SSL_SESSION
-i2d_SSL_SESSION
-
-/* setup */
-ERR_load_SSL_strings
-
-/* general API */
 SSL_CIPHER_description
 SSL_CIPHER_find
 SSL_CIPHER_get_auth_nid
@@ -370,6 +345,20 @@ SSL_want
 SSL_write
 SSL_write_early_data
 SSL_write_ex
-
-/* OpenSSL compatible init */
-OPENSSL_init_ssl
+SSLv23_client_method
+SSLv23_method
+SSLv23_server_method
+TLS_client_method
+TLS_method
+TLS_server_method
+TLSv1_1_client_method
+TLSv1_1_method
+TLSv1_1_server_method
+TLSv1_2_client_method
+TLSv1_2_method
+TLSv1_2_server_method
+TLSv1_client_method
+TLSv1_method
+TLSv1_server_method
+d2i_SSL_SESSION
+i2d_SSL_SESSION
