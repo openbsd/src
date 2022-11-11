@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.17 2022/11/11 12:36:05 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.18 2022/11/11 12:50:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -50,50 +50,50 @@
  */
 
 struct pf_state {
-	u_int64_t		 id;		/* (I) */
-	u_int32_t		 creatorid;	/* (I) */
-	u_int8_t		 direction;	/* (I) */
+	u_int64_t		 id;		/* [I] */
+	u_int32_t		 creatorid;	/* [I] */
+	u_int8_t		 direction;	/* [I] */
 	u_int8_t		 pad[3];
 
-	TAILQ_ENTRY(pf_state)	 sync_list;	/* (S) */
-	TAILQ_ENTRY(pf_state)	 sync_snap;	/* (S) */
-	TAILQ_ENTRY(pf_state)	 entry_list;	/* (L) */
-	SLIST_ENTRY(pf_state)	 gc_list;	/* (g) */
-	RB_ENTRY(pf_state)	 entry_id;	/* (P) */
+	TAILQ_ENTRY(pf_state)	 sync_list;	/* [S] */
+	TAILQ_ENTRY(pf_state)	 sync_snap;	/* [S] */
+	TAILQ_ENTRY(pf_state)	 entry_list;	/* [L] */
+	SLIST_ENTRY(pf_state)	 gc_list;	/* [g] */
+	RB_ENTRY(pf_state)	 entry_id;	/* [P] */
 	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
-	struct pf_rule_slist	 match_rules;	/* (I) */
-	union pf_rule_ptr	 rule;		/* (I) */
-	union pf_rule_ptr	 anchor;	/* (I) */
-	union pf_rule_ptr	 natrule;	/* (I) */
-	struct pf_addr		 rt_addr;	/* (I) */
-	struct pf_sn_head	 src_nodes;	/* (I) */
-	struct pf_state_key	*key[2];	/* addresses stack and wire  */
-	struct pfi_kif		*kif;		/* (I) */
+	struct pf_rule_slist	 match_rules;	/* [I] */
+	union pf_rule_ptr	 rule;		/* [I] */
+	union pf_rule_ptr	 anchor;	/* [I] */
+	union pf_rule_ptr	 natrule;	/* [I] */
+	struct pf_addr		 rt_addr;	/* [I] */
+	struct pf_sn_head	 src_nodes;	/* [I] */
+	struct pf_state_key	*key[2];	/* [ddresses stack and wire  */
+	struct pfi_kif		*kif;		/* [I] */
 	u_int64_t		 packets[2];
 	u_int64_t		 bytes[2];
-	int32_t			 creation;	/* (I) */
+	int32_t			 creation;	/* [I] */
 	int32_t			 expire;
 	int32_t			 pfsync_time;
-	int			 rtableid[2];	/* (I) rtables stack and wire */
-	u_int16_t		 qid;		/* (I) */
-	u_int16_t		 pqid;		/* (I) */
-	u_int16_t		 tag;		/* (I) */
+	int			 rtableid[2];	/* [I] rtables stack and wire */
+	u_int16_t		 qid;		/* [I] */
+	u_int16_t		 pqid;		/* [I] */
+	u_int16_t		 tag;		/* [I] */
 	u_int16_t		 state_flags;
-	u_int8_t		 log;		/* (I) */
+	u_int8_t		 log;		/* [I] */
 	u_int8_t		 timeout;
 	u_int8_t		 sync_state;	/* PFSYNC_S_x */
 	u_int8_t		 sync_updates;
-	u_int8_t		 min_ttl;	/* (I) */
-	u_int8_t		 set_tos;	/* (I) */
-	u_int8_t		 set_prio[2];	/* (I) */
-	u_int16_t		 max_mss;	/* (I) */
-	u_int16_t		 if_index_in;	/* (I) */
-	u_int16_t		 if_index_out;	/* (I) */
+	u_int8_t		 min_ttl;	/* [I] */
+	u_int8_t		 set_tos;	/* [I] */
+	u_int8_t		 set_prio[2];	/* [I] */
+	u_int16_t		 max_mss;	/* [I] */
+	u_int16_t		 if_index_in;	/* [I] */
+	u_int16_t		 if_index_out;	/* [I] */
 	pf_refcnt_t		 refcnt;
-	u_int16_t		 delay;		/* (I) */
-	u_int8_t		 rt;		/* (I) */
-	u_int8_t		 snapped;	/* (S) */
+	u_int16_t		 delay;		/* [I] */
+	u_int8_t		 rt;		/* [I] */
+	u_int8_t		 snapped;	/* [S] */
 };
 
 /*
