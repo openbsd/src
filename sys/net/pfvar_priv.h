@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.20 2022/11/11 16:12:08 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.21 2022/11/11 17:12:30 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -69,7 +69,7 @@ struct pf_state {
 	union pf_rule_ptr	 natrule;	/* [I] */
 	struct pf_addr		 rt_addr;	/* [I] */
 	struct pf_sn_head	 src_nodes;	/* [I] */
-	struct pf_state_key	*key[2];	/* [ddresses stack and wire  */
+	struct pf_state_key	*key[2];	/* stack and wire  */
 	struct pfi_kif		*kif;		/* [I] */
 	struct mutex		 mtx;
 	pf_refcnt_t		 refcnt;
