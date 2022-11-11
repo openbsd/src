@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_content.c,v 1.1 2021/09/04 16:26:12 jsing Exp $ */
+/* $OpenBSD: tls_content.c,v 1.2 2022/11/11 17:15:27 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -26,7 +26,7 @@ struct tls_content {
 	uint16_t epoch;
 
 	const uint8_t *data;
-	size_t len;
+	size_t data_len;
 	CBS cbs;
 };
 
@@ -39,7 +39,7 @@ tls_content_new(void)
 void
 tls_content_clear(struct tls_content *content)
 {
-	freezero((void *)content->data, content->len);
+	freezero((void *)content->data, content->data_len);
 	memset(content, 0, sizeof(*content));
 }
 
@@ -113,9 +113,24 @@ tls_content_set_data(struct tls_content *content, uint8_t type,
 
 	content->type = type;
 	content->data = data;
-	content->len = data_len;
+	content->data_len = data_len;
 
-	CBS_init(&content->cbs, content->data, content->len);
+	CBS_init(&content->cbs, content->data, content->data_len);
+}
+
+int
+tls_content_set_bounds(struct tls_content *content, size_t offset, size_t len)
+{
+	size_t content_len;
+
+	content_len = offset + len;
+	if (content_len < len)
+		return 0;
+	if (content_len > content->data_len)
+		return 0;
+
+	CBS_init(&content->cbs, content->data, content_len);
+	return CBS_skip(&content->cbs, offset);
 }
 
 static ssize_t

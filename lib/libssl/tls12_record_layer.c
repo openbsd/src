@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.36 2022/01/14 09:12:15 tb Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.37 2022/11/11 17:15:26 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -864,28 +864,25 @@ tls12_record_layer_aead_xored_nonce(struct tls12_record_layer *rl,
 
 static int
 tls12_record_layer_open_record_plaintext(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *fragment, uint8_t **out, size_t *out_len)
+    uint8_t content_type, CBS *fragment, struct tls_content *out)
 {
 	if (tls12_record_protection_engaged(rl->read))
 		return 0;
 
-	/* XXX - decrypt/process in place for now. */
-	*out = (uint8_t *)CBS_data(fragment);
-	*out_len = CBS_len(fragment);
-
-	return 1;
+	return tls_content_dup_data(out, content_type, CBS_data(fragment),
+	    CBS_len(fragment));
 }
 
 static int
 tls12_record_layer_open_record_protected_aead(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *seq_num, CBS *fragment, uint8_t **out,
-    size_t *out_len)
+    uint8_t content_type, CBS *seq_num, CBS *fragment, struct tls_content *out)
 {
 	struct tls12_record_protection *rp = rl->read;
 	uint8_t *header = NULL;
 	size_t header_len = 0;
-	uint8_t *plain;
-	size_t plain_len;
+	uint8_t *content = NULL;
+	size_t content_len = 0;
+	size_t out_len = 0;
 	CBS var_nonce;
 	int ret = 0;
 
@@ -913,43 +910,47 @@ tls12_record_layer_open_record_protected_aead(struct tls12_record_layer *rl,
 		goto err;
 	}
 
-	/* XXX - decrypt/process in place for now. */
-	plain = (uint8_t *)CBS_data(fragment);
-	plain_len = CBS_len(fragment) - rp->aead_tag_len;
+	content_len = CBS_len(fragment) - rp->aead_tag_len;
+	if ((content = calloc(1, CBS_len(fragment))) == NULL) {
+		content_len = 0;
+		goto err;
+	}
 
-	if (!tls12_record_layer_pseudo_header(rl, content_type, plain_len,
+	if (!tls12_record_layer_pseudo_header(rl, content_type, content_len,
 	    seq_num, &header, &header_len))
 		goto err;
 
-	if (!EVP_AEAD_CTX_open(rp->aead_ctx, plain, out_len, plain_len,
+	if (!EVP_AEAD_CTX_open(rp->aead_ctx, content, &out_len, content_len,
 	    rp->aead_nonce, rp->aead_nonce_len, CBS_data(fragment),
 	    CBS_len(fragment), header, header_len)) {
 		rl->alert_desc = SSL_AD_BAD_RECORD_MAC;
 		goto err;
 	}
 
-	if (*out_len > SSL3_RT_MAX_PLAIN_LENGTH) {
+	if (out_len > SSL3_RT_MAX_PLAIN_LENGTH) {
 		rl->alert_desc = SSL_AD_RECORD_OVERFLOW;
 		goto err;
 	}
 
-	if (*out_len != plain_len)
+	if (out_len != content_len)
 		goto err;
 
-	*out = plain;
+	tls_content_set_data(out, content_type, content, content_len);
+	content = NULL;
+	content_len = 0;
 
 	ret = 1;
 
  err:
 	freezero(header, header_len);
+	freezero(content, content_len);
 
 	return ret;
 }
 
 static int
 tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
-    uint8_t content_type, CBS *seq_num, CBS *fragment, uint8_t **out,
-    size_t *out_len)
+    uint8_t content_type, CBS *seq_num, CBS *fragment, struct tls_content *out)
 {
 	EVP_CIPHER_CTX *enc = rl->read->cipher_ctx;
 	SSL3_RECORD_INTERNAL rrec;
@@ -958,8 +959,8 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 	size_t mac_len = 0;
 	uint8_t *out_mac = NULL;
 	size_t out_mac_len = 0;
-	uint8_t *plain;
-	size_t plain_len;
+	uint8_t *content = NULL;
+	size_t content_len = 0;
 	size_t min_len;
 	CBB cbb_mac;
 	int ret = 0;
@@ -1001,16 +1002,16 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 		goto err;
 	}
 
-	/* XXX - decrypt/process in place for now. */
-	plain = (uint8_t *)CBS_data(fragment);
-	plain_len = CBS_len(fragment);
+	if ((content = calloc(1, CBS_len(fragment))) == NULL)
+		goto err;
+	content_len = CBS_len(fragment);
 
-	if (!EVP_Cipher(enc, plain, CBS_data(fragment), plain_len))
+	if (!EVP_Cipher(enc, content, CBS_data(fragment), CBS_len(fragment)))
 		goto err;
 
-	rrec.data = plain;
-	rrec.input = plain;
-	rrec.length = plain_len;
+	rrec.data = content;
+	rrec.input = content;
+	rrec.length = content_len;
 
 	/*
 	 * We now have to remove padding, extract MAC, calculate MAC
@@ -1058,8 +1059,13 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 		goto err;
 	}
 
-	*out = rrec.data;
-	*out_len = rrec.length;
+	tls_content_set_data(out, content_type, content, content_len);
+	content = NULL;
+	content_len = 0;
+
+	/* Actual content is after EIV, minus padding and MAC. */
+	if (!tls_content_set_bounds(out, eiv_len, rrec.length))
+		goto err;
 
 	ret = 1;
 
@@ -1067,13 +1073,14 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 	CBB_cleanup(&cbb_mac);
 	freezero(mac, mac_len);
 	freezero(out_mac, out_mac_len);
+	freezero(content, content_len);
 
 	return ret;
 }
 
 int
 tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
-    size_t buf_len, uint8_t **out, size_t *out_len)
+    size_t buf_len, struct tls_content *out)
 {
 	CBS cbs, fragment, seq_num;
 	uint16_t version;
@@ -1105,15 +1112,15 @@ tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
 
 	if (rl->read->aead_ctx != NULL) {
 		if (!tls12_record_layer_open_record_protected_aead(rl,
-		    content_type, &seq_num, &fragment, out, out_len))
+		    content_type, &seq_num, &fragment, out))
 			return 0;
 	} else if (rl->read->cipher_ctx != NULL) {
 		if (!tls12_record_layer_open_record_protected_cipher(rl,
-		    content_type, &seq_num, &fragment, out, out_len))
+		    content_type, &seq_num, &fragment, out))
 			return 0;
 	} else {
 		if (!tls12_record_layer_open_record_plaintext(rl,
-		    content_type, &fragment, out, out_len))
+		    content_type, &fragment, out))
 			return 0;
 	}
 

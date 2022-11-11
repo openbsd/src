@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.62 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.63 2022/11/11 17:15:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -105,6 +105,23 @@ dtls1_new(SSL *s)
 }
 
 static void
+dtls1_drain_rcontents(pqueue queue)
+{
+	DTLS1_RCONTENT_DATA_INTERNAL *rdata;
+	pitem *item;
+
+	if (queue == NULL)
+		return;
+
+	while ((item = pqueue_pop(queue)) != NULL) {
+		rdata = (DTLS1_RCONTENT_DATA_INTERNAL *)item->data;
+		tls_content_free(rdata->rcontent);
+		free(item->data);
+		pitem_free(item);
+	}
+}
+
+static void
 dtls1_drain_records(pqueue queue)
 {
 	pitem *item;
@@ -141,7 +158,7 @@ dtls1_clear_queues(SSL *s)
 	dtls1_drain_records(s->d1->unprocessed_rcds.q);
 	dtls1_drain_fragments(s->d1->buffered_messages);
 	dtls1_drain_fragments(s->d1->sent_messages);
-	dtls1_drain_records(s->d1->buffered_app_data.q);
+	dtls1_drain_rcontents(s->d1->buffered_app_data.q);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.240 2022/11/10 18:06:37 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.241 2022/11/11 17:15:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,6 +163,7 @@
 #include "ssl_locl.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
+#include "tls_content.h"
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 
@@ -1441,11 +1442,12 @@ ssl3_cipher_get_value(const SSL_CIPHER *c)
 int
 ssl3_pending(const SSL *s)
 {
-	if (s->rstate == SSL_ST_READ_BODY)
+	if (s->s3->rcontent == NULL)
+		return 0;
+	if (tls_content_type(s->s3->rcontent) != SSL3_RT_APPLICATION_DATA)
 		return 0;
 
-	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ?
-	    s->s3->rrec.length : 0;
+	return tls_content_remaining(s->s3->rcontent);
 }
 
 int
@@ -1560,6 +1562,8 @@ ssl3_free(SSL *s)
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
 
+	tls_content_free(s->s3->rcontent);
+
 	tls_buffer_free(s->s3->alert_fragment);
 	tls_buffer_free(s->s3->handshake_fragment);
 
@@ -1636,6 +1640,9 @@ ssl3_clear(SSL *s)
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
 	wlen = s->s3->wbuf.len;
+
+	tls_content_free(s->s3->rcontent);
+	s->s3->rcontent = NULL;
 
 	tls1_transcript_free(s);
 	tls1_transcript_hash_free(s);

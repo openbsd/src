@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.10 2021/10/23 13:45:44 jsing Exp $ */
+/* $OpenBSD: dtls_locl.h,v 1.11 2022/11/11 17:15:26 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -65,6 +65,7 @@
 #include <openssl/dtls1.h>
 
 #include "ssl_locl.h"
+#include "tls_content.h"
 
 __BEGIN_HIDDEN_DECLS
 
@@ -109,6 +110,11 @@ typedef struct record_pqueue_st {
 	struct _pqueue *q;
 } record_pqueue;
 
+typedef struct rcontent_pqueue_st {
+	unsigned short epoch;
+	struct _pqueue *q;
+} rcontent_pqueue;
+
 typedef struct hm_fragment_st {
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
@@ -121,6 +127,10 @@ typedef struct dtls1_record_data_internal_st {
 	SSL3_BUFFER_INTERNAL rbuf;
 	SSL3_RECORD_INTERNAL rrec;
 } DTLS1_RECORD_DATA_INTERNAL;
+
+typedef struct dtls1_rcontent_data_internal_st {
+	struct tls_content *rcontent;
+} DTLS1_RCONTENT_DATA_INTERNAL;
 
 struct dtls1_state_st {
 	/* Buffered (sent) handshake records */
@@ -160,7 +170,7 @@ struct dtls1_state_st {
 	 * to prevent either protocol violation or
 	 * unnecessary message loss.
 	 */
-	record_pqueue buffered_app_data;
+	rcontent_pqueue buffered_app_data;
 
 	/* Is set when listening for new connections with dtls1_listen() */
 	unsigned int listen;

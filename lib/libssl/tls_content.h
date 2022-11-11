@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_content.h,v 1.1 2021/09/04 16:26:12 jsing Exp $ */
+/* $OpenBSD: tls_content.h,v 1.2 2022/11/11 17:15:27 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -38,6 +38,8 @@ int tls_content_dup_data(struct tls_content *content, uint8_t type,
     const uint8_t *data, size_t data_len);
 void tls_content_set_data(struct tls_content *content, uint8_t type,
     const uint8_t *data, size_t data_len);
+int tls_content_set_bounds(struct tls_content *content, size_t offset,
+    size_t len);
 void tls_content_set_epoch(struct tls_content *content, uint16_t epoch);
 
 ssize_t tls_content_peek(struct tls_content *content, uint8_t *buf, size_t n);

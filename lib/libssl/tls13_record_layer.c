@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.71 2022/09/11 13:50:41 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.72 2022/11/11 17:15:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -561,6 +561,7 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	if (!tls13_record_content(rl->rrec, &enc_record))
 		goto err;
 
+	/* XXX - minus tag len? */
 	if ((content = calloc(1, CBS_len(&enc_record))) == NULL)
 		goto err;
 	content_len = CBS_len(&enc_record);
