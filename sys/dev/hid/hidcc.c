@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidcc.c,v 1.3 2022/11/11 15:25:13 matthieu Exp $	*/
+/*	$OpenBSD: hidcc.c,v 1.4 2022/11/11 17:23:09 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2022 Anton Lindqvist <anton@openbsd.org>
@@ -30,7 +30,7 @@
 
 #define DEVNAME(sc)	((sc)->sc_dev->dv_xname)
 
-#define HIDCC_DEBUG
+/* #define HIDCC_DEBUG */
 #ifdef HIDCC_DEBUG
 #define DPRINTF(x...)	do { if (hidcc_debug) printf(x); } while (0)
 struct hidcc;
