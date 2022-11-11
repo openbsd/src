@@ -2605,7 +2605,7 @@ inteldrm_activate(struct device *self, int act)
 	struct drm_device *dev = &dev_priv->drm;
 	int rv = 0;
 
-	if (dev->dev == NULL)
+	if (dev->dev == NULL || inteldrm_fatal_error)
 		return (0);
 
 	/*

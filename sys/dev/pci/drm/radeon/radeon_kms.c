@@ -874,7 +874,7 @@ radeondrm_activate_kms(struct device *self, int act)
 	struct radeon_device *rdev = (struct radeon_device *)self;
 	int rv = 0;
 
-	if (rdev->ddev == NULL)
+	if (rdev->ddev == NULL || radeon_fatal_error)
 		return (0);
 
 	switch (act) {
