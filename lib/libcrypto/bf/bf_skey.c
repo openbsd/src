@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_skey.c,v 1.15 2022/11/11 12:22:21 jsing Exp $ */
+/* $OpenBSD: bf_skey.c,v 1.16 2022/11/11 12:23:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,13 +65,14 @@
 #include "bf_locl.h"
 
 static const BF_KEY bf_init = {
-	{
+	.P = {
 		0x243f6a88L, 0x85a308d3L, 0x13198a2eL, 0x03707344L,
 		0xa4093822L, 0x299f31d0L, 0x082efa98L, 0xec4e6c89L,
 		0x452821e6L, 0x38d01377L, 0xbe5466cfL, 0x34e90c6cL,
 		0xc0ac29b7L, 0xc97c50ddL, 0x3f84d5b5L, 0xb5470917L,
 		0x9216d5d9L, 0x8979fb1b
-	},{
+	},
+	.S = {
 		0xd1310ba6L, 0x98dfb5acL, 0x2ffd72dbL, 0xd01adfb7L,
 		0xb8e1afedL, 0x6a267e96L, 0xba7c9045L, 0xf12c7f99L,
 		0x24a19947L, 0xb3916cf7L, 0x0801f2e2L, 0x858efc16L,
