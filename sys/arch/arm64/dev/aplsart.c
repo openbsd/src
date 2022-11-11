@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsart.c,v 1.3 2022/11/10 14:15:15 kettenis Exp $	*/
+/*	$OpenBSD: aplsart.c,v 1.4 2022/11/11 11:45:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -183,6 +183,61 @@ aplsart_map(uint32_t phandle, bus_addr_t addr, bus_size_t size)
 				return aplsart2_map(sc, addr, size);
 			else
 				return aplsart3_map(sc, addr, size);
+		}
+	}
+
+	return ENXIO;
+}
+
+int
+aplsart2_unmap(struct aplsart_softc *sc, bus_addr_t addr, bus_size_t size)
+{
+	int i;
+
+	for (i = 0; i < SART_NUM_ENTRIES; i++) {
+		if (HREAD4(sc, SART2_ADDR(i)) != (addr >> SART_ADDR_SHIFT))
+			continue;
+
+		HWRITE4(sc, SART2_ADDR(i), 0);
+		HWRITE4(sc, SART2_CONFIG(i), 0);
+		return 0;
+	}
+
+	return ENOENT;
+}
+
+int
+aplsart3_unmap(struct aplsart_softc *sc, bus_addr_t addr, bus_size_t size)
+{
+	int i;
+
+	for (i = 0; i < SART_NUM_ENTRIES; i++) {
+		if (HREAD4(sc, SART3_ADDR(i)) != (addr >> SART_ADDR_SHIFT))
+			continue;
+
+		HWRITE4(sc, SART3_ADDR(i), 0);
+		HWRITE4(sc, SART3_SIZE(i), 0);
+		HWRITE4(sc, SART3_CONFIG(i), 0);
+		return 0;
+	}
+
+	return ENOENT;
+}
+
+int
+aplsart_unmap(uint32_t phandle, bus_addr_t addr, bus_size_t size)
+{
+	struct aplsart_softc *sc;
+	int i;
+
+	for (i = 0; i < aplsart_cd.cd_ndevs; i++) {
+		sc = (struct aplsart_softc *)aplsart_cd.cd_devs[i];
+
+		if (sc->sc_phandle == phandle) {
+			if (sc->sc_version == 2)
+				return aplsart2_unmap(sc, addr, size);
+			else
+				return aplsart3_unmap(sc, addr, size);
 		}
 	}
 

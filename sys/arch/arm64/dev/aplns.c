@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.14 2022/11/09 19:18:11 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.15 2022/11/11 11:45:10 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -93,6 +93,7 @@ struct cfdriver aplns_cd = {
 };
 
 int	nvme_ans_sart_map(void *, bus_addr_t, bus_size_t);
+int	nvme_ans_sart_unmap(void *, bus_addr_t, bus_size_t);
 
 int
 aplns_match(struct device *parent, void *match, void *aux)
@@ -213,6 +214,7 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	asc->asc_rtkit.rk_cookie = asc;
 	asc->asc_rtkit.rk_dmat = faa->fa_dmat;
 	asc->asc_rtkit.rk_map = nvme_ans_sart_map;
+	asc->asc_rtkit.rk_unmap = nvme_ans_sart_unmap;
 
 	asc->asc_rtkit_state =
 	     rtkit_init(faa->fa_node, NULL, 0, &asc->asc_rtkit);
@@ -334,6 +336,14 @@ nvme_ans_sart_map(void *cookie, bus_addr_t addr, bus_size_t size)
 	struct nvme_ans_softc *asc = cookie;
 	
 	return aplsart_map(asc->asc_sart, addr, size);
+}
+
+int
+nvme_ans_sart_unmap(void *cookie, bus_addr_t addr, bus_size_t size)
+{
+	struct nvme_ans_softc *asc = cookie;
+
+	return aplsart_unmap(asc->asc_sart, addr, size);
 }
 
 int

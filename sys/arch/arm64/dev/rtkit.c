@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.8 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.9 2022/11/11 11:45:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -78,6 +78,12 @@
 #define RTKIT_MINVER			11
 #define RTKIT_MAXVER			12
 
+struct rtkit_dmamem {
+	bus_dmamap_t		rdm_map;
+	bus_dma_segment_t	rdm_seg;
+	size_t			rdm_size;
+};
+
 struct rtkit_state {
 	struct mbox_channel	*mc;
 	struct rtkit		*rk;
@@ -86,6 +92,8 @@ struct rtkit_state {
 	uint64_t		epmap;
 	void			(*callback[32])(void *, uint64_t);
 	void			*arg[32];
+	struct rtkit_dmamem	dmamem[32];
+	int			ndmamem;
 };
 
 int
@@ -115,11 +123,15 @@ rtkit_send(struct mbox_channel *mc, uint32_t endpoint,
 }
 
 bus_addr_t
-rtkit_alloc(struct rtkit *rk, bus_size_t size)
+rtkit_alloc(struct rtkit_state *state, bus_size_t size)
 {
+	struct rtkit *rk = state->rk;
 	bus_dma_segment_t seg;
 	bus_dmamap_t map;
 	int nsegs;
+
+	if (state->ndmamem >= nitems(state->dmamem))
+		return ENOMEM;
 
 	if (bus_dmamem_alloc(rk->rk_dmat, size, 16384, 0,
 	    &seg, 1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO))
@@ -137,6 +149,20 @@ rtkit_alloc(struct rtkit *rk, bus_size_t size)
 		bus_dmamem_free(rk->rk_dmat, &seg, 1);
 		return (bus_addr_t)-1;
 	}
+
+	if (rk->rk_map) {
+		if (rk->rk_map(rk->rk_cookie, seg.ds_addr, seg.ds_len)) {
+			bus_dmamap_unload(rk->rk_dmat, map);
+			bus_dmamap_destroy(rk->rk_dmat, map);
+			bus_dmamem_free(rk->rk_dmat, &seg, 1);
+			return (bus_addr_t)-1;
+		}
+	}
+
+	state->dmamem[state->ndmamem].rdm_map = map;
+	state->dmamem[state->ndmamem].rdm_seg = seg;
+	state->dmamem[state->ndmamem].rdm_size = size;
+	state->ndmamem++;
 
 	return seg.ds_addr;
 }
@@ -249,15 +275,9 @@ rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 			break;
 
 		if (rk) {
-			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
+			addr = rtkit_alloc(state, size << PAGE_SHIFT);
 			if (addr == (bus_addr_t)-1)
 				return ENOMEM;
-			if (rk->rk_map) {
-				error = rk->rk_map(rk->rk_cookie, addr,
-				    size << PAGE_SHIFT);
-				if (error)
-					return error;
-			}
 		}
 
 		error = rtkit_send(mc, RTKIT_EP_CRASHLOG, RTKIT_BUFFER_REQUEST,
@@ -291,15 +311,9 @@ rtkit_handle_syslog(struct rtkit_state *state, struct aplmbox_msg *msg)
 			break;
 
 		if (rk) {
-			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
+			addr = rtkit_alloc(state, size << PAGE_SHIFT);
 			if (addr == (bus_addr_t)-1)
 				return ENOMEM;
-			if (rk->rk_map) {
-				error = rk->rk_map(rk->rk_cookie, addr,
-				    size << PAGE_SHIFT);
-				if (error)
-					return error;
-			}
 		}
 
 		error = rtkit_send(mc, RTKIT_EP_SYSLOG, RTKIT_BUFFER_REQUEST,
@@ -341,15 +355,9 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 			break;
 
 		if (rk) {
-			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
+			addr = rtkit_alloc(state, size << PAGE_SHIFT);
 			if (addr == (bus_addr_t)-1)
 				return ENOMEM;
-			if (rk->rk_map) {
-				error = rk->rk_map(rk->rk_cookie, addr,
-				    size << PAGE_SHIFT);
-				if (error)
-					return error;
-			}
 		}
 
 		error = rtkit_send(mc, RTKIT_EP_IOREPORT, RTKIT_BUFFER_REQUEST,
@@ -479,6 +487,8 @@ void
 rtkit_shutdown(struct rtkit_state *state)
 {
 	struct mbox_channel *mc = state->mc;
+	struct rtkit *rk = state->rk;
+	int i;
 
 	if (state->ap_pwrstate != RTKIT_MGMT_PWR_STATE_QUIESCED)
 		rtkit_set_ap_pwrstate(state, RTKIT_MGMT_PWR_STATE_QUIESCED);
@@ -492,6 +502,19 @@ rtkit_shutdown(struct rtkit_state *state)
 	KASSERT(state->iop_pwrstate == RTKIT_MGMT_PWR_STATE_SLEEP);
 	KASSERT(state->ap_pwrstate == RTKIT_MGMT_PWR_STATE_QUIESCED);
 	state->epmap = 0;
+
+	/* Clean up our memory allocations. */
+	for (i = 0; i < state->ndmamem; i++) {
+		if (rk->rk_unmap) {
+			rk->rk_unmap(rk->rk_cookie,
+			    state->dmamem[i].rdm_seg.ds_addr,
+			    state->dmamem[i].rdm_seg.ds_len);
+		}
+		bus_dmamap_unload(rk->rk_dmat, state->dmamem[i].rdm_map);
+		bus_dmamap_destroy(rk->rk_dmat, state->dmamem[i].rdm_map);
+		bus_dmamem_free(rk->rk_dmat, &state->dmamem[i].rdm_seg, 1);
+	}
+	state->ndmamem = 0;
 }
 
 int
