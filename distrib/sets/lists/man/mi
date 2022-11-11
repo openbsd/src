@@ -1,3 +1,13 @@
+./usr/share/man/man4/qcdwusb.4
+./usr/share/man/man4/qcgpio.4
+./usr/share/man/man4/qciic.4
+./usr/share/man/man4/qcpdc.4
+./usr/share/man/man4/qcpmic.4
+./usr/share/man/man4/qcpmicgpio.4
+./usr/share/man/man4/qcpon.4
+./usr/share/man/man4/qcpwm.4
+./usr/share/man/man4/qcrtc.4
+./usr/share/man/man4/qcspmi.4
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/cvs.info
@@ -1259,9 +1269,6 @@
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
-./usr/share/man/man4/arm64/qcdwusb.4
-./usr/share/man/man4/arm64/qcgpio.4
-./usr/share/man/man4/arm64/qciic.4
 ./usr/share/man/man4/arm64/smbios.4
 ./usr/share/man/man4/armv7/agtimer.4
 ./usr/share/man/man4/armv7/amdisplay.4
