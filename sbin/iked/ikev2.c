@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.357 2022/11/07 22:39:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.358 2022/11/11 17:58:14 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6592,7 +6592,7 @@ int
 ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
     uint64_t spi, uint64_t *spiptr, int cleanup)
 {
-	struct iked_childsa	*csa, *csatmp = NULL, *ipcomp;
+	struct iked_childsa	*csa, *csatmp = NULL;
 	uint64_t		 peerspi = 0;
 	int			 found = 0;
 
@@ -6619,21 +6619,26 @@ ikev2_childsa_delete(struct iked *env, struct iked_sa *sa, uint8_t saproto,
 		if (spi && csa->csa_spi.spi == spi)
 			peerspi = csa->csa_peerspi;
 
-		ipcomp = csa->csa_bundled;
-		if (ipcomp) {
-			if (ipcomp->csa_loaded) {
-				if (pfkey_sa_delete(env, ipcomp) != 0)
+		/* ipcomp */
+		if (csa->csa_bundled) {
+			if (csa->csa_bundled->csa_loaded) {
+				if (pfkey_sa_delete(env, csa->csa_bundled) != 0)
 					log_info("%s: failed to delete IPCOMP"
 					    " SA spi %s", SPI_SA(sa, __func__),
-					    print_spi(ipcomp->csa_spi.spi,
-					    ipcomp->csa_spi.spi_size));
+					    print_spi(
+					    csa->csa_bundled->csa_spi.spi,
+					    csa->csa_bundled->csa_spi.spi_size
+					    ));
 				else
 					log_debug("%s: deleted IPCOMP SA spi %s",
 					    SPI_SA(sa, __func__),
-					    print_spi(ipcomp->csa_spi.spi,
-					    ipcomp->csa_spi.spi_size));
+					    print_spi(
+					    csa->csa_bundled->csa_spi.spi,
+					    csa->csa_bundled->csa_spi.spi_size
+					    ));
 			}
-			childsa_free(ipcomp);
+			childsa_free(csa->csa_bundled);
+			csa->csa_bundled = NULL;
 		}
 		TAILQ_REMOVE(&sa->sa_childsas, csa, csa_entry);
 		ikestat_inc(env, ikes_csa_removed);
