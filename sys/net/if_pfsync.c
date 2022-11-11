@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.309 2022/11/06 21:34:01 kn Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.310 2022/11/11 11:22:48 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1362,10 +1362,17 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 		TAILQ_INIT(&sn->sn_qs[q]);
 
 		while ((st = TAILQ_FIRST(&sc->sc_qs[q])) != NULL) {
-			KASSERT(st->snapped == 0);
 			TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
-			TAILQ_INSERT_TAIL(&sn->sn_qs[q], st, sync_snap);
-			st->snapped = 1;
+			if (st->snapped == 0) {
+				TAILQ_INSERT_TAIL(&sn->sn_qs[q], st, sync_snap);
+				st->snapped = 1;
+			} else {
+				/*
+				 * item is on snapshot list already, so we can
+				 * skip it now.
+				 */
+				pf_state_unref(st);
+			}
 		}
 	}
 
