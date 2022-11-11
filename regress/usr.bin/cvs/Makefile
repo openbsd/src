@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2017/07/07 23:55:21 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.33 2022/11/11 13:59:02 anton Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org> and
 # Tobias Stoeckmann <tobias@openbsd.org>.
@@ -245,7 +245,7 @@ test-cvs-import-mflag:
 	    2000.01.01.00.00.00
 	@perl ${.CURDIR}/setdate.pl ${REGRESS_ROOT}/seed/seed1.txt,v 1.1.1.1 \
 	    2000.01.01.00.00.00
-	@sed "s/author `whoami`/author user/" \
+	@sed "s/author `logname`/author user/" \
 	    ${REGRESS_ROOT}/seed/seed1.txt,v | \
 	    ${DIFF} - ${.CURDIR}/test_${TESTFILE}_import_01_seed1.txt,v
 
