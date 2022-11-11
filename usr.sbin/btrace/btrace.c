@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.63 2022/06/02 21:38:46 jca Exp $ */
+/*	$OpenBSD: btrace.c,v 1.64 2022/11/11 10:51:39 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -1230,7 +1230,7 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 		result = (lval || rval);
 		break;
 	default:
-		xabort("unsuported operation %d", ba->ba_type);
+		xabort("unsupported operation %d", ba->ba_type);
 	}
 
 	debug("ba=%p eval '%ld %s %ld = %d'\n", ba, lval, ba_name(ba),
@@ -1323,7 +1323,7 @@ ba_name(struct bt_arg *ba)
 	case B_AT_OP_LOR:
 		return "||";
 	default:
-		xabort("unsuported type %d", ba->ba_type);
+		xabort("unsupported type %d", ba->ba_type);
 	}
 
 	assert(ba->ba_type == B_AT_VAR || ba->ba_type == B_AT_MAP);
