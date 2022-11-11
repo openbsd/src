@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.12 2022/11/07 16:35:12 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.13 2022/11/11 10:55:48 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -39,6 +39,53 @@
 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+
+struct pf_state {
+	u_int64_t		 id;
+	u_int32_t		 creatorid;
+	u_int8_t		 direction;
+	u_int8_t		 pad[3];
+
+	TAILQ_ENTRY(pf_state)	 sync_list;
+	TAILQ_ENTRY(pf_state)	 sync_snap;
+	TAILQ_ENTRY(pf_state)	 entry_list;
+	SLIST_ENTRY(pf_state)	 gc_list;
+	RB_ENTRY(pf_state)	 entry_id;
+	struct pf_state_peer	 src;
+	struct pf_state_peer	 dst;
+	struct pf_rule_slist	 match_rules;
+	union pf_rule_ptr	 rule;
+	union pf_rule_ptr	 anchor;
+	union pf_rule_ptr	 natrule;
+	struct pf_addr		 rt_addr;
+	struct pf_sn_head	 src_nodes;
+	struct pf_state_key	*key[2];	/* addresses stack and wire  */
+	struct pfi_kif		*kif;
+	u_int64_t		 packets[2];
+	u_int64_t		 bytes[2];
+	int32_t			 creation;
+	int32_t			 expire;
+	int32_t			 pfsync_time;
+	int			 rtableid[2];	/* rtables stack and wire */
+	u_int16_t		 qid;
+	u_int16_t		 pqid;
+	u_int16_t		 tag;
+	u_int16_t		 state_flags;
+	u_int8_t		 log;
+	u_int8_t		 timeout;
+	u_int8_t		 sync_state; /* PFSYNC_S_x */
+	u_int8_t		 sync_updates;
+	u_int8_t		 min_ttl;
+	u_int8_t		 set_tos;
+	u_int8_t		 set_prio[2];
+	u_int16_t		 max_mss;
+	u_int16_t		 if_index_in;
+	u_int16_t		 if_index_out;
+	pf_refcnt_t		 refcnt;
+	u_int16_t		 delay;
+	u_int8_t		 rt;
+	u_int8_t		 snapped;
+};
 
 /*
  *
