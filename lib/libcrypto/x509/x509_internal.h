@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.19 2022/06/27 14:10:22 tb Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.20 2022/11/11 12:02:34 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -22,6 +22,7 @@
 
 #include <openssl/x509_verify.h>
 
+#include "bytestring.h"
 #include "x509_lcl.h"
 
 /* Hard limits on structure size and number of signature checks. */
@@ -111,14 +112,13 @@ struct x509_constraints_names *x509_constraints_names_new(size_t names_max);
 int x509_constraints_general_to_bytes(GENERAL_NAME *name, uint8_t **bytes,
     size_t *len);
 void x509_constraints_names_free(struct x509_constraints_names *names);
-int x509_constraints_valid_host(uint8_t *name, size_t len);
-int x509_constraints_valid_sandns(uint8_t *name, size_t len);
+int x509_constraints_valid_host(CBS *cbs);
+int x509_constraints_valid_sandns(CBS *cbs);
 int x509_constraints_domain(char *domain, size_t dlen, char *constraint,
     size_t len);
-int x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
+int x509_constraints_parse_mailbox(CBS *candidate,
     struct x509_constraints_name *name);
-int x509_constraints_valid_domain_constraint(uint8_t *constraint,
-    size_t len);
+int x509_constraints_valid_domain_constraint(CBS *cbs);
 int x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostp);
 int x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
     size_t len, int *error);

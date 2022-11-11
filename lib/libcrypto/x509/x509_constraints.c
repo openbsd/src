@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.28 2022/06/27 15:03:11 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.29 2022/11/11 12:02:34 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -29,11 +29,33 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "bytestring.h"
 #include "x509_internal.h"
 
 /* RFC 2821 section 4.5.3.1 */
-#define LOCAL_PART_MAX_LEN 64
-#define DOMAIN_PART_MAX_LEN 255
+#define LOCAL_PART_MAX_LEN (size_t)64
+#define DOMAIN_PART_MAX_LEN (size_t)255
+#define MAX_IP_ADDRESS_LENGTH (size_t)46
+
+static int
+cbs_is_ip_address(CBS *cbs)
+{
+	struct sockaddr_in6 sin6;
+	struct sockaddr_in sin4;
+	char *name = NULL;
+	int ret = 0;
+
+	if (CBS_len(cbs) > MAX_IP_ADDRESS_LENGTH)
+		return 0;
+	if (!CBS_strdup(cbs, &name))
+		return 0;
+	if (inet_pton(AF_INET, name, &sin4) == 1 ||
+	    inet_pton(AF_INET6, name, &sin6) == 1)
+		ret = 1;
+
+	free(name);
+	return ret;
+}
 
 struct x509_constraints_name *
 x509_constraints_name_new(void)
@@ -165,7 +187,6 @@ x509_constraints_names_dup(struct x509_constraints_names *names)
 	return NULL;
 }
 
-
 /*
  * Validate that the name contains only a hostname consisting of RFC
  * 5890 compliant A-labels (see RFC 6066 section 3). This is more
@@ -177,19 +198,23 @@ x509_constraints_names_dup(struct x509_constraints_names *names)
  * component.
  */
 static int
-x509_constraints_valid_domain_internal(uint8_t *name, size_t len, int wildcards)
+x509_constraints_valid_domain_internal(CBS *cbs, int wildcards)
 {
+	int first, component = 0;
 	uint8_t prev, c = 0;
-	int component = 0;
-	int first;
-	size_t i;
+	size_t i, len;
+	CBS copy;
+
+	CBS_dup(cbs, &copy);
+
+	len = CBS_len(cbs);
 
 	if (len > DOMAIN_PART_MAX_LEN)
 		return 0;
-
 	for (i = 0; i < len; i++) {
 		prev = c;
-		c = name[i];
+		if (!CBS_get_u8(&copy, &c))
+			return 0;
 
 		first = (i == 0);
 
@@ -234,61 +259,42 @@ x509_constraints_valid_domain_internal(uint8_t *name, size_t len, int wildcards)
 		if (++component > 63)
 			return 0;
 	}
+
 	return 1;
 }
 
 int
-x509_constraints_valid_domain(uint8_t *name, size_t len)
+x509_constraints_valid_host(CBS *cbs)
 {
-	if (len == 0)
+	uint8_t first;
+
+	if (!CBS_peek_u8(cbs, &first))
 		return 0;
-	/*
-	 * A domain may not be less than two characters, so you can't
-	 * have a require subdomain name with less than that.
-	 */
-	if (len < 3 && name[0] == '.')
+	if (first == '.')
+		return 0; /* leading . not allowed in a host name */
+	if (cbs_is_ip_address(cbs))
 		return 0;
-	return x509_constraints_valid_domain_internal(name, len, 0);
+
+	return x509_constraints_valid_domain_internal(cbs, 0);
 }
 
 int
-x509_constraints_valid_host(uint8_t *name, size_t len)
+x509_constraints_valid_sandns(CBS *cbs)
 {
-	struct sockaddr_in sin4;
-	struct sockaddr_in6 sin6;
+	uint8_t first;
 
-	if (len == 0)
+	if (!CBS_peek_u8(cbs, &first))
 		return 0;
-	if (name[0] == '.') /* leading . not allowed in a host name*/
-		return 0;
-	if (inet_pton(AF_INET, name, &sin4) == 1)
-		return 0;
-	if (inet_pton(AF_INET6, name, &sin6) == 1)
-		return 0;
-	return x509_constraints_valid_domain_internal(name, len, 0);
-}
-
-int
-x509_constraints_valid_sandns(uint8_t *name, size_t len)
-{
-	if (len == 0)
-		return 0;
-
-	if (name[0] == '.') /* leading . not allowed in a SAN DNS name */
-		return 0;
+	if (first == '.')
+		return 0; /* leading . not allowed in a SAN DNS name */
 	/*
 	 * A domain may not be less than two characters, so you
 	 * can't wildcard a single domain of less than that
 	 */
-	if (len < 4 && name[0] == '*')
-		return 0;
-	/*
-	 * A wildcard may only be followed by a '.'
-	 */
-	if (len >= 4 && name[0] == '*' && name[1] != '.')
+	if (CBS_len(cbs) < 4 && first == '*')
 		return 0;
 
-	return x509_constraints_valid_domain_internal(name, len, 1);
+	return x509_constraints_valid_domain_internal(cbs, 1);
 }
 
 static inline int
@@ -297,7 +303,7 @@ local_part_ok(char c)
 	return (('0' <= c && c <= '9') || ('a' <= c && c <= 'z') ||
 	    ('A' <= c && c <= 'Z') || c == '!' || c == '#' || c == '$' ||
 	    c == '%' || c == '&' || c == '\'' || c == '*' || c == '+' ||
-	    c == '-' || c == '/' || c == '=' || c == '?' ||  c == '^' ||
+	    c == '-' || c == '/' || c == '=' || c == '?' || c == '^' ||
 	    c == '_' || c == '`' || c == '{' || c == '|' || c == '}' ||
 	    c == '~' || c == '.');
 }
@@ -309,17 +315,25 @@ local_part_ok(char c)
  * local and domain parts of the mailbox to "name->local" and name->name"
  */
 int
-x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
+x509_constraints_parse_mailbox(CBS *candidate,
     struct x509_constraints_name *name)
 {
 	char working[DOMAIN_PART_MAX_LEN + 1] = { 0 };
 	char *candidate_local = NULL;
 	char *candidate_domain = NULL;
-	size_t i, wi = 0;
+	CBS domain_cbs;
+	size_t i, len, wi = 0;
 	int accept = 0;
 	int quoted = 0;
+	CBS copy;
 
+	/* XXX This should not be necessary - revisit and remove */
 	if (candidate == NULL)
+		return 0;
+
+	CBS_dup(candidate, &copy);
+
+	if ((len = CBS_len(&copy)) == 0)
 		return 0;
 
 	/* It can't be bigger than the local part, domain part and the '@' */
@@ -327,7 +341,9 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 		return 0;
 
 	for (i = 0; i < len; i++) {
-		char c = candidate[i];
+		char c;
+		if (!CBS_get_u8(&copy, &c))
+			goto bad;
 		/* non ascii, cr, lf, or nul is never allowed */
 		if (!isascii(c) || c == '\r' || c == '\n' || c == '\0')
 			goto bad;
@@ -372,8 +388,11 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 				continue;
 			}
 			if (c == '"' && i != 0) {
+				uint8_t next;
 				/* end the quoted part. @ must be next */
-				if (i + 1 == len || candidate[i + 1] != '@')
+				if (!CBS_peek_u8(&copy, &next))
+					goto bad;
+				if (next != '@')
 					goto bad;
 				quoted = 0;
 			}
@@ -401,14 +420,15 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 			continue;
 		}
 		if (c == '\\') {
+			uint8_t next;
 			/*
-			 * RFC 3936 hints these can happen outside of
-			 * quotend string. don't include the \ but
+			 * RFC 2821 hints these can happen outside of
+			 * quoted string. Don't include the \ but
 			 * next character must be ok.
 			 */
-			if (i + 1 == len)
+			if (!CBS_peek_u8(&copy, &next))
 				goto bad;
-			if (!local_part_ok(candidate[i + 1]))
+			if (!local_part_ok(next))
 				goto bad;
 			accept = 1;
 		}
@@ -420,8 +440,8 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 	}
 	if (candidate_local == NULL || candidate_domain == NULL)
 		goto bad;
-	if (!x509_constraints_valid_host(candidate_domain,
-	    strlen(candidate_domain)))
+	CBS_init(&domain_cbs, candidate_domain, strlen(candidate_domain));
+	if (!x509_constraints_valid_host(&domain_cbs))
 		goto bad;
 
 	if (name != NULL) {
@@ -440,18 +460,24 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 }
 
 int
-x509_constraints_valid_domain_constraint(uint8_t *constraint, size_t len)
+x509_constraints_valid_domain_constraint(CBS *cbs)
 {
-	if (len == 0)
+	uint8_t first;
+
+	if (CBS_len(cbs) == 0)
 		return 1;	/* empty constraints match */
 
 	/*
 	 * A domain may not be less than two characters, so you
 	 * can't match a single domain of less than that
 	 */
-	if (len < 3 && constraint[0] == '.')
-		return 0;
-	return x509_constraints_valid_domain_internal(constraint, len, 0);
+	if (CBS_len(cbs) < 3) {
+		if (!CBS_peek_u8(cbs, &first))
+			return 0;
+		if (first == '.')
+			return 0;
+	}
+	return x509_constraints_valid_domain_internal(cbs, 0);
 }
 
 /*
@@ -480,6 +506,7 @@ x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostpart)
 	size_t i, hostlen = 0;
 	uint8_t *authority = NULL;
 	char *host = NULL;
+	CBS host_cbs;
 
 	/*
 	 * Find first '//'. there must be at least a '//' and
@@ -529,10 +556,11 @@ x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostpart)
 		return 0;
 	if (host == NULL)
 		host = authority;
-	if (!x509_constraints_valid_host(host, hostlen))
+	CBS_init(&host_cbs, host, hostlen);
+	if (!x509_constraints_valid_host(&host_cbs))
 		return 0;
-	if (hostpart != NULL)
-		*hostpart = strndup(host, hostlen);
+	if (hostpart != NULL && !CBS_strdup(&host_cbs, hostpart))
+		return 0;
 	return 1;
 }
 
@@ -593,12 +621,15 @@ x509_constraints_domain(char *domain, size_t dlen, char *constraint, size_t len)
 }
 
 int
-x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint, size_t len,
+x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
+    size_t len,
     int *error)
 {
 	int ret = 0;
 	char *hostpart = NULL;
+	CBS cbs;
 
+	CBS_init(&cbs, constraint, len);
 	if (!x509_constraints_uri_host(uri, ulen, &hostpart)) {
 		*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 		goto err;
@@ -607,7 +638,7 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint, size_t len,
 		*error = X509_V_ERR_OUT_OF_MEM;
 		goto err;
 	}
-	if (!x509_constraints_valid_domain_constraint(constraint, len)) {
+	if (!x509_constraints_valid_domain_constraint(&cbs)) {
 		*error = X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
 		goto err;
 	}
@@ -714,7 +745,6 @@ x509_constraints_general_to_bytes(GENERAL_NAME *name, uint8_t **bytes,
 	return 0;
 }
 
-
 /*
  * Extract the relevant names for constraint checking from "cert",
  * validate them, and add them to the list of cert names for "chain".
@@ -734,6 +764,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 	while ((name = sk_GENERAL_NAME_value(cert->altname, i++)) != NULL) {
 		uint8_t *bytes = NULL;
 		size_t len = 0;
+		CBS cbs;
 
 		if ((vname = x509_constraints_name_new()) == NULL) {
 			*error = X509_V_ERR_OUT_OF_MEM;
@@ -742,30 +773,31 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 
 		name_type = x509_constraints_general_to_bytes(name, &bytes,
 		    &len);
-		switch(name_type) {
+		CBS_init(&cbs, bytes, len);
+		switch (name_type) {
 		case GEN_DNS:
-			if (!x509_constraints_valid_sandns(bytes, len)) {
+			if (!x509_constraints_valid_sandns(&cbs)) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
-			if ((vname->name = strndup(bytes, len)) == NULL) {
+			if (!CBS_strdup(&cbs, &vname->name)) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
 			vname->type = GEN_DNS;
-			include_cn = 0; /* don't use cn from subject */
+			include_cn = 0; /* Don't use cn from subject */
 			break;
 		case GEN_EMAIL:
-			if (!x509_constraints_parse_mailbox(bytes, len,
-			    vname)) {
+			if (!x509_constraints_parse_mailbox(&cbs, vname)) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
 			vname->type = GEN_EMAIL;
-			include_email = 0; /* don't use email from subject */
+			include_email = 0; /* Don't use email from subject */
 			break;
 		case GEN_URI:
-			if (!x509_constraints_uri_host(bytes, len, &vname->name)) {
+			if (!x509_constraints_uri_host(bytes, len,
+			    &vname->name)) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
@@ -850,19 +882,21 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 		 */
 		while (include_email &&
 		    (i = X509_NAME_get_index_by_NID(subject_name,
-		    NID_pkcs9_emailAddress, i)) >= 0) {
+		     NID_pkcs9_emailAddress, i)) >= 0) {
 			ASN1_STRING *aname;
-			if ((email = X509_NAME_get_entry(subject_name, i)) == NULL ||
+			CBS cbs;
+			if ((email = X509_NAME_get_entry(subject_name, i)) ==
+			    NULL ||
 			    (aname = X509_NAME_ENTRY_get_data(email)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
+			CBS_init(&cbs, aname->data, aname->length);
 			if ((vname = x509_constraints_name_new()) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if (!x509_constraints_parse_mailbox(aname->data,
-			    aname->length, vname)) {
+			if (!x509_constraints_parse_mailbox(&cbs, vname)) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
@@ -879,22 +913,23 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 		 */
 		while (include_cn &&
 		    (i = X509_NAME_get_index_by_NID(subject_name,
-		    NID_commonName, i)) >= 0) {
+		     NID_commonName, i)) >= 0) {
+			CBS cbs;
 			ASN1_STRING *aname;
-			if ((cn = X509_NAME_get_entry(subject_name, i)) == NULL ||
+			if ((cn = X509_NAME_get_entry(subject_name, i)) ==
+			    NULL ||
 			    (aname = X509_NAME_ENTRY_get_data(cn)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if (!x509_constraints_valid_host(aname->data,
-			    aname->length))
+			CBS_init(&cbs, aname->data, aname->length);
+			if (!x509_constraints_valid_host(&cbs))
 				continue; /* ignore it if not a hostname */
 			if ((vname = x509_constraints_name_new()) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if ((vname->name = strndup(aname->data,
-			    aname->length)) == NULL) {
+			if (!CBS_strdup(&cbs, &vname->name)) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
@@ -923,11 +958,12 @@ int
 x509_constraints_validate(GENERAL_NAME *constraint,
     struct x509_constraints_name **out_name, int *out_error)
 {
-	uint8_t *bytes = NULL;
+	uint8_t next, *bytes = NULL;
 	size_t len = 0;
 	struct x509_constraints_name *name;
 	int error = X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
 	int name_type;
+	CBS cbs;
 
 	if (out_name == NULL || *out_name != NULL)
 		return 0;
@@ -941,6 +977,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 	}
 
 	name_type = x509_constraints_general_to_bytes(constraint, &bytes, &len);
+	CBS_init(&cbs, bytes, len);
 	switch (name_type) {
 	case GEN_DIRNAME:
 		if (len == 0)
@@ -954,7 +991,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		name->type = GEN_DIRNAME;
 		break;
 	case GEN_DNS:
-		if (!x509_constraints_valid_domain_constraint(bytes, len))
+		if (!x509_constraints_valid_domain_constraint(&cbs))
 			goto err;
 		if ((name->name = strndup(bytes, len)) == NULL) {
 			error = X509_V_ERR_OUT_OF_MEM;
@@ -964,7 +1001,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		break;
 	case GEN_EMAIL:
 		if (len > 0 && memchr(bytes + 1, '@', len - 1) != NULL) {
-			if (!x509_constraints_parse_mailbox(bytes, len, name))
+			if (!x509_constraints_parse_mailbox(&cbs, name))
 				goto err;
 			break;
 		}
@@ -972,13 +1009,17 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		 * Mail constraints of the form @domain.com are accepted by
 		 * OpenSSL and Microsoft.
 		 */
-		if (len > 0 && bytes[0] == '@') {
-			bytes++;
-			len--;
+		if (CBS_len(&cbs) > 0) {
+			if (!CBS_peek_u8(&cbs, &next))
+				goto err;
+			if (next == '@') {
+				if (!CBS_skip(&cbs, 1))
+					goto err;
+			}
 		}
-		if (!x509_constraints_valid_domain_constraint(bytes, len))
+		if (!x509_constraints_valid_domain_constraint(&cbs))
 			goto err;
-		if ((name->name = strndup(bytes, len)) == NULL) {
+		if (!CBS_strdup(&cbs, &name->name)) {
 			error = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}
@@ -996,7 +1037,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		name->type = GEN_IPADD;
 		break;
 	case GEN_URI:
-		if (!x509_constraints_valid_domain_constraint(bytes, len))
+		if (!x509_constraints_valid_domain_constraint(&cbs))
 			goto err;
 		if ((name->name = strndup(bytes, len)) == NULL) {
 			error = X509_V_ERR_OUT_OF_MEM;
@@ -1035,7 +1076,6 @@ x509_constraints_extract_constraints(X509 *cert,
 		return 1;
 
 	for (i = 0; i < sk_GENERAL_SUBTREE_num(nc->permittedSubtrees); i++) {
-
 		subtree = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
 		if (subtree->minimum || subtree->maximum) {
 			*error = X509_V_ERR_SUBTREE_MINMAX;
