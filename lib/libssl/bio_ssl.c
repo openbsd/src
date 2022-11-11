@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.35 2022/10/05 21:16:14 tb Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.36 2022/11/11 11:25:18 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,7 @@ BIO_f_ssl(void)
 {
 	return (&methods_sslp);
 }
+LSSL_ALIAS(BIO_f_ssl)
 
 static int
 ssl_new(BIO *bi)
@@ -532,6 +533,7 @@ BIO_new_ssl_connect(SSL_CTX *ctx)
 	BIO_free(ssl);
 	return (NULL);
 }
+LSSL_ALIAS(BIO_new_ssl_connect)
 
 BIO *
 BIO_new_ssl(SSL_CTX *ctx, int client)
@@ -556,6 +558,7 @@ BIO_new_ssl(SSL_CTX *ctx, int client)
 	BIO_free(ret);
 	return (NULL);
 }
+LSSL_ALIAS(BIO_new_ssl)
 
 int
 BIO_ssl_copy_session_id(BIO *t, BIO *f)

@@ -1,0 +1,9 @@
+_libre_HMAC
+_libre_HMAC_CTX_copy
+_libre_HMAC_CTX_free
+_libre_HMAC_CTX_get_md
+_libre_HMAC_CTX_new
+_libre_HMAC_CTX_set_flags
+_libre_HMAC_Final
+_libre_HMAC_Init_ex
+_libre_HMAC_Update

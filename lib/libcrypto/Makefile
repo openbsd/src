@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.87 2022/11/10 17:53:45 joshua Exp $
+# $OpenBSD: Makefile,v 1.88 2022/11/11 11:25:18 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -19,6 +19,10 @@ CFLAGS+= -Wall -Wundef
 CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL
+.ifdef NAMESPACE
+CFLAGS+= -DLIBRESSL_NAMESPACE -DLIBRESSL_CRYPTO_NAMESPACE
+.endif
+
 
 .if !defined(NOPIC)
 CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
@@ -40,6 +44,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/ec
 CFLAGS+= -I${LCRYPTO_SRC}/ecdh
 CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
 CFLAGS+= -I${LCRYPTO_SRC}/evp
+CFLAGS+= -I${LCRYPTO_SRC}/hidden
 CFLAGS+= -I${LCRYPTO_SRC}/hmac
 CFLAGS+= -I${LCRYPTO_SRC}/kdf
 CFLAGS+= -I${LCRYPTO_SRC}/modes
@@ -51,6 +56,7 @@ CFLAGS+= -I${LCRYPTO_SRC}/x509
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
+SYMBOL_NAMESPACE=	${.CURDIR}/Symbols.namespace
 
 # crypto/
 SRCS+= cpt_err.c
@@ -875,11 +881,18 @@ includes: prereq
 	    echo $$j; \
 	    eval "$$j"; \
 	done;
-
+.ifdef NAMESPACE
+${VERSION_SCRIPT}: ${SYMBOL_LIST} ${SYMBOL_NAMESPACE}
+	{ printf '{\n\tglobal:\n'; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_NAMESPACE}; \
+	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
+	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
+.else
 ${VERSION_SCRIPT}: ${SYMBOL_LIST}
 	{ printf '{\n\tglobal:\n'; \
 	  sed '/^[._a-zA-Z]/s/$$/;/; s/^/		/' ${SYMBOL_LIST}; \
 	  printf '\n\tlocal:\n\t\t*;\n};\n'; } >$@.tmp && mv $@.tmp $@
+.endif
 
 # generated
 CFLAGS+= -I${.OBJDIR}
