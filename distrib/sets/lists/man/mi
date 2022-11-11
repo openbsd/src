@@ -1529,6 +1529,7 @@
 ./usr/share/man/man4/i386/wdt.4
 ./usr/share/man/man4/iatp.4
 ./usr/share/man/man4/iavf.4
+./usr/share/man/man4/icc.4
 ./usr/share/man/man4/ichiic.4
 ./usr/share/man/man4/ichwdt.4
 ./usr/share/man/man4/icmp.4
