@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.14 2022/01/14 09:22:50 tb Exp $ */
+/* $OpenBSD: dhparam.c,v 1.15 2022/11/11 17:07:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,11 +244,9 @@ dhparam_main(int argc, char **argv)
 	int ret = 1;
 	int i;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&dhparam_config, 0, sizeof(dhparam_config));

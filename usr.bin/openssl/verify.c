@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.14 2021/02/15 17:57:58 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.15 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -268,11 +268,9 @@ verify_main(int argc, char **argv)
 	int argsused;
 	int ret = 1;
 
-	if (single_execution) {
-		if (pledge("stdio rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&verify_config, 0, sizeof(verify_config));

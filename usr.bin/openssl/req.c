@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.23 2022/02/03 17:44:04 tb Exp $ */
+/* $OpenBSD: req.c,v 1.24 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -563,11 +563,9 @@ req_main(int argc, char **argv)
 	const EVP_MD *md_alg = NULL;
 	char *p;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&req_config, 0, sizeof(req_config));

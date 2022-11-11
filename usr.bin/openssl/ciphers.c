@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.15 2022/07/19 20:15:19 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.16 2022/11/11 17:07:38 joshua Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -114,11 +114,9 @@ ciphers_main(int argc, char **argv)
 	int i, rv = 0;
 	char *desc;
 
-	if (single_execution) {
-		if (pledge("stdio rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&ciphers_config, 0, sizeof(ciphers_config));

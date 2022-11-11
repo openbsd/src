@@ -1,4 +1,4 @@
-/*	$OpenBSD: certhash.c,v 1.19 2021/10/23 08:13:48 tb Exp $ */
+/*	$OpenBSD: certhash.c,v 1.20 2022/11/11 17:07:38 joshua Exp $ */
 /*
  * Copyright (c) 2014, 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -653,11 +653,9 @@ certhash_main(int argc, char **argv)
 	int argsused;
 	int i, cwdfd, ret = 0;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&certhash_config, 0, sizeof(certhash_config));

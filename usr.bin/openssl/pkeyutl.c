@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.16 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.17 2022/11/11 17:07:39 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -263,11 +263,9 @@ pkeyutl_main(int argc, char **argv)
 
 	int ret = 1, rv = -1;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&pkeyutl_config, 0, sizeof(pkeyutl_config));

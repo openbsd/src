@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.30 2022/03/23 15:16:59 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.31 2022/11/11 17:07:38 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1165,11 +1165,9 @@ cms_main(int argc, char **argv)
 	char *passin = NULL;
 	unsigned char *pwri_tmp = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath wpath cpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&cms_config, 0, sizeof(cms_config));

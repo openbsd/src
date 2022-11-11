@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.13 2022/01/14 09:24:20 tb Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.14 2022/11/11 17:07:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,11 +169,9 @@ dsaparam_main(int argc, char **argv)
 	int numbits = -1;
 	char *strbits = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&dsaparam_config, 0, sizeof(dsaparam_config));

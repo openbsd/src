@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.13 2022/01/14 09:21:54 tb Exp $ */
+/* $OpenBSD: dh.c,v 1.14 2022/11/11 17:07:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,11 +158,9 @@ dh_main(int argc, char **argv)
 	BIO *in = NULL, *out = NULL;
 	int ret = 1;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&dh_config, 0, sizeof(dh_config));

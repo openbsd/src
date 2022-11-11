@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.20 2022/10/04 15:31:02 espie Exp $ */
+/* $OpenBSD: genrsa.c,v 1.21 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,11 +280,9 @@ genrsa_main(int argc, char **argv)
 	RSA *rsa = NULL;
 	char *rsa_e_hex = NULL, *rsa_e_dec = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	if ((bn = BN_new()) == NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.23 2022/09/14 16:31:36 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.24 2022/11/11 17:07:39 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -536,11 +536,9 @@ pkcs12_main(int argc, char **argv)
 	char *cpass = NULL, *mpass = NULL;
 	char *passin = NULL, *passout = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&pkcs12_config, 0, sizeof(pkcs12_config));

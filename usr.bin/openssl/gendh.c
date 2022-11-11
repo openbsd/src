@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.12 2021/11/20 18:10:48 tb Exp $ */
+/* $OpenBSD: gendh.c,v 1.13 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -134,11 +134,9 @@ gendh_main(int argc, char **argv)
 	BIO *out = NULL;
 	char *strbits = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	if ((cb = BN_GENCB_new()) == NULL) {

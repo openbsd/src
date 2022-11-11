@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.29 2021/12/12 20:34:04 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.30 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -735,11 +735,9 @@ x509_main(int argc, char **argv)
 	CONF *extconf = NULL;
 	char *passin = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&x509_config, 0, sizeof(x509_config));

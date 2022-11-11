@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.21 2020/10/13 18:25:35 tb Exp $ */
+/* $OpenBSD: ocsp.c,v 1.22 2022/11/11 17:07:39 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -750,11 +750,9 @@ ocsp_main(int argc, char **argv)
 	X509 *rca_cert = NULL;
 	CA_DB *rdb = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&ocsp_config, 0, sizeof(ocsp_config));

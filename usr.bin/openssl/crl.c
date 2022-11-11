@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.15 2021/10/31 16:47:27 tb Exp $ */
+/* $OpenBSD: crl.c,v 1.16 2022/11/11 17:07:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,11 +230,9 @@ crl_main(int argc, char **argv)
 	const EVP_MD *digest;
 	char *digest_name = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	if (bio_out == NULL) {

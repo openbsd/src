@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.54 2021/12/06 11:06:58 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.55 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1081,11 +1081,9 @@ s_server_main(int argc, char *argv[])
 	X509 *s_cert2 = NULL;
 	tlsextalpnctx alpn_ctx = { NULL, 0 };
 
-	if (single_execution) {
-		if (pledge("stdio rpath inet dns tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath inet dns tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&s_server_config, 0, sizeof(s_server_config));

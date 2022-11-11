@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.17 2022/01/16 07:12:28 inoguchi Exp $ */
+/* $OpenBSD: smime.c,v 1.18 2022/11/11 17:07:39 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -722,11 +722,9 @@ smime_main(int argc, char **argv)
 	int badarg = 0;
 	char *passin = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&smime_config, 0, sizeof(smime_config));

@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.35 2022/08/31 12:29:08 tb Exp $ */
+/* $OpenBSD: s_time.c,v 1.36 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -236,11 +236,9 @@ s_time_main(int argc, char **argv)
 {
 	int ret = 1;
 
-	if (single_execution) {
-		if (pledge("stdio rpath inet dns", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio rpath inet dns", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	s_time_meth = TLS_client_method();

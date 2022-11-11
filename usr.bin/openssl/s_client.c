@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.58 2022/02/03 17:44:04 tb Exp $ */
+/* $OpenBSD: s_client.c,v 1.59 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -923,11 +923,9 @@ s_client_main(int argc, char **argv)
 	struct sockaddr_storage peer;
 	int peerlen = sizeof(peer);
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&s_client_config, 0, sizeof(s_client_config));

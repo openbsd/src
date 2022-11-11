@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.18 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: rsautl.c,v 1.19 2022/11/11 17:07:39 joshua Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -244,11 +244,9 @@ rsautl_main(int argc, char **argv)
 	int keysize;
 	int ret = 1;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&rsautl_config, 0, sizeof(rsautl_config));

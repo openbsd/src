@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.10 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: sess_id.c,v 1.11 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,11 +158,9 @@ sess_id_main(int argc, char **argv)
 	int ret = 1, i;
 	BIO *out = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&sess_id_config, 0, sizeof(sess_id_config));

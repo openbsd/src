@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.16 2022/01/14 09:26:41 tb Exp $ */
+/* $OpenBSD: rsa.c,v 1.17 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -255,11 +255,9 @@ rsa_main(int argc, char **argv)
 	BIO *out = NULL;
 	char *passin = NULL, *passout = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&rsa_config, 0, sizeof(rsa_config));

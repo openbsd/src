@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.12 2021/12/12 20:40:25 tb Exp $ */
+/* $OpenBSD: passwd.c,v 1.13 2022/11/11 17:07:39 joshua Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -145,11 +145,9 @@ passwd_main(int argc, char **argv)
 	int argsused;
 	int ret = 1;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&passwd_config, 0, sizeof(passwd_config));

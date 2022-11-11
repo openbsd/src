@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.19 2022/01/14 09:28:07 tb Exp $ */
+/* $OpenBSD: dgst.c,v 1.20 2022/11/11 17:07:38 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,11 +338,9 @@ dgst_main(int argc, char **argv)
 	int siglen = 0;
 	char *passin = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	if ((buf = malloc(BUFSIZE)) == NULL) {

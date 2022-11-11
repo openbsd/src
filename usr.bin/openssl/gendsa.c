@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.15 2022/01/14 09:25:00 tb Exp $ */
+/* $OpenBSD: gendsa.c,v 1.16 2022/11/11 17:07:39 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,11 +229,9 @@ gendsa_main(int argc, char **argv)
 	char *passout = NULL;
 	BIO *out = NULL, *in = NULL;
 
-	if (single_execution) {
-		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
-			perror("pledge");
-			exit(1);
-		}
+	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
+		perror("pledge");
+		exit(1);
 	}
 
 	memset(&gendsa_config, 0, sizeof(gendsa_config));
