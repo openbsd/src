@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuid_create.c,v 1.2 2015/09/10 18:13:46 guenther Exp $	*/
+/*	$OpenBSD: uuid_create.c,v 1.3 2022/11/11 12:05:32 krw Exp $	*/
 /*	$NetBSD: uuid_create.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * See also:
  *	http://www.opengroup.org/onlinepubs/009629399/uuid_create.htm and
  *	RFC 4122
- * 
+ *
  * Create a UUID from random number as defined in section 4.4 of RFC 4122
  */
 void
