@@ -159,6 +159,7 @@
 ./usr/include/dev/gpio/gpiovar.h
 ./usr/include/dev/hid
 ./usr/include/dev/hid/hid.h
+./usr/include/dev/hid/hidccvar.h
 ./usr/include/dev/hid/hidkbdsc.h
 ./usr/include/dev/hid/hidkbdvar.h
 ./usr/include/dev/hid/hidmsvar.h
