@@ -10,3 +10,12 @@ BEGIN {
 		printf("printed!\n");
 	}
 }
+
+END {
+	if (42) {
+		printf("multiple ");
+		@var = 4;
+		printf("(%d) ", @var);
+		printf("statements\n");
+	}
+}

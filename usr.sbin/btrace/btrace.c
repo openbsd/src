@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.64 2022/11/11 10:51:39 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.65 2022/11/11 22:40:41 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -599,8 +599,16 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	}
 
 	SLIST_FOREACH(bs, &r->br_action, bs_next) {
-		if ((bs->bs_act == B_AC_TEST) && stmt_test(bs, dtev) == true)
-			stmt_eval((struct bt_stmt *)bs->bs_var, dtev);
+		if ((bs->bs_act == B_AC_TEST) && stmt_test(bs, dtev) == true) {
+			struct bt_stmt *bbs = (struct bt_stmt *)bs->bs_var;
+
+			while (bbs != NULL) {
+				stmt_eval(bbs, dtev);
+				bbs = SLIST_NEXT(bbs, bs_next);
+			}
+
+			continue;
+		}
 
 		stmt_eval(bs, dtev);
 	}
