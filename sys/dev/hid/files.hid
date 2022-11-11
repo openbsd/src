@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hid,v 1.2 2016/01/20 01:26:00 jcs Exp $
+#	$OpenBSD: files.hid,v 1.3 2022/11/11 06:46:48 anton Exp $
 
 # Human Interface Devices
 
@@ -20,3 +20,7 @@ file	dev/hid/hidms.c			hidms
 # Multitouch
 define	hidmt
 file	dev/hid/hidmt.c			hidmt
+
+# Consumer Control keyboards
+define	hidcc
+file	dev/hid/hidcc.c			hidcc
