@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.269 2022/11/11 12:14:01 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.270 2022/11/11 18:53:29 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -688,7 +688,6 @@ spoofgpt(struct buf *bp, void (*strat)(struct buf *), const uint8_t *dosbb,
 	}
 
 	lp->d_magic = DISKMAGIC;
-	memcpy(lp->d_uid, (char *)&gh.gh_guid, sizeof(lp->d_uid));
 	*partoffp = partoff;
 	free(gp, M_DEVBUF, gpbytes);
 
