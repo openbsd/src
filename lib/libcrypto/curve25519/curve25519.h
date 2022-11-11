@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.h,v 1.5 2022/11/09 17:39:29 jsing Exp $ */
+/*	$OpenBSD: curve25519.h,v 1.6 2022/11/11 01:44:26 tb Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -78,7 +78,7 @@ int X25519(uint8_t out_shared_key[X25519_KEY_LENGTH],
  * generated, public/private key pair.
  */
 void ED25519_keypair(uint8_t out_public_key[ED25519_PUBLIC_KEY_LENGTH],
-    uint8_t out_private_key[ED25519_PRIVATE_KEY_LENGTH]); 
+    uint8_t out_private_key[ED25519_PRIVATE_KEY_LENGTH]);
 
 /*
  * ED25519_sign sets |out_sig| to be a signature of |message_len| bytes from
