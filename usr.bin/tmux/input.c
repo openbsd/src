@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.211 2022/10/28 13:00:02 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.212 2022/11/11 08:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1345,8 +1345,8 @@ input_csi_dispatch(struct input_ctx *ictx)
 	if (ictx->flags & INPUT_DISCARD)
 		return (0);
 
-	log_debug("%s: '%c' \"%s\" \"%s\"",
-	    __func__, ictx->ch, ictx->interm_buf, ictx->param_buf);
+	log_debug("%s: '%c' \"%s\" \"%s\"", __func__, ictx->ch,
+	    ictx->interm_buf, ictx->param_buf);
 
 	if (input_split(ictx) != 0)
 		return (0);

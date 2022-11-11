@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.94 2022/08/15 08:54:03 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.95 2022/11/11 08:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -265,6 +265,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SETRGBF] = { TTYCODE_STRING, "setrgbf" },
 	[TTYC_SETULC] = { TTYCODE_STRING, "Setulc" },
 	[TTYC_SE] = { TTYCODE_STRING, "Se" },
+	[TTYC_SXL] =  { TTYCODE_FLAG, "Sxl" },
 	[TTYC_SGR0] = { TTYCODE_STRING, "sgr0" },
 	[TTYC_SITM] = { TTYCODE_STRING, "sitm" },
 	[TTYC_SMACS] = { TTYCODE_STRING, "smacs" },
