@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_skey.c,v 1.13 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: bf_skey.c,v 1.14 2022/11/11 12:18:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,8 +58,10 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/blowfish.h>
+
 #include "bf_locl.h"
 #include "bf_pi.h"
 
@@ -69,7 +71,6 @@ BF_set_key(BF_KEY *key, int len, const unsigned char *data)
 	int i;
 	BF_LONG *p, ri, in[2];
 	const unsigned char *d, *end;
-
 
 	memcpy(key, &bf_init, sizeof(BF_KEY));
 	p = key->P;
@@ -117,4 +118,3 @@ BF_set_key(BF_KEY *key, int len, const unsigned char *data)
 		p[i + 1] = in[1];
 	}
 }
-

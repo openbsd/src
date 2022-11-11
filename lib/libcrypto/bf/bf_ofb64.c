@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_ofb64.c,v 1.6 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: bf_ofb64.c,v 1.7 2022/11/11 12:18:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,11 @@
  */
 
 #include <openssl/blowfish.h>
+
 #include "bf_locl.h"
 
-/* The input and output encrypted as though 64bit ofb mode is being
+/*
+ * The input and output encrypted as though 64bit ofb mode is being
  * used.  The extra state information to record how much of the
  * 64bit block we have used is contained in *num;
  */
@@ -107,4 +109,3 @@ BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
 	t = v0 = v1 = ti[0] = ti[1] = 0;
 	*num = n;
 }
-

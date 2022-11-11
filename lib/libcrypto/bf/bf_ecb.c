@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_ecb.c,v 1.7 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: bf_ecb.c,v 1.8 2022/11/11 12:18:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,10 +57,12 @@
  */
 
 #include <openssl/blowfish.h>
-#include "bf_locl.h"
 #include <openssl/opensslv.h>
 
-/* Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
+#include "bf_locl.h"
+
+/*
+ * Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
  * (From LECTURE NOTES IN COMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
@@ -97,4 +99,3 @@ BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	l2n(l, out);
 	l = d[0] = d[1] = 0;
 }
-

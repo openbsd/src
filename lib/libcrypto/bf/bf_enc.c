@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_enc.c,v 1.7 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: bf_enc.c,v 1.8 2022/11/11 12:18:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,9 +57,11 @@
  */
 
 #include <openssl/blowfish.h>
+
 #include "bf_locl.h"
 
-/* Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
+/*
+ * Blowfish as implemented from 'Blowfish: Springer-Verlag paper'
  * (From LECTURE NOTES IN COMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */

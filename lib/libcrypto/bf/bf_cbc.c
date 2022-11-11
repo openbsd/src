@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_cbc.c,v 1.6 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: bf_cbc.c,v 1.7 2022/11/11 12:18:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <openssl/blowfish.h>
+
 #include "bf_locl.h"
 
 void
@@ -134,4 +135,3 @@ BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
-
