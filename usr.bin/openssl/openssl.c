@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.31 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: openssl.c,v 1.32 2022/11/11 18:24:32 joshua Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,10 +497,9 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 	FUNCTION f, *fp;
 	int ret = 1;
 
-	if ((argc <= 0) || (argv[0] == NULL)) {
-		ret = 0;
-		goto end;
-	}
+	if (argc <= 0 || argv[0] == NULL)
+		return 0;
+
 	f.name = argv[0];
 	fp = lh_FUNCTION_retrieve(prog, &f);
 	if (fp == NULL) {
@@ -514,9 +513,16 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 			fp = &f;
 		}
 	}
-	if (fp != NULL) {
-		ret = fp->func(argc, argv);
-	} else if ((strncmp(argv[0], "no-", 3)) == 0) {
+
+	if (fp != NULL)
+		return fp->func(argc, argv);
+
+	if (strcmp(argv[0], "help") == 0) {
+		print_help();
+		return 0;
+	}
+
+	if ((strncmp(argv[0], "no-", 3)) == 0) {
 		BIO *bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE);
 		f.name = argv[0] + 3;
 		ret = (lh_FUNCTION_retrieve(prog, &f) != NULL);
@@ -525,8 +531,10 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 		else
 			BIO_printf(bio_stdout, "%s\n", argv[0] + 3);
 		BIO_free_all(bio_stdout);
-		goto end;
-	} else if ((strcmp(argv[0], LIST_STANDARD_COMMANDS) == 0) ||
+		return ret;
+	}
+
+	if ((strcmp(argv[0], LIST_STANDARD_COMMANDS) == 0) ||
 	    (strcmp(argv[0], LIST_MESSAGE_DIGEST_COMMANDS) == 0) ||
 	    (strcmp(argv[0], LIST_MESSAGE_DIGEST_ALGORITHMS) == 0) ||
 	    (strcmp(argv[0], LIST_CIPHER_COMMANDS) == 0) ||
@@ -562,17 +570,15 @@ do_cmd(LHASH_OF(FUNCTION) * prog, int argc, char *argv[])
 					    fp->name);
 		}
 		BIO_free_all(bio_stdout);
-		ret = 0;
-		goto end;
-	} else {
-		BIO_printf(bio_err,
-		    "openssl:Error: '%s' is an invalid command.\n",
-		    argv[0]);
-		print_help();
-		ret = 0;
+		return 0;
 	}
- end:
-	return (ret);
+
+	BIO_printf(bio_err,
+	    "openssl:Error: '%s' is an invalid command.\n",
+	    argv[0]);
+	print_help();
+
+	return 1;
 }
 
 static void
