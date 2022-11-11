@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.9 2022/06/02 07:41:17 mbuhl Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.10 2022/11/11 16:41:44 mbuhl Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -978,7 +978,7 @@ igc_start(struct ifqueue *ifq)
 	mask = sc->num_tx_desc - 1;
 
 	for (;;) {
-		if (free <= IGC_MAX_SCATTER) {
+		if (free <= IGC_MAX_SCATTER + 1) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -1005,6 +1005,7 @@ igc_start(struct ifqueue *ifq)
 			/* Consume the first descriptor */
 			prod++;
 			prod &= mask;
+			free--;
 		}
 
 		for (i = 0; i < map->dm_nsegs; i++) {
