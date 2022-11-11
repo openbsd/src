@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.95 2022/11/11 08:37:55 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.96 2022/11/11 08:44:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -453,6 +453,9 @@ tty_term_apply_overrides(struct tty_term *term)
 			tty_term_apply(term, s + offset, 0);
 		a = options_array_next(a);
 	}
+
+	/* Log the SIXEL flag. */
+	log_debug("SIXEL flag is %d", !!(term->flags & TERM_SIXEL));
 
 	/* Update the RGB flag if the terminal has RGB colours. */
 	if (tty_term_has(term, TTYC_SETRGBF) &&

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.27 2022/11/11 08:37:55 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.28 2022/11/11 08:44:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -343,7 +343,7 @@ static const char *const tty_feature_sixel_capabilities[] = {
 static const struct tty_feature tty_feature_sixel = {
 	"sixel",
 	tty_feature_sixel_capabilities,
-	0
+	TERM_SIXEL
 };
 
 /* Available terminal features. */
