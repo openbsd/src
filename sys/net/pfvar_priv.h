@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.16 2022/11/11 12:29:32 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.17 2022/11/11 12:36:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,7 +60,7 @@ struct pf_state {
 	TAILQ_ENTRY(pf_state)	 entry_list;	/* (L) */
 	SLIST_ENTRY(pf_state)	 gc_list;	/* (g) */
 	RB_ENTRY(pf_state)	 entry_id;	/* (P) */
-	struct pf_state_peer	 src(;
+	struct pf_state_peer	 src;
 	struct pf_state_peer	 dst;
 	struct pf_rule_slist	 match_rules;	/* (I) */
 	union pf_rule_ptr	 rule;		/* (I) */
