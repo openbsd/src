@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.19 2022/11/11 15:02:31 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.20 2022/11/11 16:12:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -267,6 +267,7 @@ struct pf_pdesc {
 	} hdr;
 };
 
+extern struct timeout	pf_purge_states_to;
 extern struct task	pf_purge_task;
 extern struct timeout	pf_purge_to;
 
@@ -319,9 +320,6 @@ extern struct rwlock	pf_state_lock;
 			splassert_fail(RW_WRITE,	\
 			    rw_status(&pf_state_lock), __func__);\
 	} while (0)
-
-extern void			 pf_purge_timeout(void *);
-extern void			 pf_purge(void *);
 
 /* for copies to/from network byte order */
 void			pf_state_peer_hton(const struct pf_state_peer *,
