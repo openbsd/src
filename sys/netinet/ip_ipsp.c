@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.274 2022/11/05 22:33:11 jan Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.275 2022/11/11 18:09:58 cheloha Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -119,7 +119,7 @@ void ipsp_ids_gc(void *);
 LIST_HEAD(, ipsec_ids) ipsp_ids_gc_list =
     LIST_HEAD_INITIALIZER(ipsp_ids_gc_list);	/* [F] */
 struct timeout ipsp_ids_gc_timeout =
-    TIMEOUT_INITIALIZER_FLAGS(ipsp_ids_gc, NULL, TIMEOUT_PROC);
+    TIMEOUT_INITIALIZER_FLAGS(ipsp_ids_gc, NULL, KCLOCK_NONE, TIMEOUT_PROC);
 
 static inline int ipsp_ids_cmp(const struct ipsec_ids *,
     const struct ipsec_ids *);
