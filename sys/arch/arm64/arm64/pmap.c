@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.87 2022/11/09 07:11:30 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.88 2022/11/12 12:58:34 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -108,6 +108,7 @@ void	pmap_set_l3(struct pmap *, uint64_t, struct pmapvp2 *,
 
 void	pmap_fill_pte(pmap_t, vaddr_t, paddr_t, struct pte_desc *,
 	    vm_prot_t, int, int);
+void	pmap_icache_sync_page(struct pmap *, paddr_t);
 void	pmap_pte_insert(struct pte_desc *);
 void	pmap_pte_remove(struct pte_desc *, int);
 void	pmap_pte_update(struct pte_desc *, uint64_t *);
@@ -534,7 +535,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	int error;
 	int cache = PMAP_CACHE_WB;
-	int need_sync = 0;
 
 	if (pa & PMAP_NOCACHE)
 		cache = PMAP_CACHE_CI;
@@ -590,6 +590,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_enter_pv(pted, pg); /* only managed mem */
 	}
 
+	if (pg != NULL && (flags & PROT_EXEC)) {
+		if ((pg->pg_flags & PG_PMAP_EXE) == 0)
+			pmap_icache_sync_page(pm, pa);
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
+	}
+
 	/*
 	 * Insert into table, if this mapping said it needed to be mapped
 	 * now.
@@ -598,15 +604,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_pte_insert(pted);
 		ttlb_flush(pm, va & ~PAGE_MASK);
 	}
-
-	if (pg != NULL && (flags & PROT_EXEC)) {
-		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
-	}
-
-	if (need_sync && (pm == pmap_kernel() || (curproc &&
-	    curproc->p_vmspace->vm_map.pmap == pm)))
-		cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
 
 	error = 0;
 out:
@@ -1665,6 +1662,16 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 }
 
 void
+pmap_icache_sync_page(struct pmap *pm, paddr_t pa)
+{
+	vaddr_t kva = zero_page + cpu_number() * PAGE_SIZE;
+
+	pmap_kenter_pa(kva, pa, PROT_READ|PROT_WRITE);
+	cpu_icache_sync_range(kva, PAGE_SIZE);
+	pmap_kremove_pg(kva);
+}
+
+void
 pmap_pte_insert(struct pte_desc *pted)
 {
 	pmap_t pm = pted->pted_pmap;
@@ -1765,7 +1772,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 	struct vm_page *pg;
 	paddr_t pa;
 	uint64_t *pl3 = NULL;
-	int need_sync = 0;
 	int retcode = 0;
 
 	pmap_lock(pm);
@@ -1833,21 +1839,20 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 		goto done;
 	}
 
-	/* We actually made a change, so flush it and sync. */
-	pmap_pte_update(pted, pl3);
-	ttlb_flush(pm, va & ~PAGE_MASK);
-
 	/*
 	 * If this is a page that can be executed, make sure to invalidate
 	 * the instruction cache if the page has been modified or not used
 	 * yet.
 	 */
 	if (pted->pted_va & PROT_EXEC) {
-		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
+		if ((pg->pg_flags & PG_PMAP_EXE) == 0)
+			pmap_icache_sync_page(pm, pa);
 		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
-		if (need_sync)
-			cpu_icache_sync_range(va & ~PAGE_MASK, PAGE_SIZE);
 	}
+
+	/* We actually made a change, so flush it and sync. */
+	pmap_pte_update(pted, pl3);
+	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	retcode = 1;
 done:
