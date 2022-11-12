@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.249 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: in6.c,v 1.250 2022/11/12 16:36:07 kn Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1602,8 +1602,6 @@ in6_domifattach(struct ifnet *ifp)
 	ext = malloc(sizeof(*ext), M_IFADDR, M_WAITOK | M_ZERO);
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
-	ext->nprefixes = 0;
-	ext->ndefrouters = 0;
 	return ext;
 }
 
