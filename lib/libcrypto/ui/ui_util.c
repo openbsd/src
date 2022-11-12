@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_util.c,v 1.10 2015/09/10 15:56:26 jsing Exp $ */
+/* $OpenBSD: ui_util.c,v 1.11 2022/11/12 13:16:10 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,6 +70,7 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 	explicit_bzero(buff, BUFSIZ);
 	return (ret);
 }
+LCRYPTO_ALIAS(UI_UTIL_read_pw_string)
 
 int
 UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
@@ -94,6 +95,7 @@ UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
 		ok = 0;
 	return (ok);
 }
+LCRYPTO_ALIAS(UI_UTIL_read_pw)
 
 /*
  * Old compatibility glue - see comment in ui_compat.h.
