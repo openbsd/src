@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.26 2022/06/26 04:14:43 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.27 2022/11/12 12:11:14 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,30 +121,6 @@ int
 i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl)
 {
 	return ASN1_item_i2d_fp(&X509_CRL_it, fp, crl);
-}
-
-PKCS7 *
-d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
-{
-	return ASN1_item_d2i_bio(&PKCS7_it, bp, p7);
-}
-
-int
-i2d_PKCS7_bio(BIO *bp, PKCS7 *p7)
-{
-	return ASN1_item_i2d_bio(&PKCS7_it, bp, p7);
-}
-
-PKCS7 *
-d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
-{
-	return ASN1_item_d2i_fp(&PKCS7_it, fp, p7);
-}
-
-int
-i2d_PKCS7_fp(FILE *fp, PKCS7 *p7)
-{
-	return ASN1_item_i2d_fp(&PKCS7_it, fp, p7);
 }
 
 X509_REQ *
@@ -497,14 +473,6 @@ X509_NAME_digest(const X509_NAME *data, const EVP_MD *type, unsigned char *md,
 {
 	return (ASN1_item_digest(&X509_NAME_it, type, (char *)data,
 	    md, len));
-}
-
-int
-PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
-    const EVP_MD *type, unsigned char *md, unsigned int *len)
-{
-	return(ASN1_item_digest(&PKCS7_ISSUER_AND_SERIAL_it, type,
-	    (char *)data, md, len));
 }
 
 int

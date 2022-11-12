@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.23 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.24 2022/11/12 12:11:14 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,6 +109,7 @@ PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(PKCS7_ctrl)
 
 int
 PKCS7_content_new(PKCS7 *p7, int type)
@@ -128,6 +129,7 @@ err:
 		PKCS7_free(ret);
 	return (0);
 }
+LCRYPTO_ALIAS(PKCS7_content_new)
 
 int
 PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data)
@@ -158,6 +160,7 @@ PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data)
 err:
 	return (0);
 }
+LCRYPTO_ALIAS(PKCS7_set_content)
 
 int
 PKCS7_set_type(PKCS7 *p7, int type)
@@ -227,6 +230,7 @@ PKCS7_set_type(PKCS7 *p7, int type)
 err:
 	return (0);
 }
+LCRYPTO_ALIAS(PKCS7_set_type)
 
 int
 PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other)
@@ -235,6 +239,7 @@ PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other)
 	p7->d.other = other;
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS7_set0_type_other)
 
 int
 PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
@@ -290,6 +295,7 @@ PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 		return 0;
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_add_signer)
 
 int
 PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
@@ -323,6 +329,7 @@ PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_add_certificate)
 
 int
 PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
@@ -357,6 +364,7 @@ PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_add_crl)
 
 int
 PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
@@ -401,6 +409,7 @@ PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 err:
 	return 0;
 }
+LCRYPTO_ALIAS(PKCS7_SIGNER_INFO_set)
 
 PKCS7_SIGNER_INFO *
 PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey, const EVP_MD *dgst)
@@ -430,6 +439,7 @@ err:
 		PKCS7_SIGNER_INFO_free(si);
 	return (NULL);
 }
+LCRYPTO_ALIAS(PKCS7_add_signature)
 
 int
 PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
@@ -447,6 +457,7 @@ PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 	PKCS7error(PKCS7_R_WRONG_CONTENT_TYPE);
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS7_set_digest)
 
 STACK_OF(PKCS7_SIGNER_INFO) *
 PKCS7_get_signer_info(PKCS7 *p7)
@@ -460,6 +471,7 @@ PKCS7_get_signer_info(PKCS7 *p7)
 	} else
 		return (NULL);
 }
+LCRYPTO_ALIAS(PKCS7_get_signer_info)
 
 void
 PKCS7_SIGNER_INFO_get0_algs(PKCS7_SIGNER_INFO *si, EVP_PKEY **pk,
@@ -472,6 +484,7 @@ PKCS7_SIGNER_INFO_get0_algs(PKCS7_SIGNER_INFO *si, EVP_PKEY **pk,
 	if (psig)
 		*psig = si->digest_enc_alg;
 }
+LCRYPTO_ALIAS(PKCS7_SIGNER_INFO_get0_algs)
 
 void
 PKCS7_RECIP_INFO_get0_alg(PKCS7_RECIP_INFO *ri, X509_ALGOR **penc)
@@ -479,6 +492,7 @@ PKCS7_RECIP_INFO_get0_alg(PKCS7_RECIP_INFO *ri, X509_ALGOR **penc)
 	if (penc)
 		*penc = ri->key_enc_algor;
 }
+LCRYPTO_ALIAS(PKCS7_RECIP_INFO_get0_alg)
 
 PKCS7_RECIP_INFO *
 PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
@@ -497,6 +511,7 @@ err:
 		PKCS7_RECIP_INFO_free(ri);
 	return NULL;
 }
+LCRYPTO_ALIAS(PKCS7_add_recipient)
 
 int
 PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
@@ -521,6 +536,7 @@ PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 		return 0;
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_add_recipient_info)
 
 int
 PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
@@ -567,6 +583,7 @@ err:
 	EVP_PKEY_free(pkey);
 	return 0;
 }
+LCRYPTO_ALIAS(PKCS7_RECIP_INFO_set)
 
 X509 *
 PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
@@ -578,6 +595,7 @@ PKCS7_cert_from_signer_info(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 	else
 		return (NULL);
 }
+LCRYPTO_ALIAS(PKCS7_cert_from_signer_info)
 
 int
 PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
@@ -608,6 +626,7 @@ PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
 	ec->cipher = cipher;
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS7_set_cipher)
 
 int
 PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
@@ -652,3 +671,4 @@ PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS7_stream)

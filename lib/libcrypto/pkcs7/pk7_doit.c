@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.47 2022/05/09 19:19:33 jsing Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.48 2022/11/12 12:11:14 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -404,6 +404,7 @@ err:
 	}
 	return (out);
 }
+LCRYPTO_ALIAS(PKCS7_dataInit)
 
 static int
 pkcs7_cmp_ri(PKCS7_RECIP_INFO *ri, X509 *pcert)
@@ -629,6 +630,7 @@ err:
 	}
 	return (out);
 }
+LCRYPTO_ALIAS(PKCS7_dataDecode)
 
 static BIO *
 PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
@@ -857,6 +859,7 @@ err:
 	EVP_MD_CTX_cleanup(&ctx_tmp);
 	return (ret);
 }
+LCRYPTO_ALIAS(PKCS7_dataFinal)
 
 int
 PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
@@ -915,6 +918,7 @@ err:
 	EVP_MD_CTX_cleanup(&mctx);
 	return 0;
 }
+LCRYPTO_ALIAS(PKCS7_SIGNER_INFO_sign)
 
 int
 PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
@@ -976,6 +980,7 @@ err:
 	
 	return ret;
 }
+LCRYPTO_ALIAS(PKCS7_dataVerify)
 
 int
 PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si, X509 *x509)
@@ -1082,6 +1087,7 @@ err:
 	EVP_MD_CTX_cleanup(&mdc_tmp);
 	return (ret);
 }
+LCRYPTO_ALIAS(PKCS7_signatureVerify)
 
 PKCS7_ISSUER_AND_SERIAL *
 PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
@@ -1104,18 +1110,21 @@ PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
 	ri = sk_PKCS7_RECIP_INFO_value(rsk, idx);
 	return (ri->issuer_and_serial);
 }
+LCRYPTO_ALIAS(PKCS7_get_issuer_and_serial)
 
 ASN1_TYPE *
 PKCS7_get_signed_attribute(PKCS7_SIGNER_INFO *si, int nid)
 {
 	return (get_attribute(si->auth_attr, nid));
 }
+LCRYPTO_ALIAS(PKCS7_get_signed_attribute)
 
 ASN1_TYPE *
 PKCS7_get_attribute(PKCS7_SIGNER_INFO *si, int nid)
 {
 	return (get_attribute(si->unauth_attr, nid));
 }
+LCRYPTO_ALIAS(PKCS7_get_attribute)
 
 static ASN1_TYPE *
 get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
@@ -1146,6 +1155,7 @@ PKCS7_digest_from_attributes(STACK_OF(X509_ATTRIBUTE) *sk)
 		return NULL;
 	return astype->value.octet_string;
 }
+LCRYPTO_ALIAS(PKCS7_digest_from_attributes)
 
 int
 PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
@@ -1167,6 +1177,7 @@ PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_set_signed_attributes)
 
 int
 PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK_OF(X509_ATTRIBUTE) *sk)
@@ -1187,6 +1198,7 @@ PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK_OF(X509_ATTRIBUTE) *sk)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(PKCS7_set_attributes)
 
 int
 PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
@@ -1194,12 +1206,14 @@ PKCS7_add_signed_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype,
 {
 	return (add_attribute(&(p7si->auth_attr), nid, atrtype, value));
 }
+LCRYPTO_ALIAS(PKCS7_add_signed_attribute)
 
 int
 PKCS7_add_attribute(PKCS7_SIGNER_INFO *p7si, int nid, int atrtype, void *value)
 {
 	return (add_attribute(&(p7si->unauth_attr), nid, atrtype, value));
 }
+LCRYPTO_ALIAS(PKCS7_add_attribute)
 
 static int
 add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype, void *value)
