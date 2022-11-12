@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_decr.c,v 1.21 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: p12_decr.c,v 1.22 2022/11/12 13:03:28 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -116,6 +116,7 @@ err:
 	return out;
 
 }
+LCRYPTO_ALIAS(PKCS12_pbe_crypt)
 
 /* Decrypt an OCTET STRING and decode ASN1 structure
  * if zbuf set zero buffer after use.
@@ -144,6 +145,7 @@ PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
 	free(out);
 	return ret;
 }
+LCRYPTO_ALIAS(PKCS12_item_decrypt_d2i)
 
 /* Encode ASN1 structure and encrypt, return OCTET STRING
  * if zbuf set zero encoding.
@@ -182,5 +184,6 @@ err:
 	ASN1_OCTET_STRING_free(oct);
 	return NULL;
 }
+LCRYPTO_ALIAS(PKCS12_item_i2d_encrypt)
 
 IMPLEMENT_PKCS12_STACK_OF(PKCS7)

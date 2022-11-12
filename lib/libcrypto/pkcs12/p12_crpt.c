@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_crpt.c,v 1.15 2021/07/09 14:07:59 tb Exp $ */
+/* $OpenBSD: p12_crpt.c,v 1.16 2022/11/12 13:03:28 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,6 +68,7 @@ void
 PKCS12_PBE_add(void)
 {
 }
+LCRYPTO_ALIAS(PKCS12_PBE_add)
 
 int
 PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
@@ -119,3 +120,4 @@ PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	explicit_bzero(iv, EVP_MAX_IV_LENGTH);
 	return ret;
 }
+LCRYPTO_ALIAS(PKCS12_PBE_keyivgen)

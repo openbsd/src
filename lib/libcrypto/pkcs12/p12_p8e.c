@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8e.c,v 1.9 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: p12_p8e.c,v 1.10 2022/11/12 13:03:28 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -100,3 +100,4 @@ err:
 	X509_SIG_free(p8);
 	return NULL;
 }
+LCRYPTO_ALIAS(PKCS8_encrypt)

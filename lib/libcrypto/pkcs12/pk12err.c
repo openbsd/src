@@ -1,4 +1,4 @@
-/* $OpenBSD: pk12err.c,v 1.12 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: pk12err.c,v 1.13 2022/11/12 13:03:28 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -108,3 +108,4 @@ ERR_load_PKCS12_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_PKCS12_strings)

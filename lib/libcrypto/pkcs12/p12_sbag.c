@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_sbag.c,v 1.5 2022/08/20 09:16:18 tb Exp $ */
+/* $OpenBSD: p12_sbag.c,v 1.6 2022/11/12 13:03:28 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2018.
@@ -70,12 +70,14 @@ PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag, int attr_nid)
 {
 	return PKCS12_get_attr_gen(bag->attrib, attr_nid);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get0_attr)
 
 ASN1_TYPE *
 PKCS8_get_attr(PKCS8_PRIV_KEY_INFO *p8, int attr_nid)
 {
 	return PKCS12_get_attr_gen(p8->attributes, attr_nid);
 }
+LCRYPTO_ALIAS(PKCS8_get_attr)
 
 const PKCS8_PRIV_KEY_INFO *
 PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag)
@@ -85,6 +87,7 @@ PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag)
 
 	return bag->value.keybag;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get0_p8inf)
 
 const X509_SIG *
 PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag)
@@ -94,6 +97,7 @@ PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag)
 
 	return bag->value.shkeybag;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get0_pkcs8)
 
 const STACK_OF(PKCS12_SAFEBAG) *
 PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag)
@@ -103,18 +107,21 @@ PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag)
 
 	return bag->value.safes;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get0_safes)
 
 const ASN1_OBJECT *
 PKCS12_SAFEBAG_get0_type(const PKCS12_SAFEBAG *bag)
 {
 	return bag->type;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get0_type)
 
 int
 PKCS12_SAFEBAG_get_nid(const PKCS12_SAFEBAG *bag)
 {
 	return OBJ_obj2nid(bag->type);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get_nid)
 
 int
 PKCS12_SAFEBAG_get_bag_nid(const PKCS12_SAFEBAG *bag)
@@ -129,6 +136,7 @@ PKCS12_SAFEBAG_get_bag_nid(const PKCS12_SAFEBAG *bag)
 
 	return -1;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get_bag_nid)
 
 X509 *
 PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag)
@@ -139,6 +147,7 @@ PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag)
 		return NULL;
 	return ASN1_item_unpack(bag->value.bag->value.octet, &X509_it);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get1_cert)
 
 X509_CRL *
 PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag)
@@ -149,6 +158,7 @@ PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag)
 		return NULL;
 	return ASN1_item_unpack(bag->value.bag->value.octet, &X509_CRL_it);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_get1_crl)
 
 PKCS12_SAFEBAG *
 PKCS12_SAFEBAG_create_cert(X509 *x509)
@@ -156,6 +166,7 @@ PKCS12_SAFEBAG_create_cert(X509 *x509)
 	return PKCS12_item_pack_safebag(x509, &X509_it,
 	    NID_x509Certificate, NID_certBag);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_cert)
 
 PKCS12_SAFEBAG *
 PKCS12_SAFEBAG_create_crl(X509_CRL *crl)
@@ -163,6 +174,7 @@ PKCS12_SAFEBAG_create_crl(X509_CRL *crl)
 	return PKCS12_item_pack_safebag(crl, &X509_CRL_it,
 	    NID_x509Crl, NID_crlBag);
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_crl)
 
 /* Turn PKCS8 object into a keybag */
 
@@ -181,6 +193,7 @@ PKCS12_SAFEBAG_create0_p8inf(PKCS8_PRIV_KEY_INFO *p8)
 
 	return bag;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_create0_p8inf)
 
 /* Turn PKCS8 object into a shrouded keybag */
 
@@ -200,6 +213,7 @@ PKCS12_SAFEBAG_create0_pkcs8(X509_SIG *p8)
 
 	return bag;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_create0_pkcs8)
 
 PKCS12_SAFEBAG *
 PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid, const char *pass, int passlen,
@@ -223,3 +237,4 @@ PKCS12_SAFEBAG_create_pkcs8_encrypt(int pbe_nid, const char *pass, int passlen,
 
 	return bag;
 }
+LCRYPTO_ALIAS(PKCS12_SAFEBAG_create_pkcs8_encrypt)

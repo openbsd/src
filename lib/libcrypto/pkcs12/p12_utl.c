@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_utl.c,v 1.19 2022/09/11 17:30:13 tb Exp $ */
+/* $OpenBSD: p12_utl.c,v 1.20 2022/11/12 13:03:28 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -100,6 +100,7 @@ OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen)
 		*uni = unitmp;
 	return unitmp;
 }
+LCRYPTO_ALIAS(OPENSSL_asc2uni)
 
 char *
 OPENSSL_uni2asc(const unsigned char *uni, int unilen)
@@ -125,27 +126,32 @@ OPENSSL_uni2asc(const unsigned char *uni, int unilen)
 	asctmp[asclen - 1] = '\0';
 	return asctmp;
 }
+LCRYPTO_ALIAS(OPENSSL_uni2asc)
 
 int
 i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
 {
 	return ASN1_item_i2d_bio(&PKCS12_it, bp, p12);
 }
+LCRYPTO_ALIAS(i2d_PKCS12_bio)
 
 int
 i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
 {
 	return ASN1_item_i2d_fp(&PKCS12_it, fp, p12);
 }
+LCRYPTO_ALIAS(i2d_PKCS12_fp)
 
 PKCS12 *
 d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
 	return ASN1_item_d2i_bio(&PKCS12_it, bp, p12);
 }
+LCRYPTO_ALIAS(d2i_PKCS12_bio)
 
 PKCS12 *
 d2i_PKCS12_fp(FILE *fp, PKCS12 **p12)
 {
 	    return ASN1_item_d2i_fp(&PKCS12_it, fp, p12);
 }
+LCRYPTO_ALIAS(d2i_PKCS12_fp)
