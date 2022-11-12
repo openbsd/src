@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.271 2022/08/12 17:04:17 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.272 2022/11/12 02:50:59 kn Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -156,9 +156,8 @@ struct idgen32_ctx ip6_id_ctx;
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
  *
- * type of "mtu": rt_mtu is u_long, ifnet.ifr_mtu is int, and
- * nd_ifinfo.linkmtu is u_int32_t.  so we use u_long to hold largest one,
- * which is rt_mtu.
+ * type of "mtu": rt_mtu is u_long, ifnet.ifr_mtu is int.
+ * We use u_long to hold largest one, * which is rt_mtu.
  */
 int
 ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
