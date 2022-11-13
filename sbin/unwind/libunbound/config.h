@@ -126,7 +126,7 @@
 
 /* Define to 1 if you have the declaration of `NID_ED25519', and to 0 if you
    don't. */
-#define HAVE_DECL_NID_ED25519 0
+#define HAVE_DECL_NID_ED25519 1
 
 /* Define to 1 if you have the declaration of `NID_ED448', and to 0 if you
    don't. */
@@ -880,7 +880,7 @@
 /* #undef USE_ECDSA_EVP_WORKAROUND */
 
 /* Define this to enable ED25519 support. */
-/* #undef USE_ED25519 */
+#define USE_ED25519 1
 
 /* Define this to enable ED448 support. */
 /* #undef USE_ED448 */
