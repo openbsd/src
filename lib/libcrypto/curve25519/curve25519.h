@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.h,v 1.6 2022/11/11 01:44:26 tb Exp $ */
+/*	$OpenBSD: curve25519.h,v 1.7 2022/11/13 14:05:04 tb Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -61,7 +61,6 @@ int X25519(uint8_t out_shared_key[X25519_KEY_LENGTH],
     const uint8_t private_key[X25519_KEY_LENGTH],
     const uint8_t peers_public_value[X25519_KEY_LENGTH]);
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /*
  * ED25519
  *
@@ -97,7 +96,6 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 int ED25519_verify(const uint8_t *message, size_t message_len,
     const uint8_t signature[ED25519_SIGNATURE_LENGTH],
     const uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH]);
-#endif
 
 #if defined(__cplusplus)
 }  /* extern C */
