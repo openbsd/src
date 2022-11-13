@@ -183,6 +183,7 @@ ASN1_VISIBLESTRING_it
 ASN1_VISIBLESTRING_new
 ASN1_add_oid_module
 ASN1_bn_print
+ASN1_buf_print
 ASN1_d2i_bio
 ASN1_d2i_fp
 ASN1_dup
@@ -1242,6 +1243,9 @@ EC_PRIVATEKEY_new
 EC_curve_nid2nist
 EC_curve_nist2nid
 EC_get_builtin_curves
+ED25519_keypair
+ED25519_sign
+ED25519_verify
 EDIPARTYNAME_free
 EDIPARTYNAME_it
 EDIPARTYNAME_new
@@ -1676,6 +1680,8 @@ EVP_PKEY_get_attr_by_NID
 EVP_PKEY_get_attr_by_OBJ
 EVP_PKEY_get_attr_count
 EVP_PKEY_get_default_digest_nid
+EVP_PKEY_get_raw_private_key
+EVP_PKEY_get_raw_public_key
 EVP_PKEY_id
 EVP_PKEY_keygen
 EVP_PKEY_keygen_init
@@ -1706,6 +1712,8 @@ EVP_PKEY_missing_parameters
 EVP_PKEY_new
 EVP_PKEY_new_CMAC_key
 EVP_PKEY_new_mac_key
+EVP_PKEY_new_raw_private_key
+EVP_PKEY_new_raw_public_key
 EVP_PKEY_param_check
 EVP_PKEY_paramgen
 EVP_PKEY_paramgen_init
