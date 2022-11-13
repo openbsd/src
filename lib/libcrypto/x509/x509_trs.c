@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.26 2022/11/10 16:52:19 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.27 2022/11/13 18:37:32 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -110,8 +110,8 @@ int
 	return oldtrust;
 }
 
-int
-X509_check_trust(X509 *x, int id, int flags)
+static int
+X509_check_trust_internal(X509 *x, int id, int flags, int compat)
 {
 	X509_TRUST *pt;
 	int idx;
@@ -132,13 +132,25 @@ X509_check_trust(X509 *x, int id, int flags)
 		rv = obj_trust(NID_anyExtendedKeyUsage, x, 0);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
-		return trust_compat(NULL, x, 0);
+		return compat && trust_compat(NULL, x, 0);
 	}
 	idx = X509_TRUST_get_by_id(id);
 	if (idx == -1)
 		return default_trust(id, x, flags);
 	pt = X509_TRUST_get0(idx);
 	return pt->check_trust(pt, x, flags);
+}
+
+int
+X509_check_trust(X509 *x, int id, int flags)
+{
+	return X509_check_trust_internal(x, id, flags, /*compat =*/1);
+}
+
+int
+x509_check_trust_no_compat(X509 *x, int id, int flags)
+{
+	return X509_check_trust_internal(x, id, flags, /*compat =*/0);
 }
 
 int
