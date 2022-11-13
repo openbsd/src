@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.20 2022/11/11 11:53:24 jsing Exp $ */
+/* $OpenBSD: objects.h,v 1.21 2022/11/13 14:03:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,11 +61,9 @@
 
 #include <openssl/obj_mac.h>
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #define SN_ED25519			SN_Ed25519
 #define NID_ED25519			NID_Ed25519
 #define OBJ_ED25519			OBJ_Ed25519
-#endif
 
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
