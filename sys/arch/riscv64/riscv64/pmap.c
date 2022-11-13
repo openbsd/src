@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.26 2022/11/03 23:30:55 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.27 2022/11/13 16:14:06 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -511,7 +511,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;
 	int error;
 	int cache = PMAP_CACHE_WB;
-	int need_sync;
 
 	if (pa & PMAP_NOCACHE)
 		cache = PMAP_CACHE_CI;
@@ -567,6 +566,12 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap_enter_pv(pted, pg); /* only managed mem */
 	}
 
+	if (pg != NULL && (flags & PROT_EXEC)) {
+		if ((pg->pg_flags & PG_PMAP_EXE) == 0)
+			icache_flush();
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
+	}
+
 	/*
 	 * Insert into table, if this mapping said it needed to be mapped
 	 * now.
@@ -576,13 +581,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 
 	tlb_flush_page(pm, va & ~PAGE_MASK);
-
-	if (pg != NULL && (flags & PROT_EXEC)) {
-		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
-		if (need_sync)
-			icache_flush();
-	}
 
 	error = 0;
 out:
@@ -1669,7 +1667,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 	struct vm_page *pg;
 	paddr_t pa;
 	pt_entry_t *pl3 = NULL;
-	int need_sync;
 	int retcode = 0;
 
 	pmap_lock(pm);
@@ -1744,23 +1741,22 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 		goto done;
 	}
 
-	/* We actually made a change, so flush it and sync. */
-	pmap_pte_update(pted, pl3);
-
-	/* Flush tlb. */
-	tlb_flush_page(pm, va & ~PAGE_MASK);
-
 	/*
 	 * If this is a page that can be executed, make sure to invalidate
 	 * the instruction cache if the page has been modified or not used
 	 * yet.
 	 */
 	if (pted->pted_va & PROT_EXEC) {
-		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
-		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
-		if (need_sync)
+		if ((pg->pg_flags & PG_PMAP_EXE) == 0)
 			icache_flush();
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_EXE);
 	}
+
+	/* We actually made a change, so flush it and sync. */
+	pmap_pte_update(pted, pl3);
+
+	/* Flush tlb. */
+	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	retcode = 1;
 done:
