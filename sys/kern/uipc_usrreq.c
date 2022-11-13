@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.191 2022/10/17 14:49:01 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.192 2022/11/13 16:01:32 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -138,6 +138,21 @@ const struct pr_usrreqs uipc_usrreqs = {
 	.pru_rcvd	= uipc_rcvd,
 	.pru_send	= uipc_send,
 	.pru_abort	= uipc_abort,
+	.pru_sense	= uipc_sense,
+	.pru_sockaddr	= uipc_sockaddr,
+	.pru_peeraddr	= uipc_peeraddr,
+	.pru_connect2	= uipc_connect2,
+};
+
+const struct pr_usrreqs uipc_dgram_usrreqs = {
+	.pru_attach	= uipc_attach,
+	.pru_detach	= uipc_detach,
+	.pru_bind	= uipc_bind,
+	.pru_listen	= uipc_listen,
+	.pru_connect	= uipc_connect,
+	.pru_disconnect	= uipc_disconnect,
+	.pru_shutdown	= uipc_dgram_shutdown,
+	.pru_send	= uipc_dgram_send,
 	.pru_sense	= uipc_sense,
 	.pru_sockaddr	= uipc_sockaddr,
 	.pru_peeraddr	= uipc_peeraddr,
@@ -358,9 +373,22 @@ int
 uipc_shutdown(struct socket *so)
 {
 	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
 
 	socantsendmore(so);
-	unp_shutdown(unp);
+
+	if ((so2 = unp_solock_peer(unp->unp_socket))){
+		socantrcvmore(so2);
+		sounlock(so2);
+	}
+
+	return (0);
+}
+
+int
+uipc_dgram_shutdown(struct socket *so)
+{
+	socantsendmore(so);
 	return (0);
 }
 
@@ -369,35 +397,22 @@ uipc_rcvd(struct socket *so)
 {
 	struct socket *so2;
 
-	switch (so->so_type) {
-	case SOCK_DGRAM:
-		panic("uipc 1");
-		/*NOTREACHED*/
-
-	case SOCK_STREAM:
-	case SOCK_SEQPACKET:
-		if ((so2 = unp_solock_peer(so)) == NULL)
-			break;
-		/*
-		 * Adjust backpressure on sender
-		 * and wakeup any waiting to write.
-		 */
-		so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
-		so2->so_snd.sb_cc = so->so_rcv.sb_cc;
-		sowwakeup(so2);
-		sounlock(so2);
-		break;
-
-	default:
-		panic("uipc 2");
-	}
+	if ((so2 = unp_solock_peer(so)) == NULL)
+		return;
+	/*
+	 * Adjust backpressure on sender
+	 * and wakeup any waiting to write.
+	 */
+	so2->so_snd.sb_mbcnt = so->so_rcv.sb_mbcnt;
+	so2->so_snd.sb_cc = so->so_rcv.sb_cc;
+	sowwakeup(so2);
+	sounlock(so2);
 }
 
 int
 uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
     struct mbuf *control)
 {
-	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
 	int error = 0;
 
@@ -409,88 +424,105 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto out;
 	}
 
-	switch (so->so_type) {
-	case SOCK_DGRAM: {
-		const struct sockaddr *from;
+	if (so->so_state & SS_CANTSENDMORE) {
+		error = EPIPE;
+		goto dispose;
+	}
+	if ((so2 = unp_solock_peer(so)) == NULL) {
+		error = ENOTCONN;
+		goto dispose;
+	}
 
-		if (nam) {
-			if (unp->unp_conn) {
-				error = EISCONN;
-				break;
-			}
-			error = unp_connect(so, nam, curproc);
-			if (error)
-				break;
-		}
-
-		if ((so2 = unp_solock_peer(so)) == NULL) {
-			if (nam != NULL)
-				error = ECONNREFUSED;
-			else
-				error = ENOTCONN;
-			break;
-		}
-
-		if (unp->unp_addr)
-			from = mtod(unp->unp_addr, struct sockaddr *);
-		else
-			from = &sun_noname;
-		if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
-			sorwakeup(so2);
-			m = NULL;
+	/*
+	 * Send to paired receive port, and then raise
+	 * send buffer counts to maintain backpressure.
+	 * Wake up readers.
+	 */
+	if (control) {
+		if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
 			control = NULL;
-		} else
-			error = ENOBUFS;
-
-		if (so2 != so)
+		} else {
 			sounlock(so2);
+			error = ENOBUFS;
+			goto dispose;
+		}
+	} else if (so->so_type == SOCK_SEQPACKET)
+		sbappendrecord(so2, &so2->so_rcv, m);
+	else
+		sbappend(so2, &so2->so_rcv, m);
+	so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
+	so->so_snd.sb_cc = so2->so_rcv.sb_cc;
+	if (so2->so_rcv.sb_cc > 0)
+		sorwakeup(so2);
 
-		if (nam)
-			unp_disconnect(unp);
-		break;
+	sounlock(so2);
+	m = NULL;
+
+dispose:
+	/* we need to undo unp_internalize in case of errors */
+	if (control && error)
+		unp_dispose(control);
+
+out:
+	m_freem(control);
+	m_freem(m);
+
+	return (error);
+}
+
+int
+uipc_dgram_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
+    struct mbuf *control)
+{
+	struct unpcb *unp = sotounpcb(so);
+	struct socket *so2;
+	const struct sockaddr *from;
+	int error = 0;
+
+	if (control) {
+		sounlock(so);
+		error = unp_internalize(control, curproc);
+		solock(so);
+		if (error)
+			goto out;
 	}
 
-	case SOCK_STREAM:
-	case SOCK_SEQPACKET:
-		if (so->so_state & SS_CANTSENDMORE) {
-			error = EPIPE;
-			break;
+	if (nam) {
+		if (unp->unp_conn) {
+			error = EISCONN;
+			goto dispose;
 		}
-		if ((so2 = unp_solock_peer(so)) == NULL) {
-			error = ENOTCONN;
-			break;
-		}
+		error = unp_connect(so, nam, curproc);
+		if (error)
+			goto dispose;
+	}
 
-		/*
-		 * Send to paired receive port, and then raise
-		 * send buffer counts to maintain backpressure.
-		 * Wake up readers.
-		 */
-		if (control) {
-			if (sbappendcontrol(so2, &so2->so_rcv, m, control)) {
-				control = NULL;
-			} else {
-				sounlock(so2);
-				error = ENOBUFS;
-				break;
-			}
-		} else if (so->so_type == SOCK_SEQPACKET)
-			sbappendrecord(so2, &so2->so_rcv, m);
+	if ((so2 = unp_solock_peer(so)) == NULL) {
+		if (nam != NULL)
+			error = ECONNREFUSED;
 		else
-			sbappend(so2, &so2->so_rcv, m);
-		so->so_snd.sb_mbcnt = so2->so_rcv.sb_mbcnt;
-		so->so_snd.sb_cc = so2->so_rcv.sb_cc;
-		if (so2->so_rcv.sb_cc > 0)
-			sorwakeup(so2);
-
-		sounlock(so2);
-		m = NULL;
-		break;
-
-	default:
-		panic("uipc 4");
+			error = ENOTCONN;
+		goto dispose;
 	}
 
+	if (unp->unp_addr)
+		from = mtod(unp->unp_addr, struct sockaddr *);
+	else
+		from = &sun_noname;
+	if (sbappendaddr(so2, &so2->so_rcv, from, m, control)) {
+		sorwakeup(so2);
+		m = NULL;
+		control = NULL;
+	} else
+		error = ENOBUFS;
+
+	if (so2 != so)
+		sounlock(so2);
+
+	if (nam)
+		unp_disconnect(unp);
+
+dispose:
 	/* we need to undo unp_internalize in case of errors */
 	if (control && error)
 		unp_dispose(control);
@@ -973,26 +1005,6 @@ unp_disconnect(struct unpcb *unp)
 
 	if (so2 != unp->unp_socket)
 		sounlock(so2);
-}
-
-void
-unp_shutdown(struct unpcb *unp)
-{
-	struct socket *so2;
-
-	switch (unp->unp_socket->so_type) {
-	case SOCK_STREAM:
-	case SOCK_SEQPACKET:
-		if ((so2 = unp_solock_peer(unp->unp_socket)) == NULL)
-			break;
-		
-		socantrcvmore(so2);
-		sounlock(so2);
-
-		break;
-	default:
-		break;
-	}
 }
 
 static struct unpcb *

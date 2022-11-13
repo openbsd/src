@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_proto.c,v 1.24 2022/08/15 09:11:38 mvs Exp $	*/
+/*	$OpenBSD: uipc_proto.c,v 1.25 2022/11/13 16:01:32 mvs Exp $	*/
 /*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ const struct protosw unixsw[] = {
   .pr_domain	= &unixdomain,
   .pr_protocol	= PF_UNIX,
   .pr_flags	= PR_ATOMIC|PR_ADDR|PR_RIGHTS,
-  .pr_usrreqs	= &uipc_usrreqs,
+  .pr_usrreqs	= &uipc_dgram_usrreqs,
 }
 };
 
