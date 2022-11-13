@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.111 2022/11/10 16:37:52 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.112 2022/11/13 14:04:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,10 +115,8 @@
 #define EVP_PKEY_HKDF		NID_hkdf
 #define EVP_PKEY_GOSTR12_256	NID_id_tc26_gost3410_2012_256
 #define EVP_PKEY_GOSTR12_512	NID_id_tc26_gost3410_2012_512
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #define EVP_PKEY_ED25519	NID_ED25519
 #define EVP_PKEY_X25519		NID_X25519
-#endif
 
 #ifdef	__cplusplus
 extern "C" {
@@ -301,7 +299,8 @@ extern "C" {
 /* Length of tag for TLS */
 #define EVP_CHACHAPOLY_TLS_TAG_LEN			16
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
+/* XXX - do we want to expose these? */
+#if defined(LIBRESSL_INTERNAL)
 #define ED25519_KEYLEN					32
 #define X25519_KEYLEN					32
 #endif
@@ -408,7 +407,6 @@ unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
     const unsigned char *private_key, size_t len);
 EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
@@ -417,7 +415,6 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey,
     unsigned char *out_private_key, size_t *out_len);
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey,
     unsigned char *out_public_key, size_t *out_len);
-#endif
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
 #define EVP_DECODE_LENGTH(l)	((l+3)/4*3+80)
