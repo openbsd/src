@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.88 2022/10/10 11:33:55 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.89 2022/11/13 21:19:40 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -314,7 +314,7 @@ void
 config_free_childsas(struct iked *env, struct iked_childsas *head,
     struct iked_spi *peerspi, struct iked_spi *localspi)
 {
-	struct iked_childsa	*csa, *csatmp, *ipcomp;
+	struct iked_childsa	*csa, *csatmp;
 
 	if (localspi != NULL)
 		bzero(localspi, sizeof(*localspi));
@@ -337,11 +337,14 @@ config_free_childsas(struct iked *env, struct iked_childsas *head,
 			RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
 			(void)pfkey_sa_delete(env, csa);
 		}
-		if ((ipcomp = csa->csa_bundled) != NULL) {
-			log_debug("%s: free IPCOMP %p", __func__, ipcomp);
-			if (ipcomp->csa_loaded)
-				(void)pfkey_sa_delete(env, ipcomp);
-			childsa_free(ipcomp);
+		/* ipcomp */
+		if (csa->csa_bundled != NULL) {
+			log_debug("%s: free IPCOMP %p", __func__,
+			    csa->csa_bundled);
+			if (csa->csa_bundled->csa_loaded)
+				(void)pfkey_sa_delete(env, csa->csa_bundled);
+			childsa_free(csa->csa_bundled);
+			csa->csa_bundled = NULL;
 		}
 		childsa_free(csa);
 		ikestat_inc(env, ikes_csa_removed);
