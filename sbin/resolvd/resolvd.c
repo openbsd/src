@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.28 2022/09/02 09:39:55 florian Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.29 2022/11/14 13:57:46 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -65,7 +65,7 @@ void		route_receive(int);
 void		handle_route_message(struct rt_msghdr *, struct sockaddr **);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		solicit_dns_proposals(int);
-void		regen_resolvconf(char *reason);
+void		regen_resolvconf(const char *reason);
 int		cmp(const void *, const void *);
 int		findslot(struct rdns_proposal *);
 void		zeroslot(struct rdns_proposal *);
@@ -503,17 +503,24 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		return;
 	}
 
-	/* Sort proposals, based upon priority and IP */
-	qsort(learning, ASR_MAXNS, sizeof(learning[0]), cmp);
+	/* Sort proposals, based upon priority */
+	if (mergesort(learning, ASR_MAXNS, sizeof(learning[0]), cmp) == -1) {
+		lwarn("mergesort");
+		return;
+	}
 
-	/* Eliminate duplicates */
+	/* Eliminate duplicate IPs per interface */
 	for (i = 0; i < ASR_MAXNS - 1; i++) {
+		int j;
+
 		if (learning[i].prio == 0)
 			continue;
-		if (learning[i].if_index == learning[i+1].if_index &&
-		    strcmp(learning[i].ip, learning[i+1].ip) == 0) {
-			zeroslot(&learning[i + 1]);
-			i--;	/* backup and re-check */
+
+		for (j = i + 1; j < ASR_MAXNS; j++) {
+			if (learning[i].if_index == learning[j].if_index &&
+			    strcmp(learning[i].ip, learning[j].ip) == 0) {
+				zeroslot(&learning[j]);
+			}
 		}
 	}
 
@@ -567,7 +574,7 @@ solicit_dns_proposals(int routesock)
 }
 
 void
-regen_resolvconf(char *why)
+regen_resolvconf(const char *why)
 {
 	struct iovec	 iov[UIO_MAXIOV];
 	int		 i, fd, len, iovcnt = 0;
@@ -694,10 +701,7 @@ cmp(const void *a, const void *b)
 {
 	const struct rdns_proposal	*rpa = a, *rpb = b;
 
-	if (rpa->prio == rpb->prio)
-		return strcmp(rpa->ip, rpb->ip);
-	else
-		return rpa->prio < rpb->prio ? -1 : 1;
+	return (rpa->prio < rpb->prio) ? -1 : (rpa->prio > rpb->prio);
 }
 
 #ifndef SMALL
