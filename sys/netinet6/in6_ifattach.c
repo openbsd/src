@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_ifattach.c,v 1.119 2022/09/08 10:22:07 kn Exp $	*/
+/*	$OpenBSD: in6_ifattach.c,v 1.120 2022/11/14 17:12:55 claudio Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ in6_ifattach(struct ifnet *ifp)
 	if (ifp->if_mtu < IPV6_MMTU)
 		return (EINVAL);
 
-	if ((ifp->if_flags & IFF_MULTICAST) == 0)
+	if (nd6_need_cache(ifp) && (ifp->if_flags & IFF_MULTICAST) == 0)
 		return (EINVAL);
 
 	/*
@@ -389,12 +389,12 @@ in6_ifattach(struct ifnet *ifp)
 			return (error);
 	}
 
-	/* Interfaces that rely on strong a priori cryptographic binding of
-	 * IP addresses are incompatible with automatically assigned llv6. */
-	switch (ifp->if_type) {
-	case IFT_WIREGUARD:
+	/*
+	 * Only interfaces that need the ND cache should automatically
+	 * assign a link local address.
+	 */
+	if (!nd6_need_cache(ifp))
 		return (0);
-	}
 
 	/* Assign a link-local address, if there's none. */
 	if (in6ifa_ifpforlinklocal(ifp, 0) == NULL) {
