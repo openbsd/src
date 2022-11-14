@@ -68,7 +68,7 @@ lookup_table_type dns_algorithms[] = {
 
 const char *svcparamkey_strs[] = {
 		"mandatory", "alpn", "no-default-alpn", "port",
-		"ipv4hint", "ech", "ipv6hint"
+		"ipv4hint", "ech", "ipv6hint", "dohpath"
 	};
 
 typedef int (*rdata_to_string_type)(buffer_type *output,
@@ -824,6 +824,7 @@ rdata_svcparam_to_string(buffer_type *output, rdata_atom_type rdata,
 		case SVCB_KEY_IPV4HINT:
 		case SVCB_KEY_IPV6HINT:
 		case SVCB_KEY_MANDATORY:
+		case SVCB_KEY_DOHPATH:
 			return 0;
 		default:
 			return 1;
@@ -844,6 +845,8 @@ rdata_svcparam_to_string(buffer_type *output, rdata_atom_type rdata,
 		return rdata_svcparam_alpn_to_string(output, val_len, data+2);
 	case SVCB_KEY_ECH:
 		return rdata_svcparam_ech_to_string(output, val_len, data+2);
+	case SVCB_KEY_DOHPATH:
+		/* fallthrough */
 	default:
 		buffer_write(output, "=\"", 2);
 		dp = (void*) (data + 2);

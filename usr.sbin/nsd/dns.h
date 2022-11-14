@@ -174,7 +174,8 @@ typedef enum nsd_rc nsd_rc_type;
 #define SVCB_KEY_IPV4HINT		4
 #define SVCB_KEY_ECH		5
 #define SVCB_KEY_IPV6HINT		6
-#define SVCPARAMKEY_COUNT 7
+#define SVCB_KEY_DOHPATH		7
+#define SVCPARAMKEY_COUNT 8
 
 #define MAXLABELLEN	63
 #define MAXDOMAINLEN	255

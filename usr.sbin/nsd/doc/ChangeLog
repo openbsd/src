@@ -1,5 +1,42 @@
+1 November 2022: Wouter
+	- Fixup for non-trailing newline lexer change warnings.
+	- Update doc/RELNOTES for changes.
+	- Fix ixfr_gone unit test to not use system default zone list file.
+	- Fix credns tests for vm usage, and not use system default zone
+	  list file.
+	- Fix verify tests to use more portable bash location in script.
+	- Fix verify_again test to use ipv4 address for test.
+
+1 November 2022: Tom
+	- Add SVCB dohpath support
+
+28 September 2022: Jeroen
+	- Set ALPN "dot" token during connection establishment as per RFC9103
+	  section 7.1 (Thanks Cesar Kuroiwa).
+
+21 September 2022: Tom
+	- Change zone parsing to accept non-trailing newline.
+
+1 September 2022: Wouter
+	- Merge #231 from moritzbuhl: Fix checking if nonblocking sockets work
+	  on OpenBSD.
+
+19 August 2022: Wouter
+	- Update cirrus build script for newer Ubuntu image, and FreeBSD
+	  build with libtoolize to install auxiliary files.
+	- Update to clang 14 in cirrus build test on Ubuntu Jammy 22.04.
+
+7 July 2022: Tom
+	- Fix #212: Change commandline control actions to always log.
+
+1 July 2022: Wouter
+	- Fix static analyzer reports, fix wrong log print when skipping xfr,
+	  fix to print error on pipe read fail, and assert an xfr is in
+	  progress during packet checks.
+
 23 June 2022: Wouter
-	- Tag for 4.6.0rc1.
+	- Tag for 4.6.0rc1. It became 4.6.0 on 30 June 2022, and it continues
+	  with version 4.6.1.
 
 17 June 2022: Wouter
 	- Fix compilation with libev, without event_base_loopbreak.

@@ -21,7 +21,7 @@
 
 1.0 Introduction
 
-This is NSD Name Server Daemon (NSD) version 4.6.0.
+This is NSD Name Server Daemon (NSD) version 4.6.1.
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative RFC compliant 
 DNS nameserver. It was first conceived to allow for more genetic 
@@ -57,7 +57,7 @@ and uses a simple configuration file 'nsd.conf'.
 
 1.2 Quick build and install
 
-Step 1: Unpack the source with gtar -xzvf nsd-4.6.0.tar.gz
+Step 1: Unpack the source with gtar -xzvf nsd-4.6.1.tar.gz
 
 Step 2: Create user nsd or any other unprivileged user of your
         choice. In case of later make sure to use
@@ -111,9 +111,9 @@ Step 11: If desired add 'nsd-control write' to your superuser crontab to
 Use your favorite combination of tar and gnu zip to unpack the source,
 for example
 
-$ gtar -xzvf nsd-4.6.0.tar.gz
+$ gtar -xzvf nsd-4.6.1.tar.gz
 
-will unpack the source into the ./nsd-4.6.0 directory...
+will unpack the source into the ./nsd-4.6.1 directory...
 
 
 2.2 Configuring NSD
@@ -927,4 +927,4 @@ larger and regular donations please contact us at users@NLnetLabs.nl. Also
 see http://www.nlnetlabs.nl/labs/contributors/.
 
 
-$Id: README,v 1.4 2022/06/30 10:49:39 florian Exp $
+$Id: README,v 1.5 2022/11/14 21:09:32 sthen Exp $

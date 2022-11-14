@@ -2246,6 +2246,7 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 	xfrd_soa_type soa;
 	enum xfrd_packet_result res;
         uint64_t xfrfile_size;
+	assert(zone->latest_xfr);
 
 	/* parse and check the packet - see if it ends the xfr */
 	switch((res=xfrd_parse_received_xfr_packet(zone, packet, &soa)))
@@ -2282,7 +2283,6 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 					zone->master->ip_address_spec));
 			}
 			if (res == xfrd_packet_notimpl
-				&& zone->latest_xfr
 				&& zone->latest_xfr->query_type == TYPE_IXFR)
 				return res;
 			else

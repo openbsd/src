@@ -1,4 +1,4 @@
-.TH "nsd\-checkzone" "8" "Jun 30, 2022" "NLnet Labs" "nsd 4.6.0"
+.TH "nsd\-checkzone" "8" "Nov 10, 2022" "NLnet Labs" "nsd 4.6.1"
 .\" Copyright (c) 2014, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"

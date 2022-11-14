@@ -798,6 +798,10 @@ svcbparam_lookup_key(const char *key, size_t key_len)
 		if (!strncmp(key, "ipv6hint", sizeof("ipv6hint")-1))
 			return SVCB_KEY_IPV6HINT;
 		break;
+	case sizeof("dohpath")-1:
+		if (!strncmp(key, "dohpath", sizeof("dohpath")-1))
+			return SVCB_KEY_DOHPATH;
+		break;
 	case sizeof("ech")-1:
 		if (!strncmp(key, "ech", sizeof("ech")-1))
 			return SVCB_KEY_ECH;
@@ -1132,6 +1136,8 @@ zparser_conv_svcbparam_key_value(region_type *region,
 		return zparser_conv_svcbparam_ech_value(region, val);
 	case SVCB_KEY_ALPN:
 		return zparser_conv_svcbparam_alpn_value(region, val, val_len);
+	case SVCB_KEY_DOHPATH:
+		/* fallthrough */
 	default:
 		break;
 	}
@@ -1177,6 +1183,7 @@ zparser_conv_svcbparam(region_type *region, const char *key, size_t key_len
 		case SVCB_KEY_PORT:
 		case SVCB_KEY_IPV4HINT:
 		case SVCB_KEY_IPV6HINT:
+		case SVCB_KEY_DOHPATH:
 			if(zone_is_slave(parser->current_zone->opts))
 				zc_warning_prev_line("value expected for SvcParam: %s", key);
 			else

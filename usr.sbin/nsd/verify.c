@@ -290,21 +290,24 @@ void verify_handle_exit(int fd, short event, void *arg)
 	pid_t pid;
 	struct nsd *nsd;
 	char buf[1];
-	size_t i;
 
 	assert(event & EV_READ);
 	assert(arg != NULL);
 
 	nsd = (struct nsd *)arg;
 
-	(void)read(fd, buf, sizeof(buf));
+	if(read(fd, buf, sizeof(buf)) == -1) {
+		if(errno != EAGAIN && errno != EINTR && errno != EWOULDBLOCK)
+			log_msg(LOG_ERR, "verify_handle_exit: read failed: %s",
+				strerror(errno));
+	}
 
 	while(((pid = waitpid(-1, &wstatus, WNOHANG)) == -1 && errno == EINTR)
 	    || (pid > 0))
 	{
 		struct verifier *verifier = NULL;
 
-		for(i = 0; !verifier && i < nsd->verifier_limit; i++) {
+		for(size_t i = 0; !verifier && i < nsd->verifier_limit; i++) {
 			if(nsd->verifiers[i].zone != NULL &&
 			   nsd->verifiers[i].pid == pid)
 			{
@@ -363,7 +366,6 @@ verify_handle_command(int fd, short event, void *arg)
 	struct nsd *nsd = (struct nsd *)arg;
 	int len;
 	sig_atomic_t mode;
-	size_t i;
 
 	assert(nsd != NULL);
 	assert(event & (EV_READ
@@ -392,7 +394,7 @@ verify_handle_command(int fd, short event, void *arg)
 	}
 
 	/* kill verifiers, processes reaped elsewhere */
-	for(i = 0; i < nsd->verifier_limit; i++) {
+	for(size_t i = 0; i < nsd->verifier_limit; i++) {
 		if(nsd->verifiers[i].zone != NULL) {
 			kill_verifier(&nsd->verifiers[i]);
 		}
@@ -412,7 +414,6 @@ void verify_zone(struct nsd *nsd, struct zone *zone)
 	char **command;
 	FILE *fin;
 	int fdin, fderr, fdout, flags;
-	size_t i;
 
 	assert(nsd != NULL);
 	assert(nsd->verifier_count < nsd->verifier_limit);
@@ -422,7 +423,7 @@ void verify_zone(struct nsd *nsd, struct zone *zone)
 	fdin = fdout = fderr = -1;
 
 	/* search for available verifier slot */
-	for(i = 0; i < nsd->verifier_limit && !verifier; i++) {
+	for(size_t i = 0; i < nsd->verifier_limit && !verifier; i++) {
 		if(nsd->verifiers[i].zone == NULL) {
 			verifier = &nsd->verifiers[i];
 		}

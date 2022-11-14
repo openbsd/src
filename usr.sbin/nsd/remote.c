@@ -2443,7 +2443,8 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 		(void)ssl_printf(res, "error version mismatch\n");
 		return;
 	}
-	VERBOSITY(2, (LOG_INFO, "control cmd: %s", buf));
+	/* always log control commands */
+	VERBOSITY(0, (LOG_INFO, "control cmd: %s", buf));
 
 	/* figure out what to do */
 	execute_cmd(rc, res, buf, s);

@@ -1508,7 +1508,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		}
 	}
 	else {
-	 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "skipping xfr: %s", log_buf));
+		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "skipping xfr: %s", zone_buf));
 	}
 	return 1;
 }

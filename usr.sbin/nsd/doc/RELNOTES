@@ -1,5 +1,22 @@
 NSD RELEASE NOTES
 
+4.6.1
+================
+FEATURES:
+	- Set ALPN "dot" token during connection establishment as per RFC9103
+	  section 7.1 (Thanks Cesar Kuroiwa).
+	- Add SVCB dohpath support
+BUG FIXES:
+	- Fix static analyzer reports, fix wrong log print when skipping xfr,
+	  fix to print error on pipe read fail, and assert an xfr is in
+	  progress during packet checks.
+	- Use AC_PROG_CC_STDC with autoconf versions prior to 2.70.
+	- Add missing documentation for zone verification.
+	- Fix #212: Change commandline control actions to always log.
+	- Merge #231 from moritzbuhl: Fix checking if nonblocking sockets work
+	  on OpenBSD.
+	- Change zone parsing to accept non-trailing newline.
+
 4.6.0
 ================
 FEATURES:

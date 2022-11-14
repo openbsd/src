@@ -105,6 +105,12 @@ parser_flush(void)
 	lexer_state = EXPECT_OWNER;
 }
 
+int at_eof(void)
+{
+	static int once = 1;
+	return (once = !once) ? 0 : NL;
+}
+
 #ifndef yy_set_bol /* compat definition, for flex 2.4.6 */
 #define yy_set_bol(at_bol) \
 	{ \
@@ -224,12 +230,17 @@ ANY     [^\"\n\\]|\\.
 	parser->error_occurred = error_occurred;
 }
 <INITIAL><<EOF>>	{
+	int eo = at_eof();
 	yy_set_bol(1); /* Set beginning of line, so "^" rules match.  */
 	if (include_stack_ptr == 0) {
+		if(eo == NL)
+			return eo;
 		yyterminate();
 	} else {
 		fclose(yyin);
 		pop_parser_state();
+		if(eo == NL)
+			return eo;
 	}
 }
 ^{DOLLAR}{LETTER}+	{ zc_warning("Unknown directive: %s", yytext); }
