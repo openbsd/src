@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.181 2020/07/20 14:21:51 kn Exp $
+.\" $OpenBSD: pfctl.8,v 1.182 2022/11/14 09:56:09 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 20 2020 $
+.Dd $Mdocdate: November 14 2022 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -325,6 +325,7 @@ This is the default behaviour.
 .It Fl o Cm profile
 Enable basic ruleset optimizations with profiling.
 .El
+.Pp
 For further information on the ruleset optimizer, see
 .Xr pf.conf 5 .
 .It Fl P
@@ -347,7 +348,7 @@ are mutually exclusive.
 .It Fl S Ar statefile
 Store the pf state table in the file specified by
 .Ar statefile .
-.It Fl s Ar modifier
+.It Fl s Ar modifier Op Fl R Ar id
 Show the filter parameters specified by
 .Ar modifier
 (may be abbreviated):
@@ -478,19 +479,16 @@ no free ports in translation port range
 .It no-route
 dropped by no-route
 .El
-.It Fl T Ar command Op Ar address ...
+.It Fl t Ar table Fl T Ar command Op Ar address ...
 Specify the
 .Ar command
-(may be abbreviated) to apply to the table.
+(may be abbreviated) to apply to
+.Ar table .
 Commands include:
 .Pp
-.Bl -tag -width xxxxxxxxxxxx -compact
-.It Fl T Cm kill
-Kill a table.
-.It Fl T Cm flush
-Flush all addresses of a table.
+.Bl -tag -width "-T expire number" -compact
 .It Fl T Cm add
-Add one or more addresses in a table.
+Add one or more addresses to a table.
 Automatically create a persistent table if it does not exist.
 .It Fl T Cm delete
 Delete one or more addresses from a table.
@@ -501,6 +499,10 @@ seconds ago.
 For entries which have never had their statistics cleared,
 .Ar number
 refers to the time they were added to the table.
+.It Fl T Cm flush
+Flush all addresses in a table.
+.It Fl T Cm kill
+Kill a table.
 .It Fl T Cm replace
 Replace the addresses of the table.
 Automatically create a persistent table if it does not exist.
@@ -670,8 +672,6 @@ tables of the same name from anchors attached below it.
 .It C
 This flag is set when per-address counters are enabled on the table.
 .El
-.It Fl t Ar table
-Specify the name of the table.
 .It Fl V Ar rdomain
 Select the routing domain to be used to kill states by host or by label.
 The rdomain of a state is displayed in parentheses before the host by
