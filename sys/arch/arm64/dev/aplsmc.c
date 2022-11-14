@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.17 2022/11/10 23:21:15 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.18 2022/11/14 11:11:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -92,7 +92,8 @@ struct aplsmc_sensor {
 
 /* Button events */
 #define SMC_PWRBTN_OFF		0x00
-#define SMC_PWRBTN_SHORT	0x06
+#define SMC_PWRBTN_SHORT	0x01
+#define SMC_PWRBTN_TOUCHID	0x06
 #define SMC_PWRBTN_LONG		0xfe
 
 #define APLSMC_BE		(1 << 0)
@@ -346,6 +347,7 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 	case SMC_EV_TYPE_BTN:
 		switch (SMC_EV_SUBTYPE(data)) {
 		case SMC_PWRBTN_SHORT:
+		case SMC_PWRBTN_TOUCHID:
 			if (SMC_EV_DATA(data) == 1) {
 #ifdef SUSPEND
 				if (cpu_suspended) {
