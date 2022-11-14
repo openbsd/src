@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.56 2021/09/26 12:39:25 krw Exp $
+#	$OpenBSD: install.md,v 1.57 2022/11/14 14:04:25 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,7 +81,7 @@ md_prep_fdisk() {
 			fi
 
 			echo -n "Setting OpenBSD GPT partition to whole $_disk..."
-			fdisk -gy -b 960 $_disk >/dev/null
+			fdisk -gy -b 532480 $_disk >/dev/null
 			echo "done."
 			return ;;
 		[eE]*)
@@ -91,7 +91,7 @@ md_prep_fdisk() {
 
 You will now create two GPT partitions. The first must have an id
 of 'EF' and be large enough to contain the OpenBSD boot programs,
-at least 960 blocks. The second must have an id of 'A6' and will
+at least 532480 blocks. The second must have an id of 'A6' and will
 contain your OpenBSD data. Neither may overlap other partitions.
 Inside the fdisk command, the 'manual' command describes the fdisk
 commands in detail.
