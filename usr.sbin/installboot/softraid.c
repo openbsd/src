@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.8 2022/11/08 14:05:41 kn Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.9 2022/11/14 13:39:37 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -161,10 +161,6 @@ sr_open_chunk(int devfd, int vol, int disk, struct bioc_disk *bd,
 	if (ioctl(devfd, BIOCDISK, bd) == -1)
 		err(1, "BIOCDISK");
 
-	/* Keydisks always have a size of zero. */
-	if (bd->bd_size == 0)
-		return -1;
-
 	/* Check disk status. */
 	if (bd->bd_status != BIOC_SDONLINE &&
 	    bd->bd_status != BIOC_SDREBUILD) {
@@ -172,6 +168,10 @@ sr_open_chunk(int devfd, int vol, int disk, struct bioc_disk *bd,
 		    disk);
 		return -1;
 	}
+
+	/* Keydisks always have a size of zero. */
+	if (bd->bd_size == 0)
+		return -1;
 
 	if (strlen(bd->bd_vendor) < 1)
 		errx(1, "invalid disk name");
