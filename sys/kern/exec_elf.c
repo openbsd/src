@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.174 2022/11/05 10:31:16 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.175 2022/11/14 17:25:00 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -571,7 +571,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 		 * Check if DYNAMIC contains DT_TEXTREL
 		 */
 		for (i = 0, pp = ph; i < eh->e_phnum; i++, pp++) {
-			Elf32_Dyn *dt;
+			Elf_Dyn *dt;
 			int j;
 
 			switch (pp->p_type) {
@@ -586,7 +586,7 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 					free(dt, M_TEMP, pp->p_filesz);
 					break;
 				}
-				for (j = 0; j * sizeof(*dt) < pp->p_filesz; j++) {
+				for (j = 0; j < pp->p_filesz / sizeof(*dt); j++) {
 					if (dt[j].d_tag == DT_TEXTREL) {
 						textrel = VMCMD_TEXTREL;
 						break;
