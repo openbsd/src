@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.119 2022/11/10 12:46:19 kn Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.120 2022/11/14 22:06:26 kn Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -263,22 +263,22 @@ struct ifmaddr {
  */
 
 struct ifg_group {
-	char			 ifg_group[IFNAMSIZ];
-	u_int			 ifg_refcnt;
-	caddr_t			 ifg_pf_kif;
-	int			 ifg_carp_demoted;
-	TAILQ_HEAD(, ifg_member) ifg_members;
-	TAILQ_ENTRY(ifg_group)	 ifg_next;
+	char			 ifg_group[IFNAMSIZ]; /* [I] group name */
+	u_int			 ifg_refcnt;  /* [N] group reference count */
+	caddr_t			 ifg_pf_kif;  /* [I] pf interface group */
+	int			 ifg_carp_demoted; /* [K] carp demotion counter */
+	TAILQ_HEAD(, ifg_member) ifg_members; /* [N] list of members per group */
+	TAILQ_ENTRY(ifg_group)	 ifg_next;    /* [N] all groups are chained */
 };
 
 struct ifg_member {
-	TAILQ_ENTRY(ifg_member)	 ifgm_next;
-	struct ifnet		*ifgm_ifp;
+	TAILQ_ENTRY(ifg_member)	 ifgm_next; /* [N] all members are chained */
+	struct ifnet		*ifgm_ifp;  /* [I] member interface */
 };
 
 struct ifg_list {
-	struct ifg_group	*ifgl_group;
-	TAILQ_ENTRY(ifg_list)	 ifgl_next;
+	struct ifg_group	*ifgl_group; /* [I] interface group */
+	TAILQ_ENTRY(ifg_list)	 ifgl_next;  /* [N] all groups are chained */
 };
 
 #define	IFNET_SLOWTIMO	1		/* granularity is 1 second */
