@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.36 2022/11/11 06:48:38 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.37 2022/11/14 00:16:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>

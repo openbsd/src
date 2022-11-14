@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidcc.c,v 1.4 2022/11/11 17:23:09 matthieu Exp $	*/
+/*	$OpenBSD: hidcc.c,v 1.5 2022/11/14 00:16:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2022 Anton Lindqvist <anton@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 
 #include <dev/hid/hidccvar.h>
 #include <dev/hid/hid.h>
