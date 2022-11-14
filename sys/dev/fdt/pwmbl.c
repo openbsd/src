@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.6 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.7 2022/11/14 07:22:44 miod Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -35,7 +35,7 @@ struct pwmbl_softc {
 	struct device		sc_dev;
 	uint32_t		*sc_pwm;
 	int			sc_pwm_len;
-	uint32_t		*sc_levels;
+	uint32_t		*sc_levels;	/* NULL if simple ramp */
 	int			sc_nlevels;
 	uint32_t		sc_max_level;
 	uint32_t		sc_def_level;
@@ -73,7 +73,7 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	struct pwmbl_softc *sc = (struct pwmbl_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t *gpios;
-	int i, len;
+	int len;
 
 	len = OF_getproplen(faa->fa_node, "pwms");
 	if (len < 0) {
@@ -95,7 +95,7 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	len = OF_getproplen(faa->fa_node, "brightness-levels");
-	if (len > 0) {
+	if (len >= (int)sizeof(uint32_t)) {
 		sc->sc_levels = malloc(len, M_DEVBUF, M_WAITOK);
 		OF_getpropintarray(faa->fa_node, "brightness-levels",
 		    sc->sc_levels, len);
@@ -107,13 +107,9 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_def_level = sc->sc_nlevels - 1;
 		sc->sc_def_level = sc->sc_levels[sc->sc_def_level];
 	} else {
+		/* No levels, assume a simple 0..255 ramp. */
 		sc->sc_nlevels = 256;
-		sc->sc_levels = mallocarray(sc->sc_nlevels,
-		    sizeof(uint32_t), M_DEVBUF, M_WAITOK);
-		for (i = 0; i < sc->sc_nlevels; i++)
-			sc->sc_levels[i] = i;
-		sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
-		sc->sc_def_level = sc->sc_levels[sc->sc_nlevels - 1];
+		sc->sc_max_level = sc->sc_def_level = sc->sc_nlevels - 1;
 	}
 
 	printf("\n");
@@ -143,6 +139,9 @@ pwmbl_find_brightness(struct pwmbl_softc *sc, uint32_t level)
 {
 	uint32_t mid;
 	int i;
+
+	if (sc->sc_levels == NULL)
+		return level < sc->sc_nlevels ? level : sc->sc_nlevels - 1;
 
 	for (i = 0; i < sc->sc_nlevels - 1; i++) {
 		mid = (sc->sc_levels[i] + sc->sc_levels[i + 1]) / 2;
