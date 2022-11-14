@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.20 2022/07/05 20:31:46 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.21 2022/11/14 17:48:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,3 +203,4 @@ X509_verify_cert_error_string(long n)
 		return(buf);
 	}
 }
+LCRYPTO_ALIAS(X509_verify_cert_error_string)

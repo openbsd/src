@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.4 2022/01/14 08:16:13 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.5 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -125,24 +125,28 @@ d2i_CERTIFICATEPOLICIES(CERTIFICATEPOLICIES **a, const unsigned char **in, long 
 	return (CERTIFICATEPOLICIES *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &CERTIFICATEPOLICIES_it);
 }
+LCRYPTO_ALIAS(d2i_CERTIFICATEPOLICIES)
 
 int
 i2d_CERTIFICATEPOLICIES(CERTIFICATEPOLICIES *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CERTIFICATEPOLICIES_it);
 }
+LCRYPTO_ALIAS(i2d_CERTIFICATEPOLICIES)
 
 CERTIFICATEPOLICIES *
 CERTIFICATEPOLICIES_new(void)
 {
 	return (CERTIFICATEPOLICIES *)ASN1_item_new(&CERTIFICATEPOLICIES_it);
 }
+LCRYPTO_ALIAS(CERTIFICATEPOLICIES_new)
 
 void
 CERTIFICATEPOLICIES_free(CERTIFICATEPOLICIES *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &CERTIFICATEPOLICIES_it);
 }
+LCRYPTO_ALIAS(CERTIFICATEPOLICIES_free)
 
 static const ASN1_TEMPLATE POLICYINFO_seq_tt[] = {
 	{
@@ -178,24 +182,28 @@ d2i_POLICYINFO(POLICYINFO **a, const unsigned char **in, long len)
 	return (POLICYINFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &POLICYINFO_it);
 }
+LCRYPTO_ALIAS(d2i_POLICYINFO)
 
 int
 i2d_POLICYINFO(POLICYINFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &POLICYINFO_it);
 }
+LCRYPTO_ALIAS(i2d_POLICYINFO)
 
 POLICYINFO *
 POLICYINFO_new(void)
 {
 	return (POLICYINFO *)ASN1_item_new(&POLICYINFO_it);
 }
+LCRYPTO_ALIAS(POLICYINFO_new)
 
 void
 POLICYINFO_free(POLICYINFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &POLICYINFO_it);
 }
+LCRYPTO_ALIAS(POLICYINFO_free)
 
 static const ASN1_TEMPLATE policydefault_tt = {
 	.flags = 0,
@@ -273,24 +281,28 @@ d2i_POLICYQUALINFO(POLICYQUALINFO **a, const unsigned char **in, long len)
 	return (POLICYQUALINFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &POLICYQUALINFO_it);
 }
+LCRYPTO_ALIAS(d2i_POLICYQUALINFO)
 
 int
 i2d_POLICYQUALINFO(POLICYQUALINFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &POLICYQUALINFO_it);
 }
+LCRYPTO_ALIAS(i2d_POLICYQUALINFO)
 
 POLICYQUALINFO *
 POLICYQUALINFO_new(void)
 {
 	return (POLICYQUALINFO *)ASN1_item_new(&POLICYQUALINFO_it);
 }
+LCRYPTO_ALIAS(POLICYQUALINFO_new)
 
 void
 POLICYQUALINFO_free(POLICYQUALINFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &POLICYQUALINFO_it);
 }
+LCRYPTO_ALIAS(POLICYQUALINFO_free)
 
 static const ASN1_TEMPLATE USERNOTICE_seq_tt[] = {
 	{
@@ -326,24 +338,28 @@ d2i_USERNOTICE(USERNOTICE **a, const unsigned char **in, long len)
 	return (USERNOTICE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &USERNOTICE_it);
 }
+LCRYPTO_ALIAS(d2i_USERNOTICE)
 
 int
 i2d_USERNOTICE(USERNOTICE *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &USERNOTICE_it);
 }
+LCRYPTO_ALIAS(i2d_USERNOTICE)
 
 USERNOTICE *
 USERNOTICE_new(void)
 {
 	return (USERNOTICE *)ASN1_item_new(&USERNOTICE_it);
 }
+LCRYPTO_ALIAS(USERNOTICE_new)
 
 void
 USERNOTICE_free(USERNOTICE *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &USERNOTICE_it);
 }
+LCRYPTO_ALIAS(USERNOTICE_free)
 
 static const ASN1_TEMPLATE NOTICEREF_seq_tt[] = {
 	{
@@ -379,24 +395,28 @@ d2i_NOTICEREF(NOTICEREF **a, const unsigned char **in, long len)
 	return (NOTICEREF *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &NOTICEREF_it);
 }
+LCRYPTO_ALIAS(d2i_NOTICEREF)
 
 int
 i2d_NOTICEREF(NOTICEREF *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &NOTICEREF_it);
 }
+LCRYPTO_ALIAS(i2d_NOTICEREF)
 
 NOTICEREF *
 NOTICEREF_new(void)
 {
 	return (NOTICEREF *)ASN1_item_new(&NOTICEREF_it);
 }
+LCRYPTO_ALIAS(NOTICEREF_new)
 
 void
 NOTICEREF_free(NOTICEREF *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &NOTICEREF_it);
 }
+LCRYPTO_ALIAS(NOTICEREF_free)
 
 static STACK_OF(POLICYINFO) *
 r2i_certpol(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *value)
@@ -762,3 +782,4 @@ X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
 	else
 		BIO_printf(out, "%*sNo Qualifiers\n", indent + 2, "");
 }
+LCRYPTO_ALIAS(X509_POLICY_NODE_print)

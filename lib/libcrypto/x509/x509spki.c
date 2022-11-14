@@ -1,4 +1,4 @@
-/* $OpenBSD: x509spki.c,v 1.14 2019/05/23 02:08:34 bcook Exp $ */
+/* $OpenBSD: x509spki.c,v 1.15 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,6 +70,7 @@ NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
 		return (0);
 	return (X509_PUBKEY_set(&(x->spkac->pubkey), pkey));
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_set_pubkey)
 
 EVP_PKEY *
 NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
@@ -78,6 +79,7 @@ NETSCAPE_SPKI_get_pubkey(NETSCAPE_SPKI *x)
 		return (NULL);
 	return (X509_PUBKEY_get(x->spkac->pubkey));
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_get_pubkey)
 
 /* Load a Netscape SPKI from a base64 encoded string */
 
@@ -106,6 +108,7 @@ NETSCAPE_SPKI_b64_decode(const char *str, int len)
 	free(spki_der);
 	return spki;
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_b64_decode)
 
 /* Generate a base64 encoded string from an SPKI */
 
@@ -130,3 +133,4 @@ NETSCAPE_SPKI_b64_encode(NETSCAPE_SPKI *spki)
 	free(der_spki);
 	return b64_str;
 }
+LCRYPTO_ALIAS(NETSCAPE_SPKI_b64_encode)

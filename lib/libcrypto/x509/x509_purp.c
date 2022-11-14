@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.16 2022/05/10 19:42:52 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.17 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -146,6 +146,7 @@ X509_check_purpose(X509 *x, int id, int ca)
 	pt = X509_PURPOSE_get0(idx);
 	return pt->check_purpose(pt, x, ca);
 }
+LCRYPTO_ALIAS(X509_check_purpose)
 
 int
 X509_PURPOSE_set(int *p, int purpose)
@@ -157,6 +158,7 @@ X509_PURPOSE_set(int *p, int purpose)
 	*p = purpose;
 	return 1;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_set)
 
 int
 X509_PURPOSE_get_count(void)
@@ -165,6 +167,7 @@ X509_PURPOSE_get_count(void)
 		return X509_PURPOSE_COUNT;
 	return sk_X509_PURPOSE_num(xptable) + X509_PURPOSE_COUNT;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get_count)
 
 X509_PURPOSE *
 X509_PURPOSE_get0(int idx)
@@ -175,6 +178,7 @@ X509_PURPOSE_get0(int idx)
 		return xstandard + idx;
 	return sk_X509_PURPOSE_value(xptable, idx - X509_PURPOSE_COUNT);
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get0)
 
 int
 X509_PURPOSE_get_by_sname(const char *sname)
@@ -189,6 +193,7 @@ X509_PURPOSE_get_by_sname(const char *sname)
 	}
 	return -1;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get_by_sname)
 
 int
 X509_PURPOSE_get_by_id(int purpose)
@@ -206,6 +211,7 @@ X509_PURPOSE_get_by_id(int purpose)
 		return -1;
 	return idx + X509_PURPOSE_COUNT;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get_by_id)
 
 int
 X509_PURPOSE_add(int id, int trust, int flags,
@@ -280,6 +286,7 @@ err:
 	X509V3error(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_add)
 
 static void
 xptable_free(X509_PURPOSE *p)
@@ -301,30 +308,35 @@ X509_PURPOSE_cleanup(void)
 	sk_X509_PURPOSE_pop_free(xptable, xptable_free);
 	xptable = NULL;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_cleanup)
 
 int
 X509_PURPOSE_get_id(const X509_PURPOSE *xp)
 {
 	return xp->purpose;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get_id)
 
 char *
 X509_PURPOSE_get0_name(const X509_PURPOSE *xp)
 {
 	return xp->name;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get0_name)
 
 char *
 X509_PURPOSE_get0_sname(const X509_PURPOSE *xp)
 {
 	return xp->sname;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get0_sname)
 
 int
 X509_PURPOSE_get_trust(const X509_PURPOSE *xp)
 {
 	return xp->trust;
 }
+LCRYPTO_ALIAS(X509_PURPOSE_get_trust)
 
 static int
 nid_cmp(const int *a, const int *b)
@@ -390,6 +402,7 @@ X509_supported_extension(X509_EXTENSION *ex)
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(X509_supported_extension)
 
 static void
 setup_dp(X509 *x, DIST_POINT *dp)
@@ -675,6 +688,7 @@ X509_check_ca(X509 *x)
 
 	return check_ca(x);
 }
+LCRYPTO_ALIAS(X509_check_ca)
 
 /* Check SSL CA: common checks for SSL client and server */
 static int
@@ -909,6 +923,7 @@ X509_check_issued(X509 *issuer, X509 *subject)
 		return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
 	return X509_V_OK;
 }
+LCRYPTO_ALIAS(X509_check_issued)
 
 int
 X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
@@ -948,6 +963,7 @@ X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
 	}
 	return X509_V_OK;
 }
+LCRYPTO_ALIAS(X509_check_akid)
 
 uint32_t
 X509_get_extension_flags(X509 *x)
@@ -958,6 +974,7 @@ X509_get_extension_flags(X509 *x)
 
 	return x->ex_flags;
 }
+LCRYPTO_ALIAS(X509_get_extension_flags)
 
 uint32_t
 X509_get_key_usage(X509 *x)
@@ -971,6 +988,7 @@ X509_get_key_usage(X509 *x)
 
 	return UINT32_MAX;
 }
+LCRYPTO_ALIAS(X509_get_key_usage)
 
 uint32_t
 X509_get_extended_key_usage(X509 *x)
@@ -984,3 +1002,4 @@ X509_get_extended_key_usage(X509 *x)
 
 	return UINT32_MAX;
 }
+LCRYPTO_ALIAS(X509_get_extended_key_usage)

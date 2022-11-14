@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_d2.c,v 1.10 2015/01/22 09:06:39 reyk Exp $ */
+/* $OpenBSD: x509_d2.c,v 1.11 2022/11/14 17:48:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,6 +83,7 @@ X509_STORE_set_default_paths(X509_STORE *ctx)
 
 	return (1);
 }
+LCRYPTO_ALIAS(X509_STORE_set_default_paths)
 
 int
 X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
@@ -107,6 +108,7 @@ X509_STORE_load_locations(X509_STORE *ctx, const char *file, const char *path)
 		return (0);
 	return (1);
 }
+LCRYPTO_ALIAS(X509_STORE_load_locations)
 
 int
 X509_STORE_load_mem(X509_STORE *ctx, void *buf, int len)
@@ -126,3 +128,4 @@ X509_STORE_load_mem(X509_STORE *ctx, void *buf, int len)
 
 	return (1);
 }
+LCRYPTO_ALIAS(X509_STORE_load_mem)

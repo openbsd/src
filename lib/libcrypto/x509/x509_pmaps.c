@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pmaps.c,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509_pmaps.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -137,12 +137,14 @@ POLICY_MAPPING_new(void)
 {
 	return (POLICY_MAPPING*)ASN1_item_new(&POLICY_MAPPING_it);
 }
+LCRYPTO_ALIAS(POLICY_MAPPING_new)
 
 void
 POLICY_MAPPING_free(POLICY_MAPPING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &POLICY_MAPPING_it);
 }
+LCRYPTO_ALIAS(POLICY_MAPPING_free)
 
 static STACK_OF(CONF_VALUE) *
 i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method, void *a,

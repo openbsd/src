@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_crld.c,v 1.2 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_crld.c,v 1.3 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -426,24 +426,28 @@ d2i_DIST_POINT_NAME(DIST_POINT_NAME **a, const unsigned char **in, long len)
 	return (DIST_POINT_NAME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &DIST_POINT_NAME_it);
 }
+LCRYPTO_ALIAS(d2i_DIST_POINT_NAME)
 
 int
 i2d_DIST_POINT_NAME(DIST_POINT_NAME *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIST_POINT_NAME_it);
 }
+LCRYPTO_ALIAS(i2d_DIST_POINT_NAME)
 
 DIST_POINT_NAME *
 DIST_POINT_NAME_new(void)
 {
 	return (DIST_POINT_NAME *)ASN1_item_new(&DIST_POINT_NAME_it);
 }
+LCRYPTO_ALIAS(DIST_POINT_NAME_new)
 
 void
 DIST_POINT_NAME_free(DIST_POINT_NAME *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &DIST_POINT_NAME_it);
 }
+LCRYPTO_ALIAS(DIST_POINT_NAME_free)
 
 static const ASN1_TEMPLATE DIST_POINT_seq_tt[] = {
 	{
@@ -486,24 +490,28 @@ d2i_DIST_POINT(DIST_POINT **a, const unsigned char **in, long len)
 	return (DIST_POINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &DIST_POINT_it);
 }
+LCRYPTO_ALIAS(d2i_DIST_POINT)
 
 int
 i2d_DIST_POINT(DIST_POINT *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIST_POINT_it);
 }
+LCRYPTO_ALIAS(i2d_DIST_POINT)
 
 DIST_POINT *
 DIST_POINT_new(void)
 {
 	return (DIST_POINT *)ASN1_item_new(&DIST_POINT_it);
 }
+LCRYPTO_ALIAS(DIST_POINT_new)
 
 void
 DIST_POINT_free(DIST_POINT *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &DIST_POINT_it);
 }
+LCRYPTO_ALIAS(DIST_POINT_free)
 
 static const ASN1_TEMPLATE CRL_DIST_POINTS_item_tt = {
 	.flags = ASN1_TFLG_SEQUENCE_OF,
@@ -530,24 +538,28 @@ d2i_CRL_DIST_POINTS(CRL_DIST_POINTS **a, const unsigned char **in, long len)
 	return (CRL_DIST_POINTS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &CRL_DIST_POINTS_it);
 }
+LCRYPTO_ALIAS(d2i_CRL_DIST_POINTS)
 
 int
 i2d_CRL_DIST_POINTS(CRL_DIST_POINTS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CRL_DIST_POINTS_it);
 }
+LCRYPTO_ALIAS(i2d_CRL_DIST_POINTS)
 
 CRL_DIST_POINTS *
 CRL_DIST_POINTS_new(void)
 {
 	return (CRL_DIST_POINTS *)ASN1_item_new(&CRL_DIST_POINTS_it);
 }
+LCRYPTO_ALIAS(CRL_DIST_POINTS_new)
 
 void
 CRL_DIST_POINTS_free(CRL_DIST_POINTS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &CRL_DIST_POINTS_it);
 }
+LCRYPTO_ALIAS(CRL_DIST_POINTS_free)
 
 static const ASN1_TEMPLATE ISSUING_DIST_POINT_seq_tt[] = {
 	{
@@ -611,24 +623,28 @@ d2i_ISSUING_DIST_POINT(ISSUING_DIST_POINT **a, const unsigned char **in, long le
 	return (ISSUING_DIST_POINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ISSUING_DIST_POINT_it);
 }
+LCRYPTO_ALIAS(d2i_ISSUING_DIST_POINT)
 
 int
 i2d_ISSUING_DIST_POINT(ISSUING_DIST_POINT *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ISSUING_DIST_POINT_it);
 }
+LCRYPTO_ALIAS(i2d_ISSUING_DIST_POINT)
 
 ISSUING_DIST_POINT *
 ISSUING_DIST_POINT_new(void)
 {
 	return (ISSUING_DIST_POINT *)ASN1_item_new(&ISSUING_DIST_POINT_it);
 }
+LCRYPTO_ALIAS(ISSUING_DIST_POINT_new)
 
 void
 ISSUING_DIST_POINT_free(ISSUING_DIST_POINT *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ISSUING_DIST_POINT_it);
 }
+LCRYPTO_ALIAS(ISSUING_DIST_POINT_free)
 
 static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
     int indent);
@@ -809,3 +825,4 @@ DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, X509_NAME *iname)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(DIST_POINT_set_dpname)

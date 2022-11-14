@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_sxnet.c,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509_sxnet.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -131,24 +131,28 @@ d2i_SXNETID(SXNETID **a, const unsigned char **in, long len)
 	return (SXNETID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &SXNETID_it);
 }
+LCRYPTO_ALIAS(d2i_SXNETID)
 
 int
 i2d_SXNETID(SXNETID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &SXNETID_it);
 }
+LCRYPTO_ALIAS(i2d_SXNETID)
 
 SXNETID *
 SXNETID_new(void)
 {
 	return (SXNETID *)ASN1_item_new(&SXNETID_it);
 }
+LCRYPTO_ALIAS(SXNETID_new)
 
 void
 SXNETID_free(SXNETID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &SXNETID_it);
 }
+LCRYPTO_ALIAS(SXNETID_free)
 
 static const ASN1_TEMPLATE SXNET_seq_tt[] = {
 	{
@@ -184,24 +188,28 @@ d2i_SXNET(SXNET **a, const unsigned char **in, long len)
 	return (SXNET *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &SXNET_it);
 }
+LCRYPTO_ALIAS(d2i_SXNET)
 
 int
 i2d_SXNET(SXNET *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &SXNET_it);
 }
+LCRYPTO_ALIAS(i2d_SXNET)
 
 SXNET *
 SXNET_new(void)
 {
 	return (SXNET *)ASN1_item_new(&SXNET_it);
 }
+LCRYPTO_ALIAS(SXNET_new)
 
 void
 SXNET_free(SXNET *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &SXNET_it);
 }
+LCRYPTO_ALIAS(SXNET_free)
 
 static int
 sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent)
@@ -263,6 +271,7 @@ SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userlen)
 	}
 	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
 }
+LCRYPTO_ALIAS(SXNET_add_id_asc)
 
 /* Add an id given the zone as an unsigned long */
 
@@ -280,6 +289,7 @@ SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
 	}
 	return SXNET_add_id_INTEGER(psx, izone, user, userlen);
 }
+LCRYPTO_ALIAS(SXNET_add_id_ulong)
 
 /* Add an id given the zone as an ASN1_INTEGER.
  * Note this version uses the passed integer and doesn't make a copy so don't
@@ -335,6 +345,7 @@ err:
 	*psx = NULL;
 	return 0;
 }
+LCRYPTO_ALIAS(SXNET_add_id_INTEGER)
 
 ASN1_OCTET_STRING *
 SXNET_get_id_asc(SXNET *sx, const char *zone)
@@ -350,6 +361,7 @@ SXNET_get_id_asc(SXNET *sx, const char *zone)
 	ASN1_INTEGER_free(izone);
 	return oct;
 }
+LCRYPTO_ALIAS(SXNET_get_id_asc)
 
 ASN1_OCTET_STRING *
 SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
@@ -367,6 +379,7 @@ SXNET_get_id_ulong(SXNET *sx, unsigned long lzone)
 	ASN1_INTEGER_free(izone);
 	return oct;
 }
+LCRYPTO_ALIAS(SXNET_get_id_ulong)
 
 ASN1_OCTET_STRING *
 SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
@@ -381,3 +394,4 @@ SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone)
 	}
 	return NULL;
 }
+LCRYPTO_ALIAS(SXNET_get_id_INTEGER)

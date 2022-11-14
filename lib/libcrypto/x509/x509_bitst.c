@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bitst.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_bitst.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -148,6 +148,7 @@ i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, ASN1_BIT_STRING *bits,
 
 	return NULL;
 }
+LCRYPTO_ALIAS(i2v_ASN1_BIT_STRING)
 
 ASN1_BIT_STRING *
 v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
@@ -185,3 +186,4 @@ v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 	}
 	return bs;
 }
+LCRYPTO_ALIAS(v2i_ASN1_BIT_STRING)

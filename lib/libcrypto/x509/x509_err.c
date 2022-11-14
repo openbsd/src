@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.17 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: x509_err.c,v 1.18 2022/11/14 17:48:50 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -191,6 +191,7 @@ ERR_load_X509_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_X509_strings)
 
 
 void
@@ -203,3 +204,4 @@ ERR_load_X509V3_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_X509V3_strings)

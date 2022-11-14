@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_bcons.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_bcons.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -121,24 +121,28 @@ d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, const unsigned char **in, long len)
 	return (BASIC_CONSTRAINTS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &BASIC_CONSTRAINTS_it);
 }
+LCRYPTO_ALIAS(d2i_BASIC_CONSTRAINTS)
 
 int
 i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &BASIC_CONSTRAINTS_it);
 }
+LCRYPTO_ALIAS(i2d_BASIC_CONSTRAINTS)
 
 BASIC_CONSTRAINTS *
 BASIC_CONSTRAINTS_new(void)
 {
 	return (BASIC_CONSTRAINTS *)ASN1_item_new(&BASIC_CONSTRAINTS_it);
 }
+LCRYPTO_ALIAS(BASIC_CONSTRAINTS_new)
 
 void
 BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &BASIC_CONSTRAINTS_it);
 }
+LCRYPTO_ALIAS(BASIC_CONSTRAINTS_free)
 
 
 static STACK_OF(CONF_VALUE) *

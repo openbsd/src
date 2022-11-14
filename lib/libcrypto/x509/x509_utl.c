@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.3 2022/05/20 07:58:54 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.4 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -117,6 +117,7 @@ X509V3_add_value(const char *name, const char *value,
 	}
 	return 0;
 }
+LCRYPTO_ALIAS(X509V3_add_value)
 
 int
 X509V3_add_value_uchar(const char *name, const unsigned char *value,
@@ -124,6 +125,7 @@ X509V3_add_value_uchar(const char *name, const unsigned char *value,
 {
 	return X509V3_add_value(name, (const char *)value, extlist);
 }
+LCRYPTO_ALIAS(X509V3_add_value_uchar)
 
 /* Free function for STACK_OF(CONF_VALUE) */
 
@@ -137,6 +139,7 @@ X509V3_conf_free(CONF_VALUE *conf)
 	free(conf->section);
 	free(conf);
 }
+LCRYPTO_ALIAS(X509V3_conf_free)
 
 int
 X509V3_add_value_bool(const char *name, int asn1_bool,
@@ -146,6 +149,7 @@ X509V3_add_value_bool(const char *name, int asn1_bool,
 		return X509V3_add_value(name, "TRUE", extlist);
 	return X509V3_add_value(name, "FALSE", extlist);
 }
+LCRYPTO_ALIAS(X509V3_add_value_bool)
 
 int
 X509V3_add_value_bool_nf(const char *name, int asn1_bool,
@@ -155,6 +159,7 @@ X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 		return X509V3_add_value(name, "TRUE", extlist);
 	return 1;
 }
+LCRYPTO_ALIAS(X509V3_add_value_bool_nf)
 
 char *
 bn_to_string(const BIGNUM *bn)
@@ -197,6 +202,7 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 	BN_free(bntmp);
 	return strtmp;
 }
+LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED)
 
 char *
 i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
@@ -212,6 +218,7 @@ i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
 	BN_free(bntmp);
 	return strtmp;
 }
+LCRYPTO_ALIAS(i2s_ASN1_INTEGER)
 
 ASN1_INTEGER *
 s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
@@ -262,6 +269,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 		aint->type |= V_ASN1_NEG;
 	return aint;
 }
+LCRYPTO_ALIAS(s2i_ASN1_INTEGER)
 
 int
 X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
@@ -278,6 +286,7 @@ X509V3_add_value_int(const char *name, const ASN1_INTEGER *aint,
 	free(strtmp);
 	return ret;
 }
+LCRYPTO_ALIAS(X509V3_add_value_int)
 
 int
 X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
@@ -303,6 +312,7 @@ X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
 	X509V3_conf_err(value);
 	return 0;
 }
+LCRYPTO_ALIAS(X509V3_get_value_bool)
 
 int
 X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
@@ -316,6 +326,7 @@ X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
 	*aint = itmp;
 	return 1;
 }
+LCRYPTO_ALIAS(X509V3_get_value_int)
 
 #define HDR_NAME	1
 #define HDR_VALUE	2
@@ -407,6 +418,7 @@ X509V3_parse_list(const char *line)
 	return NULL;
 
 }
+LCRYPTO_ALIAS(X509V3_parse_list)
 
 /* Delete leading and trailing spaces from a string */
 static char *
@@ -458,6 +470,7 @@ hex_to_string(const unsigned char *buffer, long len)
 	q[-1] = 0;
 	return tmp;
 }
+LCRYPTO_ALIAS(hex_to_string)
 
 /* Give a string of hex digits convert to
  * a buffer
@@ -519,6 +532,7 @@ string_to_hex(const char *str, long *len)
 	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
 	return NULL;
 }
+LCRYPTO_ALIAS(string_to_hex)
 
 /* V2I name comparison function: returns zero if 'name' matches
  * cmp or cmp.*
@@ -556,6 +570,7 @@ X509_get1_email(X509 *x)
 	sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
 	return ret;
 }
+LCRYPTO_ALIAS(X509_get1_email)
 
 STACK_OF(OPENSSL_STRING) *
 X509_get1_ocsp(X509 *x)
@@ -580,6 +595,7 @@ X509_get1_ocsp(X509 *x)
 	AUTHORITY_INFO_ACCESS_free(info);
 	return ret;
 }
+LCRYPTO_ALIAS(X509_get1_ocsp)
 
 STACK_OF(OPENSSL_STRING) *
 X509_REQ_get1_email(X509_REQ *x)
@@ -595,6 +611,7 @@ X509_REQ_get1_email(X509_REQ *x)
 	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	return ret;
 }
+LCRYPTO_ALIAS(X509_REQ_get1_email)
 
 
 static STACK_OF(OPENSSL_STRING) *
@@ -664,6 +681,7 @@ X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 {
 	sk_OPENSSL_STRING_pop_free(sk, str_free);
 }
+LCRYPTO_ALIAS(X509_email_free)
 
 typedef int (*equal_fn)(const unsigned char *pattern, size_t pattern_len,
     const unsigned char *subject, size_t subject_len, unsigned int flags);
@@ -1065,6 +1083,7 @@ X509_check_host(X509 *x, const char *chk, size_t chklen, unsigned int flags,
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_DNS, peername);
 }
+LCRYPTO_ALIAS(X509_check_host)
 
 int
 X509_check_email(X509 *x, const char *chk, size_t chklen, unsigned int flags)
@@ -1077,6 +1096,7 @@ X509_check_email(X509 *x, const char *chk, size_t chklen, unsigned int flags)
 		return -2;
 	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, NULL);
 }
+LCRYPTO_ALIAS(X509_check_email)
 
 int
 X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
@@ -1086,6 +1106,7 @@ X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
 		return -2;
 	return do_x509_check(x, (char *)chk, chklen, flags, GEN_IPADD, NULL);
 }
+LCRYPTO_ALIAS(X509_check_ip)
 
 int
 X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
@@ -1100,6 +1121,7 @@ X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 		return -2;
 	return do_x509_check(x, (char *)ipout, iplen, flags, GEN_IPADD, NULL);
 }
+LCRYPTO_ALIAS(X509_check_ip_asc)
 
 /* Convert IP addresses both IPv4 and IPv6 into an
  * OCTET STRING compatible with RFC3280.
@@ -1128,6 +1150,7 @@ a2i_IPADDRESS(const char *ipasc)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(a2i_IPADDRESS)
 
 ASN1_OCTET_STRING *
 a2i_IPADDRESS_NC(const char *ipasc)
@@ -1173,6 +1196,7 @@ a2i_IPADDRESS_NC(const char *ipasc)
 		ASN1_OCTET_STRING_free(ret);
 	return NULL;
 }
+LCRYPTO_ALIAS(a2i_IPADDRESS_NC)
 
 
 int
@@ -1190,6 +1214,7 @@ a2i_ipadd(unsigned char *ipout, const char *ipasc)
 		return 4;
 	}
 }
+LCRYPTO_ALIAS(a2i_ipadd)
 
 static int
 ipv4_from_asc(unsigned char *v4, const char *in)
@@ -1386,3 +1411,4 @@ X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(X509V3_NAME_from_section)

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_enum.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_enum.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -105,3 +105,4 @@ i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *e)
 	}
 	return i2s_ASN1_ENUMERATED(method, e);
 }
+LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED_TABLE)

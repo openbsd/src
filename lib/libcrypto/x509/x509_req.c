@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.29 2022/08/18 16:26:33 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.30 2022/11/14 17:48:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,6 +115,7 @@ err:
 	X509_REQ_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(X509_to_X509_REQ)
 
 EVP_PKEY *
 X509_REQ_get_pubkey(X509_REQ *req)
@@ -123,6 +124,7 @@ X509_REQ_get_pubkey(X509_REQ *req)
 		return (NULL);
 	return (X509_PUBKEY_get(req->req_info->pubkey));
 }
+LCRYPTO_ALIAS(X509_REQ_get_pubkey)
 
 EVP_PKEY *
 X509_REQ_get0_pubkey(X509_REQ *req)
@@ -131,6 +133,7 @@ X509_REQ_get0_pubkey(X509_REQ *req)
 		return NULL;
 	return X509_PUBKEY_get0(req->req_info->pubkey);
 }
+LCRYPTO_ALIAS(X509_REQ_get0_pubkey)
 
 int
 X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
@@ -170,6 +173,7 @@ X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 
 	return (ok);
 }
+LCRYPTO_ALIAS(X509_REQ_check_private_key)
 
 /* It seems several organisations had the same idea of including a list of
  * extensions in a certificate request. There are at least two OIDs that are
@@ -193,18 +197,21 @@ X509_REQ_extension_nid(int req_nid)
 			return 1;
 	}
 }
+LCRYPTO_ALIAS(X509_REQ_extension_nid)
 
 int *
 X509_REQ_get_extension_nids(void)
 {
 	return ext_nids;
 }
+LCRYPTO_ALIAS(X509_REQ_get_extension_nids)
 
 void
 X509_REQ_set_extension_nids(int *nids)
 {
 	ext_nids = nids;
 }
+LCRYPTO_ALIAS(X509_REQ_set_extension_nids)
 
 STACK_OF(X509_EXTENSION) *
 X509_REQ_get_extensions(X509_REQ *req)
@@ -231,6 +238,7 @@ X509_REQ_get_extensions(X509_REQ *req)
 	p = ext->value.sequence->data;
 	return d2i_X509_EXTENSIONS(NULL, &p, ext->value.sequence->length);
 }
+LCRYPTO_ALIAS(X509_REQ_get_extensions)
 
 /*
  * Add a STACK_OF extensions to a certificate request: allow alternative OIDs
@@ -254,6 +262,7 @@ X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 
 	return rv;
 }
+LCRYPTO_ALIAS(X509_REQ_add_extensions_nid)
 
 /* This is the normal usage: use the "official" OID */
 int
@@ -261,6 +270,7 @@ X509_REQ_add_extensions(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts)
 {
 	return X509_REQ_add_extensions_nid(req, exts, NID_ext_req);
 }
+LCRYPTO_ALIAS(X509_REQ_add_extensions)
 
 /* Request attribute functions */
 
@@ -269,12 +279,14 @@ X509_REQ_get_attr_count(const X509_REQ *req)
 {
 	return X509at_get_attr_count(req->req_info->attributes);
 }
+LCRYPTO_ALIAS(X509_REQ_get_attr_count)
 
 int
 X509_REQ_get_attr_by_NID(const X509_REQ *req, int nid, int lastpos)
 {
 	return X509at_get_attr_by_NID(req->req_info->attributes, nid, lastpos);
 }
+LCRYPTO_ALIAS(X509_REQ_get_attr_by_NID)
 
 int
 X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
@@ -282,18 +294,21 @@ X509_REQ_get_attr_by_OBJ(const X509_REQ *req, const ASN1_OBJECT *obj,
 {
 	return X509at_get_attr_by_OBJ(req->req_info->attributes, obj, lastpos);
 }
+LCRYPTO_ALIAS(X509_REQ_get_attr_by_OBJ)
 
 X509_ATTRIBUTE *
 X509_REQ_get_attr(const X509_REQ *req, int loc)
 {
 	return X509at_get_attr(req->req_info->attributes, loc);
 }
+LCRYPTO_ALIAS(X509_REQ_get_attr)
 
 X509_ATTRIBUTE *
 X509_REQ_delete_attr(X509_REQ *req, int loc)
 {
 	return X509at_delete_attr(req->req_info->attributes, loc);
 }
+LCRYPTO_ALIAS(X509_REQ_delete_attr)
 
 int
 X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr)
@@ -302,6 +317,7 @@ X509_REQ_add1_attr(X509_REQ *req, X509_ATTRIBUTE *attr)
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(X509_REQ_add1_attr)
 
 int
 X509_REQ_add1_attr_by_OBJ(X509_REQ *req, const ASN1_OBJECT *obj, int type,
@@ -312,6 +328,7 @@ X509_REQ_add1_attr_by_OBJ(X509_REQ *req, const ASN1_OBJECT *obj, int type,
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(X509_REQ_add1_attr_by_OBJ)
 
 int
 X509_REQ_add1_attr_by_NID(X509_REQ *req, int nid, int type,
@@ -322,6 +339,7 @@ X509_REQ_add1_attr_by_NID(X509_REQ *req, int nid, int type,
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(X509_REQ_add1_attr_by_NID)
 
 int
 X509_REQ_add1_attr_by_txt(X509_REQ *req, const char *attrname, int type,
@@ -332,6 +350,7 @@ X509_REQ_add1_attr_by_txt(X509_REQ *req, const char *attrname, int type,
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(X509_REQ_add1_attr_by_txt)
 
 int
 i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
@@ -339,3 +358,4 @@ i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp)
 	req->req_info->enc.modified = 1;
 	return i2d_X509_REQ_INFO(req->req_info, pp);
 }
+LCRYPTO_ALIAS(i2d_re_X509_REQ_tbs)

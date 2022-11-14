@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_akeya.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_akeya.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -104,21 +104,25 @@ d2i_AUTHORITY_KEYID(AUTHORITY_KEYID **a, const unsigned char **in, long len)
 	return (AUTHORITY_KEYID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &AUTHORITY_KEYID_it);
 }
+LCRYPTO_ALIAS(d2i_AUTHORITY_KEYID)
 
 int
 i2d_AUTHORITY_KEYID(AUTHORITY_KEYID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &AUTHORITY_KEYID_it);
 }
+LCRYPTO_ALIAS(i2d_AUTHORITY_KEYID)
 
 AUTHORITY_KEYID *
 AUTHORITY_KEYID_new(void)
 {
 	return (AUTHORITY_KEYID *)ASN1_item_new(&AUTHORITY_KEYID_it);
 }
+LCRYPTO_ALIAS(AUTHORITY_KEYID_new)
 
 void
 AUTHORITY_KEYID_free(AUTHORITY_KEYID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &AUTHORITY_KEYID_it);
 }
+LCRYPTO_ALIAS(AUTHORITY_KEYID_free)

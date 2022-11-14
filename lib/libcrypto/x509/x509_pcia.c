@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pcia.c,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509_pcia.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
 /* Contributed to the OpenSSL Project 2004
  * by Richard Levitte (richard@levitte.org)
  */
@@ -72,24 +72,28 @@ d2i_PROXY_POLICY(PROXY_POLICY **a, const unsigned char **in, long len)
 	return (PROXY_POLICY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PROXY_POLICY_it);
 }
+LCRYPTO_ALIAS(d2i_PROXY_POLICY)
 
 int
 i2d_PROXY_POLICY(PROXY_POLICY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PROXY_POLICY_it);
 }
+LCRYPTO_ALIAS(i2d_PROXY_POLICY)
 
 PROXY_POLICY *
 PROXY_POLICY_new(void)
 {
 	return (PROXY_POLICY *)ASN1_item_new(&PROXY_POLICY_it);
 }
+LCRYPTO_ALIAS(PROXY_POLICY_new)
 
 void
 PROXY_POLICY_free(PROXY_POLICY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PROXY_POLICY_it);
 }
+LCRYPTO_ALIAS(PROXY_POLICY_free)
 
 static const ASN1_TEMPLATE PROXY_CERT_INFO_EXTENSION_seq_tt[] = {
 	{
@@ -125,21 +129,25 @@ d2i_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION **a, const unsigned char
 	return (PROXY_CERT_INFO_EXTENSION *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PROXY_CERT_INFO_EXTENSION_it);
 }
+LCRYPTO_ALIAS(d2i_PROXY_CERT_INFO_EXTENSION)
 
 int
 i2d_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PROXY_CERT_INFO_EXTENSION_it);
 }
+LCRYPTO_ALIAS(i2d_PROXY_CERT_INFO_EXTENSION)
 
 PROXY_CERT_INFO_EXTENSION *
 PROXY_CERT_INFO_EXTENSION_new(void)
 {
 	return (PROXY_CERT_INFO_EXTENSION *)ASN1_item_new(&PROXY_CERT_INFO_EXTENSION_it);
 }
+LCRYPTO_ALIAS(PROXY_CERT_INFO_EXTENSION_new)
 
 void
 PROXY_CERT_INFO_EXTENSION_free(PROXY_CERT_INFO_EXTENSION *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PROXY_CERT_INFO_EXTENSION_it);
 }
+LCRYPTO_ALIAS(PROXY_CERT_INFO_EXTENSION_free)
