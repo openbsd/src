@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.4 2018/02/24 11:42:31 visa Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.5 2022/11/14 17:15:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -88,6 +88,11 @@ loongson_isa_splx(int newipl)
 	/* Update masks to new ipl. Order highly important! */
 	ci->ci_ipl = newipl;
 	loongson_isa_setintrmask(newipl);
+
+	/* Trigger deferred clock interrupt if it is now unmasked. */
+	if (ci->ci_clock_deferred && newipl < IPL_CLOCK)
+		md_triggerclock();
+
 	/* If we still have softints pending trigger processing. */
 	if (ci->ci_softpending != 0 && newipl < IPL_SOFTINT)
 		setsoftintr0();
