@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.2 2022/11/04 11:33:26 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.3 2022/11/14 17:23:43 claudio Exp $
 
 set -e
 
@@ -79,9 +79,8 @@ ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 ifconfig mpe${RDOMAIN3} rdomain ${RDOMAIN3} mplslabel 42 192.168.237.242/32
 ifconfig mpe${RDOMAIN4} rdomain ${RDOMAIN4} mplslabel 44 192.168.237.244/32
-# currently mpe fails to do inet6 because it is missing multicast
-#ifconfig mpe${RDOMAIN3} inet6 2001:db8:242::242/64
-#ifconfig mpe${RDOMAIN4} inet6 2001:db8:244::244/64
+ifconfig mpe${RDOMAIN3} inet6 2001:db8:242::242/64
+ifconfig mpe${RDOMAIN4} inet6 2001:db8:244::244/64
 ifconfig lo${RDOMAIN3} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN4} inet 127.0.0.1/8
 
@@ -101,21 +100,21 @@ route -T ${RDOMAIN1} exec bgpctl show fib table 13
 route -T ${RDOMAIN3} show
 route -T ${RDOMAIN3} get 192.168.44/24 > /dev/null
 route -T ${RDOMAIN4} get 192.168.42/24 > /dev/null
-#route -T ${RDOMAIN3} get -inet6 2001:db8:42:44::/64 > /dev/null
-#route -T ${RDOMAIN4} get -inet6 2001:db8:42:42::/64 > /dev/null
+route -T ${RDOMAIN3} get -inet6 2001:db8:42:44::/64 > /dev/null
+route -T ${RDOMAIN4} get -inet6 2001:db8:42:42::/64 > /dev/null
 
 echo Add new network
 route -T ${RDOMAIN2} exec bgpctl network add 192.168.45.0/24 rd 4200000002:14
-#route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:42:45::/64 rd 4200000002:14
+route -T ${RDOMAIN2} exec bgpctl network add 2001:db8:42:45::/64 rd 4200000002:14
 sleep 1
 route -T ${RDOMAIN3} get 192.168.45/24 > /dev/null
-#route -T ${RDOMAIN3} get -inet6 2001:db8:42:45::/64 > /dev/null
+route -T ${RDOMAIN3} get -inet6 2001:db8:42:45::/64 > /dev/null
 
 echo Remove new network
 route -T ${RDOMAIN2} exec bgpctl network del 192.168.45.0/24 rd 4200000002:14
-#route -T ${RDOMAIN2} exec bgpctl network del 2001:db8:42:45::/64 rd 4200000002:14
+route -T ${RDOMAIN2} exec bgpctl network del 2001:db8:42:45::/64 rd 4200000002:14
 sleep 1
 ! route -T ${RDOMAIN3} get 192.168.45/24 > /dev/null
-#! route -T ${RDOMAIN3} get -inet6 2001:db8:42:45::/64 > /dev/null
+! route -T ${RDOMAIN3} get -inet6 2001:db8:42:45::/64 > /dev/null
 
 exit 0
