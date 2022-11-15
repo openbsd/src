@@ -1813,6 +1813,7 @@
 ./usr/share/man/man3/BN_copy.3
 ./usr/share/man/man3/BN_generate_prime.3
 ./usr/share/man/man3/BN_get0_nist_prime_521.3
+./usr/share/man/man3/BN_kronecker.3
 ./usr/share/man/man3/BN_mod_inverse.3
 ./usr/share/man/man3/BN_mod_mul_montgomery.3
 ./usr/share/man/man3/BN_mod_mul_reciprocal.3
