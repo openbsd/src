@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_subr.c,v 1.25 2021/10/24 17:20:06 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_subr.c,v 1.26 2022/11/15 17:16:44 mvs Exp $	*/
 /*	$NetBSD: tmpfs_subr.c,v 1.79 2012/03/13 18:40:50 elad Exp $	*/
 
 /*
@@ -884,7 +884,10 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		bytes = (newpages - oldpages) << PAGE_SHIFT;
 		if (tmpfs_mem_incr(tmp, bytes) == 0)
 			return ENOSPC;
-		if (uao_grow(uobj, newpages) != 0) {
+		rw_enter(uobj->vmobjlock, RW_WRITE);
+		error = uao_grow(uobj, newpages);
+		rw_exit(uobj->vmobjlock);
+		if (error) {
 			tmpfs_mem_decr(tmp, bytes);
 			return ENOSPC;
 		}
@@ -901,8 +904,10 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	if (newpages < oldpages) {
 		if (tmpfs_uio_cached(node))
 			tmpfs_uio_uncache(node);
+		rw_enter(uobj->vmobjlock, RW_WRITE);
 		if (uao_shrink(uobj, newpages))
 			panic("shrink failed");
+		rw_exit(uobj->vmobjlock);
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
 	}
