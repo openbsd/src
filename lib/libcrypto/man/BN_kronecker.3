@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_kronecker.3,v 1.1 2022/11/14 19:51:35 schwarze Exp $
+.\" $OpenBSD: BN_kronecker.3,v 1.2 2022/11/15 17:55:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 14 2022 $
+.Dd $Mdocdate: November 15 2022 $
 .Dt BN_KRONECKER 3
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@ returns \-1, 0, or 1 in case of success or \-2 on error.
 .Sh SEE ALSO
 .Xr BN_CTX_new 3 ,
 .Xr BN_gcd 3 ,
+.Xr BN_mod_sqrt 3 ,
 .Xr BN_new 3
 .Rs
 .%A Henri Cohen
