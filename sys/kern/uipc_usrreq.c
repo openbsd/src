@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.192 2022/11/13 16:01:32 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.193 2022/11/15 22:47:15 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ again:
 
 	if (so < so2)
 		solock(so2);
-	else if (so > so2){
+	else if (so > so2) {
 		unp_ref(unp2);
 		sounlock(so);
 		solock(so2);
