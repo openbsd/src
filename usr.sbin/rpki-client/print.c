@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.19 2022/11/04 17:39:36 job Exp $ */
+/*	$OpenBSD: print.c,v 1.20 2022/11/16 08:57:38 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -181,15 +181,17 @@ cert_print(const struct cert *p)
 		if (p->aia != NULL)
 			printf("Authority info access:    %s\n", p->aia);
 		if (p->mft != NULL)
-			printf("Manifest: %s\n", p->mft);
+			printf("Manifest:                 %s\n", p->mft);
 		if (p->repo != NULL)
-			printf("caRepository: %s\n", p->repo);
+			printf("caRepository:             %s\n", p->repo);
 		if (p->notify != NULL)
-			printf("Notify URL: %s\n", p->notify);
-		if (p->pubkey != NULL)
+			printf("Notify URL:               %s\n", p->notify);
+		if (p->pubkey != NULL) {
 			printf("BGPsec ECDSA public key:  %s\n",
 			    p->pubkey);
-		printf("Router key valid until:   %s\n", tbuf);
+			printf("Router key valid until:   %s\n", tbuf);
+		} else
+			printf("Certificate valid until:  %s\n", tbuf);
 		printf("Subordinate Resources:\n");
 	}
 
