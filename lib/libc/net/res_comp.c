@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.20 2016/05/01 15:17:29 millert Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.21 2022/11/16 18:30:12 florian Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -261,14 +261,6 @@ __dn_skipname(const u_char *comp_dn, const u_char *eom)
 	return (cp - comp_dn);
 }
 
-static int
-mklower(int ch)
-{
-	if (isascii(ch) && isupper(ch))
-		return (tolower(ch));
-	return (ch);
-}
-
 /*
  * Search for expanded name from a list of previously compressed names.
  * Return the offset from msg if found or -1.
@@ -296,7 +288,8 @@ dn_find(u_char *exp_dn, u_char *msg, u_char **dnptrs, u_char **lastdnptr)
 						goto next;
 					if (*dn == '\\')
 						dn++;
-					if (mklower(*dn++) != mklower(*cp++))
+					if (tolower((unsigned char)*dn++) !=
+					    tolower((unsigned char)*cp++))
 						goto next;
 				}
 				if ((n = *dn++) == '\0' && *cp == '\0')
