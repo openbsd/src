@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.26 2021/11/17 16:08:32 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.27 2022/11/16 14:55:40 schwarze Exp $
 .\" full merge up to: OpenSSL aae41f8c Jun 25 09:47:15 2015 +0100
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 17 2021 $
+.Dd $Mdocdate: November 16 2022 $
 .Dt X509_STORE_CTX_NEW 3
 .Os
 .Sh NAME
@@ -85,6 +85,8 @@
 .Nm X509_STORE_CTX_set0_untrusted ,
 .Nm X509_STORE_CTX_get0_untrusted ,
 .Nm X509_STORE_CTX_set0_crls
+.\" X509_STORE_CTX_verify_fn moved to X509_STORE_CTX_set_verify(3)
+.\" X509_STORE_CTX_set_verify moved to X509_STORE_CTX_set_verify(3)
 .Nd X509_STORE_CTX initialisation
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h

@@ -1,6 +1,6 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.2 2021/11/23 17:06:05 tb Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.3 2022/11/16 14:55:40 schwarze Exp $
 .\"
-.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2021, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,53 +14,32 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 23 2021 $
+.Dd $Mdocdate: November 16 2022 $
 .Dt X509_STORE_CTX_SET_VERIFY 3
 .Os
-.\" ds LIBRESSL_NEXT_API
 .Sh NAME
-.if dLIBRESSL_NEXT_API \{\
 .Nm X509_STORE_CTX_verify_fn ,
-.\}
 .Nm X509_STORE_CTX_set_verify ,
-.ie dLIBRESSL_NEXT_API \{\
 .Nm X509_STORE_CTX_get_verify ,
 .Nm X509_STORE_set_verify ,
-.Nm X509_STORE_set_verify_func
-.\}
-.el \{\
-.Nm X509_STORE_CTX_get_verify
-.\}
+.Nm X509_STORE_set_verify_func ,
+.Nm X509_STORE_get_verify
 .Nd user-defined certificate chain verification function
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
-.if dLIBRESSL_NEXT_API \{\
 .Ft typedef int
 .Fo "(*X509_STORE_CTX_verify_fn)"
 .Fa "X509_STORE_CTX *ctx"
 .Fc
-.\}
 .Ft void
 .Fo X509_STORE_CTX_set_verify
 .Fa "X509_STORE_CTX *ctx"
-.ie dLIBRESSL_NEXT_API \{\
 .Fa "X509_STORE_CTX_verify_fn verify"
-.\}
-.el \{\
-.Fa "int (*verify)(X509_STORE_CTX *)"
-.\}
 .Fc
-.ie dLIBRESSL_NEXT_API \{\
 .Ft X509_STORE_CTX_verify_fn
 .Fo X509_STORE_CTX_get_verify
-.\}
-.el \{\
-.Ft int
-.Fo "(*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))"
-.\}
 .Fa "X509_STORE_CTX *ctx"
 .Fc
-.if dLIBRESSL_NEXT_API \{\
 .Ft void
 .Fo X509_STORE_set_verify
 .Fa "X509_STORE *store"
@@ -71,7 +50,10 @@
 .Fa "X509_STORE *store"
 .Fa "X509_STORE_CTX_verify_fn verify"
 .Fc
-.\}
+.Ft X509_STORE_CTX_verify_fn
+.Fo X509_STORE_get_verify
+.Fa "X509_STORE_CTX *ctx"
+.Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_CTX_set_verify
 configures
@@ -97,7 +79,6 @@ or
 .Xr X509_VERIFY_PARAM_set_flags 3 .
 Otherwise, it is ignored and a different algorithm is used that does
 not support replacing the verification function.
-.if dLIBRESSL_NEXT_API \{\
 .Pp
 .Fn X509_STORE_set_verify
 saves the function pointer
@@ -116,16 +97,13 @@ is later passed as an argument to
 is an alias for
 .Fn X509_STORE_set_verify
 implemented as a macro.
-.\}
 .Sh RETURN VALUES
-.if dLIBRESSL_NEXT_API \{\
 .Fn X509_STORE_CTX_verify_fn
 is supposed to return 1 to indicate that the chain is valid
 or 0 if it is not or if an error occurred.
 .Pp
-.\}
 .Fn X509_STORE_CTX_get_verify
-returns a function pointer to the function previously set with
+returns a function pointer previously set with
 .Fn X509_STORE_CTX_set_verify
 or
 .Xr X509_STORE_CTX_init 3 ,
@@ -134,6 +112,14 @@ or
 if
 .Fa ctx
 is uninitialized.
+.Pp
+.Fn X509_STORE_get_verify
+returns the function pointer previously set with
+.Fn X509_STORE_set_verify ,
+or
+.Dv NULL
+if that function was not called on the
+.Fa store .
 .Sh SEE ALSO
 .Xr X509_STORE_CTX_init 3 ,
 .Xr X509_STORE_CTX_set_error 3 ,
@@ -145,23 +131,19 @@ is uninitialized.
 .Xr X509_verify_cert 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3
 .Sh HISTORY
-.if dLIBRESSL_NEXT_API \{\
 .Fn X509_STORE_set_verify_func
 first appeared in SSLeay 0.8.0 and has been available since
 .Ox 2.4 .
 .Pp
-.\}
 .Fn X509_STORE_CTX_set_verify
 and
 .Fn X509_STORE_CTX_get_verify
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 7.1 .
-.if dLIBRESSL_NEXT_API \{\
 .Pp
-.Fn X509_STORE_CTX_verify_fn
+.Fn X509_STORE_CTX_verify_fn ,
+.Fn X509_STORE_set_verify ,
 and
-.Fn X509_STORE_set_verify
+.Fn X509_STORE_get_verify
 first appeared in OpenSSL 1.1.0 and have been available since
-.reminder Check the version number!
-.Ox 7.1 .
-.\}
+.Ox 7.2 .
