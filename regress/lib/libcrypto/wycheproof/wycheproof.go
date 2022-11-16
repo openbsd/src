@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.128 2022/07/13 06:40:24 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.129 2022/11/16 08:34:07 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -2900,9 +2900,6 @@ func main() {
 	acceptableComments = make(map[string]int)
 	acceptableFlags = make(map[string]int)
 
-	// TODO: Investigate the following new test vectors:
-	//	primality_test.json
-	//	x25519_{asn,jwk,pem}_test.json
 	tests := []struct {
 		name    string
 		pattern string
