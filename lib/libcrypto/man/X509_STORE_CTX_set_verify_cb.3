@@ -1,5 +1,5 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.8 2022/01/02 21:00:37 tb Exp $
-.\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.9 2022/11/16 14:51:08 schwarze Exp $
+.\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -66,23 +66,28 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 2 2022 $
+.Dd $Mdocdate: November 16 2022 $
 .Dt X509_STORE_CTX_SET_VERIFY_CB 3
 .Os
 .Sh NAME
+.Nm X509_STORE_CTX_verify_cb ,
 .Nm X509_STORE_CTX_set_verify_cb ,
 .Nm X509_STORE_CTX_get_verify_cb
 .Nd set and retrieve verification callback
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
+.Ft typedef int
+.Fo (*X509_STORE_CTX_verify_cb)
+.Fa "int ok"
+.Fa "X509_STORE_CTX *ctx"
+.Fc
 .Ft void
 .Fo X509_STORE_CTX_set_verify_cb
 .Fa "X509_STORE_CTX *ctx"
-.Fa "int (*verify_cb)(int ok, X509_STORE_CTX *ctx)"
+.Fa "X509_STORE_CTX_verify_cb verify_cb"
 .Fc
-.Ft int
-.Fo "(*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))"
-.Fa "int ok"
+.Ft X509_STORE_CTX_verify_cb
+.Fo X509_STORE_CTX_get_verify_cb
 .Fa "X509_STORE_CTX *ctx"
 .Fc
 .Sh DESCRIPTION
@@ -98,7 +103,7 @@ certificate verification, either by overriding error conditions or
 logging errors for debugging purposes.
 .Pp
 However, a verification callback is
-.Sy not
+.Em not
 essential and the default operation is often sufficient.
 .Pp
 The
@@ -256,6 +261,7 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 .Xr X509_STORE_CTX_new 3 ,
 .Xr X509_STORE_CTX_set_error 3 ,
 .Xr X509_STORE_CTX_set_flags 3 ,
+.Xr X509_STORE_CTX_set_verify 3 ,
 .Xr X509_STORE_set_verify_cb 3 ,
 .Xr X509_verify_cert 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3
@@ -267,6 +273,10 @@ first appeared in OpenSSL 0.9.6c and has been available since
 .Fn X509_STORE_CTX_get_verify_cb
 first appeared in OpenSSL 1.1.0 and has been available since
 .Ox 7.1 .
+.Pp
+.Fn X509_STORE_CTX_verify_cb
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.2 .
 .Sh CAVEATS
 In general a verification callback should
 .Sy NOT
