@@ -52,6 +52,8 @@ std::vector<SharedFile *> elf::sharedFiles;
 
 std::unique_ptr<TarWriter> elf::tar;
 
+DenseMap<StringRef, StringRef> elf::gnuWarnings;
+
 // Returns "<internal>", "foo.a(bar.o)" or "baz.o".
 std::string lld::toString(const InputFile *f) {
   if (!f)
@@ -64,6 +66,17 @@ std::string lld::toString(const InputFile *f) {
       f->toStringCache = (f->archiveName + "(" + f->getName() + ")").str();
   }
   return f->toStringCache;
+}
+
+// .gnu.warning.SYMBOL are treated as warning symbols for the given symbol
+void lld::parseGNUWarning(StringRef name, ArrayRef<char> data, size_t size) {
+  if (!name.empty() && name.startswith(".gnu.warning.")) {
+    StringRef wsym = name.substr(13);
+    StringRef s(data.begin());
+    StringRef wng(s.substr(0, size));
+    symtab->insert(wsym)->gwarn = true;
+    gnuWarnings.insert({wsym, wng});
+  }
 }
 
 static ELFKind getELFKind(MemoryBufferRef mb, StringRef archiveName) {
@@ -646,6 +659,14 @@ void ObjFile<ELFT>::initializeSections(bool ignoreComdats) {
     case SHT_REL:
     case SHT_RELA:
     case SHT_NULL:
+      break;
+    case SHT_PROGBITS: {
+      this->sections[i] = createInputSection(sec);
+      StringRef name = CHECK(obj.getSectionName(sec, this->sectionStringTable), this);
+      ArrayRef<char> data =
+          CHECK(obj.template getSectionContentsAsArray<char>(sec), this);
+      parseGNUWarning(name, data, sec.sh_size);
+      }
       break;
     default:
       this->sections[i] = createInputSection(sec);
@@ -1450,6 +1471,9 @@ template <class ELFT> void SharedFile::parse() {
   const ELFFile<ELFT> obj = this->getObj<ELFT>();
   ArrayRef<Elf_Shdr> sections = CHECK(obj.sections(), this);
 
+  StringRef sectionStringTable =
+      CHECK(obj.getSectionStringTable(sections), this);
+
   const Elf_Shdr *versymSec = nullptr;
   const Elf_Shdr *verdefSec = nullptr;
   const Elf_Shdr *verneedSec = nullptr;
@@ -1472,6 +1496,13 @@ template <class ELFT> void SharedFile::parse() {
     case SHT_GNU_verneed:
       verneedSec = &sec;
       break;
+    case SHT_PROGBITS: {
+      StringRef name = CHECK(obj.getSectionName(sec, sectionStringTable), this);
+      ArrayRef<char> data =
+          CHECK(obj.template getSectionContentsAsArray<char>(sec), this);
+      parseGNUWarning(name, data, sec.sh_size);
+      break;
+    }
     }
   }
 

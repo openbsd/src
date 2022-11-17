@@ -954,6 +954,18 @@ template <class ELFT> void elf::reportUndefinedSymbols() {
   undefs.clear();
 }
 
+static void reportGNUWarning(Symbol &sym, InputSectionBase &sec,
+                                 uint64_t offset) {
+  if (sym.gwarn) {
+    StringRef gnuWarning = gnuWarnings.lookup(sym.getName());
+    // report first occurance only
+    sym.gwarn = false;
+    if (!gnuWarning.empty())
+      message(sec.getSrcMsg(sym, offset) + "(" + sec.getObjMsg(offset) +
+              "): warning: " + gnuWarning);
+  }
+}
+
 // Report an undefined symbol if necessary.
 // Returns true if the undefined symbol will produce an error message.
 static bool maybeReportUndefined(Symbol &sym, InputSectionBase &sec,
@@ -1326,6 +1338,8 @@ static void scanReloc(InputSectionBase &sec, OffsetGetter &getOffset, RelTy *&i,
   // marker relocations, e.g. R_*_NONE and R_ARM_V4BX. Don't error on them.
   if (symIndex != 0 && maybeReportUndefined(sym, sec, rel.r_offset))
     return;
+
+  reportGNUWarning(sym, sec, rel.r_offset);
 
   const uint8_t *relocatedAddr = sec.data().begin() + rel.r_offset;
   RelExpr expr = target->getRelExpr(type, sym, relocatedAddr);
