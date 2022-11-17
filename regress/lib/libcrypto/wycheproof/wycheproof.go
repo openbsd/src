@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.129 2022/11/16 08:34:07 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.130 2022/11/17 19:07:52 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -296,6 +296,40 @@ type wycheproofTestGroupECDSAWebCrypto struct {
 	SHA    string                 `json:"sha"`
 	Type   string                 `json:"type"`
 	Tests  []*wycheproofTestECDSA `json:"tests"`
+}
+
+type wycheproofJWKEdDSA struct {
+	Crv string `json:"crv"`
+	D   string `json:"d"`
+	KID string `json:"kid"`
+	KTY string `json:"kty"`
+	X   string `json:"x"`
+}
+
+type wycheproofEdDSAKey struct {
+	Curve   string `json:"curve"`
+	KeySize int    `json:"keySize"`
+	Pk      string `json:"pk"`
+	Sk      string `json:"sk"`
+	Type    string `json:"type"`
+}
+
+type wycheproofTestEdDSA struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Msg     string   `json:"msg"`
+	Sig     string   `json:"sig"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupEdDSA struct {
+	JWK    *wycheproofJWKEdDSA    `json:"jwk"`
+	Key    *wycheproofEdDSAKey    `json:"key"`
+	KeyDer string                 `json:"keyDer"`
+	KeyPem string                 `json:"keyPem"`
+	Type   string                 `json:"type"`
+	Tests  []*wycheproofTestEdDSA `json:"tests"`
 }
 
 type wycheproofTestHkdf struct {
@@ -1956,6 +1990,74 @@ func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAW
 	return success
 }
 
+func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
+	mdctx := C.EVP_MD_CTX_new()
+	if mdctx == nil {
+		log.Fatal("EVP_MD_CTX_new failed")
+	}
+	defer C.EVP_MD_CTX_free(mdctx)
+
+	if C.EVP_DigestVerifyInit(mdctx, nil, nil, nil, pkey) != 1 {
+		log.Fatal("EVP_DigestVerifyInit failed")
+	}
+
+	msg, err := hex.DecodeString(wt.Msg)
+	if err != nil {
+		log.Fatalf("Failed to decode Message %q: %v", wt.Msg, err)
+	}
+	msgLen := len(msg);
+	if msgLen == 0 {
+		msg = append(msg, 0)
+	}
+
+	sig, err := hex.DecodeString(wt.Sig)
+	if err != nil {
+		log.Fatalf("Failed to decode Signature %q: %v", wt.Sig, err)
+	}
+	sigLen := len(sig)
+	if sigLen == 0 {
+		sig = append(sig, 0)
+	}
+
+	ret := C.EVP_DigestVerify(mdctx, (*C.uchar)(unsafe.Pointer(&sig[0])), (C.size_t)(sigLen), (*C.uchar)(unsafe.Pointer(&msg[0])), (C.size_t)(msgLen))
+
+	success := true
+	if (ret == 1) != (wt.Result == "valid") {
+		fmt.Printf("FAIL: Test case %d (%q) %v - EVP_DigestVerify() = %d, want %v\n",
+			wt.TCID, wt.Comment, wt.Flags, int(ret), wt.Result)
+		success = false
+	}
+	return success
+}
+
+func runEdDSATestGroup(algorithm string, wtg *wycheproofTestGroupEdDSA) bool {
+	fmt.Printf("Running %v test group %v...\n", algorithm, wtg.Type)
+
+	if wtg.Key.Curve != "edwards25519" || wtg.Key.KeySize != 255 {
+		fmt.Printf("INFO: Unexpected curve or key size. want (\"edwards25519\", 255), got (%q, %d)\n", wtg.Key.Curve, wtg.Key.KeySize)
+		return false
+	}
+
+	pubKey, err := hex.DecodeString(wtg.Key.Pk)
+	if err != nil {
+		log.Fatalf("Failed to decode Pubkey %q: %v", wtg.Key.Pk, err)
+	}
+
+	pkey := C.EVP_PKEY_new_raw_public_key(C.EVP_PKEY_ED25519, nil, (*C.uchar)(unsafe.Pointer(&pubKey[0])), (C.size_t)(len(pubKey)))
+	if pkey == nil {
+		log.Fatal("EVP_PKEY_new_raw_public_key failed")
+	}
+	defer C.EVP_PKEY_free(pkey)
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runEdDSATest(pkey, wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
 	ikm, err := hex.DecodeString(wt.Ikm)
 	if err != nil {
@@ -2769,6 +2871,8 @@ func runTestVectors(path string, variant testVariant) bool {
 		default:
 			wtg = &wycheproofTestGroupECDSA{}
 		}
+	case "EDDSA":
+		wtg = &wycheproofTestGroupEdDSA{}
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 		wtg = &wycheproofTestGroupHkdf{}
 	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
@@ -2844,6 +2948,10 @@ func runTestVectors(path string, variant testVariant) bool {
 					success = false
 				}
 			}
+		case "EDDSA":
+			if !runEdDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupEdDSA)) {
+				success = false
+			}
 		case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 			if !runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf)) {
 				success = false
@@ -2917,6 +3025,8 @@ func main() {
 		{"ECDSA", "ecdsa_[^w]*test.json", Normal},
 		{"ECDSA P1363", "ecdsa_*_p1363_test.json", P1363},
 		{"ECDSA webcrypto", "ecdsa_webcrypto_test.json", Webcrypto},
+		{"EDDSA", "eddsa_test.json", Normal},
+		{"ED448", "ed448_test.json", Skip},
 		{"HKDF", "hkdf_sha*_test.json", Normal},
 		{"HMAC", "hmac_sha*_test.json", Normal},
 		{"KW", "kw_test.json", Normal},
