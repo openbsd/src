@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.220 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: main.c,v 1.221 2022/11/17 20:49:38 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -64,6 +64,7 @@ const char	*bird_tablename = "ROAS";
 int	verbose;
 int	noop;
 int	filemode;
+int	shortlistmode;
 int	rrdpon = 1;
 int	repo_timeout;
 time_t	deadline;
@@ -71,6 +72,13 @@ time_t	deadline;
 struct skiplist skiplist = LIST_HEAD_INITIALIZER(skiplist);
 
 struct stats	 stats;
+
+struct shortlistentry {
+	LIST_ENTRY(shortlistentry)	 entry;
+	char				*value; /* FQDN */
+};
+LIST_HEAD(shortlist, shortlistentry);
+struct shortlist shortlist = LIST_HEAD_INITIALIZER(shortlist);
 
 /*
  * Log a message to stderr if and only if "verbose" is non-zero.
@@ -448,19 +456,33 @@ queue_add_from_cert(const struct cert *cert)
 {
 	struct repo		*repo;
 	struct skiplistentry	*sle;
+	struct shortlistentry	*she;
 	char			*nfile, *npath, *host;
 	const char		*uri, *repouri, *file;
 	size_t			 repourisz;
+	int			 shortlisted = 0;
+
+	if (strncmp(cert->repo, "rsync://", 8) != 0)
+		errx(1, "unexpected protocol");
+	host = cert->repo + 8;
 
 	LIST_FOREACH(sle, &skiplist, entry) {
-		if (strncmp(cert->repo, "rsync://", 8) != 0)
-			errx(1, "unexpected protocol");
-		host = cert->repo + 8;
-
 		if (strncasecmp(host, sle->value, strcspn(host, "/")) == 0) {
 			warnx("skipping %s (listed in skiplist)", cert->repo);
 			return;
 		}
+	}
+
+	LIST_FOREACH(she, &shortlist, entry) {
+		if (strncasecmp(host, she->value, strcspn(host, "/")) == 0) {
+			shortlisted = 1;
+			break;
+		}
+	}
+	if (shortlistmode && shortlisted == 0) {
+		if (verbose)
+			warnx("skipping %s (not shortlisted)", cert->repo);
+		return;
 	}
 
 	repo = repo_lookup(cert->talid, cert->repo,
@@ -760,6 +782,26 @@ load_skiplist(const char *slf)
 	free(line);
 }
 
+/*
+ * Load shortlist entries.
+ */
+static void
+load_shortlist(const char *fqdn)
+{
+	struct shortlistentry	*she;
+
+	if (!valid_uri(fqdn, strlen(fqdn), NULL))
+		errx(1, "invalid fqdn passed to -q: %s", fqdn);
+
+	if ((she = malloc(sizeof(struct shortlistentry))) == NULL)
+		err(1, NULL);
+
+	if ((she->value = strdup(fqdn)) == NULL)
+		err(1, NULL);
+
+	LIST_INSERT_HEAD(&shortlist, she, entry);
+}
+
 static void
 check_fs_size(int fd, const char *cachedir)
 {
@@ -865,7 +907,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fjnorRs:S:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:fH:jnorRs:S:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -885,6 +927,10 @@ main(int argc, char *argv[])
 		case 'f':
 			filemode = 1;
 			noop = 1;
+			break;
+		case 'H':
+			shortlistmode = 1;
+			load_shortlist(optarg);
 			break;
 		case 'j':
 			outformats |= FORMAT_JSON;
@@ -1330,8 +1376,9 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-BcjnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-S skiplist] [-s timeout] [-T table] [-t tal]"
-	    " [outputdir]\n"
+	    "                   [-H fqdn ] [-S skiplist] [-s timeout] [-T table]"
+	    " [-t tal]\n"
+	    "                   [outputdir]\n"
 	    "       rpki-client [-Vv] [-d cachedir] [-j] [-t tal] -f file ..."
 	    "\n");
 	return 1;

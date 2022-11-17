@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.79 2022/11/10 13:22:55 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.80 2022/11/17 20:49:38 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2022 $
+.Dd $Mdocdate: November 17 2022 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
+.Op Fl H Ar fqdn
 .Op Fl S Ar skiplist
 .Op Fl s Ar timeout
 .Op Fl T Ar table
@@ -120,6 +121,16 @@ and can be combined with
 .Fl j
 to emit a stream of
 .Em Concatenated JSON .
+.It Fl H Ar fqdn
+Create a shortlist and add
+.Ar fqdn
+to the shortlist.
+.Nm
+only connects to shortlisted hosts.
+The shortlist filter is enforced during processing of the
+.Em Subject Information Access Pq SIA
+extension in CA certificates, thus applies to both RSYNC and RRDP connections.
+This option can be used multiple times.
 .It Fl j
 Create output in the file
 .Pa json
