@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.80 2022/11/04 09:36:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.81 2022/11/17 23:26:07 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -265,8 +265,6 @@ RBT_PROTOTYPE(uvm_map_addr, vm_map_entry, daddrs.addr_entry,
  */
 struct vm_map {
 	struct pmap		*pmap;		/* [I] Physical map */
-	struct rwlock		lock;		/* Non-intrsafe lock */
-	struct mutex		mtx;		/* Intrsafe lock */
 	u_long			sserial;	/* [v] # stack changes */
 	u_long			wserial;	/* [v] # PROT_WRITE increases */
 
@@ -275,7 +273,6 @@ struct vm_map {
 	vsize_t			size;		/* virtual size */
 	int			ref_count;	/* [a] Reference count */
 	int			flags;		/* flags */
-	struct mutex		flags_lock;	/* flags lock */
 	unsigned int		timestamp;	/* Version number */
 
 	vaddr_t			min_offset;	/* [I] First address in map. */
@@ -311,6 +308,14 @@ struct vm_map {
 	struct uvm_addr_state	*uaddr_exe;	/* Executable selector. */
 	struct uvm_addr_state	*uaddr_any[4];	/* More selectors. */
 	struct uvm_addr_state	*uaddr_brk_stack; /* Brk/stack selector. */
+
+	/*
+	 * XXX struct mutex changes size because of compile options, so place
+	 * place after fields which are inspected by libkvm / procmap(8)
+	 */
+	struct rwlock		lock;		/* Non-intrsafe lock */
+	struct mutex		mtx;		/* Intrsafe lock */
+	struct mutex		flags_lock;	/* flags lock */
 };
 
 /* vm_map flags */
