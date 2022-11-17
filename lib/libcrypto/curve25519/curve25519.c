@@ -1,4 +1,4 @@
-/*	$OpenBSD: curve25519.c,v 1.13 2022/11/09 17:45:55 jsing Exp $ */
+/*	$OpenBSD: curve25519.c,v 1.14 2022/11/17 19:01:59 tb Exp $ */
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -24,6 +24,7 @@
  * The field functions are shared by Ed25519 and X25519 where possible.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -4671,10 +4672,22 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
   return 1;
 }
 
+/*
+ * Little endian representation of the order of edwards25519,
+ * see https://www.rfc-editor.org/rfc/rfc7748#section-4.1
+ */
+static const uint8_t order[] = {
+  0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
+  0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
+};
+
 int ED25519_verify(const uint8_t *message, size_t message_len,
     const uint8_t signature[ED25519_SIGNATURE_LENGTH],
     const uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH]) {
   ge_p3 A;
+  int i;
   if ((signature[63] & 224) != 0 ||
       x25519_ge_frombytes_vartime(&A, public_key) != 0) {
     return 0;
@@ -4689,6 +4702,20 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
   memcpy(rcopy, signature, 32);
   uint8_t scopy[32];
   memcpy(scopy, signature + 32, 32);
+
+  /*
+   * https://tools.ietf.org/html/rfc8032#section-5.1.7 requires that scopy be
+   * in the range [0, order) to prevent signature malleability. This value is
+   * public, so there is no need to make this constant time.
+   */
+  for (i = 31; i >= 0; i--) {
+    if (scopy[i] > order[i])
+      return 0;
+    if (scopy[i] < order[i])
+      break;
+    if (i == 0)
+      return 0;
+  }
 
   SHA512_CTX hash_ctx;
   SHA512_Init(&hash_ctx);
