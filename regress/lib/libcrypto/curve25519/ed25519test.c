@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed25519test.c,v 1.5 2022/11/17 21:19:43 tb Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.6 2022/11/17 22:45:48 tb Exp $ */
 /*
  * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -387,22 +387,6 @@ dump_info(const uint8_t *message, size_t message_len, const uint8_t *public_key,
 	}
 }
 
-static void
-dump_once(const char *description, const uint8_t *message, size_t message_len,
-    const uint8_t *public_key, const uint8_t *private_key,
-    const uint8_t *signature)
-{
-	static int dumped = 0;
-
-	if (dumped)
-		return;
-
-	fprintf(stderr, "%s\n", description);
-	dump_info(message, message_len, public_key, private_key, signature);
-
-	dumped = 1;
-}
-
 /*
  * Little-endian representation of the order of edwards25519,
  * see https://www.rfc-editor.org/rfc/rfc7748#section-4.1
@@ -421,18 +405,22 @@ static const uint8_t order[] = {
 static void
 modify_signature(uint8_t *signature)
 {
+	uint16_t sum;
 	uint8_t *upper_half = &signature[32];
+	uint16_t carry = 0;
 	size_t i;
 
 	for (i = 0; i < sizeof(order); i++) {
-		if (i < sizeof(order) - 1 && 0xff - order[i] < upper_half[i])
-			upper_half[i + 1] += 1;
-		upper_half[i] += order[i];
+		sum = carry + order[i] + upper_half[i];
+		carry = (sum > 0xff);
+		upper_half[i] = sum & 0xff;
 	}
+
+	/* carry == 0 since 0 <= upper_half < order and 2 * order < 2^256. */
 }
 
 static int
-test_signature_malleability(void)
+test_ED25519_signature_malleability(void)
 {
 	uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH];
 	uint8_t private_key[ED25519_PRIVATE_KEY_LENGTH];
@@ -461,26 +449,15 @@ test_signature_malleability(void)
 	modify_signature(signature);
 
 	if (ED25519_verify(message, sizeof(message), signature, public_key)) {
-		dump_once("Verified with modified signature", message,
-		    sizeof(message), public_key, private_key, signature);
+		fprintf(stderr, "Verified with modified signature\n");
+		dump_info(message, sizeof(message), public_key, private_key,
+		    signature);
 		goto err;
 	}
 
 	failed = 0;
 
  err:
-	return failed;
-}
-
-static int
-test_ED25519_signature_malleability(void)
-{
-	int i;
-	int failed = 0;
-
-	for (i = 0; i < 128; i++)
-		failed |= test_signature_malleability();
-
 	return failed;
 }
 
