@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_private.h,v 1.47 2018/04/28 15:16:49 schwarze Exp $	*/
+/*	$OpenBSD: asr_private.h,v 1.48 2022/11/17 17:39:41 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -298,6 +298,7 @@ int _asr_unpack_rr(struct asr_unpack *, struct asr_dns_rr *);
 int _asr_sockaddr_from_str(struct sockaddr *, int, const char *);
 ssize_t _asr_dname_from_fqdn(const char *, char *, size_t);
 ssize_t _asr_addr_as_fqdn(const char *, int, char *, size_t);
+int hnok_lenient(const char *);
 
 /* asr.c */
 void _asr_resolver_done(void *);
