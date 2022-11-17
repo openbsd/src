@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.214 2022/06/21 17:33:21 bket Exp $	*/
+/*	$OpenBSD: re.c,v 1.215 2022/11/17 01:30:57 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -97,7 +97,7 @@
  * programming API as the older 8169, but also have some vendor-specific
  * registers for the on-board PHY. The 8110S is a LAN-on-motherboard
  * part designed to be pin-compatible with the Realtek 8100 10/100 chip.
- * 
+ *
  * This driver takes advantage of the RX and TX checksum offload and
  * VLAN tag insertion/extraction features. It also implements TX
  * interrupt moderation using the timer interrupt registers, which
@@ -835,7 +835,7 @@ re_attach(struct rl_softc *sc, const char *intrstr)
 		cfg2 = CSR_READ_1(sc, sc->rl_cfg2);
 		switch (cfg2 & RL_CFG2_PCI_MASK) {
 		case RL_CFG2_PCI_33MHZ:
- 			sc->rl_bus_speed = 33;
+			sc->rl_bus_speed = 33;
 			break;
 		case RL_CFG2_PCI_66MHZ:
 			sc->rl_bus_speed = 66;
@@ -1125,7 +1125,7 @@ fail_1:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->rl_ldata.rl_tx_listseg, sc->rl_ldata.rl_tx_listnseg);
 fail_0:
- 	return (1);
+	return (1);
 }
 
 
@@ -1331,7 +1331,7 @@ re_rxeof(struct rl_softc *sc)
 		 * set, but if CRC is clear, it will still be a valid frame.
 		 */
 		if ((rxstat & RL_RDESC_STAT_RXERRSUM) != 0 &&
-	 	    !(rxstat & RL_RDESC_STAT_RXERRSUM && !(total_len > 8191 &&
+		    !(rxstat & RL_RDESC_STAT_RXERRSUM && !(total_len > 8191 &&
 		    (rxstat & RL_RDESC_STAT_ERRS) == RL_RDESC_STAT_GIANT))) {
 			ifp->if_ierrors++;
 			/*
@@ -1350,7 +1350,7 @@ re_rxeof(struct rl_softc *sc)
 			m->m_len = total_len % RL_FRAMELEN(sc->rl_max_mtu);
 			if (m->m_len == 0)
 				m->m_len = RL_FRAMELEN(sc->rl_max_mtu);
-			/* 
+			/*
 			 * Special case: if there's 4 bytes or less
 			 * in this buffer, the mbuf can be discarded:
 			 * the last 4 bytes is the CRC, which we don't
@@ -1625,7 +1625,7 @@ re_encap(struct rl_softc *sc, unsigned int idx, struct mbuf *m)
 		ip = (struct ip *)mh.m_data;
 
 		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-			ip->ip_sum = in_cksum(&mh, sizeof(struct ip)); 
+			ip->ip_sum = in_cksum(&mh, sizeof(struct ip));
 		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
 			in_delayed_cksum(&mh);
 
@@ -2064,7 +2064,7 @@ re_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
 		    NULL, RL_FRAMELEN(sc->rl_max_mtu), &sc->rl_ldata.rl_rx_ring);
- 		break;
+		break;
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, command, data);
 	}
@@ -2253,7 +2253,7 @@ re_disable_sim_im(struct rl_softc *sc)
 {
 	if (sc->sc_hwrev == RL_HWREV_8139CPLUS)
 		CSR_WRITE_4(sc, RL_TIMERINT, 0);
-	else 
+	else
 		CSR_WRITE_4(sc, RL_TIMERINT_8169, 0);
 	sc->rl_timerintr = 0;
 }
@@ -2315,7 +2315,7 @@ re_setup_intr(struct rl_softc *sc, int enable_intrs, int imtype)
 	if (enable_intrs)
 		CSR_WRITE_2(sc, RL_IMR, sc->rl_intrs);
 	else
-		CSR_WRITE_2(sc, RL_IMR, 0); 
+		CSR_WRITE_2(sc, RL_IMR, 0);
 
 	switch (imtype) {
 	case RL_IMTYPE_NONE:
@@ -2479,7 +2479,7 @@ re_kstat_read(struct kstat *ks)
 	CSR_WRITE_4(sc, RE_DTCCR_LO, cmd);
 	bus_space_barrier(sc->rl_btag, sc->rl_bhandle, RE_DTCCR_LO, 4,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
-	
+
 	tmo = 1000;
 	do {
 		reg = CSR_READ_4(sc, RE_DTCCR_LO);
