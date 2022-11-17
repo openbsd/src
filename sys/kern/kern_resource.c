@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.75 2022/10/07 14:59:39 deraadt Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.76 2022/11/17 18:53:13 deraadt Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -52,6 +52,7 @@
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 /* Resource usage check interval in msec */
 #define RUCHECK_INTERVAL	1000
@@ -329,7 +330,7 @@ dosetrlimit(struct proc *p, u_int which, struct rlimit *limp)
 			size = round_page(size);
 			KERNEL_LOCK();
 			(void) uvm_map_protect(&vm->vm_map, addr,
-			    addr+size, prot, FALSE, FALSE);
+			    addr+size, prot, UVM_ET_STACK, FALSE, FALSE);
 			KERNEL_UNLOCK();
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.303 2022/11/04 09:36:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.304 2022/11/17 18:53:05 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3120,13 +3120,15 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
  */
 int
 uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_prot_t new_prot, boolean_t set_max, boolean_t checkimmutable)
+    vm_prot_t new_prot, int etype, boolean_t set_max, boolean_t checkimmutable)
 {
 	struct vm_map_entry *first, *iter;
 	vm_prot_t old_prot;
 	vm_prot_t mask;
 	vsize_t dused;
 	int error;
+
+	KASSERT((etype & ~UVM_ET_STACK) == 0);	/* only UVM_ET_STACK allowed */
 
 	if (start > end)
 		return EINVAL;
@@ -3196,6 +3198,10 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 	}
 
+	/* only apply UVM_ET_STACK on a mapping changing to RW */
+	if (etype && new_prot != (PROT_READ|PROT_WRITE))
+		etype = 0;
+
 	/* Fix protections.  */
 	for (iter = first; iter != NULL && iter->start < end;
 	    iter = RBT_NEXT(uvm_map_addr, iter)) {
@@ -3226,6 +3232,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 			iter->protection &= new_prot;
 		} else
 			iter->protection = new_prot;
+		iter->etype |= etype;	/* potentially add UVM_ET_STACK */
 
 		/*
 		 * update physical map if necessary.  worry about copy-on-write
@@ -3306,6 +3313,8 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 	pmap_update(map->pmap);
 
 out:
+	if (etype & UVM_ET_STACK)
+		map->sserial++;
 	vm_map_unlock(map);
 	return error;
 }

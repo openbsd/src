@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.174 2022/10/21 19:13:33 deraadt Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.175 2022/11/17 18:53:05 deraadt Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ sys_mprotect(struct proc *p, void *v, register_t *retval)
 		return EINVAL;		/* disallow wrap-around. */
 
 	return (uvm_map_protect(&p->p_vmspace->vm_map, addr, addr+size,
-	    prot, FALSE, TRUE));
+	    prot, 0, FALSE, TRUE));
 }
 
 /*

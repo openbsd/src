@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.62 2022/10/21 20:46:40 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.63 2022/11/17 18:53:12 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -262,7 +262,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		 */
 		error = (uvm_map_protect(&p->p_vmspace->vm_map,
 		    cmd->ev_addr, round_page(cmd->ev_len),
-		    prot, FALSE, TRUE));
+		    prot, 0, FALSE, TRUE));
 	}
 	if (error == 0) {
 		if (cmd->ev_flags & VMCMD_IMMUTABLE)
