@@ -1,6 +1,6 @@
-/*	$OpenBSD: ed25519test.c,v 1.3 2022/11/09 17:49:54 jsing Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.4 2022/11/17 19:06:35 tb Exp $ */
 /*
- * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/curve25519.h>
@@ -353,6 +354,134 @@ test_ED25519_sign(void)
 	return failed;
 }
 
+static void
+hexdump(const unsigned char *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	if (len % 8)
+		fprintf(stderr, "\n");
+}
+
+static void
+dump_info(const uint8_t *message, size_t message_len, const uint8_t *public_key,
+    const uint8_t *private_key, const uint8_t *signature)
+{
+
+	fprintf(stderr, "message:\n");
+	hexdump(message, message_len);
+
+	fprintf(stderr, "public key:\n");
+	hexdump(public_key, ED25519_PUBLIC_KEY_LENGTH);
+	fprintf(stderr, "private key:\n");
+	hexdump(private_key, ED25519_PRIVATE_KEY_LENGTH);
+
+	if (signature != NULL) {
+		fprintf(stderr, "signature:\n");
+		hexdump(signature, ED25519_SIGNATURE_LENGTH);
+	}
+}
+
+static void
+dump_once(const char *description, const uint8_t *message, size_t message_len,
+    const uint8_t *public_key, const uint8_t *private_key,
+    const uint8_t *signature)
+{
+	static int dumped = 0;
+
+	if (dumped)
+		return;
+
+	fprintf(stderr, "%s\n", description);
+	dump_info(message, message_len, public_key, private_key, signature);
+
+	dumped = 1;
+}
+
+/*
+ * Little-endian representation of the order of edwards25519,
+ * see https://www.rfc-editor.org/rfc/rfc7748#section-4.1
+ */
+static const uint8_t order[] = {
+	0xed, 0xd3, 0xf5, 0x5c, 0x1a, 0x63, 0x12, 0x58,
+	0xd6, 0x9c, 0xf7, 0xa2, 0xde, 0xf9, 0xde, 0x14,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
+};
+
+/*
+ * Modify signature by adding the group order to the upper half of the
+ * signature. This is caught by the check added in curve25519.c r1.14.
+ */
+static void
+modify_signature(uint8_t *signature)
+{
+	uint8_t *upper_half = &signature[32];
+	size_t i;
+
+	for (i = 0; i < sizeof(order); i++) {
+		if (i < sizeof(order) - 1 && 0xff - order[i] < upper_half[i])
+			upper_half[i + 1] += 1;
+		upper_half[i] += order[i];
+	}
+}
+
+static int
+test_signature_malleability(void)
+{
+	uint8_t public_key[ED25519_PUBLIC_KEY_LENGTH];
+	uint8_t private_key[ED25519_PRIVATE_KEY_LENGTH];
+	uint8_t message[32];
+	uint8_t signature[ED25519_SIGNATURE_LENGTH];
+	int failed = 1;
+
+	ED25519_keypair(public_key, private_key);
+	arc4random_buf(message, sizeof(message));
+
+	if (!ED25519_sign(signature, message, sizeof(message),
+	    public_key, private_key)) {
+		fprintf(stderr, "Failed to sign random message\n");
+		dump_info(message, sizeof(message), public_key, private_key,
+		    NULL);
+		goto err;
+	}
+
+	if (!ED25519_verify(message, sizeof(message), signature, public_key)) {
+		fprintf(stderr, "Failed to verify random message\n");
+		dump_info(message, sizeof(message), public_key, private_key,
+		    signature);
+		goto err;
+	}
+
+	modify_signature(signature);
+
+	if (ED25519_verify(message, sizeof(message), signature, public_key)) {
+		dump_once("Verified with modified signature", message,
+		    sizeof(message), public_key, private_key, signature);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	return failed;
+}
+
+static int
+test_ED25519_signature_malleability(void)
+{
+	int i;
+	int failed = 0;
+
+	for (i = 0; i < 128; i++)
+		failed |= test_signature_malleability();
+
+	return failed;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -360,6 +489,7 @@ main(int argc, char *argv[])
 
 	failed |= test_ED25519_verify();
 	failed |= test_ED25519_sign();
+	failed |= test_ED25519_signature_malleability();
 
 	if (failed)
 		fprintf(stderr, "FAILED\n");
