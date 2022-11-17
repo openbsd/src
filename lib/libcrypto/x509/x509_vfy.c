@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.105 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.106 2022/11/17 00:42:12 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -725,43 +725,6 @@ get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 		return 0;
 }
 
-/*
- * X509_check_purpose is special.
- * 0 is bad, 1 is good, values > 1 are maybe good for web pki necromancy
- * and certificates that were checked into software unit tests years ago
- * that nobody knows how to change. (Netscape Server Gated Crypto Forever!)
- */
-#define PURPOSE_GOOD(x) (x == 1)
-#define PURPOSE_BAD(x) (x == 0)
-static int
-check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
-    int must_be_ca)
-{
-	int purpose_check, trust;
-
-	purpose_check = X509_check_purpose(x, purpose, must_be_ca > 0);
-	trust = X509_TRUST_UNTRUSTED;
-
-	/*
-	 * For trusted certificates we want to see whether any auxiliary trust
-	 * settings for the desired purpose override the purpose constraints
-	 * from the certificate EKU.
-	 */
-	if (depth >= ctx->num_untrusted && purpose == ctx->param->purpose)
-		trust = x509_check_trust_no_compat(x, ctx->param->trust, 0);
-
-	/* XXX STRICT should really be the default */
-	if (trust != X509_TRUST_REJECTED && !PURPOSE_BAD(purpose_check)) {
-		return PURPOSE_GOOD(purpose_check) ||
-		    (ctx->param->flags & X509_V_FLAG_X509_STRICT) == 0;
-	}
-
-	ctx->error = X509_V_ERR_INVALID_PURPOSE;
-	ctx->error_depth = depth;
-	ctx->current_cert = x;
-	return ctx->verify_cb(0, ctx);
-}
-
 /* Check a certificate chains extensions for consistency
  * with the supplied purpose
  */
@@ -778,7 +741,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 	int proxy_path_length = 0;
 	int purpose;
 	int allow_proxy_certs;
-	size_t chain_len;
 
 	cb = ctx->verify_cb;
 
@@ -802,8 +764,8 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 		purpose = ctx->param->purpose;
 	}
 
-	chain_len = sk_X509_num(ctx->chain);
-	for (i = 0; i < chain_len; i++) {
+	/* Check all untrusted certificates */
+	for (i = 0; i < ctx->num_untrusted; i++) {
 		int ret;
 		x = sk_X509_value(ctx->chain, i);
 		if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) &&
@@ -854,11 +816,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok = cb(0, ctx);
-			if (!ok)
-				goto end;
-		}
-		if (purpose > 0) {
-			ok = check_purpose(ctx, x, purpose, i, must_be_ca);
 			if (!ok)
 				goto end;
 		}

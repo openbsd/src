@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.28 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.29 2022/11/17 00:42:12 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -111,8 +111,8 @@ int
 }
 LCRYPTO_ALIAS(X509_TRUST_set_default)
 
-static int
-X509_check_trust_internal(X509 *x, int id, int flags, int compat)
+int
+X509_check_trust(X509 *x, int id, int flags)
 {
 	X509_TRUST *pt;
 	int idx;
@@ -133,7 +133,7 @@ X509_check_trust_internal(X509 *x, int id, int flags, int compat)
 		rv = obj_trust(NID_anyExtendedKeyUsage, x, 0);
 		if (rv != X509_TRUST_UNTRUSTED)
 			return rv;
-		return compat && trust_compat(NULL, x, 0);
+		return trust_compat(NULL, x, 0);
 	}
 	idx = X509_TRUST_get_by_id(id);
 	if (idx == -1)
@@ -142,18 +142,6 @@ X509_check_trust_internal(X509 *x, int id, int flags, int compat)
 	return pt->check_trust(pt, x, flags);
 }
 LCRYPTO_ALIAS(X509_check_trust)
-
-int
-X509_check_trust(X509 *x, int id, int flags)
-{
-	return X509_check_trust_internal(x, id, flags, /*compat =*/1);
-}
-
-int
-x509_check_trust_no_compat(X509 *x, int id, int flags)
-{
-	return X509_check_trust_internal(x, id, flags, /*compat =*/0);
-}
 
 int
 X509_TRUST_get_count(void)
