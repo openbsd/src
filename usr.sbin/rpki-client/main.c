@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.221 2022/11/17 20:49:38 job Exp $ */
+/*	$OpenBSD: main.c,v 1.222 2022/11/17 20:51:39 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -944,7 +944,7 @@ main(int argc, char *argv[])
 		case 'R':
 			rrdpon = 0;
 			break;
-		case 'r':
+		case 'r': /* Remove after OpenBSD 7.3 */
 			rrdpon = 1;
 			break;
 		case 's':
