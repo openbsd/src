@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_pmeth.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: cm_pmeth.c,v 1.9 2022/11/18 14:45:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -148,8 +148,7 @@ pkey_cmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		break;
 
 	case EVP_PKEY_CTRL_MD:
-		if (ctx->pkey && !CMAC_CTX_copy(ctx->data,
-		    (CMAC_CTX *)ctx->pkey->pkey.ptr))
+		if (ctx->pkey && !CMAC_CTX_copy(ctx->data, ctx->pkey->pkey.ptr))
 			return 0;
 		if (!CMAC_Init(cmctx, NULL, 0, NULL, NULL))
 			return 0;

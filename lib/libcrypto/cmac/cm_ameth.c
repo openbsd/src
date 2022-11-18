@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_ameth.c,v 1.8 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: cm_ameth.c,v 1.9 2022/11/18 14:45:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -73,9 +73,7 @@ cmac_size(const EVP_PKEY *pkey)
 static void
 cmac_key_free(EVP_PKEY *pkey)
 {
-	CMAC_CTX *cmctx = (CMAC_CTX *)pkey->pkey.ptr;
-
-	CMAC_CTX_free(cmctx);
+	CMAC_CTX_free(pkey->pkey.ptr);
 }
 
 const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = {

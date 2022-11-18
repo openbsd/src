@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.12 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.13 2022/11/18 14:45:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -82,7 +82,7 @@ hmac_size(const EVP_PKEY *pkey)
 static void
 hmac_key_free(EVP_PKEY *pkey)
 {
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+	ASN1_OCTET_STRING *os = pkey->pkey.ptr;
 
 	if (os) {
 		if (os->data)
@@ -132,7 +132,7 @@ static int
 old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
 {
 	int inc;
-	ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+	ASN1_OCTET_STRING *os = pkey->pkey.ptr;
 
 	if (pder) {
 		if (!*pder) {

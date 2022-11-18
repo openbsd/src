@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.30 2022/11/10 16:37:52 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.31 2022/11/18 14:45:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -93,7 +93,7 @@ struct evp_pkey_st {
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	ENGINE *engine;
 	union	{
-		char *ptr;
+		void *ptr;
 #ifndef OPENSSL_NO_RSA
 		struct rsa_st *rsa;	/* RSA */
 #endif

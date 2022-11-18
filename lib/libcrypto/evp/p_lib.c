@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.30 2022/11/10 14:46:44 jsing Exp $ */
+/* $OpenBSD: p_lib.c,v 1.31 2022/11/18 14:45:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,7 +388,7 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 		goto err;
 	}
 
-	ret->pkey.ptr = (char *)cmctx;
+	ret->pkey.ptr = cmctx;
 
 	return ret;
 
