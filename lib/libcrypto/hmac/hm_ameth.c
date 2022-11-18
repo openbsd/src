@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.13 2022/11/18 14:45:10 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.14 2022/11/18 15:01:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -72,6 +73,13 @@
  * maximum HMAC output length and to free up an HMAC
  * key.
  */
+
+static int
+hmac_pkey_public_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+{
+	/* The ameth pub_cmp must return 1 on match, 0 on mismatch. */
+	return ASN1_OCTET_STRING_cmp(a->pkey.ptr, b->pkey.ptr) == 0;
+}
 
 static int
 hmac_size(const EVP_PKEY *pkey)
@@ -101,6 +109,51 @@ hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	default:
 		return -2;
 	}
+}
+
+static int
+hmac_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv, size_t len)
+{
+	ASN1_OCTET_STRING *os = NULL;
+
+	if (pkey->pkey.ptr != NULL)
+		goto err;
+
+	if (len > INT_MAX)
+		goto err;
+
+	if ((os = ASN1_OCTET_STRING_new()) == NULL)
+		goto err;
+
+	if (!ASN1_OCTET_STRING_set(os, priv, len))
+		goto err;
+
+	pkey->pkey.ptr = os;
+
+	return 1;
+
+ err:
+	ASN1_OCTET_STRING_free(os);
+
+	return 0;
+}
+
+static int
+hmac_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
+{
+	ASN1_OCTET_STRING *os = pkey->pkey.ptr;
+	CBS cbs;
+
+	if (priv == NULL) {
+		*len = os->length;
+		return 1;
+	}
+
+	if (os == NULL)
+		return 0;
+
+	CBS_init(&cbs, os->data, os->length);
+	return CBS_write_bytes(&cbs, priv, *len, len);
 }
 
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
@@ -161,12 +214,18 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
 	.pem_str = "HMAC",
 	.info = "OpenSSL HMAC method",
 
+	.pub_cmp = hmac_pkey_public_cmp,
+
 	.pkey_size = hmac_size,
 
 	.pkey_free = hmac_key_free,
 	.pkey_ctrl = hmac_pkey_ctrl,
+
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
 	.old_priv_decode = old_hmac_decode,
-	.old_priv_encode = old_hmac_encode
+	.old_priv_encode = old_hmac_encode,
 #endif
+
+	.set_priv_key = hmac_set_priv_key,
+	.get_priv_key = hmac_get_priv_key,
 };
