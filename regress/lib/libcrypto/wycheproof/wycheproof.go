@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.130 2022/11/17 19:07:52 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.131 2022/11/18 18:32:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -2005,7 +2005,7 @@ func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
 	if err != nil {
 		log.Fatalf("Failed to decode Message %q: %v", wt.Msg, err)
 	}
-	msgLen := len(msg);
+	msgLen := len(msg)
 	if msgLen == 0 {
 		msg = append(msg, 0)
 	}
