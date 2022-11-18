@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.15 2022/11/18 15:10:51 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.16 2022/11/18 20:03:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -142,16 +142,16 @@ hmac_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv, size_t len)
 static int
 hmac_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
 {
-	ASN1_OCTET_STRING *os = pkey->pkey.ptr;
+	ASN1_OCTET_STRING *os;
 	CBS cbs;
+
+	if ((os = pkey->pkey.ptr) == NULL)
+		return 0;
 
 	if (priv == NULL) {
 		*len = os->length;
 		return 1;
 	}
-
-	if (os == NULL)
-		return 0;
 
 	CBS_init(&cbs, os->data, os->length);
 	return CBS_write_bytes(&cbs, priv, *len, len);
