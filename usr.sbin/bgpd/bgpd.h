@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.454 2022/09/23 15:50:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.455 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -263,6 +263,7 @@ struct roa {
 };
 
 RB_HEAD(roa_tree, roa);
+RB_HEAD(aspa_tree, aspa_set);
 
 struct set_table;
 struct as_set;
@@ -284,6 +285,7 @@ struct bgpd_config {
 	struct prefixset_head			 prefixsets;
 	struct prefixset_head			 originsets;
 	struct roa_tree				 roa;
+	struct aspa_tree			 aspa;
 	struct rde_prefixset_head		 rde_prefixsets;
 	struct rde_prefixset_head		 rde_originsets;
 	struct as_set_head			 as_sets;
@@ -582,6 +584,10 @@ enum imsg_type {
 	IMSG_RECONF_ORIGIN_SET,
 	IMSG_RECONF_ROA_SET,
 	IMSG_RECONF_ROA_ITEM,
+	IMSG_RECONF_ASPA,
+	IMSG_RECONF_ASPA_TAS,
+	IMSG_RECONF_ASPA_TAS_AID,
+	IMSG_RECONF_ASPA_DONE,
 	IMSG_RECONF_RTR_CONFIG,
 	IMSG_RECONF_DRAIN,
 	IMSG_RECONF_DONE,
@@ -1149,6 +1155,15 @@ struct as_set {
 	int				 dirty;
 };
 
+struct aspa_set {
+	time_t				 expires;
+	uint32_t			 as;
+	uint32_t			 num;
+	uint32_t			 *tas;
+	uint8_t				 *tas_aid;
+	RB_ENTRY(aspa_set)		 entry;
+};
+
 struct l3vpn {
 	SIMPLEQ_ENTRY(l3vpn)		entry;
 	char				descr[PEER_DESCR_LEN];
@@ -1270,14 +1285,16 @@ void		free_prefixsets(struct prefixset_head *);
 void		free_rde_prefixsets(struct rde_prefixset_head *);
 void		free_prefixtree(struct prefixset_tree *);
 void		free_roatree(struct roa_tree *);
+void		free_aspa(struct aspa_set *);
+void		free_aspatree(struct aspa_tree *);
 void		free_rtrs(struct rtr_config_head *);
 void		filterlist_free(struct filter_head *);
 int		host(const char *, struct bgpd_addr *, uint8_t *);
 uint32_t	get_bgpid(void);
 void		expand_networks(struct bgpd_config *, struct network_head *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
-int		roa_cmp(struct roa *, struct roa *);
 RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
+RB_PROTOTYPE(aspa_tree, aspa_set, entry, aspa_cmp);
 
 /* kroute.c */
 int		 kr_init(int *, uint8_t);

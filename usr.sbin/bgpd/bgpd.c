@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.254 2022/08/17 15:15:25 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.255 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,7 @@
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -594,7 +595,8 @@ send_config(struct bgpd_config *conf)
 	struct as_set		*aset;
 	struct prefixset	*ps;
 	struct prefixset_item	*psi, *npsi;
-	struct roa		*roa, *nroa;
+	struct roa		*roa;
+	struct aspa_set		*aspa;
 	struct rtr_config	*rtr;
 
 	reconfpending = 3;	/* one per child */
@@ -676,24 +678,37 @@ send_config(struct bgpd_config *conf)
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_ORIGIN_SET, 0, 0, -1,
 		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
-		RB_FOREACH_SAFE(roa, roa_tree, &ps->roaitems, nroa) {
-			RB_REMOVE(roa_tree, &ps->roaitems, roa);
+		RB_FOREACH(roa, roa_tree, &ps->roaitems) {
 			if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_ITEM, 0, 0,
 			    -1, roa, sizeof(*roa)) == -1)
 				return (-1);
-			free(roa);
 		}
+		free_roatree(&ps->roaitems);
 		free(ps);
 	}
 
-	/* roa table and rtr config are sent to the RTR engine */
-	RB_FOREACH_SAFE(roa, roa_tree, &conf->roa, nroa) {
-		RB_REMOVE(roa_tree, &conf->roa, roa);
+	/* roa table, aspa table and rtr config are sent to the RTR engine */
+	RB_FOREACH(roa, roa_tree, &conf->roa) {
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ROA_ITEM, 0, 0,
 		    -1, roa, sizeof(*roa)) == -1)
 			return (-1);
-		free(roa);
 	}
+	free_roatree(&conf->roa);
+	RB_FOREACH(aspa, aspa_tree, &conf->aspa) {
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA, 0, 0,
+		    -1, aspa, offsetof(struct aspa_set, tas)) == -1)
+			return (-1);
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_TAS, 0, 0,
+		    -1, aspa->tas, sizeof(*aspa->tas) * aspa->num) == -1)
+			return (-1);
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_TAS_AID,
+		    0, 0, -1, aspa->tas_aid, aspa->num) == -1)
+			return (-1);
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_DONE, 0, 0, -1,
+		    NULL, 0) == -1)
+			return -1;
+	}
+	free_aspatree(&conf->aspa);
 	SIMPLEQ_FOREACH(rtr, &conf->rtrs, entry) {
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_RTR_CONFIG, rtr->id,
 		    0, -1, rtr->descr, sizeof(rtr->descr)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.104 2022/08/17 15:15:25 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.105 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@ new_config(void)
 	SIMPLEQ_INIT(&conf->rde_prefixsets);
 	SIMPLEQ_INIT(&conf->rde_originsets);
 	RB_INIT(&conf->roa);
+	RB_INIT(&conf->aspa);
 	SIMPLEQ_INIT(&conf->as_sets);
 	SIMPLEQ_INIT(&conf->rtrs);
 
@@ -171,6 +172,27 @@ free_roatree(struct roa_tree *r)
 }
 
 void
+free_aspa(struct aspa_set *aspa)
+{
+	if (aspa == NULL)
+		return;
+	free(aspa->tas);
+	free(aspa->tas_aid);
+	free(aspa);
+}
+
+void
+free_aspatree(struct aspa_tree *a)
+{
+	struct aspa_set	*aspa, *naspa;
+
+	RB_FOREACH_SAFE(aspa, aspa_tree, a, naspa) {
+		RB_REMOVE(aspa_tree, a, aspa);
+		free_aspa(aspa);
+	}
+}
+
+void
 free_rtrs(struct rtr_config_head *rh)
 {
 	struct rtr_config	*r;
@@ -198,6 +220,7 @@ free_config(struct bgpd_config *conf)
 	free_rde_prefixsets(&conf->rde_originsets);
 	as_sets_free(&conf->as_sets);
 	free_roatree(&conf->roa);
+	free_aspatree(&conf->aspa);
 	free_rtrs(&conf->rtrs);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
@@ -266,6 +289,12 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	/* then move the RB tree root */
 	RB_ROOT(&xconf->roa) = RB_ROOT(&conf->roa);
 	RB_ROOT(&conf->roa) = NULL;
+
+	/* switch the aspa, first remove the old one */
+	free_aspatree(&xconf->aspa);
+	/* then move the RB tree root */
+	RB_ROOT(&xconf->aspa) = RB_ROOT(&conf->aspa);
+	RB_ROOT(&conf->aspa) = NULL;
 
 	/* switch the rtr_configs, first remove the old ones */
 	free_rtrs(&xconf->rtrs);
@@ -582,7 +611,7 @@ prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
 
 RB_GENERATE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 
-int
+static inline int
 roa_cmp(struct roa *a, struct roa *b)
 {
 	int i;
@@ -627,3 +656,15 @@ roa_cmp(struct roa *a, struct roa *b)
 }
 
 RB_GENERATE(roa_tree, roa, entry, roa_cmp);
+
+static inline int
+aspa_cmp(struct aspa_set *a, struct aspa_set *b)
+{
+	if (a->as < b->as)
+		return (-1);
+	if (a->as > b->as)
+		return (1);
+	return (0);
+}
+
+RB_GENERATE(aspa_tree, aspa_set, entry, aspa_cmp);

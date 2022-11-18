@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.436 2022/09/21 21:12:04 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.437 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,6 +140,13 @@ struct filter_match_l {
 	struct filter_prefixset	*prefixset;
 } fmopts;
 
+struct aspa_tas_l {
+	struct aspa_tas_l	*next;
+	uint32_t		 as;
+	uint32_t		 num;
+	uint8_t			 aid;
+};
+
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
@@ -171,6 +178,7 @@ static void	 add_roa_set(struct prefixset_item *, uint32_t, uint8_t,
 		    time_t);
 static struct rtr_config	*get_rtr(struct bgpd_addr *);
 static int	 insert_rtr(struct rtr_config *);
+static int	 merge_aspa_set(uint32_t, struct aspa_tas_l *, time_t);
 
 typedef struct {
 	union {
@@ -186,6 +194,7 @@ typedef struct {
 		struct filter_as_l	*filter_as;
 		struct filter_set	*filter_set;
 		struct filter_set_head	*filter_set_head;
+		struct aspa_tas_l	*aspa_elm;
 		struct {
 			struct bgpd_addr	prefix;
 			uint8_t			len;
@@ -222,8 +231,8 @@ typedef struct {
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
 %token	MAXCOMMUNITIES MAXEXTCOMMUNITIES MAXLARGECOMMUNITIES
 %token	PREFIX PREFIXLEN PREFIXSET
-%token	ROASET ORIGINSET OVS EXPIRES
-%token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
+%token	ASPASET ROASET ORIGINSET OVS EXPIRES
+%token	ASSET SOURCEAS TRANSITAS PEERAS PROVIDERAS CUSTOMERAS MAXASLEN MAXASSEQ
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY SELF
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT RTLABEL ORIGIN PRIORITY
 %token	ERROR INCLUDE
@@ -254,6 +263,7 @@ typedef struct {
 %type	<v.filter_prefix>	filter_prefix_m
 %type	<v.u8>			unaryop equalityop binaryop filter_as_type
 %type	<v.encspec>		encspec
+%type	<v.aspa_elm>		aspa_tas aspa_tas_l
 %%
 
 grammar		: /* empty */
@@ -263,6 +273,7 @@ grammar		: /* empty */
 		| grammar as_set '\n'
 		| grammar prefixset '\n'
 		| grammar roa_set '\n'
+		| grammar aspa_set '\n'
 		| grammar origin_set '\n'
 		| grammar rtr '\n'
 		| grammar rib '\n'
@@ -520,10 +531,8 @@ prefixset_item	: prefix prefixlenop			{
 
 roa_set		: ROASET '{' optnl		{
 			curroatree = &conf->roa;
-			noexpires = 0;
 		} roa_set_l optnl '}'			{
 			curroatree = NULL;
-			noexpires = 1;
 		}
 		| ROASET '{' optnl '}'		/* nothing */
 		;
@@ -540,6 +549,7 @@ origin_set	: ORIGINSET STRING '{' optnl		{
 			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
 			curoset = NULL;
 			curroatree = NULL;
+			noexpires = 0;
 		}
 		| ORIGINSET STRING '{' optnl '}'		{
 			if ((curoset = new_prefix_set($2, 1)) == NULL) {
@@ -586,6 +596,55 @@ roa_set_l	: prefixset_item SOURCEAS as4number_any	expires		{
 		}
 		;
 
+aspa_set	: ASPASET '{' optnl aspa_set_l optnl '}'
+		| ASPASET '{' optnl '}'
+		;
+
+aspa_set_l	: aspa_elm
+		| aspa_set_l comma aspa_elm
+		;
+
+aspa_elm	: CUSTOMERAS as4number expires PROVIDERAS '{' optnl
+		    aspa_tas_l optnl '}' {
+			int rv;
+			struct aspa_tas_l *a, *n;
+
+			rv = merge_aspa_set($2, $7, $3);
+
+			for (a = $7; a != NULL; a = n) {
+				n = a->next;
+				free(a);
+			}
+
+			if (rv == -1)
+				YYERROR;
+		}
+		;
+
+aspa_tas_l	: aspa_tas			{ $$ = $1; }
+		| aspa_tas_l comma aspa_tas	{
+			$3->next = $1;
+			$3->num = $1->num + 1;
+			$$ = $3;
+		}
+		;
+
+aspa_tas	: as4number_any {
+			if (($$ = calloc(1, sizeof(*$$))) == NULL)
+				fatal(NULL);
+			$$->as = $1;
+			$$->aid = AID_UNSPEC;
+			$$->num = 1;
+		}
+		| as4number_any ALLOW family {
+			if (($$ = calloc(1, sizeof(*$$))) == NULL)
+				fatal(NULL);
+			$$->as = $1;
+			$$->aid = $3;
+			$$->num = 1;
+		}
+		;
+
 rtr		: RTR address	{
 			currtr = get_rtr(&$2);
 			currtr->remote_port = RTR_PORT;
@@ -609,6 +668,7 @@ rtr		: RTR address	{
 
 rtropt_l	: rtropt
 		| rtropt_l optnl rtropt
+		;
 
 rtropt		: DESCR STRING		{
 			if (strlcpy(currtr->descr, $2,
@@ -3090,12 +3150,14 @@ lookup(char *s)
 		{ "as-4byte",		AS4BYTE },
 		{ "as-override",	ASOVERRIDE},
 		{ "as-set",		ASSET },
+		{ "aspa-set",		ASPASET},
 		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
 		{ "compare",		COMPARE},
 		{ "connect-retry",	CONNECTRETRY},
 		{ "connected",		CONNECTED},
+		{ "customer-as",	CUSTOMERAS},
 		{ "default-route",	DEFAULTROUTE},
 		{ "delete",		DELETE},
 		{ "demote",		DEMOTE},
@@ -3173,6 +3235,7 @@ lookup(char *s)
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
 		{ "priority",		PRIORITY},
+		{ "provider-as",	PROVIDERAS},
 		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
 		{ "rd",			RD},
@@ -4996,6 +5059,60 @@ insert_rtr(struct rtr_config *new)
 		new->id = ++id;
 
 	SIMPLEQ_INSERT_TAIL(&conf->rtrs, currtr, entry);
+
+	return 0;
+}
+
+static int
+merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
+{
+	struct aspa_set	*aspa, needle = { .as = as };
+	uint32_t i, num, *newtas;
+	uint8_t *newtasaid = NULL;
+
+	aspa = RB_FIND(aspa_tree, &conf->aspa, &needle);
+	if (aspa == NULL) {
+		if ((aspa = calloc(1, sizeof(*aspa))) == NULL) {
+			yyerror("out of memory");
+			return -1;
+		}
+		aspa->as = as;
+		aspa->expires = expires;
+		RB_INSERT(aspa_tree, &conf->aspa, aspa);
+	}
+
+	if (UINT32_MAX - aspa->num <= tas->num) {
+		yyerror("aspa_set overflow");
+		return -1;
+	}
+	num = aspa->num + tas->num;
+	newtas = recallocarray(aspa->tas, aspa->num, num, sizeof(uint32_t));
+	if (newtas == NULL) {
+		yyerror("out of memory");
+		return -1;
+	}
+	newtasaid = recallocarray(aspa->tas_aid, aspa->num, num, 1);
+	if (newtasaid == NULL) {
+		free(newtas);
+		yyerror("out of memory");
+		return -1;
+	}
+
+	/* fill starting at the end since the tas list is reversed */
+	if (num > 0) {
+		for (i = num - 1; tas; tas = tas->next, i--) {
+			newtas[i] = tas->as;
+			if (tas->aid != AID_UNSPEC)
+				newtasaid[i] = tas->aid;
+		}
+	}
+
+	aspa->num = num;
+	aspa->tas = newtas;
+	aspa->tas_aid = newtasaid;
+	/* take the longest expiry time, same logic as for ROA entries */
+	if (aspa->expires != 0 && expires != 0 && expires > aspa->expires)
+		aspa->expires = expires;
 
 	return 0;
 }

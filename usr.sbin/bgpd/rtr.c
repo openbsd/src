@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.8 2022/10/18 09:30:29 job Exp $ */
+/*	$OpenBSD: rtr.c,v 1.9 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -20,6 +20,7 @@
 #include <poll.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,6 +78,24 @@ rtr_expire_roas(time_t now)
 	}
 	if (recalc != 0)
 		log_info("%u roa-set entries expired", recalc);
+	return recalc;
+}
+
+static unsigned int
+rtr_expire_aspa(time_t now)
+{
+	struct aspa_set *aspa, *na;
+	unsigned int recalc = 0;
+
+	RB_FOREACH_SAFE(aspa, aspa_tree, &conf->aspa, na) {
+		if (aspa->expires != 0 && aspa->expires <= now) {
+			recalc++;
+			RB_REMOVE(aspa_tree, &conf->aspa, aspa);
+			free_aspa(aspa);
+		}
+	}
+	if (recalc != 0)
+		log_info("%u aspa-set entries expired", recalc);
 	return recalc;
 }
 
@@ -193,6 +212,8 @@ rtr_main(int debug, int verbose)
 			    EXPIRE_TIMEOUT);
 			if (rtr_expire_roas(time(NULL)) != 0)
 				rtr_recalc();
+			if (rtr_expire_aspa(time(NULL)) != 0)
+				rtr_recalc();
 		}
 	}
 
@@ -218,10 +239,11 @@ rtr_main(int debug, int verbose)
 static void
 rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
-	struct imsg	imsg;
-	struct roa	*roa;
-	struct rtr_session *rs;
-	int		n, fd;
+	static struct aspa_set	*aspa;
+	struct imsg		 imsg;
+	struct roa		*roa;
+	struct rtr_session	*rs;
+	int			 n, fd;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -274,6 +296,48 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
 			roa_insert(&nconf->roa, imsg.data);
 			break;
+		case IMSG_RECONF_ASPA:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    offsetof(struct aspa_set, tas))
+				fatalx("IMSG_RECONF_ASPA bad len");
+			if (aspa != NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA");
+			if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
+				fatal("aspa alloc");
+			memcpy(aspa, imsg.data, offsetof(struct aspa_set, tas));
+			break;
+		case IMSG_RECONF_ASPA_TAS:
+			if (aspa == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    aspa->num * sizeof(*aspa->tas))
+				fatalx("IMSG_RECONF_ASPA_TAS bad len");
+			aspa->tas = reallocarray(NULL, aspa->num,
+			    sizeof(*aspa->tas));
+			if (aspa->tas == NULL)
+				fatal("aspa tas alloc");
+			memcpy(aspa->tas, imsg.data,
+			    aspa->num * sizeof(*aspa->tas));
+			break;
+		case IMSG_RECONF_ASPA_TAS_AID:
+			if (aspa == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA_TAS_ID");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != aspa->num)
+				fatalx("IMSG_RECONF_ASPA_TAS_AID bad len");
+			aspa->tas_aid = malloc(aspa->num);
+			if (aspa->tas_aid == NULL)
+				fatal("aspa tas aid alloc");
+			memcpy(aspa->tas_aid, imsg.data, aspa->num);
+			break;
+		case IMSG_RECONF_ASPA_DONE:
+			if (aspa == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA_DONE");
+			if (RB_INSERT(aspa_tree, &nconf->aspa, aspa) != NULL) {
+				log_warnx("duplicate ASPA set received");
+				free_aspa(aspa);
+			}
+			aspa = NULL;
+			break;
 		case IMSG_RECONF_RTR_CONFIG:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != PEER_DESCR_LEN)
 				fatalx("IMSG_RECONF_RTR_CONFIG bad len");
@@ -296,9 +360,15 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			/* then move the RB tree root */
 			RB_ROOT(&conf->roa) = RB_ROOT(&nconf->roa);
 			RB_ROOT(&nconf->roa) = NULL;
+			/* switch the aspa tree, first remove the old one */
+			free_aspatree(&conf->aspa);
+			/* then move the RB tree root */
+			RB_ROOT(&conf->aspa) = RB_ROOT(&nconf->aspa);
+			RB_ROOT(&nconf->aspa) = NULL;
 			/* finally merge the rtr session */
 			rtr_config_merge();
 			rtr_expire_roas(time(NULL));
+			rtr_expire_aspa(time(NULL));
 			rtr_recalc();
 			log_info("RTR engine reconfigured");
 			imsg_compose(ibuf_main, IMSG_RECONF_DONE, 0, 0,
@@ -348,6 +418,77 @@ rtr_imsg_compose(int type, uint32_t id, pid_t pid, void *data, size_t datalen)
 }
 
 /*
+ * Add an asnum to the aspa_set. The aspa_set is sorted by asnum.
+ * The aid is altered into a bitmask to simplify the merge of entries
+ * that just use a different aid.
+ */
+static void
+aspa_set_entry(struct aspa_set *aspa, uint32_t asnum, uint8_t aid)
+{
+	uint32_t i, num, *newtas;
+	uint8_t *newtasaid;
+
+	switch (aid) {
+	case AID_INET:
+		aid = 0x1;
+		break;
+	case AID_INET6:
+		aid = 0x2;
+		break;
+	case AID_UNSPEC:
+		aid = 0x3;
+		break;
+	default:
+		fatalx("aspa_set bad AID");
+	}
+
+	for (i = 0; i < aspa->num; i++) {
+		if (asnum < aspa->tas[i] || aspa->tas[i] == 0)
+			break;
+		if (asnum == aspa->tas[i]) {
+			aspa->tas_aid[i] |= aid;
+			return;
+		}
+	}
+
+	num = aspa->num + 1;
+	newtas = recallocarray(aspa->tas, aspa->num, num, sizeof(uint32_t));
+	newtasaid = recallocarray(aspa->tas_aid, aspa->num, num, 1);
+	if (newtas == NULL || newtasaid == NULL)
+		fatal("aspa_set merge");
+
+	if (i < aspa->num) {
+		memmove(newtas + i + 1, newtas + i,
+		    (aspa->num - i) * sizeof(uint32_t));
+		memmove(newtasaid + i + 1, newtasaid + i, (aspa->num - i));
+	}
+	newtas[i] = asnum;
+	newtasaid[i] = aid;
+
+	aspa->num = num;
+	aspa->tas = newtas;
+	aspa->tas_aid = newtasaid;
+}
+
+static void
+rtr_aspa_merge_set(struct aspa_tree *a, struct aspa_set *mergeset)
+{
+	struct aspa_set *aspa, needle = { .as = mergeset->as };
+	uint32_t i;
+
+	aspa = RB_FIND(aspa_tree, a, &needle);
+	if (aspa == NULL) {
+		if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
+			fatal("aspa insert");
+		aspa->as = mergeset->as;
+		RB_INSERT(aspa_tree, a, aspa);
+	}
+
+	for (i = 0; i < mergeset->num; i++)
+		aspa_set_entry(aspa, mergeset->tas[i], mergeset->tas_aid[i]);
+}
+
+/*
  * Merge all RPKI ROA trees into one as one big union.
  * Simply try to add all roa entries into a new RB tree.
  * This could be made a fair bit faster but for now this is good enough.
@@ -356,9 +497,12 @@ void
 rtr_recalc(void)
 {
 	struct roa_tree rt;
+	struct aspa_tree at;
 	struct roa *roa, *nr;
+	struct aspa_set *aspa;
 
 	RB_INIT(&rt);
+	RB_INIT(&at);
 
 	RB_FOREACH(roa, roa_tree, &conf->roa)
 		roa_insert(&rt, roa);
@@ -371,5 +515,11 @@ rtr_recalc(void)
 		    roa, sizeof(*roa));
 		free(roa);
 	}
+
+	RB_FOREACH(aspa, aspa_tree, &conf->aspa)
+		rtr_aspa_merge_set(&at, aspa);
+
+	free_aspatree(&at);
+
 	imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0, 0, -1, NULL, 0);
 }

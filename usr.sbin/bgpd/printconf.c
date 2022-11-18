@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.159 2022/09/21 21:12:04 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.160 2022/11/18 10:17:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,6 +42,7 @@ void		 print_as_sets(struct as_set_head *);
 void		 print_prefixsets(struct prefixset_head *);
 void		 print_originsets(struct prefixset_head *);
 void		 print_roa(struct roa_tree *);
+void		 print_aspa(struct aspa_tree *);
 void		 print_rtrs(struct rtr_config_head *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
@@ -591,6 +592,33 @@ print_roa(struct roa_tree *r)
 }
 
 void
+print_aspa(struct aspa_tree *a)
+{
+	struct aspa_set	*aspa;
+	uint32_t i;
+
+	if (RB_EMPTY(a))
+		return;
+
+	printf("aspa-set {");
+	RB_FOREACH(aspa, aspa_tree, a) {
+		printf("\n\t");
+		printf("customer-as %s", log_as(aspa->as));
+		if (aspa->expires != 0)
+			printf(" expires %lld", (long long)aspa->expires);
+		printf(" provider-as { ");
+		for (i = 0; i < aspa->num; i++) {
+			printf("%s ", log_as(aspa->tas[i]));
+			if (aspa->tas_aid != NULL &&
+			    aspa->tas_aid[i] != AID_UNSPEC)
+				printf("allow %s ", print_af(aspa->tas_aid[i]));
+		}
+		printf("}");
+	}
+	printf("\n}\n\n");
+}
+
+void
 print_rtrs(struct rtr_config_head *rh)
 {
 	struct rtr_config *r;
@@ -1096,6 +1124,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l)
 	print_mainconf(conf);
 	print_rtrs(&conf->rtrs);
 	print_roa(&conf->roa);
+	print_aspa(&conf->aspa);
 	print_as_sets(&conf->as_sets);
 	print_prefixsets(&conf->prefixsets);
 	print_originsets(&conf->originsets);

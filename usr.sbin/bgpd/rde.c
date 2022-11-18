@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.579 2022/11/07 22:48:35 mbuhl Exp $ */
+/*	$OpenBSD: rde.c,v 1.580 2022/11/18 10:17:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -322,6 +322,11 @@ rde_main(int debug, int verbose)
 		msgbuf_clear(&ibuf_se_ctl->w);
 		close(ibuf_se_ctl->fd);
 		free(ibuf_se_ctl);
+	}
+	if (ibuf_rtr) {
+		msgbuf_clear(&ibuf_rtr->w);
+		close(ibuf_rtr->fd);
+		free(ibuf_rtr);
 	}
 	msgbuf_clear(&ibuf_main->w);
 	close(ibuf_main->fd);
