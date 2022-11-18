@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.222 2022/11/17 20:51:39 job Exp $ */
+/*	$OpenBSD: main.c,v 1.223 2022/11/18 11:07:10 jmc Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1376,7 +1376,7 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-BcjnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-H fqdn ] [-S skiplist] [-s timeout] [-T table]"
+	    "                   [-H fqdn] [-S skiplist] [-s timeout] [-T table]"
 	    " [-t tal]\n"
 	    "                   [outputdir]\n"
 	    "       rpki-client [-Vv] [-d cachedir] [-j] [-t tal] -f file ..."
