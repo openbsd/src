@@ -1,0 +1,36 @@
+# $OpenBSD: bgpd.conf.14.in,v 1.1 2022/11/18 10:26:04 claudio Exp $
+# test roa-set blocks
+
+AS 1
+
+roa-set {
+	192.0.2.0/24 source-as 1
+}
+
+origin-set test {
+	192.0.2.0/24 source-as 1
+}
+
+aspa-set { }
+aspa-set { customer-as 17 provider-as { 12 } }
+aspa-set {
+	customer-as 1 provider-as { 2 }
+	customer-as 1 provider-as { 3 }
+	customer-as 1 provider-as { 4 5 6 } 
+}
+
+aspa-set {
+	customer-as 41 provider-as { 2 }
+	customer-as 42 expires 12345 provider-as { 3 }
+	customer-as 42 expires 10000 provider-as { 4 } 
+}
+aspa-set {
+	customer-as 3 provider-as { 5 }
+	customer-as 2 expires 1668181648 provider-as { 3 4 }
+	customer-as 5 provider-as { 1 2 allow inet 7 allow inet6 }
+}
+
+
+#match from any aspa unknown
+#match from any aspa invalid
+#match from any aspa valid
