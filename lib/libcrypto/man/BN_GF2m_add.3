@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_GF2m_add.3,v 1.2 2022/11/18 07:27:31 tb Exp $
+.\" $OpenBSD: BN_GF2m_add.3,v 1.3 2022/11/18 07:28:34 tb Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -245,8 +245,8 @@ In particular, if
 and
 .Fa b
 are elements of the same representation
-of the same $roman GF left ( 2 sup m right )$ group,
-the sum of both in that representation of that group is computed
+of the same $roman GF left ( 2 sup m right )$ field,
+the sum of both in that representation of that field is computed
 .Po
 $r = a + b$
 .Pc .
@@ -278,7 +278,7 @@ is an alias for
 .Xr BN_ucmp 3 .
 Despite its name, it does not attempt to find out whether the two
 polynomials belong to the same congruence class with respect to some
-Galois group.
+Galois field.
 .Pp
 .Fn BN_GF2m_mod_arr
 and its wrapper
@@ -390,7 +390,7 @@ and place the result into
 $r = sqrt a ( roman mod p )$
 .Pc .
 This works because of the identity $a sup {2 sup m} = a$
-which holds for all group elements $a$.
+which holds for all field elements $a$.
 .Pp
 .Fn BN_GF2m_mod_solve_quad_arr
 and its wrapper
