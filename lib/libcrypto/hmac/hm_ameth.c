@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.14 2022/11/18 15:01:04 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.15 2022/11/18 15:10:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -64,6 +64,7 @@
 #include <openssl/hmac.h>
 
 #include "asn1_locl.h"
+#include "bytestring.h"
 #include "evp_locl.h"
 #include "hmac_local.h"
 
