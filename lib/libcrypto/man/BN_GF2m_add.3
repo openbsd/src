@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_GF2m_add.3,v 1.1 2022/11/18 01:21:40 schwarze Exp $
+.\" $OpenBSD: BN_GF2m_add.3,v 1.2 2022/11/18 07:27:31 tb Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -199,9 +199,9 @@ on $roman GF left ( 2 sup m right )$, the Galois fields of order $2 sup m$,
 where $m$ is a natural number.
 .Pp
 The $2 sup m$ elements of $roman GF left ( 2 sup m right )$
-are usually represented by the $2 sup m$ polynominals
+are usually represented by the $2 sup m$ polynomials
 of a degrees less than $m$ with binary coefficients.
-Such a polynominal can either be specified by storing the coefficients
+Such a polynomial can either be specified by storing the coefficients
 in a
 .Vt BIGNUM
 object, using the $m$ lowest bits with bit numbers corresponding to degrees,
@@ -211,15 +211,15 @@ For the functions below, the array needs to be sorted in decreasing
 order and terminated by the delimiter element \-1.
 .Pp
 A specific representation of $roman GF left ( 2 sup m right )$
-is selected by choosing a polynominal of degree $m$ that is irreducible
-with binary coefficients, called the reducing polynominal.
+is selected by choosing a polynomial of degree $m$ that is irreducible
+with binary coefficients, called the reducing polynomial.
 Making sure that $p$ is of the correct degree and indeed irreducible
 is the responsibility of the user.
 Typically, the following functions silently produce nonsensical results
 when given a
 .Fa p
 argument that is of the wrong degree or that is reducible.
-Storing the reducing polynominal requires $m + 1$ bits in a
+Storing the reducing polynomial requires $m + 1$ bits in a
 .Vt BIGNUM
 object or an
 .Vt int
@@ -233,7 +233,7 @@ and
 point to the same object.
 .Pp
 .Fn BN_GF2m_add
-adds the two polynominals
+adds the two polynomials
 .Fa a
 and
 .Fa b
@@ -277,15 +277,15 @@ It is implemented as a macro.
 is an alias for
 .Xr BN_ucmp 3 .
 Despite its name, it does not attempt to find out whether the two
-polynominals belong to the same congruence class with respect to some
+polynomials belong to the same congruence class with respect to some
 Galois group.
 .Pp
 .Fn BN_GF2m_mod_arr
 and its wrapper
 .Fn BN_GF2m_mod
-divide the polynominal with binary coefficients
+divide the polynomial with binary coefficients
 .Fa a
-by the polynominal with binary coefficients
+by the polynomial with binary coefficients
 .Fa p
 and place the remainder into
 .Fa r
@@ -334,7 +334,7 @@ reduce
 modulo
 .Fa p ,
 find the multiplicative inverse element
-in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+in $roman GF left ( 2 sup m right )$ using the reducing polynomial $p$,
 and place the result into
 .Fa r
 .Po
@@ -351,7 +351,7 @@ and
 modulo
 .Fa p ,
 compute their quotient
-in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+in $roman GF left ( 2 sup m right )$ using the reducing polynomial $p$,
 and place the result into
 .Fa r
 .Po
@@ -367,7 +367,7 @@ modulo
 .Fa p ,
 raise it to the power of
 .Fa exponent
-in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+in $roman GF left ( 2 sup m right )$ using the reducing polynomial $p$,
 and place the result into
 .Fa r
 .Po
@@ -382,7 +382,7 @@ reduce
 modulo
 .Fa p ,
 calculate the square root
-in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$
+in $roman GF left ( 2 sup m right )$ using the reducing polynomial $p$
 by raising it to the power of $2 sup { m - 1 }$,
 and place the result into
 .Fa r
@@ -400,12 +400,12 @@ reduce
 modulo
 .Fa p ,
 solve the quadratic equation $r sup 2 + r = a ( roman mod p )$
-in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+in $roman GF left ( 2 sup m right )$ using the reducing polynomial $p$,
 and place the solution into
 .Fa r .
 .Pp
 .Fn BN_GF2m_poly2arr
-converts a polynominal from a bit string stored in the
+converts a polynomial from a bit string stored in the
 .Vt BIGNUM
 object
 .Fa poly_in
@@ -420,7 +420,7 @@ The array is filled with the degrees in decreasing order,
 followed by an element with the value \-1.
 .Pp
 .Fn BN_GF2m_arr2poly
-converts a polynominal from the array
+converts a polynomial from the array
 .Fa arr_in
 containing degrees to a bit string placed in the
 .Vt BIGNUM
@@ -516,7 +516,7 @@ it contained more than five non-zero coefficients.
 .Re
 .Sh BUGS
 .Fn BN_GF2m_mod
-is arbitrarily limited to reducing polynominals containing at most five
+is arbitrarily limited to reducing polynomials containing at most five
 non-zero coefficients and returns failure if
 .Fa p
 contains six or more non-zero coefficients.
