@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.223 2022/11/18 11:07:10 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.224 2022/11/18 14:38:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -69,16 +69,16 @@ int	rrdpon = 1;
 int	repo_timeout;
 time_t	deadline;
 
-struct skiplist skiplist = LIST_HEAD_INITIALIZER(skiplist);
-
 struct stats	 stats;
 
-struct shortlistentry {
-	LIST_ENTRY(shortlistentry)	 entry;
-	char				*value; /* FQDN */
+struct fqdnlistentry {
+	LIST_ENTRY(fqdnlistentry)	 entry;
+	char				*fqdn;
 };
-LIST_HEAD(shortlist, shortlistentry);
-struct shortlist shortlist = LIST_HEAD_INITIALIZER(shortlist);
+LIST_HEAD(fqdns, fqdnlistentry);
+
+struct fqdns shortlist = LIST_HEAD_INITIALIZER(fqdns);
+struct fqdns skiplist = LIST_HEAD_INITIALIZER(fqdns);
 
 /*
  * Log a message to stderr if and only if "verbose" is non-zero.
@@ -455,8 +455,7 @@ static void
 queue_add_from_cert(const struct cert *cert)
 {
 	struct repo		*repo;
-	struct skiplistentry	*sle;
-	struct shortlistentry	*she;
+	struct fqdnlistentry	*le;
 	char			*nfile, *npath, *host;
 	const char		*uri, *repouri, *file;
 	size_t			 repourisz;
@@ -466,15 +465,15 @@ queue_add_from_cert(const struct cert *cert)
 		errx(1, "unexpected protocol");
 	host = cert->repo + 8;
 
-	LIST_FOREACH(sle, &skiplist, entry) {
-		if (strncasecmp(host, sle->value, strcspn(host, "/")) == 0) {
+	LIST_FOREACH(le, &skiplist, entry) {
+		if (strncasecmp(host, le->fqdn, strcspn(host, "/")) == 0) {
 			warnx("skipping %s (listed in skiplist)", cert->repo);
 			return;
 		}
 	}
 
-	LIST_FOREACH(she, &shortlist, entry) {
-		if (strncasecmp(host, she->value, strcspn(host, "/")) == 0) {
+	LIST_FOREACH(le, &shortlist, entry) {
+		if (strncasecmp(host, le->fqdn, strcspn(host, "/")) == 0) {
 			shortlisted = 1;
 			break;
 		}
@@ -740,7 +739,7 @@ tal_load_default(void)
 static void
 load_skiplist(const char *slf)
 {
-	struct skiplistentry	*sle;
+	struct fqdnlistentry	*le;
 	FILE			*fp;
 	char			*line = NULL;
 	size_t			 linesize = 0, linelen;
@@ -769,12 +768,12 @@ load_skiplist(const char *slf)
 		if (!valid_uri(line, linelen, NULL))
 			errx(1, "invalid entry in skiplist: %s", line);
 
-		if ((sle = malloc(sizeof(struct skiplistentry))) == NULL)
+		if ((le = malloc(sizeof(struct fqdnlistentry))) == NULL)
 			err(1, NULL);
-		if ((sle->value = strdup(line)) == NULL)
+		if ((le->fqdn = strdup(line)) == NULL)
 			err(1, NULL);
 
-		LIST_INSERT_HEAD(&skiplist, sle, entry);
+		LIST_INSERT_HEAD(&skiplist, le, entry);
 		stats.skiplistentries++;
 	}
 
@@ -788,18 +787,18 @@ load_skiplist(const char *slf)
 static void
 load_shortlist(const char *fqdn)
 {
-	struct shortlistentry	*she;
+	struct fqdnlistentry	*le;
 
 	if (!valid_uri(fqdn, strlen(fqdn), NULL))
 		errx(1, "invalid fqdn passed to -q: %s", fqdn);
 
-	if ((she = malloc(sizeof(struct shortlistentry))) == NULL)
+	if ((le = malloc(sizeof(struct fqdnlistentry))) == NULL)
 		err(1, NULL);
 
-	if ((she->value = strdup(fqdn)) == NULL)
+	if ((le->fqdn = strdup(fqdn)) == NULL)
 		err(1, NULL);
 
-	LIST_INSERT_HEAD(&shortlist, she, entry);
+	LIST_INSERT_HEAD(&shortlist, le, entry);
 }
 
 static void

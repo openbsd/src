@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.159 2022/11/04 12:05:36 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.160 2022/11/18 14:38:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,15 +23,6 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-
-/*
- * Distrusted hosts (loaded from skipfile).
- */
-struct skiplistentry {
-	LIST_ENTRY(skiplistentry)	 entry;
-	char				*value; /* FQDN */
-};
-LIST_HEAD(skiplist, skiplistentry);
 
 /*
  * Enumeration for ASN.1 explicit tags in RSC eContent
