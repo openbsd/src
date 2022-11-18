@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.182 2022/11/14 09:56:09 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.183 2022/11/18 18:11:10 kn Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 14 2022 $
+.Dd $Mdocdate: November 18 2022 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -374,6 +374,13 @@ When used together with
 .Fl v ,
 the per-rule statistics (number of evaluations,
 packets and bytes) are also shown.
+When used together with
+.Fl g
+or
+.Fl vv ,
+expired rules
+.Pq marked as Dq # expired
+are also shown.
 Note that the
 .Dq skip step
 optimization done automatically by the kernel
