@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2021/07/14 05:04:08 anton Exp $
+#	$OpenBSD: Makefile,v 1.11 2022/11/18 06:43:39 anton Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -184,7 +184,7 @@ run-tcp6-localhost-client:
 REGRESS_TARGETS +=	run-tcp-bad-localhost-server
 run-tcp-bad-localhost-server:
 	! ${NC} -4 -v -l ::1 0 ${SERVER_LOG}
-	grep 'no address associated with name' server.err
+	grep 'non-recoverable failure in name resolution' server.err
 
 REGRESS_TARGETS +=	run-tcp6-bad-localhost-server
 run-tcp6-bad-localhost-server:
@@ -197,7 +197,7 @@ run-tcp-bad-localhost-client:
 	${LISTEN_WAIT}
 	${PORT_GET}
 	! ${NC} -4 -v ::1 ${PORT} ${CLIENT_LOG}
-	grep 'no address associated with name' client.err
+	grep 'non-recoverable failure in name resolution' client.err
 
 REGRESS_TARGETS +=	run-tcp6-bad-localhost-client
 run-tcp6-bad-localhost-client:
