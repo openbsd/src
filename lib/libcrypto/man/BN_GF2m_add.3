@@ -1,0 +1,522 @@
+.\" $OpenBSD: BN_GF2m_add.3,v 1.1 2022/11/18 01:21:40 schwarze Exp $
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 18 2022 $
+.Dt BN_GF2M_ADD 3
+.Os
+.Sh NAME
+.Nm BN_GF2m_add ,
+.Nm BN_GF2m_sub ,
+.Nm BN_GF2m_cmp ,
+.Nm BN_GF2m_mod_arr ,
+.Nm BN_GF2m_mod ,
+.Nm BN_GF2m_mod_mul_arr ,
+.Nm BN_GF2m_mod_mul ,
+.Nm BN_GF2m_mod_sqr_arr ,
+.Nm BN_GF2m_mod_sqr ,
+.Nm BN_GF2m_mod_inv ,
+.Nm BN_GF2m_mod_inv_arr ,
+.Nm BN_GF2m_mod_div ,
+.Nm BN_GF2m_mod_div_arr ,
+.Nm BN_GF2m_mod_exp_arr ,
+.Nm BN_GF2m_mod_exp ,
+.Nm BN_GF2m_mod_sqrt_arr ,
+.Nm BN_GF2m_mod_sqrt ,
+.Nm BN_GF2m_mod_solve_quad_arr ,
+.Nm BN_GF2m_mod_solve_quad ,
+.Nm BN_GF2m_poly2arr ,
+.Nm BN_GF2m_arr2poly
+.Nd arithmetic in Galois fields of power-of-2 order
+.Sh SYNOPSIS
+.In openssl/bn.h
+.Ft int
+.Fo BN_GF2m_add
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_GF2m_sub
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_GF2m_cmp
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const int p[]"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *p"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_mul_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_mul
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_sqr_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_sqr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_inv
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *b"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_inv_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *b"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_div
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_div_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_exp_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *exponent"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_exp
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *exponent"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_sqrt_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_sqrt
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_solve_quad_arr
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const int p[]"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_mod_solve_quad
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *p"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_GF2m_poly2arr
+.Fa "const BIGNUM *poly_in"
+.Fa "int arr_out[]"
+.Fa "int arr_size"
+.Fc
+.Ft int
+.Fo BN_GF2m_arr2poly
+.Fa "const int arr_in[]"
+.Fa "BIGNUM *poly_out"
+.Fc
+.Sh DESCRIPTION
+Two fields containing the same, finite number of elements are isomorphic,
+and the number of elements is called their order.
+The unique field of a given finite order is called the Galois field
+of that order.
+.EQ
+delim $$
+.EN
+The following functions perform arithmetic operations
+on $roman GF left ( 2 sup m right )$, the Galois fields of order $2 sup m$,
+where $m$ is a natural number.
+.Pp
+The $2 sup m$ elements of $roman GF left ( 2 sup m right )$
+are usually represented by the $2 sup m$ polynominals
+of a degrees less than $m$ with binary coefficients.
+Such a polynominal can either be specified by storing the coefficients
+in a
+.Vt BIGNUM
+object, using the $m$ lowest bits with bit numbers corresponding to degrees,
+or by storing the degrees that have
+coefficients of 1 in an integer array of at most $m + 1$ elements.
+For the functions below, the array needs to be sorted in decreasing
+order and terminated by the delimiter element \-1.
+.Pp
+A specific representation of $roman GF left ( 2 sup m right )$
+is selected by choosing a polynominal of degree $m$ that is irreducible
+with binary coefficients, called the reducing polynominal.
+Making sure that $p$ is of the correct degree and indeed irreducible
+is the responsibility of the user.
+Typically, the following functions silently produce nonsensical results
+when given a
+.Fa p
+argument that is of the wrong degree or that is reducible.
+Storing the reducing polynominal requires $m + 1$ bits in a
+.Vt BIGNUM
+object or an
+.Vt int
+array of up to $m + 2$ elements, including the terminating \-1 element.
+.Pp
+All functions produce correct results even if some or all of the arguments
+.Fa r ,
+.Fa a ,
+and
+.Fa b
+point to the same object.
+.Pp
+.Fn BN_GF2m_add
+adds the two polynominals
+.Fa a
+and
+.Fa b
+with binary coefficients, which is equivalent to a pairwise exclusive OR
+operation on the coefficients, and places the result into
+.Fa r .
+In particular, if
+.Fa a
+and
+.Fa b
+are elements of the same representation
+of the same $roman GF left ( 2 sup m right )$ group,
+the sum of both in that representation of that group is computed
+.Po
+$r = a + b$
+.Pc .
+In contrast to most of the other functions described here, no modulo
+operation is performed.
+Consequently, if the degree of at least one of the arguments may be larger
+than or equal to $m$, a follow-up call to
+.Fn BN_GF2m_mod_arr
+or
+.Fn BN_GF2m_mod
+may occasionally be useful.
+.Pp
+.Fn BN_GF2m_sub
+calculates the difference of
+.Fa a
+and
+.Fa b
+.Po
+$r = a - b = a + b$
+.Pc .
+Since \-1 is the same as 1 in binary arithmethic,
+.Fn BN_GF2m_sub
+does exactly the same as
+.Fn BN_GF2m_add .
+It is implemented as a macro.
+.Pp
+.Fn BN_GF2m_cmp
+is an alias for
+.Xr BN_ucmp 3 .
+Despite its name, it does not attempt to find out whether the two
+polynominals belong to the same congruence class with respect to some
+Galois group.
+.Pp
+.Fn BN_GF2m_mod_arr
+and its wrapper
+.Fn BN_GF2m_mod
+divide the polynominal with binary coefficients
+.Fa a
+by the polynominal with binary coefficients
+.Fa p
+and place the remainder into
+.Fa r
+.Po
+$r = a ( roman mod p )$
+.Pc .
+If
+.Fa r
+and
+.Fa a
+point to the same object, the modular reduction is done in place.
+.Pp
+.Fn BN_GF2m_mod_mul_arr
+and its wrapper
+.Fn BN_GF2m_mod_mul
+multiply
+.Fa a
+and
+.Fa b ,
+divide the result by
+.Fa p ,
+and place the remainder in
+.Fa r
+.Po
+$r = a * b ( roman mod p )$
+.Pc .
+.Pp
+.Fn BN_GF2m_mod_sqr_arr
+and its wrapper
+.Fn BN_GF2m_mod_sqr
+divide the square of
+.Fa a
+by
+.Fa p
+and place the remainder in
+.Fa r
+.Po
+$r = a * a ( roman mod p )$
+.Pc .
+.Pp
+.Fn BN_GF2m_mod_inv
+and its wrapper
+.Fn BN_GF2m_mod_inv_arr
+reduce
+.Fa b
+modulo
+.Fa p ,
+find the multiplicative inverse element
+in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+and place the result into
+.Fa r
+.Po
+$r = 1 / b ( roman mod p )$
+.Pc .
+.Pp
+.Fn BN_GF2m_mod_div
+and its wrapper
+.Fn BN_GF2m_mod_div_arr
+reduce
+.Fa a
+and
+.Fa b
+modulo
+.Fa p ,
+compute their quotient
+in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+and place the result into
+.Fa r
+.Po
+$r = a / b ( roman mod p )$
+.Pc .
+.Pp
+.Fn BN_GF2m_mod_exp_arr
+and its wrapper
+.Fn BN_GF2m_mod_exp
+reduce
+.Fa a
+modulo
+.Fa p ,
+raise it to the power of
+.Fa exponent
+in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+and place the result into
+.Fa r
+.Po
+$r = a sup exponent ( roman mod p )$
+.Pc .
+.Pp
+.Fn BN_GF2m_mod_sqrt_arr
+and its wrapper
+.Fn BN_GF2m_mod_sqrt
+reduce
+.Fa a
+modulo
+.Fa p ,
+calculate the square root
+in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$
+by raising it to the power of $2 sup { m - 1 }$,
+and place the result into
+.Fa r
+.Po
+$r = sqrt a ( roman mod p )$
+.Pc .
+This works because of the identity $a sup {2 sup m} = a$
+which holds for all group elements $a$.
+.Pp
+.Fn BN_GF2m_mod_solve_quad_arr
+and its wrapper
+.Fn BN_GF2m_mod_solve_quad
+reduce
+.Fa a
+modulo
+.Fa p ,
+solve the quadratic equation $r sup 2 + r = a ( roman mod p )$
+in $roman GF left ( 2 sup m right )$ using the reducing polynominal $p$,
+and place the solution into
+.Fa r .
+.Pp
+.Fn BN_GF2m_poly2arr
+converts a polynominal from a bit string stored in the
+.Vt BIGNUM
+object
+.Fa poly_in
+to an array containing the degrees of the non-zero terms.
+It is the responsibility of the caller to provide an array
+.Fa arr_out
+of sufficient size and to provide the number of elements
+that can be stored in the array as the
+.Fa arr_size
+argument.
+The array is filled with the degrees in decreasing order,
+followed by an element with the value \-1.
+.Pp
+.Fn BN_GF2m_arr2poly
+converts a polynominal from the array
+.Fa arr_in
+containing degrees to a bit string placed in the
+.Vt BIGNUM
+object
+.Ft poly_out .
+It is the responsibility of the caller to provide the storage for
+.Fa poly_out
+and to make sure that
+.Fa arr_in
+is terminated with a \-1 element.
+.Sh RETURN VALUES
+.Fn BN_GF2m_cmp
+interprets
+.Fa a
+and
+.Fa b
+as integer numbers and returns
+\-1 if $left | a right | < left | b right |$,
+0 if $left | a right | = left | b right |$,
+or 1 if $left | a right | > left | b right |$.
+.Pp
+.Fn BN_GF2m_poly2arr
+returns:
+.Bl -bullet -compact -offset 2n -width 1n
+.It
+0 if
+.Fa poly_in
+has the value 0;
+.It
+a number in the range from 2 to
+.Fa arr_size ,
+inclusive, in case of success, specifying the number of elements
+that have been stored into the array;
+.It
+a number greater than
+.Fa arr_size
+if the function failed because the array was too small,
+specifying the array size that would have been needed.
+.El
+.Pp
+The other functions return 1 for success or 0 for failure.
+.Sh ERRORS
+After some cases of failure, the following diagnostics can be retrieved with
+.Xr ERR_get_error 3 ,
+.Xr ERR_GET_REASON 3 ,
+and
+.Xr ERR_reason_error_string 3 :
+.Bl -tag -width Ds
+.It Dv BN_R_NO_SOLUTION Qq "no solution"
+No solution exists for the equation that
+.Fn BN_GF2m_mod_solve_quad_arr
+or
+.Fn BN_GF2m_mod_solve_quad
+attempted to solve.
+.It Dv BN_R_INVALID_LENGTH Qq "invalid length"
+In one of the functions wrapping an
+.Fn *_arr
+variant, the
+.Fa "BIGNUM *p"
+argument had a value of zero, or in
+.Fn BN_GF2m_mod ,
+it contained more than five non-zero coefficients.
+.El
+.Sh SEE ALSO
+.Xr BN_add 3 ,
+.Xr BN_CTX_new 3 ,
+.Xr BN_new 3 ,
+.Xr BN_set_bit 3 ,
+.Xr EC_POINT_new 3
+.Rs
+.%A Darrel Hankerson
+.%A Julio L\('opez Hernandez
+.%A Alfred Menezes
+.%T Software Implementation of Elliptic Curve Cryptography over Binary Fields
+.%B CHES 2000: International Workshop on Cryptographic Hardware\
+ and Embedded Systems
+.%U https://doi.org/10.1007/3-540-44499-8_1
+.%C Worcester, MA, USA
+.%D August 2000
+.%I Springer
+.%J Lecture Notes in Computer Science
+.%V vol 1965
+.%O Algorithm 10: Modified Almost Inverse Algorithm for inversion in FP(2\(ham)
+.Re
+.Rs
+.%V IEEE Standard 1363
+.%B Specifications for Public-Key Cryptography
+.%D August 29, 2000
+.%U https://doi.org/10.1109/IEEESTD.2000.92292
+.%O square-and-multiply algorithm A.5.1 for exponentiation,\
+ exponentiation algorithm A.4.1 for square roots, and\
+ algorithms A.4.7 and A.4.6 for the quadratic equation
+.Re
+.Sh BUGS
+.Fn BN_GF2m_mod
+is arbitrarily limited to reducing polynominals containing at most five
+non-zero coefficients and returns failure if
+.Fa p
+contains six or more non-zero coefficients.
