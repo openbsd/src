@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.24 2019/06/28 13:41:42 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.25 2022/11/18 14:52:03 millert Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -64,7 +64,7 @@ read_file(char *fn, int n)
 		return ERR;
 	}
 	if (!scripted)
-		fprintf(stderr, "%d\n", size);
+		printf("%d\n", size);
 	return current_addr - n;
 }
 
@@ -166,7 +166,7 @@ write_file(char *fn, char *mode, int n, int m)
 		return ERR;
 	}
 	if (!scripted)
-		fprintf(stderr, "%d\n", size);
+		printf("%d\n", size);
 	return n ? m - n + 1 : 0;
 }
 
