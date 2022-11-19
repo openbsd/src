@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.177 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.178 2022/11/19 14:26:40 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -210,11 +210,15 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
 	case SIOCGETSGCNT:
+		KERNEL_LOCK();
 		error = mrt_ioctl(so, cmd, data);
+		KERNEL_UNLOCK();
 		break;
 #endif /* MROUTING */
 	default:
+		KERNEL_LOCK();
 		error = in_ioctl(cmd, data, ifp, privileged);
+		KERNEL_UNLOCK();
 		break;
 	}
 
