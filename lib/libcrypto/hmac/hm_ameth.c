@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.16 2022/11/18 20:03:36 tb Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.17 2022/11/19 04:32:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -67,13 +67,6 @@
 #include "bytestring.h"
 #include "evp_locl.h"
 #include "hmac_local.h"
-
-#define HMAC_TEST_PRIVATE_KEY_FORMAT
-
-/* HMAC "ASN1" method. This is just here to indicate the
- * maximum HMAC output length and to free up an HMAC
- * key.
- */
 
 static int
 hmac_pkey_public_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -157,57 +150,6 @@ hmac_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv, size_t *len)
 	return CBS_write_bytes(&cbs, priv, *len, len);
 }
 
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-/* A bogus private key format for test purposes. This is simply the
- * HMAC key with "HMAC PRIVATE KEY" in the headers. When enabled the
- * genpkey utility can be used to "generate" HMAC keys.
- */
-
-static int
-old_hmac_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
-{
-	ASN1_OCTET_STRING *os;
-
-	os = ASN1_OCTET_STRING_new();
-	if (os == NULL)
-		goto err;
-	if (ASN1_OCTET_STRING_set(os, *pder, derlen) == 0)
-		goto err;
-	if (EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, os) == 0)
-		goto err;
-	return 1;
-
-err:
-	ASN1_OCTET_STRING_free(os);
-	return 0;
-}
-
-static int
-old_hmac_encode(const EVP_PKEY *pkey, unsigned char **pder)
-{
-	int inc;
-	ASN1_OCTET_STRING *os = pkey->pkey.ptr;
-
-	if (pder) {
-		if (!*pder) {
-			*pder = malloc(os->length);
-			if (*pder == NULL)
-				return -1;
-			inc = 0;
-		} else
-			inc = 1;
-
-		memcpy(*pder, os->data, os->length);
-
-		if (inc)
-			*pder += os->length;
-	}
-
-	return os->length;
-}
-
-#endif
-
 const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
 	.pkey_id = EVP_PKEY_HMAC,
 	.pkey_base_id = EVP_PKEY_HMAC,
@@ -221,11 +163,6 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
 
 	.pkey_free = hmac_key_free,
 	.pkey_ctrl = hmac_pkey_ctrl,
-
-#ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
-	.old_priv_decode = old_hmac_decode,
-	.old_priv_encode = old_hmac_encode,
-#endif
 
 	.set_priv_key = hmac_set_priv_key,
 	.get_priv_key = hmac_get_priv_key,
