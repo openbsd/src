@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.14 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.15 2022/11/19 11:53:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -128,24 +128,28 @@ pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 }
 
 static int
-pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *out_siglen,
     const unsigned char *tbs, size_t tbslen)
 {
-	int ret, type;
-	unsigned int sltmp;
-	DSA_PKEY_CTX *dctx = ctx->data;
 	DSA *dsa = ctx->pkey->pkey.dsa;
+	DSA_PKEY_CTX *dctx = ctx->data;
+	unsigned int siglen;
 
-	if (dctx->md)
-		type = EVP_MD_type(dctx->md);
-	else
-		type = NID_sha1;
+	*out_siglen = 0;
 
-	ret = DSA_sign(type, tbs, tbslen, sig, &sltmp, dsa);
+	if (tbslen > INT_MAX)
+		 return 0;
 
-	if (ret <= 0)
-		return ret;
-	*siglen = sltmp;
+	if (dctx->md != NULL) {
+		if (tbslen != EVP_MD_size(dctx->md))
+			return 0;
+	}
+
+	if (!DSA_sign(0, tbs, tbslen, sig, &siglen, dsa))
+		return 0;
+
+	*out_siglen = siglen;
+
 	return 1;
 }
 
@@ -153,18 +157,18 @@ static int
 pkey_dsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
     const unsigned char *tbs, size_t tbslen)
 {
-	int ret, type;
-	DSA_PKEY_CTX *dctx = ctx->data;
 	DSA *dsa = ctx->pkey->pkey.dsa;
+	DSA_PKEY_CTX *dctx = ctx->data;
 
-	if (dctx->md)
-		type = EVP_MD_type(dctx->md);
-	else
-		type = NID_sha1;
+	if (tbslen > INT_MAX || siglen > INT_MAX)
+		 return 0;
 
-	ret = DSA_verify(type, tbs, tbslen, sig, siglen, dsa);
+	if (dctx->md != NULL) {
+		if (tbslen != EVP_MD_size(dctx->md))
+			return 0;
+	}
 
-	return ret;
+	return DSA_verify(0, tbs, tbslen, sig, siglen, dsa);
 }
 
 static int
