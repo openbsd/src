@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.18 2022/11/10 12:37:00 tobhe Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.19 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -69,7 +69,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-int 
+int
 ECPKParameters_print_fp(FILE * fp, const EC_GROUP * x, int off)
 {
 	BIO *b;
@@ -85,7 +85,7 @@ ECPKParameters_print_fp(FILE * fp, const EC_GROUP * x, int off)
 	return (ret);
 }
 
-int 
+int
 EC_KEY_print_fp(FILE * fp, const EC_KEY * x, int off)
 {
 	BIO *b;
@@ -101,7 +101,7 @@ EC_KEY_print_fp(FILE * fp, const EC_KEY * x, int off)
 	return (ret);
 }
 
-int 
+int
 ECParameters_print_fp(FILE * fp, const EC_KEY * x)
 {
 	BIO *b;
@@ -117,7 +117,7 @@ ECParameters_print_fp(FILE * fp, const EC_KEY * x)
 	return (ret);
 }
 
-int 
+int
 EC_KEY_print(BIO * bp, const EC_KEY * x, int off)
 {
 	EVP_PKEY *pk;
@@ -135,7 +135,7 @@ EC_KEY_print(BIO * bp, const EC_KEY * x, int off)
 	return ret;
 }
 
-int 
+int
 ECParameters_print(BIO * bp, const EC_KEY * x)
 {
 	EVP_PKEY *pk;
@@ -153,11 +153,11 @@ ECParameters_print(BIO * bp, const EC_KEY * x)
 	return ret;
 }
 
-static int 
+static int
 print_bin(BIO * fp, const char *str, const unsigned char *num,
     size_t len, int off);
 
-int 
+int
 ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 {
 	unsigned char *buffer = NULL;
@@ -333,7 +333,7 @@ ECPKParameters_print(BIO * bp, const EC_GROUP * x, int off)
 	return (ret);
 }
 
-static int 
+static int
 print_bin(BIO * fp, const char *name, const unsigned char *buf,
     size_t len, int off)
 {

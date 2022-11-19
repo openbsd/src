@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.24 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.25 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -132,7 +132,7 @@ ec_pre_comp_dup(void *src_)
 	return src_;
 }
 
-static void 
+static void
 ec_pre_comp_free(void *pre_)
 {
 	int i;
@@ -155,7 +155,7 @@ ec_pre_comp_free(void *pre_)
 	free(pre);
 }
 
-static void 
+static void
 ec_pre_comp_clear_free(void *pre_)
 {
 	int i;
@@ -331,7 +331,7 @@ compute_wNAF(const BIGNUM * scalar, int w, size_t * ret_len)
  *      scalar*generator
  * in the addition if scalar != NULL
  */
-int 
+int
 ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
     size_t num, const EC_POINT * points[], const BIGNUM * scalars[], BN_CTX * ctx)
 {
@@ -721,7 +721,7 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
  * points[2^(w-1)*numblocks-1]     = (2^(w-1)) *  2^(blocksize*(numblocks-1)) * generator
  * points[2^(w-1)*numblocks]       = NULL
  */
-int 
+int
 ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 {
 	const EC_POINT *generator;
@@ -764,7 +764,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 	/*
 	 * The following parameters mean we precompute (approximately) one
 	 * point per bit.
-	 * 
+	 *
 	 * TBD: The combination  8, 4  is perfect for 160 bits; for other bit
 	 * lengths, other parameter combinations might provide better
 	 * efficiency.
@@ -875,7 +875,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 }
 
 
-int 
+int
 ec_wNAF_have_precompute_mult(const EC_GROUP * group)
 {
 	if (EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free) != NULL)

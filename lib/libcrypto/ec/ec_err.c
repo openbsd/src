@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.14 2022/11/10 16:37:52 jsing Exp $ */
+/* $OpenBSD: ec_err.c,v 1.15 2022/11/19 07:00:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -131,7 +131,7 @@ static ERR_STRING_DATA EC_str_reasons[] =
 
 #endif
 
-void 
+void
 ERR_load_EC_strings(void)
 {
 #ifndef OPENSSL_NO_ERR

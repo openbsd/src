@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.34 2022/01/20 11:02:44 inoguchi Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.35 2022/11/19 07:00:57 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1416,7 +1416,7 @@ ec_GFp_simple_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a, BN
 /*
  * Apply randomization of EC point projective coordinates:
  *
- * 	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
+ *	(X, Y, Z) = (lambda^2 * X, lambda^3 * Y, lambda * Z)
  *
  * where lambda is in the interval [1, group->field).
  */
@@ -1473,14 +1473,14 @@ ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
 
 
 #define EC_POINT_BN_set_flags(P, flags) do {				\
-	BN_set_flags(&(P)->X, (flags));         			\
-	BN_set_flags(&(P)->Y, (flags));         			\
-	BN_set_flags(&(P)->Z, (flags));         			\
+	BN_set_flags(&(P)->X, (flags));					\
+	BN_set_flags(&(P)->Y, (flags));					\
+	BN_set_flags(&(P)->Z, (flags));					\
 } while(0)
 
-#define EC_POINT_CSWAP(c, a, b, w, t) do {      			\
+#define EC_POINT_CSWAP(c, a, b, w, t) do {				\
 	if (!BN_swap_ct(c, &(a)->X, &(b)->X, w)	||			\
-	    !BN_swap_ct(c, &(a)->Y, &(b)->Y, w)	|| 			\
+	    !BN_swap_ct(c, &(a)->Y, &(b)->Y, w)	||			\
 	    !BN_swap_ct(c, &(a)->Z, &(b)->Z, w))			\
 		goto err;						\
 	t = ((a)->Z_is_one ^ (b)->Z_is_one) & (c);			\

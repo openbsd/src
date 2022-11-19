@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.11 2022/08/29 06:08:03 jsg Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.12 2022/11/19 07:00:57 tb Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -897,7 +897,7 @@ ecp_nistz256_points_mul(const EC_GROUP *group, EC_POINT *r,
 			 */
 			BN_ULONG infty;
 			infty = (p.p.X[0] | p.p.X[1] | p.p.X[2] | p.p.X[3] |
-			         p.p.Y[0] | p.p.Y[1] | p.p.Y[2] | p.p.Y[3]);
+				 p.p.Y[0] | p.p.Y[1] | p.p.Y[2] | p.p.Y[3]);
 			if (P256_LIMBS == 8)
 				infty |=
 				    (p.p.X[4] | p.p.X[5] | p.p.X[6] | p.p.X[7] |

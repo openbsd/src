@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.13 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.14 2022/11/19 07:00:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -93,7 +93,7 @@ typedef struct {
 	size_t kdf_outlen;
 } EC_PKEY_CTX;
 
-static int 
+static int
 pkey_ec_init(EVP_PKEY_CTX * ctx)
 {
 	EC_PKEY_CTX *dctx;
@@ -111,7 +111,7 @@ pkey_ec_init(EVP_PKEY_CTX * ctx)
 	return 1;
 }
 
-static int 
+static int
 pkey_ec_copy(EVP_PKEY_CTX * dst, EVP_PKEY_CTX * src)
 {
 	EC_PKEY_CTX *dctx, *sctx;
@@ -146,7 +146,7 @@ pkey_ec_copy(EVP_PKEY_CTX * dst, EVP_PKEY_CTX * src)
 	return 1;
 }
 
-static void 
+static void
 pkey_ec_cleanup(EVP_PKEY_CTX * ctx)
 {
 	EC_PKEY_CTX *dctx = ctx->data;
@@ -160,7 +160,7 @@ pkey_ec_cleanup(EVP_PKEY_CTX * ctx)
 	}
 }
 
-static int 
+static int
 pkey_ec_sign(EVP_PKEY_CTX * ctx, unsigned char *sig, size_t * siglen,
     const unsigned char *tbs, size_t tbslen)
 {
@@ -188,7 +188,7 @@ pkey_ec_sign(EVP_PKEY_CTX * ctx, unsigned char *sig, size_t * siglen,
 	return 1;
 }
 
-static int 
+static int
 pkey_ec_verify(EVP_PKEY_CTX * ctx,
     const unsigned char *sig, size_t siglen,
     const unsigned char *tbs, size_t tbslen)
@@ -207,7 +207,7 @@ pkey_ec_verify(EVP_PKEY_CTX * ctx,
 	return ret;
 }
 
-static int 
+static int
 pkey_ec_derive(EVP_PKEY_CTX * ctx, unsigned char *key, size_t * keylen)
 {
 	int ret;
@@ -283,7 +283,7 @@ pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 	return rv;
 }
 
-static int 
+static int
 pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 {
 	EC_PKEY_CTX *dctx = ctx->data;
@@ -410,7 +410,7 @@ pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 	}
 }
 
-static int 
+static int
 pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx, const char *type, const char *value)
 {
 	if (!strcmp(type, "ec_paramgen_curve")) {
@@ -449,7 +449,7 @@ pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx, const char *type, const char *value)
 	return -2;
 }
 
-static int 
+static int
 pkey_ec_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 {
 	EC_KEY *ec = NULL;
@@ -470,7 +470,7 @@ pkey_ec_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 	return ret;
 }
 
-static int 
+static int
 pkey_ec_keygen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 {
 	EC_KEY *ec = NULL;

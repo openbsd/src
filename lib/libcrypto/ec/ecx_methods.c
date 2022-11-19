@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.1 2022/11/10 16:37:52 jsing Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.2 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -676,7 +676,7 @@ ecx_item_verify(EVP_MD_CTX *md_ctx, const ASN1_ITEM *it, void *asn,
 {
 	const ASN1_OBJECT *aobj;
 	int nid, param_type;
-	
+
 	X509_ALGOR_get0(&aobj, &param_type, NULL, algor);
 
 	nid = OBJ_obj2nid(aobj);

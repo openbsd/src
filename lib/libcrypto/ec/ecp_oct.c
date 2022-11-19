@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.14 2021/04/20 17:32:57 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.15 2022/11/19 07:00:57 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -66,7 +66,7 @@
 
 #include "ec_lcl.h"
 
-int 
+int
 ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group,
     EC_POINT * point, const BIGNUM * x_, int y_bit, BN_CTX * ctx)
 {
@@ -197,7 +197,7 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP * group,
 }
 
 
-size_t 
+size_t
 ec_GFp_simple_point2oct(const EC_GROUP * group, const EC_POINT * point, point_conversion_form_t form,
     unsigned char *buf, size_t len, BN_CTX * ctx)
 {
@@ -302,7 +302,7 @@ ec_GFp_simple_point2oct(const EC_GROUP * group, const EC_POINT * point, point_co
 }
 
 
-int 
+int
 ec_GFp_simple_oct2point(const EC_GROUP * group, EC_POINT * point,
     const unsigned char *buf, size_t len, BN_CTX * ctx)
 {

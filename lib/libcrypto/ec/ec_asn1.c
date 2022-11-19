@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.37 2022/05/24 20:06:32 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.38 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -67,7 +67,7 @@
 #include "asn1_locl.h"
 #include "ec_lcl.h"
 
-int 
+int
 EC_GROUP_get_basis_type(const EC_GROUP * group)
 {
 	int i = 0;
@@ -90,7 +90,7 @@ EC_GROUP_get_basis_type(const EC_GROUP * group)
 }
 
 #ifndef OPENSSL_NO_EC2M
-int 
+int
 EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 {
 	if (group == NULL)
@@ -108,7 +108,7 @@ EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 	return 1;
 }
 
-int 
+int
 EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
     unsigned int *k2, unsigned int *k3)
 {
@@ -268,7 +268,7 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 			.field_name = "p.onBasis",
 			.item = &ASN1_NULL_it,
 		},
-	
+
 	},
 	{
 		.value = NID_X9_62_tpBasis,
@@ -279,7 +279,7 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 			.field_name = "p.tpBasis",
 			.item = &ASN1_INTEGER_it,
 		},
-	
+
 	},
 	{
 		.value = NID_X9_62_ppBasis,
@@ -290,7 +290,7 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 			.field_name = "p.ppBasis",
 			.item = &X9_62_PENTANOMIAL_it,
 		},
-	
+
 	},
 };
 
@@ -370,7 +370,7 @@ static const ASN1_ADB_TABLE X9_62_FIELDID_adbtbl[] = {
 			.field_name = "p.prime",
 			.item = &ASN1_INTEGER_it,
 		},
-	
+
 	},
 	{
 		.value = NID_X9_62_characteristic_two_field,
@@ -381,7 +381,7 @@ static const ASN1_ADB_TABLE X9_62_FIELDID_adbtbl[] = {
 			.field_name = "p.char_two",
 			.item = &X9_62_CHARACTERISTIC_TWO_it,
 		},
-	
+
 	},
 };
 
@@ -798,7 +798,7 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 	return (ok);
 }
 
-static int 
+static int
 ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 {
 	BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
@@ -1308,7 +1308,7 @@ d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 	return (group);
 }
 
-int 
+int
 i2d_ECPKParameters(const EC_GROUP * a, unsigned char **out)
 {
 	int ret = 0;
@@ -1420,7 +1420,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 	return (NULL);
 }
 
-int 
+int
 i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 {
 	int ret = 0, ok = 0;
@@ -1504,7 +1504,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 	return (ok ? ret : 0);
 }
 
-int 
+int
 i2d_ECParameters(EC_KEY * a, unsigned char **out)
 {
 	if (a == NULL) {
@@ -1569,7 +1569,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 	return ret;
 }
 
-int 
+int
 i2o_ECPublicKey(const EC_KEY * a, unsigned char **out)
 {
 	size_t buf_len = 0;

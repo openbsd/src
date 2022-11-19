@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.26 2021/04/20 17:23:37 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.27 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -98,7 +98,7 @@ EC_KEY_new_by_curve_name(int nid)
 	return ret;
 }
 
-void 
+void
 EC_KEY_free(EC_KEY * r)
 {
 	int i;
@@ -228,7 +228,7 @@ EC_KEY_dup(const EC_KEY * ec_key)
 	return ret;
 }
 
-int 
+int
 EC_KEY_up_ref(EC_KEY * r)
 {
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
@@ -308,7 +308,7 @@ ossl_ec_key_gen(EC_KEY *eckey)
 	return (ok);
 }
 
-int 
+int
 EC_KEY_check_key(const EC_KEY * eckey)
 {
 	int ok = 0;
@@ -375,7 +375,7 @@ EC_KEY_check_key(const EC_KEY * eckey)
 	return (ok);
 }
 
-int 
+int
 EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 {
 	BN_CTX *ctx = NULL;
@@ -434,7 +434,7 @@ EC_KEY_get0_group(const EC_KEY * key)
 	return key->group;
 }
 
-int 
+int
 EC_KEY_set_group(EC_KEY * key, const EC_GROUP * group)
 {
 	if (key->meth->set_group != NULL &&
@@ -451,7 +451,7 @@ EC_KEY_get0_private_key(const EC_KEY * key)
 	return key->priv_key;
 }
 
-int 
+int
 EC_KEY_set_private_key(EC_KEY * key, const BIGNUM * priv_key)
 {
 	if (key->meth->set_private != NULL &&
@@ -468,7 +468,7 @@ EC_KEY_get0_public_key(const EC_KEY * key)
 	return key->pub_key;
 }
 
-int 
+int
 EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
 {
 	if (key->meth->set_public != NULL &&
@@ -479,25 +479,25 @@ EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
 	return (key->pub_key == NULL) ? 0 : 1;
 }
 
-unsigned int 
+unsigned int
 EC_KEY_get_enc_flags(const EC_KEY * key)
 {
 	return key->enc_flag;
 }
 
-void 
+void
 EC_KEY_set_enc_flags(EC_KEY * key, unsigned int flags)
 {
 	key->enc_flag = flags;
 }
 
-point_conversion_form_t 
+point_conversion_form_t
 EC_KEY_get_conv_form(const EC_KEY * key)
 {
 	return key->conv_form;
 }
 
-void 
+void
 EC_KEY_set_conv_form(EC_KEY * key, point_conversion_form_t cform)
 {
 	key->conv_form = cform;
@@ -537,14 +537,14 @@ EC_KEY_insert_key_method_data(EC_KEY * key, void *data,
 	return ex_data;
 }
 
-void 
+void
 EC_KEY_set_asn1_flag(EC_KEY * key, int flag)
 {
 	if (key->group != NULL)
 		EC_GROUP_set_asn1_flag(key->group, flag);
 }
 
-int 
+int
 EC_KEY_precompute_mult(EC_KEY * key, BN_CTX * ctx)
 {
 	if (key->group == NULL)
@@ -552,19 +552,19 @@ EC_KEY_precompute_mult(EC_KEY * key, BN_CTX * ctx)
 	return EC_GROUP_precompute_mult(key->group, ctx);
 }
 
-int 
+int
 EC_KEY_get_flags(const EC_KEY * key)
 {
 	return key->flags;
 }
 
-void 
+void
 EC_KEY_set_flags(EC_KEY * key, int flags)
 {
 	key->flags |= flags;
 }
 
-void 
+void
 EC_KEY_clear_flags(EC_KEY * key, int flags)
 {
 	key->flags &= ~flags;

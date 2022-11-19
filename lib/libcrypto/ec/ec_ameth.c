@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.33 2022/06/27 12:36:05 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.34 2022/11/19 07:00:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,7 +75,7 @@ static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
-static int 
+static int
 eckey_param2type(int *pptype, void **ppval, EC_KEY * ec_key)
 {
 	const EC_GROUP *group;
@@ -107,7 +107,7 @@ eckey_param2type(int *pptype, void **ppval, EC_KEY * ec_key)
 	return 1;
 }
 
-static int 
+static int
 eckey_pub_encode(X509_PUBKEY * pk, const EVP_PKEY * pkey)
 {
 	EC_KEY *ec_key = pkey->pkey.ec;
@@ -190,7 +190,7 @@ eckey_type2param(int ptype, const void *pval)
 	return NULL;
 }
 
-static int 
+static int
 eckey_pub_decode(EVP_PKEY * pkey, X509_PUBKEY * pubkey)
 {
 	const unsigned char *p = NULL;
@@ -223,7 +223,7 @@ eckey_pub_decode(EVP_PKEY * pkey, X509_PUBKEY * pubkey)
 	return 0;
 }
 
-static int 
+static int
 eckey_pub_cmp(const EVP_PKEY * a, const EVP_PKEY * b)
 {
 	int r;
@@ -238,7 +238,7 @@ eckey_pub_cmp(const EVP_PKEY * a, const EVP_PKEY * b)
 	return -2;
 }
 
-static int 
+static int
 eckey_priv_decode(EVP_PKEY * pkey, const PKCS8_PRIV_KEY_INFO * p8)
 {
 	const unsigned char *p = NULL;
@@ -305,7 +305,7 @@ eckey_priv_decode(EVP_PKEY * pkey, const PKCS8_PRIV_KEY_INFO * p8)
 	return 0;
 }
 
-static int 
+static int
 eckey_priv_encode(PKCS8_PRIV_KEY_INFO * p8, const EVP_PKEY * pkey)
 {
 	EC_KEY *ec_key;
@@ -358,13 +358,13 @@ eckey_priv_encode(PKCS8_PRIV_KEY_INFO * p8, const EVP_PKEY * pkey)
 	return 1;
 }
 
-static int 
+static int
 int_ec_size(const EVP_PKEY * pkey)
 {
 	return ECDSA_size(pkey->pkey.ec);
 }
 
-static int 
+static int
 ec_bits(const EVP_PKEY * pkey)
 {
 	BIGNUM *order = BN_new();
@@ -405,7 +405,7 @@ ec_security_bits(const EVP_PKEY *pkey)
 	return ecbits / 2;
 }
 
-static int 
+static int
 ec_missing_parameters(const EVP_PKEY * pkey)
 {
 	if (EC_KEY_get0_group(pkey->pkey.ec) == NULL)
@@ -413,13 +413,13 @@ ec_missing_parameters(const EVP_PKEY * pkey)
 	return 0;
 }
 
-static int 
+static int
 ec_copy_parameters(EVP_PKEY * to, const EVP_PKEY * from)
 {
 	return EC_KEY_set_group(to->pkey.ec, EC_KEY_get0_group(from->pkey.ec));
 }
 
-static int 
+static int
 ec_cmp_parameters(const EVP_PKEY * a, const EVP_PKEY * b)
 {
 	const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec), *group_b = EC_KEY_get0_group(b->pkey.ec);
@@ -429,13 +429,13 @@ ec_cmp_parameters(const EVP_PKEY * a, const EVP_PKEY * b)
 		return 1;
 }
 
-static void 
+static void
 int_ec_free(EVP_PKEY * pkey)
 {
 	EC_KEY_free(pkey->pkey.ec);
 }
 
-static int 
+static int
 do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 {
 	unsigned char *buffer = NULL;
@@ -519,7 +519,7 @@ do_EC_KEY_print(BIO * bp, const EC_KEY * x, int off, int ktype)
 	return (ret);
 }
 
-static int 
+static int
 eckey_param_decode(EVP_PKEY * pkey,
     const unsigned char **pder, int derlen)
 {
@@ -532,20 +532,20 @@ eckey_param_decode(EVP_PKEY * pkey,
 	return 1;
 }
 
-static int 
+static int
 eckey_param_encode(const EVP_PKEY * pkey, unsigned char **pder)
 {
 	return i2d_ECParameters(pkey->pkey.ec, pder);
 }
 
-static int 
+static int
 eckey_param_print(BIO * bp, const EVP_PKEY * pkey, int indent,
     ASN1_PCTX * ctx)
 {
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 0);
 }
 
-static int 
+static int
 eckey_pub_print(BIO * bp, const EVP_PKEY * pkey, int indent,
     ASN1_PCTX * ctx)
 {
@@ -553,14 +553,14 @@ eckey_pub_print(BIO * bp, const EVP_PKEY * pkey, int indent,
 }
 
 
-static int 
+static int
 eckey_priv_print(BIO * bp, const EVP_PKEY * pkey, int indent,
     ASN1_PCTX * ctx)
 {
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
 }
 
-static int 
+static int
 old_ec_priv_decode(EVP_PKEY * pkey,
     const unsigned char **pder, int derlen)
 {
@@ -573,13 +573,13 @@ old_ec_priv_decode(EVP_PKEY * pkey,
 	return 1;
 }
 
-static int 
+static int
 old_ec_priv_encode(const EVP_PKEY * pkey, unsigned char **pder)
 {
 	return i2d_ECPrivateKey(pkey->pkey.ec, pder);
 }
 
-static int 
+static int
 ec_pkey_ctrl(EVP_PKEY * pkey, int op, long arg1, void *arg2)
 {
 	switch (op) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistputil.c,v 1.6 2014/07/10 22:45:57 jsing Exp $ */
+/* $OpenBSD: ecp_nistputil.c,v 1.7 2022/11/19 07:00:57 tb Exp $ */
 /*
  * Written by Bodo Moeller for the OpenSSL project.
  */
@@ -43,7 +43,7 @@
  * tmp_felems needs to point to a temporary array of 'num'+1 field elements
  * for storage of intermediate values.
  */
-void 
+void
 ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
     size_t felem_size, void *tmp_felems,
     void (*felem_one) (void *out),
@@ -192,7 +192,7 @@ ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
  * has to be b_4 b_3 b_2 b_1 b_0 0.
  *
  */
-void 
+void
 ec_GFp_nistp_recode_scalar_bits(unsigned char *sign, unsigned char *digit, unsigned char in)
 {
 	unsigned char s, d;
