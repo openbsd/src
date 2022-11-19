@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2022/11/19 16:02:37 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -68,6 +68,7 @@
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_sepc)
 #define PROC_STACK(p)	((p)->p_addr->u_pcb.pcb_tf->tf_sp)
 
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
@@ -89,9 +90,7 @@ struct cpu_info {
 	struct pcb		*ci_curpcb;
 	struct pcb		*ci_idle_pcb;
 
-	uint64_t		ci_lasttb;
-	uint64_t		ci_nexttimerevent;
-	uint64_t		ci_nextstatevent;
+	struct clockintr_queue	ci_queue;
 	volatile int		ci_timer_deferred;
 
 	uint32_t		ci_cpl;
