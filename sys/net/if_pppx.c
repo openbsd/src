@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.122 2022/08/29 07:51:45 bluhm Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.123 2022/11/19 15:12:38 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -414,7 +414,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	struct pppx_dev *pxd = pppx_dev2pxd(dev);
 	int error = 0;
 
-	NET_LOCK();
 	switch (cmd) {
 	case PIPEXASESSION:
 		error = pppx_add_session(pxd,
@@ -422,13 +421,17 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case PIPEXDSESSION:
+		NET_LOCK();
 		error = pppx_del_session(pxd,
 		    (struct pipex_session_close_req *)addr);
+		NET_UNLOCK();
 		break;
 
 	case PIPEXSIFDESCR:
+		NET_LOCK();
 		error = pppx_set_session_descr(pxd,
 		    (struct pipex_session_descr_req *)addr);
+		NET_UNLOCK();
 		break;
 
 	case FIONBIO:
@@ -441,7 +444,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		error = pipex_ioctl(pxd, cmd, addr);
 		break;
 	}
-	NET_UNLOCK();
 
 	return (error);
 }
@@ -607,6 +609,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 	pxi->pxi_session = session;
 
+	NET_LOCK();
 	/* try to set the interface up */
 	unit = pppx_if_next_unit();
 	if (unit < 0) {
@@ -624,6 +627,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		goto out;
 	}
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
+	NET_UNLOCK();
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
@@ -638,13 +642,12 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	/* ifp->if_rdomain = req->pr_rdomain; */
 	if_counters_alloc(ifp);
 
-	/* XXXSMP breaks atomicity */
-	NET_UNLOCK();
 	if_attach(ifp);
-	NET_LOCK();
 
+	NET_LOCK();
 	if_addgroup(ifp, "pppx");
 	if_alloc_sadl(ifp);
+	NET_UNLOCK();
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
@@ -680,6 +683,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 	ia->ia_netmask = ia->ia_sockmask.sin_addr.s_addr;
 
+	NET_LOCK();
 	error = in_ifinit(ifp, ia, &ifaddr, 1);
 	if (error) {
 		printf("pppx: unable to set addresses for %s, error=%d\n",
@@ -687,26 +691,29 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	} else {
 		if_addrhooks_run(ifp);
 	}
+	NET_UNLOCK();
 
 	error = pipex_link_session(session, ifp, pxd);
 	if (error)
 		goto detach;
 
+	NET_LOCK();
 	SET(ifp->if_flags, IFF_RUNNING);
 	pxi->pxi_ready = 1;
+	NET_UNLOCK();
 
 	return (error);
 
 detach:
-	/* XXXSMP breaks atomicity */
-	NET_UNLOCK();
 	if_detach(ifp);
-	NET_LOCK();
 
+	NET_LOCK();
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
 		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 out:
+	NET_UNLOCK();
+
 	pool_put(&pppx_if_pl, pxi);
 	pipex_rele_session(session);
 
