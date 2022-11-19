@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.78 2021/06/03 06:42:03 otto Exp $
+.\"	$OpenBSD: newfs.8,v 1.79 2022/11/19 08:02:11 sthen Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: June 3 2021 $
+.Dd $Mdocdate: November 19 2022 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -65,6 +65,7 @@
 .Op Fl f Ar frag-size
 .Op Fl i Ar bytes
 .Op Fl m Ar free-space
+.Op Fl O Ar filesystem-format
 .Op Fl o Ar options
 .Op Fl P Ar file
 .Op Fl s Ar size
@@ -191,9 +192,11 @@ format file system.
 This option is primarily used to build root file systems that can
 be understood by older boot ROMs.
 .It 1
-Fast File System (FFS).
+Fast File System (FFS), the default for
+.Nm mount_mfs .
 .It 2
-Enhanced Fast File System (FFS2), the default.
+Enhanced Fast File System (FFS2), the default for
+.Nm .
 .El
 .It Fl o Ar optimization
 .Ar space
