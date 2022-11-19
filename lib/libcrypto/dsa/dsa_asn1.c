@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.26 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.27 2022/11/19 11:48:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -399,18 +399,27 @@ DSAparams_dup(DSA *dsa)
 
 int
 DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
-    unsigned int *siglen, DSA *dsa)
+    unsigned int *out_siglen, DSA *dsa)
 {
 	DSA_SIG *s;
+	int siglen;
+	int ret = 0;
 
-	s = DSA_do_sign(dgst, dlen, dsa);
-	if (s == NULL) {
-		*siglen = 0;
-		return 0;
-	}
-	*siglen = i2d_DSA_SIG(s,&sig);
+	*out_siglen = 0;
+
+	if ((s = DSA_do_sign(dgst, dlen, dsa)) == NULL)
+		goto err;
+
+	if ((siglen = i2d_DSA_SIG(s, &sig)) < 0)
+		goto err;
+
+	*out_siglen = siglen;
+
+	ret = 1;
+ err:
 	DSA_SIG_free(s);
-	return 1;
+
+	return ret;
 }
 
 /*
@@ -424,24 +433,26 @@ int
 DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int siglen, DSA *dsa)
 {
-	DSA_SIG *s;
+	DSA_SIG *s = NULL;
 	unsigned char *der = NULL;
-	const unsigned char *p = sigbuf;
-	int derlen = -1;
+	const unsigned char *p;
 	int ret = -1;
 
-	s = DSA_SIG_new();
-	if (s == NULL)
-		return ret;
-	if (d2i_DSA_SIG(&s, &p, siglen) == NULL)
+	p = sigbuf;
+	if ((s = d2i_DSA_SIG(NULL, &p, siglen)) == NULL)
 		goto err;
+
 	/* Ensure signature uses DER and doesn't have trailing garbage */
-	derlen = i2d_DSA_SIG(s, &der);
-	if (derlen != siglen || memcmp(sigbuf, der, derlen))
+	if (i2d_DSA_SIG(s, &der) != siglen)
 		goto err;
+
+	if (memcmp(der, sigbuf, siglen) != 0)
+		goto err;
+
 	ret = DSA_do_verify(dgst, dgst_len, s, dsa);
-err:
-	freezero(der, derlen);
+ err:
+	free(der);
 	DSA_SIG_free(s);
+
 	return ret;
 }
