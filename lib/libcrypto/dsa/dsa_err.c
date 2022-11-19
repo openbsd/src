@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_err.c,v 1.16 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: dsa_err.c,v 1.17 2022/11/19 06:33:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in

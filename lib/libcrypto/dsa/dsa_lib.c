@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.37 2022/08/31 13:28:39 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.38 2022/11/19 06:33:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,18 +106,18 @@ DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
 	 * NB: The caller is specifically setting a method, so it's not up to us
 	 * to deal with which ENGINE it comes from.
 	 */
-        const DSA_METHOD *mtmp;
-        mtmp = dsa->meth;
-        if (mtmp->finish)
+	const DSA_METHOD *mtmp;
+	mtmp = dsa->meth;
+	if (mtmp->finish)
 		mtmp->finish(dsa);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(dsa->engine);
 	dsa->engine = NULL;
 #endif
-        dsa->meth = meth;
-        if (meth->init)
+	dsa->meth = meth;
+	if (meth->init)
 		meth->init(dsa);
-        return 1;
+	return 1;
 }
 
 DSA *

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_depr.c,v 1.8 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: dsa_depr.c,v 1.9 2022/11/19 06:33:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
