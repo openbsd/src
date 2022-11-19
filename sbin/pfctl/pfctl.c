@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.388 2022/07/27 12:28:27 mbuhl Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.389 2022/11/19 14:01:51 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -783,6 +783,10 @@ pfctl_parse_host(char *str, struct pf_rule_addr *addr)
 void
 pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 {
+	if ((rule->rule_flag & PFRULE_EXPIRED) &&
+	    !(opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG)))
+		return;
+
 	if (opts & PF_OPT_DEBUG) {
 		const char *t[PF_SKIP_COUNT] = { "i", "d", "r", "f",
 		    "p", "sa", "da", "sp", "dp" };
@@ -949,6 +953,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 				INDENT(depth, !(opts & PF_OPT_VERBOSE));
 				printf("}\n");
 			} else {
+				if ((pr.rule.rule_flag & PFRULE_EXPIRED) &&
+				    !(opts & (PF_OPT_VERBOSE2 | PF_OPT_DEBUG)))
+					break;
 				printf("\n");
 				pfctl_print_rule_counters(&pr.rule, opts);
 			}
