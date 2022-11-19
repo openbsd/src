@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.24 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.25 2022/11/19 07:29:29 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -127,7 +127,7 @@ EC_GF2m_simple_method(void)
  * Note that all other members are handled by EC_GROUP_new.
  */
 int
-ec_GF2m_simple_group_init(EC_GROUP * group)
+ec_GF2m_simple_group_init(EC_GROUP *group)
 {
 	BN_init(&group->field);
 	BN_init(&group->a);
@@ -140,7 +140,7 @@ ec_GF2m_simple_group_init(EC_GROUP * group)
  * Note that all other members are handled by EC_GROUP_free.
  */
 void
-ec_GF2m_simple_group_finish(EC_GROUP * group)
+ec_GF2m_simple_group_finish(EC_GROUP *group)
 {
 	BN_free(&group->field);
 	BN_free(&group->a);
@@ -152,7 +152,7 @@ ec_GF2m_simple_group_finish(EC_GROUP * group)
  * Note that all other members are handled by EC_GROUP_clear_free.
  */
 void
-ec_GF2m_simple_group_clear_finish(EC_GROUP * group)
+ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 {
 	BN_clear_free(&group->field);
 	BN_clear_free(&group->a);
@@ -170,7 +170,7 @@ ec_GF2m_simple_group_clear_finish(EC_GROUP * group)
  * Note that all other members are handled by EC_GROUP_copy.
  */
 int
-ec_GF2m_simple_group_copy(EC_GROUP * dest, const EC_GROUP * src)
+ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	int i;
 
@@ -200,8 +200,8 @@ ec_GF2m_simple_group_copy(EC_GROUP * dest, const EC_GROUP * src)
 
 /* Set the curve parameters of an EC_GROUP structure. */
 int
-ec_GF2m_simple_group_set_curve(EC_GROUP * group,
-    const BIGNUM * p, const BIGNUM * a, const BIGNUM * b, BN_CTX * ctx)
+ec_GF2m_simple_group_set_curve(EC_GROUP *group,
+    const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
 	int ret = 0, i;
 
@@ -265,7 +265,7 @@ ec_GF2m_simple_group_get_curve(const EC_GROUP *group,
 
 /* Gets the degree of the field.  For a curve over GF(2^m) this is the value m. */
 int
-ec_GF2m_simple_group_get_degree(const EC_GROUP * group)
+ec_GF2m_simple_group_get_degree(const EC_GROUP *group)
 {
 	return BN_num_bits(&group->field) - 1;
 }
@@ -275,7 +275,7 @@ ec_GF2m_simple_group_get_degree(const EC_GROUP * group)
  * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p)
  */
 int
-ec_GF2m_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
+ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
 	int ret = 0;
 	BIGNUM *b;
@@ -314,7 +314,7 @@ ec_GF2m_simple_group_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 
 /* Initializes an EC_POINT. */
 int
-ec_GF2m_simple_point_init(EC_POINT * point)
+ec_GF2m_simple_point_init(EC_POINT *point)
 {
 	BN_init(&point->X);
 	BN_init(&point->Y);
@@ -325,7 +325,7 @@ ec_GF2m_simple_point_init(EC_POINT * point)
 
 /* Frees an EC_POINT. */
 void
-ec_GF2m_simple_point_finish(EC_POINT * point)
+ec_GF2m_simple_point_finish(EC_POINT *point)
 {
 	BN_free(&point->X);
 	BN_free(&point->Y);
@@ -335,7 +335,7 @@ ec_GF2m_simple_point_finish(EC_POINT * point)
 
 /* Clears and frees an EC_POINT. */
 void
-ec_GF2m_simple_point_clear_finish(EC_POINT * point)
+ec_GF2m_simple_point_clear_finish(EC_POINT *point)
 {
 	BN_clear_free(&point->X);
 	BN_clear_free(&point->Y);
@@ -346,7 +346,7 @@ ec_GF2m_simple_point_clear_finish(EC_POINT * point)
 
 /* Copy the contents of one EC_POINT into another.  Assumes dest is initialized. */
 int
-ec_GF2m_simple_point_copy(EC_POINT * dest, const EC_POINT * src)
+ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 {
 	if (!BN_copy(&dest->X, &src->X))
 		return 0;
@@ -364,7 +364,7 @@ ec_GF2m_simple_point_copy(EC_POINT * dest, const EC_POINT * src)
  * A point at infinity is represented by having Z=0.
  */
 int
-ec_GF2m_simple_point_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
+ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
 	point->Z_is_one = 0;
 	BN_zero(&point->Z);
@@ -376,8 +376,8 @@ ec_GF2m_simple_point_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
  * Note that the simple implementation only uses affine coordinates.
  */
 int
-ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP * group, EC_POINT * point,
-    const BIGNUM * x, const BIGNUM * y, BN_CTX * ctx)
+ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
+    const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 {
 	int ret = 0;
 	if (x == NULL || y == NULL) {
@@ -701,7 +701,7 @@ ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 
 /* Forces the given EC_POINT to internally use affine coordinates. */
 int
-ec_GF2m_simple_make_affine(const EC_GROUP * group, EC_POINT * point, BN_CTX * ctx)
+ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
 	BN_CTX *new_ctx = NULL;
 	BIGNUM *x, *y;

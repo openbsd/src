@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.19 2022/06/30 11:14:47 tb Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.20 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -117,7 +117,7 @@ EC_GFp_nist_method(void)
 }
 
 int
-ec_GFp_nist_group_copy(EC_GROUP * dest, const EC_GROUP * src)
+ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	dest->field_mod_func = src->field_mod_func;
 
@@ -192,8 +192,8 @@ ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 
 
 int
-ec_GFp_nist_field_sqr(const EC_GROUP * group, BIGNUM * r, const BIGNUM * a,
-    BN_CTX * ctx)
+ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
+    BN_CTX *ctx)
 {
 	int ret = 0;
 	BN_CTX *ctx_new = NULL;

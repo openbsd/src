@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp224.c,v 1.27 2021/09/08 17:29:21 tb Exp $ */
+/* $OpenBSD: ecp_nistp224.c,v 1.28 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Emilia Kasper (Google) for the OpenSSL project.
  */
@@ -302,7 +302,7 @@ felem_to_bin28(u8 out[28], const felem in)
 
 /* To preserve endianness when using BN_bn2bin and BN_bin2bn */
 static void
-flip_endian(u8 * out, const u8 * in, unsigned len)
+flip_endian(u8 *out, const u8 *in, unsigned len)
 {
 	unsigned i;
 	for (i = 0; i < len; ++i)
@@ -311,7 +311,7 @@ flip_endian(u8 * out, const u8 * in, unsigned len)
 
 /* From OpenSSL BIGNUM to internal representation */
 static int
-BN_to_felem(felem out, const BIGNUM * bn)
+BN_to_felem(felem out, const BIGNUM *bn)
 {
 	felem_bytearray b_in;
 	felem_bytearray b_out;
@@ -336,7 +336,7 @@ BN_to_felem(felem out, const BIGNUM * bn)
 
 /* From internal representation to OpenSSL BIGNUM */
 static BIGNUM *
-felem_to_BN(BIGNUM * out, const felem in)
+felem_to_BN(BIGNUM *out, const felem in)
 {
 	felem_bytearray b_in, b_out;
 	felem_to_bin28(b_in, in);
@@ -1249,7 +1249,7 @@ nistp224_pre_comp_clear_free(void *pre_)
  */
 
 int
-ec_GFp_nistp224_group_init(EC_GROUP * group)
+ec_GFp_nistp224_group_init(EC_GROUP *group)
 {
 	int ret;
 	ret = ec_GFp_simple_group_init(group);
@@ -1258,8 +1258,8 @@ ec_GFp_nistp224_group_init(EC_GROUP * group)
 }
 
 int
-ec_GFp_nistp224_group_set_curve(EC_GROUP * group, const BIGNUM * p,
-    const BIGNUM * a, const BIGNUM * b, BN_CTX * ctx)
+ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
+    const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
 	int ret = 0;
 	BN_CTX *new_ctx = NULL;
@@ -1292,8 +1292,8 @@ ec_GFp_nistp224_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 /* Takes the Jacobian coordinates (X, Y, Z) of a point and returns
  * (X', Y') = (X/Z^2, Y/Z^3) */
 int
-ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP * group,
-    const EC_POINT * point, BIGNUM * x, BIGNUM * y, BN_CTX * ctx)
+ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	felem z1, z2, x_in, y_in, x_out, y_out;
 	widefelem tmp;
@@ -1355,9 +1355,9 @@ make_points_affine(size_t num, felem points[ /* num */ ][3], felem tmp_felems[ /
 /* Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL values
  * Result is stored in r (r can equal one of the inputs). */
 int
-ec_GFp_nistp224_points_mul(const EC_GROUP * group, EC_POINT * r,
-    const BIGNUM * scalar, size_t num, const EC_POINT * points[],
-    const BIGNUM * scalars[], BN_CTX * ctx)
+ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *scalar, size_t num, const EC_POINT *points[],
+    const BIGNUM *scalars[], BN_CTX *ctx)
 {
 	int ret = 0;
 	int j;
@@ -1550,7 +1550,7 @@ ec_GFp_nistp224_points_mul(const EC_GROUP * group, EC_POINT * r,
 }
 
 int
-ec_GFp_nistp224_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
+ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	int ret = 0;
 	NISTP224_PRE_COMP *pre = NULL;
@@ -1677,7 +1677,7 @@ ec_GFp_nistp224_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 }
 
 int
-ec_GFp_nistp224_have_precompute_mult(const EC_GROUP * group)
+ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group)
 {
 	if (EC_EX_DATA_get_data(group->extra_data, nistp224_pre_comp_dup,
 		nistp224_pre_comp_free, nistp224_pre_comp_clear_free)

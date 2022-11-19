@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.10 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_check.c,v 1.11 2022/11/19 07:29:29 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -57,7 +57,7 @@
 #include <openssl/err.h>
 
 int
-EC_GROUP_check(const EC_GROUP * group, BN_CTX * ctx)
+EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 {
 	int ret = 0;
 	BIGNUM *order;

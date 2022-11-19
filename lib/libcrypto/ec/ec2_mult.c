@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.13 2018/07/23 18:24:22 tb Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.14 2022/11/19 07:29:29 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -441,13 +441,13 @@ ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
  * because ec_GF2m_simple_mul() uses ec_wNAF_mul() if appropriate */
 
 int
-ec_GF2m_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
+ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	return ec_wNAF_precompute_mult(group, ctx);
 }
 
 int
-ec_GF2m_have_precompute_mult(const EC_GROUP * group)
+ec_GF2m_have_precompute_mult(const EC_GROUP *group)
 {
 	return ec_wNAF_have_precompute_mult(group);
 }

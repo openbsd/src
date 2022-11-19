@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.17 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.18 2022/11/19 07:29:29 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -175,7 +175,7 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 size_t
 ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     point_conversion_form_t form,
-    unsigned char *buf, size_t len, BN_CTX * ctx)
+    unsigned char *buf, size_t len, BN_CTX *ctx)
 {
 	size_t ret;
 	BN_CTX *new_ctx = NULL;

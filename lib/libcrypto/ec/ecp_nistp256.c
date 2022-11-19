@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp256.c,v 1.26 2021/09/08 17:29:21 tb Exp $ */
+/* $OpenBSD: ecp_nistp256.c,v 1.27 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -137,7 +137,7 @@ smallfelem_to_bin32(u8 out[32], const smallfelem in)
 
 /* To preserve endianness when using BN_bn2bin and BN_bin2bn */
 static void
-flip_endian(u8 * out, const u8 * in, unsigned len)
+flip_endian(u8 *out, const u8 *in, unsigned len)
 {
 	unsigned i;
 	for (i = 0; i < len; ++i)
@@ -146,7 +146,7 @@ flip_endian(u8 * out, const u8 * in, unsigned len)
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */
 static int
-BN_to_felem(felem out, const BIGNUM * bn)
+BN_to_felem(felem out, const BIGNUM *bn)
 {
 	felem_bytearray b_in;
 	felem_bytearray b_out;
@@ -171,7 +171,7 @@ BN_to_felem(felem out, const BIGNUM * bn)
 
 /* felem_to_BN converts an felem into an OpenSSL BIGNUM */
 static BIGNUM *
-smallfelem_to_BN(BIGNUM * out, const smallfelem in)
+smallfelem_to_BN(BIGNUM *out, const smallfelem in)
 {
 	felem_bytearray b_in, b_out;
 	smallfelem_to_bin32(b_in, in);
@@ -833,7 +833,7 @@ felem_reduce_zero105(felem out, const longfelem in)
 /* subtract_u64 sets *result = *result - v and *carry to one if the subtraction
  * underflowed. */
 static void
-subtract_u64(u64 * result, u64 * carry, u64 v)
+subtract_u64(u64 *result, u64 *carry, u64 v)
 {
 	uint128_t r = *result;
 	r -= v;
@@ -1581,7 +1581,7 @@ get_bit(const felem_bytearray in, int i)
  * Output point (X, Y, Z) is stored in x_out, y_out, z_out */
 static void
 batch_mul(felem x_out, felem y_out, felem z_out,
-    const felem_bytearray scalars[], const unsigned num_points, const u8 * g_scalar,
+    const felem_bytearray scalars[], const unsigned num_points, const u8 *g_scalar,
     const int mixed, const smallfelem pre_comp[][17][3], const smallfelem g_pre_comp[2][16][3])
 {
 	int i, skip;
@@ -1798,7 +1798,7 @@ nistp256_pre_comp_clear_free(void *pre_)
  */
 
 int
-ec_GFp_nistp256_group_init(EC_GROUP * group)
+ec_GFp_nistp256_group_init(EC_GROUP *group)
 {
 	int ret;
 	ret = ec_GFp_simple_group_init(group);
@@ -1807,8 +1807,8 @@ ec_GFp_nistp256_group_init(EC_GROUP * group)
 }
 
 int
-ec_GFp_nistp256_group_set_curve(EC_GROUP * group, const BIGNUM * p,
-    const BIGNUM * a, const BIGNUM * b, BN_CTX * ctx)
+ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
+    const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
 	int ret = 0;
 	BN_CTX *new_ctx = NULL;
@@ -1841,8 +1841,8 @@ ec_GFp_nistp256_group_set_curve(EC_GROUP * group, const BIGNUM * p,
 /* Takes the Jacobian coordinates (X, Y, Z) of a point and returns
  * (X', Y') = (X/Z^2, Y/Z^3) */
 int
-ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP * group,
-    const EC_POINT * point, BIGNUM * x, BIGNUM * y, BN_CTX * ctx)
+ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
 	felem z1, z2, x_in, y_in;
 	smallfelem x_out, y_out;
@@ -1905,9 +1905,9 @@ make_points_affine(size_t num, smallfelem points[ /* num */ ][3], smallfelem tmp
 /* Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL values
  * Result is stored in r (r can equal one of the inputs). */
 int
-ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
-    const BIGNUM * scalar, size_t num, const EC_POINT * points[],
-    const BIGNUM * scalars[], BN_CTX * ctx)
+ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *scalar, size_t num, const EC_POINT *points[],
+    const BIGNUM *scalars[], BN_CTX *ctx)
 {
 	int ret = 0;
 	int j;
@@ -2103,7 +2103,7 @@ ec_GFp_nistp256_points_mul(const EC_GROUP * group, EC_POINT * r,
 }
 
 int
-ec_GFp_nistp256_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
+ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	int ret = 0;
 	NISTP256_PRE_COMP *pre = NULL;
@@ -2224,7 +2224,7 @@ ec_GFp_nistp256_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 }
 
 int
-ec_GFp_nistp256_have_precompute_mult(const EC_GROUP * group)
+ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
 	if (EC_EX_DATA_get_data(group->extra_data, nistp256_pre_comp_dup,
 		nistp256_pre_comp_free, nistp256_pre_comp_clear_free)

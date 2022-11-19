@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.27 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.28 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -99,7 +99,7 @@ EC_KEY_new_by_curve_name(int nid)
 }
 
 void
-EC_KEY_free(EC_KEY * r)
+EC_KEY_free(EC_KEY *r)
 {
 	int i;
 
@@ -128,7 +128,7 @@ EC_KEY_free(EC_KEY * r)
 }
 
 EC_KEY *
-EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
+EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 {
 	EC_EXTRA_DATA *d;
 
@@ -215,7 +215,7 @@ EC_KEY_copy(EC_KEY * dest, const EC_KEY * src)
 }
 
 EC_KEY *
-EC_KEY_dup(const EC_KEY * ec_key)
+EC_KEY_dup(const EC_KEY *ec_key)
 {
 	EC_KEY *ret;
 
@@ -229,7 +229,7 @@ EC_KEY_dup(const EC_KEY * ec_key)
 }
 
 int
-EC_KEY_up_ref(EC_KEY * r)
+EC_KEY_up_ref(EC_KEY *r)
 {
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
 	return ((i > 1) ? 1 : 0);
@@ -309,7 +309,7 @@ ossl_ec_key_gen(EC_KEY *eckey)
 }
 
 int
-EC_KEY_check_key(const EC_KEY * eckey)
+EC_KEY_check_key(const EC_KEY *eckey)
 {
 	int ok = 0;
 	BN_CTX *ctx = NULL;
@@ -376,7 +376,7 @@ EC_KEY_check_key(const EC_KEY * eckey)
 }
 
 int
-EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
+EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 {
 	BN_CTX *ctx = NULL;
 	BIGNUM *tx, *ty;
@@ -429,13 +429,13 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY * key, BIGNUM * x, BIGNUM * y)
 }
 
 const EC_GROUP *
-EC_KEY_get0_group(const EC_KEY * key)
+EC_KEY_get0_group(const EC_KEY *key)
 {
 	return key->group;
 }
 
 int
-EC_KEY_set_group(EC_KEY * key, const EC_GROUP * group)
+EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
 {
 	if (key->meth->set_group != NULL &&
 	    key->meth->set_group(key, group) == 0)
@@ -446,13 +446,13 @@ EC_KEY_set_group(EC_KEY * key, const EC_GROUP * group)
 }
 
 const BIGNUM *
-EC_KEY_get0_private_key(const EC_KEY * key)
+EC_KEY_get0_private_key(const EC_KEY *key)
 {
 	return key->priv_key;
 }
 
 int
-EC_KEY_set_private_key(EC_KEY * key, const BIGNUM * priv_key)
+EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
 	if (key->meth->set_private != NULL &&
 	    key->meth->set_private(key, priv_key) == 0)
@@ -463,13 +463,13 @@ EC_KEY_set_private_key(EC_KEY * key, const BIGNUM * priv_key)
 }
 
 const EC_POINT *
-EC_KEY_get0_public_key(const EC_KEY * key)
+EC_KEY_get0_public_key(const EC_KEY *key)
 {
 	return key->pub_key;
 }
 
 int
-EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
+EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 {
 	if (key->meth->set_public != NULL &&
 	    key->meth->set_public(key, pub_key) == 0)
@@ -480,25 +480,25 @@ EC_KEY_set_public_key(EC_KEY * key, const EC_POINT * pub_key)
 }
 
 unsigned int
-EC_KEY_get_enc_flags(const EC_KEY * key)
+EC_KEY_get_enc_flags(const EC_KEY *key)
 {
 	return key->enc_flag;
 }
 
 void
-EC_KEY_set_enc_flags(EC_KEY * key, unsigned int flags)
+EC_KEY_set_enc_flags(EC_KEY *key, unsigned int flags)
 {
 	key->enc_flag = flags;
 }
 
 point_conversion_form_t
-EC_KEY_get_conv_form(const EC_KEY * key)
+EC_KEY_get_conv_form(const EC_KEY *key)
 {
 	return key->conv_form;
 }
 
 void
-EC_KEY_set_conv_form(EC_KEY * key, point_conversion_form_t cform)
+EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
 {
 	key->conv_form = cform;
 	if (key->group != NULL)
@@ -521,7 +521,7 @@ EC_KEY_get_key_method_data(EC_KEY *key,
 }
 
 void *
-EC_KEY_insert_key_method_data(EC_KEY * key, void *data,
+EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
     void *(*dup_func) (void *),
     void (*free_func) (void *),
     void (*clear_free_func) (void *))
@@ -538,14 +538,14 @@ EC_KEY_insert_key_method_data(EC_KEY * key, void *data,
 }
 
 void
-EC_KEY_set_asn1_flag(EC_KEY * key, int flag)
+EC_KEY_set_asn1_flag(EC_KEY *key, int flag)
 {
 	if (key->group != NULL)
 		EC_GROUP_set_asn1_flag(key->group, flag);
 }
 
 int
-EC_KEY_precompute_mult(EC_KEY * key, BN_CTX * ctx)
+EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 {
 	if (key->group == NULL)
 		return 0;
@@ -553,19 +553,19 @@ EC_KEY_precompute_mult(EC_KEY * key, BN_CTX * ctx)
 }
 
 int
-EC_KEY_get_flags(const EC_KEY * key)
+EC_KEY_get_flags(const EC_KEY *key)
 {
 	return key->flags;
 }
 
 void
-EC_KEY_set_flags(EC_KEY * key, int flags)
+EC_KEY_set_flags(EC_KEY *key, int flags)
 {
 	key->flags |= flags;
 }
 
 void
-EC_KEY_clear_flags(EC_KEY * key, int flags)
+EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
 	key->flags &= ~flags;
 }

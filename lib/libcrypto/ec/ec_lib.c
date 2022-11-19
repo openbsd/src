@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.45 2022/04/07 17:37:25 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.46 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -74,7 +74,7 @@
 /* functions for EC_GROUP objects */
 
 EC_GROUP *
-EC_GROUP_new(const EC_METHOD * meth)
+EC_GROUP_new(const EC_METHOD *meth)
 {
 	EC_GROUP *ret;
 
@@ -115,7 +115,7 @@ EC_GROUP_new(const EC_METHOD * meth)
 
 
 void
-EC_GROUP_free(EC_GROUP * group)
+EC_GROUP_free(EC_GROUP *group)
 {
 	if (!group)
 		return;
@@ -136,7 +136,7 @@ EC_GROUP_free(EC_GROUP * group)
 
 
 void
-EC_GROUP_clear_free(EC_GROUP * group)
+EC_GROUP_clear_free(EC_GROUP *group)
 {
 	if (!group)
 		return;
@@ -158,7 +158,7 @@ EC_GROUP_clear_free(EC_GROUP * group)
 
 
 int
-EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
+EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	EC_EXTRA_DATA *d;
 
@@ -227,7 +227,7 @@ EC_GROUP_copy(EC_GROUP * dest, const EC_GROUP * src)
 
 
 EC_GROUP *
-EC_GROUP_dup(const EC_GROUP * a)
+EC_GROUP_dup(const EC_GROUP *a)
 {
 	EC_GROUP *t = NULL;
 
@@ -428,35 +428,35 @@ EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 
 
 void
-EC_GROUP_set_curve_name(EC_GROUP * group, int nid)
+EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
 {
 	group->curve_name = nid;
 }
 
 
 int
-EC_GROUP_get_curve_name(const EC_GROUP * group)
+EC_GROUP_get_curve_name(const EC_GROUP *group)
 {
 	return group->curve_name;
 }
 
 
 void
-EC_GROUP_set_asn1_flag(EC_GROUP * group, int flag)
+EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
 	group->asn1_flag = flag;
 }
 
 
 int
-EC_GROUP_get_asn1_flag(const EC_GROUP * group)
+EC_GROUP_get_asn1_flag(const EC_GROUP *group)
 {
 	return group->asn1_flag;
 }
 
 
 void
-EC_GROUP_set_point_conversion_form(EC_GROUP * group,
+EC_GROUP_set_point_conversion_form(EC_GROUP *group,
     point_conversion_form_t form)
 {
 	group->asn1_form = form;
@@ -464,14 +464,14 @@ EC_GROUP_set_point_conversion_form(EC_GROUP * group,
 
 
 point_conversion_form_t
-EC_GROUP_get_point_conversion_form(const EC_GROUP * group)
+EC_GROUP_get_point_conversion_form(const EC_GROUP *group)
 {
 	return group->asn1_form;
 }
 
 
 size_t
-EC_GROUP_set_seed(EC_GROUP * group, const unsigned char *p, size_t len)
+EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 {
 	if (group->seed) {
 		free(group->seed);
@@ -491,14 +491,14 @@ EC_GROUP_set_seed(EC_GROUP * group, const unsigned char *p, size_t len)
 
 
 unsigned char *
-EC_GROUP_get0_seed(const EC_GROUP * group)
+EC_GROUP_get0_seed(const EC_GROUP *group)
 {
 	return group->seed;
 }
 
 
 size_t
-EC_GROUP_get_seed_len(const EC_GROUP * group)
+EC_GROUP_get_seed_len(const EC_GROUP *group)
 {
 	return group->seed_len;
 }
@@ -556,7 +556,7 @@ EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
 #endif
 
 int
-EC_GROUP_get_degree(const EC_GROUP * group)
+EC_GROUP_get_degree(const EC_GROUP *group)
 {
 	if (group->meth->group_get_degree == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -567,7 +567,7 @@ EC_GROUP_get_degree(const EC_GROUP * group)
 
 
 int
-EC_GROUP_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
+EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
 	if (group->meth->group_check_discriminant == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -578,7 +578,7 @@ EC_GROUP_check_discriminant(const EC_GROUP * group, BN_CTX * ctx)
 
 
 int
-EC_GROUP_cmp(const EC_GROUP * a, const EC_GROUP * b, BN_CTX * ctx)
+EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 {
 	int r = 0;
 	BIGNUM *a1, *a2, *a3, *b1, *b2, *b3;
@@ -710,7 +710,7 @@ EC_EX_DATA_set_data(EC_EXTRA_DATA ** ex_data, void *data,
 
 /* this has 'package' visibility */
 void *
-EC_EX_DATA_get_data(const EC_EXTRA_DATA * ex_data,
+EC_EX_DATA_get_data(const EC_EXTRA_DATA *ex_data,
     void *(*dup_func) (void *),
     void (*free_func) (void *),
     void (*clear_free_func) (void *))
@@ -825,7 +825,7 @@ EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA ** ex_data)
 /* functions for EC_POINT objects */
 
 EC_POINT *
-EC_POINT_new(const EC_GROUP * group)
+EC_POINT_new(const EC_GROUP *group)
 {
 	EC_POINT *ret;
 
@@ -853,7 +853,7 @@ EC_POINT_new(const EC_GROUP * group)
 
 
 void
-EC_POINT_free(EC_POINT * point)
+EC_POINT_free(EC_POINT *point)
 {
 	if (!point)
 		return;
@@ -865,7 +865,7 @@ EC_POINT_free(EC_POINT * point)
 
 
 void
-EC_POINT_clear_free(EC_POINT * point)
+EC_POINT_clear_free(EC_POINT *point)
 {
 	if (!point)
 		return;
@@ -879,7 +879,7 @@ EC_POINT_clear_free(EC_POINT * point)
 
 
 int
-EC_POINT_copy(EC_POINT * dest, const EC_POINT * src)
+EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 {
 	if (dest->meth->point_copy == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -896,7 +896,7 @@ EC_POINT_copy(EC_POINT * dest, const EC_POINT * src)
 
 
 EC_POINT *
-EC_POINT_dup(const EC_POINT * a, const EC_GROUP * group)
+EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
 {
 	EC_POINT *t;
 	int r;
@@ -917,14 +917,14 @@ EC_POINT_dup(const EC_POINT * a, const EC_GROUP * group)
 
 
 const EC_METHOD *
-EC_POINT_method_of(const EC_POINT * point)
+EC_POINT_method_of(const EC_POINT *point)
 {
 	return point->meth;
 }
 
 
 int
-EC_POINT_set_to_infinity(const EC_GROUP * group, EC_POINT * point)
+EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
 	if (group->meth->point_set_to_infinity == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1113,7 +1113,7 @@ EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 
 
 int
-EC_POINT_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX * ctx)
+EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 {
 	if (group->meth->is_on_curve == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1129,7 +1129,7 @@ EC_POINT_is_on_curve(const EC_GROUP * group, const EC_POINT * point, BN_CTX * ct
 
 int
 EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
-    BN_CTX * ctx)
+    BN_CTX *ctx)
 {
 	if (group->meth->point_cmp == 0) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
@@ -1258,7 +1258,7 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 }
 
 int
-EC_GROUP_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
+EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	if (group->meth->precompute_mult != 0)
 		return group->meth->precompute_mult(group, ctx);
@@ -1267,7 +1267,7 @@ EC_GROUP_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 }
 
 int
-EC_GROUP_have_precompute_mult(const EC_GROUP * group)
+EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 {
 	if (group->meth->have_precompute_mult != 0)
 		return group->meth->have_precompute_mult(group);

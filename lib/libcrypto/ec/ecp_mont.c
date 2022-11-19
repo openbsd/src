@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.20 2021/09/08 17:29:21 tb Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.21 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -119,7 +119,7 @@ EC_GFp_mont_method(void)
 
 
 int
-ec_GFp_mont_group_init(EC_GROUP * group)
+ec_GFp_mont_group_init(EC_GROUP *group)
 {
 	int ok;
 
@@ -131,7 +131,7 @@ ec_GFp_mont_group_init(EC_GROUP * group)
 
 
 void
-ec_GFp_mont_group_finish(EC_GROUP * group)
+ec_GFp_mont_group_finish(EC_GROUP *group)
 {
 	BN_MONT_CTX_free(group->field_data1);
 	group->field_data1 = NULL;
@@ -142,7 +142,7 @@ ec_GFp_mont_group_finish(EC_GROUP * group)
 
 
 void
-ec_GFp_mont_group_clear_finish(EC_GROUP * group)
+ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 {
 	BN_MONT_CTX_free(group->field_data1);
 	group->field_data1 = NULL;
@@ -153,7 +153,7 @@ ec_GFp_mont_group_clear_finish(EC_GROUP * group)
 
 
 int
-ec_GFp_mont_group_copy(EC_GROUP * dest, const EC_GROUP * src)
+ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	BN_MONT_CTX_free(dest->field_data1);
 	dest->field_data1 = NULL;

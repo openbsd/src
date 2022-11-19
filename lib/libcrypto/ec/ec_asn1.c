@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.38 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.39 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -68,7 +68,7 @@
 #include "ec_lcl.h"
 
 int
-EC_GROUP_get_basis_type(const EC_GROUP * group)
+EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
 	int i = 0;
 
@@ -91,7 +91,7 @@ EC_GROUP_get_basis_type(const EC_GROUP * group)
 
 #ifndef OPENSSL_NO_EC2M
 int
-EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
+EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
 {
 	if (group == NULL)
 		return 0;
@@ -109,7 +109,7 @@ EC_GROUP_get_trinomial_basis(const EC_GROUP * group, unsigned int *k)
 }
 
 int
-EC_GROUP_get_pentanomial_basis(const EC_GROUP * group, unsigned int *k1,
+EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
     unsigned int *k2, unsigned int *k3)
 {
 	if (group == NULL)
@@ -683,7 +683,7 @@ static ECPKPARAMETERS *ec_asn1_group2pkparameters(const EC_GROUP *,
 /* the function definitions */
 
 static int
-ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
+ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 {
 	int ok = 0, nid;
 	BIGNUM *tmp = NULL;
@@ -799,7 +799,7 @@ ec_asn1_group2fieldid(const EC_GROUP * group, X9_62_FIELDID * field)
 }
 
 static int
-ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
+ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 {
 	BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
 	unsigned char *buffer_1 = NULL, *buffer_2 = NULL, *a_buf = NULL,
@@ -894,7 +894,7 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 }
 
 static ECPARAMETERS *
-ec_asn1_group2parameters(const EC_GROUP * group, ECPARAMETERS * param)
+ec_asn1_group2parameters(const EC_GROUP *group, ECPARAMETERS *param)
 {
 	int ok = 0;
 	size_t len = 0;
@@ -989,7 +989,7 @@ ec_asn1_group2parameters(const EC_GROUP * group, ECPARAMETERS * param)
 }
 
 ECPKPARAMETERS *
-ec_asn1_group2pkparameters(const EC_GROUP * group, ECPKPARAMETERS * params)
+ec_asn1_group2pkparameters(const EC_GROUP *group, ECPKPARAMETERS *params)
 {
 	int ok = 1, tmp;
 	ECPKPARAMETERS *ret = params;
@@ -1035,7 +1035,7 @@ ec_asn1_group2pkparameters(const EC_GROUP * group, ECPKPARAMETERS * params)
 }
 
 static EC_GROUP *
-ec_asn1_parameters2group(const ECPARAMETERS * params)
+ec_asn1_parameters2group(const ECPARAMETERS *params)
 {
 	int ok = 0, tmp;
 	EC_GROUP *ret = NULL;
@@ -1247,7 +1247,7 @@ ec_asn1_parameters2group(const ECPARAMETERS * params)
 }
 
 EC_GROUP *
-ec_asn1_pkparameters2group(const ECPKPARAMETERS * params)
+ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 {
 	EC_GROUP *ret = NULL;
 	int tmp = 0;
@@ -1309,7 +1309,7 @@ d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 }
 
 int
-i2d_ECPKParameters(const EC_GROUP * a, unsigned char **out)
+i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 {
 	int ret = 0;
 	ECPKPARAMETERS *tmp = ec_asn1_group2pkparameters(a, NULL);
@@ -1421,7 +1421,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 int
-i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
+i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 {
 	int ret = 0, ok = 0;
 	unsigned char *buffer = NULL;
@@ -1505,7 +1505,7 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 }
 
 int
-i2d_ECParameters(EC_KEY * a, unsigned char **out)
+i2d_ECParameters(EC_KEY *a, unsigned char **out)
 {
 	if (a == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
@@ -1570,7 +1570,7 @@ o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 int
-i2o_ECPublicKey(const EC_KEY * a, unsigned char **out)
+i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 {
 	size_t buf_len = 0;
 	int new_buffer = 0;

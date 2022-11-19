@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.14 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.15 2022/11/19 07:29:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -94,7 +94,7 @@ typedef struct {
 } EC_PKEY_CTX;
 
 static int
-pkey_ec_init(EVP_PKEY_CTX * ctx)
+pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
 	EC_PKEY_CTX *dctx;
 
@@ -112,7 +112,7 @@ pkey_ec_init(EVP_PKEY_CTX * ctx)
 }
 
 static int
-pkey_ec_copy(EVP_PKEY_CTX * dst, EVP_PKEY_CTX * src)
+pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 {
 	EC_PKEY_CTX *dctx, *sctx;
 	if (!pkey_ec_init(dst))
@@ -147,7 +147,7 @@ pkey_ec_copy(EVP_PKEY_CTX * dst, EVP_PKEY_CTX * src)
 }
 
 static void
-pkey_ec_cleanup(EVP_PKEY_CTX * ctx)
+pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
 {
 	EC_PKEY_CTX *dctx = ctx->data;
 
@@ -161,7 +161,7 @@ pkey_ec_cleanup(EVP_PKEY_CTX * ctx)
 }
 
 static int
-pkey_ec_sign(EVP_PKEY_CTX * ctx, unsigned char *sig, size_t * siglen,
+pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     const unsigned char *tbs, size_t tbslen)
 {
 	int ret, type;
@@ -189,7 +189,7 @@ pkey_ec_sign(EVP_PKEY_CTX * ctx, unsigned char *sig, size_t * siglen,
 }
 
 static int
-pkey_ec_verify(EVP_PKEY_CTX * ctx,
+pkey_ec_verify(EVP_PKEY_CTX *ctx,
     const unsigned char *sig, size_t siglen,
     const unsigned char *tbs, size_t tbslen)
 {
@@ -208,7 +208,7 @@ pkey_ec_verify(EVP_PKEY_CTX * ctx,
 }
 
 static int
-pkey_ec_derive(EVP_PKEY_CTX * ctx, unsigned char *key, size_t * keylen)
+pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 {
 	int ret;
 	size_t outlen;
@@ -284,7 +284,7 @@ pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 }
 
 static int
-pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
+pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
 	EC_PKEY_CTX *dctx = ctx->data;
 	EC_GROUP *group;
@@ -411,7 +411,7 @@ pkey_ec_ctrl(EVP_PKEY_CTX * ctx, int type, int p1, void *p2)
 }
 
 static int
-pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx, const char *type, const char *value)
+pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 {
 	if (!strcmp(type, "ec_paramgen_curve")) {
 		int nid;
@@ -450,7 +450,7 @@ pkey_ec_ctrl_str(EVP_PKEY_CTX * ctx, const char *type, const char *value)
 }
 
 static int
-pkey_ec_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
+pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	EC_KEY *ec = NULL;
 	EC_PKEY_CTX *dctx = ctx->data;
@@ -471,7 +471,7 @@ pkey_ec_paramgen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
 }
 
 static int
-pkey_ec_keygen(EVP_PKEY_CTX * ctx, EVP_PKEY * pkey)
+pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
 	EC_KEY *ec = NULL;
 	EC_PKEY_CTX *dctx = ctx->data;

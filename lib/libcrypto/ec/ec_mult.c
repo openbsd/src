@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.25 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.26 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -98,7 +98,7 @@ static void ec_pre_comp_free(void *);
 static void ec_pre_comp_clear_free(void *);
 
 static EC_PRE_COMP *
-ec_pre_comp_new(const EC_GROUP * group)
+ec_pre_comp_new(const EC_GROUP *group)
 {
 	EC_PRE_COMP *ret = NULL;
 
@@ -192,7 +192,7 @@ ec_pre_comp_clear_free(void *pre_)
  * w-1 zeros away from that next non-zero digit.
  */
 static signed char *
-compute_wNAF(const BIGNUM * scalar, int w, size_t * ret_len)
+compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 {
 	int window_val;
 	int ok = 0;
@@ -332,8 +332,8 @@ compute_wNAF(const BIGNUM * scalar, int w, size_t * ret_len)
  * in the addition if scalar != NULL
  */
 int
-ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
-    size_t num, const EC_POINT * points[], const BIGNUM * scalars[], BN_CTX * ctx)
+ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+    size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 {
 	BN_CTX *new_ctx = NULL;
 	const EC_POINT *generator = NULL;
@@ -722,7 +722,7 @@ ec_wNAF_mul(const EC_GROUP * group, EC_POINT * r, const BIGNUM * scalar,
  * points[2^(w-1)*numblocks]       = NULL
  */
 int
-ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
+ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	const EC_POINT *generator;
 	EC_POINT *tmp_point = NULL, *base = NULL, **var;
@@ -876,7 +876,7 @@ ec_wNAF_precompute_mult(EC_GROUP * group, BN_CTX * ctx)
 
 
 int
-ec_wNAF_have_precompute_mult(const EC_GROUP * group)
+ec_wNAF_have_precompute_mult(const EC_GROUP *group)
 {
 	if (EC_EX_DATA_get_data(group->extra_data, ec_pre_comp_dup, ec_pre_comp_free, ec_pre_comp_clear_free) != NULL)
 		return 1;

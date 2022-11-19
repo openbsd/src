@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.23 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.24 2022/11/19 07:29:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3434,7 +3434,7 @@ EC_GROUP_new_by_curve_name(int nid)
 }
 
 size_t
-EC_get_builtin_curves(EC_builtin_curve * r, size_t nitems)
+EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 {
 	size_t i, min;
 
