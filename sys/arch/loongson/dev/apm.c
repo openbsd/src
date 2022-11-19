@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.40 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: apm.c,v 1.41 2022/11/19 16:23:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -415,7 +416,13 @@ apm_suspend(int state)
 		if (rv == 0)
 			rv = sys_platform->resume();
 	}
+
 	inittodr(gettime());	/* Move the clock forward */
+#ifdef __HAVE_CLOCKINTR
+	clockintr_cpu_init(NULL);
+	clockintr_trigger();
+#endif
+
 	config_suspend_all(DVACT_RESUME);
 
 	cold = 0;

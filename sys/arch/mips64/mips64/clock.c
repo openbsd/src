@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.47 2022/10/31 13:59:10 visa Exp $ */
+/*	$OpenBSD: clock.c,v 1.48 2022/11/19 16:23:48 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -38,8 +38,10 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
+#include <sys/stdint.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -47,6 +49,8 @@
 
 static struct evcount cp0_clock_count;
 static int cp0_clock_irq = 5;
+uint64_t cp0_nsec_cycle_ratio;
+uint64_t cp0_nsec_max;
 
 int	clockmatch(struct device *, void *, void *);
 void	clockattach(struct device *, struct device *, void *);
@@ -59,9 +63,18 @@ const struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
 
-void	cp0_startclock(struct cpu_info *);
-void	cp0_trigger_int5(void);
+void	cp0_rearm_int5(void *, uint64_t);
+void	cp0_trigger_int5_wrapper(void *);
+
+const struct intrclock cp0_intrclock = {
+	.ic_rearm = cp0_rearm_int5,
+	.ic_trigger = cp0_trigger_int5_wrapper
+};
+
 uint32_t cp0_int5(uint32_t, struct trapframe *);
+void 	cp0_startclock(struct cpu_info *);
+void	cp0_trigger_int5(void);
+void	cp0_trigger_int5_masked(void);
 
 int
 clockmatch(struct device *parent, void *vcf, void *aux)
@@ -74,7 +87,12 @@ clockmatch(struct device *parent, void *vcf, void *aux)
 void
 clockattach(struct device *parent, struct device *self, void *aux)
 {
+	uint64_t cp0_freq = curcpu()->ci_hw.clock / CP0_CYCLE_DIVIDER;
+
 	printf(": int 5\n");
+
+	cp0_nsec_cycle_ratio = cp0_freq * (1ULL << 32) / 1000000000;
+	cp0_nsec_max = UINT64_MAX / cp0_nsec_cycle_ratio;
 
 	/*
 	 * We need to register the interrupt now, for idle_mask to
@@ -100,20 +118,19 @@ clockattach(struct device *parent, struct device *self, void *aux)
 uint32_t
 cp0_int5(uint32_t mask, struct trapframe *tf)
 {
-	u_int32_t clkdiff, pendingticks = 0;
 	struct cpu_info *ci = curcpu();
 	int s;
 
-	/*
-	 * If we got an interrupt before we got ready to process it,
-	 * retrigger it as far as possible. cpu_initclocks() will
-	 * take care of retriggering it correctly.
-	 */
-	if (ci->ci_clock_started == 0) {
-		cp0_set_compare(cp0_get_count() - 1);
+	atomic_inc_long((unsigned long *)&cp0_clock_count.ec_count);
 
+	cp0_set_compare(cp0_get_count() - 1);	/* clear INT5 */
+
+	/*
+	 * Just ignore the interrupt if we're not ready to process it.
+	 * cpu_initclocks() will retrigger it later.
+	 */
+	if (!ci->ci_clock_started)
 		return CR_INT_5;
-	}
 
 	/*
 	 * If the clock interrupt is logically masked, defer all
@@ -121,34 +138,9 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 	 */
 	if (tf->ipl >= IPL_CLOCK) {
 		ci->ci_clock_deferred = 1;
-		cp0_set_compare(cp0_get_count() - 1);
 		return CR_INT_5;
 	}
 	ci->ci_clock_deferred = 0;
-
-	/*
-	 * Count how many ticks have passed since the last clock interrupt...
-	 */
-	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
-	while (clkdiff >= ci->ci_cpu_counter_interval) {
-		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
-		clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
-		pendingticks++;
-	}
-	pendingticks++;
-	ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
-
-	/*
-	 * Set up next tick, and check if it has just been hit; in this
-	 * case count it and schedule one tick ahead.
-	 */
-	cp0_set_compare(ci->ci_cpu_counter_last);
-	clkdiff = cp0_get_count() - ci->ci_cpu_counter_last;
-	if ((int)clkdiff >= 0) {
-		ci->ci_cpu_counter_last += ci->ci_cpu_counter_interval;
-		pendingticks++;
-		cp0_set_compare(ci->ci_cpu_counter_last);
-	}
 
 	/*
 	 * Process clock interrupt.
@@ -160,22 +152,65 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 	sr = getsr();
 	ENABLEIPI();
 #endif
-	while (pendingticks) {
-		atomic_inc_long((unsigned long *)&cp0_clock_count.ec_count);
-		hardclock(tf);
-		pendingticks--;
-	}
+	clockintr_dispatch(tf);
 #ifdef MULTIPROCESSOR
 	setsr(sr);
 #endif
 	ci->ci_ipl = s;
-
 	return CR_INT_5;	/* Clock is always on 5 */
 }
 
 /*
- * Trigger the clock interrupt.
- * 
+ * Arm INT5 to fire after the given number of nanoseconds have elapsed.
+ * Only try once.  If we miss, let cp0_trigger_int5_masked() handle it.
+ */
+void
+cp0_rearm_int5(void *unused, uint64_t nsecs)
+{
+	uint32_t cycles, t0, t1, target;
+	register_t sr;
+
+	if (nsecs > cp0_nsec_max)
+		nsecs = cp0_nsec_max;
+	cycles = (nsecs * cp0_nsec_cycle_ratio) >> 32;
+
+	/*
+	 * Set compare, then immediately reread count.  If INT5 is not
+	 * pending then we need to check if we missed.  If t0 + cycles
+	 * did not overflow then we need t0 <= t1 < target.  Otherwise,
+	 * there are two valid constraints: either t0 <= t1 or t1 < target
+	 * show we didn't miss.
+	 */
+	sr = disableintr();
+	t0 = cp0_get_count();
+	target = t0 + cycles;
+	cp0_set_compare(target);
+	t1 = cp0_get_count();
+	if (!ISSET(cp0_get_cause(), CR_INT_5)) {
+		if (t0 <= target) {
+			if (target <= t1 || t1 < t0)
+				cp0_trigger_int5_masked();
+		} else {
+			if (t1 < t0 && target <= t1)
+				cp0_trigger_int5_masked();
+		}
+	}
+	setsr(sr);
+}
+
+void
+cp0_trigger_int5(void)
+{
+	register_t sr;
+
+	sr = disableintr();
+	cp0_trigger_int5_masked();
+	setsr(sr);
+}
+
+/*
+ * Arm INT5 to fire as soon as possible.
+ *
  * We need to spin until either (a) INT5 is pending or (b) the compare
  * register leads the count register, i.e. we know INT5 will be pending
  * very soon.
@@ -187,33 +222,38 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
  * to arm the timer on most Octeon hardware.
  */
 void
-cp0_trigger_int5(void)
+cp0_trigger_int5_masked(void)
 {
 	uint32_t compare, offset = 16;
 	int leading = 0;
-	register_t sr;
 
-	sr = disableintr();
-	while (!leading && !ISSET(cp0_get_cause(), CR_INT_5)) {
+	while (!ISSET(cp0_get_cause(), CR_INT_5) && !leading) {
 		compare = cp0_get_count() + offset;
 		cp0_set_compare(compare);
 		leading = (int32_t)(compare - cp0_get_count()) > 0;
 		offset *= 2;
 	}
-	setsr(sr);
+}
+
+void
+cp0_trigger_int5_wrapper(void *unused)
+{
+	cp0_trigger_int5();
 }
 
 /*
- * Start the real-time and statistics clocks. Leave stathz 0 since there
- * are no other timers available.
+ * Start the clock interrupt dispatch cycle.
  */
 void
 cp0_startclock(struct cpu_info *ci)
 {
 	int s;
 
-#ifdef MULTIPROCESSOR
-	if (!CPU_IS_PRIMARY(ci)) {
+	if (CPU_IS_PRIMARY(ci)) {
+		stathz = hz;
+		profhz = stathz * 10;
+		clockintr_init(CL_RNDSTAT);
+	} else {
 		s = splhigh();
 		nanouptime(&ci->ci_schedstate.spc_runtime);
 		splx(s);
@@ -223,14 +263,12 @@ cp0_startclock(struct cpu_info *ci)
 
 		cp0_calibrate(ci);
 	}
-#endif
+
+	clockintr_cpu_init(&cp0_intrclock);
 
 	/* Start the clock. */
 	s = splclock();
-	ci->ci_cpu_counter_interval =
-	    (ci->ci_hw.clock / CP0_CYCLE_DIVIDER) / hz;
-	ci->ci_cpu_counter_last = cp0_get_count() + ci->ci_cpu_counter_interval;
-	cp0_set_compare(ci->ci_cpu_counter_last);
-	ci->ci_clock_started++;
+	ci->ci_clock_started = 1;
+	clockintr_trigger();
 	splx(s);
 }

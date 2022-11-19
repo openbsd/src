@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.139 2022/08/22 00:35:06 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.140 2022/11/19 16:23:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <machine/intr.h>
 #include <sys/sched.h>
@@ -179,8 +180,8 @@ struct cpu_info {
 	uint32_t	ci_softpending;		/* pending soft interrupts */
 	int		ci_clock_started;
 	volatile int	ci_clock_deferred;	/* clock interrupt postponed */
-	u_int32_t	ci_cpu_counter_last;	/* last compare value loaded */
-	u_int32_t	ci_cpu_counter_interval; /* # of counter ticks/tick */
+	struct clockintr_queue
+			ci_queue;
 
 	struct pmap	*ci_curpmap;
 	uint		ci_intrdepth;		/* interrupt depth */

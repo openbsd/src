@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxclk.c,v 1.7 2022/08/18 06:31:36 miod Exp $	*/
+/*	$OpenBSD: glxclk.c,v 1.8 2022/11/19 16:23:48 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -113,6 +113,9 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 	struct glxpcib_attach_args *gaa = aux;
 	u_int64_t wa;
 	int statint, minint;
+
+	printf(" not configured\n");
+	return;
 
 	glxclk_sc->sc_iot = gaa->gaa_iot;
 	glxclk_sc->sc_ioh = gaa->gaa_ioh;

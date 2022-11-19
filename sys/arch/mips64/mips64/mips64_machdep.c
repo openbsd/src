@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.39 2022/10/30 17:43:39 guenther Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.40 2022/11/19 16:23:48 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
@@ -302,16 +303,15 @@ cp0_calibrate(struct cpu_info *ci)
 }
 
 /*
- * Start the real-time and statistics clocks.
+ * Prepare to start the clock interrupt dispatch cycle.
  */
 void
 cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 
-	profhz = hz;
-
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
+	tick_nsec = 1000000000 / hz;
 
 	cp0_calibrate(ci);
 
@@ -331,14 +331,10 @@ cpu_initclocks(void)
 	(*md_startclock)(ci);
 }
 
-/*
- * We assume newhz is either stathz or profhz, and that neither will
- * change after being set up above.  Could recalculate intervals here
- * but that would be a drag.
- */
 void
 setstatclockrate(int newhz)
 {
+	clockintr_setstatclockrate(newhz);
 }
 
 /*
