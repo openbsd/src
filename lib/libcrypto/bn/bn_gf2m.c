@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.24 2022/11/20 22:23:43 schwarze Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.25 2022/11/20 23:35:00 schwarze Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -464,17 +464,23 @@ int
 BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 {
 	int ret = 0;
-	int arr[6];
+	const int max = BN_num_bits(p) + 1;
+	int *arr = NULL;
 
 	bn_check_top(a);
 	bn_check_top(p);
-	ret = BN_GF2m_poly2arr(p, arr, sizeof(arr) / sizeof(arr[0]));
-	if (!ret || ret > (int)(sizeof(arr) / sizeof(arr[0]))) {
+	if ((arr = reallocarray(NULL, max, sizeof(int))) == NULL)
+		goto err;
+	ret = BN_GF2m_poly2arr(p, arr, max);
+	if (!ret || ret > max) {
 		BNerror(BN_R_INVALID_LENGTH);
-		return 0;
+		goto err;
 	}
 	ret = BN_GF2m_mod_arr(r, a, arr);
 	bn_check_top(r);
+
+ err:
+	free(arr);
 	return ret;
 }
 

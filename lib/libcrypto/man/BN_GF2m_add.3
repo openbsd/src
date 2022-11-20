@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_GF2m_add.3,v 1.3 2022/11/18 07:28:34 tb Exp $
+.\" $OpenBSD: BN_GF2m_add.3,v 1.4 2022/11/20 23:35:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 18 2022 $
+.Dd $Mdocdate: November 20 2022 $
 .Dt BN_GF2M_ADD 3
 .Os
 .Sh NAME
@@ -480,9 +480,7 @@ In one of the functions wrapping an
 .Fn *_arr
 variant, the
 .Fa "BIGNUM *p"
-argument had a value of zero, or in
-.Fn BN_GF2m_mod ,
-it contained more than five non-zero coefficients.
+argument had a value of zero.
 .El
 .Sh SEE ALSO
 .Xr BN_add 3 ,
@@ -514,9 +512,3 @@ it contained more than five non-zero coefficients.
  exponentiation algorithm A.4.1 for square roots, and\
  algorithms A.4.7 and A.4.6 for the quadratic equation
 .Re
-.Sh BUGS
-.Fn BN_GF2m_mod
-is arbitrarily limited to reducing polynomials containing at most five
-non-zero coefficients and returns failure if
-.Fa p
-contains six or more non-zero coefficients.
