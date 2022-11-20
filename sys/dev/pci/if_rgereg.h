@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.7 2021/03/30 00:55:08 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.8 2022/11/20 23:47:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -242,6 +242,27 @@ struct rge_rx_desc {
 #define RGE_RDEXTSTS_IPV4	0x40000000
 #define RGE_RDEXTSTS_IPV6	0x80000000
 
+ /*
+  * Statistics counter structure
+  */
+struct rge_stats {
+	uint64_t		rge_tx_ok;
+	uint64_t		rge_rx_ok;
+	uint64_t		rge_tx_er;
+	uint32_t		rge_rx_er;
+	uint16_t		rge_miss_pkt;
+	uint16_t		rge_fae;
+	uint32_t		rge_tx_1col;
+	uint32_t		rge_tx_mcol;
+	uint64_t		rge_rx_ok_phy;
+	uint64_t		rge_rx_ok_brd;
+	uint32_t		rge_rx_ok_mul;
+	uint16_t		rge_tx_abt;
+	uint16_t		rge_tx_undrn;
+} __packed __aligned(sizeof(uint64_t));
+
+#define RGE_STATS_ALIGNMENT	64
+
 struct rge_txq {
 	struct mbuf		*txq_mbuf;
 	bus_dmamap_t		txq_dmamap;
@@ -313,6 +334,8 @@ enum rge_mac_type {
 #define RGE_TXCFG_CONFIG	0x03000700
 #define RGE_RXCFG_CONFIG	0x40c00700
 
+struct kstat;
+
 struct rge_softc {
 	struct device		sc_dev;
 	struct arpcom		sc_arpcom;	/* Ethernet common data */
@@ -341,6 +364,8 @@ struct rge_softc {
 	int			rge_timerintr;
 #define RGE_IMTYPE_NONE		0
 #define RGE_IMTYPE_SIM		1
+
+	struct kstat		*sc_kstat;
 };
 
 /*

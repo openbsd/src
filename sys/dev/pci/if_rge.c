@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.19 2022/04/21 05:08:39 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.20 2022/11/20 23:47:51 dlg Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +38,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NKSTAT > 0
+#include <sys/kstat.h>
 #endif
 
 #include <machine/bus.h>
@@ -115,6 +120,10 @@ void		rge_link_state(struct rge_softc *);
 #ifndef SMALL_KERNEL
 int		rge_wol(struct ifnet *, int);
 void		rge_wol_power(struct rge_softc *);
+#endif
+
+#if NKSTAT > 0
+void		rge_kstat_attach(struct rge_softc *);
 #endif
 
 static const struct {
@@ -307,6 +316,10 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+#if NKSTAT > 0
+	rge_kstat_attach(sc);
+#endif
 }
 
 int
@@ -2462,3 +2475,224 @@ rge_wol_power(struct rge_softc *sc)
 	RGE_SETBIT_1(sc, RGE_CFG2, RGE_CFG2_PMSTS_EN);
 }
 #endif
+
+#if NKSTAT > 0
+
+#define RGE_DTCCR_CMD		(1U << 3)
+#define RGE_DTCCR_LO		0x10
+#define RGE_DTCCR_HI		0x14
+
+struct rge_kstats {
+	struct kstat_kv		tx_ok;
+	struct kstat_kv		rx_ok;
+	struct kstat_kv		tx_er;
+	struct kstat_kv		rx_er;
+	struct kstat_kv		miss_pkt;
+	struct kstat_kv		fae;
+	struct kstat_kv		tx_1col;
+	struct kstat_kv		tx_mcol;
+	struct kstat_kv		rx_ok_phy;
+	struct kstat_kv		rx_ok_brd;
+	struct kstat_kv		rx_ok_mul;
+	struct kstat_kv		tx_abt;
+	struct kstat_kv		tx_undrn;
+};
+
+static const struct rge_kstats rge_kstats_tpl = {
+	.tx_ok =	KSTAT_KV_UNIT_INITIALIZER("TxOk",
+			    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	.rx_ok =	KSTAT_KV_UNIT_INITIALIZER("RxOk",
+			    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	.tx_er =	KSTAT_KV_UNIT_INITIALIZER("TxEr",
+			    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	.rx_er =	KSTAT_KV_UNIT_INITIALIZER("RxEr",
+			    KSTAT_KV_T_COUNTER32, KSTAT_KV_U_PACKETS),
+	.miss_pkt =	KSTAT_KV_UNIT_INITIALIZER("MissPkt",
+			    KSTAT_KV_T_COUNTER16, KSTAT_KV_U_PACKETS),
+	.fae =		KSTAT_KV_UNIT_INITIALIZER("FAE",
+			    KSTAT_KV_T_COUNTER16, KSTAT_KV_U_PACKETS),
+	.tx_1col =	KSTAT_KV_UNIT_INITIALIZER("Tx1Col",
+			    KSTAT_KV_T_COUNTER32, KSTAT_KV_U_PACKETS),
+	.tx_mcol =	KSTAT_KV_UNIT_INITIALIZER("TxMCol",
+			    KSTAT_KV_T_COUNTER32, KSTAT_KV_U_PACKETS),
+	.rx_ok_phy =	KSTAT_KV_UNIT_INITIALIZER("RxOkPhy",
+			    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	.rx_ok_brd =	KSTAT_KV_UNIT_INITIALIZER("RxOkBrd",
+			    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	.rx_ok_mul =	KSTAT_KV_UNIT_INITIALIZER("RxOkMul",
+			    KSTAT_KV_T_COUNTER32, KSTAT_KV_U_PACKETS),
+	.tx_abt =	KSTAT_KV_UNIT_INITIALIZER("TxAbt",
+			    KSTAT_KV_T_COUNTER16, KSTAT_KV_U_PACKETS),
+	.tx_undrn =	KSTAT_KV_UNIT_INITIALIZER("TxUndrn",
+			    KSTAT_KV_T_COUNTER16, KSTAT_KV_U_PACKETS),
+};
+
+struct rge_kstat_softc {
+	struct rge_stats	*rge_ks_sc_stats;
+
+	bus_dmamap_t		 rge_ks_sc_map;
+	bus_dma_segment_t	 rge_ks_sc_seg;
+	int			 rge_ks_sc_nsegs;
+
+	struct rwlock		 rge_ks_sc_rwl;
+};
+
+static int
+rge_kstat_read(struct kstat *ks)
+{
+	struct rge_softc *sc = ks->ks_softc;
+	struct rge_kstat_softc *rge_ks_sc = ks->ks_ptr;
+	bus_dmamap_t map;
+	uint64_t cmd;
+	uint32_t reg;
+	uint8_t command;
+	int tmo;
+
+	command = RGE_READ_1(sc, RGE_CMD);
+	if (!ISSET(command, RGE_CMD_RXENB) || command == 0xff)
+		return (ENETDOWN);
+
+	map = rge_ks_sc->rge_ks_sc_map;
+	cmd = map->dm_segs[0].ds_addr | RGE_DTCCR_CMD;
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD);
+
+	RGE_WRITE_4(sc, RGE_DTCCR_HI, cmd >> 32);
+	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_HI, 8,
+	    BUS_SPACE_BARRIER_WRITE);
+	RGE_WRITE_4(sc, RGE_DTCCR_LO, cmd);
+	bus_space_barrier(sc->rge_btag, sc->rge_bhandle, RGE_DTCCR_LO, 4,
+	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
+
+	tmo = 1000;
+	do {
+		reg = RGE_READ_4(sc, RGE_DTCCR_LO);
+		if (!ISSET(reg, RGE_DTCCR_CMD))
+			break;
+
+		delay(10);
+		bus_space_barrier(sc->rge_btag, sc->rge_bhandle,
+		    RGE_DTCCR_LO, 4, BUS_SPACE_BARRIER_READ);
+	} while (--tmo);
+
+	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTREAD);
+
+	if (ISSET(reg, RGE_DTCCR_CMD))
+		return (EIO);
+
+	nanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+static int
+rge_kstat_copy(struct kstat *ks, void *dst)
+{
+	struct rge_kstat_softc *rge_ks_sc = ks->ks_ptr;
+	struct rge_stats *rs = rge_ks_sc->rge_ks_sc_stats;
+	struct rge_kstats *kvs = dst;
+
+	*kvs = rge_kstats_tpl;
+	kstat_kv_u64(&kvs->tx_ok) = lemtoh64(&rs->rge_tx_ok);
+	kstat_kv_u64(&kvs->rx_ok) = lemtoh64(&rs->rge_rx_ok);
+	kstat_kv_u64(&kvs->tx_er) = lemtoh64(&rs->rge_tx_er);
+	kstat_kv_u32(&kvs->rx_er) = lemtoh32(&rs->rge_rx_er);
+	kstat_kv_u16(&kvs->miss_pkt) = lemtoh16(&rs->rge_miss_pkt);
+	kstat_kv_u16(&kvs->fae) = lemtoh16(&rs->rge_fae);
+	kstat_kv_u32(&kvs->tx_1col) = lemtoh32(&rs->rge_tx_1col);
+	kstat_kv_u32(&kvs->tx_mcol) = lemtoh32(&rs->rge_tx_mcol);
+	kstat_kv_u64(&kvs->rx_ok_phy) = lemtoh64(&rs->rge_rx_ok_phy);
+	kstat_kv_u64(&kvs->rx_ok_brd) = lemtoh64(&rs->rge_rx_ok_brd);
+	kstat_kv_u32(&kvs->rx_ok_mul) = lemtoh32(&rs->rge_rx_ok_mul);
+	kstat_kv_u16(&kvs->tx_abt) = lemtoh16(&rs->rge_tx_abt);
+	kstat_kv_u16(&kvs->tx_undrn) = lemtoh16(&rs->rge_tx_undrn);
+
+	return (0);
+}
+
+void
+rge_kstat_attach(struct rge_softc *sc)
+{
+	struct rge_kstat_softc *rge_ks_sc;
+	struct kstat *ks;
+
+	rge_ks_sc = malloc(sizeof(*rge_ks_sc), M_DEVBUF, M_NOWAIT);
+	if (rge_ks_sc == NULL) {
+		printf("%s: cannot allocate kstat softc\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (bus_dmamap_create(sc->sc_dmat,
+	    sizeof(struct rge_stats), 1, sizeof(struct rge_stats), 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    &rge_ks_sc->rge_ks_sc_map) != 0) {
+		printf("%s: cannot create counter dma memory map\n",
+		    sc->sc_dev.dv_xname);
+		goto free;
+	}
+
+	if (bus_dmamem_alloc(sc->sc_dmat,
+	    sizeof(struct rge_stats), RGE_STATS_ALIGNMENT, 0,
+	    &rge_ks_sc->rge_ks_sc_seg, 1, &rge_ks_sc->rge_ks_sc_nsegs,
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0) {
+		printf("%s: cannot allocate counter dma memory\n",
+		    sc->sc_dev.dv_xname);
+		goto destroy;
+	}
+
+	if (bus_dmamem_map(sc->sc_dmat,
+	    &rge_ks_sc->rge_ks_sc_seg, rge_ks_sc->rge_ks_sc_nsegs,
+	    sizeof(struct rge_stats), (caddr_t *)&rge_ks_sc->rge_ks_sc_stats,
+	    BUS_DMA_NOWAIT) != 0) {
+		printf("%s: cannot map counter dma memory\n",
+		    sc->sc_dev.dv_xname);
+		goto freedma;
+	}
+
+	if (bus_dmamap_load(sc->sc_dmat, rge_ks_sc->rge_ks_sc_map,
+	    (caddr_t)rge_ks_sc->rge_ks_sc_stats, sizeof(struct rge_stats),
+	    NULL, BUS_DMA_NOWAIT) != 0) {
+		printf("%s: cannot load counter dma memory\n",
+		    sc->sc_dev.dv_xname);
+		goto unmap;
+	}
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, "re-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		printf("%s: cannot create re-stats kstat\n",
+		    sc->sc_dev.dv_xname);
+		goto unload;
+	}
+
+	ks->ks_datalen = sizeof(rge_kstats_tpl);
+
+	rw_init(&rge_ks_sc->rge_ks_sc_rwl, "rgestats");
+	kstat_set_wlock(ks, &rge_ks_sc->rge_ks_sc_rwl);
+	ks->ks_softc = sc;
+	ks->ks_ptr = rge_ks_sc;
+	ks->ks_read = rge_kstat_read;
+	ks->ks_copy = rge_kstat_copy;
+
+	kstat_install(ks);
+
+	sc->sc_kstat = ks;
+
+	return;
+
+unload:
+	bus_dmamap_unload(sc->sc_dmat, rge_ks_sc->rge_ks_sc_map);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)rge_ks_sc->rge_ks_sc_stats, sizeof(struct rge_stats));
+freedma:
+	bus_dmamem_free(sc->sc_dmat, &rge_ks_sc->rge_ks_sc_seg, 1);
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, rge_ks_sc->rge_ks_sc_map);
+free:
+	free(rge_ks_sc, M_DEVBUF, sizeof(*rge_ks_sc));
+}
+#endif /* NKSTAT > 0 */
