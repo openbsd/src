@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.63 2022/11/08 19:52:40 patrick Exp $
+# $OpenBSD: files.arm64,v 1.64 2022/11/21 21:48:06 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -208,6 +208,10 @@ file	arch/arm64/dev/aplpinctrl.c		aplpinctrl
 device	aplpmgr
 attach	aplpmgr at fdt
 file	arch/arm64/dev/aplpmgr.c		aplpmgr
+
+device	aplpwm
+attach	aplpwm at fdt
+file	arch/arm64/dev/aplpwm.c			aplpwm
 
 device	aplrtk
 attach	aplrtk at fdt
