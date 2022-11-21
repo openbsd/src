@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.9 2022/11/09 10:05:18 robert Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.10 2022/11/21 14:39:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -133,6 +133,7 @@ struct aplhidev_softc {
 	uint32_t		*sc_gpio;
 	int			sc_gpiolen;
 
+	uint8_t			sc_mode;
 	uint16_t		sc_vendor;
 	uint16_t		sc_product;
 
@@ -238,7 +239,14 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	}
 
+	sc->sc_mode = APLHIDEV_MODE_HID;
 	aplhidev_set_mode(sc, APLHIDEV_MODE_RAW);
+	for (retry = 10; retry > 0; retry--) {
+		aplhidev_intr(sc);
+		delay(1000);
+		if (sc->sc_mode == APLHIDEV_MODE_RAW)
+			break;
+	}
 
 	printf("\n");
 
@@ -394,6 +402,8 @@ aplhidev_set_mode(struct aplhidev_softc *sc, uint8_t mode)
 	delay(100);
 	spi_read(sc->sc_spi_tag, (char *)&status, sizeof(status));
 	spi_release_bus(sc->sc_spi_tag, 0);
+
+	delay(1000);
 }
 
 int
@@ -458,6 +468,12 @@ aplhidev_intr(void *arg)
 			break;
 		}
 
+		return 1;
+	}
+	if (packet.flags == APLHIDEV_WRITE_PACKET &&
+	    packet.device == APLHIDEV_TP_DEVICE &&
+	    hdr->type == APLHIDEV_SET_MODE) {
+		sc->sc_mode = APLHIDEV_MODE_RAW;
 		return 1;
 	}
 
