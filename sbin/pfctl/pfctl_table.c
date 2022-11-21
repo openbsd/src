@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.84 2020/01/15 22:38:31 kn Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.85 2022/11/21 07:27:10 sashan Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -583,18 +583,16 @@ pfctl_show_ifaces(const char *filter, int opts)
 {
 	struct pfr_buffer	 b;
 	struct pfi_kif		*p;
-	int			 i = 0;
 
 	bzero(&b, sizeof(b));
 	b.pfrb_type = PFRB_IFACES;
 	for (;;) {
-		pfr_buf_grow(&b, b.pfrb_size);
+		pfr_buf_grow(&b, 0);
 		b.pfrb_size = b.pfrb_msize;
 		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size))
 			errx(1, "%s", pf_strerror(errno));
-		if (b.pfrb_size <= b.pfrb_msize)
+		if (b.pfrb_size < b.pfrb_msize)
 			break;
-		i++;
 	}
 	if (opts & PF_OPT_SHOWALL)
 		pfctl_print_title("INTERFACES:");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.106 2022/06/26 11:37:08 mbuhl Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.107 2022/11/21 07:27:10 sashan Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -766,12 +766,12 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 		nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
 		if (pfi_skip_if(name, p))
 			continue;
-		if (*size > n++) {
-			if (!p->pfik_tzero)
-				p->pfik_tzero = gettime();
-			memcpy(buf++, p, sizeof(*buf));
-			nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
-		}
+		if (*size <= ++n)
+			break;
+		if (!p->pfik_tzero)
+			p->pfik_tzero = gettime();
+		memcpy(buf++, p, sizeof(*buf));
+		nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
 	}
 	*size = n;
 }
