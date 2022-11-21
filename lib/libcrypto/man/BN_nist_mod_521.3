@@ -1,0 +1,113 @@
+.\" $OpenBSD: BN_nist_mod_521.3,v 1.1 2022/11/21 22:04:04 schwarze Exp $
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 21 2022 $
+.Dt BN_NIST_MOD_521 3
+.Os
+.Sh NAME
+.Nm BN_nist_mod_192 ,
+.Nm BN_nist_mod_224 ,
+.Nm BN_nist_mod_256 ,
+.Nm BN_nist_mod_384 ,
+.Nm BN_nist_mod_521
+.Nd reduction modulo NIST-recommended primes
+.Sh SYNOPSIS
+.In openssl/bn.h
+.Ft int
+.Fo BN_nist_mod_192
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_nist_mod_224
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_nist_mod_256
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_nist_mod_384
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Ft int
+.Fo BN_nist_mod_521
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *m"
+.Fa "BN_CTX *ctx"
+.Fc
+.Sh DESCRIPTION
+These functions are optimized versions of
+.Xr BN_nnmod 3
+using precomputed tables.
+They ignore their
+.Fa m
+argument and use the following moduli instead:
+.Pp
+.Bl -tag -width BN_nist_mod_521() -offset indent -compact
+.It Fn BN_nist_mod_192
+.Xr BN_get0_nist_prime_192 3
+.It Fn BN_nist_mod_224
+.Xr BN_get0_nist_prime_224 3
+.It Fn BN_nist_mod_256
+.Xr BN_get0_nist_prime_256 3
+.It Fn BN_nist_mod_384
+.Xr BN_get0_nist_prime_384 3
+.It Fn BN_nist_mod_521
+.Xr BN_get0_nist_prime_521 3
+.El
+.Pp
+They reduce
+.Fa a
+modulo the respective prime number and place the non-negative remainder in
+.Fa r .
+.Pp
+These functions are designed to save time when performing multiplications
+in prime fields of these specific orders.
+Consequently, if
+.Fa a
+is negative or larger than the square of the modulus being used, they call
+.Xr BN_nnmod 3
+instead of attempting any optimization.
+.Sh RETURN VALUES
+These functions return 1 on success or 0 on error.
+.Sh SEE ALSO
+.Xr BN_get0_nist_prime_521 3 ,
+.Xr BN_nnmod 3 ,
+.Xr EC_GFp_nist_method 3
+.Sh STANDARDS
+.Rs
+.%T Digital Signature Standard (DSS)
+.%I National Institute of Standards and Technology
+.%R FIPS PUB 186-4
+.%U https://doi.org/10.6028/NIST.FIPS.186-4
+.%Q Information Technology Laboratory
+.%C Gaithersburg, Maryland
+.%D July 2013
+.%O Appendix D.1.2 Curves over Prime Fields
+.Re
