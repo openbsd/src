@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.75 2022/10/30 17:43:39 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.76 2022/11/21 20:19:21 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -781,7 +781,9 @@ initarm(struct arm64_bootparams *abp)
 	long kernbase = (long)_start & ~PAGE_MASK;
 	long kvo = abp->kern_delta;
 	paddr_t memstart, memend;
-	vaddr_t vstart;
+	paddr_t startpa, endpa, pa;
+	vaddr_t vstart, va;
+	struct fdt_head *fh;
 	void *config = abp->arg2;
 	void *fdt = NULL;
 	struct fdt_reg reg;
@@ -798,10 +800,35 @@ initarm(struct arm64_bootparams *abp)
 	__asm volatile("mov x18, %0\n"
 	    "msr tpidr_el1, %0" :: "r"(&cpu_info_primary));
 
-	pmap_map_early((paddr_t)config, PAGE_SIZE);
-	if (!fdt_init(config) || fdt_get_size(config) == 0)
-		panic("initarm: no FDT");
-	pmap_map_early((paddr_t)config, round_page(fdt_get_size(config)));
+	cache_setup();
+
+	/* The bootloader has loaded us into a 64MB block. */
+	memstart = KERNBASE + kvo;
+	memend = memstart + 64 * 1024 * 1024;
+
+	/* Bootstrap enough of pmap to enter the kernel proper. */
+	vstart = pmap_bootstrap(kvo, abp->kern_l1pt,
+	    kernbase, esym, memstart, memend);
+
+	/* Map the FDT header to determine its size. */
+	va = vstart;
+	startpa = trunc_page((paddr_t)config);
+	endpa = round_page((paddr_t)config + sizeof(struct fdt_head));
+	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+	fh = (void *)(vstart + ((paddr_t)config - startpa));
+	if (betoh32(fh->fh_magic) != FDT_MAGIC || betoh32(fh->fh_size) == 0)
+		panic("%s: no FDT", __func__);
+
+	/* Map the remainder of the FDT. */
+	endpa = round_page((paddr_t)config + betoh32(fh->fh_size));
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
+		pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+	config = (void *)(vstart + ((paddr_t)config - startpa));
+	vstart = va;
+
+	if (!fdt_init(config))
+		panic("%s: corrupt FDT", __func__);
 
 	node = fdt_find_node("/chosen");
 	if (node != NULL) {
@@ -867,17 +894,7 @@ initarm(struct arm64_bootparams *abp)
 		}
 	}
 
-	cache_setup();
-
 	process_kernel_args();
-
-	/* The bootloader has loaded us into a 64MB block. */
-	memstart = KERNBASE + kvo;
-	memend = memstart + 64 * 1024 * 1024;
-
-	/* Bootstrap enough of pmap to enter the kernel proper. */
-	vstart = pmap_bootstrap(kvo, abp->kern_l1pt,
-	    kernbase, esym, memstart, memend);
 
 	proc0paddr = (struct user *)abp->kern_stack;
 

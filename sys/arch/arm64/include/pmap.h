@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.20 2022/11/07 09:43:04 mpi Exp $ */
+/* $OpenBSD: pmap.h,v 1.21 2022/11/21 20:19:21 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -111,7 +111,6 @@ struct pv_entry;
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
 void pmap_postinit(void);
-void	pmap_map_early(paddr_t, psize_t);
 
 #define __HAVE_PMAP_MPSAFE_ENTER_COW
 
