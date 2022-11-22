@@ -1,7 +1,24 @@
-.\"	$OpenBSD: BN_num_bytes.3,v 1.8 2022/07/13 21:51:35 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: BN_num_bytes.3,v 1.9 2022/11/22 18:55:04 schwarze Exp $
+.\" full merge up to: OpenSSL 9e183d22 Mar 11 08:56:44 2017 -0500
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org>
 .\" and Richard Levitte <levitte@openssl.org>.
 .\" Copyright (c) 2000, 2004 The OpenSSL Project.  All rights reserved.
 .\"
@@ -49,71 +66,83 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: November 22 2022 $
 .Dt BN_NUM_BYTES 3
 .Os
 .Sh NAME
-.Nm BN_num_bytes ,
+.Nm BN_num_bits_word ,
 .Nm BN_num_bits ,
-.Nm BN_num_bits_word
+.Nm BN_num_bytes
 .Nd get BIGNUM size
 .Sh SYNOPSIS
 .In openssl/bn.h
 .Ft int
-.Fo BN_num_bytes
-.Fa "const BIGNUM *a"
+.Fo BN_num_bits_word
+.Fa "BN_ULONG w"
 .Fc
 .Ft int
 .Fo BN_num_bits
 .Fa "const BIGNUM *a"
 .Fc
 .Ft int
-.Fo BN_num_bits_word
-.Fa "BN_ULONG w"
+.Fo BN_num_bytes
+.Fa "const BIGNUM *a"
 .Fc
 .Sh DESCRIPTION
-.Fn BN_num_bytes
-returns the size of a
-.Vt BIGNUM
-in bytes.
-.Pp
 .Fn BN_num_bits_word
-returns the number of significant bits in a word.
-As an example, 0x00000432 returns 11, not 16 or 32.
-Basically, except for a zero, it returns
+returns the number of significant bits in
+.Fa w ,
+that is, the minimum number of digits needed to write
+.Fa w
+as a binary number.
+Except for an argument of 0, this is
 .Pp
 .D1 floor(log2( Ns Fa w ) ) No + 1 .
 .Pp
+.Vt BN_ULONG
+is a macro that expands to
+.Vt unsigned long Pq = Vt uint64_t
+on
+.Dv _LP64
+platforms and
+.Vt unsigned int Pq = Vt uint32_t
+elsewhere.
+.Pp
 .Fn BN_num_bits
-returns the number of significant bits in a
-.Sy BIGNUM ,
+returns the number of significant bits in the value of the
+.Fa "BIGNUM *a" ,
 following the same principle as
 .Fn BN_num_bits_word .
 .Pp
 .Fn BN_num_bytes
-is a macro.
-.Pp
-Some have tried using
-.Fn BN_num_bits
-on individual numbers in RSA keys, DH keys and DSA keys, and found that
-they don't always come up with the number of bits they expected
-(something like 512, 1024, 2048, ...). This is because generating a
-number with some specific number of bits doesn't always set the highest
-bits, thereby making the number of
-.Em significant
-bits a little lower.
-If you want to know the "key size" of such a key, either use functions
-like
-.Xr RSA_size 3 ,
-.Xr DH_size 3 ,
-and
-.Xr DSA_size 3 ,
-or use
-.Fn BN_num_bytes
-and multiply with 8 (although there's no real guarantee that will match
-the "key size", just a lot more probability).
+is a macro that returns the number of significant bytes in
+.Fa a ,
+i.e. the minimum number of bytes needed to store the value of
+.Fa a ,
+that is,
+.Fn BN_num_bits a
+divided by eight and rounded up to the next integer number.
 .Sh RETURN VALUES
-The size.
+.Fn BN_num_bits_word
+returns the number of significant bits in
+.Fa w
+or 0 if
+.Fa w
+is 0.
+The maximum return value that can occur is
+.Dv BN_BITS2 ,
+which is 64 on
+.Dv _LP64
+platforms and 32 elsewhere.
+.Pp
+.Fn BN_num_bits
+returns the number of significant bits and
+.Fn BN_num_bytes
+the number of significant bytes in
+.Fa a ,
+or 0 if the value of
+.Fa a
+is 0.
 .Sh SEE ALSO
 .Xr BN_new 3 ,
 .Xr BN_security_bits 3 ,
@@ -129,3 +158,18 @@ first appeared in SSLeay 0.5.1.
 first appeared in SSLeay 0.5.2.
 These functions have been available since
 .Ox 2.4 .
+.Sh CAVEATS
+Some have tried using
+.Fn BN_num_bits
+on individual numbers in RSA keys, DH keys and DSA keys, and found that
+they don't always come up with the number of bits they expected
+(something like 512, 1024, 2048, ...).
+This is because generating a number with some specific number of bits
+doesn't always set the highest bits, thereby making the number of
+.Em significant
+bits a little smaller.
+If you want to know the "key size" of such a key, use functions like
+.Xr RSA_size 3 ,
+.Xr DH_size 3 ,
+and
+.Xr DSA_size 3 .
