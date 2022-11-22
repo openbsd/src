@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.20 2022/06/30 11:14:47 tb Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.21 2022/11/22 21:54:01 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -58,13 +58,13 @@
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
- * Portions of the attached software ("Contribution") are developed by 
+ * Portions of the attached software ("Contribution") are developed by
  * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
  *
  * The Contribution is licensed pursuant to the OpenSSL open source
  * license provided above.
  *
- * The elliptic curve binary polynomial software is originally written by 
+ * The elliptic curve binary polynomial software is originally written by
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
@@ -146,9 +146,9 @@ struct ec_method_st {
 
 	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
 	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
-	        unsigned char *buf, size_t len, BN_CTX *);
+		unsigned char *buf, size_t len, BN_CTX *);
 	int (*oct2point)(const EC_GROUP *, EC_POINT *,
-	        const unsigned char *buf, size_t len, BN_CTX *);
+		const unsigned char *buf, size_t len, BN_CTX *);
 
 	/* used by EC_POINT_add, EC_POINT_dbl, ECP_POINT_invert: */
 	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
@@ -214,32 +214,35 @@ struct ec_group_st {
 
 	/* The following members are handled by the method functions,
 	 * even if they appear generic */
-	
-	BIGNUM field; /* Field specification.
-	               * For curves over GF(p), this is the modulus;
-	               * for curves over GF(2^m), this is the 
-	               * irreducible polynomial defining the field.
-	               */
 
-	int poly[6]; /* Field specification for curves over GF(2^m).
-	              * The irreducible f(t) is then of the form:
-	              *     t^poly[0] + t^poly[1] + ... + t^poly[k]
-	              * where m = poly[0] > poly[1] > ... > poly[k] = 0.
-	              * The array is terminated with poly[k+1]=-1.
-	              * All elliptic curve irreducibles have at most 5
-	              * non-zero terms.
-	              */
+	BIGNUM field;	/*
+			 * Field specification.
+			 * For curves over GF(p), this is the modulus;
+			 * for curves over GF(2^m), this is the
+			 * irreducible polynomial defining the field.
+			 */
 
-	BIGNUM a, b; /* Curve coefficients.
-	              * (Here the assumption is that BIGNUMs can be used
-	              * or abused for all kinds of fields, not just GF(p).)
-	              * For characteristic  > 3,  the curve is defined
-	              * by a Weierstrass equation of the form
-	              *     y^2 = x^3 + a*x + b.
-	              * For characteristic  2,  the curve is defined by
-	              * an equation of the form
-	              *     y^2 + x*y = x^3 + a*x^2 + b.
-	              */
+	int poly[6];	/*
+			 * Field specification for curves over GF(2^m).
+			 * The irreducible f(t) is then of the form:
+			 *     t^poly[0] + t^poly[1] + ... + t^poly[k]
+			 * where m = poly[0] > poly[1] > ... > poly[k] = 0.
+			 * The array is terminated with poly[k+1]=-1.
+			 * All elliptic curve irreducibles have at most 5
+			 * non-zero terms.
+			 */
+
+	BIGNUM a, b;	/*
+			 * Curve coefficients.
+			 * (Here the assumption is that BIGNUMs can be used
+			 * or abused for all kinds of fields, not just GF(p).)
+			 * For characteristic  > 3,  the curve is defined
+			 * by a Weierstrass equation of the form
+			 *     y^2 = x^3 + a*x + b.
+			 * For characteristic  2,  the curve is defined by
+			 * an equation of the form
+			 *     y^2 + x*y = x^3 + a*x^2 + b.
+			 */
 
 	int a_is_minus3; /* enable optimized point arithmetics for special case */
 
@@ -262,7 +265,7 @@ struct ec_key_st {
 	unsigned int enc_flag;
 	point_conversion_form_t conv_form;
 
-	int 	references;
+	int	references;
 	int	flags;
 
 	EC_EXTRA_DATA *method_data;
@@ -290,13 +293,18 @@ int ec_group_simple_order_bits(const EC_GROUP *group);
 struct ec_point_st {
 	const EC_METHOD *meth;
 
-	/* All members except 'meth' are handled by the method functions,
-	 * even if they appear generic */
+	/*
+	 * All members except 'meth' are handled by the method functions,
+	 * even if they appear generic.
+	 */
 
+	/*
+	 * Jacobian projective coordinates: (X, Y, Z) represents (X/Z^2, Y/Z^3)
+	 * if Z != 0
+	 */
 	BIGNUM X;
 	BIGNUM Y;
-	BIGNUM Z; /* Jacobian projective coordinates:
-	           * (X, Y, Z)  represents  (X/Z^2, Y/Z^3)  if  Z != 0 */
+	BIGNUM Z;
 	int Z_is_one; /* enable optimized point arithmetics for special case */
 } /* EC_POINT */;
 
