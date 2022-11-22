@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetest.c,v 1.2 2022/11/09 18:11:45 beck Exp $ */
+/*	$OpenBSD: timetest.c,v 1.3 2022/11/22 10:40:10 anton Exp $ */
 
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
@@ -1826,14 +1826,11 @@ int main() {
 	int verbose = 0;
 	struct stat sb;
 
-	if (stat("/usr/share/zoneinfo/posix", &sb) == -1) {
-		fprintf(stderr, "WARNING: /usr/share/zoneinfo/posix not"
-		    "present,\nCreate posix time zones to run this test.\n");
-		exit(0);
-	}
-	if (stat("/usr/share/zoneinfo/right", &sb) == -1) {
-		fprintf(stderr, "WARNING: /usr/share/zoneinfo/right not"
-		    "present,\nCreate right time zones to run this test.\n");
+	if (stat("/usr/share/zoneinfo/posix", &sb) == -1 ||
+	    stat("/usr/share/zoneinfo/right", &sb) == -1) {
+		fprintf(stderr, "POSIX time zones missing, run the following command:\n\n"
+		    "\tmake -C ../../../../../share/zoneinfo other_two\n\n"
+		    "SKIPPED\n");
 		exit(0);
 	}
 
