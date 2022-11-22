@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.253 2022/11/22 15:49:06 kn Exp $	*/
+/*	$OpenBSD: in6.c,v 1.254 2022/11/22 19:28:29 kn Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1601,11 +1601,19 @@ in6if_do_dad(struct ifnet *ifp)
 void *
 in6_domifattach(struct ifnet *ifp)
 {
-	return nd6_ifattach(ifp);
+	struct in6_ifextra *ext;
+
+	ext = malloc(sizeof(*ext), M_IFADDR, M_WAITOK | M_ZERO);
+
+	ext->nd_ifinfo = nd6_ifattach(ifp);
+	return ext;
 }
 
 void
 in6_domifdetach(struct ifnet *ifp, void *aux)
 {
-	nd6_ifdetach(aux);
+	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
+
+	nd6_ifdetach(ext->nd_ifinfo);
+	free(ext, M_IFADDR, sizeof(*ext));
 }
