@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.105 2022/06/26 15:33:37 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.106 2022/11/22 06:48:32 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -75,6 +75,15 @@
 #define MCX_CMD_IF_SUPPORTED		5
 
 #define MCX_HARDMTU			9500
+
+enum mcx_cmdq_slot {
+	MCX_CMDQ_SLOT_POLL = 0,
+	MCX_CMDQ_SLOT_IOCTL,
+	MCX_CMDQ_SLOT_KSTAT,
+	MCX_CMDQ_SLOT_LINK,
+
+	MCX_CMDQ_NUM_SLOTS
+};
 
 #define MCX_PAGE_SHIFT			12
 #define MCX_PAGE_SIZE			(1 << MCX_PAGE_SHIFT)
@@ -2437,6 +2446,9 @@ struct mcx_softc {
 	unsigned int		 sc_cmdq_size;
 
 	unsigned int		 sc_cmdq_token;
+	struct mutex		 sc_cmdq_mtx;
+	struct rwlock		 sc_cmdq_kstat_lk;
+	struct rwlock		 sc_cmdq_ioctl_lk;
 
 	struct mcx_hwmem	 sc_boot_pages;
 	struct mcx_hwmem	 sc_init_pages;
@@ -2510,7 +2522,7 @@ static int	mcx_init_wait(struct mcx_softc *);
 static int	mcx_enable_hca(struct mcx_softc *);
 static int	mcx_teardown_hca(struct mcx_softc *, uint16_t);
 static int	mcx_access_hca_reg(struct mcx_softc *, uint16_t, int, void *,
-		    int);
+		    int, enum mcx_cmdq_slot);
 static int	mcx_issi(struct mcx_softc *);
 static int	mcx_pages(struct mcx_softc *, struct mcx_hwmem *, uint16_t);
 static int	mcx_hca_max_caps(struct mcx_softc *);
@@ -2761,6 +2773,9 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_cmdq_mask = cq_size - 1;
 	sc->sc_cmdq_size = cq_stride;
+	rw_init(&sc->sc_cmdq_kstat_lk, "mcxkstat");
+	rw_init(&sc->sc_cmdq_ioctl_lk, "mcxioctl");
+	mtx_init(&sc->sc_cmdq_mtx, IPL_NET);
 
 	if (mcx_enable_hca(sc) != 0) {
 		/* error printed by mcx_enable_hca */
@@ -3152,11 +3167,31 @@ mcx_cmdq_token(struct mcx_softc *sc)
 {
 	uint8_t token;
 
+	mtx_enter(&sc->sc_cmdq_mtx);
 	do {
 		token = ++sc->sc_cmdq_token;
 	} while (token == 0);
+	mtx_leave(&sc->sc_cmdq_mtx);
 
 	return (token);
+}
+
+static struct mcx_cmdq_entry *
+mcx_get_cmdq_entry(struct mcx_softc *sc, enum mcx_cmdq_slot slot)
+{
+	struct mcx_cmdq_entry *cqe;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe += slot;
+
+	/* make sure the slot isn't running a command already */
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_cmdq_mem),
+	    0, MCX_DMA_LEN(&sc->sc_cmdq_mem), BUS_DMASYNC_POSTRW);
+	if ((cqe->cq_status & MCX_CQ_STATUS_OWN_MASK) !=
+	    MCX_CQ_STATUS_OWN_SW)
+		cqe = NULL;
+
+	return (cqe);
 }
 
 static void
@@ -3209,6 +3244,37 @@ mcx_cmdq_post(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
 	mcx_wr(sc, MCX_CMDQ_DOORBELL, 1U << slot);
 	mcx_bar(sc, MCX_CMDQ_DOORBELL, sizeof(uint32_t),
 	    BUS_SPACE_BARRIER_WRITE);
+}
+
+static int
+mcx_cmdq_exec(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
+    unsigned int slot, unsigned int msec)
+{
+	int err;
+
+	if (slot == MCX_CMDQ_SLOT_POLL) {
+		mcx_cmdq_post(sc, cqe, slot);
+		return (mcx_cmdq_poll(sc, cqe, msec));
+	}
+
+	mtx_enter(&sc->sc_cmdq_mtx);
+	mcx_cmdq_post(sc, cqe, slot);
+
+	err = 0;
+	while (err == 0) {
+		err = msleep_nsec(&sc->sc_cmdq_token, &sc->sc_cmdq_mtx, 0,
+		    "mcxcmd", msec * 1000);
+		bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_cmdq_mem), 0,
+		    MCX_DMA_LEN(&sc->sc_cmdq_mem), BUS_DMASYNC_POSTRW);
+		if ((cqe->cq_status & MCX_CQ_STATUS_OWN_MASK) ==
+		    MCX_CQ_STATUS_OWN_SW) {
+			err = 0;
+			break;
+		}
+	}
+
+	mtx_leave(&sc->sc_cmdq_mtx);
+	return (err);
 }
 
 static int
@@ -3497,7 +3563,7 @@ mcx_cmdq_mbox_dump(struct mcx_dmamem *mboxes, int num)
 
 static int
 mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
-    int len)
+    int len, enum mcx_cmdq_slot slot)
 {
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -3506,7 +3572,10 @@ mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
 	uint8_t token = mcx_cmdq_token(sc);
 	int error, nmb;
 
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe = mcx_get_cmdq_entry(sc, slot);
+	if (cqe == NULL)
+		return (-1);
+
 	mcx_cmdq_init(sc, cqe, sizeof(*in) + len, sizeof(*out) + len,
 	    token);
 
@@ -3526,8 +3595,7 @@ mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
 	mcx_cmdq_mboxes_sign(&mxm, nmb);
 	mcx_cmdq_mboxes_sync(sc, &mxm, BUS_DMASYNC_PRERW);
 
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
+	error = mcx_cmdq_exec(sc, cqe, slot, 1000);
 	mcx_cmdq_mboxes_sync(sc, &mxm, BUS_DMASYNC_POSTRW);
 
 	if (error != 0) {
@@ -4505,7 +4573,7 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 	memset(&pmtu, 0, sizeof(pmtu));
 	pmtu.rp_local_port = 1;
 	error = mcx_access_hca_reg(sc, MCX_REG_PMTU, MCX_REG_OP_READ, &pmtu,
-	    sizeof(pmtu));
+	    sizeof(pmtu), MCX_CMDQ_SLOT_POLL);
 	if (error != 0) {
 		printf(", unable to get port MTU\n");
 		return error;
@@ -4514,7 +4582,7 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 	mtu = min(mtu, betoh16(pmtu.rp_max_mtu));
 	pmtu.rp_admin_mtu = htobe16(mtu);
 	error = mcx_access_hca_reg(sc, MCX_REG_PMTU, MCX_REG_OP_WRITE, &pmtu,
-	    sizeof(pmtu));
+	    sizeof(pmtu), MCX_CMDQ_SLOT_POLL);
 	if (error != 0) {
 		printf(", unable to set port MTU\n");
 		return error;
@@ -6377,7 +6445,10 @@ mcx_query_rq(struct mcx_softc *sc, struct mcx_rx *rx, struct mcx_rq_ctx *rq_ctx)
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
 
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe = mcx_get_cmdq_entry(sc, MCX_CMDQ_SLOT_KSTAT);
+	if (cqe == NULL)
+		return (-1);
+
 	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
 	    token);
 
@@ -6395,8 +6466,7 @@ mcx_query_rq(struct mcx_softc *sc, struct mcx_rx *rx, struct mcx_rq_ctx *rq_ctx)
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
+	error = mcx_cmdq_exec(sc, cqe, MCX_CMDQ_SLOT_KSTAT, 1000);
 	if (error != 0) {
 		printf("%s: query rq timeout\n", DEVNAME(sc));
 		goto free;
@@ -6438,7 +6508,10 @@ mcx_query_sq(struct mcx_softc *sc, struct mcx_tx *tx, struct mcx_sq_ctx *sq_ctx)
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
 
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe = mcx_get_cmdq_entry(sc, MCX_CMDQ_SLOT_KSTAT);
+	if (cqe == NULL)
+		return (-1);
+
 	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
 	    token);
 
@@ -6456,8 +6529,7 @@ mcx_query_sq(struct mcx_softc *sc, struct mcx_tx *tx, struct mcx_sq_ctx *sq_ctx)
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
+	error = mcx_cmdq_exec(sc, cqe, MCX_CMDQ_SLOT_KSTAT, 1000);
 	if (error != 0) {
 		printf("%s: query sq timeout\n", DEVNAME(sc));
 		goto free;
@@ -6499,7 +6571,10 @@ mcx_query_cq(struct mcx_softc *sc, struct mcx_cq *cq, struct mcx_cq_ctx *cq_ctx)
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
 
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe = mcx_get_cmdq_entry(sc, MCX_CMDQ_SLOT_KSTAT);
+	if (cqe == NULL)
+		return (-1);
+
 	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*ctx) + 16,
 	    token);
 
@@ -6517,8 +6592,7 @@ mcx_query_cq(struct mcx_softc *sc, struct mcx_cq *cq, struct mcx_cq_ctx *cq_ctx)
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
+	error = mcx_cmdq_exec(sc, cqe, MCX_CMDQ_SLOT_KSTAT, 1000);
 	if (error != 0) {
 		printf("%s: query cq timeout\n", DEVNAME(sc));
 		goto free;
@@ -6558,7 +6632,10 @@ mcx_query_eq(struct mcx_softc *sc, struct mcx_eq *eq, struct mcx_eq_ctx *eq_ctx)
 	uint8_t token = mcx_cmdq_token(sc);
 	int error;
 
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	cqe = mcx_get_cmdq_entry(sc, MCX_CMDQ_SLOT_KSTAT);
+	if (cqe == NULL)
+		return (-1);
+
 	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*ctx) + 16,
 	    token);
 
@@ -6576,8 +6653,7 @@ mcx_query_eq(struct mcx_softc *sc, struct mcx_eq *eq, struct mcx_eq_ctx *eq_ctx)
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
+	error = mcx_cmdq_exec(sc, cqe, MCX_CMDQ_SLOT_KSTAT, 1000);
 	if (error != 0) {
 		printf("%s: query eq timeout\n", DEVNAME(sc));
 		goto free;
@@ -7021,7 +7097,9 @@ mcx_admin_intr(void *xsc)
 			break;
 
 		case MCX_EVENT_TYPE_CMD_COMPLETION:
-			/* wakeup probably */
+			mtx_enter(&sc->sc_cmdq_mtx);
+			wakeup(&sc->sc_cmdq_token);
+			mtx_leave(&sc->sc_cmdq_mtx);
 			break;
 
 		case MCX_EVENT_TYPE_PORT_CHANGE:
@@ -7603,15 +7681,17 @@ mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
 	struct mcx_reg_pmlp pmlp;
 	int offset, error;
 
+	rw_enter_write(&sc->sc_cmdq_ioctl_lk);
+
 	/* get module number */
 	memset(&pmlp, 0, sizeof(pmlp));
 	pmlp.rp_local_port = 1;
 	error = mcx_access_hca_reg(sc, MCX_REG_PMLP, MCX_REG_OP_READ, &pmlp,
-	    sizeof(pmlp));
+	    sizeof(pmlp), MCX_CMDQ_SLOT_IOCTL);
 	if (error != 0) {
 		printf("%s: unable to get eeprom module number\n",
 		    DEVNAME(sc));
-		return error;
+		goto out;
 	}
 
 	for (offset = 0; offset < 256; offset += MCX_MCIA_EEPROM_BYTES) {
@@ -7625,18 +7705,20 @@ mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
 		mcia.rm_size = htobe16(MCX_MCIA_EEPROM_BYTES);
 
 		error = mcx_access_hca_reg(sc, MCX_REG_MCIA, MCX_REG_OP_READ,
-		    &mcia, sizeof(mcia));
+		    &mcia, sizeof(mcia), MCX_CMDQ_SLOT_IOCTL);
 		if (error != 0) {
 			printf("%s: unable to read eeprom at %x\n",
 			    DEVNAME(sc), offset);
-			return error;
+			goto out;
 		}
 
 		memcpy(sff->sff_data + offset, mcia.rm_data,
 		    MCX_MCIA_EEPROM_BYTES);
 	}
 
-	return 0;
+ out:
+	rw_exit_write(&sc->sc_cmdq_ioctl_lk);
+	return (error);
 }
 
 static int
@@ -7864,7 +7946,7 @@ mcx_media_add_types(struct mcx_softc *sc)
 	ptys.rp_local_port = 1;
 	ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys,
-	    sizeof(ptys)) != 0) {
+	    sizeof(ptys), MCX_CMDQ_SLOT_POLL) != 0) {
 		printf("%s: unable to read port type/speed\n", DEVNAME(sc));
 		return;
 	}
@@ -7896,10 +7978,11 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ptys.rp_local_port = 1;
 	ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 
+	rw_enter_write(&sc->sc_cmdq_ioctl_lk);
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys,
-	    sizeof(ptys)) != 0) {
+	    sizeof(ptys), MCX_CMDQ_SLOT_IOCTL) != 0) {
 		printf("%s: unable to read port type/speed\n", DEVNAME(sc));
-		return;
+		goto out;
 	}
 
 	proto_oper = betoh32(ptys.rp_eth_proto_oper);
@@ -7923,6 +8006,8 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active = IFM_ETHER | IFM_AUTO | media_oper;
 		/* txpause, rxpause, duplex? */
 	}
+ out:
+	rw_exit_write(&sc->sc_cmdq_ioctl_lk);
 }
 
 static int
@@ -7938,6 +8023,7 @@ mcx_media_change(struct ifnet *ifp)
 		return EINVAL;
 
 	error = 0;
+	rw_enter_write(&sc->sc_cmdq_ioctl_lk);
 
 	if (IFM_SUBTYPE(sc->sc_media.ifm_media) == IFM_AUTO) {
 		/* read ptys to get supported media */
@@ -7945,10 +8031,11 @@ mcx_media_change(struct ifnet *ifp)
 		ptys.rp_local_port = 1;
 		ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 		if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ,
-		    &ptys, sizeof(ptys)) != 0) {
+		    &ptys, sizeof(ptys), MCX_CMDQ_SLOT_IOCTL) != 0) {
 			printf("%s: unable to read port type/speed\n",
 			    DEVNAME(sc));
-			return EIO;
+			error = EIO;
+			goto out;
 		}
 
 		media = betoh32(ptys.rp_eth_proto_cap);
@@ -7973,9 +8060,10 @@ mcx_media_change(struct ifnet *ifp)
 	paos.rp_admin_status = MCX_REG_PAOS_ADMIN_STATUS_DOWN;
 	paos.rp_admin_state_update = MCX_REG_PAOS_ADMIN_STATE_UPDATE_EN;
 	if (mcx_access_hca_reg(sc, MCX_REG_PAOS, MCX_REG_OP_WRITE, &paos,
-	    sizeof(paos)) != 0) {
+	    sizeof(paos), MCX_CMDQ_SLOT_IOCTL) != 0) {
 		printf("%s: unable to set port state to down\n", DEVNAME(sc));
-		return EIO;
+		error = EIO;
+		goto out;
 	}
 
 	memset(&ptys, 0, sizeof(ptys));
@@ -7983,10 +8071,11 @@ mcx_media_change(struct ifnet *ifp)
 	ptys.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH;
 	ptys.rp_eth_proto_admin = htobe32(media);
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_WRITE, &ptys,
-	    sizeof(ptys)) != 0) {
+	    sizeof(ptys), MCX_CMDQ_SLOT_IOCTL) != 0) {
 		printf("%s: unable to set port media type/speed\n",
 		    DEVNAME(sc));
 		error = EIO;
+		/* continue on */
 	}
 
 	/* re-enable the port to start negotiation */
@@ -7995,11 +8084,13 @@ mcx_media_change(struct ifnet *ifp)
 	paos.rp_admin_status = MCX_REG_PAOS_ADMIN_STATUS_UP;
 	paos.rp_admin_state_update = MCX_REG_PAOS_ADMIN_STATE_UPDATE_EN;
 	if (mcx_access_hca_reg(sc, MCX_REG_PAOS, MCX_REG_OP_WRITE, &paos,
-	    sizeof(paos)) != 0) {
+	    sizeof(paos), MCX_CMDQ_SLOT_IOCTL) != 0) {
 		printf("%s: unable to set port state to up\n", DEVNAME(sc));
 		error = EIO;
 	}
 
+ out:
+	rw_exit_write(&sc->sc_cmdq_ioctl_lk);
 	return error;
 }
 
@@ -8013,9 +8104,15 @@ mcx_port_change(void *xsc)
 		.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH,
 	};
 	int link_state = LINK_STATE_DOWN;
+	int slot;
+
+	if (cold) {
+		slot = MCX_CMDQ_SLOT_POLL;
+	} else
+		slot = MCX_CMDQ_SLOT_LINK;
 
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys,
-	    sizeof(ptys)) == 0) {
+	    sizeof(ptys), slot) == 0) {
 		uint32_t proto_oper = betoh32(ptys.rp_eth_proto_oper);
 		uint64_t baudrate = 0;
 		unsigned int i;
@@ -8373,6 +8470,7 @@ mcx_kstat_attach_ppcnt(struct mcx_softc *sc,
 	ks->ks_data = kvs;
 	ks->ks_datalen = ksp->ksp_n * sizeof(*kvs);
 	ks->ks_read = mcx_kstat_ppcnt_read;
+	kstat_set_wlock(ks, &sc->sc_cmdq_kstat_lk);
 
 	kstat_install(ks);
 
@@ -8409,10 +8507,8 @@ mcx_kstat_ppcnt_read(struct kstat *ks)
 	unsigned int i;
 	int rv;
 
-	KERNEL_LOCK(); /* XXX */
 	rv = mcx_access_hca_reg(sc, MCX_REG_PPCNT, MCX_REG_OP_READ,
-	    &ppcnt, sizeof(ppcnt));
-	KERNEL_UNLOCK();
+	    &ppcnt, sizeof(ppcnt), MCX_CMDQ_SLOT_KSTAT);
 	if (rv != 0)
 		return (EIO);
 
@@ -8461,7 +8557,7 @@ mcx_kstat_attach_tmps(struct mcx_softc *sc)
 	}
 
 	if (mcx_access_hca_reg(sc, MCX_REG_MCAM, MCX_REG_OP_READ,
-	    &mcam, sizeof(mcam)) != 0) {
+	    &mcam, sizeof(mcam), MCX_CMDQ_SLOT_POLL) != 0) {
 		/* unable to check management capabilities? */
 		return;
 	}
@@ -8473,7 +8569,7 @@ mcx_kstat_attach_tmps(struct mcx_softc *sc)
 	}
 
 	if (mcx_access_hca_reg(sc, MCX_REG_MTCAP, MCX_REG_OP_READ,
-	    &mtcap, sizeof(mtcap)) != 0) {
+	    &mtcap, sizeof(mtcap), MCX_CMDQ_SLOT_POLL) != 0) {
 		/* unable to find temperature sensors */
 		return;
 	}
@@ -8502,6 +8598,7 @@ mcx_kstat_attach_tmps(struct mcx_softc *sc)
 		ks->ks_datalen = sizeof(*ktmp);
 		TIMEVAL_TO_TIMESPEC(&mcx_kstat_mtmp_rate, &ks->ks_interval);
 		ks->ks_read = mcx_kstat_mtmp_read;
+		kstat_set_wlock(ks, &sc->sc_cmdq_kstat_lk);
 
 		ks->ks_softc = sc;
 		kstat_install(ks);
@@ -8539,10 +8636,8 @@ mcx_kstat_mtmp_read(struct kstat *ks)
 	memset(&mtmp, 0, sizeof(mtmp));
 	htobem16(&mtmp.mtmp_sensor_index, ks->ks_unit);
 
-	KERNEL_LOCK(); /* XXX */
 	rv = mcx_access_hca_reg(sc, MCX_REG_MTMP, MCX_REG_OP_READ,
-	    &mtmp, sizeof(mtmp));
-	KERNEL_UNLOCK();
+	    &mtmp, sizeof(mtmp), MCX_CMDQ_SLOT_KSTAT);
 	if (rv != 0)
 		return (EIO);
 
@@ -8646,8 +8741,6 @@ mcx_kstat_queue_read(struct kstat *ks)
 	const char *text;
 	int error = 0;
 
-	KERNEL_LOCK();
-	
 	if (mcx_query_rq(sc, &q->q_rx, &u.rq) != 0) {
 		error = EIO;
 		goto out;
@@ -8789,7 +8882,6 @@ mcx_kstat_queue_read(struct kstat *ks)
 
 	nanouptime(&ks->ks_updated);
 out:
-	KERNEL_UNLOCK();
 	return (error);
 }
 
