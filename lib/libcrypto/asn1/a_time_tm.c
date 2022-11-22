@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.25 2022/11/08 12:56:00 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.26 2022/11/22 21:23:16 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -68,7 +68,7 @@ ASN1_time_tm_clamp_notafter(struct tm *tm)
 	struct tm broken_os_epoch_tm;
 	time_t broken_os_epoch_time = INT_MAX;
 
-	if (!OPENSSL_gmtime(&broken_os_epoch_time, &broken_os_epoch_tm))
+	if (!asn1_time_time_t_to_tm(&broken_os_epoch_time, &broken_os_epoch_tm))
 		return 0;
 
 	if (ASN1_time_tm_cmp(tm, &broken_os_epoch_tm) == 1)
