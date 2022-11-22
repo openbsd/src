@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.108 2022/11/21 22:50:07 kn Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.109 2022/11/22 22:28:40 sashan Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -53,9 +53,16 @@
 
 #include <net/pfvar.h>
 
+#include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+
 #ifdef INET6
 #include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #endif /* INET6 */
+
+#include <net/pfvar_priv.h>
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define islower(c)	((c) >= 'a' && (c) <= 'z')
@@ -296,6 +303,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	struct pfi_kif		*kif;
 	struct task		*t;
 
+	PF_LOCK();
 	pfi_initialize();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifp->if_xname, NULL)) == NULL)
@@ -310,6 +318,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	kif->pfik_ah_cookie = t;
 
 	pfi_kif_update(kif);
+	PF_UNLOCK();
 }
 
 void
@@ -321,6 +330,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
 		return;
 
+	PF_LOCK();
 	pfi_update++;
 	t = kif->pfik_ah_cookie;
 	kif->pfik_ah_cookie = NULL;
@@ -332,6 +342,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+	PF_UNLOCK();
 }
 
 void
@@ -339,6 +350,7 @@ pfi_attach_ifgroup(struct ifg_group *ifg)
 {
 	struct pfi_kif	*kif;
 
+	PF_LOCK();
 	pfi_initialize();
 	pfi_update++;
 	if ((kif = pfi_kif_get(ifg->ifg_group, NULL)) == NULL)
@@ -346,6 +358,7 @@ pfi_attach_ifgroup(struct ifg_group *ifg)
 
 	kif->pfik_group = ifg;
 	ifg->ifg_pf_kif = (caddr_t)kif;
+	PF_UNLOCK();
 }
 
 void
@@ -356,11 +369,13 @@ pfi_detach_ifgroup(struct ifg_group *ifg)
 	if ((kif = (struct pfi_kif *)ifg->ifg_pf_kif) == NULL)
 		return;
 
+	PF_LOCK();
 	pfi_update++;
 
 	kif->pfik_group = NULL;
 	ifg->ifg_pf_kif = NULL;
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+	PF_UNLOCK();
 }
 
 void
@@ -378,15 +393,19 @@ pfi_group_change(const char *group)
 void
 pfi_group_delmember(const char *group)
 {
+	PF_LOCK();
 	pfi_group_change(group);
 	pfi_xcommit();
+	PF_UNLOCK();
 }
 
 void
 pfi_group_addmember(const char *group)
 {
+	PF_LOCK();
 	pfi_group_change(group);	
 	pfi_xcommit();
+	PF_UNLOCK();
 }
 
 int
@@ -686,8 +705,10 @@ pfi_kifaddr_update(void *v)
 
 	NET_ASSERT_LOCKED();
 
+	PF_LOCK();
 	pfi_update++;
 	pfi_kif_update(kif);
+	PF_UNLOCK();
 }
 
 int
