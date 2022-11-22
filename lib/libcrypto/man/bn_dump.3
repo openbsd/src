@@ -1,5 +1,6 @@
-.\"	$OpenBSD: bn_dump.3,v 1.6 2016/12/10 21:32:14 schwarze Exp $
-.\"	OpenSSL crypto/bn/README.pod aebb9aac Jul 19 09:27:53 2016 -0400
+.\" $OpenBSD: bn_dump.3,v 1.7 2022/11/22 19:00:15 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL crypto/bn/README.pod aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000, 2003, 2006, 2009 The OpenSSL Project.
@@ -49,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 10 2016 $
+.Dd $Mdocdate: November 22 2022 $
 .Dt BN_DUMP 3
 .Os
 .Sh NAME
@@ -320,13 +321,14 @@ a
 array of words
 .Pq Vt BN_ULONG ,
 least significant word first.
-A
 .Vt BN_ULONG
-can be either 16, 32 or 64 bits in size, depending on the 'number of
-bits'
-.Pq Dv BITS2
-specified in
-.In openssl/bn.h .
+is a macro that expands to
+.Vt unsigned long Pq = Vt uint64_t
+on
+.Dv _LP64
+platforms and
+.Vt unsigned int Pq = Vt uint32_t
+elsewhere.
 .Pp
 .Fa dmax
 is the size of the
