@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.1 2022/11/22 08:56:33 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.2 2022/11/22 09:09:43 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -54,8 +54,8 @@ test_bn_print_null_derefs(void)
 		err(1, "getrlimit");
 
 	if ((rlimit.rlim_cur + 1023) / 1024 < datalimit) {
-		printf("%s: Insufficient data limit\n", __func__);
-		printf("Need more than %zu kB\n", datalimit);
+		printf("%s: insufficient data limit. Need more than %zu KiB\n",
+		    __func__, datalimit);
 		printf("SKIPPED\n");
 		return 0;
 	}
