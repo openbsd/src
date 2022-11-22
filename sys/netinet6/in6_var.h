@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.75 2022/11/12 16:36:07 kn Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.76 2022/11/22 14:51:01 kn Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -87,11 +87,6 @@ struct in6_addrlifetime {
 };
 
 #ifdef _KERNEL
-struct nd_ifinfo;
-struct in6_ifextra {
-	struct nd_ifinfo *nd_ifinfo;
-};
-
 struct	in6_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
