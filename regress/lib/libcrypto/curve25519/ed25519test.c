@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed25519test.c,v 1.6 2022/11/17 22:45:48 tb Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.7 2022/11/22 17:58:15 tb Exp $ */
 /*
  * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -34,7 +34,7 @@ struct testvector {
  * Test vectors from https://tools.ietf.org/html/rfc8032#section-7.1.
  * sec_key is the concatenation of SECRET KEY and PUBLIC KEY in that reference.
  */
-struct testvector testvectors[] = {
+static const struct testvector testvectors[] = {
 	{
 		.sec_key = {
 			0x9d, 0x61, 0xb1, 0x9d, 0xef, 0xfd, 0x5a, 0x60,
@@ -319,7 +319,7 @@ test_ED25519_verify(void)
 	int failed = 0;
 
 	for (i = 0; i < num_testvectors; i++) {
-		struct testvector *tc = &testvectors[i];
+		const struct testvector *tc = &testvectors[i];
 
 		if (!ED25519_verify(tc->message, tc->message_len, tc->signature,
 		    tc->pub_key)) {
@@ -338,7 +338,7 @@ test_ED25519_sign(void)
 	int failed = 0;
 
 	for (i = 0; i < num_testvectors; i++) {
-		struct testvector *tc = &testvectors[i];
+		const struct testvector *tc = &testvectors[i];
 		uint8_t signature[64];
 
 		if (!ED25519_sign(signature, tc->message, tc->message_len,
