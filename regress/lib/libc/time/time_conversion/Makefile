@@ -1,11 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 2022/11/06 12:57:08 beck Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/11/22 10:40:33 anton Exp $
 
-PROG=		timetest
-SRCS=		timetest.c
-
-REGRESS_TARGETS=do-timetest
-
-do-timetest: ${PROG}
-	./${PROG}
+PROG=	timetest
 
 .include <bsd.regress.mk>
