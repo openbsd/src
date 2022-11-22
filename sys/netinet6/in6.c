@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.252 2022/11/22 14:51:01 kn Exp $	*/
+/*	$OpenBSD: in6.c,v 1.253 2022/11/22 15:49:06 kn Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -959,7 +959,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia6, struct ifnet *ifp)
 	ifa_del(ifp, ifa);
 
 	ia6->ia_ifp = NULL;
-	ifafree(&ia6->ia_ifa);
+	ifafree(ifa);
 }
 
 /*
