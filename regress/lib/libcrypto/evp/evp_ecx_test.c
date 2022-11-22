@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_ecx_test.c,v 1.1 2022/11/10 16:38:57 jsing Exp $ */
+/*	$OpenBSD: evp_ecx_test.c,v 1.2 2022/11/22 20:04:51 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -440,6 +440,7 @@ ecx_ed25519_sign_test(void)
 
  failure:
 	BIO_free(bio);
+	EVP_MD_CTX_free(md_ctx);
 	EVP_PKEY_free(pkey);
 	free(signature);
 
@@ -480,6 +481,7 @@ ecx_ed25519_verify_test(void)
 
  failure:
 	BIO_free(bio);
+	EVP_MD_CTX_free(md_ctx);
 	EVP_PKEY_free(pkey);
 
 	return failed;
