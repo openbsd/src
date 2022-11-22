@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.33 2022/01/20 10:53:33 inoguchi Exp $ */
+/* $OpenBSD: bn_print.c,v 1.34 2022/11/22 08:46:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,7 +205,7 @@ BN_hex2bn(BIGNUM **bn, const char *a)
 	for (i = 0; i <= (INT_MAX / 4) && isxdigit((unsigned char)a[i]); i++)
 		;
 	if (i > INT_MAX / 4)
-		goto err;
+		return (0);
 
 	num = i + neg;
 	if (bn == NULL)
@@ -281,7 +281,7 @@ BN_dec2bn(BIGNUM **bn, const char *a)
 	for (i = 0; i <= (INT_MAX / 4) && isdigit((unsigned char)a[i]); i++)
 		;
 	if (i > INT_MAX / 4)
-		goto err;
+		return (0);
 
 	num = i + neg;
 	if (bn == NULL)
