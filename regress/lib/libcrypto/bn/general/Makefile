@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2022/11/09 23:28:08 tb Exp $
+#	$OpenBSD: Makefile,v 1.16 2022/11/22 08:56:33 tb Exp $
 
 .include "../../Makefile.inc"
 
@@ -8,6 +8,7 @@ PROGS +=	bn_mod_exp2_mont
 PROGS +=	bn_mod_sqrt
 PROGS +=	bn_primes
 PROGS +=	bn_to_string
+PROGS +=	bn_unit
 
 DPADD +=	${LIBCRYPTO}
 LDFLAGS +=	-lcrypto
@@ -43,6 +44,11 @@ LDADD_bn_to_string = ${CRYPTO_INT}
 REGRESS_TARGETS += run-bn_to_string
 run-bn_to_string: bn_to_string
 	./bn_to_string
+
+REGRESS_TARGETS += run-bn_unit
+run-bn_unit: bn_unit
+	./bn_unit
+
 
 LDADD_bn_isqrt = ${CRYPTO_INT}
 REGRESS_TARGETS += run-bn_isqrt
