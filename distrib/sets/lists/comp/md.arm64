@@ -20,10 +20,10 @@
 ./usr/include/arm64/exec.h
 ./usr/include/arm64/fdt.h
 ./usr/include/arm64/fenv.h
+./usr/include/arm64/fpu.h
 ./usr/include/arm64/frame.h
 ./usr/include/arm64/hypervisor.h
 ./usr/include/arm64/ieee.h
-./usr/include/arm64/fpu.h
 ./usr/include/arm64/ieeefp.h
 ./usr/include/arm64/intr.h
 ./usr/include/arm64/kcore.h
