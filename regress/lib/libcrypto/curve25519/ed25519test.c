@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed25519test.c,v 1.7 2022/11/22 17:58:15 tb Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.8 2022/11/22 17:59:31 tb Exp $ */
 /*
  * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -32,7 +32,6 @@ struct testvector {
 
 /*
  * Test vectors from https://tools.ietf.org/html/rfc8032#section-7.1.
- * sec_key is the concatenation of SECRET KEY and PUBLIC KEY in that reference.
  */
 static const struct testvector testvectors[] = {
 	{
