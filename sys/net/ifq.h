@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.34 2022/01/28 07:11:15 guenther Exp $ */
+/*	$OpenBSD: ifq.h,v 1.35 2022/11/22 03:40:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -94,6 +94,11 @@ struct ifiqueue {
 	uint64_t		 ifiq_errors;
 	uint64_t		 ifiq_mcasts;
 	uint64_t		 ifiq_noproto;
+
+	/* number of times a list of packets were put on ifiq_ml */
+	uint64_t		 ifiq_enqueues;
+	/* number of times a list of packets were pulled off ifiq_ml */
+	uint64_t		 ifiq_dequeues;
 
 	struct kstat		*ifiq_kstat;
 

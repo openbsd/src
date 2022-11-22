@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.46 2022/04/30 21:13:57 bluhm Exp $ */
+/*	$OpenBSD: ifq.c,v 1.47 2022/11/22 03:40:53 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -582,6 +582,9 @@ struct ifiq_kstat_data {
 	struct kstat_kv kd_qdrops;
 	struct kstat_kv kd_errors;
 	struct kstat_kv kd_qlen;
+
+	struct kstat_kv kd_enqueues;
+	struct kstat_kv kd_dequeues;
 };
 
 static const struct ifiq_kstat_data ifiq_kstat_tpl = {
@@ -595,6 +598,11 @@ static const struct ifiq_kstat_data ifiq_kstat_tpl = {
 	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
 	KSTAT_KV_UNIT_INITIALIZER("qlen",
 	    KSTAT_KV_T_UINT32, KSTAT_KV_U_PACKETS),
+
+	KSTAT_KV_INITIALIZER("enqueues",
+	    KSTAT_KV_T_COUNTER64),
+	KSTAT_KV_INITIALIZER("dequeues",
+	    KSTAT_KV_T_COUNTER64),
 };
 
 int
@@ -609,6 +617,9 @@ ifiq_kstat_copy(struct kstat *ks, void *dst)
 	kstat_kv_u64(&kd->kd_qdrops) = ifiq->ifiq_qdrops;
 	kstat_kv_u64(&kd->kd_errors) = ifiq->ifiq_errors;
 	kstat_kv_u32(&kd->kd_qlen) = ml_len(&ifiq->ifiq_ml);
+
+	kstat_kv_u64(&kd->kd_enqueues) = ifiq->ifiq_enqueues;
+	kstat_kv_u64(&kd->kd_dequeues) = ifiq->ifiq_dequeues;
 
 	return (0);
 }
@@ -721,8 +732,10 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	if (__predict_true(!ISSET(ifp->if_xflags, IFXF_MONITOR))) {
 		if (len > ifiq_maxlen_drop)
 			ifiq->ifiq_qdrops += ml_len(ml);
-		else
+		else {
+			ifiq->ifiq_enqueues++;
 			ml_enlist(&ifiq->ifiq_ml, ml);
+		}
 	}
 	mtx_leave(&ifiq->ifiq_mtx);
 
@@ -766,6 +779,7 @@ ifiq_process(void *arg)
 		return;
 
 	mtx_enter(&ifiq->ifiq_mtx);
+	ifiq->ifiq_dequeues++;
 	ml = ifiq->ifiq_ml;
 	ml_init(&ifiq->ifiq_ml);
 	mtx_leave(&ifiq->ifiq_mtx);
