@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.9 2021/11/11 05:52:03 bket Exp $
+.\"	$OpenBSD: resolvd.8,v 1.10 2022/11/23 14:22:17 kn Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 11 2021 $
+.Dd $Mdocdate: November 23 2022 $
 .Dt RESOLVD 8
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@ at the top, to cause local resolution.
 also monitors the routing socket for proposals learned by
 .Xr dhclient 8 ,
 .Xr dhcpleased 8 ,
+.Xr iked 8 ,
 .Xr slaacd 8 ,
 or network devices which natively learn DNS information such as
 .Xr sppp 4
