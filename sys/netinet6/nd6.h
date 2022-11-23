@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.88 2022/11/23 19:35:18 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.89 2022/11/23 19:35:42 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -64,11 +64,6 @@ struct	in6_ndireq {
 	char ifname[IFNAMSIZ];
 	struct nd_ifinfo ndi;
 };
-
-/* Prefix status */
-#define NDPRF_ONLINK		0x1
-#define NDPRF_DETACHED		0x2
-#define NDPRF_HOME		0x4
 
 /* protocol constants */
 #define MAX_RTR_SOLICITATION_DELAY	1	/*1sec*/
