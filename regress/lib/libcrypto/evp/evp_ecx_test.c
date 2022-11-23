@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_ecx_test.c,v 1.3 2022/11/23 07:25:01 tb Exp $ */
+/*	$OpenBSD: evp_ecx_test.c,v 1.4 2022/11/23 22:52:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -337,7 +337,7 @@ ecx_ed25519_raw_key_test(void)
 		goto failure;
 	}
 
-	BIO_reset(bio);
+	(void)BIO_reset(bio);
 	if (!PEM_write_bio_PUBKEY(bio, pkey)) {
 		fprintf(stderr, "FAIL: failed to write ED25519 public to PEM\n");
 		goto failure;
@@ -361,7 +361,7 @@ ecx_ed25519_raw_key_test(void)
 		fprintf(stderr, "FAIL: PKEY from raw public key failed");
 		goto failure;
 	}
-	BIO_reset(bio);
+	(void)BIO_reset(bio);
 	if (!PEM_write_bio_PUBKEY(bio, pkey)) {
 		fprintf(stderr, "FAIL: failed to write ED25519 public to PEM\n");
 		goto failure;
@@ -769,7 +769,7 @@ ecx_x25519_raw_key_test(void)
 		goto failure;
 	}
 
-	BIO_reset(bio);
+	(void)BIO_reset(bio);
 	if (!PEM_write_bio_PUBKEY(bio, pkey)) {
 		fprintf(stderr, "FAIL: failed to write X25519 public to PEM\n");
 		goto failure;
@@ -791,7 +791,7 @@ ecx_x25519_raw_key_test(void)
 		fprintf(stderr, "FAIL: PKEY from raw public key failed");
 		goto failure;
 	}
-	BIO_reset(bio);
+	(void)BIO_reset(bio);
 	if (!PEM_write_bio_PUBKEY(bio, pkey)) {
 		fprintf(stderr, "FAIL: failed to write X25519 public to PEM\n");
 		goto failure;
