@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.3 2022/11/23 08:01:05 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.4 2022/11/23 08:58:34 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -45,6 +45,7 @@ test_bn_print_null_derefs(void)
 	size_t size = INT_MAX / 4 + 4;
 	size_t datalimit = (size + 500 * 1024) / 1024;
 	char *a;
+	char digit;
 	int failed = 0;
 
 	if ((a = malloc(size)) == NULL) {
@@ -53,7 +54,10 @@ test_bn_print_null_derefs(void)
 		return 0;
 	}
 
-	memset(a, '0', size - 1);
+	/* Fill with a random digit since coverity doesn't like us using '0'. */
+	digit = '0' + arc4random_uniform(10);
+
+	memset(a, digit, size - 1);
 	a[size - 1] = '\0';
 
 	failed |= test_bn_print_wrapper(a, size, "BN_dec2bn", BN_dec2bn);
