@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.251 2022/11/23 08:05:49 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.252 2022/11/23 16:57:37 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ nd6_init(void)
 	timeout_set(&nd6_expire_timeout, nd6_expire_timer, NULL);
 }
 
-struct nd_ifinfo *
+void
 nd6_ifattach(struct ifnet *ifp)
 {
 	struct nd_ifinfo *nd;
@@ -139,12 +139,13 @@ nd6_ifattach(struct ifnet *ifp)
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
 	nd->retrans = RETRANS_TIMER;
 
-	return nd;
+	ifp->if_nd = nd;
 }
 
 void
-nd6_ifdetach(struct nd_ifinfo *nd)
+nd6_ifdetach(struct ifnet *ifp)
 {
+	struct nd_ifinfo *nd = ifp->if_nd;
 
 	free(nd, M_IP6NDP, sizeof(*nd));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.682 2022/11/23 14:50:59 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.683 2022/11/23 16:57:37 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -460,7 +460,7 @@ if_attachsetup(struct ifnet *ifp)
 	if_addgroup(ifp, IFG_ALL);
 
 #ifdef INET6
-	ifp->if_nd = nd6_ifattach(ifp);
+	nd6_ifattach(ifp);
 #endif
 
 #if NPF > 0
@@ -1105,7 +1105,7 @@ if_detach(struct ifnet *ifp)
 	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 
 #ifdef INET6
-	nd6_ifdetach(ifp->if_nd);
+	nd6_ifdetach(ifp);
 #endif
 
 	/* Announce that the interface is gone. */

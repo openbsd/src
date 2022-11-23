@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.84 2022/11/23 14:48:28 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.85 2022/11/23 16:57:37 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -152,8 +152,8 @@ union nd_opts {
 #define nd_opts_done		nd_opt_each.done
 
 void nd6_init(void);
-struct nd_ifinfo *nd6_ifattach(struct ifnet *);
-void nd6_ifdetach(struct nd_ifinfo *);
+void nd6_ifattach(struct ifnet *);
+void nd6_ifdetach(struct ifnet *);
 int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
