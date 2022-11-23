@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_ecx_test.c,v 1.2 2022/11/22 20:04:51 tb Exp $ */
+/*	$OpenBSD: evp_ecx_test.c,v 1.3 2022/11/23 07:25:01 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -725,7 +725,7 @@ ecx_x25519_raw_key_test(void)
 	if (pub_key_len != sizeof(x25519_raw_pub_key_1)) {
 		fprintf(stderr, "FAIL: raw public key length differs "
 		    "(%zu != %zu)\n", pub_key_len,
-		    sizeof(x25519_raw_pub_key_2));
+		    sizeof(x25519_raw_pub_key_1));
 		goto failure;
 	}
 	if ((pub_key = malloc(pub_key_len)) == NULL)
@@ -739,7 +739,7 @@ ecx_x25519_raw_key_test(void)
 		fprintf(stderr, "Got:\n");
 		hexdump(pub_key, pub_key_len);
 		fprintf(stderr, "Want:\n");
-		hexdump(x25519_raw_pub_key_2, sizeof(x25519_raw_pub_key_2));
+		hexdump(x25519_raw_pub_key_1, sizeof(x25519_raw_pub_key_1));
 		goto failure;
 	}
 
