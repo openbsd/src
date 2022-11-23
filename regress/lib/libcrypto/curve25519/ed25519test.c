@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed25519test.c,v 1.8 2022/11/22 17:59:31 tb Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.9 2022/11/23 15:52:43 tb Exp $ */
 /*
  * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -48,6 +48,7 @@ static const struct testvector testvectors[] = {
 			0xaf, 0x02, 0x1a, 0x68, 0xf7, 0x07, 0x51, 0x1a,
 		},
 		.message = {
+			0x0,	/* Windows has stupid compilers... */
 		},
 		.message_len = 0,
 		.signature = {
