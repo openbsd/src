@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.239 2022/11/17 18:53:12 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.240 2022/11/23 11:00:27 mbuhl Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -491,6 +491,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* Now copy argc, args & environ to new stack */
 	if (!copyargs(&pack, &arginfo, stack, argp))
 		goto exec_abort;
+
+	pr->ps_auxinfo = (vaddr_t)pack.ep_auxinfo;
 
 	/* copy out the process's ps_strings structure */
 	if (copyout(&arginfo, (char *)pr->ps_strings, sizeof(arginfo)))

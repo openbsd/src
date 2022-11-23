@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.334 2022/07/23 22:10:59 cheloha Exp $	*/
+/*	$OpenBSD: proc.h,v 1.335 2022/11/23 11:00:27 mbuhl Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ struct process {
 	char	ps_comm[_MAXCOMLEN];	/* command name, incl NUL */
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
+	vaddr_t	ps_auxinfo;		/* User pointer to auxinfo */
 	vaddr_t ps_timekeep; 		/* User pointer to timekeep */
 	vaddr_t	ps_sigcode;		/* [I] User pointer to signal code */
 	vaddr_t ps_sigcoderet;		/* [I] User ptr to sigreturn retPC */
