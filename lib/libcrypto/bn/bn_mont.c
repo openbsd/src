@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.28 2022/02/07 19:44:23 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.29 2022/11/23 03:10:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -419,7 +419,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		}
 		else /* if N mod word size == 1 */
 		{
-			if (bn_expand(Ri, (int)sizeof(BN_ULONG) * 2) == NULL)
+			if (bn_wexpand(Ri, 2) == NULL)
 				goto err;
 			/* Ri-- (mod double word size) */
 			Ri->neg = 0;

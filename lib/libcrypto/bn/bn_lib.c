@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.59 2022/11/23 03:04:52 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.60 2022/11/23 03:10:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,7 +518,7 @@ int
 BN_set_word(BIGNUM *a, BN_ULONG w)
 {
 	bn_check_top(a);
-	if (bn_expand(a, (int)sizeof(BN_ULONG) * 8) == NULL)
+	if (bn_wexpand(a, 1) == NULL)
 		return (0);
 	a->neg = 0;
 	a->d[0] = w;
