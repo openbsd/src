@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.250 2022/11/10 16:00:17 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.251 2022/11/23 08:05:49 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -356,20 +356,17 @@ nd6_llinfo_timer(struct rtentry *rt)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	struct sockaddr_in6 *dst = satosin6(rt_key(rt));
 	struct ifnet *ifp;
-	struct nd_ifinfo *ndi = NULL;
 
 	NET_ASSERT_LOCKED();
 
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 		return 1;
 
-	ndi = ND_IFINFO(ifp);
-
 	switch (ln->ln_state) {
 	case ND6_LLINFO_INCOMPLETE:
 		if (ln->ln_asked < nd6_mmaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, ndi->retrans / 1000);
+			nd6_llinfo_settimer(ln, ND_IFINFO(ifp)->retrans / 1000);
 			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 		} else {
 			struct mbuf *m = ln->ln_hold;
@@ -413,19 +410,16 @@ nd6_llinfo_timer(struct rtentry *rt)
 		break;
 
 	case ND6_LLINFO_DELAY:
-		if (ndi) {
-			/* We need NUD */
-			ln->ln_asked = 1;
-			ln->ln_state = ND6_LLINFO_PROBE;
-			nd6_llinfo_settimer(ln, ndi->retrans / 1000);
-			nd6_ns_output(ifp, &dst->sin6_addr,
-			    &dst->sin6_addr, ln, 0);
-		}
+		/* We need NUD */
+		ln->ln_asked = 1;
+		ln->ln_state = ND6_LLINFO_PROBE;
+		nd6_llinfo_settimer(ln, ND_IFINFO(ifp)->retrans / 1000);
+		nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr, ln, 0);
 		break;
 	case ND6_LLINFO_PROBE:
 		if (ln->ln_asked < nd6_umaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, ndi->retrans / 1000);
+			nd6_llinfo_settimer(ln, ND_IFINFO(ifp)->retrans / 1000);
 			nd6_ns_output(ifp, &dst->sin6_addr,
 			    &dst->sin6_addr, ln, 0);
 		} else {
