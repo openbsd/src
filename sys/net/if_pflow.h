@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.h,v 1.18 2022/08/12 16:38:50 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.h,v 1.19 2022/11/23 15:12:27 mvs Exp $	*/
 
 /*
  * Copyright (c) 2008 Henning Brauer <henning@openbsd.org>
@@ -169,7 +169,16 @@ struct pflow_ipfix_flow6 {
 
 #ifdef _KERNEL
 
+/*
+ * Locks used to protect struct members and global data
+ *       N       net lock
+ *       p       this pflow_softc' `sc_lock'
+ */
+
 struct pflow_softc {
+	struct rwlock		 sc_lock;
+
+	int			 sc_dying;	/* [N] */
 	struct ifnet		 sc_if;
 
 	unsigned int		 sc_count;
@@ -185,7 +194,7 @@ struct pflow_softc {
 	struct timeout		 sc_tmo_tmpl;
 	struct mbuf_queue	 sc_outputqueue;
 	struct task		 sc_outputtask;
-	struct socket		*so;
+	struct socket		*so;		/* [p] */
 	struct mbuf		*send_nam;
 	struct sockaddr		*sc_flowsrc;
 	struct sockaddr		*sc_flowdst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.97 2022/11/11 10:51:46 dlg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.98 2022/11/23 15:12:27 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -134,11 +134,11 @@ pflow_output_process(void *arg)
 	struct mbuf *m;
 
 	mq_delist(&sc->sc_outputqueue, &ml);
-	KERNEL_LOCK();
+	rw_enter_read(&sc->sc_lock);
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		pflow_sendout_mbuf(sc, m);
 	}
-	KERNEL_UNLOCK();
+	rw_exit_read(&sc->sc_lock);
 }
 
 int
@@ -148,6 +148,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	struct pflow_softc	*pflowif;
 
 	pflowif = malloc(sizeof(*pflowif), M_DEVBUF, M_WAITOK|M_ZERO);
+	rw_init(&pflowif->sc_lock, "pflowlk");
 	MGET(pflowif->send_nam, M_WAIT, MT_SONAME);
 	pflowif->sc_version = PFLOW_PROTO_DEFAULT;
 
@@ -256,6 +257,7 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	mq_init(&pflowif->sc_outputqueue, 8192, IPL_SOFTNET);
 	pflow_setmtu(pflowif, ETHERMTU);
 	pflow_init_timeouts(pflowif);
+	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
@@ -277,6 +279,7 @@ pflow_clone_destroy(struct ifnet *ifp)
 	error = 0;
 
 	NET_LOCK();
+	sc->sc_dying = 1;
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
 	NET_UNLOCK();
 
@@ -477,10 +480,17 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct pflowreq		 pflowr;
 	int			 error;
 
+	if (sc->sc_dying)
+		return ENXIO;
+
 	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFFLAGS:
+		/* XXXSMP: enforce lock order */
+		NET_UNLOCK();
+		rw_enter_read(&sc->sc_lock);
+		NET_LOCK();
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
 			sc->sc_gcounter=pflowstats.pflow_flows;
@@ -489,6 +499,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				pflow_sendout_ipfix_tmpl(sc);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
+		rw_exit_read(&sc->sc_lock);
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < PFLOW_MINMTU)
@@ -525,10 +536,13 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		/* XXXSMP breaks atomicity */
 		NET_UNLOCK();
+		rw_enter_write(&sc->sc_lock);
 		error = pflow_set(sc, &pflowr);
 		NET_LOCK();
-		if (error != 0)
+		if (error != 0) {
+			rw_exit_write(&sc->sc_lock);
 			return (error);
+		}
 
 		if ((ifp->if_flags & IFF_UP) && sc->so != NULL) {
 			ifp->if_flags |= IFF_RUNNING;
@@ -537,6 +551,7 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				pflow_sendout_ipfix_tmpl(sc);
 		} else
 			ifp->if_flags &= ~IFF_RUNNING;
+		rw_exit_write(&sc->sc_lock);
 
 		break;
 
@@ -1198,8 +1213,8 @@ pflow_sendout_ipfix_tmpl(struct pflow_softc *sc)
 int
 pflow_sendout_mbuf(struct pflow_softc *sc, struct mbuf *m)
 {
-	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += m->m_pkthdr.len;
+	counters_pkt(sc->sc_if.if_counters,
+	            ifc_opackets, ifc_obytes, m->m_pkthdr.len);
 
 	if (sc->so == NULL) {
 		m_freem(m);
