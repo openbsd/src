@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.125 2022/11/11 17:15:26 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.126 2022/11/23 07:31:12 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -553,7 +553,7 @@ dtls1_read_handshake_unexpected(SSL *s)
 	}
 
 	/* Parse handshake message header. */
-	CBS_dup(&cbs, tls_content_cbs(s->s3->rcontent));
+	CBS_dup(tls_content_cbs(s->s3->rcontent), &cbs);
 	if (!dtls1_get_message_header(&cbs, &hs_msg_hdr))
 		return -1; /* XXX - probably should drop/continue. */
 
