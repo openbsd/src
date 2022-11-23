@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.86 2022/11/23 16:59:10 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.87 2022/11/23 19:34:59 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -58,13 +58,6 @@ struct in6_nbrinfo {
 	long	asked;		/* number of queries already sent for addr */
 	int	isrouter;	/* if it acts as a router */
 	int	state;		/* reachability state */
-};
-
-struct prf_ra {
-	u_int onlink : 1;
-	u_int autonomous : 1;
-	u_int router : 1;
-	u_int reserved : 5;
 };
 
 struct	in6_ndireq {
