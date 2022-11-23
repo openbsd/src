@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.680 2022/11/14 22:45:02 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.681 2022/11/23 14:48:27 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -461,6 +461,10 @@ if_attachsetup(struct ifnet *ifp)
 	if_addgroup(ifp, IFG_ALL);
 
 	if_attachdomain(ifp);
+#ifdef INET6
+	ifp->if_nd = nd6_ifattach(ifp);
+#endif
+
 #if NPF > 0
 	pfi_attach_ifnet(ifp);
 #endif
@@ -1127,6 +1131,9 @@ if_detach(struct ifnet *ifp)
 			(*dp->dom_ifdetach)(ifp,
 			    ifp->if_afdata[dp->dom_family]);
 	}
+#ifdef INET6
+	nd6_ifdetach(ifp->if_nd);
+#endif
 
 	/* Announce that the interface is gone. */
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);

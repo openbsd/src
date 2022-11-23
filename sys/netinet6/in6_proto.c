@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.111 2022/09/02 13:12:32 mvs Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.112 2022/11/23 14:48:28 kn Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -338,8 +338,6 @@ const struct domain inet6domain = {
   .dom_sasize = sizeof(struct sockaddr_in6),
   .dom_rtoffset = offsetof(struct sockaddr_in6, sin6_addr),
   .dom_maxplen = 128,
-  .dom_ifattach = in6_domifattach,
-  .dom_ifdetach = in6_domifdetach
 };
 
 /*
