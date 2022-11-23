@@ -1820,6 +1820,7 @@
 ./usr/share/man/man3/BN_mod_mul_reciprocal.3
 ./usr/share/man/man3/BN_mod_sqrt.3
 ./usr/share/man/man3/BN_new.3
+./usr/share/man/man3/BN_nist_mod_521.3
 ./usr/share/man/man3/BN_num_bytes.3
 ./usr/share/man/man3/BN_rand.3
 ./usr/share/man/man3/BN_set_bit.3
