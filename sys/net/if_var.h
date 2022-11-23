@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.121 2022/11/23 14:48:27 kn Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.122 2022/11/23 14:50:59 kn Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -186,7 +186,6 @@ struct ifnet {				/* and the entries */
 
 	struct sockaddr_dl *if_sadl;	/* [N] pointer to our sockaddr_dl */
 
-	void	*if_afdata[AF_MAX];
 	struct	nd_ifinfo *if_nd;	/* [I] IPv6 Neighour Discovery info */
 };
 #define	if_mtu		if_data.ifi_mtu

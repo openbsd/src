@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2022/06/29 04:49:51 anton Exp $ */
+/*	$OpenBSD: util.c,v 1.12 2022/11/23 14:51:00 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -80,8 +80,6 @@ struct domain inetdomain = {
   .dom_protoswNPROTOSW	= NULL,
   .dom_rtoffset		= offsetof(struct sockaddr_in, sin_addr),
   .dom_maxplen		= 32,
-  .dom_ifattach		= NULL,
-  .dom_ifdetach		= NULL,
 };
 
 struct domain inet6domain = {
@@ -94,8 +92,6 @@ struct domain inet6domain = {
   .dom_protoswNPROTOSW	= NULL,
   .dom_rtoffset		= offsetof(struct sockaddr_in6, sin6_addr),
   .dom_maxplen		= 128,
-  .dom_ifattach		= NULL,
-  .dom_ifdetach		= NULL,
 };
 
 struct domain *domains[] = { &inetdomain, &inet6domain, NULL };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.681 2022/11/23 14:48:27 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.682 2022/11/23 14:50:59 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -133,7 +133,6 @@
 #include <sys/device.h>
 
 void	if_attachsetup(struct ifnet *);
-void	if_attachdomain(struct ifnet *);
 void	if_attach_common(struct ifnet *);
 void	if_remove(struct ifnet *);
 int	if_createrdomain(int, struct ifnet *);
@@ -460,7 +459,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	if_addgroup(ifp, IFG_ALL);
 
-	if_attachdomain(ifp);
 #ifdef INET6
 	ifp->if_nd = nd6_ifattach(ifp);
 #endif
@@ -535,25 +533,6 @@ if_free_sadl(struct ifnet *ifp)
 
 	free(ifp->if_sadl, M_IFADDR, ifp->if_sadl->sdl_len);
 	ifp->if_sadl = NULL;
-}
-
-void
-if_attachdomain(struct ifnet *ifp)
-{
-	const struct domain *dp;
-	int i, s;
-
-	s = splnet();
-
-	/* address family dependent data region */
-	bzero(ifp->if_afdata, sizeof(ifp->if_afdata));
-	for (i = 0; (dp = domains[i]) != NULL; i++) {
-		if (dp->dom_ifattach)
-			ifp->if_afdata[dp->dom_family] =
-			    (*dp->dom_ifattach)(ifp);
-	}
-
-	splx(s);
 }
 
 void
@@ -1058,7 +1037,6 @@ if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
-	const struct domain *dp;
 	int i, s;
 
 	/* Undo pseudo-driver changes. */
@@ -1126,11 +1104,6 @@ if_detach(struct ifnet *ifp)
 	KASSERT(TAILQ_EMPTY(&ifp->if_linkstatehooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_detachhooks));
 
-	for (i = 0; (dp = domains[i]) != NULL; i++) {
-		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
-			(*dp->dom_ifdetach)(ifp,
-			    ifp->if_afdata[dp->dom_family]);
-	}
 #ifdef INET6
 	nd6_ifdetach(ifp->if_nd);
 #endif
