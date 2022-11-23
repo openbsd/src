@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.2 2022/11/19 07:00:57 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.3 2022/11/23 07:37:06 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -511,18 +511,18 @@ ecx_sign_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 static int
 ecx_set_priv_key(EVP_PKEY *pkey, const uint8_t *priv, size_t len)
 {
-	struct ecx_key_st *ecx_key;
+	struct ecx_key_st *ecx_key = NULL;
 	int ret = 0;
 
 	if (priv == NULL || len != ecx_key_len(pkey->ameth->pkey_id)) {
 		ECerror(EC_R_INVALID_ENCODING);
-		return 0;
+		goto err;
 	}
 
 	if ((ecx_key = ecx_key_new(pkey->ameth->pkey_id)) == NULL)
-		return 0;
+		goto err;
 	if (!ecx_key_set_priv(ecx_key, priv, len))
-		return 0;
+		goto err;
 	if (!EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, ecx_key))
 		goto err;
 	ecx_key = NULL;
@@ -538,18 +538,18 @@ ecx_set_priv_key(EVP_PKEY *pkey, const uint8_t *priv, size_t len)
 static int
 ecx_set_pub_key(EVP_PKEY *pkey, const uint8_t *pub, size_t len)
 {
-	struct ecx_key_st *ecx_key;
+	struct ecx_key_st *ecx_key = NULL;
 	int ret = 0;
 
 	if (pub == NULL || len != ecx_key_len(pkey->ameth->pkey_id)) {
 		ECerror(EC_R_INVALID_ENCODING);
-		return 0;
+		goto err;
 	}
 
 	if ((ecx_key = ecx_key_new(pkey->ameth->pkey_id)) == NULL)
-		return 0;
+		goto err;
 	if (!ecx_key_set_pub(ecx_key, pub, len))
-		return 0;
+		goto err;
 	if (!EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, ecx_key))
 		goto err;
 	ecx_key = NULL;
