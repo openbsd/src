@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.57 2022/11/23 02:46:09 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.58 2022/11/23 03:00:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,7 +334,7 @@ bn_expand_internal(const BIGNUM *b, int words)
  * It is mostly used by the various BIGNUM routines. If there is an error,
  * NULL is returned. If not, 'b' is returned. */
 
-BIGNUM *
+static BIGNUM *
 bn_expand2(BIGNUM *b, int words)
 {
 	bn_check_top(b);
@@ -384,6 +384,15 @@ bn_expand(BIGNUM *a, int bits)
 		return (a);
 
 	return bn_expand2(a, (bits + BN_BITS2 - 1) / BN_BITS2);
+}
+
+BIGNUM *
+bn_wexpand(BIGNUM *a, int words)
+{
+	if (words <= a->dmax)
+		return a;
+
+	return bn_expand2(a, words);
 }
 
 BIGNUM *

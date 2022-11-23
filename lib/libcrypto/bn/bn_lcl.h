@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.36 2022/11/23 02:44:01 jsing Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.37 2022/11/23 03:00:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -521,9 +521,8 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
     int cl, int dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np, const BN_ULONG *n0, int num);
 
-#define bn_wexpand(a,words) (((words) <= (a)->dmax)?(a):bn_expand2((a),(words)))
-BIGNUM *bn_expand2(BIGNUM *a, int words);
 BIGNUM *bn_expand(BIGNUM *a, int bits);
+BIGNUM *bn_wexpand(BIGNUM *a, int words);
 
 /* Bignum consistency macros
  * There is one "API" macro, bn_fix_top(), for stripping leading zeroes from
