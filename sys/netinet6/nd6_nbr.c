@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.133 2022/08/29 07:51:45 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.134 2022/11/23 16:59:10 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -716,7 +716,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			rtm_send(rt, RTM_RESOLVE, 0, ifp->if_rdomain);
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
-				    ND_IFINFO(ifp)->reachable);
+				    ifp->if_nd->reachable);
 			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
@@ -806,7 +806,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				ln->ln_byhint = 0;
 				if (!ND6_LLINFO_PERMANENT(ln)) {
 					nd6_llinfo_settimer(ln,
-					    ND_IFINFO(ifp)->reachable);
+					    ifp->if_nd->reachable);
 				}
 			} else {
 				if (lladdr && llchange) {
@@ -1129,7 +1129,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	nd6_dad_ns_output(dp, ifa);
-	nd6_dad_starttimer(dp, ND_IFINFO(ifa->ifa_ifp)->retrans);
+	nd6_dad_starttimer(dp, ifa->ifa_ifp->if_nd->retrans);
 }
 
 /*
@@ -1211,7 +1211,7 @@ nd6_dad_timer(void *xifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp, ND_IFINFO(ifa->ifa_ifp)->retrans);
+		nd6_dad_starttimer(dp, ifa->ifa_ifp->if_nd->retrans);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.

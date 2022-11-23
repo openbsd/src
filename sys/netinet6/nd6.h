@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.85 2022/11/23 16:57:37 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.86 2022/11/23 16:59:10 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -92,9 +92,6 @@ struct	in6_ndifreq {
 #ifdef _KERNEL
 
 #include <sys/queue.h>
-
-#define ND_IFINFO(ifp) \
-	((ifp)->if_nd)
 
 struct	llinfo_nd6 {
 	TAILQ_ENTRY(llinfo_nd6)	ln_list;
