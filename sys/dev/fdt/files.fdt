@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.171 2022/11/10 12:12:53 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.172 2022/11/23 23:43:08 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -230,6 +230,10 @@ file	dev/fdt/pwmbl.c			pwmbl
 device	pwmfan
 attach	pwmfan at fdt
 file	dev/fdt/pwmfan.c		pwmfan
+
+device	pwmleds
+attach	pwmleds at fdt
+file	dev/fdt/pwmleds.c		pwmleds
 
 device	pwmreg
 attach	pwmreg at fdt
