@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1_string_to_utf8.c,v 1.1 2022/05/16 20:53:20 tb Exp $ */
+/*	$OpenBSD: asn1_string_to_utf8.c,v 1.2 2022/11/23 08:51:05 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -86,8 +86,14 @@ asn1_string_to_utf8_test(const struct asn1_string_to_utf8_test_case *test)
 		goto err;
 	}
 
-	if ((ret = ASN1_STRING_to_UTF8(&out, str)) != test->want_len) {
+	if ((ret = ASN1_STRING_to_UTF8(&out, str)) < 0) {
 		warnx("ASN1_STRING_to_UTF8 failed: got %d, want %d", ret,
+		    test->want_len);
+		goto err;
+	}
+
+	if (ret != test->want_len) {
+		warnx("ASN1_STRING_to_UTF8: got %d, want %d", ret,
 		    test->want_len);
 		goto err;
 	}
