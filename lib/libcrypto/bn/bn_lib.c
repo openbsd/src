@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.55 2022/11/23 02:20:27 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.56 2022/11/23 02:44:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -263,7 +263,6 @@ BN_num_bits(const BIGNUM *a)
 	return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
-/* This is used both by bn_expand2() and bn_dup_expand() */
 /* The caller MUST check that words > b->dmax before calling this */
 static BN_ULONG *
 bn_expand_internal(const BIGNUM *b, int words)
@@ -328,57 +327,6 @@ bn_expand_internal(const BIGNUM *b, int words)
 
 	return (a);
 }
-
-/* This is an internal function that can be used instead of bn_expand2()
- * when there is a need to copy BIGNUMs instead of only expanding the
- * data part, while still expanding them.
- * Especially useful when needing to expand BIGNUMs that are declared
- * 'const' and should therefore not be changed.
- * The reason to use this instead of a BN_dup() followed by a bn_expand2()
- * is memory allocation overhead.  A BN_dup() followed by a bn_expand2()
- * will allocate new memory for the BIGNUM data twice, and free it once,
- * while bn_dup_expand() makes sure allocation is made only once.
- */
-
-#ifndef OPENSSL_NO_DEPRECATED
-BIGNUM *
-bn_dup_expand(const BIGNUM *b, int words)
-{
-	BIGNUM *r = NULL;
-
-	bn_check_top(b);
-
-	/* This function does not work if
-	 *      words <= b->dmax && top < words
-	 * because BN_dup() does not preserve 'dmax'!
-	 * (But bn_dup_expand() is not used anywhere yet.)
-	 */
-
-	if (words > b->dmax) {
-		BN_ULONG *a = bn_expand_internal(b, words);
-
-		if (a) {
-			r = BN_new();
-			if (r) {
-				r->top = b->top;
-				r->dmax = words;
-				r->neg = b->neg;
-				r->d = a;
-			} else {
-				/* r == NULL, BN_new failure */
-				free(a);
-			}
-		}
-		/* If a == NULL, there was an error in allocation in
-		   bn_expand_internal(), and NULL should be returned */
-	} else {
-		r = BN_dup(b);
-	}
-
-	bn_check_top(r);
-	return r;
-}
-#endif
 
 /* This is an internal function that should not be used in applications.
  * It ensures that 'b' has enough room for a 'words' word number
