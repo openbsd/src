@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.58 2022/11/23 03:00:12 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.59 2022/11/23 03:04:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,6 +377,9 @@ bn_expand2(BIGNUM *b, int words)
 BIGNUM *
 bn_expand(BIGNUM *a, int bits)
 {
+	if (bits < 0)
+		return (NULL);
+
 	if (bits > (INT_MAX - BN_BITS2 + 1))
 		return (NULL);
 
@@ -389,6 +392,9 @@ bn_expand(BIGNUM *a, int bits)
 BIGNUM *
 bn_wexpand(BIGNUM *a, int words)
 {
+	if (words < 0)
+		return NULL;
+
 	if (words <= a->dmax)
 		return a;
 
