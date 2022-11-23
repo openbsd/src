@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.54 2022/06/27 12:25:49 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.55 2022/11/23 02:20:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,26 +72,6 @@
 
 #include "bn_lcl.h"
 
-/* This stuff appears to be completely unused, so is deprecated */
-#ifndef OPENSSL_NO_DEPRECATED
-/* For a 32 bit machine
- * 2 -   4 ==  128
- * 3 -   8 ==  256
- * 4 -  16 ==  512
- * 5 -  32 == 1024
- * 6 -  64 == 2048
- * 7 - 128 == 4096
- * 8 - 256 == 8192
- */
-static int bn_limit_bits = 0;
-static int bn_limit_num = 8;        /* (1<<bn_limit_bits) */
-static int bn_limit_bits_low = 0;
-static int bn_limit_num_low = 8;    /* (1<<bn_limit_bits_low) */
-static int bn_limit_bits_high = 0;
-static int bn_limit_num_high = 8;   /* (1<<bn_limit_bits_high) */
-static int bn_limit_bits_mont = 0;
-static int bn_limit_num_mont = 8;   /* (1<<bn_limit_bits_mont) */
-
 BIGNUM *
 BN_new(void)
 {
@@ -148,6 +128,26 @@ BN_free(BIGNUM *a)
 {
 	BN_clear_free(a);
 }
+
+/* This stuff appears to be completely unused, so is deprecated */
+#ifndef OPENSSL_NO_DEPRECATED
+/* For a 32 bit machine
+ * 2 -   4 ==  128
+ * 3 -   8 ==  256
+ * 4 -  16 ==  512
+ * 5 -  32 == 1024
+ * 6 -  64 == 2048
+ * 7 - 128 == 4096
+ * 8 - 256 == 8192
+ */
+static int bn_limit_bits = 0;
+static int bn_limit_num = 8;        /* (1<<bn_limit_bits) */
+static int bn_limit_bits_low = 0;
+static int bn_limit_num_low = 8;    /* (1<<bn_limit_bits_low) */
+static int bn_limit_bits_high = 0;
+static int bn_limit_num_high = 8;   /* (1<<bn_limit_bits_high) */
+static int bn_limit_bits_mont = 0;
+static int bn_limit_num_mont = 8;   /* (1<<bn_limit_bits_mont) */
 
 void
 BN_set_params(int mult, int high, int low, int mont)
