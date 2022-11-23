@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.2 2022/11/22 09:09:43 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.3 2022/11/23 08:01:05 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -15,8 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/resource.h>
 
 #include <err.h>
 #include <limits.h>
@@ -44,24 +42,16 @@ test_bn_print_wrapper(char *a, size_t size, const char *descr,
 static int
 test_bn_print_null_derefs(void)
 {
-	struct rlimit rlimit;
 	size_t size = INT_MAX / 4 + 4;
 	size_t datalimit = (size + 500 * 1024) / 1024;
 	char *a;
 	int failed = 0;
 
-	if (getrlimit(RLIMIT_DATA, &rlimit) != 0)
-		err(1, "getrlimit");
-
-	if ((rlimit.rlim_cur + 1023) / 1024 < datalimit) {
-		printf("%s: insufficient data limit. Need more than %zu KiB\n",
-		    __func__, datalimit);
-		printf("SKIPPED\n");
+	if ((a = malloc(size)) == NULL) {
+		warn("malloc(%zu) failed (make sure data limit is > %zu)",
+		    size, datalimit);
 		return 0;
 	}
-
-	if ((a = malloc(size)) == NULL)
-		err(1, "malloc(%zu) failed", size);
 
 	memset(a, '0', size - 1);
 	a[size - 1] = '\0';
