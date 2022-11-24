@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.25 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.26 2022/11/24 01:24:37 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -186,9 +186,9 @@ ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	dest->poly[3] = src->poly[3];
 	dest->poly[4] = src->poly[4];
 	dest->poly[5] = src->poly[5];
-	if (bn_wexpand(&dest->a, (int) (dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+	if (bn_expand(&dest->a, dest->poly[0]) == NULL)
 		return 0;
-	if (bn_wexpand(&dest->b, (int) (dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+	if (bn_expand(&dest->b, dest->poly[0]) == NULL)
 		return 0;
 	for (i = dest->a.top; i < dest->a.dmax; i++)
 		dest->a.d[i] = 0;
@@ -216,7 +216,7 @@ ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	/* group->a */
 	if (!BN_GF2m_mod_arr(&group->a, a, group->poly))
 		goto err;
-	if (bn_wexpand(&group->a, (int) (group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+	if (bn_expand(&group->a, group->poly[0]) == NULL)
 		goto err;
 	for (i = group->a.top; i < group->a.dmax; i++)
 		group->a.d[i] = 0;
@@ -224,7 +224,7 @@ ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	/* group->b */
 	if (!BN_GF2m_mod_arr(&group->b, b, group->poly))
 		goto err;
-	if (bn_wexpand(&group->b, (int) (group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+	if (bn_expand(&group->b, group->poly[0]) == NULL)
 		goto err;
 	for (i = group->b.top; i < group->b.dmax; i++)
 		group->b.d[i] = 0;
