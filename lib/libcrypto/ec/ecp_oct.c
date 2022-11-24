@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.17 2022/11/24 16:34:13 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.18 2022/11/24 16:35:32 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -167,10 +167,10 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 		}
 		if (!BN_usub(y, &group->field, y))
 			goto err;
-	}
-	if (y_bit != BN_is_odd(y)) {
-		ECerror(ERR_R_INTERNAL_ERROR);
-		goto err;
+		if (y_bit != BN_is_odd(y)) {
+			ECerror(ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
 	}
 	if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
 		goto err;
