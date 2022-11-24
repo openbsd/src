@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lcl.h,v 1.22 2022/11/23 02:13:24 jsing Exp $ */
+/* $OpenBSD: ec_lcl.h,v 1.23 2022/11/24 16:29:09 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -89,101 +89,102 @@ __BEGIN_HIDDEN_DECLS
 /* Use default functions for poin2oct, oct2point and compressed coordinates */
 #define EC_FLAGS_DEFAULT_OCT	0x1
 
-/* Structure details are not part of the exported interface,
- * so all this may change in future versions. */
-
 struct ec_method_st {
-	/* Various method flags */
-	int flags;
-	/* used by EC_METHOD_get_field_type: */
-	int field_type; /* a NID */
 
-	/* used by EC_GROUP_new, EC_GROUP_free, EC_GROUP_clear_free, EC_GROUP_copy: */
+	/*
+	 * Methods and members exposed directly by the public API.
+	 */
+
+	int flags;
+
+	int field_type;
+
 	int (*group_init)(EC_GROUP *);
 	void (*group_finish)(EC_GROUP *);
 	void (*group_clear_finish)(EC_GROUP *);
 	int (*group_copy)(EC_GROUP *, const EC_GROUP *);
 
-	/* used by EC_GROUP_{get,set}_curve */
-	int (*group_set_curve)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
+	int (*group_set_curve)(EC_GROUP *, const BIGNUM *p, const BIGNUM *a,
+	    const BIGNUM *b, BN_CTX *);
+	int (*group_get_curve)(const EC_GROUP *, BIGNUM *p, BIGNUM *a,
+	    BIGNUM *b, BN_CTX *);
 
-	/* used by EC_GROUP_get_degree: */
 	int (*group_get_degree)(const EC_GROUP *);
-	/* used by EC_GROUP_order_bits: */
 	int (*group_order_bits)(const EC_GROUP *);
-	/* used by EC_GROUP_check: */
 	int (*group_check_discriminant)(const EC_GROUP *, BN_CTX *);
 
-	/* used by EC_POINT_new, EC_POINT_free, EC_POINT_clear_free, EC_POINT_copy: */
 	int (*point_init)(EC_POINT *);
 	void (*point_finish)(EC_POINT *);
 	void (*point_clear_finish)(EC_POINT *);
 	int (*point_copy)(EC_POINT *, const EC_POINT *);
 
-	/*
-	 * used by EC_POINT_set_to_infinity,
-	 * EC_POINT_set_Jprojective_coordinates,
-	 * EC_POINT_get_Jprojective_coordinates,
-	 * EC_POINT_set_affine_coordinates,
-	 * EC_POINT_get_affine_coordinates,
-	 * EC_POINT_set_compressed_coordinates:
-	 */
 	int (*point_set_to_infinity)(const EC_GROUP *, EC_POINT *);
 	int (*point_set_Jprojective_coordinates)(const EC_GROUP *, EC_POINT *,
-		const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
-	int (*point_get_Jprojective_coordinates)(const EC_GROUP *, const EC_POINT *,
-		BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
+	    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *);
+	int (*point_get_Jprojective_coordinates)(const EC_GROUP *,
+	    const EC_POINT *, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *);
 	int (*point_set_affine_coordinates)(const EC_GROUP *, EC_POINT *,
-		const BIGNUM *x, const BIGNUM *y, BN_CTX *);
+	    const BIGNUM *x, const BIGNUM *y, BN_CTX *);
 	int (*point_get_affine_coordinates)(const EC_GROUP *, const EC_POINT *,
-		BIGNUM *x, BIGNUM *y, BN_CTX *);
+	    BIGNUM *x, BIGNUM *y, BN_CTX *);
 	int (*point_set_compressed_coordinates)(const EC_GROUP *, EC_POINT *,
-		const BIGNUM *x, int y_bit, BN_CTX *);
+	    const BIGNUM *x, int y_bit, BN_CTX *);
 
-	/* used by EC_POINT_point2oct, EC_POINT_oct2point: */
-	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
-		unsigned char *buf, size_t len, BN_CTX *);
-	int (*oct2point)(const EC_GROUP *, EC_POINT *,
-		const unsigned char *buf, size_t len, BN_CTX *);
+	size_t (*point2oct)(const EC_GROUP *, const EC_POINT *,
+	    point_conversion_form_t form, unsigned char *buf, size_t len,
+	    BN_CTX *);
+	int (*oct2point)(const EC_GROUP *, EC_POINT *, const unsigned char *buf,
+	    size_t len, BN_CTX *);
 
-	/* used by EC_POINT_add, EC_POINT_dbl, ECP_POINT_invert: */
-	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
+	int (*add)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a,
+	    const EC_POINT *b, BN_CTX *);
 	int (*dbl)(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
 	int (*invert)(const EC_GROUP *, EC_POINT *, BN_CTX *);
 
-	/* used by EC_POINT_is_at_infinity, EC_POINT_is_on_curve, EC_POINT_cmp: */
 	int (*is_at_infinity)(const EC_GROUP *, const EC_POINT *);
 	int (*is_on_curve)(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
+	int (*point_cmp)(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b,
+	    BN_CTX *);
 
-	/* used by EC_POINT_make_affine, EC_POINTs_make_affine: */
 	int (*make_affine)(const EC_GROUP *, EC_POINT *, BN_CTX *);
-	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
+	int (*points_make_affine)(const EC_GROUP *, size_t num, EC_POINT *[],
+	    BN_CTX *);
 
-	/* used by EC_POINTs_mul, EC_POINT_mul, EC_POINT_precompute_mult, EC_POINT_have_precompute_mult */
-	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r, const BIGNUM *scalar, BN_CTX *);
-	int (*mul_single_ct)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-		const EC_POINT *point, BN_CTX *);
-	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
-		const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
+	int (*mul_generator_ct)(const EC_GROUP *, EC_POINT *r,
+	    const BIGNUM *scalar, BN_CTX *);
+	int (*mul_single_ct)(const EC_GROUP *group, EC_POINT *r,
+	    const BIGNUM *scalar, const EC_POINT *point, BN_CTX *);
+	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r,
+	    const BIGNUM *g_scalar, const BIGNUM *p_scalar,
+	    const EC_POINT *point, BN_CTX *);
 	int (*precompute_mult)(EC_GROUP *group, BN_CTX *);
 	int (*have_precompute_mult)(const EC_GROUP *group);
 
+	/*
+	 * Internal methods.
+	 */
 
-	/* internal functions */
+	/*
+	 * These can be used by 'add' and 'dbl' so that the same implementations
+	 * of point operations can be used with different optimized versions of
+	 * expensive field operations.
+	 */
+	int (*field_mul)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
+	    const BIGNUM *b, BN_CTX *);
+	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
+	    BN_CTX *);
+	int (*field_div)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
+	    const BIGNUM *b, BN_CTX *);
 
-	/* 'field_mul', 'field_sqr', and 'field_div' can be used by 'add' and 'dbl' so that
-	 * the same implementations of point operations can be used with different
-	 * optimized implementations of expensive field operations: */
-	int (*field_mul)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-	int (*field_sqr)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-	int (*field_div)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
+	/* Encode to and decode from other forms (e.g. Montgomery). */
+	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
+	    BN_CTX *);
+	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
+	    BN_CTX *);
 
-	int (*field_encode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. to Montgomery */
-	int (*field_decode)(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *); /* e.g. from Montgomery */
 	int (*field_set_to_one)(const EC_GROUP *, BIGNUM *r, BN_CTX *);
-	int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
+	int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p,
+	    BN_CTX *ctx);
 } /* EC_METHOD */;
 
 typedef struct ec_extra_data_st {
@@ -195,57 +196,65 @@ typedef struct ec_extra_data_st {
 } EC_EXTRA_DATA; /* used in EC_GROUP */
 
 struct ec_group_st {
+	/*
+	 * Methods and members exposed via the public API.
+	 */
+
 	const EC_METHOD *meth;
 
-	EC_POINT *generator; /* optional */
-	BIGNUM order, cofactor;
+	EC_POINT *generator;	/* Optional */
+	BIGNUM order;
+	BIGNUM cofactor;
 
-	int curve_name;/* optional NID for named curve */
-	int asn1_flag; /* flag to control the asn1 encoding */
+	int curve_name;		/* Optional NID for named curve. */
+
+	/* ASN.1 encoding controls. */
+	int asn1_flag;
 	point_conversion_form_t asn1_form;
 
-	unsigned char *seed; /* optional seed for parameters (appears in ASN1) */
+	/* Optional seed for parameters (appears in ASN.1). */
+	unsigned char *seed;
 	size_t seed_len;
 
-	EC_EXTRA_DATA *extra_data; /* linked list */
+	/*
+	 * Internal methods and members. Handled by the method functions, even
+	 * if they appear to be generic.
+	 */
 
-	/* The following members are handled by the method functions,
-	 * even if they appear generic */
+	EC_EXTRA_DATA *extra_data;
 
-	BIGNUM field;	/*
-			 * Field specification.
-			 * For curves over GF(p), this is the modulus;
-			 * for curves over GF(2^m), this is the
-			 * irreducible polynomial defining the field.
-			 */
+	/*
+	 * Field specification. For GF(p) this is the modulus; for GF(2^m),
+	 * this is the irreducible polynomial defining the field.
+	 */
+	BIGNUM field;
 
-	int poly[6];	/*
-			 * Field specification for curves over GF(2^m).
-			 * The irreducible f(t) is then of the form:
-			 *     t^poly[0] + t^poly[1] + ... + t^poly[k]
-			 * where m = poly[0] > poly[1] > ... > poly[k] = 0.
-			 * The array is terminated with poly[k+1]=-1.
-			 * All elliptic curve irreducibles have at most 5
-			 * non-zero terms.
-			 */
+	/*
+	 * Field specification for GF(2^m). The irreducible polynomial  is
+	 *	f(t) = t^poly[0] + t^poly[1] + ... + t^poly[k],
+	 * where
+	 *	m = poly[0] > poly[1] > ... > poly[k] = 0,
+	 * and the array is terminated with poly[k+1] = -1. All elliptic curve
+	 * irreducibles have at most 5 non-zero terms.
+	 */
+	int poly[6];
 
-	BIGNUM a, b;	/*
-			 * Curve coefficients.
-			 * (Here the assumption is that BIGNUMs can be used
-			 * or abused for all kinds of fields, not just GF(p).)
-			 * For characteristic  > 3,  the curve is defined
-			 * by a Weierstrass equation of the form
-			 *     y^2 = x^3 + a*x + b.
-			 * For characteristic  2,  the curve is defined by
-			 * an equation of the form
-			 *     y^2 + x*y = x^3 + a*x^2 + b.
-			 */
+	/*
+	 * Curve coefficients. In characteristic > 3, the curve is defined by a
+	 * Weierstrass equation of the form
+	 *	y^2 = x^3 + a*x + b.
+	 * For characteristic 2, the curve is defined by an equation of the form
+	 *	y^2 + x*y = x^3 + a*x^2 + b.
+	 */
+	BIGNUM a, b;
 
-	int a_is_minus3; /* enable optimized point arithmetics for special case */
+	/* Enables optimized point arithmetics for special case. */
+	int a_is_minus3;
 
-	void *field_data1; /* method-specific (e.g., Montgomery structure) */
-	void *field_data2; /* method-specific */
-	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,	BN_CTX *); /* method-specific */
+	void *field_data1;
+	void *field_data2;
+	int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,
+	    BN_CTX *);
 } /* EC_GROUP */;
 
 struct ec_key_st {
