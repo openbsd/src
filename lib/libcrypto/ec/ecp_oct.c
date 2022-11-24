@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.16 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.17 2022/11/24 16:34:13 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -162,20 +162,7 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 	}
 	if (y_bit != BN_is_odd(y)) {
 		if (BN_is_zero(y)) {
-			int kron;
-
-			kron = BN_kronecker(x, &group->field, ctx);
-			if (kron == -2)
-				goto err;
-
-			if (kron == 1)
-				ECerror(EC_R_INVALID_COMPRESSION_BIT);
-			else
-				/*
-				 * BN_mod_sqrt() should have cought this
-				 * error (not a square)
-				 */
-				ECerror(EC_R_INVALID_COMPRESSED_POINT);
+			ECerror(EC_R_INVALID_COMPRESSION_BIT);
 			goto err;
 		}
 		if (!BN_usub(y, &group->field, y))
