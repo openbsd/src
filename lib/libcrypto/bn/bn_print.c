@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.34 2022/11/22 08:46:27 tb Exp $ */
+/* $OpenBSD: bn_print.c,v 1.35 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,7 +221,7 @@ BN_hex2bn(BIGNUM **bn, const char *a)
 	}
 
 	/* i is the number of hex digits */
-	if (bn_expand(ret, i * 4) == NULL)
+	if (!bn_expand(ret, i * 4))
 		goto err;
 
 	j = i; /* least significant 'hex' */
@@ -298,7 +298,7 @@ BN_dec2bn(BIGNUM **bn, const char *a)
 	}
 
 	/* i is the number of digits, a bit of an over expand */
-	if (bn_expand(ret, i * 4) == NULL)
+	if (!bn_expand(ret, i * 4))
 		goto err;
 
 	j = BN_DEC_NUM - (i % BN_DEC_NUM);

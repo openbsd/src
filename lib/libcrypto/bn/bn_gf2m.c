@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.25 2022/11/20 23:35:00 schwarze Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.26 2022/11/24 01:30:01 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -336,7 +336,7 @@ BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		bt = b;
 	}
 
-	if (bn_wexpand(r, at->top) == NULL)
+	if (!bn_wexpand(r, at->top))
 		return 0;
 
 	for (i = 0; i < bt->top; i++) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.20 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.21 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -982,7 +982,7 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	if (i == 0) {
 # if 0
 		if (al == 4) {
-			if (bn_wexpand(rr, 8) == NULL)
+			if (!bn_wexpand(rr, 8))
 				goto err;
 			rr->top = 8;
 			bn_mul_comba4(rr->d, a->d, b->d);
@@ -990,7 +990,7 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 		}
 # endif
 		if (al == 8) {
-			if (bn_wexpand(rr, 16) == NULL)
+			if (!bn_wexpand(rr, 16))
 				goto err;
 			rr->top = 16;
 			bn_mul_comba8(rr->d, a->d, b->d);
@@ -1015,18 +1015,18 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			if ((t = BN_CTX_get(ctx)) == NULL)
 				goto err;
 			if (al > j || bl > j) {
-				if (bn_wexpand(t, k * 4) == NULL)
+				if (!bn_wexpand(t, k * 4))
 					goto err;
-				if (bn_wexpand(rr, k * 4) == NULL)
+				if (!bn_wexpand(rr, k * 4))
 					goto err;
 				bn_mul_part_recursive(rr->d, a->d, b->d,
 				    j, al - j, bl - j, t->d);
 			}
 			else	/* al <= j || bl <= j */
 			{
-				if (bn_wexpand(t, k * 2) == NULL)
+				if (!bn_wexpand(t, k * 2))
 					goto err;
-				if (bn_wexpand(rr, k * 2) == NULL)
+				if (!bn_wexpand(rr, k * 2))
 					goto err;
 				bn_mul_recursive(rr->d, a->d, b->d,
 				    j, al - j, bl - j, t->d);
@@ -1037,14 +1037,14 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #if 0
 		if (i == 1 && !BN_get_flags(b, BN_FLG_STATIC_DATA)) {
 			BIGNUM *tmp_bn = (BIGNUM *)b;
-			if (bn_wexpand(tmp_bn, al) == NULL)
+			if (!bn_wexpand(tmp_bn, al))
 				goto err;
 			tmp_bn->d[bl] = 0;
 			bl++;
 			i--;
 		} else if (i == -1 && !BN_get_flags(a, BN_FLG_STATIC_DATA)) {
 			BIGNUM *tmp_bn = (BIGNUM *)a;
-			if (bn_wexpand(tmp_bn, bl) == NULL)
+			if (!bn_wexpand(tmp_bn, bl))
 				goto err;
 			tmp_bn->d[al] = 0;
 			al++;
@@ -1060,15 +1060,15 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 				goto err;
 			if (al == j) /* exact multiple */
 			{
-				if (bn_wexpand(t, k * 2) == NULL)
+				if (!bn_wexpand(t, k * 2))
 					goto err;
-				if (bn_wexpand(rr, k * 2) == NULL)
+				if (!bn_wexpand(rr, k * 2))
 					goto err;
 				bn_mul_recursive(rr->d, a->d, b->d, al, t->d);
 			} else {
-				if (bn_wexpand(t, k * 4) == NULL)
+				if (!bn_wexpand(t, k * 4))
 					goto err;
-				if (bn_wexpand(rr, k * 4) == NULL)
+				if (!bn_wexpand(rr, k * 4))
 					goto err;
 				bn_mul_part_recursive(rr->d, a->d, b->d,
 				    al - j, j, t->d);
@@ -1079,7 +1079,7 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 #endif
 	}
 #endif /* BN_RECURSION */
-	if (bn_wexpand(rr, top) == NULL)
+	if (!bn_wexpand(rr, top))
 		goto err;
 	rr->top = top;
 	bn_mul_normal(rr->d, a->d, al, b->d, bl);

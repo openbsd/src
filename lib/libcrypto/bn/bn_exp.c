@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.32 2022/04/20 13:32:34 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.33 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -590,7 +590,7 @@ MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top, unsigned char *buf, int idx,
 	int width = 1 << window;
 	volatile BN_ULONG *table = (volatile BN_ULONG *)buf;
 
-	if (bn_wexpand(b, top) == NULL)
+	if (!bn_wexpand(b, top))
 		return 0;
 
 	if (window <= 3) {

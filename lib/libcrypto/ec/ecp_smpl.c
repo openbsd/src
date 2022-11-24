@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.36 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.37 2022/11/24 01:30:01 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1556,8 +1556,8 @@ ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	 */
 	cardinality_bits = BN_num_bits(cardinality);
 	group_top = cardinality->top;
-	if ((bn_wexpand(k, group_top + 2) == NULL) ||
-	    (bn_wexpand(lambda, group_top + 2) == NULL))
+	if (!bn_wexpand(k, group_top + 2) ||
+	    !bn_wexpand(lambda, group_top + 2))
 		goto err;
 
 	if (!BN_copy(k, scalar))
@@ -1588,12 +1588,12 @@ ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		goto err;
 
 	group_top = group->field.top;
-	if ((bn_wexpand(&s->X, group_top) == NULL) ||
-	    (bn_wexpand(&s->Y, group_top) == NULL) ||
-	    (bn_wexpand(&s->Z, group_top) == NULL) ||
-	    (bn_wexpand(&r->X, group_top) == NULL) ||
-	    (bn_wexpand(&r->Y, group_top) == NULL) ||
-	    (bn_wexpand(&r->Z, group_top) == NULL))
+	if (!bn_wexpand(&s->X, group_top) ||
+	    !bn_wexpand(&s->Y, group_top) ||
+	    !bn_wexpand(&s->Z, group_top) ||
+	    !bn_wexpand(&r->X, group_top) ||
+	    !bn_wexpand(&r->Y, group_top) ||
+	    !bn_wexpand(&r->Z, group_top))
 		goto err;
 
 	/*

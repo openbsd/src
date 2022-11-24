@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.14 2022/06/22 09:03:06 tb Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.15 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,11 +74,11 @@ BN_lshift1(BIGNUM *r, const BIGNUM *a)
 
 	if (r != a) {
 		r->neg = a->neg;
-		if (bn_wexpand(r, a->top + 1) == NULL)
+		if (!bn_wexpand(r, a->top + 1))
 			return (0);
 		r->top = a->top;
 	} else {
-		if (bn_wexpand(r, a->top + 1) == NULL)
+		if (!bn_wexpand(r, a->top + 1))
 			return (0);
 	}
 	ap = a->d;
@@ -114,7 +114,7 @@ BN_rshift1(BIGNUM *r, const BIGNUM *a)
 	ap = a->d;
 	j = i - (ap[i - 1]==1);
 	if (a != r) {
-		if (bn_wexpand(r, j) == NULL)
+		if (!bn_wexpand(r, j))
 			return (0);
 		r->neg = a->neg;
 	}
@@ -150,7 +150,7 @@ BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 
 	r->neg = a->neg;
 	nw = n / BN_BITS2;
-	if (bn_wexpand(r, a->top + nw + 1) == NULL)
+	if (!bn_wexpand(r, a->top + nw + 1))
 		return (0);
 	lb = n % BN_BITS2;
 	rb = BN_BITS2 - lb;
@@ -200,7 +200,7 @@ BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 	i = (BN_num_bits(a) - n + (BN_BITS2 - 1)) / BN_BITS2;
 	if (r != a) {
 		r->neg = a->neg;
-		if (bn_wexpand(r, i) == NULL)
+		if (!bn_wexpand(r, i))
 			return (0);
 	} else {
 		if (n == 0)

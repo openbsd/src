@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.13 2016/07/05 02:54:35 bcook Exp $ */
+/* $OpenBSD: bn_word.c,v 1.14 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,7 +166,7 @@ BN_add_word(BIGNUM *a, BN_ULONG w)
 		w = (w > l) ? 1 : 0;
 	}
 	if (w && i == a->top) {
-		if (bn_wexpand(a, a->top + 1) == NULL)
+		if (!bn_wexpand(a, a->top + 1))
 			return 0;
 		a->top++;
 		a->d[i] = w;
@@ -236,7 +236,7 @@ BN_mul_word(BIGNUM *a, BN_ULONG w)
 		else {
 			ll = bn_mul_words(a->d, a->d, a->top, w);
 			if (ll) {
-				if (bn_wexpand(a, a->top + 1) == NULL)
+				if (!bn_wexpand(a, a->top + 1))
 					return (0);
 				a->d[a->top++] = ll;
 			}

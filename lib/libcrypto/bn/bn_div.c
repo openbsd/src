@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.25 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_div.c,v 1.26 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,13 +187,13 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 		 * value.
 		 */
 		if (snum->top <= sdiv->top + 1) {
-			if (bn_wexpand(snum, sdiv->top + 2) == NULL)
+			if (!bn_wexpand(snum, sdiv->top + 2))
 				goto err;
 			for (i = snum->top; i < sdiv->top + 2; i++)
 				snum->d[i] = 0;
 			snum->top = sdiv->top + 2;
 		} else {
-			if (bn_wexpand(snum, snum->top + 1) == NULL)
+			if (!bn_wexpand(snum, snum->top + 1))
 				goto err;
 			snum->d[snum->top] = 0;
 			snum->top ++;

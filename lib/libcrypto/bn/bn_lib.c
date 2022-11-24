@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.60 2022/11/23 03:10:10 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.61 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,15 +334,15 @@ bn_expand_internal(const BIGNUM *b, int words)
  * It is mostly used by the various BIGNUM routines. If there is an error,
  * NULL is returned. If not, 'b' is returned. */
 
-static BIGNUM *
+static int
 bn_expand2(BIGNUM *b, int words)
 {
 	bn_check_top(b);
 
 	if (words > b->dmax) {
 		BN_ULONG *a = bn_expand_internal(b, words);
-		if (!a)
-			return NULL;
+		if (a == NULL)
+			return 0;
 		if (b->d)
 			freezero(b->d, b->dmax * sizeof(b->d[0]));
 		b->d = a;
@@ -371,32 +371,32 @@ bn_expand2(BIGNUM *b, int words)
 	}
 #endif
 	bn_check_top(b);
-	return b;
+	return 1;
 }
 
-BIGNUM *
+int
 bn_expand(BIGNUM *a, int bits)
 {
 	if (bits < 0)
-		return (NULL);
+		return 0;
 
 	if (bits > (INT_MAX - BN_BITS2 + 1))
-		return (NULL);
+		return 0;
 
 	if (((bits + BN_BITS2 - 1) / BN_BITS2) <= a->dmax)
-		return (a);
+		return 1;
 
 	return bn_expand2(a, (bits + BN_BITS2 - 1) / BN_BITS2);
 }
 
-BIGNUM *
+int
 bn_wexpand(BIGNUM *a, int words)
 {
 	if (words < 0)
-		return NULL;
+		return 0;
 
 	if (words <= a->dmax)
-		return a;
+		return 1;
 
 	return bn_expand2(a, words);
 }
@@ -432,7 +432,7 @@ BN_copy(BIGNUM *a, const BIGNUM *b)
 
 	if (a == b)
 		return (a);
-	if (bn_wexpand(a, b->top) == NULL)
+	if (!bn_wexpand(a, b->top))
 		return (NULL);
 
 #if 1
@@ -518,7 +518,7 @@ int
 BN_set_word(BIGNUM *a, BN_ULONG w)
 {
 	bn_check_top(a);
-	if (bn_wexpand(a, 1) == NULL)
+	if (!bn_wexpand(a, 1))
 		return (0);
 	a->neg = 0;
 	a->d[0] = w;
@@ -550,7 +550,7 @@ BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	}
 	i = ((n - 1) / BN_BYTES) + 1;
 	m = ((n - 1) % (BN_BYTES));
-	if (bn_wexpand(ret, (int)i) == NULL) {
+	if (!bn_wexpand(ret, (int)i)) {
 		BN_free(bn);
 		return NULL;
 	}
@@ -673,7 +673,7 @@ BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
 
 	i = ((n - 1) / BN_BYTES) + 1;
 	m = (n - 1) % BN_BYTES;
-	if (bn_wexpand(ret, (int)i) == NULL) {
+	if (!bn_wexpand(ret, (int)i)) {
 		BN_free(bn);
 		return NULL;
 	}
@@ -791,7 +791,7 @@ BN_set_bit(BIGNUM *a, int n)
 	i = n / BN_BITS2;
 	j = n % BN_BITS2;
 	if (a->top <= i) {
-		if (bn_wexpand(a, i + 1) == NULL)
+		if (!bn_wexpand(a, i + 1))
 			return (0);
 		for (k = a->top; k < i + 1; k++)
 			a->d[k] = 0;
@@ -989,7 +989,7 @@ BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, size_t nwords)
 	if (nwords > INT_MAX)
 		return 0;
 	words = (int)nwords;
-	if (bn_wexpand(a, words) == NULL || bn_wexpand(b, words) == NULL)
+	if (!bn_wexpand(a, words) || !bn_wexpand(b, words))
 		return 0;
 	if (a->top > words || b->top > words) {
 		BNerror(BN_R_INVALID_LENGTH);

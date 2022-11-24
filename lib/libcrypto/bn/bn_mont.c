@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.29 2022/11/23 03:10:10 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.30 2022/11/24 01:30:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,7 +137,7 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	int num = mont->N.top;
 
 	if (num > 1 && a->top == num && b->top == num) {
-		if (bn_wexpand(r, num) == NULL)
+		if (!bn_wexpand(r, num))
 			return (0);
 		if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
 			r->neg = a->neg^b->neg;
@@ -197,7 +197,7 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	}
 
 	max = (2 * nl); /* carry is stored separately */
-	if (bn_wexpand(r, max) == NULL)
+	if (!bn_wexpand(r, max))
 		return (0);
 
 	r->neg ^= n->neg;
@@ -226,7 +226,7 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 		rp[nl] = v;
 	}
 
-	if (bn_wexpand(ret, nl) == NULL)
+	if (!bn_wexpand(ret, nl))
 		return (0);
 	ret->top = nl;
 	ret->neg = r->neg;
@@ -419,7 +419,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		}
 		else /* if N mod word size == 1 */
 		{
-			if (bn_wexpand(Ri, 2) == NULL)
+			if (!bn_wexpand(Ri, 2))
 				goto err;
 			/* Ri-- (mod double word size) */
 			Ri->neg = 0;
