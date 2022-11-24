@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.38 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.39 2022/11/24 04:04:39 jmatthew Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -418,8 +418,11 @@ acpimadt_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		default:
-			printf("%s: unknown apic structure type %x\n",
-			    self->dv_xname, entry->madt_lapic.apic_type);
+			if (entry->madt_lapic.apic_type < ACPI_MADT_OEM_RSVD) {
+				printf("%s: unknown apic structure type %x\n",
+				    self->dv_xname,
+				    entry->madt_lapic.apic_type);
+			}
 		}
 
 		addr += entry->madt_lapic.length;

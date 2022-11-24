@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.58 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.59 2022/11/24 04:04:39 jmatthew Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -351,6 +351,8 @@ struct acpi_madt_x2apic_nmi {
 	uint8_t		local_x2apic_lint;
 	uint8_t		reserved[3];
 } __packed;
+
+#define ACPI_MADT_OEM_RSVD	128
 
 union acpi_madt_entry {
 	struct acpi_madt_lapic		madt_lapic;
