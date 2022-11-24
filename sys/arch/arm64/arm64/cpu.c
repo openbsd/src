@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.72 2022/11/08 16:53:40 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.73 2022/11/24 14:43:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -200,6 +200,8 @@ int cpu_node;
 
 uint64_t cpu_id_aa64isar0;
 uint64_t cpu_id_aa64isar1;
+uint64_t cpu_id_aa64pfr0;
+uint64_t cpu_id_aa64pfr1;
 
 #ifdef CRYPTO
 int arm64_has_aes;
@@ -378,6 +380,14 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (READ_SPECIALREG(id_aa64isar1_el1) != cpu_id_aa64isar1) {
 		printf("\n%s: mismatched ID_AA64ISAR1_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64pfr0_el1) != cpu_id_aa64pfr0) {
+		printf("\n%s: mismatched ID_AA64PFR0_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64pfr1_el1) != cpu_id_aa64pfr1) {
+		printf("\n%s: mismatched ID_AA64PFR1_EL1",
 		    ci->ci_dev->dv_xname);
 	}
 
@@ -732,6 +742,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 		cpu_id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
 		cpu_id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
+		cpu_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
+		cpu_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
 
 		cpu_identify(ci);
 

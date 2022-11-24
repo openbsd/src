@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.76 2022/11/21 20:19:21 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.77 2022/11/24 14:43:16 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -315,6 +315,8 @@ cpu_switchto(struct proc *old, struct proc *new)
 
 extern uint64_t cpu_id_aa64isar0;
 extern uint64_t cpu_id_aa64isar1;
+extern uint64_t cpu_id_aa64pfr0;
+extern uint64_t cpu_id_aa64pfr1;
 
 /*
  * machine dependent system variables.
@@ -326,6 +328,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	char *compatible;
 	int node, len, error;
+	uint64_t value;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -344,9 +347,30 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		free(compatible, M_TEMP, len);
 		return error;
 	case CPU_ID_AA64ISAR0:
-		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64isar0);
+		value = cpu_id_aa64isar0 & ID_AA64ISAR0_MASK;
+		value &= ~ID_AA64ISAR0_TLB_MASK;
+		return sysctl_rdquad(oldp, oldlenp, newp, value);
 	case CPU_ID_AA64ISAR1:
-		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64isar1);
+		value = cpu_id_aa64isar1 & ID_AA64ISAR1_MASK;
+		value &= ~ID_AA64ISAR1_SPECRES_MASK;
+		return sysctl_rdquad(oldp, oldlenp, newp, value);
+	case CPU_ID_AA64PFR0:
+		value = 0;
+		value |= cpu_id_aa64pfr0 & ID_AA64PFR0_FP_MASK;
+		value |= cpu_id_aa64pfr0 & ID_AA64PFR0_ADV_SIMD_MASK;
+		value |= cpu_id_aa64pfr0 & ID_AA64PFR0_DIT_MASK;
+		return sysctl_rdquad(oldp, oldlenp, newp, value);
+	case CPU_ID_AA64PFR1:
+		value = 0;
+		value |= cpu_id_aa64pfr1 & ID_AA64PFR1_SBSS_MASK;
+		return sysctl_rdquad(oldp, oldlenp, newp, value);
+	case CPU_ID_AA64ISAR2:
+	case CPU_ID_AA64MMFR0:
+	case CPU_ID_AA64MMFR1:
+	case CPU_ID_AA64MMFR2:
+	case CPU_ID_AA64SMFR0:
+	case CPU_ID_AA64ZFR0:
+		return sysctl_rdquad(oldp, oldlenp, newp, 0);
 	default:
 		return (EOPNOTSUPP);
 	}

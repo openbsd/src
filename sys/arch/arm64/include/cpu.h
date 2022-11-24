@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.30 2022/11/08 20:41:36 mlarkin Exp $ */
+/* $OpenBSD: cpu.h,v 1.31 2022/11/24 14:43:16 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -28,13 +28,29 @@
 #define	CPU_COMPATIBLE		1	/* compatible property */
 #define	CPU_ID_AA64ISAR0	2
 #define	CPU_ID_AA64ISAR1	3
-#define	CPU_MAXID		4	/* number of valid machdep ids */
+#define	CPU_ID_AA64ISAR2	4
+#define	CPU_ID_AA64MMFR0	5
+#define	CPU_ID_AA64MMFR1	6
+#define	CPU_ID_AA64MMFR2	7
+#define	CPU_ID_AA64PFR0		8
+#define	CPU_ID_AA64PFR1		9
+#define	CPU_ID_AA64SMFR0       10
+#define	CPU_ID_AA64ZFR0	       11
+#define	CPU_MAXID	       12	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "compatible", CTLTYPE_STRING }, \
 	{ "id_aa64isar0", CTLTYPE_QUAD }, \
 	{ "id_aa64isar1", CTLTYPE_QUAD }, \
+	{ "id_aa64isar2", CTLTYPE_QUAD }, \
+	{ "id_aa64mmfr0", CTLTYPE_QUAD }, \
+	{ "id_aa64mmfr1", CTLTYPE_QUAD }, \
+	{ "id_aa64mmfr2", CTLTYPE_QUAD }, \
+	{ "id_aa64pfr0", CTLTYPE_QUAD }, \
+	{ "id_aa64pfr1", CTLTYPE_QUAD }, \
+	{ "id_aa64smfr0", CTLTYPE_QUAD }, \
+	{ "id_aa64zfr0", CTLTYPE_QUAD }, \
 }
 
 #ifdef _KERNEL
