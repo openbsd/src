@@ -51,7 +51,8 @@ my %obsolete = (
     )],
     bn => [qw(
 	BN_FLG_EXP_CONSTTIME BN_FLG_FREE BN_get_params
-	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK BN_set_params
+	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
+	BN_options BN_prime_checks BN_set_params
     )],
     objects => [qw(
 	_DECLARE_OBJ_BSEARCH_CMP_FN
