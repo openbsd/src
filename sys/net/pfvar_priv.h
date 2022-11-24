@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.21 2022/11/11 17:12:30 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.22 2022/11/24 00:04:32 mvs Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -278,7 +278,6 @@ extern struct rwlock	pf_lock;
 extern struct rwlock	pf_state_lock;
 
 #define PF_LOCK()		do {			\
-		NET_ASSERT_LOCKED();			\
 		rw_enter_write(&pf_lock);		\
 	} while (0)
 
