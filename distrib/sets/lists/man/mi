@@ -1816,6 +1816,7 @@
 ./usr/share/man/man4/pwdog.4
 ./usr/share/man/man4/pwmbl.4
 ./usr/share/man/man4/pwmfan.4
+./usr/share/man/man4/pwmleds.4
 ./usr/share/man/man4/pwmreg.4
 ./usr/share/man/man4/qcdwusb.4
 ./usr/share/man/man4/qcgpio.4
