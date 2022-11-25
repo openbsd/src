@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1154 2022/11/25 03:45:39 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1155 2022/11/25 18:03:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1603,6 +1603,9 @@ pf_purge(void *null)
 {
 	unsigned int interval = max(1, pf_default_rule.timeout[PFTM_INTERVAL]);
 
+	/* XXX is NET_LOCK necessary? */
+	NET_LOCK();
+
 	PF_LOCK();
 
 	pf_purge_expired_src_nodes();
@@ -1613,6 +1616,7 @@ pf_purge(void *null)
 	 * Fragments don't require PF_LOCK(), they use their own lock.
 	 */
 	pf_purge_expired_fragments();
+	NET_UNLOCK();
 
 	/* interpret the interval as idle time between runs */
 	timeout_add_sec(&pf_purge_to, interval);
@@ -1887,6 +1891,7 @@ pf_purge_expired_states(const unsigned int limit, const unsigned int collect)
 	if (SLIST_EMPTY(&gcl))
 		return (scanned);
 
+	NET_LOCK();
 	rw_enter_write(&pf_state_list.pfs_rwl);
 	PF_LOCK();
 	PF_STATE_ENTER_WRITE();
@@ -1899,6 +1904,7 @@ pf_purge_expired_states(const unsigned int limit, const unsigned int collect)
 	PF_STATE_EXIT_WRITE();
 	PF_UNLOCK();
 	rw_exit_write(&pf_state_list.pfs_rwl);
+	NET_UNLOCK();
 
 	while ((st = SLIST_FIRST(&gcl)) != NULL) {
 		SLIST_REMOVE_HEAD(&gcl, gc_list);
