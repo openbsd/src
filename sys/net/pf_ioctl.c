@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.391 2022/11/11 16:12:08 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.392 2022/11/25 20:27:53 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1145,7 +1145,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_status.stateid = gettime();
 				pf_status.stateid = pf_status.stateid << 32;
 			}
-			timeout_add_sec(&pf_purge_states_to, 1);
 			timeout_add_sec(&pf_purge_to, 1);
 			pf_create_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: started");
@@ -2741,9 +2740,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_default_rule.timeout[i] =
 			    pf_default_rule_new.timeout[i];
 			if (pf_default_rule.timeout[i] == PFTM_INTERVAL &&
-			    pf_default_rule.timeout[i] < old &&
-			    timeout_del(&pf_purge_to))
-				task_add(systqmp, &pf_purge_task);
+			    pf_default_rule.timeout[i] < old)
+				task_add(net_tq(0), &pf_purge_task);
 		}
 		pfi_xcommit();
 		pf_trans_set_commit();

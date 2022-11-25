@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.520 2022/11/11 16:12:08 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.521 2022/11/25 20:27:53 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1633,6 +1633,7 @@ extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
 extern void			 pf_purge_expired_src_nodes(void);
+extern void			 pf_purge_expired_states(u_int32_t);
 extern void			 pf_purge_expired_rules(void);
 extern void			 pf_remove_state(struct pf_state *);
 extern void			 pf_remove_divert_state(struct pf_state_key *);
