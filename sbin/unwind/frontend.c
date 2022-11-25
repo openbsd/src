@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.73 2022/03/13 15:14:01 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.74 2022/11/25 16:10:07 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -63,6 +63,7 @@
 #include "control.h"
 #include "dns64_synth.h"
 
+#define	MINIMUM(a, b)		(((a) < (b)) ? (a) : (b))
 #define	ROUTE_SOCKET_BUF_SIZE   16384
 
 /*
@@ -1699,6 +1700,7 @@ tcp_request(int fd, short events, void *arg)
 
 	if (sldns_buffer_position(pq->qbuf) >= 2 && !pq->abuf) {
 		struct sldns_buffer	*tmp;
+		size_t			 rem;
 		uint16_t		 len;
 
 		sldns_buffer_flip(pq->qbuf);
@@ -1709,8 +1711,9 @@ tcp_request(int fd, short events, void *arg)
 		if (!tmp || !pq->abuf)
 			goto fail;
 
+		rem = sldns_buffer_remaining(pq->qbuf);
 		sldns_buffer_write(tmp, sldns_buffer_current(pq->qbuf),
-		    sldns_buffer_remaining(pq->qbuf));
+		    MINIMUM(len, rem));
 		sldns_buffer_free(pq->qbuf);
 		pq->qbuf = tmp;
 	}
