@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.105 2022/07/10 20:14:16 mlarkin Exp $ */
+/*	$OpenBSD: nvme.c,v 1.106 2022/11/25 03:20:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -1251,7 +1251,8 @@ nvme_ccbs_alloc(struct nvme_softc *sc, u_int nccbs)
 
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_mdts,
 		    sc->sc_max_prpl + 1, /* we get a free prp in the sqe */
-		    sc->sc_mps, sc->sc_mps, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    sc->sc_mps, sc->sc_mps,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &ccb->ccb_dmamap) != 0)
 			goto free_maps;
 
@@ -1436,7 +1437,8 @@ nvme_dmamem_alloc(struct nvme_softc *sc, size_t size)
 	ndm->ndm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ndm->ndm_map) != 0)
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+	    &ndm->ndm_map) != 0)
 		goto ndmfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, sc->sc_mps, 0, &ndm->ndm_seg,
