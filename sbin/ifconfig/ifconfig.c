@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.457 2022/10/26 17:06:31 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.458 2022/11/25 23:09:20 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -367,6 +367,9 @@ void	wg_status(int);
 #else
 void	setignore(const char *, int);
 #endif
+
+struct if_clonereq *get_cloners(void);
+int	findmac(const char *);
 
 /*
  * Media stuff.  Whenever a media command is first performed, the
@@ -794,6 +797,11 @@ main(int argc, char *argv[])
 			case 'C':
 				Cflag = 1;
 				nomore = 1;
+				break;
+			case 'M':
+				if (argv[1] == NULL)
+					usage();
+				exit(findmac(argv[1]));
 				break;
 			default:
 				usage();
@@ -1255,12 +1263,10 @@ clone_destroy(const char *addr, int param)
 		err(1, "SIOCIFDESTROY");
 }
 
-void
-list_cloners(void)
+struct if_clonereq *
+get_cloners(void)
 {
-	struct if_clonereq ifcr;
-	char *cp, *buf;
-	int idx;
+	static struct if_clonereq ifcr;
 
 	memset(&ifcr, 0, sizeof(ifcr));
 
@@ -1269,12 +1275,9 @@ list_cloners(void)
 	if (ioctl(sock, SIOCIFGCLONERS, &ifcr) == -1)
 		err(1, "SIOCIFGCLONERS for count");
 
-	buf = calloc(ifcr.ifcr_total, IFNAMSIZ);
-	if (buf == NULL)
+	if ((ifcr.ifcr_buffer = calloc(ifcr.ifcr_total, IFNAMSIZ)) == NULL)
 		err(1, "unable to allocate cloner name buffer");
-
 	ifcr.ifcr_count = ifcr.ifcr_total;
-	ifcr.ifcr_buffer = buf;
 
 	if (ioctl(sock, SIOCIFGCLONERS, &ifcr) == -1)
 		err(1, "SIOCIFGCLONERS for names");
@@ -1285,17 +1288,30 @@ list_cloners(void)
 	if (ifcr.ifcr_count > ifcr.ifcr_total)
 		ifcr.ifcr_count = ifcr.ifcr_total;
 
-	qsort(buf, ifcr.ifcr_count, IFNAMSIZ,
+	return &ifcr;
+}
+
+void
+list_cloners(void)
+{
+	struct if_clonereq *ifcr;
+	char *cp, *buf;
+	int idx;
+
+	ifcr = get_cloners();
+	buf = ifcr->ifcr_buffer;
+
+	qsort(buf, ifcr->ifcr_count, IFNAMSIZ,
 	    (int(*)(const void *, const void *))strcmp);
 
-	for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
+	for (cp = buf, idx = 0; idx < ifcr->ifcr_count; idx++, cp += IFNAMSIZ) {
 		if (idx > 0)
 			putchar(' ');
 		printf("%s", cp);
 	}
 
 	putchar('\n');
-	free(buf);
+	free(ifcr->ifcr_buffer);
 }
 
 #define RIDADDR 0
@@ -6614,7 +6630,7 @@ __dead void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: ifconfig [-AaC] [interface] [address_family] "
+	    "usage: ifconfig [-AaC] [-M lladdr] [interface] [address_family] "
 	    "[address [dest_address]]\n"
 	    "\t\t[parameters]\n");
 	exit(1);
@@ -6782,3 +6798,57 @@ setignore(const char *id, int param)
 	/* just digest the command */
 }
 #endif
+
+int
+findmac(const char *mac)
+{
+	struct ifaddrs *ifap, *ifa;
+	const char *ifnam = NULL;
+	struct if_clonereq *ifcr;
+	int ret = 0;
+
+	ifcr = get_cloners();
+	if (getifaddrs(&ifap) != 0)
+		err(1, "getifaddrs");
+
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+
+		if (sdl != NULL && sdl->sdl_alen &&
+		    (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_CARP)) {
+			if (strcmp(ether_ntoa((struct ether_addr *)LLADDR(sdl)),
+			    mac) == 0) {
+				char *cp, *nam = ifa->ifa_name;
+				int idx, skip = 0;
+				size_t len;
+
+				/* MACs on cloned devices are ignored */
+				for (len = 0; nam[len]; len++)
+					if (isdigit((unsigned char)nam[len]))
+						break;
+				for (cp = ifcr->ifcr_buffer, idx = 0;
+				    idx < ifcr->ifcr_count;
+				    idx++, cp += IFNAMSIZ) {
+					if (strncmp(nam, cp, len) == 0) {
+						skip = 1;
+						break;
+					}
+				}
+				if (skip)
+					continue;
+
+				if (ifnam) {	/* same MAC on multiple ifp */
+					ret = 1;
+					goto done;
+				}
+				ifnam = nam;
+			}
+		}
+	}
+	if (ifnam)
+		printf("%s\n", ifnam);
+done:
+	free(ifcr->ifcr_buffer);
+	freeifaddrs(ifap);
+	return ret;
+}
