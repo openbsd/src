@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.253 2022/11/23 16:59:10 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.254 2022/11/25 15:03:24 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ nd6_expire(void *unused)
 		TAILQ_FOREACH_SAFE(ifa, &ifp->if_addrlist, ifa_list, nifa) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
-			ia6 = ifatoia6(ifaref(ifa));
+			ia6 = ifatoia6(ifa);
 			/* check address lifetime */
 			if (IFA6_IS_INVALID(ia6)) {
 				in6_purgeaddr(&ia6->ia_ifa);
