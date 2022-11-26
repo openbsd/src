@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.27 2022/08/11 07:32:57 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.28 2022/11/26 06:26:14 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -936,7 +936,7 @@ hidpp10_get_serial(struct uhidpp_softc *sc, uint8_t device_id,
 }
 
 int
-hidpp10_get_type(struct uhidpp_softc *sc, uint8_t device_id, const char **type)
+hidpp10_get_type(struct uhidpp_softc *sc, uint8_t device_id, const char **buf)
 {
 	struct uhidpp_report resp;
 	int error;
@@ -953,25 +953,25 @@ hidpp10_get_type(struct uhidpp_softc *sc, uint8_t device_id, const char **type)
 
 	switch (resp.rap.params[7]) {
 	case 0x00:
-		*type = "unknown";
+		*buf = "unknown";
 		return 0;
 	case 0x01:
-		*type = "keyboard";
+		*buf = "keyboard";
 		return 0;
 	case 0x02:
-		*type = "mouse";
+		*buf = "mouse";
 		return 0;
 	case 0x03:
-		*type = "numpad";
+		*buf = "numpad";
 		return 0;
 	case 0x04:
-		*type = "presenter";
+		*buf = "presenter";
 		return 0;
 	case 0x08:
-		*type = "trackball";
+		*buf = "trackball";
 		return 0;
 	case 0x09:
-		*type = "touchpad";
+		*buf = "touchpad";
 		return 0;
 	}
 	return -ENOENT;
