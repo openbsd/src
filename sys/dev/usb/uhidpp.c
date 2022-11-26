@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.31 2022/11/26 06:28:08 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.32 2022/11/26 06:28:34 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -265,10 +265,10 @@ int hidpp20_feature_get_count(struct uhidpp_softc *, uint8_t, uint8_t,
     uint8_t *);
 int hidpp20_feature_get_id(struct uhidpp_softc *, uint8_t, uint8_t, uint8_t,
     uint16_t *, uint8_t *);
-int hidpp20_battery_get_level_status(struct uhidpp_softc *, uint8_t, uint8_t,
-    uint8_t *, uint8_t *);
-int hidpp20_battery_get_capability(struct uhidpp_softc *, uint8_t, uint8_t,
-    uint8_t *, uint8_t *);
+int hidpp20_battery_get_level_status(struct uhidpp_softc *,
+    struct uhidpp_device *);
+int hidpp20_battery_get_capability(struct uhidpp_softc *,
+    struct uhidpp_device *);
 int hidpp20_battery_status_is_charging(uint8_t);
 
 int hidpp_send_validate(uint8_t, int);
@@ -585,9 +585,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		return;
 	}
 
-	error = hidpp20_battery_get_capability(sc,
-	    dev->d_id, dev->d_battery.feature_idx,
-	    &dev->d_battery.nlevels, &dev->d_battery.rechargeable);
+	error = hidpp20_battery_get_capability(sc, dev);
 	if (error) {
 		DPRINTF("%s: battery capability failure: device_id=%d, "
 		    "error=%d\n", __func__, dev->d_id, error);
@@ -649,9 +647,7 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	if (dev->d_major <= 1)
 		return;
 
-	error = hidpp20_battery_get_level_status(sc, dev->d_id,
-	    dev->d_battery.feature_idx, &dev->d_battery.level,
-	    &dev->d_battery.status);
+	error = hidpp20_battery_get_level_status(sc, dev);
 	if (error) {
 		DPRINTF("%s: battery status failure: device_id=%d, error=%d\n",
 		    __func__, dev->d_id, error);
@@ -1025,56 +1021,58 @@ hidpp20_feature_get_id(struct uhidpp_softc *sc, uint8_t device_id,
 }
 
 int
-hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t feature_idx, uint8_t *level, uint8_t *status)
+hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
+    struct uhidpp_device *dev)
 {
 	struct uhidpp_report resp;
 	int error;
+	uint8_t level, status;
 
 	error = hidpp_send_fap_report(sc,
 	    HIDPP_REPORT_ID_LONG,
-	    device_id,
-	    feature_idx,
+	    dev->d_id,
+	    dev->d_battery.feature_idx,
 	    HIDPP20_FEAT_BATTERY_LEVEL_FUNC,
 	    NULL, 0, &resp);
 	if (error)
 		return error;
 
-	*level = resp.fap.params[0];
+	level = resp.fap.params[0];
 	/* next_level = resp.fap.params[1]; */
-	*status = resp.fap.params[2];
-
+	status = resp.fap.params[2];
 	/*
 	 * While charging, the reported level cannot be trusted. However, fake
 	 * the battery state once the charging is done.
 	 */
-	switch (hidpp20_battery_status_is_charging(*status)) {
+	switch (hidpp20_battery_status_is_charging(status)) {
 	case HIDPP20_BATTERY_STATUS_CHARGING_DONE:
-		*level = 100;
-		*status = 0;
+		level = 100;
+		status = 0;
 		break;
 	}
+	dev->d_battery.level = level;
+	dev->d_battery.status = status;
 
 	return 0;
 }
 
 int
-hidpp20_battery_get_capability(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t feature_idx, uint8_t *nlevels, uint8_t *rechargeable)
+hidpp20_battery_get_capability(struct uhidpp_softc *sc,
+    struct uhidpp_device *dev)
 {
 	struct uhidpp_report resp;
 	int error;
 
 	error = hidpp_send_fap_report(sc,
 	    HIDPP_REPORT_ID_LONG,
-	    device_id,
-	    feature_idx,
+	    dev->d_id,
+	    dev->d_battery.feature_idx,
 	    HIDPP20_FEAT_BATTERY_CAPABILITY_FUNC,
 	    NULL, 0, &resp);
 	if (error)
 		return error;
-	*nlevels = resp.fap.params[0];
-	*rechargeable = resp.fap.params[1] &
+	dev->d_battery.nlevels = resp.fap.params[0];
+	dev->d_battery.rechargeable = resp.fap.params[1] &
 	    HIDPP20_BATTERY_CAPABILITY_RECHARGEABLE;
 	return 0;
 }
