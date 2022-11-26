@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.193 2022/11/15 22:47:15 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.194 2022/11/26 17:51:18 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -322,8 +322,93 @@ int
 uipc_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 {
 	struct unpcb *unp = sotounpcb(so);
+	struct sockaddr_un *soun;
+	struct mbuf *nam2;
+	struct vnode *vp;
+	struct vattr vattr;
+	int error;
+	struct nameidata nd;
+	size_t pathlen;
 
-	return unp_bind(unp, nam, p);
+	if (unp->unp_flags & (UNP_BINDING | UNP_CONNECTING))
+		return (EINVAL);
+	if (unp->unp_vnode != NULL)
+		return (EINVAL);
+	if ((error = unp_nam2sun(nam, &soun, &pathlen)))
+		return (error);
+
+	unp->unp_flags |= UNP_BINDING;
+
+	/*
+	 * Enforce `i_lock' -> `unplock' because fifo subsystem
+	 * requires it. The socket can't be closed concurrently
+	 * because the file descriptor reference is still held.
+	 */
+
+	sounlock(unp->unp_socket);
+
+	nam2 = m_getclr(M_WAITOK, MT_SONAME);
+	nam2->m_len = sizeof(struct sockaddr_un);
+	memcpy(mtod(nam2, struct sockaddr_un *), soun,
+	    offsetof(struct sockaddr_un, sun_path) + pathlen);
+	/* No need to NUL terminate: m_getclr() returns zero'd mbufs. */
+
+	soun = mtod(nam2, struct sockaddr_un *);
+
+	/* Fixup sun_len to keep it in sync with m_len. */
+	soun->sun_len = nam2->m_len;
+
+	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
+	    soun->sun_path, p);
+	nd.ni_pledge = PLEDGE_UNIX;
+	nd.ni_unveil = UNVEIL_CREATE;
+
+	KERNEL_LOCK();
+/* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
+	error = namei(&nd);
+	if (error != 0) {
+		m_freem(nam2);
+		solock(unp->unp_socket);
+		goto out;
+	}
+	vp = nd.ni_vp;
+	if (vp != NULL) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vrele(vp);
+		m_freem(nam2);
+		error = EADDRINUSE;
+		solock(unp->unp_socket);
+		goto out;
+	}
+	VATTR_NULL(&vattr);
+	vattr.va_type = VSOCK;
+	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
+	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	vput(nd.ni_dvp);
+	if (error) {
+		m_freem(nam2);
+		solock(unp->unp_socket);
+		goto out;
+	}
+	solock(unp->unp_socket);
+	unp->unp_addr = nam2;
+	vp = nd.ni_vp;
+	vp->v_socket = unp->unp_socket;
+	unp->unp_vnode = vp;
+	unp->unp_connid.uid = p->p_ucred->cr_uid;
+	unp->unp_connid.gid = p->p_ucred->cr_gid;
+	unp->unp_connid.pid = p->p_p->ps_pid;
+	unp->unp_flags |= UNP_FEIDSBIND;
+	VOP_UNLOCK(vp);
+out:
+	KERNEL_UNLOCK();
+	unp->unp_flags &= ~UNP_BINDING;
+
+	return (error);
 }
 
 int
@@ -724,98 +809,6 @@ unp_detach(struct unpcb *unp)
 }
 
 int
-unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
-{
-	struct sockaddr_un *soun;
-	struct mbuf *nam2;
-	struct vnode *vp;
-	struct vattr vattr;
-	int error;
-	struct nameidata nd;
-	size_t pathlen;
-
-	if (unp->unp_flags & (UNP_BINDING | UNP_CONNECTING))
-		return (EINVAL);
-	if (unp->unp_vnode != NULL)
-		return (EINVAL);
-	if ((error = unp_nam2sun(nam, &soun, &pathlen)))
-		return (error);
-
-	unp->unp_flags |= UNP_BINDING;
-
-	/*
-	 * Enforce `i_lock' -> `unplock' because fifo subsystem
-	 * requires it. The socket can't be closed concurrently
-	 * because the file descriptor reference is still held.
-	 */
-
-	sounlock(unp->unp_socket);
-
-	nam2 = m_getclr(M_WAITOK, MT_SONAME);
-	nam2->m_len = sizeof(struct sockaddr_un);
-	memcpy(mtod(nam2, struct sockaddr_un *), soun,
-	    offsetof(struct sockaddr_un, sun_path) + pathlen);
-	/* No need to NUL terminate: m_getclr() returns zero'd mbufs. */
-
-	soun = mtod(nam2, struct sockaddr_un *);
-
-	/* Fixup sun_len to keep it in sync with m_len. */
-	soun->sun_len = nam2->m_len;
-
-	NDINIT(&nd, CREATE, NOFOLLOW | LOCKPARENT, UIO_SYSSPACE,
-	    soun->sun_path, p);
-	nd.ni_pledge = PLEDGE_UNIX;
-	nd.ni_unveil = UNVEIL_CREATE;
-
-	KERNEL_LOCK();
-/* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
-	error = namei(&nd);
-	if (error != 0) {
-		m_freem(nam2);
-		solock(unp->unp_socket);
-		goto out;
-	}
-	vp = nd.ni_vp;
-	if (vp != NULL) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == vp)
-			vrele(nd.ni_dvp);
-		else
-			vput(nd.ni_dvp);
-		vrele(vp);
-		m_freem(nam2);
-		error = EADDRINUSE;
-		solock(unp->unp_socket);
-		goto out;
-	}
-	VATTR_NULL(&vattr);
-	vattr.va_type = VSOCK;
-	vattr.va_mode = ACCESSPERMS &~ p->p_fd->fd_cmask;
-	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	vput(nd.ni_dvp);
-	if (error) {
-		m_freem(nam2);
-		solock(unp->unp_socket);
-		goto out;
-	}
-	solock(unp->unp_socket);
-	unp->unp_addr = nam2;
-	vp = nd.ni_vp;
-	vp->v_socket = unp->unp_socket;
-	unp->unp_vnode = vp;
-	unp->unp_connid.uid = p->p_ucred->cr_uid;
-	unp->unp_connid.gid = p->p_ucred->cr_gid;
-	unp->unp_connid.pid = p->p_p->ps_pid;
-	unp->unp_flags |= UNP_FEIDSBIND;
-	VOP_UNLOCK(vp);
-out:
-	KERNEL_UNLOCK();
-	unp->unp_flags &= ~UNP_BINDING;
-
-	return (error);
-}
-
-int
 unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 {
 	struct sockaddr_un *soun;
@@ -890,7 +883,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 
 		/*
 		 * `unp_addr', `unp_connid' and 'UNP_FEIDSBIND' flag
-		 * are immutable since we set them in unp_bind().
+		 * are immutable since we set them in uipc_bind().
 		 */
 		if (unp2->unp_addr)
 			unp3->unp_addr =
