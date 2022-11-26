@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.88 2022/11/11 11:25:18 beck Exp $
+# $OpenBSD: Makefile,v 1.89 2022/11/26 11:18:49 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -249,7 +249,6 @@ SRCS+= cms_err.c
 SRCS+= cms_ess.c
 SRCS+= cms_io.c
 SRCS+= cms_kari.c
-SRCS+= cms_lcl.h
 SRCS+= cms_lib.c
 SRCS+= cms_pwri.c
 SRCS+= cms_sd.c
