@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.33 2022/11/26 06:28:50 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.34 2022/11/26 06:29:07 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -52,8 +52,6 @@ int uhidpp_debug = 1;
 #define DREPORT(prefix, repid, buf, len)
 
 #endif
-
-#define HIDPP_LINK_STATUS(x)	((x) & (1 << 7))
 
 #define HIDPP_REPORT_ID_SHORT			0x10
 #define HIDPP_REPORT_ID_LONG			0x11
@@ -524,13 +522,7 @@ uhidpp_task(void *arg)
 		case 0x4b:	/* pairing accepted */
 			break;
 		case 0x41:	/* connect */
-			/*
-			 * Do nothing if the link is reported to be out of
-			 * range. This happens when a device has been idle for a
-			 * while.
-			 */
-			if (HIDPP_LINK_STATUS(rep.rap.params[0]))
-				uhidpp_device_connect(sc, dev);
+			uhidpp_device_connect(sc, dev);
 			break;
 		}
 	}
