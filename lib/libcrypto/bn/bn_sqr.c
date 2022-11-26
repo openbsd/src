@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.14 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.15 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,6 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 #ifdef BN_COUNT
 	fprintf(stderr, "BN_sqr %d * %d\n", a->top, a->top);
 #endif
-	bn_check_top(a);
 
 	al = a->top;
 	if (al <= 0) {
@@ -145,8 +144,6 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	ret = 1;
 
 err:
-	bn_check_top(rr);
-	bn_check_top(tmp);
 	BN_CTX_end(ctx);
 	return (ret);
 }

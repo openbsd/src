@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.61 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.62 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,6 @@ BN_new(void)
 	ret->neg = 0;
 	ret->dmax = 0;
 	ret->d = NULL;
-	bn_check_top(ret);
 	return (ret);
 }
 
@@ -94,13 +93,11 @@ void
 BN_init(BIGNUM *a)
 {
 	memset(a, 0, sizeof(BIGNUM));
-	bn_check_top(a);
 }
 
 void
 BN_clear(BIGNUM *a)
 {
-	bn_check_top(a);
 	if (a->d != NULL)
 		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
 	a->top = 0;
@@ -114,7 +111,6 @@ BN_clear_free(BIGNUM *a)
 
 	if (a == NULL)
 		return;
-	bn_check_top(a);
 	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
 		freezero(a->d, a->dmax * sizeof(a->d[0]));
 	i = BN_get_flags(a, BN_FLG_MALLOCED);
@@ -256,7 +252,6 @@ BN_num_bits(const BIGNUM *a)
 {
 	int i = a->top - 1;
 
-	bn_check_top(a);
 
 	if (BN_is_zero(a))
 		return 0;
@@ -271,7 +266,6 @@ bn_expand_internal(const BIGNUM *b, int words)
 	const BN_ULONG *B;
 	int i;
 
-	bn_check_top(b);
 
 	if (words > (INT_MAX/(4*BN_BITS2))) {
 		BNerror(BN_R_BIGNUM_TOO_LONG);
@@ -337,7 +331,6 @@ bn_expand_internal(const BIGNUM *b, int words)
 static int
 bn_expand2(BIGNUM *b, int words)
 {
-	bn_check_top(b);
 
 	if (words > b->dmax) {
 		BN_ULONG *a = bn_expand_internal(b, words);
@@ -370,7 +363,6 @@ bn_expand2(BIGNUM *b, int words)
 		assert(A == &(b->d[b->dmax]));
 	}
 #endif
-	bn_check_top(b);
 	return 1;
 }
 
@@ -408,7 +400,6 @@ BN_dup(const BIGNUM *a)
 
 	if (a == NULL)
 		return NULL;
-	bn_check_top(a);
 
 	t = BN_new();
 	if (t == NULL)
@@ -417,7 +408,6 @@ BN_dup(const BIGNUM *a)
 		BN_free(t);
 		return NULL;
 	}
-	bn_check_top(t);
 	return t;
 }
 
@@ -428,7 +418,6 @@ BN_copy(BIGNUM *a, const BIGNUM *b)
 	BN_ULONG *A;
 	const BN_ULONG *B;
 
-	bn_check_top(b);
 
 	if (a == b)
 		return (a);
@@ -463,7 +452,6 @@ BN_copy(BIGNUM *a, const BIGNUM *b)
 
 	a->top = b->top;
 	a->neg = b->neg;
-	bn_check_top(a);
 	return (a);
 }
 
@@ -474,8 +462,6 @@ BN_swap(BIGNUM *a, BIGNUM *b)
 	BN_ULONG *tmp_d;
 	int tmp_top, tmp_dmax, tmp_neg;
 
-	bn_check_top(a);
-	bn_check_top(b);
 
 	flags_old_a = a->flags;
 	flags_old_b = b->flags;
@@ -499,8 +485,6 @@ BN_swap(BIGNUM *a, BIGNUM *b)
 	    (flags_old_b & BN_FLG_STATIC_DATA);
 	b->flags = (flags_old_b & BN_FLG_MALLOCED) |
 	    (flags_old_a & BN_FLG_STATIC_DATA);
-	bn_check_top(a);
-	bn_check_top(b);
 }
 
 BN_ULONG
@@ -517,13 +501,11 @@ BN_get_word(const BIGNUM *a)
 int
 BN_set_word(BIGNUM *a, BN_ULONG w)
 {
-	bn_check_top(a);
 	if (!bn_wexpand(a, 1))
 		return (0);
 	a->neg = 0;
 	a->d[0] = w;
 	a->top = (w ? 1 : 0);
-	bn_check_top(a);
 	return (1);
 }
 
@@ -541,7 +523,6 @@ BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 		ret = bn = BN_new();
 	if (ret == NULL)
 		return (NULL);
-	bn_check_top(ret);
 	l = 0;
 	n = len;
 	if (n == 0) {
@@ -658,7 +639,6 @@ BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
 	if (ret == NULL)
 		return NULL;
 
-	bn_check_top(ret);
 
 	s += len;
 	/* Skip trailing zeroes. */
@@ -715,8 +695,6 @@ BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 	int i;
 	BN_ULONG t1, t2, *ap, *bp;
 
-	bn_check_top(a);
-	bn_check_top(b);
 
 	i = a->top - b->top;
 	if (i != 0)
@@ -748,8 +726,6 @@ BN_cmp(const BIGNUM *a, const BIGNUM *b)
 			return (0);
 	}
 
-	bn_check_top(a);
-	bn_check_top(b);
 
 	if (a->neg != b->neg) {
 		if (a->neg)
@@ -799,7 +775,6 @@ BN_set_bit(BIGNUM *a, int n)
 	}
 
 	a->d[i] |= (((BN_ULONG)1) << j);
-	bn_check_top(a);
 	return (1);
 }
 
@@ -808,7 +783,6 @@ BN_clear_bit(BIGNUM *a, int n)
 {
 	int i, j;
 
-	bn_check_top(a);
 	if (n < 0)
 		return 0;
 
@@ -827,7 +801,6 @@ BN_is_bit_set(const BIGNUM *a, int n)
 {
 	int i, j;
 
-	bn_check_top(a);
 	if (n < 0)
 		return 0;
 	i = n / BN_BITS2;
@@ -842,7 +815,6 @@ BN_mask_bits(BIGNUM *a, int n)
 {
 	int b, w;
 
-	bn_check_top(a);
 	if (n < 0)
 		return 0;
 
@@ -931,9 +903,6 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 {
 	BN_ULONG t;
 	int i;
-
-	bn_wcheck_size(a, nwords);
-	bn_wcheck_size(b, nwords);
 
 	assert(a != b);
 	assert((condition & (condition - 1)) == 0);

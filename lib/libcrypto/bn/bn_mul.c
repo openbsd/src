@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.21 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.22 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -954,9 +954,6 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	fprintf(stderr, "BN_mul %d * %d\n",a->top,b->top);
 #endif
 
-	bn_check_top(a);
-	bn_check_top(b);
-	bn_check_top(r);
 
 	al = a->top;
 	bl = b->top;
@@ -1092,7 +1089,6 @@ end:
 		BN_copy(r, rr);
 	ret = 1;
 err:
-	bn_check_top(r);
 	BN_CTX_end(ctx);
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.10 2022/07/12 16:08:19 tb Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.11 2022/11/26 13:56:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -71,8 +71,6 @@ BN_kronecker(const BIGNUM *A, const BIGNUM *B, BN_CTX *ctx)
 	int k, v;
 	int ret = -2;
 
-	bn_check_top(A);
-	bn_check_top(B);
 
 	BN_CTX_start(ctx);
 

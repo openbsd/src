@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.33 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.34 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,7 +168,6 @@ err:
 	if (r != rr && rr != NULL)
 		BN_copy(r, rr);
 	BN_CTX_end(ctx);
-	bn_check_top(r);
 	return (ret);
 }
 
@@ -178,9 +177,6 @@ BN_mod_exp_internal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m
 {
 	int ret;
 
-	bn_check_top(a);
-	bn_check_top(p);
-	bn_check_top(m);
 
 	/* For even modulus  m = 2^k*m_odd,  it might make sense to compute
 	 * a^p mod m_odd  and  a^p mod 2^k  separately (with Montgomery
@@ -222,7 +218,6 @@ BN_mod_exp_internal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m
 		ret = BN_mod_exp_recp(r, a,p, m, ctx);
 	}
 
-	bn_check_top(r);
 	return (ret);
 }
 
@@ -381,7 +376,6 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 err:
 	BN_CTX_end(ctx);
 	BN_RECP_CTX_free(&recp);
-	bn_check_top(r);
 	return (ret);
 }
 
@@ -401,9 +395,6 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 		return BN_mod_exp_mont_consttime(rr, a, p, m, ctx, in_mont);
 	}
 
-	bn_check_top(a);
-	bn_check_top(p);
-	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
 		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
@@ -533,7 +524,6 @@ err:
 	if ((in_mont == NULL) && (mont != NULL))
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	bn_check_top(rr);
 	return (ret);
 }
 
@@ -658,9 +648,6 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	unsigned char *powerbuf = NULL;
 	BIGNUM tmp, am;
 
-	bn_check_top(a);
-	bn_check_top(p);
-	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
 		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
@@ -937,8 +924,6 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 		return -1;
 	}
 
-	bn_check_top(p);
-	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
 		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
@@ -1052,7 +1037,6 @@ err:
 	if ((in_mont == NULL) && (mont != NULL))
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	bn_check_top(rr);
 	return (ret);
 }
 
@@ -1172,6 +1156,5 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(r);
 	return (ret);
 }

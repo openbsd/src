@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.16 2021/12/26 15:16:50 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.17 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,8 +123,6 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	BIGNUM *a, *b, *t;
 	int ret = 0;
 
-	bn_check_top(in_a);
-	bn_check_top(in_b);
 
 	BN_CTX_start(ctx);
 	if ((a = BN_CTX_get(ctx)) == NULL)
@@ -154,7 +152,6 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(r);
 	return (ret);
 }
 
@@ -179,8 +176,6 @@ euclid(BIGNUM *a, BIGNUM *b)
 	BIGNUM *t;
 	int shifts = 0;
 
-	bn_check_top(a);
-	bn_check_top(b);
 
 	/* 0 <= b <= a */
 	while (!BN_is_zero(b)) {
@@ -236,7 +231,6 @@ euclid(BIGNUM *a, BIGNUM *b)
 		if (!BN_lshift(a, a, shifts))
 			goto err;
 	}
-	bn_check_top(a);
 	return (a);
 
 err:
@@ -259,8 +253,6 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	if (ct)
 		return BN_mod_inverse_no_branch(in, a, n, ctx);
 
-	bn_check_top(a);
-	bn_check_top(n);
 
 	BN_CTX_start(ctx);
 	if ((A = BN_CTX_get(ctx)) == NULL)
@@ -536,7 +528,6 @@ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
-	bn_check_top(ret);
 	return (ret);
 }
 
@@ -573,8 +564,6 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	BIGNUM *ret = NULL;
 	int sign;
 
-	bn_check_top(a);
-	bn_check_top(n);
 
 	BN_init(&local_A);
 	BN_init(&local_B);
@@ -725,7 +714,6 @@ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
-	bn_check_top(ret);
 	return (ret);
 }
 
@@ -750,8 +738,6 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	BN_init(&local_A);
 	BN_init(&local_B);
 
-	bn_check_top(a);
-	bn_check_top(n);
 
 	BN_CTX_start(ctx);
 	if ((A = BN_CTX_get(ctx)) == NULL)
@@ -871,6 +857,5 @@ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
-	bn_check_top(ret);
 	return (ret);
 }

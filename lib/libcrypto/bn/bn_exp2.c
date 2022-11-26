@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp2.c,v 1.13 2022/02/07 19:49:56 tb Exp $ */
+/* $OpenBSD: bn_exp2.c,v 1.14 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,11 +130,6 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	BIGNUM *val1[TABLE_SIZE], *val2[TABLE_SIZE];
 	BN_MONT_CTX *mont = NULL;
 
-	bn_check_top(a1);
-	bn_check_top(p1);
-	bn_check_top(a2);
-	bn_check_top(p2);
-	bn_check_top(m);
 
 	if (!BN_is_odd(m)) {
 		BNerror(BN_R_CALLED_WITH_EVEN_MODULUS);
@@ -303,6 +298,5 @@ err:
 	if ((in_mont == NULL) && (mont != NULL))
 		BN_MONT_CTX_free(mont);
 	BN_CTX_end(ctx);
-	bn_check_top(rr);
 	return (ret);
 }

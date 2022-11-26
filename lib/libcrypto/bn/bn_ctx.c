@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.16 2019/08/20 10:59:09 schwarze Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.17 2022/11/26 13:56:33 jsing Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -471,7 +471,6 @@ BN_POOL_release(BN_POOL *p, unsigned int num)
 
 	p->used -= num;
 	while (num--) {
-		bn_check_top(p->current->vals + offset);
 		if (!offset) {
 			offset = BN_CTX_POOL_SIZE - 1;
 			p->current = p->current->prev;

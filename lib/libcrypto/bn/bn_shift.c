@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.15 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.16 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,8 +69,6 @@ BN_lshift1(BIGNUM *r, const BIGNUM *a)
 	BN_ULONG *ap, *rp, t, c;
 	int i;
 
-	bn_check_top(r);
-	bn_check_top(a);
 
 	if (r != a) {
 		r->neg = a->neg;
@@ -93,7 +91,6 @@ BN_lshift1(BIGNUM *r, const BIGNUM *a)
 		*rp = 1;
 		r->top++;
 	}
-	bn_check_top(r);
 	return (1);
 }
 
@@ -103,8 +100,6 @@ BN_rshift1(BIGNUM *r, const BIGNUM *a)
 	BN_ULONG *ap, *rp, t, c;
 	int i, j;
 
-	bn_check_top(r);
-	bn_check_top(a);
 
 	if (BN_is_zero(a)) {
 		BN_zero(r);
@@ -129,7 +124,6 @@ BN_rshift1(BIGNUM *r, const BIGNUM *a)
 		c = (t & 1) ? BN_TBIT : 0;
 	}
 	r->top = j;
-	bn_check_top(r);
 	return (1);
 }
 
@@ -145,8 +139,6 @@ BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 		return 0;
 	}
 
-	bn_check_top(r);
-	bn_check_top(a);
 
 	r->neg = a->neg;
 	nw = n / BN_BITS2;
@@ -171,7 +163,6 @@ BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 		t[i]=0;*/
 	r->top = a->top + nw + 1;
 	bn_correct_top(r);
-	bn_check_top(r);
 	return (1);
 }
 
@@ -187,8 +178,6 @@ BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 		return 0;
 	}
 
-	bn_check_top(r);
-	bn_check_top(a);
 
 	nw = n / BN_BITS2;
 	rb = n % BN_BITS2;
@@ -225,6 +214,5 @@ BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 		if ((l = (l >> rb) & BN_MASK2))
 			*(t) = l;
 	}
-	bn_check_top(r);
 	return (1);
 }

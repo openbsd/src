@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.26 2022/11/09 22:52:51 tb Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.27 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,7 +232,6 @@ BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
  err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	bn_check_top(ret);
 
 	return found;
 }
@@ -288,7 +287,6 @@ loop:
 	}
 	if (!BN_add_word(rnd, delta))
 		return (0);
-	bn_check_top(rnd);
 	return (1);
 }
 
@@ -338,7 +336,6 @@ loop:
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(rnd);
 	return (ret);
 }
 
@@ -406,6 +403,5 @@ loop:
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(p);
 	return (ret);
 }

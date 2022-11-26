@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.35 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_print.c,v 1.36 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,7 +254,6 @@ BN_hex2bn(BIGNUM **bn, const char *a)
 	ret->neg = neg;
 
 	*bn = ret;
-	bn_check_top(ret);
 	return (num);
 
 err:
@@ -322,7 +321,6 @@ BN_dec2bn(BIGNUM **bn, const char *a)
 
 	bn_correct_top(ret);
 	*bn = ret;
-	bn_check_top(ret);
 	return (num);
 
 err:

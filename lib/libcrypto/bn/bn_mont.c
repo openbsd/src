@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.30 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.31 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,7 +152,6 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	bn_check_top(tmp);
 	if (a == b) {
 		if (!BN_sqr(tmp, a, ctx))
 			goto err;
@@ -168,7 +167,6 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	if (!BN_from_montgomery(r, tmp, mont, ctx))
 		goto err;
 #endif
-	bn_check_top(r);
 	ret = 1;
 err:
 	BN_CTX_end(ctx);
@@ -272,7 +270,6 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 #endif
 	bn_correct_top(r);
 	bn_correct_top(ret);
-	bn_check_top(ret);
 
 	return (1);
 }
@@ -318,7 +315,6 @@ BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
 			goto err;
 	}
 	retn = 1;
-	bn_check_top(ret);
 
 err:
 	BN_CTX_end(ctx);

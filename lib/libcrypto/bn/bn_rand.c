@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.25 2021/08/31 11:19:19 tb Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.26 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -190,7 +190,6 @@ bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 
 err:
 	freezero(buf, bytes);
-	bn_check_top(rnd);
 	return (ret);
 }
 
@@ -272,7 +271,6 @@ bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 		} while (BN_cmp(r, range) >= 0);
 	}
 
-	bn_check_top(r);
 	return 1;
 }
 

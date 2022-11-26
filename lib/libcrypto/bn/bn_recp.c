@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.16 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -134,7 +134,6 @@ BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(r);
 	return (ret);
 }
 
@@ -228,8 +227,6 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 
 err:
 	BN_CTX_end(ctx);
-	bn_check_top(dv);
-	bn_check_top(rem);
 	return (ret);
 }
 
@@ -257,7 +254,6 @@ BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	ret = len;
 
 err:
-	bn_check_top(r);
 	BN_CTX_end(ctx);
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.12 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.13 2022/11/26 13:56:33 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -182,9 +182,6 @@ BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 	BIGNUM *t;
 	int ret = 0;
 
-	bn_check_top(a);
-	bn_check_top(b);
-	bn_check_top(m);
 
 	BN_CTX_start(ctx);
 	if ((t = BN_CTX_get(ctx)) == NULL)
@@ -198,7 +195,6 @@ BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 	}
 	if (!BN_nnmod(r, t,m, ctx))
 		goto err;
-	bn_check_top(r);
 	ret = 1;
 
 err:
@@ -220,7 +216,6 @@ BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
 	if (!BN_lshift1(r, a))
 		return 0;
-	bn_check_top(r);
 	return BN_nnmod(r, r, m, ctx);
 }
 
@@ -231,7 +226,6 @@ BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
 {
 	if (!BN_lshift1(r, a))
 		return 0;
-	bn_check_top(r);
 	if (BN_cmp(r, m) >= 0)
 		return BN_sub(r, r, m);
 	return 1;
@@ -254,7 +248,6 @@ BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 	}
 
 	ret = BN_mod_lshift_quick(r, r, n, (abs_m ? abs_m : m));
-	bn_check_top(r);
 
 	BN_free(abs_m);
 	return ret;
@@ -302,7 +295,6 @@ BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 				return 0;
 		}
 	}
-	bn_check_top(r);
 
 	return 1;
 }

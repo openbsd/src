@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.14 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.15 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,6 @@ BN_mod_word(const BIGNUM *a, BN_ULONG w)
 	}
 #endif
 
-	bn_check_top(a);
 	w &= BN_MASK2;
 	for (i = a->top - 1; i >= 0; i--) {
 #ifndef BN_LLONG
@@ -108,7 +107,6 @@ BN_div_word(BIGNUM *a, BN_ULONG w)
 	BN_ULONG ret = 0;
 	int i, j;
 
-	bn_check_top(a);
 	w &= BN_MASK2;
 
 	if (!w)
@@ -134,7 +132,6 @@ BN_div_word(BIGNUM *a, BN_ULONG w)
 	if ((a->top > 0) && (a->d[a->top - 1] == 0))
 		a->top--;
 	ret >>= j;
-	bn_check_top(a);
 	return (ret);
 }
 
@@ -144,7 +141,6 @@ BN_add_word(BIGNUM *a, BN_ULONG w)
 	BN_ULONG l;
 	int i;
 
-	bn_check_top(a);
 	w &= BN_MASK2;
 
 	/* degenerate case: w is zero */
@@ -171,7 +167,6 @@ BN_add_word(BIGNUM *a, BN_ULONG w)
 		a->top++;
 		a->d[i] = w;
 	}
-	bn_check_top(a);
 	return (1);
 }
 
@@ -180,7 +175,6 @@ BN_sub_word(BIGNUM *a, BN_ULONG w)
 {
 	int i;
 
-	bn_check_top(a);
 	w &= BN_MASK2;
 
 	/* degenerate case: w is zero */
@@ -219,7 +213,6 @@ BN_sub_word(BIGNUM *a, BN_ULONG w)
 	}
 	if ((a->d[i] == 0) && (i == (a->top - 1)))
 		a->top--;
-	bn_check_top(a);
 	return (1);
 }
 
@@ -228,7 +221,6 @@ BN_mul_word(BIGNUM *a, BN_ULONG w)
 {
 	BN_ULONG ll;
 
-	bn_check_top(a);
 	w &= BN_MASK2;
 	if (a->top) {
 		if (w == 0)
@@ -242,6 +234,5 @@ BN_mul_word(BIGNUM *a, BN_ULONG w)
 			}
 		}
 	}
-	bn_check_top(a);
 	return (1);
 }

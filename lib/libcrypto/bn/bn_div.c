@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.26 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.27 2022/11/26 13:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,23 +127,16 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 	int num_n, div_n;
 	int no_branch = 0;
 
-	/* Invalid zero-padding would have particularly bad consequences
-	 * in the case of 'num', so don't just rely on bn_check_top() for this one
-	 * (bn_check_top() works only for BN_DEBUG builds) */
+	/* Invalid zero-padding would have particularly bad consequences. */
 	if (num->top > 0 && num->d[num->top - 1] == 0) {
 		BNerror(BN_R_NOT_INITIALIZED);
 		return 0;
 	}
 
-	bn_check_top(num);
 
 	if (ct)
 		no_branch = 1;
 
-	bn_check_top(dv);
-	bn_check_top(rm);
-	/* bn_check_top(num); */ /* 'num' has been checked already */
-	bn_check_top(divisor);
 
 	if (BN_is_zero(divisor)) {
 		BNerror(BN_R_DIV_BY_ZERO);
@@ -234,10 +227,6 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 
 	if (!no_branch) {
 		if (BN_ucmp(&wnum, sdiv) >= 0) {
-			/* If BN_DEBUG_RAND is defined BN_ucmp changes (via
-			 * bn_pollute) the const bignum arguments =>
-			 * clean the values between top and max again */
-			bn_clear_top2max(&wnum);
 			bn_sub_words(wnum.d, wnum.d, sdiv->d, div_n);
 			*resp = 1;
 		} else
@@ -365,7 +354,6 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 		BN_rshift(rm, snum, norm_shift);
 		if (!BN_is_zero(rm))
 			rm->neg = neg;
-		bn_check_top(rm);
 	}
 	if (no_branch)
 		bn_correct_top(res);
@@ -373,7 +361,6 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 	return (1);
 
 err:
-	bn_check_top(rm);
 	BN_CTX_end(ctx);
 	return (0);
 }
