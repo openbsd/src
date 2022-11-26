@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.1 2022/11/26 12:02:37 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.2 2022/11/26 15:45:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -120,10 +120,6 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 	if ((p.res = calloc(1, sizeof(struct geofeed))) == NULL)
 		err(1, NULL);
 
-	if ((b64 = calloc(1, len)) == NULL)
-		err(1, NULL);
-	b64sz = len;
-
 	while ((nl = memchr(buf, '\n', len)) != NULL) {
 		line = buf;
 
@@ -148,13 +144,13 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 			goto out;
 		}
 
-		if (strncmp(line, "# End Signature:",
-		    strlen("# End Signature:")) == 0) {
-			end_signature_seen = 1;
-			continue;
-		}
-
 		if (rpki_signature_seen) {
+			if (strncmp(line, "# End Signature:",
+			    strlen("# End Signature:")) == 0) {
+				end_signature_seen = 1;
+				continue;
+			}
+
 			if (linelen > 74) {
 				warnx("%s: line in signature section too long",
 				    fn);
@@ -175,6 +171,11 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 		if (strncmp(line, "# RPKI Signature:",
 		    strlen("# RPKI Signature:")) == 0) {
 			rpki_signature_seen = 1;
+
+			if ((b64 = calloc(1, len)) == NULL)
+				err(1, NULL);
+			b64sz = len;
+
 			continue;
 		}
 
