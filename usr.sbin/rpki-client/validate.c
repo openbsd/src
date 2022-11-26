@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.46 2022/11/02 11:28:36 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.47 2022/11/26 12:02:37 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -522,4 +522,29 @@ valid_aspa(const char *fn, struct cert *cert, struct aspa *aspa)
 	warnx("%s: ASPA: uncovered Customer ASID: %u", fn, aspa->custasid);
 
 	return 0;
+}
+
+/*
+ * Validate Geofeed prefixes: check that the prefixes are contained.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_geofeed(const char *fn, struct cert *cert, struct geofeed *g)
+{
+	size_t	 i;
+	char	 buf[64];
+
+	for (i = 0; i < g->geoipsz; i++) {
+		if (ip_addr_check_covered(g->geoips[i].ip->afi,
+		    g->geoips[i].ip->min, g->geoips[i].ip->max, cert->ips,
+		    cert->ipsz) > 0)
+			continue;
+
+		ip_addr_print(&g->geoips[i].ip->ip, g->geoips[i].ip->afi, buf,
+		    sizeof(buf));
+		warnx("%s: Geofeed: uncovered IP: %s", fn, buf);
+		return 0;
+	}
+
+	return 1;
 }

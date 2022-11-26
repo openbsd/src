@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.20 2022/11/16 08:57:38 job Exp $ */
+/*	$OpenBSD: print.c,v 1.21 2022/11/26 12:02:37 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -722,4 +722,50 @@ tak_print(const X509 *x, const struct tak *p)
 
 	if (outformats & FORMAT_JSON)
 		printf("\n\t],\n");
+}
+
+void
+geofeed_print(const X509 *x, const struct geofeed *p)
+{
+	char	 buf[128];
+	size_t	 i;
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t\"type\": \"geofeed\",\n");
+		printf("\t\"ski\": \"%s\",\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
+		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
+		printf("\t\"records\": [\n");
+	} else {
+		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
+		x509_print(x);
+		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+		printf("Authority info access:    %s\n", p->aia);
+		printf("Geofeed valid until:      %s\n", time2str(p->expires));
+		printf("Geofeed CSV records:\n");
+	}
+
+	for (i = 0; i < p->geoipsz; i++) {
+		if (p->geoips[i].ip->type != CERT_IP_ADDR)
+			continue;
+
+		ip_addr_print(&p->geoips[i].ip->ip, p->geoips[i].ip->afi, buf,
+		    sizeof(buf));
+		if (outformats & FORMAT_JSON)
+			printf("\t\t{ \"prefix\": \"%s\", \"location\": \"%s\""
+			    "}", buf, p->geoips[i].loc);
+		else
+			printf("%5zu: IP: %s (%s)", i + 1, buf,
+			    p->geoips[i].loc);
+
+		if (outformats & FORMAT_JSON && i + 1 < p->geoipsz)
+			printf(",\n");
+		else
+			printf("\n");
+	}
+
+	if (outformats & FORMAT_JSON)
+		printf("\t],\n");
 }

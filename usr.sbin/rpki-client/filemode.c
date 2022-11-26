@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.16 2022/11/04 17:39:36 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.17 2022/11/26 12:02:37 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -270,6 +270,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct rsc *rsc = NULL;
 	struct aspa *aspa = NULL;
 	struct tak *tak = NULL;
+	struct geofeed *geofeed = NULL;
 	char *aia = NULL, *aki = NULL;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
@@ -385,6 +386,14 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = tak->aia;
 		aki = tak->aki;
 		break;
+	case RTYPE_GEOFEED:
+		geofeed = geofeed_parse(&x509, file, buf, len);
+		if (geofeed == NULL)
+			break;
+		geofeed_print(x509, geofeed);
+		aia = geofeed->aia;
+		aki = geofeed->aki;
+		break;
 	default:
 		printf("%s: unsupported file type\n", file);
 		break;
@@ -419,6 +428,9 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				break;
 			case RTYPE_ASPA:
 				status = aspa->valid;
+				break;
+			case RTYPE_GEOFEED:
+				status = geofeed->valid;
 				break;
 			default:
 				break;
@@ -479,6 +491,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	rsc_free(rsc);
 	aspa_free(aspa);
 	tak_free(tak);
+	geofeed_free(geofeed);
 }
 
 /*

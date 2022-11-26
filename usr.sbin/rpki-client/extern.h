@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.160 2022/11/18 14:38:34 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.161 2022/11/26 12:02:36 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -175,6 +175,7 @@ enum rtype {
 	RTYPE_RSC,
 	RTYPE_ASPA,
 	RTYPE_TAK,
+	RTYPE_GEOFEED,
 };
 
 enum location {
@@ -294,6 +295,27 @@ struct tak {
 	char		*sia; /* SIA signed Object */
 	char		*ski; /* SKI */
 	time_t		 expires; /* Not After of the TAK EE */
+};
+
+/*
+ * A single geofeed record
+ */
+struct geoip {
+	struct cert_ip	*ip;
+	char		*loc;
+};
+
+/*
+ * A geofeed file
+ */
+struct geofeed {
+	struct geoip	*geoips; /* Prefix + location entry in the CSV */
+	size_t		 geoipsz; /* number of IPs */
+	char		*aia; /* AIA */
+	char		*aki; /* AKI */
+	char		*ski; /* SKI */
+	time_t		 expires; /* Not After of the Geofeed EE */
+	int		 valid; /* all resources covered */
 };
 
 /*
@@ -565,6 +587,9 @@ void		 gbr_free(struct gbr *);
 struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 
+void		 geofeed_free(struct geofeed *);
+struct geofeed	*geofeed_parse(X509 **, const char *, char *, size_t);
+
 void		 rsc_free(struct rsc *);
 struct rsc	*rsc_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
@@ -608,11 +633,15 @@ int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 int		 valid_rsc(const char *, struct cert *, struct rsc *);
 int		 valid_econtent_version(const char *, const ASN1_INTEGER *);
 int		 valid_aspa(const char *, struct cert *, struct aspa *);
+int		 valid_geofeed(const char *, struct cert *, struct geofeed *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
 		    const unsigned char *, size_t,
 		    const ASN1_OBJECT *, size_t *);
+int		 cms_parse_validate_detached(X509 **, const char *,
+		    const unsigned char *, size_t,
+		    const ASN1_OBJECT *, BIO *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 
@@ -759,6 +788,7 @@ void		 gbr_print(const X509 *, const struct gbr *);
 void		 rsc_print(const X509 *, const struct rsc *);
 void		 aspa_print(const X509 *, const struct aspa *);
 void		 tak_print(const X509 *, const struct tak *);
+void		 geofeed_print(const X509 *, const struct geofeed *);
 
 /* Output! */
 

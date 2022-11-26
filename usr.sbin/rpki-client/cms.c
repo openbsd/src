@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.21 2022/08/12 13:19:02 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.22 2022/11/26 12:02:36 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/bio.h>
 #include <openssl/cms.h>
 
 #include "extern.h"
@@ -32,38 +33,32 @@ extern ASN1_OBJECT	*msg_dgst_oid;
 extern ASN1_OBJECT	*sign_time_oid;
 extern ASN1_OBJECT	*bin_sign_time_oid;
 
-/*
- * Parse and validate a self-signed CMS message, where the signing X509
- * certificate has been hashed to dgst (optional).
- * Conforms to RFC 6488.
- * The eContentType of the message must be an oid object.
- * Return the eContent as a string and set "rsz" to be its length.
- */
-unsigned char *
-cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
-    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz)
+static int
+cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
+    size_t derlen, const ASN1_OBJECT *oid, BIO *bio, unsigned char **res,
+    size_t *rsz)
 {
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
 	ASN1_OCTET_STRING		**os = NULL, *kid = NULL;
 	CMS_ContentInfo			*cms;
-	int				 rc = 0;
 	STACK_OF(X509)			*certs = NULL;
 	STACK_OF(X509_CRL)		*crls;
 	STACK_OF(CMS_SignerInfo)	*sinfos;
 	CMS_SignerInfo			*si;
 	X509_ALGOR			*pdig, *psig;
-	unsigned char			*res = NULL;
 	int				 i, nattrs, nid;
 	int				 has_ct = 0, has_md = 0, has_st = 0,
 					 has_bst = 0;
+	int				 rc = 0;
 
-	*rsz = 0;
 	*xp = NULL;
+	if (rsz != NULL)
+		*rsz = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
-		return NULL;
+		return 0;
 
 	if ((cms = d2i_CMS_ContentInfo(NULL, &der, derlen)) == NULL) {
 		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
@@ -74,10 +69,9 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 	 * The CMS is self-signed with a signing certifiate.
 	 * Verify that the self-signage is correct.
 	 */
-
-	if (!CMS_verify(cms, NULL, NULL, NULL, NULL,
+	if (!CMS_verify(cms, NULL, NULL, bio, NULL,
 	    CMS_NO_SIGNER_CERT_VERIFY)) {
-		cryptowarnx("%s: RFC 6488: CMS not self-signed", fn);
+		cryptowarnx("%s: CMS verification error", fn);
 		goto out;
 	}
 
@@ -244,7 +238,14 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 
-	/* Verify that we have eContent to disseminate. */
+	/*
+	 * In the detached sig case: there won't be eContent to extract, so
+	 * jump to out.
+	 */
+	if (res == NULL) {
+		rc = 1;
+		goto out;
+	}
 
 	if ((os = CMS_get0_content(cms)) == NULL || *os == NULL) {
 		warnx("%s: RFC 6488 section 2.1.4: "
@@ -258,21 +259,50 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 	 * this information; and since we're going to d2i it anyway,
 	 * simply pass it as the desired underlying types.
 	 */
-
-	if ((res = malloc((*os)->length)) == NULL)
+	if ((*res = malloc((*os)->length)) == NULL)
 		err(1, NULL);
-	memcpy(res, (*os)->data, (*os)->length);
+	memcpy(*res, (*os)->data, (*os)->length);
 	*rsz = (*os)->length;
 
 	rc = 1;
-out:
-	sk_X509_free(certs);
-	CMS_ContentInfo_free(cms);
-
+ out:
 	if (rc == 0) {
 		X509_free(*xp);
 		*xp = NULL;
 	}
+	sk_X509_free(certs);
+	CMS_ContentInfo_free(cms);
+	return rc;
+}
+
+/*
+ * Parse and validate a self-signed CMS message.
+ * Conforms to RFC 6488.
+ * The eContentType of the message must be an oid object.
+ * Return the eContent as a string and set "rsz" to be its length.
+ */
+unsigned char *
+cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
+    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz)
+{
+	unsigned char *res = NULL;
+
+	if (!cms_parse_validate_internal(xp, fn, der, derlen, oid, NULL, &res,
+	    rsz))
+                return NULL;
 
 	return res;
+}
+
+/*
+ * Parse and validate a detached CMS signature.
+ * bio must contain the original message, der must contain the CMS.
+ * Return the 1 on success, 0 on failure.
+ */
+int
+cms_parse_validate_detached(X509 **xp, const char *fn, const unsigned char *der,
+    size_t derlen, const ASN1_OBJECT *oid, BIO *bio)
+{
+	return cms_parse_validate_internal(xp, fn, der, derlen, oid, bio, NULL,
+	    NULL);
 }
