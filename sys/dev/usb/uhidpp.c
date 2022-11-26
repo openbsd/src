@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.32 2022/11/26 06:28:34 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.33 2022/11/26 06:28:50 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -122,12 +122,10 @@ int uhidpp_debug = 1;
 #define HIDPP20_FEAT_FEATURE_ID_FUNC		0x0001
 
 #define HIDPP20_FEAT_BATTERY_ID			0x1000
-#define HIDPP20_FEAT_BATTERY_LEVEL_FUNC		0x0000
+#define HIDPP20_FEAT_BATTERY_LEVEL_STATUS_FUNC	0x0000
+#define  HIDPP20_LEVEL_STATUS_CHARGING_DONE	0x0003
 #define HIDPP20_FEAT_BATTERY_CAPABILITY_FUNC	0x0001
-
-#define HIDPP20_BATTERY_STATUS_CHARGING_DONE	0x0003
-
-#define HIDPP20_BATTERY_CAPABILITY_RECHARGEABLE	0x0004
+#define  HIDPP20_CAPABILITY_RECHARGEABLE	0x0004
 
 /* HID++ 2.0 error codes. */
 #define HIDPP20_ERROR				0xff
@@ -1032,7 +1030,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
 	    HIDPP_REPORT_ID_LONG,
 	    dev->d_id,
 	    dev->d_battery.feature_idx,
-	    HIDPP20_FEAT_BATTERY_LEVEL_FUNC,
+	    HIDPP20_FEAT_BATTERY_LEVEL_STATUS_FUNC,
 	    NULL, 0, &resp);
 	if (error)
 		return error;
@@ -1045,7 +1043,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
 	 * the battery state once the charging is done.
 	 */
 	switch (hidpp20_battery_status_is_charging(status)) {
-	case HIDPP20_BATTERY_STATUS_CHARGING_DONE:
+	case HIDPP20_LEVEL_STATUS_CHARGING_DONE:
 		level = 100;
 		status = 0;
 		break;
@@ -1073,7 +1071,7 @@ hidpp20_battery_get_capability(struct uhidpp_softc *sc,
 		return error;
 	dev->d_battery.nlevels = resp.fap.params[0];
 	dev->d_battery.rechargeable = resp.fap.params[1] &
-	    HIDPP20_BATTERY_CAPABILITY_RECHARGEABLE;
+	    HIDPP20_CAPABILITY_RECHARGEABLE;
 	return 0;
 }
 
