@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.3 2022/11/26 16:42:04 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.4 2022/11/26 17:06:43 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -249,6 +249,11 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 
 	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
 		goto out;
+
+	if (x509_any_inherits(*x509)) {
+		warnx("%s: inherit elements not allowed in EE cert", fn);
+		goto out;
+	}
 
 	if (cert->asz > 0) {
 		warnx("%s: superfluous AS Resources extension present", fn);
