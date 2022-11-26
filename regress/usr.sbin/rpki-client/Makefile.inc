@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile.inc,v 1.26 2022/11/02 12:56:38 job Exp $
+# $OpenBSD: Makefile.inc,v 1.27 2022/11/26 12:09:34 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
 PROGS += test-ip
 PROGS += test-cert
 PROGS += test-gbr
+PROGS += test-geofeed
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-rsc
@@ -55,6 +56,11 @@ SRCS_test-gbr+=	test-gbr.c gbr.c cms.c x509.c ip.c io.c log.c \
 		encoding.c print.c validate.c as.c cert.c mft.c
 run-regress-test-gbr: test-gbr
 	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
+
+SRCS_test-geofeed+=	test-geofeed.c geofeed.c cms.c x509.c ip.c io.c log.c \
+		encoding.c print.c validate.c as.c cert.c mft.c
+run-regress-test-geofeed: test-geofeed
+	./test-geofeed -v ${.CURDIR}/../geofeed/*.csv
 
 SRCS_test-tal+=	test-tal.c tal.c ip.c io.c log.c validate.c \
 		encoding.c print.c dummy.c x509.c

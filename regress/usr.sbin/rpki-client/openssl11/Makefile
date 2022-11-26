@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2022/11/08 13:01:53 tb Exp $
+# $OpenBSD: Makefile,v 1.16 2022/11/26 12:09:34 job Exp $
 
 LDADD +=	-Wl,-rpath,/usr/local/lib/eopenssl11 -L/usr/local/lib/eopenssl11
 CFLAGS +=	-I${.CURDIR}/ -I/usr/local/include/eopenssl11/
@@ -24,6 +24,7 @@ SRCS_test-mft =		${LIBCRYPTO_COMPAT}
 SRCS_test-roa =		${LIBCRYPTO_COMPAT}
 SRCS_test-cert =	${LIBCRYPTO_COMPAT}
 SRCS_test-gbr =		${LIBCRYPTO_COMPAT}
+SRCS_test-geofeed=	${LIBCRYPTO_COMPAT}
 SRCS_test-tal =		${LIBCRYPTO_COMPAT}
 SRCS_test-bgpsec =	${LIBCRYPTO_COMPAT}
 SRCS_test-rrdp =	${LIBCRYPTO_COMPAT}
