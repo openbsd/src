@@ -1,3 +1,3 @@
-/* $OpenBSD: version.h,v 1.2 2022/05/17 14:49:22 tobhe Exp $ */
+/* $OpenBSD: version.h,v 1.3 2022/11/26 17:12:11 tobhe Exp $ */
 
-#define IKED_VERSION	"7.1"
+#define IKED_VERSION	"7.2"
