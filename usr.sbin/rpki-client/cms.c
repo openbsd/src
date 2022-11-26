@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.22 2022/11/26 12:02:36 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.23 2022/11/26 12:36:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,13 +34,43 @@ extern ASN1_OBJECT	*sign_time_oid;
 extern ASN1_OBJECT	*bin_sign_time_oid;
 
 static int
+cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
+    size_t *rsz)
+{
+	ASN1_OCTET_STRING		**os = NULL;
+
+	/* Detached signature case: no eContent to extract, so do nothing. */
+	if (res == NULL || rsz == NULL)
+		return 1;
+
+	if ((os = CMS_get0_content(cms)) == NULL || *os == NULL) {
+		warnx("%s: RFC 6488 section 2.1.4: "
+		    "eContent: zero-length content", fn);
+		return 0;
+	}
+
+	/*
+	 * Extract and duplicate the eContent.
+	 * The CMS framework offers us no other way of easily managing
+	 * this information; and since we're going to d2i it anyway,
+	 * simply pass it as the desired underlying types.
+	 */
+	if ((*res = malloc((*os)->length)) == NULL)
+		err(1, NULL);
+	memcpy(*res, (*os)->data, (*os)->length);
+	*rsz = (*os)->length;
+
+	return 1;
+}
+
+static int
 cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
     size_t derlen, const ASN1_OBJECT *oid, BIO *bio, unsigned char **res,
     size_t *rsz)
 {
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
-	ASN1_OCTET_STRING		**os = NULL, *kid = NULL;
+	ASN1_OCTET_STRING		*kid = NULL;
 	CMS_ContentInfo			*cms;
 	STACK_OF(X509)			*certs = NULL;
 	STACK_OF(X509_CRL)		*crls;
@@ -238,31 +268,8 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 
-	/*
-	 * In the detached sig case: there won't be eContent to extract, so
-	 * jump to out.
-	 */
-	if (res == NULL) {
-		rc = 1;
+	if (!cms_extract_econtent(fn, cms, res, rsz))
 		goto out;
-	}
-
-	if ((os = CMS_get0_content(cms)) == NULL || *os == NULL) {
-		warnx("%s: RFC 6488 section 2.1.4: "
-		    "eContent: zero-length content", fn);
-		goto out;
-	}
-
-	/*
-	 * Extract and duplicate the eContent.
-	 * The CMS framework offers us no other way of easily managing
-	 * this information; and since we're going to d2i it anyway,
-	 * simply pass it as the desired underlying types.
-	 */
-	if ((*res = malloc((*os)->length)) == NULL)
-		err(1, NULL);
-	memcpy(*res, (*os)->data, (*os)->length);
-	*rsz = (*os)->length;
 
 	rc = 1;
  out:
