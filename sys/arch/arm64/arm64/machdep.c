@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.77 2022/11/24 14:43:16 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.78 2022/11/26 17:23:15 tobhe Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -71,6 +71,7 @@ void (*cpuresetfn)(void);
 void (*powerdownfn)(void);
 
 int cold = 1;
+int lid_action = 0;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -322,6 +323,10 @@ extern uint64_t cpu_id_aa64pfr1;
  * machine dependent system variables.
  */
 
+const struct sysctl_bounded_args cpuctl_vars[] = {
+	{ CPU_LIDACTION, &lid_action, 0, 2 },
+};
+
 int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
@@ -372,7 +377,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CPU_ID_AA64ZFR0:
 		return sysctl_rdquad(oldp, oldlenp, newp, 0);
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }

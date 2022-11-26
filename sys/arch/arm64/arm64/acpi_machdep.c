@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.20 2022/09/13 17:14:54 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.21 2022/11/26 17:23:15 tobhe Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -36,7 +36,6 @@
 
 #include "apm.h"
 
-int	lid_action;
 int	pwr_action = 1;
 
 int	acpi_fdt_match(struct device *, void *, void *);

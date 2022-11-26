@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.19 2022/11/25 20:33:11 tobhe Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.20 2022/11/26 17:23:15 tobhe Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,6 +37,7 @@
 
 #include "apm.h"
 
+extern int lid_action;
 extern void (*simplefb_burn_hook)(u_int);
 
 extern void (*cpuresetfn)(void);
@@ -390,6 +391,14 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 		default:
 			printf("%s: SMV_EV_TYPE_LID 0x%016llx\n",
 			       sc->sc_dev.dv_xname, data);
+			break;
+		}
+		switch (lid_action) {
+		case 1: 
+			/* XXX: suspend */
+			break;
+		case 2:
+			/* XXX: hibernate */
 			break;
 		}
 		break;
