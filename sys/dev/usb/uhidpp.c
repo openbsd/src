@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.30 2022/11/26 06:27:48 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.31 2022/11/26 06:28:08 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -550,7 +550,6 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 {
 	struct ksensor *sens;
 	int error;
-	uint8_t feature_type;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
@@ -582,16 +581,6 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	if (error) {
 		DPRINTF("%s: features failure: device_id=%d, "
 		    "error=%d\n",
-		    __func__, dev->d_id, error);
-		return;
-	}
-
-	error = hidpp20_root_get_feature(sc, dev->d_id,
-	    HIDPP20_FEAT_BATTERY_ID,
-	    &dev->d_battery.feature_idx, &feature_type);
-	if (error) {
-		DPRINTF("%s: battery feature index failure: "
-		    "device_id=%d, error=%d\n",
 		    __func__, dev->d_id, error);
 		return;
 	}
@@ -746,8 +735,10 @@ uhidpp_device_features(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		if (error)
 			continue;
 
-		if (id == HIDPP20_FEAT_BATTERY_ID)
+		if (id == HIDPP20_FEAT_BATTERY_ID) {
 			dev->d_features |= UHIDPP_DEVICE_FEATURE_BATTERY;
+			dev->d_battery.feature_idx = i;
+		}
 
 		DPRINTF("%s: idx=%d, id=%x, type=%x device_id=%d\n",
 		    __func__, i, id, type, dev->d_id);
