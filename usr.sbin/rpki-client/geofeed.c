@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.4 2022/11/26 17:06:43 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.5 2022/11/26 23:05:22 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -113,6 +113,8 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 	int		 rc = 0;
 
 	bio = BIO_new(BIO_s_mem());
+	if (bio == NULL)
+		errx(1, "BIO_new");
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
