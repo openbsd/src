@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.29 2022/11/26 06:26:51 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.30 2022/11/26 06:27:48 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -573,38 +573,35 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		    __func__, dev->d_id, error);
 		return;
 	}
-
 	DPRINTF("%s: device_id=%d, version=%d.%d\n",
 	    __func__, dev->d_id, dev->d_major, dev->d_minor);
+	if (dev->d_major <= 1)
+		return;
 
-	if (dev->d_major >= 2) {
-		error = uhidpp_device_features(sc, dev);
-		if (error) {
-			DPRINTF("%s: features failure: device_id=%d, "
-			    "error=%d\n",
-			    __func__, dev->d_id, error);
-			return;
-		}
+	error = uhidpp_device_features(sc, dev);
+	if (error) {
+		DPRINTF("%s: features failure: device_id=%d, "
+		    "error=%d\n",
+		    __func__, dev->d_id, error);
+		return;
+	}
 
-		error = hidpp20_root_get_feature(sc, dev->d_id,
-		    HIDPP20_FEAT_BATTERY_ID,
-		    &dev->d_battery.feature_idx, &feature_type);
-		if (error) {
-			DPRINTF("%s: battery feature index failure: "
-			    "device_id=%d, error=%d\n",
-			    __func__, dev->d_id, error);
-			return;
-		}
+	error = hidpp20_root_get_feature(sc, dev->d_id,
+	    HIDPP20_FEAT_BATTERY_ID,
+	    &dev->d_battery.feature_idx, &feature_type);
+	if (error) {
+		DPRINTF("%s: battery feature index failure: "
+		    "device_id=%d, error=%d\n",
+		    __func__, dev->d_id, error);
+		return;
+	}
 
-		error = hidpp20_battery_get_capability(sc,
-		    dev->d_id, dev->d_battery.feature_idx,
-		    &dev->d_battery.nlevels, &dev->d_battery.rechargeable);
-		if (error) {
-			DPRINTF("%s: battery capability failure: device_id=%d, "
-			    "error=%d\n", __func__, dev->d_id, error);
-			return;
-		}
-	} else {
+	error = hidpp20_battery_get_capability(sc,
+	    dev->d_id, dev->d_battery.feature_idx,
+	    &dev->d_battery.nlevels, &dev->d_battery.rechargeable);
+	if (error) {
+		DPRINTF("%s: battery capability failure: device_id=%d, "
+		    "error=%d\n", __func__, dev->d_id, error);
 		return;
 	}
 
@@ -656,60 +653,60 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 void
 uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 {
+	int charging, error;
+
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
-	if (dev->d_major >= 2) {
-		int charging, error;
+	if (dev->d_major <= 1)
+		return;
 
-		error = hidpp20_battery_get_level_status(sc, dev->d_id,
-		    dev->d_battery.feature_idx,
-		    &dev->d_battery.level, &dev->d_battery.status);
-		if (error) {
-			DPRINTF("%s: battery status failure: device_id=%d, "
-			    "error=%d\n",
-			    __func__, dev->d_id, error);
-			return;
-		}
-
-		charging = hidpp20_battery_status_is_charging(
-		    dev->d_battery.status);
-
-		dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
-		dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
-		if (dev->d_battery.nlevels < 10) {
-			/*
-			 * According to the HID++ 2.0 specification, less than
-			 * 10 levels should be mapped to the following 4 levels:
-			 *
-			 * [0, 10]   critical
-			 * [11, 30]  low
-			 * [31, 80]  good
-			 * [81, 100] full
-			 *
-			 * Since sensors are limited to 3 valid statuses, clamp
-			 * it even further. Unless the battery is charging in
-			 * which the level cannot be trusted.
-			 */
-			if (charging)
-				dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
-			else if (dev->d_battery.level <= 10)
-				dev->d_battery.sens[0].status = SENSOR_S_CRIT;
-			else if (dev->d_battery.level <= 30)
-				dev->d_battery.sens[0].status = SENSOR_S_WARN;
-			else
-				dev->d_battery.sens[0].status = SENSOR_S_OK;
-		} else {
-			/*
-			 * XXX the device supports battery mileage. The current
-			 * level must be checked against resp.fap.params[3]
-			 * given by hidpp20_battery_get_capability().
-			 */
-			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
-		}
-
-		if (dev->d_battery.rechargeable)
-			dev->d_battery.sens[2].value = charging;
+	error = hidpp20_battery_get_level_status(sc, dev->d_id,
+	    dev->d_battery.feature_idx, &dev->d_battery.level,
+	    &dev->d_battery.status);
+	if (error) {
+		DPRINTF("%s: battery status failure: device_id=%d, error=%d\n",
+		    __func__, dev->d_id, error);
+		return;
 	}
+
+	charging = hidpp20_battery_status_is_charging(
+	    dev->d_battery.status);
+
+	dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
+	dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
+	if (dev->d_battery.nlevels < 10) {
+		/*
+		 * According to the HID++ 2.0 specification, less than
+		 * 10 levels should be mapped to the following 4 levels:
+		 *
+		 * [0, 10]   critical
+		 * [11, 30]  low
+		 * [31, 80]  good
+		 * [81, 100] full
+		 *
+		 * Since sensors are limited to 3 valid statuses, clamp
+		 * it even further. Unless the battery is charging in
+		 * which the level cannot be trusted.
+		 */
+		if (charging)
+			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
+		else if (dev->d_battery.level <= 10)
+			dev->d_battery.sens[0].status = SENSOR_S_CRIT;
+		else if (dev->d_battery.level <= 30)
+			dev->d_battery.sens[0].status = SENSOR_S_WARN;
+		else
+			dev->d_battery.sens[0].status = SENSOR_S_OK;
+	} else {
+		/*
+		 * XXX the device supports battery mileage. The current
+		 * level must be checked against resp.fap.params[3]
+		 * given by hidpp20_battery_get_capability().
+		 */
+		dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
+	}
+
+	if (dev->d_battery.rechargeable)
+		dev->d_battery.sens[2].value = charging;
 }
 
 /*
