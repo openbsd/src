@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.97 2022/11/08 08:15:39 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.98 2022/11/26 17:14:40 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -781,8 +781,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		}
 		for (i = 0; i < p.res->asz; i++) {
 			if (p.res->as[i].type == CERT_AS_INHERIT) {
-				warnx("%s: inherited AS numbers in BGPsec cert",
-				    p.fn);
+				warnx("%s: inherit elements not allowed in EE"
+				    " cert", p.fn);
 				goto out;
 			}
 		}

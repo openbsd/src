@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.18 2022/11/02 12:46:49 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.19 2022/11/26 17:14:40 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -419,7 +419,7 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	}
 
 	if (x509_any_inherits(*x509)) {
-		warnx("%s: inherit elements not allowed", fn);
+		warnx("%s: inherit elements not allowed in EE cert", fn);
 		goto out;
 	}
 
