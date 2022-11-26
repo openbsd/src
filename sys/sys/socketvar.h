@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.111 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.112 2022/11/26 17:52:35 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -160,6 +160,7 @@ struct socket {
 
 #ifdef _KERNEL
 
+#include <sys/protosw.h>
 #include <lib/libkern/libkern.h>
 
 void	soassertlocked(struct socket *);
@@ -229,31 +230,39 @@ soreadable(struct socket *so)
 }
 
 /* can we write something to so? */
-#define	sowriteable(so) \
-    ((sbspace((so), &(so)->so_snd) >= (so)->so_snd.sb_lowat && \
-	(((so)->so_state & SS_ISCONNECTED) || \
-	  ((so)->so_proto->pr_flags & PR_CONNREQUIRED)==0)) || \
-    ((so)->so_state & SS_CANTSENDMORE) || (so)->so_error)
+static inline int
+sowriteable(struct socket *so)
+{
+	soassertlocked(so);
+	return ((sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat &&
+	    ((so->so_state & SS_ISCONNECTED) ||
+	    (so->so_proto->pr_flags & PR_CONNREQUIRED)==0)) ||
+	    (so->so_state & SS_CANTSENDMORE) || so->so_error);
+}
 
 /* adjust counters in sb reflecting allocation of m */
-#define	sballoc(so, sb, m) do {						\
-	(sb)->sb_cc += (m)->m_len;					\
-	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME)	\
-		(sb)->sb_datacc += (m)->m_len;				\
-	(sb)->sb_mbcnt += MSIZE;					\
-	if ((m)->m_flags & M_EXT)					\
-		(sb)->sb_mbcnt += (m)->m_ext.ext_size;			\
-} while (/* CONSTCOND */ 0)
+static inline void
+sballoc(struct socket *so, struct sockbuf *sb, struct mbuf *m)
+{
+	sb->sb_cc += m->m_len;
+	if (m->m_type != MT_CONTROL && m->m_type != MT_SONAME)
+		sb->sb_datacc += m->m_len;
+	sb->sb_mbcnt += MSIZE;
+	if (m->m_flags & M_EXT)
+		sb->sb_mbcnt += m->m_ext.ext_size;
+}
 
 /* adjust counters in sb reflecting freeing of m */
-#define	sbfree(so, sb, m) do {						\
-	(sb)->sb_cc -= (m)->m_len;					\
-	if ((m)->m_type != MT_CONTROL && (m)->m_type != MT_SONAME)	\
-		(sb)->sb_datacc -= (m)->m_len;				\
-	(sb)->sb_mbcnt -= MSIZE;					\
-	if ((m)->m_flags & M_EXT)					\
-		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
-} while (/* CONSTCOND */ 0)
+static inline void
+sbfree(struct socket *so, struct sockbuf *sb, struct mbuf *m)
+{
+	sb->sb_cc -= m->m_len;
+	if (m->m_type != MT_CONTROL && m->m_type != MT_SONAME)
+		sb->sb_datacc -= m->m_len;
+	sb->sb_mbcnt -= MSIZE;
+	if (m->m_flags & M_EXT)
+		sb->sb_mbcnt -= m->m_ext.ext_size;
+}
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.

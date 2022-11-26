@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.58 2022/10/17 14:49:02 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.59 2022/11/26 17:52:35 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -52,6 +52,9 @@
  * The userreq routine interfaces protocols to the system and is
  * described below.
  */
+
+#ifndef _SYS_PROTOSW_H_
+#define _SYS_PROTOSW_H_
 
 struct mbuf;
 struct sockaddr;
@@ -413,3 +416,5 @@ pru_connect2(struct socket *so1, struct socket *so2)
 }
 
 #endif
+
+#endif /* _SYS_PROTOSW_H_ */
