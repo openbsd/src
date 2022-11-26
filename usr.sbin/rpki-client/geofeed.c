@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.2 2022/11/26 15:45:47 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.3 2022/11/26 16:42:04 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -233,7 +233,7 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 		goto out;
 
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
-		warnx("%s: missing AIA, AKI, SIA, or SKI X509 extension", fn);
+		warnx("%s: missing AIA, AKI, or SKI X509 extension", fn);
 		goto out;
 	}
 
