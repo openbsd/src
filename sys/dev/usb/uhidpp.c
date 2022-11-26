@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.36 2022/11/26 06:29:50 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.37 2022/11/26 06:30:08 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -197,8 +197,6 @@ struct uhidpp_device {
 	struct {
 		struct ksensor sens[UHIDPP_NSENSORS];
 		uint8_t feature_idx;
-		uint8_t level;
-		uint8_t status;
 		uint8_t nlevels;
 		uint8_t rechargeable;
 	} d_battery;
@@ -998,13 +996,10 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
 		level = 100;
 		status = 0;
 	}
-	dev->d_battery.level = level;
-	dev->d_battery.status = status;
 
-	charging = hidpp20_battery_status_is_charging(
-	    dev->d_battery.status);
+	charging = hidpp20_battery_status_is_charging(status);
 
-	dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
+	dev->d_battery.sens[0].value = level * 1000;
 	dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
 	if (dev->d_battery.nlevels < 10) {
 		/*
@@ -1022,9 +1017,9 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
 		 */
 		if (charging)
 			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
-		else if (dev->d_battery.level <= 10)
+		else if (level <= 10)
 			dev->d_battery.sens[0].status = SENSOR_S_CRIT;
-		else if (dev->d_battery.level <= 30)
+		else if (level <= 30)
 			dev->d_battery.sens[0].status = SENSOR_S_WARN;
 		else
 			dev->d_battery.sens[0].status = SENSOR_S_OK;
