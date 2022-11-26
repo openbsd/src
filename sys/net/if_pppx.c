@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.123 2022/11/19 15:12:38 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.124 2022/11/26 17:50:26 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -57,6 +57,7 @@
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
 #include <sys/selinfo.h>
+#include <sys/refcnt.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -132,7 +133,7 @@ struct pppx_dev {
 	/* queue of packets for userland to service - protected by splnet */
 	struct mbuf_queue	pxd_svcq;
 	int			pxd_waiting;	/* [N] */
-	LIST_HEAD(,pppx_if)	pxd_pxis;	/* [N] */
+	LIST_HEAD(,pppx_if)	pxd_pxis;	/* [K] */
 };
 
 LIST_HEAD(, pppx_dev)		pppx_devs =
@@ -150,11 +151,12 @@ struct pppx_if_key {
 struct pppx_if {
 	struct pppx_if_key	pxi_key;		/* [I] must be first
 							    in the struct */
+	struct refcnt		pxi_refcnt;
 
-	RBT_ENTRY(pppx_if)	pxi_entry;		/* [N] */
-	LIST_ENTRY(pppx_if)	pxi_list;		/* [N] */
+	RBT_ENTRY(pppx_if)	pxi_entry;		/* [K] */
+	LIST_ENTRY(pppx_if)	pxi_list;		/* [K] */
 
-	int			pxi_ready;		/* [N] */
+	int			pxi_ready;		/* [K] */
 
 	int			pxi_unit;		/* [I] */
 	struct ifnet		pxi_if;
@@ -172,7 +174,9 @@ RBT_HEAD(pppx_ifs, pppx_if) pppx_ifs = RBT_INITIALIZER(&pppx_ifs); /* [N] */
 RBT_PROTOTYPE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
 int		pppx_if_next_unit(void);
-struct pppx_if *pppx_if_find(struct pppx_dev *, int, int);
+struct pppx_if *pppx_if_find_locked(struct pppx_dev *, int, int);
+static inline struct pppx_if	*pppx_if_find(struct pppx_dev *, int, int);
+static inline void		 pppx_if_rele(struct pppx_if *);
 int		pppx_add_session(struct pppx_dev *,
 		    struct pipex_session_req *);
 int		pppx_del_session(struct pppx_dev *,
@@ -370,11 +374,8 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	th = mtod(top, struct pppx_hdr *);
 	m_adj(top, sizeof(struct pppx_hdr));
 
-	NET_LOCK();
-
 	pxi = pppx_if_find(pxd, th->pppx_id, th->pppx_proto);
 	if (pxi == NULL) {
-		NET_UNLOCK();
 		m_freem(top);
 		return (EINVAL);
 	}
@@ -387,6 +388,8 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	/* strip the tunnel header */
 	proto = ntohl(*(uint32_t *)(th + 1));
 	m_adj(top, sizeof(uint32_t));
+
+	NET_LOCK();
 
 	switch (proto) {
 	case AF_INET:
@@ -405,6 +408,8 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 
 	NET_UNLOCK();
 
+	pppx_if_rele(pxi);
+
 	return (error);
 }
 
@@ -421,17 +426,13 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case PIPEXDSESSION:
-		NET_LOCK();
 		error = pppx_del_session(pxd,
 		    (struct pipex_session_close_req *)addr);
-		NET_UNLOCK();
 		break;
 
 	case PIPEXSIFDESCR:
-		NET_LOCK();
 		error = pppx_set_session_descr(pxd,
 		    (struct pipex_session_descr_req *)addr);
-		NET_UNLOCK();
 		break;
 
 	case FIONBIO:
@@ -526,11 +527,10 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	pxd = pppx_dev_lookup(dev);
 
-	/* XXX */
-	NET_LOCK();
-	while ((pxi = LIST_FIRST(&pxd->pxd_pxis)))
+	while ((pxi = LIST_FIRST(&pxd->pxd_pxis))) {
+		pxi->pxi_ready = 0;
 		pppx_if_destroy(pxd, pxi);
-	NET_UNLOCK();
+	}
 
 	LIST_REMOVE(pxd, pxd_entry);
 
@@ -566,7 +566,7 @@ pppx_if_next_unit(void)
 }
 
 struct pppx_if *
-pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
+pppx_if_find_locked(struct pppx_dev *pxd, int session_id, int protocol)
 {
 	struct pppx_if_key key;
 	struct pppx_if *pxi;
@@ -580,6 +580,23 @@ pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
 		pxi = NULL;
 
 	return pxi;
+}
+
+static inline struct pppx_if *
+pppx_if_find(struct pppx_dev *pxd, int session_id, int protocol)
+{
+	struct pppx_if *pxi;
+
+	if ((pxi = pppx_if_find_locked(pxd, session_id, protocol)))
+		refcnt_take(&pxi->pxi_refcnt);
+	
+	return pxi;
+}
+
+static inline void
+pppx_if_rele(struct pppx_if *pxi)
+{
+	refcnt_rele_wake(&pxi->pxi_refcnt);
 }
 
 int
@@ -609,7 +626,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 	pxi->pxi_session = session;
 
-	NET_LOCK();
 	/* try to set the interface up */
 	unit = pppx_if_next_unit();
 	if (unit < 0) {
@@ -617,6 +633,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		goto out;
 	}
 
+	refcnt_init(&pxi->pxi_refcnt);
 	pxi->pxi_unit = unit;
 	pxi->pxi_key.pxik_session_id = req->pr_session_id;
 	pxi->pxi_key.pxik_protocol = req->pr_protocol;
@@ -627,7 +644,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		goto out;
 	}
 	LIST_INSERT_HEAD(&pxd->pxd_pxis, pxi, pxi_list);
-	NET_UNLOCK();
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
@@ -699,21 +715,18 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 
 	NET_LOCK();
 	SET(ifp->if_flags, IFF_RUNNING);
-	pxi->pxi_ready = 1;
 	NET_UNLOCK();
+	pxi->pxi_ready = 1;
 
 	return (error);
 
 detach:
 	if_detach(ifp);
 
-	NET_LOCK();
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
 		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 out:
-	NET_UNLOCK();
-
 	pool_put(&pppx_if_pl, pxi);
 	pipex_rele_session(session);
 
@@ -725,10 +738,11 @@ pppx_del_session(struct pppx_dev *pxd, struct pipex_session_close_req *req)
 {
 	struct pppx_if *pxi;
 
-	pxi = pppx_if_find(pxd, req->pcr_session_id, req->pcr_protocol);
+	pxi = pppx_if_find_locked(pxd, req->pcr_session_id, req->pcr_protocol);
 	if (pxi == NULL)
 		return (EINVAL);
 
+	pxi->pxi_ready = 0;
 	pipex_export_session_stats(pxi->pxi_session, &req->pcr_stat);
 	pppx_if_destroy(pxd, pxi);
 	return (0);
@@ -744,8 +758,12 @@ pppx_set_session_descr(struct pppx_dev *pxd,
 	if (pxi == NULL)
 		return (EINVAL);
 
+	NET_LOCK();
 	(void)memset(pxi->pxi_if.if_description, 0, IFDESCRSIZE);
 	strlcpy(pxi->pxi_if.if_description, req->pdr_descr, IFDESCRSIZE);
+	NET_UNLOCK();
+
+	pppx_if_rele(pxi);
 
 	return (0);
 }
@@ -756,18 +774,17 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 	struct ifnet *ifp;
 	struct pipex_session *session;
 
-	NET_ASSERT_LOCKED();
 	session = pxi->pxi_session;
 	ifp = &pxi->pxi_if;
-	pxi->pxi_ready = 0;
+
+	refcnt_finalize(&pxi->pxi_refcnt, "pxifinal");
+
+	NET_LOCK();
 	CLR(ifp->if_flags, IFF_RUNNING);
+	NET_UNLOCK();
 
 	pipex_unlink_session(session);
-
-	/* XXXSMP breaks atomicity */
-	NET_UNLOCK();
 	if_detach(ifp);
-	NET_LOCK();
 
 	pipex_rele_session(session);
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
