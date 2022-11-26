@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.149 2022/07/15 17:57:27 kettenis Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.150 2022/11/26 06:20:18 anton Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/task.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/errno.h>
@@ -82,6 +83,8 @@ struct wsscreen_internal {
 
 struct wsscreen {
 	struct wsscreen_internal *scr_dconf;
+
+	struct task	scr_emulbell_task;
 
 	struct tty *scr_tty;
 	int	scr_hold_screen;		/* hold tty output */
@@ -165,6 +168,8 @@ struct wsdisplay_softc {
 	int sc_focusidx;	/* available only if sc_focus isn't null */
 	struct wsscreen *sc_focus;
 
+	struct taskq *sc_taskq;
+
 #ifdef HAVE_BURNER_SUPPORT
 	struct timeout sc_burner;
 	int	sc_burnoutintvl;	/* delay before blanking (ms) */
@@ -203,6 +208,8 @@ void	wsdisplay_emul_attach(struct device *, struct device *, void *);
 int	wsdisplay_emul_detach(struct device *, int);
 
 int	wsdisplay_activate(struct device *, int);
+
+void	wsdisplay_emulbell_task(void *);
 
 struct cfdriver wsdisplay_cd = {
 	NULL, "wsdisplay", DV_TTY
@@ -304,6 +311,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 		dconf->scrdata = type;
 	}
 
+	task_set(&scr->scr_emulbell_task, wsdisplay_emulbell_task, scr);
 	scr->scr_dconf = dconf;
 	scr->scr_tty = ttymalloc(0);
 	scr->sc = sc;
@@ -327,6 +335,7 @@ wsscreen_detach(struct wsscreen *scr)
 	}
 	(*scr->scr_dconf->wsemul->detach)(scr->scr_dconf->wsemulcookie,
 	    &ccol, &crow);
+	taskq_del_barrier(scr->sc->sc_taskq, &scr->scr_emulbell_task);
 	free(scr->scr_dconf, M_DEVBUF, sizeof(*scr->scr_dconf));
 	free(scr, M_DEVBUF, sizeof(*scr));
 }
@@ -653,6 +662,8 @@ wsdisplay_common_detach(struct wsdisplay_softc *sc, int flags)
 	}
 #endif
 
+	taskq_destroy(sc->sc_taskq);
+
 	return (0);
 }
 
@@ -720,6 +731,8 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 
 	sc->sc_isconsole = console;
 	sc->sc_resumescreen = WSDISPLAY_NULLSCREEN;
+
+	sc->sc_taskq = taskq_create(sc->sc_dv.dv_xname, 1, IPL_TTY, 0);
 
 	if (console) {
 		KASSERT(wsdisplay_console_initted);
@@ -1588,7 +1601,15 @@ wsdisplay_emulbell(void *v)
 	if (scr->scr_flags & SCR_GRAPHICS) /* can this happen? */
 		return;
 
-	(void) wsdisplay_internal_ioctl(scr->sc, scr, WSKBDIO_BELL, NULL,
+	task_add(scr->sc->sc_taskq, &scr->scr_emulbell_task);
+}
+
+void
+wsdisplay_emulbell_task(void *v)
+{
+	struct wsscreen *scr = v;
+
+	(void)wsdisplay_internal_ioctl(scr->sc, scr, WSKBDIO_BELL, NULL,
 	    FWRITE, NULL);
 }
 
