@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.45 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.46 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,8 +66,8 @@
 #include <openssl/err.h>
 #include <openssl/sha.h>
 
-#include "bn_lcl.h"
-#include "dsa_locl.h"
+#include "bn_local.h"
+#include "dsa_local.h"
 
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,

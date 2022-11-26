@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_cfb64.c,v 1.7 2022/11/11 12:18:25 jsing Exp $ */
+/* $OpenBSD: bf_cfb64.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,7 @@
 
 #include <openssl/blowfish.h>
 
-#include "bf_locl.h"
+#include "bf_local.h"
 
 /*
  * The input and output encrypted as though 64bit cfb mode is being

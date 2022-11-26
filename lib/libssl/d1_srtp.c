@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.31 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.32 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,8 +123,8 @@
 #ifndef OPENSSL_NO_SRTP
 
 #include "bytestring.h"
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 #include "srtp.h"
 
 static const SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {

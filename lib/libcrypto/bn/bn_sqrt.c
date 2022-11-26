@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.13 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.14 2022/11/26 16:08:51 tb Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -57,7 +57,7 @@
 
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /*
  * Returns 'ret' such that ret^2 == a (mod p), if it exists, using the

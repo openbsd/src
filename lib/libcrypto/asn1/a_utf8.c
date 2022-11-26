@@ -1,4 +1,4 @@
-/* $OpenBSD: a_utf8.c,v 1.8 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_utf8.c,v 1.9 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
 
 #include <openssl/asn1.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 /* UTF8 utilities */
 

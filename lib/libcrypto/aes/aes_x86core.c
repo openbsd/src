@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_x86core.c,v 1.9 2018/04/03 21:59:37 tb Exp $ */
+/* $OpenBSD: aes_x86core.c,v 1.10 2022/11/26 16:08:50 tb Exp $ */
 /**
  * rijndael-alg-fst.c
  *
@@ -43,7 +43,7 @@
 
 #include <stdlib.h>
 #include <openssl/aes.h>
-#include "aes_locl.h"
+#include "aes_local.h"
 
 /*
  * These two parameters control which table, 256-byte or 2KB, is

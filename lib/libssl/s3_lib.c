@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.241 2022/11/11 17:15:26 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.242 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,8 +159,8 @@
 #include <openssl/opensslconf.h>
 
 #include "bytestring.h"
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 #include "tls_content.h"

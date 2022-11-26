@@ -1,4 +1,4 @@
-/* $OpenBSD: x_req.c,v 1.18 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_req.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* X509_REQ_INFO is handled in an unusual way to get round
  * invalid encodings. Some broken certificate requests don't

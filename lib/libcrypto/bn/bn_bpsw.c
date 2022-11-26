@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.7 2022/08/31 21:34:14 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -18,7 +18,7 @@
 
 #include <openssl/bn.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include "bn_prime.h"
 
 /*

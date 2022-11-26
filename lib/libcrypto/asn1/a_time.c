@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.35 2022/11/08 12:56:00 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.36 2022/11/26 16:08:50 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -67,7 +67,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 const ASN1_ITEM ASN1_TIME_it = {
 	.itype = ASN1_ITYPE_MSTRING,

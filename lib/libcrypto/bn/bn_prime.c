@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.27 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.28 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,7 @@
 
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /* NB: these functions have been "upgraded", the deprecated versions (which are
  * compatibility wrappers using these functions) are in bn_depr.c.

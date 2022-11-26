@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.29 2022/11/11 11:25:18 beck Exp $ */
+/* $OpenBSD: hmac.c,v 1.30 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "hmac_local.h"
 
 int

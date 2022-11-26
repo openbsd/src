@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.54 2022/01/20 11:10:11 inoguchi Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.55 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,8 +118,8 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 
-#include "bn_lcl.h"
-#include "rsa_locl.h"
+#include "bn_local.h"
+#include "rsa_local.h"
 
 static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.5 2022/05/24 20:20:19 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.6 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,8 +116,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 /*
  * ASN1_ITEM version of dup: this follows the model above except we don't need

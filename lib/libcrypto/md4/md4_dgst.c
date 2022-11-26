@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_dgst.c,v 1.16 2015/09/14 01:45:03 doug Exp $ */
+/* $OpenBSD: md4_dgst.c,v 1.17 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
-#include "md4_locl.h"
+#include "md4_local.h"
 
 /* Implemented from RFC1186 The MD4 Message-Digest Algorithm
  */

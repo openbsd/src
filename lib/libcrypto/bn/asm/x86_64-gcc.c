@@ -1,5 +1,5 @@
-/* $OpenBSD: x86_64-gcc.c,v 1.6 2015/09/12 09:04:12 miod Exp $ */
-#include "../bn_lcl.h"
+/* $OpenBSD: x86_64-gcc.c,v 1.7 2022/11/26 16:08:51 tb Exp $ */
+#include "../bn_local.h"
 /*
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *

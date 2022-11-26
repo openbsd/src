@@ -1,4 +1,4 @@
-/* $OpenBSD: des_locl.h,v 1.19 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: des_local.h,v 1.1 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

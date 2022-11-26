@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.37 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: x_name.c,v 1.38 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "x509_lcl.h"
+#include "asn1_local.h"
+#include "x509_local.h"
 
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
 DECLARE_STACK_OF(STACK_OF_X509_NAME_ENTRY)

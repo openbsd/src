@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_asn1.c,v 1.11 2022/09/03 16:01:23 jsing Exp $ */
+/* $OpenBSD: ecs_asn1.c,v 1.12 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,7 @@
  *
  */
 
-#include "ecs_locl.h"
+#include "ecs_local.h"
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 

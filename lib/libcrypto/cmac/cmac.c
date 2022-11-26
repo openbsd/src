@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.11 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: cmac.c,v 1.12 2022/11/26 16:08:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -57,7 +57,7 @@
 
 #include <openssl/cmac.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 struct CMAC_CTX_st {
 	/* Cipher context to use */

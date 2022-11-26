@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.10 2022/11/10 15:17:30 jsing Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.11 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int
 update_oneshot_only(EVP_MD_CTX *ctx, const void *data, size_t datalen)

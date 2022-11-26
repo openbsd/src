@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.19 2022/09/15 07:04:19 jsing Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.20 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
 #include <openssl/objects.h>
 #include <openssl/rc2.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);

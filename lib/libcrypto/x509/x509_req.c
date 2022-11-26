@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.30 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_req.c,v 1.31 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,8 +70,8 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "evp_locl.h"
-#include "x509_lcl.h"
+#include "evp_local.h"
+#include "x509_local.h"
 
 X509_REQ *
 X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)

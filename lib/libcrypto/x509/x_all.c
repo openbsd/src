@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.28 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x_all.c,v 1.29 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 X509 *
 d2i_X509_bio(BIO *bp, X509 **x509)

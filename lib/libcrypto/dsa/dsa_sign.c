@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_sign.c,v 1.22 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_sign.c,v 1.23 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,7 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 DSA_SIG *
 DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)

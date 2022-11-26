@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.19 2022/01/14 08:16:13 tb Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.20 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -56,7 +56,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 
 static const ASN1_TEMPLATE CMS_IssuerAndSerialNumber_seq_tt[] = {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.28 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.29 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -34,7 +34,7 @@
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
 #include <openssl/err.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 #if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
   /* even with gcc, the typedef won't work for 32-bit platforms */

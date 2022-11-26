@@ -1,4 +1,4 @@
-/* $OpenBSD: cbc_cksm.c,v 1.7 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: cbc_cksm.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "des_locl.h"
+#include "des_local.h"
 
 DES_LONG DES_cbc_cksum(const unsigned char *in, DES_cblock *output,
 		       long length, DES_key_schedule *schedule,

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.32 2022/05/24 19:59:14 tb Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.33 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,9 +71,9 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
-#include "x509_lcl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
+#include "x509_local.h"
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int

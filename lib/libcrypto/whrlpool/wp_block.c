@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_block.c,v 1.14 2021/11/09 18:40:21 bcook Exp $ */
+/* $OpenBSD: wp_block.c,v 1.15 2022/11/26 16:08:54 tb Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -40,7 +40,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 
-#include "wp_locl.h"
+#include "wp_local.h"
 
 typedef unsigned char		u8;
 #if defined(_LP64)

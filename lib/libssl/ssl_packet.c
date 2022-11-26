@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_packet.c,v 1.14 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_packet.c,v 1.15 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -16,7 +16,7 @@
  */
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static int
 ssl_is_sslv2_client_hello(CBS *header)

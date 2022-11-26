@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_skey.c,v 1.16 2022/11/11 12:23:49 jsing Exp $ */
+/* $OpenBSD: bf_skey.c,v 1.17 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/crypto.h>
 #include <openssl/blowfish.h>
 
-#include "bf_locl.h"
+#include "bf_local.h"
 
 static const BF_KEY bf_init = {
 	.P = {

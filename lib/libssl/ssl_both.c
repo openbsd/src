@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.44 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.45 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,8 +124,8 @@
 #include <openssl/x509.h>
 
 #include "bytestring.h"
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 
 /*
  * Send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or

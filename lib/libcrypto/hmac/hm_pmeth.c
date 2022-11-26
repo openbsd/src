@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.14 2022/11/18 14:45:10 tb Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.15 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -64,7 +64,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "hmac_local.h"
 
 /* HMAC pkey context structure */

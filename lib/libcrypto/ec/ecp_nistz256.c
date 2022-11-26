@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecp_nistz256.c,v 1.13 2022/11/24 01:30:01 jsing Exp $	*/
+/*	$OpenBSD: ecp_nistz256.c,v 1.14 2022/11/26 16:08:52 tb Exp $	*/
 /* Copyright (c) 2014, Intel Corporation.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -46,7 +46,7 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 #if BN_BITS2 != 64
 #define	TOBN(hi,lo)	lo,hi

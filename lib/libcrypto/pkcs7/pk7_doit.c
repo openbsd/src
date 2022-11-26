@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.48 2022/11/12 12:11:14 beck Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.49 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,8 +65,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "evp_locl.h"
-#include "x509_lcl.h"
+#include "evp_local.h"
+#include "x509_local.h"
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);

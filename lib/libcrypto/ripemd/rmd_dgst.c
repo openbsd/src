@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_dgst.c,v 1.17 2014/10/28 07:35:59 jsg Exp $ */
+/* $OpenBSD: rmd_dgst.c,v 1.18 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "rmd_locl.h"
+#include "rmd_local.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.120 2022/10/20 15:22:51 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.121 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,7 +142,7 @@
 #include <openssl/engine.h>
 #endif
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);

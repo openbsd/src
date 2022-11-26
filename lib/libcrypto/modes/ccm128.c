@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.5 2019/05/08 14:18:25 tb Exp $ */
+/* $OpenBSD: ccm128.c,v 1.6 2022/11/26 16:08:53 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -49,7 +49,7 @@
  */
 
 #include <openssl/crypto.h>
-#include "modes_lcl.h"
+#include "modes_local.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG

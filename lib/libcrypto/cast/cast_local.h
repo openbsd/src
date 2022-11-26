@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_locl.h,v 1.2 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: cast_local.h,v 1.1 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,13 +144,73 @@
                          *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
                          *((c)++)=(unsigned char)(((l)     )&0xff))
 
-#define C_RC2(n) \
-	t=(x0+(x1& ~x3)+(x2&x3)+ *(p0++))&0xffff; \
-	x0=(t<<1)|(t>>15); \
-	t=(x1+(x2& ~x0)+(x3&x0)+ *(p0++))&0xffff; \
-	x1=(t<<2)|(t>>14); \
-	t=(x2+(x3& ~x1)+(x0&x1)+ *(p0++))&0xffff; \
-	x2=(t<<3)|(t>>13); \
-	t=(x3+(x0& ~x2)+(x1&x2)+ *(p0++))&0xffff; \
-	x3=(t<<5)|(t>>11);
+/* only invoked with 0 <= n <= 31 */
+#define ROTL(a,n)     ((((a)<<(n))&0xffffffffL)|((a)>>((32-(n))&31)))
 
+#define C_M    0x3fc
+#define C_0    22L
+#define C_1    14L
+#define C_2     6L
+#define C_3     2L /* left shift */
+
+/* The rotate has an extra 16 added to it to help the x86 asm */
+#if defined(CAST_PTR)
+#define E_CAST(n,key,L,R,OP1,OP2,OP3) \
+	{ \
+	int i; \
+	t=(key[n*2] OP1 R)&0xffffffffL; \
+	i=key[n*2+1]; \
+	t=ROTL(t,i); \
+	L^= (((((*(CAST_LONG *)((unsigned char *) \
+			CAST_S_table0+((t>>C_2)&C_M)) OP2 \
+		*(CAST_LONG *)((unsigned char *) \
+			CAST_S_table1+((t<<C_3)&C_M)))&0xffffffffL) OP3 \
+		*(CAST_LONG *)((unsigned char *) \
+			CAST_S_table2+((t>>C_0)&C_M)))&0xffffffffL) OP1 \
+		*(CAST_LONG *)((unsigned char *) \
+			CAST_S_table3+((t>>C_1)&C_M)))&0xffffffffL; \
+	}
+#elif defined(CAST_PTR2)
+#define E_CAST(n,key,L,R,OP1,OP2,OP3) \
+	{ \
+	int i; \
+	CAST_LONG u,v,w; \
+	w=(key[n*2] OP1 R)&0xffffffffL; \
+	i=key[n*2+1]; \
+	w=ROTL(w,i); \
+	u=w>>C_2; \
+	v=w<<C_3; \
+	u&=C_M; \
+	v&=C_M; \
+	t= *(CAST_LONG *)((unsigned char *)CAST_S_table0+u); \
+	u=w>>C_0; \
+	t=(t OP2 *(CAST_LONG *)((unsigned char *)CAST_S_table1+v))&0xffffffffL;\
+	v=w>>C_1; \
+	u&=C_M; \
+	v&=C_M; \
+	t=(t OP3 *(CAST_LONG *)((unsigned char *)CAST_S_table2+u)&0xffffffffL);\
+	t=(t OP1 *(CAST_LONG *)((unsigned char *)CAST_S_table3+v)&0xffffffffL);\
+	L^=(t&0xffffffff); \
+	}
+#else
+#define E_CAST(n,key,L,R,OP1,OP2,OP3) \
+	{ \
+	CAST_LONG a,b,c,d; \
+	t=(key[n*2] OP1 R)&0xffffffff; \
+	t=ROTL(t,(key[n*2+1])); \
+	a=CAST_S_table0[(t>> 8)&0xff]; \
+	b=CAST_S_table1[(t    )&0xff]; \
+	c=CAST_S_table2[(t>>24)&0xff]; \
+	d=CAST_S_table3[(t>>16)&0xff]; \
+	L^=(((((a OP2 b)&0xffffffffL) OP3 c)&0xffffffffL) OP1 d)&0xffffffffL; \
+	}
+#endif
+
+extern const CAST_LONG CAST_S_table0[256];
+extern const CAST_LONG CAST_S_table1[256];
+extern const CAST_LONG CAST_S_table2[256];
+extern const CAST_LONG CAST_S_table3[256];
+extern const CAST_LONG CAST_S_table4[256];
+extern const CAST_LONG CAST_S_table5[256];
+extern const CAST_LONG CAST_S_table6[256];
+extern const CAST_LONG CAST_S_table7[256];

@@ -1,4 +1,4 @@
-/* $OpenBSD: enc_writ.c,v 1.14 2015/02/12 03:54:07 jsing Exp $ */
+/* $OpenBSD: enc_writ.c,v 1.15 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 
 #include <openssl/opensslconf.h>
 
-#include "des_locl.h"
+#include "des_local.h"
 
 /*
  * WARNINGS:

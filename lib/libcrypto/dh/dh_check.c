@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.25 2022/07/13 18:38:20 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.26 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 #include "dh_local.h"
 
 #define DH_NUMBER_ITERATIONS_FOR_PRIME 64

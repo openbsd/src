@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_cvt.c,v 1.7 2021/04/20 17:04:13 tb Exp $ */
+/* $OpenBSD: ec_cvt.c,v 1.8 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -72,7 +72,7 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/err.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 EC_GROUP *
 EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,

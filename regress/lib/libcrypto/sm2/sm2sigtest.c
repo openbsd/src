@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2sigtest.c,v 1.1.1.1 2021/08/18 16:06:56 tb Exp $ */
+/*	$OpenBSD: sm2sigtest.c,v 1.2 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -35,7 +35,7 @@ main(int argc, char *argv[])
 }
 #else
 #include <openssl/sm2.h>
-#include "sm2_locl.h"
+#include "sm2_local.h"
 
 static EC_GROUP *
 create_EC_group(const char *p_hex, const char *a_hex, const char *b_hex,

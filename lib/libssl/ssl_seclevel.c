@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.26 2022/10/02 16:36:41 jsing Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.27 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2020-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include <openssl/x509v3.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static int
 ssl_security_normalize_level(const SSL_CTX *ctx, const SSL *ssl, int *out_level)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.44 2022/08/21 19:18:57 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.45 2022/11/26 16:08:55 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/ssl.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_ERR
 

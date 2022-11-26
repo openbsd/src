@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.29 2022/07/24 20:02:04 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.30 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -65,9 +65,9 @@
 #include <openssl/pkcs7.h>
 #include <openssl/ts.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "ts_local.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* Private function declarations. */
 

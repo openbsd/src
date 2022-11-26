@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_locl.h,v 1.7 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: ui_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
 
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.

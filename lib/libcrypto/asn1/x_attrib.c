@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.17 2022/05/09 19:19:33 jsing Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.18 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /*
  * XXX - remove X509_ATTRIBUTE_SET_it with next major bump.

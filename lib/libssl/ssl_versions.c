@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.25 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.26 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static uint16_t
 ssl_dtls_to_tls_version(uint16_t dtls_ver)

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha_locl.h,v 1.24 2021/11/09 18:40:21 bcook Exp $ */
+/* $OpenBSD: sha_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *

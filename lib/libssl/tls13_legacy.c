@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.39 2022/10/02 16:36:42 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.40 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <limits.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls13_internal.h"
 
 static ssize_t

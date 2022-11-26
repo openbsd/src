@@ -1,4 +1,4 @@
-/* $OpenBSD: c_enc.c,v 1.7 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: c_enc.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/cast.h>
-#include "cast_lcl.h"
+#include "cast_local.h"
 
 #ifndef OPENBSD_CAST_ASM
 void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)

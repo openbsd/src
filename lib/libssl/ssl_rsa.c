@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.48 2022/08/31 20:49:37 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.49 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static int ssl_get_password_cb_and_arg(SSL_CTX *ctx, SSL *ssl,
     pem_password_cb **passwd_cb, void **passwd_arg);

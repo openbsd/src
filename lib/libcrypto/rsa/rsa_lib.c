@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.43 2022/06/27 12:30:28 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.44 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,8 +67,8 @@
 #include <openssl/lhash.h>
 #include <openssl/rsa.h>
 
-#include "evp_locl.h"
-#include "rsa_locl.h"
+#include "evp_local.h"
+#include "rsa_local.h"
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>

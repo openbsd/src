@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.7 2022/06/10 22:00:15 tb Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.8 2022/11/26 16:08:57 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <err.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 int tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
     const void *seed1, size_t seed1_len, const void *seed2, size_t seed2_len,

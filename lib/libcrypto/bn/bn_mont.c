@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.31 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.32 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,7 +119,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 #define MONT_WORD /* use the faster word-based algorithm */
 

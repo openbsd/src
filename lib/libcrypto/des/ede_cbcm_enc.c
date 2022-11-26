@@ -1,4 +1,4 @@
-/* $OpenBSD: ede_cbcm_enc.c,v 1.6 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: ede_cbcm_enc.c,v 1.7 2022/11/26 16:08:51 tb Exp $ */
 /* Written by Ben Laurie <ben@algroup.co.uk> for the OpenSSL
  * project 13 Feb 1999.
  */
@@ -71,7 +71,7 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_DESCBCM is defined */
 
 #ifndef OPENSSL_NO_DESCBCM
-#include "des_locl.h"
+#include "des_local.h"
 
 void DES_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 	     long length, DES_key_schedule *ks1, DES_key_schedule *ks2,

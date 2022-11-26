@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_dgst.c,v 1.14 2014/10/28 07:35:59 jsg Exp $ */
+/* $OpenBSD: md5_dgst.c,v 1.15 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <stdio.h>
-#include "md5_locl.h"
+#include "md5_local.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 

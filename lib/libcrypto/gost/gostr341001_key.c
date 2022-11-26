@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.9 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.10 2022/11/26 16:08:53 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -58,7 +58,7 @@
 #include <openssl/err.h>
 #include <openssl/gost.h>
 #include <openssl/objects.h>
-#include "gost_locl.h"
+#include "gost_local.h"
 
 struct gost_key_st {
 	EC_GROUP *group;

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_pubkey.c,v 1.3 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: a_pubkey.c,v 1.4 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,7 +76,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 EVP_PKEY *
 d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)

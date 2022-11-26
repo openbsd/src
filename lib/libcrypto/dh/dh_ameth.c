@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.24 2022/06/27 12:36:05 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.25 2022/11/26 16:08:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -64,9 +64,9 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 #include "dh_local.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static void
 int_dh_free(EVP_PKEY *pkey)

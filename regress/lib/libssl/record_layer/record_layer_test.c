@@ -1,4 +1,4 @@
-/* $OpenBSD: record_layer_test.c,v 1.5 2022/06/10 22:00:15 tb Exp $ */
+/* $OpenBSD: record_layer_test.c,v 1.6 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -18,7 +18,7 @@
 #include <err.h>
 #include <string.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls13_internal.h"
 #include "tls13_record.h"
 

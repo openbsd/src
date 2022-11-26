@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.15 2022/09/10 17:39:47 jsing Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.16 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/camellia.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* Camellia subkey Structure */
 typedef struct {

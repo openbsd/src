@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.33 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.34 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -70,9 +70,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "bn_lcl.h"
-#include "evp_locl.h"
-#include "rsa_locl.h"
+#include "bn_local.h"
+#include "evp_local.h"
+#include "rsa_local.h"
 
 /* RSA pkey context structure */
 

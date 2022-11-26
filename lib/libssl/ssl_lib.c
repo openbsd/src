@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.307 2022/11/07 11:58:45 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.308 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,8 +159,8 @@
 #endif
 
 #include "bytestring.h"
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 #include "tls12_internal.h"

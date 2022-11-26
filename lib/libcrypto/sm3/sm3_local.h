@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3_locl.h,v 1.1 2018/11/11 06:53:31 tb Exp $	*/
+/*	$OpenBSD: sm3_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *

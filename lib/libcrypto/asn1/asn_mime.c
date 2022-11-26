@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.29 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.30 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -62,8 +62,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 /* Generalised MIME like utilities for streaming ASN1. Although many
  * have a PKCS7/CMS like flavour others are more general purpose.

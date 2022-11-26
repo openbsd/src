@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.24 2022/11/12 12:11:14 beck Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.25 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,9 +62,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
-#include "x509_lcl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
+#include "x509_local.h"
 
 long
 PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)

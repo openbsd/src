@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_lib.c,v 1.12 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: ts_lib.c,v 1.13 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -64,8 +64,8 @@
 #include <openssl/ts.h>
 #include <openssl/x509v3.h>
 
-#include "bn_lcl.h"
-#include "x509_lcl.h"
+#include "bn_local.h"
+#include "x509_local.h"
 
 /* Local function declarations. */
 

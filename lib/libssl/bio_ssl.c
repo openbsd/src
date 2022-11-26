@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.36 2022/11/11 11:25:18 beck Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.37 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
 #include <openssl/ssl.h>
 
 #include "bio_local.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static int ssl_write(BIO *h, const char *buf, int num);
 static int ssl_read(BIO *h, char *buf, int size);

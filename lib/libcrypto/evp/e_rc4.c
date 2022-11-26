@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4.c,v 1.14 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: e_rc4.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/rc4.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* FIXME: surely this is available elsewhere? */
 #define EVP_RC4_KEY_SIZE		16

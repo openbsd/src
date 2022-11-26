@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_locl.h,v 1.3 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: wp_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
 
 #include <openssl/whrlpool.h>
 

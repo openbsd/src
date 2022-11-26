@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.27 2022/09/03 18:45:51 jsing Exp $ */
+/* $OpenBSD: a_enum.c,v 1.28 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,7 +65,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 #include "bytestring.h"
 
 /*

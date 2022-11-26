@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.25 2022/09/15 07:04:19 jsing Exp $ */
+/* $OpenBSD: e_des3.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 typedef struct {
     DES_key_schedule ks1;/* key schedule */

@@ -1,7 +1,4 @@
-/* $OpenBSD: ecs_locl.h,v 1.7 2022/01/14 08:31:03 tb Exp $ */
-/*
- * Written by Nils Larsch for the OpenSSL project
- */
+/* $OpenBSD: ech_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -56,44 +53,47 @@
  *
  */
 
-#ifndef HEADER_ECS_LOCL_H
-#define HEADER_ECS_LOCL_H
+#ifndef HEADER_ECH_LOCL_H
+#define HEADER_ECH_LOCL_H
 
-#include <openssl/ecdsa.h>
+#include <openssl/ecdh.h>
 
 __BEGIN_HIDDEN_DECLS
 
-typedef struct ecdsa_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	ENGINE	*engine;
-	int	flags;
-	const ECDSA_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
-} ECDSA_DATA;
-
-struct ECDSA_SIG_st {
-	BIGNUM *r;
-	BIGNUM *s;
+struct ecdh_method {
+	const char *name;
+	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
+	int flags;
+	char *app_data;
 };
 
-/** ecdsa_check
- * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure
- * and if not it removes the old meth_data and creates a ECDSA_DATA structure.
- * \param  eckey pointer to a EC_KEY object
- * \return pointer to a ECDSA_DATA structure
+/* If this flag is set the ECDH method is FIPS compliant and can be used
+ * in FIPS mode. This is set in the validated module method. If an
+ * application sets this flag in its own methods it is its responsibility
+ * to ensure the result is compliant.
  */
-ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 
-int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
-    BIGNUM **rp);
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
-    const BIGNUM *r, EC_KEY *eckey);
-ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
-    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
+#define ECDH_FLAG_FIPS_METHOD	0x1
+
+typedef struct ecdh_data_st {
+	/* EC_KEY_METH_DATA part */
+	int (*init)(EC_KEY *);
+	/* method specific part */
+	ENGINE	*engine;
+	int	flags;
+	const ECDH_METHOD *meth;
+	CRYPTO_EX_DATA ex_data;
+} ECDH_DATA;
+
+ECDH_DATA *ecdh_check(EC_KEY *);
+
+/*
+ * ECDH Key Derivation Function as defined in ANSI X9.63.
+ */
+int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
+    size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
 
 __END_HIDDEN_DECLS
 
-#endif /* HEADER_ECS_LOCL_H */
+#endif /* HEADER_ECH_LOCL_H */

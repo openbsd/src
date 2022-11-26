@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.126 2022/11/23 07:31:12 tb Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.127 2022/11/26 16:08:55 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -122,9 +122,9 @@
 #include <openssl/evp.h>
 
 #include "bytestring.h"
-#include "dtls_locl.h"
+#include "dtls_local.h"
 #include "pqueue.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls_content.h"
 
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */

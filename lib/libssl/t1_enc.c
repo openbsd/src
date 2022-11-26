@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.156 2022/11/07 11:58:45 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.157 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,8 +143,8 @@
 #include <openssl/md5.h>
 #include <openssl/opensslconf.h>
 
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 
 void
 tls1_cleanup_key_block(SSL *s)

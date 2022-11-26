@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.10 2022/09/10 17:39:47 jsing Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.11 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -58,7 +58,7 @@
 #include <openssl/err.h>
 #include <openssl/gost.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 typedef struct {
 	GOST2814789_KEY ks;

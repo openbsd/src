@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistputil.c,v 1.7 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ecp_nistputil.c,v 1.8 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Written by Bodo Moeller for the OpenSSL project.
  */
@@ -28,7 +28,7 @@
  * Common utility functions for ecp_nistp224.c, ecp_nistp256.c, ecp_nistp521.c.
  */
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 /* Convert an array of points into affine coordinates.
  * (If the point at infinity is found (Z = 0), it remains unchanged.)

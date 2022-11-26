@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_p8e.c,v 1.10 2022/11/12 13:03:28 beck Exp $ */
+/* $OpenBSD: p12_p8e.c,v 1.11 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -61,7 +61,7 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 X509_SIG *
 PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher, const char *pass,

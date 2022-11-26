@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.130 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.131 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -28,7 +28,7 @@
 #include <openssl/opensslconf.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 

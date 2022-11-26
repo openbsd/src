@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.40 2022/08/11 10:36:32 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.41 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,8 +77,8 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "asn1_locl.h"
-#include "x509_lcl.h"
+#include "asn1_local.h"
+#include "x509_local.h"
 
 int
 X509_print_fp(FILE *fp, X509 *x)

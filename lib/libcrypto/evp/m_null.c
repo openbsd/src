@@ -1,4 +1,4 @@
-/* $OpenBSD: m_null.c,v 1.11 2022/01/14 08:38:06 tb Exp $ */
+/* $OpenBSD: m_null.c,v 1.12 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int
 init(EVP_MD_CTX *ctx)

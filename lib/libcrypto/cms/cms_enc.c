@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.21 2022/01/20 10:58:35 inoguchi Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.22 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -61,7 +61,7 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/rand.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 /* CMS EncryptedData Utilities */
 

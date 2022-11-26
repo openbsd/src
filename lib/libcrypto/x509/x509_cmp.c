@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.40 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.41 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,8 +68,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "evp_locl.h"
-#include "x509_lcl.h"
+#include "evp_local.h"
+#include "x509_local.h"
 
 int
 X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)

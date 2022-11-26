@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gost2814789.c,v 1.3 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: m_gost2814789.c,v 1.4 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -57,7 +57,7 @@
 #include <openssl/gost.h>
 #include <openssl/objects.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int
 gost2814789_init(EVP_MD_CTX *ctx)

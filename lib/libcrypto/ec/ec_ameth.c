@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.35 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.36 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,9 +66,9 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "ec_lcl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "ec_local.h"
+#include "evp_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);

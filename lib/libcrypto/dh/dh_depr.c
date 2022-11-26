@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_depr.c,v 1.7 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: dh_depr.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 #ifndef OPENSSL_NO_DEPRECATED
 DH *

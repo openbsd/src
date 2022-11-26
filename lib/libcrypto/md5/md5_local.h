@@ -1,4 +1,4 @@
-/* $OpenBSD: idea_lcl.h,v 1.3 2015/02/07 13:19:15 doug Exp $ */
+/* $OpenBSD: md5_local.h,v 1.1 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,95 +56,77 @@
  * [including the GNU Public Licence.]
  */
 
-/* The new form of this macro (check if the a*b == 0) was suggested by 
- * Colin Plumb <colin@nyx10.cs.du.edu> */
-/* Removal of the inner if from from Wei Dai 24/4/96 */
-#define idea_mul(r,a,b,ul) \
-ul=(unsigned long)a*b; \
-if (ul != 0) \
-	{ \
-	r=(ul&0xffff)-(ul>>16); \
-	r-=((r)>>16); \
-	} \
-else \
-	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ 
+#include <stdlib.h>
+#include <string.h>
 
-/*  7/12/95 - Many thanks to Rhys Weatherley <rweather@us.oracle.com>
- * for pointing out that I was assuming little endian
- * byte order for all quantities what idea
- * actually used bigendian.  No where in the spec does it mention
- * this, it is all in terms of 16 bit numbers and even the example
- * does not use byte streams for the input example :-(.
- * If you byte swap each pair of input, keys and iv, the functions
- * would produce the output as the old version :-(.
+#include <openssl/opensslconf.h>
+
+#include <openssl/md5.h>
+
+#ifdef MD5_ASM
+# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+     defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#  define md5_block_data_order md5_block_asm_data_order
+# elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#  define md5_block_data_order md5_block_asm_data_order
+# endif
+#endif
+
+__BEGIN_HIDDEN_DECLS
+
+void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
+
+__END_HIDDEN_DECLS
+
+#define DATA_ORDER_IS_LITTLE_ENDIAN
+
+#define HASH_LONG		MD5_LONG
+#define HASH_CTX		MD5_CTX
+#define HASH_CBLOCK		MD5_CBLOCK
+#define HASH_UPDATE		MD5_Update
+#define HASH_TRANSFORM		MD5_Transform
+#define HASH_FINAL		MD5_Final
+#define	HASH_MAKE_STRING(c,s)	do {	\
+	unsigned long ll;		\
+	ll=(c)->A; HOST_l2c(ll,(s));	\
+	ll=(c)->B; HOST_l2c(ll,(s));	\
+	ll=(c)->C; HOST_l2c(ll,(s));	\
+	ll=(c)->D; HOST_l2c(ll,(s));	\
+	} while (0)
+#define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
+
+#include "md32_common.h"
+
+/*
+#define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
+#define	G(x,y,z)	(((x) & (z))  |  ((y) & (~(z))))
+*/
+
+/* As pointed out by Wei Dai <weidai@eskimo.com>, the above can be
+ * simplified to the code below.  Wei attributes these optimizations
+ * to Peter Gutmann's SHS code, and he attributes it to Rich Schroeppel.
  */
+#define	F(b,c,d)	((((c) ^ (d)) & (b)) ^ (d))
+#define	G(b,c,d)	((((b) ^ (c)) & (d)) ^ (c))
+#define	H(b,c,d)	((b) ^ (c) ^ (d))
+#define	I(b,c,d)	(((~(d)) | (b)) ^ (c))
 
-/* NOTE - c is not incremented as per n2l */
-#define n2ln(c,l1,l2,n)	{ \
-			c+=n; \
-			l1=l2=0; \
-			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))    ; \
-			case 7: l2|=((unsigned long)(*(--(c))))<< 8; \
-			case 6: l2|=((unsigned long)(*(--(c))))<<16; \
-			case 5: l2|=((unsigned long)(*(--(c))))<<24; \
-			case 4: l1 =((unsigned long)(*(--(c))))    ; \
-			case 3: l1|=((unsigned long)(*(--(c))))<< 8; \
-			case 2: l1|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l1|=((unsigned long)(*(--(c))))<<24; \
-				} \
-			}
+#define R0(a,b,c,d,k,s,t) { \
+	a+=((k)+(t)+F((b),(c),(d))); \
+	a=ROTATE(a,s); \
+	a+=b; };\
 
-/* NOTE - c is not incremented as per l2n */
-#define l2nn(l1,l2,c,n)	{ \
-			c+=n; \
-			switch (n) { \
-			case 8: *(--(c))=(unsigned char)(((l2)    )&0xff); \
-			case 7: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
-			case 6: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
-			case 5: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
-			case 4: *(--(c))=(unsigned char)(((l1)    )&0xff); \
-			case 3: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
-			case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
-			case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
-				} \
-			}
+#define R1(a,b,c,d,k,s,t) { \
+	a+=((k)+(t)+G((b),(c),(d))); \
+	a=ROTATE(a,s); \
+	a+=b; };
 
-#undef n2l
-#define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24L, \
-                         l|=((unsigned long)(*((c)++)))<<16L, \
-                         l|=((unsigned long)(*((c)++)))<< 8L, \
-                         l|=((unsigned long)(*((c)++))))
+#define R2(a,b,c,d,k,s,t) { \
+	a+=((k)+(t)+H((b),(c),(d))); \
+	a=ROTATE(a,s); \
+	a+=b; };
 
-#undef l2n
-#define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>>16L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)>> 8L)&0xff), \
-                         *((c)++)=(unsigned char)(((l)     )&0xff))
-
-#undef s2n
-#define s2n(l,c)	(*((c)++)=(unsigned char)(((l)     )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8L)&0xff))
-
-#undef n2s
-#define n2s(c,l)	(l =((IDEA_INT)(*((c)++)))<< 8L, \
-			 l|=((IDEA_INT)(*((c)++)))      )
-
-#define E_IDEA(num) \
-	x1&=0xffff; \
-	idea_mul(x1,x1,*p,ul); p++; \
-	x2+= *(p++); \
-	x3+= *(p++); \
-	x4&=0xffff; \
-	idea_mul(x4,x4,*p,ul); p++; \
-	t0=(x1^x3)&0xffff; \
-	idea_mul(t0,t0,*p,ul); p++; \
-	t1=(t0+(x2^x4))&0xffff; \
-	idea_mul(t1,t1,*p,ul); p++; \
-	t0+=t1; \
-	x1^=t1; \
-	x4^=t0; \
-	ul=x2^t0; /* do the swap to x3 */ \
-	x2=x3^t1; \
-	x3=ul;
-
+#define R3(a,b,c,d,k,s,t) { \
+	a+=((k)+(t)+I((b),(c),(d))); \
+	a=ROTATE(a,s); \
+	a+=b; };

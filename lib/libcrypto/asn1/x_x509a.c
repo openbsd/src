@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.18 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* X509_CERT_AUX routines. These are used to encode additional
  * user modifiable data about a certificate. This data is

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_skey.c,v 1.3 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_skey.c,v 1.4 2022/11/26 16:08:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, char *str);

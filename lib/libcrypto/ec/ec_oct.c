@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.8 2021/04/20 17:34:33 tb Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.9 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -68,7 +68,7 @@
 #include <openssl/err.h>
 #include <openssl/opensslv.h>
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 int
 EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,

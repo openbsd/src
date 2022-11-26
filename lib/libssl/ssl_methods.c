@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.28 2021/07/26 03:17:38 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.29 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,8 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
-#include "dtls_locl.h"
-#include "ssl_locl.h"
+#include "dtls_local.h"
+#include "ssl_local.h"
 #include "tls13_internal.h"
 
 static const SSL_METHOD DTLS_method_data = {

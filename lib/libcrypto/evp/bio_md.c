@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_md.c,v 1.18 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bio_md.c,v 1.19 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/evp.h>
 
 #include "bio_local.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* BIO_put and BIO_get both add to the digest,
  * BIO_gets returns the digest */

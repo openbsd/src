@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_quic.c,v 1.6 2022/08/30 18:23:40 tb Exp $ */
+/*	$OpenBSD: tls13_quic.c,v 1.7 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -15,8 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <ssl_locl.h>
-
+#include "ssl_local.h"
 #include "tls13_internal.h"
 
 static ssize_t

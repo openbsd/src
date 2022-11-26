@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.1 2018/11/11 06:53:31 tb Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.2 2022/11/26 16:08:54 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -19,7 +19,7 @@
 
 #include <openssl/sm3.h>
 
-#include "sm3_locl.h"
+#include "sm3_local.h"
 
 int
 SM3_Init(SM3_CTX *c)

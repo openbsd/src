@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.21 2019/08/11 14:19:09 jsing Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.22 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -61,7 +61,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 
 CMS_ReceiptRequest *

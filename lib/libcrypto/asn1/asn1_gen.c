@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.19 2022/05/24 19:56:13 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.20 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -62,7 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 #define ASN1_GEN_FLAG		0x10000
 #define ASN1_GEN_FLAG_IMP	(ASN1_GEN_FLAG|1)

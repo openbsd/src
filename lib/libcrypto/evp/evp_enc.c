@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.47 2022/09/13 04:59:18 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.48 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,7 @@
 #include <openssl/engine.h>
 #endif
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 int
 EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,

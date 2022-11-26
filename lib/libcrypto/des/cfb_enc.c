@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb_enc.c,v 1.14 2021/11/09 18:40:21 bcook Exp $ */
+/* $OpenBSD: cfb_enc.c,v 1.15 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "des_locl.h"
+#include "des_local.h"
 #include <endian.h>
 
 /* The input and output are loaded in multiples of 8 bits.

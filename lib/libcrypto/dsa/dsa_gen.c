@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.25 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,8 +68,8 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-#include "bn_lcl.h"
-#include "dsa_locl.h"
+#include "bn_local.h"
+#include "dsa_local.h"
 
 int
 DSA_generate_parameters_ex(DSA *ret, int bits, const unsigned char *seed_in,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.22 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.23 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
 
 #include <openssl/opensslconf.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 #if defined(OPENSSL_NO_ASM) || !defined(OPENSSL_BN_ASM_PART_WORDS)
 /* Here follows specialised variants of bn_add_words() and

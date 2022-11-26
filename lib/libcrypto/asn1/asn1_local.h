@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.41 2022/11/10 14:46:44 jsing Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.1 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */

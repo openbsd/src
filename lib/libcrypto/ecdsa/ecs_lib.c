@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.14 2022/08/31 13:01:01 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -57,7 +57,7 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ecs_locl.h"
+#include "ecs_local.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

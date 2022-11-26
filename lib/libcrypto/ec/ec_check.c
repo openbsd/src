@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.11 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ec_check.c,v 1.12 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,7 @@
  *
  */
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include <openssl/err.h>
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.30 2022/01/14 08:38:48 tb Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.31 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 int
 SSL_library_init(void)

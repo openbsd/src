@@ -1,4 +1,4 @@
-/* $OpenBSD: m_wp.c,v 1.10 2022/01/14 08:38:06 tb Exp $ */
+/* $OpenBSD: m_wp.c,v 1.11 2022/11/26 16:08:52 tb Exp $ */
 
 #include <stdio.h>
 
@@ -11,7 +11,7 @@
 #include <openssl/x509.h>
 #include <openssl/whrlpool.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int
 init(EVP_MD_CTX *ctx)

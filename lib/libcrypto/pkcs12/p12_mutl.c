@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.33 2022/11/12 13:03:28 beck Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.34 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,10 +68,10 @@
 #include <openssl/hmac.h>
 #include <openssl/pkcs12.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "hmac_local.h"
 #include "pkcs12_local.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 int
 PKCS12_mac_present(const PKCS12 *p12)

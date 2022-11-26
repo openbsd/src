@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_pkey_cleanup.c,v 1.1 2022/03/30 08:57:26 tb Exp $ */
+/*	$OpenBSD: evp_pkey_cleanup.c,v 1.2 2022/11/26 16:08:56 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -20,7 +20,7 @@
 
 #include <openssl/evp.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 struct pkey_cleanup_test {
 	const char *name;

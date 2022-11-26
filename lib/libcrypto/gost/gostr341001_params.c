@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_params.c,v 1.4 2020/06/05 17:12:09 jsing Exp $ */
+/* $OpenBSD: gostr341001_params.c,v 1.5 2022/11/26 16:08:53 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -57,7 +57,7 @@
 #include <openssl/objects.h>
 #include <openssl/gost.h>
 
-#include "gost_locl.h"
+#include "gost_local.h"
 
 int
 GostR3410_get_md_digest(int nid)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls12_lib.c,v 1.5 2022/06/07 17:19:09 tb Exp $ */
+/*	$OpenBSD: tls12_lib.c,v 1.6 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static int
 tls12_finished_verify_data(SSL *s, const char *finished_label,

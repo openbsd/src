@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_vrf.c,v 1.18 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_vrf.c,v 1.19 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,7 @@
 
 #include <openssl/dsa.h>
 
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 int
 DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)

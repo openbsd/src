@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.35 2022/07/07 13:10:22 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.36 2022/11/26 16:08:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,7 +176,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #define TEST_SERVER_CERT "../apps/server.pem"
 #define TEST_CLIENT_CERT "../apps/client.pem"

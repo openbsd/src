@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509a.c,v 1.10 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: t_x509a.c,v 1.11 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* X509_CERT_AUX and string set routines */
 

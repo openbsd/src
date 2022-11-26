@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_dd.c,v 1.14 2019/08/11 11:04:18 jsing Exp $ */
+/* $OpenBSD: cms_dd.c,v 1.15 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -60,7 +60,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 /* CMS DigestedData Utilities */
 

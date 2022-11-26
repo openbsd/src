@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2ofb64.c,v 1.5 2014/10/28 07:35:59 jsg Exp $ */
+/* $OpenBSD: rc2ofb64.c,v 1.6 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/rc2.h>
-#include "rc2_locl.h"
+#include "rc2_local.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being
  * used.  The extra state information to record how much of the

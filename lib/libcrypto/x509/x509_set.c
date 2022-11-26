@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.21 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_set.c,v 1.22 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 const STACK_OF(X509_EXTENSION) *
 X509_get0_extensions(const X509 *x)

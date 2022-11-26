@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.31 2022/11/18 14:45:10 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.32 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,8 +81,8 @@
 #include <openssl/engine.h>
 #endif
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 

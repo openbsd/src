@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.15 2019/10/25 14:40:18 jsing Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.16 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,7 +63,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 /* Override the default free and new methods */
 static int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.29 2022/11/10 16:37:51 jsing Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.30 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,8 +68,8 @@
 #include <openssl/engine.h>
 #endif
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;

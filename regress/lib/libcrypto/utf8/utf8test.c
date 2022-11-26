@@ -1,4 +1,4 @@
-/*	$OpenBSD: utf8test.c,v 1.4 2018/07/17 17:06:50 tb Exp $	*/
+/*	$OpenBSD: utf8test.c,v 1.5 2022/11/26 16:08:56 tb Exp $	*/
 /*
  * Copyright (c) 2014 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #include <err.h>
 
 #include <openssl/asn1.h>
-#include "asn1_locl.h"		/* peek into the internals */
+#include "asn1_local.h"		/* peek into the internals */
 
 #define	UNCHANGED	0xfedcba98
 

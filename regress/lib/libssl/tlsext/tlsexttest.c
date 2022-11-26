@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.78 2022/10/21 14:58:53 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.79 2022/11/26 16:08:57 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -22,7 +22,7 @@
 
 #include <openssl/tls1.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #include "bytestring.h"
 #include "ssl_tlsext.h"

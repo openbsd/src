@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.18 2022/10/02 16:38:23 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.19 2022/11/26 16:08:57 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <openssl/ssl.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 struct version_range_test {
 	const long options;

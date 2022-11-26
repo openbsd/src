@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.25 2022/11/10 16:37:52 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.26 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -72,8 +72,8 @@
 #include <openssl/engine.h>
 #endif
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 DECLARE_STACK_OF(EVP_PKEY_METHOD)
 STACK_OF(EVP_PKEY_METHOD) *pkey_app_methods = NULL;

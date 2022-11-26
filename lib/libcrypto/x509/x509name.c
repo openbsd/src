@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.28 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509name.c,v 1.29 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,7 @@
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 int
 X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)

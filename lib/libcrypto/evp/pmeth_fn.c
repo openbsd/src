@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_fn.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pmeth_fn.c,v 1.7 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -63,7 +63,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 #define M_check_autoarg(ctx, arg, arglen, err) \
 	if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) \

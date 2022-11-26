@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.134 2022/09/08 15:31:12 millert Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.135 2022/11/26 16:08:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,7 +149,7 @@
 #include <openssl/engine.h>
 #endif
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #define CIPHER_ADD	1
 #define CIPHER_KILL	2

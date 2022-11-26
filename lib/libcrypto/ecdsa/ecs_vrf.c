@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_vrf.c,v 1.9 2022/01/27 20:30:29 tb Exp $ */
+/* $OpenBSD: ecs_vrf.c,v 1.10 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -64,9 +64,9 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#include "bn_lcl.h"
-#include "ecs_locl.h"
-#include "ec_lcl.h"
+#include "bn_local.h"
+#include "ecs_local.h"
+#include "ec_local.h"
 
 /* returns
  *      1: correct signature

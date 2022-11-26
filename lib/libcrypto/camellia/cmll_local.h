@@ -1,6 +1,23 @@
-/* $OpenBSD: dsa_locl.h,v 1.6 2022/07/04 12:22:32 tb Exp $ */
+/* $OpenBSD: cmll_local.h,v 1.1 2022/11/26 16:08:51 tb Exp $ */
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
+ * ALL RIGHTS RESERVED.
+ *
+ * Intellectual Property information for Camellia:
+ *     http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html
+ *
+ * News Release for Announcement of Camellia open source:
+ *     http://www.ntt.co.jp/news/news06e/0604/060413a.html
+ *
+ * The Camellia Code included herein is developed by
+ * NTT (Nippon Telegraph and Telephone Corporation), and is contributed
+ * to the OpenSSL project.
+ *
+ * The Camellia Code is licensed pursuant to the OpenSSL open source
+ * license provided below.
+ */
+/* ====================================================================
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,73 +63,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include <openssl/dsa.h>
+#ifndef HEADER_CAMELLIA_LOCL_H
+#define HEADER_CAMELLIA_LOCL_H
 
 __BEGIN_HIDDEN_DECLS
 
-struct DSA_SIG_st {
-	BIGNUM *r;
-	BIGNUM *s;
-} /* DSA_SIG */;
+typedef unsigned int  u32;
+typedef unsigned char u8;
 
-struct dsa_method {
-	char *name;
-	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
-	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-	    BIGNUM **rp);
-	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
-	    DSA_SIG *sig, DSA *dsa);
-	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-	    BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-	    BN_MONT_CTX *in_mont);
-	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-	    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx); /* Can be null */
-	int (*init)(DSA *dsa);
-	int (*finish)(DSA *dsa);
-	int flags;
-	char *app_data;
-	/* If this is non-NULL, it is used to generate DSA parameters */
-	int (*dsa_paramgen)(DSA *dsa, int bits, const unsigned char *seed,
-	    int seed_len, int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
-	/* If this is non-NULL, it is used to generate DSA keys */
-	int (*dsa_keygen)(DSA *dsa);
-} /* DSA_METHOD */;
-
-struct dsa_st {
-	/* This first variable is used to pick up errors where
-	 * a DSA is passed instead of of a EVP_PKEY */
-	int pad;
-	long version;
-	BIGNUM *p;
-	BIGNUM *q;	/* == 20 */
-	BIGNUM *g;
-
-	BIGNUM *pub_key;  /* y public key */
-	BIGNUM *priv_key; /* x private key */
-
-	BIGNUM *kinv;	/* Signing pre-calc */
-	BIGNUM *r;	/* Signing pre-calc */
-
-	int flags;
-	/* Normally used to cache montgomery values */
-	BN_MONT_CTX *method_mont_p;
-	int references;
-	CRYPTO_EX_DATA ex_data;
-	const DSA_METHOD *meth;
-	/* functional reference if 'meth' is ENGINE-provided */
-	ENGINE *engine;
-} /* DSA */;
-
-int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
-	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
-	unsigned char *seed_out,
-	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey,
+	    KEY_TABLE_TYPE keyTable);
+void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[],
+	    const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[],
+	    const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
+void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[],
+	    const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
+void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
+	    const KEY_TABLE_TYPE keyTable, u8 plaintext[]);
 
 __END_HIDDEN_DECLS
+
+#endif /* #ifndef HEADER_CAMELLIA_LOCL_H */

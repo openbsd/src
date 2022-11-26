@@ -1,4 +1,4 @@
-/* $OpenBSD: t_pkey.c,v 1.18 2022/11/10 13:09:34 jsing Exp $ */
+/* $OpenBSD: t_pkey.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,7 @@
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 int
 ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,

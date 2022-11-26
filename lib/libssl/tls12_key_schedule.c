@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_key_schedule.c,v 1.2 2022/11/07 11:58:45 jsing Exp $ */
+/* $OpenBSD: tls12_key_schedule.c,v 1.3 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -20,7 +20,7 @@
 #include <openssl/evp.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls12_internal.h"
 
 struct tls12_key_block {

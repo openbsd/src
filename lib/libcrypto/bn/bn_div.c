@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.27 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.28 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
     && !defined(BN_DIV3W)

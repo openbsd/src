@@ -1,4 +1,4 @@
-/* $OpenBSD: i_cbc.c,v 1.3 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: i_cbc.c,v 1.4 2022/11/26 16:08:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/idea.h>
-#include "idea_lcl.h"
+#include "idea_local.h"
 
 void idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	     IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int encrypt)

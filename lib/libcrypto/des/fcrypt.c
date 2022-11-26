@@ -1,4 +1,4 @@
-/* $OpenBSD: fcrypt.c,v 1.12 2016/12/26 21:30:10 jca Exp $ */
+/* $OpenBSD: fcrypt.c,v 1.13 2022/11/26 16:08:51 tb Exp $ */
 
 #include <stdio.h>
 
@@ -15,7 +15,7 @@
  * defined 24.
  */
 
-#include "des_locl.h"
+#include "des_local.h"
 
 /* Added more values to handle illegal salt values the way normal
  * crypt() implementations do.  The patch was sent by 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_pmeth.c,v 1.9 2022/11/18 14:45:10 tb Exp $ */
+/* $OpenBSD: cm_pmeth.c,v 1.10 2022/11/26 16:08:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -59,7 +59,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* The context structure and "key" is simply a CMAC_CTX */
 

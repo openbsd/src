@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.63 2022/11/11 17:15:26 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.64 2022/11/26 16:08:55 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -67,9 +67,9 @@
 
 #include <openssl/objects.h>
 
-#include "dtls_locl.h"
+#include "dtls_local.h"
 #include "pqueue.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 void dtls1_hm_fragment_free(hm_fragment *frag);
 

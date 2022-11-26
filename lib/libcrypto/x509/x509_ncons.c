@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.6 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.7 2022/11/26 16:08:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);

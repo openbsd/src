@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.24 2021/12/12 21:27:37 tb Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.25 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,7 +69,7 @@
 #include <openssl/hmac.h>
 #include <openssl/x509.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 #include "hmac_local.h"
 
 /* This is an implementation of PKCS#5 v2.0 password based encryption key

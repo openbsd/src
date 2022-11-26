@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.18 2022/07/02 18:14:35 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,7 +63,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 /*
  * Custom primitive type for long handling. This converts between an

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_lib.c,v 1.2 2022/08/20 21:48:25 tb Exp $ */
+/* $OpenBSD: tls_lib.c,v 1.3 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 int
 tls_process_peer_certs(SSL *s, STACK_OF(X509) *peer_certs)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.15 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.16 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -66,10 +66,10 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
-#include "bn_lcl.h"
-#include "ec_lcl.h"
-#include "ech_locl.h"
-#include "evp_locl.h"
+#include "bn_local.h"
+#include "ec_local.h"
+#include "ech_local.h"
+#include "evp_local.h"
 
 /* EC pkey context structure */
 

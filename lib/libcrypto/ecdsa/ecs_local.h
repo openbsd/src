@@ -1,13 +1,16 @@
-/* $OpenBSD: aes_locl.h,v 1.11 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: ecs_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
+/*
+ * Written by Nils Larsch for the OpenSSL project
+ */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -17,12 +20,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
+ *    licensing@OpenSSL.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -31,7 +34,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -47,37 +50,50 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
 
-#ifndef HEADER_AES_LOCL_H
-#define HEADER_AES_LOCL_H
+#ifndef HEADER_ECS_LOCL_H
+#define HEADER_ECS_LOCL_H
 
-#include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_AES
-#error AES is disabled.
-#endif
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <openssl/ecdsa.h>
 
 __BEGIN_HIDDEN_DECLS
 
-#define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
-#define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
+typedef struct ecdsa_data_st {
+	/* EC_KEY_METH_DATA part */
+	int (*init)(EC_KEY *);
+	/* method (ECDSA) specific part */
+	ENGINE	*engine;
+	int	flags;
+	const ECDSA_METHOD *meth;
+	CRYPTO_EX_DATA ex_data;
+} ECDSA_DATA;
 
-typedef unsigned int u32;
-typedef unsigned short u16;
-typedef unsigned char u8;
+struct ECDSA_SIG_st {
+	BIGNUM *r;
+	BIGNUM *s;
+};
 
-#define MAXKC   (256/32)
-#define MAXKB   (256/8)
-#define MAXNR   14
+/** ecdsa_check
+ * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure
+ * and if not it removes the old meth_data and creates a ECDSA_DATA structure.
+ * \param  eckey pointer to a EC_KEY object
+ * \return pointer to a ECDSA_DATA structure
+ */
+ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 
-/* This controls loop-unrolling in aes_core.c */
-#undef FULL_UNROLL
+int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+    BIGNUM **rp);
+int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+    const BIGNUM *r, EC_KEY *eckey);
+ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
 
 __END_HIDDEN_DECLS
 
-#endif /* !HEADER_AES_LOCL_H */
+#endif /* HEADER_ECS_LOCL_H */

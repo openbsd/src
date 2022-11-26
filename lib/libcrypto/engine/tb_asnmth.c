@@ -1,4 +1,4 @@
-/* $OpenBSD: tb_asnmth.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: tb_asnmth.c,v 1.7 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -58,7 +58,7 @@
 #include <openssl/err.h>
 
 #include "eng_int.h"
-#include "asn1_locl.h"
+#include "asn1_local.h"
 #include <openssl/evp.h>
 
 /* If this symbol is defined then ENGINE_get_pkey_asn1_meth_engine(), the

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.14 2022/11/19 07:29:29 tb Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,8 +71,8 @@
 
 #include <openssl/err.h>
 
-#include "bn_lcl.h"
-#include "ec_lcl.h"
+#include "bn_local.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_EC2M
 

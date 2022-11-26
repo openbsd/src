@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.15 2022/01/09 23:55:31 tb Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.16 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -84,7 +84,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no

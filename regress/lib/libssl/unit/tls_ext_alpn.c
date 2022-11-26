@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ext_alpn.c,v 1.8 2022/10/02 16:38:23 jsing Exp $	*/
+/*	$OpenBSD: tls_ext_alpn.c,v 1.9 2022/11/26 16:08:57 tb Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  *
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <openssl/ssl.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "ssl_tlsext.h"
 
 #include "tests.h"

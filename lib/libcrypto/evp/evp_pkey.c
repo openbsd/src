@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.24 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.25 2022/11/26 16:08:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,8 +62,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 /* Extract a private key from a PKCS8 structure */
 

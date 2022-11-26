@@ -1,4 +1,4 @@
-/* $OpenBSD: e_idea.c,v 1.17 2022/09/15 07:04:19 jsing Exp $ */
+/* $OpenBSD: e_idea.c,v 1.18 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
 #include <openssl/idea.h>
 #include <openssl/objects.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 /* NB idea_ecb_encrypt doesn't take an 'encrypt' argument so we treat it as a special
  * case

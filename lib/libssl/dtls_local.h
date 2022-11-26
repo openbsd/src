@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls_locl.h,v 1.11 2022/11/11 17:15:26 jsing Exp $ */
+/* $OpenBSD: dtls_local.h,v 1.1 2022/11/26 16:08:55 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -64,7 +64,7 @@
 
 #include <openssl/dtls1.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls_content.h"
 
 __BEGIN_HIDDEN_DECLS

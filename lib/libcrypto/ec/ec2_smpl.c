@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.27 2022/11/24 01:30:01 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.28 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,7 +71,7 @@
 
 #include <openssl/err.h>
 
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_EC2M
 

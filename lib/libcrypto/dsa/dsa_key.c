@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.31 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.32 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,8 +66,8 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 
-#include "bn_lcl.h"
-#include "dsa_locl.h"
+#include "bn_local.h"
+#include "dsa_local.h"
 
 static int dsa_builtin_keygen(DSA *dsa);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_sm3.c,v 1.3 2022/01/14 08:38:06 tb Exp $	*/
+/*	$OpenBSD: m_sm3.c,v 1.4 2022/11/26 16:08:52 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -25,7 +25,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 static int
 sm3_init(EVP_MD_CTX *ctx)

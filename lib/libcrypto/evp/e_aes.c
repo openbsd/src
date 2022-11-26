@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.49 2022/09/13 04:59:18 jsing Exp $ */
+/* $OpenBSD: e_aes.c,v 1.50 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -60,8 +60,8 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#include "evp_locl.h"
-#include "modes_lcl.h"
+#include "evp_local.h"
+#include "modes_local.h"
 
 typedef struct {
 	AES_KEY ks;

@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_misc.c,v 1.10 2014/07/09 11:10:50 bcook Exp $ */
+/* $OpenBSD: aes_misc.c,v 1.11 2022/11/26 16:08:50 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -52,7 +52,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 #include <openssl/aes.h>
-#include "aes_locl.h"
+#include "aes_local.h"
 
 const char *
 AES_options(void)

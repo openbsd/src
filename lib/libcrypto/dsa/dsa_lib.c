@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.38 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.39 2022/11/26 16:08:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@
 #endif
 
 #include "dh_local.h"
-#include "dsa_locl.h"
+#include "dsa_local.h"
 
 static const DSA_METHOD *default_DSA_method = NULL;
 

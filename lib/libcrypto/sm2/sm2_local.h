@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_locl.h,v 1.1.1.1 2021/08/18 16:04:32 tb Exp $ */
+/*	$OpenBSD: sm2_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *

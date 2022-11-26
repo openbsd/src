@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.83 2022/09/03 19:15:23 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.84 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,7 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 #include "bytestring.h"
 
 /*

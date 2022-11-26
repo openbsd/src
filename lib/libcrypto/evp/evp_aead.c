@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_aead.c,v 1.7 2022/01/07 21:58:17 tb Exp $ */
+/* $OpenBSD: evp_aead.c,v 1.8 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -21,7 +21,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#include "evp_locl.h"
+#include "evp_local.h"
 
 size_t
 EVP_AEAD_key_length(const EVP_AEAD *aead)

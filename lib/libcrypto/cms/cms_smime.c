@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.24 2019/10/04 18:03:56 tb Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.25 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,8 +58,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
-#include "asn1/asn1_locl.h"
+#include "cms_local.h"
+#include "asn1/asn1_local.h"
 
 static BIO *
 cms_get_text_bio(BIO *out, unsigned int flags)

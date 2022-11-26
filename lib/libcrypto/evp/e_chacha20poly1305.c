@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.26 2022/09/13 04:59:18 jsing Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.27 2022/11/26 16:08:52 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -31,7 +31,7 @@
 #include <openssl/poly1305.h>
 
 #include "bytestring.h"
-#include "evp_locl.h"
+#include "evp_local.h"
 
 #define POLY1305_TAG_LEN 16
 

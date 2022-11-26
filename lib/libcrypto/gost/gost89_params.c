@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89_params.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gost89_params.c,v 1.3 2022/11/26 16:08:53 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -57,7 +57,7 @@
 #include <openssl/objects.h>
 #include <openssl/gost.h>
 
-#include "gost_locl.h"
+#include "gost_local.h"
 
 /* Substitution blocks from test examples for GOST R 34.11-94*/
 static const gost_subst_block GostR3411_94_TestParamSet = {

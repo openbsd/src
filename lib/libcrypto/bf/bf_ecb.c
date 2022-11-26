@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_ecb.c,v 1.8 2022/11/11 12:18:25 jsing Exp $ */
+/* $OpenBSD: bf_ecb.c,v 1.9 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <openssl/blowfish.h>
 #include <openssl/opensslv.h>
 
-#include "bf_locl.h"
+#include "bf_local.h"
 
 /*
  * Blowfish as implemented from 'Blowfish: Springer-Verlag paper'

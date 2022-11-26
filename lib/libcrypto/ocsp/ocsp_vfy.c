@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.21 2022/01/22 00:33:02 inoguchi Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.22 2022/11/26 16:08:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,7 +61,7 @@
 #include <string.h>
 
 #include "ocsp_local.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
     STACK_OF(X509) *certs, X509_STORE *st, unsigned long flags);

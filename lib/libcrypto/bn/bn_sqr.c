@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.15 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /* I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96 */
 int

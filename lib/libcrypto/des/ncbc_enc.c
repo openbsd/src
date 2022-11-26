@@ -1,4 +1,4 @@
-/* $OpenBSD: ncbc_enc.c,v 1.7 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: ncbc_enc.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
 /*
  * #included by:
  *    cbc_enc.c  (DES_cbc_encrypt)
@@ -61,7 +61,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include "des_locl.h"
+#include "des_local.h"
 
 #ifdef CBC_ENC_C__DONT_UPDATE_IV
 void DES_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,

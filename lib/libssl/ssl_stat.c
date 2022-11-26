@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.19 2022/10/02 16:36:41 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.20 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,7 @@
 
 #include <stdio.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 const char *
 SSL_state_string_long(const SSL *s)

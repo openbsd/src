@@ -1,4 +1,4 @@
-/* $OpenBSD: c_ofb64.c,v 1.5 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: c_ofb64.c,v 1.6 2022/11/26 16:08:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/cast.h>
-#include "cast_lcl.h"
+#include "cast_local.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being
  * used.  The extra state information to record how much of the

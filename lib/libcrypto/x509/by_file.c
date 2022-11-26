@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.26 2022/11/14 17:48:49 beck Exp $ */
+/* $OpenBSD: by_file.c,v 1.27 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_trs.c,v 1.29 2022/11/17 00:42:12 beck Exp $ */
+/* $OpenBSD: x509_trs.c,v 1.30 2022/11/26 16:08:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,7 +62,7 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static int tr_cmp(const X509_TRUST * const *a, const X509_TRUST * const *b);
 static void trtable_free(X509_TRUST *p);

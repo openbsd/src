@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.25 2022/06/30 11:14:47 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -64,8 +64,8 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
-#include "bn_lcl.h"
-#include "ecs_locl.h"
+#include "bn_local.h"
+#include "ecs_local.h"
 
 static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
     BIGNUM *order, BIGNUM *ret);

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.16 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.17 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -60,8 +60,8 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 
-#include "constant_time_locl.h"
-#include "evp_locl.h"
+#include "constant_time.h"
+#include "evp_local.h"
 
 #define TLS1_1_VERSION 0x0302
 

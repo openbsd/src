@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.11 2022/11/26 13:56:33 jsing Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.12 2022/11/26 16:08:51 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -53,7 +53,7 @@
  *
  */
 
-#include "bn_lcl.h"
+#include "bn_local.h"
 
 /*
  * Kronecker symbol, implemented according to Henri Cohen, "A Course in

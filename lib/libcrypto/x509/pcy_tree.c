@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.3 2022/11/14 17:48:49 beck Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.4 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -60,7 +60,7 @@
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 /* Enable this to print out the complete policy tree at various point during
  * evaluation.

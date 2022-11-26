@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.42 2022/11/14 17:48:49 beck Exp $ */
+/* $OpenBSD: by_dir.c,v 1.43 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,7 +70,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 typedef struct lookup_dir_hashes_st {
 	unsigned long hash;

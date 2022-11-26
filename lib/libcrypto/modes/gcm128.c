@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.22 2018/01/24 23:03:37 kettenis Exp $ */
+/* $OpenBSD: gcm128.c,v 1.23 2022/11/26 16:08:53 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -51,7 +51,7 @@
 #define OPENSSL_FIPSAPI
 
 #include <openssl/crypto.h>
-#include "modes_lcl.h"
+#include "modes_local.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG

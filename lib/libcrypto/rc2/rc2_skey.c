@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_skey.c,v 1.12 2014/06/12 15:49:30 deraadt Exp $ */
+/* $OpenBSD: rc2_skey.c,v 1.13 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rc2.h>
-#include "rc2_locl.h"
+#include "rc2_local.h"
 
 static const unsigned char key_table[256]={
 	0xd9,0x78,0xf9,0xc4,0x19,0xdd,0xb5,0xed,0x28,0xe9,0xfd,0x79,

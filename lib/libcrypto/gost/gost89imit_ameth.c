@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_ameth.c,v 1.3 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: gost89imit_ameth.c,v 1.4 2022/11/26 16:08:53 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -54,8 +54,8 @@
 #ifndef OPENSSL_NO_GOST
 #include <openssl/evp.h>
 
-#include "asn1_locl.h"
-#include "evp_locl.h"
+#include "asn1_local.h"
+#include "evp_local.h"
 
 static void
 mackey_free_gost(EVP_PKEY *pk)

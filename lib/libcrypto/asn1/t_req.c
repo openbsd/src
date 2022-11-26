@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.23 2022/08/30 08:45:06 tb Exp $ */
+/* $OpenBSD: t_req.c,v 1.24 2022/11/26 16:08:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@
 #include <openssl/rsa.h>
 #endif
 
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 int
 X509_REQ_print_fp(FILE *fp, X509_REQ *x)

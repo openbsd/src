@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.196 2022/10/02 16:36:42 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.197 2022/11/26 16:08:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,7 @@
 #include <openssl/ocsp.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 

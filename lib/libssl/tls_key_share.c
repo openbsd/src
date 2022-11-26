@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.7 2022/07/02 16:00:12 tb Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.8 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -23,7 +23,7 @@
 #include <openssl/evp.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls_internal.h"
 
 struct tls_key_share {

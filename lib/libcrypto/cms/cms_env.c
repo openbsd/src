@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_env.c,v 1.24 2021/09/08 14:33:02 tb Exp $ */
+/* $OpenBSD: cms_env.c,v 1.25 2022/11/26 16:08:51 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -61,9 +61,9 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/aes.h>
-#include "cms_lcl.h"
-#include "asn1/asn1_locl.h"
-#include "evp/evp_locl.h"
+#include "cms_local.h"
+#include "asn1/asn1_local.h"
+#include "evp/evp_local.h"
 
 /* CMS EnvelopedData Utilities */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.14 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,7 +71,7 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ech_locl.h"
+#include "ech_local.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_sbag.c,v 1.6 2022/11/12 13:03:28 beck Exp $ */
+/* $OpenBSD: p12_sbag.c,v 1.7 2022/11/26 16:08:53 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL project
  * 1999-2018.
@@ -63,7 +63,7 @@
 #include <openssl/pkcs12.h>
 
 #include "pkcs12_local.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 const ASN1_TYPE *
 PKCS12_SAFEBAG_get0_attr(const PKCS12_SAFEBAG *bag, int attr_nid)

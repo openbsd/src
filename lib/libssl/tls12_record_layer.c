@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.37 2022/11/11 17:15:26 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.38 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -20,7 +20,7 @@
 
 #include <openssl/evp.h>
 
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 #define TLS12_RECORD_SEQ_NUM_LEN	8
 #define TLS12_AEAD_FIXED_NONCE_MAX_LEN	12

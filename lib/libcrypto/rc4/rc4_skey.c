@@ -1,4 +1,4 @@
-/* $OpenBSD: rc4_skey.c,v 1.14 2015/10/20 15:50:13 jsing Exp $ */
+/* $OpenBSD: rc4_skey.c,v 1.15 2022/11/26 16:08:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,7 +57,7 @@
  */
 
 #include <openssl/rc4.h>
-#include "rc4_locl.h"
+#include "rc4_local.h"
 #include <openssl/opensslv.h>
 
 const char *

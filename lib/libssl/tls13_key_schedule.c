@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.17 2022/11/07 11:53:39 jsing Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.18 2022/11/26 16:08:56 tb Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -21,7 +21,7 @@
 #include <openssl/hkdf.h>
 
 #include "bytestring.h"
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "tls13_internal.h"
 
 int

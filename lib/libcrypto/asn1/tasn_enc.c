@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.26 2022/10/17 18:03:15 jsing Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.27 2022/11/26 16:08:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
-#include "asn1_locl.h"
+#include "asn1_local.h"
 
 static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
     const ASN1_ITEM *it, int tag, int aclass);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.5 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.6 2022/11/26 16:08:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,7 +64,7 @@
 #include <openssl/x509v3.h>
 
 #include "ext_dat.h"
-#include "x509_lcl.h"
+#include "x509_local.h"
 
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
