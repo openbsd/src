@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.248 2022/11/11 15:27:39 matthieu Exp $
+# $OpenBSD: GENERIC,v 1.249 2022/11/26 09:05:32 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -104,9 +104,10 @@ plgpio*		at fdt? early 1
 plrtc*		at fdt?
 pluart*		at fdt?
 psci*		at fdt? early 1
+pwmfan*		at fdt?
+pwmleds*	at fdt?
 pwmreg*		at fdt? early 1
 syscon*		at fdt? early 1
-pwmfan*		at fdt?
 
 virtio*		at fdt?
 virtio*		at pci?
@@ -168,6 +169,7 @@ aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplpmgr*	at fdt? early 1
+aplpwm*		at fdt?
 aplrtk*		at fdt?
 aplsart*	at fdt?
 aplsmc*		at fdt?
