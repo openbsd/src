@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_local.h,v 1.1 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cmll_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -65,8 +65,8 @@
  * ====================================================================
  */
 
-#ifndef HEADER_CAMELLIA_LOCL_H
-#define HEADER_CAMELLIA_LOCL_H
+#ifndef HEADER_CAMELLIA_LOCAL_H
+#define HEADER_CAMELLIA_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
 
@@ -86,4 +86,4 @@ void Camellia_DecryptBlock(int keyBitLength, const u8 ciphertext[],
 
 __END_HIDDEN_DECLS
 
-#endif /* #ifndef HEADER_CAMELLIA_LOCL_H */
+#endif /* !HEADER_CAMELLIA_LOCAL_H */

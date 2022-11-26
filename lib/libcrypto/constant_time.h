@@ -44,8 +44,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef HEADER_CONSTANT_TIME_LOCL_H
-# define HEADER_CONSTANT_TIME_LOCL_H
+#ifndef HEADER_CONSTANT_TIME_H
+#define HEADER_CONSTANT_TIME_H
 
 __BEGIN_HIDDEN_DECLS
 
@@ -204,4 +204,4 @@ void err_clear_last_constant_time(int clear);
 
 __END_HIDDEN_DECLS
 
-#endif                          /* HEADER_CONSTANT_TIME_LOCL_H */
+#endif /* !HEADER_CONSTANT_TIME_H */

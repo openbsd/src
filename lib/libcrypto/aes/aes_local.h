@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_local.h,v 1.1 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: aes_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef HEADER_AES_LOCL_H
-#define HEADER_AES_LOCL_H
+#ifndef HEADER_AES_LOCAL_H
+#define HEADER_AES_LOCAL_H
 
 #include <openssl/opensslconf.h>
 
@@ -80,4 +80,4 @@ typedef unsigned char u8;
 
 __END_HIDDEN_DECLS
 
-#endif /* !HEADER_AES_LOCL_H */
+#endif /* !HEADER_AES_LOCAL_H */

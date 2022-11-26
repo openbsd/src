@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: ui_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
 
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
@@ -57,8 +57,8 @@
  *
  */
 
-#ifndef HEADER_UI_LOCL_H
-#define HEADER_UI_LOCL_H
+#ifndef HEADER_UI_LOCAL_H
+#define HEADER_UI_LOCAL_H
 
 #include <openssl/ui.h>
 #include <openssl/crypto.h>
@@ -149,4 +149,4 @@ struct ui_st {
 
 __END_HIDDEN_DECLS
 
-#endif
+#endif	/* !HEADER_UI_LOCAL_H */

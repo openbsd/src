@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ech_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -53,8 +53,8 @@
  *
  */
 
-#ifndef HEADER_ECH_LOCL_H
-#define HEADER_ECH_LOCL_H
+#ifndef HEADER_ECH_LOCAL_H
+#define HEADER_ECH_LOCAL_H
 
 #include <openssl/ecdh.h>
 
@@ -96,4 +96,4 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
 
 __END_HIDDEN_DECLS
 
-#endif /* HEADER_ECH_LOCL_H */
+#endif /* !HEADER_ECH_LOCAL_H */

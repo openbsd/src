@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
+/*	$OpenBSD: sm2_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -15,8 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef HEADER_SM2_LOCL_H
-#define HEADER_SM2_LOCL_H
+#ifndef HEADER_SM2_LOCAL_H
+#define HEADER_SM2_LOCAL_H
 
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
@@ -39,5 +39,4 @@ int sm2_do_verify(const EC_KEY *key, const EVP_MD *digest,
 
 __END_HIDDEN_DECLS
 
-#endif
-
+#endif /* !HEADER_SM2_LOCAL_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.1 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,8 +109,8 @@
  *
  */
 
-#ifndef HEADER_BN_LCL_H
-#define HEADER_BN_LCL_H
+#ifndef HEADER_BN_LOCAL_H
+#define HEADER_BN_LOCAL_H
 
 #include <openssl/opensslconf.h>
 
@@ -564,4 +564,4 @@ int bn_is_perfect_square(int *out_perfect, const BIGNUM *n, BN_CTX *ctx);
 int bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx);
 
 __END_HIDDEN_DECLS
-#endif
+#endif /* !HEADER_BN_LOCAL_H */

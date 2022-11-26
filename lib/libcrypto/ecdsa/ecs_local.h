@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecs_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -56,8 +56,8 @@
  *
  */
 
-#ifndef HEADER_ECS_LOCL_H
-#define HEADER_ECS_LOCL_H
+#ifndef HEADER_ECS_LOCAL_H
+#define HEADER_ECS_LOCAL_H
 
 #include <openssl/ecdsa.h>
 
@@ -96,4 +96,4 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
 __END_HIDDEN_DECLS
 
-#endif /* HEADER_ECS_LOCL_H */
+#endif /* !HEADER_ECS_LOCAL_H */

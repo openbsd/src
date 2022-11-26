@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -56,8 +56,8 @@
  *
  */
 
-#ifndef HEADER_EVP_LOCL_H
-#define HEADER_EVP_LOCL_H
+#ifndef HEADER_EVP_LOCAL_H
+#define HEADER_EVP_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
 
@@ -321,4 +321,4 @@ int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md_name)
 
 __END_HIDDEN_DECLS
 
-#endif /* !HEADER_EVP_LOCL_H */
+#endif /* !HEADER_EVP_LOCAL_H */

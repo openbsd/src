@@ -1,4 +1,4 @@
-/* $OpenBSD: gost_local.h,v 1.1 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gost_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -49,8 +49,8 @@
  * ====================================================================
  */
 
-#ifndef HEADER_GOST_LOCL_H
-#define HEADER_GOST_LOCL_H
+#ifndef HEADER_GOST_LOCAL_H
+#define HEADER_GOST_LOCAL_H
 
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
@@ -114,4 +114,4 @@ extern int GostR3410_512_param_id(const char *value);
 
 __END_HIDDEN_DECLS
 
-#endif
+#endif /* !HEADER_GOST_LOCAL_H */
