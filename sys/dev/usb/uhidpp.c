@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.35 2022/11/26 06:29:24 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.36 2022/11/26 06:29:50 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -630,7 +630,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 void
 uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 {
-	int charging, error;
+	int error;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
@@ -641,47 +641,7 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	if (error) {
 		DPRINTF("%s: battery status failure: device_id=%d, error=%d\n",
 		    __func__, dev->d_id, error);
-		return;
 	}
-
-	charging = hidpp20_battery_status_is_charging(
-	    dev->d_battery.status);
-
-	dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
-	dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
-	if (dev->d_battery.nlevels < 10) {
-		/*
-		 * According to the HID++ 2.0 specification, less than
-		 * 10 levels should be mapped to the following 4 levels:
-		 *
-		 * [0, 10]   critical
-		 * [11, 30]  low
-		 * [31, 80]  good
-		 * [81, 100] full
-		 *
-		 * Since sensors are limited to 3 valid statuses, clamp
-		 * it even further. Unless the battery is charging in
-		 * which the level cannot be trusted.
-		 */
-		if (charging)
-			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
-		else if (dev->d_battery.level <= 10)
-			dev->d_battery.sens[0].status = SENSOR_S_CRIT;
-		else if (dev->d_battery.level <= 30)
-			dev->d_battery.sens[0].status = SENSOR_S_WARN;
-		else
-			dev->d_battery.sens[0].status = SENSOR_S_OK;
-	} else {
-		/*
-		 * XXX the device supports battery mileage. The current
-		 * level must be checked against resp.fap.params[3]
-		 * given by hidpp20_battery_get_capability().
-		 */
-		dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
-	}
-
-	if (dev->d_battery.rechargeable)
-		dev->d_battery.sens[2].value = charging;
 }
 
 /*
@@ -1015,7 +975,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
     struct uhidpp_device *dev)
 {
 	struct uhidpp_report resp;
-	int error;
+	int charging, error;
 	uint8_t level, status;
 
 	error = hidpp_send_fap_report(sc,
@@ -1034,14 +994,51 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc,
 	 * While charging, the reported level cannot be trusted. However, fake
 	 * the battery state once the charging is done.
 	 */
-	switch (hidpp20_battery_status_is_charging(status)) {
-	case HIDPP20_LEVEL_STATUS_CHARGING_DONE:
+	if (status == HIDPP20_LEVEL_STATUS_CHARGING_DONE) {
 		level = 100;
 		status = 0;
-		break;
 	}
 	dev->d_battery.level = level;
 	dev->d_battery.status = status;
+
+	charging = hidpp20_battery_status_is_charging(
+	    dev->d_battery.status);
+
+	dev->d_battery.sens[0].value = dev->d_battery.level * 1000;
+	dev->d_battery.sens[0].flags &= ~SENSOR_FUNKNOWN;
+	if (dev->d_battery.nlevels < 10) {
+		/*
+		 * According to the HID++ 2.0 specification, less than
+		 * 10 levels should be mapped to the following 4 levels:
+		 *
+		 * [0, 10]   critical
+		 * [11, 30]  low
+		 * [31, 80]  good
+		 * [81, 100] full
+		 *
+		 * Since sensors are limited to 3 valid statuses, clamp
+		 * it even further. Unless the battery is charging in
+		 * which the level cannot be trusted.
+		 */
+		if (charging)
+			dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
+		else if (dev->d_battery.level <= 10)
+			dev->d_battery.sens[0].status = SENSOR_S_CRIT;
+		else if (dev->d_battery.level <= 30)
+			dev->d_battery.sens[0].status = SENSOR_S_WARN;
+		else
+			dev->d_battery.sens[0].status = SENSOR_S_OK;
+	} else {
+		/*
+		 * XXX the device supports battery mileage. The current
+		 * level must be checked against resp.fap.params[3]
+		 * given by hidpp20_battery_get_capability().
+		 */
+		dev->d_battery.sens[0].status = SENSOR_S_UNKNOWN;
+	}
+
+	if (dev->d_battery.rechargeable)
+		dev->d_battery.sens[2].value = charging;
 
 	return 0;
 }
@@ -1074,10 +1071,10 @@ hidpp20_battery_status_is_charging(uint8_t status)
 	case 1:	/* recharging */
 	case 2:	/* charge in final stage */
 	case 4:	/* recharging below optimal speed */
-		return status;
+		return 1;
 
 	case 3:	/* charge complete */
-		return status;
+		return 1;
 
 	case 0:	/* discharging */
 	case 5:	/* invalid battery type */
