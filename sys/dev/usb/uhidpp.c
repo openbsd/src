@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.28 2022/11/26 06:26:14 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.29 2022/11/26 06:26:51 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -256,7 +256,6 @@ int hidpp_get_protocol_version(struct uhidpp_softc *, uint8_t, uint8_t *,
     uint8_t *);
 
 int hidpp10_get_name(struct uhidpp_softc *, uint8_t, char *, size_t);
-int hidpp10_get_serial(struct uhidpp_softc *, uint8_t, uint8_t *, size_t);
 int hidpp10_get_type(struct uhidpp_softc *, uint8_t, const char **);
 int hidpp10_enable_notifications(struct uhidpp_softc *, uint8_t);
 
@@ -379,15 +378,13 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 	/* Probe paired devices. */
 	for (i = 0; i < UHIDPP_NDEVICES; i++) {
 		char name[16];
-		uint8_t serial[4];
 		struct uhidpp_device *dev = &sc->sc_devices[i];
 		const char *type;
 		uint8_t device_id = i + 1;
 
 		dev->d_id = device_id;
 
-		if (hidpp10_get_serial(sc, device_id, serial, sizeof(serial)) ||
-		    hidpp10_get_type(sc, device_id, &type) ||
+		if (hidpp10_get_type(sc, device_id, &type) ||
 		    hidpp10_get_name(sc, device_id, name, sizeof(name)))
 			continue;
 
@@ -396,8 +393,6 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 		printf(" device %d", device_id);
 		printf(" %s", type);
 		printf(" \"%s\"", name);
-		printf(" serial %02x-%02x-%02x-%02x",
-		    serial[0], serial[1], serial[2], serial[3]);
 		npaired++;
 	}
 	if (npaired == 0)
@@ -907,31 +902,6 @@ hidpp10_get_name(struct uhidpp_softc *sc, uint8_t device_id,
 		len = bufsiz - 1;
 	memcpy(buf, &resp.rap.params[2], len);
 	buf[len] = '\0';
-	return 0;
-}
-
-int
-hidpp10_get_serial(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t *buf, size_t bufsiz)
-{
-	struct uhidpp_report resp;
-	int error;
-	uint8_t params[1] = { 0x30 + (device_id - 1) };
-	uint8_t len;
-
-	error = hidpp_send_rap_report(sc,
-	    HIDPP_REPORT_ID_SHORT,
-	    HIDPP_DEVICE_ID_RECEIVER,
-	    HIDPP_GET_LONG_REGISTER,
-	    HIDPP_REG_PAIRING_INFORMATION,
-	    params, sizeof(params), &resp);
-	if (error)
-		return error;
-
-	len = 4;
-	if (bufsiz < len)
-		len = bufsiz;
-	memcpy(buf, &resp.rap.params[1], len);
 	return 0;
 }
 
