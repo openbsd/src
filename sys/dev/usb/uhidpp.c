@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.34 2022/11/26 06:29:07 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.35 2022/11/26 06:29:24 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -732,7 +732,7 @@ uhidpp_device_features(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	DPRINTF("%s: device_id=%d, count=%d, features=%x\n",
 	    __func__, dev->d_id, count, dev->d_features);
 
-	if ((dev->d_features & UHIDPP_DEVICE_FEATURE_BATTERY) == 0)
+	if ((dev->d_features & ~UHIDPP_DEVICE_FEATURE_ROOT) == 0)
 		return -ENODEV;
 	return 0;
 }
