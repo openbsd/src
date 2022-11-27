@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.151 2022/03/24 07:37:19 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.152 2022/11/27 13:19:00 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -130,6 +130,7 @@ struct ntp_addr_msg {
 	struct ntp_addr		 a;
 	size_t			 namelen;
 	size_t			 pathlen;
+	u_int8_t		 synced;
 };
 
 struct ntp_status {
@@ -381,7 +382,7 @@ void	 constraint_remove(struct constraint *);
 void	 constraint_purge(void);
 void	 constraint_reset(void);
 int	 constraint_init(struct constraint *);
-int	 constraint_query(struct constraint *);
+int	 constraint_query(struct constraint *, int);
 int	 constraint_check(double);
 void	 constraint_msg_dns(u_int32_t, u_int8_t *, size_t);
 void	 constraint_msg_result(u_int32_t, u_int8_t *, size_t);

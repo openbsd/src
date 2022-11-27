@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.53 2022/01/07 17:14:42 otto Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.54 2022/11/27 13:19:00 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -66,12 +66,12 @@ void	 priv_constraint_readquery(struct constraint *, struct ntp_addr_msg *,
 
 struct httpsdate *
 	 httpsdate_init(const char *, const char *, const char *,
-	    const char *, const u_int8_t *, size_t);
+	    const char *, const u_int8_t *, size_t, int);
 void	 httpsdate_free(void *);
-int	 httpsdate_request(struct httpsdate *, struct timeval *);
+int	 httpsdate_request(struct httpsdate *, struct timeval *, int);
 void	*httpsdate_query(const char *, const char *, const char *,
 	    const char *, const u_int8_t *, size_t,
-	    struct timeval *, struct timeval *);
+	    struct timeval *, struct timeval *, int);
 
 char	*tls_readline(struct tls *, size_t *, size_t *, struct timeval *);
 
@@ -151,7 +151,7 @@ constraint_addr_head_clear(struct constraint *cstr)
 }
 
 int
-constraint_query(struct constraint *cstr)
+constraint_query(struct constraint *cstr, int synced)
 {
 	time_t			 now;
 	struct ntp_addr_msg	 am;
@@ -206,6 +206,7 @@ constraint_query(struct constraint *cstr)
 
 	memset(&am, 0, sizeof(am));
 	memcpy(&am.a, cstr->addr, sizeof(am.a));
+	am.synced = synced;
 
 	iov[iov_cnt].iov_base = &am;
 	iov[iov_cnt++].iov_len = sizeof(am);
@@ -424,7 +425,7 @@ priv_constraint_child(const char *pw_dir, uid_t pw_uid, gid_t pw_gid)
 	/* Run! */
 	if ((ctx = httpsdate_query(addr,
 	    CONSTRAINT_PORT, cstr.addr_head.name, cstr.addr_head.path,
-	    conf->ca, conf->ca_len, &rectv, &xmttv)) == NULL) {
+	    conf->ca, conf->ca_len, &rectv, &xmttv, am.synced)) == NULL) {
 		/* Abort with failure but without warning */
 		exit(1);
 	}
@@ -894,7 +895,7 @@ constraint_check(double val)
 
 struct httpsdate *
 httpsdate_init(const char *addr, const char *port, const char *hostname,
-    const char *path, const u_int8_t *ca, size_t ca_len)
+    const char *path, const u_int8_t *ca, size_t ca_len, int synced)
 {
 	struct httpsdate	*httpsdate = NULL;
 
@@ -925,7 +926,10 @@ httpsdate_init(const char *addr, const char *port, const char *hostname,
 	 * we do our own certificate validity checking, since the automatic
 	 * version is based on our wallclock, which may well be inaccurate...
 	 */
-	tls_config_insecure_noverifytime(httpsdate->tls_config);
+	if (!synced) {
+		log_debug("constraints: skipping time in certificate validation");
+		tls_config_insecure_noverifytime(httpsdate->tls_config);
+	}
 
 	return (httpsdate);
 
@@ -953,7 +957,7 @@ httpsdate_free(void *arg)
 }
 
 int
-httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
+httpsdate_request(struct httpsdate *httpsdate, struct timeval *when, int synced)
 {
 	char	 timebuf1[32], timebuf2[32];
 	size_t	 outlen = 0, maxlength = CONSTRAINT_MAXHEADERLENGTH, len;
@@ -1030,6 +1034,10 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 	if (httpsdate->tls_tm.tm_year == 0)
 		goto fail;
 
+	/* If we are synced, we already checked the certificate validity */
+	if (synced)
+		return 0;
+
 	/*
 	 * Now manually check the validity of the certificate presented in the
 	 * TLS handshake, based on the time specified by the server's HTTP Date:
@@ -1076,17 +1084,17 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 void *
 httpsdate_query(const char *addr, const char *port, const char *hostname,
     const char *path, const u_int8_t *ca, size_t ca_len,
-    struct timeval *rectv, struct timeval *xmttv)
+    struct timeval *rectv, struct timeval *xmttv, int synced)
 {
 	struct httpsdate	*httpsdate;
 	struct timeval		 when;
 	time_t			 t;
 
 	if ((httpsdate = httpsdate_init(addr, port, hostname, path,
-	    ca, ca_len)) == NULL)
+	    ca, ca_len, synced)) == NULL)
 		return (NULL);
 
-	if (httpsdate_request(httpsdate, &when) == -1)
+	if (httpsdate_request(httpsdate, &when, synced) == -1)
 		return (NULL);
 
 	/* Return parsed date as local time */
