@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.75 2022/11/27 14:29:06 tb Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.76 2022/11/27 14:31:22 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1707,10 +1707,13 @@ tcp_request(int fd, short events, void *arg)
 		sldns_buffer_flip(pq->qbuf);
 		len = sldns_buffer_read_u16(pq->qbuf);
 		tmp = sldns_buffer_new(len);
-		pq->abuf = sldns_buffer_new(len);
-
-		if (!tmp || !pq->abuf)
+		if (tmp == NULL)
 			goto fail;
+		pq->abuf = sldns_buffer_new(len);
+		if (pq->abuf == NULL) {
+			sldns_buffer_free(tmp);
+			goto fail;
+		}
 
 		rem = sldns_buffer_remaining(pq->qbuf);
 		sldns_buffer_write(tmp, sldns_buffer_current(pq->qbuf),
