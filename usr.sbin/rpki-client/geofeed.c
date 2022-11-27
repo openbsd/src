@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.5 2022/11/26 23:05:22 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.6 2022/11/27 20:50:09 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,7 +101,7 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 {
 	struct parse	 p;
 	char		*delim, *line, *loc, *nl;
-	size_t		 linelen;
+	int		 linelen;
 	BIO		*bio;
 	char		*b64 = NULL;
 	size_t		 b64sz;
@@ -186,7 +186,8 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 		 * calculate the message digest and compare with the one
 		 * in the detached CMS signature.
 		 */
-		if (BIO_puts(bio, line) <= 0 || BIO_puts(bio, "\r\n") <= 0) {
+		if (BIO_puts(bio, line) != linelen ||
+		    BIO_puts(bio, "\r\n") != 2) {
 			warnx("%s: BIO_puts failed", fn);
 			goto out;
 		}
