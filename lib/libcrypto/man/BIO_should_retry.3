@@ -1,5 +1,5 @@
-.\" $OpenBSD: BIO_should_retry.3,v 1.9 2018/12/19 21:12:58 schwarze Exp $
-.\" full merge up to: OpenSSL 60e24554 Apr 6 14:45:18 2010 +0000
+.\" $OpenBSD: BIO_should_retry.3,v 1.10 2022/11/27 19:11:11 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 57fd5170 May 13 11:24:11 2018 +0200
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 19 2018 $
+.Dd $Mdocdate: November 27 2022 $
 .Dt BIO_SHOULD_RETRY 3
 .Os
 .Sh NAME
@@ -59,7 +59,8 @@
 .Nm BIO_retry_type ,
 .Nm BIO_should_retry ,
 .Nm BIO_get_retry_BIO ,
-.Nm BIO_get_retry_reason
+.Nm BIO_get_retry_reason ,
+.Nm BIO_set_retry_reason
 .Nd BIO retry functions
 .Sh SYNOPSIS
 .In openssl/bio.h
@@ -97,6 +98,11 @@
 .Ft int
 .Fo BIO_get_retry_reason
 .Fa "BIO *bio"
+.Fc
+.Ft void
+.Fo BIO_set_retry_reason
+.Fa "BIO *bio"
+.Fa "int reason"
 .Fc
 .Sh DESCRIPTION
 These functions determine why a BIO is not able to read or write data.
@@ -146,6 +152,12 @@ depends on the type of BIO that resulted in this condition.
 returns the reason for a special condition
 if passed the relevant BIO, for example as returned by
 .Fn BIO_get_retry_BIO .
+.Pp
+.Fn BIO_set_retry_reason
+sets the retry reason for a special condition for the given
+.Fa bio .
+It is intended to be called by functions implementing a BIO type
+rather than by functions merely using BIOs.
 .Pp
 .Fn BIO_should_retry ,
 .Fn BIO_should_read ,
@@ -229,6 +241,10 @@ and
 first appeared in SSLeay 0.8.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_set_retry_reason
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.1 .
 .Sh BUGS
 The OpenSSL ASN.1 functions cannot gracefully deal with non-blocking I/O:
 they cannot retry after a partial read or write.
