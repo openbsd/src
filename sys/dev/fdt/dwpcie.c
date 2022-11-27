@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.38 2022/11/07 20:15:44 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.39 2022/11/27 22:04:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
@@ -55,6 +56,12 @@
 #define  PCIE_LINK_WIDTH_SPEED_CTRL_LANES_4		(0x4 << 8)
 #define  PCIE_LINK_WIDTH_SPEED_CTRL_LANES_8		(0x8 << 8)
 #define  PCIE_LINK_WIDTH_SPEED_CTRL_CHANGE		(1 << 17)
+
+#define PCIE_MSI_ADDR_LO	0x820
+#define PCIE_MSI_ADDR_HI	0x824
+#define PCIE_MSI_INTR0_ENABLE	0x828
+#define PCIE_MSI_INTR0_MASK	0x82c
+#define PCIE_MSI_INTR0_STATUS	0x830
 
 #define MISC_CONTROL_1		0x8bc
 #define  MISC_CONTROL_1_DBI_RO_WR_EN	(1 << 0)
@@ -179,6 +186,18 @@ struct dwpcie_range {
 	uint64_t		size;
 };
 
+#define DWPCIE_NUM_MSI		32
+
+struct dwpcie_msi {
+	int			(*dm_func)(void *);
+	void			*dm_arg;
+	int			dm_ipl;
+	int			dm_flags;
+	int			dm_vec;
+	struct evcount		dm_count;
+	char			*dm_name;
+};
+
 struct dwpcie_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
@@ -229,10 +248,15 @@ struct dwpcie_softc {
 	int			sc_atu_viewport;
 
 	void			*sc_ih;
+
+	uint64_t		sc_msi_addr;
+	struct dwpcie_msi	sc_msi[DWPCIE_NUM_MSI];
 };
 
 struct dwpcie_intr_handle {
 	struct machine_intr_handle pih_ih;
+	struct dwpcie_softc	*pih_sc;
+	struct dwpcie_msi	*pih_dm;
 	bus_dma_tag_t		pih_dmat;
 	bus_dmamap_t		pih_map;
 };
@@ -649,7 +673,8 @@ dwpcie_attach_deferred(struct device *self)
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
 	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie") ||
-	    OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie"))
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie") ||
+	    sc->sc_msi_addr)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
@@ -698,6 +723,104 @@ dwpcie_link_config(struct dwpcie_softc *sc)
 	reg = HREAD4(sc, PCIE_LINK_WIDTH_SPEED_CTRL);
 	reg |= PCIE_LINK_WIDTH_SPEED_CTRL_CHANGE;
 	HWRITE4(sc, PCIE_LINK_WIDTH_SPEED_CTRL, reg);
+}
+
+int
+dwpcie_msi_intr(void *arg)
+{
+	struct dwpcie_softc *sc = arg;
+	struct dwpcie_msi *dm;
+	uint32_t status;
+	int vec, s;
+
+	status = HREAD4(sc, PCIE_MSI_INTR0_STATUS);
+	if (status == 0)
+		return 0;
+
+	HWRITE4(sc, PCIE_MSI_INTR0_STATUS, status);
+	while (status) {
+		vec = ffs(status) - 1;
+		status &= ~(1U << vec);
+
+		dm = &sc->sc_msi[vec];
+		if (dm->dm_func == NULL)
+			continue;
+
+		if ((dm->dm_flags & IPL_MPSAFE) == 0)
+			KERNEL_LOCK();
+		s = splraise(dm->dm_ipl);
+		if (dm->dm_func(dm->dm_arg))
+			dm->dm_count.ec_count++;
+		splx(s);
+		if ((dm->dm_flags & IPL_MPSAFE) == 0)
+			KERNEL_UNLOCK();
+	}
+
+	return 1;
+}
+
+int
+dwpcie_msi_init(struct dwpcie_softc *sc)
+{
+	bus_dma_segment_t seg;
+	bus_dmamap_t map;
+	uint64_t addr;
+	int error, rseg;
+
+	/*
+	 * Allocate some DMA memory such that we have a "safe" target
+	 * address for MSIs.
+	 */
+	error = bus_dmamem_alloc(sc->sc_dmat, sizeof(uint32_t),
+	    sizeof(uint32_t), 0, &seg, 1, &rseg, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+
+	/*
+	 * Translate the CPU address into a bus address that we can
+	 * program into the hardware.
+	 */
+	error = bus_dmamap_create(sc->sc_dmat, sizeof(uint32_t), 1,
+	    sizeof(uint32_t), 0, BUS_DMA_WAITOK, &map);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, 1);
+		return error;
+	}
+	error = bus_dmamap_load_raw(sc->sc_dmat, map, &seg, 1,
+	    sizeof(uint32_t), BUS_DMA_WAITOK);
+	if (error) {
+		bus_dmamap_destroy(sc->sc_dmat, map);
+		bus_dmamem_free(sc->sc_dmat, &seg, 1);
+		return error;
+	}
+
+	addr = map->dm_segs[0].ds_addr;
+	HWRITE4(sc, PCIE_MSI_ADDR_LO, addr);
+	HWRITE4(sc, PCIE_MSI_ADDR_HI, addr >> 32);
+
+	bus_dmamap_unload(sc->sc_dmat, map);
+	bus_dmamap_destroy(sc->sc_dmat, map);
+
+	/* Enable, mask and clear all MSIs. */
+	HWRITE4(sc, PCIE_MSI_INTR0_ENABLE, 0xffffffff);
+	HWRITE4(sc, PCIE_MSI_INTR0_MASK, 0xffffffff);
+	HWRITE4(sc, PCIE_MSI_INTR0_STATUS, 0xffffffff);
+
+	KASSERT(sc->sc_ih == NULL);
+	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_BIO | IPL_MPSAFE,
+	    dwpcie_msi_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		bus_dmamem_free(sc->sc_dmat, &seg, 1);
+		return EINVAL;
+	}
+
+	/*
+	 * Hold on to the DMA memory such that nobody can use it to
+	 * actually do DMA transfers.
+	 */
+
+	sc->sc_msi_addr = addr;
+	return 0;
 }
 
 int
@@ -795,7 +918,7 @@ dwpcie_g12a_init(struct dwpcie_softc *sc)
 	uint32_t *reset_gpio;
 	ssize_t reset_gpiolen;
 	uint32_t reg;
-	int timo;
+	int error, timo;
 
 	reset_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
 	if (reset_gpiolen <= 0)
@@ -842,6 +965,10 @@ dwpcie_g12a_init(struct dwpcie_softc *sc)
 	}
 	if (timo == 0)
 		return ETIMEDOUT;
+
+	error = dwpcie_msi_init(sc);
+	if (error)
+		return error;
 
 	return 0;
 }
@@ -1346,52 +1473,113 @@ dwpcie_intr_string(void *v, pci_intr_handle_t ih)
 	return "intx";
 }
 
+struct dwpcie_msi *
+dwpcie_msi_establish(struct dwpcie_softc *sc, int level,
+    int (*func)(void *), void *arg, char *name)
+{
+	struct dwpcie_msi *dm;
+	int vec;
+
+	for (vec = 0; vec < DWPCIE_NUM_MSI; vec++) {
+		dm = &sc->sc_msi[vec];
+		if (dm->dm_func == NULL)
+			break;
+	}
+	if (vec == DWPCIE_NUM_MSI)
+		return NULL;
+
+	dm->dm_func = func;
+	dm->dm_arg = arg;
+	dm->dm_ipl = level & IPL_IRQMASK;
+	dm->dm_flags = level & IPL_FLAGMASK;
+	dm->dm_vec = vec;
+	dm->dm_name = name;
+	if (name != NULL)
+		evcount_attach(&dm->dm_count, name, &dm->dm_vec);
+
+	/* Unmask the MSI. */
+	HCLR4(sc, PCIE_MSI_INTR0_MASK, (1U << vec));
+
+	return dm;
+}
+
+void
+dwpcie_msi_disestablish(struct dwpcie_softc *sc, struct dwpcie_msi *dm)
+{
+	/* Mask the MSI. */
+	HSET4(sc, PCIE_MSI_INTR0_MASK, (1U << dm->dm_vec));
+
+	if (dm->dm_name)
+		evcount_detach(&dm->dm_count);
+	dm->dm_func = NULL;
+}
+
 void *
 dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct dwpcie_softc *sc = v;
 	struct dwpcie_intr_handle *pih;
-	bus_dma_segment_t seg;
-	void *cookie;
+	void *cookie = NULL;
 
 	KASSERT(ih.ih_type != PCI_NONE);
 
 	if (ih.ih_type != PCI_INTX) {
+		struct dwpcie_msi *dm = NULL;
+		bus_dma_tag_t dmat = ih.ih_dmat;
+		bus_dma_segment_t seg;
+		bus_dmamap_t map;
 		uint64_t addr, data;
 
-		/* Assume hardware passes Requester ID as sideband data. */
-		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
-		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
-		    &data, level, ci, func, arg, (void *)name);
-		if (cookie == NULL)
-			return NULL;
+		if (sc->sc_msi_addr) {
+			dm = dwpcie_msi_establish(sc, level, func, arg, name);
+			if (dm == NULL)
+				return NULL;
+			addr = sc->sc_msi_addr;
+			data = dm->dm_vec;
+		} else {
+			/*
+			 * Assume hardware passes Requester ID as
+			 * sideband data.
+			 */
+			data = pci_requester_id(ih.ih_pc, ih.ih_tag);
+			cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+			    &data, level, ci, func, arg, (void *)name);
+			if (cookie == NULL)
+				return NULL;
+		}
 
-		pih = malloc(sizeof(*pih), M_DEVBUF, M_WAITOK);
+		pih = malloc(sizeof(*pih), M_DEVBUF, M_WAITOK | M_ZERO);
 		pih->pih_ih.ih_ic = &dwpcie_ic;
 		pih->pih_ih.ih_ih = cookie;
-		pih->pih_dmat = ih.ih_dmat;
+		pih->pih_sc = sc;
+		pih->pih_dm = dm;
 
-		if (bus_dmamap_create(pih->pih_dmat, sizeof(uint32_t), 1,
-		    sizeof(uint32_t), 0, BUS_DMA_WAITOK, &pih->pih_map)) {
-			free(pih, M_DEVBUF, sizeof(*pih));
-			fdt_intr_disestablish(cookie);
-			return NULL;
+		if (sc->sc_msi_addr == 0) {
+			if (bus_dmamap_create(dmat, sizeof(uint32_t), 1,
+			    sizeof(uint32_t), 0, BUS_DMA_WAITOK, &map)) {
+				free(pih, M_DEVBUF, sizeof(*pih));
+				fdt_intr_disestablish(cookie);
+				return NULL;
+			}
+
+			memset(&seg, 0, sizeof(seg));
+			seg.ds_addr = addr;
+			seg.ds_len = sizeof(uint32_t);
+
+			if (bus_dmamap_load_raw(dmat, map, &seg, 1,
+			    sizeof(uint32_t), BUS_DMA_WAITOK)) {
+				bus_dmamap_destroy(dmat, map);
+				free(pih, M_DEVBUF, sizeof(*pih));
+				fdt_intr_disestablish(cookie);
+				return NULL;
+			}
+
+			addr = map->dm_segs[0].ds_addr;
+			pih->pih_dmat = dmat;
+			pih->pih_map = map;
 		}
 
-		memset(&seg, 0, sizeof(seg));
-		seg.ds_addr = addr;
-		seg.ds_len = sizeof(uint32_t);
-
-		if (bus_dmamap_load_raw(pih->pih_dmat, pih->pih_map,
-		    &seg, 1, sizeof(uint32_t), BUS_DMA_WAITOK)) {
-			bus_dmamap_destroy(pih->pih_dmat, pih->pih_map);
-			free(pih, M_DEVBUF, sizeof(*pih));
-			fdt_intr_disestablish(cookie);
-			return NULL;
-		}
-
-		addr = pih->pih_map->dm_segs[0].ds_addr;
 		if (ih.ih_type == PCI_MSIX) {
 			pci_msix_enable(ih.ih_pc, ih.ih_tag,
 			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
@@ -1412,10 +1600,9 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		if (cookie == NULL)
 			return NULL;
 
-		pih = malloc(sizeof(*pih), M_DEVBUF, M_WAITOK);
+		pih = malloc(sizeof(*pih), M_DEVBUF, M_WAITOK | M_ZERO);
 		pih->pih_ih.ih_ic = &dwpcie_ic;
 		pih->pih_ih.ih_ih = cookie;
-		pih->pih_dmat = NULL;
 	}
 
 	return pih;
@@ -1426,11 +1613,16 @@ dwpcie_intr_disestablish(void *v, void *cookie)
 {
 	struct dwpcie_intr_handle *pih = cookie;
 
-	fdt_intr_disestablish(pih->pih_ih.ih_ih);
+	if (pih->pih_dm)
+		dwpcie_msi_disestablish(pih->pih_sc, pih->pih_dm);
+	else
+		fdt_intr_disestablish(pih->pih_ih.ih_ih);
+
 	if (pih->pih_dmat) {
 		bus_dmamap_unload(pih->pih_dmat, pih->pih_map);
 		bus_dmamap_destroy(pih->pih_dmat, pih->pih_map);
 	}
+
 	free(pih, M_DEVBUF, sizeof(*pih));
 }
 
