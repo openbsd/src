@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2022/10/11 05:45:41 anton Exp $
+#	$OpenBSD: Makefile,v 1.26 2022/11/27 15:12:57 anton Exp $
 
 PROG=		noexec
 SRCS=		noexec.c testfly.S
@@ -12,6 +12,7 @@ REGRESS_TARGETS=	nxtext-mmap	nxtext-mprotect \
 		nxheap	nxheap-mmap	nxheap-mprotect \
 		nxmmap			nxmmap-mprotect \
 		nxstack	nxstack-mmap	nxstack-mprotect
+REGRESS_TARGETS+=	nxmutable nxmutable-mmap nxmutable-mprotect
 .PHONY: ${REGRESS_TARGETS}
 
 nxtext-mmap: ${PROG}
@@ -61,6 +62,15 @@ nxmmap: ${PROG}
 
 nxmmap-mprotect: ${PROG}
 	./${PROG} -m -p
+
+nxmutable: ${PROG}
+	./${PROG} -M
+
+nxmutable-mmap: ${PROG}
+	./${PROG} -M -m
+
+nxmutable-mprotect: ${PROG}
+	./${PROG} -M -p
 
 .if ${MACHINE} != "alpha" && \
     ${MACHINE} != "amd64" && \
