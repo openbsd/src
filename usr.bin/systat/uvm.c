@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.c,v 1.5 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: uvm.c,v 1.6 2022/11/27 23:18:54 kn Exp $	*/
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -134,10 +134,10 @@ struct uvmline uvmline[] = {
 	  &uvmexp.swpginuse, &last_uvmexp.swpginuse, "swpginuse" },
 	{ &uvmexp.kmapent, &last_uvmexp.kmapent, "kmapent",
 	  &uvmexp.pdreact, &last_uvmexp.pdreact, "pdreact",
-	  &uvmexp.nswget, &last_uvmexp.nswget, "nswget" },
+	  &uvmexp.swpgonly, &last_uvmexp.swpgonly, "swpgonly" },
 	{ NULL, NULL, NULL,
 	  &uvmexp.pdbusy, &last_uvmexp.pdbusy, "pdbusy",
-	  NULL, NULL, NULL },
+	  &uvmexp.nswget, &last_uvmexp.nswget, "nswget" },
 	{ NULL, NULL, "Constants",
 	  &uvmexp.pdpageouts, &last_uvmexp.pdpageouts, "pdpageouts",
 	  NULL, NULL, NULL },
