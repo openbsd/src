@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.134 2022/11/23 16:59:10 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.135 2022/11/27 15:31:36 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1112,7 +1112,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	}
 	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 
-	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_INSERT_TAIL(&dadq, dp, dad_list);
 	ip6_dad_pending++;
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
@@ -1150,7 +1150,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 
 	nd6_dad_stoptimer(dp);
 
-	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP, sizeof(*dp));
 	dp = NULL;
 	ifafree(ifa);
@@ -1197,7 +1197,7 @@ nd6_dad_timer(void *xifa)
 		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
 			ifa->ifa_ifp->if_xname));
 
-		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IP6NDP, sizeof(*dp));
 		dp = NULL;
 		ifafree(ifa);
@@ -1248,7 +1248,7 @@ nd6_dad_timer(void *xifa)
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 				addr, sizeof(addr))));
 
-			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
+			TAILQ_REMOVE(&dadq, dp, dad_list);
 			free(dp, M_IP6NDP, sizeof(*dp));
 			dp = NULL;
 			ifafree(ifa);
