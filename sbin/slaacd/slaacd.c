@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.66 2022/09/15 07:59:59 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.67 2022/11/27 15:19:38 kn Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -179,8 +179,11 @@ main(int argc, char *argv[])
 		errx(1, "need root privileges");
 
 	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
-	if (lockfd == -1)
-		errx(1, "already running");
+	if (lockfd == -1) {
+		if (errno == EAGAIN)
+			errx(1, "already running");
+		err(1, "%s", _PATH_LOCKFILE);
+	}
 
 	/* Check for assigned daemon user */
 	if (getpwnam(SLAACD_USER) == NULL)

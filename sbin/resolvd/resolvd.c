@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.29 2022/11/14 13:57:46 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.30 2022/11/27 15:19:38 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -193,8 +193,11 @@ main(int argc, char *argv[])
 		errx(1, "need root privileges");
 
 	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
-	if (lockfd == -1)
-		errx(1, "already running");
+	if (lockfd == -1) {
+		if (errno == EAGAIN)
+			errx(1, "already running");
+		err(1, "%s", _PATH_LOCKFILE);
+	}
 
 	if (!debug)
 		daemon(0, 0);
