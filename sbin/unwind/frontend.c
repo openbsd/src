@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.74 2022/11/25 16:10:07 bluhm Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.75 2022/11/27 14:29:06 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -996,7 +996,8 @@ synthesize_dns64_answer(struct pending_query *pq)
 }
 
 void
-resend_dns64_query(struct pending_query *opq) {
+resend_dns64_query(struct pending_query *opq)
+{
 	struct pending_query	*pq;
 	struct query_imsg	 query_imsg;
 	int			 rcode;
