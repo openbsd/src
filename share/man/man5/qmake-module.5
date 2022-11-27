@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qmake-module.5,v 1.3 2022/11/27 15:08:16 kn Exp $
+.\"	$OpenBSD: qmake-module.5,v 1.4 2022/11/27 15:27:17 kn Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -92,9 +92,8 @@ will be processed during configure stage, and their descendants will
 be visited during main build phase.
 Sometimes a qmake project processing depends on files generated
 by other qmake project during build, and recursive builds break this.
-For Qt4+ defaults to
-.Sq Yes ,
-and Qt3 doesn't support recursive configuring.
+Defaults to
+.Sq Yes .
 .It Ev MODQMAKE_build
 Actual commands that module will use to build all
 .Ev MODQMAKE_PROJECTS
