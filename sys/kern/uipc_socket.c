@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.290 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.291 2022/11/28 21:39:28 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1956,9 +1956,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
 			    level, optname, m);
-			if (error)
-				return (error);
-			return (0);
+			return (error);
 		} else
 			return (ENOPROTOOPT);
 	} else {
