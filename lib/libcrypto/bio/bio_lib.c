@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.36 2022/08/15 10:48:45 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.37 2022/11/28 07:50:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,7 +161,6 @@ BIO_set(BIO *bio, const BIO_METHOD *method)
 	bio->retry_reason = 0;
 	bio->num = 0;
 	bio->ptr = NULL;
-	bio->prev_bio = NULL;
 	bio->next_bio = NULL;
 	bio->references = 1;
 	bio->num_read = 0L;
@@ -623,8 +622,6 @@ BIO_push(BIO *b, BIO *bio)
 	while (lb->next_bio != NULL)
 		lb = lb->next_bio;
 	lb->next_bio = bio;
-	if (bio != NULL)
-		bio->prev_bio = lb;
 	/* called to do internal processing */
 	BIO_ctrl(b, BIO_CTRL_PUSH, 0, lb);
 	return (b);
@@ -642,13 +639,7 @@ BIO_pop(BIO *b)
 
 	BIO_ctrl(b, BIO_CTRL_POP, 0, b);
 
-	if (b->prev_bio != NULL)
-		b->prev_bio->next_bio = b->next_bio;
-	if (b->next_bio != NULL)
-		b->next_bio->prev_bio = b->prev_bio;
-
 	b->next_bio = NULL;
-	b->prev_bio = NULL;
 	return (ret);
 }
 
