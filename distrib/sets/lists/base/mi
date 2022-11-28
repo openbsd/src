@@ -763,7 +763,7 @@
 ./usr/lib/libpthread.so.26.3
 ./usr/lib/libradius.so.1.0
 ./usr/lib/libreadline.so.4.0
-./usr/lib/librpcsvc.so.2.0
+./usr/lib/librpcsvc.so.3.0
 ./usr/lib/libskey.so.6.0
 ./usr/lib/libsndio.so.7.2
 ./usr/lib/libssl.so.53.1

@@ -1216,8 +1216,6 @@
 ./usr/include/rpcsvc/nfs_prot.x
 ./usr/include/rpcsvc/nlm_prot.h
 ./usr/include/rpcsvc/nlm_prot.x
-./usr/include/rpcsvc/rex.h
-./usr/include/rpcsvc/rex.x
 ./usr/include/rpcsvc/rnusers.h
 ./usr/include/rpcsvc/rnusers.x
 ./usr/include/rpcsvc/rquota.h
