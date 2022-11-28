@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.13 2019/12/21 21:40:00 espie Exp $
+#	$OpenBSD: Makefile,v 1.14 2022/11/28 07:37:48 matthieu Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x \
-		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x \
+		nlm_prot.x rnusers.x rusers.x rquota.x rstat.x rwall.x \
 		sm_inter.x spray.x yp.x yppasswd.x
 SRCS=		${RPCSRCS:R:S/$/.c/g}
 HDRS=           ${RPCSRCS:R:S/$/.h/g}
