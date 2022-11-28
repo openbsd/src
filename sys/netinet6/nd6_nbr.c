@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.135 2022/11/27 15:31:36 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.136 2022/11/28 13:08:53 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,8 @@
 #include <netinet/ip_carp.h>
 #endif
 
-TAILQ_HEAD(dadq_head, dadq);
+static TAILQ_HEAD(, dadq) dadq =
+    TAILQ_HEAD_INITIALIZER(dadq);	/* list of addresses to run DAD on */
 struct dadq {
 	TAILQ_ENTRY(dadq) dad_list;
 	struct ifaddr *dad_ifa;
@@ -1036,9 +1037,6 @@ nd6_ifptomac(struct ifnet *ifp)
 	}
 }
 
-static struct dadq_head dadq;
-static int dad_init = 0;
-
 struct dadq *
 nd6_dad_find(struct ifaddr *ifa)
 {
@@ -1077,11 +1075,6 @@ nd6_dad_start(struct ifaddr *ifa)
 	char addr[INET6_ADDRSTRLEN];
 
 	NET_ASSERT_LOCKED();
-
-	if (!dad_init) {
-		TAILQ_INIT(&dadq);
-		dad_init++;
-	}
 
 	/*
 	 * If we don't need DAD, don't do it.
@@ -1140,8 +1133,6 @@ nd6_dad_stop(struct ifaddr *ifa)
 {
 	struct dadq *dp;
 
-	if (!dad_init)
-		return;
 	dp = nd6_dad_find(ifa);
 	if (!dp) {
 		/* DAD wasn't started yet */
