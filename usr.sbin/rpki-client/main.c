@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.224 2022/11/18 14:38:34 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.225 2022/11/28 17:47:01 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -616,8 +616,6 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_GBR:
 		st->gbrs++;
 		break;
-	case RTYPE_FILE:
-		break;
 	case RTYPE_ASPA:
 		st->aspas++;
 		io_read_buf(b, &c, sizeof(c));
@@ -635,6 +633,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		break;
 	case RTYPE_TAK:
 		st->taks++;
+		break;
+	case RTYPE_FILE:
 		break;
 	default:
 		errx(1, "unknown entity type %d", type);
