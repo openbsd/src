@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.369 2022/09/17 10:33:18 djm Exp $ */
+/* $OpenBSD: readconf.c,v 1.370 2022/11/28 01:37:36 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -161,6 +161,7 @@ typedef enum {
 	oFingerprintHash, oUpdateHostkeys, oHostbasedAcceptedAlgorithms,
 	oPubkeyAcceptedAlgorithms, oCASignatureAlgorithms, oProxyJump,
 	oSecurityKeyProvider, oKnownHostsCommand, oRequiredRSASize,
+	oEnableEscapeCommandline,
 	oIgnore, oIgnoredUnknownOption, oDeprecated, oUnsupported
 } OpCodes;
 
@@ -307,6 +308,7 @@ static struct {
 	{ "securitykeyprovider", oSecurityKeyProvider },
 	{ "knownhostscommand", oKnownHostsCommand },
 	{ "requiredrsasize", oRequiredRSASize },
+	{ "enableescapecommandline", oEnableEscapeCommandline },
 
 	{ NULL, oBadOption }
 };
@@ -2163,6 +2165,10 @@ parse_pubkey_algos:
 			*charptr = xstrdup(arg);
 		break;
 
+	case oEnableEscapeCommandline:
+		intptr = &options->enable_escape_commandline;
+		goto parse_flag;
+
 	case oRequiredRSASize:
 		intptr = &options->required_rsa_size;
 		goto parse_int;
@@ -2415,6 +2421,7 @@ initialize_options(Options * options)
 	options->pubkey_accepted_algos = NULL;
 	options->known_hosts_command = NULL;
 	options->required_rsa_size = -1;
+	options->enable_escape_commandline = -1;
 }
 
 /*
@@ -2606,6 +2613,8 @@ fill_default_options(Options * options)
 		options->sk_provider = xstrdup("internal");
 	if (options->required_rsa_size == -1)
 		options->required_rsa_size = SSH_RSA_MINIMUM_MODULUS_SIZE;
+	if (options->enable_escape_commandline == -1)
+		options->enable_escape_commandline = 0;
 
 	/* Expand KEX name lists */
 	all_cipher = cipher_alg_list(',', 0);
@@ -3287,6 +3296,7 @@ dump_client_config(Options *o, const char *host)
 	dump_cfg_fmtint(oVerifyHostKeyDNS, o->verify_host_key_dns);
 	dump_cfg_fmtint(oVisualHostKey, o->visual_host_key);
 	dump_cfg_fmtint(oUpdateHostkeys, o->update_hostkeys);
+	dump_cfg_fmtint(oEnableEscapeCommandline, o->enable_escape_commandline);
 
 	/* Integer options */
 	dump_cfg_int(oCanonicalizeMaxDots, o->canonicalize_max_dots);
