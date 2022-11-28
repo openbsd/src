@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.254 2022/11/25 15:03:24 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.255 2022/11/28 13:10:58 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -104,20 +104,11 @@ struct task nd6_expire_task;
 void
 nd6_init(void)
 {
-	static int nd6_init_done = 0;
-
-	if (nd6_init_done) {
-		log(LOG_NOTICE, "%s called more than once\n", __func__);
-		return;
-	}
-
 	TAILQ_INIT(&nd6_list);
 	pool_init(&nd6_pool, sizeof(struct llinfo_nd6), 0,
 	    IPL_SOFTNET, 0, "nd6", NULL);
 
 	task_set(&nd6_expire_task, nd6_expire, NULL);
-
-	nd6_init_done = 1;
 
 	/* start timer */
 	timeout_set_proc(&nd6_timer_to, nd6_timer, NULL);
