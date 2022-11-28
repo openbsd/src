@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.255 2022/11/28 13:10:58 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.256 2022/11/28 19:13:36 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -123,8 +123,6 @@ nd6_ifattach(struct ifnet *ifp)
 	struct nd_ifinfo *nd;
 
 	nd = malloc(sizeof(*nd), M_IP6NDP, M_WAITOK | M_ZERO);
-
-	nd->initialized = 1;
 
 	nd->basereachable = REACHABLE_TIME;
 	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);

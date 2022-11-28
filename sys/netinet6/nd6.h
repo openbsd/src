@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.89 2022/11/23 19:35:42 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.90 2022/11/28 19:13:36 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -43,12 +43,17 @@
 #define ND6_LLINFO_DELAY	3
 #define ND6_LLINFO_PROBE	4
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	N	net lock
+ */
+
 struct nd_ifinfo {
-	u_int32_t basereachable;	/* BaseReachableTime */
-	u_int32_t reachable;		/* Reachable Time */
-	u_int32_t retrans;		/* Retrans Timer */
-	int recalctm;			/* BaseReacable re-calculation timer */
-	u_int8_t initialized; /* Flag to see the entry is initialized */
+	u_int32_t basereachable;	/* [I] BaseReachableTime */
+	u_int32_t reachable;		/* [N] Reachable Time */
+	u_int32_t retrans;		/* [I] Retrans Timer */
+	int recalctm;			/* [N] BaseReachable recalc timer */
 };
 
 struct in6_nbrinfo {
