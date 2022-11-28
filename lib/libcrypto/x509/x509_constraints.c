@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.29 2022/11/11 12:02:34 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.30 2022/11/28 07:22:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -530,7 +530,8 @@ x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostpart)
 		 * we indicate that we have a URI with an empty
 		 * host part, and succeed.
 		 */
-		*hostpart = strdup("");
+		if (hostpart != NULL)
+			*hostpart = strdup("");
 		return 1;
 	}
 	for (i = authority - uri; i < len; i++) {
