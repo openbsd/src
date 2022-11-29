@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.37 2022/11/26 06:30:08 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.38 2022/11/29 06:29:45 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -204,6 +204,7 @@ struct uhidpp_device {
 
 /*
  * Locking:
+ *	[I]	immutable
  *	[m]	sc_mtx
  */
 struct uhidpp_softc {
@@ -226,6 +227,11 @@ struct uhidpp_softc {
 	struct uhidpp_report *sc_req;	/* [m] synchronous request buffer */
 	struct uhidpp_report *sc_resp;	/* [m] synchronous response buffer */
 	u_int sc_resp_state;		/* [m] synchronous response state */
+
+	enum {
+		UHIDPP_RECEIVER_UNIFYING,
+		UHIDPP_RECEIVER_BOLT,
+	} sc_receiver;			/* [I] */
 };
 
 int uhidpp_match(struct device *, void *, void *);
@@ -368,6 +374,11 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 		printf(" long report error %d\n", error);
 		return;
 	}
+
+	if (uaa->product == 0xc548)
+		sc->sc_receiver = UHIDPP_RECEIVER_BOLT;
+	else
+		sc->sc_receiver = UHIDPP_RECEIVER_UNIFYING;
 
 	/* Probe paired devices. */
 	for (i = 0; i < UHIDPP_NDEVICES; i++) {
@@ -815,24 +826,40 @@ hidpp10_get_name(struct uhidpp_softc *sc, uint8_t device_id,
 {
 	struct uhidpp_report resp;
 	int error;
-	uint8_t params[1] = { 0x40 + (device_id - 1) };
+	const uint8_t *name;
 	uint8_t len;
 
-	error = hidpp_send_rap_report(sc,
-	    HIDPP_REPORT_ID_SHORT,
-	    HIDPP_DEVICE_ID_RECEIVER,
-	    HIDPP_GET_LONG_REGISTER,
-	    HIDPP_REG_PAIRING_INFORMATION,
-	    params, sizeof(params), &resp);
-	if (error)
-		return error;
+	if (sc->sc_receiver == UHIDPP_RECEIVER_BOLT) {
+		uint8_t params[2] = { 0x60 + device_id, 0x01 };
 
-	len = resp.rap.params[1];
-	if (len + 2 > sizeof(resp.rap.params))
-		return -ENAMETOOLONG;
+		error = hidpp_send_rap_report(sc,
+		    HIDPP_REPORT_ID_SHORT,
+		    HIDPP_DEVICE_ID_RECEIVER,
+		    HIDPP_GET_LONG_REGISTER,
+		    HIDPP_REG_PAIRING_INFORMATION,
+		    params, sizeof(params), &resp);
+		if (error)
+			return error;
+		len = resp.rap.params[2];
+		name = &resp.rap.params[3];
+	} else {
+		uint8_t params[1] = { 0x40 + (device_id - 1) };
+
+		error = hidpp_send_rap_report(sc,
+		    HIDPP_REPORT_ID_SHORT,
+		    HIDPP_DEVICE_ID_RECEIVER,
+		    HIDPP_GET_LONG_REGISTER,
+		    HIDPP_REG_PAIRING_INFORMATION,
+		    params, sizeof(params), &resp);
+		if (error)
+			return error;
+		len = resp.rap.params[1];
+		name = &resp.rap.params[2];
+	}
+
 	if (len > bufsiz - 1)
 		len = bufsiz - 1;
-	memcpy(buf, &resp.rap.params[2], len);
+	memcpy(buf, name, len);
 	buf[len] = '\0';
 	return 0;
 }
@@ -842,18 +869,35 @@ hidpp10_get_type(struct uhidpp_softc *sc, uint8_t device_id, const char **buf)
 {
 	struct uhidpp_report resp;
 	int error;
-	uint8_t params[1] = { 0x20 + (device_id - 1) };
+	uint8_t type;
 
-	error = hidpp_send_rap_report(sc,
-	    HIDPP_REPORT_ID_SHORT,
-	    HIDPP_DEVICE_ID_RECEIVER,
-	    HIDPP_GET_LONG_REGISTER,
-	    HIDPP_REG_PAIRING_INFORMATION,
-	    params, sizeof(params), &resp);
-	if (error)
-		return error;
+	if (sc->sc_receiver == UHIDPP_RECEIVER_BOLT) {
+		uint8_t params[1] = { 0x50 + device_id };
 
-	switch (resp.rap.params[7]) {
+		error = hidpp_send_rap_report(sc,
+		    HIDPP_REPORT_ID_SHORT,
+		    HIDPP_DEVICE_ID_RECEIVER,
+		    HIDPP_GET_LONG_REGISTER,
+		    HIDPP_REG_PAIRING_INFORMATION,
+		    params, sizeof(params), &resp);
+		if (error)
+			return error;
+		type = resp.rap.params[1] & 0xf;
+	} else {
+		uint8_t params[1] = { 0x20 + (device_id - 1) };
+
+		error = hidpp_send_rap_report(sc,
+		    HIDPP_REPORT_ID_SHORT,
+		    HIDPP_DEVICE_ID_RECEIVER,
+		    HIDPP_GET_LONG_REGISTER,
+		    HIDPP_REG_PAIRING_INFORMATION,
+		    params, sizeof(params), &resp);
+		if (error)
+			return error;
+		type = resp.rap.params[7];
+	}
+
+	switch (type) {
 	case 0x00:
 		*buf = "unknown";
 		return 0;
