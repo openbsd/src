@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.26 2022/11/29 07:23:03 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.27 2022/11/29 12:23:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,15 +111,15 @@ X509_verify_cert_error_string(long n)
 	case X509_V_ERR_CERT_REVOKED:
 		return "certificate revoked";
 	case X509_V_ERR_INVALID_CA:
-		return  "invalid CA certificate";
+		return "invalid CA certificate";
 	case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-		return  "path length constraint exceeded";
+		return "path length constraint exceeded";
 	case X509_V_ERR_INVALID_PURPOSE:
-		return  "unsupported certificate purpose";
+		return "unsupported certificate purpose";
 	case X509_V_ERR_CERT_UNTRUSTED:
-		return  "certificate not trusted";
+		return "certificate not trusted";
 	case X509_V_ERR_CERT_REJECTED:
-		return  "certificate rejected";
+		return "certificate rejected";
 	case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
 		return "subject issuer mismatch";
 	case X509_V_ERR_AKID_SKID_MISMATCH:
@@ -137,13 +137,14 @@ X509_verify_cert_error_string(long n)
 	case X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION:
 		return "unhandled critical CRL extension";
 	case X509_V_ERR_INVALID_NON_CA:
-		return  "invalid non-CA certificate (has CA markings)";
+		return "invalid non-CA certificate (has CA markings)";
 	case X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED:
 		return "proxy path length constraint exceeded";
 	case X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE:
 		return "key usage does not include digital signature";
 	case X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED:
-		return "proxy certificates not allowed, please set the appropriate flag";
+		return "proxy certificates not allowed, "
+		    "please set the appropriate flag";
 	case X509_V_ERR_INVALID_EXTENSION:
 		return "invalid or inconsistent certificate extension";
 	case X509_V_ERR_INVALID_POLICY_EXTENSION:
