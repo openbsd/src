@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.23 2022/11/29 07:06:12 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.24 2022/11/29 07:08:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,8 @@ X509_verify_cert_error_string(long n)
 	switch ((int)n) {
 	case X509_V_OK:
 		return "ok";
+	case X509_V_ERR_UNSPECIFIED:
+		return "Unspecified certificate verification error";
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 		return "unable to get issuer certificate";
 	case X509_V_ERR_UNABLE_TO_GET_CRL:
