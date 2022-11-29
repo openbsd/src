@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.26 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: ip.c,v 1.27 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,7 +19,6 @@
 #include <arpa/inet.h>
 
 #include <err.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

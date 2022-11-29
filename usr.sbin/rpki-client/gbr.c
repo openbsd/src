@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.18 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.19 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -16,7 +16,6 @@
  */
 
 #include <err.h>
-#include <stdarg.h>
 #include <stdint.h>
 #include <fcntl.h>
 #include <stdlib.h>

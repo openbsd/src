@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.225 2022/11/28 17:47:01 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.226 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,6 +33,7 @@
 #include <fnmatch.h>
 #include <poll.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>

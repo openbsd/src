@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.49 2022/11/29 11:45:03 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.50 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,7 +23,6 @@
 #include <err.h>
 #include <fcntl.h>
 #include <inttypes.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

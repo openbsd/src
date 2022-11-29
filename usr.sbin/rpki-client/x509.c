@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.60 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.61 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/socket.h>
 
 #include <err.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.8 2022/11/26 17:14:40 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.9 2022/11/29 20:41:32 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -19,7 +19,6 @@
 
 #include <assert.h>
 #include <err.h>
-#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
