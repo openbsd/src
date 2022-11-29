@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.50 2022/09/08 03:06:33 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.51 2022/11/29 00:58:05 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -35,7 +35,9 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/evcount.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <machine/autoconf.h>
@@ -46,6 +48,8 @@
 #include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 
+void dec_rearm(void *, uint64_t);
+void dec_trigger(void *);
 void decr_intr(struct clockframe *frame);
 u_int tb_get_timecount(struct timecounter *);
 
@@ -54,7 +58,14 @@ u_int tb_get_timecount(struct timecounter *);
  */
 u_int32_t ticks_per_sec = 3125000;
 u_int32_t ns_per_tick = 320;
-static int32_t ticks_per_intr;
+uint64_t dec_nsec_cycle_ratio;
+uint64_t dec_nsec_max;
+int clock_initialized;
+
+const struct intrclock dec_intrclock = {
+	.ic_rearm = dec_rearm,
+	.ic_trigger = dec_trigger
+};
 
 static struct timecounter tb_timecounter = {
 	.tc_get_timecount = tb_get_timecount,
@@ -75,15 +86,8 @@ static const char *calibrate_tc_models[] = {
 time_read_t  *time_read;
 time_write_t *time_write;
 
-/* vars for stats */
-int statint;
-u_int32_t statvar;
-u_int32_t statmin;
-
 static struct evcount clk_count;
-static struct evcount stat_count;
 static int clk_irq = PPC_CLK_IRQ;
-static int stat_irq = PPC_STAT_IRQ;
 
 extern todr_chip_handle_t todr_handle;
 struct todr_chip_handle rtc_todr;
@@ -115,17 +119,15 @@ rtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 void
 decr_intr(struct clockframe *frame)
 {
-	u_int64_t tb;
-	u_int64_t nextevent;
 	struct cpu_info *ci = curcpu();
-	int nstats;
 	int s;
 
-	/*
-	 * Check whether we are initialized.
-	 */
-	if (!ticks_per_intr)
+	if (!clock_initialized)
 		return;
+
+	clk_count.ec_count++;		/* XXX not atomic */
+
+	ppc_mtdec(UINT32_MAX >> 1);	/* clear DEC exception */
 
 	/*
 	 * We can't actually mask DEC interrupts at or above IPL_CLOCK
@@ -135,73 +137,15 @@ decr_intr(struct clockframe *frame)
 	 */
 	if (ci->ci_cpl >= IPL_CLOCK) {
 		ci->ci_dec_deferred = 1;
-		ppc_mtdec(UINT32_MAX >> 1);	/* clear DEC exception */
 		return;
 	}
 	ci->ci_dec_deferred = 0;
 
-	/*
-	 * Based on the actual time delay since the last decrementer reload,
-	 * we arrange for earlier interrupt next time.
-	 */
-
-	tb = ppc_mftb();
-	while (ci->ci_nexttimerevent <= tb)
-		ci->ci_nexttimerevent += ticks_per_intr;
-
-	ci->ci_prevtb = ci->ci_nexttimerevent - ticks_per_intr;
-
-	for (nstats = 0; ci->ci_nextstatevent <= tb; nstats++) {
-		int r;
-		do {
-			r = random() & (statvar -1);
-		} while (r == 0); /* random == 0 not allowed */
-		ci->ci_nextstatevent += statmin + r;
-	}
-
-	/* only count timer ticks for CLK_IRQ */
-	stat_count.ec_count += nstats;
-
-	if (ci->ci_nexttimerevent < ci->ci_nextstatevent)
-		nextevent = ci->ci_nexttimerevent;
-	else
-		nextevent = ci->ci_nextstatevent;
-
-	/*
-	 * Need to work about the near constant skew this introduces???
-	 * reloading tb here could cause a missed tick.
-	 */
-	ppc_mtdec(nextevent - tb);
-
-	nstats += ci->ci_statspending;
-	ci->ci_statspending = 0;
-
 	s = splclock();
-
-	/*
-	 * Reenable interrupts
-	 */
 	ppc_intr_enable(1);
-
-	/*
-	 * Do standard timer interrupt stuff.
-	 */
-	while (ci->ci_lasttb < ci->ci_prevtb) {
-		/* sync lasttb with hardclock */
-		ci->ci_lasttb += ticks_per_intr;
-		clk_count.ec_count++;
-		hardclock(frame);
-	}
-
-	while (nstats-- > 0)
-		statclock(frame);
-
+	clockintr_dispatch(frame);
 	splx(s);
 	(void) ppc_intr_disable();
-
-	/* if a tick has occurred while dealing with these,
-	 * dont service it now, delay until the next tick.
-	 */
 }
 
 void cpu_startclock(void);
@@ -210,7 +154,6 @@ void
 cpu_initclocks(void)
 {
 	int intrstate;
-	int minint;
 	u_int32_t first_tb, second_tb;
 	time_t first_sec, sec;
 	int calibrate = 0, n;
@@ -242,6 +185,7 @@ cpu_initclocks(void)
 		    ticks_per_sec);
 #endif
 	}
+	ns_per_tick = 1000000000 / ticks_per_sec;
 
 	tb_timecounter.tc_frequency = ticks_per_sec;
 	tc_init(&tb_timecounter);
@@ -252,23 +196,16 @@ cpu_initclocks(void)
 
 	intrstate = ppc_intr_disable();
 
-	ticks_per_intr = ticks_per_sec / hz;
-
 	stathz = 100;
 	profhz = 1000; /* must be a multiple of stathz */
+	clockintr_init(CL_RNDSTAT);
 
-	/* init secondary clock to stathz */
-	statint = ticks_per_sec / stathz;
-	statvar = 0x40000000; /* really big power of two */
-	/* find largest 2^n which is nearly smaller than statint/2  */
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-	statmin = statint - (statvar >> 1);
+	dec_nsec_cycle_ratio = ticks_per_sec * (1ULL << 32) / 1000000000;
+	dec_nsec_max = UINT64_MAX / dec_nsec_cycle_ratio;
 
 	evcount_attach(&clk_count, "clock", &clk_irq);
-	evcount_attach(&stat_count, "stat", &stat_irq);
 
+	clock_initialized = 1;
 	cpu_startclock();
 
 	ppc_intr_enable(intrstate);
@@ -277,21 +214,8 @@ cpu_initclocks(void)
 void
 cpu_startclock(void)
 {
-	struct cpu_info *ci = curcpu();
-	u_int64_t nextevent;
-
-	ci->ci_lasttb = ppc_mftb();
-
-	/*
-	 * no point in having random on the first tick, 
-	 * it just complicates the code.
-	 */
-	ci->ci_nexttimerevent = ci->ci_lasttb + ticks_per_intr;
-	nextevent = ci->ci_nextstatevent = ci->ci_nexttimerevent;
-
-	ci->ci_statspending = 0;
-
-	ppc_mtdec(nextevent - ci->ci_lasttb);
+	clockintr_cpu_init(&dec_intrclock);
+	clockintr_trigger();
 }
 
 /*
@@ -308,35 +232,41 @@ delay(unsigned n)
 		;
 }
 
-/*
- * Nothing to do.
- */
 void
 setstatclockrate(int newhz)
 {
-	int minint;
-	int intrstate;
-
-	intrstate = ppc_intr_disable();
-
-	statint = ticks_per_sec / newhz;
-	statvar = 0x40000000; /* really big power of two */
-	/* find largest 2^n which is nearly smaller than statint/2 */
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-
-	statmin = statint - (statvar >> 1);
-	ppc_intr_enable(intrstate);
-
-	/*
-	 * XXX this allows the next stat timer to occur then it switches
-	 * to the new frequency. Rather than switching instantly.
-	 */
+	clockintr_setstatclockrate(newhz);
 }
 
 u_int
 tb_get_timecount(struct timecounter *tc)
 {
 	return ppc_mftbl();
+}
+
+void
+dec_rearm(void *unused, uint64_t nsecs)
+{
+	uint32_t cycles;
+	int s;
+
+	if (nsecs > dec_nsec_max)
+		nsecs = dec_nsec_max;
+	cycles = (nsecs * dec_nsec_cycle_ratio) >> 32;
+	if (cycles > UINT32_MAX >> 1)
+		cycles = UINT32_MAX >> 1;
+	s = ppc_intr_disable();
+	ppc_mtdec(cycles);
+	ppc_intr_enable(s);
+}
+
+void
+dec_trigger(void *unused)
+{
+	int s;
+
+	s = ppc_intr_disable();
+	ppc_mtdec(0);
+	ppc_mtdec(UINT32_MAX);
+	ppc_intr_enable(s);
 }

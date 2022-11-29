@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.73 2022/10/21 21:26:49 gkoehler Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.74 2022/11/29 00:58:05 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 
 #include <machine/frame.h>
 
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
@@ -72,11 +73,7 @@ struct cpu_info {
 #define DISISAVE_LEN	4
 	register_t ci_disisave[DISISAVE_LEN];
 
-	volatile u_int64_t ci_nexttimerevent;
-	volatile u_int64_t ci_prevtb;
-	volatile u_int64_t ci_lasttb;
-	volatile u_int64_t ci_nextstatevent;
-	int ci_statspending;
+	struct clockintr_queue ci_queue;
 
 	volatile int    ci_ddb_paused;
 #define	CI_DDB_RUNNING	0
