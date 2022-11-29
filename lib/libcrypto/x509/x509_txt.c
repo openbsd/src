@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.21 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.22 2022/11/29 07:03:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,8 +70,6 @@
 const char *
 X509_verify_cert_error_string(long n)
 {
-	static char buf[100];
-
 	switch ((int)n) {
 	case X509_V_OK:
 		return("ok");
@@ -199,8 +197,7 @@ X509_verify_cert_error_string(long n)
 		return("CA signature digest algorithm too weak");
 
 	default:
-		(void) snprintf(buf, sizeof buf, "error number %ld", n);
-		return(buf);
+		return("Unknown certificate verification error");
 	}
 }
 LCRYPTO_ALIAS(X509_verify_cert_error_string)
