@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.25 2022/11/29 07:12:17 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.26 2022/11/29 07:23:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,10 +82,10 @@ X509_verify_cert_error_string(long n)
 		return "CRL signature failure";
 	case X509_V_ERR_CERT_NOT_YET_VALID:
 		return "certificate is not yet valid";
-	case X509_V_ERR_CRL_NOT_YET_VALID:
-		return "CRL is not yet valid";
 	case X509_V_ERR_CERT_HAS_EXPIRED:
 		return "certificate has expired";
+	case X509_V_ERR_CRL_NOT_YET_VALID:
+		return "CRL is not yet valid";
 	case X509_V_ERR_CRL_HAS_EXPIRED:
 		return "CRL has expired";
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
@@ -112,22 +112,14 @@ X509_verify_cert_error_string(long n)
 		return "certificate revoked";
 	case X509_V_ERR_INVALID_CA:
 		return  "invalid CA certificate";
-	case X509_V_ERR_INVALID_NON_CA:
-		return  "invalid non-CA certificate (has CA markings)";
 	case X509_V_ERR_PATH_LENGTH_EXCEEDED:
 		return  "path length constraint exceeded";
-	case X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED:
-		return "proxy path length constraint exceeded";
-	case X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED:
-		return "proxy certificates not allowed, please set the appropriate flag";
 	case X509_V_ERR_INVALID_PURPOSE:
 		return  "unsupported certificate purpose";
 	case X509_V_ERR_CERT_UNTRUSTED:
 		return  "certificate not trusted";
 	case X509_V_ERR_CERT_REJECTED:
 		return  "certificate rejected";
-	case X509_V_ERR_APPLICATION_VERIFICATION:
-		return "application verification failure";
 	case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
 		return "subject issuer mismatch";
 	case X509_V_ERR_AKID_SKID_MISMATCH:
@@ -142,10 +134,16 @@ X509_verify_cert_error_string(long n)
 		return "unhandled critical extension";
 	case X509_V_ERR_KEYUSAGE_NO_CRL_SIGN:
 		return "key usage does not include CRL signing";
-	case X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE:
-		return "key usage does not include digital signature";
 	case X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION:
 		return "unhandled critical CRL extension";
+	case X509_V_ERR_INVALID_NON_CA:
+		return  "invalid non-CA certificate (has CA markings)";
+	case X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED:
+		return "proxy path length constraint exceeded";
+	case X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE:
+		return "key usage does not include digital signature";
+	case X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED:
+		return "proxy certificates not allowed, please set the appropriate flag";
 	case X509_V_ERR_INVALID_EXTENSION:
 		return "invalid or inconsistent certificate extension";
 	case X509_V_ERR_INVALID_POLICY_EXTENSION:
@@ -172,6 +170,8 @@ X509_verify_cert_error_string(long n)
 		return "unsupported or invalid name syntax";
 	case X509_V_ERR_CRL_PATH_VALIDATION_ERROR:
 		return "CRL path validation error";
+	case X509_V_ERR_APPLICATION_VERIFICATION:
+		return "application verification failure";
 	case X509_V_ERR_HOSTNAME_MISMATCH:
 		return "Hostname mismatch";
 	case X509_V_ERR_EMAIL_MISMATCH:
