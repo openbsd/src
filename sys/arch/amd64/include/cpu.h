@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.153 2022/11/08 17:34:13 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.154 2022/11/29 21:41:39 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -372,9 +372,7 @@ struct timeval;
 
 
 #ifdef _KERNEL
-/* locore.S */
-extern int biosbasemem;
-extern int biosextmem;
+/* cpu.c */
 extern int cpu_feature;
 extern int cpu_ebxfeature;
 extern int cpu_ecxfeature;
@@ -386,10 +384,7 @@ extern int ecpu_ecxfeature;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
-extern int cpuspeed;
 extern int cpu_meltdown;
-
-/* cpu.c */
 extern u_int cpu_mwait_size;
 extern u_int cpu_mwait_states;
 
@@ -399,6 +394,7 @@ void	x86_print_cacheinfo(struct cpu_info *);
 /* identcpu.c */
 void	identifycpu(struct cpu_info *);
 int	cpu_amd64speed(int *);
+extern int cpuspeed;
 
 /* machdep.c */
 void	dumpconf(void);

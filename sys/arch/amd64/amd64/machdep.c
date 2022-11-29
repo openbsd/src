@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.283 2022/11/08 14:46:51 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.284 2022/11/29 21:41:39 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -170,6 +170,11 @@ int	cpureset_delay = CPURESET_DELAY;
 #else
 int     cpureset_delay = 0;
 #endif
+
+char *ssym = 0, *esym = 0;	/* start and end of symbol table */
+dev_t bootdev = 0;		/* device we booted from */
+int biosbasemem = 0;		/* base memory reported by BIOS */
+u_int bootapiver = 0;		/* /boot API version */
 
 int	physmem;
 u_int64_t	dumpmem_low;
@@ -448,7 +453,6 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	bios_diskinfo_t *pdi;
-	extern dev_t bootdev;
 	int biosdev;
 
 	/* all sysctl names at this level except diskinfo are terminal */
@@ -1175,7 +1179,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-extern  struct user *proc0paddr;
+struct user *proc0paddr = NULL;
 
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl,

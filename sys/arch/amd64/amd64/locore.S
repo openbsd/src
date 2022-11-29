@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.129 2022/11/04 16:49:31 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.130 2022/11/29 21:41:39 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -161,59 +161,6 @@ _C_LABEL(lapic_ppr):
 _C_LABEL(lapic_isr):
 	.space  NBPG-LAPIC_ISR
 #endif
-
-	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
-	.globl	_C_LABEL(cpu_ebxfeature)
-	.globl	_C_LABEL(cpu_ecxfeature),_C_LABEL(ecpu_ecxfeature)
-	.globl	_C_LABEL(cpu_perf_eax)
-	.globl	_C_LABEL(cpu_perf_ebx)
-	.globl	_C_LABEL(cpu_perf_edx)
-	.globl	_C_LABEL(cpu_apmi_edx)
-	.globl	_C_LABEL(ssym),_C_LABEL(esym),_C_LABEL(boothowto)
-	.globl	_C_LABEL(bootdev)
-	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr)
-	.globl	_C_LABEL(biosbasemem)
-	.globl	_C_LABEL(bootapiver)
-	.globl	_C_LABEL(pg_nx)
-	.globl	_C_LABEL(pg_g_kern)
-	.globl	_C_LABEL(cpu_meltdown)
-_C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
-_C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
-					#   instruction
-_C_LABEL(cpu_ebxfeature):.long	0	# ext. ebx feature flags from 'cpuid'
-_C_LABEL(cpu_ecxfeature):.long	0	# ext. ecx feature flags from 'cpuid'
-_C_LABEL(ecpu_ecxfeature):.long	0	# extended ecx feature flags
-_C_LABEL(cpu_perf_eax):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_perf_ebx):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_perf_edx):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_apmi_edx):	.long	0	# adv. power mgmt. info. from 'cpuid'
-_C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
-					#   instruction
-_C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
-					#   instruction
-_C_LABEL(ssym):		.quad	0	# ptr to start of syms
-_C_LABEL(esym):		.quad	0	# ptr to end of syms
-_C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
-_C_LABEL(bootapiver):	.long	0	# /boot API version
-_C_LABEL(bootdev):	.long	0	# device we booted from
-_C_LABEL(proc0paddr):	.quad	0
-#ifndef REALBASEMEM
-_C_LABEL(biosbasemem):	.long	0	# base memory reported by BIOS
-#else
-_C_LABEL(biosbasemem):	.long	REALBASEMEM
-#endif
-#ifndef REALEXTMEM
-_C_LABEL(biosextmem):	.long	0	# extended memory reported by BIOS
-#else
-_C_LABEL(biosextmem):	.long	REALEXTMEM
-#endif
-_C_LABEL(pg_nx):	.quad	0	# NX PTE bit (if CPU supports)
-_C_LABEL(pg_g_kern):	.quad	0	# 0x100 if global pages should be used
-					# in kernel mappings, 0 otherwise (for
-					# insecure CPUs)
-_C_LABEL(cpu_meltdown):	.long	0	# 1 if this CPU has Meltdown
 
 /*****************************************************************************/
 

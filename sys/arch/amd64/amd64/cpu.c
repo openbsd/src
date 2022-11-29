@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.162 2022/11/08 17:34:13 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.163 2022/11/29 21:41:39 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -149,6 +149,19 @@ void	replacemds(void);
 
 extern long _stac;
 extern long _clac;
+
+int cpuid_level = 0;		/* cpuid(0).eax */
+char cpu_vendor[16] = { 0 };	/* cpuid(0).e[bdc]x, \0 */
+int cpu_id = 0;			/* cpuid(1).eax */
+int cpu_ebxfeature = 0;		/* cpuid(1).ebx */
+int cpu_ecxfeature = 0;		/* cpuid(1).ecx */
+int cpu_feature = 0;		/* cpuid(1).edx */
+int cpu_perf_eax = 0;		/* cpuid(0xa).eax */
+int cpu_perf_ebx = 0;		/* cpuid(0xa).ebx */
+int cpu_perf_edx = 0;		/* cpuid(0xa).edx */
+int cpu_apmi_edx = 0;		/* cpuid(0x80000007).edx */
+int ecpu_ecxfeature = 0;	/* cpuid(0x80000001).ecx */
+int cpu_meltdown = 0;
 
 void
 replacesmap(void)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.155 2022/10/16 15:03:39 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.156 2022/11/29 21:41:39 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -223,6 +223,14 @@ pd_entry_t *const normal_pdes[] = PDES_INITIALIZER;
  */
 
 struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+
+/*
+ * pg_nx: NX PTE bit (if CPU supports)
+ * pg_g_kern: PG_G if global pages should be used in kernel mappings,
+ *	0 otherwise (for insecure CPUs)
+ */
+pt_entry_t pg_nx = 0;
+pt_entry_t pg_g_kern = 0;
 
 /*
  * pmap_pg_wc: if our processor supports PAT then we set this

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.27 2022/06/29 07:44:10 kettenis Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.28 2022/11/29 21:41:39 guenther Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -44,6 +44,9 @@
 #include <machine/isa_machdep.h>
 
 extern int pmap_initialized;
+
+/* kernel address of "hole" (location of start of iomem in virtual) */
+u_long atdevbase = 0;	
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
