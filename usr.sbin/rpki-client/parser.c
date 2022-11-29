@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.78 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.79 2022/11/29 10:33:09 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -132,6 +132,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	struct auth		*a;
 	struct crl		*crl;
 	X509			*x509;
+	const char		*errstr;
 
 	if ((roa = roa_parse(&x509, file, der, len)) == NULL)
 		return NULL;
@@ -139,7 +140,8 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, roa->ski, roa->aki);
 	crl = crl_get(&crlt, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, 0)) {
+	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+		warnx("%s: %s", file, errstr);
 		X509_free(x509);
 		roa_free(roa);
 		return NULL;
@@ -232,6 +234,7 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc)
 		if (!valid_hash(f, flen, mft->crlhash, sizeof(mft->crlhash)))
 			goto next;
 		crl = crl_parse(fn, f, flen);
+
 next:
 		free(f);
 		free(fn);
@@ -255,19 +258,21 @@ next:
  */
 static struct mft *
 proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
-    struct entity *entp, enum location loc, struct crl **crl)
+    struct entity *entp, enum location loc, struct crl **crl,
+    const char **errstr)
 {
 	struct mft	*mft;
 	X509		*x509;
 	struct auth	*a;
 
 	*crl = NULL;
+	*errstr = NULL;
 	if ((mft = mft_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 	*crl = parse_load_crl_from_mft(entp, mft, loc);
 
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
-	if (!valid_x509(file, ctx, x509, a, *crl, 1)) {
+	if (!valid_x509(file, ctx, x509, a, *crl, errstr)) {
 		X509_free(x509);
 		mft_free(mft);
 		crl_free(*crl);
@@ -285,13 +290,16 @@ proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_post(char *file, struct mft *mft, const char *path)
+proc_parser_mft_post(char *file, struct mft *mft, const char *path,
+    const char *errstr)
 {
 	/* check that now is not before from */
 	time_t now = time(NULL);
 
 	if (mft == NULL) {
-		warnx("%s: no valid mft available", file);
+		if (errstr == NULL)
+			errstr = "no valid mft available";
+		warnx("%s: %s", file, errstr);
 		return NULL;
 	}
 
@@ -330,6 +338,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 	struct mft	*mft1 = NULL, *mft2 = NULL;
 	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
 	char		*f, *file, *file1, *file2;
+	const char	*err1, *err2;
 	size_t		 flen;
 
 	*mp = NULL;
@@ -341,7 +350,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 		if (f == NULL && errno != ENOENT)
 			warn("parse file %s", file1);
 		mft1 = proc_parser_mft_pre(file1, f, flen, entp, DIR_VALID,
-		    &crl1);
+		    &crl1, &err1);
 		free(f);
 	}
 	if (file2 != NULL) {
@@ -349,22 +358,27 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 		if (f == NULL && errno != ENOENT)
 			warn("parse file %s", file2);
 		mft2 = proc_parser_mft_pre(file2, f, flen, entp, DIR_TEMP,
-		    &crl2);
+		    &crl2, &err2);
 		free(f);
 	}
+
+	/* overload error from temp file if it is set */
+	if (mft1 == NULL && mft2 == NULL)
+		if (err2 != NULL)
+			err1 = err2;
 
 	if (mft_compare(mft1, mft2) == 1) {
 		mft_free(mft2);
 		crl_free(crl2);
 		free(file2);
-		*mp = proc_parser_mft_post(file1, mft1, entp->path);
+		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1);
 		crl = crl1;
 		file = file1;
 	} else {
 		mft_free(mft1);
 		crl_free(crl1);
 		free(file1);
-		*mp = proc_parser_mft_post(file2, mft2, entp->path);
+		*mp = proc_parser_mft_post(file2, mft2, entp->path, err2);
 		crl = crl2;
 		file = file2;
 	}
@@ -393,6 +407,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 	struct cert	*cert;
 	struct crl	*crl;
 	struct auth	*a;
+	const char	*errstr = NULL;
 
 	/* Extract certificate data. */
 
@@ -404,8 +419,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
 	crl = crl_get(&crlt, a);
 
-	if (!valid_x509(file, ctx, cert->x509, a, crl, 0) ||
+	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
 	    !valid_cert(file, a, cert)) {
+		if (errstr != NULL)
+			warnx("%s: %s", file, errstr);
 		cert_free(cert);
 		return NULL;
 	}
@@ -465,10 +482,11 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 static void
 proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 {
-	struct gbr		*gbr;
-	X509			*x509;
-	struct crl		*crl;
-	struct auth		*a;
+	struct gbr	*gbr;
+	X509		*x509;
+	struct crl	*crl;
+	struct auth	*a;
+	const char	*errstr;
 
 	if ((gbr = gbr_parse(&x509, file, der, len)) == NULL)
 		return;
@@ -477,7 +495,8 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 	crl = crl_get(&crlt, a);
 
 	/* return value can be ignored since nothing happens here */
-	valid_x509(file, ctx, x509, a, crl, 0);
+	if (!valid_x509(file, ctx, x509, a, crl, &errstr))
+		warnx("%s: %s", file, errstr);
 
 	X509_free(x509);
 	gbr_free(gbr);
@@ -489,10 +508,11 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 static struct aspa *
 proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 {
-	struct aspa		*aspa;
-	struct auth		*a;
-	struct crl		*crl;
-	X509			*x509;
+	struct aspa	*aspa;
+	struct auth	*a;
+	struct crl	*crl;
+	X509		*x509;
+	const char	*errstr;
 
 	if ((aspa = aspa_parse(&x509, file, der, len)) == NULL)
 		return NULL;
@@ -500,7 +520,8 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki);
 	crl = crl_get(&crlt, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, 0)) {
+	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+		warnx("%s: %s", file, errstr);
 		X509_free(x509);
 		aspa_free(aspa);
 		return NULL;
@@ -526,11 +547,12 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 static struct tak *
 proc_parser_tak(char *file, const unsigned char *der, size_t len)
 {
-	struct tak		*tak;
-	X509			*x509;
-	struct crl		*crl;
-	struct auth		*a;
-	int			 rc = 0;
+	struct tak	*tak;
+	X509		*x509;
+	struct crl	*crl;
+	struct auth	*a;
+	const char	*errstr;
+	int		 rc = 0;
 
 	if ((tak = tak_parse(&x509, file, der, len)) == NULL)
 		return NULL;
@@ -538,8 +560,10 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, tak->ski, tak->aki);
 	crl = crl_get(&crlt, a);
 
-	if (!valid_x509(file, ctx, x509, a, crl, 0))
+	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
+		warnx("%s: %s", file, errstr);
 		goto out;
+	}
 
 	/* TAK EE must be signed by self-signed CA */
 	if (a->parent != NULL)

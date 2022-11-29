@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.47 2022/11/26 12:02:37 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.48 2022/11/29 10:33:09 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -369,18 +369,20 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 /*
  * Validate the X509 certificate.  If crl is NULL don't check CRL.
  * Returns 1 for valid certificates, returns 0 if there is a verify error
+ * and sets *errstr to the error returned by X509_verify_cert_error_string().
  */
 int
 valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
-    struct crl *crl, int nowarn)
+    struct crl *crl, const char **errstr)
 {
 	X509_VERIFY_PARAM	*params;
 	ASN1_OBJECT		*cp_oid;
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls = NULL;
 	unsigned long		 flags;
-	int			 c;
+	int			 error;
 
+	*errstr = NULL;
 	build_chain(a, &chain);
 	build_crls(crl, &crls);
 
@@ -405,9 +407,8 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	X509_STORE_CTX_set0_crls(store_ctx, crls);
 
 	if (X509_verify_cert(store_ctx) <= 0) {
-		c = X509_STORE_CTX_get_error(store_ctx);
-		if (!nowarn || verbose > 1)
-			warnx("%s: %s", file, X509_verify_cert_error_string(c));
+		error = X509_STORE_CTX_get_error(store_ctx);
+		*errstr = X509_verify_cert_error_string(error);
 		X509_STORE_CTX_cleanup(store_ctx);
 		sk_X509_free(chain);
 		sk_X509_CRL_free(crls);
