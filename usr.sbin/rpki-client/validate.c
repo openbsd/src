@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.48 2022/11/29 10:33:09 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.49 2022/11/29 11:45:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -367,9 +367,9 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 }
 
 /*
- * Validate the X509 certificate.  If crl is NULL don't check CRL.
- * Returns 1 for valid certificates, returns 0 if there is a verify error
- * and sets *errstr to the error returned by X509_verify_cert_error_string().
+ * Validate the X509 certificate. Returns 1 for valid certificates,
+ * returns 0 if there is a verify error and sets *errstr to the error
+ * returned by X509_verify_cert_error_string().
  */
 int
 valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
