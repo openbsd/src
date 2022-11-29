@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.20 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: io.c,v 1.21 2022/11/29 20:26:22 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -19,7 +19,6 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.44 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.45 2022/11/29 20:26:22 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -19,7 +19,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
