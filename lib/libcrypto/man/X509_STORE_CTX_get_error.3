@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.24 2022/11/29 12:31:43 tb Exp $
+.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.25 2022/11/29 19:52:48 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_STORE_CTX_get_error 24a535ea Sep 22 13:14:20 2020 +0100
 .\" OpenSSL man3/X509_STORE_CTX_new 24a535ea Sep 22 13:14:20 2020 +0100
@@ -485,19 +485,21 @@ This is only set if issuer check debugging is enabled it is used for
 status notification and is
 .Sy not
 in itself an error.
-.\" X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER : \
+.\" .It Dv X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER : \
 .\"  No unable to get CRL issuer certificate
-.\" X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION : No unhandled critical extension
-.\" X509_V_ERR_KEYUSAGE_NO_CRL_SIGN : No key usage does not include CRL signing
-.\" X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION : \
+.\" .It Dv X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION : \
+.\"  No unhandled critical extension
+.\" .It Dv X509_V_ERR_KEYUSAGE_NO_CRL_SIGN : \
+.\"  No key usage does not include CRL signing
+.\" .It Dv X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION : \
 .\"  No unhandled critical CRL extension
-.\" X509_V_ERR_INVALID_NON_CA : \
+.\" .It Dv X509_V_ERR_INVALID_NON_CA : \
 .\"  No invalid non-CA certificate (has CA markings)
-.\" X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED : \
+.\" .It Dv X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED : \
 .\"  No proxy path length constraint exceeded
-.\" X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE : \
+.\" .It Dv X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE : \
 .\"  No key usage does not include digital signature
-.\" X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED : \
+.\" .It Dv X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED : \
 .\"  No proxy certificates not allowed, please set the appropriate flag
 .It Dv X509_V_ERR_INVALID_EXTENSION : \
  No invalid or inconsistent certificate extension
@@ -519,7 +521,7 @@ certificate.
 Some feature of a certificate extension is not supported.
 Unused.
 .It Dv X509_V_ERR_UNNESTED_RESOURCE : \
- RFC 3779 resource not subset of parent's resources
+ No RFC 3779 resource not subset of parent's resources
 When walking up a certificate chain, all resources specified in
 RFC 3779 extensions must be contained in the resources delegated in
 the issuer's RFC 3779 extensions.
