@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2022/08/09 04:40:08 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2022/11/29 01:04:44 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -46,6 +46,7 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
@@ -71,10 +72,8 @@ struct cpu_info {
 	register_t	ci_tempsave[CPUSAVE_LEN];
 	register_t	ci_idle_sp_save;
 
-	uint64_t	ci_lasttb;
-	uint64_t	ci_nexttimerevent;
-	uint64_t	ci_nextstatevent;
-	
+	struct clockintr_queue ci_queue;
+
 	volatile int 	ci_cpl;
 	volatile int	ci_dec_deferred;
 	uint32_t	ci_ipending;
