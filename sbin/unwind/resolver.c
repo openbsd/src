@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.155 2022/03/12 14:35:29 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.156 2022/11/29 11:56:32 florian Exp $	*/
 
 
 /*
@@ -1536,7 +1536,7 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	if (checked_resolver != resolvers[checked_resolver->type]) {
 		log_debug("%s: %s: ignoring late check result", __func__,
 		    uw_resolver_type_str[checked_resolver->type]);
-		goto out;
+		goto ignore_late;
 	}
 
 	prev_state = checked_resolver->state;
@@ -1610,6 +1610,7 @@ out:
 		    &checked_resolver->check_tv);
 	}
 
+ignore_late:
 	resolver_unref(checked_resolver);
 	res->stop = 1; /* do not free in callback */
 }
