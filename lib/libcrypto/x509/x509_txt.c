@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.24 2022/11/29 07:08:41 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.25 2022/11/29 07:12:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,16 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <time.h>
-
-#include <openssl/asn1.h>
-#include <openssl/buffer.h>
-#include <openssl/evp.h>
-#include <openssl/lhash.h>
-#include <openssl/objects.h>
-#include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 
 const char *
 X509_verify_cert_error_string(long n)
