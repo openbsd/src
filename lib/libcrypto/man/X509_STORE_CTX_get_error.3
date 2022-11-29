@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.23 2022/05/19 07:04:41 tb Exp $
+.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.24 2022/11/29 12:31:43 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_STORE_CTX_get_error 24a535ea Sep 22 13:14:20 2020 +0100
 .\" OpenSSL man3/X509_STORE_CTX_new 24a535ea Sep 22 13:14:20 2020 +0100
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 19 2022 $
+.Dd $Mdocdate: November 29 2022 $
 .Dt X509_STORE_CTX_GET_ERROR 3
 .Os
 .Sh NAME
@@ -296,9 +296,9 @@ debugging information relating to the current certificate.
 .Pp
 If an unrecognised error code is passed to
 .Fn X509_verify_cert_error_string ,
-the numerical value of the unknown code is returned in a static buffer.
-This is not thread safe but will never happen unless an invalid code is
-passed.
+"Unknown certificate verification error"
+is returned.
+This should never happen unless an invalid code is passed.
 .Sh RETURN VALUES
 .Fn X509_STORE_CTX_get_error
 returns
@@ -365,6 +365,10 @@ these are described as "unused".
 .Bl -tag -width Ds
 .It Dv X509_V_OK : No ok
 The operation was successful.
+.It Dv X509_V_ERR_UNSPECIFIED : \
+ No Unspecified certificate verification error
+An error was encountered during certificate verification and
+the internal routines failed to set a more specific error.
 .It Dv X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT : \
  No unable to get issuer certificate
 The issuer certificate of a locally looked up certificate could not be found.
@@ -434,7 +438,6 @@ No signatures could be verified because the chain contains only one
 certificate and it is not self signed.
 .It Dv X509_V_ERR_CERT_CHAIN_TOO_LONG : No certificate chain too long
 The certificate chain length is greater than the supplied maximum depth.
-Unused.
 .It Dv X509_V_ERR_CERT_REVOKED : No certificate revoked
 The certificate has been revoked.
 .It Dv X509_V_ERR_INVALID_CA : No invalid CA certificate
@@ -482,6 +485,20 @@ This is only set if issuer check debugging is enabled it is used for
 status notification and is
 .Sy not
 in itself an error.
+.\" X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER : \
+.\"  No unable to get CRL issuer certificate
+.\" X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION : No unhandled critical extension
+.\" X509_V_ERR_KEYUSAGE_NO_CRL_SIGN : No key usage does not include CRL signing
+.\" X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION : \
+.\"  No unhandled critical CRL extension
+.\" X509_V_ERR_INVALID_NON_CA : \
+.\"  No invalid non-CA certificate (has CA markings)
+.\" X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED : \
+.\"  No proxy path length constraint exceeded
+.\" X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE : \
+.\"  No key usage does not include digital signature
+.\" X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED : \
+.\"  No proxy certificates not allowed, please set the appropriate flag
 .It Dv X509_V_ERR_INVALID_EXTENSION : \
  No invalid or inconsistent certificate extension
 A certificate extension had an invalid value (for example an incorrect
@@ -501,6 +518,13 @@ certificate.
  No unsupported extension feature
 Some feature of a certificate extension is not supported.
 Unused.
+.It Dv X509_V_ERR_UNNESTED_RESOURCE : \
+ RFC 3779 resource not subset of parent's resources
+When walking up a certificate chain, all resources specified in
+RFC 3779 extensions must be contained in the resources delegated in
+the issuer's RFC 3779 extensions.
+The error indicates that this is not the case or that the trust anchor
+has inheritance.
 .It Dv X509_V_ERR_PERMITTED_VIOLATION : No permitted subtree violation
 A name constraint violation occurred in the permitted subtrees.
 .It Dv X509_V_ERR_EXCLUDED_VIOLATION : No excluded subtree violation
@@ -509,13 +533,6 @@ A name constraint violation occurred in the excluded subtrees.
  No name constraints minimum and maximum not supported
 A certificate name constraints extension included a minimum or maximum
 field: this is not supported.
-.It Dv X509_V_ERR_UNNESTED_RESOURCE : \
- RFC 3779 resource not subset of parent's resources
-When walking up a certificate chain, all resources specified in
-RFC 3779 extensions must be contained in the resources delegated in
-the issuer's RFC 3779 extensions.
-The error indicates that this is not the case or that the trust anchor
-has inheritance.
 .It Dv X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE : \
  No unsupported name constraint type
 An unsupported name constraint type was encountered.
@@ -527,6 +544,7 @@ The format of the name constraint is not recognised: for example an
 email address format of a form not mentioned in RFC 3280.
 This could be caused by a garbage extension or some new feature not
 currently supported.
+.\" X509_V_ERR_UNSUPPORTED_NAME_SYNTAX : No unsupported or invalid name syntax
 .It Dv X509_V_ERR_CRL_PATH_VALIDATION_ERROR : No CRL path validation error
 An error occurred when attempting to verify the CRL path.
 This error can only happen if extended CRL checking is enabled.
@@ -534,6 +552,16 @@ This error can only happen if extended CRL checking is enabled.
  No application verification failure
 An application specific error.
 This will never be returned unless explicitly set by an application.
+.\" .It Dv X509_V_ERR_HOSTNAME_MISMATCH : No Hostname mismatch
+.\" .It Dv X509_V_ERR_EMAIL_MISMATCH : No Email address mismatch
+.\" .It Dv X509_V_ERR_IP_ADDRESS_MISMATCH : No IP address mismatch
+.\" .It Dv X509_V_ERR_INVALID_CALL : \
+.\"  No Invalid certificate verification context
+.\" .It Dv X509_V_ERR_STORE_LOOKUP : No Issuer certificate lookup error
+.\" .It Dv X509_V_ERR_EE_KEY_TOO_SMALL : No EE certificate key too weak
+.\" .It Dv X509_V_ERR_CA_KEY_TOO_SMALL : No CA certificate key too weak
+.\" .It Dv X509_V_ERR_CA_MD_TOO_WEAK : \
+.\"  No CA signature digest algorithm too weak
 .El
 .Sh SEE ALSO
 .Xr X509_policy_check 3 ,
