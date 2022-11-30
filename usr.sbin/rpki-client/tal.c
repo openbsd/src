@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.37 2022/11/30 08:16:10 job Exp $ */
+/*	$OpenBSD: tal.c,v 1.38 2022/11/30 09:02:58 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,7 +15,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <netinet/in.h>
 #include <assert.h>
 #include <err.h>
 #include <libgen.h>
