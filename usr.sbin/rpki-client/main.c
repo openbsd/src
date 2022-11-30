@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.226 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: main.c,v 1.227 2022/11/30 08:16:10 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -25,7 +25,6 @@
 #include <sys/wait.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <dirent.h>
