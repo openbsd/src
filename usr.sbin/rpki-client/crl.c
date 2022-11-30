@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.20 2022/11/30 08:17:21 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.21 2022/11/30 09:03:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,9 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <arpa/inet.h>
 #include <err.h>
-#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
