@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpwm.c,v 1.1 2022/11/09 19:59:38 patrick Exp $	*/
+/*	$OpenBSD: qcpwm.c,v 1.2 2022/11/30 09:52:13 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -110,12 +110,7 @@ qcpwm_attach(struct device *parent, struct device *self, void *aux)
 	struct qcpwm_softc *sc = (struct qcpwm_softc *)self;
 	struct spmi_attach_args *saa = aux;
 
-	sc->sc_addr = OF_getpropint(saa->sa_node, "reg", -1);
-	if (sc->sc_addr < 0) {
-		printf(": can't find registers\n");
-		return;
-	}
-
+	sc->sc_addr = OF_getpropint(saa->sa_node, "reg", 0xe800);
 	sc->sc_node = saa->sa_node;
 	sc->sc_tag = saa->sa_tag;
 	sc->sc_sid = saa->sa_sid;
