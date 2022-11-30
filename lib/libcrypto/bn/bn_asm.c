@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_asm.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_asm.c,v 1.17 2022/11/30 01:47:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,11 +55,6 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-#ifndef BN_DEBUG
-# undef NDEBUG /* avoid conflicting definitions */
-# define NDEBUG
-#endif
 
 #include <assert.h>
 #include <stdio.h>

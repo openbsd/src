@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_ctx.c,v 1.18 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_ctx.c,v 1.19 2022/11/30 01:47:19 jsing Exp $ */
 /* Written by Ulf Moeller for the OpenSSL project. */
 /* ====================================================================
  * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
@@ -53,12 +53,6 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
-#if !defined(BN_CTX_DEBUG) && !defined(BN_DEBUG)
-#ifndef NDEBUG
-#define NDEBUG
-#endif
-#endif
 
 #include <stdio.h>
 #include <string.h>

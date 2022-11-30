@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.28 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.29 2022/11/30 01:47:19 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -778,11 +778,6 @@ BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	ret = 1;
 
 err:
-#ifdef BN_DEBUG /* BN_CTX_end would complain about the expanded form */
-	bn_correct_top(c);
-	bn_correct_top(u);
-	bn_correct_top(v);
-#endif
 	BN_CTX_end(ctx);
 	return ret;
 }
