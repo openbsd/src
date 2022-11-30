@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2018/11/06 06:56:17 tb Exp $
+#	$OpenBSD: Makefile,v 1.7 2022/11/30 02:51:05 jsing Exp $
 
 SUBDIR= \
 	addsub \
@@ -6,7 +6,15 @@ SUBDIR= \
 	mont \
 	rand
 
+PROGS+= bn_cmp
 
-install:
+LDADD=		-lcrypto
+DPADD=		${LIBCRYPTO}
+WARNINGS=	Yes
+CFLAGS+=	-Wall -Wundef -Werror
 
-.include <bsd.subdir.mk>
+REGRESS_TARGETS += run-bn_cmp
+run-bn_cmp: bn_cmp
+	./bn_cmp
+
+.include <bsd.regress.mk>
