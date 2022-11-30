@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.2 2022/11/01 13:35:09 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.3 2022/11/30 10:15:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -246,66 +246,77 @@ ometric_type(enum ometric_type type)
 	}
 }
 
-static void
-ometric_output_labels(const struct olabels *ol)
+static int
+ometric_output_labels(FILE *out, const struct olabels *ol)
 {
 	struct olabel *l;
 	const char *comma = "";
 
-	if (ol == NULL) {
-		printf(" ");
-		return;
-	}
+	if (ol == NULL)
+		return fprintf(out, " ");
 
-	printf("{");
+	if (fprintf(out, "{") < 0)
+		return -1;
 
 	while (ol != NULL) {
 		STAILQ_FOREACH(l, &ol->labels, entry) {
-			printf("%s%s=\"%s\"", comma, l->key, l->value);
+			if (fprintf(out, "%s%s=\"%s\"", comma, l->key,
+			    l->value) < 0)
+				return -1;
 			comma = ",";
 		}
 		ol = ol->next;
 	}
 
-	printf("} ");
+	return fprintf(out, "} ");
 }
 
-static void
-ometric_output_value(const struct ovalue *ov)
+static int
+ometric_output_value(FILE *out, const struct ovalue *ov)
 {
 	switch (ov->valtype) {
 	case OVT_INTEGER:
-		printf("%llu", ov->value.i);
-		return;
+		return fprintf(out, "%llu", ov->value.i);
 	case OVT_DOUBLE:
-		printf("%g", ov->value.f);
-		return;
+		return fprintf(out, "%g", ov->value.f);
 	}
+	return -1;
 }
 
 /*
  * Output all metric values with TYPE and optional HELP strings.
  */
-void
-ometric_output_all(void)
+int
+ometric_output_all(FILE *out)
 {
 	struct ometric *om;
 	struct ovalue *ov;
 
 	STAILQ_FOREACH(om, &ometrics, entry) {
 		if (om->help)
-			printf("# HELP %s %s\n", om->name, om->help);
-		printf("# TYPE %s %s\n", om->name, ometric_type(om->type));
+			if (fprintf(out, "# HELP %s %s\n", om->name,
+			    om->help) < 0)
+				return -1;
+
+		if (fprintf(out, "# TYPE %s %s\n", om->name,
+		    ometric_type(om->type)) < 0)
+			return -1;
 
 		STAILQ_FOREACH(ov, &om->vals, entry) {
-			printf("%s", om->name);
-			ometric_output_labels(ov->labels);
-			ometric_output_value(ov);
-			printf("\n");
+			if (fprintf(out, "%s", om->name) < 0)
+				return -1;
+			if (ometric_output_labels(out, ov->labels) < 0)
+				return -1;
+			if (ometric_output_value(out, ov) < 0)
+				return -1;
+			if (fprintf(out, "\n") < 0)
+				return -1;
 		}
 	}
 
-	printf("# EOF\n");
+	if (fprintf(out, "# EOF\n") < 0)
+		return -1;
+	return 0;
 }
 
 /*

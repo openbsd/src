@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.3 2022/11/07 11:33:24 mbuhl Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.4 2022/11/30 10:15:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -75,9 +75,7 @@ ometric_head(struct parse_result *arg)
 	values[3] = NULL;
 
 	ol = olabels_new(keys, values);
-
 	ometric_set_info(bgpd_info, NULL, NULL, ol);
-
 	olabels_free(ol);
 
 	/*
@@ -324,7 +322,7 @@ ometric_tail(void)
 	    (double)elapsed_time.tv_usec / 1000000;
 
 	ometric_set_float(bgpd_scrape_time, scrape, NULL);
-	ometric_output_all();
+	ometric_output_all(stdout);
 
 	ometric_free_all();
 }
