@@ -1,3 +1,4 @@
+/*	$OpenBSD: midicat.c,v 1.4 2022/11/30 14:56:45 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
