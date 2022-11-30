@@ -1,4 +1,4 @@
-# $OpenBSD: asia,v 1.103 2022/10/31 15:35:12 millert Exp $
+# $OpenBSD: asia,v 1.104 2022/11/30 17:59:46 millert Exp $
 # tzdb data for Asia and environs
 
 # This file is in the public domain, so clarified as of
@@ -2771,7 +2771,7 @@ Zone Asia/Kuala_Lumpur	6:46:46 -	LMT	1901 Jan  1
 			7:20	-	+0720	1941 Sep  1
 			7:30	-	+0730	1942 Feb 16
 			9:00	-	+09	1945 Sep 12
-			7:30	-	+0730	1982 Jan  1
+			7:30	-	+0730	1981 Dec 31 16:00u
 			8:00	-	+08
 
 #
@@ -3633,7 +3633,7 @@ Zone	Asia/Singapore	6:55:25 -	LMT	1901 Jan  1
 			7:20	-	+0720	1941 Sep  1
 			7:30	-	+0730	1942 Feb 16
 			9:00	-	+09	1945 Sep 12
-			7:30	-	+0730	1982 Jan  1
+			7:30	-	+0730	1981 Dec 31 16:00u
 			8:00	-	+08
 
 # Spratly Is
