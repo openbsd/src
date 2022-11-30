@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.37 2022/11/28 07:50:00 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.38 2022/11/30 01:56:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -322,11 +322,18 @@ BIO_read(BIO *b, void *out, int outl)
 	size_t readbytes = 0;
 	int ret;
 
-	if (b == NULL)
+	if (b == NULL) {
+		BIOerror(ERR_R_PASSED_NULL_PARAMETER);
+		return (-1);
+	}
+
+	if (outl <= 0)
 		return (0);
 
-	if (out == NULL || outl <= 0)
-		return (0);
+	if (out == NULL) {
+		BIOerror(ERR_R_PASSED_NULL_PARAMETER);
+		return (-1);
+	}
 
 	if (b->method == NULL || b->method->bread == NULL) {
 		BIOerror(BIO_R_UNSUPPORTED_METHOD);
@@ -372,11 +379,18 @@ BIO_write(BIO *b, const void *in, int inl)
 	size_t writebytes = 0;
 	int ret;
 
-	if (b == NULL)
+	if (b == NULL) {
+		BIOerror(ERR_R_PASSED_NULL_PARAMETER);
+		return (-1);
+	}
+
+	if (inl <= 0)
 		return (0);
 
-	if (in == NULL || inl <= 0)
-		return (0);
+	if (in == NULL) {
+		BIOerror(ERR_R_PASSED_NULL_PARAMETER);
+		return (-1);
+	}
 
 	if (b->method == NULL || b->method->bwrite == NULL) {
 		BIOerror(BIO_R_UNSUPPORTED_METHOD);
