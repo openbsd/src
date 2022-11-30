@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.64 2022/11/30 01:47:19 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.65 2022/11/30 02:52:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -691,9 +691,11 @@ BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 	BN_ULONG t1, t2, *ap, *bp;
 
 
-	i = a->top - b->top;
-	if (i != 0)
-		return (i);
+	if (a->top < b->top)
+		return -1;
+	if (a->top > b->top)
+		return 1;
+
 	ap = a->d;
 	bp = b->d;
 	for (i = a->top - 1; i >= 0; i--) {
