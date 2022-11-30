@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.65 2022/11/30 02:52:25 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.66 2022/11/30 03:08:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,6 +251,13 @@ BN_num_bits(const BIGNUM *a)
 	if (BN_is_zero(a))
 		return 0;
 	return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
+}
+
+void
+bn_correct_top(BIGNUM *a)
+{
+	while (a->top > 0 && a->d[a->top - 1] == 0)
+		a->top--;
 }
 
 /* The caller MUST check that words > b->dmax before calling this */
