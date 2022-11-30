@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.256 2022/11/23 14:48:28 kn Exp $	*/
+/*	$OpenBSD: in6.c,v 1.257 2022/11/30 14:01:02 kn Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -213,9 +213,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 		break;
 #endif /* MROUTING */
 	default:
-		KERNEL_LOCK();
 		error = in6_ioctl(cmd, data, ifp, privileged);
-		KERNEL_UNLOCK();
 		break;
 	}
 
@@ -296,6 +294,7 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
+	KERNEL_LOCK();
 	NET_LOCK();
 
 	if (sa6 != NULL) {
@@ -402,6 +401,7 @@ in6_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 err:
 	NET_UNLOCK();
+	KERNEL_UNLOCK();
 	return (error);
 }
 
@@ -422,6 +422,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
+	KERNEL_LOCK();
 	NET_LOCK_SHARED();
 
 	if (sa6 != NULL) {
@@ -517,6 +518,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 
 err:
 	NET_UNLOCK_SHARED();
+	KERNEL_UNLOCK();
 	return (error);
 }
 
