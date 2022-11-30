@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.99 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.100 2022/11/30 08:17:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/socket.h>
 
 #include <arpa/inet.h>
 #include <assert.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.50 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.51 2022/11/30 08:17:21 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/socket.h>
 
 #include <arpa/inet.h>
 #include <assert.h>

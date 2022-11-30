@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.61 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.62 2022/11/30 08:17:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <sys/socket.h>
 
 #include <err.h>
 #include <stdlib.h>
