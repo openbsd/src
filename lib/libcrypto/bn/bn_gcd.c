@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.18 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.19 2022/12/01 02:58:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -277,7 +277,8 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	if (R == NULL)
 		goto err;
 
-	BN_one(X);
+	if (!BN_one(X))
+		goto err;
 	BN_zero(Y);
 	if (BN_copy(B, a) == NULL)
 		goto err;
@@ -591,7 +592,8 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if (R == NULL)
 		goto err;
 
-	BN_one(X);
+	if (!BN_one(X))
+		goto err;
 	BN_zero(Y);
 	if (BN_copy(B, a) == NULL)
 		goto err;
@@ -755,7 +757,8 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if ((T = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	BN_one(X);
+	if (!BN_one(X))
+		goto err;
 	BN_zero(Y);
 	if (BN_copy(B, a) == NULL)
 		goto err;

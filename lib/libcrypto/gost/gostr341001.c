@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.10 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.11 2022/12/01 02:58:31 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -178,8 +178,10 @@ gost2001_do_sign(BIGNUM *md, GOST_KEY *eckey)
 		goto err;
 	if (BN_mod_ct(e, md, order, ctx) == 0)
 		goto err;
-	if (BN_is_zero(e))
-		BN_one(e);
+	if (BN_is_zero(e)) {
+		if (!BN_one(e))
+			goto err;
+	}
 	if ((k = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((X = BN_CTX_get(ctx)) == NULL)
@@ -289,8 +291,10 @@ gost2001_do_verify(BIGNUM *md, ECDSA_SIG *sig, GOST_KEY *ec)
 
 	if (BN_mod_ct(e, md, order, ctx) == 0)
 		goto err;
-	if (BN_is_zero(e))
-		BN_one(e);
+	if (BN_is_zero(e)) {
+		if (!BN_one(e))
+			goto err;
+	}
 	if ((v = BN_mod_inverse_ct(v, e, order, ctx)) == NULL)
 		goto err;
 	if (BN_mod_mul(z1, sig->s, v, order, ctx) == 0)
