@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2022/12/01 21:21:51 tb Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/12/01 22:31:59 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -32,8 +32,20 @@ run-$p: $p
 	./$p
 .endfor
 
+# Verify that the bn_isqrt -C output isn't changed by accident.
 isqrt-print-tables: bn_isqrt
 	@./bn_isqrt -C
+
+CLEANFILES += bn_isqrt_gen_tables.txt.tmp bn_isqrt_gen_tables.txt
+bn_isqrt_gen_tables.txt: bn_isqrt
+	${.MAKE} -C ${.CURDIR} isqrt-print-tables > $@.tmp
+	mv -f $@.tmp $@
+
+REGRESS_TARGETS +=	run-bn_isqrt_check_tables
+.PHONY:			run-bn_isqrt_check_tables
+run-bn_isqrt_check_tables: bn_isqrt_gen_tables.txt
+	diff -pu ${.CURDIR}/bn_isqrt_tables.txt bn_isqrt_gen_tables.txt
+
 
 # Keep bn_test last since it is special
 PROGS +=	bn_test
