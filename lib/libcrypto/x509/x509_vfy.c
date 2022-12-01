@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.108 2022/12/01 05:16:08 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.109 2022/12/01 05:20:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,7 +116,7 @@
 #define CRL_SCORE_TIME_DELTA	0x002
 
 static int null_callback(int ok, X509_STORE_CTX *e);
-static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
+static int check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
     int allow_expired);
 static int check_chain_extensions(X509_STORE_CTX *ctx);
@@ -695,21 +695,13 @@ find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
 /* Given a possible certificate and issuer check them */
 
 static int
-check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
+check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer)
 {
-	int ret;
-
-	ret = X509_check_issued(issuer, x);
-	if (ret == X509_V_OK)
-		return 1;
-	/* If we haven't asked for issuer errors don't set ctx */
-	if (!(ctx->param->flags & X509_V_FLAG_CB_ISSUER_CHECK))
-		return 0;
-
-	ctx->error = ret;
-	ctx->current_cert = x;
-	ctx->current_issuer = issuer;
-	return ctx->verify_cb(0, ctx);
+	/*
+	 * Yes, the arguments of X509_STORE_CTX_check_issued_fn were exposed in
+	 * reverse order compared to the already public X509_check_issued()...
+	 */
+	return X509_check_issued(issuer, subject) == X509_V_OK;
 }
 
 /* Alternative lookup method: look from a STACK stored in other_ctx */
