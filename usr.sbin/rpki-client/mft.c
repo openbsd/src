@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.81 2022/11/30 08:16:10 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.82 2022/12/01 10:24:28 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -195,8 +195,9 @@ valid_mft_filename(const char *fn, size_t len)
 }
 
 /*
- * Check that the file is an CER, CRL, GBR or a ROA.
- * Returns corresponding rtype or RTYPE_INVALID on error.
+ * Check that the file is allowed to be part of a manifest and the parser
+ * for this type is implemented in rpki-client.
+ * Returns corresponding rtype or RTYPE_INVALID to mark the file as unknown.
  */
 static enum rtype
 rtype_from_mftfile(const char *fn)
