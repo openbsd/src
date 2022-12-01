@@ -1,4 +1,4 @@
-/*	$OpenBSD: valid_handshakes_terminate.c,v 1.3 2019/04/05 20:25:42 tb Exp $	*/
+/*	$OpenBSD: valid_handshakes_terminate.c,v 1.4 2022/12/01 13:49:12 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -49,9 +49,6 @@ main(int argc, char *argv[])
 			    "handshake %zu\n", i);
 		}
 	}
-
-	if (!fail)
-		printf("SUCCESS\n");
 
 	return fail;
 }

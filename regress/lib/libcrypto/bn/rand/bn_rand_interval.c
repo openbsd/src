@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_rand_interval.c,v 1.5 2022/06/19 17:10:02 tb Exp $	*/
+/*	$OpenBSD: bn_rand_interval.c,v 1.6 2022/12/01 13:49:12 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -103,11 +103,6 @@ main(int argc, char *argv[])
 			print_triple(a, b, x);
 		}
 	}
-
-	if (success == 1)
-		printf("SUCCESS\n");
-	else
-		printf("FAIL");
 
 	BN_free(a);
 	BN_free(b);

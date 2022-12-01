@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_pkey_check.c,v 1.2 2022/01/11 19:27:35 tb Exp $ */
+/*	$OpenBSD: evp_pkey_check.c,v 1.3 2022/12/01 13:49:12 tb Exp $ */
 /*
  * Copyright (c) 2021-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -397,8 +397,6 @@ main(void)
 
 	failed |= evp_pkey_check_rsa();
 	failed |= evp_pkey_check_ec();
-
-	printf("%s\n", failed ? "FAILED" : "SUCCESS");
 
 	return failed;
 }

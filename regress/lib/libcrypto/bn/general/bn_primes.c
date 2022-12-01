@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_primes.c,v 1.2 2022/11/09 23:28:08 tb Exp $ */
+/*	$OpenBSD: bn_primes.c,v 1.3 2022/12/01 13:49:12 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -83,8 +83,6 @@ main(void)
 
 	failed |= test_bn_is_prime_fasttest(0);
 	failed |= test_bn_is_prime_fasttest(1);
-
-	printf("%s\n", failed ? "FAILED" : "SUCCESS");
 
 	return failed;
 }

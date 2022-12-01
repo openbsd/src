@@ -1,4 +1,4 @@
-/*	$OpenBSD: handshake_table.c,v 1.17 2022/03/08 16:59:25 tb Exp $	*/
+/*	$OpenBSD: handshake_table.c,v 1.18 2022/12/01 13:49:12 tb Exp $	*/
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -545,9 +545,6 @@ main(int argc, char *argv[])
 	build_table(hs_table, start, end, path, flags, depth);
 	if (!verify_table(hs_table, print))
 		return 1;
-
-	if (!print)
-		printf("SUCCESS\n");
 
 	return 0;
 }

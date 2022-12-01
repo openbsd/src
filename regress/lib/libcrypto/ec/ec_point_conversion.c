@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.6 2021/12/29 22:48:09 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.7 2022/12/01 13:49:12 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -134,7 +134,7 @@ test_hybrid_corner_case(void)
 	for (i = 0; i < N_FORMS; i++)
 		failed |= roundtrip(group, point, forms[i], x, y);
 
-	fprintf(stderr, "%s: %s\n", __func__, failed ? "FAILED" : "SUCCESS");
+	fprintf(stderr, "%s %s\n", __func__, failed ? ": FAILED" : "");
 
 	EC_GROUP_free(group);
 	EC_POINT_free(point);
@@ -229,7 +229,7 @@ test_random_points(void)
 	for (curve_id = 0; curve_id < ncurves; curve_id++)
 		failed |= test_random_points_on_curve(&all_curves[curve_id]);
 
-	fprintf(stderr, "%s: %s\n", __func__, failed ? "FAILED" : "SUCCESS");
+	fprintf(stderr, "%s %s\n", __func__, failed ? ": FAILED" : "");
 
 	free(all_curves);
 	return failed;
@@ -869,7 +869,7 @@ test_point_conversions(void)
 	for (i = 0; i < N_POINT_CONVERSIONS; i++)
 		failed |= point_conversion_form_y_bit(&point_conversions[i]);
 
-	fprintf(stderr, "%s: %s\n", __func__, failed ? "FAILED" : "SUCCESS");
+	fprintf(stderr, "%s %s\n", __func__, failed ? ": FAILED" : "");
 
 	return failed;
 }
@@ -882,8 +882,6 @@ main(int argc, char **argv)
 	failed |= test_random_points();
 	failed |= test_hybrid_corner_case();
 	failed |= test_point_conversions();
-
-	fprintf(stderr, "%s\n", failed ? "FAILED" : "SUCCESS");
 
 	return failed;
 }

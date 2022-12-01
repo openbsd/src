@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_to_string.c,v 1.1 2019/04/13 22:06:31 tb Exp $ */
+/*	$OpenBSD: bn_to_string.c,v 1.2 2022/12/01 13:49:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -111,6 +111,5 @@ main(int argc, char *argv[])
 
 	BN_free(bn);
 
-	printf("%s\n", failed ? "FAILED" : "SUCCESS");
 	return failed;
 }

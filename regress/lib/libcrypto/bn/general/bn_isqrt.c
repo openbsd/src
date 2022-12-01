@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.8 2022/11/26 16:08:56 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.9 2022/12/01 13:49:12 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -322,9 +322,6 @@ main(int argc, char *argv[])
 
 	failed |= check_tables(0);
 	failed |= validate_tables();
-
-	if (!failed)
-		printf("SUCCESS\n");
 
 	return failed;
 }
