@@ -1,4 +1,4 @@
-/*	$OpenBSD: exptest.c,v 1.10 2022/12/01 21:13:58 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.1 2022/12/01 21:21:51 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
