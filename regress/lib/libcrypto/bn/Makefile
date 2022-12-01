@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2022/12/01 22:31:59 tb Exp $
+#	$OpenBSD: Makefile,v 1.11 2022/12/01 22:41:46 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -45,7 +45,6 @@ REGRESS_TARGETS +=	run-bn_isqrt_check_tables
 .PHONY:			run-bn_isqrt_check_tables
 run-bn_isqrt_check_tables: bn_isqrt_gen_tables.txt
 	diff -pu ${.CURDIR}/bn_isqrt_tables.txt bn_isqrt_gen_tables.txt
-
 
 # Keep bn_test last since it is special
 PROGS +=	bn_test
