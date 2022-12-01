@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.107 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.108 2022/12/01 05:16:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2586,6 +2586,28 @@ X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, int (*verify)(X509_STORE_CTX *))
 	ctx->verify = verify;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set_verify)
+
+X509_STORE_CTX_check_issued_fn
+X509_STORE_get_check_issued(X509_STORE *store)
+{
+	return store->check_issued;
+}
+LCRYPTO_ALIAS(X509_STORE_get_check_issued)
+
+void
+X509_STORE_set_check_issued(X509_STORE *store,
+    X509_STORE_CTX_check_issued_fn check_issued)
+{
+	store->check_issued = check_issued;
+}
+LCRYPTO_ALIAS(X509_STORE_set_check_issued)
+
+X509_STORE_CTX_check_issued_fn
+X509_STORE_CTX_get_check_issued(X509_STORE_CTX *ctx)
+{
+	return ctx->check_issued;
+}
+LCRYPTO_ALIAS(X509_STORE_CTX_get_check_issued)
 
 X509 *
 X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)

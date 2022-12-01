@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.54 2022/07/07 13:01:28 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.55 2022/12/01 05:16:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -309,6 +309,17 @@ void X509_STORE_set_verify_cb(X509_STORE *ctx,
     int (*verify_cb)(int, X509_STORE_CTX *));
 #define X509_STORE_set_verify_cb_func(ctx, func) \
     X509_STORE_set_verify_cb((ctx), (func))
+
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+typedef int (*X509_STORE_CTX_check_issued_fn)(X509_STORE_CTX *ctx,
+    X509 *subject, X509 *issuer);
+
+X509_STORE_CTX_check_issued_fn X509_STORE_get_check_issued(X509_STORE *store);
+void X509_STORE_set_check_issued(X509_STORE *store,
+    X509_STORE_CTX_check_issued_fn check_issued);
+X509_STORE_CTX_check_issued_fn
+    X509_STORE_CTX_get_check_issued(X509_STORE_CTX *ctx);
+#endif
 
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
