@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.247 2022/12/01 07:11:17 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.248 2022/12/01 07:34:06 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1525,7 +1525,7 @@ pr_ipopt(int hlen, u_char *buf)
 			break;
 		default:
 			printf("\nunknown option %x", *cp);
-			if (cp[IPOPT_OLEN] > 0 && cp[IPOPT_OLEN] < hlen) {
+			if (cp[IPOPT_OLEN] > 0 && (cp[IPOPT_OLEN] - 1) <= hlen) {
 				hlen = hlen - (cp[IPOPT_OLEN] - 1);
 				cp = cp + (cp[IPOPT_OLEN] - 1);
 			} else
