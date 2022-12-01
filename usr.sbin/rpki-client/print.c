@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.21 2022/11/26 12:02:37 job Exp $ */
+/*	$OpenBSD: print.c,v 1.22 2022/12/01 12:41:34 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -192,7 +192,7 @@ cert_print(const struct cert *p)
 			printf("Router key valid until:   %s\n", tbuf);
 		} else
 			printf("Certificate valid until:  %s\n", tbuf);
-		printf("Subordinate Resources:\n");
+		printf("Subordinate resources:\n");
 	}
 
 	for (i = 0; i < p->asz; i++) {
