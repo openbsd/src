@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2022/11/30 10:47:05 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/12/01 12:13:59 bluhm Exp $
 
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -18,26 +18,31 @@
 # MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 # PURPOSE.
 
-REGRESS_TARGETS += test-libkeynote
+KEYNOTEDIR =	${.CURDIR}/../../../lib/libkeynote
 
-KEYNOTEDIR = ${.CURDIR}/../../../lib/libkeynote
+TESTFILES =	test-env \
+		auth1 auth2 auth3 auth4 \
+		test-assertion1 test-assertion2 test-assertion3 \
+		test-assertion4 test-assertion5 test-assertion6 \
+		test-assertion7 \
 
-test-libkeynote:
-	cd ${KEYNOTEDIR} && \
-		keynote verify -e testsuite/test-env \
-		-r false,maybe,probably,true \
-		-k testsuite/auth1 \
-		-k testsuite/auth2 \
-		-k testsuite/auth3 \
-		-k testsuite/auth4 \
-		-l testsuite/test-assertion1 \
-		-l testsuite/test-assertion2 \
-		-l testsuite/test-assertion3 \
-		-l testsuite/test-assertion4 \
-		-l testsuite/test-assertion5 \
-		-l testsuite/test-assertion6 \
-		-l testsuite/test-assertion7 \
-		| grep 'Query result = true'
-	@echo SUCCESS
+CLEANFILES =	${TESTFILES} keynote.out
+
+.for t in ${TESTFILES}
+$t: ${KEYNOTEDIR}/testsuite/$t
+	cp ${KEYNOTEDIR}/testsuite/$t $@
+.endfor
+
+REGRESS_TARGETS = test-libkeynote
+test-libkeynote: ${TESTFILES}
+	keynote verify \
+	    -r false,maybe,probably,true \
+	    -e test-env \
+	    -k auth1 -k auth2 -k auth3 -k auth4 \
+	    -l test-assertion1 -l test-assertion2 -l test-assertion3 \
+	    -l test-assertion4 -l test-assertion5 -l test-assertion6 \
+	    -l test-assertion7 \
+	    >keynote.out
+	echo 'Query result = true' | diff -up - keynote.out
 
 .include <bsd.regress.mk>
