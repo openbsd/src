@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.55 2022/12/01 05:16:08 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.56 2022/12/01 05:27:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -212,8 +212,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 /* Certificate verify flags */
 
-/* Send issuer+subject checks to verify_cb */
-#define	X509_V_FLAG_CB_ISSUER_CHECK		0x1
+/* Deprecated in 1.1.0, has no effect. Various FFI bindings still expose it. */
+#define	X509_V_FLAG_CB_ISSUER_CHECK		0x0
 /* Use check time instead of current time */
 #define	X509_V_FLAG_USE_CHECK_TIME		0x2
 /* Lookup CRLs */
