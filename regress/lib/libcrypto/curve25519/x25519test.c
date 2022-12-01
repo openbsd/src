@@ -1,4 +1,4 @@
-/*	$OpenBSD: x25519test.c,v 1.2 2018/07/17 17:06:49 tb Exp $	*/
+/*	$OpenBSD: x25519test.c,v 1.3 2022/12/01 13:55:22 tb Exp $	*/
 /*
  * Copyright (c) 2015, Google Inc.
  *
@@ -67,16 +67,16 @@ x25519_test(void)
 	X25519(out, kScalar1, kPoint1);
 	if (memcmp(kExpected1, out, sizeof(out)) != 0) {
 		fprintf(stderr, "X25519 test one failed.\n");
-		return 0;
+		return 1;
 	}
 
 	X25519(out, kScalar2, kPoint2);
 	if (memcmp(kExpected2, out, sizeof(out)) != 0) {
 		fprintf(stderr, "X25519 test two failed.\n");
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 static int
@@ -101,10 +101,10 @@ x25519_iterated_test(void)
 
 	if (memcmp(kExpected, scalar, sizeof(kExpected)) != 0) {
 		fprintf(stderr, "Iterated X25519 test failed\n");
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 static int
@@ -122,19 +122,20 @@ x25519_small_order_test(void)
 	memset(private_key, 0x11, sizeof(private_key));
 	if (X25519(out, private_key, kSmallOrderPoint)) {
 		fprintf(stderr, "X25519 returned success with a small-order input.\n");
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 int
-main(int argc, char **argv) {
-	if (!x25519_test() ||
-	    !x25519_iterated_test() ||
-	    !x25519_small_order_test())
-		return 1;
+main(int argc, char **argv)
+{
+	int failed = 0;
 
-	printf("PASS\n");
-	return 0;
+	failed |= x25519_test();
+	failed |= x25519_iterated_test();
+	failed |= x25519_small_order_test();
+
+	return failed;
 }

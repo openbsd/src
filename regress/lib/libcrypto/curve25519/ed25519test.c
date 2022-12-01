@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed25519test.c,v 1.9 2022/11/23 15:52:43 tb Exp $ */
+/*	$OpenBSD: ed25519test.c,v 1.10 2022/12/01 13:55:22 tb Exp $ */
 /*
  * Copyright (c) 2019, 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -469,11 +469,6 @@ main(int argc, char *argv[])
 	failed |= test_ED25519_verify();
 	failed |= test_ED25519_sign();
 	failed |= test_ED25519_signature_malleability();
-
-	if (failed)
-		fprintf(stderr, "FAILED\n");
-	else
-		fprintf(stderr, "PASS\n");
 
 	return failed;
 }
