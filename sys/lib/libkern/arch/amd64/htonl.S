@@ -40,9 +40,9 @@
 
 #include <machine/asm.h>
 
-_ENTRY(_C_LABEL(htonl))
-_NENTRY(_C_LABEL(ntohl))
-_NENTRY(_C_LABEL(bswap32))
+_ENTRY(htonl)
+_NENTRY(ntohl)
+_NENTRY(bswap32)
 _PROF_PROLOGUE
 	RETGUARD_SETUP(htonl, r11)
 	movl	%edi,%eax

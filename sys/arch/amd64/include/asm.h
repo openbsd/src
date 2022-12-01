@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.22 2022/08/30 16:26:29 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.23 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 # define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
-#define CVAROFF(x,y)		(_C_LABEL(x)+y)(%rip)
+#define CVAROFF(x,y)		(x+y)(%rip)
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y
@@ -166,9 +166,9 @@
 # define RETGUARD_SYMBOL(x)
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	NENTRY(y)	_NENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_NENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
+#define	NENTRY(y)	_NENTRY(y)
+#define	ASENTRY(y)	_NENTRY(y); _PROF_PROLOGUE
 #define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
 #define	END(y)		.size y, . - y
 

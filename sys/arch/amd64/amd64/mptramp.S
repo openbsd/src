@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.S,v 1.21 2022/11/29 02:19:29 guenther Exp $	*/
+/*	$OpenBSD: mptramp.S,v 1.22 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: mptramp.S,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
 
 /*-
@@ -88,16 +88,15 @@
 #define addr32
 #endif
 
-#define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
-#define _TRMP_OFFSET(a)	a = . - _C_LABEL(cpu_spinup_trampoline)
+#define _TRMP_LABEL(a)	a = . - cpu_spinup_trampoline + MP_TRAMPOLINE
+#define _TRMP_OFFSET(a)	a = . - cpu_spinup_trampoline
 
-#define _TRMP_DATA_LABEL(a)	a = . - _C_LABEL(mp_tramp_data_start) + \
-					MP_TRAMP_DATA
-#define _TRMP_DATA_OFFSET(a)	a = . - _C_LABEL(mp_tramp_data_start)
+#define _TRMP_DATA_LABEL(a)	a = . - mp_tramp_data_start + MP_TRAMP_DATA
+#define _TRMP_DATA_OFFSET(a)	a = . - mp_tramp_data_start
 
-	.global _C_LABEL(cpu_spinup_trampoline_end)
-	.global _C_LABEL(mp_tramp_data_start)
-	.global _C_LABEL(mp_tramp_data_end)
+	.global cpu_spinup_trampoline_end
+	.global mp_tramp_data_start
+	.global mp_tramp_data_end
 
 	/*
 	 * Initial copy of this code gets placed in .rodata, kernel
@@ -188,7 +187,7 @@ _TRMP_LABEL(.Lmptramp_longmode)
 	jmp	*%rax
 
 	.type	cpu_spinup_trampoline_end,@object
-_C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+cpu_spinup_trampoline_end:	#end of code copied to MP_TRAMPOLINE
 END(cpu_spinup_trampoline)
 
 	.text
@@ -207,12 +206,12 @@ GENTRY(cpu_spinup_finish)
 	andl	$X2APIC_ID_MASK,%eax
 	jmp	2f
 1:
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	movl	local_apic+LAPIC_ID,%eax
 	shrl	$LAPIC_ID_SHIFT,%eax
 2:
 	xorq	%rcx,%rcx
 3:
-	movq	_C_LABEL(cpu_info)(,%rcx,8),%rdi
+	movq	cpu_info(,%rcx,8),%rdi
 	incq	%rcx
 	movl	CPU_INFO_APICID(%rdi),%edx
 	cmpl	%eax,%edx
@@ -233,13 +232,13 @@ GENTRY(cpu_spinup_finish)
 	movq	%rax,%cr3
 	movl	$CR0_DEFAULT,%eax
 	movq	%rax,%cr0
-	call	_C_LABEL(cpu_hatch)
+	call	cpu_hatch
 END(cpu_spinup_finish)
 	/* NOTREACHED */
 
 	.section .rodata
 	.type	mp_tramp_data_start,@object
-_C_LABEL(mp_tramp_data_start):
+mp_tramp_data_start:
 _TRMP_DATA_LABEL(.Lmptramp_jmp64)
 	.long	.Lmptramp_longmode
 	.word	GSEL(GCODE_SEL, SEL_KPL)
@@ -268,5 +267,5 @@ _TRMP_DATA_LABEL(.Lmptramp_gdt64_desc)
 	.long .Lmptramp_gdt64
 
 	.type	mp_tramp_data_end,@object
-_C_LABEL(mp_tramp_data_end):
+mp_tramp_data_end:
 END(mp_tramp_data_start)

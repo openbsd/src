@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.15 2022/11/07 01:41:57 guenther Exp $	*/
+/*	$OpenBSD: copy.S,v 1.16 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ ENTRY(kcopy)
 	RETGUARD_SETUP(kcopy, r10)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	PCB_ONFAULT(%rax)
-	leaq	_C_LABEL(copy_fault)(%rip),%r11
+	leaq	copy_fault(%rip),%r11
 	movq	%r11, PCB_ONFAULT(%rax)
 
 	xchgq	%rdi,%rsi
@@ -118,13 +118,13 @@ ENTRY(copyout)
 	
 	movq	%rdi,%rdx
 	addq	%rax,%rdx
-	jc	_C_LABEL(copy_fault)
+	jc	copy_fault
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_fault)
+	ja	copy_fault
 
 	movq	CPUVAR(CURPCB),%rdx
-	leaq	_C_LABEL(copy_fault)(%rip),%r11
+	leaq	copy_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rdx)
 	SMAP_STAC
 	movq	%rax,%rcx
@@ -151,7 +151,7 @@ ENTRY(copyin)
 	RETGUARD_SETUP(kcopy, r10)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	$0
-	leaq	_C_LABEL(copy_fault)(%rip),%r11
+	leaq	copy_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
 	SMAP_STAC
 	xchgq	%rdi,%rsi
@@ -159,10 +159,10 @@ ENTRY(copyin)
 
 	movq	%rsi,%rdx
 	addq	%rax,%rdx
-	jc	_C_LABEL(copy_fault)
+	jc	copy_fault
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_fault)
+	ja	copy_fault
 
 3:	/* bcopy(%rsi, %rdi, %rax); */
 	movq	%rax,%rcx
@@ -204,7 +204,7 @@ ENTRY(copyoutstr)
 	movq	%rcx,%r9
 
 5:	movq	CPUVAR(CURPCB),%rax
-	leaq	_C_LABEL(copystr_fault)(%rip),%r11
+	leaq	copystr_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rax)
 	SMAP_STAC
 	/*
@@ -212,7 +212,7 @@ ENTRY(copyoutstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rdi,%rax
-	jbe	_C_LABEL(copystr_fault)		/* die if CF == 1 || ZF == 1 */
+	jbe	copystr_fault			/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -235,7 +235,7 @@ ENTRY(copyoutstr)
 2:	/* rdx is zero -- return EFAULT or ENAMETOOLONG. */
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rdi
-	jae	_C_LABEL(copystr_fault)
+	jae	copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
@@ -246,7 +246,7 @@ ENTRY(copyinstr)
 	movq	%rcx,%r9
 
 	movq	CPUVAR(CURPCB),%rcx
-	leaq	_C_LABEL(copystr_fault)(%rip),%r11
+	leaq	copystr_fault(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	SMAP_STAC
 
@@ -255,7 +255,7 @@ ENTRY(copyinstr)
 	 */
 	movq	$VM_MAXUSER_ADDRESS,%rax
 	subq	%rsi,%rax
-	jbe	_C_LABEL(copystr_fault)		/* die if CF == 1 || ZF == 1 */
+	jbe	copystr_fault			/* die if CF == 1 || ZF == 1 */
 	cmpq	%rdx,%rax
 	jae	1f
 	movq	%rax,%rdx
@@ -278,7 +278,7 @@ ENTRY(copyinstr)
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	movq	$VM_MAXUSER_ADDRESS,%r11
 	cmpq	%r11,%rsi
-	jae	_C_LABEL(copystr_fault)
+	jae	copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
@@ -332,10 +332,10 @@ ENTRY(copystr)
 	lfence
 
 	.section .rodata
-	.globl _C_LABEL(_stac)
-_C_LABEL(_stac):
+	.globl	_stac
+_stac:
 	stac
 
-	.globl _C_LABEL(_clac)
-_C_LABEL(_clac):
+	.globl	_clac
+_clac:
 	clac

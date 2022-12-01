@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.20 2022/04/14 20:24:15 bluhm Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.21 2022/12/01 00:26:15 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -30,23 +30,23 @@
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
 #define VMX_FAIL_LAUNCH_VALID_VMCS 3
 
-	.global _C_LABEL(vmxon)
-	.global _C_LABEL(vmxoff)
-	.global _C_LABEL(vmclear)
-	.global _C_LABEL(vmptrld)
-	.global _C_LABEL(vmptrst)
-	.global _C_LABEL(vmwrite)
-	.global _C_LABEL(vmread)
-	.global _C_LABEL(invvpid)
-	.global _C_LABEL(invept)
-	.global _C_LABEL(vmx_enter_guest)
-	.global _C_LABEL(vmm_dispatch_intr)
-	.global _C_LABEL(svm_enter_guest)
+	.global vmxon
+	.global vmxoff
+	.global vmclear
+	.global vmptrld
+	.global vmptrst
+	.global vmwrite
+	.global vmread
+	.global invvpid
+	.global invept
+	.global vmx_enter_guest
+	.global vmm_dispatch_intr
+	.global svm_enter_guest
 
 	.text
 	.code64
 	.align 16,0xcc
-_C_LABEL(vmm_dispatch_intr):
+vmm_dispatch_intr:
 	movq	%rsp, %r11	/* r11 = temporary register */
 	andq    $0xFFFFFFFFFFFFFFF0, %rsp
 	movw	%ss, %ax
@@ -60,7 +60,7 @@ _C_LABEL(vmm_dispatch_intr):
 	ret
 	lfence
 
-_C_LABEL(vmxon):
+vmxon:
 	RETGUARD_SETUP(vmxon, r11)
 	xorq	%rax, %rax
 	vmxon	(%rdi)
@@ -69,7 +69,7 @@ _C_LABEL(vmxon):
 	ret
 	lfence
 
-_C_LABEL(vmxoff):
+vmxoff:
 	RETGUARD_SETUP(vmxoff, r11)
 	xorq	%rax, %rax
 	vmxoff
@@ -78,7 +78,7 @@ _C_LABEL(vmxoff):
 	ret
 	lfence
 
-_C_LABEL(vmclear):
+vmclear:
 	RETGUARD_SETUP(vmclear, r11)
 	xorq	%rax, %rax
 	vmclear	(%rdi)
@@ -87,7 +87,7 @@ _C_LABEL(vmclear):
 	ret
 	lfence
 
-_C_LABEL(vmptrld):
+vmptrld:
 	RETGUARD_SETUP(vmptrld, r11)
 	xorq	%rax, %rax
 	vmptrld	(%rdi)
@@ -96,7 +96,7 @@ _C_LABEL(vmptrld):
 	ret
 	lfence
 
-_C_LABEL(vmptrst):
+vmptrst:
 	RETGUARD_SETUP(vmptrst, r11)
 	xorq	%rax, %rax
 	vmptrst	(%rdi)
@@ -105,7 +105,7 @@ _C_LABEL(vmptrst):
 	ret
 	lfence
 
-_C_LABEL(vmwrite):
+vmwrite:
 	RETGUARD_SETUP(vmwrite, r11)
 	xorq	%rax, %rax
 	vmwrite	%rsi, %rdi
@@ -114,7 +114,7 @@ _C_LABEL(vmwrite):
 	ret
 	lfence
 
-_C_LABEL(vmread):
+vmread:
 	RETGUARD_SETUP(vmread, r11)
 	xorq	%rax, %rax
 	vmread	%rdi, (%rsi)
@@ -123,21 +123,21 @@ _C_LABEL(vmread):
 	ret
 	lfence
 
-_C_LABEL(invvpid):
+invvpid:
 	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
 	RETGUARD_CHECK(invvpid, r11)
 	ret
 	lfence
 
-_C_LABEL(invept):
+invept:
 	RETGUARD_SETUP(invept, r11)
 	invept (%rsi), %rdi
 	RETGUARD_CHECK(invept, r11)
 	ret
 	lfence
 
-_C_LABEL(vmx_enter_guest):
+vmx_enter_guest:
 	RETGUARD_SETUP(vmx_enter_guest, r11)
 	movq	%rdx, %r8	/* resume flag */
 	movq	%rcx, %r9	/* L1DF MSR support */
@@ -511,7 +511,7 @@ restore_host:
 	ret
 	lfence
 
-_C_LABEL(svm_enter_guest):
+svm_enter_guest:
 	RETGUARD_SETUP(svm_enter_guest, r11)
 	clgi
 	movq	%rdi, %r8

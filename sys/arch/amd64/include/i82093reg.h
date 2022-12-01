@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82093reg.h,v 1.7 2018/07/03 20:15:57 guenther Exp $	*/
+/*	$OpenBSD: i82093reg.h,v 1.8 2022/12/01 00:26:15 guenther Exp $	*/
 /* 	$NetBSD: i82093reg.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $ */
 
 /*-
@@ -116,7 +116,7 @@
 
 #define ioapic_asm_ack(num) 					 \
 	CODEPATCH_START						;\
-	movl	$0,(_C_LABEL(local_apic)+LAPIC_EOI)(%rip)	;\
+	movl	$0,(local_apic+LAPIC_EOI)(%rip)			;\
 	CODEPATCH_END(CPTAG_EOI)
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.18 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: spl.S,v 1.19 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -80,10 +80,7 @@
 /*
  * XXXX TODO
  */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	.align 16, 0xcc
-_C_LABEL(splhigh):
+_ENTRY(splhigh)
 	RETGUARD_SETUP(splhigh, r11)
 	movl	$IPL_HIGH,%eax
 	xchgl	%eax,CPUVAR(ILEVEL)
@@ -91,13 +88,12 @@ _C_LABEL(splhigh):
 	ret
 	lfence
 
-	.align 16, 0xcc
-_C_LABEL(splx):
+_ENTRY(splx)
 	RETGUARD_SETUP(splx, r11)
 	movl	4(%esp),%eax
 	movl	%eax,CPUVAR(ILEVEL)
 	testl	%eax,%eax
-	jnz	_C_LABEL(Xspllower)
+	jnz	Xspllower
 	RETGUARD_CHECK(splx, r11)
 	ret
 	lfence
@@ -144,6 +140,7 @@ KIDTVEC(spllower)
 	movq	CPUVAR(ISOURCES)(,%rax,8),%rax
 	movq    IS_RECURSE(%rax),%rax
 	jmp     retpoline_rax
+END(Xspllower)
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -170,3 +167,4 @@ KIDTVEC(doreti)
 	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
 	movq    IS_RESUME(%rax),%rax
 	jmp     retpoline_rax
+END(Xdoreti)

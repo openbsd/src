@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.130 2022/11/29 21:41:39 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.131 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -147,19 +147,19 @@
 	.data
 
 #if NLAPIC > 0 
-	.align  NBPG, 0xcc
-	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id), _C_LABEL(lapic_tpr)
-_C_LABEL(local_apic):
-	.space  LAPIC_ID
-_C_LABEL(lapic_id):
-	.long   0x00000000
-	.space  LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):
-	.space  LAPIC_PPRI-LAPIC_TPRI
-_C_LABEL(lapic_ppr):
-	.space  LAPIC_ISR-LAPIC_PPRI 
-_C_LABEL(lapic_isr):
-	.space  NBPG-LAPIC_ISR
+	.align	NBPG, 0xcc
+	.globl	local_apic, lapic_id, lapic_tpr
+local_apic:
+	.space	LAPIC_ID
+lapic_id:
+	.long	0x00000000
+	.space	LAPIC_TPRI-(LAPIC_ID+4)
+lapic_tpr:
+	.space	LAPIC_PPRI-LAPIC_TPRI
+lapic_ppr:
+	.space	LAPIC_ISR-LAPIC_PPRI 
+lapic_isr:
+	.space	NBPG-LAPIC_ISR
 #endif
 
 /*****************************************************************************/
@@ -169,29 +169,29 @@ _C_LABEL(lapic_isr):
  * gdb's backtrace logic matches against the instructions in this.
  */
 	.section .rodata
-	.globl	_C_LABEL(sigcode)
-_C_LABEL(sigcode):
+	.globl	sigcode
+sigcode:
 	call	1f
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS_sigreturn,%rax
 	syscall
-	.globl	_C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl	sigcoderet
+sigcoderet:
 	movq	$SYS_exit,%rax
 	syscall
 	_ALIGN_TRAPS
 1:	JMP_RETPOLINE(rax)
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(esigcode):
+	.globl	esigcode
+esigcode:
 
-	.globl	_C_LABEL(sigfill)
-_C_LABEL(sigfill):
+	.globl	sigfill
+sigfill:
 	int3
-_C_LABEL(esigfill):
-	.globl	_C_LABEL(sigfillsiz)
-_C_LABEL(sigfillsiz):
-	.long	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+esigfill:
+	.globl	sigfillsiz
+sigfillsiz:
+	.long	esigfill - sigfill
 
 	.text
 /*
@@ -461,10 +461,9 @@ switch_restored:
 	lfence
 
 #ifdef DIAGNOSTIC
-	.globl	_C_LABEL(panic)
 .Lbogus_proc_pmap:
 	leaq	bogus_proc_pmap,%rdi
-	call	_C_LABEL(panic)
+	call	panic
 	int3	/* NOTREACHED */
 	.pushsection .rodata
 bogus_proc_pmap:
@@ -489,7 +488,7 @@ NENTRY(retpoline_rax)
 
 ENTRY(cpu_idle_cycle)
 	RETGUARD_SETUP(cpu_idle_cycle, r11)
-	movq	_C_LABEL(cpu_idle_cycle_fcn),%rax
+	movq	cpu_idle_cycle_fcn,%rax
 	cmpq	$0,%rax
 	jne	retpoline_rax
 	sti
@@ -566,7 +565,7 @@ IDTVEC_NOALIGN(syscall)
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame
 	andl	$~MDP_IRET,P_MD_FLAGS(%r14)
 	movq	%rsp,%rdi
-	call	_C_LABEL(syscall)
+	call	syscall
 
 .Lsyscall_check_asts:
 	/* Check for ASTs on exit to user mode. */
@@ -576,7 +575,7 @@ IDTVEC_NOALIGN(syscall)
 	CLEAR_ASTPENDING(%r11)
 	sti
 	movq	%rsp,%rdi
-	call	_C_LABEL(ast)
+	call	ast
 	jmp	.Lsyscall_check_asts
 
 2:
@@ -697,7 +696,7 @@ KUTEXT_PAGE_END
 	movl	%ebx,%ecx
 	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
-	call	_C_LABEL(printf)
+	call	printf
 #ifdef DDB
 	int	$3
 #endif /* DDB */
@@ -712,7 +711,7 @@ spl_lowered:
 
 NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
-	call	_C_LABEL(proc_trampoline_mp)
+	call	proc_trampoline_mp
 #endif
 	movl	$IPL_NONE,CPUVAR(ILEVEL)
 	movq	%r13,%rdi
@@ -754,7 +753,7 @@ GENTRY(intr_user_exit)
 	CLEAR_ASTPENDING(%r11)
 	sti
 	movq	%rsp,%rdi
-	call	_C_LABEL(ast)
+	call	ast
 	cli
 	jmp	intr_user_exit
 
@@ -851,8 +850,8 @@ KTEXT_PAGE_START
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
 
-	.globl	_C_LABEL(doreti_iret)
-_C_LABEL(doreti_iret):
+	.globl	doreti_iret
+doreti_iret:
 	iretq
 KTEXT_PAGE_END
 
@@ -902,7 +901,7 @@ KTEXT_PAGE_END
 	incl	%edi
 	movl	%edi,warn_once(%rip)
 	leaq	.Lnot_blocked(%rip),%rdi
-	call	_C_LABEL(printf)
+	call	printf
 #ifdef DDB
 	int	$3
 #endif /* DDB */
@@ -915,7 +914,7 @@ KTEXT_PAGE_END
 	movl	CPUVAR(ILEVEL),%esi
 	xorl	%edx,%edx		/* always SPL zero for userspace */
 	xorl	%eax,%eax
-	call	_C_LABEL(printf)
+	call	printf
 #ifdef DDB
 	int	$3
 #endif /* DDB */
@@ -967,7 +966,7 @@ NENTRY(intr_fast_exit)
 	incl	%edi
 	movl	%edi,warn_once(%rip)
 	leaq	.Lnot_blocked(%rip),%rdi
-	call	_C_LABEL(printf)
+	call	printf
 #ifdef DDB
 	int	$3
 #endif /* DDB */
@@ -1072,20 +1071,20 @@ NENTRY(xsetbv_resume)
 END(xsetbv_user)
 
 	.section .rodata
-	.globl	_C_LABEL(_xrstor)
-_C_LABEL(_xrstor):
+	.globl	_xrstor
+_xrstor:
 	xrstor64	(%rdi)
 
-	.globl	_C_LABEL(_xsave)
-_C_LABEL(_xsave):
+	.globl	_xsave
+_xsave:
 	xsave64	(%rdi)
 
-	.globl	_C_LABEL(_xsaveopt)
-_C_LABEL(_xsaveopt):
+	.globl	_xsaveopt
+_xsaveopt:
 	xsaveopt64	(%rdi)
 
-	.globl	_C_LABEL(_pcid_set_reuse)
-_C_LABEL(_pcid_set_reuse):
+	.globl	_pcid_set_reuse
+_pcid_set_reuse:
 	orl	$(CR3_REUSE_PCID >> 32),CPUVAR(USER_CR3 + 4)
 
 ENTRY(pagezero)
@@ -1135,8 +1134,8 @@ END(rdmsr_safe)
 	/* Hypercall page needs to be page aligned */
 	.text
 	.align	NBPG, 0xcc
-	.globl	_C_LABEL(xen_hypercall_page)
-_C_LABEL(xen_hypercall_page):
+	.globl	xen_hypercall_page
+xen_hypercall_page:
 	.skip	0x1000, 0xcc
 #endif /* NXEN > 0 */
 
@@ -1144,7 +1143,7 @@ _C_LABEL(xen_hypercall_page):
 	/* Hypercall page needs to be page aligned */
 	.text
 	.align	NBPG, 0xcc
-	.globl	_C_LABEL(hv_hypercall_page)
-_C_LABEL(hv_hypercall_page):
+	.globl	hv_hypercall_page
+hv_hypercall_page:
 	.skip	0x1000, 0xcc
 #endif /* NXEN > 0 */

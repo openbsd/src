@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_wakecode.S,v 1.48 2022/11/29 02:19:29 guenther Exp $ */
+/* $OpenBSD: acpi_wakecode.S,v 1.49 2022/12/01 00:26:15 guenther Exp $ */
 /*
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
  * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -58,12 +58,12 @@
 #define addr32
 #endif
 
-#define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + \
+#define _ACPI_TRMP_LABEL(a) a = . - acpi_real_mode_resume + \
 	ACPI_TRAMPOLINE
-#define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
-#define _ACPI_TRMP_DATA_LABEL(a) a = . - _C_LABEL(acpi_tramp_data_start) + \
+#define _ACPI_TRMP_OFFSET(a) a = . - acpi_real_mode_resume
+#define _ACPI_TRMP_DATA_LABEL(a) a = . - acpi_tramp_data_start + \
 	ACPI_TRAMP_DATA
-#define _ACPI_TRMP_DATA_OFFSET(a) a = . - _C_LABEL(acpi_tramp_data_start)
+#define _ACPI_TRMP_DATA_OFFSET(a) a = . - acpi_tramp_data_start
 #define _ACPI_RM_CODE_SEG (ACPI_TRAMPOLINE >> 4)
 #define _ACPI_RM_DATA_SEG (ACPI_TRAMP_DATA >> 4)
 
@@ -92,10 +92,10 @@
 	.section .rodata
 	.code16
 	.align 4, 0xcc
-	.global _C_LABEL(acpi_resume_end)
-	.global _C_LABEL(acpi_pdirpa)
-	.global _C_LABEL(acpi_tramp_data_start)
-	.global _C_LABEL(acpi_tramp_data_end)
+	.global acpi_resume_end
+	.global acpi_pdirpa
+	.global acpi_tramp_data_start
+	.global acpi_tramp_data_end
 GENTRY(acpi_real_mode_resume)
 _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	nop
@@ -529,7 +529,7 @@ END(hibernate_flush)
 	 */
 	.section .rodata
 	.type	acpi_resume_end,@object
-_C_LABEL(acpi_resume_end):
+acpi_resume_end:
 END(acpi_real_mode_resume)
 
 	/*
@@ -538,7 +538,7 @@ END(acpi_real_mode_resume)
 	 */
 	.section .rodata
 	.type	acpi_tramp_data_start,@object
-_C_LABEL(acpi_tramp_data_start):
+acpi_tramp_data_start:
 _ACPI_TRMP_DATA_OFFSET(.Ltmp_gdt)
 	.word	.Ltmp_gdt_end - .Ltmp_gdtable
 	.long	.Ltmp_gdtable
@@ -715,7 +715,7 @@ _ACPI_TRMP_DATA_LABEL(.Lhibernate_indirect_16b)
 #endif /* HIBERNATE */
 
 	.type	acpi_tramp_data_end,@object
-_C_LABEL(acpi_tramp_data_end):
+acpi_tramp_data_end:
 END(acpi_tramp_data_start)
 
 	/*

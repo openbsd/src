@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.20 2021/12/31 10:44:05 jsg Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.21 2022/12/01 00:26:15 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -124,7 +124,7 @@
 #include <dev/isa/isareg.h>
 
 #define	_RELOC(x)	((x) - KERNBASE)
-#define	RELOC(x)	_RELOC(_C_LABEL(x))
+#define	RELOC(x)	_RELOC(x)
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
@@ -132,8 +132,8 @@
  */
 
 	.text
-	.globl	_C_LABEL(kernel_text)
-	.set	_C_LABEL(kernel_text),KERNTEXTOFF
+	.globl	kernel_text
+	.set	kernel_text,KERNTEXTOFF
 
 	.code32
 
@@ -646,15 +646,15 @@ longmode_hi:
 	/* Relocate atdevbase. */
 	movq	$(TABLESIZE+KERNBASE),%rdx
 	addq	%rsi,%rdx
-	movq	%rdx,_C_LABEL(atdevbase)(%rip)
+	movq	%rdx,atdevbase(%rip)
 
 	/* Record start of symbols */
-	movq	$__kernel_bss_end, _C_LABEL(ssym)(%rip)
+	movq	$__kernel_bss_end, ssym(%rip)
 
 	/* Set up bootstrap stack. */
 	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
-	movq	%rax,_C_LABEL(proc0paddr)(%rip)
+	movq	%rax,proc0paddr(%rip)
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
 
 	/*
@@ -673,18 +673,18 @@ longmode_hi:
 	subq	$(NBPG*3), %rdi
 
 	/* XXX merge these */
-	call	_C_LABEL(init_x86_64)
-	call	_C_LABEL(main)
+	call	init_x86_64
+	call	main
 
 	.section .codepatch,"a"
 	.align	8, 0xcc
-	.globl _C_LABEL(codepatch_begin)
-_C_LABEL(codepatch_begin):
+	.globl codepatch_begin
+codepatch_begin:
 	.previous
 
 	.section .codepatchend,"a"
-	.globl _C_LABEL(codepatch_end)
-_C_LABEL(codepatch_end):
+	.globl codepatch_end
+codepatch_end:
 	.previous
 
 	.data
