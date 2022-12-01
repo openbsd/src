@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.4 2022/11/26 16:08:51 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.5 2022/12/01 21:59:54 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -159,7 +159,7 @@ bn_isqrt(BIGNUM *out_sqrt, int *out_perfect, const BIGNUM *n, BN_CTX *in_ctx)
 
 /*
  * is_square_mod_N[r % N] indicates whether r % N has a square root modulo N.
- * The tables are generated in regress/lib/libcrypto/bn/general/bn_isqrt.c.
+ * The tables are generated in regress/lib/libcrypto/bn/bn_isqrt.c.
  */
 
 const uint8_t is_square_mod_11[] = {
