@@ -1,4 +1,4 @@
-/*	$OpenBSD: exptest.c,v 1.8 2021/11/18 15:17:31 tb Exp $	*/
+/*	$OpenBSD: exptest.c,v 1.9 2022/12/01 02:58:40 jsing Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,11 +110,13 @@ test_exp_mod_zero(void)
 		goto err;
 	if ((m = BN_new()) == NULL)
 		goto err;
-	BN_one(m);
+	if (!BN_one(m))
+		goto err;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
-	BN_one(a);
+	if (!BN_one(a))
+		goto err;
 
 	if ((p = BN_new()) == NULL)
 		goto err;
