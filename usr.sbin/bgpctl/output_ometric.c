@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.5 2022/12/01 09:14:40 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.6 2022/12/01 09:16:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,7 @@ struct ometric *bgpd_info, *bgpd_scrape_time;
 struct ometric *peer_info, *peer_state, *peer_state_raw, *peer_last_change,
 		    *peer_last_read, *peer_last_write;
 struct ometric *peer_prefixes_transmit, *peer_prefixes_receive;
-struct ometric *peer_message_transmit, *peer_message_recieve;
+struct ometric *peer_message_transmit, *peer_message_receive;
 struct ometric *peer_update_transmit, *peer_update_pending,
 		   *peer_update_receive;
 struct ometric *peer_withdraw_transmit, *peer_withdraw_pending,
@@ -107,7 +107,7 @@ ometric_head(struct parse_result *arg)
 	peer_message_transmit = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_message_transmit_total",
 	    "per message type count of transmitted messages");
-	peer_message_recieve = ometric_new(OMT_COUNTER,
+	peer_message_receive = ometric_new(OMT_COUNTER,
 	    "bgpd_peer_message_receive_total",
 	    "per message type count of received messages");
 
@@ -216,16 +216,16 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	    p->stats.msg_sent_rrefresh, OKV("messages"), OKV("route_refresh"),
 	    ol);
 
-	ometric_set_int_with_labels(peer_message_recieve,
+	ometric_set_int_with_labels(peer_message_receive,
 	    p->stats.msg_rcvd_open, OKV("messages"), OKV("open"), ol);
-	ometric_set_int_with_labels(peer_message_recieve,
+	ometric_set_int_with_labels(peer_message_receive,
 	    p->stats.msg_rcvd_notification, OKV("messages"),
 	    OKV("notification"), ol);
-	ometric_set_int_with_labels(peer_message_recieve,
+	ometric_set_int_with_labels(peer_message_receive,
 	    p->stats.msg_rcvd_update, OKV("messages"), OKV("update"), ol);
-	ometric_set_int_with_labels(peer_message_recieve,
+	ometric_set_int_with_labels(peer_message_receive,
 	    p->stats.msg_rcvd_keepalive, OKV("messages"), OKV("keepalive"), ol);
-	ometric_set_int_with_labels(peer_message_recieve,
+	ometric_set_int_with_labels(peer_message_receive,
 	    p->stats.msg_rcvd_rrefresh, OKV("messages"), OKV("route_refresh"),
 	    ol);
 
