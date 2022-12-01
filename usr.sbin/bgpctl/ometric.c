@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.3 2022/11/30 10:15:01 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.4 2022/12/01 09:14:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -209,14 +209,9 @@ olabels_free(struct olabels *ol)
  * value needs to be freed with olabels_free().
  */
 static struct olabels *
-olabels_add_extra(struct olabels *ol, const char *key, const char *value)
+olabels_add_extras(struct olabels *ol, const char **keys, const char **values)
 {
-	const char *keys[2] = { key, NULL };
-	const char *values[2] = { value, NULL };
 	struct olabels *new;
-
-	if (value == NULL || *value == '\0')
-		return ol;
 
 	new = olabels_new(keys, values);
 	new->next = olabels_ref(ol);
@@ -382,10 +377,8 @@ ometric_set_info(struct ometric *om, const char **keys, const char **values,
 	if (om->type != OMT_INFO)
 		errx(1, "%s incorrect ometric type", __func__);
 
-	if (keys != NULL) {
-		extra = olabels_new(keys, values);
-		extra->next = olabels_ref(ol);
-	}
+	if (keys != NULL)
+		extra = olabels_add_extras(ol, keys, values);
 
 	ometric_set_int_value(om, 1, extra != NULL ? extra : ol);
 	olabels_free(extra);
@@ -397,7 +390,6 @@ ometric_set_info(struct ometric *om, const char **keys, const char **values,
 void
 ometric_set_state(struct ometric *om, const char *state, struct olabels *ol)
 {
-	struct olabels *extra;
 	size_t i;
 	int val;
 
@@ -410,9 +402,8 @@ ometric_set_state(struct ometric *om, const char *state, struct olabels *ol)
 		else
 			val = 0;
 
-		extra = olabels_add_extra(ol, om->name, om->stateset[i]);
-		ometric_set_int_value(om, val, extra);
-		olabels_free(extra);
+		ometric_set_int_with_labels(om, val, OKV(om->name),
+		    OKV(om->stateset[i]), ol);
 	}
 }
 
@@ -421,12 +412,12 @@ ometric_set_state(struct ometric *om, const char *state, struct olabels *ol)
  * the value is copied into the extra label.
  */
 void
-ometric_set_int_with_label(struct ometric *om, uint64_t val, const char *key,
-    const char *value, struct olabels *ol)
+ometric_set_int_with_labels(struct ometric *om, uint64_t val,
+    const char **keys, const char **values, struct olabels *ol)
 {
 	struct olabels *extra;
 
-	extra = olabels_add_extra(ol, key, value);
+	extra = olabels_add_extras(ol, keys, values);
 	ometric_set_int(om, val, extra);
 	olabels_free(extra);
 }

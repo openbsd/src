@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.4 2022/11/30 10:15:01 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.5 2022/12/01 09:14:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -203,27 +203,31 @@ ometric_neighbor_stats(struct peer *p, struct parse_result *arg)
 	ometric_set_int(peer_prefixes_transmit, p->stats.prefix_out_cnt, ol);
 	ometric_set_int(peer_prefixes_receive, p->stats.prefix_cnt, ol);
 
-	ometric_set_int_with_label(peer_message_transmit,
-	    p->stats.msg_sent_open, "message", "open", ol);
-	ometric_set_int_with_label(peer_message_transmit,
-	    p->stats.msg_sent_notification, "message", "notification", ol);
-	ometric_set_int_with_label(peer_message_transmit,
-	    p->stats.msg_sent_update, "message", "update", ol);
-	ometric_set_int_with_label(peer_message_transmit,
-	    p->stats.msg_sent_keepalive, "message", "keepalive", ol);
-	ometric_set_int_with_label(peer_message_transmit,
-	    p->stats.msg_sent_rrefresh, "message", "route_refresh", ol);
+	ometric_set_int_with_labels(peer_message_transmit,
+	    p->stats.msg_sent_open, OKV("messages"), OKV("open"), ol);
+	ometric_set_int_with_labels(peer_message_transmit,
+	    p->stats.msg_sent_notification, OKV("messages"),
+	    OKV("notification"), ol);
+	ometric_set_int_with_labels(peer_message_transmit,
+	    p->stats.msg_sent_update, OKV("messages"), OKV("update"), ol);
+	ometric_set_int_with_labels(peer_message_transmit,
+	    p->stats.msg_sent_keepalive, OKV("messages"), OKV("keepalive"), ol);
+	ometric_set_int_with_labels(peer_message_transmit,
+	    p->stats.msg_sent_rrefresh, OKV("messages"), OKV("route_refresh"),
+	    ol);
 
-	ometric_set_int_with_label(peer_message_recieve,
-	    p->stats.msg_rcvd_open, "message", "open", ol);
-	ometric_set_int_with_label(peer_message_recieve,
-	    p->stats.msg_rcvd_notification, "message", "notification", ol);
-	ometric_set_int_with_label(peer_message_recieve,
-	    p->stats.msg_rcvd_update, "message", "update", ol);
-	ometric_set_int_with_label(peer_message_recieve,
-	    p->stats.msg_rcvd_keepalive, "message", "keepalive", ol);
-	ometric_set_int_with_label(peer_message_recieve,
-	    p->stats.msg_rcvd_rrefresh, "message", "route_refresh", ol);
+	ometric_set_int_with_labels(peer_message_recieve,
+	    p->stats.msg_rcvd_open, OKV("messages"), OKV("open"), ol);
+	ometric_set_int_with_labels(peer_message_recieve,
+	    p->stats.msg_rcvd_notification, OKV("messages"),
+	    OKV("notification"), ol);
+	ometric_set_int_with_labels(peer_message_recieve,
+	    p->stats.msg_rcvd_update, OKV("messages"), OKV("update"), ol);
+	ometric_set_int_with_labels(peer_message_recieve,
+	    p->stats.msg_rcvd_keepalive, OKV("messages"), OKV("keepalive"), ol);
+	ometric_set_int_with_labels(peer_message_recieve,
+	    p->stats.msg_rcvd_rrefresh, OKV("messages"), OKV("route_refresh"),
+	    ol);
 
 	ometric_set_int(peer_update_transmit, p->stats.prefix_sent_update, ol);
 	ometric_set_int(peer_update_pending, p->stats.pending_update, ol);
@@ -249,13 +253,14 @@ ometric_rib_mem_element(const char *v, uint64_t count, uint64_t size,
     uint64_t refs)
 {
 	if (count != UINT64_MAX)
-		ometric_set_int_with_label(rde_mem_count, count, "type", v,
-		    NULL);
+		ometric_set_int_with_labels(rde_mem_count, count,
+		    OKV("type"), OKV(v), NULL);
 	if (size != UINT64_MAX)
-		ometric_set_int_with_label(rde_mem_size, size, "type", v, NULL);
+		ometric_set_int_with_labels(rde_mem_size, size,
+		    OKV("type"), OKV(v), NULL);
 	if (refs != UINT64_MAX)
-		ometric_set_int_with_label(rde_mem_ref_count, refs, "type", v,
-		    NULL);
+		ometric_set_int_with_labels(rde_mem_ref_count, refs,
+		    OKV("type"), OKV(v), NULL);
 }
 
 static void
@@ -297,14 +302,15 @@ ometric_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data, UINT64_MAX);
 
 	ometric_set_int(rde_table_count, stats->aset_cnt, NULL);
-	ometric_set_int_with_label(rde_set_size, stats->aset_size,
-	   "type", "as_set", NULL);
-	ometric_set_int_with_label(rde_set_count, stats->aset_nmemb,
-	   "type", "as_set", NULL);
-	ometric_set_int_with_label(rde_set_size, stats->pset_size,
-	   "type", "prefix_set", NULL);
-	ometric_set_int_with_label(rde_set_count, stats->pset_cnt,
-	   "type", "prefix_set", NULL);
+
+	ometric_set_int_with_labels(rde_set_size, stats->aset_size,
+	    OKV("type"), OKV("as_set"), NULL);
+	ometric_set_int_with_labels(rde_set_count, stats->aset_nmemb,
+	    OKV("type"), OKV("as_set"), NULL);
+	ometric_set_int_with_labels(rde_set_size, stats->pset_size,
+	    OKV("type"), OKV("prefix_set"), NULL);
+	ometric_set_int_with_labels(rde_set_count, stats->pset_cnt,
+	    OKV("type"), OKV("prefix_set"), NULL);
 	ometric_rib_mem_element("set_total", UINT64_MAX, 
 	    stats->aset_size + stats->pset_size, UINT64_MAX);
 }
