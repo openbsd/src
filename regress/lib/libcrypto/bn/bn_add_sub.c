@@ -1,4 +1,4 @@
-/*	$OpenBSD: bnaddsub.c,v 1.3 2018/07/23 17:15:21 tb Exp $	*/
+/*	$OpenBSD: bn_add_sub.c,v 1.1 2022/12/01 20:50:10 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *

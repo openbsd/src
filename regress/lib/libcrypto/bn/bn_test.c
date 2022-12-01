@@ -1,4 +1,4 @@
-/*	$OpenBSD: bntest.c,v 1.25 2022/09/05 21:06:31 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.1 2022/12/01 20:50:10 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
