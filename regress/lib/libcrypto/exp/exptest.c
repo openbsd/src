@@ -1,4 +1,4 @@
-/*	$OpenBSD: exptest.c,v 1.9 2022/12/01 02:58:40 jsing Exp $	*/
+/*	$OpenBSD: exptest.c,v 1.10 2022/12/01 21:13:58 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -211,7 +211,8 @@ test_exp_mod_zero(void)
 	return ret;
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple;
 	BIGNUM *r_mont_ct, *r_mont_nonct, *a, *b, *m;
@@ -299,12 +300,9 @@ int main(int argc, char *argv[])
 			goto err;
 		}
 
-		if (BN_cmp(r_simple, r_mont) == 0 &&
-		    BN_cmp(r_simple, r_recp) == 0 &&
-		    BN_cmp(r_simple, r_mont_const) == 0) {
-			printf(".");
-			fflush(stdout);
-		} else {
+		if (BN_cmp(r_simple, r_mont) != 0 ||
+		    BN_cmp(r_simple, r_recp) != 0 ||
+		    BN_cmp(r_simple, r_mont_const) != 0) {
 			if (BN_cmp(r_simple, r_mont) != 0)
 				printf("\nsimple and mont results differ\n");
 			if (BN_cmp(r_simple, r_mont_const) != 0)
@@ -347,12 +345,9 @@ int main(int argc, char *argv[])
 	ERR_remove_thread_state(NULL);
 	CRYPTO_mem_leaks(out);
 	BIO_free(out);
-	printf("\n");
 
 	if (test_exp_mod_zero() != 0)
 		goto err;
-
-	printf("done\n");
 
 	return (0);
 
