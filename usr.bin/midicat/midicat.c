@@ -1,4 +1,4 @@
-/*	$OpenBSD: midicat.c,v 1.4 2022/11/30 14:56:45 cheloha Exp $	*/
+/*	$OpenBSD: midicat.c,v 1.5 2022/12/02 22:21:35 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -22,8 +22,7 @@
 #include <unistd.h>
 #include <string.h>
 
-char usagestr[] = "usage: midicat [-d] [-i in-file] [-o out-file] "
-	"[-q in-port] [-q out-port]\n";
+void __dead usage(void);
 
 int
 main(int argc, char **argv)
@@ -62,16 +61,14 @@ main(int argc, char **argv)
 			ofile = optarg;
 			break;
 		default:
-			goto bad_usage;
+			usage();
 		}
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 0) {
-	bad_usage:
-		fputs(usagestr, stderr);
-		return 1;
-	}
+
+	if (argc != 0)
+		usage();
 
 	/* we don't support more than one data flow */
 	if (ifile != NULL && ofile != NULL) {
@@ -87,7 +84,7 @@ main(int argc, char **argv)
 
 	/* if there're neither files nor ports, then we've nothing to do */
 	if (port0 == NULL && ifile == NULL && ofile == NULL)
-		goto bad_usage;
+		usage();
 
 	/* if no port specified, use default one */
 	if (port0 == NULL)
@@ -194,4 +191,12 @@ main(int argc, char **argv)
 	if (ofile)
 		close(ofd);
 	return 0;
+}
+
+void __dead
+usage(void)
+{
+	fprintf(stderr, "usage: midicat [-d] [-i in-file] [-o out-file] "
+	    "[-q in-port] [-q out-port]\n");
+	exit(1);
 }
