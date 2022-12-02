@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2022/12/02 00:55:57 tb Exp $
+#	$OpenBSD: Makefile,v 1.14 2022/12/02 08:30:54 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -24,8 +24,13 @@ WARNINGS =	Yes
 CFLAGS +=	-Wall -Wundef -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bn/
 
-# Use default targets from bsd.regress.mk where possible.
-REGRESS_TARGETS = ${PROGS:S/^/run-regress-/}
+.for p in ${PROGS}
+REGRESS_TARGETS +=	run-$p
+.PHONY: 		run-$p
+
+run-$p: $p
+	./$p
+.endfor
 
 # Verify that the bn_isqrt -C output isn't changed by accident.
 isqrt-print-tables: bn_isqrt
