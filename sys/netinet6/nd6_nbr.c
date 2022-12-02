@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.136 2022/11/28 13:08:53 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.137 2022/12/02 12:58:37 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1206,28 +1206,13 @@ nd6_dad_timer(void *xifa)
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.
-		 * See what we've got.
 		 */
-		int duplicate;
-
-		duplicate = 0;
-
-		if (dp->dad_na_icount) {
-			duplicate++;
-		}
-
-		if (dp->dad_ns_icount) {
-			/* We've seen NS, means DAD has failed. */
-			duplicate++;
-		}
-
-		if (duplicate) {
+		if (dp->dad_na_icount || dp->dad_ns_icount) {
 			/* dp will be freed in nd6_dad_duplicated() */
 			nd6_dad_duplicated(dp);
 		} else {
 			/*
 			 * We are done with DAD.  No NA came, no NS came.
-			 * duplicated address found.
 			 */
 			ia6->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
@@ -1312,12 +1297,10 @@ void
 nd6_dad_ns_input(struct ifaddr *ifa)
 {
 	struct dadq *dp;
-	int duplicate;
 
 	if (!ifa)
 		panic("%s: ifa == NULL", __func__);
 
-	duplicate = 0;
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
 		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
@@ -1328,12 +1311,8 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	 * if I'm yet to start DAD, someone else started using this address
 	 * first.  I have a duplicate and you win.
 	 */
-	if (dp->dad_ns_ocount == 0)
-		duplicate++;
-
 	/* XXX more checks for loopback situation - see nd6_dad_timer too */
-
-	if (duplicate) {
+	if (dp->dad_ns_ocount == 0) {
 		/* dp will be freed in nd6_dad_duplicated() */
 		nd6_dad_duplicated(dp);
 	} else {
