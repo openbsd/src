@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.5 2022/08/30 16:26:29 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.6 2022/12/02 12:27:08 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -83,10 +83,10 @@
 
 #define	_ENTRY(x)							\
 	.text; .globl x; .type x,@function; .p2align 1; x:
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
-#define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
+#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
+#define	ENTRY_NP(y)	_ENTRY(y)
+#define	ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
+#define	ASENTRY_NP(y)	_ENTRY(y)
 #define	END(y)		.size y, . - y
 #define EENTRY(sym)	 .globl  sym; sym:
 #define EEND(sym)

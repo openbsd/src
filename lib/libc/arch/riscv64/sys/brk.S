@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.2 2021/10/25 14:38:10 jca Exp $	*/
+/*	$OpenBSD: brk.S,v 1.3 2022/12/02 12:27:08 jca Exp $	*/
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,24 +18,24 @@
 #include "SYS.h"
 
 	.extern __curbrk
-	.extern _C_LABEL(_end)
+	.extern _end
 
 	.data
 	.align 3
 __minbrk:
-	.dword _C_LABEL(_end)
+	.dword _end
 	
 
 ENTRY(brk)
 	RETGUARD_SETUP(brk, t6)
-	lla	t1, _C_LABEL(__minbrk)
+	lla	t1, __minbrk
 	ld	t5, 0(t1)
 	bgeu	a0, t5, .L_brk_call
 	mv	a0, t5
 	
 .L_brk_call:
 	mv	a2, a0
-	lla	t1, _C_LABEL(__curbrk)
+	lla	t1, __curbrk
 
 	li t0, SYS_break
 	ecall

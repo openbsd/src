@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.2 2021/10/25 14:38:10 jca Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.3 2022/12/02 12:27:08 jca Exp $	*/
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include "SYS.h"
 
-	.extern _C_LABEL(_end)
+	.extern _end
 
 	.data
 	.align	3
@@ -25,13 +25,13 @@
 	.hidden __curbrk
 	.type	__curbrk,@object
 __curbrk:
-	.dword _C_LABEL(_end)
+	.dword _end
 	END(__curbrk)
 	
 ENTRY(sbrk)
 	RETGUARD_SETUP(sbrk, t6)
 
-	lla	t1, _C_LABEL(__curbrk)
+	lla	t1, __curbrk
 	ld	a2, 0(t1)
 	add	a0, a0, a2	// compute current break
 	mv	t3, a0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.14 2022/01/02 03:41:08 jsg Exp $	*/
+/*	$OpenBSD: locore.S,v 1.15 2022/12/02 12:27:08 jca Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -185,8 +185,8 @@ va:
 	andi	sp, sp, ~STACKALIGNBYTES
 
 	/* Clear BSS */
-	la	t0, _C_LABEL(__bss_start)
-	la	t1, _C_LABEL(_end)
+	la	t0, __bss_start
+	la	t1, _end
 1:
 	sd	zero, 0(t0)
 	addi	t0, t0, 8
@@ -216,8 +216,8 @@ va:
 	sd	t1, 0(t0)
 
 	mv	a0, sp
-	call	_C_LABEL(initriscv)	/* Off we go */
-	call	_C_LABEL(main)
+	call	initriscv		/* Off we go */
+	call	main
 
 /*
  * Get the physical address the kernel is loaded to. Returned in s9.
@@ -252,19 +252,19 @@ ENTRY(sigcode)
 	li	t0, SYS_sigreturn
 	ecall
 
-	.globl _C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl sigcoderet
+sigcoderet:
 	/* sigreturn failed, exit */
 	li	t0, SYS_exit
 	ecall
 END(sigcode)
-	.globl _C_LABEL(esigcode)
-_C_LABEL(esigcode):
+	.globl esigcode
+esigcode:
 
 	.data
-	.global _C_LABEL(esym)
-_C_LABEL(esym):
-	.quad	_C_LABEL(end)
+	.global esym
+esym:
+	.quad	end
 
 	.align	12
 pagetable_l1:
@@ -333,6 +333,6 @@ mpva:
 	csrw	satp, a2
 	sfence.vma
 
-	call	_C_LABEL(cpu_start_secondary)
+	call	cpu_start_secondary
 
 #endif

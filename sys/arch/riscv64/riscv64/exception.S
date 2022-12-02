@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.5 2021/05/20 04:22:33 drahn Exp $	*/
+/*	$OpenBSD: exception.S,v 1.6 2022/12/02 12:27:08 jca Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -202,7 +202,7 @@
 
 	/* handle the ast */
 	mv	a0, sp
-	la	t0, _C_LABEL(ast)
+	la	t0, ast
 	jalr	t0
 	j	1b
 2:
@@ -222,7 +222,7 @@ END(cpu_exception_handler)
 ENTRY(cpu_exception_handler_supervisor)
 	save_registers 1
 	mv	a0, sp
-	call	_C_LABEL(do_trap_supervisor)
+	call	do_trap_supervisor
 	restore_registers 1
 	sret
 END(cpu_exception_handler_supervisor)
@@ -230,7 +230,7 @@ END(cpu_exception_handler_supervisor)
 ENTRY(cpu_exception_handler_user)
 	save_registers 0
 	mv	a0, sp
-	call	_C_LABEL(do_trap_user)
+	call	do_trap_user
 	do_ast
 	restore_registers 0
 	csrrw	sp, sscratch, sp
