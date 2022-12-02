@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.20 2022/11/01 13:34:44 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.21 2022/12/02 10:57:12 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -2515,10 +2515,16 @@ agentx_object_implied(struct agentx_object *axo,
     struct agentx_index *axi)
 {
 	size_t i = 0;
+	struct ax_varbind *vb;
 
 	for (i = 0; i < axo->axo_indexlen; i++) {
 		if (axo->axo_index[i] == axi) {
-			if (axi->axi_vb.avb_data.avb_ostring.aos_slen != 0)
+			vb = &axi->axi_vb;
+			if (vb->avb_type == AX_DATA_TYPE_OCTETSTRING &&
+			    vb->avb_data.avb_ostring.aos_slen != 0)
+				return 1;
+			else if (vb->avb_type == AX_DATA_TYPE_OID &&
+			    vb->avb_data.avb_oid.aoi_idlen != 0)
 				return 1;
 			else if (i == axo->axo_indexlen - 1)
 				return axo->axo_implied;
