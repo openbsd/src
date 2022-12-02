@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2022/09/11 15:24:53 tb Exp $
+#	$OpenBSD: Makefile,v 1.23 2022/12/02 00:47:32 tb Exp $
 
 PROGS = \
 	asn1api \
@@ -23,12 +23,5 @@ CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
 LDADD_asn1basic = ${CRYPTO_INT}
 LDADD_asn1object = ${CRYPTO_INT}
-
-.for p in ${PROGS}
-REGRESS_TARGETS +=	run-$p
-
-run-$p: $p
-	@./$p
-.endfor
 
 .include <bsd.regress.mk>
