@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.2 2022/12/02 17:33:38 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.3 2022/12/02 17:42:45 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,18 +108,23 @@ main(int argc, char *argv[])
 	for (i = 0; i < 200; i++) {
 		arc4random_buf(&c, 1);
 		c = (c % BN_BITS) - BN_BITS2;
-		BN_rand(a, NUM_BITS + c, 0, 0);
+		if (!BN_rand(a, NUM_BITS + c, 0, 0))
+			goto err;
 
 		arc4random_buf(&c, 1);
 		c = (c % BN_BITS) - BN_BITS2;
-		BN_rand(b, NUM_BITS + c, 0, 0);
+		if (!BN_rand(b, NUM_BITS + c, 0, 0))
+			goto err;
 
 		arc4random_buf(&c, 1);
 		c = (c % BN_BITS) - BN_BITS2;
-		BN_rand(m, NUM_BITS + c, 0, 1);
+		if (!BN_rand(m, NUM_BITS + c, 0, 1))
+			goto err;
 
-		BN_mod(a, a, m, ctx);
-		BN_mod(b, b, m, ctx);
+		if (!BN_mod(a, a, m, ctx))
+			goto err;
+		if (!BN_mod(b, b, m, ctx))
+			goto err;
 
 		ret = BN_mod_exp_mont(r_mont, a, b, m, ctx, NULL);
 		if (ret <= 0) {
