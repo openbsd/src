@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.3 2022/12/02 17:42:45 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.4 2022/12/02 18:24:01 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,23 +82,26 @@ main(int argc, char *argv[])
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
-	if ((r_mont = BN_new()) == NULL)
+
+	BN_CTX_start(ctx);
+
+	if ((r_mont = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r_mont_const = BN_new()) == NULL)
+	if ((r_mont_const = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r_mont_ct = BN_new()) == NULL)
+	if ((r_mont_ct = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r_mont_nonct = BN_new()) == NULL)
+	if ((r_mont_nonct = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r_recp = BN_new()) == NULL)
+	if ((r_recp = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r_simple = BN_new()) == NULL)
+	if ((r_simple = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((a = BN_new()) == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((m = BN_new()) == NULL)
+	if ((m = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if ((out = BIO_new(BIO_s_file())) == NULL)
@@ -194,15 +197,8 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-	BN_free(r_mont);
-	BN_free(r_mont_const);
-	BN_free(r_mont_ct);
-	BN_free(r_mont_nonct);
-	BN_free(r_recp);
-	BN_free(r_simple);
-	BN_free(a);
-	BN_free(b);
-	BN_free(m);
+
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	ERR_remove_thread_state(NULL);
 	CRYPTO_mem_leaks(out);
