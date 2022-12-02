@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_add_sub.c,v 1.1 2022/12/01 20:50:10 tb Exp $	*/
+/*	$OpenBSD: bn_add_sub.c,v 1.2 2022/12/02 00:01:06 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -20,13 +20,10 @@
 #include <err.h>
 #include <stdio.h>
 
-#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
-
-BIO *bio_err;
 
 struct hexinput_st {
 	const char	*a_hex;
@@ -152,16 +149,16 @@ void
 print_failure_case(BIGNUM *a, BIGNUM *b, BIGNUM *e, BIGNUM *r, int i,
     const char *testname)
 {
-	BIO_printf(bio_err, "%s #%d failed:", testname, i);
-	BIO_printf(bio_err, "\na = ");
-	BN_print(bio_err, a);
-	BIO_printf(bio_err, "\nb = ");
-	BN_print(bio_err, b);
-	BIO_printf(bio_err, "\nexpected: e = ");
-	BN_print(bio_err, e);
-	BIO_printf(bio_err, "\nobtained: r = ");
-	BN_print(bio_err, r);
-	BIO_printf(bio_err, "\n");
+	fprintf(stderr, "%s #%d failed:", testname, i);
+	fprintf(stderr, "\na = ");
+	BN_print_fp(stderr, a);
+	fprintf(stderr, "\nb = ");
+	BN_print_fp(stderr, b);
+	fprintf(stderr, "\nexpected: e = ");
+	BN_print_fp(stderr, e);
+	fprintf(stderr, "\nobtained: r = ");
+	BN_print_fp(stderr, r);
+	fprintf(stderr, "\n");
 }
 
 int
@@ -177,7 +174,7 @@ bn_op_test(int (*bn_op)(BIGNUM *, const BIGNUM *, const BIGNUM *),
 	    ((e = BN_new()) == NULL) ||
 	    ((r = BN_new()) == NULL)) {
 		failed = 1;
-		ERR_print_errors(bio_err);
+		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
@@ -188,7 +185,7 @@ bn_op_test(int (*bn_op)(BIGNUM *, const BIGNUM *, const BIGNUM *),
 		    !BN_hex2bn(&b, tests[i].b_hex) ||
 		    !BN_hex2bn(&e, tests[i].e_hex)) {
 			print = 1;
-			ERR_print_errors(bio_err);
+			ERR_print_errors_fp(stderr);
 		}
 
 		if (tests[i].ret != bn_op(r, a, b))
@@ -213,11 +210,6 @@ int
 main(int argc, char *argv[])
 {
 	int failed = 0;
-
-	if ((bio_err = BIO_new_fp(stderr, BIO_NOCLOSE)) == NULL) {
-		fprintf(stderr, "bnaddsub: failed to initialize bio_err");
-		return 1;
-	}
 
 	if (bn_op_test(BN_add, test_bn_add, nitems(test_bn_add),
 	    "BN_add with test_bn_add[]"))
