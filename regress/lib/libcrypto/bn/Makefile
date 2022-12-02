@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2022/12/01 22:55:40 tb Exp $
+#	$OpenBSD: Makefile,v 1.13 2022/12/02 00:55:57 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -15,8 +15,8 @@ PROGS +=	bn_unit
 STATIC_LINK +=	bn_isqrt
 STATIC_LINK +=	bn_mod_exp
 STATIC_LINK +=	bn_primes
-STATIC_LINK +=	bn_to_string
 STATIC_LINK +=	bn_rand_interval
+STATIC_LINK +=	bn_to_string
 
 LDADD =		-lcrypto
 DPADD =		${LIBCRYPTO}
@@ -24,13 +24,8 @@ WARNINGS =	Yes
 CFLAGS +=	-Wall -Wundef -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bn/
 
-.for p in ${PROGS}
-REGRESS_TARGETS +=	run-$p
-.PHONY: 		run-$p
-
-run-$p: $p
-	./$p
-.endfor
+# Use default targets from bsd.regress.mk where possible.
+REGRESS_TARGETS = ${PROGS:S/^/run-regress-/}
 
 # Verify that the bn_isqrt -C output isn't changed by accident.
 isqrt-print-tables: bn_isqrt
