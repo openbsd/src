@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.137 2022/12/02 12:58:37 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.138 2022/12/02 15:35:35 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct dadq {
 };
 
 struct dadq *nd6_dad_find(struct ifaddr *);
-void nd6_dad_starttimer(struct dadq *, int);
+void nd6_dad_starttimer(struct dadq *);
 void nd6_dad_stoptimer(struct dadq *);
 void nd6_dad_timer(void *);
 void nd6_dad_ns_output(struct dadq *, struct ifaddr *);
@@ -1050,17 +1050,15 @@ nd6_dad_find(struct ifaddr *ifa)
 }
 
 void
-nd6_dad_starttimer(struct dadq *dp, int msec)
+nd6_dad_starttimer(struct dadq *dp)
 {
-
 	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
-	timeout_add_msec(&dp->dad_timer_ch, msec);
+	timeout_add_msec(&dp->dad_timer_ch, RETRANS_TIMER);
 }
 
 void
 nd6_dad_stoptimer(struct dadq *dp)
 {
-
 	timeout_del(&dp->dad_timer_ch);
 }
 
@@ -1122,7 +1120,7 @@ nd6_dad_start(struct ifaddr *ifa)
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	nd6_dad_ns_output(dp, ifa);
-	nd6_dad_starttimer(dp, ifa->ifa_ifp->if_nd->retrans);
+	nd6_dad_starttimer(dp);
 }
 
 /*
@@ -1202,7 +1200,7 @@ nd6_dad_timer(void *xifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-		nd6_dad_starttimer(dp, ifa->ifa_ifp->if_nd->retrans);
+		nd6_dad_starttimer(dp);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.

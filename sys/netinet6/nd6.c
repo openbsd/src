@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.256 2022/11/28 19:13:36 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.257 2022/12/02 15:35:35 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -124,9 +124,7 @@ nd6_ifattach(struct ifnet *ifp)
 
 	nd = malloc(sizeof(*nd), M_IP6NDP, M_WAITOK | M_ZERO);
 
-	nd->basereachable = REACHABLE_TIME;
-	nd->reachable = ND_COMPUTE_RTIME(nd->basereachable);
-	nd->retrans = RETRANS_TIMER;
+	nd->reachable = ND_COMPUTE_RTIME(REACHABLE_TIME);
 
 	ifp->if_nd = nd;
 }
@@ -356,7 +354,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 	case ND6_LLINFO_INCOMPLETE:
 		if (ln->ln_asked < nd6_mmaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, ifp->if_nd->retrans / 1000);
+			nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
 		} else {
 			struct mbuf *m = ln->ln_hold;
@@ -403,13 +401,13 @@ nd6_llinfo_timer(struct rtentry *rt)
 		/* We need NUD */
 		ln->ln_asked = 1;
 		ln->ln_state = ND6_LLINFO_PROBE;
-		nd6_llinfo_settimer(ln, ifp->if_nd->retrans / 1000);
+		nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 		nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr, ln, 0);
 		break;
 	case ND6_LLINFO_PROBE:
 		if (ln->ln_asked < nd6_umaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, ifp->if_nd->retrans / 1000);
+			nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 			nd6_ns_output(ifp, &dst->sin6_addr,
 			    &dst->sin6_addr, ln, 0);
 		} else {
@@ -1285,8 +1283,7 @@ nd6_slowtimo(void *ignored_arg)
 
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		nd6if = ifp->if_nd;
-		if (nd6if->basereachable && /* already initialized */
-		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
+		if ((nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
 			/*
 			 * Since reachable time rarely changes by router
 			 * advertisements, we SHOULD insure that a new random
@@ -1294,7 +1291,7 @@ nd6_slowtimo(void *ignored_arg)
 			 * (RFC 2461, 6.3.4)
 			 */
 			nd6if->recalctm = ND6_RECALC_REACHTM_INTERVAL;
-			nd6if->reachable = ND_COMPUTE_RTIME(nd6if->basereachable);
+			nd6if->reachable = ND_COMPUTE_RTIME(REACHABLE_TIME);
 		}
 	}
 	NET_UNLOCK();
@@ -1403,7 +1400,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 */
 	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
 		ln->ln_asked++;
-		nd6_llinfo_settimer(ln, ifp->if_nd->retrans / 1000);
+		nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, ln, 0);
 	}
 	return (EAGAIN);
