@@ -1,11 +1,7 @@
-#	$OpenBSD: Makefile,v 1.9 2022/06/29 15:06:18 tb Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/12/02 01:09:04 tb Exp $
 
 PROGS += handshake_table
 PROGS += valid_handshakes_terminate
-
-.for p in ${PROGS}
-REGRESS_TARGETS += run-$p
-.endfor
 
 LDADD =		${SSL_INT} -lcrypto
 DPADD =		${LIBCRYPTO} ${LIBSSL}
@@ -31,13 +27,6 @@ handshake.${_FMT}: handshake.gv
 	dot -T${_FMT} handshake.gv -o $@
 
 CLEANFILES += handshake.${_FMT}
-.endfor
-
-.for p in ${PROGS}
-run-$p: $p
-	./$p
-
-.PHONY: run-$p
 .endfor
 
 .PHONY: print
