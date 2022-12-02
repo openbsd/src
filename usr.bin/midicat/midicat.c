@@ -1,4 +1,4 @@
-/*	$OpenBSD: midicat.c,v 1.5 2022/12/02 22:21:35 cheloha Exp $	*/
+/*	$OpenBSD: midicat.c,v 1.6 2022/12/02 22:29:59 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -92,9 +92,10 @@ main(int argc, char **argv)
 
 	/* open input or output file (if any) */
 	if (ifile) {
-		if (strcmp(ifile, "-") == 0)
+		if (strcmp(ifile, "-") == 0) {
+			ifile = "stdin";
 			ifd = STDIN_FILENO;
-		else {
+		} else {
 			ifd = open(ifile, O_RDONLY);
 			if (ifd == -1) {
 				perror(ifile);
@@ -102,9 +103,10 @@ main(int argc, char **argv)
 			}
 		}
 	} else if (ofile) {
-		if (strcmp(ofile, "-") == 0)
+		if (strcmp(ofile, "-") == 0) {
+			ofile = "stdout";
 			ofd = STDOUT_FILENO;
-		else {
+		} else {
 			ofd = open(ofile, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 			if (ofd == -1) {
 				perror(ofile);
