@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2011 2022/11/11 07:58:42 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2012 2022/12/02 07:29:30 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5423,6 +5423,7 @@
 #define	PCI_PRODUCT_INTEL_GMA600_7	0x4107		/* GMA 600 */
 #define	PCI_PRODUCT_INTEL_GMA600_8	0x4108		/* GMA 600 */
 #define	PCI_PRODUCT_INTEL_E600_HB	0x4114		/* E600 Host */
+#define	PCI_PRODUCT_INTEL_P5800X	0x4140		/* P5800X */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2200BG	0x4220		/* PRO/Wireless 2200BG */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2225BG	0x4221		/* PRO/Wireless 2225BG */
 #define	PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1	0x4222		/* PRO/Wireless 3945ABG */
