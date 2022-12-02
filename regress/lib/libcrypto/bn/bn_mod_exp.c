@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.4 2022/12/02 18:24:01 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.5 2022/12/02 18:31:40 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,7 +60,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
@@ -74,7 +73,6 @@ main(int argc, char *argv[])
 	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple;
 	BIGNUM *r_mont_ct, *r_mont_nonct, *a, *b, *m;
 	BN_CTX *ctx;
-	BIO *out = NULL;
 	unsigned char c;
 	int i, ret;
 
@@ -103,10 +101,6 @@ main(int argc, char *argv[])
 		goto err;
 	if ((m = BN_CTX_get(ctx)) == NULL)
 		goto err;
-
-	if ((out = BIO_new(BIO_s_file())) == NULL)
-		exit(1);
-	BIO_set_fp(out, stdout, BIO_NOCLOSE);
 
 	for (i = 0; i < 200; i++) {
 		arc4random_buf(&c, 1);
@@ -180,19 +174,19 @@ main(int argc, char *argv[])
 				printf("\nmont_ct and mont_nonct results differ\n");
 
 			printf("a (%3d) = ", BN_num_bits(a));
-			BN_print(out, a);
+			BN_print_fp(stdout, a);
 			printf("\nb (%3d) = ", BN_num_bits(b));
-			BN_print(out, b);
+			BN_print_fp(stdout, b);
 			printf("\nm (%3d) = ", BN_num_bits(m));
-			BN_print(out, m);
+			BN_print_fp(stdout, m);
 			printf("\nsimple   =");
-			BN_print(out, r_simple);
+			BN_print_fp(stdout, r_simple);
 			printf("\nrecp	 =");
-			BN_print(out, r_recp);
+			BN_print_fp(stdout, r_recp);
 			printf("\nmont	 =");
-			BN_print(out, r_mont);
+			BN_print_fp(stdout, r_mont);
 			printf("\nmont_ct  =");
-			BN_print(out, r_mont_const);
+			BN_print_fp(stdout, r_mont_const);
 			printf("\n");
 			exit(1);
 		}
@@ -201,13 +195,11 @@ main(int argc, char *argv[])
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	ERR_remove_thread_state(NULL);
-	CRYPTO_mem_leaks(out);
-	BIO_free(out);
 
 	return (0);
 
  err:
 	ERR_load_crypto_strings();
-	ERR_print_errors(out);
+	ERR_print_errors_fp(stdout);
 	return (1);
 }
