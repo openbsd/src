@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.26 2022/09/08 10:22:06 kn Exp $ */
+/*	$OpenBSD: vmt.c,v 1.27 2022/12/03 10:57:04 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -491,9 +491,12 @@ int
 vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 {
 	struct vmt_softc *sc = arg;
-	char *buf = NULL, *ptr;
+	struct vm_rpc rpci;
+	char *buf = NULL;
 	size_t bufsz;
 	int error = 0;
+	uint32_t rlen;
+	uint16_t ack;
 
 	bufsz = VMT_RPC_BUFLEN;
 	buf = malloc(bufsz, M_TEMP, M_WAITOK | M_ZERO);
@@ -520,25 +523,52 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 		goto done;
 	}
 
-	if (vm_rpc_send_rpci_tx(sc, "%s", buf) != 0) {
-		DPRINTF("%s: error sending command: %s\n", DEVNAME(sc), buf);
+	if (vm_rpc_open(&rpci, VM_RPC_OPEN_RPCI) != 0) {
+		DPRINTF("%s: rpci channel open failed\n", DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 		error = EIO;
 		goto done;
 	}
 
-	if (vm_rpci_response_successful(sc) == 0) {
-		DPRINTF("%s: host rejected command: %s\n", DEVNAME(sc), buf);
-		error = EINVAL;
+	if (vm_rpc_send(&rpci, buf, bufsz) != 0) {
+		DPRINTF("%s: unable to send rpci command\n", DEVNAME(sc));
+		sc->sc_rpc_error = 1;
+		error = EIO;
 		goto done;
 	}
 
-	/* skip response that was tested in vm_rpci_response_successful() */
-	ptr = sc->sc_rpc_buf + 2;
+	if (vm_rpc_get_length(&rpci, &rlen, &ack) != 0) {
+		DPRINTF("%s: failed to get length of rpci response data\n",
+		    DEVNAME(sc));
+		sc->sc_rpc_error = 1;
+		error = EIO;
+		goto done;
+	}
 
-	/* might truncate, copy anyway but return error */
-	if (strlcpy(value, ptr, valuelen) >= valuelen)
-		error = ENOMEM;
+	if (rlen > 0) {
+		if (rlen + 1 > valuelen) {
+			error = EMSGSIZE;
+			goto done;
+		}
+
+		if (vm_rpc_get_data(&rpci, value, rlen, ack) != 0) {
+			DPRINTF("%s: failed to get rpci response data\n",
+			    DEVNAME(sc));
+			sc->sc_rpc_error = 1;
+			error = EIO;
+			goto done;
+		}
+		/* test if response success  */
+		if (rlen < 2 || value[0] != '1' || value[1] != ' ') {
+			DPRINTF("%s: host rejected command: %s\n", DEVNAME(sc),
+			    buf);
+			error = EINVAL;
+			goto done;
+		}
+		/* skip response that was tested */
+		bcopy(value + 2, value, valuelen - 2);
+		value[rlen - 2] = '\0';
+	}
 
  done:
 	free(buf, M_TEMP, bufsz);
