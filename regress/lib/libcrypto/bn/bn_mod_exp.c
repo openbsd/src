@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.8 2022/12/03 09:37:02 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.9 2022/12/03 09:44:52 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,14 +103,12 @@ test_mod_exp(const BIGNUM *result_simple, const BIGNUM *a, const BIGNUM *b,
 
 	if (test->mod_exp_fn != NULL) {
 		if (!test->mod_exp_fn(result, a, b, m, ctx)) {
-			fprintf(stderr, "%s problems\n", test->name);
-			ERR_print_errors_fp(stderr);
+			printf("%s() problems\n", test->name);
 			goto err;
 		}
 	} else {
 		if (!test->mod_exp_mont_fn(result, a, b, m, ctx, NULL)) {
-			fprintf(stderr, "%s problems\n", test->name);
-			ERR_print_errors_fp(stderr);
+			printf("%s() problems\n", test->name);
 			goto err;
 		}
 	}
@@ -149,8 +147,6 @@ main(int argc, char *argv[])
 	BN_CTX *ctx;
 	int c, i;
 	size_t j;
-
-	ERR_load_BN_strings();
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
@@ -199,12 +195,13 @@ main(int argc, char *argv[])
 
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	ERR_remove_thread_state(NULL);
 
-	return (0);
+	return 0;
 
  err:
-	ERR_load_crypto_strings();
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	ERR_print_errors_fp(stdout);
-	return (1);
+
+	return 1;
 }
