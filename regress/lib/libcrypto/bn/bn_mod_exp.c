@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.5 2022/12/02 18:31:40 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.6 2022/12/03 08:05:52 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple;
 	BIGNUM *r_mont_ct, *r_mont_nonct, *a, *b, *m;
 	BN_CTX *ctx;
-	unsigned char c;
+	int c;
 	int i, ret;
 
 	ERR_load_BN_strings();
@@ -103,18 +103,15 @@ main(int argc, char *argv[])
 		goto err;
 
 	for (i = 0; i < 200; i++) {
-		arc4random_buf(&c, 1);
-		c = (c % BN_BITS) - BN_BITS2;
+		c = (arc4random() % BN_BITS) - BN_BITS2;
 		if (!BN_rand(a, NUM_BITS + c, 0, 0))
 			goto err;
 
-		arc4random_buf(&c, 1);
-		c = (c % BN_BITS) - BN_BITS2;
+		c = (arc4random() % BN_BITS) - BN_BITS2;
 		if (!BN_rand(b, NUM_BITS + c, 0, 0))
 			goto err;
 
-		arc4random_buf(&c, 1);
-		c = (c % BN_BITS) - BN_BITS2;
+		c = (arc4random() % BN_BITS) - BN_BITS2;
 		if (!BN_rand(m, NUM_BITS + c, 0, 1))
 			goto err;
 
