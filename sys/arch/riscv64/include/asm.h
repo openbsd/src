@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2022/12/02 12:27:08 jca Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2022/12/03 15:02:30 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -53,6 +53,11 @@
 # define _ALIGN_TEXT .align 0
 #endif
 
+/* NB == No Binding: use .globl or .weak as necessary */
+#define _ENTRY_NB(x) \
+	.text; .p2align 1; .type x,@function; x:
+#define _ENTRY(x)	.globl x; _ENTRY_NB(x)
+
 #if defined(PROF) || defined(GPROF)
 // XXX Profiler Support
 #define _PROF_PROLOGUE			\
@@ -81,10 +86,9 @@
 #define RETGUARD_SYMBOL(x)
 #endif
 
-#define	_ENTRY(x)							\
-	.text; .globl x; .type x,@function; .p2align 1; x:
 #define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
 #define	ENTRY_NP(y)	_ENTRY(y)
+#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
 #define	ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)	_ENTRY(y)
 #define	END(y)		.size y, . - y
