@@ -1,9 +1,13 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2022/10/20 07:33:14 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/12/03 11:35:34 tb Exp $
 
 RUST_OPENSSL_TESTS =	/usr/local/share/rust-openssl-tests
 CARGO =			/usr/local/bin/cargo
 
-.if !exists(${RUST_OPENSSL_TESTS}) || !exists(${CARGO})
+.if "${MACHINE_ARCH}" == sparc64
+regress:
+	@echo rust-openssl build is broken on sparc64
+	@echo SKIPPED
+.elif !exists(${RUST_OPENSSL_TESTS}) || !exists(${CARGO})
 regress:
 	@echo packages rust-openssl-tests and rust are required for this regress
 	@echo SKIPPED
@@ -30,8 +34,18 @@ CLEANFILES += Cargo.lock
 CLEANFILES += Cargo.toml
 . endif
 
+# Use ports-clang on sparc64 since the build with base-gcc fails with:
+# error occurred: Command "cc" "-O0" "-ffunction-sections" "-fdata-sections" [...]
+# did not execute successfully (status code exit status: 1).
+. if "${MACHINE_ARCH}" == sparc64
+CARGO_CC=/usr/local/bin/clang
+. else
+CARGO_CC=cc
+. endif
+
 rust-openssl-test: ${_WORKSPACE_COOKIE}
-	cd ${.OBJDIR} && cargo test --offline --color=never -- --color=never
+	cd ${.OBJDIR} && env CC=${CARGO_CC} \
+	       	cargo test --offline --color=never -- --color=never
 
 CLEANFILES +=	${_WORKSPACE_COOKIE} ${WORKSPACE_LINKS}
 
