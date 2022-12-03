@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.28 2022/09/19 20:54:02 tobhe Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.29 2022/12/03 22:34:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -431,7 +431,7 @@ show_string(struct imsg *imsg)
 }
 
 static char *
-plural(u_int64_t n)
+plural(uint64_t n)
 {
         return (n != 1 ? "s" : "");
 }

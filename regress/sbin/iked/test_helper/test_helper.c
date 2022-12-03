@@ -247,7 +247,7 @@ assert_string(const char *file, int line, const char *a1, const char *a2,
 static char *
 tohex(const void *_s, size_t l)
 {
-	u_int8_t *s = (u_int8_t *)_s;
+	uint8_t *s = (uint8_t *)_s;
 	size_t i, j;
 	const char *hex = "0123456789abcdef";
 	char *r = malloc((l * 2) + 1);
@@ -277,7 +277,7 @@ assert_mem(const char *file, int line, const char *a1, const char *a2,
 }
 
 static int
-memvalcmp(const u_int8_t *s, u_char v, size_t l, size_t *where)
+memvalcmp(const uint8_t *s, u_char v, size_t l, size_t *where)
 {
 	size_t i;
 
@@ -371,7 +371,7 @@ assert_char(const char *file, int line, const char *a1, const char *a2,
 
 void
 assert_u8(const char *file, int line, const char *a1, const char *a2,
-    u_int8_t aa1, u_int8_t aa2, enum test_predicate pred)
+    uint8_t aa1, uint8_t aa2, enum test_predicate pred)
 {
 	TEST_CHECK(aa1, aa2, pred);
 	test_header(file, line, a1, a2, "U8", pred);
@@ -382,7 +382,7 @@ assert_u8(const char *file, int line, const char *a1, const char *a2,
 
 void
 assert_u16(const char *file, int line, const char *a1, const char *a2,
-    u_int16_t aa1, u_int16_t aa2, enum test_predicate pred)
+    uint16_t aa1, uint16_t aa2, enum test_predicate pred)
 {
 	TEST_CHECK(aa1, aa2, pred);
 	test_header(file, line, a1, a2, "U16", pred);
@@ -393,7 +393,7 @@ assert_u16(const char *file, int line, const char *a1, const char *a2,
 
 void
 assert_u32(const char *file, int line, const char *a1, const char *a2,
-    u_int32_t aa1, u_int32_t aa2, enum test_predicate pred)
+    uint32_t aa1, uint32_t aa2, enum test_predicate pred)
 {
 	TEST_CHECK(aa1, aa2, pred);
 	test_header(file, line, a1, a2, "U32", pred);
@@ -404,7 +404,7 @@ assert_u32(const char *file, int line, const char *a1, const char *a2,
 
 void
 assert_u64(const char *file, int line, const char *a1, const char *a2,
-    u_int64_t aa1, u_int64_t aa2, enum test_predicate pred)
+    uint64_t aa1, uint64_t aa2, enum test_predicate pred)
 {
 	TEST_CHECK(aa1, aa2, pred);
 	test_header(file, line, a1, a2, "U64", pred);

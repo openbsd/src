@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.12 2022/03/15 13:07:33 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.13 2022/12/03 22:34:35 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -21,18 +21,18 @@ int	 eap_parse(struct iked *, const struct iked_sa *,
 	    struct iked_message *, void *, int);
 int	 ikev2_msg_frompeer(struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
-	    u_int8_t, u_int8_t, int);
+	    uint8_t, uint8_t, int);
 void	 ikev2_ikesa_recv_delete(struct iked *, struct iked_sa *);
 struct iked_childsa *
-	 childsa_lookup(struct iked_sa *, u_int64_t, u_int8_t);
+	 childsa_lookup(struct iked_sa *, uint64_t, uint8_t);
 int	  ikev2_childsa_delete(struct iked *, struct iked_sa *,
-	    u_int8_t, u_int64_t, u_int64_t *, int);
+	    uint8_t, uint64_t, uint64_t *, int);
 int	 sa_stateok(const struct iked_sa *, int);
 void	 sa_state(struct iked *, struct iked_sa *, int);
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
 void	 ikev2_init_ike_sa(struct iked *, void *);
 struct dh_group *
-	 group_get(u_int32_t);
+	 group_get(uint32_t);
 void	 timer_set(struct iked *, struct iked_timer *,
 	     void (*)(struct iked *, void *), void *);
 void	 timer_add(struct iked *, struct iked_timer *, int);
@@ -40,7 +40,7 @@ void	 timer_del(struct iked *, struct iked_timer *);
 ssize_t	 ikev2_nat_detection(struct iked *, struct iked_message *,
 	     void *, size_t, u_int, int);
 int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
-	     u_int8_t, u_int8_t, u_int8_t *, size_t, enum privsep_procid);
+	     uint8_t, uint8_t, uint8_t *, size_t, enum privsep_procid);
 int	 ikev2_print_id(struct iked_id *, char *, size_t);
 int	 config_add_transform(struct iked_proposal *, u_int, u_int, u_int,
 	     u_int);
@@ -67,7 +67,7 @@ ikev2_msg_frompeer(struct iked_message *msg)
 
 int
 ikev2_send_ike_e(struct iked *env, struct iked_sa *sa, struct ibuf *buf,
-    u_int8_t firstpayload, u_int8_t exchange, int response)
+    uint8_t firstpayload, uint8_t exchange, int response)
 {
 	return (0);
 }
@@ -84,14 +84,14 @@ ikev2_ikesa_info(uint64_t spi, const char *msg)
 }
 
 struct iked_childsa *
-childsa_lookup(struct iked_sa *a, u_int64_t b, u_int8_t c)
+childsa_lookup(struct iked_sa *a, uint64_t b, uint8_t c)
 {
 	return (NULL);
 }
 
 int
-ikev2_childsa_delete(struct iked *a, struct iked_sa *b, u_int8_t c,
-    u_int64_t d, u_int64_t *e , int f)
+ikev2_childsa_delete(struct iked *a, struct iked_sa *b, uint8_t c,
+    uint64_t d, uint64_t *e , int f)
 {
 	return (0);
 }
@@ -118,7 +118,7 @@ ikev2_init_ike_sa(struct iked *a, void *b)
 }
 
 const struct group_id *
-group_getid(u_int32_t id)
+group_getid(uint32_t id)
 {
 	return (NULL);
 }
@@ -148,7 +148,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 
 int
 ca_setreq(struct iked *env, struct iked_sa *sh, struct iked_static_id *localid,
-    u_int8_t type, u_int8_t more, u_int8_t *data, size_t len,
+    uint8_t type, uint8_t more, uint8_t *data, size_t len,
     enum privsep_procid procid)
 {
 	return (0);

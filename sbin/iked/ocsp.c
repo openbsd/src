@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.23 2021/12/13 17:35:34 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.24 2022/12/03 22:34:35 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -263,7 +263,7 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 /* validate the certifcate stored in 'data' by querying the ocsp-responder */
 int
 ocsp_validate_cert(struct iked *env, void *data, size_t len,
-    struct iked_sahdr sh, u_int8_t type, X509 *issuer)
+    struct iked_sahdr sh, uint8_t type, X509 *issuer)
 {
 	struct iovec		 iov[2];
 	STACK_OF(OPENSSL_STRING) *aia; /* Authority Information Access */
