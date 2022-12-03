@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2022/11/19 16:02:37 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2022/12/03 15:03:49 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -100,6 +100,7 @@ cpu_initclocks(void)
 	    clock_intr, NULL, NULL);
 
 	evcount_attach(&clock_count, "clock", NULL);
+	evcount_percpu(&clock_count);
 
 	cpu_startclock();
 }
@@ -136,7 +137,7 @@ clock_intr(void *frame)
 	intr_disable();
 	splx(s);
 
-	clock_count.ec_count++;
+	evcount_inc(&clock_count);
 
 	return 0;
 }
