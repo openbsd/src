@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmbox.c,v 1.3 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: aplmbox.c,v 1.4 2022/12/03 13:42:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -187,7 +187,7 @@ aplmbox_recv(void *cookie, void *data, size_t len)
 
 	ctrl = HREAD4(sc, MBOX_I2A_CTRL);
 	if (ctrl & MBOX_I2A_CTRL_EMPTY)
-		return EAGAIN;
+		return EWOULDBLOCK;
 
 	msg->data0 = HREAD8(sc, MBOX_I2A_RECV0);
 	msg->data1 = HREAD8(sc, MBOX_I2A_RECV1);

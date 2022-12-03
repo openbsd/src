@@ -19,6 +19,7 @@ struct rtkit_state *rtkit_init(int, const char *, int, struct rtkit *);
 int	rtkit_boot(struct rtkit_state *);
 void	rtkit_shutdown(struct rtkit_state *);
 int	rtkit_set_ap_pwrstate(struct rtkit_state *, uint16_t);
+int	rtkit_set_iop_pwrstate(struct rtkit_state *, uint16_t);
 int	rtkit_poll(struct rtkit_state *);
 int	rtkit_start_endpoint(struct rtkit_state *, uint32_t,
 	    void (*)(void *, uint64_t), void *);
