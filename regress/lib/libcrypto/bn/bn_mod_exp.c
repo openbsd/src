@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.6 2022/12/03 08:05:52 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.7 2022/12/03 08:21:38 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,18 +157,20 @@ main(int argc, char *argv[])
 		}
 
 		if (BN_cmp(r_simple, r_mont) != 0 ||
+		    BN_cmp(r_simple, r_mont_const) ||
 		    BN_cmp(r_simple, r_recp) != 0 ||
-		    BN_cmp(r_simple, r_mont_const) != 0) {
+		    BN_cmp(r_simple, r_mont_ct) != 0 ||
+		    BN_cmp(r_simple, r_mont_nonct) != 0) {
 			if (BN_cmp(r_simple, r_mont) != 0)
 				printf("\nsimple and mont results differ\n");
 			if (BN_cmp(r_simple, r_mont_const) != 0)
 				printf("\nsimple and mont const time results differ\n");
 			if (BN_cmp(r_simple, r_recp) != 0)
 				printf("\nsimple and recp results differ\n");
-			if (BN_cmp(r_mont, r_mont_ct) != 0)
-				printf("\nmont_ct and mont results differ\n");
-			if (BN_cmp(r_mont_ct, r_mont_nonct) != 0)
-				printf("\nmont_ct and mont_nonct results differ\n");
+			if (BN_cmp(r_simple, r_mont_ct) != 0)
+				printf("\nsimple and mont results differ\n");
+			if (BN_cmp(r_simple, r_mont_nonct) != 0)
+				printf("\nsimple and mont_nonct results differ\n");
 
 			printf("a (%3d) = ", BN_num_bits(a));
 			BN_print_fp(stdout, a);
