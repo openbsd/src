@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.359 2022/11/18 18:56:39 mbuhl Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.360 2022/12/03 21:02:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <endian.h>
 #include <errno.h>
 #include <err.h>
 #include <event.h>
