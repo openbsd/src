@@ -1,6 +1,7 @@
-/*	$OpenBSD: biotest.c,v 1.9 2022/09/05 21:06:31 tb Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.10 2022/12/03 09:53:47 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2022 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +28,8 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "bio_local.h"
 
 struct bio_get_host_ip_test {
 	char *input;
@@ -465,6 +468,136 @@ do_bio_mem_tests(void)
 	return failed;
 }
 
+#define N_CHAIN_BIOS	5
+
+static BIO *
+BIO_prev(BIO *bio)
+{
+	if (bio == NULL)
+		return NULL;
+
+	return bio->prev_bio;
+}
+
+static int
+do_bio_chain_pop_test(void)
+{
+	BIO *bio[N_CHAIN_BIOS];
+	BIO *prev, *next;
+	size_t i, j;
+	int failed = 1;
+
+	for (i = 0; i < N_CHAIN_BIOS; i++) {
+		memset(bio, 0, sizeof(bio));
+		prev = NULL;
+
+		/* Create a linear chain of BIOs. */
+		for (j = 0; j < N_CHAIN_BIOS; j++) {
+			if ((bio[j] = BIO_new(BIO_s_null())) == NULL)
+				errx(1, "BIO_new");
+			if ((prev = BIO_push(prev, bio[j])) == NULL)
+				errx(1, "BIO_push");
+		}
+
+		/* Check that the doubly-linked list was set up as expected. */
+		if (BIO_prev(bio[0]) != NULL) {
+			fprintf(stderr,
+			    "i = %zu: first BIO has predecessor\n", i);
+			goto err;
+		}
+		if (BIO_next(bio[N_CHAIN_BIOS - 1]) != NULL) {
+			fprintf(stderr, "i = %zu: last BIO has successor\n", i);
+			goto err;
+		}
+		for (j = 0; j < N_CHAIN_BIOS; j++) {
+			if (j > 0) {
+				if (BIO_prev(bio[j]) != bio[j - 1]) {
+					fprintf(stderr, "i = %zu: "
+					    "BIO_prev(bio[%zu]) != bio[%zu]\n",
+					    i, j, j - 1);
+					goto err;
+				}
+			}
+			if (j < N_CHAIN_BIOS - 1) {
+				if (BIO_next(bio[j]) != bio[j + 1]) {
+					fprintf(stderr, "i = %zu: "
+					    "BIO_next(bio[%zu]) != bio[%zu]\n",
+					    i, j, j + 1);
+					goto err;
+				}
+			}
+		}
+
+		/* Drop the ith bio from the chain. */
+		next = BIO_pop(bio[i]);
+
+		if (BIO_prev(bio[i]) != NULL || BIO_next(bio[i]) != NULL) {
+			fprintf(stderr,
+			    "BIO_pop() didn't isolate bio[%zu]\n", i);
+			goto err;
+		}
+
+		if (i < N_CHAIN_BIOS - 1) {
+			if (next != bio[i + 1]) {
+				fprintf(stderr, "BIO_pop(bio[%zu]) did not "
+				    "return bio[%zu]\n", i, i + 1);
+				goto err;
+			}
+		} else {
+			if (next != NULL) {
+				fprintf(stderr, "i = %zu: "
+				    "BIO_pop(last) != NULL\n", i);
+				goto err;
+			}
+		}
+
+		/*
+		 * Walk the remainder of the chain and see if the doubly linked
+		 * list checks out.
+		 */
+		if (i == 0) {
+			prev = bio[1];
+			j = 2;
+		} else {
+			prev = bio[0];
+			j = 1;
+		}
+
+		for (; j < N_CHAIN_BIOS; j++) {
+			if (j == i)
+				continue;
+			if (BIO_next(prev) != bio[j]) {
+				fprintf(stderr, "i = %zu, j = %zu: "
+				    "BIO_next(prev) != bio[%zu]\n", i, j, j);
+				goto err;
+			}
+			if (BIO_prev(bio[j]) != prev) {
+				fprintf(stderr, "i = %zu, j = %zu: "
+				    "BIO_prev(bio[%zu]) != prev\n", i, j, j);
+				goto err;
+			}
+			prev = bio[j];
+		}
+
+		if (BIO_next(prev) != NULL) {
+			fprintf(stderr, "i = %zu: BIO_next(prev) != NULL\n", i);
+			goto err;
+		}
+
+		for (j = 0; j < N_CHAIN_BIOS; j++)
+			BIO_free(bio[j]);
+		memset(bio, 0, sizeof(bio));
+	}
+
+	failed = 0;
+
+ err:
+	for (i = 0; i < N_CHAIN_BIOS; i++)
+		BIO_free(bio[i]);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -473,6 +606,7 @@ main(int argc, char **argv)
 	ret |= do_bio_get_host_ip_tests();
 	ret |= do_bio_get_port_tests();
 	ret |= do_bio_mem_tests();
+	ret |= do_bio_chain_pop_test();
 
 	return (ret);
 }
