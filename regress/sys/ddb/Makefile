@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.4 2014/12/17 00:10:22 daniel Exp $
+#	$OpenBSD: Makefile,v 1.5 2022/12/04 19:04:38 anton Exp $
 
-.if (${MACHINE} == "i386")
+.if ${MACHINE} == "i386"
 REGRESS_TARGETS+=	size
-.endif
 
 SRC=		${.CURDIR}/../../..
 
@@ -21,5 +20,11 @@ size:	clean
 
 clean:
 	rm -rf build
+
+.elif make(regress) || make(all)
+${.TARGETS}:
+	@echo Cannot run on ${MACHINE}
+	@echo SKIPPED
+.endif
 
 .include <bsd.regress.mk>
