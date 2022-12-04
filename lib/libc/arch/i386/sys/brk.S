@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.14 2021/10/25 14:38:10 jca Exp $ */
+/*	$OpenBSD: brk.S,v 1.15 2022/12/04 08:22:13 tb Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ __minbrk:
 	END(__minbrk)
 	.type	__minbrk,@object
 
-ENTRY(brk)
+ENTRY_NB(brk)
 #ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE

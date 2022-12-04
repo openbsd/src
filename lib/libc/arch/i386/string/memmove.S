@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.7 2017/11/29 05:13:57 guenther Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.8 2022/12/04 08:22:13 tb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -39,7 +39,7 @@
  * Emulate bcopy() by swapping the first two arguments, and jumping
  * into memmove(), which handles overlapping regions.
  */
-ENTRY(bcopy)
+ENTRY_NB(bcopy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi

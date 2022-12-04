@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.6 2017/11/29 05:13:57 guenther Exp $ */
+/*	$OpenBSD: bzero.S,v 1.7 2022/12/04 08:22:13 tb Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -6,7 +6,7 @@
 
 #include "DEFS.h"
 
-ENTRY(bzero)
+ENTRY_NB(bzero)
 	pushl	%edi
 	movl	8(%esp),%edi
 	movl	12(%esp),%edx

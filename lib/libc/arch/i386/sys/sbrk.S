@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.14 2021/10/25 14:38:10 jca Exp $ */
+/*	$OpenBSD: sbrk.S,v 1.15 2022/12/04 08:22:13 tb Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,7 @@ __curbrk:	.long	_end
 	END(__curbrk)
 	.type	__curbrk,@object
 
-ENTRY(sbrk)
+ENTRY_NB(sbrk)
 #ifdef __PIC__
 	movl	4(%esp),%ecx
 	PIC_PROLOGUE
