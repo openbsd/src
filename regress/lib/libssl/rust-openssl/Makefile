@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2022/12/03 11:35:34 tb Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/12/04 19:31:13 tb Exp $
 
 RUST_OPENSSL_TESTS =	/usr/local/share/rust-openssl-tests
 CARGO =			/usr/local/bin/cargo
@@ -45,7 +45,7 @@ CARGO_CC=cc
 
 rust-openssl-test: ${_WORKSPACE_COOKIE}
 	cd ${.OBJDIR} && env CC=${CARGO_CC} \
-	       	cargo test --offline --color=never -- --color=never
+		cargo test --offline --color=never -- --color=never
 
 CLEANFILES +=	${_WORKSPACE_COOKIE} ${WORKSPACE_LINKS}
 
