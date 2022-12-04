@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2013 2022/12/03 03:04:36 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2014 2022/12/04 03:13:52 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5610,6 +5610,11 @@
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_1	0x46d0		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_2	0x46d1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_N_GT_3	0x46d2		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG1_1	0x4905		/* Iris Xe MAX */
+#define	PCI_PRODUCT_INTEL_DG1_2	0x4906		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG1_3	0x4907		/* SG-18M */
+#define	PCI_PRODUCT_INTEL_DG1_4	0x4908		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG1_5	0x4909		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_1	0x4c80		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_2	0x4c8a		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_3	0x4c8b		/* UHD Graphics */
@@ -5757,6 +5762,28 @@
 #define	PCI_PRODUCT_INTEL_I219_V18	0x550b		/* I219-V */
 #define	PCI_PRODUCT_INTEL_I219_LM19	0x550c		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V19	0x550d		/* I219-V */
+#define	PCI_PRODUCT_INTEL_DG2_G10_1	0x5690		/* Arc A770M */
+#define	PCI_PRODUCT_INTEL_DG2_G10_2	0x5691		/* Arc A730M */
+#define	PCI_PRODUCT_INTEL_DG2_G10_3	0x5692		/* Arc A550M */
+#define	PCI_PRODUCT_INTEL_DG2_G11_1	0x5693		/* Arc A370M */
+#define	PCI_PRODUCT_INTEL_DG2_G11_2	0x5694		/* Arc A350M */
+#define	PCI_PRODUCT_INTEL_DG2_G11_3	0x5695		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G12_1	0x5696		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G12_2	0x5697		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G11_4	0x5698		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G10_4	0x56a0		/* Arc A770 */
+#define	PCI_PRODUCT_INTEL_DG2_G10_5	0x56a1		/* Arc A750 */
+#define	PCI_PRODUCT_INTEL_DG2_G10_6	0x56a2		/* Arc A580 */
+#define	PCI_PRODUCT_INTEL_DG2_G12_3	0x56a3		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G12_4	0x56a4		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G11_5	0x56a5		/* Arc A380 */
+#define	PCI_PRODUCT_INTEL_DG2_G11_6	0x56a6		/* Arc A310 */
+#define	PCI_PRODUCT_INTEL_DG2_G11_7	0x56b0		/* Arc Pro A30M */
+#define	PCI_PRODUCT_INTEL_DG2_G11_8	0x56b1		/* Arc Pro A40/A50 */
+#define	PCI_PRODUCT_INTEL_DG2_G12_5	0x56b2		/* Graphics */
+#define	PCI_PRODUCT_INTEL_DG2_G12_6	0x56b3		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ATS_M150	0x56c0		/* Flex 170 */
+#define	PCI_PRODUCT_INTEL_ATS_M75	0x56c1		/* Flex 140 */
 #define	PCI_PRODUCT_INTEL_QEMU_NVME	0x5845		/* QEMU NVM Express Controller */
 #define	PCI_PRODUCT_INTEL_KBL_D_GT1	0x5902		/* HD Graphics 610 */
 #define	PCI_PRODUCT_INTEL_CORE7G_U_HB	0x5904		/* Core 7G Host */
