@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.76 2021/07/12 15:09:20 beck Exp $	 */
+/* $OpenBSD: main.c,v 1.77 2022/12/04 18:01:57 cheloha Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,7 +65,7 @@ double	avenrun[3];
 double	naptime = 5.0;
 int	verbose = 1;		/* to report kvm read errs */
 int	nflag = 1;
-int	ut, hz, stathz;
+int	ut, hz;
 char    hostname[HOST_NAME_MAX+1];
 WINDOW  *wnd;
 int	CMDLINE;
@@ -414,7 +414,6 @@ gethz(void)
 	mib[1] = KERN_CLOCKRATE;
 	if (sysctl(mib, 2, &cinf, &size, NULL, 0) == -1)
 		return;
-	stathz = cinf.stathz;
 	hz = cinf.hz;
 }
 
