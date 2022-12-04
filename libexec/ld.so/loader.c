@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.204 2022/11/09 19:50:25 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.205 2022/12/04 15:42:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -840,8 +840,10 @@ _dl_call_init_recurse(elf_object_t *object, int initfirst)
 	if (initfirst && (object->obj_flags & DF_1_INITFIRST) == 0)
 		return;
 
-	if (!initfirst)
+	if (!initfirst) {
 		_dl_relro(object);
+		_dl_apply_immutable(object);
+	}
 
 	if (object->dyn.init) {
 		DL_DEB(("doing ctors obj %p @%p: [%s]\n",
@@ -860,8 +862,10 @@ _dl_call_init_recurse(elf_object_t *object, int initfirst)
 			    environ, &_dl_cb_cb);
 	}
 
-	if (initfirst)
+	if (initfirst) {
 		_dl_relro(object);
+		_dl_apply_immutable(object);
+	}
 
 	object->status |= STAT_INIT_DONE;
 }
@@ -1008,3 +1012,114 @@ _dl_rreloc(elf_object_t *object)
 	}
 }
 
+void
+_dl_defer_immut(struct mutate *m, vaddr_t start, vsize_t len)
+{
+	int i;
+
+	for (i = 0; i < MAXMUT; i++) {
+		if (m[i].valid == 0) {
+//			_dl_printf("%dimut\t%lx-%lx (len %x)\n",
+//			    i, start, start + len, len);
+			m[i].start = start;
+			m[i].end = start + len;
+			m[i].valid = 1;
+			return;
+		}
+	}
+	if (i == MAXMUT)
+		_dl_die("too many _dl_defer_immut");
+}
+
+void
+_dl_defer_mut(struct mutate *m, vaddr_t start, size_t len)
+{
+	int i;
+
+	for (i = 0; i < MAXMUT; i++) {
+		if (m[i].valid == 0) {
+//			_dl_printf("%dmut\t%lx-%lx (len %x)\n",
+//			    i, start, start + len, len);
+			m[i].start = start;
+			m[i].end = start + len;
+			m[i].valid = 1;
+			return;
+		}
+	}
+	if (i == MAXMUT)
+		_dl_die("too many _dl_defer_mut");
+}
+
+void
+_dl_apply_immutable(elf_object_t *object)
+{
+	struct mutate *m, *im, *imtail;
+	int mut, imut;
+	
+	if (object->obj_type != OBJTYPE_LIB)
+		return;
+
+	imtail = &object->imut[MAXMUT - 1];
+
+//	_dl_printf("library %s %lx:\n", object->load_name);
+	for (imut = 0; imut < MAXMUT; imut++) {
+		im = &object->imut[imut];
+		if (im->valid == 0)
+			continue;
+
+		for (mut = 0; mut < MAXMUT; mut++) {
+			m = &object->mut[mut];
+			if (m->valid == 0)
+				continue;
+//			_dl_printf("- mut%d %lx-%lx (%x) from imut%d %lx-%lx (%x): ",
+//			    mut, m->start, m->end, m->end - m->start,
+//			    imut, im->start, im->end, im->end - im->start);
+			if (m->start <= im->start) {
+				if (m->end < im->start) {
+//					_dl_printf("before ignored");
+					;
+				} else if (m->end >= im->end) {
+					im->start = im->end = im->valid = 0;
+//					_dl_printf("whole: %lx-%lx", im->start, im->end);
+				} else {
+					im->start = m->end;
+//					_dl_printf("early: %lx-%lx", im->start, im->end);
+				}
+			} else if (m->start > im->start) {
+				if (m->end > im->end) {
+//					_dl_printf("after ignored");
+					;
+				} else if (m->end == im->end) {
+					im->end = m->start;
+//					_dl_printf("end: %lx-%lx", im->start, im->end);
+				} else if (m->end < im->end) {
+					imtail->start = im->start;
+					imtail->end = m->start;
+					imtail->valid = 1;
+					imtail--;
+					imtail->start = m->end;
+					imtail->end = im->end;
+					imtail->valid = 1;
+					imtail--;
+					im->start = im->end = im->valid = 0;
+//					_dl_printf("split %lx-%lx %lx-%lx",
+//					    imtail[1].start, imtail[1].end,
+//					    imtail[2].start, imtail[2].end);
+				}
+			}
+//			_dl_printf("\n");
+		}
+	}
+
+	/* and now, install immutability for objects */
+	for (imut = 0; imut < MAXMUT; imut++) {
+		im = &object->imut[imut];
+		if (im->valid == 0)
+			continue;
+//		_dl_printf("IMUT %s %lx-%lx (len %x) (%lx,%lx) [%lx,%lx]\n",
+//		    object->load_name, im->start, im->end, im->end - im->start,
+//		    (void *)im->start, (void *)im->end,
+//		    (void *)im->start, im->end - im->start);
+		_dl_mimmutable((void *)im->start, im->end - im->start);
+	}
+}

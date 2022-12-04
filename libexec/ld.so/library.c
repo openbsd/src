@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.88 2022/11/07 10:35:26 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.89 2022/12/04 15:42:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -98,6 +98,7 @@ unload:
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 {
+	struct mutate imut[MAXMUT], mut[MAXMUT];
 	int	libfile, i;
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Addr maxva = 0, minva = ELF_NO_ADDR;
@@ -149,6 +150,9 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		_dl_errno = DL_NOT_ELF;
 		return(0);
 	}
+
+	_dl_memset(&mut, 0, sizeof mut);
+	_dl_memset(&imut, 0, sizeof imut);
 
 	/*
 	 *  Alright, we might have a winner!
@@ -210,6 +214,9 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 
 	loff = libaddr - minva;
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
+
+	/* Entire mapping can become immutable, minus exceptions chosen later */
+	_dl_defer_immut(imut, loff, maxva - minva);
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		switch (phdp->p_type) {
@@ -293,6 +300,11 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		case PT_GNU_RELRO:
 			relro_addr = phdp->p_vaddr + loff;
 			relro_size = phdp->p_memsz;
+			_dl_defer_mut(mut, phdp->p_vaddr + loff, phdp->p_memsz);
+			break;
+
+		case PT_OPENBSD_MUTABLE:
+			_dl_defer_mut(mut, phdp->p_vaddr + loff, phdp->p_memsz);
 			break;
 
 		default:
@@ -329,6 +341,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 				_dl_printf("msyscall %lx %lx error\n",
 				    exec_start, exec_size);
 		}
+		_dl_bcopy(mut, object->mut, sizeof mut);
+		_dl_bcopy(imut, object->imut, sizeof imut);
 	} else {
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);

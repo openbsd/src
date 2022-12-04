@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.102 2022/11/07 10:35:26 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.103 2022/12/04 15:42:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -238,6 +238,10 @@ struct elf_object {
 
 	/* nonzero if trace enabled for this object */
 	int traced;
+
+#define MAXMUT 40
+	struct mutate imut[MAXMUT];
+	struct mutate mut[MAXMUT];
 };
 
 struct dep_node {
@@ -324,6 +328,11 @@ void _dl_run_all_dtors(void);
 int	_dl_match_file(struct sod *sodp, const char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
+
+void _dl_find_immutables(int type, elf_object_t *object, Elf_Ehdr *);
+void _dl_defer_mut(struct mutate *m, vaddr_t start, vsize_t len);
+void _dl_defer_immut(struct mutate *m, vaddr_t start, vsize_t len);
+void _dl_apply_immutable(elf_object_t *object);
 
 typedef void lock_cb(int);
 void	_dl_thread_kern_go(lock_cb *);
