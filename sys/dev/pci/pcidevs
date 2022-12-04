@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2013 2022/12/03 03:04:36 jsg Exp $
+$OpenBSD: pcidevs,v 1.2014 2022/12/04 03:13:52 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5605,6 +5605,11 @@ product INTEL ADL_P_GT2_18	0x46c3	Graphics
 product INTEL ADL_N_GT_1	0x46d0	Graphics
 product INTEL ADL_N_GT_2	0x46d1	Graphics
 product INTEL ADL_N_GT_3	0x46d2	Graphics
+product INTEL DG1_1		0x4905	Iris Xe MAX
+product INTEL DG1_2		0x4906	Graphics
+product INTEL DG1_3		0x4907	SG-18M
+product INTEL DG1_4		0x4908	Graphics
+product INTEL DG1_5		0x4909	Graphics
 product INTEL RKL_GT_1		0x4c80	UHD Graphics
 product INTEL RKL_GT_2		0x4c8a	UHD Graphics
 product INTEL RKL_GT_3		0x4c8b	UHD Graphics
@@ -5752,6 +5757,28 @@ product INTEL I219_LM18		0x550a	I219-LM
 product INTEL I219_V18		0x550b	I219-V
 product INTEL I219_LM19		0x550c	I219-LM
 product INTEL I219_V19		0x550d	I219-V
+product INTEL DG2_G10_1		0x5690	Arc A770M
+product INTEL DG2_G10_2		0x5691	Arc A730M
+product INTEL DG2_G10_3		0x5692	Arc A550M
+product INTEL DG2_G11_1		0x5693	Arc A370M
+product INTEL DG2_G11_2		0x5694	Arc A350M
+product INTEL DG2_G11_3		0x5695	Graphics
+product INTEL DG2_G12_1		0x5696	Graphics
+product INTEL DG2_G12_2		0x5697	Graphics
+product INTEL DG2_G11_4		0x5698	Graphics
+product INTEL DG2_G10_4		0x56a0	Arc A770
+product INTEL DG2_G10_5		0x56a1	Arc A750
+product INTEL DG2_G10_6		0x56a2	Arc A580
+product INTEL DG2_G12_3		0x56a3	Graphics
+product INTEL DG2_G12_4		0x56a4	Graphics
+product INTEL DG2_G11_5		0x56a5	Arc A380
+product INTEL DG2_G11_6		0x56a6	Arc A310
+product INTEL DG2_G11_7		0x56b0	Arc Pro A30M
+product INTEL DG2_G11_8		0x56b1	Arc Pro A40/A50
+product INTEL DG2_G12_5		0x56b2	Graphics
+product INTEL DG2_G12_6		0x56b3	Graphics
+product INTEL ATS_M150		0x56c0	Flex 170
+product INTEL ATS_M75		0x56c1	Flex 140
 product INTEL QEMU_NVME		0x5845	QEMU NVM Express Controller
 product INTEL KBL_D_GT1		0x5902	HD Graphics 610
 product INTEL CORE7G_U_HB	0x5904	Core 7G Host
