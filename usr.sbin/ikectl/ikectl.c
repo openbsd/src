@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.29 2022/12/03 22:34:35 tobhe Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.30 2022/12/04 11:54:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -158,7 +158,7 @@ ca_opt(struct parse_result *res)
 int
 main(int argc, char *argv[])
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 s_un;
 	struct parse_result	*res;
 	struct imsg		 imsg;
 	int			 ctl_sock;
@@ -229,11 +229,11 @@ main(int argc, char *argv[])
 	if ((ctl_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, sock, sizeof(sun.sun_path));
+	bzero(&s_un, sizeof(s_un));
+	s_un.sun_family = AF_UNIX;
+	strlcpy(s_un.sun_path, sock, sizeof(s_un.sun_path));
  reconnect:
-	if (connect(ctl_sock, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+	if (connect(ctl_sock, (struct sockaddr *)&s_un, sizeof(s_un)) == -1) {
 		/* Keep retrying if running in monitor mode */
 		if (res->action == MONITOR &&
 		    (errno == ENOENT || errno == ECONNREFUSED)) {
