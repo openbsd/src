@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.30 2022/09/02 15:21:40 cheloha Exp $	*/
+/*	$OpenBSD: wc.c,v 1.31 2022/12/04 23:50:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -81,7 +81,6 @@ main(int argc, char *argv[])
 		case 'h':
 			humanchar = 1;
 			break;
-		case '?':
 		default:
 			fprintf(stderr,
 			    "usage: %s [-c | -m] [-hlw] [file ...]\n",

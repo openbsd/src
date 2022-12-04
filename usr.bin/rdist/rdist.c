@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.32 2021/06/22 20:19:28 jmc Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.33 2022/12/04 23:50:49 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -248,7 +248,6 @@ main(int argc, char **argv, char **envp)
 		case 'i':	FLAG_ON(options, DO_IGNLNKS);		break;
 		case 'x':	FLAG_ON(options, DO_NOEXEC);		break;
 
-		case '?':
 		default:
 			usage();
 		}

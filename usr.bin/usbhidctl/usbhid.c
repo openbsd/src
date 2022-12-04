@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.18 2021/12/15 11:21:35 mestre Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.19 2022/12/04 23:50:50 cheloha Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -776,7 +776,7 @@ main(int argc, char **argv)
 	wflag = aflag = nflag = verbose = rflag = Rflag = lflag = 0;
 	dev = NULL;
 	table = NULL;
-	while ((ch = getopt(argc, argv, "?af:lnRrt:vw")) != -1) {
+	while ((ch = getopt(argc, argv, "af:lnRrt:vw")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -805,7 +805,6 @@ main(int argc, char **argv)
 		case 'w':
 			wflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */

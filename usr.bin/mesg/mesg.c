@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.17 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.18 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -54,7 +54,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
-		case '?':
 		default:
 			goto usage;
 		}

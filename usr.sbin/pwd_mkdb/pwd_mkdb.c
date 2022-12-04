@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.59 2021/11/28 19:28:42 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.60 2022/12/04 23:50:51 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -135,7 +135,6 @@ main(int argc, char **argv)
 			break;
 		case 'v':			/* backward compatible */
 			break;
-		case '?':
 		default:
 			usage();
 		}

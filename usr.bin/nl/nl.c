@@ -1,4 +1,4 @@
-/*	$OpenBSD: nl.c,v 1.7 2019/04/21 01:08:46 deraadt Exp $ */
+/*	$OpenBSD: nl.c,v 1.8 2022/12/04 23:50:49 cheloha Exp $ */
 /*	$NetBSD: nl.c,v 1.11 2011/08/16 12:00:46 christos Exp $	*/
 
 /*-
@@ -196,7 +196,6 @@ main(int argc, char *argv[])
 				errx(EXIT_FAILURE, "width is %s: %s", errstr,
 				    optarg);
 			break;
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */

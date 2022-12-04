@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.24 2019/01/25 00:19:27 millert Exp $	*/
+/*	$OpenBSD: tput.c,v 1.25 2022/12/04 23:50:49 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
@@ -90,7 +90,6 @@ main(int argc, char *argv[])
 		case 'S':
 			Sflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

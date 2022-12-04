@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdistd.c,v 1.10 2015/02/08 23:40:34 deraadt Exp $	*/
+/*	$OpenBSD: rdistd.c,v 1.11 2022/12/04 23:50:49 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -79,7 +79,6 @@ main(int argc, char **argv, char **envp)
 			printf("%s\n", getversion());
 			exit(0);
 
-		case '?':
 		default:
 			error("Bad command line option.");
 			usage();

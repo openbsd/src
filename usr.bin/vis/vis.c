@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.21 2020/08/03 01:08:37 deraadt Exp $	*/
+/*	$OpenBSD: vis.c,v 1.22 2022/12/04 23:50:50 cheloha Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -102,7 +102,6 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 #endif
-		case '?':
 		default:
 			usage();
 		}

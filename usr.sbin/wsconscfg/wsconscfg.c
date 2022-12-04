@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.17 2021/10/24 21:24:19 deraadt Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.18 2022/12/04 23:50:51 cheloha Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -98,7 +98,6 @@ main(int argc, char *argv[])
 		case 'F':
 			dsd.flags |= WSDISPLAY_DELSCR_FORCE;
 			break;
-		case '?':
 		default:
 			usage();
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: col.c,v 1.19 2015/10/09 01:37:06 deraadt Exp $	*/
+/*	$OpenBSD: col.c,v 1.20 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: col.c,v 1.7 1995/09/02 05:48:50 jtc Exp $	*/
 
 /*-
@@ -139,7 +139,6 @@ main(int argc, char *argv[])
 		case 'x':		/* do not compress spaces into tabs */
 			compress_spaces = 0;
 			break;
-		case '?':
 		default:
 			usage();
 		}

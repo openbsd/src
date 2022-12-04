@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.28 2017/05/30 15:29:53 tedu Exp $	*/
+/*	$OpenBSD: id.c,v 1.29 2022/12/04 23:50:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 		case 'u':
 			uflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

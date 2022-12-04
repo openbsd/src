@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.122 2022/09/08 13:18:47 kn Exp $	*/
+/*	$OpenBSD: main.c,v 1.123 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -284,7 +284,6 @@ main(int argc, char *argv[])
 				errx(1, "interval is %s", errstr);
 			iflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

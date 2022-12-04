@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.36 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.37 2022/12/04 23:50:46 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -89,7 +89,6 @@ main(int argc, char *argv[])
 		case 'm':
 			domarshal = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

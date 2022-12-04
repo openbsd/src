@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.162 2020/12/30 18:41:06 benno Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.163 2022/12/04 23:50:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -314,7 +314,6 @@ main(int argc, char *argv[])
 			    optarg);
 			break;
 		}
-		case '?':
 		default:
 			fprintf(stderr,
 			    "usage: inetd [-d] [-R rate] [configuration_file]\n");

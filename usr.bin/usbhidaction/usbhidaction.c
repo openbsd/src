@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.25 2022/08/02 09:07:34 mestre Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.26 2022/12/04 23:50:50 cheloha Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -111,7 +111,6 @@ main(int argc, char **argv)
 			demon = 0;
 			verbose++;
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.75 2022/04/09 15:40:55 dv Exp $	*/
+/*	$OpenBSD: mount.c,v 1.76 2022/12/04 23:50:46 cheloha Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -158,7 +158,6 @@ main(int argc, char * const argv[])
 			if (!hasopt(options, "rw"))
 				options = catopt(options, "rw");
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: newfs_ext2fs.c,v 1.28 2021/06/26 15:42:58 deraadt Exp $ */
+/* $OpenBSD: newfs_ext2fs.c,v 1.29 2022/12/04 23:50:47 cheloha Exp $ */
 /*	$NetBSD: newfs_ext2fs.c,v 1.8 2009/03/02 10:38:13 tsutsui Exp $	*/
 
 /*
@@ -212,7 +212,6 @@ main(int argc, char *argv[])
 				errx(EXIT_FAILURE,
 				    "Volume name cannot be zero length");
 			break;
-		case '?':
 		default:
 			usage();
 		}

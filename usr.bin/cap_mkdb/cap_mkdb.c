@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.25 2020/09/15 07:41:38 kevlo Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.26 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -87,7 +87,6 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

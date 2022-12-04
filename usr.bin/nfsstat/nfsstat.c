@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.36 2016/08/27 04:07:42 guenther Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.37 2022/12/04 23:50:49 cheloha Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -106,7 +106,6 @@ main(int argc, char *argv[])
 		case 'c':
 			display = SHOW_CLIENT;
 			break;
-		case '?':
 		default:
 			usage();
 		}

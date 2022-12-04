@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2015/12/06 12:00:16 tobias Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2022/12/04 23:50:49 cheloha Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ main(int argc, char *argv[])
 				    prompt, errstr, optarg);
 			}
 			break;
-		case '?':
 		default:
 			usage();
 		}

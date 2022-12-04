@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.20 2019/07/25 13:53:57 schwarze Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.21 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -139,7 +139,6 @@ main(int argc, char *argv[])
 
 	while ((c = getopt(argc, argv, "")) != -1) {
 		switch (c) {
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */

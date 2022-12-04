@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.22 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.23 2022/12/04 23:50:46 cheloha Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -91,7 +91,6 @@ main(int argc, char *argv[])
 				errx(1, "session number is %s: %s", errstr,
 				    optarg);
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.54 2019/03/03 16:07:39 schwarze Exp $	*/
+/*	$OpenBSD: nm.c,v 1.55 2022/12/04 23:50:49 cheloha Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -206,7 +206,6 @@ main(int argc, char *argv[])
 					usage();
 			}
 			break;
-		case '?':
 		default:
 			usage();
 		}

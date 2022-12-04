@@ -223,7 +223,6 @@ main(int argc, char *argv[])
 		case 'w':
 			fp = file(optarg);
 			break;
-		case '?':
 		default:
 			usage();
 			break;

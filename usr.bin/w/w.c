@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.67 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.68 2022/12/04 23:50:50 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -148,7 +148,6 @@ main(int argc, char *argv[])
 		case 'f': case 'l': case 's': case 'u': case 'w':
 			warnx("[-flsuw] no longer supported");
 			/* FALLTHROUGH */
-		case '?':
 		default:
 			usage(wcmd);
 		}

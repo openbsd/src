@@ -1,4 +1,4 @@
-/*	$OpenBSD: makefs.c,v 1.21 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: makefs.c,v 1.22 2022/12/04 23:50:51 cheloha Exp $	*/
 /*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
@@ -187,7 +187,6 @@ main(int argc, char *argv[])
 			stampts = get_tstamp(optarg);
 			break;
 
-		case '?':
 		default:
 			usage();
 		}

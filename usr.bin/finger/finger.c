@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.27 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: finger.c,v 1.28 2022/12/04 23:50:48 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -107,7 +107,6 @@ main(int argc, char *argv[])
 		case 'o':
 			oflag = 1;		/* office info */
 			break;
-		case '?':
 		default:
 			(void)fprintf(stderr,
 			    "usage: %s [-hlMmops] [login ...]\n", __progname);

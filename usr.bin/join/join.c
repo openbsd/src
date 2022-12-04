@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.33 2020/07/23 20:13:01 martijn Exp $	*/
+/* $OpenBSD: join.c,v 1.34 2022/12/04 23:50:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -187,7 +187,6 @@ main(int argc, char *argv[])
 			if (*end)
 				errx(1, "illegal file number -- %s", optarg);
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.32 2016/08/24 03:13:45 guenther Exp $	*/
+/*	$OpenBSD: du.c,v 1.33 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ main(int argc, char *argv[])
 		case 'x':
 			ftsoptions |= FTS_XDEV;
 			break;
-		case '?':
 		default:
 			usage();
 		}

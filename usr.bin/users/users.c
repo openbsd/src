@@ -1,4 +1,4 @@
-/*	$OpenBSD: users.c,v 1.15 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: users.c,v 1.16 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
-		case '?':
 		default:
 			(void)fprintf(stderr, "usage: users\n");
 			exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.32 2022/08/03 00:23:14 cheloha Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.33 2022/12/04 23:50:46 cheloha Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -82,7 +82,6 @@ main(int argc, char *argv[])
 		case 'N':
 			nlistf = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}

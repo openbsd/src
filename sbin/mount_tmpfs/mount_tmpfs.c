@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_tmpfs.c,v 1.7 2018/07/11 07:03:03 martijn Exp $	*/
+/*	$OpenBSD: mount_tmpfs.c,v 1.8 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: mount_tmpfs.c,v 1.24 2008/08/05 20:57:45 pooka Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ mount_tmpfs_parseargs(int argc, char *argv[],
 			uidset = 1;
 			break;
 
-		case '?':
 		default:
 			usage();
 		}

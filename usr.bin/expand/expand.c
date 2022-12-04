@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.14 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.15 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ main(int argc, char *argv[])
 		case 't':
 			getstops(optarg);
 			break;
-		case '?':
 		default:
 			usage();
 			/* NOTREACHED */

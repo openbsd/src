@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.25 2019/06/28 13:32:44 deraadt Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.26 2022/12/04 23:50:46 cheloha Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ main(int argc, char *argv[])
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
 			break;
-		case '?':
 		default:
 			ffs_usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.54 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.55 2022/12/04 23:50:46 cheloha Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -1735,8 +1735,6 @@ main(int argc, char **argv)
 		case 'y':
 			ExpertFlag = 1;
 			break;
-		case '?':
-			/* FALLTHROUGH */
 		default:
 			usage();
 		}

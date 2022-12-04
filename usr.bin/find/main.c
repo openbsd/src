@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2022/12/04 23:50:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -99,7 +99,6 @@ main(int argc, char *argv[])
 			ftsoptions &= ~FTS_NOSTAT;
 			ftsoptions |= FTS_XDEV;
 			break;
-		case '?':
 		default:
 			usage();
 		}

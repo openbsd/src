@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.27 2021/11/15 15:14:24 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.28 2022/12/04 23:50:51 cheloha Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -124,7 +124,6 @@ main(int argc, char *argv[])
 		case 'x':
 			ftsoptions |= FTS_XDEV;
 			break;
-		case '?':
 		default:
 			usage();
 		}

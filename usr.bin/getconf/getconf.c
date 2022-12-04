@@ -1,4 +1,4 @@
-/*	$OpenBSD: getconf.c,v 1.22 2022/07/20 14:23:13 claudio Exp $	*/
+/*	$OpenBSD: getconf.c,v 1.23 2022/12/04 23:50:48 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -420,7 +420,6 @@ main(int argc, char *argv[])
 			if (! compilation_spec_valid(optarg))
 				errx(1, "%s: unknown specification", optarg);
 			break;
-		case '?':
 		default:
 			usage();
 		}

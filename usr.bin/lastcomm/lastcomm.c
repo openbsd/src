@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.30 2021/12/13 16:37:37 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.31 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -77,7 +77,6 @@ main(int argc, char *argv[])
 		case 'f':
 			acctfile = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}

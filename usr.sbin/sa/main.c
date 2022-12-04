@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2022/02/22 17:22:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2022/12/04 23:50:51 cheloha Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -164,7 +164,6 @@ main(int argc, char **argv)
 			if (errstr)
 				errx(1, "-v %s: %s", optarg, errstr);
 			break;
-		case '?':
 		default:
 			(void)fprintf(stderr,
 			    "usage: %s [-abcDdfijKklmnqrstu] [-v cutoff]"

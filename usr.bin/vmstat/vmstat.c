@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.154 2022/07/26 14:49:13 visa Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.155 2022/12/04 23:50:50 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -172,7 +172,6 @@ main(int argc, char *argv[])
 		case 'z':
 			zflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

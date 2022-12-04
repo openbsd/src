@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.116 2022/11/19 08:02:11 sthen Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.117 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -310,7 +310,6 @@ main(int argc, char *argv[])
 			pop = optarg;
 			break;
 #endif
-		case '?':
 		default:
 			usage();
 		}

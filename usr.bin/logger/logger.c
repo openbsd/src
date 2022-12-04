@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.18 2019/06/17 00:23:03 guenther Exp $	*/
+/*	$OpenBSD: logger.c,v 1.19 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
 
 /*
@@ -85,7 +85,6 @@ main(int argc, char *argv[])
 		case 't':		/* tag */
 			tag = optarg;
 			break;
-		case '?':
 		default:
 			usage();
 		}

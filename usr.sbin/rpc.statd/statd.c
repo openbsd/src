@@ -1,4 +1,4 @@
-/*	$OpenBSD: statd.c,v 1.4 2017/01/21 08:33:51 krw Exp $	*/
+/*	$OpenBSD: statd.c,v 1.5 2022/12/04 23:50:51 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -97,7 +97,6 @@ main(int argc, char **argv)
 			debug = 1;
 			break;
 		default:
-		case '?':
 			fprintf(stderr, "usage: %s [-d]\n", __progname);
 			exit(1);
 			/* NOTREACHED */

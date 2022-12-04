@@ -1,4 +1,4 @@
-/*	$OpenBSD: comm.c,v 1.10 2015/10/09 01:37:07 deraadt Exp $	*/
+/*	$OpenBSD: comm.c,v 1.11 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: comm.c,v 1.10 1995/09/05 19:57:43 jtc Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ main(int argc, char *argv[])
 		case 'f':
 			compare = strcasecmp;
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.109 2022/02/18 22:54:13 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.110 2022/12/04 23:50:50 cheloha Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -480,7 +480,6 @@ main(int argc, char *argv[])
 				errx(1, "battery percentage is %s: %s", errstr,
 				    optarg);
 			break;
-		case '?':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.13 2016/03/15 04:19:13 mmcc Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.14 2022/12/04 23:50:48 cheloha Exp $	*/
 /*	$NetBSD: hexsyntax.c,v 1.8 1998/04/08 23:48:57 jeremy Exp $	*/
 
 /*-
@@ -111,7 +111,7 @@ newsyntax(int argc, char ***argvp)
 			add("\"%07.7_Ax\n\"");
 			add("\"%07.7_ax \" 8/2 \"   %04x \" \"\\n\"");
 			break;
-		case '?':
+		default:
 			usage();
 		}
 

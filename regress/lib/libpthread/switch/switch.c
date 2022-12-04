@@ -1,4 +1,4 @@
-/*	$OpenBSD: switch.c,v 1.6 2018/05/21 10:14:50 bluhm Exp $	*/
+/*	$OpenBSD: switch.c,v 1.7 2022/12/04 23:50:46 cheloha Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors,
  * proven@mit.edu All rights reserved.
@@ -61,7 +61,7 @@ volatile int ending = 0;
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-?] [-c count]\n", getprogname());
+	fprintf(stderr, "usage: %s [-c count]\n", getprogname());
 	fprintf(stderr, "count is number of theads, between 2 and 26\n");
 	exit(1);
 }
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 	long i;
 	const char *errstr;
 
-	while ((ch = getopt(argc, argv, "c:?")) != -1) {
+	while ((ch = getopt(argc, argv, "c:")) != -1) {
 		switch (ch) {
 		case 'c':
 			count = strtonum(optarg, 2, 26, &errstr);

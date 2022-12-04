@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.26 2018/08/04 19:19:37 schwarze Exp $	*/
+/*	$OpenBSD: paste.c,v 1.27 2022/12/04 23:50:49 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -69,7 +69,6 @@ main(int argc, char *argv[])
 		case 's':
 			seq = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

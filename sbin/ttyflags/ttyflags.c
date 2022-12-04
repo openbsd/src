@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.16 2021/10/24 21:24:22 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.17 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -78,7 +78,6 @@ main(int argc, char *argv[])
 		case 'v':
 			vflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}

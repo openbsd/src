@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.127 2020/01/13 15:41:53 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.128 2022/12/04 23:50:48 cheloha Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ posixParseOptLetter(int c)
 		touchFlag = true;
 		break;
 	default:
-	case '?':
 		usage();
 	}
 	record_option(c, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_msdos.c,v 1.35 2022/08/20 07:03:24 tb Exp $	*/
+/*	$OpenBSD: mount_msdos.c,v 1.36 2022/12/04 23:50:47 cheloha Exp $	*/
 /*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
 
 /*
@@ -97,7 +97,6 @@ main(int argc, char **argv)
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
 			break;
-		case '?':
 		default:
 			usage();
 			break;

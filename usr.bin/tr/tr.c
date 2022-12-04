@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.21 2022/02/11 16:09:21 cheloha Exp $	*/
+/*	$OpenBSD: tr.c,v 1.22 2022/12/04 23:50:49 cheloha Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -104,7 +104,6 @@ main(int argc, char *argv[])
 		case 's':
 			sflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 		}
