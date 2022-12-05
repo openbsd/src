@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.25 2022/04/10 13:23:14 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.26 2022/12/05 08:59:28 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -84,6 +84,7 @@ mips64_ipi_init(void)
 	if (!cpuid) {
 		mtx_init(&smp_rv_mtx, IPL_HIGH);
 		evcount_attach(&ipi_count, "ipi", &ipi_irq);
+		evcount_percpu(&ipi_count);
 	}
 
 	hw_ipi_intr_clear(cpuid);
@@ -113,8 +114,7 @@ mips64_ipi_intr(void *arg)
 		for (bit = 0; bit < MIPS64_NIPIS; bit++) {
 			if (pending_ipis & (1UL << bit)) {
 				(*ipifuncs[bit])();
-				atomic_inc_long(
-				    (unsigned long *)&ipi_count.ec_count);
+				evcount_inc(&ipi_count);
 			}
 		}
 	}

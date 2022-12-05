@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.48 2022/11/19 16:23:48 cheloha Exp $ */
+/*	$OpenBSD: clock.c,v 1.49 2022/12/05 08:59:28 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -37,7 +37,6 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
 #include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
@@ -100,6 +99,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	 */
 	set_intr(INTPRI_CLOCK, CR_INT_5, cp0_int5);
 	evcount_attach(&cp0_clock_count, "clock", &cp0_clock_irq);
+	evcount_percpu(&cp0_clock_count);
 
 	/* try to avoid getting clock interrupts early */
 	cp0_set_compare(cp0_get_count() - 1);
@@ -121,7 +121,7 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 	struct cpu_info *ci = curcpu();
 	int s;
 
-	atomic_inc_long((unsigned long *)&cp0_clock_count.ec_count);
+	evcount_inc(&cp0_clock_count);
 
 	cp0_set_compare(cp0_get_count() - 1);	/* clear INT5 */
 
