@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.158 2022/10/12 13:39:50 kettenis Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.159 2022/12/05 23:18:37 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 	struct timeval atv;
 	const struct timeval *delta = SCARG(uap, delta);
 	struct timeval *olddelta = SCARG(uap, olddelta);
-	int64_t adjustment, remaining;	
+	int64_t adjustment, remaining;
 	int error;
 
 	error = pledge_adjtime(p, delta);

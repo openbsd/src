@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.63 2022/11/17 18:53:12 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.64 2022/12/05 23:18:37 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 
 	if (cmd->ev_len == 0)
 		return (0);
-	
+
 	KASSERT((cmd->ev_addr & PAGE_MASK) == 0);
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 	    round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
@@ -307,7 +307,7 @@ vmcmd_mutable(struct proc *p, struct exec_vmcmd *cmd)
 {
 	if (cmd->ev_len == 0)
 		return (0);
-	
+
 	/* ev_addr, ev_len may be misaligned, so maximize the region */
 	uvm_map_immutable(&p->p_vmspace->vm_map, trunc_page(cmd->ev_addr),
 	    round_page(cmd->ev_addr + cmd->ev_len), 0);

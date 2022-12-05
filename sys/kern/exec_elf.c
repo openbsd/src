@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.176 2022/11/23 11:00:27 mbuhl Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.177 2022/12/05 23:18:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -882,11 +882,11 @@ elf_os_pt_note_name(Elf_Note *np)
 		/* verify name padding (after the NUL) is NUL */
 		for (j = namlen + 1; j < elfround(np->namesz); j++)
 			if (((char *)(np + 1))[j] != '\0')
-				continue;		
+				continue;
 		/* verify desc padding is NUL */
 		for (j = np->descsz; j < elfround(np->descsz); j++)
 			if (((char *)(np + 1))[j] != '\0')
-				continue;		
+				continue;
 		if (strcmp((char *)(np + 1), elf_note_names[i].name) == 0)
 			return elf_note_names[i].id;
 	}

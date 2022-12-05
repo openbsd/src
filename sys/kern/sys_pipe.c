@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.142 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.143 2022/12/05 23:18:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -629,7 +629,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			if (wpipe->pipe_state & PIPE_EOF) {
 				error = EPIPE;
 				break;
-			}	
+			}
 		}
 	}
 	pipe_iounlock(wpipe);

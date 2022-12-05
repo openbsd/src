@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.206 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.207 2022/12/05 23:18:37 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -636,7 +636,7 @@ restart:
 	}
 out:
 	FRELE(fp, p);
-	return (error);	
+	return (error);
 }
 
 /*

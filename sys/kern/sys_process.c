@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.89 2021/12/07 04:19:24 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.90 2022/12/05 23:18:37 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -881,7 +881,7 @@ process_auxv_offset(struct proc *curp, struct process *tr, struct uio *uiop)
 	iov.iov_base = &pss;
 	iov.iov_len = sizeof(pss);
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;	
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = (off_t)tr->ps_strings;
 	uio.uio_resid = sizeof(pss);
 	uio.uio_segflg = UIO_SYSSPACE;

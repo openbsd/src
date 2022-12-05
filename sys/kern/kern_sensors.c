@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sensors.c,v 1.39 2019/12/19 17:40:11 mpi Exp $	*/
+/*	$OpenBSD: kern_sensors.c,v 1.40 2022/12/05 23:18:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -243,7 +243,7 @@ sensor_quiesce(void)
 	sensors_quiesced = 1;
 	while (sensors_running > 0)
 		tsleep_nsec(&sensors_running, PZERO, "sensorpause", INFSLP);
-	
+
 }
 void
 sensor_restart(void)

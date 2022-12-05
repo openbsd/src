@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.88 2022/11/11 18:09:58 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.89 2022/12/05 23:18:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -648,7 +648,7 @@ void
 softclock_process_kclock_timeout(struct timeout *to, int new)
 {
 	struct kclock *kc = &timeout_kclock[to->to_kclock];
-	
+
 	if (timespeccmp(&to->to_abstime, &kc->kc_lastscan, >)) {
 		tostat.tos_scheduled++;
 		if (!new)
@@ -914,7 +914,7 @@ db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("%20s  %8s\n",
 		    db_timespec(&kc->kc_lastscan), db_kclock(i));
 	}
-	db_printf("\n");	
+	db_printf("\n");
 	db_printf("%20s  %8s  %7s  %*s  %s\n",
 	    "remaining", "clock", "wheel", width, "arg", "func");
 	db_show_callout_bucket(&timeout_new);

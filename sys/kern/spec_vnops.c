@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.110 2022/11/09 18:12:47 claudio Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.111 2022/12/05 23:18:37 deraadt Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ spec_strategy(void *v)
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	int maj = major(bp->b_dev);
-	
+
 	if (LIST_FIRST(&bp->b_dep) != NULL)
 		buf_start(bp);
 
