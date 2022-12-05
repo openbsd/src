@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2022/01/31 05:43:22 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2022/12/05 07:49:07 kettenis Exp $
 
 CFLAGS += -fpic
 AFLAGS += -fpic
+LD_SCRIPT = ${.CURDIR}/${MACHINE_CPU}/ld.script
 
 # extract components from libgcc.a
 MDOBJ=	_dyncall.o _remU.o _remI.o _divI.o _divU.o _div_const.o
