@@ -1,10 +1,12 @@
 #include <sys/types.h>
 #include <sys/mman.h>
+
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
+#include <unistd.h>
 
 int
 main()
@@ -13,11 +15,15 @@ main()
 	int psz = getpagesize();
 
 	printf("%llx\n", (long long)flock);
-	if (mprotect((void *)(o & ~(psz-1)), psz,
-	    PROT_EXEC|PROT_WRITE|PROT_READ) == -1 &&
-	    errno == ENOTSUP) {
-		printf("mprotect -> ENOTSUP?  Please run from wxallowed filesystem\n");
-		exit(0);
+	if (mprotect((void *)(o & ~(psz - 1)), psz,
+	    PROT_EXEC|PROT_WRITE|PROT_READ) == -1) {
+		if (errno == ENOTSUP) {
+			printf("mprotect -> ENOTSUP?  Please run from "
+			    "wxallowed filesystem\n");
+			exit(0);
+		} else {
+			err(1, "mprotect");
+		}
 	}
 	flock(0, 0);
 
