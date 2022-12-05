@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.9 2022/12/03 09:44:52 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.10 2022/12/05 00:24:44 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,7 +58,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
