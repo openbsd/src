@@ -527,6 +527,7 @@ retry:
 		struct drm_connector *connector = obj_to_connector(obj);
 		connector->backlight_device->props.brightness = prop_value;
 		backlight_schedule_update_status(connector->backlight_device);
+		KNOTE(&connector->dev->note, NOTE_CHANGE);
 		ret = 0;
 #endif
 	} else {

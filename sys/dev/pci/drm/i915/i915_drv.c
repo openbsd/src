@@ -2134,6 +2134,7 @@ inteldrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			bd->props.brightness = dp->curval;
 			backlight_update_status(bd);
+			KNOTE(&dev_priv->drm.note, NOTE_CHANGE);
 			return 0;
 		}
 		break;

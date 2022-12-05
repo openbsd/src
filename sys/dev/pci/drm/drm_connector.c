@@ -2340,6 +2340,7 @@ int drm_connector_set_obj_prop(struct drm_mode_object *obj,
 	} else if (property == connector->backlight_property) {
 		connector->backlight_device->props.brightness = value;
 		backlight_schedule_update_status(connector->backlight_device);
+		KNOTE(&connector->dev->note, NOTE_CHANGE);
 		ret = 0;
 #endif
 	} else if (connector->funcs->set_property)
