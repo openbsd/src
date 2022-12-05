@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplaudio.c,v 1.4 2022/10/28 15:09:45 kn Exp $	*/
+/*	$OpenBSD: aplaudio.c,v 1.5 2022/12/05 07:30:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -35,8 +35,6 @@
 
 struct aplaudio_softc {
 	struct device		sc_dev;
-
-	uint32_t		sc_mclk_fs;
 
 	struct dai_device	*sc_dai_cpu;
 	struct dai_device	*sc_dai_codec[6];
@@ -155,8 +153,6 @@ aplaudio_attach(struct device *parent, struct device *self, void *aux)
 		if (count > 1)
 			aplaudio_set_tdm_slots(sc);
 
-		sc->sc_mclk_fs = OF_getpropint(node, "mclk-fs", 0);
-
 		/* XXX Parameters are missing from the device tree? */
 		fmt = DAI_FORMAT_LJ;
 		pol = 0;
@@ -274,24 +270,24 @@ aplaudio_set_params(void *cookie, int setmode, int usemode,
 	int error;
 	int i;
 
-	if (sc->sc_mclk_fs) {
-		if (setmode & AUMODE_PLAY)
-			rate = play->sample_rate * sc->sc_mclk_fs;
-		else
-			rate = rec->sample_rate * sc->sc_mclk_fs;
+	dai = sc->sc_dai_cpu;
+	hwif = dai->dd_hw_if;
+	if (hwif->set_params) {
+		error = hwif->set_params(dai->dd_cookie,
+		    setmode, usemode, play, rec);
+		if (error)
+			return error;
+	}
 
-		for (i = 0; i < nitems(sc->sc_dai_codec); i++) {
-			dai = sc->sc_dai_codec[i];
-			if (dai == NULL)
-				continue;
-			if (dai->dd_set_sysclk) {
-				error = dai->dd_set_sysclk(dai->dd_cookie, rate);
-				if (error)
-					return error;
-			}
-		}
+	if (setmode & AUMODE_PLAY)
+		rate = play->sample_rate * play->channels * play->bps * 8;
+	else
+		rate = rec->sample_rate * rec->channels * rec->bps * 8;
 
-		dai = sc->sc_dai_cpu;
+	for (i = 0; i < nitems(sc->sc_dai_codec); i++) {
+		dai = sc->sc_dai_codec[i];
+		if (dai == NULL)
+			continue;
 		if (dai->dd_set_sysclk) {
 			error = dai->dd_set_sysclk(dai->dd_cookie, rate);
 			if (error)
@@ -300,10 +296,8 @@ aplaudio_set_params(void *cookie, int setmode, int usemode,
 	}
 
 	dai = sc->sc_dai_cpu;
-	hwif = dai->dd_hw_if;
-	if (hwif->set_params) {
-		error = hwif->set_params(dai->dd_cookie,
-		    setmode, usemode, play, rec);
+	if (dai->dd_set_sysclk) {
+		error = dai->dd_set_sysclk(dai->dd_cookie, rate);
 		if (error)
 			return error;
 	}
