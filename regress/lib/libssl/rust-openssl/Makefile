@@ -1,13 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2022/12/04 19:31:13 tb Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/12/05 14:43:06 tb Exp $
 
 RUST_OPENSSL_TESTS =	/usr/local/share/rust-openssl-tests
 CARGO =			/usr/local/bin/cargo
 
-.if "${MACHINE_ARCH}" == sparc64
-regress:
-	@echo rust-openssl build is broken on sparc64
-	@echo SKIPPED
-.elif !exists(${RUST_OPENSSL_TESTS}) || !exists(${CARGO})
+.if !exists(${RUST_OPENSSL_TESTS}) || !exists(${CARGO})
 regress:
 	@echo packages rust-openssl-tests and rust are required for this regress
 	@echo SKIPPED
@@ -34,11 +30,11 @@ CLEANFILES += Cargo.lock
 CLEANFILES += Cargo.toml
 . endif
 
-# Use ports-clang on sparc64 since the build with base-gcc fails with:
+# Force use of base-clang on sparc64 since the build with base-gcc fails with:
 # error occurred: Command "cc" "-O0" "-ffunction-sections" "-fdata-sections" [...]
 # did not execute successfully (status code exit status: 1).
 . if "${MACHINE_ARCH}" == sparc64
-CARGO_CC=/usr/local/bin/clang
+CARGO_CC=/usr/bin/clang
 . else
 CARGO_CC=cc
 . endif
