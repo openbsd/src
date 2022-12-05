@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.229 2022/11/05 12:06:05 kn Exp $
+#	$OpenBSD: netstart,v 1.230 2022/12/05 20:12:00 afresh1 Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -135,6 +135,22 @@ ifstart() {
 	local _if=$1 _hn=/etc/hostname.$1 _cmds _i=0 _line _stat
 	set -A _cmds
 
+	if [[ $_if == ??:??:??:??:??:?? ]]; then
+		if ! _line=$( ifconfig -M $_if ); then
+			print -u2 "${0##*/}: $_if is not unique."
+			return
+		fi
+
+		[[ -z $_line ]] && return
+		_if=$_line
+		_line=
+
+		if [[ -e /etc/hostname.$_if ]]; then
+			print -u2 "${0##*/}: $_hn: /etc/hostname.$_if overrides"
+			return
+		fi
+	fi
+
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
 	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
@@ -183,14 +199,16 @@ ifmstart() {
 	local _sifs=$1 _xifs=$2 _hn _if _sif _xif
 
 	for _sif in ${_sifs:-ALL}; do
-		for _hn in /etc/hostname.+([[:alpha:]])+([[:digit:]]); do
+		for _hn in /etc/hostname.@(+([[:alpha:]])+([[:digit:]])|??:??:??:??:??:??); do
 			[[ -f $_hn ]] || continue
 			_if=${_hn#/etc/hostname.}
 
-			# Skip unwanted ifs.
-			for _xif in $_xifs; do
-				[[ $_xif == ${_if%%[0-9]*} ]] && continue 2
-			done
+			if [[ $_if == +([[:alpha:]])+([[:digit:]]) ]]; then
+				# Skip unwanted ifs.
+				for _xif in $_xifs; do
+					[[ $_xif == ${_if%%[0-9]*} ]] && continue 2
+				done
+			fi
 
 			# Start wanted ifs.
 			[[ $_sif == @(ALL|${_if%%[0-9]*}) ]] && ifstart $_if

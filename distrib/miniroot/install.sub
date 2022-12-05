@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1214 2022/11/06 21:32:54 kn Exp $
+#	$OpenBSD: install.sub,v 1.1215 2022/12/05 20:12:00 afresh1 Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2431,6 +2431,12 @@ ifstart() {
 	local _if=$1 _hn=/mnt/etc/hostname.$1 _cmds _i=0 _line
 	set -A _cmds
 
+	if [[ $_if == ??:??:??:??:??:?? ]]; then
+		_if=$(ifconfig -M $_if)
+		[[ -z $_if ]]                   && return # invalid interface
+		[[ -e /mnt/etc/hostname.$_if ]] && return # duplicate config
+	fi
+
 	# Create interface if it does not yet exist.
 	{ ifconfig $_if || ifconfig $_if create; } >/dev/null 2>&1 || return
 
@@ -2472,6 +2478,9 @@ enable_ifs() {
 			svlan)	_svlans="$_svlans $_if";;
 			vlan)	_vlans="$_vlans $_if";;
 			esac
+		elif [[ $_if == ??:??:??:??:??:?? ]]; then
+			# start by lladdr
+			ifstart $_if
 		else
 			# 'Real' interfaces (if available) are done now.
 			ifconfig $_if >/dev/null 2>&1 && ifstart $_if
