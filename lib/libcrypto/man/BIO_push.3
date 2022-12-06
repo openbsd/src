@@ -1,8 +1,26 @@
-.\"	$OpenBSD: BIO_push.3,v 1.8 2022/12/02 22:58:56 tb Exp $
-.\"	OpenSSL doc/man3/BIO_push.pod 76ed5a42 Jun 29 13:38:55 2014 +0100
-.\"	OpenSSL doc/man7/bio.pod a9c85cea Nov 11 09:33:55 2016 +0100
+.\" $OpenBSD: BIO_push.3,v 1.9 2022/12/06 21:13:01 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL doc/man3/BIO_push.pod 791bfd91 Nov 19 20:38:27 2021 +0100
+.\" OpenSSL doc/man7/bio.pod 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2014 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,23 +67,29 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 2 2022 $
+.Dd $Mdocdate: December 6 2022 $
 .Dt BIO_PUSH 3
 .Os
 .Sh NAME
 .Nm BIO_push ,
-.Nm BIO_pop
-.Nd add and remove BIOs from a chain
+.Nm BIO_pop ,
+.Nm BIO_set_next
+.Nd manipulate BIO chains
 .Sh SYNOPSIS
 .In openssl/bio.h
 .Ft BIO *
 .Fo BIO_push
 .Fa "BIO *b"
-.Fa "BIO *append"
+.Fa "BIO *new_tail"
 .Fc
 .Ft BIO *
 .Fo BIO_pop
 .Fa "BIO *b"
+.Fc
+.Ft void
+.Fo BIO_set_next
+.Fa "BIO *b"
+.Fa "BIO *new_tail"
 .Fc
 .Sh DESCRIPTION
 BIOs can be joined together to form chains.
@@ -73,51 +97,133 @@ A chain normally consists of one or more filter BIOs
 and one source/sink BIO at the end.
 Data read from or written to the first BIO traverses the chain
 to the end.
-A single BIO can be regarded as a chain with one component.
 .Pp
-The
+Every BIO is a member of exactly one chain.
+It is either at the beginning of its chain
+or there is exactly one preceding BIO.
+It is either at the end of its chain
+or there is exactly one following BIO.
+If there is neither a preceding nor a following BIO,
+it can be regarded as a chain with one member.
+.Pp
 .Fn BIO_push
-function appends the BIO
-.Fa append
-to
-.Fa b
-and returns
+appends the chain starting at
+.Fa new_tail
+to the end of the chain that contains
 .Fa b .
+Unless
+.Fa b
+is
+.Dv NULL ,
+it then calls
+.Xr BIO_ctrl 3
+on
+.Fa b
+with an argument of
+.Dv BIO_CTRL_PUSH .
+If
+.Fa b
+or
+.Fa new_tail
+is
+.Dv NULL ,
+nothing is appended.
+.Pp
+In LibreSSL, if
+.Fa new_tail
+is not at the beginning of its chain,
+the head of that chain up to but not including
+.Fa new_tail
+is cut off and becomes a separate chain.
+For portability, it is best to make sure that
+.Fa new_tail
+is at the beginning of its chain before calling
+.Fn BIO_push .
 .Pp
 .Fn BIO_pop
 removes the BIO
 .Fa b
-from a chain and returns the next BIO in the chain, or
-.Dv NULL
-if there is no next BIO.
-The removed BIO then becomes a single BIO with no association with the
-original chain.
-It can thus be freed or attached to a different chain.
-.Pp
-The names of these functions are misleading.
-.Fn BIO_push
-joins two BIO chains whereas
-.Fn BIO_pop
-deletes a single BIO from a chain;
-the deleted BIO does not need to be at the end of a chain.
-.Pp
-The process of calling
-.Fn BIO_push
-and
-.Fn BIO_pop
-on a BIO may have additional consequences: a
+from its chain.
+Despite the word
+.Dq pop
+in the function name,
+.Fa b
+can be at the beginning, in the middle, or at the end of its chain.
+Before removal,
 .Xr BIO_ctrl 3
-call is made to the affected BIOs.
-Any effects will be noted in the descriptions of individual BIOs.
-.Sh RETURN VALUES
-.Fn BIO_push
-returns the beginning of the chain,
+is called on
+.Fa b
+with an argument of
+.Dv BIO_CTRL_POP .
+The removed BIO
+.Fa b
+becomes the only member of its own chain and can thus be freed
+or attached to a different chain.
+If
+.Fa b
+is
+.Dv NULL ,
+no action occurs.
+.Pp
+.Fn BIO_set_next
+appends the chain starting with
+.Fa new_tail
+to the chain ending with
 .Fa b .
 .Pp
+In LibreSSL, if
+.Fa new_tail
+is not at the beginning of its chain,
+the head of that chain up to but not including
+.Fa new_tail
+is cut off and becomes a separate chain,
+and if
+.Fa b
+is not at the end of its chain,
+the tail of that chain starting after
+.Fa b
+is cut off and becomes a separate chain,
+.Pp
+For portability, it is best to make sure that
+.Fa b
+is at the end of its chain and that
+.Fa new_tail
+is at the beginning of its chain before calling
+.Fn BIO_set_next
+and to avoid calling
 .Fn BIO_pop
-returns the next BIO in the chain, or
+on
+.Fa new_tail
+afterwards.
+.Pp
+In LibreSSL, the only built-in BIO type for which
+.Xr BIO_ctrl 3
+calls with an argument of
+.Dv BIO_CTRL_PUSH
+or
+.Dv BIO_CTRL_POP
+have any effect is
+.Xr BIO_f_ssl 3 .
+.Sh RETURN VALUES
+.Fn BIO_push
+returns
+.Fa b
+if it is not
 .Dv NULL
-if there is no next BIO.
+or
+.Fa new_tail
+if it is.
+.Pp
+.Fn BIO_pop
+returns the BIO that followed
+.Fa b
+in its chain, or
+.Dv NULL
+if
+.Fa b
+is
+.Dv NULL
+or was at the end of its chain.
 .Sh EXAMPLES
 For these examples suppose
 .Sy md1
@@ -183,3 +289,8 @@ first appeared in SSLeay 0.6.0.
 first appeared in SSLeay 0.6.4.
 Both functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_set_next
+first appeared in OpenSSL 1.1.0
+and has been available since
+.Ox 7.1 .
