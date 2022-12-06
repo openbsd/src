@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpinctrl.c,v 1.4 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: aplpinctrl.c,v 1.5 2022/12/06 16:07:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,6 +60,7 @@
 	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct intrhand {
+	TAILQ_ENTRY(intrhand) ih_list;
 	int (*ih_func)(void *);
 	void *ih_arg;
 	int ih_irq;
@@ -79,14 +80,14 @@ struct aplpinctrl_softc {
 	struct gpio_controller	sc_gc;
 
 	void			*sc_ih;
-	struct intrhand		**sc_handler;
+	TAILQ_HEAD(, intrhand)	*sc_handler;
 	struct interrupt_controller sc_ic;
 };
 
 int	aplpinctrl_match(struct device *, void *, void *);
 void	aplpinctrl_attach(struct device *, struct device *, void *);
 
-const struct cfattach	aplpinctrl_ca = {
+const struct cfattach aplpinctrl_ca = {
 	sizeof (struct aplpinctrl_softc), aplpinctrl_match, aplpinctrl_attach
 };
 
@@ -121,6 +122,7 @@ aplpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	struct aplpinctrl_softc *sc = (struct aplpinctrl_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t gpio_ranges[4] = {};
+	int i;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -160,6 +162,8 @@ aplpinctrl_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_handler = mallocarray(sc->sc_ngpios,
 	    sizeof(*sc->sc_handler), M_DEVBUF, M_ZERO | M_WAITOK);
+	for (i = 0; i < sc->sc_ngpios; i++)
+		TAILQ_INIT(&sc->sc_handler[i]);
 
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = sc;
@@ -266,24 +270,23 @@ aplpinctrl_intr(void *arg)
 	struct aplpinctrl_softc *sc = arg;
 	struct intrhand *ih;
 	uint32_t status, pending;
-	int base, pin, s;
+	int base, bit, pin, s;
 
 	for (base = 0; base < sc->sc_ngpios; base += 32) {
 		status = HREAD4(sc, GPIO_IRQ(0, base));
 		pending = status;
 
 		while (pending) {
-			pin = ffs(pending) - 1;
-			ih = sc->sc_handler[base + pin];
-
-			if (ih) {
+			bit = ffs(pending) - 1;
+			pin = base + bit;
+			TAILQ_FOREACH(ih, &sc->sc_handler[pin], ih_list) {
 				s = splraise(ih->ih_ipl);
 				if (ih->ih_func(ih->ih_arg))
 					ih->ih_count.ec_count++;
 				splx(s);
 			}
 
-			pending &= ~(1 << pin);
+			pending &= ~(1 << bit);
 		}
 
 		HWRITE4(sc, GPIO_IRQ(0, base), status);
@@ -303,7 +306,6 @@ aplpinctrl_intr_establish(void *cookie, int *cells, int ipl,
 	uint32_t reg;
 
 	KASSERT(pin < sc->sc_ngpios);
-	KASSERT(sc->sc_handler[pin] == NULL);
 
 	if (ci != NULL && !CPU_IS_PRIMARY(ci))
 		return NULL;
@@ -326,6 +328,10 @@ aplpinctrl_intr_establish(void *cookie, int *cells, int ipl,
 		break;
 	}
 
+	ih = TAILQ_FIRST(&sc->sc_handler[pin]);
+	if (ih && ih->ih_type != type)
+		return NULL;
+
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
@@ -334,11 +340,9 @@ aplpinctrl_intr_establish(void *cookie, int *cells, int ipl,
 	ih->ih_ipl = ipl;
 	ih->ih_name = name;
 	ih->ih_sc = sc;
-
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
-
-	sc->sc_handler[pin] = ih;
+	TAILQ_INSERT_TAIL(&sc->sc_handler[pin], ih, ih_list);
 
 	reg = HREAD4(sc, GPIO_PIN(pin));
 	reg &= ~GPIO_PIN_DATA;
@@ -381,15 +385,17 @@ aplpinctrl_intr_disestablish(void *cookie)
 
 	s = splhigh();
 
-	reg = HREAD4(sc, GPIO_PIN(ih->ih_irq));
-	reg &= ~GPIO_PIN_MODE_MASK;
-	reg |= GPIO_PIN_MODE_IRQ_OFF;
-	HWRITE4(sc, GPIO_PIN(ih->ih_irq), reg);
-
-	sc->sc_handler[ih->ih_irq] = NULL;
+	TAILQ_REMOVE(&sc->sc_handler[ih->ih_irq], ih, ih_list);
 	if (ih->ih_name)
 		evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF, sizeof(*ih));
+
+	if (TAILQ_EMPTY(&sc->sc_handler[ih->ih_irq])) {
+		reg = HREAD4(sc, GPIO_PIN(ih->ih_irq));
+		reg &= ~GPIO_PIN_MODE_MASK;
+		reg |= GPIO_PIN_MODE_IRQ_OFF;
+		HWRITE4(sc, GPIO_PIN(ih->ih_irq), reg);
+	}
 
 	splx(s);
 }
