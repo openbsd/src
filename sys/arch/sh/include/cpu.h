@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.33 2022/02/21 10:44:58 jsg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.34 2022/12/06 01:19:35 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
  */
 
 #include <machine/intr.h>
+#include <sys/clockintr.h>
 #include <sys/sched.h>
 
 struct cpu_info {
@@ -70,6 +71,8 @@ struct cpu_info {
 #endif
 
 	int	ci_want_resched;
+
+	struct clockintr_queue ci_queue;
 
 	char	ci_panicbuf[512];
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2020/10/20 15:59:17 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2022/12/06 01:19:35 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/timetc.h>
 
@@ -205,7 +206,7 @@ sh_clock_get_pclock(void)
 void
 setstatclockrate(int newhz)
 {
-	/* XXX not yet */
+	clockintr_setstatclockrate(newhz);
 }
 
 u_int
@@ -260,6 +261,12 @@ cpu_initclocks(void)
 	hz = HZ;
 	tick = 1000000 / hz;
 	tick_nsec = 1000000000 / hz;
+
+	stathz = hz;
+	profhz = stathz;
+	clockintr_init(0);
+
+	clockintr_cpu_init(NULL);
 
 	/*
 	 * Use TMU channel 0 as hard clock
@@ -332,7 +339,7 @@ sh3_clock_intr(void *arg) /* trap frame */
 	/* clear underflow status */
 	_reg_bclr_2(SH3_TCR0, TCR_UNF);
 
-	hardclock(arg);
+	clockintr_dispatch(arg);
 
 	return (1);
 }
@@ -353,7 +360,7 @@ sh4_clock_intr(void *arg) /* trap frame */
 	/* clear underflow status */
 	_reg_bclr_2(SH4_TCR0, TCR_UNF);
 
-	hardclock(arg);
+	clockintr_dispatch(arg);
 
 	return (1);
 }
