@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.360 2022/12/03 21:02:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.361 2022/12/06 09:07:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -664,7 +664,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	logit(hdr->ike_exchange == IKEV2_EXCHANGE_INFORMATIONAL ?
 	    LOG_DEBUG : LOG_INFO,
-	    "%srecv %s %s %u peer %s local %s, %ld bytes, policy '%s'",
+	    "%srecv %s %s %u peer %s local %s, %zu bytes, policy '%s'",
 	    SPI_IH(hdr),
 	    print_map(hdr->ike_exchange, ikev2_exchange_map),
 	    msg->msg_response ? "res" : "req",

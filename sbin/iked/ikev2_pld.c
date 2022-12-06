@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.126 2022/12/03 21:02:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.127 2022/12/06 09:07:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -320,7 +320,7 @@ ikev2_validate_sa(struct iked_message *msg, size_t offset, size_t left,
 	 */
 	if (!sap->sap_more && left != sap_length) {
 		log_debug("%s: malformed payload: SA payload length mismatches "
-		    "single proposal substructure length (%lu != %zu)",
+		    "single proposal substructure length (%zu != %zu)",
 		    __func__, left, sap_length);
 		return (-1);
 	}
