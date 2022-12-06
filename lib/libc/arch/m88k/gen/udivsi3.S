@@ -1,4 +1,4 @@
-/*	$OpenBSD: udivsi3.S,v 1.3 2013/06/05 22:48:21 miod Exp $	*/
+/*	$OpenBSD: udivsi3.S,v 1.4 2022/12/06 18:50:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -24,7 +24,7 @@
  */
 
 #ifndef LDSO
-.weak	_C_LABEL(__udivsi3)
+.weak	__udivsi3
 #endif
 ENTRY(__udivsi3)
 	/* if divider is zero, trap */

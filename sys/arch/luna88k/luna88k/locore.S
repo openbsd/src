@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.32 2017/07/23 09:17:17 aoyama Exp $	*/
+/*	$OpenBSD: locore.S,v 1.33 2022/12/06 18:50:59 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -69,8 +69,8 @@
 
 GLOBAL(delay)
 	bcnd	eq0, %r2, 2f
-	or.u	%r3, %r0, %hi16(_C_LABEL(cpuspeed))
-	ld	%r3, %r3, %lo16(_C_LABEL(cpuspeed))
+	or.u	%r3, %r0, %hi16(cpuspeed)
+	ld	%r3, %r3, %lo16(cpuspeed)
 	mul	%r4, %r2, %r3
 	subu	%r4, %r4, 4	/* overhead of these instructions */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.3 2022/01/11 09:21:35 jsg Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.4 2022/12/06 18:51:00 guenther Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -60,16 +60,16 @@ ENTRY(bzero)
 	 * (of the destination address). If either are set, it's
 	 * not word aligned.
 	 */
-	bb1	0, R_dest, _ASM_LABEL(not_initially_word_aligned)
-	bb1	1, R_dest, _ASM_LABEL(not_initially_word_aligned)
+	bb1	0, R_dest, not_initially_word_aligned
+	bb1	1, R_dest, not_initially_word_aligned
 
 ASLOCAL(now_word_aligned)
 	/*
 	 * before we get into the main loop, grab the
 	 * address of the label "mark" below.
 	 */
-	or.u	R_mark_address, %r0, %hi16(_ASM_LABEL(mark))
-	or	R_mark_address, R_mark_address, %lo16(_ASM_LABEL(mark))
+	or.u	R_mark_address, %r0, %hi16(mark)
+	or	R_mark_address, R_mark_address, %lo16(mark)
 
 ASLOCAL(top_of_main_loop)
 #define MAX_AT_ONE_TIME 128
@@ -89,7 +89,7 @@ ASLOCAL(top_of_main_loop)
 	clr	R_bytes, R_len, 2<0>
 
 	/* if we're done clearing WORDS, jump out */
-	bcnd	eq0, R_bytes, _ASM_LABEL(done_doing_words)
+	bcnd	eq0, R_bytes, done_doing_words
 
 	/* if the number of bytes > MAX_AT_ONE_TIME, do only the max */
 	cmp	R_temp, R_bytes, MAX_AT_ONE_TIME
@@ -160,7 +160,7 @@ ASLOCAL(do_max)
 	st	%r0, R_dest, 0x00	/*   0 */
 
 ASLOCAL(mark)
-	br.n	_ASM_LABEL(top_of_main_loop)
+	br.n	top_of_main_loop
 	 addu	R_dest, R_dest, R_bytes	/* bump up the dest address */
 
 ASLOCAL(done_doing_words)
@@ -182,9 +182,9 @@ ASLOCAL(not_initially_word_aligned)
 	st.b	%r0, R_dest, 0
 	addu	R_dest, R_dest, 1
 	mask	R_temp, R_dest, 0x3
-	bcnd.n	eq0, R_temp, _ASM_LABEL(now_word_aligned)
+	bcnd.n	eq0, R_temp, now_word_aligned
 	 subu	R_len, R_len, 1
-	br	_ASM_LABEL(not_initially_word_aligned)
+	br	not_initially_word_aligned
 
 #undef	R_dest
 #undef	R_len

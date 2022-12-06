@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.5 2022/10/14 20:53:18 aoyama Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.6 2022/12/06 18:50:59 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -106,10 +106,10 @@ ASGLOBAL(__start)
 	 * A few identical jump instructions to make sure the pipeline is
 	 * in a good state. Probably overkill, but it's cheap.
 	 */
- 	br	_ASM_LABEL(main_start)
-	br	_ASM_LABEL(main_start)
-	br	_ASM_LABEL(main_start)
-	br	_ASM_LABEL(main_start)
+ 	br	main_start
+	br	main_start
+	br	main_start
+	br	main_start
 
 	/*
 	 * Startup code common to all processors.
@@ -121,14 +121,14 @@ ASLOCAL(main_start)
 	cmp	%r11, %r2,  %r10
 	bb1	ne,   %r11, 1f
 
-	or.u	%r10, %r0,  %hi16(_C_LABEL(esym))
-	st	%r3,  %r10, %lo16(_C_LABEL(esym))
+	or.u	%r10, %r0,  %hi16(esym)
+	st	%r3,  %r10, %lo16(esym)
 1:
 #endif
 	or	%r24, %r0,  %r4		/* save bootdev */
 	or	%r25, %r0,  %r5		/* save boothowto */
 
-	bsr	_ASM_LABEL(setup_psr)
+	bsr	setup_psr
 
 	stcr	%r0,  VBR		/* start with VBR set to zero */
 	FLUSH_PIPELINE
@@ -137,8 +137,8 @@ ASLOCAL(main_start)
 	 * Now we will compete with the other processors to see which one
 	 * will be elected as the main one.
 	 */
-	or.u	%r11, %r0,  %hi16(_C_LABEL(cpu_hatch_mutex))
-	or	%r11, %r11, %lo16(_C_LABEL(cpu_hatch_mutex))
+	or.u	%r11, %r0,  %hi16(cpu_hatch_mutex)
+	or	%r11, %r11, %lo16(cpu_hatch_mutex)
 1:
 	FLUSH_PIPELINE
 	or	%r22, %r0,  1
@@ -158,8 +158,8 @@ ASLOCAL(main_start)
 4:
 	/* now try to grab the master_mpu prize */
 	FLUSH_PIPELINE
-	or.u	%r11, %r0,  %hi16(_ASM_LABEL(master_mpu))
-	or	%r11, %r11, %lo16(_ASM_LABEL(master_mpu))
+	or.u	%r11, %r0,  %hi16(master_mpu)
+	or	%r11, %r11, %lo16(master_mpu)
 	or	%r22, %r0,  1
 	xmem	%r22, %r11, %r0
 
@@ -170,7 +170,7 @@ ASLOCAL(main_start)
 	 * Note that we haven't released the interprocessor lock....
 	 * We'll do that when we're ready for another CPU to go.
 	 */
-	bcnd	ne0,  %r22, _ASM_LABEL(secondary_init)
+	bcnd	ne0,  %r22, secondary_init
 
 	/*
 	 * Main processor specific initialization (with
@@ -178,29 +178,29 @@ ASLOCAL(main_start)
 	 */
 ASLOCAL(main_init)
 	/* clear BSS. PROM might have already done this... */
-	or.u	%r2, %r0, %hi16(_C_LABEL(edata))
-	or	%r2, %r2, %lo16(_C_LABEL(edata))
-	or.u	%r4, %r0, %hi16(_C_LABEL(end))
-	or	%r4, %r4, %lo16(_C_LABEL(end))
-	bsr.n	_C_LABEL(bzero)		/* bzero(edata, end-edata) */
+	or.u	%r2, %r0, %hi16(edata)
+	or	%r2, %r2, %lo16(edata)
+	or.u	%r4, %r0, %hi16(end)
+	or	%r4, %r4, %lo16(end)
+	bsr.n	bzero			/* bzero(edata, end-edata) */
 	 subu	%r3, %r4, %r2
 
 	/* figure out the end of the kernel image. */
 #if defined(DDB) || NKSYMS > 0
-	or.u	%r4, %r0, %hi16(_C_LABEL(esym))
-	ld	%r4, %r4, %lo16(_C_LABEL(esym))
+	or.u	%r4, %r0, %hi16(esym)
+	ld	%r4, %r4, %lo16(esym)
 	bcnd	ne0, %r4, 1f
 #endif
-	or.u	%r4, %r0, %hi16(_C_LABEL(end))
-	or	%r4, %r4, %lo16(_C_LABEL(end))		/* if no symbols */
+	or.u	%r4, %r0, %hi16(end)
+	or	%r4, %r4, %lo16(end)			/* if no symbols */
 1:
-	or.u	%r5, %r0, %hi16(_C_LABEL(first_addr))
-	st	%r4, %r5, %lo16(_C_LABEL(first_addr))
+	or.u	%r5, %r0, %hi16(first_addr)
+	st	%r4, %r5, %lo16(first_addr)
 
-	or.u	%r5,  %r0, %hi16(_C_LABEL(bootdev))
-	st	%r24, %r5, %lo16(_C_LABEL(bootdev))
-	or.u	%r5,  %r0, %hi16(_C_LABEL(boothowto))
-	st	%r25, %r5, %lo16(_C_LABEL(boothowto))
+	or.u	%r5,  %r0, %hi16(bootdev)
+	st	%r24, %r5, %lo16(bootdev)
+	or.u	%r5,  %r0, %hi16(boothowto)
+	st	%r25, %r5, %lo16(boothowto)
 
 	/*
 	 * Have curcpu() point to a valid cpuinfo structure,
@@ -209,23 +209,23 @@ ASLOCAL(main_init)
 	 * mutex diagnostic code.
 	 */
 #ifdef MULTIPROCESSOR
-	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
-	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	or.u	%r11, %r0,  %hi16(dummy_cpu)
+	or	%r11, %r11, %lo16(dummy_cpu)
 #else
 	/* Need to make sure this matches non-MP curcpu() */
-	or.u	%r11, %r0,  %hi16(_C_LABEL(m88k_cpus))
-	or	%r11, %r11, %lo16(_C_LABEL(m88k_cpus))
+	or.u	%r11, %r0,  %hi16(m88k_cpus)
+	or	%r11, %r11, %lo16(m88k_cpus)
 #endif
 	stcr	%r11, CPU
 
 	/* Switch to startup stack */
-	or.u	%r31, %r0,  %hi16(_ASM_LABEL(initstack_end))
-	or	%r31, %r31, %lo16(_ASM_LABEL(initstack_end))
+	or.u	%r31, %r0,  %hi16(initstack_end)
+	or	%r31, %r31, %lo16(initstack_end)
 
-	or.u	%r3,  %r0,  %hi16(_C_LABEL(vector_list))
-	or	%r3,  %r3,  %lo16(_C_LABEL(vector_list))
+	or.u	%r3,  %r0,  %hi16(vector_list)
+	or	%r3,  %r3,  %lo16(vector_list)
 
-	bsr.n	_C_LABEL(luna88k_vector_init)
+	bsr.n	luna88k_vector_init
 	 ldcr	%r2, VBR
 
 	/* PIO stuff */
@@ -238,13 +238,13 @@ ASLOCAL(main_init)
 	mak	%r10, %r10, 0<8>		/* shift left 8 bit */
 	ld.bu	%r12, %r11, %lo16(OBIO_PIO0B)	/* dipsw-2 (from portB) */
 	or	%r10, %r10, %r12
-	or.u	%r11, %r0,  %hi16(_C_LABEL(dipswitch))
-	st.h	%r10, %r11, %lo16(_C_LABEL(dipswitch))
+	or.u	%r11, %r0,  %hi16(dipswitch)
+	st.h	%r10, %r11, %lo16(dipswitch)
 
 	/* read frame buffer depth from ROM work area */
 	ld	%r12, %r0,  %lo16(0x00001114)	/* frame buffer depth */
-	or.u	%r13, %r0,  %hi16(_C_LABEL(hwplanebits))
-	st	%r12, %r13, %lo16(_C_LABEL(hwplanebits))
+	or.u	%r13, %r0,  %hi16(hwplanebits)
+	st	%r12, %r13, %lo16(hwplanebits)
 
 	/*
 	 * By default, sysconsole is set to 0 (means using ttya). If
@@ -255,8 +255,8 @@ ASLOCAL(main_init)
 	bb0	14,   %r10, 1f			/* if dipsw-1:2 is on, skip */
 	bcnd	eq0,  %r12, 1f			/* if hwplanebits == 0, skip */
 	or	%r10, %r0,  1			/* set sysconsole = 1 */
-	or.u	%r11, %r0,  %hi16(_C_LABEL(sysconsole))
-	st	%r10, %r11, %lo16(_C_LABEL(sysconsole))
+	or.u	%r11, %r0,  %hi16(sysconsole)
+	st	%r10, %r11, %lo16(sysconsole)
 
 1:
 	or	%r10,  %r0,  0x84		/* initialize pio1 */
@@ -278,7 +278,7 @@ ASLOCAL(main_init)
 	 * We are still using the interrupt stack here, thus we are not
 	 * affected...
 	 */
-	bsr	_C_LABEL(luna88k_bootstrap)
+	bsr	luna88k_bootstrap
 
 	/*
 	 * ...and we can switch to the u area stack now.
@@ -288,11 +288,11 @@ ASLOCAL(main_init)
 	addu	%r31, %r31, USPACE
 
 	/* call main() - no arguments although main() still defines one */
-	bsr	_C_LABEL(main)
+	bsr	main
 
-	or.u	%r2,  %r0,  %hi16(_ASM_LABEL(main_panic))
-	bsr.n	_C_LABEL(panic)
-	 or	%r2,  %r2,  %lo16(_ASM_LABEL(main_panic))
+	or.u	%r2,  %r0,  %hi16(main_panic)
+	bsr.n	panic
+	 or	%r2,  %r2,  %lo16(main_panic)
 
 	.data
 	.balign	4
@@ -313,8 +313,8 @@ ASLOCAL(secondary_init)
 	 * This is necessary for early spl*() usage, as well as
 	 * mutex diagnostic code.
 	 */
-	or.u	%r11, %r0,  %hi16(_ASM_LABEL(dummy_cpu))
-	or	%r11, %r11, %lo16(_ASM_LABEL(dummy_cpu))
+	or.u	%r11, %r0,  %hi16(dummy_cpu)
+	or	%r11, %r11, %lo16(dummy_cpu)
 	st	%r0,  %r11, CI_FLAGS		/* reset CIF_PRIMARY */
 	stcr	%r11, CPU
 
@@ -325,11 +325,11 @@ ASLOCAL(secondary_init)
 	 * use and we'll switch to it.
 	 */
 
-	or.u	%r31, %r0,  %hi16(_ASM_LABEL(slavestack_end))
-	bsr.n	_C_LABEL(secondary_pre_main)	/* set cpu number */
-	 or	%r31, %r31, %lo16(_ASM_LABEL(slavestack_end))
+	or.u	%r31, %r0,  %hi16(slavestack_end)
+	bsr.n	secondary_pre_main		/* set cpu number */
+	 or	%r31, %r31, %lo16(slavestack_end)
 
-	bsr.n	_C_LABEL(secondary_main)
+	bsr.n	secondary_main
 	 addu	%r31, %r2, USPACE		/* switch to idle stack */
 
 #else
@@ -377,7 +377,7 @@ ASLOCAL(slavestack_end)
 ASLOCAL(u0)
 	.space	USPACE
 GLOBAL(proc0paddr)
-	.word	_ASM_LABEL(u0)	/*  KVA of proc0 uarea */
+	.word	u0		/*  KVA of proc0 uarea */
 
 /* The first processor to XMEM this becomes the master */
 ASLOCAL(master_mpu)
@@ -391,8 +391,8 @@ ASLOCAL(dummy_cpu)
 	.word	0				/* ci_curpcb */
 	.word	0				/* ci_curpmap */
 	.word	0				/* ci_cpuid */
-	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_begin */
-	.word	_ASM_LABEL(dummy_mplock)	/* ci_mp_atomic_end */
+	.word	dummy_mplock			/* ci_mp_atomic_begin */
+	.word	dummy_mplock			/* ci_mp_atomic_end */
 	.space	CPU_INFO_SIZEOF - 7 * 4
 #endif
 

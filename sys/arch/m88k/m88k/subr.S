@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.27 2017/05/29 06:06:52 mpi Exp $	*/
+/* $OpenBSD: subr.S,v 1.28 2022/12/06 18:50:59 guenther Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -199,8 +199,8 @@ ENTRY(copyin)
 	/* set up fault handler */
 	ldcr	%r5,  CPU
 	ld	%r6,  %r5,  CI_CURPCB
-	or.u	%r5,  %r0,  %hi16(_ASM_LABEL(Lciflt))
-	or	%r5,  %r5,  %lo16(_ASM_LABEL(Lciflt))
+	or.u	%r5,  %r0,  %hi16(Lciflt)
+	or	%r5,  %r5,  %lo16(Lciflt)
 	st	%r5,  %r6,  PCB_ONFAULT	/* pcb_onfault = Lciflt */
 
 	/*
@@ -210,25 +210,25 @@ ENTRY(copyin)
 	 * to save an hyperthetical fraction of cycle.
 	 */
 	cmp	%r9,  LEN,  8
-	bb1	lt,   %r9,  _ASM_LABEL(copyin_byte_only)
+	bb1	lt,   %r9,  copyin_byte_only
 
 	/* If they're not aligned similarly, use byte only... */
 	xor	%r9,  SRC,  DEST
 	mask	%r8,  %r9,  0x3
-	bcnd	ne0,  %r8,  _ASM_LABEL(copyin_byte_only)
+	bcnd	ne0,  %r8,  copyin_byte_only
 
 	/*
 	 * At this point, we don't know if they're word aligned or not,
 	 * but we know that what needs to be done to one to align
 	 * it is what's needed for the other.
 	 */
-	bb1	0,    SRC,  _ASM_LABEL(copyin_left_align_to_halfword)
+	bb1	0,    SRC,  copyin_left_align_to_halfword
 ASLOCAL(copyin_left_aligned_to_halfword)
-	bb1	1,    SRC,  _ASM_LABEL(copyin_left_align_to_word)
+	bb1	1,    SRC,  copyin_left_align_to_word
 ASLOCAL(copyin_left_aligned_to_word)
-	bb1	0,    LEN,  _ASM_LABEL(copyin_right_align_to_halfword)
+	bb1	0,    LEN,  copyin_right_align_to_halfword
 ASLOCAL(copyin_right_aligned_to_halfword)
-	bb1	1,    LEN,  _ASM_LABEL(copyin_right_align_to_word)
+	bb1	1,    LEN,  copyin_right_align_to_word
 ASLOCAL(copyin_right_aligned_to_word)
 
 	/*
@@ -236,7 +236,7 @@ ASLOCAL(copyin_right_aligned_to_word)
 	 * boundary, and LEN is a multiple of 4. We want it an even
 	 * multiple of 4.
 	 */
-	bb1.n	2,    LEN,  _ASM_LABEL(copyin_right_align_to_doubleword)
+	bb1.n	2,    LEN,  copyin_right_align_to_doubleword
 	 or	%r7,  %r0,  4
 
 ASLOCAL(copyin_right_aligned_to_doubleword)
@@ -258,9 +258,9 @@ ASLOCAL(copyin_right_aligned_to_doubleword)
 	st	%r5,  DEST, %r0
 	addu	SRC,  SRC,  8
 	st	%r6,  DEST, %r7
-	bcnd.n	ne0,  LEN,  _ASM_LABEL(copyin_right_aligned_to_doubleword)
+	bcnd.n	ne0,  LEN,  copyin_right_aligned_to_doubleword
 	 addu	DEST, DEST, 8
-	br.n	_ASM_LABEL(Lcidone)
+	br.n	Lcidone
 	 or	%r2, %r0, %r0	/* successful return */
 
 ASLOCAL(copyin_left_align_to_halfword)
@@ -276,7 +276,7 @@ ASLOCAL(copyin_left_align_to_halfword)
 	subu	LEN,  LEN,  1
 	st.b	%r5,  DEST, %r0
 	addu	SRC,  SRC,  1
-	br.n	_ASM_LABEL(copyin_left_aligned_to_halfword)
+	br.n	copyin_left_aligned_to_halfword
 	 addu	DEST, DEST, 1
 
 ASLOCAL(copyin_left_align_to_word)
@@ -292,7 +292,7 @@ ASLOCAL(copyin_left_align_to_word)
 	subu	LEN,  LEN,  2
 	st.h	%r5,  DEST, %r0
 	addu	SRC,  SRC,  2
-	br.n	_ASM_LABEL(copyin_left_aligned_to_word)
+	br.n	copyin_left_aligned_to_word
 	 addu	DEST, DEST, 2
 
 ASLOCAL(copyin_right_align_to_halfword)
@@ -306,7 +306,7 @@ ASLOCAL(copyin_right_align_to_halfword)
 #else
 	ld.b.usr	%r5,  SRC, LEN
 #endif
-	br.n	_ASM_LABEL(copyin_right_aligned_to_halfword)
+	br.n	copyin_right_aligned_to_halfword
 	 st.b	%r5,  DEST, LEN
 
 ASLOCAL(copyin_right_align_to_word)
@@ -320,7 +320,7 @@ ASLOCAL(copyin_right_align_to_word)
 #else
 	ld.h.usr	%r5,  SRC, LEN
 #endif
-	br.n	_ASM_LABEL(copyin_right_aligned_to_word)
+	br.n	copyin_right_aligned_to_word
 	 st.h	%r5,  DEST, LEN
 
 ASLOCAL(copyin_right_align_to_doubleword)
@@ -334,9 +334,9 @@ ASLOCAL(copyin_right_align_to_doubleword)
 #else
 	ld.usr	%r5,  SRC,  LEN
 #endif
-	bcnd.n	ne0,  LEN, _ASM_LABEL(copyin_right_aligned_to_doubleword)
+	bcnd.n	ne0,  LEN, copyin_right_aligned_to_doubleword
 	 st	%r5,  DEST, LEN
-	br.n	_ASM_LABEL(Lcidone)
+	br.n	Lcidone
    	 or	%r2, %r0, %r0	/* successful return */
 
 ASLOCAL(copyin_byte_only)
@@ -365,7 +365,7 @@ ASLOCAL(Lcidone)
 	 st	%r0,  %r6,  PCB_ONFAULT
 
 ASLOCAL(Lciflt)
-	br.n	_ASM_LABEL(Lcidone)
+	br.n	Lcidone
 	 or	%r2, %r0, EFAULT	/* return fault */
 
 #undef	SRC
@@ -385,13 +385,13 @@ ASLOCAL(Lciflt)
 ENTRY(copyin32)
 	/* check for source alignment */
 	mask	%r8,  SRC,  0x3
-	bcnd	ne0,  %r8,  _ASM_LABEL(copyin32_misaligned)
+	bcnd	ne0,  %r8,  copyin32_misaligned
 
 	/* set up fault handler */
 	ldcr	%r5,  CPU
 	ld	%r6,  %r5,  CI_CURPCB
-	or.u	%r5,  %r0,  %hi16(_ASM_LABEL(Lciflt))
-	or	%r5,  %r5,  %lo16(_ASM_LABEL(Lciflt))
+	or.u	%r5,  %r0,  %hi16(Lciflt)
+	or	%r5,  %r5,  %lo16(Lciflt)
 	st	%r5,  %r6,  PCB_ONFAULT	/* pcb_onfault = Lciflt */
 
 #ifdef ERRATA__XXX_USR
@@ -404,7 +404,7 @@ ENTRY(copyin32)
 	ld.usr	%r5,  SRC,  %r0
 #endif
 	st	%r5,  DEST, %r0
-	br.n	_ASM_LABEL(Lcidone)
+	br.n	Lcidone
    	 or	%r2, %r0, %r0	/* successful return */
 
 ASLOCAL(copyin32_misaligned)
@@ -438,12 +438,12 @@ ENTRY(copyinstr)
 	/* setup fault handler */
 	ldcr	%r6,  CPU
 	ld	%r7,  %r6,   CI_CURPCB
-	or.u	%r6,  %r0,   %hi16(_ASM_LABEL(Lcisflt))
-	or	%r6,  %r6,   %lo16(_ASM_LABEL(Lcisflt))
+	or.u	%r6,  %r0,   %hi16(Lcisflt)
+	or	%r6,  %r6,   %lo16(Lcisflt)
 	st	%r6,  %r7,   PCB_ONFAULT
 	or	%r6,  %r0,   0
-	bcnd	lt0,  CNT,  _ASM_LABEL(Lcisflt)
-	bcnd	eq0,  CNT,  _ASM_LABEL(Lcistoolong)
+	bcnd	lt0,  CNT,  Lcisflt
+	bcnd	eq0,  CNT,  Lcistoolong
 1:
 #ifdef ERRATA__XXX_USR
 	NOP
@@ -464,11 +464,11 @@ ASLOCAL(Lcistoolong)
 	or	%r2,   %r0, ENAMETOOLONG	/* overflow */
 
 ASLOCAL(Lcisnull)
-	bcnd	eq0,%r6, _ASM_LABEL(Lcisdone)	/* do not attempt to clear last byte */
+	bcnd	eq0,%r6, Lcisdone		/* do not attempt to clear last byte */
 					/* if we did not write to the string */
 	subu	%r6,  %r6,  1
 	st.b	%r0,  DEST, %r6		/* clear last byte */
-	br.n	_ASM_LABEL(Lcisdone)
+	br.n	Lcisdone
 	 addu	%r6,  %r6,  1
 2:					/* all done */
 	or	%r2,  %r0,  0
@@ -483,7 +483,7 @@ ASLOCAL(Lcisdone)
 	 st	%r0,  %r6,  PCB_ONFAULT	/* clear the handler */
 
 ASLOCAL(Lcisflt)
-	br.n	_ASM_LABEL(Lcisnull)
+	br.n	Lcisnull
 	 or	%r2,  %r0,  EFAULT	/* return fault */
 
 #undef	SRC
@@ -507,8 +507,8 @@ ENTRY(copyout)
 	/* setup fault handler */
 	ldcr	%r5,  CPU
 	ld	%r6,  %r5,  CI_CURPCB
-	or.u	%r5,  %r0,  %hi16(_ASM_LABEL(Lcoflt))
-	or	%r5,  %r5,  %lo16(_ASM_LABEL(Lcoflt))
+	or.u	%r5,  %r0,  %hi16(Lcoflt)
+	or	%r5,  %r5,  %lo16(Lcoflt)
 	st	%r5,  %r6,  PCB_ONFAULT	/* pcb_onfault = Lcoflt */
 
 	/*
@@ -518,25 +518,25 @@ ENTRY(copyout)
 	 * to save an hyperthetical fraction of cycle.
 	 */
 	cmp	%r9,  LEN,  8
-	bb1	lt,   %r9,   _ASM_LABEL(copyout_byte_only)
+	bb1	lt,   %r9,   copyout_byte_only
 
 	/* If they're not aligned similarly, use byte only... */
 	xor	%r9,  SRC,  DEST
 	mask	%r8,  %r9,  0x3
-	bcnd	ne0,  %r8,  _ASM_LABEL(copyout_byte_only)
+	bcnd	ne0,  %r8,  copyout_byte_only
 
 	/*
 	 * At this point, we don't know if they're word aligned or not,
 	 * but we know that what needs to be done to one to align
 	 * it is what's needed for the other.
 	 */
-	bb1	0,    SRC,  _ASM_LABEL(copyout_left_align_to_halfword)
+	bb1	0,    SRC,  copyout_left_align_to_halfword
 ASLOCAL(copyout_left_aligned_to_halfword)
-	bb1	1,    SRC,  _ASM_LABEL(copyout_left_align_to_word)
+	bb1	1,    SRC,  copyout_left_align_to_word
 ASLOCAL(copyout_left_aligned_to_word)
-	bb1	0,    LEN,  _ASM_LABEL(copyout_right_align_to_halfword)
+	bb1	0,    LEN,  copyout_right_align_to_halfword
 ASLOCAL(copyout_right_aligned_to_halfword)
-	bb1	1,    LEN,  _ASM_LABEL(copyout_right_align_to_word)
+	bb1	1,    LEN,  copyout_right_align_to_word
 ASLOCAL(copyout_right_aligned_to_word)
 
 	/*
@@ -544,7 +544,7 @@ ASLOCAL(copyout_right_aligned_to_word)
 	 * boundary, and LEN is a multiple of 4. We want it an even
 	 * multiple of 4.
 	 */
-	bb1.n	2,    LEN,  _ASM_LABEL(copyout_right_align_to_doubleword)
+	bb1.n	2,    LEN,  copyout_right_align_to_doubleword
 	 or	%r7,  %r0,  4
 
 ASLOCAL(copyout_right_aligned_to_doubleword)
@@ -570,10 +570,10 @@ ASLOCAL(copyout_right_aligned_to_doubleword)
 #else
 	st.usr	%r6,  DEST, %r7
 #endif
-	bcnd.n	ne0,  LEN,  _ASM_LABEL(copyout_right_aligned_to_doubleword)
+	bcnd.n	ne0,  LEN,  copyout_right_aligned_to_doubleword
 	 addu	DEST, DEST, 8
 	or	%r2,  %r0,  %r0	/* successful return */
-	br	_ASM_LABEL(Lcodone)
+	br	Lcodone
 
 	/***************************************************/
 ASLOCAL(copyout_left_align_to_halfword)
@@ -589,7 +589,7 @@ ASLOCAL(copyout_left_align_to_halfword)
 	st.b.usr	%r5,  DEST, %r0
 #endif
 	addu	SRC,  SRC,  1
-	br.n	_ASM_LABEL(copyout_left_aligned_to_halfword)
+	br.n	copyout_left_aligned_to_halfword
 	 addu	DEST, DEST, 1
 
 ASLOCAL(copyout_left_align_to_word)
@@ -605,7 +605,7 @@ ASLOCAL(copyout_left_align_to_word)
 	st.h.usr	%r5,  DEST, %r0
 #endif
 	addu	SRC,  SRC,  2
-	br.n	_ASM_LABEL(copyout_left_aligned_to_word)
+	br.n	copyout_left_aligned_to_word
 	 addu	DEST, DEST, 2
 
 ASLOCAL(copyout_right_align_to_halfword)
@@ -617,9 +617,9 @@ ASLOCAL(copyout_right_align_to_halfword)
 	NOP
 	NOP
 	NOP
-	br	_ASM_LABEL(copyout_right_aligned_to_halfword)
+	br	copyout_right_aligned_to_halfword
 #else
-	br.n	_ASM_LABEL(copyout_right_aligned_to_halfword)
+	br.n	copyout_right_aligned_to_halfword
 	 st.b.usr	%r5,  DEST, LEN
 #endif
 
@@ -632,9 +632,9 @@ ASLOCAL(copyout_right_align_to_word)
 	NOP
 	NOP
 	NOP
-	br	_ASM_LABEL(copyout_right_aligned_to_word)
+	br	copyout_right_aligned_to_word
 #else
-	br.n	_ASM_LABEL(copyout_right_aligned_to_word)
+	br.n	copyout_right_aligned_to_word
 	 st.h.usr	%r5,  DEST, LEN
 #endif
 
@@ -647,12 +647,12 @@ ASLOCAL(copyout_right_align_to_doubleword)
 	NOP
 	NOP
 	NOP
-	bcnd	ne0,  LEN, _ASM_LABEL(copyout_right_aligned_to_doubleword)
+	bcnd	ne0,  LEN, copyout_right_aligned_to_doubleword
 #else
-	bcnd.n	ne0,  LEN, _ASM_LABEL(copyout_right_aligned_to_doubleword)
+	bcnd.n	ne0,  LEN, copyout_right_aligned_to_doubleword
 	 st.usr	%r5,  DEST, LEN
 #endif
-	br.n	_ASM_LABEL(Lcodone)
+	br.n	Lcodone
 	 or	%r2, %r0, %r0	/* successful return */
 
 ASLOCAL(copyout_byte_only)
@@ -683,7 +683,7 @@ ASLOCAL(Lcodone)
 	 st	%r0,  %r6,  PCB_ONFAULT	/* clear the handler */
 
 ASLOCAL(Lcoflt)
-	br.n	_ASM_LABEL(Lcodone)
+	br.n	Lcodone
 	 or	%r2, %r0, EFAULT	/* return fault */
 
 #undef	SRC
@@ -710,11 +710,11 @@ ENTRY(copyoutstr)
 	/* setup fault handler */
 	ldcr	%r6,  CPU
 	ld	%r7,  %r6,  CI_CURPCB
-	or.u	%r6,  %r0,  %hi16(_ASM_LABEL(Lcosflt))
-	or	%r6,  %r6,  %lo16(_ASM_LABEL(Lcosflt))
+	or.u	%r6,  %r0,  %hi16(Lcosflt)
+	or	%r6,  %r6,  %lo16(Lcosflt)
 	st	%r6,  %r7,  PCB_ONFAULT
-	bcnd	lt0,  CNT,  _ASM_LABEL(Lcosflt)
-	bcnd	eq0,  CNT,  _ASM_LABEL(Lcosdone)
+	bcnd	lt0,  CNT,  Lcosflt
+	bcnd	eq0,  CNT,  Lcosdone
 	or	%r6,  %r0,  0
 1:
 	ld.bu	%r7,  SRC,  %r6
@@ -731,14 +731,14 @@ ENTRY(copyoutstr)
 	 addu	%r6,  %r6, 1
 	cmp	%r7,  %r6, CNT
 	bb1	lt,   %r7, 1b
-	br.n	_ASM_LABEL(Lcosdone)
+	br.n	Lcosdone
 	 or	%r2,  %r0, ENAMETOOLONG
 2:
-	br.n	_ASM_LABEL(Lcosdone)
+	br.n	Lcosdone
 	 or	%r2,  %r0, 0
 
 ASLOCAL(Lcosflt)
-	br.n	_ASM_LABEL(Lcosdone)
+	br.n	Lcosdone
 	 or	%r2, %r0, EFAULT
 
 ASLOCAL(Lcosdone)
@@ -766,23 +766,23 @@ ENTRY(kcopy)
 	subu	%r31, %r31, 16
 	ldcr	%r5,  CPU
 	ld	%r6,  %r5,  CI_CURPCB
-	or.u	%r5,  %r0,  %hi16(_ASM_LABEL(kcopy_fault))
+	or.u	%r5,  %r0,  %hi16(kcopy_fault)
 	ld	%r7,  %r6,  PCB_ONFAULT
-	or	%r5,  %r5,  %lo16(_ASM_LABEL(kcopy_fault))
+	or	%r5,  %r5,  %lo16(kcopy_fault)
 	st	%r7,  %r31, 0			/* save old pcb_onfault */
 	st	%r5,  %r6,  PCB_ONFAULT		/* pcb_onfault = kcopy_fault */
-	bcnd	le0,  %r4,  _ASM_LABEL(kcopy_out) /* nothing to do if <= 0 */
+	bcnd	le0,  %r4,  kcopy_out /* nothing to do if <= 0 */
 /*
  *	check position of source and destination data
  */
 	cmp 	%r9,  %r2,  %r3	/* compare source address to destination */
-	bb1	eq,   %r9,  _ASM_LABEL(kcopy_out) /* nothing to do if equal */
-	bb1	lo,   %r9,  _ASM_LABEL(kcopy_reverse) /* reverse copy if src < dest */
+	bb1	eq,   %r9,  kcopy_out /* nothing to do if equal */
+	bb1	lo,   %r9,  kcopy_reverse /* reverse copy if src < dest */
 /*
  *	source address is greater than destination address, copy forward
  */
 	cmp 	%r9,  %r4,  16	/* see if we have at least 16 bytes */
-	bb1	lt,   %r9,  _ASM_LABEL(kf_byte_copy)	/* copy bytes for small length */
+	bb1	lt,   %r9,  kf_byte_copy		/* copy bytes for small length */
 /*
  *	determine copy strategy based on alignment of source and destination
  */
@@ -790,8 +790,8 @@ ENTRY(kcopy)
 	mask	%r7,  %r3,  3	/* get 2 low order bits of destination addr */
 	mak	%r6,  %r6,  0<4>/* convert source bits to table offset */
 	mak	%r7,  %r7,  0<2>/* convert destination bits to table offset */
-	or.u	%r12, %r0,  %hi16(_ASM_LABEL(kf_strat))
-	or	%r12, %r12, %lo16(_ASM_LABEL(kf_strat))
+	or.u	%r12, %r0,  %hi16(kf_strat)
+	or	%r12, %r12, %lo16(kf_strat)
 	addu	%r6,  %r6,  %r7	/* compute final table offset for strategy */
 	ld	%r12, %r12, %r6	/* load the strategy routine */
 	jmp	%r12		/* branch to strategy routine */
@@ -808,7 +808,7 @@ ASLOCAL(kf_3byte_word_copy)
 	st.b	%r8,  %r3,  2		/* store byte to destination */
 	addu	%r2,  %r2,  3		/* increment source pointer */
 	addu	%r3,  %r3,  3		/* increment destination pointer */
-	br.n	_ASM_LABEL(kf_word_copy)/* copy full words */
+	br.n	kf_word_copy/* copy full words */
 	 subu	%r4,  %r4,  3		/* decrement length */
 
 /*
@@ -819,7 +819,7 @@ ASLOCAL(kf_1half_word_copy)
 	st.h	%r6,  %r3,  0		/* store half-word to destination */
 	addu	%r2,  %r2,  2		/* increment source pointer */
 	addu	%r3,  %r3,  2		/* increment destination pointer */
-	br.n	_ASM_LABEL(kf_word_copy)/* copy full words */
+	br.n	kf_word_copy/* copy full words */
 	 subu	%r4,  %r4,  2		/* decrement remaining length */
 
 /*
@@ -837,7 +837,7 @@ ASLOCAL(kf_1byte_word_copy)
  */
 ASLOCAL(kf_word_copy)
 	cmp	%r10, %r4,  16		/* see if we have 16 bytes remaining */
-	bb1	lo,   %r10, _ASM_LABEL(kf_byte_copy) 	/* not enough left, copy bytes */
+	bb1	lo,   %r10, kf_byte_copy 		/* not enough left, copy bytes */
 	ld	%r6,  %r2,  0		/* load first word */
 	ld	%r7,  %r2,  4		/* load second word */
 	ld	%r8,  %r2,  8		/* load third word */
@@ -848,7 +848,7 @@ ASLOCAL(kf_word_copy)
 	st 	%r9,  %r3,  12		/* store fourth word */
 	addu	%r2,  %r2,  16		/* increment source pointer */
 	addu	%r3,  %r3,  16		/* increment destination pointer */
-	br.n	_ASM_LABEL(kf_word_copy)/* copy another block */
+	br.n	kf_word_copy/* copy another block */
 	 subu	%r4,  %r4,  16		/* decrement remaining length */
 
 ASLOCAL(kf_1byte_half_copy)
@@ -861,7 +861,7 @@ ASLOCAL(kf_1byte_half_copy)
 
 ASLOCAL(kf_half_copy)
 	cmp	%r10, %r4,  16		/* see if we have 16 bytes remaining */
-	bb1	lo,   %r10, _ASM_LABEL(kf_byte_copy)	/* not enough left, copy bytes */
+	bb1	lo,   %r10, kf_byte_copy		/* not enough left, copy bytes */
 	ld.hu	%r6,  %r2,  0		/* load first half-word */
 	ld.hu	%r7,  %r2,  2		/* load second half-word */
 	ld.hu	%r8,  %r2,  4		/* load third half-word */
@@ -880,16 +880,16 @@ ASLOCAL(kf_half_copy)
 	st.h 	%r13, %r3,  14		/* store eighth half-word */
 	addu	%r2,  %r2,  16		/* increment source pointer */
 	addu	%r3,  %r3,  16		/* increment destination pointer */
-	br.n	_ASM_LABEL(kf_half_copy)/* copy another block */
+	br.n	kf_half_copy/* copy another block */
 	 subu	%r4,  %r4,  16		/* decrement remaining length */
 
 ASLOCAL(kf_byte_copy)
-	bcnd	eq0,  %r4,  _ASM_LABEL(kcopy_out)	/* branch if nothing left to copy */
+	bcnd	eq0,  %r4,  kcopy_out			/* branch if nothing left to copy */
 	ld.bu	%r6,  %r2,  0		/* load byte from source */
 	st.b	%r6,  %r3,  0		/* store byte in destination */
 	addu	%r2,  %r2,  1		/* increment source pointer */
 	addu	%r3,  %r3,  1		/* increment destination pointer */
-	br.n	_ASM_LABEL(kf_byte_copy)/* branch for next byte */
+	br.n	kf_byte_copy/* branch for next byte */
 	 subu	%r4,  %r4,  1		/* decrement remaining length */
 
 /*
@@ -905,7 +905,7 @@ ASLOCAL(kcopy_reverse)
  * check for short data
  */
 	cmp 	%r9,  %r4,  16		/* see if we have at least 16 bytes */
-	bb1	lt,   %r9,  _ASM_LABEL(kr_byte_copy)	/* copy bytes for small data length */
+	bb1	lt,   %r9,  kr_byte_copy		/* copy bytes for small data length */
 /*
  *	determine copy strategy based on alignment of source and destination
  */
@@ -913,8 +913,8 @@ ASLOCAL(kcopy_reverse)
 	mask	%r7,  %r3,  3	/* get 2 low order bits of destination addr */
 	mak	%r6,  %r6,  0<4>/* convert source bits to table offset */
 	mak	%r7,  %r7,  0<2>/* convert destination bits to table offset */
-	or.u	%r12, %r0,  %hi16(_ASM_LABEL(kr_strat))
-	or	%r12, %r12, %lo16(_ASM_LABEL(kr_strat))
+	or.u	%r12, %r0,  %hi16(kr_strat)
+	or	%r12, %r12, %lo16(kr_strat)
 	addu	%r6,  %r6,  %r7	/* compute final table offset for strategy */
 	ld	%r12, %r12, %r6	/* load the strategy routine */
 	jmp	%r12		/* branch to strategy routine */
@@ -931,7 +931,7 @@ ASLOCAL(kr_3byte_word_copy)
 	st.b	%r6,  %r3,  0		/* store byte to destination */
 	st.b	%r7,  %r3,  1		/* store byte to destination */
 	st.b	%r8,  %r3,  2		/* store byte to destination */
-	br.n	_ASM_LABEL(kr_word_copy)/* copy full words */
+	br.n	kr_word_copy/* copy full words */
 	 subu	%r4,  %r4,  3		/* decrement length */
 
 /*
@@ -942,7 +942,7 @@ ASLOCAL(kr_1half_word_copy)
 	subu	%r3,  %r3,  2		/* decrement destination pointer */
 	ld.hu	%r6,  %r2,  0		/* load half-word from source */
 	st.h	%r6,  %r3,  0		/* store half-word to destination */
-	br.n	_ASM_LABEL(kr_word_copy)/* copy full words */
+	br.n	kr_word_copy/* copy full words */
 	 subu	%r4,  %r4,  2		/* decrement remaining length */
 
 /*
@@ -960,7 +960,7 @@ ASLOCAL(kr_1byte_word_copy)
  */
 ASLOCAL(kr_word_copy)
 	cmp	%r10, %r4,  16		/* see if we have 16 bytes remaining */
-	bb1	lo,   %r10, _ASM_LABEL(kr_byte_copy)	/* not enough left, copy bytes */
+	bb1	lo,   %r10, kr_byte_copy		/* not enough left, copy bytes */
 	subu	%r2,  %r2,  16		/* decrement source pointer */
 	subu	%r3,  %r3,  16		/* decrement destination pointer */
 	ld	%r6,  %r2,  0		/* load first word */
@@ -971,7 +971,7 @@ ASLOCAL(kr_word_copy)
 	st	%r7,  %r3,  4		/* store second word */
 	st 	%r8,  %r3,  8		/* store third word */
 	st 	%r9,  %r3,  12		/* store fourth word */
-	br.n	_ASM_LABEL(kr_word_copy)/* copy another block */
+	br.n	kr_word_copy/* copy another block */
 	 subu	%r4,  %r4,  16	/* decrement remaining length */
 
 ASLOCAL(kr_1byte_half_copy)
@@ -984,7 +984,7 @@ ASLOCAL(kr_1byte_half_copy)
 
 ASLOCAL(kr_half_copy)
 	cmp	%r10, %r4,  16		/* see if we have 16 bytes remaining */
-	bb1	lo,   %r10, _ASM_LABEL(kr_byte_copy)	/* not enough left, copy bytes */
+	bb1	lo,   %r10, kr_byte_copy		/* not enough left, copy bytes */
 	subu	%r2,  %r2,  16		/* decrement source pointer */
 	subu	%r3,  %r3,  16		/* decrement destination pointer */
 	ld.hu	%r6,  %r2,  0		/* load first half-word */
@@ -1003,16 +1003,16 @@ ASLOCAL(kr_half_copy)
 	st.h	%r11, %r3,  10		/* store sixth half-word */
 	st.h 	%r12, %r3,  12		/* store seventh half-word */
 	st.h 	%r13, %r3,  14		/* store eighth half-word */
-	br.n	_ASM_LABEL(kr_half_copy)/* copy another block */
+	br.n	kr_half_copy/* copy another block */
 	 subu	%r4,  %r4,  16		/* decrement remaining length */
 
 ASLOCAL(kr_byte_copy)
-	bcnd	eq0,  %r4,  _ASM_LABEL(kcopy_out)	/* branch if nothing left to copy */
+	bcnd	eq0,  %r4,  kcopy_out			/* branch if nothing left to copy */
 	subu	%r2,  %r2,  1		/* decrement source pointer */
 	subu	%r3,  %r3,  1		/* decrement destination pointer */
 	ld.bu	%r6,  %r2,  0		/* load byte from source */
 	st.b	%r6,  %r3,  0		/* store byte in destination */
-	br.n	_ASM_LABEL(kr_byte_copy)/* branch for next byte */
+	br.n	kr_byte_copy/* branch for next byte */
 	 subu	%r4,  %r4,  1		/* decrement remaining length */
 
 ASLOCAL(kcopy_out)
@@ -1026,46 +1026,46 @@ ASLOCAL(kcopy_out_fault)
 	 st	%r7,  %r6,  PCB_ONFAULT	/* restore previous pcb_onfault */
 
 ASLOCAL(kcopy_fault)
-	br.n	_ASM_LABEL(kcopy_out_fault)
+	br.n	kcopy_out_fault
 	 or	%r2,  %r0,  EFAULT	/* return fault */
 
 	.data
 	.align	2
 ASLOCAL(kf_strat)
-	.word	_ASM_LABEL(kf_word_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_half_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_3byte_word_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_1byte_half_copy)
-	.word	_ASM_LABEL(kf_half_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_1half_word_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_1byte_half_copy)
-	.word	_ASM_LABEL(kf_byte_copy)
-	.word	_ASM_LABEL(kf_1byte_word_copy)
+	.word	kf_word_copy
+	.word	kf_byte_copy
+	.word	kf_half_copy
+	.word	kf_byte_copy
+	.word	kf_byte_copy
+	.word	kf_3byte_word_copy
+	.word	kf_byte_copy
+	.word	kf_1byte_half_copy
+	.word	kf_half_copy
+	.word	kf_byte_copy
+	.word	kf_1half_word_copy
+	.word	kf_byte_copy
+	.word	kf_byte_copy
+	.word	kf_1byte_half_copy
+	.word	kf_byte_copy
+	.word	kf_1byte_word_copy
 
 ASLOCAL(kr_strat)
-	.word	_ASM_LABEL(kr_word_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_half_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_1byte_word_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_1byte_half_copy)
-	.word	_ASM_LABEL(kr_half_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_1half_word_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_1byte_half_copy)
-	.word	_ASM_LABEL(kr_byte_copy)
-	.word	_ASM_LABEL(kr_3byte_word_copy)
+	.word	kr_word_copy
+	.word	kr_byte_copy
+	.word	kr_half_copy
+	.word	kr_byte_copy
+	.word	kr_byte_copy
+	.word	kr_1byte_word_copy
+	.word	kr_byte_copy
+	.word	kr_1byte_half_copy
+	.word	kr_half_copy
+	.word	kr_byte_copy
+	.word	kr_1half_word_copy
+	.word	kr_byte_copy
+	.word	kr_byte_copy
+	.word	kr_1byte_half_copy
+	.word	kr_byte_copy
+	.word	kr_3byte_word_copy
 
 #ifdef DDB
 /*
@@ -1150,7 +1150,7 @@ GLOBAL(esigcode)
 GLOBAL(sigfill)
 	tb0	0, %r0, 130	/* breakpoint */
 GLOBAL(sigfillsiz)
-	.word	_C_LABEL(sigfillsiz) - _C_LABEL(sigfill)
+	.word	sigfillsiz - sigfill
 
 /*
  * Helper functions for pmap_copy_page() and pmap_zero_page().

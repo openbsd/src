@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2022/10/14 20:53:19 aoyama Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2022/12/06 18:50:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -67,11 +67,11 @@ ASLOCAL(main_start)
 	 * They will then proceed to run the kernel, as if the kernel
 	 * had been directly booted from the PROM.
 	 */
-	or.u	%r3,  %r0,  %hi16(_ASM_LABEL(cpu_park_address))
-	or	%r3,  %r3,  %lo16(_ASM_LABEL(cpu_park_address))
+	or.u	%r3,  %r0,  %hi16(cpu_park_address)
+	or	%r3,  %r3,  %lo16(cpu_park_address)
 
-	or.u	%r2,  %r0,  %hi16(_ASM_LABEL(cpu_park))
-	or	%r2,  %r2,  %lo16(_ASM_LABEL(cpu_park))
+	or.u	%r2,  %r0,  %hi16(cpu_park)
+	or	%r2,  %r2,  %lo16(cpu_park)
 	FLUSH_PIPELINE
 	xmem	%r2,  %r3,  %r0
 
@@ -80,18 +80,18 @@ ASLOCAL(main_start)
 
 1:
 	/* clear BSS */
-	or.u	%r2, %r0, %hi16(_C_LABEL(edata))
-	or	%r2, %r2, %lo16(_C_LABEL(edata))
-	or.u	%r4, %r0, %hi16(_C_LABEL(end))
-	or	%r4, %r4, %lo16(_C_LABEL(end))
+	or.u	%r2, %r0, %hi16(edata)
+	or	%r2, %r2, %lo16(edata)
+	or.u	%r4, %r0, %hi16(end)
+	or	%r4, %r4, %lo16(end)
 1:	st	%r0, %r2, %r0
 	addu	%r2, %r2, 4
 	cmp	%r3, %r2, %r4
 	bb1	ne,  %r3, 1b
 
 	/* setup stack, below our image */
-	or.u	%r31, %r0,  %hi16(_ASM_LABEL(__start))
-	or	%r31, %r31, %lo16(_ASM_LABEL(__start))
+	or.u	%r31, %r0,  %hi16(__start)
+	or	%r31, %r31, %lo16(__start)
 
 	/* read dip switch settings */
 	or.u	%r11, %r0,  %hi16(OBIO_PIO0A)
@@ -100,11 +100,11 @@ ASLOCAL(main_start)
 	ld.bu	%r12, %r11, %lo16(OBIO_PIO0B)
 	or	%r10, %r10, %r12
 
-	or.u	%r11, %r0,  %hi16(_C_LABEL(dipswitch))
-	st.h	%r10, %r11, %lo16(_C_LABEL(dipswitch))
+	or.u	%r11, %r0,  %hi16(dipswitch)
+	st.h	%r10, %r11, %lo16(dipswitch)
 
-	bsr	_C_LABEL(main)
-	bsr	_C_LABEL(_rtt)
+	bsr	main
+	bsr	_rtt
 1:	br	1b
 
 ASLOCAL(cpu_park)
@@ -115,30 +115,30 @@ ASLOCAL(cpu_park)
 	bcnd	ne0,  %r2,  9b
 
 	/* if kernel entry point is known, exit */
-	or.u	%r1,  %r0,  %hi16(_C_LABEL(cpu_boot))
-	ld	%r1,  %r1,  %lo16(_C_LABEL(cpu_boot))
-	bcnd	eq0,  %r1,  _ASM_LABEL(cpu_park)
+	or.u	%r1,  %r0,  %hi16(cpu_boot)
+	ld	%r1,  %r1,  %lo16(cpu_boot)
+	bcnd	eq0,  %r1,  cpu_park
 
 	or.u	%r2,  %r0,  1
 9:
 	subu	%r2,  %r2,  1
 	bcnd	ne0,  %r2,  9b
 
-	or.u	%r2,  %r0, %hi16(_C_LABEL(cpu_bootarg1))
-	ld	%r2,  %r2, %lo16(_C_LABEL(cpu_bootarg1))
-	or.u	%r3,  %r0, %hi16(_C_LABEL(cpu_bootarg2))
-	ld	%r3,  %r3, %lo16(_C_LABEL(cpu_bootarg2))
-	or.u	%r4,  %r0, %hi16(_C_LABEL(cpu_bootarg3))
-	ld	%r4,  %r4, %lo16(_C_LABEL(cpu_bootarg3))
-	or.u	%r5,  %r0, %hi16(_C_LABEL(cpu_bootarg4))
-	ld	%r5,  %r5, %lo16(_C_LABEL(cpu_bootarg4))
+	or.u	%r2,  %r0, %hi16(cpu_bootarg1)
+	ld	%r2,  %r2, %lo16(cpu_bootarg1)
+	or.u	%r3,  %r0, %hi16(cpu_bootarg2)
+	ld	%r3,  %r3, %lo16(cpu_bootarg2)
+	or.u	%r4,  %r0, %hi16(cpu_bootarg3)
+	ld	%r4,  %r4, %lo16(cpu_bootarg3)
+	or.u	%r5,  %r0, %hi16(cpu_bootarg4)
+	ld	%r5,  %r5, %lo16(cpu_bootarg4)
 
 	jmp	%r1
 
 GLOBAL(delay)
 	bcnd	eq0, %r2, 2f
-	or.u	%r3, %r0, %hi16(_C_LABEL(cpuspeed))
-	ld	%r3, %r3, %lo16(_C_LABEL(cpuspeed))
+	or.u	%r3, %r0, %hi16(cpuspeed)
+	ld	%r3, %r3, %lo16(cpuspeed)
 	mul	%r4, %r2, %r3
 	subu	%r4, %r4, 4
 1:

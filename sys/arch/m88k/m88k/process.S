@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.26 2013/05/17 22:35:19 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.27 2022/12/06 18:50:59 guenther Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -51,7 +51,7 @@ ENTRY(cpu_switchto)
 	ldcr	%r2,  CPU
 	ld	%r2,  %r2,  CI_CURPCB
 	st	%r1,  %r2,  PCB_PC		/* save return address */
-	bsr	_ASM_LABEL(__savectx)
+	bsr	__savectx
 	/* note that we don't need to recover r1 at this point */
 
 	/* inline pmap_deactivate(oldproc) */
@@ -75,7 +75,7 @@ ENTRY(cpu_switchto)
 	ld	%r2,  %r3,  P_ADDR
 	st	%r2,  %r11, CI_CURPCB			/* curpcb = p->p_addr */
 
-	bsr.n	_C_LABEL(pmap_activate)		/* pmap_activate(newproc) */
+	bsr.n	pmap_activate			/* pmap_activate(newproc) */
 	 or	%r2, %r0, %r3
 
 	ldcr	%r2, PSR
