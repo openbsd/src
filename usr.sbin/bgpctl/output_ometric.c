@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.7 2022/12/06 11:27:58 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.8 2022/12/06 17:38:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -58,7 +58,7 @@ ometric_head(struct parse_result *arg)
 	char hostname[HOST_NAME_MAX + 1];
 	char *domainname;
 
-	bgpd_info = ometric_new(OMT_INFO, "bgpd_info", "bgpd information");
+	bgpd_info = ometric_new(OMT_INFO, "bgpd", "bgpd information");
 	bgpd_scrape_time = ometric_new(OMT_GAUGE, "bgpd_scrape_seconds",
 	    "bgpd scrape time in seconds");
 
@@ -82,7 +82,7 @@ ometric_head(struct parse_result *arg)
 	 * per neighbor stats: attrs will be remote_as, remote_addr,
 	 * description and group
 	 */
-	peer_info = ometric_new(OMT_INFO, "bgpd_peer_info",
+	peer_info = ometric_new(OMT_INFO, "bgpd_peer",
 	    "peer information");
 	peer_state = ometric_new_state(statenames,
 	    sizeof(statenames) / sizeof(statenames[0]), "bgpd_peer_state",
@@ -105,65 +105,65 @@ ometric_head(struct parse_result *arg)
 	    "number of prefixes received from peer");
 
 	peer_message_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_message_transmit_total",
+	    "bgpd_peer_message_transmit",
 	    "per message type count of transmitted messages");
 	peer_message_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_message_receive_total",
+	    "bgpd_peer_message_receive",
 	    "per message type count of received messages");
 
 	peer_update_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_update_transmit_total",
+	    "bgpd_peer_update_transmit",
 	    "number of prefixes sent as update");
 	peer_update_pending = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_update_pending_total",
+	    "bgpd_peer_update_pending",
 	    "number of pending update prefixes");
 	peer_update_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_update_receive_total",
+	    "bgpd_peer_update_receive",
 	    "number of prefixes received as update");
 
 	peer_withdraw_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_withdraw_transmit_total",
+	    "bgpd_peer_withdraw_transmit",
 	    "number of withdrawn prefixes sent to peer");
 	peer_withdraw_pending = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_withdraw_pending_total",
+	    "bgpd_peer_withdraw_pending",
 	    "number of pending withdrawn prefixes");
 	peer_withdraw_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_withdraw_receive_total",
+	    "bgpd_peer_withdraw_receive",
 	    "number of withdrawn prefixes received from peer");
 
 	peer_rr_req_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_req_transmit_total",
+	    "bgpd_peer_route_refresh_req_transmit",
 	    "number of route-refresh request transmitted to peer");
 	peer_rr_req_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_req_receive_total",
+	    "bgpd_peer_route_refresh_req_receive",
 	    "number of route-refresh request received from peer");
 	peer_rr_borr_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_borr_transmit_total",
+	    "bgpd_peer_route_refresh_borr_transmit",
 	    "number of ext. route-refresh BORR messages transmitted to peer");
 	peer_rr_borr_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_borr_receive_total",
+	    "bgpd_peer_route_refresh_borr_receive",
 	    "number of ext. route-refresh BORR messages received from peer");
 	peer_rr_eorr_transmit = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_eorr_transmit_total",
+	    "bgpd_peer_route_refresh_eorr_transmit",
 	    "number of ext. route-refresh EORR messages transmitted to peer");
 	peer_rr_eorr_receive = ometric_new(OMT_COUNTER,
-	    "bgpd_peer_route_refresh_eorr_receive_total",
+	    "bgpd_peer_route_refresh_eorr_receive",
 	    "number of ext. route-refresh EORR messages received from peer");
 
 	/* RDE memory statistics */
 	rde_mem_size = ometric_new(OMT_GAUGE,
 	    "bgpd_rde_memory_usage_bytes", "memory usage in bytes");
 	rde_mem_count = ometric_new(OMT_GAUGE,
-	    "bgpd_rde_memory_count", "number of object in use");
+	    "bgpd_rde_memory_usage_objects", "number of object in use");
 	rde_mem_ref_count = ometric_new(OMT_GAUGE,
-	    "bgpd_rde_memory_reference_count", "number of references held");
+	    "bgpd_rde_memory_usage_references", "number of references held");
 
 	rde_set_size = ometric_new(OMT_GAUGE,
 	    "bgpd_rde_set_usage_bytes", "memory usage of set in bytes");
 	rde_set_count = ometric_new(OMT_GAUGE,
-	    "bgpd_rde_set_count", "number of object in set");
+	    "bgpd_rde_set_usage_objects", "number of object in set");
 	rde_table_count = ometric_new(OMT_GAUGE,
-	    "bgpd_rde_table_count", "number of as_set tables");
+	    "bgpd_rde_set_usage_tables", "number of as_set tables");
 }
 
 static void
