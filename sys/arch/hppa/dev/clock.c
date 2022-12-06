@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.32 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.33 2022/12/06 00:40:09 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -29,6 +29,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
@@ -41,10 +43,15 @@
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
 
-u_long	cpu_hzticks;
+uint64_t itmr_nsec_cycle_ratio;
+uint64_t itmr_nsec_max;
 
-int	cpu_hardclock(void *);
 u_int	itmr_get_timecount(struct timecounter *);
+int	itmr_intr(void *);
+void	itmr_rearm(void *, uint64_t);
+void	itmr_trigger(void);
+void	itmr_trigger_masked(void);
+void	itmr_trigger_wrapper(void *);
 
 struct timecounter itmr_timecounter = {
 	.tc_get_timecount = itmr_get_timecount,
@@ -55,6 +62,11 @@ struct timecounter itmr_timecounter = {
 	.tc_quality = 0,
 	.tc_priv = NULL,
 	.tc_user = 0,
+};
+
+const struct intrclock itmr_intrclock = {
+	.ic_rearm = itmr_rearm,
+	.ic_trigger = itmr_trigger_wrapper
 };
 
 extern todr_chip_handle_t todr_handle;
@@ -94,88 +106,43 @@ pdc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 void
 cpu_initclocks(void)
 {
-	struct cpu_info *ci = curcpu();
-	u_long __itmr;
+	uint64_t itmr_freq = PAGE0->mem_10msec * 100;
 
 	pdc_todr.todr_gettime = pdc_gettime;
 	pdc_todr.todr_settime = pdc_settime;
 	todr_handle = &pdc_todr;
 
-	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
-
-	itmr_timecounter.tc_frequency = PAGE0->mem_10msec * 100;
+	itmr_timecounter.tc_frequency = itmr_freq;
 	tc_init(&itmr_timecounter);
 
-	mfctl(CR_ITMR, __itmr);
-	ci->ci_itmr = __itmr;
-	__itmr += cpu_hzticks;
-	mtctl(__itmr, CR_ITMR);
+	stathz = hz;
+	profhz = stathz * 10;
+	clockintr_init(CL_RNDSTAT);
+
+	itmr_nsec_cycle_ratio = itmr_freq * (1ULL << 32) / 1000000000;
+	itmr_nsec_max = UINT64_MAX / itmr_nsec_cycle_ratio;
+
+	cpu_startclock();
+}
+
+void
+cpu_startclock(void)
+{
+	clockintr_cpu_init(&itmr_intrclock);
+	clockintr_trigger();
 }
 
 int
-cpu_hardclock(void *v)
+itmr_intr(void *v)
 {
-	struct cpu_info *ci = curcpu();
-	u_long __itmr, delta, eta;
-	int wrap;
-	register_t eiem;
-
-	/*
-	 * Invoke hardclock as many times as there has been cpu_hzticks
-	 * ticks since the last interrupt.
-	 */
-	for (;;) {
-		mfctl(CR_ITMR, __itmr);
-		delta = __itmr - ci->ci_itmr;
-		if (delta >= cpu_hzticks) {
-			hardclock(v);
-			ci->ci_itmr += cpu_hzticks;
-		} else
-			break;
-	}
-
-	/*
-	 * Program the next clock interrupt, making sure it will
-	 * indeed happen in the future. This is done with interrupts
-	 * disabled to avoid a possible race.
-	 */
-	eta = ci->ci_itmr + cpu_hzticks;
-	wrap = eta < ci->ci_itmr;	/* watch out for a wraparound */
-	__asm volatile("mfctl	%%cr15, %0": "=r" (eiem));
-	__asm volatile("mtctl	%r0, %cr15");
-	mtctl(eta, CR_ITMR);
-	mfctl(CR_ITMR, __itmr);
-	/*
-	 * If we were close enough to the next tick interrupt
-	 * value, by the time we have programmed itmr, it might
-	 * have passed the value, which would cause a complete
-	 * cycle until the next interrupt occurs. On slow
-	 * models, this would be a disaster (a complete cycle
-	 * taking over two minutes on a 715/33).
-	 *
-	 * We expect that it will only be necessary to postpone
-	 * the interrupt once. Thus, there are two cases:
-	 * - We are expecting a wraparound: eta < cpu_itmr.
-	 *   itmr is in tracks if either >= cpu_itmr or < eta.
-	 * - We are not wrapping: eta > cpu_itmr.
-	 *   itmr is in tracks if >= cpu_itmr and < eta (we need
-	 *   to keep the >= cpu_itmr test because itmr might wrap
-	 *   before eta does).
-	 */
-	if ((wrap && !(eta > __itmr || __itmr >= ci->ci_itmr)) ||
-	    (!wrap && !(eta > __itmr && __itmr >= ci->ci_itmr))) {
-		eta += cpu_hzticks;
-		mtctl(eta, CR_ITMR);
-	}
-	__asm volatile("mtctl	%0, %%cr15":: "r" (eiem));
-
+	clockintr_dispatch(v);
 	return (1);
 }
 
 void
 setstatclockrate(int newhz)
 {
-	/* nothing we can do */
+	clockintr_setstatclockrate(newhz);
 }
 
 u_int
@@ -185,4 +152,78 @@ itmr_get_timecount(struct timecounter *tc)
 
 	mfctl(CR_ITMR, __itmr);
 	return (__itmr);
+}
+
+/*
+ * Program the next clock interrupt, making sure it will
+ * indeed happen in the future.  This is done with interrupts
+ * disabled to avoid a possible race.
+ */
+void
+itmr_rearm(void *unused, uint64_t nsecs)
+{
+	uint32_t cycles, t0, t1, target;
+	register_t eiem, eirr;
+
+	if (nsecs > itmr_nsec_max)
+		nsecs = itmr_nsec_max;
+	cycles = (nsecs * itmr_nsec_cycle_ratio) >> 32;
+
+	eiem = hppa_intr_disable();
+	mfctl(CR_ITMR, t0);
+	target = t0 + cycles;
+	mtctl(target, CR_ITMR);
+	mfctl(CR_ITMR, t1);
+
+	/*
+	 * If the interrupt isn't already pending we need to check if
+	 * we missed.  In general, we are checking whether ITMR had
+	 * already passed the target value when we wrote the register.
+	 * There are two cases.
+	 *
+	 * 1. If (t0 + cycles) did not overflow, we want t1 to be between
+	 *    t0 and target.  If t0 <= t1 < target, we didn't miss.
+	 *
+	 * 2. If (t0 + cycles) overflowed, either t0 <= t1 or t1 < target
+	 *    are sufficient to show we didn't miss.
+	 *
+	 * Only try once.  Fall back to itmr_trigger_masked() if we miss.
+	 */
+	mfctl(CR_EIRR, eirr);
+	if (!ISSET(eirr, 1U << 31)) {
+		if (t0 <= target) {
+			if (target <= t1 || t1 < t0)
+				itmr_trigger_masked();
+		} else {
+			if (target <= t1 && t1 < t0)
+				itmr_trigger_masked();
+		}
+	}
+	hppa_intr_enable(eiem);
+}
+
+void
+itmr_trigger(void)
+{
+	register_t eiem;
+
+	eiem = hppa_intr_disable();
+	itmr_trigger_masked();
+	hppa_intr_enable(eiem);
+}
+
+/* Trigger our own ITMR interrupt by setting EIR{0}. */
+void
+itmr_trigger_masked(void)
+{
+	struct iomod *cpu = (struct iomod *)curcpu()->ci_hpa;
+
+	cpu->io_eir = 0;
+	__asm volatile ("sync" ::: "memory");
+}
+
+void
+itmr_trigger_wrapper(void *unused)
+{
+	itmr_trigger();
 }

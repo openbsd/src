@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.44 2022/12/06 00:40:09 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -89,7 +89,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 	extern u_int fpu_enable;
 	/* clock.c */
-	extern int cpu_hardclock(void *);
+	extern int itmr_intr(void *);
 	/* ipi.c */
 	extern int hppa_ipi_intr(void *);
 
@@ -173,7 +173,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 		printf(", %u/%u D/I BTLBs",
 		    pdc_btlb.finfo.num_i, pdc_btlb.finfo.num_d);
 
-	cpu_intr_establish(IPL_CLOCK, 31, cpu_hardclock, NULL, "clock");
+	cpu_intr_establish(IPL_CLOCK, 31, itmr_intr, NULL, "clock");
 #ifdef MULTIPROCESSOR
 	cpu_intr_establish(IPL_IPI, 30, hppa_ipi_intr, NULL, "ipi");
 #endif
@@ -242,8 +242,6 @@ void
 cpu_hatch(void)
 {
 	struct cpu_info *ci = curcpu();
-	extern u_long cpu_hzticks;
-	u_long itmr;
 	int s;
 
 	/* Initialise IPIs. */
@@ -251,11 +249,8 @@ cpu_hatch(void)
 
 	/* Initialise clock. */
 	mtctl((1U << 31), CR_EIRR);
-	mfctl(CR_ITMR, itmr);
-	ci->ci_itmr = itmr;
-	itmr += cpu_hzticks;
-	mtctl(itmr, CR_ITMR);
 	ci->ci_mask |= (1U << 31);
+	cpu_startclock();
 
 	/* Enable interrupts. */
 	mtctl(ci->ci_mask, CR_EIEM);
