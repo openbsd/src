@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.c,v 1.6 2021/07/02 08:44:37 kettenis Exp $	*/
+/*	$OpenBSD: sbi.c,v 1.7 2022/12/06 00:11:23 jca Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -76,22 +76,22 @@ sbi_print_version(void)
 
 	switch (sbi_impl_id) {
 	case (SBI_IMPL_ID_BBL):
-		printf("SBI: Berkely Boot Loader %lu\n", sbi_impl_version);
+		printf("SBI: Berkely Boot Loader %lu", sbi_impl_version);
 		break;
 	case (SBI_IMPL_ID_OPENSBI):
 		major = sbi_impl_version >> OPENSBI_VERSION_MAJOR_OFFSET;
 		minor = sbi_impl_version & OPENSBI_VERSION_MINOR_MASK;
-		printf("SBI: OpenSBI v%u.%u\n", major, minor);
+		printf("SBI: OpenSBI v%u.%u", major, minor);
 		break;
 	default:
-		printf("SBI: Unrecognized Implementation: %lu\n", sbi_impl_id);
+		printf("SBI: Unrecognized Implementation: %lu", sbi_impl_id);
 		break;
 	}
 
 	major = (sbi_spec_version & SBI_SPEC_VERS_MAJOR_MASK) >>
 	    SBI_SPEC_VERS_MAJOR_OFFSET;
 	minor = (sbi_spec_version & SBI_SPEC_VERS_MINOR_MASK);
-	printf("SBI Specification Version: %u.%u\n", major, minor);
+	printf(", SBI Specification Version %u.%u\n", major, minor);
 }
 
 #ifdef MULTIPROCESSOR

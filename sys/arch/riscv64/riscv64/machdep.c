@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2022/10/30 17:43:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2022/12/06 00:11:23 jca Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -272,6 +272,8 @@ cpu_startup(void)
 
 	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free) / 1024 / 1024);
+
+	sbi_print_version();
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
