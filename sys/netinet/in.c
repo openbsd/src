@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.178 2022/11/19 14:26:40 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.179 2022/12/06 22:19:39 mvs Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -885,10 +885,13 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 */
 		memset(&ifr, 0, sizeof(ifr));
 		memcpy(&ifr.ifr_addr, &inm->inm_sin, sizeof(inm->inm_sin));
+		KERNEL_LOCK();
 		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
+			KERNEL_UNLOCK();
 			free(inm, M_IPMADDR, sizeof(*inm));
 			return (NULL);
 		}
+		KERNEL_UNLOCK();
 
 		TAILQ_INSERT_HEAD(&ifp->if_maddrlist, &inm->inm_ifma,
 		    ifma_list);
