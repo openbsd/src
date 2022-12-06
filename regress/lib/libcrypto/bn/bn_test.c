@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.1 2022/12/01 20:50:10 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.2 2022/12/06 18:23:29 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,19 +81,9 @@
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/x509.h>
 #include <openssl/err.h>
 
-int BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx);
-int BN_mod_exp_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx);
-int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-
-int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
+#include "bn_local.h"
 
 const int num0 = 100; /* number of tests */
 const int num1 = 50;  /* additional tests for some functions */

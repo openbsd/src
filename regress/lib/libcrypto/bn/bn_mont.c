@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mont.c,v 1.1 2022/12/01 20:50:10 tb Exp $	*/
+/*	$OpenBSD: bn_mont.c,v 1.2 2022/12/06 18:23:29 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -16,10 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <err.h>
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
