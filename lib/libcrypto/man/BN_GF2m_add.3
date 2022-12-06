@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_GF2m_add.3,v 1.4 2022/11/20 23:35:00 schwarze Exp $
+.\" $OpenBSD: BN_GF2m_add.3,v 1.5 2022/12/06 02:12:05 jsg Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2022 $
+.Dd $Mdocdate: December 6 2022 $
 .Dt BN_GF2M_ADD 3
 .Os
 .Sh NAME
@@ -267,7 +267,7 @@ and
 .Po
 $r = a - b = a + b$
 .Pc .
-Since \-1 is the same as 1 in binary arithmethic,
+Since \-1 is the same as 1 in binary arithmetic,
 .Fn BN_GF2m_sub
 does exactly the same as
 .Fn BN_GF2m_add .
