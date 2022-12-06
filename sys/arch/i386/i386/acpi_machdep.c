@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.85 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.86 2022/12/06 01:56:43 cheloha Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -421,8 +421,6 @@ acpi_resume_cpu(struct acpi_softc *sc, int state)
 #if NLAPIC > 0
 	lapic_tpr = save_lapic_tpr;
 	lapic_enable();
-	if (initclock_func == lapic_initclocks)
-		lapic_startclock();
 	lapic_set_lvt();
 #endif
 

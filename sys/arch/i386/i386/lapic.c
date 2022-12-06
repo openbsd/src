@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.52 2022/09/10 01:30:14 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.53 2022/12/06 01:56:44 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -34,7 +34,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -68,7 +70,6 @@ struct evcount clk_count;
 struct evcount ipi_count;
 #endif
 
-void	lapic_delay(int);
 static u_int32_t lapic_gettick(void);
 void	lapic_clockintr(void *);
 void	lapic_initclocks(void);
@@ -239,18 +240,42 @@ lapic_gettick(void)
 
 #include <sys/kernel.h>		/* for hz */
 
-u_int32_t lapic_tval;
-
 /*
  * this gets us up to a 4GHz busclock....
  */
 u_int32_t lapic_per_second = 0;
-u_int32_t lapic_frac_usec_per_cycle;
-u_int64_t lapic_frac_cycle_per_usec;
-u_int32_t lapic_delaytab[26];
+uint64_t lapic_timer_nsec_cycle_ratio;
+uint64_t lapic_timer_nsec_max;
+
+void lapic_timer_rearm(void *, uint64_t);
+void lapic_timer_trigger(void *);
+
+struct intrclock lapic_timer_intrclock = {
+	.ic_rearm = lapic_timer_rearm,
+	.ic_trigger = lapic_timer_trigger
+};
 
 void lapic_timer_oneshot(uint32_t, uint32_t);
 void lapic_timer_periodic(uint32_t, uint32_t);
+
+void
+lapic_timer_rearm(void *unused, uint64_t nsecs)
+{
+	uint32_t cycles;
+
+	if (nsecs > lapic_timer_nsec_max)
+		nsecs = lapic_timer_nsec_max;
+	cycles = (nsecs * lapic_timer_nsec_cycle_ratio) >> 32;
+	if (cycles == 0)
+		cycles = 1;
+	lapic_timer_oneshot(0, cycles);
+}
+
+void
+lapic_timer_trigger(void *unused)
+{
+	lapic_timer_oneshot(0, 1);
+}
 
 /*
  * Start the local apic countdown timer.
@@ -280,25 +305,28 @@ lapic_timer_periodic(uint32_t mask, uint32_t cycles)
 }
 
 void
-lapic_clockintr(void *arg)
+lapic_clockintr(void *frame)
 {
-	struct clockframe *frame = arg;
-
-	hardclock(frame);
-
+	clockintr_dispatch(frame);
 	clk_count.ec_count++;
 }
 
 void
 lapic_startclock(void)
 {
-	lapic_timer_periodic(0, lapic_tval);
+	clockintr_cpu_init(&lapic_timer_intrclock);
+	clockintr_trigger();
 }
 
 void
 lapic_initclocks(void)
 {
 	i8254_inittimecounter_simple();
+
+	stathz = hz;
+	profhz = stathz * 10;
+	clockintr_init(CL_RNDSTAT);
+
 	lapic_startclock();
 }
 
@@ -385,74 +413,14 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	printf("%s: apic clock running at %dMHz\n",
 	    ci->ci_dev->dv_xname, lapic_per_second / (1000 * 1000));
 
-	if (lapic_per_second != 0) {
-		/*
-		 * reprogram the apic timer to run in periodic mode.
-		 * XXX need to program timer on other cpu's, too.
-		 */
-		lapic_tval = (lapic_per_second * 2) / hz;
-		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
-
-		lapic_timer_periodic(LAPIC_LVTT_M, lapic_tval);
-
-		/*
-		 * Compute fixed-point ratios between cycles and
-		 * microseconds to avoid having to do any division
-		 * in lapic_delay.
-		 */
-
-		tmp = (1000000 * (u_int64_t)1 << 32) / lapic_per_second;
-		lapic_frac_usec_per_cycle = tmp;
-
-		tmp = (lapic_per_second * (u_int64_t)1 << 32) / 1000000;
-
-		lapic_frac_cycle_per_usec = tmp;
-
-		/*
-		 * Compute delay in cycles for likely short delays in usec.
-		 */
-		for (i = 0; i < 26; i++)
-			lapic_delaytab[i] = (lapic_frac_cycle_per_usec * i) >>
-			    32;
-
-		/*
-		 * Now that the timer's calibrated, use the apic timer routines
-		 * for all our timing needs..
-		 */
-		delay_init(lapic_delay, 3000);
-		initclock_func = lapic_initclocks;
-	}
-}
-
-/*
- * delay for N usec.
- */
-
-void
-lapic_delay(int usec)
-{
-	int32_t tick, otick;
-	int64_t deltat;		/* XXX may want to be 64bit */
-
-	otick = lapic_gettick();
-
-	if (usec <= 0)
+	/* XXX What should we do here if the timer frequency is zero? */
+	if (lapic_per_second == 0)
 		return;
-	if (usec <= 25)
-		deltat = lapic_delaytab[usec];
-	else
-		deltat = (lapic_frac_cycle_per_usec * usec) >> 32;
 
-	while (deltat > 0) {
-		tick = lapic_gettick();
-		if (tick > otick)
-			deltat -= lapic_tval - (tick - otick);
-		else
-			deltat -= otick - tick;
-		otick = tick;
-
-		CPU_BUSY_CYCLE();
-	}
+	lapic_timer_nsec_cycle_ratio =
+	    lapic_per_second * (1ULL << 32) / 1000000000;
+	lapic_timer_nsec_max = UINT64_MAX / lapic_timer_nsec_cycle_ratio;
+	initclock_func = lapic_initclocks;
 }
 
 /*

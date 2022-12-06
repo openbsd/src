@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.61 2022/11/01 13:59:00 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.62 2022/12/06 01:56:44 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -89,7 +89,9 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timeout.h>
 #include <sys/timetc.h>
 #include <sys/mutex.h>
@@ -202,10 +204,8 @@ rtcdrain(void *v)
 }
 
 int
-clockintr(void *arg)
+clockintr(void *frame)
 {
-	struct clockframe *frame = arg;		/* not strictly necessary */
-
 	if (timecounter->tc_get_timecount == i8254_get_timecount) {
 		if (i8254_ticked) {
 			i8254_ticked = 0;
@@ -214,33 +214,26 @@ clockintr(void *arg)
 			i8254_lastcount = 0;
 		}
 	}
-
-	hardclock(frame);
+	clockintr_dispatch(frame);
 	return (1);
 }
 
 int
-rtcintr(void *arg)
+rtcintr(void *frame)
 {
-	struct clockframe *frame = arg;		/* not strictly necessary */
 	u_int stat = 0;
-
-	if (stathz == 0) {
-		extern int psratio;
-
-		stathz = 128;
-		profhz = 1024;
-		psratio = profhz / stathz;
-	}
 
 	/*
 	 * If rtcintr is 'late', next intr may happen immediately.
 	 * Get them all. (Also, see comment in cpu_initclocks().)
 	 */
-	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF) {
-		statclock(frame);
+	while (mc146818_read(NULL, MC_REGC) & MC_REGC_PF)
 		stat = 1;
-	}
+
+	/* XXX Can rtcintr() run before i8254_initclocks() is complete? */
+	if (stathz != 0 && stat)
+		clockintr_dispatch(frame);
+
 	return (stat);
 }
 
@@ -433,6 +426,14 @@ calibrate_cyclecounter(void)
 void
 i8254_initclocks(void)
 {
+	i8254_inittimecounter();	/* hook the interrupt-based i8254 tc */
+
+	stathz = 128;
+	profhz = 1024;		/* XXX does not divide into 1 billion */
+	clockintr_init(0);
+
+	clockintr_cpu_init(NULL);
+
 	/* When using i8254 for clock, we also use the rtc for profclock */
 	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
 	    clockintr, 0, "clock");
@@ -440,8 +441,6 @@ i8254_initclocks(void)
 	    rtcintr, 0, "rtc");
 
 	rtcstart();			/* start the mc146818 clock */
-
-	i8254_inittimecounter();	/* hook the interrupt-based i8254 tc */
 }
 
 void
@@ -668,6 +667,7 @@ setstatclockrate(int arg)
 			mc146818_write(NULL, MC_REGA,
 			    MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	}
+	clockintr_setstatclockrate(arg);
 }
 
 void

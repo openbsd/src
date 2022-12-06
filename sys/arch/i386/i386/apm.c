@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.127 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: apm.c,v 1.128 2022/12/06 01:56:44 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -44,6 +44,7 @@
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
@@ -271,6 +272,11 @@ apm_suspend(int state)
 	if (initclock_func == i8254_initclocks)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
 	inittodr(gettime());
+
+#ifdef __HAVE_CLOCKINTR
+	clockintr_cpu_init(NULL);
+	clockintr_trigger();
+#endif
 
 	config_suspend_all(DVACT_RESUME);
 	cold = 0;
