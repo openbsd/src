@@ -1,4 +1,4 @@
-/*	$OpenBSD: apliic.c,v 1.3 2022/02/14 14:55:53 kettenis Exp $	*/
+/*	$OpenBSD: apliic.c,v 1.4 2022/12/06 16:06:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -153,6 +153,29 @@ apliic_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
+apliic_wait(struct apliic_softc *sc)
+{
+	uint32_t reg;
+	int timo;
+
+	for (timo = 10; timo > 0; timo--) {
+		reg = HREAD4(sc, I2C_SMSTA);
+		if (reg & I2C_SMSTA_XEN)
+			break;
+		delay(1000);
+	}
+	if (reg & I2C_SMSTA_MTN)
+		return ENXIO;
+	if (timo == 0) {
+		HWRITE4(sc, I2C_SMSTA, reg);
+		return ETIMEDOUT;
+	}
+
+	HWRITE4(sc, I2C_SMSTA, I2C_SMSTA_XEN);
+	return 0;
+}
+
+int
 apliic_acquire_bus(void *cookie, int flags)
 {
 	return 0;
@@ -169,12 +192,13 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 {
 	struct apliic_softc *sc = cookie;
 	uint32_t reg;
-	int i;
+	int error, i;
 
 	if (!I2C_OP_STOP_P(op))
 		return EINVAL;
 
-	HWRITE4(sc, I2C_SMSTA, 0xffffffff);
+	reg = HREAD4(sc, I2C_SMSTA);
+	HWRITE4(sc, I2C_SMSTA, reg);
 
 	if (cmdlen > 0) {
 		HWRITE4(sc, I2C_MTXFIFO, I2C_MTXFIFO_START | addr << 1);
@@ -191,17 +215,9 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		HWRITE4(sc, I2C_MTXFIFO, I2C_MTXFIFO_START | addr << 1 | 1);
 		HWRITE4(sc, I2C_MTXFIFO, I2C_MTXFIFO_READ | buflen |
 		    I2C_MTXFIFO_STOP);
-		for (i = 10; i > 0; i--) {
-			delay(1000);
-			reg = HREAD4(sc, I2C_SMSTA);
-			if (reg & I2C_SMSTA_XEN)
-				break;
-		}
-		if (reg & I2C_SMSTA_MTN)
-			return ENXIO;
-		if (i == 0)
-			return ETIMEDOUT;
-		HWRITE4(sc, I2C_SMSTA, I2C_SMSTA_XEN);
+		error = apliic_wait(sc);
+		if (error)
+			return error;
 		for (i = 0; i < buflen; i++) {
 			reg = HREAD4(sc, I2C_MRXFIFO);
 			if (reg & I2C_MRXFIFO_EMPTY)
@@ -215,6 +231,9 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 			HWRITE4(sc, I2C_MTXFIFO, ((uint8_t *)buf)[i]);
 		HWRITE4(sc, I2C_MTXFIFO, ((uint8_t *)buf)[buflen - 1] |
 		    I2C_MTXFIFO_STOP);
+		error = apliic_wait(sc);
+		if (error)
+			return error;
 	}
 
 	return 0;
