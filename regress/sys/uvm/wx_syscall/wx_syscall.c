@@ -20,10 +20,10 @@ main()
 		if (errno == ENOTSUP) {
 			printf("mprotect -> ENOTSUP?  Please run from "
 			    "wxallowed filesystem\n");
-			exit(0);
 		} else {
-			err(1, "mprotect");
+			warn("mprotect");
 		}
+		exit(0);
 	}
 	flock(0, 0);
 
