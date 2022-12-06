@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.5 2022/12/05 11:50:11 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.6 2022/12/06 11:27:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <stdarg.h>
@@ -42,6 +43,7 @@ struct olabels {
 enum ovalue_type {
 	OVT_INTEGER,
 	OVT_DOUBLE,
+	OVT_TIMEVAL,
 };
 
 struct ovalue {
@@ -50,6 +52,7 @@ struct ovalue {
 	union {
 		unsigned long long	i;
 		double			f;
+		struct timeval		tv;
 	}			 value;
 	enum ovalue_type	 valtype;
 };
@@ -274,6 +277,9 @@ ometric_output_value(FILE *out, const struct ovalue *ov)
 		return fprintf(out, "%llu", ov->value.i);
 	case OVT_DOUBLE:
 		return fprintf(out, "%g", ov->value.f);
+	case OVT_TIMEVAL:
+		return fprintf(out, "%lld.%06ld",
+		    (long long)ov->value.tv.tv_sec, (long)ov->value.tv.tv_usec);
 	}
 	return -1;
 }
@@ -366,6 +372,28 @@ ometric_set_float(struct ometric *om, double val, struct olabels *ol)
 }
 
 /*
+ * Set an timeval value with label ol. ol can be NULL.
+ */
+void
+ometric_set_timeval(struct ometric *om, const struct timeval *tv,
+    struct olabels *ol)
+{
+	struct ovalue *ov;
+
+	if (om->type != OMT_GAUGE)
+		errx(1, "%s incorrect ometric type", __func__);
+
+	if ((ov = malloc(sizeof(*ov))) == NULL)
+		err(1, NULL);
+
+	ov->value.tv = *tv;
+	ov->valtype = OVT_TIMEVAL;
+	ov->labels = olabels_ref(ol);
+
+	STAILQ_INSERT_TAIL(&om->vals, ov, entry);
+}
+
+/*
  * Add an info value (which is the value 1 but with extra key-value pairs).
  */
 void
@@ -422,5 +450,16 @@ ometric_set_int_with_labels(struct ometric *om, uint64_t val,
 
 	extra = olabels_add_extras(ol, keys, values);
 	ometric_set_int(om, val, extra);
+	olabels_free(extra);
+}
+
+void
+ometric_set_timeval_with_labels(struct ometric *om, struct timeval *tv,
+    const char **keys, const char **values, struct olabels *ol)
+{
+	struct olabels *extra;
+
+	extra = olabels_add_extras(ol, keys, values);
+	ometric_set_timeval(om, tv, extra);
 	olabels_free(extra);
 }

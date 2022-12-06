@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.6 2022/12/01 09:16:43 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.7 2022/12/06 11:27:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -319,15 +319,11 @@ static void
 ometric_tail(void)
 {
 	struct timeval elapsed_time;
-	double scrape;
 
 	gettimeofday(&end_time, NULL);
 	timersub(&end_time, &start_time, &elapsed_time);
 
-	scrape = (double)elapsed_time.tv_sec +
-	    (double)elapsed_time.tv_usec / 1000000;
-
-	ometric_set_float(bgpd_scrape_time, scrape, NULL);
+	ometric_set_timeval(bgpd_scrape_time, &elapsed_time, NULL);
 	ometric_output_all(stdout);
 
 	ometric_free_all();
