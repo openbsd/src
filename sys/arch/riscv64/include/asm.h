@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2022/12/03 15:02:30 jca Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2022/12/06 00:08:38 jca Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -107,10 +107,6 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-
-#define	WEAK_REFERENCE(sym, alias)				\
-	.weak alias;						\
-	.set alias,sym
 
 #define	SWAP_FAULT_HANDLER(handler, tmp0, tmp1)			\
 	ld	tmp0, CI_CURPCB(tp);		/* Load the pcb */	\
