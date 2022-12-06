@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.40 2022/12/06 16:10:55 schwarze Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.41 2022/12/06 17:59:21 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -625,7 +625,11 @@ BIO_ctrl_wpending(BIO *bio)
 }
 
 
-/* put the 'bio' on the end of b's list of operators */
+/*
+ * Append "bio" to the end of the chain containing "b":
+ * Two chains "b -> lb" and "oldhead -> bio"
+ * become two chains "b -> lb -> bio" and "oldhead".
+ */
 BIO *
 BIO_push(BIO *b, BIO *bio)
 {
@@ -637,8 +641,11 @@ BIO_push(BIO *b, BIO *bio)
 	while (lb->next_bio != NULL)
 		lb = lb->next_bio;
 	lb->next_bio = bio;
-	if (bio != NULL)
+	if (bio != NULL) {
+		if (bio->prev_bio != NULL)
+			bio->prev_bio->next_bio = NULL;
 		bio->prev_bio = lb;
+	}
 	/* called to do internal processing */
 	BIO_ctrl(b, BIO_CTRL_PUSH, 0, lb);
 	return (b);
