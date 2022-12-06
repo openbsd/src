@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.140 2022/10/25 11:39:33 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.141 2022/12/06 00:56:52 cheloha Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,6 +60,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
@@ -778,6 +779,8 @@ secondary_main()
 	__cpu_simple_unlock(&cpu_boot_mutex);
 
 	set_vbr(kernel_vbr);
+
+	clockintr_cpu_init(NULL);
 
 	spl0();
 	SCHED_LOCK(s);

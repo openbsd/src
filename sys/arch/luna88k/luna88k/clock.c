@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.15 2020/07/06 13:33:07 pirofti Exp $ */
+/* $OpenBSD: clock.c,v 1.16 2022/12/06 00:56:52 cheloha Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -47,6 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/evcount.h>
@@ -118,8 +119,7 @@ struct timecounter clock_tc = {
 };
 
 /*
- * Start the real-time and statistics clocks. Leave stathz 0 since there
- * are no other timers available.
+ * Start the real-time and statistics clocks.
  */
 void
 cpu_initclocks()
@@ -131,8 +131,17 @@ cpu_initclocks()
 #endif
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
+	tick_nsec = 1000000000 / hz;
+
 	clock_tc.tc_frequency = hz;
 	tc_init(&clock_tc);
+
+	stathz = hz;
+	profhz = stathz;
+	clockintr_init(0);
+
+	clockintr_cpu_init(NULL);
+
 	clockinitted = 1;
 
 	rtc_todr.todr_gettime = rtc_gettime;
@@ -140,15 +149,10 @@ cpu_initclocks()
 	todr_handle = &rtc_todr;
 }
 
-/*
- * We assume newhz is either stathz or profhz, and that neither will
- * change after being set up above.  Could recalculate intervals here
- * but that would be a drag.
- */
 void
 setstatclockrate(int newhz)
 {
-	/* nothing we can do */
+	clockintr_setstatclockrate(newhz);
 }
 
 /*
@@ -166,7 +170,7 @@ clockintr(void *eframe)
 
 	*(volatile uint32_t *)(ci->ci_clock_ack) = ~0;
 	if (clockinitted)
-		hardclock(eframe);
+		clockintr_dispatch(eframe);
 	return 1;
 }
 
