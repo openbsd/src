@@ -40,13 +40,14 @@
 
 #include <machine/asm.h>
 
-_ENTRY(htons)
-_NENTRY(ntohs)
-_NENTRY(bswap16)
-_PROF_PROLOGUE
+STRONG_ALIAS(ntohs, htons)
+STRONG_ALIAS(bswap16, htons)
+
+ENTRY(htons)
 	RETGUARD_SETUP(htons, r11)
 	movl	%edi,%eax
 	xchgb	%ah,%al
 	RETGUARD_CHECK(htons, r11)
 	ret
 	lfence
+END(htons)
