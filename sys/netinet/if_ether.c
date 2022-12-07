@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.251 2022/07/16 15:25:30 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.252 2022/12/07 14:38:29 claudio Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -429,8 +429,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 	/*
 	 * There is an arptab entry, but no ethernet address
-	 * response yet. Insert mbuf in hold queue if below limit
-	 * if above the limit free the queue without queuing the new packet.
+	 * response yet. Insert mbuf in hold queue if below limit.
+	 * If above the limit free the queue without queuing the new packet.
 	 */
 	if (atomic_inc_int_nv(&la_hold_total) <= LA_HOLD_TOTAL) {
 		if (mq_push(&la->la_mq, m) != 0)
