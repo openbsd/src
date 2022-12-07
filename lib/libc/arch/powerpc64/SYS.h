@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 2020/10/16 23:42:14 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 2022/12/07 23:25:59 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -54,8 +54,8 @@
 /* offset of errno from %r13 */
 #define R13_OFFSET_ERRNO		(-TCB_OFFSET + TCB_OFFSET_ERRNO)
 
-#define SYSENTRY(x)		.weak _C_LABEL(x); \
-				_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x); \
+#define SYSENTRY(x)		.weak x; \
+				x = _thread_sys_ ## x; \
 				ENTRY(_thread_sys_ ## x)
 #define SYSENTRY_HIDDEN(x) 	ENTRY(_thread_sys_ ## x)
 #define __END_HIDDEN(p,x)	END(p##x);			\

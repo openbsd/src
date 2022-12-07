@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2020/10/22 23:35:43 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2022/12/07 23:25:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -32,7 +32,7 @@
 	addis	%r2, %r12, .TOC.-_GEP_LABEL(x)@ha;		\
 	addi	%r2, %r2, .TOC.-_GEP_LABEL(x)@l;		\
 	_LEP_LABEL(x):						\
-	.localentry     _C_LABEL(x), _LEP_LABEL(x)-_GEP_LABEL(x);
+	.localentry	x, _LEP_LABEL(x)-_GEP_LABEL(x);
 
 #if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE(y)					\
@@ -50,8 +50,8 @@ _TMP_LABEL(y):;							\
 # define _PROF_PROLOGUE(y)
 #endif
 
-#define ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE(y)
-#define ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE(y)
+#define ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE(y)
+#define ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE(y)
 #define END(y)		.size y, . - y
 
 #define STRONG_ALIAS(alias,sym) \
