@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.9 2022/12/07 18:25:33 guenther Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.10 2022/12/07 19:26:39 guenther Exp $	*/
 /*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -157,3 +157,4 @@ ENTRY(strlen)
 	dec	%rsi
 	or	%rsi,%rdx		/* low bytes now non-zero */
 	jmp	2b
+END(strlen)

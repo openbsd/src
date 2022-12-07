@@ -55,3 +55,4 @@ ENTRY(scanc)
 	RETGUARD_CHECK(scanc, r10)
 	ret
 	lfence
+END(scanc)

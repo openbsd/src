@@ -88,3 +88,6 @@ ENTRY(memcpy)
 3:	RETGUARD_CHECK(memmove, r10)
 	ret
 	lfence
+END(bcopy)
+END(memmove)
+END(memcpy)

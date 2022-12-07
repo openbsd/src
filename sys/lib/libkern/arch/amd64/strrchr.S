@@ -1,4 +1,4 @@
-/*	$OpenBSD: strrchr.S,v 1.5 2022/12/07 18:25:33 guenther Exp $	*/
+/*	$OpenBSD: strrchr.S,v 1.6 2022/12/07 19:26:39 guenther Exp $	*/
 /*	$NetBSD: strrchr.S,v 1.3 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*
@@ -124,3 +124,4 @@ ENTRY(strrchr)
 	RETGUARD_CHECK(strrchr, r10)
 	ret
 	lfence
+END(strrchr)

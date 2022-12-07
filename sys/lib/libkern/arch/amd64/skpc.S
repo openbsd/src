@@ -49,3 +49,4 @@ ENTRY(skpc)
 	RETGUARD_CHECK(skpc, r10)
 	ret
 	lfence
+END(skpc)
