@@ -87,3 +87,4 @@ ENTRY(memcpy)
 	cld
 3:	RETGUARD_CHECK(memmove, r10)
 	ret
+	lfence

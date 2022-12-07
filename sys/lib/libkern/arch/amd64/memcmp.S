@@ -35,3 +35,4 @@ L6:	xorl	%eax,%eax		/* Perform unsigned comparison	*/
 	subl    %edx,%eax
 L7:	RETGUARD_CHECK(memcmp, r11)
 	ret
+	lfence

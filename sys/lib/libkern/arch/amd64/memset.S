@@ -52,3 +52,4 @@ L1:	rep
 	movq	%r11,%rax
 	RETGUARD_CHECK(memset, r10)
 	ret
+	lfence

@@ -20,3 +20,4 @@ ENTRY(memchr)
 L1:	xorq	%rax,%rax
 L2:	RETGUARD_CHECK(memchr, r11)
 	ret
+	lfence

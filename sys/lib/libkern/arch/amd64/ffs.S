@@ -17,3 +17,4 @@ ENTRY(ffs)
 L1:	xorl	%eax,%eax		/* clear result */
 L2:	RETGUARD_CHECK(ffs, r11)
 	ret
+	lfence

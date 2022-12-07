@@ -19,3 +19,4 @@ ENTRY(bcmp)
 L1:	incl	%eax
 L2:	RETGUARD_CHECK(bcmp, r11)
 	ret
+	lfence

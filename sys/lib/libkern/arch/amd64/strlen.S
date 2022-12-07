@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.8 2022/01/11 09:21:34 jsg Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.9 2022/12/07 18:25:33 guenther Exp $	*/
 /*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -142,6 +142,7 @@ ENTRY(strlen)
 	lea	-8(%rax,%rdx),%rax
 	RETGUARD_CHECK(strlen, r10)
 	ret
+	lfence
 
 /* Misaligned, read aligned word and make low bytes non-zero */
 	_ALIGN_TRAPS

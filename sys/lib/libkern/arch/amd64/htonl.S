@@ -49,3 +49,4 @@ _PROF_PROLOGUE
 	bswap	%eax
 	RETGUARD_CHECK(htonl, r11)
 	ret
+	lfence

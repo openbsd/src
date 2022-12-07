@@ -49,3 +49,4 @@ _PROF_PROLOGUE
 	xchgb	%ah,%al
 	RETGUARD_CHECK(htons, r11)
 	ret
+	lfence

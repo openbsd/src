@@ -38,3 +38,4 @@ L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
 	stosb
 	RETGUARD_CHECK(bzero, r11)
 	ret
+	lfence

@@ -54,3 +54,4 @@ ENTRY(scanc)
 	movl	%ecx,%eax
 	RETGUARD_CHECK(scanc, r10)
 	ret
+	lfence
