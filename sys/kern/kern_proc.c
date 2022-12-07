@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.92 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.93 2022/12/07 20:08:28 mvs Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -43,10 +43,16 @@
 #include <sys/pool.h>
 #include <sys/vnode.h>
 
+/*
+ *  Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	U	uidinfolk
+ */
+
 struct rwlock uidinfolk;
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
+LIST_HEAD(uihashhead, uidinfo) *uihashtbl;	/* [U] */
+u_long uihash;				/* [I] size of hash table - 1 */
 
 /*
  * Other process lists

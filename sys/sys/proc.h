@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.335 2022/11/23 11:00:27 mbuhl Exp $	*/
+/*	$OpenBSD: proc.h,v 1.336 2022/12/07 20:08:29 mvs Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -303,6 +303,7 @@ struct p_inentry {
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	S	scheduler lock
+ *	U	uidinfolk
  *	l	read only reference, see lim_read_enter()
  *	o	owned (read/modified only) by this thread
  */
@@ -433,10 +434,10 @@ struct proc {
 #ifdef _KERNEL
 
 struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
-	uid_t   ui_uid;
-	long    ui_proccnt;	/* proc structs */
-	long	ui_lockcnt;	/* lockf structs */
+	LIST_ENTRY(uidinfo) ui_hash;	/* [U] */
+	uid_t   ui_uid;			/* [I] */
+	long    ui_proccnt;		/* [U] proc structs */
+	long	ui_lockcnt;		/* [U] lockf structs */
 };
 
 struct uidinfo *uid_find(uid_t);
