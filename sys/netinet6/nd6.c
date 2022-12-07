@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.257 2022/12/02 15:35:35 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.258 2022/12/07 17:34:20 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -249,13 +249,6 @@ nd6_options(union nd_opts *ndopts)
 			}
 			break;
 		case ND_OPT_PREFIX_INFORMATION:
-			if (ndopts->nd_opt_array[nd_opt->nd_opt_type] == 0) {
-				ndopts->nd_opt_array[nd_opt->nd_opt_type]
-					= nd_opt;
-			}
-			ndopts->nd_opts_pi_end =
-				(struct nd_opt_prefix_info *)nd_opt;
-			break;
 		case ND_OPT_DNSSL:
 		case ND_OPT_RDNSS:
 			/* Don't warn */

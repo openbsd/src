@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.91 2022/12/02 15:35:35 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.92 2022/12/07 17:34:20 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -125,10 +125,6 @@ union nd_opts {
 };
 #define nd_opts_src_lladdr	nd_opt_each.src_lladdr
 #define nd_opts_tgt_lladdr	nd_opt_each.tgt_lladdr
-#define nd_opts_pi		nd_opt_each.pi_beg
-#define nd_opts_pi_end		nd_opt_each.pi_end
-#define nd_opts_rh		nd_opt_each.rh
-#define nd_opts_mtu		nd_opt_each.mtu
 #define nd_opts_search		nd_opt_each.search
 #define nd_opts_last		nd_opt_each.last
 #define nd_opts_done		nd_opt_each.done
