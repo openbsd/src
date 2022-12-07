@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_push.3,v 1.9 2022/12/06 21:13:01 schwarze Exp $
+.\" $OpenBSD: BIO_push.3,v 1.10 2022/12/07 22:30:15 tb Exp $
 .\" full merge up to:
 .\" OpenSSL doc/man3/BIO_push.pod 791bfd91 Nov 19 20:38:27 2021 +0100
 .\" OpenSSL doc/man7/bio.pod 1cb7eff4 Sep 10 13:56:40 2019 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2022 $
+.Dd $Mdocdate: December 7 2022 $
 .Dt BIO_PUSH 3
 .Os
 .Sh NAME
@@ -233,7 +233,12 @@ are digest BIOs,
 .Sy b64
 is a Base64 BIO and
 .Sy f
-is a file BIO.
+is a file BIO (see
+.Xr BIO_f_md 3 ,
+.Xr BIO_f_base64 3 ,
+and
+.Xr BIO_s_file 3 ,
+respectively).
 .Pp
 If the call
 .Pp
