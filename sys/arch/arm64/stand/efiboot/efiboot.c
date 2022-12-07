@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.44 2022/11/05 19:00:31 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.45 2022/12/07 23:04:26 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -47,7 +47,10 @@ EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
 EFI_HANDLE		 IH, efi_bootdp;
-void			*fdt = NULL;
+void			*fdt_sys = NULL;
+void			*fdt_override = NULL;
+size_t			 fdt_override_size;
+void			*smbios = NULL;
 
 EFI_PHYSICAL_ADDRESS	 heap;
 UINTN			 heapsiz = 1 * 1024 * 1024;
@@ -62,6 +65,8 @@ static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 static EFI_GUID		 gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 static EFI_GUID		 fdt_guid = FDT_TABLE_GUID;
+static EFI_GUID		 smbios_guid = SMBIOS_TABLE_GUID;
+static EFI_GUID		 smbios3_guid = SMBIOS3_TABLE_GUID;
 
 #define efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
@@ -73,6 +78,9 @@ static void efi_timer_init(void);
 static void efi_timer_cleanup(void);
 static EFI_STATUS efi_memprobe_find(UINTN, UINTN, EFI_MEMORY_TYPE,
     EFI_PHYSICAL_ADDRESS *);
+void *efi_fdt(void);
+int fdt_load_override(char *);
+extern void smbios_init(void *);
 
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
@@ -102,9 +110,15 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	for (i = 0; i < ST->NumberOfTableEntries; i++) {
 		if (efi_guidcmp(&fdt_guid,
 		    &ST->ConfigurationTable[i].VendorGuid) == 0)
-			fdt = ST->ConfigurationTable[i].VendorTable;
+			fdt_sys = ST->ConfigurationTable[i].VendorTable;
+		if (efi_guidcmp(&smbios_guid,
+		    &ST->ConfigurationTable[i].VendorGuid) == 0)
+			smbios = ST->ConfigurationTable[i].VendorTable;
+		if (efi_guidcmp(&smbios3_guid,
+		    &ST->ConfigurationTable[i].VendorGuid) == 0)
+			smbios = ST->ConfigurationTable[i].VendorTable;
 	}
-	fdt_init(fdt);
+	fdt_init(fdt_sys);
 
 	progname = "BOOTAA64";
 
@@ -584,9 +598,10 @@ efi_makebootargs(char *bootargs, int howto)
 	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
 	uint32_t boothowto = htobe32(howto);
 	EFI_PHYSICAL_ADDRESS addr;
-	void *node;
+	void *node, *fdt;
 	size_t len;
 
+	fdt = efi_fdt();
 	if (fdt == NULL || acpi)
 		fdt = efi_acpi();
 
@@ -698,6 +713,7 @@ machdep(void)
 
 	cninit();
 	efi_heap_init();
+	smbios_init(smbios);
 
 	/*
 	 * The kernel expects to be loaded into a block of memory aligned
@@ -1072,6 +1088,79 @@ mdrandom(char *buf, size_t buflen)
 	return ret;
 }
 
+#define FW_PATH "/etc/firmware/dtb/"
+
+void *
+efi_fdt(void)
+{
+	extern char *hw_vendor, *hw_prod;
+
+	/* 'mach dtb' has precedence */
+	if (fdt_override != NULL)
+		return fdt_override;
+
+	/* Return system provided one */
+	if (hw_vendor == NULL || hw_prod == NULL)
+		return fdt_sys;
+
+	if (strcmp(hw_vendor, "LENOVO") == 0 &&
+	    strncmp(hw_prod, "21BX", 4) == 0)
+		fdt_load_override(FW_PATH
+		    "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb");
+
+	return fdt_override ? fdt_override : fdt_sys;
+}
+
+int
+fdt_load_override(char *file)
+{
+	EFI_PHYSICAL_ADDRESS addr;
+	char path[MAXPATHLEN];
+	struct stat sb;
+	int fd;
+
+	if (file == NULL && fdt_override) {
+		BS->FreePages((uint64_t)fdt_override,
+		    EFI_SIZE_TO_PAGES(fdt_override_size));
+		fdt_override = NULL;
+		fdt_init(fdt_sys);
+		return 0;
+	}
+
+	snprintf(path, sizeof(path), "%s:%s", cmd.bootdev, file);
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0 || fstat(fd, &sb) == -1) {
+		printf("cannot open %s\n", path);
+		return 0;
+	}
+	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
+	    PAGE_SIZE, EfiLoaderData, &addr) != EFI_SUCCESS) {
+		printf("cannot allocate memory for %s\n", path);
+		return 0;
+	}
+	if (read(fd, (void *)addr, sb.st_size) != sb.st_size) {
+		printf("cannot read from %s\n", path);
+		return 0;
+	}
+
+	if (!fdt_init((void *)addr)) {
+		printf("invalid device tree\n");
+		BS->FreePages(addr, EFI_SIZE_TO_PAGES(sb.st_size));
+		return 0;
+	}
+
+	if (fdt_override) {
+		BS->FreePages((uint64_t)fdt_override,
+		    EFI_SIZE_TO_PAGES(fdt_override_size));
+		fdt_override = NULL;
+	}
+
+	fdt_override = (void *)addr;
+	fdt_override_size = sb.st_size;
+	return 0;
+}
+
 /*
  * Commands
  */
@@ -1099,36 +1188,17 @@ Xacpi_efi(void)
 int
 Xdtb_efi(void)
 {
-	EFI_PHYSICAL_ADDRESS addr;
-	char path[MAXPATHLEN];
-	struct stat sb;
-	int fd;
+	if (cmd.argc == 1) {
+		fdt_load_override(NULL);
+		return (0);
+	}
 
 	if (cmd.argc != 2) {
 		printf("dtb file\n");
 		return (0);
 	}
 
-	snprintf(path, sizeof(path), "%s:%s", cmd.bootdev, cmd.argv[1]);
-
-	fd = open(path, O_RDONLY);
-	if (fd < 0 || fstat(fd, &sb) == -1) {
-		printf("cannot open %s\n", path);
-		return (0);
-	}
-	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
-	    PAGE_SIZE, EfiLoaderData, &addr) != EFI_SUCCESS) {
-		printf("cannot allocate memory for %s\n", path);
-		return (0);
-	}
-	if (read(fd, (void *)addr, sb.st_size) != sb.st_size) {
-		printf("cannot read from %s\n", path);
-		return (0);
-	}
-
-	fdt = (void *)addr;
-	fdt_init(fdt);
-	return (0);
+	return fdt_load_override(cmd.argv[1]);
 }
 
 int
