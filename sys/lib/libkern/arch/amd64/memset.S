@@ -19,7 +19,7 @@ ENTRY(memset)
 	 * unaligned set.
 	 */
 	cmpq	$0x0f,%rcx
-	jle	L1
+	jle	1f
 
 	movb	%al,%ah			/* copy char to all bytes in word */
 	movl	%eax,%edx
@@ -47,9 +47,10 @@ ENTRY(memset)
 
 	movq	%r8,%rcx		/* set remainder by bytes */
 	andq	$7,%rcx
-L1:	rep
+1:	rep
 	stosb
 	movq	%r11,%rax
 	RETGUARD_CHECK(memset, r10)
 	ret
 	lfence
+END(memset)

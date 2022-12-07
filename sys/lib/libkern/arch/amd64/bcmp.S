@@ -8,15 +8,16 @@ ENTRY(bcmp)
 	shrq	$3,%rcx
 	repe
 	cmpsq
-	jne	L1
+	jne	1f
 
 	movq	%rdx,%rcx		/* compare remainder by bytes */
 	andq	$7,%rcx
 	repe
 	cmpsb
-	je	L2
+	je	2f
 
-L1:	incl	%eax
-L2:	RETGUARD_CHECK(bcmp, r11)
+1:	incl	%eax
+2:	RETGUARD_CHECK(bcmp, r11)
 	ret
 	lfence
+END(bcmp)

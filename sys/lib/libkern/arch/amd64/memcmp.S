@@ -12,27 +12,28 @@ ENTRY(memcmp)
 	shrq	$3,%rcx
 	repe
 	cmpsq
-	jne	L5			/* do we match so far? */
+	jne	5f			/* do we match so far? */
 
 	movq	%rdx,%rcx		/* compare remainder by bytes */
 	andq	$7,%rcx
 	repe
 	cmpsb
-	jne	L6			/* do we match? */
+	jne	6f			/* do we match? */
 
 	xorl	%eax,%eax		/* we match, return zero	*/
-	jmp L7
+	jmp	7f
 
-L5:	movl	$8,%ecx			/* We know that one of the next	*/
+5:	movl	$8,%ecx			/* We know that one of the next	*/
 	subq	%rcx,%rdi		/* eight pairs of bytes do not	*/
 	subq	%rcx,%rsi		/* match.			*/
 	repe
 	cmpsb
-L6:	xorl	%eax,%eax		/* Perform unsigned comparison	*/
+6:	xorl	%eax,%eax		/* Perform unsigned comparison	*/
 	movb	-1(%rdi),%al
 	xorl	%edx,%edx
 	movb	-1(%rsi),%dl
 	subl    %edx,%eax
-L7:	RETGUARD_CHECK(memcmp, r11)
+7:	RETGUARD_CHECK(memcmp, r11)
 	ret
 	lfence
+END(memcmp)

@@ -11,13 +11,14 @@ ENTRY(memchr)
 	movb	%sil,%al		/* set character to search for */
 	movq	%rdx,%rcx		/* set length of search */
 	testq	%rcx,%rcx		/* test for len == 0 */
-	jz	L1
+	jz	1f
 	repne				/* search! */
 	scasb
-	jne	L1			/* scan failed, return null */
+	jne	1f			/* scan failed, return null */
 	leaq	-1(%rdi),%rax		/* adjust result of scan */
-	jmp L2
-L1:	xorq	%rax,%rax
-L2:	RETGUARD_CHECK(memchr, r11)
+	jmp	2f
+1:	xorq	%rax,%rax
+2:	RETGUARD_CHECK(memchr, r11)
 	ret
 	lfence
+END(memchr)

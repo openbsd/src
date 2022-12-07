@@ -18,7 +18,7 @@ ENTRY(bzero)
 	 * unaligned set.
 	 */
 	cmpq	$16,%rdx
-	jb	L1
+	jb	1f
 
 	movq	%rdi,%rcx		/* compute misalignment */
 	negq	%rcx
@@ -33,9 +33,10 @@ ENTRY(bzero)
 	rep
 	stosq
 
-L1:	movq	%rdx,%rcx		/* zero remainder by bytes */
+1:	movq	%rdx,%rcx		/* zero remainder by bytes */
 	rep
 	stosb
 	RETGUARD_CHECK(bzero, r11)
 	ret
 	lfence
+END(bzero)
