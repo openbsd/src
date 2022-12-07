@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_push.3,v 1.10 2022/12/07 22:30:15 tb Exp $
+.\" $OpenBSD: BIO_push.3,v 1.11 2022/12/07 23:08:47 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL doc/man3/BIO_push.pod 791bfd91 Nov 19 20:38:27 2021 +0100
 .\" OpenSSL doc/man7/bio.pod 1cb7eff4 Sep 10 13:56:40 2019 +0100
@@ -105,6 +105,7 @@ It is either at the end of its chain
 or there is exactly one following BIO.
 If there is neither a preceding nor a following BIO,
 it can be regarded as a chain with one member.
+Every chain has exactly one beginning and exactly one end.
 .Pp
 .Fn BIO_push
 appends the chain starting at
@@ -139,6 +140,11 @@ For portability, it is best to make sure that
 .Fa new_tail
 is at the beginning of its chain before calling
 .Fn BIO_push .
+.Pp
+The LibreSSL implementation of
+.Fn BIO_push
+never creates cycles.
+If a call would result in a cycle, nothing is changed and the call fails.
 .Pp
 .Fn BIO_pop
 removes the BIO
@@ -208,11 +214,16 @@ have any effect is
 .Fn BIO_push
 returns
 .Fa b
-if it is not
-.Dv NULL
-or
+for success or a different pointer for failure.
+In particular, it fails and returns
 .Fa new_tail
-if it is.
+if
+.Fa b
+is
+.Dv NULL .
+In LibreSSL, it fails and returns
+.Dv NULL
+if appending would create a cycle.
 .Pp
 .Fn BIO_pop
 returns the BIO that followed
@@ -283,6 +294,22 @@ and the new chain will be
 data can be written to
 .Sy md1
 as before.
+.Pp
+Even though LibreSSL handles some of the edge cases gracefully,
+the following idiom is recommended for portable error checking:
+.Bd -literal -offset indent
+if (b == NULL || new_tail == NULL || b == new_tail)
+	/* Report the problem and bail out. */
+if (BIO_push(b, new_tail) != b)
+	/* Report that nothing was changed
+	 * because it would have created a cycle. */
+.Ed
+.Pp
+Even with the portable idiom, old and non-LibreSSL library implementations
+may silently attempt to create cycles instead of rejecting them and returning
+.Dv NULL ,
+which may result in infinite loops, infinite recursion, or segmentation
+faults either right away or later on.
 .Sh SEE ALSO
 .Xr BIO_find_type 3 ,
 .Xr BIO_new 3 ,
