@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.5 2022/12/08 18:16:28 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.6 2022/12/08 18:33:20 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -27,7 +27,7 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define CHAIN_POP_LEN	5
+#define CHAIN_POP_LEN		5
 #define LINK_CHAIN_A_LEN	8
 #define LINK_CHAIN_B_LEN	5
 
@@ -360,8 +360,9 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 
 	/* If we push B[0] or set next to B[0], the oldhead chain is empty. */
 	if (j == 0) {
-		oldhead_len = 0;
 		oldhead_start = NULL;
+		oldhead_end = NULL;
+		oldhead_len = 0;
 	}
 
 	if (use_bio_push) {
@@ -409,11 +410,11 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 		goto err;
 
 	/*
-	 * All sanity checks passed. We can now free the our chains
+	 * All sanity checks passed. We can now free the chains
 	 * with the BIO API without risk of leaks or double frees.
 	 */
 
-	BIO_free_all(A[0]);
+	BIO_free_all(new_start);
 	BIO_free_all(oldhead_start);
 	BIO_free_all(oldtail_start);
 
