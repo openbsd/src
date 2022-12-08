@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.130 2022/10/20 13:31:52 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.131 2022/12/08 21:32:48 kettenis Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -899,11 +899,34 @@ uvn_cluster(struct uvm_object *uobj, voff_t offset, voff_t *loffset,
 int
 uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 {
-	int retval;
+	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
+	int dying, retval;
 
 	KASSERT(rw_write_held(uobj->vmobjlock));
 
+	/*
+	 * Unless we're recycling this vnode, grab a reference to it
+	 * to prevent it from being recycled from under our feet.
+	 * This also makes sure we can don't panic if we end up in
+	 * uvn_vnp_uncache() as a result of the I/O operation as that
+	 * function assumes we hold a reference.
+	 *
+	 * If the vnode is in the process of being recycled by someone
+	 * else, grabbing a refernce will fail.  In that case the
+	 * pages will already be written out by whoever is cleaning
+	 * the vnode, so simply return VM_PAGER_AGAIN such that we
+	 * skip these pages.
+	 */
+	dying = (uvn->u_flags & UVM_VNODE_DYING);
+	if (!dying) {
+		if (vget(uvn->u_vnode, LK_NOWAIT))
+			return VM_PAGER_AGAIN;
+	}
+
 	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
+
+	if (!dying)
+		vrele(uvn->u_vnode);
 
 	return retval;
 }
