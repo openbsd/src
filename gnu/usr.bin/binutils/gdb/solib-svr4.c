@@ -378,6 +378,8 @@ elf_locate_base (void)
     }
   else /* 64-bit elf */
     {
+      char *bufstart = buf;
+
       for (bufend = buf + dyninfo_sect_size;
 	   buf < bufend;
 	   buf += sizeof (Elf64_External_Dyn))
@@ -407,7 +409,7 @@ elf_locate_base (void)
 	      dyn_ptr = bfd_h_get_64 (exec_bfd, 
 				      (bfd_byte *) x_dynp->d_un.d_ptr);
 	      if (dyn_tag == DT_MIPS_RLD_MAP_REL)
-		dyn_ptr += (entry_addr - bfd_get_start_address(exec_bfd));
+		dyn_ptr += (relocated_dyninfo_addr + (buf - bufstart));
 	      if (target_read_memory (dyn_ptr, pbuf, pbuf_size))
 		return 0;
 	      return extract_unsigned_integer (pbuf, pbuf_size);

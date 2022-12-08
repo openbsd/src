@@ -8714,8 +8714,17 @@ _bfd_mips_elf_finish_dynamic_sections (bfd *output_bfd,
 	      break;
 
 	    case DT_MIPS_RLD_MAP:
-	    case DT_MIPS_RLD_MAP_REL:
 	      dyn.d_un.d_ptr = mips_elf_hash_table (info)->rld_value;
+	      break;
+
+	    case DT_MIPS_RLD_MAP_REL:
+	      {
+		bfd_vma dt_addr;
+
+		dt_addr = (sdyn->output_section->vma + sdyn->output_offset
+			   + (b - sdyn->contents));
+	        dyn.d_un.d_val = mips_elf_hash_table (info)->rld_value - dt_addr;
+	      }
 	      break;
 
 	    case DT_MIPS_OPTIONS:
