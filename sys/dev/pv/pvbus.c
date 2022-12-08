@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.25 2022/08/25 17:38:16 cheloha Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.26 2022/12/08 05:45:36 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -408,7 +408,7 @@ pvbusgetstr(size_t srclen, const char *src, char **dstp)
 	else if (srclen > PAGE_SIZE)
 		return (ENAMETOOLONG);
 
-	*dstp = dst = malloc(srclen + 1, M_TEMP|M_ZERO, M_WAITOK);
+	*dstp = dst = malloc(srclen + 1, M_TEMP, M_WAITOK | M_ZERO);
 	if (src != NULL) {
 		error = copyin(src, dst, srclen);
 		dst[srclen] = '\0';
