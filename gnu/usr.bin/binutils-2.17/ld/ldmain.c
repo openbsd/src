@@ -296,7 +296,7 @@ main (int argc, char **argv)
   link_info.keep_memory = TRUE;
   link_info.notice_all = FALSE;
   link_info.nocopyreloc = FALSE;
-  link_info.new_dtags = FALSE;
+  link_info.new_dtags = TRUE;	/* to match lld */
   link_info.combreloc = TRUE;
   link_info.eh_frame_hdr = FALSE;
   link_info.relro = TRUE;
