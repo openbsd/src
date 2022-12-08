@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.2 2022/12/08 18:10:52 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.3 2022/12/08 18:12:39 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -153,6 +153,97 @@ bio_chain_pop_test(void)
 	return failed;
 }
 
+static int
+walk_forward(BIO *start, BIO *end, size_t expected_length,
+    size_t i, size_t j, const char *fn, const char *description)
+{
+	BIO *prev, *next;
+	size_t length;
+	int ret = 0;
+
+	if (start == NULL || end == NULL)
+		goto done;
+
+	next = start;
+	length = 0;
+
+	do {
+		prev = next;
+		next = BIO_next(prev);
+		length++;
+	} while (next != NULL);
+
+	if (prev != end) {
+		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected end\n",
+		    fn, i, j, description);
+		goto err;
+	}
+
+	if (length != expected_length) {
+		fprintf(stderr, "%s case (%zu, %zu) %s length "
+		    "(walking forward) want: %zu, got %zu\n",
+		    fn, i, j, description, expected_length, length);
+		goto err;
+	}
+
+ done:
+	ret = 1;
+
+ err:
+	return ret;
+}
+
+static int
+walk_backward(BIO *start, BIO *end, size_t expected_length,
+    size_t i, size_t j, const char *fn, const char *description)
+{
+	BIO *prev, *next;
+	size_t length;
+	int ret = 0;
+
+	if (start == NULL || end == NULL)
+		goto done;
+
+	length = 0;
+	prev = end;
+	do {
+		next = prev;
+		prev = BIO_prev(prev);
+		length++;
+	} while (prev != NULL);
+
+	if (next != start) {
+		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected start\n",
+		    fn, i, j, description);
+		goto err;
+	}
+
+	if (length != expected_length) {
+		fprintf(stderr, "%s case (%zu, %zu) %s length "
+		    "(walking backward) want: %zu, got %zu\n",
+		    fn, i, j, description, expected_length, length);
+		goto err;
+	}
+
+ done:
+	ret = 1;
+
+ err:
+	return ret;
+}
+
+static int
+check_chain(BIO *start, BIO *end, size_t expected_length,
+    size_t i, size_t j, const char *fn, const char *description)
+{
+	if (!walk_forward(start, end, expected_length, i, j, fn, description))
+		return 0;
+	if (!walk_backward(start, end, expected_length, i, j, fn, description))
+		return 0;
+
+	return 1;
+}
+
 /*
  * Link two linear chains of BIOs, A[] and B[], of length N_CHAIN_BIOS together
  * using either BIO_push(A[i], B[j]) or BIO_set_next(A[i], B[j]).
@@ -198,10 +289,11 @@ bio_chain_pop_test(void)
 static int
 link_chains_at(size_t i, size_t j, int use_bio_push)
 {
+	const char *fn = use_bio_push ? "BIO_push" : "BIO_set_next";
 	BIO *A[N_CHAIN_BIOS], *B[N_CHAIN_BIOS];
+	BIO *new_start, *new_end, *prev;
 	BIO *oldhead_start, *oldhead_end, *oldtail_start, *oldtail_end;
-	BIO *prev, *next;
-	size_t k, length, new_chain_length, oldhead_length, oldtail_length;
+	size_t k, new_length, oldhead_length, oldtail_length;
 	int failed = 1;
 
 	memset(A, 0, sizeof(A));
@@ -227,55 +319,32 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	 * Set our expectations. ... it's complicated.
 	 */
 
+	new_start = A[0];
+	new_end = B[N_CHAIN_BIOS - 1];
+
 	oldhead_length = j;
 	oldhead_start = B[0];
 	oldhead_end = BIO_prev(B[j]);
 
-	/*
-	 * Adjust for edge case where we push B[0] or set next to B[0].
-	 * The oldhead chain is then empty.
-	 */
-
+	/* If we push B[0] or set next to B[0], the oldhead chain is empty. */
 	if (j == 0) {
-		if (oldhead_end != NULL) {
-			fprintf(stderr, "%s: oldhead(B) not empty at start\n",
-			    __func__);
-			goto err;
-		}
-
 		oldhead_length = 0;
 		oldhead_start = NULL;
 	}
 
 	if (use_bio_push) {
-		new_chain_length = N_CHAIN_BIOS + N_CHAIN_BIOS - j;
+		new_length = N_CHAIN_BIOS + N_CHAIN_BIOS - j;
 
 		/* oldtail doesn't exist in the BIO_push() case. */
 		oldtail_start = NULL;
 		oldtail_end = NULL;
 		oldtail_length = 0;
 	} else {
-		new_chain_length = i + 1 + N_CHAIN_BIOS - j;
+		new_length = i + 1 + N_CHAIN_BIOS - j;
 
 		oldtail_start = BIO_next(A[i]);
 		oldtail_end = A[N_CHAIN_BIOS - 1];
 		oldtail_length = N_CHAIN_BIOS - i - 1;
-
-		/*
-		 * In case we push onto (or set next at) the end of A[],
-		 * the oldtail chain is empty.
-		 */
-		if (i == N_CHAIN_BIOS - 1) {
-			if (oldtail_start != NULL) {
-				fprintf(stderr,
-				    "%s: oldtail(A) not empty at end\n",
-				    __func__);
-				goto err;
-			}
-
-			oldtail_end = NULL;
-			oldtail_length = 0;
-		}
 	}
 
 	/*
@@ -284,9 +353,8 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 
 	if (use_bio_push) {
 		if (BIO_push(A[i], B[j]) != A[i]) {
-			fprintf(stderr,
-			    "%s: BIO_push(A[%zu], B[%zu]) != A[%zu]\n",
-			    __func__, i, j, i);
+			fprintf(stderr, "BIO_push(A[%zu], B[%zu]) != A[%zu]\n",
+			    i, j, i);
 			goto err;
 		}
 	} else {
@@ -294,176 +362,19 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	}
 
 	/*
-	 * Walk the new chain starting at A[0] forward. Check that we reach
-	 * B[N_CHAIN_BIOS - 1] and that the new chain's length is as expected.
+	 * Check that all the chains match our expectations.
 	 */
 
-	next = A[0];
-	length = 0;
-	do {
-		prev = next;
-		next = BIO_next(prev);
-		length++;
-	} while (next != NULL);
-
-	if (prev != B[N_CHAIN_BIOS - 1]) {
-		fprintf(stderr,
-		    "%s(%zu, %zu, %d): new chain doesn't end in end of B\n",
-		    __func__, i, j, use_bio_push);
+	if (!check_chain(new_start, new_end, new_length, i, j, fn, "new chain"))
 		goto err;
-	}
 
-	if (length != new_chain_length) {
-		fprintf(stderr, "%s(%zu, %zu, %d) unexpected new chain length"
-		    " (walking forward). want %zu, got %zu\n",
-		    __func__, i, j, use_bio_push, new_chain_length, length);
+	if (!check_chain(oldhead_start, oldhead_end, oldhead_length, i, j, fn,
+	    "oldhead"))
 		goto err;
-	}
 
-	/*
-	 * Walk the new chain ending in B[N_CHAIN_BIOS - 1] backward.
-	 * Check that we reach A[0] and that its length is what we expect.
-	 */
-
-	prev = B[N_CHAIN_BIOS - 1];
-	length = 0;
-	do {
-		next = prev;
-		prev = BIO_prev(next);
-		length++;
-	} while (prev != NULL);
-
-	if (next != A[0]) {
-		fprintf(stderr,
-		    "%s(%zu, %zu, %d): new chain doesn't start at start of A\n",
-		    __func__, i, j, use_bio_push);
+	if (!check_chain(oldtail_start, oldtail_end, oldtail_length, i, j, fn,
+	    "oldtail"))
 		goto err;
-	}
-
-	if (length != new_chain_length) {
-		fprintf(stderr, "%s(%zu, %zu, %d) unexpected new chain length"
-		    " (walking backward). want %zu, got %zu\n",
-		    __func__, i, j, use_bio_push, new_chain_length, length);
-		goto err;
-	}
-
-	if (oldhead_start != NULL) {
-
-		/*
-		 * Walk the old head forward and check its length.
-		 */
-
-		next = oldhead_start;
-		length = 0;
-		do {
-			prev = next;
-			next = BIO_next(prev);
-			length++;
-		} while (next != NULL);
-
-		if (prev != oldhead_end) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d): unexpected old head end\n",
-			    __func__, i, j, use_bio_push);
-			goto err;
-		}
-
-		if (length != oldhead_length) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d) unexpected old head length"
-			    " (walking forward). want %zu, got %zu\n",
-			    __func__, i, j, use_bio_push,
-			    oldhead_length, length);
-			goto err;
-		}
-
-		/*
-		 * Walk the old head backward and check its length.
-		 */
-
-		prev = oldhead_end;
-		length = 0;
-		do {
-			next = prev;
-			prev = BIO_prev(next);
-			length++;
-		} while (prev != NULL);
-
-		if (next != oldhead_start) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d): unexpected old head start\n",
-			    __func__, i, j, use_bio_push);
-			goto err;
-		}
-
-		if (length != oldhead_length) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d) unexpected old head length"
-			    " (walking backward). want %zu, got %zu\n",
-			    __func__, i, j, use_bio_push,
-			    oldhead_length, length);
-			goto err;
-		}
-	}
-
-	if (oldtail_start != NULL) {
-
-		/*
-		 * Walk the old tail forward and check its length.
-		 */
-
-		next = oldtail_start;
-		length = 0;
-		do {
-			prev = next;
-			next = BIO_next(prev);
-			length++;
-		} while (next != NULL);
-
-		if (prev != oldtail_end) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d): unexpected old tail end\n",
-			    __func__, i, j, use_bio_push);
-			goto err;
-		}
-
-		if (length != oldtail_length) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d) unexpected old tail length"
-			    " (walking forward). want %zu, got %zu\n",
-			    __func__, i, j, use_bio_push,
-			    oldtail_length, length);
-			goto err;
-		}
-
-		/*
-		 * Walk the old tail backward and check its length.
-		 */
-
-		prev = oldtail_end;
-		length = 0;
-		do {
-			next = prev;
-			prev = BIO_prev(next);
-			length++;
-		} while (prev != NULL);
-
-		if (next != oldtail_start) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d): unexpected old tail start\n",
-			    __func__, i, j, use_bio_push);
-			goto err;
-		}
-
-		if (length != oldtail_length) {
-			fprintf(stderr,
-			    "%s(%zu, %zu, %d) unexpected old tail length"
-			    " (walking backward). want %zu, got %zu\n",
-			    __func__, i, j, use_bio_push,
-			    oldtail_length, length);
-			goto err;
-		}
-	}
 
 	/*
 	 * All sanity checks passed. We can now free the our chains
