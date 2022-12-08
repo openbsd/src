@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2015/12/06 18:42:12 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/12/08 12:01:04 anton Exp $
 
-regress:
-	@sh ${.CURDIR}/fmt.sh
+REGRESS_TARGETS+=	fmt
+fmt:
+	sh ${.CURDIR}/fmt.sh
 
 .include <bsd.regress.mk>

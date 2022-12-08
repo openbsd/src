@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2016/08/28 12:39:07 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/12/08 12:01:04 anton Exp $
 
-regress:
-	@sh ${.CURDIR}/column.sh
+REGRESS_TARGETS+=	column
+column:
+	sh ${.CURDIR}/column.sh
 
 .include <bsd.regress.mk>
