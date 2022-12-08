@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.6 2022/12/08 18:33:20 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.7 2022/12/08 18:34:00 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -338,7 +338,7 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	memset(A, 0, sizeof(A));
 	memset(B, 0, sizeof(B));
 
-	if (i > nitems(A) || j > nitems(B))
+	if (i >= nitems(A) || j >= nitems(B))
 		goto err;
 
 	/* Create two linear chains of BIOs. */
