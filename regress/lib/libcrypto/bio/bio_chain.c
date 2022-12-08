@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.3 2022/12/08 18:12:39 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.4 2022/12/08 18:15:36 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -23,7 +23,13 @@
 
 #include "bio_local.h"
 
-#define N_CHAIN_BIOS	5
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
+#define CHAIN_POP_LEN	5
+#define LINK_CHAIN_A_LEN	8
+#define LINK_CHAIN_B_LEN	5
 
 static BIO *
 BIO_prev(BIO *bio)
@@ -34,25 +40,61 @@ BIO_prev(BIO *bio)
 	return bio->prev_bio;
 }
 
+static void bio_chain_destroy(BIO **, size_t);
+
+static int
+bio_chain_create(const BIO_METHOD *meth, BIO *chain[], size_t len)
+{
+	BIO *prev;
+	size_t i;
+
+	memset(chain, 0, len * sizeof(BIO *));
+
+	prev = NULL;
+	for (i = 0; i < len; i++) {
+		if ((chain[i] = BIO_new(meth)) == NULL) {
+			fprintf(stderr, "BIO_new failed\n");
+			goto err;
+		}
+		if ((prev = BIO_push(prev, chain[i])) == NULL) {
+			fprintf(stderr, "BIO_push failed\n");
+			goto err;
+		}
+	}
+
+	return 1;
+
+ err:
+	bio_chain_destroy(chain, len);
+
+	return 0;
+}
+
+static void
+bio_chain_destroy(BIO *chain[], size_t len)
+{
+	size_t i;
+
+	for (i = 0; i < len; i++)
+		BIO_free(chain[i]);
+
+	memset(chain, 0, len * sizeof(BIO *));
+}
+
 static int
 bio_chain_pop_test(void)
 {
-	BIO *bio[N_CHAIN_BIOS];
+	BIO *bio[CHAIN_POP_LEN];
 	BIO *prev, *next;
 	size_t i, j;
 	int failed = 1;
 
-	for (i = 0; i < N_CHAIN_BIOS; i++) {
+	for (i = 0; i < nitems(bio); i++) {
 		memset(bio, 0, sizeof(bio));
 		prev = NULL;
 
-		/* Create a linear chain of BIOs. */
-		for (j = 0; j < N_CHAIN_BIOS; j++) {
-			if ((bio[j] = BIO_new(BIO_s_null())) == NULL)
-				errx(1, "BIO_new");
-			if ((prev = BIO_push(prev, bio[j])) == NULL)
-				errx(1, "BIO_push");
-		}
+		if (!bio_chain_create(BIO_s_null(), bio, nitems(bio)))
+			goto err;
 
 		/* Check that the doubly-linked list was set up as expected. */
 		if (BIO_prev(bio[0]) != NULL) {
@@ -60,11 +102,11 @@ bio_chain_pop_test(void)
 			    "i = %zu: first BIO has predecessor\n", i);
 			goto err;
 		}
-		if (BIO_next(bio[N_CHAIN_BIOS - 1]) != NULL) {
+		if (BIO_next(bio[nitems(bio) - 1]) != NULL) {
 			fprintf(stderr, "i = %zu: last BIO has successor\n", i);
 			goto err;
 		}
-		for (j = 0; j < N_CHAIN_BIOS; j++) {
+		for (j = 0; j < nitems(bio); j++) {
 			if (j > 0) {
 				if (BIO_prev(bio[j]) != bio[j - 1]) {
 					fprintf(stderr, "i = %zu: "
@@ -73,7 +115,7 @@ bio_chain_pop_test(void)
 					goto err;
 				}
 			}
-			if (j < N_CHAIN_BIOS - 1) {
+			if (j < nitems(bio) - 1) {
 				if (BIO_next(bio[j]) != bio[j + 1]) {
 					fprintf(stderr, "i = %zu: "
 					    "BIO_next(bio[%zu]) != bio[%zu]\n",
@@ -92,7 +134,7 @@ bio_chain_pop_test(void)
 			goto err;
 		}
 
-		if (i < N_CHAIN_BIOS - 1) {
+		if (i < nitems(bio) - 1) {
 			if (next != bio[i + 1]) {
 				fprintf(stderr, "BIO_pop(bio[%zu]) did not "
 				    "return bio[%zu]\n", i, i + 1);
@@ -118,7 +160,7 @@ bio_chain_pop_test(void)
 			j = 1;
 		}
 
-		for (; j < N_CHAIN_BIOS; j++) {
+		for (; j < nitems(bio); j++) {
 			if (j == i)
 				continue;
 			if (BIO_next(prev) != bio[j]) {
@@ -139,16 +181,13 @@ bio_chain_pop_test(void)
 			goto err;
 		}
 
-		for (j = 0; j < N_CHAIN_BIOS; j++)
-			BIO_free(bio[j]);
-		memset(bio, 0, sizeof(bio));
+		bio_chain_destroy(bio, nitems(bio));
 	}
 
 	failed = 0;
 
  err:
-	for (i = 0; i < N_CHAIN_BIOS; i++)
-		BIO_free(bio[i]);
+	bio_chain_destroy(bio, nitems(bio));
 
 	return failed;
 }
@@ -245,26 +284,26 @@ check_chain(BIO *start, BIO *end, size_t expected_length,
 }
 
 /*
- * Link two linear chains of BIOs, A[] and B[], of length N_CHAIN_BIOS together
- * using either BIO_push(A[i], B[j]) or BIO_set_next(A[i], B[j]).
+ * Link two linear chains of BIOs A[] and B[] together using either
+ * BIO_push(A[i], B[j]) or BIO_set_next(A[i], B[j]).
  *
  * BIO_push() first walks the chain A[] to its end and then appends the tail
  * of chain B[] starting at B[j]. If j > 0, we get two chains
  *
- *     A[0] -- ... -- A[N_CHAIN_BIOS - 1] -- B[j] -- ... -- B[N_CHAIN_BIOS - 1]
- *                                         `- link created by BIO_push()
+ *     A[0] -- ... -- A[nitems(A) - 1] -- B[j] -- ... -- B[nitems(B) - 1]
+ *                                      `- link created by BIO_push()
  *     B[0] -- ... -- B[j-1]
  *       |<-- oldhead -->|
  *
- * of lengths N_CHAIN_BIOS + N_CHAIN_BIOS - j and j, respectively.
+ * of lengths nitems(A) + nitems(B) - j and j, respectively.
  * If j == 0, the second chain (oldhead) is empty. One quirk of BIO_push() is
  * that the outcome of BIO_push(A[i], B[j]) apart from the return value is
  * independent of i.
  *
  * Prior to bio_lib.c r1.41, BIO_push(A[i], B[j]) would fail to dissociate the
- * two chains and leave B[j] with two parents for 0 < j < N_CHAIN_BIOS.
- * B[j]->prev_bio would point at A[N_CHAIN_BIOS - 1], while both B[j - 1] and
- * A[N_CHAIN_BIOS - 1] would point at B[j]. In particular, BIO_free_all(A[0])
+ * two chains and leave B[j] with two parents for 0 < j < nitems(B).
+ * B[j]->prev_bio would point at A[nitems(A) - 1], while both B[j - 1] and
+ * A[nitems(A) - 1] would point at B[j]. In particular, BIO_free_all(A[0])
  * followed by BIO_free_all(B[0]) results in a double free of B[j].
  *
  * The result for BIO_set_next() is different: three chains are created.
@@ -276,8 +315,8 @@ check_chain(BIO *start, BIO *end, size_t expected_length,
  *     --- oldhead -->|      \
  *          ... -- B[j-1] -- B[j] -- B[j+1] -- ...
  *
- * After creating a new link, the new chain has length i + 1 + N_CHAIN_BIOS - j,
- * oldtail has length N_CHAIN_BIOS - i - 1 and oldhead has length j.
+ * After creating a new link, the new chain has length i + 1 + nitems(B) - j,
+ * oldtail has length nitems(A) - i - 1 and oldhead has length j.
  *
  * Prior to bio_lib.c r1.40, BIO_set_next(A[i], B[j]) results in both A[i] and
  * B[j - 1] pointing at B[j] while B[j] points back at A[i]. The result is
@@ -290,37 +329,30 @@ static int
 link_chains_at(size_t i, size_t j, int use_bio_push)
 {
 	const char *fn = use_bio_push ? "BIO_push" : "BIO_set_next";
-	BIO *A[N_CHAIN_BIOS], *B[N_CHAIN_BIOS];
-	BIO *new_start, *new_end, *prev;
+	BIO *A[LINK_CHAIN_A_LEN], *B[LINK_CHAIN_B_LEN];
+	BIO *new_start, *new_end;
 	BIO *oldhead_start, *oldhead_end, *oldtail_start, *oldtail_end;
-	size_t k, new_length, oldhead_length, oldtail_length;
+	size_t new_length, oldhead_length, oldtail_length;
 	int failed = 1;
 
 	memset(A, 0, sizeof(A));
 	memset(B, 0, sizeof(B));
 
+	if (i > nitems(A) || j > nitems(B))
+		goto err;
+
 	/* Create two linear chains of BIOs. */
-	prev = NULL;
-	for (k = 0; k < N_CHAIN_BIOS; k++) {
-		if ((A[k] = BIO_new(BIO_s_null())) == NULL)
-			errx(1, "BIO_new");
-		if ((prev = BIO_push(prev, A[k])) == NULL)
-			errx(1, "BIO_push");
-	}
-	prev = NULL;
-	for (k = 0; k < N_CHAIN_BIOS; k++) {
-		if ((B[k] = BIO_new(BIO_s_null())) == NULL)
-			errx(1, "BIO_new");
-		if ((prev = BIO_push(prev, B[k])) == NULL)
-			errx(1, "BIO_push");
-	}
+	if (!bio_chain_create(BIO_s_null(), A, nitems(A)))
+		goto err;
+	if (!bio_chain_create(BIO_s_null(), B, nitems(B)))
+		goto err;
 
 	/*
 	 * Set our expectations. ... it's complicated.
 	 */
 
 	new_start = A[0];
-	new_end = B[N_CHAIN_BIOS - 1];
+	new_end = B[nitems(B) - 1];
 
 	oldhead_length = j;
 	oldhead_start = B[0];
@@ -333,18 +365,18 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	}
 
 	if (use_bio_push) {
-		new_length = N_CHAIN_BIOS + N_CHAIN_BIOS - j;
+		new_length = nitems(A) + nitems(B) - j;
 
 		/* oldtail doesn't exist in the BIO_push() case. */
 		oldtail_start = NULL;
 		oldtail_end = NULL;
 		oldtail_length = 0;
 	} else {
-		new_length = i + 1 + N_CHAIN_BIOS - j;
+		new_length = i + 1 + nitems(B) - j;
 
 		oldtail_start = BIO_next(A[i]);
-		oldtail_end = A[N_CHAIN_BIOS - 1];
-		oldtail_length = N_CHAIN_BIOS - i - 1;
+		oldtail_end = A[nitems(A) - 1];
+		oldtail_length = nitems(A) - i - 1;
 	}
 
 	/*
@@ -391,10 +423,8 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	failed = 0;
 
  err:
-	for (i = 0; i < N_CHAIN_BIOS; i++)
-		BIO_free(A[i]);
-	for (i = 0; i < N_CHAIN_BIOS; i++)
-		BIO_free(B[i]);
+	bio_chain_destroy(A, nitems(A));
+	bio_chain_destroy(B, nitems(B));
 
 	return failed;
 }
@@ -405,8 +435,8 @@ link_chains(int use_bio_push)
 	size_t i, j;
 	int failure = 0;
 
-	for (i = 0; i < N_CHAIN_BIOS; i++) {
-		for (j = 0; j < N_CHAIN_BIOS; j++) {
+	for (i = 0; i < LINK_CHAIN_A_LEN; i++) {
+		for (j = 0; j < LINK_CHAIN_B_LEN; j++) {
 			failure |= link_chains_at(i, j, use_bio_push);
 		}
 	}
