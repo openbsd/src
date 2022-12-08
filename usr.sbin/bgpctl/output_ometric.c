@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_ometric.c,v 1.8 2022/12/06 17:38:41 claudio Exp $ */
+/*	$OpenBSD: output_ometric.c,v 1.9 2022/12/08 17:24:39 cheloha Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -16,11 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/time.h>
+
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "bgpd.h"
@@ -47,7 +50,7 @@ struct ometric *peer_rr_eorr_transmit, *peer_rr_eorr_receive;
 struct ometric *rde_mem_size, *rde_mem_count, *rde_mem_ref_count;
 struct ometric *rde_set_size, *rde_set_count, *rde_table_count;
 
-struct timeval start_time, end_time;
+struct timespec start_time, end_time;
 
 static void
 ometric_head(struct parse_result *arg)
@@ -58,11 +61,11 @@ ometric_head(struct parse_result *arg)
 	char hostname[HOST_NAME_MAX + 1];
 	char *domainname;
 
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
+
 	bgpd_info = ometric_new(OMT_INFO, "bgpd", "bgpd information");
 	bgpd_scrape_time = ometric_new(OMT_GAUGE, "bgpd_scrape_seconds",
 	    "bgpd scrape time in seconds");
-
-	gettimeofday(&start_time, NULL);
 
 	if (gethostname(hostname, sizeof(hostname)))
 		err(1, "gethostname");
@@ -318,12 +321,14 @@ ometric_rib_mem(struct rde_memstats *stats)
 static void
 ometric_tail(void)
 {
-	struct timeval elapsed_time;
+	struct timespec elapsed_time;
+	struct timeval tv;
 
-	gettimeofday(&end_time, NULL);
-	timersub(&end_time, &start_time, &elapsed_time);
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	timespecsub(&end_time, &start_time, &elapsed_time);
+	TIMESPEC_TO_TIMEVAL(&tv, &elapsed_time);
 
-	ometric_set_timeval(bgpd_scrape_time, &elapsed_time, NULL);
+	ometric_set_timeval(bgpd_scrape_time, &tv, NULL);
 	ometric_output_all(stdout);
 
 	ometric_free_all();
