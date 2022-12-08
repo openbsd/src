@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.8 2010/12/14 20:24:25 jasper Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.9 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: exception_vector.S,v 1.19 2006/08/22 21:47:57 uwe Exp $	*/
 
 /*-
@@ -54,8 +54,8 @@
  */
 
 #define VECTOR_END_MARKER(sym)			\
-		.globl	_C_LABEL(sym);		\
-	_C_LABEL(sym):
+		.globl	sym;			\
+	sym:
 
 
 /*
@@ -120,13 +120,13 @@ NENTRY(sh_vector_generic)
 2:	__EXCEPTION_RETURN
 	/* NOTREACHED */
 	.align	5
-.Lg_curproc:			.long	_C_LABEL(cpu_info_store) + CI_CURPROC
+.Lg_curproc:			.long	cpu_info_store + CI_CURPROC
 REG_SYMBOL(EXPEVT)
 REG_SYMBOL(BBRA)
 REG_SYMBOL(TEA)
-.Lg_tlb_exception:		.long	_C_LABEL(tlb_exception)
-.Lg_general_exception:		.long	_C_LABEL(general_exception)
-.Lg_ast:			.long	_C_LABEL(ast)
+.Lg_tlb_exception:		.long	tlb_exception
+.Lg_general_exception:		.long	general_exception
+.Lg_ast:			.long	ast
 .Lg_TLB_PROT_ST:		.long	EXPEVT_TLB_PROT_ST
 .Lg_VPN_MASK:			.long	0xfffff000
 
@@ -281,8 +281,8 @@ NENTRY(sh3_vector_tlbmiss)
 
 	.align	4
 .L3_VPN_cleanup:		.long	~0x00000c00
-.L3_curptd:			.long	_C_LABEL(curptd)
-.L3_kernptd:			.long	_C_LABEL(__pmap_kernel)
+.L3_curptd:			.long	curptd
+.L3_kernptd:			.long	__pmap_kernel
 .L3_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L3_ptp_index_mask:		.long	0x1ff
 .L3_ptp_offset_mask:		.long	0x3ff << 2
@@ -290,8 +290,8 @@ NENTRY(sh3_vector_tlbmiss)
 .L3_PG_V:			.long	PG_V
 .L3_clear_ASID:			.long	~SH3_PTEH_ASID_MASK
 .L3_SH3_EXPEVT:			.long	SH3_EXPEVT
-.L3_curproc:			.long	_C_LABEL(cpu_info_store) + CI_CURPROC
-.L3_tlb_exception:		.long	_C_LABEL(tlb_exception)
+.L3_curproc:			.long	cpu_info_store + CI_CURPROC
+.L3_tlb_exception:		.long	tlb_exception
 
 /* LINTSTUB: Var: char sh3_vector_tlbmiss_end[1]; */
 VECTOR_END_MARKER(sh3_vector_tlbmiss_end)
@@ -447,16 +447,16 @@ NENTRY(sh4_vector_tlbmiss)
 
 .L4_SH4_PTEH:			.long	SH4_PTEH
 .L4_VPN_cleanup:		.long	~0x00000c00
-.L4_curptd:			.long	_C_LABEL(curptd)
-.L4_kernptd:			.long	_C_LABEL(__pmap_kernel)
+.L4_curptd:			.long	curptd
+.L4_kernptd:			.long	__pmap_kernel
 .L4_VM_MIN_KERNEL_ADDRESS:	.long	VM_MIN_KERNEL_ADDRESS
 .L4_ptp_index_mask:		.long	0x1ff
 .L4_ptp_offset_mask:		.long	0x3ff << 2
 .L4_PG_HW_BITS:			.long	PG_HW_BITS
 .L4_PG_V:			.long	PG_V
 .L4_clear_ASID:			.long	~SH4_PTEH_ASID_MASK
-.L4_curproc:			.long	_C_LABEL(cpu_info_store) + CI_CURPROC
-.L4_tlb_exception:		.long	_C_LABEL(tlb_exception)
+.L4_curproc:			.long	cpu_info_store + CI_CURPROC
+.L4_tlb_exception:		.long	tlb_exception
 
 
 /* LINTSTUB: Var: char sh4_vector_tlbmiss_end[1]; */
@@ -497,10 +497,10 @@ NENTRY(sh_vector_interrupt)
 	__EXCEPTION_RETURN
 
 	.align	5
-.Li_curproc:		.long	_C_LABEL(cpu_info_store) + CI_CURPROC
-.Li_intc_intr:		.long	_C_LABEL(intc_intr)
-.Li_ast:		.long	_C_LABEL(ast)
-.Li_uvmexp_intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
+.Li_curproc:		.long	cpu_info_store + CI_CURPROC
+.Li_intc_intr:		.long	intc_intr
+.Li_ast:		.long	ast
+.Li_uvmexp_intrs:	.long	uvmexp + UVMEXP_INTRS
 
 /* LINTSTUB: Var: char sh_vector_interrupt_end[1]; */
 VECTOR_END_MARKER(sh_vector_interrupt_end)

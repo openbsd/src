@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.5 2022/09/02 10:15:35 miod Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.6 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: boot.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -148,7 +148,7 @@ ENTRY(cache_disable)
 .L.__bss_start:
 	.long   __bss_start
 .L.boot:
-	.long   _C_LABEL(boot)
+	.long	boot
 .L.start:
 	.long	0xc0000000
 .L.pwrctl:

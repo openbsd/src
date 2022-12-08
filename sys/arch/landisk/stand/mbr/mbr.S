@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.2 2022/05/24 17:29:02 krw Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.3 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: mbr.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ boot_lba:
 
 
 	.align	1
-mbr_size:	.word	mbr_end - _C_LABEL(start)
+mbr_size:	.word	mbr_end - start
 	.align	1
 stack_offset:	.word	0x1000
 	.align	1
@@ -182,17 +182,17 @@ ERR_NOOS:	.asciz	"No O/S\r\n"
 
 
 /* space for mbr_dsn */
-	. = _C_LABEL(start) + 0x1b4
+	. = start + 0x1b4
 	.long	0
 
 /* mbr_bootsel_magic */
-	. = _C_LABEL(start) + 0x1b8
+	. = start + 0x1b8
 	.word	0
 
 /*
  * MBR partition table
  */
-	. = _C_LABEL(start) + 0x1be
+	. = start + 0x1be
 _pbr_part0:
 	.byte	0, 0, 0, 0, 0, 0, 0, 0	
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
@@ -206,7 +206,7 @@ _pbr_part3:
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
 
-	. = _C_LABEL(start) + 0x1fe
+	. = start + 0x1fe
 magic:
 	.word	0xaa55
 mbr_end:

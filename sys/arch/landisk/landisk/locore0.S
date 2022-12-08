@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.1 2017/06/08 05:35:25 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.2 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -67,6 +67,6 @@ ALTENTRY(kernel_text)
 
 	/* NOTREACHED */	
 	.align	2
-_L.landisk_startup:	.long	_C_LABEL(landisk_startup)
-_L.bootstrap_stack:	.long	_C_LABEL(start)
+_L.landisk_startup:	.long	landisk_startup
+_L.bootstrap_stack:	.long	start
 _L.MMUCR:		.long	SH4_MMUCR

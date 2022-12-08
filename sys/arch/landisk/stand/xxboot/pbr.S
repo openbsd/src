@@ -1,4 +1,4 @@
-/*	$OpenBSD: pbr.S,v 1.2 2022/08/24 17:35:15 miod Exp $	*/
+/*	$OpenBSD: pbr.S,v 1.3 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: pbr.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -40,9 +40,9 @@ ENTRY(start)
 	 .byte	0x11			/* 0x4f11: cmp/pz r15... */
 	.asciz	"OpenBSD"
 
-	. = _C_LABEL(start) + 0x0b	/* move to start of BPB */
+	. = start + 0x0b		/* move to start of BPB */
 
-	. = _C_LABEL(start) + 0x1c	/* skip BPB */
+	. = start + 0x1c		/* skip BPB */
 start0:
 	mova	pbr_end, r0
 	mov.w	pbr_size, r2
@@ -175,7 +175,7 @@ pbr_read_ok:
 
 
 	.align	1
-pbr_size:	.word	pbr_end - _C_LABEL(start)
+pbr_size:	.word	pbr_end - start
 	.align	1
 stack_offset:	.word	0x1000
 	.align	1
@@ -187,9 +187,9 @@ magic_offset:	.word	0x1fe
 .L.xxboot_magic1:
 	.long	0x20031125
 .L.xxboot_magic:
-	.long	_C_LABEL(xxboot_magic)
+	.long	xxboot_magic
 .L.xxboot_start:
-	.long	_C_LABEL(xxboot_start)
+	.long	xxboot_start
 
 	.align	2
 crlf:		.asciz	"\r\n"
@@ -202,11 +202,11 @@ ERR_NO_XXBOOT:	.asciz  "Not a xxboot image"
 ERR_PTN:	.asciz  "No OpenBSD partition"
 
 
-	. = _C_LABEL(start) + 0x1fe
+	. = start + 0x1fe
 magic:
 	.word	0xaa55
 pbr_end:
 
-	.global	_C_LABEL(ptn_disklabel)
-_C_LABEL(ptn_disklabel):
+	.global	ptn_disklabel
+ptn_disklabel:
 	.fill	512

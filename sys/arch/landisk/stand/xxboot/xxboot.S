@@ -1,4 +1,4 @@
-/*	$OpenBSD: xxboot.S,v 1.1 2006/11/08 17:46:56 deraadt Exp $	*/
+/*	$OpenBSD: xxboot.S,v 1.2 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: xxboot.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ boot_fail:
 .L.__bss_start:
 	.long	__bss_start
 .L.boot1:
-	.long	_C_LABEL(boot1)
+	.long	boot1
 .L.2nd_loadaddr:
 	.long	LOADADDRESS
 .L.boot_params:

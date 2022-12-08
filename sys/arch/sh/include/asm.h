@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.9 2022/08/30 16:26:29 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.10 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
 
 /*-
@@ -74,22 +74,22 @@
 #define	_PROF_PROLOGUE
 #endif /* !GPROF */
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)) _PROF_PROLOGUE
-#define	NENTRY(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)) _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(y) _PROF_PROLOGUE
+#define	NENTRY(y)	_ENTRY(y)
+#define	ASENTRY(y)	_ENTRY(y) _PROF_PROLOGUE
 
 #define END(y)		.size	y, . - y
 
 #define SET_ENTRY_SIZE(y) \
-	.size	_C_LABEL(y), . - _C_LABEL(y)
+	.size	y, . - y
 
 #define SET_ASENTRY_SIZE(y) \
-	.size	_ASM_LABEL(y), . - _ASM_LABEL(y)
+	.size	y, . - y
 
 #define	ALTENTRY(name)				 \
-	.globl _C_LABEL(name)			;\
-	.type _C_LABEL(name),@function		;\
-	_C_LABEL(name):
+	.globl name				;\
+	.type name,@function			;\
+	name:
 
 /*
  * Hide the gory details of PIC calls vs. normal calls.  Use as in the
@@ -182,10 +182,10 @@
 #endif /* !PIC */
 
 #define	STRONG_ALIAS(alias,sym)						\
-	.global _C_LABEL(alias);					\
-	_C_LABEL(alias) = _C_LABEL(sym)
+	.global alias;							\
+	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
-	.weak _C_LABEL(alias);						\
-	_C_LABEL(alias) = _C_LABEL(sym)
+	.weak alias;							\
+	alias = sym
 
 #endif /* !_SH_ASM_H_ */

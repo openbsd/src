@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.7 2022/09/02 06:19:04 miod Exp $	*/
+/*	$OpenBSD: brk.S,v 1.8 2022/12/08 02:11:27 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.10 2006/01/06 03:58:31 uwe Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 	.data
 	.align	2
 __minbrk:
-	.long	_C_LABEL(_end)
+	.long	_end
 	.size	__minbrk, . - __minbrk
 	.type	__minbrk,@object
 
