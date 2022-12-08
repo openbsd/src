@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.45 2022/12/07 23:04:26 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.46 2022/12/08 00:29:06 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -1104,9 +1104,12 @@ efi_fdt(void)
 		return fdt_sys;
 
 	if (strcmp(hw_vendor, "LENOVO") == 0 &&
-	    strncmp(hw_prod, "21BX", 4) == 0)
+	    strncmp(hw_prod, "21BX", 4) == 0) {
 		fdt_load_override(FW_PATH
 		    "qcom/sc8280xp-lenovo-thinkpad-x13s.dtb");
+		/* TODO: find a better mechanism */
+		cnset(ttydev("fb0"));
+	}
 
 	return fdt_override ? fdt_override : fdt_sys;
 }
