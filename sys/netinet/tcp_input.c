@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.382 2022/11/07 11:22:55 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.383 2022/12/08 05:59:39 yasuoka Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3352,7 +3352,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= tcptv_keep_init)
+	if (sc->sc_rxttot >= TCP_TIME(tcptv_keep_init))
 		goto dropit;
 
 	tcpstat_inc(tcps_sc_retransmitted);
