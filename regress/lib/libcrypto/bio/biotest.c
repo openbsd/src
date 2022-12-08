@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.10 2022/12/03 09:53:47 tb Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.11 2022/12/08 11:32:27 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -598,6 +598,370 @@ do_bio_chain_pop_test(void)
 	return failed;
 }
 
+/*
+ * Link two linear chains of BIOs, A[], B[] of length N_CHAIN_BIOS together
+ * using either BIO_push(A[i], B[j]) or BIO_set_next(A[i], B[j]).
+ *
+ * BIO_push() first walks the chain A[] to its end and then appends the tail
+ * of chain B[] starting at B[j]. If j > 0, we get two chains
+ *
+ *     A[0] -- ... -- A[N_CHAIN_BIOS - 1] -- B[j] -- ... -- B[N_CHAIN_BIOS - 1]
+ *
+ *     B[0] -- ... -- B[j-1]
+ *     --- oldhead -->|
+ *
+ * of lengths N_CHAIN_BIOS + N_CHAIN_BIOS - j and j, respectively.
+ * If j == 0, the second chain (oldhead) is empty. One quirk of BIO_push() is
+ * that the outcome of BIO_push(A[i], B[j]) apart from the return value is
+ * independent of i.
+ *
+ * Prior to bio_lib.c r1.41, BIO_push() would keep * BIO_next(B[j-1]) == B[j]
+ * for 0 < j < N_CHAIN_BIOS, and at the same time for all j the inconsistent
+ * BIO_prev(B[j]) == A[N_CHAIN_BIOS - 1].
+ *
+ * The result for BIO_set_next() is different: three chains are created.
+ *
+ *                                 |--- oldtail -->
+ *     ... -- A[i-1] -- A[i] -- A[i+1] -- ...
+ *                         \
+ *                          \  new link created by BIO_set_next()
+ *     --- oldhead -->|      \
+ *          ... -- B[j-1] -- B[j] -- B[j+1] -- ...
+ *
+ * After creating a new link, the new chain has length i + 1 + N_CHAIN_BIOS - j,
+ * oldtail has length N_CHAIN_BIOS - i - 1 and oldhead has length j.
+ *
+ * Prior to bio_lib.c r1.40, BIO_set_next() results in BIO_next(B[j-1]) == B[j],
+ * B[j-1] == BIO_prev(B[j]), A[i] == BIO_prev(A[i+1]) and, in addition,
+ * BIO_next(A[i]) == B[j], thus leaving A[] and B[] in an inconsistent state.
+ *
+ * XXX: Should check that the callback is called on BIO_push() as expected.
+ */
+
+static int
+do_bio_link_chains_at(size_t i, size_t j, int use_bio_push)
+{
+	BIO *A[N_CHAIN_BIOS], *B[N_CHAIN_BIOS];
+	BIO *oldhead_start, *oldhead_end, *oldtail_start, *oldtail_end;
+	BIO *prev, *next;
+	size_t k, length, new_chain_length, oldhead_length, oldtail_length;
+	int failed = 1;
+
+	memset(A, 0, sizeof(A));
+	memset(B, 0, sizeof(A));
+
+	/* Create two linear chains of BIOs. */
+	prev = NULL;
+	for (k = 0; k < N_CHAIN_BIOS; k++) {
+		if ((A[k] = BIO_new(BIO_s_null())) == NULL)
+			errx(1, "BIO_new");
+		if ((prev = BIO_push(prev, A[k])) == NULL)
+			errx(1, "BIO_push");
+	}
+	prev = NULL;
+	for (k = 0; k < N_CHAIN_BIOS; k++) {
+		if ((B[k] = BIO_new(BIO_s_null())) == NULL)
+			errx(1, "BIO_new");
+		if ((prev = BIO_push(prev, B[k])) == NULL)
+			errx(1, "BIO_push");
+	}
+
+	/*
+	 * Set our expectations. ... it's complicated.
+	 */
+
+	oldhead_length = j;
+	oldhead_start = B[0];
+	oldhead_end = BIO_prev(B[j]);
+
+	/*
+	 * Adjust for edge case where we push B[0] or set next to B[0].
+	 * The oldhead chain is then empty.
+	 */
+
+	if (j == 0) {
+		if (oldhead_end != NULL) {
+			fprintf(stderr, "%s: oldhead(B) not empty at start\n",
+			    __func__);
+			goto err;
+		}
+
+		oldhead_length = 0;
+		oldhead_start = NULL;
+	}
+
+	if (use_bio_push) {
+		new_chain_length = N_CHAIN_BIOS + N_CHAIN_BIOS - j;
+
+		/* oldtail doesn't exist in the BIO_push() case. */
+		oldtail_start = NULL;
+		oldtail_end = NULL;
+		oldtail_length = 0;
+	} else {
+		new_chain_length = i + 1 + N_CHAIN_BIOS - j;
+
+		oldtail_start = BIO_next(A[i]);
+		oldtail_end = A[N_CHAIN_BIOS - 1];
+		oldtail_length = N_CHAIN_BIOS - i - 1;
+
+		/*
+		 * In case we push onto (or set next at) the end of A[],
+		 * the oldtail chain is empty.
+		 */
+		if (i == N_CHAIN_BIOS - 1) {
+			if (oldtail_start != NULL) {
+				fprintf(stderr,
+				    "%s: oldtail(A) not empty at end\n",
+				    __func__);
+				goto err;
+			}
+
+			oldtail_end = NULL;
+			oldtail_length = 0;
+		}
+	}
+
+	/*
+	 * Now actually push or set next.
+	 */
+
+	if (use_bio_push) {
+		if (BIO_push(A[i], B[j]) != A[i]) {
+			fprintf(stderr,
+			    "%s: BIO_push(A[%zu], B[%zu]) != A[%zu]\n",
+			    __func__, i, j, i);
+			goto err;
+		}
+	} else {
+		BIO_set_next(A[i], B[j]);
+	}
+
+	/*
+	 * Walk the new chain starting at A[0] forward. Check that we reach
+	 * B[N_CHAIN_BIOS - 1] and that the new chain's length is as expected.
+	 */
+
+	next = A[0];
+	length = 0;
+	do {
+		prev = next;
+		next = BIO_next(prev);
+		length++;
+	} while (next != NULL);
+
+	if (prev != B[N_CHAIN_BIOS - 1]) {
+		fprintf(stderr,
+		    "%s(%zu, %zu, %d): new chain doesn't end in end of B\n",
+		    __func__, i, j, use_bio_push);
+		goto err;
+	}
+
+	if (length != new_chain_length) {
+		fprintf(stderr, "%s(%zu, %zu, %d) unexpected new chain length"
+		    " (walking forward). want %zu, got %zu\n",
+		    __func__, i, j, use_bio_push, new_chain_length, length);
+		goto err;
+	}
+
+	/*
+	 * Walk the new chain ending in B[N_CHAIN_BIOS - 1] backward.
+	 * Check that we reach A[0] and that its length is what we expect.
+	 */
+
+	prev = B[N_CHAIN_BIOS - 1];
+	length = 0;
+	do {
+		next = prev;
+		prev = BIO_prev(next);
+		length++;
+	} while (prev != NULL);
+
+	if (next != A[0]) {
+		fprintf(stderr,
+		    "%s(%zu, %zu, %d): new chain doesn't start at start of A\n",
+		    __func__, i, j, use_bio_push);
+		goto err;
+	}
+
+	if (length != new_chain_length) {
+		fprintf(stderr, "%s(%zu, %zu, %d) unexpected new chain length"
+		    " (walking backward). want %zu, got %zu\n",
+		    __func__, i, j, use_bio_push, new_chain_length, length);
+		goto err;
+	}
+
+	if (oldhead_start != NULL) {
+
+		/*
+		 * Walk the old head forward and check its length.
+		 */
+
+		next = oldhead_start;
+		length = 0;
+		do {
+			prev = next;
+			next = BIO_next(prev);
+			length++;
+		} while (next != NULL);
+
+		if (prev != oldhead_end) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d): unexpected old head end\n",
+			    __func__, i, j, use_bio_push);
+			goto err;
+		}
+
+		if (length != oldhead_length) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d) unexpected old head length"
+			    " (walking forward). want %zu, got %zu\n",
+			    __func__, i, j, use_bio_push,
+			    oldhead_length, length);
+			goto err;
+		}
+
+		/*
+		 * Walk the old head backward and check its length.
+		 */
+
+		prev = oldhead_end;
+		length = 0;
+		do {
+			next = prev;
+			prev = BIO_prev(next);
+			length++;
+		} while (prev != NULL);
+
+		if (next != oldhead_start) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d): unexpected old head start\n",
+			    __func__, i, j, use_bio_push);
+			goto err;
+		}
+
+		if (length != oldhead_length) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d) unexpected old head length"
+			    " (walking backward). want %zu, got %zu\n",
+			    __func__, i, j, use_bio_push,
+			    oldhead_length, length);
+			goto err;
+		}
+	}
+
+	if (oldtail_start != NULL) {
+
+		/*
+		 * Walk the old tail forward and check its length.
+		 */
+
+		next = oldtail_start;
+		length = 0;
+		do {
+			prev = next;
+			next = BIO_next(prev);
+			length++;
+		} while (next != NULL);
+
+		if (prev != oldtail_end) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d): unexpected old tail end\n",
+			    __func__, i, j, use_bio_push);
+			goto err;
+		}
+
+		if (length != oldtail_length) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d) unexpected old tail length"
+			    " (walking forward). want %zu, got %zu\n",
+			    __func__, i, j, use_bio_push,
+			    oldtail_length, length);
+			goto err;
+		}
+
+		/*
+		 * Walk the old tail backward and check its length.
+		 */
+
+		prev = oldtail_end;
+		length = 0;
+		do {
+			next = prev;
+			prev = BIO_prev(next);
+			length++;
+		} while (prev != NULL);
+
+		if (next != oldtail_start) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d): unexpected old tail start\n",
+			    __func__, i, j, use_bio_push);
+			goto err;
+		}
+
+		if (length != oldtail_length) {
+			fprintf(stderr,
+			    "%s(%zu, %zu, %d) unexpected old tail length"
+			    " (walking backward). want %zu, got %zu\n",
+			    __func__, i, j, use_bio_push,
+			    oldtail_length, length);
+			goto err;
+		}
+	}
+
+	/*
+	 * All sanity checks passed. We can now free the our chains
+	 * with the BIO API without risk of leaks or double frees.
+	 */
+
+	BIO_free_all(A[0]);
+	BIO_free_all(oldhead_start);
+	BIO_free_all(oldtail_start);
+
+	memset(A, 0, sizeof(A));
+	memset(B, 0, sizeof(B));
+
+	failed = 0;
+
+ err:
+	for (i = 0; i < N_CHAIN_BIOS; i++)
+		BIO_free(A[i]);
+	for (i = 0; i < N_CHAIN_BIOS; i++)
+		BIO_free(B[i]);
+
+	return failed;
+}
+
+static int
+do_bio_link_chains(int use_bio_push)
+{
+	size_t i, j;
+	int failure = 0;
+
+	for (i = 0; i < N_CHAIN_BIOS; i++) {
+		for (j = 0; j < N_CHAIN_BIOS; j++) {
+			failure |= do_bio_link_chains_at(i, j, use_bio_push);
+		}
+	}
+
+	return failure;
+}
+
+static int
+do_bio_push_link_test(void)
+{
+	int use_bio_push = 1;
+
+	return do_bio_link_chains(use_bio_push);
+}
+
+static int
+do_bio_set_next_link_test(void)
+{
+	int use_bio_push = 0;
+
+	return do_bio_link_chains(use_bio_push);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -607,6 +971,8 @@ main(int argc, char **argv)
 	ret |= do_bio_get_port_tests();
 	ret |= do_bio_mem_tests();
 	ret |= do_bio_chain_pop_test();
+	ret |= do_bio_push_link_test();
+	ret |= do_bio_set_next_link_test();
 
 	return (ret);
 }
