@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.11 2022/12/08 11:32:27 tb Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.12 2022/12/08 12:27:03 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -599,41 +599,43 @@ do_bio_chain_pop_test(void)
 }
 
 /*
- * Link two linear chains of BIOs, A[], B[] of length N_CHAIN_BIOS together
+ * Link two linear chains of BIOs, A[] and B[], of length N_CHAIN_BIOS together
  * using either BIO_push(A[i], B[j]) or BIO_set_next(A[i], B[j]).
  *
  * BIO_push() first walks the chain A[] to its end and then appends the tail
  * of chain B[] starting at B[j]. If j > 0, we get two chains
  *
  *     A[0] -- ... -- A[N_CHAIN_BIOS - 1] -- B[j] -- ... -- B[N_CHAIN_BIOS - 1]
- *
+ *                                         `- link created by BIO_push()
  *     B[0] -- ... -- B[j-1]
- *     --- oldhead -->|
+ *       |<-- oldhead -->|
  *
  * of lengths N_CHAIN_BIOS + N_CHAIN_BIOS - j and j, respectively.
  * If j == 0, the second chain (oldhead) is empty. One quirk of BIO_push() is
  * that the outcome of BIO_push(A[i], B[j]) apart from the return value is
  * independent of i.
  *
- * Prior to bio_lib.c r1.41, BIO_push() would keep * BIO_next(B[j-1]) == B[j]
- * for 0 < j < N_CHAIN_BIOS, and at the same time for all j the inconsistent
- * BIO_prev(B[j]) == A[N_CHAIN_BIOS - 1].
+ * Prior to bio_lib.c r1.41, BIO_push(A[i], B[j]) would fail to dissociate the
+ * two chains and leave B[j] with two parents for 0 < j < N_CHAIN_BIOS.
+ * B[j]->prev_bio would point at A[N_CHAIN_BIOS - 1], while both B[j - 1] and
+ * A[N_CHAIN_BIOS - 1] would point at B[j]. In particular, BIO_free_all(A[0])
+ * followed by BIO_free_all(B[0]) results in a double free of B[j].
  *
  * The result for BIO_set_next() is different: three chains are created.
  *
  *                                 |--- oldtail -->
  *     ... -- A[i-1] -- A[i] -- A[i+1] -- ...
  *                         \
- *                          \  new link created by BIO_set_next()
+ *                          \  link created by BIO_set_next()
  *     --- oldhead -->|      \
  *          ... -- B[j-1] -- B[j] -- B[j+1] -- ...
  *
  * After creating a new link, the new chain has length i + 1 + N_CHAIN_BIOS - j,
  * oldtail has length N_CHAIN_BIOS - i - 1 and oldhead has length j.
  *
- * Prior to bio_lib.c r1.40, BIO_set_next() results in BIO_next(B[j-1]) == B[j],
- * B[j-1] == BIO_prev(B[j]), A[i] == BIO_prev(A[i+1]) and, in addition,
- * BIO_next(A[i]) == B[j], thus leaving A[] and B[] in an inconsistent state.
+ * Prior to bio_lib.c r1.40, BIO_set_next(A[i], B[j]) results in both A[i] and
+ * B[j - 1] pointing at B[j] while B[j] points back at A[i]. The result is
+ * again double frees.
  *
  * XXX: Should check that the callback is called on BIO_push() as expected.
  */
