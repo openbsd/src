@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.8 2022/01/02 23:31:10 jsg Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.9 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ ofentry:	.long	0		/* actual entry to firmware in virtual mode */
 #define	SVSIZE		(SRSIZE+SPRGSIZE+SDR1SIZE+MSRSIZE)
 #define BATSIZE		(16*4)
 
-	.global _C_LABEL(fwcall)
-_C_LABEL(fwcall): .long 0
+	.global fwcall
+fwcall: .long 0
 
 .lcomm	fwsave,SVSIZE,8
 .lcomm	fwbatsave,BATSIZE,8
@@ -68,11 +68,11 @@ _C_LABEL(fwcall): .long 0
 .lcomm	clbatsave,BATSIZE,8
 .lcomm	ofsrsave,16*4,4	/* 16 words of 4 bytes to store OF segment registers */
 .lcomm	srsave,16*4,4	/* 16 words of 4 bytes to swap OF segment registers*/
-	.globl _C_LABEL(ofmsr)
-_C_LABEL(ofmsr):	.long	0	/* area to store msr for openfirmware*/
+	.globl ofmsr
+ofmsr:			.long	0	/* area to store msr for openfirmware*/
 
 	.text
-_ENTRY(_C_LABEL(ofw_init))
+_ENTRY(ofw_init)
 	mflr	%r31			/* save return address */
 
 	mr	%r13,%r6		/* save args (only pointer used) */
@@ -83,8 +83,8 @@ _ENTRY(_C_LABEL(ofw_init))
 	stw	%r5,fwcall@l(%r4)
 
 	mfmsr	%r5
-	lis	%r4,_C_LABEL(ofmsr)@ha	/* save msr from openfirmware */
-	stw	%r5,_C_LABEL(ofmsr)@l(%r4)
+	lis	%r4,ofmsr@ha		/* save msr from openfirmware */
+	stw	%r5,ofmsr@l(%r4)
 #if 0
 	lis	%r0,(0x80001ffe)@ha
 	addi	%r0,%r0,(0x80001ffe)@l
@@ -101,7 +101,7 @@ _ENTRY(_C_LABEL(ofw_init))
 	bl	savemmu
 
 	/* save openfirmware address mappings */
-	bl	_C_LABEL(save_ofw_mapping)
+	bl	save_ofw_mapping
 
 #if 0
 	/* dont really need the bats from firmware saved, 0 to disable */
@@ -306,7 +306,7 @@ restoremmu:
 	blr
 
 
-_ENTRY(_C_LABEL(fwentry))
+_ENTRY(fwentry)
 	mflr	%r4
 	RETGUARD_SETUP_LATE(fwentry, %r11, %r4)
 	stwu	%r1,-16(%r1)
@@ -362,7 +362,7 @@ _ENTRY(_C_LABEL(fwentry))
 	blr
 
 .lcomm	firmstk,NBPG,16
-.comm	_C_LABEL(OF_buf),NBPG
+.comm	OF_buf,NBPG
 
 /*
  * OpenFirmware entry point
@@ -370,7 +370,7 @@ _ENTRY(_C_LABEL(fwentry))
  * Note: caller has to set the machine state register (msr)
  * to be correct for OpenFirmware.
  */
-_ENTRY(_C_LABEL(openfirmware))
+_ENTRY(openfirmware)
 	mflr	%r0
 	RETGUARD_SETUP_LATE(openfirmware, %r11, %r0)
 	stw	%r0,4(%r1)		/* save return address */

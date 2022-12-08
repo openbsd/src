@@ -56,11 +56,11 @@
 #define addr32
 #endif
 
-#define _ACPI_TRMP_LABEL(a) a = . - _C_LABEL(acpi_real_mode_resume) + ACPI_TRAMPOLINE
-#define _ACPI_TRMP_OFFSET(a) a = . - _C_LABEL(acpi_real_mode_resume)
-#define _ACPI_TRMP_DATA_LABEL(a) a = . - _C_LABEL(acpi_tramp_data_start) + \
+#define _ACPI_TRMP_LABEL(a) a = . - acpi_real_mode_resume + ACPI_TRAMPOLINE
+#define _ACPI_TRMP_OFFSET(a) a = . - acpi_real_mode_resume
+#define _ACPI_TRMP_DATA_LABEL(a) a = . - acpi_tramp_data_start + \
 	ACPI_TRAMP_DATA
-#define _ACPI_TRMP_DATA_OFFSET(a) a = . - _C_LABEL(acpi_tramp_data_start)
+#define _ACPI_TRMP_DATA_OFFSET(a) a = . - acpi_tramp_data_start
 #define _ACPI_RM_CODE_SEG (ACPI_TRAMPOLINE >> 4)
 #define _ACPI_RM_DATA_SEG (ACPI_TRAMP_DATA >> 4)
 
@@ -90,12 +90,12 @@
 	.text
 	.code16
 	.align 4, 0xcc
-	.global _C_LABEL(acpi_real_mode_resume)
-	.global _C_LABEL(acpi_protected_mode_resume)
-	.global _C_LABEL(acpi_resume_end)
-	.global _C_LABEL(acpi_tramp_data_start)
-	.global _C_LABEL(acpi_tramp_data_end)
-_C_LABEL(acpi_real_mode_resume):
+	.global acpi_real_mode_resume
+	.global acpi_protected_mode_resume
+	.global acpi_resume_end
+	.global acpi_tramp_data_start
+	.global acpi_tramp_data_end
+acpi_real_mode_resume:
 _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	nop
 	cli
@@ -165,7 +165,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	.code32
 	.align 16, 0xcc
 _ACPI_TRMP_LABEL(.Lacpi_protected_mode_trampoline)
-_C_LABEL(acpi_protected_mode_resume):
+acpi_protected_mode_resume:
 	nop
 
 	/*
@@ -406,14 +406,14 @@ NENTRY(hibernate_flush)
 	/*
 	 * End of resume code (code copied to ACPI_TRAMPOLINE)
 	 */
-_C_LABEL(acpi_resume_end):
+acpi_resume_end:
 
 	/*
 	 * Initial copy of this data gets placed in .rodata, kernel makes
 	 * RW copy of it in the tramp data page.
 	 */
 	.section .rodata
-_C_LABEL(acpi_tramp_data_start):
+acpi_tramp_data_start:
 _ACPI_TRMP_DATA_OFFSET(.Ltmp_gdt)
 	.word	.Ltmp_gdt_end - .Ltmp_gdtable
 	.long	.Ltmp_gdtable
@@ -568,7 +568,7 @@ _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_ss)
 _ACPI_TRMP_DATA_LABEL(.Lacpi_saved_tr)
 	.short 0xcccc
 
-_C_LABEL(acpi_tramp_data_end):
+acpi_tramp_data_end:
 
 	/*
 	 * acpi_savecpu saves the processor's registers and flags

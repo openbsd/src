@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.S,v 1.3 2018/08/06 18:39:13 kettenis Exp $	*/
+/*	$OpenBSD: vectors.S,v 1.4 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: vectors.S,v 1.4 2002/08/17 16:36:32 thorpej Exp $	*/
 
 /*
@@ -46,10 +46,10 @@
 
 	.text
 	.align	2
-	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
-	.global _C_LABEL(fiqvector)
+	.global	page0, page0_data, page0_end
+	.global fiqvector
 
-_C_LABEL(page0):
+page0:
 	ldr	pc, .Lreset_target
 	ldr	pc, .Lundefined_target
 	ldr	pc, .Lswi_target
@@ -61,12 +61,12 @@ _C_LABEL(page0):
 	ldr	pc, .Lfiq_target
 #else
 .Lfiqvector:
-	.set	_C_LABEL(fiqvector), . - _C_LABEL(page0)
+	.set	fiqvector, . - page0
 	subs	pc, lr, #4
 	.org	.Lfiqvector + 0x100
 #endif
 
-_C_LABEL(page0_data):
+page0_data:
 .Lreset_target:
 	.word	reset_entry
 
@@ -90,16 +90,16 @@ _C_LABEL(page0_data):
 
 #ifdef __ARM_FIQ_INDIRECT
 .Lfiq_target:
-	.word	_C_LABEL(fiqvector)
+	.word	fiqvector
 #else
 	.word	0	/* pad it out */
 #endif
-_C_LABEL(page0_end):
+page0_end:
 
 #ifdef __ARM_FIQ_INDIRECT
 	.data
 	.align	2
-_C_LABEL(fiqvector):
+fiqvector:
 	subs	pc, lr, #4
-	.org	_C_LABEL(fiqvector) + 0x100
+	.org	fiqvector + 0x100
 #endif

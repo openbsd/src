@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.35 2018/07/09 19:20:30 guenther Exp $	*/
+/*	$OpenBSD: icu.s,v 1.36 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -31,8 +31,8 @@
  */
 
 	.data
-	.globl	_C_LABEL(imen)
-_C_LABEL(imen):
+	.globl	imen
+imen:
 	.long	0xffff		# interrupt mask enable (all off)
 
 	.text
@@ -52,7 +52,7 @@ KIDTVEC(spllower)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax		# get cpl
 	shrl	$4,%eax			# find its mask.
-	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+	movl	iunmask(,%eax,4),%eax
 	cli
 	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
 	jz	2f
@@ -60,7 +60,7 @@ KIDTVEC(spllower)
 	bsfl	%eax,%eax
 	btrl	%eax,CPUVAR(IPENDING)
 	jnc	1b
-	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
+	jmp	*Xrecurse(,%eax,4)
 2:	movl	%ebx,CPL
 	sti
 	popl	%edi
@@ -81,7 +81,7 @@ KIDTVEC(doreti)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	shrl	$4,%eax
-	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+	movl	iunmask(,%eax,4),%eax
 	cli
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
@@ -90,7 +90,7 @@ KIDTVEC(doreti)
 	btrl    %eax,CPUVAR(IPENDING)
 	jnc     1b			# some intr cleared the in-memory bit
 	cli
-	jmp	*_C_LABEL(Xresume)(,%eax,4)
+	jmp	*Xresume(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
 	CHECK_ASTPENDING(%ecx)
 	movl	%ebx,CPL
@@ -100,7 +100,7 @@ KIDTVEC(doreti)
 4:	CLEAR_ASTPENDING(%ecx)
 	sti
 	pushl	%esp
-	call	_C_LABEL(ast)
+	call	ast
 	addl	$4,%esp
 	cli
 	jmp	2b
@@ -120,7 +120,7 @@ KIDTVEC(softtty)
 	movl	%eax,CPL
 	sti
 	pushl	$I386_SOFTINTR_SOFTTTY
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
 
@@ -129,7 +129,7 @@ KIDTVEC(softnet)
 	movl	%eax,CPL
 	sti
 	pushl	$I386_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
 #undef DONETISR
@@ -139,7 +139,7 @@ KIDTVEC(softclock)
 	movl	%eax,CPL
 	sti
 	pushl	$I386_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	jmp	*%esi
 

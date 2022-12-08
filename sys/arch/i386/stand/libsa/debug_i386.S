@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.12 2004/03/09 19:12:12 tom Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.13 2022/12/08 01:25:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -64,7 +64,7 @@ alltraps:
 	movb	$0x17, %ah
 	movl	%eax, (%edi)
 #endif
-	call	_C_LABEL(check_regs)
+	call	check_regs
 #ifdef DEBUG_DEBUG
 	movl	$0xb8290, %edi
 	movl	$0x47394738, (%edi)
@@ -113,7 +113,7 @@ ENTRY(check_regs)
 	movl	0x0d*4(%esp), %eax	/* trapno */
 	pushl	%ecx
 	pushl	%eax
-	call	_C_LABEL(dump_regs)
+	call	dump_regs
 	popl	%eax
 	popl	%eax
 

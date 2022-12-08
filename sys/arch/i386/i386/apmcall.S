@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmcall.S,v 1.6 2013/11/28 19:30:46 brad Exp $	*/
+/*	$OpenBSD: apmcall.S,v 1.7 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -33,9 +33,9 @@
 #endif /* APM_DISABLE_INTERRUPTS */
 
 	.data
-	.globl	_C_LABEL(apm_ep)
-	.globl	_C_LABEL(apm_cli)
-_C_LABEL(apm_cli):
+	.globl	apm_ep
+	.globl	apm_cli
+apm_cli:
 	.long	APM_DISABLE_INTERRUPTS
 /*
  * int apmcall(u_int f, int dev, struct apmregs *r)
@@ -56,7 +56,7 @@ ENTRY(apmcall)
 
 	pushfl
 
-	cmpl	$0, _C_LABEL(apm_cli)
+	cmpl	$0, apm_cli
 	je	1f
 	cli
 1:
@@ -74,7 +74,7 @@ ENTRY(apmcall)
 	movl	8(%ebp), %eax
 
 	clc
-	lcall	*%cs:(_C_LABEL(apm_ep))
+	lcall	*%cs:(apm_ep)
 	pushl	%eax
 	setc	%al
 	movzbl	%al, %esi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: htons.S,v 1.3 2014/12/30 08:12:52 jsg Exp $	*/
+/*	$OpenBSD: htons.S,v 1.4 2022/12/08 01:25:46 guenther Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.1.20.1 2002/07/02 06:50:59 lukem Exp $	*/
 
 /*-
@@ -32,9 +32,9 @@
 
 #include <machine/asm.h>
 
-_ENTRY(_C_LABEL(htons))
-_ENTRY(_C_LABEL(ntohs))
-_ENTRY(_C_LABEL(bswap16))
+_ENTRY(htons)
+_ENTRY(ntohs)
+_ENTRY(bswap16)
 _PROF_PROLOGUE
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8

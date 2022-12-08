@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.22 2020/05/18 17:24:03 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.23 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ ASENTRY_NP(start)
 	mov	r1, r5
 	mov	r2, r6
 	mov	r3, r7
-	bl	_C_LABEL(initarm)	/* Off we go */
+	bl	initarm			/* Off we go */
 
 	/* init arm will return the new stack pointer. */
 	mov	sp, r0
@@ -89,16 +89,16 @@ ASENTRY_NP(start)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 
-	bl	_C_LABEL(main)		/* call main()! */
+	bl	main			/* call main()! */
 
 	adr	r0, .Lmainreturned
-	b	_C_LABEL(panic)
+	b	panic
 	/* NOTREACHED */
 
 .Lstart:
 	.word	_edata
 	.word	_end
-	.word	_C_LABEL(cpu_info_primary)
+	.word	cpu_info_primary
 	.word	svcstk + INIT_ARM_STACK_SIZE
 
 .Lmainreturned:
@@ -215,7 +215,7 @@ svcstk:
 	/* OFW based systems will use OF_boot() */
 	
 .Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
+	.word	cpufuncs
 
 ENTRY_NP(cpu_reset)
 	mrs     r2, cpsr
@@ -247,7 +247,7 @@ ENTRY_NP(cpu_reset)
 	 * This variable is provided by the hardware specific code
 	 */
 .Lcpu_reset_address:
-	.word	_C_LABEL(cpu_reset_address)
+	.word	cpu_reset_address
 
 #endif	/* OFW */
 
@@ -268,8 +268,8 @@ ENTRY(longjmp)
 
 	.data
 	.align	2
-	.global _C_LABEL(esym)
-_C_LABEL(esym):	.word	_C_LABEL(end)
+	.global esym
+esym:		.word	end
 
 ENTRY_NP(abort)
-	b	_C_LABEL(abort)
+	b	abort

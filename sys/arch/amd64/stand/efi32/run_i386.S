@@ -1,4 +1,4 @@
-/*	$OpenBSD: run_i386.S,v 1.2 2022/01/02 05:49:50 jsg Exp $	*/
+/*	$OpenBSD: run_i386.S,v 1.3 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -22,14 +22,14 @@
 #define	CODE_SEGMENT	0x10
 #define	DATA_SEGMENT	0x18
 
-	.globl _C_LABEL(run_i386_size)
-_C_LABEL(run_i386_size):
-	.long run_i386_end - _C_LABEL(run_i386_start)
+	.globl run_i386_size
+run_i386_size:
+	.long run_i386_end - run_i386_start
 
 	.align	4
 	.text
-	.globl	_C_LABEL(run_i386_start)
-_C_LABEL(run_i386_start):
+	.globl	run_i386_start
+run_i386_start:
 start:
 	/*
 	 * run_i386(_start) is to call the loaded kernel's start() with

@@ -22,14 +22,14 @@
 
 	.text
 	.code32
-	.global	_C_LABEL(launch_amd64_kernel_long)
+	.global	launch_amd64_kernel_long
 	/*
 	 * void launch_amd64_kernel_long(caddr_t base, caddr_t pml4,
 	 *     caddr_t rsp, uint64_t entry, int boothowto, int bootdev,
 	 *     int bootapiver, uint64_t end, int extmem, int cnvmem,
 	 *     int ac, uint64_t av);
 	 */
-_C_LABEL(launch_amd64_kernel_long):
+launch_amd64_kernel_long:
 asm_start:
 	xchg	%bx, %bx
 

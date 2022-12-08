@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_call.S,v 1.4 2006/01/02 00:26:29 tom Exp $ */
+/*	$OpenBSD: pxe_call.S,v 1.5 2022/12/08 01:25:45 guenther Exp $ */
 /*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
 
 /*
@@ -56,8 +56,8 @@ ENTRY(pxecall_bangpxe)
 	/* For simplicity, just move all 32 bits. */
 	movl	8(%ebp), %ebx
 
-	pushw	_C_LABEL(pxe_command_buf_seg)
-	pushw	_C_LABEL(pxe_command_buf_off)
+	pushw	pxe_command_buf_seg
+	pushw	pxe_command_buf_off
 	pushw	%bx
 
 	call	prot_to_real			/* Enter real mode */
@@ -66,10 +66,10 @@ ENTRY(pxecall_bangpxe)
 	sti
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
 	lcall	$0, $0xffff
-	.globl	_C_LABEL(bangpxe_off)
-_C_LABEL(bangpxe_off) = . - 4
-	.globl	_C_LABEL(bangpxe_seg)
-_C_LABEL(bangpxe_seg) = . - 2
+	.globl	bangpxe_off
+bangpxe_off = . - 4
+	.globl	bangpxe_seg
+bangpxe_seg = . - 2
 
 	cli
 	call	real_to_prot			/* Leave real mode */
@@ -103,7 +103,7 @@ ENTRY(pxecall_pxenv)
 	 * prot_to_real() will set %es to BOOTSEG, so we just need to set
 	 * %(e)di up here.  Remember to relocate it!
 	 */
-	movl	$_C_LABEL(pxe_command_buf), %edi
+	movl	$pxe_command_buf, %edi
 	subl	$LINKADDR, %edi
 
 	call	prot_to_real			/* Enter real mode */
@@ -111,10 +111,10 @@ ENTRY(pxecall_pxenv)
 
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
 	lcall	$0, $0xffff
-	.globl	_C_LABEL(pxenv_off)
-_C_LABEL(pxenv_off) = . - 4
-	.globl	_C_LABEL(pxenv_seg)
-_C_LABEL(pxenv_seg) = . - 2
+	.globl	pxenv_off
+pxenv_off = . - 4
+	.globl	pxenv_seg
+pxenv_seg = . - 2
 
 	call	real_to_prot			/* Leave real mode */
 	.code32

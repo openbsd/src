@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.12 2019/11/09 17:58:46 deraadt Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.13 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -115,16 +115,16 @@
 	lidt	Idtr;
 
 
-	.globl	_C_LABEL(BIOS_regs)
+	.globl	BIOS_regs
 
 	.text
 	.code32
-	.globl	_ASM_LABEL(pmm_init)
-	.globl	_C_LABEL(_rtt)
+	.globl	pmm_init
+	.globl	_rtt
 
 ENTRY(_rtt)
 #ifdef SOFTRAID
-	call	_C_LABEL(sr_clear_keys)
+	call	sr_clear_keys
 #endif
 #ifdef GIDT_DEBUG
 	movl	$0xb8000, %ebx
@@ -356,9 +356,9 @@ EMUh:
 	mov	%al, intno
 
 	/* Load BIOS registers prior to switching to real mode. */
-	movl	_C_LABEL(BIOS_regs)+BIOSR_ES, %eax
+	movl	BIOS_regs+BIOSR_ES, %eax
 	mov	%eax, 7f
-	movl	_C_LABEL(BIOS_regs)+BIOSR_DS, %eax
+	movl	BIOS_regs+BIOSR_DS, %eax
 	mov	%eax, 6f
 
 	prot2real
@@ -406,12 +406,12 @@ intno	= . - 1
 	# movl $Leax, %eax
 	.byte	0xb8
 4:	.long	0x90909090
-	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_BX
+	movl	%eax, BIOS_regs+BIOSR_BX
 
 	# movl $Leax, %eax
 	.byte	0xb8
 3:	.long	0x90909090
-	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_ES
+	movl	%eax, BIOS_regs+BIOSR_ES
 
 	# movl $Leax, %eax
 	.byte	0xb8
@@ -424,12 +424,12 @@ intno	= . - 1
 	movb	%bh , 0xe*4(%esp)
 
 	/* save registers into save area */
-	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
-	movl	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
-	movl	%edx, _C_LABEL(BIOS_regs)+BIOSR_DX
-	movl	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
-	movl	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
-	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
+	movl	%eax, BIOS_regs+BIOSR_AX
+	movl	%ecx, BIOS_regs+BIOSR_CX
+	movl	%edx, BIOS_regs+BIOSR_DX
+	movl	%ebp, BIOS_regs+BIOSR_BP
+	movl	%esi, BIOS_regs+BIOSR_SI
+	movl	%edi, BIOS_regs+BIOSR_DI
 
 	/* clear NT flag in eflags */
 	pushf

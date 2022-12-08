@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.40 2022/07/13 09:28:18 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.41 2022/12/08 01:25:44 guenther Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -273,8 +273,8 @@ abort:
 	b abort
 
 	.data
-	.global _C_LABEL(esym)
-_C_LABEL(esym): .xword   _C_LABEL(end)
+	.global esym
+esym:	.xword	end
 
 data_align_pad:
 	.space 32
@@ -316,9 +316,9 @@ initstack:
 initstack_end:
 
 	.text
-	.globl	_C_LABEL(sigcode)
-	.type	_C_LABEL(sigcode),@function
-_C_LABEL(sigcode):
+	.globl	sigcode
+	.type	sigcode,@function
+sigcode:
 	sub	sp, sp, #17 * 32
 	mov	x3, sp
 	stp	q0, q1, [x3], #32
@@ -369,8 +369,8 @@ _C_LABEL(sigcode):
 	svc	0
 	dsb	nsh
 	isb
-	.globl  _C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl  sigcoderet
+sigcoderet:
 
 	/* sigreturn failed, exit */
 	mov	x8, #SYS_exit
@@ -378,8 +378,8 @@ _C_LABEL(sigcoderet):
 	dsb	nsh
 	isb
 END(sigcode)
-	.global _C_LABEL(esigcode)
-_C_LABEL(esigcode):
+	.global esigcode
+esigcode:
 
 	.globl	sigfill
 sigfill:

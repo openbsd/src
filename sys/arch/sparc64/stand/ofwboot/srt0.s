@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.6 2006/07/09 19:36:57 miod Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.7 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: srt0.s,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -43,18 +43,18 @@
 	.globl	_esym
 	.data
 _esym:	.word	0			/* end of symbol table */
-	.globl	_C_LABEL(romp)
+	.globl	romp
 	.align	8
 	.register %g2,	#scratch
 	.register %g3,	#scratch
-_C_LABEL(romp):	.xword	0		/* openfirmware entry point */
+romp:		.xword	0		/* openfirmware entry point */
 
 /*
  * Startup entry
  */
 	.text
-	.globl	_start, _C_LABEL(kernel_text)
-	_C_LABEL(kernel_text) = _start
+	.globl	_start, kernel_text
+	kernel_text = _start
 _start:
 	nop			! For some reason this is needed to fixup the text section
 	
@@ -63,7 +63,7 @@ _start:
 	 */
 	
 	mov	%o4, %g7	! save prom vector pointer
-	set	_C_LABEL(romp), %g1
+	set	romp, %g1
 	stx	%o4, [%g1]	! It's initialized data, I hope
 
 	/*
@@ -96,14 +96,14 @@ _start:
 	/*
 	 * XXXXXXXX Need to determine what params are passed
 	 */
-	call	_C_LABEL(setup)
+	call	setup
 	 nop
 	mov	%i1, %o1		
-	call	_C_LABEL(main)
+	call	main
 	 mov	%i2, %o0
-	call	_C_LABEL(exit)
+	call	exit
 	 nop
-	call	_C_LABEL(_rtt)
+	call	_rtt
 	 nop
 
 /*
@@ -112,11 +112,11 @@ _start:
  * I$ flush.  Really simple.  Just flush over the whole range.
  */
 	.align	8
-	.globl	_C_LABEL(syncicache)
-_C_LABEL(syncicache):
+	.globl	syncicache
+syncicache:
 	dec	4, %o1
 	flush	%o0
-	brgz,a,pt	%o1, _C_LABEL(syncicache)
+	brgz,a,pt	%o1, syncicache
 	 inc	4, %o0
 	retl
 	 nop
@@ -130,15 +130,15 @@ _C_LABEL(syncicache):
  * and 64-bit cells.  The cells we'll allocate off the stack for simplicity.
  */
 	.align 8
-	.globl	_C_LABEL(openfirmware)
+	.globl	openfirmware
 	.proc 1
 	FTYPE(openfirmware)
-_C_LABEL(openfirmware):
+openfirmware:
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
-	 sethi	%hi(_C_LABEL(romp)), %o1
+	 sethi	%hi(romp), %o1
 	
-	ldx	[%o1+%lo(_C_LABEL(romp))], %o4		! v9 stack, just load the addr and callit
+	ldx	[%o1+%lo(romp)], %o4			! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
 	mov	%i0, %o0				! Copy over our parameter
 	mov	%g1, %l1
@@ -165,9 +165,9 @@ _C_LABEL(openfirmware):
 1:						! v8 -- need to screw with stack & params
 	save	%sp, -CC64FSZ, %sp			! Get a new 64-bit stack frame
 	add	%sp, -BIAS, %sp
-	sethi	%hi(_C_LABEL(romp)), %o1
+	sethi	%hi(romp), %o1
 	rdpr	%pstate, %l0
-	ldx	[%o1+%lo(_C_LABEL(romp))], %o1		! Do the actual call
+	ldx	[%o1+%lo(romp)], %o1			! Do the actual call
 	srl	%sp, 0, %sp
 	mov	%i0, %o0
 	mov	%g1, %l1

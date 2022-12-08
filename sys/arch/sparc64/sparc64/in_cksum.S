@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.S,v 1.2 2005/05/01 05:42:43 brad Exp $	*/
+/*	$OpenBSD: in_cksum.S,v 1.3 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: in_cksum.S,v 1.2 2001/08/10 20:53:11 eeh Exp $ */
 
 /*
@@ -59,7 +59,7 @@
 ENTRY(in_cksum)
 	clr	%o3		! sum = 0;
 	clr	%o2
-_ENTRY(_C_LABEL(in_cksum_internal))
+_ENTRY(in_cksum_internal)
 	brz	%o0, Lfinish	! for (; m && len > 0; m->m_next) {
 	 clr	%g1		! swapped = 0;
 	brlez	%o1, Lfinish

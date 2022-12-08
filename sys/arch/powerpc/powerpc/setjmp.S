@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.10 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.11 2022/12/08 01:25:45 guenther Exp $	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
@@ -55,7 +55,7 @@
 #define JMP_sig	0x60
 
 
-ENTRY(_C_LABEL(setjmp))
+ENTRY(setjmp)
 	mflr %r12
 	RETGUARD_SETUP_LATE(setjmp, %r11, %r12)
 	stw %r31, JMP_r31(%r3)
@@ -92,7 +92,7 @@ ENTRY(_C_LABEL(setjmp))
 	blr
 
 
-ENTRY(_C_LABEL(longjmp))
+ENTRY(longjmp)
 	/* lr, r31 */
 	lwz %r12, JMP_lr(%r3)
 	RETGUARD_SETUP_LATE(longjmp, %r11, %r12)

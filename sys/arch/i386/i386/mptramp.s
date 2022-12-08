@@ -1,4 +1,4 @@
-/*	$OpenBSD: mptramp.s,v 1.26 2022/08/22 08:53:55 jsg Exp $	*/
+/*	$OpenBSD: mptramp.s,v 1.27 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,29 +90,28 @@
 
 #define GDTE(a,b)	.byte	0xff,0xff,0x0,0x0,0x0,a,b,0x0
 #define _RELOC(x)	((x) - KERNBASE)
-#define RELOC(x)	_RELOC(_C_LABEL(x))
+#define RELOC(x)	_RELOC(x)
 
-#define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
-#define _TRMP_OFFSET(a)  a = . - _C_LABEL(cpu_spinup_trampoline)
-#define _TRMP_DATA_LABEL(a)  a = . - _C_LABEL(mp_tramp_data_start) + \
-				MP_TRAMP_DATA
-#define _TRMP_DATA_OFFSET(a)  a = . - _C_LABEL(mp_tramp_data_start)
+#define _TRMP_LABEL(a)	a = . - cpu_spinup_trampoline + MP_TRAMPOLINE
+#define _TRMP_OFFSET(a)	a = . - cpu_spinup_trampoline
+#define _TRMP_DATA_LABEL(a)	a = . - mp_tramp_data_start + MP_TRAMP_DATA
+#define _TRMP_DATA_OFFSET(a)	a = . - mp_tramp_data_start
 
-	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	cpu_id,cpu_vendor
+	.globl	cpuid_level,cpu_feature
 
-	.global _C_LABEL(cpu_spinup_trampoline)
-	.global _C_LABEL(cpu_spinup_trampoline_end)
-	.global _C_LABEL(cpu_hatch)
-	.global _C_LABEL(mp_pdirpa)
-	.global _C_LABEL(mp_tramp_data_start)
-	.global _C_LABEL(mp_tramp_data_end)
-	.global _C_LABEL(gdt), _C_LABEL(local_apic)
+	.global cpu_spinup_trampoline
+	.global cpu_spinup_trampoline_end
+	.global cpu_hatch
+	.global mp_pdirpa
+	.global mp_tramp_data_start
+	.global mp_tramp_data_end
+	.global gdt, local_apic
 
 	.text
 	.align 4, 0xcc
 	.code16
-_C_LABEL(cpu_spinup_trampoline):
+cpu_spinup_trampoline:
 	cli
 	movw	$(MP_TRAMP_DATA >> 4), %ax
 	movw	%ax, %ds
@@ -146,7 +145,7 @@ _TRMP_LABEL(.Lmp_startup)
 	/* Load base of page directory and enable mapping. */
 	movl	%ecx,%cr3		# load ptd addr into mmu
 #ifndef SMALL_KERNEL
-	testl	$0x1, RELOC(_C_LABEL(cpu_pae))
+	testl	$0x1, RELOC(cpu_pae)
 	jz	nopae
 
 	movl	%cr4,%eax
@@ -168,13 +167,13 @@ nopae:
 # ok, we're now running with paging enabled and sharing page tables with cpu0.
 # figure out which processor we really are, what stack we should be on, etc.
 
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%eax
+	movl	local_apic+LAPIC_ID,%eax
 	shrl	$LAPIC_ID_SHIFT,%eax
 	xorl	%ebx,%ebx
 1:
 	leal	0(,%ebx,4),%ecx
 	incl	%ebx
-	movl	_C_LABEL(cpu_info)(%ecx),%ecx
+	movl	cpu_info(%ecx),%ecx
 	movl	CPU_INFO_APICID(%ecx),%edx
 	cmpl	%eax,%edx
 	jne 1b
@@ -196,7 +195,7 @@ nopae:
 	pushl	$mp_cont
 	lret
 
-_C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+cpu_spinup_trampoline_end:		#end of code copied to MP_TRAMPOLINE
 mp_cont:
 
 	movl	CPU_INFO_IDLE_PCB(%ecx),%esi
@@ -217,11 +216,11 @@ mp_cont:
 	movl	PCB_CR0(%esi),%eax
 	movl	%eax,%cr0
 	pushl	%ecx
-	call	_C_LABEL(cpu_hatch)
+	call	cpu_hatch
 	/* NOTREACHED */
 
 	.section .rodata
-_C_LABEL(mp_tramp_data_start):
+mp_tramp_data_start:
 _TRMP_DATA_LABEL(.Lgdt_table)
 	.word	0x0,0x0,0x0,0x0			# null GDTE
 	 GDTE(0x9f,0xcf)			# Kernel text
@@ -229,4 +228,4 @@ _TRMP_DATA_LABEL(.Lgdt_table)
 _TRMP_DATA_OFFSET(.Lgdt_desc)
 	.word	0x17				# limit 3 entries
 	.long	.Lgdt_table			# where is gdt
-_C_LABEL(mp_tramp_data_end):
+mp_tramp_data_end:

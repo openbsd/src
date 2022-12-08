@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.10 2020/03/11 21:04:58 deraadt Exp $	*/
+/*	$OpenBSD: exception.S,v 1.11 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: exception.S,v 1.13 2003/10/31 16:30:15 scw Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 	and	r0, r0, #(PSR_MODE)	/* Returning to USR mode? */	;\
 	cmp	r0, #(PSR_USR32_MODE)					;\
 	bne	1f							;\
-	bl	_C_LABEL(vfp_enable)                                    ;\
+	bl	vfp_enable						;\
 1:
 
 AST_LOCALS
@@ -73,7 +73,7 @@ AST_LOCALS
 ASENTRY_NP(reset_entry)
 	adr	r0, Lreset_panicmsg
 	mov	r1, lr
-	bl	_C_LABEL(panic)
+	bl	panic
 	/* NOTREACHED */
 Lreset_panicmsg:
 	.asciz	"Reset vector called, LR = 0x%08x"
@@ -88,7 +88,7 @@ ASENTRY_NP(swi_entry)
 	PUSHFRAME
 
 	mov	r0, sp			/* Pass the frame to any function */
-	bl	_C_LABEL(swi_handler)	/* It's a SWI ! */
+	bl	swi_handler		/* It's a SWI ! */
 
 	DO_AST
 	PULLFRAME
@@ -112,18 +112,18 @@ ASENTRY_NP(prefetch_abort_entry)
 	ldr	pc, [r1]
 
 Lprefetch_abort_handler_address:
-	.word	_C_LABEL(prefetch_abort_handler_address)
+	.word	prefetch_abort_handler_address
 
 	.data
-	.global	_C_LABEL(prefetch_abort_handler_address)
+	.global	prefetch_abort_handler_address
 
-_C_LABEL(prefetch_abort_handler_address):
+prefetch_abort_handler_address:
 	.word	abortprefetch
 
 	.text
 abortprefetch:
         adr     r0, abortprefetchmsg
-	b	_C_LABEL(panic)
+	b	panic
 
 abortprefetchmsg:
         .asciz  "abortprefetch"
@@ -146,17 +146,17 @@ ASENTRY_NP(data_abort_entry)
 	ldr	pc, [r1]
 
 Ldata_abort_handler_address:
-	.word	_C_LABEL(data_abort_handler_address)
+	.word	data_abort_handler_address
 
 	.data
-	.global	_C_LABEL(data_abort_handler_address)
-_C_LABEL(data_abort_handler_address):
+	.global	data_abort_handler_address
+data_abort_handler_address:
 	.word	abortdata
 
 	.text
 abortdata:
         adr     r0, abortdatamsg
-	b	_C_LABEL(panic)
+	b	panic
 
 abortdatamsg:
         .asciz  "abortdata"
@@ -176,7 +176,7 @@ ASENTRY_NP(address_exception_entry)
 	mrs	r2, spsr
 	mov	r3, lr
 	adr	r0, Laddress_exception_msg
-	bl	_C_LABEL(printf)	/* XXX CLOBBERS LR!! */
+	bl	printf			/* XXX CLOBBERS LR!! */
 	b	data_abort_entry
 Laddress_exception_msg:
 	.asciz	"Address Exception CPSR=0x%08x SPSR=0x%08x LR=0x%08x\n"
@@ -232,7 +232,7 @@ ENTRY_NP(undefinedinstruction_bounce)
 
 	mov	r0, sp
 	adr	lr, exception_exit
-	b	_C_LABEL(undefinedinstruction)
+	b	undefinedinstruction
 
 	.data
 	.align	2
@@ -247,6 +247,6 @@ Lundefined_handler_indirection_data:
 	.word	0
 	.word	0
 
-	.global	_C_LABEL(undefined_handler_address)
-_C_LABEL(undefined_handler_address):
-	.word	_C_LABEL(undefinedinstruction_bounce)
+	.global	undefined_handler_address
+undefined_handler_address:
+	.word	undefinedinstruction_bounce

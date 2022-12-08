@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2022/08/30 16:26:29 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.19 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 	call	666f;	\
 666:			\
 	popl	%ebx;	\
-	addl	$_C_LABEL(_GLOBAL_OFFSET_TABLE_)+[.-666b], %ebx
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-666b], %ebx
 #define PIC_EPILOGUE	\
 	popl	%ebx
 #define PIC_PLT(x)	x@PLT
@@ -61,7 +61,7 @@
 #define _C_LABEL(name)	name
 #define	_ASM_LABEL(x)	x
 
-#define CVAROFF(x, y)	_C_LABEL(x) + y
+#define CVAROFF(x, y)	x + y
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y
@@ -113,14 +113,14 @@
 # define _PROF_PROLOGUE
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
 #define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
-#define	NENTRY(y)	_ENTRY(_C_LABEL(y))
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
-#define	NASENTRY(y)	_ENTRY(_ASM_LABEL(y))
+#define	NENTRY(y)	_ENTRY(y)
+#define	ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
+#define	NASENTRY(y)	_ENTRY(y)
 #define	END(y)		.size y, . - y
 
-#define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
+#define	ALTENTRY(name)	.globl name; name:
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.60 2022/10/25 15:15:38 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.61 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -51,11 +51,11 @@
 	.text
 
 #ifdef MULTIPROCESSOR
-_ENTRY(_C_LABEL(cpu_spinup_trampoline))
-	lis	%r3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r3)
+_ENTRY(cpu_spinup_trampoline)
+	lis	%r3,cpu_hatch_stack@ha
+	lwz	%r1,cpu_hatch_stack@l(%r3)
 
-	b	_C_LABEL(cpu_hatch)
+	b	cpu_hatch
 	/* NOTREACHED */
 #endif
 
@@ -63,7 +63,7 @@ _ENTRY(_C_LABEL(cpu_spinup_trampoline))
  * void cpu_switchto(struct proc *old, struct proc *new)
  * Switch from "old" proc to "new".
  */
-_ENTRY(_C_LABEL(cpu_switchto_asm))
+_ENTRY(cpu_switchto_asm)
 	mflr	%r0			/* save lr */
 	stw	%r0,4(%r1)
 	stwu	%r1,(-SFRAMELEN - 16)(%r1)
@@ -136,10 +136,10 @@ switch_exited:
 	RETGUARD_CHECK(cpu_switchto_asm, %r9, %r0)
 	blr
 
-_ENTRY(_C_LABEL(cpu_idle_enter))
+_ENTRY(cpu_idle_enter)
 	RETGUARD_SETUP(cpu_idle_enter, %r11, %r12)
-	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
-	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
+	lis	%r4, ppc_cpuidle@ha
+	lwz	%r4, ppc_cpuidle@l(%r4)
 	cmpwi	%r4, 0
 	beq	1f
 	/* must disable external interrupts during idle queue checking */
@@ -151,10 +151,10 @@ _ENTRY(_C_LABEL(cpu_idle_enter))
 	RETGUARD_CHECK(cpu_idle_enter, %r11, %r12)
 	blr
 
-_ENTRY(_C_LABEL(cpu_idle_cycle))
+_ENTRY(cpu_idle_cycle)
 	RETGUARD_SETUP(cpu_idle_cycle, %r11, %r12)
-	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
-	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
+	lis	%r4, ppc_cpuidle@ha
+	lwz	%r4, ppc_cpuidle@l(%r4)
 	cmpwi	%r4, 0
 	beq	idledone
 
@@ -193,10 +193,10 @@ idledone:
 	RETGUARD_CHECK(cpu_idle_cycle, %r11, %r12)
 	blr
 
-_ENTRY(_C_LABEL(cpu_idle_leave))
+_ENTRY(cpu_idle_leave)
 	RETGUARD_SETUP(cpu_idle_leave, %r11, %r12)
-	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
-	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
+	lis	%r4, ppc_cpuidle@ha
+	lwz	%r4, ppc_cpuidle@l(%r4)
 	cmpwi	%r4, 0
 	beq	1f
 	/* enable interrupts disabled in cpu_idle_enter. */
@@ -212,10 +212,10 @@ _ENTRY(_C_LABEL(cpu_idle_leave))
  * except ISI/DSI, ALI, and the interrupts
  */
 	.text
-	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
-	.type	_C_LABEL(trapcode),@function
-	.type	_C_LABEL(trapsize),@object
-_C_LABEL(trapcode):
+	.globl	trapcode,trapsize
+	.type	trapcode,@function
+	.type	trapsize,@object
+trapcode:
 	mtsprg	1,%r1			/* save SP */
 nop32_1s:
 	mfmsr	%r1
@@ -237,13 +237,13 @@ nop32_1e:
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */
 1:
 	bla	s_trap
-_C_LABEL(trapsize) =	.-_C_LABEL(trapcode)
+trapsize =		.-trapcode
 
 /*
  * For ALI: has to save DSISR and DAR
  */
-	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
-_C_LABEL(alitrap):
+	.globl	alitrap,alisize
+alitrap:
 	mtsprg	1,%r1			/* save SP */
 nop32_2s:
 	mfmsr	%r1
@@ -268,17 +268,17 @@ nop32_2e:
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */
 1:
 	bla	s_trap
-_C_LABEL(alisize) =	.-_C_LABEL(alitrap)
+alisize =		.-alitrap
 
 /*
  * Similar to the above for DSI
  * Has to handle BAT spills
  * and standard pagetable spills
  */
-	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
-	.type	_C_LABEL(dsitrap),@function
-	.type	_C_LABEL(dsisize),@object
-_C_LABEL(dsitrap):
+	.globl	dsitrap,dsisize
+	.type	dsitrap,@function
+	.type	dsisize,@object
+dsitrap:
 	mtsprg	1,%r1
 	GET_CPUINFO(%r1)
 	stmw	%r28,CI_DISISAVE(%r1)	/* free r28-r31 */
@@ -297,11 +297,11 @@ nopbat_1s:
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
-	addis	%r31,%r31,_C_LABEL(battable)@ha
-	lwz	%r30,_C_LABEL(battable)@l(%r31)	/* get batu */
+	addis	%r31,%r31,battable@ha
+	lwz	%r30,battable@l(%r31)		/* get batu */
 	mtcr	%r30
 	bc	4,30,1f			/* branch if supervisor valid is false */
-	lwz	%r31,_C_LABEL(battable)+4@l(%r31)	/* get batl */
+	lwz	%r31,battable+4@l(%r31)			/* get batl */
 /* We randomly use the highest two bat registers here */
 	mftb	%r28
 	andi.	%r28,%r28,1
@@ -325,15 +325,15 @@ nopbat_1s:
 nopbat_1e:
 	mflr	%r28			/* save LR */
 	bla	s_dsitrap
-_C_LABEL(dsisize) =	.-_C_LABEL(dsitrap)
+dsisize =		.-dsitrap
 
 /*
  * Similar to the above for ISI
  */
-	.globl	_C_LABEL(isitrap),_C_LABEL(isisize)
-	.type	_C_LABEL(isitrap),@function
-	.type	_C_LABEL(isisize),@object
-_C_LABEL(isitrap):
+	.globl	isitrap,isisize
+	.type	isitrap,@function
+	.type	isisize,@object
+isitrap:
 	mtsprg	1,%r1                   /* save SP */
 nop32_4s:
 	mfmsr	%r1
@@ -347,15 +347,15 @@ nop32_4e:
 	mfsrr1	%r31			/* test kernel mode */
 	mfsprg	%r1,1                   /* restore SP */
 	bla	s_isitrap
-_C_LABEL(isisize) =	.-_C_LABEL(isitrap)
+isisize =		.-isitrap
 
 /*
  * This one for the external interrupt handler.
  */
-	.globl	_C_LABEL(extint),_C_LABEL(extsize)
-	.type	_C_LABEL(extint),@function
-	.type	_C_LABEL(extsize),@object
-_C_LABEL(extint):
+	.globl	extint,extsize
+	.type	extint,@function
+	.type	extsize,@object
+extint:
 	mtsprg	1,%r1			/* save SP */
 nop32_5s:
 	mfmsr	%r1
@@ -375,15 +375,15 @@ nop32_5e:
 	mfsprg	%r1,1			/* yes, get old SP */
 1:
 	ba	extintr
-_C_LABEL(extsize) =	.-_C_LABEL(extint)
+extsize =		.-extint
 
 /*
  * And this one for the decrementer interrupt handler.
  */
-	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
-	.type	_C_LABEL(decrint),@function
-	.type	_C_LABEL(decrsize),@object
-_C_LABEL(decrint):
+	.globl	decrint,decrsize
+	.type	decrint,@function
+	.type	decrsize,@object
+decrint:
 	mtsprg	1,%r1			/* save SP */
 nop32_6s:
 	mfmsr	%r1
@@ -403,7 +403,7 @@ nop32_6e:
 	mfsprg	%r1,1			/* yes, get old SP */
 1:
 	ba	decrintr
-_C_LABEL(decrsize) =	.-_C_LABEL(decrint)
+decrsize =		.-decrint
 
 /*
  * Now the tlb software load for 603 processors:
@@ -421,10 +421,10 @@ _C_LABEL(decrsize) =	.-_C_LABEL(decrint)
 #define	tlbli	.long	0x7c0007e4+0x800*
 #define	tlbld	.long	0x7c0007a4+0x800*
 
-	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
-	.type	_C_LABEL(tlbimiss),@function
-	.type	_C_LABEL(tlbimsize),@object
-_C_LABEL(tlbimiss):
+	.globl	tlbimiss,tlbimsize
+	.type	tlbimiss,@function
+	.type	tlbimsize,@object
+tlbimiss:
 	mfspr	%r2,HASH1		/* get first pointer */
 	li	%r1,8
 	mfctr	%r0			/* save counter */
@@ -477,12 +477,12 @@ _C_LABEL(tlbimiss):
 	mtmsr	%r0			/* now with native gprs */
 	isync
 	ba	EXC_ISI
-_C_LABEL(tlbimsize) =	.-_C_LABEL(tlbimiss)
+tlbimsize =		.-tlbimiss
 
-	.globl	_C_LABEL(tlbdlmiss),_C_LABEL(tlbdlmsize)
-	.type	_C_LABEL(tlbdlmiss),@function
-	.type	_C_LABEL(tlbdlmsize),@object
-_C_LABEL(tlbdlmiss):
+	.globl	tlbdlmiss,tlbdlmsize
+	.type	tlbdlmiss,@function
+	.type	tlbdlmsize,@object
+tlbdlmiss:
 	mfspr	%r2,HASH1		/* get first pointer */
 	li	%r1,8
 	mfctr	%r0			/* save counter */
@@ -530,12 +530,12 @@ _C_LABEL(tlbdlmiss):
 	mtmsr	%r0			/* now with native gprs */
 	isync
 	ba	EXC_DSI
-_C_LABEL(tlbdlmsize) =	.-_C_LABEL(tlbdlmiss)
+tlbdlmsize =		.-tlbdlmiss
 
-	.globl	_C_LABEL(tlbdsmiss),_C_LABEL(tlbdsmsize)
-	.type	_C_LABEL(tlbdsmiss),@function
-	.type	_C_LABEL(tlbdsmsize),@object
-_C_LABEL(tlbdsmiss):
+	.globl	tlbdsmiss,tlbdsmsize
+	.type	tlbdsmiss,@function
+	.type	tlbdsmsize,@object
+tlbdsmiss:
 	mfspr	%r2,HASH1		/* get first pointer */
 	li	%r1,8
 	mfctr	%r0			/* save counter */
@@ -606,14 +606,14 @@ _C_LABEL(tlbdsmiss):
 	mtmsr	%r0			/* now with native gprs */
 	isync
 	ba	EXC_DSI
-_C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
+tlbdsmsize =		.-tlbdsmiss
 
 #ifdef DDB
 /*
  * In case of DDB we want a separate trap catcher for it
  */
-	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
-_C_LABEL(ddblow):
+	.globl	ddblow,ddbsize
+ddblow:
 	mtsprg	1,%r1			/* save SP */
 nop32_7s:
 	mfmsr	%r1
@@ -628,7 +628,7 @@ nop32_7e:
 	lwz	%r30,CI_INTSTK(%r30)	/* get interrupt stack */
 	addi	%r1,%r30,(SPILLSTK+DDBSTK)
 	bla	ddbtrap
-_C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
+ddbsize =		.-ddblow
 #endif  /* DDB */
 
 /*
@@ -644,8 +644,8 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 	beq	1f;							\
 	andi.	sr2,sr2,~flag@l;					\
 	stw	sr2,CI_FLAGS(sr1);					\
-	lis	rSRR0,_C_LABEL(idledone)@ha;				\
-	addi	rSRR0,rSRR0,_C_LABEL(idledone)@l;			\
+	lis	rSRR0,idledone@ha;					\
+	addi	rSRR0,rSRR0,idledone@l;					\
 1:
 
 /*
@@ -668,8 +668,8 @@ _C_LABEL(ddbsize) =	.-_C_LABEL(ddblow)
 	mfsrr1	%r30;							\
 	stw	%r30,savearea+28(%r31);					\
 	/* load all kernel segment registers. */			\
-	lis	%r31,_C_LABEL(kernel_pmap_)@ha;				\
-	addi	%r31,%r31,_C_LABEL(kernel_pmap_)@l;			\
+	lis	%r31,kernel_pmap_@ha;					\
+	addi	%r31,%r31,kernel_pmap_@l;				\
 	lwz	%r30,0(%r31);	mtsr	0,%r30;				\
 	lwz	%r30,4(%r31);	mtsr	1,%r30;				\
 	lwz	%r30,8(%r31);	mtsr	2,%r30;				\
@@ -813,7 +813,7 @@ s_trap:
 /* Call C trap code: */
 trapagain:
 	addi	%r3,%r1,8
-	bl	_C_LABEL(trap)
+	bl	trap
 
 	.globl	trapexit
 trapexit:
@@ -842,14 +842,14 @@ rfi1:	rfi
  * Child comes here at the end of a fork.
  * Mostly similar to the above.
  */
-	.globl	_C_LABEL(proc_trampoline)
-	.type	_C_LABEL(proc_trampoline),@function
-_C_LABEL(proc_trampoline):
+	.globl	proc_trampoline
+	.type	proc_trampoline,@function
+proc_trampoline:
 #ifdef MULTIPROCESSOR
-	bl	_C_LABEL(proc_trampoline_mp)
+	bl	proc_trampoline_mp
 #endif
 	li	%r3,0
-	bl	_C_LABEL(lcsplx)
+	bl	lcsplx
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */
@@ -891,7 +891,7 @@ s_pte_spill:
 	li	%r3,0
 	bne	1f
 	mr	%r3,%r7
-	bl	_C_LABEL(pte_spill_r)	/* try a spill */
+	bl	pte_spill_r		/* try a spill */
 1:
 	cmpwi	0,%r3,0
 	mtctr	%r31			/* restore CTR */
@@ -983,8 +983,8 @@ s_isitrap:
 	stw	%r4,12(%r1);						\
 	stw	%r3,8(%r1);						\
 /* load all kernel segment registers. */				\
-	lis	3,_C_LABEL(kernel_pmap_)@ha;                            \
-	addi	3,3,_C_LABEL(kernel_pmap_)@l;                           \
+	lis	3,kernel_pmap_@ha;					\
+	addi	3,3,kernel_pmap_@l;					\
 	lwz	%r5,0(%r3);	mtsr 0,%r5;				\
 	lwz	%r5,4(%r3);	mtsr 1,%r5;				\
 	lwz	%r5,8(%r3);	mtsr 2,%r5;				\
@@ -1007,12 +1007,12 @@ s_isitrap:
 	mtmsr	%r5;							\
 	isync
 
-	.globl	_C_LABEL(extint_call)
-	.type	_C_LABEL(extint_call),@function
+	.globl	extint_call
+	.type	extint_call,@function
 extintr:
 	INTRENTER
-_C_LABEL(extint_call):
-	bl	_C_LABEL(extint_call)		/* to be filled in later */
+extint_call:
+	bl	extint_call			/* to be filled in later */
 intr_exit:
 /* Disable interrupts (should already be disabled) and MMU here: */
 	mfmsr	%r3
@@ -1100,7 +1100,7 @@ rfi3:	rfi
 decrintr:
 	INTRENTER
 	addi	%r3,%r1,8			/* intr frame */
-	bl	_C_LABEL(decr_intr)
+	bl	decr_intr
 	b	intr_exit
 
 
@@ -1112,9 +1112,9 @@ decrintr:
  * or the (currently used) C code optimized, so it doesn't use any non-volatile
  * registers.
  */
-	.globl	_C_LABEL(setfault)
-	.type	_C_LABEL(setfault),@function
-_C_LABEL(setfault):
+	.globl	setfault
+	.type	setfault,@function
+setfault:
 	mflr	%r0
 	RETGUARD_SETUP_LATE(setfault, %r11, %r0)
 	mfcr	%r12
@@ -1136,10 +1136,10 @@ _C_LABEL(setfault):
  * All other registers are unchanged.
  */
 	.section .rodata
-	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
-	.type	_C_LABEL(sigcode),@function
-	.type	_C_LABEL(esigcode),@function
-_C_LABEL(sigcode):
+	.globl	sigcode,esigcode
+	.type	sigcode,@function
+	.type	esigcode,@function
+sigcode:
 	addi	%r1,%r1,-((16+FPSIG_SIZEOF+15)& ~0xf)		/* reserved space for callee */
 	addi	%r6,%r1,8
 	stfd	%f0,0(%r6)
@@ -1180,20 +1180,20 @@ _C_LABEL(sigcode):
 	addi	%r3,%r1,((16+FPSIG_SIZEOF+15)&~0xf)+SF_SC	/* compute &sf_sc */
 	li	%r0,SYS_sigreturn
 	sc				/* sigreturn(scp) */
-	.globl  _C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl	sigcoderet
+sigcoderet:
 	li	%r0,SYS_exit
 	sc				/* exit(errno) */
-_C_LABEL(esigcode):
+esigcode:
 
-	.globl  _C_LABEL(sigfill)
-_C_LABEL(sigfill):
+	.globl	sigfill
+sigfill:
 	.long	0		# illegal
-_C_LABEL(esigfill):
+esigfill:
 	.align	4
-	.globl	_C_LABEL(sigfillsiz)
-_C_LABEL(sigfillsiz):
-	.long	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+	.globl	sigfillsiz
+sigfillsiz:
+	.long	esigfill - sigfill
 
 	.text
 
@@ -1201,8 +1201,8 @@ _C_LABEL(sigfillsiz):
 /*
  * Deliberate entry to ddbtrap
  */
-	.globl	_C_LABEL(ddb_trap)
-_C_LABEL(ddb_trap):
+	.globl	ddb_trap
+ddb_trap:
 	mtsprg	1,%r1
 	mfmsr	%r3
 	mtsrr1	%r3
@@ -1229,7 +1229,7 @@ ddbtrap:
 	FRAME_SETUP_FLAG(CI_DDBSAVE, 0)
 /* Call C trap code: */
 	addi	%r3,%r1,8
-	bl	_C_LABEL(db_trap_glue)
+	bl	db_trap_glue
 	or.	%r3,%r3,%r3
 	bne	ddbleave
 /* This wasn't for DDB, so switch to real trap: */
@@ -1250,18 +1250,18 @@ ddbleave:
 rfi4:	rfi
 #endif /* DDB */
 
-	.globl  _C_LABEL(rfi_inst)
-_C_LABEL(rfi_inst):
+	.globl	rfi_inst
+rfi_inst:
 	rfi
-	.globl  _C_LABEL(rfid_inst)
-_C_LABEL(rfid_inst):
+	.globl	rfid_inst
+rfid_inst:
 	rfid
-	.globl  _C_LABEL(nop_inst)
- _C_LABEL(nop_inst):
+	.globl	nop_inst
+ nop_inst:
 	nop
 
-	.globl  _C_LABEL(rfi_start)
-_C_LABEL(rfi_start):
+	.globl	rfi_start
+rfi_start:
 	.long	rfi1, rfi1 + 4
 	.long	rfi2, rfi2 + 4
 	.long	rfi3, rfi3 + 4
@@ -1271,13 +1271,13 @@ _C_LABEL(rfi_start):
 	.long	0, 0
 
 
-	.globl  _C_LABEL(nopbat_start)
-_C_LABEL(nopbat_start):
+	.globl	nopbat_start
+nopbat_start:
 	.long	nopbat_1s, nopbat_1e
 	.long	0, 0
 
-	.globl  _C_LABEL(nop32_start)
-_C_LABEL(nop32_start):
+	.globl	nop32_start
+nop32_start:
 	.long	nop32_1s, nop32_1e
 	.long	nop32_2s, nop32_2e
 	.long	nop32_3s, nop32_3e

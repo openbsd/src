@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2022/06/10 01:56:02 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -89,9 +89,9 @@ _TMP_LABEL(y):; \
 # define _PROF_PROLOGUE(y)
 #endif
 
-#define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE(y)
+#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE(y)
 #define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE(y)
-#define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE(y)
+#define	ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE(y)
 #define	END(y)		.size y, . - y
 
 #define STRONG_ALIAS(alias,sym) \

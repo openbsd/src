@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.2 2019/09/03 14:37:22 deraadt Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.3 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -51,12 +51,12 @@
 /*
  * Globals
  */
-	.globl	_C_LABEL(esym),_C_LABEL(proc0paddr)
-	.type	_C_LABEL(esym),@object
-	.type	_C_LABEL(proc0paddr),@object
+	.globl	esym,proc0paddr
+	.type	esym,@object
+	.type	proc0paddr,@object
 	.data
-_C_LABEL(esym):		.long	0	/* end of symbol table */
-_C_LABEL(proc0paddr):	.long	0	/* proc0 p_addr */
+esym:			.long	0	/* end of symbol table */
+proc0paddr:		.long	0	/* proc0 p_addr */
 
 	.globl	fwargsave
 fwargsave:
@@ -67,7 +67,7 @@ fwargsave:
 /*
  * Startup entry
  */
-_ENTRY(_C_LABEL(kernel_text))
+_ENTRY(kernel_text)
 /* arguments to start
  * r1 - stack provided by firmware/bootloader
  * r3 - unused
@@ -100,24 +100,24 @@ start:
 	lwz	%r9, -4(%r9)
 	cmpwi   %r9,0
 	beq	1f
-	lis	%r8,_C_LABEL(esym)@ha
-	stw	%r9,_C_LABEL(esym)@l(%r8)
+	lis	%r8,esym@ha
+	stw	%r9,esym@l(%r8)
 	mr	%r8, %r9
 1:
 #endif
 	li	%r9,PGOFSET
 	add	%r8,%r8,%r9
 	andc	%r8,%r8,%r9
-	lis	%r9,_C_LABEL(cpu_info)@ha
-	addi	%r9,%r9,_C_LABEL(cpu_info)@l
+	lis	%r9,cpu_info@ha
+	addi	%r9,%r9,cpu_info@l
 	mtsprg	0,%r9
 	addi	%r8,%r8,INTSTK
 	stw	%r8,CI_INTSTK(%r9)
 	li	%r0,-1
 	stw	%r0,CI_INTRDEPTH(%r9)
 	addi	%r8,%r8,SPILLSTK+DDBSTK	/* leave room for spillstk and ddbstk */
-	lis	%r9,_C_LABEL(proc0paddr)@ha
-	stw	%r8,_C_LABEL(proc0paddr)@l(%r9)
+	lis	%r9,proc0paddr@ha
+	stw	%r8,proc0paddr@l(%r9)
 	addi	%r1,%r8,USPACE-FRAMELEN	/* stackpointer for proc0 */
 	mr	%r4,%r1			/* end of mem reserved for kernel */
 	li	%r0,0
@@ -126,6 +126,6 @@ start:
 	lis	%r3,start@ha
 	addi	%r3,%r3,start@l
 	mr	%r5,%r6			/* args string */
-	bl	_C_LABEL(initppc)
-	bl	_C_LABEL(main)
-	b	_C_LABEL(OF_exit)
+	bl	initppc
+	bl	main
+	b	OF_exit

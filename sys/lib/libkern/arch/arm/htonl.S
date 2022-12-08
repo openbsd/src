@@ -1,4 +1,4 @@
-/*	$OpenBSD: htonl.S,v 1.3 2014/12/30 08:12:52 jsg Exp $	*/
+/*	$OpenBSD: htonl.S,v 1.4 2022/12/08 01:25:46 guenther Exp $	*/
 /*	$NetBSD: byte_swap_4.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*-
@@ -32,9 +32,9 @@
 
 #include <machine/asm.h>
 
-_ENTRY(_C_LABEL(htonl))
-_ENTRY(_C_LABEL(ntohl))
-_ENTRY(_C_LABEL(bswap32))
+_ENTRY(htonl)
+_ENTRY(ntohl)
+_ENTRY(bswap32)
 _PROF_PROLOGUE
 	eor		r1, r0, r0, ror #16
 	bic		r1, r1, #0x00FF0000

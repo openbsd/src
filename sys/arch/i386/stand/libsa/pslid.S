@@ -1,4 +1,4 @@
-/*	$OpenBSD: pslid.S,v 1.2 2020/06/14 17:05:45 deraadt Exp $	*/
+/*	$OpenBSD: pslid.S,v 1.3 2022/12/08 01:25:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 #include <machine/psl.h>
 
-	.globl	_C_LABEL(pslid)
+	.globl	pslid
 ENTRY(pslid)
 	// See if we have CPU identification.
 	pushfl

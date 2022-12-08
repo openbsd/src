@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.4 2020/10/20 15:26:59 visa Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.5 2022/12/08 01:25:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -35,7 +35,7 @@ GPOFF=FRAMESZ-2*REGSZ
 LEAF(__tfork_thread, FRAMESZ)
 	/* a0 = param, a1 = psize, a2 = func, a3 = arg */
 	PTR_SUBU sp, FRAMESZ
-	SETUP_GP64(GPOFF, _C_LABEL(__tfork_thread))
+	SETUP_GP64(GPOFF, __tfork_thread)
 	.set	reorder
 
 	move	t1, a3		/* arg */

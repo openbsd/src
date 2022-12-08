@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.12 2022/05/24 17:15:23 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.13 2022/12/08 01:25:43 guenther Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2003/08/07 16:42:05 agc Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(_end)
+	.globl	_end
 
 	.data
 	.align	2
@@ -42,7 +42,7 @@
 	.type	__curbrk,#object
 	.hidden	__curbrk
 __curbrk:
-	.word	_C_LABEL(_end)
+	.word	_end
 	END(__curbrk)
 
 /*
@@ -79,7 +79,7 @@ ENTRY_NB(sbrk)
 	.align	2
 #ifdef __PIC__
 .Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) - (.L1+8)
+	.word	_GLOBAL_OFFSET_TABLE_ - (.L1+8)
 #endif
 .Lcurbrk:
 	.word	PIC_SYM(__curbrk, GOT)

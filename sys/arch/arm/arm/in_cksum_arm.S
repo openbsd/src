@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.8 2020/02/28 11:38:56 jsg Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.9 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -74,7 +74,7 @@ ENTRY(in_cksum)
 	eor	r11, r10, r0
 	add	r10, r10, r1
 	adds	r2, r1, #0x00
-	blne	_ASM_LABEL(L_cksumdata)
+	blne	L_cksumdata
 	tst	r11, #0x01
 	movne	r2, r2, ror #8
 	adds	r8, r8, r2
@@ -186,7 +186,7 @@ ENTRY(in4_cksum)
 
 .Lin4_cksum_whoops:
 	adr	r0, .Lin4_cksum_whoops_str
-	bl	_C_LABEL(panic)
+	bl	panic
 .Lin4_cksum_whoops_str:
 	.asciz	"in4_cksum: out of mbufs\n"
 	.align	5

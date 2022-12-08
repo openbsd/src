@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.9 2021/11/27 15:12:19 visa Exp $ */
+/*	$OpenBSD: brk.S,v 1.10 2022/12/08 01:25:43 guenther Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 
 	.data
 __minbrk:
-	PTR_VAL	_C_LABEL(_end)
+	PTR_VAL	_end
 	.size	__minbrk, . - __minbrk
 	.type	__minbrk,@object
 	.text

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.6 2022/05/24 22:34:02 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.7 2022/12/08 01:25:43 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -34,14 +34,14 @@
 
 #include "SYS.h"
 
-	.globl	_C_LABEL(_end)
+	.globl	_end
 	.globl	__curbrk
 
 	.data
 	.align	3
 	.type	__minbrk,#object
 __minbrk:
-	.quad	_C_LABEL(_end)
+	.quad	_end
 	END(__minbrk)
 
 /*

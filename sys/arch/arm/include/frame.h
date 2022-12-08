@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.13 2018/06/30 15:23:37 deraadt Exp $	*/
+/*	$OpenBSD: frame.h,v 1.14 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: frame.h,v 1.9 2003/12/01 08:48:33 scw Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ struct frame {
 
 #define	AST_LOCALS							 \
 .Laflt_astpending:							;\
-	.word	_C_LABEL(astpending)
+	.word	astpending
 
 #define	DO_AST								 \
 	ldr	r0, [sp]		/* Get the SPSR from stack */	;\
@@ -193,7 +193,7 @@ struct frame {
 	msr	cpsr_c, r4		/* Restore interrupts */	;\
 	mov	r0, sp							;\
 	adr	lr, 1b							;\
-	b	_C_LABEL(ast)		/* ast(frame) */		;\
+	b	ast			/* ast(frame) */		;\
 2:
 
 /*

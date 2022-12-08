@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.4 2013/06/15 19:16:53 miod Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.5 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
@@ -39,4 +39,4 @@ ENTRY(bcopy)
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 
 	eor     r0, r1, r0 
-	b	PIC_SYM(_C_LABEL(memmove), PLT)
+	b	PIC_SYM(memmove, PLT)

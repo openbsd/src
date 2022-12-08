@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.7 2022/01/02 23:29:12 jsg Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.8 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -56,8 +56,8 @@
  */
 	.text
 
-	.global	_C_LABEL(bootstrap_start)
-_C_LABEL(bootstrap_start):
+	.global	bootstrap_start
+bootstrap_start:
 	/* Save U-Boot arguments */
 	mov	r6, r0
 	mov	r7, r1

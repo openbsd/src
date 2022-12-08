@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_md.h,v 1.7 2006/06/06 13:30:42 mickey Exp $	*/
+/*	$OpenBSD: debug_md.h,v 1.8 2022/12/08 01:25:45 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -48,7 +48,7 @@
 	"reserved fault base"
 
 #ifdef	_LOCORE
-	.globl	_C_LABEL(reg)
+	.globl	reg
 #define DUMP_REGS	int $2
 #else
 #define DUMP_REGS	__asm("int $2")

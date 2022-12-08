@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_dispatch.S,v 1.16 2020/03/11 21:04:58 deraadt Exp $	*/
+/*	$OpenBSD: irq_dispatch.S,v 1.17 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: irq_dispatch.S,v 1.5 2003/10/30 08:57:24 scw Exp $	*/
 
 /*
@@ -88,10 +88,10 @@
 	.text
 	.align	2
 .Lcpu_info_primary:
-	.word	_C_LABEL(cpu_info_primary)
+	.word	cpu_info_primary
 
 #define STOREVFP						\
-	bl	_C_LABEL(vfp_save)
+	bl	vfp_save
 
 AST_LOCALS
 
@@ -134,6 +134,6 @@ ASENTRY_NP(irq_entry)
 	.bss
 	.align	2
 
-	.global _C_LABEL(astpending)
-_C_LABEL(astpending):
+	.global astpending
+astpending:
 	.word	0

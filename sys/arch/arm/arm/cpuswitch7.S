@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.16 2020/03/11 21:04:58 deraadt Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.17 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -97,10 +97,10 @@
 	.text
 
 .Lcpufuncs:
-	.word	_C_LABEL(cpufuncs)
+	.word	cpufuncs
 
 .Lcpu_do_powersave:
-	.word	_C_LABEL(cpu_do_powersave)
+	.word	cpu_do_powersave
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -222,10 +222,10 @@ ENTRY(savectx)
 
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
-	bl	_C_LABEL(proc_trampoline_mp)
+	bl	proc_trampoline_mp
 #endif
 	mov	r0, #(IPL_NONE)
-	bl	_C_LABEL(_spllower)
+	bl	_spllower
 
 	mov	r0, r5
 	mov	r1, sp

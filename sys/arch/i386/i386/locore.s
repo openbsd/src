@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.197 2022/08/22 09:33:40 jsg Exp $	*/
+/*	$OpenBSD: locore.s,v 1.198 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
 
-#define CPL _C_LABEL(lapic_tpr)
+#define CPL lapic_tpr
 
 #define	GET_CURPCB(reg)					\
 	movl	CPUVAR(CURPCB), reg
@@ -212,102 +212,102 @@ INTRENTRY_LABEL(label):	/* from kernel */	; \
  * PTmap is recursive pagemap at top of virtual address space.
  * Within PTmap, the page directory can be found (third indirection).
  */
-	.globl	_C_LABEL(PTmap), _C_LABEL(PTD)
-	.set	_C_LABEL(PTmap), (PDSLOT_PTE << PDSHIFT)
-	.set	_C_LABEL(PTD), (_C_LABEL(PTmap) + PDSLOT_PTE * NBPG)
+	.globl	PTmap, PTD
+	.set	PTmap, (PDSLOT_PTE << PDSHIFT)
+	.set	PTD, (PTmap + PDSLOT_PTE * NBPG)
 
 /*
  * Initialization
  */
 	.data
 
-	.globl	_C_LABEL(cpu_id), _C_LABEL(cpu_vendor)
-	.globl	_C_LABEL(cpu_brandstr)
-	.globl	_C_LABEL(cpuid_level)
-	.globl	_C_LABEL(cpu_miscinfo)
-	.globl	_C_LABEL(cpu_feature), _C_LABEL(cpu_ecxfeature)
-	.globl	_C_LABEL(ecpu_feature), _C_LABEL(ecpu_eaxfeature)
-	.globl	_C_LABEL(ecpu_ecxfeature)
-	.globl	_C_LABEL(cpu_cache_eax), _C_LABEL(cpu_cache_ebx)
-	.globl	_C_LABEL(cpu_cache_ecx), _C_LABEL(cpu_cache_edx)
-	.globl	_C_LABEL(cpu_perf_eax)
-	.globl	_C_LABEL(cpu_perf_ebx)
-	.globl	_C_LABEL(cpu_perf_edx)
-	.globl	_C_LABEL(cpu_apmi_edx)
-	.globl	_C_LABEL(cold), _C_LABEL(cnvmem), _C_LABEL(extmem)
-	.globl	_C_LABEL(cpu_pae)
-	.globl	_C_LABEL(esym)
-	.globl	_C_LABEL(ssym)
-	.globl	_C_LABEL(nkptp_max)
-	.globl	_C_LABEL(boothowto), _C_LABEL(bootdev), _C_LABEL(atdevbase)
-	.globl	_C_LABEL(proc0paddr), _C_LABEL(PTDpaddr), _C_LABEL(PTDsize)
-	.globl	_C_LABEL(gdt)
-	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
-	.globl	_C_LABEL(lapic_tpr)
-	.globl	_C_LABEL(pg_g_kern)
-	.globl	_C_LABEL(cpu_meltdown)
+	.globl	cpu_id, cpu_vendor
+	.globl	cpu_brandstr
+	.globl	cpuid_level
+	.globl	cpu_miscinfo
+	.globl	cpu_feature, cpu_ecxfeature
+	.globl	ecpu_feature, ecpu_eaxfeature
+	.globl	ecpu_ecxfeature
+	.globl	cpu_cache_eax, cpu_cache_ebx
+	.globl	cpu_cache_ecx, cpu_cache_edx
+	.globl	cpu_perf_eax
+	.globl	cpu_perf_ebx
+	.globl	cpu_perf_edx
+	.globl	cpu_apmi_edx
+	.globl	cold, cnvmem, extmem
+	.globl	cpu_pae
+	.globl	esym
+	.globl	ssym
+	.globl	nkptp_max
+	.globl	boothowto, bootdev, atdevbase
+	.globl	proc0paddr, PTDpaddr, PTDsize
+	.globl	gdt
+	.globl	bootapiver, bootargc, bootargv
+	.globl	lapic_tpr
+	.globl	pg_g_kern
+	.globl	cpu_meltdown
 
 #if NLAPIC > 0
 	.align NBPG
-	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
-_C_LABEL(local_apic):
+	.globl local_apic, lapic_id
+local_apic:
 	.space	LAPIC_ID
-_C_LABEL(lapic_id):
+lapic_id:
 	.long	0x00000000
 	.space	LAPIC_TPRI-(LAPIC_ID+4)
-_C_LABEL(lapic_tpr):
+lapic_tpr:
 	.space	LAPIC_PPRI-LAPIC_TPRI
-_C_LABEL(lapic_ppr):
+lapic_ppr:
 	.space	LAPIC_ISR-LAPIC_PPRI
-_C_LABEL(lapic_isr):
+lapic_isr:
 	.space	NBPG-LAPIC_ISR
 #else
-_C_LABEL(lapic_tpr):
+lapic_tpr:
 	.long	0
 #endif
 
-_C_LABEL(cpu_id):	.long	0	# saved from 'cpuid' instruction
-_C_LABEL(cpu_pae):	.long	0	# are we using PAE paging mode?
-_C_LABEL(cpu_miscinfo):	.long	0	# misc info (apic/brand id) from 'cpuid'
-_C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid' instruction
-_C_LABEL(ecpu_feature): .long	0	# extended feature flags from 'cpuid'
-_C_LABEL(cpu_ecxfeature):.long	0	# ecx feature flags from 'cpuid'
-_C_LABEL(ecpu_eaxfeature): .long 0	# extended eax feature flags
-_C_LABEL(ecpu_ecxfeature): .long 0	# extended ecx feature flags
-_C_LABEL(cpuid_level):	.long	-1	# max. lvl accepted by 'cpuid' insn
-_C_LABEL(cpu_cache_eax):.long	0
-_C_LABEL(cpu_cache_ebx):.long	0
-_C_LABEL(cpu_cache_ecx):.long	0
-_C_LABEL(cpu_cache_edx):.long	0
-_C_LABEL(cpu_perf_eax):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_perf_ebx):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_perf_edx):	.long	0	# arch. perf. mon. flags from 'cpuid'
-_C_LABEL(cpu_apmi_edx):	.long	0	# adv. power management info. 'cpuid'
-_C_LABEL(cpu_vendor): .space 16	# vendor string returned by 'cpuid' instruction
-_C_LABEL(cpu_brandstr):	.space 48 # brand string returned by 'cpuid'
-_C_LABEL(cold):		.long	1	# cold till we are not
-_C_LABEL(ssym):		.long	0	# ptr to start of syms
-_C_LABEL(esym):		.long	0	# ptr to end of syms
-_C_LABEL(cnvmem):	.long	0	# conventional memory size
-_C_LABEL(extmem):	.long	0	# extended memory size
-_C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
-_C_LABEL(bootapiver):	.long	0	# /boot API version
-_C_LABEL(bootargc):	.long	0	# /boot argc
-_C_LABEL(bootargv):	.long	0	# /boot argv
-_C_LABEL(bootdev):	.long	0	# device we booted from
-_C_LABEL(proc0paddr):	.long	0
-_C_LABEL(PTDpaddr):	.long	0	# paddr of PTD, for libkvm
-_C_LABEL(PTDsize):	.long	NBPG	# size of PTD, for libkvm
-_C_LABEL(pg_g_kern):	.long	0	# 0x100 if global pages should be used
+cpu_id:			.long	0	# saved from 'cpuid' instruction
+cpu_pae:		.long	0	# are we using PAE paging mode?
+cpu_miscinfo:		.long	0	# misc info (apic/brand id) from 'cpuid'
+cpu_feature:		.long	0	# feature flags from 'cpuid' instruction
+ecpu_feature:		.long	0	# extended feature flags from 'cpuid'
+cpu_ecxfeature:		.long	0	# ecx feature flags from 'cpuid'
+ecpu_eaxfeature:	.long	0	# extended eax feature flags
+ecpu_ecxfeature:	.long	0	# extended ecx feature flags
+cpuid_level:		.long	-1	# max. lvl accepted by 'cpuid' insn
+cpu_cache_eax:		.long	0
+cpu_cache_ebx:		.long	0
+cpu_cache_ecx:		.long	0
+cpu_cache_edx:		.long	0
+cpu_perf_eax:		.long	0	# arch. perf. mon. flags from 'cpuid'
+cpu_perf_ebx:		.long	0	# arch. perf. mon. flags from 'cpuid'
+cpu_perf_edx:		.long	0	# arch. perf. mon. flags from 'cpuid'
+cpu_apmi_edx:		.long	0	# adv. power management info. 'cpuid'
+cpu_vendor:		.space	16	# vendor string returned by 'cpuid' instruction
+cpu_brandstr:		.space	48	# brand string returned by 'cpuid'
+cold:			.long	1	# cold till we are not
+ssym:			.long	0	# ptr to start of syms
+esym:			.long	0	# ptr to end of syms
+cnvmem:			.long	0	# conventional memory size
+extmem:			.long	0	# extended memory size
+atdevbase:		.long	0	# location of start of iomem in virtual
+bootapiver:		.long	0	# /boot API version
+bootargc:		.long	0	# /boot argc
+bootargv:		.long	0	# /boot argv
+bootdev:		.long	0	# device we booted from
+proc0paddr:		.long	0
+PTDpaddr:		.long	0	# paddr of PTD, for libkvm
+PTDsize:		.long	NBPG	# size of PTD, for libkvm
+pg_g_kern:		.long	0	# 0x100 if global pages should be used
 					# in kernel mappings, 0 otherwise (for
 					# insecure CPUs)
-_C_LABEL(cpu_meltdown): .long	0	# 1 if this CPU has Meltdown
+cpu_meltdown: .long		0	# 1 if this CPU has Meltdown
 
 	.text
 
 NENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
-	call	_C_LABEL(proc_trampoline_mp)
+	call	proc_trampoline_mp
 #endif
 	movl	$IPL_NONE,CPL
 	pushl	%ebx
@@ -321,13 +321,13 @@ NENTRY(proc_trampoline)
 	/* This must come before any use of the CODEPATCH macros */
        .section .codepatch,"a"
        .align  8
-       .globl _C_LABEL(codepatch_begin)
-_C_LABEL(codepatch_begin):
+       .globl codepatch_begin
+codepatch_begin:
        .previous
 
        .section .codepatchend,"a"
-       .globl _C_LABEL(codepatch_end)
-_C_LABEL(codepatch_end):
+       .globl codepatch_end
+codepatch_end:
        .previous
 
 /*****************************************************************************/
@@ -336,8 +336,8 @@ _C_LABEL(codepatch_end):
  * Signal trampoline; copied to top of user stack.
  */
 	.section .rodata
-	.globl	_C_LABEL(sigcode)
-_C_LABEL(sigcode):
+	.globl	sigcode
+sigcode:
 	call	*SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -345,22 +345,22 @@ _C_LABEL(sigcode):
 	pushl	%eax			# junk to fake return address
 	movl	$SYS_sigreturn,%eax
 	int	$0x80			# enter kernel with args on stack
-	.globl	_C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl	sigcoderet
+sigcoderet:
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(esigcode):
+	.globl	esigcode
+esigcode:
 
-	.globl	_C_LABEL(sigfill)
-_C_LABEL(sigfill):
+	.globl	sigfill
+sigfill:
 	int3
-_C_LABEL(esigfill):
+esigfill:
 
 	.data
-	.globl	_C_LABEL(sigfillsiz)
-_C_LABEL(sigfillsiz):
-	.long	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+	.globl	sigfillsiz
+sigfillsiz:
+	.long	esigfill - sigfill
 
 	.text
 
@@ -390,7 +390,7 @@ ENTRY(kcopy)
 	pushl	%edi
 	GET_CURPCB(%eax)		# load curpcb into eax and set on-fault
 	pushl	PCB_ONFAULT(%eax)
-	movl	$_C_LABEL(copy_fault), PCB_ONFAULT(%eax)
+	movl	$copy_fault, PCB_ONFAULT(%eax)
 
 	movl	16+FPADD(%esp),%esi
 	movl	20+FPADD(%esp),%edi
@@ -477,12 +477,12 @@ ENTRY(copyout)
 	 */
 	movl	%edi,%edx
 	addl	%eax,%edx
-	jc	_C_LABEL(copy_fault)
+	jc	copy_fault
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
-	ja	_C_LABEL(copy_fault)
+	ja	copy_fault
 
 	GET_CURPCB(%edx)
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+	movl	$copy_fault,PCB_ONFAULT(%edx)
 	SMAP_STAC
 
 	/* bcopy(%esi, %edi, %eax); */
@@ -518,7 +518,7 @@ ENTRY(copyin)
 	pushl	%edi
 	GET_CURPCB(%eax)
 	pushl	$0
-	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%eax)
+	movl	$copy_fault,PCB_ONFAULT(%eax)
 	SMAP_STAC
 
 	movl	16+FPADD(%esp),%esi
@@ -532,9 +532,9 @@ ENTRY(copyin)
 	 */
 	movl	%esi,%edx
 	addl	%eax,%edx
-	jc	_C_LABEL(copy_fault)
+	jc	copy_fault
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
-	ja	_C_LABEL(copy_fault)
+	ja	copy_fault
 
 	/* bcopy(%esi, %edi, %eax); */
 	movl	%eax,%ecx
@@ -589,14 +589,14 @@ ENTRY(copyoutstr)
 	movl	20+FPADD(%esp),%edx		# edx = maxlen
 
 5:	GET_CURPCB(%eax)
-	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%eax)
+	movl	$copystr_fault,PCB_ONFAULT(%eax)
 	SMAP_STAC
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
-	jbe	_C_LABEL(copystr_fault)		# die if CF == 1 || ZF == 1
+	jbe	copystr_fault			# die if CF == 1 || ZF == 1
 						# i.e. make sure that %edi
 						# is below VM_MAXUSER_ADDRESS
 
@@ -621,7 +621,7 @@ ENTRY(copyoutstr)
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	cmpl	$VM_MAXUSER_ADDRESS,%edi
-	jae	_C_LABEL(copystr_fault)
+	jae	copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
@@ -640,7 +640,7 @@ ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
 	GET_CURPCB(%ecx)
-	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
+	movl	$copystr_fault,PCB_ONFAULT(%ecx)
 	SMAP_STAC
 
 	movl	12+FPADD(%esp),%esi		# %esi = from
@@ -652,7 +652,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
-	jbe	_C_LABEL(copystr_fault)		# Error if CF == 1 || ZF == 1
+	jbe	copystr_fault			# Error if CF == 1 || ZF == 1
 						# i.e. make sure that %esi
 						# is below VM_MAXUSER_ADDRESS
 	cmpl	%edx,%eax
@@ -676,7 +676,7 @@ ENTRY(copyinstr)
 
 2:	/* edx is zero -- return EFAULT or ENAMETOOLONG. */
 	cmpl	$VM_MAXUSER_ADDRESS,%esi
-	jae	_C_LABEL(copystr_fault)
+	jae	copystr_fault
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
@@ -862,7 +862,7 @@ switch_exited:
 	 */
 	pushl	%edi
 	pushl	%esi
-	call	_C_LABEL(pmap_switch)
+	call	pmap_switch
 	addl	$8,%esp
 
 	/* Restore cr0 (including FPU state). */
@@ -889,7 +889,7 @@ switch_exited:
 	ret
 
 ENTRY(cpu_idle_enter)
-	movl	_C_LABEL(cpu_idle_enter_fcn),%eax
+	movl	cpu_idle_enter_fcn,%eax
 	cmpl	$0,%eax
 	je	1f
 	jmpl	*%eax
@@ -897,7 +897,7 @@ ENTRY(cpu_idle_enter)
 	ret
 
 ENTRY(cpu_idle_cycle)
-	movl	_C_LABEL(cpu_idle_cycle_fcn),%eax
+	movl	cpu_idle_cycle_fcn,%eax
 	cmpl	$0,%eax
 	je	1f
 	call	*%eax
@@ -908,7 +908,7 @@ ENTRY(cpu_idle_cycle)
 	ret
 
 ENTRY(cpu_idle_leave)
-	movl	_C_LABEL(cpu_idle_leave_fcn),%eax
+	movl	cpu_idle_leave_fcn,%eax
 	cmpl	$0,%eax
 	je	1f
 	jmpl	*%eax
@@ -945,7 +945,7 @@ ENTRY(savectx)
  * handler.
  */
 
-#define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
+#define	TRAP(a)		pushl $(a) ; jmp alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 
 IDTVEC(div)
@@ -1077,7 +1077,7 @@ IDTVEC(dna)
 	INTRENTRY(dna)
 	sti
 	pushl	CPUVAR(SELF)
-	call	*_C_LABEL(npxdna_func)
+	call	*npxdna_func
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
@@ -1104,7 +1104,7 @@ IDTVEC(prot)
 	pushl	$T_PROTFLT
 	/* If iret faults, we'll get a trap at doreti_iret+3 with CPL == 0. */
 	pushl	%eax
-	leal	_C_LABEL(doreti_iret+3),%eax
+	leal	doreti_iret+3,%eax
 	cmpl	%eax,12(%esp)	/* over %eax, trapno and err to %eip */
 	popl	%eax
 	jne	97f
@@ -1168,7 +1168,7 @@ IDTVEC(f00f_redirect)
 	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
 	movl	%cr2,%eax
-	subl	_C_LABEL(idt),%eax
+	subl	idt,%eax
 	cmpl	$(6*8),%eax
 	jne	calltrap
 	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
@@ -1203,8 +1203,8 @@ IDTVEC(fpu)
 	sti
 	pushl	CPL			# if_ppl in intrframe
 	pushl	%esp			# push address of intrframe
-	incl	_C_LABEL(uvmexp)+V_TRAP
-	call	_C_LABEL(npxintr)
+	incl	uvmexp+V_TRAP
+	call	npxintr
 	addl	$8,%esp			# pop address and if_ppl
 #ifdef DIAGNOSTIC
 	movl	$0xfc,%esi
@@ -1261,10 +1261,10 @@ calltrap:
 	pushl	%esp
 	subl	$4, %esp
 	pushl	%eax
-	leal	_C_LABEL(dt_prov_kprobe), %eax
+	leal	dt_prov_kprobe, %eax
 	movl	%eax, 4(%esp)
 	popl	%eax
-	call	_C_LABEL(dt_prov_kprobe_hook)
+	call	dt_prov_kprobe_hook
 	addl	$8, %esp
 	cmpl	$0, %eax
 	je	.Lreal_trap
@@ -1288,7 +1288,7 @@ calltrap:
 .Lreal_trap:
 #endif /* !defined(GPROF) && defined(DDBPROF) */
 	pushl	%esp
-	call	_C_LABEL(trap)
+	call	trap
 	addl	$4,%esp
 
 .Lalltraps_check_asts:
@@ -1301,7 +1301,7 @@ calltrap:
 5:	CLEAR_ASTPENDING(%ecx)
 	sti
 	pushl	%esp
-	call	_C_LABEL(ast)
+	call	ast
 	addl	$4,%esp
 	jmp	.Lalltraps_check_asts
 1:
@@ -1329,7 +1329,7 @@ calltrap:
 	INTRFASTEXIT
 3:	sti
 	pushl	$spl_lowered
-	call	_C_LABEL(printf)
+	call	printf
 	addl	$4,%esp
 #if defined(DDB) && 0
 	int	$3
@@ -1402,7 +1402,7 @@ spl_lowered:
 	pushl	%esi		/* marker indicating where we came from */
 	pushl	%edx		/* EFLAGS are in %edx */
 	pushl	$.Lnot_blocked
-	call	_C_LABEL(printf)
+	call	printf
 	addl	$12,%esp
 #ifdef DDB
 	int	$3
@@ -1428,7 +1428,7 @@ IDTVEC(syscall)
 	INTRENTRY(syscall)
 	sti
 	pushl	%esp
-	call	_C_LABEL(syscall)
+	call	syscall
 	addl	$4,%esp
 
 .Lsyscall_check_asts:
@@ -1440,7 +1440,7 @@ IDTVEC(syscall)
 	CLEAR_ASTPENDING(%ecx)
 	sti
 	pushl	%esp
-	call	_C_LABEL(ast)
+	call	ast
 	addl	$4,%esp
 	jmp	.Lsyscall_check_asts
 1:
@@ -1509,8 +1509,8 @@ KUENTRY(iret_tramp)
 	popl	%fs
 	popl	%eax
 	popl	%ebp
-	.globl	_C_LABEL(doreti_iret)
-_C_LABEL(doreti_iret):
+	.globl	doreti_iret
+doreti_iret:
 	/* we have an iretframe */
 	addl	$IRF_EIP,%esp
 	iret
@@ -1588,7 +1588,7 @@ ENTRY(i686_pagezero)
  */
 ENTRY(cpu_paenable)
 	movl	$-1, %eax
-	testl	$CPUID_PAE, _C_LABEL(cpu_feature)
+	testl	$CPUID_PAE, cpu_feature
 	jz	1f
 
 	pushl	%esi
@@ -1615,7 +1615,7 @@ ENTRY(cpu_paenable)
 	subl	$KERNBASE, %eax
 	movl	%eax, %cr3      /* reload real PDPT */
 	movl	$4*NBPG, %eax
-	movl	%eax, _C_LABEL(PTDsize)
+	movl	%eax, PTDsize
 
 	xorl	%eax, %eax
 	popl	%edi
@@ -1628,10 +1628,10 @@ ENTRY(cpu_paenable)
 #endif
 
 	.section .rodata
-	.globl _C_LABEL(_stac)
-_C_LABEL(_stac):
+	.globl _stac
+_stac:
 	stac
 
-	.globl _C_LABEL(_clac)
-_C_LABEL(_clac):
+	.globl _clac
+_clac:
 	clac

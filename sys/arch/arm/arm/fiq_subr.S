@@ -1,4 +1,4 @@
-/*	$OpenBSD: fiq_subr.S,v 1.4 2015/01/18 14:55:02 jsg Exp $	*/
+/*	$OpenBSD: fiq_subr.S,v 1.5 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: fiq_subr.S,v 1.3 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ ENTRY(fiq_setregs)
  *	Null handler copied down to the FIQ vector when the last
  *	FIQ handler is removed.
  */
-	.global	_C_LABEL(fiq_nullhandler), _C_LABEL(fiq_nullhandler_end)
-_C_LABEL(fiq_nullhandler):
+	.global	fiq_nullhandler, fiq_nullhandler_end
+fiq_nullhandler:
 	subs	pc, lr, #4
-_C_LABEL(fiq_nullhandler_end):
+fiq_nullhandler_end:

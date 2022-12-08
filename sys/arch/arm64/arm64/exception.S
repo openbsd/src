@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.13 2022/01/01 18:52:36 kettenis Exp $ */
+/* $OpenBSD: exception.S,v 1.14 2022/12/08 01:25:44 guenther Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -133,7 +133,7 @@
 
 	/* handle the ast */
 	mov	x0, sp
-	bl	_C_LABEL(ast)
+	bl	ast
 	b	1b
 2:
 .endm

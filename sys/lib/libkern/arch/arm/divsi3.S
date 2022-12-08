@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.5 2017/10/26 15:23:59 jsg Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.6 2022/12/08 01:25:46 guenther Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.2 2001/11/13 20:06:40 chris Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ ENTRY(__modsi3)
 L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 	mov	r0, #8			/* SIGFPE */
-	bl	PIC_SYM(_C_LABEL(raise), PLT)	/* raise it */
+	bl	PIC_SYM(raise, PLT)		/* raise it */
 	mov	r0, #0
 #else
 	/* XXX should cause a fatal error */

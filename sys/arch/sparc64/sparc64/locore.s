@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.193 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.194 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -93,44 +93,44 @@
 #endif	/* 1 */
 
 	.section	.sun4v_patch, "ax"
-	.globl _C_LABEL(sun4v_patch)
-_C_LABEL(sun4v_patch):
+	.globl sun4v_patch
+sun4v_patch:
 	.previous
 
 	.section	.sun4v_patch_end, "ax"
-	.globl _C_LABEL(sun4v_patch_end)
-_C_LABEL(sun4v_patch_end):
+	.globl sun4v_patch_end
+sun4v_patch_end:
 	.previous
 
 	.section	.sun4v_pause_patch, "ax"
-	.globl _C_LABEL(sun4v_pause_patch)
-_C_LABEL(sun4v_pause_patch):
+	.globl sun4v_pause_patch
+sun4v_pause_patch:
 	.previous
 
 	.section	.sun4v_pause_patch_end, "ax"
-	.globl _C_LABEL(sun4v_pause_patch_end)
-_C_LABEL(sun4v_pause_patch_end):
+	.globl sun4v_pause_patch_end
+sun4v_pause_patch_end:
 	.previous
 
 #ifdef MULTIPROCESSOR
 	.section	.sun4v_mp_patch, "ax"
-	.globl _C_LABEL(sun4v_mp_patch)
-_C_LABEL(sun4v_mp_patch):
+	.globl sun4v_mp_patch
+sun4v_mp_patch:
 	.previous
 
 	.section	.sun4v_mp_patch_end, "ax"
-	.globl _C_LABEL(sun4v_mp_patch_end)
-_C_LABEL(sun4v_mp_patch_end):
+	.globl sun4v_mp_patch_end
+sun4v_mp_patch_end:
 	.previous
 
 	.section	.sun4u_mtp_patch, "ax"
-	.globl _C_LABEL(sun4u_mtp_patch)
-_C_LABEL(sun4u_mtp_patch):
+	.globl sun4u_mtp_patch
+sun4u_mtp_patch:
 	.previous
 
 	.section	.sun4u_mtp_patch_end, "ax"
-	.globl _C_LABEL(sun4u_mtp_patch_end)
-_C_LABEL(sun4u_mtp_patch_end):
+	.globl sun4u_mtp_patch_end
+sun4u_mtp_patch_end:
 	.previous
 #endif
 
@@ -208,7 +208,7 @@ _C_LABEL(sun4u_mtp_patch_end):
  * something like:
  *	foointr:
  *		TRAP_SETUP ...		! makes %o registers safe
- *		INCR _C_LABEL(cnt)+V_FOO	! count a foo
+ *		INCR cnt+V_FOO			! count a foo
  */
 	.macro INCR what
 	sethi	%hi(\what), %o0
@@ -285,17 +285,17 @@ _C_LABEL(sun4u_mtp_patch_end):
 
 
 	.data
-	.globl	_C_LABEL(data_start)
-_C_LABEL(data_start):					! Start of data segment
-#define DATA_START	_C_LABEL(data_start)
+	.globl	data_start
+data_start:						! Start of data segment
+#define DATA_START	data_start
 
 /*
  * Process 0's u.
  *
  * This must be aligned on an 8 byte boundary.
  */
-	.globl	_C_LABEL(u0)
-_C_LABEL(u0):	.xword	0
+	.globl	u0
+u0:		.xword	0
 estack0:	.xword	0
 
 /*
@@ -325,12 +325,12 @@ romp:	.xword	0
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4U or CPU_SUN4V.
  */
-	.globl	_C_LABEL(cputyp)
-_C_LABEL(cputyp):
+	.globl	cputyp
+cputyp:
 	.word	CPU_SUN4U
 
-	.globl _C_LABEL(cold)
-_C_LABEL(cold):
+	.globl cold
+cold:
 	.word 1
 
 	_ALIGN
@@ -403,7 +403,7 @@ _C_LABEL(cold):
 #endif	/* DEBUG */
 	/* hardware interrupts (can be linked or made `fast') */
 	.macro HARDINT4U lev
-	VTRAP \lev, _C_LABEL(sparc_interrupt)
+	VTRAP \lev, sparc_interrupt
 	.endm
 
 	/* software interrupts (may not be made direct, sorry---but you
@@ -684,12 +684,12 @@ _C_LABEL(cold):
 
 #endif
 
-	.globl	start, _C_LABEL(kernel_text)
-	_C_LABEL(kernel_text) = start		! for kvm_mkdb(8)
+	.globl	start, kernel_text
+	kernel_text = start			! for kvm_mkdb(8)
 start:
 	/* Traps from TL=0 -- traps from user mode */
-	.globl	_C_LABEL(trapbase)
-_C_LABEL(trapbase):
+	.globl	trapbase
+trapbase:
 	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
 	/* We should not get the next 5 traps */
 	UTRAP 0x001		! 001 = POR Reset -- ROM should get this
@@ -1003,8 +1003,8 @@ nucleus_syscall:
 #ifdef SUN4V
 
 	.align	0x8000
-	.globl	_C_LABEL(trapbase_sun4v)
-_C_LABEL(trapbase_sun4v):
+	.globl	trapbase_sun4v
+trapbase_sun4v:
 	sun4v_tl0_reserved 8				! 0x0-0x7
 	VTRAP T_INST_EXCEPT, sun4v_tl0_itsb_miss	! 0x8
 	VTRAP T_TEXTFAULT, sun4v_tl0_itsb_miss		! 0x9
@@ -1269,15 +1269,15 @@ Lpanic_red:
 	! set stack pointer redzone to base+minstack; alters base
 .macro	SET_SP_REDZONE base, tmp
 	add	\base, REDSIZE, \base
-	sethi	%hi(_C_LABEL(redzone)), \tmp
-	stx	\base, [\tmp + %lo(_C_LABEL(redzone))]
+	sethi	%hi(redzone), \tmp
+	stx	\base, [\tmp + %lo(redzone)]
 	.endm
 
 	! variant with a constant
 .macro	SET_SP_REDZONE_CONST const,  tmp1,  tmp2
 	set	(\const) + REDSIZE, \tmp1
-	sethi	%hi(_C_LABEL(redzone)), \tmp2
-	stx	\tmp1, [\tmp2 + %lo(_C_LABEL(redzone))]
+	sethi	%hi(redzone), \tmp2
+	stx	\tmp1, [\tmp2 + %lo(redzone)]
 	.endm
 
 	! check stack pointer against redzone (uses two temps)
@@ -1285,8 +1285,8 @@ Lpanic_red:
 	sethi	KERNBASE, \t1
 	cmp	%sp, \t1
 	blu,pt	%xcc, 7f
-	 sethi	%hi(_C_LABEL(redzone)), \t1
-	ldx	[\t1 + %lo(_C_LABEL(redzone))], \t2
+	 sethi	%hi(redzone), \t1
+	ldx	[\t1 + %lo(redzone)], \t2
 	cmp	%sp, \t2	! if sp >= \t2, not in red zone
 	blu	panic_red
 	nop	! and can continue normally
@@ -1295,16 +1295,16 @@ Lpanic_red:
 
 panic_red:
 	/* move to panic stack */
-	stx	%g0, [t1 + %lo(_C_LABEL(redzone))];
+	stx	%g0, [t1 + %lo(redzone)];
 	set	eredstack - BIAS, %sp;
 	/* prevent panic() from lowering ipl */
-	sethi	%hi(_C_LABEL(panicstr)), t2;
+	sethi	%hi(panicstr), t2;
 	set	Lpanic_red, t2;
-	st	t2, [t1 + %lo(_C_LABEL(panicstr))];
+	st	t2, [t1 + %lo(panicstr)];
 	wrpr	g0, 15, %pil		/* t1 = splhigh() */
 	save	%sp, -CCF64SZ, %sp;	/* preserve current window */
 	sethi	%hi(Lpanic_red), %o0;
-	call	_C_LABEL(panic);
+	call	panic;
 	 or %o0, %lo(Lpanic_red), %o0;
 
 
@@ -1539,9 +1539,9 @@ dmmu_write_fault:
 	mov	TLB_TAG_ACCESS, %g3
 	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! Get fault addr from Tag Target
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(ctxbusy), %g4
 	or	%g6, %lo(0x1fff), %g6
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g6, %g6				! Isolate context
 	
@@ -1664,9 +1664,9 @@ data_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(ctxbusy), %g4
 	or	%g6, %lo(0x1fff), %g6
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g6, %g6				! Isolate context
 	
@@ -1982,8 +1982,8 @@ winfixspill:
 
 !	ba	0f					! DEBUG -- don't use phys addresses
 	 wr	%g0, ASI_NUCLEUS, %asi			! In case of problems finding PA
-	sethi	%hi(_C_LABEL(ctxbusy)), %g1
-	ldx	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1	! Load start of ctxbusy
+	sethi	%hi(ctxbusy), %g1
+	ldx	[%g1 + %lo(ctxbusy)], %g1		! Load start of ctxbusy
 #ifdef DEBUG
 	srax	%g6, HOLESHIFT, %g7			! Check for valid address
 	brz,pt	%g7, 1f					! Should be zero or -1
@@ -2072,7 +2072,7 @@ winfixspill:
 	add	%sp, -CC64FSZ-BIAS, %sp			! Overwrite proc 0's stack.
 #endif	/* DEBUG */
 	ta	1; nop					! This helps out traptrace.
-	call	_C_LABEL(panic)				! This needs to be fixed properly but we should panic here
+	call	panic					! This needs to be fixed properly but we should panic here
 	 mov	%g1, %o1
 	NOTREACHED
 	.data
@@ -2262,7 +2262,7 @@ datafault:
 
 	TRAP_SETUP -CC64FSZ-TF_SIZE
 Ldatafault_internal:
-	INCR _C_LABEL(uvmexp)+V_FAULTS			! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
+	INCR uvmexp+V_FAULTS				! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
 !	ldx	[%sp + CC64FSZ + BIAS + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o0				! Move these to the out regs so we can save the globals
 	mov	%g2, %o4
@@ -2338,7 +2338,7 @@ Ldatafault_internal:
 
 	mov	%o0, %o3			! (argument: trap address)
 	mov	%g2, %o2			! (argument: trap pc)
-	call	_C_LABEL(data_access_fault)	! data_access_fault(&tf, type, 
+	call	data_access_fault		! data_access_fault(&tf, type, 
 						!	pc, addr, sfva, sfsr)
 	 add	%sp, CC64FSZ + BIAS, %o0	! (argument: &tf)
 
@@ -2350,7 +2350,7 @@ data_recover:
 	NOTREACHED
 
 data_error:
-	call	_C_LABEL(data_access_error)	! data_access_error(&tf, type, 
+	call	data_access_error		! data_access_error(&tf, type, 
 						!	afva, afsr, sfva, sfsr)
 	 add	%sp, CC64FSZ + BIAS, %o0	! (argument: &tf)
 	ba	data_recover
@@ -2380,9 +2380,9 @@ instr_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(0x1fff), %g7			! 8K context mask
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(ctxbusy), %g4
 	or	%g7, %lo(0x1fff), %g7
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g7, %g6				! Isolate context
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
@@ -2517,7 +2517,7 @@ textfault:
 	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP -CC64FSZ-TF_SIZE
-	INCR _C_LABEL(uvmexp)+V_FAULTS			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
+	INCR uvmexp+V_FAULTS				! cnt.v_faults++ (clobbers %o0,%o1,%o2)
 
 	mov	%g3, %o3
 
@@ -2568,7 +2568,7 @@ textfault:
 	 st	%g4, [%sp + CC64FSZ + BIAS + TF_Y]		! set tf.tf_y
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
-	call	_C_LABEL(text_access_fault)	! mem_access_fault(&tf, type, pc, sfsr)
+	call	text_access_fault		! mem_access_fault(&tf, type, pc, sfsr)
 	 add	%sp, CC64FSZ + BIAS, %o0	! (argument: &tf)
 text_recover:
 	CHKPT %o1,%o2,2
@@ -2579,7 +2579,7 @@ text_recover:
 
 text_error:
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
-	call	_C_LABEL(text_access_error)	! mem_access_fault(&tfm type, sfva [pc], sfsr,
+	call	text_access_error		! mem_access_fault(&tfm type, sfva [pc], sfsr,
 						!		afva, afsr);
 	 add	%sp, CC64FSZ + BIAS, %o0	! (argument: &tf)
 	ba	text_recover
@@ -2598,8 +2598,8 @@ sun4v_tl1_dtsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4 + %g6], %g4			! Load up our page table.
@@ -2640,8 +2640,8 @@ sun4v_tl1_dtsb_miss:
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4V_TLB_ACCESS, %g4		! Update the modified bit
 2:
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(tsb_dmmu))], %g2
+	sethi	%hi(tsb_dmmu), %g2
+	ldx	[%g2 + %lo(tsb_dmmu)], %g2
 
 	mov	%g1, %g7
 	/* Construct TSB tag word. */
@@ -2653,9 +2653,9 @@ sun4v_tl1_dtsb_miss:
 	or	%g1, %g6, %g1
 
 	srlx	%g3, PTSHIFT, %g3
-	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	sethi	%hi(tsbsize), %g5
 	mov	512, %g6
-	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	ld	[%g5 + %lo(tsbsize)], %g5
 	sllx	%g6, %g5, %g5
 	sub	%g5, 1, %g5
 	and	%g3, %g5, %g3
@@ -2684,8 +2684,8 @@ sun4v_tl1_dtsb_prot:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4 + %g6], %g4			! Load up our page table.
@@ -2732,8 +2732,8 @@ sun4v_tl1_dtsb_prot:
 	 or	%g4, SUN4V_TLB_MODIFY|SUN4V_TLB_ACCESS|SUN4V_TLB_W, %g4
 		! Update the modified bit
 2:
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(tsb_dmmu))], %g2
+	sethi	%hi(tsb_dmmu), %g2
+	ldx	[%g2 + %lo(tsb_dmmu)], %g2
 
 	mov	%g1, %g7
 	/* Construct TSB tag word. */
@@ -2745,9 +2745,9 @@ sun4v_tl1_dtsb_prot:
 	or	%g1, %g6, %g1
 
 	srlx	%g3, PTSHIFT, %g3
-	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	sethi	%hi(tsbsize), %g5
 	mov	512, %g6
-	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	ld	[%g5 + %lo(tsbsize)], %g5
 	sllx	%g6, %g5, %g5
 	sub	%g5, 1, %g5
 	and	%g3, %g5, %g3
@@ -2880,8 +2880,8 @@ sun4v_tl0_dtsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4 + %g6], %g4			! Load up our page table.
@@ -2922,8 +2922,8 @@ sun4v_tl0_dtsb_miss:
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4V_TLB_ACCESS, %g4		! Update the modified bit
 2:
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(tsb_dmmu))], %g2
+	sethi	%hi(tsb_dmmu), %g2
+	ldx	[%g2 + %lo(tsb_dmmu)], %g2
 
 	mov	%g1, %g7
 	/* Construct TSB tag word. */
@@ -2935,9 +2935,9 @@ sun4v_tl0_dtsb_miss:
 	or	%g1, %g6, %g1
 
 	srlx	%g3, PTSHIFT, %g3
-	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	sethi	%hi(tsbsize), %g5
 	mov	512, %g6
-	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	ld	[%g5 + %lo(tsbsize)], %g5
 	sllx	%g6, %g5, %g5
 	sub	%g5, 1, %g5
 	and	%g3, %g5, %g3
@@ -2966,8 +2966,8 @@ sun4v_tl0_dtsb_prot:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x50, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4 + %g6], %g4			! Load up our page table.
@@ -3014,8 +3014,8 @@ sun4v_tl0_dtsb_prot:
 	 or	%g4, SUN4V_TLB_MODIFY|SUN4V_TLB_ACCESS|SUN4V_TLB_W, %g4
 		! Update the modified bit
 2:
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(tsb_dmmu))], %g2
+	sethi	%hi(tsb_dmmu), %g2
+	ldx	[%g2 + %lo(tsb_dmmu)], %g2
 
 	mov	%g1, %g7
 	/* Construct TSB tag word. */
@@ -3027,9 +3027,9 @@ sun4v_tl0_dtsb_prot:
 	or	%g1, %g6, %g1
 
 	srlx	%g3, PTSHIFT, %g3
-	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	sethi	%hi(tsbsize), %g5
 	mov	512, %g6
-	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	ld	[%g5 + %lo(tsbsize)], %g5
 	sllx	%g6, %g5, %g5
 	sub	%g5, 1, %g5
 	and	%g3, %g5, %g3
@@ -3075,8 +3075,8 @@ sun4v_tl0_itsb_miss:
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3
 	add	%g1, 0x10, %g6
 	ldxa	[%g6] ASI_PHYS_CACHED, %g6
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	sethi	%hi(ctxbusy), %g4
+	ldx	[%g4 + %lo(ctxbusy)], %g4
 
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
 	ldx	[%g4 + %g6], %g4			! Load up our page table.
@@ -3120,8 +3120,8 @@ sun4v_tl0_itsb_miss:
 	bne,pn	%xcc, 1b
 	 or	%g4, SUN4V_TLB_ACCESS, %g4		! Update the modified bit
 2:
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(tsb_dmmu))], %g2
+	sethi	%hi(tsb_dmmu), %g2
+	ldx	[%g2 + %lo(tsb_dmmu)], %g2
 
 	mov	%g1, %g7
 	/* Construct TSB tag word. */
@@ -3133,9 +3133,9 @@ sun4v_tl0_itsb_miss:
 	or	%g1, %g6, %g1
 
 	srlx	%g3, PTSHIFT, %g3
-	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	sethi	%hi(tsbsize), %g5
 	mov	512, %g6
-	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	ld	[%g5 + %lo(tsbsize)], %g5
 	sllx	%g6, %g5, %g5
 	sub	%g5, 1, %g5
 	and	%g3, %g5, %g3
@@ -3187,8 +3187,8 @@ pcbspill:
 	wr	%g0, ASI_PHYS_CACHED, %asi
 	ldxa	[%g6 + CI_CPCB] %asi, %g6
 
-	sethi	%hi(_C_LABEL(ctxbusy)), %g1
-	ldx	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1
+	sethi	%hi(ctxbusy), %g1
+	ldx	[%g1 + %lo(ctxbusy)], %g1
 	ldx	[%g1], %g1
 
 	srlx	%g6, STSHIFT, %g7
@@ -3335,7 +3335,7 @@ sun4v_datatrap:
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
-	call	_C_LABEL(data_access_fault)	! data_acces_fault(tf, type, ...)
+	call	data_access_fault		! data_acces_fault(tf, type, ...)
 	 nop
 
 	ba,a,pt	%icc, return_from_trap
@@ -3430,7 +3430,7 @@ sun4v_texttrap:
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
-	call	_C_LABEL(text_access_fault)	! text_access_fault(tf, type, ...)
+	call	text_access_fault		! text_access_fault(tf, type, ...)
 	 nop
 
 	ba,a,pt	%icc, return_from_trap
@@ -3597,7 +3597,7 @@ Lslowtrap_reenter:
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
-	call	_C_LABEL(trap)			! trap(tf, type, pc, pstate)
+	call	trap				! trap(tf, type, pc, pstate)
 	 nop
 
 	ba,a,pt	%icc, return_from_trap
@@ -3724,7 +3724,7 @@ syscall_setup:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
 	GET_CPUINFO_VA(%g7)
-	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
+	call	syscall				! syscall(&tf, code, pc)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
 	/* see `proc_trampoline' for the reason for this label */
@@ -3790,8 +3790,8 @@ return_from_syscall:
 #define INTRDEBUG_LEVEL		0x2
 #define INTRDEBUG_FUNC		0x4
 #define INTRDEBUG_SPUR		0x8
-	.globl	_C_LABEL(intrdebug)
-_C_LABEL(intrdebug):	.word 0x0
+	.globl	intrdebug
+intrdebug:		.word 0x0
 /*
  * Note: we use the local label `97' to branch forward to, to skip
  * actual debugging code following a `intrdebug' bit test.
@@ -3832,8 +3832,8 @@ Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
 
-	sethi	%hi(_C_LABEL(intrlev)), %g3
-	or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	sethi	%hi(intrlev), %g3
+	or	%g3, %lo(intrlev), %g3
 	sllx	%g5, 3, %g5		! Calculate entry number
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
 #ifdef DEBUG
@@ -3872,7 +3872,7 @@ setup_sparcintr:
 	stx	%g5, [%g1]
 
 #ifdef DEBUG
-	set	_C_LABEL(intrdebug), %g7
+	set	intrdebug, %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_VECTOR, %g7
 	bz,pt	%icc, 97f
@@ -3903,7 +3903,7 @@ ret_from_intr_vector:
 
 3:
 #ifdef DEBUG
-	set	_C_LABEL(intrdebug), %g7
+	set	intrdebug, %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_SPUR, %g7
 	bz,pt	%icc, 97f
@@ -3966,8 +3966,8 @@ sun4v_dev_mondo:
 	bgeu,pt	%xcc, 1f
 	 nop
 
-	sethi	%hi(_C_LABEL(intrlev)), %g3
-	or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	sethi	%hi(intrlev), %g3
+	or	%g3, %lo(intrlev), %g3
 	sllx	%g5, 3, %g5		! Calculate entry number
 	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
 1:
@@ -4208,8 +4208,8 @@ END(ipi_db)
  *       IRQ# = %tt - 0x40
  */
 
-	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
-_C_LABEL(sparc_interrupt):
+	.globl sparc_interrupt			! This is for interrupt debugging
+sparc_interrupt:
 	/*
 	 * If this is a %tick softint, clear it then call interrupt_vector.
 	 */
@@ -4285,7 +4285,7 @@ _C_LABEL(sparc_interrupt):
 #endif
 
 	rd	%y, %l6
-	INCR _C_LABEL(uvmexp)+V_INTR	! cnt.v_intr++; (clobbers %o0,%o1,%o2)
+	INCR uvmexp+V_INTR		! cnt.v_intr++; (clobbers %o0,%o1,%o2)
 	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
@@ -4353,7 +4353,7 @@ sparc_intr_retry:
 	! At this point, the current ih could already be added
 	! back to the pending table.
 
-	call	_C_LABEL(intr_handler)
+	call	intr_handler
 	 mov	%l2, %o1
 
 	brz,pn	%l1, 0f
@@ -4381,7 +4381,7 @@ intrcmplt:
 	 mov	1, %l5			! initialize intr count for next run
 
 #ifdef DEBUG
-	set	_C_LABEL(intrdebug), %o2
+	set	intrdebug, %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
 	bz,a,pt	%icc, 97f
@@ -4572,8 +4572,8 @@ rft_user:
 	wrpr	%g1, %g7, %tstate
 
 	/* XXX Rewrite sun4u code to handle faults like sun4v. */
-	sethi	%hi(_C_LABEL(cputyp)), %g2
-	ld	[%g2 + %lo(_C_LABEL(cputyp))], %g2
+	sethi	%hi(cputyp), %g2
+	ld	[%g2 + %lo(cputyp)], %g2
 	cmp	%g2, CPU_SUN4V
 	bne,pt	%icc, 1f
 	 nop
@@ -4630,8 +4630,8 @@ rft_user_fault_end:
 	retry
 
 ! exported end marker for kernel gdb
-	.globl	_C_LABEL(endtrapcode)
-_C_LABEL(endtrapcode):
+	.globl	endtrapcode
+endtrapcode:
 
 #ifdef DDB
 !!!
@@ -4676,7 +4676,7 @@ print_dtlb:
 	membar	#Sync
 	inc	%l2
 	set	2f, %o0
-	call	_C_LABEL(db_printf)
+	call	db_printf
 	 inc	8, %l1
 
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4686,7 +4686,7 @@ print_dtlb:
 	membar	#Sync
 	inc	%l2
 	set	3f, %o0
-	call	_C_LABEL(db_printf)
+	call	db_printf
 	 inc	8, %l1
 
 	cmp	%l1, %l3
@@ -4755,12 +4755,12 @@ dostart:
 	 nop
 
 	ldx	[%o1+8], %l4
-	sethi	%hi(_C_LABEL(esym)), %l3	! store esym
-	stx	%l4, [%l3 + %lo(_C_LABEL(esym))]
+	sethi	%hi(esym), %l3			! store esym
+	stx	%l4, [%l3 + %lo(esym)]
 
 	ldx	[%o1+16], %l4
-	sethi	%hi(_C_LABEL(ssym)), %l3	! store ssym
-	stx	%l4, [%l3 + %lo(_C_LABEL(ssym))]
+	sethi	%hi(ssym), %l3			! store ssym
+	stx	%l4, [%l3 + %lo(ssym)]
 1:
 #endif	/* defined(DDB) || NKSYMS > 0 */
 	/*
@@ -4791,7 +4791,7 @@ dostart:
 	 */
 1:
 	set	0x2000, %o0			! fixed: 8192 contexts
-	call	_C_LABEL(bootstrap)
+	call	bootstrap
 	 clr	%g4				! Clear data segment pointer
 
 	/*
@@ -4800,8 +4800,8 @@ dostart:
 	 * stack now.
 	 */
 
-	sethi	%hi(_C_LABEL(cpus)), %g2
-	ldx	[%g2 + %lo(_C_LABEL(cpus))], %g2
+	sethi	%hi(cpus), %g2
+	ldx	[%g2 + %lo(cpus)], %g2
 	ldx	[%g2 + CI_PADDR], %g2		! Load the interrupt stack's PA
 
 /*
@@ -4813,24 +4813,24 @@ dostart:
  *	Call the routine passed in in cpu_info->ci_spinup.
  */
 
-_C_LABEL(cpu_initialize):
+cpu_initialize:
 
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	flushw
 
 	/* Change the trap base register */
-	set	_C_LABEL(trapbase), %l1
+	set	trapbase, %l1
 #ifdef SUN4V
-	sethi	%hi(_C_LABEL(cputyp)), %l0
-	ld	[%l0 + %lo(_C_LABEL(cputyp))], %l0
+	sethi	%hi(cputyp), %l0
+	ld	[%l0 + %lo(cputyp)], %l0
 	cmp	%l0, CPU_SUN4V
 	bne,pt	%icc, 1f
 	 nop
-	set	_C_LABEL(trapbase_sun4v), %l1
+	set	trapbase_sun4v, %l1
 	GET_MMFSA(%o1)
 1:
 #endif
-	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
+	call	prom_set_trap_table		! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
 	wrpr	%g0, WSTATE_KERN, %wstate
@@ -4853,7 +4853,7 @@ _C_LABEL(cpu_initialize):
 	NOTREACHED
 
 	set	1f, %o0				! Main should never come back here
-	call	_C_LABEL(panic)
+	call	panic
 	 nop
 	.data
 1:
@@ -4865,9 +4865,9 @@ ENTRY(sun4u_set_tsbs)
 
 	/* Set the dmmu tsb */
 	sethi	%hi(0x1fff), %o2
-	set	_C_LABEL(tsb_dmmu), %o0
+	set	tsb_dmmu, %o0
 	ldx	[%o0], %o0
-	set	_C_LABEL(tsbsize), %o1
+	set	tsbsize, %o1
 	or	%o2, %lo(0x1fff), %o2
 	ld	[%o1], %o1
 	andn	%o0, %o2, %o0			! Mask off size and split bits
@@ -4878,9 +4878,9 @@ ENTRY(sun4u_set_tsbs)
 
 	/* Set the immu tsb */
 	sethi	%hi(0x1fff), %o2
-	set	_C_LABEL(tsb_immu), %o0
+	set	tsb_immu, %o0
 	ldx	[%o0], %o0
-	set	_C_LABEL(tsbsize), %o1
+	set	tsbsize, %o1
 	or	%o2, %lo(0x1fff), %o2
 	ld	[%o1], %o1
 	andn	%o0, %o2, %o0			! Mask off size and split bits
@@ -4904,7 +4904,7 @@ ENTRY(cpu_mp_startup)
 
 	set	tmpstack-CC64FSZ-BIAS, %sp
 
-	call	_C_LABEL(pmap_bootstrap_cpu)
+	call	pmap_bootstrap_cpu
 	 nop
 
 	ba,a,pt	%xcc, cpu_initialize
@@ -4918,10 +4918,10 @@ END(cpu_mp_startup)
  * OpenFirmware entry point
  */
 	.align 8
-	.globl	_C_LABEL(openfirmware)
+	.globl	openfirmware
 	.proc 1
 	FTYPE(openfirmware)
-_C_LABEL(openfirmware):
+openfirmware:
 	sethi	%hi(romp), %o4
 	ldx	[%o4+%lo(romp)], %o4
 	save	%sp, -CC64FSZ, %sp
@@ -4961,10 +4961,10 @@ END(openfirmware)
  *
  */
 	.align 8
-	.globl	_C_LABEL(sp_tlb_flush_pte)
+	.globl	sp_tlb_flush_pte
 	.proc 1
 	FTYPE(sp_tlb_flush_pte)
-_C_LABEL(sp_tlb_flush_pte):
+sp_tlb_flush_pte:
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -4982,7 +4982,7 @@ _C_LABEL(sp_tlb_flush_pte):
 	mov	%i1, %o1
 	andn	%i0, 0xfff, %o3
 	or	%o3, 0x010, %o3
-	call	_C_LABEL(printf)
+	call	printf
 	 mov	%i0, %o2
 	restore
 	.data
@@ -5043,10 +5043,10 @@ END(sp_tlb_flush_pte)
  *
  */
 	.align 8
-	.globl	_C_LABEL(sp_tlb_flush_ctx)
+	.globl	sp_tlb_flush_ctx
 	.proc 1
 	FTYPE(sp_tlb_flush_ctx)
-_C_LABEL(sp_tlb_flush_ctx):
+sp_tlb_flush_ctx:
 #ifdef DEBUG
 	set	DATA_START, %o4				! Forget any recent TLB misses
 	stx	%g0, [%o4]
@@ -5112,10 +5112,10 @@ END(sp_tlb_flush_ctx)
  *
  */
 	.align 8
-	.globl	_C_LABEL(us_dcache_flush_page)
+	.globl	us_dcache_flush_page
 	.proc 1
 	FTYPE(us_dcache_flush_page)
-_C_LABEL(us_dcache_flush_page):
+us_dcache_flush_page:
 
 	!! Try using cache_flush_phys for a change.
 
@@ -5154,10 +5154,10 @@ dlflush2:
 END(us_dcache_flush_page)
 
 	.align 8
-	.globl  _C_LABEL(us3_dcache_flush_page)
+	.globl	us3_dcache_flush_page
 	.proc 1
 	FTYPE(us3_dcache_flush_page)
-_C_LABEL(us3_dcache_flush_page):
+us3_dcache_flush_page:
 	ldxa    [%g0] ASI_MCCR, %o1
 	btst    MCCR_DCACHE_EN, %o1
 	bz,pn   %icc, 1f
@@ -5189,10 +5189,10 @@ END(no_dcache_flush_page)
  *
  */
 	.align 8
-	.globl	_C_LABEL(cache_flush_virt)
+	.globl	cache_flush_virt
 	.proc 1
 	FTYPE(cache_flush_virt)
-_C_LABEL(cache_flush_virt):
+cache_flush_virt:
 	brz,pn	%o1, 2f		! What? nothing to clear?
 	 add	%o0, %o1, %o2
 	mov	0x1ff, %o3
@@ -5226,10 +5226,10 @@ END(cache_flush_virt)
  */
 
 		.align 8
-	.globl	_C_LABEL(cache_flush_phys)
+	.globl	cache_flush_phys
 	.proc 1
 	FTYPE(cache_flush_phys)
-_C_LABEL(cache_flush_phys):
+cache_flush_phys:
 #ifdef DEBUG
 	tst	%o2		! Want to clear E$?
 	tnz	1		! Error!
@@ -5304,8 +5304,8 @@ END(cache_flush_phys)
  * work out.
  */
 	.section .rodata
-	.globl	_C_LABEL(sigcode)
-_C_LABEL(sigcode):
+	.globl	sigcode
+sigcode:
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
@@ -5394,23 +5394,23 @@ _C_LABEL(sigcode):
 	restore	%g0, SYS_sigreturn, %g1 ! get registers back & set syscall #
 	add	%sp, BIAS + 128 + 16, %o0	! compute scp
 !	andn	%o0, 0x0f, %o0
-	.globl  _C_LABEL(sigcoderet)
-_C_LABEL(sigcoderet):
+	.globl	sigcoderet
+sigcoderet:
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(esigcode):
+	.globl	esigcode
+esigcode:
 
-	.globl	_C_LABEL(sigfill)
-_C_LABEL(sigfill):
+	.globl	sigfill
+sigfill:
 	unimp
-_C_LABEL(esigfill):
+esigfill:
 
-	.globl	_C_LABEL(sigfillsiz)
-_C_LABEL(sigfillsiz):
-	.word	_C_LABEL(esigfill) - _C_LABEL(sigfill)
+	.globl	sigfillsiz
+sigfillsiz:
+	.word	esigfill - sigfill
 
 	.text
 
@@ -5424,7 +5424,7 @@ _C_LABEL(sigfillsiz):
 #ifdef GPROF
 	.globl	_mcount
 #define	ENTRY(x) \
-	.globl _C_LABEL(x); _C_LABEL(x): ; \
+	.globl x; x: ; \
 	.data; \
 	.align 8; \
 0:	.uaword 0; .uaword 0; \
@@ -5435,9 +5435,9 @@ _C_LABEL(sigfillsiz):
 	or	%o0, %lo(0b), %o0; \
 	restore
 #else	/* GPROF */
-#define	ENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
+#define	ENTRY(x)	.globl x; x:
 #endif	/* GPROF */
-#define	ALTENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
+#define	ALTENTRY(x)	.globl x; x:
 
 /*
  * getfp() - get stack frame pointer
@@ -5558,7 +5558,7 @@ ENTRY(copystr)
 #ifdef DIAGNOSTIC
 4:
 	sethi	%hi(5f), %o0
-	call	_C_LABEL(panic)
+	call	panic
 	 or	%lo(5f), %o0, %o0
 	.data
 5:
@@ -6059,10 +6059,10 @@ Lsw_load:
 	 * zero so it is safe to have interrupts going here.)
 	 */
 	ldx	[%i1 + P_VMSPACE], %o3		! vm = newproc->p_vmspace;
-	sethi	%hi(_C_LABEL(kernel_pmap_)), %o1
+	sethi	%hi(kernel_pmap_), %o1
 	mov	CTX_SECONDARY, %l5		! Recycle %l5
 	ldx	[%o3 + VM_PMAP], %o2		! if (vm->vm_pmap != kernel_pmap_)
-	or	%o1, %lo(_C_LABEL(kernel_pmap_)), %o1
+	or	%o1, %lo(kernel_pmap_), %o1
 	cmp	%o2, %o1
 	bz,pn	%xcc, Lsw_havectx		! Don't replace kernel context!
 	 ld	[%o2 + PM_CTX], %o0
@@ -6070,7 +6070,7 @@ Lsw_load:
 	 nop
 	
 	/* p does not have a context: call ctx_alloc to get one */
-	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
+	call	ctx_alloc			! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
 	set	DEMAP_CTX_SECONDARY, %o1	! This context has been recycled
@@ -6129,7 +6129,7 @@ END(snapshot)
 ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
 	save	%sp, -CC64FSZ, %sp
-	call	_C_LABEL(proc_trampoline_mp)
+	call	proc_trampoline_mp
 	 nop
 	restore
 #endif
@@ -6190,7 +6190,7 @@ ENTRY(probeget)
 	mov	%o2, %o4
 	! %o0 = addr, %o1 = asi, %o4 = (1,2,4)
 	GET_CPCB(%o2)			! cpcb->pcb_onfault = Lfsprobe;
-	set	_C_LABEL(Lfsprobe), %o5
+	set	Lfsprobe, %o5
 	stx	%o5, [%o2 + PCB_ONFAULT]
 	or	%o0, 0x9, %o3		! if (PHYS_ASI(asi)) {
 	sub	%o3, 0x1d, %o3
@@ -6231,8 +6231,8 @@ END(probeget)
 	/*
 	 * Fault handler for probeget
 	 */
-	.globl	_C_LABEL(Lfsprobe)
-_C_LABEL(Lfsprobe):
+	.globl	Lfsprobe
+Lfsprobe:
 	stx	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	mov	-1, %o1
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
@@ -7334,10 +7334,10 @@ END(loadfpstate)
 
 	.data
 	_ALIGN
-	.globl	_C_LABEL(cecclast), _C_LABEL(ceccerrs)
-_C_LABEL(cecclast):
+	.globl	cecclast, ceccerrs
+cecclast:
 	.xword 0
-_C_LABEL(ceccerrs):
+ceccerrs:
 	.word 0
 	_ALIGN
 	.text
@@ -7595,8 +7595,8 @@ END(stickcmpr_set)
 #define MICROPERSEC	(1000000)
 	.data
 	.align	16
-	.globl	_C_LABEL(cpu_clockrate)
-_C_LABEL(cpu_clockrate):
+	.globl	cpu_clockrate
+cpu_clockrate:
 	!! Pretend we have a 200MHz clock -- cpu_attach will fix this
 	.xword	200000000
 	!! Here we'll store cpu_clockrate/1000000 so we can calculate usecs
@@ -7618,16 +7618,16 @@ _C_LABEL(cpu_clockrate):
  */
 ENTRY(delay)			! %o0 = n
 	rdpr	%tick, %o1					! Take timer snapshot
-	sethi	%hi(_C_LABEL(cpu_clockrate)), %o2
+	sethi	%hi(cpu_clockrate), %o2
 	sethi	%hi(MICROPERSEC), %o3
-	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
+	ldx	[%o2 + %lo(cpu_clockrate + 8)], %o4		! Get scale factor
 	brnz,pt	%o4, 0f
 	 or	%o3, %lo(MICROPERSEC), %o3
 
 	!! Calculate ticks/usec
-	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
+	ldx	[%o2 + %lo(cpu_clockrate)], %o4			! No, we need to calculate it
 	udivx	%o4, %o3, %o4
-	stx	%o4, [%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
+	stx	%o4, [%o2 + %lo(cpu_clockrate + 8)]		! Save it so we don't need to divide again
 0:
 
 	mulx	%o0, %o4, %o0					! Convert usec -> ticks
@@ -7757,24 +7757,24 @@ END(longjmp)
 	.data
 	_ALIGN
 #if defined(DDB) || NKSYMS > 0
-	.globl	_C_LABEL(esym)
-_C_LABEL(esym):
+	.globl	esym
+esym:
 	.xword	0
-	.globl	_C_LABEL(ssym)
-_C_LABEL(ssym):
+	.globl	ssym
+ssym:
 	.xword	0
 #endif	/* defined(DDB) || NKSYMS > 0 */
-	.globl	_C_LABEL(proc0paddr)
-_C_LABEL(proc0paddr):
-	.xword	_C_LABEL(u0)		! KVA of proc0 uarea
+	.globl	proc0paddr
+proc0paddr:
+	.xword	u0			! KVA of proc0 uarea
 
 #ifdef DEBUG
-	.comm	_C_LABEL(trapdebug), 4
-	.comm	_C_LABEL(pmapdebug), 4
+	.comm	trapdebug, 4
+	.comm	pmapdebug, 4
 #endif	/* DEBUG */
 
-	.globl	_C_LABEL(dlflush_start)
-_C_LABEL(dlflush_start):
+	.globl	dlflush_start
+dlflush_start:
 	.xword	dlflush1
 	.xword	dlflush2
 	.xword	dlflush3

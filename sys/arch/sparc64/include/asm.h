@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.16 2022/10/25 06:05:57 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.17 2022/12/08 01:25:45 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -91,14 +91,14 @@
 #define _PROF_PROLOGUE
 #endif
 
-#define ENTRY(name)		_ENTRY(_C_LABEL(name)); _PROF_PROLOGUE
-#define NENTRY(name)		_ENTRY(_C_LABEL(name))
+#define ENTRY(name)		_ENTRY(name); _PROF_PROLOGUE
+#define NENTRY(name)		_ENTRY(name)
 #define ENTRY_NB(name)		_ENTRY_NB(name); _PROF_PROLOGUE
-#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
+#define	ASENTRY(name)		_ENTRY(name); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
 #define	END(y)			.size y, . - y
-#define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
-				OTYPE(_C_LABEL(name)); _C_LABEL(name):
+#define RODATA(name)		.align 4; .text; .globl name; \
+				OTYPE(name); name:
 
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm_armv7.S,v 1.18 2020/01/06 19:12:39 kettenis Exp $ */
+/* $OpenBSD: cpufunc_asm_armv7.S,v 1.19 2022/12/08 01:25:44 guenther Exp $ */
 /*
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
  *
@@ -89,11 +89,11 @@ ENTRY(armv7_tlb_flushD)
  * operations.
  */
 .Larmv7_dcache_line_size:
-	.word	_C_LABEL(arm_dcache_min_line_size)
+	.word	arm_dcache_min_line_size
 .Larmv7_icache_line_size:
-	.word	_C_LABEL(arm_icache_min_line_size)
+	.word	arm_icache_min_line_size
 .Larmv7_idcache_line_size:
-	.word	_C_LABEL(arm_idcache_min_line_size)
+	.word	arm_idcache_min_line_size
 
 	s_max	.req r0
 	i_max	.req r1
@@ -238,7 +238,7 @@ ENTRY(armv7_context_switch)
 
 /* XXX The following macros should probably be moved to asm.h */
 #define _DATA_OBJECT(x) .globl x; .type x,_ASM_TYPE_OBJECT; x:
-#define C_OBJECT(x)	_DATA_OBJECT(_C_LABEL(x))
+#define C_OBJECT(x)	_DATA_OBJECT(x)
 
 	.align 2
 C_OBJECT(armv7_dcache_sets_max)

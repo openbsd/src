@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.3 2012/10/12 15:00:32 jsing Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -31,12 +31,12 @@
 
 #define BOOTSTACK 0xfffc
 
-	.globl	_C_LABEL(end)
-	.globl	_C_LABEL(edata)
-	.globl	_C_LABEL(boot)
-	.globl	_C_LABEL(_rtt)
-	.globl	_C_LABEL(bios_bootdev)
-	.globl	_ASM_LABEL(pmm_init)
+	.globl	end
+	.globl	edata
+	.globl	boot
+	.globl	_rtt
+	.globl	bios_bootdev
+	.globl	pmm_init
 	.globl	Gdtr
 
 	.text
@@ -71,7 +71,7 @@ _start:
 	mov	%ax,%gs
 	movl	$BOOTSTACK,%esp
 	pushl	%edx
-	movl	%edx, _C_LABEL(bios_bootdev)
+	movl	%edx, bios_bootdev
 
 	/* Now do it all */
 #ifdef DEBUG
@@ -80,13 +80,13 @@ _start:
 #endif
 	/* zero .bss */
 	xorl	%eax, %eax
-	movl	$_C_LABEL(end), %ecx
-	subl	$_C_LABEL(edata),%ecx
-	movl	$_C_LABEL(edata), %edi
+	movl	$end, %ecx
+	subl	$edata,%ecx
+	movl	$edata, %edi
 	cld
 	rep;	stosb
 
-	call	_ASM_LABEL(pmm_init)
-	call	_C_LABEL(boot)
+	call	pmm_init
+	call	boot
 
-	jmp	_C_LABEL(_rtt)
+	jmp	_rtt

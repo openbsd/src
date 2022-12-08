@@ -1,4 +1,4 @@
-/* $OpenBSD: start.S,v 1.3 2018/03/31 18:07:14 patrick Exp $ */
+/* $OpenBSD: start.S,v 1.4 2022/12/08 01:25:44 guenther Exp $ */
 /*-
  * Copyright (c) 2014, 2015 Andrew Turner
  * All rights reserved.
@@ -154,7 +154,7 @@ _start:
 	ldr	r1, .Ldynamic
 	add	r1, r1, r5
 
-	bl	_C_LABEL(self_reloc)
+	bl	self_reloc
 
 	/* Zero the BSS, _reloc fixed the values for us */
 	ldr	r0, .Lbss
@@ -168,7 +168,7 @@ _start:
 2:
 
 	pop	{r0, r1}
-	bl	_C_LABEL(efi_main)
+	bl	efi_main
 
 1:	b	1b
 

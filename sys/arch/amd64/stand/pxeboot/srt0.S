@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.3 2012/10/29 14:18:11 jsing Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 2022/12/08 01:25:44 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -31,12 +31,12 @@
 
 #define BOOTSTACK 0xfffc
 
-	.globl	_C_LABEL(end)
-	.globl	_C_LABEL(edata)
-	.globl	_C_LABEL(boot)
-	.globl	_C_LABEL(_rtt)
-	.globl	_C_LABEL(bios_bootdev)
-	.globl	_ASM_LABEL(pmm_init)
+	.globl	end
+	.globl	edata
+	.globl	boot
+	.globl	_rtt
+	.globl	bios_bootdev
+	.globl	pmm_init
 	.globl	Gdtr
 
 	.text
@@ -76,8 +76,8 @@ _start:
 	movw	$(PXEBOOTADDR >> 4), %ax /* Reloc from %ds = 0x7c0. */
 	movw	$(LINKADDR >> 4), %bx	 /* Reloc to %es = 0x4012. */
 
-	movl	$_C_LABEL(end), %edx
-	subl	$_C_LABEL(_start), %edx	/* How big are we? */
+	movl	$end, %edx
+	subl	$_start, %edx		/* How big are we? */
 
 	/*
 	 * Relocate in blocks that are a maximum of 32KB in size, incrementing
@@ -149,7 +149,7 @@ relocated:
 #endif
 
 	xorl	%edx, %edx
-	movl	%edx, _C_LABEL(bios_bootdev)
+	movl	%edx, bios_bootdev
 	pushl	%edx			/* boot() takes this as a parameter */
 
 #ifdef DEBUG
@@ -159,14 +159,14 @@ relocated:
 
 	/* Zero .bss */
 	xorl	%eax, %eax
-	movl	$_C_LABEL(end), %ecx
-	subl	$_C_LABEL(edata), %ecx
-	movl	$_C_LABEL(edata), %edi
+	movl	$end, %ecx
+	subl	$edata, %ecx
+	movl	$edata, %edi
 	cld
 	rep;	stosb
 
 	/* Set up an interrupt descriptor table for protected mode. */
-	call	_ASM_LABEL(pmm_init)
+	call	pmm_init
 
 	/* Set our program name ("PXEBOOT", not "BOOT"). */
 	movl	$pxe_progname, %eax
@@ -181,10 +181,10 @@ relocated:
 	movl	$0xb8004, %ebx
 	movl	$0x07410741, (%ebx)
 #endif
-	call	_C_LABEL(boot)
+	call	boot
 
 	/* boot() should not return.  If it does, reset computer. */
-	jmp	_C_LABEL(_rtt)
+	jmp	_rtt
 
 ENTRY(debugchar)
 	pushl	%ebx

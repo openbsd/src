@@ -1,4 +1,4 @@
-/* $OpenBSD: apicvec.s,v 1.35 2018/06/18 23:15:05 bluhm Exp $ */
+/* $OpenBSD: apicvec.s,v 1.36 2022/12/08 01:25:44 guenther Exp $ */
 /* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */
 
 /*-
@@ -37,18 +37,18 @@
 #include <machine/i82093reg.h>
 #include <machine/i82489reg.h>
 
-	.globl  _C_LABEL(apic_stray)
+	.globl  apic_stray
 
 #ifdef MULTIPROCESSOR
 IDTVEC(intripi)
 	subl	$8,%esp			/* space for tf_{err,trapno} */
 	INTRENTRY(ipi)
 	pushl	CPL
-	movl	_C_LABEL(lapic_ppr),%eax
+	movl	lapic_ppr,%eax
 	movl	%eax,CPL
 	ioapic_asm_ack()
 	sti			/* safe to take interrupts.. */
-	call	_C_LABEL(i386_ipi_handler)
+	call	i386_ipi_handler
 	cli
 	popl	CPL
 #ifdef DIAGNOSTIC
@@ -154,17 +154,17 @@ IDTVEC(intrltimer)
 	subl	$8,%esp			/* space for tf_{err,trapno} */
 	INTRENTRY(ltimer)
 	pushl	CPL
-	movl	_C_LABEL(lapic_ppr),%eax
+	movl	lapic_ppr,%eax
 	movl	%eax,CPL
 	ioapic_asm_ack()
 	sti
 	incl	CPUVAR(IDEPTH)
 	movl	%esp,%eax
 	pushl	%eax
-	call	_C_LABEL(lapic_clockintr)
+	call	lapic_clockintr
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
-	jmp	_C_LABEL(Xdoreti)
+	jmp	Xdoreti
 
 KIDTVEC(intrsoftclock)
 	subl	$8,%esp			/* space for tf_{err,trapno} */
@@ -176,10 +176,10 @@ KIDTVEC(intrsoftclock)
 	sti
 	incl	CPUVAR(IDEPTH)
 	pushl	$I386_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
-	jmp	_C_LABEL(Xdoreti)
+	jmp	Xdoreti
 
 KIDTVEC(intrsoftnet)
 	subl	$8,%esp			/* space for tf_{err,trapno} */
@@ -191,10 +191,10 @@ KIDTVEC(intrsoftnet)
 	sti
 	incl	CPUVAR(IDEPTH)
 	pushl	$I386_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
-	jmp	_C_LABEL(Xdoreti)
+	jmp	Xdoreti
 #undef DONETISR
 
 KIDTVEC(intrsofttty)
@@ -207,10 +207,10 @@ KIDTVEC(intrsofttty)
 	sti
 	incl	CPUVAR(IDEPTH)
 	pushl	$I386_SOFTINTR_SOFTTTY
-	call	_C_LABEL(softintr_dispatch)
+	call	softintr_dispatch
 	addl	$4,%esp
 	decl	CPUVAR(IDEPTH)
-	jmp	_C_LABEL(Xdoreti)
+	jmp	Xdoreti
 
 #if NIOAPIC > 0
 
@@ -229,30 +229,30 @@ IDTVEC(intr_##name##num)						\
 	subl	$8,%esp			/* space for tf_{err,trapno} */	;\
 	INTRENTRY(intr_##name##num)					;\
 	pushl	CPL							;\
-	movl	_C_LABEL(lapic_ppr),%eax				;\
+	movl	lapic_ppr,%eax						;\
 	orl	$num,%eax						;\
-	movl	_C_LABEL(apic_maxlevel)(,%eax,4),%ebx			;\
+	movl	apic_maxlevel(,%eax,4),%ebx				;\
 	movl	%ebx,CPL						;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
-	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
+	incl	uvmexp+V_INTR		/* statistical info */		;\
 	sti								;\
-	movl	_C_LABEL(apic_intrhand)(,%eax,4),%ebx /* chain head */	;\
+	movl	apic_intrhand(,%eax,4),%ebx /* chain head */		;\
 	testl	%ebx,%ebx						;\
-	jz      _C_LABEL(Xstray_##name##num)				;\
+	jz	Xstray_##name##num					;\
 	APIC_STRAY_INIT			/* nobody claimed it yet */	;\
 7:	incl	CPUVAR(IDEPTH)						;\
 	movl	%esp, %eax		/* save frame pointer in eax */	;\
 	pushl	%ebx			/* arg 2: ih structure */	;\
 	pushl	%eax			/* arg 1: frame pointer */	;\
-	call	_C_LABEL(intr_handler)	/* call it */			;\
+	call	intr_handler		/* call it */			;\
 	addl	$8, %esp		/* toss args */			;\
 	APIC_STRAY_INTEGRATE		/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	4f							;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
-	cmpl	$0,_C_LABEL(intr_shared_edge)				;\
+	cmpl	$0,intr_shared_edge					;\
 	jne	4f			/* if no shared edges ... */	;\
 	orl	%eax,%eax		/* ... 1 means stop trying */	;\
 	js	4f							;\
@@ -266,10 +266,10 @@ IDTVEC(intr_##name##num)						\
 8:									 \
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	jmp	_C_LABEL(Xdoreti)					;\
-_C_LABEL(Xstray_##name##num):					 \
+	jmp	Xdoreti							;\
+Xstray_##name##num:						 \
 	pushl	$num							;\
-	call	_C_LABEL(apic_stray)					;\
+	call	apic_stray						;\
 	addl	$4,%esp							;\
 	jmp	8b							;\
 
@@ -280,7 +280,7 @@ _C_LABEL(Xstray_##name##num):					 \
 	orl	%eax,%esi
 #define APIC_STRAY_TEST(name,num) \
 	testl 	%esi,%esi						;\
-	jz 	_C_LABEL(Xstray_##name##num)
+	jz 	Xstray_##name##num
 #else /* !DEBUG */
 #define APIC_STRAY_INIT
 #define APIC_STRAY_INTEGRATE
@@ -304,25 +304,25 @@ APICINTR(ioapic,13, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 APICINTR(ioapic,14, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 APICINTR(ioapic,15, voidop, ioapic_asm_ack, voidop, voidop, voidop)
 
-	.globl	_C_LABEL(Xintr_ioapic0),_C_LABEL(Xintr_ioapic1)
-	.globl	_C_LABEL(Xintr_ioapic2),_C_LABEL(Xintr_ioapic3)
-	.globl	_C_LABEL(Xintr_ioapic4),_C_LABEL(Xintr_ioapic5)
-	.globl	_C_LABEL(Xintr_ioapic6),_C_LABEL(Xintr_ioapic7)
-	.globl	_C_LABEL(Xintr_ioapic8),_C_LABEL(Xintr_ioapic9)
-	.globl	_C_LABEL(Xintr_ioapic10),_C_LABEL(Xintr_ioapic11)
-	.globl	_C_LABEL(Xintr_ioapic12),_C_LABEL(Xintr_ioapic13)
-	.globl	_C_LABEL(Xintr_ioapic14),_C_LABEL(Xintr_ioapic15)
-	.globl _C_LABEL(apichandler)
+	.globl	Xintr_ioapic0,Xintr_ioapic1
+	.globl	Xintr_ioapic2,Xintr_ioapic3
+	.globl	Xintr_ioapic4,Xintr_ioapic5
+	.globl	Xintr_ioapic6,Xintr_ioapic7
+	.globl	Xintr_ioapic8,Xintr_ioapic9
+	.globl	Xintr_ioapic10,Xintr_ioapic11
+	.globl	Xintr_ioapic12,Xintr_ioapic13
+	.globl	Xintr_ioapic14,Xintr_ioapic15
+	.globl apichandler
 
-_C_LABEL(apichandler):
-	.long	_C_LABEL(Xintr_ioapic0),_C_LABEL(Xintr_ioapic1)
-	.long	_C_LABEL(Xintr_ioapic2),_C_LABEL(Xintr_ioapic3)
-	.long	_C_LABEL(Xintr_ioapic4),_C_LABEL(Xintr_ioapic5)
-	.long	_C_LABEL(Xintr_ioapic6),_C_LABEL(Xintr_ioapic7)
-	.long	_C_LABEL(Xintr_ioapic8),_C_LABEL(Xintr_ioapic9)
-	.long	_C_LABEL(Xintr_ioapic10),_C_LABEL(Xintr_ioapic11)
-	.long	_C_LABEL(Xintr_ioapic12),_C_LABEL(Xintr_ioapic13)
-	.long	_C_LABEL(Xintr_ioapic14),_C_LABEL(Xintr_ioapic15)
+apichandler:
+	.long	Xintr_ioapic0,Xintr_ioapic1
+	.long	Xintr_ioapic2,Xintr_ioapic3
+	.long	Xintr_ioapic4,Xintr_ioapic5
+	.long	Xintr_ioapic6,Xintr_ioapic7
+	.long	Xintr_ioapic8,Xintr_ioapic9
+	.long	Xintr_ioapic10,Xintr_ioapic11
+	.long	Xintr_ioapic12,Xintr_ioapic13
+	.long	Xintr_ioapic14,Xintr_ioapic15
 
 #endif
 

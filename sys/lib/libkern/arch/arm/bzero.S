@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.3 2008/06/26 05:42:20 ray Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.4 2022/12/08 01:25:46 guenther Exp $	*/
 /*	$NetBSD: bzero.S,v 1.1 2000/12/29 20:51:57 bjh21 Exp $	*/
 
 /*-
@@ -35,4 +35,4 @@
 ENTRY(bzero)
 	mov	r2, r1
 	mov	r1, #0
-	b	_C_LABEL(memset)
+	b	memset

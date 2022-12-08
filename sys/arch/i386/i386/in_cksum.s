@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.s,v 1.9 2017/06/29 17:17:28 deraadt Exp $	*/
+/*	$OpenBSD: in_cksum.s,v 1.10 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: in_cksum.S,v 1.2 2003/08/07 16:27:54 agc Exp $	*/
 
 /*-
@@ -356,7 +356,7 @@ ENTRY(in_cksum)
 
 .Lout_of_mbufs:
 	pushl	$cksum_ood
-	call	_C_LABEL(printf)
+	call	printf
 	leal	4(%esp), %esp
 	jmp	.Lreturn
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.23 2018/06/18 23:15:05 bluhm Exp $	*/
+/*	$OpenBSD: vector.s,v 1.24 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  * segment registers.
  */
 
-	.globl	_C_LABEL(isa_strayintr)
+	.globl	isa_strayintr
 
 #define voidop(num)
 
@@ -91,32 +91,32 @@ IDTVEC(intr_##name##num)						;\
 	INTRENTRY(intr_##name##num)					;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
-	incl	_C_LABEL(uvmexp)+V_INTR	/* statistical info */		;\
-	movl	_C_LABEL(iminlevel) + (num) * 4, %eax			;\
+	incl	uvmexp+V_INTR		/* statistical info */		;\
+	movl	iminlevel + (num) * 4, %eax				;\
 	movl	CPL,%ebx						;\
 	cmpl	%eax,%ebx						;\
-	jae	_C_LABEL(Xhold_##name##num)/* currently masked; hold it */;\
+	jae	Xhold_##name##num/* currently masked; hold it */;\
 	pushl	%ebx			/* cpl to restore on exit */	;\
 1:									;\
-	movl	_C_LABEL(imaxlevel) + (num) * 4,%eax			;\
+	movl	imaxlevel + (num) * 4,%eax				;\
 	movl	%eax,CPL		/* block enough for this irq */	;\
 	sti				/* safe to take intrs now */	;\
-	movl	_C_LABEL(intrhand) + (num) * 4,%ebx	/* head of chain */ ;\
+	movl	intrhand + (num) * 4,%ebx		/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
-	jz	_C_LABEL(Xstray_##name##num)	/* no handlers; we're stray */	;\
+	jz	Xstray_##name##num		/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	incl	CPUVAR(IDEPTH)						;\
 7:	movl	%esp, %eax		/* save frame pointer in eax */	;\
 	pushl	%ebx			/* arg 2: ih structure */	;\
 	pushl	%eax			/* arg 1: frame pointer */	;\
-	call	_C_LABEL(intr_handler)	/* call it */			;\
+	call	intr_handler		/* call it */			;\
 	addl	$8, %esp		/* toss args */			;\
 	STRAY_INTEGRATE			/* maybe he claimed it */	;\
 	orl	%eax,%eax		/* should it be counted? */	;\
 	jz	5f			/* no, skip it */		;\
 	addl	$1,IH_COUNT(%ebx)	/* count the intrs */		;\
 	adcl	$0,IH_COUNT+4(%ebx)					;\
-	cmpl	$0,_C_LABEL(intr_shared_edge)				;\
+	cmpl	$0,intr_shared_edge					;\
 	jne	5f			 /* if no shared edges ... */	;\
 	orl	%eax,%eax		/* ... 1 means stop trying */	;\
 	jns	8f							;\
@@ -127,10 +127,10 @@ IDTVEC(intr_##name##num)						;\
 	STRAY_TEST(name,num)		/* see if it's a stray */	;\
 6:	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
+	jmp	Xdoreti			/* lower spl and do ASTs */	;\
 KIDTVEC(stray_##name##num)						;\
 	pushl	$num							;\
-	call	_C_LABEL(isa_strayintr)					;\
+	call	isa_strayintr						;\
 	addl	$4,%esp							;\
 	jmp	6b							;\
 KIDTVEC(hold_##name##num)						;\
@@ -152,7 +152,7 @@ KIDTVEC(hold_##name##num)						;\
 	orl	%eax,%esi
 #define	STRAY_TEST(name,num) \
 	testl	%esi,%esi						;\
-	jz	_C_LABEL(Xstray_##name##num)
+	jz	Xstray_##name##num
 #else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
@@ -204,43 +204,43 @@ INTRSTUB(legacy,15, i8259_asm_ack2, voidop, i8259_asm_mask, i8259_asm_unmask,
  */
 /* interrupt service routine entry points */
 IDTVEC(intr)
-	.long   _C_LABEL(Xintr_legacy0), _C_LABEL(Xintr_legacy1)
-	.long	_C_LABEL(Xintr_legacy2), _C_LABEL(Xintr_legacy3)
-	.long	_C_LABEL(Xintr_legacy4), _C_LABEL(Xintr_legacy5)
-	.long	_C_LABEL(Xintr_legacy6), _C_LABEL(Xintr_legacy7)
-	.long	_C_LABEL(Xintr_legacy8), _C_LABEL(Xintr_legacy9)
-	.long	_C_LABEL(Xintr_legacy10), _C_LABEL(Xintr_legacy11)
-	.long	_C_LABEL(Xintr_legacy12), _C_LABEL(Xintr_legacy13)
-	.long	_C_LABEL(Xintr_legacy14), _C_LABEL(Xintr_legacy15)
+	.long	Xintr_legacy0, Xintr_legacy1
+	.long	Xintr_legacy2, Xintr_legacy3
+	.long	Xintr_legacy4, Xintr_legacy5
+	.long	Xintr_legacy6, Xintr_legacy7
+	.long	Xintr_legacy8, Xintr_legacy9
+	.long	Xintr_legacy10, Xintr_legacy11
+	.long	Xintr_legacy12, Xintr_legacy13
+	.long	Xintr_legacy14, Xintr_legacy15
 
 /*
  * These tables are used by Xdoreti() and Xspllower().
  */
 /* resume points for suspended interrupts */
 IDTVEC(resume)
-	.long	_C_LABEL(Xresume_legacy0), _C_LABEL(Xresume_legacy1)
-	.long	_C_LABEL(Xresume_legacy2), _C_LABEL(Xresume_legacy3)
-	.long	_C_LABEL(Xresume_legacy4), _C_LABEL(Xresume_legacy5)
-	.long	_C_LABEL(Xresume_legacy6), _C_LABEL(Xresume_legacy7)
-	.long	_C_LABEL(Xresume_legacy8), _C_LABEL(Xresume_legacy9)
-	.long	_C_LABEL(Xresume_legacy10), _C_LABEL(Xresume_legacy11)
-	.long	_C_LABEL(Xresume_legacy12), _C_LABEL(Xresume_legacy13)
-	.long	_C_LABEL(Xresume_legacy14), _C_LABEL(Xresume_legacy15)
+	.long	Xresume_legacy0, Xresume_legacy1
+	.long	Xresume_legacy2, Xresume_legacy3
+	.long	Xresume_legacy4, Xresume_legacy5
+	.long	Xresume_legacy6, Xresume_legacy7
+	.long	Xresume_legacy8, Xresume_legacy9
+	.long	Xresume_legacy10, Xresume_legacy11
+	.long	Xresume_legacy12, Xresume_legacy13
+	.long	Xresume_legacy14, Xresume_legacy15
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_C_LABEL(Xsofttty), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
+	.long	Xsofttty, Xsoftnet, Xsoftclock
 	.long	0, 0
 /* fake interrupts to resume from splx() */
 IDTVEC(recurse)
-	.long	_C_LABEL(Xrecurse_legacy0), _C_LABEL(Xrecurse_legacy1)
-	.long	_C_LABEL(Xrecurse_legacy2), _C_LABEL(Xrecurse_legacy3)
-	.long	_C_LABEL(Xrecurse_legacy4), _C_LABEL(Xrecurse_legacy5)
-	.long	_C_LABEL(Xrecurse_legacy6), _C_LABEL(Xrecurse_legacy7)
-	.long	_C_LABEL(Xrecurse_legacy8), _C_LABEL(Xrecurse_legacy9)
-	.long	_C_LABEL(Xrecurse_legacy10), _C_LABEL(Xrecurse_legacy11)
-	.long	_C_LABEL(Xrecurse_legacy12), _C_LABEL(Xrecurse_legacy13)
-	.long	_C_LABEL(Xrecurse_legacy14), _C_LABEL(Xrecurse_legacy15)
+	.long	Xrecurse_legacy0, Xrecurse_legacy1
+	.long	Xrecurse_legacy2, Xrecurse_legacy3
+	.long	Xrecurse_legacy4, Xrecurse_legacy5
+	.long	Xrecurse_legacy6, Xrecurse_legacy7
+	.long	Xrecurse_legacy8, Xrecurse_legacy9
+	.long	Xrecurse_legacy10, Xrecurse_legacy11
+	.long	Xrecurse_legacy12, Xrecurse_legacy13
+	.long	Xrecurse_legacy14, Xrecurse_legacy15
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_C_LABEL(Xsofttty), _C_LABEL(Xsoftnet), _C_LABEL(Xsoftclock)
+	.long	Xsofttty, Xsoftnet, Xsoftclock
 	.long	0, 0

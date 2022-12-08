@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.9 2022/01/01 23:47:14 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.10 2022/12/08 01:25:44 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -39,12 +39,12 @@
 #include "SYS.h"
 
 	.globl	__curbrk
-	.globl	_C_LABEL(_end)
+	.globl	_end
 
 	.data
 	.align	8
 __minbrk:
-	.xword	_C_LABEL(_end)		/* lower brk limit; also for gmon code */
+	.xword	_end			/* lower brk limit; also for gmon code */
 	END(__minbrk)
 	OTYPE(__minbrk)
 	.text
