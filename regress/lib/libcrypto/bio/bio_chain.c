@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.4 2022/12/08 18:15:36 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.5 2022/12/08 18:16:28 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -193,23 +193,23 @@ bio_chain_pop_test(void)
 }
 
 static int
-walk_forward(BIO *start, BIO *end, size_t expected_length,
-    size_t i, size_t j, const char *fn, const char *description)
+walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
+    const char *fn, const char *description)
 {
 	BIO *prev, *next;
-	size_t length;
+	size_t len;
 	int ret = 0;
 
 	if (start == NULL || end == NULL)
 		goto done;
 
 	next = start;
-	length = 0;
+	len = 0;
 
 	do {
 		prev = next;
 		next = BIO_next(prev);
-		length++;
+		len++;
 	} while (next != NULL);
 
 	if (prev != end) {
@@ -218,10 +218,10 @@ walk_forward(BIO *start, BIO *end, size_t expected_length,
 		goto err;
 	}
 
-	if (length != expected_length) {
+	if (len != expected_len) {
 		fprintf(stderr, "%s case (%zu, %zu) %s length "
 		    "(walking forward) want: %zu, got %zu\n",
-		    fn, i, j, description, expected_length, length);
+		    fn, i, j, description, expected_len, len);
 		goto err;
 	}
 
@@ -233,22 +233,22 @@ walk_forward(BIO *start, BIO *end, size_t expected_length,
 }
 
 static int
-walk_backward(BIO *start, BIO *end, size_t expected_length,
-    size_t i, size_t j, const char *fn, const char *description)
+walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
+    const char *fn, const char *description)
 {
 	BIO *prev, *next;
-	size_t length;
+	size_t len;
 	int ret = 0;
 
 	if (start == NULL || end == NULL)
 		goto done;
 
-	length = 0;
+	len = 0;
 	prev = end;
 	do {
 		next = prev;
 		prev = BIO_prev(prev);
-		length++;
+		len++;
 	} while (prev != NULL);
 
 	if (next != start) {
@@ -257,10 +257,10 @@ walk_backward(BIO *start, BIO *end, size_t expected_length,
 		goto err;
 	}
 
-	if (length != expected_length) {
+	if (len != expected_len) {
 		fprintf(stderr, "%s case (%zu, %zu) %s length "
 		    "(walking backward) want: %zu, got %zu\n",
-		    fn, i, j, description, expected_length, length);
+		    fn, i, j, description, expected_len, len);
 		goto err;
 	}
 
@@ -272,12 +272,12 @@ walk_backward(BIO *start, BIO *end, size_t expected_length,
 }
 
 static int
-check_chain(BIO *start, BIO *end, size_t expected_length,
-    size_t i, size_t j, const char *fn, const char *description)
+check_chain(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
+    const char *fn, const char *description)
 {
-	if (!walk_forward(start, end, expected_length, i, j, fn, description))
+	if (!walk_forward(start, end, expected_len, i, j, fn, description))
 		return 0;
-	if (!walk_backward(start, end, expected_length, i, j, fn, description))
+	if (!walk_backward(start, end, expected_len, i, j, fn, description))
 		return 0;
 
 	return 1;
@@ -332,7 +332,7 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	BIO *A[LINK_CHAIN_A_LEN], *B[LINK_CHAIN_B_LEN];
 	BIO *new_start, *new_end;
 	BIO *oldhead_start, *oldhead_end, *oldtail_start, *oldtail_end;
-	size_t new_length, oldhead_length, oldtail_length;
+	size_t new_len, oldhead_len, oldtail_len;
 	int failed = 1;
 
 	memset(A, 0, sizeof(A));
@@ -354,29 +354,29 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	new_start = A[0];
 	new_end = B[nitems(B) - 1];
 
-	oldhead_length = j;
+	oldhead_len = j;
 	oldhead_start = B[0];
 	oldhead_end = BIO_prev(B[j]);
 
 	/* If we push B[0] or set next to B[0], the oldhead chain is empty. */
 	if (j == 0) {
-		oldhead_length = 0;
+		oldhead_len = 0;
 		oldhead_start = NULL;
 	}
 
 	if (use_bio_push) {
-		new_length = nitems(A) + nitems(B) - j;
+		new_len = nitems(A) + nitems(B) - j;
 
 		/* oldtail doesn't exist in the BIO_push() case. */
 		oldtail_start = NULL;
 		oldtail_end = NULL;
-		oldtail_length = 0;
+		oldtail_len = 0;
 	} else {
-		new_length = i + 1 + nitems(B) - j;
+		new_len = i + 1 + nitems(B) - j;
 
 		oldtail_start = BIO_next(A[i]);
 		oldtail_end = A[nitems(A) - 1];
-		oldtail_length = nitems(A) - i - 1;
+		oldtail_len = nitems(A) - i - 1;
 	}
 
 	/*
@@ -397,14 +397,14 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	 * Check that all the chains match our expectations.
 	 */
 
-	if (!check_chain(new_start, new_end, new_length, i, j, fn, "new chain"))
+	if (!check_chain(new_start, new_end, new_len, i, j, fn, "new chain"))
 		goto err;
 
-	if (!check_chain(oldhead_start, oldhead_end, oldhead_length, i, j, fn,
+	if (!check_chain(oldhead_start, oldhead_end, oldhead_len, i, j, fn,
 	    "oldhead"))
 		goto err;
 
-	if (!check_chain(oldtail_start, oldtail_end, oldtail_length, i, j, fn,
+	if (!check_chain(oldtail_start, oldtail_end, oldtail_len, i, j, fn,
 	    "oldtail"))
 		goto err;
 
