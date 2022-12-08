@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.1 2022/12/08 17:49:02 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.2 2022/12/08 18:10:52 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -35,7 +35,7 @@ BIO_prev(BIO *bio)
 }
 
 static int
-do_bio_chain_pop_test(void)
+bio_chain_pop_test(void)
 {
 	BIO *bio[N_CHAIN_BIOS];
 	BIO *prev, *next;
@@ -196,7 +196,7 @@ do_bio_chain_pop_test(void)
  */
 
 static int
-do_bio_link_chains_at(size_t i, size_t j, int use_bio_push)
+link_chains_at(size_t i, size_t j, int use_bio_push)
 {
 	BIO *A[N_CHAIN_BIOS], *B[N_CHAIN_BIOS];
 	BIO *oldhead_start, *oldhead_end, *oldtail_start, *oldtail_end;
@@ -489,14 +489,14 @@ do_bio_link_chains_at(size_t i, size_t j, int use_bio_push)
 }
 
 static int
-do_bio_link_chains(int use_bio_push)
+link_chains(int use_bio_push)
 {
 	size_t i, j;
 	int failure = 0;
 
 	for (i = 0; i < N_CHAIN_BIOS; i++) {
 		for (j = 0; j < N_CHAIN_BIOS; j++) {
-			failure |= do_bio_link_chains_at(i, j, use_bio_push);
+			failure |= link_chains_at(i, j, use_bio_push);
 		}
 	}
 
@@ -504,19 +504,19 @@ do_bio_link_chains(int use_bio_push)
 }
 
 static int
-do_bio_push_link_test(void)
+bio_push_link_test(void)
 {
 	int use_bio_push = 1;
 
-	return do_bio_link_chains(use_bio_push);
+	return link_chains(use_bio_push);
 }
 
 static int
-do_bio_set_next_link_test(void)
+bio_set_next_link_test(void)
 {
 	int use_bio_push = 0;
 
-	return do_bio_link_chains(use_bio_push);
+	return link_chains(use_bio_push);
 }
 
 int
@@ -524,9 +524,9 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
-	failed |= do_bio_chain_pop_test();
-	failed |= do_bio_push_link_test();
-	failed |= do_bio_set_next_link_test();
+	failed |= bio_chain_pop_test();
+	failed |= bio_push_link_test();
+	failed |= bio_set_next_link_test();
 
 	return failed;
 }
