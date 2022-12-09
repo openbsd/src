@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.7 2022/12/08 18:34:00 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.8 2022/12/09 07:46:54 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -243,8 +243,9 @@ walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	if (start == NULL || end == NULL)
 		goto done;
 
-	len = 0;
 	prev = end;
+	len = 0;
+
 	do {
 		next = prev;
 		prev = BIO_prev(prev);
@@ -277,6 +278,7 @@ check_chain(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 {
 	if (!walk_forward(start, end, expected_len, i, j, fn, description))
 		return 0;
+
 	if (!walk_backward(start, end, expected_len, i, j, fn, description))
 		return 0;
 
@@ -318,9 +320,9 @@ check_chain(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
  * After creating a new link, the new chain has length i + 1 + nitems(B) - j,
  * oldtail has length nitems(A) - i - 1 and oldhead has length j.
  *
- * Prior to bio_lib.c r1.40, BIO_set_next(A[i], B[j]) results in both A[i] and
- * B[j - 1] pointing at B[j] while B[j] points back at A[i]. The result is
- * again double frees.
+ * Prior to bio_lib.c r1.40, BIO_set_next(A[i], B[j]) would result in both A[i]
+ * and B[j - 1] pointing at B[j] while B[j] would point back at A[i]. Calling
+ * BIO_free_all(A[0]) and BIO_free_all(B[0]) results in a double free of B[j].
  *
  * XXX: Should check that the callback is called on BIO_push() as expected.
  */
@@ -354,9 +356,9 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	new_start = A[0];
 	new_end = B[nitems(B) - 1];
 
-	oldhead_len = j;
 	oldhead_start = B[0];
 	oldhead_end = BIO_prev(B[j]);
+	oldhead_len = j;
 
 	/* If we push B[0] or set next to B[0], the oldhead chain is empty. */
 	if (j == 0) {
