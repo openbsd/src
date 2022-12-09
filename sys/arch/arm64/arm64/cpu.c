@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.73 2022/11/24 14:43:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.74 2022/12/09 20:37:39 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -610,7 +610,7 @@ cpu_identify(struct cpu_info *ci)
 		sep = ",";
 	}
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_SCXT)
-		printf("+SCTX");
+		printf("+SCXT");
 
 	if (ID_AA64PFR0_DIT(id) >= ID_AA64PFR0_DIT_IMPL) {
 		printf("%sDIT", sep);
