@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.8 2022/12/09 07:46:54 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.9 2022/12/09 07:47:59 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -200,8 +200,11 @@ walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	size_t len;
 	int ret = 0;
 
-	if (start == NULL || end == NULL)
+	if (start == NULL || end == NULL) {
+		if (expected_len != 0)
+			goto err;
 		goto done;
+	}
 
 	next = start;
 	len = 0;
@@ -240,8 +243,11 @@ walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	size_t len;
 	int ret = 0;
 
-	if (start == NULL || end == NULL)
+	if (start == NULL || end == NULL) {
+		if (expected_len != 0)
+			goto err;
 		goto done;
+	}
 
 	prev = end;
 	len = 0;
