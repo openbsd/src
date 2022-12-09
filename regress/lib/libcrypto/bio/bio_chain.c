@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.9 2022/12/09 07:47:59 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.10 2022/12/09 07:53:06 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -201,8 +201,12 @@ walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	int ret = 0;
 
 	if (start == NULL || end == NULL) {
-		if (expected_len != 0)
+		if (expected_len != 0) {
+			fprintf(stderr, "%s case (%zu, %zu) %s: empty chain "
+			    "with expected length %zu > 0\n",
+			    fn, i, j, description, expected_len);
 			goto err;
+		}
 		goto done;
 	}
 
@@ -244,8 +248,12 @@ walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	int ret = 0;
 
 	if (start == NULL || end == NULL) {
-		if (expected_len != 0)
+		if (expected_len != 0) {
+			fprintf(stderr, "%s case (%zu, %zu) %s: empty chain "
+			    "with expected length %zu > 0\n",
+			    fn, i, j, description, expected_len);
 			goto err;
+		}
 		goto done;
 	}
 
