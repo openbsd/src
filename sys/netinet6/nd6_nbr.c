@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.138 2022/12/02 15:35:35 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.139 2022/12/09 17:32:53 claudio Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	int anycast = 0, proxy = 0, tentative = 0;
 	int router = ip6_forwarding;
 	int tlladdr;
-	union nd_opts ndopts;
+	struct nd_opts ndopts;
 	struct sockaddr_dl *proxydl = NULL;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
@@ -573,7 +573,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct llinfo_nd6 *ln;
 	struct rtentry *rt = NULL;
 	struct sockaddr_dl *sdl;
-	union nd_opts ndopts;
+	struct nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
 	NET_ASSERT_LOCKED();

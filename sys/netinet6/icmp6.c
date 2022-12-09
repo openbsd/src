@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.242 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.243 2022/12/09 17:32:53 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1234,7 +1234,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct in6_addr src6 = ip6->ip6_src;
 	struct in6_addr redtgt6;
 	struct in6_addr reddst6;
-	union nd_opts ndopts;
+	struct nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN];
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);

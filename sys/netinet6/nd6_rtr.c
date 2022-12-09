@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.167 2019/06/21 17:11:43 mpi Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.168 2022/12/09 17:32:53 claudio Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ nd6_rtr_cache(struct mbuf *m, int off, int icmp6len, int icmp6_type)
 	struct in6_addr saddr6 = ip6->ip6_src;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-	union nd_opts ndopts;
+	struct nd_opts ndopts;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
 	KASSERT(icmp6_type == ND_ROUTER_SOLICIT || icmp6_type ==

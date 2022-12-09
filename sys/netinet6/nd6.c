@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.258 2022/12/07 17:34:20 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.259 2022/12/09 17:32:53 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -101,6 +101,8 @@ struct timeout nd6_slowtimo_ch;
 struct timeout nd6_expire_timeout;
 struct task nd6_expire_task;
 
+struct nd_opt_hdr *nd6_option(struct nd_opts *);
+
 void
 nd6_init(void)
 {
@@ -138,7 +140,7 @@ nd6_ifdetach(struct ifnet *ifp)
 }
 
 void
-nd6_option_init(void *opt, int icmp6len, union nd_opts *ndopts)
+nd6_option_init(void *opt, int icmp6len, struct nd_opts *ndopts)
 {
 	bzero(ndopts, sizeof(*ndopts));
 	ndopts->nd_opts_search = (struct nd_opt_hdr *)opt;
@@ -155,15 +157,11 @@ nd6_option_init(void *opt, int icmp6len, union nd_opts *ndopts)
  * Take one ND option.
  */
 struct nd_opt_hdr *
-nd6_option(union nd_opts *ndopts)
+nd6_option(struct nd_opts *ndopts)
 {
 	struct nd_opt_hdr *nd_opt;
 	int olen;
 
-	if (!ndopts)
-		panic("%s: ndopts == NULL", __func__);
-	if (!ndopts->nd_opts_last)
-		panic("%s: uninitialized ndopts", __func__);
 	if (!ndopts->nd_opts_search)
 		return NULL;
 	if (ndopts->nd_opts_done)
@@ -206,21 +204,18 @@ nd6_option(union nd_opts *ndopts)
  * multiple options of the same type.
  */
 int
-nd6_options(union nd_opts *ndopts)
+nd6_options(struct nd_opts *ndopts)
 {
 	struct nd_opt_hdr *nd_opt;
 	int i = 0;
 
-	if (!ndopts)
-		panic("%s: ndopts == NULL", __func__);
-	if (!ndopts->nd_opts_last)
-		panic("%s: uninitialized ndopts", __func__);
-	if (!ndopts->nd_opts_search)
+	KASSERT(ndopts->nd_opts_last != NULL);
+	if (ndopts->nd_opts_search == NULL)
 		return 0;
 
 	while (1) {
 		nd_opt = nd6_option(ndopts);
-		if (!nd_opt && !ndopts->nd_opts_last) {
+		if (nd_opt == NULL && ndopts->nd_opts_last == NULL) {
 			/*
 			 * Message validation requires that all included
 			 * options have a length that is greater than zero.
@@ -230,28 +225,30 @@ nd6_options(union nd_opts *ndopts)
 			return -1;
 		}
 
-		if (!nd_opt)
+		if (nd_opt == NULL)
 			goto skip1;
 
 		switch (nd_opt->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
+			if (ndopts->nd_opts_src_lladdr != NULL)
+				nd6log((LOG_INFO, "duplicated ND6 option found "
+				    "(type=%d)\n", nd_opt->nd_opt_type));
+			else
+				ndopts->nd_opts_src_lladdr = nd_opt;
+			break;
 		case ND_OPT_TARGET_LINKADDR:
+			if (ndopts->nd_opts_tgt_lladdr != NULL)
+				nd6log((LOG_INFO, "duplicated ND6 option found "
+				    "(type=%d)\n", nd_opt->nd_opt_type));
+			else
+				ndopts->nd_opts_tgt_lladdr = nd_opt;
+			break;
 		case ND_OPT_MTU:
 		case ND_OPT_REDIRECTED_HEADER:
-			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
-				nd6log((LOG_INFO,
-				    "duplicated ND6 option found (type=%d)\n",
-				    nd_opt->nd_opt_type));
-				/* XXX bark? */
-			} else {
-				ndopts->nd_opt_array[nd_opt->nd_opt_type]
-					= nd_opt;
-			}
-			break;
 		case ND_OPT_PREFIX_INFORMATION:
 		case ND_OPT_DNSSL:
 		case ND_OPT_RDNSS:
-			/* Don't warn */
+			/* Don't warn, not used by kernel */
 			break;
 		default:
 			/*
@@ -261,6 +258,7 @@ nd6_options(union nd_opts *ndopts)
 			nd6log((LOG_DEBUG,
 			    "nd6_options: unsupported option %d - "
 			    "option ignored\n", nd_opt->nd_opt_type));
+			break;
 		}
 
 skip1:

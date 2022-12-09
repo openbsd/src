@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.92 2022/12/07 17:34:20 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.93 2022/12/09 17:32:53 claudio Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -108,34 +108,20 @@ extern int nd6_debug;
 
 #define nd6log(x)	do { if (nd6_debug) log x; } while (0)
 
-union nd_opts {
-	struct nd_opt_hdr *nd_opt_array[9];
-	struct {
-		struct nd_opt_hdr *zero;
-		struct nd_opt_hdr *src_lladdr;
-		struct nd_opt_hdr *tgt_lladdr;
-		struct nd_opt_prefix_info *pi_beg; /* multiple opts, start */
-		struct nd_opt_rd_hdr *rh;
-		struct nd_opt_mtu *mtu;
-		struct nd_opt_hdr *search;	/* multiple opts */
-		struct nd_opt_hdr *last;	/* multiple opts */
-		int done;
-		struct nd_opt_prefix_info *pi_end;/* multiple opts, end */
-	} nd_opt_each;
+struct nd_opts {
+	struct nd_opt_hdr *nd_opts_src_lladdr;
+	struct nd_opt_hdr *nd_opts_tgt_lladdr;
+	struct nd_opt_hdr *nd_opts_search;	/* multiple opts */
+	struct nd_opt_hdr *nd_opts_last;	/* multiple opts */
+	int nd_opts_done;
 };
-#define nd_opts_src_lladdr	nd_opt_each.src_lladdr
-#define nd_opts_tgt_lladdr	nd_opt_each.tgt_lladdr
-#define nd_opts_search		nd_opt_each.search
-#define nd_opts_last		nd_opt_each.last
-#define nd_opts_done		nd_opt_each.done
 
 void nd6_init(void);
 void nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct ifnet *);
 int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
-void nd6_option_init(void *, int, union nd_opts *);
-struct nd_opt_hdr *nd6_option(union nd_opts *);
-int nd6_options(union nd_opts *);
+void nd6_option_init(void *, int, struct nd_opts *);
+int nd6_options(struct nd_opts *);
 struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *,
     u_int);
 void nd6_llinfo_settimer(const struct llinfo_nd6 *, unsigned int);
