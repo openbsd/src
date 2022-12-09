@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm_map.9,v 1.1 2019/12/05 15:14:28 mpi Exp $
+.\"	$OpenBSD: uvm_map.9,v 1.2 2022/12/09 17:16:36 deraadt Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 5 2019 $
+.Dd $Mdocdate: December 9 2022 $
 .Dt UVM_MAP 9
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 .Ft boolean_t
 .Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
-.Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
+.Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "int et" "boolean_t set_max" "boolean_t checkimmutable"
 .Ft struct vmspace *
 .Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "boolean_t pageable" "boolean_t remove_holes"
 .Ft void
@@ -261,6 +261,12 @@ also setting the maximum protection to the region to
 if
 .Fa set_max
 is non-zero.
+The
+.Fa et
+parameter should be 0, unless a
+.Ar PROT_READ | PROT_WRITE
+mapping is being changed to extend the stack limit, then it it may be
+.Ar UVM_ET_STACK .
 This function returns a standard errno.
 .Pp
 The
