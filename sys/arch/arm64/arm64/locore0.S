@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.8 2022/12/08 01:25:44 guenther Exp $ */
+/* $OpenBSD: locore0.S,v 1.9 2022/12/09 22:31:31 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -168,26 +168,29 @@ virtdone:
 	.quad	virtdone
 .Lbss:
 	.quad	__bss_start
-.Lstart:
-	.quad	_start
 .Lend:
 	.quad	_end
 
 /*
- * This builds the page tables containing the identity map, and the kernel
- * virtual map.
+ * This builds the page tables containing the identity map, and the
+ * initial kernel virtual map.
  *
  * It relies on:
  *  We were loaded to an address that is on a 2MiB boundary
  *  All the memory must not cross a 1GiB boundary
  *  x28 contains the physical address we were loaded from
  *
- *  There are 3 pages before that address for the page tables
- *  These pages are allocated aligned in .data
- *   The pages used are:
- *    - The identity (PA = VA) table (TTBR0)
- *    - The Kernel L1 table          (TTBR1)
- *    -  The PA == VA L2 table for kernel
+ * The page table for the identity map starts at L0 and maps the 1GB
+ * of memory that contains the memory block where the kernel was
+ * loaded by the bootloader.  These are loaded into TTBR0.
+ *
+ * The initial kernel page table starts at L1 and maps the 64MB block
+ * that the kernel was initially loaded into by the bootloader using
+ * 2MB (L2) pages.  The first 2MB of this 64MB block is unused and
+ * not mapped.  These are loaded into TTBR1.
+ *
+ * The pages for the page tables are allocated aligned in .data
+ * (see locore.S).
  */
 .Lpagetable:
 	.xword pagetable
@@ -227,34 +230,16 @@ create_pagetables:
 	 * Build the TTBR1 maps.
 	 */
 
-	/* Find the size of the kernel */
-	adr	x6, .Lstart
-	ldr	x6, [x6]
-	sub	x6, x6, x29
-
-	/* End is the symbol address */
-	adr	x7, .Lesym
-	ldr	x7, [x7]
-	sub	x7, x7, x29
-	ldr	x7, [x7]
-	sub	x7, x7, x29
-
-	/* Find the end - begin */
-	sub	x8, x7, x6
-	/* Get the number of l2 pages to allocate, rounded down */
-	lsr	x10, x8, #(L2_SHIFT)
-	/* Add 4 MiB for any rounding above and the module data */
-	add	x10, x10, #2
-
 	/* Create the kernel space L2 table */
 	mov	x6, x26				// pagetable:
 	mov	x7, #NORMAL_MEM
 	add	x8, x28, x29
 	mov	x9, x28
+	mov	x10, #31			// entries for 64MB - 2MB
 	bl	build_l2_block_pagetable
 
 	/* Move to the l1 table */
-	add	x26, x26, #PAGE_SIZE*2		// pagetable_l1_ttbr1:
+	add	x26, x26, #PAGE_SIZE * 2	// pagetable_l1_ttbr1:
 
 	/* Link the l1 -> l2 table */
 	mov	x9, x6
