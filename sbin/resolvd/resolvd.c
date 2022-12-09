@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.30 2022/11/27 15:19:38 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.31 2022/12/09 18:11:24 otto Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -666,9 +666,11 @@ regen_resolvconf(const char *why)
 		fclose(fp);
 	}
 
-	if (writev(fd, iov, iovcnt) == -1) {
-		lwarn("writev");
-		goto err;
+	if (iovcnt > 0) {
+		if (writev(fd, iov, iovcnt) == -1) {
+			lwarn("writev");
+			goto err;
+		}
 	}
 
 	if (fsync(fd) == -1) {
@@ -680,7 +682,7 @@ regen_resolvconf(const char *why)
 
 	if (resolvfd == -1) {
 		close(fd);
-		resolvfd = open(_PATH_RESCONF, O_RDWR | O_CREAT);
+		resolvfd = open(_PATH_RESCONF, O_RDWR);
 	} else {
 		dup2(fd, resolvfd);
 		close(fd);
