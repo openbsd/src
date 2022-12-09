@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.24 2021/08/31 23:33:05 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.25 2022/12/09 09:30:54 tb Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -33,7 +33,9 @@ _REGRESS_OUT= | tee -a ${REGRESS_LOG} ${_REGRESS_TMP} 2>&1 > /dev/null
 
 .for p in ${PROG} ${PROGS}
 run-regress-$p: $p
+. if !commands(run-regress-$p)
 	./$p
+. endif
 .PHONY: run-regress-$p
 .endfor
 
