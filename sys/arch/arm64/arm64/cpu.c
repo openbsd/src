@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.74 2022/12/09 20:37:39 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.75 2022/12/09 21:23:24 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -200,6 +200,7 @@ int cpu_node;
 
 uint64_t cpu_id_aa64isar0;
 uint64_t cpu_id_aa64isar1;
+uint64_t cpu_id_aa64isar2;
 uint64_t cpu_id_aa64pfr0;
 uint64_t cpu_id_aa64pfr1;
 
@@ -382,6 +383,10 @@ cpu_identify(struct cpu_info *ci)
 		printf("\n%s: mismatched ID_AA64ISAR1_EL1",
 		    ci->ci_dev->dv_xname);
 	}
+	if (READ_SPECIALREG(id_aa64isar2_el1) != cpu_id_aa64isar2) {
+		printf("\n%s: mismatched ID_AA64ISAR2_EL1",
+		    ci->ci_dev->dv_xname);
+	}
 	if (READ_SPECIALREG(id_aa64pfr0_el1) != cpu_id_aa64pfr0) {
 		printf("\n%s: mismatched ID_AA64PFR0_EL1",
 		    ci->ci_dev->dv_xname);
@@ -547,6 +552,16 @@ cpu_identify(struct cpu_info *ci)
 	}
 
 	/*
+	 * ID_AA64ISAR2
+	 */
+	id = READ_SPECIALREG(id_aa64isar2_el1);
+
+	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL) {
+		printf("%sCLRBHB", sep);
+		sep = ",";
+	}
+
+	/*
 	 * ID_AA64MMFR0
 	 *
 	 * We only print ASIDBits for now.
@@ -595,6 +610,11 @@ cpu_identify(struct cpu_info *ci)
 	if (ID_AA64MMFR1_HAFDBS(id) >= ID_AA64MMFR1_HAFDBS_AF_DBS)
 		printf("DBS");
 
+	if (ID_AA64MMFR1_ECBHB(id) >= ID_AA64MMFR1_ECBHB_IMPL) {
+		printf("%sECBHB", sep);
+		sep = ",";
+	}
+
 	/*
 	 * ID_AA64PFR0
 	 */
@@ -611,6 +631,8 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_SCXT)
 		printf("+SCXT");
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_HCXT)
+		printf("+HCXT");
 
 	if (ID_AA64PFR0_DIT(id) >= ID_AA64PFR0_DIT_IMPL) {
 		printf("%sDIT", sep);
@@ -630,6 +652,8 @@ cpu_identify(struct cpu_info *ci)
 	printf("\nID_AA64ISAR0_EL1: 0x%016llx", id);
 	id = READ_SPECIALREG(id_aa64isar1_el1);
 	printf("\nID_AA64ISAR1_EL1: 0x%016llx", id);
+	id = READ_SPECIALREG(id_aa64isar2_el1);
+	printf("\nID_AA64ISAR2_EL1: 0x%016llx", id);
 	id = READ_SPECIALREG(id_aa64mmfr0_el1);
 	printf("\nID_AA64MMFR0_EL1: 0x%016llx", id);
 	id = READ_SPECIALREG(id_aa64mmfr1_el1);
@@ -742,6 +766,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 		cpu_id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
 		cpu_id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
+		cpu_id_aa64isar2 = READ_SPECIALREG(id_aa64isar2_el1);
 		cpu_id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
 		cpu_id_aa64pfr1 = READ_SPECIALREG(id_aa64pfr1_el1);
 
