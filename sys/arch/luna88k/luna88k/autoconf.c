@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.28 2022/10/14 20:53:18 aoyama Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.29 2022/12/10 02:41:56 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -101,7 +101,7 @@ diskconf(void)
 }
 
 /*
- * Get 'auto-boot' information from NVRAM
+ * Get 'auto-boot' information
  *
  * XXX Right now we can not handle network boot.
  */
@@ -147,7 +147,7 @@ get_autoboot_device(void)
 
 use_nvram_info:
 	/*
-	 * Use old method if we can not get bootdev information from boot loader
+	 * Use old method if we can not get bootdev information
 	 */
 	printf("%s: no bootdev information, use NVRAM setting\n", __func__);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.141 2022/12/06 00:56:52 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.142 2022/12/10 02:41:56 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -190,8 +190,8 @@ int machtype = LUNA_88K;	/* may be overwritten in cpu_startup() */
 int cputyp = CPU_88100;
 int cpuspeed = 33;		/* safe guess */
 int sysconsole = 0;		/* 0 = ttya, may be overwritten in locore0.S */
-u_int16_t dipswitch = 0;	/* set in locore.S */
-int hwplanebits;		/* set in locore.S */
+u_int16_t dipswitch = 0;	/* set in locore0.S */
+int hwplanebits;		/* set in locore0.S */
 
 extern struct consdev syscons;	/* in dev/siotty.c */
 
@@ -970,7 +970,7 @@ luna88k_vector_init(uint32_t *bootvbr, uint32_t *vectors)
 }
 
 /*
- * Called from locore.S during boot,
+ * Called from locore0.S during boot,
  * this is the first C code that's run.
  */
 void
