@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.139 2022/12/09 17:32:53 claudio Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.140 2022/12/10 21:26:21 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -170,8 +170,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		taddr6.s6_addr16[1] = htons(ifp->if_index);
 
 	icmp6len -= sizeof(*nd_ns);
-	nd6_option_init(nd_ns + 1, icmp6len, &ndopts);
-	if (nd6_options(&ndopts) < 0) {
+	if (nd6_options(nd_ns + 1, icmp6len, &ndopts) < 0) {
 		nd6log((LOG_INFO,
 		    "nd6_ns_input: invalid ND option, ignored\n"));
 		/* nd6_options have incremented stats */
@@ -620,8 +619,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
 	icmp6len -= sizeof(*nd_na);
-	nd6_option_init(nd_na + 1, icmp6len, &ndopts);
-	if (nd6_options(&ndopts) < 0) {
+	if (nd6_options(nd_na + 1, icmp6len, &ndopts) < 0) {
 		nd6log((LOG_INFO,
 		    "nd6_na_input: invalid ND option, ignored\n"));
 		/* nd6_options have incremented stats */

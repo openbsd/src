@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.259 2022/12/09 17:32:53 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.260 2022/12/10 21:26:21 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -139,20 +139,6 @@ nd6_ifdetach(struct ifnet *ifp)
 	free(nd, M_IP6NDP, sizeof(*nd));
 }
 
-void
-nd6_option_init(void *opt, int icmp6len, struct nd_opts *ndopts)
-{
-	bzero(ndopts, sizeof(*ndopts));
-	ndopts->nd_opts_search = (struct nd_opt_hdr *)opt;
-	ndopts->nd_opts_last
-		= (struct nd_opt_hdr *)(((u_char *)opt) + icmp6len);
-
-	if (icmp6len == 0) {
-		ndopts->nd_opts_done = 1;
-		ndopts->nd_opts_search = NULL;
-	}
-}
-
 /*
  * Take one ND option.
  */
@@ -204,14 +190,21 @@ nd6_option(struct nd_opts *ndopts)
  * multiple options of the same type.
  */
 int
-nd6_options(struct nd_opts *ndopts)
+nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 {
-	struct nd_opt_hdr *nd_opt;
+	struct nd_opt_hdr *nd_opt = opt;
 	int i = 0;
 
-	KASSERT(ndopts->nd_opts_last != NULL);
-	if (ndopts->nd_opts_search == NULL)
+	bzero(ndopts, sizeof(*ndopts));
+	ndopts->nd_opts_search = nd_opt;
+	ndopts->nd_opts_last =
+	    (struct nd_opt_hdr *)(((u_char *)nd_opt) + icmp6len);
+
+	if (icmp6len == 0) {
+		ndopts->nd_opts_done = 1;
+		ndopts->nd_opts_search = NULL;
 		return 0;
+	}
 
 	while (1) {
 		nd_opt = nd6_option(ndopts);

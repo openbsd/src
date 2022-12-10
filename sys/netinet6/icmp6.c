@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.243 2022/12/09 17:32:53 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.244 2022/12/10 21:26:21 kn Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1342,8 +1342,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	/* validation passed */
 
 	icmp6len -= sizeof(*nd_rd);
-	nd6_option_init(nd_rd + 1, icmp6len, &ndopts);
-	if (nd6_options(&ndopts) < 0) {
+	if (nd6_options(nd_rd + 1, icmp6len, &ndopts) < 0) {
 		nd6log((LOG_INFO, "icmp6_redirect_input: "
 			"invalid ND option, rejected: %s\n",
 			icmp6_redirect_diag(&src6, &reddst6, &redtgt6)));
