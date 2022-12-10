@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.90 2022/12/09 22:31:31 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.91 2022/12/10 10:13:58 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1826,14 +1826,21 @@ void
 pmap_postinit(void)
 {
 	extern char trampoline_vectors[];
+	extern char trampoline_vectors_end[];
 	paddr_t pa;
 	vaddr_t minaddr, maxaddr;
 	u_long npteds, npages;
 
 	memset(pmap_tramp.pm_vp.l1, 0, sizeof(struct pmapvp1));
 	pmap_extract(pmap_kernel(), (vaddr_t)trampoline_vectors, &pa);
-	pmap_enter(&pmap_tramp, (vaddr_t)trampoline_vectors, pa,
-	    PROT_READ | PROT_EXEC, PROT_READ | PROT_EXEC | PMAP_WIRED);
+	minaddr = (vaddr_t)trampoline_vectors;
+	maxaddr = (vaddr_t)trampoline_vectors_end;
+	while (minaddr < maxaddr) {
+		pmap_enter(&pmap_tramp, minaddr, pa,
+		    PROT_READ | PROT_EXEC, PROT_READ | PROT_EXEC | PMAP_WIRED);
+		minaddr += PAGE_SIZE;
+		pa += PAGE_SIZE;
+	}
 
 	/*
 	 * Reserve enough virtual address space to grow the kernel

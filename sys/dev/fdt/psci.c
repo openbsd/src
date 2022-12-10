@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.11 2022/07/09 19:27:56 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.12 2022/12/10 10:13:58 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -34,6 +34,7 @@ extern void (*powerdownfn)(void);
 #define SMCCC_VERSION		0x80000000
 #define SMCCC_ARCH_FEATURES	0x80000001
 #define SMCCC_ARCH_WORKAROUND_1	0x80008000
+#define SMCCC_ARCH_WORKAROUND_3	0x80003fff
 
 #define PSCI_VERSION		0x84000000
 #define CPU_OFF			0x84000002
@@ -63,6 +64,7 @@ struct psci_softc {
 	uint32_t	 sc_cpu_off;
 
 	uint32_t	 sc_smccc_version;
+	uint32_t	 sc_method;
 };
 
 struct psci_softc *psci_sc;
@@ -108,10 +110,13 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t version;
 
 	if (OF_getprop(faa->fa_node, "method", method, sizeof(method))) {
-		if (strcmp(method, "hvc") == 0)
+		if (strcmp(method, "hvc") == 0) {
 			sc->sc_callfn = hvc_call;
-		else if (strcmp(method, "smc") == 0)
+			sc->sc_method = PSCI_METHOD_HVC;
+		} else if (strcmp(method, "smc") == 0) {
 			sc->sc_callfn = smc_call;
+			sc->sc_method = PSCI_METHOD_SMC;
+		}
 	}
 
 	/*
@@ -198,6 +203,14 @@ psci_flush_bp_smccc_arch_workaround_1(void)
 }
 
 void
+psci_flush_bp_smccc_arch_workaround_3(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	(*sc->sc_callfn)(SMCCC_ARCH_WORKAROUND_3, 0, 0, 0);
+}
+
+void
 psci_flush_bp(void)
 {
 	struct psci_softc *sc = psci_sc;
@@ -216,6 +229,24 @@ psci_flush_bp(void)
 		/* Workaround isn't implemented or isn't needed. */
 		ci->ci_flush_bp = psci_flush_bp_none;
 	}
+}
+
+int
+psci_flush_bp_has_bhb(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	/*
+	 * SMCCC 1.1 allows us to detect if the workaround is
+	 * implemented and needed.
+	 */
+	if (sc && sc->sc_smccc_version >= 0x10001 &&
+	    smccc_arch_features(SMCCC_ARCH_WORKAROUND_3) == 0) {
+		/* Workaround implemented and needed. */
+		return 1;
+	}
+
+	return 0;
 }
 
 int32_t
@@ -307,4 +338,12 @@ psci_can_suspend(void)
 	struct psci_softc *sc = psci_sc;
 
 	return (sc && sc->sc_system_suspend != 0);
+}
+
+int
+psci_method(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	return sc ? sc->sc_method : PSCI_METHOD_NONE;
 }

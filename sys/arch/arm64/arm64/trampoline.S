@@ -1,4 +1,4 @@
-/*	$OpenBSD: trampoline.S,v 1.3 2021/02/17 12:11:44 kettenis Exp $	*/
+/*	$OpenBSD: trampoline.S,v 1.4 2022/12/10 10:13:58 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -19,6 +19,9 @@
 #include <machine/asm.h>
 #include <machine/param.h>
 #include "assym.h"
+#include "psci.h"
+
+#define SMCCC_ARCH_WORKAROUND_3		0x80003fff
 
 	.text
 
@@ -31,26 +34,93 @@
  */
 	.align 12
 
+.macro	spectre_bhb_none_early
+.endm
+.macro	spectre_bhb_none_late
+.endm
+
+.macro	spectre_bhb_loop_8_early
+	spectre_bhb_loop 8
+.endm
+.macro	spectre_bhb_loop_8_late
+.endm
+
+.macro	spectre_bhb_loop_24_early
+	spectre_bhb_loop 24
+.endm
+.macro	spectre_bhb_loop_24_late
+.endm
+
+.macro	spectre_bhb_loop_32_early
+	spectre_bhb_loop 32
+.endm
+.macro	spectre_bhb_loop_32_late
+.endm
+
+.macro	spectre_bhb_loop, cnt
+	mov x18, #\cnt
+1:
+	b . + 4
+	subs x18, x18, #1
+	b.ne 1b
+	dsb nsh
+	isb
+.endm
+
+#if NPSCI > 0
+.macro	spectre_bhb_psci_hvc_early
+.endm
+.macro	spectre_bhb_psci_hvc_late
+	stp	x0, x1, [sp, #-16]!
+	stp	x2, x3, [sp, #-16]!
+	mov	w0, #SMCCC_ARCH_WORKAROUND_3
+	hvc	#0
+	ldp	x2, x3, [sp], #16
+	ldp	x0, x1, [sp], #16
+.endm
+
+.macro	spectre_bhb_psci_smc_early
+.endm
+.macro	spectre_bhb_psci_smc_late
+	stp	x0, x1, [sp, #-16]!
+	stp	x2, x3, [sp, #-16]!
+	mov	w0, #SMCCC_ARCH_WORKAROUND_3
+	smc	#0
+	ldp	x2, x3, [sp], #16
+	ldp	x0, x1, [sp], #16
+.endm
+#endif
+
+.macro	spectre_bhb_clrbhb_early
+	hint	#22 /* clrbhb */
+	isb
+.endm
+.macro	spectre_bhb_clrbhb_late
+.endm
+
 .macro	vempty
 	.align 7
 	brk	0xfff
 	1: b	1b
 .endm
 
-.macro	vector	name
+.macro	vector	name, bhb
 	.align 7
 	msr	tpidrro_el0, x18
+	spectre_bhb_\bhb\()_early
 	mrs	x18, ttbr1_el1
 	bic	x18, x18, #(1UL << 48)
 	sub	x18, x18, #(2 * PAGE_SIZE)
 	msr	ttbr1_el1, x18
 	isb
+	spectre_bhb_\bhb\()_late
 	b	tramp_\name
 .endm
 
+.macro	tramp_vector, bhb
 	.align 11
-	.globl trampoline_vectors
-trampoline_vectors:
+	.globl trampoline_vectors_\bhb
+trampoline_vectors_\bhb:
 	vempty			/* Synchronous EL1t */
 	vempty			/* IRQ EL1t */
 	vempty			/* FIQ EL1t */
@@ -61,15 +131,29 @@ trampoline_vectors:
 	vempty			/* FIQ EL1h */
 	vempty			/* Error EL1h */
 
-	vector el0_sync		/* Synchronous 64-bit EL0 */
-	vector el0_irq		/* IRQ 64-bit EL0 */
-	vector el0_fiq		/* FIQ 64-bit EL0 */
-	vector el0_error	/* Error 64-bit EL0 */
+	vector el0_sync, \bhb	/* Synchronous 64-bit EL0 */
+	vector el0_irq, \bhb	/* IRQ 64-bit EL0 */
+	vector el0_fiq, \bhb	/* FIQ 64-bit EL0 */
+	vector el0_error, \bhb	/* Error 64-bit EL0 */
 
 	vempty			/* Synchronous 32-bit EL0 */
 	vempty			/* IRQ 32-bit EL0 */
 	vempty			/* FIQ 32-bit EL0 */
 	vempty			/* Error 32-bit EL0 */
+.endm
+
+	.align 11
+	.globl trampoline_vectors
+trampoline_vectors:
+	tramp_vector none
+	tramp_vector loop_8
+	tramp_vector loop_24
+	tramp_vector loop_32
+#if NPSCI > 0
+	tramp_vector psci_hvc
+	tramp_vector psci_smc
+#endif
+	tramp_vector clrbhb
 
 	.align 11
 	.globl tramp_return
@@ -84,6 +168,9 @@ tramp_return:
 	eret
 	dsb nsh
 	isb
+
+	.global trampoline_vectors_end
+trampoline_vectors_end:
 
 /*
  * The next page contains the start of the EL0 exception handlers.

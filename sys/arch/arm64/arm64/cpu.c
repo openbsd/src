@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.75 2022/12/09 21:23:24 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.76 2022/12/10 10:13:58 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -208,6 +208,16 @@ uint64_t cpu_id_aa64pfr1;
 int arm64_has_aes;
 #endif
 
+extern char trampoline_vectors_none[];
+extern char trampoline_vectors_loop_8[];
+extern char trampoline_vectors_loop_24[];
+extern char trampoline_vectors_loop_32[];
+#if NPSCI > 0
+extern char trampoline_vectors_psci_hvc[];
+extern char trampoline_vectors_psci_smc[];
+#endif
+extern char trampoline_vectors_clrbhb[];
+
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 int	cpu_match(struct device *, void *, void *);
@@ -364,12 +374,84 @@ cpu_identify(struct cpu_info *ci)
 
 	/*
 	 * The architecture has been updated to explicitly tell us if
-	 * we're not vulnerable.
+	 * we're not vulnerable to regular Spectre.
 	 */
 
 	id = READ_SPECIALREG(id_aa64pfr0_el1);
 	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
+
+	/*
+	 * But we might still be vulnerable to Spectre-BHB.  If we know the
+	 * CPU, we can add a branchy loop that cleans the BHB.
+	 */
+
+	if (impl == CPU_IMPL_ARM) {
+		switch (part) {
+		case CPU_PART_CORTEX_A72:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_8;
+			break;
+		case CPU_PART_CORTEX_A76:
+		case CPU_PART_CORTEX_A76AE:
+		case CPU_PART_CORTEX_A77:
+		case CPU_PART_NEOVERSE_N1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_24;
+			break;
+		case CPU_PART_CORTEX_A78:
+		case CPU_PART_CORTEX_A78AE:
+		case CPU_PART_CORTEX_A78C:
+		case CPU_PART_CORTEX_X1:
+		case CPU_PART_CORTEX_X2:
+		case CPU_PART_CORTEX_A710:
+		case CPU_PART_NEOVERSE_N2:
+		case CPU_PART_NEOVERSE_V1:
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_loop_32;
+			break;
+		}
+	}
+
+	/*
+	 * If we're not using a loop, try and call into PSCI.  This also
+	 * covers the original Spectre in addition to Spectre-BHB.
+	 */
+#if NPSCI > 0
+	if (ci->ci_trampoline_vectors == (vaddr_t)trampoline_vectors_none &&
+	    psci_flush_bp_has_bhb()) {
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		if (psci_method() == PSCI_METHOD_HVC)
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_psci_hvc;
+		if (psci_method() == PSCI_METHOD_SMC)
+			ci->ci_trampoline_vectors =
+			    (vaddr_t)trampoline_vectors_psci_smc;
+	}
+#endif
+
+	/* Prefer CLRBHB to mitigate Spectre-BHB. */
+
+	id = READ_SPECIALREG(id_aa64isar2_el1);
+	if (ID_AA64ISAR2_CLRBHB(id) >= ID_AA64ISAR2_CLRBHB_IMPL)
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_clrbhb;
+
+	/* ECBHB tells us Spectre-BHB is mitigated. */
+
+	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+	if (ID_AA64MMFR1_ECBHB(id) >= ID_AA64MMFR1_ECBHB_IMPL)
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
+
+	/*
+	 * The architecture has been updated to explicitly tell us if
+	 * we're not vulnerable.
+	 */
+
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_HCXT) {
+		ci->ci_flush_bp = cpu_flush_bp_noop;
+		ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
+	}
 
 	/*
 	 * Print CPU features encoded in the ID registers.
@@ -727,6 +809,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	kstack = km_alloc(USPACE, &kv_any, &kp_zero, &kd_waitok);
 	ci->ci_el1_stkend = (vaddr_t)kstack + USPACE - 16;
+	ci->ci_trampoline_vectors = (vaddr_t)trampoline_vectors_none;
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_flags & CPUF_AP) {

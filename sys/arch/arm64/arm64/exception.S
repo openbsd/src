@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.14 2022/12/08 01:25:44 guenther Exp $ */
+/* $OpenBSD: exception.S,v 1.15 2022/12/10 10:13:58 patrick Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -195,7 +195,8 @@ handle_el1h_error:
 
 .macro	return
 	msr	tpidrro_el0, x18
-	ldr	x18, =trampoline_vectors
+	mrs	x18, tpidr_el1
+	ldr	x18, [x18, #CI_TRAMPOLINE_VECTORS]
 	msr	vbar_el1, x18
 	isb
 	b	tramp_return

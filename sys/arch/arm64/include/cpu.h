@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.32 2022/11/26 17:23:15 tobhe Exp $ */
+/* $OpenBSD: cpu.h,v 1.33 2022/12/10 10:13:58 patrick Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -125,6 +125,8 @@ struct cpu_info {
 	u_int32_t		ci_randseed;
 
 	u_int32_t		ci_ctrl; /* The CPU control register */
+
+	u_int64_t		ci_trampoline_vectors;
 
 	uint32_t		ci_cpl;
 	uint32_t		ci_ipending;
