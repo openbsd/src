@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.13 2022/12/10 10:45:39 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.14 2022/12/10 10:56:16 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -213,14 +213,13 @@ walk_report(BIO *last, BIO *expected_last, size_t len, size_t expected_len,
     const char *direction, const char *last_name)
 {
 	if (last != expected_last) {
-		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected %s\n",
-		    fn, i, j, description, last_name);
+		fprintf(stderr, "%s case (%zu, %zu) %s %s has unexpected %s\n",
+		    fn, i, j, description, direction, last_name);
 		return 0;
 	}
 
 	if (len != expected_len) {
-		fprintf(stderr, "%s case (%zu, %zu) %s length "
-		    "(walking %s) want: %zu, got %zu\n",
+		fprintf(stderr, "%s case (%zu, %zu) %s %s want %zu, got %zu\n",
 		    fn, i, j, description, direction, expected_len, len);
 		return 0;
 	}
