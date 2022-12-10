@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.14 2016/08/14 21:47:16 guenther Exp $	*/
+/*	$OpenBSD: search.c,v 1.15 2022/12/10 16:06:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -104,9 +104,14 @@ prev:			if (sp->re == NULL) {
 					++p;
 				break;
 			}
-			if (plen > 1 && p[0] == '\\' && p[1] == delim) {
-				++p;
-				--plen;
+			if (plen > 1 && p[0] == '\\') {
+				if (p[1] == delim) {
+					++p;
+					--plen;
+				} else if (p[1] == '\\') {
+					*t++ = *p++;
+					--plen;
+				}
 			}
 		}
 		if (epp != NULL)
