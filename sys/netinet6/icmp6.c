@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.245 2022/12/10 22:16:24 kn Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.246 2022/12/10 22:40:58 kn Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -396,7 +396,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct ip6_hdr *ip6, *nip6;
 	struct icmp6_hdr *icmp6, *nicmp6;
 	int off = *offp;
-	int icmp6len = m->m_pkthdr.len - *offp;
+	int icmp6len = m->m_pkthdr.len - off;
 	int code, sum, noff;
 	char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
