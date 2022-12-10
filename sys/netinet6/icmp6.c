@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.246 2022/12/10 22:40:58 kn Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.247 2022/12/10 23:45:51 kn Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -128,9 +128,6 @@ static int icmp6_mtudisc_lowat = 256;
  * keep track of # of redirect routes.
  */
 struct rttimer_queue icmp6_redirect_timeout_q;
-
-/* XXX experimental, turned off */
-static int icmp6_redirect_lowat = -1;
 
 void	icmp6_errcount(int, int);
 int	icmp6_ratelimit(const struct in6_addr *, const int, const int);
@@ -1386,12 +1383,6 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		rtcount = rt_timer_queue_count(&icmp6_redirect_timeout_q);
 		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
 			goto freeit;
-		else if (0 <= icmp6_redirect_lowat &&
-		    rtcount > icmp6_redirect_lowat) {
-			/*
-			 * XXX nuke a victim, install the new one.
-			 */
-		}
 
 		bzero(&sdst, sizeof(sdst));
 		bzero(&sgw, sizeof(sgw));
