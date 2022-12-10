@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.11 2022/12/09 17:23:05 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.12 2022/12/10 10:42:13 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -200,24 +200,15 @@ walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	size_t len;
 	int ret = 0;
 
-	if (start == NULL || end == NULL) {
-		if (expected_len != 0) {
-			fprintf(stderr, "%s case (%zu, %zu) %s: empty chain "
-			    "with expected length %zu > 0\n",
-			    fn, i, j, description, expected_len);
-			goto err;
-		}
-		goto done;
-	}
-
+	prev = NULL;
 	next = start;
 	len = 0;
 
-	do {
+	while (next != NULL) {
 		prev = next;
 		next = BIO_next(prev);
 		len++;
-	} while (next != NULL);
+	}
 
 	if (prev != end) {
 		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected end\n",
@@ -232,7 +223,6 @@ walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 		goto err;
 	}
 
- done:
 	ret = 1;
 
  err:
@@ -247,24 +237,15 @@ walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 	size_t len;
 	int ret = 0;
 
-	if (start == NULL || end == NULL) {
-		if (expected_len != 0) {
-			fprintf(stderr, "%s case (%zu, %zu) %s: empty chain "
-			    "with expected length %zu > 0\n",
-			    fn, i, j, description, expected_len);
-			goto err;
-		}
-		goto done;
-	}
-
+	next = NULL;
 	prev = end;
 	len = 0;
 
-	do {
+	while (prev != NULL) {
 		next = prev;
 		prev = BIO_prev(prev);
 		len++;
-	} while (prev != NULL);
+	}
 
 	if (next != start) {
 		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected start\n",
@@ -279,7 +260,6 @@ walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
 		goto err;
 	}
 
- done:
 	ret = 1;
 
  err:
@@ -369,6 +349,7 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 
 	new_start = A[0];
 	new_end = B[nitems(B) - 1];
+	/* new_len depends on use_bio_push. It is set a few lines down. */
 
 	oldhead_start = B[0];
 	oldhead_end = BIO_prev(B[j]);
@@ -394,6 +375,13 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 		oldtail_start = BIO_next(A[i]);
 		oldtail_end = A[nitems(A) - 1];
 		oldtail_len = nitems(A) - i - 1;
+
+		/* If we set next on end of A[], the oldtail chain is empty. */
+		if (i == nitems(A) - 1) {
+			oldtail_start = NULL;
+			oldtail_end = NULL;
+			oldtail_len = 0;
+		}
 	}
 
 	/* The two chains A[] and B[] are split into three disjoint pieces. */
