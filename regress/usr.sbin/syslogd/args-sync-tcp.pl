@@ -54,7 +54,7 @@ our %args = (
 		or die ref($self), " shutdown write failed: $!";
 	})},
 	loggrep => {
-	    qr/Accepted/ => 2,
+	    qr/^Accepted$/ => 2,
 	    get_between2loggrep(),
 	    get_thirdlog() => 0,
 	},

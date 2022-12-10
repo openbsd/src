@@ -46,7 +46,7 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    qr/Signal/ => 1,
-	    qr/Accepted/ => 1,
+	    qr/^Accepted$/ => 1,
 	},
     },
     multifile => [

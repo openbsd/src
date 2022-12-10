@@ -50,7 +50,7 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    qr/Signal/ => 1,
-	    qr/Accepted/ => 2,
+	    qr/^Accepted$/ => 2,
 	},
     },
 );

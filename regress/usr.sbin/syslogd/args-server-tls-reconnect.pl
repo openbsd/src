@@ -45,7 +45,7 @@ our %args = (
 	    $self->listen();
 	})},
 	loggrep => {
-	    qr/Accepted/ => 2,
+	    qr/^Accepted$/ => 2,
 	    qr/syslogd\[\d+\]: loghost .* connection close/ => 1,
 	    qr/syslogd\[\d+\]: .*/.
 		qr/connection error: handshake failed:/ => 1,

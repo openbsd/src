@@ -42,7 +42,7 @@ our %args = (
 	    $self->listen();
 	})},
 	loggrep => {
-	    qr/Accepted/ => 2,
+	    qr/^Accepted$/ => 2,
 	    qr/syslogd\[\d+\]: loghost .* connection close/ => 1,
 	    qr/syslogd\[\d+\]: (connect .*|.*connection error): $errors/ => 1,
 	    get_between2loggrep(),
