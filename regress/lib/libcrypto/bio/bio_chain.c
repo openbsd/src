@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.12 2022/12/10 10:42:13 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.13 2022/12/10 10:45:39 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -192,78 +192,66 @@ bio_chain_pop_test(void)
 	return failed;
 }
 
-static int
-walk_forward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
-    const char *fn, const char *description)
+static void
+walk(BIO *(*step)(BIO *), BIO *start, BIO **end, size_t *len)
 {
-	BIO *prev, *next;
-	size_t len;
-	int ret = 0;
+	BIO *current = NULL;
+	BIO *next = start;
 
-	prev = NULL;
-	next = start;
-	len = 0;
-
+	*len = 0;
 	while (next != NULL) {
-		prev = next;
-		next = BIO_next(prev);
-		len++;
+		current = next;
+		next = step(current);
+		(*len)++;
 	}
-
-	if (prev != end) {
-		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected end\n",
-		    fn, i, j, description);
-		goto err;
-	}
-
-	if (len != expected_len) {
-		fprintf(stderr, "%s case (%zu, %zu) %s length "
-		    "(walking forward) want: %zu, got %zu\n",
-		    fn, i, j, description, expected_len, len);
-		goto err;
-	}
-
-	ret = 1;
-
- err:
-	return ret;
+	*end = current;
 }
 
 static int
-walk_backward(BIO *start, BIO *end, size_t expected_len, size_t i, size_t j,
-    const char *fn, const char *description)
+walk_report(BIO *last, BIO *expected_last, size_t len, size_t expected_len,
+    size_t i, size_t j, const char *fn, const char *description,
+    const char *direction, const char *last_name)
 {
-	BIO *prev, *next;
-	size_t len;
-	int ret = 0;
-
-	next = NULL;
-	prev = end;
-	len = 0;
-
-	while (prev != NULL) {
-		next = prev;
-		prev = BIO_prev(prev);
-		len++;
-	}
-
-	if (next != start) {
-		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected start\n",
-		    fn, i, j, description);
-		goto err;
+	if (last != expected_last) {
+		fprintf(stderr, "%s case (%zu, %zu) %s has unexpected %s\n",
+		    fn, i, j, description, last_name);
+		return 0;
 	}
 
 	if (len != expected_len) {
 		fprintf(stderr, "%s case (%zu, %zu) %s length "
-		    "(walking backward) want: %zu, got %zu\n",
-		    fn, i, j, description, expected_len, len);
-		goto err;
+		    "(walking %s) want: %zu, got %zu\n",
+		    fn, i, j, description, direction, expected_len, len);
+		return 0;
 	}
 
-	ret = 1;
+	return 1;
+}
 
- err:
-	return ret;
+static int
+walk_forward(BIO *start, BIO *expected_end, size_t expected_len,
+    size_t i, size_t j, const char *fn, const char *description)
+{
+	BIO *end;
+	size_t len;
+
+	walk(BIO_next, start, &end, &len);
+
+	return walk_report(end, expected_end, len, expected_len,
+	    i, j, fn, description, "forward", "end");
+}
+
+static int
+walk_backward(BIO *expected_start, BIO *end, size_t expected_len,
+    size_t i, size_t j, const char *fn, const char *description)
+{
+	BIO *start;
+	size_t len;
+
+	walk(BIO_prev, end, &start, &len);
+
+	return walk_report(start, expected_start, len, expected_len,
+	    i, j, fn, description, "backward", "start");
 }
 
 static int
