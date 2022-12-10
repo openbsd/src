@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.40 2017/01/21 05:42:03 guenther Exp $ */
+/* $OpenBSD: interrupt.c,v 1.41 2022/12/10 15:02:29 cheloha Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -200,7 +200,6 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
     struct trapframe *framep)
 {
 	struct cpu_info *ci = curcpu();
-	extern int schedhz;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
@@ -227,22 +226,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		atomic_add_int(&uvmexp.intrs, 1);
 		if (CPU_IS_PRIMARY(ci))
 			clk_count.ec_count++;
-		if (platform.clockintr) {
-			/*
-			 * Call hardclock().  This will also call
-			 * statclock(). On the primary CPU, it
-			 * will also deal with time-of-day stuff.
-			 */
-			(*platform.clockintr)((struct clockframe *)framep);
-
-			/*
-			 * If it's time to call the scheduler clock,
-			 * do so.
-			 */
-			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
-			    schedhz != 0)
-				schedclock(ci->ci_curproc);
-		}
+		if (platform.clockintr)
+			(*platform.clockintr)(framep);
 		break;
 
 	case ALPHA_INTR_ERROR:	/* Machine Check or Correctable Error */

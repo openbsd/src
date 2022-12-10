@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.67 2022/10/25 15:15:38 guenther Exp $ */
+/* $OpenBSD: cpu.h,v 1.68 2022/12/10 15:02:29 cheloha Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -99,6 +99,7 @@ typedef union alpha_t_float {
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <sys/cdefs.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
@@ -212,6 +213,7 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+	struct clockintr_queue ci_queue;
 	char ci_panicbuf[512];
 };
 

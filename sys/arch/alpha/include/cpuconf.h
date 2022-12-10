@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuconf.h,v 1.6 2011/03/23 16:54:34 pirofti Exp $	*/
+/*	$OpenBSD: cpuconf.h,v 1.7 2022/12/10 15:02:29 cheloha Exp $	*/
 /*	$NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ struct platform {
 	 */
 	void	(*cons_init)(void);
 	void	(*device_register)(struct device *, void *);
-	void	(*clockintr)(struct clockframe *);
+	int	(*clockintr)(void *);
 	void	(*mcheck_handler)(unsigned long, struct trapframe *,
 		    unsigned long, unsigned long);
 	void	(*powerdown)(void);

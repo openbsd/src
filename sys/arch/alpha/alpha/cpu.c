@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.45 2022/03/13 08:04:13 mpi Exp $ */
+/* $OpenBSD: cpu.c,v 1.46 2022/12/10 15:02:29 cheloha Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -60,6 +60,7 @@
 
 
 #include <sys/param.h>
+#include <sys/clockintr.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -602,6 +603,8 @@ cpu_hatch(struct cpu_info *ci)
 	ci->ci_curproc = ci->ci_fpcurproc = NULL;
 	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 	KERNEL_UNLOCK();
+
+	clockintr_cpu_init(NULL);
 
 	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 	SCHED_LOCK(s);
