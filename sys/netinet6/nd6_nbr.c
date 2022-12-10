@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.140 2022/12/10 21:26:21 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.141 2022/12/10 21:29:10 mvs Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1099,7 +1099,6 @@ nd6_dad_start(struct ifaddr *ifa)
 			ifa->ifa_ifp ? ifa->ifa_ifp->if_xname : "???");
 		return;
 	}
-	bzero(&dp->dad_timer_ch, sizeof(dp->dad_timer_ch));
 
 	TAILQ_INSERT_TAIL(&dadq, dp, dad_list);
 	ip6_dad_pending++;
