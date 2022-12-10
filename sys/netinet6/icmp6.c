@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.244 2022/12/10 21:26:21 kn Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.245 2022/12/10 22:16:24 kn Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 		if (!icmp6_reflect(&n, sizeof(struct ip6_hdr), NULL))
 			ip6_send(n);
 	}
-}                                                                    
+}
 
 /*
  * Process a received ICMP6 message.
