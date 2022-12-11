@@ -1,4 +1,4 @@
-/*	$OpenBSD: octciu.c,v 1.18 2022/08/22 00:35:07 cheloha Exp $	*/
+/*	$OpenBSD: octciu.c,v 1.19 2022/12/11 05:31:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
@@ -271,6 +270,7 @@ octciu_intr_establish(int irq, int level, int (*ih_fun)(void *),
 	ih->ih_irq = irq;
 	ih->ih_cpuid = cpuid;
 	evcount_attach(&ih->ih_count, ih_what, &ih->ih_irq);
+	evcount_percpu(&ih->ih_count);
 
 	s = splhigh();
 
@@ -520,8 +520,7 @@ octciu_intr_bank(struct octciu_softc *sc, struct intrbank *bank,
 #endif
 			if ((*ih->ih_fun)(ih->ih_arg) != 0) {
 				handled = 1;
-				atomic_inc_long(
-				    (unsigned long *)&ih->ih_count.ec_count);
+				evcount_inc(&ih->ih_count);
 			}
 #ifdef MULTIPROCESSOR
 			if (need_lock)
