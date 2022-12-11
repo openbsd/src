@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.291 2022/11/28 21:39:28 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.292 2022/12/11 21:19:08 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -580,7 +580,7 @@ restart:
 		goto out;
 	so->so_state |= SS_ISSENDING;
 	do {
-		if (so->so_state & SS_CANTSENDMORE)
+		if (so->so_snd.sb_state & SBS_CANTSENDMORE)
 			snderr(EPIPE);
 		if (so->so_error) {
 			error = so->so_error;
@@ -1465,7 +1465,7 @@ somove(struct socket *so, int wait)
 		error = so->so_error;
 		goto release;
 	}
-	if (sosp->so_state & SS_CANTSENDMORE) {
+	if (sosp->so_snd.sb_state & SBS_CANTSENDMORE) {
 		error = EPIPE;
 		goto release;
 	}
@@ -1659,7 +1659,8 @@ somove(struct socket *so, int wait)
 			if (o) {
 				error = pru_send(sosp, m, NULL, NULL);
 				if (error) {
-					if (sosp->so_state & SS_CANTSENDMORE)
+					if (sosp->so_snd.sb_state &
+					    SBS_CANTSENDMORE)
 						error = EPIPE;
 					m_freem(o);
 					goto release;
@@ -1676,7 +1677,7 @@ somove(struct socket *so, int wait)
 			*mtod(o, caddr_t) = *mtod(m, caddr_t);
 			error = pru_sendoob(sosp, o, NULL, NULL);
 			if (error) {
-				if (sosp->so_state & SS_CANTSENDMORE)
+				if (sosp->so_snd.sb_state & SBS_CANTSENDMORE)
 					error = EPIPE;
 				m_freem(m);
 				goto release;
@@ -1697,7 +1698,7 @@ somove(struct socket *so, int wait)
 		sosp->so_state &= ~SS_ISSENDING;
 	error = pru_send(sosp, m, NULL, NULL);
 	if (error) {
-		if (sosp->so_state & SS_CANTSENDMORE)
+		if (sosp->so_snd.sb_state & SBS_CANTSENDMORE)
 			error = EPIPE;
 		goto release;
 	}
@@ -1714,7 +1715,8 @@ somove(struct socket *so, int wait)
 	if (error)
 		so->so_error = error;
 	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
-	    (sosp->so_state & SS_CANTSENDMORE) || maxreached || error) {
+	    (sosp->so_snd.sb_state & SBS_CANTSENDMORE) ||
+	    maxreached || error) {
 		sounsplice(so, sosp, 0);
 		return (0);
 	}
@@ -1839,7 +1841,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			switch (optname) {
 
 			case SO_SNDBUF:
-				if (so->so_state & SS_CANTSENDMORE)
+				if (so->so_snd.sb_state & SBS_CANTSENDMORE)
 					return (EINVAL);
 				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
 				    sbreserve(so, &so->so_snd, cnt))
@@ -2185,7 +2187,7 @@ filt_sowrite(struct knote *kn, long hint)
 	soassertlocked(so);
 
 	kn->kn_data = sbspace(so, &so->so_snd);
-	if (so->so_state & SS_CANTSENDMORE) {
+	if (so->so_snd.sb_state & SBS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)
