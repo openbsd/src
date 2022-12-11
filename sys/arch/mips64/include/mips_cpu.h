@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.10 2021/05/01 16:11:11 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.11 2022/12/11 05:07:25 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -98,6 +98,7 @@
  */
 
 #define	CR_BR_DELAY		0x80000000
+#define	CR_BR_DELAY_SHIFT	31
 #define	CR_EXC_CODE		0x0000007c
 #define	CR_EXC_CODE_SHIFT	2
 #define	CR_COP_ERR		0x30000000

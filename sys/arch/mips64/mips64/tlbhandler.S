@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlbhandler.S,v 1.53 2021/10/07 13:08:17 visa Exp $ */
+/*	$OpenBSD: tlbhandler.S,v 1.54 2022/12/11 05:07:25 visa Exp $ */
 
 /*
  * Copyright (c) 1995-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -140,16 +140,16 @@ go_u_general:
 NLEAF(k_tlb_inv, 0)
 	.set	noat
 #ifdef CPU_OCTEON
+	.set	push
+	.set	arch=octeon
 	/* Check if the fault was caused by an instruction fetch. */
 	dmfc0	k0, COP_0_CAUSE_REG
-	/* XXX bbit0 k0, CR_BR_DELAY_BIT, 1f */
-	li	k1, CR_BR_DELAY
-	and	k0, k0, k1
-	beq	k0, zero, 1f			# fault in a branch delay slot?
+	bbit0	k0, CR_BR_DELAY_SHIFT, 1f	# fault in a branch delay slot?
 	 dmfc0	k1, COP_0_EXC_PC
 	daddu	k1, k1, 4			# adjust for the slot
 1:	dmfc0	k0, COP_0_BAD_VADDR
 	beq	k0, k1, go_k_general
+	.set	pop
 #else
 	dmfc0	k0, COP_0_BAD_VADDR		# get the fault address
 #endif
