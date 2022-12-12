@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.26 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.27 2022/12/12 19:18:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -166,6 +166,13 @@ enum endpoint_type {
 	EP_DRM_ENCODER,		/* struct drm_encoder */
 	EP_DRM_PANEL,		/* struct drm_panel */
 	EP_DAI_DEVICE,		/* struct dai_device */
+	EP_USB_CONTROLLER_PORT,	/* struct usb_controller_port */
+};
+
+struct usb_controller_port {
+	void *up_cookie;
+	void (*up_connect)(void *);
+	void (*up_disconnect)(void *);
 };
 
 struct endpoint {

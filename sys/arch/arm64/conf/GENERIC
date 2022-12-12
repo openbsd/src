@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.249 2022/11/26 09:05:32 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.250 2022/12/12 19:18:25 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -551,6 +551,7 @@ rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
 tascodec*	at iic?			# TAS2770 audio codec
 tcpci*		at iic?			# USB Type-C controller
+tipd*		at iic?			# TPS6598x Type-C controller
 pijuice*	at iic?			# PiJuice HAT
 
 # GPIO "pin bus" drivers

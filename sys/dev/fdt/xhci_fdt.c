@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.19 2022/06/06 09:46:07 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.20 2022/12/12 19:18:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -47,6 +48,10 @@ struct xhci_fdt_softc {
 	bus_addr_t		sc_otg_base;
 	bus_size_t		sc_otg_size;
 	bus_space_handle_t	sc_otg_ioh;
+
+	struct device_ports	sc_ports;
+	struct usb_controller_port sc_usb_controller_port;
+	struct task		sc_snps_connect_task;
 };
 
 int	xhci_fdt_match(struct device *, void *, void *);
@@ -222,12 +227,49 @@ xhci_cdns_init(struct xhci_fdt_softc *sc)
 #define  USB3_GUSB2PHYCFG0_SUSPENDUSB20	(1 << 6)
 #define  USB3_GUSB2PHYCFG0_PHYIF	(1 << 3)
 
+void
+xhci_snps_do_connect(void *arg)
+{
+	struct xhci_fdt_softc *sc = arg;
+	
+	xhci_reinit(&sc->sc);
+}
+
+void
+xhci_snps_connect(void *cookie)
+{
+	struct xhci_fdt_softc *sc = cookie;
+
+	task_add(systq, &sc->sc_snps_connect_task);
+}
+
+void *
+xhci_snps_ep_get_cookie(void *cookie, struct endpoint *ep)
+{
+	return cookie;
+}
+
 int
 xhci_snps_init(struct xhci_fdt_softc *sc)
 {
 	char phy_type[16] = { 0 };
 	int node = sc->sc_node;
 	uint32_t reg;
+
+	/*
+	 * On Apple hardware we need to reset the controller when we
+	 * see a new connection.
+	 */
+	if (OF_is_compatible(node, "apple,dwc3")) {
+		sc->sc_usb_controller_port.up_cookie = sc;
+		sc->sc_usb_controller_port.up_connect = xhci_snps_connect;
+		task_set(&sc->sc_snps_connect_task, xhci_snps_do_connect, sc);
+
+		sc->sc_ports.dp_node = node;
+		sc->sc_ports.dp_cookie = &sc->sc_usb_controller_port;
+		sc->sc_ports.dp_ep_get_cookie = xhci_snps_ep_get_cookie;
+		device_ports_register(&sc->sc_ports, EP_USB_CONTROLLER_PORT);
+	}
 
 	/* We don't support device mode, so always force host mode. */
 	reg = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USB3_GCTL);

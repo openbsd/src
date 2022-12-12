@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.126 2022/07/15 07:52:06 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.127 2022/12/12 19:18:25 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -528,16 +528,7 @@ xhci_activate(struct device *self, int act)
 	switch (act) {
 	case DVACT_RESUME:
 		sc->sc_bus.use_polling++;
-
-		xhci_reset(sc);
-		xhci_ring_reset(sc, &sc->sc_cmd_ring);
-		xhci_ring_reset(sc, &sc->sc_evt_ring);
-
-		/* Renesas controllers, at least, need more time to resume. */
-		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-
-		xhci_config(sc);
-
+		xhci_reinit(sc);
 		sc->sc_bus.use_polling--;
 		rv = config_activate_children(self, act);
 		break;
@@ -587,6 +578,18 @@ xhci_reset(struct xhci_softc *sc)
 	return (0);
 }
 
+void
+xhci_reinit(struct xhci_softc *sc)
+{
+	xhci_reset(sc);
+	xhci_ring_reset(sc, &sc->sc_cmd_ring);
+	xhci_ring_reset(sc, &sc->sc_evt_ring);
+
+	/* Renesas controllers, at least, need more time to resume. */
+	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+
+	xhci_config(sc);
+}
 
 int
 xhci_intr(void *v)

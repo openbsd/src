@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.172 2022/11/23 23:43:08 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.173 2022/12/12 19:18:25 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -677,3 +677,8 @@ file	dev/fdt/qcpwm.c			qcpwm
 device	qcrtc
 attach	qcrtc at spmi
 file	dev/fdt/qcrtc.c			qcrtc
+
+# TI TPS6598x Type-C controller
+device	tipd
+attach	tipd at i2c
+file	dev/fdt/tipd.c		tipd
