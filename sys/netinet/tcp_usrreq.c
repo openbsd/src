@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.213 2022/12/11 21:19:08 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.214 2022/12/12 08:30:22 tb Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -773,7 +773,7 @@ tcp_shutdown(struct socket *so)
 		ostate = tp->t_state;
 	}
 
-	if (so->so_snd.sb_state & SBS_CANTSENDMORE)
+	if (so->so_state & SS_CANTSENDMORE)
 		goto out;
 
 	socantsendmore(so);

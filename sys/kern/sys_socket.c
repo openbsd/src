@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.57 2022/12/11 21:19:08 mvs Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.58 2022/12/12 08:30:22 tb Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 	solock(so);
 	if ((so->so_state & SS_CANTRCVMORE) == 0 || so->so_rcv.sb_cc != 0)
 		ub->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
-	if ((so->so_snd.sb_state & SBS_CANTSENDMORE) == 0)
+	if ((so->so_state & SS_CANTSENDMORE) == 0)
 		ub->st_mode |= S_IWUSR | S_IWGRP | S_IWOTH;
 	ub->st_uid = so->so_euid;
 	ub->st_gid = so->so_egid;

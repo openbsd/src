@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.113 2022/12/11 21:19:08 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.114 2022/12/12 08:30:22 tb Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -121,7 +121,6 @@ struct socket {
 		short	sb_flags;	/* flags, see below */
 /* End area that is zeroed on flush. */
 #define	sb_endzero	sb_flags
-		short	sb_state;	/* state, see below */
 		uint64_t sb_timeo_nsecs;/* timeout for read/write */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 	} so_rcv, so_snd;
@@ -132,8 +131,6 @@ struct socket {
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_SPLICE	0x20		/* buffer is splice source or drain */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
-
-#define SBS_CANTSENDMORE 0x01		/* can't send more data to peer */
 
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */
@@ -149,6 +146,7 @@ struct socket {
 #define	SS_ISCONNECTED		0x002	/* socket connected to a peer */
 #define	SS_ISCONNECTING		0x004	/* in process of connecting to peer */
 #define	SS_ISDISCONNECTING	0x008	/* in process of disconnecting */
+#define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
@@ -239,7 +237,7 @@ sowriteable(struct socket *so)
 	return ((sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat &&
 	    ((so->so_state & SS_ISCONNECTED) ||
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)==0)) ||
-	    (so->so_snd.sb_state & SBS_CANTSENDMORE) || so->so_error);
+	    (so->so_state & SS_CANTSENDMORE) || so->so_error);
 }
 
 /* adjust counters in sb reflecting allocation of m */
