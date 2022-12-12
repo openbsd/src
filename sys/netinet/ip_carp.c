@@ -798,6 +798,9 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	struct ifnet *ifp;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (sc == NULL)
+		return (ENOMEM);
+
 	refcnt_init(&sc->sc_refcnt);
 
 	SRPL_INIT(&sc->carp_vhosts);
