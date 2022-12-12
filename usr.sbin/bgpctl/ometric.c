@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.7 2022/12/06 17:38:41 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.8 2022/12/12 09:51:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,7 @@ struct olabels {
 enum ovalue_type {
 	OVT_INTEGER,
 	OVT_DOUBLE,
-	OVT_TIMEVAL,
+	OVT_TIMESPEC,
 };
 
 struct ovalue {
@@ -52,7 +52,7 @@ struct ovalue {
 	union {
 		unsigned long long	i;
 		double			f;
-		struct timeval		tv;
+		struct timespec		ts;
 	}			 value;
 	enum ovalue_type	 valtype;
 };
@@ -316,9 +316,9 @@ ometric_output_value(FILE *out, const struct ovalue *ov)
 		return fprintf(out, "%llu", ov->value.i);
 	case OVT_DOUBLE:
 		return fprintf(out, "%g", ov->value.f);
-	case OVT_TIMEVAL:
-		return fprintf(out, "%lld.%06ld",
-		    (long long)ov->value.tv.tv_sec, (long)ov->value.tv.tv_usec);
+	case OVT_TIMESPEC:
+		return fprintf(out, "%lld.%09ld",
+		    (long long)ov->value.ts.tv_sec, ov->value.ts.tv_nsec);
 	}
 	return -1;
 }
@@ -430,10 +430,10 @@ ometric_set_float(struct ometric *om, double val, struct olabels *ol)
 }
 
 /*
- * Set an timeval value with label ol. ol can be NULL.
+ * Set an timespec value with label ol. ol can be NULL.
  */
 void
-ometric_set_timeval(struct ometric *om, const struct timeval *tv,
+ometric_set_timespec(struct ometric *om, const struct timespec *ts,
     struct olabels *ol)
 {
 	struct ovalue *ov;
@@ -444,8 +444,8 @@ ometric_set_timeval(struct ometric *om, const struct timeval *tv,
 	if ((ov = malloc(sizeof(*ov))) == NULL)
 		err(1, NULL);
 
-	ov->value.tv = *tv;
-	ov->valtype = OVT_TIMEVAL;
+	ov->value.ts = *ts;
+	ov->valtype = OVT_TIMESPEC;
 	ov->labels = olabels_ref(ol);
 
 	STAILQ_INSERT_TAIL(&om->vals, ov, entry);
@@ -512,12 +512,12 @@ ometric_set_int_with_labels(struct ometric *om, uint64_t val,
 }
 
 void
-ometric_set_timeval_with_labels(struct ometric *om, struct timeval *tv,
+ometric_set_timespec_with_labels(struct ometric *om, struct timespec *ts,
     const char **keys, const char **values, struct olabels *ol)
 {
 	struct olabels *extra;
 
 	extra = olabels_add_extras(ol, keys, values);
-	ometric_set_timeval(om, tv, extra);
+	ometric_set_timespec(om, ts, extra);
 	olabels_free(extra);
 }
