@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.184 2022/11/10 12:13:22 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.185 2022/12/12 22:06:40 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -369,6 +369,7 @@ pcxrtc*		at iic?			# PCF8563 RTC
 pcyrtc*		at iic?			# PCF85063A/TP RTC
 rkpmic*		at iic?			# RK808 PMIC
 tcpci*		at iic?			# USB Type-C controller
+tipd*		at iic?			# TPS6598x Type-C controller
 
 pseudo-device	loop 1
 pseudo-device	vlan
