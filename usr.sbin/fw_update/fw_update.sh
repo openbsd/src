@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.43 2022/08/05 18:01:40 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.44 2022/12/12 02:30:51 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -405,7 +405,7 @@ if [ "$LOCALSRC" ]; then
 		FWURL="${LOCALSRC}"
 		LOCALSRC=
 	else
-		LOCALSRC="${LOCALSRC:#file:}"
+		LOCALSRC="${LOCALSRC#file:}"
 		! [ -d "$LOCALSRC" ] &&
 		    echo "The path must be a URL or an existing directory" >&2 &&
 		    exit 1
