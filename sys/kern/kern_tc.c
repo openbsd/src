@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.80 2022/12/05 23:18:37 deraadt Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.81 2022/12/13 17:30:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -292,6 +292,30 @@ nanoruntime(struct timespec *ts)
 
 	binruntime(&bt);
 	BINTIME_TO_TIMESPEC(&bt, ts);
+}
+
+void
+getbinruntime(struct bintime *bt)
+{
+	struct timehands *th;
+	u_int gen;
+
+	do {
+		th = timehands;
+		gen = th->th_generation;
+		membar_consumer();
+		bintimesub(&th->th_offset, &th->th_naptime, bt);
+		membar_consumer();
+	} while (gen == 0 || gen != th->th_generation);
+}
+
+uint64_t
+getnsecruntime(void)
+{
+	struct bintime bt;
+
+	getbinruntime(&bt);
+	return BINTIME_TO_NSEC(&bt);
 }
 
 void

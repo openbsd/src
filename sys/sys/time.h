@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.62 2022/07/23 22:58:51 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.63 2022/12/13 17:30:36 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -317,6 +317,9 @@ void	nanoboottime(struct timespec *);
 
 void	binruntime(struct bintime *);
 void	nanoruntime(struct timespec *);
+
+void getbinruntime(struct bintime *);
+uint64_t getnsecruntime(void);
 
 time_t	gettime(void);
 time_t	getuptime(void);
