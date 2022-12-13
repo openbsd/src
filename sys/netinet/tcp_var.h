@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.161 2022/11/07 11:22:55 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.162 2022/12/13 18:10:55 claudio Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -641,7 +641,7 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 static inline uint32_t
 tcp_now(void)
 {
-	return (getnsecuptime() / 1000000);
+	return (getnsecruntime() / 1000000);
 }
 
 #define TCP_TIME_MSEC(_ms)	(_ms)	/* tcp_now() is in milliseconds */
