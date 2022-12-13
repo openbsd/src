@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigpause.3,v 1.14 2013/07/17 05:42:10 schwarze Exp $
+.\"	$OpenBSD: sigpause.3,v 1.15 2022/12/13 06:56:06 jmc Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: December 13 2022 $
 .Dt SIGPAUSE 3
 .Os
 .Sh NAME
@@ -38,8 +38,10 @@
 .Ft int
 .Fn sigpause "int sigmask"
 .Sh DESCRIPTION
-.Sy This interface is made obsolete by
+.Bf -symbolic
+This interface is made obsolete by
 .Xr sigsuspend 2 .
+.Ef
 .Pp
 .Fn sigpause
 assigns
