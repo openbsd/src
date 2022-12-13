@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.14 2020/04/23 21:28:10 jmc Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.15 2022/12/13 00:59:53 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
 .\" Copyright (c) 2014 Internet Initiative Japan Inc.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: December 13 2022 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -54,9 +54,8 @@ It is followed by a block of options enclosed in curly brackets:
 The shared secret with the clients.
 This option cannot be omitted.
 .It Ic msgauth-required Ar yes | no
-Message authentication is required if
-.Dq yes
-is specified.
+Specify if message authentication is required.
+The default is to require message authentication.
 .El
 .It Ic module load Ar name path
 Load a module
