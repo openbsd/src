@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.32 2022/11/09 19:11:14 mbuhl Exp $ */
+/*	$Id: netproc.c,v 1.33 2022/12/14 18:32:26 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,13 +73,13 @@ buf_dump(const struct buf *buf)
 		err(EXIT_FAILURE, "malloc");
 
 	for (j = 0, i = 0; i < buf->sz; i++)
-		if (isspace((int)buf->buf[i])) {
+		if (isspace((unsigned char)buf->buf[i])) {
 			nbuf[j++] = ' ';
-			while (isspace((int)buf->buf[i]))
+			while (isspace((unsigned char)buf->buf[i]))
 				i++;
 			i--;
 		} else
-			nbuf[j++] = isprint((int)buf->buf[i]) ?
+			nbuf[j++] = isprint((unsigned char)buf->buf[i]) ?
 			    buf->buf[i] : '?';
 	dodbg("transfer buffer: [%.*s] (%zu bytes)", j, nbuf, buf->sz);
 	free(nbuf);
