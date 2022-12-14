@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.21 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: io.c,v 1.22 2022/12/14 15:19:16 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -189,10 +189,13 @@ io_buf_read(int fd, struct ibuf **ib)
 		*ib = b;
 	}
 
+ again:
 	/* read some data */
 	while ((n = read(fd, b->buf + b->wpos, b->size - b->wpos)) == -1) {
 		if (errno == EINTR)
 			continue;
+		if (errno == EAGAIN)
+			return NULL;
 		err(1, "read");
 	}
 
@@ -209,7 +212,7 @@ io_buf_read(int fd, struct ibuf **ib)
 				errx(1, "bad internal framing, bad size");
 			if (ibuf_realloc(b, sz) == -1)
 				err(1, "ibuf_realloc");
-			return NULL;
+			goto again;
 		}
 
 		/* skip over initial size header */
