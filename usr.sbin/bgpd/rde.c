@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.580 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.581 2022/12/14 14:16:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1302,7 +1302,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	p += 2;
 
 	/* withdraw prefix */
-	while (len > 0) {
+	if (len > 0) {
 		if (peer->capa.mp[AID_INET] == 0) {
 			log_peer_warnx(&peer->conf,
 			    "bad withdraw, %s disabled", aid2str(AID_INET));
@@ -1310,7 +1310,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
-
+	}
+	while (len > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
 			if (len <= sizeof(pathid)) {
 				log_peer_warnx(&peer->conf,
@@ -1447,7 +1448,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	p += 2 + attrpath_len;
 
 	/* parse nlri prefix */
-	while (nlri_len > 0) {
+	if (nlri_len > 0) {
 		if (peer->capa.mp[AID_INET] == 0) {
 			log_peer_warnx(&peer->conf,
 			    "bad update, %s disabled", aid2str(AID_INET));
@@ -1455,7 +1456,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
-
+	}
+	while (nlri_len > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
 			if (nlri_len <= sizeof(pathid)) {
 				log_peer_warnx(&peer->conf,
