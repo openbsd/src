@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.22 2022/12/01 12:41:34 job Exp $ */
+/*	$OpenBSD: print.c,v 1.23 2022/12/14 02:34:32 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -117,27 +117,38 @@ void
 x509_print(const X509 *x)
 {
 	const ASN1_INTEGER	*xserial;
+	const X509_NAME		*xissuer;
+	char			*issuer = NULL;
 	char			*serial = NULL;
 
-	xserial = X509_get0_serialNumber(x);
-	if (xserial == NULL) {
-		warnx("X509_get0_serialNumber failed in %s", __func__);
+	if ((xissuer = X509_get_issuer_name(x)) == NULL) {
+		warnx("X509_get_issuer_name failed");
 		goto out;
 	}
 
-	serial = x509_convert_seqnum(__func__, xserial);
-	if (serial == NULL) {
-		warnx("x509_convert_seqnum failed in %s", __func__);
+	if ((issuer = X509_NAME_oneline(xissuer, NULL, 0)) == NULL) {
+		warnx("X509_NAME_oneline failed");
 		goto out;
 	}
+			
+	if ((xserial = X509_get0_serialNumber(x)) == NULL) {
+		warnx("X509_get0_serialNumber failed");
+		goto out;
+	}
+
+	if ((serial = x509_convert_seqnum(__func__, xserial)) == NULL)
+		goto out;
 
 	if (outformats & FORMAT_JSON) {
+		printf("\t\"cert_issuer\": \"%s\",\n", issuer);
 		printf("\t\"cert_serial\": \"%s\",\n", serial);
 	} else {
+		printf("Certificate issuer:       %s\n", issuer);
 		printf("Certificate serial:       %s\n", serial);
 	}
 
  out:
+	free(issuer);
 	free(serial);
 }
 
@@ -270,8 +281,9 @@ crl_print(const struct crl *p)
 	STACK_OF(X509_REVOKED)	*revlist;
 	X509_REVOKED *rev;
 	ASN1_INTEGER *crlnum;
+	X509_NAME *xissuer;
 	int i;
-	char *serial;
+	char *issuer, *serial;
 	time_t t;
 
 	if (outformats & FORMAT_JSON) {
@@ -280,14 +292,20 @@ crl_print(const struct crl *p)
 	} else
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 
+	xissuer = X509_CRL_get_issuer(p->x509_crl);
+	issuer = X509_NAME_oneline(xissuer, NULL, 0);	
 	crlnum = X509_CRL_get_ext_d2i(p->x509_crl, NID_crl_number, NULL, NULL);
 	serial = x509_convert_seqnum(__func__, crlnum);
-	if (serial != NULL) {
-		if (outformats & FORMAT_JSON)
+	if (issuer != NULL && serial != NULL) {
+		if (outformats & FORMAT_JSON) {
+			printf("\t\"crl_issuer\": \"%s\",\n", issuer);
 			printf("\t\"crl_serial\": \"%s\",\n", serial);
-		else
-			printf("CRL Serial Number:        %s\n", serial);
+		} else {
+			printf("CRL issuer:               %s\n", issuer);
+			printf("CRL serial number:        %s\n", serial);
+		}
 	}
+	free(issuer);
 	free(serial);
 	ASN1_INTEGER_free(crlnum);
 
