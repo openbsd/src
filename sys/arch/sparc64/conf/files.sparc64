@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.154 2020/08/13 10:04:37 jca Exp $
+#	$OpenBSD: files.sparc64,v 1.155 2022/12/14 23:50:31 jsg Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -340,6 +340,8 @@ file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/db_interface.c	ddb
 file	arch/sparc64/sparc64/db_trace.c		ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
+
+file	lib/libkern/ctzdi2.c
 
 #
 # Machine-independent SCSI drivers
