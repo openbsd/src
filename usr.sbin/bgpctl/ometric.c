@@ -1,4 +1,4 @@
-/*	$OpenBSD: ometric.c,v 1.8 2022/12/12 09:51:04 claudio Exp $ */
+/*	$OpenBSD: ometric.c,v 1.9 2022/12/14 11:23:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -278,6 +278,8 @@ ometric_type(enum ometric_type type)
 		return "histogram";
 	case OMT_SUMMARY:
 		return "summary";
+	case OMT_INFO:
+		return "info";
 	default:
 		return "unknown";
 	}
