@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.273 2022/09/23 15:49:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.274 2022/12/14 12:37:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -444,10 +444,7 @@ struct aspath	*aspath_copy(struct aspath *);
 void		 aspath_put(struct aspath *);
 u_char		*aspath_deflate(u_char *, uint16_t *, int *);
 void		 aspath_merge(struct rde_aspath *, struct attr *);
-u_char		*aspath_dump(struct aspath *);
-uint16_t	 aspath_length(struct aspath *);
 uint32_t	 aspath_neighbor(struct aspath *);
-uint32_t	 aspath_origin(struct aspath *);
 int		 aspath_loopfree(struct aspath *, uint32_t);
 int		 aspath_compare(struct aspath *, struct aspath *);
 int		 aspath_match(struct aspath *, struct filter_as *, uint32_t);
@@ -455,6 +452,25 @@ u_char		*aspath_prepend(struct aspath *, uint32_t, int, uint16_t *);
 u_char		*aspath_override(struct aspath *, uint32_t, uint32_t,
 		    uint16_t *);
 int		 aspath_lenmatch(struct aspath *, enum aslen_spec, u_int);
+
+static inline u_char *
+aspath_dump(struct aspath *aspath)
+{
+	return (aspath->data);
+}
+
+static inline uint16_t
+aspath_length(struct aspath *aspath)
+{
+	return (aspath->len);
+}
+
+static inline uint32_t
+aspath_origin(struct aspath *aspath)
+{
+	return (aspath->source_as);
+}
+
 
 /* rde_community.c */
 int	community_match(struct rde_community *, struct community *,

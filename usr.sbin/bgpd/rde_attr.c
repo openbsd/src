@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.131 2022/09/01 13:19:11 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.132 2022/12/14 12:37:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -516,18 +516,6 @@ aspath_merge(struct rde_aspath *a, struct attr *attr)
 	attr_free(a, attr);
 }
 
-u_char *
-aspath_dump(struct aspath *aspath)
-{
-	return (aspath->data);
-}
-
-uint16_t
-aspath_length(struct aspath *aspath)
-{
-	return (aspath->len);
-}
-
 uint32_t
 aspath_neighbor(struct aspath *aspath)
 {
@@ -540,12 +528,6 @@ aspath_neighbor(struct aspath *aspath)
 	    aspath->data[0] != AS_SEQUENCE)
 		return (rde_local_as());
 	return (aspath_extract(aspath->data, 0));
-}
-
-uint32_t
-aspath_origin(struct aspath *aspath)
-{
-	return aspath->source_as;
 }
 
 static uint16_t
