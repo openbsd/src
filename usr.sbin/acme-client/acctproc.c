@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.23 2022/01/14 09:20:18 tb Exp $ */
+/*	$Id: acctproc.c,v 1.24 2022/12/14 15:02:43 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -439,6 +439,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 
 	rc = 1;
 out:
+	ECDSA_SIG_free(ec_sig);
 	EVP_MD_CTX_free(ctx);
 	free(pay);
 	free(sign);
