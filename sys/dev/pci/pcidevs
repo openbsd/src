@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2014 2022/12/04 03:13:52 jsg Exp $
+$OpenBSD: pcidevs,v 1.2015 2022/12/14 23:28:31 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -2079,6 +2079,7 @@ product ATI BEIGE_GOBY_3	0x7422	Navi 24
 product ATI BEIGE_GOBY_4	0x7423	Navi 24
 product ATI BEIGE_GOBY_5	0x7424	Navi 24
 product ATI BEIGE_GOBY_6	0x743f	Navi 24
+product ATI NAVI31_1		0x744c	Navi 31
 product ATI RADEON_9000IGP	0x7834	Radeon 9000/9100 IGP
 product ATI RADEON_RS350IGP	0x7835	Radeon RS350IGP
 product ATI RS690_HB		0x7910	RS690 Host
