@@ -1,0 +1,70 @@
+.\" $OpenBSD: ASN1_buf_print.3,v 1.1 2022/12/14 20:27:28 schwarze Exp $
+.\"
+.\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 14 2022 $
+.Dt ASN1_BUF_PRINT 3
+.Os
+.Sh NAME
+.Nm ASN1_buf_print
+.Nd pretty-print a byte array
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Ft int
+.Fo ASN1_buf_print
+.Fa "BIO *bio_out"
+.Fa "const unsigned char *buf"
+.Fa "size_t buflen"
+.Fa "int indent"
+.Fc
+.Sh DESCRIPTION
+.Fn ASN1_buf_print
+prints a hexadecimal representation of the first
+.Fa buflen
+bytes from
+.Fa buf
+to
+.Fa bio_out .
+Despite its name and the header file,
+this function has nothing to do with ASN.1.
+.Pp
+Each byte from
+.Fa buf
+is represented by two lower-case hexadecimal digits.
+Fifteen pairs of digits are printed per output line,
+or at most fifteen on the last output line.
+Every output line including the last one ends with a newline character.
+Every pair except the last is followed by a colon
+.Pq Sq \&: .
+If
+.Fa indent
+is greater than zero,
+every output line is indented by
+.Fa indent
+space characters, but not by more than 64 characters.
+.Sh RETURN VALUES
+.Fn ASN1_buf_print
+returns 1 if successful or 0 if printing fails.
+.Sh SEE ALSO
+.Xr ASN1_bn_print 3 ,
+.Xr ASN1_item_print 3 ,
+.Xr ASN1_STRING_print_ex 3 ,
+.Xr ASN1_TIME_print 3 ,
+.Xr BIO_new 3 ,
+.Xr BIO_write 3
+.Sh HISTORY
+.Fn ASN1_buf_print
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.3 .

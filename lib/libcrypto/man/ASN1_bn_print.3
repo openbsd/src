@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_bn_print.3,v 1.1 2021/12/08 21:52:29 schwarze Exp $
+.\" $OpenBSD: ASN1_bn_print.3,v 1.2 2022/12/14 20:27:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2021 $
+.Dd $Mdocdate: December 14 2022 $
 .Dt ASN1_BN_PRINT 3
 .Os
 .Sh NAME
@@ -105,6 +105,7 @@ is a
 pointer.
 It returns 0 if printing fails.
 .Sh SEE ALSO
+.Xr ASN1_buf_print 3 ,
 .Xr BIO_new 3 ,
 .Xr BIO_write 3 ,
 .Xr BN_is_negative 3 ,
