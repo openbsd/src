@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2022/12/14 13:55:11 kettenis Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.2 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
@@ -72,6 +72,8 @@ device_register(struct device *dev, void *aux)
 void
 cpu_configure(void)
 {
+	splhigh();
+
 	softintr_init();
 
 	/*
