@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.227 2022/11/30 08:16:10 job Exp $ */
+/*	$OpenBSD: main.c,v 1.228 2022/12/14 10:34:49 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -18,28 +18,31 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <sys/resource.h>
+#include <sys/socket.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <limits.h>
 #include <poll.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
-#include <limits.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
+
 #include <imsg.h>
 
 #include "extern.h"
@@ -881,9 +884,9 @@ main(int argc, char *argv[])
 	struct brk_tree	 brks = RB_INITIALIZER(&brks);
 	struct vap_tree	 vaps = RB_INITIALIZER(&vaps);
 	struct rusage	 ru;
-	struct timeval	 start_time, now_time;
+	struct timespec	 start_time, now_time;
 
-	gettimeofday(&start_time, NULL);
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	/* If started as root, priv-drop to _rpki-client */
 	if (getuid() == 0) {
@@ -1322,15 +1325,19 @@ main(int argc, char *argv[])
 	if (!noop)
 		repo_cleanup(&fpt, cachefd);
 
-	gettimeofday(&now_time, NULL);
-	timersub(&now_time, &start_time, &stats.elapsed_time);
+	clock_gettime(CLOCK_MONOTONIC, &now_time);
+	timespecsub(&now_time, &start_time, &stats.elapsed_time);
 	if (getrusage(RUSAGE_SELF, &ru) == 0) {
-		stats.user_time = ru.ru_utime;
-		stats.system_time = ru.ru_stime;
+		TIMEVAL_TO_TIMESPEC(&ru.ru_utime, &stats.user_time);
+		TIMEVAL_TO_TIMESPEC(&ru.ru_stime, &stats.system_time);
 	}
 	if (getrusage(RUSAGE_CHILDREN, &ru) == 0) {
-		timeradd(&stats.user_time, &ru.ru_utime, &stats.user_time);
-		timeradd(&stats.system_time, &ru.ru_stime, &stats.system_time);
+		struct timespec ts;
+
+		TIMEVAL_TO_TIMESPEC(&ru.ru_utime, &ts);
+		timespecadd(&stats.user_time, &ts, &stats.user_time);
+		TIMEVAL_TO_TIMESPEC(&ru.ru_stime, &ts);
+		timespecadd(&stats.system_time, &ts, &stats.system_time);
 	}
 
 	/* change working directory to the output directory */

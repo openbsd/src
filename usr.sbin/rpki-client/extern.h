@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.162 2022/11/29 10:33:09 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.163 2022/12/14 10:34:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -533,9 +533,9 @@ struct stats {
 	size_t	 del_dirs; /* number of directories removed in cleanup */
 	size_t	 brks; /* number of BGPsec Router Key (BRK) certificates */
 	size_t	 skiplistentries; /* number of skiplist entries */
-	struct timeval	elapsed_time;
-	struct timeval	user_time;
-	struct timeval	system_time;
+	struct timespec	elapsed_time;
+	struct timespec	user_time;
+	struct timespec	system_time;
 };
 
 struct ibuf;
