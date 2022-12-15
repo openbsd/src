@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.21 2022/12/14 18:32:26 florian Exp $ */
+/*	$Id: revokeproc.c,v 1.22 2022/12/15 16:59:04 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -34,58 +34,25 @@
 #define	RENEW_ALLOW (30 * 24 * 60 * 60)
 
 /*
- * Convert the X509's expiration time (which is in ASN1_TIME format)
- * into a time_t value.
- * There are lots of suggestions on the Internet on how to do this and
- * they're really, really unsafe.
- * Adapt those poor solutions to a safe one.
+ * Convert the X509's expiration time into a time_t value.
  */
 static time_t
 X509expires(X509 *x)
 {
 	ASN1_TIME	*atim;
 	struct tm	 t;
-	unsigned char	*str;
-	size_t		 i = 0;
 
-	atim = X509_get_notAfter(x);
-	str = atim->data;
+	if ((atim = X509_getm_notAfter(x)) == NULL) {
+		warnx("missing notAfter");
+		return -1;
+	}
+
 	memset(&t, 0, sizeof(t));
 
-	/* Account for 2 and 4-digit time. */
-
-	if (atim->type == V_ASN1_UTCTIME) {
-		if (atim->length <= 2) {
-			warnx("invalid ASN1_TIME");
-			return (time_t)-1;
-		}
-		t.tm_year = (str[0] - '0') * 10 + (str[1] - '0');
-		if (t.tm_year < 70)
-			t.tm_year += 100;
-		i = 2;
-	} else if (atim->type == V_ASN1_GENERALIZEDTIME) {
-		if (atim->length <= 4) {
-			warnx("invalid ASN1_TIME");
-			return (time_t)-1;
-		}
-		t.tm_year = (str[0] - '0') * 1000 + (str[1] - '0') * 100 +
-		    (str[2] - '0') * 10 + (str[3] - '0');
-		t.tm_year -= 1900;
-		i = 4;
-	}
-
-	/* Now the post-year parts. */
-
-	if (atim->length <= (int)i + 10) {
+	if (!ASN1_TIME_to_tm(atim, &t)) {
 		warnx("invalid ASN1_TIME");
-		return (time_t)-1;
+		return -1;
 	}
-
-	t.tm_mon = ((str[i + 0] - '0') * 10 + (str[i + 1] - '0')) - 1;
-	t.tm_mday = (str[i + 2] - '0') * 10 + (str[i + 3] - '0');
-	t.tm_hour = (str[i + 4] - '0') * 10 + (str[i + 5] - '0');
-	t.tm_min  = (str[i + 6] - '0') * 10 + (str[i + 7] - '0');
-	t.tm_sec  = (str[i + 8] - '0') * 10 + (str[i + 9] - '0');
 
 	return mktime(&t);
 }
@@ -154,7 +121,7 @@ revokeproc(int fd, const char *certfile, int force,
 
 	/* Read out the expiration date. */
 
-	if ((t = X509expires(x)) == (time_t)-1) {
+	if ((t = X509expires(x)) == -1) {
 		warnx("X509expires");
 		goto out;
 	}
