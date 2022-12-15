@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.133 2022/10/31 14:02:11 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.134 2022/12/15 16:01:40 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1349,8 +1349,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		goto fail;
 	} else {
 		for (s = vcp->vcp_name; *s != '\0'; ++s) {
-			if (!(isalnum(*s) || *s == '.' || *s == '-' ||
-			    *s == '_')) {
+			if (!(isalnum((unsigned char)*s) || *s == '.' || \
+			    *s == '-' || *s == '_')) {
 				log_warnx("invalid VM name");
 				goto fail;
 			}
@@ -1896,7 +1896,7 @@ get_string(uint8_t *ptr, size_t len)
 	size_t	 i;
 
 	for (i = 0; i < len; i++)
-		if (!isprint(ptr[i]))
+		if (!isprint((unsigned char)ptr[i]))
 			break;
 
 	return strndup(ptr, i);

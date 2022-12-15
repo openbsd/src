@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.19 2021/11/29 05:17:35 deraadt Exp $	*/
+/*	$OpenBSD: priv.c,v 1.20 2022/12/15 16:01:40 dv Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -319,7 +319,7 @@ priv_validgroup(const char *name)
 	if (strlen(name) >= IF_NAMESIZE)
 		return (-1);
 	/* Group can not end with a digit */
-	if (name[0] && isdigit(name[strlen(name) - 1]))
+	if (name[0] && isdigit((unsigned char)name[strlen(name) - 1]))
 		return (-1);
 	return (0);
 }
