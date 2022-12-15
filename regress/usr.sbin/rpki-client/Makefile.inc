@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.27 2022/11/26 12:09:34 job Exp $
+# $OpenBSD: Makefile.inc,v 1.28 2022/12/15 12:04:59 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -43,7 +43,7 @@ run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
 SRCS_test-roa+=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c log.c \
-		encoding.c print.c validate.c cert.c mft.c
+		encoding.c print.c validate.c cert.c mft.c repo-dummy.c
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
 
@@ -68,7 +68,7 @@ run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
 
 SRCS_test-aspa+=	test-aspa.c aspa.c cms.c x509.c ip.c as.c io.c log.c \
-		encoding.c print.c validate.c cert.c mft.c
+		encoding.c print.c validate.c cert.c mft.c repo-dummy.c
 run-regress-test-aspa: test-aspa
 	./test-aspa -v ${.CURDIR}/../aspa/*.asa
 
