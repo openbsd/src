@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.29 2022/11/02 12:43:02 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.30 2022/12/15 12:02:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -43,24 +43,31 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"elapsedtime\": \"%lld\",\n"
 	    "\t\t\"usertime\": \"%lld\",\n"
 	    "\t\t\"systemtime\": \"%lld\",\n"
-	    "\t\t\"roas\": %zu,\n"
-	    "\t\t\"failedroas\": %zu,\n"
-	    "\t\t\"invalidroas\": %zu,\n"
-	    "\t\t\"aspas\": %zu,\n"
-	    "\t\t\"failedaspas\": %zu,\n"
-	    "\t\t\"invalidaspas\": %zu,\n"
-	    "\t\t\"bgpsec_pubkeys\": %zu,\n"
-	    "\t\t\"certificates\": %zu,\n"
-	    "\t\t\"invalidcertificates\": %zu,\n"
-	    "\t\t\"taks\": %zu,\n"
-	    "\t\t\"tals\": %zu,\n"
-	    "\t\t\"invalidtals\": %zu,\n"
+	    "\t\t\"roas\": %u,\n"
+	    "\t\t\"failedroas\": %u,\n"
+	    "\t\t\"invalidroas\": %u,\n"
+	    "\t\t\"aspas\": %u,\n"
+	    "\t\t\"failedaspas\": %u,\n"
+	    "\t\t\"invalidaspas\": %u,\n"
+	    "\t\t\"bgpsec_pubkeys\": %u,\n"
+	    "\t\t\"certificates\": %u,\n"
+	    "\t\t\"invalidcertificates\": %u,\n"
+	    "\t\t\"taks\": %u,\n"
+	    "\t\t\"tals\": %u,\n"
+	    "\t\t\"invalidtals\": %u,\n"
 	    "\t\t\"talfiles\": [\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->aspas, st->aspas_fail, st->aspas_invalid,
-	    st->brks, st->certs, st->certs_fail, st->taks,
+	    st->repo_stats.roas,
+	    st->repo_stats.roas_fail,
+	    st->repo_stats.roas_invalid,
+	    st->repo_stats.aspas,
+	    st->repo_stats.aspas_fail,
+	    st->repo_stats.aspas_invalid,
+	    st->repo_stats.brks,
+	    st->repo_stats.certs,
+	    st->repo_stats.certs_fail,
+	    st->repo_stats.taks,
 	    st->tals, talsz - st->tals) < 0)
 		return -1;
 
@@ -73,27 +80,33 @@ outputheader_json(FILE *out, struct stats *st)
 
 	if (fprintf(out,
 	    "\t\t],\n"
-	    "\t\t\"manifests\": %zu,\n"
-	    "\t\t\"failedmanifests\": %zu,\n"
-	    "\t\t\"stalemanifests\": %zu,\n"
-	    "\t\t\"crls\": %zu,\n"
-	    "\t\t\"gbrs\": %zu,\n"
-	    "\t\t\"repositories\": %zu,\n"
-	    "\t\t\"vrps\": %zu,\n"
-	    "\t\t\"uniquevrps\": %zu,\n"
-	    "\t\t\"vaps\": %zu,\n"
-	    "\t\t\"uniquevaps\": %zu,\n"
-	    "\t\t\"cachedir_del_files\": %zu,\n"
-	    "\t\t\"cachedir_superfluous_files\": %zu,\n"
-	    "\t\t\"cachedir_del_dirs\": %zu\n"
+	    "\t\t\"manifests\": %u,\n"
+	    "\t\t\"failedmanifests\": %u,\n"
+	    "\t\t\"stalemanifests\": %u,\n"
+	    "\t\t\"crls\": %u,\n"
+	    "\t\t\"gbrs\": %u,\n"
+	    "\t\t\"repositories\": %u,\n"
+	    "\t\t\"vrps\": %u,\n"
+	    "\t\t\"uniquevrps\": %u,\n"
+	    "\t\t\"vaps\": %u,\n"
+	    "\t\t\"uniquevaps\": %u,\n"
+	    "\t\t\"cachedir_del_files\": %u,\n"
+	    "\t\t\"cachedir_superfluous_files\": %u,\n"
+	    "\t\t\"cachedir_del_dirs\": %u\n"
 	    "\t},\n\n",
-	    st->mfts, st->mfts_fail, st->mfts_stale,
-	    st->crls,
-	    st->gbrs,
+	    st->repo_stats.mfts,
+	    st->repo_stats.mfts_fail,
+	    st->repo_stats.mfts_stale,
+	    st->repo_stats.crls,
+	    st->repo_stats.gbrs,
 	    st->repos,
-	    st->vrps, st->uniqs,
-	    st->vaps, st->vaps_uniqs,
-	    st->del_files, st->extra_files, st->del_dirs) < 0)
+	    st->repo_stats.vrps,
+	    st->repo_stats.vrps_uniqs,
+	    st->repo_stats.vaps,
+	    st->repo_stats.vaps_uniqs,
+	    st->del_files,
+	    st->extra_files,
+	    st->del_dirs) < 0)
 		return -1;
 	return 0;
 }

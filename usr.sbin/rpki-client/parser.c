@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.80 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.81 2022/12/15 12:02:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -636,6 +636,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		switch (entp->type) {
 		case RTYPE_TAL:
 			io_str_buffer(b, entp->file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			if ((tal = tal_parse(entp->file, entp->data,
 			    entp->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
@@ -647,6 +649,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_CER:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			if (entp->data != NULL)
 				cert = proc_parser_root_cert(file,
 				    f, flen, entp->data, entp->datasz,
@@ -673,10 +677,14 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			file = parse_filepath(entp->repoid, entp->path,
 			    entp->file, entp->location);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			break;
 		case RTYPE_MFT:
 			file = proc_parser_mft(entp, &mft);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
@@ -686,6 +694,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ROA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			roa = proc_parser_roa(file, f, flen);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
@@ -696,11 +706,15 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_GBR:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			proc_parser_gbr(file, f, flen);
 			break;
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			aspa = proc_parser_aspa(file, f, flen);
 			c = (aspa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
@@ -711,6 +725,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_TAK:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &entp->repoid,
+			    sizeof(entp->repoid));
 			proc_parser_tak(file, f, flen);
 			break;
 		default:

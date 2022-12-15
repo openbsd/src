@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.28 2022/11/04 13:01:19 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.29 2022/12/15 12:02:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -73,6 +73,7 @@ static const struct outputs {
 	{ FORMAT_BIRD, "bird", output_bird2 },
 	{ FORMAT_CSV, "csv", output_csv },
 	{ FORMAT_JSON, "json", output_json },
+	{ FORMAT_OMETRIC, "metrics", output_ometric },
 	{ 0, NULL, NULL }
 };
 
@@ -213,17 +214,18 @@ outputheader(FILE *out, struct stats *st)
 	if (fprintf(out,
 	    "# Generated on host %s at %s\n"
 	    "# Processing time %lld seconds (%llds user, %llds system)\n"
-	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
-	    "# BGPsec Router Certificates: %zu\n"
-	    "# Certificates: %zu (%zu invalid)\n",
+	    "# Route Origin Authorizations: %u (%u failed parse, %u invalid)\n"
+	    "# BGPsec Router Certificates: %u\n"
+	    "# Certificates: %u (%u invalid)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->brks, st->certs, st->certs_fail) < 0)
+	    st->repo_stats.roas, st->repo_stats.roas_fail,
+	    st->repo_stats.roas_invalid, st->repo_stats.brks,
+	    st->repo_stats.certs, st->repo_stats.certs_fail) < 0)
 		return -1;
 
 	if (fprintf(out,
-	    "# Trust Anchor Locators: %zu (%zu invalid) [", st->tals,
+	    "# Trust Anchor Locators: %u (%u invalid) [", st->tals,
 	    talsz - st->tals) < 0)
 		return -1;
 	for (i = 0; i < talsz; i++)
@@ -232,16 +234,17 @@ outputheader(FILE *out, struct stats *st)
 
 	if (fprintf(out,
 	    " ]\n"
-	    "# Manifests: %zu (%zu failed parse, %zu stale)\n"
-	    "# Certificate revocation lists: %zu\n"
-	    "# Ghostbuster records: %zu\n"
-	    "# Repositories: %zu\n"
-	    "# VRP Entries: %zu (%zu unique)\n",
-	    st->mfts, st->mfts_fail, st->mfts_stale,
-	    st->crls,
-	    st->gbrs,
+	    "# Manifests: %u (%u failed parse, %u stale)\n"
+	    "# Certificate revocation lists: %u\n"
+	    "# Ghostbuster records: %u\n"
+	    "# Repositories: %u\n"
+	    "# VRP Entries: %u (%u unique)\n",
+	    st->repo_stats.mfts, st->repo_stats.mfts_fail,
+	    st->repo_stats.mfts_stale,
+	    st->repo_stats.crls,
+	    st->repo_stats.gbrs,
 	    st->repos,
-	    st->vrps, st->uniqs) < 0)
+	    st->repo_stats.vrps, st->repo_stats.vrps_uniqs) < 0)
 		return -1;
 	return 0;
 }

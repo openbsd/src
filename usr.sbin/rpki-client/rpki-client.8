@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.81 2022/11/26 12:02:37 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.82 2022/12/15 12:02:29 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2022 $
+.Dd $Mdocdate: December 15 2022 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl BcjnoRrVv
+.Op Fl BcjmnoRrVv
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -138,6 +138,10 @@ in the output directory as JSON object.
 See
 .Fl c
 for a description of the fields.
+.It Fl m
+Create output in the file
+.Pa metrics
+in the output directory in OpenMetrics format.
 .It Fl n
 Offline mode.
 Validate the contents of

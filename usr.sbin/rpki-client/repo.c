@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.39 2022/09/02 21:56:45 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.40 2022/12/15 12:02:29 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -97,6 +97,8 @@ struct repo {
 	const struct rsyncrepo	*rsync;
 	const struct tarepo	*ta;
 	struct entityq		 queue;		/* files waiting for repo */
+	struct repostats	 stats;
+	struct timespec		 start_time;
 	time_t			 alarm;		/* sync timeout */
 	int			 talid;
 	unsigned int		 id;		/* identifier */
@@ -263,7 +265,7 @@ repo_mkpath(int fd, char *file)
  * Return the state of a repository.
  */
 static enum repo_state
-repo_state(struct repo *rp)
+repo_state(const struct repo *rp)
 {
 	if (rp->ta)
 		return rp->ta->state;
@@ -283,24 +285,24 @@ static void
 repo_done(const void *vp, int ok)
 {
 	struct repo *rp;
+	struct timespec flush_time;
 
 	SLIST_FOREACH(rp, &repos, entry) {
-		if (vp == rp->ta)
-			entityq_flush(&rp->queue, rp);
-		if (vp == rp->rsync)
-			entityq_flush(&rp->queue, rp);
-		if (vp == rp->rrdp) {
-			if (!ok && !nofetch) {
-				/* try to fall back to rsync */
-				rp->rrdp = NULL;
-				rp->rsync = rsync_get(rp->repouri,
-				    rp->basedir);
-				/* need to check if it was already loaded */
-				if (repo_state(rp) != REPO_LOADING)
-					entityq_flush(&rp->queue, rp);
-			} else
-				entityq_flush(&rp->queue, rp);
+		if (vp != rp->ta && vp != rp->rsync && vp != rp->rrdp)
+			continue;
+
+		/* for rrdp try to fall back to rsync */
+		if (vp == rp->rrdp && !ok && !nofetch) {
+			rp->rrdp = NULL;
+			rp->rsync = rsync_get(rp->repouri, rp->basedir);
+			/* need to check if it was already loaded */
+			if (repo_state(rp) == REPO_LOADING)
+				continue;
 		}
+
+		entityq_flush(&rp->queue, rp);
+		clock_gettime(CLOCK_MONOTONIC, &flush_time);
+		timespecsub(&flush_time, &rp->start_time, &rp->stats.sync_time);
 	}
 }
 
@@ -600,6 +602,7 @@ repo_alloc(int talid)
 	rp->alarm = getmonotime() + repo_timeout;
 	TAILQ_INIT(&rp->queue);
 	SLIST_INSERT_HEAD(&repos, rp, entry);
+	clock_gettime(CLOCK_MONOTONIC, &rp->start_time);
 
 	stats.repos++;
 	return rp;
@@ -1179,6 +1182,38 @@ repo_uri(const struct repo *rp)
 	return rp->repouri;
 }
 
+/*
+ * Return the repository URI.
+ */
+void
+repo_fetch_uris(const struct repo *rp, const char **carepo,
+    const char **notifyuri)
+{
+	*carepo = rp->repouri;
+	*notifyuri = rp->notifyuri;
+}
+
+/*
+ * Return 1 if repository is synced else 0.
+ */
+int
+repo_synced(const struct repo *rp)
+{
+	if (repo_state(rp) == REPO_DONE &&
+	    !(rp->rrdp == NULL && rp->rsync == NULL && rp->ta == NULL))
+		return 1;
+	return 0;
+}
+
+/*
+ * Return the repository tal ID.
+ */
+int
+repo_talid(const struct repo *rp)
+{
+	return rp->talid;
+}
+
 int
 repo_queued(struct repo *rp, struct entity *p)
 {
@@ -1260,6 +1295,112 @@ repo_check_timeout(int timeout)
 		}
 	}
 	return timeout;
+}
+
+/*
+ * Update stats object of repository depending on rtype and subtype.
+ */
+void
+repo_stat_inc(struct repo *rp, enum rtype type, enum stype subtype)
+{
+	if (rp == NULL)
+		return;
+	switch (type) {
+	case RTYPE_CER:
+		if (subtype == STYPE_OK)
+			rp->stats.certs++;
+		if (subtype == STYPE_FAIL)
+			rp->stats.certs_fail++;
+		if (subtype == STYPE_BGPSEC) {
+			rp->stats.certs--;
+			rp->stats.brks++;
+		}
+		break;
+	case RTYPE_MFT:
+		if (subtype == STYPE_OK)
+			rp->stats.mfts++;
+		if (subtype == STYPE_FAIL)
+			rp->stats.mfts_fail++;
+		if (subtype == STYPE_STALE)
+			rp->stats.mfts_stale++;
+		break;
+	case RTYPE_ROA:
+		switch (subtype) {
+		case STYPE_OK:
+			rp->stats.roas++;
+			break;
+		case STYPE_FAIL:
+			rp->stats.roas_fail++;
+			break;
+		case STYPE_INVALID:
+			rp->stats.roas_invalid++;
+			break;
+		case STYPE_TOTAL:
+			rp->stats.vrps++;
+			break;
+		case STYPE_UNIQUE:
+			rp->stats.vrps_uniqs++;
+			break;
+		case STYPE_DEC_UNIQUE:
+			rp->stats.vrps_uniqs--;
+			break;
+		default:
+			break;
+		}
+		break;
+	case RTYPE_ASPA:
+		switch (subtype) {
+		case STYPE_OK:
+			rp->stats.aspas++;
+			break;
+		case STYPE_FAIL:
+			rp->stats.aspas_fail++;
+			break;
+		case STYPE_INVALID:
+			rp->stats.aspas_invalid++;
+			break;
+		case STYPE_TOTAL:
+			rp->stats.vaps++;
+			break;
+		case STYPE_UNIQUE:
+			rp->stats.vaps_uniqs++;
+			break;
+		case STYPE_BOTH:
+			rp->stats.vaps_pas++;
+			break;
+		case STYPE_ONLY_IPV4:
+			rp->stats.vaps_pas4++;
+			break;
+		case STYPE_ONLY_IPV6:
+			rp->stats.vaps_pas6++;
+			break;
+		default:
+			break;
+		}
+		break;
+	case RTYPE_CRL:
+		rp->stats.crls++;
+		break;
+	case RTYPE_GBR:
+		rp->stats.gbrs++;
+		break;
+	case RTYPE_TAK:
+		rp->stats.taks++;
+		break;
+	default:
+		break;
+	}
+}
+
+void
+repo_stats_collect(void (*cb)(const struct repo *, const struct repostats *,
+    void *), void *arg)
+{
+	struct repo	*rp;
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		cb(rp, &rp->stats, arg);
+	}
 }
 
 /*
