@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.44 2022/10/09 09:59:31 op Exp $ */
+/*	$OpenBSD: parse.y,v 1.45 2022/12/15 08:06:13 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1101,7 +1101,7 @@ domain_valid(const char *cp)
 
 	for ( ; *cp != '\0'; cp++)
 		if (!(*cp == '.' || *cp == '-' ||
-		    *cp == '_' || isalnum((int)*cp)))
+		    *cp == '_' || isalnum((unsigned char)*cp)))
 			return 0;
 	return 1;
 }
