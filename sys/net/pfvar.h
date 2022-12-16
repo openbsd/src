@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.521 2022/11/25 20:27:53 bluhm Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.522 2022/12/16 02:05:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1731,7 +1731,6 @@ void	pf_pkt_addr_changed(struct mbuf *);
 struct inpcb *pf_inp_lookup(struct mbuf *);
 void	pf_inp_link(struct mbuf *, struct inpcb *);
 void	pf_inp_unlink(struct inpcb *);
-int	pf_state_key_attach(struct pf_state_key *, struct pf_state *, int);
 int	pf_translate(struct pf_pdesc *, struct pf_addr *, u_int16_t,
 	    struct pf_addr *, u_int16_t, u_int16_t, int);
 int	pf_translate_af(struct pf_pdesc *);

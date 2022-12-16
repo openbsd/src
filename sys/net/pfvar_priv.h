@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.23 2022/11/25 20:27:53 bluhm Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.24 2022/12/16 02:05:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -42,7 +42,7 @@
 
 /*
  * Protection/ownership of pf_state members:
- *	I	immutable after creation
+ *	I	immutable after pf_state_insert()
  *	M	pf_state mtx
  *	P	PF_STATE_LOCK
  *	S	pfsync mutex
@@ -69,7 +69,7 @@ struct pf_state {
 	union pf_rule_ptr	 natrule;	/* [I] */
 	struct pf_addr		 rt_addr;	/* [I] */
 	struct pf_sn_head	 src_nodes;	/* [I] */
-	struct pf_state_key	*key[2];	/* stack and wire  */
+	struct pf_state_key	*key[2];	/* [I] stack and wire  */
 	struct pfi_kif		*kif;		/* [I] */
 	struct mutex		 mtx;
 	pf_refcnt_t		 refcnt;

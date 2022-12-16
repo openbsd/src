@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1156 2022/11/25 20:27:53 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1157 2022/12/16 02:05:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -185,6 +185,8 @@ int			 pf_translate_icmp_af(struct pf_pdesc*, int, void *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t, int,
 			    sa_family_t, struct pf_rule *, u_int);
 void			 pf_detach_state(struct pf_state *);
+struct pf_state_key	*pf_state_key_attach(struct pf_state_key *,
+			     struct pf_state *, int);
 void			 pf_state_key_detach(struct pf_state *, int);
 u_int32_t		 pf_tcp_iss(struct pf_pdesc *);
 void			 pf_rule_to_actions(struct pf_rule *,
@@ -379,7 +381,7 @@ pf_set_protostate(struct pf_state *s, int which, u_int8_t newstate)
 
 	if (s->src.state == newstate)
 		return;
-	if (s->creatorid == pf_status.hostid && s->key[PF_SK_STACK] != NULL &&
+	if (s->creatorid == pf_status.hostid &&
 	    s->key[PF_SK_STACK]->proto == IPPROTO_TCP &&
 	    !(TCPS_HAVEESTABLISHED(s->src.state) ||
 	    s->src.state == TCPS_CLOSED) &&
@@ -720,17 +722,26 @@ pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 	return (0);
 }
 
-int
+/*
+ * on failure, pf_state_key_attach() releases the pf_state_key
+ * reference and returns NULL.
+ */
+struct pf_state_key *
 pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 {
 	struct pf_state_item	*si;
 	struct pf_state_key     *cur;
 	struct pf_state		*olds = NULL;
 
+	PF_ASSERT_LOCKED();
+
 	KASSERT(s->key[idx] == NULL);
-	if ((cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk)) != NULL) {
+	sk->removed = 0;
+	cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk);
+	if (cur != NULL) {
+		sk->removed = 1;
 		/* key exists. check for same kif, if none, add to key */
-		TAILQ_FOREACH(si, &cur->states, entry)
+		TAILQ_FOREACH(si, &cur->states, entry) {
 			if (si->s->kif == s->kif &&
 			    ((si->s->key[PF_SK_WIRE]->af == sk->af &&
 			     si->s->direction == s->direction) ||
@@ -766,44 +777,53 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 					/* remove late or sks can go away */
 					olds = si->s;
 				} else {
-					pool_put(&pf_state_key_pl, sk);
-					return (-1);	/* collision! */
+					pf_state_key_unref(sk);
+					return (NULL);	/* collision! */
 				}
 			}
-		pool_put(&pf_state_key_pl, sk);
-		s->key[idx] = cur;
-	} else
-		s->key[idx] = sk;
+		}
+
+		/* reuse the existing state key */
+		pf_state_key_unref(sk);
+		sk = cur;
+	}
 
 	if ((si = pool_get(&pf_state_item_pl, PR_NOWAIT)) == NULL) {
-		pf_state_key_detach(s, idx);
-		return (-1);
+		if (TAILQ_EMPTY(&sk->states)) {
+			KASSERT(cur == NULL);
+			RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
+			sk->removed = 1;
+			pf_state_key_unref(sk);
+		}
+
+		return (NULL);
 	}
-	si->s = s;
+
+	s->key[idx] = pf_state_key_ref(sk); /* give a ref to state */
+	si->s = pf_state_ref(s);
 
 	/* list is sorted, if-bound states before floating */
 	if (s->kif == pfi_all)
-		TAILQ_INSERT_TAIL(&s->key[idx]->states, si, entry);
+		TAILQ_INSERT_TAIL(&sk->states, si, entry);
 	else
-		TAILQ_INSERT_HEAD(&s->key[idx]->states, si, entry);
+		TAILQ_INSERT_HEAD(&sk->states, si, entry);
 
 	if (olds)
 		pf_remove_state(olds);
 
-	return (0);
+	/* caller owns the pf_state ref, which owns a pf_state_key ref now */
+	return (sk);
 }
 
 void
 pf_detach_state(struct pf_state *s)
 {
-	if (s->key[PF_SK_WIRE] == s->key[PF_SK_STACK])
-		s->key[PF_SK_WIRE] = NULL;
+	KASSERT(s->key[PF_SK_WIRE] != NULL);
+	pf_state_key_detach(s, PF_SK_WIRE);
 
-	if (s->key[PF_SK_STACK] != NULL)
+	KASSERT(s->key[PF_SK_STACK] != NULL);
+	if (s->key[PF_SK_STACK] != s->key[PF_SK_WIRE])
 		pf_state_key_detach(s, PF_SK_STACK);
-
-	if (s->key[PF_SK_WIRE] != NULL)
-		pf_state_key_detach(s, PF_SK_WIRE);
 }
 
 void
@@ -812,20 +832,22 @@ pf_state_key_detach(struct pf_state *s, int idx)
 	struct pf_state_item	*si;
 	struct pf_state_key	*sk;
 
-	if (s->key[idx] == NULL)
-		return;
-
-	si = TAILQ_FIRST(&s->key[idx]->states);
-	while (si && si->s != s)
-	    si = TAILQ_NEXT(si, entry);
-
-	if (si) {
-		TAILQ_REMOVE(&s->key[idx]->states, si, entry);
-		pool_put(&pf_state_item_pl, si);
-	}
+	PF_ASSERT_LOCKED();
 
 	sk = s->key[idx];
-	s->key[idx] = NULL;
+	if (sk == NULL)
+		return;
+
+	TAILQ_FOREACH(si, &sk->states, entry) {
+		if (si->s == s)
+			break;
+	}
+	if (si == NULL)
+		return;
+
+	TAILQ_REMOVE(&sk->states, si, entry);
+	pool_put(&pf_state_item_pl, si);
+ 
 	if (TAILQ_EMPTY(&sk->states)) {
 		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
 		sk->removed = 1;
@@ -833,6 +855,8 @@ pf_state_key_detach(struct pf_state *s, int idx)
 		pf_state_key_unlink_inpcb(sk);
 		pf_state_key_unref(sk);
 	}
+
+	pf_state_unref(s);
 }
 
 struct pf_state_key *
@@ -842,7 +866,10 @@ pf_alloc_state_key(int pool_flags)
 
 	if ((sk = pool_get(&pf_state_key_pl, pool_flags)) == NULL)
 		return (NULL);
+
+	PF_REF_INIT(sk->refcnt);
 	TAILQ_INIT(&sk->states);
+	sk->removed = 1;
 
 	return (sk);
 }
@@ -916,8 +943,6 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	sk1->proto = pd->proto;
 	sk1->af = pd->af;
 	sk1->rdomain = pd->rdomain;
-	PF_REF_INIT(sk1->refcnt);
-	sk1->removed = 0;
 	if (rtableid >= 0)
 		wrdom = rtable_l2(rtableid);
 
@@ -926,7 +951,7 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	    pd->nsport != pd->osport || pd->ndport != pd->odport ||
 	    wrdom != pd->rdomain || afto) {	/* NAT/NAT64 */
 		if ((sk2 = pf_alloc_state_key(PR_NOWAIT | PR_ZERO)) == NULL) {
-			pool_put(&pf_state_key_pl, sk1);
+			pf_state_key_unref(sk1);
 			return (ENOMEM);
 		}
 		pf_state_key_addr_setup(pd, sk2, afto ? pd->didx : pd->sidx,
@@ -949,10 +974,8 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 			sk2->proto = pd->proto;
 		sk2->af = pd->naf;
 		sk2->rdomain = wrdom;
-		PF_REF_INIT(sk2->refcnt);
-		sk2->removed = 0;
 	} else
-		sk2 = sk1;
+		sk2 = pf_state_key_ref(sk1);
 
 	if (pd->dir == PF_IN) {
 		*skw = sk1;
@@ -971,34 +994,47 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	return (0);
 }
 
+/*
+ * pf_state_insert() does the following:
+ * - links the pf_state up with pf_state_key(s).
+ * - inserts the pf_state_keys into pf_state_tree.
+ * - inserts the pf_state into the into pf_state_tree_id.
+ * - tells pfsync about the state.
+ *
+ * pf_state_insert() owns the references to the pf_state_key structs
+ * it is given. on failure to insert, these references are released.
+ * on success, the caller owns a pf_state reference that allows it
+ * to access the state keys.
+ */
+
 int
-pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
-    struct pf_state_key **sks, struct pf_state *s)
+pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
+    struct pf_state_key **sksp, struct pf_state *s)
 {
+	struct pf_state_key *skw = *skwp;
+	struct pf_state_key *sks = *sksp;
+	int same = (skw == sks);
+
 	PF_ASSERT_LOCKED();
 
 	s->kif = kif;
 	PF_STATE_ENTER_WRITE();
-	if (*skw == *sks) {
-		if (pf_state_key_attach(*skw, s, PF_SK_WIRE)) {
-			PF_STATE_EXIT_WRITE();
-			return (-1);
-		}
-		*skw = *sks = s->key[PF_SK_WIRE];
-		s->key[PF_SK_STACK] = s->key[PF_SK_WIRE];
-	} else {
-		if (pf_state_key_attach(*skw, s, PF_SK_WIRE)) {
-			pool_put(&pf_state_key_pl, *sks);
-			PF_STATE_EXIT_WRITE();
-			return (-1);
-		}
-		*skw = s->key[PF_SK_WIRE];
-		if (pf_state_key_attach(*sks, s, PF_SK_STACK)) {
-			pf_state_key_detach(s, PF_SK_WIRE);
-			PF_STATE_EXIT_WRITE();
-			return (-1);
-		}
-		*sks = s->key[PF_SK_STACK];
+
+	skw = pf_state_key_attach(skw, s, PF_SK_WIRE);
+	if (skw == NULL) {
+		pf_state_key_unref(sks);
+		PF_STATE_EXIT_WRITE();
+		return (-1);
+	}
+
+	if (same) {
+		/* pf_state_key_attach might have swapped skw */
+		pf_state_key_unref(sks);
+		s->key[PF_SK_STACK] = sks = pf_state_key_ref(skw);
+	} else if (pf_state_key_attach(sks, s, PF_SK_STACK) == NULL) {
+		pf_state_key_detach(s, PF_SK_WIRE);
+		PF_STATE_EXIT_WRITE();
+		return (-1);
 	}
 
 	if (s->id == 0 && s->creatorid == 0) {
@@ -1024,6 +1060,10 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skw,
 	pfsync_insert_state(s);
 #endif	/* NPFSYNC > 0 */
 	PF_STATE_EXIT_WRITE();
+
+	*skwp = skw;
+	*sksp = sks;
+
 	return (0);
 }
 
@@ -1374,7 +1414,7 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 		if ((sks = pf_alloc_state_key(pool_flags)) == NULL)
 			goto cleanup;
 	} else
-		sks = skw;
+		sks = pf_state_key_ref(skw);
 
 	/* allocate memory for scrub info */
 	if (pf_state_alloc_scrub_memory(&sp->src, &st->src) ||
@@ -1387,7 +1427,6 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	skw->port[0] = sp->key[PF_SK_WIRE].port[0];
 	skw->port[1] = sp->key[PF_SK_WIRE].port[1];
 	skw->rdomain = ntohs(sp->key[PF_SK_WIRE].rdomain);
-	PF_REF_INIT(skw->refcnt);
 	skw->proto = sp->proto;
 	if (!(skw->af = sp->key[PF_SK_WIRE].af))
 		skw->af = sp->af;
@@ -1397,7 +1436,6 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 		sks->port[0] = sp->key[PF_SK_STACK].port[0];
 		sks->port[1] = sp->key[PF_SK_STACK].port[1];
 		sks->rdomain = ntohs(sp->key[PF_SK_STACK].rdomain);
-		PF_REF_INIT(sks->refcnt);
 		if (!(sks->af = sp->key[PF_SK_STACK].af))
 			sks->af = sp->af;
 		if (sks->af != skw->af) {
@@ -1499,12 +1537,10 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	return (0);
 
  cleanup:
-	if (skw == sks)
-		sks = NULL;
 	if (skw != NULL)
-		pool_put(&pf_state_key_pl, skw);
+		pf_state_key_unref(skw);
 	if (sks != NULL)
-		pool_put(&pf_state_key_pl, sks);
+		pf_state_key_unref(sks);
 
  cleanup_state: /* pf_state_insert frees the state keys */
 	if (st) {
@@ -1587,10 +1623,9 @@ pf_state_expires(const struct pf_state *state, uint8_t stimeout)
 	 */
 
 	/* handle all PFTM_* > PFTM_MAX here */
-	if (stimeout == PFTM_PURGE)
+	if (stimeout > PFTM_MAX)
 		return (0);
 
-	KASSERT(stimeout != PFTM_UNLINKED);
 	KASSERT(stimeout < PFTM_MAX);
 
 	timeout = state->rule.ptr->timeout[stimeout];
@@ -4460,7 +4495,6 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		}
 
 	if (pf_state_insert(BOUND_IFACE(r, pd->kif), skw, sks, s)) {
-		pf_detach_state(s);
 		*sks = *skw = NULL;
 		REASON_SET(&reason, PFRES_STATEINS);
 		goto csfailed;
@@ -7993,8 +8027,9 @@ pf_state_unref(struct pf_state *s)
 #endif	/* NPFSYNC */
 		KASSERT((TAILQ_NEXT(s, entry_list) == NULL) ||
 		    (TAILQ_NEXT(s, entry_list) == _Q_INVALID));
-		KASSERT((s->key[PF_SK_WIRE] == NULL) &&
-		    (s->key[PF_SK_STACK] == NULL));
+
+		pf_state_key_unref(s->key[PF_SK_WIRE]);
+		pf_state_key_unref(s->key[PF_SK_STACK]);
 
 		pool_put(&pf_state_pl, s);
 	}
