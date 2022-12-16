@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_push.3,v 1.13 2022/12/16 13:41:55 schwarze Exp $
+.\" $OpenBSD: BIO_push.3,v 1.14 2022/12/16 16:02:17 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL doc/man3/BIO_push.pod 791bfd91 Nov 19 20:38:27 2021 +0100
 .\" OpenSSL doc/man7/bio.pod 1cb7eff4 Sep 10 13:56:40 2019 +0100
@@ -300,3 +300,36 @@ Both functions have been available since
 first appeared in OpenSSL 1.1.0
 and has been available since
 .Ox 7.1 .
+.Sh CAVEATS
+Creating a cyclic chain results in undefined behavior.
+For example, infinite recursion or infinite loops may ensue.
+.Pp
+If it is unknown whether
+.Fa b
+and
+.Fa new_tail
+are already members of the same chain and whether joining them would
+create a cycle, the calling code can use the following safe idiom:
+.Bd -literal -offset indent
+BIO *btest;
+
+for (btest = new_tail; btest != NULL; btest = BIO_next(btest))
+	if (btest == b)
+		/* Bail out because this would create a cycle. */
+BIO_push(b, new_tail);  /* This is now safe. */
+.Ed
+.Pp
+The same idiom can be used with
+.Fn BIO_set_next
+instead of
+.Fn BIO_push .
+.Pp
+Often, the safe idiom is not needed because it is already known that
+.Fa b
+and
+.Fa new_tail
+are not members of the same chain, for example when
+.Fa b
+or
+.Fa new_tail
+was created right before.
