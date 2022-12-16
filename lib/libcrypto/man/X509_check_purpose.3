@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_purpose.3,v 1.7 2021/10/29 14:29:24 schwarze Exp $
+.\" $OpenBSD: X509_check_purpose.3,v 1.8 2022/12/16 18:02:28 tb Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2021 $
+.Dd $Mdocdate: December 16 2022 $
 .Dt X509_CHECK_PURPOSE 3
 .Os
 .Sh NAME
@@ -30,10 +30,26 @@
 .Fc
 .Sh DESCRIPTION
 If the
+.Fa purpose
+argument is \-1,
+.Fn X509_check_purpose
+ignores the
+.Fa ca
+argument and checks that all the extensions of the
+.Fa certificate
+can be parsed and pass minimal sanity checks, in particular that
+extensions that must not occur more than once do not.
+It also makes sure that all extensions are cached in the
+.Vt X509
+object.
+.Pp
+If the
+.Fa purpose
+argument is not \-1 and the
 .Fa ca
 flag is 0,
 .Fn X509_check_purpose
-checks whether the public key contained in the
+additionally checks whether the public key contained in the
 .Fa certificate
 is intended to be used for the given
 .Fa purpose ,
@@ -205,10 +221,12 @@ bits is set, and no other bits are set.
 .El
 .Pp
 If the
+.Fa purpose
+argument is not \-1 and the
 .Fa ca
 flag is non-zero,
 .Fn X509_check_purpose
-instead checks whether the
+instead checks, in addition to the minimal sanity checks, whether the
 .Fa certificate
 can be used as a certificate authority certificate
 in the context of the given
@@ -334,14 +352,6 @@ The check even succeeds if the three other common conditions
 cited above this list are violated.
 .El
 .Pp
-If parsing of any extensions that are present succeeds and the
-.Fa purpose
-argument is \-1,
-.Fn X509_check_purpose
-always succeeds, no matter whether or not the
-.Fa ca
-flag is set.
-.Pp
 If the function
 .Xr X509_PURPOSE_add 3
 was called before
@@ -352,22 +362,28 @@ installed additional, user-supplied checking functions for user-defined
 .Fa purpose
 identifiers not listed above.
 .Sh RETURN VALUES
-.Fn X509_check_purpose
-returns the following values:
-.Bl -column -1 Failure -compact
-.It \-1 Ta Error Ta Parsing of certificate extensions failed or the
+If parsing of certificate extensions or sanity checks fail or the
 .Fa purpose
-is invalid.
+is invalid,
+.Fn X509_check_purpose
+returns \-1 to indicate the error.
+.Pp
+If the
+.Fa purpose
+argument is \-1 and parsing and minimal sanity checks succeed,
+.Fn X509_check_purpose
+returns 1 to indicate success.
+.Pp
+Otherwise, it returns the following values:
+.Pp
+If
+.Fa ca
+is 0:
+.Bl -column -1 Failure -compact
 .It 0 Ta Failure Ta The
 .Fa certificate
 cannot be used for the
 .Fa purpose .
-.El
-.Pp
-If
-.Fa ca
-is 0, the following values can also be returned:
-.Bl -column -1 Failure -compact
 .It 1 Ta Success Ta The
 .Fa certificate
 can be used for the
@@ -377,8 +393,12 @@ can be used for the
 .Pp
 If
 .Fa ca
-is non-zero, the following values can also be returned:
+is non-zero:
 .Bl -column -1 Failure -compact
+.It 0 Ta Failure Ta The
+.Fa certificate
+cannot be used as a CA for the
+.Fa purpose .
 .It 1 Ta Success Ta The
 .Fa certificate
 can be used as a CA for the
