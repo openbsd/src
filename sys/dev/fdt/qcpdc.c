@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpdc.c,v 1.1 2022/11/10 12:12:53 patrick Exp $	*/
+/*	$OpenBSD: qcpdc.c,v 1.2 2022/12/16 18:08:08 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -205,7 +205,7 @@ qcpdc_intr_establish(void *aux, int *cells, int ipl,
 	HSET4(sc, PDC_INTR_ENABLE(pin), PDC_INTR_ENABLE_BIT(pin));
 	splx(s);
 
-	return cookie;
+	return ih;
 }
 
 void
