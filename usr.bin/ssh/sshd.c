@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.593 2022/12/04 23:50:49 cheloha Exp $ */
+/* $OpenBSD: sshd.c,v 1.594 2022/12/16 06:56:47 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1466,6 +1466,10 @@ main(int ac, char **av)
 	int keytype;
 	Authctxt *authctxt;
 	struct connection_info *connection_info = NULL;
+	sigset_t sigmask;
+
+	sigemptyset(&sigmask);
+	sigprocmask(SIG_SETMASK, &sigmask, NULL);
 
 	/* Save argv. */
 	saved_argv = av;
