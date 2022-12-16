@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_push.3,v 1.12 2022/12/08 11:33:58 tb Exp $
+.\" $OpenBSD: BIO_push.3,v 1.13 2022/12/16 13:41:55 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL doc/man3/BIO_push.pod 791bfd91 Nov 19 20:38:27 2021 +0100
 .\" OpenSSL doc/man7/bio.pod 1cb7eff4 Sep 10 13:56:40 2019 +0100
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 8 2022 $
+.Dd $Mdocdate: December 16 2022 $
 .Dt BIO_PUSH 3
 .Os
 .Sh NAME
@@ -141,11 +141,6 @@ For portability, it is best to make sure that
 is at the beginning of its chain before calling
 .Fn BIO_push .
 .Pp
-The LibreSSL implementation of
-.Fn BIO_push
-never creates cycles.
-If a call would result in a cycle, nothing is changed and the call fails.
-.Pp
 .Fn BIO_pop
 removes the BIO
 .Fa b
@@ -214,16 +209,11 @@ have any effect is
 .Fn BIO_push
 returns
 .Fa b
-for success or a different pointer for failure.
-In particular, it fails and returns
-.Fa new_tail
-if
-.Fa b
-is
-.Dv NULL .
-In LibreSSL, it fails and returns
+if it is not
 .Dv NULL
-if appending would create a cycle.
+or
+.Fa new_tail
+if it is.
 .Pp
 .Fn BIO_pop
 returns the BIO that followed
@@ -294,22 +284,6 @@ and the new chain will be
 data can be written to
 .Sy md1
 as before.
-.Pp
-Even though LibreSSL handles some of the edge cases gracefully,
-the following idiom is recommended for portable error checking:
-.Bd -literal -offset indent
-if (b == NULL || new_tail == NULL || b == new_tail)
-	/* Report the problem and bail out. */
-if (BIO_push(b, new_tail) != b)
-	/* Report that nothing was changed
-	 * because it would have created a cycle. */
-.Ed
-.Pp
-Even with the portable idiom, old and non-LibreSSL library implementations
-may silently attempt to create cycles instead of rejecting them and returning
-.Dv NULL ,
-which may result in infinite loops, infinite recursion, or segmentation
-faults either right away or later on.
 .Sh SEE ALSO
 .Xr BIO_find_type 3 ,
 .Xr BIO_new 3 ,

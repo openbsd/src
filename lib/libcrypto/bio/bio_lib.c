@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.42 2022/12/07 23:08:47 schwarze Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.43 2022/12/16 13:41:55 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -637,12 +637,6 @@ BIO_push(BIO *b, BIO *bio)
 
 	if (b == NULL)
 		return (bio);
-
-	/* If this would create a cycle, change nothing and fail. */
-	for (lb = bio; lb != NULL; lb = lb->next_bio)
-		if (lb == b)
-			return NULL;
-
 	lb = b;
 	while (lb->next_bio != NULL)
 		lb = lb->next_bio;
