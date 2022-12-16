@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.230 2022/12/05 20:12:00 afresh1 Exp $
+#	$OpenBSD: netstart,v 1.231 2022/12/16 04:04:25 afresh1 Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -132,28 +132,33 @@ vifscreate() {
 # Start a single interface.
 # Usage: ifstart if1
 ifstart() {
-	local _if=$1 _hn=/etc/hostname.$1 _cmds _i=0 _line _stat
+	local _if=$1 _lladdr _hn=/etc/hostname.$1 _cmds _i=0 _line _stat
 	set -A _cmds
-
-	if [[ $_if == ??:??:??:??:??:?? ]]; then
-		if ! _line=$( ifconfig -M $_if ); then
-			print -u2 "${0##*/}: $_if is not unique."
-			return
-		fi
-
-		[[ -z $_line ]] && return
-		_if=$_line
-		_line=
-
-		if [[ -e /etc/hostname.$_if ]]; then
-			print -u2 "${0##*/}: $_hn: /etc/hostname.$_if overrides"
-			return
-		fi
-	fi
 
 	# Interface names must be alphanumeric only.  We check to avoid
 	# configuring backup or temp files, and to catch the "*" case.
-	[[ $_if != +([[:alpha:]])+([[:digit:]]) ]] && return
+	if [[ $_if == +([[:alpha:]])+([[:digit:]]) ]]; then
+		_lladdr=$(ifconfig $_if 2>/dev/null |
+		    sed -n 's/^[[:space:]]*lladdr[[:space:]]//p')
+		if [[ -n $_lladdr && -f /etc/hostname.$_lladdr  && \
+		    -n $(ifconfig -M "$_lladdr") ]]; then
+			print -u2 "${0##*/}: $_hn: /etc/hostname.$_lladdr overrides"
+			return
+		fi
+
+	# We also support hostname.lladdr, but it must resolve to be valid
+	elif [[ $_if == ??:??:??:??:??:?? ]]; then
+		_lladdr=$_if
+		_if=$(ifconfig -M $_lladdr)
+		if (($? != 0)); then
+			print -u2 "${0##*/}: $_lladdr is not unique."
+			return
+		fi
+
+		[[ -z $_if ]] && return
+	else
+		return
+	fi
 
 	if [[ ! -f $_hn ]]; then
 		print -u2 "${0##*/}: $_hn: No such file or directory."

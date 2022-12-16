@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.81 2022/12/15 06:39:05 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.82 2022/12/16 04:04:25 afresh1 Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 15 2022 $
+.Dd $Mdocdate: December 16 2022 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ so interfaces can alternatively be referenced by
 their link layer address (lladdr),
 such as
 .Dq hostname.00:00:5e:00:53:af .
-Priority is given to configuration by interface name/unit over lladdr.
+Priority is given to configuration by interface lladdr over name/unit.
 A configuration file is not needed for lo0.
 .Pp
 The configuration information is expressed in a line-by-line packed format

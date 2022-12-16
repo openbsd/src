@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1215 2022/12/05 20:12:00 afresh1 Exp $
+#	$OpenBSD: install.sub,v 1.1216 2022/12/16 04:04:25 afresh1 Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -355,6 +355,15 @@ get_ifs() {
 		isin "${_if%%+([0-9])}" $_if_list || echo $_if
 	done
 }
+
+# Map an interface to its MAC address if it is unique
+if_name_to_lladdr() {          
+	local _lladdr     
+
+	_lladdr=$(ifconfig $1 2>/dev/null |
+	    sed -n 's/^[[:space:]]*lladdr[[:space:]]//p')
+	[[ -n $_lladdr && -n $(ifconfig -M "$_lladdr") ]] && echo $_lladdr
+}                                                                              
 
 # Return the device name of the disk device $1, which may be a disklabel UID.
 get_dkdev_name() {
@@ -2428,13 +2437,18 @@ parse_hn_line() {
 # Start interface using the on-disk hostname.if file passed as argument $1.
 # Much of this is gratuitously stolen from /etc/netstart.
 ifstart() {
-	local _if=$1 _hn=/mnt/etc/hostname.$1 _cmds _i=0 _line
+	local _if=$1 _lladdr _hn=/mnt/etc/hostname.$1 _cmds _i=0 _line
 	set -A _cmds
 
-	if [[ $_if == ??:??:??:??:??:?? ]]; then
-		_if=$(ifconfig -M $_if)
-		[[ -z $_if ]]                   && return # invalid interface
-		[[ -e /mnt/etc/hostname.$_if ]] && return # duplicate config
+	if [[ $_if == +([[:alpha:]])+([[:digit:]]) ]]; then
+		_lladdr=$(if_name_to_lladdr $_if)
+		[[ -n $_lladdr && -f /mnt/etc/hostname.$_lladdr ]] && return
+	elif [[ $_if == ??:??:??:??:??:?? ]]; then
+		_lladdr=$_if
+		_if=$(ifconfig -M $_lladdr)
+		[[ -z $_if ]] && return
+	else
+		return
 	fi
 
 	# Create interface if it does not yet exist.
