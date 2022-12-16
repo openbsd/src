@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1216 2022/12/16 04:04:25 afresh1 Exp $
+#	$OpenBSD: install.sub,v 1.1217 2022/12/16 17:47:34 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -357,13 +357,13 @@ get_ifs() {
 }
 
 # Map an interface to its MAC address if it is unique
-if_name_to_lladdr() {          
-	local _lladdr     
+if_name_to_lladdr() {
+	local _lladdr
 
 	_lladdr=$(ifconfig $1 2>/dev/null |
 	    sed -n 's/^[[:space:]]*lladdr[[:space:]]//p')
 	[[ -n $_lladdr && -n $(ifconfig -M "$_lladdr") ]] && echo $_lladdr
-}                                                                              
+}
 
 # Return the device name of the disk device $1, which may be a disklabel UID.
 get_dkdev_name() {
