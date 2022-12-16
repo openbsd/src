@@ -1,11 +1,10 @@
-.\" $OpenBSD: BIO_set_callback.3,v 1.9 2018/03/29 20:42:17 schwarze Exp $
-.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
-.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" $OpenBSD: BIO_set_callback.3,v 1.10 2022/12/16 23:56:57 schwarze Exp $
+.\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,10 +65,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2018 $
+.Dd $Mdocdate: December 16 2022 $
 .Dt BIO_SET_CALLBACK 3
 .Os
 .Sh NAME
+.Nm BIO_callback_fn_ex ,
+.Nm BIO_set_callback_ex ,
+.Nm BIO_get_callback_ex ,
+.Nm BIO_callback_fn ,
 .Nm BIO_set_callback ,
 .Nm BIO_get_callback ,
 .Nm BIO_set_callback_arg ,
@@ -78,6 +81,35 @@
 .Nd BIO callback functions
 .Sh SYNOPSIS
 .In openssl/bio.h
+.Ft typedef long
+.Fo (*BIO_callback_fn_ex)
+.Fa "BIO *b"
+.Fa "int oper"
+.Fa "const char *argp"
+.Fa "size_t len"
+.Fa "int argi"
+.Fa "long argl"
+.Fa "int ret"
+.Fa "size_t *processed"
+.Fc
+.Ft void
+.Fo BIO_set_callback_ex
+.Fa "BIO *b"
+.Fa "BIO_callback_fn_ex cb_ex"
+.Fc
+.Ft BIO_callback_fn_ex
+.Fo BIO_get_callback_ex
+.Fa "const BIO *b"
+.Fc
+.Ft typedef long
+.Fo (*BIO_callback_fn)
+.Fa "BIO *b"
+.Fa "int oper"
+.Fa "const char *argp"
+.Fa "int argi"
+.Fa "long argl"
+.Fa "long ret"
+.Fc
 .Ft void
 .Fo BIO_set_callback
 .Fa "BIO *b"
@@ -90,7 +122,7 @@
 .Ft void
 .Fo BIO_set_callback_arg
 .Fa "BIO *b"
-.Fa "char *arg"
+.Fa "char *pointer"
 .Fc
 .Ft char *
 .Fo BIO_get_callback_arg
@@ -105,60 +137,75 @@
 .Fa "long argl"
 .Fa "long ret"
 .Fc
-.Ft typedef long
-.Fo "(*BIO_callback_fn)"
-.Fa "BIO *b"
-.Fa "int oper"
-.Fa "const char *argp"
-.Fa "int argi"
-.Fa "long argl"
-.Fa "long ret"
-.Fc
 .Sh DESCRIPTION
-.Fn BIO_set_callback
+.Fn BIO_set_callback_ex
 and
-.Fn BIO_get_callback
+.Fn BIO_get_callback_ex
 set and retrieve the BIO callback.
-The callback is called during most high level BIO operations.
+The callback is called during most high-level BIO operations.
 It can be used for debugging purposes to trace operations on a BIO
 or to modify its operation.
 .Pp
+.Fn BIO_set_callback
+and
+.Fn BIO_get_callback
+are deprecated functions that set and retrieve the old-style BIO callback,
+which is only used if no new-style callback is set with
+.Fn BIO_set_callback_ex .
+.Pp
 .Fn BIO_set_callback_arg
+stores the
+.Fa pointer
+internally in
+.Fa b
 and
 .Fn BIO_get_callback_arg
-set and retrieve an argument for use in the callback.
+retrieves it from
+.Fa b .
+The name of these two functions is badly misleading: the
+.Fa pointer
+is never passed as an argument to any callback function.
+But of course, callback functions can call
+.Fn BIO_get_callback_arg
+and access the pointer, just like any other code can.
 .Pp
 .Fn BIO_debug_callback
 is a standard debugging callback which prints
-out information relating to each BIO operation.
-If the callback argument is set, it is interpreted as a BIO
-to send the information to, otherwise stderr is used.
+out information related to each BIO operation.
+If
+.Fn BIO_set_callback_arg
+was called with a
+.Pf non- Dv NULL
+argument, information is sent to the BIO pointed to by the
+.Fa pointer ;
+otherwise, standard error output is used.
 .Pp
-.Fn BIO_callback_fn
-is the type of the callback function.
-The meaning of each argument is described below.
-.Pp
-The BIO the callback is attached to is passed in
-.Fa b .
-.Pp
-.Fa oper
-is set to the operation being performed.
-For some operations the callback is called twice,
+The arguments of the callback functions are as follows:
+.Bl -tag -width Ds
+.It Fa b
+The BIO the callback is attached to.
+.It Fa oper
+The operation being performed.
+For some operations, the callback is called twice,
 once before and once after the actual operation.
 The latter case has
 .Fa oper
-or'ed with
+OR'ed with
 .Dv BIO_CB_RETURN .
-.Pp
-The meaning of the arguments
-.Fa argp ,
-.Fa argi
-and
-.Fa argl
-depends on the value of
+.It Fa argp , argi , argl
+The meaning of these three arguments depends on the value of
+.Fa oper ,
+that is on the operation being performed.
+.It Fa len
+The length of the data requested to be read or written.
+This is only useful if
 .Fa oper
-(i.e. the operation being performed).
-.Pp
+is
+.Dv BIO_CB_READ ,
+.Dv BIO_CB_WRITE ,
+or
+.Dv BIO_CB_GETS .
+.It Fa ret
 When
 .Fa oper
 does not include
@@ -185,43 +232,101 @@ if no callback were present.
 When a callback is present, the operation only passes this value
 to the callback and instead of it returns the return value of the
 callback to the application.
+.It Fa processed
+The location pointed to is updated with the number of bytes
+actually read or written.
+Only used for
+.Dv BIO_CB_READ ,
+.Dv BIO_CB_WRITE ,
+.Dv BIO_CB_GETS ,
+and
+.Dv BIO_CB_PUTS .
+.El
 .Pp
 The callback should normally simply return
 .Fa ret
 when it has finished processing, unless it specifically wishes to
 abort the operation or to modify the value returned to the application.
-.Ss Callback operations
-.Bl -tag -width Ds
-.It Fn BIO_free b
-.Fn callback b BIO_CB_FREE NULL 0L 0L 1L
-is called before the free operation.
-.It Fn BIO_read b out outl
-.Fn callback b BIO_CB_READ out outl 0L 1L
-is called before the read and
-.Fn callback b BIO_CB_READ|BIO_CB_RETURN out outl 0L ret
-after.
-.It Fn BIO_write b in inl
-.Fn callback b BIO_CB_WRITE in inl 0L 1L
-is called before the write and
-.Fn callback b BIO_CB_WRITE|BIO_CB_RETURN in inl 0L ret
-after.
-.It Fn BIO_gets b out outl
-.Fn callback b BIO_CB_GETS out outl 0L 1L
-is called before the operation and
-.Fn callback b BIO_CB_GETS|BIO_CB_RETURN out outl 0L ret
-after.
-.It Fn BIO_puts b in
-.Fn callback b BIO_CB_PUTS in 0 0L 1L
-is called before the operation and
-.Fn callback b BIO_CB_PUTS|BIO_CB_RETURN in 0 0L ret
-after.
-.It Fn BIO_ctrl b oper larg parg
-.Fn callback b BIO_CB_CTRL parg oper larg 1L
-is called before the call and
-.Fn callback b BIO_CB_CTRL|BIO_CB_RETURN parg oper larg ret
-after.
+.Pp
+The callbacks are called as follows:
+.Bl -tag -width 1n
+.It \&In Fn BIO_free "BIO *b" :
+.Bd -literal
+before the free operation:
+cb_ex(b, BIO_CB_FREE, NULL, 0, 0, 0, 1, NULL)
+or cb(b, BIO_CB_FREE, NULL,    0, 0, 1)
+.Ed
+.It \&In Fn BIO_read "BIO *b" "void *out" "int outl" :
+.Bd -literal
+before the read operation:
+cb_ex(b, BIO_CB_READ, out, outl, 0, 0, 1, NULL)
+or cb(b, BIO_CB_READ, out, outl,    0, 1)
+
+after the read operation:
+cb_ex(b, BIO_CB_READ|BIO_CB_RETURN, out, outl, 0, 0, ret, &bytes)
+or cb(b, BIO_CB_READ|BIO_CB_RETURN, out, outl,    0, ret)
+.Ed
+.It \&In Fn BIO_write "BIO *b" "const void *in" "int inl" :
+.Bd -literal
+before the write operation:
+cb_ex(b, BIO_CB_WRITE, in, inl, 0, 0, 1, NULL)
+or cb(b, BIO_CB_WRITE, in, inl,    0, 1)
+
+after the write operation:
+cb_ex(b, BIO_CB_WRITE|BIO_CB_RETURN, in, inl, 0, 0, ret, &bytes)
+or cb(b, BIO_CB_WRITE|BIO_CB_RETURN, in, inl,    0, ret)
+.Ed
+.It \&In Fn BIO_gets "BIO *b" "char *out" "int outl" :
+.Bd -literal
+before the read operation:
+cb_ex(b, BIO_CB_GETS, out, outl, 0, 0, 1, NULL)
+or cb(b, BIO_CB_GETS, out, outl,    0, 1)
+
+after the read operation:
+cb_ex(b, BIO_CB_GETS|BIO_CB_RETURN, out, outl, 0, 0, ret, &bytes)
+or cb(b, BIO_CB_GETS|BIO_CB_RETURN, out, outl,    0, ret)
+.Ed
+.It \&In Fn BIO_puts "BIO *b" "const char *in" :
+.Bd -literal
+before the write operation:
+cb_ex(b, BIO_CB_PUTS, in, 0, 0, 0, 1, NULL)
+or cb(b, BIO_CB_PUTS, in,    0, 0, 1)
+
+after the write operation:
+cb_ex(b, BIO_CB_PUTS|BIO_CB_RETURN, in, 0, 0, 0, ret, &bytes)
+or cb(b, BIO_CB_PUTS|BIO_CB_RETURN, in,    0, 0, ret)
+.Ed
+.It \&In Fn BIO_ctrl "BIO *b" "int cmd" "long larg" "void *parg" :
+.Bd -literal
+before the control operation:
+cb_ex(b, BIO_CB_CTRL, parg, 0, cmd, larg, 1, NULL)
+or cb(b, BIO_CB_CTRL, parg,    cmd, larg, 1)
+
+after the control operation:
+cb_ex(b, BIO_CB_CTRL|BIO_CB_RETURN, parg, 0, cmd, larg, ret, NULL)
+or cb(b, BIO_CB_CTRL|BIO_CB_RETURN, parg,    cmd, larg, ret)
+.Ed
+.It \&In Fn BIO_callback_ctrl "BIO *b" "int cmd" "BIO_info_cb *fp" :
+.Bd -literal
+before the control operation:
+cb_ex(b, BIO_CB_CTRL, fp, 0, cmd, 0, 1, NULL)
+or cb(b, BIO_CB_CTRL, fp,    cmd, 0, 1)
+
+after the control operation:
+cb_ex(b, BIO_CB_CTRL|BIO_CB_RETURN, fp, 0, cmd, 0, ret, NULL)
+or cb(b, BIO_CB_CTRL|BIO_CB_RETURN, fp,    cmd, 0, ret)
+.Ed
 .El
 .Sh RETURN VALUES
+.Fn BIO_get_callback_ex
+returns a pointer to the function
+.Fa cb_ex
+previously installed with
+.Fn BIO_set_callback_cb ,
+or
+.Dv NULL
+if no such callback was installed.
+.Pp
 .Fn BIO_get_callback
 returns a pointer to the function
 .Fa cb
@@ -229,16 +334,16 @@ previously installed with
 .Fn BIO_set_callback ,
 or
 .Dv NULL
-if no callback was installed.
+if no such callback was installed.
 .Pp
 .Fn BIO_get_callback_arg
-returns a pointer to the
-.Fa arg
+returns the
+.Fa pointer
 previously set with
 .Fn BIO_set_callback_arg ,
 or
 .Dv NULL
-if no such argument was set.
+if no such pointer was set.
 .Pp
 .Fn BIO_debug_callback
 returns
@@ -265,5 +370,15 @@ and
 first appeared in SSLeay 0.6.0.
 .Fn BIO_get_callback_arg
 first appeared in SSLeay 0.8.0.
-All these functions have been available since
+These functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_callback_fn
+first appeared in OpenSSL 1.1.0.
+.Fn BIO_callback_fn_ex ,
+.Fn BIO_set_callback_ex ,
+and
+.Fn BIO_get_callback_ex
+first appeared in OpenSSL 1.1.1.
+These functions have been available since
+.Ox 7.1 .
