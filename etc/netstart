@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.231 2022/12/16 04:04:25 afresh1 Exp $
+#	$OpenBSD: netstart,v 1.232 2022/12/16 17:57:39 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -140,7 +140,7 @@ ifstart() {
 	if [[ $_if == +([[:alpha:]])+([[:digit:]]) ]]; then
 		_lladdr=$(ifconfig $_if 2>/dev/null |
 		    sed -n 's/^[[:space:]]*lladdr[[:space:]]//p')
-		if [[ -n $_lladdr && -f /etc/hostname.$_lladdr  && \
+		if [[ -n $_lladdr && -f /etc/hostname.$_lladdr &&
 		    -n $(ifconfig -M "$_lladdr") ]]; then
 			print -u2 "${0##*/}: $_hn: /etc/hostname.$_lladdr overrides"
 			return
