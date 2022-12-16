@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.58 2021/06/10 07:56:47 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.59 2022/12/16 08:19:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -227,12 +227,11 @@ utf8_width(struct utf8_data *ud, int *width)
 		return (UTF8_ERROR);
 	}
 	*width = wcwidth(wc);
-	if (*width < 0 || *width > 0xff) {
-		log_debug("UTF-8 %.*s, wcwidth() %d", (int)ud->size, ud->data,
-		    *width);
-		return (UTF8_ERROR);
-	}
-	return (UTF8_DONE);
+	log_debug("UTF-8 %.*s %#x, wcwidth() %d", (int)ud->size, ud->data,
+	    (u_int)wc, *width);
+	if (*width >= 0 && *width <= 0xff)
+		return (UTF8_DONE);
+	return (UTF8_ERROR);
 }
 
 /*
