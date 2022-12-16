@@ -846,7 +846,7 @@ void CodeGenModule::EmitBackendOptionsMetadata(
     break;
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
-    getModule().addModuleFlag(llvm::Module::Error, "SmallDataLimit",
+    getModule().addModuleFlag(llvm::Module::Warning, "SmallDataLimit",
                               CodeGenOpts.SmallDataLimit);
     break;
   }
