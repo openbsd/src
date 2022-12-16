@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.206 2022/12/04 15:55:26 visa Exp $ */
+/*	$OpenBSD: loader.c,v 1.207 2022/12/16 03:14:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -215,18 +215,14 @@ void
 _dl_clean_boot(void)
 {
 	extern char boot_text_start[], boot_text_end[];
-#if 0	/* XXX breaks boehm-gc?!? */
 	extern char boot_data_start[], boot_data_end[];
-#endif
 
 	_dl_mmap(boot_text_start, boot_text_end - boot_text_start,
 	    PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
 	_dl_mimmutable(boot_text_start, boot_text_end - boot_text_start);
-#if 0	/* XXX breaks boehm-gc?!? */
 	_dl_mmap(boot_data_start, boot_data_end - boot_data_start,
 	    PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, 0);
 	_dl_mimmutable(boot_data_start, boot_data_end - boot_data_start);
-#endif
 }
 #endif /* DO_CLEAN_BOOT */
 
@@ -1016,8 +1012,6 @@ _dl_defer_immut(struct mutate *m, vaddr_t start, vsize_t len)
 
 	for (i = 0; i < MAXMUT; i++) {
 		if (m[i].valid == 0) {
-//			_dl_printf("%dimut\t%lx-%lx (len %x)\n",
-//			    i, start, start + len, len);
 			m[i].start = start;
 			m[i].end = start + len;
 			m[i].valid = 1;
@@ -1035,8 +1029,6 @@ _dl_defer_mut(struct mutate *m, vaddr_t start, size_t len)
 
 	for (i = 0; i < MAXMUT; i++) {
 		if (m[i].valid == 0) {
-//			_dl_printf("%dmut\t%lx-%lx (len %x)\n",
-//			    i, start, start + len, len);
 			m[i].start = start;
 			m[i].end = start + len;
 			m[i].valid = 1;
@@ -1058,7 +1050,6 @@ _dl_apply_immutable(elf_object_t *object)
 
 	imtail = &object->imut[MAXMUT - 1];
 
-//	_dl_printf("library %s %lx:\n", object->load_name);
 	for (imut = 0; imut < MAXMUT; imut++) {
 		im = &object->imut[imut];
 		if (im->valid == 0)
@@ -1068,27 +1059,19 @@ _dl_apply_immutable(elf_object_t *object)
 			m = &object->mut[mut];
 			if (m->valid == 0)
 				continue;
-//			_dl_printf("- mut%d %lx-%lx (%x) from imut%d %lx-%lx (%x): ",
-//			    mut, m->start, m->end, m->end - m->start,
-//			    imut, im->start, im->end, im->end - im->start);
 			if (m->start <= im->start) {
 				if (m->end < im->start) {
-//					_dl_printf("before ignored");
 					;
 				} else if (m->end >= im->end) {
 					im->start = im->end = im->valid = 0;
-//					_dl_printf("whole: %lx-%lx", im->start, im->end);
 				} else {
 					im->start = m->end;
-//					_dl_printf("early: %lx-%lx", im->start, im->end);
 				}
 			} else if (m->start > im->start) {
 				if (m->end > im->end) {
-//					_dl_printf("after ignored");
 					;
 				} else if (m->end == im->end) {
 					im->end = m->start;
-//					_dl_printf("end: %lx-%lx", im->start, im->end);
 				} else if (m->end < im->end) {
 					imtail->start = im->start;
 					imtail->end = m->start;
@@ -1099,12 +1082,8 @@ _dl_apply_immutable(elf_object_t *object)
 					imtail->valid = 1;
 					imtail--;
 					im->start = im->end = im->valid = 0;
-//					_dl_printf("split %lx-%lx %lx-%lx",
-//					    imtail[1].start, imtail[1].end,
-//					    imtail[2].start, imtail[2].end);
 				}
 			}
-//			_dl_printf("\n");
 		}
 	}
 
@@ -1113,10 +1092,6 @@ _dl_apply_immutable(elf_object_t *object)
 		im = &object->imut[imut];
 		if (im->valid == 0)
 			continue;
-//		_dl_printf("IMUT %s %lx-%lx (len %x) (%lx,%lx) [%lx,%lx]\n",
-//		    object->load_name, im->start, im->end, im->end - im->start,
-//		    (void *)im->start, (void *)im->end,
-//		    (void *)im->start, im->end - im->start);
 		_dl_mimmutable((void *)im->start, im->end - im->start);
 	}
 }
