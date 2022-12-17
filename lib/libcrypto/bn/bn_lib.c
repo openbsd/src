@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.66 2022/11/30 03:08:39 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.67 2022/12/17 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -998,11 +998,22 @@ BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, size_t nwords)
 }
 
 void
-BN_zero_ex(BIGNUM *a)
+BN_zero(BIGNUM *a)
 {
 	a->neg = 0;
 	a->top = 0;
-	/* XXX: a->flags &= ~BN_FIXED_TOP */
+}
+
+void
+BN_zero_ex(BIGNUM *a)
+{
+	BN_zero(a);
+}
+
+int
+BN_one(BIGNUM *a)
+{
+	return BN_set_word(a, 1);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.56 2022/11/30 01:47:19 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.57 2022/12/17 15:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,6 +329,10 @@ int BN_is_one(const BIGNUM *a);
 int BN_is_word(const BIGNUM *a, const BN_ULONG w);
 int BN_is_odd(const BIGNUM *a);
 
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+void BN_zero(BIGNUM *a);
+int BN_one(BIGNUM *a);
+#else
 #define BN_one(a)	BN_set_word((a), 1)
 
 void BN_zero_ex(BIGNUM *a);
@@ -337,6 +341,7 @@ void BN_zero_ex(BIGNUM *a);
 #define BN_zero(a)	BN_zero_ex(a)
 #else
 #define BN_zero(a)	(BN_set_word((a),0))
+#endif
 #endif
 
 const BIGNUM *BN_value_one(void);
