@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.37 2022/11/07 19:07:31 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.38 2022/12/17 11:54:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -576,6 +576,8 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 {
 	struct nvmem_device *nd;
 	struct nvmem_cell *nc;
+	uint8_t *p = data;
+	bus_addr_t addr;
 	uint32_t phandle, *phandles;
 	uint32_t offset, bitlen;
 	int id, len, first;
@@ -605,14 +607,14 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 		return EACCES;
 
 	first = 1;
-	offset = nc->nc_offset;
+	addr = nc->nc_addr + (nc->nc_offset / 8);
+	offset = nc->nc_offset % 8;
 	bitlen = nc->nc_bitlen;
 	while (bitlen > 0 && size > 0) {
-		uint8_t *p = data;
 		uint8_t mask, tmp;
 		int error;
 
-		error = nd->nd_read(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		error = nd->nd_read(nd->nd_cookie, addr++, &tmp, 1);
 		if (error)
 			return error;
 
@@ -624,11 +626,12 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 		if (!first) {
 			*p++ |= (tmp << (8 - offset)) & (mask << (8 - offset));
 			bitlen -= MIN(offset, bitlen);
+			mask >>= offset;
 			size--;
 		}
 
 		if (bitlen > 0 && size > 0) {
-			*p = (tmp >> offset) & (mask >> offset);
+			*p = (tmp >> offset) & mask;
 			bitlen -= MIN(8 - offset, bitlen);
 		}
 
@@ -648,6 +651,8 @@ nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
 {
 	struct nvmem_device *nd;
 	struct nvmem_cell *nc;
+	const uint8_t *p = data;
+	bus_addr_t addr;
 	uint32_t phandle, *phandles;
 	uint32_t offset, bitlen;
 	int id, len, first;
@@ -677,14 +682,14 @@ nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
 		return EACCES;
 
 	first = 1;
-	offset = nc->nc_offset;
+	addr = nc->nc_addr + (nc->nc_offset / 8);
+	offset = nc->nc_offset % 8;
 	bitlen = nc->nc_bitlen;
 	while (bitlen > 0 && size > 0) {
-		const uint8_t *p = data;
 		uint8_t mask, tmp;
 		int error;
 
-		error = nd->nd_read(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		error = nd->nd_read(nd->nd_cookie, addr, &tmp, 1);
 		if (error)
 			return error;
 
@@ -704,7 +709,7 @@ nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
 			bitlen -= MIN(offset, bitlen);
 		}
 
-		error = nd->nd_write(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		error = nd->nd_write(nd->nd_cookie, addr++, &tmp, 1);
 		if (error)
 			return error;
 
