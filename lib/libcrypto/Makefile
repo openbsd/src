@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.89 2022/11/26 11:18:49 tb Exp $
+# $OpenBSD: Makefile,v 1.90 2022/12/17 22:01:29 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -664,6 +664,7 @@ SRCS+=txt_db.c
 # ui/
 SRCS+= ui_err.c
 SRCS+= ui_lib.c
+SRCS+= ui_null.c
 SRCS+= ui_openssl.c
 SRCS+= ui_util.c
 
