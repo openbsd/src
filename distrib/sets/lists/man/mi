@@ -1241,6 +1241,7 @@
 ./usr/share/man/man4/arm64/apldart.4
 ./usr/share/man/man4/arm64/apldma.4
 ./usr/share/man/man4/arm64/apldog.4
+./usr/share/man/man4/arm64/aplefuse.4
 ./usr/share/man/man4/arm64/aplhidev.4
 ./usr/share/man/man4/arm64/apliic.4
 ./usr/share/man/man4/arm64/aplintc.4
