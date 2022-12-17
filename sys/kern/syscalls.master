@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.237 2022/11/30 10:20:37 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.238 2022/12/17 13:42:59 kn Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -445,7 +445,7 @@
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
-250	STD		{ int sys_minherit(void *addr, size_t len, \
+250	STD NOLOCK	{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
 251	OBSOL		rfork
 252	STD		{ int sys_poll(struct pollfd *fds, \
