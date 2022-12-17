@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_purpose.3,v 1.8 2022/12/16 18:02:28 tb Exp $
+.\" $OpenBSD: X509_check_purpose.3,v 1.9 2022/12/17 12:48:53 tb Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 16 2022 $
+.Dd $Mdocdate: December 17 2022 $
 .Dt X509_CHECK_PURPOSE 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ ignores the
 .Fa ca
 argument and checks that all the extensions of the
 .Fa certificate
-can be parsed and pass minimal sanity checks, in particular that
+can be parsed and pass minimal sanity checks, ensuring that
 extensions that must not occur more than once do not.
 It also makes sure that all extensions are cached in the
 .Vt X509
@@ -49,7 +49,7 @@ argument is not \-1 and the
 .Fa ca
 flag is 0,
 .Fn X509_check_purpose
-additionally checks whether the public key contained in the
+also checks whether the public key contained in the
 .Fa certificate
 is intended to be used for the given
 .Fa purpose ,
@@ -362,7 +362,7 @@ installed additional, user-supplied checking functions for user-defined
 .Fa purpose
 identifiers not listed above.
 .Sh RETURN VALUES
-If parsing of certificate extensions or sanity checks fail or the
+If the parsing of certificate extensions fails, sanity checks fail or the
 .Fa purpose
 is invalid,
 .Fn X509_check_purpose
