@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2022/12/17 17:18:46 jsing Exp $
+#	$OpenBSD: Makefile,v 1.18 2022/12/17 22:31:10 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -60,11 +60,12 @@ run-bc: bn_test.out
 
 CLEANFILES +=	bn_test.out bc.out
 
+benchmark: bn_shift
+	./bn_shift --benchmark
+.PHONY: benchmark
+
 .for p in ${STATIC_LINK}
 LDADD_$p +=	${CRYPTO_INT}
 .endfor
-
-benchmark: bn_shift
-	./bn_shift --benchmark
 
 .include <bsd.regress.mk>
