@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp2_mont.c,v 1.1 2022/12/01 20:50:10 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp2_mont.c,v 1.2 2022/12/17 23:41:29 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -32,7 +32,7 @@ main(void)
 	if ((m = BN_new()) == NULL)
 		errx(1, "BN_new");
 
-	BN_zero_ex(m);
+	BN_zero(m);
 
 	if (BN_mod_exp2_mont(NULL, NULL, NULL, NULL, NULL, m, NULL, NULL))
 		errx(1, "BN_mod_exp2_mont succeeded");
