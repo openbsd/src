@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2015 2022/12/14 23:28:31 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2016 2022/12/18 10:29:28 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -32630,6 +32630,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_UMIS, PCI_PRODUCT_UMIS_NVME,
 	    "NVMe",
+	},
+	{
+	    PCI_VENDOR_UMIS, PCI_PRODUCT_UMIS_AM620,
+	    "AM620",
+	},
+	{
+	    PCI_VENDOR_UMIS, PCI_PRODUCT_UMIS_AM630,
+	    "AM630",
 	},
 	{
 	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5610,
