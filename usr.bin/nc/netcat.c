@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.223 2022/12/18 12:51:10 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.224 2022/12/18 12:53:18 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -700,16 +700,19 @@ main(int argc, char *argv[])
 
 			ret = 0;
 			if (vflag || zflag) {
+				int print_info = 1;
+
 				/* For UDP, make sure we are connected. */
 				if (uflag) {
-					if (udptest(s) == -1) {
+					/* No info on failed or skipped test. */
+					if ((print_info = udptest(s)) == -1) {
 						ret = 1;
 						continue;
 					}
 				}
-
-				connection_info(host, portlist[i],
-				    uflag ? "udp" : "tcp", ipaddr);
+				if (print_info == 1)
+					connection_info(host, portlist[i],
+					    uflag ? "udp" : "tcp", ipaddr);
 			}
 			if (Fflag)
 				fdpass(s);
