@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.24 2022/12/14 15:02:43 tb Exp $ */
+/*	$Id: acctproc.c,v 1.25 2022/12/18 12:13:11 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -133,8 +133,7 @@ static int
 op_thumbprint(int fd, EVP_PKEY *pkey)
 {
 	char		*thumb = NULL, *dig64 = NULL;
-	EVP_MD_CTX	*ctx = NULL;
-	unsigned char	*dig = NULL;
+	unsigned char	 dig[EVP_MAX_MD_SIZE];
 	unsigned int	 digsz;
 	int		 rc = 0;
 
@@ -161,32 +160,21 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 	 * it up in the read loop).
 	 */
 
-	if ((dig = malloc(EVP_MAX_MD_SIZE)) == NULL) {
-		warn("malloc");
+	if (!EVP_Digest(thumb, strlen(thumb), dig, &digsz, EVP_sha256(),
+	    NULL)) {
+		warnx("EVP_Digest");
 		goto out;
-	} else if ((ctx = EVP_MD_CTX_new()) == NULL) {
-		warnx("EVP_MD_CTX_new");
-		goto out;
-	} else if (!EVP_DigestInit_ex(ctx, EVP_sha256(), NULL)) {
-		warnx("EVP_SignInit_ex");
-		goto out;
-	} else if (!EVP_DigestUpdate(ctx, thumb, strlen(thumb))) {
-		warnx("EVP_SignUpdate");
-		goto out;
-	} else if (!EVP_DigestFinal_ex(ctx, dig, &digsz)) {
-		warnx("EVP_SignFinal");
-		goto out;
-	} else if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
+	}
+	if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
 		warnx("base64buf_url");
 		goto out;
-	} else if (writestr(fd, COMM_THUMB, dig64) < 0)
+	}
+	if (writestr(fd, COMM_THUMB, dig64) < 0)
 		goto out;
 
 	rc = 1;
 out:
-	EVP_MD_CTX_free(ctx);
 	free(thumb);
-	free(dig);
 	free(dig64);
 	return rc;
 }
