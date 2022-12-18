@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.27 2022/12/18 12:27:58 tb Exp $ */
+/*	$Id: acctproc.c,v 1.28 2022/12/18 12:31:57 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include <err.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -367,6 +368,11 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		}
 		break;
 	case EVP_PKEY_EC:
+		if (digsz > LONG_MAX) {
+			warnx("EC signature too long");
+			goto out;
+		}
+
 		digp = dig;
 		if ((ec_sig = d2i_ECDSA_SIG(NULL, &digp, digsz)) == NULL) {
 			warnx("d2i_ECDSA_SIG");
