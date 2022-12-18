@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.7 2022/11/06 15:33:58 patrick Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.8 2022/12/18 10:00:53 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -186,10 +186,13 @@ qcgpio_sc7180_pin_map(int pin, bus_size_t *off)
 	case 30:
 		*off = QCGPIO_SC7180_SOUTH;
 		return 30;
+#if 0
+	/* XXX: Disable until we can fix the interrupt storm. */
 	case 32:
 	case 0x140:
 		*off = QCGPIO_SC7180_NORTH;
 		return 32;
+#endif
 	case 33:
 	case 0x180:
 		*off = QCGPIO_SC7180_NORTH;
