@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.29 2022/12/18 12:35:26 tb Exp $ */
+/*	$Id: acctproc.c,v 1.30 2022/12/18 12:39:59 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -258,7 +258,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 	const EVP_MD		*evp_md = NULL;
 	ECDSA_SIG		*ec_sig = NULL;
 	const BIGNUM		*ec_sig_r = NULL, *ec_sig_s = NULL;
-	int			 bn_len, cc, rc = 0;
+	int			 bn_len, sign_len, rc = 0;
 	char			*nonce = NULL, *pay = NULL, *pay64 = NULL;
 	char			*prot = NULL, *prot64 = NULL;
 	char			*sign = NULL, *dig64 = NULL, *fin = NULL;
@@ -332,8 +332,8 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 
 	/* Now the signature material. */
 
-	cc = asprintf(&sign, "%s.%s", prot64, pay64);
-	if (cc == -1) {
+	sign_len = asprintf(&sign, "%s.%s", prot64, pay64);
+	if (sign_len == -1) {
 		warn("asprintf");
 		sign = NULL;
 		goto out;
@@ -349,7 +349,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		warnx("EVP_DigestSignInit");
 		goto out;
 	}
-	if (!EVP_DigestSign(ctx, NULL, &digsz, sign, cc)) {
+	if (!EVP_DigestSign(ctx, NULL, &digsz, sign, sign_len)) {
 		warnx("EVP_DigestSign");
 		goto out;
 	}
@@ -357,7 +357,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		warn("malloc");
 		goto out;
 	}
-	if (!EVP_DigestSign(ctx, dig, &digsz, sign, cc)) {
+	if (!EVP_DigestSign(ctx, dig, &digsz, sign, sign_len)) {
 		warnx("EVP_DigestSign");
 		goto out;
 	}
