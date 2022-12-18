@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.6 2022/12/06 18:50:59 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.7 2022/12/18 13:18:36 aoyama Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,6 +59,8 @@
 
 #include "assym.h"
 #include "ksyms.h"
+
+#include <sys/reboot.h>		/* B_DEVMAGIC, B_MAGICMASK */
 
 #include <machine/asm.h>
 #include <machine/board.h>
@@ -197,11 +199,20 @@ ASLOCAL(main_init)
 	or.u	%r5, %r0, %hi16(first_addr)
 	st	%r4, %r5, %lo16(first_addr)
 
+	/* check bootdev (saved in %r24) magic number */
+	or.u	%r10, %r0,  %hi16(B_MAGICMASK)
+	or	%r10, %r10, %lo16(B_MAGICMASK)
+	and	%r11, %r24, %r10
+	or.u	%r10, %r0,  %hi16(B_DEVMAGIC)
+	or	%r10, %r10, %lo16(B_DEVMAGIC)
+	cmp	%r11, %r10, %r11
+	bb1	ne,   %r11, 1f				/* no magic, skip */
+
 	or.u	%r5,  %r0, %hi16(bootdev)
 	st	%r24, %r5, %lo16(bootdev)
 	or.u	%r5,  %r0, %hi16(boothowto)
 	st	%r25, %r5, %lo16(boothowto)
-
+1:
 	/*
 	 * Have curcpu() point to a valid cpuinfo structure,
 	 * and initialize cr17.
