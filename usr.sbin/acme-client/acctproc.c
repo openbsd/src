@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.28 2022/12/18 12:31:57 tb Exp $ */
+/*	$Id: acctproc.c,v 1.29 2022/12/18 12:35:26 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -18,16 +18,18 @@
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <openssl/pem.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/ecdsa.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
 
 #include "extern.h"
