@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.24 2022/12/17 13:53:38 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.25 2022/12/18 12:04:55 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -177,9 +178,17 @@ revokeproc(int fd, const char *certfile, int force,
 		}
 		if (j == altsz) {
 			if (revocate) {
-				/* XXX strnvis? */
-				warnx("%s: unexpected SAN entry: %.*s",
-				    certfile, name_len, name_buf);
+				char *visbuf;
+
+				visbuf = calloc(4, name_len + 1);
+				if (visbuf == NULL) {
+					warn("%s: unexpected SAN", certfile);
+					goto out;
+				}
+				strvisx(visbuf, name_buf, name_len, VIS_SAFE);
+				warnx("%s: unexpected SAN entry: %s",
+				    certfile, visbuf);
+				free(visbuf);
 				goto out;
 			}
 			force = 2;
@@ -187,7 +196,6 @@ revokeproc(int fd, const char *certfile, int force,
 		}
 		if (found[j]++) {
 			if (revocate) {
-				/* XXX strnvis? */
 				warnx("%s: duplicate SAN entry: %.*s",
 				    certfile, name_len, name_buf);
 				goto out;
