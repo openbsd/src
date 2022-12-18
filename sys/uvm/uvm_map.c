@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.304 2022/11/17 18:53:05 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.305 2022/12/18 23:41:17 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4096,7 +4096,7 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
  * uvm_map_checkprot: check protection in map
  *
  * => must allow specific protection in a fully allocated region.
- * => map mut be read or write locked by caller.
+ * => map must be read or write locked by caller.
  */
 boolean_t
 uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
