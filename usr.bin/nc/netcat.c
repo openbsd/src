@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.220 2022/12/18 12:45:34 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.221 2022/12/18 12:47:31 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -131,7 +131,7 @@ int	timeout_connect(int, const struct sockaddr *, socklen_t);
 int	socks_connect(const char *, const char *, struct addrinfo,
 	    const char *, const char *, struct addrinfo, int, const char *);
 int	udptest(int);
-void	connection_info(const char *, const char *, const char *);
+void	connection_info(const char *, const char *, const char *, const char *);
 int	unix_bind(char *, int);
 int	unix_connect(char *);
 int	unix_listen(char *);
@@ -708,7 +708,8 @@ main(int argc, char *argv[])
 					}
 				}
 
-				connection_info(host, portlist[i], ipaddr);
+				connection_info(host, portlist[i],
+				    uflag ? "udp" : "tcp", ipaddr);
 			}
 			if (Fflag)
 				fdpass(s);
@@ -1519,7 +1520,8 @@ udptest(int s)
 }
 
 void
-connection_info(const char *host, const char *port, const char *ipaddr)
+connection_info(const char *host, const char *port, const char *proto,
+    const char *ipaddr)
 {
 	struct servent *sv;
 
@@ -1527,7 +1529,7 @@ connection_info(const char *host, const char *port, const char *ipaddr)
 	if (nflag)
 		sv = NULL;
 	else {
-		sv = getservbyport(ntohs(atoi(port)), uflag ? "udp" : "tcp");
+		sv = getservbyport(ntohs(atoi(port)), proto);
 	}
 
 	fprintf(stderr, "Connection to %s", host);
@@ -1539,8 +1541,8 @@ connection_info(const char *host, const char *port, const char *ipaddr)
 	if (!nflag && !xflag && strcmp(host, ipaddr) != 0)
 		fprintf(stderr, " (%s)", ipaddr);
 
-	fprintf(stderr, " %s port [%s/%s] succeeded!\n",
-	    port, uflag ? "udp" : "tcp", sv ? sv->s_name : "*");
+	fprintf(stderr, " %s port [%s/%s] succeeded!\n", port, proto,
+	    sv ? sv->s_name : "*");
 }
 
 void
