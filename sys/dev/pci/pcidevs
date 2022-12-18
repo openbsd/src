@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2015 2022/12/14 23:28:31 jsg Exp $
+$OpenBSD: pcidevs,v 1.2016 2022/12/18 10:29:28 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -9127,6 +9127,8 @@ product UMC UM8891N		0xe891	UM8891N
 
 /* Shenzhen Unionmemory Information System products */
 product UMIS NVME		0x2263	NVMe
+product UMIS AM620		0x6202	AM620
+product UMIS AM630		0x6303	AM630
 
 /* US Robotics */
 product USR 3CP5610		0x1008	3CP5610
