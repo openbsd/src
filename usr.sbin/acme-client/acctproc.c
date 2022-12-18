@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.25 2022/12/18 12:13:11 tb Exp $ */
+/*	$Id: acctproc.c,v 1.26 2022/12/18 12:22:30 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -256,14 +256,15 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 	EC_KEY			*ec;
 	ECDSA_SIG		*ec_sig = NULL;
 	const BIGNUM		*ec_sig_r = NULL, *ec_sig_s = NULL;
+	unsigned int		 bufsz, degree, bn_len, r_len, s_len;
 	int			 cc, rc = 0;
-	unsigned int		 digsz, bufsz, degree, bn_len, r_len, s_len;
 	char			*nonce = NULL, *pay = NULL, *pay64 = NULL;
 	char			*prot = NULL, *prot64 = NULL;
 	char			*sign = NULL, *dig64 = NULL, *fin = NULL;
 	char			*url = NULL, *kid = NULL, *alg = NULL;
-	unsigned char		*dig = NULL, *buf = NULL;
 	const unsigned char	*digp;
+	unsigned char		*dig = NULL, *buf = NULL;
+	size_t			 digsz;
 
 	/* Read our payload and nonce from the requestor. */
 
@@ -337,27 +338,26 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		goto out;
 	}
 
-	if ((dig = malloc(EVP_PKEY_size(pkey))) == NULL) {
-		warn("malloc");
-		goto out;
-	}
-
-	/*
-	 * Here we go: using our RSA key as merged into the envelope,
-	 * sign a SHA256 digest of our message.
-	 */
+	/* Sign the message. */
 
 	if ((ctx = EVP_MD_CTX_new()) == NULL) {
 		warnx("EVP_MD_CTX_new");
 		goto out;
-	} else if (!EVP_SignInit_ex(ctx, evp_md, NULL)) {
-		warnx("EVP_SignInit_ex");
+	}
+	if (!EVP_DigestSignInit(ctx, NULL, evp_md, NULL, pkey)) {
+		warnx("EVP_DigestSignInit");
 		goto out;
-	} else if (!EVP_SignUpdate(ctx, sign, strlen(sign))) {
-		warnx("EVP_SignUpdate");
+	}
+	if (!EVP_DigestSign(ctx, NULL, &digsz, sign, cc)) {
+		warnx("EVP_DigestSign");
 		goto out;
-	} else if (!EVP_SignFinal(ctx, dig, &digsz, pkey)) {
-		warnx("EVP_SignFinal");
+	}
+	if ((dig = malloc(digsz)) == NULL) {
+		warn("malloc");
+		goto out;
+	}
+	if (!EVP_DigestSign(ctx, dig, &digsz, sign, cc)) {
+		warnx("EVP_DigestSign");
 		goto out;
 	}
 
