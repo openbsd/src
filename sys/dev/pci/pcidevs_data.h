@@ -32336,6 +32336,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SD",
 	},
 	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000_HB,
+	    "TM8000 Host",
+	},
+	{
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000_AGP,
+	    "TM8000 AGP",
+	},
+	{
 	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NB,
 	    "Northbridge",
 	},
