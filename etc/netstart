@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.233 2022/12/18 05:51:14 kn Exp $
+#	$OpenBSD: netstart,v 1.234 2022/12/18 15:52:52 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -173,8 +173,8 @@ ifstart() {
 		chown -LR root:wheel $_hn
 	fi
 
-	# Skip missing physical interface, virtual ones were created up front.
-	ifconfig $_if >/dev/null 2>&1 || return
+	# Check for ifconfig'able interface, except if -n option is specified.
+	ifcreate $_if || return
 
 	# Parse the hostname.if(5) file and fill _cmds array with interface
 	# configuration commands.
