@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.222 2022/12/18 12:48:28 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.223 2022/12/18 12:51:10 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1509,6 +1509,10 @@ int
 udptest(int s)
 {
 	int i, ret;
+
+	/* Only write to the socket in scan mode or interactive mode. */
+	if (!zflag && !isatty(STDIN_FILENO))
+		return 0;
 
 	for (i = 0; i <= 3; i++) {
 		if (write(s, "X", 1) == 1)
