@@ -1,5 +1,5 @@
-.\"	$OpenBSD: BIO_f_cipher.3,v 1.12 2019/06/06 01:06:58 schwarze Exp $
-.\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
+.\" $OpenBSD: BIO_f_cipher.3,v 1.13 2022/12/18 19:35:36 schwarze Exp $
+.\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2003, 2015, 2016 The OpenSSL Project.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: December 18 2022 $
 .Dt BIO_F_CIPHER 3
 .Os
 .Sh NAME
@@ -132,6 +132,13 @@ with the standard cipher routines to set it up.
 This is useful when
 .Fn BIO_set_cipher
 is not flexible enough for the applications needs.
+.Pp
+When a chain containing a cipher BIO is copied with
+.Xr BIO_dup_chain 3 ,
+the cipher context is automatically copied from the existing BIO object
+to the new one and the init flag that can be retrieved with
+.Xr BIO_get_init 3
+is set to 1.
 .Pp
 When encrypting,
 .Xr BIO_flush 3

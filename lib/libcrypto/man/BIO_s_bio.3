@@ -1,5 +1,5 @@
-.\"	$OpenBSD: BIO_s_bio.3,v 1.14 2022/03/31 17:27:16 naddy Exp $
-.\"	OpenSSL c03726ca Aug 27 12:28:08 2015 -0400
+.\" $OpenBSD: BIO_s_bio.3,v 1.15 2022/12/18 19:35:36 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by
 .\" Lutz Jaenicke <Lutz.Jaenicke@aet.TU-Cottbus.DE>,
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: December 18 2022 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -184,6 +184,10 @@ to
 .Fa size .
 If the size is not initialized, a default value is used.
 This is currently 17K, sufficient for a maximum size TLS record.
+When a chain containing a BIO pair is copied with
+.Xr BIO_dup_chain 3 ,
+the write buffer size is automatically copied
+from the original BIO object to the new one.
 .Pp
 .Fn BIO_get_write_buf_size
 returns the size of the write buffer.

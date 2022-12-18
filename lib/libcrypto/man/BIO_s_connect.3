@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_connect.3,v 1.13 2022/12/18 19:15:38 schwarze Exp $
+.\" $OpenBSD: BIO_s_connect.3,v 1.14 2022/12/18 19:35:36 schwarze Exp $
 .\" full merge up to: OpenSSL 0e474b8b Nov 1 15:45:49 2015 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -289,6 +289,17 @@ If this is returned, it is an indication
 that a connection attempt would block.
 The application should then take appropriate action to wait
 until the underlying socket has connected and retry the call.
+.Pp
+When a chain containing a connect BIO is copied with
+.Xr BIO_dup_chain 3 ,
+.Fn BIO_set_conn_hostname ,
+.Fn BIO_set_conn_port ,
+.Fn BIO_set_nbio ,
+and
+.Xr BIO_set_info_callback 3
+are called internally to automatically copy the hostname, port,
+non-blocking I/O flag, and info callback from the original BIO object
+to the new one.
 .Pp
 .Fn BIO_set_conn_hostname ,
 .Fn BIO_set_conn_port ,
