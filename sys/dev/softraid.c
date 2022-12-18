@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.427 2022/09/11 19:34:40 miod Exp $ */
+/* $OpenBSD: softraid.c,v 1.428 2022/12/18 13:10:08 kn Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3620,6 +3620,16 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct sr_discipline *sd,
 			sr_error(sc, "volume %s not found", bd->bd_dev);
 			goto bad;
 		}
+	}
+
+	/*
+	 * XXX Better check for mounted file systems and refuse to detach any
+	 * volume that is actively in use.
+	 */
+	if (bcmp(&sr_bootuuid, &sd->sd_meta->ssdi.ssd_uuid,
+	    sizeof(sr_bootuuid)) == 0) {
+		sr_error(sc, "refusing to delete boot volume");
+		goto bad;
 	}
 
 	sd->sd_deleted = 1;
