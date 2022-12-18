@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.459 2022/11/26 07:26:43 jmc Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.460 2022/12/18 18:56:38 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2522,13 +2522,10 @@ ieee80211_status(void)
 		bcopy(bssid.i_bssid, &nr.nr_macaddr, sizeof(nr.nr_macaddr));
 		strlcpy(nr.nr_ifname, ifname, sizeof(nr.nr_ifname));
 		if (ioctl(sock, SIOCG80211NODE, &nr) == 0) {
-			if (nr.nr_rssi) {
-				if (nr.nr_max_rssi)
-					printf(" %u%%",
-					    IEEE80211_NODEREQ_RSSI(&nr));
-				else
-					printf(" %ddBm", nr.nr_rssi);
-			}
+			if (nr.nr_max_rssi)
+				printf(" %u%%", IEEE80211_NODEREQ_RSSI(&nr));
+			else
+				printf(" %ddBm", nr.nr_rssi);
 			assocfail = nr.nr_assoc_fail;
 		}
 	}
