@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_shift.c,v 1.2 2022/12/17 22:30:39 tb Exp $ */
+/*	$OpenBSD: bn_shift.c,v 1.3 2022/12/18 00:22:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -468,7 +468,7 @@ struct benchmark benchmarks[] = {
 
 #define N_BENCHMARKS (sizeof(benchmarks) / sizeof(benchmarks[0]))
 
-static int benchmark_stop;
+static volatile sig_atomic_t benchmark_stop;
 
 static void
 benchmark_sig_alarm(int sig)
