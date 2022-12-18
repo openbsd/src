@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.26 2022/12/18 12:22:30 tb Exp $ */
+/*	$Id: acctproc.c,v 1.27 2022/12/18 12:27:58 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -253,11 +253,9 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 {
 	EVP_MD_CTX		*ctx = NULL;
 	const EVP_MD		*evp_md = NULL;
-	EC_KEY			*ec;
 	ECDSA_SIG		*ec_sig = NULL;
 	const BIGNUM		*ec_sig_r = NULL, *ec_sig_s = NULL;
-	unsigned int		 bufsz, degree, bn_len, r_len, s_len;
-	int			 cc, rc = 0;
+	int			 bn_len, cc, rc = 0;
 	char			*nonce = NULL, *pay = NULL, *pay64 = NULL;
 	char			*prot = NULL, *prot64 = NULL;
 	char			*sign = NULL, *dig64 = NULL, *fin = NULL;
@@ -369,40 +367,35 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		}
 		break;
 	case EVP_PKEY_EC:
-		if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
-			warnx("EVP_PKEY_get0_EC_KEY");
-			goto out;
-		}
-		degree = EC_GROUP_get_degree(EC_KEY_get0_group(ec));
-		bn_len = (degree + 7) / 8;
-
-		digp = dig; /* d2i_ECDSA_SIG advances digp */
+		digp = dig;
 		if ((ec_sig = d2i_ECDSA_SIG(NULL, &digp, digsz)) == NULL) {
 			warnx("d2i_ECDSA_SIG");
 			goto out;
 		}
 
-		ECDSA_SIG_get0(ec_sig, &ec_sig_r, &ec_sig_s);
-
-		r_len = BN_num_bytes(ec_sig_r);
-		s_len = BN_num_bytes(ec_sig_s);
-
-		if((r_len > bn_len) || (s_len > bn_len)) {
+		if ((ec_sig_r = ECDSA_SIG_get0_r(ec_sig)) == NULL ||
+		    (ec_sig_s = ECDSA_SIG_get0_s(ec_sig)) == NULL) {
 			warnx("ECDSA_SIG_get0");
 			goto out;
 		}
 
-		bufsz = 2 * bn_len;
-		if ((buf = calloc(1, bufsz)) == NULL) {
+		if ((bn_len = (EVP_PKEY_bits(pkey) + 7) / 8) <= 0) {
+			warnx("EVP_PKEY_bits");
+			goto out;
+		}
+
+		if ((buf = calloc(2, bn_len)) == NULL) {
 			warnx("calloc");
 			goto out;
 		}
 
-		/* put r and s in with leading zeros if any */
-		BN_bn2bin(ec_sig_r, buf + bn_len - r_len);
-		BN_bn2bin(ec_sig_s, buf + bufsz - s_len);
+		if (BN_bn2binpad(ec_sig_r, buf, bn_len) != bn_len ||
+		    BN_bn2binpad(ec_sig_s, buf + bn_len, bn_len) != bn_len) {
+			warnx("BN_bn2binpad");
+			goto out;
+		}
 
-		if ((dig64 = base64buf_url((char *)buf, bufsz)) == NULL) {
+		if ((dig64 = base64buf_url((char *)buf, 2 * bn_len)) == NULL) {
 			warnx("base64buf_url");
 			goto out;
 		}
