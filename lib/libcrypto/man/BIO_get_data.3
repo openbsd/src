@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_get_data.3,v 1.5 2022/12/17 22:21:24 schwarze Exp $
+.\" $OpenBSD: BIO_get_data.3,v 1.6 2022/12/18 21:45:47 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 17 2022 $
+.Dd $Mdocdate: December 18 2022 $
 .Dt BIO_GET_DATA 3
 .Os
 .Sh NAME
@@ -75,6 +75,11 @@
 .Nm BIO_clear_flags ,
 .Nm BIO_test_flags ,
 .Nm BIO_get_flags ,
+.Nm BIO_set_retry_read ,
+.Nm BIO_set_retry_write ,
+.Nm BIO_set_retry_special ,
+.Nm BIO_clear_retry_flags ,
+.Nm BIO_get_retry_flags ,
 .Nm BIO_set_init ,
 .Nm BIO_get_init ,
 .Nm BIO_set_shutdown ,
@@ -109,6 +114,26 @@
 .Ft int
 .Fo BIO_get_flags
 .Fa "const BIO *a"
+.Fc
+.Ft void
+.Fo BIO_set_retry_read
+.Fa "BIO *a"
+.Fc
+.Ft void
+.Fo BIO_set_retry_write
+.Fa "BIO *a"
+.Fc
+.Ft void
+.Fo BIO_set_retry_special
+.Fa "BIO *a"
+.Fc
+.Ft void
+.Fo BIO_clear_retry_flags
+.Fa "BIO *a"
+.Fc
+.Ft int
+.Fo BIO_get_retry_flags
+.Fa "BIO *a"
 .Fc
 .Ft void
 .Fo BIO_set_init
@@ -174,6 +199,60 @@ Application programs usually call macros like those documented in
 rather than calling
 .Fn BIO_test_flags
 directly.
+Flag bits correspond to accessor functions as follows:
+.Pp
+.Bl -tag -width BIO_FLAGS_SHOULD_RETRY -compact
+.It Dv BIO_FLAGS_READ
+.Xr BIO_should_read 3
+.It Dv BIO_FLAGS_WRITE
+.Xr BIO_should_write 3
+.It Dv BIO_FLAGS_IO_SPECIAL
+.Xr BIO_should_io_special 3
+.It Dv BIO_FLAGS_RWS
+.Xr BIO_retry_type 3
+.It Dv BIO_FLAGS_SHOULD_RETRY
+.Xr BIO_should_retry 3
+.It Dv BIO_FLAGS_BASE64_NO_NL
+see
+.Xr BIO_f_base64 3
+.It Dv BIO_FLAGS_MEM_RDONLY
+see
+.Xr BIO_s_mem 3
+.El
+.Pp
+In particular,
+.Dv BIO_FLAGS_RWS
+is the bitwise OR of
+.Dv BIO_FLAGS_READ ,
+.Dv BIO_FLAGS_WRITE ,
+and
+.Dv BIO_FLAGS_IO_SPECIAL .
+.Pp
+.Fn BIO_set_retry_read ,
+.Fn BIO_set_retry_write ,
+and
+.Fn BIO_set_retry_special
+set the
+.Dv BIO_FLAGS_READ ,
+.Dv BIO_FLAGS_WRITE ,
+and
+.Dv BIO_FLAGS_IO_SPECIAL
+flag bit in
+.Fa b ,
+respectively.
+They all set the
+.Dv BIO_FLAGS_SHOULD_RETRY
+flag bit, too.
+.Pp
+.Fn BIO_clear_retry_flags
+clears the flag bits
+.Dv BIO_FLAGS_READ ,
+.Dv BIO_FLAGS_WRITE ,
+.Dv BIO_FLAGS_IO_SPECIAL ,
+and
+.Dv BIO_FLAGS_SHOULD_RETRY
+in
+.Fa b .
 .Pp
 The
 .Fn BIO_set_init
@@ -223,7 +302,7 @@ or
 if none is set.
 .Pp
 .Fn BIO_test_flags
-returns the bitwise OR of the
+returns the bitwise AND of the
 .Fa flags
 argument and the flags stored in
 .Fa a .
@@ -234,6 +313,12 @@ is set.
 .Pp
 .Fn BIO_get_flags
 returns all the flags currently stored in
+.Fa a .
+.Pp
+.Fn BIO_get_retry_flags
+returns the bitwise AND of
+.Pq Dv BIO_FLAGS_RWS | BIO_FLAGS_SHOULD_RETRY
+and the flags stored in
 .Fa a .
 .Pp
 .Fn BIO_get_init
@@ -251,9 +336,14 @@ or with
 .Xr BIO_set_close 3 ,
 .Xr BIO_should_retry 3
 .Sh HISTORY
-.Fn BIO_set_flags
+.Fn BIO_set_flags ,
+.Fn BIO_clear_flags ,
+.Fn BIO_set_retry_read ,
+.Fn BIO_set_retry_write ,
+.Fn BIO_set_retry_special ,
+.Fn BIO_clear_retry_flags ,
 and
-.Fn BIO_clear_flags
+.Fn BIO_get_retry_flags
 first appeared in SSLeay 0.8.0 and
 .Fn BIO_get_flags
 in SSLeay 0.9.0.
