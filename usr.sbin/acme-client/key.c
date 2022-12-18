@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.6 2022/02/22 13:45:09 tb Exp $ */
+/*	$Id: key.c,v 1.7 2022/12/18 12:08:49 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -33,7 +33,6 @@
  * Default number of bits when creating a new RSA key.
  */
 #define	KBITS 4096
-#define ECCTYPE NID_secp384r1
 
 /*
  * Create an RSA key with the default KBITS number of bits.
@@ -81,7 +80,7 @@ ec_key_create(FILE *f, const char *fname)
 	EC_KEY		*eckey = NULL;
 	EVP_PKEY	*pkey = NULL;
 
-	if ((eckey = EC_KEY_new_by_curve_name(ECCTYPE)) == NULL ) {
+	if ((eckey = EC_KEY_new_by_curve_name(NID_secp384r1)) == NULL ) {
 		warnx("EC_KEY_new_by_curve_name");
 		goto err;
 	}
