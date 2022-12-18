@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2022/11/18 06:43:39 anton Exp $
+#	$OpenBSD: Makefile,v 1.12 2022/12/18 12:53:50 tb Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -681,11 +681,9 @@ run-udp-probe:
 	${CLIENT_NC} -u -v -n 127.0.0.1 ${PORT} ${CLIENT_BG}
 	${TRANSFER_WAIT}
 	grep '^greeting$$' client.out
-	# client sends 4 X UDP packets to check connection
-	grep '^XXXXcommand$$' server.out
+	grep '^command$$' server.out
 	grep 'Bound on 127.0.0.1 ' server.err
 	grep 'Connection received on 127.0.0.1 ' server.err
-	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 # UDP resolver
 
@@ -727,11 +725,10 @@ run-udp-keep:
 	# server does not connect, nothing reaches the client
 	${TRANSFER_SERVER_WAIT}
 	! grep 'greeting' client.out
-	grep '^XXXXcommand$$' server.out
+	grep '^command$$' server.out
 	grep 'Bound on 127.0.0.1 ' server.err
 	# client does not connect
 	! grep 'Connection received on ' server.err
-	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 	# kill client and reconnect with a new one
 	:> server.err
 	pkill -l -f "^${NC} .* 127.0.0.1 ${PORT}$$"
@@ -741,12 +738,11 @@ run-udp-keep:
 	${TRANSFER_SERVER_WAIT}
 	! grep 'greeting' client.out
 	# truncation of log results in NUL bytes, do not match ^
-	grep 'XXXXcommand$$' server.out
+	grep 'command$$' server.out
 	# server keeps socket and does not bind again
 	! grep 'Bound on ' server.err
 	# client does not connect
 	! grep 'Connection received on ' server.err
-	grep 'Connection to 127.0.0.1 .* succeeded!' client.err
 
 REGRESS_TARGETS +=	run-udp-sleep
 run-udp-sleep:
