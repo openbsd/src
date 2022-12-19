@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.73 2022/12/16 08:13:40 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.74 2022/12/19 07:30:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -39,7 +39,7 @@ const struct cmd_entry cmd_send_keys_entry = {
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
-	.flags = CMD_AFTERHOOK|CMD_CLIENT_CFLAG,
+	.flags = CMD_AFTERHOOK|CMD_CLIENT_CFLAG|CMD_CLIENT_CANFAIL,
 	.exec = cmd_send_keys_exec
 };
 
@@ -71,6 +71,8 @@ cmd_send_keys_inject_key(struct cmdq_item *item, struct cmdq_item *after,
 	struct key_event		*event;
 
 	if (args_has(args, 'K')) {
+		if (tc == NULL)
+			return (item);
 		event = xmalloc(sizeof *event);
 		event->key = key;
 		memset(&event->m, 0, sizeof event->m);
