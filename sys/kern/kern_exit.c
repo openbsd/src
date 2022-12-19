@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.208 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.209 2022/12/19 00:22:12 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -517,7 +517,8 @@ loop:
 				proc_finish_wait(q, p);
 			return (0);
 		}
-		if (pr->ps_flags & PS_TRACED &&
+		if ((options & WTRAPPED) &&
+		    pr->ps_flags & PS_TRACED &&
 		    (pr->ps_flags & PS_WAITED) == 0 && pr->ps_single &&
 		    pr->ps_single->p_stat == SSTOP &&
 		    (pr->ps_single->p_flag & P_SUSPSINGLE) == 0) {
@@ -636,6 +637,7 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 
 	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WCONTINUED))
 		return (EINVAL);
+	options |= WEXITED | WTRAPPED;
 
 	if (SCARG(uap, pid) == WAIT_MYPGRP) {
 		idtype = P_PGID;
@@ -652,7 +654,7 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 	}
 
 	error = dowait6(q, idtype, id,
-	    SCARG(uap, status) ? &status : NULL, options | WEXITED,
+	    SCARG(uap, status) ? &status : NULL, options,
 	    SCARG(uap, rusage) ? &ru : NULL, NULL, retval);
 	if (error == 0 && *retval > 0 && SCARG(uap, status)) {
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
@@ -681,9 +683,9 @@ sys_waitid(struct proc *q, void *v, register_t *retval)
 	int options = SCARG(uap, options);
 	int error;
 
-	if (options &~ (WSTOPPED|WCONTINUED|WEXITED|WNOHANG|WNOWAIT))
+	if (options &~ (WSTOPPED|WCONTINUED|WEXITED|WTRAPPED|WNOHANG|WNOWAIT))
 		return (EINVAL);
-	if ((options & (WSTOPPED|WCONTINUED|WEXITED)) == 0)
+	if ((options & (WSTOPPED|WCONTINUED|WEXITED|WTRAPPED)) == 0)
 		return (EINVAL);
 	if (idtype != P_ALL && idtype != P_PID && idtype != P_PGID)
 		return (EINVAL);

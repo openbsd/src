@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.19 2022/10/25 16:08:26 kettenis Exp $	*/
+/*	$OpenBSD: wait.h,v 1.20 2022/12/19 00:22:11 guenther Exp $	*/
 /*	$NetBSD: wait.h,v 1.11 1996/04/09 20:55:51 cgd Exp $	*/
 
 /*
@@ -75,16 +75,15 @@
  * about them is returned. WNOWAIT only requests information about zombie,
  * leaving the proc around, available for later waits.
  */
-#define WNOHANG		1	/* don't hang in wait */
-#define WUNTRACED	2	/* tell about stopped, untraced children */
+#define WNOHANG		0x01	/* don't hang in wait */
+#define WUNTRACED	0x02	/* report stopped-by-signal processes */
+#define WCONTINUED	0x08	/* report job control continued processes */
+#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE >= 420
+#define WEXITED		0x04	/* report exited processes */
 #define WSTOPPED	WUNTRACED
-#define	WCONTINUED	8	/* report a job control continued process */
-#if __POSIX_VISIBLE >= 200809 || _XPG_VISIBLE
-#define WEXITED		4	/* wait for exited processes */
-#define WNOWAIT		16	/* poll only */
-#endif
+#define WNOWAIT		0x10	/* poll only */
+#define WTRAPPED	0x20	/* report stopped-by-tracing processes */
 
-#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE
 typedef enum {
 	P_ALL,
 	P_PGID,
@@ -108,7 +107,7 @@ struct rusage;	/* forward declaration */
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
-#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE
+#if __POSIX_VISIBLE >= 200809 || __XPG_VISIBLE >= 420
 int	waitid(idtype_t, id_t, siginfo_t *, int);
 #endif
 #if __BSD_VISIBLE
