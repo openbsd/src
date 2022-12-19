@@ -1739,6 +1739,7 @@
 ./usr/share/man/man2/utrace.2
 ./usr/share/man/man2/vfork.2
 ./usr/share/man/man2/wait.2
+./usr/share/man/man2/waitid.2
 ./usr/share/man/man2/write.2
 ./usr/share/man/man2/ypconnect.2
 ./usr/share/man/man3/ACCESS_DESCRIPTION_new.3
@@ -1775,6 +1776,7 @@
 ./usr/share/man/man3/BF_set_key.3
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_dump.3
+./usr/share/man/man3/BIO_dup_chain.3
 ./usr/share/man/man3/BIO_f_asn1.3
 ./usr/share/man/man3/BIO_f_base64.3
 ./usr/share/man/man3/BIO_f_buffer.3
