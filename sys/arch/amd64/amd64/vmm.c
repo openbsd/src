@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.332 2022/11/09 17:53:12 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.333 2022/12/19 04:48:07 dlg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -117,6 +117,7 @@ struct vmm_softc {
 	struct device		sc_dev;		/* [r] */
 
 	/* Suspend/Resume Synchronization */
+	struct rwlock		sc_slock;
 	struct refcnt		sc_refcnt;
 	volatile unsigned int	sc_status;	/* [a] */
 #define VMM_SUSPENDED		(unsigned int) 0
@@ -403,10 +404,9 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
+	rw_init(&sc->sc_slock, "vmmslk");
 	sc->sc_status = VMM_ACTIVE;
-
 	refcnt_init(&sc->sc_refcnt);
-	refcnt_rele(&sc->sc_refcnt);
 
 	sc->nr_vmx_cpus = 0;
 	sc->nr_svm_cpus = 0;
@@ -563,20 +563,17 @@ int
 vmm_activate(struct device *self, int act)
 {
 	struct cpu_info		*ci = curcpu();
-	unsigned int		 old_state;
 
 	switch (act) {
 	case DVACT_QUIESCE:
 		/* Block device users as we're suspending operation. */
-		old_state = atomic_cas_uint(&vmm_softc->sc_status, VMM_ACTIVE,
-		    VMM_SUSPENDED);
-		if (old_state != VMM_ACTIVE)
-			DPRINTF("%s: invalid device state on quiesce (%d)\n",
-			    __func__, old_state);
+		rw_enter_write(&vmm_softc->sc_slock);
+		KASSERT(vmm_softc->sc_status == VMM_ACTIVE);
+		vmm_softc->sc_status = VMM_SUSPENDED;
+		rw_exit_write(&vmm_softc->sc_slock);
 
 		/* Wait for any device users to finish. */
-		while (refcnt_read(&vmm_softc->sc_refcnt) > 0)
-			tsleep_nsec(&vmm_softc, PPAUSE, "vmm", MSEC_TO_NSEC(1));
+		refcnt_finalize(&vmm_softc->sc_refcnt, "vmmsusp");
 
 		/* If we're not in vmm mode, nothing to do. */
 		if ((ci->ci_flags & CPUF_VMM) == 0)
@@ -598,14 +595,14 @@ vmm_activate(struct device *self, int act)
 			vmm_start();
 
 		/* Set the device back to active. */
-		old_state = atomic_cas_uint(&vmm_softc->sc_status,
-		    VMM_SUSPENDED, VMM_ACTIVE);
-		if (old_state != VMM_SUSPENDED)
-			DPRINTF("%s: invalid device state on wakeup (%d)\n",
-			    __func__, old_state);
+		rw_enter_write(&vmm_softc->sc_slock);
+		KASSERT(vmm_softc->sc_status == VMM_SUSPENDED);
+		refcnt_init(&vmm_softc->sc_refcnt);
+		vmm_softc->sc_status = VMM_ACTIVE;
+		rw_exit_write(&vmm_softc->sc_slock);
 
 		/* Notify any waiting device users. */
-		wakeup(&vmm_softc);
+		wakeup(&vmm_softc->sc_status);
 		break;
 	}
 
@@ -652,21 +649,19 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	KERNEL_UNLOCK();
 
-	refcnt_take(&vmm_softc->sc_refcnt);
-	while (atomic_load_int(&vmm_softc->sc_status) != VMM_ACTIVE) {
-		refcnt_rele(&vmm_softc->sc_refcnt);
-		/* Wait for the signal that we're running again. */
-		ret = tsleep_nsec(&vmm_softc, PWAIT | PCATCH, "vmm",
-		    MSEC_TO_NSEC(1));
-		if (ret != ERESTART && ret != EINTR && ret != EWOULDBLOCK
-		    && ret != 0) {
-			printf("%s: unhandled wakeup (%d) for device\n",
-			    __func__, ret);
-			ret = EBUSY;
-			goto out;
+	ret = rw_enter(&vmm_softc->sc_slock, RW_READ | RW_INTR);
+	if (ret != 0)
+		return (ret);
+	while (vmm_softc->sc_status != VMM_ACTIVE) {
+		ret = rwsleep_nsec(&vmm_softc->sc_status, &vmm_softc->sc_slock,
+		    PWAIT | PCATCH, "vmmresume", INFSLP);
+		if (ret != 0) {
+			rw_exit(&vmm_softc->sc_slock);
+			return (ret);
 		}
-		refcnt_take(&vmm_softc->sc_refcnt);
 	}
+	refcnt_take(&vmm_softc->sc_refcnt);
+	rw_exit(&vmm_softc->sc_slock);
 
 	switch (cmd) {
 	case VMM_IOC_CREATE:
@@ -712,8 +707,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ret = ENOTTY;
 	}
 
-	refcnt_rele(&vmm_softc->sc_refcnt);
-out:
+	refcnt_rele_wake(&vmm_softc->sc_refcnt);
+
 	KERNEL_LOCK();
 
 	return (ret);
