@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.174 2022/01/09 05:42:37 jsg Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.175 2022/12/19 08:16:36 kn Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -526,7 +526,7 @@ struct sr_discipline {
 #define	SR_MD_RAID6		8
 #define	SR_MD_CONCAT		9
 #define	SR_MD_RAID1C		10
-	char			sd_name[10];	/* human readable dis name */
+	char			sd_name[10];	/* human readable discipline name */
 	u_int16_t		sd_target;	/* scsibus target discipline uses */
 
 	u_int32_t		sd_capabilities;
