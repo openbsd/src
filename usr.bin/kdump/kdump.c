@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.150 2022/09/08 16:04:31 mbuhl Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.151 2022/12/19 22:55:12 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -145,6 +145,7 @@ static void flagsandmodename(int);
 static void clockname(int);
 static void sockoptlevelname(int);
 static void ktraceopname(int);
+static void idtypeandid(int);
 
 static int screenwidth;
 
@@ -588,6 +589,8 @@ static void (*formatters[])(int) = {
 	gidname,
 	syslogflagname,
 	futexflagname,
+	waitidoptname,
+	idtypeandid,
 };
 
 enum {
@@ -672,6 +675,8 @@ enum {
 	Gidname,
 	Syslogflagname,
 	Futexflagname,
+	Waitidoptname,
+	Idtypeandid,
 };
 
 #define Pptr		Phexlong
@@ -695,6 +700,7 @@ enum {
 #define Msgflgname	Phexlong	/* to be added */
 
 
+/* includes relevant entries as of syscalls.master rev 1.238 */
 typedef signed char formatter;
 static const formatter scargs[][8] = {
     [SYS_exit]		= { Pdecint },
@@ -816,6 +822,8 @@ static const formatter scargs[][8] = {
     [SYS_adjtime]	= { Pptr, Pptr },
     [SYS_quotactl]	= { Ppath, Quotactlname, Uidname, Pptr },
     [SYS_nfssvc]	= { Phexint, Pptr },
+    [SYS_mimmutable]	= { Pptr, Pbigsize },
+    [SYS_waitid]	= { PASS_TWO, Idtypeandid, Pptr, Waitidoptname },
     [SYS_getfh]		= { Ppath, Pptr },
     [SYS_sysarch]	= { Pdecint, Pptr },
     [SYS_pread]		= { Pfd, Pptr, Pbigsize, Poff_t, END64 },
@@ -1722,4 +1730,22 @@ ktraceopname(int ops)
 	printf(">");
 	if (invalid || (ops & ~(KTROP((unsigned)-1) | KTRFLAG_DESCEND)))
 		(void)printf("<invalid>%d", ops);
+}
+
+static void
+idtypeandid(int id)
+{
+	switch (arg1) {
+	case P_PID:
+		printf("P_PID,%d", id);
+		break;
+	case P_PGID:
+		printf("P_PGID,%d", id);
+		break;
+	case P_ALL:
+		printf("P_ALL,<unused>%d", id);
+		break;
+	default: /* Should not reach */
+		printf("<invalid=%d>, <unused>%d", arg1, id);
+	}
 }
