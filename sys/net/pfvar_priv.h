@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.24 2022/12/16 02:05:45 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.25 2022/12/19 04:35:34 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -39,6 +39,31 @@
 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+
+struct pf_state_item {
+	TAILQ_ENTRY(pf_state_item)	 entry;
+	struct pf_state			*s;
+};
+
+TAILQ_HEAD(pf_statelisthead, pf_state_item);
+
+struct pf_state_key {
+	struct pf_addr	 addr[2];
+	u_int16_t	 port[2];
+	u_int16_t	 rdomain;
+	sa_family_t	 af;
+	u_int8_t	 proto;
+
+	RB_ENTRY(pf_state_key)	 entry;
+	struct pf_statelisthead	 states;
+	struct pf_state_key	*reverse;
+	struct inpcb		*inp;
+	pf_refcnt_t		 refcnt;
+	u_int8_t		 removed;
+};
+#define PF_REVERSED_KEY(key, family)				\
+	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
+	 (key[PF_SK_WIRE]->af != (family)))
 
 /*
  * Protection/ownership of pf_state members:
