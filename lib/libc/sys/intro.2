@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.72 2022/12/19 03:54:17 guenther Exp $
+.\"	$OpenBSD: intro.2,v 1.73 2022/12/19 18:13:50 guenther Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -123,7 +123,8 @@ or a read (write) request was made to a file that was only open for
 writing (reading).
 .It Er 10 ECHILD Em "\&No child processes" .
 A
-.Xr wait 2
+.Xr wait 2 ,
+.Xr waitid 2 ,
 or
 .Xr waitpid 2
 function was executed by a process that had no existing or unwaited-for
