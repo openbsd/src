@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.30 2022/12/18 12:39:59 tb Exp $ */
+/*	$Id: acctproc.c,v 1.31 2022/12/19 11:16:52 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -120,7 +120,7 @@ op_thumb_ec(EVP_PKEY *pkey)
 	else if ((y = bn2string(Y)) == NULL)
 		warnx("bn2string");
 	else if ((json = json_fmt_thumb_ec(x, y)) == NULL)
-		warnx("json_fmt_thumb_rsa");
+		warnx("json_fmt_thumb_ec");
 
 	BN_free(X);
 	BN_free(Y);
