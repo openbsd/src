@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.32 2021/07/16 16:21:22 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.33 2022/12/19 20:27:26 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -299,7 +299,7 @@ vcpu_process_com_data(struct vm_exit *vei, uint32_t vm_id, uint32_t vcpu_id)
 			com1_dev.regs.lsr &= ~LSR_RXRDY;
 		} else {
 			set_return_data(vei, com1_dev.regs.data);
-			log_warnx("%s: guest reading com1 when not ready",
+			log_debug("%s: guest reading com1 when not ready",
 			    __func__);
 		}
 
