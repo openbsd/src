@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_wait_noproc.c,v 1.3 2022/10/26 23:18:01 kettenis Exp $	*/
+/*	$OpenBSD: t_wait_noproc.c,v 1.4 2022/12/19 22:44:54 guenther Exp $	*/
 /* $NetBSD: t_wait_noproc.c,v 1.5 2016/11/09 17:50:19 kamil Exp $ */
 
 /*-
@@ -145,11 +145,11 @@ get_options6(size_t pos)
 	const int matrix[] = {
 		WNOWAIT,	// First in order to blacklist it easily
 		WEXITED,
-		WUNTRACED,
-		WSTOPPED,	// SUS compatibility, equal to WUNTRACED
 #ifndef __OpenBSD__
-		WTRAPPED,
+		WUNTRACED,
 #endif
+		WSTOPPED,	// SUS compatibility, equal to WUNTRACED
+		WTRAPPED,
 		WCONTINUED
 	};
 
