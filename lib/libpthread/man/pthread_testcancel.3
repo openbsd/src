@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_testcancel.3,v 1.16 2014/08/31 20:23:10 guenther Exp $
+.\" $OpenBSD: pthread_testcancel.3,v 1.17 2022/12/19 03:49:42 guenther Exp $
 .\"
 .\"
 .\"  David Leonard, 1999. Public Domain.
 .\"
-.Dd $Mdocdate: August 31 2014 $
+.Dd $Mdocdate: December 19 2022 $
 .Dt PTHREAD_TESTCANCEL 3
 .Os
 .Sh NAME
@@ -117,6 +117,7 @@ base interfaces:
 .Fn pause ,
 .Fn poll ,
 .Fn pread ,
+.Fn pselect ,
 .Fn pthread_cond_timedwait ,
 .Fn pthread_cond_wait ,
 .Fn pthread_join ,
@@ -139,6 +140,7 @@ base interfaces:
 .Fn system ,
 .Fn tcdrain ,
 .Fn wait ,
+.Fn waitid ,
 .Fn waitpid ,
 .Fn write ,
 .Fn writev .
@@ -151,6 +153,8 @@ extension interfaces:
 .Fn ppoll ,
 .Fn preadv ,
 .Fn pwritev ,
+.Fn recvmmsg ,
+.Fn sendmmsg ,
 .Fn wait3 ,
 .Fn wait4 .
 .Sh RETURN VALUES
