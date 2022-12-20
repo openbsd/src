@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.16 2022/09/13 10:22:07 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.17 2022/12/20 20:04:55 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -61,8 +61,8 @@ struct appl_request_upstream {
 	struct snmp_message *aru_statereference;
 	int32_t aru_requestid; /* upstream requestid */
 	int32_t aru_transactionid; /* RFC 2741 section 6.1 */
-	int16_t aru_nonrepeaters;
-	int16_t aru_maxrepetitions;
+	uint16_t aru_nonrepeaters;
+	uint16_t aru_maxrepetitions;
 	struct appl_varbind_internal *aru_vblist;
 	size_t aru_varbindlen;
 	enum appl_error aru_error;
@@ -77,8 +77,8 @@ struct appl_request_downstream {
 	struct appl_request_upstream *ard_request;
 	struct appl_backend *ard_backend;
 	enum snmp_pdutype ard_requesttype;
-	int16_t ard_nonrepeaters;
-	int16_t ard_maxrepetitions;
+	uint16_t ard_nonrepeaters;
+	uint16_t ard_maxrepetitions;
 	int32_t ard_requestid;
 	uint8_t ard_retries;
 
