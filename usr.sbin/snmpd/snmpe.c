@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.86 2022/12/20 19:53:33 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.87 2022/12/20 20:06:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -445,10 +445,18 @@ badversion:
 		goto fail;
 	}
 
-	for (a = msg->sm_varbind; a != NULL; a = a->be_next) {
+	for (len = 0, a = msg->sm_varbind; a != NULL; a = a->be_next, len++) {
 		if (ober_scanf_elements(a, "{oS$}", NULL) == -1)
 			goto parsefail;
 	}
+	/*
+	 * error-status == non-repeaters
+	 * error-index == max-repetitions
+	 */
+	if (msg->sm_pdutype == SNMP_C_GETBULKREQ &&
+	    (errval < 0 || errval > (long long)len ||
+	    erridx < 1 || erridx > UINT16_MAX))
+		goto parsefail;
 
 	msg->sm_request = req;
 	msg->sm_error = errval;
