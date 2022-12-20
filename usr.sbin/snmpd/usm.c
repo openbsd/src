@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.24 2022/01/05 17:01:06 tb Exp $	*/
+/*	$OpenBSD: usm.c,v 1.25 2022/12/20 20:01:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -504,7 +504,7 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 	struct ber_element	*encrpdu = NULL;
 	void			*ptr;
 	ssize_t			 elen, len;
-	u_char			 encbuf[READ_BUF_SIZE];
+	u_char			*encbuf;
 
 	if (!MSG_HAS_PRIV(msg))
 		return pdu;
@@ -517,10 +517,12 @@ usm_encrypt(struct snmp_message *msg, struct ber_element *pdu)
 #endif
 
 	len = ober_write_elements(&ber, pdu);
-	if (ober_get_writebuf(&ber, &ptr) > 0) {
+	if (ober_get_writebuf(&ber, &ptr) > 0 &&
+	    (encbuf = malloc(len + EVP_MAX_BLOCK_LENGTH)) != NULL) {
 		elen = usm_crypt(msg, ptr, len, encbuf, 1);
 		if (elen > 0)
 			encrpdu = ober_add_nstring(NULL, (char *)encbuf, elen);
+		free(encbuf);
 	}
 
 	ober_free(&ber);
@@ -617,12 +619,13 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 {
 	u_char			*privstr;
 	size_t			 privlen;
-	u_char			 buf[READ_BUF_SIZE];
+	u_char			*buf;
 	struct ber		 ber;
 	struct ber_element	*scoped_pdu = NULL;
 	ssize_t			 scoped_pdu_len;
 
-	if (ober_get_nstring(encr, (void *)&privstr, &privlen) < 0)
+	if (ober_get_nstring(encr, (void *)&privstr, &privlen) < 0 ||
+	    (buf = malloc(privlen)) == NULL)
 		return NULL;
 
 	scoped_pdu_len = usm_crypt(msg, privstr, (int)privlen, buf, 0);
@@ -642,6 +645,7 @@ usm_decrypt(struct snmp_message *msg, struct ber_element *encr)
 #endif
 
 	ober_free(&ber);
+	free(buf);
 	return scoped_pdu;
 }
 
