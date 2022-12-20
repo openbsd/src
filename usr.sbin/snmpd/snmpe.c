@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.85 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.86 2022/12/20 19:53:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -612,8 +612,7 @@ snmpe_writecb(int fd, short type, void *arg)
 	if (type == EV_TIMEOUT)
 		goto fail;
 
-	len = ber->br_wend - ber->br_wbuf;
-	ber->br_wptr = ber->br_wbuf;
+	len = ber->br_wend - ber->br_wptr;
 
 	log_debug("%s: write fd %d len %zd", __func__, fd, len);
 
@@ -799,6 +798,7 @@ snmpe_response(struct snmp_message *msg)
 
 	usm_finalize_digest(msg, ptr, len);
 	if (msg->sm_sock_tcp) {
+		msg->sm_ber.br_wptr = msg->sm_ber.br_wbuf;
 		event_del(&msg->sm_sockev);
 		event_set(&msg->sm_sockev, msg->sm_sock, EV_WRITE,
 		    snmpe_writecb, msg);
