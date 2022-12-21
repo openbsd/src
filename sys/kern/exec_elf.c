@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.177 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.178 2022/12/21 07:16:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -621,9 +621,11 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 			} else
 				addr = ELF_NO_ADDR;
 
-			/* Permit system calls in specific main-programs */
+			/*
+			 * Permit system calls in main-text static binaries.
+			 * Also block the ld.so syscall-grant
+			 */
 			if (interp == NULL) {
-				/* statics. Also block the ld.so syscall-grant */
 				syscall = VMCMD_SYSCALL;
 				p->p_vmspace->vm_map.flags |= VM_MAP_SYSCALL_ONCE;
 			}
