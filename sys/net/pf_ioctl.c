@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.392 2022/11/25 20:27:53 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.393 2022/12/21 02:23:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1762,24 +1762,27 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (sk == NULL)
 					continue;
 
-				TAILQ_FOREACH_SAFE(si, &sk->states, entry, sit)
-					if (((si->s->key[PF_SK_WIRE]->af ==
-					    si->s->key[PF_SK_STACK]->af &&
+				TAILQ_FOREACH_SAFE(si, &sk->sk_states,
+				    si_entry, sit) {
+					struct pf_state *sist = si->si_st;
+					if (((sist->key[PF_SK_WIRE]->af ==
+					    sist->key[PF_SK_STACK]->af &&
 					    sk == (dirs[i] == PF_IN ?
-					    si->s->key[PF_SK_WIRE] :
-					    si->s->key[PF_SK_STACK])) ||
-					    (si->s->key[PF_SK_WIRE]->af !=
-					    si->s->key[PF_SK_STACK]->af &&
+					    sist->key[PF_SK_WIRE] :
+					    sist->key[PF_SK_STACK])) ||
+					    (sist->key[PF_SK_WIRE]->af !=
+					    sist->key[PF_SK_STACK]->af &&
 					    dirs[i] == PF_IN &&
-					    (sk == si->s->key[PF_SK_STACK] ||
-					    sk == si->s->key[PF_SK_WIRE]))) &&
+					    (sk == sist->key[PF_SK_STACK] ||
+					    sk == sist->key[PF_SK_WIRE]))) &&
 					    (!psk->psk_ifname[0] ||
-					    (si->s->kif != pfi_all &&
+					    (sist->kif != pfi_all &&
 					    !strcmp(psk->psk_ifname,
-					    si->s->kif->pfik_name)))) {
-						pf_remove_state(si->s);
+					    sist->kif->pfik_name)))) {
+						pf_remove_state(sist);
 						killed++;
 					}
+				}
 			}
 			if (killed)
 				psk->psk_killed = killed;
