@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.45 2022/12/21 22:30:42 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.46 2022/12/21 23:18:09 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -224,6 +224,8 @@ int		agintc_spllower(int);
 void		agintc_splx(int);
 int		agintc_splraise(int);
 void		agintc_setipl(int);
+void		agintc_enable_wakeup(void);
+void		agintc_disable_wakeup(void);
 void		agintc_calc_mask(void);
 void		agintc_calc_irq(struct agintc_softc *sc, int irq);
 void		*agintc_intr_establish(int, int, int, struct cpu_info *,
@@ -233,6 +235,7 @@ void		*agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 void		*agintc_intr_establish_mbi(void *, uint64_t *, uint64_t *,
 		    int , struct cpu_info *, int (*)(void *), void *, char *);
 void		agintc_intr_disestablish(void *);
+void		agintc_intr_set_wakeup(void *);
 void		agintc_irq_handler(void *);
 uint32_t	agintc_iack(void);
 void		agintc_eoi(uint32_t);
@@ -542,7 +545,8 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(agintc_splraise, agintc_spllower, agintc_splx,
-	    agintc_setipl, agintc_irq_handler, NULL, NULL, NULL);
+	    agintc_setipl, agintc_irq_handler, NULL,
+	    agintc_enable_wakeup, agintc_disable_wakeup);
 
 	/* enable interrupts */
 	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_CTLR);
@@ -648,6 +652,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_barrier = agintc_intr_barrier;
 	if (sc->sc_mbi_nranges > 0)
 		sc->sc_ic.ic_establish_msi = agintc_intr_establish_mbi;
+	sc->sc_ic.ic_set_wakeup = agintc_intr_set_wakeup;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	intr_restore(psw);
@@ -800,6 +805,80 @@ agintc_setipl(int ipl)
 	__isb();
 
 	intr_restore(psw);
+}
+
+void
+agintc_enable_wakeup(void)
+{
+	struct agintc_softc *sc = agintc_sc;
+	struct intrhand *ih;
+	uint8_t *prop;
+	int irq, wakeup;
+
+	for (irq = 0; irq < sc->sc_nintr; irq++) {
+		/* No handler? Disabled already. */
+		if (TAILQ_EMPTY(&sc->sc_handler[irq].iq_list))
+			continue;
+		/* Unless we're WAKEUP, disable. */
+		wakeup = 0;
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
+			if (ih->ih_flags & IPL_WAKEUP) {
+				wakeup = 1;
+				break;
+			}
+		}
+		if (!wakeup)
+			agintc_intr_disable(sc, irq);
+	}
+
+	for (irq = 0; irq < sc->sc_nlpi; irq++) {
+		ih = sc->sc_lpi_handler[irq];
+		if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+			continue;
+		prop = AGINTC_DMA_KVA(sc->sc_prop);
+		prop[irq] &= ~GICR_PROP_ENABLE;
+		/* Make globally visible. */
+		cpu_dcache_wb_range((vaddr_t)&prop[irq],
+		    sizeof(*prop));
+		__asm volatile("dsb sy");
+	}
+}
+
+void
+agintc_disable_wakeup(void)
+{
+	struct agintc_softc *sc = agintc_sc;
+	struct intrhand *ih;
+	uint8_t *prop;
+	int irq, wakeup;
+
+	for (irq = 0; irq < sc->sc_nintr; irq++) {
+		/* No handler? Keep disabled. */
+		if (TAILQ_EMPTY(&sc->sc_handler[irq].iq_list))
+			continue;
+		/* WAKEUPs are already enabled. */
+		wakeup = 0;
+		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
+			if (ih->ih_flags & IPL_WAKEUP) {
+				wakeup = 1;
+				break;
+			}
+		}
+		if (!wakeup)
+			agintc_intr_enable(sc, irq);
+	}
+
+	for (irq = 0; irq < sc->sc_nlpi; irq++) {
+		ih = sc->sc_lpi_handler[irq];
+		if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+			continue;
+		prop = AGINTC_DMA_KVA(sc->sc_prop);
+		prop[irq] |= GICR_PROP_ENABLE;
+		/* Make globally visible. */
+		cpu_dcache_wb_range((vaddr_t)&prop[irq],
+		    sizeof(*prop));
+		__asm volatile("dsb sy");
+	}
 }
 
 void
@@ -1220,6 +1299,14 @@ agintc_intr_disestablish(void *cookie)
 	intr_restore(psw);
 
 	free(ih, M_DEVBUF, 0);
+}
+
+void
+agintc_intr_set_wakeup(void *cookie)
+{
+	struct intrhand *ih = cookie;
+
+	ih->ih_flags |= IPL_WAKEUP;
 }
 
 void *
