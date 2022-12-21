@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1159 2022/12/21 02:51:06 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1160 2022/12/21 03:02:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -848,7 +848,7 @@ pf_state_key_detach(struct pf_state *s, int idx)
 
 	TAILQ_REMOVE(&sk->sk_states, si, si_entry);
 	pool_put(&pf_state_item_pl, si);
- 
+
 	if (TAILQ_EMPTY(&sk->sk_states)) {
 		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
 		sk->sk_removed = 1;
