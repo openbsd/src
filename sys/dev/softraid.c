@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.428 2022/12/18 13:10:08 kn Exp $ */
+/* $OpenBSD: softraid.c,v 1.429 2022/12/21 09:54:23 kn Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -141,6 +141,7 @@ int			sr_chunk_in_use(struct sr_softc *, dev_t);
 int			sr_rw(struct sr_softc *, dev_t, char *, size_t,
 			    daddr_t, long);
 void			sr_wu_done_callback(void *);
+struct sr_discipline	*sr_find_discipline(struct sr_softc *sc, const char *);
 
 /* don't include these on RAMDISK */
 #ifndef SMALL_KERNEL
@@ -3610,16 +3611,9 @@ sr_ioctl_deleteraid(struct sr_softc *sc, struct sr_discipline *sd,
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_deleteraid %s\n",
 	    DEVNAME(sc), bd->bd_dev);
 
-	if (sd == NULL) {
-		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-			if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
-			    sizeof(sd->sd_meta->ssd_devname)))
-				break;
-		}
-		if (sd == NULL) {
-			sr_error(sc, "volume %s not found", bd->bd_dev);
-			goto bad;
-		}
+	if (sd == NULL && (sd = sr_find_discipline(sc, bd->bd_dev)) == NULL) {
+		sr_error(sc, "volume %s not found", bd->bd_dev);
+		goto bad;
 	}
 
 	/*
@@ -3652,16 +3646,9 @@ sr_ioctl_discipline(struct sr_softc *sc, struct sr_discipline *sd,
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_discipline %s\n", DEVNAME(sc),
 	    bd->bd_dev);
 
-	if (sd == NULL) {
-		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-			if (!strncmp(sd->sd_meta->ssd_devname, bd->bd_dev,
-			    sizeof(sd->sd_meta->ssd_devname)))
-				break;
-		}
-		if (sd == NULL) {
-			sr_error(sc, "volume %s not found", bd->bd_dev);
-			goto bad;
-		}
+	if (sd == NULL && (sd = sr_find_discipline(sc, bd->bd_dev)) == NULL) {
+		sr_error(sc, "volume %s not found", bd->bd_dev);
+		goto bad;
 	}
 
 	if (sd->sd_ioctl_handler)
@@ -3688,16 +3675,9 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	DNPRINTF(SR_D_IOCTL, "%s: sr_ioctl_installboot %s\n", DEVNAME(sc),
 	    bb->bb_dev);
 
-	if (sd == NULL) {
-		TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link) {
-			if (!strncmp(sd->sd_meta->ssd_devname, bb->bb_dev,
-			    sizeof(sd->sd_meta->ssd_devname)))
-				break;
-		}
-		if (sd == NULL) {
-			sr_error(sc, "volume %s not found", bb->bb_dev);
-			goto done;
-		}
+	if (sd == NULL && (sd = sr_find_discipline(sc, bb->bb_dev)) == NULL) {
+		sr_error(sc, "volume %s not found", bb->bb_dev);
+		goto done;
 	}
 
 	TAILQ_FOREACH(dk, &disklist,  dk_link)
@@ -4838,6 +4818,18 @@ abort:
 		    DEVNAME(sc), sd->sd_meta->ssd_devname);
 fail:
 	dma_free(buf, SR_REBUILD_IO_SIZE << DEV_BSHIFT);
+}
+
+struct sr_discipline *
+sr_find_discipline(struct sr_softc *sc, const char *devname)
+{
+	struct sr_discipline	*sd;
+
+	TAILQ_FOREACH(sd, &sc->sc_dis_list, sd_link)
+		if (!strncmp(sd->sd_meta->ssd_devname, devname,
+		    sizeof(sd->sd_meta->ssd_devname)))
+			break;
+	return sd;
 }
 
 #ifndef SMALL_KERNEL
