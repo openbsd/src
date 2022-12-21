@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.26 2022/11/09 19:18:11 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.27 2022/12/21 22:30:42 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -701,12 +701,15 @@ arm_do_pending_intr(int pcpl)
 void
 arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
     void (*x)(int), void (*setipl)(int), void (*irq_dispatch)(void *),
-    void (*fiq_dispatch)(void *))
+    void (*fiq_dispatch)(void *), void (*enable_wakeup)(void),
+    void (*disable_wakeup)(void))
 {
 	arm_intr_func.raise = raise;
 	arm_intr_func.lower = lower;
 	arm_intr_func.x	= x;
 	arm_intr_func.setipl = setipl;
+	arm_intr_func.enable_wakeup = enable_wakeup;
+	arm_intr_func.disable_wakeup = disable_wakeup;
 
 	if (irq_dispatch)
 		arm_irq_dispatch = irq_dispatch;
@@ -871,13 +874,31 @@ intr_barrier(void *cookie)
 }
 
 void
-intr_enable_wakeup(void *cookie)
+intr_set_wakeup(void *cookie)
 {
 	struct machine_intr_handle *ih = cookie;
 	struct interrupt_controller *ic = ih->ih_ic;
 
-	if (ic->ic_enable_wakeup)
-		ic->ic_enable_wakeup(ih->ih_ih);
+	if (ic->ic_set_wakeup)
+		ic->ic_set_wakeup(ih->ih_ih);
+}
+
+void
+intr_enable_wakeup(void)
+{
+	if (arm_intr_func.enable_wakeup)
+		arm_intr_func.enable_wakeup();
+	arm_intr_func.setipl(IPL_NONE);
+	intr_enable();
+}
+
+void
+intr_disable_wakeup(void)
+{
+	intr_disable();
+	arm_intr_func.setipl(IPL_HIGH);
+	if (arm_intr_func.disable_wakeup)
+		arm_intr_func.disable_wakeup();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.17 2022/11/09 19:18:11 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.18 2022/12/21 22:30:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -163,11 +163,9 @@ struct aplintc_softc *aplintc_sc;
 
 int	aplintc_match(struct device *, void *, void *);
 void	aplintc_attach(struct device *, struct device *, void *);
-int	aplintc_activate(struct device *, int act);
 
-const struct cfattach	aplintc_ca = {
-	sizeof (struct aplintc_softc), aplintc_match, aplintc_attach,
-	NULL, aplintc_activate
+const struct cfattach aplintc_ca = {
+	sizeof (struct aplintc_softc), aplintc_match, aplintc_attach
 };
 
 struct cfdriver aplintc_cd = {
@@ -182,11 +180,13 @@ int	aplintc_splraise(int);
 int	aplintc_spllower(int);
 void	aplintc_splx(int);
 void	aplintc_setipl(int);
+void	aplintc_enable_wakeup(void);
+void	aplintc_disable_wakeup(void);
 
 void 	*aplintc_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	aplintc_intr_disestablish(void *);
-void	aplintc_intr_enable_wakeup(void *);
+void	aplintc_intr_set_wakeup(void *);
 
 void	aplintc_send_ipi(struct cpu_info *, int);
 void	aplintc_handle_ipi(struct aplintc_softc *);
@@ -272,7 +272,8 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 
 	evcount_attach(&sc->sc_ipi_count, "ipi", NULL);
 	arm_set_intr_handler(aplintc_splraise, aplintc_spllower, aplintc_splx,
-	    aplintc_setipl, aplintc_irq_handler, aplintc_fiq_handler);
+	    aplintc_setipl, aplintc_irq_handler, aplintc_fiq_handler,
+	    aplintc_enable_wakeup, aplintc_disable_wakeup);
 
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = self;
@@ -280,7 +281,7 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_disestablish = aplintc_intr_disestablish;
 	sc->sc_ic.ic_cpu_enable = aplintc_cpuinit;
 	sc->sc_ic.ic_barrier = aplintc_intr_barrier;
-	sc->sc_ic.ic_enable_wakeup = aplintc_intr_enable_wakeup;
+	sc->sc_ic.ic_set_wakeup = aplintc_intr_set_wakeup;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 #ifdef MULTIPROCESSOR
@@ -289,39 +290,6 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_version == 2)
 		HSET4(sc, AIC2_CONFIG, AIC2_CONFIG_ENABLE);
-}
-
-int
-aplintc_activate(struct device *self, int act)
-{
-	struct aplintc_softc *sc = (struct aplintc_softc *)self;
-	struct intrhand *ih;
-	int die, irq;
-
-	switch (act) {
-	case DVACT_SUSPEND:
-		for (die = 0; die < sc->sc_ndie; die++) {
-			for (irq = 0; irq < sc->sc_nirq; irq++) {
-				ih = sc->sc_irq_handler[die][irq];
-				if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
-					continue;
-				aplintc_mask_set(sc, die, irq);
-			}
-		}
-		break;
-	case DVACT_RESUME:
-		for (die = 0; die < sc->sc_ndie; die++) {
-			for (irq = 0; irq < sc->sc_nirq; irq++) {
-				ih = sc->sc_irq_handler[die][irq];
-				if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
-					continue;
-				aplintc_mask_clr(sc, die, irq);
-			}
-		}
-		break;
-	}
-
-	return 0;
 }
 
 void
@@ -543,6 +511,40 @@ aplintc_setipl(int ipl)
 	ci->ci_cpl = ipl;
 }
 
+void
+aplintc_enable_wakeup(void)
+{
+	struct aplintc_softc *sc = aplintc_sc;
+	struct intrhand *ih;
+	int die, irq;
+
+	for (die = 0; die < sc->sc_ndie; die++) {
+		for (irq = 0; irq < sc->sc_nirq; irq++) {
+			ih = sc->sc_irq_handler[die][irq];
+			if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+				continue;
+			aplintc_mask_set(sc, die, irq);
+		}
+	}
+}
+
+void
+aplintc_disable_wakeup(void)
+{
+	struct aplintc_softc *sc = aplintc_sc;
+	struct intrhand *ih;
+	int die, irq;
+
+	for (die = 0; die < sc->sc_ndie; die++) {
+		for (irq = 0; irq < sc->sc_nirq; irq++) {
+			ih = sc->sc_irq_handler[die][irq];
+			if (ih == NULL || (ih->ih_flags & IPL_WAKEUP))
+				continue;
+			aplintc_mask_clr(sc, die, irq);
+		}
+	}
+}
+
 void *
 aplintc_intr_establish(void *cookie, int *cell, int level,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
@@ -638,7 +640,7 @@ aplintc_intr_disestablish(void *cookie)
 }
 
 void
-aplintc_intr_enable_wakeup(void *cookie)
+aplintc_intr_set_wakeup(void *cookie)
 {
 	struct intrhand *ih = cookie;
 

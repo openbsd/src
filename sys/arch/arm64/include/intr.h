@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.20 2022/11/09 19:18:11 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.21 2022/12/21 22:30:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -88,7 +88,8 @@ void	splx(int);
 
 void	arm_do_pending_intr(int);
 void	arm_set_intr_handler(int (*)(int), int (*)(int), void (*)(int),
-	    void (*)(int), void (*)(void *), void (*)(void *));
+	    void (*)(int), void (*)(void *), void (*)(void *),
+	    void (*)(void), void (*)(void));
 
 struct machine_intr_handle {
 	struct interrupt_controller *ih_ic;
@@ -100,6 +101,8 @@ struct arm_intr_func {
 	int (*lower)(int);
 	void (*x)(int);
 	void (*setipl)(int);
+	void (*enable_wakeup)(void);
+	void (*disable_wakeup)(void);
 };
 
 extern struct arm_intr_func arm_intr_func;
@@ -126,7 +129,9 @@ extern struct arm_intr_func arm_intr_func;
 #define	spl0()		spllower(IPL_NONE)
 
 void	 intr_barrier(void *);
-void	 intr_enable_wakeup(void *);
+void	 intr_set_wakeup(void *);
+void	 intr_enable_wakeup(void);
+void	 intr_disable_wakeup(void);
 
 void	 arm_init_smask(void); /* XXX */
 extern uint32_t arm_smask[NIPL];
@@ -152,7 +157,7 @@ struct interrupt_controller {
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 	void	 (*ic_cpu_enable)(void);
 	void	 (*ic_barrier)(void *);
-	void	 (*ic_enable_wakeup)(void *);
+	void	 (*ic_set_wakeup)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;
