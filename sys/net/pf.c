@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1158 2022/12/21 02:23:10 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1159 2022/12/21 02:51:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1507,7 +1507,7 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	st->pfsync_time = getuptime();
 	st->sync_state = PFSYNC_S_NONE;
 
-	refcnt_init(&st->refcnt);
+	PF_REF_INIT(st->refcnt);
 	mtx_init(&st->mtx, IPL_NET);
 
 	/* XXX when we have anchors, use STATE_INC_COUNTERS */
@@ -4400,7 +4400,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	 * must initialize refcnt, before pf_state_insert() gets called.
 	 * pf_state_inserts() grabs reference for pfsync!
 	 */
-	refcnt_init(&s->refcnt);
+	PF_REF_INIT(s->refcnt);
 	mtx_init(&s->mtx, IPL_NET);
 
 	switch (pd->proto) {
