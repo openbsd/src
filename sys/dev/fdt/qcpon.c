@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpon.c,v 1.2 2022/11/10 16:20:54 patrick Exp $	*/
+/*	$OpenBSD: qcpon.c,v 1.3 2022/12/21 23:26:54 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -89,13 +89,17 @@ qcpon_attach(struct device *parent, struct device *self, void *aux)
 
 	for (node = OF_child(saa->sa_node); node; node = OF_peer(node)) {
 		if (OF_is_compatible(node, "qcom,pmk8350-pwrkey")) {
-			sc->sc_pwrkey_ih = fdt_intr_establish(node, IPL_BIO,
-			    qcpon_pwrkey_intr, sc, sc->sc_dev.dv_xname);
+			sc->sc_pwrkey_ih = fdt_intr_establish(node,
+			    IPL_BIO | IPL_WAKEUP, qcpon_pwrkey_intr, sc,
+			    sc->sc_dev.dv_xname);
 			if (sc->sc_pwrkey_ih == NULL) {
 				printf("%s: can't establish interrupt\n",
 				    sc->sc_dev.dv_xname);
 				continue;
 			}
+#ifdef SUSPEND
+			device_register_wakeup(&sc->sc_dev);
+#endif
 		}
 	}
 }
@@ -104,13 +108,22 @@ int
 qcpon_pwrkey_intr(void *arg)
 {
 	struct qcpon_softc *sc = arg;
+#ifdef SUSPEND
+	extern int cpu_suspended;
+#endif
 
 	/* Ignore presses, handle releases. */
 	sc->sc_pwrkey_debounce = (sc->sc_pwrkey_debounce + 1) % 2;
 	if (sc->sc_pwrkey_debounce == 1)
 		return 1;
 
-	task_add(systq, &sc->sc_powerdown_task);
+#ifdef SUSPEND
+	if (cpu_suspended)
+		cpu_suspended = 0;
+	else
+#endif
+		task_add(systq, &sc->sc_powerdown_task);
+
 	return 1;
 }
 

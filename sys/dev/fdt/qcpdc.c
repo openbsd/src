@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpdc.c,v 1.2 2022/12/16 18:08:08 patrick Exp $	*/
+/*	$OpenBSD: qcpdc.c,v 1.3 2022/12/21 23:26:54 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -84,6 +84,7 @@ void	qcpdc_intr_disestablish(void *);
 void	qcpdc_intr_enable(void *);
 void	qcpdc_intr_disable(void *);
 void	qcpdc_intr_barrier(void *);
+void	qcpdc_intr_set_wakeup(void *);
 
 int
 qcpdc_match(struct device *parent, void *match, void *aux)
@@ -140,6 +141,7 @@ qcpdc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_enable = qcpdc_intr_enable;
 	sc->sc_ic.ic_disable = qcpdc_intr_disable;
 	sc->sc_ic.ic_barrier = qcpdc_intr_barrier;
+	sc->sc_ic.ic_set_wakeup = qcpdc_intr_set_wakeup;
 	fdt_intr_register(&sc->sc_ic);
 
 	printf("\n");
@@ -246,4 +248,12 @@ qcpdc_intr_barrier(void *cookie)
 	struct intrhand *ih = cookie;
 
 	intr_barrier(ih->ih_cookie);
+}
+
+void
+qcpdc_intr_set_wakeup(void *cookie)
+{
+	struct intrhand *ih = cookie;
+
+	intr_set_wakeup(ih->ih_cookie);
 }
