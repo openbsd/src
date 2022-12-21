@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.8 2022/11/20 23:47:51 dlg Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.9 2022/12/21 02:31:09 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -189,9 +189,10 @@
 #define RGE_NEXT_RX_DESC(x)	(((x) + 1) % RGE_RX_LIST_CNT)
 #define RGE_ADDR_LO(y)		((uint64_t) (y) & 0xffffffff)
 #define RGE_ADDR_HI(y)		((uint64_t) (y) >> 32)
-#define RGE_OWN(x)		(letoh32((x)->rge_cmdsts) & RGE_RDCMDSTS_OWN)
-#define RGE_RXBYTES(x)          (letoh32((x)->rge_cmdsts) & \
-				RGE_RDCMDSTS_FRAGLEN)
+#define RGE_OWN(x)							\
+	(letoh32((x)->hi_qword1.rx_qword4.rge_cmdsts) & RGE_RDCMDSTS_OWN)
+#define RGE_RXBYTES(x)							\
+	(letoh32((x)->hi_qword1.rx_qword4.rge_cmdsts) & RGE_RDCMDSTS_FRAGLEN)
 
 #define RGE_ADV_2500TFDX	0x0080
 
@@ -219,26 +220,67 @@ struct rge_tx_desc {
 
 /* Rx descriptor */
 struct rge_rx_desc {
-	uint32_t		rge_cmdsts;
-	uint32_t		rge_extsts;
-	uint32_t		rge_addrlo;
-	uint32_t		rge_addrhi;
+	union {
+		struct {
+			uint32_t	rsvd0;
+			uint32_t	rsvd1;
+		} rx_qword0;
+	} lo_qword0;
+
+	union {
+		struct {
+			uint32_t	rss;
+			uint16_t	length;
+			uint16_t	hdr_info;
+		} rx_qword1;
+
+		struct {
+			uint32_t	rsvd2;
+			uint32_t	rsvd3;
+		} rx_qword2;
+	} lo_qword1;
+
+	union {
+		uint64_t		rge_addr;
+
+		struct {
+			uint64_t	timestamp;
+		} rx_timestamp;
+
+		struct {
+			uint32_t	rsvd4;
+			uint32_t	rsvd5;
+		} rx_qword3;
+	} hi_qword0;
+
+	union {
+		struct {
+			uint32_t	rge_extsts;
+			uint32_t	rge_cmdsts;
+		} rx_qword4;
+
+		struct {
+			uint16_t	rsvd6;
+			uint16_t	rsvd7;
+			uint32_t	rsvd8;
+		} rx_ptp;
+	} hi_qword1;
 };
 
-#define RGE_RDCMDSTS_TCPCSUMERR	0x00004000
-#define RGE_RDCMDSTS_UDPCSUMERR	0x00008000
-#define RGE_RDCMDSTS_IPCSUMERR	0x00010000
-#define RGE_RDCMDSTS_TCPPKT	0x00020000
-#define RGE_RDCMDSTS_UDPPKT	0x00040000
-#define RGE_RDCMDSTS_RXERRSUM	0x00200000
-#define RGE_RDCMDSTS_EOF	0x10000000
-#define RGE_RDCMDSTS_SOF	0x20000000
+#define RGE_RDCMDSTS_RXERRSUM	0x00100000
+#define RGE_RDCMDSTS_EOF	0x01000000
+#define RGE_RDCMDSTS_SOF	0x02000000
 #define RGE_RDCMDSTS_EOR	0x40000000
 #define RGE_RDCMDSTS_OWN	0x80000000
 #define RGE_RDCMDSTS_FRAGLEN	0x00003fff
 
 #define RGE_RDEXTSTS_VTAG	0x00010000
 #define RGE_RDEXTSTS_VLAN_MASK	0x0000ffff
+#define RGE_RDEXTSTS_TCPCSUMERR	0x01000000
+#define RGE_RDEXTSTS_UDPCSUMERR	0x02000000
+#define RGE_RDEXTSTS_IPCSUMERR	0x04000000
+#define RGE_RDEXTSTS_TCPPKT	0x10000000
+#define RGE_RDEXTSTS_UDPPKT	0x20000000
 #define RGE_RDEXTSTS_IPV4	0x40000000
 #define RGE_RDEXTSTS_IPV6	0x80000000
 
@@ -332,7 +374,7 @@ enum rge_mac_type {
 	ETHER_VLAN_ENCAP_LEN)
 
 #define RGE_TXCFG_CONFIG	0x03000700
-#define RGE_RXCFG_CONFIG	0x40c00700
+#define RGE_RXCFG_CONFIG	0x41c00700
 
 struct kstat;
 
