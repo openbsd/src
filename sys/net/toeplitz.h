@@ -1,4 +1,4 @@
-/*	$OpenBSD: toeplitz.h,v 1.8 2021/02/24 23:44:04 dlg Exp $ */
+/*	$OpenBSD: toeplitz.h,v 1.9 2022/12/22 04:43:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -118,6 +118,8 @@ extern const struct stoeplitz_cache *const stoeplitz_cache;
 
 #define stoeplitz_n16(_n16) \
 	stoeplitz_hash_n16(stoeplitz_cache, (_n16))
+#define stoeplitz_n32(_n32) \
+	stoeplitz_hash_n32(stoeplitz_cache, (_n32))
 #define stoeplitz_h16(_h16) \
 	stoeplitz_hash_h16(stoeplitz_cache, (_h16))
 #define stoeplitz_h32(_h32) \
