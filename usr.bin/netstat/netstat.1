@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.95 2022/09/08 13:18:47 kn Exp $
+.\"	$OpenBSD: netstat.1,v 1.96 2022/12/22 07:23:29 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: September 8 2022 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -342,31 +342,6 @@ The individual flags are discussed in more detail in the
 and
 .Xr route 4
 manual pages.
-.Pp
-The mapping between letters and flags is:
-.Bl -column "1" "RTF_BLACKHOLE" "Protocol specific routing flag #1."
-.It 1 Ta Dv RTF_PROTO1 Ta "Protocol specific routing flag #1."
-.It 2 Ta Dv RTF_PROTO2 Ta "Protocol specific routing flag #2."
-.It 3 Ta Dv RTF_PROTO3 Ta "Protocol specific routing flag #3."
-.It B Ta Dv RTF_BLACKHOLE Ta "Just discard pkts (during updates)."
-.It b Ta Dv RTF_BROADCAST Ta "Correspond to a local broadcast address."
-.It C Ta Dv RTF_CLONING Ta "Generate new routes on use."
-.It c Ta Dv RTF_CLONED Ta "Cloned routes (generated from RTF_CLONING)."
-.It D Ta Dv RTF_DYNAMIC Ta "Created dynamically (by redirect)."
-.It G Ta Dv RTF_GATEWAY Ta "Destination requires forwarding by intermediary."
-.It H Ta Dv RTF_HOST Ta "Host entry (net otherwise)."
-.It h Ta Dv RTF_CACHED Ta "Referenced by gateway route."
-.It L Ta Dv RTF_LLINFO Ta "Valid protocol to link address translation."
-.It l Ta Dv RTF_LOCAL Ta "Correspond to a local address."
-.It M Ta Dv RTF_MODIFIED Ta "Modified dynamically (by redirect)."
-.It m Ta Dv RTF_MULTICAST Ta "Correspond to a multicast address."
-.It n Ta Dv RTF_CONNECTED Ta "Interface route."
-.It P Ta Dv RTF_MPATH Ta "Multipath route."
-.It R Ta Dv RTF_REJECT Ta "Host or net unreachable."
-.It S Ta Dv RTF_STATIC Ta "Manually added."
-.It T Ta Dv RTF_MPLS Ta "MPLS route."
-.It U Ta Dv RTF_UP Ta "Route usable."
-.El
 .Pp
 Direct routes are created for each interface attached to the local host;
 the gateway field for such entries shows the address of the outgoing interface.

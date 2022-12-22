@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.106 2022/11/19 19:23:37 kn Exp $
+.\"	$OpenBSD: route.8,v 1.107 2022/12/22 07:23:29 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: November 19 2022 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ instead of a real routing socket to test route manipulation.
 The
 .Nm
 utility provides the following simple commands:
-.Bl -tag -width Fl
+.Bl -tag -width Ds
 .It Xo
 .Nm route
 .Op Fl T Ar rtable
@@ -159,9 +159,6 @@ are shown.
 If a routing table is supplied with
 .Fl T ,
 only changes in that routing table will be displayed.
-.El
-.Pp
-.Bl -tag -width Fl -compact
 .It Xo
 .Ic route
 .Op Fl dtv
@@ -185,7 +182,6 @@ If no
 .Ar address
 argument is given, a request to remove the nameservers previously entered for
 the given interface is sent.
-.Pp
 .It Xo
 .Nm route
 .Op Fl nv
@@ -197,10 +193,7 @@ the given interface is sent.
 .Op Fl label Ar label
 .Op Fl priority Ar priority
 .Xc
-Print out the routing table, in a fashion similar to "netstat -r".
-The output is documented in more detail towards the end of the
-.Xr netstat 1
-manual.
+Display the routing table.
 .Pp
 If
 .Fl gateway
@@ -224,6 +217,34 @@ or
 .Cm bgp .
 If the priority is negative, then routes that do not match the numeric
 priority are shown.
+.Pp
+Within the output of
+.Cm show ,
+the "Flags" column indicates what flags are set on the route.
+The mapping between letters and flags is:
+.Bl -column "1" "RTF_BLACKHOLE" "Protocol specific routing flag #1."
+.It 1 Ta Dv RTF_PROTO1 Ta "Protocol specific routing flag #1."
+.It 2 Ta Dv RTF_PROTO2 Ta "Protocol specific routing flag #2."
+.It 3 Ta Dv RTF_PROTO3 Ta "Protocol specific routing flag #3."
+.It B Ta Dv RTF_BLACKHOLE Ta "Just discard pkts (during updates)."
+.It b Ta Dv RTF_BROADCAST Ta "Correspond to a local broadcast address."
+.It C Ta Dv RTF_CLONING Ta "Generate new routes on use."
+.It c Ta Dv RTF_CLONED Ta "Cloned routes (generated from RTF_CLONING)."
+.It D Ta Dv RTF_DYNAMIC Ta "Created dynamically (by redirect)."
+.It G Ta Dv RTF_GATEWAY Ta "Dest requires forwarding by intermediary."
+.It H Ta Dv RTF_HOST Ta "Host entry (net otherwise)."
+.It h Ta Dv RTF_CACHED Ta "Referenced by gateway route."
+.It L Ta Dv RTF_LLINFO Ta "Valid protocol to link address translation."
+.It l Ta Dv RTF_LOCAL Ta "Correspond to a local address."
+.It M Ta Dv RTF_MODIFIED Ta "Modified dynamically (by redirect)."
+.It m Ta Dv RTF_MULTICAST Ta "Correspond to a multicast address."
+.It n Ta Dv RTF_CONNECTED Ta "Interface route."
+.It P Ta Dv RTF_MPATH Ta "Multipath route."
+.It R Ta Dv RTF_REJECT Ta "Host or net unreachable."
+.It S Ta Dv RTF_STATIC Ta "Manually added."
+.It T Ta Dv RTF_MPLS Ta "MPLS route."
+.It U Ta Dv RTF_UP Ta "Route usable."
+.El
 .El
 .Pp
 .Bl -tag -width Fl -compact
