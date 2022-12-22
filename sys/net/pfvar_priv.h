@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.26 2022/12/21 02:23:10 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.27 2022/12/22 05:59:27 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -52,6 +52,7 @@ struct pf_state_key {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
 	u_int16_t	 rdomain;
+	u_int16_t	 hash;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 
@@ -254,6 +255,7 @@ struct pf_pdesc {
 	u_int16_t	*dport;
 	u_int16_t	 osport;
 	u_int16_t	 odport;
+	u_int16_t	 hash;
 	u_int16_t	 nsport;	/* src port after NAT */
 	u_int16_t	 ndport;	/* dst port after NAT */
 

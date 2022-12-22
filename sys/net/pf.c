@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1160 2022/12/21 03:02:34 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1161 2022/12/22 05:59:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,6 +60,7 @@
 #include <net/if_var.h>
 #include <net/if_types.h>
 #include <net/route.h>
+#include <net/toeplitz.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -238,6 +239,9 @@ int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 int			 pf_compare_state_keys(struct pf_state_key *,
 			    struct pf_state_key *, struct pfi_kif *, u_int);
+u_int16_t		 pf_pkt_hash(sa_family_t, uint8_t,
+			     const struct pf_addr *, const struct pf_addr *,
+			     uint16_t, uint16_t);
 int			 pf_find_state(struct pf_pdesc *,
 			    struct pf_state_key_cmp *, struct pf_state **);
 int			 pf_src_connlimit(struct pf_state **);
@@ -690,6 +694,8 @@ pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
 {
 	int	diff;
 
+	if ((diff = a->hash - b->hash) != 0)
+		return (diff);
 	if ((diff = a->proto - b->proto) != 0)
 		return (diff);
 	if ((diff = a->af - b->af) != 0)
@@ -944,6 +950,7 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	sk1->proto = pd->proto;
 	sk1->af = pd->af;
 	sk1->rdomain = pd->rdomain;
+	sk1->hash = pd->hash;
 	if (rtableid >= 0)
 		wrdom = rtable_l2(rtableid);
 
@@ -975,6 +982,8 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 			sk2->proto = pd->proto;
 		sk2->af = pd->naf;
 		sk2->rdomain = wrdom;
+		sk2->hash = pf_pkt_hash(sk2->af, sk2->proto,
+		    &sk2->addr[0], &sk2->addr[1], sk2->port[0], sk2->port[1]);
 	} else
 		sk2 = pf_state_key_ref(sk1);
 
@@ -1435,6 +1444,9 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	skw->proto = sp->proto;
 	if (!(skw->af = sp->key[PF_SK_WIRE].af))
 		skw->af = sp->af;
+	skw->hash = pf_pkt_hash(skw->af, skw->proto,
+	    &skw->addr[0], &skw->addr[1], skw->port[0], skw->port[1]);
+
 	if (sks != skw) {
 		sks->addr[0] = sp->key[PF_SK_STACK].addr[0];
 		sks->addr[1] = sp->key[PF_SK_STACK].addr[1];
@@ -1462,6 +1474,9 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 			error = EINVAL;
 			goto cleanup;
 		}
+
+		sks->hash = pf_pkt_hash(sks->af, sks->proto,
+		    &sks->addr[0], &sks->addr[1], sks->port[0], sks->port[1]);
 
 	} else if ((sks->af != AF_INET) && (sks->af != AF_INET6)) {
 		error = EINVAL;
@@ -5310,6 +5325,9 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	    pd->dst, pd->af, multi))
 		return (PF_DROP);
 
+	key->hash = pf_pkt_hash(pd->af, pd->proto,
+	    pd->src, pd->dst, 0, 0);
+
 	action = pf_find_state(pd, key, state);
 	if (action != PF_MATCH)
 		return (action);
@@ -5579,6 +5597,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[pd2.sidx] = th->th_sport;
 			key.port[pd2.didx] = th->th_dport;
+			key.hash = pf_pkt_hash(pd2.af, pd2.proto,
+			    pd2.src, pd2.dst, th->th_sport, th->th_dport);
 
 			action = pf_find_state(&pd2, &key, state);
 			if (action != PF_MATCH)
@@ -5757,6 +5777,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[pd2.sidx] = uh->uh_sport;
 			key.port[pd2.didx] = uh->uh_dport;
+			key.hash = pf_pkt_hash(pd2.af, pd2.proto,
+			    pd2.src, pd2.dst, uh->uh_sport, uh->uh_dport);
 
 			action = pf_find_state(&pd2, &key, state);
 			if (action != PF_MATCH)
@@ -6091,6 +6113,8 @@ pf_test_state_icmp(struct pf_pdesc *pd, struct pf_state **state,
 			pf_addrcpy(&key.addr[pd2.sidx], pd2.src, key.af);
 			pf_addrcpy(&key.addr[pd2.didx], pd2.dst, key.af);
 			key.port[0] = key.port[1] = 0;
+			key.hash = pf_pkt_hash(pd2.af, pd2.proto,
+			    pd2.src, pd2.dst, 0, 0);
 
 			action = pf_find_state(&pd2, &key, state);
 			if (action != PF_MATCH)
@@ -7019,6 +7043,32 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 }
 #endif /* INET6 */
 
+u_int16_t
+pf_pkt_hash(sa_family_t af, uint8_t proto,
+    const struct pf_addr *src, const struct pf_addr *dst,
+    uint16_t sport, uint16_t dport)
+{
+	uint32_t hash;
+
+	hash = src->addr32[0] ^ dst->addr32[0];
+#ifdef INET6
+	if (af == AF_INET6) {
+		hash ^= src->addr32[1] ^ dst->addr32[1];
+		hash ^= src->addr32[2] ^ dst->addr32[2];
+		hash ^= src->addr32[3] ^ dst->addr32[3];
+	}
+#endif
+
+	switch (proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		hash ^= sport ^ dport;
+		break;
+	}
+
+	return stoeplitz_n32(hash);
+}
+
 int
 pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
     struct pfi_kif *kif, struct mbuf *m, u_short *reason)
@@ -7205,6 +7255,9 @@ pf_setup_pdesc(struct pf_pdesc *pd, sa_family_t af, int dir,
 		pd->osport = pd->nsport = *pd->sport;
 	if (pd->dport)
 		pd->odport = pd->ndport = *pd->dport;
+
+	pd->hash = pf_pkt_hash(pd->af, pd->proto,
+	    pd->src, pd->dst, pd->osport, pd->odport);
 
 	return (PF_PASS);
 }
@@ -7486,6 +7539,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		pf_addrcpy(&key.addr[pd.didx], pd.dst, key.af);
 		key.port[pd.sidx] = pd.osport;
 		key.port[pd.didx] = pd.odport;
+		key.hash = pd.hash;
 
 		PF_STATE_ENTER_READ();
 		action = pf_find_state(&pd, &key, &s);

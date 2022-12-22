@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.524 2022/12/21 02:23:10 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.525 2022/12/22 05:59:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -704,6 +704,7 @@ struct pf_state_key_cmp {
 	struct pf_addr	 addr[2];
 	u_int16_t	 port[2];
 	u_int16_t	 rdomain;
+	u_int16_t	 hash;
 	sa_family_t	 af;
 	u_int8_t	 proto;
 };
