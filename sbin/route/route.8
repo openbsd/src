@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.107 2022/12/22 07:23:29 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.108 2022/12/22 07:46:19 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -92,7 +92,8 @@ instead of a real routing socket to test route manipulation.
 The
 .Nm
 utility provides the following simple commands:
-.Bl -tag -width Ds
+.Pp
+.Bl -tag -width Ds -compact
 .It Xo
 .Nm route
 .Op Fl T Ar rtable
@@ -104,6 +105,7 @@ Execute a command forcing the process and its children to use the
 routing table and appropriate routing domain as specified with the
 .Fl T Ar rtable
 option.
+.Pp
 .It Xo
 .Nm route
 .Op Fl nqv
@@ -123,6 +125,7 @@ by using the
 or
 .Fl priority
 modifiers.
+.Pp
 .It Xo
 .Nm route
 .Op Fl nv
@@ -137,6 +140,7 @@ If
 .Fl gateway
 is specified, only routes whose gateway are in the
 same address family as the destination are shown.
+.Pp
 .It Xo
 .Nm
 .Op Fl n
@@ -159,6 +163,7 @@ are shown.
 If a routing table is supplied with
 .Fl T ,
 only changes in that routing table will be displayed.
+.Pp
 .It Xo
 .Ic route
 .Op Fl dtv
@@ -182,6 +187,7 @@ If no
 .Ar address
 argument is given, a request to remove the nameservers previously entered for
 the given interface is sent.
+.Pp
 .It Xo
 .Nm route
 .Op Fl nv
@@ -245,9 +251,7 @@ The mapping between letters and flags is:
 .It T Ta Dv RTF_MPLS Ta "MPLS route."
 .It U Ta Dv RTF_UP Ta "Route usable."
 .El
-.El
 .Pp
-.Bl -tag -width Fl -compact
 .It Xo
 .Ic route
 .Op Fl T Ar rtable
