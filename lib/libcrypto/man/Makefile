@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.240 2022/12/18 19:35:36 schwarze Exp $
+# $OpenBSD: Makefile,v 1.241 2022/12/22 21:05:48 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,7 @@ MAN=	\
 	AUTHORITY_KEYID_new.3 \
 	BASIC_CONSTRAINTS_new.3 \
 	BF_set_key.3 \
+	BIO_accept.3 \
 	BIO_ctrl.3 \
 	BIO_dump.3 \
 	BIO_dup_chain.3 \
