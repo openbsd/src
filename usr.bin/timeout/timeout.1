@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.3 2021/09/04 11:58:31 schwarze Exp $
+.\"	$OpenBSD: timeout.1,v 1.4 2022/12/22 19:53:23 kn Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: September 4 2021 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -41,14 +41,12 @@
 .Op Fl -preserve-status
 .Ar duration
 .Ar command
-.Op Ar args
+.Op Ar arg ...
 .Sh DESCRIPTION
 The
 .Nm
 utility executes
-.Ar command ,
-with any
-.Ar args ,
+.Ar command
 and kills it if it is still running after the
 specified
 .Ar duration .

@@ -1,10 +1,10 @@
-.\"	$OpenBSD: expr.1,v 1.24 2017/08/16 20:10:58 schwarze Exp $
+.\"	$OpenBSD: expr.1,v 1.25 2022/12/22 19:53:22 kn Exp $
 .\"	$NetBSD: expr.1,v 1.9 1995/04/28 23:27:13 jtc Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd $Mdocdate: August 16 2017 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt EXPR 1
 .Os
 .Sh NAME
@@ -12,11 +12,11 @@
 .Nd evaluate expression
 .Sh SYNOPSIS
 .Nm expr
-.Ar expression
+.Ar expression ...
 .Sh DESCRIPTION
 The
 .Nm
-utility evaluates
+utility evaluates each
 .Ar expression
 and writes the result on standard output.
 All operators are separate arguments to the

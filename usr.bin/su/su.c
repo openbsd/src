@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.88 2022/03/23 02:18:22 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.89 2022/12/22 19:53:23 kn Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -487,7 +487,7 @@ usage(void)
 
 	fprintf(stderr, "usage: %s [-fKLlm] [-a auth-type] [-c login-class] "
 	    "[-s login-shell]\n"
-	    "%-*s[login [shell arguments]]\n", __progname,
+	    "%-*s[login [shell-argument ...]]\n", __progname,
 	    (int)strlen(__progname) + 8, "");
 	exit(1);
 }

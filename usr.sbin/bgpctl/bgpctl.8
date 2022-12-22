@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.102 2022/10/17 15:04:12 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.103 2022/12/22 19:53:24 kn Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2022 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -127,21 +127,19 @@ Bring the BGP session to the specified neighbor up.
 may be the neighbor's address, description or the word
 .Cm group
 followed by a group description.
-.It Cm network add Ar prefix Op Ar arguments
+.It Cm network add Ar prefix Op Ar argument ...
 Add the specified prefix to the list of announced networks.
-It is possible to set various path attributes with additional
-.Ar arguments .
+It is possible to set various path attributes with additional arguments.
 Adding a prefix will replace an existing equal prefix, including
 prefixes loaded from the configuration.
 .It Xo
 .Cm network bulk
-.Op Ar arguments
+.Op Ar argument ...
 .Op Cm add
 .Xc
 Bulk add specified prefixes to the list of announced networks.
 Prefixes should be sent via stdin.
-It is possible to set various path attributes with additional
-.Ar arguments .
+It is possible to set various path attributes with additional arguments.
 If neither
 .Cm add
 or

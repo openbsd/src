@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csplit.1,v 1.12 2015/10/24 15:32:50 zhuk Exp $
+.\"	$OpenBSD: csplit.1,v 1.13 2022/12/22 19:53:22 kn Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/usr.bin/csplit/csplit.1,v 1.11 2005/01/25 22:29:51 tjr Exp $
 .\"
-.Dd $Mdocdate: October 24 2015 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt CSPLIT 1
 .Os
 .Sh NAME
@@ -37,14 +37,15 @@
 .Op Fl ks
 .Op Fl f Ar prefix
 .Op Fl n Ar number
-.Ar file args ...
+.Ar file
+.Ar arg ...
 .Sh DESCRIPTION
 The
 .Nm
 utility splits
 .Ar file
-into pieces using the patterns
-.Ar args .
+into pieces using the pattern
+.Ar arg .
 If
 .Ar file
 is
@@ -92,8 +93,8 @@ created.
 .El
 .Pp
 The
-.Ar args
-operands may be a combination of the following patterns:
+.Ar arg
+operand may be a combination of the following patterns:
 .Bl -tag -width indent
 .It Xo
 .Sm off

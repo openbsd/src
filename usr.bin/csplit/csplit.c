@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.10 2021/07/08 00:38:42 millert Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.11 2022/12/22 19:53:22 kn Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -214,7 +214,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-ks] [-f prefix] [-n number] file args ...\n",
+	    "usage: %s [-ks] [-f prefix] [-n number] file arg ...\n",
 	    __progname);
 	exit(1);
 }

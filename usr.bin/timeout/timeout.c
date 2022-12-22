@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.21 2022/07/02 19:00:35 kn Exp $ */
+/* $OpenBSD: timeout.c,v 1.22 2022/12/22 19:53:23 kn Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -57,7 +57,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: timeout [-k time] [-s sig] [--foreground]"
 	    " [--preserve-status] duration\n"
-	    "               command [args]\n");
+	    "               command [arg ...]\n");
 
 	exit(1);
 }

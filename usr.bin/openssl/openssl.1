@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.139 2022/07/19 16:08:09 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.140 2022/12/22 19:53:23 kn Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 19 2022 $
+.Dd $Mdocdate: December 22 2022 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -119,8 +119,8 @@
 .Sh SYNOPSIS
 .Nm
 .Ar command
-.Op Ar command_opts
-.Op Ar command_args
+.Op Ar command_opt ...
+.Op Ar command_arg ...
 .Pp
 .Nm
 .Cm list-standard-commands |

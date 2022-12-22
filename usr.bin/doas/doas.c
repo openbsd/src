@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.97 2022/03/22 20:36:49 deraadt Exp $ */
+/* $OpenBSD: doas.c,v 1.98 2022/12/22 19:53:22 kn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -40,7 +40,7 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: doas [-Lns] [-a style] [-C config] [-u user]"
-	    " command [args]\n");
+	    " command [arg ...]\n");
 	exit(1);
 }
 

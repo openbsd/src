@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.108 2022/12/22 07:46:19 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.109 2022/12/22 19:53:22 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -42,8 +42,8 @@
 .Op Fl T Ar rtable
 .Ar command
 .Oo
-.Op Ar modifiers
-.Ar args
+.Op Ar modifier ...
+.Ar arg ...
 .Oc
 .Sh DESCRIPTION
 .Nm
@@ -112,7 +112,7 @@ option.
 .Op Fl T Ar rtable
 .Tg
 .Cm flush
-.Op Ar modifiers
+.Op Ar modifier ...
 .Xc
 Delete all gateway entries from the routing table.
 When the address family is specified by any one of the
@@ -132,7 +132,7 @@ modifiers.
 .Op Fl T Ar rtable
 .Tg
 .Cm get
-.Op Ar modifiers
+.Op Ar modifier ...
 .Ar address
 .Xc
 Extract a routing entry from the kernel.
@@ -147,7 +147,7 @@ same address family as the destination are shown.
 .Op Fl T Ar rtable
 .Tg
 .Cm monitor
-.Op Ar modifiers
+.Op Ar modifier ...
 .Xc
 Continuously report any changes to the routing information base,
 routing lookup misses, or suspected network partitionings.
@@ -303,7 +303,7 @@ have the syntax:
 .Op Fl T Ar rtable
 .Tg
 .Cm add
-.Op Ar modifiers
+.Op Ar modifier ...
 .Ar destination gateway
 .Xc
 .It Xo
@@ -312,7 +312,7 @@ have the syntax:
 .Op Fl T Ar rtable
 .Tg
 .Cm change
-.Op Ar modifiers
+.Op Ar modifier ...
 .Ar destination gateway
 .Xc
 .It Xo
@@ -322,7 +322,7 @@ have the syntax:
 .Tg delete
 .Tg
 .Cm del Ns Op Cm ete
-.Op Ar modifiers
+.Op Ar modifier ...
 .Ar destination gateway
 .Xc
 .El
