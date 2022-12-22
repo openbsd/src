@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.72 2022/11/10 07:08:01 jmatthew Exp $	*/
+/*	$OpenBSD: clock.c,v 1.73 2022/12/22 19:51:11 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -149,6 +149,8 @@ static long tick_increment;
 void	tick_start(void);
 void	sys_tick_start(void);
 void	stick_start(void);
+
+void	stick_rearm(uint64_t);
 
 int	tickintr(void *);
 int	sys_tickintr(void *);
@@ -810,7 +812,7 @@ stickintr(void *cap)
 
 	/* Reset the interrupt. */
 	s = intr_disable();
-	stickcmpr_set(ci->ci_tick);
+	stick_rearm(ci->ci_tick);
 	intr_restore(s);
 
 	return (1);
@@ -920,9 +922,24 @@ stick_start(void)
 	 */
 
 	s = intr_disable();
-	ci->ci_tick = roundup(stick(), tick_increment);
-	stickcmpr_set(ci->ci_tick);
+	ci->ci_tick = stick();
+	stick_rearm(ci->ci_tick);
 	intr_restore(s);
+}
+
+void
+stick_rearm(uint64_t cmp)
+{
+	uint64_t now, off = 8;
+
+	stickcmpr_set(cmp);
+	now = stick();
+	while (cmp <= now) {
+		cmp += off;
+		stickcmpr_set(cmp);
+		now = stick();
+		off *= 2;
+	}
 }
 
 u_int

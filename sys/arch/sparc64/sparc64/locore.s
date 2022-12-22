@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.194 2022/12/08 01:25:45 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.195 2022/12/22 19:51:11 cheloha Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7568,26 +7568,10 @@ END(stick)
 
 ENTRY(stickcmpr_set)
 	setx	STICK_CMP_HIGH, %o1, %o3
-	mov	8, %o2			! Initial step size
-1:
 	srlx	%o0, 32, %o1
 	stxa	%o1, [%o3] ASI_PHYS_NON_CACHED
 	add	%o3, (STICK_CMP_LOW - STICK_CMP_HIGH), %o4
 	stxa	%o0, [%o4] ASI_PHYS_NON_CACHED
-
-	add	%o3, (STICK_REG_LOW - STICK_CMP_HIGH), %o4
-	ldxa	[%o4] ASI_PHYS_NON_CACHED, %o1
-	add	%o3, (STICK_REG_HIGH - STICK_CMP_HIGH), %o4
-	ldxa	[%o4] ASI_PHYS_NON_CACHED, %o5
-	sllx	%o5, 32, %o5
-	or	%o1, %o5, %o1
-
-	cmp	%o0, %o1		! Make sure the value we wrote
-	bg,pt	%xcc, 2f		!   was in the future
-	 add	%o0, %o2, %o0		! If not, add the step size, double
-	ba,pt	%xcc, 1b		!   the step size and try again.
-	 sllx	%o2, 1, %o2
-2:
 	retl
 	 nop
 END(stickcmpr_set)
