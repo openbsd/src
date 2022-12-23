@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_buffer.3,v 1.12 2022/12/18 19:35:36 schwarze Exp $
+.\" $OpenBSD: BIO_f_buffer.3,v 1.13 2022/12/23 17:27:53 schwarze Exp $
 .\" full merge up to OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 18 2022 $
+.Dd $Mdocdate: December 23 2022 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -59,6 +59,9 @@
 .Nm BIO_set_write_buffer_size ,
 .Nm BIO_set_buffer_size ,
 .Nm BIO_set_buffer_read_data
+.\" .Nm BIO_buffer_get_num_lines is intentionally undocumented.
+.\" Contrary to what bio.h says, it does not *not* get some "IO type",
+.\" whatever that is supposed to be, but is a NOOP, and nothing uses it.
 .Nd buffering BIO
 .Sh SYNOPSIS
 .In openssl/bio.h
