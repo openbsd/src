@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcomp.4,v 1.16 2018/01/12 04:36:44 deraadt Exp $
+.\" $OpenBSD: ipcomp.4,v 1.17 2022/12/23 07:16:55 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: December 23 2022 $
 .Dt IPCOMP 4
 .Os
 .Sh NAME
@@ -101,14 +101,9 @@ compressed.
 .El
 .Sh DIAGNOSTICS
 .Xr netstat 1
-can be used to obtain some statistics about IPComp usage, using the
-.Fl p
-flag.
-Just like for IPsec, using the
-.Fl r
-flag,
-.Xr netstat 1
-displays information about IPComp flows.
+can be used to obtain some statistics about IPComp usage:
+.Pp
+.Dl $ netstat -s -p ipcomp
 .Sh SEE ALSO
 .Xr enc 4 ,
 .Xr inet 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.65 2021/02/21 17:18:01 jmc Exp $
+.\"	$OpenBSD: ping.8,v 1.66 2022/12/23 07:16:55 jmc Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,7 @@
 .\"
 .\"     @(#)ping.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 21 2021 $
+.Dd $Mdocdate: December 23 2022 $
 .Dt PING 8
 .Os
 .Sh NAME
@@ -418,8 +418,8 @@ Others may use completely wild values.
 exits 0 if at least one reply is received,
 and >0 if no reply is received or an error occurred.
 .Sh SEE ALSO
-.Xr netstat 1 ,
-.Xr ifconfig 8
+.Xr ifconfig 8 ,
+.Xr route 8
 .Sh HISTORY
 The
 .Nm

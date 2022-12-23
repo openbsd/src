@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.74 2022/07/30 07:19:31 jsg Exp $
+.\"	$OpenBSD: traceroute.8,v 1.75 2022/12/23 07:16:55 jmc Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)traceroute.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 30 2022 $
+.Dd $Mdocdate: December 23 2022 $
 .Dt TRACEROUTE 8
 .Os
 .Sh NAME
@@ -387,8 +387,8 @@ Because of the load it could impose on the network, it is unwise to use
 .Nm
 during normal operations or from automated scripts.
 .Sh SEE ALSO
-.Xr netstat 1 ,
-.Xr ping 8
+.Xr ping 8 ,
+.Xr route 8
 .Sh HISTORY
 The very first
 .Nm

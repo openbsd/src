@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.88 2022/03/31 17:27:21 naddy Exp $
+.\" $OpenBSD: ipsec.4,v 1.89 2022/12/23 07:16:55 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: December 23 2022 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -356,14 +356,15 @@ was given.
 .El
 .Pp
 .Xr netstat 1
-can be used to obtain some statistics about AH and ESP usage, using the
-.Fl p
-flag.
-Using the
-.Fl r
-flag,
-.Xr netstat 1
-displays information about IPsec flows.
+can be used to obtain some statistics about AH or ESP usage:
+.Bd -literal -offset indent
+$ netstat -s -p ah
+$ netstat -s -p esp
+.Ed
+.Pp
+The
+.Xr ipsecctl 8
+command can be used to display information about IPsec flows.
 .Pp
 .Xr vmstat 8
 displays information about memory use by IPsec with the
