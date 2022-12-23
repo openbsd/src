@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.150 2022/08/29 17:59:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.151 2022/12/23 11:29:32 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -311,6 +311,7 @@ int	iwx_disable_txq(struct iwx_softc *sc, int, int, uint8_t);
 void	iwx_post_alive(struct iwx_softc *);
 int	iwx_schedule_session_protection(struct iwx_softc *, struct iwx_node *,
 	    uint32_t);
+void	iwx_unprotect_session(struct iwx_softc *, struct iwx_node *);
 void	iwx_init_channel_map(struct iwx_softc *, uint16_t *, uint32_t *, int);
 void	iwx_setup_ht_rates(struct iwx_softc *);
 void	iwx_setup_vht_rates(struct iwx_softc *);
@@ -2910,55 +2911,6 @@ iwx_post_alive(struct iwx_softc *sc)
 	iwx_ict_reset(sc);
 }
 
-/*
- * For the high priority TE use a time event type that has similar priority to
- * the FW's action scan priority.
- */
-#define IWX_ROC_TE_TYPE_NORMAL IWX_TE_P2P_DEVICE_DISCOVERABLE
-#define IWX_ROC_TE_TYPE_MGMT_TX IWX_TE_P2P_CLIENT_ASSOC
-
-int
-iwx_send_time_event_cmd(struct iwx_softc *sc,
-    const struct iwx_time_event_cmd *cmd)
-{
-	struct iwx_rx_packet *pkt;
-	struct iwx_time_event_resp *resp;
-	struct iwx_host_cmd hcmd = {
-		.id = IWX_TIME_EVENT_CMD,
-		.flags = IWX_CMD_WANT_RESP,
-		.resp_pkt_len = sizeof(*pkt) + sizeof(*resp),
-	};
-	uint32_t resp_len;
-	int err;
-
-	hcmd.data[0] = cmd;
-	hcmd.len[0] = sizeof(*cmd);
-	err = iwx_send_cmd(sc, &hcmd);
-	if (err)
-		return err;
-
-	pkt = hcmd.resp_pkt;
-	if (!pkt || (pkt->hdr.flags & IWX_CMD_FAILED_MSK)) {
-		err = EIO;
-		goto out;
-	}
-
-	resp_len = iwx_rx_packet_payload_len(pkt);
-	if (resp_len != sizeof(*resp)) {
-		err = EIO;
-		goto out;
-	}
-
-	resp = (void *)pkt->data;
-	if (le32toh(resp->status) == 0)
-		sc->sc_time_event_uid = le32toh(resp->unique_id);
-	else
-		err = EIO;
-out:
-	iwx_free_resp(sc, &hcmd);
-	return err;
-}
-
 int
 iwx_schedule_session_protection(struct iwx_softc *sc, struct iwx_node *in,
     uint32_t duration)
@@ -2971,9 +2923,34 @@ iwx_schedule_session_protection(struct iwx_softc *sc, struct iwx_node *in,
 		.duration_tu = htole32(duration * IEEE80211_DUR_TU),
 	};
 	uint32_t cmd_id;
+	int err;
 
 	cmd_id = iwx_cmd_id(IWX_SESSION_PROTECTION_CMD, IWX_MAC_CONF_GROUP, 0);
-	return iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
+	err = iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
+	if (!err)
+		sc->sc_flags |= IWX_FLAG_TE_ACTIVE;
+	return err;
+}
+
+void
+iwx_unprotect_session(struct iwx_softc *sc, struct iwx_node *in)
+{
+	struct iwx_session_prot_cmd cmd = {
+		.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id,
+		    in->in_color)),
+		.action = htole32(IWX_FW_CTXT_ACTION_REMOVE),
+		.conf_id = htole32(IWX_SESSION_PROTECT_CONF_ASSOC),
+		.duration_tu = 0,
+	};
+	uint32_t cmd_id;
+
+	/* Do nothing if the time event has already ended. */
+	if ((sc->sc_flags & IWX_FLAG_TE_ACTIVE) == 0)
+		return;
+
+	cmd_id = iwx_cmd_id(IWX_SESSION_PROTECTION_CMD, IWX_MAC_CONF_GROUP, 0);
+	if (iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd) == 0)
+		sc->sc_flags &= ~IWX_FLAG_TE_ACTIVE;
 }
 
 /*
@@ -3433,6 +3410,8 @@ iwx_mac_ctxt_task(void *arg)
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
+
+	iwx_unprotect_session(sc, in);
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
@@ -7832,6 +7811,8 @@ iwx_deauth(struct iwx_softc *sc)
 
 	splassert(IPL_NET);
 
+	iwx_unprotect_session(sc, in);
+
 	if (sc->sc_flags & IWX_FLAG_STA_ACTIVE) {
 		err = iwx_rm_sta(sc, in);
 		if (err)
@@ -9662,8 +9643,21 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		}
 
 		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
-		    IWX_SESSION_PROTECTION_NOTIF):
+		    IWX_SESSION_PROTECTION_NOTIF): {
+			struct iwx_session_prot_notif *notif;
+			uint32_t status, start, conf_id;
+
+			SYNC_RESP_STRUCT(notif, pkt);
+
+			status = le32toh(notif->status);
+			start = le32toh(notif->start);
+			conf_id = le32toh(notif->conf_id);
+			/* Check for end of successful PROTECT_CONF_ASSOC. */
+			if (status == 1 && start == 0 &&
+			    conf_id == IWX_SESSION_PROTECT_CONF_ASSOC)
+				sc->sc_flags &= ~IWX_FLAG_TE_ACTIVE;
 			break;
+		}
 
 		case IWX_WIDE_ID(IWX_SYSTEM_GROUP,
 		    IWX_FSEQ_VER_MISMATCH_NOTIFICATION):
