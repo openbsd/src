@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.123 2022/12/04 23:50:48 cheloha Exp $	*/
+/*	$OpenBSD: main.c,v 1.124 2022/12/23 07:18:46 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -485,8 +485,7 @@ usage(void)
 	    "       netstat -s [-gru] [-f address_family] [-p protocol]\n"
 	    "       netstat -g [-lnu] [-f address_family]\n"
 	    "       netstat -R\n"
-	    "       netstat -r [-AFu] [-f address_family] [-M core] [-N system] [-p protocol]\n"
-	    "               [-T rtable]\n"
+	    "       netstat -r [-AFu] [-f address_family] [-M core] [-N system] [-T rtable]\n"
 	    "       netstat -P pcbaddr [-v] [-M core] [-N system]\n");
 	exit(1);
 }
