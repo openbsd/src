@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.67 2022/12/17 15:56:25 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.68 2022/12/23 03:15:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -695,69 +695,38 @@ int
 BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 {
 	int i;
-	BN_ULONG t1, t2, *ap, *bp;
-
 
 	if (a->top < b->top)
 		return -1;
 	if (a->top > b->top)
 		return 1;
 
-	ap = a->d;
-	bp = b->d;
 	for (i = a->top - 1; i >= 0; i--) {
-		t1 = ap[i];
-		t2 = bp[i];
-		if (t1 != t2)
-			return ((t1 > t2) ? 1 : -1);
+		if (a->d[i] != b->d[i])
+			return (a->d[i] > b->d[i] ? 1 : -1);
 	}
-	return (0);
+
+	return 0;
 }
 
 int
 BN_cmp(const BIGNUM *a, const BIGNUM *b)
 {
-	int i;
-	int gt, lt;
-	BN_ULONG t1, t2;
-
-	if ((a == NULL) || (b == NULL)) {
+	if (a == NULL || b == NULL) {
 		if (a != NULL)
-			return (-1);
-		else if (b != NULL)
-			return (1);
-		else
-			return (0);
+			return -1;
+		if (b != NULL)
+			return 1;
+		return 0;
 	}
 
+	if (a->neg != b->neg)
+		return b->neg - a->neg;
 
-	if (a->neg != b->neg) {
-		if (a->neg)
-			return (-1);
-		else
-			return (1);
-	}
-	if (a->neg == 0) {
-		gt = 1;
-		lt = -1;
-	} else {
-		gt = -1;
-		lt = 1;
-	}
+	if (a->neg)
+		return BN_ucmp(b, a);
 
-	if (a->top > b->top)
-		return (gt);
-	if (a->top < b->top)
-		return (lt);
-	for (i = a->top - 1; i >= 0; i--) {
-		t1 = a->d[i];
-		t2 = b->d[i];
-		if (t1 > t2)
-			return (gt);
-		if (t1 < t2)
-			return (lt);
-	}
-	return (0);
+	return BN_ucmp(a, b);
 }
 
 int
