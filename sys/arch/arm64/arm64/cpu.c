@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.77 2022/12/21 22:30:42 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.78 2022/12/23 17:46:49 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -674,6 +674,8 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (ID_AA64MMFR1_PAN(id) >= ID_AA64MMFR1_PAN_ATS1E1)
 		printf("+ATS1E1");
+	if (ID_AA64MMFR1_PAN(id) >= ID_AA64MMFR1_PAN_EPAN)
+		printf("+EPAN");
 
 	if (ID_AA64MMFR1_LO(id) >= ID_AA64MMFR1_LO_IMPL) {
 		printf("%sLO", sep);

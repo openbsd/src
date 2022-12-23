@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.25 2022/12/09 21:23:24 patrick Exp $ */
+/* $OpenBSD: armreg.h,v 1.26 2022/12/23 17:46:49 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -472,6 +472,7 @@
 #define	 ID_AA64MMFR1_PAN_NONE		(0x0 << ID_AA64MMFR1_PAN_SHIFT)
 #define	 ID_AA64MMFR1_PAN_IMPL		(0x1 << ID_AA64MMFR1_PAN_SHIFT)
 #define	 ID_AA64MMFR1_PAN_ATS1E1	(0x2 << ID_AA64MMFR1_PAN_SHIFT)
+#define	 ID_AA64MMFR1_PAN_EPAN		(0x3 << ID_AA64MMFR1_PAN_SHIFT)
 #define	ID_AA64MMFR1_SPECSEI_SHIFT	24
 #define	ID_AA64MMFR1_SPECSEI_MASK	(0xf << ID_AA64MMFR1_SPECSEI_SHIFT)
 #define	ID_AA64MMFR1_SPECSEI(x)		((x) & ID_AA64MMFR1_SPECSEI_MASK)
