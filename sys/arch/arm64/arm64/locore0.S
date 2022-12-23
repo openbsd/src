@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.9 2022/12/09 22:31:31 kettenis Exp $ */
+/* $OpenBSD: locore0.S,v 1.10 2022/12/23 17:31:30 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -176,13 +176,13 @@ virtdone:
  * initial kernel virtual map.
  *
  * It relies on:
+ *  We were loaded into contiguous 64MB block of memory
  *  We were loaded to an address that is on a 2MiB boundary
- *  All the memory must not cross a 1GiB boundary
  *  x28 contains the physical address we were loaded from
  *
- * The page table for the identity map starts at L0 and maps the 1GB
- * of memory that contains the memory block where the kernel was
- * loaded by the bootloader.  These are loaded into TTBR0.
+ * The page table for the identity map starts at L0 and maps the 64MB
+ * block that the kernel was loaded into by the bootloader using
+ * 2MB (L2) pages.  These are loaded into TTBR0.
  *
  * The initial kernel page table starts at L1 and maps the 64MB block
  * that the kernel was initially loaded into by the bootloader using
@@ -196,12 +196,6 @@ virtdone:
 	.xword pagetable
 .Lpagetable_end:
 	.xword pagetable_end
-.Lpagetable_l1_ttbr0_idx:
-	.xword pagetable_l1_ttbr0_idx
-.Lpagetable_l1_ttbr0_num:
-	.xword pagetable_l1_ttbr0_num
-.Lpagetable_l1_ttbr0_pa:
-	.xword pagetable_l1_ttbr0_pa
 
 .Lesym:
 	.xword esym
@@ -231,7 +225,7 @@ create_pagetables:
 	 */
 
 	/* Create the kernel space L2 table */
-	mov	x6, x26				// pagetable:
+	mov	x6, x26				// pagetable_l2_ttbr1:
 	mov	x7, #NORMAL_MEM
 	add	x8, x28, x29
 	mov	x9, x28
@@ -243,58 +237,39 @@ create_pagetables:
 
 	/* Link the l1 -> l2 table */
 	mov	x9, x6
+	mov	x10, #2
 	mov	x6, x26
 	bl	link_l1_pagetable
 
 	/*
 	 * Build the TTBR0 maps.
 	 */
-	add	x27, x26, #PAGE_SIZE * 2	// pagetable_l1_ttbr0:
+	add	x27, x26, #PAGE_SIZE		// pagetable_l2_ttbr0:
 
-	mov	x6, x27		/* The initial page table */
-#if defined(SOCDEV_PA) && defined(SOCDEV_VA)
-	/* Create a table for the UART */
-	mov	x7, #DEVICE_MEM
-	mov	x8, #(SOCDEV_VA)	/* VA start */
-	mov	x9, #(SOCDEV_PA)	/* PA start */
-	mov	x10, #1
-	bl	build_l1_block_pagetable
-#endif
+	/* Create the kernel space L2 table */
+	mov	x6, x27				// pagetable_l2_ttbr0:
+	mov	x7, #NORMAL_MEM
+	mov	x8, x28
+	mov	x9, x28
+	mov	x10, #31			// entries for 64MB - 2MB
+	bl	build_l2_block_pagetable
 
-	/* Create the VA = PA map */
-	mov	x7, #NORMAL_MEM // #NORMAL
-	mov	x9, x27
-	mov	x8, x9		/* VA start (== PA start) */
-	mov	x10, #1
-	bl	build_l1_block_pagetable
+	/* Move to the l1 table */
+	add	x27, x27, #PAGE_SIZE * 2	// pagetable_l1_ttbr0:
 
-	/* Store pa of l1 table space start */
-	adr	x7, .Lpagetable_l1_ttbr0_pa
-	ldr	x7, [x7]
-	sub	x7, x7, x29 // VA -> PA
-	str	x27, [x7]
-
-	/* Store idx of created l1 table */
-	adr	x7, .Lpagetable_l1_ttbr0_idx
-	ldr	x7, [x7]
-	sub	x7, x7, x29 // VA -> PA
-	lsr	x9, x27, #L0_SHIFT
-	and	x9, x9, #Ln_ADDR_MASK
-	str	x9, [x7]
-
-	adr	x7, .Lpagetable_l1_ttbr0_num
-	ldr	x7, [x7]
-	sub	x7, x7, x29 // VA -> PA
-	ldr	x7, [x7]
+	/* Link the l1 -> l2 table */
+	mov	x9, x6
+	mov	x10, #2
+	mov	x6, x27
+	bl	link_l1_pagetable
 
 	/* Move to the l0 table */
-	lsl	x7, x7, PAGE_SHIFT
-	add	x27, x27, x7	// pagetable_l0_ttbr0:
+	add	x27, x27, #PAGE_SIZE * 2	// pagetable_l0_ttbr0:
 
 	/* Link the l0 -> l1 table */
 	mov	x9, x6
+	mov	x10, #2
 	mov	x6, x27
-	mov	x10, #1
 	bl	link_l0_pagetable
 
 	/* Restore the Link register */
@@ -305,7 +280,7 @@ create_pagetables:
  * Builds an L0 -> L1 table descriptor
  *
  * This is a link for a 512GiB block of memory with up to 1GiB regions mapped
- * within it by build_l1_block_pagetable.
+ * within it by link_l1_pagetable.
  *
  *  x6  = L0 table
  *  x8  = Virtual Address
@@ -347,6 +322,7 @@ link_l0_pagetable:
  *  x6  = L1 table
  *  x8  = Virtual Address
  *  x9  = L2 PA (trashed)
+ *  x10 = Entry Count
  *  x11, x12 and x13 are trashed
  */
 link_l1_pagetable:
@@ -362,48 +338,14 @@ link_l1_pagetable:
 
 	/* Only use the output address bits */
 	lsr	x9, x9, #PAGE_SHIFT
-	orr	x13, x12, x9, lsl #PAGE_SHIFT
-
-	/* Store the entry */
-	str	x13, [x6, x11, lsl #3]
-
-	ret
-
-/*
- * Builds count 1 GiB page table entry
- *  x6  = L1 table
- *  x7  = Type (0 = Device, 1 = Normal)
- *  x8  = VA start
- *  x9  = PA start (trashed)
- *  x10 = Entry count
- *  x11, x12 and x13 are trashed
- */
-build_l1_block_pagetable:
-	/*
-	 * Build the L1 table entry.
-	 */
-	/* Find the table index */
-	lsr	x11, x8, #L1_SHIFT
-	and	x11, x11, #Ln_ADDR_MASK
-
-	/* Build the L1 block entry */
-	lsl	x12, x7, #2
-	orr	x12, x12, #L1_BLOCK
-	orr	x12, x12, #(ATTR_nG | ATTR_AF | ATTR_SH(SH_INNER))
-	orr	x12, x12, #ATTR_UXN
-
-	/* Only use the output address bits */
-	lsr	x9, x9, #L1_SHIFT
-
-	/* Set the physical address for this virtual address */
-1:	orr	x13, x12, x9, lsl #L1_SHIFT
+1:	orr	x13, x12, x9, lsl #PAGE_SHIFT
 
 	/* Store the entry */
 	str	x13, [x6, x11, lsl #3]
 
 	sub	x10, x10, #1
 	add	x11, x11, #1
-	add	x9, x9, #1
+	add	x9, x9,	#1
 	cbnz	x10, 1b
 
 	ret
