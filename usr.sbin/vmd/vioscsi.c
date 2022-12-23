@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.21 2022/11/08 12:41:00 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.22 2022/12/23 19:25:22 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -81,6 +81,7 @@ vioscsi_next_ring_item(struct vioscsi_dev *dev, struct vring_avail *avail,
 {
 	used->ring[used->idx & VIOSCSI_QUEUE_MASK].id = idx;
 	used->ring[used->idx & VIOSCSI_QUEUE_MASK].len = desc->len;
+	__sync_synchronize();
 	used->idx++;
 
 	dev->vq[dev->cfg.queue_notify].last_avail =
@@ -157,7 +158,7 @@ vioscsi_reg_name(uint8_t reg)
 	switch (reg) {
 	case VIRTIO_CONFIG_DEVICE_FEATURES: return "device feature";
 	case VIRTIO_CONFIG_GUEST_FEATURES: return "guest feature";
-	case VIRTIO_CONFIG_QUEUE_ADDRESS: return "queue address";
+	case VIRTIO_CONFIG_QUEUE_PFN: return "queue pfn";
 	case VIRTIO_CONFIG_QUEUE_SIZE: return "queue size";
 	case VIRTIO_CONFIG_QUEUE_SELECT: return "queue select";
 	case VIRTIO_CONFIG_QUEUE_NOTIFY: return "queue notify";
@@ -1672,8 +1673,8 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			DPRINTF("%s: guest feature set to %u",
 			    __func__, dev->cfg.guest_feature);
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			dev->cfg.queue_address = *data;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			dev->cfg.queue_pfn = *data;
 			vioscsi_update_qa(dev);
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
@@ -1692,7 +1693,7 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (dev->cfg.device_status == 0) {
 				log_debug("%s: device reset", __func__);
 				dev->cfg.guest_feature = 0;
-				dev->cfg.queue_address = 0;
+				dev->cfg.queue_pfn = 0;
 				vioscsi_update_qa(dev);
 				dev->cfg.queue_size = 0;
 				vioscsi_update_qs(dev);
@@ -1988,8 +1989,8 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			*data = dev->cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = dev->cfg.queue_address;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			*data = dev->cfg.queue_pfn;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 			if (sz == 4)
@@ -2033,25 +2034,38 @@ vioscsi_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 void
 vioscsi_update_qs(struct vioscsi_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select >= VIRTIO_MAX_QUEUES) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
 
-	/* Update queue address/size based on queue select */
-	dev->cfg.queue_address = dev->vq[dev->cfg.queue_select].qa;
-	dev->cfg.queue_size = dev->vq[dev->cfg.queue_select].qs;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+
+	/* Update queue pfn/size based on queue select */
+	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
+	dev->cfg.queue_size = vq_info->qs;
 }
 
 void
 vioscsi_update_qa(struct vioscsi_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+	void *hva = NULL;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select >= VIRTIO_MAX_QUEUES)
 		return;
 
-	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
+
+	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIOSCSI_QUEUE_SIZE));
+	if (hva == NULL)
+		fatal("vioscsi_update_qa");
+	vq_info->q_hva = hva;
 }
 
 /*
@@ -2067,13 +2081,12 @@ vioscsi_update_qa(struct vioscsi_dev *dev)
 int
 vioscsi_notifyq(struct vioscsi_dev *dev)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
-	int cnt, ret;
+	int cnt, ret = 0;
 	char *vr;
 	struct virtio_scsi_req_hdr req;
 	struct virtio_scsi_res_hdr resp;
 	struct virtio_vq_acct acct;
+	struct virtio_vq_info *vq_info;
 
 	ret = 0;
 
@@ -2081,34 +2094,21 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 	if (dev->cfg.queue_notify >= VIRTIO_MAX_QUEUES)
 		return (ret);
 
-	vr_sz = vring_size(VIOSCSI_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
-
-	vr = calloc(1, vr_sz);
-	if (vr == NULL) {
-		log_warn("%s: calloc error getting vioscsi ring", __func__);
-		return (ret);
-	}
-
-	if (read_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("%s: error reading gpa 0x%llx", __func__, q_gpa);
-		goto out;
-	}
+	vq_info = &dev->vq[dev->cfg.queue_notify];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	acct.desc = (struct vring_desc *)(vr);
-	acct.avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	acct.used = (struct vring_used *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
+	acct.avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	acct.used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
-	acct.idx =
-	    dev->vq[dev->cfg.queue_notify].last_avail & VIOSCSI_QUEUE_MASK;
+	acct.idx = vq_info->last_avail & VIOSCSI_QUEUE_MASK;
 
 	if ((acct.avail->idx & VIOSCSI_QUEUE_MASK) == acct.idx) {
-		log_warnx("%s:nothing to do?", __func__);
-		goto out;
+		log_debug("%s - nothing to do?", __func__);
+		return (0);
 	}
 
 	cnt = 0;
@@ -2180,14 +2180,10 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 
 			ret = 1;
 			dev->cfg.isr_status = 1;
-			/* Move ring indexes */
+
+			/* Move ring indexes (updates the used ring index) */
 			vioscsi_next_ring_item(dev, acct.avail, acct.used,
 			    acct.req_desc, acct.req_idx);
-
-			if (write_mem(q_gpa, vr, vr_sz)) {
-				log_warnx("%s: error writing vioring",
-				    __func__);
-			}
 			goto next_msg;
 		}
 
@@ -2202,138 +2198,48 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 		case TEST_UNIT_READY:
 		case START_STOP:
 			ret = vioscsi_handle_tur(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case PREVENT_ALLOW:
 			ret = vioscsi_handle_prevent_allow(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_TOC:
 			ret = vioscsi_handle_read_toc(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_CAPACITY:
 			ret = vioscsi_handle_read_capacity(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_CAPACITY_16:
 			ret = vioscsi_handle_read_capacity_16(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_COMMAND:
 			ret = vioscsi_handle_read_6(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_10:
 			ret = vioscsi_handle_read_10(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case INQUIRY:
 			ret = vioscsi_handle_inquiry(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case MODE_SENSE:
 			ret = vioscsi_handle_mode_sense(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case MODE_SENSE_BIG:
 			ret = vioscsi_handle_mode_sense_big(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case GET_EVENT_STATUS_NOTIFICATION:
 			ret = vioscsi_handle_gesn(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case READ_DISC_INFORMATION:
 			ret = vioscsi_handle_read_disc_info(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case GET_CONFIGURATION:
 			ret = vioscsi_handle_get_config(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case MECHANISM_STATUS:
 			ret = vioscsi_handle_mechanism_status(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		case REPORT_LUNS:
 			ret = vioscsi_handle_report_luns(dev, &req, &acct);
-			if (ret) {
-				if (write_mem(q_gpa, vr, vr_sz)) {
-					log_warnx("%s: error writing vioring",
-					    __func__);
-				}
-			}
 			break;
 		default:
 			log_warnx("%s: unsupported opcode 0x%02x,%s",
@@ -2348,6 +2254,5 @@ next_msg:
 		acct.idx = (acct.idx + 1) & VIOSCSI_QUEUE_MASK;
 	}
 out:
-	free(vr);
 	return (ret);
 }

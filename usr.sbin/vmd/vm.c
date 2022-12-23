@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.76 2022/11/11 10:52:44 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.77 2022/12/23 19:25:22 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1988,6 +1988,47 @@ read_mem(paddr_t src, void *buf, size_t len)
 	}
 
 	return (0);
+}
+
+/*
+ * hvaddr_mem
+ *
+ * Translate a guest physical address to a host virtual address, checking the
+ * provided memory range length to confirm it's contiguous within the same
+ * guest memory range (vm_mem_range).
+ *
+ * Parameters:
+ *  gpa: guest physical address to translate
+ *  len: number of bytes in the intended range
+ *
+ * Return values:
+ *  void* to host virtual memory on success
+ *  NULL on error, setting errno to:
+ *    EFAULT: gpa falls outside guest memory ranges
+ *    EINVAL: requested len extends beyond memory range
+ */
+void *
+hvaddr_mem(paddr_t gpa, size_t len)
+{
+	struct vm_mem_range *vmr;
+	size_t off;
+
+	vmr = find_gpa_range(&current_vm->vm_params.vmc_params, gpa, len);
+	if (vmr == NULL) {
+		log_warnx("%s: failed - invalid gpa: 0x%lx\n", __func__, gpa);
+		errno = EFAULT;
+		return (NULL);
+	}
+
+	off = gpa - vmr->vmr_gpa;
+	if (len > (vmr->vmr_size - off)) {
+		log_warnx("%s: failed - invalid memory range: gpa=0x%lx, "
+		    "len=%zu", __func__, gpa, len);
+		errno = EINVAL;
+		return (NULL);
+	}
+
+	return ((char *)vmr->vmr_va + off);
 }
 
 /*

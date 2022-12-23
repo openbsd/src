@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.42 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.43 2022/12/23 19:25:22 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -64,13 +64,18 @@
 #define VIRTIO_MAX_QUEUES	3
 
 /*
+ * Rename the address config register to be more descriptive.
+ */
+#define VIRTIO_CONFIG_QUEUE_PFN	VIRTIO_CONFIG_QUEUE_ADDRESS
+
+/*
  * This struct stores notifications from a virtio driver. There is
  * one such struct per virtio device.
  */
 struct virtio_io_cfg {
 	uint32_t device_feature;
 	uint32_t guest_feature;
-	uint32_t queue_address;
+	uint32_t queue_pfn;
 	uint16_t queue_size;
 	uint16_t queue_select;
 	uint16_t queue_notify;
@@ -93,7 +98,10 @@ struct virtio_backing {
  */
 struct virtio_vq_info {
 	/* Guest physical address of virtq */
-	uint32_t qa;
+	uint64_t q_gpa;
+
+	/* Host virtual address of virtq */
+	void *q_hva;
 
 	/* Queue size: number of queue entries in virtq */
 	uint32_t qs;

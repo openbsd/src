@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.97 2021/08/29 18:01:32 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.98 2022/12/23 19:25:22 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -89,7 +89,7 @@ virtio_reg_name(uint8_t reg)
 	switch (reg) {
 	case VIRTIO_CONFIG_DEVICE_FEATURES: return "device feature";
 	case VIRTIO_CONFIG_GUEST_FEATURES: return "guest feature";
-	case VIRTIO_CONFIG_QUEUE_ADDRESS: return "queue address";
+	case VIRTIO_CONFIG_QUEUE_PFN: return "queue address";
 	case VIRTIO_CONFIG_QUEUE_SIZE: return "queue size";
 	case VIRTIO_CONFIG_QUEUE_SELECT: return "queue select";
 	case VIRTIO_CONFIG_QUEUE_NOTIFY: return "queue notify";
@@ -123,40 +123,52 @@ vring_size(uint32_t vq_size)
 void
 viornd_update_qs(void)
 {
+	struct virtio_vq_info *vq_info;
+
 	/* Invalid queue? */
 	if (viornd.cfg.queue_select > 0) {
 		viornd.cfg.queue_size = 0;
 		return;
 	}
 
-	/* Update queue address/size based on queue select */
-	viornd.cfg.queue_address = viornd.vq[viornd.cfg.queue_select].qa;
-	viornd.cfg.queue_size = viornd.vq[viornd.cfg.queue_select].qs;
+	vq_info = &viornd.vq[viornd.cfg.queue_select];
+
+	/* Update queue pfn/size based on queue select */
+	viornd.cfg.queue_pfn = vq_info->q_gpa >> 12;
+	viornd.cfg.queue_size = vq_info->qs;
 }
 
 /* Update queue address */
 void
 viornd_update_qa(void)
 {
+	struct virtio_vq_info *vq_info;
+	void *hva = NULL;
+
 	/* Invalid queue? */
 	if (viornd.cfg.queue_select > 0)
 		return;
 
-	viornd.vq[viornd.cfg.queue_select].qa = viornd.cfg.queue_address;
+	vq_info = &viornd.vq[viornd.cfg.queue_select];
+	vq_info->q_gpa = (uint64_t)viornd.cfg.queue_pfn * VIRTIO_PAGE_SIZE;
+
+	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIORND_QUEUE_SIZE));
+	if (hva == NULL)
+		fatal("viornd_update_qa");
+	vq_info->q_hva = hva;
 }
 
 int
 viornd_notifyq(void)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
 	size_t sz;
 	int dxx, ret;
 	uint16_t aidx, uidx;
-	char *buf, *rnd_data;
+	char *vr, *rnd_data;
 	struct vring_desc *desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
+	struct virtio_vq_info *vq_info;
 
 	ret = 0;
 
@@ -164,26 +176,14 @@ viornd_notifyq(void)
 	if (viornd.cfg.queue_notify > 0)
 		return (0);
 
-	vr_sz = vring_size(VIORND_QUEUE_SIZE);
-	q_gpa = viornd.vq[viornd.cfg.queue_notify].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
+	vq_info = &viornd.vq[viornd.cfg.queue_notify];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
-	buf = calloc(1, vr_sz);
-	if (buf == NULL) {
-		log_warn("calloc error getting viornd ring");
-		return (0);
-	}
-
-	if (read_mem(q_gpa, buf, vr_sz)) {
-		free(buf);
-		return (0);
-	}
-
-	desc = (struct vring_desc *)(buf);
-	avail = (struct vring_avail *)(buf +
-	    viornd.vq[viornd.cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(buf +
-	    viornd.vq[viornd.cfg.queue_notify].vq_usedoffset);
+	desc = (struct vring_desc *)(vr);
+	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
 	aidx = avail->idx & VIORND_QUEUE_MASK;
 	uidx = used->idx & VIORND_QUEUE_MASK;
@@ -209,17 +209,12 @@ viornd_notifyq(void)
 			viornd.cfg.isr_status = 1;
 			used->ring[uidx].id = dxx;
 			used->ring[uidx].len = sz;
+			__sync_synchronize();
 			used->idx++;
-
-			if (write_mem(q_gpa, buf, vr_sz)) {
-				log_warnx("viornd: error writing vio ring");
-			}
 		}
 		free(rnd_data);
 	} else
 		fatal("memory allocation error for viornd data");
-
-	free(buf);
 
 	return (ret);
 }
@@ -241,8 +236,8 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			viornd.cfg.guest_feature = *data;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			viornd.cfg.queue_address = *data;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			viornd.cfg.queue_pfn = *data;
 			viornd_update_qa();
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
@@ -266,8 +261,8 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			*data = viornd.cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = viornd.cfg.queue_address;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			*data = viornd.cfg.queue_pfn;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 			*data = viornd.cfg.queue_size;
@@ -294,25 +289,38 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 void
 vioblk_update_qa(struct vioblk_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+	void *hva = NULL;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select > 0)
 		return;
 
-	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
+
+	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIOBLK_QUEUE_SIZE));
+	if (hva == NULL)
+		fatal("vioblk_update_qa");
+	vq_info->q_hva = hva;
 }
 
 void
 vioblk_update_qs(struct vioblk_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select > 0) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
 
-	/* Update queue address/size based on queue select */
-	dev->cfg.queue_address = dev->vq[dev->cfg.queue_select].qa;
-	dev->cfg.queue_size = dev->vq[dev->cfg.queue_select].qs;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+
+	/* Update queue pfn/size based on queue select */
+	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
+	dev->cfg.queue_size = vq_info->qs;
 }
 
 static void
@@ -424,55 +432,41 @@ vioblk_finish_write(struct ioinfo *info)
 int
 vioblk_notifyq(struct vioblk_dev *dev)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
 	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx;
 	uint8_t ds;
-	int cnt, ret;
+	int cnt;
 	off_t secbias;
 	char *vr;
 	struct vring_desc *desc, *cmd_desc, *secdata_desc, *ds_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
 	struct virtio_blk_req_hdr cmd;
-
-	ret = 0;
+	struct virtio_vq_info *vq_info;
 
 	/* Invalid queue? */
 	if (dev->cfg.queue_notify > 0)
 		return (0);
 
-	vr_sz = vring_size(VIOBLK_QUEUE_SIZE);
-	q_gpa = dev->vq[dev->cfg.queue_notify].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
-
-	vr = calloc(1, vr_sz);
-	if (vr == NULL) {
-		log_warn("calloc error getting vioblk ring");
-		return (0);
-	}
-
-	if (read_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("error reading gpa 0x%llx", q_gpa);
-		goto out;
-	}
+	vq_info = &dev->vq[dev->cfg.queue_notify];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_availoffset);
-	used = (struct vring_used *)(vr +
-	    dev->vq[dev->cfg.queue_notify].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
-	idx = dev->vq[dev->cfg.queue_notify].last_avail & VIOBLK_QUEUE_MASK;
+	idx = vq_info->last_avail & VIOBLK_QUEUE_MASK;
 
 	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
-		log_warnx("vioblk queue notify - nothing to do?");
-		goto out;
+		log_debug("%s - nothing to do?", __func__);
+		return (0);
 	}
 
 	while (idx != (avail->idx & VIOBLK_QUEUE_MASK)) {
 
+		ds = VIRTIO_BLK_S_IOERR;
 		cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
 		cmd_desc = &desc[cmd_desc_idx];
 
@@ -691,22 +685,17 @@ vioblk_notifyq(struct vioblk_dev *dev)
 			goto out;
 		}
 
-		ret = 1;
 		dev->cfg.isr_status = 1;
 		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
 		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+		__sync_synchronize();
 		used->idx++;
 
-		dev->vq[dev->cfg.queue_notify].last_avail = avail->idx &
-		    VIOBLK_QUEUE_MASK;
-		if (write_mem(q_gpa, vr, vr_sz))
-			log_warnx("%s: error writing vio ring", __func__);
-
+		vq_info->last_avail = avail->idx & VIOBLK_QUEUE_MASK;
 		idx = (idx + 1) & VIOBLK_QUEUE_MASK;
 	}
 out:
-	free(vr);
-	return (ret);
+	return (1);
 }
 
 int
@@ -729,8 +718,8 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			dev->cfg.guest_feature = *data;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			dev->cfg.queue_address = *data;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			dev->cfg.queue_pfn = *data;
 			vioblk_update_qa(dev);
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
@@ -747,7 +736,7 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (dev->cfg.device_status == 0) {
 				log_debug("%s: device reset", __func__);
 				dev->cfg.guest_feature = 0;
-				dev->cfg.queue_address = 0;
+				dev->cfg.queue_pfn = 0;
 				vioblk_update_qa(dev);
 				dev->cfg.queue_size = 0;
 				vioblk_update_qs(dev);
@@ -890,8 +879,8 @@ virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			*data = dev->cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = dev->cfg.queue_address;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			*data = dev->cfg.queue_pfn;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 			if (sz == 4)
@@ -951,8 +940,8 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			dev->cfg.guest_feature = *data;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			dev->cfg.queue_address = *data;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			dev->cfg.queue_pfn = *data;
 			vionet_update_qa(dev);
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
@@ -969,7 +958,7 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 			if (dev->cfg.device_status == 0) {
 				log_debug("%s: device reset", __func__);
 				dev->cfg.guest_feature = 0;
-				dev->cfg.queue_address = 0;
+				dev->cfg.queue_pfn = 0;
 				vionet_update_qa(dev);
 				dev->cfg.queue_size = 0;
 				vionet_update_qs(dev);
@@ -1003,8 +992,8 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			*data = dev->cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = dev->cfg.queue_address;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			*data = dev->cfg.queue_pfn;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 			*data = dev->cfg.queue_size;
@@ -1036,11 +1025,20 @@ virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 void
 vionet_update_qa(struct vionet_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+	void *hva = NULL;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select > 1)
 		return;
 
-	dev->vq[dev->cfg.queue_select].qa = dev->cfg.queue_address;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
+
+	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIONET_QUEUE_SIZE));
+	if (hva == NULL)
+		fatal("vionet_update_qa");
+	vq_info->q_hva = hva;
 }
 
 /*
@@ -1049,15 +1047,19 @@ vionet_update_qa(struct vionet_dev *dev)
 void
 vionet_update_qs(struct vionet_dev *dev)
 {
+	struct virtio_vq_info *vq_info;
+
 	/* Invalid queue? */
 	if (dev->cfg.queue_select > 1) {
 		dev->cfg.queue_size = 0;
 		return;
 	}
 
-	/* Update queue address/size based on queue select */
-	dev->cfg.queue_address = dev->vq[dev->cfg.queue_select].qa;
-	dev->cfg.queue_size = dev->vq[dev->cfg.queue_select].qs;
+	vq_info = &dev->vq[dev->cfg.queue_select];
+
+	/* Update queue pfn/size based on queue select */
+	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
+	dev->cfg.queue_size = vq_info->qs;
 }
 
 /*
@@ -1073,17 +1075,14 @@ vionet_update_qs(struct vionet_dev *dev)
 int
 vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
 	uint16_t dxx, idx, hdr_desc_idx, chain_hdr_idx;
-	int ret = 0;
 	char *vr = NULL;
 	size_t bufsz = 0, off = 0, pkt_offset = 0, chunk_size = 0;
 	size_t chain_len = 0;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
-	struct vring_used_elem *ue;
+	struct virtio_vq_info *vq_info;
 	struct virtio_net_hdr hdr;
 	size_t hdr_sz;
 
@@ -1095,33 +1094,23 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 	hdr_sz = sizeof(hdr);
 
 	if (!(dev->cfg.device_status & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK))
-		return ret;
-
-	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[RXQ].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
-
-	vr = calloc(1, vr_sz);
-	if (vr == NULL) {
-		log_warn("rx enq: calloc error getting vionet ring");
 		return (0);
-	}
 
-	if (read_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("rx enq: error reading gpa 0x%llx", q_gpa);
-		goto out;
-	}
+	vq_info = &dev->vq[RXQ];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
-	used = (struct vring_used *)(vr + dev->vq[RXQ].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
-	idx = dev->vq[RXQ].last_avail & VIONET_QUEUE_MASK;
-	if ((dev->vq[RXQ].notified_avail & VIONET_QUEUE_MASK) == idx) {
+	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
+	if ((vq_info->notified_avail & VIONET_QUEUE_MASK) == idx) {
 		log_debug("%s: insufficient available buffer capacity, "
 		    "dropping packet.", __func__);
-		goto out;
+		return (0);
 	}
 
 	hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
@@ -1138,7 +1127,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 		if (!(pkt_desc->flags & VRING_DESC_F_WRITE)) {
 			log_warnx("%s: invalid descriptor, not writable",
 			    __func__);
-			goto out;
+			return (0);
 		}
 
 		/* How much data do we get to write? */
@@ -1158,7 +1147,7 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 			pkt + pkt_offset, chunk_size)) {
 			log_warnx("%s: failed to write to buffer 0x%llx",
 			    __func__, pkt_desc->addr);
-			goto out;
+			return (0);
 		}
 
 		chain_len += chunk_size + off;
@@ -1168,19 +1157,8 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 		dxx = pkt_desc->next & VIONET_QUEUE_MASK;
 	} while (bufsz < sz && pkt_desc->flags & VRING_DESC_F_NEXT);
 
-	/* Update the list of used buffers. */
-	ue = &used->ring[(used->idx) & VIONET_QUEUE_MASK];
-	ue->id = chain_hdr_idx;
-	ue->len = chain_len;
-	off = ((char *)ue - vr);
-	if (write_mem(q_gpa + off, ue, sizeof(*ue))) {
-		log_warnx("%s: error updating rx used ring", __func__);
-		goto out;
-	}
-
 	/* Move our marker in the ring...*/
-	used->idx++;
-	dev->vq[RXQ].last_avail = (dev->vq[RXQ].last_avail + 1) &
+	vq_info->last_avail = (vq_info->last_avail + 1) &
 	    VIONET_QUEUE_MASK;
 
 	/* Prepend the virtio net header in the first buffer. */
@@ -1189,23 +1167,21 @@ vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
 	if (write_mem(hdr_desc->addr, &hdr, hdr_sz)) {
 	    log_warnx("vionet: rx enq header write_mem error @ 0x%llx",
 		hdr_desc->addr);
-		goto out;
+	    return (0);
 	}
 
 	/* Update the index field in the used ring. This must be done last. */
 	dev->cfg.isr_status = 1;
-	off = (char *)&used->idx - vr;
-	*spc = (dev->vq[RXQ].notified_avail - dev->vq[RXQ].last_avail) &
-	    VIONET_QUEUE_MASK;
+	*spc = (vq_info->notified_avail - vq_info->last_avail)
+	    & VIONET_QUEUE_MASK;
 
-	if (write_mem(q_gpa + off, &used->idx, sizeof(used->idx)))
-		log_warnx("vionet: error writing vio ring");
+	/* Update the list of used buffers. */
+	used->ring[used->idx & VIONET_QUEUE_MASK].id = chain_hdr_idx;
+	used->ring[used->idx & VIONET_QUEUE_MASK].len = chain_len;
+	__sync_synchronize();
+	used->idx++;
 
-	ret = 1;
-
-out:
-	free(vr);
-	return (ret);
+	return (1);
 }
 
 /*
@@ -1277,33 +1253,18 @@ vionet_rx_event(int fd, short kind, void *arg)
 void
 vionet_notify_rx(struct vionet_dev *dev)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
 	char *vr;
 	struct vring_avail *avail;
+	struct virtio_vq_info *vq_info;
 
-	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[RXQ].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
-
-	vr = malloc(vr_sz);
-	if (vr == NULL) {
-		log_warn("malloc error getting vionet ring");
-		return;
-	}
-
-	if (read_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("error reading gpa 0x%llx", q_gpa);
-		free(vr);
-		return;
-	}
+	vq_info = &dev->vq[RXQ];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
 	/* Compute offset into avail ring */
-	avail = (struct vring_avail *)(vr + dev->vq[RXQ].vq_availoffset);
-
-	dev->vq[RXQ].notified_avail = avail->idx - 1;
-
-	free(vr);
+	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	vq_info->notified_avail = avail->idx - 1;
 }
 
 /*
@@ -1312,12 +1273,11 @@ vionet_notify_rx(struct vionet_dev *dev)
 int
 vionet_notifyq(struct vionet_dev *dev)
 {
-	int ret;
+	int ret = 0;
 
 	switch (dev->cfg.queue_notify) {
 	case RXQ:
 		vionet_notify_rx(dev);
-		ret = 0;
 		break;
 	case TXQ:
 		ret = vionet_notify_tx(dev);
@@ -1329,7 +1289,6 @@ vionet_notifyq(struct vionet_dev *dev)
 		 */
 		log_debug("%s: notify for unimplemented queue ID %d",
 		    __func__, dev->cfg.queue_notify);
-		ret = 0;
 		break;
 	}
 
@@ -1342,49 +1301,34 @@ vionet_notifyq(struct vionet_dev *dev)
 int
 vionet_notify_tx(struct vionet_dev *dev)
 {
-	uint64_t q_gpa;
-	uint32_t vr_sz;
 	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx, cnt;
 	size_t pktsz, chunk_size = 0;
-	ssize_t dhcpsz;
-	int ret, num_enq, ofs, spc;
-	char *vr, *pkt, *dhcppkt;
+	ssize_t dhcpsz = 0;
+	int num_enq, ofs, spc = 0;
+	char *vr = NULL, *pkt = NULL, *dhcppkt = NULL;
 	struct vring_desc *desc, *pkt_desc, *hdr_desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
+	struct virtio_vq_info *vq_info;
 	struct ether_header *eh;
 
-	dhcpsz = 0;
-	vr = pkt = dhcppkt = NULL;
-	ret = spc = 0;
-
-	vr_sz = vring_size(VIONET_QUEUE_SIZE);
-	q_gpa = dev->vq[TXQ].qa;
-	q_gpa = q_gpa * VIRTIO_PAGE_SIZE;
-
-	vr = calloc(1, vr_sz);
-	if (vr == NULL) {
-		log_warn("calloc error getting vionet ring");
-		goto out;
-	}
-
-	if (read_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("error reading gpa 0x%llx", q_gpa);
-		goto out;
-	}
+	vq_info = &dev->vq[TXQ];
+	vr = vq_info->q_hva;
+	if (vr == NULL)
+		fatalx("%s: null vring", __func__);
 
 	/* Compute offsets in ring of descriptors, avail ring, and used ring */
 	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + dev->vq[TXQ].vq_availoffset);
-	used = (struct vring_used *)(vr + dev->vq[TXQ].vq_usedoffset);
+	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
+	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
 	num_enq = 0;
 
-	idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
+	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
 
 	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
-		log_warnx("vionet tx queue notify - nothing to do?");
-		goto out;
+		log_debug("%s - nothing to do?", __func__);
+		return (0);
 	}
 
 	while ((avail->idx & VIONET_QUEUE_MASK) != idx) {
@@ -1502,36 +1446,29 @@ vionet_notify_tx(struct vionet_dev *dev)
 		}
 
 	drop_packet:
-		ret = 1;
 		dev->cfg.isr_status = 1;
 		used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_desc_idx;
 		used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len;
+		__sync_synchronize();
 		used->idx++;
 
-		dev->vq[TXQ].last_avail++;
-		num_enq++;
+		vq_info->last_avail = avail->idx & VIONET_QUEUE_MASK;
+		idx = (idx + 1) & VIONET_QUEUE_MASK;
 
-		idx = dev->vq[TXQ].last_avail & VIONET_QUEUE_MASK;
+		num_enq++;
 
 		free(pkt);
 		pkt = NULL;
 	}
 
-	if (write_mem(q_gpa, vr, vr_sz)) {
-		log_warnx("vionet: tx error writing vio ring");
-	}
-
-	if (dhcpsz > 0) {
-		if (vionet_enq_rx(dev, dhcppkt, dhcpsz, &spc))
-			ret = 1;
-	}
+	if (dhcpsz > 0)
+		vionet_enq_rx(dev, dhcppkt, dhcpsz, &spc);
 
 out:
-	free(vr);
 	free(pkt);
 	free(dhcppkt);
 
-	return (ret);
+	return (1);
 }
 
 int
@@ -1662,8 +1599,8 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			vmmci.cfg.guest_feature = *data;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			vmmci.cfg.queue_address = *data;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			vmmci.cfg.queue_pfn = *data;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SELECT:
 			vmmci.cfg.queue_select = *data;
@@ -1703,8 +1640,8 @@ vmmci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		case VIRTIO_CONFIG_GUEST_FEATURES:
 			*data = vmmci.cfg.guest_feature;
 			break;
-		case VIRTIO_CONFIG_QUEUE_ADDRESS:
-			*data = vmmci.cfg.queue_address;
+		case VIRTIO_CONFIG_QUEUE_PFN:
+			*data = vmmci.cfg.queue_pfn;
 			break;
 		case VIRTIO_CONFIG_QUEUE_SIZE:
 			*data = vmmci.cfg.queue_size;
