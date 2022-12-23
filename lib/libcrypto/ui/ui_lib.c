@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.47 2022/12/23 02:22:58 jsing Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.48 2022/12/23 02:26:16 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -575,11 +575,13 @@ UI_create_method(const char *name)
 LCRYPTO_ALIAS(UI_create_method)
 
 void
-UI_destroy_method(UI_METHOD *ui_method)
+UI_destroy_method(UI_METHOD *method)
 {
-	free(ui_method->name);
-	ui_method->name = NULL;
-	free(ui_method);
+	if (method == NULL)
+		return;
+
+	free(method->name);
+	free(method);
 }
 LCRYPTO_ALIAS(UI_destroy_method)
 
