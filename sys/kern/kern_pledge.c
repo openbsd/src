@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.300 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.301 2022/12/23 05:35:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -430,8 +430,7 @@ parsepledges(struct proc *p, const char *kname, const char *promises, u_int64_t 
 	int error;
 
 	rbuf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
-	error = copyinstr(promises, rbuf, MAXPATHLEN,
-	    &rbuflen);
+	error = copyinstr(promises, rbuf, MAXPATHLEN, &rbuflen);
 	if (error) {
 		free(rbuf, M_TEMP, MAXPATHLEN);
 		return (error);
