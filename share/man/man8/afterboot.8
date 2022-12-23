@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.172 2022/12/23 07:16:55 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.173 2022/12/23 07:37:21 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -164,7 +164,7 @@ Correct by editing
 .Pa /etc/hostname. Ns Ar interface
 (where
 .Ar interface
-is the interface name, e.g.,
+is the interface name or link layer address, e.g.,
 .Dq em0 )
 and then using
 .Xr ifconfig 8
@@ -174,19 +174,14 @@ Read the
 .Xr hostname.if 5
 man page for more information on the format of
 .Pa /etc/hostname. Ns Ar interface
-files.
+files and instructions on configuring dynamic addresses.
 .Pp
-See
-.Xr multicast 4
-for instructions on configuring multicast routing.
-See
-.Xr hostname.if 5
-for instructions on configuring interfaces with DHCP.
-.Pp
-Routing tables can be viewed by issuing
+Routing tables are manipulated using
+.Xr route 8 .
+They can be viewed by issuing
 .Dq route -n show .
 The default gateway address is stored in the
-.Pa /etc/mygate
+.Xr mygate 5
 file.
 If you need to edit this file, a painless way to reconfigure the network
 afterwards is
@@ -199,19 +194,19 @@ Or, you may prefer to manually configure using a series of
 and
 .Ic route delete
 commands.
-See
-.Xr route 8
-for more information.
 .Pp
+Packets are not forwarded by default, due to RFC requirements.
 If you wish to route packets between interfaces, add one or both
 of the following directives (depending on whether IPv4 or IPv6 routing
 is required) to
-.Pa /etc/sysctl.conf :
+.Xr sysctl.conf 5 :
 .Pp
 .Dl net.inet.ip.forwarding=1
 .Dl net.inet6.ip6.forwarding=1
 .Pp
-Packets are not forwarded by default, due to RFC requirements.
+See
+.Xr multicast 4
+for instructions on configuring multicast routing.
 .Ss Check DNS
 Use
 .Xr host 1
