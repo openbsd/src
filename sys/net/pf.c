@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1161 2022/12/22 05:59:27 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1162 2022/12/23 07:14:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -694,8 +694,10 @@ pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
 {
 	int	diff;
 
+#if 0
 	if ((diff = a->hash - b->hash) != 0)
 		return (diff);
+#endif
 	if ((diff = a->proto - b->proto) != 0)
 		return (diff);
 	if ((diff = a->af - b->af) != 0)
