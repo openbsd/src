@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_shift.c,v 1.4 2022/12/23 02:12:11 jsing Exp $ */
+/*	$OpenBSD: bn_shift.c,v 1.5 2022/12/23 02:13:15 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -231,6 +231,43 @@ test_bn_shift(void)
 	}
 
 	if (!check_shift_result(bn1))
+		goto failure;
+
+	/*
+	 * Shift of zero (equivalent to a copy).
+	 */
+	BN_zero(bn2);
+	if (!BN_lshift(bn2, bn1, 0)) {
+		fprintf(stderr, "FAIL: failed to BN_lshift()\n");
+		goto failure;
+	}
+
+	if (!check_shift_result(bn2))
+		goto failure;
+
+	if (!BN_lshift(bn2, bn2, 0)) {
+		fprintf(stderr, "FAIL: failed to BN_lshift()\n");
+		goto failure;
+	}
+
+	if (!check_shift_result(bn2))
+		goto failure;
+
+	BN_zero(bn2);
+	if (!BN_rshift(bn2, bn1, 0)) {
+		fprintf(stderr, "FAIL: failed to BN_rshift()\n");
+		goto failure;
+	}
+
+	if (!check_shift_result(bn2))
+		goto failure;
+
+	if (!BN_rshift(bn2, bn2, 0)) {
+		fprintf(stderr, "FAIL: failed to BN_rshift()\n");
+		goto failure;
+	}
+
+	if (!check_shift_result(bn2))
 		goto failure;
 
 	failed = 0;
