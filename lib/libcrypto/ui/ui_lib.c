@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.46 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.47 2022/12/23 02:22:58 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -574,11 +574,6 @@ UI_create_method(const char *name)
 }
 LCRYPTO_ALIAS(UI_create_method)
 
-/*
- * BIG FSCKING WARNING!!!!  If you use this on a statically allocated method
- * (that is, it hasn't been allocated using UI_create_method(), you deserve
- * anything Murphy can throw at you and more!  You have been warned.
- */
 void
 UI_destroy_method(UI_METHOD *ui_method)
 {
