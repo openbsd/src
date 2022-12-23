@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.49 2022/12/23 02:27:47 jsing Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.50 2022/12/23 02:31:56 jsing Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -117,6 +117,7 @@ UI_free(UI *ui)
 {
 	if (ui == NULL)
 		return;
+
 	sk_UI_STRING_pop_free(ui->strings, free_string);
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_UI, ui, &ui->ex_data);
 	free(ui);
@@ -379,6 +380,7 @@ UI_add_user_data(UI *ui, void *user_data)
 	void *old_data = ui->user_data;
 
 	ui->user_data = user_data;
+
 	return old_data;
 }
 LCRYPTO_ALIAS(UI_add_user_data)
@@ -486,6 +488,7 @@ UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
 		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
 	}
+
 	switch (cmd) {
 	case UI_CTRL_PRINT_ERRORS:
 		{
@@ -530,18 +533,18 @@ UI_get_ex_data(UI *r, int idx)
 LCRYPTO_ALIAS(UI_get_ex_data)
 
 void
-UI_set_default_method(const UI_METHOD *meth)
+UI_set_default_method(const UI_METHOD *method)
 {
-	default_UI_meth = meth;
+	default_UI_meth = method;
 }
 LCRYPTO_ALIAS(UI_set_default_method)
 
 const UI_METHOD *
 UI_get_default_method(void)
 {
-	if (default_UI_meth == NULL) {
+	if (default_UI_meth == NULL)
 		default_UI_meth = UI_OpenSSL();
-	}
+
 	return default_UI_meth;
 }
 LCRYPTO_ALIAS(UI_get_default_method)
@@ -554,9 +557,10 @@ UI_get_method(UI *ui)
 LCRYPTO_ALIAS(UI_get_method)
 
 const UI_METHOD *
-UI_set_method(UI *ui, const UI_METHOD *meth)
+UI_set_method(UI *ui, const UI_METHOD *method)
 {
-	ui->meth = meth;
+	ui->meth = method;
+
 	return ui->meth;
 }
 LCRYPTO_ALIAS(UI_set_method)
@@ -597,55 +601,60 @@ LCRYPTO_ALIAS(UI_destroy_method)
 int
 UI_method_set_opener(UI_METHOD *method, int (*opener)(UI *ui))
 {
-	if (method) {
-		method->ui_open_session = opener;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_open_session = opener;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_opener)
 
 int
 UI_method_set_writer(UI_METHOD *method, int (*writer)(UI *ui, UI_STRING *uis))
 {
-	if (method) {
-		method->ui_write_string = writer;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_write_string = writer;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_writer)
 
 int
 UI_method_set_flusher(UI_METHOD *method, int (*flusher)(UI *ui))
 {
-	if (method) {
-		method->ui_flush = flusher;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_flush = flusher;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_flusher)
 
 int
 UI_method_set_reader(UI_METHOD *method, int (*reader)(UI *ui, UI_STRING *uis))
 {
-	if (method) {
-		method->ui_read_string = reader;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_read_string = reader;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_reader)
 
 int
 UI_method_set_closer(UI_METHOD *method, int (*closer)(UI *ui))
 {
-	if (method) {
-		method->ui_close_session = closer;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_close_session = closer;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_closer)
 
@@ -654,56 +663,62 @@ UI_method_set_prompt_constructor(UI_METHOD *method,
     char *(*prompt_constructor)(UI *ui, const char *object_desc,
     const char *object_name))
 {
-	if (method) {
-		method->ui_construct_prompt = prompt_constructor;
-		return 0;
-	}
-	return -1;
+	if (method == NULL)
+		return -1;
+
+	method->ui_construct_prompt = prompt_constructor;
+
+	return 0;
 }
 LCRYPTO_ALIAS(UI_method_set_prompt_constructor)
 
 int
 (*UI_method_get_opener(const UI_METHOD * method))(UI *)
 {
-	if (method)
-		return method->ui_open_session;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_open_session;
 }
 LCRYPTO_ALIAS(UI_method_get_opener)
 
 int
 (*UI_method_get_writer(const UI_METHOD *method))(UI *, UI_STRING *)
 {
-	if (method)
-		return method->ui_write_string;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_write_string;
 }
 LCRYPTO_ALIAS(UI_method_get_writer)
 
 int
 (*UI_method_get_flusher(const UI_METHOD *method)) (UI *)
 {
-	if (method)
-		return method->ui_flush;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_flush;
 }
 LCRYPTO_ALIAS(UI_method_get_flusher)
 
 int
 (*UI_method_get_reader(const UI_METHOD *method))(UI *, UI_STRING *)
 {
-	if (method)
-		return method->ui_read_string;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_read_string;
 }
 LCRYPTO_ALIAS(UI_method_get_reader)
 
 int
 (*UI_method_get_closer(const UI_METHOD *method))(UI *)
 {
-	if (method)
-		return method->ui_close_session;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_close_session;
 }
 LCRYPTO_ALIAS(UI_method_get_closer)
 
@@ -711,17 +726,19 @@ char *
 (*UI_method_get_prompt_constructor(const UI_METHOD *method))(UI *, const char *,
     const char *)
 {
-	if (method)
-		return method->ui_construct_prompt;
-	return NULL;
+	if (method == NULL)
+		return NULL;
+
+	return method->ui_construct_prompt;
 }
 LCRYPTO_ALIAS(UI_method_get_prompt_constructor)
 
 enum UI_string_types
 UI_get_string_type(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return UIT_NONE;
+
 	return uis->type;
 }
 LCRYPTO_ALIAS(UI_get_string_type)
@@ -729,8 +746,9 @@ LCRYPTO_ALIAS(UI_get_string_type)
 int
 UI_get_input_flags(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return 0;
+
 	return uis->input_flags;
 }
 LCRYPTO_ALIAS(UI_get_input_flags)
@@ -738,8 +756,9 @@ LCRYPTO_ALIAS(UI_get_input_flags)
 const char *
 UI_get0_output_string(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return NULL;
+
 	return uis->out_string;
 }
 LCRYPTO_ALIAS(UI_get0_output_string)
@@ -747,8 +766,9 @@ LCRYPTO_ALIAS(UI_get0_output_string)
 const char *
 UI_get0_action_string(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return NULL;
+
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_BOOLEAN:
@@ -762,8 +782,9 @@ LCRYPTO_ALIAS(UI_get0_action_string)
 const char *
 UI_get0_result_string(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return NULL;
+
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_VERIFY:
@@ -777,8 +798,9 @@ LCRYPTO_ALIAS(UI_get0_result_string)
 const char *
 UI_get0_test_string(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return NULL;
+
 	switch (uis->type) {
 	case UIT_VERIFY:
 		return uis->_.string_data.test_buf;
@@ -791,8 +813,9 @@ LCRYPTO_ALIAS(UI_get0_test_string)
 int
 UI_get_result_minsize(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return -1;
+
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_VERIFY:
@@ -806,8 +829,9 @@ LCRYPTO_ALIAS(UI_get_result_minsize)
 int
 UI_get_result_maxsize(UI_STRING *uis)
 {
-	if (!uis)
+	if (uis == NULL)
 		return -1;
+
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_VERIFY:
@@ -826,8 +850,9 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 
 	ui->flags &= ~UI_FLAG_REDOABLE;
 
-	if (!uis)
+	if (uis == NULL)
 		return -1;
+
 	switch (uis->type) {
 	case UIT_PROMPT:
 	case UIT_VERIFY:
