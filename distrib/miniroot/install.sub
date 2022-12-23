@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1217 2022/12/16 17:47:34 tb Exp $
+#	$OpenBSD: install.sub,v 1.1218 2022/12/23 00:40:58 afresh1 Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -356,13 +356,23 @@ get_ifs() {
 	done
 }
 
-# Map an interface to its MAC address if it is unique
+# Map an interface to its MAC address if it is unique.
 if_name_to_lladdr() {
 	local _lladdr
 
 	_lladdr=$(ifconfig $1 2>/dev/null |
 	    sed -n 's/^[[:space:]]*lladdr[[:space:]]//p')
 	[[ -n $_lladdr && -n $(ifconfig -M "$_lladdr") ]] && echo $_lladdr
+}
+
+# Print a list of interface names and unique lladdr.
+get_ifs_and_lladdrs() {
+	local _if
+
+	for _if in $(get_ifs); do
+		echo $_if
+		if_name_to_lladdr $_if
+	done
 }
 
 # Return the device name of the disk device $1, which may be a disklabel UID.
@@ -1300,7 +1310,8 @@ ieee80211_config() {
 
 # Set up IPv4 and IPv6 interface configuration.
 configure_ifs() {
-	local _first _hn _if _name _p _vi _vn
+	local _first _hn _if _ifs _lladdr _name _p _q _vi _vn
+	resp=
 
 	# Always need lo0 configured.
 	ifconfig lo0 inet 127.0.0.1/8
@@ -1309,20 +1320,55 @@ configure_ifs() {
 	rm -f /tmp/i/mygate
 
 	while :; do
+		set -sA _ifs -- $(get_ifs)
+
 		# Discover last configured vlan interface and increment its
 		# minor for the next offered vlan interface.
-		_vi=$(get_ifs vlan | sed '$!d;s/^vlan//')
+		_vi=
+		for _if in "${_ifs[@]}"; do
+			[[ $_if = vlan+([[:digit:]]) ]] && _vi=${_if#vlan}
+		done
 		[[ -n $_vi ]] && ((_vi++))
-		[[ -n $(get_ifs) ]] && _vn="vlan${_vi:-0}"
+		[[ -n ${_ifs[*]} ]] && _vn="vlan${_vi:-0}"
 
-		ask_which "network interface" "do you wish to configure" \
-			"\$(get_ifs) $_vn" \
-			${_p:-'$( (get_ifs netboot; get_ifs) | sed q )'}
+		echo "Available network interfaces are: ${_ifs[*]} $_vn."
+		if [[ $resp == '?' ]]; then
+			for _if in "${_ifs[@]}"; do
+				_lladdr=$(if_name_to_lladdr $_if)
+				[[ -n $_lladdr ]] && echo " $_if: lladdr $_lladdr"
+			done
+		fi
+
+		_q="Network interface to configure?"
+		ask_until "$_q (name, lladdr, '?', or 'done')" \
+		    ${_p:-$( (get_ifs netboot; get_ifs) | sed q )}
+
 		[[ $resp == done ]] && break
+		[[ $resp == '?'  ]] && continue
+
+		# Quote $resp to prevent user from confusing isin() by
+		# entering something like 'a a'.
+		if ! isin "$resp" $(get_ifs_and_lladdrs) $_vn done; then
+			echo "'$resp' is not a valid choice."
+			$AI && [[ -n $AI_RESPFILE ]] && exit 1
+			continue
+		fi
 
 		_if=$resp
 		_hn=/tmp/i/hostname.$_if
 		rm -f $_hn
+
+		# Map lladdr to interface name if needed
+		# and remove duplicate configuration.
+		if [[ $_if == ??:??:??:??:??:?? ]]; then
+			_lladdr=$_if
+			_if=$(ifconfig -M $_lladdr)
+			[[ -z $_if ]] && continue # should not be possible
+			rm -f /tmp/i/hostname.$_if
+		else
+			_lladdr=$(if_name_to_lladdr $_if)
+			[[ -n $_lladdr ]] && rm -f /tmp/i/hostname.$_lladdr
+		fi
 
 		# If the offered vlan is chosen, ask the relevant
 		# questions and bring it up.
