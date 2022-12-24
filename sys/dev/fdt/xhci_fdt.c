@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.20 2022/12/12 19:18:25 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.21 2022/12/24 12:36:06 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -58,7 +58,8 @@ int	xhci_fdt_match(struct device *, void *, void *);
 void	xhci_fdt_attach(struct device *, struct device *, void *);
 
 const struct cfattach xhci_fdt_ca = {
-	sizeof(struct xhci_fdt_softc), xhci_fdt_match, xhci_fdt_attach
+	sizeof(struct xhci_fdt_softc), xhci_fdt_match, xhci_fdt_attach, NULL,
+	xhci_activate
 };
 
 int	xhci_cdns_init(struct xhci_fdt_softc *);
