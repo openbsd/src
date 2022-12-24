@@ -1774,6 +1774,7 @@
 ./usr/share/man/man3/AUTHORITY_KEYID_new.3
 ./usr/share/man/man3/BASIC_CONSTRAINTS_new.3
 ./usr/share/man/man3/BF_set_key.3
+./usr/share/man/man3/BIO_accept.3
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_dump.3
 ./usr/share/man/man3/BIO_dup_chain.3
@@ -1797,6 +1798,7 @@
 ./usr/share/man/man3/BIO_s_accept.3
 ./usr/share/man/man3/BIO_s_bio.3
 ./usr/share/man/man3/BIO_s_connect.3
+./usr/share/man/man3/BIO_s_datagram.3
 ./usr/share/man/man3/BIO_s_fd.3
 ./usr/share/man/man3/BIO_s_file.3
 ./usr/share/man/man3/BIO_s_mem.3
