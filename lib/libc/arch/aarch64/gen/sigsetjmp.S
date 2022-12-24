@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.2 2017/03/22 07:31:35 guenther Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.3 2022/12/24 10:49:19 kettenis Exp $	*/
 /*-
  * Copyright (c) 2014 The FreeBSD Foundation
  * All rights reserved.
@@ -39,14 +39,12 @@ END(sigsetjmp)
 
 ENTRY(siglongjmp)
 	/* Load the _setjmp magic */
-	ldr	x2, .Lmagic
+	movz	x2, #(_JB_MAGIC__SETJMP & 0xffff)
+	movk	x2, #(_JB_MAGIC__SETJMP >> 16), lsl #16
 	ldr	x3, [x0]
 
 	/* Check the magic */
 	cmp	x2, x3
 	b.eq	_HIDDEN(_longjmp)
 	b	_HIDDEN(longjmp)
-.Lmagic:
-	.align	3
-	.quad	_JB_MAGIC__SETJMP
 END(siglongjmp)
