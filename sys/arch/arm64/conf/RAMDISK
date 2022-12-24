@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.185 2022/12/12 22:06:40 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.186 2022/12/24 10:51:27 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -364,6 +364,9 @@ islrtc*		at iic?			# ISL1208 RTC
 maxrtc*		at iic?			# DS1307 RTC
 mcprtc*		at iic?			# MCP794XX RTC
 mfokrtc*	at iic?			# M41T8X RTC
+pcagpio*	at iic?			# PCA9554 GPIO expander
+pcamux*		at iic?			# PCA9548 multiplexer
+iic*		at pcamux?
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 pcyrtc*		at iic?			# PCF85063A/TP RTC
