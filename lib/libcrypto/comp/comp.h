@@ -1,4 +1,4 @@
-/* $OpenBSD: comp.h,v 1.10 2022/12/23 23:23:02 schwarze Exp $ */
+/* $OpenBSD: comp.h,v 1.11 2022/12/24 07:12:09 tb Exp $ */
 /*
  * ---------------------------------------------------------------------------
  * Patches to this file were contributed by
@@ -11,7 +11,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -111,6 +111,7 @@
  * simply be copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
 #ifndef HEADER_COMP_H
 #define HEADER_COMP_H
 
