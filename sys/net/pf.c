@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1162 2022/12/23 07:14:55 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1163 2022/12/24 05:20:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -694,10 +694,8 @@ pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
 {
 	int	diff;
 
-#if 0
 	if ((diff = a->hash - b->hash) != 0)
 		return (diff);
-#endif
 	if ((diff = a->proto - b->proto) != 0)
 		return (diff);
 	if ((diff = a->af - b->af) != 0)
@@ -952,7 +950,8 @@ pf_state_key_setup(struct pf_pdesc *pd, struct pf_state_key **skw,
 	sk1->proto = pd->proto;
 	sk1->af = pd->af;
 	sk1->rdomain = pd->rdomain;
-	sk1->hash = pd->hash;
+	sk1->hash = pf_pkt_hash(sk1->af, sk1->proto,
+	    &sk1->addr[0], &sk1->addr[1], sk1->port[0], sk1->port[1]);
 	if (rtableid >= 0)
 		wrdom = rtable_l2(rtableid);
 
@@ -5327,8 +5326,8 @@ pf_icmp_state_lookup(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	    pd->dst, pd->af, multi))
 		return (PF_DROP);
 
-	key->hash = pf_pkt_hash(pd->af, pd->proto,
-	    pd->src, pd->dst, 0, 0);
+	key->hash = pf_pkt_hash(key->af, key->proto,
+	    &key->addr[0], &key->addr[1], 0, 0);
 
 	action = pf_find_state(pd, key, state);
 	if (action != PF_MATCH)
