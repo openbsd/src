@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.24 2017/10/18 17:31:01 millert Exp $ */
+/*	$OpenBSD: sdl.c,v 1.25 2022/12/26 20:06:43 jmc Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Bob Beck.  All rights reserved.
@@ -288,7 +288,7 @@ sdl_del(char *sdname)
 }
 
 /*
- * Return 0 if the addresss a (with mask m) matches address key
+ * Return 0 if the address a (with mask m) matches address key
  * otherwise return 1 if a > key or -1 if a < key.  It is assumed
  * that address a has been pre-masked out, we only need to mask key.
  */
@@ -311,7 +311,7 @@ match_addr_v4(const void *vkey, const void *ventry)
 }
 
 /*
- * Return 0 if the addresss a (with mask m) matches address key
+ * Return 0 if the address a (with mask m) matches address key
  * otherwise return 1 if a > key or -1 if a < key.  It is assumed
  * that address a has been pre-masked out, we only need to mask key.
  */

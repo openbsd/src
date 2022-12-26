@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.h,v 1.5 2013/12/03 01:29:00 deraadt Exp $	*/
+/*	$OpenBSD: tokendb.h,v 1.6 2022/12/26 20:06:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -63,7 +63,7 @@ typedef	struct	{
 #define	TOKEN_DECMODE	0x1		/* allow decimal results */
 #define	TOKEN_HEXMODE	0x2		/* allow hex results */
 #define	TOKEN_PHONEMODE	0x4		/* allow phone book results */
-#define	TOKEN_RIM	0x8		/* reduced imput mode */
+#define	TOKEN_RIM	0x8		/* reduced input mode */
 
 #define	TOKEN_GROUP	"_token"	/* group that owns token database */
 
