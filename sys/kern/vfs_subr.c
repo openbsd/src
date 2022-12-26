@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.317 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.318 2022/12/26 19:25:49 miod Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -270,8 +270,8 @@ vfs_rootmountalloc(char *fstypename, char *devname, struct mount **mpp)
 	mp = vfs_mount_alloc(NULLVP, vfsp);
 	mp->mnt_flag |= MNT_RDONLY;
 	mp->mnt_stat.f_mntonname[0] = '/';
-	copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN, NULL);
-	copystr(devname, mp->mnt_stat.f_mntfromspec, MNAMELEN, NULL);
+	strlcpy(mp->mnt_stat.f_mntfromname, devname, MNAMELEN);
+	strlcpy(mp->mnt_stat.f_mntfromspec, devname, MNAMELEN);
 	*mpp = mp;
 	return (0);
  }
