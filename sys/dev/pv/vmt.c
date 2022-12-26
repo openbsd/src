@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.27 2022/12/03 10:57:04 yasuoka Exp $ */
+/*	$OpenBSD: vmt.c,v 1.28 2022/12/26 04:09:14 asou Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -534,7 +534,7 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 		DPRINTF("%s: unable to send rpci command\n", DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 		error = EIO;
-		goto done;
+		goto close;
 	}
 
 	if (vm_rpc_get_length(&rpci, &rlen, &ack) != 0) {
@@ -542,13 +542,13 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 		    DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 		error = EIO;
-		goto done;
+		goto close;
 	}
 
 	if (rlen > 0) {
 		if (rlen + 1 > valuelen) {
 			error = EMSGSIZE;
-			goto done;
+			goto close;
 		}
 
 		if (vm_rpc_get_data(&rpci, value, rlen, ack) != 0) {
@@ -556,20 +556,23 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 			    DEVNAME(sc));
 			sc->sc_rpc_error = 1;
 			error = EIO;
-			goto done;
+			goto close;
 		}
 		/* test if response success  */
 		if (rlen < 2 || value[0] != '1' || value[1] != ' ') {
 			DPRINTF("%s: host rejected command: %s\n", DEVNAME(sc),
 			    buf);
 			error = EINVAL;
-			goto done;
+			goto close;
 		}
 		/* skip response that was tested */
 		bcopy(value + 2, value, valuelen - 2);
 		value[rlen - 2] = '\0';
 	}
 
+ close:
+	if (vm_rpc_close(&rpci) != 0)
+                DPRINTF("%s: unable to close rpci channel\n", DEVNAME(sc));
  done:
 	free(buf, M_TEMP, bufsz);
 	return (error);
