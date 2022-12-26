@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.38 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.39 2022/12/26 16:00:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -754,4 +754,10 @@ X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
 		*psig = crl->signature;
 	if (palg != NULL)
 		*palg = crl->sig_alg;
+}
+
+const X509_ALGOR *
+X509_CRL_get0_tbs_sigalg(const X509_CRL *crl)
+{
+	return crl->crl->sig_alg;
 }
