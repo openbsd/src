@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2021/06/23 02:53:44 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2022/12/26 19:16:01 jmc Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -1443,7 +1443,7 @@ readin()
 		flexend(1);
 
 	/*
-	 * If the user explicitly requested posix compatibility by specifing
+	 * If the user explicitly requested posix compatibility by specifying
 	 * the posix-compat option, then we check for conflicting options.
 	 * However, if the POSIXLY_CORRECT variable is set, then we quietly
 	 * make flex as posix-compatible as possible.  This is the

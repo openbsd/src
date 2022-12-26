@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.h,v 1.11 2016/05/27 09:18:12 martijn Exp $	*/
+/*	$OpenBSD: vi.h,v 1.12 2022/12/26 19:16:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -61,7 +61,7 @@ typedef struct _vicmd {
 	 * The VM_RCM_* flags are single usage, i.e. if you set one, you have
 	 * to clear the others.
 	 */
-#define	VM_RCM		0x00000010	/* Use relative cursor movment (RCM). */
+#define	VM_RCM		0x00000010	/* Use relative cursor movement (RCM). */
 #define	VM_RCM_SET	0x00000020	/* RCM: set to current position. */
 #define	VM_RCM_SETFNB	0x00000040	/* RCM: set to first non-blank (FNB). */
 #define	VM_RCM_SETLAST	0x00000080	/* RCM: set to last character. */

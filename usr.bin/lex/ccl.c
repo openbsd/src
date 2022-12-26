@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccl.c,v 1.8 2015/11/19 22:55:13 tedu Exp $	*/
+/*	$OpenBSD: ccl.c,v 1.9 2022/12/26 19:16:01 jmc Exp $	*/
 
 /* ccl - routines for character classes */
 
@@ -134,7 +134,7 @@ ccl_set_diff(int a, int b)
 
 	/*
 	 * In order to handle negation, we spin through all possible chars,
-	 * addding each char in a that is not in b. (This could be O(n^2),
+	 * adding each char in a that is not in b. (This could be O(n^2),
 	 * but n is small and bounded.)
 	 */
 	for (ch = 0; ch < csize; ++ch)

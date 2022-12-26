@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.12 2021/03/02 13:06:50 lum Exp $	*/
+/*	$OpenBSD: log.c,v 1.13 2022/12/26 19:16:02 jmc Exp $	*/
 
 /* 
  * This file is in the public domain.
@@ -16,7 +16,7 @@
  * amend the 'Makefile' for that to happen. Because of this, the code
  * is subject to bit-rot. However, I know myself and others have 
  * written similar functionally often enough, that recording the below 
- * in a code repository could aid the developement efforts of mg, even
+ * in a code repository could aid the development efforts of mg, even
  * if it requires a bit of effort to get working. The current code is
  * written in the spirit of debugging (quickly and perhaps not ideal,
  * but it does what is required well enough). Should debugging become

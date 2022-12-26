@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1187 2022/12/16 08:13:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1188 2022/12/26 19:16:03 jmc Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1410,7 +1410,7 @@ struct tty {
 #define TTY_HAVEDA 0x100 /* Primary DA. */
 #define TTY_HAVEXDA 0x200
 #define TTY_SYNCING 0x400
-#define TTY_HAVEDA2 0x800 /* Seconday DA. */
+#define TTY_HAVEDA2 0x800 /* Secondary DA. */
 	int		 flags;
 
 	struct tty_term	*term;

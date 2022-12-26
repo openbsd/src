@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.48 2022/01/28 06:18:42 guenther Exp $	*/
+/*	$OpenBSD: server.c,v 1.49 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -54,8 +54,8 @@ char	*ptarget;		/* pointer to end of target name */
 int	catname = 0;		/* cat name to target name */
 char	*sptarget[32];		/* stack of saved ptarget's for directories */
 char   *fromhost = NULL;	/* Client hostname */
-static int64_t min_freespace = 0; /* Minimium free space on a filesystem */
-static int64_t min_freefiles = 0; /* Minimium free # files on a filesystem */
+static int64_t min_freespace = 0; /* Minimum free space on a filesystem */
+static int64_t min_freefiles = 0; /* Minimum free # files on a filesystem */
 int	oumask;			/* Old umask */
 
 static int cattarget(char *);
@@ -1275,8 +1275,8 @@ hardlink(char *cmd)
  *
  * A key letter is followed immediately by the value
  * to set.  The keys are:
- *	SC_FREESPACE	- Set minimium free space of filesystem
- *	SC_FREEFILES	- Set minimium free number of files of filesystem
+ *	SC_FREESPACE	- Set minimum free space of filesystem
+ *	SC_FREEFILES	- Set minimum free number of files of filesystem
  */
 static void
 setconfig(char *cmd)
@@ -1297,14 +1297,14 @@ setconfig(char *cmd)
 		}
 		break;
 
-	case SC_FREESPACE: 	/* Minimium free space */
+	case SC_FREESPACE: 	/* Minimum free space */
 		min_freespace = (int64_t)strtonum(cp, 0, LLONG_MAX, &errstr);
 		if (errstr)
 			fatalerr("Minimum free space is %s: '%s'", errstr,
 				optarg);
 		break;
 
-	case SC_FREEFILES: 	/* Minimium free files */
+	case SC_FREEFILES: 	/* Minimum free files */
 		min_freefiles = (int64_t)strtonum(cp, 0, LLONG_MAX, &errstr);
 		if (errstr)
 			fatalerr("Minimum free files is %s: '%s'", errstr,

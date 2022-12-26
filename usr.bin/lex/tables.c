@@ -1,4 +1,4 @@
-/* $OpenBSD: tables.c,v 1.4 2017/08/17 19:27:09 tedu Exp $ */
+/* $OpenBSD: tables.c,v 1.5 2022/12/26 19:16:01 jmc Exp $ */
 
 /*  tables.c - tables serialization code
  *
@@ -157,12 +157,12 @@ int yytbl_hdr_fwrite (struct yytbl_writer *wr, const struct yytbl_hdr *th)
 
 	sz = strlen (th->th_version) + 1;
 	if ((rv = yytbl_writen (wr, th->th_version, sz)) != sz)
-		flex_die (_("th_version writen failed"));
+		flex_die (_("th_version written failed"));
 	bwritten += rv;
 
 	sz = strlen (th->th_name) + 1;
 	if ((rv = yytbl_writen (wr, th->th_name, sz)) != sz)
-		flex_die (_("th_name writen failed"));
+		flex_die (_("th_name written failed"));
 	bwritten += rv;
 
 	/* add padding */

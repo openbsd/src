@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.19 2022/10/15 09:54:29 op Exp $ */
+/* $OpenBSD: cmode.c,v 1.20 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -213,7 +213,7 @@ cc_lfindent(int f, int n)
 }
 
 /*
- * Get the level of indention after line lp is processed
+ * Get the level of indentation after line lp is processed
  * Note getindent has two returns:
  * curi = value if indenting current line.
  * return value = value affecting subsequent lines.
@@ -227,7 +227,7 @@ getindent(const struct line *lp, int *curi)
 	int newind = 0;		/* new index value */
 	int stringp = FALSE;	/* in string? */
 	int escp = FALSE;	/* Escape char? */
-	int lastc = '\0';	/* Last matched string delimeter */
+	int lastc = '\0';	/* Last matched string delimiter */
 	int nparen = 0;		/* paren count */
 	int obrace = 0;		/* open brace count */
 	int cbrace = 0;		/* close brace count */
@@ -356,7 +356,7 @@ getindent(const struct line *lp, int *curi)
 }
 
 /*
- * Given a delimeter and its purported mate, tell us if they
+ * Given a delimiter and its purported mate, tell us if they
  * match.
  */
 static int

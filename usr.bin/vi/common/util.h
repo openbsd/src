@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.4 2006/01/08 21:10:04 miod Exp $	*/
+/*	$OpenBSD: util.h,v 1.5 2022/12/26 19:16:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 typedef enum { B_NONE, B_OFF, B_READ, B_RECOVER, B_SEARCH, B_WRITE } bmsg_t;
 
 /*
- * Number handling defines and protoypes.
+ * Number handling defines and prototypes.
  *
  * NNFITS:	test for addition of two negative numbers under a limit
  * NPFITS:	test for addition of two positive numbers under a limit

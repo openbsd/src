@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.14 2015/12/06 23:22:51 guenther Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.15 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -354,7 +354,7 @@ cyclelink()
     arctype		*arcp;
 
 	/*
-	 *	Count the number of cycles, and initialze the cycle lists
+	 *	Count the number of cycles, and initialize the cycle lists
 	 */
     ncycle = 0;
     for ( nlp = nl ; nlp < npe ; nlp++ ) {

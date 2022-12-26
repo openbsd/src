@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.14 2021/12/13 18:28:40 deraadt Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.15 2022/12/26 19:16:00 jmc Exp $	*/
 /*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -1092,7 +1092,7 @@ main(int argc, char *argv[])
 
 /*
  * Tokenize one file.  This is a separate function so it can
- * be called recursively to parse mutiple levels of include files.
+ * be called recursively to parse multiple levels of include files.
  */
 
 static void

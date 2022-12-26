@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysex.h,v 1.2 2013/12/20 08:47:37 ratchov Exp $	*/
+/*	$OpenBSD: sysex.h,v 1.3 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -46,7 +46,7 @@
 #define   SYSEX_MMC_LOC_CMD	0x01
 
 /*
- * sepcial "any" midi device number
+ * special "any" midi device number
  */
 #define SYSEX_DEV_ANY		0x7f
 

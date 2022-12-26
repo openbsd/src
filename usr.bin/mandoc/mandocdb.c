@@ -1,4 +1,4 @@
-/* $OpenBSD: mandocdb.c,v 1.218 2021/10/24 21:24:16 deraadt Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.219 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -764,7 +764,7 @@ filescan(const char *infile)
 	 * We have to do lstat(2) before realpath(3) loses
 	 * the information whether this is a symbolic link.
 	 * We need to know that because for symbolic links,
-	 * we want to use the orginal file name, while for
+	 * we want to use the original file name, while for
 	 * regular files, we want to use the real path.
 	 */
 	if (lstat(infile, &st) == -1) {

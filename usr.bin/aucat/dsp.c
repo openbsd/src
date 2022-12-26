@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.17 2021/07/05 08:29:59 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.18 2022/12/26 19:16:00 jmc Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -359,7 +359,7 @@ resamp_getcnt(struct resamp *p, int *icnt, int *ocnt)
 
 /*
  * Resample the given number of frames. The number of output frames
- * must match the coresponding number of input frames. Either always
+ * must match the corresponding number of input frames. Either always
  * use icnt and ocnt such that:
  *
  *	 icnt * oblksz = ocnt * iblksz

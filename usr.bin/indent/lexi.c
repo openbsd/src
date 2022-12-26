@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.20 2016/06/06 06:43:03 tobiasu Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.21 2022/12/26 19:16:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -324,7 +324,7 @@ lexi(void)
 	    ps.last_u_d = true;	/* will make "int a -1" work */
 	last_code = ident;
 	return (ident);		/* the ident is not in the list */
-    }				/* end of procesing for alpanum character */
+    }				/* end of processing for alpanum character */
 
     /* Scan a non-alphanumeric token */
 
@@ -341,7 +341,7 @@ lexi(void)
 	code = (had_eof ? 0 : newline);
 
 	/*
-	 * if data has been exausted, the newline is a dummy, and we should
+	 * if data has been exhausted, the newline is a dummy, and we should
 	 * return code to stop
 	 */
 	break;

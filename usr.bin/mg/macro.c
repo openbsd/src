@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.16 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: macro.c,v 1.17 2022/12/26 19:16:02 jmc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -15,7 +15,7 @@
 #include "key.h"
 #include "macro.h"
 
-int inmacro = FALSE;	/* Macro playback in progess */
+int inmacro = FALSE;	/* Macro playback in progress */
 int macrodef = FALSE;	/* Macro recording in progress */
 int macrocount = 0;
 

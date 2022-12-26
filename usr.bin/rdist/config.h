@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.13 2015/01/21 04:08:37 guenther Exp $	*/
+/*	$OpenBSD: config.h,v 1.14 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * Copyright (c) 1993 Michael A. Cooper
@@ -58,7 +58,7 @@
 /*
  * Syslog levels.  Define these to match the levels you want to log
  * via syslog().  These are defined in <syslog.h>.  If you don't want
- * a particuliar level logged _ever_, undefine it.  What is logged is
+ * a particular level logged _ever_, undefine it.  What is logged is
  * usually controlled via command line options, so you normally should
  * not need to undefine these.
  */

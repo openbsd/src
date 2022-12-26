@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.17 2022/01/28 06:18:41 guenther Exp $	*/
+/*	$OpenBSD: tags.c,v 1.18 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -463,7 +463,7 @@ curtoken(int f, int n, char *token)
 	odoto = curwp->w_doto;
 	odotline = curwp->w_dotline;
 	
-	/* Move backword unless we are at the beginning of a word or at
+	/* Move backward unless we are at the beginning of a word or at
 	 * beginning of line.
 	 */
 	if (!atbow())

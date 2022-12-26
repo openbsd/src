@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.25 2019/11/27 08:18:22 ratchov Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -40,7 +40,7 @@
  *	from the callback
  *
  *	the timeout can be aborted with timo_del(), it is OK to try to
- *	abort a timout that has expired
+ *	abort a timeout that has expired
  *
  */
 
@@ -143,7 +143,7 @@ timo_del(struct timo *o)
 
 /*
  * routine to be called by the timer when 'delta' 24-th of microsecond
- * elapsed. This routine updates time referece used by timeouts and
+ * elapsed. This routine updates time reference used by timeouts and
  * calls expired timeouts
  */
 void

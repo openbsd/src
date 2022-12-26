@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.320 2020/10/19 19:51:20 naddy Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.321 2022/12/26 19:16:00 jmc Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1663,7 +1663,7 @@ rcs_get_revision(const char *revstr, RCSFILE *rfp)
 
 	/*
 	 * If it was not a branch, thats ok the symbolic
-	 * name refered to a revision, so return the resolved
+	 * name referred to a revision, so return the resolved
 	 * revision for the given name. */
 	if (!RCSNUM_ISBRANCH(rev)) {
 		/* Sanity check: The first two elements of any

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.36 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.37 2022/12/26 19:16:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -212,7 +212,7 @@ enter_lastlog(PERSON *pn)
 		/*
 		 * and if it's not any of the current logins
 		 * can't use time comparison because there may be a small
-		 * discrepency since login calls time() twice
+		 * discrepancy since login calls time() twice
 		 */
 		for (w = pn->whead; doit && w != NULL; w = w->next)
 			if (w->info == LOGGEDIN &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_sentence.c,v 1.7 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_sentence.c,v 1.8 2022/12/26 19:16:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -214,7 +214,7 @@ v_sentenceb(SCR *sp, VICMD *vp)
 	/*
 	 * !!!
 	 * In empty lines, skip to the previous non-white-space character.
-	 * If in text, skip to the prevous white-space character.  Believe
+	 * If in text, skip to the previous white-space character.  Believe
 	 * it or not, in the paragraph:
 	 *	ab cd.
 	 *	AB CD.

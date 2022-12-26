@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_funcs.c,v 1.22 2021/09/02 11:19:02 schwarze Exp $	*/
+/*	$OpenBSD: cl_funcs.c,v 1.23 2022/12/26 19:16:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -330,7 +330,7 @@ cl_ex_adjust(SCR *sp, exadj_t action)
 			 * displayed line was only a single glyph, and <eof>
 			 * was more than one glyph, the output would not fully
 			 * overwrite the user's input.  To fix this, output
-			 * the maxiumum character number of spaces.  Note,
+			 * the maximum character number of spaces.  Note,
 			 * this won't help if the user entered extra prompt
 			 * or <blank> characters before the command character.
 			 * We'd have to do a lot of work to make that work, and

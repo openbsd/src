@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 		/* default prompt is medium */
 		pr_type = OPT_ON;
 
-		/* do not hilight search terms */
+		/* do not highlight search terms */
 		hilite_search = OPT_OFF;
 
 		/* do not use LESSOPEN */

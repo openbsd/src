@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.17 2021/12/25 16:25:07 ratchov Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.18 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -710,7 +710,7 @@ cmd(char *line)
 			fprintf(stderr, "%s.%s: expects value\n", astr, func);
 			exit(1);
 		}
-		/* FALLTROUGH */
+		/* FALLTHROUGH */
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
 		for (i = g; i != NULL; i = nextpar(i)) {

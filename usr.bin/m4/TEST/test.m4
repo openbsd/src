@@ -1,4 +1,4 @@
-#	$OpenBSD: test.m4,v 1.3 2003/06/03 02:56:11 millert Exp $
+#	$OpenBSD: test.m4,v 1.4 2022/12/26 19:16:01 jmc Exp $
 #	$NetBSD: test.m4,v 1.4 1995/09/28 05:38:05 tls Exp $
 #
 # Copyright (c) 1989, 1993
@@ -209,7 +209,7 @@ smaller ones.  In either case, new spells must be found.
      
 If all existing dragons are quiet (i.e. have eaten sufficiently), wizards
 have time to do other things.  They hide in castles and practice spells and
-incatations.  They also devise shortcuts for travelers and new laws of
+incantations.  They also devise shortcuts for travelers and new laws of
 transformation.
      
 Changes in the Kingdom

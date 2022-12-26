@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.212 2022/11/09 17:41:05 claudio Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.213 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -934,7 +934,7 @@ noslash:
 					} else
 						loctail[1] = '\0';
 				}
-				/* Contruct URL from relative redirect */
+				/* Construct URL from relative redirect */
 				if (asprintf(&redirurl, "%s%s%s%s/%s%s",
 				    scheme, full_host,
 				    portnum ? ":" : "",

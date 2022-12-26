@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.50 2018/12/07 14:45:40 schwarze Exp $	*/
+/*	$OpenBSD: compile.c,v 1.51 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -342,7 +342,7 @@ nonsel:		/* Now parse the command */
 }
 
 /*
- * Get a delimited string.  P points to the delimeter of the string; d points
+ * Get a delimited string.  P points to the delimiter of the string; d points
  * to a buffer area.  Newline and delimiter escapes are processed; other
  * escapes are ignored.
  *

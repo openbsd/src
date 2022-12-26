@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.11 2022/03/07 08:58:33 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.12 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -61,7 +61,7 @@ typedef int adata_t;
 #define RESAMP_RATIO		64
 
 /*
- * Maximum size of the encording string (the longest possible
+ * Maximum size of the encoding string (the longest possible
  * encoding is ``s24le3msb'').
  */
 #define ENCMAX	10

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.15 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.16 2022/12/26 19:16:03 jmc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -225,7 +225,7 @@ char affix[40];
  * the path to a file in which to store found words.
  *
  * In normal usage, spell is called twice.  The first time it is
- * called with a stop list to flag commonly mispelled words.  The
+ * called with a stop list to flag commonly misspelled words.  The
  * remaining words are then passed to spell again, this time with
  * the dictionary file as the first (non-flag) argument.
  *

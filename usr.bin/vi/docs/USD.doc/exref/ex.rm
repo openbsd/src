@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ex.rm,v 1.8 2007/11/24 12:59:28 jmc Exp $
+.\"	$OpenBSD: ex.rm,v 1.9 2022/12/26 19:16:03 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -363,7 +363,7 @@ It is possible to use
 in
 .I "read only"
 mode to look at files that you have no intention of modifying.
-This mode protects you from accidently overwriting the file.
+This mode protects you from accidentally overwriting the file.
 Read only mode is on when the
 .I readonly
 option is set.
@@ -2002,7 +2002,7 @@ or
 preceded by a tab or a space.  This string may be anywhere in the
 line and anything after the
 .B :
-is interpeted as editor commands.  This option defaults to off because
+is interpreted as editor commands.  This option defaults to off because
 of unexpected behavior when editing files such as
 .I /etc/passwd .
 .LC

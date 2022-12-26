@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdoc_man.c,v 1.135 2021/07/04 15:38:09 schwarze Exp $ */
+/*	$OpenBSD: mdoc_man.c,v 1.136 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2011-2021 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -1516,7 +1516,7 @@ mid_it(void)
 	    Bl_stack[Bl_stack_len - 1]);
 	print_word(buf);
 
-	/* Remeber to close out this .RS block later. */
+	/* Remember to close out this .RS block later. */
 	Bl_stack_post[Bl_stack_len - 1] = 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.162 2020/06/02 12:24:44 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.163 2022/12/26 19:16:02 jmc Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -745,7 +745,7 @@ reap_finished_job(pid_t pid)
 
 /*
  * classic waitpid handler: retrieve as many dead children as possible.
- * returns true if succesful
+ * returns true if successful
  */
 static bool
 reap_jobs(void)

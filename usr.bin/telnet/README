@@ -1,4 +1,4 @@
-	$OpenBSD: README,v 1.5 2014/07/19 23:50:38 guenther Exp $
+	$OpenBSD: README,v 1.6 2022/12/26 19:16:03 jmc Exp $
 
 
 The following TELNET options are supported:
@@ -19,7 +19,7 @@ The following TELNET options are supported:
 		when a terminal type is received, termcap/terminfo
 		is consulted to determine if it is a known terminal
 		type.  It keeps requesting terminal types until it
-		gets one that it recongnizes, or hits the end of the
+		gets one that it recognizes, or hits the end of the
 		list.  The server side looks up the entry in the
 		termcap/terminfo data base, and generates a list of
 		names which it then passes one at a time to each

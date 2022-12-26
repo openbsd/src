@@ -1,4 +1,4 @@
-/*	$OpenBSD: msg.c,v 1.27 2016/12/18 18:28:39 krw Exp $	*/
+/*	$OpenBSD: msg.c,v 1.28 2022/12/26 19:16:03 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -434,7 +434,7 @@ msgq_status(SCR *sp, recno_t lno, u_int flags)
 		if (db_last(sp, &last))
 			return;
 		if (last == 0) {
-			len = strlen("emptry file");
+			len = strlen("empty file");
 			memcpy(p, "empty file", len);
 			p += len;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.36 2021/11/03 14:42:12 deraadt Exp $ */
+/*	$OpenBSD: flist.c,v 1.37 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -34,7 +34,7 @@
 /*
  * We allocate our file list in chunk sizes so as not to do it one by
  * one.
- * Preferrably we get one or two allocation.
+ * Preferably we get one or two allocation.
  */
 #define	FLIST_CHUNK_SIZE (1024)
 

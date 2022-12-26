@@ -1,4 +1,4 @@
-#	$OpenBSD: jpeg,v 1.4 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: jpeg,v 1.5 2022/12/26 19:16:01 jmc Exp $
 
 #------------------------------------------------------------------------------
 # JPEG images
@@ -121,7 +121,7 @@
 >>>>>(150.L+61)	byte	!0x30		\b%c
 # Here things get sticky.  We can do ONE MORE marker segment with
 # indirect addressing, and that's all.  It would be great if we could
-# do pointer arithemetic like in an assembler language.  Christos?
+# do pointer arithmetic like in an assembler language.  Christos?
 # And if there was some sort of looping construct to do searches, plus a few
 # named accumulators, it would be even more effective...
 # At least we can show a comment if no other segments got inserted before:

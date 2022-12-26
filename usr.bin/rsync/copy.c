@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.3 2021/11/28 19:28:42 deraadt Exp $ */
+/*	$OpenBSD: copy.c,v 1.4 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  *
@@ -27,7 +27,7 @@
 
 /*
  * Return true if all bytes in buffer are zero.
- * A buffer of zero lenght is also considered a zero buffer.
+ * A buffer of zero length is also considered a zero buffer.
  */
 static int
 iszero(const void *b, size_t len)

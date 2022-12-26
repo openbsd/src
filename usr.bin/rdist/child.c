@@ -1,4 +1,4 @@
-/*	$OpenBSD: child.c,v 1.27 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: child.c,v 1.28 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -469,7 +469,7 @@ spawn(struct cmd *cmd, struct cmd *cmdlist)
 		/* Receive notification when the child exits */
 		(void) signal(SIGCHLD, reap);
 
-		/* Settup the new child */
+		/* Setup the new child */
 		newchild.c_next = NULL;
 		newchild.c_name = childname;
 		newchild.c_readfd = fildes[PIPE_READ];

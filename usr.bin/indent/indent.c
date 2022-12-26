@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.32 2021/01/26 18:21:25 deraadt Exp $	*/
+/*	$OpenBSD: indent.c,v 1.33 2022/12/26 19:16:01 jmc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -474,7 +474,7 @@ main(int argc, char **argv)
 			fill_buffer();
 		    break;
 		}
-	    default:		/* it is the start of a normal statment */
+	    default:		/* it is the start of a normal statement */
 		if (flushed_nl)	/* if we flushed a newline, make sure it is
 				 * put back */
 		    force_nl = true;

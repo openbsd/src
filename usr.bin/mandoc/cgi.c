@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.119 2022/07/06 17:19:57 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.120 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1092,7 +1092,7 @@ main(void)
 
 	/*
 	 * The "rpath" pledge could be revoked after mparse_readfd()
-	 * if the file desciptor to "/footer.html" would be opened
+	 * if the file descriptor to "/footer.html" would be opened
 	 * up front, but it's probably not worth the complication
 	 * of the code it would cause: it would require scattering
 	 * pledge() calls in multiple low-level resp_*() functions.

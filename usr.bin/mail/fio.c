@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.38 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: fio.c,v 1.39 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ expand(char *name)
 	if (strpbrk(name, "~{[*?\\") == NULL)
 		return(savestr(name));
 
-	/* XXX - does not expand enviroment variables. */
+	/* XXX - does not expand environment variables. */
 	switch (glob(name, flags, NULL, &names)) {
 	case 0:
 		if (names.gl_pathc == 1)

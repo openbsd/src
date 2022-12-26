@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.32 2022/08/02 18:09:20 job Exp $ */
+/*	$OpenBSD: socket.c,v 1.33 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,7 +46,7 @@ struct	source {
 };
 
 /*
- * Try to bind to a local IP address matching the addres family passed.
+ * Try to bind to a local IP address matching the address family passed.
  * Return -1 on failure to bind to any address, 0 on success.
  */
 static int

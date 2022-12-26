@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.33 2015/11/03 16:21:47 deraadt Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.34 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ struct input_file {
 #define CURRENT_NAME	(infile[ilevel].name)
 #define CURRENT_LINE	(infile[ilevel].lineno)
 /*
- * macros for readibility and/or speed
+ * macros for readability and/or speed
  *
  *      gpbc()  - get a possibly pushed-back character
  *      pushf() - push a call frame entry onto stack

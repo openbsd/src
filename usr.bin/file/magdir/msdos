@@ -1,4 +1,4 @@
-#	$OpenBSD: msdos,v 1.7 2018/10/04 16:51:38 ccardenas Exp $
+#	$OpenBSD: msdos,v 1.8 2022/12/26 19:16:01 jmc Exp $
 
 #------------------------------------------------------------------------------
 # msdos:  file(1) magic for MS-DOS files
@@ -44,7 +44,7 @@
 # probably some linker directive to set it.  The linker version was
 # 3.0, except for one ".exe" which had it as 4.20 (same damn linker!).
 #
-# many of the compressed formats were extraced from IDARC 1.23 source code
+# many of the compressed formats were extracted from IDARC 1.23 source code
 #
 0	string	MZ		MS-DOS executable
 !:mime	application/x-dosexec
@@ -204,7 +204,7 @@
 >>>&1		string		x for DOS, Win or OS/2, emx %s
 >>&(&0x42.l-3)	byte		x 
 >>>&0x26	string		UPX \b, UPX compressed
-# and yet another guess: small .text, and after large .data is unusal, could be 32lite
+# and yet another guess: small .text, and after large .data is unusual, could be 32lite
 >>&0x2c		search/0xa0	.text
 >>>&0x0b	lelong		<0x2000
 >>>>&0		lelong		>0x6000 \b, 32lite compressed

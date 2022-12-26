@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.21 2022/12/04 23:50:48 cheloha Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.22 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: gencat.c,v 1.9 1998/10/09 17:00:56 itohy Exp $	*/
 
 /*-
@@ -388,7 +388,7 @@ getmsg(int fd, char *cptr, char quote)
 						++cptr;
 					}
 				} else {
-					warning(cptr, "unrecognized escape sequence; ignoring esacpe character");
+					warning(cptr, "unrecognized escape sequence; ignoring escape character");
 				}
 				break;
 			}

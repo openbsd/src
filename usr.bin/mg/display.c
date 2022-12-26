@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.48 2017/07/06 19:27:37 schwarze Exp $	*/
+/*	$OpenBSD: display.c,v 1.49 2022/12/26 19:16:02 jmc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -38,7 +38,7 @@ struct video {
 
 #define VFCHG	0x0001			/* Changed.			 */
 #define VFHBAD	0x0002			/* Hash and cost are bad.	 */
-#define VFEXT	0x0004			/* extended line (beond ncol)	 */
+#define VFEXT	0x0004			/* extended line (beyond ncol)	 */
 
 /*
  * SCORE structures hold the optimal
@@ -685,7 +685,7 @@ updext(int currow, int curcol)
 	lbound = curcol - (curcol % (ncol >> 1)) - (ncol >> 2);
 
 	/*
-	 * scan through the line outputing characters to the virtual screen
+	 * scan through the line outputting characters to the virtual screen
 	 * once we reach the left edge
 	 */
 	vtmove(currow, -lbound);		/* start scanning offscreen */

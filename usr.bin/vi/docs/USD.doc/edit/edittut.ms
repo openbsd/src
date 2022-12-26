@@ -1,4 +1,4 @@
-.\"	$OpenBSD: edittut.ms,v 1.7 2004/02/20 19:56:53 jmc Exp $
+.\"	$OpenBSD: edittut.ms,v 1.8 2022/12/26 19:16:03 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -847,7 +847,7 @@ uses a special notation to
 show the existence of non-printing characters.
 Suppose you had introduced the non-printing character ``control-A''
 into the word ``illustrate''
-by accidently pressing the \s-2CTRL\s0 key while
+by accidentally pressing the \s-2CTRL\s0 key while
 typing `a'.
 This can happen on many terminals
 because the \s-2CTRL\s+2 key and the `A' key

@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_txt.c,v 1.35 2021/04/13 15:34:41 millert Exp $	*/
+/*	$OpenBSD: v_txt.c,v 1.36 2022/12/26 19:16:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -2831,7 +2831,7 @@ txt_Rresolve(SCR *sp, TEXTH *tiqh, TEXT *tp, const size_t orig_len)
 
 	/*
 	 * If the user has entered less characters than the original line
-	 * was long, restore any overwriteable characters to the original
+	 * was long, restore any overwritable characters to the original
 	 * characters.  These characters are entered as "insert characters",
 	 * because they're after the cursor and we don't want to lose them.
 	 * (This is okay because the R command has no insert characters.)

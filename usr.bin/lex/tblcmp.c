@@ -1,4 +1,4 @@
-/*	$OpenBSD: tblcmp.c,v 1.10 2015/11/19 23:34:56 mmcc Exp $	*/
+/*	$OpenBSD: tblcmp.c,v 1.11 2022/12/26 19:16:01 jmc Exp $	*/
 
 /* tblcmp - table compression routines */
 
@@ -511,7 +511,7 @@ mkdeftbl()
  * (i.e., jam entries) into the table.  It is assumed that by linking to
  * "JAMSTATE" they will be taken care of.  In any case, entries in "state"
  * marking transitions to "SAME_TRANS" are treated as though they will be
- * taken care of by whereever "deflink" points.  "totaltrans" is the total
+ * taken care of by wherever "deflink" points.  "totaltrans" is the total
  * number of transitions out of the state.  If it is below a certain threshold,
  * the tables are searched for an interior spot that will accommodate the
  * state array.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.35 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.36 2022/12/26 19:16:02 jmc Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -438,7 +438,7 @@ quote(int f, int n)
 }
 
 /*
- * Wraper function to count invocation repeats.
+ * Wrapper function to count invocation repeats.
  * We ignore any function whose sole purpose is to get us
  * to the intended function.
  */

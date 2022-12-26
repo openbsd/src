@@ -1,4 +1,4 @@
-#	$OpenBSD: mathematica,v 1.3 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: mathematica,v 1.4 2022/12/26 19:16:01 jmc Exp $
 
 #------------------------------------------------------------------------------
 # mathematica:  file(1) magic for mathematica files
@@ -11,7 +11,7 @@
 0	string	\064\024\011\000\035\000\000\000	Mathematica version 2 notebook
 
 # .ma
-# multiple possibilites:
+# multiple possibilities:
 
 0	string	(*^\n\n::[\011frontEndVersion\ =\ 	Mathematica notebook
 #>41	string	>\0	%s
@@ -21,7 +21,7 @@
 #0	string	(*^\n\n::[\011Information	Mathematica notebook version 2.x
 #>675	string	>\0	%s #doesn't work well
 
-# there may be 'cr' instread of 'nl' in some does this matter?
+# there may be 'cr' instead of 'nl' in some does this matter?
 
 # generic:
 0	string	(*^\r\r::[\011	Mathematica notebook version 2.x

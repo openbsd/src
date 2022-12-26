@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmatch.c,v 1.2 2021/08/29 15:37:58 claudio Exp $	*/
+/*	$OpenBSD: rmatch.c,v 1.3 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -126,7 +126,7 @@ rangematch(const char **pp, char test)
 			case RANGE_NOMATCH:
 				continue;
 			default:
-				/* invalid character class, treat litterally. */
+				/* invalid character class, treat literally. */
 				break;
 			}
 		}
@@ -156,7 +156,7 @@ rangematch(const char **pp, char test)
 
 /*
  * Single character match, advances pattern as much as needed.
- * Return 0 on match and !0 (aka 1) on missmatch.
+ * Return 0 on match and !0 (aka 1) on mismatch.
  * When matched pp is advanced to the end of the pattern matched.
  */
 static int

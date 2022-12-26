@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.15 2015/11/19 23:48:06 tedu Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.16 2022/12/26 19:16:01 jmc Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -882,7 +882,7 @@ extern void mark_defs1 PROTO ((void));
 /* Mark the current position in the action array as the end of the prolog. */
 extern void mark_prolog PROTO ((void));
 
-/* Generate a data statment for a two-dimensional array. */
+/* Generate a data statement for a two-dimensional array. */
 extern void mk2data PROTO ((int));
 
 extern void mkdata PROTO ((int));	/* generate a data statement */

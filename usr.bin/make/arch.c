@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.91 2020/01/13 13:54:44 espie Exp $ */
+/*	$OpenBSD: arch.c,v 1.92 2022/12/26 19:16:02 jmc Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ read_archive(const char *archive, const char *earchive)
 
 			(void)memcpy(memberName, arHeader.ar_name,
 			    AR_NAME_SIZE);
-			/* Find real end of name (strip extranous ' ')  */
+			/* Find real end of name (strip extraneous ' ')  */
 			for (cp = memberName + AR_NAME_SIZE - 1; *cp == ' ';)
 				cp--;
 			cp[1] = '\0';

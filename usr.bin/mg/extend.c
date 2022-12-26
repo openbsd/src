@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.75 2021/05/06 14:16:12 lum Exp $	*/
+/*	$OpenBSD: extend.c,v 1.76 2022/12/26 19:16:02 jmc Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -661,7 +661,7 @@ load(const char *fname)
 		return (FALSE);
 	}
 
-	/* keep a note of fname incase of errors in loaded file. */
+	/* keep a note of fname in case of errors in loaded file. */
 	(void)strlcpy(fncpy, fname, sizeof(fncpy));
 	line = 0;
 	while ((s = ffgetline(ffp, excbuf, sizeof(excbuf) - 1, &nbytes))

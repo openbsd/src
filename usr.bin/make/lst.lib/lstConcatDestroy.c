@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstConcatDestroy.c,v 1.11 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: lstConcatDestroy.c,v 1.12 2022/12/26 19:16:02 jmc Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 /*-
  * listConcat.c --
- *	Function to concatentate two lists.
+ *	Function to concatenate two lists.
  */
 
 #include    "lstInt.h"

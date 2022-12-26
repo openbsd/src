@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.46 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.47 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -834,7 +834,7 @@ sock_auth(struct sock *f)
 	gid_t egid;
 
 	/*
-	 * root bypasses any authenication checks and has no session
+	 * root bypasses any authentication checks and has no session
 	 */
 	if (getpeereid(f->fd, &euid, &egid) == 0 && euid == 0) {
 		f->pstate = SOCK_HELLO;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.4 2017/07/23 09:47:11 zhuk Exp $
+# $OpenBSD: UList.pm,v 1.5 2022/12/26 19:16:01 jmc Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -38,7 +38,7 @@ sub _translate_num_key($$;$) {
 	die "invalid index $_[1]" if $_[1] - int($_[2] // 0) >= @{$_[0]};
 }
 
-# Construct new UList and returnes reference to the array,
+# Construct new UList and returns reference to the array,
 # not to the tied object itself.
 sub new {
 	my $class = shift;
@@ -150,7 +150,7 @@ sub SPLICE
 		$length = $maxrm;
 	}
 
-	# trailing elemenets positions to be renumbered by adding $delta
+	# trailing elements positions to be renumbered by adding $delta
 	my $delta = -$length;
 
 	#

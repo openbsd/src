@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.40 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: common.c,v 1.41 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -168,7 +168,7 @@ finish(void)
 
 		if (!setjmp_ok) {
 #ifdef DEBUG_SETJMP
-			error("attemping longjmp() without target");
+			error("attempting longjmp() without target");
 			abort();
 #else
 			exit(1);

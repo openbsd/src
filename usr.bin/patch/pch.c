@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.62 2019/12/02 22:23:19 jca Exp $	*/
+/*	$OpenBSD: pch.c,v 1.63 2022/12/26 19:16:02 jmc Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -495,7 +495,7 @@ another_hunk(void)
 	LINENUM	fillcnt;			/* #lines of missing ptrn or repl */
 	LINENUM	fillsrc;			/* index of first line to copy */
 	LINENUM	filldst;			/* index of first missing line */
-	bool	ptrn_spaces_eaten;		/* ptrn was slightly misformed */
+	bool	ptrn_spaces_eaten;		/* ptrn was slightly malformed */
 	bool	repl_could_be_missing;		/* no + or ! lines in this hunk */
 	bool	repl_missing;			/* we are now backtracking */
 	off_t	repl_backtrack_position;	/* file pos of first repl line */

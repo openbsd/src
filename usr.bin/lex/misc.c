@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.19 2015/11/19 23:34:56 mmcc Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2022/12/26 19:16:01 jmc Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -696,7 +696,7 @@ otoi(str)
 }
 
 
-/* out - various flavors of outputing a (possibly formatted) string for the
+/* out - various flavors of outputting a (possibly formatted) string for the
  *	 generated scanner, keeping track of the line count.
  */
 

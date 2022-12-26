@@ -1216,7 +1216,7 @@ Section 44.10: {lisp} default: nolisp
 
 Autoindent indents appropriately for lisp code, and the {(}, {)}, [{], [}],
 {[[}, and {]]} commands in open and visual modes are modified in a
-striaghtforward, intuitive fashion to have meaning for lisp.
+straightforward, intuitive fashion to have meaning for lisp.
 
 [Author's note: but don't ask me to define them precisely.]
 

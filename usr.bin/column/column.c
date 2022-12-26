@@ -1,4 +1,4 @@
-/*	$OpenBSD: column.c,v 1.26 2018/06/22 12:27:00 rob Exp $	*/
+/*	$OpenBSD: column.c,v 1.27 2022/12/26 19:16:00 jmc Exp $	*/
 /*	$NetBSD: column.c,v 1.4 1995/09/02 05:53:03 jtc Exp $	*/
 
 /*
@@ -300,7 +300,7 @@ input(FILE *fp)
 
 			/*
 			 * Remember the width of the field,
-			 * NUL-terminate and remeber the content,
+			 * NUL-terminate and remember the content,
 			 * and advance beyond the separator, if any.
 			 */
 

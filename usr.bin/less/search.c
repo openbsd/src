@@ -433,7 +433,7 @@ add_hilite(struct hilite *anchor, struct hilite *hl)
 }
 
 /*
- * Hilight every character in a range of displayed characters.
+ * Highlight every character in a range of displayed characters.
  */
 static void
 create_hilites(off_t linepos, int start_index, int end_index, int *chpos)

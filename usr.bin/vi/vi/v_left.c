@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_left.c,v 1.6 2014/11/12 04:28:41 bentley Exp $	*/
+/*	$OpenBSD: v_left.c,v 1.7 2022/12/26 19:16:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -167,7 +167,7 @@ v_first(SCR *sp, VICMD *vp)
 	/*
 	 * If moving right, non-motion commands move to the end of the range.
 	 * Delete and yank stay at the start.  Motion commands adjust the
-	 * ending point to the character before the current ending charcter.
+	 * ending point to the character before the current ending character.
 	 *
 	 * If moving left, all commands move to the end of the range.  Motion
 	 * commands adjust the starting point to the character before the
@@ -229,7 +229,7 @@ v_ncol(SCR *sp, VICMD *vp)
 	/*
 	 * If moving right, non-motion commands move to the end of the range.
 	 * Delete and yank stay at the start.  Motion commands adjust the
-	 * ending point to the character before the current ending charcter.
+	 * ending point to the character before the current ending character.
 	 *
 	 * If moving left, all commands move to the end of the range.  Motion
 	 * commands adjust the starting point to the character before the

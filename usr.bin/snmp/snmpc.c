@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.39 2022/12/20 20:12:27 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.40 2022/12/26 19:16:03 jmc Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -1197,7 +1197,7 @@ snmpc_printerror(enum snmp_error error, struct ber_element *varbind,
 	case SNMP_ERROR_COMMITFAILED:
 		errx(1, "Can't parse oid %s: Commit failed", oid);
 	case SNMP_ERROR_UNDOFAILED:
-		errx(1, "Can't parse oid %s: Undo faild", oid);
+		errx(1, "Can't parse oid %s: Undo failed", oid);
 	case SNMP_ERROR_AUTHERROR:
 		errx(1, "Can't parse oid %s: Authorization error", oid);
 	case SNMP_ERROR_NOTWRITABLE:

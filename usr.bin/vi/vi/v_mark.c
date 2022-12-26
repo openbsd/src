@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_mark.c,v 1.10 2015/03/29 01:04:23 bcallah Exp $	*/
+/*	$OpenBSD: v_mark.c,v 1.11 2022/12/26 19:16:04 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -186,7 +186,7 @@ mark(SCR *sp, VICMD *vp, enum which cmd)
 	 * the character before the current one (this is safe because we know
 	 * the search had to move to succeed).
 	 *
-	 * Mark motions become line mode opertions if they start at the first
+	 * Mark motions become line mode operations if they start at the first
 	 * nonblank and end at column 0 of another line.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {

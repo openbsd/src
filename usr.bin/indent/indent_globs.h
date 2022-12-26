@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent_globs.h,v 1.15 2021/01/26 18:21:25 deraadt Exp $ */
+/*	$OpenBSD: indent_globs.h,v 1.16 2022/12/26 19:16:01 jmc Exp $ */
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -249,7 +249,7 @@ extern struct parser_state {
     int         col_1;		/* set to true if the last token started in
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
-				 * coment should start */
+				 * comment should start */
     int         com_ind;	/* the column in which comments to the right
 				 * of code should start */
     int         com_lines;	/* the number of lines with comments, set by

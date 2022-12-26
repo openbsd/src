@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.267 2022/08/16 17:29:18 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.268 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1447,7 +1447,7 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 				break;
 
 			/*
-			 * If not overriden,
+			 * If not overridden,
 			 * let \*(.T through to the formatters.
 			 */
 
@@ -2477,7 +2477,7 @@ roff_getnum(const char *v, int *pos, int *res, int flags)
  * Evaluate a string comparison condition.
  * The first character is the delimiter.
  * Succeed if the string up to its second occurrence
- * matches the string up to its third occurence.
+ * matches the string up to its third occurrence.
  * Advance the cursor after the third occurrence
  * or lacking that, to the end of the line.
  */
@@ -4369,7 +4369,7 @@ roff_getformat(const struct roff *r)
  * return zero and don't change the current position.
  * If the control character has been set with `.cc', then let that grain
  * precedence.
- * This is slighly contrary to groff, where using the non-breaking
+ * This is slightly contrary to groff, where using the non-breaking
  * control character when `cc' has been invoked will cause the
  * non-breaking macro contents to be printed verbatim.
  */

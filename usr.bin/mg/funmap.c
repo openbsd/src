@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.64 2022/10/20 18:59:24 op Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.65 2022/12/26 19:16:02 jmc Exp $	*/
 
 /* This file is in the public domain */
 
@@ -34,7 +34,7 @@ static struct funmap *funs;
  *  0 = a toggle, non-modifiable insert/delete, region modifier, etc
  *  1 = value can be string or number value (like: file/buf name, search string)
  *  2 = multiple type value required, see auto-execute, or global-set-key, etc
- * -1 = error: interactive commmand, unsuitable for interpreter
+ * -1 = error: interactive command, unsuitable for interpreter
  *
  * Some functions when used interactively may ask for a 'y' or 'n' (or another
  * character) to continue, in excline, a 'y' is assumed. Functions like this

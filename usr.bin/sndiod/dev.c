@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.105 2022/04/29 09:12:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.106 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1929,7 +1929,7 @@ slot_attach(struct slot *s)
 	}
 
 	/*
-	 * setup converions layer
+	 * setup conversions layer
 	 */
 	slot_initconv(s);
 
@@ -2334,7 +2334,7 @@ ctlslot_update(struct ctlslot *s)
 		/* nothing to do if no visibility change */
 		if (((c->refs_mask & s->self) ^ refs_mask) == 0)
 			continue;
-		/* if control becomes visble */
+		/* if control becomes visible */
 		if (refs_mask)
 			c->refs_mask |= s->self;
 		/* if control is hidden */
@@ -2548,7 +2548,7 @@ ctl_update(struct ctl *c)
 		/* nothing to do if no visibility change */
 		if (((c->refs_mask & s->self) ^ refs_mask) == 0)
 			continue;
-		/* if control becomes visble */
+		/* if control becomes visible */
 		if (refs_mask)
 			c->refs_mask |= s->self;
 		/* if control is hidden */

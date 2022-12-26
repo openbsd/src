@@ -1,4 +1,4 @@
-/* $OpenBSD: eqn.c,v 1.48 2022/04/13 20:19:18 schwarze Exp $ */
+/* $OpenBSD: eqn.c,v 1.49 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -354,7 +354,7 @@ eqn_def_find(struct eqn_node *ep)
 /*
  * Parse a token from the input text.  The modes are:
  * MODE_QUOTED: Use *ep->start as the delimiter; the token ends
- *   before its next occurence.  Do not interpret the token in any
+ *   before its next occurrence.  Do not interpret the token in any
  *   way and return EQN_TOK_QUOTED.  All other modes behave like
  *   MODE_QUOTED when *ep->start is '"'.
  * MODE_NOSUB: If *ep->start is a curly brace, the token ends after it;

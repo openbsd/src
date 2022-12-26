@@ -1,4 +1,4 @@
-#	$OpenBSD: c-lang,v 1.5 2009/04/24 18:54:34 chl Exp $
+#	$OpenBSD: c-lang,v 1.6 2022/12/26 19:16:01 jmc Exp $
 
 #------------------------------------------------------------------------------
 # c-lang:  file(1) magic for C programs (or REXX)
@@ -22,7 +22,7 @@
 >7	string		x		version %.2s
 # We skip the path here, because it is often long (so file will
 # truncate it) and mostly redundant.
-# The inverted index functionality was added some time betwen
+# The inverted index functionality was added some time between
 # versions 11 and 15, so look for -q if version is above 14:
 >7	string		>14
 >>10	search/100	\ -q\ 		with inverted index

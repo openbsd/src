@@ -1,4 +1,4 @@
-/* $OpenBSD: term.c,v 1.150 2022/08/16 17:44:53 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.151 2022/12/26 19:16:02 jmc Exp $ */
 /*
  * Copyright (c) 2010-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -192,7 +192,7 @@ term_flushln(struct termp *p)
 			break;
 
 		/*
-		 * At the location of an automtic line break, input
+		 * At the location of an automatic line break, input
 		 * space characters are consumed by the line break.
 		 */
 

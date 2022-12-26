@@ -247,7 +247,7 @@
 	+ Fix core dump if TERM wasn't set or terminal type was unknown.
 	+ Fix bug where combining ex commands that did/did not require an
 	  ex screen would overwrite the command with the want-to-continue
-	  messsage.
+	  message.
 	+ Fix bug where the screen was never resolved if the user continued
 	  entering ex commands using the : character, but then backspaced
 	  over the prompt to quit or tried to edit their colon command-line

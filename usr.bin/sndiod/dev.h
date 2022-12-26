@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.42 2022/04/29 09:12:57 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.43 2022/12/26 19:16:03 jmc Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -155,7 +155,7 @@ struct ctl {
 	} u;
 
 	unsigned int addr;		/* slot side control address */
-#define CTL_NAMEMAX	16		/* max name lenght */
+#define CTL_NAMEMAX	16		/* max name length */
 	char func[CTL_NAMEMAX];		/* parameter function name */
 	char group[CTL_NAMEMAX];	/* group aka namespace */
 	struct ctl_node {

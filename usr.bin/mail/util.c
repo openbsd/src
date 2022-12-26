@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.1 2020/12/15 00:50:01 daniel Exp $	*/
+/*	$OpenBSD: util.c,v 1.2 2022/12/26 19:16:01 jmc Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ newname:
 }
 
 /*
- * Count the occurances of c in str
+ * Count the occurrences of c in str
  */
 int
 charcount(char *str, int c)

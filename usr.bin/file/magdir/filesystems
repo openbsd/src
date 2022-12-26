@@ -1,4 +1,4 @@
-#	$OpenBSD: filesystems,v 1.5 2009/12/23 02:24:39 krw Exp $
+#	$OpenBSD: filesystems,v 1.6 2022/12/26 19:16:01 jmc Exp $
 
 #------------------------------------------------------------------------------
 # filesystems:  file(1) magic for different filesystems
@@ -135,7 +135,7 @@
 # updated by Joerg Jenderek
 # variables according to grub-0.97/stage1/stage1.S or
 # http://www.gnu.org/software/grub/manual/grub.html#Embedded-data
-# usual values are marked with comments to get only informations of strange GRUB loaders
+# usual values are marked with comments to get only information of strange GRUB loaders
 >0		ulelong		0x009048EB	
 >>0x41		ubyte		<2		
 >>>0x3E		ubyte		>2		\b; GRand Unified Bootloader
@@ -163,7 +163,7 @@
 >>>>>379	string	GRUB\ \0		\b, GRUB version 0.95 or 0.96
 >>>>391		string	Geom\0Hard\ Disk\0Read\0\ Error\0
 >>>>>385	string	GRUB\ \0		\b, GRUB version 0.97
-#unkown version
+#unknown version
 >>>343		string	Geom\0Read\0\ Error\0	
 >>>>321		string	Loading\ stage1.5	\b, GRUB version x.y
 >>>380		string	Geom\0Hard\ Disk\0Read\0\ Error\0
@@ -736,7 +736,7 @@
 # maximal short forward jump is 07fx
 >1		ubyte			<0xff	\b, code offset 0x%x
 # mtools-3.9.8/msdos.h
-# usual values are marked with comments to get only informations of strange FAT systems
+# usual values are marked with comments to get only information of strange FAT systems
 # valid sectorsize must be a power of 2 from 32 to 32768
 >>11		uleshort&0x000f	x		
 >>>11		uleshort	<32769		
@@ -859,7 +859,7 @@
 # In the second sector (+0x200) are variables according to grub-0.97/stage2/asm.S or
 # grub-1.94/kern/i386/pc/startup.S
 # http://www.gnu.org/software/grub/manual/grub.html#Embedded-data
-# usual values are marked with comments to get only informations of strange GRUB loaders
+# usual values are marked with comments to get only information of strange GRUB loaders
 0x200	uleshort		0x70EA		
 # found only version 3.{1,2}
 >0x206		ubeshort	>0x0300		
