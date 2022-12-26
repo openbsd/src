@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.8 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: ctr128.c,v 1.9 2022/12/26 07:18:52 jmc Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -109,7 +109,7 @@ ctr128_inc_aligned(unsigned char *counter)
  * This algorithm assumes that the counter is in the x lower bits
  * of the IV (ivec), and that the application has full control over
  * overflow and the rest of the IV.  This implementation takes NO
- * responsability for checking that the counter doesn't overflow
+ * responsibility for checking that the counter doesn't overflow
  * into the rest of the IV when incremented.
  */
 void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
@@ -228,7 +228,7 @@ void CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 		(*func)(in,out,blocks,key,ivec);
 		/* (*ctr) does not update ivec, caller does: */
 		PUTU32(ivec+12,ctr32);
-		/* ... overflow was detected, propogate carry. */
+		/* ... overflow was detected, propagate carry. */
 		if (ctr32 == 0)	ctr96_inc(ivec);
 		blocks *= 16;
 		len -= blocks;

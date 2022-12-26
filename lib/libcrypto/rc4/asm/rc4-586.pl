@@ -123,7 +123,7 @@ if ($alt=0) {
 	push	(@XX,shift(@XX))			if ($i>=0);
   }
 } else {
-  # Using pinsrw here improves performane on Intel CPUs by 2-3%, but
+  # Using pinsrw here improves performance on Intel CPUs by 2-3%, but
   # brings down AMD by 7%...
   $RC4_loop_mmx = sub {
     my $i=shift;
@@ -144,7 +144,7 @@ if ($alt=0) {
 	&movd	($i>0?"mm1":"mm2",&DWP(0,$dat,$ty,4));
 
 	# (*)	This is the key to Core2 and Westmere performance.
-	#	Whithout movz out-of-order execution logic confuses
+	#	Without movz out-of-order execution logic confuses
 	#	itself and fails to reorder loads and stores. Problem
 	#	appears to be fixed in Sandy Bridge...
   }

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.4 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.5 2022/12/26 07:18:53 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -723,7 +723,7 @@ skip_prefix(const unsigned char **p, size_t *plen, const unsigned char *subject,
  * "equal_nocase" function is a hand-rolled strncasecmp that does not
  * allow \0 in the pattern. Since an embedded \0 is likely a sign of
  * problems, we simply don't allow it in either case, and then we use
- * standard libc funcitons.
+ * standard libc functions.
  */
 
 /* Compare using strncasecmp */

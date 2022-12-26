@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.21 2022/01/14 08:59:30 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.22 2022/12/26 07:18:50 jmc Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -170,7 +170,7 @@ typedef struct DIST_POINT_st DIST_POINT;
 typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
 typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
-/* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
+/* If placed in pkcs12.h, we end up with a circular dependency with pkcs7.h */
 #define DECLARE_PKCS12_STACK_OF(type) /* Nothing */
 #define IMPLEMENT_PKCS12_STACK_OF(type) /* Nothing */
 

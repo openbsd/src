@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.21 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.22 2022/12/26 07:18:52 jmc Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -321,7 +321,7 @@ OCSP_SINGLERESP_add_ext(OCSP_SINGLERESP *x, X509_EXTENSION *ex, int loc)
 
 /* Nonce handling functions */
 
-/* Add a nonce to an extension stack. A nonce can be specificed or if NULL
+/* Add a nonce to an extension stack. A nonce can be specified or if NULL
  * a random nonce will be generated.
  * Note: OpenSSL 0.9.7d and later create an OCTET STRING containing the
  * nonce, previous versions used the raw nonce.

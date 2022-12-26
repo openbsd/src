@@ -124,7 +124,7 @@ changequote({,})
 ! technique.
 !
 ! The macro also loads address sbox 1 to 5 to global 1 to 5, address
-! sbox 6 to local6, and addres sbox 8 to out3.
+! sbox 6 to local6, and address sbox 8 to out3.
 !
 ! Rotates the halfs 3 left to bring the sbox bits in convenient positions.
 !
@@ -266,7 +266,7 @@ define(ip_macro, {
 ! other half (use).
 !
 ! In this version we do two rounds in a loop repeated 7 times
-! and two rounds seperately.
+! and two rounds separately.
 !
 ! One half has the bits for the sboxes in the following positions:
 !

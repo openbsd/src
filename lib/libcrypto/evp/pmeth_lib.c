@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.26 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.27 2022/12/26 07:18:52 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -173,7 +173,7 @@ int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 	} else
 		e = ENGINE_get_pkey_meth_engine(id);
 
-	/* If an ENGINE handled this method look it up. Othewise
+	/* If an ENGINE handled this method look it up. Otherwise
 	 * use internal tables.
 	 */
 

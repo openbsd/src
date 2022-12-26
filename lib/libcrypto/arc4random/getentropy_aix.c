@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_aix.c,v 1.8 2021/10/24 21:24:20 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_aix.c,v 1.9 2022/12/26 07:18:50 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Michael Felt <aixtools@gmail.com>
@@ -21,7 +21,7 @@
  * http://man.openbsd.org/getentropy.2
  */
 /*
- * -lperfstat is needed for the psuedo entropy data
+ * -lperfstat is needed for the pseudo entropy data
  */
 
 #include <sys/mman.h>

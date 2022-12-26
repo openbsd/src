@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.48 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.49 2022/12/26 07:18:52 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,7 @@ EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
 	 * the previous handle, re-querying for an ENGINE, and having a
-	 * reinitialisation, when it may all be unecessary. */
+	 * reinitialisation, when it may all be unnecessary. */
 	if (ctx->engine && ctx->cipher &&
 	    (!cipher || (cipher && (cipher->nid == ctx->cipher->nid))))
 		goto skip_to_init;

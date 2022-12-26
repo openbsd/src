@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.90 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: x509.h,v 1.91 2022/12/26 07:18:53 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -893,7 +893,7 @@ int 		X509_NAME_get_text_by_NID(X509_NAME *name, int nid,
 int		X509_NAME_get_text_by_OBJ(X509_NAME *name,
 			const ASN1_OBJECT *obj, char *buf,int len);
 
-/* NOTE: you should be passsing -1, not 0 as lastpos.  The functions that use
+/* NOTE: you should be passing -1, not 0 as lastpos.  The functions that use
  * lastpos, search after that position on. */
 int 		X509_NAME_get_index_by_NID(const X509_NAME *name, int nid,
 			int lastpos);

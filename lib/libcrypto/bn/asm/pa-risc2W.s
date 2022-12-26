@@ -783,7 +783,7 @@ $00000012
     COPY    %r0,%r10                           ; ret = 0
     MTSARCM %r31                               ; i to shift
     DEPD,Z  %r3,%sar,64,%r3                    ; d <<= i;
-    SUBI    64,%r31,%r19                       ; 64 - i; redundent
+    SUBI    64,%r31,%r19                       ; 64 - i; redundant
     MTSAR   %r19                               ; (64 -i) to shift
     SHRPD   %r4,%r5,%sar,%r4                   ; l>> (64-i)
     MTSARCM %r31                               ; i to shift

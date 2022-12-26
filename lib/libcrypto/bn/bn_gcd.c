@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.19 2022/12/01 02:58:31 jsing Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.20 2022/12/26 07:18:51 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,7 +301,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 		/* Binary inversion algorithm; requires odd modulus.
 		 * This is faster than the general algorithm if the modulus
 		 * is sufficiently small (about 400 .. 500 bits on 32-bit
-		 * sytems, but much more on 64-bit systems) */
+		 * systems, but much more on 64-bit systems) */
 		int shift;
 
 		while (!BN_is_zero(B)) {

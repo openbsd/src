@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp521.c,v 1.29 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecp_nistp521.c,v 1.30 2022/12/26 07:18:51 jmc Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1034,7 +1034,7 @@ felem_contract(felem out, const felem in)
  * elliptic curve group itself. Points on the curve are represented in Jacobian
  * coordinates */
 
-/* point_double calcuates 2*(x_in, y_in, z_in)
+/* point_double calculates 2*(x_in, y_in, z_in)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#doubling-dbl-2001-b
@@ -1143,7 +1143,7 @@ copy_conditional(felem out, const felem in, limb mask)
 	}
 }
 
-/* point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+/* point_add calculates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,

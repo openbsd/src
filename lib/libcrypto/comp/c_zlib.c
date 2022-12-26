@@ -1,4 +1,4 @@
-/* $OpenBSD: c_zlib.c,v 1.24 2022/12/24 07:12:09 tb Exp $ */
+/* $OpenBSD: c_zlib.c,v 1.25 2022/12/26 07:18:51 jmc Exp $ */
 /*
  * ---------------------------------------------------------------------------
  * Major patches to this file were contributed by
@@ -143,7 +143,7 @@ static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
     unsigned int olen, unsigned char *in, unsigned int ilen);
 
 
-/* memory allocations functions for zlib intialization */
+/* memory allocations functions for zlib initialization */
 static void*
 zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
 {
@@ -297,7 +297,7 @@ COMP_zlib(void)
 #ifdef ZLIB
 	{
 		/* init zlib_stateful_ex_idx here so that in a multi-process
-		 * application it's enough to intialize openssl before forking
+		 * application it's enough to initialize openssl before forking
 		 * (idx will be inherited in all the children) */
 		if (zlib_stateful_ex_idx == -1) {
 			CRYPTO_w_lock(CRYPTO_LOCK_COMP);

@@ -1307,7 +1307,7 @@ end_main_loop_a3b:
 	 movdqa	%xmm3, (+$tmp16_offset+16*3)(%rsp)
 	 call	mont_reduce
 
-	# If result > m, subract m
+	# If result > m, subtract m
 	# load result into r15:r8
 	 mov	(+$pResult_offset)(%rsp), %rax
 	 mov	(+8*0)(%rax), %r8

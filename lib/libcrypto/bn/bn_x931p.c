@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.14 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.15 2022/12/26 07:18:51 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -80,7 +80,7 @@ bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx, BN_GENCB *cb)
 	for (;;) {
 		i++;
 		BN_GENCB_call(cb, 0, i);
-		/* NB 27 MR is specificed in X9.31 */
+		/* NB 27 MR is specified in X9.31 */
 		is_prime = BN_is_prime_fasttest_ex(pi, 27, ctx, 1, cb);
 		if (is_prime < 0)
 			return 0;
@@ -205,8 +205,8 @@ err:
 	return ret;
 }
 
-/* Generate pair of paramters Xp, Xq for X9.31 prime generation.
- * Note: nbits paramter is sum of number of bits in both.
+/* Generate pair of parameters Xp, Xq for X9.31 prime generation.
+ * Note: nbits parameter is sum of number of bits in both.
  */
 
 int

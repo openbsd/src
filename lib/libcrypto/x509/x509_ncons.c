@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.7 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.8 2022/12/26 07:18:53 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -482,7 +482,7 @@ nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 
 	if (!emlat)
 		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-	/* Special case: inital '.' is RHS match */
+	/* Special case: initial '.' is RHS match */
 	if (!baseat && (*baseptr == '.')) {
 		if (eml->length > base->length) {
 			emlptr += eml->length - base->length;
@@ -543,7 +543,7 @@ nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 	if (hostlen == 0)
 		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 
-	/* Special case: inital '.' is RHS match */
+	/* Special case: initial '.' is RHS match */
 	if (*baseptr == '.') {
 		if (hostlen > base->length) {
 			p = hostptr + hostlen - base->length;

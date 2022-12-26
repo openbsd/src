@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# $OpenBSD: ecp_nistz256-armv4.pl,v 1.1 2016/11/04 17:33:19 miod Exp $
+# $OpenBSD: ecp_nistz256-armv4.pl,v 1.2 2022/12/26 07:18:51 jmc Exp $
 #
 # Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
@@ -179,7 +179,7 @@ __ecp_nistz256_add:
 	@ if a+b >= modulus, subtract modulus.
 	@
 	@ But since comparison implies subtraction, we subtract
-	@ modulus and then add it back if subraction borrowed.
+	@ modulus and then add it back if subtraction borrowed.
 
 	subs	$a0,$a0,#-1
 	sbcs	$a1,$a1,#-1
@@ -1090,7 +1090,7 @@ __ecp_nistz256_add_self:
 	@ if a+b >= modulus, subtract modulus.
 	@
 	@ But since comparison implies subtraction, we subtract
-	@ modulus and then add it back if subraction borrowed.
+	@ modulus and then add it back if subtraction borrowed.
 
 	subs	$a0,$a0,#-1
 	sbcs	$a1,$a1,#-1

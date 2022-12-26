@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_table.c,v 1.9 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: eng_table.c,v 1.10 2022/12/26 07:18:52 jmc Exp $ */
 /* ====================================================================
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
  *
@@ -163,7 +163,7 @@ engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			fnd->funct = NULL;
 			(void)lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
 		}
-		/* A registration shouldn't add duplciate entries */
+		/* A registration shouldn't add duplicate entries */
 		(void)sk_ENGINE_delete_ptr(fnd->sk, e);
 		/* if 'setdefault', this ENGINE goes to the head of the list */
 		if (!sk_ENGINE_push(fnd->sk, e))
@@ -193,7 +193,7 @@ int_unregister_cb_doall_arg(ENGINE_PILE *pile, ENGINE *e)
 {
 	int n;
 
-	/* Iterate the 'c->sk' stack removing any occurance of 'e' */
+	/* Iterate the 'c->sk' stack removing any occurrence of 'e' */
 	while ((n = sk_ENGINE_find(pile->sk, e)) >= 0) {
 		(void)sk_ENGINE_delete(pile->sk, n);
 		pile->uptodate = 0;

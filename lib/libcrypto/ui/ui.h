@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.15 2022/12/17 21:59:39 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.16 2022/12/26 07:18:52 jmc Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -276,7 +276,7 @@ const UI_METHOD *UI_null(void);
  *			display a dialog box after it has been built.
  *	a reader	This function is called to read a given prompt,
  *			maybe from the tty, maybe from a field in a
- *			window.  Note that it's called wth all string
+ *			window.  Note that it's called with all string
  *			structures, not only the prompt ones, so it must
  *			check such things itself.
  *	a closer	This function closes the session, maybe by closing

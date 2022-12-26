@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_trust.3,v 1.6 2022/09/10 10:22:46 jsg Exp $
+.\" $OpenBSD: X509_check_trust.3,v 1.7 2022/12/26 07:18:52 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2022 $
+.Dd $Mdocdate: December 26 2022 $
 .Dt X509_CHECK_TRUST 3
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ identifiers, the standard algorithm is modified:
 and
 .Xr X509_add1_trust_object 3
 settings are completely ignored
-and all steps before the compatibility step are skippped.
+and all steps before the compatibility step are skipped.
 The
 .Fa certificate
 is trusted if and only if it is self-signed.

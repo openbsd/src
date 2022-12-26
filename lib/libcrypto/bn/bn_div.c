@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.28 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_div.c,v 1.29 2022/12/26 07:18:51 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,7 +327,7 @@ BN_div_internal(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor
 		l0 = bn_mul_words(tmp->d, sdiv->d, div_n, q);
 		tmp->d[div_n] = l0;
 		wnum.d--;
-		/* ingore top values of the bignums just sub the two
+		/* ignore top values of the bignums just sub the two
 		 * BN_ULONG arrays with bn_sub_words */
 		if (bn_sub_words(wnum.d, wnum.d, tmp->d, div_n + 1)) {
 			/* Note: As we have considered only the leading

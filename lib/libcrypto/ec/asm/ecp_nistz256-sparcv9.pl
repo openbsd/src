@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# $OpenBSD: ecp_nistz256-sparcv9.pl,v 1.1 2016/11/04 17:33:20 miod Exp $
+# $OpenBSD: ecp_nistz256-sparcv9.pl,v 1.2 2022/12/26 07:18:51 jmc Exp $
 #
 # Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
 #
@@ -350,7 +350,7 @@ __ecp_nistz256_add:
 	! if a+b >= modulus, subtract modulus.
 	!
 	! But since comparison implies subtraction, we subtract
-	! modulus and then add it back if subraction borrowed.
+	! modulus and then add it back if subtraction borrowed.
 
 	subcc	@acc[0],-1,@acc[0]
 	subccc	@acc[1],-1,@acc[1]
@@ -1805,7 +1805,7 @@ $code.=<<___;
 	 srlx	$acc0,32,$t1
 	addxccc	$acc3,$t2,$acc2		! +=acc[0]*0xFFFFFFFF00000001
 	 sub	$acc0,$t0,$t2		! acc0*0xFFFFFFFF00000001, low part
-	addxc	%g0,$t3,$acc3		! cant't overflow
+	addxc	%g0,$t3,$acc3		! can't overflow
 ___
 }
 $code.=<<___;

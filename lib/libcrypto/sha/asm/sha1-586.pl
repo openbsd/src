@@ -28,7 +28,7 @@
 # P4		+85%(!)			+45%
 #
 # As you can see Pentium came out as looser:-( Yet I reckoned that
-# improvement on P4 outweights the loss and incorporate this
+# improvement on P4 outweighs the loss and incorporate this
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
 #					<appro@fy.chalmers.se>
@@ -511,14 +511,14 @@ my $_ror=sub { &ror(@_) };
 #
 # Temporary registers usage. X[2] is volatile at the entry and at the
 # end is restored from backtrace ring buffer. X[3] is expected to
-# contain current K_XX_XX constant and is used to caclulate X[-1]+K
+# contain current K_XX_XX constant and is used to calculate X[-1]+K
 # from previous round, it becomes volatile the moment the value is
 # saved to stack for transfer to IALU. X[4] becomes volatile whenever
 # X[-4] is accumulated and offloaded to backtrace ring buffer, at the
 # end it is loaded with next K_XX_XX [which becomes X[3] in next
 # round]...
 #
-sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_ssse3_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -940,7 +940,7 @@ my $_ror=sub { &shrd(@_[0],@_) };
 	&vmovdqa(&QWP(0+32,"esp"),@X[2]);
 	&jmp	(&label("loop"));
 
-sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions

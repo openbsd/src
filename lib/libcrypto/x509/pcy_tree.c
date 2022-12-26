@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.4 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.5 2022/12/26 07:18:53 jmc Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -131,7 +131,7 @@ tree_print(char *str, X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 #endif
 
 /* Initialize policy tree. Return values:
- *  0 Some internal error occured.
+ *  0 Some internal error occurred.
  * -1 Inconsistent or invalid extensions in certificates.
  *  1 Tree initialized OK.
  *  2 Policy tree is empty.

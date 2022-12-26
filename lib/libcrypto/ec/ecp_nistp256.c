@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nistp256.c,v 1.28 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecp_nistp256.c,v 1.29 2022/12/26 07:18:51 jmc Exp $ */
 /*
  * Written by Adam Langley (Google) for the OpenSSL project
  */
@@ -1223,7 +1223,7 @@ copy_small_conditional(felem out, const smallfelem in, limb mask)
 	}
 }
 
-/* point_add calcuates (x1, y1, z1) + (x2, y2, z2)
+/* point_add calculates (x1, y1, z1) + (x2, y2, z2)
  *
  * The method is taken from:
  *   http://hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-3.html#addition-add-2007-bl,

@@ -1,6 +1,6 @@
-/* $OpenBSD: eng_aesni.c,v 1.11 2018/04/14 07:18:37 tb Exp $ */
+/* $OpenBSD: eng_aesni.c,v 1.12 2022/12/26 07:18:51 jmc Exp $ */
 /*
- * Support for Intel AES-NI intruction set
+ * Support for Intel AES-NI instruction set
  *   Author: Huang Ying <ying.huang@intel.com>
  *
  * Intel AES-NI is a new set of Single Instruction Multiple Data

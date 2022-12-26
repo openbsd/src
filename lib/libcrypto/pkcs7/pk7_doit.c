@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.49 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.50 2022/12/26 07:18:52 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -534,7 +534,7 @@ PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		/* If we haven't got a certificate try each ri in turn */
 		if (pcert == NULL) {
 			/* Always attempt to decrypt all rinfo even
-			 * after sucess as a defence against MMA timing
+			 * after success as a defence against MMA timing
 			 * attacks.
 			 */
 			for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rsk); i++) {

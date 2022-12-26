@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.22 2016/11/04 13:56:04 miod Exp $ */
+/* $OpenBSD: md32_common.h,v 1.23 2022/12/26 07:18:50 jmc Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -316,7 +316,7 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 #if defined(__alpha) || defined(__sparcv9) || defined(__mips)
 #define MD32_REG_T long
 /*
- * This comment was originaly written for MD5, which is why it
+ * This comment was originally written for MD5, which is why it
  * discusses A-D. But it basically applies to all 32-bit digests,
  * which is why it was moved to common header file.
  *

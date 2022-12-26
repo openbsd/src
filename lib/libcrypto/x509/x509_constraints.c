@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.30 2022/11/28 07:22:15 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.31 2022/12/26 07:18:53 jmc Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -192,7 +192,7 @@ x509_constraints_names_dup(struct x509_constraints_names *names)
  * 5890 compliant A-labels (see RFC 6066 section 3). This is more
  * permissive to allow for a leading '.'  for a subdomain based
  * constraint, as well as allowing for '_' which is commonly accepted
- * by nonconformant DNS implementaitons.
+ * by nonconformant DNS implementations.
  *
  * if "wildcards" is set it allows '*' to occur in the string at the end of a
  * component.
@@ -587,7 +587,7 @@ x509_constraints_sandns(char *sandns, size_t dlen, char *constraint, size_t len)
  * returns 1 if the domain and constraint match.
  * returns 0 otherwise.
  *
- * an empty constraint matches everyting.
+ * an empty constraint matches everything.
  * constraint will be matched against the domain as a suffix if it
  * starts with a '.'.
  * domain will be matched against the constraint as a suffix if it
@@ -651,10 +651,10 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
 }
 
 /*
- * Verify a validated address of size alen with a validated contraint
+ * Verify a validated address of size alen with a validated constraint
  * of size constraint_len. returns 1 if matching, 0 if not.
  * Addresses are assumed to be pre-validated for a length of 4 and 8
- * respectively for ipv4 addreses and constraints, and a length of
+ * respectively for ipv4 addresses and constraints, and a length of
  * 16 and 32 respectively for ipv6 address constraints by the caller.
  */
 int
@@ -909,7 +909,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 			vname = NULL;
 		}
 		/*
-		 * Include the CN as a hostname to be checked againt
+		 * Include the CN as a hostname to be checked against
 		 * name constraints if it looks like a hostname.
 		 */
 		while (include_cn &&
@@ -1210,7 +1210,7 @@ x509_constraints_check(struct x509_constraints_names *names,
 /*
  * Walk a validated chain of X509 certs, starting at the leaf, and
  * validate the name constraints in the chain. Intended for use with
- * the legacy X509 validtion code in x509_vfy.c
+ * the legacy X509 validation code in x509_vfy.c
  *
  * returns 1 if the constraints are ok, 0 otherwise, setting error and
  * depth

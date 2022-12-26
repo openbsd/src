@@ -51,7 +51,7 @@
 #
 # Modulo-scheduled inner loops allow to interleave floating point and
 # integer instructions and minimize Read-After-Write penalties. This
-# results in *further* 20-50% perfromance improvement [depending on
+# results in *further* 20-50% performance improvement [depending on
 # key length, more for longer keys] on USI&II cores and 30-80% - on
 # USIII&IV.
 
@@ -867,7 +867,7 @@ ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 # Below substitution makes it possible to compile without demanding
-# VIS extentions on command line, e.g. -xarch=v9 vs. -xarch=v9a. I
+# VIS extensions on command line, e.g. -xarch=v9 vs. -xarch=v9a. I
 # dare to do this, because VIS capability is detected at run-time now
 # and this routine is not called on CPU not capable to execute it. Do
 # note that fzeros is not the only VIS dependency! Another dependency

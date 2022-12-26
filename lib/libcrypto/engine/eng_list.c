@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_list.c,v 1.24 2019/01/19 01:07:00 tb Exp $ */
+/* $OpenBSD: eng_list.c,v 1.25 2022/12/26 07:18:51 jmc Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -223,7 +223,7 @@ ENGINE_get_next(ENGINE *e)
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	ret = e->next;
 	if (ret) {
-		/* Return a valid structural refernce to the next ENGINE */
+		/* Return a valid structural reference to the next ENGINE */
 		ret->struct_ref++;
 		engine_ref_debug(ret, 0, 1)
 	}

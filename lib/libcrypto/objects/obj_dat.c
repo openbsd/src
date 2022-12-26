@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.50 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.51 2022/12/26 07:18:52 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,7 +251,7 @@ static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
 
 /* The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting
- * to use freed up OIDs. If neccessary the actual freeing up of OIDs is
+ * to use freed up OIDs. If necessary the actual freeing up of OIDs is
  * delayed.
  */
 
@@ -320,7 +320,7 @@ OBJ_add_object(const ASN1_OBJECT *obj)
 			ao[i]->type = i;
 			ao[i]->obj = o;
 			aop = lh_ADDED_OBJ_insert(added, ao[i]);
-			/* memory leak, buit should not normally matter */
+			/* memory leak, but should not normally matter */
 			free(aop);
 		}
 	}

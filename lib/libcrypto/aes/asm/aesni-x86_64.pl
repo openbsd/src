@@ -52,7 +52,7 @@
 # nothing one can do and the result appears optimal. CCM result is
 # identical to CBC, because CBC-MAC is essentially CBC encrypt without
 # saving output. CCM CTR "stays invisible," because it's neatly
-# interleaved wih CBC-MAC. This provides ~30% improvement over
+# interleaved with CBC-MAC. This provides ~30% improvement over
 # "straghtforward" CCM implementation with CTR and CBC-MAC performed
 # disjointly. Parallelizable modes practically achieve the theoretical
 # limit.
@@ -136,7 +136,7 @@
 # asymptotic, if it can be surpassed, isn't it? What happens there?
 # Rewind to CBC paragraph for the answer. Yes, out-of-order execution
 # magic is responsible for this. Processor overlaps not only the
-# additional instructions with AES ones, but even AES instuctions
+# additional instructions with AES ones, but even AES instructions
 # processing adjacent triplets of independent blocks. In the 6x case
 # additional instructions  still claim disproportionally small amount
 # of additional cycles, but in 8x case number of instructions must be
@@ -1350,7 +1350,7 @@ ___
 	movdqa	@tweak[5],@tweak[$i]
 	paddq	@tweak[5],@tweak[5]		# psllq	1,$tweak
 	pand	$twmask,$twres			# isolate carry and residue
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	pxor	$twres,@tweak[5]
 ___
     }
@@ -1456,7 +1456,7 @@ $code.=<<___;
 	 aesenc		$rndkey0,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesenc		$rndkey0,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesenc		$rndkey0,$inout2
 	pxor	$twres,@tweak[5]
 	 aesenc		$rndkey0,$inout3
@@ -1471,7 +1471,7 @@ $code.=<<___;
 	 aesenc		$rndkey1,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesenc		$rndkey1,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesenc		$rndkey1,$inout2
 	pxor	$twres,@tweak[5]
 	 aesenc		$rndkey1,$inout3
@@ -1485,7 +1485,7 @@ $code.=<<___;
 	 aesenclast	$rndkey0,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesenclast	$rndkey0,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesenclast	$rndkey0,$inout2
 	pxor	$twres,@tweak[5]
 	 aesenclast	$rndkey0,$inout3
@@ -1499,7 +1499,7 @@ $code.=<<___;
 	 xorps	`16*0`(%rsp),$inout0		# output^=tweak
 	pand	$twmask,$twres			# isolate carry and residue
 	 xorps	`16*1`(%rsp),$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	pxor	$twres,@tweak[5]
 
 	xorps	`16*2`(%rsp),$inout2
@@ -1750,7 +1750,7 @@ ___
 	movdqa	@tweak[5],@tweak[$i]
 	paddq	@tweak[5],@tweak[5]		# psllq	1,$tweak
 	pand	$twmask,$twres			# isolate carry and residue
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	pxor	$twres,@tweak[5]
 ___
     }
@@ -1856,7 +1856,7 @@ $code.=<<___;
 	 aesdec		$rndkey0,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesdec		$rndkey0,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesdec		$rndkey0,$inout2
 	pxor	$twres,@tweak[5]
 	 aesdec		$rndkey0,$inout3
@@ -1871,7 +1871,7 @@ $code.=<<___;
 	 aesdec		$rndkey1,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesdec		$rndkey1,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesdec		$rndkey1,$inout2
 	pxor	$twres,@tweak[5]
 	 aesdec		$rndkey1,$inout3
@@ -1885,7 +1885,7 @@ $code.=<<___;
 	 aesdeclast	$rndkey0,$inout0
 	pand	$twmask,$twres			# isolate carry and residue
 	 aesdeclast	$rndkey0,$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	 aesdeclast	$rndkey0,$inout2
 	pxor	$twres,@tweak[5]
 	 aesdeclast	$rndkey0,$inout3
@@ -1899,7 +1899,7 @@ $code.=<<___;
 	 xorps	`16*0`(%rsp),$inout0		# output^=tweak
 	pand	$twmask,$twres			# isolate carry and residue
 	 xorps	`16*1`(%rsp),$inout1
-	pcmpgtd	@tweak[5],$twtmp		# broadcat upper bits
+	pcmpgtd	@tweak[5],$twtmp		# broadcast upper bits
 	pxor	$twres,@tweak[5]
 
 	xorps	`16*2`(%rsp),$inout2
@@ -2520,7 +2520,7 @@ ___
 #	Vinodh Gopal <vinodh.gopal@intel.com>
 #	Kahraman Akdemir
 #
-# Agressively optimized in respect to aeskeygenassist's critical path
+# Aggressively optimized in respect to aeskeygenassist's critical path
 # and is contained in %xmm0-5 to meet Win64 ABI requirement.
 #
 $code.=<<___;
@@ -2602,7 +2602,7 @@ __aesni_set_encrypt_key:
 
 .align	16
 .L14rounds:
-	movups	16($inp),%xmm2			# remaning half of *userKey
+	movups	16($inp),%xmm2			# remaining half of *userKey
 	mov	\$13,$bits			# 14 rounds for 256
 	lea	16(%rax),%rax
 	$movkey	%xmm0,($key)			# round 0
@@ -2862,7 +2862,7 @@ xts_se_handler:
 	mov	56($disp),%r11		# disp->HandlerData
 
 	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue lable
+	lea	(%rsi,%r10),%r10	# prologue label
 	cmp	%r10,%rbx		# context->Rip<prologue label
 	jb	.Lcommon_seh_tail
 

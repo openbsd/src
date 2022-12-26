@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_padlock.c,v 1.16 2018/04/14 07:18:37 tb Exp $ */
+/* $OpenBSD: eng_padlock.c,v 1.17 2022/12/26 07:18:51 jmc Exp $ */
 /*
  * Support for VIA PadLock Advanced Cryptography Engine (ACE)
  * Written by Michal Ludvig <michal@logix.cz>
@@ -285,7 +285,7 @@ struct padlock_cipher_data {
  * Essentially this variable belongs in thread local storage.
  * Having this variable global on the other hand can only cause
  * few bogus key reloads [if any at all on single-CPU system],
- * so we accept the penatly...
+ * so we accept the penalty...
  */
 static volatile struct padlock_cipher_data *padlock_saved_context;
 #endif
@@ -872,7 +872,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 		chunk = PADLOCK_CHUNK;
 
 	if (out_misaligned) {
-		/* optmize for small input */
+		/* optimize for small input */
 		allocated = (chunk < nbytes ? PADLOCK_CHUNK : nbytes);
 		out = alloca(0x10 + allocated);
 		out = NEAREST_ALIGNED(out);
