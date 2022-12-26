@@ -153,7 +153,7 @@ lwres_resetaddr(lwres_addr_t *addr) {
 	memset(addr, 0, sizeof(*addr));
 }
 
-/*% intializes data structure for subsequent config parsing. */
+/*% initializes data structure for subsequent config parsing. */
 void
 lwres_conf_init(lwres_conf_t *confdata, int lwresflags) {
 	int i;
