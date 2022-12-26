@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.14 2022/12/26 18:41:05 jmc Exp $ */
+/*	$OpenBSD: parse.c,v 1.15 2022/12/26 18:43:49 jmc Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -72,7 +72,7 @@ RB_HEAD(itype_tree, itype)	 itypet[CTF_K_MAX];
  */
 struct isymb_tree	 isymbt;
 
-struct itype		*void_it;		/* no type is emitted for void */
+struct itype		*void_it;		/* no type is emited for void */
 uint16_t		 tidx, fidx, oidx;	/* type, func & object IDs */
 uint16_t		 long_tidx;		/* index of "long", for array */
 
