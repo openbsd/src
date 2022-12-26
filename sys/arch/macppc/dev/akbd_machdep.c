@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd_machdep.c,v 1.3 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: akbd_machdep.c,v 1.4 2022/12/26 19:14:18 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -81,14 +81,12 @@ akbd_cngetc(void *v, u_int *type, int *data)
 	s = splhigh();
 
 	adb_polledkey = -1;
-	adb_polling = 1;
 
 	while (adb_polledkey == -1) {
 		adb_intr(NULL); /* adb does not use the argument */
 		DELAY(10000);				/* XXX */
 	}
 
-	adb_polling = 0;
 	splx(s);
 
 	key = adb_polledkey;
@@ -102,4 +100,5 @@ akbd_cngetc(void *v, u_int *type, int *data)
 void
 akbd_cnpollc(void *v, int on)
 {
+	adb_polling = on;
 }
