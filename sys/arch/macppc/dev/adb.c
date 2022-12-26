@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.48 2022/10/23 03:43:03 gkoehler Exp $	*/
+/*	$OpenBSD: adb.c,v 1.49 2022/12/26 19:17:00 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -612,7 +612,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data,
 
 	splx(s);
 
-	if ((s & (1 << 18)) || adb_polling) /* XXX were VIA1 interrupts blocked ? */
+	if (adb_polling) /* XXX were VIA1 interrupts blocked ? */
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
