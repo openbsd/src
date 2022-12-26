@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.217 2022/09/13 20:26:26 kn Exp $
+.\"	$OpenBSD: ksh.1,v 1.218 2022/12/26 17:45:27 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: September 13 2022 $
+.Dd $Mdocdate: December 26 2022 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2713,9 +2713,7 @@ Exit status is set to zero.
 .Cm +-x Oc
 .Op Fl p
 .Op Cm +
-.Oo Ar name
-.Op Ns = Ns Ar value
-.Ar ... Oc
+.Op Ar name Ns Oo = Ns Ar value Oc Ar ...
 .Xc
 Without arguments,
 .Ic alias
@@ -3454,9 +3452,7 @@ option is used, input is saved to the history file.
 .It Xo
 .Ic readonly
 .Op Fl p
-.Oo Ar parameter
-.Op Ns = Ns Ar value
-.Ar ... Oc
+.Op Ar parameter Ns Oo = Ns Ar value Oc Ar ...
 .Xc
 Sets the read-only attribute of the named parameters.
 If values are given,
@@ -4125,11 +4121,7 @@ Short form of
 .Op Fl i Ns Op Ar n
 .No \&| Fl f Op Fl tux
 .Oc
-.Oo
-.Ar name
-.Op Ns = Ns Ar value
-.Ar ...
-.Oc
+.Op Ar name Ns Oo = Ns Ar value Oc Ar ...
 .Xc
 Display or set parameter attributes.
 With no
