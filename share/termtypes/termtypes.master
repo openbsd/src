@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.61 2017/04/19 15:20:55 nicm Exp $
+# $OpenBSD: termtypes.master,v 1.62 2022/12/26 19:34:12 jmc Exp $
 #
 # OpenBSD local changes:
 #   - add rxvt-unicode and rxvt-unicode-256color
@@ -13,8 +13,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.61 $
-#	$Date: 2017/04/19 15:20:55 $
+#	$Revision: 1.62 $
+#	$Date: 2022/12/26 19:34:12 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -4816,7 +4816,7 @@ kterm-color|kterm-co|kterm with ANSI colors,
 # These (xtermc and xtermm) are distributed with Solaris.  They refer to a
 # variant of xterm which is apparently no longer supported, but are interesting
 # because they illustrate SVr4 curses mouse controls - T.Dickey
-xtermm|xterm terminal emulator (monocrome),
+xtermm|xterm terminal emulator (monochrome),
 	OTbs, am, km, mir, msgr, xenl,
 	btns#3, cols#80, it#8, lines#24,
 	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~,
