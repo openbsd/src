@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.28 2022/12/26 18:52:10 florian Exp $
+.\" $OpenBSD: units.1,v 1.29 2022/12/26 21:04:10 jmc Exp $
 .\" converted to new format by deraadt@openbsd.org
 .\"
 .\" Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -79,11 +79,11 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl f Ar filename
 Specifies the name of the units data file to load.
-This option may be specified multiple times.
 The standard units library is read if
 .Ar filename
 is the empty string.
-This allows extending the standard units library with a personal library.
+This option may be specified multiple times
+to extend the standard units library with a personal library.
 .It Fl q
 Suppresses prompting of the user for units and the display of statistics
 about the number of units loaded.
