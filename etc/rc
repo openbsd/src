@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.566 2022/12/26 18:57:50 florian Exp $
+#	$OpenBSD: rc,v 1.567 2022/12/26 20:24:43 kn Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -254,6 +254,7 @@ reorder_libs() {
 # Read output of reorder_libs co-process and output on console.
 wait_reorder_libs() {
 	local _line
+
 	while IFS= read -p _line; do
 		echo -n "$_line"
 	done
