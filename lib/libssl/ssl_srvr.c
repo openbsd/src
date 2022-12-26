@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.152 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.153 2022/12/26 07:31:44 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1152,8 +1152,8 @@ ssl3_get_client_hello(SSL *s)
 	/*
 	 * We now have the following setup.
 	 * client_random
-	 * cipher_list		- our prefered list of ciphers
-	 * ciphers		- the clients prefered list of ciphers
+	 * cipher_list		- our preferred list of ciphers
+	 * ciphers		- the clients preferred list of ciphers
 	 * compression		- basically ignored right now
 	 * ssl version is set	- sslv3
 	 * s->session		- The ssl session has been setup.

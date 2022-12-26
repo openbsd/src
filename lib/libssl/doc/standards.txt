@@ -280,6 +280,6 @@ STARTTLS documents.
 To be implemented:
 ------------------
 
-These are documents that describe things that are planed to be
+These are documents that describe things that are planned to be
 implemented in the hopefully short future.
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.229 2022/09/11 17:39:46 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.230 2022/12/26 07:31:44 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2348,7 +2348,7 @@ void ERR_load_SSL_strings(void);
  */
 
 /*
- * These are provided for compatibiliy, but have no effect
+ * These are provided for compatibility, but have no effect
  * on how LibreSSL is initialized.
  */
 #define OPENSSL_INIT_LOAD_SSL_STRINGS	_OPENSSL_INIT_FLAG_NOOP

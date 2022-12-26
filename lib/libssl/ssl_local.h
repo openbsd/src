@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.3 2022/12/26 07:31:44 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1087,7 +1087,7 @@ struct ssl_st {
 	STACK_OF(X509_NAME) *client_CA;
 
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
-	 * and SSL_write() calls, good for nbio debuging :-) */
+	 * and SSL_write() calls, good for nbio debugging :-) */
 	int debug;
 	long max_cert_list;
 	int first_packet;

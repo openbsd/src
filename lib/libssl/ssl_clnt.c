@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.157 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.158 2022/12/26 07:31:44 jmc Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1633,7 +1633,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	}
 
 	/*
-	 * There are two ways to detect a resumed ticket sesion.
+	 * There are two ways to detect a resumed ticket session.
 	 * One is to set an appropriate session ID and then the server
 	 * must return a match in ServerHello. This allows the normal
 	 * client session ID matching to work and we know much
@@ -1941,7 +1941,7 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	int nid;
 	int ret = 0;
 
-	/* Get server sertificate PKEY and create ctx from it */
+	/* Get server certificate PKEY and create ctx from it */
 	pkey = X509_get0_pubkey(s->session->peer_cert);
 	if (pkey == NULL || s->session->peer_cert_type != SSL_PKEY_GOST01) {
 		SSLerror(s, SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
