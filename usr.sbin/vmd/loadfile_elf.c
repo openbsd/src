@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.43 2022/11/28 18:24:52 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.44 2022/12/26 23:50:20 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -334,38 +334,23 @@ loadfile_elf(gzFile fp, struct vm_create_params *vcp,
 static size_t
 create_bios_memmap(struct vm_create_params *vcp, bios_memmap_t *memmap)
 {
-	size_t i, n = 0, sz;
-	paddr_t gpa;
+	size_t i, n = 0;
 	struct vm_mem_range *vmr;
 
-	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+	for (i = 0; i < vcp->vcp_nmemranges; i++, n++) {
 		vmr = &vcp->vcp_memranges[i];
-		gpa = vmr->vmr_gpa;
-		sz = vmr->vmr_size;
-
-		/*
-		 * Make sure that we do not mark the ROM/video RAM area in the
-		 * low memory as physcal memory available to the kernel.
-		 */
-		if (gpa < 0x100000 && gpa + sz > LOWMEM_KB * 1024) {
-			if (gpa >= LOWMEM_KB * 1024)
-				sz = 0;
-			else
-				sz = LOWMEM_KB * 1024 - gpa;
-		}
-
-		if (sz != 0) {
-			memmap[n].addr = gpa;
-			memmap[n].size = sz;
-			memmap[n].type = 0x1;	/* Type 1 : Normal memory */
-			n++;
-		}
+		memmap[n].addr = vmr->vmr_gpa;
+		memmap[n].size = vmr->vmr_size;
+		if (vmr->vmr_type == VM_MEM_RAM)
+			memmap[n].type = BIOS_MAP_FREE;
+		else
+			memmap[n].type = BIOS_MAP_RES;
 	}
 
 	/* Null mem map entry to denote the end of the ranges */
 	memmap[n].addr = 0x0;
 	memmap[n].size = 0x0;
-	memmap[n].type = 0x0;
+	memmap[n].type = BIOS_MAP_END;
 	n++;
 
 	return (n);

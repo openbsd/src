@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.77 2022/12/23 19:25:22 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.78 2022/12/26 23:50:20 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -899,6 +899,7 @@ create_memory_map(struct vm_create_params *vcp)
 	len = LOWMEM_KB * 1024;
 	vcp->vcp_memranges[0].vmr_gpa = 0x0;
 	vcp->vcp_memranges[0].vmr_size = len;
+	vcp->vcp_memranges[0].vmr_type = VM_MEM_RAM;
 	mem_bytes -= len;
 
 	/*
@@ -913,12 +914,14 @@ create_memory_map(struct vm_create_params *vcp)
 	len = MB(1) - (LOWMEM_KB * 1024);
 	vcp->vcp_memranges[1].vmr_gpa = LOWMEM_KB * 1024;
 	vcp->vcp_memranges[1].vmr_size = len;
+	vcp->vcp_memranges[1].vmr_type = VM_MEM_RESERVED;
 	mem_bytes -= len;
 
 	/* If we have less than 2MB remaining, still create a 2nd BIOS area. */
 	if (mem_bytes <= MB(2)) {
 		vcp->vcp_memranges[2].vmr_gpa = VMM_PCI_MMIO_BAR_END;
 		vcp->vcp_memranges[2].vmr_size = MB(2);
+		vcp->vcp_memranges[2].vmr_type = VM_MEM_RESERVED;
 		vcp->vcp_nmemranges = 3;
 		return;
 	}
@@ -939,18 +942,27 @@ create_memory_map(struct vm_create_params *vcp)
 	/* Third memory region: area above 1MB to MMIO region */
 	vcp->vcp_memranges[2].vmr_gpa = MB(1);
 	vcp->vcp_memranges[2].vmr_size = above_1m;
+	vcp->vcp_memranges[2].vmr_type = VM_MEM_RAM;
 
-	/* Fourth region: 2nd copy of BIOS above MMIO ending at 4GB */
-	vcp->vcp_memranges[3].vmr_gpa = VMM_PCI_MMIO_BAR_END + 1;
-	vcp->vcp_memranges[3].vmr_size = MB(2);
+	/* Fourth region: PCI MMIO range */
+	vcp->vcp_memranges[3].vmr_gpa = VMM_PCI_MMIO_BAR_BASE;
+	vcp->vcp_memranges[3].vmr_size = VMM_PCI_MMIO_BAR_END -
+	    VMM_PCI_MMIO_BAR_BASE + 1;
+	vcp->vcp_memranges[3].vmr_type = VM_MEM_MMIO;
 
-	/* Fifth region: any remainder above 4GB */
+	/* Fifth region: 2nd copy of BIOS above MMIO ending at 4GB */
+	vcp->vcp_memranges[4].vmr_gpa = VMM_PCI_MMIO_BAR_END + 1;
+	vcp->vcp_memranges[4].vmr_size = MB(2);
+	vcp->vcp_memranges[4].vmr_type = VM_MEM_RESERVED;
+
+	/* Sixth region: any remainder above 4GB */
 	if (above_4g > 0) {
-		vcp->vcp_memranges[4].vmr_gpa = GB(4);
-		vcp->vcp_memranges[4].vmr_size = above_4g;
-		vcp->vcp_nmemranges = 5;
+		vcp->vcp_memranges[5].vmr_gpa = GB(4);
+		vcp->vcp_memranges[5].vmr_size = above_4g;
+		vcp->vcp_memranges[5].vmr_type = VM_MEM_RAM;
+		vcp->vcp_nmemranges = 6;
 	} else
-		vcp->vcp_nmemranges = 4;
+		vcp->vcp_nmemranges = 5;
 }
 
 /*

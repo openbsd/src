@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.5 2021/11/05 10:18:50 jan Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.6 2022/12/26 23:50:20 dv Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <machine/biosvar.h>	/* bios_memmap_t */
 #include <machine/vmmvar.h>
 
 #include <stdlib.h>
@@ -63,6 +64,8 @@ static struct fw_cfg_state {
 
 static uint64_t	fw_cfg_dma_addr;
 
+static bios_memmap_t e820[VMM_MAX_MEM_RANGES];
+
 static int	fw_cfg_select_file(uint16_t);
 static void	fw_cfg_file_dir(void);
 
@@ -71,6 +74,22 @@ fw_cfg_init(struct vmop_create_params *vmc)
 {
 	const char *bootorder = NULL;
 	unsigned int sd = 0;
+	size_t i, e820_len = 0;
+
+	/* Define e820 memory ranges. */
+	memset(&e820, 0, sizeof(e820));
+	for (i = 0; i < vmc->vmc_params.vcp_nmemranges; i++) {
+		struct vm_mem_range *range = &vmc->vmc_params.vcp_memranges[i];
+		bios_memmap_t *entry = &e820[i];
+		entry->addr = range->vmr_gpa;
+		entry->size = range->vmr_size;
+		if (range->vmr_type == VM_MEM_RAM)
+			entry->type = BIOS_MAP_FREE;
+		else
+			entry->type = BIOS_MAP_RES;
+		e820_len += sizeof(bios_memmap_t);
+	}
+	fw_cfg_add_file("etc/e820", &e820, e820_len);
 
 	/* do not double print chars on serial port */
 	fw_cfg_add_file("etc/screen-and-debug", &sd, sizeof(sd));
