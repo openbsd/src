@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.22 2015/10/09 01:37:09 deraadt Exp $	*/
+/*	$OpenBSD: units.c,v 1.23 2022/12/26 18:52:10 florian Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ readunits(char *userfile)
 	int len, linenum, i;
 	FILE *unitfile;
 
-	unitcount = 0;
 	linenum = 0;
 
 	if (userfile) {
@@ -626,8 +625,7 @@ main(int argc, char **argv)
 	struct unittype have, want;
 	char havestr[81], wantstr[81];
 	int optchar;
-	char *userfile = 0;
-	int quiet = 0;
+	int quiet = 0, units_read = 0;
 
 	extern char *optarg;
 	extern int optind;
@@ -638,7 +636,8 @@ main(int argc, char **argv)
 	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
 		switch (optchar) {
 		case 'f':
-			userfile = optarg;
+			units_read = 1;
+			readunits(*optarg == '\0' ? NULL : optarg);
 			break;
 		case 'q':
 			quiet = 1;
@@ -662,7 +661,8 @@ main(int argc, char **argv)
 	if (argc != 3 && argc != 2 && argc != 0)
 		usage();
 
-	readunits(userfile);
+	if (!units_read)
+		readunits(NULL);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
