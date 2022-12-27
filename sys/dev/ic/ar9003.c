@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.55 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.56 2022/12/27 20:13:03 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -114,7 +114,7 @@ int	ar9003_init_calib(struct athn_softc *);
 void	ar9003_do_calib(struct athn_softc *);
 void	ar9003_next_calib(struct athn_softc *);
 void	ar9003_calib_iq(struct athn_softc *);
-int	ar9003_get_iq_corr(struct athn_softc *, int32_t[], int32_t[]);
+int	ar9003_get_iq_corr(struct athn_softc *, int32_t *, int32_t *);
 int	ar9003_calib_tx_iq(struct athn_softc *);
 void	ar9003_paprd_calib(struct athn_softc *, struct ieee80211_channel *);
 int	ar9003_get_desired_txgain(struct athn_softc *, int, int);
@@ -126,17 +126,17 @@ int	ar9003_compute_predistortion(struct athn_softc *, const uint32_t *,
 void	ar9003_enable_predistorter(struct athn_softc *, int);
 void	ar9003_paprd_enable(struct athn_softc *);
 void	ar9003_paprd_tx_tone_done(struct athn_softc *);
-void	ar9003_write_txpower(struct athn_softc *, int16_t power[]);
+void	ar9003_write_txpower(struct athn_softc *, int16_t *);
 void	ar9003_reset_rx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9003_reset_tx_gain(struct athn_softc *, struct ieee80211_channel *);
 void	ar9003_hw_init(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
 void	ar9003_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const uint8_t *, const struct ar_cal_target_power_leg *,
-	    int, uint8_t[]);
+	    int, uint8_t *);
 void	ar9003_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
 	    uint8_t, const uint8_t *, const struct ar_cal_target_power_ht *,
-	    int, uint8_t[]);
+	    int, uint8_t *);
 void	ar9003_set_noise_immunity_level(struct athn_softc *, int);
 void	ar9003_enable_ofdm_weak_signal(struct athn_softc *);
 void	ar9003_disable_ofdm_weak_signal(struct athn_softc *);

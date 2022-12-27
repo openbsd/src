@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.247 2022/03/20 12:01:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.248 2022/12/27 20:13:03 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -87,8 +87,8 @@ int	ieee80211_parse_edca_params_body(struct ieee80211com *,
 	    const u_int8_t *);
 int	ieee80211_parse_edca_params(struct ieee80211com *, const u_int8_t *);
 int	ieee80211_parse_wmm_params(struct ieee80211com *, const u_int8_t *);
-enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t[]);
-enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t[]);
+enum	ieee80211_cipher ieee80211_parse_rsn_cipher(const u_int8_t *);
+enum	ieee80211_akm ieee80211_parse_rsn_akm(const u_int8_t *);
 int	ieee80211_parse_rsn_body(struct ieee80211com *, const u_int8_t *,
 	    u_int, struct ieee80211_rsnparams *);
 int	ieee80211_save_ie(const u_int8_t *, u_int8_t **);

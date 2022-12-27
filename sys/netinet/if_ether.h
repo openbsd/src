@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.83 2021/07/07 20:19:01 sashan Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.84 2022/12/27 20:13:03 patrick Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -271,7 +271,7 @@ void	arp_rtrequest(struct ifnet *, int, struct rtentry *);
 void	ether_fakeaddr(struct ifnet *);
 int	ether_addmulti(struct ifreq *, struct arpcom *);
 int	ether_delmulti(struct ifreq *, struct arpcom *);
-int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
+int	ether_multiaddr(struct sockaddr *, u_int8_t *, u_int8_t *);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);

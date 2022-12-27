@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.150 2022/08/16 13:32:16 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.151 2022/12/27 20:13:03 patrick Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ int kqpoll_debug = 0;
 	printf(x);							\
 }
 
-int pselregister(struct proc *, fd_set *[], fd_set *[], int, int *, int *);
-int pselcollect(struct proc *, struct kevent *, fd_set *[], int *);
+int pselregister(struct proc *, fd_set **, fd_set **, int, int *, int *);
+int pselcollect(struct proc *, struct kevent *, fd_set **, int *);
 void ppollregister(struct proc *, struct pollfd *, int, int *, int *);
 int ppollcollect(struct proc *, struct kevent *, struct pollfd *, u_int);
 

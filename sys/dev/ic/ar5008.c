@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.70 2022/04/21 21:03:02 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.71 2022/12/27 20:13:03 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -111,7 +111,7 @@ void	ar5008_next_calib(struct athn_softc *);
 void	ar5008_calib_iq(struct athn_softc *);
 void	ar5008_calib_adc_gain(struct athn_softc *);
 void	ar5008_calib_adc_dc_off(struct athn_softc *);
-void	ar5008_write_txpower(struct athn_softc *, int16_t power[]);
+void	ar5008_write_txpower(struct athn_softc *, int16_t *);
 void	ar5008_set_viterbi_mask(struct athn_softc *, int);
 void	ar5008_hw_init(struct athn_softc *, struct ieee80211_channel *,
 	    struct ieee80211_channel *);
@@ -119,9 +119,9 @@ uint8_t	ar5008_get_vpd(uint8_t, const uint8_t *, const uint8_t *, int);
 void	ar5008_get_pdadcs(struct athn_softc *, uint8_t, struct athn_pier *,
 	    struct athn_pier *, int, int, uint8_t, uint8_t *, uint8_t *);
 void	ar5008_get_lg_tpow(struct athn_softc *, struct ieee80211_channel *,
-	    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t[]);
+	    uint8_t, const struct ar_cal_target_power_leg *, int, uint8_t *);
 void	ar5008_get_ht_tpow(struct athn_softc *, struct ieee80211_channel *,
-	    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t[]);
+	    uint8_t, const struct ar_cal_target_power_ht *, int, uint8_t *);
 void	ar5008_set_noise_immunity_level(struct athn_softc *, int);
 void	ar5008_enable_ofdm_weak_signal(struct athn_softc *);
 void	ar5008_disable_ofdm_weak_signal(struct athn_softc *);
