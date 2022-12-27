@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.52 2022/01/20 14:12:55 naddy Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.53 2022/12/27 12:11:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -388,6 +388,7 @@ show_interface_msg(struct imsg *imsg)
 			err(1, NULL);
 		printf("%-11s %-29s %-6s %-10s %-10s %s\n",
 		    iface->name, netid, if_state_name(iface->state),
+		    iface->hello_timer < 0 ? "-" :
 		    fmt_timeframe_core(iface->hello_timer),
 		    get_linkstate(iface->if_type, iface->linkstate),
 		    fmt_timeframe_core(iface->uptime));
