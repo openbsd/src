@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.436 2022/10/18 12:24:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.437 2022/12/27 17:05:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1441,8 +1441,8 @@ session_open(struct peer *p)
 	if (p->capa.ann.refresh)	/* no data */
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
-	/* BGP open policy, RFC 9234 */
-	if (p->capa.ann.role_ena) {
+	/* BGP open policy, RFC 9234, only for ebgp sessions */
+	if (p->capa.ann.role_ena && p->conf.ebgp) {
 		errs += session_capa_add(opb, CAPA_ROLE, 1);
 		errs += ibuf_add(opb, &p->capa.ann.role, 1);
 	}
@@ -2478,6 +2478,11 @@ parse_notification(struct peer *peer)
 				log_peer_warnx(&peer->conf,
 				    "disabling route refresh capability");
 				break;
+			case CAPA_ROLE:
+				peer->capa.ann.role_ena = 0;
+				log_peer_warnx(&peer->conf,
+				    "disabling role capability");
+				break;
 			case CAPA_RESTART:
 				peer->capa.ann.grestart.restart = 0;
 				log_peer_warnx(&peer->conf,
@@ -2616,10 +2621,12 @@ parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 		case CAPA_ROLE:
 			if (capa_len != 1) {
 				log_peer_warnx(&peer->conf,
-				    "Bad open policy capability length: "
-				    "%u", capa_len);
+				    "Bad role capability length: %u", capa_len);
 				break;
 			}
+			if (!peer->conf.ebgp)
+				log_peer_warnx(&peer->conf,
+				    "Received role capability on iBGP session");
 			peer->capa.peer.role_ena = 1;
 			peer->capa.peer.role = *capa_val;
 			break;
@@ -2835,8 +2842,10 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	 * Make sure that the roles match and set the negotiated capability
 	 * to the role of the peer. So the RDE can inject the OTC attribute.
 	 * See RFC 9234, section 4.2.
+	 * These checks should only happen on ebgp sessions.
 	 */
-	if (p->capa.ann.role_ena != 0 && p->capa.peer.role_ena != 0) {
+	if (p->capa.ann.role_ena != 0 && p->capa.peer.role_ena != 0 &&
+	    p->conf.ebgp) {
 		switch (p->capa.ann.role) {
 		case CAPA_ROLE_PROVIDER:
 			if (p->capa.peer.role != CAPA_ROLE_CUSTOMER)
@@ -2868,7 +2877,7 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 		}
 		p->capa.neg.role_ena = 1;
 		p->capa.neg.role = p->capa.peer.role;
-	} else if (p->capa.ann.role_ena == 2) {
+	} else if (p->capa.ann.role_ena == 2 && p->conf.ebgp) {
 		/* enforce presence of open policy role capability */
 		log_peer_warnx(&p->conf, "open policy role enforced but "
 		    "not present");
