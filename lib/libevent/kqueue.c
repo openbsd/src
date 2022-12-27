@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.41 2019/05/08 17:33:22 tobias Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.42 2022/12/27 23:05:55 jmc Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -91,7 +91,7 @@ kq_init(struct event_base *base)
 	if (!(kqueueop = calloc(1, sizeof(struct kqop))))
 		return (NULL);
 
-	/* Initalize the kernel queue */
+	/* Initialize the kernel queue */
 
 	if ((kq = kqueue()) == -1) {
 		event_warn("kqueue");
@@ -103,7 +103,7 @@ kq_init(struct event_base *base)
 
 	kqueueop->pid = getpid();
 
-	/* Initalize fields */
+	/* Initialize fields */
 	kqueueop->changes = calloc(NEVENT, sizeof(struct kevent));
 	if (kqueueop->changes == NULL) {
 		free (kqueueop);

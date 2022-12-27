@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.41 2019/05/01 19:14:25 jca Exp $	*/
+/*	$OpenBSD: event.c,v 1.42 2022/12/27 23:05:55 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -338,7 +338,7 @@ event_process_active(struct event_base *base)
 }
 
 /*
- * Wait continously for events.  We exit only if no events are left.
+ * Wait continuously for events.  We exit only if no events are left.
  */
 
 int
@@ -690,7 +690,7 @@ event_add(struct event *ev, const struct timeval *tv)
 	}
 
 	/*
-	 * we should change the timout state only if the previous event
+	 * we should change the timeout state only if the previous event
 	 * addition succeeded.
 	 */
 	if (res != -1 && tv != NULL) {
@@ -698,7 +698,7 @@ event_add(struct event *ev, const struct timeval *tv)
 
 		/*
 		 * we already reserved memory above for the case where we
-		 * are not replacing an exisiting timeout.
+		 * are not replacing an existing timeout.
 		 */
 		if (ev->ev_flags & EVLIST_TIMEOUT)
 			event_queue_remove(base, ev, EVLIST_TIMEOUT);
