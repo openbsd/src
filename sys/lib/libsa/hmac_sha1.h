@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmac_sha1.h,v 1.1 2012/10/09 12:36:50 jsing Exp $	*/
+/*	$OpenBSD: hmac_sha1.h,v 1.2 2022/12/27 07:30:10 jca Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -22,4 +22,4 @@
  * HMAC-SHA-1 (from RFC 2202).
  */
 void hmac_sha1(const u_int8_t *, size_t, const u_int8_t *,
-    size_t, u_int8_t []);
+    size_t, u_int8_t *);
