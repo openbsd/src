@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.14 2018/03/16 12:31:09 mpi Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.15 2022/12/27 07:44:56 jmc Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -285,7 +285,7 @@ typedef struct {
 			/* fields in third byte */
 	unsigned	qr: 1;		/* response flag */
 	unsigned	opcode: 4;	/* purpose of message */
-	unsigned	aa: 1;		/* authoritive answer */
+	unsigned	aa: 1;		/* authoritative answer */
 	unsigned	tc: 1;		/* truncated message */
 	unsigned	rd: 1;		/* recursion desired */
 			/* fields in fourth byte */
@@ -299,7 +299,7 @@ typedef struct {
 			/* fields in third byte */
 	unsigned	rd :1;		/* recursion desired */
 	unsigned	tc :1;		/* truncated message */
-	unsigned	aa :1;		/* authoritive answer */
+	unsigned	aa :1;		/* authoritative answer */
 	unsigned	opcode :4;	/* purpose of message */
 	unsigned	qr :1;		/* response flag */
 			/* fields in fourth byte */

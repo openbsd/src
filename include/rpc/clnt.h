@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.13 2022/07/15 17:33:28 deraadt Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.14 2022/12/27 07:44:56 jmc Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ struct rpc_err {
 		int RE_errno;		/* related system error */
 		enum auth_stat RE_why;	/* why the auth error occurred */
 		struct {
-			u_int32_t low;	/* lowest verion supported */
-			u_int32_t high;	/* highest verion supported */
+			u_int32_t low;	/* lowest version supported */
+			u_int32_t high;	/* highest version supported */
 		} RE_vers;
 		struct {		/* maybe meaningful if RPC_FAILED */
 			int32_t s1;
@@ -226,7 +226,7 @@ typedef struct __rpc_client {
 
 
 /*
- * RPCTEST is a test program which is accessable on every rpc
+ * RPCTEST is a test program which is accessible on every rpc
  * transport/port.  It is used for testing, performance evaluation,
  * and network administration.
  */

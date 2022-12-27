@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.h,v 1.13 2022/02/14 03:38:59 guenther Exp $	*/
+/*	$OpenBSD: xdr.h,v 1.14 2022/12/27 07:44:56 jmc Exp $	*/
 /*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
@@ -94,8 +94,8 @@ enum xdr_op {
 /*
  * The XDR handle.
  * Contains operation which is being applied to the stream,
- * an operations vector for the paticular implementation (e.g. see xdr_mem.c),
- * and two private fields for the use of the particular impelementation.
+ * an operations vector for the particular implementation (e.g. see xdr_mem.c),
+ * and two private fields for the use of the particular implementation.
  */
 typedef struct __rpc_xdr {
 	enum xdr_op	x_op;		/* operation; fast additional param */
