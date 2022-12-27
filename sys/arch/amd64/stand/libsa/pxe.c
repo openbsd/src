@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe.c,v 1.7 2016/03/06 22:41:24 naddy Exp $ */
+/*	$OpenBSD: pxe.c,v 1.8 2022/12/27 07:34:05 jca Exp $ */
 /*	$NetBSD: pxe.c,v 1.5 2003/03/11 18:29:00 drochner Exp $	*/
 
 /*
@@ -241,8 +241,7 @@ pxe_netif_open(void)
 }
 
 void
-pxe_netif_close(sock)
-	int sock;
+pxe_netif_close(int sock)
 {
 	t_PXENV_UDP_CLOSE *uc = (void *) pxe_command_buf;
 
@@ -271,8 +270,7 @@ pxe_netif_shutdown(void)
 }
 
 struct iodesc *
-pxesocktodesc(sock)
-	int sock;
+pxesocktodesc(int sock)
 {
 
 #ifdef NETIF_DEBUG
