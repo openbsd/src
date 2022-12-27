@@ -371,8 +371,8 @@ context(ctx, ...)
     PPCODE:
 	if (items > 2) {
 	    STRLEN len;
-	    ctx->count = SvUV(ST(1)) << 3;
 	    unsigned char *buf = (unsigned char *)(SvPV(ST(2), len));
+	    ctx->count = SvUV(ST(1)) << 3;
 	    ctx->state[0] = buf[ 0] | (buf[ 1]<<8) | (buf[ 2]<<16) | (buf[ 3]<<24);
 	    ctx->state[1] = buf[ 4] | (buf[ 5]<<8) | (buf[ 6]<<16) | (buf[ 7]<<24);
 	    ctx->state[2] = buf[ 8] | (buf[ 9]<<8) | (buf[10]<<16) | (buf[11]<<24);
