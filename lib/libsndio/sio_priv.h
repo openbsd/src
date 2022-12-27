@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.10 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.11 2022/12/27 17:10:07 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -33,7 +33,7 @@ struct sio_hdl {
 	unsigned mode;			/* SIO_PLAY | SIO_REC */
 	int started;			/* true if started */
 	int nbio;			/* true if non-blocking io */
-	int eof;			/* true if error occured */
+	int eof;			/* true if error occurred */
 	int rdrop;			/* recorded bytes to drop */
 	int wsil;			/* silence to play */
 	int rused;			/* bytes used in read buffer */

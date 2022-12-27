@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.5 2016/09/12 19:47:01 guenther Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.6 2022/12/27 17:10:07 jmc Exp $	*/
 /*	$NetBSD: fenv.c,v 1.1 2010/07/31 21:47:53 joerg Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@ feclearexcept(int excepts)
 	/* Clear the requested floating-point exceptions */
 	fenv.__x87.__status &= ~excepts;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
@@ -155,7 +155,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	fenv.__x87.__status &= ~excepts;
 	fenv.__x87.__status |= *flagp & excepts;
 
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__asm__ volatile ("fldenv %0" : : "m" (fenv));
 
 	/* Same for SSE environment */
@@ -318,7 +318,7 @@ DEF_STD(feholdexcept);
 int
 fesetenv(const fenv_t *envp)
 {
-	/* Load the x87 floating-point environent */
+	/* Load the x87 floating-point environment */
 	__asm__ volatile ("fldenv %0" : : "m" (*envp));
 
 	/* Store the MXCSR register */
@@ -359,7 +359,7 @@ feupdateenv(const fenv_t *envp)
 DEF_STD(feupdateenv);
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)

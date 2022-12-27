@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfscanf.c,v 1.34 2016/10/30 05:07:06 jsg Exp $ */
+/*	$OpenBSD: vfscanf.c,v 1.35 2022/12/27 17:10:06 jmc Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -774,7 +774,7 @@ literal:
 			for (p = buf; width; width--) {
 				c = *fp->_p;
 				/*
-				 * This code mimicks the integer conversion
+				 * This code mimics the integer conversion
 				 * code, but is much simpler.
 				 */
 				switch (c) {
@@ -916,7 +916,7 @@ doswitch:
 			 * z', but treats `a-a' as `the letter a, the
 			 * character -, and the letter a'.
 			 *
-			 * For compatibility, the `-' is not considerd
+			 * For compatibility, the `-' is not considered
 			 * to define a range if the character following
 			 * it is either a close bracket (required by ANSI)
 			 * or is not numerically greater than the character

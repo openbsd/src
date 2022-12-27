@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.4 2002/02/24 21:24:06 millert Exp $
+#	$OpenBSD: README,v 1.5 2022/12/27 17:10:06 jmc Exp $
 
 This package implements a superset of the hsearch and dbm/ndbm libraries.
 
@@ -48,7 +48,7 @@ The man page ../man/db.3 explains the interface to the hashing system.
 The file hash.ps is a postscript copy of a paper explaining
 the history, implementation, and performance of the hash package.
 
-"bugs" or idiosyncracies
+"bugs" or idiosyncrasies
 
 If you have a lot of overflows, it is possible to run out of overflow
 pages.  Currently, this will cause a message to be printed on stderr.

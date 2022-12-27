@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.18 2017/04/27 15:35:36 millert Exp $ */
+/* $OpenBSD: keynote.y,v 1.19 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -792,7 +792,7 @@ checkexception(int i)
 
 
 /* 
- * Integer exponentation -- copied from Schneier's AC2, page 244. 
+ * Integer exponentiation -- copied from Schneier's AC2, page 244. 
  */
 static int
 intpow(int x, int y)

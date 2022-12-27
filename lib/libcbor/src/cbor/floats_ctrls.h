@@ -124,7 +124,7 @@ cbor_item_t *cbor_new_undef();
 /** Constructs new boolean ctrl item
  *
  * @param value The value to use
- * @return **new** boolen ctrl item or `NULL` upon memory allocation failure
+ * @return **new** boolean ctrl item or `NULL` upon memory allocation failure
  */
 cbor_item_t *cbor_build_bool(bool value);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.58 2022/11/17 17:39:41 florian Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.59 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -466,7 +466,7 @@ getaddrinfo_async_run(struct asr_query *as, struct asr_result *ar)
 }
 
 /*
- * Retreive the port number for the service name "servname" and
+ * Retrieve the port number for the service name "servname" and
  * the protocol "proto".
  */
 static int

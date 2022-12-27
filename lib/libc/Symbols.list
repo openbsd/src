@@ -6,7 +6,7 @@
  * static, or renamed it to have a leading underbar.
  */
 
-/* brk/sbrk need this so it can be overriden by the executable's value */
+/* brk/sbrk need this so it can be overridden by the executable's value */
 _end
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.21 2022/11/16 18:30:12 florian Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.22 2022/12/27 17:10:06 jmc Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -149,7 +149,7 @@ DEF_WEAK(dn_expand);
  * 'length' is the size of the array pointed to by 'comp_dn'.
  * 'dnptrs' is a list of pointers to previous compressed names. dnptrs[0]
  * is a pointer to the beginning of the message. The list ends with NULL.
- * 'lastdnptr' is a pointer to the end of the arrary pointed to
+ * 'lastdnptr' is a pointer to the end of the array pointed to
  * by 'dnptrs'. Side effect is to update the list of pointers for
  * labels inserted into the message as we compress the name.
  * If 'dnptr' is NULL, we don't try to compress names. If 'lastdnptr'

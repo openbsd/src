@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwcache.c,v 1.15 2018/09/22 02:47:23 millert Exp $	*/
+/*	$OpenBSD: pwcache.c,v 1.16 2022/12/27 17:10:06 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -79,7 +79,7 @@ typedef struct gidc {
  * Traditional passwd/group cache routines perform quite poorly with
  * archives. The chances of hitting a valid lookup with an archive is quite a
  * bit worse than with files already resident on the file system. These misses
- * create a MAJOR performance cost. To adress this problem, these routines
+ * create a MAJOR performance cost. To address this problem, these routines
  * cache both hits and misses.
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sioctl_priv.h,v 1.1 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: sioctl_priv.h,v 1.2 2022/12/27 17:10:07 jmc Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -32,7 +32,7 @@ struct sioctl_hdl {
 	void *ctl_arg;
 	unsigned int mode;		/* SIOCTL_READ | SIOCTL_WRITE */
 	int nbio;			/* true if non-blocking io */
-	int eof;			/* true if error occured */
+	int eof;			/* true if error occurred */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.23 2022/02/14 03:38:59 guenther Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.24 2022/12/27 17:10:06 jmc Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -456,7 +456,7 @@ xdrrec_skiprecord(XDR *xdrs)
 DEF_WEAK(xdrrec_skiprecord);
 
 /*
- * Look ahead fuction.
+ * Look ahead function.
  * Returns TRUE iff there is no more input in the buffer 
  * after consuming the rest of the current record.
  */
@@ -482,7 +482,7 @@ DEF_WEAK(xdrrec_eof);
  * The client must tell the package when an end-of-record has occurred.
  * The second paraemters tells whether the record should be flushed to the
  * (output) tcp stream.  (This let's the package support batched or
- * pipelined procedure calls.)  TRUE => immmediate flush to tcp connection.
+ * pipelined procedure calls.)  TRUE => immediate flush to tcp connection.
  */
 bool_t
 xdrrec_endofrecord(XDR *xdrs, int32_t sendnow)

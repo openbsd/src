@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.29 2022/04/29 08:30:48 ratchov Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.30 2022/12/27 17:10:07 jmc Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -586,7 +586,7 @@ sio_sun_revents(struct sio_hdl *sh, struct pollfd *pfd)
 
 	/*
 	 * GETPOS reports positions including xruns,
-	 * so we have to substract to get the real position
+	 * so we have to subtract to get the real position
 	 */
 	hdl->idelta -= dierr;
 	hdl->odelta -= doerr;

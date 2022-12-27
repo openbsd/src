@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.62 2019/01/25 00:19:26 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.63 2022/12/27 17:10:07 jmc Exp $
  */
 
 #ifdef	QUOTA
@@ -108,7 +108,7 @@ skeygetent(int fd, struct skey *mp, const char *name)
 	}
 
 	if (fd == -1) {
-		/* Open the user's databse entry, creating it as needed. */
+		/* Open the user's database entry, creating it as needed. */
 		if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
 		    name) >= sizeof(filename)) {
 			errno = ENAMETOOLONG;

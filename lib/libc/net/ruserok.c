@@ -384,7 +384,7 @@ __gethostloop(struct sockaddr *raddr, socklen_t salen)
 	}
 
 	/*
-	 * either the DNS adminstrator has made a configuration
+	 * either the DNS administrator has made a configuration
 	 * mistake, or someone has attempted to spoof us
 	 */
 	freeaddrinfo(res);

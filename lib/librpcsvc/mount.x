@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.x,v 1.5 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: mount.x,v 1.6 2022/12/27 17:10:07 jmc Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -110,7 +110,7 @@ program MOUNTPROG {
 	version MOUNTVERS {
 		/*
 		 * Does no work. It is made available in all RPC services
-		 * to allow server reponse testing and timing
+		 * to allow server response testing and timing
 		 */
 		void
 		MOUNTPROC_NULL(void) = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr.c,v 1.16 2017/01/21 08:29:13 krw Exp $ */
+/*	$OpenBSD: xdr.c,v 1.17 2022/12/27 17:10:06 jmc Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -549,7 +549,7 @@ xdr_netobj(XDR *xdrs, struct netobj *np)
 }
 
 /*
- * XDR a descriminated union
+ * XDR a discriminated union
  * Support routine for discriminated unions.
  * You create an array of xdrdiscrim structures, terminated with
  * an entry with a null procedure pointer.  The routine gets

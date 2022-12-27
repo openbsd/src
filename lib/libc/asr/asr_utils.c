@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.19 2022/11/17 17:39:41 florian Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.20 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -384,7 +384,7 @@ static int
 pack_dname(struct asr_pack *p, const char *dname)
 {
 	/* dname compression would be nice to have here.
-	 * need additionnal context.
+	 * need additional context.
 	 */
 	return (pack_data(p, dname, strlen(dname) + 1));
 }

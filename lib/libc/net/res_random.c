@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.25 2020/07/06 13:33:06 pirofti Exp $ */
+/* $OpenBSD: res_random.c,v 1.26 2022/12/27 17:10:06 jmc Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -70,7 +70,7 @@
 
 #include "thread_private.h"
 
-#define RU_OUT  	180	/* Time after wich will be reseeded */
+#define RU_OUT  	180	/* Time after which will be reseeded */
 #define RU_MAX		30000	/* Uniq cycle, avoid blackjack prediction */
 #define RU_GEN		2	/* Starting generator */
 #define RU_N		32749	/* RU_N-1 = 2*2*3*2729 */

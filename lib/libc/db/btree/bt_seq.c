@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_seq.c,v 1.11 2005/08/05 13:03:00 espie Exp $	*/
+/*	$OpenBSD: bt_seq.c,v 1.12 2022/12/27 17:10:06 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -83,7 +83,7 @@ __bt_seq(const DB *dbp, DBT *key, DBT *data, u_int flags)
 	}
 
 	/*
-	 * If scan unitialized as yet, or starting at a specific record, set
+	 * If scan uninitialized as yet, or starting at a specific record, set
 	 * the scan to a specific key.  Both __bt_seqset and __bt_seqadv pin
 	 * the page the cursor references if they're successful.
 	 */

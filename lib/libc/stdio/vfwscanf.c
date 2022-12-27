@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwscanf.c,v 1.7 2017/12/08 01:03:51 kevlo Exp $ */
+/*	$OpenBSD: vfwscanf.c,v 1.8 2022/12/27 17:10:06 jmc Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -691,7 +691,7 @@ literal:
 			for (p = buf; width; width--) {
 				c = __fgetwc_unlock(fp);
 				/*
-				 * This code mimicks the integer conversion
+				 * This code mimics the integer conversion
 				 * code, but is much simpler.
 				 */
 				switch (c) {

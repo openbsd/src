@@ -72,7 +72,7 @@ cbrt(double x)
 	r=(r-t)/(w+r);	/* r-s is exact */
 	t=t+t*r;
 
-    /* retore the sign bit */
+    /* restore the sign bit */
 	GET_HIGH_WORD(high,t);
 	SET_HIGH_WORD(t,high|sign);
 	return(t);

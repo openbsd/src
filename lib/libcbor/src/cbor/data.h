@@ -184,7 +184,7 @@ struct cbor_indefinite_string_data {
 
 /** High-level decoding error */
 struct cbor_error {
-  /** Aproximate position */
+  /** Approximate position */
   size_t position;
   /** Description */
   cbor_error_code code;

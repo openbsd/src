@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.7 2016/09/12 19:47:02 guenther Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.8 2022/12/27 17:10:07 jmc Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -311,7 +311,7 @@ feupdateenv(const fenv_t *envp)
 DEF_STD(feupdateenv);
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)

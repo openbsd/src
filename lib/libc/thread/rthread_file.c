@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_file.c,v 1.2 2017/08/15 06:38:41 guenther Exp $	*/
+/*	$OpenBSD: rthread_file.c,v 1.3 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -74,7 +74,7 @@ struct	file_lock {
  * value is then remaindered using the maximum number of hash
  * entries to produce and index into the array of static lock
  * structures. If there is a collision, a linear search of the
- * dynamic list of locks linked to each static lock is perfomed.
+ * dynamic list of locks linked to each static lock is performed.
  */
 #define file_idx(_p)	((int)((((uintptr_t) _p) >> sizeof(void *)) % NUM_HEADS))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.10 2022/11/06 09:25:39 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.11 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -51,7 +51,7 @@ int	_pagesize = 0;
 struct timekeep	*_timekeep;
 
 /*
- * In dynamicly linked binaries environ and __progname are overriden by
+ * In dynamically linked binaries environ and __progname are overridden by
  * the definitions in ld.so.
  */
 char	**environ __attribute__((weak)) = NULL;

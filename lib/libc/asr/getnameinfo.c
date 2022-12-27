@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.10 2020/12/21 09:40:35 eric Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.11 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -38,7 +38,7 @@ static size_t asr_print_port(const struct sockaddr *, const char *, char *, size
  * set in "sa".
  *
  * Return the total length of the string it tried to create or 0 if an error
- * occured, in which case errno is set.  On success, the constructed string
+ * occurred, in which case errno is set.  On success, the constructed string
  * is guaranteed to be NUL-terminated.  Overflow must be detected by checking
  * the returned size against buflen.
  *
@@ -102,7 +102,7 @@ asr_print_addr(const struct sockaddr *sa, char *buf, size_t buflen)
  * it prints the portno.
  *
  * Return the total length of the string it tried to create or 0 if an error
- * occured, in which case errno is set.  On success, the constructed string
+ * occurred, in which case errno is set.  On success, the constructed string
  * is guaranteed to be NUL-terminated.  Overflow must be detected by checking
  * the returned size against buflen.
  */

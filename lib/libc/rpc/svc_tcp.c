@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.42 2022/02/14 03:38:59 guenther Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.43 2022/12/27 17:10:06 jmc Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -35,7 +35,7 @@
  * svc_tcp.c, Server side for TCP/IP based RPC. 
  *
  * Actually implements two flavors of transporter -
- * a tcp rendezvouser (a listner and connection establisher)
+ * a tcp rendezvouser (a listener and connection establisher)
  * and a record/tcp stream.
  */
 
@@ -217,7 +217,7 @@ makefd_xprt(int fd, u_int sendsize, u_int recvsize)
 	xprt->xp_p1 = (caddr_t)cd;
 	xprt->xp_verf.oa_base = cd->verf_body;
 	xprt->xp_addrlen = 0;
-	xprt->xp_ops = &svctcp_op;  /* truely deals with calls */
+	xprt->xp_ops = &svctcp_op;  /* truly deals with calls */
 	xprt->xp_port = 0;  /* this is a connection, not a rendezvouser */
 	xprt->xp_sock = fd;
 	if (__xprt_register(xprt) == 0) {
@@ -325,7 +325,7 @@ svctcp_destroy(SVCXPRT *xprt)
 static struct timespec wait_per_try = { 35, 0 };
 
 /*
- * reads data from the tcp conection.
+ * reads data from the tcp connection.
  * any error is fatal and the connection is closed.
  * (And a read of zero bytes is a half closed stream => error.)
  */

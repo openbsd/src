@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcvt.c,v 1.14 2019/01/25 00:19:25 millert Exp $	*/
+/*	$OpenBSD: gcvt.c,v 1.15 2022/12/27 17:10:06 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2006, 2010
@@ -61,7 +61,7 @@ gcvt(double value, int ndigit, char *buf)
 	if (sign)
 		*dst++ = '-';
 
-	/* Match printf(3) behavior for exponential vs. regular fomatting. */
+	/* Match printf(3) behavior for exponential vs. regular formatting. */
 	if (decpt <= -4 || decpt > ndigit) {
 		/* exponential format (e.g. 1.2345e+13) */
 		if (--decpt < 0) {

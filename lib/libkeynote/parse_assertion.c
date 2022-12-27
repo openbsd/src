@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.16 2015/12/14 03:25:59 mmcc Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.17 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -395,7 +395,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
     for (i = 0, j = len; i < j && isspace((unsigned char)as->as_buf[i]); i++)
      ;
 
-    /* Keyword must start at begining of buffer or line */
+    /* Keyword must start at beginning of buffer or line */
     if ((i >= j) || ((i != 0) && (as->as_buf[i - 1] != '\n')))
     {
 	keynote_free_assertion(as);
@@ -407,11 +407,11 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
     {
 	ks = as->as_buf + i;
 
-	/* Mark begining of assertion for signature purposes */
+	/* Mark beginning of assertion for signature purposes */
 	if (as->as_startofsignature == NULL)
 	  as->as_startofsignature = ks;
 
-	/* This catches comments at the begining of an assertion only */
+	/* This catches comments at the beginning of an assertion only */
 	if (as->as_buf[i] == '#')	/* Comment */
 	{
 	    seen_field = 1;
@@ -435,10 +435,10 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	    return NULL;
 	}
 
-	/* ks points at begining of keyword, ke points at end */
+	/* ks points at beginning of keyword, ke points at end */
 	ke = as->as_buf + i;
 
-	/* ts points at begining of value field */
+	/* ts points at beginning of value field */
 	ts = as->as_buf + i + 1;	/* Skip ':' */
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tib.h,v 1.3 2019/06/02 01:03:01 guenther Exp $	*/
+/*	$OpenBSD: tib.h,v 1.4 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,7 +24,7 @@ __BEGIN_HIDDEN_DECLS
 
 #ifndef PIC
 /*
- * Handling for static TLS allocation in staticly linked programs
+ * Handling for static TLS allocation in statically linked programs
  */
 /* Given the base of a TIB allocation, initialize the static TLS for a thread */
 struct tib *_static_tls_init(char *_base, void *_thread);
@@ -45,7 +45,7 @@ extern const dl_cb *_dl_cb;
 #if ! TCB_HAVE_MD_GET
 /*
  * For archs without a fast TCB_GET(): the pointer to the TCB in
- * single-threaded programs, whether linked staticly or dynamically.
+ * single-threaded programs, whether linked statically or dynamically.
  */
 extern void	*_libc_single_tcb;
 #endif

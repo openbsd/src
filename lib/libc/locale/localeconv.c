@@ -1,4 +1,4 @@
-/*	$OpenBSD: localeconv.c,v 1.8 2016/05/23 00:05:15 guenther Exp $ */
+/*	$OpenBSD: localeconv.c,v 1.9 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -12,7 +12,7 @@
  * monetary and numeric locales.
  *
  * Because localeconv() may be called many times (especially by library
- * routines like printf() & strtod()), the approprate members of the
+ * routines like printf() & strtod()), the appropriate members of the
  * lconv structure are computed only when the monetary or numeric
  * locale has been changed.
  */

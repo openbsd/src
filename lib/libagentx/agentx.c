@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.21 2022/12/02 10:57:12 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.22 2022/12/27 17:10:05 jmc Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -2867,7 +2867,7 @@ getnext:
  * - AX_PDU_TYPE_GET: we always return AX_DATA_TYPE_NOSUCHINSTANCE
  * - AX_PDU_TYPE_GETNEXT:
  *   - Missing OID digits to match indices or !dynamic indices
- *     (AX_DATA_TYPE_INTEGER) undeflows will result in the following indices to
+ *     (AX_DATA_TYPE_INTEGER) underflows will result in the following indices to
  *     be NUL-initialized and the request type will be set to
  *     AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
  *   - An overflow can happen on AX_DATA_TYPE_OCTETSTRING and

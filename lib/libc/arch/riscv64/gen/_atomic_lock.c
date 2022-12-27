@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 2021/04/29 18:33:36 drahn Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 2022/12/27 17:10:06 jmc Exp $	*/
 /*
  * Copyright (c) 2020	Mars Li <mengshi.li.mars@gmail.com>
  *
@@ -23,7 +23,7 @@
 #include <machine/spinlock.h>
 
 /*
- * Spinlock does not have Aquire/Release semantics, so amoswap.w.aq
+ * Spinlock does not have Acquire/Release semantics, so amoswap.w.aq
  * should not used here.
  */
 int

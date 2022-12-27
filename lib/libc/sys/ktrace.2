@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.41 2022/07/30 07:19:30 jsg Exp $
+.\"	$OpenBSD: ktrace.2,v 1.42 2022/12/27 17:10:06 jmc Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 30 2022 $
+.Dd $Mdocdate: December 27 2022 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -185,7 +185,7 @@ receiving process,
 the receiving process is currently being traced by the superuser,
 or the receiving process has changed its UIDs or GIDs.
 When tracing multiple processes,
-this error is returned if none of the targetted processes could be traced.
+this error is returned if none of the targeted processes could be traced.
 When clearing a trace file with
 .Dv KTROP_CLEARFILE ,
 this error is returned if it could not stop tracing any of the processes

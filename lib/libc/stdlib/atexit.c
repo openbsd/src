@@ -1,4 +1,4 @@
-/*	$OpenBSD: atexit.c,v 1.28 2022/10/22 15:21:25 deraadt Exp $ */
+/*	$OpenBSD: atexit.c,v 1.29 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * Copyright (c) 2002 Daniel Hartmeier
  * All rights reserved.
@@ -112,7 +112,7 @@ unlock:
 DEF_STRONG(__cxa_atexit);
 
 /*
- * Copy of atexit() used by libc and anything staticly linked into the
+ * Copy of atexit() used by libc and anything statically linked into the
  * executable.  This passes NULL for the dso, so the callbacks are only
  * invoked by exit() and not dlclose()
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2020/06/05 00:51:56 jsg Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2022/12/27 17:10:07 jmc Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -562,7 +562,7 @@ hid_report_size(report_desc_t r, enum hid_kind k, int id)
 	}
 	hid_end_parse(d);
 
-	/* safety check - can happen in case of currupt descriptors */
+	/* safety check - can happen in case of corrupt descriptors */
 	if (lpos > hpos)
 		temp = 0;
 	else

@@ -101,7 +101,7 @@ add_or_find_if(pcap_if_t **curdev_ret, pcap_if_t **alldevs, const char *name,
 	 * but that don't support packet capture aren't included
 	 * in the list.  An example of this is loopback interfaces
 	 * on Solaris; we don't just omit loopback interfaces
-	 * becaue you *can* capture on loopback interfaces on some
+	 * because you *can* capture on loopback interfaces on some
 	 * OSes.
 	 */
 	p = pcap_open_live(name, 68, 0, 0, errbuf);

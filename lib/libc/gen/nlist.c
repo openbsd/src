@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.71 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: nlist.c,v 1.72 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ __elf_is_okay__(Elf_Ehdr *ehdr)
 {
 	int retval = 0;
 	/*
-	 * We need to check magic, class size, endianess,
+	 * We need to check magic, class size, endianness,
 	 * and version before we look at the rest of the
 	 * Elf_Ehdr structure.  These few elements are
 	 * represented in a machine independent fashion.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.43 2021/01/03 17:07:57 tb Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.44 2022/12/27 17:10:06 jmc Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -473,7 +473,7 @@ p_simp_re(struct parse *p,
 	sopno subno;
 #	define	BACKSL	(1<<CHAR_BIT)
 
-	pos = HERE();		/* repetion op, if any, covers from here */
+	pos = HERE();		/* repetition op, if any, covers from here */
 
 	assert(MORE());		/* caller should have ensured this */
 	c = GETNEXT();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.63 2022/05/28 03:20:33 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.64 2022/12/27 17:10:07 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -1625,7 +1625,7 @@ iphl_to_x(void)
 			tmp->s.k = 2;
 			sappend(s, tmp);
 
-			/* A = A + X (add off_nl again to compansate) */
+			/* A = A + X (add off_nl again to compensate) */
 			sappend(s, new_stmt(BPF_ALU|BPF_ADD|BPF_X));
 			
 			/* MEM[iphl_reg] = A */

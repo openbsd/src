@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_reference.c,v 1.12 2016/12/20 22:19:08 krw Exp $ */
+/*	$OpenBSD: xdr_reference.c,v 1.13 2022/12/27 17:10:06 jmc Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -50,7 +50,7 @@
  * referenced by a pointer inside the structure that is currently being
  * translated.  pp references a pointer to storage. If *pp is null
  * the  necessary storage is allocated.
- * size is the sizeof the referneced structure.
+ * size is the sizeof the referenced structure.
  * proc is the routine to handle the referenced structure.
  */
 bool_t

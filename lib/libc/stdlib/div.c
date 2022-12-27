@@ -1,4 +1,4 @@
-/*	$OpenBSD: div.c,v 1.6 2015/09/13 08:31:47 guenther Exp $ */
+/*	$OpenBSD: div.c,v 1.7 2022/12/27 17:10:06 jmc Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -46,7 +46,7 @@ div(int num, int denom)
 	 * words, we should always truncate the quotient towards
 	 * 0, never -infinity.
 	 *
-	 * Machine division and remainer may work either way when
+	 * Machine division and remainder may work either way when
 	 * one or both of n or d is negative.  If only one is
 	 * negative and r.quot has been truncated towards -inf,
 	 * r.rem will have the same sign as denom and the opposite
