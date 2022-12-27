@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfcc.c,v 1.3 2022/01/17 14:17:48 visa Exp $	*/
+/*	$OpenBSD: sfcc.c,v 1.4 2022/12/27 21:13:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,7 +57,8 @@ sfcc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "sifive,fu540-c000-ccache");
+	return (OF_is_compatible(faa->fa_node, "sifive,fu540-c000-ccache") ||
+	    OF_is_compatible(faa->fa_node, "starfive,jh7100-ccache"));
 }
 
 void
