@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.45 2022/12/04 23:50:51 cheloha Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.46 2022/12/28 20:56:37 cheloha Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -68,10 +68,12 @@
 
 #include <err.h>
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <kvm.h>
 
@@ -85,7 +87,8 @@ extern int	dk_ndrive;
 kvm_t *kd;
 char	*nlistf, *memf;
 
-int		hz, reps, interval;
+int		hz, reps;
+time_t		interval;
 static int	todo = 0;
 
 volatile sig_atomic_t wantheader;
@@ -100,6 +103,7 @@ volatile sig_atomic_t wantheader;
 static void cpustats(void);
 static void disk_stats(double);
 static void disk_stats2(double);
+static void sigalarm(int);
 static void sigheader(int);
 static void header(void);
 static void usage(void);
@@ -113,9 +117,10 @@ int dkinit(int);
 int
 main(int argc, char *argv[])
 {
+	struct itimerval itv;
 	const char *errstr;
+	sigset_t empty;
 	int ch, hdrcnt;
-	struct timespec	ts;
 
 	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
@@ -146,7 +151,7 @@ main(int argc, char *argv[])
 			todo |= SHOW_TTY;
 			break;
 		case 'w':
-			interval = strtonum(optarg, 1, 100000000, &errstr);
+			interval = strtonum(optarg, 1, UINT_MAX, &errstr);
 			if (errstr)
 				errx(1, "wait is %s", errstr);
 			break;
@@ -169,11 +174,19 @@ main(int argc, char *argv[])
 	dkreadstats();
 	selectdrives(argv);
 
-	ts.tv_sec = interval;
-	ts.tv_nsec = 0;
-
 	/* print a new header on sigcont */
 	signal(SIGCONT, sigheader);
+
+	if (interval != 0) {
+		if (signal(SIGALRM, sigalarm) == SIG_ERR)
+			err(1, "signal");
+		sigemptyset(&empty);
+		itv.it_value.tv_sec = interval;
+		itv.it_value.tv_usec = 0;
+		itv.it_interval = itv.it_value;
+		if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+			err(1, "setitimer");
+	}
 
 	for (hdrcnt = 1;;) {
 		if (!--hdrcnt || wantheader) {
@@ -188,12 +201,17 @@ main(int argc, char *argv[])
 
 		if (reps >= 0 && --reps <= 0)
 			break;
-		nanosleep(&ts, NULL);
+		sigsuspend(&empty);
 		dkreadstats();
 		if (last.dk_ndrive != cur.dk_ndrive)
 			wantheader = 1;
 	}
 	exit(0);
+}
+
+static void
+sigalarm(int signo)
+{
 }
 
 /*ARGSUSED*/
@@ -421,7 +439,7 @@ selectdrives(char *argv[])
 			errx(1, "invalid interval or drive name: %s", *argv);
 	}
 	if (*argv) {
-		interval = strtonum(*argv, 1, 100000000, &errstr);
+		interval = strtonum(*argv, 1, UINT_MAX, &errstr);
 		if (errstr)
 			errx(1, "interval is %s", errstr);
 		if (*++argv) {
