@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2022/11/13 16:14:06 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2022/12/28 12:56:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -279,7 +279,7 @@ const pt_entry_t ap_bits_user[8] = {
 	[PROT_READ]				= PTE_U|PTE_A|PTE_R,
 	[PROT_WRITE]				= PTE_U|PTE_A|PTE_R|PTE_D|PTE_W,
 	[PROT_WRITE|PROT_READ]			= PTE_U|PTE_A|PTE_R|PTE_D|PTE_W,
-	[PROT_EXEC]				= PTE_U|PTE_A|PTE_X|PTE_R,
+	[PROT_EXEC]				= PTE_U|PTE_A|PTE_X,
 	[PROT_EXEC|PROT_READ]			= PTE_U|PTE_A|PTE_X|PTE_R,
 	[PROT_EXEC|PROT_WRITE]			= PTE_U|PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
 	[PROT_EXEC|PROT_WRITE|PROT_READ]	= PTE_U|PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
@@ -290,7 +290,7 @@ const pt_entry_t ap_bits_kern[8] = {
 	[PROT_READ]				= PTE_A|PTE_R,
 	[PROT_WRITE]				= PTE_A|PTE_R|PTE_D|PTE_W,
 	[PROT_WRITE|PROT_READ]			= PTE_A|PTE_R|PTE_D|PTE_W,
-	[PROT_EXEC]				= PTE_A|PTE_X|PTE_R,
+	[PROT_EXEC]				= PTE_A|PTE_X,
 	[PROT_EXEC|PROT_READ]			= PTE_A|PTE_X|PTE_R,
 	[PROT_EXEC|PROT_WRITE]			= PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
 	[PROT_EXEC|PROT_WRITE|PROT_READ]	= PTE_A|PTE_X|PTE_R|PTE_D|PTE_W,
