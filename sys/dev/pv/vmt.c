@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.28 2022/12/26 04:09:14 asou Exp $ */
+/*	$OpenBSD: vmt.c,v 1.29 2022/12/28 10:11:36 asou Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -572,7 +572,7 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 
  close:
 	if (vm_rpc_close(&rpci) != 0)
-                DPRINTF("%s: unable to close rpci channel\n", DEVNAME(sc));
+		DPRINTF("%s: unable to close rpci channel\n", DEVNAME(sc));
  done:
 	free(buf, M_TEMP, bufsz);
 	return (error);
