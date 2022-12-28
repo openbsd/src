@@ -1,4 +1,4 @@
-/*	$OpenBSD: printer.c,v 1.3 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: printer.c,v 1.4 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -141,7 +141,7 @@ printer(int debug, int verbose, const char *name)
 
 	/*
 	 * Redirect stderr if not in debug mode.
-	 * This must be done before dropping priviledges.
+	 * This must be done before dropping privileges.
 	 */
 	if (!debug) {
 		fd = open(LP_LF(lp), O_WRONLY|O_APPEND);
@@ -154,7 +154,7 @@ printer(int debug, int verbose, const char *name)
 		}
 	}
 
-	/* Drop priviledges. */
+	/* Drop privileges. */
 	if ((pw = getpwnam(LPD_USER)) == NULL)
 		fatalx("unknown user " LPD_USER);
 
@@ -1112,7 +1112,7 @@ prn_open(void)
 
 /*
  * Open the printer device, or connect to the remote host.
- * Return the printer file desciptor, or -1 on error.
+ * Return the printer file descriptor, or -1 on error.
  */
 static int
 prn_connect(void)

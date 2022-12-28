@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.40 2022/12/15 12:02:29 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.41 2022/12/28 21:30:18 jmc Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -684,7 +684,7 @@ rrdp_save_state(unsigned int id, struct rrdp_session *state)
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "non-existant rrdp repo %u", id);
+		errx(1, "non-existent rrdp repo %u", id);
 
 	file = rrdp_state_filename(rr, 0);
 	temp = rrdp_state_filename(rr, 1);
@@ -780,7 +780,7 @@ rrdp_clear(unsigned int id)
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "non-existant rrdp repo %u", id);
+		errx(1, "non-existent rrdp repo %u", id);
 
 	/* remove rrdp repository contents */
 	remove_contents(rr->basedir);
@@ -804,7 +804,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "non-existant rrdp repo %u", id);
+		errx(1, "non-existent rrdp repo %u", id);
 	if (rr->state == REPO_FAILED)
 		return -1;
 
@@ -923,7 +923,7 @@ rsync_finish(unsigned int id, int ok)
 }
 
 /*
- * RRDP sync finshed, either with or without success.
+ * RRDP sync finished, either with or without success.
  */
 void
 rrdp_finish(unsigned int id, int ok)
@@ -967,7 +967,7 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 
 	tr = ta_find(id);
 	if (tr == NULL) {
-		/* not a TA fetch therefor RRDP */
+		/* not a TA fetch therefore RRDP */
 		rrdp_http_done(id, res, last_mod);
 		return;
 	}

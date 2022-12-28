@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.26 2022/11/09 14:20:11 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.27 2022/12/28 21:30:15 jmc Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -903,7 +903,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	json_do_printf("last_update", "%s", fmt_timeframe(r->age));
 	json_do_int("last_update_sec", r->age);
 
-	/* keep the object open for communities and attribuites */
+	/* keep the object open for communities and attributes */
 }
 
 static void

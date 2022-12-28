@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.78 2022/12/26 23:50:20 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.79 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -274,7 +274,7 @@ loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
  *
  * 1. validates and create the new VM
  * 2. opens the imsg control channel to the parent and drops more privilege
- * 3. drops additional privleges by calling pledge(2)
+ * 3. drops additional privileges by calling pledge(2)
  * 4. loads the kernel from the disk image or file descriptor
  * 5. runs the VM's VCPU loops.
  *
@@ -563,7 +563,7 @@ send_vm(int fd, struct vm_create_params *vcp)
 
 	vmc = calloc(1, sizeof(struct vmop_create_params));
 	if (vmc == NULL) {
-		log_warn("%s: calloc error geting vmc", __func__);
+		log_warn("%s: calloc error getting vmc", __func__);
 		ret = -1;
 		goto err;
 	}
@@ -1597,7 +1597,7 @@ vcpu_pic_intr(uint32_t vm_id, uint32_t vcpu_id, uint8_t intr)
  * Handle all I/O to the emulated PCI subsystem.
  *
  * Parameters:
- *  vrp: vcpu run paramters containing guest state for this exit
+ *  vrp: vcpu run parameters containing guest state for this exit
  *
  * Return value:
  *  Interrupt to inject to the guest VM, or 0xFF if no interrupt should

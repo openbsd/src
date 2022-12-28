@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.h,v 1.1.1.1 2018/04/27 16:14:36 eric Exp $	*/
+/*	$OpenBSD: io.h,v 1.2 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -50,7 +50,7 @@ int	io_set_bufsize(struct io *, size_t);
 void	io_set_timeout(struct io *, int);
 void	io_set_lowat(struct io *, size_t);
 
-/* State retreival */
+/* State retrieval */
 const char *io_error(struct io *);
 int	io_fileno(struct io *);
 

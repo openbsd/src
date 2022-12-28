@@ -215,7 +215,7 @@ gethostloop(struct sockaddr *raddr, socklen_t salen)
 	}
 
 	/*
-	 * Either the DNS adminstrator has made a configuration
+	 * Either the DNS administrator has made a configuration
 	 * mistake, or someone has attempted to spoof us.
 	 */
 	syslog(LOG_NOTICE, "lpd: address %s not listed for host %s",

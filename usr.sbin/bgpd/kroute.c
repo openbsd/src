@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.302 2022/11/09 14:26:14 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.303 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2099,7 +2099,7 @@ kif_validate(struct kif *kif)
 }
 
 /*
- * return 1 when the interface is up and the link state is up or unknwown
+ * return 1 when the interface is up and the link state is up or unknown
  * except when this is a carp interface, then return 1 only when link state
  * is up
  */
@@ -2435,7 +2435,7 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	u_int	 l = 0;
 
 	/*
-	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * sin6_len is the size of the sockaddr so subtract the offset of
 	 * the possibly truncated sin6_addr struct.
 	 */
 	ap = (uint8_t *)&sa_in6->sin6_addr;

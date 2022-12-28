@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_client.c,v 1.16 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtp_client.c,v 1.17 2022/12/28 21:30:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -224,7 +224,7 @@ smtp_client_free(struct smtp_client *proto)
 }
 
 /*
- * End the session immediatly.
+ * End the session immediately.
  */
 static void
 smtp_client_abort(struct smtp_client *proto, int err, const char *reason)

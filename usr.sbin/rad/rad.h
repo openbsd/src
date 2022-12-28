@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.23 2022/10/15 13:26:15 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.24 2022/12/28 21:30:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -111,7 +111,7 @@ struct ra_prefix_conf {
 	struct in6_addr			 prefix;	/* prefix */
 	int				 prefixlen;	/* prefix length */
 	uint32_t			 vltime;	/* valid lifetime */
-	uint32_t			 pltime;	/* prefered lifetime */
+	uint32_t			 pltime;	/* preferred lifetime */
 	int				 lflag;		/* on-link flag*/
 	int				 aflag;		/* autonom. addr flag */
 };

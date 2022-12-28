@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.18 2022/01/28 06:33:27 guenther Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.19 2022/12/28 21:30:19 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -317,7 +317,7 @@ pnpgets(int mouse_fd, char *buf)
 		ioctl(mouse_fd, TIOCMBIC, &i);
 		usleep(200000);
 
-		/* wait for respose, 2nd phase (2.1.6) */
+		/* wait for response, 2nd phase (2.1.6) */
 		FlushInput(mouse_fd);
 		i = TIOCM_DTR | TIOCM_RTS;	/* DTR = 1, RTS = 1 */
 		ioctl(mouse_fd, TIOCMBIS, &i);
@@ -573,7 +573,7 @@ mouse_init(void)
 	 **
 	 ** The following lines take care of the Logitech MouseMan protocols.
 	 **
-	 ** NOTE: There are diffrent versions of both MouseMan and TrackMan!
+	 ** NOTE: There are different versions of both MouseMan and TrackMan!
 	 **       Hence I add another protocol P_LOGIMAN, which the user can
 	 **       specify as MouseMan in his XF86Config file. This entry was
 	 **       formerly handled as a special case of P_MS. However, people

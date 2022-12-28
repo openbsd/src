@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.1.1.1 2018/04/27 16:14:35 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.2 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -67,7 +67,7 @@ control(int debug, int verbose)
 
 	control_init(LPD_SOCKET);
 
-	/* Drop priviledges. */
+	/* Drop privileges. */
 	if ((pw = getpwnam(LPD_USER)) == NULL)
 		fatalx("unknown user " LPD_USER);
 

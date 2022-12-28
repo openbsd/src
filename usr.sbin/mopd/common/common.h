@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.9 2014/12/13 14:44:59 miod Exp $	*/
+/*	$OpenBSD: common.h,v 1.10 2022/12/28 21:30:17 jmc Exp $	*/
 /*	$NetBSD: common.h,v 1.9 2011/08/30 19:49:10 joerg Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ typedef enum {
 struct dllist {
 	u_char		status;		/* Status byte			*/
 	struct if_info *ii;		/* interface pointer		*/
-	u_char		eaddr[6];	/* targets ethernet addres	*/
+	u_char		eaddr[6];	/* targets ethernet address	*/
 	int		ldfd;		/* filedescriptor for loadfile	*/
 	u_short		dl_bsz;		/* Data Link Buffer Size	*/
 	int		timeout;	/* Timeout counter		*/

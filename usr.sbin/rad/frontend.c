@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.41 2022/10/15 13:26:15 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.42 2022/12/28 21:30:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1243,7 +1243,7 @@ build_packet(struct ra_iface *ra_iface)
 		/* scaled lifetime in units of 8 seconds */
 		sltime_plc = pref64->ltime / 8;
 		sltime_plc = sltime_plc << 3;
-		/* encode prefix lenght in lower 3 bits */
+		/* encode prefix length in lower 3 bits */
 		switch (pref64->prefixlen) {
 		case 96:
 			sltime_plc |= 0;
@@ -1280,7 +1280,7 @@ build_packet(struct ra_iface *ra_iface)
 	    != 0) {
 		memcpy(ra_iface->data, buf, len);
 		ra_iface->datalen = len;
-		/* packet changed; tell engine to send new advertisments */
+		/* packet changed; tell engine to send new advertisements */
 		if (event_initialized(&ra_iface->icmp6ev->ev))
 			frontend_imsg_compose_engine(IMSG_UPDATE_IF, 0,
 			    &ra_iface->if_index, sizeof(ra_iface->if_index));

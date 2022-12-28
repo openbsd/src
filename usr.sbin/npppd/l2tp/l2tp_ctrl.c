@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.26 2021/05/22 08:29:57 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.27 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.26 2021/05/22 08:29:57 yasuoka Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.27 2022/12/28 21:30:17 jmc Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -1564,7 +1564,7 @@ l2tp_ctrl_send_ZLB(l2tp_ctrl *_this)
 }
 
 /*
- * Utitlity
+ * Utility
  */
 
 /**

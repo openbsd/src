@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.275 2022/06/16 18:44:43 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.276 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1151,7 +1151,7 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 		log_debug("Malformed accept address");
 		peername = hostname_unknown;
 	}
-	log_debug("Peer addresss and port %s", peername);
+	log_debug("Peer address and port %s", peername);
 	if ((p = malloc(sizeof(*p))) == NULL) {
 		log_warn("allocate \"%s\"", peername);
 		close(fd);
@@ -3302,7 +3302,7 @@ ctlconn_writecb(int fd, short event, void *arg)
 	}
 
 	/*
-	 * Make space in the buffer for continous writes.
+	 * Make space in the buffer for continuous writes.
 	 * Set offset behind reply header to skip it
 	 */
 	*reply_text = '\0';

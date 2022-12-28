@@ -68,7 +68,7 @@
  * Right-most bit is the Route Change Notification bit, set if the
  * reservation protocol wishes to receive notification of
  * a route change for the source-destination pair listed in the query.
- * Notification is in the form of an unsolicitied Route Reply.
+ * Notification is in the form of an unsolicited Route Reply.
  */
 #define RSRR_NOTIFICATION_BIT 0
 /* Next bit indicates an error returning the Route Reply. */

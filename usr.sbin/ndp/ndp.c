@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.106 2022/12/02 15:35:35 kn Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.107 2022/12/28 21:30:17 jmc Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -598,7 +598,7 @@ again:;
 		printf("%-*.*s %-*.*s %*.*s", addrwidth, addrwidth, host_buf,
 		    llwidth, llwidth, ether_str(sdl), ifwidth, ifwidth, ifname);
 
-		/* Print neighbor discovery specific informations */
+		/* Print neighbor discovery specific information */
 		nbi = getnbrinfo(&sin->sin6_addr, sdl->sdl_index, 1);
 		if (nbi) {
 			if (nbi->expire > now.tv_sec) {

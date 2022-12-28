@@ -1111,7 +1111,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p,
 		n->al_genid = genid;
 	    else if (n->al_genid != genid) {
 		logit(LOG_DEBUG, 0,
-		    "new genid neigbor %s on vif %d [old:%x, new:%x]",
+		    "new genid neighbor %s on vif %d [old:%x, new:%x]",
 		    inet_fmt(addr, s1), vifi, n->al_genid, genid);
 
 		n->al_genid = genid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.29 2015/12/06 12:00:16 tobias Exp $	*/
+/*	$OpenBSD: options.c,v 1.30 2022/12/28 21:30:18 jmc Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -268,7 +268,7 @@ static struct cmd {
     {"-all", 0, noopt},		/* Don't request/allow any options (useless) */
     {"noaccomp", 0, noaccomp},	/* Disable Address/Control compression */
     {"-ac", 0, noaccomp},	/* Disable Address/Control compress */
-    {"default-asyncmap", 0, noasyncmap}, /* Disable asyncmap negoatiation */
+    {"default-asyncmap", 0, noasyncmap}, /* Disable asyncmap negotiation */
     {"-am", 0, noasyncmap},	/* Disable asyncmap negotiation */
     {"-as", 1, setasyncmap},	/* set the desired async map */
     {"-d", 0, setdebug},	/* Increase debugging level */

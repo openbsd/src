@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.17 2016/08/16 18:41:57 tedu Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.18 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -100,7 +100,7 @@ vscsi_dispatch(int fd, short event, void *arg)
 		fatal("vscsi_dispatch");
 
 	sreq->opcode = ISCSI_OP_SCSI_REQUEST;
-	/* XXX use untagged commands, dlg sais so */
+	/* XXX use untagged commands, dlg says so */
 	sreq->flags = ISCSI_SCSI_F_F | ISCSI_SCSI_ATTR_UNTAGGED;
 	if (i2t.direction == VSCSI_DIR_WRITE)
 		sreq->flags |= ISCSI_SCSI_F_W;

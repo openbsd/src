@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.134 2022/12/15 16:01:40 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.135 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -393,7 +393,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    imsg->hdr.type, vm->vm_peerid, -1,
 			    &vmr, sizeof(vmr)) == -1) {
 				errno = vmr.vmr_result;
-				log_warn("%s: failed to foward vm result",
+				log_warn("%s: failed to forward vm result",
 				    vcp->vcp_name);
 				vm_remove(vm, __func__);
 				return (-1);
@@ -1671,7 +1671,7 @@ vm_checkperm(struct vmd_vm *vm, struct vmop_owner *vmo, uid_t uid)
 /*
  * vm_checkinsflag
  *
- * Checks wheter the non-root user is allowed to set an instance option.
+ * Checks whether the non-root user is allowed to set an instance option.
  *
  * Parameters:
  *  vmc: the VM create parameters

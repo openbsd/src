@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.13 2017/07/29 07:18:03 florian Exp $ */
+/*	$OpenBSD: print.c,v 1.14 2022/12/28 21:30:17 jmc Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -453,7 +453,7 @@ mopPrintInfo(FILE *fd, u_char *pkt, int *idx, u_short moplen, u_char mopcode,
 			break;
 		case MOP_K_INFO_MFCT:
 			tmps = mopGetShort(pkt, idx);
-			fprintf(fd, "Maint Funcion: %04x ( ", tmps);
+			fprintf(fd, "Maint Function: %04x ( ", tmps);
 			if (tmps &   1) fprintf(fd, "Loop ");
 			if (tmps &   2) fprintf(fd, "Dump ");
 			if (tmps &   4) fprintf(fd, "Pldr ");

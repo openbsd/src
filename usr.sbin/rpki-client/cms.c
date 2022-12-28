@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.25 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.26 2022/12/28 21:30:18 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 
 	/*
-	 * The CMS is self-signed with a signing certifiate.
+	 * The CMS is self-signed with a signing certificate.
 	 * Verify that the self-signage is correct.
 	 */
 	if (!CMS_verify(cms, NULL, NULL, bio, NULL,

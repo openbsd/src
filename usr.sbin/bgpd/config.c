@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.105 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.106 2022/12/28 21:30:15 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -352,7 +352,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		} else		/* exists, just flag */
 			ola->reconf = RECONF_KEEP;
 	}
-	/* finally clean up the original list and remove all stale entires */
+	/* finally clean up the original list and remove all stale entries */
 	for (nla = TAILQ_FIRST(xconf->listen_addrs); nla != NULL; nla = next) {
 		next = TAILQ_NEXT(nla, entry);
 		if (nla->reconf == RECONF_DELETE) {

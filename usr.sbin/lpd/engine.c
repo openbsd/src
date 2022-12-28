@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2018/09/05 17:32:56 eric Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -49,7 +49,7 @@ engine(int debug, int verbose)
 		fatal("%s: malloc", __func__);
 	gethostname(lpd_hostname, HOST_NAME_MAX + 1);
 
-	/* Drop priviledges. */
+	/* Drop privileges. */
 	if ((pw = getpwnam(LPD_USER)) == NULL)
 		fatal("%s: getpwnam: %s", __func__, LPD_USER);
 

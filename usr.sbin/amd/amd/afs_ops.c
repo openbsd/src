@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.20 2021/10/21 10:55:56 deraadt Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.21 2022/12/28 21:30:15 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -685,7 +685,7 @@ try_mount(void *mvp)
 	/*
 	 * If the directory is not yet made and
 	 * it needs to be made, then make it!
-	 * This may be run in a backgroun process
+	 * This may be run in a background process
 	 * in which case the flag setting won't be
 	 * noticed later - but it is set anyway
 	 * just after run_task is called.  It

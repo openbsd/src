@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.35 2022/10/28 11:24:49 dlg Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.36 2022/12/28 21:30:19 jmc Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ dump_device(int fd, uint8_t addr)
 				printf(" enabled");
 
 			if (status & UPS_SUSPEND)
-				printf(" supsend");
+				printf(" suspend");
 
 			if (status & UPS_OVERCURRENT_INDICATOR)
 				printf(" overcurrent");

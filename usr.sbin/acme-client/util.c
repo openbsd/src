@@ -1,4 +1,4 @@
-/*	$Id: util.c,v 1.12 2019/06/28 13:32:46 deraadt Exp $ */
+/*	$Id: util.c,v 1.13 2022/12/28 21:30:15 jmc Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -206,7 +206,7 @@ writebuf(int fd, enum comm comm, const void *v, size_t sz)
 	/*
 	 * First, try to write the length.
 	 * If the other end of the pipe has closed, we allow the short
-	 * write to propogate as a return value of zero.
+	 * write to propagate as a return value of zero.
 	 * To detect this, catch SIGPIPE.
 	 */
 

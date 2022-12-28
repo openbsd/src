@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_unicode.c,v 1.2 2016/12/17 16:43:30 krw Exp $	*/
+/*	$OpenBSD: msdosfs_unicode.c,v 1.3 2022/12/28 21:30:17 jmc Exp $	*/
 /*	$NetBSD: msdosfs_unicode.c,v 1.2 2016/02/06 14:11:58 joerg Exp $	*/
 
 /*
@@ -307,7 +307,7 @@ msdosfs_unicode_foldmap[] = {
 	0x0398, 0x03B8, /* GREEK CAPITAL LETTER THETA */
 	0x0399, 0x03B9, /* GREEK CAPITAL LETTER IOTA */
 	0x039A, 0x03BA, /* GREEK CAPITAL LETTER KAPPA */
-	0x039B, 0x03BB, /* GREEK CAPITAL LETTER LAMDA */
+	0x039B, 0x03BB, /* GREEK CAPITAL LETTER LAMBDA */
 	0x039C, 0x03BC, /* GREEK CAPITAL LETTER MU */
 	0x039D, 0x03BD, /* GREEK CAPITAL LETTER NU */
 	0x039E, 0x03BE, /* GREEK CAPITAL LETTER XI */

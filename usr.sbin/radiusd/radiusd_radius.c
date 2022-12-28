@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.17 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.18 2022/12/28 21:30:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -537,7 +537,7 @@ module_radius_req_reset_event(struct module_radius_req *req)
 	}
 	if (evtimer_add(&req->ev, &tv) != 0) {
 		module_radius_log(req->module, LOG_WARNING,
-		    "Cannot proccess the request for q=%u: "
+		    "Cannot process the request for q=%u: "
 		    "evtimer_add() failed: %m", req->q_id);
 		module_radius_req_on_failure(req);
 		return (-1);

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.x	8.1 (Berkeley) 6/6/93
- *	$Id: amq.x,v 1.6 2015/01/21 09:49:37 guenther Exp $
+ *	$Id: amq.x,v 1.7 2022/12/28 21:30:15 jmc Exp $
  *
  */
 
@@ -118,7 +118,7 @@ program AMQ_PROGRAM {
 	version AMQ_VERSION {
 		/*
 		 * Does no work. It is made available in all RPC services
-		 * to allow server reponse testing and timing
+		 * to allow server response testing and timing
 		 */
 		void
 		AMQPROC_NULL(void) = 0;

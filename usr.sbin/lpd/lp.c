@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.c,v 1.3 2020/03/16 20:46:44 benno Exp $	*/
+/*	$OpenBSD: lp.c,v 1.4 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 2017 Eric Faurot <eric@openbsd.org>
@@ -822,7 +822,7 @@ lp_create(struct lp_printer *lp, int cf, size_t sz, const char *fname)
 
 	if (cf) {
 		/*
-		 * Create a temporay file, but we want to avoid
+		 * Create a temporary file, but we want to avoid
 		 * a collision with the final cf filename.
 		 */
 		/* XXX this would require a lock on .seq */
@@ -844,7 +844,7 @@ lp_create(struct lp_printer *lp, int cf, size_t sz, const char *fname)
 
 /*
  * Commit the job given by its temporary CF name.
- * This is done by renaming the temporay CF file name to its final name.
+ * This is done by renaming the temporary CF file name to its final name.
  * The functions return 0 on success, or -1 on error and set errno.
  */
 int

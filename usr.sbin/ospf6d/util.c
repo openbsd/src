@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2018/12/09 14:56:24 remi Exp $ */
+/*	$OpenBSD: util.c,v 1.4 2022/12/28 21:30:18 jmc Exp $ */
 
 /*
  * Copyright (c) 2012 Alexander Bluhm <bluhm@openbsd.org>
@@ -37,7 +37,7 @@ embedscope(struct sockaddr_in6 *sin6)
 	if (IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
 		bcopy(&sin6->sin6_addr.s6_addr[2], &tmp16, sizeof(tmp16));
 		if (tmp16 != 0) {
-			log_warnx("embedscope: address %s already has embeded "
+			log_warnx("embedscope: address %s already has embedded "
 			    "scope %u", log_sockaddr(sin6), ntohs(tmp16));
 		}
 		tmp16 = htons(sin6->sin6_scope_id);
@@ -95,7 +95,7 @@ mask2prefixlen(struct sockaddr_in6 *sa_in6)
 	u_int		 l = 0;
 
 	/*
-	 * sin6_len is the size of the sockaddr so substract the offset of
+	 * sin6_len is the size of the sockaddr so subtract the offset of
 	 * the possibly truncated sin6_addr struct.
 	 */
 	ap = (u_int8_t *)&sa_in6->sin6_addr;

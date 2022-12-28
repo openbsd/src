@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.16 2022/08/31 11:25:36 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.17 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -35,7 +35,7 @@
  * nodes. Internal nodes are added when needed because off path nodes are being
  * inserted and are just used for branching.
  * During lookup every node defines which bit is checked for branching. This
- * offset is strictly increasing. For IPv4 the maximum is therefor 32 levels.
+ * offset is strictly increasing. For IPv4 the maximum is therefore 32 levels.
  * Every node checks the bit at position plen to decide which branch to take.
  * The real nodes also include a prefixlen mask which represents the prefixlen
  * range that was defined. The prefixlen mask for IPv4 only has 32 bits but
@@ -592,7 +592,7 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen,
 		if (n->node) {
 			/*
 			 * The prefix is covered by this roa node
-			 * therefor invalid unless roa_set matches.
+			 * therefore invalid unless roa_set matches.
 			 */
 			validity = ROA_INVALID;
 
@@ -640,7 +640,7 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, uint8_t plen,
 		if (n->node) {
 			/*
 			 * This prefix is covered by this roa node.
-			 * Therefor invalid unless proven otherwise.
+			 * Therefore invalid unless proven otherwise.
 			 */
 			validity = ROA_INVALID;
 

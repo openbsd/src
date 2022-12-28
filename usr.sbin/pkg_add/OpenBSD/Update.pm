@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.167 2019/12/29 10:40:16 espie Exp $
+# $OpenBSD: Update.pm,v 1.168 2022/12/28 21:30:18 jmc Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -170,7 +170,7 @@ sub process_handle
 	}
 	# XXX all that code conveniently forgets about old versions, while
 	# marking them as "normal".
-	# there should be some error path when we consistenly fail to find
+	# there should be some error path when we consistently fail to find
 	# an equal-or-newer version in our repository, so that pkg_add has
 	# consistent exit codes.
 	if (!$state->defines('downgrade')) {

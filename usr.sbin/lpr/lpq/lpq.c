@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.24 2022/12/04 23:50:51 cheloha Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.25 2022/12/28 21:30:17 jmc Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ main(int argc, char **argv)
 		case 'w':
 			l = strtol(optarg, &cp, 10);
 			if (*cp != '\0' || l < 0 || l >= INT_MAX)
-				errx(1, "wait time must be postive integer: %s",
+				errx(1, "wait time must be positive integer: %s",
 				    optarg);
 			wait_time = (u_int)l;
 			if (wait_time < 30)

@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.11 2016/11/29 03:59:31 jsg Exp $ */
+/* $OpenBSD: main.c,v 1.12 2022/12/28 21:30:19 jmc Exp $ */
 /* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
@@ -47,7 +47,7 @@ typedef struct cmd_t {
 	int		(*c_func)(int, char **);	/* called function */
 } cmd_t;
 
-/* despatch table for commands */
+/* dispatch table for commands */
 static cmd_t	cmds[] = {
 	{	1,	{ "useradd",	NULL },		useradd		},
 	{	2,	{ "user",	"add" },	useradd		},

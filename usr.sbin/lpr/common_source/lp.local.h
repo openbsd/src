@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.local.h,v 1.4 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lp.local.h,v 1.5 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -67,7 +67,7 @@
 #define DROP	3		/* offset to drop characters with descenders */
 
 /*
- * Define TERMCAP if the terminal capabilites are to be used for lpq.
+ * Define TERMCAP if the terminal capabilities are to be used for lpq.
  */
 #define TERMCAP
 

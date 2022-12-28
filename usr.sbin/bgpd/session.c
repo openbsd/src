@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.437 2022/12/27 17:05:38 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.438 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -586,7 +586,7 @@ init_peer(struct peer *p)
 
 	/*
 	 * on startup, demote if requested.
-	 * do not handle new peers. they must reach ESTABLISHED beforehands.
+	 * do not handle new peers. they must reach ESTABLISHED beforehand.
 	 * peers added at runtime have reconf_action set to RECONF_REINIT.
 	 */
 	if (p->reconf_action != RECONF_REINIT && p->conf.demote_group[0])
@@ -1505,7 +1505,7 @@ session_open(struct peer *p)
 	if (optparamlen == 0) {
 		/* nothing */
 	} else if (optparamlen + 2 >= 255) {
-		/* RFC9072: 2 byte lenght instead of 1 + 3 byte extra header */
+		/* RFC9072: 2 byte length instead of 1 + 3 byte extra header */
 		optparamlen += sizeof(op_type) + 2 + 3;
 		msg.optparamlen = 255;
 		extlen = 1;
@@ -2775,7 +2775,7 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	/*
 	 * graceful restart: the peer capabilities are of interest here.
 	 * It is necessary to compare the new values with the previous ones
-	 * and act acordingly. AFI/SAFI that are not part in the MP capability
+	 * and act accordingly. AFI/SAFI that are not part in the MP capability
 	 * are treated as not being present.
 	 * Also make sure that a flush happens if the session stopped
 	 * supporting graceful restart.

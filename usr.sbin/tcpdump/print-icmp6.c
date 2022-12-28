@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.24 2022/01/05 05:33:14 dlg Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.25 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -139,7 +139,7 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 	dp = (struct icmp6_hdr *)bp;
 	ip = (struct ip6_hdr *)bp2;
 	oip = (struct ip6_hdr *)(dp + 1);
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 	if (ip->ip6_plen)
 		icmp6len = (ntohs(ip->ip6_plen) + sizeof(struct ip6_hdr) -
@@ -234,7 +234,7 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 		TCHECK(oip->ip6_dst);
 		switch (dp->icmp6_code) {
 		case ICMP6_PARAMPROB_HEADER:
-			printf("icmp6: parameter problem errorneous - octet %u",
+			printf("icmp6: parameter problem erroneous - octet %u",
 			    (u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
@@ -545,7 +545,7 @@ icmp6_opt_print(const u_char *bp, int resid)
 	ip = (struct ip6_hdr *)bp2;
 	oip = &dp->icmp6_ip6;
 #endif
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	ECHECK(op->nd_opt_len);
@@ -727,7 +727,7 @@ mld6_print(const u_char *bp)
 	struct mld_hdr *mp = (struct mld_hdr *)bp;
 	const u_char *ep;
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	if ((u_char *)mp + sizeof(*mp) > ep)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.110 2022/09/01 13:23:24 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.111 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,7 @@ mrt_update_msg_guess_aid(uint8_t *pkg, uint16_t pkglen)
 	pkglen -= 2;
 
 	if (wlen > 0) {
-		/* UPDATE has withdraw routes, therefor IPv4 */
+		/* UPDATE has withdraw routes, therefore IPv4 */
 		return AID_INET;
 	}
 
@@ -119,7 +119,7 @@ mrt_update_msg_guess_aid(uint8_t *pkg, uint16_t pkglen)
 	pkglen -= 2;
 
 	if (alen < pkglen) {
-		/* UPDATE has NLRI prefixes, therefor IPv4 */
+		/* UPDATE has NLRI prefixes, therefore IPv4 */
 		return AID_INET;
 	}
 
@@ -972,7 +972,7 @@ mrt_dump_hdr_se(struct ibuf ** bp, struct peer *peer, uint16_t type,
 	}
 
 	DUMP_LONG(*bp, len);
-	/* milisecond field use by the _ET format */
+	/* millisecond field use by the _ET format */
 	DUMP_LONG(*bp, time.tv_nsec / 1000);
 
 	if (subtype == BGP4MP_STATE_CHANGE_AS4 ||

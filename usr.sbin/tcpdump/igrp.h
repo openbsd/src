@@ -1,4 +1,4 @@
-/*	$OpenBSD: igrp.h,v 1.4 2000/10/03 14:31:55 ho Exp $	*/
+/*	$OpenBSD: igrp.h,v 1.5 2022/12/28 21:30:19 jmc Exp $	*/
 
 /* Cisco IGRP definitions */
 
@@ -16,7 +16,7 @@ struct igrphdr {
 	u_short ig_as;		/* autonomous system number */
 	u_short ig_ni;		/* number of subnet in local net */
 	u_short ig_ns;		/* number of networks in AS */
-	u_short ig_nx;		/* number of networks ouside AS */
+	u_short ig_nx;		/* number of networks outside AS */
 	u_short ig_sum;		/* checksum of IGRP header & data */
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_netgroup.c,v 1.13 2015/12/08 07:16:33 mmcc Exp $ */
+/* $OpenBSD: parse_netgroup.c,v 1.14 2022/12/28 21:30:19 jmc Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -185,7 +185,7 @@ parse_netgrp(char *group)
 	if (lp->l_parsed) {
 #ifdef DEBUG
 		/*
-		 * This error message is largely superflous since the
+		 * This error message is largely superfluous since the
 		 * code handles the error condition successfully, and
 		 * spewing it out from inside libc can actually hose
 		 * certain programs.

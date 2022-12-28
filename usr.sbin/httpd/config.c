@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.62 2021/10/24 16:01:04 ian Exp $	*/
+/*	$OpenBSD: config.c,v 1.63 2022/12/28 21:30:16 jmc Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -233,7 +233,7 @@ config_setserver(struct httpd *env, struct server *srv)
 				return (-1);
 			}
 
-			/* Configure FCGI parmeters if necessary. */
+			/* Configure FCGI parameters if necessary. */
 			config_setserver_fcgiparams(env, srv);
 		}
 	}

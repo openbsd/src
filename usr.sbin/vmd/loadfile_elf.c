@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.44 2022/12/26 23:50:20 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.45 2022/12/28 21:30:19 jmc Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ push_gdt(void)
 	/*
 	 * Create three segment descriptors:
 	 *
-	 * GDT[0] : null desriptor. "Created" via memset above.
+	 * GDT[0] : null descriptor. "Created" via memset above.
 	 * GDT[1] (selector @ 0x8): Executable segment, for CS
 	 * GDT[2] (selector @ 0x10): RW Data segment, for DS/ES/SS
 	 */

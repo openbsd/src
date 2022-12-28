@@ -103,7 +103,7 @@ typedef struct lwres_addr lwres_addr_t;
 struct lwres_addr {
 	lwres_uint32_t			family;
 	lwres_uint16_t			length;
-	/* address folows */
+	/* address follows */
 };
 
 typedef struct {

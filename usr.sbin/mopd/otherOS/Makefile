@@ -1,10 +1,10 @@
 #  Copyright (c) 1993-1994 Mats O Jansson, Stockholm, Sweden
 #  All rights reserved.
 #
-# @(#) $OpenBSD: Makefile,v 1.5 2006/04/29 16:26:56 maja Exp $
+# @(#) $OpenBSD: Makefile,v 1.6 2022/12/28 21:30:17 jmc Exp $
 
 # Script (or program) that returns the machine and os types,
-# or jsut edit in the name yourself.
+# or just edit in the name yourself.
 MD=`./mdtype`
 OS=`./ostype`
 REL=`cat ../common/VERSION`
@@ -47,7 +47,7 @@ LEX = lex
 YACC = yacc -y
 MAKE = make
 
-# Explicitly define compiliation rule since SunOS 4's make doesn't like gcc.
+# Explicitly define compilation rule since SunOS 4's make doesn't like gcc.
 # Also, gcc does not remove the .o before forking 'as', which can be a
 # problem if you don't own the file but can write to the directory.
 .c.o:

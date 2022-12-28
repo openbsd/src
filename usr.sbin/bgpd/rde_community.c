@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.9 2022/09/01 13:19:11 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.10 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -857,7 +857,7 @@ communities_copy(struct rde_community *to, struct rde_community *from)
 {
 	memset(to, 0, sizeof(*to));
 
-	/* ingore from->size and allocate the perfect amount */
+	/* ignore from->size and allocate the perfect amount */
 	to->size = from->size;
 	to->nentries = from->nentries;
 	to->flags = from->flags;

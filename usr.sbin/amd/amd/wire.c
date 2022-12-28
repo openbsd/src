@@ -32,13 +32,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.13 2014/10/24 10:29:56 schwarze Exp $
+ *	$Id: wire.c,v 1.14 2022/12/28 21:30:15 jmc Exp $
  */
 
 /*
  * This function returns the subnet (address&netmask) for the primary network
  * interface.  If the resulting address has an entry in the hosts file, the
- * corresponding name is retuned, otherwise the address is returned in
+ * corresponding name is returned, otherwise the address is returned in
  * standard internet format.
  * As a side-effect, a list of local IP/net address is recorded for use
  * by the islocalnet() function.

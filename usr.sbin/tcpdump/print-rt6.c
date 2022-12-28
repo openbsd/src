@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-rt6.c,v 1.9 2022/01/05 05:36:37 dlg Exp $	*/
+/*	$OpenBSD: print-rt6.c,v 1.10 2022/12/28 21:30:19 jmc Exp $	*/
 
 
 /*
@@ -55,7 +55,7 @@ rt6_print(const u_char *bp, const u_char *bp2)
 	dp = (struct ip6_rthdr *)bp;
 	len = dp->ip6r_len;
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 #if 0

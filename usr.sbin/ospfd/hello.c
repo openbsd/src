@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.25 2019/11/19 09:55:55 remi Exp $ */
+/*	$OpenBSD: hello.c,v 1.26 2022/12/28 21:30:18 jmc Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -166,7 +166,7 @@ recv_hello(struct iface *iface, struct in_addr src, u_int32_t rtr_id, char *buf,
 	 * Only the router-id is compared since the source IP on NBMA,
 	 * broadcast and point-to-multipoint interfaces was already
 	 * compared in find_iface() and only IPs in the same subnet
-	 * are accepted. This is not excatly what the RFC specifies
+	 * are accepted. This is not exactly what the RFC specifies
 	 * but works far better.
 	 */
 	LIST_FOREACH(nbr, &iface->nbr_list, entry) {

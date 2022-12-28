@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.h,v 1.17 2021/04/16 14:37:06 claudio Exp $ */
+/*	$OpenBSD: iscsid.h,v 1.18 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -276,7 +276,7 @@ struct connection {
 	u_int32_t		 expstatsn;
 	int			 state;
 	int			 fd;
-	u_int16_t		 cid;	/* conection id */
+	u_int16_t		 cid;	/* connection id */
 };
 
 struct task {

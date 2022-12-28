@@ -1,4 +1,4 @@
-/*	$OpenBSD: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $	*/
+/*	$OpenBSD: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,12 +25,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $ */
+/* $Id: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $ */
 
 /**@file
  * This file provides a implementation of PPTP daemon.  Currently it
  * provides functions for PAC (PPTP Access Concentrator) only.
- * $Id: pptpd.c,v 1.33 2021/03/29 03:54:40 yasuoka Exp $
+ * $Id: pptpd.c,v 1.34 2022/12/28 21:30:17 jmc Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -661,7 +661,7 @@ pptpd_gre_io_event(int fd, short evmask, void *ctx)
 
 	if (evmask & EV_READ) {
 		for (;;) {
-			/* read till bloked */
+			/* read till blocked */
 			peerlen = sizeof(peer);
 			if ((sz = recvfrom(listener->sock_gre, pkt, sizeof(pkt),
 			    0, (struct sockaddr *)&peer, &peerlen)) == -1) {

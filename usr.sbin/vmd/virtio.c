@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.98 2022/12/23 19:25:22 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.99 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1550,7 +1550,7 @@ vmmci_ack(unsigned int cmd)
 		/* FALLTHROUGH */
 	case VMMCI_REBOOT:
 		/*
-		 * If the VM acknowleged our shutdown request, give it
+		 * If the VM acknowledged our shutdown request, give it
 		 * enough time to shutdown or reboot gracefully.  This
 		 * might take a considerable amount of time (running
 		 * rc.shutdown on the VM), so increase the timeout before

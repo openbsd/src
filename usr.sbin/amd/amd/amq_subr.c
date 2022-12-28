@@ -32,11 +32,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: amq_subr.c,v 1.18 2015/01/21 09:50:25 guenther Exp $
+ *	$Id: amq_subr.c,v 1.19 2022/12/28 21:30:15 jmc Exp $
  */
 
 /*
- * Auxilliary routines for amq tool
+ * Auxiliary routines for amq tool
  */
 
 #include "am.h"

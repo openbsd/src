@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmio.c,v 1.1 2022/11/10 11:46:39 dv Exp $	*/
+/*	$OpenBSD: mmio.c,v 1.2 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -387,7 +387,7 @@ detect_cpu_mode(struct vcpu_reg_state *vrs)
 			log_warnx("%s: invalid cpu mode", __progname);
 			return (VMM_CPU_MODE_UNKNOWN);
 		} else {
-			/* Compatability Modes */
+			/* Compatibility Modes */
 			if (cs & CS_D) /* XXX Add Compat32 mode */
 				return (VMM_CPU_MODE_UNKNOWN);
 			return (VMM_CPU_MODE_COMPAT);

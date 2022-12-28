@@ -1,4 +1,4 @@
-# $OpenBSD: mopd-x.x.x.spec,v 1.1 1999/03/27 14:31:23 maja Exp $
+# $OpenBSD: mopd-x.x.x.spec,v 1.2 2022/12/28 21:30:17 jmc Exp $
 Summary: MOP (Maintenance Operations Protocol) loader daemon
 Name: mopd
 Version: 2.5.4
@@ -16,7 +16,7 @@ filename can be given. This is the normal case for e.g. terminal servers.
 If a filename isn't given mopd must know what image to load.
 
 Upon receiving a request, mopd checks if the requested file exists in
-/tftpboot/mop, the filename is normaly uppercase and with an extension of
+/tftpboot/mop, the filename is normally uppercase and with an extension of
 .SYS. If the filename isn't given, the ethernet address of the target is
 used as filename, e.g.  08002b09f4de.SYS and it might be a soft link to
 another file.

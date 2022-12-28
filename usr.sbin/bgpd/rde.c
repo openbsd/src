@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.581 2022/12/14 14:16:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.582 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -523,7 +523,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 				network_add(&netconf_s, &netconf_state);
 				break;
 			case 0:
-				/* something failed beforehands */
+				/* something failed beforehand */
 				break;
 			default:
 badnet:
@@ -850,7 +850,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				/* no change to rib apart from filters */
 				rib->state = RECONF_KEEP;
 			} else {
-				/* reload rib because somehing changed */
+				/* reload rib because something changed */
 				rib->flags_tmp = rr.flags;
 				rib->rtableid_tmp = rr.rtableid;
 				rib->state = RECONF_RELOAD;
@@ -1737,7 +1737,7 @@ rde_update_withdraw(struct rde_peer *peer, uint32_t path_id,
  * BGP UPDATE parser functions
  */
 
-/* attribute parser specific makros */
+/* attribute parser specific macros */
 #define UPD_READ(t, p, plen, n) \
 	do { \
 		memcpy(t, p, n); \

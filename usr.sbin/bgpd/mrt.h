@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.37 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.38 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ enum MRT_MSG_TYPES {
 
 /*
  * Main zebra dump format is in MSG_PROTOCOL_BGP4MP exceptions are table dumps
- * that are normaly saved as MSG_TABLE_DUMP.
+ * that are normally saved as MSG_TABLE_DUMP.
  * In most cases this is the format to choose to dump updates et al.
  */
 enum MRT_BGP4MP_SUBTYPES {
@@ -162,7 +162,7 @@ enum MRT_BGP4MP_SUBTYPES {
  *   ...                      |
  * +--------+--------+--------+
  *
- * View is normaly 0 and originated the time of last change.
+ * View is normally 0 and originated the time of last change.
  * The status seems to be 1 by default but probably something to indicate
  * the status of a prefix would be more useful.
  * The format of the nexthop address is defined via the afi value. For IPv6
@@ -298,7 +298,7 @@ enum MRT_DUMP_V2_SUBTYPES {
  * +--------+--------+--------+
  *
  *
- * View is normaly 0 and seqnum just a simple counter for this dump.
+ * View is normally 0 and seqnum just a simple counter for this dump.
  * The status field is unused and should be set to 1.
  */
 

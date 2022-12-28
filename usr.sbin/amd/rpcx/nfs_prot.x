@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_prot.x,v 1.1 2015/01/22 03:43:58 guenther Exp $	*/
+/*	$OpenBSD: nfs_prot.x,v 1.2 2022/12/28 21:30:15 jmc Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -138,7 +138,7 @@ struct fattr {
 	unsigned uid;		/* owner user id */
 	unsigned gid;		/* owner group id */
 	unsigned size;		/* file size in bytes */
-	unsigned blocksize;	/* prefered block size */
+	unsigned blocksize;	/* preferred block size */
 	unsigned rdev;		/* special device # */
 	unsigned blocks;	/* Kb of disk used by file */
 	unsigned fsid;		/* device # */

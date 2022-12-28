@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ifs_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: ifs_ops.c,v 1.6 2017/07/28 22:41:10 fcambus Exp $
+ *	$Id: ifs_ops.c,v 1.7 2022/12/28 21:30:15 jmc Exp $
  */
 
 #include "am.h"
@@ -45,7 +45,7 @@
  *
  * This is a *gross* hack - it knows far too
  * much about the way other parts of the
- * sytem work.  See restart.c too.
+ * system work.  See restart.c too.
  */
 static char not_a_filesystem[] = "Attempting to inherit not-a-filesystem";
 /*

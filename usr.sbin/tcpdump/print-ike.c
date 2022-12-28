@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.40 2021/12/01 18:28:46 deraadt Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.41 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -198,7 +198,7 @@ ike_print (const u_int8_t *cp, u_int length)
 	if (length < sizeof (struct isakmp_header))
 		goto trunc;
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 	printf("isakmp v%u.%u", ih->version >> 4, ih->version & 0xf);

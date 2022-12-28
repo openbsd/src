@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.31 2022/06/04 10:12:38 espie Exp $
+.\"	$OpenBSD: package.5,v 1.32 2022/12/28 21:30:18 jmc Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 4 2022 $
+.Dd $Mdocdate: December 28 2022 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ of
 .Ar external
 .Sm on
 .Xc
-Record the date of signature of a package, synthetized by
+Record the date of signature of a package, synthesized by
 .Xr pkg_add 1
 from
 .Xr signify 1
@@ -208,7 +208,7 @@ to record the files's cryptographic checksum,
 as a sha256 digest encoded in base64.
 .Pp
 .It Cm @signer
-Record the signing key for a package, synthetized by
+Record the signing key for a package, synthesized by
 .Xr pkg_add 1
 from
 .Xr signify 1
@@ -225,7 +225,7 @@ Added after a file entry by
 to record that the entry is actually a symbolic link.
 .Pp
 .It Cm @url
-Original location of the package, synthetized by
+Original location of the package, synthesized by
 .Xr pkg_add 1
 during installation.
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.23 2022/06/30 09:42:19 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.24 2022/12/28 21:30:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -194,7 +194,7 @@ traphandler_v1translate(struct snmp_message *msg, int proxy)
 		return NULL;
 	}
 
-	/* work aronud net-snmp's snmptrap: It adds an EOC element in vblist */
+	/* work around net-snmp's snmptrap: It adds an EOC element in vblist */
 	if (vblist->be_len != 0)
 		vb0 = ober_unlink_elements(vblist);
 

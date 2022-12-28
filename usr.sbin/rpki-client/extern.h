@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.164 2022/12/15 12:02:29 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.165 2022/12/28 21:30:18 jmc Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -352,7 +352,7 @@ struct aspa {
 
 /*
  * A Validated ASPA Payload (VAP) tree element.
- * To ease transformation, this struct mimicks ASPA RTR PDU structure.
+ * To ease transformation, this struct mimics ASPA RTR PDU structure.
  */
 struct vap {
 	RB_ENTRY(vap)		 entry;
@@ -490,7 +490,7 @@ struct entity {
 	unsigned int	 repoid;	/* repository identifier */
 	int		 talid;		/* tal identifier */
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
-	enum location	 location;	/* which directroy the file lives in */
+	enum location	 location;	/* which directory the file lives in */
 };
 TAILQ_HEAD(entityq, entity);
 

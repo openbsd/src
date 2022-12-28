@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.14 2017/08/22 16:59:40 schwarze Exp $
+@c	$Id: amdref.texinfo,v 1.15 2022/12/28 21:30:15 jmc Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -265,7 +265,7 @@ configuration files, shell scripts and so on.
 @cindex Fileserver
 @cindex sublink
 
-@i{Amd} views the world as a set of fileservers, each containg one or
+@i{Amd} views the world as a set of fileservers, each containing one or
 more filesystems where each filesystem contains one or more
 @dfn{volumes}.  Here the term @dfn{volume} is used to refer to a
 coherent set of files such as a user's home directory or a @TeX{}
@@ -1960,7 +1960,7 @@ jsp  host!=charm;type:=nfs;rhost:=charm;rfs:=/home/charm;sublink:=jsp
 @end example
 
 The mount system call and any unmount attempts are always done
-in a new task to avoid the possibilty of blocking @i{Amd}.
+in a new task to avoid the possibility of blocking @i{Amd}.
 
 @node     Network Host Filesystem, Network Filesystem Group, Network Filesystem, Filesystem Types
 @comment  node-name,  next,  previous,  up
@@ -3067,7 +3067,7 @@ By using the wildcard facility, @i{Amd} can @dfn{overlay} an existing
 directory with additional entries.
 The system files are usually mounted under @samp{/usr}.  If instead
 @i{Amd} is mounted on @samp{/usr}, additional
-names can be overlayed to augment or replace names in the ``master'' @samp{/usr}.
+names can be overlaid to augment or replace names in the ``master'' @samp{/usr}.
 A map to do this would have the form:
 
 @example

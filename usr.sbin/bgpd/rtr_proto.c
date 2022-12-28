@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.7 2022/07/11 16:47:27 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.8 2022/12/28 21:30:16 jmc Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -360,7 +360,7 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 			return -1;
 		}
 		/*
-		 * session_id check ommitted since ROUTER_KEY and ERROR_REPORT
+		 * session_id check omitted since ROUTER_KEY and ERROR_REPORT
 		 * use the field for different things.
 		 */
 		return 0;
