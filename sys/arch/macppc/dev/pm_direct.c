@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.33 2022/10/23 08:00:10 kn Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.34 2022/12/28 07:40:23 jca Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -200,11 +200,7 @@ extern	void	adb_pass_up(struct adbCommand *);
  * This function dumps contents of the PMData
  */
 void
-pm_printerr(ttl, rval, num, data)
-	char *ttl;
-	int rval;
-	int num;
-	char *data;
+pm_printerr(char *ttl, int rval, int num, char *data)
 {
 	int i;
 
