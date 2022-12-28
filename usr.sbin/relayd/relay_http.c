@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.83 2021/10/23 20:46:18 benno Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.84 2022/12/28 21:38:29 jmc Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -281,7 +281,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 			} else {
 				SIMPLEQ_REMOVE_HEAD(&hs->hs_methods, hmn_entry);
 				request_method = hmn->hmn_method;
-				DPRINTF("%s: session %d dequeing %s", __func__,
+				DPRINTF("%s: session %d dequeuing %s", __func__,
 				    con->se_id,
 				    relay_httpmethod_byid(request_method));
 				free(hmn);
@@ -335,7 +335,7 @@ relay_read_http(struct bufferevent *bev, void *arg)
 				goto fail;
 			}
 			hmn->hmn_method = desc->http_method;
-			DPRINTF("%s: session %d enqueing %s", __func__,
+			DPRINTF("%s: session %d enqueuing %s", __func__,
 			    con->se_id,
 			    relay_httpmethod_byid(hmn->hmn_method));
 			SIMPLEQ_INSERT_TAIL(&hs->hs_methods, hmn, hmn_entry);
