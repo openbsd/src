@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.8 2022/12/14 10:45:34 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.9 2022/12/28 12:16:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
@@ -192,14 +193,19 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 			goto out;
 		}
 
-		/* Skip empty lines or commented lines. */
-		if (linelen == 0 || line[0] == '#')
-			continue;
-
-		/* zap comments */
+		/* Zap comments and whitespace before them. */
 		delim = memchr(line, '#', linelen);
-		if (delim != NULL)
+		if (delim != NULL) {
+			while (delim > line &&
+			    isspace((unsigned char)delim[-1]))
+				delim--;
 			*delim = '\0';
+			linelen = delim - line;
+		}
+
+		/* Skip empty lines. */
+		if (linelen == 0)
+			continue;
 
 		/* Split prefix and location info */
 		delim = memchr(line, ',', linelen);
