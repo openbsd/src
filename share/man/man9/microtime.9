@@ -1,4 +1,4 @@
-.\"	$OpenBSD: microtime.9,v 1.22 2020/06/26 18:48:31 cheloha Exp $
+.\"	$OpenBSD: microtime.9,v 1.23 2022/12/28 15:46:39 cheloha Exp $
 .\"     $NetBSD: microtime.9,v 1.2 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,38 +28,29 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2020 $
+.Dd $Mdocdate: December 28 2022 $
 .Dt MICROTIME 9
 .Os
 .Sh NAME
-.Nm microtime ,
-.Nm getmicrotime ,
 .Nm microuptime ,
 .Nm getmicrouptime ,
-.Nm microboottime ,
-.Nm nanotime ,
-.Nm getnanotime ,
 .Nm nanouptime ,
 .Nm getnanouptime ,
+.Nm nsecuptime ,
+.Nm getnsecuptime ,
+.Nm getuptime ,
 .Nm nanoruntime ,
-.Nm nanoboottime ,
-.Nm bintime ,
-.Nm binuptime ,
-.Nm binruntime ,
-.Nm binboottime ,
+.Nm getnsecruntime ,
+.Nm microtime ,
+.Nm getmicrotime ,
+.Nm nanotime ,
+.Nm getnanotime ,
 .Nm gettime ,
-.Nm getuptime
-.Nd system clocks
+.Nm microboottime ,
+.Nm nanoboottime
+.Nd get the time
 .Sh SYNOPSIS
 .In sys/time.h
-.Ft void
-.Fo microtime
-.Fa "struct timeval *tv"
-.Fc
-.Ft void
-.Fo getmicrotime
-.Fa "struct timeval *tv"
-.Fc
 .Ft void
 .Fo microuptime
 .Fa "struct timeval *tv"
@@ -69,86 +60,160 @@
 .Fa "struct timeval *tv"
 .Fc
 .Ft void
-.Fo microboottime
-.Fa "struct timeval *tv"
-.Fc
-.Ft void
-.Fo nanotime
-.Fa "struct timespec *tv"
-.Fc
-.Ft void
-.Fo getnanotime
-.Fa "struct timespec *tv"
-.Fc
-.Ft void
 .Fo nanouptime
-.Fa "struct timespec *tv"
+.Fa "struct timespec *ts"
 .Fc
 .Ft void
 .Fo getnanouptime
-.Fa "struct timespec *tv"
+.Fa "struct timespec *ts"
 .Fc
-.Ft void
-.Fo nanoruntime
-.Fa "struct timespec *tv"
+.Ft uint64_t
+.Fo nsecuptime
+.Fa "void"
 .Fc
-.Ft void
-.Fo nanoboottime
-.Fa "struct timespec *tv"
-.Fc
-.Ft void
-.Fo bintime
-.Fa "struct bintime *tv"
-.Fc
-.Ft void
-.Fo binuptime
-.Fa "struct bintime *tv"
-.Fc
-.Ft void
-.Fo binruntime
-.Fa "struct bintime *tv"
-.Fc
-.Ft void
-.Fo binboottime
-.Fa "struct bintime *tv"
-.Fc
-.Ft time_t
-.Fo gettime
+.Ft uint64_t
+.Fo getnsecuptime
 .Fa "void"
 .Fc
 .Ft time_t
 .Fo getuptime
 .Fa "void"
 .Fc
+.Ft void
+.Fo nanoruntime
+.Fa "struct timespec *ts"
+.Fc
+.Ft uint64_t
+.Fo getnsecruntime
+.Fa "void"
+.Fc
+.Ft void
+.Fo microtime
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo getmicrotime
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo nanotime
+.Fa "struct timespec *ts"
+.Fc
+.Ft void
+.Fo getnanotime
+.Fa "struct timespec *ts"
+.Fc
+.Ft time_t
+.Fo gettime
+.Fa "void"
+.Fc
+.Ft void
+.Fo microboottime
+.Fa "struct timeval *tv"
+.Fc
+.Ft void
+.Fo nanoboottime
+.Fa "struct timespec *ts"
+.Fc
 .Sh DESCRIPTION
-This family of functions return different system clocks in various formats.
-The "uptime" functions return the monotonically increasing time since boot.
-The "runtime" functions return the monotonically increasing time since boot,
-less any time spent suspended.
-The "boottime" functions return the UTC time at which the system booted.
-The "time" functions return the current UTC time.
-The various formats for the result are specified with:
-.Bl -tag -offset indent -width "micro"
-.It bin
-result in struct bintime containing seconds and 64-bit fractions of seconds.
-.It nano
-result in struct timespec containing seconds and nanoseconds
-.It micro
-result in struct timeval containing seconds and microseconds
+The kernel has three clocks and a variety of interfaces for reading them.
+.Pp
+The
+.Sy uptime
+clock measures the time elapsed since the system booted.
+It begins at zero and advances monotonically.
+The uptime clock may be read with the following functions:
+.Bl -column "getmicrouptimeX" "Output Format" "Source" -offset indent
+.It Em Name            Ta Em Output Format    Ta Em Source
+.It Fn microuptime     Ta Vt struct timeval   Ta hardware
+.It Fn getmicrouptime  Ta Vt struct timeval   Ta timestamp
+.It Fn nanouptime      Ta Vt struct timespec  Ta hardware
+.It Fn getnanouptime   Ta Vt struct timespec  Ta timestamp
+.It Fn nsecuptime      Ta Ft uint64_t         Ta hardware
+.It Fn getnsecuptime   Ta Ft uint64_t         Ta timestamp
+.It Fn getuptime       Ta Ft time_t           Ta timestamp
 .El
 .Pp
-The functions with the "get" prefix return a less precise result, but much
-faster.
-They should be used where a precision of 10 msec is acceptable and where
-performance is critical.
-The functions without the "get" prefix return the best timestamp that can
-be produced in the given format.
+The
+.Sy runtime
+clock measures the time elapsed since the system booted,
+less any time the system is suspended or hibernating.
+It begins at zero and normally advances monotonically,
+but pauses while the system is suspended or hibernating.
+The runtime clock may be read with the following functions:
+.Bl -column "getnsecruntimeX" "Output Format" "Source" -offset indent
+.It Em Name            Ta Em Output Format    Ta Em Source
+.It Fn nanoruntime     Ta Vt struct timespec  Ta hardware
+.It Fn getnsecruntime  Ta Ft uint64_t         Ta timestamp
+.El
+.Pp
+The
+.Sy UTC
+clock measures the time elapsed since Jan 1 1970 00:00:00
+.Pq the Unix Epoch .
+The clock normally advances monotonically,
+but jumps when a process calls
+.Xr clock_settime 2
+or
+.Xr settimeofday 2 .
+The UTC clock may be read with the following functions:
+.Bl -column "getmicrotimeX" "Output Format" "Source" -offset indent
+.It Em Name            Ta Em Output Format    Ta Em Source
+.It Fn microtime       Ta Vt struct timeval   Ta hardware
+.It Fn getmicrotime    Ta Vt struct timeval   Ta timestamp
+.It Fn nanotime        Ta Vt struct timespec  Ta hardware
+.It Fn getnanotime     Ta Vt struct timespec  Ta timestamp
+.It Fn gettime         Ta Ft time_t           Ta timestamp
+.El
+.Pp
+The kernel also maintains a
+.Sy boot timestamp .
+It is the moment on the UTC clock when the system booted.
+The timestamp jumps when a process calls
+.Xr clock_settime 2
+or
+.Xr settimeofday 2 .
+The boot timestamp may be read with the following functions:
+.Bl -column "microboottimeX" "Output Format" "Source" -offset indent
+.It Em Name            Ta Em Output Format    Ta Em Source
+.It Fn microboottime   Ta Vt struct timeval   Ta timestamp
+.It Fn nanoboottime    Ta Vt struct timespec  Ta timestamp
+.El
+.Pp
+Functions that source from the
+.Em hardware
+provide the most precise result possible.
+Functions that source from a
+.Em timestamp
+provide a far less precise result,
+but do so very quickly.
+On most platforms,
+timestamps are updated approximately 100 times per second.
+.Sh CONTEXT
+These functions may be called during autoconf,
+from process context,
+or from any interrupt context.
+.Sh RETURN VALUES
+.Fn nsecuptime ,
+.Fn getnsecuptime ,
+and
+.Fn getnsecruntime
+return a count of nanoseconds.
+.Pp
+.Fn getuptime
+and
+.Fn gettime
+return a count of seconds.
+.Sh ERRORS
+These functions are always successful,
+and no return value is reserved to indicate an error.
 .Sh CODE REFERENCES
-The implementation of these functions is partly machine dependent, but
-the bulk of the code is in the file
-.Pa sys/kern/kern_tc.c .
+.Pa sys/kern/kern_tc.c
 .Sh SEE ALSO
+.Xr clock_settime 2 ,
 .Xr settimeofday 2 ,
+.Xr timeradd 3 ,
 .Xr hardclock 9 ,
 .Xr hz 9 ,
-.Xr inittodr 9
+.Xr inittodr 9 ,
+.Xr tc_init 9
