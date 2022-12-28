@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.9 2022/12/28 12:16:35 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.10 2022/12/28 13:21:11 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -16,14 +16,16 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vis.h>
 
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
 
