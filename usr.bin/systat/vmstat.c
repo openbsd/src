@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.95 2022/12/04 18:01:57 cheloha Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.96 2022/12/28 20:49:05 cheloha Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -84,7 +84,7 @@ static	enum state { BOOT, TIME, RUN } state = TIME;
 static void allocinfo(struct Info *);
 static void copyinfo(struct Info *, struct Info *);
 static float cputime(int);
-static void dinfo(int, int);
+static void dinfo(int, int, double);
 static void getinfo(struct Info *);
 void putint(int, int, int, int);
 void putintmk(int, int, int, int);
@@ -443,7 +443,7 @@ showkre(void)
 			mvprintw(DISKROW, DISKCOL + 5 + c,
 			    " %*s", l, dr_name[i]);
 			c += 1 + l;
-			dinfo(i, c);
+			dinfo(i, c, etime);
 		}
 	/* and pad the DRIVESPACE */
 	l = DRIVESPACE - c;
@@ -666,11 +666,9 @@ copyinfo(struct Info *from, struct Info *to)
 }
 
 static void
-dinfo(int dn, int c)
+dinfo(int dn, int c, double etime)
 {
-	double words, atime, etime;
-
-	etime = naptime;
+	double words, atime;
 
 	c += DISKCOL;
 
