@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.2 2022/06/12 10:51:55 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.3 2022/12/28 11:20:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -288,6 +288,9 @@ stfclock_enable(void *cookie, uint32_t *cells, int on)
 			HSET4(sc, idx * 4, 1U << 31);
 		else
 			HCLR4(sc, idx * 4, 1U << 31);
+		return;
+	case JH7100_CLK_GMAC_ROOT_DIV:
+		/* No gate */
 		return;
 	}
 
