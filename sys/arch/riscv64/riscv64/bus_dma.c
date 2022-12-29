@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.6 2022/12/29 11:30:58 kettenis Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.7 2022/12/29 11:35:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -101,7 +101,6 @@ _dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 
 	*dmamp = map;
 	return (0);
@@ -275,10 +274,19 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	mapsize = size;
 	bmask = ~(map->_dm_boundary - 1);
 
+	/*
+	 * Assume the mapping is coherent until we run into a segment
+	 * that isn't.
+	 */
+	map->_dm_flags = BUS_DMA_COHERENT;
+
 	for (i = 0; i < nsegs && size > 0; i++) {
 		paddr = segs[i].ds_addr;
 		vaddr = segs[i]._ds_vaddr;
 		plen = MIN(segs[i].ds_len, size);
+
+		if (!segs[i]._ds_coherent)
+			map->_dm_flags &= ~BUS_DMA_COHERENT;
 
 		while (plen > 0) {
 			/*
@@ -400,7 +408,7 @@ _dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
 	 * with is coherent, make sure the write buffer is synced
 	 * and return.
 	 */
-	if (t->_flags & BUS_DMA_COHERENT) {
+	if (t->_flags & BUS_DMA_COHERENT || map->_dm_flags & BUS_DMA_COHERENT) {
 		__asm volatile ("fence iorw,iorw" ::: "memory");
 		return;
 	}
@@ -514,6 +522,7 @@ _dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size,
 		cache = PMAP_CACHE_CI;
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		segs[curseg]._ds_vaddr = va;
+		segs[curseg]._ds_coherent = !!(flags & BUS_DMA_COHERENT);
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += NBPG, va += NBPG, size -= NBPG) {
