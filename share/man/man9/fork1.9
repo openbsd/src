@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fork1.9,v 1.30 2017/06/11 17:06:27 schwarze Exp $
+.\"	$OpenBSD: fork1.9,v 1.31 2022/12/29 06:10:54 guenther Exp $
 .\"	$NetBSD: fork1.9,v 1.3 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2017 $
+.Dd $Mdocdate: December 29 2022 $
 .Dt FORK1 9
 .Os
 .Sh NAME
@@ -99,32 +99,24 @@ See
 The child will share the parent's address space.
 The default behavior is
 that the child gets a copy-on-write copy of the address space.
-.It Dv FORK_SIGHAND
-The child will share the parent's signal actions, including the handler,
-mask, and flags, with
-.Fn sigactsshare .
-The default behavior is to copy the signal actions from the parent with
-.Fn sigactsinit .
-.Dv FORK_SHAREVM
-must also be set.
+.It Dv FORK_SYSTEM
+The child will be marked as a system process.
 .It Dv FORK_PTRACE
 The child will start with tracing enabled, as if
 ptrace(PT_TRACE_ME, 0, 0, 0) had been invoked in the child.
 .El
 .Pp
-If
-.Fa func
-is not
-.Dv NULL ,
-the new thread will begin execution by calling this function.
-It defaults to child_return, which returns to userland.
-.Pp
+the new thread will begin execution by calling
+.Fa func ,
+which must not be
+.Dv NULL .
 If
 .Fa arg
 is not
 .Dv NULL ,
-it is the argument to the previous function.
-It defaults to a pointer to the new thread.
+it is passed as the argument to
+.Fa func .
+Otherwise, a pointer to the new process's only thread is passed.
 .Pp
 If
 .Fa retval
