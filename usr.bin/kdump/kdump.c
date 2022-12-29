@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.152 2022/12/20 21:44:19 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.153 2022/12/29 01:36:36 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -1320,60 +1320,84 @@ ktrgenio(struct ktr_genio *ktr, size_t len)
 	showbuf(dp, datalen);
 }
 
+void
+siginfo(const siginfo_t *si, int show_signo)
+{
+	if (show_signo) {
+		printf("signo=");
+		signame(si->si_signo);
+	}
+	if (si->si_code) {
+		printf(" code=");
+		if (!fancy)
+			printf("<%d>", si->si_code);
+		else {
+			switch (si->si_signo) {
+			case SIGILL:
+				sigill_name(si->si_code);
+				break;
+			case SIGTRAP:
+				sigtrap_name(si->si_code);
+				break;
+			case SIGEMT:
+				sigemt_name(si->si_code);
+				break;
+			case SIGFPE:
+				sigfpe_name(si->si_code);
+				break;
+			case SIGBUS:
+				sigbus_name(si->si_code);
+				break;
+			case SIGSEGV:
+				sigsegv_name(si->si_code);
+				break;
+			case SIGCHLD:
+				sigchld_name(si->si_code);
+				break;
+			default:
+				printf("<%d>", si->si_code);
+				break;
+			}
+		}
+	}
+
+	switch (si->si_signo) {
+	case SIGSEGV:
+	case SIGILL:
+	case SIGBUS:
+	case SIGFPE:
+		printf(" addr=%p trapno=%d", si->si_addr, si->si_trapno);
+		break;
+	case SIGCHLD:
+		if (si->si_code == CLD_EXITED) {
+			printf(" status=%d", si->si_status);
+			if (si->si_status < 0 || si->si_status > 9)
+				(void)printf("/%#x", si->si_status);
+		} else {
+			printf(" status=");
+			signame(si->si_status);
+		}
+		printf(" pid=%d uid=", si->si_pid);
+		uidname(si->si_uid);
+		break;
+	default:
+		break;
+	}
+}
+
 static void
 ktrpsig(struct ktr_psig *psig)
 {
 	signame(psig->signo);
 	printf(" ");
 	if (psig->action == SIG_DFL)
-		(void)printf("SIG_DFL");
+		printf("SIG_DFL");
 	else {
-		(void)printf("caught handler=0x%lx mask=",
-		    (u_long)psig->action);
+		printf("caught handler=0x%lx mask=", (u_long)psig->action);
 		sigset(psig->mask);
 	}
-	if (psig->code) {
-		printf(" code ");
-		if (fancy) {
-			switch (psig->signo) {
-			case SIGILL:
-				sigill_name(psig->code);
-				break;
-			case SIGTRAP:
-				sigtrap_name(psig->code);
-				break;
-			case SIGEMT:
-				sigemt_name(psig->code);
-				break;
-			case SIGFPE:
-				sigfpe_name(psig->code);
-				break;
-			case SIGBUS:
-				sigbus_name(psig->code);
-				break;
-			case SIGSEGV:
-				sigsegv_name(psig->code);
-				break;
-			case SIGCHLD:
-				sigchld_name(psig->code);
-				break;
-			}
-		}
-		printf("<%d>", psig->code);
-	}
-
-	switch (psig->signo) {
-	case SIGSEGV:
-	case SIGILL:
-	case SIGBUS:
-	case SIGFPE:
-		printf(" addr=%p trapno=%d", psig->si.si_addr,
-		    psig->si.si_trapno);
-		break;
-	default:
-		break;
-	}
-	printf("\n");
+	siginfo(&psig->si, 0);
+	putchar('\n');
 }
 
 static void

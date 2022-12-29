@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.30 2022/09/08 16:04:31 mbuhl Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.31 2022/12/29 01:36:36 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -550,6 +550,14 @@ ktrflock(const struct flock *fl)
 	printf(" }\n");
 }
 
+static void
+ktrsiginfo(const siginfo_t *si)
+{
+	printf("siginfo_t { ");
+	siginfo(si, 1);
+	printf(" }\n");
+}
+
 void
 ktrstruct(char *buf, size_t buflen)
 {
@@ -710,6 +718,13 @@ ktrstruct(char *buf, size_t buflen)
 			goto invalid;
 		memcpy(&fl, data, datalen);
 		ktrflock(&fl);
+	} else if (strcmp(name, "siginfo") == 0) {
+		siginfo_t si;
+
+		if (datalen != sizeof(si))
+			goto invalid;
+		memcpy(&si, data, datalen);
+		ktrsiginfo(&si);
 	} else {
 		printf("unknown structure %s\n", name);
 	}

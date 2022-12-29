@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.209 2022/12/19 00:22:12 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.210 2022/12/29 01:36:36 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -692,8 +692,13 @@ sys_waitid(struct proc *q, void *v, register_t *retval)
 
 	error = dowait6(q, idtype, SCARG(uap, id), NULL,
 	    options, NULL, &info, retval);
-	if (error == 0)
+	if (error == 0) {
 		error = copyout(&info, SCARG(uap, info), sizeof(info));
+#ifdef KTRACE
+		if (error == 0 && KTRPOINT(q, KTR_STRUCT))
+			ktrsiginfo(q, &info);
+#endif
+	}
 	if (error == 0)
 		*retval = 0;
 	return (error);
