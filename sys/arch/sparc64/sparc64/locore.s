@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.195 2022/12/22 19:51:11 cheloha Exp $	*/
+/*	$OpenBSD: locore.s,v 1.196 2022/12/29 22:44:23 cheloha Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7477,22 +7477,9 @@ END(tick_enable)
  * sure those two instructions are in the same cache line.
  */
 ENTRY(tickcmpr_set)
-	ba	1f
-	 mov	8, %o2			! Initial step size
 	.align	64
-1:	wr	%o0, 0, %tick_cmpr
+	wr	%o0, 0, %tick_cmpr
 	rd	%tick_cmpr, %g0
-
-	rd	%tick, %o1		! Read current %tick
-	sllx	%o1, 1, %o1
-	srlx	%o1, 1, %o1
-
-	cmp	%o0, %o1		! Make sure the value we wrote to
-	bg,pt	%xcc, 2f		!   %tick_cmpr was in the future.
-	 add	%o0, %o2, %o0		! If not, add the step size, double
-	ba,pt	%xcc, 1b		!   the step size and try again.
-	 sllx	%o2, 1, %o2
-2:
 	retl
 	 nop
 END(tickcmpr_set)
@@ -7518,22 +7505,9 @@ ENTRY(sys_tick_enable)
 END(sys_tick_enable)
 
 ENTRY(sys_tickcmpr_set)
-	ba	1f
-	 mov	8, %o2			! Initial step size
 	.align	64
-1:	wr	%o0, 0, %sys_tick_cmpr
+	wr	%o0, 0, %sys_tick_cmpr
 	rd	%sys_tick_cmpr, %g0
-
-	rd	%sys_tick, %o1		! Read current %sys_tick
-	sllx	%o1, 1, %o1
-	srlx	%o1, 1, %o1
-
-	cmp	%o0, %o1		! Make sure the value we wrote to
-	bg,pt	%xcc, 2f		!   %sys_tick_cmpr was in the future.
-	 add	%o0, %o2, %o0		! If not, add the step size, double
-	ba,pt	%xcc, 1b		!   the step size and try again.
-	 sllx	%o2, 1, %o2
-2:
 	retl
 	 nop
 END(sys_tickcmpr_set)
