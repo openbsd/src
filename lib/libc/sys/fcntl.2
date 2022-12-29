@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.35 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: fcntl.2,v 1.36 2022/12/29 02:12:41 jsg Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: December 29 2022 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -549,5 +549,7 @@ function conforms to
 .Sh HISTORY
 The
 .Fn fcntl
-function call appeared in
+system call first appeared in
+.At III
+and was reimplemented for
 .Bx 4.2 .
