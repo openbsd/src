@@ -1,3 +1,4 @@
+/*	$OpenBSD: accton.c,v 1.9 2022/12/30 18:47:45 cheloha Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
