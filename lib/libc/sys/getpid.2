@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpid.2,v 1.13 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getpid.2,v 1.14 2022/12/30 23:12:12 jsg Exp $
 .\"	$NetBSD: getpid.2,v 1.5 1995/02/27 12:33:12 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getpid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: December 30 2022 $
 .Dt GETPID 2
 .Os
 .Sh NAME
@@ -65,3 +65,12 @@ and
 .Fn getppid
 conform to
 .St -p1003.1-2008 .
+.Sh HISTORY
+The
+.Fn getpid
+system call first appeared in
+.At v5 .
+The
+.Fn getppid
+function appeared in
+.At 32v .
