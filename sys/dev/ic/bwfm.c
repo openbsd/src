@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.105 2022/06/30 19:57:40 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.106 2022/12/30 16:49:34 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -391,6 +391,7 @@ void
 bwfm_start(struct ifnet *ifp)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct mbuf *m;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
@@ -407,6 +408,10 @@ bwfm_start(struct ifnet *ifp)
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
+
+		if (ic->ic_state != IEEE80211_S_RUN ||
+		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
+			break;
 
 		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
