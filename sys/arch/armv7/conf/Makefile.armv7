@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.armv7,v 1.52 2021/12/17 14:59:22 patrick Exp $
+#	$OpenBSD: Makefile.armv7,v 1.53 2022/12/30 06:44:35 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,6 +28,9 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
+# XXX Workaround for zlib + clang 15
+# https://github.com/madler/zlib/issues/633
+CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 
 CMACHFLAGS=	-msoft-float -march=armv7a
 CMACHFLAGS+=	-ffreestanding ${NOPIE_FLAGS}

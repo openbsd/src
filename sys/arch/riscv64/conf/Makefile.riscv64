@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.15 2022/01/12 00:58:48 kevlo Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.16 2022/12/30 06:44:36 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -30,6 +30,9 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
+# XXX Workaround for zlib + clang 15
+# https://github.com/madler/zlib/issues/633
+CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 
 CMACHFLAGS=	-march=rv64gc -mcmodel=medany -mno-relax \
 		-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer

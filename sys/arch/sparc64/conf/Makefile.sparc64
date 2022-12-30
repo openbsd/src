@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.104 2021/12/17 14:59:22 patrick Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.105 2022/12/30 06:44:36 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -47,6 +47,9 @@ COPTIMIZE?=	-Oz
 CWARNFLAGS+=	-Wno-unused-command-line-argument
 CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
+# XXX Workaround for zlib + clang 15
+# https://github.com/madler/zlib/issues/633
+CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 .endif
 
 DEBUG?=		-g

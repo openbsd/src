@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.61 2022/07/18 12:48:35 visa Exp $
+#	$OpenBSD: Makefile.octeon,v 1.62 2022/12/30 06:44:36 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -49,6 +49,9 @@ NO_INTEGR_AS=	-no-integrated-as
 CMACHFLAGS+=	-fomit-frame-pointer
 CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
+# XXX Workaround for zlib + clang 15
+# https://github.com/madler/zlib/issues/633
+CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 .endif
 
 DEBUG?=		-g

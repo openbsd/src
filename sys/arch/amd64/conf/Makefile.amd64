@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.127 2022/04/07 07:30:54 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.128 2022/12/30 06:44:35 jca Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -72,6 +72,9 @@ CMACHFLAGS+=	-mno-retpoline
 NO_INTEGR_AS=	-no-integrated-as
 CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
+# XXX Workaround for zlib + clang 15
+# https://github.com/madler/zlib/issues/633
+CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 .endif
 
 DEBUG?=		-g
