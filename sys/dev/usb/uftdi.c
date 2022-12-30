@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.77 2022/04/09 20:07:44 naddy Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.78 2022/12/30 00:54:09 kevlo Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ void	uftdi_read(void *sc, int portno, u_char **ptr,
 void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
 			    u_int32_t *count);
 void	uftdi_break(void *sc, int portno, int onoff);
-int	uftdi_8u232am_getrate(speed_t speed, int *rate);
+int	uftdi_8u232am_getrate(struct uftdi_softc *sc, speed_t speed, int *rate);
 int	uftdi_2232h_getrate(speed_t speed, int *rate);
 
 const struct ucom_methods uftdi_methods = {
@@ -772,6 +772,9 @@ uftdi_attach(struct device *parent, struct device *self, void *aux)
 	if (uaa->release < 0x0200) {
 		sc->sc_type = UFTDI_TYPE_SIO;
 		sc->sc_hdrlen = 1;
+	} else if (uaa->release == 0x0600) {
+		sc->sc_type = UFTDI_TYPE_232R;
+		sc->sc_hdrlen = 0;
 	} else if (uaa->release == 0x0700  || uaa->release == 0x0800) {
 		sc->sc_type = UFTDI_TYPE_2232H;
 		sc->sc_hdrlen = 0;
@@ -1011,8 +1014,9 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		}
 		break;
 
+	case UFTDI_TYPE_232R:
 	case UFTDI_TYPE_8U232AM:
-		if (uftdi_8u232am_getrate(t->c_ospeed, &rate) == -1)
+		if (uftdi_8u232am_getrate(sc, t->c_ospeed, &rate) == -1)
 			return (EINVAL);
 		break;
 	case UFTDI_TYPE_2232H:
@@ -1131,7 +1135,7 @@ uftdi_break(void *vsc, int portno, int onoff)
 }
 
 int
-uftdi_8u232am_getrate(speed_t speed, int *rate)
+uftdi_8u232am_getrate(struct uftdi_softc *sc, speed_t speed, int *rate)
 {
 	/* Table of the nearest even powers-of-2 for values 0..15. */
 	static const unsigned char roundoff[16] = {
@@ -1182,11 +1186,13 @@ uftdi_8u232am_getrate(speed_t speed, int *rate)
 	 * 0.125.
 	 */
 	result = d >> 4;
-	if (d & 8)
-		result |= 0x4000;
-	else if (d & 4)
-		result |= 0x8000;
-	else if (d & 2)
+	if (sc->sc_type == UFTDI_TYPE_8U232AM) {
+		if (d & 8)
+			result |= 0x4000;
+		else if (d & 4)
+			result |= 0x8000;
+	}
+	if (d & 2)
 		result |= 0xc000;
 
 done:
