@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.13 2016/09/20 21:10:22 fcambus Exp $	*/
+/*	$OpenBSD: termios.h,v 1.14 2022/12/30 23:41:45 millert Exp $	*/
 /*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
@@ -111,9 +111,14 @@
 #if __XPG_VISIBLE
 #define ONLCR		0x00000002	/* map NL to CR-NL (ala CRMOD) */
 #endif
+#if __BSD_VISIBLE || __XPG_VISIBLE
+#define TABDLY		0x00000004	/* horizontal tab delay mask */
+#define TAB0		0x00000000	/* no tab delay or expansion */
+#define TAB3		0x00000004	/* expand tabs to spaces */
 #if __BSD_VISIBLE
-#define OXTABS		0x00000004	/* expand tabs to spaces */
+#define OXTABS		TAB3		/* BSD name for TAB3 */
 #define ONOEOT		0x00000008	/* discard EOT's (^D) on output */
+#endif
 #endif
 #if __XPG_VISIBLE
 #define OCRNL		0x00000010	/* map CR to NL */
