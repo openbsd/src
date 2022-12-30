@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.74 2022/11/10 12:14:05 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.75 2022/12/30 14:10:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -494,7 +494,10 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		chip = "4377b3";
 		break;
 	case BRCM_CC_4378_CHIP_ID:
-		chip = "4378b1";
+		if (bwfm->sc_chip.ch_chiprev <= 3)
+			chip = "4378b1";
+		else
+			chip = "4378b3";
 		break;
 	case BRCM_CC_4387_CHIP_ID:
 		chip = "4387c2";
