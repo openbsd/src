@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.1 2022/11/05 19:29:46 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.2 2022/12/31 00:48:53 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -368,7 +368,7 @@ int
 sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	struct clockintr_stat sum = { 0 }, tmp;
+	struct clockintr_stat sum, tmp;
 	struct clockintr_queue *cq;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -379,6 +379,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 	case KERN_CLOCKINTR_STATS:
+		memset(&sum, 0, sizeof sum);
 		CPU_INFO_FOREACH(cii, ci) {
 			cq = &ci->ci_queue;
 			if (!ISSET(cq->cq_flags, CL_CPU_INIT))
