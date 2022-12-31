@@ -8,6 +8,7 @@
 #ifndef LIBCBOR_SERIALIZATION_H
 #define LIBCBOR_SERIALIZATION_H
 
+#include "cbor/cbor_export.h"
 #include "cbor/common.h"
 
 #ifdef __cplusplus
@@ -27,23 +28,42 @@ extern "C" {
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize(const cbor_item_t *item, cbor_mutable_data buffer,
-                      size_t buffer_size);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize(const cbor_item_t *item,
+                                                  cbor_mutable_data buffer,
+                                                  size_t buffer_size);
+
+/** Compute the length (in bytes) of the item when serialized using
+ * `cbor_serialize`.
+ *
+ * Time complexity is proportional to the number of nested items.
+ *
+ * @param item[borrow] A data item
+ * @return Length (>= 1) of the item when serialized. 0 if the length overflows
+ * `size_t`.
+ */
+_CBOR_NODISCARD CBOR_EXPORT size_t
+cbor_serialized_size(const cbor_item_t *item);
 
 /** Serialize the given item, allocating buffers as needed
  *
+ * Since libcbor v0.10, the return value is always the same as `buffer_size` (if
+ * provided, see https://github.com/PJK/libcbor/pull/251/). New clients should
+ * ignore the return value.
+ *
  * \rst
- * .. warning:: It is your responsibility to free the buffer using an
- * appropriate ``free`` implementation. \endrst
+ * .. warning:: It is the caller's responsibility to free the buffer using an
+ *  appropriate ``free`` implementation.
+ * \endrst
  *
  * @param item[borrow] A data item
  * @param buffer[out] Buffer containing the result
- * @param buffer_size[out] Size of the \p buffer
+ * @param buffer_size[out] Size of the \p buffer, or ``NULL``
  * @return Length of the result. 0 on failure, in which case \p buffer is
  * ``NULL``.
  */
-size_t cbor_serialize_alloc(const cbor_item_t *item, cbor_mutable_data *buffer,
-                            size_t *buffer_size);
+CBOR_EXPORT size_t cbor_serialize_alloc(const cbor_item_t *item,
+                                        cbor_mutable_data *buffer,
+                                        size_t *buffer_size);
 
 /** Serialize an uint
  *
@@ -52,16 +72,20 @@ size_t cbor_serialize_alloc(const cbor_item_t *item, cbor_mutable_data *buffer,
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_uint(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_uint(const cbor_item_t *,
+                                                       cbor_mutable_data,
+                                                       size_t);
 
 /** Serialize a negint
  *
- * @param item[borrow] A neging
+ * @param item[borrow] A negint
  * @param buffer Buffer to serialize to
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_negint(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_negint(const cbor_item_t *,
+                                                         cbor_mutable_data,
+                                                         size_t);
 
 /** Serialize a bytestring
  *
@@ -70,8 +94,8 @@ size_t cbor_serialize_negint(const cbor_item_t *, cbor_mutable_data, size_t);
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_bytestring(const cbor_item_t *, cbor_mutable_data,
-                                 size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t
+cbor_serialize_bytestring(const cbor_item_t *, cbor_mutable_data, size_t);
 
 /** Serialize a string
  *
@@ -80,7 +104,9 @@ size_t cbor_serialize_bytestring(const cbor_item_t *, cbor_mutable_data,
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_string(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_string(const cbor_item_t *,
+                                                         cbor_mutable_data,
+                                                         size_t);
 
 /** Serialize an array
  *
@@ -89,7 +115,9 @@ size_t cbor_serialize_string(const cbor_item_t *, cbor_mutable_data, size_t);
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_array(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_array(const cbor_item_t *,
+                                                        cbor_mutable_data,
+                                                        size_t);
 
 /** Serialize a map
  *
@@ -98,7 +126,9 @@ size_t cbor_serialize_array(const cbor_item_t *, cbor_mutable_data, size_t);
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_map(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_map(const cbor_item_t *,
+                                                      cbor_mutable_data,
+                                                      size_t);
 
 /** Serialize a tag
  *
@@ -107,7 +137,9 @@ size_t cbor_serialize_map(const cbor_item_t *, cbor_mutable_data, size_t);
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_tag(const cbor_item_t *, cbor_mutable_data, size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t cbor_serialize_tag(const cbor_item_t *,
+                                                      cbor_mutable_data,
+                                                      size_t);
 
 /** Serialize a
  *
@@ -116,8 +148,8 @@ size_t cbor_serialize_tag(const cbor_item_t *, cbor_mutable_data, size_t);
  * @param buffer_size Size of the \p buffer
  * @return Length of the result. 0 on failure.
  */
-size_t cbor_serialize_float_ctrl(const cbor_item_t *, cbor_mutable_data,
-                                 size_t);
+_CBOR_NODISCARD CBOR_EXPORT size_t
+cbor_serialize_float_ctrl(const cbor_item_t *, cbor_mutable_data, size_t);
 
 #ifdef __cplusplus
 }

@@ -22,7 +22,7 @@ Get the latest documentation at [libcbor.readthedocs.org](http://libcbor.readthe
 
 ## Contributions
 
-All bug reports and contributions are welcome. Please see https://github.com/PJK/libcbor for more info.
+Bug reports and contributions are welcome. Please see [CONTRIBUTING.md](https://github.com/PJK/libcbor/blob/master/CONTRIBUTING.md) for more info.
 
 Kudos to all the [contributors](https://github.com/PJK/libcbor/graphs/contributors)!
 
