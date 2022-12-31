@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.63 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.64 2022/12/31 05:06:18 gkoehler Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -511,6 +511,12 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 	uint32_t i, cf;
 	int rv;
 
+	/*
+	 * Look for the first 2 mem regions.  For r128, this skips the
+	 * io region 0x14 and finds frame memory 0x10 and mmio 0x18.
+	 * For nvidia, this finds mmio 0x10 and frame memory 0x14.
+	 * Some nvidias have a 3rd mem region 0x18, which we ignore.
+	 */
 	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
 		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_MEM) {
@@ -549,6 +555,8 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 					sc->sc_mem_addr = ba;
 					sc->sc_mem_size = bs;
 				}
+				/* Ignore any other mem region. */
+				break;
 			}
 		}
 	}
