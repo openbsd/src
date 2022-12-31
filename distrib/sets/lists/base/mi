@@ -736,7 +736,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/libagentx.so.1.1
 ./usr/lib/libc.so.96.4
-./usr/lib/libcbor.so.1.0
+./usr/lib/libcbor.so.2.0
 ./usr/lib/libcrypto.so.50.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
@@ -744,7 +744,7 @@
 ./usr/lib/libevent.so.4.1
 ./usr/lib/libexecinfo.so.3.0
 ./usr/lib/libexpat.so.14.0
-./usr/lib/libfido2.so.6.0
+./usr/lib/libfido2.so.7.0
 ./usr/lib/libform.so.6.0
 ./usr/lib/libformw.so.6.0
 ./usr/lib/libfuse.so.2.0

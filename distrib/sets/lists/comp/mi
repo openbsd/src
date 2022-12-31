@@ -33,6 +33,7 @@
 ./usr/include/cbor/arrays.h
 ./usr/include/cbor/bytestrings.h
 ./usr/include/cbor/callbacks.h
+./usr/include/cbor/cbor_export.h
 ./usr/include/cbor/common.h
 ./usr/include/cbor/configuration.h
 ./usr/include/cbor/data.h
