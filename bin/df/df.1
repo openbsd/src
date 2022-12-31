@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.48 2016/08/10 19:46:43 schwarze Exp $
+.\"	$OpenBSD: df.1,v 1.49 2022/12/31 21:47:53 millert Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd $Mdocdate: August 10 2016 $
+.Dd $Mdocdate: December 31 2022 $
 .Dt DF 1
 .Os
 .Sh NAME
@@ -100,6 +100,9 @@ with the possibly stale statistics that were previously obtained.
 .It Fl P
 Print out information in a stricter format designed to be parsed
 by portable scripts.
+The
+.Ev BLOCKSIZE
+environment variable is ignored when this option is specified.
 .It Fl t Ar type
 Indicate the actions should only be taken on
 file systems of the specified
@@ -125,14 +128,13 @@ the last option given overrides the others.
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
-If the environment variable
-.Ev BLOCKSIZE
-is set, and the
-.Fl h
+Display block counts in units of size
+.Dv BLOCKSIZE .
+Ignored if any of the
+.Fl h , k
 or
-.Fl k
-options are not specified, the block counts will be displayed in units of that
-size block.
+.Fl P
+options are specified.
 .El
 .Sh EXIT STATUS
 .Ex -std df
