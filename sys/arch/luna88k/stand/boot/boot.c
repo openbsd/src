@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2022/10/14 20:53:18 aoyama Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2022/12/31 02:42:01 aoyama Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -99,8 +99,8 @@ static int get_boot_device(const char *, int *, int *, int *);
 void (*cpu_boot)(uint32_t, uint32_t, uint32_t, uint32_t);
 uint32_t cpu_bootarg1;
 uint32_t cpu_bootarg2;
-uint32_t cpu_bootarg3;
-uint32_t cpu_bootarg4;
+uint32_t cpu_bootarg3;			/* set at devopen() */
+uint32_t cpu_bootarg4 = RB_AUTOBOOT;
 
 char rnddata[BOOTRANDOM_MAX];
 struct rc4_ctx randomctx;
@@ -199,6 +199,8 @@ bootunix(char *line)
 			strlcpy(rndpath, BOOTRANDOM, sizeof rndpath);
 
 		rnd_loaded = loadrandom(rndpath, rnddata, sizeof(rnddata));
+		if (rnd_loaded == 0)
+			cpu_bootarg4 |= RB_GOODRANDOM;
 	}
 
 	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
@@ -217,8 +219,6 @@ bootunix(char *line)
 
 		cpu_bootarg1 = BOOT_MAGIC;
 		cpu_bootarg2 = (uint32_t)marks[MARK_END];
-		/* cpu_bootarg3 is set in devopen() */
-		cpu_bootarg4 = RB_AUTOBOOT;
 #ifdef DEBUG
 		printf("bootarg: 0x%08x, 0x%08x, 0x%08x, 0x%08x\n",
 		    cpu_bootarg1, cpu_bootarg2, cpu_bootarg3, cpu_bootarg4);
