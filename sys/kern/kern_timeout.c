@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.89 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.90 2022/12/31 16:06:24 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -380,7 +380,7 @@ timeout_add_nsec(struct timeout *to, int nsecs)
 }
 
 int
-timeout_at_ts(struct timeout *to, const struct timespec *abstime)
+timeout_abs_ts(struct timeout *to, const struct timespec *abstime)
 {
 	struct timespec old_abstime;
 	int ret = 1;

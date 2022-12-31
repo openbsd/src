@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.159 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.160 2022/12/31 16:06:24 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -548,7 +548,7 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 		if (which == ITIMER_REAL) {
 			if (timespecisset(&its.it_value)) {
 				timespecadd(&its.it_value, &now, &its.it_value);
-				timeout_at_ts(&pr->ps_realit_to, &its.it_value);
+				timeout_abs_ts(&pr->ps_realit_to,&its.it_value);
 			} else
 				timeout_del(&pr->ps_realit_to);
 		}
@@ -691,7 +691,7 @@ realitexpire(void *arg)
 	while (timespeccmp(&tp->it_value, &cts, <=))
 		timespecadd(&tp->it_value, &tp->it_interval, &tp->it_value);
 	if ((pr->ps_flags & PS_EXITING) == 0)
-		timeout_at_ts(&pr->ps_realit_to, &tp->it_value);
+		timeout_abs_ts(&pr->ps_realit_to, &tp->it_value);
 
 out:
 	mtx_leave(&pr->ps_mtx);
