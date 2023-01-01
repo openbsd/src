@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.16 2022/01/06 14:31:03 jsing Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.17 2023/01/01 17:43:04 miod Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -84,7 +84,7 @@ test_get_u(void)
 	CHECK(CBS_get_u32(&data, &u32));
 	CHECK(u32 == 0x708090a);
 	CHECK(CBS_get_u64(&data, &u64));
-	CHECK(u64 == 0x0b0c0d0e0f101112U);
+	CHECK(u64 == 0x0b0c0d0e0f101112ULL);
 	CHECK(CBS_get_last_u8(&data, &u8));
 	CHECK(u8 == 20);
 	CHECK(CBS_get_last_u8(&data, &u8));
@@ -334,7 +334,7 @@ test_cbb_basic(void)
 	CHECK_GOTO(CBB_add_u24(&cbb, 0x40506));
 	CHECK_GOTO(CBB_add_u32(&cbb, 0x708090a));
 	CHECK_GOTO(CBB_add_bytes(&cbb, (const uint8_t*) "\x0b\x0c", 2));
-	CHECK_GOTO(CBB_add_u64(&cbb, 0xd0e0f1011121314));
+	CHECK_GOTO(CBB_add_u64(&cbb, 0xd0e0f1011121314LL));
 	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
 	ret = (buf_len == sizeof(kExpected)
