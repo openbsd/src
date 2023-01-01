@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.13 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.14 2023/01/01 11:29:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -378,6 +378,8 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_msi_ic.ic_disestablish = aplpcie_intr_disestablish_msi;
 	sc->sc_msi_ic.ic_barrier = intr_barrier;
 	fdt_intr_register(&sc->sc_msi_ic);
+
+	pci_dopm = 1;
 
 	config_found(self, &pba, NULL);
 }
