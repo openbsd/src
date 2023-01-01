@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.127 2022/12/12 19:18:25 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.128 2023/01/01 21:45:40 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -628,6 +628,7 @@ xhci_intr1(struct xhci_softc *sc)
 	if (intrs & XHCI_STS_HSE) {
 		printf("%s: host system error\n", DEVNAME(sc));
 		sc->sc_bus.dying = 1;
+		XOWRITE4(sc, XHCI_USBSTS, intrs);
 		return (1);
 	}
 
