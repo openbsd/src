@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_posix.c,v 1.2 2022/11/08 14:42:42 beck Exp $ */
+/* $OpenBSD: a_time_posix.c,v 1.3 2023/01/01 16:58:23 miod Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  * Copyright (c) 2022, Bob Beck <beck@obtuse.com>
@@ -83,7 +83,8 @@ static int
 is_valid_epoch_time(int64_t time)
 {
 	/* 0000-01-01 00:00:00 UTC to 9999-12-31 23:59:59 UTC */
-	return (int64_t)-62167219200 <= time && time <= (int64_t)253402300799;
+	return (int64_t)-62167219200LL <= time &&
+	    time <= (int64_t)253402300799LL;
 }
 
 /*
