@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.121 2021/09/13 12:19:10 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.122 2023/01/01 19:49:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1403,19 +1403,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		pmap, (void *)va, (void *)pa, rv));
 
 	return found;
-}
-
-/*
- * Find first virtual address >= *vap that
- * will not cause cache aliases.
- */
-vaddr_t
-pmap_prefer(paddr_t foff, vaddr_t va)
-{
-	if (pmap_prefer_mask != 0)
-		va += (foff - va) & pmap_prefer_mask;
-
-	return va;
 }
 
 /*

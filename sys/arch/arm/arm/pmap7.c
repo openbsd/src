@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.65 2022/09/12 19:28:19 miod Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.66 2023/01/01 19:49:17 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -2847,21 +2847,4 @@ pmap_pte_init_armv7(void)
 	__asm volatile("mrc p15, 0, %0, c0, c1, 7" : "=r"(id_mmfr3));
 	if ((id_mmfr3 & 0x00f00000) == 0x00100000)
 		pmap_needs_pte_sync = 0;
-}
-
-uint32_t pmap_alias_dist;
-uint32_t pmap_alias_bits;
-
-vaddr_t
-pmap_prefer(vaddr_t foff, vaddr_t va)
-{
-	long d, m;
-
-	m = pmap_alias_dist;
-	if (m == 0)             /* m=0 => no cache aliasing */
-		return va;
-
-	d = foff - va;
-	d &= (m - 1);
-	return va + d;
 }

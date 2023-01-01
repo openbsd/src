@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.51 2022/09/12 19:28:19 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.52 2023/01/01 19:49:17 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -612,23 +612,6 @@ l2pte_is_writeable(pt_entry_t pte, struct pmap *pm)
 
 #define	L2_L_MAPPABLE_P(va, pa, size)					\
 	((((va) | (pa)) & L2_L_OFFSET) == 0 && (size) >= L2_L_SIZE)
-
-#ifndef _LOCORE
-/* pmap_prefer bits for VIPT ARMv7 */
-#define PMAP_PREFER(fo, ap)	pmap_prefer((fo), (ap))
-vaddr_t	pmap_prefer(vaddr_t, vaddr_t);
-
-extern uint32_t pmap_alias_dist;
-extern uint32_t pmap_alias_bits;
-
-/* pmap prefer alias alignment. */
-#define PMAP_PREFER_ALIGN()	(pmap_alias_dist)
-/* pmap prefer offset withing alignment. */
-#define PMAP_PREFER_OFFSET(of)						\
-    (PMAP_PREFER_ALIGN() == 0 ? 0 : ((of) & (PMAP_PREFER_ALIGN() - 1)))
-
-
-#endif /* _LOCORE */
 
 #endif /* _KERNEL */
 

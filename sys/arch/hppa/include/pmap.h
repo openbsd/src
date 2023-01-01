@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.52 2022/10/25 18:44:36 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.53 2023/01/01 19:49:17 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -91,16 +91,7 @@ struct vm_page *pmap_unmap_direct(vaddr_t);
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
-#define	PMAP_PREFER(o,h)	pmap_prefer(o, h)
-static __inline__ vaddr_t
-pmap_prefer(vaddr_t offs, vaddr_t hint)
-{
-	vaddr_t pmap_prefer_hint = (hint & HPPA_PGAMASK) | (offs & HPPA_PGAOFF);
-	if (pmap_prefer_hint < hint)
-		pmap_prefer_hint += HPPA_PGALIAS;
-	return pmap_prefer_hint;
-}
-
+#define	PMAP_PREFER
 /* pmap prefer alignment */
 #define PMAP_PREFER_ALIGN()	(HPPA_PGALIAS)
 /* pmap prefer offset within alignment */
