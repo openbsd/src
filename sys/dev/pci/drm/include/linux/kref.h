@@ -1,4 +1,4 @@
-/*	$OpenBSD: kref.h,v 1.4 2020/06/17 02:58:15 jsg Exp $	*/
+/*	$OpenBSD: kref.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -24,6 +24,7 @@
 #include <linux/atomic.h>
 #include <linux/compiler.h>
 #include <linux/refcount.h>
+#include <linux/spinlock.h>
 
 struct kref {
 	uint32_t refcount;

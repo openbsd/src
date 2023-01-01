@@ -5,6 +5,8 @@
 
 #if defined(__amd64__) || defined(__i386__)
 
+#include <sys/param.h>
+
 #define X86_FEATURE_CLFLUSH	1
 #define X86_FEATURE_XMM4_1	2
 #define X86_FEATURE_PAT		3
@@ -25,6 +27,12 @@ static_cpu_has(uint16_t f)
 	default:
 		return false;
 	}
+}
+
+static inline bool
+pat_enabled(void)
+{
+	return ((curcpu()->ci_feature_flags & CPUID_PAT) != 0);
 }
 
 #define boot_cpu_has(x) static_cpu_has(x)

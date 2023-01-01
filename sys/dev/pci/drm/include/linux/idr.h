@@ -1,4 +1,4 @@
-/*	$OpenBSD: idr.h,v 1.5 2022/03/01 04:08:04 jsg Exp $	*/
+/*	$OpenBSD: idr.h,v 1.6 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -76,5 +76,9 @@ void ida_init(struct ida *);
 void ida_destroy(struct ida *);
 int ida_simple_get(struct ida *, unsigned int, unsigned int, gfp_t);
 void ida_simple_remove(struct ida *, unsigned int);
+
+int ida_alloc_min(struct ida *, unsigned int, gfp_t);
+int ida_alloc_max(struct ida *, unsigned int, gfp_t);
+void ida_free(struct ida *, unsigned int);
 
 #endif

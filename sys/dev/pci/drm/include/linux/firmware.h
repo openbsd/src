@@ -37,6 +37,13 @@ request_firmware(const struct firmware **fw, const char *name,
 }
 
 static inline int
+firmware_request_nowarn(const struct firmware **fw, const char *name,
+    struct device *device)
+{
+	return request_firmware(fw, name, device);
+}
+
+static inline int
 request_firmware_direct(const struct firmware **fw, const char *name,
     struct device *device)
 {

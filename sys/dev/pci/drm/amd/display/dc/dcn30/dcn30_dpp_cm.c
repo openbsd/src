@@ -61,23 +61,20 @@ static enum dc_lut_mode dpp30_get_gamcor_current(struct dpp *dpp_base)
 	uint32_t lut_mode;
 	struct dcn3_dpp *dpp = TO_DCN30_DPP(dpp_base);
 
-	REG_GET(CM_GAMCOR_CONTROL,
-			CM_GAMCOR_MODE_CURRENT, &state_mode);
+	REG_GET(CM_GAMCOR_CONTROL, CM_GAMCOR_MODE_CURRENT, &state_mode);
 
-		if (state_mode == 0)
-			mode = LUT_BYPASS;
+	if (state_mode == 0)
+		mode = LUT_BYPASS;
 
-		if (state_mode == 2) {//Programmable RAM LUT
-			REG_GET(CM_GAMCOR_CONTROL,
-					CM_GAMCOR_SELECT_CURRENT, &lut_mode);
+	if (state_mode == 2) {//Programmable RAM LUT
+		REG_GET(CM_GAMCOR_CONTROL, CM_GAMCOR_SELECT_CURRENT, &lut_mode);
+		if (lut_mode == 0)
+			mode = LUT_RAM_A;
+		else
+			mode = LUT_RAM_B;
+	}
 
-			if (lut_mode == 0)
-				mode = LUT_RAM_A;
-			else
-				mode = LUT_RAM_B;
-		}
-
-		return mode;
+	return mode;
 }
 
 static void dpp3_program_gammcor_lut(
@@ -136,9 +133,13 @@ static void dpp3_power_on_gamcor_lut(
 	struct dcn3_dpp *dpp = TO_DCN30_DPP(dpp_base);
 
 	if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.cm) {
-		REG_UPDATE(CM_MEM_PWR_CTRL, GAMCOR_MEM_PWR_FORCE, power_on ? 0 : 3);
-		if (power_on)
+		if (power_on) {
+			REG_UPDATE(CM_MEM_PWR_CTRL, GAMCOR_MEM_PWR_FORCE, 0);
 			REG_WAIT(CM_MEM_PWR_STATUS, GAMCOR_MEM_PWR_STATE, 0, 1, 5);
+		} else {
+			dpp_base->ctx->dc->optimized_required = true;
+			dpp_base->deferred_reg_writes.bits.disable_gamcor = true;
+		}
 	} else
 		REG_SET(CM_MEM_PWR_CTRL, 0,
 				GAMCOR_MEM_PWR_DIS, power_on == true ? 0:1);
@@ -404,6 +405,6 @@ void dpp3_cm_set_gamut_remap(
 			gamut_mode = 1;
 
 		//follow dcn2 approach for now - using only coefficient set A
-		program_gamut_remap(dpp, arr_reg_val, GAMUT_REMAP_COEFF);
+		program_gamut_remap(dpp, arr_reg_val, gamut_mode);
 	}
 }

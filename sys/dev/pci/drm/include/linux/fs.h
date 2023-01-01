@@ -16,5 +16,6 @@
 #include <linux/sched/signal.h>	/* via percpu-rwsem.h -> rcuwait.h */
 
 struct address_space;
+struct seq_file;
 
 #endif

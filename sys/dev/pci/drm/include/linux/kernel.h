@@ -16,18 +16,13 @@
 #include <linux/linkage.h>
 #include <linux/printk.h>
 #include <linux/typecheck.h>
+#include <linux/container_of.h>
 #include <asm/byteorder.h>
 
 #define swap(a, b) \
 	do { __typeof(a) __tmp = (a); (a) = (b); (b) = __tmp; } while(0)
 
-#define container_of(ptr, type, member) ({			\
-	const __typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-	(type *)( (char *)__mptr - offsetof(type,member) );})
-
 #define offsetofend(s, e) (offsetof(s, e) + sizeof((((s *)0)->e)))
-
-#define typeof_member(s, e)	typeof(((s *)0)->e)
 
 #define S8_MAX		INT8_MAX
 #define S16_MAX		INT16_MAX

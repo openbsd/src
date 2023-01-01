@@ -27,7 +27,7 @@
 #define __DC_HWSS_DCN30_H__
 
 #include "hw_sequencer_private.h"
-
+#include "dcn20/dcn20_hwseq.h"
 struct dc;
 
 void dcn30_init_hw(struct dc *dc);
@@ -79,5 +79,13 @@ void dcn30_set_disp_pattern_generator(const struct dc *dc,
 		enum dc_color_depth color_depth,
 		const struct tg_color *solid_color,
 		int width, int height, int offset);
+
+void dcn30_set_hubp_blank(const struct dc *dc,
+		struct pipe_ctx *pipe_ctx,
+		bool blank_enable);
+
+void dcn30_prepare_bandwidth(struct dc *dc,
+	struct dc_state *context);
+
 
 #endif /* __DC_HWSS_DCN30_H__ */

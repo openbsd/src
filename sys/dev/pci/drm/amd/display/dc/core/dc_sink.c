@@ -23,8 +23,6 @@
  *
  */
 
-#include <linux/slab.h>
-
 #include "dm_services.h"
 #include "dm_helpers.h"
 #include "core_types.h"
@@ -32,14 +30,6 @@
 /*******************************************************************************
  * Private functions
  ******************************************************************************/
-
-static void dc_sink_destruct(struct dc_sink *sink)
-{
-	if (sink->dc_container_id) {
-		kfree(sink->dc_container_id);
-		sink->dc_container_id = NULL;
-	}
-}
 
 static bool dc_sink_construct(struct dc_sink *sink, const struct dc_sink_init_data *init_params)
 {
@@ -75,7 +65,7 @@ void dc_sink_retain(struct dc_sink *sink)
 static void dc_sink_free(struct kref *kref)
 {
 	struct dc_sink *sink = container_of(kref, struct dc_sink, refcount);
-	dc_sink_destruct(sink);
+	kfree(sink->dc_container_id);
 	kfree(sink);
 }
 

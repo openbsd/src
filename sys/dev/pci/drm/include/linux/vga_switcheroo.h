@@ -63,4 +63,10 @@ vga_switcheroo_unlock_ddc(struct pci_dev *pdev)
 	return -ENOSYS;
 }
 
+static inline bool
+vga_switcheroo_client_probe_defer(struct pci_dev *pdev)
+{
+	return false;
+}
+
 #endif

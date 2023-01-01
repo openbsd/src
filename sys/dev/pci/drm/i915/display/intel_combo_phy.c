@@ -4,6 +4,7 @@
  */
 
 #include "intel_combo_phy.h"
+#include "intel_combo_phy_regs.h"
 #include "intel_de.h"
 #include "intel_display_types.h"
 
@@ -24,18 +25,29 @@ enum {
 };
 
 static const struct icl_procmon {
+	const char *name;
 	u32 dw1, dw9, dw10;
 } icl_procmon_values[] = {
-	[PROCMON_0_85V_DOT_0] =
-		{ .dw1 = 0x00000000, .dw9 = 0x62AB67BB, .dw10 = 0x51914F96, },
-	[PROCMON_0_95V_DOT_0] =
-		{ .dw1 = 0x00000000, .dw9 = 0x86E172C7, .dw10 = 0x77CA5EAB, },
-	[PROCMON_0_95V_DOT_1] =
-		{ .dw1 = 0x00000000, .dw9 = 0x93F87FE1, .dw10 = 0x8AE871C5, },
-	[PROCMON_1_05V_DOT_0] =
-		{ .dw1 = 0x00000000, .dw9 = 0x98FA82DD, .dw10 = 0x89E46DC1, },
-	[PROCMON_1_05V_DOT_1] =
-		{ .dw1 = 0x00440000, .dw9 = 0x9A00AB25, .dw10 = 0x8AE38FF1, },
+	[PROCMON_0_85V_DOT_0] = {
+		.name = "0.85V dot0 (low-voltage)",
+		.dw1 = 0x00000000, .dw9 = 0x62AB67BB, .dw10 = 0x51914F96,
+	},
+	[PROCMON_0_95V_DOT_0] = {
+		.name = "0.95V dot0",
+		.dw1 = 0x00000000, .dw9 = 0x86E172C7, .dw10 = 0x77CA5EAB,
+	},
+	[PROCMON_0_95V_DOT_1] = {
+		.name = "0.95V dot1",
+		.dw1 = 0x00000000, .dw9 = 0x93F87FE1, .dw10 = 0x8AE871C5,
+	},
+	[PROCMON_1_05V_DOT_0] = {
+		.name = "1.05V dot0",
+		.dw1 = 0x00000000, .dw9 = 0x98FA82DD, .dw10 = 0x89E46DC1,
+	},
+	[PROCMON_1_05V_DOT_1] = {
+		.name = "1.05V dot1",
+		.dw1 = 0x00440000, .dw9 = 0x9A00AB25, .dw10 = 0x8AE38FF1,
+	},
 };
 
 static const struct icl_procmon *
@@ -111,6 +123,10 @@ static bool icl_verify_procmon_ref_values(struct drm_i915_private *dev_priv,
 	bool ret;
 
 	procmon = icl_get_procmon_ref_values(dev_priv, phy);
+
+	drm_dbg_kms(&dev_priv->drm,
+		    "Combo PHY %c Voltage/Process Info : %s\n",
+		    phy_name(phy), procmon->name);
 
 	ret = check_phy_reg(dev_priv, phy, ICL_PORT_COMP_DW1(phy),
 			    (0xff << 16) | 0xff, procmon->dw1);
@@ -220,13 +236,13 @@ static bool icl_combo_phy_verify_state(struct drm_i915_private *dev_priv,
 		return false;
 
 	if (DISPLAY_VER(dev_priv) >= 12) {
-		ret &= check_phy_reg(dev_priv, phy, ICL_PORT_TX_DW8_LN0(phy),
+		ret &= check_phy_reg(dev_priv, phy, ICL_PORT_TX_DW8_LN(0, phy),
 				     ICL_PORT_TX_DW8_ODCC_CLK_SEL |
 				     ICL_PORT_TX_DW8_ODCC_CLK_DIV_SEL_MASK,
 				     ICL_PORT_TX_DW8_ODCC_CLK_SEL |
 				     ICL_PORT_TX_DW8_ODCC_CLK_DIV_SEL_DIV2);
 
-		ret &= check_phy_reg(dev_priv, phy, ICL_PORT_PCS_DW1_LN0(phy),
+		ret &= check_phy_reg(dev_priv, phy, ICL_PORT_PCS_DW1_LN(0, phy),
 				     DCC_MODE_SELECT_MASK,
 				     DCC_MODE_SELECT_CONTINUOSLY);
 	}
@@ -301,7 +317,7 @@ void intel_combo_phy_power_up_lanes(struct drm_i915_private *dev_priv,
 
 	val = intel_de_read(dev_priv, ICL_PORT_CL_DW10(phy));
 	val &= ~PWR_DOWN_LN_MASK;
-	val |= lane_mask << PWR_DOWN_LN_SHIFT;
+	val |= lane_mask;
 	intel_de_write(dev_priv, ICL_PORT_CL_DW10(phy), val);
 }
 
@@ -343,13 +359,13 @@ static void icl_combo_phys_init(struct drm_i915_private *dev_priv)
 
 skip_phy_misc:
 		if (DISPLAY_VER(dev_priv) >= 12) {
-			val = intel_de_read(dev_priv, ICL_PORT_TX_DW8_LN0(phy));
+			val = intel_de_read(dev_priv, ICL_PORT_TX_DW8_LN(0, phy));
 			val &= ~ICL_PORT_TX_DW8_ODCC_CLK_DIV_SEL_MASK;
 			val |= ICL_PORT_TX_DW8_ODCC_CLK_SEL;
 			val |= ICL_PORT_TX_DW8_ODCC_CLK_DIV_SEL_DIV2;
 			intel_de_write(dev_priv, ICL_PORT_TX_DW8_GRP(phy), val);
 
-			val = intel_de_read(dev_priv, ICL_PORT_PCS_DW1_LN0(phy));
+			val = intel_de_read(dev_priv, ICL_PORT_PCS_DW1_LN(0, phy));
 			val &= ~DCC_MODE_SELECT_MASK;
 			val |= DCC_MODE_SELECT_CONTINUOSLY;
 			intel_de_write(dev_priv, ICL_PORT_PCS_DW1_GRP(phy), val);

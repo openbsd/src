@@ -171,10 +171,9 @@ struct dwbc {
 	bool dwb_is_efc_transition;
 	bool dwb_is_drc;
 	int wb_src_plane_inst;/*hubp, mpcc, inst*/
-	bool update_privacymask;
 	uint32_t mask_id;
-        int otg_inst;
-        bool mvc_cfg;
+    int otg_inst;
+    bool mvc_cfg;
 };
 
 struct dwbc_funcs {
@@ -219,12 +218,6 @@ struct dwbc_funcs {
 	bool (*dwb_ogam_set_output_transfer_func)(
 		struct dwbc *dwbc,
 		const struct dc_transfer_func *in_transfer_func_dwb_ogam);
-
-	void (*get_privacy_mask)(
-		struct dwbc *dwbc, uint32_t *mask_id);
-
-	void (*set_privacy_mask)(
-		struct dwbc *dwbc, uint32_t mask_id);
 
 	//TODO: merge with output_transfer_func?
 	bool (*dwb_ogam_set_input_transfer_func)(

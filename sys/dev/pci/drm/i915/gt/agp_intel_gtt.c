@@ -156,7 +156,7 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 }
 
 int
-intel_enable_gtt(void)
+intel_gmch_enable_gtt(void)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 
@@ -172,7 +172,7 @@ intel_gmch_probe(struct pci_dev *bridge_dev, struct pci_dev *gpu_pdev,
 }
 
 void
-intel_gtt_get(u64 *gtt_total,
+intel_gmch_gtt_get(u64 *gtt_total,
     phys_addr_t *mappable_base, resource_size_t *mappable_end)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
@@ -184,7 +184,7 @@ intel_gtt_get(u64 *gtt_total,
 }
 
 void
-intel_gtt_chipset_flush(void)
+intel_gmch_gtt_flush(void)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 
@@ -220,7 +220,7 @@ intel_gmch_remove(void)
 }
 
 void
-intel_gtt_insert_sg_entries(struct sg_table *pages, unsigned int pg_start,
+intel_gmch_gtt_insert_sg_entries(struct sg_table *pages, unsigned int pg_start,
     unsigned int flags)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
@@ -234,22 +234,22 @@ intel_gtt_insert_sg_entries(struct sg_table *pages, unsigned int pg_start,
 		addr += PAGE_SIZE;
 	}
 	membar_producer_wc();
-	intel_gtt_chipset_flush();
+	intel_gmch_gtt_flush();
 }
 
 void
-intel_gtt_insert_page(dma_addr_t addr, unsigned int pg,
+intel_gmch_gtt_insert_page(dma_addr_t addr, unsigned int pg,
     unsigned int flags)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 	struct agp_softc *sc = dev_priv->drm.agp->agpdev;
 	bus_addr_t apaddr = sc->sc_apaddr + (pg * PAGE_SIZE);
 	sc->sc_methods->bind_page(sc->sc_chipc, apaddr, addr, flags);
-	intel_gtt_chipset_flush();
+	intel_gmch_gtt_flush();
 }
 
 void
-intel_gtt_clear_range(unsigned int first_entry, unsigned int num_entries)
+intel_gmch_gtt_clear_range(unsigned int first_entry, unsigned int num_entries)
 {
 	struct inteldrm_softc *dev_priv = (void *)inteldrm_cd.cd_devs[0];
 	struct agp_softc *sc = dev_priv->drm.agp->agpdev;

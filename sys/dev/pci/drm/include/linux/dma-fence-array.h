@@ -39,5 +39,12 @@ dma_fence_is_array(struct dma_fence *fence)
 
 struct dma_fence_array *dma_fence_array_create(int, struct dma_fence **,
     u64, unsigned, bool);
+struct dma_fence *dma_fence_array_first(struct dma_fence *);
+struct dma_fence *dma_fence_array_next(struct dma_fence *, unsigned int);
+
+#define dma_fence_array_for_each(f, i, h)		\
+	for (i = 0, f = dma_fence_array_first(h);	\
+	     f != NULL;					\
+	     ++(i), f = dma_fence_array_next(h, i))	\
 
 #endif

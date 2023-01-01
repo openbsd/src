@@ -80,7 +80,7 @@
  *
  * Note that the source rectangle must fully lie within the bounds of the
  * &drm_framebuffer. The destination rectangle can lie outside of the visible
- * area of the current mode of the CRTC. It must be apprpriately clipped by the
+ * area of the current mode of the CRTC. It must be appropriately clipped by the
  * driver, which can be done by calling drm_plane_helper_check_update(). Drivers
  * are also allowed to round the subpixel sampling positions appropriately, but
  * only to the next full pixel. No pixel outside of the source rectangle may
@@ -317,7 +317,7 @@ EXPORT_SYMBOL(drm_plane_create_rotation_property);
  *                       DRM_MODE_ROTATE_90 | DRM_MODE_ROTATE_180 |
  *                       DRM_MODE_ROTATE_270 | DRM_MODE_REFLECT_Y);
  *
- * to eliminate the DRM_MODE_ROTATE_X flag. Depending on what kind of
+ * to eliminate the DRM_MODE_REFLECT_X flag. Depending on what kind of
  * transforms the hardware supports, this function may not
  * be able to produce a supported transform, so the caller should
  * check the result afterwards.
@@ -428,7 +428,6 @@ int drm_plane_create_zpos_immutable_property(struct drm_plane *plane,
 }
 EXPORT_SYMBOL(drm_plane_create_zpos_immutable_property);
 
-#ifdef notyet
 static int drm_atomic_state_zpos_cmp(const void *a, const void *b)
 {
 	const struct drm_plane_state *sa = *(struct drm_plane_state **)a;
@@ -439,14 +438,10 @@ static int drm_atomic_state_zpos_cmp(const void *a, const void *b)
 	else
 		return sa->plane->base.id - sb->plane->base.id;
 }
-#endif
 
 static int drm_atomic_helper_crtc_normalize_zpos(struct drm_crtc *crtc,
 					  struct drm_crtc_state *crtc_state)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_atomic_state *state = crtc_state->state;
 	struct drm_device *dev = crtc->dev;
 	int total_planes = dev->mode_config.num_total_plane;
@@ -493,7 +488,6 @@ static int drm_atomic_helper_crtc_normalize_zpos(struct drm_crtc *crtc,
 done:
 	kfree(states);
 	return ret;
-#endif
 }
 
 /**

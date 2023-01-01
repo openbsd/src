@@ -50,4 +50,14 @@ dma_fence_chain_free(struct dma_fence_chain *dfc)
 	free(dfc, M_DRM, sizeof(struct dma_fence_chain));
 }
 
+static inline struct dma_fence *
+dma_fence_chain_contained(struct dma_fence *f)
+{
+	struct dma_fence_chain *dfc = to_dma_fence_chain(f);
+
+	if (dfc != NULL)
+		return dfc->fence;
+	return f;
+}
+
 #endif

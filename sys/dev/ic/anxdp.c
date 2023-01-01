@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.6 2022/01/14 06:52:58 jsg Exp $ */
+/* $OpenBSD: anxdp.c,v 1.7 2023/01/01 01:34:33 jsg Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -38,7 +38,7 @@
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
-#include <drm/drm_dp_helper.h>
+#include <drm/display/drm_dp_helper.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/drm_edid.h>
 

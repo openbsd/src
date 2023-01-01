@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.94 2022/09/16 01:48:07 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.95 2023/01/01 01:34:34 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -53,6 +53,7 @@
 #include <linux/sync_file.h>
 
 #include <drm/drm_device.h>
+#include <drm/drm_connector.h>
 #include <drm/drm_print.h>
 
 #if defined(__amd64__) || defined(__i386__)
@@ -901,6 +902,24 @@ ida_simple_remove(struct ida *ida, unsigned int id)
 }
 
 int
+ida_alloc_min(struct ida *ida, unsigned int min, gfp_t gfp)
+{
+	return idr_alloc(&ida->idr, NULL, min, INT_MAX, gfp);
+}
+
+int
+ida_alloc_max(struct ida *ida, unsigned int max, gfp_t gfp)
+{
+	return idr_alloc(&ida->idr, NULL, 0, max - 1, gfp);
+}
+
+void
+ida_free(struct ida *ida, unsigned int id)
+{
+	idr_remove(&ida->idr, id);
+}
+
+int
 xarray_cmp(struct xarray_entry *a, struct xarray_entry *b)
 {
 	return (a->id < b->id ? -1 : a->id > b->id);
@@ -938,6 +957,7 @@ xa_destroy(struct xarray *xa)
 	}
 }
 
+/* Don't wrap ids. */
 int
 __xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
 {
@@ -974,6 +994,20 @@ __xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
 	xid->ptr = entry;
 	*id = xid->id;
 	return 0;
+}
+
+/*
+ * Wrap ids and store next id.
+ * We walk the entire tree so don't special case wrapping.
+ * The only caller of this (i915_drm_client.c) doesn't use next id.
+ */
+int
+__xa_alloc_cyclic(struct xarray *xa, u32 *id, void *entry, int limit, u32 *next,
+    gfp_t gfp)
+{
+	int r = __xa_alloc(xa, id, entry, limit, gfp);
+	*next = *id + 1;
+	return r;
 }
 
 void *
@@ -1298,6 +1332,11 @@ acpi_get_table(const char *sig, int instance,
 	return AE_NOT_FOUND;
 }
 
+void
+acpi_put_table(struct acpi_table_header *hdr)
+{
+}
+
 acpi_status
 acpi_get_handle(acpi_handle node, const char *name, acpi_handle *rnode)
 {
@@ -1503,6 +1542,19 @@ void
 drm_sysfs_hotplug_event(struct drm_device *dev)
 {
 	KNOTE(&dev->note, NOTE_CHANGE);
+}
+
+void
+drm_sysfs_connector_hotplug_event(struct drm_connector *connector)
+{
+	KNOTE(&connector->dev->note, NOTE_CHANGE);
+}
+
+void
+drm_sysfs_connector_status_event(struct drm_connector *connector,
+    struct drm_property *property)
+{
+	STUB();
 }
 
 struct dma_fence *
@@ -2035,6 +2087,40 @@ dma_fence_array_create(int num_fences, struct dma_fence **fences, u64 context,
 	return dfa;
 }
 
+struct dma_fence *
+dma_fence_array_first(struct dma_fence *f)
+{
+	struct dma_fence_array *dfa;
+
+	if (f == NULL)
+		return NULL;
+
+	if ((dfa = to_dma_fence_array(f)) == NULL)
+		return f;
+
+	if (dfa->num_fences > 0)
+		return dfa->fences[0];
+
+	return NULL;
+}
+
+struct dma_fence *
+dma_fence_array_next(struct dma_fence *f, unsigned int i)
+{
+	struct dma_fence_array *dfa;
+
+	if (f == NULL)
+		return NULL;
+
+	if ((dfa = to_dma_fence_array(f)) == NULL)
+		return NULL;
+
+	if (i < dfa->num_fences)
+		return dfa->fences[i];
+
+	return NULL;
+}
+
 const struct dma_fence_ops dma_fence_array_ops = {
 	.get_driver_name = dma_fence_array_get_driver_name,
 	.get_timeline_name = dma_fence_array_get_timeline_name,
@@ -2242,6 +2328,13 @@ const struct dma_fence_ops dma_fence_chain_ops = {
 	.release = dma_fence_chain_release,
 	.use_64bit_seqno = true,
 };
+
+bool
+dma_fence_is_container(struct dma_fence *fence)
+{
+	return (fence->ops == &dma_fence_chain_ops) ||
+	    (fence->ops == &dma_fence_array_ops);
+}
 
 int
 dmabuf_read(struct file *fp, struct uio *uio, int fflags)
@@ -2702,7 +2795,7 @@ pci_resize_resource(struct pci_dev *pdev, int bar, int nsize)
 TAILQ_HEAD(, shrinker) shrinkers = TAILQ_HEAD_INITIALIZER(shrinkers);
 
 int
-register_shrinker(struct shrinker *shrinker)
+register_shrinker(struct shrinker *shrinker, const char *format, ...)
 {
 	TAILQ_INSERT_TAIL(&shrinkers, shrinker, next);
 	return 0;
@@ -2999,4 +3092,10 @@ sync_file_create(struct dma_fence *fence)
 	sf->fence = dma_fence_get(fence);
 	fp->f_data = sf;
 	return sf;
+}
+
+bool
+drm_firmware_drivers_only(void)
+{
+	return false;
 }

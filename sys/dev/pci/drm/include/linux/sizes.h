@@ -15,6 +15,7 @@
 #define SZ_512K	(1024 * 512)
 #define SZ_1M	(1024 * 1024 * 1)
 #define SZ_2M	(1024 * 1024 * 2)
+#define SZ_4M	(1024 * 1024 * 4)
 #define SZ_8M	(1024 * 1024 * 8)
 #define SZ_16M	(1024 * 1024 * 16)
 #define SZ_1G	(1024 * 1024 * 1024 * 1)

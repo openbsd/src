@@ -61,26 +61,12 @@ void __exit drm_sched_fence_slab_fini(void)
 
 void drm_sched_fence_scheduled(struct drm_sched_fence *fence)
 {
-	int ret = dma_fence_signal(&fence->scheduled);
-
-	if (!ret)
-		DMA_FENCE_TRACE(&fence->scheduled,
-				"signaled from irq context\n");
-	else
-		DMA_FENCE_TRACE(&fence->scheduled,
-				"was already signaled\n");
+	dma_fence_signal(&fence->scheduled);
 }
 
 void drm_sched_fence_finished(struct drm_sched_fence *fence)
 {
-	int ret = dma_fence_signal(&fence->finished);
-
-	if (!ret)
-		DMA_FENCE_TRACE(&fence->finished,
-				"signaled from irq context\n");
-	else
-		DMA_FENCE_TRACE(&fence->finished,
-				"was already signaled\n");
+	dma_fence_signal(&fence->finished);
 }
 
 static const char *drm_sched_fence_get_driver_name(struct dma_fence *fence)
@@ -94,23 +80,38 @@ static const char *drm_sched_fence_get_timeline_name(struct dma_fence *f)
 	return (const char *)fence->sched->name;
 }
 
-/**
- * drm_sched_fence_free - free up the fence memory
- *
- * @rcu: RCU callback head
- *
- * Free up the fence memory after the RCU grace period.
- */
-static void drm_sched_fence_free(struct rcu_head *rcu)
+static void drm_sched_fence_free_rcu(struct rcu_head *rcu)
 {
 	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
 	struct drm_sched_fence *fence = to_drm_sched_fence(f);
 
+	if (!WARN_ON_ONCE(!fence)) {
 #ifdef __linux__
-	kmem_cache_free(sched_fence_slab, fence);
+		kmem_cache_free(sched_fence_slab, fence);
 #else
-	pool_put(&sched_fence_slab, fence);
+		pool_put(&sched_fence_slab, fence);
 #endif
+	}
+}
+
+/**
+ * drm_sched_fence_free - free up an uninitialized fence
+ *
+ * @fence: fence to free
+ *
+ * Free up the fence memory. Should only be used if drm_sched_fence_init()
+ * has not been called yet.
+ */
+void drm_sched_fence_free(struct drm_sched_fence *fence)
+{
+	/* This function should not be called if the fence has been initialized. */
+	if (!WARN_ON_ONCE(fence->sched)) {
+#ifdef __linux__
+		kmem_cache_free(sched_fence_slab, fence);
+#else
+		pool_put(&sched_fence_slab, fence);
+#endif
+	}
 }
 
 /**
@@ -126,7 +127,7 @@ static void drm_sched_fence_release_scheduled(struct dma_fence *f)
 	struct drm_sched_fence *fence = to_drm_sched_fence(f);
 
 	dma_fence_put(fence->parent);
-	call_rcu(&fence->finished.rcu, drm_sched_fence_free);
+	call_rcu(&fence->finished.rcu, drm_sched_fence_free_rcu);
 }
 
 /**
@@ -167,11 +168,10 @@ struct drm_sched_fence *to_drm_sched_fence(struct dma_fence *f)
 }
 EXPORT_SYMBOL(to_drm_sched_fence);
 
-struct drm_sched_fence *drm_sched_fence_create(struct drm_sched_entity *entity,
-					       void *owner)
+struct drm_sched_fence *drm_sched_fence_alloc(struct drm_sched_entity *entity,
+					      void *owner)
 {
 	struct drm_sched_fence *fence = NULL;
-	unsigned seq;
 
 #ifdef __linux__
 	fence = kmem_cache_zalloc(sched_fence_slab, GFP_KERNEL);
@@ -182,16 +182,22 @@ struct drm_sched_fence *drm_sched_fence_create(struct drm_sched_entity *entity,
 		return NULL;
 
 	fence->owner = owner;
-	fence->sched = entity->rq->sched;
 	mtx_init(&fence->lock, IPL_TTY);
 
+	return fence;
+}
+
+void drm_sched_fence_init(struct drm_sched_fence *fence,
+			  struct drm_sched_entity *entity)
+{
+	unsigned seq;
+
+	fence->sched = entity->rq->sched;
 	seq = atomic_inc_return(&entity->fence_seq);
 	dma_fence_init(&fence->scheduled, &drm_sched_fence_ops_scheduled,
 		       &fence->lock, entity->fence_context, seq);
 	dma_fence_init(&fence->finished, &drm_sched_fence_ops_finished,
 		       &fence->lock, entity->fence_context + 1, seq);
-
-	return fence;
 }
 
 module_init(drm_sched_fence_slab_init);

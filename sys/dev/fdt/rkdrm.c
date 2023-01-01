@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.14 2022/07/15 17:57:26 kettenis Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.15 2023/01/01 01:34:33 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -64,10 +64,10 @@ int	rkdrm_unload(struct drm_device *);
 struct drm_driver rkdrm_driver = {
 	.driver_features = DRIVER_ATOMIC | DRIVER_MODESET | DRIVER_GEM,
 
-	.dumb_create = drm_gem_cma_dumb_create,
+	.dumb_create = drm_gem_dma_dumb_create,
 	.dumb_map_offset = drm_gem_dumb_map_offset,
 
-	.gem_fault = drm_gem_cma_fault,
+	.gem_fault = drm_gem_dma_fault,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -78,7 +78,7 @@ struct drm_driver rkdrm_driver = {
 };
 
 const struct drm_gem_object_funcs rkdrm_gem_object_funcs = {
-	.free = drm_gem_cma_free_object,
+	.free = drm_gem_dma_free_object,
 };
 
 const struct cfattach rkdrm_ca = {
@@ -164,7 +164,7 @@ rkdrm_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_helper_mode_fill_fb_struct(ddev, &fb->base, cmd);
 	fb->base.format = drm_format_info(DRM_FORMAT_ARGB8888);
 	fb->base.obj[0] = gem_obj;
-	fb->obj = to_drm_gem_cma_obj(gem_obj);
+	fb->obj = to_drm_gem_dma_obj(gem_obj);
 
 	error = drm_framebuffer_init(ddev, &fb->base, &rkdrm_framebuffer_funcs);
 	if (error != 0)
@@ -511,7 +511,7 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 
 	/* FIXME: CMA pool? */
 
-	sfb->obj = drm_gem_cma_create(ddev, size);
+	sfb->obj = drm_gem_dma_create(ddev, size);
 	if (sfb->obj == NULL) {
 		DRM_ERROR("failed to allocate memory for framebuffer\n");
 		return -ENOMEM;

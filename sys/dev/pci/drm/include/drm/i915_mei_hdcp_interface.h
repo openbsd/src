@@ -3,7 +3,7 @@
 #ifndef _I915_MEI_HDCP_INTERFACE_H_
 #define _I915_MEI_HDCP_INTERFACE_H_
 
-#include <drm/drm_hdcp.h>
+#include <drm/display/drm_hdcp.h>
 
 enum hdcp_wired_protocol {
 	HDCP_PROTOCOL_INVALID,

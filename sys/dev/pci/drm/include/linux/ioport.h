@@ -3,7 +3,7 @@
 #ifndef _LINUX_IOPORT_H
 #define _LINUX_IOPORT_H
 
-#include <sys/types.h>
+#include <linux/types.h>
 
 struct resource {
 	u_long	start;

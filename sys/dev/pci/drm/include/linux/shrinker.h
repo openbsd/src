@@ -20,7 +20,12 @@ struct shrinker {
 
 #define DEFAULT_SEEKS	2
 
-int register_shrinker(struct shrinker *);
+int register_shrinker(struct shrinker *, const char *format, ...);
 void unregister_shrinker(struct shrinker *);
+
+static inline void
+synchronize_shrinkers(void)
+{
+}
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.12 2022/10/03 10:07:01 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.13 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -31,7 +31,7 @@
 #include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/kobject.h>
-#include <linux/dma-mapping.h> /* pci-dma-compat.h -> dma-mapping.h */
+#include <linux/dma-mapping.h>
 #include <linux/mod_devicetable.h>
 
 struct pci_dev;
@@ -72,6 +72,12 @@ struct pci_dev {
 	struct pci_acpi dev;
 };
 #define PCI_ANY_ID (uint16_t) (~0U)
+
+#define PCI_DEVICE(v, p)		\
+	.vendor = (v),			\
+	.device = (p),			\
+	.subvendor = PCI_ANY_ID,	\
+	.subdevice = PCI_ANY_ID
 
 #ifndef PCI_MEM_START
 #define PCI_MEM_START	0
@@ -413,6 +419,12 @@ pci_enable_device(struct pci_dev *pdev)
 static inline void
 pci_disable_device(struct pci_dev *pdev)
 {
+}
+
+static inline int
+pci_wait_for_pending_transaction(struct pci_dev *pdev)
+{
+	return 0;
 }
 
 static inline bool

@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.h,v 1.2 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: anxdp.h,v 1.3 2023/01/01 01:34:33 jsg Exp $ */
 /* $NetBSD: anx_dp.h,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -30,7 +30,7 @@
 #define _DEV_IC_ANXDP_H
 
 #include <drm/drm_bridge.h>
-#include <drm/drm_dp_helper.h>
+#include <drm/display/drm_dp_helper.h>
 #include <drm/drm_panel.h>
 
 struct anxdp_softc;

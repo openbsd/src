@@ -56,6 +56,7 @@
 #include <drm/drm_managed.h>
 #include <drm/drm_mode_object.h>
 #include <drm/drm_print.h>
+#include <drm/drm_privacy_screen_machine.h>
 
 #include <drm/drm_gem.h>
 
@@ -706,7 +707,7 @@ static int drm_dev_init(struct drm_device *dev,
 	mutex_init(&dev->clientlist_mutex);
 	mutex_init(&dev->master_mutex);
 
-	ret = drmm_add_action(dev, drm_dev_init_release, NULL);
+	ret = drmm_add_action_or_reset(dev, drm_dev_init_release, NULL);
 	if (ret)
 		return ret;
 
@@ -1128,6 +1129,7 @@ static const struct file_operations drm_stub_fops = {
 
 static void drm_core_exit(void)
 {
+	drm_privacy_screen_lookup_exit();
 #ifdef __linux__
 	unregister_chrdev(DRM_MAJOR, "drm");
 	debugfs_remove(drm_debugfs_root);
@@ -1160,6 +1162,8 @@ static int __init drm_core_init(void)
 	if (ret < 0)
 		goto error;
 #endif
+
+	drm_privacy_screen_lookup_init();
 
 	drm_core_init_complete = true;
 
@@ -1279,6 +1283,9 @@ drm_probe(struct device *parent, void *match, void *aux)
 	return (1);
 }
 
+int drm_buddy_module_init(void);
+void drm_buddy_module_exit(void);
+
 void
 drm_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -1290,6 +1297,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	if (drm_refcnt == 0) {
 		drm_linux_init();
 		drm_core_init();
+		drm_buddy_module_init();
 	}
 	drm_refcnt++;
 
@@ -1430,6 +1438,7 @@ drm_detach(struct device *self, int flags)
 
 	drm_refcnt--;
 	if (drm_refcnt == 0) {
+		drm_buddy_module_exit();
 		drm_core_exit();
 		drm_linux_exit();
 	}
@@ -1516,7 +1525,8 @@ drm_find_description(int vendor, int device, const struct pci_device_id *idlist)
 	
 	for (i = 0; idlist[i].vendor != 0; i++) {
 		if ((idlist[i].vendor == vendor) &&
-		    (idlist[i].device == device) &&
+		    (idlist[i].device == device ||
+		     idlist[i].device == PCI_ANY_ID) &&
 		    (idlist[i].subvendor == PCI_ANY_ID) &&
 		    (idlist[i].subdevice == PCI_ANY_ID))
 			return &idlist[i];

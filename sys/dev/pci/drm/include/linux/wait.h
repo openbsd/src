@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.8 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.9 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -191,6 +191,29 @@ do {						\
 		__ret = __wait_event_intr_timeout(wqh, condition, timo, PCATCH);\
 	__ret;					\
 })
+
+#define __wait_event_lock_irq(wqh, condition, mtx)			\
+({									\
+	do {								\
+		KASSERT(!cold);						\
+									\
+		mtx_leave(&(mtx));					\
+		mtx_enter(&sch_mtx);					\
+		msleep(&wqh, &sch_mtx, 0, "drmweli", 0);		\
+		mtx_leave(&sch_mtx);					\
+		mtx_enter(&(mtx));					\
+	} while (!(condition));						\
+})
+
+/*
+ * Sleep until `condition' gets true.
+ * called locked, condition checked under lock
+ */
+#define wait_event_lock_irq(wqh, condition, mtx) 		\
+do {								\
+	if (!(condition))					\
+		__wait_event_lock_irq(wqh, condition, mtx); 	\
+} while (0)
 
 static inline void
 wake_up(wait_queue_head_t *wqh)

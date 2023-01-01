@@ -12,4 +12,6 @@
 #define BUILD_BUG_ON_INVALID(x)		((void)0)
 #define BUILD_BUG_ON_ZERO(x)		0
 
+#define static_assert(x, ...)
+
 #endif

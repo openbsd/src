@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.19 2022/08/28 02:54:43 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.20 2023/01/01 01:34:58 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -373,7 +373,7 @@ find_first_bit(volatile void *p, int max)
 }
 
 static inline int
-find_next_bit(volatile void *p, int max, int b)
+find_next_bit(const volatile void *p, int max, int b)
 {
 	volatile u_int *ptr = (volatile u_int *)p;
 

@@ -89,6 +89,7 @@ static int ttm_range_man_alloc(struct ttm_resource_manager *man,
 	spin_unlock(&rman->lock);
 
 	if (unlikely(ret)) {
+		ttm_resource_fini(man, &node->base);
 		kfree(node);
 		return ret;
 	}
@@ -108,7 +109,39 @@ static void ttm_range_man_free(struct ttm_resource_manager *man,
 	drm_mm_remove_node(&node->mm_nodes[0]);
 	spin_unlock(&rman->lock);
 
+	ttm_resource_fini(man, res);
 	kfree(node);
+}
+
+static bool ttm_range_man_intersects(struct ttm_resource_manager *man,
+				     struct ttm_resource *res,
+				     const struct ttm_place *place,
+				     size_t size)
+{
+	struct drm_mm_node *node = &to_ttm_range_mgr_node(res)->mm_nodes[0];
+	u32 num_pages = PFN_UP(size);
+
+	/* Don't evict BOs outside of the requested placement range */
+	if (place->fpfn >= (node->start + num_pages) ||
+	    (place->lpfn && place->lpfn <= node->start))
+		return false;
+
+	return true;
+}
+
+static bool ttm_range_man_compatible(struct ttm_resource_manager *man,
+				     struct ttm_resource *res,
+				     const struct ttm_place *place,
+				     size_t size)
+{
+	struct drm_mm_node *node = &to_ttm_range_mgr_node(res)->mm_nodes[0];
+	u32 num_pages = PFN_UP(size);
+
+	if (node->start < place->fpfn ||
+	    (place->lpfn && (node->start + num_pages) > place->lpfn))
+		return false;
+
+	return true;
 }
 
 static void ttm_range_man_debug(struct ttm_resource_manager *man,
@@ -124,21 +157,25 @@ static void ttm_range_man_debug(struct ttm_resource_manager *man,
 static const struct ttm_resource_manager_func ttm_range_manager_func = {
 	.alloc = ttm_range_man_alloc,
 	.free = ttm_range_man_free,
+	.intersects = ttm_range_man_intersects,
+	.compatible = ttm_range_man_compatible,
 	.debug = ttm_range_man_debug
 };
 
 /**
- * ttm_range_man_init
+ * ttm_range_man_init_nocheck - Initialise a generic range manager for the
+ * selected memory type.
  *
  * @bdev: ttm device
  * @type: memory manager type
  * @use_tt: if the memory manager uses tt
  * @p_size: size of area to be managed in pages.
  *
- * Initialise a generic range manager for the selected memory type.
  * The range manager is installed for this device in the type slot.
+ *
+ * Return: %0 on success or a negative error code on failure
  */
-int ttm_range_man_init(struct ttm_device *bdev,
+int ttm_range_man_init_nocheck(struct ttm_device *bdev,
 		       unsigned type, bool use_tt,
 		       unsigned long p_size)
 {
@@ -154,7 +191,7 @@ int ttm_range_man_init(struct ttm_device *bdev,
 
 	man->func = &ttm_range_manager_func;
 
-	ttm_resource_manager_init(man, p_size);
+	ttm_resource_manager_init(man, bdev, p_size);
 
 	drm_mm_init(&rman->mm, 0, p_size);
 	mtx_init(&rman->lock, IPL_NONE);
@@ -163,17 +200,18 @@ int ttm_range_man_init(struct ttm_device *bdev,
 	ttm_resource_manager_set_used(man, true);
 	return 0;
 }
-EXPORT_SYMBOL(ttm_range_man_init);
+EXPORT_SYMBOL(ttm_range_man_init_nocheck);
 
 /**
- * ttm_range_man_fini
+ * ttm_range_man_fini_nocheck - Remove the generic range manager from a slot
+ * and tear it down.
  *
  * @bdev: ttm device
  * @type: memory manager type
  *
- * Remove the generic range manager from a slot and tear it down.
+ * Return: %0 on success or a negative error code on failure
  */
-int ttm_range_man_fini(struct ttm_device *bdev,
+int ttm_range_man_fini_nocheck(struct ttm_device *bdev,
 		       unsigned type)
 {
 	struct ttm_resource_manager *man = ttm_manager_type(bdev, type);
@@ -200,4 +238,4 @@ int ttm_range_man_fini(struct ttm_device *bdev,
 	kfree(rman);
 	return 0;
 }
-EXPORT_SYMBOL(ttm_range_man_fini);
+EXPORT_SYMBOL(ttm_range_man_fini_nocheck);

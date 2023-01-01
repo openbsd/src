@@ -28,6 +28,8 @@
 #include "dcn20/dcn20_hwseq.h"
 #include "dcn21_hwseq.h"
 
+#include "dcn21_init.h"
+
 static const struct hw_sequencer_funcs dcn21_funcs = {
 	.program_gamut_remap = dcn10_program_gamut_remap,
 	.init_hw = dcn10_init_hw,
@@ -97,6 +99,10 @@ static const struct hw_sequencer_funcs dcn21_funcs = {
 #ifndef TRIM_FSFT
 	.optimize_timing_for_fsft = dcn20_optimize_timing_for_fsft,
 #endif
+	.enable_lvds_link_output = dce110_enable_lvds_link_output,
+	.enable_tmds_link_output = dce110_enable_tmds_link_output,
+	.enable_dp_link_output = dce110_enable_dp_link_output,
+	.disable_link_output = dce110_disable_link_output,
 	.is_abm_supported = dcn21_is_abm_supported,
 	.set_disp_pattern_generator = dcn20_set_disp_pattern_generator,
 	.get_dcc_en_bits = dcn10_get_dcc_en_bits,

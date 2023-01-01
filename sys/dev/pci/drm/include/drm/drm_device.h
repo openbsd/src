@@ -10,7 +10,7 @@
 #include <linux/idr.h>
 #include <linux/pci.h>
 
-#include <drm/drm_hashtab.h>
+#include <drm/drm_legacy.h>
 #include <drm/drm_mode_config.h>
 
 #include <sys/pool.h>
@@ -18,10 +18,7 @@
 struct drm_driver;
 struct drm_minor;
 struct drm_master;
-struct drm_device_dma;
 struct drm_vblank_crtc;
-struct drm_sg_mem;
-struct drm_local_map;
 struct drm_vma_offset_manager;
 struct drm_vram_mm;
 struct drm_fb_helper;

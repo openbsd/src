@@ -161,6 +161,12 @@
 	DCN21_HUBP_REG_COMMON_VARIABLE_LIST;\
 	uint32_t DCN_DMDATA_VM_CNTL
 
+#define DCN32_HUBP_REG_COMMON_VARIABLE_LIST \
+	DCN30_HUBP_REG_COMMON_VARIABLE_LIST;\
+	uint32_t DCHUBP_MALL_CONFIG;\
+	uint32_t DCHUBP_VMPG_CONFIG;\
+	uint32_t UCLK_PSTATE_FORCE
+
 #define DCN2_HUBP_REG_FIELD_VARIABLE_LIST(type) \
 	DCN_HUBP_REG_FIELD_BASE_LIST(type); \
 	type DMDATA_ADDRESS_HIGH;\
@@ -222,16 +228,29 @@
 	type CURSOR_REQ_MODE;\
 	type HUBP_SOFT_RESET
 
+#define DCN32_HUBP_REG_FIELD_VARIABLE_LIST(type) \
+	DCN31_HUBP_REG_FIELD_VARIABLE_LIST(type);\
+	type USE_MALL_SEL; \
+	type USE_MALL_FOR_CURSOR;\
+	type VMPG_SIZE; \
+	type PTE_BUFFER_MODE; \
+	type BIGK_FRAGMENT_SIZE; \
+	type FORCE_ONE_ROW_FOR_FRAME; \
+	type DATA_UCLK_PSTATE_FORCE_EN; \
+	type DATA_UCLK_PSTATE_FORCE_VALUE; \
+	type CURSOR_UCLK_PSTATE_FORCE_EN; \
+	type CURSOR_UCLK_PSTATE_FORCE_VALUE
+
 struct dcn_hubp2_registers {
-	DCN30_HUBP_REG_COMMON_VARIABLE_LIST;
+	DCN32_HUBP_REG_COMMON_VARIABLE_LIST;
 };
 
 struct dcn_hubp2_shift {
-	DCN31_HUBP_REG_FIELD_VARIABLE_LIST(uint8_t);
+	DCN32_HUBP_REG_FIELD_VARIABLE_LIST(uint8_t);
 };
 
 struct dcn_hubp2_mask {
-	DCN31_HUBP_REG_FIELD_VARIABLE_LIST(uint32_t);
+	DCN32_HUBP_REG_FIELD_VARIABLE_LIST(uint32_t);
 };
 
 struct dcn20_hubp {
@@ -330,6 +349,7 @@ void hubp2_program_surface_config(
 bool hubp2_is_flip_pending(struct hubp *hubp);
 
 void hubp2_set_blank(struct hubp *hubp, bool blank);
+void hubp2_set_blank_regs(struct hubp *hubp, bool blank);
 
 void hubp2_cursor_set_position(
 		struct hubp *hubp,

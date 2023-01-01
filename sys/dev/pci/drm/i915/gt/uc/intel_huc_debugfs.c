@@ -5,7 +5,7 @@
 
 #include <drm/drm_print.h>
 
-#include "gt/debugfs_gt.h"
+#include "gt/intel_gt_debugfs.h"
 #include "intel_huc.h"
 #include "intel_huc_debugfs.h"
 
@@ -23,7 +23,7 @@ static int huc_info_show(struct seq_file *m, void *data)
 
 	return 0;
 }
-DEFINE_GT_DEBUGFS_ATTRIBUTE(huc_info);
+DEFINE_INTEL_GT_DEBUGFS_ATTRIBUTE(huc_info);
 
 #endif
 
@@ -31,7 +31,7 @@ void intel_huc_debugfs_register(struct intel_huc *huc, struct dentry *root)
 {
 	STUB();
 #ifdef notyet
-	static const struct debugfs_gt_file files[] = {
+	static const struct intel_gt_debugfs_file files[] = {
 		{ "huc_info", &huc_info_fops, NULL },
 	};
 

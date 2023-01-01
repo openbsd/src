@@ -34,6 +34,7 @@
 #include <linux/sched.h>
 #include <linux/shmem_fs.h>
 #include <linux/file.h>
+#include <linux/module.h>
 #include <drm/drm_cache.h>
 #include <drm/ttm/ttm_bo_driver.h>
 
@@ -68,12 +69,12 @@ int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc)
 	switch (bo->type) {
 	case ttm_bo_type_device:
 		if (zero_alloc)
-			page_flags |= TTM_PAGE_FLAG_ZERO_ALLOC;
+			page_flags |= TTM_TT_FLAG_ZERO_ALLOC;
 		break;
 	case ttm_bo_type_kernel:
 		break;
 	case ttm_bo_type_sg:
-		page_flags |= TTM_PAGE_FLAG_SG;
+		page_flags |= TTM_TT_FLAG_EXTERNAL;
 		break;
 	default:
 		pr_err("Illegal buffer object type\n");
@@ -84,6 +85,9 @@ int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc)
 	if (unlikely(bo->ttm == NULL))
 		return -ENOMEM;
 
+	WARN_ON(bo->ttm->page_flags & TTM_TT_FLAG_EXTERNAL_MAPPABLE &&
+		!(bo->ttm->page_flags & TTM_TT_FLAG_EXTERNAL));
+
 	return 0;
 }
 
@@ -92,13 +96,11 @@ int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc)
  */
 static int ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 {
-	ttm->pages = kvmalloc_array(ttm->num_pages, sizeof(void*),
-			GFP_KERNEL | __GFP_ZERO);
+	ttm->pages = kvcalloc(ttm->num_pages, sizeof(void*), GFP_KERNEL);
 	if (!ttm->pages)
 		return -ENOMEM;
 	ttm->orders = kvmalloc_array(ttm->num_pages,
-				      sizeof(unsigned long),
-				      GFP_KERNEL | __GFP_ZERO);
+	    sizeof(unsigned long), GFP_KERNEL | __GFP_ZERO);
 	if (!ttm->orders)
 		return -ENOMEM;
 	return 0;
@@ -106,10 +108,8 @@ static int ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 
 static int ttm_dma_tt_alloc_page_directory(struct ttm_tt *ttm)
 {
-	ttm->pages = kvmalloc_array(ttm->num_pages,
-				    sizeof(*ttm->pages) +
-				    sizeof(*ttm->dma_address),
-				    GFP_KERNEL | __GFP_ZERO);
+	ttm->pages = kvcalloc(ttm->num_pages, sizeof(*ttm->pages) +
+			      sizeof(*ttm->dma_address), GFP_KERNEL);
 	if (!ttm->pages)
 		return -ENOMEM;
 
@@ -125,24 +125,13 @@ static int ttm_dma_tt_alloc_page_directory(struct ttm_tt *ttm)
 
 static int ttm_sg_tt_alloc_page_directory(struct ttm_tt *ttm)
 {
-	ttm->dma_address = kvmalloc_array(ttm->num_pages,
-					  sizeof(*ttm->dma_address),
-					  GFP_KERNEL | __GFP_ZERO);
+	ttm->dma_address = kvcalloc(ttm->num_pages, sizeof(*ttm->dma_address),
+				    GFP_KERNEL);
 	if (!ttm->dma_address)
 		return -ENOMEM;
+
 	return 0;
 }
-
-void ttm_tt_destroy_common(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	ttm_tt_unpopulate(bdev, ttm);
-
-	if (ttm->swap_storage)
-		uao_detach(ttm->swap_storage);
-
-	ttm->swap_storage = NULL;
-}
-EXPORT_SYMBOL(ttm_tt_destroy_common);
 
 void ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
 {
@@ -152,9 +141,10 @@ void ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
 static void ttm_tt_init_fields(struct ttm_tt *ttm,
 			       struct ttm_buffer_object *bo,
 			       uint32_t page_flags,
-			       enum ttm_caching caching)
+			       enum ttm_caching caching,
+			       unsigned long extra_pages)
 {
-	ttm->num_pages = PAGE_ALIGN(bo->base.size) >> PAGE_SHIFT;
+	ttm->num_pages = (PAGE_ALIGN(bo->base.size) >> PAGE_SHIFT) + extra_pages;
 	ttm->caching = ttm_cached;
 	ttm->page_flags = page_flags;
 	ttm->dma_address = NULL;
@@ -164,9 +154,10 @@ static void ttm_tt_init_fields(struct ttm_tt *ttm,
 }
 
 int ttm_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
-		uint32_t page_flags, enum ttm_caching caching)
+		uint32_t page_flags, enum ttm_caching caching,
+		unsigned long extra_pages)
 {
-	ttm_tt_init_fields(ttm, bo, page_flags, caching);
+	ttm_tt_init_fields(ttm, bo, page_flags, caching, extra_pages);
 
 	if (ttm_tt_alloc_page_directory(ttm)) {
 		pr_err("Failed allocating page table\n");
@@ -178,6 +169,12 @@ EXPORT_SYMBOL(ttm_tt_init);
 
 void ttm_tt_fini(struct ttm_tt *ttm)
 {
+	WARN_ON(ttm->page_flags & TTM_TT_FLAG_PRIV_POPULATED);
+
+	if (ttm->swap_storage)
+		uao_detach(ttm->swap_storage);
+	ttm->swap_storage = NULL;
+
 	if (ttm->pages)
 		kvfree(ttm->pages);
 	else
@@ -199,9 +196,9 @@ int ttm_sg_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
 	int ret;
 	int flags = BUS_DMA_WAITOK;
 
-	ttm_tt_init_fields(ttm, bo, page_flags, caching);
+	ttm_tt_init_fields(ttm, bo, page_flags, caching, 0);
 
-	if (page_flags & TTM_PAGE_FLAG_SG)
+	if (page_flags & TTM_TT_FLAG_EXTERNAL)
 		ret = ttm_sg_tt_alloc_page_directory(ttm);
 	else
 		ret = ttm_dma_tt_alloc_page_directory(ttm);
@@ -272,7 +269,7 @@ int ttm_tt_swapin(struct ttm_tt *ttm)
 
 	uao_detach(swap_storage);
 	ttm->swap_storage = NULL;
-	ttm->page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
+	ttm->page_flags &= ~TTM_TT_FLAG_SWAPPED;
 
 	return 0;
 
@@ -328,7 +325,7 @@ int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
 
 	ttm_tt_unpopulate(bdev, ttm);
 	ttm->swap_storage = swap_storage;
-	ttm->page_flags |= TTM_PAGE_FLAG_SWAPPED;
+	ttm->page_flags |= TTM_TT_FLAG_SWAPPED;
 
 	return ttm->num_pages;
 
@@ -336,19 +333,6 @@ out_err:
 	uao_detach(swap_storage);
 
 	return ret;
-#endif
-}
-
-static void ttm_tt_add_mapping(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-#ifdef __linux__
-	pgoff_t i;
-
-	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
-		return;
-
-	for (i = 0; i < ttm->num_pages; ++i)
-		ttm->pages[i]->mapping = bdev->dev_mapping;
 #endif
 }
 
@@ -363,7 +347,7 @@ int ttm_tt_populate(struct ttm_device *bdev,
 	if (ttm_tt_is_populated(ttm))
 		return 0;
 
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
+	if (!(ttm->page_flags & TTM_TT_FLAG_EXTERNAL)) {
 		atomic_long_add(ttm->num_pages, &ttm_pages_allocated);
 		if (bdev->pool.use_dma32)
 			atomic_long_add(ttm->num_pages,
@@ -388,9 +372,8 @@ int ttm_tt_populate(struct ttm_device *bdev,
 	if (ret)
 		goto error;
 
-	ttm_tt_add_mapping(bdev, ttm);
-	ttm->page_flags |= TTM_PAGE_FLAG_PRIV_POPULATED;
-	if (unlikely(ttm->page_flags & TTM_PAGE_FLAG_SWAPPED)) {
+	ttm->page_flags |= TTM_TT_FLAG_PRIV_POPULATED;
+	if (unlikely(ttm->page_flags & TTM_TT_FLAG_SWAPPED)) {
 		ret = ttm_tt_swapin(ttm);
 		if (unlikely(ret != 0)) {
 			ttm_tt_unpopulate(bdev, ttm);
@@ -401,7 +384,7 @@ int ttm_tt_populate(struct ttm_device *bdev,
 	return 0;
 
 error:
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
+	if (!(ttm->page_flags & TTM_TT_FLAG_EXTERNAL)) {
 		atomic_long_sub(ttm->num_pages, &ttm_pages_allocated);
 		if (bdev->pool.use_dma32)
 			atomic_long_sub(ttm->num_pages,
@@ -411,41 +394,24 @@ error:
 }
 EXPORT_SYMBOL(ttm_tt_populate);
 
-static void ttm_tt_clear_mapping(struct ttm_tt *ttm)
-{
-	int i;
-	struct vm_page *page;
-
-	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
-		return;
-
-	for (i = 0; i < ttm->num_pages; ++i) {
-		page = ttm->pages[i];
-		if (unlikely(page == NULL))
-			continue;
-		pmap_page_protect(page, PROT_NONE);
-	}
-}
-
 void ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm)
 {
 	if (!ttm_tt_is_populated(ttm))
 		return;
 
-	ttm_tt_clear_mapping(ttm);
 	if (bdev->funcs->ttm_tt_unpopulate)
 		bdev->funcs->ttm_tt_unpopulate(bdev, ttm);
 	else
 		ttm_pool_free(&bdev->pool, ttm);
 
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
+	if (!(ttm->page_flags & TTM_TT_FLAG_EXTERNAL)) {
 		atomic_long_sub(ttm->num_pages, &ttm_pages_allocated);
 		if (bdev->pool.use_dma32)
 			atomic_long_sub(ttm->num_pages,
 					&ttm_dma32_pages_allocated);
 	}
 
-	ttm->page_flags &= ~TTM_PAGE_FLAG_PRIV_POPULATED;
+	ttm->page_flags &= ~TTM_TT_FLAG_PRIV_POPULATED;
 }
 
 #ifdef CONFIG_DEBUG_FS
@@ -483,23 +449,23 @@ void ttm_tt_mgr_init(unsigned long num_pages, unsigned long num_dma32_pages)
 }
 
 static void ttm_kmap_iter_tt_map_local(struct ttm_kmap_iter *iter,
-				       struct dma_buf_map *dmap,
+				       struct iosys_map *dmap,
 				       pgoff_t i, bus_space_tag_t bst)
 {
 	struct ttm_kmap_iter_tt *iter_tt =
 		container_of(iter, typeof(*iter_tt), base);
 
 #ifdef __linux__
-	dma_buf_map_set_vaddr(dmap, kmap_local_page_prot(iter_tt->tt->pages[i],
-							 iter_tt->prot));
+	iosys_map_set_vaddr(dmap, kmap_local_page_prot(iter_tt->tt->pages[i],
+						       iter_tt->prot));
 #else
-	dma_buf_map_set_vaddr(dmap, kmap_atomic_prot(iter_tt->tt->pages[i],
-							 iter_tt->prot));
+	iosys_map_set_vaddr(dmap, kmap_atomic_prot(iter_tt->tt->pages[i],
+						       iter_tt->prot));
 #endif
 }
 
 static void ttm_kmap_iter_tt_unmap_local(struct ttm_kmap_iter *iter,
-					 struct dma_buf_map *map, bus_space_tag_t bst)
+					 struct iosys_map *map, bus_space_tag_t bst)
 {
 #ifdef __linux__
 	kunmap_local(map->vaddr);

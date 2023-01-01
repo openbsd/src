@@ -4,8 +4,8 @@
 #define _LINUX_KOBJECT_H
 
 #include <linux/kref.h>
-#include <linux/kernel.h>
 #include <linux/sysfs.h>
+#include <linux/container_of.h>
 
 struct kobject {
 	struct kref kref;

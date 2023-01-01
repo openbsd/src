@@ -110,7 +110,7 @@ int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 	auth->magic = file_priv->magic;
 	mutex_unlock(&dev->master_mutex);
 
-	DRM_DEBUG("%u\n", auth->magic);
+	drm_dbg_core(dev, "%u\n", auth->magic);
 
 	return ret < 0 ? ret : 0;
 }
@@ -121,7 +121,7 @@ int drm_authmagic(struct drm_device *dev, void *data,
 	struct drm_auth *auth = data;
 	struct drm_file *file;
 
-	DRM_DEBUG("%u\n", auth->magic);
+	drm_dbg_core(dev, "%u\n", auth->magic);
 
 	mutex_lock(&dev->master_mutex);
 	file = idr_find(&file_priv->master->magic_map, auth->magic);
@@ -144,14 +144,14 @@ struct drm_master *drm_master_create(struct drm_device *dev)
 
 	kref_init(&master->refcount);
 	drm_master_legacy_init(master);
-	idr_init(&master->magic_map);
+	idr_init_base(&master->magic_map, 1);
 	master->dev = dev;
 
 	/* initialize the tree of output resource lessees */
 	INIT_LIST_HEAD(&master->lessees);
 	INIT_LIST_HEAD(&master->lessee_list);
 	idr_init(&master->leases);
-	idr_init(&master->lessee_idr);
+	idr_init_base(&master->lessee_idr, 1);
 
 	return master;
 }
@@ -280,7 +280,9 @@ int drm_setmaster_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (file_priv->master->lessor != NULL) {
-		DRM_DEBUG_LEASE("Attempt to set lessee %d as master\n", file_priv->master->lessee_id);
+		drm_dbg_lease(dev,
+			      "Attempt to set lessee %d as master\n",
+			      file_priv->master->lessee_id);
 		ret = -EINVAL;
 		goto out_unlock;
 	}
@@ -321,7 +323,9 @@ int drm_dropmaster_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (file_priv->master->lessor != NULL) {
-		DRM_DEBUG_LEASE("Attempt to drop lessee %d as master\n", file_priv->master->lessee_id);
+		drm_dbg_lease(dev,
+			      "Attempt to drop lessee %d as master\n",
+			      file_priv->master->lessee_id);
 		ret = -EINVAL;
 		goto out_unlock;
 	}

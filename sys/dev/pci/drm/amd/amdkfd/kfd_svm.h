@@ -46,8 +46,8 @@ struct svm_range_bo {
 	spinlock_t			list_lock;
 	struct amdgpu_amdkfd_fence	*eviction_fence;
 	struct work_struct		eviction_work;
-	struct svm_range_list		*svms;
 	uint32_t			evicting;
+	struct work_struct		release_work;
 };
 
 enum svm_work_list_ops {
@@ -75,8 +75,6 @@ struct svm_work_list_item {
  *              aligned, page size is (last - start + 1)
  * @list:       link list node, used to scan all ranges of svms
  * @update_list:link list node used to add to update_list
- * @remove_list:link list node used to add to remove list
- * @insert_list:link list node used to add to insert list
  * @mapping:    bo_va mapping structure to create and update GPU page table
  * @npages:     number of pages
  * @dma_addr:   dma mapping address on each GPU for system memory physical page
@@ -112,8 +110,6 @@ struct svm_range {
 	struct interval_tree_node	it_node;
 	struct list_head		list;
 	struct list_head		update_list;
-	struct list_head		remove_list;
-	struct list_head		insert_list;
 	uint64_t			npages;
 	dma_addr_t			*dma_addr[MAX_GPU_INSTANCE];
 	struct ttm_resource		*ttm_res;
@@ -128,7 +124,7 @@ struct svm_range {
 	uint32_t			actual_loc;
 	uint8_t				granularity;
 	atomic_t			invalid;
-	uint64_t			validate_timestamp;
+	ktime_t				validate_timestamp;
 	struct mmu_interval_notifier	notifier;
 	struct svm_work_list_item	work_item;
 	struct list_head		deferred_list;
@@ -136,6 +132,7 @@ struct svm_range {
 	DECLARE_BITMAP(bitmap_access, MAX_GPU_INSTANCE);
 	DECLARE_BITMAP(bitmap_aip, MAX_GPU_INSTANCE);
 	bool				validated_once;
+	bool				mapped_to_gpu;
 };
 
 static inline void svm_range_lock(struct svm_range *prange)
@@ -184,17 +181,30 @@ void schedule_deferred_list_work(struct svm_range_list *svms);
 void svm_range_dma_unmap(struct device *dev, dma_addr_t *dma_addr,
 			 unsigned long offset, unsigned long npages);
 void svm_range_free_dma_mappings(struct svm_range *prange);
-void svm_range_prefault(struct svm_range *prange, struct mm_struct *mm,
-			void *owner);
+int svm_range_get_info(struct kfd_process *p, uint32_t *num_svm_ranges,
+		       uint64_t *svm_priv_data_size);
+int kfd_criu_checkpoint_svm(struct kfd_process *p,
+			    uint8_t __user *user_priv_data,
+			    uint64_t *priv_offset);
+int kfd_criu_restore_svm(struct kfd_process *p,
+			 uint8_t __user *user_priv_ptr,
+			 uint64_t *priv_data_offset,
+			 uint64_t max_priv_data_size);
+int kfd_criu_resume_svm(struct kfd_process *p);
 struct kfd_process_device *
 svm_range_get_pdd_by_adev(struct svm_range *prange, struct amdgpu_device *adev);
+void svm_range_list_lock_and_flush_work(struct svm_range_list *svms, struct mm_struct *mm);
 
 /* SVM API and HMM page migration work together, device memory type
  * is initialized to not 0 when page migration register device memory.
  */
 #define KFD_IS_SVM_API_SUPPORTED(dev) ((dev)->pgmap.type != 0)
 
-void svm_range_bo_unref(struct svm_range_bo *svm_bo);
+void svm_range_bo_unref_async(struct svm_range_bo *svm_bo);
+
+void svm_range_set_max_pages(struct amdgpu_device *adev);
+int svm_range_switch_xnack_reserve_mem(struct kfd_process *p, bool xnack_enabled);
+
 #else
 
 struct kfd_process;
@@ -220,6 +230,35 @@ static inline int svm_range_schedule_evict_svm_bo(
 {
 	WARN_ONCE(1, "SVM eviction fence triggered, but SVM is disabled");
 	return -EINVAL;
+}
+
+static inline int svm_range_get_info(struct kfd_process *p,
+				     uint32_t *num_svm_ranges,
+				     uint64_t *svm_priv_data_size)
+{
+	*num_svm_ranges = 0;
+	*svm_priv_data_size = 0;
+	return 0;
+}
+
+static inline int kfd_criu_checkpoint_svm(struct kfd_process *p,
+					  uint8_t __user *user_priv_data,
+					  uint64_t *priv_offset)
+{
+	return 0;
+}
+
+static inline int kfd_criu_restore_svm(struct kfd_process *p,
+				       uint8_t __user *user_priv_ptr,
+				       uint64_t *priv_data_offset,
+				       uint64_t max_priv_data_size)
+{
+	return -EINVAL;
+}
+
+static inline int kfd_criu_resume_svm(struct kfd_process *p)
+{
+	return 0;
 }
 
 #define KFD_IS_SVM_API_SUPPORTED(dev) false

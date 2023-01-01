@@ -72,9 +72,7 @@
 #define DC_LOG_DSC(...) DRM_DEBUG_KMS(__VA_ARGS__)
 #define DC_LOG_SMU(...) pr_debug("[SMU_MSG]:"__VA_ARGS__)
 #define DC_LOG_DWB(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#if defined(CONFIG_DRM_AMD_DC_DCN)
 #define DC_LOG_DP2(...) DRM_DEBUG_KMS(__VA_ARGS__)
-#endif
 
 struct dal_logger;
 
@@ -121,12 +119,15 @@ enum dc_log_type {
 	LOG_HDMI_RETIMER_REDRIVER,
 	LOG_DSC,
 	LOG_SMU_MSG,
+	LOG_DC2RESERVED4,
+	LOG_DC2RESERVED5,
 	LOG_DWB,
 	LOG_GAMMA_DEBUG,
 	LOG_MAX_HW_POINTS,
 	LOG_ALL_TF_CHANNELS,
 	LOG_SAMPLE_1DLUT,
-	LOG_SECTION_TOTAL_COUNT
+	LOG_DP2,
+	LOG_DC2RESERVED12,
 };
 
 #define DC_MIN_LOG_MASK ((1 << LOG_ERROR) | \

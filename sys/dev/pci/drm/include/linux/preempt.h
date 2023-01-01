@@ -4,6 +4,7 @@
 #define _LINUX_PREEMPT_H
 
 #include <asm/preempt.h>
+#include <sys/param.h> /* for curcpu in machine/cpu.h */
 
 static inline void
 preempt_enable(void)

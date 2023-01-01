@@ -31,9 +31,33 @@
 #define TO_DCN31_RES_POOL(pool)\
 	container_of(pool, struct dcn31_resource_pool, base)
 
+extern struct _vcs_dpi_ip_params_st dcn3_1_ip;
+
 struct dcn31_resource_pool {
 	struct resource_pool base;
 };
+
+bool dcn31_validate_bandwidth(struct dc *dc,
+		struct dc_state *context,
+		bool fast_validate);
+void dcn31_calculate_wm_and_dlg(
+		struct dc *dc, struct dc_state *context,
+		display_e2e_pipe_params_st *pipes,
+		int pipe_cnt,
+		int vlevel);
+int dcn31_populate_dml_pipes_from_context(
+	struct dc *dc, struct dc_state *context,
+	display_e2e_pipe_params_st *pipes,
+	bool fast_validate);
+void
+dcn31_populate_dml_writeback_from_context(struct dc *dc,
+					  struct resource_context *res_ctx,
+					  display_e2e_pipe_params_st *pipes);
+void
+dcn31_set_mcif_arb_params(struct dc *dc,
+			  struct dc_state *context,
+			  display_e2e_pipe_params_st *pipes,
+			  int pipe_cnt);
 
 struct resource_pool *dcn31_create_resource_pool(
 		const struct dc_init_data *init_data,

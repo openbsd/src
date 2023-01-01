@@ -4,6 +4,7 @@
  * Copyright © 2016 Intel Corporation
  */
 
+#include "i915_file_private.h"
 #include "mock_context.h"
 #include "selftests/mock_drm.h"
 #include "selftests/mock_gtt.h"
@@ -23,6 +24,7 @@ mock_context(struct drm_i915_private *i915,
 	kref_init(&ctx->ref);
 	INIT_LIST_HEAD(&ctx->link);
 	ctx->i915 = i915;
+	INIT_WORK(&ctx->release_work, i915_gem_context_release_work);
 
 	rw_init(&ctx->mutex, "mkctx");
 
@@ -40,8 +42,7 @@ mock_context(struct drm_i915_private *i915,
 		if (!ppgtt)
 			goto err_free;
 
-		ctx->vm = i915_vm_open(&ppgtt->vm);
-		i915_vm_put(&ppgtt->vm);
+		ctx->vm = &ppgtt->vm;
 	}
 
 	rw_init(&ctx->engines_mutex, "mkeng");
@@ -57,7 +58,7 @@ mock_context(struct drm_i915_private *i915,
 
 err_vm:
 	if (ctx->vm)
-		i915_vm_close(ctx->vm);
+		i915_vm_put(ctx->vm);
 err_free:
 	kfree(ctx);
 	return NULL;
@@ -87,7 +88,7 @@ live_context(struct drm_i915_private *i915, struct file *file)
 		return ERR_CAST(pc);
 
 	ctx = i915_gem_create_context(i915, pc);
-	proto_context_close(pc);
+	proto_context_close(i915, pc);
 	if (IS_ERR(ctx))
 		return ctx;
 
@@ -162,7 +163,7 @@ kernel_context(struct drm_i915_private *i915,
 	}
 
 	ctx = i915_gem_create_context(i915, pc);
-	proto_context_close(pc);
+	proto_context_close(i915, pc);
 	if (IS_ERR(ctx))
 		return ctx;
 

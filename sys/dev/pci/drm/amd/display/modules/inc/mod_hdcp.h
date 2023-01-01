@@ -104,6 +104,7 @@ struct mod_hdcp_displayport {
 	uint8_t rev;
 	uint8_t assr_enabled;
 	uint8_t mst_enabled;
+	uint8_t usb4_enabled;
 };
 
 struct mod_hdcp_hdmi {
@@ -249,6 +250,7 @@ struct mod_hdcp_link {
 	uint8_t ddc_line;
 	uint8_t link_enc_idx;
 	uint8_t phy_idx;
+	uint8_t dio_output_id;
 	uint8_t hdcp_supported_informational;
 	union {
 		struct mod_hdcp_displayport dp;
@@ -292,7 +294,7 @@ enum mod_hdcp_status mod_hdcp_remove_display(struct mod_hdcp *hdcp,
 		uint8_t index, struct mod_hdcp_output *output);
 
 /* called per display to apply new authentication adjustment */
-enum mod_hdcp_status mod_hdcp_update_authentication(struct mod_hdcp *hdcp,
+enum mod_hdcp_status mod_hdcp_update_display(struct mod_hdcp *hdcp,
 		uint8_t index,
 		struct mod_hdcp_link_adjustment *link_adjust,
 		struct mod_hdcp_display_adjustment *display_adjust,

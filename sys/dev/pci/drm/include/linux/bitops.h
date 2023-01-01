@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitops.h,v 1.4 2022/01/14 06:53:14 jsg Exp $	*/
+/*	$OpenBSD: bitops.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -39,6 +39,7 @@
 /* despite the name these are really ctz */
 #define __ffs(x)		__builtin_ctzl(x)
 #define __ffs64(x)		__builtin_ctzll(x)
+#define ffz(x)			__ffs(~(x))
 
 static inline uint8_t
 hweight8(uint32_t x)

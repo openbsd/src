@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.14 2022/12/30 06:44:36 jca Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.15 2023/01/01 01:34:33 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -32,13 +32,17 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/display/dc \
 		-I$S/dev/pci/drm/amd/display/amdgpu_dm \
 		-I$S/dev/pci/drm/amd/pm/inc \
+		-I$S/dev/pci/drm/amd/pm/legacy-dpm \
 		-I$S/dev/pci/drm/amd/pm/swsmu \
+		-I$S/dev/pci/drm/amd/pm/swsmu/inc \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu11 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu12 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu13 \
-		-I$S/dev/pci/drm/amd/pm/powerplay \
+		-I$S/dev/pci/drm/amd/pm/powerplay/inc \
 		-I$S/dev/pci/drm/amd/pm/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/pm/powerplay/smumgr \
+		-I$S/dev/pci/drm/amd/pm/swsmu/inc \
+		-I$S/dev/pci/drm/amd/pm/swsmu/inc/pmfw_if \
 		-I$S/dev/pci/drm/amd/display/dc/inc \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
 		-I$S/dev/pci/drm/amd/display/dc/clk_mgr \

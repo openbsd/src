@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.6 2022/01/14 06:53:14 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.7 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -61,6 +61,12 @@ ktime_to_ns(ktime_t k)
 
 static inline int64_t
 ktime_get_raw_ns(void)
+{
+	return ktime_to_ns(ktime_get_raw());
+}
+
+static inline int64_t
+ktime_get_raw_fast_ns(void)
 {
 	return ktime_to_ns(ktime_get_raw());
 }

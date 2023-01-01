@@ -8,6 +8,9 @@ struct notifier_block {
 	SLIST_ENTRY(notifier_block) link;
 };
 
+struct blocking_notifier_head {
+};
+
 #define ATOMIC_INIT_NOTIFIER_HEAD(x)
 
 #define NOTIFY_DONE	0

@@ -1,5 +1,7 @@
 /* Public domain. */
 
+#include <linux/kernel.h>
+
 #include <drm/drm_plane.h>
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_atomic_uapi.h>
@@ -10,11 +12,22 @@ int
 drm_gem_plane_helper_prepare_fb(struct drm_plane *dp,
     struct drm_plane_state *dps)
 {
+	struct drm_gem_object *obj;
+	struct dma_fence *f;
+	int r;
+
 	if (dps->fb != NULL) {
-		struct drm_gem_object *obj = dps->fb->obj[0];
-		drm_atomic_set_fence_for_plane(dps,
-		    dma_resv_get_excl_unlocked(obj->resv));
-		
+		obj = dps->fb->obj[0];
+		if (obj == NULL)
+			return -EINVAL;
+		if (dps->fence) {
+			printf("%s: explicit fence not handled\n", __func__);
+			return -EINVAL;
+		}
+		r = dma_resv_get_singleton(obj->resv, DMA_RESV_USAGE_WRITE, &f);
+		if (r)
+			return r;
+		dps->fence = f;
 	}
 
 	return 0;

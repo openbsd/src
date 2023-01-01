@@ -8,8 +8,6 @@
 
 #include <linux/types.h>
 
-#include "i915_reg.h"
-
 #define drm_i915_private inteldrm_softc
 
 enum intel_output_format;
@@ -28,11 +26,12 @@ struct intel_dp;
 struct intel_encoder;
 
 struct link_config_limits {
-	int min_clock, max_clock;
+	int min_rate, max_rate;
 	int min_lane_count, max_lane_count;
 	int min_bpp, max_bpp;
 };
 
+void intel_edp_fixup_vbt_bpp(struct intel_encoder *encoder, int pipe_bpp);
 void intel_dp_adjust_compliance_config(struct intel_dp *intel_dp,
 				       struct intel_crtc_state *pipe_config,
 				       struct link_config_limits *limits);
@@ -60,12 +59,14 @@ int intel_dp_compute_config(struct intel_encoder *encoder,
 			    struct intel_crtc_state *pipe_config,
 			    struct drm_connector_state *conn_state);
 bool intel_dp_is_edp(struct intel_dp *intel_dp);
+bool intel_dp_is_uhbr(const struct intel_crtc_state *crtc_state);
 bool intel_dp_is_port_edp(struct drm_i915_private *dev_priv, enum port port);
 enum irqreturn intel_dp_hpd_pulse(struct intel_digital_port *dig_port,
 				  bool long_hpd);
 void intel_edp_backlight_on(const struct intel_crtc_state *crtc_state,
 			    const struct drm_connector_state *conn_state);
 void intel_edp_backlight_off(const struct drm_connector_state *conn_state);
+void intel_edp_fixup_vbt_bpp(struct intel_encoder *encoder, int pipe_bpp);
 void intel_dp_mst_suspend(struct drm_i915_private *dev_priv);
 void intel_dp_mst_resume(struct drm_i915_private *dev_priv);
 int intel_dp_max_link_rate(struct intel_dp *intel_dp);
@@ -74,12 +75,12 @@ int intel_dp_rate_select(struct intel_dp *intel_dp, int rate);
 
 void intel_dp_compute_rate(struct intel_dp *intel_dp, int port_clock,
 			   u8 *link_bw, u8 *rate_select);
-bool intel_dp_source_supports_hbr2(struct intel_dp *intel_dp);
-bool intel_dp_source_supports_hbr3(struct intel_dp *intel_dp);
+bool intel_dp_source_supports_tps3(struct drm_i915_private *i915);
+bool intel_dp_source_supports_tps4(struct drm_i915_private *i915);
 
 bool intel_dp_get_colorimetry_status(struct intel_dp *intel_dp);
 int intel_dp_link_required(int pixel_clock, int bpp);
-int intel_dp_max_data_rate(int max_link_clock, int max_lanes);
+int intel_dp_max_data_rate(int max_link_rate, int max_lanes);
 bool intel_dp_can_bigjoiner(struct intel_dp *intel_dp);
 bool intel_dp_needs_vsc_sdp(const struct intel_crtc_state *crtc_state,
 			    const struct drm_connector_state *conn_state);
@@ -89,7 +90,7 @@ void intel_dp_compute_psr_vsc_sdp(struct intel_dp *intel_dp,
 				  struct drm_dp_vsc_sdp *vsc);
 void intel_write_dp_vsc_sdp(struct intel_encoder *encoder,
 			    const struct intel_crtc_state *crtc_state,
-			    struct drm_dp_vsc_sdp *vsc);
+			    const struct drm_dp_vsc_sdp *vsc);
 void intel_dp_set_infoframes(struct intel_encoder *encoder, bool enable,
 			     const struct intel_crtc_state *crtc_state,
 			     const struct drm_connector_state *conn_state);

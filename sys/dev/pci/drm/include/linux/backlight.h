@@ -4,6 +4,7 @@
 #define _LINUX_BACKLIGHT_H
 
 #include <sys/task.h>
+#include <linux/fb.h>
 
 struct backlight_device;
 struct device;

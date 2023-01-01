@@ -174,4 +174,10 @@ int	drm_mtrr_del(int, unsigned long, size_t, int);
 
 #define DRM_MTRR_WC	MDF_WRITECOMBINE
 
+static inline void *
+IOMEM_ERR_PTR(long error)
+{
+	return (void *) error;
+}
+
 #endif

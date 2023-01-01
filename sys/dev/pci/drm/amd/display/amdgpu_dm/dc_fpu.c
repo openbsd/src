@@ -59,7 +59,7 @@ static int fpu_recursion_depth;
  * This function tells if the code is already under FPU protection or not. A
  * function that works as an API for a set of FPU operations can use this
  * function for checking if the caller invoked it after DC_FP_START(). For
- * example, take a look at dcn2x.c file.
+ * example, take a look at dcn20_fpu.c file.
  */
 void dc_assert_fp_enabled(void)
 {

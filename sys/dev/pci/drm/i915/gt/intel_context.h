@@ -25,6 +25,8 @@
 		     ##__VA_ARGS__);					\
 } while (0)
 
+#define INTEL_CONTEXT_BANNED_PREEMPT_TIMEOUT_MS (1)
+
 struct i915_gem_ww_ctx;
 
 void intel_context_init(struct intel_context *ce,
@@ -43,6 +45,54 @@ void intel_context_free(struct intel_context *ce);
 
 int intel_context_reconfigure_sseu(struct intel_context *ce,
 				   const struct intel_sseu sseu);
+
+#define PARENT_SCRATCH_SIZE	PAGE_SIZE
+
+static inline bool intel_context_is_child(struct intel_context *ce)
+{
+	return !!ce->parallel.parent;
+}
+
+static inline bool intel_context_is_parent(struct intel_context *ce)
+{
+	return !!ce->parallel.number_children;
+}
+
+static inline bool intel_context_is_pinned(struct intel_context *ce);
+
+static inline struct intel_context *
+intel_context_to_parent(struct intel_context *ce)
+{
+	if (intel_context_is_child(ce)) {
+		/*
+		 * The parent holds ref count to the child so it is always safe
+		 * for the parent to access the child, but the child has a
+		 * pointer to the parent without a ref. To ensure this is safe
+		 * the child should only access the parent pointer while the
+		 * parent is pinned.
+		 */
+		GEM_BUG_ON(!intel_context_is_pinned(ce->parallel.parent));
+
+		return ce->parallel.parent;
+	} else {
+		return ce;
+	}
+}
+
+static inline bool intel_context_is_parallel(struct intel_context *ce)
+{
+	return intel_context_is_child(ce) || intel_context_is_parent(ce);
+}
+
+void intel_context_bind_parent_child(struct intel_context *parent,
+				     struct intel_context *child);
+
+#define for_each_child(parent, ce)\
+	list_for_each_entry(ce, &(parent)->parallel.child_list,\
+			    parallel.child_link)
+#define for_each_child_safe(parent, ce, cn)\
+	list_for_each_entry_safe(ce, cn, &(parent)->parallel.child_list,\
+				 parallel.child_link)
 
 /**
  * intel_context_lock_pinned - Stablises the 'pinned' status of the HW context
@@ -163,7 +213,8 @@ static inline void intel_context_enter(struct intel_context *ce)
 
 static inline void intel_context_mark_active(struct intel_context *ce)
 {
-	lockdep_assert_held(&ce->timeline->mutex);
+	lockdep_assert(lockdep_is_held(&ce->timeline->mutex) ||
+		       test_bit(CONTEXT_IS_PARKING, &ce->flags));
 	++ce->active_count;
 }
 
@@ -193,7 +244,13 @@ intel_context_timeline_lock(struct intel_context *ce)
 	struct intel_timeline *tl = ce->timeline;
 	int err;
 
-	err = mutex_lock_interruptible(&tl->mutex);
+	if (intel_context_is_parent(ce))
+		err = mutex_lock_interruptible_nested(&tl->mutex, 0);
+	else if (intel_context_is_child(ce))
+		err = mutex_lock_interruptible_nested(&tl->mutex,
+						      ce->parallel.child_index + 1);
+	else
+		err = mutex_lock_interruptible(&tl->mutex);
 	if (err)
 		return ERR_PTR(err);
 
@@ -254,17 +311,25 @@ static inline bool intel_context_set_banned(struct intel_context *ce)
 	return test_and_set_bit(CONTEXT_BANNED, &ce->flags);
 }
 
-static inline bool intel_context_ban(struct intel_context *ce,
-				     struct i915_request *rq)
+bool intel_context_ban(struct intel_context *ce, struct i915_request *rq);
+
+static inline bool intel_context_is_schedulable(const struct intel_context *ce)
 {
-	bool ret = intel_context_set_banned(ce);
-
-	trace_intel_context_ban(ce);
-	if (ce->ops->ban)
-		ce->ops->ban(ce, rq);
-
-	return ret;
+	return !test_bit(CONTEXT_EXITING, &ce->flags) &&
+	       !test_bit(CONTEXT_BANNED, &ce->flags);
 }
+
+static inline bool intel_context_is_exiting(const struct intel_context *ce)
+{
+	return test_bit(CONTEXT_EXITING, &ce->flags);
+}
+
+static inline bool intel_context_set_exiting(struct intel_context *ce)
+{
+	return test_and_set_bit(CONTEXT_EXITING, &ce->flags);
+}
+
+bool intel_context_revoke(struct intel_context *ce);
 
 static inline bool
 intel_context_force_single_submission(const struct intel_context *ce)
@@ -296,18 +361,13 @@ intel_context_clear_nopreempt(struct intel_context *ce)
 	clear_bit(CONTEXT_NOPREEMPT, &ce->flags);
 }
 
-static inline u64 intel_context_get_total_runtime_ns(struct intel_context *ce)
+u64 intel_context_get_total_runtime_ns(const struct intel_context *ce);
+u64 intel_context_get_avg_runtime_ns(struct intel_context *ce);
+
+static inline u64 intel_context_clock(void)
 {
-	const u32 period = ce->engine->gt->clock_period_ns;
-
-	return READ_ONCE(ce->runtime.total) * period;
-}
-
-static inline u64 intel_context_get_avg_runtime_ns(struct intel_context *ce)
-{
-	const u32 period = ce->engine->gt->clock_period_ns;
-
-	return mul_u32_u32(ewma_runtime_read(&ce->runtime.avg), period);
+	/* As we mix CS cycles with CPU clocks, use the raw monotonic clock. */
+	return ktime_get_raw_fast_ns();
 }
 
 #endif /* __INTEL_CONTEXT_H__ */

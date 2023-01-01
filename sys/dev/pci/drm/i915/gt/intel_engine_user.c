@@ -47,6 +47,7 @@ static const u8 uabi_classes[] = {
 	[COPY_ENGINE_CLASS] = I915_ENGINE_CLASS_COPY,
 	[VIDEO_DECODE_CLASS] = I915_ENGINE_CLASS_VIDEO,
 	[VIDEO_ENHANCEMENT_CLASS] = I915_ENGINE_CLASS_VIDEO_ENHANCE,
+	[COMPUTE_CLASS] = I915_ENGINE_CLASS_COMPUTE,
 };
 
 static int engine_cmp(void *priv, const struct list_head *A,
@@ -117,7 +118,7 @@ static void set_scheduler_caps(struct drm_i915_private *i915)
 			disabled |= (I915_SCHEDULER_CAP_ENABLED |
 				     I915_SCHEDULER_CAP_PRIORITY);
 
-		if (intel_uc_uses_guc_submission(&i915->gt.uc))
+		if (intel_uc_uses_guc_submission(&to_gt(i915)->uc))
 			enabled |= I915_SCHEDULER_CAP_STATIC_PRIORITY_MAP;
 
 		for (i = 0; i < ARRAY_SIZE(map); i++) {
@@ -161,7 +162,7 @@ static void set_scheduler_caps(struct drm_i915_private *i915)
 			disabled |= (I915_SCHEDULER_CAP_ENABLED |
 				     I915_SCHEDULER_CAP_PRIORITY);
 
-		if (intel_uc_uses_guc_submission(&i915->gt.uc))
+		if (intel_uc_uses_guc_submission(&to_gt(i915)->uc))
 			enabled |= I915_SCHEDULER_CAP_STATIC_PRIORITY_MAP;
 
 		for (i = 0; i < ARRAY_SIZE(map); i++) {
@@ -185,6 +186,7 @@ const char *intel_engine_class_repr(u8 class)
 		[COPY_ENGINE_CLASS] = "bcs",
 		[VIDEO_DECODE_CLASS] = "vcs",
 		[VIDEO_ENHANCEMENT_CLASS] = "vecs",
+		[COMPUTE_CLASS] = "ccs",
 	};
 
 	if (class >= ARRAY_SIZE(uabi_names) || !uabi_names[class])
@@ -208,6 +210,7 @@ static int legacy_ring_idx(const struct legacy_ring *ring)
 		[COPY_ENGINE_CLASS] = { BCS0, 1 },
 		[VIDEO_DECODE_CLASS] = { VCS0, I915_MAX_VCS },
 		[VIDEO_ENHANCEMENT_CLASS] = { VECS0, I915_MAX_VECS },
+		[COMPUTE_CLASS] = { CCS0, I915_MAX_CCS },
 	};
 
 	if (GEM_DEBUG_WARN_ON(ring->class >= ARRAY_SIZE(map)))
@@ -236,7 +239,6 @@ static void add_legacy_ring(struct legacy_ring *ring,
 void intel_engines_driver_register(struct drm_i915_private *i915)
 {
 	struct legacy_ring ring = {};
-	u8 uabi_instances[4] = {};
 	struct list_head *it, *next;
 	struct rb_node **p, *prev;
 	DRM_LIST_HEAD(engines);
@@ -257,8 +259,10 @@ void intel_engines_driver_register(struct drm_i915_private *i915)
 		GEM_BUG_ON(engine->class >= ARRAY_SIZE(uabi_classes));
 		engine->uabi_class = uabi_classes[engine->class];
 
-		GEM_BUG_ON(engine->uabi_class >= ARRAY_SIZE(uabi_instances));
-		engine->uabi_instance = uabi_instances[engine->uabi_class]++;
+		GEM_BUG_ON(engine->uabi_class >=
+			   ARRAY_SIZE(i915->engine_uabi_class_count));
+		engine->uabi_instance =
+			i915->engine_uabi_class_count[engine->uabi_class]++;
 
 		/* Replace the internal name with the final user facing name */
 		memcpy(old, engine->name, sizeof(engine->name));
@@ -288,8 +292,8 @@ void intel_engines_driver_register(struct drm_i915_private *i915)
 		int class, inst;
 		int errors = 0;
 
-		for (class = 0; class < ARRAY_SIZE(uabi_instances); class++) {
-			for (inst = 0; inst < uabi_instances[class]; inst++) {
+		for (class = 0; class < ARRAY_SIZE(i915->engine_uabi_class_count); class++) {
+			for (inst = 0; inst < i915->engine_uabi_class_count[class]; inst++) {
 				engine = intel_engine_lookup_user(i915,
 								  class, inst);
 				if (!engine) {

@@ -32,6 +32,9 @@
 // For dcn20_update_clocks_update_dpp_dto
 #include "dcn20/dcn20_clk_mgr.h"
 
+// For DML FPU code
+#include "dml/dcn20/dcn20_fpu.h"
+
 #include "vg_clk_mgr.h"
 #include "dcn301_smu.h"
 #include "reg_helper.h"
@@ -89,9 +92,9 @@ static int vg_get_active_display_cnt_wa(
 	return display_count;
 }
 
-void vg_update_clocks(struct clk_mgr *clk_mgr_base,
-			struct dc_state *context,
-			bool safe_to_lower)
+static void vg_update_clocks(struct clk_mgr *clk_mgr_base,
+			     struct dc_state *context,
+			     bool safe_to_lower)
 {
 	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
 	struct dc_clocks *new_clocks = &context->bw_ctx.bw.dcn.clk;
@@ -176,8 +179,7 @@ void vg_update_clocks(struct clk_mgr *clk_mgr_base,
 		if (update_dppclk || update_dispclk)
 			dcn301_smu_set_dppclk(clk_mgr, clk_mgr_base->clks.dppclk_khz);
 		// always update dtos unless clock is lowered and not safe to lower
-		if (new_clocks->dppclk_khz >= dc->current_state->bw_ctx.bw.dcn.clk.dppclk_khz)
-			dcn20_update_clocks_update_dpp_dto(clk_mgr, context, safe_to_lower);
+		dcn20_update_clocks_update_dpp_dto(clk_mgr, context, safe_to_lower);
 	}
 }
 
@@ -367,18 +369,6 @@ static void vg_dump_clk_registers(struct clk_state_registers_and_bypass *regs_an
 	}
 }
 
-/* This function produce translated logical clk state values*/
-void vg_get_clk_states(struct clk_mgr *clk_mgr_base, struct clk_states *s)
-{
-
-	struct clk_state_registers_and_bypass sb = { 0 };
-	struct clk_log_info log_info = { 0 };
-
-	vg_dump_clk_registers(&sb, clk_mgr_base, &log_info);
-
-	s->dprefclk_khz = sb.dprefclk * 1000;
-}
-
 static void vg_enable_pme_wa(struct clk_mgr *clk_mgr_base)
 {
 	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
@@ -386,7 +376,7 @@ static void vg_enable_pme_wa(struct clk_mgr *clk_mgr_base)
 	dcn301_smu_enable_pme_wa(clk_mgr);
 }
 
-void vg_init_clocks(struct clk_mgr *clk_mgr)
+static void vg_init_clocks(struct clk_mgr *clk_mgr)
 {
 	memset(&(clk_mgr->clks), 0, sizeof(struct dc_clocks));
 	// Assumption is that boot state always supports pstate
@@ -539,81 +529,6 @@ static struct clk_bw_params vg_bw_params = {
 
 };
 
-static struct wm_table ddr4_wm_table = {
-	.entries = {
-		{
-			.wm_inst = WM_A,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 6.09,
-			.sr_enter_plus_exit_time_us = 7.14,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_B,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 10.12,
-			.sr_enter_plus_exit_time_us = 11.48,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_C,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 10.12,
-			.sr_enter_plus_exit_time_us = 11.48,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_D,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.72,
-			.sr_exit_time_us = 10.12,
-			.sr_enter_plus_exit_time_us = 11.48,
-			.valid = true,
-		},
-	}
-};
-
-static struct wm_table lpddr5_wm_table = {
-	.entries = {
-		{
-			.wm_inst = WM_A,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.65333,
-			.sr_exit_time_us = 13.5,
-			.sr_enter_plus_exit_time_us = 16.5,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_B,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.65333,
-			.sr_exit_time_us = 13.5,
-			.sr_enter_plus_exit_time_us = 16.5,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_C,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.65333,
-			.sr_exit_time_us = 13.5,
-			.sr_enter_plus_exit_time_us = 16.5,
-			.valid = true,
-		},
-		{
-			.wm_inst = WM_D,
-			.wm_type = WM_TYPE_PSTATE_CHG,
-			.pstate_latency_us = 11.65333,
-			.sr_exit_time_us = 13.5,
-			.sr_enter_plus_exit_time_us = 16.5,
-			.valid = true,
-		},
-	}
-};
-
-
 static unsigned int find_dcfclk_for_voltage(const struct vg_dpm_clocks *clock_table,
 		unsigned int voltage)
 {
@@ -683,10 +598,9 @@ static void vg_clk_mgr_helper_populate_bw_params(
 		/*
 		 * WM set D will be re-purposed for memory retraining
 		 */
-		bw_params->wm_table.entries[WM_D].pstate_latency_us = LPDDR_MEM_RETRAIN_LATENCY;
-		bw_params->wm_table.entries[WM_D].wm_inst = WM_D;
-		bw_params->wm_table.entries[WM_D].wm_type = WM_TYPE_RETRAINING;
-		bw_params->wm_table.entries[WM_D].valid = true;
+		DC_FP_START();
+		dcn21_clk_mgr_set_bw_params_wm_table(bw_params);
+		DC_FP_END();
 	}
 
 }
@@ -753,7 +667,7 @@ void vg_clk_mgr_construct(
 				sizeof(struct watermarks),
 				&clk_mgr->smu_wm_set.mc_address.quad_part);
 
-	if (clk_mgr->smu_wm_set.wm_set == 0) {
+	if (!clk_mgr->smu_wm_set.wm_set) {
 		clk_mgr->smu_wm_set.wm_set = &dummy_wms;
 		clk_mgr->smu_wm_set.mc_address.quad_part = 0;
 	}

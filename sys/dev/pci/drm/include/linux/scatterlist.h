@@ -1,4 +1,4 @@
-/*	$OpenBSD: scatterlist.h,v 1.4 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: scatterlist.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <linux/mm.h>
+#include <linux/fwnode.h> /* via asm/io.h -> logic_pio.h */
 
 struct scatterlist {
 	struct vm_page *__page;

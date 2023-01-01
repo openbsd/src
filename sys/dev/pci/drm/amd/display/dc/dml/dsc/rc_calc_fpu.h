@@ -27,7 +27,7 @@
 #define __RC_CALC_FPU_H__
 
 #include "os_types.h"
-#include <drm/drm_dsc.h>
+#include <drm/display/drm_dsc.h>
 
 #define QP_SET_SIZE 15
 
@@ -77,10 +77,6 @@ struct qp_entry {
 };
 
 typedef struct qp_entry qp_table[];
-
-u32 _do_bytes_per_pixel_calc(int slice_width,
-		u16 drm_bpp,
-		bool is_navite_422_or_420);
 
 void _do_calc_rc_params(struct rc_params *rc,
 		enum colour_mode cm,

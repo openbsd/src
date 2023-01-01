@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_memory.h,v 1.4 2022/01/14 06:53:14 jsg Exp $	*/
+/*	$OpenBSD: set_memory.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -18,6 +18,7 @@
 #ifndef _ASM_SET_MEMORY_H
 #define _ASM_SET_MEMORY_H
 
+#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
 

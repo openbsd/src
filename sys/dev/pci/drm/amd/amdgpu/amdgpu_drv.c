@@ -31,14 +31,15 @@
 #include "amdgpu_drv.h"
 
 #include <drm/drm_pciids.h>
-#include <linux/console.h>
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
 #include <linux/vga_switcheroo.h>
 #include <drm/drm_probe_helper.h>
 #include <linux/mmu_notifier.h>
 #include <linux/suspend.h>
+#include <linux/cc_platform.h>
 #include <linux/fb.h>
+#include <linux/dynamic_debug.h>
 
 #include "amdgpu.h"
 #include "amdgpu_irq.h"
@@ -81,7 +82,7 @@
  * - 3.24.0 - Add high priority compute support for gfx9
  * - 3.25.0 - Add support for sensor query info (stable pstate sclk/mclk).
  * - 3.26.0 - GFX9: Process AMDGPU_IB_FLAG_TC_WB_NOT_INVALIDATE.
- * - 3.27.0 - Add new chunk to to AMDGPU_CS to enable BO_LIST creation.
+ * - 3.27.0 - Add new chunk to AMDGPU_CS to enable BO_LIST creation.
  * - 3.28.0 - Add AMDGPU_CHUNK_ID_SCHEDULED_DEPENDENCIES
  * - 3.29.0 - Add AMDGPU_IB_FLAG_RESET_GDS_MAX_WAVE_ID
  * - 3.30.0 - Add AMDGPU_SCHED_OP_CONTEXT_PRIORITY_OVERRIDE.
@@ -97,9 +98,16 @@
  * - 3.40.0 - Add AMDGPU_IDS_FLAGS_TMZ
  * - 3.41.0 - Add video codec query
  * - 3.42.0 - Add 16bpc fixed point display support
+ * - 3.43.0 - Add device hot plug/unplug support
+ * - 3.44.0 - DCN3 supports DCC independent block settings: !64B && 128B, 64B && 128B
+ * - 3.45.0 - Add context ioctl stable pstate interface
+ * - 3.46.0 - To enable hot plug amdgpu tests in libdrm
+ * - 3.47.0 - Add AMDGPU_GEM_CREATE_DISCARDABLE and AMDGPU_VM_NOALLOC flags
+ * - 3.48.0 - Add IP discovery version info to HW INFO
+ *   3.49.0 - Add gang submit into CS IOCTL
  */
 #define KMS_DRIVER_MAJOR	3
-#define KMS_DRIVER_MINOR	42
+#define KMS_DRIVER_MINOR	49
 #define KMS_DRIVER_PATCHLEVEL	0
 
 int amdgpu_vram_limit;
@@ -107,8 +115,6 @@ int amdgpu_vis_vram_limit;
 int amdgpu_gart_size = -1; /* auto */
 int amdgpu_gtt_size = -1; /* auto */
 int amdgpu_moverate = -1; /* auto */
-int amdgpu_benchmarking;
-int amdgpu_testing;
 int amdgpu_audio = -1;
 int amdgpu_disp_priority;
 int amdgpu_hw_i2c;
@@ -134,7 +140,7 @@ int amdgpu_sched_jobs = 32;
 int amdgpu_sched_hw_submission = 2;
 uint amdgpu_pcie_gen_cap;
 uint amdgpu_pcie_lane_cap;
-uint amdgpu_cg_mask = 0xffffffff;
+u64 amdgpu_cg_mask = 0xffffffffffffffff;
 uint amdgpu_pg_mask = 0xffffffff;
 uint amdgpu_sdma_phase_quantum = 32;
 char *amdgpu_disable_cu = NULL;
@@ -165,19 +171,34 @@ int amdgpu_smu_pptable_id = -1;
  */
 uint amdgpu_dc_feature_mask = 2;
 uint amdgpu_dc_debug_mask;
+uint amdgpu_dc_visual_confirm;
 int amdgpu_async_gfx_ring = 1;
 int amdgpu_mcbp;
 int amdgpu_discovery = -1;
 int amdgpu_mes;
+int amdgpu_mes_kiq;
 int amdgpu_noretry = -1;
 int amdgpu_force_asic_type = -1;
 int amdgpu_tmz = -1; /* auto */
-uint amdgpu_freesync_vid_mode;
 int amdgpu_reset_method = -1; /* auto */
 int amdgpu_num_kcq = -1;
 int amdgpu_smartshift_bias;
+int amdgpu_use_xgmi_p2p = 1;
+int amdgpu_vcnfw_log;
 
 static void amdgpu_drv_delayed_reset_work_handler(struct work_struct *work);
+
+DECLARE_DYNDBG_CLASSMAP(drm_debug_classes, DD_CLASS_TYPE_DISJOINT_BITS, 0,
+			"DRM_UT_CORE",
+			"DRM_UT_DRIVER",
+			"DRM_UT_KMS",
+			"DRM_UT_PRIME",
+			"DRM_UT_ATOMIC",
+			"DRM_UT_VBL",
+			"DRM_UT_STATE",
+			"DRM_UT_LEASE",
+			"DRM_UT_DP",
+			"DRM_UT_DRMRES");
 
 struct amdgpu_mgpu_info mgpu_info = {
 	.mutex = RWLOCK_INITIALIZER("mgpu_info"),
@@ -228,20 +249,6 @@ module_param_named(gttsize, amdgpu_gtt_size, int, 0600);
  */
 MODULE_PARM_DESC(moverate, "Maximum buffer migration rate in MB/s. (32, 64, etc., -1=auto, 0=1=disabled)");
 module_param_named(moverate, amdgpu_moverate, int, 0600);
-
-/**
- * DOC: benchmark (int)
- * Run benchmarks. The default is 0 (Skip benchmarks).
- */
-MODULE_PARM_DESC(benchmark, "Run benchmark");
-module_param_named(benchmark, amdgpu_benchmarking, int, 0444);
-
-/**
- * DOC: test (int)
- * Test BO GTT->VRAM and VRAM->GTT GPU copies. The default is 0 (Skip test, only set 1 to run test).
- */
-MODULE_PARM_DESC(test, "Run tests");
-module_param_named(test, amdgpu_testing, int, 0444);
 
 /**
  * DOC: audio (int)
@@ -312,9 +319,12 @@ module_param_named(dpm, amdgpu_dpm, int, 0444);
 
 /**
  * DOC: fw_load_type (int)
- * Set different firmware loading type for debugging (0 = direct, 1 = SMU, 2 = PSP). The default is -1 (auto).
+ * Set different firmware loading type for debugging, if supported.
+ * Set to 0 to force direct loading if supported by the ASIC.  Set
+ * to -1 to select the default loading mode for the ASIC, as defined
+ * by the driver.  The default is -1 (auto).
  */
-MODULE_PARM_DESC(fw_load_type, "firmware loading type (0 = direct, 1 = SMU, 2 = PSP, -1 = auto)");
+MODULE_PARM_DESC(fw_load_type, "firmware loading type (3 = rlc backdoor autoload if supported, 2 = smu load if supported, 1 = psp load, 0 = force direct if supported, -1 = auto)");
 module_param_named(fw_load_type, amdgpu_fw_load_type, int, 0444);
 
 /**
@@ -326,10 +336,11 @@ module_param_named(aspm, amdgpu_aspm, int, 0444);
 
 /**
  * DOC: runpm (int)
- * Override for runtime power management control for dGPUs in PX/HG laptops. The amdgpu driver can dynamically power down
- * the dGPU on PX/HG laptops when it is idle. The default is -1 (auto enable). Setting the value to 0 disables this functionality.
+ * Override for runtime power management control for dGPUs. The amdgpu driver can dynamically power down
+ * the dGPUs when they are idle if supported. The default is -1 (auto enable).
+ * Setting the value to 0 disables this functionality.
  */
-MODULE_PARM_DESC(runpm, "PX runtime pm (2 = force enable with BAMACO, 1 = force enable with BACO, 0 = disable, -1 = PX only default)");
+MODULE_PARM_DESC(runpm, "PX runtime pm (2 = force enable with BAMACO, 1 = force enable with BACO, 0 = disable, -1 = auto)");
 module_param_named(runpm, amdgpu_runtime_pm, int, 0444);
 
 /**
@@ -461,12 +472,12 @@ MODULE_PARM_DESC(pcie_lane_cap, "PCIE Lane Caps (0: autodetect (default))");
 module_param_named(pcie_lane_cap, amdgpu_pcie_lane_cap, uint, 0444);
 
 /**
- * DOC: cg_mask (uint)
+ * DOC: cg_mask (ullong)
  * Override Clockgating features enabled on GPU (0 = disable clock gating). See the AMD_CG_SUPPORT flags in
- * drivers/gpu/drm/amd/include/amd_shared.h. The default is 0xffffffff (all enabled).
+ * drivers/gpu/drm/amd/include/amd_shared.h. The default is 0xffffffffffffffff (all enabled).
  */
 MODULE_PARM_DESC(cg_mask, "Clockgating flags mask (0 = disable clock gating)");
-module_param_named(cg_mask, amdgpu_cg_mask, uint, 0444);
+module_param_named(cg_mask, amdgpu_cg_mask, ullong, 0444);
 
 /**
  * DOC: pg_mask (uint)
@@ -628,7 +639,7 @@ module_param_named(mcbp, amdgpu_mcbp, int, 0444);
 /**
  * DOC: discovery (int)
  * Allow driver to discover hardware IP information from IP Discovery table at the top of VRAM.
- * (-1 = auto (default), 0 = disabled, 1 = enabled)
+ * (-1 = auto (default), 0 = disabled, 1 = enabled, 2 = use ip_discovery table from file)
  */
 MODULE_PARM_DESC(discovery,
 	"Allow driver to discover hardware IPs from IP Discovery table at the top of VRAM");
@@ -642,6 +653,15 @@ module_param_named(discovery, amdgpu_discovery, int, 0444);
 MODULE_PARM_DESC(mes,
 	"Enable Micro Engine Scheduler (0 = disabled (default), 1 = enabled)");
 module_param_named(mes, amdgpu_mes, int, 0444);
+
+/**
+ * DOC: mes_kiq (int)
+ * Enable Micro Engine Scheduler KIQ. This is a new engine pipe for kiq.
+ * (0 = disabled (default), 1 = enabled)
+ */
+MODULE_PARM_DESC(mes_kiq,
+	"Enable Micro Engine Scheduler KIQ (0 = disabled (default), 1 = enabled)");
+module_param_named(mes_kiq, amdgpu_mes_kiq, int, 0444);
 
 /**
  * DOC: noretry (int)
@@ -661,6 +681,13 @@ MODULE_PARM_DESC(force_asic_type,
 	"A non negative value used to specify the asic type for all supported GPUs");
 module_param_named(force_asic_type, amdgpu_force_asic_type, int, 0444);
 
+/**
+ * DOC: use_xgmi_p2p (int)
+ * Enables/disables XGMI P2P interface (0 = disable, 1 = enable).
+ */
+MODULE_PARM_DESC(use_xgmi_p2p,
+	"Enable XGMI P2P interface (0 = disable; 1 = enable (default))");
+module_param_named(use_xgmi_p2p, amdgpu_use_xgmi_p2p, int, 0444);
 
 
 #ifdef CONFIG_HSA_AMD
@@ -734,7 +761,7 @@ MODULE_PARM_DESC(debug_largebar,
  * systems with a broken CRAT table.
  *
  * Default is auto (according to asic type, iommu_v2, and crat table, to decide
- * whehter use CRAT)
+ * whether use CRAT)
  */
 int ignore_crat;
 module_param(ignore_crat, int, 0444);
@@ -793,6 +820,16 @@ module_param_named(no_queue_eviction_on_vm_fault, amdgpu_no_queue_eviction_on_vm
 #endif
 
 /**
+ * DOC: pcie_p2p (bool)
+ * Enable PCIe P2P (requires large-BAR). Default value: true (on)
+ */
+#ifdef CONFIG_HSA_AMD_P2P
+bool pcie_p2p = true;
+module_param(pcie_p2p, bool, 0444);
+MODULE_PARM_DESC(pcie_p2p, "Enable PCIe P2P (requires large-BAR). (N = off, Y = on(default))");
+#endif
+
+/**
  * DOC: dcfeaturemask (uint)
  * Override display features enabled. See enum DC_FEATURE_MASK in drivers/gpu/drm/amd/include/amd_shared.h.
  * The default is the current set of stable display features.
@@ -806,6 +843,9 @@ module_param_named(dcfeaturemask, amdgpu_dc_feature_mask, uint, 0444);
  */
 MODULE_PARM_DESC(dcdebugmask, "all debug options disabled (default))");
 module_param_named(dcdebugmask, amdgpu_dc_debug_mask, uint, 0444);
+
+MODULE_PARM_DESC(visualconfirm, "Visual confirm (0 = off (default), 1 = MPO, 5 = PSR)");
+module_param_named(visualconfirm, amdgpu_dc_visual_confirm, uint, 0444);
 
 /**
  * DOC: abmlevel (uint)
@@ -838,36 +878,10 @@ MODULE_PARM_DESC(tmz, "Enable TMZ feature (-1 = auto (default), 0 = off, 1 = on)
 module_param_named(tmz, amdgpu_tmz, int, 0444);
 
 /**
- * DOC: freesync_video (uint)
- * Enable the optimization to adjust front porch timing to achieve seamless
- * mode change experience when setting a freesync supported mode for which full
- * modeset is not needed.
- *
- * The Display Core will add a set of modes derived from the base FreeSync
- * video mode into the corresponding connector's mode list based on commonly
- * used refresh rates and VRR range of the connected display, when users enable
- * this feature. From the userspace perspective, they can see a seamless mode
- * change experience when the change between different refresh rates under the
- * same resolution. Additionally, userspace applications such as Video playback
- * can read this modeset list and change the refresh rate based on the video
- * frame rate. Finally, the userspace can also derive an appropriate mode for a
- * particular refresh rate based on the FreeSync Mode and add it to the
- * connector's mode list.
- *
- * Note: This is an experimental feature.
- *
- * The default value: 0 (off).
- */
-MODULE_PARM_DESC(
-	freesync_video,
-	"Enable freesync modesetting optimization feature (0 = off (default), 1 = on)");
-module_param_named(freesync_video, amdgpu_freesync_vid_mode, uint, 0444);
-
-/**
  * DOC: reset_method (int)
- * GPU reset method (-1 = auto (default), 0 = legacy, 1 = mode0, 2 = mode1, 3 = mode2, 4 = baco, 5 = pci)
+ * GPU reset method (-1 = auto (default), 0 = legacy, 1 = mode0, 2 = mode1, 3 = mode2, 4 = baco)
  */
-MODULE_PARM_DESC(reset_method, "GPU reset method (-1 = auto (default), 0 = legacy, 1 = mode0, 2 = mode1, 3 = mode2, 4 = baco/bamaco, 5 = pci)");
+MODULE_PARM_DESC(reset_method, "GPU reset method (-1 = auto (default), 0 = legacy, 1 = mode0, 2 = mode1, 3 = mode2, 4 = baco/bamaco)");
 module_param_named(reset_method, amdgpu_reset_method, int, 0444);
 
 /**
@@ -876,11 +890,18 @@ module_param_named(reset_method, amdgpu_reset_method, int, 0444);
  * result in the GPU entering bad status when the number of total
  * faulty pages by ECC exceeds the threshold value.
  */
-MODULE_PARM_DESC(bad_page_threshold, "Bad page threshold(-1 = auto(default value), 0 = disable bad page retirement)");
+MODULE_PARM_DESC(bad_page_threshold, "Bad page threshold(-1 = auto(default value), 0 = disable bad page retirement, -2 = ignore bad page threshold)");
 module_param_named(bad_page_threshold, amdgpu_bad_page_threshold, int, 0444);
 
 MODULE_PARM_DESC(num_kcq, "number of kernel compute queue user want to setup (8 if set to greater than 8 or less than 0, only affect gfx 8+)");
 module_param_named(num_kcq, amdgpu_num_kcq, int, 0444);
+
+/**
+ * DOC: vcnfw_log (int)
+ * Enable vcnfw log output for debugging, the default is disabled.
+ */
+MODULE_PARM_DESC(vcnfw_log, "Enable vcnfw log(0 = disable (default value), 1 = enable)");
+module_param_named(vcnfw_log, amdgpu_vcnfw_log, int, 0444);
 
 /**
  * DOC: smu_pptable_id (int)
@@ -1602,7 +1623,7 @@ static const u16 amdgpu_unsupported_pciidlist[] = {
 	0x793f,
 };
 
-const struct pci_device_id amdgpu_pciidlist[] = {
+static const struct pci_device_id pciidlist[] = {
 #ifdef  CONFIG_DRM_AMDGPU_SI
 	{0x1002, 0x6780, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_TAHITI},
 	{0x1002, 0x6784, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_TAHITI},
@@ -1936,13 +1957,14 @@ const struct pci_device_id amdgpu_pciidlist[] = {
 	{0x1002, 0x73FF, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_DIMGREY_CAVEFISH},
 
 	/* Aldebaran */
-	{0x1002, 0x7408, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN|AMD_EXP_HW_SUPPORT},
-	{0x1002, 0x740C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN|AMD_EXP_HW_SUPPORT},
-	{0x1002, 0x740F, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN|AMD_EXP_HW_SUPPORT},
-	{0x1002, 0x7410, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN|AMD_EXP_HW_SUPPORT},
+	{0x1002, 0x7408, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN},
+	{0x1002, 0x740C, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN},
+	{0x1002, 0x740F, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN},
+	{0x1002, 0x7410, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_ALDEBARAN},
 
 	/* CYAN_SKILLFISH */
 	{0x1002, 0x13FE, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_CYAN_SKILLFISH|AMD_IS_APU},
+	{0x1002, 0x143F, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_CYAN_SKILLFISH|AMD_IS_APU},
 
 	/* BEIGE_GOBY */
 	{0x1002, 0x7420, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_BEIGE_GOBY},
@@ -1952,31 +1974,46 @@ const struct pci_device_id amdgpu_pciidlist[] = {
 	{0x1002, 0x7424, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_BEIGE_GOBY},
 	{0x1002, 0x743F, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_BEIGE_GOBY},
 
+	{ PCI_DEVICE(0x1002, PCI_ANY_ID),
+	  .class = PCI_CLASS_DISPLAY_VGA << 8,
+	  .class_mask = 0xffffff,
+	  .driver_data = CHIP_IP_DISCOVERY },
+
+	{ PCI_DEVICE(0x1002, PCI_ANY_ID),
+	  .class = PCI_CLASS_DISPLAY_OTHER << 8,
+	  .class_mask = 0xffffff,
+	  .driver_data = CHIP_IP_DISCOVERY },
+
 	{0, 0, 0}
 };
 
 MODULE_DEVICE_TABLE(pci, pciidlist);
 
-const struct drm_driver amdgpu_kms_driver;
+static const struct drm_driver amdgpu_kms_driver;
 
-static bool amdgpu_is_fw_framebuffer(resource_size_t base,
-				     resource_size_t size)
+static void amdgpu_get_secondary_funcs(struct amdgpu_device *adev)
 {
-	bool found = false;
-#if IS_REACHABLE(CONFIG_FB)
-	struct apertures_struct *a;
+	STUB();
+#ifdef notyet
+	struct pci_dev *p = NULL;
+	int i;
 
-	a = alloc_apertures(1);
-	if (!a)
-		return false;
-
-	a->ranges[0].base = base;
-	a->ranges[0].size = size;
-
-	found = is_firmware_framebuffer(a);
-	kfree(a);
+	/* 0 - GPU
+	 * 1 - audio
+	 * 2 - USB
+	 * 3 - UCSI
+	 */
+	for (i = 1; i < 4; i++) {
+		p = pci_get_domain_bus_and_slot(pci_domain_nr(adev->pdev->bus),
+						adev->pdev->bus->number, i);
+		if (p) {
+			pm_runtime_get_sync(&p->dev);
+			pm_runtime_mark_last_busy(&p->dev);
+			pm_runtime_put_autosuspend(&p->dev);
+			pci_dev_put(p);
+		}
+	}
 #endif
-	return found;
 }
 
 #ifdef notyet
@@ -1988,17 +2025,15 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 	unsigned long flags = ent->driver_data;
 	int ret, retry = 0, i;
 	bool supports_atomic = false;
-	bool is_fw_fb;
-	resource_size_t base, size;
-
-	if (amdgpu_aspm == -1 && !pcie_aspm_enabled(pdev))
-		amdgpu_aspm = 0;
 
 	/* skip devices which are owned by radeon */
 	for (i = 0; i < ARRAY_SIZE(amdgpu_unsupported_pciidlist); i++) {
 		if (amdgpu_unsupported_pciidlist[i] == pdev->device)
 			return -ENODEV;
 	}
+
+	if (amdgpu_aspm == -1 && !pcie_aspm_enabled(pdev))
+		amdgpu_aspm = 0;
 
 	if (amdgpu_virtual_display ||
 	    amdgpu_device_asic_has_dc_support(flags & AMD_ASIC_MASK))
@@ -2014,7 +2049,8 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 	 * however, SME requires an indirect IOMMU mapping because the encryption
 	 * bit is beyond the DMA mask of the chip.
 	 */
-	if (mem_encrypt_active() && ((flags & AMD_ASIC_MASK) == CHIP_RAVEN)) {
+	if (cc_platform_has(CC_ATTR_MEM_ENCRYPT) &&
+	    ((flags & AMD_ASIC_MASK) == CHIP_RAVEN)) {
 		dev_info(&pdev->dev,
 			 "SME is not compatible with RAVEN\n");
 		return -ENOTSUPP;
@@ -2055,10 +2091,6 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 	}
 #endif
 
-	base = pci_resource_start(pdev, 0);
-	size = pci_resource_len(pdev, 0);
-	is_fw_fb = amdgpu_is_fw_framebuffer(base, size);
-
 	/* Get rid of things like offb */
 	ret = drm_aperture_remove_conflicting_pci_framebuffers(pdev, &amdgpu_kms_driver);
 	if (ret)
@@ -2071,7 +2103,6 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 	adev->dev  = &pdev->dev;
 	adev->pdev = pdev;
 	ddev = adev_to_drm(adev);
-	adev->is_fw_fb = is_fw_fb;
 
 	if (!supports_atomic)
 		ddev->driver_features &= ~DRIVER_ATOMIC;
@@ -2097,9 +2128,64 @@ retry_init:
 		goto err_pci;
 	}
 
+	/*
+	 * 1. don't init fbdev on hw without DCE
+	 * 2. don't init fbdev if there are no connectors
+	 */
+	if (adev->mode_info.mode_config_initialized &&
+	    !list_empty(&adev_to_drm(adev)->mode_config.connector_list)) {
+		/* select 8 bpp console on low vram cards */
+		if (adev->gmc.real_vram_size <= (32*1024*1024))
+			drm_fbdev_generic_setup(adev_to_drm(adev), 8);
+		else
+			drm_fbdev_generic_setup(adev_to_drm(adev), 32);
+	}
+
 	ret = amdgpu_debugfs_init(adev);
 	if (ret)
 		DRM_ERROR("Creating debugfs files failed (%d).\n", ret);
+
+	if (adev->pm.rpm_mode != AMDGPU_RUNPM_NONE) {
+		/* only need to skip on ATPX */
+		if (amdgpu_device_supports_px(ddev))
+			dev_pm_set_driver_flags(ddev->dev, DPM_FLAG_NO_DIRECT_COMPLETE);
+		/* we want direct complete for BOCO */
+		if (amdgpu_device_supports_boco(ddev))
+			dev_pm_set_driver_flags(ddev->dev, DPM_FLAG_SMART_PREPARE |
+						DPM_FLAG_SMART_SUSPEND |
+						DPM_FLAG_MAY_SKIP_RESUME);
+		pm_runtime_use_autosuspend(ddev->dev);
+		pm_runtime_set_autosuspend_delay(ddev->dev, 5000);
+
+		pm_runtime_allow(ddev->dev);
+
+		pm_runtime_mark_last_busy(ddev->dev);
+		pm_runtime_put_autosuspend(ddev->dev);
+
+		/*
+		 * For runpm implemented via BACO, PMFW will handle the
+		 * timing for BACO in and out:
+		 *   - put ASIC into BACO state only when both video and
+		 *     audio functions are in D3 state.
+		 *   - pull ASIC out of BACO state when either video or
+		 *     audio function is in D0 state.
+		 * Also, at startup, PMFW assumes both functions are in
+		 * D0 state.
+		 *
+		 * So if snd driver was loaded prior to amdgpu driver
+		 * and audio function was put into D3 state, there will
+		 * be no PMFW-aware D-state transition(D0->D3) on runpm
+		 * suspend. Thus the BACO will be not correctly kicked in.
+		 *
+		 * Via amdgpu_get_secondary_funcs(), the audio dev is put
+		 * into D0 state. Then there will be a PMFW-aware D-state
+		 * transition(D0->D3) on runpm suspend.
+		 */
+		if (amdgpu_device_supports_baco(ddev) &&
+		    !(adev->flags & AMD_IS_APU) &&
+		    (adev->asic_type >= CHIP_NAVI10))
+			amdgpu_get_secondary_funcs(adev);
+	}
 
 	return 0;
 
@@ -2112,9 +2198,48 @@ static void
 amdgpu_pci_remove(struct pci_dev *pdev)
 {
 	struct drm_device *dev = pci_get_drvdata(pdev);
+	struct amdgpu_device *adev = drm_to_adev(dev);
+
+	if (adev->pm.rpm_mode != AMDGPU_RUNPM_NONE) {
+		pm_runtime_get_sync(dev->dev);
+		pm_runtime_forbid(dev->dev);
+	}
+
+	if (adev->ip_versions[MP1_HWIP][0] == IP_VERSION(13, 0, 2) &&
+	    !amdgpu_sriov_vf(adev)) {
+		bool need_to_reset_gpu = false;
+
+		if (adev->gmc.xgmi.num_physical_nodes > 1) {
+			struct amdgpu_hive_info *hive;
+
+			hive = amdgpu_get_xgmi_hive(adev);
+			if (hive->device_remove_count == 0)
+				need_to_reset_gpu = true;
+			hive->device_remove_count++;
+			amdgpu_put_xgmi_hive(hive);
+		} else {
+			need_to_reset_gpu = true;
+		}
+
+		/* Workaround for ASICs need to reset SMU.
+		 * Called only when the first device is removed.
+		 */
+		if (need_to_reset_gpu) {
+			struct amdgpu_reset_context reset_context;
+
+			adev->shutdown = true;
+			memset(&reset_context, 0, sizeof(reset_context));
+			reset_context.method = AMD_RESET_METHOD_NONE;
+			reset_context.reset_req_dev = adev;
+			set_bit(AMDGPU_NEED_FULL_RESET, &reset_context.flags);
+			set_bit(AMDGPU_RESET_FOR_DEVICE_REMOVE, &reset_context.flags);
+			amdgpu_device_gpu_recover(adev, NULL, &reset_context);
+		}
+	}
+
+	amdgpu_driver_unload_kms(dev);
 
 	drm_dev_unplug(dev);
-	amdgpu_driver_unload_kms(dev);
 
 	/*
 	 * Flush any in flight DMA operations from device.
@@ -2276,6 +2401,10 @@ static int amdgpu_pmops_resume(struct device *dev)
 	struct amdgpu_device *adev = drm_to_adev(drm_dev);
 	int r;
 
+	/* Avoids registers access if device is physically gone */
+	if (!pci_device_is_present(adev->pdev))
+		adev->no_hw_access = true;
+
 	r = amdgpu_device_resume(drm_dev, true);
 	if (amdgpu_acpi_is_s0ix_active(adev))
 		adev->in_s0ix = false;
@@ -2319,6 +2448,71 @@ static int amdgpu_pmops_restore(struct device *dev)
 	return amdgpu_device_resume(drm_dev, true);
 }
 
+static int amdgpu_runtime_idle_check_display(struct device *dev)
+{
+	struct pci_dev *pdev = to_pci_dev(dev);
+	struct drm_device *drm_dev = pci_get_drvdata(pdev);
+	struct amdgpu_device *adev = drm_to_adev(drm_dev);
+
+	if (adev->mode_info.num_crtc) {
+		struct drm_connector *list_connector;
+		struct drm_connector_list_iter iter;
+		int ret = 0;
+
+		/* XXX: Return busy if any displays are connected to avoid
+		 * possible display wakeups after runtime resume due to
+		 * hotplug events in case any displays were connected while
+		 * the GPU was in suspend.  Remove this once that is fixed.
+		 */
+		mutex_lock(&drm_dev->mode_config.mutex);
+		drm_connector_list_iter_begin(drm_dev, &iter);
+		drm_for_each_connector_iter(list_connector, &iter) {
+			if (list_connector->status == connector_status_connected) {
+				ret = -EBUSY;
+				break;
+			}
+		}
+		drm_connector_list_iter_end(&iter);
+		mutex_unlock(&drm_dev->mode_config.mutex);
+
+		if (ret)
+			return ret;
+
+		if (amdgpu_device_has_dc_support(adev)) {
+			struct drm_crtc *crtc;
+
+			drm_for_each_crtc(crtc, drm_dev) {
+				drm_modeset_lock(&crtc->mutex, NULL);
+				if (crtc->state->active)
+					ret = -EBUSY;
+				drm_modeset_unlock(&crtc->mutex);
+				if (ret < 0)
+					break;
+			}
+		} else {
+			mutex_lock(&drm_dev->mode_config.mutex);
+			drm_modeset_lock(&drm_dev->mode_config.connection_mutex, NULL);
+
+			drm_connector_list_iter_begin(drm_dev, &iter);
+			drm_for_each_connector_iter(list_connector, &iter) {
+				if (list_connector->dpms ==  DRM_MODE_DPMS_ON) {
+					ret = -EBUSY;
+					break;
+				}
+			}
+
+			drm_connector_list_iter_end(&iter);
+
+			drm_modeset_unlock(&drm_dev->mode_config.connection_mutex);
+			mutex_unlock(&drm_dev->mode_config.mutex);
+		}
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 static int amdgpu_pmops_runtime_suspend(struct device *dev)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);
@@ -2326,10 +2520,14 @@ static int amdgpu_pmops_runtime_suspend(struct device *dev)
 	struct amdgpu_device *adev = drm_to_adev(drm_dev);
 	int ret, i;
 
-	if (!adev->runpm) {
+	if (adev->pm.rpm_mode == AMDGPU_RUNPM_NONE) {
 		pm_runtime_forbid(dev);
 		return -EBUSY;
 	}
+
+	ret = amdgpu_runtime_idle_check_display(dev);
+	if (ret)
+		return ret;
 
 	/* wait for all rings to drain before suspending */
 	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
@@ -2391,7 +2589,7 @@ static int amdgpu_pmops_runtime_resume(struct device *dev)
 	struct amdgpu_device *adev = drm_to_adev(drm_dev);
 	int ret;
 
-	if (!adev->runpm)
+	if (adev->pm.rpm_mode == AMDGPU_RUNPM_NONE)
 		return -EINVAL;
 
 	/* Avoids registers access if device is physically gone */
@@ -2419,8 +2617,11 @@ static int amdgpu_pmops_runtime_resume(struct device *dev)
 		amdgpu_device_baco_exit(drm_dev);
 	}
 	ret = amdgpu_device_resume(drm_dev, false);
-	if (ret)
+	if (ret) {
+		if (amdgpu_device_supports_px(drm_dev))
+			pci_disable_device(pdev);
 		return ret;
+	}
 
 	if (amdgpu_device_supports_px(drm_dev))
 		drm_dev->switch_power_state = DRM_SWITCH_POWER_ON;
@@ -2435,46 +2636,12 @@ static int amdgpu_pmops_runtime_idle(struct device *dev)
 	/* we don't want the main rpm_idle to call suspend - we want to autosuspend */
 	int ret = 1;
 
-	if (!adev->runpm) {
+	if (adev->pm.rpm_mode == AMDGPU_RUNPM_NONE) {
 		pm_runtime_forbid(dev);
 		return -EBUSY;
 	}
 
-	if (amdgpu_device_has_dc_support(adev)) {
-		struct drm_crtc *crtc;
-
-		drm_for_each_crtc(crtc, drm_dev) {
-			drm_modeset_lock(&crtc->mutex, NULL);
-			if (crtc->state->active)
-				ret = -EBUSY;
-			drm_modeset_unlock(&crtc->mutex);
-			if (ret < 0)
-				break;
-		}
-
-	} else {
-		struct drm_connector *list_connector;
-		struct drm_connector_list_iter iter;
-
-		mutex_lock(&drm_dev->mode_config.mutex);
-		drm_modeset_lock(&drm_dev->mode_config.connection_mutex, NULL);
-
-		drm_connector_list_iter_begin(drm_dev, &iter);
-		drm_for_each_connector_iter(list_connector, &iter) {
-			if (list_connector->dpms ==  DRM_MODE_DPMS_ON) {
-				ret = -EBUSY;
-				break;
-			}
-		}
-
-		drm_connector_list_iter_end(&iter);
-
-		drm_modeset_unlock(&drm_dev->mode_config.connection_mutex);
-		mutex_unlock(&drm_dev->mode_config.mutex);
-	}
-
-	if (ret == -EBUSY)
-		DRM_DEBUG_DRIVER("failing to power off - crtc active\n");
+	ret = amdgpu_runtime_idle_check_display(dev);
 
 	pm_runtime_mark_last_busy(dev);
 	pm_runtime_autosuspend(dev);
@@ -2588,7 +2755,7 @@ const struct drm_ioctl_desc amdgpu_ioctls_kms[] = {
 	DRM_IOCTL_DEF_DRV(AMDGPU_GEM_USERPTR, amdgpu_gem_userptr_ioctl, DRM_AUTH|DRM_RENDER_ALLOW),
 };
 
-const struct drm_driver amdgpu_kms_driver = {
+static const struct drm_driver amdgpu_kms_driver = {
 	.driver_features =
 	    DRIVER_ATOMIC |
 	    DRIVER_GEM |
@@ -2659,10 +2826,8 @@ static int __init amdgpu_init(void)
 {
 	int r;
 
-	if (vgacon_text_force()) {
-		DRM_ERROR("VGACON disables amdgpu kernel modesetting.\n");
+	if (drm_firmware_drivers_only())
 		return -EINVAL;
-	}
 
 	r = amdgpu_sync_init();
 	if (r)
@@ -2706,3 +2871,812 @@ MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL and additional rights");
 #endif /* __linux__ */
+
+#include <drm/drm_drv.h>
+
+#include "vga.h"
+
+#if NVGA > 0
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+
+extern int vga_console_attached;
+#endif
+
+#ifdef __amd64__
+#include "efifb.h"
+#include <machine/biosvar.h>
+#endif
+
+#if NEFIFB > 0
+#include <machine/efifbvar.h>
+#endif
+
+int     amdgpu_probe(struct device *, void *, void *);
+void    amdgpu_attach(struct device *, struct device *, void *);
+int     amdgpu_detach(struct device *, int);
+int     amdgpu_activate(struct device *, int);
+void    amdgpu_attachhook(struct device *);
+int     amdgpu_forcedetach(struct amdgpu_device *);
+
+bool	amdgpu_msi_ok(struct amdgpu_device *);
+
+/*
+ * set if the mountroot hook has a fatal error
+ * such as not being able to find the firmware
+ */
+int amdgpu_fatal_error;
+
+const struct cfattach amdgpu_ca = {
+        sizeof (struct amdgpu_device), amdgpu_probe, amdgpu_attach,
+        amdgpu_detach, amdgpu_activate
+};
+
+struct cfdriver amdgpu_cd = {
+        NULL, "amdgpu", DV_DULL
+};
+
+int
+amdgpu_probe(struct device *parent, void *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+	const struct pci_device_id *id_entry;
+	unsigned long flags = 0;
+	int i;
+
+	if (amdgpu_fatal_error)
+		return 0;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), pciidlist);
+	if (id_entry != NULL) {
+		flags = id_entry->driver_data;
+
+		if (id_entry->device == PCI_ANY_ID) {
+			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+				return 0;
+			if (PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA &&
+			    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_MISC)
+				return 0;
+		}
+
+		/* skip devices which are owned by radeon */
+		for (i = 0; i < ARRAY_SIZE(amdgpu_unsupported_pciidlist); i++) {
+			if (amdgpu_unsupported_pciidlist[i] ==
+			    PCI_PRODUCT(pa->pa_id))
+				return 0;
+		}
+
+		if (flags & AMD_EXP_HW_SUPPORT)
+			return 0;
+		else
+			return 20;
+	}
+
+	return 0;
+}
+
+/*
+ * some functions are only called once on init regardless of how many times
+ * amdgpu attaches in linux this is handled via module_init()/module_exit()
+ */
+int amdgpu_refcnt;
+
+int __init drm_sched_fence_slab_init(void);
+void __exit drm_sched_fence_slab_fini(void);
+irqreturn_t amdgpu_irq_handler(void *);
+
+void
+amdgpu_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct amdgpu_device	*adev = (struct amdgpu_device *)self;
+	struct drm_device	*dev;
+	struct pci_attach_args	*pa = aux;
+	const struct pci_device_id *id_entry;
+	pcireg_t		 type;
+	int			 i;
+	uint8_t			 rmmio_bar;
+	paddr_t			 fb_aper;
+	pcireg_t		 addr, mask;
+	int			 s;
+	bool			 supports_atomic = false;
+
+	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id), pciidlist);
+	adev->flags = id_entry->driver_data;
+	adev->family = adev->flags & AMD_ASIC_MASK;
+	adev->pc = pa->pa_pc;
+	adev->pa_tag = pa->pa_tag;
+	adev->iot = pa->pa_iot;
+	adev->memt = pa->pa_memt;
+	adev->dmat = pa->pa_dmat;
+
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA &&
+	    (pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG)
+	    & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE))
+	    == (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) {
+		adev->primary = 1;
+#if NVGA > 0
+		adev->console = vga_is_console(pa->pa_iot, -1);
+		vga_console_attached = 1;
+#endif
+	}
+#if NEFIFB > 0
+	if (efifb_is_primary(pa)) {
+		adev->primary = 1;
+		adev->console = efifb_is_console(pa);
+		efifb_detach();
+	}
+#endif
+
+#define AMDGPU_PCI_MEM		0x10
+
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMDGPU_PCI_MEM);
+	if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
+	    pci_mapreg_info(pa->pa_pc, pa->pa_tag, AMDGPU_PCI_MEM,
+	    type, &adev->fb_aper_offset, &adev->fb_aper_size, NULL)) {
+		printf(": can't get frambuffer info\n");
+		return;
+	}
+
+	if (adev->fb_aper_offset == 0) {
+		bus_size_t start, end, pci_mem_end;
+		bus_addr_t base;
+
+		KASSERT(pa->pa_memex != NULL);
+
+		start = max(PCI_MEM_START, pa->pa_memex->ex_start);
+		if (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			pci_mem_end = PCI_MEM64_END;
+		else
+			pci_mem_end = PCI_MEM_END;
+		end = min(pci_mem_end, pa->pa_memex->ex_end);
+		if (extent_alloc_subregion(pa->pa_memex, start, end,
+		    adev->fb_aper_size, adev->fb_aper_size, 0, 0, 0, &base)) {
+			printf(": can't reserve framebuffer space\n");
+			return;
+		}
+		pci_conf_write(pa->pa_pc, pa->pa_tag, AMDGPU_PCI_MEM, base);
+		if (PCI_MAPREG_MEM_TYPE(type) == PCI_MAPREG_MEM_TYPE_64BIT)
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    AMDGPU_PCI_MEM + 4, (uint64_t)base >> 32);
+		adev->fb_aper_offset = base;
+	}
+
+	if (adev->family >= CHIP_BONAIRE) {
+		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x18);
+		if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
+		    pci_mapreg_map(pa, 0x18, type, BUS_SPACE_MAP_LINEAR,
+		    &adev->doorbell.bst, &adev->doorbell.bsh,
+		    &adev->doorbell.base, &adev->doorbell.size, 0)) {
+			printf(": can't map doorbell space\n");
+			return;
+		}
+		adev->doorbell.ptr = bus_space_vaddr(adev->doorbell.bst,
+		    adev->doorbell.bsh);
+	}
+
+	if (adev->family >= CHIP_BONAIRE)
+		rmmio_bar = 0x24;
+	else
+		rmmio_bar = 0x18;
+
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, rmmio_bar);
+	if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
+	    pci_mapreg_map(pa, rmmio_bar, type, BUS_SPACE_MAP_LINEAR,
+	    &adev->rmmio_bst, &adev->rmmio_bsh, &adev->rmmio_base,
+	    &adev->rmmio_size, 0)) {
+		printf(": can't map rmmio space\n");
+		return;
+	}
+	adev->rmmio = bus_space_vaddr(adev->rmmio_bst, adev->rmmio_bsh);
+
+	/*
+	 * Make sure we have a base address for the ROM such that we
+	 * can map it later.
+	 */
+	s = splhigh();
+	addr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, ~PCI_ROM_ENABLE);
+	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROM_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, addr);
+	splx(s);
+
+	if (addr == 0 && PCI_ROM_SIZE(mask) != 0 && pa->pa_memex) {
+		bus_size_t size, start, end;
+		bus_addr_t base;
+
+		size = PCI_ROM_SIZE(mask);
+		start = max(PCI_MEM_START, pa->pa_memex->ex_start);
+		end = min(PCI_MEM_END, pa->pa_memex->ex_end);
+		if (extent_alloc_subregion(pa->pa_memex, start, end, size,
+		    size, 0, 0, 0, &base) == 0)
+			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, base);
+	}
+
+	printf("\n");
+
+	/* from amdgpu_pci_probe(), aspm test done later */
+
+	if (!amdgpu_virtual_display &&
+	     amdgpu_device_asic_has_dc_support(adev->family))
+		supports_atomic = true;
+
+	if ((adev->flags & AMD_EXP_HW_SUPPORT) && !amdgpu_exp_hw_support) {
+		DRM_INFO("This hardware requires experimental hardware support.\n");
+		return;
+	}
+
+	/*
+	 * Initialize amdkfd before starting radeon.
+	 */
+	amdgpu_amdkfd_init();
+
+	dev = drm_attach_pci(&amdgpu_kms_driver, pa, 0, adev->primary,
+	    self, &adev->ddev);
+	if (dev == NULL) {
+		printf("%s: drm attach failed\n", adev->self.dv_xname);
+		return;
+	}
+	adev->pdev = dev->pdev;
+
+	/* from amdgpu_pci_probe() */
+	if (amdgpu_aspm == -1 && !pcie_aspm_enabled(adev->pdev))
+		amdgpu_aspm = 0;
+
+	if (!supports_atomic)
+		dev->driver_features &= ~DRIVER_ATOMIC;
+
+	if (!amdgpu_msi_ok(adev))
+		pa->pa_flags &= ~PCI_FLAGS_MSI_ENABLED;
+
+	/* from amdgpu_init() */
+	if (amdgpu_refcnt == 0) {
+		drm_sched_fence_slab_init();
+
+		if (amdgpu_sync_init()) {
+			printf("%s: amdgpu_sync_init failed\n",
+			    adev->self.dv_xname);
+			return;
+		}
+
+		if (amdgpu_fence_slab_init()) {
+			amdgpu_sync_fini();
+			printf("%s: amdgpu_fence_slab_init failed\n",
+			    adev->self.dv_xname);
+			return;
+		}
+
+		amdgpu_register_atpx_handler();
+		amdgpu_acpi_detect();
+	}
+	amdgpu_refcnt++;
+
+	adev->irq.msi_enabled = false;
+	if (pci_intr_map_msi(pa, &adev->intrh) == 0)
+		adev->irq.msi_enabled = true;
+	else if (pci_intr_map(pa, &adev->intrh) != 0) {
+		printf("%s: couldn't map interrupt\n", adev->self.dv_xname);
+		return;
+	}
+	printf("%s: %s\n", adev->self.dv_xname,
+	    pci_intr_string(pa->pa_pc, adev->intrh));
+
+	adev->irqh = pci_intr_establish(pa->pa_pc, adev->intrh, IPL_TTY,
+	    amdgpu_irq_handler, &adev->ddev, adev->self.dv_xname);
+	if (adev->irqh == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    adev->self.dv_xname);
+		return;
+	}
+	adev->pdev->irq = 0;
+
+	fb_aper = bus_space_mmap(adev->memt, adev->fb_aper_offset, 0, 0, 0);
+	if (fb_aper != -1)
+		rasops_claim_framebuffer(fb_aper, adev->fb_aper_size, self);
+
+
+	adev->shutdown = true;
+	config_mountroot(self, amdgpu_attachhook);
+}
+
+int
+amdgpu_forcedetach(struct amdgpu_device *adev)
+{
+	struct pci_softc	*sc = (struct pci_softc *)adev->self.dv_parent;
+	pcitag_t		 tag = adev->pa_tag;
+
+#if NVGA > 0
+	if (adev->primary)
+		vga_console_attached = 0;
+#endif
+
+	/* reprobe pci device for non efi systems */
+#if NEFIFB > 0
+	if (bios_efiinfo == NULL && !efifb_cb_found()) {
+#endif
+		config_detach(&adev->self, 0);
+		return pci_probe_device(sc, tag, NULL, NULL);
+#if NEFIFB > 0
+	} else if (adev->primary) {
+		efifb_reattach();
+	}
+#endif
+
+	return 0;
+}
+
+void amdgpu_burner(void *, u_int, u_int);
+void amdgpu_burner_cb(void *);
+int amdgpu_wsioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t amdgpu_wsmmap(void *, off_t, int);
+int amdgpu_alloc_screen(void *, const struct wsscreen_descr *,
+    void **, int *, int *, uint32_t *);
+void amdgpu_free_screen(void *, void *);
+int amdgpu_show_screen(void *, void *, int,
+    void (*)(void *, int, int), void *);
+void amdgpu_doswitch(void *);
+void amdgpu_enter_ddb(void *, void *);
+
+struct wsscreen_descr amdgpu_stdscreen = {
+	"std",
+	0, 0,
+	0,
+	0, 0,
+	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
+	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
+};
+
+const struct wsscreen_descr *amdgpu_scrlist[] = {
+	&amdgpu_stdscreen,
+};
+
+struct wsscreen_list amdgpu_screenlist = {
+	nitems(amdgpu_scrlist), amdgpu_scrlist
+};
+
+struct wsdisplay_accessops amdgpu_accessops = {
+	.ioctl = amdgpu_wsioctl,
+	.mmap = amdgpu_wsmmap,
+	.alloc_screen = amdgpu_alloc_screen,
+	.free_screen = amdgpu_free_screen,
+	.show_screen = amdgpu_show_screen,
+	.enter_ddb = amdgpu_enter_ddb,
+	.getchar = rasops_getchar,
+	.load_font = rasops_load_font,
+	.list_font = rasops_list_font,
+	.scrollback = rasops_scrollback,
+	.burn_screen = amdgpu_burner
+};
+
+int
+amdgpu_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct rasops_info *ri = v;
+	struct amdgpu_device *adev = ri->ri_hw;
+	struct backlight_device *bd = adev->dm.backlight_dev[0];
+	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
+	struct wsdisplay_fbinfo *wdf;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_RADEONDRM;
+		return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (struct wsdisplay_fbinfo *)data;
+		wdf->width = ri->ri_width;
+		wdf->height = ri->ri_height;
+		wdf->depth = ri->ri_depth;
+		wdf->stride = ri->ri_stride;
+		wdf->offset = 0;
+		wdf->cmsize = 0;
+		return 0;
+	case WSDISPLAYIO_GETPARAM:
+		if (bd == NULL)
+			return -1;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			dp->min = 0;
+			dp->max = bd->props.max_brightness;
+			dp->curval = bd->props.brightness;
+			return (dp->max > dp->min) ? 0 : -1;
+		}
+		break;
+	case WSDISPLAYIO_SETPARAM:
+		if (bd == NULL || dp->curval > bd->props.max_brightness)
+			return -1;
+
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			bd->props.brightness = dp->curval;
+			backlight_update_status(bd);
+			KNOTE(&adev->ddev.note, NOTE_CHANGE);
+			return 0;
+		}
+		break;
+	}
+
+	return (-1);
+}
+
+paddr_t
+amdgpu_wsmmap(void *v, off_t off, int prot)
+{
+	return (-1);
+}
+
+int
+amdgpu_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
+{
+	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
+}
+
+void
+amdgpu_free_screen(void *v, void *cookie)
+{
+	return rasops_free_screen(v, cookie);
+}
+
+int
+amdgpu_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
+{
+	struct rasops_info *ri = v;
+	struct amdgpu_device *adev = ri->ri_hw;
+
+	if (cookie == ri->ri_active)
+		return (0);
+
+	adev->switchcb = cb;
+	adev->switchcbarg = cbarg;
+	adev->switchcookie = cookie;
+	if (cb) {
+		task_add(systq, &adev->switchtask);
+		return (EAGAIN);
+	}
+
+	amdgpu_doswitch(v);
+
+	return (0);
+}
+
+void
+amdgpu_doswitch(void *v)
+{
+	struct rasops_info *ri = v;
+	struct amdgpu_device *adev = ri->ri_hw;
+	struct amdgpu_crtc *amdgpu_crtc;
+	int i, crtc;
+
+	rasops_show_screen(ri, adev->switchcookie, 0, NULL, NULL);
+	drm_fb_helper_restore_fbdev_mode_unlocked(adev_to_drm(adev)->fb_helper);
+
+	if (adev->switchcb)
+		(adev->switchcb)(adev->switchcbarg, 0, 0);
+}
+
+void
+amdgpu_enter_ddb(void *v, void *cookie)
+{
+	struct rasops_info *ri = v;
+	struct amdgpu_device *adev = ri->ri_hw;
+	struct drm_fb_helper *fb_helper = adev_to_drm(adev)->fb_helper;
+
+	if (cookie == ri->ri_active)
+		return;
+
+	rasops_show_screen(ri, cookie, 0, NULL, NULL);
+	drm_fb_helper_debug_enter(fb_helper->fbdev);
+}
+
+void
+amdgpu_init_backlight(struct amdgpu_device *adev)
+{
+	struct drm_device *dev = &adev->ddev;
+	struct backlight_device *bd = adev->dm.backlight_dev[0];
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector;
+
+	if (bd == NULL)
+		return;
+		
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		if (connector->connector_type != DRM_MODE_CONNECTOR_LVDS &&
+		    connector->connector_type != DRM_MODE_CONNECTOR_eDP &&
+		    connector->connector_type != DRM_MODE_CONNECTOR_DSI)
+			continue;
+
+		connector->backlight_device = bd;
+		connector->backlight_property = drm_property_create_range(dev,
+		    0, "Backlight", 0, bd->props.max_brightness);
+		drm_object_attach_property(&connector->base,
+		    connector->backlight_property, bd->props.brightness);
+	}
+	drm_connector_list_iter_end(&conn_iter);
+}
+
+void
+amdgpu_attachhook(struct device *self)
+{
+	struct amdgpu_device	*adev = (struct amdgpu_device *)self;
+	struct drm_device	*dev = &adev->ddev;
+	int r, acpi_status;
+	struct rasops_info *ri = &adev->ro;
+	struct drm_fb_helper *fb_helper;
+	struct drm_framebuffer *fb;
+	struct drm_gem_object *obj;
+	struct amdgpu_bo *rbo;
+
+	/* from amdgpu_driver_load_kms() */
+
+	/* amdgpu_device_init should report only fatal error
+	 * like memory allocation failure or iomapping failure,
+	 * or memory manager initialization failure, it must
+	 * properly initialize the GPU MC controller and permit
+	 * VRAM allocation
+	 */
+	r = amdgpu_device_init(adev, adev->flags);
+	if (r) {
+		dev_err(&dev->pdev->dev, "Fatal error during GPU init\n");
+		goto out;
+	}
+
+	adev->pm.rpm_mode = AMDGPU_RUNPM_NONE;
+	if (amdgpu_device_supports_px(dev) &&
+	    (amdgpu_runtime_pm != 0)) { /* enable PX as runtime mode */
+		adev->pm.rpm_mode = AMDGPU_RUNPM_PX;
+		dev_info(adev->dev, "Using ATPX for runtime pm\n");
+	} else if (amdgpu_device_supports_boco(dev) &&
+		   (amdgpu_runtime_pm != 0)) { /* enable boco as runtime mode */
+		adev->pm.rpm_mode = AMDGPU_RUNPM_BOCO;
+		dev_info(adev->dev, "Using BOCO for runtime pm\n");
+	} else if (amdgpu_device_supports_baco(dev) &&
+		   (amdgpu_runtime_pm != 0)) {
+		switch (adev->asic_type) {
+		case CHIP_VEGA20:
+		case CHIP_ARCTURUS:
+			/* enable BACO as runpm mode if runpm=1 */
+			if (amdgpu_runtime_pm > 0)
+				adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
+			break;
+		case CHIP_VEGA10:
+			/* enable BACO as runpm mode if noretry=0 */
+			if (!adev->gmc.noretry)
+				adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
+			break;
+		default:
+			/* enable BACO as runpm mode on CI+ */
+			adev->pm.rpm_mode = AMDGPU_RUNPM_BACO;
+			break;
+		}
+
+		if (adev->pm.rpm_mode == AMDGPU_RUNPM_BACO)
+			dev_info(adev->dev, "Using BACO for runtime pm\n");
+	}
+
+	/* Call ACPI methods: require modeset init
+	 * but failure is not fatal
+	 */
+
+	acpi_status = amdgpu_acpi_init(adev);
+	if (acpi_status)
+		dev_dbg(dev->dev, "Error during ACPI methods call\n");
+
+	if (amdgpu_acpi_smart_shift_update(dev, AMDGPU_SS_DRV_LOAD))
+		DRM_WARN("smart shift update failed\n");
+
+	/*
+	 * 1. don't init fbdev on hw without DCE
+	 * 2. don't init fbdev if there are no connectors
+	 */
+	if (adev->mode_info.mode_config_initialized &&
+	    !list_empty(&adev_to_drm(adev)->mode_config.connector_list)) {
+
+		/* OpenBSD specific backlight property on connector */
+		amdgpu_init_backlight(adev);
+
+		/*
+		 * in linux via amdgpu_pci_probe -> drm_dev_register
+		 * must be after (local) backlight property added not before
+		 * and before drm_fbdev_generic_setup()
+		 */
+		drm_dev_register(dev, adev->flags);
+
+		/* select 8 bpp console on low vram cards */
+		if (adev->gmc.real_vram_size <= (32*1024*1024))
+			drm_fbdev_generic_setup(adev_to_drm(adev), 8);
+		else
+			drm_fbdev_generic_setup(adev_to_drm(adev), 32);
+
+		fb_helper = adev_to_drm(adev)->fb_helper;
+		if (fb_helper == NULL) {
+			printf("fb_helper NULL\n");
+			return;
+		}
+		fb = fb_helper->fb;
+		obj = fb->obj[0];
+		rbo = gem_to_amdgpu_bo(obj);
+		amdgpu_bo_kmap(rbo, (void **)(&ri->ri_bits));
+
+		ri->ri_depth = fb->format->cpp[0] * 8;
+		ri->ri_stride = fb->pitches[0];
+		ri->ri_width = fb_helper->fbdev->var.xres;
+		ri->ri_height = fb_helper->fbdev->var.yres;
+
+		switch (fb->format->format) {
+		case DRM_FORMAT_XRGB8888:
+			ri->ri_rnum = 8;
+			ri->ri_rpos = 16;
+			ri->ri_gnum = 8;
+			ri->ri_gpos = 8;
+			ri->ri_bnum = 8;
+			ri->ri_bpos = 0;
+			break;
+		case DRM_FORMAT_RGB565:
+			ri->ri_rnum = 5;
+			ri->ri_rpos = 11;
+			ri->ri_gnum = 6;
+			ri->ri_gpos = 5;
+			ri->ri_bnum = 5;
+			ri->ri_bpos = 0;
+			break;
+		}
+	}
+{
+	struct wsemuldisplaydev_attach_args aa;
+
+	task_set(&adev->switchtask, amdgpu_doswitch, ri);
+	task_set(&adev->burner_task, amdgpu_burner_cb, adev);
+
+	if (ri->ri_bits == NULL)
+		return;
+
+	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
+	rasops_init(ri, 160, 160);
+
+	ri->ri_hw = adev;
+
+	amdgpu_stdscreen.capabilities = ri->ri_caps;
+	amdgpu_stdscreen.nrows = ri->ri_rows;
+	amdgpu_stdscreen.ncols = ri->ri_cols;
+	amdgpu_stdscreen.textops = &ri->ri_ops;
+	amdgpu_stdscreen.fontwidth = ri->ri_font->fontwidth;
+	amdgpu_stdscreen.fontheight = ri->ri_font->fontheight;
+
+	aa.console = adev->console;
+	aa.primary = adev->primary;
+	aa.scrdata = &amdgpu_screenlist;
+	aa.accessops = &amdgpu_accessops;
+	aa.accesscookie = ri;
+	aa.defaultscreens = 0;
+
+	if (adev->console) {
+		uint32_t defattr;
+
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&amdgpu_stdscreen, ri->ri_active,
+		    ri->ri_ccol, ri->ri_crow, defattr);
+	}
+
+	/*
+	 * Now that we've taken over the console, disable decoding of
+	 * VGA legacy addresses, and opt out of arbitration.
+	 */
+	amdgpu_asic_set_vga_state(adev, false);
+	pci_disable_legacy_vga(&adev->self);
+
+	printf("%s: %dx%d, %dbpp\n", adev->self.dv_xname,
+	    ri->ri_width, ri->ri_height, ri->ri_depth);
+
+	config_found_sm(&adev->self, &aa, wsemuldisplaydevprint,
+	    wsemuldisplaydevsubmatch);
+}
+
+out:
+	if (r) {
+		amdgpu_fatal_error = 1;
+		amdgpu_forcedetach(adev);
+	}
+}
+
+/* from amdgpu_exit amdgpu_driver_unload_kms */
+int
+amdgpu_detach(struct device *self, int flags)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)self;
+	struct drm_device *dev = &adev->ddev;
+
+	if (adev == NULL)
+		return 0;
+
+	amdgpu_refcnt--;
+
+	if (amdgpu_refcnt == 0)
+		amdgpu_amdkfd_fini();
+
+	pci_intr_disestablish(adev->pc, adev->irqh);
+
+	amdgpu_unregister_gpu_instance(adev);
+
+	amdgpu_acpi_fini(adev);
+	amdgpu_device_fini_hw(adev);
+
+	if (amdgpu_refcnt == 0) {
+		amdgpu_unregister_atpx_handler();
+		amdgpu_sync_fini();
+		amdgpu_fence_slab_fini();
+
+		drm_sched_fence_slab_fini();
+	}
+
+	config_detach(adev->ddev.dev, flags);
+
+	return 0;
+}
+
+int
+amdgpu_activate(struct device *self, int act)
+{
+	struct amdgpu_device *adev = (struct amdgpu_device *)self;
+	struct drm_device *dev = &adev->ddev;
+	int rv = 0;
+
+	if (dev->dev == NULL || amdgpu_fatal_error)
+		return (0);
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		rv = config_activate_children(self, act);
+		amdgpu_device_suspend(dev, true);
+		break;
+	case DVACT_SUSPEND:
+		break;
+	case DVACT_RESUME:
+		break;
+	case DVACT_WAKEUP:
+		amdgpu_device_resume(dev, true);
+		rv = config_activate_children(self, act);
+		break;
+	}
+
+	return (rv);
+}
+
+void
+amdgpu_burner(void *v, u_int on, u_int flags)
+{
+	struct rasops_info *ri = v;
+	struct amdgpu_device *adev = ri->ri_hw;
+
+	task_del(systq, &adev->burner_task);
+
+	if (on)
+		adev->burner_fblank = FB_BLANK_UNBLANK;
+	else {
+		if (flags & WSDISPLAY_BURN_VBLANK)
+			adev->burner_fblank = FB_BLANK_VSYNC_SUSPEND;
+		else
+			adev->burner_fblank = FB_BLANK_NORMAL;
+	}
+
+	/*
+	 * Setting the DPMS mode may sleep while waiting for vblank so
+	 * hand things off to a taskq.
+	 */
+	task_add(systq, &adev->burner_task);
+}
+
+void
+amdgpu_burner_cb(void *arg1)
+{
+	struct amdgpu_device *adev = arg1;
+	struct drm_fb_helper *helper = adev_to_drm(adev)->fb_helper;
+
+	drm_fb_helper_blank(adev->burner_fblank, helper->fbdev);
+}

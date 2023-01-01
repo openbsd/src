@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.4 2022/06/15 07:04:09 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -49,6 +49,16 @@ bitmap_zero(void *p, u_int n)
 
 	for (b = 0; b < n; b += 32)
 		ptr[b >> 5] = 0;
+}
+
+static inline void
+bitmap_fill(void *p, u_int n)
+{
+	u_int *ptr = p;
+	u_int b;
+
+	for (b = 0; b < n; b += 32)
+		ptr[b >> 5] = 0xffffffff;
 }
 
 static inline void
@@ -119,9 +129,9 @@ bitmap_to_arr32(void *d, unsigned long *src, u_int n)
 
 
 static inline int
-bitmap_weight(void *p, u_int n)
+bitmap_weight(const void *p, u_int n)
 {
-	u_int *ptr = p;
+	const u_int *ptr = p;
 	u_int b;
 	int sum = 0;
 

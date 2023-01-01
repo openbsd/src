@@ -35,9 +35,13 @@ struct intel_context_ops {
 #define COPS_HAS_INFLIGHT_BIT 0
 #define COPS_HAS_INFLIGHT BIT(COPS_HAS_INFLIGHT_BIT)
 
+#define COPS_RUNTIME_CYCLES_BIT 1
+#define COPS_RUNTIME_CYCLES BIT(COPS_RUNTIME_CYCLES_BIT)
+
 	int (*alloc)(struct intel_context *ce);
 
-	void (*ban)(struct intel_context *ce, struct i915_request *rq);
+	void (*revoke)(struct intel_context *ce, struct i915_request *rq,
+		       unsigned int preempt_timeout_ms);
 
 	int (*pre_pin)(struct intel_context *ce, struct i915_gem_ww_ctx *ww, void **vaddr);
 	int (*pin)(struct intel_context *ce, void *vaddr);
@@ -55,9 +59,13 @@ struct intel_context_ops {
 	void (*reset)(struct intel_context *ce);
 	void (*destroy)(struct kref *kref);
 
-	/* virtual engine/context interface */
+	/* virtual/parallel engine/context interface */
 	struct intel_context *(*create_virtual)(struct intel_engine_cs **engine,
-						unsigned int count);
+						unsigned int count,
+						unsigned long flags);
+	struct intel_context *(*create_parallel)(struct intel_engine_cs **engines,
+						 unsigned int num_siblings,
+						 unsigned int width);
 	struct intel_engine_cs *(*get_sibling)(struct intel_engine_cs *engine,
 					       unsigned int sibling);
 };
@@ -112,6 +120,10 @@ struct intel_context {
 #define CONTEXT_FORCE_SINGLE_SUBMISSION	7
 #define CONTEXT_NOPREEMPT		8
 #define CONTEXT_LRCA_DIRTY		9
+#define CONTEXT_GUC_INIT		10
+#define CONTEXT_PERMA_PIN		11
+#define CONTEXT_IS_PARKING		12
+#define CONTEXT_EXITING			13
 
 	struct {
 		u64 timeout_us;
@@ -127,14 +139,19 @@ struct intel_context {
 	} lrc;
 	u32 tag; /* cookie passed to HW to track this context on submission */
 
-	/* Time on GPU as tracked by the hw. */
-	struct {
-		struct ewma_runtime avg;
-		u64 total;
-		u32 last;
-		I915_SELFTEST_DECLARE(u32 num_underflow);
-		I915_SELFTEST_DECLARE(u32 max_underflow);
-	} runtime;
+	/** stats: Context GPU engine busyness tracking. */
+	struct intel_context_stats {
+		u64 active;
+
+		/* Time on GPU as tracked by the hw. */
+		struct {
+			struct ewma_runtime avg;
+			u64 total;
+			u32 last;
+			I915_SELFTEST_DECLARE(u32 num_underflow);
+			I915_SELFTEST_DECLARE(u32 max_underflow);
+		} runtime;
+	} stats;
 
 	unsigned int active_count; /* protected by timeline->mutex */
 
@@ -163,49 +180,137 @@ struct intel_context {
 	u8 wa_bb_page; /* if set, page num reserved for context workarounds */
 
 	struct {
-		/** lock: protects everything in guc_state */
+		/** @lock: protects everything in guc_state */
 		spinlock_t lock;
 		/**
-		 * sched_state: scheduling state of this context using GuC
+		 * @sched_state: scheduling state of this context using GuC
 		 * submission
 		 */
-		u16 sched_state;
+		u32 sched_state;
 		/*
-		 * fences: maintains of list of requests that have a submit
-		 * fence related to GuC submission
+		 * @fences: maintains a list of requests that are currently
+		 * being fenced until a GuC operation completes
 		 */
 		struct list_head fences;
+		/**
+		 * @blocked: fence used to signal when the blocking of a
+		 * context's submissions is complete.
+		 */
+		struct i915_sw_fence blocked;
+		/** @number_committed_requests: number of committed requests */
+		int number_committed_requests;
+		/** @requests: list of active requests on this context */
+		struct list_head requests;
+		/** @prio: the context's current guc priority */
+		u8 prio;
+		/**
+		 * @prio_count: a counter of the number requests in flight in
+		 * each priority bucket
+		 */
+		u32 prio_count[GUC_CLIENT_PRIORITY_NUM];
 	} guc_state;
 
 	struct {
-		/** lock: protects everything in guc_active */
-		spinlock_t lock;
-		/** requests: active requests on this context */
-		struct list_head requests;
-	} guc_active;
+		/**
+		 * @id: handle which is used to uniquely identify this context
+		 * with the GuC, protected by guc->submission_state.lock
+		 */
+		u16 id;
+		/**
+		 * @ref: the number of references to the guc_id, when
+		 * transitioning in and out of zero protected by
+		 * guc->submission_state.lock
+		 */
+		atomic_t ref;
+		/**
+		 * @link: in guc->guc_id_list when the guc_id has no refs but is
+		 * still valid, protected by guc->submission_state.lock
+		 */
+		struct list_head link;
+	} guc_id;
 
-	/* GuC scheduling state flags that do not require a lock. */
-	atomic_t guc_sched_state_no_lock;
-
-	/* GuC LRC descriptor ID */
-	u16 guc_id;
-
-	/* GuC LRC descriptor reference count */
-	atomic_t guc_id_ref;
-
-	/*
-	 * GuC ID link - in list when unpinned but guc_id still valid in GuC
+	/**
+	 * @destroyed_link: link in guc->submission_state.destroyed_contexts, in
+	 * list when context is pending to be destroyed (deregistered with the
+	 * GuC), protected by guc->submission_state.lock
 	 */
-	struct list_head guc_id_link;
+	struct list_head destroyed_link;
 
-	/* GuC context blocked fence */
-	struct i915_sw_fence guc_blocked;
+	/** @parallel: sub-structure for parallel submission members */
+	struct {
+		union {
+			/**
+			 * @child_list: parent's list of children
+			 * contexts, no protection as immutable after context
+			 * creation
+			 */
+			struct list_head child_list;
+			/**
+			 * @child_link: child's link into parent's list of
+			 * children
+			 */
+			struct list_head child_link;
+		};
+		/** @parent: pointer to parent if child */
+		struct intel_context *parent;
+		/**
+		 * @last_rq: last request submitted on a parallel context, used
+		 * to insert submit fences between requests in the parallel
+		 * context
+		 */
+		struct i915_request *last_rq;
+		/**
+		 * @fence_context: fence context composite fence when doing
+		 * parallel submission
+		 */
+		u64 fence_context;
+		/**
+		 * @seqno: seqno for composite fence when doing parallel
+		 * submission
+		 */
+		u32 seqno;
+		/** @number_children: number of children if parent */
+		u8 number_children;
+		/** @child_index: index into child_list if child */
+		u8 child_index;
+		/** @guc: GuC specific members for parallel submission */
+		struct {
+			/** @wqi_head: cached head pointer in work queue */
+			u16 wqi_head;
+			/** @wqi_tail: cached tail pointer in work queue */
+			u16 wqi_tail;
+			/** @wq_head: pointer to the actual head in work queue */
+			u32 *wq_head;
+			/** @wq_tail: pointer to the actual head in work queue */
+			u32 *wq_tail;
+			/** @wq_status: pointer to the status in work queue */
+			u32 *wq_status;
 
-	/*
-	 * GuC priority management
+			/**
+			 * @parent_page: page in context state (ce->state) used
+			 * by parent for work queue, process descriptor
+			 */
+			u8 parent_page;
+		} guc;
+	} parallel;
+
+#ifdef CONFIG_DRM_I915_SELFTEST
+	/**
+	 * @drop_schedule_enable: Force drop of schedule enable G2H for selftest
 	 */
-	u8 guc_prio;
-	u32 guc_prio_count[GUC_CLIENT_PRIORITY_NUM];
+	bool drop_schedule_enable;
+
+	/**
+	 * @drop_schedule_disable: Force drop of schedule disable G2H for
+	 * selftest
+	 */
+	bool drop_schedule_disable;
+
+	/**
+	 * @drop_deregister: Force drop of deregister G2H for selftest
+	 */
+	bool drop_deregister;
+#endif
 };
 
 #endif /* __INTEL_CONTEXT_TYPES__ */

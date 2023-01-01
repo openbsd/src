@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
- * Copyright 2015-2017 Advanced Micro Devices, Inc.
+ * Copyright 2015-2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -794,6 +795,102 @@ static struct kfd_gpu_cache_info yellow_carp_cache_info[] = {
 	},
 };
 
+static struct kfd_gpu_cache_info gfx1037_cache_info[] = {
+	{
+		/* TCP L1 Cache per CU */
+		.cache_size = 16,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+				CRAT_CACHE_FLAGS_DATA_CACHE |
+				CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 1,
+	},
+	{
+		/* Scalar L1 Instruction Cache per SQC */
+		.cache_size = 32,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+				CRAT_CACHE_FLAGS_INST_CACHE |
+				CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* Scalar L1 Data Cache per SQC */
+		.cache_size = 16,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+				CRAT_CACHE_FLAGS_DATA_CACHE |
+				CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* GL1 Data Cache per SA */
+		.cache_size = 128,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+				CRAT_CACHE_FLAGS_DATA_CACHE |
+				CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* L2 Data Cache per GPU (Total Tex Cache) */
+		.cache_size = 256,
+		.cache_level = 2,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+				CRAT_CACHE_FLAGS_DATA_CACHE |
+				CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+};
+
+static struct kfd_gpu_cache_info gc_10_3_6_cache_info[] = {
+	{
+		/* TCP L1 Cache per CU */
+		.cache_size = 16,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+			  CRAT_CACHE_FLAGS_DATA_CACHE |
+			  CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 1,
+	},
+	{
+		/* Scalar L1 Instruction Cache per SQC */
+		.cache_size = 32,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+			  CRAT_CACHE_FLAGS_INST_CACHE |
+			  CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* Scalar L1 Data Cache per SQC */
+		.cache_size = 16,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+			  CRAT_CACHE_FLAGS_DATA_CACHE |
+			  CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* GL1 Data Cache per SA */
+		.cache_size = 128,
+		.cache_level = 1,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+			  CRAT_CACHE_FLAGS_DATA_CACHE |
+			  CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+	{
+		/* L2 Data Cache per GPU (Total Tex Cache) */
+		.cache_size = 256,
+		.cache_level = 2,
+		.flags = (CRAT_CACHE_FLAGS_ENABLED |
+			  CRAT_CACHE_FLAGS_DATA_CACHE |
+			  CRAT_CACHE_FLAGS_SIMD_CACHE),
+		.num_cu_shared = 2,
+	},
+};
+
 static void kfd_populated_cu_info_cpu(struct kfd_topology_device *dev,
 		struct crat_subtype_computeunit *cu)
 {
@@ -1039,7 +1136,6 @@ static int kfd_parse_subtype_iolink(struct crat_subtype_iolink *iolink,
 			props->rec_transfer_size =
 					iolink->recommended_transfer_size;
 
-			dev->io_link_count++;
 			dev->node_props.io_links_count++;
 			list_add_tail(&props->list, &dev->io_link_props);
 			break;
@@ -1055,7 +1151,7 @@ static int kfd_parse_subtype_iolink(struct crat_subtype_iolink *iolink,
 	 * table, add corresponded reversed direction link now.
 	 */
 	if (props && (iolink->flags & CRAT_IOLINK_FLAGS_BI_DIRECTIONAL)) {
-		to_dev = kfd_topology_device_by_proximity_domain(id_to);
+		to_dev = kfd_topology_device_by_proximity_domain_no_lock(id_to);
 		if (!to_dev)
 			return -ENODEV;
 		/* same everything but the other direction */
@@ -1066,7 +1162,6 @@ static int kfd_parse_subtype_iolink(struct crat_subtype_iolink *iolink,
 		props2->node_from = id_to;
 		props2->node_to = id_from;
 		props2->kobj = NULL;
-		to_dev->io_link_count++;
 		to_dev->node_props.io_links_count++;
 		list_add_tail(&props2->list, &to_dev->io_link_props);
 	}
@@ -1314,6 +1409,80 @@ static int fill_in_l2_l3_pcache(struct crat_subtype_cache *pcache,
 	return 1;
 }
 
+#define KFD_MAX_CACHE_TYPES 6
+
+static int kfd_fill_gpu_cache_info_from_gfx_config(struct kfd_dev *kdev,
+						   struct kfd_gpu_cache_info *pcache_info)
+{
+	struct amdgpu_device *adev = kdev->adev;
+	int i = 0;
+
+	/* TCP L1 Cache per CU */
+	if (adev->gfx.config.gc_tcp_l1_size) {
+		pcache_info[i].cache_size = adev->gfx.config.gc_tcp_l1_size;
+		pcache_info[i].cache_level = 1;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_DATA_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[0].num_cu_shared = adev->gfx.config.gc_num_tcp_per_wpg / 2;
+		i++;
+	}
+	/* Scalar L1 Instruction Cache per SQC */
+	if (adev->gfx.config.gc_l1_instruction_cache_size_per_sqc) {
+		pcache_info[i].cache_size =
+			adev->gfx.config.gc_l1_instruction_cache_size_per_sqc;
+		pcache_info[i].cache_level = 1;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_INST_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[i].num_cu_shared = adev->gfx.config.gc_num_sqc_per_wgp * 2;
+		i++;
+	}
+	/* Scalar L1 Data Cache per SQC */
+	if (adev->gfx.config.gc_l1_data_cache_size_per_sqc) {
+		pcache_info[i].cache_size = adev->gfx.config.gc_l1_data_cache_size_per_sqc;
+		pcache_info[i].cache_level = 1;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_DATA_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[i].num_cu_shared = adev->gfx.config.gc_num_sqc_per_wgp * 2;
+		i++;
+	}
+	/* GL1 Data Cache per SA */
+	if (adev->gfx.config.gc_gl1c_per_sa &&
+	    adev->gfx.config.gc_gl1c_size_per_instance) {
+		pcache_info[i].cache_size = adev->gfx.config.gc_gl1c_per_sa *
+			adev->gfx.config.gc_gl1c_size_per_instance;
+		pcache_info[i].cache_level = 1;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_DATA_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[i].num_cu_shared = adev->gfx.config.max_cu_per_sh;
+		i++;
+	}
+	/* L2 Data Cache per GPU (Total Tex Cache) */
+	if (adev->gfx.config.gc_gl2c_per_gpu) {
+		pcache_info[i].cache_size = adev->gfx.config.gc_gl2c_per_gpu;
+		pcache_info[i].cache_level = 2;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_DATA_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[i].num_cu_shared = adev->gfx.config.max_cu_per_sh;
+		i++;
+	}
+	/* L3 Data Cache per GPU */
+	if (adev->gmc.mall_size) {
+		pcache_info[i].cache_size = adev->gmc.mall_size / 1024;
+		pcache_info[i].cache_level = 3;
+		pcache_info[i].flags = (CRAT_CACHE_FLAGS_ENABLED |
+					CRAT_CACHE_FLAGS_DATA_CACHE |
+					CRAT_CACHE_FLAGS_SIMD_CACHE);
+		pcache_info[i].num_cu_shared = adev->gfx.config.max_cu_per_sh;
+		i++;
+	}
+	return i;
+}
+
 /* kfd_fill_gpu_cache_info - Fill GPU cache info using kfd_gpu_cache_info
  * tables
  *
@@ -1335,6 +1504,7 @@ static int kfd_fill_gpu_cache_info(struct kfd_dev *kdev,
 			int *num_of_entries)
 {
 	struct kfd_gpu_cache_info *pcache_info;
+	struct kfd_gpu_cache_info cache_info[KFD_MAX_CACHE_TYPES];
 	int num_of_cache_types = 0;
 	int i, j, k;
 	int ct = 0;
@@ -1343,7 +1513,7 @@ static int kfd_fill_gpu_cache_info(struct kfd_dev *kdev,
 	int ret;
 	unsigned int num_cu_shared;
 
-	switch (kdev->device_info->asic_family) {
+	switch (kdev->adev->asic_type) {
 	case CHIP_KAVERI:
 		pcache_info = kaveri_cache_info;
 		num_of_cache_types = ARRAY_SIZE(kaveri_cache_info);
@@ -1380,67 +1550,88 @@ static int kfd_fill_gpu_cache_info(struct kfd_dev *kdev,
 		pcache_info = vegam_cache_info;
 		num_of_cache_types = ARRAY_SIZE(vegam_cache_info);
 		break;
-	case CHIP_VEGA10:
-		pcache_info = vega10_cache_info;
-		num_of_cache_types = ARRAY_SIZE(vega10_cache_info);
-		break;
-	case CHIP_VEGA12:
-		pcache_info = vega12_cache_info;
-		num_of_cache_types = ARRAY_SIZE(vega12_cache_info);
-		break;
-	case CHIP_VEGA20:
-	case CHIP_ARCTURUS:
-		pcache_info = vega20_cache_info;
-		num_of_cache_types = ARRAY_SIZE(vega20_cache_info);
-		break;
-	case CHIP_ALDEBARAN:
-		pcache_info = aldebaran_cache_info;
-		num_of_cache_types = ARRAY_SIZE(aldebaran_cache_info);
-		break;
-	case CHIP_RAVEN:
-		pcache_info = raven_cache_info;
-		num_of_cache_types = ARRAY_SIZE(raven_cache_info);
-		break;
-	case CHIP_RENOIR:
-		pcache_info = renoir_cache_info;
-		num_of_cache_types = ARRAY_SIZE(renoir_cache_info);
-		break;
-	case CHIP_NAVI10:
-	case CHIP_NAVI12:
-	case CHIP_CYAN_SKILLFISH:
-		pcache_info = navi10_cache_info;
-		num_of_cache_types = ARRAY_SIZE(navi10_cache_info);
-		break;
-	case CHIP_NAVI14:
-		pcache_info = navi14_cache_info;
-		num_of_cache_types = ARRAY_SIZE(navi14_cache_info);
-		break;
-	case CHIP_SIENNA_CICHLID:
-		pcache_info = sienna_cichlid_cache_info;
-		num_of_cache_types = ARRAY_SIZE(sienna_cichlid_cache_info);
-		break;
-	case CHIP_NAVY_FLOUNDER:
-		pcache_info = navy_flounder_cache_info;
-		num_of_cache_types = ARRAY_SIZE(navy_flounder_cache_info);
-		break;
-	case CHIP_DIMGREY_CAVEFISH:
-		pcache_info = dimgrey_cavefish_cache_info;
-		num_of_cache_types = ARRAY_SIZE(dimgrey_cavefish_cache_info);
-		break;
-	case CHIP_VANGOGH:
-		pcache_info = vangogh_cache_info;
-		num_of_cache_types = ARRAY_SIZE(vangogh_cache_info);
-		break;
-	case CHIP_BEIGE_GOBY:
-		pcache_info = beige_goby_cache_info;
-		num_of_cache_types = ARRAY_SIZE(beige_goby_cache_info);
-		break;
-	case CHIP_YELLOW_CARP:
-		pcache_info = yellow_carp_cache_info;
-		num_of_cache_types = ARRAY_SIZE(yellow_carp_cache_info);
-		break;
 	default:
-		return -EINVAL;
+		switch (KFD_GC_VERSION(kdev)) {
+		case IP_VERSION(9, 0, 1):
+			pcache_info = vega10_cache_info;
+			num_of_cache_types = ARRAY_SIZE(vega10_cache_info);
+			break;
+		case IP_VERSION(9, 2, 1):
+			pcache_info = vega12_cache_info;
+			num_of_cache_types = ARRAY_SIZE(vega12_cache_info);
+			break;
+		case IP_VERSION(9, 4, 0):
+		case IP_VERSION(9, 4, 1):
+			pcache_info = vega20_cache_info;
+			num_of_cache_types = ARRAY_SIZE(vega20_cache_info);
+			break;
+		case IP_VERSION(9, 4, 2):
+			pcache_info = aldebaran_cache_info;
+			num_of_cache_types = ARRAY_SIZE(aldebaran_cache_info);
+			break;
+		case IP_VERSION(9, 1, 0):
+		case IP_VERSION(9, 2, 2):
+			pcache_info = raven_cache_info;
+			num_of_cache_types = ARRAY_SIZE(raven_cache_info);
+			break;
+		case IP_VERSION(9, 3, 0):
+			pcache_info = renoir_cache_info;
+			num_of_cache_types = ARRAY_SIZE(renoir_cache_info);
+			break;
+		case IP_VERSION(10, 1, 10):
+		case IP_VERSION(10, 1, 2):
+		case IP_VERSION(10, 1, 3):
+		case IP_VERSION(10, 1, 4):
+			pcache_info = navi10_cache_info;
+			num_of_cache_types = ARRAY_SIZE(navi10_cache_info);
+			break;
+		case IP_VERSION(10, 1, 1):
+			pcache_info = navi14_cache_info;
+			num_of_cache_types = ARRAY_SIZE(navi14_cache_info);
+			break;
+		case IP_VERSION(10, 3, 0):
+			pcache_info = sienna_cichlid_cache_info;
+			num_of_cache_types = ARRAY_SIZE(sienna_cichlid_cache_info);
+			break;
+		case IP_VERSION(10, 3, 2):
+			pcache_info = navy_flounder_cache_info;
+			num_of_cache_types = ARRAY_SIZE(navy_flounder_cache_info);
+			break;
+		case IP_VERSION(10, 3, 4):
+			pcache_info = dimgrey_cavefish_cache_info;
+			num_of_cache_types = ARRAY_SIZE(dimgrey_cavefish_cache_info);
+			break;
+		case IP_VERSION(10, 3, 1):
+			pcache_info = vangogh_cache_info;
+			num_of_cache_types = ARRAY_SIZE(vangogh_cache_info);
+			break;
+		case IP_VERSION(10, 3, 5):
+			pcache_info = beige_goby_cache_info;
+			num_of_cache_types = ARRAY_SIZE(beige_goby_cache_info);
+			break;
+		case IP_VERSION(10, 3, 3):
+			pcache_info = yellow_carp_cache_info;
+			num_of_cache_types = ARRAY_SIZE(yellow_carp_cache_info);
+			break;
+		case IP_VERSION(10, 3, 6):
+			pcache_info = gc_10_3_6_cache_info;
+			num_of_cache_types = ARRAY_SIZE(gc_10_3_6_cache_info);
+			break;
+		case IP_VERSION(10, 3, 7):
+			pcache_info = gfx1037_cache_info;
+			num_of_cache_types = ARRAY_SIZE(gfx1037_cache_info);
+			break;
+		case IP_VERSION(11, 0, 0):
+		case IP_VERSION(11, 0, 1):
+		case IP_VERSION(11, 0, 2):
+		case IP_VERSION(11, 0, 3):
+			pcache_info = cache_info;
+			num_of_cache_types =
+				kfd_fill_gpu_cache_info_from_gfx_config(kdev, pcache_info);
+			break;
+		default:
+			return -EINVAL;
+		}
 	}
 
 	*size_filled = 0;
@@ -1966,8 +2157,6 @@ static int kfd_fill_gpu_direct_io_link_to_cpu(int *avail_size,
 			struct crat_subtype_iolink *sub_type_hdr,
 			uint32_t proximity_domain)
 {
-	struct amdgpu_device *adev = (struct amdgpu_device *)kdev->kgd;
-
 	*avail_size -= sizeof(struct crat_subtype_iolink);
 	if (*avail_size < 0)
 		return -ENOMEM;
@@ -1984,7 +2173,7 @@ static int kfd_fill_gpu_direct_io_link_to_cpu(int *avail_size,
 	/* Fill in IOLINK subtype.
 	 * TODO: Fill-in other fields of iolink subtype
 	 */
-	if (adev->gmc.xgmi.connected_to_cpu) {
+	if (kdev->adev->gmc.xgmi.connected_to_cpu) {
 		/*
 		 * with host gpu xgmi link, host can access gpu memory whether
 		 * or not pcie bar type is large, so always create bidirectional
@@ -1993,19 +2182,19 @@ static int kfd_fill_gpu_direct_io_link_to_cpu(int *avail_size,
 		sub_type_hdr->flags |= CRAT_IOLINK_FLAGS_BI_DIRECTIONAL;
 		sub_type_hdr->io_interface_type = CRAT_IOLINK_TYPE_XGMI;
 		sub_type_hdr->num_hops_xgmi = 1;
-		if (adev->asic_type == CHIP_ALDEBARAN) {
+		if (KFD_GC_VERSION(kdev) == IP_VERSION(9, 4, 2)) {
 			sub_type_hdr->minimum_bandwidth_mbs =
 					amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(
-							kdev->kgd, NULL, true);
+							kdev->adev, NULL, true);
 			sub_type_hdr->maximum_bandwidth_mbs =
 					sub_type_hdr->minimum_bandwidth_mbs;
 		}
 	} else {
 		sub_type_hdr->io_interface_type = CRAT_IOLINK_TYPE_PCIEXPRESS;
 		sub_type_hdr->minimum_bandwidth_mbs =
-				amdgpu_amdkfd_get_pcie_bandwidth_mbytes(kdev->kgd, true);
+				amdgpu_amdkfd_get_pcie_bandwidth_mbytes(kdev->adev, true);
 		sub_type_hdr->maximum_bandwidth_mbs =
-				amdgpu_amdkfd_get_pcie_bandwidth_mbytes(kdev->kgd, false);
+				amdgpu_amdkfd_get_pcie_bandwidth_mbytes(kdev->adev, false);
 	}
 
 	sub_type_hdr->proximity_domain_from = proximity_domain;
@@ -2047,11 +2236,11 @@ static int kfd_fill_gpu_xgmi_link_to_gpu(int *avail_size,
 	sub_type_hdr->proximity_domain_from = proximity_domain_from;
 	sub_type_hdr->proximity_domain_to = proximity_domain_to;
 	sub_type_hdr->num_hops_xgmi =
-		amdgpu_amdkfd_get_xgmi_hops_count(kdev->kgd, peer_kdev->kgd);
+		amdgpu_amdkfd_get_xgmi_hops_count(kdev->adev, peer_kdev->adev);
 	sub_type_hdr->maximum_bandwidth_mbs =
-		amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(kdev->kgd, peer_kdev->kgd, false);
+		amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(kdev->adev, peer_kdev->adev, false);
 	sub_type_hdr->minimum_bandwidth_mbs = sub_type_hdr->maximum_bandwidth_mbs ?
-		amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(kdev->kgd, NULL, true) : 0;
+		amdgpu_amdkfd_get_xgmi_bandwidth_mbytes(kdev->adev, NULL, true) : 0;
 
 	return 0;
 }
@@ -2117,7 +2306,7 @@ static int kfd_create_vcrat_image_gpu(void *pcrat_image,
 	cu->flags |= CRAT_CU_FLAGS_GPU_PRESENT;
 	cu->proximity_domain = proximity_domain;
 
-	amdgpu_amdkfd_get_cu_info(kdev->kgd, &cu_info);
+	amdgpu_amdkfd_get_cu_info(kdev->adev, &cu_info);
 	cu->num_simd_per_cu = cu_info.simd_per_cu;
 	cu->num_simd_cores = cu_info.simd_per_cu * cu_info.cu_active_number;
 	cu->max_waves_simd = cu_info.max_waves_per_simd;
@@ -2148,7 +2337,7 @@ static int kfd_create_vcrat_image_gpu(void *pcrat_image,
 	 * report the total FB size (public+private) as a single
 	 * private heap.
 	 */
-	amdgpu_amdkfd_get_local_mem_info(kdev->kgd, &local_mem_info);
+	local_mem_info = kdev->local_mem_info;
 	sub_type_hdr = (typeof(sub_type_hdr))((char *)sub_type_hdr +
 			sub_type_hdr->length);
 
@@ -2197,7 +2386,7 @@ static int kfd_create_vcrat_image_gpu(void *pcrat_image,
 
 	/* Fill in Subtype: IO_LINKS
 	 *  Only direct links are added here which is Link from GPU to
-	 *  to its NUMA node. Indirect links are added by userspace.
+	 *  its NUMA node. Indirect links are added by userspace.
 	 */
 	sub_type_hdr = (typeof(sub_type_hdr))((char *)sub_type_hdr +
 		cache_mem_filled);
@@ -2221,7 +2410,7 @@ static int kfd_create_vcrat_image_gpu(void *pcrat_image,
 	 */
 	if (kdev->hive_id) {
 		for (nid = 0; nid < proximity_domain; ++nid) {
-			peer_dev = kfd_topology_device_by_proximity_domain(nid);
+			peer_dev = kfd_topology_device_by_proximity_domain_no_lock(nid);
 			if (!peer_dev->gpu)
 				continue;
 			if (peer_dev->gpu->hive_id != kdev->hive_id)

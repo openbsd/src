@@ -3,6 +3,7 @@
 #define _I915_TRACE_H_
 
 #include "i915_drv.h"
+#include "i915_irq.h"
 
 #define trace_g4x_wm(a, b)
 #define trace_i915_context_create(a)
