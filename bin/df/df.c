@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.60 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.61 2023/01/01 16:31:20 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -51,6 +51,7 @@ int		 bread(int, off_t, void *, int);
 static void	 bsdprint(struct statfs *, long, int);
 char		*getmntpt(char *);
 static void	 maketypelist(char *);
+static int	 percent(u_int64_t, u_int64_t);
 static void	 posixprint(struct statfs *, long, int);
 static void	 prthuman(struct statfs *sfsp, unsigned long long);
 static void	 prthumanval(long long);
@@ -323,13 +324,12 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 		    fsbtoblk(used, sfsp->f_bsize, blocksize),
 		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
-	(void)printf(" %5.0f%%",
-	    availblks == 0 ? 100.0 : (double)used / (double)availblks * 100.0);
+	(void)printf(" %5d%%", percent(used, availblks));
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %7llu %7llu %5.0f%% ", used, sfsp->f_ffree,
-		   inodes == 0 ? 100.0 : (double)used / (double)inodes * 100.0);
+		(void)printf(" %7llu %7llu %5d%% ", used, sfsp->f_ffree,
+		   percent(used, inodes));
 	} else
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
@@ -372,6 +372,12 @@ bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 	return;
 }
 
+static int
+percent(u_int64_t used, u_int64_t avail)
+{
+	return avail ? (100 * used + (avail - 1)) / avail : 100;
+}
+
 /*
  * Print in format defined by POSIX 1002.2, invoke with -P option.
  */
@@ -383,7 +389,6 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 	char *blockstr;
 	struct statfs *sfsp;
 	long long used, avail;
-	double percentused;
 
 	if (kflag) {
 		blocksize = 1024;
@@ -401,18 +406,14 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 		sfsp = &mntbuf[i];
 		used = sfsp->f_blocks - sfsp->f_bfree;
 		avail = sfsp->f_bavail + used;
-		if (avail == 0)
-			percentused = 100.0;
-		else
-			percentused = (double)used / (double)avail * 100.0;
 
-		(void) printf ("%-*.*s %*lld %10lld %11lld %5.0f%%   %s\n",
+		(void) printf ("%-*.*s %*lld %10lld %11lld %5d%%   %s\n",
 			maxwidth, maxwidth, sfsp->f_mntfromname,
 			(int)strlen(blockstr),
 			fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 			fsbtoblk(used, sfsp->f_bsize, blocksize),
 			fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize),
-			percentused, sfsp->f_mntonname);
+			percent(used, avail), sfsp->f_mntonname);
 	}
 }
 
