@@ -871,6 +871,10 @@ typedef struct {
   { 0x49152e77, 0x1ada, 0x4764,	\
     { 0xb7, 0xa2, 0x7a, 0xfe, 0xfe, 0xd9, 0x5e, 0x8b } }
 
+#define EFI_SYSTEM_RESOURCE_TABLE_GUID \
+  { 0xb122a263, 0x3661, 0x4f68,	\
+    { 0x99, 0x29, 0x78, 0xf8, 0xb0, 0xd6, 0x21, 0x80 } }
+
 typedef struct _EFI_CONFIGURATION_TABLE {
   EFI_GUID                VendorGuid;
   VOID                    *VendorTable;
@@ -911,5 +915,28 @@ typedef struct _EFI_SYSTEM_TABLE {
   EFI_CONFIGURATION_TABLE         *ConfigurationTable;
 
 } EFI_SYSTEM_TABLE;
+
+//
+// EFI System Resource Table
+//
+
+typedef struct _EFI_SYSTEM_RESOURCE_TABLE {
+  UINT32	FwResourceCount;
+  UINT32	FwResourceCountMax;
+  UINT64	FwResourceVersion;
+  //EFI_SYSTEM_RESOURCE_ENTRY Entries[];
+} EFI_SYSTEM_RESOURCE_TABLE;
+
+#define EFI_SYSTEM_RESOURCE_TABLE_FIRMWARE_RESOURCE_VERSION 1
+
+typedef struct _EFI_SYSTEM_RESOURCE_ENTRY {
+  EFI_GUID      FwClass;
+  UINT32        FwType;
+  UINT32        FwVersion;
+  UINT32        LowestSupportedFwVersion;
+  UINT32        CapsuleFlags;
+  UINT32        LastAttemptVersion;
+  UINT32        LastAttemptStatus;
+} EFI_SYSTEM_RESOURCE_ENTRY;
 
 #endif
