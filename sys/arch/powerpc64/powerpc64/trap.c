@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2021/05/11 18:21:12 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2023/01/02 23:03:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -305,7 +305,7 @@ trap(struct trapframe *frame)
 
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
-		access_type = PROT_READ | PROT_EXEC;
+		access_type = PROT_EXEC;
 		error = uvm_fault(map, trunc_page(va), 0, access_type);
 		if (error == 0)
 			uvm_grow(p, va);
