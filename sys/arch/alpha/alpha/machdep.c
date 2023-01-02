@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.199 2022/10/30 17:43:39 guenther Exp $ */
+/* $OpenBSD: machdep.c,v 1.200 2023/01/02 19:09:17 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -402,7 +402,7 @@ nobootinfo:
 	 * read-only eventually (although this is not the case at the moment).
 	 */
 	if (alpha_implver() >= ALPHA_IMPLVER_EV5) {
-		if (~alpha_amask(ALPHA_AMASK_BWX) != 0) {
+		if ((~alpha_amask(ALPHA_AMASK_BWX) & ALPHA_AMASK_BWX) != 0) {
 			extern vaddr_t __bwx_switch0, __bwx_switch1,
 			    __bwx_switch2, __bwx_switch3;
 			u_int32_t *dst, *src, *end;
