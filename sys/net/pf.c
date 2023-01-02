@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1164 2022/12/27 20:13:03 patrick Exp $ */
+/*	$OpenBSD: pf.c,v 1.1165 2023/01/02 05:32:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7671,7 +7671,7 @@ done:
 		    pd.m->m_pkthdr.pf.inp);
 
 	if (s != NULL && !ISSET(pd.m->m_pkthdr.csum_flags, M_FLOWID)) {
-		pd.m->m_pkthdr.ph_flowid = bemtoh64(&s->id);
+		pd.m->m_pkthdr.ph_flowid = s->key[PF_SK_WIRE]->hash;
 		SET(pd.m->m_pkthdr.csum_flags, M_FLOWID);
 	}
 
