@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.93 2022/12/07 20:08:28 mvs Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.94 2023/01/02 23:09:48 guenther Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -197,6 +197,24 @@ tfind(pid_t tid)
 		if (p->p_tid == tid)
 			return (p);
 	return (NULL);
+}
+
+/*
+ * Locate a thread by userspace id, from a given process.
+ */
+struct proc *
+tfind_user(pid_t tid, struct process *pr)
+{
+	struct proc *p;
+
+	if (tid < THREAD_PID_OFFSET)
+		return NULL;
+	p = tfind(tid - THREAD_PID_OFFSET);
+
+	/* verify we found a thread in the correct process */
+	if (p != NULL && p->p_p != pr)
+		p = NULL;
+	return p;
 }
 
 /*

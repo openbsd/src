@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.302 2022/12/29 01:36:36 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.303 2023/01/02 23:09:48 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -640,17 +640,10 @@ sys_thrkill(struct proc *cp, void *v, register_t *retval)
 
 	if (((u_int)signum) >= NSIG)
 		return (EINVAL);
-	if (tid > THREAD_PID_OFFSET) {
-		if ((p = tfind(tid - THREAD_PID_OFFSET)) == NULL)
-			return (ESRCH);
 
-		/* can only kill threads in the same process */
-		if (p->p_p != cp->p_p)
-			return (ESRCH);
-	} else if (tid == 0)
-		p = cp;
-	else
-		return (EINVAL);
+	p = tid ? tfind_user(tid, cp->p_p) : cp;
+	if (p == NULL)
+		return (ESRCH);
 
 	/* optionally require the target thread to have the given tcb addr */
 	tcb = SCARG(uap, tcb);

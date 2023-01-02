@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.91 2022/12/21 07:59:02 claudio Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.92 2023/01/02 23:09:48 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -556,11 +556,9 @@ ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
 		struct proc *t;
 
 		if (req == PT_GET_THREAD_NEXT) {
-			t = tfind(pts->pts_tid - THREAD_PID_OFFSET);
+			t = tfind_user(pts->pts_tid, tr);
 			if (t == NULL || ISSET(t->p_flag, P_WEXIT))
 				return ESRCH;
-			if (t->p_p != tr)
-				return EINVAL;
 			t = TAILQ_NEXT(t, p_thr_link);
 		} else {
 			t = TAILQ_FIRST(&tr->ps_threads);
