@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiobl.c,v 1.2 2022/11/09 22:56:44 tobhe Exp $	*/
+/*	$OpenBSD: gpiobl.c,v 1.3 2023/01/03 10:59:00 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Tobias Heider <tobhe@openbsd.org>
  *
@@ -44,9 +44,11 @@ struct gpiobl_softc *sc_gpiobl;
 
 int	gpiobl_match(struct device *, void *, void *);
 void	gpiobl_attach(struct device *, struct device *, void *);
+int	gpiobl_activate(struct device *, int);
 
 const struct cfattach gpiobl_ca = {
-	sizeof(struct gpiobl_softc), gpiobl_match, gpiobl_attach
+	sizeof(struct gpiobl_softc), gpiobl_match, gpiobl_attach, NULL,
+	gpiobl_activate
 };
 
 struct cfdriver gpiobl_cd = {
@@ -86,6 +88,23 @@ gpiobl_attach(struct device *parent, struct device *self, void *aux)
 	simplefb_burn_hook = gpiobl_set;
 
 	printf("\n");
+}
+
+int
+gpiobl_activate(struct device *self, int act)
+{
+	struct gpiobl_softc *sc = (struct gpiobl_softc *)self;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		gpio_controller_set_pin(&sc->sc_gpio[0], 0);
+		break;
+	case DVACT_WAKEUP:
+		gpio_controller_set_pin(&sc->sc_gpio[0], sc->sc_on);
+		break;
+	}
+
+	return 0;
 }
 
 void
