@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.112 2022/12/16 08:22:05 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.113 2023/01/03 11:43:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -834,7 +834,8 @@ cmdq_print_data(struct cmdq_item *item, int parse, struct evbuffer *evb)
 	char				*sanitized, *msg, *line;
 
 	if (!parse) {
-		utf8_stravisx(&msg, data, size, VIS_OCTAL|VIS_CSTYLE);
+		utf8_stravisx(&msg, data, size,
+		    VIS_OCTAL|VIS_CSTYLE|VIS_NOSLASH);
 		log_debug("%s: %s", __func__, msg);
 	} else {
 		msg = EVBUFFER_DATA(evb);
