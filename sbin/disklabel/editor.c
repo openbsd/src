@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.380 2022/11/10 15:26:38 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.381 2023/01/03 23:27:03 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -407,18 +407,18 @@ editor(int f)
 			break;
 
 		case 'r': {
-			struct diskchunk *chunks;
-			int i;
+			const struct diskchunk *chunk;
+			uint64_t total = 0;
 			/* Display free space. */
-			chunks = free_chunks(&newlab);
-			for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0;
-			    i++)
+			chunk = free_chunks(&newlab);
+			for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+				total += chunk->stop - chunk->start;
 				fprintf(stderr, "Free sectors: %16llu - %16llu "
 				    "(%16llu)\n",
-				    chunks[i].start, chunks[i].stop - 1,
-				    chunks[i].stop - chunks[i].start);
-			fprintf(stderr, "Total free sectors: %llu.\n",
-			    editor_countfree(&newlab));
+				    chunk->start, chunk->stop - 1,
+				    chunk->stop - chunk->start);
+			}
+			fprintf(stderr, "Total free sectors: %llu.\n", total);
 			break;
 		}
 
