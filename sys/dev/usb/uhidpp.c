@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.41 2023/01/03 15:51:40 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.42 2023/01/03 15:52:02 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -668,7 +668,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	 */
 	KASSERT(sc->sc_senstsk == NULL);
 	mtx_leave(&sc->sc_mtx);
-	sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 30);
+	sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 60);
 	mtx_enter(&sc->sc_mtx);
 }
 
