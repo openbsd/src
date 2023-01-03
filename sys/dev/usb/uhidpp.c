@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.39 2022/11/29 06:30:34 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.40 2023/01/03 15:50:52 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -72,21 +72,21 @@ int uhidpp_debug = 1;
 
 #define HIDPP_DEVICE_ID_RECEIVER		0xff
 
-#define HIDPP_FEAT_ROOT_IDX			0x00
+#define HIDPP_FEAT_ROOT_ID			0x00
 #define HIDPP_FEAT_ROOT_PING_FUNC		0x01
-#define HIDPP_FEAT_ROOT_PING_DATA		0x5a
+#define  HIDPP_PING_DATA			0x5a
 
 #define HIDPP_SET_REGISTER			0x80
 #define HIDPP_GET_REGISTER			0x81
 #define HIDPP_SET_LONG_REGISTER			0x82
 #define HIDPP_GET_LONG_REGISTER			0x83
 
-#define HIDPP_REG_ENABLE_REPORTS		0x00
-#define HIDPP_REG_PAIRING_INFORMATION		0xb5
+#define HIDPP_REG_ENABLE_REPORTS			0x00
+#define  HIDPP_ENABLE_REPORTS_DEVICE_BATTERY_STATUS	0x10
+#define  HIDPP_ENABLE_REPORTS_RECEIVER_WIRELESS		0x01
+#define  HIDPP_ENABLE_REPORTS_RECEIVER_SOFTWARE_PRESENT	0x08
 
-#define HIDPP_NOTIF_DEVICE_BATTERY_STATUS	(1 << 4)
-#define HIDPP_NOTIF_RECEIVER_WIRELESS		(1 << 0)
-#define HIDPP_NOTIF_RECEIVER_SOFTWARE_PRESENT	(1 << 3)
+#define HIDPP_REG_PAIRING_INFORMATION		0xb5
 
 /* HID++ 1.0 error codes. */
 #define HIDPP_ERROR				0x8f
@@ -835,13 +835,13 @@ hidpp_get_protocol_version(struct uhidpp_softc *sc, uint8_t device_id,
     uint8_t *major, uint8_t *minor)
 {
 	struct uhidpp_report resp;
-	uint8_t params[3] = { 0, 0, HIDPP_FEAT_ROOT_PING_DATA };
+	uint8_t params[3] = { 0, 0, HIDPP_PING_DATA };
 	int error;
 
 	error = hidpp_send_fap_report(sc,
 	    HIDPP_REPORT_ID_SHORT,
 	    device_id,
-	    HIDPP_FEAT_ROOT_IDX,
+	    HIDPP_FEAT_ROOT_ID,
 	    HIDPP_FEAT_ROOT_PING_FUNC,
 	    params, sizeof(params), &resp);
 	if (error == HIDPP_ERROR_INVALID_SUBID) {
@@ -851,7 +851,7 @@ hidpp_get_protocol_version(struct uhidpp_softc *sc, uint8_t device_id,
 	}
 	if (error)
 		return error;
-	if (resp.rap.params[2] != HIDPP_FEAT_ROOT_PING_DATA)
+	if (resp.rap.params[2] != HIDPP_PING_DATA)
 		return -EPROTO;
 
 	*major = resp.fap.params[0];
@@ -969,10 +969,10 @@ hidpp10_enable_notifications(struct uhidpp_softc *sc, uint8_t device_id)
 	uint8_t params[3];
 
 	/* Device reporting flags. */
-	params[0] = HIDPP_NOTIF_DEVICE_BATTERY_STATUS;
+	params[0] = HIDPP_ENABLE_REPORTS_DEVICE_BATTERY_STATUS;
 	/* Receiver reporting flags. */
-	params[1] = HIDPP_NOTIF_RECEIVER_WIRELESS |
-	    HIDPP_NOTIF_RECEIVER_SOFTWARE_PRESENT;
+	params[1] = HIDPP_ENABLE_REPORTS_RECEIVER_WIRELESS |
+	    HIDPP_ENABLE_REPORTS_RECEIVER_SOFTWARE_PRESENT;
 	/* Device reporting flags (continued). */
 	params[2] = 0;
 
