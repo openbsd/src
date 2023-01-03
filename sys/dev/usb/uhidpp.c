@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.40 2023/01/03 15:50:52 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.41 2023/01/03 15:51:40 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -108,8 +108,11 @@ int uhidpp_debug = 1;
  * The software ID is added to feature access reports (FAP) and used to
  * distinguish responses from notifications. Note, the software ID must be
  * greater than zero which is reserved for notifications.
+ * The effective software ID round robins within its allowed interval [1, 15]
+ * making it easier to correlate requests and responses.
  */
-#define HIDPP_SOFTWARE_ID			0x01
+#define HIDPP_SOFTWARE_ID_MIN			1
+#define HIDPP_SOFTWARE_ID_MAX			15
 #define HIDPP_SOFTWARE_ID_LEN			4
 
 #define HIDPP20_FEAT_ROOT_ID			0x0000
@@ -238,6 +241,7 @@ struct uhidpp_softc {
 	struct uhidpp_report *sc_req;	/* [m] synchronous request buffer */
 	struct uhidpp_report *sc_resp;	/* [m] synchronous response buffer */
 	u_int sc_resp_state;		/* [m] synchronous response state */
+	u_int sc_swid;			/* [m] request software id */
 
 	enum {
 		UHIDPP_RECEIVER_UNIFYING,
@@ -372,6 +376,7 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_resp = NULL;
 	sc->sc_resp_state = UHIDPP_RESP_NONE;
+	sc->sc_swid = HIDPP_SOFTWARE_ID_MIN;
 
 	error = uhidev_open(&sc->sc_hdev);
 	if (error) {
@@ -1268,8 +1273,10 @@ hidpp_send_fap_report(struct uhidpp_softc *sc, uint8_t report_id,
 	memset(&req, 0, sizeof(req));
 	req.device_id = device_id;
 	req.fap.feature_idx = feature_idx;
+	sc->sc_swid = sc->sc_swid == HIDPP_SOFTWARE_ID_MAX ?
+	    HIDPP_SOFTWARE_ID_MIN : sc->sc_swid + 1;
 	req.fap.funcidx_swid =
-	    (funcidx_swid << HIDPP_SOFTWARE_ID_LEN) | HIDPP_SOFTWARE_ID;
+	    (funcidx_swid << HIDPP_SOFTWARE_ID_LEN) | sc->sc_swid;
 	memcpy(req.fap.params, params, nparams);
 	return hidpp_send_report(sc, report_id, &req, resp);
 }
