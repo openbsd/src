@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.27 2022/11/29 20:26:22 job Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.28 2023/01/03 18:19:12 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -321,20 +321,26 @@ rrdp_finished(struct rrdp *s)
 			s->last_mod = NULL;
 			switch (s->task) {
 			case NOTIFICATION:
-				logx("%s: repository not modified", s->local);
+				logx("%s: repository not modified (%s#%lld)",
+				    s->local, s->repository.session_id,
+				    s->repository.serial);
 				rrdp_state_send(s);
 				rrdp_free(s);
 				rrdp_done(id, 1);
 				break;
 			case SNAPSHOT:
-				logx("%s: downloading snapshot", s->local);
+				logx("%s: downloading snapshot (%s#%lld)",
+				    s->local, s->current.session_id,
+				    s->current.serial);
 				rrdp_clear_repo(s);
 				s->sxml = new_snapshot_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			case DELTA:
-				logx("%s: downloading %lld deltas", s->local,
-				    s->repository.serial - s->current.serial);
+				logx("%s: downloading %lld deltas (%s#%lld)",
+				    s->local,
+				    s->repository.serial - s->current.serial,
+				    s->current.session_id, s->current.serial);
 				s->dxml = new_delta_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
