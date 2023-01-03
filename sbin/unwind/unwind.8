@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.11 2021/07/18 11:18:38 kn Exp $
+.\"	$OpenBSD: unwind.8,v 1.12 2023/01/03 20:58:05 deraadt Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2021 $
+.Dd $Mdocdate: January 3 2023 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -34,7 +34,6 @@ listens on localhost.
 .Nm
 sends DNS queries to nameservers to answer queries and switches to resolvers
 learned from
-.Xr dhclient 8 ,
 .Xr dhcpleased 8
 or
 .Xr slaacd 8
@@ -104,7 +103,6 @@ socket used for communication with
 .El
 .Sh SEE ALSO
 .Xr unwind.conf 5 ,
-.Xr dhclient 8 ,
 .Xr dhcpleased 8 ,
 .Xr slaacd 8 ,
 .Xr unbound 8 ,
