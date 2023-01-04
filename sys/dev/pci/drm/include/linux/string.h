@@ -81,17 +81,21 @@ match_string(const char * const *array,  size_t n, const char *str)
 	return -EINVAL;
 }
 
-/* returns chars written excluding NUL */
+static inline ssize_t
+strscpy(char *dst, const char *src, size_t dstsize)
+{
+	ssize_t r;
+	r = strlcpy(dst, src, dstsize);
+	if (dstsize == 0 || r >= dstsize)
+		return -E2BIG;
+	return r;
+}
+
 static inline ssize_t
 strscpy_pad(char *dst, const char *src, size_t dstsize)
 {
-	ssize_t r;
 	memset(dst, 0, dstsize);
-	r = strlcpy(dst, src, dstsize);
-	/* truncation */
-	if (r >= dstsize)
-		r = dstsize - 1;
-	return r;
+	return strscpy(dst, src, dstsize);
 }
 
 #endif
