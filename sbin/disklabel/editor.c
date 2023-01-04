@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.382 2023/01/04 01:22:48 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.383 2023/01/04 15:18:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -150,12 +150,12 @@ u_int64_t getuint64(struct disklabel *, char *, char *, u_int64_t,
 u_int64_t getnumber(char *, char *, u_int32_t, u_int32_t);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
-struct partition **sort_partitions(struct disklabel *);
+struct partition **sort_partitions(struct disklabel *, int);
 void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
-struct diskchunk *free_chunks(struct disklabel *);
+struct diskchunk *free_chunks(struct disklabel *, int);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
@@ -410,7 +410,7 @@ editor(int f)
 			const struct diskchunk *chunk;
 			uint64_t total = 0;
 			/* Display free space. */
-			chunk = free_chunks(&newlab);
+			chunk = free_chunks(&newlab, -1);
 			for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
 				total += chunk->stop - chunk->start;
 				fprintf(stderr, "Free sectors: %16llu - %16llu "
@@ -623,7 +623,7 @@ again:
 		ap = &alloc[i];
 
 		/* Find largest chunk of free space. */
-		chunk = free_chunks(lp);
+		chunk = free_chunks(lp, -1);
 		chunksize = 0;
 		for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
 			if ((chunk->stop - chunk->start) > chunksize) {
@@ -882,7 +882,7 @@ editor_add(struct disklabel *lp, char *p)
 
 	/* Make sure selected partition is zero'd too. */
 	memset(pp, 0, sizeof(*pp));
-	chunks = free_chunks(lp);
+	chunks = free_chunks(lp, -1);
 
 	/*
 	 * Since we know there's free space, there must be at least one
@@ -1246,7 +1246,7 @@ has_overlap(struct disklabel *lp)
 	ssize_t linelen;
 
 	for (;;) {
-		spp = sort_partitions(lp);
+		spp = sort_partitions(lp, -1);
 		for (i = 0; spp[i+1] != NULL; i++) {
 			if (DL_GETPOFFSET(spp[i]) + DL_GETPSIZE(spp[i]) >
 			    DL_GETPOFFSET(spp[i+1]))
@@ -1331,7 +1331,7 @@ edit_parms(struct disklabel *lp)
 }
 
 struct partition **
-sort_partitions(struct disklabel *lp)
+sort_partitions(struct disklabel *lp, int ignore)
 {
 	static struct partition *spp[MAXPARTITIONS+2];
 	int i, npartitions;
@@ -1339,7 +1339,7 @@ sort_partitions(struct disklabel *lp)
 	memset(spp, 0, sizeof(spp));
 
 	for (npartitions = 0, i = 0; i < lp->d_npartitions; i++) {
-		if (lp->d_partitions[i].p_fstype != FS_UNUSED &&
+		if (i != ignore && lp->d_partitions[i].p_fstype != FS_UNUSED &&
 		    DL_GETPSIZE(&lp->d_partitions[i]) != 0)
 			spp[npartitions++] = &lp->d_partitions[i];
 	}
@@ -1506,7 +1506,7 @@ set_duid(struct disklabel *lp)
  * Return a list of the "chunks" of free space available
  */
 struct diskchunk *
-free_chunks(struct disklabel *lp)
+free_chunks(struct disklabel *lp, int partno)
 {
 	struct partition **spp;
 	static struct diskchunk chunks[MAXPARTITIONS + 2];
@@ -1514,7 +1514,7 @@ free_chunks(struct disklabel *lp)
 	int i, numchunks;
 
 	/* Sort the in-use partitions based on offset */
-	spp = sort_partitions(lp);
+	spp = sort_partitions(lp, partno);
 
 	/* If there are no partitions, it's all free. */
 	if (spp[0] == NULL) {
@@ -1582,7 +1582,7 @@ editor_countfree(struct disklabel *lp)
 	u_int64_t freesectors = 0;
 	int i;
 
-	chunks = free_chunks(lp);
+	chunks = free_chunks(lp, -1);
 
 	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++)
 		freesectors += chunks[i].stop - chunks[i].start;
@@ -2085,21 +2085,16 @@ zero_partitions(struct disklabel *lp)
 u_int64_t
 max_partition_size(struct disklabel *lp, int partno)
 {
-	struct partition *pp = &lp->d_partitions[partno];
-	struct diskchunk *chunks;
+	struct diskchunk *chunk;
 	u_int64_t maxsize = 0, offset;
-	int fstype, i;
 
-	fstype = pp->p_fstype;
-	pp->p_fstype = FS_UNUSED;
-	chunks = free_chunks(lp);
-	pp->p_fstype = fstype;
+	chunk = free_chunks(lp, partno);
 
-	offset = DL_GETPOFFSET(pp);
-	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
-		if (offset < chunks[i].start || offset >= chunks[i].stop)
+	offset = DL_GETPOFFSET(&lp->d_partitions[partno]);
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+		if (offset < chunk->start || offset >= chunk->stop)
 			continue;
-		maxsize = chunks[i].stop - offset;
+		maxsize = chunk->stop - offset;
 		break;
 	}
 	return (maxsize);
@@ -2306,10 +2301,8 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
     u_int64_t stopalign, int flags)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	struct diskchunk *chunks;
+	struct diskchunk *chunk;
 	u_int64_t start, stop, maxstop;
-	unsigned int i;
-	u_int8_t fstype;
 
 	start = DL_GETPOFFSET(pp);
 	if ((flags & ROUND_OFFSET_UP) == ROUND_OFFSET_UP)
@@ -2318,15 +2311,12 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 		start = (start / startalign) * startalign;
 
 	/* Find the chunk that contains 'start'. */
-	fstype = pp->p_fstype;
-	pp->p_fstype = FS_UNUSED;
-	chunks = free_chunks(lp);
-	pp->p_fstype = fstype;
-	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
-		if (start >= chunks[i].start && start < chunks[i].stop)
+	chunk = free_chunks(lp, partno);
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+		if (start >= chunk->start && start < chunk->stop)
 			break;
 	}
-	if (chunks[i].stop == 0) {
+	if (chunk->stop == 0) {
 		fprintf(stderr, "'%c' aligned offset %llu lies outside "
 		    "the OpenBSD bounds or inside another partition\n",
 		    'a' + partno, start);
@@ -2335,7 +2325,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 
 	/* Calculate the new 'stop' sector, the sector after the partition. */
 	if ((flags & ROUND_SIZE_OVERLAP) == 0)
-		maxstop = (chunks[i].stop / stopalign) * stopalign;
+		maxstop = (chunk->stop / stopalign) * stopalign;
 	else
 		maxstop = (ending_sector / stopalign) * stopalign;
 
