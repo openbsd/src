@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.28 2023/01/04 02:00:49 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.29 2023/01/04 10:31:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -128,6 +128,10 @@ struct pf_state {
 	u_int8_t		 rt;		/* [I] */
 	u_int8_t		 snapped;	/* [S] */
 };
+
+RBT_HEAD(pf_state_tree_id, pf_state);
+RBT_PROTOTYPE(pf_state_tree_id, pf_state, entry_id, pf_state_compare_id);
+extern struct pf_state_tree_id tree_id;
 
 /*
  *

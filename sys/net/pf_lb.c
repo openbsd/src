@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.72 2022/08/31 11:29:12 benno Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.73 2023/01/04 10:31:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -311,10 +311,8 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		}
 		if (sns[type]->states != 0) {
 			/* XXX expensive */
-			RB_FOREACH(s, pf_state_tree_id,
-			   &tree_id)
-				pf_state_rm_src_node(s,
-				    sns[type]);
+			RBT_FOREACH(s, pf_state_tree_id, &tree_id)
+				pf_state_rm_src_node(s, sns[type]);
 		}
 		sns[type]->expire = 1;
 		pf_remove_src_node(sns[type]);

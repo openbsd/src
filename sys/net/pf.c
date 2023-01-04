@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1166 2023/01/04 02:00:49 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1167 2023/01/04 10:31:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -305,8 +305,8 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
 static inline int pf_state_compare_key(const struct pf_state_key *,
 	const struct pf_state_key *);
-static __inline int pf_state_compare_id(struct pf_state *,
-	struct pf_state *);
+static inline int pf_state_compare_id(const struct pf_state *,
+	const struct pf_state *);
 #ifdef INET6
 static __inline void pf_cksum_uncover(u_int16_t *, u_int16_t, u_int8_t);
 static __inline void pf_cksum_cover(u_int16_t *, u_int16_t, u_int8_t);
@@ -320,8 +320,7 @@ struct pf_state_list pf_state_list = PF_STATE_LIST_INITIALIZER(pf_state_list);
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RBT_GENERATE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key);
-RB_GENERATE(pf_state_tree_id, pf_state,
-    entry_id, pf_state_compare_id);
+RBT_GENERATE(pf_state_tree_id, pf_state, entry_id, pf_state_compare_id);
 
 int
 pf_addr_compare(const struct pf_addr *a, const struct pf_addr *b,
@@ -541,7 +540,7 @@ pf_src_connlimit(struct pf_state **state)
 			struct pf_state *st;
 
 			pf_status.lcounters[LCNT_OVERLOAD_FLUSH]++;
-			RB_FOREACH(st, pf_state_tree_id, &tree_id) {
+			RBT_FOREACH(st, pf_state_tree_id, &tree_id) {
 				sk = st->key[PF_SK_WIRE];
 				/*
 				 * Kill states from this source.  (Only those
@@ -715,8 +714,8 @@ pf_state_compare_key(const struct pf_state_key *a,
 	return (0);
 }
 
-static __inline int
-pf_state_compare_id(struct pf_state *a, struct pf_state *b)
+static inline int
+pf_state_compare_id(const struct pf_state *a, const struct pf_state *b)
 {
 	if (a->id > b->id)
 		return (1);
@@ -1054,7 +1053,7 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 		s->id = htobe64(pf_status.stateid++);
 		s->creatorid = pf_status.hostid;
 	}
-	if (RB_INSERT(pf_state_tree_id, &tree_id, s) != NULL) {
+	if (RBT_INSERT(pf_state_tree_id, &tree_id, s) != NULL) {
 		if (pf_status.debug >= LOG_NOTICE) {
 			log(LOG_NOTICE, "pf: state insert failed: "
 			    "id: %016llx creatorid: %08x",
@@ -1085,7 +1084,7 @@ pf_find_state_byid(struct pf_state_cmp *key)
 {
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	return (RB_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
+	return (RBT_FIND(pf_state_tree_id, &tree_id, (struct pf_state *)key));
 }
 
 int
@@ -1733,7 +1732,7 @@ pf_remove_state(struct pf_state *cur)
 	if (cur->key[PF_SK_STACK]->proto == IPPROTO_TCP)
 		pf_set_protostate(cur, PF_PEER_BOTH, TCPS_CLOSED);
 
-	RB_REMOVE(pf_state_tree_id, &tree_id, cur);
+	RBT_REMOVE(pf_state_tree_id, &tree_id, cur);
 #if NPFLOW > 0
 	if (cur->state_flags & PFSTATE_PFLOW)
 		export_pflow(cur);
