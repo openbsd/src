@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.224 2022/12/18 12:53:18 tb Exp $ */
+/* $OpenBSD: netcat.c,v 1.225 2023/01/04 12:53:38 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -103,7 +103,7 @@ const char    *Kflag;				/* Private key file */
 const char    *oflag;				/* OCSP stapling file */
 const char    *Rflag;				/* Root CA file */
 int	tls_cachanged;				/* Using non-default CA file */
-int     TLSopt;					/* TLS options */
+int	TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
 char	*tls_ciphers;				/* TLS ciphers */
