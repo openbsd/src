@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.381 2023/01/03 23:27:03 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.382 2023/01/04 01:22:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -531,11 +531,11 @@ editor_allocspace(struct disklabel *lp_org)
 	struct space_allocation *alloc;
 	struct space_allocation *ap;
 	struct partition *pp;
-	struct diskchunk *chunks;
+	struct diskchunk *chunk;
 	u_int64_t chunkstart, chunkstop, chunksize;
 	u_int64_t cylsecs, secs, xtrasecs;
 	char **partmp;
-	int i, j, lastalloc, index, partno, freeparts;
+	int i, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
 
 	/* How big is the OpenBSD portion of the disk?  */
@@ -611,25 +611,24 @@ again:
 
 	for (i = 0; i < lastalloc; i++) {
 		/* Find next available partition. */
-		for (j = 0;  j < MAXPARTITIONS; j++)
-			if (DL_GETPSIZE(&lp->d_partitions[j]) == 0)
+		for (partno = 0;  partno < MAXPARTITIONS; partno++)
+			if (DL_GETPSIZE(&lp->d_partitions[partno]) == 0)
 				break;
-		if (j == MAXPARTITIONS) {
+		if (partno == MAXPARTITIONS) {
 			/* It did not work out, try next strategy */
 			goto again;
 		}
-		partno = j;
-		pp = &lp->d_partitions[j];
-		partmp = &mountpoints[j];
+		pp = &lp->d_partitions[partno];
+		partmp = &mountpoints[partno];
 		ap = &alloc[i];
 
 		/* Find largest chunk of free space. */
-		chunks = free_chunks(lp);
+		chunk = free_chunks(lp);
 		chunksize = 0;
-		for (j = 0; chunks[j].start != 0 || chunks[j].stop != 0; j++) {
-			if ((chunks[j].stop - chunks[j].start) > chunksize) {
-				chunkstart = chunks[j].start;
-				chunkstop = chunks[j].stop;
+		for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+			if ((chunk->stop - chunk->start) > chunksize) {
+				chunkstart = chunk->start;
+				chunkstop = chunk->stop;
 #ifdef SUN_CYLCHECK
 				if (lp->d_flags & D_VENDOR) {
 					/* Align to cylinder boundaries. */
