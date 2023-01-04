@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.79 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: vm.c,v 1.80 2023/01/04 02:19:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1663,7 +1663,8 @@ vcpu_exit_inout(struct vm_run_params *vrp)
 		    vei->vrs.vrs_gprs[VCPU_REGS_RDX],
 		    vei->vrs.vrs_gprs[VCPU_REGS_RSI]);
 #endif /* MMIO_DEBUG */
-		fatalx("%s: can't emulate rep refix'd IN(s)/OUT(s)", __func__);
+		fatalx("%s: can't emulate REP prefixed IN(S)/OUT(S)",
+		    __func__);
 	}
 
 	if (ioports_map[vei->vei.vei_port] != NULL)
