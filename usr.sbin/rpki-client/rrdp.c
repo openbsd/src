@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.28 2023/01/03 18:19:12 job Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.29 2023/01/04 16:51:34 job Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -366,7 +366,8 @@ rrdp_finished(struct rrdp *s)
 			break;
 		}
 	} else if (s->res == HTTP_NOT_MOD && s->task == NOTIFICATION) {
-		logx("%s: notification file not modified", s->local);
+		logx("%s: notification file not modified (%s#%lld)", s->local,
+		    s->repository.session_id, s->repository.serial);
 		/* no need to update state file */
 		rrdp_free(s);
 		rrdp_done(id, 1);
