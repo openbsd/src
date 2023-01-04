@@ -14,5 +14,5 @@ test-rrdp: type: add
 test-rrdp: uri: rsync://rpki.example.com/repository/DEFAULT/95/d58727-d970-44d9-abdc-93b3ad12d2f3/1/x7OkhL6fs-x6CQ4Kqd5jOkkB4pY.roa
 test-rrdp: data: 28b761092849ea963824de57bd8b0bef1de6f467b91af51c2d847fa5ae90c6dc
 test-rrdp: version: 1
-test-rrdp: session_id: 9b3f7e31-4979-ef8c-d818-73e4dadc3e6b serial: 13755
+test-rrdp: session_id: 9b3f7e31-4979-4f8c-9818-73e4dadc3e6b serial: 13755
 OK

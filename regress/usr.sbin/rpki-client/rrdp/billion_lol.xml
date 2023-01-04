@@ -12,6 +12,6 @@
 <!ENTITY lol8 "&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;&lol7;">
 <!ENTITY lol9 "&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;&lol8;">
 ]>
-<notification version="1" session_id="9b3f7e31-4979-ef8c-d818-73e4dadc3e6b" serial="13756" xmlns="http://www.ripe.net/rpki/rrdp">
+<notification version="1" session_id="9b3f7e31-4979-4f8c-9818-73e4dadc3e6b" serial="13756" xmlns="http://www.ripe.net/rpki/rrdp">
 &lol9;
 </notification>
