@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.27 2022/12/22 05:59:27 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.28 2023/01/04 02:00:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,6 +63,10 @@ struct pf_state_key {
 	pf_refcnt_t		 sk_refcnt;
 	u_int8_t		 sk_removed;
 };
+
+RBT_HEAD(pf_state_tree, pf_state_key);
+RBT_PROTOTYPE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key);
+
 #define PF_REVERSED_KEY(key, family)				\
 	((key[PF_SK_WIRE]->af != key[PF_SK_STACK]->af) &&	\
 	 (key[PF_SK_WIRE]->af != (family)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.393 2022/12/21 02:23:10 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.394 2023/01/04 02:00:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1758,7 +1758,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				key.port[sidx] = psk->psk_src.port[0];
 				key.port[didx] = psk->psk_dst.port[0];
 
-				sk = RB_FIND(pf_state_tree, &pf_statetbl, &key);
+				sk = RBT_FIND(pf_state_tree, &pf_statetbl,
+				    &key);
 				if (sk == NULL)
 					continue;
 

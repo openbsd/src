@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1165 2023/01/02 05:32:40 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1166 2023/01/04 02:00:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -303,8 +303,8 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	} while (0)
 
 static __inline int pf_src_compare(struct pf_src_node *, struct pf_src_node *);
-static __inline int pf_state_compare_key(struct pf_state_key *,
-	struct pf_state_key *);
+static inline int pf_state_compare_key(const struct pf_state_key *,
+	const struct pf_state_key *);
 static __inline int pf_state_compare_id(struct pf_state *,
 	struct pf_state *);
 #ifdef INET6
@@ -319,12 +319,13 @@ struct pf_state_tree_id tree_id;
 struct pf_state_list pf_state_list = PF_STATE_LIST_INITIALIZER(pf_state_list);
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
-RB_GENERATE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key);
+RBT_GENERATE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key);
 RB_GENERATE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 
-__inline int
-pf_addr_compare(struct pf_addr *a, struct pf_addr *b, sa_family_t af)
+int
+pf_addr_compare(const struct pf_addr *a, const struct pf_addr *b,
+    sa_family_t af)
 {
 	switch (af) {
 	case AF_INET:
@@ -689,8 +690,9 @@ pf_state_rm_src_node(struct pf_state *s, struct pf_src_node *sn)
 
 /* state table stuff */
 
-static __inline int
-pf_state_compare_key(struct pf_state_key *a, struct pf_state_key *b)
+static inline int
+pf_state_compare_key(const struct pf_state_key *a,
+    const struct pf_state_key *b)
 {
 	int	diff;
 
@@ -743,7 +745,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 
 	KASSERT(s->key[idx] == NULL);
 	sk->sk_removed = 0;
-	cur = RB_INSERT(pf_state_tree, &pf_statetbl, sk);
+	cur = RBT_INSERT(pf_state_tree, &pf_statetbl, sk);
 	if (cur != NULL) {
 		sk->sk_removed = 1;
 		/* key exists. check for same kif, if none, add to key */
@@ -798,7 +800,7 @@ pf_state_key_attach(struct pf_state_key *sk, struct pf_state *s, int idx)
 	if ((si = pool_get(&pf_state_item_pl, PR_NOWAIT)) == NULL) {
 		if (TAILQ_EMPTY(&sk->sk_states)) {
 			KASSERT(cur == NULL);
-			RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
+			RBT_REMOVE(pf_state_tree, &pf_statetbl, sk);
 			sk->sk_removed = 1;
 			pf_state_key_unref(sk);
 		}
@@ -856,7 +858,7 @@ pf_state_key_detach(struct pf_state *s, int idx)
 	pool_put(&pf_state_item_pl, si);
 
 	if (TAILQ_EMPTY(&sk->sk_states)) {
-		RB_REMOVE(pf_state_tree, &pf_statetbl, sk);
+		RBT_REMOVE(pf_state_tree, &pf_statetbl, sk);
 		sk->sk_removed = 1;
 		pf_state_key_unlink_reverse(sk);
 		pf_state_key_unlink_inpcb(sk);
@@ -1165,7 +1167,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	}
 
 	if (sk == NULL) {
-		if ((sk = RB_FIND(pf_state_tree, &pf_statetbl,
+		if ((sk = RBT_FIND(pf_state_tree, &pf_statetbl,
 		    (struct pf_state_key *)key)) == NULL)
 			return (PF_DROP);
 		if (pd->dir == PF_OUT && pkt_sk &&
@@ -1220,7 +1222,7 @@ pf_find_state_all(struct pf_state_key_cmp *key, u_int dir, int *more)
 
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 
-	sk = RB_FIND(pf_state_tree, &pf_statetbl, (struct pf_state_key *)key);
+	sk = RBT_FIND(pf_state_tree, &pf_statetbl, (struct pf_state_key *)key);
 
 	if (sk != NULL) {
 		TAILQ_FOREACH(si, &sk->sk_states, si_entry) {

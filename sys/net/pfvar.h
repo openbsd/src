@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.525 2022/12/22 05:59:27 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.526 2023/01/04 02:00:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1033,9 +1033,6 @@ struct pfr_ktable {
 #define pfrkt_nomatch	pfrkt_ts.pfrts_nomatch
 #define pfrkt_tzero	pfrkt_ts.pfrts_tzero
 
-RB_HEAD(pf_state_tree, pf_state_key);
-RB_PROTOTYPE(pf_state_tree, pf_state_key, sk_entry, pf_state_compare_key)
-
 RB_HEAD(pf_state_tree_ext_gwy, pf_state_key);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state_key,
     entry_ext_gwy, pf_state_compare_ext_gwy)
@@ -1792,8 +1789,8 @@ void		 pf_tag2tagname(u_int16_t, char *);
 void		 pf_tag_ref(u_int16_t);
 void		 pf_tag_unref(u_int16_t);
 void		 pf_tag_packet(struct mbuf *, int, int);
-int		 pf_addr_compare(struct pf_addr *, struct pf_addr *,
-		    sa_family_t);
+int		 pf_addr_compare(const struct pf_addr *,
+		     const struct pf_addr *, sa_family_t);
 
 const struct pfq_ops
 		*pf_queue_manager(struct pf_queuespec *);
