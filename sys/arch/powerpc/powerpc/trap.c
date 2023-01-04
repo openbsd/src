@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.127 2022/11/02 07:20:07 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.128 2023/01/04 22:13:43 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ trap(struct trapframe *frame)
 		    frame->srr0, 0, 1))
 			break;
 
-		access_type = PROT_READ | PROT_EXEC;
+		access_type = PROT_EXEC;
 
 		error = uvm_fault(&p->p_vmspace->vm_map,
 		    trunc_page(frame->srr0), 0, access_type);
