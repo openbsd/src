@@ -18,6 +18,3 @@ unset EMBEDDED
 unset OTHER_SECTIONS
 
 . ${srcdir}/emulparams/elf_obsd.sh
-
-# No nx bit, so don't bother to pad between .text and .rodata
-unset PAD_RO
