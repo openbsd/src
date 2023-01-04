@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.2 2008/06/26 05:42:16 ray Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 2023/01/04 14:42:46 jsg Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/09/05 14:42:06 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #      This model includes software developed by Christopher G. Demetriou.
-#      This model includes software developed by Christos Zoulas
 # 4. The name of the author(s) may not be used to endorse or promote models
 #    derived from this software without specific prior written permission
 #

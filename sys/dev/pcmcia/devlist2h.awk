@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.4 2000/02/01 16:54:41 fgsch Exp $
+#	$OpenBSD: devlist2h.awk,v 1.5 2023/01/04 14:42:46 jsg Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
 # Copyright (c) 1998, Christos Zoulas
@@ -17,7 +17,6 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #      This product includes software developed by Christopher G. Demetriou.
-#      This product includes software developed by Christos Zoulas
 # 4. The name of the author(s) may not be used to endorse or promote products
 #    derived from this software without specific prior written permission
 #
