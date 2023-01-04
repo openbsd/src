@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.384 2023/01/04 18:41:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.385 2023/01/04 21:08:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -139,23 +139,23 @@ void	edit_parms(struct disklabel *);
 void	editor_resize(struct disklabel *, char *);
 void	editor_add(struct disklabel *, char *);
 void	editor_change(struct disklabel *, char *);
-u_int64_t editor_countfree(struct disklabel *);
+u_int64_t editor_countfree(const struct disklabel *);
 void	editor_delete(struct disklabel *, char *);
 void	editor_help(void);
 void	editor_modify(struct disklabel *, char *);
 void	editor_name(struct disklabel *, char *);
 char	*getstring(const char *, const char *, const char *);
-u_int64_t getuint64(struct disklabel *, char *, char *, u_int64_t,
+u_int64_t getuint64(const struct disklabel *, char *, char *, u_int64_t,
     u_int64_t, int *);
 u_int64_t getnumber(char *, char *, u_int32_t, u_int32_t);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
-struct partition **sort_partitions(struct disklabel *, int);
+const struct partition **sort_partitions(const struct disklabel *, int);
 void	getdisktype(struct disklabel *, char *, char *);
-void	find_bounds(struct disklabel *);
+void	find_bounds(const struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
-struct diskchunk *free_chunks(struct disklabel *, int);
+struct diskchunk *free_chunks(const struct disklabel *, int);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
@@ -166,9 +166,9 @@ int	get_mp(struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
 void	zero_partitions(struct disklabel *);
-u_int64_t max_partition_size(struct disklabel *, int);
-void	display_edit(struct disklabel *, char);
-void	psize(u_int64_t sz, char unit, struct disklabel *lp);
+u_int64_t max_partition_size(const struct disklabel *, int);
+void	display_edit(const struct disklabel *, char);
+void	psize(u_int64_t sz, char unit, const struct disklabel *lp);
 char	*get_token(char **);
 int	apply_unit(double, u_char, u_int64_t *);
 int	parse_sizespec(const char *, double *, char **);
@@ -1150,7 +1150,7 @@ getnumber(char *prompt, char *helpstring, u_int32_t oval, u_int32_t maxval)
  * CMD_ABORTED		==> ^D on input
  */
 u_int64_t
-getuint64(struct disklabel *lp, char *prompt, char *helpstring,
+getuint64(const struct disklabel *lp, char *prompt, char *helpstring,
     u_int64_t oval, u_int64_t maxval, int *flags)
 {
 	char buf[21], *p, operator = '\0';
@@ -1239,7 +1239,7 @@ invalid:
 int
 has_overlap(struct disklabel *lp)
 {
-	struct partition **spp;
+	const struct partition **spp;
 	int i, p1, p2;
 	char *line = NULL;
 	size_t linesize = 0;
@@ -1330,10 +1330,10 @@ edit_parms(struct disklabel *lp)
 	strncpy(lp->d_packname, p, sizeof(lp->d_packname));	/* checked */
 }
 
-struct partition **
-sort_partitions(struct disklabel *lp, int ignore)
+const struct partition **
+sort_partitions(const struct disklabel *lp, int ignore)
 {
-	static struct partition *spp[MAXPARTITIONS+2];
+	const static struct partition *spp[MAXPARTITIONS+2];
 	int i, npartitions;
 
 	memset(spp, 0, sizeof(spp));
@@ -1506,9 +1506,9 @@ set_duid(struct disklabel *lp)
  * Return a list of the "chunks" of free space available
  */
 struct diskchunk *
-free_chunks(struct disklabel *lp, int partno)
+free_chunks(const struct disklabel *lp, int partno)
 {
-	struct partition **spp;
+	const struct partition **spp;
 	static struct diskchunk chunks[MAXPARTITIONS + 2];
 	u_int64_t start, stop;
 	int i, numchunks;
@@ -1558,7 +1558,7 @@ free_chunks(struct disklabel *lp, int partno)
 }
 
 void
-find_bounds(struct disklabel *lp)
+find_bounds(const struct disklabel *lp)
 {
 	starting_sector = DL_GETBSTART(lp);
 	ending_sector = DL_GETBEND(lp);
@@ -1576,9 +1576,9 @@ find_bounds(struct disklabel *lp)
  * Calculate free space.
  */
 u_int64_t
-editor_countfree(struct disklabel *lp)
+editor_countfree(const struct disklabel *lp)
 {
-	struct diskchunk *chunk;
+	const struct diskchunk *chunk;
 	u_int64_t freesectors = 0;
 
 	chunk = free_chunks(lp, -1);
@@ -1648,7 +1648,7 @@ mpequal(char **mp1, char **mp2)
 }
 
 void
-mpsave(struct disklabel *lp)
+mpsave(const struct disklabel *lp)
 {
 	int i, j;
 	char bdev[PATH_MAX], *p;
@@ -2082,7 +2082,7 @@ zero_partitions(struct disklabel *lp)
 }
 
 u_int64_t
-max_partition_size(struct disklabel *lp, int partno)
+max_partition_size(const struct disklabel *lp, int partno)
 {
 	struct diskchunk *chunk;
 	u_int64_t maxsize = 0, offset;
@@ -2100,7 +2100,7 @@ max_partition_size(struct disklabel *lp, int partno)
 }
 
 void
-psize(u_int64_t sz, char unit, struct disklabel *lp)
+psize(u_int64_t sz, char unit, const struct disklabel *lp)
 {
 	double d = scale(sz, unit, lp);
 	if (d < 0)
@@ -2110,7 +2110,7 @@ psize(u_int64_t sz, char unit, struct disklabel *lp)
 }
 
 void
-display_edit(struct disklabel *lp, char unit)
+display_edit(const struct disklabel *lp, char unit)
 {
 	u_int64_t fr;
 	int i;

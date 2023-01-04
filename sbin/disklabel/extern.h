@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2022/02/18 17:45:43 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.35 2023/01/04 21:08:08 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -19,16 +19,16 @@
 #define MEG(x)	((x) * 1024LL * (1024 / DEV_BSIZE))
 #define GIG(x)  (MEG(x) * 1024LL)
 
-u_short	dkcksum(struct disklabel *);
-char	canonical_unit(struct disklabel *, char);
-double	scale(u_int64_t, char, struct disklabel *);
-void	display(FILE *, struct disklabel *, char, int);
-void	display_partition(FILE *, struct disklabel *, int, char);
+u_short	dkcksum(const struct disklabel *);
+char	canonical_unit(const struct disklabel *, char);
+double	scale(u_int64_t, char, const struct disklabel *);
+void	display(FILE *, const struct disklabel *, char, int);
+void	display_partition(FILE *, const struct disklabel *, int, char);
 int	duid_parse(struct disklabel *, char *);
 
 int	editor(int);
 int	editor_allocspace(struct disklabel *);
-void	mpsave(struct disklabel *);
+void	mpsave(const struct disklabel *);
 void	mpcopy(char **, char **);
 void	mpfree(char **);
 void	parse_autotable(char *);
