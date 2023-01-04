@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.227 2022/12/22 19:53:24 kn Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.228 2023/01/04 14:33:30 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: January 4 2023 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -933,19 +933,11 @@ The default is
 .Pp
 .It Xo
 .Ic announce policy
-.Pq Ic no Ns | Ns Ar role
-.Op Ic enforce
+.Pq Ic yes Ns | Ns Ic no Ns | Ns Ic enforce
 .Xc
 If set to
-.Ic no ,
-do not add the open policy role capability.
-The role can be one of
-.Ar provider ,
-.Ar customer ,
-.Ar rs ,
-.Ar rs-client ,
-or
-.Ar peer .
+.Ic yes ,
+add the open policy role capability.
 If the role of the neighbor does not correspond to the expected role then
 the session will be closed.
 If
@@ -1310,6 +1302,22 @@ setting.
 .Pp
 .It Ic rib Ar name
 Bind the neighbor to the specified RIB.
+.Pp
+.It Ic role Ar role
+Set the local role for this eBGP session.
+The role can be one of
+.Ar none ,
+.Ar provider ,
+.Ar customer ,
+.Ar rs ,
+.Ar rs-client ,
+or
+.Ar peer .
+If the role is set to
+.Ar none
+the
+.Ic announce Ic policy
+will also be disabled.
 .Pp
 .It Ic route-reflector Op Ar address
 Act as an RFC 4456

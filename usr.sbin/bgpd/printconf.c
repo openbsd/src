@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.160 2022/11/18 10:17:23 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.161 2023/01/04 14:33:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -671,6 +671,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		    log_addr(&p->local_addr_v6));
 	if (p->remote_port != BGP_PORT)
 		printf("%s\tport %hu\n", c, p->remote_port);
+	if (p->role != ROLE_NONE)
+		printf("%s\trole %s\n", c, log_policy(p->role));
 	if (p->max_prefix) {
 		printf("%s\tmax-prefix %u", c, p->max_prefix);
 		if (p->max_prefix_restart)
@@ -847,11 +849,9 @@ print_announce(struct peer_config *p, const char *c)
 		printf("\n");
 	}
 	if (p->capabilities.role_ena) {
-		printf("%s\tannounce policy %s%s\n", c,
-		    log_policy(p->capabilities.role),
-		    p->capabilities.role_ena == 2 ? " enforce" : "");
+		printf("%s\tannounce policy %s\n", c,
+		    p->capabilities.role_ena == 2 ? "enforce" : "yes");
 	}
-
 }
 
 void

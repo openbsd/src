@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.437 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.438 2023/01/04 14:33:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,7 +219,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
-%token	SEND RECV PLUS POLICY
+%token	SEND RECV PLUS POLICY ROLE
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT
@@ -1640,32 +1640,30 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.eval.extrapaths = $5;
 			curpeer->conf.eval.maxpaths = $6;
 		}
-		| ANNOUNCE POLICY STRING enforce {
-			curpeer->conf.capabilities.role_ena = $4;
-			if (strcmp($3, "no") == 0) {
-				curpeer->conf.capabilities.role_ena = 0;
-			} else if (strcmp($3, "provider") == 0) {
-				curpeer->conf.capabilities.role =
-				    CAPA_ROLE_PROVIDER;
-			} else if (strcmp($3, "rs") == 0) {
-				curpeer->conf.capabilities.role =
-				    CAPA_ROLE_RS;
-			} else if (strcmp($3, "rs-client") == 0) {
-				curpeer->conf.capabilities.role =
-				    CAPA_ROLE_RS_CLIENT;
-			} else if (strcmp($3, "customer") == 0) {
-				curpeer->conf.capabilities.role =
-				    CAPA_ROLE_CUSTOMER;
-			} else if (strcmp($3, "peer") == 0) {
-				curpeer->conf.capabilities.role =
-				    CAPA_ROLE_PEER;
+		| ANNOUNCE POLICY enforce {
+			curpeer->conf.capabilities.role_ena = $3;
+		}
+		| ROLE STRING {
+			if (strcmp($2, "provider") == 0) {
+				curpeer->conf.role = ROLE_PROVIDER;
+			} else if (strcmp($2, "rs") == 0) {
+				curpeer->conf.role = ROLE_RS;
+			} else if (strcmp($2, "rs-client") == 0) {
+				curpeer->conf.role = ROLE_RS_CLIENT;
+			} else if (strcmp($2, "customer") == 0) {
+				curpeer->conf.role = ROLE_CUSTOMER;
+			} else if (strcmp($2, "peer") == 0) {
+				curpeer->conf.role = ROLE_PEER;
 			} else {
-				yyerror("syntax error, one of no, provider, "
+				yyerror("syntax error, one of none, provider, "
 				    "rs, rs-client, customer, peer expected");
-				free($3);
+				free($2);
 				YYERROR;
 			}
-			free($3);
+			free($2);
+		}
+		| ROLE NONE {
+			curpeer->conf.role = ROLE_NONE;
 		}
 		| EXPORT NONE {
 			curpeer->conf.export_type = EXPORT_NONE;
@@ -2742,7 +2740,7 @@ delete		: /* empty */	{ $$ = 0; }
 		| DELETE	{ $$ = 1; }
 		;
 
-enforce		: /* empty */	{ $$ = 1; }
+enforce		: yesno		{ $$ = $1; }
 		| ENFORCE	{ $$ = 2; }
 		;
 
@@ -3248,6 +3246,7 @@ lookup(char *s)
 		{ "restricted",		RESTRICTED},
 		{ "rib",		RIB},
 		{ "roa-set",		ROASET },
+		{ "role",		ROLE},
 		{ "route-reflector",	REFLECTOR},
 		{ "router-id",		ROUTERID},
 		{ "rtable",		RTABLE},
@@ -4710,6 +4709,14 @@ neighbor_consistent(struct peer *p)
 		    "reflector clusters");
 		return (-1);
 	}
+
+	/* BGP role and RFC 9234 role are only valid for EBGP neighbors */
+	if (p->conf.ebgp) {
+		if (p->conf.role == ROLE_NONE)
+			p->conf.capabilities.role_ena = 0;
+		p->conf.capabilities.role = p->conf.role;
+	} else
+		p->conf.role = ROLE_NONE;
 
 	/* check for duplicate peer definitions */
 	RB_FOREACH(xp, peer_head, new_peers)

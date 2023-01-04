@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.73 2022/11/09 14:23:53 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.74 2023/01/04 14:33:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -198,18 +198,18 @@ log_rtr_error(enum rtr_error err)
 }
 
 const char *
-log_policy(uint8_t role)
+log_policy(enum role role)
 {
 	switch (role) {
-	case CAPA_ROLE_PROVIDER:
+	case ROLE_PROVIDER:
 		return "provider";
-	case CAPA_ROLE_RS:
+	case ROLE_RS:
 		return "rs";
-	case CAPA_ROLE_RS_CLIENT:
+	case ROLE_RS_CLIENT:
 		return "rs-client";
-	case CAPA_ROLE_CUSTOMER:
+	case ROLE_CUSTOMER:
 		return "customer";
-	case CAPA_ROLE_PEER:
+	case ROLE_PEER:
 		return "peer";
 	default:
 		return "unknown";

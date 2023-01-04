@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.455 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.456 2023/01/04 14:33:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -333,6 +333,15 @@ enum enforce_as {
 	ENFORCE_AS_ON
 };
 
+enum role {
+	ROLE_NONE,
+	ROLE_CUSTOMER,
+	ROLE_PROVIDER,
+	ROLE_RS,
+	ROLE_RS_CLIENT,
+	ROLE_PEER,
+};
+
 enum auth_method {
 	AUTH_NONE,
 	AUTH_MD5SIG,
@@ -380,12 +389,12 @@ struct capabilities {
 		int8_t	flags[AID_MAX];	/* graceful restart per AID flags */
 		int8_t	restart;	/* graceful restart, RFC 4724 */
 	}	grestart;
+	enum role role;			/* Open Policy, RFC 9234 */
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
+	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
 	int8_t	refresh;		/* route refresh, RFC 2918 */
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
-	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
-	uint8_t	role;			/* Open Policy, RFC 9234 */
 	int8_t	role_ena;		/* 1 for enable, 2 for enforce */
 };
 
@@ -432,6 +441,7 @@ struct peer_config {
 	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
+	enum role		 role;
 	uint16_t		 max_prefix_restart;
 	uint16_t		 max_out_prefix_restart;
 	uint16_t		 holdtime;
@@ -1417,7 +1427,7 @@ const char	*log_rd(uint64_t);
 const char	*log_ext_subtype(int, uint8_t);
 const char	*log_reason(const char *);
 const char	*log_rtr_error(enum rtr_error);
-const char	*log_policy(uint8_t);
+const char	*log_policy(enum role);
 int		 aspath_snprint(char *, size_t, void *, uint16_t);
 int		 aspath_asprint(char **, void *, uint16_t);
 size_t		 aspath_strlen(void *, uint16_t);
