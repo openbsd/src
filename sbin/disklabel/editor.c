@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.383 2023/01/04 15:18:46 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.384 2023/01/04 18:41:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -818,9 +818,9 @@ void
 editor_add(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
-	struct diskchunk *chunks;
+	struct diskchunk *chunk;
 	char buf[2];
-	int i, partno;
+	int partno;
 	u_int64_t freesectors, new_offset, new_size;
 
 	freesectors = editor_countfree(lp);
@@ -882,7 +882,7 @@ editor_add(struct disklabel *lp, char *p)
 
 	/* Make sure selected partition is zero'd too. */
 	memset(pp, 0, sizeof(*pp));
-	chunks = free_chunks(lp, -1);
+	chunk = free_chunks(lp, -1);
 
 	/*
 	 * Since we know there's free space, there must be at least one
@@ -890,10 +890,10 @@ editor_add(struct disklabel *lp, char *p)
 	 * partition in that free space.
 	 */
 	new_size = new_offset = 0;
-	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++) {
-		if (chunks[i].stop - chunks[i].start > new_size) {
-			new_size = chunks[i].stop - chunks[i].start;
-			new_offset = chunks[i].start;
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+		if (chunk->stop - chunk->start > new_size) {
+			new_size = chunk->stop - chunk->start;
+			new_offset = chunk->start;
 		}
 	}
 	DL_SETPSIZE(pp, new_size);
@@ -1578,14 +1578,13 @@ find_bounds(struct disklabel *lp)
 u_int64_t
 editor_countfree(struct disklabel *lp)
 {
-	struct diskchunk *chunks;
+	struct diskchunk *chunk;
 	u_int64_t freesectors = 0;
-	int i;
 
-	chunks = free_chunks(lp, -1);
+	chunk = free_chunks(lp, -1);
 
-	for (i = 0; chunks[i].start != 0 || chunks[i].stop != 0; i++)
-		freesectors += chunks[i].stop - chunks[i].start;
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++)
+		freesectors += chunk->stop - chunk->start;
 
 	return (freesectors);
 }
