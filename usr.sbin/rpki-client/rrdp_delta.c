@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.8 2022/05/15 16:43:35 tb Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.9 2023/01/04 14:22:43 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -77,7 +77,8 @@ start_delta_elem(struct delta_xml *dxml, const char **attr)
 			if (errstr == NULL)
 				continue;
 		}
-		if (strcmp("session_id", attr[i]) == 0) {
+		if (strcmp("session_id", attr[i]) == 0 &&
+		    valid_uuid(attr[i + 1])) {
 			dxml->session_id = xstrdup(attr[i + 1]);
 			continue;
 		}

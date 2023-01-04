@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.51 2022/11/30 08:17:21 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.52 2023/01/04 14:22:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -546,3 +546,46 @@ valid_geofeed(const char *fn, struct cert *cert, struct geofeed *g)
 
 	return 1;
 }
+
+/*
+ * Validate whether a given string is a valid UUID.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_uuid(const char *s)
+{
+	int n = 0;
+
+	while (1) {
+		switch (n) {
+		case 8:
+		case 13:
+		case 18:
+		case 23:
+			if (s[n] != '-')
+				return 0;
+			break;
+#ifdef NOTYET	/* World is not yet ready to enfoce UUID version and variant */
+		/* Check UUID is version 4 */
+		case 14:
+			if (s[n] != '4')
+				return 0;
+			break;
+		/* Check UUID variant is 1 */
+		case 19:
+			if (s[n] != '8' && s[n] != '9' && s[n] != 'a' &&
+			    s[n] != 'A' && s[n] != 'b' && s[n] != 'B')
+				return 0;
+			break;
+#endif
+		case 36:
+			return s[n] == '\0';
+		default:
+			if (!isxdigit((unsigned char)s[n]))
+				return 0;
+			break;
+		}
+		n++;
+	}
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.16 2022/06/16 16:09:56 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.17 2023/01/04 14:22:43 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -125,7 +125,8 @@ start_notification_elem(struct notification_xml *nxml, const char **attr)
 			has_xmlns = 1;
 			continue;
 		}
-		if (strcmp("session_id", attr[i]) == 0) {
+		if (strcmp("session_id", attr[i]) == 0 &&
+		    valid_uuid(attr[i + 1])) {
 			nxml->session_id = xstrdup(attr[i + 1]);
 			continue;
 		}
