@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.5 2021/01/29 16:22:36 deraadt Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.6 2023/01/04 09:24:14 jsg Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 1997/04/06 08:41:24 cgd Exp $	*/
 
 /*
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gordon W. Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
