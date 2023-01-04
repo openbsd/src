@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2022/10/14 17:17:13 tb Exp $
+# $OpenBSD: Makefile,v 1.8 2023/01/04 14:27:00 claudio Exp $
 
 PROGS += test-http
 
@@ -24,7 +24,6 @@ run-regress-test-http: test-http
 .endif
 
 REGRESS_TARGETS+=		run-regress-test-http-redirectchain
-REGRESS_EXPECTED_FAILURES+=	run-regress-test-http-redirectchain
 run-regress-test-http-redirectchain: test-http
 	./test-http 'https://demo.cyotek.com/features/redirectchaintest.php?index=1' redirloop.out 2>&1 | grep -q 'Too many redirections requested'
 
