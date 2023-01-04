@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: policy.sh,v 1.1 2022/06/27 13:29:40 claudio Exp $
+#	$OpenBSD: policy.sh,v 1.2 2023/01/04 14:34:50 claudio Exp $
 
 set -e
 
@@ -107,7 +107,7 @@ ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 
 echo test1: no policy
 test_bgpd "Last error sent: error in OPEN message, role mismatch" \
-    "no" "no" "no" "no" "no"
+    "none" "none" "none" "none" "none"
 
 echo test2: wrong policy
 test_bgpd "Last error sent: error in OPEN message, role mismatch" \
