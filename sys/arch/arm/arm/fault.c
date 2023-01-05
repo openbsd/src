@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.46 2022/01/02 05:59:53 jsg Exp $	*/
+/*	$OpenBSD: fault.c,v 1.47 2023/01/05 20:35:44 kettenis Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ prefetch_abort_handler(trapframe_t *tf)
 #endif
 
 	KERNEL_LOCK();
-	error = uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
+	error = uvm_fault(map, va, 0, PROT_EXEC);
 	KERNEL_UNLOCK();
 
 	if (error == 0) {
