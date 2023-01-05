@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.18 2023/01/05 22:17:43 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -19,10 +19,13 @@ LINKS+=	${BINDIR}/clang ${BINDIR}/cc \
 	${BINDIR}/clang ${LIBEXECDIR}/cpp
 
 maninstall:
+.if !defined(NOMAN)
 	cd ${DESTDIR}${MANDIR}1 && { \
 	rm -f cc.1 && ln clang.1 cc.1; \
 	rm -f c++.1 && ln clang.1 c++.1; \
 	rm -f cpp.1 && ln clang.1 cpp.1; }
+.endif
+
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../../../llvm/clang/include
