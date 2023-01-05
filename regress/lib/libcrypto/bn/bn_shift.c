@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_shift.c,v 1.5 2022/12/23 02:13:15 jsing Exp $ */
+/*	$OpenBSD: bn_shift.c,v 1.6 2023/01/05 04:44:20 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -392,6 +392,12 @@ benchmark_bn_lshift_1(BIGNUM *bn)
 }
 
 static void
+benchmark_bn_lshift_16(BIGNUM *bn)
+{
+	benchmark_bn_lshift(bn, 16);
+}
+
+static void
 benchmark_bn_lshift_32(BIGNUM *bn)
 {
 	benchmark_bn_lshift(bn, 32);
@@ -401,6 +407,18 @@ static void
 benchmark_bn_lshift_64(BIGNUM *bn)
 {
 	benchmark_bn_lshift(bn, 64);
+}
+
+static void
+benchmark_bn_lshift_65(BIGNUM *bn)
+{
+	benchmark_bn_lshift(bn, 65);
+}
+
+static void
+benchmark_bn_lshift_80(BIGNUM *bn)
+{
+	benchmark_bn_lshift(bn, 80);
 }
 
 static void
@@ -462,6 +480,18 @@ benchmark_bn_rshift_64(BIGNUM *bn)
 }
 
 static void
+benchmark_bn_rshift_65(BIGNUM *bn)
+{
+	benchmark_bn_rshift(bn, 65);
+}
+
+static void
+benchmark_bn_rshift_80(BIGNUM *bn)
+{
+	benchmark_bn_rshift(bn, 80);
+}
+
+static void
 benchmark_bn_rshift_127(BIGNUM *bn)
 {
 	benchmark_bn_rshift(bn, 127);
@@ -482,12 +512,24 @@ struct benchmark benchmarks[] = {
 		.func = benchmark_bn_lshift_1,
 	},
 	{
+		.desc = "BN_lshift(_, _, 16)",
+		.func = benchmark_bn_lshift_16,
+	},
+	{
 		.desc = "BN_lshift(_, _, 32)",
 		.func = benchmark_bn_lshift_32,
 	},
 	{
 		.desc = "BN_lshift(_, _, 64)",
 		.func = benchmark_bn_lshift_64,
+	},
+	{
+		.desc = "BN_lshift(_, _, 65)",
+		.func = benchmark_bn_lshift_65,
+	},
+	{
+		.desc = "BN_lshift(_, _, 80)",
+		.func = benchmark_bn_lshift_80,
 	},
 	{
 		.desc = "BN_lshift(_, _, 127)",
@@ -502,12 +544,24 @@ struct benchmark benchmarks[] = {
 		.func = benchmark_bn_rshift_1,
 	},
 	{
-		.desc = "BN_rshift(_, _, 32)",
+		.desc = "BN_rshift(_, _, 16)",
+		.func = benchmark_bn_rshift_32,
+	},
+	{
+		.desc = "BN_rshift(_, _, 16)",
 		.func = benchmark_bn_rshift_32,
 	},
 	{
 		.desc = "BN_rshift(_, _, 64)",
 		.func = benchmark_bn_rshift_64,
+	},
+	{
+		.desc = "BN_rshift(_, _, 65)",
+		.func = benchmark_bn_rshift_65,
+	},
+	{
+		.desc = "BN_rshift(_, _, 80)",
+		.func = benchmark_bn_rshift_80,
 	},
 	{
 		.desc = "BN_rshift(_, _, 127)",
