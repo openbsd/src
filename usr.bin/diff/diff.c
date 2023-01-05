@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.67 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.68 2023/01/05 00:00:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <millert@openbsd.org>
@@ -43,7 +43,7 @@ struct stat stb1, stb2;
 struct excludes *excludes_list;
 regex_t	 ignore_re;
 
-#define	OPTIONS	"0123456789abC:cdD:efhI:iL:lnNPpqrS:sTtU:uwX:x:"
+#define	OPTIONS	"0123456789abC:cdD:efhI:iL:nNPpqrS:sTtU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
