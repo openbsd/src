@@ -525,6 +525,8 @@ static const struct ld_option ld_options[] =
     TWO_DASHES },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
     '\0', N_("SYMBOL"), N_("Use wrapper functions for SYMBOL"), TWO_DASHES },
+  { {"no-execute-only", no_argument, NULL, OPTION_IGNORE},
+    '\0', NULL, N_("Ignored for lld compatibility"), TWO_DASHES},
 };
 
 #define OPTION_COUNT ARRAY_SIZE (ld_options)
