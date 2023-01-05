@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.240 2022/11/23 11:00:27 mbuhl Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.241 2023/01/05 21:39:57 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -826,9 +826,8 @@ exec_sigcode_map(struct process *pr)
 	 * memory) that we keep a permanent reference to and that we map
 	 * in all processes that need this sigcode. The creation is simple,
 	 * we create an object, add a permanent reference to it, map it in
-	 * kernel space, copy out the sigcode to it and unmap it.
-	 * Then we map it with PROT_READ|PROT_EXEC into the process just
-	 * the way sys_mmap would map it.
+	 * kernel space, copy out the sigcode to it and unmap it.  Then we map
+	 * it with PROT_EXEC into the process just the way sys_mmap would map it.
 	 */
 	if (sigobject == NULL) {
 		extern int sigfillsiz;
@@ -860,7 +859,7 @@ exec_sigcode_map(struct process *pr)
 	pr->ps_sigcode = 0; /* no hint */
 	uao_reference(sigobject);
 	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_sigcode, round_page(sz),
-	    sigobject, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_EXEC,
+	    sigobject, 0, 0, UVM_MAPFLAG(PROT_EXEC,
 	    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_INHERIT_COPY,
 	    MADV_RANDOM, UVM_FLAG_COPYONW | UVM_FLAG_SYSCALL))) {
 		uao_detach(sigobject);
