@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.395 2023/01/04 10:31:55 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.396 2023/01/05 23:44:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -910,7 +910,7 @@ pf_addr_copyout(struct pf_addr_wrap *addr)
 int
 pf_states_clr(struct pfioc_state_kill *psk)
 {
-	struct pf_state		*s, *nexts;
+	struct pf_state		*st, *nextst;
 	struct pf_state		*head, *tail;
 	u_int			 killed = 0;
 	int			 error;
@@ -928,26 +928,26 @@ pf_states_clr(struct pfioc_state_kill *psk)
 	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
 	mtx_leave(&pf_state_list.pfs_mtx);
 
-	s = NULL;
-	nexts = head;
+	st = NULL;
+	nextst = head;
 
 	PF_LOCK();
 	PF_STATE_ENTER_WRITE();
 
-	while (s != tail) {
-		s = nexts;
-		nexts = TAILQ_NEXT(s, entry_list);
+	while (st != tail) {
+		st = nextst;
+		nextst = TAILQ_NEXT(st, entry_list);
 
-		if (s->timeout == PFTM_UNLINKED)
+		if (st->timeout == PFTM_UNLINKED)
 			continue;
 
 		if (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-		    s->kif->pfik_name)) {
+		    st->kif->pfik_name)) {
 #if NPFSYNC > 0
 			/* don't send out individual delete messages */
-			SET(s->state_flags, PFSTATE_NOSYNC);
+			SET(st->state_flags, PFSTATE_NOSYNC);
 #endif	/* NPFSYNC > 0 */
-			pf_remove_state(s);
+			pf_remove_state(st);
 			killed++;
 		}
 	}
@@ -969,8 +969,8 @@ unlock:
 int
 pf_states_get(struct pfioc_states *ps)
 {
+	struct pf_state		*st, *nextst;
 	struct pf_state		*head, *tail;
-	struct pf_state		*next, *state;
 	struct pfsync_state	*p, pstore;
 	u_int32_t		 nr = 0;
 	int			 error;
@@ -994,20 +994,20 @@ pf_states_get(struct pfioc_states *ps)
 	tail = TAILQ_LAST(&pf_state_list.pfs_list, pf_state_queue);
 	mtx_leave(&pf_state_list.pfs_mtx);
 
-	state = NULL;
-	next = head;
+	st = NULL;
+	nextst = head;
 
-	while (state != tail) {
-		state = next;
-		next = TAILQ_NEXT(state, entry_list);
+	while (st != tail) {
+		st = nextst;
+		nextst = TAILQ_NEXT(st, entry_list);
 
-		if (state->timeout == PFTM_UNLINKED)
+		if (st->timeout == PFTM_UNLINKED)
 			continue;
 
 		if ((nr+1) * sizeof(*p) > ps->ps_len)
 			break;
 
-		pf_state_export(&pstore, state);
+		pf_state_export(&pstore, st);
 		error = copyout(&pstore, p, sizeof(*p));
 		if (error)
 			goto fail;
@@ -1706,7 +1706,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case DIOCKILLSTATES: {
-		struct pf_state		*s, *nexts;
+		struct pf_state		*st, *nextst;
 		struct pf_state_item	*si, *sit;
 		struct pf_state_key	*sk, key;
 		struct pf_addr		*srcaddr, *dstaddr;
@@ -1722,8 +1722,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			NET_LOCK();
 			PF_LOCK();
 			PF_STATE_ENTER_WRITE();
-			if ((s = pf_find_state_byid(&psk->psk_pfcmp))) {
-				pf_remove_state(s);
+			if ((st = pf_find_state_byid(&psk->psk_pfcmp))) {
+				pf_remove_state(st);
 				psk->psk_killed = 1;
 			}
 			PF_STATE_EXIT_WRITE();
@@ -1796,15 +1796,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		NET_LOCK();
 		PF_LOCK();
 		PF_STATE_ENTER_WRITE();
-		RBT_FOREACH_SAFE(s, pf_state_tree_id, &tree_id, nexts) {
-			if (s->direction == PF_OUT) {
-				sk = s->key[PF_SK_STACK];
+		RBT_FOREACH_SAFE(st, pf_state_tree_id, &tree_id, nextst) {
+			if (st->direction == PF_OUT) {
+				sk = st->key[PF_SK_STACK];
 				srcaddr = &sk->addr[1];
 				dstaddr = &sk->addr[0];
 				srcport = sk->port[1];
 				dstport = sk->port[0];
 			} else {
-				sk = s->key[PF_SK_WIRE];
+				sk = st->key[PF_SK_WIRE];
 				srcaddr = &sk->addr[0];
 				dstaddr = &sk->addr[1];
 				srcport = sk->port[0];
@@ -1829,11 +1829,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
 			    dstport)) &&
-			    (!psk->psk_label[0] || (s->rule.ptr->label[0] &&
-			    !strcmp(psk->psk_label, s->rule.ptr->label))) &&
+			    (!psk->psk_label[0] || (st->rule.ptr->label[0] &&
+			    !strcmp(psk->psk_label, st->rule.ptr->label))) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
-			    s->kif->pfik_name))) {
-				pf_remove_state(s);
+			    st->kif->pfik_name))) {
+				pf_remove_state(st);
 				killed++;
 			}
 		}
@@ -1864,7 +1864,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCGETSTATE: {
 		struct pfioc_state	*ps = (struct pfioc_state *)addr;
-		struct pf_state		*s;
+		struct pf_state		*st;
 		struct pf_state_cmp	 id_key;
 
 		memset(&id_key, 0, sizeof(id_key));
@@ -1873,17 +1873,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		NET_LOCK();
 		PF_STATE_ENTER_READ();
-		s = pf_find_state_byid(&id_key);
-		s = pf_state_ref(s);
+		st = pf_find_state_byid(&id_key);
+		st = pf_state_ref(st);
 		PF_STATE_EXIT_READ();
 		NET_UNLOCK();
-		if (s == NULL) {
+		if (st == NULL) {
 			error = ENOENT;
 			goto fail;
 		}
 
-		pf_state_export(&ps->state, s);
-		pf_state_unref(s);
+		pf_state_export(&ps->state, st);
+		pf_state_unref(st);
 		break;
 	}
 
@@ -1946,7 +1946,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCNATLOOK: {
 		struct pfioc_natlook	*pnl = (struct pfioc_natlook *)addr;
 		struct pf_state_key	*sk;
-		struct pf_state		*state;
+		struct pf_state		*st;
 		struct pf_state_key_cmp	 key;
 		int			 m = 0, direction = pnl->direction;
 		int			 sidx, didx;
@@ -1986,15 +1986,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			NET_LOCK();
 			PF_STATE_ENTER_READ();
-			state = pf_find_state_all(&key, direction, &m);
-			state = pf_state_ref(state);
+			st = pf_find_state_all(&key, direction, &m);
+			st = pf_state_ref(st);
 			PF_STATE_EXIT_READ();
 			NET_UNLOCK();
 
 			if (m > 1)
 				error = E2BIG;	/* more than one state */
-			else if (state != NULL) {
-				sk = state->key[sidx];
+			else if (st != NULL) {
+				sk = st->key[sidx];
 				pf_addrcpy(&pnl->rsaddr, &sk->addr[sidx],
 				    sk->af);
 				pnl->rsport = sk->port[sidx];
@@ -2004,7 +2004,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pnl->rrdomain = sk->rdomain;
 			} else
 				error = ENOENT;
-			pf_state_unref(state);
+			pf_state_unref(st);
 		}
 		break;
 	}
@@ -2820,13 +2820,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCCLRSRCNODES: {
 		struct pf_src_node	*n;
-		struct pf_state		*state;
+		struct pf_state		*st;
 
 		NET_LOCK();
 		PF_LOCK();
 		PF_STATE_ENTER_WRITE();
-		RBT_FOREACH(state, pf_state_tree_id, &tree_id)
-			pf_src_tree_remove_state(state);
+		RBT_FOREACH(st, pf_state_tree_id, &tree_id)
+			pf_src_tree_remove_state(st);
 		PF_STATE_EXIT_WRITE();
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking)
 			n->expire = 1;
@@ -2838,7 +2838,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCKILLSRCNODES: {
 		struct pf_src_node	*sn;
-		struct pf_state		*s;
+		struct pf_state		*st;
 		struct pfioc_src_node_kill *psnk =
 		    (struct pfioc_src_node_kill *)addr;
 		u_int			killed = 0;
@@ -2858,9 +2858,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				if (sn->states != 0) {
 					PF_ASSERT_LOCKED();
 					PF_STATE_ENTER_WRITE();
-					RBT_FOREACH(s, pf_state_tree_id,
+					RBT_FOREACH(st, pf_state_tree_id,
 					   &tree_id)
-						pf_state_rm_src_node(s, sn);
+						pf_state_rm_src_node(st, sn);
 					PF_STATE_EXIT_WRITE();
 				}
 				sn->expire = 1;
