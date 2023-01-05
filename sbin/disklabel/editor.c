@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.385 2023/01/04 21:08:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.386 2023/01/05 00:19:53 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -155,7 +155,7 @@ void	getdisktype(struct disklabel *, char *, char *);
 void	find_bounds(const struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
-struct diskchunk *free_chunks(const struct disklabel *, int);
+const struct diskchunk *free_chunks(const struct disklabel *, int);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
 int	get_bsize(struct disklabel *, int);
@@ -531,7 +531,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct space_allocation *alloc;
 	struct space_allocation *ap;
 	struct partition *pp;
-	struct diskchunk *chunk;
+	const struct diskchunk *chunk;
 	u_int64_t chunkstart, chunkstop, chunksize;
 	u_int64_t cylsecs, secs, xtrasecs;
 	char **partmp;
@@ -818,7 +818,7 @@ void
 editor_add(struct disklabel *lp, char *p)
 {
 	struct partition *pp;
-	struct diskchunk *chunk;
+	const struct diskchunk *chunk;
 	char buf[2];
 	int partno;
 	u_int64_t freesectors, new_offset, new_size;
@@ -1505,7 +1505,7 @@ set_duid(struct disklabel *lp)
 /*
  * Return a list of the "chunks" of free space available
  */
-struct diskchunk *
+const struct diskchunk *
 free_chunks(const struct disklabel *lp, int partno)
 {
 	const struct partition **spp;
@@ -2084,7 +2084,7 @@ zero_partitions(struct disklabel *lp)
 u_int64_t
 max_partition_size(const struct disklabel *lp, int partno)
 {
-	struct diskchunk *chunk;
+	const struct diskchunk *chunk;
 	u_int64_t maxsize = 0, offset;
 
 	chunk = free_chunks(lp, partno);
@@ -2300,7 +2300,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
     u_int64_t stopalign, int flags)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	struct diskchunk *chunk;
+	const struct diskchunk *chunk;
 	u_int64_t start, stop, maxstop;
 
 	start = DL_GETPOFFSET(pp);
