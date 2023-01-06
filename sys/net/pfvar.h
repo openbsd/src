@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.527 2023/01/04 10:31:55 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.528 2023/01/06 17:44:34 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -474,6 +474,7 @@ union pf_rule_ptr {
 	u_int32_t		 nr;
 };
 
+#define	PF_ANCHOR_STACK_MAX	 64
 #define	PF_ANCHOR_NAME_SIZE	 64
 #define	PF_ANCHOR_MAXPATH	(PATH_MAX - PF_ANCHOR_NAME_SIZE - 1)
 #define	PF_ANCHOR_HIWAT		 512

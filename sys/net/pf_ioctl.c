@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.396 2023/01/05 23:44:35 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.397 2023/01/06 17:44:34 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -156,6 +156,8 @@ struct rwlock		 pf_lock = RWLOCK_INITIALIZER("pf_lock");
 struct rwlock		 pf_state_lock = RWLOCK_INITIALIZER("pf_state_lock");
 struct rwlock		 pfioctl_rw = RWLOCK_INITIALIZER("pfioctl_rw");
 
+struct cpumem *pf_anchor_stack;
+
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
 #endif
@@ -171,6 +173,8 @@ void
 pfattach(int num)
 {
 	u_int32_t *timeout = pf_default_rule.timeout;
+	struct pf_anchor_stackframe *sf;
+	struct cpumem_iter cmi;
 
 	pool_init(&pf_rule_pl, sizeof(struct pf_rule), 0,
 	    IPL_SOFTNET, 0, "pfrule", NULL);
@@ -261,6 +265,18 @@ pfattach(int num)
 	pf_status.hostid = arc4random();
 
 	pf_default_rule_new = pf_default_rule;
+
+	/*
+	 * we waste two stack frames as meta-data.
+	 * frame[0] always presents a top, which can not be used for data
+	 * frame[PF_ANCHOR_STACK_MAX] denotes a bottom of the stack and keeps
+	 * the pointer to currently used stack frame.
+	 */
+	pf_anchor_stack = cpumem_malloc(
+	    sizeof(struct pf_anchor_stackframe) * (PF_ANCHOR_STACK_MAX + 2),
+	    M_WAITOK|M_ZERO);
+	CPUMEM_FOREACH(sf, &cmi, pf_anchor_stack)
+		sf[PF_ANCHOR_STACK_MAX].sf_stack_top = &sf[0];
 }
 
 int

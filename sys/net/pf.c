@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1168 2023/01/05 23:44:35 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1169 2023/01/06 17:44:34 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -132,7 +132,6 @@ enum pf_test_status {
 };
 
 struct pf_test_ctx {
-	enum pf_test_status	  test_status;
 	struct pf_pdesc		 *pd;
 	struct pf_rule_actions	  act;
 	u_int8_t		  icmpcode;
@@ -152,10 +151,7 @@ struct pf_test_ctx {
 	struct pf_ruleset	 *arsm;
 	struct pf_ruleset	 *aruleset;
 	struct tcphdr		 *th;
-	int			  depth;
 };
-
-#define	PF_ANCHOR_STACK_MAX	64
 
 struct pool		 pf_src_tree_pl, pf_rule_pl, pf_queue_pl;
 struct pool		 pf_state_pl, pf_state_key_pl, pf_state_item_pl;
@@ -3514,46 +3510,110 @@ pf_tag_packet(struct mbuf *m, int tag, int rtableid)
 		m->m_pkthdr.ph_rtableid = (u_int)rtableid;
 }
 
-enum pf_test_status
-pf_step_into_anchor(struct pf_test_ctx *ctx, struct pf_rule *r)
+void
+pf_anchor_stack_init(void)
 {
-	int	rv;
+	struct pf_anchor_stackframe *stack;
 
-	if (ctx->depth >= PF_ANCHOR_STACK_MAX) {
-		log(LOG_ERR, "pf_step_into_anchor: stack overflow\n");
-		return (PF_TEST_FAIL);
-	}
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+	stack[PF_ANCHOR_STACK_MAX].sf_stack_top = &stack[0];
+	cpumem_leave(pf_anchor_stack, stack);
+}
 
-	ctx->depth++;
+int
+pf_anchor_stack_is_full(struct pf_anchor_stackframe *sf)
+{
+	struct pf_anchor_stackframe *stack;
+	int rv;
 
-	if (r->anchor_wildcard) {
-		struct pf_anchor	*child;
-		rv = PF_TEST_OK;
-		RB_FOREACH(child, pf_anchor_node, &r->anchor->children) {
-			rv = pf_match_rule(ctx, &child->ruleset);
-			if ((rv == PF_TEST_QUICK) || (rv == PF_TEST_FAIL)) {
-				/*
-				 * we either hit a rule with quick action
-				 * (more likely), or hit some runtime
-				 * error (e.g. pool_get() failure).
-				 */
-				break;
-			}
-		}
-	} else {
-		rv = pf_match_rule(ctx, &r->anchor->ruleset);
-		/*
-		 * Unless errors occurred, stop iff any rule matched
-		 * within quick anchors.
-		 */
-		if (rv != PF_TEST_FAIL && r->quick == PF_TEST_QUICK &&
-		    *ctx->am == r)
-			rv = PF_TEST_QUICK;
-	}
-
-	ctx->depth--;
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+	rv = (sf == &stack[PF_ANCHOR_STACK_MAX]);
+	cpumem_leave(pf_anchor_stack, stack);
 
 	return (rv);
+}
+
+int
+pf_anchor_stack_is_empty(struct pf_anchor_stackframe *sf)
+{
+	struct pf_anchor_stackframe *stack;
+	int rv;
+
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+	rv = (sf == &stack[0]);
+	cpumem_leave(pf_anchor_stack, stack);
+
+	return (rv);
+}
+
+struct pf_anchor_stackframe *
+pf_anchor_stack_top(void)
+{
+	struct pf_anchor_stackframe *stack;
+	struct pf_anchor_stackframe *top_sf;
+
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+	top_sf = stack[PF_ANCHOR_STACK_MAX].sf_stack_top;
+	cpumem_leave(pf_anchor_stack, stack);
+
+	return (top_sf);
+}
+
+int
+pf_anchor_stack_push(struct pf_ruleset *rs, struct pf_rule *r,
+    struct pf_anchor *child, int jump_target)
+{
+	struct pf_anchor_stackframe *stack;
+	struct pf_anchor_stackframe *top_sf = pf_anchor_stack_top();
+
+	top_sf++;
+	if (pf_anchor_stack_is_full(top_sf))
+		return (-1);
+
+	top_sf->sf_rs = rs;
+	top_sf->sf_r = r;
+	top_sf->sf_child = child;
+	top_sf->sf_jump_target = jump_target;
+
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+
+	if ((top_sf <= &stack[0]) || (top_sf >= &stack[PF_ANCHOR_STACK_MAX]))
+		panic("%s: top frame outside of anchor stack range", __func__);
+
+	stack[PF_ANCHOR_STACK_MAX].sf_stack_top = top_sf;
+	cpumem_leave(pf_anchor_stack, stack);
+
+	return (0);
+}
+
+int
+pf_anchor_stack_pop(struct pf_ruleset **rs, struct pf_rule **r,
+    struct pf_anchor **child, int *jump_target)
+{
+	struct pf_anchor_stackframe *top_sf = pf_anchor_stack_top();
+	struct pf_anchor_stackframe *stack;
+	int on_top;
+
+	stack = (struct pf_anchor_stackframe *)cpumem_enter(pf_anchor_stack);
+	if (pf_anchor_stack_is_empty(top_sf)) {
+		on_top = -1;
+	} else {
+		if ((top_sf <= &stack[0]) ||
+		    (top_sf >= &stack[PF_ANCHOR_STACK_MAX]))
+			panic("%s: top frame outside of anchor stack range",
+			    __func__);
+
+		*rs = top_sf->sf_rs;
+		*r = top_sf->sf_r;
+		*child = top_sf->sf_child;
+		*jump_target = top_sf->sf_jump_target;
+		top_sf--;
+		stack[PF_ANCHOR_STACK_MAX].sf_stack_top = top_sf;
+		on_top = 0;
+	}
+	cpumem_leave(pf_anchor_stack, stack);
+
+	return (on_top);
 }
 
 void
@@ -3917,11 +3977,12 @@ pf_rule_to_actions(struct pf_rule *r, struct pf_rule_actions *a)
 enum pf_test_status
 pf_match_rule(struct pf_test_ctx *ctx, struct pf_ruleset *ruleset)
 {
-	struct pf_rule	*r;
-	struct pf_rule	*save_a;
-	struct pf_ruleset	*save_aruleset;
+	struct pf_rule *r;
+	struct pf_anchor *child = NULL;
+	int target;
 
-retry:
+	pf_anchor_stack_init();
+enter_ruleset:
 	r = TAILQ_FIRST(ruleset->rules.active.ptr);
 	while (r != NULL) {
 		PF_TEST_ATTRIB(r->rule_flag & PFRULE_EXPIRED,
@@ -4057,18 +4118,19 @@ retry:
 				rule_flag = r->rule_flag;
 				if (((rule_flag & PFRULE_EXPIRED) == 0) &&
 				    atomic_cas_uint(&r->rule_flag, rule_flag,
-				    rule_flag | PFRULE_EXPIRED) == rule_flag)
+				    rule_flag | PFRULE_EXPIRED) == rule_flag) {
 					r->exptime = gettime();
-				else
-					goto retry;
+				} else {
+					r = TAILQ_NEXT(r, entries);
+					continue;
+				}
 			}
 
 			if (r->action == PF_MATCH) {
 				if ((ctx->ri = pool_get(&pf_rule_item_pl,
 				    PR_NOWAIT)) == NULL) {
 					REASON_SET(&ctx->reason, PFRES_MEMORY);
-					ctx->test_status = PF_TEST_FAIL;
-					break;
+					return (PF_TEST_FAIL);
 				}
 				ctx->ri->r = r;
 				/* order is irrelevant */
@@ -4081,8 +4143,7 @@ retry:
 				    &ctx->nr) == -1) {
 					REASON_SET(&ctx->reason,
 					    PFRES_TRANSLATE);
-					ctx->test_status = PF_TEST_FAIL;
-					break;
+					return (PF_TEST_FAIL);
 				}
 #if NPFLOG > 0
 				if (r->log) {
@@ -4116,28 +4177,50 @@ retry:
 				    &ctx->rules);
 #endif	/* NPFLOG > 0 */
 
-			if (r->quick) {
-				ctx->test_status = PF_TEST_QUICK;
-				break;
-			}
+			if (r->quick)
+				return (PF_TEST_QUICK);
 		} else {
-			save_a = ctx->a;
-			save_aruleset = ctx->aruleset;
-			ctx->a = r;		/* remember anchor */
-			ctx->aruleset = ruleset;	/* and its ruleset */
-			/*
-			 * Note: we don't need to restore if we are not going
-			 * to continue with ruleset evaluation.
-			 */
-			if (pf_step_into_anchor(ctx, r) != PF_TEST_OK)
-				break;
-			ctx->a = save_a;
-			ctx->aruleset = save_aruleset;
+			ctx->a = r;
+			ctx->aruleset = &r->anchor->ruleset;
+			if (r->anchor_wildcard) {
+				RB_FOREACH(child, pf_anchor_node,
+				    &r->anchor->children) {
+					if (pf_anchor_stack_push(ruleset, r, child,
+					    PF_NEXT_CHILD) != 0)
+						return (PF_TEST_FAIL);
+
+					ruleset = &child->ruleset;
+					goto enter_ruleset;
+next_child:
+					continue;	/* with RB_FOREACH() */
+				}
+			} else {
+				if (pf_anchor_stack_push(ruleset, r, child,
+				    PF_NEXT_RULE) != 0)
+					return (PF_TEST_FAIL);
+
+				ruleset = &r->anchor->ruleset;
+				child = NULL;
+				goto enter_ruleset;
+next_rule:
+				;
+			}
 		}
 		r = TAILQ_NEXT(r, entries);
 	}
 
-	return (ctx->test_status);
+	if (pf_anchor_stack_pop(&ruleset, &r, &child, &target) == 0) {
+		switch (target) {
+		case PF_NEXT_CHILD:
+			goto next_child;
+		case PF_NEXT_RULE:
+			goto next_rule;
+		default:
+			panic("%s: unknown jump target", __func__);
+		}
+	}
+
+	return (PF_TEST_OK);
 }
 
 int

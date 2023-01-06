@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.29 2023/01/04 10:31:55 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.30 2023/01/06 17:44:34 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -39,6 +39,7 @@
 
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
+#include <sys/percpu.h>
 
 struct pf_state_item {
 	TAILQ_ENTRY(pf_state_item)
@@ -302,6 +303,24 @@ struct pf_pdesc {
 #endif /* INET6 */
 	} hdr;
 };
+
+struct pf_anchor_stackframe {
+	struct pf_ruleset	*sf_rs;
+	union {
+		struct pf_rule			*u_r;
+		struct pf_anchor_stackframe	*u_stack_top;
+	} u;
+	struct pf_anchor	*sf_child;
+	int			 sf_jump_target;
+};
+#define sf_r		u.u_r
+#define sf_stack_top	u.u_stack_top
+enum {
+	PF_NEXT_RULE,
+	PF_NEXT_CHILD
+};
+
+extern struct cpumem *pf_anchor_stack;
 
 extern struct task	pf_purge_task;
 extern struct timeout	pf_purge_to;

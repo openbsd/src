@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.389 2022/11/19 14:01:51 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.390 2023/01/06 17:44:33 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -840,6 +840,11 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 	u_int32_t nr, mnr, header = 0;
 	int len = strlen(path), ret = 0;
 	char *npath, *p;
+
+	if (depth > PF_ANCHOR_STACK_MAX) {
+		warnx("%s: max stack depth exceeded for %s", __func__, path);
+		return (-1);
+	}
 
 	/*
 	 * Truncate a trailing / and * on an anchorname before searching for
