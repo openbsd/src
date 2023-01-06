@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.94 2022/12/10 21:26:21 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.95 2023/01/06 14:35:34 kn Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -111,9 +111,6 @@ extern int nd6_debug;
 struct nd_opts {
 	struct nd_opt_hdr *nd_opts_src_lladdr;
 	struct nd_opt_hdr *nd_opts_tgt_lladdr;
-	struct nd_opt_hdr *nd_opts_search;	/* multiple opts */
-	struct nd_opt_hdr *nd_opts_last;	/* multiple opts */
-	int nd_opts_done;
 };
 
 void nd6_init(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.263 2023/01/06 14:32:55 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.264 2023/01/06 14:35:34 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ nd6_ifdetach(struct ifnet *ifp)
 int
 nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 {
-	struct nd_opt_hdr *nd_opt = opt;
+	struct nd_opt_hdr *nd_opt = opt, *next_opt, *last_opt;
 	int i = 0;
 
 	bzero(ndopts, sizeof(*ndopts));
@@ -153,20 +153,19 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 	if (icmp6len == 0)
 		return 0;
 
-	ndopts->nd_opts_search = nd_opt;
-	ndopts->nd_opts_last =
-	    (struct nd_opt_hdr *)(((u_char *)nd_opt) + icmp6len);
+	next_opt = nd_opt;
+	last_opt = (struct nd_opt_hdr *)((u_char *)nd_opt + icmp6len);
 
 	while (1) {
 		int olen;
 
-		if (ndopts->nd_opts_search == NULL || ndopts->nd_opts_done)
+		if (next_opt == NULL)
 			goto skip1;
 
-		nd_opt = ndopts->nd_opts_search;
+		nd_opt = next_opt;
 
 		/* make sure nd_opt_len is inside the buffer */
-		if ((caddr_t)&nd_opt->nd_opt_len >= (caddr_t)ndopts->nd_opts_last)
+		if ((caddr_t)&nd_opt->nd_opt_len >= (caddr_t)last_opt)
 			goto invalid;
 
 		/* every option must have a length greater than zero */
@@ -174,14 +173,13 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 		if (olen == 0)
 			goto invalid;
 
-		ndopts->nd_opts_search = (struct nd_opt_hdr *)((caddr_t)nd_opt + olen);
-		if (ndopts->nd_opts_search > ndopts->nd_opts_last) {
+		next_opt = (struct nd_opt_hdr *)((caddr_t)nd_opt + olen);
+		if (next_opt > last_opt) {
 			/* option overruns the end of buffer */
 			goto invalid;
-		} else if (ndopts->nd_opts_search == ndopts->nd_opts_last) {
+		} else if (next_opt == last_opt) {
 			/* reached the end of options chain */
-			ndopts->nd_opts_done = 1;
-			ndopts->nd_opts_search = NULL;
+			next_opt = NULL;
 		}
 
 		switch (nd_opt->nd_opt_type) {
@@ -225,7 +223,7 @@ skip1:
 			break;
 		}
 
-		if (ndopts->nd_opts_done)
+		if (next_opt == NULL)
 			break;
 	}
 
