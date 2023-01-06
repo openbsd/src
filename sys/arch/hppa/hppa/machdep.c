@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.267 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.268 2023/01/06 19:10:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1085,14 +1085,6 @@ int
 kcopy(const void *from, void *to, size_t size)
 {
 	return spcopy(HPPA_SID_KERNEL, from, HPPA_SID_KERNEL, to, size);
-}
-
-int
-copystr(const void *src, void *dst, size_t size, size_t *lenp)
-{
-	if (size == 0)
-		return ENAMETOOLONG;
-	return spstrcpy(HPPA_SID_KERNEL, src, HPPA_SID_KERNEL, dst, size, lenp);
 }
 
 int

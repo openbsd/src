@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.13 2020/09/25 14:42:25 deraadt Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.14 2023/01/06 19:10:18 miod Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -219,30 +219,3 @@ sh4_switch_setup(struct proc *p)
 }
 #endif /* SH4 */
 #endif /* !P1_STACK */
-
-/*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
- */
-int
-copystr(const void *kfaddr, void *kdaddr, size_t maxlen, size_t *lencopied)
-{
-	const char *from = kfaddr;
-	char *to = kdaddr;
-	int i;
-
-	for (i = 0; maxlen-- > 0; i++) {
-		if ((*to++ = *from++) == '\0') {
-			if (lencopied)
-				*lencopied = i + 1;
-			return (0);
-		}
-	}
-
-	if (lencopied)
-		*lencopied = i;
-
-	return (ENAMETOOLONG);
-}

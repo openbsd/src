@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.49 2022/10/25 15:15:38 guenther Exp $ */
+/* $OpenBSD: locore.s,v 1.50 2023/01/06 19:10:18 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -793,7 +793,7 @@ LEAF(proc_trampoline, 0)
  *
  * int copystr(char *from, char *to, size_t len, size_t *lenp);
  */
-LEAF(copystr, 4)
+STATIC_LEAF(copystr, 4)
 	LDGP(pv)
 
 	mov	a2, t0			/* t0 = i = len */

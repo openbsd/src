@@ -1,4 +1,4 @@
-/* $OpenBSD: copystr.S,v 1.7 2020/10/20 23:21:41 patrick Exp $ */
+/* $OpenBSD: copystr.S,v 1.8 2023/01/06 19:10:18 miod Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -22,53 +22,6 @@
 
 	.text
 	.align	2
-
-/*
- * x0 - from
- * x1 - to
- * x2 - maxlens
- * x3 - lencopied
- * x4 - scratch
- * x5 - hold old onfault
- *
- * Copy string from x0 to x1
- */
-ENTRY(copystr)
-	RETGUARD_SETUP(copystr, x15)
-	mrs	x6, tpidr_el1			// load curcpu
-	ldr	x6, [x6, #(CI_CURPCB)]
-	ldr	x5, [x6, #(PCB_ONFAULT)]
-	adr	x7, .Lcopystrfault
-	str	x7, [x6, #(PCB_ONFAULT)]	// set handler
-
-	mov	x8, xzr
-	cbz	x2, 2f
-
-1:	ldrb	w4, [x0], 1
-	strb	w4, [x1], #1
-	sub	x2, x2, #1
-	add	x8, x8, #1
-	cbz	w4, .Lcopystrsuccess
-	cbnz	x2, 1b
-
-2:
-	mov	x0, #ENAMETOOLONG
-	b	.Lcopystrcleanup
-
-.Lcopystrfault:
-	mov	x0, #EFAULT
-	b	.Lcopystrcleanup
-
-.Lcopystrsuccess:
-	mov	x0, xzr
-
-.Lcopystrcleanup:
-	cbz	x3, 3f
-	str	x8, [x3]
-3:
-	str	x5, [x6, #(PCB_ONFAULT)]
-	RETGUARD_CHECK(copystr, x15)
-	ret
 
 /*
  * x0 - user space address
@@ -102,6 +55,21 @@ ENTRY(copyinstr)
 2:
 	mov	x0, #ENAMETOOLONG
 	b	.Lcopystrcleanup
+
+.Lcopystrfault:
+	mov	x0, #EFAULT
+	b	.Lcopystrcleanup
+
+.Lcopystrsuccess:
+	mov	x0, xzr
+
+.Lcopystrcleanup:
+	cbz	x3, 3f
+	str	x8, [x3]
+3:
+	str	x5, [x6, #(PCB_ONFAULT)]
+	RETGUARD_CHECK(copystr, x15)
+	ret
 
 /*
  * x0 - kernel space address

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.198 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: locore.s,v 1.199 2023/01/06 19:10:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -696,55 +696,6 @@ copystr_return:
 	movl	%ecx,(%edx)
 
 8:	popl	%edi
-	popl	%esi
-#ifdef DDB
-	leave
-#endif
-	ret
-
-/*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
- * Copy a NUL-terminated string, at most maxlen characters long.  Return the
- * number of characters copied (including the NUL) in *lencopied.  If the
- * string is too long, return ENAMETOOLONG; else return 0.
- */
-ENTRY(copystr)
-#ifdef DDB
-	pushl	%ebp
-	movl	%esp,%ebp
-#endif
-	pushl	%esi
-	pushl	%edi
-
-	movl	12+FPADD(%esp),%esi		# esi = from
-	movl	16+FPADD(%esp),%edi		# edi = to
-	movl	20+FPADD(%esp),%edx		# edx = maxlen
-	incl	%edx
-
-1:	decl	%edx
-	jz	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	1b
-
-	/* Success -- 0 byte reached. */
-	decl	%edx
-	xorl	%eax,%eax
-	jmp	6f
-
-4:	/* edx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-
-6:	/* Set *lencopied and return %eax. */
-	movl	20+FPADD(%esp),%ecx
-	subl	%edx,%ecx
-	movl	24+FPADD(%esp),%edx
-	testl	%edx,%edx
-	jz	7f
-	movl	%ecx,(%edx)
-
-7:	popl	%edi
 	popl	%esi
 #ifdef DDB
 	leave

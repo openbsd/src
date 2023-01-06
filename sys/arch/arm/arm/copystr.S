@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.10 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.11 2023/01/06 19:10:18 miod Exp $	*/
 /*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
@@ -55,38 +55,6 @@
 .Lcpu_info_primary:
 	.word	cpu_info_primary
 #endif
-
-/*
- * r0 - from
- * r1 - to
- * r2 - maxlens
- * r3 - lencopied
- *
- * Copy string from r0 to r1
- */
-ENTRY(copystr)
-	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
-	teq	r2, #0x00000000
-	mov	r5, #0x00000000
-	moveq	r0, #ENAMETOOLONG
-	beq	2f
-
-1:	ldrb	r4, [r0], #0x0001
-	add	r5, r5, #0x00000001
-	teq	r4, #0x00000000
-	strb	r4, [r1], #0x0001
-	teqne	r5, r2
-	bne	1b
-
-	teq	r4, #0x00000000
-	moveq	r0, #0x00000000
-	movne	r0, #ENAMETOOLONG
-
-2:	teq	r3, #0x00000000
-	strne	r5, [r3]
-
-	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
-	mov	pc, lr
 
 #define SAVE_REGS	stmfd	sp!, {r4-r6}
 #define RESTORE_REGS	ldmfd	sp!, {r4-r6}

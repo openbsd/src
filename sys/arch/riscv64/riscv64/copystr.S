@@ -1,4 +1,4 @@
-/*	$OpenBSD: copystr.S,v 1.4 2021/06/28 18:53:10 deraadt Exp $	*/
+/*	$OpenBSD: copystr.S,v 1.5 2023/01/06 19:10:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -27,28 +27,31 @@
 	.text
 
 /*
- * a0 - from
- * a1 - to
+ * a0 - user space address
+ * a1 - kernel space address
  * a2 - maxlens
  * a3 - lencopied
  *
- * Copy string from a0 to a1
+ * Copy string from user space to kernel space
  */
-ENTRY(copystr)
+ENTRY(copyinstr)
 	RETGUARD_SETUP(copyiostr, a6)
 	beqz	a2, .Lcopyiostrtoolong_early
-	la	a4, .Lcopyiostrfault
+	la	a4, .Lcopyiostrfault_user
 	SWAP_FAULT_HANDLER(a4, t0, t1)
+	ENTER_USER_ACCESS(t0)
 
 	mv	a5, x0
 
-1:	lb	t0, 0(a0)
+	li	t1, VM_MAXUSER_ADDRESS
+1:	bgtu	a0, t1, .Lcopyiostrfault_user
+	lb	t0, 0(a0)
 	addi	a0, a0, 1
 	sb	t0, 0(a1)
 	addi	a1, a1, 1
 	addi	a2, a2, -1
 	addi	a5, a5, 1
-	beqz	t0, .Lcopyiostrsuccess
+	beqz	t0, .Lcopyiostrsuccess_user
 	bnez	a2, 1b
 
 .Lcopyiostrtoolong_user:
@@ -79,35 +82,6 @@ ENTRY(copystr)
 	RETGUARD_CHECK(copyiostr, a6)
 	ret
 
-/*
- * a0 - user space address
- * a1 - kernel space address
- * a2 - maxlens
- * a3 - lencopied
- *
- * Copy string from user space to kernel space
- */
-ENTRY(copyinstr)
-	RETGUARD_SETUP(copyiostr, a6)
-	beqz	a2, .Lcopyiostrtoolong_early
-	la	a4, .Lcopyiostrfault_user
-	SWAP_FAULT_HANDLER(a4, t0, t1)
-	ENTER_USER_ACCESS(t0)
-
-	mv	a5, x0
-
-	li	t1, VM_MAXUSER_ADDRESS
-1:	bgtu	a0, t1, .Lcopyiostrfault_user
-	lb	t0, 0(a0)
-	addi	a0, a0, 1
-	sb	t0, 0(a1)
-	addi	a1, a1, 1
-	addi	a2, a2, -1
-	addi	a5, a5, 1
-	beqz	t0, .Lcopyiostrsuccess_user
-	bnez	a2, 1b
-
-	j	.Lcopyiostrtoolong_user
 END(copyinstr)
 
 /*

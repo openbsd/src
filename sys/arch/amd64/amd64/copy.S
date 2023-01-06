@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.16 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: copy.S,v 1.17 2023/01/06 19:10:18 miod Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -296,38 +296,6 @@ copystr_return:
 	movq	%r8,(%r9)
 8:
 	RETGUARD_CHECK(copyoutstr, r10)
-	ret
-	lfence
-
-ENTRY(copystr)
-	RETGUARD_SETUP(copystr, r10)
-	xchgq	%rdi,%rsi
-	movq	%rdx,%r8
-
-	incq	%rdx
-
-1:	decq	%rdx
-	jz	4f
-	lodsb
-	stosb
-	testb	%al,%al
-	jnz	1b
-
-	/* Success -- 0 byte reached. */
-	decq	%rdx
-	xorl	%eax,%eax
-	jmp	6f
-
-4:	/* edx is zero -- return ENAMETOOLONG. */
-	movl	$ENAMETOOLONG,%eax
-
-6:	/* Set *lencopied and return %eax. */
-	testq	%rcx,%rcx
-	jz	7f
-	subq	%rdx,%r8
-	movq	%r8,(%rcx)
-7:
-	RETGUARD_CHECK(copystr, r10)
 	ret
 	lfence
 

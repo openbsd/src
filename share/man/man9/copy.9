@@ -1,4 +1,4 @@
-.\"	$OpenBSD: copy.9,v 1.17 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: copy.9,v 1.18 2023/01/06 19:10:18 miod Exp $
 .\"	$NetBSD: copy.9,v 1.2 1996/01/09 03:23:04 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
@@ -33,13 +33,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: January 6 2023 $
 .Dt COPYIN 9
 .Os
 .Sh NAME
 .Nm copyin ,
 .Nm copyout ,
-.Nm copystr ,
 .Nm copyinstr ,
 .Nm copyoutstr ,
 .Nm kcopy
@@ -52,8 +51,6 @@
 .Ft int
 .Fn copyout "const void *kaddr" "void *uaddr" "size_t len"
 .Ft int
-.Fn copystr "const void *kfaddr" "void *kdaddr" "size_t len" "size_t *done"
-.Ft int
 .Fn copyinstr "const void *uaddr" "void *kaddr" "size_t len" "size_t *done"
 .Ft int
 .Fn copyoutstr "const void *kaddr" "void *uaddr" "size_t len" "size_t *done"
@@ -64,8 +61,6 @@ The
 .Nm
 functions are designed to copy contiguous data from one address to another.
 All but
-.Fn copystr
-and
 .Fn kcopy
 copy data from user-space to kernel-space or vice-versa.
 .Pp
@@ -87,30 +82,6 @@ bytes of data from the kernel-space address
 .Fa kaddr
 to the user-space address
 .Fa uaddr .
-.It Fn copystr
-Copies a null-terminated string, at most
-.Fa len
-bytes long, from kernel-space address
-.Fa kfaddr
-to kernel-space address
-.Fa kdaddr .
-The number of bytes actually copied, including the terminating null,
-is returned in
-.Fa *done ,
-if
-.Fa done
-is not
-.Dv NULL .
-.Pp
-Unlike the other
-.Nm
-functions,
-.Fn copystr
-does
-.Em not
-support returning
-.Er EFAULT
-when a bad address is encountered.
 .It Fn copyinstr
 Copies a null-terminated string, at most
 .Fa len
@@ -154,8 +125,7 @@ functions return 0 on success or
 .Er EFAULT
 if a bad address is encountered.
 In addition, the
-.Fn copystr ,
-.Fn copyinstr ,
+.Fn copyinstr
 and
 .Fn copyoutstr
 functions return

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.71 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.72 2023/01/06 19:10:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -191,32 +191,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 #endif
 	tf->tf_r[2] = stack;
 	tf->tf_r[31] = stack;
-}
-
-int
-copystr(fromaddr, toaddr, maxlength, lencopied)
-	const void *fromaddr;
-	void *toaddr;
-	size_t maxlength;
-	size_t *lencopied;
-{
-	u_int tally;
-
-	tally = 0;
-
-	while (maxlength--) {
-		*(u_char *)toaddr = *(u_char *)fromaddr++;
-		tally++;
-		if (*(u_char *)toaddr++ == 0) {
-			if (lencopied) *lencopied = tally;
-			return (0);
-		}
-	}
-
-	if (lencopied)
-		*lencopied = tally;
-
-	return (ENAMETOOLONG);
 }
 
 #ifdef DDB

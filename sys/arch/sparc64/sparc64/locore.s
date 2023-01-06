@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.196 2022/12/29 22:44:23 cheloha Exp $	*/
+/*	$OpenBSD: locore.s,v 1.197 2023/01/06 19:10:18 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5521,51 +5521,6 @@ Lcsdone:				! done:
 Lcsfault:
 	b	Lcsdone			! error = EFAULT;
 	 mov	EFAULT, %o0		! goto ret;
-
-/*
- * copystr(fromaddr, toaddr, maxlength, &lencopied)
- *
- * Copy a null terminated string from one point to another in
- * the kernel address space.  (This is a leaf procedure, but
- * it does not seem that way to the C compiler.)
- */
-ENTRY(copystr)
-	brgz,pt	%o2, 0f	! Make sure len is valid
-	 mov	%o1, %o5		!	to0 = to;
-	retl
-	 mov	ENAMETOOLONG, %o0
-0:					! loop:
-	ldsb	[%o0], %o4		!	c = *from;
-	tst	%o4
-	stb	%o4, [%o1]		!	*to++ = c;
-	be	1f			!	if (c == 0)
-	 inc	%o1			!		goto ok;
-	deccc	%o2			!	if (--len > 0) {
-	bg,a	0b			!		from++;
-	 inc	%o0			!		goto loop;
-	b	2f			!	}
-	 mov	ENAMETOOLONG, %o0	!	ret = ENAMETOOLONG; goto done;
-1:					! ok:
-	clr	%o0			!	ret = 0;
-2:
-	sub	%o1, %o5, %o1		!	len = to - to0;
-	tst	%o3			!	if (lencopied)
-	bnz,a	3f
-	 stx	%o1, [%o3]		!		*lencopied = len;
-3:
-	retl
-	 nop
-#ifdef DIAGNOSTIC
-4:
-	sethi	%hi(5f), %o0
-	call	panic
-	 or	%lo(5f), %o0, %o0
-	.data
-5:
-	.asciz	"copystr"
-	_ALIGN
-	.text
-#endif	/* DIAGNOSTIC */
 
 /*
  * copyin(src, dst, len)
