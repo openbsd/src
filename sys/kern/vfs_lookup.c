@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.87 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.88 2023/01/06 19:08:36 miod Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -143,10 +143,16 @@ namei(struct nameidata *ndp)
 	 */
 	if ((cnp->cn_flags & HASBUF) == 0)
 		cnp->cn_pnbuf = pool_get(&namei_pool, PR_WAITOK);
-	if (ndp->ni_segflg == UIO_SYSSPACE)
-		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
-			    MAXPATHLEN, &ndp->ni_pathlen);
-	else
+	if (ndp->ni_segflg == UIO_SYSSPACE) {
+		ndp->ni_pathlen = strlcpy(cnp->cn_pnbuf, ndp->ni_dirp,
+		    MAXPATHLEN);
+		if (ndp->ni_pathlen >= MAXPATHLEN) {
+			error = ENAMETOOLONG;
+		} else {
+			error = 0;
+			ndp->ni_pathlen++;	/* ni_pathlen includes NUL */
+		}
+	} else
 		error = copyinstr(ndp->ni_dirp, cnp->cn_pnbuf,
 			    MAXPATHLEN, &ndp->ni_pathlen);
 
