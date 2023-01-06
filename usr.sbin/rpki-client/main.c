@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.229 2022/12/15 12:02:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.230 2023/01/06 16:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -548,6 +548,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	 * We follow that up with whether the resources didn't parse.
 	 */
 	io_read_buf(b, &type, sizeof(type));
+	io_read_buf(b, &id, sizeof(id));
 	io_read_str(b, &file);
 
 	/* in filemode messages can be ignored, only the accounting matters */
@@ -559,7 +560,6 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		goto done;
 	}
 
-	io_read_buf(b, &id, sizeof(id));
 	rp = repo_byid(id);
 	repo_stat_inc(rp, type, STYPE_OK);
 	switch (type) {
@@ -638,7 +638,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_FILE:
 		break;
 	default:
-		errx(1, "unknown entity type %d", type);
+		warnx("%s: unknown entity type %d", file, type);
+		break;
 	}
 
 done:
