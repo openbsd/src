@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.260 2022/12/10 21:26:21 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.261 2023/01/06 14:24:36 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -196,15 +196,13 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 	int i = 0;
 
 	bzero(ndopts, sizeof(*ndopts));
+
+	if (icmp6len == 0)
+		return 0;
+
 	ndopts->nd_opts_search = nd_opt;
 	ndopts->nd_opts_last =
 	    (struct nd_opt_hdr *)(((u_char *)nd_opt) + icmp6len);
-
-	if (icmp6len == 0) {
-		ndopts->nd_opts_done = 1;
-		ndopts->nd_opts_search = NULL;
-		return 0;
-	}
 
 	while (1) {
 		nd_opt = nd6_option(ndopts);
