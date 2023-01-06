@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.24 2022/12/14 08:46:58 job Exp $ */
+/*	$OpenBSD: print.c,v 1.25 2023/01/06 13:19:43 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -130,7 +130,7 @@ x509_print(const X509 *x)
 		warnx("X509_NAME_oneline failed");
 		goto out;
 	}
-			
+
 	if ((xserial = X509_get0_serialNumber(x)) == NULL) {
 		warnx("X509_get0_serialNumber failed");
 		goto out;
@@ -292,7 +292,7 @@ crl_print(const struct crl *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 
 	xissuer = X509_CRL_get_issuer(p->x509_crl);
-	issuer = X509_NAME_oneline(xissuer, NULL, 0);	
+	issuer = X509_NAME_oneline(xissuer, NULL, 0);
 	crlnum = X509_CRL_get_ext_d2i(p->x509_crl, NID_crl_number, NULL, NULL);
 	serial = x509_convert_seqnum(__func__, crlnum);
 	if (issuer != NULL && serial != NULL) {
