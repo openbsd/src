@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.16 2021/05/16 03:39:27 jsg Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.17 2023/01/06 19:23:53 miod Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -164,26 +164,16 @@ undefinedinstruction(trapframe_t *frame)
 	p = (curproc == NULL) ? &proc0 : curproc;
 
 	/*
-	 * Make sure the program counter is correctly aligned so we
-	 * don't take an alignment fault trying to read the opcode.
+	 * Fetch the opcode and Make sure the program counter is correctly
+	 * aligned.
 	 */
-	if (__predict_false((fault_pc & 3) != 0)) {
+	if (copyin32((void *)fault_pc, &fault_instruction) != 0) {
 		/* Give the user an illegal instruction signal. */
 		sv.sival_int = (u_int32_t) fault_pc;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		userret(p);
 		return;
 	}
-
-	/*
-	 * Should use copyin() here .. but in the interests of squeezing every
-	 * bit of speed we will just read it directly. We know the instruction
-	 * can be read as was just executed so this will never fail unless the
-	 * kernel is screwed up in which case it does not really matter does
-	 * it?
-	 */
-
-	fault_instruction = *(u_int32_t *)fault_pc;
 
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
