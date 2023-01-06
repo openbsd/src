@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.158 2022/05/30 12:48:57 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.159 2023/01/06 07:09:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -692,6 +692,9 @@ client_dispatch_wait(struct imsg *imsg)
 		file_read_open(&client_files, client_peer, imsg, 1,
 		    !(client_flags & CLIENT_CONTROL), client_file_check_cb,
 		    NULL);
+		break;
+	case MSG_READ_CANCEL:
+		file_read_cancel(&client_files, imsg);
 		break;
 	case MSG_WRITE_OPEN:
 		file_write_open(&client_files, client_peer, imsg, 1,
