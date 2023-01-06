@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.23 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.24 2023/01/06 19:05:46 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -68,7 +68,6 @@
 #include <machine/trap.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
-#include <machine/nvm.h>
 #include <machine/cpufunc.h>
 
 #include "dev_hppa.h"
@@ -81,8 +80,6 @@ pdcio_t pdc;
 int	pdcbuf[64] PDC_ALIGNMENT;/* PDC return buffer */
 struct	stable_storage sstor;	/* contents of Stable Storage */
 int	sstorsiz;		/* size of Stable Storage */
-struct bootdata bd;
-int bdsize = sizeof(struct bootdata);
 
 /*
  * Initialize PDC and related variables.
