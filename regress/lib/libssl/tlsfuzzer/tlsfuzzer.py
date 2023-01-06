@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.47 2022/07/18 09:15:08 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.48 2023/01/06 19:25:20 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -187,6 +187,9 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
         "-e", "zero-length app data with large padding",
         "-e", "zero-length app data with padding",
     ]),
+
+    # We don't currently handle NSTs
+    Test("test-tls13-connection-abort.py", ["-e", "After NewSessionTicket"]),
 ])
 
 # Tests that take a lot of time (> ~30s on an x280)
@@ -335,6 +338,7 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-TLSv1_2-rejected-without-TLSv1_2.py"),
     Test("test-aes-gcm-nonces.py"),
     Test("test-chacha20.py"),
+    Test("test-connection-abort.py"),
     Test("test-conversation.py"),
     Test("test-cve-2016-2107.py"),
     Test("test-cve-2016-6309.py"),
