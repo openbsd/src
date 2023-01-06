@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.141 2022/12/10 21:29:10 mvs Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.142 2023/01/06 14:17:15 kn Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct dadq {
 };
 
 struct dadq *nd6_dad_find(struct ifaddr *);
+void nd6_dad_destroy(struct dadq *);
 void nd6_dad_starttimer(struct dadq *);
 void nd6_dad_stoptimer(struct dadq *);
 void nd6_dad_timer(void *);
@@ -1048,6 +1049,15 @@ nd6_dad_find(struct ifaddr *ifa)
 }
 
 void
+nd6_dad_destroy(struct dadq *dp)
+{
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	ifafree(dp->dad_ifa);
+	free(dp, M_IP6NDP, sizeof(*dp));
+	ip6_dad_pending--;
+}
+
+void
 nd6_dad_starttimer(struct dadq *dp)
 {
 	timeout_set_proc(&dp->dad_timer_ch, nd6_dad_timer, dp->dad_ifa);
@@ -1135,12 +1145,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 	}
 
 	nd6_dad_stoptimer(dp);
-
-	TAILQ_REMOVE(&dadq, dp, dad_list);
-	free(dp, M_IP6NDP, sizeof(*dp));
-	dp = NULL;
-	ifafree(ifa);
-	ip6_dad_pending--;
+	nd6_dad_destroy(dp);
 }
 
 void
@@ -1183,11 +1188,7 @@ nd6_dad_timer(void *xifa)
 		nd6log((LOG_INFO, "%s: could not run DAD, driver problem?\n",
 			ifa->ifa_ifp->if_xname));
 
-		TAILQ_REMOVE(&dadq, dp, dad_list);
-		free(dp, M_IP6NDP, sizeof(*dp));
-		dp = NULL;
-		ifafree(ifa);
-		ip6_dad_pending--;
+		nd6_dad_destroy(dp);
 		goto done;
 	}
 
@@ -1219,11 +1220,7 @@ nd6_dad_timer(void *xifa)
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 				addr, sizeof(addr))));
 
-			TAILQ_REMOVE(&dadq, dp, dad_list);
-			free(dp, M_IP6NDP, sizeof(*dp));
-			dp = NULL;
-			ifafree(ifa);
-			ip6_dad_pending--;
+			nd6_dad_destroy(dp);
 		}
 	}
 
@@ -1255,13 +1252,9 @@ nd6_dad_duplicated(struct dadq *dp)
 	log(LOG_ERR, "%s: manual intervention required\n",
 	    ia6->ia_ifp->if_xname);
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
-
 	rtm_addr(RTM_CHGADDRATTR, dp->dad_ifa);
 
-	ifafree(dp->dad_ifa);
-	free(dp, M_IP6NDP, sizeof(*dp));
-	ip6_dad_pending--;
+	nd6_dad_destroy(dp);
 }
 
 void
