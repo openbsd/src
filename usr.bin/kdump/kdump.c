@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.153 2022/12/29 01:36:36 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.154 2023/01/07 05:26:40 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -826,6 +826,8 @@ static const formatter scargs[][8] = {
     [SYS_rmdir]		= { Ppath },
     [SYS_adjtime]	= { Pptr, Pptr },
     [SYS_getlogin_r]	= { Pptr, Psize },
+    [SYS_getthrname]	= { Ppid_t, Pptr, Psize },
+    [SYS_setthrname]	= { Ppid_t, Pptr },
     [SYS_quotactl]	= { Ppath, Quotactlname, Uidname, Pptr },
     [SYS_ypconnect]	= { Socktypename },
     [SYS_nfssvc]	= { Phexint, Pptr },
@@ -1166,6 +1168,8 @@ doerr:
 			/* syscalls that return errno values */
 			case SYS_getlogin_r:
 			case SYS___thrsleep:
+			case SYS_getthrname:
+			case SYS_setthrname:
 				if ((error = ret) != 0)
 					goto doerr;
 				/* FALLTHROUGH */
