@@ -358,8 +358,14 @@ static void checkOptions() {
   }
 
   if (config->executeOnly) {
-    if (config->emachine != EM_AARCH64)
-      error("-execute-only is only supported on AArch64 targets");
+    switch (config->emachine) {
+    case EM_AARCH64:
+    case EM_RISCV:
+    case EM_MIPS:
+      break;
+    default:
+      error("-execute-only is not supported on this target");
+    }
 
     if (config->singleRoRx && !script->hasSectionsCommand)
       error("-execute-only and -no-rosegment cannot be used together");
