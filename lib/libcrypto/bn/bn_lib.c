@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.69 2023/01/07 16:09:18 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.70 2023/01/07 16:13:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@ BN_clear(BIGNUM *a)
 }
 
 void
-BN_clear_free(BIGNUM *a)
+BN_free(BIGNUM *a)
 {
 	int i;
 
@@ -112,9 +112,9 @@ BN_clear_free(BIGNUM *a)
 }
 
 void
-BN_free(BIGNUM *a)
+BN_clear_free(BIGNUM *bn)
 {
-	BN_clear_free(a);
+	BN_free(bn);
 }
 
 /* This stuff appears to be completely unused, so is deprecated */
