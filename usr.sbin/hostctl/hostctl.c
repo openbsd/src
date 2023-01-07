@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostctl.c,v 1.5 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: hostctl.c,v 1.6 2023/01/07 06:40:21 asou Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -178,14 +178,28 @@ main(int argc, char *argv[])
 		usage();
 
 	/* Re-open read-writable */
-	if (cmd == PVBUSIOC_KVWRITE) {
+	if (cmd != PVBUSIOC_KVREAD) {
 		close(fd);
 		if ((fd = open(path_pvbus, O_RDWR)) == -1)
 			err(1, "open: %s", path_pvbus);
+		if ((ret = ioctl(fd, cmd, &pvr, sizeof(pvr))) == -1)
+			err(1, "ioctl");
+	} else {
+		while (1) {
+			if ((ret = ioctl(fd, cmd, &pvr, sizeof(pvr))) == 0)
+				break;
+			if (errno == ERANGE &&
+			    pvr.pvr_valuelen < PVBUS_KVOP_MAXSIZE) {
+				/* the buffer is not enough, expand it */
+				pvr.pvr_valuelen *= 2;
+				if ((pvr.pvr_value = realloc(pvr.pvr_value,
+				    pvr.pvr_valuelen)) == NULL)
+					err(1, "realloc");
+				continue;
+			}
+			err(1, "ioctl");
+		}
 	}
-
-	if ((ret = ioctl(fd, cmd, &pvr, sizeof(pvr))) == -1)
-		err(1, "ioctl");
 
 	if (!qflag && strlen(pvr.pvr_value)) {
 		/*

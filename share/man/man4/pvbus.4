@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pvbus.4,v 1.14 2017/06/14 12:42:09 jmc Exp $
+.\"	$OpenBSD: pvbus.4,v 1.15 2023/01/07 06:40:21 asou Exp $
 .\"
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006 Jason McIntyre <jmc@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2017 $
+.Dd $Mdocdate: January 7 2023 $
 .Dt PVBUS 4
 .Os
 .Sh NAME
@@ -125,6 +125,13 @@ Read the value from
 .Fa pvr_key
 and return it in
 .Fa pvr_value .
+If
+.Fa pvr_valuelen
+is not enough for the value,
+the command will fail and
+.Xr errno 2
+is set to
+.Er ERANGE .
 .It Dv PVBUSIOC_KVTYPE
 Return the type of the attached hypervisor interface as a string in
 .Fa pvr_key ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.29 2022/12/28 10:11:36 asou Exp $ */
+/*	$OpenBSD: vmt.c,v 1.30 2023/01/07 06:40:21 asou Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -547,7 +547,7 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 
 	if (rlen > 0) {
 		if (rlen + 1 > valuelen) {
-			error = EMSGSIZE;
+			error = ERANGE;
 			goto close;
 		}
 

@@ -1151,11 +1151,12 @@ hv_kvop(void *arg, int op, char *key, char *val, size_t vallen)
 	kvpl = &kvp->kvp_pool[pool];
 	if (strlen(key) == 0) {
 		for (next = 0; next < MAXPOOLENTS; next++) {
-			if ((val + vallen < vp + HV_KVP_MAX_KEY_SIZE / 2) ||
-			    kvp_pool_keys(kvpl, next, vp, &keylen))
+			if (val + vallen < vp + HV_KVP_MAX_KEY_SIZE / 2)
+				return (ERANGE);
+			if (kvp_pool_keys(kvpl, next, vp, &keylen))
 				goto out;
 			if (strlcat(val, "\n", vallen) >= vallen)
-				goto out;
+				return (ERANGE);
 			vp += keylen;
 		}
  out:

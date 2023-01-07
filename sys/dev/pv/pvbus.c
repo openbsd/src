@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.26 2022/12/08 05:45:36 yasuoka Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.27 2023/01/07 06:40:21 asou Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -399,13 +399,14 @@ pvbusgetstr(size_t srclen, const char *src, char **dstp)
 
 	/*
 	 * Reject size that is too short or obviously too long:
-	 * - at least one byte for the nul terminator.
-	 * - PAGE_SIZE is an arbitrary value, but known pv backends seem
-	 *   to have a hard (PAGE_SIZE - x) limit in their messaging.
+	 * - Known pv backends other than vmware have a hard limit smaller than
+	 *   PVBUS_KVOP_MAXSIZE in their messaging.  vmware has a software
+	 *   limit at 1MB, but current open-vm-tools has a limit at 64KB
+	 *   (=PVBUS_KVOP_MAXSIZE).
 	 */
 	if (srclen < 1)
 		return (EINVAL);
-	else if (srclen > PAGE_SIZE)
+	else if (srclen > PVBUS_KVOP_MAXSIZE)
 		return (ENAMETOOLONG);
 
 	*dstp = dst = malloc(srclen + 1, M_TEMP, M_WAITOK | M_ZERO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.47 2022/11/10 02:47:52 asou Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.48 2023/01/07 06:40:21 asou Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -1116,11 +1116,16 @@ xs_kvop(void *xsc, int op, char *key, char *value, size_t valuelen)
 		/* FALLTHROUGH */
 	case XS_LIST:
 		for (i = 0; i < iov_cnt; i++) {
-			if (i && strlcat(value, "\n", valuelen) >= valuelen)
+			if (i > 0 && strlcat(value, "\n", valuelen) >=
+			    valuelen) {
+				error = ERANGE;
 				break;
+			}
 			if (strlcat(value, iovp[i].iov_base,
-			    valuelen) >= valuelen)
+			    valuelen) >= valuelen) {
+				error = ERANGE;
 				break;
+			}
 		}
 		xs_resfree(&xst, iovp, iov_cnt);
 		break;
@@ -1128,5 +1133,5 @@ xs_kvop(void *xsc, int op, char *key, char *value, size_t valuelen)
 		break;
 	}
 
-	return (0);
+	return (error);
 }

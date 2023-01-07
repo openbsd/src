@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvvar.h,v 1.10 2017/06/22 06:21:12 jmatthew Exp $	*/
+/*	$OpenBSD: pvvar.h,v 1.11 2023/01/07 06:40:21 asou Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,6 +29,8 @@ struct pvbus_req {
 #define PVBUSIOC_KVREAD		_IOWR('V', 1, struct pvbus_req)
 #define PVBUSIOC_KVWRITE	_IOWR('V', 2, struct pvbus_req)
 #define PVBUSIOC_TYPE		_IOWR('V', 3, struct pvbus_req)
+
+#define	PVBUS_KVOP_MAXSIZE	(64 * 1024)
 
 #ifdef _KERNEL
 enum {
