@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.80 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.81 2023/01/07 05:24:58 guenther Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -1109,6 +1109,56 @@ sys___get_tcb(struct proc *p, void *v, register_t *retval)
 {
 	*retval = (register_t)TCB_GET(p);
 	return (0);
+}
+
+int
+sys_getthrname(struct proc *curp, void *v, register_t *retval)
+{
+	struct sys_getthrname_args /* {
+		syscallarg(pid_t) tid;
+		syscallarg(char *) name;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+	struct proc *p;
+	size_t len;
+	int tid = SCARG(uap, tid);
+	int error;
+
+	p = tid ? tfind_user(tid, curp->p_p) : curp;
+	if (p == NULL)
+                return ESRCH;
+
+	len = SCARG(uap, len);
+	if (len > sizeof(p->p_name))
+		len = sizeof(p->p_name);
+	error = copyoutstr(p->p_name, SCARG(uap, name), len, NULL);
+	if (error == ENAMETOOLONG)
+		error = ERANGE;
+	*retval = error;
+	return 0;
+}
+
+int
+sys_setthrname(struct proc *curp, void *v, register_t *retval)
+{
+	struct sys_setthrname_args /* {
+		syscallarg(pid_t) tid;
+		syscallarg(const char *) name;
+	} */ *uap = v;
+	struct proc *p;
+	char buf[sizeof p->p_name];
+	int tid = SCARG(uap, tid);
+	int error;
+
+	p = tid ? tfind_user(tid, curp->p_p) : curp;
+	if (p == NULL)
+                return ESRCH;
+
+	error = copyinstr(SCARG(uap, name), buf, sizeof buf, NULL);
+	if (error == 0)
+		strlcpy(p->p_name, buf, sizeof(p->p_name));
+	*retval = error;
+	return 0;
 }
 
 /*

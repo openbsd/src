@@ -115,6 +115,7 @@ _thread_sys_getsid
 _thread_sys_getsockname
 _thread_sys_getsockopt
 _thread_sys_getthrid
+_thread_sys_getthrname
 _thread_sys_gettimeofday
 _thread_sys_getuid
 _thread_sys_ioctl
@@ -206,6 +207,7 @@ _thread_sys_setrlimit
 _thread_sys_setrtable
 _thread_sys_setsid
 _thread_sys_setsockopt
+_thread_sys_setthrname
 _thread_sys_settimeofday
 _thread_sys_setuid
 _thread_sys_shmat
@@ -314,6 +316,7 @@ getsid
 getsockname
 getsockopt
 getthrid
+getthrname
 gettimeofday
 getuid
 ioctl
@@ -408,6 +411,7 @@ setrlimit
 setrtable
 setsid
 setsockopt
+setthrname
 settimeofday
 setuid
 shmat

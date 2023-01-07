@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.244 2022/11/11 18:09:58 cheloha Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.245 2023/01/07 05:24:58 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -535,6 +535,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	p = thread_new(curp, uaddr);
 	atomic_setbits_int(&p->p_flag, P_THREAD);
 	sigstkinit(&p->p_sigstk);
+	memset(p->p_name, 0, sizeof p->p_name);
 
 	/* other links */
 	p->p_p = pr;

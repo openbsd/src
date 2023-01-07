@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.84 2022/09/20 10:01:51 job Exp $	*/
+/*	$OpenBSD: print.c,v 1.85 2023/01/07 05:24:59 guenther Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -95,6 +95,18 @@ printheader(void)
 	(void)putchar('\n');
 }
 
+static int
+print_comm_name(const struct kinfo_proc *kp, int left, int trail)
+{
+	left -= mbswprint(kp->p_comm, left, trail);
+	if (left > 1 && kp->p_name[0] != '\0') {
+		putchar('/');
+		left--;
+		left -= mbswprint(kp->p_name, left, trail);
+	}
+	return left;
+}
+
 void
 command(const struct pinfo *pi, VARENT *ve)
 {
@@ -161,6 +173,7 @@ command(const struct pinfo *pi, VARENT *ve)
 				}
 			}
 			if (argv == NULL || argv[0] == NULL ||
+			    kp->p_name[0] != '\0' ||
 			    strcmp(cmdpart(argv[0]), kp->p_comm)) {
 				if (wantspace) {
 					putchar(' ');
@@ -169,7 +182,7 @@ command(const struct pinfo *pi, VARENT *ve)
 				}
 				putchar('(');
 				left--;
-				left -= mbswprint(kp->p_comm, left, 0);
+				left -= print_comm_name(kp, left, 0);
 				if (left == 0)
 					return;
 				putchar(')');
@@ -180,7 +193,7 @@ command(const struct pinfo *pi, VARENT *ve)
 				putchar(' ');
 				left--;
 			}
-			left -= mbswprint(kp->p_comm, left, 0);
+			left -= print_comm_name(kp, left, 0);
 		}
 	}
 	if (ve->next != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.337 2023/01/02 23:09:48 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.338 2023/01/07 05:24:58 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -367,6 +367,7 @@ struct proc {
 #define	p_startcopy	p_sigmask
 	sigset_t p_sigmask;		/* [a] Current signal mask */
 
+	char	p_name[_MAXCOMLEN];	/* thread name, incl NUL */
 	u_char	p_slppri;		/* [S] Sleeping priority */
 	u_char	p_usrpri;	/* [S] Priority based on p_estcpu & ps_nice */
 	u_int	p_estcpu;		/* [S] Time averaged val of p_cpticks */

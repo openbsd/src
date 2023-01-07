@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.167 2022/12/19 18:13:50 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.168 2023/01/07 05:24:58 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -91,9 +91,10 @@ DASM=	${ASM:.o=.do}
 # they just never want to set errno.
 ASM_NOERR=__get_tcb.o __set_tcb.o __threxit.o __thrsleep.o __thrwakeup.o \
 	getdtablecount.o getegid.o geteuid.o getgid.o getlogin_r.o \
-	getpgrp.o getpid.o getppid.o getrtable.o getthrid.o getuid.o \
+	getpgrp.o getpid.o getppid.o getrtable.o getthrid.o \
+	getthrname.o getuid.o \
 	issetugid.o \
-	sched_yield.o sync.o \
+	sched_yield.o setthrname.o sync.o \
 	umask.o 
 PASM_NOERR=	${ASM_NOERR:.o=.po}
 SASM_NOERR=	${ASM_NOERR:.o=.so}

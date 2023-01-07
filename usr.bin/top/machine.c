@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.112 2022/09/10 16:58:51 cheloha Exp $	 */
+/* $OpenBSD: machine.c,v 1.113 2023/01/07 05:24:59 guenther Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -390,6 +390,9 @@ cmd_matches(struct kinfo_proc *proc, char *term)
 		/* Filter set, process name needs to contain term */
 		if (strstr(proc->p_comm, term))
 			return 1;
+		/* If thread name set, search that too */
+		if (strstr(proc->p_name, term))
+			return 1;
 		/* If showing arguments, search those as well */
 		if (show_args) {
 			args = get_proc_args(proc);
@@ -518,22 +521,22 @@ format_comm(struct kinfo_proc *kp)
 	char		**p, **s;
 	extern int	show_args;
 
-	if (!show_args)
-		return (kp->p_comm);
-
-	s = get_proc_args(kp);
-	if (s == NULL)
-		return kp->p_comm;
-
-	buf[0] = '\0';
-	for (p = s; *p != NULL; p++) {
-		if (p != s)
-			strlcat(buf, " ", sizeof(buf));
-		strlcat(buf, *p, sizeof(buf));
+	if (show_args && (s = get_proc_args(kp)) != NULL) {
+		buf[0] = '\0';
+		for (p = s; *p != NULL; p++) {
+			if (p != s)
+				strlcat(buf, " ", sizeof(buf));
+			strlcat(buf, *p, sizeof(buf));
+		}
+		if (buf[0] != '\0')
+			return buf;
 	}
-	if (buf[0] == '\0')
-		return (kp->p_comm);
-	return (buf);
+	if (kp->p_name[0] != '\0') {
+		snprintf(buf, sizeof buf, "%s/%s", kp->p_comm,
+		    kp->p_name);
+		return buf;
+	}
+	return kp->p_comm;
 }
 
 void

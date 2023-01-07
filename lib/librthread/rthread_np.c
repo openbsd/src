@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.23 2021/09/17 15:20:21 deraadt Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.24 2023/01/07 05:24:58 guenther Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -36,17 +36,27 @@
 #include "rthread.h"
 
 REDIRECT_SYSCALL(sysctl);
+REDIRECT_SYSCALL(getthrname);
+REDIRECT_SYSCALL(setthrname);
 
 void
 pthread_set_name_np(pthread_t thread, const char *name)
 {
-	strlcpy(thread->name, name, sizeof(thread->name));
+	pid_t tid = 0;
+
+	if (thread != pthread_self())
+		tid = thread->tib->tib_tid;
+	setthrname(tid, name);
 }
 
 void
 pthread_get_name_np(pthread_t thread, char *name, size_t len)
 {
-	strlcpy(name, thread->name, len);
+	pid_t tid = 0;
+
+	if (thread != pthread_self())
+		tid = thread->tib->tib_tid;
+	getthrname(tid, name, len);
 }
 
 int

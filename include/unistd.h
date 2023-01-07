@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.106 2018/07/13 09:25:22 beck Exp $ */
+/*	$OpenBSD: unistd.h,v 1.107 2023/01/07 05:24:58 guenther Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -488,6 +488,7 @@ mode_t	 getmode(const void *, mode_t);
 int	 getresgid(gid_t *, gid_t *, gid_t *);
 int	 getresuid(uid_t *, uid_t *, uid_t *);
 pid_t	 getthrid(void);
+int	 getthrname(pid_t, char *, size_t);
 char	*getusershell(void);
 int	 initgroups(const char *, gid_t);
 int	 issetugid(void);
@@ -517,6 +518,7 @@ void	*setmode(const char *);
 int	 setpgrp(pid_t _pid, pid_t _pgrp);	/* BSD compat version */
 int	 setresgid(gid_t, gid_t, gid_t);
 int	 setresuid(uid_t, uid_t, uid_t);
+int	 setthrname(pid_t, const char *);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 int	 swapctl(int cmd, const void *arg, int misc);
