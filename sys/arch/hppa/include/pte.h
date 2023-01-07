@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.13 2013/03/25 20:14:30 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.14 2023/01/07 10:09:34 kettenis Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -46,8 +46,11 @@
 #define	TLB_EXECUTE	0x02000000
 #define	TLB_GATEWAY	0x04000000
 #define	TLB_USER	0x00f00000
+/* no execute access at any PL; no GATEWAY promotion */ 
 #define		TLB_AR_NA	0x07300000
 #define		TLB_AR_R	TLB_READ
+/* execute access at designated PL; no GATEWAY promotion */
+#define		TLB_AR_X	0x07000000
 #define		TLB_AR_RW	TLB_READ|TLB_WRITE
 #define		TLB_AR_RX	TLB_READ|TLB_EXECUTE
 #define		TLB_AR_RWX	TLB_READ|TLB_WRITE|TLB_EXECUTE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.179 2022/10/25 18:44:36 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.180 2023/01/07 10:09:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -407,6 +407,7 @@ pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		pte |= pmap_vp_find(pve->pv_pmap, pve->pv_va);
 		if ((va & HPPA_PGAOFF) != (pve->pv_va & HPPA_PGAOFF) &&
+		    (pte & PTE_PROT(TLB_GATEWAY)) == 0 &&
 		    (pte & PTE_PROT(TLB_WRITE))) {
 #ifdef PMAPDEBUG
 			printf("pmap_check_alias: "
@@ -494,7 +495,7 @@ pmap_bootstrap(vaddr_t vstart)
 	hppa_prot[PROT_READ]  = TLB_AR_R;
 	hppa_prot[PROT_WRITE] = TLB_AR_RW;
 	hppa_prot[PROT_READ | PROT_WRITE] = TLB_AR_RW;
-	hppa_prot[PROT_EXEC]  = TLB_AR_RX;
+	hppa_prot[PROT_EXEC]  = TLB_AR_X;
 	hppa_prot[PROT_READ | PROT_EXEC] = TLB_AR_RX;
 	hppa_prot[PROT_WRITE | PROT_EXEC] = TLB_AR_RWX;
 	hppa_prot[PROT_READ | PROT_WRITE | PROT_EXEC] = TLB_AR_RWX;
