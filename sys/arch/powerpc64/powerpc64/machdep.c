@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.74 2023/01/07 17:29:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -622,6 +622,10 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 
 	return 0;
 }
+
+/* in locore.S */
+extern int copystr(const void *, void *, size_t, size_t *)
+		__attribute__ ((__bounded__(__string__,2,3)));
 
 int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
