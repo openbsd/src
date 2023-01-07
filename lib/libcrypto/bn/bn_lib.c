@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.68 2022/12/23 03:15:35 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.69 2023/01/07 16:09:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,18 +70,15 @@
 BIGNUM *
 BN_new(void)
 {
-	BIGNUM *ret;
+	BIGNUM *bn;
 
-	if ((ret = malloc(sizeof(BIGNUM))) == NULL) {
+	if ((bn = calloc(1, sizeof(BIGNUM))) == NULL) {
 		BNerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
-	ret->flags = BN_FLG_MALLOCED;
-	ret->top = 0;
-	ret->neg = 0;
-	ret->dmax = 0;
-	ret->d = NULL;
-	return (ret);
+	bn->flags = BN_FLG_MALLOCED;
+
+	return bn;
 }
 
 void
