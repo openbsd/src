@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_shift.c,v 1.6 2023/01/05 04:44:20 jsing Exp $ */
+/*	$OpenBSD: bn_shift.c,v 1.7 2023/01/07 14:30:57 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -468,6 +468,12 @@ benchmark_bn_rshift_1(BIGNUM *bn)
 }
 
 static void
+benchmark_bn_rshift_16(BIGNUM *bn)
+{
+	benchmark_bn_rshift(bn, 16);
+}
+
+static void
 benchmark_bn_rshift_32(BIGNUM *bn)
 {
 	benchmark_bn_rshift(bn, 32);
@@ -545,10 +551,10 @@ struct benchmark benchmarks[] = {
 	},
 	{
 		.desc = "BN_rshift(_, _, 16)",
-		.func = benchmark_bn_rshift_32,
+		.func = benchmark_bn_rshift_16,
 	},
 	{
-		.desc = "BN_rshift(_, _, 16)",
+		.desc = "BN_rshift(_, _, 32)",
 		.func = benchmark_bn_rshift_32,
 	},
 	{
