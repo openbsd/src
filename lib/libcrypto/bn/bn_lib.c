@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.70 2023/01/07 16:13:46 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.71 2023/01/07 16:17:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,18 +97,20 @@ BN_clear(BIGNUM *a)
 }
 
 void
-BN_free(BIGNUM *a)
+BN_free(BIGNUM *bn)
 {
-	int i;
-
-	if (a == NULL)
+	if (bn == NULL)
 		return;
-	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
-		freezero(a->d, a->dmax * sizeof(a->d[0]));
-	i = BN_get_flags(a, BN_FLG_MALLOCED);
-	explicit_bzero(a, sizeof(BIGNUM));
-	if (i)
-		free(a);
+
+	if (!BN_get_flags(bn, BN_FLG_STATIC_DATA))
+		freezero(bn->d, bn->dmax * sizeof(bn->d[0]));
+
+	if (!BN_get_flags(bn, BN_FLG_MALLOCED)) {
+		explicit_bzero(bn, sizeof(*bn));
+		return;
+	}
+
+	freezero(bn, sizeof(*bn));
 }
 
 void
