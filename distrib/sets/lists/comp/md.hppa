@@ -32,7 +32,6 @@
 ./usr/include/hppa/loadfile_machdep.h
 ./usr/include/hppa/mplock.h
 ./usr/include/hppa/mutex.h
-./usr/include/hppa/nvm.h
 ./usr/include/hppa/param.h
 ./usr/include/hppa/pcb.h
 ./usr/include/hppa/pci_machdep.h
