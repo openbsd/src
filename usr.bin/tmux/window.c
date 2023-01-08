@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.283 2023/01/06 07:09:27 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.284 2023/01/08 22:17:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1535,8 +1535,10 @@ window_pane_input_callback(struct client *c, __unused const char *path,
 
 	wp = window_pane_find_by_id(cdata->wp);
 	if (cdata->file != NULL && (wp == NULL || c->flags & CLIENT_DEAD)) {
-		if (wp == NULL)
+		if (wp == NULL) {
+			c->retval = 1;
 			c->flags |= CLIENT_EXIT;
+		}
 		file_cancel(cdata->file);
 	} else if (cdata->file == NULL || closed || error != 0) {
 		cmdq_continue(cdata->item);
