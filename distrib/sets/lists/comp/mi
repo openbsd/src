@@ -1646,6 +1646,7 @@
 ./usr/share/man/man2/getsockname.2
 ./usr/share/man/man2/getsockopt.2
 ./usr/share/man/man2/getthrid.2
+./usr/share/man/man2/getthrname.2
 ./usr/share/man/man2/gettimeofday.2
 ./usr/share/man/man2/getuid.2
 ./usr/share/man/man2/i386/i386_get_fsbase.2
