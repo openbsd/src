@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.8,v 1.5 2023/01/08 06:58:07 ratchov Exp $
+.\" $OpenBSD: audioctl.8,v 1.6 2023/01/08 08:27:17 jmc Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,11 +62,11 @@ Suppress printing of the variable name.
 .It Fl q
 Suppress all output when setting a variable.
 .It Fl w Ar wait
-Pause
+Display variables every
 .Ar wait
-seconds between each display.
+seconds.
 .Nm
-will display variables forever.
+will continue to display variables until interrupted.
 .It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
@@ -138,7 +138,7 @@ audio control devices
 audio devices
 .El
 .Sh EXAMPLES
-Once per-second, display the number of bytes of silence inserted due to buffer
+Once per second, display the number of bytes of silence inserted due to buffer
 underruns (since the device started playback):
 .Bd -literal -offset indent
 # audioctl -w 1 play.errors
