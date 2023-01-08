@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.57 2022/12/16 08:13:40 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.58 2023/01/08 23:34:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -150,8 +150,6 @@ args_parse_flag_argument(struct args_value *values, u_int count, char **cause,
 			xasprintf(cause, "-%c argument must be a string", flag);
 			return (-1);
 		}
-		if (argument->string[0] == '-')
-			argument = NULL;
 	}
 	if (argument == NULL) {
 		if (optional_argument) {
@@ -210,12 +208,12 @@ args_parse_flags(const struct args_parse *parse, struct args_value *values,
 			xasprintf(cause, "unknown flag -%c", flag);
 			return (-1);
 		}
-		if (*++found != ':') {
+		if (found[1] != ':') {
 			log_debug("%s: -%c", __func__, flag);
 			args_set(args, flag, NULL, 0);
 			continue;
 		}
-		optional_argument = (*found == ':');
+		optional_argument = (found[2] == ':');
 		return (args_parse_flag_argument(values, count, cause, args, i,
 		    string, flag, optional_argument));
 	}
