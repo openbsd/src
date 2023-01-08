@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.80 2023/01/04 02:19:19 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.81 2023/01/08 19:57:17 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* PAGE_SIZE */
+#include <sys/param.h>	/* PAGE_SIZE, MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -46,6 +46,7 @@
 #include <limits.h>
 #include <poll.h>
 #include <pthread.h>
+#include <pthread_np.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1211,6 +1212,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 	size_t i;
 	int ret;
 	pthread_t *tid, evtid;
+	char tname[MAXCOMLEN + 1];
 	struct vm_run_params **vrp;
 	void *exit_status;
 
@@ -1353,6 +1355,9 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 			    __func__, i);
 			return (ret);
 		}
+
+		snprintf(tname, sizeof(tname), "vcpu-%zu", i);
+		pthread_set_name_np(tid[i], tname);
 	}
 
 	log_debug("%s: waiting on events for VM %s", __func__, vcp->vcp_name);
@@ -1362,6 +1367,7 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 		log_warn("%s: could not create event thread", __func__);
 		return (ret);
 	}
+	pthread_set_name_np(evtid, "event");
 
 	for (;;) {
 		ret = pthread_cond_wait(&threadcond, &threadmutex);
