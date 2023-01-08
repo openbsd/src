@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.910 2022/12/22 19:53:23 kn Exp $
+.\" $OpenBSD: tmux.1,v 1.911 2023/01/08 21:00:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: January 8 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1971,7 +1971,7 @@ For example:
 $ tmux list-windows
 0: ksh [159x48]
     layout: bb62,159x48,0,0{79x48,0,0,79x48,80,0}
-$ tmux select-layout bb62,159x48,0,0{79x48,0,0,79x48,80,0}
+$ tmux select-layout 'bb62,159x48,0,0{79x48,0,0,79x48,80,0}'
 .Ed
 .Pp
 .Nm
