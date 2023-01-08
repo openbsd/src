@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.8,v 1.4 2020/04/23 00:16:59 schwarze Exp $
+.\" $OpenBSD: audioctl.8,v 1.5 2023/01/08 06:58:07 ratchov Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: January 8 2023 $
 .Dt AUDIOCTL 8
 .Os
 .Sh NAME
@@ -35,9 +35,11 @@
 .Sh SYNOPSIS
 .Nm audioctl
 .Op Fl f Ar file
+.Op Fl w Ar wait
 .Nm audioctl
 .Op Fl n
 .Op Fl f Ar file
+.Op Fl w Ar wait
 .Ar name ...
 .Nm audioctl
 .Op Fl nq
@@ -59,6 +61,12 @@ The default is
 Suppress printing of the variable name.
 .It Fl q
 Suppress all output when setting a variable.
+.It Fl w Ar wait
+Pause
+.Ar wait
+seconds between each display.
+.Nm
+will display variables forever.
 .It Ar name Ns = Ns Ar value
 Attempt to set the specified variable
 .Ar name
@@ -130,10 +138,10 @@ audio control devices
 audio devices
 .El
 .Sh EXAMPLES
-Display the number of bytes of silence inserted during play buffer
-underruns since device started:
+Once per-second, display the number of bytes of silence inserted due to buffer
+underruns (since the device started playback):
 .Bd -literal -offset indent
-# audioctl play.errors
+# audioctl -w 1 play.errors
 .Ed
 .Pp
 Use signed 24-bit samples and 44100Hz sample rate:
