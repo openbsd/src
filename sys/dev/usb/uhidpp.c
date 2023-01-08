@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.42 2023/01/03 15:52:02 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.43 2023/01/08 06:54:51 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -1260,7 +1260,7 @@ hidpp_send_validate(uint8_t report_id, int nparams)
 
 int
 hidpp_send_fap_report(struct uhidpp_softc *sc, uint8_t report_id,
-    uint8_t device_id, uint8_t feature_idx, uint8_t funcidx_swid,
+    uint8_t device_id, uint8_t feature_idx, uint8_t func_idx,
     uint8_t *params, int nparams, struct uhidpp_report *resp)
 {
 	struct uhidpp_report req;
@@ -1276,7 +1276,7 @@ hidpp_send_fap_report(struct uhidpp_softc *sc, uint8_t report_id,
 	sc->sc_swid = sc->sc_swid == HIDPP_SOFTWARE_ID_MAX ?
 	    HIDPP_SOFTWARE_ID_MIN : sc->sc_swid + 1;
 	req.fap.funcidx_swid =
-	    (funcidx_swid << HIDPP_SOFTWARE_ID_LEN) | sc->sc_swid;
+	    (func_idx << HIDPP_SOFTWARE_ID_LEN) | sc->sc_swid;
 	memcpy(req.fap.params, params, nparams);
 	return hidpp_send_report(sc, report_id, &req, resp);
 }
