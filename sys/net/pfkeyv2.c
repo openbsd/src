@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.254 2022/10/17 14:49:01 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.255 2023/01/08 10:26:36 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2604,7 +2604,7 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg,
     unsigned int tableid)
 {
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
-	void *buffer = 0;
+	void *buffer = NULL;
 	int i, buflen, error = 0;
 
 	if (w->w_where) {
