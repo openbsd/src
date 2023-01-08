@@ -1,4 +1,4 @@
-/*	$OpenBSD: testfly.S,v 1.10 2021/06/20 16:48:50 deraadt Exp $	*/
+/*	$OpenBSD: testfly.S,v 1.11 2023/01/08 06:56:01 anton Exp $	*/
 
 /*
  * Copyright (c) 2002,2003 Michael Shalayeff
@@ -32,7 +32,16 @@
 
 	.space 16384
 
-#if defined(__aarch64__) || defined(__amd64__) || defined(__i386__)
+#if defined(__aarch64__)
+	.section .rodata
+	.globl	testfly
+	.type	testfly,#function
+testfly:
+	ret
+END(testfly)
+#endif
+
+#if defined(__amd64__) || defined(__i386__)
 ENTRY(testfly)
 	ret
 END(testfly)
