@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.51 2022/09/12 19:33:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.52 2023/01/09 06:04:14 miod Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -416,6 +416,10 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	}
 
 	err = uvm_fault(map, va, 0, access_type);
+	if (usermode && access_type == PROT_READ && err == EACCES) {
+		access_type = PROT_EXEC;
+		err = uvm_fault(map, va, 0, access_type);
+	}
 
 	/* User stack extension */
 	if (err == 0 && map != kernel_map)
