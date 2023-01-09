@@ -77,6 +77,8 @@ enum option_values
   OPTION_EL,
   OPTION_EMBEDDED_RELOCS,
   OPTION_EXPORT_DYNAMIC,
+  OPTION_EXECUTE_ONLY,
+  OPTION_NO_EXECUTE_ONLY,
   OPTION_HELP,
   OPTION_IGNORE,
   OPTION_MAP,
@@ -361,6 +363,10 @@ static const struct ld_option ld_options[] =
     TWO_DASHES },
   { {"embedded-relocs", no_argument, NULL, OPTION_EMBEDDED_RELOCS},
     '\0', NULL, N_("Generate embedded relocs"), TWO_DASHES},
+  { {"execute-only", no_argument, NULL, OPTION_EXECUTE_ONLY},
+    '\0', NULL, N_("Mark executable sections unreadable"), TWO_DASHES},
+  { {"no-execute-only", no_argument, NULL, OPTION_NO_EXECUTE_ONLY},
+    '\0', NULL, N_("Do not mark executable sections unreadable"), TWO_DASHES},
   { {"fatal-warnings", no_argument, NULL, OPTION_WARN_FATAL},
     '\0', NULL, N_("Treat warnings as errors"),
     TWO_DASHES },
@@ -525,8 +531,6 @@ static const struct ld_option ld_options[] =
     TWO_DASHES },
   { {"wrap", required_argument, NULL, OPTION_WRAP},
     '\0', N_("SYMBOL"), N_("Use wrapper functions for SYMBOL"), TWO_DASHES },
-  { {"no-execute-only", no_argument, NULL, OPTION_IGNORE},
-    '\0', NULL, N_("Ignored for lld compatibility"), TWO_DASHES},
 };
 
 #define OPTION_COUNT ARRAY_SIZE (ld_options)
@@ -770,6 +774,12 @@ parse_args (unsigned argc, char **argv)
 	  break;
 	case OPTION_EMBEDDED_RELOCS:
 	  command_line.embedded_relocs = TRUE;
+	  break;
+	case OPTION_EXECUTE_ONLY:
+	  link_info.execute_only = TRUE;
+	  break;
+	case OPTION_NO_EXECUTE_ONLY:
+	  link_info.execute_only = FALSE;
 	  break;
 	case OPTION_EXPORT_DYNAMIC:
 	case 'E': /* HP/UX compatibility.  */

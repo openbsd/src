@@ -4597,7 +4597,8 @@ assign_file_positions_for_segments (bfd *abfd, struct bfd_link_info *link_info)
 
 	  if (! m->p_flags_valid)
 	    {
-	      p->p_flags |= PF_R;
+	      if ((flags & SEC_CODE) == 0 || !link_info->execute_only)
+	        p->p_flags |= PF_R;
 	      if ((flags & SEC_CODE) != 0)
 		p->p_flags |= PF_X;
 	      if ((flags & SEC_READONLY) == 0)

@@ -265,6 +265,9 @@ struct bfd_link_info
   unsigned int allow_multiple_definition: 1;
 
   /* TRUE if output program should be marked to request W^X permission */
+  unsigned int execute_only: 1;
+
+  /* TRUE if output program should be marked to request W^X permission */
   unsigned int wxneeded: 1;
 
   /* TRUE if ok to have version with no definition.  */
