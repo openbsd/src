@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.36 2023/01/04 03:47:10 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.37 2023/01/09 03:37:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -90,6 +90,7 @@ struct ifiqueue {
 	/* counters */
 	uint64_t		 ifiq_packets;
 	uint64_t		 ifiq_bytes;
+	uint64_t		 ifiq_fdrops;
 	uint64_t		 ifiq_qdrops;
 	uint64_t		 ifiq_errors;
 	uint64_t		 ifiq_mcasts;
