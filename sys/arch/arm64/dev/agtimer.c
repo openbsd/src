@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.20 2022/11/08 17:56:38 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.21 2023/01/09 15:22:53 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -42,10 +42,11 @@
 #define TIMER_FREQUENCY		24 * 1000 * 1000 /* ARM core clock */
 int32_t agtimer_frequency = TIMER_FREQUENCY;
 
-u_int agtimer_get_timecount(struct timecounter *);
+u_int agtimer_get_timecount_default(struct timecounter *);
+u_int agtimer_get_timecount_sun50i(struct timecounter *);
 
 static struct timecounter agtimer_timecounter = {
-	.tc_get_timecount = agtimer_get_timecount,
+	.tc_get_timecount = agtimer_get_timecount_default,
 	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
@@ -67,7 +68,6 @@ struct agtimer_softc {
 
 int		agtimer_match(struct device *, void *, void *);
 void		agtimer_attach(struct device *, struct device *, void *);
-uint64_t	agtimer_readcnt64(void);
 int		agtimer_intr(void *);
 void		agtimer_cpu_initclocks(void);
 void		agtimer_delay(u_int);
@@ -91,7 +91,7 @@ struct intrclock agtimer_intrclock = {
 };
 
 uint64_t
-agtimer_readcnt64(void)
+agtimer_readcnt64_default(void)
 {
 	uint64_t val0, val1;
 
@@ -106,6 +106,26 @@ agtimer_readcnt64(void)
 	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val1));
 	return ((val0 ^ val1) & 0x100000000ULL) ? val0 : val1;
 }
+
+uint64_t
+agtimer_readcnt64_sun50i(void)
+{
+	uint64_t val;
+	int retry;
+
+	__asm volatile("isb" ::: "memory");
+	for (retry = 0; retry < 150; retry++) {
+		__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val));
+
+		if (((val + 1) & 0x1ff) > 1)
+			break;
+	}
+	KASSERT(retry < 150);
+
+	return val;
+}
+
+uint64_t (*agtimer_readcnt64)(void) = agtimer_readcnt64_default;
 
 static inline uint64_t
 agtimer_get_freq(void)
@@ -174,6 +194,18 @@ agtimer_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %u kHz\n", sc->sc_ticks_per_second / 1000);
 
 	/*
+	 * The Allwinner A64 has an erratum where the bottom 9 bits of
+	 * the counter register can't be trusted if any of the higher
+	 * bits are rolling over.
+	 */
+	if (OF_getpropbool(sc->sc_node, "allwinner,erratum-unknown1")) {
+		agtimer_readcnt64 = agtimer_readcnt64_sun50i;
+		agtimer_timecounter.tc_get_timecount =
+		    agtimer_get_timecount_sun50i;
+		agtimer_timecounter.tc_user = TC_AGTIMER_SUN50I;
+	}
+
+	/*
 	 * private timer and interrupts not enabled until
 	 * timer configures
 	 */
@@ -189,7 +221,7 @@ agtimer_attach(struct device *parent, struct device *self, void *aux)
 }
 
 u_int
-agtimer_get_timecount(struct timecounter *tc)
+agtimer_get_timecount_default(struct timecounter *tc)
 {
 	uint64_t val;
 
@@ -200,6 +232,12 @@ agtimer_get_timecount(struct timecounter *tc)
 	__asm volatile("isb" ::: "memory");
 	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val));
 	return (val & 0xffffffff);
+}
+
+u_int
+agtimer_get_timecount_sun50i(struct timecounter *tc)
+{
+	return agtimer_readcnt64_sun50i();
 }
 
 void
