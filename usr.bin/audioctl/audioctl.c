@@ -1,4 +1,4 @@
-/*	$OpenBSD: audioctl.c,v 1.46 2023/01/08 08:27:17 jmc Exp $	*/
+/*	$OpenBSD: audioctl.c,v 1.47 2023/01/09 17:13:46 jmc Exp $	*/
 /*
  * Copyright (c) 2016 Alexandre Ratchov <alex@caoua.org>
  *
@@ -64,9 +64,7 @@ struct field {
 };
 
 const char usagestr[] =
-	"usage: audioctl [-f file] [-w wait]\n"
-	"       audioctl [-n] [-f file] [-w wait] name ...\n"
-	"       audioctl [-nq] [-f file] name=value ...\n";
+	"usage: audioctl [-nq] [-f file] [-w wait] [name[=value] ...]\n";
 
 int fd, show_names = 1, quiet = 0, wait_sec = 0;
 
