@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.123 2022/11/02 07:20:07 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.124 2023/01/09 11:18:44 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -389,6 +389,8 @@ user_fault:
 			    pbus_type, pbus_exception_type[pbus_type],
 			    fault_addr, frame, frame->tf_cpu);
 #endif
+			access_type = PROT_EXEC;
+			fault_code = PROT_EXEC;
 		} else {
 			fault_addr = frame->tf_dma0;
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_dpfsr);
@@ -397,14 +399,13 @@ user_fault:
 			    pbus_type, pbus_exception_type[pbus_type],
 			    fault_addr, frame, frame->tf_cpu);
 #endif
-		}
-
-		if (frame->tf_dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
-			access_type = PROT_READ | PROT_WRITE;
-			fault_code = PROT_WRITE;
-		} else {
-			access_type = PROT_READ;
-			fault_code = PROT_READ;
+			if (frame->tf_dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
+				access_type = PROT_READ | PROT_WRITE;
+				fault_code = PROT_WRITE;
+			} else {
+				access_type = PROT_READ;
+				fault_code = PROT_READ;
+			}
 		}
 
 		va = trunc_page((vaddr_t)fault_addr);
@@ -860,8 +861,8 @@ lose:
 			goto userexit;
 m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
-			access_type = PROT_READ;
-			fault_code = PROT_READ;
+			access_type = PROT_EXEC;
+			fault_code = PROT_EXEC;
 #ifdef TRAPDEBUG
 			printf("User Instruction fault exip %x isr %x ilar %x\n",
 			    frame->tf_exip, frame->tf_isr, frame->tf_ilar);
