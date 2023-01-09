@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.163 2023/01/03 11:43:24 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.164 2023/01/09 07:57:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1516,18 +1516,25 @@ tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
 	if (len == 5)
 		return (1);
 
-	/* Copy the rest up to \033\. */
+	/* Copy the rest up to \033\ or \007. */
 	for (i = 0; i < (sizeof tmp) - 1; i++) {
 		if (5 + i == len)
 			return (1);
 		if (buf[5 + i - 1] == '\033' && buf[5 + i] == '\\')
 			break;
+		if (buf[5 + i] == '\007')
+			break;
 		tmp[i] = buf[5 + i];
 	}
 	if (i == (sizeof tmp) - 1)
 		return (-1);
-	tmp[i - 1] = '\0';
-	*size = 6 + i;
+	if (tmp[i] == '\007') {
+		*size = 5 + i;
+		tmp[i] = '\0';
+	} else {
+		*size = 6 + i;
+		tmp[i - 1] = '\0';
+	}
 
 	n = colour_parseX11(tmp);
 	if (n != -1 && buf[3] == '0') {
