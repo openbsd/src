@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.572 2023/01/09 17:17:55 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.573 2023/01/09 17:41:03 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3358,8 +3358,8 @@ writes a wrapper script to ${WRKDIR}/bin/ld in
 .Cm patch
 adding
 .Fl -no-execute-only .
-Use when a port does not work with execute-only code sections
-which are enabled by default on some architectures.
+Use when a port does not work with execute-only (unreadable) code sections
+which are used by default by the linker on some architectures.
 .It Ev USE_WXNEEDED
 If set to
 .Sq Yes ,
