@@ -1,7 +1,7 @@
 . ${srcdir}/emulparams/hppaelf.sh
  
 #override hppaelf.sh
-SCRIPT_NAME=elf
+SCRIPT_NAME=elf_obsd
 ELFSIZE=32
 OUTPUT_FORMAT="elf32-hppa"
 
