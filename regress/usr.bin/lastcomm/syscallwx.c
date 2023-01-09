@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallwx.c,v 1.1 2019/09/23 08:34:07 bluhm Exp $	*/
+/*	$OpenBSD: syscallwx.c,v 1.2 2023/01/09 11:50:01 anton Exp $	*/
 /*
  * Copyright (c) 2018 Todd Mortimer <mortimer@openbsd.org>
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -20,30 +20,34 @@
 
 #include <err.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
-void handler(int);
+extern void gadget_getpid(void);
+static void handler(int);
 
 int
 main(int argc, char *argv[])
 {
-	pid_t pid;
-
-	pid = getpid();
-	if (pid == -1)
-		err(1, "getpid");
-	/* map kill system call in libc writeable */
-	if (mprotect(kill, 100, PROT_EXEC | PROT_WRITE | PROT_READ) == -1)
-		err(1, "mprotect");
+	union {
+		void *p;
+		void (*gadget)(void);
+	} addr;
+	int psz = getpagesize();
 
 	if (signal(SIGSEGV, handler) == SIG_ERR)
 		err(1, "signal");
-	if (kill(pid, SIGABRT) == -1)
-		err(1, "kill");
+
+	addr.p = mmap(NULL, psz, PROT_READ | PROT_WRITE | PROT_EXEC,
+	    MAP_PRIVATE | MAP_ANON, -1, 0);
+	if (addr.p == NULL)
+		err(1, "mmap");
+	memcpy(addr.p, gadget_getpid, psz);
+	addr.gadget();
 	return 3;
 }
 
-void
+static void
 handler(int signum)
 {
 	_exit(0);
