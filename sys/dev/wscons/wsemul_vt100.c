@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.39 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.40 2023/01/09 15:49:36 nicm Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -204,9 +204,7 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 
 	if (console) {
 		edp = &wsemul_vt100_console_emuldata;
-#ifdef DIAGNOSTIC
 		KASSERT(edp->console == 1);
-#endif
 	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_NOWAIT);
 		if (edp == NULL)
