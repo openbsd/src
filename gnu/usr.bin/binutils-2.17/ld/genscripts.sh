@@ -212,7 +212,7 @@ fi
 #   $SCRIPT_NAME is "elf" and $GENERATE_SHLIB_SCRIPT is set by the emulation
 #   parameters too.
 
-if [ "x$SCRIPT_NAME" = "xelf" ]; then
+if [ "x$SCRIPT_NAME" = "xelf" ] || [ "x$SCRIPT_NAME" = "xelf_obsd" ]; then
   GENERATE_COMBRELOC_SCRIPT=yes
 fi
 
