@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.48 2023/01/09 03:37:44 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.49 2023/01/09 03:39:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -769,7 +769,34 @@ ifiq_add_data(struct ifiqueue *ifiq, struct if_data *data)
 int
 ifiq_enqueue(struct ifiqueue *ifiq, struct mbuf *m)
 {
+	struct ifnet *ifp = ifiq->ifiq_if;
+#if NBPFILTER > 0
+	caddr_t if_bpf = ifp->if_bpf;
+#endif
+
+	m->m_pkthdr.ph_ifidx = ifp->if_index;
+	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+#if NBPFILTER > 0
+	if_bpf = ifp->if_bpf;
+	if (if_bpf) {
+		if ((*ifp->if_bpf_mtap)(if_bpf, m, BPF_DIRECTION_IN)) {
+			mtx_enter(&ifiq->ifiq_mtx);
+			ifiq->ifiq_packets++;
+			ifiq->ifiq_bytes += m->m_pkthdr.len;
+			ifiq->ifiq_fdrops++;
+			mtx_leave(&ifiq->ifiq_mtx);
+
+			m_freem(m);
+			return (0);
+		}
+	}
+#endif
+
 	mtx_enter(&ifiq->ifiq_mtx);
+	ifiq->ifiq_packets++;
+	ifiq->ifiq_bytes += m->m_pkthdr.len;
+	ifiq->ifiq_enqueues++;
 	ml_enqueue(&ifiq->ifiq_ml, m);
 	mtx_leave(&ifiq->ifiq_mtx);
 
