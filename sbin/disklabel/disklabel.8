@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.150 2022/09/29 16:52:31 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.151 2023/01/09 00:56:36 jsg Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: September 29 2022 $
+.Dd $Mdocdate: January 9 2023 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -611,6 +611,11 @@ partition.
 .Xr disktab 5 ,
 .Xr installboot 8 ,
 .Xr scan_ffs 8
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Bx 4.3 Tahoe .
 .Sh CAVEATS
 The maximum disk and partition size is 64PB.
 .Pp
