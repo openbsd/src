@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.19 2022/11/10 23:42:15 jsg Exp $	*/
+/*	$OpenBSD: apm.c,v 1.20 2023/01/09 20:29:35 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -43,6 +43,7 @@
 #include <sys/event.h>
 #include <sys/reboot.h>
 #include <sys/hibernate.h>
+#include <sys/task.h>
 
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -53,6 +54,12 @@
 #define DPRINTF(x)	printf x
 #else
 #define	DPRINTF(x)	/**/
+#endif
+
+#ifdef SUSPEND
+struct taskq *suspend_taskq;
+struct task suspend_task;
+void	do_suspend(void *);
 #endif
 
 struct apm_softc {
@@ -119,6 +126,11 @@ apmmatch(struct device *parent, void *match, void *aux)
 void
 apmattach(struct device *parent, struct device *self, void *aux)
 {
+#ifdef SUSPEND
+	suspend_taskq = taskq_create("suspend", 1, IPL_NONE, 0);
+	task_set(&suspend_task, do_suspend, NULL);
+#endif
+
 	acpiapm_open = apmopen;
 	acpiapm_close = apmclose;
 	acpiapm_ioctl = apmioctl;
@@ -346,6 +358,19 @@ apm_record_event(u_int event, const char *src, const char *msg)
 }
 
 #ifdef SUSPEND
+
+void
+do_suspend(void *v)
+{
+	sleep_state(v, SLEEP_SUSPEND);
+}
+
+void
+suspend(void)
+{
+	if (suspend_taskq)
+		task_add(suspend_taskq, &suspend_task);
+}
 
 #ifdef MULTIPROCESSOR
 

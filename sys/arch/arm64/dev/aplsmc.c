@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.20 2022/11/26 17:23:15 tobhe Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.21 2023/01/09 20:29:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -348,7 +348,32 @@ void
 aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 {
 	extern int allowpowerdown;
+#ifdef SUSPEND
 	extern int cpu_suspended;
+	extern void suspend(void);
+
+	if (cpu_suspended) {
+		switch (SMC_EV_TYPE(data)) {
+		case SMC_EV_TYPE_BTN:
+			switch (SMC_EV_SUBTYPE(data)) {
+			case SMC_PWRBTN_SHORT:
+			case SMC_PWRBTN_TOUCHID:
+				cpu_suspended = 0;
+				break;
+			}
+			break;
+		case SMC_EV_TYPE_LID:
+			switch (SMC_EV_SUBTYPE(data)) {
+			case SMC_LID_OPEN:
+				cpu_suspended = 0;
+				break;
+			}
+			break;
+		}
+
+		return;
+	}
+#endif
 
 	switch (SMC_EV_TYPE(data)) {
 	case SMC_EV_TYPE_BTN:
@@ -356,11 +381,6 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 		case SMC_PWRBTN_SHORT:
 		case SMC_PWRBTN_TOUCHID:
 			if (SMC_EV_DATA(data) == 1) {
-#ifdef SUSPEND
-				if (cpu_suspended) {
-					cpu_suspended = 0;
-				} else
-#endif
 				if (allowpowerdown) {
 					allowpowerdown = 0;
 					prsignal(initprocess, SIGUSR2);
@@ -379,23 +399,26 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 		}
 		break;
 	case SMC_EV_TYPE_LID:
-		switch (SMC_EV_SUBTYPE(data)) {
-		case SMC_LID_OPEN:
-			if (simplefb_burn_hook)
-				simplefb_burn_hook(1);
-			break;
-		case SMC_LID_CLOSE:
-			if (simplefb_burn_hook)
-				simplefb_burn_hook(0);
-			break;
-		default:
-			printf("%s: SMV_EV_TYPE_LID 0x%016llx\n",
-			       sc->sc_dev.dv_xname, data);
-			break;
-		}
 		switch (lid_action) {
-		case 1: 
-			/* XXX: suspend */
+		case 0:
+			switch (SMC_EV_SUBTYPE(data)) {
+			case SMC_LID_OPEN:
+				if (simplefb_burn_hook)
+					simplefb_burn_hook(1);
+				break;
+			case SMC_LID_CLOSE:
+				if (simplefb_burn_hook)
+					simplefb_burn_hook(0);
+				break;
+			default:
+				printf("%s: SMV_EV_TYPE_LID 0x%016llx\n",
+				       sc->sc_dev.dv_xname, data);
+				break;
+			}
+		case 1:
+#ifdef SUSPEND
+			suspend();
+#endif
 			break;
 		case 2:
 			/* XXX: hibernate */
