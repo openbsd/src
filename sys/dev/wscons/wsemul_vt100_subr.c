@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.24 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.25 2023/01/09 07:48:12 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -231,7 +231,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 	switch (A3(edp->modif1, edp->modif2, c)) {
 	case A3('>', '\0', 'c'): /* DA secondary */
 		wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID2,
-		    sizeof(WSEMUL_VT_ID2));
+		    sizeof(WSEMUL_VT_ID2) - 1);
 		break;
 
 	case A3('\0', '\0', 'J'): /* ED selective erase in display */
@@ -510,7 +510,7 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 	case 'c': /* DA primary */
 		if (ARG(0) == 0)
 			wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID1,
-			    sizeof(WSEMUL_VT_ID1));
+			    sizeof(WSEMUL_VT_ID1) - 1);
 		break;
 	case 'g': /* TBC */
 		if (edp->tabs != NULL)
