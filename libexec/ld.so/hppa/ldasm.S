@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.25 2023/01/09 13:45:55 kettenis Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.26 2023/01/09 13:52:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -33,34 +33,27 @@
 #include <machine/vmparam.h>
 #undef	_LOCORE
 
+	.import	$global$, data
+
 ENTRY(_dl_start,32)
 	copy	r3, r1
 	copy	sp, r3
 	stwm	r1, HPPA_FRAME_SIZE+16*4(sp)
 
-	stw	%arg0, HPPA_FRAME_ARG(0)(r3)	/* ps_strings */
+	stw	arg0, HPPA_FRAME_ARG(0)(r3)	/* ps_strings */
 
-#define	ADDR(s,r) \
-	bl	4, t1							!\
-	depi	0, 31, 2, t1	/* kill pl bits */			!\
-	b	s		/* cold brunch -- never done */		!\
-	ldw	0(t1), t2	/* cat(w,w1,w2{10},w2{0..9}) << 2 */	!\
-	extru	t2, 28, 10, t3	/* w2{0..9} */				!\
-	extru	t2, 26, 16, r	/* w1 */				!\
-	dep	t3, 31, 11, r						!\
-	extru,=	t2, 31, 1, r0	/* w */					!\
-	depi	1, 15, 1, r						!\
-	extru,=	t2, 29, 1, r0	/* w2{10} */				!\
-	depi	1, 21, 1, r						!\
-	sh2add	r, t1, r	/* plus the base */			!\
-	addi	8, r, r		/* bl target is -8 */
-
-	ADDR(_GLOBAL_OFFSET_TABLE_, r19)
-	ADDR(_DYNAMIC, arg2)
+	bl	1f, r19
+	depi	0, 31, 2, r19
+1:	addil	L'$global$ - ($PIC_pcrel$0 - 8), r19
+	ldo	R'$global$ - ($PIC_pcrel$0 - 12)(r1), r19
+	bl	1f, arg2
+	depi	0, 31, 2, arg2
+1:	addil	L'_DYNAMIC - ($PIC_pcrel$0 - 8), arg2
+	ldo	R'_DYNAMIC - ($PIC_pcrel$0 - 12)(r1), arg2
 	stw	arg2, HPPA_FRAME_ARG(1)(r3)
 
 	/* make sure to get a fault until it's set proper */
-	ldi	-1, %dp
+	ldi	-1, dp
 
 	ldw	0(arg0), arg0
 	ldo	4(r3), arg1			/* dl_data */
@@ -79,7 +72,8 @@ ENTRY(_dl_start,32)
 	ldo	4(r3), arg3			/* dl_data */
 
 	ldw	HPPA_FRAME_ARG(0)(r3), arg0	/* ps_strings */
-	ADDR(_hppa_dl_dtors_plabel, arg1)
+	addil	LT'_dl_dtors_plabel, r19
+	ldw	RT'_dl_dtors_plabel(r1), arg1
 	ldw	0(arg1), arg1			/* cleanup */
 
 	ldo	HPPA_FRAME_SIZE(r3), sp
@@ -88,19 +82,10 @@ ENTRY(_dl_start,32)
 	ldwm	-HPPA_FRAME_SIZE(sp), r3
 EXIT(_dl_start)
 
-/*
- * void _hppa_dl_dtors(void);
- */
-ENTRY(_hppa_dl_dtors,0)
-	ADDR(_GLOBAL_OFFSET_TABLE_, r19)
-	b	_dl_dtors
-	nop
-EXIT(_hppa_dl_dtors)
-
 	.section .data
 	.align 4
-_hppa_dl_dtors_plabel:
-	.word P%_hppa_dl_dtors
+_dl_dtors_plabel:
+	.word P%_dl_dtors
 	.previous
 
 LEAF_ENTRY(_hppa_dl_set_dp)
