@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.165 2022/10/11 11:46:58 jsg Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.166 2023/01/10 11:18:47 kettenis Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ LIST_HEAD(swap_priority, swappri);
 struct swap_priority swap_priority;	/* [S] */
 
 /* locks */
-struct mutex uvm_swap_data_lock = MUTEX_INITIALIZER(IPL_NONE);
+struct mutex uvm_swap_data_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
 struct rwlock swap_syscall_lock = RWLOCK_INITIALIZER("swplk");
 
 struct mutex oommtx = MUTEX_INITIALIZER(IPL_VM);
