@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.5 2023/01/10 14:19:12 job Exp $
+.\"	$OpenBSD: timeout.1,v 1.6 2023/01/10 21:10:37 jmc Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -61,12 +61,12 @@ Do not propagate the timeout signal to children processes.
 Send a second signal,
 .Dv SIGKILL ,
 if the command is still running
+.Ar time
+after the first signal was sent.
 .It Fl p , -preserve-status
 Always exit with the same status as
 .Ar command ,
 even if the timeout was reached.
-.Ar time
-after the first signal was sent.
 .It Fl s Ar sig , Fl -signal Ns = Ns Ar sig
 Specify the signal to send on timeout, instead of the default
 .Dv SIGTERM .
