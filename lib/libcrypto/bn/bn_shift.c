@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.18 2023/01/05 04:51:13 jsing Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.19 2023/01/10 04:13:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,40 +130,71 @@ BN_rshift1(BIGNUM *r, const BIGNUM *a)
 int
 BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 {
-	int i, nw, lb, rb;
-	BN_ULONG *t, *f;
-	BN_ULONG l;
+	size_t count, shift_bits, shift_words;
+	size_t lshift, rshift;
+	ssize_t rstride;
+	BN_ULONG *dst, *src;
 
 	if (n < 0) {
 		BNerror(BN_R_INVALID_LENGTH);
 		return 0;
 	}
+	shift_bits = n;
 
+	/*
+	 * Left bit shift, potentially across word boundaries.
+	 *
+	 * When shift is not an exact multiple of BN_BITS2, the bottom bits of
+	 * the previous word need to be right shifted and combined with the left
+	 * shifted bits using bitwise OR. If shift is an exact multiple of
+	 * BN_BITS2, the source for the left and right shifts are the same
+	 * and the shifts become zero bits (which is effectively a memmove).
+	 */
+	shift_words = shift_bits / BN_BITS2;
+	lshift = shift_bits % BN_BITS2;
+	rshift = (BN_BITS2 - lshift) % BN_BITS2;
+	rstride = 0 - (lshift + rshift) / BN_BITS2;
 
+	if (a->top < 1) {
+		BN_zero(r);
+		return 1;
+	}
+
+	count = a->top + shift_words + 1;
+
+	if (count < shift_words)
+		return 0;
+
+	if (!bn_wexpand(r, count))
+		return 0;
+
+	src = a->d + a->top - 1;
+	dst = r->d + a->top + shift_words;
+
+	/* Handle right shift for top most word. */
+	*dst = (*src >> rshift) & rstride;
+	dst--;
+
+	/* Handle left shift and right shift for remaining words. */
+	while (src > a->d) {
+		*dst = *src << lshift | src[rstride] >> rshift;
+		src--;
+		dst--;
+	}
+	*dst = *src << lshift;
+
+	/* Zero any additional words resulting from the left shift. */
+	while (dst > r->d) {
+		dst--;
+		*dst = 0;
+	}
+
+	r->top = count;
 	r->neg = a->neg;
-	nw = n / BN_BITS2;
-	if (!bn_wexpand(r, a->top + nw + 1))
-		return (0);
-	lb = n % BN_BITS2;
-	rb = BN_BITS2 - lb;
-	f = a->d;
-	t = r->d;
-	t[a->top + nw] = 0;
-	if (lb == 0)
-		for (i = a->top - 1; i >= 0; i--)
-			t[nw + i] = f[i];
-	else
-		for (i = a->top - 1; i >= 0; i--) {
-			l = f[i];
-			t[nw + i + 1] |= (l >> rb) & BN_MASK2;
-			t[nw + i] = (l << lb) & BN_MASK2;
-		}
-	memset(t, 0, nw * sizeof(t[0]));
-/*	for (i=0; i<nw; i++)
-		t[i]=0;*/
-	r->top = a->top + nw + 1;
+
 	bn_correct_top(r);
-	return (1);
+
+	return 1;
 }
 
 int
