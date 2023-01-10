@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcvbuf.h,v 1.1 2013/10/28 22:13:13 miod Exp $	*/
+/*	$OpenBSD: rcvbuf.h,v 1.2 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: rcvbuf.h,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
 
 /*
@@ -98,6 +98,11 @@ do {									\
 	c= *(--rcvbuf[n].rb_pop);					\
 	if (rcvbuf[n].rb_pop == rcvbuf[n].rb_buf)			\
 		rcvbuf[n].rb_pop = &rcvbuf[n].rb_buf[RBUF_SIZE];	\
+} while (0)
+
+#define PEEK_RBUF(n, c)							\
+do {									\
+	c= *(rcvbuf[n].rb_pop - 1);					\
 } while (0)
 
 #define RBUF_EMPTY(n)	(rcvbuf[n].rb_push == rcvbuf[n].rb_pop ? 1: 0)

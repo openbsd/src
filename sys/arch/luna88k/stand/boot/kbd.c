@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.1 2013/10/28 22:13:12 miod Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.2 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: kbd.c,v 1.1 2013/01/05 17:44:24 tsutsui Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #include <luna88k/stand/boot/samachdep.h>
 #include <luna88k/stand/boot/kbdreg.h>
 
-struct kbd_keymap kbd_keymap[] = {
+const struct kbd_keymap kbd_keymap[] = {
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   0 [0x00]	      */
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   1 [0x01]	      */
 	{ KC_IGNORE,	{ 0,	    0        } },	/*   2 [0x02]	      */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.9 2022/10/14 20:53:19 aoyama Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.10 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -97,15 +97,14 @@
  * rights to redistribute these changes.
  */
 
+const char version[] = "0.8";
+
 #include <sys/param.h>
-#define _KERNEL
-#include <sys/fcntl.h>
-#undef _KERNEL
 #include <lib/libkern/libkern.h>
 #include <machine/board.h>
 #include <luna88k/stand/boot/samachdep.h>
-#include <luna88k/stand/boot/status.h>
-#include <lib/libsa/loadfile.h>
+#include <stand/boot/cmd.h>
+
 #include "dev_net.h"
 
 static void get_fuse_rom_data(void);
@@ -115,30 +114,15 @@ static const char *nvram_by_symbol(char *);
 
 int cpuspeed;	/* for DELAY() macro */
 int machtype;
-char default_file[64];
-char upgrade_file[64];
+
+uint32_t bootdev;
 
 uint16_t dipswitch = 0;
 int nplane;
 
-/* for command parser */
-
-#define BUFFSIZE 100
-#define MAXARGS  30
-
-char buffer[BUFFSIZE];
-
-int   argc;
-char *argv[MAXARGS];
-
-#define BOOT_TIMEOUT 5
-int boot_timeout = BOOT_TIMEOUT;
-
-static const char prompt[] = "boot> ";
-
+#ifdef DEBUG
 int debug;
-
-int exist(const char *);
+#endif
 
 /*
  * FUSE ROM and NVRAM data
@@ -162,10 +146,8 @@ struct nvram_t {
 int
 main(void)
 {
-	int status = ST_NORMAL;
-	const char *machstr;
-	const char *nvv;
-	int unit, part;
+	extern char *progname;	/* boot.c */
+	extern int boottimeout;	/* boot.c */
 
 	/* Determine the machine type from FUSE ROM data.  */
 	get_fuse_rom_data();
@@ -178,95 +160,31 @@ main(void)
 	 * Initialize the console before we print anything out.
 	 */
 	if (machtype == LUNA_88K) {
-		machstr  = "LUNA-88K";
+		progname = "LUNA-88K BOOT";
 		cpuspeed = MHZ_25;
 	} else {
-		machstr  = "LUNA-88K2";
+		progname = "LUNA-88K2 BOOT";
 		cpuspeed = MHZ_33;
 	}
 
 	nplane = get_plane_numbers();
 	cninit();
 
-	printf("\nOpenBSD/" MACHINE " (%s) boot 0.7\n\n", machstr);
-
 #ifdef SUPPORT_ETHERNET
 	try_bootp = 1;
 #endif
 
-        /* Determine the 'auto-boot' device from NVRAM data */
         get_nvram_data();
 
-	nvv = nvram_by_symbol("boot_unit");
-	if (nvv != NULL)
-		unit = (int)strtol(nvv, NULL, 10);
-	else
-		unit = 0;
-	nvv = nvram_by_symbol("boot_partition");
-	if (nvv != NULL)
-		part = (int)strtol(nvv, NULL, 10);
-	else
-		part = 0;
-
-	nvv = nvram_by_symbol("boot_device");
-
-	snprintf(default_file, sizeof(default_file),
-	    "%s(%d,%d)%s", nvv != NULL ? nvv : "sd", unit, part, "bsd");
-	snprintf(upgrade_file, sizeof(upgrade_file),
-	    "%s(%d,%d)%s", nvv != NULL ? nvv : "sd", unit, part, "bsd.upgrade");
-
-	if (exist(upgrade_file)) {
-		strlcpy(default_file, upgrade_file, sizeof(default_file));
-		printf("upgrade detected: switching to %s\n", default_file);
+	/* disable timeout if requested */
+	if ((dipswitch & 0x8000) == 0) {
+		boottimeout = 0;
 	}
 
-	/* auto-boot? (SW1) */
-	if ((dipswitch & 0x8000) != 0) {
-		char c;
-
-		printf("Press return to boot now,"
-		    " any other key for boot menu\n");
-		printf("booting %s - starting in ", default_file);
-		c = awaitkey("%d seconds. ", boot_timeout, 1);
-		if (c == '\r' || c == '\n' || c == 0) {
-			printf("auto-boot %s\n", default_file);
-			bootunix(default_file);
-		}
-	}
-
-	/*
-	 * Main Loop
-	 */
-
-	printf("type \"help\" for help.\n");
-
-	do {
-		memset(buffer, 0, BUFFSIZE);
-		if (getline(prompt, buffer) > 0) {
-			argc = getargs(buffer, argv, sizeof(argv)/sizeof(char *));
-
-			status = parse(argc, argv);
-			if (status == ST_NOTFOUND)
-				printf("unknown command \"%s\"\n", argv[0]);
-		}
-	} while (status != ST_EXIT);
+	boot(0);
 
 	_rtt();
 	/* NOTREACHED */
-}
-
-/* Check file existence with "device(unit, part)filename" format */ 
-
-int
-exist(const char *name)
-{
-	int fd;
-
-	fd = open(name, O_RDONLY);
-	if (fd == -1)
-		return 0;
-	close(fd);
-	return 1;
 }
 
 int
@@ -294,7 +212,7 @@ get_fuse_rom_data(void)
 		fuse_rom_data[i] =
 		    (char)((((p->h) >> 24) & 0x000000f0) |
 		           (((p->l) >> 28) & 0x0000000f));
-		p++;                                                                            
+		p++;
 	}
 }
 
@@ -363,4 +281,61 @@ _rtt(void)
 	*(volatile unsigned int *)RESET_CPU_ALL = 0;
 	for (;;) ;
 	/* NOTREACHED */
+}
+
+
+/*
+ * "machine tty" command to select a different console is not supported,
+ * console device selection is performed using the DIP switches.
+ */
+
+int
+cnspeed(dev_t dev, int sp)
+{
+	return 9600;
+}
+
+char *
+ttyname(int fd)
+{
+	return "console";
+}
+
+dev_t
+ttydev(char *name)
+{
+	return NODEV;
+}
+
+/*
+ * Return the default boot device.
+ */
+void
+devboot(dev_t dev, char *path)
+{
+	const char *nvv;
+	int unit, part;
+
+        /* Determine the 'auto-boot' device from NVRAM data */
+	nvv = nvram_by_symbol("boot_unit");
+	if (nvv != NULL)
+		unit = (int)strtol(nvv, NULL, 10);
+	else
+		unit = 0;
+	nvv = nvram_by_symbol("boot_partition");
+	if (nvv != NULL)
+		part = (int)strtol(nvv, NULL, 10);
+	else
+		part = 0;
+
+	nvv = nvram_by_symbol("boot_device");
+
+	snprintf(path, BOOTDEVLEN, "%s(%d,%d)",
+	    nvv != NULL ? nvv : "sd", unit, part);
+}
+
+void
+machdep()
+{
+	/* Nothing to do - everything done in main() already */
 }

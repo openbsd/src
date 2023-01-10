@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 2022/10/14 20:53:18 aoyama Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.3 2013/01/16 15:46:20 tsutsui Exp $	*/
 
 /*
@@ -92,14 +92,14 @@ devopen(struct open_file *f, const char *fname, char **file)
 		return ENXIO;
 
 #ifdef DEBUG
-	printf("%s: %s(%d,%d)%s\n", __func__,
+	printf("%s: %s(%d,%d):%s\n", __func__,
 	    devsw[dev].dv_name, unit, part, *file);
 #endif
 	dp = &devsw[dev];
 	error = (*dp->dv_open)(f, unit, part);
 	if (error != 0) {
 #ifdef DEBUG
-		printf("%s: open %s(%d,%d)%s failed (%s)\n", __func__,
+		printf("%s: open %s(%d,%d):%s failed (%s)\n", __func__,
 		    devsw[dev].dv_name, unit, part, *file, strerror(error));
 #endif
 		return error;
@@ -120,7 +120,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	f->f_dev = dp;
 
 	/* Save boot device information to pass to the kernel */
-	cpu_bootarg3 = MAKEBOOTDEV(dev, 0, unit / 10, 6 - unit % 10, part);
+	bootdev = MAKEBOOTDEV(dev, 0, unit / 10, 6 - unit % 10, part);
 
 	return 0;
 }
@@ -187,13 +187,15 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	*unitp = unit;
 	*partp = part;
 	cp++;
+	if (*cp == ':')
+		cp++;
 	if (*cp == '\0')
 		*fname = "bsd";
 	else
 		*fname = (char *)cp;	/* XXX */
 #ifdef DEBUG
-	printf("%s: major = %d, unit = %d, part = %d, fname = %s\n",
-	    __func__, major, unit, part, *fname);
+	printf("%s(%s): major = %d, unit = %d, part = %d, fname = %s\n",
+	    __func__, str, major, unit, part, *fname);
 #endif
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.ldscript,v 1.2 2013/10/30 18:40:38 miod Exp $	*/
+/*	$OpenBSD: boot.ldscript,v 1.3 2023/01/10 17:10:57 miod Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -17,9 +17,9 @@
  */
 
 /*
- * This linker script is used to merge .rodata into .text and pad .text to
- * a page size. This allows objcopy to correctly be able to convert it to
- * an OMAGIC binary, suitable to be booted from the PROM.
+ * This linker script is used to merge .rodata into .text.  This allows
+ * objcopy to correctly be able to convert it to an OMAGIC binary, suitable
+ * to be booted from the PROM.
  */
 OUTPUT_FORMAT("elf32-m88k")
 OUTPUT_ARCH(m88k)

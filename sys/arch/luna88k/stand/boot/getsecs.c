@@ -1,4 +1,4 @@
-/*	$OpenBSD: getsecs.c,v 1.3 2013/11/12 13:56:23 aoyama Exp $	*/
+/*	$OpenBSD: getsecs.c,v 1.4 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: getsecs.c,v 1.1 2013/01/13 14:10:55 tsutsui Exp $	*/
 
 /*-
@@ -38,6 +38,17 @@
 	do { *chiptime = (off); (data) = (*chipdata); } while (0)
 #define _DS_SET(off, data) \
 	do { *chiptime = (off); *chipdata = (u_int8_t)(data); } while (0)
+
+/*
+ * Convert a single byte between (unsigned) packed bcd and binary.
+ * Public domain.
+ */
+unsigned int
+bcdtobin(unsigned int bcd)
+{
+
+        return (((bcd >> 4) & 0x0f) * 10 + (bcd & 0x0f));
+}
 
 time_t
 getsecs(void)

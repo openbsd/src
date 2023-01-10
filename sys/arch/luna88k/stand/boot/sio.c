@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.4 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: sio.c,v 1.3 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
@@ -82,23 +82,12 @@
 #include <luna88k/stand/boot/rcvbuf.h>
 #include <luna88k/stand/boot/kbdreg.h>
 
-static int siointr(int);
 static int sioreg(int, int);
 
 struct rcvbuf	rcvbuf[NSIO];
 
 int	sioconsole = -1;
 struct	siodevice *sio_addr[2];
-
-void
-_siointr(void)
-{
-	int unit;
-
-	for (unit = 0; unit < NSIO; unit++)
-		while (siointr(unit) != 0)
-			continue;
-}
 
 int
 siointr(int unit)
@@ -164,15 +153,25 @@ siocninit(struct consdev *cp)
 int
 siocngetc(dev_t dev)
 {
-	int c, unit = dev;
+	int c, unit = dev & ~0x80, poll = (dev & 0x80) != 0;
 
-	_siointr();
-	if (RBUF_EMPTY(unit))
-		return 0;
+	siointr(unit);
+
+	if (poll) {
+		if (RBUF_EMPTY(unit))
+			return 0;
+		PEEK_RBUF(unit, c);
+		return c;
+
+	}
+
+	while (RBUF_EMPTY(unit)) {
+		DELAY(1);
+		siointr(unit);
+	}
 
 	POP_RBUF(unit, c);
-
-	return(c);
+	return c;
 }
 
 void

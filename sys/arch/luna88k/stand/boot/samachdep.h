@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.5 2022/10/14 20:53:19 aoyama Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.6 2023/01/10 17:10:57 miod Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -47,12 +47,6 @@ typedef struct label_t {
 void configure(void);
 void find_devs(void);
 
-/* awaitkey.c */
-char awaitkey(const char *, int, int);
-
-/* bcd.c */
-unsigned int bcdtobin(unsigned int);
-
 /* bmc.c */
 void bmccnprobe(struct consdev *);
 void bmccninit(struct consdev *);
@@ -66,30 +60,21 @@ void bmdadjust(short, short);
 void bmdclear(void);
 
 /* boot.c */
-extern int howto;
-int boot(int, char **);
-int bootunix(char *);
+extern uint32_t bootdev;
 
-extern void (*cpu_boot)(uint32_t, uint32_t, uint32_t, uint32_t);
-extern uint32_t cpu_bootarg1;
-extern uint32_t cpu_bootarg2;
-extern uint32_t cpu_bootarg3;
-extern uint32_t cpu_bootarg4;
-#define	BOOT_MAGIC	0xf1abde3f
+/* conf.c */
+extern	struct fs_ops file_system_disk[];
+extern	int nfsys_disk;
+extern	struct fs_ops file_system_nfs[];
 
-/* cons.c */
-void cninit(void);
-int cngetc(void);
-void cnputc(int);
+/* exec.c */
+void run_loadfile(uint64_t *, int);
 
 /* fault.c */
 int badaddr(void *, int);
 
 /* font.c */
 extern const u_short bmdfont[][20];
-
-/* getline.c */
-int getline(const char *, char *);
 
 /* init_main.c */
 extern int cpuspeed;
@@ -111,19 +96,10 @@ int lance_put(void *, void *, size_t);
 int lance_end(void *);
 
 /* locore.S */
-extern u_int bootdev;
 extern uint16_t dipswitch;
 extern volatile uint32_t tick;
 int setjmp(label_t *);
 void delay(int);
-
-/* prf.c */
-int tgetchar(void);
-
-/* parse.c */
-int exit_program(int, char **);
-int parse(int, char **);
-int getargs(char *, char **, int);
 
 /* sc.c */
 struct scsi_softc;
@@ -140,7 +116,7 @@ int sdopen(struct open_file *, ...);
 int sdclose(struct open_file *);
 
 /* sio.c */
-void _siointr(void);
+int  siointr(int);
 void siocnprobe(struct consdev *);
 void siocninit(struct consdev *);
 int  siocngetc(dev_t);
@@ -151,7 +127,3 @@ void sioinit(void);
 char *readdisklabel(struct scsi_softc *, uint, struct disklabel *);
 
 #define DELAY(n)	delay(n)
-
-extern	struct fs_ops file_system_disk[];
-extern	int nfsys_disk;
-extern	struct fs_ops file_system_nfs[];

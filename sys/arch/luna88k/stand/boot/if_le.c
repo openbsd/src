@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.4 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.5 2023/01/10 17:10:57 miod Exp $	*/
 /* $NetBSD: if_le.c,v 1.3 2013/01/22 15:48:40 tsutsui Exp $ */
 
 /*
@@ -62,6 +62,11 @@
 #include <sys/param.h>
 
 #include <netinet/in.h>
+#ifdef DEBUG
+#include <sys/socket.h>
+#include <net/if_arp.h>
+#include <netinet/if_ether.h>
+#endif
 
 #include <luna88k/stand/boot/samachdep.h>
 #include <machine/board.h>
