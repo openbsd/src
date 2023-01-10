@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.659 2023/01/10 00:49:45 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.660 2023/01/10 01:01:18 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1861,7 +1861,8 @@ identifycpu(struct cpu_info *ci)
 			}
 			break;
 		}
-		calibrate_cyclecounter();
+		if (CPU_IS_PRIMARY(ci))
+			calibrate_cyclecounter();	/* set cpuspeed */
 	}
 
 	if (cpuid_level != -1)
