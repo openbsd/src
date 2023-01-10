@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2022/08/06 13:44:04 semarie Exp $
+#	$OpenBSD: Makefile,v 1.19 2023/01/10 12:17:00 anton Exp $
 
 SUBDIR+= blist
 SUBDIR+= minherit_zero
@@ -7,7 +7,6 @@ SUBDIR+= mmap_noreplace mmap_write_self
 SUBDIR+= mmap0
 SUBDIR+= mmap_hint
 SUBDIR+= vnode
-SUBDIR+= wx_syscall
 
 install:
 
