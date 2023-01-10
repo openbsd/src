@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.4 2022/12/22 19:53:23 kn Exp $
+.\"	$OpenBSD: timeout.1,v 1.5 2023/01/10 14:19:12 job Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: January 10 2023 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -35,10 +35,9 @@
 .Nd run a command with a time limit
 .Sh SYNOPSIS
 .Nm
+.Op Fl fp
 .Op Fl k Ar time
 .Op Fl s Ar sig
-.Op Fl -foreground
-.Op Fl -preserve-status
 .Ar duration
 .Ar command
 .Op Ar arg ...
@@ -56,21 +55,21 @@ is 0, the timeout is disabled.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f , -foreground
+Do not propagate the timeout signal to children processes.
 .It Fl k Ar time , Fl -kill-after Ns = Ns Ar time
 Send a second signal,
 .Dv SIGKILL ,
 if the command is still running
+.It Fl p , -preserve-status
+Always exit with the same status as
+.Ar command ,
+even if the timeout was reached.
 .Ar time
 after the first signal was sent.
 .It Fl s Ar sig , Fl -signal Ns = Ns Ar sig
 Specify the signal to send on timeout, instead of the default
 .Dv SIGTERM .
-.It Fl -foreground
-Do not propagate the timeout signal to children processes.
-.It Fl -preserve-status
-Always exit with the same status as
-.Ar command ,
-even if the timeout was reached.
 .El
 .Sh DURATION FORMAT
 .Ar duration
@@ -93,13 +92,13 @@ days
 .El
 .Sh EXIT STATUS
 If the timeout was not reached or
-.Fl -preserve-status
+.Fl p
 was set, the exit status of
 .Ar command
 is returned.
 .Pp
 If the timeout was reached and
-.Fl -preserve-status
+.Fl p
 was not set, an exit status of 124 is returned.
 .Pp
 If
