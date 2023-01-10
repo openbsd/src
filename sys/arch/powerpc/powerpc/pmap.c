@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.177 2022/09/10 20:35:28 miod Exp $ */
+/*	$OpenBSD: pmap.c,v 1.178 2023/01/10 21:27:12 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1094,8 +1094,9 @@ int pmap_id_avail = 0;
 pmap_t
 pmap_create(void)
 {
-	int i, k, try, tblidx, tbloff;
-	int s, seg;
+	u_int bits;
+	int first, i, k, try, tblidx, tbloff;
+	int seg;
 	pmap_t pm;
 
 	pm = pool_get(&pmap_pmap_pool, PR_WAITOK|PR_ZERO);
@@ -1107,23 +1108,21 @@ pmap_create(void)
 	 * Allocate segment registers for this pmap.
 	 * Try not to reuse pmap ids, to spread the hash table usage.
 	 */
+	first = pmap_id_avail;
 again:
 	for (i = 0; i < NPMAPS; i++) {
-		try = pmap_id_avail + i;
+		try = first + i;
 		try = try % NPMAPS; /* truncate back into bounds */
 		tblidx = try / (8 * sizeof usedsr[0]);
 		tbloff = try % (8 * sizeof usedsr[0]);
-		if ((usedsr[tblidx] & (1 << tbloff)) == 0) {
-			/* pmap create lock? */
-			s = splvm();
-			if ((usedsr[tblidx] & (1 << tbloff)) == 1) {
-				/* entry was stolen out from under us, retry */
-				splx(s); /* pmap create unlock */
+		bits = usedsr[tblidx];
+		if ((bits & (1U << tbloff)) == 0) {
+			if (atomic_cas_uint(&usedsr[tblidx], bits,
+			    bits | (1U << tbloff)) != bits) {
+				first = try;
 				goto again;
 			}
-			usedsr[tblidx] |= (1 << tbloff); 
 			pmap_id_avail = try + 1;
-			splx(s); /* pmap create unlock */
 
 			seg = try << 4;
 			for (k = 0; k < 16; k++)
@@ -1173,17 +1172,14 @@ void
 pmap_release(pmap_t pm)
 {
 	int i, tblidx, tbloff;
-	int s;
 
 	pmap_vp_destroy(pm);
 	i = (pm->pm_sr[0] & SR_VSID) >> 4;
 	tblidx = i / (8  * sizeof usedsr[0]);
 	tbloff = i % (8  * sizeof usedsr[0]);
 
-	/* LOCK? */
-	s = splvm();
-	usedsr[tblidx] &= ~(1 << tbloff);
-	splx(s);
+	/* powerpc can do atomic cas, clearbits on same word. */
+	atomic_clearbits_int(&usedsr[tblidx], 1U << tbloff);
 }
 
 void
