@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.106 2022/09/10 20:35:29 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.107 2023/01/10 17:38:10 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1074,6 +1074,7 @@ remap_data:
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0)) {
 			for (j = 0; j < prom_map[i].vsize; j += NBPG) {
 				int k;
+				uint64_t tte;
 				
 				for (k = 0; page_size_map[k].mask; k++) {
 					if (((prom_map[i].vstart |
@@ -1084,9 +1085,14 @@ remap_data:
 						break;
 				}
 				/* Enter PROM map into pmap_kernel() */
+				tte = prom_map[i].tte;
+				if (CPU_ISSUN4V)
+					tte &= ~SUN4V_TLB_SOFT_MASK;
+				else
+					tte &= ~(SUN4U_TLB_SOFT2_MASK |
+					    SUN4U_TLB_SOFT_MASK);
 				pmap_enter_kpage(prom_map[i].vstart + j,
-					(prom_map[i].tte + j)|data|
-					page_size_map[k].code);
+				    (tte + j) | data | page_size_map[k].code);
 			}
 		}
 	}
