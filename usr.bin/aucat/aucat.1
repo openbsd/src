@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.118 2022/10/14 06:46:52 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.119 2023/01/10 20:48:34 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2022 $
+.Dd $Mdocdate: January 10 2023 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -265,9 +265,11 @@ At this stage,
 will start, stop and relocate automatically following all user
 actions in the MIDI sequencer, assuming it's configured to
 transmit MMC on
-.Va midithru/0 .
+.Va midithru/0
+and
+.Va snd/0.mmc .
 Furthermore, the MIDI sequencer could be configured to use the
-.Va snd/0
+.Va snd/0.mmc
 port as MTC clock source, assured to be synchronous to playback of
 .Pa file.wav .
 .Sh EXAMPLES
