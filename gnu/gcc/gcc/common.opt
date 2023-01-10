@@ -570,7 +570,7 @@ Common Report Var(flag_ivopts) Init(1)
 Optimize induction variables on trees
 
 fjump-tables
-Common Var(flag_jump_tables) Init(1)
+Common Var(flag_jump_tables) Init(JUMP_TABLES_DEFAULT)
 Use jump tables for sufficiently large switch statements
 
 fkeep-inline-functions

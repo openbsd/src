@@ -904,4 +904,8 @@ Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
 #define PIE_DEFAULT 0
 #endif
 
+#ifndef JUMP_TABLES_DEFAULT
+#define JUMP_TABLES_DEFAULT 1
+#endif
+
 #endif  /* ! GCC_DEFAULTS_H */
