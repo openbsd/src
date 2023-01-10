@@ -75,6 +75,9 @@ Boston, MA 02110-1301, USA.  */
 #undef LONG_DOUBLE_TYPE_SIZE
 #define LONG_DOUBLE_TYPE_SIZE 64
 
+#undef JUMP_TABLES_DEFAULT
+#define JUMP_TABLES_DEFAULT 0	/* incompatible with --executable-text */
+
 #undef LINK_SPEC
 #define LINK_SPEC \
   "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
