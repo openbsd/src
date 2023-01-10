@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.129 2022/09/22 04:36:38 robert Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.130 2023/01/10 01:09:14 dv Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ const struct {
 	{ SEFF0ECX_AVX512VBMI,	"AVX512VBMI" },
 	{ SEFF0ECX_UMIP,	"UMIP" },
 	{ SEFF0ECX_PKU,		"PKU" },
+	{ SEFF0ECX_WAITPKG,	"WAITPKG" },
 }, cpu_seff0_edxfeatures[] = {
 	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
 	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
