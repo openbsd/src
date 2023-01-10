@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.162 2022/11/18 03:47:21 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.163 2023/01/10 17:04:01 miod Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,7 +255,6 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 	case T_TLB_LD_MISS:
 	case T_TLB_ST_MISS:
 		if (type == T_TLB_LD_MISS) {
-#ifdef CPU_OCTEON
 			vaddr_t pc;
 
 			/*
@@ -268,8 +267,7 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 			if (pc == trapframe->badvaddr)
 				access_type = PROT_EXEC;
 			else
-#endif
-			access_type = PROT_READ;
+				access_type = PROT_READ;
 		} else
 			access_type = PROT_WRITE;
 
@@ -309,7 +307,6 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 		}
 
 	case T_TLB_LD_MISS+T_USER: {
-#ifdef CPU_OCTEON
 		vaddr_t pc;
 
 		/* Check if the fault was caused by an instruction fetch. */
@@ -319,8 +316,7 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 		if (pc == trapframe->badvaddr)
 			access_type = PROT_EXEC;
 		else
-#endif
-		access_type = PROT_READ;
+			access_type = PROT_READ;
 		pcb = &p->p_addr->u_pcb;
 		goto fault_common;
 	}
