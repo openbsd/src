@@ -184,6 +184,9 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef JUMP_TABLES_DEFAULT
+#define JUMP_TABLES_DEFAULT 0	/* incompatible with --executable-text */
+
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
 #define STARTFILE_SPEC "\
