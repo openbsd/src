@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.658 2022/11/08 14:49:20 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.659 2023/01/10 00:49:45 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1862,18 +1862,6 @@ identifycpu(struct cpu_info *ci)
 			break;
 		}
 		calibrate_cyclecounter();
-		if (cpuspeed > 994) {
-			int ghz, fr;
-
-			ghz = (cpuspeed + 9) / 1000;
-			fr = ((cpuspeed + 9) / 10 ) % 100;
-			if (fr)
-				printf(" %d.%02d GHz", ghz, fr);
-			else
-				printf(" %d GHz", ghz);
-		} else {
-			printf(" %d MHz", cpuspeed);
-		}
 	}
 
 	if (cpuid_level != -1)
