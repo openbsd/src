@@ -1,6 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.4 2019/05/11 13:05:25 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2023/01/11 16:36:44 deraadt Exp $
 
 # sparc64-specific libcrypto build rules
+
+LDADD+= -Wl,--no-execute-only
 
 # aes
 SRCS+= aes_core.c aes_cbc.c 
