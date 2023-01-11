@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.91 2022/12/10 10:13:58 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.92 2023/01/11 11:09:17 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -184,7 +184,7 @@ VP_IDX3(vaddr_t va)
 }
 
 const uint64_t ap_bits_user[8] = {
-	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
+	[PROT_NONE]				= 0,
 	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(3),
 	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
 	[PROT_WRITE|PROT_READ]			= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(1),
@@ -195,7 +195,7 @@ const uint64_t ap_bits_user[8] = {
 };
 
 const uint64_t ap_bits_kern[8] = {
-	[PROT_NONE]				= ATTR_PXN|ATTR_UXN|ATTR_AP(2),
+	[PROT_NONE]				= 0,
 	[PROT_READ]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(2),
 	[PROT_WRITE]				= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
 	[PROT_WRITE|PROT_READ]			= ATTR_PXN|ATTR_UXN|ATTR_AF|ATTR_AP(0),
@@ -1446,6 +1446,10 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pted->pted_va &= ~PROT_WRITE;
 	pted->pted_pte &= ~PROT_WRITE;
+	if ((prot & PROT_READ) == 0) {
+		pted->pted_va &= ~PROT_READ;
+		pted->pted_pte &= ~PROT_READ;
+	}
 	if ((prot & PROT_EXEC) == 0) {
 		pted->pted_va &= ~PROT_EXEC;
 		pted->pted_pte &= ~PROT_EXEC;
@@ -1476,9 +1480,6 @@ pmap_page_rw(pmap_t pm, vaddr_t va)
 
 /*
  * Lower the protection on the specified physical page.
- *
- * There are only two cases, either the protection is going to 0,
- * or it is going to read-only.
  */
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
@@ -1688,7 +1689,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
-	*pl3 = pte;
+	*pl3 = access_bits ? pte : 0;
 }
 
 void
