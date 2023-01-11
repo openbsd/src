@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2023/01/11 03:17:56 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2023/01/11 03:19:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -2076,4 +2076,39 @@ void
 pmap_update(struct pmap *pmap)
 {
 	Mips_SyncICache(curcpu());
+}
+
+/*
+ * Read an instruction from a given virtual memory address.
+ * TLB read-inhibition is bypassed.
+ */
+int
+pmap_copyinsn(pmap_t pmap, vaddr_t uva, uint32_t *insn)
+{
+	pt_entry_t *pte;
+	paddr_t pa;
+	int found = 0;
+
+	if (uva >= VM_MAXUSER_ADDRESS || pmap == pmap_kernel()) {
+		panic("%s(%p, %p): invalid params", __func__,
+		    pmap, (void *)uva);
+	}
+
+	/*
+	 * Read the instruction through the direct map region.
+	 *
+	 * The pmap lock prevents other threads from changing the mapping
+	 * and repurposing the page frame while this thread accesses the
+	 * direct map.
+	 */
+	pmap_lock(pmap);
+	pte = pmap_pte_lookup(pmap, uva);
+	if (pte != NULL && (*pte & PG_V) != 0 && (*pte & pg_xi) == 0) {
+		pa = pfn_to_pad(*pte) | (uva & PAGE_MASK);
+		*insn = *(uint32_t *)PHYS_TO_XKPHYS(pa, CCA_CACHED);
+		found = 1;
+	}
+	pmap_unlock(pmap);
+
+	return found;
 }

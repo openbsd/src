@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.163 2023/01/10 17:04:01 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.164 2023/01/11 03:19:52 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -412,7 +412,7 @@ fault_common_no_miss:
 		tpc = trapframe->pc; /* Remember if restart */
 		if (trapframe->cause & CR_BR_DELAY) {
 			/* Get the branch instruction. */
-			if (copyin32((const void *)locr0->pc, &branch) != 0) {
+			if (copyinsn(p, locr0->pc, &branch) != 0) {
 				signal = SIGBUS;
 				sicode = BUS_OBJERR;
 				break;
@@ -519,18 +519,17 @@ fault_common_no_miss:
 	case T_BREAK+T_USER:
 	    {
 		struct trapframe *locr0 = p->p_md.md_regs;
-		caddr_t va;
+		vaddr_t va;
 		uint32_t branch = 0;
 		uint32_t instr;
 
 		/* compute address of break instruction */
-		va = (caddr_t)trapframe->pc;
+		va = trapframe->pc;
 		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
 
 			/* Read branch instruction. */
-			if (copyin32((const void *)trapframe->pc,
-			    &branch) != 0) {
+			if (copyinsn(p, trapframe->pc, &branch) != 0) {
 				signal = SIGBUS;
 				sicode = BUS_OBJERR;
 				break;
@@ -538,7 +537,7 @@ fault_common_no_miss:
 		}
 
 		/* read break instruction */
-		if (copyin32((const void *)va, &instr) != 0) {
+		if (copyinsn(p, va, &instr) != 0) {
 			signal = SIGBUS;
 			sicode = BUS_OBJERR;
 			break;
@@ -641,18 +640,17 @@ fault_common_no_miss:
 	case T_TRAP+T_USER:
 	    {
 		struct trapframe *locr0 = p->p_md.md_regs;
-		caddr_t va;
+		vaddr_t va;
 		uint32_t branch = 0;
 		uint32_t instr;
 
 		/* compute address of trap instruction */
-		va = (caddr_t)trapframe->pc;
+		va = trapframe->pc;
 		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
 
 			/* Read branch instruction. */
-			if (copyin32((const void *)trapframe->pc,
-			    &branch) != 0) {
+			if (copyinsn(p, trapframe->pc, &branch) != 0) {
 				signal = SIGBUS;
 				sicode = BUS_OBJERR;
 				break;
@@ -660,7 +658,7 @@ fault_common_no_miss:
 		}
 
 		/* read break instruction */
-		if (copyin32((const void *)va, &instr) != 0) {
+		if (copyinsn(p, va, &instr) != 0) {
 			signal = SIGBUS;
 			sicode = BUS_OBJERR;
 			break;
@@ -703,18 +701,17 @@ fault_common_no_miss:
 	case T_RES_INST+T_USER:
 	    {
 		register_t *regs = (register_t *)trapframe;
-		caddr_t va;
+		vaddr_t va;
 		uint32_t branch = 0;
 		InstFmt inst;
 
 		/* Compute the instruction's address. */
-		va = (caddr_t)trapframe->pc;
+		va = trapframe->pc;
 		if (trapframe->cause & CR_BR_DELAY) {
 			va += 4;
 
 			/* Get the branch instruction. */
-			if (copyin32((const void *)trapframe->pc,
-			    &branch) != 0) {
+			if (copyinsn(p, trapframe->pc, &branch) != 0) {
 				signal = SIGBUS;
 				sicode = BUS_OBJERR;
 				break;
@@ -722,7 +719,7 @@ fault_common_no_miss:
 		}
 
 		/* Get the faulting instruction. */
-		if (copyin32((const void *)va, &inst.word) != 0) {
+		if (copyinsn(p, va, &inst.word) != 0) {
 			signal = SIGBUS;
 			sicode = BUS_OBJERR;
 			break;
@@ -839,6 +836,24 @@ child_return(void *arg)
 	KERNEL_UNLOCK();
 
 	mi_child_return(p);
+}
+
+int
+copyinsn(struct proc *p, vaddr_t uva, uint32_t *insn)
+{
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	int error = 0;
+
+	if (__predict_false(uva >= VM_MAXUSER_ADDRESS || (uva & 3) != 0))
+		return EFAULT;
+
+	do {
+		if (pmap_copyinsn(map->pmap, uva, insn))
+			break;
+		error = uvm_fault(map, trunc_page(uva), 0, PROT_EXEC);
+	} while (error == 0);
+
+	return error;
 }
 
 #if defined(DDB) || defined(DEBUG)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_emulate.c,v 1.24 2021/03/11 11:16:59 jsg Exp $	*/
+/*	$OpenBSD: fp_emulate.c,v 1.25 2023/01/11 03:19:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -210,7 +210,7 @@ MipsFPTrap(struct trapframe *tf)
 	 * if it does, it's probably not your lucky day.
 	 */
 
-	if (copyin32((const void *)pc, &insn) != 0) {
+	if (copyinsn(p, pc, &insn) != 0) {
 		sig = SIGBUS;
 		fault_type = BUS_OBJERR;
 		sv.sival_ptr = (void *)pc;
@@ -219,7 +219,7 @@ MipsFPTrap(struct trapframe *tf)
 	inst = *(InstFmt *)&insn;
 
 	if (tf->cause & CR_BR_DELAY) {
-		if (copyin32((const void *)tf->pc, &branch) != 0) {
+		if (copyinsn(p, tf->pc, &branch) != 0) {
 			sig = SIGBUS;
 			fault_type = BUS_OBJERR;
 			sv.sival_ptr = (void *)tf->pc;
@@ -1639,7 +1639,7 @@ nofpu_emulate_cop1(struct proc *p, struct trapframe *tf, uint32_t insn,
 			 */
 			/* inline MipsEmulateBranch(tf, tf->pc, tf->fsr, insn)*/
 			dest = tf->pc + 4 + ((short)inst.IType.imm << 2);
-			if (copyin32((const void *)(tf->pc + 4), &dinsn) != 0) {
+			if (copyinsn(p, tf->pc + 4, &dinsn) != 0) {
 				sv->sival_ptr = (void *)(tf->pc + 4);
 				return SIGSEGV;
 			}

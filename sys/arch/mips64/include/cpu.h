@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.140 2022/11/19 16:23:48 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.141 2023/01/11 03:19:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -418,6 +418,7 @@ void	cpu_switchto_asm(struct proc *, struct proc *);
 int	exec_md_map(struct proc *, struct exec_package *);
 void	savectx(struct user *, int);
 
+int	copyinsn(struct proc *, vaddr_t, uint32_t *);
 void	enable_fpu(struct proc *);
 void	save_fpu(void);
 int	fpe_branch_emulate(struct proc *, struct trapframe *, uint32_t,
