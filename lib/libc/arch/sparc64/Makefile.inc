@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2014/06/09 20:47:11 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2023/01/11 17:00:21 deraadt Exp $
+
+LDADD+= -Wl,--no-execute-only
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
