@@ -1,20 +1,12 @@
-#	$OpenBSD: dynamic-forward.sh,v 1.15 2023/01/06 08:50:33 dtucker Exp $
+#	$OpenBSD: dynamic-forward.sh,v 1.16 2023/01/11 00:51:27 djm Exp $
 #	Placed in the Public Domain.
 
 tid="dynamic forwarding"
 
 FWDPORT=`expr $PORT + 1`
-
+CTL=$OBJ/ctl-sock
 cp $OBJ/ssh_config $OBJ/ssh_config.orig
-
-if [ -x "`which nc`" ] && nc -h 2>&1 | grep "proxy address" >/dev/null; then
-	proxycmd="nc -x 127.0.0.1:$FWDPORT -X"
-elif [ -x "`which connect`" ]; then
-	proxycmd="connect -S 127.0.0.1:$FWDPORT -"
-else
-	echo "skipped (no suitable ProxyCommand found)"
-	exit 0
-fi
+proxycmd="nc -x 127.0.0.1:$FWDPORT -X"
 trace "will use ProxyCommand $proxycmd"
 
 start_ssh() {
@@ -22,34 +14,34 @@ start_ssh() {
 	arg="$2"
 	n=0
 	error="1"
+	# Use a multiplexed ssh so we can control its lifecycle.
 	trace "start dynamic -$direction forwarding, fork to background"
 	(cat $OBJ/ssh_config.orig ; echo "$arg") > $OBJ/ssh_config
-	while [ "$error" -ne 0 -a "$n" -lt 3 ]; do
-		n=`expr $n + 1`
-		${SSH} -F $OBJ/ssh_config -f -vvv -E$TEST_SSH_LOGFILE \
-		    -$direction $FWDPORT -oExitOnForwardFailure=yes \
-		    somehost exec sh -c \
-			\'"echo \$\$ > $OBJ/remote_pid; exec sleep 444"\'
-		error=$?
-		if [ "$error" -ne 0 ]; then
-			trace "forward failed attempt $n err $error"
-			sleep $n
-		fi
-	done
-	if [ "$error" -ne 0 ]; then
-		fatal "failed to start dynamic forwarding"
+	${REAL_SSH} -vvvnNfF $OBJ/ssh_config -E$TEST_SSH_LOGFILE \
+	    -$direction $FWDPORT -oExitOnForwardFailure=yes \
+	    -oControlMaster=yes -oControlPath=$CTL somehost
+	r=$?
+	test $r -eq 0 || fatal "failed to start dynamic forwarding $r"
+	if ! ${REAL_SSH} -qF$OBJ/ssh_config -O check \
+	     -oControlPath=$CTL somehost >/dev/null 2>&1 ; then
+		fatal "forwarding ssh process unresponsive"
 	fi
 }
 
 stop_ssh() {
-	if [ -f $OBJ/remote_pid ]; then
-		remote=`cat $OBJ/remote_pid`
-		trace "terminate remote shell, pid $remote"
-		if [ $remote -gt 1 ]; then
-			kill -HUP $remote
-		fi
-	else
-		fail "no pid file: $OBJ/remote_pid"
+	test -S $CTL || return
+	if ! ${REAL_SSH} -qF$OBJ/ssh_config -O exit \
+	     -oControlPath=$CTL >/dev/null somehost >/dev/null ; then
+		fatal "forwarding ssh process did not respond to close"
+	fi
+	n=0
+	while [ "$n" -lt 20 ] ; do
+		test -S $CTL || break
+		sleep 1
+		n=`expr $n + 1`
+	done
+	if test -S $CTL ; then
+		fatal "forwarding ssh process did not exit"
 	fi
 }
 
@@ -59,7 +51,7 @@ check_socks() {
 	for s in 4 5; do
 	    for h in 127.0.0.1 localhost; do
 		trace "testing ssh socks version $s host $h (-$direction)"
-		${SSH} -F $OBJ/ssh_config \
+		${REAL_SSH} -q -F $OBJ/ssh_config \
 			-o "ProxyCommand ${proxycmd}${s} $h $PORT 2>/dev/null" \
 			somehost cat ${DATA} > ${COPY}
 		r=$?
@@ -77,6 +69,7 @@ check_socks() {
 }
 
 start_sshd
+trap "stop_ssh" EXIT
 
 for d in D R; do
 	verbose "test -$d forwarding"
