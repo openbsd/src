@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2023/01/09 14:14:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2023/01/11 08:11:07 sashan Exp $
 
 # Copyright (c) 2022 Alexandr Nedvedicky <sashan@openbsd.org>
 #
@@ -76,10 +76,9 @@ run-once-${rules}:
 	ping -c 1 -w 1 ${PROBE_HOST} || true
 .endfor
 
-REGRESS_CLEANUP += clean
+REGRESS_CLEANUP += cleanup
 
-#clean:
-#	${SUDO} pfctl -a "regress/*" -Fa
-#	${SUDO} pfctl -d
+cleanup:
+	${SUDO} pfctl -a "regress/*" -Fr
 
 .include <bsd.regress.mk>
