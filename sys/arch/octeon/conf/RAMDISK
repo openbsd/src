@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.46 2019/11/04 14:58:40 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.47 2023/01/11 03:28:42 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -25,6 +25,7 @@ option		INET6
 option		CPU_MIPS64R2
 option		CPU_OCTEON
 option		FPUEMUL
+option		MIPS_PTE64
 makeoption	LINK_ADDRESS="0xffffffff81000000"
 
 config		bsd root on rd0a swap on rd0b

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.60 2021/08/21 14:46:25 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.61 2023/01/11 03:28:42 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -16,6 +16,7 @@ maxusers	32
 option		CPU_MIPS64R2
 option		CPU_OCTEON
 option		FPUEMUL
+option		MIPS_PTE64
 makeoption	LINK_ADDRESS="0xffffffff81000000"
 
 option		PCIVERBOSE
