@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.148 2022/09/23 15:49:20 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.149 2023/01/11 13:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -490,6 +490,9 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	asp = &state.aspath;
 	asp->aspath = aspath_get(NULL, 0);
 	asp->origin = ORIGIN_IGP;
+#ifdef NOTYET
+	asp->aspa_state = ASPA_NEVER_KNOWN;
+#endif
 	/* the other default values are OK, nexthop is once again NULL */
 
 	/*

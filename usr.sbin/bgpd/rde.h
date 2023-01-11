@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.275 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde.h,v 1.276 2023/01/11 13:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -225,6 +225,7 @@ struct rde_aspath {
 	uint16_t			 pftableid;	/* pf table id */
 	uint8_t				 origin;
 	uint8_t				 others_len;
+	uint8_t				 aspa_state;
 };
 
 enum nexthop_state {
@@ -470,7 +471,6 @@ aspath_origin(struct aspath *aspath)
 {
 	return (aspath->source_as);
 }
-
 
 /* rde_community.c */
 int	community_match(struct rde_community *, struct community *,
@@ -727,5 +727,13 @@ int		 up_dump_withdraws(u_char *, int, struct rde_peer *, uint8_t);
 int		 up_dump_mp_unreach(u_char *, int, struct rde_peer *, uint8_t);
 int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
 int		 up_dump_mp_reach(u_char *, int, struct rde_peer *, uint8_t);
+
+/* rde_aspa.c */
+struct rde_aspa	*aspa_table_prep(uint32_t, size_t);
+void		 aspa_add_set(struct rde_aspa *, uint32_t, const uint32_t *,
+		    uint32_t, const uint32_t *);
+void		 aspa_table_free(struct rde_aspa *);
+uint8_t		 aspa_validation(struct rde_aspa *, enum role, struct aspath *,
+		    uint8_t);
 
 #endif /* __RDE_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.582 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde.c,v 1.583 2023/01/11 13:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -61,6 +61,8 @@ uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
 int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
 		    struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
+uint8_t		 rde_aspa_validation(struct rde_peer *, struct rde_aspath *,
+		    uint8_t);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 
 void		 rde_dump_ctx_new(struct ctl_show_rib_request *, pid_t,
@@ -107,6 +109,7 @@ static struct imsgbuf		*ibuf_rtr;
 static struct imsgbuf		*ibuf_main;
 static struct bgpd_config	*conf, *nconf;
 static struct rde_prefixset	 rde_roa, roa_new;
+static struct rde_aspa		*rde_aspa /* , *aspa_new */;
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct filter_head	*out_rules, *out_rules_tmp;
@@ -1456,6 +1459,10 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
+#if NOTYET
+		state.aspath.aspa_state = rde_aspa_validation(peer,
+		    &state.aspath, AID_INET);
+#endif
 	}
 	while (nlri_len > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
@@ -1528,6 +1535,10 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		mpp += pos;
 		mplen -= pos;
 
+#if NOTYET
+		state.aspath.aspa_state = rde_aspa_validation(peer,
+		    &state.aspath, aid);
+#endif
 		while (mplen > 0) {
 			if (peer_has_add_path(peer, aid, CAPA_AP_RECV)) {
 				if (mplen <= sizeof(pathid)) {
@@ -2395,6 +2406,36 @@ rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 		aspath_merge(a, nasp);
 }
 
+
+uint8_t
+rde_aspa_validation(struct rde_peer *peer, struct rde_aspath *asp, uint8_t aid)
+{
+	if (!peer->conf.ebgp)	/* ASPA is only performed on ebgp sessions */
+		return ASPA_NEVER_KNOWN;
+	if (aid != AID_INET && aid != AID_INET6) /* skip uncovered aids */
+		return ASPA_NEVER_KNOWN;
+
+#ifdef MAYBE
+	/*
+	 * By default enforce neighbor-as is set for all ebgp sessions.
+	 * So if a admin disables this check should we really "reenable"
+	 * it here in such a dubious way?
+	 * This just fails the ASPA validation for these paths so maybe
+	 * this can be helpful. But it is not transparent to the admin.
+	 */
+
+	/* skip neighbor-as check for transparent RS sessions */
+	if (peer->conf.role != ROLE_RS_CLIENT) {
+		uint32_t fas;
+
+		fas = aspath_neighbor(asp->aspath);
+		if (peer->conf.remote_as != fas)
+			return ASPA_INVALID;
+	}
+#endif
+
+	return aspa_validation(rde_aspa, peer->conf.role, asp->aspath, aid);
+}
 
 /*
  * route reflector helper function
@@ -4119,6 +4160,9 @@ network_add(struct network_config *nc, struct filterstate *state)
 		rde_apply_set(vpnset, peerself, peerself, state,
 		    nc->prefix.aid);
 
+#if NOTYET
+	state.aspath.aspa_state = ASPA_NEVER_KNOWN;
+#endif
 	vstate = rde_roa_validity(&rde_roa, &nc->prefix,
 	    nc->prefixlen, aspath_origin(state->aspath.aspath));
 	path_id_tx = pathid_assign(peerself, 0, &nc->prefix, nc->prefixlen);

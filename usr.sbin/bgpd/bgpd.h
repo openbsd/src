@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.456 2023/01/04 14:33:30 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.457 2023/01/11 13:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -106,6 +106,12 @@
 #define	ROA_INVALID		0x1
 #define	ROA_VALID		0x2
 #define	ROA_MASK		0x3
+
+#define	ASPA_UNKNOWN		0x00	/* default */
+#define	ASPA_INVALID		0x01
+#define	ASPA_VALID		0x02
+#define	ASPA_MASK		0x03
+#define	ASPA_NEVER_KNOWN	0x08	/* unknown and check never needed */
 
 /*
  * Limit the number of messages queued in the session engine.
