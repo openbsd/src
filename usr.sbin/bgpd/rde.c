@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.583 2023/01/11 13:53:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.584 2023/01/11 17:10:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -463,7 +463,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
 			rde_filterstate_prep(&netconf_state, NULL, NULL, NULL,
-			    0);
+			    0, 0);
 			asp = &netconf_state.aspath;
 			asp->aspath = aspath_get(NULL, 0);
 			asp->origin = ORIGIN_IGP;
@@ -802,7 +802,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_NETWORK_DONE:
 			TAILQ_CONCAT(&netconf_p.attrset, &parent_set, entry);
 
-			rde_filterstate_prep(&state, NULL, NULL, NULL, 0);
+			rde_filterstate_prep(&state, NULL, NULL, NULL, 0, 0);
 			asp = &state.aspath;
 			asp->aspath = aspath_get(NULL, 0);
 			asp->origin = ORIGIN_IGP;
@@ -1235,7 +1235,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	}
 
 	memset(&mpa, 0, sizeof(mpa));
-	rde_filterstate_prep(&state, NULL, NULL, NULL, 0);
+	rde_filterstate_prep(&state, NULL, NULL, NULL, 0, 0);
 	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
 		/* parse path attributes */
 		while (len > 0) {
@@ -1666,20 +1666,19 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 {
 	struct filterstate	 state;
 	enum filter_actions	 action;
-	uint8_t			 vstate;
 	uint16_t		 i;
 	uint32_t		 path_id_tx;
 	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
-	vstate = rde_roa_validity(&rde_roa, prefix, prefixlen,
+	in->vstate = rde_roa_validity(&rde_roa, prefix, prefixlen,
 	    aspath_origin(in->aspath.aspath));
 
 	path_id_tx = pathid_assign(peer, path_id, prefix, prefixlen);
 
 	/* add original path to the Adj-RIB-In */
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, path_id_tx,
-	    in, prefix, prefixlen, vstate) == 1)
+	    in, prefix, prefixlen, in->vstate) == 1)
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1698,17 +1697,17 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 		if (rib == NULL)
 			continue;
 		rde_filterstate_prep(&state, &in->aspath, &in->communities,
-		    in->nexthop, in->nhflags);
+		    in->nexthop, in->nhflags, in->vstate);
 		/* input filter */
 		action = rde_filter(rib->in_rules, peer, peer, prefix,
-		    prefixlen, vstate, &state);
+		    prefixlen, &state);
 
 		if (action == ACTION_ALLOW) {
 			rde_update_log("update", i, peer,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			prefix_update(rib, peer, path_id, path_id_tx, &state,
-			    prefix, prefixlen, vstate);
+			    prefix, prefixlen, in->vstate);
 		} else if (prefix_withdraw(rib, peer, path_id, prefix,
 		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
@@ -2541,7 +2540,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	pt_getaddr(p->pt, &rib.prefix);
 	rib.prefixlen = p->pt->prefixlen;
 	rib.origin = asp->origin;
-	rib.validation_state = p->validation_state;
+	rib.validation_state = prefix_roa_vstate(p);
 	rib.dmetric = p->dmetric;
 	rib.flags = 0;
 	if (!adjout) {
@@ -3776,16 +3775,17 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 				continue;
 
 			rde_filterstate_prep(&state, asp, prefix_communities(p),
-			    prefix_nexthop(p), prefix_nhflags(p));
+			    prefix_nexthop(p), prefix_nhflags(p),
+			    prefix_roa_vstate(p));
 			action = rde_filter(rib->in_rules, peer, peer, &prefix,
-			    pt->prefixlen, p->validation_state, &state);
+			    pt->prefixlen, &state);
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
 				    p->path_id_tx, &state,
 				    &prefix, pt->prefixlen,
-				    p->validation_state);
+				    prefix_roa_vstate(p));
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
@@ -3902,7 +3902,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 		/* ROA validation state update */
 		vstate = rde_roa_validity(&rde_roa,
 		    &prefix, pt->prefixlen, aspath_origin(asp->aspath));
-		if (vstate == p->validation_state)
+		if (vstate == prefix_roa_vstate(p))
 			continue;
 		p->validation_state = vstate;
 
@@ -3916,16 +3916,17 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 				continue;
 
 			rde_filterstate_prep(&state, asp, prefix_communities(p),
-			    prefix_nexthop(p), prefix_nhflags(p));
+			    prefix_nexthop(p), prefix_nhflags(p),
+			    prefix_roa_vstate(p));
 			action = rde_filter(rib->in_rules, peer, peer, &prefix,
-			    pt->prefixlen, p->validation_state, &state);
+			    pt->prefixlen, &state);
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
 				    p->path_id_tx, &state,
 				    &prefix, pt->prefixlen,
-				    p->validation_state);
+				    prefix_roa_vstate(p));
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
@@ -4383,7 +4384,7 @@ int
 ovs_match(struct prefix *p, uint32_t flag)
 {
 	if (flag & (F_CTL_OVS_VALID|F_CTL_OVS_INVALID|F_CTL_OVS_NOTFOUND)) {
-		switch (prefix_vstate(p)) {
+		switch (prefix_roa_vstate(p)) {
 		case ROA_VALID:
 			if (!(flag & F_CTL_OVS_VALID))
 				return 0;

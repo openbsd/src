@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.276 2023/01/11 13:53:17 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.277 2023/01/11 17:10:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -362,6 +362,7 @@ struct filterstate {
 	struct rde_community	 communities;
 	struct nexthop		*nexthop;
 	uint8_t			 nhflags;
+	uint8_t			 vstate;
 };
 
 enum eval_mode {
@@ -533,13 +534,13 @@ void		 prefix_evaluate_nexthop(struct prefix *, enum nexthop_state,
 void	rde_apply_set(struct filter_set_head *, struct rde_peer *,
 	    struct rde_peer *, struct filterstate *, uint8_t);
 void	rde_filterstate_prep(struct filterstate *, struct rde_aspath *,
-	    struct rde_community *, struct nexthop *, uint8_t);
+	    struct rde_community *, struct nexthop *, uint8_t, uint8_t);
 void	rde_filterstate_clean(struct filterstate *);
 int	rde_filter_equal(struct filter_head *, struct filter_head *,
 	    struct rde_peer *);
 void	rde_filter_calc_skip_steps(struct filter_head *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
-	    struct rde_peer *, struct bgpd_addr *, uint8_t, uint8_t,
+	    struct rde_peer *, struct bgpd_addr *, uint8_t,
 	    struct filterstate *);
 
 /* rde_prefix.c */
@@ -685,7 +686,7 @@ prefix_nhvalid(struct prefix *p)
 }
 
 static inline uint8_t
-prefix_vstate(struct prefix *p)
+prefix_roa_vstate(struct prefix *p)
 {
 	return (p->validation_state & ROA_MASK);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.129 2022/07/28 13:11:51 deraadt Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.130 2023/01/11 17:10:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -212,7 +212,7 @@ rde_prefix_match(struct filter_prefix *fp, struct bgpd_addr *prefix,
 static int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
     struct rde_peer *from, struct filterstate *state,
-    struct bgpd_addr *prefix, uint8_t plen, uint8_t vstate)
+    struct bgpd_addr *prefix, uint8_t plen)
 {
 	struct rde_aspath *asp = &state->aspath;
 	int i;
@@ -223,7 +223,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		return (0);
 
 	if (f->match.ovs.is_set) {
-		if (vstate != f->match.ovs.validity)
+		if (state->vstate != f->match.ovs.validity)
 			return (0);
 	}
 
@@ -427,7 +427,8 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 
 void
 rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
-    struct rde_community *communities, struct nexthop *nh, uint8_t nhflags)
+    struct rde_community *communities, struct nexthop *nh, uint8_t nhflags,
+    uint8_t vstate)
 {
 	memset(state, 0, sizeof(*state));
 
@@ -438,6 +439,7 @@ rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
 		communities_copy(&state->communities, communities);
 	state->nexthop = nexthop_ref(nh);
 	state->nhflags = nhflags;
+	state->vstate = vstate;
 }
 
 void
@@ -784,7 +786,7 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
     struct rde_peer *from, struct bgpd_addr *prefix, uint8_t plen,
-    uint8_t vstate, struct filterstate *state)
+    struct filterstate *state)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
@@ -814,8 +816,7 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		     f->peer.peerid != peer->conf.id),
 		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
-		if (rde_filter_match(f, peer, from, state, prefix, plen,
-		    vstate)) {
+		if (rde_filter_match(f, peer, from, state, prefix, plen)) {
 			rde_apply_set(&f->set, peer, from, state, prefix->aid);
 			if (f->action != ACTION_NONE)
 				action = f->action;
