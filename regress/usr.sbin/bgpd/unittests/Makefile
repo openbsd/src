@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/09/07 11:10:28 bluhm Exp $
+# $OpenBSD: Makefile,v 1.10 2023/01/11 13:55:08 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -6,6 +6,7 @@ PROGS += rde_sets_test
 PROGS += rde_trie_test
 PROGS += rde_community_test
 PROGS += rde_decide_test
+PROGS += rde_aspa_test
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
