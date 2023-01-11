@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2023/01/11 03:17:56 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -165,6 +165,8 @@ pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
 const vaddr_t	Sysmapbase = VM_MIN_KERNEL_ADDRESS;	/* for libkvm */
 
+pt_entry_t	protection_codes[8];
+pt_entry_t	pg_ri;
 pt_entry_t	pg_xi;
 
 void
@@ -410,9 +412,20 @@ pmap_bootstrap(void)
 	}
 
 #if defined(CPU_MIPS64R2) && !defined(CPU_LOONGSON2)
+	if (cp0_get_pagegrain() & PGRAIN_RIE)
+		pg_ri = PG_RI;
 	if (cp0_get_pagegrain() & PGRAIN_XIE)
 		pg_xi = PG_XI;
 #endif
+
+	for (i = 0; i < 8; i++) {
+		if ((i & PROT_READ) == 0)
+			protection_codes[i] |= pg_ri;
+		if ((i & PROT_WRITE) == 0)
+			protection_codes[i] |= PG_RO;
+		if ((i & PROT_EXEC) == 0)
+			protection_codes[i] |= pg_xi;
+	}
 }
 
 /*
@@ -786,9 +799,7 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 	pv_entry_t pv;
 	int needisync = 0;
 
-	p = PG_RO;
-	if (!(prot & PROT_EXEC))
-		p |= pg_xi;
+	p = protection_codes[prot];
 
 	mtx_enter(&pg->mdpage.pv_mtx);
 	for (pv = pg_to_pvh(pg); pv != NULL; pv = pv->pv_next) {
@@ -806,7 +817,7 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 			    (entry & PG_CACHEMODE) == PG_CACHED)
 				Mips_HitSyncDCachePage(ci, pv->pv_va,
 				    pfn_to_pad(entry));
-			entry = (entry & ~(PG_M | PG_XI)) | p;
+			entry = (entry & ~PG_PROTMASK) | p;
 			*pte = entry;
 			pmap_update_kernel_page(pv->pv_va, entry);
 			pmap_shootdown_range(pmap_kernel(), pv->pv_va,
@@ -824,7 +835,7 @@ pmap_page_wrprotect(struct vm_page *pg, vm_prot_t prot)
 				    pfn_to_pad(entry));
 			if (pg_xi != 0 && (entry & pg_xi) == 0)
 				needisync = 1;
-			entry = (entry & ~(PG_M | PG_XI)) | p;
+			entry = (entry & ~PG_PROTMASK) | p;
 			*pte = entry;
 			pmap_update_user_page(pv->pv_pmap, pv->pv_va, entry);
 			if (needisync)
@@ -903,6 +914,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		break;
 
 	/* copy_on_write */
+	case PROT_EXEC:
 	case PROT_READ:
 	case PROT_READ | PROT_EXEC:
 		pmap_page_wrprotect(pg, prot);
@@ -936,9 +948,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	p = (prot & PROT_WRITE) ? PG_M : PG_RO;
-	if (!(prot & PROT_EXEC))
-		p |= pg_xi;
+	p = protection_codes[prot];
+	if (prot & PROT_WRITE)
+		p |= PG_M;
 
 	pmap_lock(pmap);
 
@@ -966,7 +978,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				if ((entry & PG_CACHEMODE) == PG_CACHED)
 					Mips_HitSyncDCachePage(ci, va,
 					    pfn_to_pad(entry));
-			entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
+			entry = (entry & ~PG_PROTMASK) | p;
 			*pte = entry;
 			/*
 			 * Update the TLB if the given address is in the cache.
@@ -1013,7 +1025,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				}
 				if (pg_xi != 0 && (entry & pg_xi) == 0)
 					needisync = 1;
-				entry = (entry & ~(PG_M | PG_RO | PG_XI)) | p;
+				entry = (entry & ~PG_PROTMASK) | p;
 				*pte = entry;
 				pmap_update_user_page(pmap, va, entry);
 				if (needisync)
@@ -1113,6 +1125,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			atomic_inc_long(&pmap->pm_stats.wired_count);
 	}
 
+	npte = protection_codes[prot] | PG_V;
+
 	if (pg != NULL) {
 		mtx_enter(&pg->mdpage.pv_mtx);
 
@@ -1123,27 +1137,22 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else if (flags & PROT_MASK)
 			atomic_setbits_int(&pg->pg_flags, PGF_ATTR_REF);
 
-		if (!(prot & PROT_WRITE)) {
-			npte = PG_ROPAGE;
-		} else {
+		if (prot & PROT_WRITE) {
 			if (pmap == pmap_kernel()) {
 				/*
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
-				npte = PG_RWPAGE;
-			} else {
-				if (pg->pg_flags & PGF_ATTR_MOD) {
-					npte = PG_RWPAGE;
-				} else {
-					npte = PG_CWPAGE;
-				}
+				npte |= PG_M;
+			} else if (pg->pg_flags & PGF_ATTR_MOD) {
+				npte |= PG_M;
 			}
 		}
-		if (flags & PMAP_NOCACHE) {
-			npte &= ~PG_CACHED;
+
+		if (flags & PMAP_NOCACHE)
 			npte |= PG_UNCACHED;
-		}
+		else
+			npte |= PG_CACHED;
 
 		stat_count(enter_stats.managed);
 	} else {
@@ -1152,15 +1161,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 * then it must be device memory which may be volatile.
 		 */
 		stat_count(enter_stats.unmanaged);
-		if (prot & PROT_WRITE) {
-			npte = PG_IOPAGE & ~PG_G;
-		} else {
-			npte = (PG_IOPAGE | PG_RO) & ~(PG_G | PG_M);
-		}
+		npte |= PG_UNCACHED;
+		if (prot & PROT_WRITE)
+			npte |= PG_M;
 	}
-
-	if (!(prot & PROT_EXEC))
-		npte |= pg_xi;
 
 	if (pmap == pmap_kernel()) {
 		/*
@@ -1268,13 +1272,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("pmap_kenter_pa: kva %p", (void *)va);
 #endif
 
-	npte = vad_to_pfn(pa) | PG_G | PG_WIRED;
+	npte = vad_to_pfn(pa) | protection_codes[prot] |
+	    PG_V | PG_G | PG_CACHED | PG_WIRED;
 	if (prot & PROT_WRITE)
-		npte |= PG_RWPAGE;
-	else
-		npte |= PG_ROPAGE;
-	if (!(prot & PROT_EXEC))
-		npte |= pg_xi;
+		npte |= PG_M;
 	pte = kvtopte(va);
 	if ((*pte & PG_V) == 0) {
 		atomic_inc_long(&pmap_kernel()->pm_stats.resident_count);
