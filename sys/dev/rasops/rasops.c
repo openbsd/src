@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.66 2020/07/23 09:17:03 tim Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.67 2023/01/11 12:47:04 nicm Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -120,14 +120,6 @@ const u_char rasops_cmap[256 * 3] = {
 	_C(~NORMAL_BLACK),
 
 #undef	_C
-};
-
-/* True if color is gray */
-const u_char rasops_isgray[16] = {
-	1, 0, 0, 0,
-	0, 0, 0, 1,
-	1, 0, 0, 0,
-	0, 0, 0, 1
 };
 
 struct rasops_screen {
@@ -569,12 +561,6 @@ rasops_pack_cattr(void *cookie, int fg, int bg, int flg, uint32_t *attr)
 		fg += 8;
 
 	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-
-	if (rasops_isgray[fg])
-		flg |= 2;
-
-	if (rasops_isgray[bg])
-		flg |= 4;
 
 	*attr = (bg << 16) | (fg << 24) | flg;
 	return (0);
