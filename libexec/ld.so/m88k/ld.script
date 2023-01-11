@@ -1,0 +1,65 @@
+PHDRS
+{
+  rodata  PT_LOAD FILEHDR PHDRS FLAGS (4);
+  text    PT_LOAD;
+  btext   PT_LOAD FLAGS (0x08000005);
+  data    PT_LOAD;
+  random  PT_OPENBSD_RANDOMIZE;
+  relro   PT_GNU_RELRO;
+  dynamic PT_DYNAMIC;
+  note    PT_NOTE;
+}
+
+SECTIONS
+{
+  . = 0 + SIZEOF_HEADERS;
+  /* RODATA */
+  .gnu.hash : { *(.gnu.hash) } :rodata
+  .dynsym : { *(.dynsym) } :rodata
+  .dynstr : { *(.dynstr) } :rodata
+  .rodata : { *(.rodata .rodata.*) } :rodata
+  .eh_frame : { *(.eh_frame) } :rodata
+
+  /* TEXT */
+  . = ALIGN(0x1000);
+  .boot.text :
+  {
+    boot_text_start = .;
+    . = ALIGN(0x1000);
+    *(.boot.text)
+    boot_text_end = .;
+  } :btext =0xf4005800
+  . = ALIGN(0x1000);
+  .text : { *(.text .text.*) } :text =0xf4005800
+
+  /* RELRO DATA */
+  . = DATA_SEGMENT_ALIGN (0x10000, 0x1000);
+  .openbsd.randomdata : { *(.openbsd.randomdata .openbsd.randomdata.*) }
+    :data :relro :random
+  .data.rel.ro : { *(.data.rel.ro.local*) *(.data.rel.ro*) } :data :relro
+  .dynamic : { *(.dynamic) } :data :relro :dynamic
+  .got : { *(.got.plt) *(.got) } :data :relro
+  . = DATA_SEGMENT_RELRO_END (0, .);
+
+  /* BOOTDATA */
+  . = ALIGN(0x1000);
+  boot_data_start = .;
+  .rela.dyn :
+    {
+      *(.rela.text .rela.text.*)
+      *(.rela.rodata .rela.rodata.*)
+      *(.rela.data .rela.data.*)
+      *(.rela.got)
+      *(.rela.bss .rela.bss.*)
+    } :data
+  .rela.plt : { *(.rela.plt) } :data
+  .note : { *(.note.openbsd.*) } :data :note
+  .hash : { *(.hash) } :data
+  .boot.data : { *(.boot.data .boot.data.*) } :data
+
+  /* DATA */
+  . = ALIGN(0x1000);
+  .data : { *(.data .data.*) } :data
+  .bss : { *(.dynbss) *(.bss .bss.*) *(COMMON) } :data
+  . = DATA_SEGMENT_END (.);
+}
