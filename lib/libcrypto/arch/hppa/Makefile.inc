@@ -1,6 +1,8 @@
-# $OpenBSD: Makefile.inc,v 1.10 2019/05/11 13:05:25 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.11 2023/01/11 16:25:13 deraadt Exp $
 
 # hppa-specific libcrypto build rules
+
+LDADD+= -Wl,--no-execute-only
 
 # aes
 SRCS+= aes_core.c aes_cbc.c 
