@@ -319,6 +319,11 @@ main (int argc, char **argv)
 #else
   link_info.emit_gnu_hash = FALSE;
 #endif
+#if defined(__hppa__)
+  link_info.execute_only = TRUE;
+#else
+  link_info.execute_only = FALSE;
+#endif
   /* SVR4 linkers seem to set DT_INIT and DT_FINI based on magic _init
      and _fini symbols.  We are compatible.  */
   link_info.init_function = "_init";
