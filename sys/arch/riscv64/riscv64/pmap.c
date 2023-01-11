@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2022/12/28 12:56:35 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 2023/01/11 11:10:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -270,12 +270,15 @@ VP_IDX3(vaddr_t va)
 	return (va >> VP_IDX3_POS) & VP_IDX3_MASK;
 }
 
-// For RISC-V Machines, write without read permission is not a valid
-// combination of permission bits. These cases are mapped to R+W instead.
-// PROT_NONE grants read permissions because r = 0 | w = 0 | x = 0 is
-// reserved for non-leaf page table entries.
+/*
+ * On RISC-V, the encodings for write permission without read
+ * permission (r=0, w=1, x=0, or r=0, w=1, x=1) are reserved, so
+ * PROT_WRITE implies PROT_READ.  We need to handle PROT_NONE
+ * seperately (see pmap_pte_update()) since r=0, w=0, x=0 is reserved
+ * for non-leaf page table entries.
+ */
 const pt_entry_t ap_bits_user[8] = {
-	[PROT_NONE]				= PTE_U|PTE_A|PTE_R,
+	[PROT_NONE]				= 0,
 	[PROT_READ]				= PTE_U|PTE_A|PTE_R,
 	[PROT_WRITE]				= PTE_U|PTE_A|PTE_R|PTE_D|PTE_W,
 	[PROT_WRITE|PROT_READ]			= PTE_U|PTE_A|PTE_R|PTE_D|PTE_W,
@@ -286,7 +289,7 @@ const pt_entry_t ap_bits_user[8] = {
 };
 
 const pt_entry_t ap_bits_kern[8] = {
-	[PROT_NONE]				= PTE_A|PTE_R,
+	[PROT_NONE]				= 0,
 	[PROT_READ]				= PTE_A|PTE_R,
 	[PROT_WRITE]				= PTE_A|PTE_R|PTE_D|PTE_W,
 	[PROT_WRITE|PROT_READ]			= PTE_A|PTE_R|PTE_D|PTE_W,
@@ -1487,6 +1490,10 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 
 	pted->pted_va &= ~PROT_WRITE;
 	pted->pted_pte &= ~PROT_WRITE;
+	if ((prot & PROT_READ) == 0) {
+		pted->pted_va &= ~PROT_READ;
+		pted->pted_pte &= ~PROT_READ;
+	}
 	if ((prot & PROT_EXEC) == 0) {
 		pted->pted_va &= ~PROT_EXEC;
 		pted->pted_pte &= ~PROT_EXEC;
@@ -1622,7 +1629,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
 
 	pte = VP_Lx(pted->pted_pte) | access_bits | PTE_V;
-	*pl3 = pte;
+	*pl3 = access_bits ? pte : 0;
 }
 
 void
