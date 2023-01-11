@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.27 2023/01/11 04:39:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,11 +142,12 @@ dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
 	else if (seed_len != 0)
 		goto err;
 
-	if ((mont=BN_MONT_CTX_new()) == NULL)
+	if ((mont = BN_MONT_CTX_new()) == NULL)
 		goto err;
 
-	if ((ctx=BN_CTX_new()) == NULL)
+	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
+
 	BN_CTX_start(ctx);
 
 	if ((r0 = BN_CTX_get(ctx)) == NULL)
@@ -348,11 +349,10 @@ err:
 		if (seed_out != NULL)
 			memcpy(seed_out, seed, qsize);
 	}
-	if (ctx) {
-		BN_CTX_end(ctx);
-		BN_CTX_free(ctx);
-	}
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
 	BN_MONT_CTX_free(mont);
+
 	return ok;
 }
 #endif

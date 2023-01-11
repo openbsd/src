@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.38 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.39 2023/01/11 04:39:42 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -192,7 +192,6 @@ dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 	ASN1_INTEGER *privkey = NULL;
 	BN_CTX *ctx = NULL;
 	DSA *dsa = NULL;
-
 	int ret = 0;
 
 	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
@@ -221,10 +220,13 @@ dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		DSAerror(ERR_R_MALLOC_FAILURE);
 		goto dsaerr;
 	}
-	if (!(ctx = BN_CTX_new())) {
+
+	if ((ctx = BN_CTX_new()) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
 		goto dsaerr;
 	}
+
+	BN_CTX_start(ctx);
 
 	if (!BN_mod_exp_ct(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
 		DSAerror(DSA_R_BN_ERROR);
@@ -242,8 +244,10 @@ decerr:
 dsaerr:
 	DSA_free(dsa);
 done:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	ASN1_INTEGER_free(privkey);
+
 	return ret;
 }
 
@@ -511,26 +515,31 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		goto err;
 	}
 
-	ctx = BN_CTX_new();
-	if (ctx == NULL)
+	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
+
+	BN_CTX_start(ctx);
 
 	/*
 	 * Check that p and q are consistent with each other.
 	 */
-
-	j = BN_CTX_get(ctx);
-	p1 = BN_CTX_get(ctx);
-	newp1 = BN_CTX_get(ctx);
-	powg = BN_CTX_get(ctx);
-	if (j == NULL || p1 == NULL || newp1 == NULL || powg == NULL)
+	if ((j = BN_CTX_get(ctx)) == NULL)
 		goto err;
+	if ((p1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((newp1 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((powg = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
 	/* p1 = p - 1 */
 	if (BN_sub(p1, dsa->p, BN_value_one()) == 0)
 		goto err;
+
 	/* j = (p - 1) / q */
 	if (BN_div_ct(j, NULL, p1, dsa->q, ctx) == 0)
 		goto err;
+
 	/* q * j should == p - 1 */
 	if (BN_mul(newp1, dsa->q, j, ctx) == 0)
 		goto err;
@@ -561,12 +570,14 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		goto err;
 	}
 
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
 
  err:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	DSA_free(dsa);
 	return 0;
