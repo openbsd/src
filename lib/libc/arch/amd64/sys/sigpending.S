@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.3 2015/06/17 03:04:50 uebayasi Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.4 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: sigpending.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -40,7 +40,11 @@
 #include "SYS.h"
 
 SYSCALL(sigpending)
+	RETGUARD_SETUP(_thread_sys_sigpending, r11);
+	RETGUARD_PUSH(r11);
 	movl	%eax,(%rdi)		# store old mask
 	xorl	%eax,%eax
+	RETGUARD_POP(r11)
+	RETGUARD_CHECK(_thread_sys_sigpending, r11);
 	ret
 SYSCALL_END(sigpending)

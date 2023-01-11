@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.8 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.9 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -41,11 +41,15 @@
 
 SYSENTRY_HIDDEN(vfork)
 	popq	%r9		/* my rta into r9 */
+	RETGUARD_SETUP(_thread_sys_vfork, r11);
+	RETGUARD_PUSH(r11);
 	SYSTRAP(vfork)
+	RETGUARD_POP(r11)
 	jc	1f
 	jmp	*%r9
 1:
 	pushq	%r9
 	SET_ERRNO
+	RETGUARD_CHECK(_thread_sys_vfork, r11);
 	ret
 SYSCALL_END_HIDDEN(vfork)

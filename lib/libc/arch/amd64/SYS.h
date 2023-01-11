@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.20 2016/09/06 18:33:35 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.21 2023/01/11 01:55:17 mortimer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,25 +82,36 @@
 	HANDLE_ERRNO
 
 
-/* return, handling errno for failed calls */
-#define _RSYSCALL_RET							\
-	jc	99f;							\
-	ret;								\
-	99: SET_ERRNO;							\
-	ret
-
 #define PSEUDO_NOERROR(x,y)						\
-	_SYSCALL_NOERROR(x,y);						\
+	SYSENTRY(x);							\
+	RETGUARD_SETUP(_thread_sys_##x, r11);				\
+	RETGUARD_PUSH(r11);						\
+	SYSTRAP(y);							\
+	RETGUARD_POP(r11);						\
+	RETGUARD_CHECK(_thread_sys_##x, r11);				\
 	ret;								\
 	SYSCALL_END(x)
 
 #define PSEUDO(x,y)							\
-	_SYSCALL_NOERROR(x,y);						\
-	_RSYSCALL_RET;							\
+	SYSENTRY(x);							\
+	RETGUARD_SETUP(_thread_sys_##x, r11);				\
+	RETGUARD_PUSH(r11);						\
+	SYSTRAP(y);							\
+	HANDLE_ERRNO;							\
+	RETGUARD_POP(r11);						\
+	RETGUARD_CHECK(_thread_sys_##x, r11);				\
+	ret;								\
 	SYSCALL_END(x)
+
 #define PSEUDO_HIDDEN(x,y)						\
-	_SYSCALL_HIDDEN_NOERROR(x,y);					\
-	_RSYSCALL_RET;							\
+	SYSENTRY_HIDDEN(x);						\
+	RETGUARD_SETUP(_thread_sys_##x, r11);				\
+	RETGUARD_PUSH(r11);						\
+	SYSTRAP(y);							\
+	HANDLE_ERRNO;							\
+	RETGUARD_POP(r11);						\
+	RETGUARD_CHECK(_thread_sys_##x , r11);				\
+	ret;								\
 	SYSCALL_END_HIDDEN(x)
 
 #define RSYSCALL_NOERROR(x)						\

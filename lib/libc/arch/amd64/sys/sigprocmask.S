@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.9 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.10 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: sigprocmask.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -40,6 +40,8 @@
 #include "SYS.h"
 
 SYSENTRY_HIDDEN(sigprocmask)
+	RETGUARD_SETUP(_thread_sys_sigprocmask, r11);
+	RETGUARD_PUSH(r11);
 	testq	%rsi,%rsi		# check new sigset pointer
 	jnz	1f			# if not null, indirect
 	movl	$1,%edi			# SIG_BLOCK
@@ -52,8 +54,11 @@ SYSENTRY_HIDDEN(sigprocmask)
 	movl	%eax,(%rdx)		# store old mask
 3:
 	xorl	%eax,%eax
-	ret
+	jmp	2f
 1:
 	SET_ERRNO
+2:
+	RETGUARD_POP(r11);
+	RETGUARD_CHECK(_thread_sys_sigprocmask, r11);
 	ret
 SYSCALL_END_HIDDEN(sigprocmask)

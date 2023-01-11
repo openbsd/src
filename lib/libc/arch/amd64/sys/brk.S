@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.12 2022/01/01 23:47:14 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.13 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -49,6 +49,8 @@ __minbrk:
 	.type	__minbrk,@object
 
 ENTRY_NB(brk)
+	RETGUARD_SETUP(brk, r11);
+	RETGUARD_PUSH(r11);
 	cmpq	%rdi,__minbrk(%rip)
 	jb	1f
 	movq	__minbrk(%rip),%rdi
@@ -57,9 +59,12 @@ ENTRY_NB(brk)
 	jc	1f
 	movq	%rdi,__curbrk(%rip)
 	xorl	%eax,%eax
-	ret
+	jmp	2f
 1:
 	SET_ERRNO
+2:
+	RETGUARD_POP(r11);
+	RETGUARD_CHECK(brk, r11);
 	ret
 END(brk)
 	.weak	brk

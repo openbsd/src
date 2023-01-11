@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.12 2022/01/01 23:47:14 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.13 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@ __curbrk:
 	.type	__curbrk,@object
 
 ENTRY_NB(sbrk)
+	RETGUARD_SETUP(sbrk, r11);
+	RETGUARD_PUSH(r11);
 	movq	__curbrk(%rip),%rax
 	movslq	%edi,%rsi
 	movq	%rsi,%rdi
@@ -62,9 +64,12 @@ ENTRY_NB(sbrk)
 	jc	1f
 	movq	__curbrk(%rip),%rax
 	addq	%rsi,__curbrk(%rip)
-	ret
+	jmp	2f
 1:
 	SET_ERRNO
+2:
+	RETGUARD_POP(r11);
+	RETGUARD_CHECK(sbrk, r11);
 	ret
 END(sbrk)
 	.weak	sbrk

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.7 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.8 2023/01/11 01:55:17 mortimer Exp $	*/
 /*	$NetBSD: sigsuspend.S,v 1.1 2001/06/19 00:25:07 fvdl Exp $	*/
 
 /*-
@@ -40,8 +40,12 @@
 #include "SYS.h"
 
 SYSENTRY_HIDDEN(sigsuspend)
+	RETGUARD_SETUP(_thread_sys_sigsuspend, r11);
+	RETGUARD_PUSH(r11);
 	movl	(%rdi),%edi		# indirect to mask arg
 	SYSTRAP(sigsuspend)
 	SET_ERRNO
+	RETGUARD_POP(r11);
+	RETGUARD_CHECK(_thread_sys_sigsuspend, r11);
 	ret
 SYSCALL_END_HIDDEN(sigsuspend)
