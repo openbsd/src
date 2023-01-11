@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.197 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.198 2023/01/11 19:57:17 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -1714,11 +1714,15 @@ data_miss:
 1:
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, data_nfo				! Entry invalid?  Punt
-	 or	%g4, SUN4U_TLB_ACCESS, %g7		! Update the access bit
+	 nop
+
+	btst	SUN4U_TLB_EXEC_ONLY, %g4		! no read/write allowed?
+	bne,pn	%xcc, data_nfo				! bail
+	 nop
 	
 	btst	SUN4U_TLB_ACCESS, %g4			! Need to update access git?
 	bne,pt	%xcc, 1f
-	 nop
+	 or	%g4, SUN4U_TLB_ACCESS, %g7		! Update the access bit
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.39 2022/10/21 18:55:42 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.40 2023/01/11 19:57:17 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -269,6 +269,7 @@ export	SUN4U_TLB_ACCESS
 export	SUN4U_TLB_MODIFY
 export	SUN4U_TLB_REAL_W
 export	SUN4U_TLB_EXEC
+export	SUN4U_TLB_EXEC_ONLY
 export	SUN4U_TLB_W
 
 export	SUN4V_TLB_ACCESS

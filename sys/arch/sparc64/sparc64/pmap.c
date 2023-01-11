@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.107 2023/01/10 17:38:10 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.108 2023/01/11 19:57:18 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -779,7 +779,6 @@ remap_data:
 		prom_printf("Cannot allocate new cpu_info\r\n");
 		OF_exit();
 	}
-
 
 	/*
 	 * Now the kernel text segment is in its final location we can try to
@@ -1691,6 +1690,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 			tte.data |= SUN4U_TLB_REAL_W|SUN4U_TLB_W;
 		if (prot & PROT_EXEC)
 			tte.data |= SUN4U_TLB_EXEC;
+		if (prot == PROT_EXEC)
+			tte.data |= SUN4U_TLB_EXEC_ONLY;
 		tte.data |= SUN4U_TLB_TSB_LOCK;	/* wired */
 	}
 	KDASSERT((tte.data & TLB_NFO) == 0);
@@ -1823,6 +1824,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			tte.data |= SUN4U_TLB_REAL_W;
 		if (prot & PROT_EXEC)
 			tte.data |= SUN4U_TLB_EXEC;
+		if (prot == PROT_EXEC)
+			tte.data |= SUN4U_TLB_EXEC_ONLY;
 		if (wired)
 			tte.data |= SUN4U_TLB_TSB_LOCK;
 	}
@@ -1947,8 +1950,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	KDASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	KDASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
-	if ((prot & (PROT_WRITE | PROT_EXEC)) ==
-	    (PROT_WRITE | PROT_EXEC))
+	if ((prot & (PROT_WRITE | PROT_EXEC)) == (PROT_WRITE | PROT_EXEC))
 		return;
 
 	if (prot == PROT_NONE) {
@@ -1991,7 +1993,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				if ((prot & PROT_WRITE) == 0)
 					data &= ~(SUN4U_TLB_W|SUN4U_TLB_REAL_W);
 				if ((prot & PROT_EXEC) == 0)
-					data &= ~(SUN4U_TLB_EXEC);
+					data &= ~(SUN4U_TLB_EXEC | SUN4U_TLB_EXEC_ONLY);
 			}
 			KDASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
@@ -2470,6 +2472,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 				clear |= SUN4U_TLB_EXEC;
 			if (PROT_EXEC == prot)
 				set |= SUN4U_TLB_EXEC_ONLY;
+			else
+				clear |= SUN4U_TLB_EXEC_ONLY;
 		}
 
 		pv = pa_to_pvh(pa);
