@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.23 2023/01/10 14:19:12 job Exp $ */
+/* $OpenBSD: timeout.c,v 1.24 2023/01/12 14:08:39 jmc Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -55,7 +55,7 @@ static void __dead
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: timeout [-fp] [-k time] [-s sig] duration command"
+	    "usage: timeout [-fp] [-k time] [-s signal] duration command"
 	    " [arg ...]\n");
 	exit(1);
 }

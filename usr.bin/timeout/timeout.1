@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.6 2023/01/10 21:10:37 jmc Exp $
+.\"	$OpenBSD: timeout.1,v 1.7 2023/01/12 14:08:39 jmc Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: January 10 2023 $
+.Dd $Mdocdate: January 12 2023 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nm
 .Op Fl fp
 .Op Fl k Ar time
-.Op Fl s Ar sig
+.Op Fl s Ar signal
 .Ar duration
 .Ar command
 .Op Ar arg ...
@@ -67,8 +67,9 @@ after the first signal was sent.
 Always exit with the same status as
 .Ar command ,
 even if the timeout was reached.
-.It Fl s Ar sig , Fl -signal Ns = Ns Ar sig
-Specify the signal to send on timeout, instead of the default
+.It Fl s Ar signal , Fl -signal Ns = Ns Ar signal
+A non-negative decimal number or symbolic signal name specifying
+the signal to send on timeout, instead of the default
 .Dv SIGTERM .
 .El
 .Sh DURATION FORMAT
