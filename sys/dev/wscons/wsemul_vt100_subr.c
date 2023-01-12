@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.27 2023/01/12 12:28:08 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.28 2023/01/12 12:34:06 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -217,7 +217,7 @@ int
 wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
     struct wsemul_inputstate *instate)
 {
-	int n, help, flags, fgcol, bgcol;
+	int n, m, help, flags, fgcol, bgcol;
 	uint32_t attr, bkgdattr;
 	u_char c;
 	int rc = 0;
@@ -516,6 +516,22 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		n = min(DEF1_ARG(0), COLS_LEFT + 1);
 		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
 		    ERASECOLS(edp->ccol, n, edp->bkgdattr));
+		break;
+	case 'Z': /* CBT */
+		if (edp->ccol == 0)
+			break;
+		for (m = 0; m < DEF1_ARG(0); m++) {
+			if (edp->tabs) {
+				for (n = edp->ccol - 1; n > 0; n--) {
+					if (edp->tabs[n])
+						break;
+				}
+			} else
+				n = (edp->ccol - 1) & ~7;
+			edp->ccol = n;
+			if (n == 0)
+				break;
+		}
 		break;
 	case 'c': /* DA primary */
 		if (ARG(0) == 0)
