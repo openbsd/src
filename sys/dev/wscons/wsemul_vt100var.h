@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.11 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.12 2023/01/12 20:39:37 nicm Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -60,8 +60,10 @@ struct wsemul_vt100_emuldata {
 	u_int scrreg_startrow;
 	u_int scrreg_nrows;
 	char *tabs;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	char *dblwid;
 	int dw;
+#endif
 
 	int chartab0, chartab1;
 	u_int *chartab_G[4];
@@ -107,6 +109,7 @@ struct wsemul_vt100_emuldata {
 #define ROWS_ABOVE	((int)edp->crow - (int)edp->scrreg_startrow)
 #define ROWS_BELOW	((int)(edp->scrreg_startrow + edp->scrreg_nrows) \
 					- (int)edp->crow - 1)
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 #define CHECK_DW do { \
 	if (edp->dblwid && edp->dblwid[edp->crow]) { \
 		edp->dw = 1; \
@@ -116,11 +119,17 @@ struct wsemul_vt100_emuldata {
 		edp->dw = 0; \
 } while (0)
 #define NCOLS		(edp->ncols >> edp->dw)
-#define	COLS_LEFT	(NCOLS - edp->ccol - 1)
 #define COPYCOLS(f, t, n)	(edp->emulcookie, edp->crow, (f) << edp->dw, \
 				 (t) << edp->dw, (n) << edp->dw)
 #define ERASECOLS(f, n, a)	(edp->emulcookie, edp->crow, (f) << edp->dw, \
-				 (n) << edp->dw, a)
+				 (n) << edp->dw, (a))
+#else
+#define CHECK_DW do { } while (0)
+#define NCOLS		(edp->ncols)
+#define COPYCOLS(f, t, n)	(edp->emulcookie, edp->crow, (f), (t), (n))
+#define ERASECOLS(f, n, a)	(edp->emulcookie, edp->crow, (f), (n), (a))
+#endif
+#define	COLS_LEFT	(NCOLS - edp->ccol - 1)
 
 /*
  * response to primary DA request

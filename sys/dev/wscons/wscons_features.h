@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_features.h,v 1.4 2020/09/13 10:05:46 fcambus Exp $ */
+/* $OpenBSD: wscons_features.h,v 1.5 2023/01/12 20:39:37 nicm Exp $ */
 /* public domain */
 
 /*
@@ -22,6 +22,9 @@
  *	defined to disable most of the restartable emulops code (to be used
  *	only if all wsdisplay drivers are compliant, i.e. no udl(4) in the
  *	kernel configuration)
+ * HAVE_DOUBLE_WIDTH_HEIGHT
+ *	defined to enable escape sequences for double width and height
+ *	characters
  */
 
 #ifdef _KERNEL
@@ -33,6 +36,7 @@
 #define	HAVE_JUMP_SCROLL
 #define	HAVE_UTF8_SUPPORT
 #define	HAVE_RESTARTABLE_EMULOPS
+#define	HAVE_DOUBLE_WIDTH_HEIGHT
 #endif
 
 #endif

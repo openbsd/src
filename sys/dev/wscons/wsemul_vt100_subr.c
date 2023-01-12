@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.28 2023/01/12 12:34:06 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.29 2023/01/12 20:39:37 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -68,6 +68,7 @@ wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *edp, int n)
 	    (edp->emulcookie, edp->scrreg_startrow + help, n, edp->bkgdattr));
 	if (rc != 0)
 		return rc;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	if (edp->dblwid) {
 		if (help > 0)
 			memmove(&edp->dblwid[edp->scrreg_startrow],
@@ -75,6 +76,7 @@ wsemul_vt100_scrollup(struct wsemul_vt100_emuldata *edp, int n)
 		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
 	}
 	CHECK_DW;
+#endif
 
 	return 0;
 }
@@ -103,6 +105,7 @@ wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *edp, int n)
 	    (edp->emulcookie, edp->scrreg_startrow, n, edp->bkgdattr));
 	if (rc != 0)
 		return rc;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	if (edp->dblwid) {
 		if (help > 0)
 			memmove(&edp->dblwid[edp->scrreg_startrow + n],
@@ -110,6 +113,7 @@ wsemul_vt100_scrolldown(struct wsemul_vt100_emuldata *edp, int n)
 		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
 	}
 	CHECK_DW;
+#endif
 
 	return 0;
 }
@@ -135,8 +139,10 @@ wsemul_vt100_ed(struct wsemul_vt100_emuldata *edp, int arg)
 			    (edp->emulcookie, edp->crow + 1, n, edp->bkgdattr));
 			if (rc != 0)
 				break;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 			if (edp->dblwid)
 				memset(&edp->dblwid[edp->crow + 1], 0, n);
+#endif
 		}
 		break;
 	case 1: /* beginning to cursor */
@@ -150,18 +156,22 @@ wsemul_vt100_ed(struct wsemul_vt100_emuldata *edp, int arg)
 		    ERASECOLS(0, edp->ccol + 1, edp->bkgdattr));
 		if (rc != 0)
 			break;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 		if (edp->dblwid) {
 			if (edp->crow > 0)
 				memset(&edp->dblwid[0], 0, edp->crow);
 		}
+#endif
 		break;
 	case 2: /* complete display */
 		WSEMULOP(rc, edp, &edp->abortstate, eraserows,
 		    (edp->emulcookie, 0, edp->nrows, edp->bkgdattr));
 		if (rc != 0)
 			break;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 		if (edp->dblwid)
 			memset(&edp->dblwid[0], 0, edp->nrows);
+#endif
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN

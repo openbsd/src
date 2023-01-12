@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.41 2023/01/12 20:13:28 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.42 2023/01/12 20:39:37 nicm Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -187,8 +187,10 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 		edp->kernattr = defattr;
 
 	edp->tabs = NULL;
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	edp->dblwid = NULL;
 	edp->dw = 0;
+#endif
 	edp->dcsarg = 0;
 	edp->isolatin1tab = edp->decgraphtab = edp->dectechtab = NULL;
 	edp->nrctab = NULL;
@@ -217,8 +219,10 @@ wsemul_vt100_attach(int console, const struct wsscreen_descr *type,
 	edp->cbcookie = cbcookie;
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT | M_ZERO);
 	edp->dw = 0;
+#endif
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
 	edp->decgraphtab = malloc(128 * sizeof(u_int), M_DEVBUF, M_NOWAIT);
@@ -238,7 +242,9 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 	*ccolp = edp->ccol;
 #define f(ptr) do { free(ptr, M_DEVBUF, 0); ptr = NULL; } while (0)
 	f(edp->tabs);
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	f(edp->dblwid);
+#endif
 	f(edp->dcsarg);
 	f(edp->isolatin1tab);
 	f(edp->decgraphtab);
@@ -382,9 +388,15 @@ wsemul_vt100_output_normal(struct wsemul_vt100_emuldata *edp,
 		}
 	}
 
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 	WSEMULOP(rc, edp, &edp->abortstate, putchar,
 	    (edp->emulcookie, edp->crow, edp->ccol << edp->dw, dc,
 	     kernel ? edp->kernattr : edp->curattr));
+#else
+	WSEMULOP(rc, edp, &edp->abortstate, putchar,
+	    (edp->emulcookie, edp->crow, edp->ccol, dc,
+	     kernel ? edp->kernattr : edp->curattr));
+#endif
 	if (rc != 0) {
 		/* undo potential sschartab update */
 		edp->sschartab = oldsschartab;
@@ -954,12 +966,13 @@ int
 wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp,
     struct wsemul_inputstate *instate)
 {
-	int i;
 	int rc = 0;
 
 	switch (instate->inchar) {
 	case '5': /*  DECSWL single width, single height */
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 		if (edp->dblwid != NULL && edp->dw != 0) {
+			int i;
 			for (i = 0; i < edp->ncols / 2; i++) {
 				WSEMULOP(rc, edp, &edp->abortstate, copycols,
 				    (edp->emulcookie, edp->crow, 2 * i, i, 1));
@@ -974,11 +987,14 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp,
 			edp->dblwid[edp->crow] = 0;
 			edp->dw = 0;
 		}
+#endif
 		break;
 	case '6': /*  DECDWL double width, single height */
 	case '3': /*  DECDHL double width, double height, top half */
 	case '4': /*  DECDHL double width, double height, bottom half */
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 		if (edp->dblwid != NULL && edp->dw == 0) {
+			int i;
 			for (i = edp->ncols / 2 - 1; i >= 0; i--) {
 				WSEMULOP(rc, edp, &edp->abortstate, copycols,
 				    (edp->emulcookie, edp->crow, i, 2 * i, 1));
@@ -997,6 +1013,7 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp,
 			if (edp->ccol > (edp->ncols >> 1) - 1)
 				edp->ccol = (edp->ncols >> 1) - 1;
 		}
+#endif
 		break;
 	case '8': { /* DECALN */
 		int i, j;
@@ -1113,7 +1130,11 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		if (edp->flags & VTFL_CURSORON) {
 			rc = (*edp->emulops->cursor)
 			    (edp->emulcookie, 0, edp->crow,
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 			     edp->ccol << edp->dw);
+#else
+			     edp->ccol);
+#endif
 			if (rc != 0)
 				return 0;
 		}
@@ -1213,7 +1234,11 @@ wsemul_vt100_output(void *cookie, const u_char *data, u_int count, int kernel)
 		if (edp->flags & VTFL_CURSORON) {
 			rc = (*edp->emulops->cursor)
 			    (edp->emulcookie, 1, edp->crow,
+#ifdef HAVE_DOUBLE_WIDTH_HEIGHT
 			     edp->ccol << edp->dw);
+#else
+			     edp->ccol);
+#endif
 			if (rc != 0) {
 				/*
 				 * Fail the last character output, remembering
