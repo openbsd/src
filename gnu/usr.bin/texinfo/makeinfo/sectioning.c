@@ -1,5 +1,5 @@
 /* sectioning.c -- for @chapter, @section, ..., @contents ...
-   $Id: sectioning.c,v 1.1.1.3 2006/07/17 16:03:48 espie Exp $
+   $Id: sectioning.c,v 1.2 2023/01/12 07:18:25 miod Exp $
 
    Copyright (C) 1999, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
@@ -256,7 +256,7 @@ current_chapter_number (void)
     return xstrdup ("");
   else if (enum_marker == APPENDIX_MAGIC)
     {
-      char s[1];
+      char s[2];
       sprintf (s, "%c", numbers[0] + 64);
       return xstrdup (s);
     }
