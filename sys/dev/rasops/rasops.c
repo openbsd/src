@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.67 2023/01/11 12:47:04 nicm Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.68 2023/01/12 12:28:08 nicm Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -557,7 +557,8 @@ rasops_pack_cattr(void *cookie, int fg, int bg, int flg, uint32_t *attr)
 		bg = swap;
 	}
 
-	if ((flg & WSATTR_HILIT) != 0)
+	/* Bold is only supported for ANSI colors 0 - 7. */
+	if ((flg & WSATTR_HILIT) != 0 && fg < 8)
 		fg += 8;
 
 	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);

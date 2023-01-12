@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.26 2023/01/12 12:23:40 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.27 2023/01/12 12:28:08 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -606,6 +606,18 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 				bgcol = WSCOL_BLACK;
 				if (fgcol == WSCOL_WHITE)
 					flags &= ~WSATTR_WSCOLORS;
+				break;
+			case 90: case 91: case 92: case 93:
+			case 94: case 95: case 96: case 97:
+				/* bright foreground color */
+				flags |= WSATTR_WSCOLORS;
+				fgcol = ARG(n) - 82;
+				break;
+			case 100: case 101: case 102: case 103:
+			case 104: case 105: case 106: case 107:
+				/* bright background color */
+				flags |= WSATTR_WSCOLORS;
+				bgcol = ARG(n) - 92;
 				break;
 			default:
 #ifdef VT100_PRINTUNKNOWN
