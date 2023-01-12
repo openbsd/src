@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.1 2023/01/11 13:55:08 claudio Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.2 2023/01/12 08:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -615,8 +615,15 @@ build_aspath(const uint32_t *asns, uint32_t asncnt, int rev)
 	aspath->len = len;
 	aspath->ascnt = asncnt; /* lie but nothing cares */
 	aspath->source_as = 0;
-	if (len != 0)
+
+	if (len == 0)
+		return aspath;
+
+	if (rev)
+		aspath->source_as = asns[asncnt - 1];
+	else
 		aspath->source_as = asns[0];
+
 	aspath->data[0] = AS_SEQUENCE;
 	aspath->data[1] = asncnt;
 	for (i = 0; i < asncnt; i++) {
