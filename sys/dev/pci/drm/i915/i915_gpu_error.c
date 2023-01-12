@@ -2150,10 +2150,11 @@ __i915_gpu_coredump(struct intel_gt *gt, intel_engine_mask_t engine_mask, u32 du
 	return error;
 }
 
+static DEFINE_MUTEX(capture_mutex);
+
 struct i915_gpu_coredump *
 i915_gpu_coredump(struct intel_gt *gt, intel_engine_mask_t engine_mask, u32 dump_flags)
 {
-	static DEFINE_MUTEX(capture_mutex);
 	int ret = mutex_lock_interruptible(&capture_mutex);
 	struct i915_gpu_coredump *dump;
 
