@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.93 2022/11/08 10:04:31 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.94 2023/01/12 18:49:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -497,6 +497,9 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		ike = input_key_get(key & ~KEYC_EXTENDED);
 	if (ike != NULL) {
 		log_debug("found key 0x%llx: \"%s\"", key, ike->data);
+		if ((key == KEYC_PASTE_START || key == KEYC_PASTE_END) &&
+		    (~s->mode & MODE_BRACKETPASTE))
+			return (0);
 		if ((key & KEYC_META) && (~key & KEYC_IMPLIED_META))
 			input_key_write(__func__, bev, "\033", 1);
 		input_key_write(__func__, bev, ike->data, strlen(ike->data));

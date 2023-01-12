@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1190 2023/01/06 07:09:27 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1191 2023/01/12 18:49:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1811,6 +1811,7 @@ struct client {
 #define CLIENT_CONTROL_WAITEXIT 0x200000000ULL
 #define CLIENT_WINDOWSIZECHANGED 0x400000000ULL
 #define CLIENT_CLIPBOARDBUFFER 0x800000000ULL
+#define CLIENT_BRACKETPASTING 0x1000000000ULL
 #define CLIENT_ALLREDRAWFLAGS		\
 	(CLIENT_REDRAWWINDOW|		\
 	 CLIENT_REDRAWSTATUS|		\
