@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1218 2022/12/23 00:40:58 afresh1 Exp $
+#	$OpenBSD: install.sub,v 1.1219 2023/01/12 15:03:23 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -765,7 +765,7 @@ _ask() {
 	else
 		case $resp in
 		!)	echo "Type 'exit' to return to install."
-			sh
+			ksh
 			_redo=1
 			;;
 		!*)	eval "${resp#?}"
