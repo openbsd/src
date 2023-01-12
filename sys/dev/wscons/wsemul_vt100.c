@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.40 2023/01/09 15:49:36 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.41 2023/01/12 20:13:28 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -236,14 +236,14 @@ wsemul_vt100_detach(void *cookie, u_int *crowp, u_int *ccolp)
 
 	*crowp = edp->crow;
 	*ccolp = edp->ccol;
-#define f(ptr) if (ptr) {free(ptr, M_DEVBUF, 0); ptr = NULL;}
-	f(edp->tabs)
-	f(edp->dblwid)
-	f(edp->dcsarg)
-	f(edp->isolatin1tab)
-	f(edp->decgraphtab)
-	f(edp->dectechtab)
-	f(edp->nrctab)
+#define f(ptr) do { free(ptr, M_DEVBUF, 0); ptr = NULL; } while (0)
+	f(edp->tabs);
+	f(edp->dblwid);
+	f(edp->dcsarg);
+	f(edp->isolatin1tab);
+	f(edp->decgraphtab);
+	f(edp->dectechtab);
+	f(edp->nrctab);
 #undef f
 	if (edp != &wsemul_vt100_console_emuldata)
 		free(edp, M_DEVBUF, sizeof *edp);
