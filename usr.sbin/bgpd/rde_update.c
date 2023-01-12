@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.150 2023/01/11 17:10:26 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.151 2023/01/12 17:35:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -176,9 +176,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		    !(peer->flags & PEERFLAG_EVALUATE_ALL))
 			break;
 
-		rde_filterstate_prep(&state, prefix_aspath(new),
-		    prefix_communities(new), prefix_nexthop(new),
-		    prefix_nhflags(new), prefix_roa_vstate(new));
+		rde_filterstate_prep(&state, new);
 		if (rde_filter(rules, peer, prefix_peer(new), &addr,
 		    prefixlen, &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
@@ -318,9 +316,7 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 		if (!up_test_update(peer, new))
 			continue;
 
-		rde_filterstate_prep(&state, prefix_aspath(new),
-		    prefix_communities(new), prefix_nexthop(new),
-		    prefix_nhflags(new), prefix_roa_vstate(new));
+		rde_filterstate_prep(&state, new);
 		if (rde_filter(rules, peer, prefix_peer(new), &addr,
 		    prefixlen, &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
@@ -428,9 +424,7 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 		if (!up_test_update(peer, new))
 			continue;
 
-		rde_filterstate_prep(&state, prefix_aspath(new),
-		    prefix_communities(new), prefix_nexthop(new),
-		    prefix_nhflags(new), prefix_roa_vstate(new));
+		rde_filterstate_prep(&state, new);
 		if (rde_filter(rules, peer, prefix_peer(new), &addr,
 		    prefixlen, &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
@@ -488,7 +482,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	if (peer->capa.mp[aid] == 0)
 		return;
 
-	rde_filterstate_prep(&state, NULL, NULL, NULL, 0, ROA_NOTFOUND);
+	rde_filterstate_init(&state);
 	asp = &state.aspath;
 	asp->aspath = aspath_get(NULL, 0);
 	asp->origin = ORIGIN_IGP;
@@ -1033,8 +1027,7 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	if (p == NULL)
 		goto done;
 
-	rde_filterstate_prep(&state, prefix_aspath(p), prefix_communities(p),
-	    prefix_nexthop(p), prefix_nhflags(p), prefix_roa_vstate(p));
+	rde_filterstate_prep(&state, p);
 
 	r = up_generate_attr(buf + 2, len - 2, peer, &state, AID_INET);
 	rde_filterstate_clean(&state);
@@ -1172,8 +1165,7 @@ up_dump_mp_reach(u_char *buf, int len, struct rde_peer *peer, uint8_t aid)
 
 	wpos = 4;	/* reserve space for length fields */
 
-	rde_filterstate_prep(&state, prefix_aspath(p), prefix_communities(p),
-	    prefix_nexthop(p), prefix_nhflags(p), prefix_roa_vstate(p));
+	rde_filterstate_prep(&state, p);
 
 	/* write regular path attributes */
 	r = up_generate_attr(buf + wpos, len - wpos, peer, &state, aid);

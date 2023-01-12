@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.130 2023/01/11 17:10:26 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.131 2023/01/12 17:35:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -426,13 +426,19 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 }
 
 void
-rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
+rde_filterstate_init(struct filterstate *state)
+{
+	memset(state, 0, sizeof(*state));
+	path_prep(&state->aspath);
+}
+
+static void
+rde_filterstate_set(struct filterstate *state, struct rde_aspath *asp,
     struct rde_community *communities, struct nexthop *nh, uint8_t nhflags,
     uint8_t vstate)
 {
-	memset(state, 0, sizeof(*state));
+	rde_filterstate_init(state);
 
-	path_prep(&state->aspath);
 	if (asp)
 		path_copy(&state->aspath, asp);
 	if (communities)
@@ -440,6 +446,20 @@ rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
 	state->nexthop = nexthop_ref(nh);
 	state->nhflags = nhflags;
 	state->vstate = vstate;
+}
+
+void
+rde_filterstate_prep(struct filterstate *state, struct prefix *p)
+{
+	rde_filterstate_set(state, prefix_aspath(p), prefix_communities(p),
+	    prefix_nexthop(p), prefix_nhflags(p), prefix_roa_vstate(p));
+}
+
+void
+rde_filterstate_copy(struct filterstate *state, struct filterstate *src)
+{
+	rde_filterstate_set(state, &src->aspath, &src->communities,
+	    src->nexthop, src->nhflags, src->vstate);
 }
 
 void

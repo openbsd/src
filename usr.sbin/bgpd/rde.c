@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.584 2023/01/11 17:10:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.585 2023/01/12 17:35:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -462,8 +462,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			}
 			memcpy(&netconf_s, imsg.data, sizeof(netconf_s));
 			TAILQ_INIT(&netconf_s.attrset);
-			rde_filterstate_prep(&netconf_state, NULL, NULL, NULL,
-			    0, 0);
+			rde_filterstate_init(&netconf_state);
 			asp = &netconf_state.aspath;
 			asp->aspath = aspath_get(NULL, 0);
 			asp->origin = ORIGIN_IGP;
@@ -802,7 +801,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		case IMSG_NETWORK_DONE:
 			TAILQ_CONCAT(&netconf_p.attrset, &parent_set, entry);
 
-			rde_filterstate_prep(&state, NULL, NULL, NULL, 0, 0);
+			rde_filterstate_init(&state);
 			asp = &state.aspath;
 			asp->aspath = aspath_get(NULL, 0);
 			asp->origin = ORIGIN_IGP;
@@ -1235,7 +1234,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	}
 
 	memset(&mpa, 0, sizeof(mpa));
-	rde_filterstate_prep(&state, NULL, NULL, NULL, 0, 0);
+	rde_filterstate_init(&state);
 	if (attrpath_len != 0) { /* 0 = no NLRI information in this message */
 		/* parse path attributes */
 		while (len > 0) {
@@ -1696,8 +1695,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 		struct rib *rib = rib_byid(i);
 		if (rib == NULL)
 			continue;
-		rde_filterstate_prep(&state, &in->aspath, &in->communities,
-		    in->nexthop, in->nhflags, in->vstate);
+		rde_filterstate_copy(&state, in);
 		/* input filter */
 		action = rde_filter(rib->in_rules, peer, peer, prefix,
 		    prefixlen, &state);
@@ -3774,9 +3772,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			if (rib->state != RECONF_RELOAD)
 				continue;
 
-			rde_filterstate_prep(&state, asp, prefix_communities(p),
-			    prefix_nexthop(p), prefix_nhflags(p),
-			    prefix_roa_vstate(p));
+			rde_filterstate_prep(&state, p);
 			action = rde_filter(rib->in_rules, peer, peer, &prefix,
 			    pt->prefixlen, &state);
 
@@ -3915,9 +3911,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 			if (rib == NULL)
 				continue;
 
-			rde_filterstate_prep(&state, asp, prefix_communities(p),
-			    prefix_nexthop(p), prefix_nhflags(p),
-			    prefix_roa_vstate(p));
+			rde_filterstate_prep(&state, p);
 			action = rde_filter(rib->in_rules, peer, peer, &prefix,
 			    pt->prefixlen, &state);
 
