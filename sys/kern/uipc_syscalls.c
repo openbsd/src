@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.207 2022/12/07 01:02:28 deraadt Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.208 2023/01/12 10:59:36 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1271,9 +1271,9 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 		valsize = 0;
 	m = m_get(M_WAIT, MT_SOOPTS);
 	so = fp->f_data;
-	solock_shared(so);
+	solock(so);
 	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), m);
-	sounlock_shared(so);
+	sounlock(so);
 	if (error == 0 && SCARG(uap, val) && valsize && m != NULL) {
 		if (valsize > m->m_len)
 			valsize = m->m_len;
