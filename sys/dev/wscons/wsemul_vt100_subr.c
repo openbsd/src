@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.25 2023/01/09 07:48:12 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.26 2023/01/12 12:23:40 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -461,6 +461,10 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		edp->ccol -= min(DEF1_ARG(0), edp->ccol);
 		edp->flags &= ~VTFL_LASTCHAR;
 		break;
+	case 'G': /* CHA */
+	case '`': /* HPA */
+		edp->ccol = min(DEF1_ARG(0), edp->ncols) - 1;
+		break;
 	case 'H': /* CUP */
 	case 'f': /* HVP */
 		if (edp->flags & VTFL_DECOM)
@@ -502,6 +506,12 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
 		    ERASECOLS(NCOLS - n, n, edp->bkgdattr));
 		break;
+	case 'S': /* SU scroll up */
+		wsemul_vt100_scrollup(edp, DEF1_ARG(0));
+		break;
+	case 'T': /* SD scroll down */
+		wsemul_vt100_scrolldown(edp, DEF1_ARG(0));
+		break;
 	case 'X': /* ECH erase character */
 		n = min(DEF1_ARG(0), COLS_LEFT + 1);
 		WSEMULOP(rc, edp, &edp->abortstate, erasecols,
@@ -511,6 +521,9 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		if (ARG(0) == 0)
 			wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID1,
 			    sizeof(WSEMUL_VT_ID1) - 1);
+		break;
+	case 'd': /* VPA */
+		edp->crow = min(DEF1_ARG(0), edp->nrows) - 1;
 		break;
 	case 'g': /* TBC */
 		if (edp->tabs != NULL)
