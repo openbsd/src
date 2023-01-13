@@ -67,7 +67,7 @@ $inp="%i2";
 $len="%i3";
 
 $code.=<<___;
-.section	".text",#alloc,#execinstr
+.section	".rodata",#alloc
 
 .align	64
 rem_4bit:
@@ -78,18 +78,30 @@ rem_4bit:
 .type	rem_4bit,#object
 .size	rem_4bit,(.-rem_4bit)
 
+.section	".text",#alloc,#execinstr
 .globl	gcm_ghash_4bit
 .align	32
 gcm_ghash_4bit:
 	save	%sp,-$frame,%sp
+#ifdef __PIC__
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), $tmp
+	rd	%pc, $rem
+	or	$tmp, %lo(_GLOBAL_OFFSET_TABLE_+4), $tmp
+	add	$tmp, $rem, $tmp
+#endif
+
 	ldub	[$inp+15],$nlo
 	ldub	[$Xi+15],$xi0
 	ldub	[$Xi+14],$xi1
 	add	$len,$inp,$len
 	add	$Htbl,8,$Htblo
 
-1:	call	.+8
-	add	%o7,rem_4bit-1b,$rem_4bit
+#ifdef __PIC__
+	set	rem_4bit, $rem_4bit
+	ldx	[$rem_4bit+$tmp], $rem_4bit
+#else
+	set	rem_4bit, $rem_4bit
+#endif
 
 .Louter:
 	xor	$xi0,$nlo,$nlo
@@ -223,11 +235,22 @@ $code.=<<___;
 .align	32
 gcm_gmult_4bit:
 	save	%sp,-$frame,%sp
+#ifdef __PIC__
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), $tmp
+	rd	%pc, $rem
+	or	$tmp, %lo(_GLOBAL_OFFSET_TABLE_+4), $tmp
+	add	$tmp, $rem, $tmp
+#endif
+
 	ldub	[$Xi+15],$nlo
 	add	$Htbl,8,$Htblo
 
-1:	call	.+8
-	add	%o7,rem_4bit-1b,$rem_4bit
+#ifdef __PIC__
+	set	rem_4bit, $rem_4bit
+	ldx	[$rem_4bit+$tmp], $rem_4bit
+#else
+	set	rem_4bit, $rem_4bit
+#endif
 
 	and	$nlo,0xf0,$nhi
 	and	$nlo,0x0f,$nlo
@@ -321,8 +344,6 @@ gcm_gmult_4bit:
 	restore
 .type	gcm_gmult_4bit,#function
 .size	gcm_gmult_4bit,(.-gcm_gmult_4bit)
-.asciz	"GHASH for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
-.align	4
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

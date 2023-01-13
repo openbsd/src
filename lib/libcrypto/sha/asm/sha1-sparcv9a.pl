@@ -396,7 +396,7 @@ ___
 }
 
 $code.=<<___;
-.section	".text",#alloc,#execinstr
+.section	".rodata",#alloc
 
 .align	64
 vis_const:
@@ -409,13 +409,22 @@ vis_const:
 .type	vis_const,#object
 .size	vis_const,(.-vis_const)
 
+.section	".text",#alloc,#execinstr
 .globl	sha1_block_data_order
 sha1_block_data_order:
 	save	%sp,-$frame,%sp
 	add	%fp,$bias-256,$base
 
-1:	call	.+8
-	add	%o7,vis_const-1b,$tmp0
+#ifdef __PIC__
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %o5
+	rd	%pc, %o4
+	or	%o5, %lo(_GLOBAL_OFFSET_TABLE_+4), %o5
+	add	%o5, %o4, %o5
+	set	vis_const, %o4
+	ldx	[%o4+%o5], %o4
+#else
+	set	vis_const, %o4
+#endif
 
 	ldd	[$tmp0+0],$VK_00_19
 	ldd	[$tmp0+8],$VK_20_39
@@ -538,8 +547,6 @@ $code.=<<___;
 	restore
 .type	sha1_block_data_order,#function
 .size	sha1_block_data_order,(.-sha1_block_data_order)
-.asciz	"SHA1 block transform for SPARCv9a, CRYPTOGAMS by <appro\@openssl.org>"
-.align	4
 ___
 
 # Purpose of these subroutines is to explicitly encode VIS instructions,

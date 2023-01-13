@@ -386,7 +386,7 @@ $code.=<<___ if ($bits==64);
 .register	%g3,#scratch
 ___
 $code.=<<___;
-.section	".text",#alloc,#execinstr
+.section	".rodata",#alloc
 
 .align	64
 K${label}:
@@ -457,9 +457,17 @@ ___
 }
 $code.=<<___;
 .size	K${label},.-K${label}
+
+.section	".text",#alloc,#execinstr
 .globl	sha${label}_block_data_order
 sha${label}_block_data_order:
 	save	%sp,`-$frame-$locals`,%sp
+#ifdef __PIC__
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %o5
+	rd	%pc, %o4
+	or	%o5, %lo(_GLOBAL_OFFSET_TABLE_+4), %o5
+	add	%o5, %o4, %o5
+#endif
 	and	$inp,`$align-1`,$tmp31
 	sllx	$len,`log(16*$SZ)/log(2)`,$len
 	andn	$inp,`$align-1`,$inp
@@ -471,8 +479,12 @@ $code.=<<___ if ($SZ==8); # SHA512
 	sub	$tmp32,$tmp31,$tmp32
 ___
 $code.=<<___;
-.Lpic:	call	.+8
-	add	%o7,K${label}-.Lpic,$Ktbl
+#ifdef __PIC__
+	set	K${label}, $Ktbl
+	ldx	[$Ktbl+%o5], $Ktbl
+#else
+	set	K${label}, $Ktbl
+#endif
 
 	$LD	[$ctx+`0*$SZ`],$A
 	$LD	[$ctx+`1*$SZ`],$B
@@ -585,8 +597,6 @@ $code.=<<___;
 	restore
 .type	sha${label}_block_data_order,#function
 .size	sha${label}_block_data_order,(.-sha${label}_block_data_order)
-.asciz	"SHA${label} block transform for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
-.align	4
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
