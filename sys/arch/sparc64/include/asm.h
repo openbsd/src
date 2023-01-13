@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.17 2022/12/08 01:25:45 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.18 2023/01/13 17:53:30 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -62,17 +62,8 @@
 	rd %pc, tmp; \
 	or dest,%lo(_GLOBAL_OFFSET_TABLE_+4),dest; \
 	add dest,tmp,dest
-
-/*
- * PICCY_SET() does the equivalent of a `set var, %dest' instruction in
- * a PIC-like way, but without involving the Global Offset Table. This
- * only works for VARs defined in the same file *and* in the text segment.
- */
-#define PICCY_SET(var,dest,tmp) \
-	3: rd %pc, tmp; add tmp,(var-3b),dest
 #else
 #define PIC_PROLOGUE(dest,tmp)
-#define PICCY_OFFSET(var,dest,tmp)
 #endif
 
 #define FTYPE(x)		.type x,@function
@@ -97,8 +88,6 @@
 #define	ASENTRY(name)		_ENTRY(name); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
 #define	END(y)			.size y, . - y
-#define RODATA(name)		.align 4; .text; .globl name; \
-				OTYPE(name); name:
 
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\
