@@ -26,4 +26,9 @@ acpi_video_backlight_use_native(void)
 	return true;
 }
 
+static inline void
+acpi_video_report_nolcd(void)
+{
+}
+
 #endif
