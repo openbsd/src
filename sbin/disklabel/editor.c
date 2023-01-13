@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.386 2023/01/05 00:19:53 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.387 2023/01/13 14:24:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -179,7 +179,7 @@ int	alignpartition(struct disklabel *, int, u_int64_t, u_int64_t, int);
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
 static int expert;
-static int overlap;
+static int resizeok;
 
 /*
  * Simple partition editor.
@@ -399,7 +399,7 @@ editor(int f)
 			break;
 
 		case 'R':
-			if (aflag && !overlap)
+			if (aflag && resizeok)
 				editor_resize(&newlab, arg);
 			else
 				fputs("Resize only implemented for auto "
@@ -532,7 +532,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct space_allocation *ap;
 	struct partition *pp;
 	const struct diskchunk *chunk;
-	u_int64_t chunkstart, chunkstop, chunksize;
+	u_int64_t chunkstart, chunksize, start, stop;
 	u_int64_t cylsecs, secs, xtrasecs;
 	char **partmp;
 	int i, lastalloc, index, partno, freeparts;
@@ -541,23 +541,16 @@ editor_allocspace(struct disklabel *lp_org)
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp_org);
 
-	overlap = 0;
+	resizeok = 1;
 	freeparts = 0;
 	for (i = 0;  i < MAXPARTITIONS; i++) {
-		u_int64_t psz, pstart, pend;
-
+		if (i == RAW_PART)
+			continue;
 		pp = &lp_org->d_partitions[i];
-		psz = DL_GETPSIZE(pp);
-		if (psz == 0)
+		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED)
 			freeparts++;
-		pstart = DL_GETPOFFSET(pp);
-		pend = pstart + psz;
-		if (i != RAW_PART && psz != 0 &&
-		    ((pstart >= starting_sector && pstart < ending_sector) ||
-		    (pend > starting_sector && pend <= ending_sector))) {
-			overlap = 1;
-			break;
-		}
+		else
+			resizeok = 0;
 	}
 
 	cylsecs = lp_org->d_secpercyl;
@@ -626,19 +619,21 @@ again:
 		chunk = free_chunks(lp, -1);
 		chunksize = 0;
 		for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
-			if ((chunk->stop - chunk->start) > chunksize) {
-				chunkstart = chunk->start;
-				chunkstop = chunk->stop;
+			start = chunk->start;
+			stop = chunk->stop;
 #ifdef SUN_CYLCHECK
-				if (lp->d_flags & D_VENDOR) {
-					/* Align to cylinder boundaries. */
-					chunkstart = ((chunkstart + cylsecs - 1)
-					    / cylsecs) * cylsecs;
-					chunkstop = (chunkstop / cylsecs) *
-					    cylsecs;
-				}
+			if (lp->d_flags & D_VENDOR) {
+				/* Align to cylinder boundaries. */
+				start = ((start + cylsecs - 1) / cylsecs) *
+				    cylsecs;
+				stop = (stop / cylsecs) * cylsecs;
+				if (start > stop)
+					start = stop;
+			}
 #endif
-				chunksize = chunkstop - chunkstart;
+			if (stop - start > chunksize) {
+				chunkstart = start;
+				chunksize = stop - start;
 			}
 		}
 
