@@ -159,13 +159,9 @@ ___
 
 $code=<<___;
 	.LEVEL	$LEVEL
-#if 0
-	.SPACE	\$TEXT\$
-	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
-#else
 	.text
-#endif
 
+	.section .rodata
 	.ALIGN	64
 L\$table
 ___
@@ -230,6 +226,7 @@ $code.=<<___ if ($SZ==4);
 	.WORD	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 ___
 $code.=<<___;
+	.previous
 
 	.EXPORT	$func,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
 	.ALIGN	64
@@ -262,11 +259,13 @@ $func
 	$PUSH	$inp,`-$FRAME_MARKER-3*$SIZE_T`(%sp)
 	$PUSH	$ctx,`-$FRAME_MARKER-2*$SIZE_T`(%sp)
 
-	blr	%r0,$Tbl
-	ldi	3,$t1
-L\$pic
-	andcm	$Tbl,$t1,$Tbl		; wipe privilege level
-	ldo	L\$table-L\$pic($Tbl),$Tbl
+#ifdef __PIC__
+	addil	LT'L\$table, %r19
+	ldw	RT'L\$table(%r1), $Tbl
+#else
+	ldil	L'L\$table, %t1
+	ldo	R'L\$table(%t1), $Tbl
+#endif
 ___
 $code.=<<___ if ($SZ==8 && $SIZE_T==4);
 #ifndef __OpenBSD__
@@ -692,9 +691,6 @@ $code.=<<___;
 	.EXIT
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
-
-	.data
-	.STRINGZ "SHA`64*$SZ` block transform for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 # Explicitly encode PA-RISC 2.0 instructions used in this module, so

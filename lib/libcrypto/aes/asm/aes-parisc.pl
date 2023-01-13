@@ -64,12 +64,7 @@ $rounds="%r29";
 
 $code=<<___;
 	.LEVEL	$LEVEL
-#if 0
-	.SPACE	\$TEXT\$
-	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
-#else
 	.text
-#endif
 
 	.EXPORT	AES_encrypt,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
 	.ALIGN	64
@@ -95,11 +90,14 @@ AES_encrypt
 	$PUSH	%r17,`-$FRAME+14*$SIZE_T`(%sp)
 	$PUSH	%r18,`-$FRAME+15*$SIZE_T`(%sp)
 
-	blr	%r0,$tbl
 	ldi	3,$t0
-L\$enc_pic
-	andcm	$tbl,$t0,$tbl
-	ldo	L\$AES_Te-L\$enc_pic($tbl),$tbl
+#ifdef __PIC__
+	addil	LT'L\$AES_Te, %r19
+	ldw	RT'L\$AES_Te(%r1), $tbl
+#else
+	ldil	L'L\$AES_Te, %t1
+	ldo	R'L\$AES_Te(%t1), $tbl
+#endif
 
 	and	$inp,$t0,$t0
 	sub	$inp,$t0,$inp
@@ -439,6 +437,7 @@ L\$enc_last
 		xor	$acc15,$s3,$s3
 	.PROCEND
 
+	.section .rodata
 	.ALIGN	64
 L\$AES_Te
 	.WORD	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d
@@ -537,6 +536,7 @@ L\$AES_Te
 	.BYTE	0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf
 	.BYTE	0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68
 	.BYTE	0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+	.previous
 ___
 
 $code.=<<___;
@@ -564,11 +564,14 @@ AES_decrypt
 	$PUSH	%r17,`-$FRAME+14*$SIZE_T`(%sp)
 	$PUSH	%r18,`-$FRAME+15*$SIZE_T`(%sp)
 
-	blr	%r0,$tbl
 	ldi	3,$t0
-L\$dec_pic
-	andcm	$tbl,$t0,$tbl
-	ldo	L\$AES_Td-L\$dec_pic($tbl),$tbl
+#ifdef __PIC__
+	addil	LT'L\$AES_Td, %r19
+	ldw	RT'L\$AES_Td(%r1), $tbl
+#else
+	ldil	L'L\$AES_Td, %t1
+	ldo	R'L\$AES_Td(%t1), $tbl
+#endif
 
 	and	$inp,$t0,$t0
 	sub	$inp,$t0,$inp
@@ -908,6 +911,7 @@ L\$dec_last
 		xor	$acc15,$s3,$s3
 	.PROCEND
 
+	.section .rodata
 	.ALIGN	64
 L\$AES_Td
 	.WORD	0x51f4a750, 0x7e416553, 0x1a17a4c3, 0x3a275e96
@@ -1006,9 +1010,7 @@ L\$AES_Td
 	.BYTE	0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61
 	.BYTE	0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26
 	.BYTE	0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d
-
-	.data
-	.STRINGZ "AES for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
+	.previous
 ___
 
 foreach (split("\n",$code)) {

@@ -137,12 +137,7 @@ ___
 
 $code=<<___;
 	.LEVEL	$LEVEL
-#if 0
-	.SPACE	\$TEXT\$
-	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
-#else
 	.text
-#endif
 
 	.EXPORT	RC4,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR,ARGW3=GR
 RC4
@@ -297,20 +292,22 @@ RC4_options
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
-	blr	%r0,%r28
-	ldi	3,%r1
-L\$pic
-	andcm	%r28,%r1,%r28
+#ifdef __PIC__
+	addil	LT'L\$opts, %r19
+	ldw	RT'L\$opts(%r1), %r28
+#else
+	ldil	L'L\$opts, %t1
+	ldo	R'L\$opts(%t1), %r28
+#endif
 	bv	(%r2)
 	.EXIT
-	ldo	L\$opts-L\$pic(%r28),%r28
+	nop
 	.PROCEND
 
-	.data
+	.section .rodata
 	.ALIGN	8
 L\$opts
 	.STRINGZ "rc4(4x,`$SZ==1?"char":"int"`)"
-	.STRINGZ "RC4 for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/cmpib,\*/comib,/gm	if ($SIZE_T==4);

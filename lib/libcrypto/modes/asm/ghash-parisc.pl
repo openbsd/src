@@ -81,12 +81,7 @@ $rem2="%r6";	# used in PA-RISC 2.0 code
 
 $code.=<<___;
 	.LEVEL	$LEVEL
-#if 0
-	.SPACE	\$TEXT\$
-	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
-#else
 	.text
-#endif
 
 	.EXPORT	gcm_gmult_4bit,ENTRY,ARGW0=GR,ARGW1=GR
 	.ALIGN	64
@@ -108,12 +103,14 @@ $code.=<<___ if ($SIZE_T==4);
 	$PUSH	%r11,`-$FRAME+8*$SIZE_T`(%sp)
 ___
 $code.=<<___;
-	blr	%r0,$rem_4bit
-	ldi	3,$rem
-L\$pic_gmult
-	andcm	$rem_4bit,$rem,$rem_4bit
 	addl	$inp,$len,$len
-	ldo	L\$rem_4bit-L\$pic_gmult($rem_4bit),$rem_4bit
+#ifdef __PIC__
+	addil	LT'L\$rem_4bit, %r19
+	ldw	RT'L\$rem_4bit(%r1), $rem_4bit
+#else
+	ldil	L'L\$rem_4bit, %t1
+	ldo	R'L\$rem_4bit(%t1), $rem_4bit
+#endif
 	ldi	0xf0,$mask0xf0
 ___
 $code.=<<___ if ($SIZE_T==4);
@@ -363,12 +360,14 @@ $code.=<<___ if ($SIZE_T==4);
 	$PUSH	%r11,`-$FRAME+8*$SIZE_T`(%sp)
 ___
 $code.=<<___;
-	blr	%r0,$rem_4bit
-	ldi	3,$rem
-L\$pic_ghash
-	andcm	$rem_4bit,$rem,$rem_4bit
 	addl	$inp,$len,$len
-	ldo	L\$rem_4bit-L\$pic_ghash($rem_4bit),$rem_4bit
+#ifdef __PIC__
+	addil	LT'L\$rem_4bit, %r19
+	ldw	RT'L\$rem_4bit(%r1), $rem_4bit
+#else
+	ldil	L'L\$rem_4bit, %t1
+	ldo	R'L\$rem_4bit(%t1), $rem_4bit
+#endif
 	ldi	0xf0,$mask0xf0
 ___
 $code.=<<___ if ($SIZE_T==4);
@@ -619,15 +618,15 @@ $code.=<<___;
 	$POPMB	-$FRAME(%sp),%r3
 	.PROCEND
 
+	.section .rodata
 	.ALIGN	64
 L\$rem_4bit
 	.WORD	`0x0000<<16`,0,`0x1C20<<16`,0,`0x3840<<16`,0,`0x2460<<16`,0
 	.WORD	`0x7080<<16`,0,`0x6CA0<<16`,0,`0x48C0<<16`,0,`0x54E0<<16`,0
 	.WORD	`0xE100<<16`,0,`0xFD20<<16`,0,`0xD940<<16`,0,`0xC560<<16`,0
 	.WORD	`0x9180<<16`,0,`0x8DA0<<16`,0,`0xA9C0<<16`,0,`0xB5E0<<16`,0
+	.previous
 
-	.data
-	.STRINGZ "GHASH for PA-RISC, GRYPTOGAMS by <appro\@openssl.org>"
 	.ALIGN	64
 ___
 
