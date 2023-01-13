@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.178 2022/12/21 07:16:03 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.179 2023/01/13 23:02:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -982,6 +982,9 @@ int	coredump_note_elf(struct proc *, void *, size_t *);
 int	coredump_writenote_elf(struct proc *, void *, Elf_Note *,
 	    const char *, void *);
 
+extern vaddr_t sigcode_va;
+extern vsize_t sigcode_sz;
+
 int
 coredump_elf(struct proc *p, void *cookie)
 {
@@ -1038,8 +1041,18 @@ coredump_elf(struct proc *p, void *cookie)
 			    (long long) pent->p_filesz);
 #endif
 
-		error = coredump_write(cookie, UIO_USERSPACE,
-		    (void *)(vaddr_t)pent->p_vaddr, pent->p_filesz);
+		/*
+		 * Since the sigcode is mapped execute-only, we can't
+		 * read it.  So use the kernel mapping for it instead.
+		 */
+		if (pent->p_vaddr == p->p_p->ps_sigcode &&
+		    pent->p_filesz == sigcode_sz) {
+			error = coredump_write(cookie, UIO_SYSSPACE,
+			    (void *)sigcode_va, sigcode_sz);
+		} else {
+			error = coredump_write(cookie, UIO_USERSPACE,
+			    (void *)(vaddr_t)pent->p_vaddr, pent->p_filesz);
+		}
 		if (error)
 			goto out;
 

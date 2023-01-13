@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.242 2023/01/07 05:24:58 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.243 2023/01/13 23:02:43 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -66,6 +66,8 @@
 #include <sys/timetc.h>
 
 struct uvm_object *sigobject;		/* shared sigcode object */
+vaddr_t sigcode_va;
+vsize_t sigcode_sz;
 struct uvm_object *timekeep_object;
 struct timekeep *timekeep;
 
@@ -855,7 +857,11 @@ exec_sigcode_map(struct process *pr)
 			left -= chunk;
 		}
 		memcpy((caddr_t)va, sigcode, sz);
-		uvm_unmap(kernel_map, va, va + round_page(sz));
+
+		(void) uvm_map_protect(kernel_map, va, round_page(sz),
+		    PROT_READ, 0, FALSE, FALSE);
+		sigcode_va = va;
+		sigcode_sz = round_page(sz);
 	}
 
 	pr->ps_sigcode = 0; /* no hint */
