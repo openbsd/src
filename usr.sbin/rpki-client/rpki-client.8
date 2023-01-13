@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.82 2022/12/15 12:02:29 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.83 2023/01/13 08:58:36 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2022 $
+.Dd $Mdocdate: January 13 2023 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd RPKI validator to support BGP routing security
 .Sh SYNOPSIS
 .Nm
-.Op Fl BcjmnoRrVv
+.Op Fl ABcjmnoRrVv
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
@@ -62,6 +62,8 @@ in various formats.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Exclude the aspa-set in the OpenBGPD specific output file.
 .It Fl B
 Create output in the files
 .Pa bird1v4 ,

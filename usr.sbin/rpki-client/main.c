@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.230 2023/01/06 16:06:43 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.231 2023/01/13 08:58:36 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -67,6 +67,7 @@ const char	*bird_tablename = "ROAS";
 
 int	verbose;
 int	noop;
+int	excludeaspa;
 int	filemode;
 int	shortlistmode;
 int	rrdpon = 1;
@@ -942,8 +943,11 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fH:jmnorRs:S:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnorRs:S:t:T:vV")) != -1)
 		switch (c) {
+		case 'A':
+			excludeaspa = 1;
+			break;
 		case 'b':
 			bind_addr = optarg;
 			break;
@@ -1423,7 +1427,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-BcjmnoRrVv] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-ABcjmnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-H fqdn] [-S skiplist] [-s timeout] [-T table]"
 	    " [-t tal]\n"

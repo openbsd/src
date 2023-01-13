@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.166 2023/01/04 14:22:43 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.167 2023/01/13 08:58:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -356,9 +356,8 @@ struct aspa {
  */
 struct vap {
 	RB_ENTRY(vap)		 entry;
-	enum afi		 afi;
 	uint32_t		 custasid;
-	uint32_t		*providers;
+	struct aspa_provider	*providers;
 	size_t			 providersz;
 	time_t			 expires;
 };
@@ -503,9 +502,9 @@ enum stype {
 	STYPE_TOTAL,
 	STYPE_UNIQUE,
 	STYPE_DEC_UNIQUE,
+	STYPE_BOTH,
 	STYPE_ONLY_IPV4,
 	STYPE_ONLY_IPV6,
-	STYPE_BOTH,
 };
 
 struct repo;
@@ -568,6 +567,7 @@ struct msgbuf;
 /* global variables */
 extern int verbose;
 extern int filemode;
+extern int excludeaspa;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.10 2022/12/15 12:02:29 claudio Exp $ */
+/*	$OpenBSD: aspa.c,v 1.11 2023/01/13 08:58:36 claudio Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -328,120 +328,80 @@ aspa_read(struct ibuf *b)
 }
 
 /*
- * draft-ietf-sidrops-8210bis section 5.12 states:
- *
- *     "The router MUST see at most one ASPA for a given AFI from a cache for
- *      a particular Customer ASID active at any time. As a number of conditions
- *      in the global RPKI may present multiple valid ASPA RPKI records for a
- *      single customer to a particular RP cache, this places a burden on the
- *      cache to form the union of multiple ASPA records it has received from
- *      the global RPKI into one RPKI-To-Router (RTR) ASPA PDU."
- *
- * The above described 'burden' (which is specific to RTR) is resolved in
- * insert_vap() and aspa_insert_vaps() functions below.
- *
- * XXX: for bgpd(8), ASPA config injection (via /var/db/rpki-client/openbgpd)
- * we probably want to undo the 'burden solving' and compress into implicit
- * AFIs.
+ * Insert a new aspa_provider at index idx in the struct vap v.
+ * All elements in the provider array from idx are moved up by one
+ * to make space for the new element.
  */
-
-/*
- * If the CustomerASID (CAS) showed up before, append the ProviderAS (PAS);
- * otherwise create a new entry in the RB tree.
- * Ensure there are no duplicates in the 'providers' array.
- * Always compare 'expires': use the soonest expiration moment.
- */
-static int
-insert_vap(struct vap_tree *tree, uint32_t cas, uint32_t pas, time_t expires,
-    enum afi afi, struct repo *rp)
+static void
+insert_vap(struct vap *v, uint32_t idx, struct aspa_provider *p)
 {
-	struct vap	*v, *found;
-	size_t		 i;
-
-	if ((v = malloc(sizeof(*v))) == NULL)
-		err(1, NULL);
-	v->afi = afi;
-	v->custasid = cas;
-	v->expires = expires;
-
-	if ((found = RB_INSERT(vap_tree, tree, v)) == NULL) {
-		if ((v->providers = malloc(sizeof(uint32_t))) == NULL)
-			err(1, NULL);
-
-		v->providers[0] = pas;
-		v->providersz = 1;
-
-		repo_stat_inc(rp, RTYPE_ASPA, STYPE_UNIQUE);
-		return 1;
-	}
-
-	free(v);
-
-	if (found->expires > expires)
-		found->expires = expires;
-
-	for (i = 0; i < found->providersz; i++) {
-		if (found->providers[i] == pas)
-			return 0;
-	}
-
-	found->providers = reallocarray(found->providers,
-	    found->providersz + 1, sizeof(uint32_t));
-	if (found->providers == NULL)
-		err(1, NULL);
-	found->providers[found->providersz++] = pas;
-	return 1;
+	if (idx < v->providersz)
+		memmove(v->providers + idx + 1, v->providers + idx,
+		    (v->providersz - idx) * sizeof(*v->providers));
+	v->providers[idx] = *p;
+	v->providersz++;
 }
 
 /*
  * Add each ProviderAS entry into the Validated ASPA Providers (VAP) tree.
- * Updates "vaps" to be the total number of VAPs, and "uniqs" to be the
- * pre-'AFI explosion' deduplicated count.
+ * Duplicated entries are merged.
  */
 void
 aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 {
-	size_t		 i;
-	uint32_t	 cas, pas;
-	time_t		 expires;
-	int		 new;
-
-	cas = aspa->custasid;
-	expires = aspa->expires;
+	struct vap	*v, *found;
+	size_t		 i, j;
 
 	repo_stat_inc(rp, RTYPE_ASPA, STYPE_TOTAL);
 
-	for (i = 0; i < aspa->providersz; i++) {
-		pas = aspa->providers[i].as;
+	if ((v = calloc(1, sizeof(*v))) == NULL)
+		err(1, NULL);
+	v->custasid = aspa->custasid;
+	v->expires = aspa->expires;
 
-		switch (aspa->providers[i].afi) {
-		case AFI_IPV4:
-			if (insert_vap(tree, cas, pas, expires, AFI_IPV4, rp))
-				repo_stat_inc(rp, RTYPE_ASPA, STYPE_ONLY_IPV4);
-			break;
-		case AFI_IPV6:
-			if (insert_vap(tree, cas, pas, expires, AFI_IPV6, rp))
-				repo_stat_inc(rp, RTYPE_ASPA, STYPE_ONLY_IPV6);
-			break;
-		default:
-			new = insert_vap(tree, cas, pas, expires, AFI_IPV4, rp);
-			new += insert_vap(tree, cas, pas, expires, AFI_IPV6,
-			    rp);
-			if (new != 0)
-				repo_stat_inc(rp, RTYPE_ASPA, STYPE_BOTH);
-			break;
+	if ((found = RB_INSERT(vap_tree, tree, v)) != NULL) {
+		if (found->expires > v->expires)
+			found->expires = v->expires;
+		free(v);
+		v = found;
+	} else
+		repo_stat_inc(rp, RTYPE_ASPA, STYPE_UNIQUE);
+
+	v->providers = reallocarray(v->providers,
+	    v->providersz + aspa->providersz, sizeof(*v->providers));
+	if (v->providers == NULL)
+		err(1, NULL);
+
+	/*
+	 * Merge all data from aspa into v: loop over all aspa providers,
+	 * insert them in the right place in v->providers while keeping the
+	 * order of the providers array.
+	 */
+	for (i = 0, j = 0; i < aspa->providersz; ) {
+		if (j == v->providersz ||
+		    aspa->providers[i].as < v->providers[j].as) {
+			/* merge provider from aspa into v */
+			repo_stat_inc(rp, RTYPE_ASPA,
+			    STYPE_BOTH + aspa->providers[i].afi);
+			insert_vap(v, j, &aspa->providers[i]);
+			i++;
+		} else if (aspa->providers[i].as == v->providers[j].as) {
+			/* duplicate provider, merge afi */
+			if (v->providers[j].afi != aspa->providers[i].afi) {
+				repo_stat_inc(rp, RTYPE_ASPA,
+				    STYPE_BOTH + aspa->providers[i].afi);
+				v->providers[j].afi = 0;
+			}
+			i++;
 		}
+		if (j < v->providersz)
+			j++;
 	}
 }
 
 static inline int
 vapcmp(struct vap *a, struct vap *b)
 {
-	if (a->afi > b->afi)
-		return 1;
-	if (a->afi < b->afi)
-		return -1;
-
 	if (a->custasid > b->custasid)
 		return 1;
 	if (a->custasid < b->custasid)
