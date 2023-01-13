@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.S,v 1.6 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: modf.S,v 1.7 2023/01/13 17:52:08 miod Exp $	*/
 /*	$NetBSD: modf.S,v 1.3 2000/11/01 23:32:41 eeh Exp $	*/
 
 /*
@@ -76,6 +76,7 @@
  *	%f6:f7		double temp.
  */
 
+	.section .rodata
 	.align	8
 Lmagic:
 	.word	0x43300000	! sign = 0, exponent = 52 + 1023, mantissa = 0
@@ -85,8 +86,12 @@ L0:
 	.word	0		! 0.0
 	.word	0
 
+	.text
 ENTRY(modf)
 	save	%sp, -CC64FSZ-16, %sp
+#ifdef __PIC__
+	PIC_PROLOGUE(%o5, %o4)
+#endif
 
 	/*
 	 * First, compute v = abs(val)
@@ -94,7 +99,8 @@ ENTRY(modf)
 	fabsd	%f0, %f4		! %f4:f5 = v
 	fcmped	%fcc1, %f0, %f4		! %fcc1 = (val == abs(val))
 #ifdef __PIC__
-	PICCY_SET(Lmagic, %l0, %o7)
+	set	Lmagic, %o4
+	ldx	[%o5 + %o4], %l0
 	ldd	[%l0], %f2
 #else
 	sethi	%hi(Lmagic), %l0
@@ -168,7 +174,8 @@ Lbig:
 	 * fractional part is 0.
 	 */
 #ifdef __PIC__
-	PICCY_SET(L0, %l0, %o7)
+	set	L0, %o4
+	ldx	[%o5 + %o4], %l0
 	std	%f0, [%i1]		! *ival = val;
 	ldd	[%l0], %f0		! return 0.0;
 #else

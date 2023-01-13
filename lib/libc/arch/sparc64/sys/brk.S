@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.11 2023/01/13 17:52:08 miod Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ __minbrk:
 
 ENTRY_NB(brk)
 #ifdef __PIC__
-	PIC_PROLOGUE(%o5,%o4)
+	PIC_PROLOGUE(%o5, %o4)
 	set	__minbrk, %o4
 	ldx	[%o5 + %o4], %o4
 	ldx	[%o4], %o1		/* %o1 = minbrk */

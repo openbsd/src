@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.S,v 1.9 2022/12/08 01:25:43 guenther Exp $	*/
+/*	$OpenBSD: ffs.S,v 1.10 2023/01/13 17:52:08 miod Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,9 @@
  */
 ENTRY(ffs)
 #ifdef __PIC__
-	PICCY_SET(__ffstab, %o2, %o3)
+	PIC_PROLOGUE(%o5, %o4)
+	set	__ffstab, %o4
+	ldx	[%o5 + %o4], %o2
 #else
 	set	__ffstab, %o2
 #endif
@@ -86,6 +88,7 @@ ENTRY(ffs)
 END(ffs)
 .protected ffs
 
+	.section .rodata
 __ffstab:
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */

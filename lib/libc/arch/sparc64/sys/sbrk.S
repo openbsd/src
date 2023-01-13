@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.8 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.9 2023/01/13 17:52:08 miod Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.7 2000/07/25 15:14:46 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ __curbrk:
 
 ENTRY_NB(sbrk)
 #ifdef __PIC__
-	PIC_PROLOGUE(%o5,%o4)
+	PIC_PROLOGUE(%o5, %o4)
 	set	__curbrk, %o3
 	ldx	[%o5 + %o3], %o2
 	ldx	[%o2], %o3			/* %o3 = old break */

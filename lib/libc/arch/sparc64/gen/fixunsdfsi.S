@@ -1,4 +1,4 @@
-/*	$OpenBSD: fixunsdfsi.S,v 1.4 2012/08/22 17:19:35 pascal Exp $	*/
+/*	$OpenBSD: fixunsdfsi.S,v 1.5 2023/01/13 17:52:08 miod Exp $	*/
 /*	$NetBSD: fixunsdfsi.S,v 1.3 2000/07/25 04:26:12 mycroft Exp $	*/
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
  * that it really matters, by using `fbul,a'.
  */
 
+	.section .rodata
 	.align	8
 Lbigd:
 	.word	0x43e00000		! .double 2^63
@@ -55,11 +56,14 @@ Lbigf:
  *unsigned long __dtoul(double):
  *	double -> unsigned long
  */
+	.text
 ENTRY(__dtoul)
 	sub	%sp, 16, %sp
 	std	%f2, [%sp + 64 + BIAS + 8]
 #ifdef __PIC__
-	PICCY_SET(Lbigd, %g1, %o0)
+	PIC_PROLOGUE(%o5, %o4)
+	set	Lbigd, %o4
+	ldx	[%o5 + %o4], %g1
 	ldd	[%g1], %f2
 #else
 	sethi	%hi(Lbigd), %g1
@@ -101,7 +105,9 @@ ENTRY(__ftoul)
 	st	%f1, [%sp + 64 + BIAS + 8]
 	st	%f2, [%sp + 64 + BIAS + 12]
 #ifdef __PIC__
-	PICCY_SET(Lbigf, %g1, %o0)
+	PIC_PROLOGUE(%o5, %o4)
+	set	Lbigf, %o4
+	ldx	[%o5 + %o4], %g1
 	ld	[%g1], %f2
 #else
 	sethi	%hi(Lbigf), %g1
