@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.100 2022/10/22 20:09:41 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.101 2023/01/13 03:22:18 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -78,6 +78,7 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
+#include <sys/clockintr.h>
 #include <sys/sched.h>
 #include <sys/srp.h>
 
@@ -129,7 +130,7 @@ struct cpu_info {
 	int			ci_want_resched;
 	int			ci_handled_intr_level;
 	void			*ci_intrpending[16][8];
-	u_int64_t		ci_tick;
+	struct clockintr_queue	ci_queue;
 	struct intrhand		ci_tickintr;
 
 	volatile int		ci_ddb_paused;
