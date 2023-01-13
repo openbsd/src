@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.53 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.54 2023/01/13 07:02:16 cheloha Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ const int tlistlen = sizeof(tlist) / sizeof(tlist[0]);
 
 static time_t offset, shuttime;
 static int dofast, dohalt, doreboot, dopower, dodump, mbuflen, nosync;
-static sig_atomic_t killflg, timed_out;
+static volatile sig_atomic_t killflg, timed_out;
 static char *whom, mbuf[BUFSIZ];
 
 void badtime(void);
