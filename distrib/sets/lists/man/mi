@@ -2477,6 +2477,7 @@
 ./usr/share/man/man8/lpc.8
 ./usr/share/man/man8/lpd.8
 ./usr/share/man/man8/luna88k/MAKEDEV.8
+./usr/share/man/man8/luna88k/boot.8
 ./usr/share/man/man8/luna88k/boot_luna88k.8
 ./usr/share/man/man8/macppc/MAKEDEV.8
 ./usr/share/man/man8/macppc/boot.8
