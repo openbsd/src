@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.334 2022/12/26 23:50:20 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.335 2023/01/13 14:15:49 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -651,13 +651,13 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	ret = rw_enter(&vmm_softc->sc_slock, RW_READ | RW_INTR);
 	if (ret != 0)
-		return (ret);
+		goto out;
 	while (vmm_softc->sc_status != VMM_ACTIVE) {
 		ret = rwsleep_nsec(&vmm_softc->sc_status, &vmm_softc->sc_slock,
 		    PWAIT | PCATCH, "vmmresume", INFSLP);
 		if (ret != 0) {
 			rw_exit(&vmm_softc->sc_slock);
-			return (ret);
+			goto out;
 		}
 	}
 	refcnt_take(&vmm_softc->sc_refcnt);
@@ -708,7 +708,7 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 	refcnt_rele_wake(&vmm_softc->sc_refcnt);
-
+out:
 	KERNEL_LOCK();
 
 	return (ret);
