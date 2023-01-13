@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.24 2023/01/12 14:08:39 jmc Exp $ */
+/* $OpenBSD: timeout.c,v 1.25 2023/01/13 06:53:04 cheloha Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -46,10 +46,10 @@
 
 #define EXIT_TIMEOUT 124
 
-static sig_atomic_t sig_chld = 0;
-static sig_atomic_t sig_term = 0;
-static sig_atomic_t sig_alrm = 0;
-static sig_atomic_t sig_ign = 0;
+static volatile sig_atomic_t sig_chld = 0;
+static volatile sig_atomic_t sig_term = 0;
+static volatile sig_atomic_t sig_alrm = 0;
+static volatile sig_atomic_t sig_ign = 0;
 
 static void __dead
 usage(void)
