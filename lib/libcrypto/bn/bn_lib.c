@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.71 2023/01/07 16:17:29 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.72 2023/01/14 15:12:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,139 +259,62 @@ bn_correct_top(BIGNUM *a)
 		a->top--;
 }
 
-/* The caller MUST check that words > b->dmax before calling this */
-static BN_ULONG *
-bn_expand_internal(const BIGNUM *b, int words)
-{
-	BN_ULONG *A, *a = NULL;
-	const BN_ULONG *B;
-	int i;
-
-
-	if (words > (INT_MAX/(4*BN_BITS2))) {
-		BNerror(BN_R_BIGNUM_TOO_LONG);
-		return NULL;
-	}
-	if (BN_get_flags(b, BN_FLG_STATIC_DATA)) {
-		BNerror(BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
-		return (NULL);
-	}
-	a = A = reallocarray(NULL, words, sizeof(BN_ULONG));
-	if (A == NULL) {
-		BNerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
-	}
-#if 1
-	B = b->d;
-	/* Check if the previous number needs to be copied */
-	if (B != NULL) {
-		for (i = b->top >> 2; i > 0; i--, A += 4, B += 4) {
-			/*
-			 * The fact that the loop is unrolled
-			 * 4-wise is a tribute to Intel. It's
-			 * the one that doesn't have enough
-			 * registers to accommodate more data.
-			 * I'd unroll it 8-wise otherwise:-)
-			 *
-			 *		<appro@fy.chalmers.se>
-			 */
-			BN_ULONG a0, a1, a2, a3;
-			a0 = B[0];
-			a1 = B[1];
-			a2 = B[2];
-			a3 = B[3];
-			A[0] = a0;
-			A[1] = a1;
-			A[2] = a2;
-			A[3] = a3;
-		}
-		switch (b->top & 3) {
-		case 3:
-			A[2] = B[2];
-		case 2:
-			A[1] = B[1];
-		case 1:
-			A[0] = B[0];
-		}
-	}
-
-#else
-	memset(A, 0, sizeof(BN_ULONG) * words);
-	memcpy(A, b->d, sizeof(b->d[0]) * b->top);
-#endif
-
-	return (a);
-}
-
-/* This is an internal function that should not be used in applications.
- * It ensures that 'b' has enough room for a 'words' word number
- * and initialises any unused part of b->d with leading zeros.
- * It is mostly used by the various BIGNUM routines. If there is an error,
- * NULL is returned. If not, 'b' is returned. */
-
 static int
-bn_expand2(BIGNUM *b, int words)
+bn_expand_internal(BIGNUM *bn, int words)
 {
+	BN_ULONG *d;
 
-	if (words > b->dmax) {
-		BN_ULONG *a = bn_expand_internal(b, words);
-		if (a == NULL)
-			return 0;
-		if (b->d)
-			freezero(b->d, b->dmax * sizeof(b->d[0]));
-		b->d = a;
-		b->dmax = words;
+	if (words < 0) {
+		BNerror(BN_R_BIGNUM_TOO_LONG); // XXX
+		return 0;
 	}
 
-/* None of this should be necessary because of what b->top means! */
-#if 0
-	/* NB: bn_wexpand() calls this only if the BIGNUM really has to grow */
-	if (b->top < b->dmax) {
-		int i;
-		BN_ULONG *A = &(b->d[b->top]);
-		for (i = (b->dmax - b->top) >> 3; i > 0; i--, A += 8) {
-			A[0] = 0;
-			A[1] = 0;
-			A[2] = 0;
-			A[3] = 0;
-			A[4] = 0;
-			A[5] = 0;
-			A[6] = 0;
-			A[7] = 0;
-		}
-		for (i = (b->dmax - b->top)&7; i > 0; i--, A++)
-			A[0] = 0;
-		assert(A == &(b->d[b->dmax]));
+	if (words > INT_MAX / (4 * BN_BITS2)) {
+		BNerror(BN_R_BIGNUM_TOO_LONG);
+		return 0;
 	}
-#endif
+	if (BN_get_flags(bn, BN_FLG_STATIC_DATA)) {
+		BNerror(BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+		return 0;
+	}
+
+	d = recallocarray(bn->d, bn->dmax, words, sizeof(BN_ULONG));
+	if (d == NULL) {
+		BNerror(ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	bn->d = d;
+	bn->dmax = words;
+
 	return 1;
 }
 
 int
-bn_expand(BIGNUM *a, int bits)
+bn_expand(BIGNUM *bn, int bits)
 {
+	int words;
+
 	if (bits < 0)
 		return 0;
 
 	if (bits > (INT_MAX - BN_BITS2 + 1))
 		return 0;
 
-	if (((bits + BN_BITS2 - 1) / BN_BITS2) <= a->dmax)
-		return 1;
+	words = (bits + BN_BITS2 - 1) / BN_BITS2;
 
-	return bn_expand2(a, (bits + BN_BITS2 - 1) / BN_BITS2);
+	return bn_wexpand(bn, words);
 }
 
 int
-bn_wexpand(BIGNUM *a, int words)
+bn_wexpand(BIGNUM *bn, int words)
 {
 	if (words < 0)
 		return 0;
 
-	if (words <= a->dmax)
+	if (words <= bn->dmax)
 		return 1;
 
-	return bn_expand2(a, words);
+	return bn_expand_internal(bn, words);
 }
 
 BIGNUM *
