@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.78 2022/12/23 17:46:49 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.79 2023/01/14 23:38:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1012,6 +1012,12 @@ cpu_boot_secondary(struct cpu_info *ci)
 	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
 	__asm volatile("dsb sy; sev" ::: "memory");
 
+	/*
+	 * Send an interrupt as well to make sure the CPU wakes up
+	 * regardless of whether it is in a WFE or a WFI loop.
+	 */
+	arm_send_ipi(ci, ARM_IPI_NOP);
+
 	while ((ci->ci_flags & CPUF_RUNNING) == 0)
 		__asm volatile("wfe");
 }
@@ -1084,7 +1090,7 @@ cpu_halt(void)
 	    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
 
 	while ((ci->ci_flags & CPUF_GO) == 0) {
-		__asm volatile("wfe");
+		__asm volatile("wfi");
 		count++;
 	}
 
