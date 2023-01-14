@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplaudio.c,v 1.5 2022/12/05 07:30:51 kettenis Exp $	*/
+/*	$OpenBSD: aplaudio.c,v 1.6 2023/01/14 23:35:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -195,8 +195,18 @@ aplaudio_set_tdm_slots(struct aplaudio_softc *sc)
 		dai = sc->sc_dai_codec[i];
 		if (dai == NULL)
 			continue;
-		if (dai->dd_set_tdm_slot)
-			dai->dd_set_tdm_slot(dai->dd_cookie, i % 2);
+		if (dai->dd_set_tdm_slot) {
+			char prefix[8];
+			int slot = 0;
+
+			if (OF_getprop(dai->dd_node, "sound-name-prefix",
+			    prefix, sizeof(prefix)) > 0) {
+				if (strncmp(prefix, "Right", 5) == 0)
+					slot = 1;
+			}
+
+			dai->dd_set_tdm_slot(dai->dd_cookie, slot);
+		}
 	}
 }
 
