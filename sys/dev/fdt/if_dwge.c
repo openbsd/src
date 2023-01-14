@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.13 2021/12/20 04:21:32 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.14 2023/01/14 17:02:57 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -146,6 +146,8 @@
 #define  GMAC_AXI_BUS_MODE_BLEN_16		(1 << 3)
 #define  GMAC_AXI_BUS_MODE_BLEN_8		(1 << 2)
 #define  GMAC_AXI_BUS_MODE_BLEN_4		(1 << 1)
+#define GMAC_HW_FEATURE		0x1058
+#define  GMAC_HW_FEATURE_ENHDESSEL	(1 << 24)
 
 /*
  * DWGE descriptors.
@@ -171,6 +173,11 @@ struct dwge_desc {
 #define TDES0_JT		(1 << 14)
 #define TDES0_IHE		(1 << 16)
 #define TDES0_OWN		(1 << 31)
+
+#define ETDES0_TCH		(1 << 20)
+#define ETDES0_FS		(1 << 28)
+#define ETDES0_LS		(1 << 29)
+#define ETDES0_IC		(1 << 30)
 
 /* Rx status bits */
 #define RDES0_PE		(1 << 0)
@@ -206,6 +213,8 @@ struct dwge_desc {
 #define RDES1_RBS1		(0xfff << 0)
 #define RDES1_RCH		(1 << 24)
 #define RDES1_DIC		(1 << 31)
+
+#define ERDES1_RCH		(1 << 14)
 
 struct dwge_buf {
 	bus_dmamap_t	tb_map;
@@ -243,6 +252,7 @@ struct dwge_softc {
 	int			sc_link;
 	int			sc_phyloc;
 	int			sc_force_thresh_dma_mode;
+	int			sc_enh_desc;
 
 	struct dwge_dmamem	*sc_txring;
 	struct dwge_buf		*sc_txbuf;
@@ -348,6 +358,7 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t axi_config;
 	uint32_t mode, pbl;
 	uint32_t version;
+	uint32_t feature;
 	int node;
 
 	sc->sc_node = faa->fa_node;
@@ -388,6 +399,12 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 
 	version = dwge_read(sc, GMAC_VERSION);
 	printf(": rev 0x%02x", version & GMAC_VERSION_SNPS_MASK);
+
+	if ((version & GMAC_VERSION_SNPS_MASK) > 0x35) {
+		feature = dwge_read(sc, GMAC_HW_FEATURE);
+		if (feature & GMAC_HW_FEATURE_ENHDESSEL)
+			sc->sc_enh_desc = 1;
+	}
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
@@ -934,7 +951,7 @@ dwge_tx_proc(struct dwge_softc *sc)
 		else
 			sc->sc_tx_cons++;
 
-		txd->sd_status = 0;
+		txd->sd_status = sc->sc_enh_desc ? ETDES0_TCH : 0;
 	}
 
 	if (sc->sc_tx_cons == sc->sc_tx_prod)
@@ -1034,6 +1051,10 @@ dwge_up(struct dwge_softc *sc)
 		sc->sc_txdesc[i].sd_next =
 		    DWGE_DMA_DVA(sc->sc_txring) +
 		    ((i+1) % DWGE_NTXDESC) * sizeof(struct dwge_desc);
+		if (sc->sc_enh_desc)
+			sc->sc_txdesc[i].sd_status = ETDES0_TCH;
+		else
+			sc->sc_txdesc[i].sd_len = TDES1_TCH;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, DWGE_DMA_MAP(sc->sc_txring),
@@ -1060,6 +1081,8 @@ dwge_up(struct dwge_softc *sc)
 		sc->sc_rxdesc[i].sd_next =
 		    DWGE_DMA_DVA(sc->sc_rxring) +
 		    ((i+1) % DWGE_NRXDESC) * sizeof(struct dwge_desc);
+		sc->sc_rxdesc[i].sd_len =
+		    sc->sc_enh_desc ? ERDES1_RCH : RDES1_RCH;
 	}
 
 	if_rxr_init(&sc->sc_rx_ring, 2, DWGE_NRXDESC);
@@ -1243,13 +1266,23 @@ dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx, int *used)
 	txd = txd_start = &sc->sc_txdesc[frag];
 	for (i = 0; i < map->dm_nsegs; i++) {
 		txd->sd_addr = map->dm_segs[i].ds_addr;
-		txd->sd_len = map->dm_segs[i].ds_len | TDES1_TCH;
-		if (i == 0)
-			txd->sd_len |= TDES1_FS;
-		if (i == (map->dm_nsegs - 1))
-			txd->sd_len |= TDES1_LS | TDES1_IC;
+		if (sc->sc_enh_desc) {
+			txd->sd_status = ETDES0_TCH;
+			txd->sd_len = map->dm_segs[i].ds_len;
+			if (i == 0)
+				txd->sd_status |= ETDES0_FS;
+			if (i == (map->dm_nsegs - 1))
+				txd->sd_status |= ETDES0_LS | ETDES0_IC;
+		} else {
+			txd->sd_status = 0;
+			txd->sd_len = map->dm_segs[i].ds_len | TDES1_TCH;
+			if (i == 0)
+				txd->sd_len |= TDES1_FS;
+			if (i == (map->dm_nsegs - 1))
+				txd->sd_len |= TDES1_LS | TDES1_IC;
+		}
 		if (i != 0)
-			txd->sd_status = TDES0_OWN;
+			txd->sd_status |= TDES0_OWN;
 
 		bus_dmamap_sync(sc->sc_dmat, DWGE_DMA_MAP(sc->sc_txring),
 		    frag * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
@@ -1265,10 +1298,9 @@ dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx, int *used)
 		KASSERT(frag != sc->sc_tx_cons);
 	}
 
-	txd_start->sd_status = TDES0_OWN;
+	txd_start->sd_status |= TDES0_OWN;
 	bus_dmamap_sync(sc->sc_dmat, DWGE_DMA_MAP(sc->sc_txring),
 	    *idx * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
-
 
 	KASSERT(sc->sc_txbuf[cur].tb_m == NULL);
 	sc->sc_txbuf[*idx].tb_map = sc->sc_txbuf[cur].tb_map;
@@ -1401,7 +1433,8 @@ dwge_fill_rx_ring(struct dwge_softc *sc)
 			break;
 
 		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
-		rxd->sd_len = rxb->tb_map->dm_segs[0].ds_len | RDES1_RCH;
+		rxd->sd_len = rxb->tb_map->dm_segs[0].ds_len;
+		rxd->sd_len |= sc->sc_enh_desc ? ERDES1_RCH : RDES1_RCH;
 		rxd->sd_addr = rxb->tb_map->dm_segs[0].ds_addr;
 		rxd->sd_status = RDES0_OWN;
 
