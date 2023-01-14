@@ -21,6 +21,7 @@
 ./usr/include/amd64/db_machdep.h
 ./usr/include/amd64/disklabel.h
 ./usr/include/amd64/efifbvar.h
+./usr/include/amd64/efivar.h
 ./usr/include/amd64/endian.h
 ./usr/include/amd64/exec.h
 ./usr/include/amd64/fenv.h
@@ -78,6 +79,7 @@
 ./usr/include/amd64/vga_post.h
 ./usr/include/amd64/vmmvar.h
 ./usr/include/amd64/vmparam.h
+./usr/include/dev/efi/efiio.h
 ./usr/include/ieeefp.h
 ./usr/lib/libamd64.a
 ./usr/lib/libamd64_p.a
