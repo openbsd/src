@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.106 2022/10/16 15:03:39 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.107 2023/01/14 12:11:10 kettenis Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -245,9 +245,9 @@ file	arch/amd64/pci/acpipci.c		acpipci
 #
 # EFI
 #
-device	efi
+include "dev/efi/files.efi"
 attach	efi at bios
-file	arch/amd64/amd64/efi_machdep.c		efi needs-flag
+file	arch/amd64/amd64/efi_machdep.c		efi
 
 #
 # VMM

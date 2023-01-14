@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2022/09/02 20:06:55 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.21 2023/01/14 12:11:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -121,6 +121,7 @@ cdev_decl(pci);
 #include "openprom.h"
 #include "gpio.h"
 #include "ipmi.h"
+#include "efi.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -199,7 +200,7 @@ struct cdevsw	cdevsw[] =
 	    wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
 	cdev_openprom_init(NOPENPROM,openprom),	/* 70: /dev/openprom */
-	cdev_notdef(),			/* 71: was: Cyclades-Z serial port */
+	cdev_efi_init(NEFI,efi),	/* 71: EFI */
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),        /* 72: PCI user */
 #else

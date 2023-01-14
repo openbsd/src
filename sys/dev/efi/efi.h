@@ -1,4 +1,4 @@
-/* $OpenBSD: efi.h,v 1.3 2022/10/18 10:17:56 kettenis Exp $ */
+/* $OpenBSD: efi.h,v 1.4 2023/01/14 12:11:11 kettenis Exp $ */
 
 /* Public Domain */
 
@@ -9,6 +9,12 @@
 #define EFIAPI		__attribute__((ms_abi))
 #else
 #define EFIAPI
+#endif
+
+#ifdef __LP64__
+#define EFIERR(x)	(0x8000000000000000 | (x))
+#else
+#define EFIERR(x)	(0x80000000 | (x))
 #endif
 
 typedef uint8_t		UINT8;
@@ -46,6 +52,10 @@ typedef struct {
 #define SMBIOS3_TABLE_GUID \
   { 0xf2fd1544, 0x9794, 0x4a2c, \
     { 0x99, 0x2e, 0xe5, 0xbb, 0xcf, 0x20, 0xe3, 0x94 } }
+
+#define EFI_SYSTEM_RESOURCE_TABLE_GUID \
+  { 0xb122a263, 0x3661, 0x4f68, \
+    { 0x99, 0x29, 0x78, 0xf8, 0xb0, 0xd6, 0x21, 0x80 } }
 
 #define EFI_GLOBAL_VARIABLE \
   { 0x8be4df61, 0x93ca, 0x11d2, \
@@ -175,7 +185,33 @@ typedef struct {
 	EFI_CONFIGURATION_TABLE		*ConfigurationTable;
 } EFI_SYSTEM_TABLE;
 
+typedef struct {
+	EFI_GUID			FwClass;
+	UINT32				FwType;
+	UINT32				FwVersion;
+	UINT32				LowestSupportedFwVersion;
+	UINT32				CapsuleFlags;
+	UINT32				LastAttemptVersion;
+	UINT32				LastAttemptStatus;
+} EFI_SYSTEM_RESOURCE_ENTRY;
+
+typedef struct {
+	UINT32				FwResourceCount;
+	UINT32				FwResourceCountMax;
+	UINT64				FwResourceVersion;
+	EFI_SYSTEM_RESOURCE_ENTRY	Entries[];
+} EFI_SYSTEM_RESOURCE_TABLE;
+
 #define EFI_SUCCESS	0
+
+#define EFI_INVALID_PARAMETER	EFIERR(2)
+#define EFI_UNSUPPORTED		EFIERR(3)
+#define EFI_BUFFER_TOO_SMALL	EFIERR(5)
+#define EFI_DEVICE_ERROR	EFIERR(7)
+#define EFI_WRITE_PROTECTED	EFIERR(8)
+#define EFI_OUT_OF_RESOURCES	EFIERR(9)
+#define EFI_NOT_FOUND		EFIERR(14)
+#define EFI_SECURITY_VIOLATION	EFIERR(26)
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 

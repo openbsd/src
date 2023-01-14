@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.76 2022/09/02 20:06:55 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.77 2023/01/14 12:11:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -173,6 +173,7 @@ cdev_decl(pci);
 #include "fuse.h"
 #include "pvbus.h"
 #include "ipmi.h"
+#include "efi.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -272,7 +273,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_acpi_init(NACPI,acpi),	/* 83: ACPI */
-	cdev_notdef(),
+	cdev_efi_init(NEFI,efi),	/* 84: EFI */
 	cdev_nvram_init(NNVRAM,nvram),	/* 85: NVRAM interface */
 	cdev_notdef(),			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */

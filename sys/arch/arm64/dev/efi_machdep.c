@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.5 2022/11/06 11:44:30 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.6 2023/01/14 12:11:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -32,8 +32,7 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/efi/efi.h>
-
-#include <dev/clock_subr.h>
+#include <machine/efivar.h>
 
 /*
  * We need a large address space to allow identity mapping of physical
@@ -50,15 +49,6 @@ extern EFI_MEMORY_DESCRIPTOR *mmap;
 uint64_t efi_acpi_table;
 uint64_t efi_smbios_table;
 
-struct efi_softc {
-	struct device	sc_dev;
-	struct pmap	*sc_pm;
-	EFI_RUNTIME_SERVICES *sc_rs;
-	u_long		sc_psw;
-
-	struct todr_chip_handle sc_todr;
-};
-
 int	efi_match(struct device *, void *, void *);
 void	efi_attach(struct device *, struct device *, void *);
 
@@ -66,20 +56,11 @@ const struct cfattach efi_ca = {
 	sizeof(struct efi_softc), efi_match, efi_attach
 };
 
-struct cfdriver efi_cd = {
-	NULL, "efi", DV_DULL
-};
-
 void	efi_map_runtime(struct efi_softc *);
-void	efi_enter(struct efi_softc *);
-void	efi_leave(struct efi_softc *);
 int	efi_gettime(struct todr_chip_handle *, struct timeval *);
 int	efi_settime(struct todr_chip_handle *, struct timeval *);
 
 label_t efi_jmpbuf;
-
-#define efi_enter_check(sc) (setjmp(&efi_jmpbuf) ? \
-    (efi_leave(sc), EFAULT) : (efi_enter(sc), 0))
 
 int
 efi_match(struct device *parent, void *match, void *aux)

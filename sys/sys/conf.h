@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.160 2022/11/06 13:03:52 dlg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.161 2023/01/14 12:11:11 kettenis Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -481,6 +481,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, (dev_type_mmap((*))) enodev, \
 	0, 0, seltrue_kqfilter }
 
+/* open, close, ioctl */
+#define cdev_efi_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, \
+	(dev_type_mmap((*))) enodev }
+
 /* open, close, ioctl, mmap */
 #define cdev_kcov_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -632,6 +639,7 @@ cdev_decl(amdmsr);
 cdev_decl(fuse);
 cdev_decl(pvbus);
 cdev_decl(ipmi);
+cdev_decl(efi);
 cdev_decl(kcov);
 
 #endif

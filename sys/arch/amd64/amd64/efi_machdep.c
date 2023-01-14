@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.4 2022/11/07 01:41:57 guenther Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.5 2023/01/14 12:11:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
@@ -28,20 +28,9 @@
 extern paddr_t cr3_reuse_pcid;
 
 #include <dev/efi/efi.h>
-
-#include <dev/clock_subr.h>
+#include <machine/efivar.h>
 
 extern EFI_MEMORY_DESCRIPTOR *mmap;
-
-struct efi_softc {
-	struct device	sc_dev;
-	struct pmap	*sc_pm;
-	EFI_RUNTIME_SERVICES *sc_rs;
-	u_long		sc_psw;
-	uint64_t	sc_cr3;
-
-	struct todr_chip_handle sc_todr;
-};
 
 int	efi_match(struct device *, void *, void *);
 void	efi_attach(struct device *, struct device *, void *);
@@ -50,20 +39,11 @@ const struct cfattach efi_ca = {
 	sizeof(struct efi_softc), efi_match, efi_attach
 };
 
-struct cfdriver efi_cd = {
-	NULL, "efi", DV_DULL
-};
-
 void	efi_map_runtime(struct efi_softc *);
-void	efi_enter(struct efi_softc *);
-void	efi_leave(struct efi_softc *);
 int	efi_gettime(struct todr_chip_handle *, struct timeval *);
 int	efi_settime(struct todr_chip_handle *, struct timeval *);
 
 label_t efi_jmpbuf;
-
-#define efi_enter_check(sc) (setjmp(&efi_jmpbuf) ? \
-    (efi_leave(sc), EFAULT) : (efi_enter(sc), 0))
 
 int
 efi_match(struct device *parent, void *match, void *aux)
@@ -123,6 +103,9 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((bios_efiinfo->flags & BEI_64BIT) == 0)
 		return;
+
+	if (bios_efiinfo->flags & BEI_ESRT)
+		sc->sc_esrt = (void *)bios_efiinfo->config_esrt;
 
 	efi_map_runtime(sc);
 
