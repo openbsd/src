@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.112 2022/12/23 19:25:22 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.113 2023/01/14 20:55:55 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -108,6 +108,7 @@ enum imsg_type {
 	IMSG_VMDOP_GET_INFO_VM_DATA,
 	IMSG_VMDOP_GET_INFO_VM_END_DATA,
 	IMSG_VMDOP_LOAD,
+	IMSG_VMDOP_RECEIVE_VMM_FD,
 	IMSG_VMDOP_RELOAD,
 	IMSG_VMDOP_PRIV_IFDESCR,
 	IMSG_VMDOP_PRIV_IFADD,

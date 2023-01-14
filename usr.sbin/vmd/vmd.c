@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.135 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.136 2023/01/14 20:55:55 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -847,8 +847,8 @@ main(int argc, char **argv)
 	proc_priv->p_pw = &proc_privpw; /* initialized to all 0 */
 	proc_priv->p_chroot = ps->ps_pw->pw_dir; /* from VMD_USER */
 
-	/* Open /dev/vmm */
-	if (env->vmd_noaction == 0) {
+	/* Open /dev/vmm early. */
+	if (env->vmd_noaction == 0 && proc_id == PROC_PARENT) {
 		env->vmd_fd = open(VMM_NODE, O_RDWR);
 		if (env->vmd_fd == -1)
 			fatal("%s", VMM_NODE);
@@ -970,6 +970,10 @@ vmd_configure(void)
 		proc_kill(&env->vmd_ps);
 		exit(0);
 	}
+
+	/* Send VMM device fd to vmm proc. */
+	proc_compose_imsg(&env->vmd_ps, PROC_VMM, -1,
+	    IMSG_VMDOP_RECEIVE_VMM_FD, -1, env->vmd_fd, NULL, 0);
 
 	/* Send shared global configuration to all children */
 	if (config_setconfig(env) == -1)
