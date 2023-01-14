@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.118 2022/11/10 09:50:00 krw Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.119 2023/01/14 12:15:12 kettenis Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -533,3 +533,5 @@ __devitem(dt, dt, Dynamic Tracer)dnl
 _mkdev(dt, dt, {-M dt c major_dt_c 0 600-})dnl
 __devitem(kstat, kstat, Kernel Statistics)dnl
 _mkdev(kstat, kstat, {-M kstat c major_kstat_c 0 640-})dnl
+__devitem(efi, efi, EFI runtime services)dnl
+_mkdev(efi, efi, {-M efi c major_efi_c 0 600-})dnl
