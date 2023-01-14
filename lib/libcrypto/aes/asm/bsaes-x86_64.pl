@@ -2882,6 +2882,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
+.rodata
 .type	_bsaes_const,\@object
 .align	64
 _bsaes_const:
@@ -2934,9 +2935,9 @@ _bsaes_const:
 	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
 .L63:
 	.quad	0x6363636363636363, 0x6363636363636363
-.asciz	"Bit-sliced AES for x86_64/SSSE3, Emilia Käsper, Peter Schwabe, Andy Polyakov"
 .align	64
 .size	_bsaes_const,.-_bsaes_const
+.previous
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

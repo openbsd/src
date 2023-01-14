@@ -2113,6 +2113,7 @@ ___
 }
 
 $code.=<<___;
+.rodata
 .align	64
 .LAES_Te:
 ___
@@ -2533,8 +2534,8 @@ ___
 $code.=<<___;
 	.long	0x80808080, 0x80808080, 0xfefefefe, 0xfefefefe
 	.long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
-.asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
+.previous
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

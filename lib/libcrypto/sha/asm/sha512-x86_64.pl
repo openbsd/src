@@ -269,6 +269,7 @@ ___
 
 if ($SZ==4) {
 $code.=<<___;
+.rodata
 .align	64
 .type	$TABLE,\@object
 $TABLE:
@@ -288,9 +289,11 @@ $TABLE:
 	.long	0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3
 	.long	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208
 	.long	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+.previous
 ___
 } else {
 $code.=<<___;
+.rodata
 .align	64
 .type	$TABLE,\@object
 $TABLE:
@@ -334,6 +337,7 @@ $TABLE:
 	.quad	0x3c9ebe0a15c9bebc,0x431d67c49c100d4c
 	.quad	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
 	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
+.previous
 ___
 }
 

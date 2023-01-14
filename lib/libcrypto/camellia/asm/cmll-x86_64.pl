@@ -599,6 +599,7 @@ sub S0222 { my $i=shift; $i=@SBOX[$i]; $i=($i<<1|$i>>7)&0xff; $i=$i<<16|$i<<8|$i
 sub S3033 { my $i=shift; $i=@SBOX[$i]; $i=($i>>1|$i<<7)&0xff; $i=$i<<24|$i<<8|$i; sprintf("0x%08x",$i); }
 
 $code.=<<___;
+.rodata
 .align	64
 .LCamellia_SIGMA:
 .long	0x3bcc908b, 0xa09e667f, 0x4caa73b2, 0xb67ae858
@@ -624,6 +625,7 @@ $_ivp="40(%rsp)";
 $_rsp="48(%rsp)";
 
 $code.=<<___;
+.previous
 .globl	Camellia_cbc_encrypt
 .type	Camellia_cbc_encrypt,\@function,6
 .align	16
@@ -857,8 +859,6 @@ Camellia_cbc_encrypt:
 .Lcbc_abort:
 	ret
 .size	Camellia_cbc_encrypt,.-Camellia_cbc_encrypt
-
-.asciz	"Camellia for x86_64 by <appro\@openssl.org>"
 ___
 }
 

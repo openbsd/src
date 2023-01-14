@@ -964,6 +964,7 @@ _vpaes_preheat:
 ##                     Constants                      ##
 ##                                                    ##
 ########################################################
+.rodata
 .type	_vpaes_consts,\@object
 .align	64
 _vpaes_consts:
@@ -1060,9 +1061,9 @@ _vpaes_consts:
 .Lk_dsbo:	# decryption sbox final output
 	.quad	0x1387EA537EF94000, 0xC7AA6DB9D4943E2D
 	.quad	0x12D7560F93441D00, 0xCA4B8159D8C58E9C
-.asciz	"Vector Permutation AES for x86_64/SSSE3, Mike Hamburg (Stanford University)"
 .align	64
 .size	_vpaes_consts,.-_vpaes_consts
+.previous
 ___
 
 if ($win64) {

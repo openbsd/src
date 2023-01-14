@@ -1071,6 +1071,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
+.rodata
 .align	64
 K_XX_XX:
 .long	0x5a827999,0x5a827999,0x5a827999,0x5a827999	# K_00_19
@@ -1078,10 +1079,10 @@ K_XX_XX:
 .long	0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc	# K_40_59
 .long	0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6	# K_60_79
 .long	0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f	# pbswap mask
+.previous
 ___
 }}}
 $code.=<<___;
-.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
 

@@ -204,6 +204,7 @@ $code.=<<___;
 	ret
 .size	$func,.-$func
 
+.rodata
 .align	64
 .type	$table,\@object
 $table:

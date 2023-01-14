@@ -517,13 +517,14 @@ RC4_options:
 	add	\$12,%rax
 .Ldone:
 	ret
+.rodata
 .align	64
 .Lopts:
 .asciz	"rc4(8x,int)"
 .asciz	"rc4(8x,char)"
 .asciz	"rc4(16x,int)"
-.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
+.previous
 .size	RC4_options,.-RC4_options
 ___
 
