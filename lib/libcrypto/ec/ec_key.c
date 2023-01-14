@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.29 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.30 2023/01/14 15:10:45 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -259,84 +259,93 @@ EC_KEY_generate_key(EC_KEY *eckey)
 int
 ossl_ec_key_gen(EC_KEY *eckey)
 {
-	int ok = 0;
 	BN_CTX *ctx = NULL;
-	BIGNUM *priv_key = NULL, *order = NULL;
+	BIGNUM *priv_key = NULL;
 	EC_POINT *pub_key = NULL;
+	BIGNUM *order;
+	int ret = 0;
 
-	if (!eckey || !eckey->group) {
+	if (eckey == NULL || eckey->group == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
 
-	if ((order = BN_new()) == NULL)
+	if ((priv_key = BN_new()) == NULL)
 		goto err;
+	if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
+		goto err;
+
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if ((priv_key = eckey->priv_key) == NULL) {
-		if ((priv_key = BN_new()) == NULL)
-			goto err;
-	}
+	BN_CTX_start(ctx);
+
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
-
 	if (!bn_rand_interval(priv_key, BN_value_one(), order))
 		goto err;
-
-	if ((pub_key = eckey->pub_key) == NULL) {
-		if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
-			goto err;
-	}
-
 	if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
 		goto err;
 
+	BN_free(eckey->priv_key);
 	eckey->priv_key = priv_key;
-	eckey->pub_key = pub_key;
+	priv_key = NULL;
 
-	ok = 1;
+	EC_POINT_free(eckey->pub_key);
+	eckey->pub_key = pub_key;
+	pub_key = NULL;
+
+	ret = 1;
 
  err:
-	BN_free(order);
-	if (eckey->pub_key == NULL)
-		EC_POINT_free(pub_key);
-	if (eckey->priv_key == NULL)
-		BN_free(priv_key);
+	EC_POINT_free(pub_key);
+	BN_free(priv_key);
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	return (ok);
+
+	return ret;
 }
 
 int
 EC_KEY_check_key(const EC_KEY *eckey)
 {
-	int ok = 0;
 	BN_CTX *ctx = NULL;
-	const BIGNUM *order = NULL;
 	EC_POINT *point = NULL;
+	BIGNUM *order;
+	int ret = 0;
 
-	if (!eckey || !eckey->group || !eckey->pub_key) {
+	if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
+
 	if (EC_POINT_is_at_infinity(eckey->group, eckey->pub_key) > 0) {
 		ECerror(EC_R_POINT_AT_INFINITY);
 		goto err;
 	}
+
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
+
+	BN_CTX_start(ctx);
+
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
 	if ((point = EC_POINT_new(eckey->group)) == NULL)
 		goto err;
 
-	/* testing whether the pub_key is on the elliptic curve */
+	/* Ensure public key is on the elliptic curve. */
 	if (EC_POINT_is_on_curve(eckey->group, eckey->pub_key, ctx) <= 0) {
 		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}
-	/* testing whether pub_key * order is the point at infinity */
-	order = &eckey->group->order;
-	if (BN_is_zero(order)) {
+
+	/* Ensure public key multiplied by the order is the point at infinity. */
+	if (!EC_GROUP_get_order(eckey->group, order, ctx)) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
@@ -348,84 +357,90 @@ EC_KEY_check_key(const EC_KEY *eckey)
 		ECerror(EC_R_WRONG_ORDER);
 		goto err;
 	}
+
 	/*
-	 * in case the priv_key is present : check if generator * priv_key ==
-	 * pub_key
+	 * If the private key is present, ensure that the private key multiplied
+	 * by the generator matches the public key.
 	 */
-	if (eckey->priv_key) {
+	if (eckey->priv_key != NULL) {
 		if (BN_cmp(eckey->priv_key, order) >= 0) {
 			ECerror(EC_R_WRONG_ORDER);
 			goto err;
 		}
-		if (!EC_POINT_mul(eckey->group, point, eckey->priv_key,
-			NULL, NULL, ctx)) {
+		if (!EC_POINT_mul(eckey->group, point, eckey->priv_key, NULL,
+		    NULL, ctx)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		if (EC_POINT_cmp(eckey->group, point, eckey->pub_key,
-			ctx) != 0) {
+		    ctx) != 0) {
 			ECerror(EC_R_INVALID_PRIVATE_KEY);
 			goto err;
 		}
 	}
-	ok = 1;
+
+	ret = 1;
+
  err:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
-	return (ok);
+
+	return ret;
 }
 
 int
 EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 {
 	BN_CTX *ctx = NULL;
-	BIGNUM *tx, *ty;
 	EC_POINT *point = NULL;
-	int ok = 0;
+	BIGNUM *tx, *ty;
+	int ret = 0;
 
-	if (!key || !key->group || !x || !y) {
+	if (key == NULL || key->group == NULL || x == NULL || y == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
-	ctx = BN_CTX_new();
-	if (!ctx)
+
+	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	point = EC_POINT_new(key->group);
-
-	if (!point)
-		goto err;
+	BN_CTX_start(ctx);
 
 	if ((tx = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((ty = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
+	if ((point = EC_POINT_new(key->group)) == NULL)
+		goto err;
+
 	if (!EC_POINT_set_affine_coordinates(key->group, point, x, y, ctx))
 		goto err;
 	if (!EC_POINT_get_affine_coordinates(key->group, point, tx, ty, ctx))
 		goto err;
+
 	/*
 	 * Check if retrieved coordinates match originals: if not values are
 	 * out of range.
 	 */
-	if (BN_cmp(x, tx) || BN_cmp(y, ty)) {
+	if (BN_cmp(x, tx) != 0 || BN_cmp(y, ty) != 0) {
 		ECerror(EC_R_COORDINATES_OUT_OF_RANGE);
 		goto err;
 	}
 	if (!EC_KEY_set_public_key(key, point))
 		goto err;
-
 	if (EC_KEY_check_key(key) == 0)
 		goto err;
 
-	ok = 1;
+	ret = 1;
 
  err:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
-	return ok;
 
+	return ret;
 }
 
 const EC_GROUP *
@@ -457,9 +472,12 @@ EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 	if (key->meth->set_private != NULL &&
 	    key->meth->set_private(key, priv_key) == 0)
 		return 0;
-	BN_clear_free(key->priv_key);
-	key->priv_key = BN_dup(priv_key);
-	return (key->priv_key == NULL) ? 0 : 1;
+
+	BN_free(key->priv_key);
+	if ((key->priv_key = BN_dup(priv_key)) == NULL)
+		return 0;
+
+	return 1;
 }
 
 const EC_POINT *
@@ -474,9 +492,12 @@ EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 	if (key->meth->set_public != NULL &&
 	    key->meth->set_public(key, pub_key) == 0)
 		return 0;
+
 	EC_POINT_free(key->pub_key);
-	key->pub_key = EC_POINT_dup(pub_key, key->group);
-	return (key->pub_key == NULL) ? 0 : 1;
+	if ((key->pub_key = EC_POINT_dup(pub_key, key->group)) == NULL)
+		return 0;
+
+	return 1;
 }
 
 unsigned int
