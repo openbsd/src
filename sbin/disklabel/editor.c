@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.387 2023/01/13 14:24:17 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.388 2023/01/14 18:21:46 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -214,10 +214,10 @@ editor(int f)
 
 	/* If we don't have a 'c' partition, create one. */
 	pp = &newlab.d_partitions[RAW_PART];
-	if (newlab.d_npartitions < 3 || DL_GETPSIZE(pp) == 0) {
+	if (newlab.d_npartitions <= RAW_PART || DL_GETPSIZE(pp) == 0) {
 		puts("No 'c' partition found, adding one that spans the disk.");
-		if (newlab.d_npartitions < 3)
-			newlab.d_npartitions = 3;
+		if (newlab.d_npartitions <= RAW_PART)
+			newlab.d_npartitions = RAW_PART + 1;
 		DL_SETPOFFSET(pp, 0);
 		DL_SETPSIZE(pp, DL_GETDSIZE(&newlab));
 		pp->p_fstype = FS_UNUSED;
