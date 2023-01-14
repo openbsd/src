@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.96 2023/01/10 01:09:14 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.97 2023/01/14 03:21:17 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -82,9 +82,13 @@
 #define	CR4_FSGSBASE	0x00010000	/* enable {RD,WR}{FS,GS}BASE ops */
 #define	CR4_PCIDE	0x00020000	/* enable process-context IDs */
 #define	CR4_OSXSAVE	0x00040000	/* enable XSAVE and extended states */
+#define	CR4_KL		0x00080000	/* enable AES Key Locker */
 #define	CR4_SMEP	0x00100000	/* supervisor mode exec protection */
 #define	CR4_SMAP	0x00200000	/* supervisor mode access prevention */
-#define CR4_PKE		0x00400000	/* protection key enable */
+#define	CR4_PKE		0x00400000	/* user-mode protection keys */
+#define	CR4_CET		0x00800000	/* control-flow enforcement tech */
+#define	CR4_PKS		0x01000000	/* supervisor-mode protection keys */
+#define	CR4_UINTR	0x02000000	/* user interrupts enable bit */
 
 /*
  * Extended Control Register XCR0
@@ -92,6 +96,14 @@
 #define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
 #define	XCR0_SSE	0x00000002	/* SSE state */
 #define	XCR0_AVX	0x00000004	/* AVX state */
+#define	XCR0_BNDREG	0x00000008	/* MPX state */
+#define	XCR0_BNDCSR	0x00000010	/* MPX state */
+#define	XCR0_OPMASK	0x00000020	/* AVX-512 opmask */
+#define	XCR0_ZMM_HI256	0x00000040	/* AVX-512 ZMM0-7 */
+#define	XCR0_HI16_ZMM	0x00000080	/* AVX-512 ZMM16-31 */
+#define	XCR0_PKRU	0x00000200	/* user page key */
+#define	XCR0_TILECFG	0x00020000	/* AMX state */
+#define	XCR0_TILEDATA	0x00040000	/* AMX state */
 
 /*
  * CPUID "features" bits (CPUID function 0x1):
