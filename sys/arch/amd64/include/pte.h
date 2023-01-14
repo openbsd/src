@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.14 2018/01/07 19:56:19 mlarkin Exp $	*/
+/*	$OpenBSD: pte.h,v 1.15 2023/01/14 03:37:13 jsg Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PGEX_W		0x02	/* exception during a write cycle */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
 #define PGEX_I		0x10	/* instruction fetch blocked by NX */
+#define PGEX_PK		0x20	/* protection-key violation */
 
 #ifdef _KERNEL
 extern pt_entry_t pg_nx;	/* NX pte bit */
