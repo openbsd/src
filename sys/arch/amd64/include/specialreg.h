@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.97 2023/01/14 03:21:17 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.98 2023/01/14 03:28:51 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -214,6 +214,7 @@
 #define SEFF0ECX_UMIP		0x00000004 /* UMIP support */
 #define SEFF0ECX_PKU		0x00000008 /* Page prot keys for user mode */
 #define SEFF0ECX_WAITPKG	0x00000010 /* UMONITOR/UMWAIT/TPAUSE insns */
+#define SEFF0ECX_PKS		0x80000000 /* Page prot keys for sup mode */
 /* SEFF EDX bits */
 #define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
 #define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
@@ -500,6 +501,7 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+#define MSR_PKRS		0x6e1
 
 /* VIA MSR */
 #define MSR_CENT_TMTEMPERATURE	0x1423	/* Thermal monitor temperature */
