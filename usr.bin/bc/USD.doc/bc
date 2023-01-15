@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.9 2004/07/09 10:23:05 jmc Exp $
+.\"	$OpenBSD: bc,v 1.10 2023/01/15 06:55:12 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -1029,7 +1029,7 @@ to the named expression on the left.
 .PP
 The result of the above expressions is equivalent
 to ``named expression = named expression OP expression'',
-where OP is the operator after the = sign.
+where OP is the operator before the = sign.
 .NH 1
 Relations
 .PP
