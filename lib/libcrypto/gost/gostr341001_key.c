@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.10 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.11 2023/01/15 13:58:44 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -193,6 +193,8 @@ GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 	if (ctx == NULL)
 		goto err;
 
+	BN_CTX_start(ctx);
+
 	point = EC_POINT_new(key->group);
 	if (point == NULL)
 		goto err;
@@ -225,6 +227,7 @@ GOST_KEY_set_public_key_affine_coordinates(GOST_KEY *key, BIGNUM *x, BIGNUM *y)
 
 err:
 	EC_POINT_free(point);
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	return ok;
 
