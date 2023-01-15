@@ -79,7 +79,6 @@
 ./usr/include/amd64/vga_post.h
 ./usr/include/amd64/vmmvar.h
 ./usr/include/amd64/vmparam.h
-./usr/include/dev/efi/efiio.h
 ./usr/include/ieeefp.h
 ./usr/lib/libamd64.a
 ./usr/lib/libamd64_p.a

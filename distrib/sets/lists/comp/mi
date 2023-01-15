@@ -134,6 +134,7 @@
 ./usr/include/dev/dt/dtvar.h
 ./usr/include/dev/efi
 ./usr/include/dev/efi/efi.h
+./usr/include/dev/efi/efiio.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/eisadevs.h
 ./usr/include/dev/eisa/eisadevs_data.h
