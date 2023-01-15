@@ -391,11 +391,7 @@ static int drm_client_buffer_addfb(struct drm_client_buffer *buffer,
 	/* drop the reference we picked up in framebuffer lookup */
 	drm_framebuffer_put(buffer->fb);
 
-#ifdef __linux__
 	strscpy(buffer->fb->comm, client->name, TASK_COMM_LEN);
-#else
-	strlcpy(buffer->fb->comm, client->name, TASK_COMM_LEN);
-#endif
 
 	return 0;
 }
