@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.43 2022/08/07 23:56:06 guenther Exp $
+#	$OpenBSD: genassym.cf,v 1.44 2023/01/16 00:05:18 deraadt Exp $
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
 include <sys/param.h>
@@ -160,6 +160,9 @@ export	PG_N
 export	PG_NX
 export	PG_G
 export	PG_PS
+
+# PKE value for key1 to be exec-only 
+export	PGK_VALUE
 
 # pmap constants
 export	PDIR_SLOT_PTE
