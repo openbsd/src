@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.159 2022/11/02 07:20:07 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.160 2023/01/16 05:32:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -765,7 +765,7 @@ syscall(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
-	int retq, code, argsize, argoff, error;
+	int retq, code, argsize, argoff, error, indirect = -1;
 	register_t args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int oldcpl = curcpu()->ci_cpl;
@@ -781,6 +781,7 @@ syscall(struct trapframe *frame)
 	argoff = 4; retq = 0;
 	switch (code = frame->tf_t1) {
 	case SYS_syscall:
+		indirect = code;
 		code = frame->tf_arg0;
 		args[0] = frame->tf_arg1;
 		args[1] = frame->tf_arg2;
@@ -793,6 +794,7 @@ syscall(struct trapframe *frame)
 		 * due to the args being laid backwards on the stack
 		 * and then copied in words
 		 */
+		indirect = code;
 		code = frame->tf_arg0;
 		args[0] = frame->tf_arg2;
 		args[1] = frame->tf_arg3;
@@ -862,7 +864,7 @@ syscall(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = frame->tf_ret1;
 
-	error = mi_syscall(p, code, callp, args, rval);
+	error = mi_syscall(p, code, indirect, callp, args, rval);
 
 	switch (error) {
 	case 0:

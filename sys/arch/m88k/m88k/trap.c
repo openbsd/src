@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.124 2023/01/09 11:18:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.125 2023/01/16 05:32:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1155,7 +1155,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	int i, nap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
-	int error;
+	int error, indirect = -1;
 	register_t args[8] __aligned(8);
 	register_t rval[2] __aligned(8);
 	register_t *ap;
@@ -1176,10 +1176,12 @@ m88100_syscall(register_t code, struct trapframe *tf)
 
 	switch (code) {
 	case SYS_syscall:
+		indirect = code;
 		code = *ap++;
 		nap--;
 		break;
 	case SYS___syscall:
+		indirect = code;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;
 		nap -= 2;
@@ -1206,7 +1208,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	rval[0] = 0;
 	rval[1] = tf->tf_r[3];
 
-	error = mi_syscall(p, code, callp, args, rval);
+	error = mi_syscall(p, code, indirect, callp, args, rval);
 
 	/*
 	 * system call will look like:

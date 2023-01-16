@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.164 2023/01/11 03:19:52 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.165 2023/01/16 05:32:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -397,7 +397,7 @@ fault_common_no_miss:
 	    {
 		struct trapframe *locr0 = p->p_md.md_regs;
 		const struct sysent *callp;
-		unsigned int code;
+		unsigned int code, indirect = -1;
 		register_t tpc;
 		uint32_t branch = 0;
 		int error, numarg;
@@ -433,6 +433,7 @@ fault_common_no_miss:
 			 * proper alignment of 64-bit arguments on 32-bit
 			 * platforms, which doesn't change anything here.
 			 */
+			indirect = code;
 			code = locr0->a0;
 			if (code >= SYS_MAXSYSCALL)
 				callp += SYS_syscall;
@@ -480,7 +481,7 @@ fault_common_no_miss:
 		    TRAPSIZE : trppos[ci->ci_cpuid]) - 1].code = code;
 #endif
 
-		error = mi_syscall(p, code, callp, args.i, rval);
+		error = mi_syscall(p, code, indirect, callp, args.i, rval);
 
 		switch (error) {
 		case 0:

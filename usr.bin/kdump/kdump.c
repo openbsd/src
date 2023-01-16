@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.154 2023/01/07 05:26:40 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.155 2023/01/16 05:32:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -908,7 +908,7 @@ static void
 ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 {
 	register_t *ap;
-	int narg;
+	int narg, code;
 	char sep;
 
 	if (ktr->ktr_argsize > ktrlen)
@@ -918,14 +918,19 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 	narg = ktr->ktr_argsize / sizeof(register_t);
 	sep = '\0';
 
-	if (ktr->ktr_code >= SYS_MAXSYSCALL || ktr->ktr_code < 0)
-		(void)printf("[%d]", ktr->ktr_code);
+	if (ktr->ktr_code & KTRC_CODE_SYSCALL)
+		(void)printf("(via syscall) ");
+	else if (ktr->ktr_code & KTRC_CODE__SYSCALL)
+		(void)printf("(via __syscall) ");
+	code = ktr->ktr_code & KTRC_CODE_MASK;
+	if (code >= SYS_MAXSYSCALL || code < 0)
+		(void)printf("[%d]", code);
 	else
-		(void)printf("%s", syscallnames[ktr->ktr_code]);
+		(void)printf("%s", syscallnames[code]);
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	(void)putchar('(');
 
-	if (ktr->ktr_code == SYS_sysctl && fancy) {
+	if (code == SYS_sysctl && fancy) {
 		const char *s;
 		int n, i, *top;
 
@@ -954,8 +959,8 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 		sep = ',';
 		ap += 2;
 		narg -= 2;
-	} else if (ktr->ktr_code < nitems(scargs)) {
-		const formatter *fmts = scargs[ktr->ktr_code];
+	} else if (code < nitems(scargs)) {
+		const formatter *fmts = scargs[code];
 		int fmt;
 		int arg = 0;
 

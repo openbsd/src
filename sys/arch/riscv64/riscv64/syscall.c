@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.13 2022/11/02 07:20:08 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.14 2023/01/16 05:32:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -42,7 +42,7 @@ svc_handler(trapframe_t *frame)
 {
 	struct proc *p = curproc;
 	const struct sysent *callp;
-	int code, error;
+	int code, error, indirect = -1;
 	u_int nap = 8, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
@@ -57,10 +57,8 @@ svc_handler(trapframe_t *frame)
 
 	switch (code) {
 	case SYS_syscall:
-		code = *ap++;
-		nap--;
-		break;
 	case SYS___syscall:
+		indirect = code;
 		code = *ap++;
 		nap--;
 		break;
@@ -86,7 +84,7 @@ svc_handler(trapframe_t *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, callp, args, rval);
+	error = mi_syscall(p, code, indirect, callp, args, rval);
 
 	switch (error) {
 	case 0:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.43 2022/12/29 01:36:36 guenther Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.44 2023/01/16 05:32:05 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ struct ktr_header {
 #define KTR_SYSCALL	1
 struct ktr_syscall {
 	int	ktr_code;		/* syscall number */
+#define KTRC_CODE_MASK			0x0000ffff
+#define KTRC_CODE_SYSCALL		0x20000000
+#define KTRC_CODE__SYSCALL		0x40000000
 	int	ktr_argsize;		/* size of arguments */
 	/*
 	 * followed by ktr_argsize/sizeof(register_t) "register_t"s

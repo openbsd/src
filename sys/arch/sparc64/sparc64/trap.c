@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.112 2022/11/02 07:20:08 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.113 2023/01/16 05:32:05 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1106,7 +1106,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
-	int error, new;
+	int error, new, indirect = -1;
 	register_t args[8];
 	register_t rval[2];
 
@@ -1143,6 +1143,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	switch (code) {
 	case SYS_syscall:
 	case SYS___syscall:
+		indirect = code;
 		code = *ap++;
 		nap--;
 		break;
@@ -1177,7 +1178,7 @@ syscall(struct trapframe *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = mi_syscall(p, code, callp, args, rval);
+	error = mi_syscall(p, code, indirect, callp, args, rval);
 
 	switch (error) {
 		vaddr_t dest;

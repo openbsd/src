@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.156 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.157 2023/01/16 05:32:05 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -519,7 +519,7 @@ syscall(struct trapframe *frame)
 	caddr_t params;
 	const struct sysent *callp;
 	struct proc *p;
-	int error;
+	int error, indirect = -1;
 	register_t code, args[8], rval[2];
 #ifdef DIAGNOSTIC
 	int ocpl = lapic_tpr;
@@ -552,6 +552,7 @@ syscall(struct trapframe *frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
+		indirect = code;
 		copyin(params, &code, sizeof(int));
 		params += sizeof(int);
 		break;
@@ -560,6 +561,7 @@ syscall(struct trapframe *frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
+		indirect = code;
 		copyin(params + _QUAD_LOWWORD * sizeof(int), &code, sizeof(int));
 		params += sizeof(quad_t);
 		break;
@@ -579,7 +581,7 @@ syscall(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = frame->tf_edx;
 
-	error = mi_syscall(p, code, callp, args, rval);
+	error = mi_syscall(p, code, indirect, callp, args, rval);
 
 	switch (error) {
 	case 0:
