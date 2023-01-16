@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.388 2023/01/14 18:21:46 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.389 2023/01/16 16:49:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -816,20 +816,26 @@ editor_add(struct disklabel *lp, char *p)
 	const struct diskchunk *chunk;
 	char buf[2];
 	int partno;
-	u_int64_t freesectors, new_offset, new_size;
+	u_int64_t new_offset, new_size;
 
-	freesectors = editor_countfree(lp);
+	chunk = free_chunks(lp, -1);
+	new_size = new_offset = 0;
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+		if (chunk->stop - chunk->start > new_size) {
+			new_size = chunk->stop - chunk->start;
+			new_offset = chunk->start;
+		}
+	}
 
-	/* XXX - prompt user to steal space from another partition instead */
 #ifdef SUN_CYLCHECK
-	if ((lp->d_flags & D_VENDOR) && freesectors < lp->d_secpercyl) {
+	if ((lp->d_flags & D_VENDOR) && new_size < lp->d_secpercyl) {
 		fputs("No space left, you need to shrink a partition "
 		    "(need at least one full cylinder)\n",
 		    stderr);
 		return;
 	}
 #endif
-	if (freesectors == 0) {
+	if (new_size == 0) {
 		fputs("No space left, you need to shrink a partition\n",
 		    stderr);
 		return;
@@ -862,11 +868,13 @@ editor_add(struct disklabel *lp, char *p)
 	}
 	pp = &lp->d_partitions[partno];
 
-	if (pp->p_fstype != FS_UNUSED && DL_GETPSIZE(pp) != 0) {
+	if (partno < lp->d_npartitions && pp->p_fstype != FS_UNUSED &&
+	    DL_GETPSIZE(pp) != 0) {
 		fprintf(stderr, "Partition '%c' exists.  Delete it first.\n",
 		    p[0]);
 		return;
 	}
+	memset(pp, 0, sizeof(*pp));
 
 	/*
 	 * Increase d_npartitions if necessary. Ensure all new partitions are
@@ -875,22 +883,6 @@ editor_add(struct disklabel *lp, char *p)
 	for(; lp->d_npartitions <= partno; lp->d_npartitions++)
 		memset(&lp->d_partitions[lp->d_npartitions], 0, sizeof(*pp));
 
-	/* Make sure selected partition is zero'd too. */
-	memset(pp, 0, sizeof(*pp));
-	chunk = free_chunks(lp, -1);
-
-	/*
-	 * Since we know there's free space, there must be at least one
-	 * chunk. So find the largest chunk and assume we want to add the
-	 * partition in that free space.
-	 */
-	new_size = new_offset = 0;
-	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
-		if (chunk->stop - chunk->start > new_size) {
-			new_size = chunk->stop - chunk->start;
-			new_offset = chunk->start;
-		}
-	}
 	DL_SETPSIZE(pp, new_size);
 	DL_SETPOFFSET(pp, new_offset);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
