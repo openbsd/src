@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcrtc.c,v 1.1 2022/11/08 19:47:05 patrick Exp $	*/
+/*	$OpenBSD: qcrtc.c,v 1.2 2023/01/16 20:12:38 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -61,6 +61,9 @@ int	qcrtc_settime(struct todr_chip_handle *, struct timeval *);
 
 void	qcrtc_tick(void *);
 
+extern int qcscm_uefi_rtc_get(uint32_t *);
+extern int qcscm_uefi_rtc_set(uint32_t);
+
 int
 qcrtc_match(struct device *parent, void *match, void *aux)
 {
@@ -100,7 +103,32 @@ int
 qcrtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
 	struct qcrtc_softc *sc = handle->cookie;
-	uint32_t reg;
+	uint32_t reg, off;
+	int error;
+
+	/* Read current counting RTC value. */
+	error = spmi_cmd_read(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_READL,
+	    sc->sc_addr + RTC_READ, &reg, sizeof(reg));
+	if (error) {
+		printf("%s: error reading RTC\n", sc->sc_dev.dv_xname);
+		return error;
+	}
+
+	/* Retrieve RTC offset stored in UEFI. */
+	if (qcscm_uefi_rtc_get(&off) != 0)
+		return EIO;
+
+	/* Add RTC counter and 10y+1w to get seconds from epoch. */
+	tv->tv_sec = off + (reg + (10 * 365 * 86400 + 7 * 86400));
+	tv->tv_usec = 0;
+	return 0;
+}
+
+int
+qcrtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct qcrtc_softc *sc = handle->cookie;
+	uint32_t reg, off;
 	int error;
 
 	error = spmi_cmd_read(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_READL,
@@ -110,16 +138,9 @@ qcrtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 		return error;
 	}
 
-	tv->tv_sec = reg;
-	tv->tv_usec = 0;
+	/* Subtract RTC counter and 10y+1w to get offset for UEFI. */
+	off = tv->tv_sec - (reg + (10 * 365 * 86400 + 7 * 86400));
 
-	/* We need to offset. */
-	return EIO;
-}
-
-int
-qcrtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
-{
-	/* XXX: We can't set the time for now, hardware reasons. */
-	return EPERM;
+	/* Store offset in UEFI. */
+	return qcscm_uefi_rtc_set(off);
 }

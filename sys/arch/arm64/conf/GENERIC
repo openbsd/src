@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.252 2022/12/24 10:51:27 patrick Exp $
+# $OpenBSD: GENERIC,v 1.253 2023/01/16 20:12:38 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -316,6 +316,7 @@ qciic*		at acpi?
 qciic*		at fdt?
 iic*		at qciic?
 qcpdc*		at fdt?
+qcscm*		at fdt?
 qcspmi*		at fdt?
 qcpmic*		at qcspmi?
 qcpmicgpio*	at qcpmic?
