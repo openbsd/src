@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2022/11/08 12:08:53 kn Exp $
+#	$OpenBSD: Makefile,v 1.36 2023/01/16 22:59:41 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -27,6 +27,7 @@ STAGENAMES =		boot
 STAGENAMES =		boot
 .elif ${MACHINE} == "riscv64"
 STAGENAMES =		BOOTRISCV64.EFI
+USE_SOFTRAID ?=		Yes
 .elif ${MACHINE} == "sparc64"
 FORMAT_DISK =		true	# NOOP
 STAGENAMES =		bootblk ofwboot
