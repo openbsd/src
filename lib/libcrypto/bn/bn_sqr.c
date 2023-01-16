@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.17 2023/01/16 16:53:19 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.18 2023/01/16 17:56:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,90 +60,6 @@
 #include <string.h>
 
 #include "bn_local.h"
-
-/* I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96 */
-int
-BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
-{
-	int max, al;
-	int ret = 0;
-	BIGNUM *tmp, *rr;
-
-
-	al = a->top;
-	if (al <= 0) {
-		r->top = 0;
-		r->neg = 0;
-		return 1;
-	}
-
-	BN_CTX_start(ctx);
-	rr = (a != r) ? r : BN_CTX_get(ctx);
-	tmp = BN_CTX_get(ctx);
-	if (rr == NULL || tmp == NULL)
-		goto err;
-
-	max = 2 * al; /* Non-zero (from above) */
-	if (!bn_wexpand(rr, max))
-		goto err;
-
-	if (al == 4) {
-#ifndef BN_SQR_COMBA
-		BN_ULONG t[8];
-		bn_sqr_normal(rr->d, a->d, 4, t);
-#else
-		bn_sqr_comba4(rr->d, a->d);
-#endif
-	} else if (al == 8) {
-#ifndef BN_SQR_COMBA
-		BN_ULONG t[16];
-		bn_sqr_normal(rr->d, a->d, 8, t);
-#else
-		bn_sqr_comba8(rr->d, a->d);
-#endif
-	} else {
-#if defined(BN_RECURSION)
-		if (al < BN_SQR_RECURSIVE_SIZE_NORMAL) {
-			BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL*2];
-			bn_sqr_normal(rr->d, a->d, al, t);
-		} else {
-			int j, k;
-
-			j = BN_num_bits_word((BN_ULONG)al);
-			j = 1 << (j - 1);
-			k = j + j;
-			if (al == j) {
-				if (!bn_wexpand(tmp, k * 2))
-					goto err;
-				bn_sqr_recursive(rr->d, a->d, al, tmp->d);
-			} else {
-				if (!bn_wexpand(tmp, max))
-					goto err;
-				bn_sqr_normal(rr->d, a->d, al, tmp->d);
-			}
-		}
-#else
-		if (!bn_wexpand(tmp, max))
-			goto err;
-		bn_sqr_normal(rr->d, a->d, al, tmp->d);
-#endif
-	}
-
-	rr->neg = 0;
-	/* If the most-significant half of the top word of 'a' is zero, then
-	 * the square of 'a' will max-1 words. */
-	if (a->d[al - 1] == (a->d[al - 1] & BN_MASK2l))
-		rr->top = max - 1;
-	else
-		rr->top = max;
-	if (rr != r)
-		BN_copy(r, rr);
-	ret = 1;
-
-err:
-	BN_CTX_end(ctx);
-	return (ret);
-}
 
 /* tmp must have 2*n words */
 void
@@ -274,3 +190,87 @@ bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
 	}
 }
 #endif
+
+/* I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96 */
+int
+BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
+{
+	int max, al;
+	int ret = 0;
+	BIGNUM *tmp, *rr;
+
+
+	al = a->top;
+	if (al <= 0) {
+		r->top = 0;
+		r->neg = 0;
+		return 1;
+	}
+
+	BN_CTX_start(ctx);
+	rr = (a != r) ? r : BN_CTX_get(ctx);
+	tmp = BN_CTX_get(ctx);
+	if (rr == NULL || tmp == NULL)
+		goto err;
+
+	max = 2 * al; /* Non-zero (from above) */
+	if (!bn_wexpand(rr, max))
+		goto err;
+
+	if (al == 4) {
+#ifndef BN_SQR_COMBA
+		BN_ULONG t[8];
+		bn_sqr_normal(rr->d, a->d, 4, t);
+#else
+		bn_sqr_comba4(rr->d, a->d);
+#endif
+	} else if (al == 8) {
+#ifndef BN_SQR_COMBA
+		BN_ULONG t[16];
+		bn_sqr_normal(rr->d, a->d, 8, t);
+#else
+		bn_sqr_comba8(rr->d, a->d);
+#endif
+	} else {
+#if defined(BN_RECURSION)
+		if (al < BN_SQR_RECURSIVE_SIZE_NORMAL) {
+			BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL*2];
+			bn_sqr_normal(rr->d, a->d, al, t);
+		} else {
+			int j, k;
+
+			j = BN_num_bits_word((BN_ULONG)al);
+			j = 1 << (j - 1);
+			k = j + j;
+			if (al == j) {
+				if (!bn_wexpand(tmp, k * 2))
+					goto err;
+				bn_sqr_recursive(rr->d, a->d, al, tmp->d);
+			} else {
+				if (!bn_wexpand(tmp, max))
+					goto err;
+				bn_sqr_normal(rr->d, a->d, al, tmp->d);
+			}
+		}
+#else
+		if (!bn_wexpand(tmp, max))
+			goto err;
+		bn_sqr_normal(rr->d, a->d, al, tmp->d);
+#endif
+	}
+
+	rr->neg = 0;
+	/* If the most-significant half of the top word of 'a' is zero, then
+	 * the square of 'a' will max-1 words. */
+	if (a->d[al - 1] == (a->d[al - 1] & BN_MASK2l))
+		rr->top = max - 1;
+	else
+		rr->top = max;
+	if (rr != r)
+		BN_copy(r, rr);
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	return (ret);
+}
