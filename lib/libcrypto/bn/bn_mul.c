@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.24 2022/11/30 01:47:19 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.25 2023/01/16 16:53:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,11 +92,6 @@ bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 	b += cl;
 
 	if (dl < 0) {
-#ifdef BN_COUNT
-		fprintf(stderr,
-		    "  bn_sub_part_words %d + %d (dl < 0, c = %d)\n",
-		    cl, dl, c);
-#endif
 		for (;;) {
 			t = b[0];
 			r[0] = (0 - t - c) & BN_MASK2;
@@ -131,11 +126,6 @@ bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 		}
 	} else {
 		int save_dl = dl;
-#ifdef BN_COUNT
-		fprintf(stderr,
-		    "  bn_sub_part_words %d + %d (dl > 0, c = %d)\n",
-		    cl, dl, c);
-#endif
 		while (c) {
 			t = a[0];
 			r[0] = (t - c) & BN_MASK2;
@@ -170,11 +160,6 @@ bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			r += 4;
 		}
 		if (dl > 0) {
-#ifdef BN_COUNT
-			fprintf(stderr,
-			    "  bn_sub_part_words %d + %d (dl > 0, c == 0)\n",
-			    cl, dl);
-#endif
 			if (save_dl > dl) {
 				switch (save_dl - dl) {
 				case 1:
@@ -195,11 +180,6 @@ bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			}
 		}
 		if (dl > 0) {
-#ifdef BN_COUNT
-			fprintf(stderr,
-			    "  bn_sub_part_words %d + %d (dl > 0, copy)\n",
-			    cl, dl);
-#endif
 			for (;;) {
 				r[0] = a[0];
 				if (--dl <= 0)
@@ -241,11 +221,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 
 	if (dl < 0) {
 		int save_dl = dl;
-#ifdef BN_COUNT
-		fprintf(stderr,
-		    "  bn_add_part_words %d + %d (dl < 0, c = %d)\n",
-		    cl, dl, c);
-#endif
 		while (c) {
 			l = (c + b[0]) & BN_MASK2;
 			c = (l < c);
@@ -276,11 +251,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			r += 4;
 		}
 		if (dl < 0) {
-#ifdef BN_COUNT
-			fprintf(stderr,
-			    "  bn_add_part_words %d + %d (dl < 0, c == 0)\n",
-			    cl, dl);
-#endif
 			if (save_dl < dl) {
 				switch (dl - save_dl) {
 				case 1:
@@ -301,11 +271,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			}
 		}
 		if (dl < 0) {
-#ifdef BN_COUNT
-			fprintf(stderr,
-			    "  bn_add_part_words %d + %d (dl < 0, copy)\n",
-			    cl, dl);
-#endif
 			for (;;) {
 				r[0] = b[0];
 				if (++dl >= 0)
@@ -326,10 +291,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 		}
 	} else {
 		int save_dl = dl;
-#ifdef BN_COUNT
-		fprintf(stderr,
-		    "  bn_add_part_words %d + %d (dl > 0)\n", cl, dl);
-#endif
 		while (c) {
 			t = (a[0] + c) & BN_MASK2;
 			c = (t < c);
@@ -359,10 +320,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			a += 4;
 			r += 4;
 		}
-#ifdef BN_COUNT
-		fprintf(stderr,
-		    "  bn_add_part_words %d + %d (dl > 0, c == 0)\n", cl, dl);
-#endif
 		if (dl > 0) {
 			if (save_dl > dl) {
 				switch (save_dl - dl) {
@@ -384,11 +341,6 @@ bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int cl,
 			}
 		}
 		if (dl > 0) {
-#ifdef BN_COUNT
-			fprintf(stderr,
-			    "  bn_add_part_words %d + %d (dl > 0, copy)\n",
-			    cl, dl);
-#endif
 			for (;;) {
 				r[0] = a[0];
 				if (--dl <= 0)
@@ -435,9 +387,6 @@ bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2, int dna,
 	unsigned int neg, zero;
 	BN_ULONG ln, lo, *p;
 
-# ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_recursive %d%+d * %d%+d\n",n2,dna,n2,dnb);
-# endif
 # ifdef BN_MUL_COMBA
 #  if 0
 	if (n2 == 4) {
@@ -582,10 +531,6 @@ bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n, int tna,
 	int c1, c2, neg;
 	BN_ULONG ln, lo, *p;
 
-# ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_part_recursive (%d%+d) * (%d%+d)\n",
-	    n, tna, n, tnb);
-# endif
 	if (n < 8) {
 		bn_mul_normal(r, a, n + tna, b, n + tnb);
 		return;
@@ -740,9 +685,6 @@ bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2, BN_ULONG *t)
 {
 	int n = n2 / 2;
 
-# ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_low_recursive %d * %d\n",n2,n2);
-# endif
 
 	bn_mul_recursive(r, a, b, n, 0, 0, &(t[0]));
 	if (n >= BN_MUL_LOW_RECURSIVE_SIZE_NORMAL) {
@@ -772,9 +714,6 @@ bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 	int neg, oneg, zero;
 	BN_ULONG ll, lc, *lp, *mp;
 
-# ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_high %d * %d\n",n2,n2);
-# endif
 	n = n2 / 2;
 
 	/* Calculate (al-ah)*(bh-bl) */
@@ -945,9 +884,6 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	int j = 0, k;
 #endif
 
-#ifdef BN_COUNT
-	fprintf(stderr, "BN_mul %d * %d\n",a->top,b->top);
-#endif
 
 
 	al = a->top;
@@ -1093,9 +1029,6 @@ bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 {
 	BN_ULONG *rr;
 
-#ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_normal %d * %d\n", na, nb);
-#endif
 
 	if (na < nb) {
 		int itmp;
@@ -1138,9 +1071,6 @@ bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 void
 bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 {
-#ifdef BN_COUNT
-	fprintf(stderr, " bn_mul_low_normal %d * %d\n", n, n);
-#endif
 	bn_mul_words(r, a, n, b[0]);
 
 	for (;;) {

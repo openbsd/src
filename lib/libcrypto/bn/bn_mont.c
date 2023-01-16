@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.32 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.33 2023/01/16 16:53:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -213,9 +213,6 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	r->top = max;
 	n0 = mont->n0[0];
 
-#ifdef BN_COUNT
-	fprintf(stderr, "word BN_from_montgomery_word %d * %d\n", nl, nl);
-#endif
 	for (carry = 0, i = 0; i < nl; i++, rp++) {
 		v = bn_mul_add_words(rp, np, nl, (rp[0] * n0) & BN_MASK2);
 		v = (v + carry + rp[nl]) & BN_MASK2;

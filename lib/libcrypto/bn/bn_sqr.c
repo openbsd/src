@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.17 2023/01/16 16:53:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,9 +69,6 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	int ret = 0;
 	BIGNUM *tmp, *rr;
 
-#ifdef BN_COUNT
-	fprintf(stderr, "BN_sqr %d * %d\n", a->top, a->top);
-#endif
 
 	al = a->top;
 	if (al <= 0) {
@@ -203,9 +200,6 @@ bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
 	int zero, c1;
 	BN_ULONG ln, lo, *p;
 
-#ifdef BN_COUNT
-	fprintf(stderr, " bn_sqr_recursive %d * %d\n", n2, n2);
-#endif
 	if (n2 == 4) {
 #ifndef BN_SQR_COMBA
 		bn_sqr_normal(r, a, 4, t);
