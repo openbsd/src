@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.176 2023/01/04 06:33:33 jsg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.177 2023/01/16 07:09:11 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1130,8 +1130,6 @@ uvm_mmapfile(vm_map_t map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	return error;
 }
 
-/* an address that can't be in userspace or kernelspace */
-#define	BOGO_PC	(u_long)-1
 int
 sys_kbind(struct proc *p, void *v, register_t *retval)
 {
@@ -1171,9 +1169,12 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	pc = PROC_PC(p);
 	mtx_enter(&pr->ps_mtx);
 	if (paramp == NULL) {
+		/* ld.so disables kbind() when lazy binding is disabled */
 		if (pr->ps_kbind_addr == 0)
 			pr->ps_kbind_addr = BOGO_PC;
-		else
+		/* pre-7.3 static binaries disable kbind */
+		/* XXX delete check in 2026 */
+		else if (pr->ps_kbind_addr != BOGO_PC)
 			sigill = 1;
 	} else if (pr->ps_kbind_addr == 0) {
 		pr->ps_kbind_addr = pc;

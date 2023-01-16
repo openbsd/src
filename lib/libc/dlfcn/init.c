@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.11 2022/12/27 17:10:06 jmc Exp $ */
+/*	$OpenBSD: init.c,v 1.12 2023/01/16 07:09:12 guenther Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -205,16 +205,12 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 
 #ifndef PIC
 /*
- * static libc in a static link?  Then disable kbind and set up
- * __progname and environ
+ * static libc in a static link?  Then set up __progname and environ
  */
 static inline void
 early_static_init(char **argv, char **envp)
 {
 	static char progname_storage[NAME_MAX+1];
-
-	/* disable kbind */
-	syscall(SYS_kbind, (void *)NULL, (size_t)0, (long long)0);
 
 	environ = envp;
 

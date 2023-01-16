@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.338 2023/01/07 05:24:58 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.339 2023/01/16 07:09:11 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -237,6 +237,8 @@ struct process {
 
 	int64_t ps_kbind_cookie;	/* [m] */
 	u_long  ps_kbind_addr;		/* [m] */
+/* an address that can't be in userspace or kernelspace */
+#define	BOGO_PC	(u_long)-1
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_refcnt

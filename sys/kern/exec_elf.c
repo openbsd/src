@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.179 2023/01/13 23:02:43 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.180 2023/01/16 07:09:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -806,6 +806,10 @@ exec_elf_fixup(struct proc *p, struct exec_package *epp)
 	}
 
 	interp = epp->ep_interp;
+
+	/* disable kbind in programs that don't use ld.so */
+	if (interp == NULL)
+		p->p_p->ps_kbind_addr = BOGO_PC;
 
 	if (interp &&
 	    (error = elf_load_file(p, interp, epp, ap)) != 0) {
