@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.398 2023/01/12 18:49:11 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.399 2023/01/16 11:26:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1890,7 +1890,9 @@ server_client_key_callback(struct cmdq_item *item, void *data)
 		goto forward_key;
 
 	/* Treat everything as a regular key when pasting is detected. */
-	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
+	if (!KEYC_IS_MOUSE(key) &&
+	    (~key & KEYC_SENT) &&
+	    server_client_assume_paste(s))
 		goto forward_key;
 
 	/*
