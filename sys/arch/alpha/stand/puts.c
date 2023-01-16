@@ -1,5 +1,7 @@
-/*	$OpenBSD: puts.c,v 1.3 1996/10/30 22:40:35 niklas Exp $	*/
+/*	$OpenBSD: puts.c,v 1.4 2023/01/16 07:29:32 deraadt Exp $	*/
 
+
+void putchar(char);
 
 void
 puts(s)

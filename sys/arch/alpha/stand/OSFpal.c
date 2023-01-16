@@ -1,4 +1,4 @@
-/* $OpenBSD: OSFpal.c,v 1.8 2013/12/22 18:31:29 miod Exp $ */
+/* $OpenBSD: OSFpal.c,v 1.9 2023/01/16 07:29:32 deraadt Exp $ */
 /* $NetBSD: OSFpal.c,v 1.8 2001/07/22 15:17:30 wiz Exp $ */
 
 /*
@@ -36,6 +36,8 @@
 #include <machine/alpha_cpu.h>
 
 paddr_t ptbr_save;
+
+void switch_palcode(void);
 
 void
 OSFpal()

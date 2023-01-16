@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_prom.c,v 1.8 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: if_prom.c,v 1.9 2023/01/16 07:29:35 deraadt Exp $	*/
 /*	$NetBSD: if_prom.c,v 1.9 1997/04/06 08:41:26 cgd Exp $	*/
 
 /*
@@ -137,6 +137,8 @@ prom_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 }
 
 extern char *strchr();
+void halt(void);
+const char *ether_sprintf(const u_char *);
 
 void
 prom_init(struct iodesc *desc, void *machdep_hint)
@@ -209,7 +211,7 @@ prom_init(struct iodesc *desc, void *machdep_hint)
 gotit:
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 
-	ret.bits = prom_open(devname, devlen + 1);
+	ret.bits = prom_open((u_int64_t)devname, devlen + 1);
 	if (ret.u.status) {
 		printf("prom_init: open failed: %d\n", ret.u.status);
 		goto reallypunt;

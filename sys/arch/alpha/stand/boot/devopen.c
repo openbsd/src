@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.8 2003/06/02 23:27:44 millert Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.9 2023/01/16 07:29:35 deraadt Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 1995/11/23 02:39:37 cgd Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@
  * Decode the string 'fname', open the device and return the remaining
  * file name if any.
  */
+int
 devopen(f, fname, file)
 	struct open_file *f;
 	const char *fname;

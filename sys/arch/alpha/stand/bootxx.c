@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.10 2004/07/05 19:59:17 deraadt Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.11 2023/01/16 07:29:32 deraadt Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.4 1997/01/18 00:28:59 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 #include "bbinfo.h"
 
-extern _end, start;
+extern long _end, start;
 
 struct bbinfoloc desc = {
 	0xbabefacedeadbeef,
@@ -60,7 +60,7 @@ open_dev(fd)
         ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
         devlen = ret.u.retval;
 
-        ret.bits = prom_open(devname, devlen);
+        ret.bits = prom_open((u_int64_t)devname, devlen);
         if (ret.u.status)
                 return 0;
 
@@ -68,6 +68,8 @@ open_dev(fd)
 
 	return 1;
 }
+
+void puts(char *);
 
 int
 load_file(bbinfop, loadaddr)
@@ -128,6 +130,8 @@ puts("\b");
 	return (rv);
 }
 
+void init_prom_calls(void);
+
 int
 main()
 {
@@ -144,7 +148,7 @@ main()
 	loadaddr = (char *)SECONDARY_LOAD_ADDRESS;
 	if (!load_file(bbinfop, loadaddr)) {
 		puts("\nLOAD FAILED!\n\n");
-		return;
+		return 1;
 	}
 
 #if 0
@@ -153,4 +157,6 @@ main()
 	entry = (void (*)())loadaddr;
 	(*entry)();
 	puts("SECONDARY BOOT BLOCK RETURNED!\n");
+	return 1;
 }
+

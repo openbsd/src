@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.6 2023/01/04 09:24:14 jsg Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.7 2023/01/16 07:29:35 deraadt Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 1997/04/06 08:41:24 cgd Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ u_char bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
  */
 static int netdev_sock = -1;
 static int netdev_opens;
+
+int net_getparams(int);
+int nfs_mount(int, struct in_addr, char *);
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.

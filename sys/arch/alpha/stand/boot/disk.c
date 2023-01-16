@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.19 2020/12/09 18:10:17 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.20 2023/01/16 07:29:35 deraadt Exp $	*/
 /*	$NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ diskopen(struct open_file *f, int ctlr, int unit, int part)
 	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
 	devlen = ret.u.retval;
 
-	ret.bits = prom_open(devname, devlen);
+	ret.bits = prom_open((u_int64_t)devname, devlen);
 	if (ret.u.status == 2)
 		return (ENXIO);
 	if (ret.u.status == 3)

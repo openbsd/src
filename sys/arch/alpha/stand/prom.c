@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.c,v 1.8 2010/05/14 21:08:28 naddy Exp $	*/
+/*	$OpenBSD: prom.c,v 1.9 2023/01/16 07:29:32 deraadt Exp $	*/
 /*	$NetBSD: prom.c,v 1.2 1996/11/25 16:18:16 cgd Exp $	*/
 
 /*  
@@ -61,7 +61,7 @@ getchar()
 	prom_return_t ret;
 
 	for (;;) {
-		ret.bits = prom_dispatch(PROM_R_GETC, console);
+		ret.bits = prom_dispatch(PROM_R_GETC, console, 0, 0, 0);
 		if (ret.u.status == 0 || ret.u.status == 1)
 			return (ret.u.retval);
 	}
@@ -78,13 +78,14 @@ putchar(c)
 		cbuf = '\r';
 		do {
 			ret.bits = prom_dispatch(PROM_R_PUTS, console,
-			    &cbuf, 1);
+			    (u_int64_t)&cbuf, 1, 0);
 		} while ((ret.u.retval & 1) == 0);
 		cbuf = '\n';
 	} else
 		cbuf = c;
 	do {
-		ret.bits = prom_dispatch(PROM_R_PUTS, console, &cbuf, 1);
+		ret.bits = prom_dispatch(PROM_R_PUTS, console,
+		    (u_int64_t)&cbuf, 1, 0);
 	} while ((ret.u.retval & 1) == 0);
 }
 
@@ -102,7 +103,7 @@ prom_getenv(id, buf, len)
 	static char abuf[128] __attribute__ ((aligned (8)));
 	prom_return_t ret;
 
-	ret.bits = prom_dispatch(PROM_R_GETENV, id, abuf, 128);
+	ret.bits = prom_dispatch(PROM_R_GETENV, id, (u_int64_t)abuf, 128, 0);
 	if (ret.u.status & 0x4)
 		ret.u.retval = 0;
 	len--;
