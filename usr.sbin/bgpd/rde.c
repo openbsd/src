@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.585 2023/01/12 17:35:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.586 2023/01/16 10:37:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1129,7 +1129,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 			    "route refresh: bad AID %d", rr.aid);
 			break;
 		}
-		if (peer->capa.mp[rr.aid]) {
+		if (peer->capa.mp[rr.aid] == 0) {
 			log_peer_warnx(&peer->conf,
 			    "route refresh: AID %s not negotiated",
 			    aid2str(rr.aid));
