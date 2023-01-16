@@ -1,4 +1,4 @@
-/*	$OpenBSD: aesv8-armx.S,v 1.1 2021/02/21 14:55:16 tobhe Exp $	*/
+/*	$OpenBSD: aesv8-armx.S,v 1.2 2023/01/16 10:11:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2006, CRYPTOGAMS by <appro@openssl.org>
  * All rights reserved.
@@ -47,12 +47,16 @@
  */
 
 .arch	armv8-a+crypto
-.text
+	
+.rodata
+
 .align	5
 .Lrcon:
 .long	0x01,0x01,0x01,0x01
 .long	0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d,0x0c0f0e0d	// rotate-n-splat
 .long	0x1b,0x1b,0x1b,0x1b
+
+.text
 
 .globl	aes_v8_set_encrypt_key
 .type	aes_v8_set_encrypt_key,%function
@@ -74,7 +78,8 @@ aes_v8_set_encrypt_key:
 	tst	w1,#0x3f
 	b.ne	.Lenc_key_abort
 
-	adr	x3,.Lrcon
+	adrp	x3,.Lrcon
+	add	x3,x3,:lo12:.Lrcon
 	cmp	w1,#192
 
 	eor	v0.16b,v0.16b,v0.16b
