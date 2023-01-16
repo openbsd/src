@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_riscv64.h,v 1.1 2021/04/28 19:01:00 drahn Exp $	*/
+/*	$OpenBSD: softraid_riscv64.h,v 1.2 2023/01/16 21:30:46 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _SOFTRAID_ARM64_H_
-#define _SOFTRAID_ARM64_H_
+#ifndef _SOFTRAID_RISCV64_H_
+#define _SOFTRAID_RISCV64_H_
 
 void	srprobe(void);
 
@@ -30,4 +30,4 @@ int	srdiskio(int, struct diskinfo *, u_int, int, void *);
 int	srclose(struct open_file *);
 int	srioctl(struct open_file *, u_long, void *);
 
-#endif /* _SOFTRAID_ARM64_H */
+#endif /* _SOFTRAID_RISCV64_H */
