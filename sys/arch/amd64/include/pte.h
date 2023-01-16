@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.15 2023/01/14 03:37:13 jsg Exp $	*/
+/*	$OpenBSD: pte.h,v 1.16 2023/01/16 00:04:47 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -122,10 +122,14 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define	PG_AVAIL2	0x0000000000000400UL
 #define	PG_AVAIL3	0x0000000000000800UL
 #define	PG_PATLG	0x0000000000001000UL	/* PAT on large pages */
+#define	PG_PKMASK	0x7800000000000000UL	/* Protection Key Mask */
+#define	PG_XO		0x0800000000000000UL	/* key1 used for execute-only */
 #define	PG_NX		0x8000000000000000UL	/* non-executable */
 #define	PG_FRAME	0x000ffffffffff000UL
 
 #define	PG_LGFRAME	0x000fffffffe00000UL	/* large (2M) page frame mask */
+
+#define PGK_VALUE	0xfffffffc		/* key0 is normal */
 
 /* EPT PTE bits */
 #define EPT_R		(1ULL << 0)
