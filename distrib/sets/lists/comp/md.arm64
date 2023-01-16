@@ -16,6 +16,7 @@
 ./usr/include/arm64/cpufunc.h
 ./usr/include/arm64/db_machdep.h
 ./usr/include/arm64/disklabel.h
+./usr/include/arm64/efivar.h
 ./usr/include/arm64/endian.h
 ./usr/include/arm64/exec.h
 ./usr/include/arm64/fdt.h
