@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.66 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.67 2023/01/17 10:40:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -148,6 +148,7 @@ static enum cmd_retval
 cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args		*args = cmd_get_args(self);
+	struct client		*tc = cmdq_get_target_client(item);
 	struct key_table	*table;
 	struct key_binding	*bd;
 	const char		*tablename, *r, *keystr;
@@ -296,9 +297,15 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			strlcat(tmp, cp, tmpsize);
 			free(cp);
 
-			cmdq_print(item, "bind-key %s", tmp);
-
+			if (args_has(args, '1') && tc != NULL) {
+				status_message_set(tc, -1, 1, 0, "bind-key %s",
+				    tmp);
+			} else
+				cmdq_print(item, "bind-key %s", tmp);
 			free(key);
+
+			if (args_has(args, '1'))
+				break;
 			bd = key_bindings_next(table, bd);
 		}
 		table = key_bindings_next_table(table);
