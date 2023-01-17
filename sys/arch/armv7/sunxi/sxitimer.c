@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.18 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.19 2023/01/17 02:38:59 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -20,7 +20,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 
 #include <machine/bus.h>
@@ -94,6 +96,17 @@ static struct timecounter sxitimer_timecounter = {
 	.tc_user = 0,
 };
 
+uint64_t sxitimer_nsec_cycle_ratio;
+uint64_t sxitimer_nsec_max;
+
+void sxitimer_rearm(void *, uint64_t);
+void sxitimer_trigger(void *);
+
+const struct intrclock sxitimer_intrclock = {
+	.ic_rearm = sxitimer_rearm,
+	.ic_trigger = sxitimer_trigger
+};
+
 bus_space_tag_t		sxitimer_iot;
 bus_space_handle_t	sxitimer_ioh;
 
@@ -110,11 +123,6 @@ uint32_t sxitimer_irq[] = {
 	TIMER2_IRQ,
 	0
 };
-
-uint32_t sxitimer_stat_tpi, sxitimer_tick_tpi;
-uint32_t sxitimer_statvar, sxitimer_statmin;
-uint32_t sxitimer_tick_nextevt, sxitimer_stat_nextevt;
-uint32_t sxitimer_ticks_err_cnt, sxitimer_ticks_err_sum;
 
 struct sxitimer_softc {
 	struct device		sc_dev;
@@ -147,7 +155,6 @@ void
 sxitimer_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
-	uint32_t freq, ival, now;
 
 	KASSERT(faa->fa_nreg > 0);
 
@@ -163,61 +170,31 @@ sxitimer_attach(struct device *parent, struct device *self, void *aux)
 	    & CNT64_CLR_EN)
 		continue;
 
-	/* timers are down-counters, from interval to 0 */
-	now = 0xffffffff; /* known big value */
-	freq = sxitimer_freq[TICKTIMER];
-
 	/* stop timer, and set clk src */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(TICKTIMER), TIMER_OSC24M);
 
-	ival = sxitimer_tick_tpi = freq / hz;
-	sxitimer_tick_nextevt = now - ival;
+	sxitimer_nsec_cycle_ratio =
+	    sxitimer_freq[TICKTIMER] * (1ULL << 32) / 1000000000;
+	sxitimer_nsec_max = UINT64_MAX / sxitimer_nsec_cycle_ratio;
 
-	sxitimer_ticks_err_cnt = freq % hz;
-	sxitimer_ticks_err_sum = 0;
-
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(TICKTIMER), ival);
-
-	/* timers are down-counters, from interval to 0 */
-	now = 0xffffffff; /* known big value */
-	freq = sxitimer_freq[STATTIMER];
-
-	/* stop timer, and set clk src */
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER), TIMER_OSC24M);
-
-	/* 100/1000 or 128/1024 ? */
-	stathz = 128;
-	profhz = 1024;
-	sxitimer_setstatclockrate(stathz);
-
-	ival = sxitimer_stat_tpi = freq / stathz;
-	sxitimer_stat_nextevt = now - ival;
-
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(STATTIMER), ival);
-
-	/* timers are down-counters, from interval to 0 */
-	now = 0xffffffff; /* known big value */
-	freq = sxitimer_freq[CNTRTIMER];
+	stathz = hz;
+	profhz = stathz * 10;
+	clockintr_init(CL_RNDSTAT);
 
 	/* stop timer, and set clk src */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_CTRL(CNTRTIMER), TIMER_OSC24M);
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_INTV(CNTRTIMER), UINT32_MAX);
 
-	ival = now;
-
-	sxitimer_timecounter.tc_frequency = freq;
+	sxitimer_timecounter.tc_frequency = sxitimer_freq[CNTRTIMER];
 	tc_init(&sxitimer_timecounter);
+
 	arm_clock_register(sxitimer_cpu_initclocks, sxitimer_delay,
 	    sxitimer_setstatclockrate, NULL);
 
-	printf(": %d kHz", freq / 1000);
-
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(CNTRTIMER), ival);
+	printf(": %d kHz", sxitimer_freq[CNTRTIMER] / 1000);
 
 	printf("\n");
 }
@@ -233,20 +210,18 @@ sxitimer_cpu_initclocks(void)
 {
 	uint32_t isr, ier, ctrl;
 
-	/* establish interrupts */
+	/* establish interrupt */
 	arm_intr_establish(sxitimer_irq[TICKTIMER], IPL_CLOCK,
 	    sxitimer_tickintr, NULL, "tick");
-	arm_intr_establish(sxitimer_irq[STATTIMER], IPL_STATCLOCK,
-	    sxitimer_statintr, NULL, "stattick");
 
 	/* clear timer interrupt pending bits */
 	isr = bus_space_read_4(sxitimer_iot, sxitimer_ioh, TIMER_ISR);
-	isr |= TIMER_IRQ(STATTIMER) | TIMER_IRQ(TICKTIMER);
+	isr |= TIMER_IRQ(TICKTIMER);
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh, TIMER_ISR, isr);
 
-	/* enable timer IRQs */
+	/* enable timer IRQ */
 	ier = bus_space_read_4(sxitimer_iot, sxitimer_ioh, TIMER_IER);
-	ier |= TIMER_IRQ(STATTIMER) | TIMER_IRQ(TICKTIMER);
+	ier |= TIMER_IRQ(TICKTIMER);
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh, TIMER_IER, ier);
 
 	/* enable timers */
@@ -256,153 +231,21 @@ sxitimer_cpu_initclocks(void)
 	    TIMER_CTRL(CNTRTIMER),
 	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_CONTINOUS);
 
-	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER),
-	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
-
-	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER),
-	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+	/* start clock interrupt cycle */
+	clockintr_cpu_init(&sxitimer_intrclock);
+	clockintr_trigger();
 }
 
-/*
- * See comment in arm/xscale/i80321_clock.c
- *
- * Counter is count up, but with autoreload timers it is not possible
- * to detect how many interrupts passed while interrupts were blocked.
- * Also it is not possible to atomically add to the register.
- *
- * To work around this two timers are used, one is used as a reference
- * clock without reload, however we just disable the interrupt it
- * could generate.
- *
- * Internally this keeps track of when the next timer should fire
- * and based on that time and the current value of the reference
- * clock a number is written into the timer count register to schedule
- * the next event.
- */
-/* XXX update above comment */
 int
 sxitimer_tickintr(void *frame)
 {
-	uint32_t now, nextevent;
-	uint32_t val;
-	int rc = 0;
-
 	splassert(IPL_CLOCK);	
 
 	/* clear timer pending interrupt bit */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
 	    TIMER_ISR, TIMER_IRQ(TICKTIMER));
 
-	now = sxitimer_readcnt32();
-
-	while ((int32_t)(now - sxitimer_tick_nextevt) < 0) {
-		sxitimer_tick_nextevt -= sxitimer_tick_tpi;
-		sxitimer_ticks_err_sum += sxitimer_ticks_err_cnt;
-
-		while (sxitimer_ticks_err_sum  > hz) {
-			sxitimer_tick_nextevt += 1;
-			sxitimer_ticks_err_sum -= hz;
-		}
-
-		rc = 1;
-		hardclock(frame);
-	}
-	nextevent = now - sxitimer_tick_nextevt;
-	if (nextevent < 10 /* XXX */)
-		nextevent = 10;
-
-	if (nextevent > sxitimer_tick_tpi) {
-		/*
-		 * If interrupts are blocked too long, like during
-		 * the root prompt or ddb, the timer can roll over,
-		 * this will allow the system to continue to run
-		 * even if time is lost.
-		 */
-		nextevent = sxitimer_tick_tpi;
-		sxitimer_tick_nextevt = now;
-	}
-
-	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER), val & ~TIMER_ENABLE);
-
-	sxitimer_sync();
-
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(TICKTIMER), nextevent);
-
-	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(TICKTIMER),
-	    val | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
-
-	return rc;
-}
-
-int
-sxitimer_statintr(void *frame)
-{
-	uint32_t now, nextevent, r;
-	uint32_t val;
-	int rc = 0;
-
-	splassert(IPL_STATCLOCK);	
-
-	/* clear timer pending interrupt bit */
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_ISR, TIMER_IRQ(STATTIMER));
-
-	now = sxitimer_readcnt32();
-	while ((int32_t)(now - sxitimer_stat_nextevt) < 0) {
-		do {
-			r = random() & (sxitimer_statvar -1);
-		} while (r == 0); /* random == 0 not allowed */
-		sxitimer_stat_nextevt -= sxitimer_statmin + r;
-		rc = 1;
-		statclock(frame);
-	}
-
-	nextevent = now - sxitimer_stat_nextevt;
-
-	if (nextevent < 10 /* XXX */)
-		nextevent = 10;
-
-	if (nextevent > sxitimer_stat_tpi) {
-		/*
-		 * If interrupts are blocked too long, like during
-		 * the root prompt or ddb, the timer can roll over,
-		 * this will allow the system to continue to run
-		 * even if time is lost.
-		 */
-		nextevent = sxitimer_stat_tpi;
-		sxitimer_stat_nextevt = now;
-	}
-
-	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER), val & ~TIMER_ENABLE);
-
-	sxitimer_sync();
-
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_INTV(STATTIMER), nextevent);
-
-	val = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER));
-	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
-	    TIMER_CTRL(STATTIMER),
-	    val | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
-
-	return rc;
+	return clockintr_dispatch(frame);
 }
 
 uint64_t
@@ -457,29 +300,62 @@ sxitimer_delay(u_int usecs)
 void
 sxitimer_setstatclockrate(int newhz)
 {
-	int minint, statint, s;
-	
-	s = splstatclock();
-
-	statint = sxitimer_freq[STATTIMER] / newhz;
-	/* calculate largest 2^n which is smaller than just over half statint */
-	sxitimer_statvar = 0x40000000; /* really big power of two */
-	minint = statint / 2 + 100;
-	while (sxitimer_statvar > minint)
-		sxitimer_statvar >>= 1;
-
-	sxitimer_statmin = statint - (sxitimer_statvar >> 1);
-
-	splx(s);
-
-	/*
-	 * XXX this allows the next stat timer to occur then it switches
-	 * to the new frequency. Rather than switching instantly.
-	 */
+	clockintr_setstatclockrate(newhz);
 }
 
 u_int
 sxitimer_get_timecount(struct timecounter *tc)
 {
 	return (u_int)UINT_MAX - sxitimer_readcnt32();
+}
+
+void
+sxitimer_rearm(void *unused, uint64_t nsecs)
+{
+	uint32_t ctrl, cycles;
+
+	if (nsecs > sxitimer_nsec_max)
+		nsecs = sxitimer_nsec_max;
+	cycles = (nsecs * sxitimer_nsec_cycle_ratio) >> 32;
+	if (cycles < 10)
+		cycles = 10;	/* XXX Why do we need to round up to 10? */
+
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER), ctrl & ~TIMER_ENABLE);
+
+	sxitimer_sync();
+
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_INTV(TICKTIMER), cycles);
+
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER),
+	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
+}
+
+void
+sxitimer_trigger(void *unused)
+{
+	uint32_t ctrl;
+
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER), ctrl & ~TIMER_ENABLE);
+
+	sxitimer_sync();
+
+	/* XXX Why do we need to round up to 10? */
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_INTV(TICKTIMER), 10);
+
+	ctrl = bus_space_read_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER));
+	bus_space_write_4(sxitimer_iot, sxitimer_ioh,
+	    TIMER_CTRL(TICKTIMER),
+	    ctrl | TIMER_ENABLE | TIMER_RELOAD | TIMER_SINGLESHOT);
 }
