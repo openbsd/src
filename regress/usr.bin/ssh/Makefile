@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.122 2023/01/06 08:07:39 djm Exp $
+#	$OpenBSD: Makefile,v 1.123 2023/01/17 10:02:34 djm Exp $
 
 OPENSSL?=	yes
 
@@ -100,7 +100,8 @@ LTESTS= 	connect \
 		knownhosts-command \
 		agent-restrict \
 		hostbased \
-		channel-timeout
+		channel-timeout \
+		connection-timeout
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
