@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1220 2023/01/17 16:14:23 kn Exp $
+#	$OpenBSD: install.sub,v 1.1221 2023/01/17 16:22:56 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3429,6 +3429,9 @@ start_watchdog() {
 	echo $! > /tmp/wdpid
 	set +m
 }
+
+# return if we only want internal functions
+[[ -n $FUNCS_ONLY ]] && return
 
 # ------------------------------------------------------------------------------
 # Initial actions common to both installs and upgrades.
