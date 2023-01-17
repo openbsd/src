@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.15 2022/02/21 10:57:58 jsg Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.16 2023/01/17 02:32:07 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -25,8 +25,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/clockintr.h>
 #include <sys/evcount.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 #include <machine/bus.h>
 #include <armv7/armv7/armv7var.h>
@@ -95,11 +97,9 @@
 #define TIMER_FREQUENCY			32768	/* 32kHz is used, selectable */
 #define MAX_TIMERS			2
 
-static struct evcount clk_count;
-static struct evcount stat_count;
-
 void dmtimer_attach(struct device *parent, struct device *self, void *args);
 int dmtimer_intr(void *frame);
+void dmtimer_reset_tisr(void);
 void dmtimer_wait(int reg);
 void dmtimer_cpu_initclocks(void);
 void dmtimer_delay(u_int);
@@ -117,6 +117,14 @@ static struct timecounter dmtimer_timecounter = {
 	.tc_priv = NULL,
 };
 
+void dmtimer_rearm(void *, uint64_t);
+void dmtimer_trigger(void *);
+
+struct intrclock dmtimer_intrclock = {
+	.ic_rearm = dmtimer_rearm,
+	.ic_trigger = dmtimer_trigger
+};
+
 bus_space_handle_t dmtimer_ioh0;
 int dmtimer_irq = 0;
 
@@ -126,13 +134,8 @@ struct dmtimer_softc {
 	bus_space_handle_t	sc_ioh[MAX_TIMERS];
 	u_int32_t		sc_irq;
 	u_int32_t		sc_ticks_per_second;
-	u_int32_t		sc_ticks_per_intr;
-	u_int32_t		sc_ticks_err_cnt;
-	u_int32_t		sc_ticks_err_sum;
-	u_int32_t		sc_statvar;
-	u_int32_t		sc_statmin;
-	u_int32_t		sc_nexttickevent;
-	u_int32_t		sc_nextstatevent;
+	u_int64_t		sc_nsec_cycle_ratio;
+	u_int64_t		sc_nsec_max;
 };
 
 const struct cfattach	dmtimer_ca = {
@@ -208,82 +211,11 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 	printf(" rev %d.%d\n", (rev & DM_TIDR_MAJOR) >> 8, rev & DM_TIDR_MINOR);
 }
 
-/*
- * See comment in arm/xscale/i80321_clock.c
- *
- * Counter is count up, but with autoreload timers it is not possible
- * to detect how many interrupts passed while interrupts were blocked.
- * Also it is not possible to atomically add to the register.
- *
- * To work around this two timers are used, one is used as a reference
- * clock without reload, however we just disable the interrupt it
- * could generate.
- *
- * Internally this keeps track of when the next timer should fire
- * and based on that time and the current value of the reference
- * clock a number is written into the timer count register to schedule
- * the next event.
- */
-
 int
 dmtimer_intr(void *frame)
 {
-	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
-	u_int32_t		now, r, nextevent;
-	int32_t			duration;
-
-	now = bus_space_read_4(sc->sc_iot, sc->sc_ioh[1], DM_TCRR);
-
-	while ((int32_t) (sc->sc_nexttickevent - now) <= 0) {
-		sc->sc_nexttickevent += sc->sc_ticks_per_intr;
-		sc->sc_ticks_err_sum += sc->sc_ticks_err_cnt;
-
-		while (sc->sc_ticks_err_sum  > hz) {
-			sc->sc_nexttickevent += 1;
-			sc->sc_ticks_err_sum -= hz;
-		}
-
-		clk_count.ec_count++;
-		hardclock(frame);
-	}
-
-	while ((int32_t) (sc->sc_nextstatevent - now) <= 0) {
-		do {
-			r = random() & (sc->sc_statvar - 1);
-		} while (r == 0); /* random == 0 not allowed */
-		sc->sc_nextstatevent += sc->sc_statmin + r;
-		stat_count.ec_count++;
-		statclock(frame);
-	}
-	if ((sc->sc_nexttickevent - now) < (sc->sc_nextstatevent - now))
-		nextevent = sc->sc_nexttickevent;
-	else
-		nextevent = sc->sc_nextstatevent;
-
-	duration = nextevent -
-	    bus_space_read_4(sc->sc_iot, sc->sc_ioh[1], DM_TCRR);
-
-	if (duration <= 0)
-		duration = 1; /* trigger immediately. */
-
-	if (duration > sc->sc_ticks_per_intr + 1) {
-		printf("%s: time lost!\n", __func__);
-		/*
-		 * If interrupts are blocked too long, like during
-		 * the root prompt or ddb, the timer can roll over,
-		 * this will allow the system to continue to run
-		 * even if time is lost.
-		*/
-		duration = sc->sc_ticks_per_intr;
-		sc->sc_nexttickevent = now;
-		sc->sc_nextstatevent = now;
-	}
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR,
-		bus_space_read_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCRR, -duration);
-	dmtimer_wait(DM_TWPS_ALL);
- 
+	dmtimer_reset_tisr();		/* clear pending interrupts */
+	clockintr_dispatch(frame);
 	return 1;
 }
 
@@ -298,37 +230,28 @@ dmtimer_cpu_initclocks(void)
 {
 	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
 
-	stathz = 128;
-	profhz = 1024;
+	stathz = 100;
+	profhz = 1000;
+	clockintr_init(CL_RNDSTAT);
 
 	sc->sc_ticks_per_second = TIMER_FREQUENCY; /* 32768 */
-
-	setstatclockrate(stathz);
-
-	sc->sc_ticks_per_intr = sc->sc_ticks_per_second / hz;
-	sc->sc_ticks_err_cnt = sc->sc_ticks_per_second % hz;
-	sc->sc_ticks_err_sum = 0;
+	sc->sc_nsec_cycle_ratio =
+	    sc->sc_ticks_per_second * (1ULL << 32) / 1000000000;
+	sc->sc_nsec_max = UINT64_MAX / sc->sc_nsec_cycle_ratio;
+	dmtimer_intrclock.ic_cookie = sc;
 
 	/* establish interrupts */
 	arm_intr_establish(sc->sc_irq, IPL_CLOCK, dmtimer_intr,
 	    NULL, "tick");
 
 	/* setup timer 0 */
-
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TLDR, 0);
-
-	sc->sc_nexttickevent = sc->sc_nextstatevent = bus_space_read_4(sc->sc_iot,
-	    sc->sc_ioh[1], DM_TCRR) + sc->sc_ticks_per_intr;
-
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TIER, DM_TIER_OVF_EN);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TWER, DM_TWER_OVF_EN);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR, /*clear interrupt flags */
-		bus_space_read_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR));
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCRR, -sc->sc_ticks_per_intr);
-	dmtimer_wait(DM_TWPS_ALL);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCLR, /* autoreload and start */
-	    DM_TCLR_AR | DM_TCLR_ST);
-	dmtimer_wait(DM_TWPS_ALL);
+
+	/* start the clock interrupt cycle */
+	clockintr_cpu_init(&dmtimer_intrclock);
+	clockintr_trigger();
 }
 
 void
@@ -337,6 +260,19 @@ dmtimer_wait(int reg)
 	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
 	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh[0], DM_TWPS) & reg)
 		;
+}
+
+/*
+ * Clear all interrupt status bits.
+ */
+void
+dmtimer_reset_tisr(void)
+{
+	struct dmtimer_softc *sc = dmtimer_cd.cd_devs[1];
+	u_int32_t tisr;
+
+	tisr = bus_space_read_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TISR, tisr);
 }
 
 void
@@ -382,27 +318,7 @@ dmtimer_delay(u_int usecs)
 void
 dmtimer_setstatclockrate(int newhz)
 {
-	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
-	int minint, statint;
-	int s;
-	
-	s = splclock();
-
-	statint = sc->sc_ticks_per_second / newhz;
-	/* calculate largest 2^n which is smaller than just over half statint */
-	sc->sc_statvar = 0x40000000; /* really big power of two */
-	minint = statint / 2 + 100;
-	while (sc->sc_statvar > minint)
-		sc->sc_statvar >>= 1;
-
-	sc->sc_statmin = statint - (sc->sc_statvar >> 1);
-
-	splx(s);
-
-	/*
-	 * XXX this allows the next stat timer to occur then it switches
-	 * to the new frequency. Rather than switching instantly.
-	 */
+	clockintr_setstatclockrate(newhz);
 }
 
 
@@ -412,4 +328,38 @@ dmtimer_get_timecount(struct timecounter *tc)
 	struct dmtimer_softc *sc = dmtimer_timecounter.tc_priv;
 	
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh[1], DM_TCRR);
+}
+
+void
+dmtimer_rearm(void *cookie, uint64_t nsecs)
+{
+	struct dmtimer_softc *sc = cookie;
+	uint32_t cycles;
+
+	if (nsecs > sc->sc_nsec_max)
+		nsecs = sc->sc_nsec_max;
+	cycles = (nsecs * sc->sc_nsec_cycle_ratio) >> 32;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCRR,
+	    UINT32_MAX - cycles);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCLR, DM_TCLR_ST);
+	dmtimer_wait(DM_TWPS_ALL);
+}
+
+void
+dmtimer_trigger(void *cookie)
+{
+	struct dmtimer_softc *sc = cookie;
+
+	/* stop timer */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCLR, 0);
+
+	dmtimer_reset_tisr();	/* clear pending interrupts */
+
+	/* set shortest possible timeout */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCRR, UINT32_MAX);
+	dmtimer_wait(DM_TWPS_ALL);
+
+	/* start timer */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TCLR, DM_TCLR_ST);
+	dmtimer_wait(DM_TWPS_ALL);
 }
