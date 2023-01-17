@@ -32,7 +32,7 @@ our %args = (
 	    write_shutdown($self);
 	},
 	ktrace => {
-	    qr/CALL  sendsyslog\(/ => 18,
+	    qr/CALL  (\(via syscall\) )?sendsyslog\(/ => 18,
 	    qr/GIO   fd -1 wrote /.length(get_testlog()).qr/ bytes/ => 2,
 	    qr/RET   sendsyslog -1 errno $errno / => 18,
 	},

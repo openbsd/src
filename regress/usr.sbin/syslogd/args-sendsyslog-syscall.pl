@@ -13,7 +13,7 @@ our %args = (
     client => {
 	connect => { domain => "sendsyslog" },
 	ktrace => {
-	    qr/CALL  sendsyslog\(/ => 2,
+	    qr/CALL  (\(via syscall\) )?sendsyslog\(/ => 2,
 	    qr/GIO   fd -1 wrote \d+ bytes/ => 2,
 	    qr/RET   sendsyslog 0/ => 2,
 	},

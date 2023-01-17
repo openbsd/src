@@ -27,7 +27,7 @@ our %args = (
 	    write_log($self);
 	},
 	ktrace => {
-	    qr/CALL  sendsyslog\(/ => 3,
+	    qr/CALL  (\(via syscall\) )?sendsyslog\(/ => 3,
 	    qr/RET   sendsyslog -1 errno $errno / => 1,
 	},
 	loggrep => {
