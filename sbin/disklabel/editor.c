@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.389 2023/01/16 16:49:16 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.390 2023/01/17 23:56:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -42,7 +42,8 @@
 #include "extern.h"
 #include "pathnames.h"
 
-#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define	ROUNDUP(_s, _a)		((((_s) + (_a) - 1) / (_a)) * (_a))
+#define	ROUNDDOWN(_s, _a)	(((_s) / (_a)) * (_a))
 
 /* flags for getuint64() */
 #define	DO_CONVERSIONS	0x00000001
