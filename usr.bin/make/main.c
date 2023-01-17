@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.128 2022/12/04 23:50:48 cheloha Exp $ */
+/*	$OpenBSD: main.c,v 1.129 2023/01/17 13:03:22 kn Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -891,7 +891,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: make [-BeiknpqrSst] [-C directory] [-D variable] [-d flags] [-f mk]\n\
 	    [-I directory] [-j max_processes] [-m directory] [-V variable]\n\
-	    [NAME=value] [target ...]\n");
+	    [NAME=value ...] [target ...]\n");
 	exit(2);
 }
 
