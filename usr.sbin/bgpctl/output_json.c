@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.27 2022/12/28 21:30:15 jmc Exp $ */
+/*	$OpenBSD: output_json.c,v 1.28 2023/01/17 16:09:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -981,7 +981,7 @@ json_rib_set(struct ctl_show_set *set)
 	json_do_printf("type", "%s", fmt_set_type(set));
 	json_do_printf("last_change", "%s", fmt_monotime(set->lastchange));
 	json_do_int("last_change_sec", get_monotime(set->lastchange));
-	if (set->type == ASNUM_SET) {
+	if (set->type == ASNUM_SET || set->type == ASPA_SET) {
 		json_do_uint("num_ASnum", set->as_cnt);
 	} else {
 		json_do_uint("num_IPv4", set->v4_cnt);

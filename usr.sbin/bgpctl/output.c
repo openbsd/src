@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.32 2022/11/09 14:20:11 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.33 2023/01/17 16:09:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1039,7 +1039,7 @@ show_rib_set(struct ctl_show_set *set)
 {
 	char buf[64];
 
-	if (set->type == ASNUM_SET)
+	if (set->type == ASNUM_SET || set->type == ASPA_SET)
 		snprintf(buf, sizeof(buf), "%7s %7s %6zu",
 		    "-", "-", set->as_cnt);
 	else
