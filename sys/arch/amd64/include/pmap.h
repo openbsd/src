@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.82 2022/10/16 15:03:39 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.83 2023/01/17 19:29:09 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
 
 #ifndef _LOCORE
 #ifdef _KERNEL
+#include <lib/libkern/libkern.h>	/* for KASSERT() */
 #include <machine/cpufunc.h>
 #endif /* _KERNEL */
 #include <sys/mutex.h>
@@ -455,12 +456,11 @@ pmap_update_pg(vaddr_t va)
 static inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	if ((prot & PROT_WRITE) == 0) {
-		if (prot & (PROT_READ | PROT_EXEC)) {
-			(void) pmap_clear_attrs(pg, PG_RW);
-		} else {
-			pmap_page_remove(pg);
-		}
+	if (prot == PROT_READ) {
+		(void) pmap_clear_attrs(pg, PG_RW);
+	} else {
+		KASSERT(prot == PROT_NONE);
+		pmap_page_remove(pg);
 	}
 }
 
