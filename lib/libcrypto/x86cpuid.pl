@@ -152,51 +152,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &external_label("OPENSSL_ia32cap_P");
 
-&function_begin_B("OPENSSL_wipe_cpu","");
-	&xor	("eax","eax");
-	&xor	("edx","edx");
-	&picmeup("ecx","OPENSSL_ia32cap_P");
-	&mov	("ecx",&DWP(0,"ecx"));
-	&bt	(&DWP(0,"ecx"),"\$IA32CAP_BIT0_FPU");
-	&jnc	(&label("no_x87"));
-	if ($sse2) {
-		# Check SSE2 and FXSR bits.
-		&and	("ecx", "\$(IA32CAP_MASK0_FXSR | IA32CAP_MASK0_SSE2)");
-		&cmp	("ecx", "\$(IA32CAP_MASK0_FXSR | IA32CAP_MASK0_SSE2)");
-		&jne	(&label("no_sse2"));
-		&pxor	("xmm0","xmm0");
-		&pxor	("xmm1","xmm1");
-		&pxor	("xmm2","xmm2");
-		&pxor	("xmm3","xmm3");
-		&pxor	("xmm4","xmm4");
-		&pxor	("xmm5","xmm5");
-		&pxor	("xmm6","xmm6");
-		&pxor	("xmm7","xmm7");
-	&set_label("no_sse2");
-	}
-	# just a bunch of fldz to zap the fp/mm bank followed by finit...
-	&data_word(0xeed9eed9,0xeed9eed9,0xeed9eed9,0xeed9eed9,0x90e3db9b);
-&set_label("no_x87");
-	&lea	("eax",&DWP(4,"esp"));
-	&ret	();
-&function_end_B("OPENSSL_wipe_cpu");
-
-&function_begin_B("OPENSSL_atomic_add");
-	&mov	("edx",&DWP(4,"esp"));	# fetch the pointer, 1st arg
-	&mov	("ecx",&DWP(8,"esp"));	# fetch the increment, 2nd arg
-	&push	("ebx");
-	&nop	();
-	&mov	("eax",&DWP(0,"edx"));
-&set_label("spin");
-	&lea	("ebx",&DWP(0,"eax","ecx"));
-	&nop	();
-	&data_word(0x1ab10ff0);	# lock;	cmpxchg	%ebx,(%edx)	# %eax is involved and is always reloaded
-	&jne	(&label("spin"));
-	&mov	("eax","ebx");	# OpenSSL expects the new value
-	&pop	("ebx");
-	&ret	();
-&function_end_B("OPENSSL_atomic_add");
-
 &initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();

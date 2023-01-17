@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2023/01/13 17:11:41 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2023/01/17 15:04:27 miod Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -40,10 +40,3 @@ ${dst}.S: ${LCRYPTO_SRC}/${dir}/asm/${src}.pl
 	/usr/bin/perl \
 		${LCRYPTO_SRC}/${dir}/asm/${src}.pl 32 ${.TARGET} > ${.TARGET}
 .endfor
-
-CFLAGS+= -DOPENSSL_CPUID_OBJ
-SRCS+=	pariscid.S
-GENERATED+=pariscid.S
-pariscid.S: ${LCRYPTO_SRC}/pariscid.pl
-	/usr/bin/perl \
-		${LCRYPTO_SRC}/pariscid.pl 32 > ${.TARGET}

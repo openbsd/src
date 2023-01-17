@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2019/05/11 13:05:25 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2023/01/17 15:04:27 miod Exp $
 
 # powerpc-specific libcrypto build rules
 
@@ -37,8 +37,4 @@ ${dst}.S: ${LCRYPTO_SRC}/${dir}/asm/${src}.pl
 .endfor
 
 #CFLAGS+= -DOPENSSL_CPUID_OBJ		# it's commented out in ppccap.c
-SRCS+=	ppccpuid.S ppccap.c
-GENERATED+=ppccpuid.S
-ppccpuid.S: ${LCRYPTO_SRC}/ppccpuid.pl
-	/usr/bin/perl \
-		${LCRYPTO_SRC}/ppccpuid.pl linux32 > ${.TARGET}
+SRCS+=	ppccap.c
