@@ -1489,7 +1489,6 @@
 ./usr/share/man/man4/i386/autoconf.4
 ./usr/share/man/man4/i386/bios.4
 ./usr/share/man/man4/i386/cpu.4
-./usr/share/man/man4/i386/elansc.4
 ./usr/share/man/man4/i386/esm.4
 ./usr/share/man/man4/i386/geodesc.4
 ./usr/share/man/man4/i386/glxpcib.4
