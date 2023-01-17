@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.457 2023/01/11 13:53:17 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.458 2023/01/17 16:09:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -604,6 +604,7 @@ enum imsg_type {
 	IMSG_RECONF_ASPA_TAS,
 	IMSG_RECONF_ASPA_TAS_AID,
 	IMSG_RECONF_ASPA_DONE,
+	IMSG_RECONF_ASPA_PREP,
 	IMSG_RECONF_RTR_CONFIG,
 	IMSG_RECONF_DRAIN,
 	IMSG_RECONF_DONE,
@@ -801,6 +802,7 @@ struct ctl_show_set {
 		PREFIX_SET,
 		ORIGIN_SET,
 		ROA_SET,
+		ASPA_SET,
 	}			type;
 };
 
@@ -1178,6 +1180,11 @@ struct aspa_set {
 	uint32_t			 *tas;
 	uint8_t				 *tas_aid;
 	RB_ENTRY(aspa_set)		 entry;
+};
+
+struct aspa_prep {
+	size_t				datasize;
+	uint32_t			entries;
 };
 
 struct l3vpn {

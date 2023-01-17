@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.586 2023/01/16 10:37:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.587 2023/01/17 16:09:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,6 +83,7 @@ static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_done(void *, uint8_t);
 static void	 rde_roa_reload(void);
+static void	 rde_aspa_reload(void);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(uint8_t);
@@ -109,7 +110,7 @@ static struct imsgbuf		*ibuf_rtr;
 static struct imsgbuf		*ibuf_main;
 static struct bgpd_config	*conf, *nconf;
 static struct rde_prefixset	 rde_roa, roa_new;
-static struct rde_aspa		*rde_aspa /* , *aspa_new */;
+static struct rde_aspa		*rde_aspa, *aspa_new;
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct filter_head	*out_rules, *out_rules_tmp;
@@ -641,6 +642,14 @@ badnetdel:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
 			    imsg.hdr.pid, -1, &cset, sizeof(cset));
 
+			/* then aspa set */
+			memset(&cset, 0, sizeof(cset));
+			cset.type = ASPA_SET;
+			strlcpy(cset.name, "RPKI ASPA", sizeof(cset.name));
+			aspa_table_stats(rde_aspa, &cset);
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_SET, 0,
+			    imsg.hdr.pid, -1, &cset, sizeof(cset));
+
 			SIMPLEQ_FOREACH(aset, &conf->as_sets, entry) {
 				memset(&cset, 0, sizeof(cset));
 				cset.type = ASNUM_SET;
@@ -1065,9 +1074,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 void
 rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 {
-	struct imsg	 imsg;
-	struct roa	 roa;
-	int		 n;
+	static struct aspa_set	*aspa;
+	struct imsg		 imsg;
+	struct roa		 roa;
+	struct aspa_prep	 ap;
+	int			 n;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -1094,9 +1105,65 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 				    log_addr(&p), roa.prefixlen);
 			}
 			break;
+		case IMSG_RECONF_ASPA_PREP:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(ap))
+				fatalx("IMSG_RECONF_ASPA_PREP bad len");
+			if (aspa_new)
+				fatalx("unexpected IMSG_RECONF_ASPA_PREP");
+			memcpy(&ap, imsg.data, sizeof(ap));
+			aspa_new = aspa_table_prep(ap.entries, ap.datasize);
+			break;
+		case IMSG_RECONF_ASPA:
+			if (aspa_new == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA");
+			if (aspa != NULL)
+				fatalx("IMSG_RECONF_ASPA already sent");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(uint32_t) * 2)
+				fatalx("IMSG_RECONF_ASPA bad len");
+
+			if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
+				fatal("IMSG_RECONF_ASPA");
+			memcpy(&aspa->as, imsg.data, sizeof(aspa->as));
+			memcpy(&aspa->num, (char *)imsg.data + sizeof(aspa->as),
+			    sizeof(aspa->num));
+			break;
+		case IMSG_RECONF_ASPA_TAS:
+			if (aspa == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			     aspa->num * sizeof(uint32_t))
+				fatalx("IMSG_RECONF_ASPA_TAS bad len");
+			aspa->tas = reallocarray(NULL, aspa->num,
+			    sizeof(uint32_t));
+			if (aspa->tas == NULL)
+				fatal("IMSG_RECONF_ASPA_TAS");
+			memcpy(aspa->tas, imsg.data,
+			    aspa->num * sizeof(uint32_t));
+			break;
+		case IMSG_RECONF_ASPA_TAS_AID:
+			if (aspa == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA_TAS_AID");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			     (aspa->num + 15) / 16)
+				fatalx("IMSG_RECONF_ASPA_TAS_AID bad len");
+			aspa->tas_aid = malloc((aspa->num + 15) / 16);
+			if (aspa->tas_aid == NULL)
+				fatal("IMSG_RECONF_ASPA_TAS_AID");
+			memcpy(aspa->tas_aid, imsg.data, (aspa->num + 15) / 16);
+			break;
+		case IMSG_RECONF_ASPA_DONE:
+			if (aspa_new == NULL)
+				fatalx("unexpected IMSG_RECONF_ASPA");
+			aspa_add_set(aspa_new, aspa->as, aspa->tas,
+			    aspa->num, (void *)aspa->tas_aid);
+			free_aspa(aspa);
+			aspa = NULL;
+			break;
 		case IMSG_RECONF_DONE:
 			/* end of update */
 			rde_roa_reload();
+			rde_aspa_reload();
 			break;
 		}
 		imsg_free(&imsg);
@@ -3933,6 +4000,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 }
 
 static int roa_update_pending;
+static int aspa_update_pending;
 
 static void
 rde_roa_softreload_done(void *arg, uint8_t aid)
@@ -3972,6 +4040,32 @@ rde_roa_reload(void)
 	    rib_byid(RIB_ADJ_IN), rde_roa_softreload,
 	    rde_roa_softreload_done, NULL) == -1)
 		fatal("%s: rib_dump_new", __func__);
+}
+
+static void
+rde_aspa_reload(void)
+{
+	struct rde_aspa *aspa_old;
+
+	if (aspa_update_pending) {
+		log_info("ASPA softreload skipped, old still running");
+		return;
+	}
+
+	aspa_old = rde_aspa;
+	rde_aspa = aspa_new;
+	aspa_new = NULL;
+
+	/* check if aspa changed */
+	if (aspa_table_equal(rde_aspa, aspa_old)) {
+		aspa_table_unchanged(rde_aspa, aspa_old);
+		aspa_table_free(aspa_old);	/* old aspa no longer needed */
+		return;
+	}
+
+	aspa_table_free(aspa_old);	/* old aspa no longer needed */
+	log_debug("ASPA change: reloading Adj-RIB-In");
+	/* XXX MISSING */
 }
 
 /*

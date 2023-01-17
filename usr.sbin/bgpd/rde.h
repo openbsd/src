@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.278 2023/01/12 17:35:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.279 2023/01/17 16:09:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -112,6 +112,8 @@ struct rde_peer {
 	uint8_t				 throttled;
 	uint8_t				 flags;
 };
+
+struct rde_aspa;
 
 #define AS_SET			1
 #define AS_SEQUENCE		2
@@ -731,11 +733,17 @@ int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
 int		 up_dump_mp_reach(u_char *, int, struct rde_peer *, uint8_t);
 
 /* rde_aspa.c */
+uint8_t		 aspa_validation(struct rde_aspa *, enum role, struct aspath *,
+		    uint8_t);
 struct rde_aspa	*aspa_table_prep(uint32_t, size_t);
 void		 aspa_add_set(struct rde_aspa *, uint32_t, const uint32_t *,
 		    uint32_t, const uint32_t *);
 void		 aspa_table_free(struct rde_aspa *);
-uint8_t		 aspa_validation(struct rde_aspa *, enum role, struct aspath *,
-		    uint8_t);
+void		 aspa_table_stats(const struct rde_aspa *,
+		    struct ctl_show_set *);
+int		 aspa_table_equal(const struct rde_aspa *,
+		    const struct rde_aspa *);
+void		 aspa_table_unchanged(struct rde_aspa *,
+		    const struct rde_aspa *);
 
 #endif /* __RDE_H__ */

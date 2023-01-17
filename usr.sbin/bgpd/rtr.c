@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.9 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.10 2023/01/17 16:09:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -428,25 +428,15 @@ aspa_set_entry(struct aspa_set *aspa, uint32_t asnum, uint8_t aid)
 	uint32_t i, num, *newtas;
 	uint8_t *newtasaid;
 
-	switch (aid) {
-	case AID_INET:
-		aid = 0x1;
-		break;
-	case AID_INET6:
-		aid = 0x2;
-		break;
-	case AID_UNSPEC:
-		aid = 0x3;
-		break;
-	default:
-		fatalx("aspa_set bad AID");
-	}
+	if (aid != AID_UNSPEC && aid != AID_INET && aid != AID_INET6)
+		fatalx("aspa set with invalid AFI %s", aid2str(aid));
 
 	for (i = 0; i < aspa->num; i++) {
 		if (asnum < aspa->tas[i] || aspa->tas[i] == 0)
 			break;
 		if (asnum == aspa->tas[i]) {
-			aspa->tas_aid[i] |= aid;
+			if (aspa->tas_aid[i] != aid)
+				aspa->tas_aid[i] = AID_UNSPEC;
 			return;
 		}
 	}
@@ -489,6 +479,53 @@ rtr_aspa_merge_set(struct aspa_tree *a, struct aspa_set *mergeset)
 }
 
 /*
+ * Compress aspa_set tas_aid into the bitfield used by the RDE.
+ * Returns the size of tas and tas_aid bitfield required for this aspa_set.
+ * At the same time tas_aid is overwritten with the bitmasks or cleared
+ * if no extra aid masks are needed.
+ */
+static size_t
+rtr_aspa_set_prep(struct aspa_set *aspa)
+{
+	uint32_t i, mask = 0;
+	int needafi = 0;
+	size_t s;
+	
+	s = aspa->num * sizeof(uint32_t);
+	for (i = 0; i < aspa->num; i++) {
+		switch (aspa->tas_aid[i]) {
+		case AID_INET:
+			needafi = 1;
+			mask |= 0x1 << ((i % 16) * 2);
+			break;
+		case AID_INET6:
+			needafi = 1;
+			mask |= 0x2 << ((i % 16) * 2);
+			break;
+		default:
+			mask |= 0x3 << ((i % 16) * 2);
+			break;
+		}
+		if (i % 16 == 15) {
+			memcpy(aspa->tas_aid + (i / 16) * sizeof(mask), &mask,
+			    sizeof(mask));
+			mask = 0;
+		}
+	}
+
+	if (!needafi) {
+		free(aspa->tas_aid);
+		aspa->tas_aid = NULL;
+	} else {
+		memcpy(aspa->tas_aid + (aspa->num / 16) * sizeof(mask), &mask,
+		    sizeof(mask));
+		s += (aspa->num + 15) / 16;
+	}
+
+	return s;
+}
+
+/*
  * Merge all RPKI ROA trees into one as one big union.
  * Simply try to add all roa entries into a new RB tree.
  * This could be made a fair bit faster but for now this is good enough.
@@ -500,6 +537,7 @@ rtr_recalc(void)
 	struct aspa_tree at;
 	struct roa *roa, *nr;
 	struct aspa_set *aspa;
+	struct aspa_prep ap = { 0 };
 
 	RB_INIT(&rt);
 	RB_INIT(&at);
@@ -510,14 +548,37 @@ rtr_recalc(void)
 
 	imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1, NULL, 0);
 	RB_FOREACH_SAFE(roa, roa_tree, &rt, nr) {
-		RB_REMOVE(roa_tree, &rt, roa);
 		imsg_compose(ibuf_rde, IMSG_RECONF_ROA_ITEM, 0, 0, -1,
 		    roa, sizeof(*roa));
-		free(roa);
 	}
+	free_roatree(&rt);
 
 	RB_FOREACH(aspa, aspa_tree, &conf->aspa)
 		rtr_aspa_merge_set(&at, aspa);
+
+	RB_FOREACH(aspa, aspa_tree, &at) {
+		ap.datasize += rtr_aspa_set_prep(aspa);
+		ap.entries++;
+	}
+
+	imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_PREP, 0, 0, -1,
+	    &ap, sizeof(ap));
+
+	RB_FOREACH(aspa, aspa_tree, &at) {
+		uint32_t	as[2];
+		as[0] = aspa->as;
+		as[1] = aspa->num;
+
+		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA, 0, 0, -1,
+		    &as, sizeof(as));
+		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_TAS, 0, 0, -1,
+		    aspa->tas, aspa->num * sizeof(*aspa->tas));
+		if (aspa->tas_aid)
+			imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_TAS, 0, 0, -1,
+			    aspa->tas_aid, (aspa->num + 15) / 16);
+		imsg_compose(ibuf_rde, IMSG_RECONF_ASPA_DONE, 0, 0, -1,
+		    NULL, 0);
+	}
 
 	free_aspatree(&at);
 

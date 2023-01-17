@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.1 2023/01/11 13:53:17 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.2 2023/01/17 16:09:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,7 @@ struct rde_aspa {
 	size_t		 	  maxdata;
 	size_t		 	  curdata;
 	uint32_t		  curset;
+	time_t			  lastchange;
 };
 
 struct aspa_state {
@@ -114,14 +115,14 @@ static enum cp_res
 aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas, uint8_t aid)
 {
 	struct rde_aspa_set *aspa;
-	uint32_t i;
+	uint32_t i, mask;
 
 	switch (aid) {
 	case AID_INET:
-		aid = 0x1;
+		mask = 0x1;
 		break;
 	case AID_INET6:
-		aid = 0x2;
+		mask = 0x2;
 		break;
 	default:
 		return UNKNOWN;
@@ -162,7 +163,7 @@ aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas, uint8_t aid)
 
 	if (aspa->pas_aid == NULL)
 		return PROVIDER;
-	if (aspa->pas_aid[i / 16] & (aid << ((i % 16) * 2)))
+	if (aspa->pas_aid[i / 16] & (mask << ((i % 16) * 2)))
 		return PROVIDER;
 	return NOT_PROVIDER;
 }
@@ -336,10 +337,10 @@ aspa_validation(struct rde_aspa *ra, enum role role, struct aspath *a,
 /*
  * Preallocate all data structures needed for the aspa table.
  * There are entries number of rde_aspa_sets with data_size bytes of
- * extra data.
+ * extra data (used to store SPAS and optional AFI bitmasks).
  */
 struct rde_aspa *
-aspa_table_prep(uint32_t entries, size_t data_size)
+aspa_table_prep(uint32_t entries, size_t datasize)
 {
 	struct rde_aspa *ra;
 	uint32_t hsize = 1024;
@@ -361,12 +362,13 @@ aspa_table_prep(uint32_t entries, size_t data_size)
 	if ((ra->sets = calloc(entries, sizeof(ra->sets[0]))) == NULL)
 		fatal("aspa table prep");
 
-	if ((ra->data = malloc(data_size)) == NULL)
+	if ((ra->data = malloc(datasize)) == NULL)
 		fatal("aspa table prep");
 		
 	ra->mask = hsize - 1;
 	ra->maxset = entries;
-	ra->maxdata = data_size / sizeof(ra->data[0]);
+	ra->maxdata = datasize / sizeof(ra->data[0]);
+	ra->lastchange = getmonotime();
 
 	return ra;
 }
@@ -441,4 +443,47 @@ aspa_table_free(struct rde_aspa *ra)
 	free(ra->sets);
 	free(ra->data);
 	free(ra);
+}
+
+void
+aspa_table_stats(const struct rde_aspa *ra, struct ctl_show_set *cset)
+{
+	if (ra == NULL)
+		return;
+	cset->lastchange = ra->lastchange;
+	cset->as_cnt = ra->maxset;
+}
+
+/*
+ * Return true if the two rde_aspa tables are contain the same data.
+ */
+int
+aspa_table_equal(const struct rde_aspa *ra, const struct rde_aspa *rb)
+{
+	uint32_t i;
+
+	/* allow NULL pointers to be passed */
+	if (ra == NULL && rb == NULL)
+		return 1;
+	if (ra == NULL || rb == NULL)
+		return 0;
+
+	if (ra->maxset != rb->maxset ||
+	    ra->maxdata != rb->maxdata)
+		return 0;
+	for (i = 0; i < ra->maxset; i++)
+		if (ra->sets[i].as != rb->sets[i].as)
+			return 0;
+	if (memcmp(ra->data, rb->data, ra->maxdata * sizeof(ra->data[0])) != 0)
+		return 0;
+
+	return 1;
+}
+
+void
+aspa_table_unchanged(struct rde_aspa *ra, const struct rde_aspa *old)
+{
+	if (ra == NULL || old == NULL)
+		return;
+	ra->lastchange = old->lastchange;
 }
