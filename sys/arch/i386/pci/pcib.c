@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcib.c,v 1.25 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: pcib.c,v 1.26 2023/01/17 23:39:30 jsg Exp $	*/
 /*	$NetBSD: pcib.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 
 #include <dev/pci/pcidevs.h>
 
-#include "isa.h"
+#include "isadma.h"
 #include "pcibios.h"
 #if NPCIBIOS > 0
 #include <i386/pci/pcibiosvar.h>
