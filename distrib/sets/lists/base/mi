@@ -2985,6 +2985,9 @@
 ./usr/share/relink/usr/lib/libcrypto.so.50.1.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
+./usr/share/relink/usr/sbin
+./usr/share/relink/usr/sbin/sshd
+./usr/share/relink/usr/sbin/sshd/sshd.tar
 ./usr/share/snmp
 ./usr/share/snmp/mibs
 ./usr/share/snmp/mibs/OPENBSD-BASE-MIB.txt
