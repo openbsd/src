@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.30 2023/01/02 22:41:17 kettenis Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.31 2023/01/18 23:25:32 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -41,7 +41,7 @@
 #define	BIOSF_BIOS32	0x0001
 #define	BIOSF_PCIBIOS	0x0002
 #define	BIOSF_PROMSCAN	0x0004
-#define	BIOSF_SMBIOS	0x0006
+#define	BIOSF_SMBIOS	0x0008
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
