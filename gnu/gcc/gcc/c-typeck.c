@@ -4873,6 +4873,9 @@ static int constructor_simple;
 /* 1 if this constructor is erroneous so far.  */
 static int constructor_erroneous;
 
+/* 1 if this constructor is a zero init. */
+static int constructor_zeroinit;
+
 /* Structure for managing pending initializer elements, organized as an
    AVL tree.  */
 
@@ -5032,6 +5035,7 @@ start_init (tree decl, tree asmspec_tree ATTRIBUTE_UNUSED, int top_level)
   constructor_stack = 0;
   constructor_range_stack = 0;
 
+  constructor_zeroinit = 0;
   missing_braces_mentioned = 0;
 
   spelling_base = 0;
@@ -5314,12 +5318,6 @@ push_init_level (int implicit)
 	set_nonincremental_init ();
     }
 
-  if (implicit == 1 && warn_missing_braces && !missing_braces_mentioned)
-    {
-      missing_braces_mentioned = 1;
-      warning_init ("missing braces around initializer");
-    }
-
   if (TREE_CODE (constructor_type) == RECORD_TYPE
 	   || TREE_CODE (constructor_type) == UNION_TYPE)
     {
@@ -5445,6 +5443,22 @@ pop_init_level (int implicit)
 	  if (TREE_CHAIN (constructor_fields) != NULL_TREE)
 	    constructor_type = NULL_TREE;
 	}
+    }
+
+  if (VEC_length (constructor_elt,constructor_elements) == 0)
+     constructor_zeroinit = 1;
+  else if (VEC_length (constructor_elt,constructor_elements) == 1 &&
+      initializer_zerop (VEC_index (constructor_elt,constructor_elements,0)->value))
+     constructor_zeroinit = 1;
+  else
+     constructor_zeroinit = 0;
+
+  /* only warn for missing braces unless it is { 0 } */
+  if (p->implicit == 1 && warn_missing_braces && !missing_braces_mentioned &&
+      !constructor_zeroinit)
+    {
+      missing_braces_mentioned = 1;
+      warning_init ("missing braces around initializer");
     }
 
   /* Warn when some struct elements are implicitly initialized to zero.  */
