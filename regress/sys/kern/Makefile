@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.103 2021/12/24 08:49:19 guenther Exp $
+#	$OpenBSD: Makefile,v 1.104 2023/01/18 19:18:49 anton Exp $
 
 SUBDIR+= accept access
 SUBDIR+= bind
@@ -24,6 +24,7 @@ SUBDIR+= signal sosplice stackjmp stackpivot syscall syscall_segment
 SUBDIR+= sysvmsg sysvsem sysvshm
 SUBDIR+= unalign unfdpass unixsockets unveil unveil-unmount
 SUBDIR+= wait
+SUBDIR+= xonly
 
 install:
 
