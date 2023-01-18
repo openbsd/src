@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.106 2022/05/27 05:02:46 djm Exp $
+#	$OpenBSD: Makefile,v 1.107 2023/01/18 20:43:15 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -14,6 +14,7 @@ SRCS+=	${SRCS_BASE} ${SRCS_KEX} ${SRCS_KEXS} ${SRCS_KEY} ${SRCS_KEYP} \
 	${SRCS_SK_CLIENT}
 
 PROG=	sshd
+BINMODE=511
 BINDIR=	/usr/sbin
 MAN=	sshd.8 sshd_config.5
 
@@ -46,3 +47,22 @@ DPADD+=	${LIBUTIL}
 LDADD+=	-lz
 DPADD+=	${LIBZ}
 .endif
+
+# The random relink kit, used on OpenBSD by /etc/rc
+
+Makefile.relink: ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile
+	# XXX assume a concatenation of these is OK
+	cat ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile > Makefile.relink
+
+${PROG} sshd.tar: ${OBJS} Makefile.relink
+	tar cf $@ ${OBJS} Makefile.relink
+
+afterinstall: sshd.tar
+	install -d -o root -g wheel -m 755 \
+	    ${DESTDIR}/usr/share/relink/usr/sbin/sshd
+	install -o ${BINOWN} -g ${BINGRP} -m 640 \
+	    sshd.tar ${DESTDIR}/usr/share/relink/usr/sbin/sshd/sshd.tar
+
+relink:
+	cc -o sshd `echo ${OBJS} | tr ' ' '\n' | sort -R` ${LDADD}
+	./sshd -V && install -o root -g wheel -m ${BINMODE} sshd /usr/sbin/sshd
