@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1221 2023/01/17 16:22:56 kn Exp $
+#	$OpenBSD: install.sub,v 1.1222 2023/01/18 10:30:20 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1324,7 +1324,7 @@ configure_ifs() {
 
                 # Skip all interface configuration questions if there is no
                 # physical interface to begin with.
-                ((${_ifs[*]} == 0)) && break
+                ((${#_ifs[*]} == 0)) && break
 
 		# Discover last configured vlan interface and increment its
 		# minor for the next offered vlan interface.
