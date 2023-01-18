@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.52 2023/01/04 14:22:43 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.53 2023/01/18 00:27:10 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -396,6 +396,7 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
 
 	flags = X509_V_FLAG_CRL_CHECK;
+	flags |= X509_V_FLAG_POLICY_CHECK;
 	flags |= X509_V_FLAG_EXPLICIT_POLICY;
 	flags |= X509_V_FLAG_INHIBIT_MAP;
 	X509_STORE_CTX_set_flags(store_ctx, flags);
