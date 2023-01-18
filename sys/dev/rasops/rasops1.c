@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops1.c,v 1.12 2021/01/09 18:20:47 fcambus Exp $	*/
+/*	$OpenBSD: rasops1.c,v 1.13 2023/01/18 11:08:49 nicm Exp $	*/
 /*	$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 		}
 
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if ((attr & WSATTR_UNDERLINE) != 0) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			*rp = (*rp & lmask) | (fg & rmask);
 		}
@@ -213,7 +213,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 		}
 
 		/* Do underline */
-		if ((attr & 1) != 0) {
+		if ((attr & WSATTR_UNDERLINE) != 0) {
 			DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 			rp[0] = (rp[0] & lmask) | (fg & ~lmask);
 			rp[1] = (rp[1] & rmask) | (fg & ~rmask);
@@ -281,7 +281,7 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & WSATTR_UNDERLINE) != 0)
 		rp[-(ri->ri_stride << 1)] = fg;
 
 	return 0;
@@ -345,7 +345,7 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & WSATTR_UNDERLINE) != 0)
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = fg;
 
 	return 0;

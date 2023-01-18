@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.68 2023/01/12 12:28:08 nicm Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.69 2023/01/18 11:08:49 nicm Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -561,9 +561,7 @@ rasops_pack_cattr(void *cookie, int fg, int bg, int flg, uint32_t *attr)
 	if ((flg & WSATTR_HILIT) != 0 && fg < 8)
 		fg += 8;
 
-	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
-
-	*attr = (bg << 16) | (fg << 24) | flg;
+	*attr = (bg << 16) | (fg << 24) | (flg & WSATTR_UNDERLINE);
 	return (0);
 }
 
@@ -587,7 +585,7 @@ rasops_pack_mattr(void *cookie, int fg, int bg, int flg, uint32_t *attr)
 		bg = swap;
 	}
 
-	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
+	*attr = (bg << 16) | (fg << 24) | (flg & WSATTR_UNDERLINE);
 	return (0);
 }
 
@@ -881,7 +879,7 @@ rasops_unpack_attr(void *cookie, uint32_t attr, int *fg, int *bg, int *underline
 	*fg = ((u_int)attr >> 24) & 0xf;
 	*bg = ((u_int)attr >> 16) & 0xf;
 	if (underline != NULL)
-		*underline = (u_int)attr & 1;
+		*underline = (u_int)attr & WSATTR_UNDERLINE;
 }
 
 /*
@@ -1252,7 +1250,8 @@ rasops_putchar_rotated(void *cookie, int row, int col, u_int uc, uint32_t attr)
 		col = ri->ri_cols - col - 1;
 
 	/* Do rotated char sans (side)underline */
-	rc = ri->ri_real_ops.putchar(cookie, col, row, uc, attr & ~1);
+	rc = ri->ri_real_ops.putchar(cookie, col, row, uc,
+	    attr & ~WSATTR_UNDERLINE);
 	if (rc != 0)
 		return rc;
 
@@ -1263,7 +1262,7 @@ rasops_putchar_rotated(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
 
 		while (height--) {

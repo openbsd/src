@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops15.c,v 1.9 2020/05/25 09:55:49 jsg Exp $	*/
+/*	$OpenBSD: rasops15.c,v 1.10 2023/01/18 11:08:49 nicm Exp $	*/
 /*	$NetBSD: rasops15.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ rasops15_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int16_t c = (int16_t)clr[1];
 		rp -= ri->ri_stride << 1;
 
@@ -265,7 +265,7 @@ rasops15_putchar8(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0) {
+	if ((attr & WSATTR_UNDERLINE) != 0) {
 		int32_t c = STAMP_READ(28);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -345,7 +345,7 @@ rasops15_putchar12(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if (attr & 1) {
+	if (attr & WSATTR_UNDERLINE) {
 		int32_t c = STAMP_READ(28);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
@@ -430,7 +430,7 @@ rasops15_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	}
 
 	/* Do underline */
-	if (attr & 1) {
+	if (attr & WSATTR_UNDERLINE) {
 		int32_t c = STAMP_READ(28);
 
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
