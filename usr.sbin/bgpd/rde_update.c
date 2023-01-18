@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.151 2023/01/12 17:35:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.152 2023/01/18 17:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -199,15 +199,16 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		}
 
 		/* check if this was actually a withdraw */
-		if (need_withdraw)
+		if (need_withdraw) {
+			rde_filterstate_clean(&state);
 			break;
+		}
 
 		/* from here on we know this is an update */
 
 		up_prep_adjout(peer, &state, addr.aid);
 		prefix_adjout_update(p, peer, &state, &addr,
-		    new->pt->prefixlen, new->path_id_tx,
-		    prefix_roa_vstate(new));
+		    new->pt->prefixlen, new->path_id_tx);
 		rde_filterstate_clean(&state);
 
 		/* max prefix checker outbound */
@@ -337,8 +338,7 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 
 		up_prep_adjout(peer, &state, addr.aid);
 		prefix_adjout_update(p, peer, &state, &addr,
-		    new->pt->prefixlen, new->path_id_tx,
-		    prefix_roa_vstate(new));
+		    new->pt->prefixlen, new->path_id_tx);
 		rde_filterstate_clean(&state);
 
 		/* max prefix checker outbound */
@@ -441,7 +441,7 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 
 		up_prep_adjout(peer, &state, addr.aid);
 		prefix_adjout_update(p, peer, &state, &addr,
-		    prefixlen, new->path_id_tx, prefix_roa_vstate(new));
+		    prefixlen, new->path_id_tx);
 		rde_filterstate_clean(&state);
 
 		/* max prefix checker outbound */
@@ -509,7 +509,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	}
 
 	up_prep_adjout(peer, &state, addr.aid);
-	prefix_adjout_update(p, peer, &state, &addr, 0, 0, ROA_NOTFOUND);
+	prefix_adjout_update(p, peer, &state, &addr, 0, 0);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
@@ -1028,7 +1028,6 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 		goto done;
 
 	rde_filterstate_prep(&state, p);
-
 	r = up_generate_attr(buf + 2, len - 2, peer, &state, AID_INET);
 	rde_filterstate_clean(&state);
 	if (r == -1) {

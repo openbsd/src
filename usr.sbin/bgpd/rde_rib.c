@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.251 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.252 2023/01/18 17:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -955,7 +955,7 @@ prefix_adjout_match(struct rde_peer *peer, struct bgpd_addr *addr)
 int
 prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
     uint32_t path_id_tx, struct filterstate *state, struct bgpd_addr *prefix,
-    int prefixlen, uint8_t vstate)
+    int prefixlen)
 {
 	struct rde_aspath	*asp, *nasp = &state->aspath;
 	struct rde_community	*comm, *ncomm = &state->communities;
@@ -973,7 +973,7 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 		    path_compare(nasp, prefix_aspath(p)) == 0) {
 			/* no change, update last change */
 			p->lastchange = getmonotime();
-			p->validation_state = vstate;
+			p->validation_state = state->vstate;
 			return (0);
 		}
 	}
@@ -997,11 +997,11 @@ prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 	/* If the prefix was found move it else add it to the RIB. */
 	if (p != NULL)
 		return (prefix_move(p, peer, asp, comm, state->nexthop,
-		    state->nhflags, vstate));
+		    state->nhflags, state->vstate));
 	else
 		return (prefix_add(prefix, prefixlen, rib, peer, path_id,
 		    path_id_tx, asp, comm, state->nexthop, state->nhflags,
-		    vstate));
+		    state->vstate));
 }
 
 /*
@@ -1123,7 +1123,7 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 void
 prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
     struct filterstate *state, struct bgpd_addr *prefix, int prefixlen,
-    uint32_t path_id_tx, uint8_t vstate)
+    uint32_t path_id_tx)
 {
 	struct rde_aspath *asp;
 	struct rde_community *comm;
@@ -1160,7 +1160,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 		    prefix_communities(p)) &&
 		    path_compare(&state->aspath, prefix_aspath(p)) == 0) {
 			/* nothing changed */
-			p->validation_state = vstate;
+			p->validation_state = state->vstate;
 			p->lastchange = getmonotime();
 			p->flags &= ~PREFIX_FLAG_STALE;
 			return;
@@ -1205,7 +1205,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 	}
 
 	prefix_link(p, NULL, p->pt, peer, 0, p->path_id_tx, asp, comm,
-	    state->nexthop, state->nhflags, vstate);
+	    state->nexthop, state->nhflags, state->vstate);
 	peer->prefix_out_cnt++;
 
 	if (p->flags & PREFIX_FLAG_MASK)

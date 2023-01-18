@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.588 2023/01/18 13:20:00 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.589 2023/01/18 17:40:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1744,7 +1744,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 
 	/* add original path to the Adj-RIB-In */
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, path_id_tx,
-	    in, prefix, prefixlen, in->vstate) == 1)
+	    in, prefix, prefixlen) == 1)
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1772,7 +1772,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
 			prefix_update(rib, peer, path_id, path_id_tx, &state,
-			    prefix, prefixlen, in->vstate);
+			    prefix, prefixlen);
 		} else if (prefix_withdraw(rib, peer, path_id, prefix,
 		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
@@ -3847,8 +3847,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
 				    p->path_id_tx, &state,
-				    &prefix, pt->prefixlen,
-				    prefix_roa_vstate(p));
+				    &prefix, pt->prefixlen);
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
@@ -3986,8 +3985,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 				/* update Local-RIB */
 				prefix_update(rib, peer, p->path_id,
 				    p->path_id_tx, &state,
-				    &prefix, pt->prefixlen,
-				    prefix_roa_vstate(p));
+				    &prefix, pt->prefixlen);
 			} else if (action == ACTION_DENY) {
 				/* remove from Local-RIB */
 				prefix_withdraw(rib, peer, p->path_id, &prefix,
@@ -4187,7 +4185,6 @@ network_add(struct network_config *nc, struct filterstate *state)
 	struct filter_set_head	*vpnset = NULL;
 	struct in_addr		 prefix4;
 	struct in6_addr		 prefix6;
-	uint8_t			 vstate;
 	uint16_t		 i;
 	uint32_t		 path_id_tx;
 
@@ -4249,14 +4246,16 @@ network_add(struct network_config *nc, struct filterstate *state)
 		rde_apply_set(vpnset, peerself, peerself, state,
 		    nc->prefix.aid);
 
-#if NOTYET
-	state.aspath.aspa_state = ASPA_NEVER_KNOWN;
-#endif
-	vstate = rde_roa_validity(&rde_roa, &nc->prefix,
-	    nc->prefixlen, aspath_origin(state->aspath.aspath));
 	path_id_tx = pathid_assign(peerself, 0, &nc->prefix, nc->prefixlen);
+
+#if NOTYET
+	state->aspath.aspa_state = ASPA_NEVER_KNOWN;
+#endif
+	state->vstate = rde_roa_validity(&rde_roa, &nc->prefix,
+	    nc->prefixlen, aspath_origin(state->aspath.aspath));
+
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, 0, path_id_tx,
-	    state, &nc->prefix, nc->prefixlen, vstate) == 1)
+	    state, &nc->prefix, nc->prefixlen) == 1)
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
@@ -4266,7 +4265,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 		    state->nexthop ? &state->nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
 		prefix_update(rib, peerself, 0, path_id_tx, state, &nc->prefix,
-		    nc->prefixlen, vstate);
+		    nc->prefixlen);
 	}
 	filterset_free(&nc->attrset);
 }
