@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.391 2023/01/18 00:48:14 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.392 2023/01/18 12:59:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -534,7 +534,7 @@ editor_allocspace(struct disklabel *lp_org)
 	struct partition *pp;
 	const struct diskchunk *chunk;
 	u_int64_t chunkstart, chunksize, start, stop;
-	u_int64_t cylsecs, secs, xtrasecs;
+	u_int64_t secs, xtrasecs;
 	char **partmp;
 	int i, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
@@ -554,7 +554,6 @@ editor_allocspace(struct disklabel *lp_org)
 			resizeok = 0;
 	}
 
-	cylsecs = lp_org->d_secpercyl;
 	alloc = NULL;
 	index = -1;
 again:
@@ -626,7 +625,7 @@ again:
 			if (lp->d_flags & D_VENDOR) {
 				/* Align to cylinder boundaries. */
 				start = ROUNDUP(start, lp_org->d_secpercyl);
-				stop = (stop / cylsecs) * cylsecs;
+				stop = ROUNDDOWN(stop, lp_org->d_secpercyl);
 				if (start > stop)
 					start = stop;
 			}
@@ -654,7 +653,7 @@ again:
 		if (lp->d_flags & D_VENDOR) {
 			secs = ROUNDUP(secs, lp_org->d_secpercyl);
 			while (secs > chunksize)
-				secs -= cylsecs;
+				secs -= lp_org->d_secpercyl;
 		}
 #endif
 
@@ -2291,7 +2290,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 	if ((flags & ROUND_OFFSET_UP) == ROUND_OFFSET_UP)
 		start = ROUNDUP(start, startalign);
 	else if ((flags & ROUND_OFFSET_DOWN) == ROUND_OFFSET_DOWN)
-		start = (start / startalign) * startalign;
+		start = ROUNDDOWN(start, startalign);
 
 	/* Find the chunk that contains 'start'. */
 	chunk = free_chunks(lp, partno);
@@ -2308,15 +2307,15 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 
 	/* Calculate the new 'stop' sector, the sector after the partition. */
 	if ((flags & ROUND_SIZE_OVERLAP) == 0)
-		maxstop = (chunk->stop / stopalign) * stopalign;
+		maxstop = ROUNDDOWN(chunk->stop, stopalign);
 	else
-		maxstop = (ending_sector / stopalign) * stopalign;
+		maxstop = ROUNDDOWN(ending_sector, stopalign);
 
 	stop = DL_GETPOFFSET(pp) + DL_GETPSIZE(pp);
 	if ((flags & ROUND_SIZE_UP) == ROUND_SIZE_UP)
 		stop = ROUNDUP(stop, stopalign);
 	else if ((flags & ROUND_SIZE_DOWN) == ROUND_SIZE_DOWN)
-		stop = (stop / stopalign) * stopalign;
+		stop = ROUNDDOWN(stop, stopalign);
 	if (stop > maxstop)
 		stop = maxstop;
 
