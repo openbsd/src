@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.83 2023/01/13 08:58:36 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.84 2023/01/18 10:13:46 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 13 2023 $
+.Dd $Mdocdate: January 18 2023 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -234,11 +234,9 @@ Defaults to
 .Pp
 By default
 .Nm
-produces a list of unique
-.Li roa-set
-statements in
+outputs validated payloads in
 .Fl o
-(OpenBGPD compatible) output.
+(OpenBGPD compatible) format.
 .Pp
 .Nm
 should be run hourly by
