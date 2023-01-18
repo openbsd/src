@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.53 2023/01/18 00:27:10 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.54 2023/01/18 18:12:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -566,7 +566,6 @@ valid_uuid(const char *s)
 			if (s[n] != '-')
 				return 0;
 			break;
-#ifdef NOTYET	/* World is not yet ready to enfoce UUID version and variant */
 		/* Check UUID is version 4 */
 		case 14:
 			if (s[n] != '4')
@@ -578,7 +577,6 @@ valid_uuid(const char *s)
 			    s[n] != 'A' && s[n] != 'b' && s[n] != 'B')
 				return 0;
 			break;
-#endif
 		case 36:
 			return s[n] == '\0';
 		default:
