@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.49 2022/12/05 08:59:28 visa Exp $ */
+/*	$OpenBSD: clock.c,v 1.50 2023/01/18 19:12:43 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -167,7 +167,7 @@ cp0_int5(uint32_t mask, struct trapframe *tf)
 void
 cp0_rearm_int5(void *unused, uint64_t nsecs)
 {
-	uint32_t cycles, t0, t1, target;
+	uint32_t cycles, t0;
 	register_t sr;
 
 	if (nsecs > cp0_nsec_max)
@@ -175,25 +175,16 @@ cp0_rearm_int5(void *unused, uint64_t nsecs)
 	cycles = (nsecs * cp0_nsec_cycle_ratio) >> 32;
 
 	/*
-	 * Set compare, then immediately reread count.  If INT5 is not
-	 * pending then we need to check if we missed.  If t0 + cycles
-	 * did not overflow then we need t0 <= t1 < target.  Otherwise,
-	 * there are two valid constraints: either t0 <= t1 or t1 < target
-	 * show we didn't miss.
+	 * Set compare, then immediately reread count.  If at least
+	 * "cycles" CP0 ticks have elapsed and INT5 isn't already
+	 * pending, we missed.
 	 */
 	sr = disableintr();
 	t0 = cp0_get_count();
-	target = t0 + cycles;
-	cp0_set_compare(target);
-	t1 = cp0_get_count();
-	if (!ISSET(cp0_get_cause(), CR_INT_5)) {
-		if (t0 <= target) {
-			if (target <= t1 || t1 < t0)
-				cp0_trigger_int5_masked();
-		} else {
-			if (t1 < t0 && target <= t1)
-				cp0_trigger_int5_masked();
-		}
+	cp0_set_compare(t0 + cycles);
+	if (cycles <= cp0_get_count() - t0) {
+		if (!ISSET(cp0_get_cause(), CR_INT_5))
+			cp0_trigger_int5_masked();
 	}
 	setsr(sr);
 }
@@ -224,13 +215,13 @@ cp0_trigger_int5(void)
 void
 cp0_trigger_int5_masked(void)
 {
-	uint32_t compare, offset = 16;
-	int leading = 0;
+	uint32_t offset = 16, t0;
 
-	while (!ISSET(cp0_get_cause(), CR_INT_5) && !leading) {
-		compare = cp0_get_count() + offset;
-		cp0_set_compare(compare);
-		leading = (int32_t)(compare - cp0_get_count()) > 0;
+	while (!ISSET(cp0_get_cause(), CR_INT_5)) {
+		t0 = cp0_get_count();
+		cp0_set_compare(t0 + offset);
+		if (cp0_get_count() - t0 < offset)
+			return;
 		offset *= 2;
 	}
 }
