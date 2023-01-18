@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.460 2022/12/18 18:56:38 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.461 2023/01/18 21:57:10 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1906,13 +1906,6 @@ delifjoinlist(const char *val, int d)
 
 	memset(&join, 0, sizeof(join));
 	join.i_flags |= (IEEE80211_JOIN_DEL | IEEE80211_JOIN_DEL_ALL);
-
-	if (d == -1) {
-		ifr.ifr_data = (caddr_t)&join;
-		if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
-			err(1, "SIOCS80211JOIN");
-		return;
-	}
 
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
