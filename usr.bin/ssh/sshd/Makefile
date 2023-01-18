@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.107 2023/01/18 20:43:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.108 2023/01/18 20:56:36 deraadt Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -54,7 +54,7 @@ Makefile.relink: ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile
 	# XXX assume a concatenation of these is OK
 	cat ${.CURDIR}/../Makefile.inc ${.CURDIR}/Makefile > Makefile.relink
 
-${PROG} sshd.tar: ${OBJS} Makefile.relink
+sshd.tar: ${OBJS} Makefile.relink
 	tar cf $@ ${OBJS} Makefile.relink
 
 afterinstall: sshd.tar
