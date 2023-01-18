@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.390 2023/01/17 23:56:51 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.391 2023/01/18 00:48:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -625,8 +625,7 @@ again:
 #ifdef SUN_CYLCHECK
 			if (lp->d_flags & D_VENDOR) {
 				/* Align to cylinder boundaries. */
-				start = ((start + cylsecs - 1) / cylsecs) *
-				    cylsecs;
+				start = ROUNDUP(start, lp_org->d_secpercyl);
 				stop = (stop / cylsecs) * cylsecs;
 				if (start > stop)
 					start = stop;
@@ -653,7 +652,7 @@ again:
 		}
 #ifdef SUN_CYLCHECK
 		if (lp->d_flags & D_VENDOR) {
-			secs = ((secs + cylsecs - 1) / cylsecs) * cylsecs;
+			secs = ROUNDUP(secs, lp_org->d_secpercyl);
 			while (secs > chunksize)
 				secs -= cylsecs;
 		}
@@ -746,11 +745,8 @@ editor_resize(struct disklabel *lp, char *p)
 	}
 
 #ifdef SUN_CYLCHECK
-	if (lp->d_flags & D_VENDOR) {
-		u_int64_t cylsecs;
-		cylsecs = lp->d_secpercyl;
-		ui = ((ui + cylsecs - 1) / cylsecs) * cylsecs;
-	}
+	if (lp->d_flags & D_VENDOR)
+		ui = ROUNDUP(ui, lp->d_secpercyl);
 #endif
 	if (DL_GETPOFFSET(pp) + ui > ending_sector) {
 		fputs("Amount too big\n", stderr);
@@ -2293,7 +2289,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 
 	start = DL_GETPOFFSET(pp);
 	if ((flags & ROUND_OFFSET_UP) == ROUND_OFFSET_UP)
-		start = ((start + startalign - 1) / startalign) * startalign;
+		start = ROUNDUP(start, startalign);
 	else if ((flags & ROUND_OFFSET_DOWN) == ROUND_OFFSET_DOWN)
 		start = (start / startalign) * startalign;
 
@@ -2318,7 +2314,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 
 	stop = DL_GETPOFFSET(pp) + DL_GETPSIZE(pp);
 	if ((flags & ROUND_SIZE_UP) == ROUND_SIZE_UP)
-		stop = ((stop + stopalign - 1) / stopalign) * stopalign;
+		stop = ROUNDUP(stop, stopalign);
 	else if ((flags & ROUND_SIZE_DOWN) == ROUND_SIZE_DOWN)
 		stop = (stop / stopalign) * stopalign;
 	if (stop > maxstop)
