@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.399 2022/10/09 02:32:02 kevlo Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.400 2023/01/18 23:31:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3160,10 +3160,10 @@ bge_detach(struct device *self, int flags)
 	struct bge_softc *sc = (struct bge_softc *)self;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 
+	bge_stop(sc, 1);
+
 	if (sc->bge_intrhand)
 		pci_intr_disestablish(sc->bge_pa.pa_pc, sc->bge_intrhand);
-
-	bge_stop(sc, 1);
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc->bge_mii.mii_phys) != NULL)
