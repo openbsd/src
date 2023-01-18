@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.25 2022/09/23 15:49:20 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.26 2023/01/18 13:20:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -28,6 +28,7 @@
 
 struct peer_tree	 peertable;
 struct rde_peer		*peerself;
+static long		 imsg_pending;
 
 CTASSERT(sizeof(peerself->recv_eor) * 8 > AID_MAX);
 CTASSERT(sizeof(peerself->sent_eor) * 8 > AID_MAX);
@@ -610,6 +611,7 @@ peer_imsg_push(struct rde_peer *peer, struct imsg *imsg)
 		fatal(NULL);
 	imsg_move(&iq->imsg, imsg);
 	SIMPLEQ_INSERT_TAIL(&peer->imsg_queue, iq, entry);
+	imsg_pending++;
 }
 
 /*
@@ -629,16 +631,9 @@ peer_imsg_pop(struct rde_peer *peer, struct imsg *imsg)
 
 	SIMPLEQ_REMOVE_HEAD(&peer->imsg_queue, entry);
 	free(iq);
+	imsg_pending--;
 
 	return 1;
-}
-
-static void
-peer_imsg_queued(struct rde_peer *peer, void *arg)
-{
-	int *p = arg;
-
-	*p = *p || !SIMPLEQ_EMPTY(&peer->imsg_queue);
 }
 
 /*
@@ -647,11 +642,7 @@ peer_imsg_queued(struct rde_peer *peer, void *arg)
 int
 peer_imsg_pending(void)
 {
-	int pending = 0;
-
-	peer_foreach(peer_imsg_queued, &pending);
-
-	return pending;
+	return imsg_pending != 0;
 }
 
 /*
@@ -665,5 +656,6 @@ peer_imsg_flush(struct rde_peer *peer)
 	while ((iq = SIMPLEQ_FIRST(&peer->imsg_queue)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&peer->imsg_queue, entry);
 		free(iq);
+		imsg_pending--;
 	}
 }
