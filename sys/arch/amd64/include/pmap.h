@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.83 2023/01/17 19:29:09 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.84 2023/01/19 20:17:12 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -475,12 +475,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 static inline void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	if ((prot & PROT_WRITE) == 0) {
-		if (prot & (PROT_READ| PROT_EXEC)) {
-			pmap_write_protect(pmap, sva, eva, prot);
-		} else {
-			pmap_remove(pmap, sva, eva);
-		}
+	if (prot != PROT_NONE) {
+		pmap_write_protect(pmap, sva, eva, prot);
+	} else {
+		pmap_remove(pmap, sva, eva);
 	}
 }
 
