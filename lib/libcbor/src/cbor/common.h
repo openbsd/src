@@ -83,7 +83,11 @@ extern bool _cbor_enable_assert;
 #define _CBOR_UNUSED(x) __attribute__((__unused__)) x
 // TODO(https://github.com/PJK/libcbor/issues/247): Prefer [[nodiscard]] if
 // available
+#if ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 4)) || (__GNUC__ >= 4)
 #define _CBOR_NODISCARD __attribute__((warn_unused_result))
+#else	/* gcc3 can not treat warn_unused_result attribute */
+#define _CBOR_NODISCARD
+#endif
 #elif defined(_MSC_VER)
 #define _CBOR_UNUSED(x) __pragma(warning(suppress : 4100 4101)) x
 #define _CBOR_NODISCARD
