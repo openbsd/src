@@ -1,4 +1,4 @@
-#	$OpenBSD: reexec.sh,v 1.12 2017/08/07 03:52:55 dtucker Exp $
+#	$OpenBSD: reexec.sh,v 1.13 2023/01/19 07:53:45 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="reexec tests"
@@ -9,7 +9,11 @@ SSHD_COPY=$OBJ/sshd
 # Start a sshd and then delete it
 start_sshd_copy ()
 {
-	cp $SSHD_ORIG $SSHD_COPY
+	if [ -r "$SSHD_ORIG" ]; then
+		cp "$SSHD_ORIG" "$SSHD_COPY"
+	elif [ -z "$SUDO" ] || ! $SUDO cp "$SSHD_ORIG" "$SSHD_COPY"; then
+		skip "Cannot copy sshd."
+	fi
 	SSHD=$SSHD_COPY
 	start_sshd
 	SSHD=$SSHD_ORIG
@@ -43,7 +47,7 @@ cp $OBJ/sshd_config.orig $OBJ/sshd_config
 verbose "test reexec fallback"
 
 start_sshd_copy
-rm -f $SSHD_COPY
+$SUDO rm -f $SSHD_COPY
 
 copy_tests
 
