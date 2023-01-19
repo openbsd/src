@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.86 2023/01/10 01:09:14 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.87 2023/01/19 15:52:51 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -662,7 +662,6 @@ struct vm_mprotect_ept_params {
  *  MPX (SEFF0EBX_MPX)
  *  PCOMMIT (SEFF0EBX_PCOMMIT)
  *  PT (SEFF0EBX_PT)
- *  AVX512VBMI (SEFF0ECX_AVX512VBMI)
  */
 #define VMM_SEFF0EBX_MASK ~(SEFF0EBX_TSC_ADJUST | SEFF0EBX_SGX | \
     SEFF0EBX_HLE | SEFF0EBX_INVPCID | \
@@ -674,7 +673,7 @@ struct vm_mprotect_ept_params {
     SEFF0EBX_AVX512BW | SEFF0EBX_AVX512VL)
 
 /* ECX mask contains the bits to include */
-#define VMM_SEFF0ECX_MASK (SEFF0ECX_PREFETCHWT1 | SEFF0ECX_UMIP | SEFF0ECX_PKU)
+#define VMM_SEFF0ECX_MASK (SEFF0ECX_UMIP)
 
 /* EDX mask contains the bits to include */
 #define VMM_SEFF0EDX_MASK (SEFF0EDX_MD_CLEAR)
