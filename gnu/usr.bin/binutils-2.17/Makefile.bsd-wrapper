@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 2023/01/19 00:18:19 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 2023/01/19 22:54:45 kettenis Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 SUBDIRS+=	binutils
 CONF_SUBDIRS+=	binutils
 INST_SUBDIRS+=	binutils
-MAN+=		binutils/doc/strings.1
+MAN+=		binutils/doc/strings.1 binutils/doc/strip.1
 
 .if (${TARGET_ARCH} != "aarch64" && ${TARGET_ARCH} != "powerpc64" && \
     ${TARGET_ARCH} != "riscv64")
@@ -47,12 +47,8 @@ SKIP_AR=	am__EXEEXT_7= am__EXEEXT_9=
 .endif
 
 .if ${LINKER_VERSION:L} == "bfd"
-MAN+=		binutils/doc/strip.1
 maninstall:
 		cd ${DESTDIR}${MANDIR}1 && rm -f ld.1 && ln ld.bfd.1 ld.1
-.else
-# skip installing strip(1) which is am__EXEEXT_14
-SKIP_STRIP=	am__EXEEXT_14=
 .endif
 
 # Used by the GNU Makefile
@@ -143,7 +139,7 @@ install: maninstall
 	    INSTALL_PROGRAM='${INSTALL} -c ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}' \
 	    INSTALL_DATA='${INSTALL} -c -o ${DOCOWN} -g ${DOCGRP} -m ${NONBINMODE}' \
 	    INSTALL_INFO_HOST_MODULES='${INSTALL_INFO_HOST_MODULES}' \
-	    ${SKIP_AR} ${SKIP_STRIP} \
+	    ${SKIP_AR} \
 	      $t
 .endfor
 .if ${LINKER_VERSION:L} == "bfd"
