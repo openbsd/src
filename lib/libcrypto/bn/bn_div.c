@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.31 2023/01/18 05:29:48 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.32 2023/01/20 10:07:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,11 +63,12 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
+#include "bn_arch.h"
 #include "bn_local.h"
 
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
 
-#ifndef BN_DIV3W
+#ifndef HAVE_BN_DIV_3_WORDS
 
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 # if defined(__GNUC__) && __GNUC__>=2
@@ -199,7 +200,7 @@ bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
 
 	return q;
 }
-#endif /* !BN_DIV3W */
+#endif /* !HAVE_BN_DIV_3_WORDS */
 
 /*
  * BN_div_internal computes quotient := numerator / divisor, rounding towards
