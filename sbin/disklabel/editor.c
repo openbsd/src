@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.393 2023/01/20 14:35:43 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.394 2023/01/20 17:47:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -144,7 +144,7 @@ u_int64_t editor_countfree(const struct disklabel *);
 void	editor_delete(struct disklabel *, const char *);
 void	editor_help(void);
 void	editor_modify(struct disklabel *, const char *);
-void	editor_name(struct disklabel *, const char *);
+void	editor_name(const struct disklabel *, const char *);
 char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(const struct disklabel *, char *, char *, u_int64_t,
     u_int64_t, int *);
@@ -163,7 +163,7 @@ int	get_bsize(struct disklabel *, int);
 int	get_fsize(struct disklabel *, int);
 int	get_cpg(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
-int	get_mp(struct disklabel *, int);
+int	get_mp(const struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
 int	get_size(struct disklabel *, int);
 void	zero_partitions(struct disklabel *);
@@ -900,9 +900,9 @@ editor_add(struct disklabel *lp, const char *p)
  * Set the mountpoint of an existing partition ('name').
  */
 void
-editor_name(struct disklabel *lp, const char *p)
+editor_name(const struct disklabel *lp, const char *p)
 {
-	struct partition *pp;
+	const struct partition *pp;
 	int partno;
 
 	/* Change which partition? */
@@ -1985,9 +1985,9 @@ get_fstype(struct disklabel *lp, int partno)
 }
 
 int
-get_mp(struct disklabel *lp, int partno)
+get_mp(const struct disklabel *lp, int partno)
 {
-	struct partition *pp = &lp->d_partitions[partno];
+	const struct partition *pp = &lp->d_partitions[partno];
 	char *p;
 	int i;
 
