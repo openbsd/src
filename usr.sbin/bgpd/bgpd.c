@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.255 2022/11/18 10:17:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.256 2023/01/20 10:30:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ struct connect_elm {
 	int				fd;
 };
 
-TAILQ_HEAD( ,connect_elm)	connect_queue = \
+TAILQ_HEAD(, connect_elm)	connect_queue = \
 				    TAILQ_HEAD_INITIALIZER(connect_queue);
 u_int				connect_cnt;
 #define MAX_CONNECT_CNT		32
