@@ -1,4 +1,4 @@
-/* $OpenBSD: x86_64-gcc.c,v 1.7 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: x86_64-gcc.c,v 1.8 2023/01/20 17:26:03 jsing Exp $ */
 #include "../bn_local.h"
 /*
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
@@ -226,6 +226,11 @@ BN_ULONG bn_sub_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int 
 /* mul_add_c2(a,b,c0,c1,c2) -- c+=2*a*b for three word number c=(c2,c1,c0) */
 /* sqr_add_c(a,i,c0,c1,c2)  -- c+=a[i]^2 for three word number c=(c2,c1,c0) */
 /* sqr_add_c2(a,i,c0,c1,c2) -- c+=2*a[i]*a[j] for three word number c=(c2,c1,c0) */
+
+#undef mul_add_c
+#undef mul_add_c2
+#undef sqr_add_c
+#undef sqr_add_c2
 
 /*
  * Keep in mind that carrying into high part of multiplication result
