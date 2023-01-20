@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_add.c,v 1.17 2023/01/20 04:49:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,35 +61,6 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
-
-int
-BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
-{
-	int ret, r_neg;
-
-
-	if (a->neg == b->neg) {
-		r_neg = a->neg;
-		ret = BN_uadd(r, a, b);
-	} else {
-		int cmp = BN_ucmp(a, b);
-
-		if (cmp > 0) {
-			r_neg = a->neg;
-			ret = BN_usub(r, a, b);
-		} else if (cmp < 0) {
-			r_neg = b->neg;
-			ret = BN_usub(r, b, a);
-		} else {
-			r_neg = 0;
-			BN_zero(r);
-			ret = 1;
-		}
-	}
-
-	r->neg = r_neg;
-	return ret;
-}
 
 int
 BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
@@ -180,6 +151,35 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	r->neg = 0;
 	bn_correct_top(r);
 	return 1;
+}
+
+int
+BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+{
+	int ret, r_neg;
+
+
+	if (a->neg == b->neg) {
+		r_neg = a->neg;
+		ret = BN_uadd(r, a, b);
+	} else {
+		int cmp = BN_ucmp(a, b);
+
+		if (cmp > 0) {
+			r_neg = a->neg;
+			ret = BN_usub(r, a, b);
+		} else if (cmp < 0) {
+			r_neg = b->neg;
+			ret = BN_usub(r, b, a);
+		} else {
+			r_neg = 0;
+			BN_zero(r);
+			ret = 1;
+		}
+	}
+
+	r->neg = r_neg;
+	return ret;
 }
 
 int
