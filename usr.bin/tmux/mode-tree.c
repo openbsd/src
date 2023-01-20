@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.62 2022/02/01 18:12:20 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.63 2023/01/20 21:36:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -962,8 +962,8 @@ mode_tree_display_menu(struct mode_tree_data *mtd, struct client *c, u_int x,
 		x -= (menu->width + 4) / 2;
 	else
 		x = 0;
-	if (menu_display(menu, 0, NULL, x, y, c, NULL, mode_tree_menu_callback,
-	    mtm) != 0)
+	if (menu_display(menu, 0, 0, NULL, x, y, c, NULL,
+	    mode_tree_menu_callback, mtm) != 0)
 		menu_free(menu);
 }
 

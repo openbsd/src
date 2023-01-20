@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.911 2023/01/08 21:00:01 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.912 2023/01/20 21:36:00 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 8 2023 $
+.Dd $Mdocdate: January 20 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5815,6 +5815,7 @@ until it is dismissed.
 .Op Fl O
 .Op Fl c Ar target-client
 .Op Fl t Ar target-pane
+.Op Fl S Ar starting-choice
 .Op Fl T Ar title
 .Op Fl x Ar position
 .Op Fl y Ar position
@@ -5844,6 +5845,9 @@ command should be omitted.
 .Fl T
 is a format for the menu title (see
 .Sx FORMATS ) .
+.Fl S
+sets the menu item selected by default, if the menu is not bound to a mouse key
+binding.
 .Pp
 .Fl x
 and
