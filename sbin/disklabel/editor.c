@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.392 2023/01/18 12:59:16 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.393 2023/01/20 14:35:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -137,22 +137,22 @@ struct alloc_table *alloc_table = alloc_table_default;
 int alloc_table_nitems = 4;
 
 void	edit_parms(struct disklabel *);
-void	editor_resize(struct disklabel *, char *);
-void	editor_add(struct disklabel *, char *);
-void	editor_change(struct disklabel *, char *);
+void	editor_resize(struct disklabel *, const char *);
+void	editor_add(struct disklabel *, const char *);
+void	editor_change(struct disklabel *, const char *);
 u_int64_t editor_countfree(const struct disklabel *);
-void	editor_delete(struct disklabel *, char *);
+void	editor_delete(struct disklabel *, const char *);
 void	editor_help(void);
-void	editor_modify(struct disklabel *, char *);
-void	editor_name(struct disklabel *, char *);
+void	editor_modify(struct disklabel *, const char *);
+void	editor_name(struct disklabel *, const char *);
 char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(const struct disklabel *, char *, char *, u_int64_t,
     u_int64_t, int *);
-u_int64_t getnumber(char *, char *, u_int32_t, u_int32_t);
+u_int64_t getnumber(const char *, const char *, u_int32_t, u_int32_t);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 const struct partition **sort_partitions(const struct disklabel *, int);
-void	getdisktype(struct disklabel *, char *, char *);
+void	getdisktype(struct disklabel *, const char *, char *);
 void	find_bounds(const struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
@@ -697,7 +697,7 @@ again:
  * Resize a partition, moving all subsequent partitions
  */
 void
-editor_resize(struct disklabel *lp, char *p)
+editor_resize(struct disklabel *lp, const char *p)
 {
 	struct disklabel label;
 	struct partition *pp, *prev;
@@ -806,7 +806,7 @@ editor_resize(struct disklabel *lp, char *p)
  * Add a new partition.
  */
 void
-editor_add(struct disklabel *lp, char *p)
+editor_add(struct disklabel *lp, const char *p)
 {
 	struct partition *pp;
 	const struct diskchunk *chunk;
@@ -900,7 +900,7 @@ editor_add(struct disklabel *lp, char *p)
  * Set the mountpoint of an existing partition ('name').
  */
 void
-editor_name(struct disklabel *lp, char *p)
+editor_name(struct disklabel *lp, const char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -931,7 +931,7 @@ editor_name(struct disklabel *lp, char *p)
  * Change an existing partition.
  */
 void
-editor_modify(struct disklabel *lp, char *p)
+editor_modify(struct disklabel *lp, const char *p)
 {
 	struct partition opp, *pp;
 	int partno;
@@ -974,7 +974,7 @@ editor_modify(struct disklabel *lp, char *p)
  * Delete an existing partition.
  */
 void
-editor_delete(struct disklabel *lp, char *p)
+editor_delete(struct disklabel *lp, const char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -1012,7 +1012,7 @@ editor_delete(struct disklabel *lp, char *p)
  * Change the size of an existing partition.
  */
 void
-editor_change(struct disklabel *lp, char *p)
+editor_change(struct disklabel *lp, const char *p)
 {
 	struct partition *pp;
 	int partno;
@@ -1100,7 +1100,8 @@ getstring(const char *prompt, const char *helpstring, const char *oval)
  * CMD_ABORTED		==> ^D on input
  */
 u_int64_t
-getnumber(char *prompt, char *helpstring, u_int32_t oval, u_int32_t maxval)
+getnumber(const char *prompt, const char *helpstring, u_int32_t oval,
+    u_int32_t maxval)
 {
 	char buf[BUFSIZ], *p;
 	int rslt;
@@ -1343,7 +1344,7 @@ sort_partitions(const struct disklabel *lp, int ignore)
  * Get a valid disk type if necessary.
  */
 void
-getdisktype(struct disklabel *lp, char *banner, char *dev)
+getdisktype(struct disklabel *lp, const char *banner, char *dev)
 {
 	int i;
 	char *s;
