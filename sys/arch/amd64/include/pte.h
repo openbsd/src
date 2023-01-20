@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.16 2023/01/16 00:04:47 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.17 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define PGEX_PK		0x20	/* protection-key violation */
 
 #ifdef _KERNEL
+extern pt_entry_t pg_xo;	/* XO pte bits using PKU key1 */
 extern pt_entry_t pg_nx;	/* NX pte bit */
 extern pt_entry_t pg_g_kern;	/* PG_G if glbl mappings can be used in kern */
 #endif /* _KERNEL */

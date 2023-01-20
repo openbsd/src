@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.87 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.88 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -149,6 +149,7 @@ INTRENTRY_LABEL(calltrap_specstk):
 	movq	%r12,%rax
 	movq	%r13,%rdx
 	wrmsr
+	call	pku_xonly
 	popq	%rdi
 	popq	%rsi
 	popq	%rdx

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.131 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.132 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -597,6 +597,7 @@ IDTVEC_NOALIGN(syscall)
 	jz	.Lsyscall_restore_fsbase
 
 .Lsyscall_restore_registers:
+	call	pku_xonly
 	RET_STACK_REFILL_WITH_RCX
 
 	movq	TF_R8(%rsp),%r8
@@ -773,6 +774,7 @@ intr_user_exit_post_ast:
 	jz	.Lintr_restore_fsbase
 
 .Lintr_restore_registers:
+	call	pku_xonly
 	RET_STACK_REFILL_WITH_RCX
 
 	movq	TF_R8(%rsp),%r8
@@ -940,6 +942,7 @@ NENTRY(intr_fast_exit)
 	testq	$PSL_I,%rdx
 	jnz	.Lintr_exit_not_blocked
 #endif /* DIAGNOSTIC */
+	call	pku_xonly	/* XXX guenther disapproves, but foo3 locks */
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8
@@ -1104,6 +1107,19 @@ ENTRY(pagezero)
 	ret
 	lfence
 END(pagezero)
+
+/* void pku_xonly(void) */
+ENTRY(pku_xonly)
+	movq	pg_xo,%rax	/* have PKU support? */
+	cmpq	$0,%rax
+	je	1f
+	movl	$0,%ecx		/* force PKRU for xonly restriction */
+	movl	$0,%edx
+	movl	$PGK_VALUE,%eax	/* key0 normal, key1 is exec without read */
+	wrpkru
+1:	ret
+	lfence
+END(pku_xonly)
 
 /* int rdmsr_safe(u_int msr, uint64_t *data) */
 ENTRY(rdmsr_safe)

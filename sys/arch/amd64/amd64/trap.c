@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.95 2023/01/17 08:03:51 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.96 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -132,6 +132,7 @@ static void trap_print(struct trapframe *, int _type);
 static inline void frame_dump(struct trapframe *_tf, struct proc *_p,
     const char *_sig, uint64_t _cr2);
 static inline void verify_smap(const char *_func);
+static inline int verify_pkru(struct proc *);
 static inline void debug_trap(struct trapframe *_frame, struct proc *_p,
     long _type);
 
@@ -357,6 +358,17 @@ kerntrap(struct trapframe *frame)
 	}
 }
 
+/* If we find out userland changed the pkru register, punish the process */
+static inline int
+verify_pkru(struct proc *p)
+{
+	if (pg_xo == 0 || rdpkru(0) == PGK_VALUE)
+		return 0;
+	KERNEL_LOCK();
+	sigabort(p);
+	KERNEL_UNLOCK();
+	return 1;
+}
 
 /*
  * usertrap(frame): handler for exceptions, faults, and traps from userspace
@@ -379,6 +391,9 @@ usertrap(struct trapframe *frame)
 
 	p->p_md.md_regs = frame;
 	refreshcreds(p);
+
+	if (verify_pkru(p))
+		goto out;
 
 	switch (type) {
 	case T_TSSFLT:
@@ -547,6 +562,11 @@ syscall(struct trapframe *frame)
 	verify_smap(__func__);
 	uvmexp.syscalls++;
 	p = curproc;
+
+	if (verify_pkru(p)) {
+		userret(p);
+		return;
+	}
 
 	code = frame->tf_rax;
 	argp = &args[0];

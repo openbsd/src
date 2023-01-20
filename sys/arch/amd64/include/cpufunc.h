@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.37 2022/09/22 04:57:08 robert Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.38 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.3 2003/05/08 10:27:43 fvdl Exp $	*/
 
 /*-
@@ -230,6 +230,14 @@ rdmsr(u_int msr)
 	uint32_t hi, lo;
 	__asm volatile("rdmsr" : "=d" (hi), "=a" (lo) : "c" (msr));
 	return (((uint64_t)hi << 32) | (uint64_t) lo);
+}
+
+static __inline int
+rdpkru(u_int ecx)
+{
+	uint32_t edx, pkru;
+	asm volatile("rdpkru " : "=a" (pkru), "=d" (edx) : "c" (ecx));
+	return pkru;
 }
 
 static __inline void

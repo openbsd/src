@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.163 2022/11/29 21:41:39 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.164 2023/01/20 16:01:04 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -737,6 +737,8 @@ cpu_init(struct cpu_info *ci)
 		cr4 |= CR4_UMIP;
 	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd)
 		cr4 |= CR4_OSXSAVE;
+	if (pg_xo)
+		cr4 |= CR4_PKE;
 	if (pmap_use_pcid)
 		cr4 |= CR4_PCIDE;
 	lcr4(cr4);

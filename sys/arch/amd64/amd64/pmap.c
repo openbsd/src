@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.157 2023/01/19 20:17:11 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.158 2023/01/20 16:01:04 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -231,6 +231,9 @@ struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
  */
 pt_entry_t pg_nx = 0;
 pt_entry_t pg_g_kern = 0;
+
+/* pg_nx: XO PTE bits, set to PKU key1 (if cpu supports PKU) */
+pt_entry_t pg_xo;
 
 /*
  * pmap_pg_wc: if our processor supports PAT then we set this
@@ -656,13 +659,28 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	virtual_avail = kva_start;		/* first free KVA */
 
 	/*
+	 * If PKU is available, initialize PROT_EXEC entry correctly,
+	 * and enable the feature before it gets used
+	 * XXX Some Hypervisors forget to save/restore PKU
+	 */
+	if (cpuid_level >= 0x7) {
+		uint32_t ecx, dummy;
+		CPUID_LEAF(0x7, 0, dummy, dummy, ecx, dummy);
+		if ((ecx & SEFF0ECX_PKU) &&
+		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
+			lcr4(rcr4() | CR4_PKE);
+			pg_xo = PG_XO;
+		}
+	}
+
+	/*
 	 * set up protection_codes: we need to be able to convert from
 	 * a MI protection code (some combo of VM_PROT...) to something
 	 * we can jam into a i386 PTE.
 	 */
 
 	protection_codes[PROT_NONE] = pg_nx;			/* --- */
-	protection_codes[PROT_EXEC] = PG_RO;			/* --x */
+	protection_codes[PROT_EXEC] = pg_xo;		;	/* --x */
 	protection_codes[PROT_READ] = PG_RO | pg_nx;		/* -r- */
 	protection_codes[PROT_READ | PROT_EXEC] = PG_RO;	/* -rx */
 	protection_codes[PROT_WRITE] = PG_RW | pg_nx;		/* w-- */
@@ -2119,6 +2137,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
+	if (!(prot & PROT_READ))
+		set |= pg_xo;
 	if (!(prot & PROT_WRITE))
 		clear = PG_RW;
 	if (!(prot & PROT_EXEC))
