@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.70 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.71 2023/01/20 15:11:44 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -208,6 +208,10 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
+	sc->sc_parent_busex = pa->pa_busex;
+	sc->sc_busnum = sec;
+	sc->sc_busrange = sub - sec + 1;
+
 	/* Check for PCI Express capabilities and setup hotplug support. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &sc->sc_cap_off, &reg) && (reg & PCI_PCIE_XCAP_SI)) {
@@ -396,7 +400,7 @@ ppbdetach(struct device *self, int flags)
 		free(name, M_DEVBUF, PPB_EXNAMLEN);
 	}
 
-	if (sc->sc_parent_busex)
+	if (sc->sc_parent_busex && sc->sc_busrange > 0)
 		extent_free(sc->sc_parent_busex, sc->sc_busnum,
 		    sc->sc_busrange, EX_NOWAIT);
 
@@ -558,9 +562,6 @@ ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
 	}
 
 	if (busrange > 0) {
-		sc->sc_parent_busex = pa->pa_busex;
-		sc->sc_busnum = busnum;
-		sc->sc_busrange = busrange;
 		*busdata |= pa->pa_bus;
 		*busdata |= (busnum << 8);
 		*busdata |= ((busnum + busrange - 1) << 16);
