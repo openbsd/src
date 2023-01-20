@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.228 2023/01/04 14:33:30 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.229 2023/01/20 15:41:33 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2023 $
+.Dd $Mdocdate: January 20 2023 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -426,12 +426,16 @@ may be defined, against which
 will validate the origin of each prefix.
 The
 .Ic roa-set
-is merged with the tables received via
+and the
+.Ic aspa-set
+are merged with the corresponding tables received via
 .Ic rtr
 sessions.
 .Pp
 A set definition can span multiple lines, and an optional comma is allowed
 between elements.
+The same set can be defined more than once, in this case the definitions are
+merged into one common set.
 .Pp
 .Bl -tag -width Ds -compact
 .It Xo
@@ -443,6 +447,30 @@ An
 stores AS numbers, and can be used with the AS specific parameter in
 .Sx FILTER
 rules.
+.Pp
+.It Xo
+.Ic aspa-set
+.Ic { Ic customer-as Ar as-number
+.Op Ic expires Ar seconds
+.Ic provider-as Ic { Ar as-number
+.Op Ic inet Ns | Ns Ic inet6
+.Ic ... Ic } ... Ic }
+.Xc
+The
+.Ic aspa-set
+holds a collection of
+.Em Validated ASPA Payloads Pq VAPs .
+Each as AS_PATH received from an eBGP peer is checked against the
+.Ic aspa-set ,
+and the ASPA Validation State (AVS) is set.
+.Ic expires
+can be set to the seconds since Epoch until when this VAP is valid.
+.Bd -literal -offset indent
+roa-set {
+	customer-as 64511 provider-as { 64496 65496 }
+	customer-as 64496 provider-as { 65496 64544 }
+}
+.Ed
 .Pp
 .It Xo
 .Ic origin-set Ar name

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.438 2023/01/04 14:33:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.439 2023/01/20 15:41:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -636,11 +636,11 @@ aspa_tas	: as4number_any {
 			$$->aid = AID_UNSPEC;
 			$$->num = 1;
 		}
-		| as4number_any ALLOW family {
+		| as4number_any family {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				fatal(NULL);
 			$$->as = $1;
-			$$->aid = $3;
+			$$->aid = $2;
 			$$->num = 1;
 		}
 		;

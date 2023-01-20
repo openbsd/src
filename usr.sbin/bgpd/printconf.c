@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.161 2023/01/04 14:33:30 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.162 2023/01/20 15:41:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -609,9 +609,8 @@ print_aspa(struct aspa_tree *a)
 		printf(" provider-as { ");
 		for (i = 0; i < aspa->num; i++) {
 			printf("%s ", log_as(aspa->tas[i]));
-			if (aspa->tas_aid != NULL &&
-			    aspa->tas_aid[i] != AID_UNSPEC)
-				printf("allow %s ", print_af(aspa->tas_aid[i]));
+			if (aspa->tas_aid[i] != AID_UNSPEC)
+				printf("%s ", print_af(aspa->tas_aid[i]));
 		}
 		printf("}");
 	}
