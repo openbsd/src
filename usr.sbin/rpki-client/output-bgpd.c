@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.25 2023/01/13 08:58:36 claudio Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.26 2023/01/20 15:42:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -67,11 +67,11 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 				return -1;
 			switch (vap->providers[i].afi) {
 			case AFI_IPV4:
-				if (fprintf(out, "allow inet") < 0)
+				if (fprintf(out, "inet") < 0)
 					return -1;
 				break;
 			case AFI_IPV6:
-				if (fprintf(out, "allow inet6") < 0)
+				if (fprintf(out, "inet6") < 0)
 					return -1;
 				break;
 			}
