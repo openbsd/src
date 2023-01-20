@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.18 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.19 2023/01/20 22:00:47 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -76,8 +76,6 @@
 #define ns_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-void x509v3_cache_extensions(X509 *x);
-
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
     int ca);
@@ -131,13 +129,9 @@ X509_check_purpose(X509 *x, int id, int ca)
 	int idx;
 	const X509_PURPOSE *pt;
 
-	if (!(x->ex_flags & EXFLAG_SET)) {
-		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		x509v3_cache_extensions(x);
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-		if (x->ex_flags & EXFLAG_INVALID)
-			return -1;
-	}
+	if (!x509v3_cache_extensions(x))
+		return -1;
+
 	if (id == -1)
 		return 1;
 	idx = X509_PURPOSE_get_by_id(id);
@@ -449,8 +443,8 @@ setup_crldp(X509 *x)
 		setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
 }
 
-void
-x509v3_cache_extensions(X509 *x)
+static void
+x509v3_cache_extensions_internal(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;
 	PROXY_CERT_INFO_EXTENSION *pci;
@@ -640,6 +634,18 @@ x509v3_cache_extensions(X509 *x)
 	x->ex_flags |= EXFLAG_SET;
 }
 
+int
+x509v3_cache_extensions(X509 *x)
+{
+	if ((x->ex_flags & EXFLAG_SET) == 0) {
+		CRYPTO_w_lock(CRYPTO_LOCK_X509);
+		x509v3_cache_extensions_internal(x);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
+	}
+
+	return (x->ex_flags & EXFLAG_INVALID) == 0;
+}
+
 /* CA checks common to all purposes
  * return codes:
  * 0 not a CA
@@ -680,11 +686,7 @@ check_ca(const X509 *x)
 int
 X509_check_ca(X509 *x)
 {
-	if (!(x->ex_flags & EXFLAG_SET)) {
-		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		x509v3_cache_extensions(x);
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-	}
+	x509v3_cache_extensions(x);
 
 	return check_ca(x);
 }
@@ -895,19 +897,10 @@ X509_check_issued(X509 *issuer, X509 *subject)
 	if (X509_NAME_cmp(X509_get_subject_name(issuer),
 	    X509_get_issuer_name(subject)))
 		return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
-	if (!(issuer->ex_flags & EXFLAG_SET)) {
-		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		x509v3_cache_extensions(issuer);
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-	}
-	if (issuer->ex_flags & EXFLAG_INVALID)
+
+	if (!x509v3_cache_extensions(issuer))
 		return X509_V_ERR_UNSPECIFIED;
-	if (!(subject->ex_flags & EXFLAG_SET)) {
-		CRYPTO_w_lock(CRYPTO_LOCK_X509);
-		x509v3_cache_extensions(subject);
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-	}
-	if (subject->ex_flags & EXFLAG_INVALID)
+	if (!x509v3_cache_extensions(subject))
 		return X509_V_ERR_UNSPECIFIED;
 
 	if (subject->akid) {
