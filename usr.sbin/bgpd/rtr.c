@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.10 2023/01/17 16:09:01 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.11 2023/01/20 09:54:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -490,7 +490,7 @@ rtr_aspa_set_prep(struct aspa_set *aspa)
 	uint32_t i, mask = 0;
 	int needafi = 0;
 	size_t s;
-	
+
 	s = aspa->num * sizeof(uint32_t);
 	for (i = 0; i < aspa->num; i++) {
 		switch (aspa->tas_aid[i]) {
