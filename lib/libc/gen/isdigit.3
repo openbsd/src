@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isdigit.3,v 1.13 2022/09/11 06:38:10 jmc Exp $
+.\"	$OpenBSD: isdigit.3,v 1.14 2023/01/20 17:21:12 millert Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: January 20 2023 $
 .Dt ISDIGIT 3
 .Os
 .Sh NAME
@@ -51,7 +51,12 @@ The
 and
 .Fn isdigit_l
 functions test for any decimal-digit character.
-The complete list of decimal digits is 0 and 1\(en9, in any locale.
+In the C locale, the complete list of decimal digits is 0 and 1\(en9.
+.Ox
+always uses the C locale for these functions,
+ignoring the global locale, the thread-specific locale, and the
+.Fa locale
+argument.
 .Sh RETURN VALUES
 These functions return zero if the character tests false or
 non-zero if the character tests true.
