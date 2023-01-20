@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.33 2022/12/06 00:40:09 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.34 2023/01/20 17:18:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -162,7 +162,7 @@ itmr_get_timecount(struct timecounter *tc)
 void
 itmr_rearm(void *unused, uint64_t nsecs)
 {
-	uint32_t cycles, t0, t1, target;
+	uint32_t cycles, t0, t1;
 	register_t eiem, eirr;
 
 	if (nsecs > itmr_nsec_max)
@@ -171,33 +171,17 @@ itmr_rearm(void *unused, uint64_t nsecs)
 
 	eiem = hppa_intr_disable();
 	mfctl(CR_ITMR, t0);
-	target = t0 + cycles;
-	mtctl(target, CR_ITMR);
+	mtctl(t0 + cycles, CR_ITMR);
 	mfctl(CR_ITMR, t1);
+	mfctl(CR_EIRR, eirr);
 
 	/*
-	 * If the interrupt isn't already pending we need to check if
-	 * we missed.  In general, we are checking whether ITMR had
-	 * already passed the target value when we wrote the register.
-	 * There are two cases.
-	 *
-	 * 1. If (t0 + cycles) did not overflow, we want t1 to be between
-	 *    t0 and target.  If t0 <= t1 < target, we didn't miss.
-	 *
-	 * 2. If (t0 + cycles) overflowed, either t0 <= t1 or t1 < target
-	 *    are sufficient to show we didn't miss.
-	 *
-	 * Only try once.  Fall back to itmr_trigger_masked() if we miss.
+	 * If at least "cycles" ITMR ticks have elapsed and the interrupt
+	 * isn't pending, we missed.  Fall back to itmr_trigger_masked().
 	 */
-	mfctl(CR_EIRR, eirr);
-	if (!ISSET(eirr, 1U << 31)) {
-		if (t0 <= target) {
-			if (target <= t1 || t1 < t0)
-				itmr_trigger_masked();
-		} else {
-			if (target <= t1 && t1 < t0)
-				itmr_trigger_masked();
-		}
+	if (cycles <= t1 - t0) {
+		if (!ISSET(eirr, 1U << 31))
+			itmr_trigger_masked();
 	}
 	hppa_intr_enable(eiem);
 }
