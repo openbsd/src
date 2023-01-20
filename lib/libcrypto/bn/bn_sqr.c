@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.19 2023/01/20 17:31:52 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.20 2023/01/20 17:34:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,18 +232,10 @@ bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
 	BN_ULONG ln, lo, *p;
 
 	if (n2 == 4) {
-#ifndef BN_SQR_COMBA
-		bn_sqr_normal(r, a, 4, t);
-#else
 		bn_sqr_comba4(r, a);
-#endif
 		return;
 	} else if (n2 == 8) {
-#ifndef BN_SQR_COMBA
-		bn_sqr_normal(r, a, 8, t);
-#else
 		bn_sqr_comba8(r, a);
-#endif
 		return;
 	}
 	if (n2 < BN_SQR_RECURSIVE_SIZE_NORMAL) {
@@ -333,19 +325,9 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 		goto err;
 
 	if (al == 4) {
-#ifndef BN_SQR_COMBA
-		BN_ULONG t[8];
-		bn_sqr_normal(rr->d, a->d, 4, t);
-#else
 		bn_sqr_comba4(rr->d, a->d);
-#endif
 	} else if (al == 8) {
-#ifndef BN_SQR_COMBA
-		BN_ULONG t[16];
-		bn_sqr_normal(rr->d, a->d, 8, t);
-#else
 		bn_sqr_comba8(rr->d, a->d);
-#endif
 	} else {
 #if defined(BN_RECURSION)
 		if (al < BN_SQR_RECURSIVE_SIZE_NORMAL) {
