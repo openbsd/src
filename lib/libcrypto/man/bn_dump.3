@@ -1,4 +1,4 @@
-.\" $OpenBSD: bn_dump.3,v 1.7 2022/11/22 19:00:15 schwarze Exp $
+.\" $OpenBSD: bn_dump.3,v 1.8 2023/01/20 12:16:46 jsing Exp $
 .\" full merge up to:
 .\" OpenSSL crypto/bn/README.pod aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 22 2022 $
+.Dd $Mdocdate: January 20 2023 $
 .Dt BN_DUMP 3
 .Os
 .Sh NAME
@@ -66,11 +66,8 @@
 .Nm bn_sqr_comba8 ,
 .Nm bn_cmp_words ,
 .Nm bn_mul_normal ,
-.Nm bn_mul_low_normal ,
 .Nm bn_mul_recursive ,
 .Nm bn_mul_part_recursive ,
-.Nm bn_mul_low_recursive ,
-.Nm bn_mul_high ,
 .Nm bn_sqr_normal ,
 .Nm bn_sqr_recursive ,
 .Nm bn_expand ,
@@ -166,13 +163,6 @@
 .Fa "int nb"
 .Fc
 .Ft void
-.Fo bn_mul_low_normal
-.Fa "BN_ULONG *r"
-.Fa "BN_ULONG *a"
-.Fa "BN_ULONG *b"
-.Fa "int n"
-.Fc
-.Ft void
 .Fo bn_mul_recursive
 .Fa "BN_ULONG *r"
 .Fa "BN_ULONG *a"
@@ -190,23 +180,6 @@
 .Fa "int n"
 .Fa "int tna"
 .Fa "int tnb"
-.Fa "BN_ULONG *tmp"
-.Fc
-.Ft void
-.Fo bn_mul_low_recursive
-.Fa "BN_ULONG *r"
-.Fa "BN_ULONG *a"
-.Fa "BN_ULONG *b"
-.Fa "int n2"
-.Fa "BN_ULONG *tmp"
-.Fc
-.Ft void
-.Fo bn_mul_high
-.Fa "BN_ULONG *r"
-.Fa "BN_ULONG *a"
-.Fa "BN_ULONG *b"
-.Fa "BN_ULONG *l"
-.Fa "int n2"
 .Fa "BN_ULONG *tmp"
 .Fc
 .Ft void
@@ -545,21 +518,6 @@ It computes
 and places the result in
 .Fa r .
 .Pp
-.Fn bn_mul_low_normal r a b n
-operates on the
-.Fa n
-word arrays
-.Fa r ,
-.Fa a
-and
-.Fa b .
-It computes the
-.Fa n
-low words of
-.Fa a Ns * Ns Fa b
-and places the result in
-.Fa r .
-.Pp
 .Fn bn_mul_recursive r a b n2 dna dnb t
 operates on the word arrays
 .Fa a
@@ -599,34 +557,6 @@ and the
 word arrays
 .Fa r
 and
-.Fa tmp .
-.Pp
-.Fn bn_mul_low_recursive r a b n2 tmp
-operates on the
-.Fa n2
-word arrays
-.Fa r
-and
-.Fa tmp
-and the
-.Fa n2 Ns /2
-word arrays
-.Fa a
-and
-.Fa b .
-.Pp
-.Fn bn_mul_high r a b l n2 tmp
-operates on the
-.Fa n2
-word arrays
-.Fa r ,
-.Fa a ,
-.Fa b
-and
-.Fa l
-(?) and the
-.Pf 3* Fa n2
-word array
 .Fa tmp .
 .Pp
 .Xr BN_mul 3
