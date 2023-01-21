@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.28 2023/01/20 17:31:52 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.29 2023/01/21 15:40:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -710,63 +710,32 @@ bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n, int tna,
 }
 #endif /* BN_RECURSION */
 
+#ifndef HAVE_BN_MUL
+#ifndef BN_RECURSION
 int
-BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+bn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, int rn, BN_CTX *ctx)
 {
-	int ret = 0;
-	int top, al, bl;
-	BIGNUM *rr;
-#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
-	int i;
-#endif
-#ifdef BN_RECURSION
+	bn_mul_normal(r->d, a->d, a->top, b->d, b->top);
+
+	return 1;
+}
+
+#else /* BN_RECURSION */
+int
+bn_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, int rn, BN_CTX *ctx)
+{
 	BIGNUM *t = NULL;
-	int j = 0, k;
-#endif
+	int al, bl, i, k;
+	int j = 0;
+	int ret = 0;
 
-
+	BN_CTX_start(ctx);
 
 	al = a->top;
 	bl = b->top;
 
-	if ((al == 0) || (bl == 0)) {
-		BN_zero(r);
-		return (1);
-	}
-	top = al + bl;
-
-	BN_CTX_start(ctx);
-	if ((r == a) || (r == b)) {
-		if ((rr = BN_CTX_get(ctx)) == NULL)
-			goto err;
-	} else
-		rr = r;
-	rr->neg = a->neg ^ b->neg;
-
-#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
 	i = al - bl;
-#endif
-#ifdef BN_MUL_COMBA
-	if (i == 0) {
-# if 0
-		if (al == 4) {
-			if (!bn_wexpand(rr, 8))
-				goto err;
-			rr->top = 8;
-			bn_mul_comba4(rr->d, a->d, b->d);
-			goto end;
-		}
-# endif
-		if (al == 8) {
-			if (!bn_wexpand(rr, 16))
-				goto err;
-			rr->top = 16;
-			bn_mul_comba8(rr->d, a->d, b->d);
-			goto end;
-		}
-	}
-#endif /* BN_MUL_COMBA */
-#ifdef BN_RECURSION
+
 	if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL)) {
 		if (i >= -1 && i <= 1) {
 			/* Find out the power of two lower or equal
@@ -785,21 +754,21 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			if (al > j || bl > j) {
 				if (!bn_wexpand(t, k * 4))
 					goto err;
-				if (!bn_wexpand(rr, k * 4))
+				if (!bn_wexpand(r, k * 4))
 					goto err;
-				bn_mul_part_recursive(rr->d, a->d, b->d,
+				bn_mul_part_recursive(r->d, a->d, b->d,
 				    j, al - j, bl - j, t->d);
 			}
 			else	/* al <= j || bl <= j */
 			{
 				if (!bn_wexpand(t, k * 2))
 					goto err;
-				if (!bn_wexpand(rr, k * 2))
+				if (!bn_wexpand(r, k * 2))
 					goto err;
-				bn_mul_recursive(rr->d, a->d, b->d,
+				bn_mul_recursive(r->d, a->d, b->d,
 				    j, al - j, bl - j, t->d);
 			}
-			rr->top = top;
+			r->top = rn;
 			goto end;
 		}
 #if 0
@@ -830,36 +799,81 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			{
 				if (!bn_wexpand(t, k * 2))
 					goto err;
-				if (!bn_wexpand(rr, k * 2))
+				if (!bn_wexpand(r, k * 2))
 					goto err;
-				bn_mul_recursive(rr->d, a->d, b->d, al, t->d);
+				bn_mul_recursive(r->d, a->d, b->d, al, t->d);
 			} else {
 				if (!bn_wexpand(t, k * 4))
 					goto err;
-				if (!bn_wexpand(rr, k * 4))
+				if (!bn_wexpand(r, k * 4))
 					goto err;
-				bn_mul_part_recursive(rr->d, a->d, b->d,
+				bn_mul_part_recursive(r->d, a->d, b->d,
 				    al - j, j, t->d);
 			}
-			rr->top = top;
+			r->top = top;
 			goto end;
 		}
 #endif
 	}
-#endif /* BN_RECURSION */
-	if (!bn_wexpand(rr, top))
-		goto err;
-	rr->top = top;
-	bn_mul_normal(rr->d, a->d, al, b->d, bl);
 
-#if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
-end:
-#endif
+	bn_mul_normal(r->d, a->d, al, b->d, bl);
+
+ end:
+	ret = 1;
+ err:
+	BN_CTX_end(ctx);
+
+	return ret;
+}
+#endif /* BN_RECURSION */
+#endif /* HAVE_BN_MUL */
+
+int
+BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
+{
+	BIGNUM *rr;
+	int rn;
+	int ret = 0;
+
+	BN_CTX_start(ctx);
+
+	if (BN_is_zero(a) || BN_is_zero(b)) {
+		BN_zero(r);
+		goto done;
+	}
+
+	rr = r;
+	if (rr == a || rr == b)
+		rr = BN_CTX_get(ctx);
+	if (rr == NULL)
+		goto err;
+
+	rn = a->top + b->top;
+	if (rn < a->top)
+		goto err;
+	if (!bn_wexpand(rr, rn))
+		goto err;
+
+	if (a->top == 4 && b->top == 4) {
+		bn_mul_comba4(rr->d, a->d, b->d);
+	} else if (a->top == 8 && b->top == 8) {
+		bn_mul_comba8(rr->d, a->d, b->d);
+	} else {
+		if (!bn_mul(rr, a, b, rn, ctx))
+			goto err;
+	}
+
+	rr->top = rn;
+	rr->neg = a->neg ^ b->neg;
+
 	bn_correct_top(rr);
+
 	if (r != rr)
 		BN_copy(r, rr);
+ done:
 	ret = 1;
-err:
+ err:
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
