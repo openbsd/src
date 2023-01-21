@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.1 2023/01/16 20:12:38 patrick Exp $ */
+/* $OpenBSD: qcscm.c,v 1.2 2023/01/21 10:34:49 kettenis Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -745,8 +745,8 @@ qcscm_dmamem_alloc(struct qcscm_softc *sc, bus_size_t size, bus_size_t align)
 	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &qdm->qdm_map) != 0)
 		goto qdmfree;
 
-	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &qdm->qdm_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK) != 0)
+	if (bus_dmamem_alloc_range(sc->sc_dmat, size, align, 0,
+	    &qdm->qdm_seg, 1, &nsegs, BUS_DMA_WAITOK, 0, 0xffffffff) != 0)
 		goto destroy;
 
 	if (bus_dmamem_map(sc->sc_dmat, &qdm->qdm_seg, nsegs, size,
