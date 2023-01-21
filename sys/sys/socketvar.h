@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.114 2022/12/12 08:30:22 tb Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.115 2023/01/21 11:23:24 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ struct socket {
 		short	sb_flags;	/* flags, see below */
 /* End area that is zeroed on flush. */
 #define	sb_endzero	sb_flags
+		short	sb_state;	/* socket state on sockbuf */
 		uint64_t sb_timeo_nsecs;/* timeout for read/write */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 	} so_rcv, so_snd;
@@ -141,7 +142,13 @@ struct socket {
 
 /*
  * Socket state bits.
+ *
+ * NOTE: The following states should be used with corresponding socket's
+ * buffer `sb_state' only:
+ *
+ *	SS_CANTSENDMORE		with `so_snd' 
  */
+
 #define	SS_NOFDREF		0x001	/* no file table ref any more */
 #define	SS_ISCONNECTED		0x002	/* socket connected to a peer */
 #define	SS_ISCONNECTING		0x004	/* in process of connecting to peer */
@@ -237,7 +244,7 @@ sowriteable(struct socket *so)
 	return ((sbspace(so, &so->so_snd) >= so->so_snd.sb_lowat &&
 	    ((so->so_state & SS_ISCONNECTED) ||
 	    (so->so_proto->pr_flags & PR_CONNREQUIRED)==0)) ||
-	    (so->so_state & SS_CANTSENDMORE) || so->so_error);
+	    (so->so_snd.sb_state & SS_CANTSENDMORE) || so->so_error);
 }
 
 /* adjust counters in sb reflecting allocation of m */

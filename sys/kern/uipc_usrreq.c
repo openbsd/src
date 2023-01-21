@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.197 2022/12/12 08:30:22 tb Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.198 2023/01/21 11:23:23 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -509,7 +509,7 @@ uipc_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 			goto out;
 	}
 
-	if (so->so_state & SS_CANTSENDMORE) {
+	if (so->so_snd.sb_state & SS_CANTSENDMORE) {
 		error = EPIPE;
 		goto dispose;
 	}

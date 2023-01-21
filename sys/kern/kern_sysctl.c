@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.409 2023/01/14 01:04:55 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.410 2023/01/21 11:23:23 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1184,7 +1184,7 @@ fill_file(struct kinfo_file *kf, struct file *fp, struct filedesc *fdp,
 		}
 
 		kf->so_type = so->so_type;
-		kf->so_state = so->so_state;
+		kf->so_state = so->so_state | so->so_snd.sb_state;
 		if (show_pointers)
 			kf->so_pcb = PTRTOINT64(so->so_pcb);
 		else
