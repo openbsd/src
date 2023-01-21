@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.60 2021/05/30 15:08:08 visa Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.61 2023/01/21 19:39:28 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -142,7 +142,6 @@ void pmap_pinit(struct pmap *);
 void pmap_release(struct pmap *);
 
 void pmap_real_memory(vaddr_t *start, vsize_t *size);
-void switchexit(struct proc *);
 
 int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr, int exec_fault);
 #define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;

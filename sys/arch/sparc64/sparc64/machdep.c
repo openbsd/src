@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.205 2022/10/30 17:43:40 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.206 2023/01/21 19:39:28 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -245,10 +245,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-#if 0
-	pmap_redzone();
-#endif
 }
 
 /*
