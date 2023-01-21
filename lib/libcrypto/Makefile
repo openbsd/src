@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.92 2023/01/20 10:04:33 jsing Exp $
+# $OpenBSD: Makefile,v 1.93 2023/01/21 17:29:56 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -733,13 +733,14 @@ SRCS+= x509spki.c
 SRCS+= x509type.c
 SRCS+= x_all.c
 
-.PATH:	${.CURDIR}/arch/${MACHINE_CPU} \
+.PATH:	${LCRYPTO_SRC}/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC} \
 	${LCRYPTO_SRC}/aes \
 	${LCRYPTO_SRC}/asn1 \
 	${LCRYPTO_SRC}/bf \
 	${LCRYPTO_SRC}/bio \
 	${LCRYPTO_SRC}/bn \
+	${LCRYPTO_SRC}/bn/arch/${MACHINE_CPU} \
 	${LCRYPTO_SRC}/bn/asm \
 	${LCRYPTO_SRC}/buffer \
 	${LCRYPTO_SRC}/bytestring \
