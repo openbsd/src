@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.394 2023/01/20 17:47:07 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.395 2023/01/21 16:20:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -149,6 +149,7 @@ char	*getstring(const char *, const char *, const char *);
 u_int64_t getuint64(const struct disklabel *, char *, char *, u_int64_t,
     u_int64_t, int *);
 u_int64_t getnumber(const char *, const char *, u_int32_t, u_int32_t);
+int	getpartno(const struct disklabel *, const char *, const char *);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 const struct partition **sort_partitions(const struct disklabel *, int);
@@ -706,25 +707,11 @@ editor_resize(struct disklabel *lp, const char *p)
 
 	label = *lp;
 
-	/* Change which partition? */
-	if (p == NULL)
-		p = getstring("partition to resize",
-		    "The letter of the partition to name, a - p.", NULL);
-	if (p == NULL)
+	if ((partno = getpartno(&label, p, "resize")) == -1)
 		return;
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
-		return;
-	}
 
 	pp = &label.d_partitions[partno];
 	sz = DL_GETPSIZE(pp);
-	if (sz == 0) {
-		fputs("No such partition\n", stderr);
-		return;
-	}
 	if (pp->p_fstype != FS_BSDFFS && pp->p_fstype != FS_SWAP) {
 		fputs("Cannot resize spoofed partition\n", stderr);
 		return;
@@ -902,27 +889,10 @@ editor_add(struct disklabel *lp, const char *p)
 void
 editor_name(const struct disklabel *lp, const char *p)
 {
-	const struct partition *pp;
 	int partno;
 
-	/* Change which partition? */
-	if (p == NULL)
-		p = getstring("partition to name",
-		    "The letter of the partition to name, a - p.", NULL);
-	if (p == NULL)
+	if ((partno = getpartno(lp, p, "name")) == -1)
 		return;
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
-		return;
-	}
-	pp = &lp->d_partitions[partno];
-
-	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
-		return;
-	}
 
 	get_mp(lp, partno);
 }
@@ -936,25 +906,10 @@ editor_modify(struct disklabel *lp, const char *p)
 	struct partition opp, *pp;
 	int partno;
 
-	/* Change which partition? */
-	if (p == NULL)
-		p = getstring("partition to modify",
-		    "The letter of the partition to modify, a - p.", NULL);
-	if (p == NULL)
+	if ((partno = getpartno(lp, p, "modify")) == -1)
 		return;
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
-		return;
-	}
+
 	pp = &lp->d_partitions[partno];
-
-	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
-		return;
-	}
-
 	opp = *pp;
 
 	if (get_offset(lp, partno) == 0 &&
@@ -1017,27 +972,13 @@ editor_change(struct disklabel *lp, const char *p)
 	struct partition *pp;
 	int partno;
 
-	if (p == NULL)
-		p = getstring("partition to change size",
-		    "The letter of the partition to change size, a - p.", NULL);
-	if (p == NULL)
+	if ((partno = getpartno(lp, p, "change size")) == -1)
 		return;
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
-		return;
-	}
+
 	pp = &lp->d_partitions[partno];
-
-	if (DL_GETPSIZE(pp) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
-		return;
-	}
-
 	printf("Partition %c is currently %llu sectors in size, and can have "
 	    "a maximum\nsize of %llu sectors.\n",
-	    p[0], DL_GETPSIZE(pp), max_partition_size(lp, partno));
+	    'a' + partno, DL_GETPSIZE(pp), max_partition_size(lp, partno));
 
 	/* Get new size */
 	get_size(lp, partno);
@@ -1091,6 +1032,47 @@ getstring(const char *prompt, const char *helpstring, const char *oval)
 	} while (buf[0] == '?');
 
 	return (&buf[0]);
+}
+
+int
+getpartno(const struct disklabel *lp, const char *id, const char *action)
+{
+	const char *promptfmt = "partition to %s";
+	const char *helpfmt = "Partition must be between 'a' and '%c' "
+	    "(excluding 'c').\n";
+	const struct partition *pp;
+	const char *p;
+	char *help = NULL, *prompt = NULL;
+	const unsigned char maxpart = 'a' + lp->d_npartitions - 1;
+	unsigned int partno;
+
+	p = id;
+	if (p == NULL) {
+		if (asprintf(&prompt, promptfmt, action) == -1 ||
+		    asprintf(&help, helpfmt, maxpart) == -1)
+			fprintf(stderr, "Unable to build prompt or help\n");
+		else
+			p = getstring(prompt, help, NULL);
+		free(prompt);
+		free(help);
+		if (p == NULL || *p == '\0')
+			goto done;
+	}
+
+	if (strlen(p) > 1 || *p < 'a' || *p >= maxpart || *p == 'c') {
+		fprintf(stderr, helpfmt, maxpart);
+		goto done;
+	}
+
+	partno = *p - 'a';
+	pp = &lp->d_partitions[partno];
+	if (DL_GETPSIZE(pp) > 0 && pp->p_fstype != FS_UNUSED)
+		return (partno);
+
+	fprintf(stderr, "Partition '%c' is not in use.\n", *p);
+
+ done:
+	return (-1);
 }
 
 /*
