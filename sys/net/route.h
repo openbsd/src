@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.196 2022/06/28 10:01:13 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.197 2023/01/21 17:35:01 mvs Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -383,6 +383,13 @@ struct rt_addrinfo {
 #ifdef _KERNEL
 
 #include <sys/percpu.h>
+#include <sys/rwlock.h>
+
+extern struct rwlock rt_lock;
+
+#define RT_LOCK() rw_enter_write(&rt_lock)
+#define RT_UNLOCK() rw_exit_write(&rt_lock)
+#define RT_ASSERT_LOCKED() rw_assert_wrlock(&rt_lock)
 
 enum rtstat_counters {
 	rts_badredirect,	/* bogus redirect calls */
