@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.132 2023/01/21 11:23:23 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.133 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -142,7 +142,8 @@ soisdisconnecting(struct socket *so)
 {
 	soassertlocked(so);
 	so->so_state &= ~SS_ISCONNECTING;
-	so->so_state |= (SS_ISDISCONNECTING|SS_CANTRCVMORE);
+	so->so_state |= SS_ISDISCONNECTING;
+	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
@@ -154,7 +155,8 @@ soisdisconnected(struct socket *so)
 {
 	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
-	so->so_state |= (SS_CANTRCVMORE|SS_ISDISCONNECTED);
+	so->so_state |= SS_ISDISCONNECTED;
+	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	so->so_snd.sb_state |= SS_CANTSENDMORE;
 	wakeup(&so->so_timeo);
 	sowwakeup(so);
@@ -344,7 +346,7 @@ void
 socantrcvmore(struct socket *so)
 {
 	soassertlocked(so);
-	so->so_state |= SS_CANTRCVMORE;
+	so->so_rcv.sb_state |= SS_CANTRCVMORE;
 	sorwakeup(so);
 }
 

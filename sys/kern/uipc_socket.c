@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.294 2023/01/21 11:23:23 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.295 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ restart:
 				so->so_error = 0;
 			goto release;
 		}
-		if (so->so_state & SS_CANTRCVMORE) {
+		if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
 			if (m)
 				goto dontblock;
 			else if (so->so_rcv.sb_cc == 0)
@@ -1023,7 +1023,7 @@ dontblock:
 			    so, so->so_type, m, m->m_type);
 #endif
 		}
-		so->so_state &= ~SS_RCVATMARK;
+		so->so_rcv.sb_state &= ~SS_RCVATMARK;
 		len = uio->uio_resid;
 		if (so->so_oobmark && len > so->so_oobmark - offset)
 			len = so->so_oobmark - offset;
@@ -1100,7 +1100,7 @@ dontblock:
 			if ((flags & MSG_PEEK) == 0) {
 				so->so_oobmark -= len;
 				if (so->so_oobmark == 0) {
-					so->so_state |= SS_RCVATMARK;
+					so->so_rcv.sb_state |= SS_RCVATMARK;
 					break;
 				}
 			} else {
@@ -1120,7 +1120,8 @@ dontblock:
 		 */
 		while (flags & MSG_WAITALL && m == NULL && uio->uio_resid > 0 &&
 		    !sosendallatonce(so) && !nextrecord) {
-			if (so->so_error || so->so_state & SS_CANTRCVMORE)
+			if (so->so_rcv.sb_state & SS_CANTRCVMORE ||
+			    so->so_error)
 				break;
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
@@ -1160,7 +1161,8 @@ dontblock:
 			pru_rcvd(so);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
-	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
+	    (flags & MSG_EOR) == 0 &&
+	    (so->so_rcv.sb_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(so, &so->so_rcv);
 		goto restart;
 	}
@@ -1632,13 +1634,13 @@ somove(struct socket *so, int wait)
 		pru_rcvd(so);
 
 	/* Receive buffer did shrink by len bytes, adjust oob. */
-	state = so->so_state;
-	so->so_state &= ~SS_RCVATMARK;
+	state = so->so_rcv.sb_state;
+	so->so_rcv.sb_state &= ~SS_RCVATMARK;
 	oobmark = so->so_oobmark;
 	so->so_oobmark = oobmark > len ? oobmark - len : 0;
 	if (oobmark) {
 		if (oobmark == len)
-			so->so_state |= SS_RCVATMARK;
+			so->so_rcv.sb_state |= SS_RCVATMARK;
 		if (oobmark >= len)
 			oobmark = 0;
 	}
@@ -1714,7 +1716,8 @@ somove(struct socket *so, int wait)
 		error = EFBIG;
 	if (error)
 		so->so_error = error;
-	if (((so->so_state & SS_CANTRCVMORE) && so->so_rcv.sb_cc == 0) ||
+	if (((so->so_rcv.sb_state & SS_CANTRCVMORE) &&
+	    so->so_rcv.sb_cc == 0) ||
 	    (sosp->so_snd.sb_state & SS_CANTSENDMORE) ||
 	    maxreached || error) {
 		sounsplice(so, sosp, 0);
@@ -1850,7 +1853,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 				break;
 
 			case SO_RCVBUF:
-				if (so->so_state & SS_CANTRCVMORE)
+				if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 					return (EINVAL);
 				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
 				    sbreserve(so, &so->so_rcv, cnt))
@@ -2151,7 +2154,7 @@ filt_soread(struct knote *kn, long hint)
 		rv = 0;
 	} else
 #endif /* SOCKET_SPLICE */
-	if (so->so_state & SS_CANTRCVMORE) {
+	if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)
@@ -2223,7 +2226,7 @@ filt_soexcept(struct knote *kn, long hint)
 	} else
 #endif /* SOCKET_SPLICE */
 	if (kn->kn_sfflags & NOTE_OOB) {
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
+		if (so->so_oobmark || (so->so_rcv.sb_state & SS_RCVATMARK)) {
 			kn->kn_fflags |= NOTE_OOB;
 			kn->kn_data -= so->so_oobmark;
 			rv = 1;

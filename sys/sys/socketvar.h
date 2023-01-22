@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.115 2023/01/21 11:23:24 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.116 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -147,6 +147,8 @@ struct socket {
  * buffer `sb_state' only:
  *
  *	SS_CANTSENDMORE		with `so_snd' 
+ *	SS_CANTRCVMORE		with `so_rcv'
+ *	SS_RCVATMARK		with `so_rcv'
  */
 
 #define	SS_NOFDREF		0x001	/* no file table ref any more */
@@ -232,8 +234,8 @@ soreadable(struct socket *so)
 	soassertlocked(so);
 	if (isspliced(so))
 		return 0;
-	return (so->so_state & SS_CANTRCVMORE) || so->so_qlen || so->so_error ||
-	    so->so_rcv.sb_cc >= so->so_rcv.sb_lowat;
+	return (so->so_rcv.sb_state & SS_CANTRCVMORE) || so->so_qlen ||
+	    so->so_error || so->so_rcv.sb_cc >= so->so_rcv.sb_lowat;
 }
 
 /* can we write something to so? */

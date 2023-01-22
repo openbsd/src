@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.358 2022/10/17 14:49:02 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.359 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -464,7 +464,7 @@ rtm_senddesync(struct socket *so)
 	 * timeout(9), otherwise timeout_del_barrier(9) can't help us.
 	 */
 	if ((so->so_state & SS_ISCONNECTED) == 0 ||
-	    (so->so_state & SS_CANTRCVMORE))
+	    (so->so_rcv.sb_state & SS_CANTRCVMORE))
 		return;
 
 	/* If we are in a DESYNC state, try to send a RTM_DESYNC packet */
@@ -524,7 +524,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		 */
 		if ((so0 == so && !(so0->so_options & SO_USELOOPBACK)) ||
 		    !(so->so_state & SS_ISCONNECTED) ||
-		    (so->so_state & SS_CANTRCVMORE))
+		    (so->so_rcv.sb_state & SS_CANTRCVMORE))
 			goto next;
 
 		/* filter messages that the process does not want */

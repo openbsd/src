@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.99 2023/01/21 11:23:23 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.100 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -199,7 +199,8 @@ fifo_open(void *v)
 		}
 		if (fip->fi_writers == 1) {
 			solock(rso);
-			rso->so_state &= ~(SS_CANTRCVMORE|SS_ISDISCONNECTED);
+			rso->so_state &= ~SS_ISDISCONNECTED;
+			rso->so_rcv.sb_state &= ~SS_CANTRCVMORE;
 			sounlock(rso);
 			if (fip->fi_readers > 0)
 				wakeup(&fip->fi_readers);
@@ -525,7 +526,7 @@ filt_fiforead(struct knote *kn, long hint)
 	soassertlocked(so);
 
 	kn->kn_data = so->so_rcv.sb_cc;
-	if (so->so_state & SS_CANTRCVMORE) {
+	if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)

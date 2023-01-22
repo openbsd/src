@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.385 2023/01/12 13:09:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.386 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ tcp_flush_queue(struct tcpcb *tp)
 		nq = TAILQ_NEXT(q, tcpqe_q);
 		TAILQ_REMOVE(&tp->t_segq, q, tcpqe_q);
 		ND6_HINT(tp);
-		if (so->so_state & SS_CANTRCVMORE)
+		if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 			m_freem(q->tcpqe_m);
 		else
 			sbappendstream(so, &so->so_rcv, q->tcpqe_m);
@@ -1041,7 +1041,7 @@ findpcb:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			if (so->so_state & SS_CANTRCVMORE)
+			if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
 				if (tp->t_srtt != 0 && tp->rfbuf_ts != 0 &&
@@ -1794,7 +1794,7 @@ trimthenstep6:
 				 * specification, but if we don't get a FIN
 				 * we'll hang forever.
 				 */
-				if (so->so_state & SS_CANTRCVMORE) {
+				if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
 					tp->t_flags |= TF_BLOCKOUTPUT;
 					soisdisconnected(so);
 					tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -1903,7 +1903,7 @@ step6:
 			so->so_oobmark = so->so_rcv.sb_cc +
 			    (tp->rcv_up - tp->rcv_nxt) - 1;
 			if (so->so_oobmark == 0)
-				so->so_state |= SS_RCVATMARK;
+				so->so_rcv.sb_state |= SS_RCVATMARK;
 			sohasoutofband(so);
 			tp->t_oobflags &= ~(TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		}
@@ -1946,7 +1946,7 @@ dodata:							/* XXX */
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat_pkt(tcps_rcvpack, tcps_rcvbyte, tlen);
 			ND6_HINT(tp);
-			if (so->so_state & SS_CANTRCVMORE)
+			if (so->so_rcv.sb_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
 				m_adj(m, hdroptlen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.171 2022/10/17 14:49:02 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.172 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	rw_enter_write(&rawin6pcbtable.inpt_notify);
 	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
-		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
+		if (in6p->inp_socket->so_rcv.sb_state & SS_CANTRCVMORE)
 			continue;
 		if (rtable_l2(in6p->inp_rtableid) !=
 		    rtable_l2(m->m_pkthdr.ph_rtableid))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.208 2023/01/12 10:59:36 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.209 2023/01/22 12:05:44 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -288,14 +288,14 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		goto out_unlock;
 	}
 	if ((headfp->f_flag & FNONBLOCK) && head->so_qlen == 0) {
-		if (head->so_state & SS_CANTRCVMORE)
+		if (head->so_rcv.sb_state & SS_CANTRCVMORE)
 			error = ECONNABORTED;
 		else
 			error = EWOULDBLOCK;
 		goto out_unlock;
 	}
 	while (head->so_qlen == 0 && head->so_error == 0) {
-		if (head->so_state & SS_CANTRCVMORE) {
+		if (head->so_rcv.sb_state & SS_CANTRCVMORE) {
 			head->so_error = ECONNABORTED;
 			break;
 		}
