@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.395 2023/01/21 16:20:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.396 2023/01/22 19:57:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1059,7 +1059,7 @@ getpartno(const struct disklabel *lp, const char *id, const char *action)
 			goto done;
 	}
 
-	if (strlen(p) > 1 || *p < 'a' || *p >= maxpart || *p == 'c') {
+	if (strlen(p) > 1 || *p < 'a' || *p > maxpart || *p == 'c') {
 		fprintf(stderr, helpfmt, maxpart);
 		goto done;
 	}
