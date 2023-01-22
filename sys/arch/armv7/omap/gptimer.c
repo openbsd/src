@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.16 2022/02/21 10:57:58 jsg Exp $ */
+/* $OpenBSD: gptimer.c,v 1.17 2023/01/22 18:36:38 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -327,45 +327,6 @@ gptimer_wait(int reg)
 	while (bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TWPS) & reg)
 		;
 }
-
-#if 0
-void
-microtime(struct timeval *tvp)
-{
-	int s;
-	int deltacnt;
-	u_int32_t counter, expected;
-	s = splhigh();
-
-	if (1) {	/* not inited */
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-	s = splhigh();
-	counter = bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR);
-	expected = nexttickevent;
-
-	*tvp = time;
-	splx(s);
-
-	deltacnt = counter - expected + ticks_per_intr;
-
-#if 1
-	/* low frequency timer algorithm */
-	tvp->tv_usec += deltacnt * 1000000ULL / TIMER_FREQUENCY;
-#else
-	/* high frequency timer algorithm - XXX */
-	tvp->tv_usec += deltacnt / (TIMER_FREQUENCY / 1000000ULL);
-#endif
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-
-}
-#endif
 
 void
 gptimer_delay(u_int usecs)
