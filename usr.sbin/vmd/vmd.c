@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.136 2023/01/14 20:55:55 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.137 2023/01/22 22:18:40 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -66,6 +66,8 @@ int	 vm_instance(struct privsep *, struct vmd_vm **,
 int	 vm_checkinsflag(struct vmop_create_params *, unsigned int, uid_t);
 int	 vm_claimid(const char *, int, uint32_t *);
 void	 start_vm_batch(int, short, void*);
+
+static inline void vm_terminate(struct vmd_vm *, const char *);
 
 struct vmd	*env;
 
@@ -395,14 +397,14 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				errno = vmr.vmr_result;
 				log_warn("%s: failed to forward vm result",
 				    vcp->vcp_name);
-				vm_remove(vm, __func__);
+				vm_terminate(vm, __func__);
 				return (-1);
 			}
 		}
 
 		if (vmr.vmr_result) {
 			log_warnx("%s: failed to start vm", vcp->vcp_name);
-			vm_remove(vm, __func__);
+			vm_terminate(vm, __func__);
 			errno = vmr.vmr_result;
 			break;
 		}
@@ -410,7 +412,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		/* Now configure all the interfaces */
 		if (vm_priv_ifconfig(ps, vm) == -1) {
 			log_warn("%s: failed to configure vm", vcp->vcp_name);
-			vm_remove(vm, __func__);
+			vm_terminate(vm, __func__);
 			break;
 		}
 
@@ -441,10 +443,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_info("%s: sent vm %d successfully.",
 			    vm->vm_params.vmc_params.vcp_name,
 			    vm->vm_vmid);
-			if (vm->vm_from_config)
-				vm_stop(vm, 0, __func__);
-			else
-				vm_remove(vm, __func__);
+			vm_terminate(vm, __func__);
 		}
 
 		/* Send a response if a control client is waiting for it */
@@ -470,10 +469,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (vmr.vmr_result != EAGAIN ||
 		    vm->vm_params.vmc_bootdevice) {
-			if (vm->vm_from_config)
-				vm_stop(vm, 0, __func__);
-			else
-				vm_remove(vm, __func__);
+			vm_terminate(vm, __func__);
 		} else {
 			/* Stop VM instance but keep the tty open */
 			vm_stop(vm, 1, __func__);
@@ -509,7 +505,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		    imsg->hdr.peerid, -1, &vir, sizeof(vir)) == -1) {
 			log_debug("%s: GET_INFO_VM failed for vm %d, removing",
 			    __func__, vm->vm_vmid);
-			vm_remove(vm, __func__);
+			vm_terminate(vm, __func__);
 			return (-1);
 		}
 		break;
@@ -545,7 +541,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 				    sizeof(vir)) == -1) {
 					log_debug("%s: GET_INFO_VM_END failed",
 					    __func__);
-					vm_remove(vm, __func__);
+					vm_terminate(vm, __func__);
 					return (-1);
 				}
 			}
@@ -1947,3 +1943,15 @@ getmonotime(struct timeval *tv)
 
 	TIMESPEC_TO_TIMEVAL(tv, &ts);
 }
+
+static inline void
+vm_terminate(struct vmd_vm *vm, const char *caller)
+{
+	if (vm->vm_from_config)
+		vm_stop(vm, 0, caller);
+	else {
+		/* vm_remove calls vm_stop */
+		vm_remove(vm, caller);
+	}
+}
+
