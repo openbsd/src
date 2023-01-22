@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.2 2019/01/23 09:57:36 phessler Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.3 2023/01/22 13:14:21 kettenis Exp $	*/
 
 /*
  *  Copyright (c) 2001 Alexander Guy
@@ -121,7 +121,7 @@ struct apm_ctl {
 
 #ifdef _KERNEL
 void apm_setinfohook(int (*)(struct apm_power_info *));
-int apm_record_event(u_int, const char *, const char *);
+int apm_record_event(u_int);
 #endif
 
 #endif /* _MACHINE_APMVAR_H_ */

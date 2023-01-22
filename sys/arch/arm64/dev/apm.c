@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.20 2023/01/09 20:29:35 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.21 2023/01/22 13:14:21 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -335,26 +335,18 @@ apm_setinfohook(int (*hook)(struct apm_power_info *))
 }
 
 int
-apm_record_event(u_int event, const char *src, const char *msg)
+apm_record_event(u_int event)
 {
+	struct apm_softc *sc = apm_cd.cd_devs[0];
 	static int apm_evindex;
-	struct apm_softc *sc;
-
-	/* apm0 only */
-	if (apm_cd.cd_ndevs == 0 || (sc = apm_cd.cd_devs[0]) == NULL)
-		return ENXIO;
-
-	if ((sc->sc_flags & SCFLAG_NOPRINT) == 0)
-		printf("%s: %s %s\n", sc->sc_dev.dv_xname, src, msg);
 
 	/* skip if no user waiting */
-	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
-		return (1);
+	if (sc == NULL || (sc->sc_flags & SCFLAG_OPEN) == 0)
+		return 1;
 
 	apm_evindex++;
 	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(event, apm_evindex));
-
-	return (0);
+	return 0;
 }
 
 #ifdef SUSPEND
@@ -440,6 +432,7 @@ sleep_resume(void *v)
 int
 suspend_finish(void *v)
 {
+	apm_record_event(APM_NORMAL_RESUME);
 	return 0;
 }
 
