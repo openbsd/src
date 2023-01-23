@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_asm.c,v 1.21 2023/01/23 12:02:48 jsing Exp $ */
+/* $OpenBSD: bn_asm.c,v 1.22 2023/01/23 12:09:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,32 +124,6 @@ bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	return (c1);
 }
 
-void
-bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
-{
-	assert(n >= 0);
-	if (n <= 0)
-		return;
-
-#ifndef OPENSSL_SMALL_FOOTPRINT
-	while (n & ~3) {
-		sqr(r[0], r[1], a[0]);
-		sqr(r[2], r[3], a[1]);
-		sqr(r[4], r[5], a[2]);
-		sqr(r[6], r[7], a[3]);
-		a += 4;
-		r += 8;
-		n -= 4;
-	}
-#endif
-	while (n) {
-		sqr(r[0], r[1], a[0]);
-		a++;
-		r += 2;
-		n--;
-	}
-}
-
 #else /* !(defined(BN_LLONG) || defined(BN_UMULT_HIGH)) */
 
 BN_ULONG
@@ -216,32 +190,6 @@ bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 		num--;
 	}
 	return (carry);
-}
-
-void
-bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
-{
-	assert(n >= 0);
-	if (n <= 0)
-		return;
-
-#ifndef OPENSSL_SMALL_FOOTPRINT
-	while (n & ~3) {
-		sqr64(r[0], r[1], a[0]);
-		sqr64(r[2], r[3], a[1]);
-		sqr64(r[4], r[5], a[2]);
-		sqr64(r[6], r[7], a[3]);
-		a += 4;
-		r += 8;
-		n -= 4;
-	}
-#endif
-	while (n) {
-		sqr64(r[0], r[1], a[0]);
-		a++;
-		r += 2;
-		n--;
-	}
 }
 
 #endif /* !(defined(BN_LLONG) || defined(BN_UMULT_HIGH)) */
