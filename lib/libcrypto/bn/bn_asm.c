@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_asm.c,v 1.20 2023/01/23 10:31:03 jsing Exp $ */
+/* $OpenBSD: bn_asm.c,v 1.21 2023/01/23 12:02:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -245,85 +245,6 @@ bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 }
 
 #endif /* !(defined(BN_LLONG) || defined(BN_UMULT_HIGH)) */
-
-#if defined(BN_LLONG) && defined(BN_DIV2W)
-
-BN_ULONG
-bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
-{
-	return ((BN_ULONG)(((((BN_ULLONG)h) << BN_BITS2)|l)/(BN_ULLONG)d));
-}
-
-#else
-
-/* Divide h,l by d and return the result. */
-/* I need to test this some more :-( */
-BN_ULONG
-bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
-{
-	BN_ULONG dh, dl, q,ret = 0, th, tl, t;
-	int i, count = 2;
-
-	if (d == 0)
-		return (BN_MASK2);
-
-	i = BN_num_bits_word(d);
-	assert((i == BN_BITS2) || (h <= (BN_ULONG)1 << i));
-
-	i = BN_BITS2 - i;
-	if (h >= d)
-		h -= d;
-
-	if (i) {
-		d <<= i;
-		h = (h << i) | (l >> (BN_BITS2 - i));
-		l <<= i;
-	}
-	dh = (d & BN_MASK2h) >> BN_BITS4;
-	dl = (d & BN_MASK2l);
-	for (;;) {
-		if ((h >> BN_BITS4) == dh)
-			q = BN_MASK2l;
-		else
-			q = h / dh;
-
-		th = q * dh;
-		tl = dl * q;
-		for (;;) {
-			t = h - th;
-			if ((t & BN_MASK2h) ||
-			    ((tl) <= (
-			    (t << BN_BITS4) |
-			    ((l & BN_MASK2h) >> BN_BITS4))))
-				break;
-			q--;
-			th -= dh;
-			tl -= dl;
-		}
-		t = (tl >> BN_BITS4);
-		tl = (tl << BN_BITS4) & BN_MASK2h;
-		th += t;
-
-		if (l < tl)
-			th++;
-		l -= tl;
-		if (h < th) {
-			h += d;
-			q--;
-		}
-		h -= th;
-
-		if (--count == 0)
-			break;
-
-		ret = q << BN_BITS4;
-		h = ((h << BN_BITS4) | (l >> BN_BITS4)) & BN_MASK2;
-		l = (l & BN_MASK2l) << BN_BITS4;
-	}
-	ret |= q;
-	return (ret);
-}
-#endif /* !defined(BN_LLONG) && defined(BN_DIV2W) */
 
 #if defined(BN_MUL_COMBA) && !defined(OPENSSL_SMALL_FOOTPRINT)
 
