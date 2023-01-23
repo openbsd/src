@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.5 2023/01/23 12:09:06 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.6 2023/01/23 12:17:57 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -24,8 +24,10 @@
 
 #define HAVE_BN_DIV_WORDS
 
+#define HAVE_BN_MUL_ADD_WORDS
 #define HAVE_BN_MUL_COMBA4
 #define HAVE_BN_MUL_COMBA8
+#define HAVE_BN_MUL_WORDS
 
 #define HAVE_BN_SQR_COMBA4
 #define HAVE_BN_SQR_COMBA8
