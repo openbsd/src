@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.46 2021/05/01 16:11:16 visa Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.47 2023/01/23 09:38:03 nicm Exp $	*/
 
 /*
  * THIS FILE IS AUTOMAGICALLY GENERATED.  DO NOT EDIT.
@@ -7,7 +7,7 @@
  *	OpenBSD: makemap.awk,v 1.15 2020/11/02 19:45:18 tobhe Exp 
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.46 2019/05/11 14:19:16 abieber Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.48 2023/01/23 09:36:40 nicm Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(40),	KS_Return,
     KC(41),	KS_Cmd_Debugger,KS_Escape,
     KC(42),	KS_Cmd_ResetEmul,KS_Delete,
-    KC(43),	KS_Tab,
+    KC(43),	KS_Tab,		KS_Backtab,
     KC(44),	KS_space,
     KC(45),	KS_minus,	KS_underscore,
     KC(46),	KS_equal,	KS_plus,
