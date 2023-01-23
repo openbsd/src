@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2016 2022/12/18 10:29:28 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2018 2023/01/23 05:19:10 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3265,7 +3265,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_1,
-	    "Yellow Carp",
+	    "Rembrandt",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAPHAEL,
@@ -3273,7 +3273,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_YELLOW_CARP_2,
-	    "Yellow Carp",
+	    "Rembrandt",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD6500D_HDA,
@@ -32336,8 +32336,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SD",
 	},
 	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000_HB,
-	    "TM8000 Host",
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000_HT,
+	    "TM8000 HyperTransport",
 	},
 	{
 	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000_AGP,
