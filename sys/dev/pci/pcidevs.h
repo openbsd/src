@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2018 2023/01/23 05:19:10 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2019 2023/01/23 10:13:46 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1268,6 +1268,7 @@
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
 #define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_1	0x13fe		/* Cyan Skillfish */
+#define	PCI_PRODUCT_ATI_CYAN_SKILLFISH_2	0x143f		/* Cyan Skillfish */
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_MENDOCINO	0x1506		/* Mendocino */
@@ -2078,6 +2079,10 @@
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_10	0x73ed		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_11	0x73ef		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_12	0x73ff		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_ALDEBARAN_1	0x7408		/* Aldebaran */
+#define	PCI_PRODUCT_ATI_ALDEBARAN_2	0x740c		/* Aldebaran */
+#define	PCI_PRODUCT_ATI_ALDEBARAN_3	0x740f		/* Aldebaran */
+#define	PCI_PRODUCT_ATI_ALDEBARAN_4	0x7410		/* Aldebaran */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_1	0x7420		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_2	0x7421		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_3	0x7422		/* Navi 24 */
