@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.17 2023/01/20 04:49:48 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.18 2023/01/23 10:31:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +56,168 @@
  * [including the GNU Public Licence.]
  */
 
+#include <assert.h>
 #include <stdio.h>
 
 #include <openssl/err.h>
 
 #include "bn_local.h"
+
+#ifndef HAVE_BN_ADD_WORDS
+#ifdef BN_LLONG
+BN_ULONG
+bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
+{
+	BN_ULLONG ll = 0;
+
+	assert(n >= 0);
+	if (n <= 0)
+		return ((BN_ULONG)0);
+
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n & ~3) {
+		ll += (BN_ULLONG)a[0] + b[0];
+		r[0] = (BN_ULONG)ll & BN_MASK2;
+		ll >>= BN_BITS2;
+		ll += (BN_ULLONG)a[1] + b[1];
+		r[1] = (BN_ULONG)ll & BN_MASK2;
+		ll >>= BN_BITS2;
+		ll += (BN_ULLONG)a[2] + b[2];
+		r[2] = (BN_ULONG)ll & BN_MASK2;
+		ll >>= BN_BITS2;
+		ll += (BN_ULLONG)a[3] + b[3];
+		r[3] = (BN_ULONG)ll & BN_MASK2;
+		ll >>= BN_BITS2;
+		a += 4;
+		b += 4;
+		r += 4;
+		n -= 4;
+	}
+#endif
+	while (n) {
+		ll += (BN_ULLONG)a[0] + b[0];
+		r[0] = (BN_ULONG)ll & BN_MASK2;
+		ll >>= BN_BITS2;
+		a++;
+		b++;
+		r++;
+		n--;
+	}
+	return ((BN_ULONG)ll);
+}
+#else /* !BN_LLONG */
+BN_ULONG
+bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
+{
+	BN_ULONG c, l, t;
+
+	assert(n >= 0);
+	if (n <= 0)
+		return ((BN_ULONG)0);
+
+	c = 0;
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n & ~3) {
+		t = a[0];
+		t = (t + c) & BN_MASK2;
+		c = (t < c);
+		l = (t + b[0]) & BN_MASK2;
+		c += (l < t);
+		r[0] = l;
+		t = a[1];
+		t = (t + c) & BN_MASK2;
+		c = (t < c);
+		l = (t + b[1]) & BN_MASK2;
+		c += (l < t);
+		r[1] = l;
+		t = a[2];
+		t = (t + c) & BN_MASK2;
+		c = (t < c);
+		l = (t + b[2]) & BN_MASK2;
+		c += (l < t);
+		r[2] = l;
+		t = a[3];
+		t = (t + c) & BN_MASK2;
+		c = (t < c);
+		l = (t + b[3]) & BN_MASK2;
+		c += (l < t);
+		r[3] = l;
+		a += 4;
+		b += 4;
+		r += 4;
+		n -= 4;
+	}
+#endif
+	while (n) {
+		t = a[0];
+		t = (t + c) & BN_MASK2;
+		c = (t < c);
+		l = (t + b[0]) & BN_MASK2;
+		c += (l < t);
+		r[0] = l;
+		a++;
+		b++;
+		r++;
+		n--;
+	}
+	return ((BN_ULONG)c);
+}
+#endif /* !BN_LLONG */
+#endif
+
+#ifndef HAVE_BN_SUB_WORDS
+BN_ULONG
+bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
+{
+	BN_ULONG t1, t2;
+	int c = 0;
+
+	assert(n >= 0);
+	if (n <= 0)
+		return ((BN_ULONG)0);
+
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (n&~3) {
+		t1 = a[0];
+		t2 = b[0];
+		r[0] = (t1 - t2 - c) & BN_MASK2;
+		if (t1 != t2)
+			c = (t1 < t2);
+		t1 = a[1];
+		t2 = b[1];
+		r[1] = (t1 - t2 - c) & BN_MASK2;
+		if (t1 != t2)
+			c = (t1 < t2);
+		t1 = a[2];
+		t2 = b[2];
+		r[2] = (t1 - t2 - c) & BN_MASK2;
+		if (t1 != t2)
+			c = (t1 < t2);
+		t1 = a[3];
+		t2 = b[3];
+		r[3] = (t1 - t2 - c) & BN_MASK2;
+		if (t1 != t2)
+			c = (t1 < t2);
+		a += 4;
+		b += 4;
+		r += 4;
+		n -= 4;
+	}
+#endif
+	while (n) {
+		t1 = a[0];
+		t2 = b[0];
+		r[0] = (t1 - t2 - c) & BN_MASK2;
+		if (t1 != t2)
+			c = (t1 < t2);
+		a++;
+		b++;
+		r++;
+		n--;
+	}
+	return (c);
+}
+#endif
 
 int
 BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
