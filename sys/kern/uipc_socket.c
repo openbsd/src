@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.296 2023/01/23 18:33:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.297 2023/01/23 18:34:24 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 restart:
 	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
-	so->so_state |= SS_ISSENDING;
+	so->so_snd.sb_state |= SS_ISSENDING;
 	do {
 		if (so->so_snd.sb_state & SS_CANTSENDMORE)
 			snderr(EPIPE);
@@ -612,7 +612,7 @@ restart:
 				snderr(EWOULDBLOCK);
 			sbunlock(so, &so->so_snd);
 			error = sbwait(so, &so->so_snd);
-			so->so_state &= ~SS_ISSENDING;
+			so->so_snd.sb_state &= ~SS_ISSENDING;
 			if (error)
 				goto out;
 			goto restart;
@@ -638,7 +638,7 @@ restart:
 					top->m_flags |= M_EOR;
 			}
 			if (resid == 0)
-				so->so_state &= ~SS_ISSENDING;
+				so->so_snd.sb_state &= ~SS_ISSENDING;
 			if (top && so->so_options & SO_ZEROIZE)
 				top->m_flags |= M_ZEROIZE;
 			if (flags & MSG_OOB)
@@ -654,7 +654,7 @@ restart:
 	} while (resid);
 
 release:
-	so->so_state &= ~SS_ISSENDING;
+	so->so_snd.sb_state &= ~SS_ISSENDING;
 	sbunlock(so, &so->so_snd);
 out:
 	sounlock(so);
@@ -1502,7 +1502,7 @@ somove(struct socket *so, int wait)
 			goto release;
 		len = space;
 	}
-	sosp->so_state |= SS_ISSENDING;
+	sosp->so_snd.sb_state |= SS_ISSENDING;
 
 	SBLASTRECORDCHK(&so->so_rcv, "somove 1");
 	SBLASTMBUFCHK(&so->so_rcv, "somove 1");
@@ -1697,7 +1697,7 @@ somove(struct socket *so, int wait)
 
 	/* Append all remaining data to drain socket. */
 	if (so->so_rcv.sb_cc == 0 || maxreached)
-		sosp->so_state &= ~SS_ISSENDING;
+		sosp->so_snd.sb_state &= ~SS_ISSENDING;
 	error = pru_send(sosp, m, NULL, NULL);
 	if (error) {
 		if (sosp->so_snd.sb_state & SS_CANTSENDMORE)
@@ -1711,7 +1711,7 @@ somove(struct socket *so, int wait)
 		goto nextpkt;
 
  release:
-	sosp->so_state &= ~SS_ISSENDING;
+	sosp->so_snd.sb_state &= ~SS_ISSENDING;
 	if (!error && maxreached && so->so_splicemax == so->so_splicelen)
 		error = EFBIG;
 	if (error)

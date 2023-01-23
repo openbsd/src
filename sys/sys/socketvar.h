@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.116 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.117 2023/01/23 18:34:24 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -146,7 +146,8 @@ struct socket {
  * NOTE: The following states should be used with corresponding socket's
  * buffer `sb_state' only:
  *
- *	SS_CANTSENDMORE		with `so_snd' 
+ *	SS_CANTSENDMORE		with `so_snd'
+ *	SS_ISSENDING		with `so_snd'
  *	SS_CANTRCVMORE		with `so_rcv'
  *	SS_RCVATMARK		with `so_rcv'
  */
@@ -225,7 +226,7 @@ sbspace(struct socket *so, struct sockbuf *sb)
 
 /* are we sending on this socket? */
 #define	soissending(so) \
-    ((so)->so_state & SS_ISSENDING)
+    ((so)->so_snd.sb_state & SS_ISSENDING)
 
 /* can we read something from so? */
 static inline int
