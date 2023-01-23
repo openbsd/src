@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.18 2023/01/23 10:31:03 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.19 2023/01/23 10:34:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,7 @@
 
 #include <openssl/err.h>
 
+#include "bn_arch.h"
 #include "bn_local.h"
 
 #ifndef HAVE_BN_ADD_WORDS
