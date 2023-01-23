@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2023/01/16 22:59:41 kn Exp $
+#	$OpenBSD: Makefile,v 1.37 2023/01/23 14:49:16 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -38,9 +38,11 @@ regress:
 	@echo SKIPPED
 .endif
 
+# how distrib/$(arch -s)/*/install.md:md_prep_disklabel() formats the root disk
 FORMAT_DISK ?=		fdisk -iy -b '32768@32768:C'
 STAGEDIR =		/usr/mdec
 STAGEFILES =		${STAGENAMES:=${STAGEDIR}/%}
+# is installboot(8) built with -DSOFTRAID?
 USE_SOFTRAID ?=		No
 
 .if ${USE_SOFTRAID:L} == "yes"
@@ -97,7 +99,7 @@ create-root: create-disks
 
 
 # must be first as some targets expect a working filesystem
-REGRESS_TARGETS = prepare
+REGRESS_TARGETS =	prepare
 
 prepare:
 	${SUDO} ${REAL_RUN} -p -- "$$(<${ROOTDEVFILE})"
@@ -116,7 +118,7 @@ dry-root:
 	${SUDO} ${DRY_RUN} -r/ -- "$$(<${ROOTDEVFILE})"
 
 root:
-	${SUDO} ${REAL_RUN} -r ${MOUNTPOINT} "$$(<${ROOTDEVFILE})"
+	${SUDO} ${REAL_RUN} -r ${MOUNTPOINT} -- "$$(<${ROOTDEVFILE})"
 root-stages:
 	${SUDO} ${REAL_RUN} -- "$$(<${ROOTDEVFILE})" ${STAGEFILES}
 
