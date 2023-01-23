@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.117 2023/01/23 18:34:24 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.118 2023/01/23 18:35:13 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -200,7 +200,6 @@ sorele(struct socket *so)
 static inline int
 sb_notify(struct socket *so, struct sockbuf *sb)
 {
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	soassertlocked(so);
 	return ((sb->sb_flags & (SB_WAIT|SB_ASYNC|SB_SPLICE)) != 0 ||
 	    !klist_empty(&sb->sb_sel.si_note));
@@ -215,7 +214,6 @@ sb_notify(struct socket *so, struct sockbuf *sb)
 static inline long
 sbspace(struct socket *so, struct sockbuf *sb)
 {
-	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	soassertlocked(so);
 	return lmin(sb->sb_hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
 }
