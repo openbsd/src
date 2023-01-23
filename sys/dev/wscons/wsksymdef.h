@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.39 2021/09/20 17:32:39 anton Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.40 2023/01/23 09:36:40 nicm Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -626,6 +626,7 @@
 #define KS_Open			0xf393
 #define KS_Paste		0xf394
 #define KS_Cut			0xf395
+#define KS_Backtab		0xf396
 
 #define KS_Menu			0xf3c0
 #define KS_Pause		0xf3c1

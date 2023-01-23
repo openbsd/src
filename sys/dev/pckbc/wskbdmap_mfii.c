@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.47 2021/05/01 16:11:16 visa Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.48 2023/01/23 09:36:40 nicm Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(12),			KS_minus,	KS_underscore,
     KC(13),			KS_equal,	KS_plus,
     KC(14),  KS_Cmd_ResetEmul,	KS_Delete,
-    KC(15),			KS_Tab,
+    KC(15),			KS_Tab,		KS_Backtab,
     KC(16),			KS_q,
     KC(17),			KS_w,
     KC(18),			KS_e,

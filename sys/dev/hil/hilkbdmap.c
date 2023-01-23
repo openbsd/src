@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.8 2021/11/16 10:20:52 landry Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.9 2023/01/23 09:36:39 nicm Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -218,7 +218,7 @@ static const keysym_t hilkbd_keydesc_us[] = {
     KC(35), KS_Cmd_Screen10,	KS_f11,		/* also KS_KP_F3 */
     KC(36),			KS_KP_Delete,	KS_KP_Decimal,
     KC(37), KS_Cmd_Screen8,	KS_f9,		/* also KS_KP_F1 */
-    KC(38),			KS_Tab,		/* numeric pad */
+    KC(38),			KS_Tab,		KS_Backtab,	/* numeric pad */
     KC(39), KS_Cmd_Screen11,	KS_f12,		/* also KS_KP_F4 */
     KC(40),			KS_h,		KS_H,		KS_yen,
     KC(41),			KS_g,		KS_G,		KS_currency,
@@ -235,7 +235,7 @@ static const keysym_t hilkbd_keydesc_us[] = {
     KC(52),			KS_e,		KS_E,		KS_ae,
     KC(53),			KS_w,		KS_W,		KS_asciitilde,
     KC(54),			KS_q,		KS_Q,		KS_periodcentered,
-    KC(55),			KS_Tab,
+    KC(55),			KS_Tab,		KS_Backtab,
     KC(56),			KS_7,		KS_ampersand,	KS_backslash,
     KC(57),			KS_6,		KS_asciicircum,	KS_asciicircum,
     KC(58),			KS_5,		KS_percent,	KS_onehalf,

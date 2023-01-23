@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.10 2014/09/06 10:18:34 mpi Exp $ */
+/*	$OpenBSD: akbdmap.h,v 1.11 2023/01/23 09:36:39 nicm Exp $ */
 /*	$NetBSD: akbdmap.h,v 1.7 2005/05/05 22:29:41 abs Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(45),			KS_n,
     KC(46),			KS_m,
     KC(47),			KS_period,	KS_greater,
-    KC(48),			KS_Tab,
+    KC(48),			KS_Tab,		KS_Backtab,
     KC(49),			KS_space,
     KC(50),			KS_grave,	KS_asciitilde,
     KC(51),  KS_Cmd_ResetEmul,	KS_Delete,

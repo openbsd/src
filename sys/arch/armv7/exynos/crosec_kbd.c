@@ -1,4 +1,4 @@
-/* $OpenBSD: crosec_kbd.c,v 1.4 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: crosec_kbd.c,v 1.5 2023/01/23 09:36:39 nicm Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -62,7 +62,7 @@ static const keysym_t cros_ec_keyboard_keydesc_us[] = {
 	KC(19),	KS_h,
 	KC(24),	KS_BackSpace,
 	KC(26),	KS_Control_L,
-	KC(27),	KS_Tab,
+	KC(27),	KS_Tab,		KS_Backtab,
 	KC(29),	KS_t,
 	KC(32),	KS_y,
 	KC(42),	KS_5,

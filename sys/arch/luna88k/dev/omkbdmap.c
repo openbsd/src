@@ -1,4 +1,4 @@
-/*	$OpenBSD: omkbdmap.c,v 1.3 2017/11/03 06:54:06 aoyama Exp $	*/
+/*	$OpenBSD: omkbdmap.c,v 1.4 2023/01/23 09:36:39 nicm Exp $	*/
 
 /* Partially from:
  *	$NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $
@@ -181,7 +181,7 @@ const u_int8_t omkbd_raw[0x80] = {
 
 static const keysym_t omkbd_keydesc_jp[] = {
 /*	pos		command		normal		shifted */
-	KC(0x09),			KS_Tab,
+	KC(0x09),			KS_Tab,		KS_Backtab,
 	KC(0x0a),   KS_Cmd1,		KS_Control_L,
 	KC(0x0b),			KS_Mode_switch,	/* Kana */
 	KC(0x0c),			KS_Shift_R,

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_keys.c,v 1.8 2015/03/14 03:38:50 jsg Exp $ */
+/* $OpenBSD: wsemul_vt100_keys.c,v 1.9 2023/01/23 09:36:40 nicm Exp $ */
 /* $NetBSD: wsemul_vt100_keys.c,v 1.3 1999/04/22 20:06:02 mycroft Exp $ */
 
 /*
@@ -174,6 +174,9 @@ wsemul_vt100_translate(void *cookie, kbd_t layout, keysym_t in,
 	    case KS_KP_Next:
 		*out = "\033[6~";
 		return (4);
+	    case KS_Backtab:
+		*out = "\033[Z";
+		return (3);
 	    case KS_Home:
 	    case KS_KP_Home:
 		*out = "\033[7~";

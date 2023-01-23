@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdmap.c,v 1.6 2014/01/26 17:48:08 miod Exp $	*/
+/*	$OpenBSD: sunkbdmap.c,v 1.7 2023/01/23 09:36:40 nicm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.
@@ -239,7 +239,7 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x32),				KS_KP_Delete,	KS_KP_Decimal,
     KC(0x33),				KS_Copy,
     KC(0x34),				KS_Home,
-    KC(0x35),				KS_Tab,
+    KC(0x35),				KS_Tab,		KS_Backtab,
     KC(0x36),				KS_q,
     KC(0x37),				KS_w,
     KC(0x38),				KS_e,
