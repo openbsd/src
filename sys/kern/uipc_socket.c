@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.295 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.296 2023/01/23 18:33:34 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1458,7 +1458,7 @@ somove(struct socket *so, int wait)
 	u_long		 len, off, oobmark;
 	long		 space;
 	int		 error = 0, maxreached = 0;
-	unsigned int	 state;
+	unsigned int	 rcvstate;
 
 	soassertlocked(so);
 
@@ -1634,7 +1634,7 @@ somove(struct socket *so, int wait)
 		pru_rcvd(so);
 
 	/* Receive buffer did shrink by len bytes, adjust oob. */
-	state = so->so_rcv.sb_state;
+	rcvstate = so->so_rcv.sb_state;
 	so->so_rcv.sb_state &= ~SS_RCVATMARK;
 	oobmark = so->so_oobmark;
 	so->so_oobmark = oobmark > len ? oobmark - len : 0;
@@ -1649,13 +1649,13 @@ somove(struct socket *so, int wait)
 	 * Handle oob data.  If any malloc fails, ignore error.
 	 * TCP urgent data is not very reliable anyway.
 	 */
-	while (((state & SS_RCVATMARK) || oobmark) &&
+	while (((rcvstate & SS_RCVATMARK) || oobmark) &&
 	    (so->so_options & SO_OOBINLINE)) {
 		struct mbuf *o = NULL;
 
-		if (state & SS_RCVATMARK) {
+		if (rcvstate & SS_RCVATMARK) {
 			o = m_get(wait, MT_DATA);
-			state &= ~SS_RCVATMARK;
+			rcvstate &= ~SS_RCVATMARK;
 		} else if (oobmark) {
 			o = m_split(m, oobmark, wait);
 			if (o) {
@@ -1689,7 +1689,7 @@ somove(struct socket *so, int wait)
 			if (oobmark) {
 				oobmark -= 1;
 				if (oobmark == 0)
-					state |= SS_RCVATMARK;
+					rcvstate |= SS_RCVATMARK;
 			}
 			m_adj(m, 1);
 		}
