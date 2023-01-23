@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2018 2023/01/23 05:19:10 jsg Exp $
+$OpenBSD: pcidevs,v 1.2019 2023/01/23 10:13:46 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1263,6 +1263,7 @@ product ATI KAVERI_20		0x131b	Kaveri Radeon R4
 product ATI KAVERI_21		0x131c	Kaveri Radeon R7
 product ATI KAVERI_22		0x131d	Kaveri Radeon R6
 product ATI CYAN_SKILLFISH_1	0x13fe	Cyan Skillfish
+product ATI CYAN_SKILLFISH_2	0x143f	Cyan Skillfish
 product ATI PPB_1		0x1478	PCIE
 product ATI PPB_2		0x1479	PCIE
 product ATI MENDOCINO		0x1506	Mendocino
@@ -2073,6 +2074,10 @@ product ATI DIMGREY_CAVEFISH_9	0x73ec	Navi 23
 product ATI DIMGREY_CAVEFISH_10	0x73ed	Navi 23
 product ATI DIMGREY_CAVEFISH_11	0x73ef	Navi 23
 product ATI DIMGREY_CAVEFISH_12	0x73ff	Navi 23
+product ATI ALDEBARAN_1		0x7408	Aldebaran
+product ATI ALDEBARAN_2		0x740c	Aldebaran
+product ATI ALDEBARAN_3		0x740f	Aldebaran
+product ATI ALDEBARAN_4		0x7410	Aldebaran
 product ATI BEIGE_GOBY_1	0x7420	Navi 24
 product ATI BEIGE_GOBY_2	0x7421	Navi 24
 product ATI BEIGE_GOBY_3	0x7422	Navi 24
