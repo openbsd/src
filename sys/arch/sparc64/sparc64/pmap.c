@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.108 2023/01/11 19:57:18 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.109 2023/01/23 19:31:41 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -2021,27 +2021,30 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 
-	if (pm == pmap_kernel() && va >= kdata && 
-		va < roundup(ekdata, 4*MEG)) {
-		/* Need to deal w/locked TLB entry specially. */
-		pa = (paddr_t) (kdatap - kdata + va);
-	} else if( pm == pmap_kernel() && va >= ktext && va < ektext ) {
-		/* Need to deal w/locked TLB entry specially. */
-		pa = (paddr_t) (ktextp - ktext + va);
-	} else if (pm == pmap_kernel() && va >= INTSTACK && va < EINTSTACK) {
-		pa = curcpu()->ci_paddr + va - INTSTACK;
+	if (pm == pmap_kernel()) {
+		if (va >= kdata && va < roundup(ekdata, 4*MEG)) {
+			/* Need to deal w/locked TLB entry specially. */
+			pa = (paddr_t)(kdatap - kdata + va);
+		} else if (va >= ktext && va < ektext) {
+			/* Need to deal w/locked TLB entry specially. */
+			pa = (paddr_t)(ktextp - ktext + va);
+		} else if (va >= INTSTACK && va < EINTSTACK) {
+			pa = curcpu()->ci_paddr + va - INTSTACK;
+		} else {
+			goto check_pseg;
+		}
 	} else {
-		int s;
-
-		s = splvm();
-		pa = (pseg_get(pm, va) & TLB_PA_MASK) + (va & PGOFSET);
-		splx(s);
+check_pseg:
+		mtx_enter(&pm->pm_mtx);
+		pa = pseg_get(pm, va) & TLB_PA_MASK;
+		mtx_leave(&pm->pm_mtx);
+		if (pa == 0)
+			return FALSE;
+		pa |= va & PAGE_MASK;
 	}
-	if (pa == 0)
-		return (FALSE);
 	if (pap != NULL)
 		*pap = pa;
-	return (TRUE);
+	return TRUE;
 }
 
 /*
