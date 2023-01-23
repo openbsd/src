@@ -191,16 +191,22 @@ static const struct pci_matchid amdgpu_devices[] = {
 	{0x1002, 0x7424 },
 	{0x1002, 0x743F },
 
-	/* gfx1036, GC 10.3.6, APU, Ryzen 7000 "Raphael" */
+	/*
+	 * amdgpu/amdgpu_discovery.c amdgpu_discovery_set_ip_blocks()
+	 * display/dc/core/dc_resource.c resource_parse_asic_id()
+	 */
+
+	/* GC 10.3.6, DCN 3.1.5, APU, Ryzen 7000 "Raphael" */
 	{0x1002, 0x164e },
 
-	/* gfx1037, GC 10.3.7, APU, Ryzen 7020 "Mendocino" */
+	/* GC 10.3.7, DCN 3.1.6, APU, Ryzen 7020 "Mendocino" */
 	{0x1002, 0x1506 },
 
-	/* gfx1100, GC 11.0.0, dGPU, Radeon RX 7900 XT/XTX "Navi 31" */
+	/* GC 11.0.0, DCN 3.2.0, dGPU, Radeon RX 7900 XT/XTX "Navi 31" */
 	{0x1002, 0x744c },
 
-	/* gfx1101 dGPU */
-	/* gfx1102 dGPU */
-	/* gfx1103 APU */
+	/* GC 11.0.1, DCN 3.1.4, APU */
+	/* GC 11.0.2, DCN 3.2.1, dGPU */
+	/* GC 11.0.3, DCN 3.2.0, dGPU */
+	/* GC 11.0.4, DCN 3.1.4, APU */
 };
