@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.113 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.114 2023/01/24 07:26:34 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -322,6 +322,8 @@ void text_access_error(struct trapframe *tf, unsigned type,
 	vaddr_t pc, u_long sfsr, vaddr_t afva, u_long afsr);
 void syscall(struct trapframe *, register_t code, register_t pc);
 
+int	copyinsn(struct proc *p, vaddr_t uva, int *insn);
+
 /*
  * If someone stole the FPU while we were away, do not enable it
  * on return.  This is not done in userret() above as it must follow
@@ -465,7 +467,7 @@ dopanic:
 	{
 		union instr ins;
 
-		if (copyin((caddr_t)pc, &ins, sizeof(ins)) != 0) {
+		if (copyinsn(p, pc, &ins.i_int) != 0) {
 			/* XXX Can this happen? */
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 			break;
@@ -543,7 +545,7 @@ dopanic:
 	{
 		union instr ins;
 
-		if (copyin((caddr_t)pc, &ins, sizeof(ins)) != 0) {
+		if (copyinsn(p, pc, &ins.i_int) != 0) {
 			/* XXX Can this happen? */
 			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 			break;
@@ -624,7 +626,8 @@ dopanic:
 			 * Push the faulting instruction on the queue;
 			 * we might need to emulate it.
 			 */
-			copyin((caddr_t)pc, &p->p_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
+			(void)copyinsn(p, pc,
+			    &p->p_md.md_fpstate->fs_queue[0].fq_instr);
 			p->p_md.md_fpstate->fs_queue[0].fq_addr = (int *)pc;
 			p->p_md.md_fpstate->fs_qsize = 1;
 		}
@@ -1251,4 +1254,22 @@ child_return(void *arg)
 	KERNEL_UNLOCK();
 
 	mi_child_return(p);
+}
+
+int
+copyinsn(struct proc *p, vaddr_t uva, int *insn)
+{
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	int error = 0;
+
+	if (__predict_false((uva & 3) != 0))
+		return EFAULT;
+
+	do {
+		if (pmap_copyinsn(map->pmap, uva, (uint32_t *)insn) == 0)
+			break;
+		error = uvm_fault(map, trunc_page(uva), 0, PROT_EXEC);
+	} while (error == 0);
+
+	return error;
 }

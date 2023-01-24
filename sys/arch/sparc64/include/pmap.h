@@ -159,7 +159,8 @@ extern struct pmap kernel_pmap_;
 
 #define pmap_proc_iflush(p,va,len)	/* nothing */
 
-void pmap_bootstrap(u_long, u_long, u_int, u_int);
+void	pmap_bootstrap(u_long, u_long, u_int, u_int);
+int	pmap_copyinsn(pmap_t, vaddr_t, uint32_t *);
 
 /* make sure all page mappings are modulo 16K to prevent d$ aliasing */
 #define PMAP_PREFER

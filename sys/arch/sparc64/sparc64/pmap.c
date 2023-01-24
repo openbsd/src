@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.109 2023/01/23 19:31:41 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.110 2023/01/24 07:26:34 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -2915,3 +2915,25 @@ db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 #endif
+
+/*
+ * Read an instruction from a given virtual memory address.
+ * EXEC_ONLY mappings are bypassed.
+ */
+int
+pmap_copyinsn(pmap_t pmap, vaddr_t va, uint32_t *insn)
+{
+	paddr_t pa;
+
+	if (pmap == pmap_kernel())
+		return EINVAL;
+
+	mtx_enter(&pmap->pm_mtx);
+	/* inline pmap_extract */
+	pa = pseg_get(pmap, va) & TLB_PA_MASK;
+	if (pa != 0)
+		*insn = lduwa(pa | (va & PAGE_MASK), ASI_PHYS_CACHED);
+	mtx_leave(&pmap->pm_mtx);
+
+	return pa == 0 ? EFAULT : 0;
+}
