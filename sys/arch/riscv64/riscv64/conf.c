@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2022/09/02 20:06:56 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2023/01/24 13:29:51 jca Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -88,11 +88,16 @@ cdev_decl(lpt);
 #include "midi.h"
 #include "ksyms.h"
 #include "kstat.h"
+#include "usb.h"
+#include "uhid.h"
+#include "fido.h"
+#include "ujoy.h"
+#include "ugen.h"
+#include "ulpt.h"
+#include "ucom.h"
 #include "radio.h"
 #include "drm.h"
 cdev_decl(drm);
-#include "uhid.h"
-#include "fido.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -180,12 +185,12 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 59: i4b trace device */
 	cdev_notdef(),			/* 60: i4b phone device */
 	/* End of reserved slots for isdn4bsd. */
-	cdev_notdef(),			/* 61: USB controller */
+	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
-	cdev_notdef(),			/* 63: USB generic driver */
-	cdev_notdef(),			/* 64: USB printers */
+	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_notdef(),			/* 65: urio */
-	cdev_notdef(),			/* 66: USB tty */
+	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_mouse_init(NWSKBD, wskbd),	/* 67: keyboards */
 	cdev_mouse_init(NWSMOUSE,	/* 68: mice */
 	    wsmouse),
@@ -224,7 +229,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 97: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
-	cdev_notdef(),			/* 100: USB joystick/gamecontroller */
+	cdev_ujoy_init(NUJOY,ujoy),	/* 100: USB joystick/gamecontroller */
 };
 int	nchrdev = nitems(cdevsw);
 
