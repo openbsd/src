@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.396 2023/01/22 19:57:25 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.397 2023/01/24 15:47:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -824,39 +824,9 @@ editor_add(struct disklabel *lp, const char *p)
 		return;
 	}
 
-	if (p == NULL) {
-		/*
-		 * Use the first unused partition that is not 'c' as the
-		 * default partition in the prompt string.
-		 */
-		pp = &lp->d_partitions[0];
-		buf[0] = buf[1] = '\0';
-		for (partno = 0; partno < MAXPARTITIONS; partno++, pp++) {
-			if (DL_GETPSIZE(pp) == 0 && partno != RAW_PART) {
-				buf[0] = partno + 'a';
-				p = &buf[0];
-				break;
-			}
-		}
-		p = getstring("partition",
-		    "The letter of the new partition, a - p.", p);
-	}
-	if (p == NULL)
+	if ((partno = getpartno(lp, p, "add")) == -1)
 		return;
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= MAXPARTITIONS) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
-		return;
-	}
 	pp = &lp->d_partitions[partno];
-
-	if (partno < lp->d_npartitions && pp->p_fstype != FS_UNUSED &&
-	    DL_GETPSIZE(pp) != 0) {
-		fprintf(stderr, "Partition '%c' exists.  Delete it first.\n",
-		    p[0]);
-		return;
-	}
 	memset(pp, 0, sizeof(*pp));
 
 	/*
@@ -1035,24 +1005,43 @@ getstring(const char *prompt, const char *helpstring, const char *oval)
 }
 
 int
-getpartno(const struct disklabel *lp, const char *id, const char *action)
+getpartno(const struct disklabel *lp, const char *p, const char *action)
 {
+	char buf[2] = { '\0', '\0'};
 	const char *promptfmt = "partition to %s";
 	const char *helpfmt = "Partition must be between 'a' and '%c' "
 	    "(excluding 'c').\n";
 	const struct partition *pp;
-	const char *p;
 	char *help = NULL, *prompt = NULL;
-	const unsigned char maxpart = 'a' + lp->d_npartitions - 1;
+	unsigned char maxpart;
 	unsigned int partno;
+	int add, inuse;
 
-	p = id;
+	add = strcmp("add", action) == 0;
+	maxpart = 'a' - 1 + (add ? MAXPARTITIONS : lp->d_npartitions);
+
 	if (p == NULL) {
 		if (asprintf(&prompt, promptfmt, action) == -1 ||
-		    asprintf(&help, helpfmt, maxpart) == -1)
+		    asprintf(&help, helpfmt, maxpart) == -1) {
 			fprintf(stderr, "Unable to build prompt or help\n");
-		else
-			p = getstring(prompt, help, NULL);
+			goto done;
+		}
+		if (add) {
+			/* Default to first unused partition. */
+			for (partno = 0; partno < MAXPARTITIONS; partno++) {
+				if (partno == RAW_PART)
+					continue;
+				pp = &lp->d_partitions[partno];
+				if (partno >= lp->d_npartitions ||
+				    DL_GETPSIZE(pp) == 0 ||
+				    pp->p_fstype == FS_UNUSED) {
+					buf[0] = 'a' + partno;
+					p = buf;
+					break;
+				}
+			}
+		}
+		p = getstring(prompt, help, p);
 		free(prompt);
 		free(help);
 		if (p == NULL || *p == '\0')
@@ -1066,10 +1055,14 @@ getpartno(const struct disklabel *lp, const char *id, const char *action)
 
 	partno = *p - 'a';
 	pp = &lp->d_partitions[partno];
-	if (DL_GETPSIZE(pp) > 0 && pp->p_fstype != FS_UNUSED)
+	inuse = partno < lp->d_npartitions && DL_GETPSIZE(pp) > 0 &&
+	    pp->p_fstype != FS_UNUSED;
+
+	if ((add && !inuse) || (!add && inuse))
 		return (partno);
 
-	fprintf(stderr, "Partition '%c' is not in use.\n", *p);
+	fprintf(stderr, "Partition '%c' is %sin use.\n", *p,
+	    inuse ? "" : "not ");
 
  done:
 	return (-1);
