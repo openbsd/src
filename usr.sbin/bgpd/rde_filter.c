@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.131 2023/01/12 17:35:51 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.132 2023/01/24 11:28:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -223,7 +223,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 		return (0);
 
 	if (f->match.ovs.is_set) {
-		if (state->vstate != f->match.ovs.validity)
+		if ((state->vstate & ROA_MASK) != f->match.ovs.validity)
 			return (0);
 	}
 
@@ -448,18 +448,37 @@ rde_filterstate_set(struct filterstate *state, struct rde_aspath *asp,
 	state->vstate = vstate;
 }
 
+/*
+ * Build a filterstate based on the prefix p.
+ */
 void
 rde_filterstate_prep(struct filterstate *state, struct prefix *p)
 {
 	rde_filterstate_set(state, prefix_aspath(p), prefix_communities(p),
-	    prefix_nexthop(p), prefix_nhflags(p), prefix_roa_vstate(p));
+	    prefix_nexthop(p), prefix_nhflags(p), p->validation_state);
 }
 
+/*
+ * Copy a filterstate to a new filterstate.
+ */
 void
 rde_filterstate_copy(struct filterstate *state, struct filterstate *src)
 {
 	rde_filterstate_set(state, &src->aspath, &src->communities,
 	    src->nexthop, src->nhflags, src->vstate);
+}
+
+/*
+ * Set the vstate based on the aspa_state and the supplied roa vstate.
+ * This function must be called after rde_filterstate_init().
+ * rde_filterstate_prep() and rde_filterstate_copy() set the right vstate.
+ */
+void
+rde_filterstate_set_vstate(struct filterstate *state, uint8_t roa_vstate,
+    uint8_t aspa_state)
+{
+	state->vstate = aspa_state << 4;
+	state->vstate |= roa_vstate & ROA_MASK;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.253 2023/01/20 10:28:22 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.254 2023/01/24 11:28:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -635,6 +635,8 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 		return (1);
 	if (a->pftableid < b->pftableid)
 		return (-1);
+
+	/* no need to check aspa_state or aspa_generation */
 
 	r = aspath_compare(a->aspath, b->aspath);
 	if (r > 0)

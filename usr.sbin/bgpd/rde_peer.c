@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.26 2023/01/18 13:20:01 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.27 2023/01/24 11:28:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -166,6 +166,7 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 		fatalx("King Bula's new peer met an unknown RIB");
 	peer->state = PEER_NONE;
 	peer->eval = peer->conf.eval;
+	peer->role = peer->conf.role;
 	peer->export_type = peer->conf.export_type;
 	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);

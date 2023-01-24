@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.2 2023/01/17 16:09:01 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.3 2023/01/24 11:28:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -23,11 +23,12 @@
 #include "bgpd.h"
 #include "rde.h"
 
-enum cp_res {
-	UNKNOWN = -1,
-	NOT_PROVIDER = 0,
-	PROVIDER = 1,
-};
+#define	UNKNOWN		0x0
+#define	NOT_PROVIDER	0x1
+#define	PROVIDER	0x2
+
+#define	CP(x, y)	(x | (y << 4))
+#define	CP_GET(x, i)	((x >> (i * 4)) & 0xf)
 
 struct rde_aspa_set {
 	uint32_t		 as;
@@ -49,8 +50,8 @@ struct rde_aspa {
 	uint32_t		  maxset;
 	struct rde_aspa_set	 *sets;
 	uint32_t		 *data;
-	size_t		 	  maxdata;
-	size_t		 	  curdata;
+	size_t			  maxdata;
+	size_t			  curdata;
 	uint32_t		  curset;
 	time_t			  lastchange;
 };
@@ -109,43 +110,34 @@ aspa_lookup(struct rde_aspa *ra, uint32_t asnum)
  * Returns UNKNOWN if cas is not in the ra table or the aid is out of range.
  * Returns PROVIDER if pas is registered for cas for the specified aid.
  * Retruns NOT_PROVIDER otherwise.
+ * The returned value includes the result for both IPv4 and IPv6 and needs
+ * to be looked at with CP_GET.
  * This function is called very frequently and needs to be fast.
  */
-static enum cp_res
-aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas, uint8_t aid)
+static uint8_t
+aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas)
 {
 	struct rde_aspa_set *aspa;
-	uint32_t i, mask;
-
-	switch (aid) {
-	case AID_INET:
-		mask = 0x1;
-		break;
-	case AID_INET6:
-		mask = 0x2;
-		break;
-	default:
-		return UNKNOWN;
-	}
+	uint32_t i;
 
 	aspa = aspa_lookup(ra, cas);
 	if (aspa == NULL)
-		return UNKNOWN;
+		return CP(UNKNOWN, UNKNOWN);
 
 	if (aspa->num < 16) {
 		for (i = 0; i < aspa->num; i++) {
 			if (aspa->pas[i] == pas)
 				break;
 			if (aspa->pas[i] > pas)
-				return NOT_PROVIDER;
+				return CP(NOT_PROVIDER, NOT_PROVIDER);
 		}
 		if (i == aspa->num)
-			return NOT_PROVIDER;
+			return CP(NOT_PROVIDER, NOT_PROVIDER);
 	} else {
 		uint32_t lim, x;
 		for (i = 0, lim = aspa->num; lim != 0; lim /= 2) {
 			x = lim / 2;
-			i += x; 
+			i += x;
 			if (aspa->pas[i] == pas) {
 				break;
 			} else if (aspa->pas[i] < pas) {
@@ -158,14 +150,21 @@ aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas, uint8_t aid)
 			}
 		}
 		if (lim == 0)
-			return NOT_PROVIDER;
+			return CP(NOT_PROVIDER, NOT_PROVIDER);
 	}
 
 	if (aspa->pas_aid == NULL)
-		return PROVIDER;
-	if (aspa->pas_aid[i / 16] & (mask << ((i % 16) * 2)))
-		return PROVIDER;
-	return NOT_PROVIDER;
+		return CP(PROVIDER, PROVIDER);
+	switch (aspa->pas_aid[i / 16] >> ((i % 16) * 2) & 0x3) {
+	case 0x1:
+		return CP(PROVIDER, NOT_PROVIDER);
+	case 0x2:
+		return CP(NOT_PROVIDER, PROVIDER);
+	case 0x3:
+		return CP(PROVIDER, PROVIDER);
+	default:
+		fatalx("impossible state in aspa_cp_lookup");
+	}
 }
 
 /*
@@ -182,22 +181,21 @@ aspa_cp_lookup(struct rde_aspa *ra, uint32_t cas, uint32_t pas, uint8_t aid)
  * Returns 0 on success and -1 if a AS_SET is encountered.
  */
 static int
-aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, int check_downramp,
-    uint8_t aid, struct aspa_state *s)
+aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, struct aspa_state *s)
 {
 	uint8_t		*seg;
+	int		 afi;
 	uint32_t	 as, prevas = 0;
 	uint16_t	 len, seg_size;
-	uint8_t		 i, seg_type, seg_len;
-	enum cp_res	 r;
+	uint8_t		 i, r, seg_type, seg_len;
 
-	memset(s, 0, sizeof(*s));
-	/* the neighbor-as itself is by definition valid */ 
-	s->ndown_p = 1;
+	/* the neighbor-as itself is by definition valid */
+	s[0].ndown_p = 1;
+	s[1].ndown_p = 1;
 
 	/*
 	 * Walk aspath and validate if necessary both up- and down-ramp.
-	 * If an AS_SET is found the result is immediatly ASPA_INVALID.
+	 * If an AS_SET is found return -1 to indicate failure.
 	 */
 	seg = aspath_dump(a);
 	len = aspath_length(a);
@@ -206,7 +204,7 @@ aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, int check_downramp,
 		seg_len = seg[1];
 		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
-		if (seg_type == AS_SET)
+		if (seg_type != AS_SEQUENCE)
 			return -1;
 
 		for (i = 0; i < seg_len; i++) {
@@ -215,52 +213,59 @@ aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, int check_downramp,
 			if (as == prevas)
 				continue; /* skip prepends */
 
-			s->nhops++;
-			if (prevas != 0) {
-				if (check_downramp) {
-					/*
-					 * down-ramp check, remember the
-					 * left-most unknown or not-provider
-					 * node and the right-most provider node
-					 * for which all nodes before are valid.
-					 */
-					r = aspa_cp_lookup(ra, prevas, as, aid);
-					switch (r) {
-					case UNKNOWN:
-						if (s->ndown_u == 0)
-							s->ndown_u = s->nhops;
-						break;
-					case PROVIDER:
-						if (s->ndown_p + 1 == s->nhops)
-							s->ndown_p = s->nhops;
-						break;
-					case NOT_PROVIDER:
-						if (s->ndown_np == 0)
-							s->ndown_np = s->nhops;
-						break;
-					}
-				}
-				/*
-				 * up-ramp check, remember the right-most
-				 * unknown and not-provider node and the
-				 * left-most provider node for which all nodes
-				 * after are valid.
-				 * We recorde the nhops value of prevas,
-				 * that's why the use of nhops - 1.
-				 */
-				r = aspa_cp_lookup(ra, as, prevas, aid);
-				switch (r) {
+			s[0].nhops++;
+			s[1].nhops++;
+			if (prevas == 0) {
+				prevas = as; /* skip left-most AS */
+				continue;
+			}
+
+			/*
+			 * down-ramp check, remember the
+			 * left-most unknown or not-provider
+			 * node and the right-most provider node
+			 * for which all nodes before are valid.
+			 */
+			r = aspa_cp_lookup(ra, prevas, as);
+			for (afi = 0; afi < 2; afi++) {
+				switch (CP_GET(r, afi)) {
 				case UNKNOWN:
-					s->nup_p = 0;
-					s->nup_u = s->nhops - 1;
+					if (s[afi].ndown_u == 0)
+						s[afi].ndown_u = s[afi].nhops;
 					break;
 				case PROVIDER:
-					if (s->nup_p == 0)
-						s->nup_p = s->nhops - 1;
+					if (s[afi].ndown_p + 1 == s[afi].nhops)
+						s[afi].ndown_p = s[afi].nhops;
 					break;
 				case NOT_PROVIDER:
-					s->nup_p = 0;
-					s->nup_np = s->nhops - 1;
+					if (s[afi].ndown_np == 0)
+						s[afi].ndown_np = s[afi].nhops;
+					break;
+				}
+			}
+
+			/*
+			 * up-ramp check, remember the right-most
+			 * unknown and not-provider node and the
+			 * left-most provider node for which all nodes
+			 * after are valid.
+			 * We recorde the nhops value of prevas,
+			 * that's why the use of nhops - 1.
+			 */
+			r = aspa_cp_lookup(ra, as, prevas);
+			for (afi = 0; afi < 2; afi++) {
+				switch (CP_GET(r, afi)) {
+				case UNKNOWN:
+					s[afi].nup_p = 0;
+					s[afi].nup_u = s[afi].nhops - 1;
+					break;
+				case PROVIDER:
+					if (s[afi].nup_p == 0)
+						s[afi].nup_p = s[afi].nhops - 1;
+					break;
+				case NOT_PROVIDER:
+					s[afi].nup_p = 0;
+					s[afi].nup_np = s[afi].nhops - 1;
 					break;
 				}
 			}
@@ -268,10 +273,52 @@ aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, int check_downramp,
 		}
 	}
 
-	/* the source-as itself is by definition valid */ 
-	if (s->nup_p == 0)
-		s->nup_p = s->nhops;
+	/* the source-as itself is by definition valid */
+	if (s[0].nup_p == 0)
+		s[0].nup_p = s[0].nhops;
+	if (s[1].nup_p == 0)
+		s[1].nup_p = s[1].nhops;
 	return 0;
+}
+
+/*
+ * Set the two possible aspa outcomes for up-ramp only and up/down ramp
+ * in the vstate array.
+ */
+static void
+aspa_check_finalize(struct aspa_state *state, uint8_t *onlyup, uint8_t *downup)
+{
+	/*
+	 * Just an up-ramp:
+	 * if a check returned NOT_PROVIDER then the result is invalid.
+	 * if a check returned UNKNOWN then the result is unknown.
+	 * else path is valid.
+	 */
+	if (state->nup_np != 0)
+		*onlyup = ASPA_INVALID;
+	else if (state->nup_u != 0)
+		*onlyup = ASPA_UNKNOWN;
+	else
+		*onlyup = ASPA_VALID;
+
+	/*
+	 * Both up-ramp and down-ramp:
+	 * if nhops <= 2 the result is valid.
+	 * if there is less than one AS hop between up-ramp and
+	 *   down-ramp then the result is valid.
+	 * if not-provider nodes for both ramps exist and they
+	 *   do not overlap the path is invalid.
+	 * else the path is unknown.
+	 */
+	if (state->nhops <= 2)
+		*downup = ASPA_VALID;
+	else if (state->nup_p - state->ndown_p <= 1)
+		*downup = ASPA_VALID;
+	else if (state->nup_np != 0 && state->ndown_np != 0 &&
+	    state->nup_np - state->ndown_np >= 0)
+		*downup = ASPA_INVALID;
+	else
+		*downup = ASPA_UNKNOWN;
 }
 
 /*
@@ -280,58 +327,31 @@ aspa_check_aspath(struct rde_aspa *ra, struct aspath *a, int check_downramp,
  * aspath contains hops with unknown relation and invalid for
  * empty aspaths, aspath with AS_SET and aspaths that fail validation.
  */
-uint8_t
-aspa_validation(struct rde_aspa *ra, enum role role, struct aspath *a,
-    uint8_t aid)
+void
+aspa_validation(struct rde_aspa *ra, struct aspath *a,
+    struct rde_aspa_state *vstate)
 {
-	struct aspa_state	state;
+	struct aspa_state state[2] = { 0 };
 
 	/* no aspa table, evrything is unknown */
-	if (ra == NULL)
-		return ASPA_UNKNOWN;
+	if (ra == NULL) {
+		memset(vstate, ASPA_UNKNOWN, 4);
+		return;
+	}
 
 	/* empty ASPATHs are always invalid */
-	if (aspath_length(a) == 0)
-		return ASPA_INVALID;
-
-	/* if no role is set, the outcome is unknown */
-	if (role == ROLE_NONE)
-		return ASPA_UNKNOWN;
-		
-	if (aspa_check_aspath(ra, a, role == ROLE_CUSTOMER, aid, &state) == -1)
-		return ASPA_INVALID;
-
-	if (role != ROLE_CUSTOMER) {
-		/*
-		 * Just an up-ramp:
-		 * if a check returned NOT_PROVIDER then the result is invalid.
-		 * if a check returned UNKNOWN then the result is unknown.
-		 * else path is valid.
-		 */
-		if (state.nup_np != 0)
-			return ASPA_INVALID;
-		if (state.nup_u != 0)
-			return ASPA_UNKNOWN;
-		return ASPA_VALID;
-	} else {
-		/*
-		 * Both up-ramp and down-ramp:
-		 * if nhops <= 2 the result is valid.
-		 * if there is less than one AS hop between up-ramp and
-		 *   down-ramp then the result is valid.
-		 * if not-provider nodes for both ramps exist and they
-		 *   do not overlap the path is invalid.
-		 * else the path is unknown.
-		 */
-		if (state.nhops <= 2)
-			return ASPA_VALID;
-		if (state.nup_p - state.ndown_p <= 1)
-			return ASPA_VALID;
-		if (state.nup_np != 0 && state.ndown_np != 0 &&
-		    state.nup_np - state.ndown_np >= 0)
-			return ASPA_INVALID;
-		return ASPA_UNKNOWN;
+	if (aspath_length(a) == 0) {
+		memset(vstate, ASPA_INVALID, 4);
+		return;
 	}
+
+	if (aspa_check_aspath(ra, a, state) == -1) {
+		memset(vstate, ASPA_INVALID, 4);
+		return;
+	}
+
+	aspa_check_finalize(state, &vstate->onlyup_v4, &vstate->downup_v4);
+	aspa_check_finalize(state + 1, &vstate->onlyup_v6, &vstate->downup_v6);
 }
 
 /*
@@ -364,7 +384,7 @@ aspa_table_prep(uint32_t entries, size_t datasize)
 
 	if ((ra->data = malloc(datasize)) == NULL)
 		fatal("aspa table prep");
-		
+
 	ra->mask = hsize - 1;
 	ra->maxset = entries;
 	ra->maxdata = datasize / sizeof(ra->data[0]);
