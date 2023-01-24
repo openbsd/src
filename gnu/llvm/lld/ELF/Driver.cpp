@@ -364,6 +364,7 @@ static void checkOptions() {
     case EM_MIPS:
     case EM_SPARCV9:
     case EM_X86_64:
+    case EM_PPC64:
       break;
     default:
       error("-execute-only is not supported on this target");
