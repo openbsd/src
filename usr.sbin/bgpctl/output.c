@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.34 2023/01/24 11:29:34 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.35 2023/01/24 15:50:10 job Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -965,7 +965,7 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
 	    fmt_origin(r->origin, 0), r->med, r->local_pref, r->weight,
 	    fmt_ovs(r->roa_validation_state, 0));
-	printf("avs %s, %s", fmt_avs(r->roa_validation_state, 0),
+	printf("avs %s, %s", fmt_avs(r->aspa_validation_state, 0),
 	    fmt_flags(r->flags, 0));
 
 	printf("%c    Last update: %s ago%c", EOL0(flag0),
