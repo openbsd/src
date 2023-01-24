@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.92 2023/01/02 23:09:48 guenther Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.93 2023/01/24 00:12:03 deraadt Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -864,8 +864,7 @@ process_domem(struct proc *curp, struct process *tr, struct uio *uio, int req)
 
 	uvmspace_addref(vm);
 
-	error = uvm_io(&vm->vm_map, uio,
-	    (uio->uio_rw == UIO_WRITE) ? UVM_IO_FIXPROT : 0);
+	error = uvm_io(&vm->vm_map, uio, UVM_IO_FIXPROT);
 
 	uvmspace_free(vm);
 
