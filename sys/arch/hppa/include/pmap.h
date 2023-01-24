@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.53 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.54 2023/01/24 16:51:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -33,6 +33,7 @@
 #include <sys/mutex.h>
 
 #ifdef	_KERNEL
+#include <sys/systm.h>
 #include <machine/pte.h>
 
 struct pmap {
@@ -117,6 +118,7 @@ struct vm_page *pmap_unmap_direct(vaddr_t);
 void pmap_bootstrap(vaddr_t);
 boolean_t pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
 boolean_t pmap_testbit(struct vm_page *, int);
+void pmap_page_write_protect(struct vm_page *);
 void pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva);
 void pmap_page_remove(struct vm_page *pg);
@@ -131,23 +133,21 @@ pmap_prot(struct pmap *pmap, int prot)
 static __inline void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	if ((prot & PROT_WRITE) == 0) {
-		if (prot & (PROT_READ | PROT_EXEC))
-			pmap_changebit(pg, 0, PTE_PROT(TLB_WRITE));
-		else
-			pmap_page_remove(pg);
+	if (prot == PROT_READ) {
+		pmap_page_write_protect(pg);
+	} else {
+		KASSERT(prot == PROT_NONE);
+		pmap_page_remove(pg);
 	}
 }
 
 static __inline void
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	if ((prot & PROT_WRITE) == 0) {
-		if (prot & (PROT_READ | PROT_EXEC))
-			pmap_write_protect(pmap, sva, eva, prot);
-		else
-			pmap_remove(pmap, sva, eva);
-	}
+	if (prot != PROT_NONE)
+		pmap_write_protect(pmap, sva, eva, prot);
+	else
+		pmap_remove(pmap, sva, eva);
 }
 
 #endif /* _KERNEL */
