@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.590 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.591 2023/01/24 14:13:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,7 +103,8 @@ static void	 network_dump_upcall(struct rib_entry *, void *);
 static void	 network_flush_upcall(struct rib_entry *, void *);
 
 void		 rde_shutdown(void);
-int		 ovs_match(struct prefix *, uint32_t);
+static int	 ovs_match(struct prefix *, uint32_t);
+static int	 avs_match(struct prefix *, uint32_t);
 
 static struct imsgbuf		*ibuf_se;
 static struct imsgbuf		*ibuf_se_ctl;
@@ -2776,6 +2777,8 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 	}
 	if (!ovs_match(p, req->flags))
 		return;
+	if (!avs_match(p, req->flags))
+		return;
 	rde_dump_rib_as(p, asp, req->pid, req->flags, adjout);
 }
 
@@ -4528,7 +4531,7 @@ rde_roa_validity(struct rde_prefixset *ps, struct bgpd_addr *prefix,
 	return (r & ROA_MASK);
 }
 
-int
+static int
 ovs_match(struct prefix *p, uint32_t flag)
 {
 	if (flag & (F_CTL_OVS_VALID|F_CTL_OVS_INVALID|F_CTL_OVS_NOTFOUND)) {
@@ -4543,6 +4546,31 @@ ovs_match(struct prefix *p, uint32_t flag)
 			break;
 		case ROA_NOTFOUND:
 			if (!(flag & F_CTL_OVS_NOTFOUND))
+				return 0;
+			break;
+		default:
+			break;
+		}
+	}
+
+	return 1;
+}
+
+static int
+avs_match(struct prefix *p, uint32_t flag)
+{
+	if (flag & (F_CTL_AVS_VALID|F_CTL_AVS_INVALID|F_CTL_AVS_UNKNOWN)) {
+		switch (prefix_aspa_vstate(p) & ASPA_MASK) {
+		case ASPA_VALID:
+			if (!(flag & F_CTL_AVS_VALID))
+				return 0;
+			break;
+		case ASPA_INVALID:
+			if (!(flag & F_CTL_AVS_INVALID))
+				return 0;
+			break;
+		case ASPA_UNKNOWN:
+			if (!(flag & F_CTL_AVS_UNKNOWN))
 				return 0;
 			break;
 		default:

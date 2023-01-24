@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.459 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.460 2023/01/24 14:13:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,6 +94,9 @@
 #define	F_CTL_OVS_NOTFOUND	0x200000
 #define	F_CTL_NEIGHBORS		0x400000 /* only used by bgpctl */
 #define	F_CTL_HAS_PATHID	0x800000 /* only set on requests */
+#define	F_CTL_AVS_VALID		0x1000000
+#define	F_CTL_AVS_INVALID	0x2000000
+#define	F_CTL_AVS_UNKNOWN	0x4000000
 
 #define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ] \
 			    __attribute__((__unused__))
@@ -896,7 +899,7 @@ struct filter_originset {
 	struct rde_prefixset	*ps;
 };
 
-struct filter_ovs {
+struct filter_vs {
 	uint8_t			 validity;
 	uint8_t			 is_set;
 };
@@ -1082,7 +1085,8 @@ struct filter_match {
 	struct community		community[MAX_COMM_MATCH];
 	struct filter_prefixset		prefixset;
 	struct filter_originset		originset;
-	struct filter_ovs		ovs;
+	struct filter_vs		ovs;
+	struct filter_vs		avs;
 	int				maxcomm;
 	int				maxextcomm;
 	int				maxlargecomm;
