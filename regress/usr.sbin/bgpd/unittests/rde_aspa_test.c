@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.3 2023/01/17 16:11:52 claudio Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.4 2023/01/24 11:31:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -38,8 +38,7 @@ struct aspa_test_set {
 struct cp_test {
 	uint32_t	customeras;
 	uint32_t	provideras;
-	uint8_t		aid;
-	enum cp_res	expected_result;
+	uint8_t		expected_result;
 };
 
 struct aspath_test {
@@ -52,7 +51,6 @@ struct aspa_test {
 	const uint32_t	*aspath;
 	uint32_t	 aspathcnt;
 	enum role	 role;
-	uint8_t		 aid;
 	uint8_t		 expected_result;
 };
 
@@ -111,73 +109,65 @@ struct aspa_test_set testset[] = {
 	    60, 65, 70, 75, 80, 81, 82, 83, 87, 90 }, 30, NULL },
 	/* extra test for AFI check */
 	{ 196618, (const uint32_t []){ 1, 2, 3, 4 }, 4,
-	    (const uint32_t []){ 0x39 }},
+	    (const uint32_t []){ 0xf9 }},
 };
 
 struct cp_test cp_testset[] = {
-	{ 1, 2, AID_VPN_IPv4, UNKNOWN },
-	{ 1, 4, AID_VPN_IPv6, UNKNOWN },
+	{ 6, 1, CP(UNKNOWN, UNKNOWN) },
+	{ 42, 1, CP(UNKNOWN, UNKNOWN) },
 
-	{ 6, 1, AID_INET, UNKNOWN },
-	{ 42, 1, AID_INET, UNKNOWN },
+	{ 1, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 1, 3, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 1, 7, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 5, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 5, 16, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 5, 18, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 5, 24, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 5, 26, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 8, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 9, 5, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 27, 13, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 27, 15, CP(NOT_PROVIDER, NOT_PROVIDER) },
 
-	{ 1, 2, AID_INET, NOT_PROVIDER },
-	{ 1, 3, AID_INET, NOT_PROVIDER },
-	{ 1, 7, AID_INET, NOT_PROVIDER },
-	{ 5, 2, AID_INET, NOT_PROVIDER },
-	{ 5, 16, AID_INET, NOT_PROVIDER },
-	{ 5, 18, AID_INET, NOT_PROVIDER },
-	{ 5, 24, AID_INET, NOT_PROVIDER },
-	{ 5, 26, AID_INET, NOT_PROVIDER },
-	{ 8, 2, AID_INET, NOT_PROVIDER },
-	{ 9, 5, AID_INET, NOT_PROVIDER },
-	{ 27, 13, AID_INET, NOT_PROVIDER },
-	{ 27, 15, AID_INET, NOT_PROVIDER },
-
-	{ 1, 4, AID_INET, PROVIDER },
-	{ 1, 5, AID_INET, PROVIDER },
-	{ 1, 6, AID_INET, PROVIDER },
-	{ 2, 10, AID_INET, PROVIDER },
-	{ 2, 11, AID_INET, PROVIDER },
-	{ 9, 2, AID_INET, PROVIDER },
-	{ 27, 14, AID_INET, PROVIDER },
+	{ 1, 4, CP(PROVIDER, PROVIDER) },
+	{ 1, 5, CP(PROVIDER, PROVIDER) },
+	{ 1, 6, CP(PROVIDER, PROVIDER) },
+	{ 2, 10, CP(PROVIDER, PROVIDER) },
+	{ 2, 11, CP(PROVIDER, PROVIDER) },
+	{ 9, 2, CP(PROVIDER, PROVIDER) },
+	{ 27, 14, CP(PROVIDER, PROVIDER) },
 
 	/* per AID tests */
-	{ 196618, 1, AID_INET, PROVIDER },
-	{ 196618, 1, AID_INET6, NOT_PROVIDER },
-	{ 196618, 2, AID_INET, NOT_PROVIDER },
-	{ 196618, 2, AID_INET6, PROVIDER },
-	{ 196618, 3, AID_INET, PROVIDER },
-	{ 196618, 3, AID_INET6, PROVIDER },
-	{ 196618, 4, AID_INET, NOT_PROVIDER },
-	{ 196618, 4, AID_INET6, NOT_PROVIDER },
-	{ 196618, 5, AID_INET, NOT_PROVIDER },
-	{ 196618, 5, AID_INET6, NOT_PROVIDER },
+	{ 196618, 1, CP(PROVIDER, NOT_PROVIDER) },
+	{ 196618, 2, CP(NOT_PROVIDER, PROVIDER) },
+	{ 196618, 3, CP(PROVIDER, PROVIDER) },
+	{ 196618, 4, CP(PROVIDER, PROVIDER) },
+	{ 196618, 5, CP(NOT_PROVIDER, NOT_PROVIDER) },
 
 	/* big provider set test */
-	{ 65000, 1, AID_INET, NOT_PROVIDER },
-	{ 65000, 2, AID_INET, NOT_PROVIDER },
-	{ 65000, 3, AID_INET, PROVIDER },
-	{ 65000, 4, AID_INET, NOT_PROVIDER },
-	{ 65000, 5, AID_INET, PROVIDER },
-	{ 65000, 15, AID_INET, PROVIDER },
-	{ 65000, 19, AID_INET, NOT_PROVIDER },
-	{ 65000, 20, AID_INET, PROVIDER },
-	{ 65000, 21, AID_INET, PROVIDER },
-	{ 65000, 22, AID_INET, PROVIDER },
-	{ 65000, 23, AID_INET, PROVIDER },
-	{ 65000, 24, AID_INET, PROVIDER },
-	{ 65000, 25, AID_INET, PROVIDER },
-	{ 65000, 26, AID_INET, NOT_PROVIDER },
-	{ 65000, 85, AID_INET, NOT_PROVIDER },
-	{ 65000, 86, AID_INET, NOT_PROVIDER },
-	{ 65000, 87, AID_INET, PROVIDER },
-	{ 65000, 88, AID_INET, NOT_PROVIDER },
-	{ 65000, 89, AID_INET, NOT_PROVIDER },
-	{ 65000, 90, AID_INET, PROVIDER },
-	{ 65000, 91, AID_INET, NOT_PROVIDER },
-	{ 65000, 92, AID_INET, NOT_PROVIDER },
-	{ 65000, 6666, AID_INET, NOT_PROVIDER },
+	{ 65000, 1, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 3, CP(PROVIDER, PROVIDER) },
+	{ 65000, 4, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 5, CP(PROVIDER, PROVIDER) },
+	{ 65000, 15, CP(PROVIDER, PROVIDER) },
+	{ 65000, 19, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 20, CP(PROVIDER, PROVIDER) },
+	{ 65000, 21, CP(PROVIDER, PROVIDER) },
+	{ 65000, 22, CP(PROVIDER, PROVIDER) },
+	{ 65000, 23, CP(PROVIDER, PROVIDER) },
+	{ 65000, 24, CP(PROVIDER, PROVIDER) },
+	{ 65000, 25, CP(PROVIDER, PROVIDER) },
+	{ 65000, 26, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 85, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 86, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 87, CP(PROVIDER, PROVIDER) },
+	{ 65000, 88, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 89, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 90, CP(PROVIDER, PROVIDER) },
+	{ 65000, 91, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 92, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 6666, CP(NOT_PROVIDER, NOT_PROVIDER) },
 };
 
 struct aspath_test	aspath_testset[] = {
@@ -225,198 +215,161 @@ struct aspath_test	aspath_testset[] = {
  */
 struct aspa_test	aspa_testset[] = {
 	/* empty ASPATH are invalid by default */
-	{ (const uint32_t []) { }, 0, ROLE_CUSTOMER, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { }, 0, ROLE_PROVIDER, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { }, 0, ROLE_RS, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { }, 0, ROLE_RS_CLIENT, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { }, 0, ROLE_PEER, AID_INET, ASPA_INVALID },
+	{ (const uint32_t []) { }, 0, ROLE_CUSTOMER, ASPA_INVALID },
+	{ (const uint32_t []) { }, 0, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { }, 0, ROLE_RS, ASPA_INVALID },
+	{ (const uint32_t []) { }, 0, ROLE_RS_CLIENT, ASPA_INVALID },
+	{ (const uint32_t []) { }, 0, ROLE_PEER, ASPA_INVALID },
 
-	{ (const uint32_t []) { 2 }, 1, ROLE_RS_CLIENT, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 2 }, 1, ROLE_PEER, AID_INET, ASPA_VALID },
+	{ (const uint32_t []) { 2 }, 1, ROLE_RS_CLIENT, ASPA_VALID },
+	{ (const uint32_t []) { 2 }, 1, ROLE_PEER, ASPA_VALID },
 
-	{ (const uint32_t []) { 3 }, 1, ROLE_PROVIDER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 4 }, 1, ROLE_CUSTOMER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 5 }, 1, ROLE_CUSTOMER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 6 }, 1, ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	{ (const uint32_t []) { 3 }, 1, ROLE_PROVIDER, ASPA_VALID },
+	{ (const uint32_t []) { 4 }, 1, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 5 }, 1, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 6 }, 1, ROLE_CUSTOMER, ASPA_VALID },
 
-	{ (const uint32_t []) { 7 }, 1, ROLE_PROVIDER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 7 }, 1, ROLE_PEER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 7 }, 1, ROLE_RS_CLIENT, AID_INET, ASPA_VALID },
+	{ (const uint32_t []) { 7 }, 1, ROLE_PROVIDER, ASPA_VALID },
+	{ (const uint32_t []) { 7 }, 1, ROLE_PEER, ASPA_VALID },
+	{ (const uint32_t []) { 7 }, 1, ROLE_RS_CLIENT, ASPA_VALID },
 
-	{ (const uint32_t []) { 2, 8 }, 2, ROLE_PEER, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { 2, 8 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_INVALID },
+	{ (const uint32_t []) { 2, 8 }, 2, ROLE_PEER, ASPA_INVALID },
+	{ (const uint32_t []) { 2, 8 }, 2, ROLE_RS_CLIENT, ASPA_INVALID },
 
-	{ (const uint32_t []) { 2, 9 }, 2, ROLE_PEER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 2, 9 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 2, 9 }, 2, ROLE_PEER, ASPA_VALID },
+	{ (const uint32_t []) { 2, 9 }, 2, ROLE_RS_CLIENT, ASPA_VALID },
 
-	{ (const uint32_t []) { 2, 10 }, 2, ROLE_PEER, AID_INET, ASPA_INVALID },
-	{ (const uint32_t []) { 2, 10 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_INVALID },
+	{ (const uint32_t []) { 2, 10 }, 2, ROLE_PEER, ASPA_INVALID },
+	{ (const uint32_t []) { 2, 10 }, 2, ROLE_RS_CLIENT, ASPA_INVALID },
 
-	{ (const uint32_t []) { 2, 11 }, 2, ROLE_PEER, AID_INET, ASPA_VALID },
-	{ (const uint32_t []) { 2, 11 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 2, 11 }, 2, ROLE_PEER, ASPA_VALID },
+	{ (const uint32_t []) { 2, 11 }, 2, ROLE_RS_CLIENT, ASPA_VALID },
 
-	{ (const uint32_t []) { 3, 8 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 12 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 3, 13 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 14 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 3, 8 }, 2, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 12 }, 2, ROLE_PROVIDER, ASPA_VALID },
+	{ (const uint32_t []) { 3, 13 }, 2, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 14 }, 2, ROLE_PROVIDER, ASPA_VALID },
 
-	{ (const uint32_t []) { 4, 8 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 4, 15 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 4, 16 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 4, 24 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 4, 8 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 4, 15 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 4, 16 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 4, 24 }, 2, ROLE_CUSTOMER, ASPA_VALID },
 
-	{ (const uint32_t []) { 5, 8 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 5, 17 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 5, 25 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 5, 26 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 5, 8 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 5, 17 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 5, 25 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 5, 26 }, 2, ROLE_CUSTOMER, ASPA_VALID },
 
-	{ (const uint32_t []) { 6, 18 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 6, 19 }, 2, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 6, 18 }, 2, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 6, 19 }, 2, ROLE_CUSTOMER, ASPA_VALID },
 
-	{ (const uint32_t []) { 7, 19 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 7, 19 }, 2, ROLE_PEER, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 7, 19 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 7, 21 }, 2, ROLE_PROVIDER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 7, 21 }, 2, ROLE_PEER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 7, 21 }, 2, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_INVALID },
+	{ (const uint32_t []) { 7, 19 }, 2, ROLE_PROVIDER, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 7, 19 }, 2, ROLE_PEER, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 7, 19 }, 2, ROLE_RS_CLIENT, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 7, 21 }, 2, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { 7, 21 }, 2, ROLE_PEER, ASPA_INVALID },
+	{ (const uint32_t []) { 7, 21 }, 2, ROLE_RS_CLIENT, ASPA_INVALID },
 
-	{ (const uint32_t []) { 6, 19, 20 }, 3, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 20, 19, 6 }, 3, ROLE_CUSTOMER, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 6, 19, 20 }, 3, ROLE_CUSTOMER, ASPA_VALID },
+	{ (const uint32_t []) { 20, 19, 6 }, 3, ROLE_CUSTOMER, ASPA_VALID },
 
-	{ (const uint32_t []) { 3, 14, 25 }, 3, ROLE_PROVIDER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_PROVIDER, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_PEER, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_UNKNOWN },
-	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_PROVIDER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_PEER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_PROVIDER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_PEER, AID_INET,
-	    ASPA_VALID },
-	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_RS_CLIENT, AID_INET,
-	    ASPA_VALID },
+	{ (const uint32_t []) { 3, 14, 25 }, 3, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_PROVIDER, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_PEER, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 3, 14, 19 }, 3, ROLE_RS_CLIENT, ASPA_UNKNOWN },
+	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_PROVIDER, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_PEER, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 14, 21 }, 3, ROLE_RS_CLIENT, ASPA_INVALID },
+	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_PROVIDER, ASPA_VALID },
+	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_PEER, ASPA_VALID },
+	{ (const uint32_t []) { 3, 14, 27 }, 3, ROLE_RS_CLIENT, ASPA_VALID },
 	
-	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_PROVIDER, AID_INET,
+	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_PROVIDER,
 	    ASPA_INVALID },
-	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_PEER, AID_INET,
-	    ASPA_INVALID },
-	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_RS_CLIENT, AID_INET,
+	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_PEER, ASPA_INVALID },
+	{ (const uint32_t []) { 7, 19, 22, 21 }, 4, ROLE_RS_CLIENT,
 	    ASPA_INVALID },
 
-	{ (const uint32_t []) { 6, 19, 22, 23 }, 4, ROLE_CUSTOMER, AID_INET,
+	{ (const uint32_t []) { 6, 19, 22, 23 }, 4, ROLE_CUSTOMER,
 	    ASPA_UNKNOWN },
 
 	{ (const uint32_t []) { 1, 5, 17, 13, 3, 14, 27 }, 7, ROLE_CUSTOMER,
-	    AID_INET, ASPA_VALID },
+	    ASPA_VALID },
 	{ (const uint32_t []) { 27, 14, 3, 13, 17, 5, 1 }, 7, ROLE_CUSTOMER,
-	    AID_INET, ASPA_VALID },
+	    ASPA_VALID },
 
 	{ (const uint32_t []) { 27, 14, 3, 6, 7, 19, 17, 5, 1 }, 9,
-	    ROLE_CUSTOMER, AID_INET, ASPA_INVALID },
+	    ROLE_CUSTOMER, ASPA_INVALID },
 	{ (const uint32_t []) { 27, 14, 3, 7, 19, 6, 1, 5, 17 }, 9,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 
 	/* check L < K (ramps overlap) */
 	{ (const uint32_t []) { 201, 202, 203, 103, 102, 101 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	{ (const uint32_t []) { 101, 102, 103, 203, 202, 201 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 
 	/* check L == K (ramps touch) 203 ?> 111 <? 103 */
 	{ (const uint32_t []) { 201, 202, 203, 111, 103, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	{ (const uint32_t []) { 101, 102, 103, 111, 203, 202, 201 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	/* check L == K (ramps touch) 203 -> 111 <- 103 */
 	{ (const uint32_t []) { 201, 202, 203, 112, 103, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	{ (const uint32_t []) { 101, 102, 103, 112, 203, 202, 201 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 
 	/* check L - K == 1 (204 ?? 104) */
 	{ (const uint32_t []) { 201, 202, 204, 104, 102, 101 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	/* check L - K == 1 (204 -? 105) */
 	{ (const uint32_t []) { 201, 202, 204, 105, 102, 101 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	/* check L - K == 1 (205 ?- 104) */
 	{ (const uint32_t []) { 201, 202, 205, 104, 102, 101 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 	/* check L - K == 1 (205 -- 105) */
 	{ (const uint32_t []) { 201, 202, 205, 105, 102, 101 }, 6,
-	    ROLE_CUSTOMER, AID_INET, ASPA_VALID },
+	    ROLE_CUSTOMER, ASPA_VALID },
 
 	/* check L - K == 2 invalid cases (205 ?- 111 -? 105) */
 	{ (const uint32_t []) { 201, 202, 205, 111, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_INVALID },
+	    ROLE_CUSTOMER, ASPA_INVALID },
 	/* check L - K == 2 invalid cases (205 -- 112 -- 105) */
 	{ (const uint32_t []) { 201, 202, 205, 112, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_INVALID },
+	    ROLE_CUSTOMER, ASPA_INVALID },
 	/* check L - K == 2 invalid cases (205 <- 113 -> 105) */
 	{ (const uint32_t []) { 201, 202, 205, 113, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_INVALID },
+	    ROLE_CUSTOMER, ASPA_INVALID },
 
 	/* check L - K == 2 unknown cases (205 ?- 111 ?? 104) */
 	{ (const uint32_t []) { 201, 202, 205, 111, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 ?? 111 -? 105) */
 	{ (const uint32_t []) { 201, 202, 204, 111, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 ?? 111 ?? 104) */
 	{ (const uint32_t []) { 201, 202, 204, 111, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (205 -- 112 ?- 104) */
 	{ (const uint32_t []) { 201, 202, 205, 112, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 -? 112 -- 105) */
 	{ (const uint32_t []) { 201, 202, 204, 112, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 -? 112 ?- 104) */
 	{ (const uint32_t []) { 201, 202, 204, 112, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (205 <- 113 ?> 104) */
 	{ (const uint32_t []) { 201, 202, 205, 113, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 <? 113 -> 105) */
 	{ (const uint32_t []) { 201, 202, 204, 113, 105, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 	/* check L - K == 2 unknown cases (204 <? 113 ?> 104) */
 	{ (const uint32_t []) { 201, 202, 204, 113, 104, 102, 101 }, 7,
-	    ROLE_CUSTOMER, AID_INET, ASPA_UNKNOWN },
+	    ROLE_CUSTOMER, ASPA_UNKNOWN },
 };
 
 static struct rde_aspa *
@@ -443,6 +396,21 @@ load_test_set(struct aspa_test_set *testv, uint32_t numentries)
 	return aspa;
 }
 
+static uint8_t
+vstate_for_role(struct rde_aspa_state *vstate, enum role role)
+{
+	if (vstate->onlyup_v4 != vstate->onlyup_v6 ||
+	    vstate->downup_v4 != vstate->downup_v6) {
+		printf("failed: vstate differ per AID ");
+			return 0xff;
+	}
+
+	if (role != ROLE_CUSTOMER) {
+		return (vstate->onlyup_v4);
+	} else {
+		return (vstate->downup_v4);
+	}
+}
 
 int
 main(int argc, char **argv)
@@ -464,9 +432,9 @@ main(int argc, char **argv)
 
 	printf("testing aspa_cp_lookup: ");
 	for (i = 0; i < num_cp; i++) {
-		enum cp_res r;
+		uint8_t r;
 		r = aspa_cp_lookup(aspa, cp_testset[i].customeras,
-		    cp_testset[i].provideras, cp_testset[i].aid);
+		    cp_testset[i].provideras);
 
 		if (cp_testset[i].expected_result != r) {
 			printf("failed: cp_testset[%zu]: "
@@ -483,12 +451,13 @@ main(int argc, char **argv)
 
 	printf("testing aspa_check_aspath: ");
 	for (i = 0; i < num_aspath; i++) {
-		struct aspa_state st, revst;
+		struct aspa_state st[2], revst;
 		struct aspath *a;
 
+		memset(st, 0, sizeof(st));
 		a = build_aspath(aspath_testset[i].aspath,
 		    aspath_testset[i].aspathcnt, 0);
-		if (aspa_check_aspath(aspa, a, 1, AID_INET, &st) == -1) {
+		if (aspa_check_aspath(aspa, a, st) == -1) {
 			printf("failed: aspath_testset[%zu]: "
 			    "aspath %s got -1\n", i,
 			    print_aspath(aspath_testset[i].aspath,
@@ -496,20 +465,30 @@ main(int argc, char **argv)
 			aspath_failed = 1;
 		}
 
-		if (memcmp(&aspath_testset[i].state, &st, sizeof(st))) {
+		if (memcmp(&aspath_testset[i].state, st, sizeof(*st))) {
 			printf("failed: aspath_testset[%zu]: aspath %s "
 			    "bad state", i,
 			    print_aspath(aspath_testset[i].aspath,
 			    aspath_testset[i].aspathcnt));
-			print_state(&aspath_testset[i].state, &st);
+			print_state(&aspath_testset[i].state, st);
+			printf("\n");
+			aspath_failed = 1;
+		}
+		if (memcmp(&aspath_testset[i].state, st + 1, sizeof(*st))) {
+			printf("failed: aspath_testset[%zu]: aspath %s "
+			    "bad state AID_INET6", i,
+			    print_aspath(aspath_testset[i].aspath,
+			    aspath_testset[i].aspathcnt));
+			print_state(&aspath_testset[i].state, st + 1);
 			printf("\n");
 			aspath_failed = 1;
 		}
 		free(a);
 
+		memset(st, 0, sizeof(st));
 		a = build_aspath(aspath_testset[i].aspath,
 		    aspath_testset[i].aspathcnt, 1);
-		if (aspa_check_aspath(aspa, a, 1, AID_INET, &st) == -1) {
+		if (aspa_check_aspath(aspa, a, st) == -1) {
 			printf("failed: reverse aspath_testset[%zu]: "
 			    "aspath %s got -1\n", i,
 			    print_aspath(aspath_testset[i].aspath,
@@ -518,12 +497,21 @@ main(int argc, char **argv)
 		}
 
 		reverse_state(&aspath_testset[i].state, &revst);
-		if (memcmp(&revst, &st, sizeof(st))) {
+		if (memcmp(&revst, st, sizeof(*st))) {
 			printf("failed: reverse aspath_testset[%zu]: aspath %s "
 			    "bad state", i,
 			    print_aspath(aspath_testset[i].aspath,
 			    aspath_testset[i].aspathcnt));
-			print_state(&revst, &st);
+			print_state(&revst, st);
+			printf("\n");
+			aspath_failed = 1;
+		}
+		if (memcmp(&revst, st + 1, sizeof(*st))) {
+			printf("failed: reverse aspath_testset[%zu]: aspath %s "
+			    "bad state AID_INET6", i,
+			    print_aspath(aspath_testset[i].aspath,
+			    aspath_testset[i].aspathcnt));
+			print_state(&revst, st + 1);
 			printf("\n");
 			aspath_failed = 1;
 		}
@@ -535,12 +523,14 @@ main(int argc, char **argv)
 	printf("testing aspa_validation: ");
 	for (i = 0; i < num_aspa; i++) {
 		struct aspath *a;
+		struct rde_aspa_state vstate;
 		uint8_t rv;
 
 		a = build_aspath(aspa_testset[i].aspath,
 		    aspa_testset[i].aspathcnt, 0);
-		rv = aspa_validation(aspa, aspa_testset[i].role, a,
-		    aspa_testset[i].aid);
+		aspa_validation(aspa, a, &vstate);
+
+		rv = vstate_for_role(&vstate, aspa_testset[i].role);
 
 		if (aspa_testset[i].expected_result != rv) {
 			printf("failed: aspa_testset[%zu]: aspath %s role %d "
