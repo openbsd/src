@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.189 2022/09/02 14:08:09 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.190 2023/01/24 22:35:46 jan Exp $	*/
 
 /******************************************************************************
 
@@ -2477,25 +2477,16 @@ static inline int
 ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
     uint32_t *type_tucmd_mlhl, uint32_t *olinfo_status)
 {
-	struct ether_header *eh = mtod(mp, struct ether_header *);
-	struct mbuf *m;
-	int hoff;
+	struct ether_extracted ext;
 	int offload = 0;
 	uint32_t iphlen;
-	uint8_t ipproto;
 
-	*vlan_macip_lens |= (sizeof(*eh) << IXGBE_ADVTXD_MACLEN_SHIFT);
+	ether_extract_headers(mp, &ext);
 
-	switch (ntohs(eh->ether_type)) {
-	case ETHERTYPE_IP: {
-		struct ip *ip;
+	*vlan_macip_lens |= (sizeof(*ext.eh) << IXGBE_ADVTXD_MACLEN_SHIFT);
 
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
-		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
-
-		iphlen = ip->ip_hl << 2;
-		ipproto = ip->ip_p;
+	if (ext.ip4) {
+		iphlen = ext.ip4->ip_hl << 2;
 
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
 			*olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
@@ -2503,46 +2494,30 @@ ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 		}
 
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
-		break;
-	}
-
 #ifdef INET6
-	case ETHERTYPE_IPV6: {
-		struct ip6_hdr *ip6;
-
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
-		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
-
-		iphlen = sizeof(*ip6);
-		ipproto = ip6->ip6_nxt;
+	} else if (ext.ip6) {
+		iphlen = sizeof(*ext.ip6);
 
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
-		break;
-	}
 #endif
-
-	default:
+	} else {
 		return offload;
 	}
 
 	*vlan_macip_lens |= iphlen;
 
-	switch (ipproto) {
-	case IPPROTO_TCP:
+	if (ext.tcp) {
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 			*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 			offload = 1;
 		}
-		break;
-	case IPPROTO_UDP:
+	} else if (ext.udp) {
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 			*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 			offload = 1;
 		}
-		break;
 	}
 
 	return offload;
