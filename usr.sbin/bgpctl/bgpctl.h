@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.18 2022/11/09 14:20:11 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.19 2023/01/24 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -50,6 +50,7 @@ const char	*fmt_fib_flags(uint16_t);
 const char	*fmt_origin(uint8_t, int);
 const char	*fmt_flags(uint32_t, int);
 const char	*fmt_ovs(uint8_t, int);
+const char	*fmt_avs(uint8_t, int);
 const char	*fmt_auth_method(enum auth_method);
 const char	*fmt_mem(long long);
 const char	*fmt_errstr(uint8_t, uint8_t);

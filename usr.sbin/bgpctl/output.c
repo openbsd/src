@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.33 2023/01/17 16:09:34 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.34 2023/01/24 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -71,9 +71,11 @@ show_head(struct parse_result *res)
 		    "       S = Stale, E = Error\n");
 		printf("origin validation state: "
 		    "N = not-found, V = valid, ! = invalid\n");
+		printf("aspa validation state: "
+		    "? = unknown, V = valid, ! = invalid\n");
 		printf("origin: i = IGP, e = EGP, ? = Incomplete\n\n");
 		printf("%-5s %3s %-20s %-15s  %5s %5s %s\n",
-		    "flags", "ovs", "destination", "gateway", "lpref", "med",
+		    "flags", "vs", "destination", "gateway", "lpref", "med",
 		    "aspath origin");
 		break;
 	case SHOW_SET:
@@ -918,8 +920,9 @@ show_rib_brief(struct ctl_show_rib *r, u_char *asdata, size_t aslen)
 
 	if (asprintf(&p, "%s/%u", log_addr(&r->prefix), r->prefixlen) == -1)
 		err(1, NULL);
-	printf("%s %3s %-20s %-15s %5u %5u ",
-	    fmt_flags(r->flags, 1), fmt_ovs(r->validation_state, 1), p,
+	printf("%s %s-%s %-20s %-15s %5u %5u ",
+	    fmt_flags(r->flags, 1), fmt_ovs(r->roa_validation_state, 1),
+	    fmt_avs(r->aspa_validation_state, 1), p,
 	    log_addr(&r->exit_nexthop), r->local_pref, r->med);
 	free(p);
 
@@ -961,8 +964,9 @@ show_rib_detail(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 
 	printf("    Origin %s, metric %u, localpref %u, weight %u, ovs %s, ",
 	    fmt_origin(r->origin, 0), r->med, r->local_pref, r->weight,
-	    fmt_ovs(r->validation_state, 0));
-	printf("%s", fmt_flags(r->flags, 0));
+	    fmt_ovs(r->roa_validation_state, 0));
+	printf("avs %s, %s", fmt_avs(r->roa_validation_state, 0),
+	    fmt_flags(r->flags, 0));
 
 	printf("%c    Last update: %s ago%c", EOL0(flag0),
 	    fmt_timeframe(r->age), EOL0(flag0));

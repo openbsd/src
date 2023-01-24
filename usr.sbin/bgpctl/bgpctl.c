@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.288 2023/01/17 16:09:34 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.289 2023/01/24 11:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -768,6 +768,19 @@ fmt_ovs(uint8_t validation_state, int sum)
 		return (sum ? "V" : "valid");
 	default:
 		return (sum ? "N" : "not-found");
+	}
+}
+
+const char *
+fmt_avs(uint8_t validation_state, int sum)
+{
+	switch (validation_state) {
+	case ASPA_INVALID:
+		return (sum ? "!" : "invalid");
+	case ASPA_VALID:
+		return (sum ? "V" : "valid");
+	default:
+		return (sum ? "?" : "unknown");
 	}
 }
 
