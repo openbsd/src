@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.6 2022/12/06 17:33:27 patrick Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.7 2023/01/24 01:40:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -90,6 +90,8 @@ main(void)
 	printf("%s\n", "acx");
 	printf("%s\n", "amdgpu");
 	print_devices("amdgpu", amdgpu_devices, nitems(amdgpu_devices));
+	printf("%s\n", "amdgpu ^vga*vendor \"ATI\", unknown product"); 
+	printf("%s\n", "amdgpu ^vendor \"ATI\", unknown product*class display");
 	printf("%s\n", "apple-boot ^cpu0*Apple");
 	printf("%s\n", "arm64-qcom-dtb ^qcgpio0");
 	printf("%s\n", "athn");
