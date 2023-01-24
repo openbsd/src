@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.118 2022/11/10 10:47:30 mbuhl Exp $ */
+/*	$OpenBSD: parser.c,v 1.119 2023/01/24 14:14:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -77,6 +77,7 @@ static const struct token t_show[];
 static const struct token t_show_summary[];
 static const struct token t_show_fib[];
 static const struct token t_show_rib[];
+static const struct token t_show_avs[];
 static const struct token t_show_ovs[];
 static const struct token t_show_mrt[];
 static const struct token t_show_mrt_file[];
@@ -181,6 +182,7 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
+	{ KEYWORD,	"avs",		NONE,		t_show_avs},
 	{ KEYWORD,	"ovs",		NONE,		t_show_ovs},
 	{ KEYWORD,	"path-id",	NONE,		t_show_rib_path},
 	{ KEYWORD,	"table",	NONE,		t_show_rib_rib},
@@ -188,6 +190,13 @@ static const struct token t_show_rib[] = {
 	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
 	{ FAMILY,	"",		NONE,		t_show_rib},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_avs[] = {
+	{ FLAG,		"valid"	,	F_CTL_AVS_VALID,	t_show_rib},
+	{ FLAG,		"invalid",	F_CTL_AVS_INVALID,	t_show_rib},
+	{ FLAG,		"unknonw",	F_CTL_AVS_UNKNOWN,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
