@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.264 2023/01/06 14:35:34 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.265 2023/01/24 20:06:16 claudio Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ nd6_ifdetach(struct ifnet *ifp)
 int
 nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 {
-	struct nd_opt_hdr *nd_opt = opt, *next_opt, *last_opt;
+	struct nd_opt_hdr *nd_opt, *next_opt, *last_opt;
 	int i = 0;
 
 	bzero(ndopts, sizeof(*ndopts));
@@ -153,14 +153,11 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 	if (icmp6len == 0)
 		return 0;
 
-	next_opt = nd_opt;
-	last_opt = (struct nd_opt_hdr *)((u_char *)nd_opt + icmp6len);
+	next_opt = opt;
+	last_opt = (struct nd_opt_hdr *)((u_char *)opt + icmp6len);
 
-	while (1) {
+	while (next_opt != NULL) {
 		int olen;
-
-		if (next_opt == NULL)
-			goto skip1;
 
 		nd_opt = next_opt;
 
@@ -215,16 +212,12 @@ nd6_options(void *opt, int icmp6len, struct nd_opts *ndopts)
 			break;
 		}
 
-skip1:
 		i++;
 		if (i > nd6_maxndopt) {
 			icmp6stat_inc(icp6s_nd_toomanyopt);
 			nd6log((LOG_INFO, "too many loop in nd opt\n"));
 			break;
 		}
-
-		if (next_opt == NULL)
-			break;
 	}
 
 	return 0;
