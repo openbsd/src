@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.8 2019/12/08 14:22:14 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.9 2023/01/25 19:06:50 millert Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -221,6 +221,10 @@ sub expanded
 	# Expand all variables, unless the returned value is defined as an
 	# as an unexpandable variable (such as with --defined-variable).
 	while ($v =~ m/\$\{(.*?)\}/) {
+	    # Limit the expanded variable size if 64K to prevent a
+	    # malicious .pc file from consuming too much memory.
+	    die "Variable expansion overflow" if length($v) > 64 * 1024;
+
 	    unless (defined &$get_value($1)) {
 		$v =~ s/\$\{(.*?)\}/$extra->{$1}/g;
 		last;
