@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.569 2023/01/18 20:44:40 deraadt Exp $
+#	$OpenBSD: rc,v 1.570 2023/01/25 10:53:15 asou Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -251,7 +251,7 @@ reorder_libs() {
 		fi
 		) || { _error=true; break; }
 	done
-		
+
 	rm -rf $_relink/_rebuild.*
 
 	# Restore previous mount state if it was changed.
