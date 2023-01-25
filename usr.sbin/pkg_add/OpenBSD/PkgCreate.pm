@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.184 2022/11/01 17:41:19 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.185 2023/01/25 13:25:07 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1600,7 +1600,8 @@ sub save_history
 
 	my $name = $plist->fullpkgpath;
 	$name =~ s,/,.,g;
-	my $fname = "$dir/$name";
+	my $oldfname = "$dir/$name";
+	my $fname = "$oldfname.lru";
 
 	# if we have history, we record the order of checksums
 	my $known = {};
@@ -1610,6 +1611,12 @@ sub save_history
 			$known->{$_} //= $.;
 		}
 		close($f);
+	} elsif (open(my $f2, '<', $oldfname)) {
+		while (<$f2>) {
+			chomp;
+			$known->{$_} //= $.;
+		}
+		close($f2);
 	}
 
 	my $todo = [];		
@@ -1646,6 +1653,7 @@ sub save_history
 	close($f);
 	rename($name2, $fname) or 
 	    $state->fatal("Can't rename #1->#2: #3", $name2, $fname, $!);
+	unlink($oldfname);
 	# even with no former history, it's a good idea to save chunks
 	# for instance: packages like texlive will not change all that
 	# fast, so there's a good chance the end chunks will be ordered
