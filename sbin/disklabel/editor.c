@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.397 2023/01/24 15:47:10 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.398 2023/01/25 21:44:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -904,28 +904,13 @@ editor_delete(struct disklabel *lp, const char *p)
 	struct partition *pp;
 	int partno;
 
-	if (p == NULL)
-		p = getstring("partition to delete",
-		    "The letter of the partition to delete, a - p, or '*'.",
-		    NULL);
-	if (p == NULL)
+	if ((partno = getpartno(lp, p, "delete")) == -1)
 		return;
-	if (p[0] == '*') {
+	if (partno == lp->d_npartitions) {
 		zero_partitions(lp);
 		return;
 	}
-	partno = p[0] - 'a';
-	if (partno < 0 || partno == RAW_PART || partno >= lp->d_npartitions) {
-		fprintf(stderr, "Partition must be between 'a' and '%c' "
-		    "(excluding 'c').\n", 'a' + lp->d_npartitions - 1);
-		return;
-	}
 	pp = &lp->d_partitions[partno];
-
-	if (pp->p_fstype == FS_UNUSED && DL_GETPSIZE(pp) == 0) {
-		fprintf(stderr, "Partition '%c' is not in use.\n", p[0]);
-		return;
-	}
 
 	/* Really delete it (as opposed to just setting to "unused") */
 	memset(pp, 0, sizeof(*pp));
@@ -1010,19 +995,21 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 	char buf[2] = { '\0', '\0'};
 	const char *promptfmt = "partition to %s";
 	const char *helpfmt = "Partition must be between 'a' and '%c' "
-	    "(excluding 'c').\n";
+	    "(excluding 'c')%s.\n";
 	const struct partition *pp;
 	char *help = NULL, *prompt = NULL;
 	unsigned char maxpart;
 	unsigned int partno;
-	int add, inuse;
+	int add, delete, inuse;
 
 	add = strcmp("add", action) == 0;
+	delete = strcmp("delete", action) == 0;
 	maxpart = 'a' - 1 + (add ? MAXPARTITIONS : lp->d_npartitions);
 
 	if (p == NULL) {
 		if (asprintf(&prompt, promptfmt, action) == -1 ||
-		    asprintf(&help, helpfmt, maxpart) == -1) {
+		    asprintf(&help, helpfmt, maxpart, delete ? ", or '*'" : "")
+		    == -1) {
 			fprintf(stderr, "Unable to build prompt or help\n");
 			goto done;
 		}
@@ -1048,8 +1035,11 @@ getpartno(const struct disklabel *lp, const char *p, const char *action)
 			goto done;
 	}
 
+	if (delete && strlen(p) == 1 && *p == '*')
+		return (lp->d_npartitions);
+
 	if (strlen(p) > 1 || *p < 'a' || *p > maxpart || *p == 'c') {
-		fprintf(stderr, helpfmt, maxpart);
+		fprintf(stderr, helpfmt, maxpart, delete ? ", or '*'" : "");
 		goto done;
 	}
 
