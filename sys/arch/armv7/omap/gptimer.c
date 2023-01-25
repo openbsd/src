@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.17 2023/01/22 18:36:38 cheloha Exp $ */
+/* $OpenBSD: gptimer.c,v 1.18 2023/01/25 14:14:39 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -23,9 +23,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/kernel.h>
 #include <sys/evcount.h>
 #include <sys/device.h>
+#include <sys/stdint.h>
 #include <sys/timetc.h>
 #include <machine/bus.h>
 #include <armv7/armv7/armv7var.h>
@@ -93,14 +95,12 @@
 
 #define TIMER_FREQUENCY			32768	/* 32kHz is used, selectable */
 
-static struct evcount clk_count;
-static struct evcount stat_count;
-
 void gptimer_attach(struct device *parent, struct device *self, void *args);
 int gptimer_intr(void *frame);
 void gptimer_wait(int reg);
 void gptimer_cpu_initclocks(void);
 void gptimer_delay(u_int);
+void gptimer_reset_tisr(void);
 void gptimer_setstatclockrate(int newhz);
 
 bus_space_tag_t gptimer_iot;
@@ -120,13 +120,16 @@ static struct timecounter gptimer_timecounter = {
 	.tc_user = 0,
 };
 
-volatile u_int32_t nexttickevent;
-volatile u_int32_t nextstatevent;
-u_int32_t	ticks_per_second;
-u_int32_t	ticks_per_intr;
-u_int32_t	ticks_err_cnt;
-u_int32_t	ticks_err_sum;
-u_int32_t	statvar, statmin;
+uint64_t gptimer_nsec_cycle_ratio;
+uint64_t gptimer_nsec_max;
+
+void gptimer_rearm(void *, uint64_t);
+void gptimer_trigger(void *);
+
+const struct intrclock gptimer_intrclock = {
+	.ic_rearm = gptimer_rearm,
+	.ic_trigger = gptimer_trigger
+};
 
 const struct cfattach	gptimer_ca = {
 	sizeof (struct device), NULL, gptimer_attach
@@ -177,98 +180,10 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 	    gptimer_setstatclockrate, NULL);
 }
 
-/*
- * See comment in arm/xscale/i80321_clock.c
- *
- * counter is count up, but with autoreload timers it is not possible
- * to detect how many  interrupts passed while interrupts were blocked.
- * also it is not possible to atomically add to the register
- * get get it to precisely fire at a non-fixed interval.
- *
- * To work around this two timers are used, GPT1 is used as a reference
- * clock without reload , however we just ignore the interrupt it
- * would (may?) generate.
- *
- * Internally this keeps track of when the next timer should fire
- * and based on that time and the current value of the reference
- * clock a number is written into the timer count register to schedule
- * the next event.
- */
-
 int
 gptimer_intr(void *frame)
 {
-	u_int32_t now, r;
-	u_int32_t nextevent, duration;
-
-	/* clear interrupt */
-	now = bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR);
-
-	while ((int32_t) (nexttickevent - now) < 0) {
-		nexttickevent += ticks_per_intr;
-		ticks_err_sum += ticks_err_cnt;
-#if 0
-		if (ticks_err_sum  > hz) {
-			u_int32_t match_error;
-			match_error = ticks_err_sum / hz
-			ticks_err_sum -= (match_error * hz);
-		}
-#else
-		/* looping a few times is faster than divide */
-		while (ticks_err_sum  > hz) {
-			nexttickevent += 1;
-			ticks_err_sum -= hz;
-		}
-#endif
-		clk_count.ec_count++;
-		hardclock(frame);
-	}
-	while ((int32_t) (nextstatevent - now) < 0) {
-		do {
-			r = random() & (statvar -1);
-		} while (r == 0); /* random == 0 not allowed */
-		nextstatevent += statmin + r;
-		/* XXX - correct nextstatevent? */
-		stat_count.ec_count++;
-		statclock(frame);
-	}
-	if ((nexttickevent - now) < (nextstatevent - now))
-                nextevent = nexttickevent;
-        else
-                nextevent = nextstatevent;
-
-/* XXX */
-	duration = nextevent -
-	    bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR);
-#if 0
-	printf("duration 0x%x %x %x\n", nextevent -
-	    bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR),
-	    bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TCRR),
-	    bus_space_read_4(gptimer_iot, gptimer_ioh1, GP_TCRR));
-#endif
-
-
-        if (duration <= 0)
-                duration = 1; /* trigger immediately. */
-
-        if (duration > ticks_per_intr) {
-                /*
-                 * If interrupts are blocked too long, like during
-                 * the root prompt or ddb, the timer can roll over,
-                 * this will allow the system to continue to run
-                 * even if time is lost.
-                 */
-                duration = ticks_per_intr;
-                nexttickevent = now;
-                nextstatevent = now;
-        }
-
-	gptimer_wait(GP_TWPS_ALL);
-	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TISR,
-		bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TISR));
-	gptimer_wait(GP_TWPS_ALL);
-        bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR, -duration);
- 
+	clockintr_dispatch(frame);
 	return 1;
 }
 
@@ -281,44 +196,31 @@ gptimer_intr(void *frame)
 void
 gptimer_cpu_initclocks(void)
 {
-	stathz = 128;
-	profhz = 1024;
+	stathz = hz;
+	profhz = stathz * 10;
+	clockintr_init(CL_RNDSTAT);
 
-	ticks_per_second = TIMER_FREQUENCY;
-
-	setstatclockrate(stathz);
-
-	ticks_per_intr = ticks_per_second / hz;
-	ticks_err_cnt = ticks_per_second % hz;
-	ticks_err_sum = 0;
+	gptimer_nsec_cycle_ratio = TIMER_FREQUENCY * (1ULL << 32) / 1000000000;
+	gptimer_nsec_max = UINT64_MAX / gptimer_nsec_cycle_ratio;
 
 	prcm_setclock(1, PRCM_CLK_SPEED_32);
 	prcm_setclock(2, PRCM_CLK_SPEED_32);
+
 	/* establish interrupts */
 	arm_intr_establish(gptimer_irq, IPL_CLOCK, gptimer_intr,
 	    NULL, "tick");
 
 	/* setup timer 0 (hardware timer 2) */
 	/* reset? - XXX */
-
-        bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TLDR, 0);
-
-	nexttickevent = nextstatevent = bus_space_read_4(gptimer_iot,
-	    gptimer_ioh1, GP_TCRR) + ticks_per_intr;
-
 	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TIER, GP_TIER_OVF_EN);
 	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TWER, GP_TWER_OVF_EN);
 	gptimer_wait(GP_TWPS_ALL);
-	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR,
-	    GP_TCLR_AR | GP_TCLR_ST);
-	gptimer_wait(GP_TWPS_ALL);
-	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TISR,
-		bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TISR));
-	gptimer_wait(GP_TWPS_ALL);
-	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR, -ticks_per_intr);
-	gptimer_wait(GP_TWPS_ALL);
+
+	/* start the clock interrupt cycle */
+	clockintr_cpu_init(&gptimer_intrclock);
+	clockintr_trigger();
 }
 
 void
@@ -326,6 +228,61 @@ gptimer_wait(int reg)
 {
 	while (bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TWPS) & reg)
 		;
+}
+
+/*
+ * Clear all interrupt status bits.
+ */
+void
+gptimer_reset_tisr(void)
+{
+	u_int32_t tisr;
+
+	tisr = bus_space_read_4(gptimer_iot, gptimer_ioh0, GP_TISR);
+	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TISR, tisr);
+}
+
+void
+gptimer_rearm(void *unused, uint64_t nsecs)
+{
+	uint32_t cycles;
+	u_long s;
+
+	if (nsecs > gptimer_nsec_max)
+		nsecs = gptimer_nsec_max;
+	cycles = (nsecs * gptimer_nsec_cycle_ratio) >> 32;
+
+	s = intr_disable();
+	gptimer_reset_tisr();
+        bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR,
+	    UINT32_MAX - cycles);
+	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR, GP_TCLR_ST);
+	gptimer_wait(GP_TWPS_ALL);
+	intr_restore(s);
+}
+
+void
+gptimer_trigger(void *unused)
+{
+	u_long s;
+
+	s = intr_disable();
+
+	/* stop timer. */
+	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR, 0);
+	gptimer_wait(GP_TWPS_ALL);
+
+	/* clear interrupt status bits. */
+	gptimer_reset_tisr();
+
+	/* set shortest possible timeout. */
+	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCRR, UINT32_MAX);
+
+	/* start timer, wait for writes to post. */
+	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TCLR, GP_TCLR_ST);
+	gptimer_wait(GP_TWPS_ALL);
+
+	intr_restore(s);
 }
 
 void
@@ -370,26 +327,7 @@ gptimer_delay(u_int usecs)
 void
 gptimer_setstatclockrate(int newhz)
 {
-	int minint, statint;
-	int s;
-	
-	s = splclock();
-
-	statint = ticks_per_second / newhz;
-	/* calculate largest 2^n which is smaller that just over half statint */
-	statvar = 0x40000000; /* really big power of two */
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-
-	statmin = statint - (statvar >> 1);
-	
-	splx(s);
-
-	/*
-	 * XXX this allows the next stat timer to occur then it switches
-	 * to the new frequency. Rather than switching instantly.
-	 */
+	clockintr_setstatclockrate(newhz);
 }
 
 
