@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.7 2020/09/07 18:51:47 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.8 2023/01/25 09:53:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -47,6 +47,7 @@ struct pte {
 #define PTE_W			0x0000000000000040ULL
 #define PTE_CHG			0x0000000000000080ULL
 #define PTE_REF			0x0000000000000100ULL
+#define PTE_AC			0x0000000000000200ULL
 #define PTE_RPGN		0x0ffffffffffff000ULL
 
 #define ADDR_PIDX		0x000000000ffff000ULL
