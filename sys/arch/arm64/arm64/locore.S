@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.S,v 1.42 2022/12/23 17:31:30 kettenis Exp $ */
+/* $OpenBSD: locore.S,v 1.43 2023/01/26 13:09:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -393,6 +393,12 @@ sigfillsiz:
 	.text
 
 #ifdef MULTIPROCESSOR
+	.globl cpu_hatch_secondary_spin
+cpu_hatch_secondary_spin:
+	/* Fetch physical address of CPU info */
+	adrp	x0, cpu_hatch_ci
+	ldr	x0, [x0, :lo12:cpu_hatch_ci]	
+
 	.globl cpu_hatch_secondary
 cpu_hatch_secondary:
 	/* Drop to EL1 */
@@ -402,10 +408,6 @@ cpu_hatch_secondary:
 	bl	get_virt_delta
 
 	/* Set up CPU info */
-	adr	x0, .Lcpu_hatch_ci
-	ldr	x0, [x0]
-	sub	x0, x0, x29
-	ldr	x0, [x0]
 	ldr	x1, [x0, #CI_SELF]
 	msr	tpidr_el1, x1
 
@@ -428,8 +430,6 @@ cpu_hatch_secondary:
 	.align 3
 .Lcpu_init_secondary:
 	.xword	cpu_init_secondary
-.Lcpu_hatch_ci:
-	.xword	cpu_hatch_ci
 
 	.data
 	.align 3
