@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.85 2023/01/24 22:35:47 jan Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.86 2023/01/26 07:32:40 deraadt Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -296,16 +296,6 @@ const struct ether_brport *
 
 uint64_t	ether_addr_to_e64(const struct ether_addr *);
 void		ether_e64_to_addr(struct ether_addr *, uint64_t);
-
-struct ether_extracted {
-	struct ether_header	*eh;
-	struct ip		*ip4;
-	struct ip6_hdr		*ip6;
-	struct tcphdr		*tcp;
-	struct udphdr		*udp;
-};
-
-void ether_extract_headers(struct mbuf *, struct ether_extracted *);
 
 /*
  * Ethernet multicast address structure.  There is one of these for each

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.285 2023/01/24 22:35:47 jan Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.286 2023/01/26 07:32:40 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -98,10 +98,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_ipsp.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1037,57 +1033,4 @@ ether_e64_to_addr(struct ether_addr *ea, uint64_t e64)
 		ea->ether_addr_octet[--i] = e64;
 		e64 >>= 8;
 	} while (i > 0);
-}
-
-/* Parse different TCP/IP protocol headers for a quick view inside an mbuf. */
-void
-ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
-{
-	struct mbuf	*m;
-	uint64_t	 hlen;
-	int		 hoff;
-	uint8_t		 ipproto;
-
-	/* Return NULL if header was not recognized. */
-	memset(ext, 0, sizeof *ext);
-
-	ext->eh = mtod(mp, struct ether_header *);
-	switch (ntohs(ext->eh->ether_type)) {
-	case ETHERTYPE_IP:
-		m = m_getptr(mp, sizeof(*ext->eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ext->ip4));
-		ext->ip4 = (struct ip *)(mtod(m, caddr_t) + hoff);
-
-		hlen = ext->ip4->ip_hl << 2;
-		ipproto = ext->ip4->ip_p;
-
-		break;
-#ifdef INET6
-	case ETHERTYPE_IPV6:
-		m = m_getptr(mp, sizeof(*ext->eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ext->ip6));
-		ext->ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
-
-		hlen = sizeof(*ext->ip6);
-		ipproto = ext->ip6->ip6_nxt;
-
-		break;
-#endif
-	default:
-		return;
-	}
-
-	switch (ipproto) {
-	case IPPROTO_TCP:
-		m = m_getptr(m, hoff + hlen, &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ext->tcp));
-		ext->tcp = (struct tcphdr *)(mtod(m, caddr_t) + hoff);
-		break;
-
-	case IPPROTO_UDP:
-		m = m_getptr(m, hoff + hlen, &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ext->udp));
-		ext->udp = (struct udphdr *)(mtod(m, caddr_t) + hoff);
-		break;
-	}
 }
