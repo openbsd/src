@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.51 2022/11/29 00:58:05 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.52 2023/01/27 22:13:48 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -196,8 +196,8 @@ cpu_initclocks(void)
 
 	intrstate = ppc_intr_disable();
 
-	stathz = 100;
-	profhz = 1000; /* must be a multiple of stathz */
+	stathz = hz;
+	profhz = stathz * 10;
 	clockintr_init(CL_RNDSTAT);
 
 	dec_nsec_cycle_ratio = ticks_per_sec * (1ULL << 32) / 1000000000;
