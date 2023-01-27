@@ -573,7 +573,11 @@ PPC64::PPC64() {
   relativeRel = R_PPC64_RELATIVE;
   iRelativeRel = R_PPC64_IRELATIVE;
   symbolicRel = R_PPC64_ADDR64;
+#ifdef __OpenBSD__
+  pltHeaderSize = 52;
+#else
   pltHeaderSize = 60;
+#endif
   pltEntrySize = 4;
   ipltEntrySize = 16; // PPC64PltCallStub::size
   gotBaseSymInGotPlt = false;
@@ -1072,26 +1076,38 @@ void PPC64::writeGotHeader(uint8_t *buf) const {
 }
 
 void PPC64::writePltHeader(uint8_t *buf) const {
+  int64_t gotPltOffset = in.gotPlt->getVA() - (in.plt->getVA() + 8);
+
   // The generic resolver stub goes first.
   write32(buf +  0, 0x7c0802a6); // mflr r0
   write32(buf +  4, 0x429f0005); // bcl  20,4*cr7+so,8 <_glink+0x8>
   write32(buf +  8, 0x7d6802a6); // mflr r11
   write32(buf + 12, 0x7c0803a6); // mtlr r0
   write32(buf + 16, 0x7d8b6050); // subf r12, r11, r12
+#ifdef __OpenBSD__
+  write32(buf + 20, 0x380cffd4); // subi r0,r12,44
+#else
   write32(buf + 20, 0x380cffcc); // subi r0,r12,52
+#endif
   write32(buf + 24, 0x7800f082); // srdi r0,r0,62,2
+#ifdef __OpenBSD__
+  write32(buf + 28, 0x3d6b0000 | ha(gotPltOffset)); // addis r11,r11,offset@ha
+  write32(buf + 32, 0x396b0000 | lo(gotPltOffset)); // addi  r11,r11,offset@l
+#else
   write32(buf + 28, 0xe98b002c); // ld   r12,44(r11)
   write32(buf + 32, 0x7d6c5a14); // add  r11,r12,r11
+#endif
   write32(buf + 36, 0xe98b0000); // ld   r12,0(r11)
   write32(buf + 40, 0xe96b0008); // ld   r11,8(r11)
   write32(buf + 44, 0x7d8903a6); // mtctr   r12
   write32(buf + 48, 0x4e800420); // bctr
 
+#ifndef __OpenBSD__
   // The 'bcl' instruction will set the link register to the address of the
   // following instruction ('mflr r11'). Here we store the offset from that
   // instruction  to the first entry in the GotPlt section.
-  int64_t gotPltOffset = in.gotPlt->getVA() - (in.plt->getVA() + 8);
   write64(buf + 52, gotPltOffset);
+#endif
 }
 
 void PPC64::writePlt(uint8_t *buf, const Symbol &sym,
