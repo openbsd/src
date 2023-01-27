@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.10 2023/01/10 17:10:57 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.11 2023/01/27 13:58:17 aoyama Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ const char version[] = "0.8";
 
 static void get_fuse_rom_data(void);
 static void get_nvram_data(void);
-static int get_plane_numbers(void);
 static const char *nvram_by_symbol(char *);
 
 int cpuspeed;	/* for DELAY() macro */
@@ -167,7 +166,7 @@ main(void)
 		cpuspeed = MHZ_33;
 	}
 
-	nplane = get_plane_numbers();
+	nplane = *((int *)0x1114);	/* 0, 1, 4, or 8 */
 	cninit();
 
 #ifdef SUPPORT_ETHERNET
@@ -185,19 +184,6 @@ main(void)
 
 	_rtt();
 	/* NOTREACHED */
-}
-
-int
-get_plane_numbers(void)
-{
-	int r = *((int *)0x1114);
-	int n = 0;
-
-	for (; r ; r >>= 1)
-		if (r & 0x1)
-			n++;
-
-	return(n);
 }
 
 /* Get data from FUSE ROM */
