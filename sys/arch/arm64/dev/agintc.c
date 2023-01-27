@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.46 2022/12/21 23:18:09 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.47 2023/01/27 23:11:59 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1396,7 +1396,17 @@ agintc_ipi_ddb(void *v)
 int
 agintc_ipi_halt(void *v)
 {
+	struct agintc_softc *sc = v;
+	int old = curcpu()->ci_cpl;
+
+	intr_disable();
+	agintc_eoi(sc->sc_ipi_num[ARM_IPI_HALT]);
+	agintc_setipl(IPL_NONE);
+
 	cpu_halt();
+
+	agintc_setipl(old);
+	intr_enable();
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.80 2023/01/26 13:09:18 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.81 2023/01/27 23:11:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1064,17 +1064,19 @@ cpu_halt(void)
 {
 	struct cpu_info *ci = curcpu();
 	int count = 0;
+	u_long psw;
 
 	KERNEL_ASSERT_UNLOCKED();
 	SCHED_ASSERT_UNLOCKED();
 
-	intr_disable();
+	psw = intr_disable();
 
 	atomic_clearbits_int(&ci->ci_flags,
 	    CPUF_RUNNING | CPUF_PRESENT | CPUF_GO);
 
 #if NPSCI > 0
-	psci_cpu_off();
+	if (psci_can_suspend())
+		psci_cpu_off();
 #endif
 
 	/*
@@ -1097,7 +1099,7 @@ cpu_halt(void)
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
 	__asm volatile("dsb sy; sev" ::: "memory");
 
-	intr_enable();
+	intr_restore(psw);
 
 	/* Unmask clock interrupts. */
 	WRITE_SPECIALREG(cntv_ctl_el0,
