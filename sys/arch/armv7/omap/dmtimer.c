@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.16 2023/01/17 02:32:07 cheloha Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.17 2023/01/27 22:16:52 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -230,8 +230,8 @@ dmtimer_cpu_initclocks(void)
 {
 	struct dmtimer_softc	*sc = dmtimer_cd.cd_devs[1];
 
-	stathz = 100;
-	profhz = 1000;
+	stathz = hz;
+	profhz = stathz * 10;
 	clockintr_init(CL_RNDSTAT);
 
 	sc->sc_ticks_per_second = TIMER_FREQUENCY; /* 32768 */
