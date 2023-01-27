@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1 2011/05/28 22:38:06 martynas Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/01/27 16:39:22 miod Exp $
 
 PROG=lgamma
 LDADD=-lm
 DPADD=${LIBM}
+CFLAGS+= -fno-builtin
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2018/03/10 20:52:58 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.3 2023/01/27 16:39:22 miod Exp $
 
 PROG = fpaccuracy
 SRCS = Gamma.c INV.c Pix.c acos.c acosh.c asin.c asinh.c atan.c \
@@ -7,6 +7,7 @@ SRCS = Gamma.c INV.c Pix.c acos.c acosh.c asin.c asinh.c atan.c \
        sincos.c sincos2.c sinh.c sqrt.c tan.c tanh.c y0.c y1.c
 LDADD = -lm
 DPADD = ${LIBM}
+CFLAGS+= -fno-builtin
 CLEANFILES += fpaccuracy.out
 
 .include <bsd.regress.mk>
