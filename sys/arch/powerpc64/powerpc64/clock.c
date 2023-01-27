@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2022/11/29 01:04:44 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2023/01/27 22:14:43 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -98,8 +98,8 @@ cpu_initclocks(void)
 	dec_nsec_cycle_ratio = tb_freq * (1ULL << 32) / 1000000000;
 	dec_nsec_max = UINT64_MAX / dec_nsec_cycle_ratio;
 
-	stathz = 100;
-	profhz = 1000; /* must be a multiple of stathz */
+	stathz = hz;
+	profhz = stathz * 10;
 	clockintr_init(CL_RNDSTAT);
 
 	evcount_attach(&clock_count, "clock", NULL);
