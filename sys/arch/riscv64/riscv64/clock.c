@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2022/12/03 15:03:49 jca Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2023/01/27 15:37:16 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -92,8 +92,8 @@ cpu_initclocks(void)
 	timer_nsec_cycle_ratio = tb_freq * (1ULL << 32) / 1000000000;
 	timer_nsec_max = UINT64_MAX / timer_nsec_cycle_ratio;
 
-	stathz = 100;
-	profhz = 1000; /* must be a multiple of stathz */
+	stathz = hz;
+	profhz = stathz * 10;
 	clockintr_init(CL_RNDSTAT);
 
 	riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
