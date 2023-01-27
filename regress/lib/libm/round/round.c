@@ -1,4 +1,4 @@
-/*	$OpenBSD: round.c,v 1.2 2011/07/09 03:33:07 martynas Exp $	*/
+/*	$OpenBSD: round.c,v 1.3 2023/01/27 16:39:58 miod Exp $	*/
 
 /*	Written by Michael Shalayeff, 2003,  Public domain.	*/
 
@@ -35,8 +35,8 @@ main(int argc, char *argv[])
 	sigaction(SIGFPE, &sa, NULL);
 
 	assert(round(8.6) == 9.);
-	assert(roundf(8.6F) == 9);
-	assert(roundl(8.6L) == 9);
+	assert(roundf(8.6F) == 9.);
+	assert(roundl(8.6L) == 9.);
  	assert(lround(8.6) == 9L);
  	assert(lroundf(8.6F) == 9L);
  	assert(lroundl(8.6L) == 9L);
@@ -50,6 +50,14 @@ main(int argc, char *argv[])
 	assert(lround(-0.0) == 0L);
 	assert(lroundf(-0.0F) == 0L);
 	assert(lroundl(-0.0L) == 0L);
+
+	/* Test proper rounding direction of halfway values. */
+	assert(round(2.5) == 3.);
+	assert(roundf(2.5F) == 3.);
+	assert(roundl(2.5L) == 3.);
+	assert(round(-2.5) == -3.);
+	assert(roundf(-2.5F) == -3.);
+	assert(roundl(-2.5L) == -3.);
 
 	assert(llround(4503599627370496.0) == 4503599627370496LL);
 	assert(llroundf(4503599627370496.0F) == 4503599627370496LL);
