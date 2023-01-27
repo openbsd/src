@@ -1,4 +1,4 @@
-/*	$OpenBSD: s_ceil.c,v 1.10 2016/09/12 19:47:01 guenther Exp $	*/
+/*	$OpenBSD: s_ceil.c,v 1.11 2023/01/27 16:43:33 miod Exp $	*/
 /*
  * Written by Michael Shalayeff. Public Domain
  */
@@ -12,14 +12,14 @@ ceil(double x)
 {
 	u_int64_t ofpsr, fpsr;
 
-	__asm__ volatile("fstds %%fr0,0(%0)" :: "r" (&ofpsr) : "memory");
+	__asm__ volatile("fstds %%fr0,0(%1)" : "=m" (ofpsr) : "r" (&ofpsr));
 	fpsr = (ofpsr & ~((u_int64_t)FP_RM << (9 + 32))) |
 	    ((u_int64_t)FP_RP << (9 + 32));
-	__asm__ volatile("fldds 0(%0), %%fr0" :: "r" (&fpsr) : "memory");
+	__asm__ volatile("fldds 0(%0), %%fr0" :: "r" (&fpsr), "m" (fpsr));
 
 	__asm__ volatile("frnd,dbl %0,%0" : "+f" (x));
 
-	__asm__ volatile("fldds 0(%0), %%fr0" :: "r" (&ofpsr) : "memory");
+	__asm__ volatile("fldds 0(%0), %%fr0" :: "r" (&ofpsr), "m" (ofpsr));
 	return (x);
 }
 DEF_STD(ceil);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv.c,v 1.6 2022/12/27 17:10:07 jmc Exp $	*/
+/*	$OpenBSD: fenv.c,v 1.7 2023/01/27 16:43:33 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
@@ -53,7 +53,7 @@ feclearexcept(int excepts)
 	u.bits[0] &= ~(excepts << _MASK_SHIFT);
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m" (u.fpsr));
 
 	return (0);
 }
@@ -146,7 +146,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 	u.bits[0] |= (*flagp & excepts) << _MASK_SHIFT;
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m" (u.fpsr));
 
 	return (0);
 }
@@ -211,7 +211,7 @@ fesetround(int round)
 	u.bits[0] |= round;
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m"(u.fpsr));
 
 	return (0);
 }
@@ -258,7 +258,7 @@ feholdexcept(fenv_t *envp)
 
 	/* Mask all exceptions */
 	u.bits[0] &= ~FE_ALL_EXCEPT;
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m"(u.fpsr));
 
 	return (0);
 }
@@ -288,7 +288,7 @@ fesetenv(const fenv_t *envp)
 	    (FE_ALL_EXCEPT << _MASK_SHIFT));
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m"(u.fpsr));
 
 	return (0);
 }
@@ -340,7 +340,7 @@ feenableexcept(int mask)
 	u.bits[0] |= mask;
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m"(u.fpsr));
 
 	return (omask);
 
@@ -362,7 +362,7 @@ fedisableexcept(int mask)
 	u.bits[0] &= ~mask;
 
 	/* Load the floating-point status register */
-	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr));
+	__asm__ volatile ("fldd 0(%0), %%fr0" : : "r" (&u.fpsr), "m"(u.fpsr));
 
 	return (omask);
 }
