@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetmask.c,v 1.5 2014/04/18 15:09:52 guenther Exp $	*/
+/*	$OpenBSD: fpsetmask.c,v 1.6 2023/01/27 11:25:16 miod Exp $	*/
 
 /*
  * Written by Miodrag Vallat.  Public domain
@@ -17,6 +17,6 @@ fpsetmask(mask)
 	__asm__ volatile("fstd %%fr0,0(%1)" : "=m"(fpsr) : "r"(&fpsr));
 	old = (fpsr >> 32) & 0x1f;
 	fpsr = (fpsr & 0xffffffe000000000LL) | ((u_int64_t)(mask & 0x1f) << 32);
-	__asm__ volatile("fldd 0(%0),%%fr0" : : "r"(&fpsr));
+	__asm__ volatile("fldd 0(%0),%%fr0" : : "r"(&fpsr), "m"(fpsr));
 	return (old);
 }
