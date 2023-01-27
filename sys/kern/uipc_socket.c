@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.298 2023/01/27 18:46:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.299 2023/01/27 21:01:59 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1953,14 +1953,14 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 {
 	int error = 0;
 
-	soassertlocked(so);
-
 	if (level != SOL_SOCKET) {
 		if (so->so_proto->pr_ctloutput) {
 			m->m_len = 0;
 
+			solock(so);
 			error = (*so->so_proto->pr_ctloutput)(PRCO_GETOPT, so,
 			    level, optname, m);
+			sounlock(so);
 			return (error);
 		} else
 			return (ENOPROTOOPT);
@@ -1971,9 +1971,11 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 
 		case SO_LINGER:
 			m->m_len = sizeof (struct linger);
+			solock_shared(so);
 			mtod(m, struct linger *)->l_onoff =
 				so->so_options & SO_LINGER;
 			mtod(m, struct linger *)->l_linger = so->so_linger;
+			sounlock_shared(so);
 			break;
 
 		case SO_BINDANY:
@@ -1998,8 +2000,11 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			break;
 
 		case SO_ERROR:
+			solock(so);
 			*mtod(m, int *) = so->so_error;
 			so->so_error = 0;
+			sounlock(so);
+
 			break;
 
 		case SO_DOMAIN:
@@ -2029,10 +2034,14 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
 		    {
+			struct sockbuf *sb = (optname == SO_SNDTIMEO ?
+			    &so->so_snd : &so->so_rcv);
 			struct timeval tv;
-			uint64_t nsecs = (optname == SO_SNDTIMEO ?
-			    so->so_snd.sb_timeo_nsecs :
-			    so->so_rcv.sb_timeo_nsecs);
+			uint64_t nsecs;
+
+			solock_shared(so);
+			nsecs = sb->sb_timeo_nsecs;
+			sounlock_shared(so);
 
 			m->m_len = sizeof(struct timeval);
 			memset(&tv, 0, sizeof(tv));
@@ -2050,8 +2059,10 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 				    so->so_proto->pr_domain;
 
 				level = dom->dom_protosw->pr_protocol;
+				solock(so);
 				error = (*so->so_proto->pr_ctloutput)
 				    (PRCO_GETOPT, so, level, optname, m);
+				sounlock(so);
 				if (error)
 					return (error);
 				break;
@@ -2064,7 +2075,9 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			off_t len;
 
 			m->m_len = sizeof(off_t);
+			solock_shared(so);
 			len = so->so_sp ? so->so_sp->ssp_len : 0;
+			sounlock_shared(so);
 			memcpy(mtod(m, off_t *), &len, sizeof(off_t));
 			break;
 		    }
@@ -2074,12 +2087,16 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			if (so->so_proto->pr_protocol == AF_UNIX) {
 				struct unpcb *unp = sotounpcb(so);
 
+				solock(so);
 				if (unp->unp_flags & UNP_FEIDS) {
 					m->m_len = sizeof(unp->unp_connid);
 					memcpy(mtod(m, caddr_t),
 					    &(unp->unp_connid), m->m_len);
+					sounlock(so);
 					break;
 				}
+				sounlock(so);
+
 				return (ENOTCONN);
 			}
 			return (EOPNOTSUPP);
