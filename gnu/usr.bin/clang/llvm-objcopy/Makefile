@@ -1,8 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2023/01/19 22:54:45 kettenis Exp $
+# $OpenBSD: Makefile,v 1.5 2023/01/27 22:01:02 kettenis Exp $
 
 .include <bsd.own.mk>
 
 PROG=	llvm-objcopy
+MAN=	llvm-objcopy.1
 BINDIR=	/usr/bin
 LIBEXECDIR=/usr/libexec
 
@@ -23,6 +24,11 @@ SRCS=	ConfigManager.cpp \
 	WasmReader.cpp \
 	WasmWriter.cpp \
 	WasmObjcopy.cpp
+
+.if ${LINKER_VERSION:L} == "lld"
+LINKS=	${BINDIR}/llvm-objcopy ${BINDIR}/strip
+MAN+=	strip.1
+.endif
 
 COFFObject.cpp:
 	ln -s ${.CURDIR}/../../../llvm/llvm/tools/llvm-objcopy/COFF/Object.cpp $@
