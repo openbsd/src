@@ -730,10 +730,12 @@
 ./usr/games
 ./usr/include
 ./usr/lib
+./usr/lib/crt0.o
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
+./usr/lib/gcrt0.o
 ./usr/lib/libagentx.so.1.1
 ./usr/lib/libc.so.96.5
 ./usr/lib/libcbor.so.2.0
@@ -784,6 +786,7 @@
 ./usr/lib/pkgconfig/openssl.pc
 ./usr/lib/pkgconfig/sndio.pc
 ./usr/lib/pkgconfig/zlib.pc
+./usr/lib/rcrt0.o
 ./usr/libdata
 ./usr/libdata/cvs
 ./usr/libdata/cvs/contrib
