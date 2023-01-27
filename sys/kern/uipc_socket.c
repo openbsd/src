@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.297 2023/01/23 18:34:24 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.298 2023/01/27 18:46:34 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
 	so = soalloc(M_WAIT);
-	klist_init(&so->so_rcv.sb_sel.si_note, &socket_klistops, so);
-	klist_init(&so->so_snd.sb_sel.si_note, &socket_klistops, so);
+	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
+	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
 	sigio_init(&so->so_sigio);
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
@@ -303,8 +303,8 @@ sofree(struct socket *so, int keep_lock)
 	}
 
 	sigio_free(&so->so_sigio);
-	klist_free(&so->so_rcv.sb_sel.si_note);
-	klist_free(&so->so_snd.sb_sel.si_note);
+	klist_free(&so->so_rcv.sb_klist);
+	klist_free(&so->so_snd.sb_klist);
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		if (issplicedback(so)) {
@@ -2095,7 +2095,7 @@ void
 sohasoutofband(struct socket *so)
 {
 	pgsigio(&so->so_sigio, SIGURG, 0);
-	KNOTE(&so->so_rcv.sb_sel.si_note, 0);
+	KNOTE(&so->so_rcv.sb_klist, 0);
 }
 
 int
@@ -2126,7 +2126,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		return (EINVAL);
 	}
 
-	klist_insert_locked(&sb->sb_sel.si_note, kn);
+	klist_insert_locked(&sb->sb_klist, kn);
 	sounlock(so);
 
 	return (0);
@@ -2137,7 +2137,7 @@ filt_sordetach(struct knote *kn)
 {
 	struct socket *so = kn->kn_fp->f_data;
 
-	klist_remove(&so->so_rcv.sb_sel.si_note, kn);
+	klist_remove(&so->so_rcv.sb_klist, kn);
 }
 
 int
@@ -2178,7 +2178,7 @@ filt_sowdetach(struct knote *kn)
 {
 	struct socket *so = kn->kn_fp->f_data;
 
-	klist_remove(&so->so_snd.sb_sel.si_note, kn);
+	klist_remove(&so->so_snd.sb_klist, kn);
 }
 
 int

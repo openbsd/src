@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.100 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.101 2023/01/27 18:46:34 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -504,7 +504,7 @@ fifo_kqfilter(void *v)
 
 	ap->a_kn->kn_hook = so;
 
-	klist_insert(&sb->sb_sel.si_note, ap->a_kn);
+	klist_insert(&sb->sb_klist, ap->a_kn);
 
 	return (0);
 }
@@ -514,7 +514,7 @@ filt_fifordetach(struct knote *kn)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
 
-	klist_remove(&so->so_rcv.sb_sel.si_note, kn);
+	klist_remove(&so->so_rcv.sb_klist, kn);
 }
 
 int
@@ -548,7 +548,7 @@ filt_fifowdetach(struct knote *kn)
 {
 	struct socket *so = (struct socket *)kn->kn_hook;
 
-	klist_remove(&so->so_snd.sb_sel.si_note, kn);
+	klist_remove(&so->so_snd.sb_klist, kn);
 }
 
 int

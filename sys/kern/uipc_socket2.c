@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.133 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.134 2023/01/27 18:46:34 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -226,8 +226,8 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo_nsecs = head->so_rcv.sb_timeo_nsecs;
 
-	klist_init(&so->so_rcv.sb_sel.si_note, &socket_klistops, so);
-	klist_init(&so->so_snd.sb_sel.si_note, &socket_klistops, so);
+	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
+	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
 	sigio_init(&so->so_sigio);
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
@@ -262,8 +262,8 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		if (persocket)
 			sounlock(so);
 		sigio_free(&so->so_sigio);
-		klist_free(&so->so_rcv.sb_sel.si_note);
-		klist_free(&so->so_snd.sb_sel.si_note);
+		klist_free(&so->so_rcv.sb_klist);
+		klist_free(&so->so_snd.sb_klist);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}
@@ -549,7 +549,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 	}
 	if (sb->sb_flags & SB_ASYNC)
 		pgsigio(&so->so_sigio, SIGIO, 0);
-	KNOTE(&sb->sb_sel.si_note, 0);
+	KNOTE(&sb->sb_klist, 0);
 }
 
 /*

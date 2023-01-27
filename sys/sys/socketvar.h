@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.118 2023/01/23 18:35:13 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.119 2023/01/27 18:46:34 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #ifndef _SYS_SOCKETVAR_H_
 #define _SYS_SOCKETVAR_H_
 
-#include <sys/selinfo.h>			/* for struct selinfo */
+#include <sys/event.h>
 #include <sys/queue.h>
 #include <sys/sigio.h>				/* for struct sigio_ref */
 #include <sys/task.h>
@@ -123,7 +123,7 @@ struct socket {
 #define	sb_endzero	sb_flags
 		short	sb_state;	/* socket state on sockbuf */
 		uint64_t sb_timeo_nsecs;/* timeout for read/write */
-		struct	selinfo sb_sel;	/* process selecting read/write */
+		struct klist sb_klist;	/* process selecting read/write */
 	} so_rcv, so_snd;
 #define	SB_MAX		(2*1024*1024)	/* default for max chars in sockbuf */
 #define	SB_LOCK		0x01		/* lock on data queue */
@@ -202,7 +202,7 @@ sb_notify(struct socket *so, struct sockbuf *sb)
 {
 	soassertlocked(so);
 	return ((sb->sb_flags & (SB_WAIT|SB_ASYNC|SB_SPLICE)) != 0 ||
-	    !klist_empty(&sb->sb_sel.si_note));
+	    !klist_empty(&sb->sb_klist));
 }
 
 /*
