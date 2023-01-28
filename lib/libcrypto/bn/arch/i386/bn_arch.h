@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.6 2023/01/23 12:17:57 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.7 2023/01/28 16:33:34 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/bn.h>
 
 #ifndef HEADER_BN_ARCH_H
 #define HEADER_BN_ARCH_H
@@ -34,6 +36,29 @@
 #define HAVE_BN_SQR_WORDS
 
 #define HAVE_BN_SUB_WORDS
+
+#if defined(__GNUC__)
+#define HAVE_BN_DIV_REM_WORDS_INLINE
+
+static inline void
+bn_div_rem_words_inline(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
+    BN_ULONG *out_r)
+{
+	BN_ULONG q, r;
+
+	/*
+	 * Unsigned division of %edx:%eax by d with quotient being stored in
+	 * %eax and remainder in %edx.
+	 */
+	__asm__ volatile ("divl %4"
+	    : "=a"(q), "=d"(r)
+	    : "a"(l), "d"(h), "rm"(d)
+	    : "cc");
+
+	*out_q = q;
+	*out_r = r;
+}
+#endif /* __GNUC__ */
 
 #endif
 #endif

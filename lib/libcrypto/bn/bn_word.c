@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_word.c,v 1.17 2023/01/28 16:33:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,8 +125,7 @@ BN_div_word(BIGNUM *a, BN_ULONG w)
 		BN_ULONG l, d;
 
 		l = a->d[i];
-		d = bn_div_words(ret, l, w);
-		ret = (l - ((d*w)&BN_MASK2))&BN_MASK2;
+		bn_div_rem_words(ret, l, w, &d, &ret);
 		a->d[i] = d;
 	}
 	if ((a->top > 0) && (a->d[a->top - 1] == 0))
