@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.19 2021/10/04 01:34:29 kevlo Exp $
+#	$OpenBSD: list,v 1.20 2023/01/28 18:40:53 phessler Exp $
 
 SRCDIRS distrib/special
 
@@ -37,6 +37,7 @@ LINK	instbin					sbin/fsck_msdos
 LINK	instbin					sbin/growfs
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
+LINK	instbin					sbin/kbd
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
