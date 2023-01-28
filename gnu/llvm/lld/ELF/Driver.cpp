@@ -359,6 +359,7 @@ static void checkOptions() {
 
   if (config->executeOnly) {
     switch (config->emachine) {
+    case EM_386:
     case EM_AARCH64:
     case EM_MIPS:
     case EM_PPC64:
