@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.398 2023/01/25 21:44:08 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.399 2023/01/28 13:14:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -797,7 +797,6 @@ editor_add(struct disklabel *lp, const char *p)
 {
 	struct partition *pp;
 	const struct diskchunk *chunk;
-	char buf[2];
 	int partno;
 	u_int64_t new_offset, new_size;
 
