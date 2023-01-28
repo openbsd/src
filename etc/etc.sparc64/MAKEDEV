@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.101 2022/11/09 19:35:24 krw Exp 
-#	OpenBSD: MAKEDEV.common,v 1.118 2022/11/10 09:50:00 krw Exp 
+#	OpenBSD: MAKEDEV.common,v 1.120 2023/01/28 11:04:47 phessler Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -451,18 +451,19 @@ wskbd[0-9]*)
 wscons)
 	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wsmouse4 wsmouse5
 	R wsmouse6 wsmouse7 wsmouse8 wsmouse9 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyJcfg ttyJ0 ttyJ1 ttyJ2 ttyJ3 ttyJ4 ttyJ5
-	R ttyJ6 ttyJ7 ttyJ8 ttyJ9 ttyJa ttyJb ttyIcfg ttyI0 ttyI1
-	R ttyI2 ttyI3 ttyI4 ttyI5 ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb
-	R ttyHcfg ttyH0 ttyH1 ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7
-	R ttyH8 ttyH9 ttyHa ttyHb ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3
-	R ttyG4 ttyG5 ttyG6 ttyG7 ttyG8 ttyG9 ttyGa ttyGb ttyFcfg
-	R ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9
-	R ttyFa ttyFb ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5
-	R ttyE6 ttyE7 ttyE8 ttyE9 ttyEa ttyEb ttyDcfg ttyD0 ttyD1
-	R ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb
-	R ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7
-	R ttyC8 ttyC9 ttyCa ttyCb
+	R wskbd3 wskbd4 wskbd5 wskbd6 wskbd7 wskbd8 wskbd9 wsmux
+	R ttyJcfg ttyJ0 ttyJ1 ttyJ2 ttyJ3 ttyJ4 ttyJ5 ttyJ6 ttyJ7
+	R ttyJ8 ttyJ9 ttyJa ttyJb ttyIcfg ttyI0 ttyI1 ttyI2 ttyI3
+	R ttyI4 ttyI5 ttyI6 ttyI7 ttyI8 ttyI9 ttyIa ttyIb ttyHcfg
+	R ttyH0 ttyH1 ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7 ttyH8 ttyH9
+	R ttyHa ttyHb ttyGcfg ttyG0 ttyG1 ttyG2 ttyG3 ttyG4 ttyG5
+	R ttyG6 ttyG7 ttyG8 ttyG9 ttyGa ttyGb ttyFcfg ttyF0 ttyF1
+	R ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb
+	R ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	R ttyE8 ttyE9 ttyEa ttyEb ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3
+	R ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb ttyCcfg
+	R ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9
+	R ttyCa ttyCb
 	;;
 
 tty[C-J]*)
