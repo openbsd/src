@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.253 2023/01/21 17:35:01 mvs Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.254 2023/01/28 10:17:16 mvs Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (ifp->if_flags & (IFF_NOARP|IFF_STATICARP))
 		goto bad;
 
-	RT_LOCK();
+	KERNEL_LOCK();
 	/*
 	 * Re-check since we grab the route lock after the first check.
 	 * rtrequest_delete() can be called with shared netlock.  From
@@ -421,7 +421,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * route lock here and are safe.  XXXSMP
 	 */
 	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
-		RT_UNLOCK();
+		KERNEL_UNLOCK();
 		goto bad;
 	}
 	la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -471,7 +471,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		}
 	}
 
-	RT_UNLOCK();
+	KERNEL_UNLOCK();
 	return (EAGAIN);
 
 bad:
@@ -611,9 +611,9 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 	} else if (rt != NULL) {
 		int error;
 
-		RT_LOCK();
+		KERNEL_LOCK();
 		error = arpcache(ifp, ea, rt);
-		RT_UNLOCK();
+		KERNEL_UNLOCK();
 		if (error)
 			goto out;
 	}
@@ -659,7 +659,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	unsigned int len;
 	int changed = 0;
 
-	RT_ASSERT_LOCKED();
+	KERNEL_ASSERT_LOCKED();
 	KASSERT(sdl != NULL);
 
 	/*

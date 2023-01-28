@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.415 2023/01/21 17:35:01 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.416 2023/01/28 10:17:16 mvs Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -113,7 +113,6 @@
 #include <sys/queue.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
-#include <sys/rwlock.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -139,8 +138,6 @@
 #endif
 
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-
-struct rwlock rt_lock = RWLOCK_INITIALIZER("rtlck");
 
 /* Give some jitter to hash, to avoid synchronization between routers. */
 static uint32_t		rt_hashjitter;
@@ -256,10 +253,10 @@ rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
 	 * It should also be higher to let the ARP layer find
 	 * cloned routes instead of the cloning one.
 	 */
-	RT_LOCK();
+	KERNEL_LOCK();
 	error = rtrequest(RTM_RESOLVE, &info, rt->rt_priority - 1, &rt,
 	    rtableid);
-	RT_UNLOCK();
+	KERNEL_UNLOCK();
 	if (error) {
 		rtm_miss(RTM_MISS, &info, 0, RTP_NONE, 0, error, rtableid);
 	} else {
