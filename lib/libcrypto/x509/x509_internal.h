@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.24 2023/01/20 22:00:47 job Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.25 2023/01/28 19:08:09 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -20,10 +20,9 @@
 /* Internal use only, not public API */
 #include <netinet/in.h>
 
-#include <openssl/x509_verify.h>
-
 #include "bytestring.h"
 #include "x509_local.h"
+#include "x509_verify.h"
 
 /* Hard limits on structure size and number of signature checks. */
 #define X509_VERIFY_MAX_CHAINS		8	/* Max validated chains */
