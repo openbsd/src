@@ -1,4 +1,4 @@
-/* $OpenBSD: expirecallback.c,v 1.2 2022/10/17 18:44:36 jsing Exp $ */
+/* $OpenBSD: expirecallback.c,v 1.3 2023/01/28 19:12:20 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -24,7 +24,8 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/x509_verify.h>
+
+#include "x509_verify.h"
 
 #define MODE_MODERN_VFY		0
 #define MODE_MODERN_VFY_DIR	1
