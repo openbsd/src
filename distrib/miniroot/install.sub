@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1222 2023/01/18 10:30:20 kn Exp $
+#	$OpenBSD: install.sub,v 1.1223 2023/01/28 18:44:31 phessler Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2114,6 +2114,8 @@ set_term() {
 	else
 		[[ -x /sbin/kbd ]] || return
 		_layouts=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
+		# Ensure all connected keyboards get the same encoding
+		make_dev $(scan_dmesg '/^wskbd[0-9]* /s/ .*//p')
 		while :; do
 			ask "Choose your keyboard layout ('?' or 'L' for list)" default
 			case $resp in
