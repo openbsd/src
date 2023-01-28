@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.113 2023/01/14 20:55:55 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.114 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -54,6 +54,17 @@
 #define VM_NAME_MAX		64
 #define VM_MAX_BASE_PER_DISK	4
 #define VM_TTYNAME_MAX		16
+#define VM_MAX_DISKS_PER_VM	4
+#define VM_MAX_PATH_DISK	128
+#define VM_MAX_PATH_CDROM	128
+#define VM_MAX_KERNEL_PATH	128
+#define VM_MAX_NICS_PER_VM	4
+
+#define VM_PCI_MMIO_BAR_SIZE	0x00010000
+#define VM_PCI_IO_BAR_BASE	0x1000
+#define VM_PCI_IO_BAR_END	0xFFFF
+#define VM_PCI_IO_BAR_SIZE	0x1000
+
 #define MAX_TAP			256
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
@@ -195,22 +206,22 @@ struct vmop_create_params {
 #define VMBOOTDEV_DISK		1
 #define VMBOOTDEV_CDROM		2
 #define VMBOOTDEV_NET		3
-	unsigned int		 vmc_ifflags[VMM_MAX_NICS_PER_VM];
+	unsigned int		 vmc_ifflags[VM_MAX_NICS_PER_VM];
 #define VMIFF_UP		0x01
 #define VMIFF_LOCKED		0x02
 #define VMIFF_LOCAL		0x04
 #define VMIFF_RDOMAIN		0x08
 #define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 
-	unsigned int		 vmc_disktypes[VMM_MAX_DISKS_PER_VM];
-	unsigned int		 vmc_diskbases[VMM_MAX_DISKS_PER_VM];
+	unsigned int		 vmc_disktypes[VM_MAX_DISKS_PER_VM];
+	unsigned int		 vmc_diskbases[VM_MAX_DISKS_PER_VM];
 #define VMDF_RAW		0x01
 #define VMDF_QCOW2		0x02
 
-	char			 vmc_ifnames[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
-	char			 vmc_ifswitch[VMM_MAX_NICS_PER_VM][VM_NAME_MAX];
-	char			 vmc_ifgroup[VMM_MAX_NICS_PER_VM][IF_NAMESIZE];
-	unsigned int		 vmc_ifrdomain[VMM_MAX_NICS_PER_VM];
+	char			 vmc_ifnames[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
+	char			 vmc_ifswitch[VM_MAX_NICS_PER_VM][VM_NAME_MAX];
+	char			 vmc_ifgroup[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
+	unsigned int		 vmc_ifrdomain[VM_MAX_NICS_PER_VM];
 	struct vmop_owner	 vmc_owner;
 
 	/* instance template params */
@@ -273,8 +284,8 @@ struct vmd_vm {
 	uint32_t		 vm_vmid;
 	int			 vm_kernel;
 	int			 vm_cdrom;
-	int			 vm_disks[VMM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
-	struct vmd_if		 vm_ifs[VMM_MAX_NICS_PER_VM];
+	int			 vm_disks[VM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
+	struct vmd_if		 vm_ifs[VM_MAX_NICS_PER_VM];
 	char			*vm_ttyname;
 	int			 vm_tty;
 	uint32_t		 vm_peerid;

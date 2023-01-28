@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.137 2023/01/22 22:18:40 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.138 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1192,7 +1192,7 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 		event_del(&vm->vm_iev.ev);
 		close(vm->vm_iev.ibuf.fd);
 	}
-	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++) {
+	for (i = 0; i < VM_MAX_DISKS_PER_VM; i++) {
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 			if (vm->vm_disks[i][j] != -1) {
 				close(vm->vm_disks[i][j]);
@@ -1200,7 +1200,7 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 			}
 		}
 	}
-	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
+	for (i = 0; i < VM_MAX_NICS_PER_VM; i++) {
 		if (vm->vm_ifs[i].vif_fd != -1) {
 			close(vm->vm_ifs[i].vif_fd);
 			vm->vm_ifs[i].vif_fd = -1;
@@ -1330,10 +1330,10 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_warnx("invalid number of CPUs");
 		goto fail;
-	} else if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM) {
+	} else if (vcp->vcp_ndisks > VM_MAX_DISKS_PER_VM) {
 		log_warnx("invalid number of disks");
 		goto fail;
-	} else if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM) {
+	} else if (vcp->vcp_nnics > VM_MAX_NICS_PER_VM) {
 		log_warnx("invalid number of interfaces");
 		goto fail;
 	} else if (strlen(vcp->vcp_kernel) == 0 &&
@@ -1368,10 +1368,10 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_receive_fd = -1;
 	vm->vm_state &= ~VM_STATE_PAUSED;
 
-	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++)
+	for (i = 0; i < VM_MAX_DISKS_PER_VM; i++)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
 			vm->vm_disks[i][j] = -1;
-	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
+	for (i = 0; i < VM_MAX_NICS_PER_VM; i++)
 		vm->vm_ifs[i].vif_fd = -1;
 	for (i = 0; i < vcp->vcp_nnics; i++) {
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {

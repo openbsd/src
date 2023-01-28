@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.83 2022/05/13 00:17:20 yasuoka Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.84 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -98,7 +98,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 	else if (flags != 0) {
 		if (memsize < 1)
 			memsize = VM_DEFAULT_MEMORY;
-		if (ndisks > VMM_MAX_DISKS_PER_VM)
+		if (ndisks > VM_MAX_DISKS_PER_VM)
 			errx(1, "too many disks");
 		else if (ndisks == 0)
 			warnx("starting without disks");
@@ -106,7 +106,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 			errx(1, "no kernel or disk/cdrom specified");
 		if (nnics == -1)
 			nnics = 0;
-		if (nnics > VMM_MAX_NICS_PER_VM)
+		if (nnics > VM_MAX_NICS_PER_VM)
 			errx(1, "too many network interfaces");
 		if (nnics == 0)
 			warnx("starting without network interfaces");

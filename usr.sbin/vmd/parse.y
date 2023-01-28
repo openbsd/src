@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2022/09/13 10:28:19 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.63 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -346,7 +346,7 @@ vm		: VM string vm_instance		{
 			} else
 				name = $2;
 
-			for (i = 0; i < VMM_MAX_NICS_PER_VM; i++) {
+			for (i = 0; i < VM_MAX_NICS_PER_VM; i++) {
 				/* Set the interface to UP by default */
 				vmc.vmc_ifflags[i] |= IFF_UP;
 			}
@@ -426,7 +426,7 @@ vm_opts		: disable			{
 			char		type[IF_NAMESIZE];
 
 			i = vcp_nnics;
-			if (++vcp_nnics > VMM_MAX_NICS_PER_VM) {
+			if (++vcp_nnics > VM_MAX_NICS_PER_VM) {
 				yyerror("too many interfaces: %zu", vcp_nnics);
 				free($3);
 				YYERROR;
@@ -504,7 +504,7 @@ vm_opts		: disable			{
 				yyerror("interfaces specified more than once");
 				YYERROR;
 			}
-			if ($2 < 0 || $2 > VMM_MAX_NICS_PER_VM) {
+			if ($2 < 0 || $2 > VM_MAX_NICS_PER_VM) {
 				yyerror("too many interfaces: %lld", $2);
 				YYERROR;
 			}
@@ -1344,7 +1344,7 @@ parse_disk(char *word, int type)
 	int	 fd;
 	ssize_t	 len;
 
-	if (vcp->vcp_ndisks >= VMM_MAX_DISKS_PER_VM) {
+	if (vcp->vcp_ndisks >= VM_MAX_DISKS_PER_VM) {
 		log_warnx("too many disks");
 		return (-1);
 	}
@@ -1372,7 +1372,7 @@ parse_disk(char *word, int type)
 	}
 
 	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], path,
-	    VMM_MAX_PATH_DISK) >= VMM_MAX_PATH_DISK) {
+	    VM_MAX_PATH_DISK) >= VM_MAX_PATH_DISK) {
 		log_warnx("disk path too long");
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.29 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.30 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -80,26 +80,26 @@ pci_add_bar(uint8_t id, uint32_t type, void *barfn, void *cookie)
 
 		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
 		    PCI_MAPREG_MEM_ADDR(pci.pci_next_mmio_bar);
-		pci.pci_next_mmio_bar += VMM_PCI_MMIO_BAR_SIZE;
+		pci.pci_next_mmio_bar += VM_PCI_MMIO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_MMIO;
-		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_MMIO_BAR_SIZE;
+		pci.pci_devices[id].pd_barsize[bar_ct] = VM_PCI_MMIO_BAR_SIZE;
 		pci.pci_devices[id].pd_bar_ct++;
 	} else if (type == PCI_MAPREG_TYPE_IO) {
-		if (pci.pci_next_io_bar >= VMM_PCI_IO_BAR_END)
+		if (pci.pci_next_io_bar >= VM_PCI_IO_BAR_END)
 			return (1);
 
 		pci.pci_devices[id].pd_cfg_space[bar_reg_idx] =
 		    PCI_MAPREG_IO_ADDR(pci.pci_next_io_bar) |
 		    PCI_MAPREG_TYPE_IO;
-		pci.pci_next_io_bar += VMM_PCI_IO_BAR_SIZE;
+		pci.pci_next_io_bar += VM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_barfunc[bar_ct] = barfn;
 		pci.pci_devices[id].pd_bar_cookie[bar_ct] = cookie;
 		DPRINTF("%s: adding pci bar cookie for dev %d bar %d = %p",
 		    __progname, id, bar_ct, cookie);
 		pci.pci_devices[id].pd_bartype[bar_ct] = PCI_BAR_TYPE_IO;
-		pci.pci_devices[id].pd_barsize[bar_ct] = VMM_PCI_IO_BAR_SIZE;
+		pci.pci_devices[id].pd_barsize[bar_ct] = VM_PCI_IO_BAR_SIZE;
 		pci.pci_devices[id].pd_bar_ct++;
 	}
 
@@ -216,7 +216,7 @@ pci_init(void)
 
 	memset(&pci, 0, sizeof(pci));
 	pci.pci_next_mmio_bar = VMM_PCI_MMIO_BAR_BASE;
-	pci.pci_next_io_bar = VMM_PCI_IO_BAR_BASE;
+	pci.pci_next_io_bar = VM_PCI_IO_BAR_BASE;
 
 	if (pci_add_device(&id, PCI_VENDOR_OPENBSD, PCI_PRODUCT_OPENBSD_PCHB,
 	    PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_HOST,
@@ -266,7 +266,7 @@ pci_handle_io(struct vm_run_params *vrp)
 	for (i = 0 ; i < pci.pci_dev_ct ; i++) {
 		for (j = 0 ; j < pci.pci_devices[i].pd_bar_ct; j++) {
 			b_lo = PCI_MAPREG_IO_ADDR(pci.pci_devices[i].pd_bar[j]);
-			b_hi = b_lo + VMM_PCI_IO_BAR_SIZE;
+			b_hi = b_lo + VM_PCI_IO_BAR_SIZE;
 			if (reg >= b_lo && reg < b_hi) {
 				if (pci.pci_devices[i].pd_barfunc[j]) {
 					k = j;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.81 2023/01/08 19:57:17 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.82 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -293,7 +293,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	struct vcpu_reg_state	 vrs;
-	int			 nicfds[VMM_MAX_NICS_PER_VM];
+	int			 nicfds[VM_MAX_NICS_PER_VM];
 	int			 ret;
 	gzFile			 fp;
 	size_t			 i;
@@ -383,7 +383,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)
 		fatal("failed to set nonblocking mode on console");
 
-	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
+	for (i = 0; i < VM_MAX_NICS_PER_VM; i++)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
 	event_init();
@@ -1041,10 +1041,10 @@ vmm_create_vm(struct vm_create_params *vcp)
 	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
 		return (EINVAL);
 
-	if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM)
+	if (vcp->vcp_ndisks > VM_MAX_DISKS_PER_VM)
 		return (EINVAL);
 
-	if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM)
+	if (vcp->vcp_nnics > VM_MAX_NICS_PER_VM)
 		return (EINVAL);
 
 	if (ioctl(env->vmd_fd, VMM_IOC_CREATE, vcp) == -1)
@@ -1114,7 +1114,7 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
 
 	/* Initialize PCI */
-	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
+	for (i = VM_PCI_IO_BAR_BASE; i <= VM_PCI_IO_BAR_END; i++)
 		ioports_map[i] = vcpu_exit_pci;
 
 	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
@@ -1172,7 +1172,7 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
 	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
 
 	/* Initialize PCI */
-	for (i = VMM_PCI_IO_BAR_BASE; i <= VMM_PCI_IO_BAR_END; i++)
+	for (i = VM_PCI_IO_BAR_BASE; i <= VM_PCI_IO_BAR_END; i++)
 		ioports_map[i] = vcpu_exit_pci;
 
 	ioports_map[PCI_MODE1_ADDRESS_REG] = vcpu_exit_pci;
@@ -1231,10 +1231,10 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
 		return (EINVAL);
 
-	if (vcp->vcp_ndisks > VMM_MAX_DISKS_PER_VM)
+	if (vcp->vcp_ndisks > VM_MAX_DISKS_PER_VM)
 		return (EINVAL);
 
-	if (vcp->vcp_nnics > VMM_MAX_NICS_PER_VM)
+	if (vcp->vcp_nnics > VM_MAX_NICS_PER_VM)
 		return (EINVAL);
 
 	if (vcp->vcp_nmemranges == 0 ||
@@ -1627,7 +1627,7 @@ vcpu_exit_pci(struct vm_run_params *vrp)
 	case PCI_MODE1_DATA_REG + 3:
 		pci_handle_data_reg(vrp);
 		break;
-	case VMM_PCI_IO_BAR_BASE ... VMM_PCI_IO_BAR_END:
+	case VM_PCI_IO_BAR_BASE ... VM_PCI_IO_BAR_END:
 		intr = pci_handle_io(vrp);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.66 2022/10/31 14:02:11 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.67 2023/01/28 14:40:53 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -212,7 +212,7 @@ config_getreset(struct vmd *env, struct imsg *imsg)
 int
 config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 {
-	int diskfds[VMM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
+	int diskfds[VM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		*vif;
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params	*vcp = &vmc->vmc_params;
@@ -264,7 +264,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 	vm->vm_start_tv = tv;
 
-	for (i = 0; i < VMM_MAX_DISKS_PER_VM; i++)
+	for (i = 0; i < VM_MAX_DISKS_PER_VM; i++)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
 			diskfds[i][j] = -1;
 
