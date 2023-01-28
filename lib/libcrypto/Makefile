@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.93 2023/01/21 17:29:56 jsing Exp $
+# $OpenBSD: Makefile,v 1.94 2023/01/28 19:14:38 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -860,7 +860,6 @@ HDRS=\
 	${LCRYPTO_SRC}/whrlpool/whrlpool.h \
 	${LCRYPTO_SRC}/x509/x509.h \
 	${LCRYPTO_SRC}/x509/x509_vfy.h \
-	${LCRYPTO_SRC}/x509/x509_verify.h \
 	${LCRYPTO_SRC}/x509/x509v3.h
 
 HDRS_GEN=\
