@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.34 2023/01/28 16:33:34 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.35 2023/01/28 16:58:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,12 +156,17 @@ bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
  */
 #ifndef HAVE_BN_DIV_REM_WORDS
 #ifndef HAVE_BN_DIV_REM_WORDS_INLINE
-static inline
+static inline void
 bn_div_rem_words_inline(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
     BN_ULONG *out_r)
 {
-	*q = bn_div_words(h, l, d);
-	*r = (l - q * d) & BN_MASK2;
+	BN_ULONG q, r;
+
+	q = bn_div_words(h, l, d);
+	r = (l - q * d) & BN_MASK2;
+
+	*out_q = q;
+	*out_r = r;
 }
 #endif
 
