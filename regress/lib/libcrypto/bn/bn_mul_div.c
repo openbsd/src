@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.1 2023/01/29 15:18:49 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.2 2023/01/29 15:22:12 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -30,9 +30,9 @@ static int
 benchmark_bn_mul_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
     BIGNUM *r)
 {
-	if (!BN_rand(a, a_bits - 1, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+	if (!BN_rand(a, a_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
 		return 0;
-	if (!BN_rand(b, b_bits - 1, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+	if (!BN_rand(b, b_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
 		return 0;
 	if (!BN_set_bit(r, (a_bits + b_bits) - 1))
 		return 0;
@@ -51,7 +51,7 @@ static int
 benchmark_bn_sqr_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
     BIGNUM *r)
 {
-	if (!BN_rand(a, a_bits - 1, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+	if (!BN_rand(a, a_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
 		return 0;
 	if (!BN_set_bit(r, (a_bits + a_bits) - 1))
 		return 0;
