@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.10 2023/01/21 17:29:56 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.11 2023/01/29 14:00:41 jsing Exp $
 
 # amd64-specific libcrypto build rules
 
@@ -29,7 +29,16 @@ SSLASM+= bn x86_64-gf2m
 
 # bn s2n-bignum
 SRCS += bn_arch.c
+SRCS += bignum_add.S
+SRCS += bignum_cmadd.S
+SRCS += bignum_cmul.S
+SRCS += bignum_mul.S
+SRCS += bignum_mul_4_8_alt.S
+SRCS += bignum_mul_8_16_alt.S
 SRCS += bignum_sqr.S
+SRCS += bignum_sqr_4_8_alt.S
+SRCS += bignum_sqr_8_16_alt.S
+SRCS += bignum_sub.S
 
 # camellia
 SRCS+=	cmll_misc.c
@@ -75,7 +84,7 @@ ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${EXTRA_PL}
 .endfor
 
 CFLAGS+= -DOPENSSL_CPUID_OBJ
-SRCS+=	x86_64cpuid.S x86_64-gcc.c
+SRCS+=	x86_64cpuid.S
 GENERATED+=x86_64cpuid.S
 
 x86_64cpuid.S: ${LCRYPTO_SRC}/x86_64cpuid.pl ${EXTRA_PL}
