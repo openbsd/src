@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.159 2023/01/28 05:58:47 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.160 2023/01/29 16:23:15 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 pt_entry_t pg_nx = 0;
 pt_entry_t pg_g_kern = 0;
 
-/* pg_no: XO PTE bits, set to PKU key1 (if cpu supports PKU) */
+/* pg_xo: XO PTE bits, set to PKU key1 (if cpu supports PKU) */
 pt_entry_t pg_xo;
 
 /*
