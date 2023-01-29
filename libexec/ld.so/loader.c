@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.209 2022/12/25 09:39:37 visa Exp $ */
+/*	$OpenBSD: loader.c,v 1.210 2023/01/29 20:30:56 gnezdo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -1018,92 +1018,87 @@ _dl_rreloc(elf_object_t *object)
 }
 
 void
-_dl_defer_immut(struct mutate *m, vaddr_t start, vsize_t len)
+_dl_push_range(struct range_vector *v, vaddr_t s, vaddr_t e)
 {
-	int i;
+	int i = v->count;
 
-	for (i = 0; i < MAXMUT; i++) {
-		if (m[i].valid == 0) {
-			m[i].start = start;
-			m[i].end = start + len;
-			m[i].valid = 1;
-			return;
-		}
+	if (i == nitems(v->slice)) {
+		_dl_die("too many ranges");
 	}
-	if (i == MAXMUT)
-		_dl_die("too many _dl_defer_immut");
+	/* Skips the empty ranges (s == e). */
+	if (s < e) {
+		v->slice[i].start = s;
+		v->slice[i].end = e;
+		v->count++;
+	} else if (s > e) {
+		_dl_die("invalid range");
+	}
 }
 
 void
-_dl_defer_mut(struct mutate *m, vaddr_t start, size_t len)
+_dl_push_range_size(struct range_vector *v, vaddr_t s, vsize_t size)
 {
-	int i;
-
-	for (i = 0; i < MAXMUT; i++) {
-		if (m[i].valid == 0) {
-			m[i].start = start;
-			m[i].end = start + len;
-			m[i].valid = 1;
-			return;
-		}
-	}
-	if (i == MAXMUT)
-		_dl_die("too many _dl_defer_mut");
+	_dl_push_range(v, s, s + size);
 }
 
+/*
+ * Finds the truly immutable ranges by taking mutable ones out.  Implements
+ * interval difference of imut and mut. Interval splitting necessitates
+ * intermediate storage and complex double buffering.
+ */
 void
 _dl_apply_immutable(elf_object_t *object)
 {
-	struct mutate *m, *im, *imtail;
-	int mut, imut;
-	
+	struct range_vector acc[2];  /* flips out to avoid copying */
+	struct addr_range *m, *im;
+	int i, j, imut, in, out;
+
 	if (object->obj_type != OBJTYPE_LIB)
 		return;
 
-	imtail = &object->imut[MAXMUT - 1];
+	for (imut = 0; imut < object->imut.count; imut++) {
+		im = &object->imut.slice[imut];
+		out = 0;
+		acc[out].count = 0;
+		_dl_push_range(&acc[out], im->start, im->end);
 
-	for (imut = 0; imut < MAXMUT; imut++) {
-		im = &object->imut[imut];
-		if (im->valid == 0)
-			continue;
-
-		for (mut = 0; mut < MAXMUT; mut++) {
-			m = &object->mut[mut];
-			if (m->valid == 0)
-				continue;
-			if (m->start <= im->start) {
-				if (m->end < im->start) {
+		for (i = 0; i < object->mut.count; i++) {
+			m = &object->mut.slice[i];
+			in = out;
+			out = 1 - in;
+			acc[out].count = 0;
+			for (j = 0; j < acc[in].count; j++) {
+				const vaddr_t ms = m->start, me = m->end;
+				const vaddr_t is = acc[in].slice[j].start,
+				    ie = acc[in].slice[j].end;
+				if (ie <= ms || me <= is) {
+					/* is .. ie .. ms .. me -> is .. ie */
+					/* ms .. me .. is .. ie -> is .. ie */
+					_dl_push_range(&acc[out], is, ie);
+				} else if (ms <= is && ie <= me) {
+					/* PROVIDED: ms < ie && is < me */
+					/* ms .. is .. ie .. me -> [] */
 					;
-				} else if (m->end >= im->end) {
-					im->start = im->end = im->valid = 0;
+				} else if (ie <= me) {
+					/* is .. ms .. ie .. me -> is .. ms */
+					_dl_push_range(&acc[out], is, ms);
+				} else if (is < ms) {
+					/* is .. ms .. me .. ie -> is .. ms */
+					_dl_push_range(&acc[out], is, ms);
+					_dl_push_range(&acc[out], me, ie);
 				} else {
-					im->start = m->end;
-				}
-			} else if (m->start > im->start) {
-				if (m->end > im->end) {
-					;
-				} else if (m->end == im->end) {
-					im->end = m->start;
-				} else if (m->end < im->end) {
-					imtail->start = im->start;
-					imtail->end = m->start;
-					imtail->valid = 1;
-					imtail--;
-					imtail->start = m->end;
-					imtail->end = im->end;
-					imtail->valid = 1;
-					imtail--;
-					im->start = im->end = im->valid = 0;
+					/* ms .. is .. me .. ie -> me .. ie */
+					_dl_push_range(&acc[out], me, ie);
 				}
 			}
 		}
+
+		/* and now, install immutability for objects */
+		for (i = 0; i < acc[out].count; i++) {
+			const struct addr_range *ar = &acc[out].slice[i];
+			_dl_mimmutable((void *)ar->start, ar->end - ar->start);
+		}
+
 	}
 
-	/* and now, install immutability for objects */
-	for (imut = 0; imut < MAXMUT; imut++) {
-		im = &object->imut[imut];
-		if (im->valid == 0)
-			continue;
-		_dl_mimmutable((void *)im->start, im->end - im->start);
-	}
 }

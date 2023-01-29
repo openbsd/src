@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.89 2022/12/04 15:42:07 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.90 2023/01/29 20:30:56 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -98,7 +98,7 @@ unload:
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 {
-	struct mutate imut[MAXMUT], mut[MAXMUT];
+	struct range_vector imut, mut;
 	int	libfile, i;
 	struct load_list *next_load, *load_list = NULL;
 	Elf_Addr maxva = 0, minva = ELF_NO_ADDR;
@@ -216,7 +216,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 
 	/* Entire mapping can become immutable, minus exceptions chosen later */
-	_dl_defer_immut(imut, loff, maxva - minva);
+	_dl_push_range_size(&imut, loff, maxva - minva);
 
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
 		switch (phdp->p_type) {
@@ -300,11 +300,12 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 		case PT_GNU_RELRO:
 			relro_addr = phdp->p_vaddr + loff;
 			relro_size = phdp->p_memsz;
-			_dl_defer_mut(mut, phdp->p_vaddr + loff, phdp->p_memsz);
+			_dl_push_range_size(&mut, relro_addr, relro_size);
 			break;
 
 		case PT_OPENBSD_MUTABLE:
-			_dl_defer_mut(mut, phdp->p_vaddr + loff, phdp->p_memsz);
+			_dl_push_range_size(&mut, phdp->p_vaddr + loff,
+			    phdp->p_memsz);
 			break;
 
 		default:
@@ -341,8 +342,8 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 				_dl_printf("msyscall %lx %lx error\n",
 				    exec_start, exec_size);
 		}
-		_dl_bcopy(mut, object->mut, sizeof mut);
-		_dl_bcopy(imut, object->imut, sizeof imut);
+		_dl_bcopy(&mut, &object->mut, sizeof mut);
+		_dl_bcopy(&imut, &object->imut, sizeof imut);
 	} else {
 		_dl_munmap((void *)libaddr, maxva - minva);
 		_dl_load_list_free(load_list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.69 2022/12/04 15:42:07 deraadt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.70 2023/01/29 20:30:56 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -103,7 +103,7 @@ unload:
 elf_object_t *
 _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 {
-	struct mutate imut[MAXMUT], mut[MAXMUT];
+	struct range_vector imut, mut;
 	int libfile, i;
 	struct load_list *ld, *lowld = NULL;
 	elf_object_t *object;
@@ -289,7 +289,7 @@ retry:
 		}
 
 		/* Entire mapping can become immutable, minus exceptions chosen later */
-		_dl_defer_immut(imut, LOFF + ld->moff, ROUND_PG(ld->size));
+		_dl_push_range_size(&imut, LOFF + ld->moff, ROUND_PG(ld->size));
 
 		ld->start = res;
 	}
@@ -312,10 +312,11 @@ retry:
 		case PT_GNU_RELRO:
 			relro_addr = phdp->p_vaddr + LOFF;
 			relro_size = phdp->p_memsz;
-			_dl_defer_mut(mut, phdp->p_vaddr + LOFF, phdp->p_memsz);
+			_dl_push_range_size(&mut, relro_addr, relro_size);
 			break;
 		case PT_OPENBSD_MUTABLE:
-			_dl_defer_mut(mut, phdp->p_vaddr + LOFF, phdp->p_memsz);
+			_dl_push_range_size(&mut, phdp->p_vaddr + LOFF,
+			    phdp->p_memsz);
 			break;
 		}
 	}
@@ -350,8 +351,8 @@ retry:
 				_dl_printf("msyscall %lx %lx error\n",
 				    exec_start, exec_size);
 		}
-		_dl_bcopy(mut, object->mut, sizeof mut);
-		_dl_bcopy(imut, object->imut, sizeof imut);
+		_dl_bcopy(&mut, &object->mut, sizeof mut);
+		_dl_bcopy(&imut, &object->imut, sizeof imut);
 	} else {
 		_dl_load_list_free(lowld);
 	}

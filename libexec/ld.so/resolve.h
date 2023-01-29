@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.103 2022/12/04 15:42:07 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.104 2023/01/29 20:30:56 gnezdo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -77,10 +77,14 @@ struct object_vector {
 };
 void	object_vec_grow(struct object_vector *_vec, int _more);
 
-struct mutate {
+struct addr_range {
 	vaddr_t start;
 	vaddr_t end;
-	int valid;
+};
+
+struct range_vector {
+	struct addr_range slice[40];
+	int count;
 };
 
 /*
@@ -239,9 +243,8 @@ struct elf_object {
 	/* nonzero if trace enabled for this object */
 	int traced;
 
-#define MAXMUT 40
-	struct mutate imut[MAXMUT];
-	struct mutate mut[MAXMUT];
+	struct range_vector imut;
+	struct range_vector mut;
 };
 
 struct dep_node {
@@ -330,8 +333,7 @@ char	*_dl_find_shlib(struct sod *sodp, char **searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
 
 void _dl_find_immutables(int type, elf_object_t *object, Elf_Ehdr *);
-void _dl_defer_mut(struct mutate *m, vaddr_t start, vsize_t len);
-void _dl_defer_immut(struct mutate *m, vaddr_t start, vsize_t len);
+void _dl_push_range_size(struct range_vector *v, vaddr_t start, vsize_t len);
 void _dl_apply_immutable(elf_object_t *object);
 
 typedef void lock_cb(int);
