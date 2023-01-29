@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.2 2023/01/29 15:22:12 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.3 2023/01/29 15:26:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -27,8 +27,31 @@
 #include <openssl/bn.h>
 
 static int
+benchmark_bn_div_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
+    BIGNUM *r, BIGNUM *q)
+{
+	if (!BN_rand(a, a_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+		return 0;
+	if (!BN_rand(b, b_bits - 1, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
+		return 0;
+	if (!BN_set_bit(r, a_bits))
+		return 0;
+	if (!BN_set_bit(q, b_bits))
+		return 0;
+
+	return 1;
+}
+
+static void
+benchmark_bn_div_run_once(BIGNUM *r, BIGNUM *q, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
+{
+	if (!BN_div(r, q, a, b, bn_ctx))
+		errx(1, "BN_div");
+}
+
+static int
 benchmark_bn_mul_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
-    BIGNUM *r)
+    BIGNUM *r, BIGNUM *q)
 {
 	if (!BN_rand(a, a_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
 		return 0;
@@ -41,7 +64,7 @@ benchmark_bn_mul_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
 }
 
 static void
-benchmark_bn_mul_run_once(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
+benchmark_bn_mul_run_once(BIGNUM *r, BIGNUM *q, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
 {
 	if (!BN_mul(r, a, b, bn_ctx))
 		errx(1, "BN_mul");
@@ -49,7 +72,7 @@ benchmark_bn_mul_run_once(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
 
 static int
 benchmark_bn_sqr_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
-    BIGNUM *r)
+    BIGNUM *r, BIGNUM *q)
 {
 	if (!BN_rand(a, a_bits, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
 		return 0;
@@ -60,7 +83,7 @@ benchmark_bn_sqr_setup(BIGNUM *a, size_t a_bits, BIGNUM *b, size_t b_bits,
 }
 
 static void
-benchmark_bn_sqr_run_once(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
+benchmark_bn_sqr_run_once(BIGNUM *r, BIGNUM *q, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
 {
 	if (!BN_sqr(r, a, bn_ctx))
 		errx(1, "BN_sqr");
@@ -68,13 +91,125 @@ benchmark_bn_sqr_run_once(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *bn_ctx)
 
 struct benchmark {
 	const char *desc;
-	int (*setup)(BIGNUM *, size_t, BIGNUM *, size_t, BIGNUM *);
-	void (*run_once)(BIGNUM *, BIGNUM *, BIGNUM *, BN_CTX *);
+	int (*setup)(BIGNUM *, size_t, BIGNUM *, size_t, BIGNUM *, BIGNUM *);
+	void (*run_once)(BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BN_CTX *);
 	size_t a_bits;
 	size_t b_bits;
 };
 
 struct benchmark benchmarks[] = {
+	{
+		.desc = "BN_div (64 bit / 64 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 64,
+		.b_bits = 64,
+	},
+	{
+		.desc = "BN_div (128 bit / 128 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 128,
+		.b_bits = 128,
+	},
+	{
+		.desc = "BN_div (196 bit / 196 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 196,
+		.b_bits = 196,
+	},
+	{
+		.desc = "BN_div (256 bit / 256 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 256,
+		.b_bits = 256,
+	},
+	{
+		.desc = "BN_div (320 bit / 320 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 320,
+		.b_bits = 320,
+	},
+	{
+		.desc = "BN_div (384 bit / 384 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 384,
+		.b_bits = 384,
+	},
+	{
+		.desc = "BN_div (384 bit / 128 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 384,
+		.b_bits = 128,
+	},
+	{
+		.desc = "BN_div (448 bit / 256 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 448,
+		.b_bits = 256,
+	},
+	{
+		.desc = "BN_div (512 bit / 512 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 512,
+		.b_bits = 512,
+	},
+	{
+		.desc = "BN_div (768 bit / 256 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 768,
+		.b_bits = 256,
+	},
+	{
+		.desc = "BN_div (1024 bit / 128 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 1024,
+		.b_bits = 128,
+	},
+	{
+		.desc = "BN_div (2048 bit / 512 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 2048,
+		.b_bits = 128,
+	},
+	{
+		.desc = "BN_div (3072 bit / 1024 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 2048,
+		.b_bits = 1024,
+	},
+	{
+		.desc = "BN_div (4288 bit / 2176 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 2048,
+		.b_bits = 1024,
+	},
+	{
+		.desc = "BN_div (6144 bit / 2048 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 2048,
+		.b_bits = 1024,
+	},
+	{
+		.desc = "BN_div (16384 bit / 8192 bit)",
+		.setup = benchmark_bn_div_setup,
+		.run_once = benchmark_bn_div_run_once,
+		.a_bits = 16384,
+		.b_bits = 8192,
+	},
 	{
 		.desc = "BN_mul (128 bit x 128 bit)",
 		.setup = benchmark_bn_mul_setup,
@@ -203,7 +338,7 @@ static void
 benchmark_run(const struct benchmark *bm, int seconds)
 {
 	struct timespec start, end, duration;
-	BIGNUM *a, *b, *r;
+	BIGNUM *a, *b, *r, *q;
 	BN_CTX *bn_ctx;
 	int i;
 
@@ -220,8 +355,10 @@ benchmark_run(const struct benchmark *bm, int seconds)
 		errx(1, "BN_CTX_get");
 	if ((r = BN_CTX_get(bn_ctx)) == NULL)
 		errx(1, "BN_CTX_get");
+	if ((q = BN_CTX_get(bn_ctx)) == NULL)
+		errx(1, "BN_CTX_get");
 
-	if (!bm->setup(a, bm->a_bits, b, bm->b_bits, r))
+	if (!bm->setup(a, bm->a_bits, b, bm->b_bits, r, q))
 		errx(1, "benchmark setup failed");
 
 	benchmark_stop = 0;
@@ -232,7 +369,7 @@ benchmark_run(const struct benchmark *bm, int seconds)
 
 	fprintf(stderr, "Benchmarking %s for %ds: ", bm->desc, seconds);
 	while (!benchmark_stop) {
-		bm->run_once(r, a, b, bn_ctx);
+		bm->run_once(r, q, a, b, bn_ctx);
 		i++;
 	}
 	clock_gettime(CLOCK_MONOTONIC, &end);
