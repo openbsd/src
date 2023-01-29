@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.82 2022/04/22 21:09:48 jmc Exp $
+.\"	$OpenBSD: vi.1,v 1.83 2023/01/29 09:28:57 otto Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: April 22 2022 $
+.Dd $Mdocdate: January 29 2023 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -1593,10 +1593,10 @@ Erase to the previous
 column boundary.
 .Pp
 .It Cm ^ Ns Aq Cm control-D
-Erase all of the autoindent characters, and reset the autoindent level.
+Erase all of the autoindent characters.
 .Pp
 .It Cm 0 Ns Aq Cm control-D
-Erase all of the autoindent characters.
+Erase all of the autoindent characters, and reset the autoindent level.
 .Pp
 .It Aq Cm control-T
 Insert sufficient
