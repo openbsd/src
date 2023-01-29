@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2022/01/08 06:49:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2023/01/29 20:30:21 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2004,2021 Dale Rahn <drahn@openbsd.org>
@@ -91,8 +91,6 @@ static const Elf_Addr reloc_target_bitmask[] = {
 
 
 void _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rel);
-
-#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 int
 _dl_md_reloc(elf_object_t *object, int rel, int relsz)

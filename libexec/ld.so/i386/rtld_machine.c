@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.50 2022/05/10 20:23:57 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.51 2023/01/29 20:30:21 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -74,8 +74,6 @@
 
 #include "util.h"
 #include "resolve.h"
-
-#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
