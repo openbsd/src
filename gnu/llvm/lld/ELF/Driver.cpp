@@ -362,6 +362,7 @@ static void checkOptions() {
     case EM_386:
     case EM_AARCH64:
     case EM_MIPS:
+    case EM_PPC:
     case EM_PPC64:
     case EM_RISCV:
     case EM_SPARCV9:
