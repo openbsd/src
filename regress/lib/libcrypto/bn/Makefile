@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2023/01/21 13:24:39 jsing Exp $
+#	$OpenBSD: Makefile,v 1.20 2023/01/29 15:18:49 jsing Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -8,7 +8,7 @@ PROGS +=	bn_mod_exp2_mont
 PROGS +=	bn_mod_exp_zero
 PROGS +=	bn_mod_sqrt
 PROGS +=	bn_mont
-PROGS +=	bn_mul
+PROGS +=	bn_mul_div
 PROGS +=	bn_primes
 PROGS +=	bn_rand_interval
 PROGS +=	bn_shift
@@ -61,8 +61,8 @@ run-bc: bn_test.out
 
 CLEANFILES +=	bn_test.out bc.out
 
-benchmark: bn_mul bn_shift
-	./bn_mul --benchmark
+benchmark: bn_mul_div bn_shift
+	./bn_mul_div --benchmark
 	./bn_shift --benchmark
 .PHONY: benchmark
 
