@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.4 2023/01/29 15:33:43 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.5 2023/01/29 15:51:26 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/resource.h>
 #include <sys/time.h>
 
 #include <err.h>
@@ -338,6 +339,7 @@ static void
 benchmark_run(const struct benchmark *bm, int seconds)
 {
 	struct timespec start, end, duration;
+	struct rusage rusage;
 	BIGNUM *a, *b, *r, *q;
 	BN_CTX *bn_ctx;
 	int i;
@@ -368,17 +370,24 @@ benchmark_run(const struct benchmark *bm, int seconds)
 	i = 0;
 	alarm(seconds);
 
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	if (getrusage(RUSAGE_SELF, &rusage) == -1)
+		err(1, "getrusage failed");
+	TIMEVAL_TO_TIMESPEC(&rusage.ru_utime, &start);
 
 	fprintf(stderr, "Benchmarking %s for %ds: ", bm->desc, seconds);
 	while (!benchmark_stop) {
 		bm->run_once(r, q, a, b, bn_ctx);
 		i++;
 	}
-	clock_gettime(CLOCK_MONOTONIC, &end);
+	if (getrusage(RUSAGE_SELF, &rusage) == -1)
+		err(1, "getrusage failed");
+	TIMEVAL_TO_TIMESPEC(&rusage.ru_utime, &end);
+
 	timespecsub(&end, &start, &duration);
-	fprintf(stderr, "%d iterations in %f seconds\n", i,
-	    duration.tv_sec + duration.tv_nsec / 1000000000.0);
+	fprintf(stderr, "%d iterations in %f seconds - %llu op/s\n", i,
+	    duration.tv_sec + duration.tv_nsec / 1000000000.0,
+	    (size_t)i * 1000000000 /
+	    (duration.tv_sec * 1000000000 + duration.tv_nsec));
 
 	BN_CTX_end(bn_ctx);
 	BN_CTX_free(bn_ctx);
