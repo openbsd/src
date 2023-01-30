@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.124 2022/11/26 17:50:26 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.125 2023/01/30 03:31:59 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,8 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
-#include <sys/selinfo.h>
+#include <sys/event.h>
+#include <sys/mutex.h>
 #include <sys/refcnt.h>
 
 #include <net/if.h>
@@ -118,6 +119,7 @@ struct pppx_if;
  *       I       immutable after creation
  *       K       kernel lock
  *       N       net lock
+ *       m       pxd_mtx
  */
 
 struct pppx_dev {
@@ -125,10 +127,9 @@ struct pppx_dev {
 	int			pxd_unit;	/* [I] */
 
 	/* kq shizz */
-	struct selinfo		pxd_rsel;
-	struct mutex		pxd_rsel_mtx;
-	struct selinfo		pxd_wsel;
-	struct mutex		pxd_wsel_mtx;
+	struct mutex		pxd_mtx;
+	struct klist		pxd_rklist;	/* [m] */
+	struct klist		pxd_wklist;	/* [m] */
 
 	/* queue of packets for userland to service - protected by splnet */
 	struct mbuf_queue	pxd_svcq;
@@ -195,22 +196,28 @@ void		pppxattach(int);
 
 void		filt_pppx_rdetach(struct knote *);
 int		filt_pppx_read(struct knote *, long);
+int		filt_pppx_modify(struct kevent *, struct knote *);
+int		filt_pppx_process(struct knote *, struct kevent *);
 
 const struct filterops pppx_rd_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_pppx_rdetach,
 	.f_event	= filt_pppx_read,
+	.f_modify	= filt_pppx_modify,
+	.f_process	= filt_pppx_process,
 };
 
 void		filt_pppx_wdetach(struct knote *);
 int		filt_pppx_write(struct knote *, long);
 
 const struct filterops pppx_wr_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_pppx_wdetach,
 	.f_event	= filt_pppx_write,
+	.f_modify	= filt_pppx_modify,
+	.f_process	= filt_pppx_process,
 };
 
 struct pppx_dev *
@@ -257,8 +264,9 @@ pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 	}
 
 	pxd->pxd_unit = minor(dev);
-	mtx_init(&pxd->pxd_rsel_mtx, IPL_NET);
-	mtx_init(&pxd->pxd_wsel_mtx, IPL_NET);
+	mtx_init(&pxd->pxd_mtx, IPL_NET);
+	klist_init_mutex(&pxd->pxd_rklist, &pxd->pxd_mtx);
+	klist_init_mutex(&pxd->pxd_wklist, &pxd->pxd_mtx);
 	LIST_INIT(&pxd->pxd_pxis);
 
 	mq_init(&pxd->pxd_svcq, 128, IPL_NET);
@@ -453,29 +461,24 @@ int
 pppxkqfilter(dev_t dev, struct knote *kn)
 {
 	struct pppx_dev *pxd = pppx_dev2pxd(dev);
-	struct mutex *mtx;
 	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		mtx = &pxd->pxd_rsel_mtx;
-		klist = &pxd->pxd_rsel.si_note;
+		klist = &pxd->pxd_rklist;
 		kn->kn_fop = &pppx_rd_filtops;
 		break;
 	case EVFILT_WRITE:
-		mtx = &pxd->pxd_wsel_mtx;
-		klist = &pxd->pxd_wsel.si_note;
+		klist = &pxd->pxd_wklist;
 		kn->kn_fop = &pppx_wr_filtops;
 		break;
 	default:
 		return (EINVAL);
 	}
 
-	kn->kn_hook = (caddr_t)pxd;
+	kn->kn_hook = pxd;
 
-	mtx_enter(mtx);
-	klist_insert_locked(klist, kn);
-	mtx_leave(mtx);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -483,18 +486,17 @@ pppxkqfilter(dev_t dev, struct knote *kn)
 void
 filt_pppx_rdetach(struct knote *kn)
 {
-	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
-	struct klist *klist = &pxd->pxd_rsel.si_note;
+	struct pppx_dev *pxd = kn->kn_hook;
 
-	mtx_enter(&pxd->pxd_rsel_mtx);
-	klist_remove_locked(klist, kn);
-	mtx_leave(&pxd->pxd_rsel_mtx);
+	klist_remove(&pxd->pxd_rklist, kn);
 }
 
 int
 filt_pppx_read(struct knote *kn, long hint)
 {
-	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
+	struct pppx_dev *pxd = kn->kn_hook;
+
+	MUTEX_ASSERT_LOCKED(&pxd->pxd_mtx);
 
 	kn->kn_data = mq_hdatalen(&pxd->pxd_svcq);
 
@@ -504,12 +506,9 @@ filt_pppx_read(struct knote *kn, long hint)
 void
 filt_pppx_wdetach(struct knote *kn)
 {
-	struct pppx_dev *pxd = (struct pppx_dev *)kn->kn_hook;
-	struct klist *klist = &pxd->pxd_wsel.si_note;
+	struct pppx_dev *pxd = kn->kn_hook;
 
-	mtx_enter(&pxd->pxd_wsel_mtx);
-	klist_remove_locked(klist, kn);
-	mtx_leave(&pxd->pxd_wsel_mtx);
+	klist_remove(&pxd->pxd_wklist, kn);
 }
 
 int
@@ -517,6 +516,32 @@ filt_pppx_write(struct knote *kn, long hint)
 {
 	/* We're always ready to accept a write. */
 	return (1);
+}
+
+int
+filt_pppx_modify(struct kevent *kev, struct knote *kn)
+{
+	struct pppx_dev *pxd = kn->kn_hook;
+	int active;
+
+	mtx_enter(&pxd->pxd_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&pxd->pxd_mtx);
+
+	return (active);
+}
+
+int
+filt_pppx_process(struct knote *kn, struct kevent *kev)
+{
+	struct pppx_dev *pxd = kn->kn_hook;
+	int active;
+
+	mtx_enter(&pxd->pxd_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&pxd->pxd_mtx);
+
+	return (active);
 }
 
 int
@@ -535,6 +560,9 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 	LIST_REMOVE(pxd, pxd_entry);
 
 	mq_purge(&pxd->pxd_svcq);
+
+	klist_free(&pxd->pxd_rklist);
+	klist_free(&pxd->pxd_rklist);
 
 	free(pxd, M_DEVBUF, sizeof(*pxd));
 
@@ -875,7 +903,9 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				wakeup((caddr_t)pxi->pxi_dev);
 				pxi->pxi_dev->pxd_waiting = 0;
 			}
-			selwakeup(&pxi->pxi_dev->pxd_rsel);
+			mtx_enter(&pxi->pxi_dev->pxd_mtx);
+			KNOTE(&pxi->pxi_dev->pxd_rklist, 0);
+			mtx_leave(&pxi->pxi_dev->pxd_mtx);
 		}
 	}
 
@@ -921,6 +951,14 @@ pppx_if_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 RBT_GENERATE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
+/*
+ * Locks used to protect struct members and global data
+ *       I       immutable after creation
+ *       K       kernel lock
+ *       N       net lock
+ *       m       sc_mtx
+ */
+
 struct pppac_softc {
 	struct ifnet	sc_if;
 	dev_t		sc_dev;		/* [I] */
@@ -928,10 +966,9 @@ struct pppac_softc {
 	LIST_ENTRY(pppac_softc)
 			sc_entry;	/* [K] */
 
-	struct mutex	sc_rsel_mtx;
-	struct selinfo	sc_rsel;
-	struct mutex	sc_wsel_mtx;
-	struct selinfo	sc_wsel;
+	struct mutex	sc_mtx;
+	struct klist	sc_rklist;	/* [m] */
+	struct klist	sc_wklist;	/* [m] */
 
 	struct pipex_session
 			*sc_multicast_session;
@@ -944,22 +981,28 @@ LIST_HEAD(pppac_list, pppac_softc);	/* [K] */
 
 static void	filt_pppac_rdetach(struct knote *);
 static int	filt_pppac_read(struct knote *, long);
+static int	filt_pppac_modify(struct kevent *, struct knote *);
+static int	filt_pppac_process(struct knote *, struct kevent *);
 
 static const struct filterops pppac_rd_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_pppac_rdetach,
-	.f_event	= filt_pppac_read
+	.f_event	= filt_pppac_read,
+	.f_modify	= filt_pppac_modify,
+	.f_process	= filt_pppac_process,
 };
 
 static void	filt_pppac_wdetach(struct knote *);
 static int	filt_pppac_write(struct knote *, long);
 
 static const struct filterops pppac_wr_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_pppac_wdetach,
-	.f_event	= filt_pppac_write
+	.f_event	= filt_pppac_write,
+	.f_modify	= filt_pppac_modify,
+	.f_process	= filt_pppac_process,
 };
 
 static struct pppac_list pppac_devs = LIST_HEAD_INITIALIZER(pppac_devs);
@@ -1020,8 +1063,9 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	session->ownersc = sc;
 	sc->sc_multicast_session = session;
 
-	mtx_init(&sc->sc_rsel_mtx, IPL_SOFTNET);
-	mtx_init(&sc->sc_wsel_mtx, IPL_SOFTNET);
+	mtx_init(&sc->sc_mtx, IPL_SOFTNET);
+	klist_init_mutex(&sc->sc_rklist, &sc->sc_mtx);
+	klist_init_mutex(&sc->sc_wklist, &sc->sc_mtx);
 	mq_init(&sc->sc_mq, IFQ_MAXLEN, IPL_SOFTNET);
 
 	ifp = &sc->sc_if;
@@ -1205,18 +1249,15 @@ int
 pppackqfilter(dev_t dev, struct knote *kn)
 {
 	struct pppac_softc *sc = pppac_lookup(dev);
-	struct mutex *mtx;
 	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		mtx = &sc->sc_rsel_mtx;
-		klist = &sc->sc_rsel.si_note;
+		klist = &sc->sc_rklist;
 		kn->kn_fop = &pppac_rd_filtops;
 		break;
 	case EVFILT_WRITE:
-		mtx = &sc->sc_wsel_mtx;
-		klist = &sc->sc_wsel.si_note;
+		klist = &sc->sc_wklist;
 		kn->kn_fop = &pppac_wr_filtops;
 		break;
 	default:
@@ -1225,9 +1266,7 @@ pppackqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	mtx_enter(mtx);
-	klist_insert_locked(klist, kn);
-	mtx_leave(mtx);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -1236,17 +1275,16 @@ static void
 filt_pppac_rdetach(struct knote *kn)
 {
 	struct pppac_softc *sc = kn->kn_hook;
-	struct klist *klist = &sc->sc_rsel.si_note;
 
-	mtx_enter(&sc->sc_rsel_mtx);
-	klist_remove_locked(klist, kn);
-	mtx_leave(&sc->sc_rsel_mtx);
+	klist_remove(&sc->sc_rklist, kn);
 }
 
 static int
 filt_pppac_read(struct knote *kn, long hint)
 {
 	struct pppac_softc *sc = kn->kn_hook;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	kn->kn_data = mq_hdatalen(&sc->sc_mq);
 
@@ -1257,11 +1295,8 @@ static void
 filt_pppac_wdetach(struct knote *kn)
 {
 	struct pppac_softc *sc = kn->kn_hook;
-	struct klist *klist = &sc->sc_wsel.si_note;
 
-	mtx_enter(&sc->sc_wsel_mtx);
-	klist_remove_locked(klist, kn);
-	mtx_leave(&sc->sc_wsel_mtx);
+	klist_remove(&sc->sc_wklist, kn);
 }
 
 static int
@@ -1271,12 +1306,37 @@ filt_pppac_write(struct knote *kn, long hint)
 	return (1);
 }
 
+static int
+filt_pppac_modify(struct kevent *kev, struct knote *kn)
+{
+	struct pppac_softc *sc = kn->kn_hook;
+	int active;
+
+	mtx_enter(&sc->sc_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&sc->sc_mtx);
+
+	return (active);
+}
+
+static int
+filt_pppac_process(struct knote *kn, struct kevent *kev)
+{
+	struct pppac_softc *sc = kn->kn_hook;
+	int active;
+
+	mtx_enter(&sc->sc_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&sc->sc_mtx);
+
+	return (active);
+}
+
 int
 pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pppac_softc *sc = pppac_lookup(dev);
 	struct ifnet *ifp = &sc->sc_if;
-	int s;
 
 	sc->sc_ready = 0;
 
@@ -1286,10 +1346,8 @@ pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	if_detach(ifp);
 
-	s = splhigh();
-	klist_invalidate(&sc->sc_rsel.si_note);
-	klist_invalidate(&sc->sc_wsel.si_note);
-	splx(s);
+	klist_free(&sc->sc_rklist);
+	klist_free(&sc->sc_wklist);
 
 	pool_put(&pipex_session_pool, sc->sc_multicast_session);
 	pipex_destroy_all_sessions(sc);
@@ -1461,6 +1519,8 @@ bad:
 
 	if (!mq_empty(&sc->sc_mq)) {
 		wakeup(sc);
-		selwakeup(&sc->sc_rsel);
+		mtx_enter(&sc->sc_mtx);
+		KNOTE(&sc->sc_rklist, 0);
+		mtx_leave(&sc->sc_mtx);
 	}
 }
