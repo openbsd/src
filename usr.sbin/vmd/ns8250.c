@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.34 2022/12/28 21:30:19 jmc Exp $ */
+/* $OpenBSD: ns8250.c,v 1.35 2023/01/30 21:43:12 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -153,14 +153,15 @@ com_rcv_event(int fd, short kind, void *arg)
 		return;
 	}
 
-	if ((com1_dev.regs.lsr & LSR_RXRDY) == 0)
+	if ((com1_dev.regs.lsr & LSR_RXRDY) == 0) {
 		com_rcv(&com1_dev, (uintptr_t)arg, 0);
 
-	/* If pending interrupt, inject */
-	if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
-		/* XXX: vcpu_id */
-		vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
-		vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		/* If pending interrupt, inject */
+		if ((com1_dev.regs.iir & IIR_NOPEND) == 0) {
+			/* XXX: vcpu_id */
+			vcpu_assert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+			vcpu_deassert_pic_irq((uintptr_t)arg, 0, com1_dev.irq);
+		}
 	}
 
 	mutex_unlock(&com1_dev.mutex);
