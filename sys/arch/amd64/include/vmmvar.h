@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.88 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.89 2023/01/30 02:32:01 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -956,6 +956,9 @@ struct vcpu {
 
 	/* Shadowed MSRs */
 	uint64_t vc_shadow_pat;			/* [v] */
+
+	/* Userland Protection Keys */
+	uint32_t vc_pkru;			/* [v] */
 
 	/* VMX only (all requiring [v]) */
 	uint64_t vc_vmx_basic;

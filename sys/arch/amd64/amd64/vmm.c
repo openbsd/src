@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.335 2023/01/13 14:15:49 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.336 2023/01/30 02:32:01 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -128,6 +128,7 @@ struct vmm_softc {
 	uint32_t		nr_svm_cpus;	/* [I] */
 	uint32_t		nr_rvi_cpus;	/* [I] */
 	uint32_t		nr_ept_cpus;	/* [I] */
+	uint8_t			pkru_enabled;	/* [I] */
 
 	/* Managed VMs */
 	struct vmlist_head	vm_list;	/* [v] */
@@ -428,6 +429,10 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 		if (ci->ci_vmm_flags & CI_VMM_EPT)
 			sc->nr_ept_cpus++;
 	}
+
+	sc->pkru_enabled = 0;
+	if (rcr4() & CR4_PKE)
+		sc->pkru_enabled = 1;
 
 	SLIST_INIT(&sc->vm_list);
 	rw_init(&sc->vm_lock, "vm_list");
@@ -5029,10 +5034,20 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 
 		TRACEPOINT(vmm, guest_enter, vcpu, vrp);
 
+		/* Restore any guest PKRU state. */
+		if (vmm_softc->pkru_enabled)
+			wrpkru(vcpu->vc_pkru);
+
 		ret = vmx_enter_guest(&vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate,
 		    (vcpu->vc_vmx_vmcs_state == VMCS_LAUNCHED),
 		    ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr);
+
+		/* Restore host PKRU state. */
+		if (vmm_softc->pkru_enabled) {
+			vcpu->vc_pkru = rdpkru(0);
+			wrpkru(PGK_VALUE);
+		}
 
 		bare_lgdt(&gdtr);
 		lidt(&idtr);
@@ -7331,11 +7346,21 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 			break;
 		}
 
+		/* Restore any guest PKRU state. */
+		if (vmm_softc->pkru_enabled)
+			wrpkru(vcpu->vc_pkru);
+
 		KASSERT(vmcb->v_intercept1 & SVM_INTERCEPT_INTR);
 		wrmsr(MSR_AMD_VM_HSAVE_PA, vcpu->vc_svm_hsa_pa);
 
 		ret = svm_enter_guest(vcpu->vc_control_pa,
 		    &vcpu->vc_gueststate, &gdt);
+
+		/* Restore host PKRU state. */
+		if (vmm_softc->pkru_enabled) {
+			vcpu->vc_pkru = rdpkru(0);
+			wrpkru(PGK_VALUE);
+		}
 
 		/*
 		 * On exit, interrupts are disabled, and we are running with
