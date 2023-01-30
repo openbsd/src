@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apm.4,v 1.7 2022/03/31 17:27:22 naddy Exp $
+.\"     $OpenBSD: apm.4,v 1.8 2023/01/30 14:43:29 jcs Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"	AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: January 30 2023 $
 .Dt APM 4 loongson
 .Os
 .Sh NAME
@@ -141,48 +141,6 @@ value contains the estimated percentage of battery life available.
 The
 .Va minutes_left
 value contains the estimated number of minutes of battery life remaining.
-.\" .It Dv APM_IOC_NEXTEVENT
-.\" .Em NOT YET SUPPORTED on loongson
-.\" .Pq Li "struct apm_event_info"
-.\" The
-.\" .Tn APM
-.\" driver stores up to
-.\" .Dv APM_NEVENTS
-.\" events.
-.\" This was defined as 16 at the time this documentation was written.
-.\" If the event list is full when a new event is detected, the new event is lost.
-.\" .Dv APM_IOC_NEXTEVENT
-.\" ioctl returns the next event on the list or
-.\" .Er EAGAIN
-.\" if the event list is empty.
-.\" The format of the returned event is:
-.\" .Bd -literal -offset indent
-.\" struct apm_event_info {
-.\"	u_int type;
-.\"	u_int index;
-.\"	u_int spare[8];
-.\" };
-.\" .Ed
-.\" where
-.\" .Va index
-.\" is a sequential count of events that can be used to check if any
-.\" events were lost and
-.\" .Va type
-.\" is one of:
-.\" .Pp
-.\" .Bl -tag -width Ds -offset indent -compact
-.\" .It Dv APM_STANDBY_REQ
-.\" .It Dv APM_SUSPEND_REQ
-.\" .It Dv APM_NORMAL_RESUME
-.\" .It Dv APM_CRIT_RESUME
-.\" .It Dv APM_BATTERY_LOW
-.\" .It Dv APM_POWER_CHANGE
-.\" .It Dv APM_UPDATE_TIME
-.\" .It Dv APM_CRIT_SUSPEND_REQ
-.\" .It Dv APM_USER_STANDBY_REQ
-.\" .It Dv APM_USER_SUSPEND_REQ
-.\" .It Dv APM_SYS_STANDBY_RESUME
-.\" .El
 .\" .It Dv APM_IOC_DEV_CTL
 .\" .Em NOT YET SUPPORTED on loongson
 .\" .Pq Li "struct apm_ctl"
