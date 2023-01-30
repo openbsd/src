@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.5 2022/05/31 09:46:54 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.6 2023/01/30 17:02:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -27,10 +27,6 @@
 
 struct rde_memstats rdemem;
 struct rde_community comm;
-struct rde_peer peer = {
-	.conf.remote_as = 22512,
-	.conf.local_as = 42,
-};
 
 static void
 dump(uint8_t *b, size_t len)
@@ -117,10 +113,15 @@ test_filter(size_t num, struct testfilter *f)
 {
 	size_t l;
 	int r;
+	struct rde_peer *p = &peer;
 
 	communities_clean(&comm);
+
+	if (f->peer != NULL)
+		p = f->peer;
+
 	for (l = 0; f->in[l] != -1; l++) {
-		r = community_set(&comm, &filters[f->in[l]], &peer);
+		r = community_set(&comm, &filters[f->in[l]], p);
 		if (r != 1) {
 			printf("Test %zu: community_set %zu "
 			    "unexpected return %d != 1\n",
@@ -130,7 +131,7 @@ test_filter(size_t num, struct testfilter *f)
 	}
 
 	if (f->match != -1) {
-		r = community_match(&comm, &filters[f->match], &peer);
+		r = community_match(&comm, &filters[f->match], p);
 		if (r != f->mout) {
 			printf("Test %zu: community_match "
 			    "unexpected return %d != %d\n", num, r, f->mout);
@@ -139,9 +140,9 @@ test_filter(size_t num, struct testfilter *f)
 	}
 
 	if (f->delete != -1) {
-		community_delete(&comm, &filters[f->delete], &peer);
+		community_delete(&comm, &filters[f->delete], p);
 
-		if (community_match(&comm, &filters[f->delete], &peer) != 0) {
+		if (community_match(&comm, &filters[f->delete], p) != 0) {
 			printf("Test %zu: community_delete still around\n",
 			    num);
 			return -1;
