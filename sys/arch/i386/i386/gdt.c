@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.43 2018/06/22 13:21:14 bluhm Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.44 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: gdt.c,v 1.28 2002/12/14 09:38:50 junyoung Exp $	*/
 
 /*-
@@ -44,11 +44,7 @@
 #include <sys/systm.h>
 #include <sys/mutex.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 #include <machine/gdt.h>
-#include <machine/pcb.h>
 #include <machine/tss.h>
 
 struct mutex gdt_lock_store = MUTEX_INITIALIZER(IPL_HIGH);

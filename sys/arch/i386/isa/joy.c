@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.16 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: joy.c,v 1.17 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -38,13 +38,11 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <machine/joystick.h>
 #include <machine/conf.h>
 
-#include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/joyreg.h>

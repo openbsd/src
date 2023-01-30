@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpiapm.c,v 1.2 2020/04/03 08:24:52 mpi Exp $ */
+/*	$OpenBSD: acpiapm.c,v 1.3 2023/01/30 10:49:04 jsg Exp $ */
 /*
  * Copyright (c) 2007 Ted Unangst <tedu@openbsd.org>
  *
@@ -17,8 +17,6 @@
 
 #include <sys/param.h>
 #include <machine/conf.h>
-#include <sys/event.h>
-
 
 int (*acpiapm_open)(dev_t, int, int, struct proc *);
 int (*acpiapm_close)(dev_t, int, int, struct proc *);

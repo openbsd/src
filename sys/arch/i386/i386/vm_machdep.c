@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.72 2022/02/21 19:18:52 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.73 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -45,20 +45,10 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/signalvar.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>
-#include <sys/exec.h>
-#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
-#include <machine/gdt.h>
-#include <machine/reg.h>
-#include <machine/specialreg.h>
 
 #include "npx.h"
 

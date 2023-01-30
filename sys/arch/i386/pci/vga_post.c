@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_post.c,v 1.10 2021/01/03 02:29:28 jmatthew Exp $ */
+/* $OpenBSD: vga_post.c,v 1.11 2023/01/30 10:49:05 jsg Exp $ */
 /* $NetBSD: vga_post.c,v 1.12 2009/03/15 21:32:36 cegger Exp $ */
 
 /*-
@@ -31,7 +31,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>

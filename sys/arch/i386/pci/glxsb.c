@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.41 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.42 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -38,7 +38,6 @@
 
 #ifdef CRYPTO
 #include <crypto/cryptodev.h>
-#include <crypto/aes.h>
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
 #endif

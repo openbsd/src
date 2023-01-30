@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.30 2017/09/08 05:36:51 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.31 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -12,11 +12,8 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
-#include <sys/ioccom.h>
 #include <sys/systm.h>
 
-#include <machine/cputypes.h>
-#include <machine/psl.h>
 #include <machine/pctr.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>

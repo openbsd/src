@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.60 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.61 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.21 1997/06/06 23:14:20 thorpej Exp $	*/
 
 /*
@@ -47,8 +47,7 @@
 
 #include "pci.h"
 #include "eisa.h"
-#include "isa.h"
-#include "apm.h"
+#include "isadma.h"
 #include "bios.h"
 #include "acpi.h"
 #include "ipmi.h"

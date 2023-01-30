@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.25 2014/05/04 20:09:15 sf Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.26 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -30,8 +30,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 #include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
@@ -40,7 +38,6 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibiosvar.h>
 

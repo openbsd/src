@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.108 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.109 2023/01/30 10:49:04 jsg Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -47,13 +47,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
-#include <sys/socket.h>
-#include <sys/socketvar.h>
 #include <sys/hibernate.h>
 
 #include <net/if.h>
@@ -63,12 +58,8 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/pte.h>
-#include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/biosvar.h>
-
-#include <dev/cons.h>
 
 #include "ioapic.h"
 
@@ -76,10 +67,6 @@
 
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
-#endif
-
-#if NACPI > 0
-#include <dev/acpi/acpivar.h>
 #endif
 
 #ifdef MULTIPROCESSOR

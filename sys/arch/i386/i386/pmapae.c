@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.67 2022/06/29 14:24:29 dv Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.68 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -80,23 +80,16 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
-#include <sys/kernel.h>
 #include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/cpu.h>
 #include <machine/specialreg.h>
-#include <machine/gdt.h>
 
 #include <dev/isa/isareg.h>
 #include <i386/isa/isa_machdep.h>
-#include <sys/msgbuf.h>
-#include <stand/boot/bootarg.h>
 
 #include "ksyms.h"
 

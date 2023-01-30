@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd756.c,v 1.5 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: amd756.c,v 1.6 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -62,15 +62,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/amd756reg.h>

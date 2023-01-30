@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.35 2015/12/17 17:16:04 tedu Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.36 2023/01/30 10:49:04 jsg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,15 +66,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
-
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.54 2021/08/17 19:44:01 tb Exp $ */
+/*	$OpenBSD: est.c,v 1.55 2023/01/30 10:49:05 jsg Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -67,7 +67,6 @@
 
 #if NACPICPU > 0
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/acpivar.h>
 #endif
 
 /* Convert MHz and mV into IDs for passing to the MSR. */

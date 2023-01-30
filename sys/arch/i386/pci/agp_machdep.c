@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_machdep.c,v 1.20 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: agp_machdep.c,v 1.21 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 - 2009 Owain G. Ainsworth <oga@openbsd.org>
@@ -44,11 +44,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/rwlock.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/agpvar.h>
 
 #include <uvm/uvm_extern.h>

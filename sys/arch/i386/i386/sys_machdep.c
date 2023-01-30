@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.40 2018/07/09 19:20:29 guenther Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.41 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -38,28 +38,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/uio.h>
-#include <sys/kernel.h>
-#include <sys/mtio.h>
-#include <sys/buf.h>
-#include <sys/signal.h>
-#include <sys/malloc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/gdt.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/sysarch.h>
 
 extern struct vm_map *kernel_map;

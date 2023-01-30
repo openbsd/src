@@ -1,4 +1,4 @@
-/*	$OpenBSD: via82c586.c,v 1.11 2008/06/26 05:42:11 ray Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.12 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -62,14 +62,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/via82c586reg.h>

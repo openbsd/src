@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.63 2021/03/06 09:20:50 jsg Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.64 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -86,14 +86,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/i8259.h>
 #include <machine/i82093var.h>
 
 #include <dev/pci/pcireg.h>

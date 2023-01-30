@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.43 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.44 2023/01/30 10:49:05 jsg Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.7 2003/07/14 22:32:40 lukem Exp $	*/
 
 /*-
@@ -73,19 +73,13 @@
 #include <machine/bus.h>
 #include <machine/psl.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
 
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
-#include <machine/pmap.h>
-
 #include <machine/mpbiosvar.h>
-
-#include "isa.h"
 
 /*
  * XXX locking

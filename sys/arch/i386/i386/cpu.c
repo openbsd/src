@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.110 2022/12/06 01:56:44 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.111 2023/01/30 10:49:04 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -72,7 +72,6 @@
 #include <sys/timeout.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/memrange.h>
 #include <sys/atomic.h>
 
@@ -84,9 +83,7 @@
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
-#include <machine/npx.h>
 #include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -94,7 +91,6 @@
 #include <machine/pio.h>
 
 #if NLAPIC > 0
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif

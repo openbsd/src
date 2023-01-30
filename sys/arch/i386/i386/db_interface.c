@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.44 2022/04/14 19:47:11 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.45 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /*
@@ -33,20 +33,14 @@
  * Interface to new debugger.
  */
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <sys/systm.h>
-#include <sys/mutex.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
 
-#include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
-#include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>
 #include <ddb/db_var.h>

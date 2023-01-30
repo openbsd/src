@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.33 2020/09/13 11:53:16 jsg Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.34 2023/01/30 10:49:05 jsg Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -39,20 +39,14 @@
 #include "npx.h"
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/memrange.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/intr.h>
 #include <machine/atomic.h>
-#include <machine/i82093var.h>
 #include <machine/db_machdep.h>
-#include <machine/mplock.h>
-#include <machine/vmmvar.h>
 
 void i386_ipi_nop(struct cpu_info *);
 void i386_ipi_halt(struct cpu_info *);

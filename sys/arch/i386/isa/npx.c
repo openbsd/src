@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.73 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: npx.c,v 1.74 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -42,16 +42,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/npx.h>
 #include <machine/pio.h>
@@ -61,7 +58,6 @@
 #include <machine/specialreg.h>
 #include <machine/i8259.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 /*

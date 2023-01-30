@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.42 2020/05/14 06:58:54 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.43 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_access.h>
 #include <ddb/db_variables.h>
-#include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpcib.c,v 1.7 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: gscpcib.c,v 1.8 2023/01/30 10:49:05 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,7 +25,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
-#include <sys/kernel.h>
 
 #include <machine/bus.h>
 

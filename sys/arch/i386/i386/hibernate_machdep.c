@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.60 2023/01/17 23:12:37 jsg Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.61 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -18,17 +18,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/hibernate.h>
-#include <sys/timeout.h>
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_pmemrange.h>
 
 #include <machine/biosvar.h>
 #include <machine/hibernate.h>

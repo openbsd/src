@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.63 2022/04/16 19:32:54 naddy Exp $ */
+/*	$OpenBSD: esm.c,v 1.64 2023/01/30 10:49:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -20,7 +20,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/timeout.h>
 #include <sys/queue.h>

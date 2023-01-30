@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.127 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: bios.c,v 1.128 2023/01/30 10:49:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -30,7 +30,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
@@ -43,14 +42,9 @@
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 
-#include <machine/cpu.h>
-#include <machine/pio.h>
-#include <machine/cpufunc.h>
 #include <machine/conf.h>
 #include <machine/gdt.h>
-#include <machine/pcb.h>
 #include <machine/biosvar.h>
-#include <machine/apmvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/smbiosvar.h>
 
@@ -58,9 +52,6 @@
 #include <i386/isa/isa_machdep.h>
 
 #include <dev/pci/pcivar.h>
-
-#include <dev/acpi/acpireg.h>
-#include <dev/acpi/acpivar.h>
 
 #include "apm.h"
 #include "acpi.h"
@@ -70,9 +61,8 @@
 
 #include "com.h"
 #if NCOM > 0
-#include <sys/tty.h>
+#include <sys/termios.h>
 #include <dev/ic/comvar.h>
-#include <dev/ic/comreg.h>
 #endif
 
 #include "softraid.h"

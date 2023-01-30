@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.31 2022/02/21 10:24:28 mpi Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.32 2023/01/30 10:49:05 jsg Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -35,9 +35,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/ichreg.h>
-
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
 
 struct ichpcib_softc {
 	struct device sc_dev;

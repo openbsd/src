@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.6 2016/03/07 05:32:47 naddy Exp $ */
+/*	$OpenBSD: nvram.c,v 1.7 2023/01/30 10:49:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Joshua Stein <jcs@openbsd.org>
@@ -29,10 +29,8 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/fcntl.h>
-#include <sys/conf.h>
 
 #include <dev/ic/mc146818reg.h>
-#include <i386/isa/nvram.h>
 
 /* checksum is calculated over bytes 2 to 31 and stored in byte 32 */
 #define NVRAM_CSUM_START	(MC_NVRAM_START + 2)

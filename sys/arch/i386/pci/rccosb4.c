@@ -1,4 +1,4 @@
-/*	$OpenBSD: rccosb4.c,v 1.6 2015/09/01 06:01:24 deraadt Exp $	*/
+/*	$OpenBSD: rccosb4.c,v 1.7 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Michael Shalayeff
@@ -32,14 +32,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/piixvar.h>

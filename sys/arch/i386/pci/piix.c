@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.11 2015/09/01 06:01:24 deraadt Exp $	*/
+/*	$OpenBSD: piix.c,v 1.12 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -62,15 +62,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/piixreg.h>

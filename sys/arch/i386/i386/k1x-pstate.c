@@ -1,4 +1,4 @@
-/*	$OpenBSD: k1x-pstate.c,v 1.13 2021/08/11 18:46:11 tb Exp $ */
+/*	$OpenBSD: k1x-pstate.c,v 1.14 2023/01/30 10:49:05 jsg Exp $ */
 /*
  * Copyright (c) 2011 Bryan Steele <brynet@gmail.com>
  *
@@ -29,7 +29,6 @@
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
@@ -37,7 +36,6 @@
 
 #if NACPICPU > 0
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/acpivar.h>
 #endif
 
 extern int setperf_prio;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.53 2022/12/06 01:56:44 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.54 2023/01/30 10:49:05 jsg Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -40,13 +40,10 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
-#include <machine/vmparam.h>
 #include <machine/mpbiosvar.h>
-#include <machine/pcb.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 

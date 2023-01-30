@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.13 2020/09/11 09:27:10 mpi Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.14 2023/01/30 10:49:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -22,8 +22,6 @@
 #include <sys/mutex.h>
 
 #include <machine/db_machdep.h>
-
-#include <ddb/db_output.h>
 
 struct db_mutex ddb_mp_mutex = DB_MUTEX_INITIALIZER;
 

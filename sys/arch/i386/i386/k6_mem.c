@@ -1,4 +1,4 @@
-/* $OpenBSD: k6_mem.c,v 1.13 2018/07/30 14:19:12 kettenis Exp $ */
+/* $OpenBSD: k6_mem.c,v 1.14 2023/01/30 10:49:05 jsg Exp $ */
 /*-
  * Copyright (c) 1999 Brian Fundakowski Feldman
  * All rights reserved.
@@ -29,14 +29,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/ioccom.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
 
 #include <machine/cpufunc.h>
-#include <machine/specialreg.h>
 
 /*
  * A K6-2 MTRR is defined as the highest 15 bits having the address, the next

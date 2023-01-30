@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.93 2022/02/21 10:24:28 mpi Exp $ */
+/*	$OpenBSD: pchb.c,v 1.94 2023/01/30 10:49:05 jsg Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -59,7 +59,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/timeout.h>
-#include <sys/rwlock.h>
 
 #include <machine/bus.h>
 

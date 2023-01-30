@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.158 2023/01/18 05:06:44 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.159 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -45,27 +45,20 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/trap.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
 
-#include <sys/exec.h>
-
 #include "isa.h"
-#include "npx.h"
 
 int upageflttrap(struct trapframe *, uint32_t);
 int kpageflttrap(struct trapframe *, uint32_t);

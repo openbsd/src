@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdmsr.c,v 1.11 2022/02/21 10:24:28 mpi Exp $	*/
+/*      $OpenBSD: amdmsr.c,v 1.12 2023/01/30 10:49:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -24,17 +24,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/gpio.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
+
 #include <machine/amdmsr.h>
-
-#include <machine/bus.h>
 #include <machine/cpufunc.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #ifdef APERTURE
 static int amdmsr_open_cnt;

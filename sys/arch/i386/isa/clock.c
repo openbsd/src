@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.62 2022/12/06 01:56:44 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.63 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -90,13 +90,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/clockintr.h>
-#include <sys/device.h>
-#include <sys/stdint.h>
 #include <sys/timeout.h>
 #include <sys/timetc.h>
 #include <sys/mutex.h>
 
-#include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>

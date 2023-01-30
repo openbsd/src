@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.54 2018/02/19 08:59:52 mpi Exp $ */
+/*	$OpenBSD: mem.c,v 1.55 2023/01/30 10:49:05 jsg Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,13 +45,10 @@
 #include <sys/filio.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
-#include <sys/ioccom.h>
 #include <sys/malloc.h>
 #include <sys/memrange.h>
-#include <sys/fcntl.h>
 #include <sys/rwlock.h>
 
-#include <machine/cpu.h>
 #include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>

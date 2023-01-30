@@ -1,4 +1,4 @@
-/*	$OpenBSD: powernow-k8.c,v 1.34 2018/07/04 02:06:15 mlarkin Exp $ */
+/*	$OpenBSD: powernow-k8.c,v 1.35 2023/01/30 10:49:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2004 Martin Végiard.
@@ -35,7 +35,6 @@
 #include <dev/isa/isareg.h>
 #include <i386/isa/isa_machdep.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
@@ -43,7 +42,6 @@
 
 #if NACPICPU > 0
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/acpivar.h>
 #endif
 
 #define BIOS_START			0xe0000

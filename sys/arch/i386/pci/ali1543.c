@@ -1,4 +1,4 @@
-/*	$OpenBSD: ali1543.c,v 1.5 2022/08/29 06:08:03 jsg Exp $	*/
+/*	$OpenBSD: ali1543.c,v 1.6 2023/01/30 10:49:05 jsg Exp $	*/
 /*	$NetBSD: ali1543.c,v 1.2 2001/09/13 14:00:52 tshiozak Exp $	*/
 
 /*
@@ -89,16 +89,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibiosvar.h>
 #include <i386/pci/piixvar.h>
