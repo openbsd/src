@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.161 2023/01/30 00:10:39 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.162 2023/01/30 11:21:26 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -669,7 +669,6 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 		CPUID_LEAF(0x7, 0, dummy, dummy, ecx, dummy);
 		if (ecx & SEFF0ECX_PKU) {
 			lcr4(rcr4() | CR4_PKE);
-			uvm_xonlymmu = 1;
 			pg_xo = PG_XO;
 		}
 	}
