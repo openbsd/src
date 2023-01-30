@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.81 2023/01/27 23:11:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.82 2023/01/30 20:05:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1025,6 +1025,10 @@ cpu_boot_secondary(struct cpu_info *ci)
 void
 cpu_init_secondary(struct cpu_info *ci)
 {
+	struct proc *p;
+	struct pcb *pcb;
+	struct trapframe *tf;
+	struct switchframe *sf;
 	int s;
 
 	ci->ci_flags |= CPUF_PRESENT;
@@ -1043,6 +1047,43 @@ cpu_init_secondary(struct cpu_info *ci)
 		__asm volatile("wfe");
 
 	cpu_init();
+
+	/*
+	 * Start from a clean slate regardless of whether this is the
+	 * initial power up or a wakeup of a suspended CPU.
+	 */
+
+	ci->ci_curproc = NULL;
+	ci->ci_curpcb = NULL;
+	ci->ci_curpm = NULL;
+	ci->ci_cpl = IPL_NONE;
+	ci->ci_ipending = 0;
+	ci->ci_idepth = 0;
+
+#ifdef DIAGNOSTIC
+	ci->ci_mutex_level = 0;
+#endif
+
+	/*
+	 * Re-create the switchframe for this CPUs idle process.
+	 */
+
+	p = ci->ci_schedstate.spc_idleproc;
+	pcb = &p->p_addr->u_pcb;
+
+	tf = (struct trapframe *)((u_long)p->p_addr
+	    + USPACE
+	    - sizeof(struct trapframe)
+	    - 0x10);
+
+	tf = (struct trapframe *)STACKALIGN(tf);
+	pcb->pcb_tf = tf;
+
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_x19 = (uint64_t)sched_idle;
+	sf->sf_x20 = (uint64_t)ci;
+	sf->sf_lr = (uint64_t)proc_trampoline;
+	pcb->pcb_sp = (uint64_t)sf;
 
 	s = splhigh();
 	arm_intr_cpu_enable();
@@ -1151,9 +1192,9 @@ cpu_init_primary(void)
 int
 cpu_suspend_primary(void)
 {
-	extern uint64_t pmap_avail_kvo;
 	struct cpu_info *ci = curcpu();
-	paddr_t startaddr, data;
+	vaddr_t start_va;
+	paddr_t ci_pa, start_pa;
 	uint64_t ttbr1;
 
 	if (!psci_can_suspend()) {
@@ -1204,18 +1245,16 @@ cpu_suspend_primary(void)
 		return 0;
 	}
 
-	pmap_extract(pmap_kernel(), (vaddr_t)ci, &data);
-
 	__asm("mrs %x0, ttbr1_el1": "=r"(ttbr1));
 	ci->ci_ttbr1 = ttbr1;
-
-	cpu_dcache_wb_range((vaddr_t)&data, sizeof(paddr_t));
 	cpu_dcache_wb_range((vaddr_t)ci, sizeof(*ci));
 
-	startaddr = (vaddr_t)cpu_hatch_primary + pmap_avail_kvo;
+	start_va = (vaddr_t)cpu_hatch_primary;
+	pmap_extract(pmap_kernel(), start_va, &start_pa);
+	pmap_extract(pmap_kernel(), (vaddr_t)ci, &ci_pa);
 
 #if NPSCI > 0
-	psci_system_suspend(startaddr, data);
+	psci_system_suspend(start_pa, ci_pa);
 #endif
 
 	return EOPNOTSUPP;
@@ -1226,43 +1265,10 @@ cpu_suspend_primary(void)
 void
 cpu_resume_secondary(struct cpu_info *ci)
 {
-	struct proc *p;
-	struct pcb *pcb;
-	struct trapframe *tf;
-	struct switchframe *sf;
 	int timeout = 10000;
 
 	if (ci->ci_flags & CPUF_PRESENT)
 		return;
-
-	ci->ci_curproc = NULL;
-	ci->ci_curpcb = NULL;
-	ci->ci_curpm = NULL;
-	ci->ci_cpl = IPL_NONE;
-	ci->ci_ipending = 0;
-	ci->ci_idepth = 0;
-
-#ifdef DIAGNOSTIC
-	ci->ci_mutex_level = 0;
-#endif
-	ci->ci_ttbr1 = 0;
-
-	p = ci->ci_schedstate.spc_idleproc;
-	pcb = &p->p_addr->u_pcb;
-
-	tf = (struct trapframe *)((u_long)p->p_addr
-	    + USPACE
-	    - sizeof(struct trapframe)
-	    - 0x10);
-
-	tf = (struct trapframe *)STACKALIGN(tf);
-	pcb->pcb_tf = tf;
-
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_x19 = (uint64_t)sched_idle;
-	sf->sf_x20 = (uint64_t)ci;
-	sf->sf_lr = (uint64_t)proc_trampoline;
-	pcb->pcb_sp = (uint64_t)sf;
 
 	cpu_start_secondary(ci, 1, 0);
 	while ((ci->ci_flags & CPUF_PRESENT) == 0 && --timeout)
