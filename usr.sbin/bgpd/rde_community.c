@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.10 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.11 2023/01/30 16:51:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -112,6 +112,7 @@ fc2c(struct community *fc, struct rde_peer *peer, struct community *c,
 		c->data3 = type << 8 | subtype;
 		switch (type & EXT_COMMUNITY_VALUE) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
+		case EXT_COMMUNITY_TRANS_FOUR_AS:
 			if ((fc->flags >> 8 & 0xff) == COMMUNITY_ANY)
 				break;
 
@@ -121,11 +122,9 @@ fc2c(struct community *fc, struct rde_peer *peer, struct community *c,
 			if (apply_flag(fc->data2, fc->flags >> 16, peer,
 			    &c->data2, m ? &m->data2 : NULL))
 				return -1;
-			/* check that values fit */
-			if (c->data1 > USHRT_MAX)
-				return -1;
+			if (m)
+				m->data3 &= ~(EXT_COMMUNITY_TRANS_FOUR_AS << 8);
 			return 0;
-		case EXT_COMMUNITY_TRANS_FOUR_AS:
 		case EXT_COMMUNITY_TRANS_IPV4:
 			if ((fc->flags >> 8 & 0xff) == COMMUNITY_ANY)
 				break;
@@ -268,7 +267,6 @@ struct rde_peer *peer)
 		    sizeof(*fc), fast_match) != NULL);
 	} else {
 		/* slow path */
-
 		if (fc2c(fc, peer, &test, &mask) == -1)
 			return 0;
 
@@ -335,6 +333,24 @@ struct rde_peer *peer)
 	} else {
 		if (fc2c(fc, peer, &set, NULL) == -1)
 			return 0;
+		if ((uint8_t)set.flags == COMMUNITY_TYPE_EXT) {
+			int type = (int)set.data3 >> 8;
+			switch (type & EXT_COMMUNITY_VALUE) {
+			case EXT_COMMUNITY_TRANS_TWO_AS:
+			case EXT_COMMUNITY_TRANS_FOUR_AS:
+				/* check that values fit */
+				if (set.data1 > USHRT_MAX &&
+				    set.data2 > USHRT_MAX)
+					return 0;
+				if (set.data1 > USHRT_MAX)
+					set.data3 = (set.data3 & 0xff) |
+					    EXT_COMMUNITY_TRANS_FOUR_AS << 8;
+				else
+					set.data3 = (set.data3 & 0xff) |
+					    EXT_COMMUNITY_TRANS_TWO_AS << 8;
+				break;
+			}
+		}
 		insert_community(comm, &set);
 	}
 	return 1;

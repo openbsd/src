@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.440 2023/01/24 14:13:11 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.441 2023/01/30 16:51:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4083,11 +4083,11 @@ parseextvalue(int type, char *s, uint32_t *v, uint32_t *flag)
 	} else if (strcmp(s, "neighbor-as") == 0) {
 		*flag = COMMUNITY_NEIGHBOR_AS;
 		*v = 0;
-		return EXT_COMMUNITY_TRANS_FOUR_AS;
+		return EXT_COMMUNITY_TRANS_TWO_AS;
 	} else if (strcmp(s, "local-as") == 0) {
 		*flag = COMMUNITY_LOCAL_AS;
 		*v = 0;
-		return EXT_COMMUNITY_TRANS_FOUR_AS;
+		return EXT_COMMUNITY_TRANS_TWO_AS;
 	} else if ((p = strchr(s, '.')) == NULL) {
 		/* AS_PLAIN number (4 or 2 byte) */
 		strtonum(s, 0, USHRT_MAX, &errstr);
