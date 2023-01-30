@@ -189,7 +189,7 @@ sub ::picmeup
        &::lea($dst,&::DWP($sym));
        &::emitraw("#endif /* PIC */");
     }
-    if (($::pic && ($::elf || $::aout)) || $::macosx)
+    elsif (($::pic && ($::elf || $::aout)) || $::macosx)
     {	if (!defined($base))
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
