@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.255 2023/01/31 11:47:35 mvs Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.256 2023/01/31 13:41:54 mvs Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -417,8 +417,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * Re-check since we grab the kernel lock after the first check.
 	 * rtrequest_delete() can be called with shared netlock.  From
 	 * there arp_rtrequest() is reached which touches RTF_LLINFO
-	 * and rt_llinfo.  As this is called with route lock we grab the
-	 * route lock here and are safe.  XXXSMP
+	 * and rt_llinfo.  As this is called with kernel lock we grab the
+	 * kernel lock here and are safe.  XXXSMP
 	 */
 	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
 		KERNEL_UNLOCK();
