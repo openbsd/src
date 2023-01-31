@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.19 2023/01/23 10:34:21 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.20 2023/01/31 05:16:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,6 +291,10 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	rp = r->d;
 
 	borrow = bn_sub_words(rp, ap, bp, min);
+	if (dif == 0 && borrow > 0) {
+		BNerror(BN_R_ARG2_LT_ARG3);
+		return 0;
+	}
 	ap += min;
 	rp += min;
 
