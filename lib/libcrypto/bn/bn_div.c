@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.35 2023/01/28 16:58:24 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.36 2023/01/31 06:08:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 
 #include "bn_arch.h"
 #include "bn_local.h"
+#include "bn_internal.h"
 
 BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
 
@@ -191,7 +192,7 @@ bn_div_rem_words(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
 BN_ULONG
 bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
 {
-	BN_ULONG n0, n1, q;
+	BN_ULONG n0, n1, q, t2h, t2l;
 	BN_ULONG rem = 0;
 
 	n0 = m[0];
@@ -201,55 +202,20 @@ bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
 		return BN_MASK2;
 
 	/* n0 < d0 */
-	{
-#ifdef BN_LLONG
-		BN_ULLONG t2;
+	bn_div_rem_words(n0, n1, d0, &q, &rem);
 
-		bn_div_rem_words(n0, n1, d0, &q, &rem);
+	bn_umul_hilo(d1, q, &t2h, &t2l);
 
-		t2 = (BN_ULLONG)d1 * q;
-
-		for (;;) {
-			if (t2 <= (((BN_ULLONG)rem << BN_BITS2) | m[-2]))
-				break;
-			q--;
-			rem += d0;
-			if (rem < d0) break; /* don't let rem overflow */
-				t2 -= d1;
-		}
-#else /* !BN_LLONG */
-		BN_ULONG t2l, t2h;
-
-		bn_div_rem_words(n0, n1, d0, &q, &rem);
-
-#if defined(BN_UMULT_LOHI)
-		BN_UMULT_LOHI(t2l, t2h, d1, q);
-#elif defined(BN_UMULT_HIGH)
-		t2l = d1 * q;
-		t2h = BN_UMULT_HIGH(d1, q);
-#else
-		{
-			BN_ULONG ql, qh;
-			t2l = LBITS(d1);
-			t2h = HBITS(d1);
-			ql = LBITS(q);
-			qh = HBITS(q);
-			mul64(t2l, t2h, ql, qh); /* t2 = (BN_ULLONG)d1 * q; */
-		}
-#endif
-
-		for (;;) {
-			if (t2h < rem || (t2h == rem && t2l <= m[-2]))
-				break;
-			q--;
-			rem += d0;
-			if (rem < d0)
-				break; /* don't let rem overflow */
-			if (t2l < d1)
-				t2h--;
-			t2l -= d1;
-		}
-#endif /* !BN_LLONG */
+	for (;;) {
+		if (t2h < rem || (t2h == rem && t2l <= m[-2]))
+			break;
+		q--;
+		rem += d0;
+		if (rem < d0)
+			break; /* don't let rem overflow */
+		if (t2l < d1)
+			t2h--;
+		t2l -= d1;
 	}
 
 	return q;
