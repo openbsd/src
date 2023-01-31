@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.13 2023/01/17 15:04:27 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.14 2023/01/31 06:17:10 jsing Exp $
 
 # hppa-specific libcrypto build rules
 
@@ -9,7 +9,6 @@ SSLASM+= aes aes-parisc aes-parisc
 # bf
 SRCS+= bf_enc.c
 # bn
-SRCS+= bn_asm.c
 SSLASM+= bn parisc-mont parisc-mont
 CFLAGS+= -DOPENSSL_BN_ASM_MONT -DBN_DIV2W
 # camellia
