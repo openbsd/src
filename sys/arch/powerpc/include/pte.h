@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.10 2015/01/20 18:14:39 mpi Exp $	*/
+/*	$OpenBSD: pte.h,v 1.11 2023/01/31 01:27:58 gkoehler Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 1996/09/30 16:34:32 ws Exp $	*/
 
 /*-
@@ -82,6 +82,7 @@ struct pte_64 {
 #define	PTE_HID_64		0x0000000000000002ULL
 /* Low word: */
 #define	PTE_RPGN_64		0x3ffffffffffff000ULL
+#define	PTE_AC_64		0x0000000000000200ULL
 #define	PTE_REF_64		0x0000000000000100ULL
 #define	PTE_CHG_64		0x0000000000000080ULL
 #define	PTE_WIMG_64		0x0000000000000078ULL

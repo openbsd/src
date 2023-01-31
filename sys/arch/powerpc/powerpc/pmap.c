@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.178 2023/01/10 21:27:12 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.179 2023/01/31 01:27:58 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -900,6 +900,9 @@ pmap_fill_pte64(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 	else
 		pte64->pte_lo |= (PTE_M_64 | PTE_I_64 | PTE_G_64);
 
+	if ((prot & (PROT_READ | PROT_WRITE)) == 0)
+		pte64->pte_lo |= PTE_AC_64;
+
 	if (prot & PROT_WRITE)
 		pte64->pte_lo |= PTE_RW_64;
 	else
@@ -1604,6 +1607,13 @@ pmap_enable_mmu(void)
 	uint32_t scratch, sdr1;
 	int i;
 
+	/*
+	 * For the PowerPC 970, ACCR = 3 inhibits loads and stores to
+	 * pages with PTE_AC_64.  This is for execute-only mappings.
+	 */
+	if (ppc_proc_is_64b)
+		asm volatile ("mtspr 29, %0" :: "r" (3));
+
 	if (!ppc_nobat) {
 		extern caddr_t etext;
 
@@ -1684,6 +1694,39 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 	PMAP_VP_UNLOCK(pm);
 	return TRUE;
 }
+
+#ifdef ALTIVEC
+/*
+ * Read an instruction from a given virtual memory address.
+ * Execute-only protection is bypassed.
+ */
+int
+pmap_copyinsn(pmap_t pm, vaddr_t va, uint32_t *insn)
+{
+	struct pte_desc *pted;
+	paddr_t pa;
+
+	/* Assume pm != pmap_kernel(). */
+	if (ppc_proc_is_64b) {
+		/* inline pmap_extract */
+		PMAP_VP_LOCK(pm);
+		pted = pmap_vp_lookup(pm, va);
+		if (pted == NULL || !PTED_VALID(pted)) {
+			PMAP_VP_UNLOCK(pm);
+			return EFAULT;
+		}
+		pa = (pted->p.pted_pte64.pte_lo & PTE_RPGN_64) |
+		    (va & ~PTE_RPGN_64);
+		PMAP_VP_UNLOCK(pm);
+
+		if (pa > physmaxaddr - sizeof(*insn))
+			return EFAULT;
+		*insn = *(uint32_t *)pa;
+		return 0;
+	} else
+		return copyin32((void *)va, insn);
+}
+#endif
 
 u_int32_t
 pmap_setusr(pmap_t pm, vaddr_t va)
@@ -1965,6 +2008,9 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 	if ((prot & PROT_EXEC) == 0)
 		pted->p.pted_pte64.pte_lo |= PTE_N_64;
 
+	if ((prot & (PROT_READ | PROT_WRITE)) == 0)
+		pted->p.pted_pte64.pte_lo |= PTE_AC_64;
+
 	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		struct pte_64 *ptp64 = pte;
@@ -1977,8 +2023,7 @@ pmap_pted_ro64(struct pte_desc *pted, vm_prot_t prot)
 		}
 
 		/* Add a Page Table Entry, section 7.6.3.1. */
-		ptp64->pte_lo &= ~(PTE_CHG_64|PTE_PP_64);
-		ptp64->pte_lo |= PTE_RO_64;
+		ptp64->pte_lo = pted->p.pted_pte64.pte_lo;
 		eieio();	/* Order 1st PTE update before 2nd. */
 		ptp64->pte_hi |= PTE_VALID_64;
 		sync();		/* Ensure updates completed. */
@@ -2242,6 +2287,13 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 {
 	struct pte_desc *pted;
 	int inserted = 0;
+
+	/*
+	 * DSISR_DABR is set if the PowerPC 970 attempted to read or
+	 * write an execute-only page.
+	 */
+	if (dsisr & DSISR_DABR)
+		return 0;
 
 	/*
 	 * If the current mapping is RO and the access was a write
