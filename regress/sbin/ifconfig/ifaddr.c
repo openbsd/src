@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifaddr.c,v 1.6 2021/07/12 15:09:18 beck Exp $	*/
+/*	$OpenBSD: ifaddr.c,v 1.7 2023/01/31 20:37:16 tb Exp $	*/
 
 /*
  * This file has been copied from ifconfig and adapted to test
@@ -206,8 +206,6 @@ const struct	cmd {
 	{ "tunnel",	NEXTARG2,	0,		NULL, settunnel },
 	{ "tunneladdr",	NEXTARG,	0,		settunneladdr },
 	{ "-tunnel",	0,		0,		deletetunnel },
-	/* deletetunnel is for backward compat, remove during 6.4-current */
-	{ "deletetunnel",  0,		0,		deletetunnel },
 	{ "tunneldomain", NEXTARG,	0,		settunnelinst },
 	{ "-tunneldomain", 0,		0,		unsettunnelinst },
 	{ "tunnelttl",	NEXTARG,	0,		settunnelttl },
