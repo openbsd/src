@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2023/01/29 15:18:49 jsing Exp $
+#	$OpenBSD: Makefile,v 1.21 2023/01/31 05:13:28 jsing Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -29,6 +29,7 @@ DPADD =		${LIBCRYPTO}
 WARNINGS =	Yes
 CFLAGS +=	-Wall -Wundef -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bn/
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bn/arch/${MACHINE_CPU}/
 
 # Use default targets from bsd.regress.mk unless overridden below
 REGRESS_TARGETS = ${PROGS:S/^/run-regress-/}
