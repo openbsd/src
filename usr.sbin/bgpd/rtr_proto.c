@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.8 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.9 2023/01/31 14:38:43 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -640,11 +640,11 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	errcode = ntohs(rh.session_id);
 
 	memcpy(&pdu_len, buf, sizeof(pdu_len));
-	pdu_len = ntohs(pdu_len);
+	pdu_len = ntohl(pdu_len);
 
 	if (len < pdu_len + sizeof(pdu_len)) {
-		log_warnx("rtr %s: received %s: bad pdu len: %u byte",
-		    log_rtr(rs), log_rtr_type(ERROR_REPORT), pdu_len);
+		log_warnx("rtr %s: received %s: bad encapsulated pdu len: %u "
+		    "byte", log_rtr(rs), log_rtr_type(ERROR_REPORT), pdu_len);
 		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
 		return -1;
 	}
@@ -654,7 +654,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	len -= pdu_len + sizeof(pdu_len);
 
 	memcpy(&msg_len, buf, sizeof(msg_len));
-	msg_len = ntohs(msg_len);
+	msg_len = ntohl(msg_len);
 
 	if (len < msg_len + sizeof(msg_len)) {
 		log_warnx("rtr %s: received %s: bad msg len: %u byte",
