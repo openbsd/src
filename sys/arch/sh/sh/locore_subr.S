@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.14 2022/12/08 02:11:27 guenther Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.15 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -611,10 +611,10 @@ ENTRY(copyout)
 
 
 /*
- * LINTSTUB: Func: int copyin(const void *usrc, void *kdst, size_t len)
+ * LINTSTUB: Func: int _copyin(const void *usrc, void *kdst, size_t len)
  *	Copy len bytes from the user address space.
  */
-ENTRY(copyin)
+ENTRY(_copyin)
 	mov.l	r14,	@-r15
 	sts.l	pr,	@-r15
 	mov	r15,	r14
@@ -663,7 +663,7 @@ ENTRY(copyin)
 	.long	curpcb
 .L_copyin_memcpy:
 	.long	memcpy
-	SET_ENTRY_SIZE(copyin)
+	SET_ENTRY_SIZE(_copyin)
 
 
 /*
@@ -743,13 +743,13 @@ ENTRY(copyoutstr)
 
 
 /*
- * LINTSTUB: Func: int copyinstr(const void *src, void *dst, size_t maxlen, size_t *lencopied)
+ * LINTSTUB: Func: int _copyinstr(const void *src, void *dst, size_t maxlen, size_t *lencopied)
  *	Copy a NUL-terminated string, at most maxlen characters long,
  *	from the user address space.  Return the number of characters
  *	copied (including the NUL) in *lencopied.  If the string is
  *	too long, return ENAMETOOLONG; else return 0 or EFAULT.
  */
-ENTRY(copyinstr)
+ENTRY(_copyinstr)
 	mov.l	r8,	@-r15
 	mov	#EFAULT, r3		/* assume there was a problem */
 	mov	r4,	r8
@@ -815,7 +815,7 @@ ENTRY(copyinstr)
 	.long	VM_MAXUSER_ADDRESS
 .L_copyinstr_curpcb:
 	.long	curpcb
-	SET_ENTRY_SIZE(copyinstr)
+	SET_ENTRY_SIZE(_copyinstr)
 
 /*
  * LINTSTUB: Func: int kcopy(const void *src, void *dst, size_t len)

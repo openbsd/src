@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.50 2023/01/06 19:10:18 miod Exp $ */
+/* $OpenBSD: locore.s,v 1.51 2023/01/31 15:18:51 deraadt Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -827,7 +827,7 @@ STATIC_LEAF(copystr, 4)
 	RET
 	END(copystr)
 
-NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
+NESTED(_copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
@@ -847,7 +847,7 @@ NESTED(copyinstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	ldq	s0, (16-16)(sp)			/* restore s0.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	RET					/* v0 left over from copystr */
-	END(copyinstr)
+	END(_copyinstr)
 
 NESTED(copyoutstr, 4, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
@@ -914,7 +914,7 @@ LEAF(kcopyerr, 0)
 	RET
 END(kcopyerr)
 
-NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
+NESTED(_copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)
 	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
@@ -935,7 +935,7 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	mov	zero, v0			/* return 0. */
 	RET
-	END(copyin)
+	END(_copyin)
 
 NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	LDGP(pv)

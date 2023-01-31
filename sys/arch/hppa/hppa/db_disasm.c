@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.23 2022/08/12 08:34:43 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.24 2023/01/31 15:18:54 deraadt Exp $	*/
 
 /* TODO parse 64bit insns or rewrite */
 
@@ -2314,14 +2314,15 @@ db_disasm(vaddr_t loc, int flag)
 	register const struct inst *i;
 	register const struct majoropcode *m;
 	register u_int ext;
-	int ok, instruct;
+	int ok;
+	uint32_t instruct;
 	OFS ofs = loc;
 
 	if (loc == PC_REGS(&ddb_regs) && ddb_regs.tf_iir)
 		instruct = ddb_regs.tf_iir;
 	else if (USERMODE(loc)) {
-		if (copyin((caddr_t)(loc &~ HPPA_PC_PRIV_MASK),
-		    &instruct, sizeof(instruct)))
+		if (copyinsn(NULL, (uint32_t *)(loc &~ HPPA_PC_PRIV_MASK),
+		    &instruct))
 			instruct = 0;
 	} else
 		instruct = *(int *)loc;

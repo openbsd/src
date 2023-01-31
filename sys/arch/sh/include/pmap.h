@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.17 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.18 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+
+#define PMAP_CHECK_COPYIN	1
 
 #define	PMAP_STEAL_MEMORY
 #define	PMAP_GROWKERNEL

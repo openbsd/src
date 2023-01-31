@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.60 2022/10/21 18:55:42 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.61 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -532,7 +532,7 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 		if (src >= (char *)VM_MIN_KERNEL_ADDRESS)
 			*data++ = probeget((paddr_t)(u_long)src++, ASI_P, 1);
 		else
-			copyin(src++, data++, sizeof(u_char));
+			_copyin(src++, data++, sizeof(u_char));
 	}
 }
 

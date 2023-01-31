@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.64 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.65 2023/01/31 15:18:56 deraadt Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -215,6 +215,13 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 		if (cmd->ev_flags & VMCMD_IMMUTABLE)
 			uvm_map_immutable(&p->p_vmspace->vm_map, cmd->ev_addr,
 			    round_page(cmd->ev_addr + cmd->ev_len), 1);
+#ifdef PMAP_CHECK_COPYIN
+		if (PMAP_CHECK_COPYIN &&
+		    ((flags & UVM_FLAG_SYSCALL) ||
+		    ((cmd->ev_flags & VMCMD_IMMUTABLE) && (cmd->ev_prot & PROT_EXEC))))
+			uvm_map_check_copyin_add(&p->p_vmspace->vm_map,
+			    cmd->ev_addr, round_page(cmd->ev_addr + cmd->ev_len));
+#endif
 	}
 
 	return (error);

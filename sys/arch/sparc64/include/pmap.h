@@ -169,6 +169,8 @@ int	pmap_copyinsn(pmap_t, vaddr_t, uint32_t *);
 /* pmap prefer offset in alignment */
 #define PMAP_PREFER_OFFSET(of)	((of) & VA_ALIAS_MASK)
 
+#define PMAP_CHECK_COPYIN	CPU_ISSUN4V
+
 #define PMAP_GROWKERNEL         /* turn on pmap_growkernel interface */
 
 #define	__HAVE_PMAP_COLLECT

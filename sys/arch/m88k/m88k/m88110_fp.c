@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110_fp.c,v 1.13 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: m88110_fp.c,v 1.14 2023/01/31 15:18:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, Miodrag Vallat.
@@ -97,7 +97,7 @@ m88110_fpu_exception(struct trapframe *frame)
 	 * Fetch the faulting instruction. This should not fail, if it
 	 * does, it's probably not your lucky day.
 	 */
-	if (copyin((void *)fault_addr, &insn, sizeof insn) != 0) {
+	if (copyinsn(p, (u_int32_t *)fault_addr, (u_int32_t *)&insn) != 0) {
 		sig = SIGBUS;
 		fault_type = BUS_OBJERR;
 		goto deliver;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.198 2023/01/11 19:57:17 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.199 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -5451,12 +5451,12 @@ ENTRY(getfp)
 	 mov %fp, %o0
 
 /*
- * copyinstr(fromaddr, toaddr, maxlength, &lencopied)
+ * _copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *
  * Copy a null terminated string from the user address space into
  * the kernel address space.
  */
-ENTRY(copyinstr)
+ENTRY(_copyinstr)
 	! %o0 = fromaddr, %o1 = toaddr, %o2 = maxlen, %o3 = &lencopied
 	brgz,pt	%o2, 1f					! Make sure len is valid
 	 nop
@@ -5537,7 +5537,7 @@ Lcsfault:
 
 #define	BCOPY_SMALL	32	/* if < 32, copy by bytes */
 
-ENTRY(copyin)
+ENTRY(_copyin)
 !	flushw			! Make sure we don't have stack probs & lose hibits of %o
 	GET_CPCB(%o3)
 	wr	%g0, ASI_AIUS, %asi
@@ -5711,7 +5711,7 @@ Lcopyin_done:
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 	retl
 	 clr	%o0			! return 0
-END(copyin)
+END(_copyin)
 
 /*
  * copyout(src, dst, len)

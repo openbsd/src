@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.17 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: copy.S,v 1.18 2023/01/31 15:18:54 deraadt Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -147,7 +147,7 @@ ENTRY(copyout)
 	ret
 	lfence
 
-ENTRY(copyin)
+ENTRY(_copyin)
 	RETGUARD_SETUP(kcopy, r10)
 	movq	CPUVAR(CURPCB),%rax
 	pushq	$0
@@ -239,7 +239,7 @@ ENTRY(copyoutstr)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
 
-ENTRY(copyinstr)
+ENTRY(_copyinstr)
 	RETGUARD_SETUP(copyoutstr, r10)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8

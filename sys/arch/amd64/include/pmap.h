@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.84 2023/01/19 20:17:12 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.85 2023/01/31 15:18:54 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -419,6 +419,8 @@ void	pmap_flush_cache(vaddr_t, vsize_t);
 	KDASSERT(PHYS_TO_VM_PAGE(paddr) != NULL);			\
 	pmap_flush_cache(PMAP_DIRECT_MAP(paddr), PAGE_SIZE);		\
 } while (/* CONSTCOND */ 0)
+
+#define PMAP_CHECK_COPYIN	(pg_xo == 0)
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */

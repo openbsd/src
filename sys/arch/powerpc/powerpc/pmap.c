@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.179 2023/01/31 01:27:58 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.180 2023/01/31 15:18:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1750,7 +1750,7 @@ pmap_popusr(u_int32_t sr)
 }
 
 int
-copyin(const void *udaddr, void *kaddr, size_t len)
+_copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	void *p;
 	size_t l;
@@ -1835,7 +1835,7 @@ copyin32(const uint32_t *udaddr, uint32_t *kaddr)
 }
 
 int
-copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
+_copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 {
 	const u_char *uaddr = udaddr;
 	u_char *kp    = kaddr;

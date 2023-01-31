@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.125 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.126 2023/01/31 15:18:54 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -535,7 +535,7 @@ user_fault:
 			vaddr_t pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
-			copyin((caddr_t)pc, &instr, sizeof(u_int));
+			copyinsn(p, (u_int32_t *)pc, (u_int32_t *)&instr);
 
 			/* check and see if we got here by accident */
 			if ((p->p_md.md_bp0va != pc &&
@@ -668,8 +668,8 @@ m88110_trap(u_int type, struct trapframe *frame)
 				    (frame->tf_exip + 4) | 1, frame->tf_enip);
 		} else {
 			/* copyin here should not fail */
-			if (copyin((const void *)frame->tf_exip, &instr,
-			    sizeof instr) == 0 &&
+			if (copyinsn(p, (u_int32_t *)frame->tf_exip,
+			    (u_int32_t *)&instr) == 0 &&
 			    instr == 0xf400cc01) {
 				uprintf("mc88110 errata #16, exip 0x%lx enip 0x%lx",
 				    (frame->tf_exip + 4) | 1, frame->tf_enip);
@@ -1075,7 +1075,7 @@ m88110_user_fault:
 			vaddr_t pc = PC_REGS(&frame->tf_regs);
 
 			/* read break instruction */
-			copyin((caddr_t)pc, &instr, sizeof(u_int));
+			copyinsn(p, (u_int32_t *)pc, (u_int32_t *)&instr);
 
 			/* check and see if we got here by accident */
 			if ((p->p_md.md_bp0va != pc &&
@@ -1662,7 +1662,7 @@ double_reg_fixup(struct trapframe *frame, int fault)
 	 */
 
 	pc = PC_REGS(&frame->tf_regs);
-	if (copyin((void *)pc, &instr, sizeof(u_int32_t)) != 0)
+	if (copyinsn(NULL, (u_int32_t *)pc, (u_int32_t *)&instr) != 0)
 		return SIGSEGV;
 
 	switch (instr & 0xfc00ff00) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.98 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.99 2023/01/31 15:18:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -303,6 +303,9 @@ struct blink_led {
 
 extern void blink_led_register(struct blink_led *);
 #endif
+
+#define copyinsn(p, v, ip) copyin32((v), (ip))
+
 #endif
 
 #endif /* _MACHINE_CPU_H_ */

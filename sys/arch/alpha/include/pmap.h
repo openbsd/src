@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.42 2022/09/12 19:35:20 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.43 2023/01/31 15:18:54 deraadt Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -175,6 +175,8 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
 
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
+
+#define PMAP_CHECK_COPYIN	1
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
 #define PMAP_GROWKERNEL			/* enable pmap_growkernel() */

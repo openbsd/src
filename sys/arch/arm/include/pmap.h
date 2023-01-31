@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.52 2023/01/01 19:49:17 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.53 2023/01/31 15:18:54 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -250,6 +250,8 @@ extern struct pmap	kernel_pmap_store;
  */
 void	pmap_remove_all(pmap_t);
 void	pmap_uncache_page(paddr_t, vaddr_t);
+
+#define PMAP_CHECK_COPYIN	1
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 

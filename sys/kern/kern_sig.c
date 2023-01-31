@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.303 2023/01/02 23:09:48 guenther Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.304 2023/01/31 15:18:56 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1634,6 +1634,11 @@ coredump(struct proc *p)
 	const char *dir = "/var/crash";
 
 	atomic_setbits_int(&pr->ps_flags, PS_COREDUMP);
+
+#ifdef PMAP_CHECK_COPYIN
+	/* disable copyin checks, so we can write out text sections if needed */
+	p->p_vmspace->vm_map.check_copyin_count = 0;
+#endif
 
 	/* Don't dump if will exceed file size limit. */
 	if (USPACE + ptoa(vm->vm_dsize + vm->vm_ssize) >= lim_cur(RLIMIT_CORE))

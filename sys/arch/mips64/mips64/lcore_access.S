@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.33 2022/12/08 01:25:45 guenther Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.34 2023/01/31 15:18:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -147,13 +147,13 @@ END(mem_zero_page)
  * Copy a null terminated string from the user address space into
  * the kernel address space.
  *
- *	copyinstr(fromaddr, toaddr, maxlength, &lencopied)
+ *	_copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *		caddr_t fromaddr;
  *		caddr_t toaddr;
  *		u_int maxlength;
  *		u_int *lencopied;
  */
-NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
+NON_LEAF(_copyinstr, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
@@ -171,7 +171,7 @@ NON_LEAF(copyinstr, FRAMESZ(CF_SZ), ra)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	 NOP
-END(copyinstr)
+END(_copyinstr)
 
 /*
  * Copy a null terminated string from the kernel address space into
@@ -205,12 +205,12 @@ END(copyoutstr)
 
 /*
  * Copy specified amount of data from user space into the kernel
- *	copyin(from, to, len)
+ *	_copyin(from, to, len)
  *		caddr_t *from;	(user source address)
  *		caddr_t *to;	(kernel destination address)
  *		unsigned len;
  */
-NON_LEAF(copyin, FRAMESZ(CF_SZ), ra)
+NON_LEAF(_copyin, FRAMESZ(CF_SZ), ra)
 	PTR_SUBU sp, sp, FRAMESZ(CF_SZ)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 	PTR_S	ra, CF_RA_OFFS(sp)
@@ -228,7 +228,7 @@ NON_LEAF(copyin, FRAMESZ(CF_SZ), ra)
 	PTR_ADDU sp, sp, FRAMESZ(CF_SZ)
 	j	ra
 	 move	v0, zero
-END(copyin)
+END(_copyin)
 
 /*
  * Copy specified amount of data from kernel to the user space

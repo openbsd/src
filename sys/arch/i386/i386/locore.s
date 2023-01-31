@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.199 2023/01/06 19:10:18 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.200 2023/01/31 15:18:54 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -506,10 +506,10 @@ ENTRY(copyout)
 	ret
 
 /*
- * copyin(caddr_t from, caddr_t to, size_t len);
+ * _copyin(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes from the user's address space.
  */
-ENTRY(copyin)
+ENTRY(_copyin)
 #ifdef DDB
 	pushl	%ebp
 	movl	%esp,%ebp
@@ -626,13 +626,13 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * _copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including the
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
  * return 0 or EFAULT.
  */
-ENTRY(copyinstr)
+ENTRY(_copyinstr)
 #ifdef DDB
 	pushl	%ebp
 	movl	%esp,%ebp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.82 2023/01/26 07:44:31 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.83 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -309,6 +309,12 @@ struct vm_map {
 	struct uvm_addr_state	*uaddr_any[4];	/* More selectors. */
 	struct uvm_addr_state	*uaddr_brk_stack; /* Brk/stack selector. */
 
+#define UVM_MAP_CHECK_COPYIN_MAX 4	/* main, sigtramp, ld.so, libc.so */
+	struct uvm_check_copyin {
+		vaddr_t		start, end;
+	}			check_copyin[UVM_MAP_CHECK_COPYIN_MAX];
+	int			check_copyin_count;
+
 	/*
 	 * XXX struct mutex changes size because of compile options, so
 	 * place after fields which are inspected by libkvm / procmap(8)
@@ -354,6 +360,7 @@ int		uvm_map_extract(struct vm_map *, vaddr_t, vsize_t,
 struct vm_map *	uvm_map_create(pmap_t, vaddr_t, vaddr_t, int);
 vaddr_t		uvm_map_pie(vaddr_t);
 vaddr_t		uvm_map_hint(struct vmspace *, vm_prot_t, vaddr_t, vaddr_t);
+int		uvm_map_check_copyin_add(struct vm_map *, vaddr_t, vaddr_t);
 int		uvm_map_syscall(struct vm_map *, vaddr_t, vaddr_t);
 int		uvm_map_immutable(struct vm_map *, vaddr_t, vaddr_t, int);
 int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t, vm_inherit_t);

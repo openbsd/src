@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp_complete.c,v 1.12 2016/03/30 15:39:46 afresh1 Exp $	*/
+/*	$OpenBSD: fp_complete.c,v 1.13 2023/01/31 15:18:51 deraadt Exp $	*/
 /*	$NetBSD: fp_complete.c,v 1.5 2002/01/18 22:15:56 ross Exp $	*/
 
 /*-
@@ -572,7 +572,8 @@ alpha_fp_complete_at(u_long trigger_pc, struct proc *p, u_int64_t *ucode)
 	u_int64_t rm, fpcr, orig_fpcr;
 	u_int64_t orig_flags, new_flags, changed_flags, md_flags;
 
-	if (__predict_false(copyin((void *)trigger_pc, &inst, sizeof inst))) {
+	if (__predict_false(copyinsn(NULL, (u_int32_t *)trigger_pc,
+	    (u_int32_t *)&inst))) {
 		this_cannot_happen(6, -1);
 		return SIGSEGV;
 	}
@@ -651,10 +652,10 @@ alpha_fp_complete(u_long a0, u_long a1, struct proc *p, u_int64_t *ucode)
 		++alpha_shadow.len;
 		if (pc < win_begin) {
 			win_begin = pc - TSWINSIZE + 1;
-			if (copyin(win_begin, tsw, sizeof tsw)) {
+			if (_copyin(win_begin, tsw, sizeof tsw)) {
 				/* sigh, try to get just one */
 				win_begin = pc;
-				if (copyin(win_begin, tsw, 4))
+				if (_copyin(win_begin, tsw, 4))
 					return SIGSEGV;
 			}
 		}

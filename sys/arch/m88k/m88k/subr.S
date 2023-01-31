@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.28 2022/12/06 18:50:59 guenther Exp $	*/
+/* $OpenBSD: subr.S,v 1.29 2023/01/31 15:18:54 deraadt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -185,7 +185,7 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 
 /*
  * Copy specified amount of data from user space into the kernel
- * copyin(from, to, len)
+ * _copyin(from, to, len)
  *	r2 == from (user source address)
  *	r3 == to (kernel destination address)
  *	r4 == length
@@ -195,7 +195,7 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 #define	DEST	%r3
 #define	LEN	%r4
 
-ENTRY(copyin)
+ENTRY(_copyin)
 	/* set up fault handler */
 	ldcr	%r5,  CPU
 	ld	%r6,  %r5,  CI_CURPCB
@@ -421,7 +421,7 @@ ASLOCAL(copyin32_misaligned)
  * Copy a null terminated string from the user space to the kernel
  * address space.
  *
- * copyinstr(from, to, maxlen, &lencopied)
+ * _copyinstr(from, to, maxlen, &lencopied)
  * r2 == from
  * r3 == to
  * r4 == maxlen
@@ -433,7 +433,7 @@ ASLOCAL(copyin32_misaligned)
 #define	CNT	%r4
 #define	LEN	%r5
 
-ENTRY(copyinstr)
+ENTRY(_copyinstr)
 
 	/* setup fault handler */
 	ldcr	%r6,  CPU

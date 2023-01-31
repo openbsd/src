@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.51 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.52 2023/01/31 15:18:56 deraadt Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -43,6 +43,67 @@
 #include <sys/sched.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <uvm/uvm_extern.h>
+
+#ifdef PMAP_CHECK_COPYIN
+
+static inline int check_copyin(struct proc *, const void *, size_t);
+extern int _copyinstr(const void *, void *, size_t, size_t *);
+extern int _copyin(const void *uaddr, void *kaddr, size_t len);
+
+/*
+ * If range overlaps an check_copyin region, return EFAULT
+ */
+static inline int
+check_copyin(struct proc *p, const void *vstart, size_t len)
+{
+	struct vm_map *map = &p->p_vmspace->vm_map;
+	const vaddr_t start = (vaddr_t)vstart;
+	const vaddr_t end = start + len;
+	int i, max;
+
+	/* XXX if the array was sorted, we could shortcut */
+	max = map->check_copyin_count;
+	membar_consumer();
+	for (i = 0; i < max; i++) {
+		vaddr_t s = map->check_copyin[i].start;
+		vaddr_t e = map->check_copyin[i].end;
+		if ((start >= s && start < e) || (end > s && end < e))
+			return EFAULT;
+	}
+	return (0);
+}
+
+int
+copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
+{
+	size_t alen;
+	int error;
+
+	/*
+	 * Must do the copyin checks after figuring out the string length,
+	 * the buffer size length may cross into another ELF segment
+	 */
+	error = _copyinstr(uaddr, kaddr, len, &alen);
+	if (PMAP_CHECK_COPYIN && error == 0)
+		error = check_copyin(curproc, uaddr, alen);
+	if (done)
+		*done = alen;
+	return (error);
+}
+
+int
+copyin(const void *uaddr, void *kaddr, size_t len)
+{
+	int error = 0;
+
+	if (PMAP_CHECK_COPYIN)
+		error = check_copyin(curproc, uaddr, len);
+	if (error == 0)
+		error = _copyin(uaddr, kaddr, len);
+	return (error);
+}
+#endif /* PMAP_CHECK_COPYIN */
 
 int
 uiomove(void *cp, size_t n, struct uio *uio)

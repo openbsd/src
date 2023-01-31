@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.105 2023/01/16 05:32:04 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.106 2023/01/31 15:18:51 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -737,7 +737,7 @@ handle_opdec(p, ucodep)
 	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 
 	inst_pc = memaddr = p->p_md.md_tf->tf_regs[FRAME_PC] - 4;
-	if (copyin((caddr_t)inst_pc, &inst, sizeof (inst)) != 0) {
+	if (copyinsn(p, (u_int32_t *)inst_pc, (u_int32_t *)&inst) != 0) {
 		/*
 		 * really, this should never happen, but in case it
 		 * does we handle it.

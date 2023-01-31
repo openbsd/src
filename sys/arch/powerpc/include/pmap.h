@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.62 2023/01/31 01:27:58 gkoehler Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.63 2023/01/31 15:18:55 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -153,6 +153,8 @@ int reserve_dumppages(caddr_t p);
 
 #define pmap_unuse_final(p)		/* nothing */
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)
+
+#define PMAP_CHECK_COPYIN	(ppc_proc_is_64b == 0)
 
 #define	PMAP_STEAL_MEMORY
 
