@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.9 2023/01/31 14:38:43 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.10 2023/01/31 17:14:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -83,7 +83,7 @@ struct rtr_endofdata {
 enum rtr_event {
 	RTR_EVNT_START,
 	RTR_EVNT_CON_OPEN,
-	RTR_EVNT_CON_CLOSED,
+	RTR_EVNT_CON_CLOSE,
 	RTR_EVNT_TIMER_REFRESH,
 	RTR_EVNT_TIMER_RETRY,
 	RTR_EVNT_TIMER_EXPIRE,
@@ -93,6 +93,7 @@ enum rtr_event {
 	RTR_EVNT_END_OF_DATA,
 	RTR_EVNT_CACHE_RESET,
 	RTR_EVNT_NO_DATA,
+	RTR_EVNT_RESET_AND_CLOSE,
 };
 
 static const char *rtr_eventnames[] = {
@@ -107,7 +108,8 @@ static const char *rtr_eventnames[] = {
 	"cache response received",
 	"end of data received",
 	"cache reset received",
-	"no data"
+	"no data",
+	"connection closed with reset",
 };
 
 enum rtr_state {
@@ -645,7 +647,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	if (len < pdu_len + sizeof(pdu_len)) {
 		log_warnx("rtr %s: received %s: bad encapsulated pdu len: %u "
 		    "byte", log_rtr(rs), log_rtr_type(ERROR_REPORT), pdu_len);
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
 		return -1;
 	}
 
@@ -659,7 +661,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	if (len < msg_len + sizeof(msg_len)) {
 		log_warnx("rtr %s: received %s: bad msg len: %u byte",
 		    log_rtr(rs), log_rtr_type(ERROR_REPORT), msg_len);
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
 		return -1;
 	}
 
@@ -674,7 +676,7 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 	if (errcode == NO_DATA_AVAILABLE) {
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
 	} else {
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
 		rs->last_recv_error = errcode;
 		if (str)
 			strlcpy(rs->last_recv_msg, str,
@@ -788,7 +790,16 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 	enum rtr_state prev_state = rs->state;
 
 	switch (event) {
-	case RTR_EVNT_CON_CLOSED:
+	case RTR_EVNT_RESET_AND_CLOSE:
+		rs->state = RTR_STATE_ERROR;
+		/* FALLTHROUGH */
+	case RTR_EVNT_CON_CLOSE:
+		if (rs->state == RTR_STATE_ERROR) {
+			/* reset session */
+			rs->session_id = -1;
+			free_roatree(&rs->roa_set);
+			rtr_recalc();
+		}
 		if (rs->state != RTR_STATE_CLOSED) {
 			/* flush buffers */
 			msgbuf_clear(&rs->w);
@@ -805,7 +816,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 	case RTR_EVNT_TIMER_RETRY:
 		switch (rs->state) {
 		case RTR_STATE_ERROR:
-			rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
 		case RTR_STATE_CLOSED:
 			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
@@ -851,6 +862,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		/* reset session and retry after a quick wait */
 		rs->session_id = -1;
 		free_roatree(&rs->roa_set);
+		rtr_recalc();
 		timer_set(&rs->timers, Timer_Rtr_Retry,
 		    arc4random_uniform(10));
 		break;
@@ -883,12 +895,12 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 
 	if (pfd->revents & POLLHUP) {
 		log_warnx("rtr %s: Connection closed, hangup", log_rtr(rs));
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 		return;
 	}
 	if (pfd->revents & (POLLERR|POLLNVAL)) {
 		log_warnx("rtr %s: Connection closed, error", log_rtr(rs));
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 		return;
 	}
 	if (pfd->revents & POLLOUT && rs->w.queued) {
@@ -898,24 +910,24 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 				    log_rtr(rs));
 			else if (error == -1)
 				log_warn("rtr %s: write error", log_rtr(rs));
-			rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
 		}
 		if (rs->w.queued == 0 && rs->state == RTR_STATE_ERROR)
-			rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 	if (pfd->revents & POLLIN) {
 		if ((n = read(rs->fd, rs->r.buf + rs->r.wpos,
 		    sizeof(rs->r.buf) - rs->r.wpos)) == -1) {
 			if (errno != EINTR && errno != EAGAIN) {
 				log_warn("rtr %s: read error", log_rtr(rs));
-				rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+				rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			}
 			return;
 		}
 		if (n == 0) {
 			log_warnx("rtr %s: Connection closed", log_rtr(rs));
-			rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
 		}
 		rs->r.wpos += n;
@@ -1066,7 +1078,7 @@ rtr_free(struct rtr_session *rs)
 	if (rs == NULL)
 		return;
 
-	rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+	rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	timer_remove_all(&rs->timers);
 	free_roatree(&rs->roa_set);
 	free(rs);
@@ -1077,7 +1089,7 @@ rtr_open(struct rtr_session *rs, int fd)
 {
 	if (rs->state != RTR_STATE_CLOSED) {
 		log_warnx("rtr %s: bad session state", log_rtr(rs));
-		rtr_fsm(rs, RTR_EVNT_CON_CLOSED);
+		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 
 	log_debug("rtr %s: connection opened", log_rtr(rs));
