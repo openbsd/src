@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.31 2022/12/04 23:50:48 cheloha Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.32 2023/02/01 00:03:38 bluhm Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -106,6 +106,8 @@ main(int argc, char *argv[])
 		err(1, "%s", acctfile);
 
 	for (;;) {
+		char commpid[sizeof(ab.ac_comm) + 13];
+
 		if (fread(&ab, sizeof(struct acct), 1, fp) != 1)
 			err(1, "%s", acctfile);
 
@@ -117,12 +119,14 @@ main(int argc, char *argv[])
 			    p < &ab.ac_comm[sizeof ab.ac_comm] && *p; ++p)
 				if (!isprint((unsigned char)*p))
 					*p = '?';
+		snprintf(commpid, sizeof(commpid), "%s[%d]",
+		    ab.ac_comm, ab.ac_pid);
 		if (!*argv || requested(argv, &ab)) {
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
-			    (int)sizeof ab.ac_comm,
-			    (int)sizeof ab.ac_comm,
-			    ab.ac_comm, flagbits(ab.ac_flag), UT_NAMESIZE,
+			    (int)sizeof commpid,
+			    (int)sizeof commpid,
+			    commpid, flagbits(ab.ac_flag), UT_NAMESIZE,
 			    UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
 			    UT_LINESIZE, UT_LINESIZE, getdev(ab.ac_tty),
 			    t / (double)AHZ, ctime(&ab.ac_btime));
