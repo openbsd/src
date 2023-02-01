@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.10 2023/01/31 17:14:27 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.11 2023/02/01 15:37:34 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -478,7 +478,7 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 
 		r = RB_FIND(roa_tree, &rs->roa_set, roa);
 		if (r == NULL) {
-			log_warnx("rtr %s: received %s: unknown withdrawl",
+			log_warnx("rtr %s: received %s: unknown withdrawal",
 			    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
 			rtr_send_error(rs, UNK_REC_WDRAWL, NULL, buf, len);
 			free(roa);
@@ -547,7 +547,7 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 
 		r = RB_FIND(roa_tree, &rs->roa_set, roa);
 		if (r == NULL) {
-			log_warnx("rtr %s: received %s: unknown withdrawl",
+			log_warnx("rtr %s: received %s: unknown withdrawal",
 			    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
 			rtr_send_error(rs, UNK_REC_WDRAWL, NULL, buf, len);
 			free(roa);
