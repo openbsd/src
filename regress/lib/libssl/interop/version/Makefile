@@ -1,15 +1,12 @@
-# $OpenBSD: Makefile,v 1.4 2023/01/27 08:28:36 tb Exp $
+# $OpenBSD: Makefile,v 1.5 2023/02/01 14:39:09 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
-# openssl 1.0.2, or openssl 1.1.  Pin client or server to a fixed TLS
+# openssl 1.1 or openssl 3.0.  Pin client or server to a fixed TLS
 # version number.  Incompatible versions must fail.  Check that client 
 # and server have used correct version by grepping in their session
 # print out.
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl)
-LIBRARIES +=		openssl
-.endif
 .if exists(/usr/local/bin/eopenssl11)
 LIBRARIES +=		openssl11
 .endif
@@ -31,8 +28,7 @@ FAIL_${cver}_${sver} = !
 .for clib in ${LIBRARIES}
 .for slib in ${LIBRARIES}
 
-.if (("${clib}" != openssl && "${slib}" != openssl) || \
-    ("${cver}" != TLS1_3 && "${sver}" != TLS1_3)) && \
+.if ("${cver}" != TLS1_3 && "${sver}" != TLS1_3) && \
     (("${clib}" != openssl30 && "${slib}" != openssl30) || \
     (("${cver}" != any && "${sver}" != any) && \
     ("${cver}" != TLS1 && "${sver}" != TLS1) && \
@@ -79,13 +75,8 @@ check-version-client-${clib}-${cver}-server-${slib}-${sver}: \
 	@grep ' Protocol *: ' ${@:S/^check/server/}.out
 .if "${cver}" == any
 .if "${sver}" == any
-.if "${clib}" == openssl || "${slib}" == openssl
-	grep -q ' Protocol *: TLSv1.2$$' ${@:S/^check/client/}.out
-	grep -q ' Protocol *: TLSv1.2$$' ${@:S/^check/server/}.out
-.else
 	grep -q ' Protocol *: TLSv1.3$$' ${@:S/^check/client/}.out
 	grep -q ' Protocol *: TLSv1.3$$' ${@:S/^check/server/}.out
-.endif
 .else
 	grep -q ' Protocol *: ${sver:S/TLS/TLSv/:S/_/./}$$' \
 	    ${@:S/^check/client/}.out

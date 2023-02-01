@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.10 2023/01/27 08:28:36 tb Exp $
+# $OpenBSD: Makefile,v 1.11 2023/02/01 14:39:09 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
-# openssl 1.0.2, 1.1, or 3.0.  Create lists of supported ciphers
+# openssl 1.1 or 3.0.  Create lists of supported ciphers
 # and pin client and server to one of the ciphers.  Use server
 # certificate with compatible type.  Check that client and server
 # have used correct cipher by grepping in their session print out.
@@ -18,9 +18,6 @@ check-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl:
 	@echo DISABLED
 
 LIBRARIES =		libressl
-.if exists(/usr/local/bin/eopenssl)
-LIBRARIES +=		openssl
-.endif
 .if exists(/usr/local/bin/eopenssl11)
 LIBRARIES +=		openssl11
 .endif
@@ -84,7 +81,6 @@ regress: ciphers.mk
 .endif
 
 LEVEL_libressl =
-LEVEL_openssl =
 LEVEL_openssl11 = ,@SECLEVEL=0
 LEVEL_openssl30 = ,@SECLEVEL=0
 
@@ -104,12 +100,7 @@ TYPE_${cipher} =	rsa
 TYPE_${cipher} =	127.0.0.1
 .endif
 
-.if "${slib}" == "openssl" && \
-    "${cipher:MADH-*}${cipher:MEDH-*}${cipher:MDHE-*}" != ""
-DHPARAM_${cipher}_${slib} =	-p dh.param
-.else
 DHPARAM_${cipher}_${slib} =
-.endif
 
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
@@ -141,8 +132,7 @@ REGRESS_SLOW_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
 check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
     server-cipher-${cipher}-client-${clib}-server-${slib}.out
-.if "${clib}" != "openssl" && "${slib}" != "openssl" && \
-    "${cipher:C/TLS_(AES.*_GCM|CHACHA.*_POLY.*)_SHA.*/TLS1_3/}" != TLS1_3
+.if "${cipher:C/TLS_(AES.*_GCM|CHACHA.*_POLY.*)_SHA.*/TLS1_3/}" != TLS1_3
 	# client and server 1.3 capable, not TLS 1.3 cipher
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported

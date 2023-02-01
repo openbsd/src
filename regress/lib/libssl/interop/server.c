@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.11 2022/07/07 13:12:57 tb Exp $	*/
+/*	$OpenBSD: server.c,v 1.12 2023/02/01 14:39:09 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -85,10 +85,8 @@ main(int argc, char *argv[])
 				version = TLS1_1_VERSION;
 			} else if (strcmp(optarg, "TLS1_2") == 0) {
 				version = TLS1_2_VERSION;
-#ifdef TLS1_3_VERSION
 			} else if (strcmp(optarg, "TLS1_3") == 0) {
 				version = TLS1_3_VERSION;
-#endif
 			} else {
 				errx(1, "unknown protocol version: %s", optarg);
 			}
@@ -184,10 +182,6 @@ main(int argc, char *argv[])
 		fclose(file);
 	}
 
-	/* needed when linking with OpenSSL 1.0.2p */
-	if (SSL_CTX_set_ecdh_auto(ctx, 1) <= 0)
-		err_ssl(1, "SSL_CTX_set_ecdh_auto");
-
 	/* load server certificate */
 	if (SSL_CTX_use_certificate_file(ctx, crt, SSL_FILETYPE_PEM) <= 0)
 		err_ssl(1, "SSL_CTX_use_certificate_file");
@@ -231,9 +225,6 @@ main(int argc, char *argv[])
 	if (listciphers) {
 		STACK_OF(SSL_CIPHER) *supported_ciphers;
 
-#if OPENSSL_VERSION_NUMBER < 0x1010000f
-#define SSL_get1_supported_ciphers SSL_get_ciphers
-#endif
 		ssl = SSL_new(ctx);
 		if (ssl == NULL)
 			err_ssl(1, "SSL_new");
@@ -242,9 +233,7 @@ main(int argc, char *argv[])
 			err_ssl(1, "SSL_get1_supported_ciphers");
 		print_ciphers(supported_ciphers);
 
-#if OPENSSL_VERSION_NUMBER >= 0x1010000f
 		sk_SSL_CIPHER_free(supported_ciphers);
-#endif
 		return 0;
 	}
 
