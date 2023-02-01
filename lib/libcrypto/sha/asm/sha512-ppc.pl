@@ -220,8 +220,11 @@ $func:
 	$LD	$G,`6*$SZ`($ctx)
 	$LD	$H,`7*$SZ`($ctx)
 
-	bl	LPICmeup
-LPICedup:
+	bcl	20,31,Lpc
+Lpc:
+	mflr	$Tbl
+	addis	$Tbl,$Tbl,Ltable-Lpc\@ha
+	addi	$Tbl,$Tbl,Ltable-Lpc\@l
 	andi.	r0,$inp,3
 	bne	Lunaligned
 Laligned:
@@ -377,22 +380,8 @@ $code.=<<___;
 	blr
 	.long	0
 	.byte	0,12,0x14,0,0,0,0,0
-___
-
-# Ugly hack here, because PPC assembler syntax seem to vary too
-# much from platforms to platform...
-$code.=<<___;
-.align	6
-LPICmeup:
-	mflr	r0
-	bcl	20,31,\$+4
-	mflr	$Tbl	; vvvvvv "distance" between . and 1st data entry
-	addi	$Tbl,$Tbl,`64-8`
-	mtlr	r0
-	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
-	.space	`64-9*4`
+	.rodata
+Ltable:
 ___
 $code.=<<___ if ($SZ==8);
 	.long	0x428a2f98,0xd728ae22,0x71374491,0x23ef65cd
