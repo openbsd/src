@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.35 2023/02/01 04:48:08 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.36 2023/02/01 06:23:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,6 +120,8 @@
 #include <stdint.h>
 
 #include "bn_local.h"
+
+#define MONT_WORD /* use the faster word-based algorithm */
 
 BN_MONT_CTX *
 BN_MONT_CTX_new(void)
@@ -393,8 +395,6 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 }
 #endif /* !OPENSSL_BN_ASM_MONT */
 #endif /* OPENSSL_NO_ASM */
-
-#define MONT_WORD /* use the faster word-based algorithm */
 
 #ifdef MONT_WORD
 static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont);
