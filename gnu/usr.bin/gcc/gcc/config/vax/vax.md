@@ -1646,37 +1646,10 @@
   "j%C0 %l1") ; %C0 negates condition
 
 ;; Recognize jbs, jlbs, jbc and jlbc instructions.  Note that the operand
-;; of jlbs and jlbc insns are SImode in the hardware.  However, if it is
-;; memory, we use QImode in the insn.  So we can't use those instructions
-;; for mode-dependent addresses.
-
-(define_insn ""
-  [(set (pc)
-	(if_then_else
-	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
-			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
-	     (const_int 0))
-	 (label_ref (match_operand 2 "" ""))
-	 (pc)))]
-  ""
-  "@
-   jlbs %0,%l2
-   jbs %1,%0,%l2")
-
-(define_insn ""
-  [(set (pc)
-	(if_then_else
-	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
-			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
-	     (const_int 0))
-	 (label_ref (match_operand 2 "" ""))
-	 (pc)))]
-  ""
-  "@
-   jlbc %0,%l2
-   jbc %1,%0,%l2")
+;; of jlbs and jlbc insns are SImode in the hardware.  Thus, if it is
+;; memory, we can only use SImode in the insn.  By only allowing
+;; register_operand here, we force a (possible zero-extended) load into a
+;; register, regardless of the actual mode of the memory operand.
 
 (define_insn ""
   [(set (pc)
