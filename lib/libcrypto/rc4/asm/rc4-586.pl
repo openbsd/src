@@ -188,7 +188,8 @@ if ($alt=0) {
 	&mov	(&wparam(3),$out);	# $out as accumulator in these loops
 	&jz	(&label("go4loop4"));
 
-	&picmeup($out,"OPENSSL_ia32cap_P");
+	&picsetup($out);
+	&picsymbol($out, "OPENSSL_ia32cap_P", $out);
 	# check SSE2 bit [could have been MMX]
 	&bt	(&DWP(0,$out),"\$IA32CAP_BIT0_SSE2");
 	&jnc	(&label("go4loop4"));
@@ -305,7 +306,9 @@ $idx="edx";
 	&mov	($out,&wparam(0));		# load key
 	&mov	($idi,&wparam(1));		# load len
 	&mov	($inp,&wparam(2));		# load data
-	&picmeup($idx,"OPENSSL_ia32cap_P");
+
+	&picsetup($idx);
+	&picsymbol($idx, "OPENSSL_ia32cap_P", $idx);
 
 	&lea	($out,&DWP(2*4,$out));		# &key->data
 	&lea	($inp,&DWP(0,$inp,$idi));	# $inp to point at the end
@@ -382,12 +385,12 @@ $idx="edx";
 &function_end("RC4_set_key");
 
 # const char *RC4_options(void);
+&static_label("opts");
 &function_begin_B("RC4_options");
-	&call	(&label("pic_point"));
-&set_label("pic_point");
-	&blindpop("eax");
-	&lea	("eax",&DWP(&label("opts")."-".&label("pic_point"),"eax"));
-	&picmeup("edx","OPENSSL_ia32cap_P");
+	&picsetup("edx");
+	&picsymbol("eax", &label("opts"), "edx");
+	&picsymbol("edx", "OPENSSL_ia32cap_P", "edx");;
+
 	&mov	("edx",&DWP(0,"edx"));
 	&bt	("edx","\$IA32CAP_BIT0_INTELP4");
 	&jc	(&label("1xchar"));
@@ -399,13 +402,14 @@ $idx="edx";
 	&add	("eax",12);
 &set_label("ret");
 	&ret	();
-&set_label("opts",64);
+&function_end_B("RC4_options");
+
+	&rodataseg();
+&set_label("opts");
 &asciz	("rc4(4x,int)");
 &asciz	("rc4(1x,char)");
 &asciz	("rc4(8x,mmx)");
-&asciz	("RC4 for x86, CRYPTOGAMS by <appro\@openssl.org>");
-&align	(64);
-&function_end_B("RC4_options");
+	&previous();
 
 &asm_finish();
 

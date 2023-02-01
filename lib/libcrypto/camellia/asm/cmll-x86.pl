@@ -141,10 +141,8 @@ my $t0=@T[($j)%4],$t1=@T[($j+1)%4],$t2=@T[($j+2)%4],$t3=@T[($j+3)%4];
 	&mov	($_esp,"ebx");	# save %esp
 	&mov	($_end,"eax");	# save keyEnd
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea	($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 
 	&mov	(@T[0],&DWP(0,$idx));	# load plaintext
 	&mov	(@T[1],&DWP(4,$idx));
@@ -206,10 +204,8 @@ if ($OPENSSL) {
 	&mov	($_esp,"ebx");	# save %esp
 	&mov	($_end,"eax");	# save keyEnd
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea	($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 
 	&mov	(@T[0],&DWP(0,$idx));	# load plaintext
 	&mov	(@T[1],&DWP(4,$idx));
@@ -316,10 +312,8 @@ if ($OPENSSL) {
 	&lea	($key,&DWP(0,$key,"eax"));
 	&mov	(&DWP(5*4,"esp"),"ebx");# save %esp
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea	($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 
 	&mov	(@T[0],&DWP(0,$idx));	# load ciphertext
 	&mov	(@T[1],&DWP(4,$idx));
@@ -381,10 +375,8 @@ if ($OPENSSL) {
 	&lea	($key,&DWP(0,$key,"eax"));
 	&mov	(&DWP(5*4,"esp"),"ebx");# save %esp
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea	($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 
 	&mov	(@T[0],&DWP(0,$idx));	# load ciphertext
 	&mov	(@T[1],&DWP(4,$idx));
@@ -594,10 +586,8 @@ my $bias=int(@T[0])?shift(@T):0;
 	&xor	(@T[3],&DWP(1*8+4,$key));
 
 &set_label("1st128",4);
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea	($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 	&lea	($key,&DWP(&label("Camellia_SIGMA")."-".&label("Camellia_SBOX"),$Tbl));
 
 	&mov	($idx,&DWP($step*8,$key));	# prefetch SIGMA[0]
@@ -786,6 +776,7 @@ sub S4404 { my $i=shift; $i=($i<<1|$i>>7)&0xff; $i=@SBOX[$i]; return $i<<24|$i<<
 sub S0222 { my $i=shift; $i=@SBOX[$i]; $i=($i<<1|$i>>7)&0xff; return $i<<16|$i<<8|$i; }	
 sub S3033 { my $i=shift; $i=@SBOX[$i]; $i=($i>>1|$i<<7)&0xff; return $i<<24|$i<<8|$i; }	
 
+	&rodataseg();
 &set_label("Camellia_SIGMA",64);
 &data_word(
     0xa09e667f, 0x3bcc908b, 0xb67ae858, 0x4caa73b2,
@@ -796,6 +787,7 @@ sub S3033 { my $i=shift; $i=@SBOX[$i]; $i=($i>>1|$i<<7)&0xff; return $i<<24|$i<<
 # tables are interleaved, remember?
 for ($i=0;$i<256;$i++) { &data_word(&S1110($i),&S4404($i)); }
 for ($i=0;$i<256;$i++) { &data_word(&S0222($i),&S3033($i)); }
+	&previous();
 
 # void Camellia_cbc_encrypt (const void char *inp, unsigned char *out,
 #			size_t length, const CAMELLIA_KEY *key,
@@ -856,10 +848,8 @@ my ($s0,$s1,$s2,$s3) = @T;
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$Tbl);		# save copy of ivp
 
-	&call   (&label("pic_point"));	# make it PIC!
-	&set_label("pic_point");
-	&blindpop($Tbl);
-	&lea    ($Tbl,&DWP(&label("Camellia_SBOX")."-".&label("pic_point"),$Tbl));
+	&picsetup($Tbl);
+	&picsymbol($Tbl, &label("Camellia_SBOX"), $Tbl);
 
 	&mov	($idx,32);
 	&set_label("prefetch_sbox",4);
@@ -1132,7 +1122,5 @@ my ($s0,$s1,$s2,$s3) = @T;
     &popf	();
 &function_end("Camellia_cbc_encrypt");
 }
-
-&asciz("Camellia for x86 by <appro\@openssl.org>");
 
 &asm_finish();

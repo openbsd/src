@@ -2184,6 +2184,5 @@ if ($PREFIX eq "aesni") {
 &set_label("dec_key_ret");
 	&ret	();
 &function_end_B("${PREFIX}_set_decrypt_key");
-&asciz("AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

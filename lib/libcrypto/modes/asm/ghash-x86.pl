@@ -411,10 +411,8 @@ $S=12;		# shift factor for rem_4bit
 	&mov	($inp,&wparam(0));	# load Xi
 	&mov	($Htbl,&wparam(1));	# load Htable
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop("eax");
-	&lea	("eax",&DWP(&label("rem_4bit")."-".&label("pic_point"),"eax"));
+	&picsetup("eax");
+	&picsymbol("eax", &label("rem_4bit"), "eax");
 
 	&movz	($Zll,&BP(15,$inp));
 
@@ -436,10 +434,8 @@ $S=12;		# shift factor for rem_4bit
 	&mov	($inp,&wparam(2));	# load in
 	&mov	($Zlh,&wparam(3));	# load len
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop("eax");
-	&lea	("eax",&DWP(&label("rem_4bit")."-".&label("pic_point"),"eax"));
+	&picsetup("eax");
+	&picsymbol("eax", &label("rem_4bit"), "eax");
 
 	&add	($Zlh,$inp);
 	&mov	(&wparam(3),$Zlh);	# len to point at the end of input
@@ -584,10 +580,8 @@ sub mmx_loop() {
 	&mov	($inp,&wparam(0));	# load Xi
 	&mov	($Htbl,&wparam(1));	# load Htable
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop("eax");
-	&lea	("eax",&DWP(&label("rem_4bit")."-".&label("pic_point"),"eax"));
+	&picsetup("eax");
+	&picsymbol("eax", &label("rem_4bit"), "eax");
 
 	&movz	($Zll,&BP(15,$inp));
 
@@ -618,10 +612,9 @@ sub mmx_loop() {
     &mov	("ecx",&wparam(2));		# inp
     &mov	("edx",&wparam(3));		# len
     &mov	("ebp","esp");			# original %esp
-    &call	(&label("pic_point"));
-    &set_label	("pic_point");
-    &blindpop	($rem_8bit);
-    &lea	($rem_8bit,&DWP(&label("rem_8bit")."-".&label("pic_point"),$rem_8bit));
+
+    &picsetup($rem_8bit);
+    &picsymbol($rem_8bit, &label("rem_8bit"), $rem_8bit);
 
     &sub	("esp",512+16+16);		# allocate stack frame...
     &and	("esp",-64);			# ...and align it
@@ -910,10 +903,8 @@ my ($Xhi,$Xi) = @_;
 	&mov		($Htbl,&wparam(0));
 	&mov		($Xip,&wparam(1));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Hkey,&QWP(0,$Xip));
 	&pshufd		($Hkey,$Hkey,0b01001110);# dword swap
@@ -947,10 +938,8 @@ my ($Xhi,$Xi) = @_;
 	&mov		($Xip,&wparam(0));
 	&mov		($Htbl,&wparam(1));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Xi,&QWP(0,$Xip));
 	&movdqa		($T3,&QWP(0,$const));
@@ -972,10 +961,8 @@ my ($Xhi,$Xi) = @_;
 	&mov		($inp,&wparam(2));
 	&mov		($len,&wparam(3));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Xi,&QWP(0,$Xip));
 	&movdqa		($T3,&QWP(0,$const));
@@ -1138,10 +1125,8 @@ my ($Xhi,$Xi)=@_;
 	&mov		($Htbl,&wparam(0));
 	&mov		($Xip,&wparam(1));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Hkey,&QWP(0,$Xip));
 	&pshufd		($Hkey,$Hkey,0b01001110);# dword swap
@@ -1161,10 +1146,8 @@ my ($Xhi,$Xi)=@_;
 	&mov		($Xip,&wparam(0));
 	&mov		($Htbl,&wparam(1));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Xi,&QWP(0,$Xip));
 	&movdqa		($Xn,&QWP(0,$const));
@@ -1186,10 +1169,8 @@ my ($Xhi,$Xi)=@_;
 	&mov		($inp,&wparam(2));
 	&mov		($len,&wparam(3));
 
-	&call		(&label("pic"));
-&set_label("pic");
-	&blindpop	($const);
-	&lea		($const,&DWP(&label("bswap")."-".&label("pic"),$const));
+	&picsetup($const);
+	&picsymbol($const, &label("bswap"), $const);
 
 	&movdqu		($Xi,&QWP(0,$Xip));
 	&movdqa		($T3,&QWP(0,$const));
@@ -1270,11 +1251,14 @@ my ($Xhi,$Xi)=@_;
 
 }
 
+	&rodataseg();
 &set_label("bswap",64);
 	&data_byte(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 	&data_byte(1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xc2);	# 0x1c2_polynomial
+	&previous();
 }}	# $sse2
 
+	&rodataseg();
 &set_label("rem_4bit",64);
 	&data_word(0,0x0000<<$S,0,0x1C20<<$S,0,0x3840<<$S,0,0x2460<<$S);
 	&data_word(0,0x7080<<$S,0,0x6CA0<<$S,0,0x48C0<<$S,0,0x54E0<<$S);
@@ -1313,9 +1297,9 @@ my ($Xhi,$Xi)=@_;
 	&data_short(0xA7D0,0xA612,0xA454,0xA596,0xA0D8,0xA11A,0xA35C,0xA29E);
 	&data_short(0xB5E0,0xB422,0xB664,0xB7A6,0xB2E8,0xB32A,0xB16C,0xB0AE);
 	&data_short(0xBBF0,0xBA32,0xB874,0xB9B6,0xBCF8,0xBD3A,0xBF7C,0xBEBE);
+	&previous();
 }}}	# !$x86only
 
-&asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
 &asm_finish();
 
 # A question was risen about choice of vanilla MMX. Or rather why wasn't

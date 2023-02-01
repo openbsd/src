@@ -57,6 +57,7 @@ $PREFIX="vpaes";
 my  ($round, $base, $magic, $key, $const, $inp, $out)=
     ("eax",  "ebx", "ecx",  "edx","ebp",  "esi","edi");
 
+	&rodataseg();
 &static_label("_vpaes_consts");
 &static_label("_vpaes_schedule_low_round");
 
@@ -153,8 +154,7 @@ $k_dsbe=0x2a0;		# decryption sbox output *E*u, *E*t
 $k_dsbo=0x2c0;		# decryption sbox final output
 	&data_word(0x7EF94000,0x1387EA53,0xD4943E2D,0xC7AA6DB9);
 	&data_word(0x93441D00,0x12D7560F,0xD8C58E9C,0xCA4B8159);
-&asciz	("Vector Permutation AES for x86/SSSE3, Mike Hamburg (Stanford University)");
-&align	(64);
+	&previous();
 
 &function_begin_B("_vpaes_preheat");
 	&add	($const,&DWP(0,"esp"));
@@ -762,9 +762,11 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	($magic,0x30);
 	&mov	($out,0);
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&picsetup($const);
+	&picsymbol($const, &label("_vpaes_consts"), $const);
+	&lea	($const,&DWP(0x30,$const))
+
 	&call	("_vpaes_schedule_core");
-&set_label("pic_point");
 
 	&mov	("esp",&DWP(48,"esp"));
 	&xor	("eax","eax");
@@ -792,18 +794,22 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&and	($magic,32);
 	&xor	($magic,32);			# nbist==192?0:32;
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&picsetup($const);
+	&picsymbol($const, &label("_vpaes_consts"), $const);
+	&lea	($const,&DWP(0x30,$const))
+
 	&call	("_vpaes_schedule_core");
-&set_label("pic_point");
 
 	&mov	("esp",&DWP(48,"esp"));
 	&xor	("eax","eax");
 &function_end("${PREFIX}_set_decrypt_key");
 
 &function_begin("${PREFIX}_encrypt");
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&picsetup($const);
+	&picsymbol($const, &label("_vpaes_consts"), $const);
+	&lea	($const,&DWP(0x30,$const))
+
 	&call	("_vpaes_preheat");
-&set_label("pic_point");
 	&mov	($inp,&wparam(0));		# inp
 	&lea	($base,&DWP(-56,"esp"));
 	&mov	($out,&wparam(1));		# out
@@ -820,9 +826,11 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 &function_end("${PREFIX}_encrypt");
 
 &function_begin("${PREFIX}_decrypt");
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&picsetup($const);
+	&picsymbol($const, &label("_vpaes_consts"), $const);
+	&lea	($const,&DWP(0x30,$const))
+
 	&call	("_vpaes_preheat");
-&set_label("pic_point");
 	&mov	($inp,&wparam(0));		# inp
 	&lea	($base,&DWP(-56,"esp"));
 	&mov	($out,&wparam(1));		# out
@@ -859,9 +867,11 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	(&DWP(8,"esp"),$const);		# save ivp
 	&mov	($out,$round);			# $out works as $len
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&picsetup($const);
+	&picsymbol($const, &label("_vpaes_consts"), $const);
+	&lea	($const,&DWP(0x30,$const))
+
 	&call	("_vpaes_preheat");
-&set_label("pic_point");
 	&cmp	($magic,0);
 	&je	(&label("cbc_dec_loop"));
 	&jmp	(&label("cbc_enc_loop"));

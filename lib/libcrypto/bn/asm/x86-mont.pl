@@ -113,7 +113,8 @@ $mul1="mm5";
 $temp="mm6";
 $mask="mm7";
 
-	&picmeup("eax","OPENSSL_ia32cap_P");
+	&picsetup("eax");
+	&picsymbol("eax", "OPENSSL_ia32cap_P", "eax");
 	&bt	(&DWP(0,"eax"),"\$IA32CAP_BIT0_SSE2");
 	&jnc	(&label("non_sse2"));
 
@@ -587,7 +588,5 @@ $sbit=$num;
 	&mov	("eax",1);
 &set_label("just_leave");
 &function_end("bn_mul_mont");
-
-&asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

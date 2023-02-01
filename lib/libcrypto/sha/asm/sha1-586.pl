@@ -295,11 +295,9 @@ if ($xmm) {
   &static_label("avx_shortcut")		if ($ymm);
   &static_label("K_XX_XX");
 
-	&call	(&label("pic_point"));	# make it PIC!
-  &set_label("pic_point");
-	&blindpop($tmp1);
-	&picmeup($T,"OPENSSL_ia32cap_P",$tmp1,&label("pic_point"));
-	&lea	($tmp1,&DWP(&label("K_XX_XX")."-".&label("pic_point"),$tmp1));
+	&picsetup($tmp1);
+	&picsymbol($T, "OPENSSL_ia32cap_P", $tmp1);
+	&picsymbol($tmp1, &label("K_XX_XX"), $tmp1);
 
 	&mov	($A,&DWP(0,$T));
 	&mov	($D,&DWP(4,$T));
@@ -419,10 +417,9 @@ my $_rol=sub { &rol(@_) };
 my $_ror=sub { &ror(@_) };
 
 &function_begin("_sha1_block_data_order_ssse3");
-	&call	(&label("pic_point"));	# make it PIC!
-	&set_label("pic_point");
-	&blindpop($tmp1);
-	&lea	($tmp1,&DWP(&label("K_XX_XX")."-".&label("pic_point"),$tmp1));
+	&picsetup($tmp1);
+	&picsymbol($tmp1, &label("K_XX_XX"), $tmp1);
+
 &set_label("ssse3_shortcut");
 
 	&movdqa	(@X[3],&QWP(0,$tmp1));		# K_00_19
@@ -861,10 +858,9 @@ my $_rol=sub { &shld(@_[0],@_) };
 my $_ror=sub { &shrd(@_[0],@_) };
 
 &function_begin("_sha1_block_data_order_avx");
-	&call	(&label("pic_point"));	# make it PIC!
-	&set_label("pic_point");
-	&blindpop($tmp1);
-	&lea	($tmp1,&DWP(&label("K_XX_XX")."-".&label("pic_point"),$tmp1));
+	&picsetup($tmp1);
+	&picsymbol($tmp1, &label("K_XX_XX"), $tmp1);
+
 &set_label("avx_shortcut");
 	&vzeroall();
 
@@ -1213,13 +1209,15 @@ sub Xtail_avx()
 	&mov	(&DWP(16,@T[1]),$E);
 &function_end("_sha1_block_data_order_avx");
 }
+
+	&rodataseg();
 &set_label("K_XX_XX",64);
 &data_word(0x5a827999,0x5a827999,0x5a827999,0x5a827999);	# K_00_19
 &data_word(0x6ed9eba1,0x6ed9eba1,0x6ed9eba1,0x6ed9eba1);	# K_20_39
 &data_word(0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc,0x8f1bbcdc);	# K_40_59
 &data_word(0xca62c1d6,0xca62c1d6,0xca62c1d6,0xca62c1d6);	# K_60_79
 &data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);	# pbswap mask
+	&previous();
 }
-&asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

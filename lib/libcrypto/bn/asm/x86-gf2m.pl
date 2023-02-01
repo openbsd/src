@@ -200,7 +200,8 @@ $R="mm0";
 # void bn_GF2m_mul_2x2(BN_ULONG *r, BN_ULONG a1, BN_ULONG a0, BN_ULONG b1, BN_ULONG b0);
 &function_begin_B("bn_GF2m_mul_2x2");
 if (!$x86only) {
-	&picmeup("edx","OPENSSL_ia32cap_P");
+	&picsetup("edx");
+	&picsymbol("edx", "OPENSSL_ia32cap_P", "edx");
 	&mov	("eax",&DWP(0,"edx"));
 	&mov	("edx",&DWP(4,"edx"));
 	&test	("eax","\$IA32CAP_MASK0_MMX");	# check MMX bit
@@ -307,7 +308,5 @@ if ($sse2) {
 	&pop	("ebp");
 	&ret	();
 &function_end_B("bn_GF2m_mul_2x2");
-
-&asciz	("GF(2^m) Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

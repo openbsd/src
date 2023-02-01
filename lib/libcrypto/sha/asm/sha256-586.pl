@@ -96,16 +96,15 @@ sub BODY_00_15() {
 	&add	($A,"esi");	# h += K256[i]
 }
 
+&static_label("K256");
 &function_begin("sha256_block_data_order");
 	&mov	("esi",wparam(0));	# ctx
 	&mov	("edi",wparam(1));	# inp
 	&mov	("eax",wparam(2));	# num
 	&mov	("ebx","esp");		# saved sp
 
-	&call	(&label("pic_point"));	# make it PIC!
-&set_label("pic_point");
-	&blindpop($K256);
-	&lea	($K256,&DWP(&label("K256")."-".&label("pic_point"),$K256));
+	&picsetup($K256);
+	&picsymbol($K256, &label("K256"), $K256);
 
 	&sub	("esp",16);
 	&and	("esp",-64);
@@ -225,8 +224,10 @@ sub BODY_00_15() {
 
 	&mov	("esp",&DWP(12,"esp"));		# restore sp
 &function_end_A();
+&function_end_B("sha256_block_data_order");
 
-&set_label("K256",64);	# Yes! I keep it in the code segment!
+	&rodataseg();
+&set_label("K256",64);
 	&data_word(0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5);
 	&data_word(0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5);
 	&data_word(0xd807aa98,0x12835b01,0x243185be,0x550c7dc3);
@@ -243,7 +244,6 @@ sub BODY_00_15() {
 	&data_word(0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3);
 	&data_word(0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208);
 	&data_word(0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2);
-&function_end_B("sha256_block_data_order");
-&asciz("SHA256 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+	&previous();
 
 &asm_finish();

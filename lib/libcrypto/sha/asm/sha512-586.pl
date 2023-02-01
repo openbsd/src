@@ -261,16 +261,18 @@ sub BODY_00_15_x86 {
 }
 
 
+&static_label("K512");
 &function_begin("sha512_block_data_order");
 	&mov	("esi",wparam(0));	# ctx
 	&mov	("edi",wparam(1));	# inp
 	&mov	("eax",wparam(2));	# num
 	&mov	("ebx","esp");		# saved sp
 
-	&call	(&label("pic_point"));	# make it PIC!
-&set_label("pic_point");
-	&blindpop($K512);
-	&lea	($K512,&DWP(&label("K512")."-".&label("pic_point"),$K512));
+	&picsetup($K512);
+if ($sse2) {
+	&picsymbol("edx", "OPENSSL_ia32cap_P", $K512);
+}
+	&picsymbol($K512, &label("K512"), $K512);
 
 	&sub	("esp",16);
 	&and	("esp",-64);
@@ -283,7 +285,6 @@ sub BODY_00_15_x86 {
 	&mov	(&DWP(12,"esp"),"ebx");	# saved sp
 
 if ($sse2) {
-	&picmeup("edx","OPENSSL_ia32cap_P",$K512,&label("K512"));
 	&bt	(&DWP(0,"edx"),"\$IA32CAP_BIT0_SSE2");
 	&jnc	(&label("loop_x86"));
 
@@ -556,8 +557,10 @@ if ($sse2) {
 
 	&mov	("esp",&DWP(12,"esp"));		# restore sp
 &function_end_A();
+&function_end_B("sha512_block_data_order");
 
-&set_label("K512",64);	# Yes! I keep it in the code segment!
+	&rodataseg();
+&set_label("K512",64);
 	&data_word(0xd728ae22,0x428a2f98);	# u64
 	&data_word(0x23ef65cd,0x71374491);	# u64
 	&data_word(0xec4d3b2f,0xb5c0fbcf);	# u64
@@ -638,7 +641,6 @@ if ($sse2) {
 	&data_word(0xfc657e2a,0x597f299c);	# u64
 	&data_word(0x3ad6faec,0x5fcb6fab);	# u64
 	&data_word(0x4a475817,0x6c44198c);	# u64
-&function_end_B("sha512_block_data_order");
-&asciz("SHA512 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
+	&previous();
 
 &asm_finish();

@@ -154,11 +154,8 @@ sub DES_encrypt
 		&rotl($L,3);
 		}
 
-	# PIC-ification:-)
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($trans);
-	&lea	($trans,&DWP(&label("DES_SPtrans")."-".&label("pic_point"),$trans));
+	&picsetup($trans);
+	&picsymbol($trans, &label("DES_SPtrans"), $trans);
 
 	&mov(	"ecx",	&wparam(1)	);
 
@@ -314,6 +311,7 @@ sub FP_new
 
 sub DES_SPtrans
 	{
+	&rodataseg();
 	&set_label("DES_SPtrans",64);
 	&data_word(0x02080800, 0x00080000, 0x02000002, 0x02080802);
 	&data_word(0x02000000, 0x00080802, 0x00080002, 0x02000002);
@@ -450,4 +448,5 @@ sub DES_SPtrans
 	&data_word(0x00820000, 0x00020080, 0x20020080, 0x20800000);
 	&data_word(0x00000080, 0x20820000, 0x00820080, 0x00000000);
 	&data_word(0x20000000, 0x20800080, 0x00020000, 0x00820080);
+	&previous();
 	}

@@ -34,6 +34,15 @@ sub cbc
 	# p1,p2,p3 are the offsets for parameters to be passed to the
 	# underlying calls.
 
+&static_label("cbc_enc_jmp_table_".$name);
+&static_label("ej1_".$name);
+&static_label("ej2_".$name);
+&static_label("ej3_".$name);
+&static_label("ej4_".$name);
+&static_label("ej5_".$name);
+&static_label("ej6_".$name);
+&static_label("ej7_".$name);
+
 	&function_begin_B($name,"");
 	&comment("");
 
@@ -146,33 +155,32 @@ sub cbc
 	&mov($count,	&wparam(2));	# length
 	&and($count,	7);
 	&jz(&label("finish"));
-	&call(&label("PIC_point"));
-&set_label("PIC_point");
-	&blindpop("edx");
-	&lea("ecx",&DWP(&label("cbc_enc_jmp_table")."-".&label("PIC_point"),"edx"));
+
+	&picsetup("edx");
+	&picsymbol("ecx", &label("cbc_enc_jmp_table_".$name), "edx")
 	&mov($count,&DWP(0,"ecx",$count,4));
-	&add($count,"edx");
+	&picadjust($count, "edx");
+
 	&xor("ecx","ecx");
 	&xor("edx","edx");
-	#&mov($count,&DWP(&label("cbc_enc_jmp_table"),"",$count,4));
 	&jmp_ptr($count);
 
-&set_label("ej7");
+&set_label("ej7_".$name);
 	&movb(&HB("edx"),	&BP(6,$in,"",0));
 	&shl("edx",8);
-&set_label("ej6");
+&set_label("ej6_".$name);
 	&movb(&HB("edx"),	&BP(5,$in,"",0));
-&set_label("ej5");
+&set_label("ej5_".$name);
 	&movb(&LB("edx"),	&BP(4,$in,"",0));
-&set_label("ej4");
+&set_label("ej4_".$name);
 	&mov("ecx",		&DWP(0,$in,"",0));
 	&jmp(&label("ejend"));
-&set_label("ej3");
+&set_label("ej3_".$name);
 	&movb(&HB("ecx"),	&BP(2,$in,"",0));
 	&shl("ecx",8);
-&set_label("ej2");
+&set_label("ej2_".$name);
 	&movb(&HB("ecx"),	&BP(1,$in,"",0));
-&set_label("ej1");
+&set_label("ej1_".$name);
 	&movb(&LB("ecx"),	&BP(0,$in,"",0));
 &set_label("ejend");
 
@@ -279,30 +287,14 @@ sub cbc
 	&mov("eax",	&DWP(0,$in,"",0));	# get old cipher text,
 	&mov("ebx",	&DWP(4,$in,"",0));	# next iv actually
 
-&set_label("dj7");
 	&rotr("edx",	16);
 	&movb(&BP(6,$out,"",0),	&LB("edx"));
 	&shr("edx",16);
-&set_label("dj6");
 	&movb(&BP(5,$out,"",0),	&HB("edx"));
-&set_label("dj5");
 	&movb(&BP(4,$out,"",0),	&LB("edx"));
-&set_label("dj4");
 	&mov(&DWP(0,$out,"",0),	"ecx");
-	&jmp(&label("djend"));
-&set_label("dj3");
-	&rotr("ecx",	16);
-	&movb(&BP(2,$out,"",0),	&LB("ecx"));
-	&shl("ecx",16);
-&set_label("dj2");
-	&movb(&BP(1,$in,"",0),	&HB("ecx"));
-&set_label("dj1");
-	&movb(&BP(0,$in,"",0),	&LB("ecx"));
-&set_label("djend");
 
 	# final iv is still in eax:ebx
-	&jmp(&label("finish"));
-
 
 ############################ FINISH #######################3
 	&set_label("finish",1);
@@ -319,31 +311,21 @@ sub cbc
 	&mov(&DWP(4,"ecx","",0),	"ebx");	# save iv
 
 	&function_end_A($name);
-
-	&align(64);
-	&set_label("cbc_enc_jmp_table");
-	&data_word("0");
-	&data_word(&label("ej1")."-".&label("PIC_point"));
-	&data_word(&label("ej2")."-".&label("PIC_point"));
-	&data_word(&label("ej3")."-".&label("PIC_point"));
-	&data_word(&label("ej4")."-".&label("PIC_point"));
-	&data_word(&label("ej5")."-".&label("PIC_point"));
-	&data_word(&label("ej6")."-".&label("PIC_point"));
-	&data_word(&label("ej7")."-".&label("PIC_point"));
-	# not used
-	#&set_label("cbc_dec_jmp_table",1);
-	#&data_word("0");
-	#&data_word(&label("dj1")."-".&label("PIC_point"));
-	#&data_word(&label("dj2")."-".&label("PIC_point"));
-	#&data_word(&label("dj3")."-".&label("PIC_point"));
-	#&data_word(&label("dj4")."-".&label("PIC_point"));
-	#&data_word(&label("dj5")."-".&label("PIC_point"));
-	#&data_word(&label("dj6")."-".&label("PIC_point"));
-	#&data_word(&label("dj7")."-".&label("PIC_point"));
-	&align(64);
-
 	&function_end_B($name);
-	
+
+	&rodataseg();
+	&align(64);
+	&set_label("cbc_enc_jmp_table_".$name);
+	&data_word("0");
+	&data_word(&code_sym(&label("ej1_".$name)));
+	&data_word(&code_sym(&label("ej2_".$name)));
+	&data_word(&code_sym(&label("ej3_".$name)));
+	&data_word(&code_sym(&label("ej4_".$name)));
+	&data_word(&code_sym(&label("ej5_".$name)));
+	&data_word(&code_sym(&label("ej6_".$name)));
+	&data_word(&code_sym(&label("ej7_".$name)));
+	&previous();
+
 	}
 
 1;

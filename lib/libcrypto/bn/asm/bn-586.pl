@@ -32,7 +32,8 @@ sub bn_mul_add_words
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picsetup("eax");
+		&picsymbol("eax", "OPENSSL_ia32cap_P", "eax");
 		&bt(&DWP(0,"eax"),"\$IA32CAP_BIT0_SSE2");
 		&jnc(&label("maw_non_sse2"));
 
@@ -218,7 +219,8 @@ sub bn_mul_words
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picsetup("eax");
+		&picsymbol("eax", "OPENSSL_ia32cap_P", "eax");
 		&bt(&DWP(0,"eax"),"\$IA32CAP_BIT0_SSE2");
 		&jnc(&label("mw_non_sse2"));
 
@@ -329,7 +331,8 @@ sub bn_sqr_words
 	$c="ecx";
 
 	if ($sse2) {
-		&picmeup("eax","OPENSSL_ia32cap_P");
+		&picsetup("eax");
+		&picsymbol("eax", "OPENSSL_ia32cap_P", "eax");
 		&bt(&DWP(0,"eax"),"\$IA32CAP_BIT0_SSE2");
 		&jnc(&label("sqr_non_sse2"));
 

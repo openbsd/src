@@ -77,6 +77,8 @@ sub row()
 $tbl="ebp";
 @mm=("mm0","mm1","mm2","mm3","mm4","mm5","mm6","mm7");
 
+&static_label("table");
+
 &function_begin_B("whirlpool_block_mmx");
 	&push	("ebp");
 	&push	("ebx");
@@ -97,10 +99,8 @@ $tbl="ebp";
 	&mov	(&DWP(8,"ebx"),"ebp");
 	&mov	(&DWP(16,"ebx"),"eax");		# saved stack pointer
 
-	&call	(&label("pic_point"));
-&set_label("pic_point");
-	&blindpop($tbl);
-	&lea	($tbl,&DWP(&label("table")."-".&label("pic_point"),$tbl));
+	&picsetup($tbl);
+	&picsymbol($tbl, &label("table"), $tbl);
 
 	&xor	("ecx","ecx");
 	&xor	("edx","edx");
@@ -218,7 +218,9 @@ for($i=0;$i<8;$i++) {
 	&pop	("ebx");
 	&pop	("ebp");
 	&ret	();
+&function_end_B("whirlpool_block_mmx");
 
+	&rodataseg();
 &align(64);
 &set_label("table");
 	&LL(0x18,0x18,0x60,0x18,0xc0,0x78,0x30,0xd8);
@@ -488,6 +490,6 @@ for($i=0;$i<8;$i++) {
 	&L(0xe4,0x27,0x41,0x8b,0xa7,0x7d,0x95,0xd8);
 	&L(0xfb,0xee,0x7c,0x66,0xdd,0x17,0x47,0x9e);
 	&L(0xca,0x2d,0xbf,0x07,0xad,0x5a,0x83,0x33);
+	&previous();
 
-&function_end_B("whirlpool_block_mmx");
 &asm_finish(); 

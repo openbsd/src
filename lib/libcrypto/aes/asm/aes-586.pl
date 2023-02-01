@@ -950,8 +950,10 @@ sub enclast()
 	&xor	($s3,&DWP(12,$key));
 
 	&ret	();
+&function_end_B("_x86_AES_encrypt");
 
-&set_label("AES_Te",64);	# Yes! I keep it in the code segment!
+	&rodataseg();
+&set_label("AES_Te",64);
 	&_data_word(0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6);
 	&_data_word(0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591);
 	&_data_word(0x50303060, 0x03010102, 0xa96767ce, 0x7d2b2b56);
@@ -1154,7 +1156,7 @@ sub enclast()
 	&data_word(0x00000010, 0x00000020, 0x00000040, 0x00000080);
 	&data_word(0x0000001b, 0x00000036, 0x00000000, 0x00000000);
 	&data_word(0x00000000, 0x00000000, 0x00000000, 0x00000000);
-&function_end_B("_x86_AES_encrypt");
+	&previous();
 
 # void AES_encrypt (const void *inp,void *out,const AES_KEY *key);
 &function_begin("AES_encrypt");
@@ -1174,11 +1176,9 @@ sub enclast()
 	&add	("esp",4);	# 4 is reserved for caller's return address
 	&mov	($_esp,$s0);			# save stack pointer
 
-	&call   (&label("pic_point"));          # make it PIC!
-	&set_label("pic_point");
-	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if (!$x86only);
-	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	&picsetup($tbl);
+	&picsymbol($s0, "OPENSSL_ia32cap_P", $tbl);
+	&picsymbol($tbl, &label("AES_Te"), $tbl);
 
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	&lea	($s1,&DWP(768-4,"esp"));
@@ -1744,8 +1744,10 @@ sub declast()
 	&xor	($s3,&DWP(12,$key));
 
 	&ret	();
+&function_end_B("_x86_AES_decrypt");
 
-&set_label("AES_Td",64);	# Yes! I keep it in the code segment!
+	&rodataseg();
+&set_label("AES_Td",64);
 	&_data_word(0x50a7f451, 0x5365417e, 0xc3a4171a, 0x965e273a);
 	&_data_word(0xcb6bab3b, 0xf1459d1f, 0xab58faac, 0x9303e34b);
 	&_data_word(0x55fa3020, 0xf66d76ad, 0x9176cc88, 0x254c02f5);
@@ -1943,7 +1945,7 @@ sub declast()
 	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
 	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
 	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
-&function_end_B("_x86_AES_decrypt");
+	&previous();
 
 # void AES_decrypt (const void *inp,void *out,const AES_KEY *key);
 &function_begin("AES_decrypt");
@@ -1963,11 +1965,9 @@ sub declast()
 	&add	("esp",4);	# 4 is reserved for caller's return address
 	&mov	($_esp,$s0);	# save stack pointer
 
-	&call   (&label("pic_point"));          # make it PIC!
-	&set_label("pic_point");
-	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
-	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
+	&picsetup($tbl);
+	&picsymbol($s0, "OPENSSL_ia32cap_P", $tbl);
+	&picsymbol($tbl, &label("AES_Td"), $tbl);
 
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
 	&lea	($s1,&DWP(768-4,"esp"));
@@ -2034,13 +2034,10 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&cmp	($s2,0);
 	&je	(&label("drop_out"));
 
-	&call   (&label("pic_point"));		# make it PIC!
-	&set_label("pic_point");
-	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
-
+	&picsetup($tbl);
+	&picsymbol($s0, "OPENSSL_ia32cap_P", $tbl);
+	&picsymbol($tbl, &label("AES_Te"), $tbl);
 	&cmp	(&wparam(5),0);
-	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 	&jne	(&label("picked_te"));
 	&lea	($tbl,&DWP(&label("AES_Td")."-".&label("AES_Te"),$tbl));
 	&set_label("picked_te");
@@ -2659,10 +2656,9 @@ sub enckey()
 	&test	("edi",-1);
 	&jz	(&label("badpointer"));
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	&blindpop($tbl);
-	&lea	($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	&picsetup($tbl);
+	&picsymbol($tbl, &label("AES_Te"), $tbl);
+
 	&lea	($tbl,&DWP(2048+128,$tbl));
 
 	# prefetch Te4
@@ -2975,6 +2971,5 @@ sub deckey()
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
-&asciz("AES for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
