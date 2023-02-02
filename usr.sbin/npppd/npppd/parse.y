@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.25 2021/10/15 15:01:28 naddy Exp $ */
+/*	$OpenBSD: parse.y,v 1.26 2023/02/02 09:34:17 mvs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -919,6 +919,14 @@ bind		: BIND TUNNEL FROM STRING AUTHENTICATED BY STRING TO STRING {
 			}
 			if ((iface = iface_find($9)) == NULL) {
 				yyerror("interface %s is not found", $9);
+				free($4);
+				free($7);
+				free($9);
+				YYERROR;
+			}
+			if (tunn->pipex == 0 && iface->is_pppx) {
+				yyerror("pipex should be enabled for"
+				    " interface %s", $9);
 				free($4);
 				free($7);
 				free($9);
