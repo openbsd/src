@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.2 2023/01/29 14:00:41 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.3 2023/02/02 18:39:26 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -21,12 +21,30 @@
 #include "bn_local.h"
 #include "s2n_bignum.h"
 
+#ifdef HAVE_BN_ADD
+BN_ULONG
+bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
+{
+	return bignum_add(rn, (uint64_t *)r->d, a->top, (uint64_t *)a->d,
+	    b->top, (uint64_t *)b->d);
+}
+#endif
+
 #ifdef HAVE_BN_ADD_WORDS
 BN_ULONG
 bn_add_words(BN_ULONG *rd, const BN_ULONG *ad, const BN_ULONG *bd, int n)
 {
 	return bignum_add(n, (uint64_t *)rd, n, (uint64_t *)ad, n,
 	    (uint64_t *)bd);
+}
+#endif
+
+#ifdef HAVE_BN_SUB
+BN_ULONG
+bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
+{
+	return bignum_sub(rn, (uint64_t *)r->d, a->top, (uint64_t *)a->d,
+	    b->top, (uint64_t *)b->d);
 }
 #endif
 

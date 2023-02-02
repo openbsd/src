@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.20 2023/01/31 05:16:52 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.21 2023/02/02 18:39:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,12 +57,16 @@
  */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/err.h>
 
 #include "bn_arch.h"
 #include "bn_local.h"
+
+BN_ULONG bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
+BN_ULONG bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
 
 #ifndef HAVE_BN_ADD_WORDS
 #ifdef BN_LLONG
@@ -220,13 +224,18 @@ bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 }
 #endif
 
-int
-BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+#ifndef HAVE_BN_ADD
+/*
+ * bn_add() computes a + b, storing the result in r (which may be the same as a
+ * or b). The caller must ensure that r has been expanded to max(a->top, b->top)
+ * words. Any carry resulting from the addition is returned.
+ */
+BN_ULONG
+bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
 {
-	int max, min, dif;
-	const BN_ULONG *ap, *bp;
 	BN_ULONG *rp, carry, t1, t2;
-
+	const BN_ULONG *ap, *bp;
+	int max, min, dif;
 
 	if (a->top < b->top) {
 		const BIGNUM *tmp;
@@ -238,11 +247,6 @@ BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	max = a->top;
 	min = b->top;
 	dif = max - min;
-
-	if (!bn_wexpand(r, max + 1))
-		return 0;
-
-	r->top = max;
 
 	ap = a->d;
 	bp = b->d;
@@ -259,42 +263,34 @@ BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		*(rp++) = t2;
 		carry &= (t2 == 0);
 	}
-	*rp = carry;
-	r->top += carry;
 
-	r->neg = 0;
-	return 1;
+	return carry;
 }
+#endif
 
-int
-BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+#ifndef HAVE_BN_SUB
+/*
+ * bn_sub() computes a - b, storing the result in r (which may be the same as a
+ * or b). The caller must ensure that the number of words in a is greater than
+ * or equal to the number of words in b and that r has been expanded to
+ * a->top words. Any borrow resulting from the subtraction is returned.
+ */
+BN_ULONG
+bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
 {
-	int max, min, dif;
-	const BN_ULONG *ap, *bp;
 	BN_ULONG t1, t2, borrow, *rp;
-
+	const BN_ULONG *ap, *bp;
+	int max, min, dif;
 
 	max = a->top;
 	min = b->top;
 	dif = max - min;
-
-	if (dif < 0) {
-		BNerror(BN_R_ARG2_LT_ARG3);
-		return 0;
-	}
-
-	if (!bn_wexpand(r, max))
-		return 0;
 
 	ap = a->d;
 	bp = b->d;
 	rp = r->d;
 
 	borrow = bn_sub_words(rp, ap, bp, min);
-	if (dif == 0 && borrow > 0) {
-		BNerror(BN_R_ARG2_LT_ARG3);
-		return 0;
-	}
 	ap += min;
 	rp += min;
 
@@ -306,12 +302,58 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		borrow &= (t1 == 0);
 	}
 
-	while (max > 0 && *--rp == 0)
-		max--;
+	return borrow;
+}
+#endif
 
-	r->top = max;
+int
+BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+{
+	BN_ULONG carry;
+	int rn;
+
+	if ((rn = a->top) < b->top)
+		rn = b->top;
+	if (rn == INT_MAX)
+		return 0;
+	if (!bn_wexpand(r, rn + 1))
+		return 0;
+
+	carry = bn_add(r, rn, a, b);
+	r->d[rn] = carry;
+
+	r->top = rn + (carry & 1);
 	r->neg = 0;
+
+	return 1;
+}
+
+int
+BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+{
+	BN_ULONG borrow;
+	int rn;
+
+	if (a->top < b->top) {
+		BNerror(BN_R_ARG2_LT_ARG3);
+		return 0;
+	}
+	rn = a->top;
+
+	if (!bn_wexpand(r, rn))
+		return 0;
+
+	borrow = bn_sub(r, rn, a, b);
+	if (borrow > 0) {
+		BNerror(BN_R_ARG2_LT_ARG3);
+		return 0;
+	}
+
+	r->top = rn;
+	r->neg = 0;
+
 	bn_correct_top(r);
+
 	return 1;
 }
 
@@ -319,7 +361,6 @@ int
 BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
 	int ret, r_neg;
-
 
 	if (a->neg == b->neg) {
 		r_neg = a->neg;
@@ -348,7 +389,6 @@ int
 BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
 	int ret, r_neg;
-
 
 	if (a->neg != b->neg) {
 		r_neg = a->neg;
