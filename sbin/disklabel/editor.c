@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.400 2023/02/02 00:20:49 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.401 2023/02/02 14:33:38 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -551,17 +551,15 @@ editor_allocspace(struct disklabel *lp_org)
 			continue;
 		pp = &lp_org->d_partitions[i];
 		psz = DL_GETPSIZE(pp);
-		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED) {
+		if (psz == 0 || pp->p_fstype == FS_UNUSED) {
 			freeparts++;
 			continue;
 		}
 		pstart = DL_GETPOFFSET(pp);
 		pend = pstart + psz;
-		if (i != RAW_PART && psz != 0 &&
-		    ((pstart >= starting_sector && pstart < ending_sector) ||
-		    (pend > starting_sector && pend <= ending_sector))) {
-			resizeok = 0; /* Non-default partition found! */
-                 }
+		if (((pstart >= starting_sector && pstart < ending_sector) ||
+		    (pend > starting_sector && pend <= ending_sector)))
+			resizeok = 0; /* Part of OBSD area is in use! */
 	}
 
 	alloc = NULL;
