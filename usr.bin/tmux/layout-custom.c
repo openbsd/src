@@ -1,4 +1,4 @@
-/* $OpenBSD: layout-custom.c,v 1.21 2022/05/30 12:52:02 nicm Exp $ */
+/* $OpenBSD: layout-custom.c,v 1.22 2023/02/02 09:24:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -162,8 +162,10 @@ layout_parse(struct window *w, const char *layout, char **cause)
 	u_short			 csum;
 
 	/* Check validity. */
-	if (sscanf(layout, "%hx,", &csum) != 1)
+	if (sscanf(layout, "%hx,", &csum) != 1) {
+		*cause = xstrdup("invalid layout");
 		return (-1);
+	}
 	layout += 5;
 	if (csum != layout_checksum(layout)) {
 		*cause = xstrdup("invalid layout");
