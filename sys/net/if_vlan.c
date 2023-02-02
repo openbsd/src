@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.210 2022/08/10 09:01:48 mvs Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.211 2023/02/02 13:28:31 claudio Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -270,7 +270,7 @@ vlan_transmit(struct vlan_softc *sc, struct ifnet *ifp0, struct mbuf *m)
 	 */
 	if ((ifp0->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 	    (sc->sc_type == ETHERTYPE_VLAN)) {
-		m->m_pkthdr.ether_vtag = sc->sc_tag +
+		m->m_pkthdr.ether_vtag = sc->sc_tag |
 		    (prio << EVL_PRIO_BITS);
 		m->m_flags |= M_VLANTAG;
 	} else {
