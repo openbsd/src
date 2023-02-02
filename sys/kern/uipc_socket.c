@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.299 2023/01/27 21:01:59 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.300 2023/02/02 09:35:07 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -112,6 +112,16 @@ const struct filterops soexcept_filtops = {
 	.f_process	= filt_soprocess,
 };
 
+void	klist_soassertlk(void *);
+int	klist_solock(void *);
+void	klist_sounlock(void *, int);
+
+const struct klistops socket_klistops = {
+	.klo_assertlk	= klist_soassertlk,
+	.klo_lock	= klist_solock,
+	.klo_unlock	= klist_sounlock,
+};
+
 #ifndef SOMINCONN
 #define SOMINCONN 80
 #endif /* SOMINCONN */
@@ -148,6 +158,11 @@ soalloc(int wait)
 		return (NULL);
 	rw_init_flags(&so->so_lock, "solock", RWL_DUPOK);
 	refcnt_init(&so->so_refcnt);
+	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
+	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
+	sigio_init(&so->so_sigio);
+	TAILQ_INIT(&so->so_q0);
+	TAILQ_INIT(&so->so_q);
 
 	return (so);
 }
@@ -176,11 +191,6 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
 	so = soalloc(M_WAIT);
-	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
-	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
-	sigio_init(&so->so_sigio);
-	TAILQ_INIT(&so->so_q0);
-	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
 	if (suser(p) == 0)
 		so->so_state = SS_PRIV;
@@ -2333,12 +2343,6 @@ klist_sounlock(void *arg, int ls)
 
 	sounlock(so);
 }
-
-const struct klistops socket_klistops = {
-	.klo_assertlk	= klist_soassertlk,
-	.klo_lock	= klist_solock,
-	.klo_unlock	= klist_sounlock,
-};
 
 #ifdef DDB
 void

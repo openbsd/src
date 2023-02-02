@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.134 2023/01/27 18:46:34 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.135 2023/02/02 09:35:07 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
-#include <sys/event.h>
 #include <sys/pool.h>
 
 /*
@@ -213,12 +212,8 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	/*
 	 * Inherit watermarks but those may get clamped in low mem situations.
 	 */
-	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat)) {
-		if (persocket)
-			sounlock(so);
-		pool_put(&socket_pool, so);
-		return (NULL);
-	}
+	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat))
+		goto fail;
 	so->so_snd.sb_wat = head->so_snd.sb_wat;
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
 	so->so_snd.sb_timeo_nsecs = head->so_snd.sb_timeo_nsecs;
@@ -226,9 +221,6 @@ sonewconn(struct socket *head, int connstatus, int wait)
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
 	so->so_rcv.sb_timeo_nsecs = head->so_rcv.sb_timeo_nsecs;
 
-	klist_init(&so->so_rcv.sb_klist, &socket_klistops, so);
-	klist_init(&so->so_snd.sb_klist, &socket_klistops, so);
-	sigio_init(&so->so_sigio);
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
 	soqinsque(head, so, 0);
@@ -259,13 +251,7 @@ sonewconn(struct socket *head, int connstatus, int wait)
 
 	if (error) {
 		soqremque(so, 0);
-		if (persocket)
-			sounlock(so);
-		sigio_free(&so->so_sigio);
-		klist_free(&so->so_rcv.sb_klist);
-		klist_free(&so->so_snd.sb_klist);
-		pool_put(&socket_pool, so);
-		return (NULL);
+		goto fail;
 	}
 
 	if (connstatus) {
@@ -280,6 +266,16 @@ sonewconn(struct socket *head, int connstatus, int wait)
 		sounlock(so);
 
 	return (so);
+
+fail:
+	if (persocket)
+		sounlock(so);
+	sigio_free(&so->so_sigio);
+	klist_free(&so->so_rcv.sb_klist);
+	klist_free(&so->so_snd.sb_klist);
+	pool_put(&socket_pool, so);
+
+	return (NULL);
 }
 
 void
