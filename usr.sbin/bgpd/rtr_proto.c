@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.11 2023/02/01 15:37:34 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.12 2023/02/02 20:31:37 job Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -251,7 +251,7 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 	ibuf_add(buf, msg, mlen);
 	ibuf_close(&rs->w, buf);
 
-	log_warnx("%s: sending error report[%u] %s", log_rtr(rs), err,
+	log_warnx("rtr %s: sending error report[%u] %s", log_rtr(rs), err,
 	    msg ? msg : "");
 }
 
