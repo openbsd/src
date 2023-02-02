@@ -262,9 +262,6 @@ Ldone:
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
-	.long	0
-	.byte	0,12,4,1,0x80,18,3,0
-	.long	0
 ___
 
 # This is private block function, which uses tailored calling
@@ -314,11 +311,6 @@ $code.=<<___;
 	addi	$inp,$inp,`16*4`
 	bdnz-	Lsha1_block_private
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
-___
-$code.=<<___;
-.asciz	"SHA1 block transform for PPC, CRYPTOGAMS by <appro\@fy.chalmers.se>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

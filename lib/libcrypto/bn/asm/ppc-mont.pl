@@ -322,11 +322,6 @@ Lcopy:				; copy or in-place refresh
 	$POP	r31,`-1*$SIZE_T`($tj)
 	mr	$sp,$tj
 	blr
-	.long	0
-	.byte	0,12,4,0,0x80,12,6,0
-	.long	0
-
-.asciz  "Montgomery Multiplication for PPC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

@@ -309,9 +309,6 @@ Ldone:
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
-	.long	0
-	.byte	0,12,4,1,0x80,18,3,0
-	.long	0
 
 .align	4
 Lsha2_block_private:
@@ -378,8 +375,6 @@ $code.=<<___;
 	$ST	$H,`7*$SZ`($ctx)
 	bne	Lsha2_block_private
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
 	.rodata
 Ltable:
 ___

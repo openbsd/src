@@ -118,9 +118,7 @@ LAES_Te:
 	addi	$Tbl0,$Tbl0,`128-8`
 	mtlr	r0
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
-	.space	`64-9*4`
+	.space	`64-12*4`
 LAES_Td:
 	mflr	r0
 	bcl	20,31,\$+4
@@ -128,9 +126,7 @@ LAES_Td:
 	addi	$Tbl0,$Tbl0,`128-64-8+2048+256`
 	mtlr	r0
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
-	.space	`128-64-9*4`
+	.space	`128-64-12*4`
 ___
 &_data_word(
 	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d,
@@ -472,9 +468,6 @@ Lenc_done:
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
-	.long	0
-	.byte	0,12,4,1,0x80,18,3,0
-	.long	0
 
 .align	5
 Lppc_AES_encrypt:
@@ -617,8 +610,6 @@ Lenc_loop:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
 
 .align	4
 Lppc_AES_encrypt_compact:
@@ -762,8 +753,6 @@ Lenc_compact_done:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.AES_decrypt
 .align	7
@@ -906,9 +895,6 @@ Ldec_done:
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
-	.long	0
-	.byte	0,12,4,1,0x80,18,3,0
-	.long	0
 
 .align	5
 Lppc_AES_decrypt:
@@ -1051,8 +1037,6 @@ Ldec_loop:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
 
 .align	4
 Lppc_AES_decrypt_compact:
@@ -1353,11 +1337,6 @@ Ldec_compact_done:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
-	.long	0
-	.byte	0,12,0x14,0,0,0,0,0
-
-.asciz	"AES for PPC, CRYPTOGAMS by <appro\@openssl.org>"
-.align	7
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
