@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_dh_groups.c,v 1.2 2018/06/05 18:06:07 jsing Exp $ */
+/* $OpenBSD: csi_dh_groups.c,v 1.3 2023/02/02 12:36:52 anton Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -47,7 +47,7 @@ static struct csi_dh_params dh_modp_group1 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group1()
+csi_dh_params_modp_group1(void)
 {
 	return csi_dh_params_dup(&dh_modp_group1);
 }
@@ -82,7 +82,7 @@ static struct csi_dh_params dh_modp_group2 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group2()
+csi_dh_params_modp_group2(void)
 {
 	return csi_dh_params_dup(&dh_modp_group2);
 }
@@ -125,7 +125,7 @@ static struct csi_dh_params dh_modp_group5 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group5()
+csi_dh_params_modp_group5(void)
 {
 	return csi_dh_params_dup(&dh_modp_group5);
 }
@@ -176,7 +176,7 @@ static struct csi_dh_params dh_modp_group14 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group14()
+csi_dh_params_modp_group14(void)
 {
 	return csi_dh_params_dup(&dh_modp_group14);
 }
@@ -243,7 +243,7 @@ static struct csi_dh_params dh_modp_group15 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group15()
+csi_dh_params_modp_group15(void)
 {
 	return csi_dh_params_dup(&dh_modp_group15);
 }
@@ -326,7 +326,7 @@ static struct csi_dh_params dh_modp_group16 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group16()
+csi_dh_params_modp_group16(void)
 {
 	return csi_dh_params_dup(&dh_modp_group16);
 }
@@ -441,7 +441,7 @@ static struct csi_dh_params dh_modp_group17 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group17()
+csi_dh_params_modp_group17(void)
 {
 	return csi_dh_params_dup(&dh_modp_group17);
 }
@@ -588,7 +588,7 @@ static struct csi_dh_params dh_modp_group18 = {
 };
 
 struct csi_dh_params *
-csi_dh_params_modp_group18()
+csi_dh_params_modp_group18(void)
 {
 	return csi_dh_params_dup(&dh_modp_group18);
 }

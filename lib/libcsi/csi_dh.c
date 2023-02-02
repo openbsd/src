@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_dh.c,v 1.4 2022/10/04 20:46:13 tb Exp $ */
+/* $OpenBSD: csi_dh.c,v 1.5 2023/02/02 12:36:52 anton Exp $ */
 /*
  * Copyright (c) 2000, 2001, 2015 Markus Friedl <markus@openbsd.org>
  * Copyright (c) 2006, 2016 Damien Miller <djm@openbsd.org>
@@ -28,7 +28,7 @@
 #include "csi_internal.h"
 
 struct csi_dh *
-csi_dh_new()
+csi_dh_new(void)
 {
 	return calloc(1, sizeof(struct csi_dh));
 }
