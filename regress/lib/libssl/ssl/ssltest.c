@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.36 2022/11/26 16:08:57 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.37 2023/02/02 12:37:14 anton Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1855,7 +1855,7 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
  * (The second function has been renamed to avoid name conflicts.)
  */
 static DH *
-get_dh1024()
+get_dh1024(void)
 {
 	static unsigned char dh1024_p[] = {
 		0xF8, 0x81, 0x89, 0x7D, 0x14, 0x24, 0xC5, 0xD1, 0xE6, 0xF7, 0xBF, 0x3A,
@@ -1897,7 +1897,7 @@ get_dh1024()
 }
 
 static DH *
-get_dh1024dsa()
+get_dh1024dsa(void)
 {
 	static unsigned char dh1024_p[] = {
 		0xC8, 0x00, 0xF7, 0x08, 0x07, 0x89, 0x4D, 0x90, 0x53, 0xF3, 0xD5, 0x00,
