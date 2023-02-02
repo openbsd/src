@@ -157,7 +157,6 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&previous();
 
 &function_begin_B("_vpaes_preheat");
-	&add	($const,&DWP(0,"esp"));
 	&movdqa	("xmm7",&QWP($k_inv,$const));
 	&movdqa	("xmm6",&QWP($k_s0F,$const));
 	&ret	();
@@ -368,7 +367,6 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 ##                                                    ##
 ########################################################
 &function_begin_B("_vpaes_schedule_core");
-	&add	($const,&DWP(0,"esp"));
 	&movdqu	("xmm0",&QWP(0,$inp));		# load key (unaligned)
 	&movdqa	("xmm2",&QWP($k_rcon,$const));	# load rcon
 
