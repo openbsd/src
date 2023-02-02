@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.363 2022/11/06 18:17:56 mbuhl Exp $ */
+/* $OpenBSD: if_em.c,v 1.364 2023/02/02 13:37:24 claudio Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2411,7 +2411,7 @@ em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
 	
 #if NVLAN > 0
 	if (ISSET(mp->m_flags, M_VLANTAG)) {
-		uint16_t vtag = htole16(mp->m_pkthdr.ether_vtag);
+		uint32_t vtag = mp->m_pkthdr.ether_vtag;
 		vlan_macip_lens |= vtag << E1000_ADVTXD_VLAN_SHIFT;
 		*cmd_type_len |= E1000_ADVTXD_DCMD_VLE;
 		off = 1;
