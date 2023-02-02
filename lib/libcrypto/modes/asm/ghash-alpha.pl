@@ -261,8 +261,7 @@ gcm_gmult_4bit:
 	ldq	$Xlo,8($Xi)
 	ldq	$Xhi,0($Xi)
 
-	bsr	$t0,picmeup
-	nop
+	lda	$rem_4bit,rem_4bit
 ___
 
 	&loop();
@@ -336,8 +335,7 @@ gcm_ghash_4bit:
 	ldq	$Xhi,0($Xi)
 	ldq	$Xlo,8($Xi)
 
-	bsr	$t0,picmeup
-	nop
+	lda	$rem_4bit,rem_4bit
 
 .Louter:
 	extql	$inhi,$inp,$inhi
@@ -430,23 +428,14 @@ $code.=<<___;
 	ret	(ra)
 .end	gcm_ghash_4bit
 
-.align	4
-.ent	picmeup
-picmeup:
-	.frame	sp,0,$t0
-	.prologue 0
-	br	$rem_4bit,.Lpic
-.Lpic:	lda	$rem_4bit,12($rem_4bit)
-	ret	($t0)
-.end	picmeup
-	nop
+	.section .rodata
+	.align	4
 rem_4bit:
 	.long	0,0x0000<<16, 0,0x1C20<<16, 0,0x3840<<16, 0,0x2460<<16
 	.long	0,0x7080<<16, 0,0x6CA0<<16, 0,0x48C0<<16, 0,0x54E0<<16
 	.long	0,0xE100<<16, 0,0xFD20<<16, 0,0xD940<<16, 0,0xC560<<16
 	.long	0,0x9180<<16, 0,0x8DA0<<16, 0,0xA9C0<<16, 0,0xB5E0<<16
-.ascii	"GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
-.align	4
+	.previous
 
 ___
 $output=shift and open STDOUT,">$output";

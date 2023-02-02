@@ -309,7 +309,6 @@ $code.=<<___;
 	lda	sp,64(sp)
 	ret	(ra)
 .end	sha1_block_data_order
-.ascii	"SHA1 block transform for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
 $output=shift and open STDOUT,">$output";

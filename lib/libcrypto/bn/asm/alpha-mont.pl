@@ -308,7 +308,6 @@ bn_mul_mont:
 	lda	sp,48(sp)
 	ret	(ra)
 .end	bn_mul_mont
-.ascii	"Montgomery Multiplication for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
 
