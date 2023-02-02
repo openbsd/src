@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.120 2023/01/30 16:53:24 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.121 2023/02/02 19:23:01 job Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,7 +196,7 @@ static const struct token t_show_rib[] = {
 static const struct token t_show_avs[] = {
 	{ FLAG,		"valid"	,	F_CTL_AVS_VALID,	t_show_rib},
 	{ FLAG,		"invalid",	F_CTL_AVS_INVALID,	t_show_rib},
-	{ FLAG,		"unknonw",	F_CTL_AVS_UNKNOWN,	t_show_rib},
+	{ FLAG,		"unknown",	F_CTL_AVS_UNKNOWN,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
