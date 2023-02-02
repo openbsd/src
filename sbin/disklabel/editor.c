@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.399 2023/01/28 13:14:01 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.400 2023/02/02 00:20:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -536,6 +536,7 @@ editor_allocspace(struct disklabel *lp_org)
 	const struct diskchunk *chunk;
 	u_int64_t chunkstart, chunksize, start, stop;
 	u_int64_t secs, xtrasecs;
+	u_int64_t pstart, pend, psz;
 	char **partmp;
 	int i, lastalloc, index, partno, freeparts;
 	extern int64_t physmem;
@@ -549,10 +550,18 @@ editor_allocspace(struct disklabel *lp_org)
 		if (i == RAW_PART)
 			continue;
 		pp = &lp_org->d_partitions[i];
-		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED)
+		psz = DL_GETPSIZE(pp);
+		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED) {
 			freeparts++;
-		else
-			resizeok = 0;
+			continue;
+		}
+		pstart = DL_GETPOFFSET(pp);
+		pend = pstart + psz;
+		if (i != RAW_PART && psz != 0 &&
+		    ((pstart >= starting_sector && pstart < ending_sector) ||
+		    (pend > starting_sector && pend <= ending_sector))) {
+			resizeok = 0; /* Non-default partition found! */
+                 }
 	}
 
 	alloc = NULL;
