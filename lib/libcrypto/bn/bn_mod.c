@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.16 2023/02/03 04:55:13 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.17 2023/02/03 05:06:20 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -152,8 +152,10 @@ BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 	return BN_nnmod(r, r, m, ctx);
 }
 
-/* BN_mod_add variant that may be used if both  a  and  b  are non-negative
- * and less than  m */
+/*
+ * BN_mod_add() variant that may only be used if both a and b are non-negative
+ * and have already been reduced (less than m).
+ */
 int
 BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 {
@@ -173,16 +175,18 @@ BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 	return BN_nnmod(r, r, m, ctx);
 }
 
-/* BN_mod_sub variant that may be used if both  a  and  b  are non-negative
- * and less than  m */
+/*
+ * BN_mod_sub() variant that may only be used if both a and b are non-negative
+ * and have already been reduced (less than m).
+ */
 int
 BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 {
-	if (!BN_sub(r, a, b))
+	if (BN_ucmp(a, b) >= 0)
+		return BN_usub(r, a, b);
+	if (!BN_usub(r, b, a))
 		return 0;
-	if (r->neg)
-		return BN_add(r, r, m);
-	return 1;
+	return BN_usub(r, m, r);
 }
 
 /* slow but works */
@@ -230,15 +234,17 @@ BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 	return BN_nnmod(r, r, m, ctx);
 }
 
-/* BN_mod_lshift1 variant that may be used if  a  is non-negative
- * and less than  m */
+/*
+ * BN_mod_lshift1() variant that may be used if a is non-negative
+ * and has already been reduced (less than m).
+ */
 int
 BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
 {
 	if (!BN_lshift1(r, a))
 		return 0;
-	if (BN_cmp(r, m) >= 0)
-		return BN_sub(r, r, m);
+	if (BN_ucmp(r, m) >= 0)
+		return BN_usub(r, r, m);
 	return 1;
 }
 
