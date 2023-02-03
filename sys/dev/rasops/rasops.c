@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.69 2023/01/18 11:08:49 nicm Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.70 2023/02/03 18:34:24 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -539,10 +539,6 @@ rasops_pack_cattr(void *cookie, int fg, int bg, int flg, uint32_t *attr)
 {
 	int swap;
 
-#ifdef RASOPS_CLIPPING
-	fg &= 7;
-	bg &= 7;
-#endif
 	if ((flg & WSATTR_BLINK) != 0)
 		return (EINVAL);
 
