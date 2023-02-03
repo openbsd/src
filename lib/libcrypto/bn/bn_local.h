@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.6 2023/01/28 16:33:34 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.7 2023/02/03 04:47:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -680,12 +680,13 @@ int BN_mod_exp_mont_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 int BN_mod_exp_mont_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
-int BN_div_nonct(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+int BN_div_nonct(BIGNUM *q, BIGNUM *r, const BIGNUM *n, const BIGNUM *d,
     BN_CTX *ctx);
-int BN_div_ct(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
+int BN_div_ct(BIGNUM *q, BIGNUM *r, const BIGNUM *n, const BIGNUM *d,
     BN_CTX *ctx);
-#define BN_mod_ct(rem,m,d,ctx) BN_div_ct(NULL,(rem),(m),(d),(ctx))
-#define BN_mod_nonct(rem,m,d,ctx) BN_div_nonct(NULL,(rem),(m),(d),(ctx))
+int BN_mod_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
+int BN_mod_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx);
+
 BIGNUM *BN_mod_inverse_ct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,
     BN_CTX *ctx);
 BIGNUM *BN_mod_inverse_nonct(BIGNUM *ret, const BIGNUM *a, const BIGNUM *n,

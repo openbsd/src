@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.14 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.15 2023/02/03 04:47:59 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -114,6 +114,18 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
+
+int
+BN_mod_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
+{
+	return BN_div_ct(NULL, r, a, m, ctx);
+}
+
+int
+BN_mod_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
+{
+	return BN_div_nonct(NULL, r, a, m, ctx);
+}
 
 int
 BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
