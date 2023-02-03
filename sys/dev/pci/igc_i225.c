@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_i225.c,v 1.3 2022/05/11 06:14:15 kevlo Exp $	*/
+/*	$OpenBSD: igc_i225.c,v 1.4 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -163,16 +163,7 @@ igc_init_phy_params_i225(struct igc_hw *hw)
 		goto out;
 
 	ret_val = igc_get_phy_id(hw);
-	/* Verify phy id and set remaining function pointers */
-	switch (phy->id) {
-	case I225_I_PHY_ID:
-	default:
-		phy->type = igc_phy_i225;
-		phy->ops.set_d0_lplu_state = igc_set_d0_lplu_state_i225;
-		phy->ops.set_d3_lplu_state = igc_set_d3_lplu_state_i225;
-		/* TODO - complete with GPY PHY information */
-		break;
-	}
+	phy->type = igc_phy_i225;
 
 out:
 	return ret_val;
@@ -1104,66 +1095,6 @@ igc_init_hw_i225(struct igc_hw *hw)
 
 	ret_val = igc_init_hw_base(hw);
 	return ret_val;
-}
-
-/*
- * igc_set_d0_lplu_state_i225 - Set Low-Power-Link-Up (LPLU) D0 state
- * @hw: pointer to the HW structure
- * @active: true to enable LPLU, false to disable
- *
- * Note: since I225 does not actually support LPLU, this function
- * simply enables/disables 1G and 2.5G speeds in D0.
- */
-int
-igc_set_d0_lplu_state_i225(struct igc_hw *hw, bool active)
-{
-	uint32_t data;
-
-	DEBUGFUNC("igc_set_d0_lplu_state_i225");
-
-	data = IGC_READ_REG(hw, IGC_I225_PHPM);
-
-	if (active) {
-		data |= IGC_I225_PHPM_DIS_1000;
-		data |= IGC_I225_PHPM_DIS_2500;
-	} else {
-		data &= ~IGC_I225_PHPM_DIS_1000;
-		data &= ~IGC_I225_PHPM_DIS_2500;
-	}
-
-	IGC_WRITE_REG(hw, IGC_I225_PHPM, data);
-	return IGC_SUCCESS;
-}
-
-/*
- * igc_set_d3_lplu_state_i225 - Set Low-Power-Link-Up (LPLU) D3 state
- * @hw: pointer to the HW structure
- * @active: true to enable LPLU, false to disable
- *
- * Note: since I225 does not actually support LPLU, this function
- * simply enables/disables 100M, 1G and 2.5G speeds in D3.
- */
-int
-igc_set_d3_lplu_state_i225(struct igc_hw *hw, bool active)
-{
-	uint32_t data;
-
-	DEBUGFUNC("igc_set_d3_lplu_state_i225");
-
-	data = IGC_READ_REG(hw, IGC_I225_PHPM);
-
-	if (active) {
-		data |= IGC_I225_PHPM_DIS_100_D3;
-		data |= IGC_I225_PHPM_DIS_1000_D3;
-		data |= IGC_I225_PHPM_DIS_2500_D3;
-	} else {
-		data &= ~IGC_I225_PHPM_DIS_100_D3;
-		data &= ~IGC_I225_PHPM_DIS_1000_D3;
-		data &= ~IGC_I225_PHPM_DIS_2500_D3;
-	}
-
-	IGC_WRITE_REG(hw, IGC_I225_PHPM, data);
-	return IGC_SUCCESS;
 }
 
 /**

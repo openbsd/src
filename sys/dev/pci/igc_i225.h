@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_i225.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_i225.h,v 1.2 2023/02/03 11:31:52 mbuhl Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -27,8 +27,6 @@ void	igc_release_swfw_sync_i225(struct igc_hw *, uint16_t);
 int	igc_set_ltr_i225(struct igc_hw *, bool);
 int	igc_init_hw_i225(struct igc_hw *);
 int	igc_setup_copper_link_i225(struct igc_hw *);
-int	igc_set_d0_lplu_state_i225(struct igc_hw *, bool);
-int	igc_set_d3_lplu_state_i225(struct igc_hw *, bool);
 int	igc_set_eee_i225(struct igc_hw *, bool, bool, bool);
 
 #define ID_LED_DEFAULT_I225						\
