@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.26 2022/12/22 19:53:24 kn Exp $	*/
+/*	$OpenBSD: tput.c,v 1.27 2023/02/03 15:55:59 tb Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 static char **
 process(char *cap, char *str, char **argv)
 {
-	char *cp, *s, *nargv[9];
+	char *cp, *s, *nargv[9] = {0};
 	int arg_need, popcount, i;
 
 	/* Count how many values we need for this capability. */
