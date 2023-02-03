@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.2 2022/08/25 16:49:18 claudio Exp $ */
+/*	$OpenBSD: qs.c,v 1.3 2023/02/03 10:10:36 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -31,7 +31,8 @@ enum qs_type {
 	PREFIX,
 	NUMBER,
 	FAMILY,
-	OVS
+	OVS,
+	AVS,
 };
 
 const struct qs {
@@ -53,6 +54,7 @@ const struct qs {
 	{ QS_ALL, "all", ONE },
 	{ QS_SHORTER, "or-shorter", ONE },
 	{ QS_ERROR, "error", ONE },
+	{ QS_AVS, "avs", AVS },
 	{ 0, NULL }
 };
 
@@ -246,7 +248,22 @@ parse_value(struct lg_ctx *ctx, unsigned int qs, enum qs_type type, char *val)
 			return 400;
 		}
 		break;
+	case AVS:
+		if (strcmp("unknown", val) == 0 ||
+		    strcmp("valid", val) == 0 ||
+		    strcmp("invalid", val) == 0) {
+			ctx->qs_args[qs].string = strdup(val);
+			if (ctx->qs_args[qs].string == NULL) {
+				lwarn("parse_value");
+				return 500;
+			}
+		} else {
+			lwarnx("%s: bad AVS value %s", qs2str(qs), val);
+			return 400;
+		}
+		break;
 	}
+
 	return 0;
 }
 
@@ -356,6 +373,12 @@ qs_argv(char **argv, size_t argc, size_t len, struct lg_ctx *ctx, int barenbr)
 			argv[argc++] = "ovs";
 		if (argc < len)
 			argv[argc++] = ctx->qs_args[QS_OVS].string;
+	}
+	if (ctx->qs_set & (1 << QS_AVS)) {
+		if (argc < len)
+			argv[argc++] = "avs";
+		if (argc < len)
+			argv[argc++] = ctx->qs_args[QS_AVS].string;
 	}
 	/* BEST and ERROR are exclusive */
 	if (ctx->qs_args[QS_BEST].one) {
