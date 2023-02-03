@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.18 2022/12/08 01:25:45 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.19 2023/02/03 06:13:08 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -35,32 +35,7 @@
 #ifndef _POWERPC_ASM_H_
 #define _POWERPC_ASM_H_
 
-/* XXX */
-#define TARGET_ELF
-
-#ifdef __PIC__
-#define PIC_PROLOGUE	XXX
-#define PIC_EPILOGUE	XXX
-#ifdef	__STDC__
-#define PIC_PLT(x)	x ## @plt
-#define PIC_GOT(x)	XXX
-#define PIC_GOTOFF(x)	XXX
-#else	/* not __STDC__ */
-#define PIC_PLT(x)	x/**/@plt
-#define PIC_GOT(x)	XXX
-#define PIC_GOTOFF(x)	XXX
-#endif	/* __STDC__ */
-#else
-#define PIC_PROLOGUE
-#define PIC_EPILOGUE
-#define PIC_PLT(x)	x
-#define PIC_GOT(x)	x
-#define PIC_GOTOFF(x)	x
-#endif
-
-#ifdef TARGET_ELF
-# define _C_LABEL(x)	x
-#endif
+#define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
