@@ -1487,6 +1487,7 @@ static void setConfigs(opt::InputArgList &args) {
   case EM_PPC:
   case EM_PPC64:
   case EM_RISCV:
+  case EM_SPARCV9:
   case EM_X86_64:
     config->executeOnly = true;
     break;
