@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.25 2020/05/25 09:55:49 jsg Exp $ */
+/*	$OpenBSD: rasops.h,v 1.26 2023/02/03 18:32:31 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -182,7 +182,6 @@ void	rasops_scrollback(void *, void *, int);
 void	rasops_claim_framebuffer(paddr_t, psize_t, struct device *);
 int	rasops_check_framebuffer(paddr_t);
 
-extern const u_char	rasops_isgray[16];
 extern const u_char	rasops_cmap[256*3];
 
 #endif /* _RASOPS_H_ */
