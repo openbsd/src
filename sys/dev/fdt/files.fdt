@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.175 2023/01/16 20:12:38 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.176 2023/02/03 14:48:57 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -626,6 +626,10 @@ file	dev/fdt/gpiokeys.c		gpiokeys
 device	gpiorestart
 attach	gpiorestart at fdt
 file	dev/fdt/gpiorestart.c		gpiorestart
+
+device	sncodec
+attach	sncodec at i2c
+file	dev/fdt/sncodec.c		sncodec
 
 device	tascodec
 attach	tascodec at i2c

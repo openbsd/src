@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.254 2023/01/24 21:48:04 jcs Exp $
+# $OpenBSD: GENERIC,v 1.255 2023/02/03 14:48:57 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -555,6 +555,7 @@ pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 pcyrtc*		at iic?			# PCF85063A/TP RTC
 rkpmic*		at iic?			# RK808 PMIC
+sncodec*	at iic?			# TAS2764 audio codec
 sypwr*		at iic?			# SY8106A regulator
 tascodec*	at iic?			# TAS2770 audio codec
 tcpci*		at iic?			# USB Type-C controller
