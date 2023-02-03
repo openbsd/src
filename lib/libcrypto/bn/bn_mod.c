@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.18 2023/02/03 05:10:57 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.19 2023/02/03 05:15:40 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -253,64 +253,60 @@ BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
 int
 BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 {
-	BIGNUM *abs_m = NULL;
-	int ret;
+	BIGNUM *abs_m;
+	int ret = 0;
+
+	BN_CTX_start(ctx);
 
 	if (!BN_nnmod(r, a, m, ctx))
-		return 0;
+		goto err;
 
-	if (m->neg) {
-		abs_m = BN_dup(m);
-		if (abs_m == NULL)
-			return 0;
-		abs_m->neg = 0;
+	if (BN_is_negative(m)) {
+		if ((abs_m = BN_CTX_get(ctx)) == NULL)
+			goto err;
+		if (BN_copy(abs_m, m) == NULL)
+			goto err;
+		BN_set_negative(abs_m, 0);
+		m = abs_m;
 	}
+	if (!BN_mod_lshift_quick(r, r, n, m))
+		goto err;
 
-	ret = BN_mod_lshift_quick(r, r, n, (abs_m ? abs_m : m));
+	ret = 1;
+ err:
+	BN_CTX_end(ctx);
 
-	BN_free(abs_m);
 	return ret;
 }
 
-/* BN_mod_lshift variant that may be used if  a  is non-negative
- * and less than  m */
+/*
+ * BN_mod_lshift() variant that may be used if a is non-negative
+ * and has already been reduced (less than m).
+ */
 int
 BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 {
-	if (r != a) {
-		if (BN_copy(r, a) == NULL)
-			return 0;
-	}
+	int max_shift;
+
+	if (BN_copy(r, a) == NULL)
+		return 0;
 
 	while (n > 0) {
-		int max_shift;
-
-		/* 0 < r < m */
-		max_shift = BN_num_bits(m) - BN_num_bits(r);
-		/* max_shift >= 0 */
-
-		if (max_shift < 0) {
+		if ((max_shift = BN_num_bits(m) - BN_num_bits(r)) < 0) {
 			BNerror(BN_R_INPUT_NOT_REDUCED);
 			return 0;
 		}
-
+		if (max_shift == 0)
+			max_shift = 1;
 		if (max_shift > n)
 			max_shift = n;
 
-		if (max_shift) {
-			if (!BN_lshift(r, r, max_shift))
-				return 0;
-			n -= max_shift;
-		} else {
-			if (!BN_lshift1(r, r))
-				return 0;
-			--n;
-		}
+		if (!BN_lshift(r, r, max_shift))
+			return 0;
+		n -= max_shift;
 
-		/* BN_num_bits(r) <= BN_num_bits(m) */
-
-		if (BN_cmp(r, m) >= 0) {
-			if (!BN_sub(r, r, m))
+		if (BN_ucmp(r, m) >= 0) {
+			if (!BN_usub(r, r, m))
 				return 0;
 		}
 	}
