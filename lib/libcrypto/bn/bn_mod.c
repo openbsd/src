@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.17 2023/02/03 05:06:20 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.18 2023/02/03 05:10:57 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -189,41 +189,43 @@ BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 	return BN_usub(r, m, r);
 }
 
-/* slow but works */
 int
 BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     BN_CTX *ctx)
 {
-	BIGNUM *t;
+	BIGNUM *rr;
 	int ret = 0;
 
-
 	BN_CTX_start(ctx);
-	if ((t = BN_CTX_get(ctx)) == NULL)
+
+	rr = r;
+	if (rr == a || rr == b)
+		rr = BN_CTX_get(ctx);
+	if (rr == NULL)
 		goto err;
+
 	if (a == b) {
-		if (!BN_sqr(t, a, ctx))
+		if (!BN_sqr(rr, a, ctx))
 			goto err;
 	} else {
-		if (!BN_mul(t, a,b, ctx))
+		if (!BN_mul(rr, a, b, ctx))
 			goto err;
 	}
-	if (!BN_nnmod(r, t,m, ctx))
+	if (!BN_nnmod(r, rr, m, ctx))
 		goto err;
+
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
 
 int
 BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
-	if (!BN_sqr(r, a, ctx))
-		return 0;
-	/* r->neg == 0,  thus we don't need BN_nnmod */
-	return BN_mod_ct(r, r, m, ctx);
+	return BN_mod_mul(r, a, a, m, ctx);
 }
 
 int
