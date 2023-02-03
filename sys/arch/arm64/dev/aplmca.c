@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmca.c,v 1.5 2022/10/28 15:09:45 kn Exp $	*/
+/*	$OpenBSD: aplmca.c,v 1.6 2023/02/03 13:20:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,6 +48,9 @@
 
 #define MCA_STATUS(idx)			((idx) * MCA_CL_STRIDE + 0x0000)
 #define  MCA_STATUS_MCLK_EN		(1 << 0)
+#define MCA_MCLK_CONF(idx)		((idx) * MCA_CL_STRIDE + 0x0004)
+#define  MCA_MCLK_CONF_DIV_MASK		(0xf << 8)
+#define  MCA_MCLK_CONF_DIV_SHIFT	8
 
 #define MCA_SYNCGEN_STATUS(idx)		((idx) * MCA_CL_STRIDE + 0x0100)
 #define  MCA_SYNCGEN_STATUS_EN		(1 << 0)
@@ -462,6 +465,8 @@ aplmca_trigger_output(void *cookie, void *start, void *end, int blksize,
 	period = params->channels * 32;
 	HWRITE4(sc, MCA_SYNCGEN_HI_PERIOD(ad->ad_cluster), period - 2);
 	HWRITE4(sc, MCA_SYNCGEN_LO_PERIOD(ad->ad_cluster), 0);
+	HWRITE4(sc, MCA_MCLK_CONF(ad->ad_cluster),
+	    1 << MCA_MCLK_CONF_DIV_SHIFT);
 
 	clock_enable_idx(sc->sc_node, ad->ad_cluster);
 
