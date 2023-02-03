@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_noise.c,v 1.5 2021/03/21 18:13:59 sthen Exp $ */
+/*	$OpenBSD: wg_noise.c,v 1.6 2023/02/03 18:31:17 miod Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -791,12 +791,10 @@ noise_kdf(uint8_t *a, uint8_t *b, uint8_t *c, const uint8_t *x,
 	uint8_t out[BLAKE2S_HASH_SIZE + 1];
 	uint8_t sec[BLAKE2S_HASH_SIZE];
 
-#ifdef DIAGNOSTIC
 	KASSERT(a_len <= BLAKE2S_HASH_SIZE && b_len <= BLAKE2S_HASH_SIZE &&
 			c_len <= BLAKE2S_HASH_SIZE);
 	KASSERT(!(b || b_len || c || c_len) || (a && a_len));
 	KASSERT(!(c || c_len) || (b && b_len));
-#endif
 
 	/* Extract entropy from "x" into sec */
 	blake2s_hmac(sec, x, ck, BLAKE2S_HASH_SIZE, x_len, NOISE_HASH_LEN);

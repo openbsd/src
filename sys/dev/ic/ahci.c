@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.38 2022/04/09 20:10:26 naddy Exp $ */
+/*	$OpenBSD: ahci.c,v 1.39 2023/02/03 18:31:16 miod Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2481,10 +2481,8 @@ ahci_put_err_ccb(struct ahci_ccb *ccb)
 		printf("ahci_put_err_ccb but SACT %08x != 0?\n", sact);
 	KASSERT(ahci_pread(ap, AHCI_PREG_CI) == 0);
 
-#ifdef DIAGNOSTIC
 	/* Done with the CCB */
 	KASSERT(ccb == ap->ap_ccb_err);
-#endif
 
 	/* Restore outstanding command state */
 	ap->ap_sactive = ap->ap_err_saved_sactive;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: blake2s.c,v 1.2 2020/07/22 13:54:30 tobhe Exp $	*/
+/*	$OpenBSD: blake2s.c,v 1.3 2023/02/03 18:31:16 miod Exp $	*/
 /*
  * Copyright (C) 2012 Samuel Neves <sneves@dei.uc.pt>. All Rights Reserved.
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -73,9 +73,7 @@ static inline void blake2s_init_param(struct blake2s_state *state,
 
 void blake2s_init(struct blake2s_state *state, const size_t outlen)
 {
-#ifdef DIAGNOSTIC
 	KASSERT(!(!outlen || outlen > BLAKE2S_HASH_SIZE));
-#endif
 	blake2s_init_param(state, 0x01010000 | outlen);
 	state->outlen = outlen;
 }
@@ -85,10 +83,8 @@ void blake2s_init_key(struct blake2s_state *state, const size_t outlen,
 {
 	uint8_t block[BLAKE2S_BLOCK_SIZE] = { 0 };
 
-#ifdef DIAGNOSTIC
 	KASSERT(!(!outlen || outlen > BLAKE2S_HASH_SIZE ||
 		  !key || !keylen || keylen > BLAKE2S_KEY_SIZE));
-#endif
 
 	blake2s_init_param(state, 0x01010000 | keylen << 8 | outlen);
 	state->outlen = outlen;
@@ -105,9 +101,7 @@ static inline void blake2s_compress(struct blake2s_state *state,
 	uint32_t v[16];
 	int i;
 
-#ifdef DIAGNOSTIC
 	KASSERT(!((nblocks > 1 && inc != BLAKE2S_BLOCK_SIZE)));
-#endif
 
 	while (nblocks > 0) {
 		blake2s_increment_counter(state, inc);

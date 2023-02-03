@@ -1,4 +1,4 @@
-/*	$OpenBSD: blake2s.h,v 1.2 2020/07/22 13:54:30 tobhe Exp $	*/
+/*	$OpenBSD: blake2s.h,v 1.3 2023/02/03 18:31:16 miod Exp $	*/
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>.
@@ -48,11 +48,9 @@ static inline void blake2s(
 {
 	struct blake2s_state state;
 
-#ifdef DIAGNOSTIC
 	KASSERT((in != NULL || inlen == 0) &&
 		out != NULL && outlen <= BLAKE2S_HASH_SIZE &&
 		(key != NULL || keylen == 0) && keylen <= BLAKE2S_KEY_SIZE);
-#endif
 
 	if (keylen)
 		blake2s_init_key(&state, outlen, key, keylen);
