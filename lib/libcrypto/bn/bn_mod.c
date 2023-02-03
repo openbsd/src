@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.15 2023/02/03 04:47:59 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.16 2023/02/03 04:55:13 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -127,21 +127,20 @@ BN_mod_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 	return BN_div_nonct(NULL, r, a, m, ctx);
 }
 
+/*
+ * BN_nnmod() is like BN_mod(), but always returns a non-negative remainder
+ * (that is 0 <= r < |m| always holds). If both a and m have the same sign then
+ * the result is already non-negative. Otherwise, -|m| < r < 0, which needs to
+ * be adjusted as r := r + |m|. This equates to r := |m| - |r|.
+ */
 int
-BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
+BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
-	/* like BN_mod, but returns non-negative remainder
-	 * (i.e.,  0 <= r < |d|  always holds) */
-
-	if (!(BN_mod_ct(r, m,d, ctx)))
+	if (!BN_mod_ct(r, a, m, ctx))
 		return 0;
-	if (!r->neg)
-		return 1;
-	/* now -|d| < r < 0,  so we have to set  r := r + |d| */
-	if (d->neg)
-		return BN_sub(r, r, d);
-	else
-		return BN_add(r, r, d);
+	if (BN_is_negative(r))
+		return BN_usub(r, m, r);
+	return 1;
 }
 
 int
