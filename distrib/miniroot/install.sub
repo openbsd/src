@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1225 2023/02/03 14:18:56 kn Exp $
+#	$OpenBSD: install.sub,v 1.1226 2023/02/03 15:28:04 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -313,6 +313,13 @@ scan_disknames() {
 	bsort $(for _n in $_disks; do echo "${_n%%:*} "; done | sed -n "$1")
 }
 
+# Return list of disks with softraid chunks, optionally limited to the volume $1.
+get_softraid_disks() {
+	local _device=${1:-softraid0}
+
+	bioctl $_device 2>/dev/null | sed -n 's/.*<\(.*\).>$/\1/p'
+}
+
 # Return disk devices found in hw.disknames.
 get_dkdevs() {
 	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
@@ -344,13 +351,6 @@ get_dkdevs_root() {
 		done
 	fi
 	echo -n $_disks
-}
-
-# Return list of disks with softraid chunks, optionally limited to the volume $1.
-get_softraid_disks() {
-	local _device=${1:-softraid0}
-
-	bioctl $_device 2>/dev/null | sed -n 's/.*<\(.*\).>$/\1/p'
 }
 
 # Return list of all network devices, optionally limited by parameters to
