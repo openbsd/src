@@ -1902,6 +1902,7 @@
 ./usr/share/man/man4/sk.4
 ./usr/share/man/man4/sm.4
 ./usr/share/man/man4/smsc.4
+./usr/share/man/man4/sncodec.4
 ./usr/share/man/man4/softraid.4
 ./usr/share/man/man4/sparc64/agten.4
 ./usr/share/man/man4/sparc64/apio.4
