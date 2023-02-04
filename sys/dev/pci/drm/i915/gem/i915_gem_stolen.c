@@ -813,26 +813,40 @@ struct intel_memory_region *
 i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 			   u16 instance)
 {
-	STUB();
-	return ERR_PTR(-ENOSYS);
-#ifdef notyet
 	struct intel_uncore *uncore = &i915->uncore;
 	struct pci_dev *pdev = i915->drm.pdev;
 	resource_size_t dsm_size, dsm_base, lmem_size;
 	struct intel_memory_region *mem;
 	resource_size_t io_start, io_size;
 	resource_size_t min_page_size;
+	pcireg_t mtype;
+	bus_addr_t lmem_start;
+	bus_size_t lmem_len;
+	int ret;
 
 	if (WARN_ON_ONCE(instance))
 		return ERR_PTR(-ENODEV);
 
+#ifdef __linux__
 	if (!i915_pci_resource_valid(pdev, GEN12_LMEM_BAR))
 		return ERR_PTR(-ENXIO);
+#else
+	mtype = pci_mapreg_type(i915->pc, i915->tag,
+	    0x10 + (4 * GEN12_LMEM_BAR));
+	ret = pci_mapreg_info(i915->pc, i915->tag,
+	    0x10 + (4 * GEN12_LMEM_BAR), mtype, &lmem_start, &lmem_len, NULL);
+	if (ret != 0)
+		return ERR_PTR(-ENXIO);
+#endif
 
 	/* Use DSM base address instead for stolen memory */
 	dsm_base = intel_uncore_read64(uncore, GEN12_DSMBASE);
 	if (IS_DG1(uncore->i915)) {
+#ifdef __linux__
 		lmem_size = pci_resource_len(pdev, GEN12_LMEM_BAR);
+#else
+		lmem_size = lmem_len;
+#endif
 		if (WARN_ON(lmem_size < dsm_base))
 			return ERR_PTR(-ENODEV);
 	} else {
@@ -844,6 +858,7 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 	}
 
 	dsm_size = lmem_size - dsm_base;
+#ifdef __linux__
 	if (pci_resource_len(pdev, GEN12_LMEM_BAR) < lmem_size) {
 		io_start = 0;
 		io_size = 0;
@@ -851,6 +866,15 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 		io_start = pci_resource_start(pdev, GEN12_LMEM_BAR) + dsm_base;
 		io_size = dsm_size;
 	}
+#else
+	if (lmem_len < lmem_size) {
+		io_start = 0;
+		io_size = 0;
+	} else {
+		io_start = lmem_start + dsm_base;
+		io_size = dsm_size;
+	}
+#endif
 
 	min_page_size = HAS_64K_PAGES(i915) ? I915_GTT_PAGE_SIZE_64K :
 						I915_GTT_PAGE_SIZE_4K;
@@ -878,7 +902,6 @@ i915_gem_stolen_lmem_setup(struct drm_i915_private *i915, u16 type,
 	mem->private = true;
 
 	return mem;
-#endif
 }
 
 struct intel_memory_region*
