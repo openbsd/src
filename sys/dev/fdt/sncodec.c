@@ -1,4 +1,4 @@
-/*	$OpenBSD: sncodec.c,v 1.1 2023/02/03 13:22:59 kettenis Exp $	*/
+/*	$OpenBSD: sncodec.c,v 1.2 2023/02/04 18:58:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,7 +57,8 @@
 #define  TDM_CFG3_RX_SLOT_L_MASK	0x0f
 #define  TDM_CFG3_RX_SLOT_L_SHIFT	0
 #define DVC				0x1a
-#define  DVC_PCM_MIN			0xc9
+#define  DVC_LVL_MIN			0xc9
+#define  DVC_LVL_30DB			0x3c
 #define BOP_CFG0			0x1d
 
 uint8_t sncodec_bop_cfg[] = {
@@ -145,9 +146,9 @@ sncodec_attach(struct device *parent, struct device *self, void *aux)
 		delay(1000);
 	}
 
-	sc->sc_dvc = sncodec_read(sc, DVC);
-	if (sc->sc_dvc > DVC_PCM_MIN)
-		sc->sc_dvc = DVC_PCM_MIN;
+	/* Set volume to a reasonable level. */
+	sc->sc_dvc = DVC_LVL_30DB;
+	sncodec_write(sc, DVC, sc->sc_dvc);
 
 	/* Default to stereo downmix mode for now. */
 	cfg2 = sncodec_read(sc, TDM_CFG2);
@@ -269,7 +270,7 @@ sncodec_set_port(void *priv, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case SNCODEC_MASTER_VOL:
 		level = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
-		sc->sc_dvc = (DVC_PCM_MIN * (255 - level)) / 255;
+		sc->sc_dvc = (DVC_LVL_MIN * (255 - level)) / 255;
 		sncodec_write(sc, DVC, sc->sc_dvc);
 		return 0;
 	}
@@ -286,7 +287,7 @@ sncodec_get_port(void *priv, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case SNCODEC_MASTER_VOL:
 		mc->un.value.num_channels = 1;
-		level = 255 - ((255 * sc->sc_dvc) / DVC_PCM_MIN);
+		level = 255 - ((255 * sc->sc_dvc) / DVC_LVL_MIN);
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = level;
 		return 0;
 	}
