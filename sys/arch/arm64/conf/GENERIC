@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.255 2023/02/03 14:48:57 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.256 2023/02/04 23:11:59 mglocker Exp $
 #
 # GENERIC machine description file
 #
@@ -62,6 +62,7 @@ ipmi*		at acpi?
 ohci*		at acpi?
 pluart*		at acpi?
 sdhc*		at acpi?
+ufshci*		at acpi?
 xhci*		at acpi?
 simplebus*	at fdt?
 
