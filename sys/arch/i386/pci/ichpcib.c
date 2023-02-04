@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.32 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.33 2023/02/04 19:19:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -56,7 +56,6 @@ u_int	ichpcib_get_timecount(struct timecounter *tc);
 
 struct timecounter ichpcib_timecounter = {
 	.tc_get_timecount = ichpcib_get_timecount,
-	.tc_poll_pps = 0,
 	.tc_counter_mask = 0xffffff,
 	.tc_frequency = 3579545,
 	.tc_name = "ICHPM",

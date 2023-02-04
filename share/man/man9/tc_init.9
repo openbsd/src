@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc_init.9,v 1.10 2023/01/17 10:10:11 jsg Exp $
+.\"	$OpenBSD: tc_init.9,v 1.11 2023/02/04 19:19:36 cheloha Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 17 2023 $
+.Dd $Mdocdate: February 4 2023 $
 .Dt TC_INIT 9
 .Os
 .Sh NAME
@@ -46,7 +46,6 @@ structure:
 .Bd -literal -offset indent
 struct timecounter {
 	timecounter_get_t	*tc_get_timecount;
-	timecounter_pps_t	*tc_poll_pps;
 	u_int 			tc_counter_mask;
 	u_int64_t		tc_frequency;
 	char			*tc_name;
@@ -64,12 +63,6 @@ structure are described below.
 This function reads the counter.
 It is not required to mask any unimplemented bits out, as long as they
 are constant.
-.It Ft void Fn (*tc_poll_pps) "struct timecounter *"
-This function is optional and can be set to NULL.
-It will be called whenever the timecounter is rewound, and is intended
-to check for PPS events.
-Normal hardware does not need it but timecounters which latch PPS in
-hardware do.
 .It Va tc_counter_mask
 This mask should mask off any unimplemented bits.
 .It Va tc_frequency

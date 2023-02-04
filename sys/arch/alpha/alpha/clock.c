@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.26 2022/12/10 15:02:29 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.27 2023/02/04 19:19:36 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ int clk_irq = 0;
 u_int rpcc_get_timecount(struct timecounter *);
 struct timecounter rpcc_timecounter = {
 	.tc_get_timecount = rpcc_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = "rpcc",

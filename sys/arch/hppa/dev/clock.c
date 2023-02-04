@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.34 2023/01/20 17:18:08 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.35 2023/02/04 19:19:36 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -55,7 +55,6 @@ void	itmr_trigger_wrapper(void *);
 
 struct timecounter itmr_timecounter = {
 	.tc_get_timecount = itmr_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "itmr",

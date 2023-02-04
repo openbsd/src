@@ -142,7 +142,6 @@ struct {
 
 struct timecounter hv_timecounter = {
 	.tc_get_timecount = hv_gettime,
-	.tc_poll_pps = 0,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 10000000,
 	.tc_name = "hyperv",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.19 2023/01/17 02:38:59 cheloha Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.20 2023/02/04 19:19:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -87,7 +87,6 @@ u_int sxitimer_get_timecount(struct timecounter *);
 
 static struct timecounter sxitimer_timecounter = {
 	.tc_get_timecount = sxitimer_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "sxitimer",

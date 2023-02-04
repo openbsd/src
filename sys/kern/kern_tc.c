@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.81 2022/12/13 17:30:36 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.82 2023/02/04 19:19:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -56,7 +56,6 @@ dummy_get_timecount(struct timecounter *tc)
 
 static struct timecounter dummy_timecounter = {
 	.tc_get_timecount = dummy_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 1000000,
 	.tc_name = "dummy",
@@ -707,19 +706,6 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 		naptime = th->th_naptime.sec;
 		th->th_offset = *new_offset;
 	}
-
-#ifdef notyet
-	/*
-	 * Hardware latching timecounters may not generate interrupts on
-	 * PPS events, so instead we poll them.  There is a finite risk that
-	 * the hardware might capture a count which is later than the one we
-	 * got above, and therefore possibly in the next NTP second which might
-	 * have a different rate than the current NTP second.  It doesn't
-	 * matter in practice.
-	 */
-	if (tho->th_counter->tc_poll_pps)
-		tho->th_counter->tc_poll_pps(tho->th_counter);
-#endif
 
 	/*
 	 * If changing the boot time or clock adjustment, do so before

@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.16 2023/01/17 02:58:22 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.17 2023/02/04 19:19:36 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -45,7 +45,6 @@ u_int agtimer_get_timecount(struct timecounter *);
 
 static struct timecounter agtimer_timecounter = {
 	.tc_get_timecount = agtimer_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "agtimer",

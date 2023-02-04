@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.18 2023/01/25 14:14:39 cheloha Exp $ */
+/* $OpenBSD: gptimer.c,v 1.19 2023/02/04 19:19:36 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -111,7 +111,6 @@ u_int gptimer_get_timecount(struct timecounter *);
 
 static struct timecounter gptimer_timecounter = {
 	.tc_get_timecount = gptimer_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "gptimer",

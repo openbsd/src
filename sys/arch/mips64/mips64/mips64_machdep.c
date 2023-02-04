@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.40 2022/11/19 16:23:48 cheloha Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.41 2023/02/04 19:19:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -251,7 +251,6 @@ u_int cp0_get_timecount(struct timecounter *);
 
 struct timecounter cp0_timecounter = {
 	.tc_get_timecount = cp0_get_timecount,
-	.tc_poll_pps = 0,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "CP0",

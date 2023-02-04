@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.21 2022/03/11 18:00:52 mpi Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.22 2023/02/04 19:19:37 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -173,7 +173,6 @@ u_int	viapm_get_timecount(struct timecounter *tc);
 
 static struct timecounter viapm_timecounter = {
 	.tc_get_timecount = viapm_get_timecount,
-	.tc_poll_pps = 0,
 	.tc_counter_mask = 0xffffff,
 	.tc_frequency = VIAPM_FREQUENCY,
 	.tc_name = "VIAPM",

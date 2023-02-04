@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2023/01/27 15:37:16 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2023/02/04 19:19:37 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -48,7 +48,6 @@ u_int	tb_get_timecount(struct timecounter *);
 
 static struct timecounter tb_timecounter = {
 	.tc_get_timecount = tb_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "tb",

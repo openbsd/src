@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.15 2023/01/17 02:47:55 cheloha Exp $ */
+/* $OpenBSD: amptimer.c,v 1.16 2023/02/04 19:19:36 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -67,7 +67,6 @@ u_int amptimer_get_timecount(struct timecounter *);
 
 static struct timecounter amptimer_timecounter = {
 	.tc_get_timecount = amptimer_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "amptimer",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.9 2023/02/04 19:19:37 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -75,7 +75,6 @@ struct cfdriver pvclock_cd = {
 
 struct timecounter pvclock_timecounter = {
 	.tc_get_timecount = pvclock_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = NULL,

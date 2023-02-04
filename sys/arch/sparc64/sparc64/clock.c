@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.75 2023/01/13 03:22:18 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.76 2023/02/04 19:19:37 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -112,7 +112,6 @@ u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
 	.tc_get_timecount = tick_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = "tick",
@@ -125,7 +124,6 @@ u_int sys_tick_get_timecount(struct timecounter *);
 
 struct timecounter sys_tick_timecounter = {
 	.tc_get_timecount = sys_tick_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = "sys_tick",

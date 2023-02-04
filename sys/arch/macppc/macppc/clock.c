@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.52 2023/01/27 22:13:48 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.53 2023/02/04 19:19:36 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ const struct intrclock dec_intrclock = {
 
 static struct timecounter tb_timecounter = {
 	.tc_get_timecount = tb_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "tb",

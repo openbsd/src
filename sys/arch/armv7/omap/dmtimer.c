@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.17 2023/01/27 22:16:52 cheloha Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.18 2023/02/04 19:19:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -109,7 +109,6 @@ u_int dmtimer_get_timecount(struct timecounter *);
 
 static struct timecounter dmtimer_timecounter = {
 	.tc_get_timecount = dmtimer_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,
 	.tc_frequency = 0,
 	.tc_name = "dmtimer",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.81 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.82 2023/02/04 19:19:37 cheloha Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ u_int stick_get_timecount(struct timecounter *);
 
 struct timecounter stick_timecounter = {
 	.tc_get_timecount = stick_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = "stick",

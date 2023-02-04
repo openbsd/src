@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2023/01/11 03:20:52 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.136 2023/02/04 19:19:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -149,7 +149,6 @@ u_int		ioclock_get_timecount(struct timecounter *);
 
 struct timecounter ioclock_timecounter = {
 	.tc_get_timecount = ioclock_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = 0xffffffff,	/* truncated to 32 bits */
 	.tc_frequency = 0,		/* determined at runtime */
 	.tc_name = "ioclock",

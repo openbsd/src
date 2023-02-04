@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.38 2022/11/08 17:34:13 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.39 2023/02/04 19:19:36 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -118,7 +118,6 @@ u_int i8254_simple_get_timecount(struct timecounter *tc);
 
 static struct timecounter i8254_timecounter = {
 	.tc_get_timecount = i8254_get_timecount,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = TIMER_FREQ,
 	.tc_name = "i8254",

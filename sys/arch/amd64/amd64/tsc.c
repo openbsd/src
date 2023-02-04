@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.30 2022/10/24 00:56:33 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.31 2023/02/04 19:19:36 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -49,7 +49,6 @@ u_int64_t (*tsc_rdtsc)(void) = rdtsc_lfence;
 
 struct timecounter tsc_timecounter = {
 	.tc_get_timecount = tsc_get_timecount_lfence,
-	.tc_poll_pps = NULL,
 	.tc_counter_mask = ~0u,
 	.tc_frequency = 0,
 	.tc_name = "tsc",

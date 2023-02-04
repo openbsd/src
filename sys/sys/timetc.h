@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetc.h,v 1.13 2022/08/12 02:20:36 cheloha Exp $ */
+/*	$OpenBSD: timetc.h,v 1.14 2023/02/04 19:19:35 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -44,7 +44,6 @@
 
 struct timecounter;
 typedef u_int timecounter_get_t(struct timecounter *);
-typedef void timecounter_pps_t(struct timecounter *);
 
 /*
  * Locks used to protect struct members in this file:
@@ -59,13 +58,6 @@ struct timecounter {
 		 * This function reads the counter.  It is not required to
 		 * mask any unimplemented bits out, as long as they are
 		 * constant.
-		 */
-	timecounter_pps_t	*tc_poll_pps;		/* [I] */
-		/*
-		 * This function is optional.  It will be called whenever the
-		 * timecounter is rewound, and is intended to check for PPS
-		 * events.  Normal hardware does not need it but timecounters
-		 * which latch PPS in hardware (like sys/pci/xrpu.c) do.
 		 */
 	u_int 			tc_counter_mask;	/* [I] */
 		/* This mask should mask off any unimplemented bits. */

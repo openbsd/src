@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.38 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.39 2023/02/04 19:19:37 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -78,7 +78,6 @@ u_int amdpm_get_timecount(struct timecounter *tc);
 
 static struct timecounter amdpm_timecounter = {
 	.tc_get_timecount = amdpm_get_timecount,
-	.tc_poll_pps = 0,
 	.tc_counter_mask = 0xffffff,
 	.tc_frequency = AMDPM_FREQUENCY,
 	.tc_name = "AMDPM",
