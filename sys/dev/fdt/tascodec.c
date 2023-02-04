@@ -1,4 +1,4 @@
-/*	$OpenBSD: tascodec.c,v 1.5 2022/09/02 16:53:28 kettenis Exp $	*/
+/*	$OpenBSD: tascodec.c,v 1.6 2023/02/04 20:04:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,6 +40,7 @@
 #define  PWR_CTL_MODE_SHUTDOWN		(2 << 0)
 #define PB_CFG2				0x05
 #define  PB_CFG2_DVC_PCM_MIN		0xc9
+#define  PB_CFG2_DVC_PCM_30DB		0x3c
 #define TDM_CFG0			0x0a
 #define  TDM_CFG0_FRAME_START		(1 << 0)
 #define TDM_CFG1			0x0b
@@ -135,9 +136,9 @@ tascodec_attach(struct device *parent, struct device *self, void *aux)
 		delay(1000);
 	}
 
-	sc->sc_dvc = tascodec_read(sc, PB_CFG2);
-	if (sc->sc_dvc > PB_CFG2_DVC_PCM_MIN)
-		sc->sc_dvc = PB_CFG2_DVC_PCM_MIN;
+	/* Set volume to a reasonable level. */
+	sc->sc_dvc = PB_CFG2_DVC_PCM_30DB;
+	tascodec_write(sc, PB_CFG2, sc->sc_dvc);
 
 	/* Default to stereo downmix mode for now. */
 	cfg2 = tascodec_read(sc, TDM_CFG2);
