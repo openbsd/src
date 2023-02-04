@@ -319,7 +319,7 @@ main (int argc, char **argv)
 #else
   link_info.emit_gnu_hash = FALSE;
 #endif
-#if defined(__hppa__)
+#if defined(__amd64__) || defined(__hppa__)
   link_info.execute_only = TRUE;
 #else
   link_info.execute_only = FALSE;
