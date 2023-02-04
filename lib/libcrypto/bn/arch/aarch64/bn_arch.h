@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.2 2023/01/31 05:53:49 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.3 2023/02/04 11:48:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -32,7 +32,7 @@ bn_umul_hilo(BN_ULONG a, BN_ULONG b, BN_ULONG *out_h, BN_ULONG *out_l)
 
 	/* Unsigned multiplication using a umulh/mul pair. */
 	__asm__ ("umulh %0, %2, %3; mul %1, %2, %3"
-	    : "=r"(h), "=r"(l)
+	    : "=&r"(h), "=r"(l)
 	    : "r"(a), "r"(b));
 
 	*out_h = h;
