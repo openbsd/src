@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.105 2022/08/14 01:58:27 jsg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.106 2023/02/04 19:33:03 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -98,8 +98,6 @@ volatile unsigned long jiffies;		/* XXX Linux API for drm(4) */
 void
 initclocks(void)
 {
-	int i;
-
 	ticks = INT_MAX - (15 * 60 * hz);
 	jiffies = ULONG_MAX - (10 * 60 * hz);
 
@@ -111,12 +109,9 @@ initclocks(void)
 	cpu_initclocks();
 
 	/*
-	 * Compute profhz/stathz, and fix profhz if needed.
+	 * Compute profhz/stathz.
 	 */
-	i = stathz ? stathz : hz;
-	if (profhz == 0)
-		profhz = i;
-	psratio = profhz / i;
+	psratio = profhz / stathz;
 
 	inittimecounter();
 }
@@ -157,12 +152,6 @@ hardclock(struct clockframe *frame)
 			need_proftick(p);
 		}
 	}
-
-	/*
-	 * If no separate statistics clock is available, run it from here.
-	 */
-	if (stathz == 0)
-		statclock(frame);
 
 	if (--ci->ci_schedstate.spc_rrticks <= 0)
 		roundrobin(ci);
@@ -268,7 +257,7 @@ startprofclock(struct process *pr)
 
 	if ((pr->ps_flags & PS_PROFIL) == 0) {
 		atomic_setbits_int(&pr->ps_flags, PS_PROFIL);
-		if (++profprocs == 1 && stathz != 0) {
+		if (++profprocs == 1) {
 			s = splstatclock();
 			psdiv = pscnt = psratio;
 			setstatclockrate(profhz);
@@ -287,7 +276,7 @@ stopprofclock(struct process *pr)
 
 	if (pr->ps_flags & PS_PROFIL) {
 		atomic_clearbits_int(&pr->ps_flags, PS_PROFIL);
-		if (--profprocs == 0 && stathz != 0) {
+		if (--profprocs == 0) {
 			s = splstatclock();
 			psdiv = pscnt = 1;
 			setstatclockrate(stathz);
@@ -415,6 +404,6 @@ sysctl_clockrate(char *where, size_t *sizep, void *newp)
 	clkinfo.tick = tick;
 	clkinfo.hz = hz;
 	clkinfo.profhz = profhz;
-	clkinfo.stathz = stathz ? stathz : hz;
+	clkinfo.stathz = stathz;
 	return (sysctl_rdstruct(where, sizep, newp, &clkinfo, sizeof(clkinfo)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.73 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.74 2023/02/04 19:33:03 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -189,16 +189,6 @@ schedcpu(void *arg)
 	struct proc *p;
 	int s;
 	unsigned int newcpu;
-	int phz;
-
-	/*
-	 * If we have a statistics clock, use that to calculate CPU
-	 * time, otherwise revert to using the profiling clock (which,
-	 * in turn, defaults to hz if there is no separate profiling
-	 * clock available)
-	 */
-	phz = stathz ? stathz : profhz;
-	KASSERT(phz);
 
 	LIST_FOREACH(p, &allproc, p_list) {
 		/*
@@ -225,13 +215,13 @@ schedcpu(void *arg)
 		 * p_pctcpu is only for diagnostic tools such as ps.
 		 */
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (phz == 100)?
+		p->p_pctcpu += (stathz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
                 	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / phz;
+				<< (FSHIFT - CCPU_SHIFT)) / stathz;
 #else
 		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / phz)) >> FSHIFT;
+			(p->p_cpticks * FSCALE / stathz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
 		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu);

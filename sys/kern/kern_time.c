@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.161 2023/01/02 23:09:48 guenther Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.162 2023/02/04 19:33:03 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -218,10 +218,9 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 	struct timespec ts;
 	struct proc *q;
 	u_int64_t scale;
-	int error = 0, realstathz;
+	int error = 0;
 
 	memset(&ts, 0, sizeof(ts));
-	realstathz = (stathz == 0) ? hz : stathz;
 	clock_id = SCARG(uap, clock_id);
 
 	switch (clock_id) {
@@ -238,7 +237,7 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 		break;
 	case CLOCK_PROCESS_CPUTIME_ID:
 	case CLOCK_THREAD_CPUTIME_ID:
-		ts.tv_nsec = 1000000000 / realstathz;
+		ts.tv_nsec = 1000000000 / stathz;
 		break;
 	default:
 		/* check for clock from pthread_getcpuclockid() */
@@ -248,7 +247,7 @@ sys_clock_getres(struct proc *p, void *v, register_t *retval)
 			if (q == NULL)
 				error = ESRCH;
 			else
-				ts.tv_nsec = 1000000000 / realstathz;
+				ts.tv_nsec = 1000000000 / stathz;
 			KERNEL_UNLOCK();
 		} else
 			error = EINVAL;
