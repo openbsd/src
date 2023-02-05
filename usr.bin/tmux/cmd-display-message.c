@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-message.c,v 1.62 2022/11/03 08:33:57 nicm Exp $ */
+/* $OpenBSD: cmd-display-message.c,v 1.63 2023/02/05 21:15:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -68,9 +68,10 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane	*wp = target->wp;
 	const char		*template;
 	char			*msg, *cause;
-	int			 delay = -1, flags;
+	int			 delay = -1, flags, Nflag = args_has(args, 'N');
 	struct format_tree	*ft;
 	u_int			 count = args_count(args);
+	struct evbuffer		*evb;
 
 	if (args_has(args, 'I')) {
 		if (wp == NULL)
@@ -141,10 +142,15 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		cmdq_error(item, "%s", msg);
 	else if (args_has(args, 'p'))
 		cmdq_print(item, "%s", msg);
-	else if (tc != NULL) {
-		status_message_set(tc, delay, 0, args_has(args, 'N'), "%s",
-		    msg);
-	}
+	else if (tc != NULL && (tc->flags & CLIENT_CONTROL)) {
+		evb = evbuffer_new();
+		if (evb == NULL)
+			fatalx("out of memory");
+		evbuffer_add_printf(evb, "%%message %s", msg);
+		server_client_print(tc, 0, evb);
+		evbuffer_free(evb);
+	} else if (tc != NULL)
+		status_message_set(tc, delay, 0, Nflag, "%s", msg);
 	free(msg);
 
 	format_free(ft);
