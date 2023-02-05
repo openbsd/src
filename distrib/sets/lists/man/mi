@@ -2048,6 +2048,7 @@
 ./usr/share/man/man4/udl.4
 ./usr/share/man/man4/udp.4
 ./usr/share/man/man4/udsbr.4
+./usr/share/man/man4/ufshci.4
 ./usr/share/man/man4/uftdi.4
 ./usr/share/man/man4/ugen.4
 ./usr/share/man/man4/ugl.4

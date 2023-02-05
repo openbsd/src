@@ -392,6 +392,8 @@
 ./usr/include/dev/ic/trm.h
 ./usr/include/dev/ic/twereg.h
 ./usr/include/dev/ic/twevar.h
+./usr/include/dev/ic/ufshcireg.h
+./usr/include/dev/ic/ufshcivar.h
 ./usr/include/dev/ic/uhareg.h
 ./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/vgareg.h
