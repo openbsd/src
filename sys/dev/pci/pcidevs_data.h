@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2019 2023/01/23 10:13:46 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2020 2023/02/05 01:57:59 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19552,6 +19552,74 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Turbo Memory",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_DPTF,
+	    "Elkhart Lake DPTF",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GNA,
+	    "Elkhart Lake GNA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_1,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_2,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_3,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_4,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_5,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_6,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_7,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_8,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GCD_TH,
+	    "Elkhart Lake TH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_9,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_10,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_11,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_12,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_13,
+	    "Elkhart Lake Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HB_14,
+	    "Elkhart Lake Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_1,
 	    "UHD Graphics",
 	},
@@ -19568,7 +19636,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UHD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_5,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_6,
+	    "UHD Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_GT_7,
 	    "UHD Graphics",
 	},
 	{
@@ -19858,6 +19930,342 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_DG1_5,
 	    "Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_ESPI,
+	    "Elkhart Lake eSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_P2SB,
+	    "Elkhart Lake P2SB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PMC,
+	    "Elkhart Lake PMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SMB,
+	    "Elkhart Lake SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SPI,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_TH,
+	    "Elkhart Lake TH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_UART_0,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_UART_1,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_SPI_0,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_SPI_1,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_IEH,
+	    "Elkhart Lake IEH",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SGMII,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_SPI_2,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_0,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_1,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_2,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_3,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_4,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_5,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PCIE_6,
+	    "Elkhart Lake PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_6,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_7,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_EMMC,
+	    "Elkhart Lake eMMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SDMMC,
+	    "Elkhart Lake SD/MMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SI,
+	    "Elkhart Lake SI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_4,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_5,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_UART_2,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HDA,
+	    "Elkhart Lake HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_AHCI,
+	    "Elkhart Lake AHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_HPET,
+	    "Elkhart Lake HPET",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_IOAPIC,
+	    "Elkhart Lake IOAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_PTT_DMA,
+	    "Elkhart Lake PTT DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_UMA,
+	    "Elkhart Lake UMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_HECI_0,
+	    "Elkhart Lake HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_HECI_1,
+	    "Elkhart Lake HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_HECI_2,
+	    "Elkhart Lake HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_CSE_HECI_3,
+	    "Elkhart Lake HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_0,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_1,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_2,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SIO_I2C_3,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_XHCI,
+	    "Elkhart Lake xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_XDCI,
+	    "Elkhart Lake xDCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_SRAM,
+	    "Elkhart Lake SRAM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_QEP_1,
+	    "Elkhart Lake QEP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_QEP_2,
+	    "Elkhart Lake QEP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_QEP_3,
+	    "Elkhart Lake QEP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_SPI_0,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_SPI_1,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_SPI_2,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_SPI_3,
+	    "Elkhart Lake SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_GPIO_0,
+	    "Elkhart Lake GPIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_GPIO_1,
+	    "Elkhart Lake GPIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_0,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_1,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_2,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_3,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_4,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_UART_5,
+	    "Elkhart Lake UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2S_0,
+	    "Elkhart Lake I2S",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2S_1,
+	    "Elkhart Lake I2S",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_RGMII_1G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_1G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE0_SGMII_2G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_RGMII_1G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_1G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE1_SGMII_2G,
+	    "Elkhart Lake Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_LH2OSE,
+	    "Elkhart Lake LH2OSE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_DMA_0,
+	    "Elkhart Lake DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_DMA_1,
+	    "Elkhart Lake DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_DMA_2,
+	    "Elkhart Lake DMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_PWM,
+	    "Elkhart Lake PWM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_0,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_1,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_2,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_3,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_4,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_5,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_6,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_I2C_7,
+	    "Elkhart Lake I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_CAN_0,
+	    "Elkhart Lake CAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_CAN_1,
+	    "Elkhart Lake CAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EHL_PSE_QEP_0,
+	    "Elkhart Lake QEP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RKL_GT_1,
