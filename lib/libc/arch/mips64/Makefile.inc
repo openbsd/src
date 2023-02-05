@@ -1,5 +1,3 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2023/01/11 17:00:20 deraadt Exp $
-
-LDADD+= -Wl,--no-execute-only
+#	$OpenBSD: Makefile.inc,v 1.5 2023/02/05 15:37:28 deraadt Exp $
 
 CERROR=	cerror.S
