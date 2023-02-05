@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.48 2023/01/20 21:36:00 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.49 2023/02/05 21:26:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -63,6 +63,8 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 
 	line = (item == NULL || item->name == NULL || *item->name == '\0');
 	if (line && menu->count == 0)
+		return;
+	if (line && menu->items[menu->count - 1].name == NULL)
 		return;
 
 	menu->items = xreallocarray(menu->items, menu->count + 1,
