@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdrop.8,v 1.13 2014/08/28 08:22:42 jmc Exp $
+.\"	$OpenBSD: tcpdrop.8,v 1.14 2023/02/06 18:14:10 millert Exp $
 .\"
 .\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 28 2014 $
+.Dd $Mdocdate: February 6 2023 $
 .Dt TCPDROP 8
 .Os
 .Sh NAME
@@ -26,9 +26,6 @@
 .Ar local-port
 .Ar remote-addr
 .Ar remote-port
-.Nm tcpdrop
-.Ar local-addr : Ns Ar local-port
-.Ar remote-addr : Ns Ar remote-port
 .Sh DESCRIPTION
 The
 .Nm
@@ -41,6 +38,18 @@ and the foreign address
 port
 .Ar remote-port .
 Addresses and ports can be specified by name or numeric value.
+.Pp
+To simplify dropping TCP connections using the output of
+.Xr fstat 1
+and
+.Xr netstat 1 ,
+.Nm
+also supports a two-argument form where the address and port are
+separated by a colon
+.Pq Sq \&:
+or dot
+.Pq Sq \&.
+character.
 .Sh EXAMPLES
 If a connection to
 .Xr httpd 8
@@ -57,6 +66,8 @@ Either of the following commands will drop the connection:
 # tcpdrop 192.168.5.41 80 192.168.5.1 26747
 
 # tcpdrop 192.168.5.41:80 192.168.5.1:26747
+
+# tcpdrop 192.168.5.41.80 192.168.5.1.26747
 .Ed
 .Sh SEE ALSO
 .Xr fstat 1 ,

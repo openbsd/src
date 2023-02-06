@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.20 2021/07/12 15:09:21 beck Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.21 2023/02/06 18:14:10 millert Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -44,9 +44,6 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s local-addr local-port remote-addr remote-port\n",
 	    __progname);
-	fprintf(stderr,
-	    "       %s local-addr:local-port remote-addr:remote-port\n",
-	    __progname);
 	exit(1);
 }
 
@@ -76,10 +73,15 @@ main(int argc, char **argv)
 	hints.ai_socktype = SOCK_STREAM;
 
 	if (argc == 3) {
+		char *dot;
+
 		laddr1 = addr1 = strdup(argv[1]);
 		if (!addr1)
 			err(1, "strdup");
 		port1 = strrchr(addr1, ':');
+		dot = strrchr(addr1, '.');
+		if (dot > port1)
+			port1 = dot;
 		if (port1)
 			*port1++ = '\0';
 		else
@@ -89,6 +91,9 @@ main(int argc, char **argv)
 		if (!addr2)
 			err(1, "strdup");
 		port2 = strrchr(addr2, ':');
+		dot = strrchr(addr2, '.');
+		if (dot > port2)
+			port2 = dot;
 		if (port2)
 			*port2++ = '\0';
 		else
