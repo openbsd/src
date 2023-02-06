@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.86 2023/01/26 07:32:39 deraadt Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.87 2023/02/06 20:27:45 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2784,10 +2784,8 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 static uint64_t
 ixl_tx_setup_offload(struct mbuf *m0)
 {
-	struct mbuf *m;
-	int hoff;
+	struct ether_extracted ext;
 	uint64_t hlen;
-	uint8_t ipproto;
 	uint64_t offload = 0;
 
 	if (ISSET(m0->m_flags, M_VLANTAG)) {
@@ -2800,39 +2798,21 @@ ixl_tx_setup_offload(struct mbuf *m0)
 	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
 		return (offload);
 
-	switch (ntohs(mtod(m0, struct ether_header *)->ether_type)) {
-	case ETHERTYPE_IP: {
-		struct ip *ip;
+	ether_extract_headers(m0, &ext);
 
-		m = m_getptr(m0, ETHER_HDR_LEN, &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
-		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
-
+	if (ext.ip4) {
 		offload |= ISSET(m0->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) ?
 		    IXL_TX_DESC_CMD_IIPT_IPV4_CSUM :
 		    IXL_TX_DESC_CMD_IIPT_IPV4;
  
-		hlen = ip->ip_hl << 2;
-		ipproto = ip->ip_p;
-		break;
-	}
-
+		hlen = ext.ip4->ip_hl << 2;
 #ifdef INET6
-	case ETHERTYPE_IPV6: {
-		struct ip6_hdr *ip6;
-
-		m = m_getptr(m0, ETHER_HDR_LEN, &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
-		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
- 
+	} else if (ext.ip6) {
 		offload |= IXL_TX_DESC_CMD_IIPT_IPV6;
 
-		hlen = sizeof(*ip6);
-		ipproto = ip6->ip6_nxt;
-		break;
-	}
+		hlen = sizeof(*ext.ip6);
 #endif
-	default:
+	} else {
 		panic("CSUM_OUT set for non-IP packet");
 		/* NOTREACHED */
 	}
@@ -2840,30 +2820,12 @@ ixl_tx_setup_offload(struct mbuf *m0)
 	offload |= (ETHER_HDR_LEN >> 1) << IXL_TX_DESC_MACLEN_SHIFT;
 	offload |= (hlen >> 2) << IXL_TX_DESC_IPLEN_SHIFT;
 
-	switch (ipproto) {
-	case IPPROTO_TCP: {
-		struct tcphdr *th;
-
-		if (!ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT))
-			break;
-
-		m = m_getptr(m, hoff + hlen, &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*th));
-		th = (struct tcphdr *)(mtod(m, caddr_t) + hoff);
- 
+	if (ext.tcp && ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 		offload |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
-		offload |= (uint64_t)th->th_off << IXL_TX_DESC_L4LEN_SHIFT;
-		break;
-	}
-
-	case IPPROTO_UDP:
-		if (!ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT))
-			break;
- 
+		offload |= (uint64_t)ext.tcp->th_off << IXL_TX_DESC_L4LEN_SHIFT;
+	} else if (ext.udp && ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 		offload |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
-		offload |= (sizeof(struct udphdr) >> 2) <<
-		    IXL_TX_DESC_L4LEN_SHIFT;
-		break;
+		offload |= (sizeof(*ext.udp) >> 2) << IXL_TX_DESC_L4LEN_SHIFT;
 	}
 
 	return (offload);
