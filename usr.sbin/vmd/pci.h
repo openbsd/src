@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.9 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: pci.h,v 1.10 2023/02/06 20:33:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -92,6 +92,7 @@ struct pci {
 	struct pci_dev pci_devices[PCI_CONFIG_MAX_DEV];
 };
 
+int pci_find_first_device(uint16_t);
 void pci_handle_address_reg(struct vm_run_params *);
 void pci_handle_data_reg(struct vm_run_params *);
 uint8_t pci_handle_io(struct vm_run_params *);

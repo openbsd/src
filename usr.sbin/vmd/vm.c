@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.82 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.83 2023/02/06 20:33:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1106,13 +1106,6 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 	for (i = COM1_DATA; i <= COM1_SCR; i++)
 		ioports_map[i] = vcpu_exit_com;
 
-	/* Init QEMU fw_cfg interface */
-	fw_cfg_init(vmc);
-	ioports_map[FW_CFG_IO_SELECT] = vcpu_exit_fw_cfg;
-	ioports_map[FW_CFG_IO_DATA] = vcpu_exit_fw_cfg;
-	ioports_map[FW_CFG_IO_DMA_ADDR_HIGH] = vcpu_exit_fw_cfg_dma;
-	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
-
 	/* Initialize PCI */
 	for (i = VM_PCI_IO_BAR_BASE; i <= VM_PCI_IO_BAR_END; i++)
 		ioports_map[i] = vcpu_exit_pci;
@@ -1126,7 +1119,18 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
 
 	/* Initialize virtio devices */
 	virtio_init(current_vm, child_cdrom, child_disks, child_taps);
+
+	/*
+	 * Init QEMU fw_cfg interface. Must be done last for pci hardware
+	 * detection.
+	 */
+	fw_cfg_init(vmc);
+	ioports_map[FW_CFG_IO_SELECT] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DATA] = vcpu_exit_fw_cfg;
+	ioports_map[FW_CFG_IO_DMA_ADDR_HIGH] = vcpu_exit_fw_cfg_dma;
+	ioports_map[FW_CFG_IO_DMA_ADDR_LOW] = vcpu_exit_fw_cfg_dma;
 }
+
 /*
  * restore_emulated_hw
  *

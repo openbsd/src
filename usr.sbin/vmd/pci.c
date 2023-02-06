@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.30 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: pci.c,v 1.31 2023/02/06 20:33:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -436,4 +436,22 @@ pci_restore(int fd)
 		return (-1);
 	}
 	return (0);
+}
+
+/*
+ * Find the first PCI device based on PCI Subsystem ID
+ * (e.g. PCI_PRODUCT_VIRTIO_BLOCK).
+ *
+ * Returns the PCI device id of the first matching device, if found.
+ * Otherwise, returns -1.
+ */
+int
+pci_find_first_device(uint16_t subsys_id)
+{
+	int i;
+
+	for (i = 0; i < pci.pci_dev_ct; i++)
+		if (pci.pci_devices[i].pd_subsys_id == subsys_id)
+			return (i);
+	return (-1);
 }
