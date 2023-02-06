@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2022/02/06 11:29:18 visa Exp $
+#	$OpenBSD: install.md,v 1.7 2023/02/06 08:41:00 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ __EOT
 				disk_has $_disk mbr openbsd && return
 				echo -n "No OpenBSD partition in MBR,"
 			fi
-			echo "try again." ;;
+			echo " try again." ;;
 		esac
 	done
 }
