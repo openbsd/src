@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.h,v 1.11 2023/01/16 18:41:53 deraadt Exp $ */
+/* $OpenBSD: prom.h,v 1.12 2023/02/06 11:16:22 miod Exp $ */
 /* $NetBSD: prom.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
@@ -114,7 +114,6 @@ void	hwrpb_restart_setup(void);
 #if defined(_KERNEL) || defined(_STANDALONE)
 void	promcnputc(dev_t, int);
 int	promcngetc(dev_t);
-int	promcnlookc(dev_t, char *);
 
 u_int64_t	prom_dispatch(u_int64_t, u_int64_t, u_int64_t, u_int64_t,
 		    u_int64_t);

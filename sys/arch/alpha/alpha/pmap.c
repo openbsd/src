@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.88 2022/09/12 19:35:20 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.89 2023/02/06 11:16:22 miod Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -149,7 +149,7 @@
 
 #include <machine/atomic.h>
 #include <machine/cpu.h>
-#if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
 #endif
 
@@ -785,27 +785,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	kernel_lev1map[l1pte_index(VPTBASE)] = pte;
 	VPT = (pt_entry_t *)VPTBASE;
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-    {
-	extern pt_entry_t prom_pte;			/* XXX */
-	extern int prom_mapped;				/* XXX */
-
-	if (pmap_uses_prom_console()) {
-		/*
-		 * XXX Save old PTE so we can remap the PROM, if
-		 * XXX necessary.
-		 */
-		prom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;
-	}
-	prom_mapped = 0;
-
-	/*
-	 * Actually, this code lies.  The prom is still mapped, and will
-	 * remain so until the context switch after alpha_init() returns.
-	 */
-    }
-#endif
-
 	/*
 	 * Set up level 2 page table.
 	 */
@@ -914,21 +893,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	atomic_setbits_ulong(&pmap_kernel()->pm_cpus,
 	    (1UL << cpu_number()));
 }
-
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int
-pmap_uses_prom_console(void)
-{
-
-#if defined(NEW_SCC_DRIVER)
-	return (cputype == ST_DEC_21000);
-#else
-	return (cputype == ST_DEC_21000
-	    || cputype == ST_DEC_3000_300
-	    || cputype == ST_DEC_3000_500);
-#endif /* NEW_SCC_DRIVER */
-}
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 
 /*
  * pmap_steal_memory:		[ INTERFACE ]

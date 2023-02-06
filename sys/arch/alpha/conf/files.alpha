@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.107 2018/02/14 23:51:49 jsg Exp $
+#	$OpenBSD: files.alpha,v 1.108 2023/02/06 11:16:22 miod Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -299,9 +299,6 @@ file	arch/alpha/dev/bus_dma.c
 #
 
 file	arch/alpha/alpha/in_cksum.c
-
-# XXX
-file	arch/alpha/alpha/promcons.c
 
 # XXX
 file	arch/alpha/alpha/cpuconf.c

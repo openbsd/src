@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.16 2014/12/18 10:50:02 dlg Exp $ */
+/* $OpenBSD: prom.c,v 1.17 2023/02/06 11:16:22 miod Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -54,26 +54,6 @@ struct mutex prom_lock = MUTEX_INITIALIZER(IPL_HIGH);
 void	prom_enter(void);
 void	prom_leave(void);
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-int		prom_mapped = 1;	/* Is PROM still mapped? */
-
-pt_entry_t	prom_pte, saved_pte[1];	/* XXX */
-static pt_entry_t *prom_lev1map(void);
-
-static pt_entry_t *
-prom_lev1map()
-{
-	struct alpha_pcb *apcb;
-
-	/*
-	 * Find the level 1 map that we're currently running on.
-	 */
-	apcb = (struct alpha_pcb *)ALPHA_PHYS_TO_K0SEG(curpcb);
-
-	return ((pt_entry_t *)ALPHA_PHYS_TO_K0SEG(apcb->apcb_ptbr << PGSHIFT));
-}
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
-
 void
 init_prom_interface(struct rpb *rpb)
 {
@@ -99,67 +79,17 @@ init_bootstrap_console()
 	cn_tab = &promcons;
 }
 
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-static void prom_cache_sync(void);
-#endif
-
 void
 prom_enter(void)
 {
 	mtx_enter(&prom_lock);
-
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	/*
-	 * If we have not yet switched out of the PROM's context
-	 * (i.e. the first one after alpha_init()), then the PROM
-	 * is still mapped, regardless of the `prom_mapped' setting.
-	 */
-	if (prom_mapped == 0 && curpcb != 0) {
-		if (!pmap_uses_prom_console())
-			panic("prom_enter");
-		{
-			pt_entry_t *lev1map;
-
-			lev1map = prom_lev1map();	/* XXX */
-			saved_pte[0] = lev1map[0];	/* XXX */
-			lev1map[0] = prom_pte;		/* XXX */
-		}
-		prom_cache_sync();			/* XXX */
-	}
-#endif
 }
 
 void
 prom_leave(void)
 {
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	/*
-	 * See comment above.
-	 */
-	if (prom_mapped == 0 && curpcb != 0) {
-		if (!pmap_uses_prom_console())
-			panic("prom_leave");
-		{
-			pt_entry_t *lev1map;
-
-			lev1map = prom_lev1map();	/* XXX */
-			lev1map[0] = saved_pte[0];	/* XXX */
-		}
-		prom_cache_sync();			/* XXX */
-	}
-#endif
-
 	mtx_leave(&prom_lock);
 }
-
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-static void
-prom_cache_sync(void)
-{
-	ALPHA_TBIA();
-	alpha_pal_imb();
-}
-#endif
 
 /*
  * promcnputc:
@@ -204,26 +134,6 @@ promcngetc(dev_t dev)
 		if (ret.u.status == 0 || ret.u.status == 1)
 			return (ret.u.retval);
 	}
-}
-
-/*
- * promcnlookc:
- *
- * See if prom has a real char and pass it back.
- */
-int
-promcnlookc(dev_t dev, char *cp)
-{
-	prom_return_t ret;
-
-	prom_enter();
-	ret.bits = prom_getc(alpha_console);
-	prom_leave();
-	if (ret.u.status == 0 || ret.u.status == 1) {
-		*cp = ret.u.retval;
-		return 1;
-	} else
-		return 0;
 }
 
 int

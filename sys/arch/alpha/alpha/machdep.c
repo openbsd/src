@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.200 2023/01/02 19:09:17 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.201 2023/02/06 11:16:22 miod Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -387,12 +387,6 @@ nobootinfo:
 #endif
 
 	/* NO MORE FIRMWARE ACCESS ALLOWED */
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	/*
-	 * XXX (unless _PMAP_MAY_USE_PROM_CONSOLE is defined and
-	 * XXX pmap_uses_prom_console() evaluates to non-zero.)
-	 */
-#endif
 
 #ifndef SMALL_KERNEL
 	/*
@@ -506,14 +500,6 @@ nobootinfo:
 		 * software use.  We must determine if this cluster
 		 * holds the kernel.
 		 */
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-		/*
-		 * XXX If the kernel uses the PROM console, we only use the
-		 * XXX memory after the kernel in the first system segment,
-		 * XXX to avoid clobbering prom mapping, data, etc.
-		 */
-	    if (!pmap_uses_prom_console() || physmem == 0) {
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 		physmem += memc->mddt_pg_cnt;
 		pfn0 = memc->mddt_pfn;
 		pfn1 = memc->mddt_pfn + memc->mddt_pg_cnt;
@@ -525,9 +511,6 @@ nobootinfo:
 #if 0
 			printf("Cluster %d contains kernel\n", i);
 #endif
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-		    if (!pmap_uses_prom_console()) {
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 			if (pfn0 < kernstartpfn) {
 				/*
 				 * There is a chunk before the kernel.
@@ -539,9 +522,6 @@ nobootinfo:
 				uvm_page_physload(pfn0, kernstartpfn,
 				    pfn0, kernstartpfn, 0);
 			}
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-		    }
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 			if (kernendpfn < pfn1) {
 				/*
 				 * There is a chunk after the kernel.
@@ -563,9 +543,6 @@ nobootinfo:
 #endif
 			uvm_page_physload(pfn0, pfn1, pfn0, pfn1, 0);
 		}
-#ifdef _PMAP_MAY_USE_PROM_CONSOLE
-	    }
-#endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 	}
 
 #ifdef DEBUG
@@ -773,15 +750,10 @@ nobootinfo:
 void
 consinit()
 {
-
 	/*
 	 * Everything related to console initialization is done
 	 * in alpha_init().
 	 */
-#if defined(DIAGNOSTIC) && defined(_PMAP_MAY_USE_PROM_CONSOLE)
-	printf("consinit: %susing prom console\n",
-	    pmap_uses_prom_console() ? "" : "not ");
-#endif
 }
 
 void
