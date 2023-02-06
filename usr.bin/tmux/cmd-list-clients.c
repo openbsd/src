@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.39 2022/03/08 11:28:40 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.40 2023/02/06 09:20:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -41,8 +41,8 @@ const struct cmd_entry cmd_list_clients_entry = {
 	.name = "list-clients",
 	.alias = "lsc",
 
-	.args = { "F:t:", 0, 0, NULL },
-	.usage = "[-F format] " CMD_TARGET_SESSION_USAGE,
+	.args = { "F:f:t:", 0, 0, NULL },
+	.usage = "[-F format] [-f filter] " CMD_TARGET_SESSION_USAGE,
 
 	.target = { 't', CMD_FIND_SESSION, 0 },
 
@@ -58,9 +58,10 @@ cmd_list_clients_exec(struct cmd *self, struct cmdq_item *item)
 	struct client		*c;
 	struct session		*s;
 	struct format_tree	*ft;
-	const char		*template;
+	const char		*template, *filter;
 	u_int			 idx;
-	char			*line;
+	char			*line, *expanded;
+	int			 flag;
 
 	if (args_has(args, 't'))
 		s = target->s;
@@ -69,6 +70,7 @@ cmd_list_clients_exec(struct cmd *self, struct cmdq_item *item)
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = LIST_CLIENTS_TEMPLATE;
+	filter = args_get(args, 'f');
 
 	idx = 0;
 	TAILQ_FOREACH(c, &clients, entry) {
@@ -79,9 +81,17 @@ cmd_list_clients_exec(struct cmd *self, struct cmdq_item *item)
 		format_add(ft, "line", "%u", idx);
 		format_defaults(ft, c, NULL, NULL, NULL);
 
-		line = format_expand(ft, template);
-		cmdq_print(item, "%s", line);
-		free(line);
+		if (filter != NULL) {
+			expanded = format_expand(ft, filter);
+			flag = format_true(expanded);
+			free(expanded);
+		} else
+			flag = 1;
+		if (flag) {
+			line = format_expand(ft, template);
+			cmdq_print(item, "%s", line);
+			free(line);
+		}
 
 		format_free(ft);
 
