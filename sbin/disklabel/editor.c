@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.401 2023/02/02 14:33:38 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.402 2023/02/07 14:30:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -2097,7 +2097,9 @@ parse_autotable(char *filename)
 	uint	 idx = 0, pctsum = 0;
 	struct space_allocation *sa;
 
-	if ((cfile = fopen(filename, "r")) == NULL)
+	if (strcmp(filename, "-") == 0)
+		cfile = stdin;
+	else if ((cfile = fopen(filename, "r")) == NULL)
 		err(1, "%s", filename);
 	if ((alloc_table = calloc(1, sizeof(struct alloc_table))) == NULL)
 		err(1, NULL);
@@ -2206,6 +2208,12 @@ parse_sizerange(char *buf, u_int64_t *min, u_int64_t *max)
 	char	*p, *unit1 = NULL, *unit2 = NULL;
 	double	 val1 = 0, val2 = 0;
 
+	if (strcmp(buf, "*") == 0) {
+		*min = 0;
+		*max = UINT64_MAX;
+		goto done;
+	}
+
 	if ((p = strchr(buf, '-')) != NULL) {
 		p[0] = '\0';
 		p++;
@@ -2230,6 +2238,7 @@ parse_sizerange(char *buf, u_int64_t *min, u_int64_t *max)
 	} else
 		if (*max == 0)
 			*max = *min;
+ done:
 	free(buf);
 	return (0);
 }
