@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/10/06 22:59:23 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2023/02/07 15:33:22 krw Exp $
 #
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -37,7 +37,7 @@ vnd-$v: unconfig
 	rm -f diskimage$v
 	dd if=/dev/null of=diskimage$v bs=1m seek=1100
 	vnconfig vnd$v diskimage$v
-	printf "a\n\n\n\nRAID\nw\nq\n" | disklabel -E vnd$v
+	printf "RAID *" | disklabel -wAT- vnd$v
 	[ `disklabel vnd$v | grep -c '\<RAID\>'` -eq 1 ]
 .endfor
 
@@ -68,7 +68,7 @@ raid-1C: vnd-1 vnd-2 vnd-3 passfile
 .PHONY: mount-$r
 mount-$r: raid-$r
 	@echo '==== $@ ===='
-	printf "a\na\n\n\n4.2BSD\nw\nq\n" | disklabel -E "`${LASTDISK}`"
+	printf "/ *" | disklabel -wAT- "`${LASTDISK}`"
 	newfs "/dev/r`${LASTDISK}`a"
 	mkdir -p /mnt/regress-softraid
 	mount "/dev/`${LASTDISK}`a" /mnt/regress-softraid
