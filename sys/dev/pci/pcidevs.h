@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2020 2023/02/05 01:57:59 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2021 2023/02/07 07:10:43 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1190,6 +1190,7 @@
 #define	PCI_PRODUCT_ASMEDIA_ASM1184E	0x1184		/* ASM1184e */
 #define	PCI_PRODUCT_ASMEDIA_ASM1042AE	0x1242		/* ASM1042AE xHCI */
 #define	PCI_PRODUCT_ASMEDIA_ASM1143	0x1343		/* ASM1143 xHCI */
+#define	PCI_PRODUCT_ASMEDIA_ASM2142	0x2142		/* ASM2142 xHCI */
 #define	PCI_PRODUCT_ASMEDIA_ASM2824	0x2824		/* ASM2824 */
 
 /* ASPEED Technology products */
