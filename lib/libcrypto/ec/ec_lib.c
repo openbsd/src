@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.47 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.48 2023/02/07 09:00:48 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -949,8 +949,14 @@ EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
 		return 0;
 	}
-	return group->meth->point_set_Jprojective_coordinates(group, point,
-	    x, y, z, ctx);
+	if (!group->meth->point_set_Jprojective_coordinates(group, point,
+	    x, y, z, ctx))
+		return 0;
+	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
+		return 0;
+	}
+	return 1;
 }
 
 int
