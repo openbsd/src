@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.528 2023/01/06 17:44:34 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.529 2023/02/07 17:58:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -572,8 +572,8 @@ struct pf_rule {
 	u_int8_t		 keep_state;
 	sa_family_t		 af;
 	u_int8_t		 proto;
-	u_int8_t		 type;
-	u_int8_t		 code;
+	u_int16_t		 type;	/* aux. value 256 is legit */
+	u_int16_t		 code;	/* aux. value 256 is legit */
 	u_int8_t		 flags;
 	u_int8_t		 flagset;
 	u_int8_t		 min_ttl;
@@ -592,7 +592,6 @@ struct pf_rule {
 	u_int8_t		 set_prio[2];
 	sa_family_t		 naf;
 	u_int8_t		 rcvifnot;
-	u_int8_t		 pad[2];
 
 	struct {
 		struct pf_addr		addr;
