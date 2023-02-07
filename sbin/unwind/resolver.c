@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.156 2022/11/29 11:56:32 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.157 2023/02/07 17:44:02 florian Exp $	*/
 
 
 /*
@@ -232,7 +232,7 @@ struct val_neg_cache		*unified_neg_cache;
 int				 dns64_present;
 int				 available_afs = HAVE_IPV4 | HAVE_IPV6;
 
-static const char * const	 as112_zones[] = {
+static const char * const	 forward_transparent_zones[] = {
 	/* RFC1918 */
 	"10.in-addr.arpa. transparent",
 	"16.172.in-addr.arpa. transparent",
@@ -327,7 +327,10 @@ static const char * const	 as112_zones[] = {
 	"B.E.F.ip6.arpa. transparent",
 
 	/* RFC3849 */
-	"8.B.D.0.1.0.0.2.ip6.arpa. transparent"
+	"8.B.D.0.1.0.0.2.ip6.arpa. transparent",
+
+	/* RFC8375 */
+	"home.arpa. transparent",
 };
 
 const char	 bogus_past[]	= "validation failure <. NS IN>: signature "
@@ -1348,20 +1351,21 @@ create_resolver(enum uw_resolver_type type)
 		break;
 	}
 
-	/* for the forwarder cases allow AS112 zones */
+	/* for the forwarder cases allow AS112 and special-use zones */
 	switch(res->type) {
 	case UW_RES_AUTOCONF:
 	case UW_RES_ODOT_AUTOCONF:
 	case UW_RES_FORWARDER:
 	case UW_RES_ODOT_FORWARDER:
 	case UW_RES_DOT:
-		for (i = 0; i < nitems(as112_zones); i++) {
+		for (i = 0; i < nitems(forward_transparent_zones); i++) {
 			if((err = ub_ctx_set_option(res->ctx, "local-zone:",
-			    as112_zones[i])) != 0) {
+			    forward_transparent_zones[i])) != 0) {
 				ub_ctx_delete(res->ctx);
 				free(res);
 				log_warnx("error setting local-zone: %s: %s",
-				    as112_zones[i], ub_strerror(err));
+				    forward_transparent_zones[i],
+				    ub_strerror(err));
 				return (NULL);
 			}
 		}
