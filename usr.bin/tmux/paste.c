@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.45 2022/10/28 13:00:02 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.46 2023/02/07 10:56:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -241,11 +241,8 @@ paste_rename(const char *oldname, const char *newname, char **cause)
 	}
 
 	pb_new = paste_get_name(newname);
-	if (pb_new != NULL) {
-		if (cause != NULL)
-			xasprintf(cause, "buffer %s already exists", newname);
-		return (-1);
-	}
+	if (pb_new != NULL)
+		paste_free(pb_new);
 
 	RB_REMOVE(paste_name_tree, &paste_by_name, pb);
 
