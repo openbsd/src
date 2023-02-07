@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2023/01/23 14:49:16 kn Exp $
+#	$OpenBSD: Makefile,v 1.38 2023/02/07 15:04:27 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -76,8 +76,7 @@ create-disks:
 	${SUDO} vnconfig -- ${diskfile} 1>${devfile}
 	${SUDO} ${FORMAT_DISK} -- "$$(<${devfile})" 1>/dev/null
 .  if ${USE_SOFTRAID:L} == "yes"
-	echo 'RAID 1M-* 100%' | \
-		${SUDO} disklabel -wAT/dev/stdin -- "$$(<${devfile})" 1>/dev/null
+	echo 'RAID *' | ${SUDO} disklabel -wAT- -- "$$(<${devfile})" 1>/dev/null
 .  endif
 .endfor
 
