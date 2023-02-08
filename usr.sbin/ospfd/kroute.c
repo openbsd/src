@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.115 2022/05/06 15:51:09 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.116 2023/02/08 08:20:54 tb Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -409,7 +409,7 @@ kr_fib_reload_arm_timer(int delay)
 }
 
 void
-kr_fib_reload()
+kr_fib_reload(void)
 {
 	struct kroute_node	*krn, *kr, *kn;
 

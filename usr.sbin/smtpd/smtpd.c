@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.343 2022/02/18 16:57:36 millert Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.344 2023/02/08 08:20:54 tb Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -308,7 +308,7 @@ parent_send_config_dispatcher(void)
 }
 
 void
-parent_send_config_lka()
+parent_send_config_lka(void)
 {
 	log_debug("debug: parent_send_config_ruleset: reloading");
 	m_compose(p_lka, IMSG_CONF_START, 0, 0, -1, NULL, 0);

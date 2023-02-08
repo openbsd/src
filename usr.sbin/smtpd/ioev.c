@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.48 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.49 2023/02/08 08:20:54 tb Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -224,7 +224,7 @@ io_frame_leave(struct io *io)
 }
 
 void
-_io_init()
+_io_init(void)
 {
 	static int init = 0;
 
