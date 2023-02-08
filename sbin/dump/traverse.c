@@ -1,4 +1,4 @@
-/*	$OpenBSD: traverse.c,v 1.39 2018/04/26 17:40:48 guenther Exp $	*/
+/*	$OpenBSD: traverse.c,v 1.40 2023/02/08 08:25:44 tb Exp $	*/
 /*	$NetBSD: traverse.c,v 1.17 1997/06/05 11:13:27 lukem Exp $	*/
 
 /*-
@@ -717,10 +717,7 @@ ufs2_blksout(daddr_t *blkp, int frags, ino_t ino)
  * Dump a map to the tape.
  */
 void
-dumpmap(map, type, ino)
-	char *map;
-	int type;
-	ino_t ino;
+dumpmap(char *map, int type, ino_t ino)
 {
 	int i;
 	char *cp;
@@ -736,8 +733,7 @@ dumpmap(map, type, ino)
  * Write a header record to the dump tape.
  */
 void
-writeheader(ino)
-	ino_t ino;
+writeheader(ino_t ino)
 {
 	int32_t sum, cnt, *lp;
 

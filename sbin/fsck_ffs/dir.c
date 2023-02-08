@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.32 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.33 2023/02/08 08:25:44 tb Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -439,10 +439,7 @@ linkup(ino_t orphan, ino_t parentdir)
  * fix an entry in a directory.
  */
 int
-changeino(dir, name, newnum)
-	ino_t dir;
-	char *name;
-	ino_t newnum;
+changeino(ino_t dir, char *name, ino_t newnum)
 {
 	struct inodesc idesc;
 
