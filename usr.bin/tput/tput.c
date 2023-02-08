@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.27 2023/02/03 15:55:59 tb Exp $	*/
+/*	$OpenBSD: tput.c,v 1.28 2023/02/08 15:56:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
@@ -44,13 +44,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/wait.h>
 #include <ctype.h>
 #include <err.h>
 #include <curses.h>
 #include <term.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
@@ -58,7 +58,7 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-#include <sys/wait.h>
+#define NUM_PARM	9	/* must match tic.h */
 
 static void   init(void);
 static char **process(char *, char *, char **);
@@ -67,6 +67,7 @@ static void   set_margins(void);
 static void   usage(void);
 
 extern char  *__progname;
+extern int _nc_tparm_analyze(const char *string, char *p_is_s[NUM_PARM], int *popcount);
 
 int
 main(int argc, char *argv[])
@@ -192,66 +193,35 @@ main(int argc, char *argv[])
 static char **
 process(char *cap, char *str, char **argv)
 {
-	char *cp, *s, *nargv[9] = {0};
-	int arg_need, popcount, i;
+	char *cp, *s, *nargv[NUM_PARM] = {0};
+	char *p_is_s[NUM_PARM];
+	int arg_need, i;
 
 	/* Count how many values we need for this capability. */
-	for (cp = str, arg_need = popcount = 0; *cp != '\0'; cp++) {
-		if (*cp == '%') {
-			switch (*++cp) {
-			case '%':
-			   	cp++;
-				break;
-			case 'i':
-				if (popcount < 2)
-					popcount = 2;
-				break;
-			case 'p':
-				cp++;
-				if (isdigit((unsigned char)cp[1]) &&
-				    popcount < cp[1] - '0')
-					popcount = cp[1] - '0';
-				break;
-			case 'd':
-			case 's':
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '.':
-			case '+':
-				arg_need++;
-				break;
-			default:
-				break;
-			}
-		}
-	}
-	arg_need = MAXIMUM(arg_need, popcount);
-	if (arg_need > 9)
+	i = _nc_tparm_analyze(str, p_is_s, &arg_need);
+	if (arg_need == 0)
+		arg_need = i;
+	if (arg_need > NUM_PARM)
 		errx(2, "too many arguments (%d) for capability `%s'",
 		    arg_need, cap);
 	
 	for (i = 0; i < arg_need; i++) {
+		const char *errstr;
 		long l;
 
 		if (argv[i] == NULL)
 			errx(2, "not enough arguments (%d) for capability `%s'",
 			    arg_need, cap);
 
-		/* convert ascii representation of numbers to longs */
-		if (isdigit((unsigned char)argv[i][0])
-		    && (l = strtol(argv[i], &cp, 10)) >= 0
-		    && l < LONG_MAX && *cp == '\0')
-			nargv[i] = (char *)l;
-		else
+		if (p_is_s[i] != 0) {
 			nargv[i] = argv[i];
+		} else {
+			/* convert ascii representation of numbers to longs */
+			l = strtonum(argv[i], LONG_MIN, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(2, "capability `%s' is %s", cap, errstr);
+			nargv[i] = (char *)l;
+		}
 	}
 
 	s = tparm(str, nargv[0], nargv[1], nargv[2], nargv[3],
