@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2022/12/04 23:50:49 cheloha Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2023/02/08 08:18:11 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -478,7 +478,7 @@ add_file(char *s)
 
 
 static int
-next_files_have_lines()
+next_files_have_lines(void)
 {
 	struct s_flist *file;
 	FILE *file_fd;
