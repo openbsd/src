@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.76 2022/11/27 14:31:22 tb Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.77 2023/02/08 08:01:25 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1760,7 +1760,7 @@ tcp_timeout(int fd, short events, void *arg)
 }
 
 void
-check_available_af()
+check_available_af(void)
 {
 	static int		 available_af = HAVE_IPV4 | HAVE_IPV6;
 	static int		 rtable = -1;
