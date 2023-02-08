@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.99 2023/02/08 17:22:10 kn Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -81,7 +81,9 @@ static const char initifs[] = "IFS= \t\n";
 static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
 static const char *initcoms [] = {
+#ifndef SMALL
 	"typeset", "-r", "KSH_VERSION", NULL,
+#endif /* SMALL */
 	"typeset", "-x", "SHELL", "PATH", "HOME", "PWD", "OLDPWD", NULL,
 	"typeset", "-ir", "PPID", NULL,
 	"typeset", "-i", "OPTIND=1", NULL,
@@ -110,7 +112,9 @@ static const char *initcoms [] = {
 
 char username[_PW_NAME_LEN + 1];
 
+#ifndef SMALL
 #define version_param  (initcoms[2])
+#endif /* SMALL */
 
 /* The shell uses its own variation on argv, to build variables like
  * $0 and $@.
@@ -247,7 +251,9 @@ main(int argc, char *argv[])
 	    (strlen(kshname) >= 3 &&
 	    !strcmp(&kshname[strlen(kshname) - 3], "/sh"))) {
 		Flag(FSH) = 1;
+#ifndef SMALL
 		version_param = "SH_VERSION";
+#endif /* SMALL */
 	}
 
 	/* Set edit mode to emacs by default, may be overridden
@@ -296,8 +302,10 @@ main(int argc, char *argv[])
 	}
 	ppid = getppid();
 	setint(global("PPID"), (int64_t) ppid);
+#ifndef SMALL
 	/* setstr can't fail here */
 	setstr(global(version_param), ksh_version, KSH_RETURN_ERROR);
+#endif /* SMALL */
 
 	/* execute initialization statements */
 	for (wp = (char**) initcoms; *wp != NULL; wp++) {
