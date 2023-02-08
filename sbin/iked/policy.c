@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.92 2022/10/10 11:33:55 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.93 2023/02/08 19:59:10 tb Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -222,11 +222,9 @@ struct iked_policy *
 policy_test(struct iked *env, struct iked_policy *key)
 {
 	struct iked_policy	*p = NULL, *pol = NULL;
-	unsigned int		 cnt = 0;
 
 	p = TAILQ_FIRST(&env->sc_policies);
 	while (p != NULL) {
-		cnt++;
 		if (p->pol_flags & IKED_POLICY_SKIP)
 			p = p->pol_skip[IKED_SKIP_FLAGS];
 		else if (key->pol_af && p->pol_af &&
