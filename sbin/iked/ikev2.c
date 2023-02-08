@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.361 2022/12/06 09:07:33 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.362 2023/02/08 20:10:34 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3024,7 +3024,7 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 	uint64_t		 spi64, spi = 0;
 	uint32_t		 spi32;
 	uint8_t			*buf;
-	size_t			 found = 0, failed = 0;
+	size_t			 found = 0;
 	int			 ret = -1;
 	size_t			 i, sz, cnt, len;
 
@@ -3091,9 +3091,7 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 		}
 
 		if (ikev2_childsa_delete(env, sa, msg->msg_del_protoid, spi,
-		    &localspi[i], 0) == -1)
-			failed++;
-		else {
+		    &localspi[i], 0) != -1) {
 			found++;
 
 			/* append SPI to log buffer */
