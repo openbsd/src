@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.364 2023/02/02 13:37:24 claudio Exp $ */
+/* $OpenBSD: if_em.c,v 1.365 2023/02/09 21:21:27 naddy Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -2398,12 +2398,11 @@ u_int
 em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
     u_int32_t *olinfo_status, u_int32_t *cmd_type_len)
 {
+	struct ether_extracted ext;
 	struct e1000_adv_tx_context_desc *TD;
-	struct ether_header *eh = mtod(mp, struct ether_header *);
-	struct mbuf *m;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0, mss_l4len_idx = 0;
-	int off = 0, hoff;
-	uint8_t ipproto, iphlen;
+	int off = 0;
+	uint8_t iphlen;
 
 	*olinfo_status = 0;
 	*cmd_type_len = 0;
@@ -2418,44 +2417,26 @@ em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
 	}
 #endif
 
-	vlan_macip_lens |= (sizeof(*eh) << E1000_ADVTXD_MACLEN_SHIFT);
-	
-	switch (ntohs(eh->ether_type)) {
-	case ETHERTYPE_IP: {
-		struct ip *ip;
+	ether_extract_headers(mp, &ext);
 
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
+	vlan_macip_lens |= (sizeof(*ext.eh) << E1000_ADVTXD_MACLEN_SHIFT);
 
-		iphlen = ip->ip_hl << 2;
-		ipproto = ip->ip_p;
+	if (ext.ip4) {
+		iphlen = ext.ip4->ip_hl << 2;
 
 		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV4;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
 			*olinfo_status |= E1000_TXD_POPTS_IXSM << 8;
 			off = 1;
 		}
-
-		break;
-	}
 #ifdef INET6
-	case ETHERTYPE_IPV6: {
-		struct ip6_hdr *ip6;
-
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
-
-		iphlen = sizeof(*ip6);
-		ipproto = ip6->ip6_nxt;
+	} else if (ext.ip6) {
+		iphlen = sizeof(*ext.ip6);
 
 		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_IPV6;
-		break;
-	}
 #endif
-	default:
+	} else {
 		iphlen = 0;
-		ipproto = 0;
-		break;
 	}
 
 	*cmd_type_len |= E1000_ADVTXD_DTYP_DATA | E1000_ADVTXD_DCMD_IFCS;
@@ -2464,21 +2445,18 @@ em_tx_ctx_setup(struct em_queue *que, struct mbuf *mp, u_int head,
 	vlan_macip_lens |= iphlen;
 	type_tucmd_mlhl |= E1000_ADVTXD_DCMD_DEXT | E1000_ADVTXD_DTYP_CTXT;
 
-	switch (ipproto) {
-	case IPPROTO_TCP:
+	if (ext.tcp) {
 		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_L4T_TCP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 			*olinfo_status |= E1000_TXD_POPTS_TXSM << 8;
 			off = 1;
 		}
-		break;
-	case IPPROTO_UDP:
+	} else if (ext.udp) {
 		type_tucmd_mlhl |= E1000_ADVTXD_TUCMD_L4T_UDP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 			*olinfo_status |= E1000_TXD_POPTS_TXSM << 8;
 			off = 1;
 		}
-		break;
 	}
 
 	if (!off)

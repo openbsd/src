@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.10 2022/11/11 16:41:44 mbuhl Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.11 2023/02/09 21:21:27 naddy Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -2002,17 +2002,14 @@ int
 igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
     uint32_t *olinfo_status)
 {
+	struct ether_extracted ext;
 	struct igc_adv_tx_context_desc *txdesc;
-	struct ether_header *eh = mtod(mp, struct ether_header *);
-	struct mbuf *m;
 	uint32_t type_tucmd_mlhl = 0;
 	uint32_t vlan_macip_lens = 0;
 	uint32_t iphlen;
-	int hoff;
 	int off = 0;
-	uint8_t ipproto;
 
-	vlan_macip_lens |= (sizeof(*eh) << IGC_ADVTXD_MACLEN_SHIFT);
+	vlan_macip_lens |= (sizeof(*ext.eh) << IGC_ADVTXD_MACLEN_SHIFT);
 
 	/*
 	 * In advanced descriptors the vlan tag must
@@ -2029,62 +2026,41 @@ igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
 #endif
 #endif
 
-	switch (ntohs(eh->ether_type)) {
-	case ETHERTYPE_IP: {
-		struct ip *ip;
+	ether_extract_headers(mp, &ext);
 
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
-		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
-
-		iphlen = ip->ip_hl << 2;
-		ipproto = ip->ip_p;
+	if (ext.ip4) {
+		iphlen = ext.ip4->ip_hl << 2;
 
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
 			*olinfo_status |= IGC_TXD_POPTS_IXSM << 8;
 			off = 1;
 		}
-
-		break;
-	}
 #ifdef INET6
-	case ETHERTYPE_IPV6: {
-		struct ip6_hdr *ip6;
-
-		m = m_getptr(mp, sizeof(*eh), &hoff);
-		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
-		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
-
-		iphlen = sizeof(*ip6);
-		ipproto = ip6->ip6_nxt;
+	} else if (ext.ip6) {
+		iphlen = sizeof(*ext.ip6);
 
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV6;
-		break;
-	}
 #endif
-	default:
+	} else {
 		return 0;
 	}
 
 	vlan_macip_lens |= iphlen;
 	type_tucmd_mlhl |= IGC_ADVTXD_DCMD_DEXT | IGC_ADVTXD_DTYP_CTXT;
 
-	switch (ipproto) {
-	case IPPROTO_TCP:
+	if (ext.tcp) {
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_L4T_TCP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
 			*olinfo_status |= IGC_TXD_POPTS_TXSM << 8;
 			off = 1;
 		}
-		break;
-	case IPPROTO_UDP:
+	} else if (ext.udp) {
 		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_L4T_UDP;
 		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
 			*olinfo_status |= IGC_TXD_POPTS_TXSM << 8;
 			off = 1;
 		}
-		break;
 	}
 
 	if (off == 0)
