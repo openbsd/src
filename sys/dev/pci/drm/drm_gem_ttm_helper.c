@@ -24,12 +24,17 @@ drm_gem_ttm_mmap(struct drm_gem_object *obj,
 int
 drm_gem_ttm_vmap(struct drm_gem_object *obj, struct iosys_map *ism)
 {
-	STUB();
-	return -ENOSYS;
+	struct ttm_buffer_object *tbo =
+	    container_of(obj, struct ttm_buffer_object, base);
+
+	return ttm_bo_vmap(tbo, ism);
 }
 
 void
 drm_gem_ttm_vunmap(struct drm_gem_object *obj, struct iosys_map *ism)
 {
-	STUB();
+	struct ttm_buffer_object *tbo =
+	    container_of(obj, struct ttm_buffer_object, base);
+
+	ttm_bo_vunmap(tbo, ism);
 }
