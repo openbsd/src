@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.54 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.55 2023/02/09 01:41:15 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -271,7 +271,11 @@ lapic_timer_rearm(void *unused, uint64_t nsecs)
 void
 lapic_timer_trigger(void *unused)
 {
+	u_long s;
+
+	s = intr_disable();
 	lapic_timer_oneshot(0, 1);
+	intr_restore(s);
 }
 
 /*
