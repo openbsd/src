@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1226 2023/02/03 15:28:04 kn Exp $
+#	$OpenBSD: install.sub,v 1.1227 2023/02/09 10:38:41 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -332,10 +332,12 @@ get_cddevs() {
 
 # Return sorted list of disks not in DISKS_DONE which contains disks already
 # initialized during installation.
+# Ignore softraid chunks, they either auto-assembled at boot or were created
+# manually in an installer shell.
 get_dkdevs_uninitialized() {
 	local _disks=$(get_dkdevs) _d
 
-	for _d in $DISKS_DONE; do
+	for _d in $DISKS_DONE $(get_softraid_disks); do
 		_disks=$(rmel "$_d" $_disks)
 	done
 	bsort $_disks
