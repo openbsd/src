@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.281 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.282 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -79,6 +79,7 @@ struct rde_peer {
 	RB_ENTRY(rde_peer)		 entry;
 	SIMPLEQ_HEAD(, iq)		 imsg_queue;
 	struct peer_config		 conf;
+	struct rde_peer_stats		 stats;
 	struct bgpd_addr		 remote_addr;
 	struct bgpd_addr		 local_v4_addr;
 	struct bgpd_addr		 local_v6_addr;
@@ -88,17 +89,7 @@ struct rde_peer {
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
 	time_t				 staletime[AID_MAX];
-	uint64_t			 prefix_rcvd_update;
-	uint64_t			 prefix_rcvd_withdraw;
-	uint64_t			 prefix_rcvd_eor;
-	uint64_t			 prefix_sent_update;
-	uint64_t			 prefix_sent_withdraw;
-	uint64_t			 prefix_sent_eor;
-	uint32_t			 prefix_cnt;
-	uint32_t			 prefix_out_cnt;
 	uint32_t			 remote_bgpid; /* host byte order! */
-	uint32_t			 up_nlricnt;
-	uint32_t			 up_wcnt;
 	uint32_t			 path_id_tx;
 	enum peer_state			 state;
 	enum export_type		 export_type;

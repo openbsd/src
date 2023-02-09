@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.153 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.154 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -213,10 +213,11 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 
 		/* max prefix checker outbound */
 		if (peer->conf.max_out_prefix &&
-		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
 			log_peer_warnx(&peer->conf,
 			    "outbound prefix limit reached (>%u/%u)",
-			    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			    peer->stats.prefix_out_cnt,
+			    peer->conf.max_out_prefix);
 			rde_update_err(peer, ERR_CEASE,
 			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 		}
@@ -343,10 +344,11 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 
 		/* max prefix checker outbound */
 		if (peer->conf.max_out_prefix &&
-		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
 			log_peer_warnx(&peer->conf,
 			    "outbound prefix limit reached (>%u/%u)",
-			    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			    peer->stats.prefix_out_cnt,
+			    peer->conf.max_out_prefix);
 			rde_update_err(peer, ERR_CEASE,
 			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 		}
@@ -446,10 +448,11 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 
 		/* max prefix checker outbound */
 		if (peer->conf.max_out_prefix &&
-		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
 			log_peer_warnx(&peer->conf,
 			    "outbound prefix limit reached (>%u/%u)",
-			    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			    peer->stats.prefix_out_cnt,
+			    peer->conf.max_out_prefix);
 			rde_update_err(peer, ERR_CEASE,
 			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 		}
@@ -512,10 +515,10 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 
 	/* max prefix checker outbound */
 	if (peer->conf.max_out_prefix &&
-	    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
+	    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
 		log_peer_warnx(&peer->conf,
 		    "outbound prefix limit reached (>%u/%u)",
-		    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+		    peer->stats.prefix_out_cnt, peer->conf.max_out_prefix);
 		rde_update_err(peer, ERR_CEASE,
 		    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 	}
@@ -929,13 +932,13 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		if (withdraw) {
 			/* prefix no longer needed, remove it */
 			prefix_adjout_destroy(p);
-			peer->prefix_sent_withdraw++;
+			peer->stats.prefix_sent_withdraw++;
 		} else {
 			/* prefix still in Adj-RIB-Out, keep it */
 			RB_REMOVE(prefix_tree, prefix_head, p);
 			p->flags &= ~PREFIX_FLAG_UPDATE;
-			peer->up_nlricnt--;
-			peer->prefix_sent_update++;
+			peer->stats.pending_update--;
+			peer->stats.prefix_sent_update++;
 		}
 
 		if (done)

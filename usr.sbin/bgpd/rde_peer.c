@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.27 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.28 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -348,7 +348,7 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 		}
 
 		prefix_destroy(p);
-		peer->prefix_cnt--;
+		peer->stats.prefix_cnt--;
 	}
 }
 
@@ -422,8 +422,8 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 		    peer_adjout_clear_upcall, NULL, NULL) == -1)
 			fatal("%s: prefix_dump_new", __func__);
 		peer_flush(peer, AID_UNSPEC, 0);
-		peer->prefix_cnt = 0;
-		peer->prefix_out_cnt = 0;
+		peer->stats.prefix_cnt = 0;
+		peer->stats.prefix_out_cnt = 0;
 		peer->state = PEER_DOWN;
 	}
 	peer->remote_bgpid = ntohl(sup->remote_bgpid);
@@ -473,8 +473,8 @@ peer_down(struct rde_peer *peer, void *bula)
 
 	/* flush Adj-RIB-In */
 	peer_flush(peer, AID_UNSPEC, 0);
-	peer->prefix_cnt = 0;
-	peer->prefix_out_cnt = 0;
+	peer->stats.prefix_cnt = 0;
+	peer->stats.prefix_out_cnt = 0;
 
 	RB_REMOVE(peer_tree, &peertable, peer);
 	free(peer);

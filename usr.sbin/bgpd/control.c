@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.108 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.109 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,7 +219,7 @@ int
 control_close(struct ctl_conn *c)
 {
 	if (c->terminate && c->ibuf.pid)
-		imsg_ctl_rde(IMSG_CTL_TERMINATE, c->ibuf.pid, NULL, 0);
+		imsg_ctl_rde(IMSG_CTL_TERMINATE, 0, c->ibuf.pid, NULL, 0);
 
 	msgbuf_clear(&c->ibuf.w);
 	TAILQ_REMOVE(&ctl_conns, c, entry);
@@ -250,7 +250,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN)
 			return control_close(c);
 		if (c->throttled && c->ibuf.w.queued < CTL_MSG_LOW_MARK) {
-			if (imsg_ctl_rde(IMSG_XON, c->ibuf.pid, NULL, 0) != -1)
+			if (imsg_ctl_rde(IMSG_XON, 0, c->ibuf.pid, NULL, 0) !=
+			    -1)
 				c->throttled = 0;
 		}
 	}
@@ -323,9 +324,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 
 				matched = 1;
 				if (!neighbor || !neighbor->show_timers) {
-					imsg_ctl_rde(imsg.hdr.type,
-					    imsg.hdr.pid,
-					    p, sizeof(struct peer));
+					imsg_ctl_rde(imsg.hdr.type, p->conf.id,
+					    imsg.hdr.pid, NULL, 0);
 				} else {
 					u_int			 i;
 					time_t			 d;
@@ -349,7 +349,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			if (!matched && RB_EMPTY(peers)) {
 				control_result(c, CTL_RES_NOSUCHPEER);
 			} else if (!neighbor || !neighbor->show_timers) {
-				imsg_ctl_rde(IMSG_CTL_END, imsg.hdr.pid,
+				imsg_ctl_rde(IMSG_CTL_END, 0, imsg.hdr.pid,
 				    NULL, 0);
 			} else {
 				imsg_compose(&c->ibuf, IMSG_CTL_END, 0, 0, -1,
@@ -494,7 +494,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			c->ibuf.pid = imsg.hdr.pid;
 			c->terminate = 1;
 
-			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
+			imsg_ctl_rde(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
@@ -503,7 +503,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		case IMSG_CTL_SHOW_RIB_MEM:
 		case IMSG_CTL_SHOW_SET:
 			c->ibuf.pid = imsg.hdr.pid;
-			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
+			imsg_ctl_rde(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_NETWORK_ADD:
@@ -513,7 +513,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		case IMSG_NETWORK_FLUSH:
 		case IMSG_NETWORK_DONE:
 		case IMSG_FILTER_SET:
-			imsg_ctl_rde(imsg.hdr.type, 0,
+			imsg_ctl_rde(imsg.hdr.type, 0, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_LOG_VERBOSE:
@@ -524,7 +524,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			/* forward to other processes */
 			imsg_ctl_parent(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
-			imsg_ctl_rde(imsg.hdr.type, 0,
+			imsg_ctl_rde(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			memcpy(&verbose, imsg.data, sizeof(verbose));
@@ -540,19 +540,47 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 }
 
 int
-control_imsg_relay(struct imsg *imsg)
+control_imsg_relay(struct imsg *imsg, struct peer *p)
 {
 	struct ctl_conn	*c;
 
 	if ((c = control_connbypid(imsg->hdr.pid)) == NULL)
 		return (0);
 
+	/* special handling for peers since only the stats are sent from RDE */
+	if (imsg->hdr.type == IMSG_CTL_SHOW_NEIGHBOR) {
+		struct rde_peer_stats stats;
+
+		if (imsg->hdr.len > IMSG_HEADER_SIZE + sizeof(stats)) {
+			log_warnx("wrong imsg len");
+			return (0);
+		}
+		if (p == NULL) {
+			log_warnx("no such peer: id=%u", imsg->hdr.peerid);
+			return (0);
+		}
+		memcpy(&stats, imsg->data, sizeof(stats));
+		p->stats.prefix_cnt = stats.prefix_cnt;
+		p->stats.prefix_out_cnt = stats.prefix_out_cnt;
+		p->stats.prefix_rcvd_update = stats.prefix_rcvd_update;
+		p->stats.prefix_rcvd_withdraw = stats.prefix_rcvd_withdraw;
+		p->stats.prefix_rcvd_eor = stats.prefix_rcvd_eor;
+		p->stats.prefix_sent_update = stats.prefix_sent_update;
+		p->stats.prefix_sent_withdraw = stats.prefix_sent_withdraw;
+		p->stats.prefix_sent_eor = stats.prefix_sent_eor;
+		p->stats.pending_update = stats.pending_update;
+		p->stats.pending_withdraw = stats.pending_withdraw;
+
+		return (imsg_compose(&c->ibuf, imsg->hdr.type, 0,
+		    imsg->hdr.pid, -1, p, sizeof(*p)));
+	}
+
 	/* if command finished no need to send exit message */
 	if (imsg->hdr.type == IMSG_CTL_END || imsg->hdr.type == IMSG_CTL_RESULT)
 		c->terminate = 0;
 
 	if (!c->throttled && c->ibuf.w.queued > CTL_MSG_HIGH_MARK) {
-		if (imsg_ctl_rde(IMSG_XOFF, imsg->hdr.pid, NULL, 0) != -1)
+		if (imsg_ctl_rde(IMSG_XOFF, 0, imsg->hdr.pid, NULL, 0) != -1)
 			c->throttled = 1;
 	}
 

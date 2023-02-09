@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.254 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.255 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1171,16 +1171,16 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 		/* if pending update unhook it before it is unlinked */
 		if (p->flags & PREFIX_FLAG_UPDATE) {
 			RB_REMOVE(prefix_tree, &peer->updates[prefix->aid], p);
-			peer->up_nlricnt--;
+			peer->stats.pending_update--;
 		}
 
 		/* unlink prefix so it can be relinked below */
 		prefix_unlink(p);
-		peer->prefix_out_cnt--;
+		peer->stats.prefix_out_cnt--;
 	}
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
 		RB_REMOVE(prefix_tree, &peer->withdraws[prefix->aid], p);
-		peer->up_wcnt--;
+		peer->stats.pending_withdraw--;
 	}
 
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
@@ -1208,14 +1208,14 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 
 	prefix_link(p, NULL, p->pt, peer, 0, p->path_id_tx, asp, comm,
 	    state->nexthop, state->nhflags, state->vstate);
-	peer->prefix_out_cnt++;
+	peer->stats.prefix_out_cnt++;
 
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
 	p->flags |= PREFIX_FLAG_UPDATE;
 	if (RB_INSERT(prefix_tree, &peer->updates[prefix->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
-	peer->up_nlricnt++;
+	peer->stats.pending_update++;
 }
 
 /*
@@ -1239,12 +1239,12 @@ prefix_adjout_withdraw(struct prefix *p)
 	/* pending update just got withdrawn */
 	if (p->flags & PREFIX_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
-		peer->up_nlricnt--;
+		peer->stats.pending_update--;
 	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
 	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
 		prefix_unlink(p);
-		peer->prefix_out_cnt--;
+		peer->stats.prefix_out_cnt--;
 	}
 
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
@@ -1254,7 +1254,7 @@ prefix_adjout_withdraw(struct prefix *p)
 	p->flags |= PREFIX_FLAG_WITHDRAW;
 	if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
-	peer->up_wcnt++;
+	peer->stats.pending_withdraw++;
 }
 
 void
@@ -1273,16 +1273,16 @@ prefix_adjout_destroy(struct prefix *p)
 
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
 		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
-		peer->up_wcnt--;
+		peer->stats.pending_withdraw--;
 	}
 	if (p->flags & PREFIX_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
-		peer->up_nlricnt--;
+		peer->stats.pending_update--;
 	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
 	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
 		prefix_unlink(p);
-		peer->prefix_out_cnt--;
+		peer->stats.prefix_out_cnt--;
 	}
 
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */

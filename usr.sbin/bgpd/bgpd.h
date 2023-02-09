@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.460 2023/01/24 14:13:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.461 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -479,6 +479,19 @@ struct peer_config {
 #define PEERFLAG_LOG_UPDATES	0x02
 #define PEERFLAG_EVALUATE_ALL	0x04
 #define PEERFLAG_NO_AS_SET	0x08
+
+struct rde_peer_stats {
+	uint64_t			 prefix_rcvd_update;
+	uint64_t			 prefix_rcvd_withdraw;
+	uint64_t			 prefix_rcvd_eor;
+	uint64_t			 prefix_sent_update;
+	uint64_t			 prefix_sent_withdraw;
+	uint64_t			 prefix_sent_eor;
+	uint32_t			 prefix_cnt;
+	uint32_t			 prefix_out_cnt;
+	uint32_t			 pending_update;
+	uint32_t			 pending_withdraw;
+};
 
 enum network_type {
 	NETWORK_DEFAULT,	/* from network statements */
@@ -1301,7 +1314,7 @@ void		 set_pollfd(struct pollfd *, struct imsgbuf *);
 int		 handle_pollfd(struct pollfd *, struct imsgbuf *);
 
 /* control.c */
-int	control_imsg_relay(struct imsg *);
+int	control_imsg_relay(struct imsg *, struct peer *);
 
 /* config.c */
 struct bgpd_config	*new_config(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.591 2023/01/24 14:13:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.592 2023/02/09 13:43:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,8 +34,8 @@
 #include <unistd.h>
 
 #include "bgpd.h"
-#include "rde.h"
 #include "session.h"
+#include "rde.h"
 #include "log.h"
 
 #define PFD_PIPE_MAIN		0
@@ -359,7 +359,7 @@ void
 rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
-	struct peer		 p;
+	struct rde_peer_stats	 stats;
 	struct ctl_show_set	 cset;
 	struct ctl_show_rib	 csr;
 	struct ctl_show_rib_request	req;
@@ -601,33 +601,18 @@ badnetdel:
 			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct peer)) {
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != 0) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
-			memcpy(&p, imsg.data, sizeof(struct peer));
-			peer = peer_get(p.conf.id);
-			if (peer != NULL) {
-				p.stats.prefix_cnt = peer->prefix_cnt;
-				p.stats.prefix_out_cnt = peer->prefix_out_cnt;
-				p.stats.prefix_rcvd_update =
-				    peer->prefix_rcvd_update;
-				p.stats.prefix_rcvd_withdraw =
-				    peer->prefix_rcvd_withdraw;
-				p.stats.prefix_rcvd_eor =
-				    peer->prefix_rcvd_eor;
-				p.stats.prefix_sent_update =
-				    peer->prefix_sent_update;
-				p.stats.prefix_sent_withdraw =
-				    peer->prefix_sent_withdraw;
-				p.stats.prefix_sent_eor =
-				    peer->prefix_sent_eor;
-				p.stats.pending_update = peer->up_nlricnt;
-				p.stats.pending_withdraw = peer->up_wcnt;
-			}
-			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR, 0,
-			    imsg.hdr.pid, -1, &p, sizeof(struct peer));
+			peer = peer_get(imsg.hdr.peerid);
+			if (peer != NULL)
+				memcpy(&stats, &peer->stats, sizeof(stats));
+			else
+				memset(&stats, 0, sizeof(stats));
+			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NEIGHBOR,
+			    imsg.hdr.peerid, imsg.hdr.pid, -1,
+			    &stats, sizeof(stats));
 			break;
 		case IMSG_CTL_SHOW_RIB_MEM:
 			imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_RIB_MEM, 0,
@@ -1739,7 +1724,7 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 	uint8_t			 roa_state, aspa_state;
 	const char		*wmsg = "filtered, withdraw";
 
-	peer->prefix_rcvd_update++;
+	peer->stats.prefix_rcvd_update++;
 
 	roa_state = rde_roa_validity(&rde_roa, prefix, prefixlen,
 	    aspath_origin(in->aspath.aspath));
@@ -1750,12 +1735,13 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 	/* add original path to the Adj-RIB-In */
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, path_id_tx,
 	    in, prefix, prefixlen) == 1)
-		peer->prefix_cnt++;
+		peer->stats.prefix_cnt++;
 
 	/* max prefix checker */
-	if (peer->conf.max_prefix && peer->prefix_cnt > peer->conf.max_prefix) {
+	if (peer->conf.max_prefix &&
+	    peer->stats.prefix_cnt > peer->conf.max_prefix) {
 		log_peer_warnx(&peer->conf, "prefix limit reached (>%u/%u)",
-		    peer->prefix_cnt, peer->conf.max_prefix);
+		    peer->stats.prefix_cnt, peer->conf.max_prefix);
 		rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX, NULL, 0);
 		return (-1);
 	}
@@ -1807,9 +1793,9 @@ rde_update_withdraw(struct rde_peer *peer, uint32_t path_id,
 	/* remove original path form the Adj-RIB-In */
 	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peer, path_id,
 	    prefix, prefixlen))
-		peer->prefix_cnt--;
+		peer->stats.prefix_cnt--;
 
-	peer->prefix_rcvd_withdraw++;
+	peer->stats.prefix_rcvd_withdraw++;
 }
 
 /*
@@ -4151,7 +4137,7 @@ rde_decisionflags(void)
 static void
 rde_peer_recv_eor(struct rde_peer *peer, uint8_t aid)
 {
-	peer->prefix_rcvd_eor++;
+	peer->stats.prefix_rcvd_eor++;
 	peer->recv_eor |= 1 << aid;
 
 	/*
@@ -4176,7 +4162,7 @@ rde_peer_send_eor(struct rde_peer *peer, uint8_t aid)
 	uint16_t	afi;
 	uint8_t		safi;
 
-	peer->prefix_sent_eor++;
+	peer->stats.prefix_sent_eor++;
 	peer->sent_eor |= 1 << aid;
 
 	if (aid == AID_INET) {
@@ -4320,7 +4306,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 	path_id_tx = pathid_assign(peerself, 0, &nc->prefix, nc->prefixlen);
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, 0, path_id_tx,
 	    state, &nc->prefix, nc->prefixlen) == 1)
-		peerself->prefix_cnt++;
+		peerself->stats.prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
 		if (rib == NULL)
@@ -4395,7 +4381,7 @@ network_delete(struct network_config *nc)
 	}
 	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peerself, 0, &nc->prefix,
 	    nc->prefixlen))
-		peerself->prefix_cnt--;
+		peerself->stats.prefix_cnt--;
 }
 
 static void
@@ -4457,7 +4443,7 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 
 	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peerself, 0, &addr,
 	    prefixlen) == 1)
-		peerself->prefix_cnt--;
+		peerself->stats.prefix_cnt--;
 }
 
 /* clean up */
