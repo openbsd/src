@@ -3532,6 +3532,7 @@ amdgpu_attachhook(struct device *self)
 		fb = fb_helper->fb;
 		obj = fb->obj[0];
 		rbo = gem_to_amdgpu_bo(obj);
+		amdgpu_bo_pin(rbo, AMDGPU_GEM_DOMAIN_VRAM);
 		amdgpu_bo_kmap(rbo, (void **)(&ri->ri_bits));
 
 		ri->ri_depth = fb->format->cpp[0] * 8;
