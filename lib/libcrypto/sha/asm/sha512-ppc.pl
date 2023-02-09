@@ -375,7 +375,7 @@ $code.=<<___;
 	$ST	$H,`7*$SZ`($ctx)
 	bne	Lsha2_block_private
 	blr
-	.rodata
+	.section .rodata
 Ltable:
 ___
 $code.=<<___ if ($SZ==8);

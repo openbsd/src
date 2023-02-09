@@ -269,7 +269,7 @@ ___
 
 if ($SZ==4) {
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 .type	$TABLE,\@object
 $TABLE:
@@ -293,7 +293,7 @@ $TABLE:
 ___
 } else {
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 .type	$TABLE,\@object
 $TABLE:

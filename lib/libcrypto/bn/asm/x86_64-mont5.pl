@@ -1032,7 +1032,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 .Linc:
 	.long	0,0, 1,1

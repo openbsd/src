@@ -964,7 +964,7 @@ _vpaes_preheat:
 ##                     Constants                      ##
 ##                                                    ##
 ########################################################
-.rodata
+.section .rodata
 .type	_vpaes_consts,\@object
 .align	64
 _vpaes_consts:

@@ -2882,7 +2882,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.rodata
+.section .rodata
 .type	_bsaes_const,\@object
 .align	64
 _bsaes_const:

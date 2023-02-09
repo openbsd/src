@@ -307,7 +307,7 @@ sub ::dataseg
 {   push(@out,".data\n");   }
 
 sub ::rodataseg
-{   push(@out,".rodata\n");   }
+{   push(@out,".section .rodata\n");   }
 
 sub ::previous
 {   push(@out,".previous\n");   }

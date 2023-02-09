@@ -2113,7 +2113,7 @@ ___
 }
 
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 .LAES_Te:
 ___

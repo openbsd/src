@@ -1075,7 +1075,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 K_XX_XX:
 .long	0x5a827999,0x5a827999,0x5a827999,0x5a827999	# K_00_19

@@ -599,7 +599,7 @@ sub S0222 { my $i=shift; $i=@SBOX[$i]; $i=($i<<1|$i>>7)&0xff; $i=$i<<16|$i<<8|$i
 sub S3033 { my $i=shift; $i=@SBOX[$i]; $i=($i>>1|$i<<7)&0xff; $i=$i<<24|$i<<8|$i; sprintf("0x%08x",$i); }
 
 $code.=<<___;
-.rodata
+.section .rodata
 .align	64
 .LCamellia_SIGMA:
 .long	0x3bcc908b, 0xa09e667f, 0x4caa73b2, 0xb67ae858

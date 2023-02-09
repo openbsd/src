@@ -204,7 +204,7 @@ $code.=<<___;
 	ret
 .size	$func,.-$func
 
-.rodata
+.section .rodata
 .align	64
 .type	$table,\@object
 $table:
