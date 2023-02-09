@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.23 2023/02/09 09:16:26 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.24 2023/02/09 09:58:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,7 @@
 
 #include "bn_arch.h"
 #include "bn_local.h"
+#include "bn_internal.h"
 
 int bn_sqr(BIGNUM *r, const BIGNUM *a, int max, BN_CTX *ctx);
 
