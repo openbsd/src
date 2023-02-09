@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.62 2022/11/30 08:17:21 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.63 2023/02/09 22:50:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -595,7 +595,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 		    "no distribution point name", fn);
 		goto out;
 	}
-	if (dp->distpoint->type != 0) {
+	if (dp->distpoint->type != GEN_OTHERNAME) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "expected GEN_OTHERNAME, have %d", fn, dp->distpoint->type);
 		goto out;
