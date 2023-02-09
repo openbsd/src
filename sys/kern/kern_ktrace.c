@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.109 2022/12/05 23:18:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.110 2023/02/09 08:00:31 guenther Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -128,7 +128,6 @@ ktrinitheaderraw(struct ktr_header *kth, uint type, pid_t pid, pid_t tid)
 {
 	memset(kth, 0, sizeof(struct ktr_header));
 	kth->ktr_type = type;
-	nanotime(&kth->ktr_time);
 	kth->ktr_pid = pid;
 	kth->ktr_tid = tid;
 }
@@ -634,6 +633,8 @@ ktrwriteraw(struct proc *curp, struct vnode *vp, struct ucred *cred,
 	struct iovec aiov[3];
 	struct process *pr;
 	int error;
+
+	nanotime(&kth->ktr_time);
 
 	KERNEL_ASSERT_LOCKED();
 
