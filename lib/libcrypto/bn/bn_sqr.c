@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.22 2023/01/23 12:09:06 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.23 2023/02/09 09:16:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,7 +180,9 @@ bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 #endif
 
 #ifndef HAVE_BN_SQR_WORDS
-#if defined(BN_LLONG) || defined(BN_UMULT_HIGH)
+/*
+ * bn_sqr_words() computes (r[i*2+1]:r[i*2]) = a[i] * a[i].
+ */
 void
 bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 {
@@ -190,49 +192,22 @@ bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n & ~3) {
-		sqr(r[0], r[1], a[0]);
-		sqr(r[2], r[3], a[1]);
-		sqr(r[4], r[5], a[2]);
-		sqr(r[6], r[7], a[3]);
+		bn_umul_hilo(a[0], a[0], &r[1], &r[0]);
+		bn_umul_hilo(a[1], a[1], &r[3], &r[2]);
+		bn_umul_hilo(a[2], a[2], &r[5], &r[4]);
+		bn_umul_hilo(a[3], a[3], &r[7], &r[6]);
 		a += 4;
 		r += 8;
 		n -= 4;
 	}
 #endif
 	while (n) {
-		sqr(r[0], r[1], a[0]);
+		bn_umul_hilo(a[0], a[0], &r[1], &r[0]);
 		a++;
 		r += 2;
 		n--;
 	}
 }
-#else /* !(defined(BN_LLONG) || defined(BN_UMULT_HIGH)) */
-void
-bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
-{
-	assert(n >= 0);
-	if (n <= 0)
-		return;
-
-#ifndef OPENSSL_SMALL_FOOTPRINT
-	while (n & ~3) {
-		sqr64(r[0], r[1], a[0]);
-		sqr64(r[2], r[3], a[1]);
-		sqr64(r[4], r[5], a[2]);
-		sqr64(r[6], r[7], a[3]);
-		a += 4;
-		r += 8;
-		n -= 4;
-	}
-#endif
-	while (n) {
-		sqr64(r[0], r[1], a[0]);
-		a++;
-		r += 2;
-		n--;
-	}
-}
-#endif
 #endif
 
 /* tmp must have 2*n words */

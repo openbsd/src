@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.7 2023/02/03 04:47:59 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.8 2023/02/09 09:16:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -342,13 +342,6 @@ struct bn_gencb_st {
 	(c)= Hw(t); \
 	}
 
-#define sqr(r0,r1,a) { \
-	BN_ULLONG t; \
-	t=(BN_ULLONG)(a)*(a); \
-	(r0)=Lw(t); \
-	(r1)=Hw(t); \
-	}
-
 #elif defined(BN_UMULT_LOHI)
 #define mul_add(r,a,w,c) {		\
 	BN_ULONG high,low,ret,tmp=(a);	\
@@ -369,11 +362,6 @@ struct bn_gencb_st {
 	(c) =  high;			\
 	(c) += (ret<low)?1:0;		\
 	(r) =  ret;			\
-	}
-
-#define sqr(r0,r1,a)	{		\
-	BN_ULONG tmp=(a);		\
-	BN_UMULT_LOHI(r0,r1,tmp,tmp);	\
 	}
 
 #elif defined(BN_UMULT_HIGH)
@@ -398,12 +386,6 @@ struct bn_gencb_st {
 	(c) =  high;			\
 	(c) += (ret<low)?1:0;		\
 	(r) =  ret;			\
-	}
-
-#define sqr(r0,r1,a)	{		\
-	BN_ULONG tmp=(a);		\
-	(r0) = tmp * tmp;		\
-	(r1) = BN_UMULT_HIGH(tmp,tmp);	\
 	}
 
 #else
