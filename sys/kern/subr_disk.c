@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.270 2022/11/11 18:53:29 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.271 2023/02/10 07:00:12 miod Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -1806,9 +1806,7 @@ disk_map(char *path, char *mappath, int size, int flags)
 
 	mdk = NULL;
 	TAILQ_FOREACH(dk, &disklist, dk_link) {
-		if (dk->dk_label &&
-		    !duid_iszero(dk->dk_label->d_uid) &&
-		    memcmp(dk->dk_label->d_uid, uid,
+		if (dk->dk_label && memcmp(dk->dk_label->d_uid, uid,
 		    sizeof(dk->dk_label->d_uid)) == 0) {
 			/* Fail if there are duplicate UIDs! */
 			if (mdk != NULL)
