@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.237 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.238 2023/02/10 14:39:18 visa Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -47,13 +47,14 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/selinfo.h>
 #include <sys/fcntl.h>
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/event.h>
+#include <sys/mutex.h>
 #include <sys/smr.h>
 
 #include <net/if.h>
@@ -78,8 +79,9 @@
 struct tun_softc {
 	struct arpcom		sc_ac;		/* ethernet common data */
 #define sc_if			sc_ac.ac_if
-	struct selinfo		sc_rsel;	/* read select */
-	struct selinfo		sc_wsel;	/* write select (not used) */
+	struct mutex		sc_mtx;
+	struct klist		sc_rklist;	/* knotes for read */
+	struct klist		sc_wklist;	/* knotes for write (unused) */
 	SMR_LIST_ENTRY(tun_softc)
 				sc_entry;	/* all tunnel interfaces */
 	int			sc_unit;
@@ -125,22 +127,28 @@ int	tun_init(struct tun_softc *);
 void	tun_start(struct ifnet *);
 int	filt_tunread(struct knote *, long);
 int	filt_tunwrite(struct knote *, long);
+int	filt_tunmodify(struct kevent *, struct knote *);
+int	filt_tunprocess(struct knote *, struct kevent *);
 void	filt_tunrdetach(struct knote *);
 void	filt_tunwdetach(struct knote *);
 void	tun_link_state(struct ifnet *, int);
 
 const struct filterops tunread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_tunrdetach,
 	.f_event	= filt_tunread,
+	.f_modify	= filt_tunmodify,
+	.f_process	= filt_tunprocess,
 };
 
 const struct filterops tunwrite_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_tunwdetach,
 	.f_event	= filt_tunwrite,
+	.f_modify	= filt_tunmodify,
+	.f_process	= filt_tunprocess,
 };
 
 SMR_LIST_HEAD(tun_list, tun_softc);
@@ -220,6 +228,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	ifp = &sc->sc_if;
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname),
 	    "%s%d", ifc->ifc_name, unit);
+	mtx_init(&sc->sc_mtx, IPL_NET);
+	klist_init_mutex(&sc->sc_rklist, &sc->sc_mtx);
+	klist_init_mutex(&sc->sc_wklist, &sc->sc_mtx);
 	ifp->if_softc = sc;
 
 	/* this is enough state for tun_dev_open to work with */
@@ -275,6 +286,8 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	return (0);
 
 exists:
+	klist_free(&sc->sc_rklist);
+	klist_free(&sc->sc_wklist);
 	free(sc, M_DEVBUF, sizeof(*sc));
 	return (EEXIST);
 }
@@ -284,7 +297,6 @@ tun_clone_destroy(struct ifnet *ifp)
 {
 	struct tun_softc	*sc = ifp->if_softc;
 	dev_t			 dev;
-	int			 s;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -314,10 +326,11 @@ tun_clone_destroy(struct ifnet *ifp)
 	/* wait for device entrypoints to finish */
 	refcnt_finalize(&sc->sc_refs, "tundtor");
 
-	s = splhigh();
-	klist_invalidate(&sc->sc_rsel.si_note);
-	klist_invalidate(&sc->sc_wsel.si_note);
-	splx(s);
+	klist_invalidate(&sc->sc_rklist);
+	klist_invalidate(&sc->sc_wklist);
+
+	klist_free(&sc->sc_rklist);
+	klist_free(&sc->sc_wklist);
 
 	if (ISSET(sc->sc_flags, TUN_LAYER2))
 		ether_ifdetach(ifp);
@@ -488,7 +501,6 @@ tun_dev_close(dev_t dev, struct proc *p)
 	ifq_purge(&ifp->if_snd);
 
 	CLR(sc->sc_flags, TUN_ASYNC);
-	selwakeup(&sc->sc_rsel);
 	sigio_free(&sc->sc_sigio);
 
 	if (!ISSET(sc->sc_flags, TUN_DEAD)) {
@@ -654,7 +666,8 @@ tun_wakeup(struct tun_softc *sc)
 	if (sc->sc_reading)
 		wakeup(&sc->sc_if.if_snd);
 
-	selwakeup(&sc->sc_rsel);
+	knote(&sc->sc_rklist, 0);
+
 	if (sc->sc_flags & TUN_ASYNC)
 		pgsigio(&sc->sc_sigio, SIGIO, 0);
 }
@@ -960,7 +973,6 @@ tun_dev_kqfilter(dev_t dev, struct knote *kn)
 	struct ifnet		*ifp;
 	struct klist		*klist;
 	int			 error = 0;
-	int			 s;
 
 	sc = tun_get(dev);
 	if (sc == NULL)
@@ -970,11 +982,11 @@ tun_dev_kqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_note;
+		klist = &sc->sc_rklist;
 		kn->kn_fop = &tunread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wsel.si_note;
+		klist = &sc->sc_wklist;
 		kn->kn_fop = &tunwrite_filtops;
 		break;
 	default:
@@ -982,11 +994,9 @@ tun_dev_kqfilter(dev_t dev, struct knote *kn)
 		goto put;
 	}
 
-	kn->kn_hook = (caddr_t)sc; /* XXX give the sc_ref to the hook? */
+	kn->kn_hook = sc;
 
-	s = splhigh();
-	klist_insert_locked(klist, kn);
-	splx(s);
+	klist_insert(klist, kn);
 
 put:
 	tun_put(sc);
@@ -996,12 +1006,9 @@ put:
 void
 filt_tunrdetach(struct knote *kn)
 {
-	int			 s;
 	struct tun_softc	*sc = kn->kn_hook;
 
-	s = splhigh();
-	klist_remove_locked(&sc->sc_rsel.si_note, kn);
-	splx(s);
+	klist_remove(&sc->sc_rklist, kn);
 }
 
 int
@@ -1009,6 +1016,8 @@ filt_tunread(struct knote *kn, long hint)
 {
 	struct tun_softc	*sc = kn->kn_hook;
 	struct ifnet		*ifp = &sc->sc_if;
+
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
 	kn->kn_data = ifq_hdatalen(&ifp->if_snd);
 
@@ -1018,12 +1027,9 @@ filt_tunread(struct knote *kn, long hint)
 void
 filt_tunwdetach(struct knote *kn)
 {
-	int			 s;
 	struct tun_softc	*sc = kn->kn_hook;
 
-	s = splhigh();
-	klist_remove_locked(&sc->sc_wsel.si_note, kn);
-	splx(s);
+	klist_remove(&sc->sc_wklist, kn);
 }
 
 int
@@ -1032,9 +1038,37 @@ filt_tunwrite(struct knote *kn, long hint)
 	struct tun_softc	*sc = kn->kn_hook;
 	struct ifnet		*ifp = &sc->sc_if;
 
+	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
+
 	kn->kn_data = ifp->if_hdrlen + ifp->if_hardmtu;
 
 	return (1);
+}
+
+int
+filt_tunmodify(struct kevent *kev, struct knote *kn)
+{
+	struct tun_softc	*sc = kn->kn_hook;
+	int			 active;
+
+	mtx_enter(&sc->sc_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&sc->sc_mtx);
+
+	return (active);
+}
+
+int
+filt_tunprocess(struct knote *kn, struct kevent *kev)
+{
+	struct tun_softc	*sc = kn->kn_hook;
+	int			 active;
+
+	mtx_enter(&sc->sc_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&sc->sc_mtx);
+
+	return (active);
 }
 
 void
