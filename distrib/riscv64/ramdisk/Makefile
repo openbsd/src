@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2022/02/04 18:12:47 krw Exp $
+#	$OpenBSD: Makefile,v 1.6 2023/02/10 15:54:33 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		67584
@@ -25,7 +25,7 @@ ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:c" `cat vnd` >/dev/null
-	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
+	echo '/ *' | disklabel -wAT- `cat vnd`
 	newfs -t msdos ${NEWFS_ARGS_msdos} /dev/r`cat vnd`i
 	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
 	mkdir -p ${MOUNT_POINT}/efi/boot
