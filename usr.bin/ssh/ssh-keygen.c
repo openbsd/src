@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.461 2022/12/04 23:50:49 cheloha Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.462 2023/02/10 04:56:30 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1456,13 +1456,23 @@ do_change_passphrase(struct passwd *pw)
  */
 static int
 do_print_resource_record(struct passwd *pw, char *fname, char *hname,
-    int print_generic)
+    int print_generic, char * const *opts, size_t nopts)
 {
 	struct sshkey *public;
 	char *comment = NULL;
 	struct stat st;
-	int r;
+	int r, hash = -1;
+	size_t i;
 
+	for (i = 0; i < nopts; i++) {
+		if (strncasecmp(opts[i], "hashalg=", 8) == 0) {
+			if ((hash = ssh_digest_alg_by_name(opts[i] + 8)) == -1)
+				fatal("Unsupported hash algorithm");
+		} else {
+			error("Invalid option \"%s\"", opts[i]);
+			return SSH_ERR_INVALID_ARGUMENT;
+		}
+	}
 	if (fname == NULL)
 		fatal_f("no filename");
 	if (stat(fname, &st) == -1) {
@@ -1472,7 +1482,7 @@ do_print_resource_record(struct passwd *pw, char *fname, char *hname,
 	}
 	if ((r = sshkey_load_public(fname, &public, &comment)) != 0)
 		fatal_r(r, "Failed to read v2 public key from \"%s\"", fname);
-	export_dns_rr(hname, public, stdout, print_generic);
+	export_dns_rr(hname, public, stdout, print_generic, hash);
 	sshkey_free(public);
 	free(comment);
 	return 1;
@@ -3699,7 +3709,7 @@ main(int argc, char **argv)
 
 		if (have_identity) {
 			n = do_print_resource_record(pw, identity_file,
-			    rr_hostname, print_generic);
+			    rr_hostname, print_generic, opts, nopts);
 			if (n == 0)
 				fatal("%s: %s", identity_file, strerror(errno));
 			exit(0);
@@ -3707,19 +3717,19 @@ main(int argc, char **argv)
 
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_RSA_KEY_FILE, rr_hostname,
-			    print_generic);
+			    print_generic, opts, nopts);
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_DSA_KEY_FILE, rr_hostname,
-			    print_generic);
+			    print_generic, opts, nopts);
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_ECDSA_KEY_FILE, rr_hostname,
-			    print_generic);
+			    print_generic, opts, nopts);
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_ED25519_KEY_FILE, rr_hostname,
-			    print_generic);
+			    print_generic, opts, nopts);
 			n += do_print_resource_record(pw,
 			    _PATH_HOST_XMSS_KEY_FILE, rr_hostname,
-			    print_generic);
+			    print_generic, opts, nopts);
 			if (n == 0)
 				fatal("no keys found.");
 			exit(0);
