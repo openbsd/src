@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.135 2023/02/02 09:35:07 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.136 2023/02/10 14:34:17 visa Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 	}
 	if (sb->sb_flags & SB_ASYNC)
 		pgsigio(&so->so_sigio, SIGIO, 0);
-	KNOTE(&sb->sb_klist, 0);
+	knote_locked(&sb->sb_klist, 0);
 }
 
 /*

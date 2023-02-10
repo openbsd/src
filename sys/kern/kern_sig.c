@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.304 2023/01/31 15:18:56 deraadt Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.305 2023/02/10 14:34:17 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -985,7 +985,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	}
 
 	if (type != SPROPAGATED)
-		KNOTE(&pr->ps_klist, NOTE_SIGNAL | signum);
+		knote_locked(&pr->ps_klist, NOTE_SIGNAL | signum);
 
 	prop = sigprop[signum];
 

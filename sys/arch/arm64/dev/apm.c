@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.21 2023/01/22 13:14:21 kettenis Exp $	*/
+/*	$OpenBSD: apm.c,v 1.22 2023/02/10 14:34:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -345,7 +345,7 @@ apm_record_event(u_int event)
 		return 1;
 
 	apm_evindex++;
-	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(event, apm_evindex));
+	knote_locked(&sc->sc_note, APM_EVENT_COMPOSE(event, apm_evindex));
 	return 0;
 }
 

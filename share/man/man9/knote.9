@@ -1,4 +1,4 @@
-.\"	$OpenBSD: knote.9,v 1.9 2014/01/21 03:15:46 schwarze Exp $
+.\"	$OpenBSD: knote.9,v 1.10 2023/02/10 14:34:16 visa Exp $
 .\"	$NetBSD: knote.9,v 1.9 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -28,23 +28,26 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 21 2014 $
+.Dd $Mdocdate: February 10 2023 $
 .Dt KNOTE 9
 .Os
 .Sh NAME
 .Nm knote ,
-.Nm KNOTE
+.Nm knote_locked
 .Nd raise kernel event
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/event.h
 .Ft void
 .Fn knote "struct klist *list" "long hint"
-.Fn KNOTE "struct klist *list" "long hint"
+.Ft void
+.Fn knote_locked "struct klist *list" "long hint"
 .Sh DESCRIPTION
 The
 .Fn knote
-function provides a hook into the kqueue kernel event notification
+and
+.Fn knote_locked
+functions provide a hook into the kqueue kernel event notification
 mechanism to allow sections of the kernel to raise a kernel event
 in the form of a
 .Sq knote ,
@@ -60,7 +63,7 @@ of knotes, along with a
 .Fa hint
 (which is passed to the appropriate filter routine).
 .Fn knote
-then walks the
+then locks and walks the
 .Fa list
 making calls to the filter routine for each knote.
 As each knote contains a reference to the data structure that it is
@@ -80,17 +83,19 @@ If the knote is already on the active list, no action is taken, but the
 call to the filter occurs in order to provide an opportunity for the
 filter to record the activity.
 .Pp
+.Fn knote_locked
+is like
 .Fn knote
+but assumes that the
+.Fa list
+is already locked.
+.Pp
+.Fn knote
+and
+.Fn knote_locked
 must not be called from interrupt contexts running at an interrupt
 priority level higher than
 .Fn splsched .
-.Pp
-.Fn KNOTE
-is a macro that calls
-.Fn knote list hint
-if
-.Fa list
-is not empty.
 .\" .Sh ERRORS
 .Sh SEE ALSO
 .Xr kqueue 2
@@ -98,8 +103,6 @@ is not empty.
 .Sh HISTORY
 The
 .Fn knote
-and
-.Fn KNOTE
 functions first appeared in
 .Fx 4.1 ,
 and then in

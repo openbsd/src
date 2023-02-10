@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.167 2022/08/12 14:30:53 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.168 2023/02/10 14:34:17 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ extern int		vttoif_tab[];
 #define	VATTR_NULL(vap)	vattr_null(vap)
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
-	KNOTE(&vp->v_selectinfo.si_note, (b))
+	knote_locked(&vp->v_selectinfo.si_note, (b))
 
 /*
  * Global vnode data.

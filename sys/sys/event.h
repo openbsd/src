@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.68 2023/02/02 09:35:07 mvs Exp $	*/
+/*	$OpenBSD: event.h,v 1.69 2023/02/10 14:34:17 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -152,12 +152,6 @@ struct klist {
  */
 #define NOTE_SUBMIT	0x01000000		/* initial knote submission */
 
-#define KNOTE(list, hint)	do { \
-					struct klist *__list = (list); \
-					if (!klist_empty(__list)) \
-						knote(__list, hint); \
-				} while (0)
-
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 
 /*
@@ -291,6 +285,7 @@ extern void	kqpoll_init(unsigned int);
 extern void	kqpoll_done(unsigned int);
 extern void	kqpoll_exit(void);
 extern void	knote(struct klist *list, long hint);
+extern void	knote_locked(struct klist *list, long hint);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct process *);
 extern void	knote_assign(const struct kevent *, struct knote *);

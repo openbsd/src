@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.211 2023/01/27 21:01:59 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.212 2023/02/10 14:34:17 visa Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -326,7 +326,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	    : (flags & SOCK_NONBLOCK ? FNONBLOCK : 0);
 
 	/* connection has been removed from the listen queue */
-	KNOTE(&head->so_rcv.sb_klist, 0);
+	knote_locked(&head->so_rcv.sb_klist, 0);
 
 	if (persocket)
 		sounlock(head);

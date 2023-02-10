@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.205 2022/11/08 17:53:01 kn Exp $	*/
+/*	$OpenBSD: audio.c,v 1.206 2023/02/10 14:34:16 visa Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -285,7 +285,7 @@ audio_mixer_wakeup(struct audio_softc *sc)
 		wakeup(&sc->mix_blocking);
 		sc->mix_blocking = 0;
 	}
-	KNOTE(&sc->mix_klist, 0);
+	knote_locked(&sc->mix_klist, 0);
 }
 
 void
@@ -297,7 +297,7 @@ audio_buf_wakeup(struct audio_buf *buf)
 		wakeup(&buf->blocking);
 		buf->blocking = 0;
 	}
-	KNOTE(&buf->klist, 0);
+	knote_locked(&buf->klist, 0);
 }
 
 int

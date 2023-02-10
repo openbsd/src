@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.125 2023/01/30 03:31:59 visa Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.126 2023/02/10 14:34:17 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -903,9 +903,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				wakeup((caddr_t)pxi->pxi_dev);
 				pxi->pxi_dev->pxd_waiting = 0;
 			}
-			mtx_enter(&pxi->pxi_dev->pxd_mtx);
-			KNOTE(&pxi->pxi_dev->pxd_rklist, 0);
-			mtx_leave(&pxi->pxi_dev->pxd_mtx);
+			knote(&pxi->pxi_dev->pxd_rklist, 0);
 		}
 	}
 
@@ -1519,8 +1517,6 @@ bad:
 
 	if (!mq_empty(&sc->sc_mq)) {
 		wakeup(sc);
-		mtx_enter(&sc->sc_mtx);
-		KNOTE(&sc->sc_rklist, 0);
-		mtx_leave(&sc->sc_mtx);
+		knote(&sc->sc_rklist, 0);
 	}
 }

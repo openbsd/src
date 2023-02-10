@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.194 2022/11/09 22:25:36 claudio Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.195 2023/02/10 14:34:17 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1590,9 +1590,7 @@ kqueue_task(void *arg)
 {
 	struct kqueue *kq = arg;
 
-	mtx_enter(&kqueue_klist_lock);
-	KNOTE(&kq->kq_klist, 0);
-	mtx_leave(&kqueue_klist_lock);
+	knote(&kq->kq_klist, 0);
 }
 
 void
@@ -1744,6 +1742,16 @@ knote_activate(struct knote *kn)
 void
 knote(struct klist *list, long hint)
 {
+	int ls;
+
+	ls = klist_lock(list);
+	knote_locked(list, hint);
+	klist_unlock(list, ls);
+}
+
+void
+knote_locked(struct klist *list, long hint)
+{
 	struct knote *kn, *kn0;
 	struct kqueue *kq;
 
@@ -1853,7 +1861,7 @@ knote_processexit(struct process *pr)
 {
 	KERNEL_ASSERT_LOCKED();
 
-	KNOTE(&pr->ps_klist, NOTE_EXIT);
+	knote_locked(&pr->ps_klist, NOTE_EXIT);
 
 	/* remove other knotes hanging off the process */
 	klist_invalidate(&pr->ps_klist);

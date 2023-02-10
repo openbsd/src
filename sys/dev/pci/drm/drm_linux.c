@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.95 2023/01/01 01:34:34 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.96 2023/02/10 14:34:16 visa Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1541,13 +1541,13 @@ backlight_disable(struct backlight_device *bd)
 void
 drm_sysfs_hotplug_event(struct drm_device *dev)
 {
-	KNOTE(&dev->note, NOTE_CHANGE);
+	knote_locked(&dev->note, NOTE_CHANGE);
 }
 
 void
 drm_sysfs_connector_hotplug_event(struct drm_connector *connector)
 {
-	KNOTE(&connector->dev->note, NOTE_CHANGE);
+	knote_locked(&connector->dev->note, NOTE_CHANGE);
 }
 
 void

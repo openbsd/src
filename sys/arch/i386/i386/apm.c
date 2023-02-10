@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.129 2023/01/30 10:49:04 jsg Exp $	*/
+/*	$OpenBSD: apm.c,v 1.130 2023/02/10 14:34:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -311,7 +311,7 @@ apm_record_event(struct apm_softc *sc, u_int type)
 	}
 
 	apm_evindex++;
-	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(type, apm_evindex));
+	knote_locked(&sc->sc_note, APM_EVENT_COMPOSE(type, apm_evindex));
 	return (0);
 }
 

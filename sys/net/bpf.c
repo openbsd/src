@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.219 2022/07/09 12:48:21 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.220 2023/02/10 14:34:17 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ bpf_wakeup(struct bpf_d *d)
 	if (d->bd_nreaders)
 		wakeup(d);
 
-	KNOTE(&d->bd_klist, 0);
+	knote_locked(&d->bd_klist, 0);
 
 	/*
 	 * As long as pgsigio() needs to be protected
