@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.154 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.155 2023/02/11 08:50:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -27,6 +27,13 @@
 #include "bgpd.h"
 #include "rde.h"
 #include "log.h"
+
+enum up_state {
+	UP_OK,
+	UP_ERR_LIMIT,
+	UP_FILTERED,
+	UP_EXCLUDED,
+};
 
 static struct community	comm_no_advertise = {
 	.flags = COMMUNITY_TYPE_BASIC,
@@ -133,14 +140,76 @@ up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state)
 	return 0;
 }
 
+/*
+ * Process a single prefix by passing it through the various filter stages
+ * and if not filtered out update the Adj-RIB-Out. Returns:
+ * - UP_OK if prefix was added
+ * - UP_ERR_LIMIT if the peer outbound prefix limit was reached
+ * - UP_FILTERED if prefix was filtered out
+ * - UP_EXCLUDED if prefix was excluded because of up_test_update()
+ */
+static enum up_state
+up_process_prefix(struct filter_head *rules, struct rde_peer *peer,
+    struct prefix *new, struct prefix *p, struct bgpd_addr *addr, uint8_t plen)
+{
+	struct filterstate state;
+	int excluded = 0;
+
+	/*
+	 * up_test_update() needs to run before the output filters
+	 * else the well known communities won't work properly.
+	 * The output filters would not be able to add well known
+	 * communities.
+	 */
+	if (!up_test_update(peer, new))
+		excluded = 1;
+
+	rde_filterstate_prep(&state, new);
+	if (rde_filter(rules, peer, prefix_peer(new), addr, plen, &state) ==
+	    ACTION_DENY) {
+		rde_filterstate_clean(&state);
+		return UP_FILTERED;
+	}
+
+	/* Open Policy Check: acts like an output filter */
+	if (up_enforce_open_policy(peer, &state)) {
+		rde_filterstate_clean(&state);
+		return UP_FILTERED;
+	}
+
+	if (excluded) {
+		rde_filterstate_clean(&state);
+		return UP_EXCLUDED;
+	}
+
+	/* from here on we know this is an update */
+	if (p == (void *)-1)
+		p = prefix_adjout_get(peer, new->path_id_tx, addr, plen);
+
+	up_prep_adjout(peer, &state, addr->aid);
+	prefix_adjout_update(p, peer, &state, addr, plen, new->path_id_tx);
+	rde_filterstate_clean(&state);
+
+	/* max prefix checker outbound */
+	if (peer->conf.max_out_prefix &&
+	    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
+		log_peer_warnx(&peer->conf,
+		    "outbound prefix limit reached (>%u/%u)",
+		    peer->stats.prefix_out_cnt, peer->conf.max_out_prefix);
+		rde_update_err(peer, ERR_CEASE,
+		    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+		return UP_ERR_LIMIT;
+	}
+
+	return UP_OK;
+}
+
 void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct filterstate	state;
 	struct bgpd_addr	addr;
 	struct prefix		*p;
-	int			need_withdraw;
 	uint8_t			prefixlen;
 
 	if (new == NULL) {
@@ -154,77 +223,24 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	p = prefix_adjout_lookup(peer, &addr, prefixlen);
 
 	while (new != NULL) {
-		need_withdraw = 0;
-		/*
-		 * up_test_update() needs to run before the output filters
-		 * else the well known communities won't work properly.
-		 * The output filters would not be able to add well known
-		 * communities.
-		 */
-		if (!up_test_update(peer, new))
-			need_withdraw = 1;
-
-		/*
-		 * if 'rde evaluate all' is set for this peer then
-		 * delay the the withdraw because of up_test_update().
-		 * The filters may actually skip this prefix and so this
-		 * decision needs to be delayed.
-		 * For the default mode we can just give up here and
-		 * skip the filters.
-		 */
-		if (need_withdraw &&
-		    !(peer->flags & PEERFLAG_EVALUATE_ALL))
-			break;
-
-		rde_filterstate_prep(&state, new);
-		if (rde_filter(rules, peer, prefix_peer(new), &addr,
-		    prefixlen, &state) == ACTION_DENY) {
-			rde_filterstate_clean(&state);
+		switch (up_process_prefix(rules, peer, new, p,
+		    &addr, prefixlen)) {
+		case UP_OK:
+		case UP_ERR_LIMIT:
+			return;
+		case UP_FILTERED:
 			if (peer->flags & PEERFLAG_EVALUATE_ALL) {
 				new = TAILQ_NEXT(new, entry.list.rib);
 				if (new != NULL && prefix_eligible(new))
 					continue;
 			}
-			break;
+			goto done;
+		case UP_EXCLUDED:
+			goto done;
 		}
-
-		if (up_enforce_open_policy(peer, &state)) {
-			rde_filterstate_clean(&state);
-			if (peer->flags & PEERFLAG_EVALUATE_ALL) {
-				new = TAILQ_NEXT(new, entry.list.rib);
-				if (new != NULL && prefix_eligible(new))
-					continue;
-			}
-			break;
-		}
-
-		/* check if this was actually a withdraw */
-		if (need_withdraw) {
-			rde_filterstate_clean(&state);
-			break;
-		}
-
-		/* from here on we know this is an update */
-
-		up_prep_adjout(peer, &state, addr.aid);
-		prefix_adjout_update(p, peer, &state, &addr,
-		    new->pt->prefixlen, new->path_id_tx);
-		rde_filterstate_clean(&state);
-
-		/* max prefix checker outbound */
-		if (peer->conf.max_out_prefix &&
-		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
-			log_peer_warnx(&peer->conf,
-			    "outbound prefix limit reached (>%u/%u)",
-			    peer->stats.prefix_out_cnt,
-			    peer->conf.max_out_prefix);
-			rde_update_err(peer, ERR_CEASE,
-			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
-		}
-
-		return;
 	}
 
+done:
 	/* withdraw prefix */
 	if (p != NULL)
 		prefix_adjout_withdraw(p);
@@ -241,7 +257,6 @@ void
 up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *new, struct prefix *old)
 {
-	struct filterstate	state;
 	struct bgpd_addr	addr;
 	struct prefix		*head, *p;
 	uint8_t			prefixlen;
@@ -309,48 +324,18 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 			}
 		}
 
-		/*
-		 * up_test_update() needs to run before the output filters
-		 * else the well known communities won't work properly.
-		 * The output filters would not be able to add well known
-		 * communities.
-		 */
-		if (!up_test_update(peer, new))
-			continue;
-
-		rde_filterstate_prep(&state, new);
-		if (rde_filter(rules, peer, prefix_peer(new), &addr,
-		    prefixlen, &state) == ACTION_DENY) {
-			rde_filterstate_clean(&state);
-			continue;
-		}
-
-		if (up_enforce_open_policy(peer, &state)) {
-			rde_filterstate_clean(&state);
-			continue;
-		}
-
-		/* from here on we know this is an update */
-		maxpaths++;
-		extrapaths += extra;
-
-		p = prefix_adjout_get(peer, new->path_id_tx, &addr,
-		    new->pt->prefixlen);
-
-		up_prep_adjout(peer, &state, addr.aid);
-		prefix_adjout_update(p, peer, &state, &addr,
-		    new->pt->prefixlen, new->path_id_tx);
-		rde_filterstate_clean(&state);
-
-		/* max prefix checker outbound */
-		if (peer->conf.max_out_prefix &&
-		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
-			log_peer_warnx(&peer->conf,
-			    "outbound prefix limit reached (>%u/%u)",
-			    peer->stats.prefix_out_cnt,
-			    peer->conf.max_out_prefix);
-			rde_update_err(peer, ERR_CEASE,
-			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+		switch (up_process_prefix(rules, peer, new, (void *)-1,
+		    &addr, prefixlen)) {
+		case UP_OK:
+			maxpaths++;
+			extrapaths += extra;
+			break;
+		case UP_FILTERED:
+		case UP_EXCLUDED:
+			break;
+		case UP_ERR_LIMIT:
+			/* just give up */
+			return;
 		}
 	}
 
@@ -369,7 +354,6 @@ void
 up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
     struct prefix *best, struct prefix *new, struct prefix *old)
 {
-	struct filterstate	state;
 	struct bgpd_addr	addr;
 	struct prefix		*p, *next, *head = NULL;
 	uint8_t			prefixlen;
@@ -417,44 +401,15 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 		if (!prefix_eligible(new))
 			break;
 
-		/*
-		 * up_test_update() needs to run before the output filters
-		 * else the well known communities won't work properly.
-		 * The output filters would not be able to add well known
-		 * communities.
-		 */
-		if (!up_test_update(peer, new))
-			continue;
-
-		rde_filterstate_prep(&state, new);
-		if (rde_filter(rules, peer, prefix_peer(new), &addr,
-		    prefixlen, &state) == ACTION_DENY) {
-			rde_filterstate_clean(&state);
-			continue;
-		}
-
-		if (up_enforce_open_policy(peer, &state)) {
-			rde_filterstate_clean(&state);
-			continue;
-		}
-
-		/* from here on we know this is an update */
-		p = prefix_adjout_get(peer, new->path_id_tx, &addr, prefixlen);
-
-		up_prep_adjout(peer, &state, addr.aid);
-		prefix_adjout_update(p, peer, &state, &addr,
-		    prefixlen, new->path_id_tx);
-		rde_filterstate_clean(&state);
-
-		/* max prefix checker outbound */
-		if (peer->conf.max_out_prefix &&
-		    peer->stats.prefix_out_cnt > peer->conf.max_out_prefix) {
-			log_peer_warnx(&peer->conf,
-			    "outbound prefix limit reached (>%u/%u)",
-			    peer->stats.prefix_out_cnt,
-			    peer->conf.max_out_prefix);
-			rde_update_err(peer, ERR_CEASE,
-			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
+		switch (up_process_prefix(rules, peer, new, (void *)-1,
+		    &addr, prefixlen)) {
+		case UP_OK:
+		case UP_FILTERED:
+		case UP_EXCLUDED:
+			break;
+		case UP_ERR_LIMIT:
+			/* just give up */
+			return;
 		}
 	}
 
