@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_destroy.3,v 1.6 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_destroy.3,v 1.7 2023/02/11 21:13:56 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_destroy.3,v 1.9 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: February 11 2023 $
 .Dt SEM_DESTROY 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ After a successful call to
 .Fn sem_destroy ,
 .Fa sem
 is unusable until re-initialized by another call to
-.Fn sem_init .
+.Xr sem_init 3 .
 .Sh RETURN VALUES
 .Rv -std sem_destroy
 .Sh ERRORS

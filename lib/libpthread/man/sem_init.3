@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_init.3,v 1.7 2021/04/06 19:59:32 kn Exp $
+.\" $OpenBSD: sem_init.3,v 1.8 2023/02/11 21:13:56 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_init.3,v 1.11 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: April 6 2021 $
+.Dd $Mdocdate: February 11 2023 $
 .Dt SEM_INIT 3
 .Os
 .Sh NAME
@@ -54,21 +54,21 @@ Following a successful call to
 .Fn sem_init ,
 .Fa sem
 can be used as an argument in subsequent calls to
-.Fa sem_wait ,
-.Fa sem_trywait ,
-.Fa sem_post ,
+.Xr sem_wait 3 ,
+.Xr sem_trywait 3 ,
+.Xr sem_post 3 ,
 and
-.Fa sem_destroy .
+.Xr sem_destroy 3 .
 .Fa sem
 is no longer valid after a successful call to
-.Fa sem_destroy .
+.Xr sem_destroy 3 .
 .Sh RETURN VALUES
 .Rv -std sem_init
 .Sh ERRORS
 It is an error to call
-.Fn sem_destroy
+.Xr sem_destroy 3
 on a named semaphore created by
-.Fn sem_open .
+.Xr sem_open 3 .
 .Pp
 .Fn sem_init
 will fail if:

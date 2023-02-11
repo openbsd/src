@@ -1,4 +1,4 @@
-.\" $OpenBSD: sem_post.3,v 1.5 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: sem_post.3,v 1.6 2023/02/11 21:13:56 jmc Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libc_r/man/sem_post.3,v 1.10 2001/10/01 16:09:09 ru Exp $
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: February 11 2023 $
 .Dt SEM_POST 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ If there are threads blocked on the semaphore when
 .Fn sem_post
 is called, then the highest priority thread that has been blocked the longest on
 the semaphore will be allowed to return from
-.Fn sem_wait .
+.Xr sem_wait 3 .
 .Pp
 .Fn sem_post
 is signal-reentrant and may be called within signal handlers.
