@@ -25,7 +25,6 @@ __get_tcb
 __semctl
 __set_tcb
 __stack_smash_handler
-__syscall
 __tfork_thread
 __threxit
 __thrsigdivert
@@ -38,7 +37,6 @@ _thread_sys___getcwd
 _thread_sys___realpath
 _thread_sys___semctl
 _thread_sys___set_tcb
-_thread_sys___syscall
 _thread_sys___threxit
 _thread_sys___thrsigdivert
 _thread_sys___thrsleep

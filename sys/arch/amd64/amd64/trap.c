@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.96 2023/01/20 16:01:04 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.97 2023/02/11 23:07:26 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -574,7 +574,6 @@ syscall(struct trapframe *frame)
 
 	switch (code) {
 	case SYS_syscall:
-	case SYS___syscall:
 		/*
 		 * Code is first argument, followed by actual args.
 		 */

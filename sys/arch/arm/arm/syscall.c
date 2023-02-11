@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.25 2023/01/16 05:32:04 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.26 2023/02/11 23:07:26 deraadt Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -121,12 +121,6 @@ swi_handler(trapframe_t *frame)
 		indirect = code;
 		code = *ap++;
 		nap--;
-		break;
-        case SYS___syscall:
-		indirect = code;
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
 		break;
 	}
 

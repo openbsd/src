@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.27 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.28 2023/02/11 23:07:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,9 +76,6 @@ mi_syscall(struct proc *p, register_t code, int indirect,
 		switch (indirect) {
 		case SYS_syscall:
 			indirect = KTRC_CODE_SYSCALL;
-			break;
-		case SYS___syscall:
-			indirect = KTRC_CODE__SYSCALL;
 			break;
 		default:
 			indirect = 0;

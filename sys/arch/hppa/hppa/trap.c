@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.160 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.161 2023/02/11 23:07:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -787,19 +787,6 @@ syscall(struct trapframe *frame)
 		args[1] = frame->tf_arg2;
 		args[2] = frame->tf_arg3;
 		argoff = 3;
-		break;
-	case SYS___syscall:
-		/*
-		 * this works, because quads get magically swapped
-		 * due to the args being laid backwards on the stack
-		 * and then copied in words
-		 */
-		indirect = code;
-		code = frame->tf_arg0;
-		args[0] = frame->tf_arg2;
-		args[1] = frame->tf_arg3;
-		argoff = 2;
-		retq = 1;
 		break;
 	default:
 		args[0] = frame->tf_arg0;

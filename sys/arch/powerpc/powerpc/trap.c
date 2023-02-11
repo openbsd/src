@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.130 2023/01/31 01:27:58 gkoehler Exp $	*/
+/*	$OpenBSD: trap.c,v 1.131 2023/02/11 23:07:27 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -369,16 +369,6 @@ trap(struct trapframe *frame)
 			 * code is first argument,
 			 * followed by actual args.
 			 */
-			indirect = code;
-			code = *params++;
-			break;
-		case SYS___syscall:
-			/*
-			 * Like syscall, but code is a quad,
-			 * so as to maintain quad alignment
-			 * for the rest of the args.
-			 */
-			params++;
 			indirect = code;
 			code = *params++;
 			break;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.2,v 1.14 2022/08/02 17:37:18 deraadt Exp $
+.\"	$OpenBSD: syscall.2,v 1.15 2023/02/11 23:07:28 deraadt Exp $
 .\"	$NetBSD: syscall.2,v 1.4 1995/02/27 12:38:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,19 +30,17 @@
 .\"
 .\"     @(#)syscall.2	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: August 2 2022 $
+.Dd $Mdocdate: February 11 2023 $
 .Dt SYSCALL 2
 .Os
 .Sh NAME
-.Nm syscall ,
-.Nm __syscall
+.Nm syscall
 .Nd indirect system call
 .Sh SYNOPSIS
 .In sys/syscall.h
 .In unistd.h
 .Ft int
 .Fn syscall "int number" "..."
-.Fn __syscall "quad_t number" "..."
 .Sh DESCRIPTION
 .Fn syscall
 performs the system call whose assembly language
@@ -52,19 +50,6 @@ with the specified arguments.
 Symbolic constants for system calls can be found in the header file
 .In sys/syscall.h .
 .Pp
-Since different system calls have different return types, a
-prototype of
-.Nm __syscall
-specifying the correct return type should be declared locally.
-This is especially important for system calls returning
-larger-than-int results.
-.Pp
-The
-.Nm __syscall
-form should be used when one or more of the parameters is a
-64-bit argument to ensure that argument alignment is correct.
-This system call is useful for testing new system calls that
-do not have entries in the C library.
 .Sh RETURN VALUES
 The return values are defined by the system call being invoked.
 In general, for system calls returning

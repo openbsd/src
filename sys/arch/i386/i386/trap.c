@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.159 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.160 2023/02/11 23:07:27 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -555,15 +555,6 @@ syscall(struct trapframe *frame)
 		indirect = code;
 		copyin(params, &code, sizeof(int));
 		params += sizeof(int);
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		indirect = code;
-		copyin(params + _QUAD_LOWWORD * sizeof(int), &code, sizeof(int));
-		params += sizeof(quad_t);
 		break;
 	default:
 		break;

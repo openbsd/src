@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2023/02/11 23:07:27 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -535,19 +535,6 @@ syscall(struct proc *p, struct trapframe *tf)
 		indirect = code;
 	        code = tf->tf_r4;
 		argoff = 1;
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		indirect = code;
-#if _BYTE_ORDER == BIG_ENDIAN
-		code = tf->tf_r5;
-#else
-		code = tf->tf_r4;
-#endif
-		argoff = 2;
 		break;
 	default:
 		argoff = 0;

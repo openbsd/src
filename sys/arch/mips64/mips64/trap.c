@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.165 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.166 2023/02/11 23:07:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -426,12 +426,8 @@ fault_common_no_miss:
 		code = locr0->v0;
 		switch (code) {
 		case SYS_syscall:
-		case SYS___syscall:
 			/*
 			 * Code is first argument, followed by actual args.
-			 * __syscall provides the code as a quad to maintain
-			 * proper alignment of 64-bit arguments on 32-bit
-			 * platforms, which doesn't change anything here.
 			 */
 			indirect = code;
 			code = locr0->a0;

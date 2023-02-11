@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.126 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.127 2023/02/11 23:07:27 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1167,9 +1167,7 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	/*
 	 * For 88k, all the arguments are passed in the registers (r2-r9),
 	 * and further arguments (if any) on stack.
-	 * For syscall (and __syscall), r2 (and r3) has the actual code.
-	 * __syscall  takes a quad syscall number, so that other
-	 * arguments are at their natural alignments.
+	 * For syscall, r2 has the actual code.
 	 */
 	ap = &tf->tf_r[2];
 	nap = 8; /* r2-r9 */
@@ -1179,12 +1177,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		indirect = code;
 		code = *ap++;
 		nap--;
-		break;
-	case SYS___syscall:
-		indirect = code;
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
 		break;
 	}
 
@@ -1288,9 +1280,7 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	/*
 	 * For 88k, all the arguments are passed in the registers (r2-r9),
 	 * and further arguments (if any) on stack.
-	 * For syscall (and __syscall), r2 (and r3) has the actual code.
-	 * __syscall  takes a quad syscall number, so that other
-	 * arguments are at their natural alignments.
+	 * For syscall, r2 has the actual code.
 	 */
 	ap = &tf->tf_r[2];
 	nap = 8;	/* r2-r9 */
@@ -1299,11 +1289,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	case SYS_syscall:
 		code = *ap++;
 		nap--;
-		break;
-	case SYS___syscall:
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
 		break;
 	}
 
