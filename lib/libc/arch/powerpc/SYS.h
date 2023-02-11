@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.26 2022/06/10 01:56:02 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.27 2023/02/11 06:10:39 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -77,7 +77,7 @@
 				beq+	.L_ret;				\
 				stw	%r0, R2_OFFSET_ERRNO(2);	\
 				li	%r3, -1;			\
-				li	%r4, -1; /* for __syscall(lseek) */ \
+				li	%r4, -1;	/* for lseek */	\
 			.L_ret:						\
 				RETGUARD_CHECK(x, %r11, %r12);		\
 				blr;					\

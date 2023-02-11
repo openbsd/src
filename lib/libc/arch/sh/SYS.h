@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.12 2022/09/02 06:19:04 miod Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.13 2023/02/11 06:10:39 guenther Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -122,7 +122,7 @@
 		mov	#TCB_OFFSET_ERRNO_NEG,r2;	\
 		sub	r2,r1;				\
 		mov.l	r0,@r1;				\
-		mov	#-1, r1;			\
+		mov	#-1, r1;	/* for lseek */	\
 		rts;					\
 		 mov	#-1, r0
 

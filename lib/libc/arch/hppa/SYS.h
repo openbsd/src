@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.22 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.23 2023/02/11 06:10:39 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -93,7 +93,7 @@ LEAF_ENTRY(__CONCAT(_thread_sys_,x))
 	stw	t1, TCB_OFFSET_ERRNO(r1)	!\
 	ldi	-1, ret0			!\
 	bv	r0(rp)				!\
-	 ldi	-1, ret1			!\
+	 ldi	-1, ret1	/* for lseek */	!\
 1:
 
 #define	PSEUDO(x,y)				!\
