@@ -737,7 +737,7 @@
 ./usr/lib/crtendS.o
 ./usr/lib/gcrt0.o
 ./usr/lib/libagentx.so.1.1
-./usr/lib/libc.so.96.5
+./usr/lib/libc.so.97.0
 ./usr/lib/libcbor.so.2.0
 ./usr/lib/libcrypto.so.50.1
 ./usr/lib/libcurses.so.14.0
@@ -2984,7 +2984,7 @@
 ./usr/share/relink/kernel.tgz
 ./usr/share/relink/usr
 ./usr/share/relink/usr/lib
-./usr/share/relink/usr/lib/libc.so.96.5.a
+./usr/share/relink/usr/lib/libc.so.97.0.a
 ./usr/share/relink/usr/lib/libcrypto.so.50.1.a
 ./usr/share/relink/usr/libexec
 ./usr/share/relink/usr/libexec/ld.so.a
