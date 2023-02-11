@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.309 2023/01/31 15:18:55 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.310 2023/02/11 21:11:37 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3982,6 +3982,7 @@ uvmspace_fork(struct process *pr)
 			    new_map, new_entry->start, new_entry->end);
 		}
 	}
+	new_map->flags |= old_map->flags & VM_MAP_SYSCALL_ONCE;
 
 	vm_map_unlock(old_map);
 	vm_map_unlock(new_map);
