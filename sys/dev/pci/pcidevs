@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2021 2023/02/07 07:10:43 kevlo Exp $
+$OpenBSD: pcidevs,v 1.2022 2023/02/12 10:39:16 mvs Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -227,6 +227,7 @@ vendor	ADMTEK		0x1317	ADMtek
 vendor	PE		0x1318	Packet Engines
 vendor	FORTEMEDIA	0x1319	Forte Media
 vendor	SIIG		0x131f	SIIG
+vendor	MICRON		0x1344	Micron Technology
 vendor	DTCTECH		0x134a	DTC Tech
 vendor	PCTEL		0x134d	PCTEL
 vendor	BRAINBOXES	0x135a	Brainboxes
@@ -7261,6 +7262,9 @@ product MENTOR PCI0661		0x0661	PCI-PCI
 /* Micrel products */
 product MICREL KSZ8841		0x8841	KSZ8841
 product MICREL KSZ8842		0x8842	KSZ8842
+
+/* Micron Technology products */
+product MICRON MTFDKBA512QFM	0x5413	NVMe
 
 /* Microsoft products */
 product MICROSOFT MN120		0x0001	MN-120
