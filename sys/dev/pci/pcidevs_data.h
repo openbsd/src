@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2021 2023/02/07 07:10:43 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2022 2023/02/12 10:39:16 mvs Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -26192,6 +26192,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "KSZ8842",
 	},
 	{
+	    PCI_VENDOR_MICRON, PCI_PRODUCT_MICRON_MTFDKBA512QFM,
+	    "NVMe",
+	},
+	{
 	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
 	    "MN-120",
 	},
@@ -35446,6 +35450,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SIIG,
 	    "SIIG",
+	},
+	{
+	    PCI_VENDOR_MICRON,
+	    "Micron Technology",
 	},
 	{
 	    PCI_VENDOR_DTCTECH,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2021 2023/02/07 07:10:43 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2022 2023/02/12 10:39:16 mvs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -232,6 +232,7 @@
 #define	PCI_VENDOR_PE	0x1318		/* Packet Engines */
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
+#define	PCI_VENDOR_MICRON	0x1344		/* Micron Technology */
 #define	PCI_VENDOR_DTCTECH	0x134a		/* DTC Tech */
 #define	PCI_VENDOR_PCTEL	0x134d		/* PCTEL */
 #define	PCI_VENDOR_BRAINBOXES	0x135a		/* Brainboxes */
@@ -7266,6 +7267,9 @@
 /* Micrel products */
 #define	PCI_PRODUCT_MICREL_KSZ8841	0x8841		/* KSZ8841 */
 #define	PCI_PRODUCT_MICREL_KSZ8842	0x8842		/* KSZ8842 */
+
+/* Micron Technology products */
+#define	PCI_PRODUCT_MICRON_MTFDKBA512QFM	0x5413		/* NVMe */
 
 /* Microsoft products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 */
