@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.144 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.145 2023/02/12 10:41:00 mvs Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -124,7 +124,7 @@ static unsigned int amountpipekva;
 struct pool pipe_pair_pool;
 
 int	dopipe(struct proc *, int *, int);
-void	pipeselwakeup(struct pipe *);
+void	pipe_wakeup(struct pipe *);
 
 int	pipe_create(struct pipe *);
 void	pipe_destroy(struct pipe *);
@@ -366,7 +366,7 @@ pipe_iosleep(struct pipe *cpipe, const char *wmesg)
 }
 
 void
-pipeselwakeup(struct pipe *cpipe)
+pipe_wakeup(struct pipe *cpipe)
 {
 	rw_assert_wrlock(cpipe->pipe_lock);
 
@@ -470,7 +470,7 @@ unlocked_error:
 	}
 
 	if (rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt >= PIPE_BUF)
-		pipeselwakeup(rpipe);
+		pipe_wakeup(rpipe);
 
 	rw_exit_write(rpipe->pipe_lock);
 	return (error);
@@ -615,7 +615,7 @@ pipe_write(struct file *fp, struct uio *uio, int fflags)
 			 * We have no more space and have something to offer,
 			 * wake up select/poll.
 			 */
-			pipeselwakeup(wpipe);
+			pipe_wakeup(wpipe);
 
 			wpipe->pipe_state |= PIPE_WANTW;
 			error = pipe_iosleep(wpipe, "pipewr");
@@ -659,7 +659,7 @@ unlocked_error:
 		getnanotime(&wpipe->pipe_mtime);
 	/* We have something to offer, wake up select/poll. */
 	if (wpipe->pipe_buffer.cnt)
-		pipeselwakeup(wpipe);
+		pipe_wakeup(wpipe);
 
 	rw_exit_write(lock);
 	return (error);
@@ -791,7 +791,7 @@ pipe_destroy(struct pipe *cpipe)
 
 	rw_enter_write(cpipe->pipe_lock);
 
-	pipeselwakeup(cpipe);
+	pipe_wakeup(cpipe);
 	sigio_free(&cpipe->pipe_sigio);
 
 	/*
@@ -807,7 +807,7 @@ pipe_destroy(struct pipe *cpipe)
 
 	/* Disconnect from peer. */
 	if ((ppipe = cpipe->pipe_peer) != NULL) {
-		pipeselwakeup(ppipe);
+		pipe_wakeup(ppipe);
 
 		ppipe->pipe_state |= PIPE_EOF;
 		wakeup(ppipe);
