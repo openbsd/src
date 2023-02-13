@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.63 2022/10/09 20:31:30 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.64 2023/02/13 19:19:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -3018,6 +3018,16 @@ const struct rkclock rk3568_clocks[] = {
 		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
 	},
 	{
+		RK3568_CLK_TSADC_TSEN, RK3568_CRU_CLKSEL_CON(51),
+		SEL(5, 4), DIV(2, 0),
+		{ RK3568_XIN24M, RK3568_GPLL_100M, RK3568_CPLL_100M }
+	},
+	{
+		RK3568_CLK_TSADC, RK3568_CRU_CLKSEL_CON(51),
+		0, DIV(14, 8),
+		{ RK3568_CLK_TSADC_TSEN }
+	},
+	{
 		RK3568_SCLK_UART1, RK3568_CRU_CLKSEL_CON(52),
 		SEL(13, 12), 0,
 		{ 0, 0, RK3568_XIN24M }
@@ -3105,6 +3115,11 @@ const struct rkclock rk3568_clocks[] = {
 	{
 		RK3568_GPLL_300M, RK3568_CRU_CLKSEL_CON(75),
 		0, DIV(12, 8),
+		{ RK3568_PLL_GPLL }
+	},
+	{
+		RK3568_GPLL_100M, RK3568_CRU_CLKSEL_CON(77),
+		0, DIV(4, 0),
 		{ RK3568_PLL_GPLL }
 	},
 	{
