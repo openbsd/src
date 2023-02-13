@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.6 2023/02/13 19:16:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,11 +37,19 @@
 #define FAN53555_ID1			0x03
 #define FAN53555_ID2			0x04
 
+#define TCS4525_VSEL1			0x10
+#define TCS4525_VSEL0			0x11
+#define  TCS4525_VSEL_NSEL_MASK		0x7f
+#define TCS4525_TIME			0x13
+#define  TCS4525_TIME_SLEW_MASK		(0x3 << 3)
+#define  TCS4525_TIME_SLEW_SHIFT	3
+
 /* Distinguish between Failrchild original and Silergy clones. */
 enum fanpwr_id {
 	FANPWR_FAN53555,	/* Fairchild FAN53555 */
 	FANPWR_SYR827,		/* Silergy SYR827 */
-	FANPWR_SYR828		/* Silergy SYR828 */
+	FANPWR_SYR828,		/* Silergy SYR828 */
+	FANPWR_TCS4525,		/* TCS TCS4525 */
 };
 
 struct fanpwr_softc {
@@ -51,6 +59,7 @@ struct fanpwr_softc {
 
 	enum fanpwr_id	sc_id;
 	uint8_t		sc_vsel;
+	uint8_t		sc_vsel_nsel_mask;
 
 	struct regulator_device sc_rd;
 	uint32_t	sc_vbase;
@@ -80,7 +89,8 @@ fanpwr_match(struct device *parent, void *match, void *aux)
 
 	return (strcmp(ia->ia_name, "fcs,fan53555") == 0 ||
 	    strcmp(ia->ia_name, "silergy,syr827") == 0 ||
-	    strcmp(ia->ia_name, "silergy,syr828") == 0);
+	    strcmp(ia->ia_name, "silergy,syr828") == 0 ||
+	    strcmp(ia->ia_name, "tcs,tcs4525") == 0);
 }
 
 void
@@ -97,20 +107,32 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
-		sc->sc_vsel = FAN53555_VSEL0;
-	else
-		sc->sc_vsel = FAN53555_VSEL1;
-
 	if (OF_is_compatible(node, "silergy,syr827")) {
 		printf(": SYR827");
 		sc->sc_id = FANPWR_SYR827;
 	} else if (OF_is_compatible(node, "silergy,syr828")) {
 		printf(": SYR828");
 		sc->sc_id = FANPWR_SYR828;
+	} else if (OF_is_compatible(node, "tcs,tcs4525")) {
+		printf(": TCS4525");
+		sc->sc_id = FANPWR_TCS4525;
 	} else {
 		printf(": FAN53555");
 		sc->sc_id = FANPWR_FAN53555;
+	}
+
+	if (sc->sc_id == FANPWR_TCS4525) {
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+			sc->sc_vsel = TCS4525_VSEL0;
+		else
+			sc->sc_vsel = TCS4525_VSEL1;
+		sc->sc_vsel_nsel_mask = TCS4525_VSEL_NSEL_MASK;
+	} else {
+		if (OF_getpropint(node, "fcs,suspend-voltage-selector", 0))
+			sc->sc_vsel = FAN53555_VSEL0;
+		else
+			sc->sc_vsel = FAN53555_VSEL1;
+		sc->sc_vsel_nsel_mask = FAN53555_VSEL_NSEL_MASK;
 	}
 
 	id1 = fanpwr_read(sc, FAN53555_ID1);
@@ -156,6 +178,10 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_vbase = 712500;
 		sc->sc_vstep = 12500;
 		break;
+	case FANPWR_TCS4525:
+		sc->sc_vbase = 600000;
+		sc->sc_vstep = 6250;
+		break;
 	}
 
 	voltage = fanpwr_get_voltage(sc);
@@ -164,15 +190,32 @@ fanpwr_attach(struct device *parent, struct device *self, void *aux)
 
 	ramp_delay = OF_getpropint(node, "regulator-ramp-delay", 0);
 	if (ramp_delay > 0) {
-		uint8_t ctrl, slew;
+		if (sc->sc_id == FANPWR_TCS4525) {
+			uint8_t ctrl, slew;
 
-		for (slew = 7; slew > 0; slew--)
-			if ((64000 >> slew) >= ramp_delay)
-				break;
-		ctrl = fanpwr_read(sc, FAN53555_CONTROL);
-		ctrl &= ~FAN53555_CONTROL_SLEW_MASK;
-		ctrl |= slew << FAN53555_CONTROL_SLEW_SHIFT;
-		fanpwr_write(sc, FAN53555_CONTROL, ctrl);
+			if (ramp_delay >= 18700)
+				slew = 0;
+			else if (ramp_delay >= 9300)
+				slew = 1;
+			else if (ramp_delay >= 4600)
+				slew = 2;
+			else
+				slew = 3;
+			ctrl = fanpwr_read(sc, TCS4525_TIME);
+			ctrl &= ~TCS4525_TIME_SLEW_MASK;
+			ctrl |= slew << TCS4525_TIME_SLEW_SHIFT;
+			fanpwr_write(sc, TCS4525_TIME, ctrl);
+		} else {
+			uint8_t ctrl, slew;
+
+			for (slew = 7; slew > 0; slew--)
+				if ((64000 >> slew) >= ramp_delay)
+					break;
+			ctrl = fanpwr_read(sc, FAN53555_CONTROL);
+			ctrl &= ~FAN53555_CONTROL_SLEW_MASK;
+			ctrl |= slew << FAN53555_CONTROL_SLEW_SHIFT;
+			fanpwr_write(sc, FAN53555_CONTROL, ctrl);
+		}
 	}
 
 	sc->sc_rd.rd_node = node;
@@ -230,7 +273,7 @@ fanpwr_get_voltage(void *cookie)
 	uint8_t vsel;
 	
 	vsel = fanpwr_read(sc, sc->sc_vsel);
-	return sc->sc_vbase + (vsel & FAN53555_VSEL_NSEL_MASK) * sc->sc_vstep;
+	return sc->sc_vbase + (vsel & sc->sc_vsel_nsel_mask) * sc->sc_vstep;
 }
 
 int
@@ -238,14 +281,14 @@ fanpwr_set_voltage(void *cookie, uint32_t voltage)
 {
 	struct fanpwr_softc *sc = cookie;
 	uint32_t vmin = sc->sc_vbase;
-	uint32_t vmax = vmin + FAN53555_VSEL_NSEL_MASK * sc->sc_vstep;
+	uint32_t vmax = vmin + sc->sc_vsel_nsel_mask * sc->sc_vstep;
 	uint8_t vsel;
 
 	if (voltage < vmin || voltage > vmax)
 		return EINVAL;
 
 	vsel = fanpwr_read(sc, sc->sc_vsel);
-	vsel &= ~FAN53555_VSEL_NSEL_MASK;
+	vsel &= ~sc->sc_vsel_nsel_mask;
 	vsel |= (voltage - sc->sc_vbase) / sc->sc_vstep;
 	fanpwr_write(sc, sc->sc_vsel, vsel);
 
