@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.310 2023/02/11 21:11:37 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.311 2023/02/13 14:51:49 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3983,6 +3983,14 @@ uvmspace_fork(struct process *pr)
 		}
 	}
 	new_map->flags |= old_map->flags & VM_MAP_SYSCALL_ONCE;
+#ifdef PMAP_CHECK_COPYIN
+	if (PMAP_CHECK_COPYIN) {
+		memcpy(&new_map->check_copyin, &old_map->check_copyin,
+		    sizeof(new_map->check_copyin));
+		membar_producer();
+		new_map->check_copyin_count = old_map->check_copyin_count;
+	}
+#endif
 
 	vm_map_unlock(old_map);
 	vm_map_unlock(new_map);
