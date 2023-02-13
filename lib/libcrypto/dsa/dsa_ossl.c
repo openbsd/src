@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.47 2023/01/11 04:39:42 jsing Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.48 2023/02/13 09:21:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,4 +432,39 @@ dsa_finish(DSA *dsa)
 {
 	BN_MONT_CTX_free(dsa->method_mont_p);
 	return 1;
+}
+
+DSA_SIG *
+DSA_SIG_new(void)
+{
+	return calloc(1, sizeof(DSA_SIG));
+}
+
+void
+DSA_SIG_free(DSA_SIG *sig)
+{
+	if (sig == NULL)
+		return;
+
+	BN_free(sig->r);
+	BN_free(sig->s);
+	free(sig);
+}
+
+int
+DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+{
+	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
+}
+
+DSA_SIG *
+DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+{
+	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
+}
+
+int
+DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
+{
+	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
 }
