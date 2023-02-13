@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.155 2023/02/11 08:50:43 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.156 2023/02/13 18:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -206,22 +206,18 @@ up_process_prefix(struct filter_head *rules, struct rde_peer *peer,
 
 void
 up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
-    struct prefix *new, struct prefix *old)
+    struct rib_entry *re)
 {
 	struct bgpd_addr	addr;
-	struct prefix		*p;
+	struct prefix		*new, *p;
 	uint8_t			prefixlen;
 
-	if (new == NULL) {
-		pt_getaddr(old->pt, &addr);
-		prefixlen = old->pt->prefixlen;
-	} else {
-		pt_getaddr(new->pt, &addr);
-		prefixlen = new->pt->prefixlen;
-	}
+	pt_getaddr(re->prefix, &addr);
+	prefixlen = re->prefix->prefixlen;
 
 	p = prefix_adjout_lookup(peer, &addr, prefixlen);
 
+	new = prefix_best(re);
 	while (new != NULL) {
 		switch (up_process_prefix(rules, peer, new, p,
 		    &addr, prefixlen)) {
@@ -255,21 +251,16 @@ done:
  */
 void
 up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
-    struct prefix *new, struct prefix *old)
+    struct rib_entry *re)
 {
 	struct bgpd_addr	addr;
-	struct prefix		*head, *p;
+	struct prefix		*head, *new, *p;
 	uint8_t			prefixlen;
 	int			maxpaths = 0, extrapaths = 0, extra;
 	int			checkmode = 1;
 
-	if (new == NULL) {
-		pt_getaddr(old->pt, &addr);
-		prefixlen = old->pt->prefixlen;
-	} else {
-		pt_getaddr(new->pt, &addr);
-		prefixlen = new->pt->prefixlen;
-	}
+	pt_getaddr(re->prefix, &addr);
+	prefixlen = re->prefix->prefixlen;
 
 	head = prefix_adjout_lookup(peer, &addr, prefixlen);
 
@@ -278,11 +269,8 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 		p->flags |= PREFIX_FLAG_STALE;
 
 	/* update paths */
-	for ( ; new != NULL; new = TAILQ_NEXT(new, entry.list.rib)) {
-		/* since list is sorted, stop at first invalid prefix */
-		if (!prefix_eligible(new))
-			break;
-
+	new = prefix_best(re);
+	while (new != NULL) {
 		/* check limits and stop when a limit is reached */
 		if (peer->eval.maxpaths != 0 &&
 		    maxpaths >= peer->eval.maxpaths)
@@ -337,6 +325,11 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
 			/* just give up */
 			return;
 		}
+
+		/* only allow valid prefixes */
+		new = TAILQ_NEXT(new, entry.list.rib);
+		if (new == NULL || !prefix_eligible(new))
+			break;
 	}
 
 	/* withdraw stale paths */
@@ -352,12 +345,15 @@ up_generate_addpath(struct filter_head *rules, struct rde_peer *peer,
  */ 
 void
 up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
-    struct prefix *best, struct prefix *new, struct prefix *old)
+    struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
 	struct bgpd_addr	addr;
-	struct prefix		*p, *next, *head = NULL;
+	struct prefix		*p, *head = NULL;
 	uint8_t			prefixlen;
 	int			all = 0;
+
+	pt_getaddr(re->prefix, &addr);
+	prefixlen = re->prefix->prefixlen;
 
 	/*
 	 * if old and new are NULL then insert all prefixes from best,
@@ -365,42 +361,23 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 	 */
 	if (old == NULL && new == NULL) {
 		/* mark all paths as stale */
-		pt_getaddr(best->pt, &addr);
-		prefixlen = best->pt->prefixlen;
-
 		head = prefix_adjout_lookup(peer, &addr, prefixlen);
 		for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
 			p->flags |= PREFIX_FLAG_STALE;
 
-		new = best;
+		new = prefix_best(re);
 		all = 1;
 	}
 
 	if (old != NULL) {
 		/* withdraw stale paths */
-		pt_getaddr(old->pt, &addr);
-		p = prefix_adjout_get(peer, old->path_id_tx, &addr,
-		    old->pt->prefixlen);
+		p = prefix_adjout_get(peer, old->path_id_tx, &addr, prefixlen);
 		if (p != NULL)
 			prefix_adjout_withdraw(p);
 	}
 
-	if (new != NULL) {
-		pt_getaddr(new->pt, &addr);
-		prefixlen = new->pt->prefixlen;
-	}
-
 	/* add new path (or multiple if all is set) */
-	for (; new != NULL; new = next) {
-		if (all)
-			next = TAILQ_NEXT(new, entry.list.rib);
-		else
-			next = NULL;
-
-		/* only allow valid prefixes */
-		if (!prefix_eligible(new))
-			break;
-
+	while (new != NULL) {
 		switch (up_process_prefix(rules, peer, new, (void *)-1,
 		    &addr, prefixlen)) {
 		case UP_OK:
@@ -411,6 +388,14 @@ up_generate_addpath_all(struct filter_head *rules, struct rde_peer *peer,
 			/* just give up */
 			return;
 		}
+
+		if (!all)
+			break;
+
+		/* only allow valid prefixes */
+		new = TAILQ_NEXT(new, entry.list.rib);
+		if (new == NULL || !prefix_eligible(new))
+			break;
 	}
 
 	if (all) {

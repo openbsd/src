@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.282 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.283 2023/02/13 18:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -392,9 +392,6 @@ void		rde_pftable_add(uint16_t, struct prefix *);
 void		rde_pftable_del(uint16_t, struct prefix *);
 
 int		rde_evaluate_all(void);
-void		rde_generate_updates(struct rib *, struct prefix *,
-		    struct prefix *, struct prefix *, struct prefix *,
-		    enum eval_mode);
 uint32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 void		rde_peer_send_rrefresh(struct rde_peer *, uint8_t, uint8_t);
@@ -411,6 +408,9 @@ void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
 struct rde_peer	*peer_get(uint32_t);
 struct rde_peer *peer_match(struct ctl_neighbor *, uint32_t);
 struct rde_peer	*peer_add(uint32_t, struct peer_config *);
+
+void		 rde_generate_updates(struct rib_entry *, struct prefix *,
+		    struct prefix *, enum eval_mode);
 
 void		 peer_up(struct rde_peer *, struct session_up *);
 void		 peer_down(struct rde_peer *, void *);
@@ -729,11 +729,11 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
 void		 up_generate_updates(struct filter_head *, struct rde_peer *,
-		    struct prefix *, struct prefix *);
+		    struct rib_entry *);
 void		 up_generate_addpath(struct filter_head *, struct rde_peer *,
-		    struct prefix *, struct prefix *);
+		    struct rib_entry *);
 void		 up_generate_addpath_all(struct filter_head *,
-		    struct rde_peer *, struct prefix *, struct prefix *,
+		    struct rde_peer *, struct rib_entry *, struct prefix *,
 		    struct prefix *);
 void		 up_generate_default(struct filter_head *, struct rde_peer *,
 		    uint8_t);

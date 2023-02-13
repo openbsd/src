@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.592 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.593 2023/02/13 18:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3888,14 +3888,11 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 static void
 rde_softreconfig_out(struct rib_entry *re, void *arg)
 {
-	struct rib	*rib = arg;
-	struct prefix	*p;
-
-	if ((p = prefix_best(re)) == NULL)
+	if (prefix_best(re) == NULL)
 		/* no valid path for prefix */
 		return;
 
-	rde_generate_updates(rib, p, NULL, NULL, NULL, EVAL_RECONF);
+	rde_generate_updates(re, NULL, NULL, EVAL_RECONF);
 }
 
 static void

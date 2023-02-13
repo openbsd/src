@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.28 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.29 2023/02/13 18:07:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -207,23 +207,13 @@ peer_cmp(struct rde_peer *a, struct rde_peer *b)
 RB_GENERATE(peer_tree, rde_peer, entry, peer_cmp);
 
 static void
-peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
-    struct prefix *newbest, struct prefix *oldbest,
+peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
     struct prefix *newpath, struct prefix *oldpath,
     enum eval_mode mode)
 {
 	uint8_t		 aid;
 
-	if (newbest != NULL)
-		aid = newbest->pt->aid;
-	else if (oldbest != NULL)
-		aid = oldbest->pt->aid;
-	else if (newpath != NULL)
-		aid = newpath->pt->aid;
-	else if (oldpath != NULL)
-		aid = oldpath->pt->aid;
-	else
-		return;
+	aid = re->prefix->aid;
 
 	/* skip ourself */
 	if (peer == peerself)
@@ -231,7 +221,7 @@ peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
 	if (peer->state != PEER_UP)
 		return;
 	/* skip peers using a different rib */
-	if (peer->loc_rib_id != rib_id)
+	if (peer->loc_rib_id != re->rib_id)
 		return;
 	/* check if peer actually supports the address family */
 	if (peer->capa.mp[aid] == 0)
@@ -248,37 +238,27 @@ peer_generate_update(struct rde_peer *peer, uint16_t rib_id,
 	/* handle peers with add-path */
 	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
 		if (peer->eval.mode == ADDPATH_EVAL_ALL)
-			up_generate_addpath_all(out_rules, peer, newbest,
+			up_generate_addpath_all(out_rules, peer, re,
 			    newpath, oldpath);
 		else
-			up_generate_addpath(out_rules, peer, newbest, oldbest);
+			up_generate_addpath(out_rules, peer, re);
 		return;
 	}
 
 	/* skip regular peers if the best path didn't change */
 	if (mode == EVAL_ALL && (peer->flags & PEERFLAG_EVALUATE_ALL) == 0)
 		return;
-	up_generate_updates(out_rules, peer, newbest, oldbest);
+	up_generate_updates(out_rules, peer, re);
 }
 
 void
-rde_generate_updates(struct rib *rib, struct prefix *newbest,
-    struct prefix *oldbest, struct prefix *newpath, struct prefix *oldpath,
-    enum eval_mode mode)
+rde_generate_updates(struct rib_entry *re, struct prefix *newpath,
+    struct prefix *oldpath, enum eval_mode mode)
 {
 	struct rde_peer	*peer;
 
-	/*
-	 * If oldbest is != NULL we know it was active and should be removed.
-	 * If newbest is != NULL we know it is reachable and then we should
-	 * generate an update.
-	 */
-	if (oldbest == NULL && newbest == NULL)
-		return;
-
 	RB_FOREACH(peer, peer_tree, &peertable)
-		peer_generate_update(peer, rib->id, newbest, oldbest, newpath,
-		    oldpath, mode);
+		peer_generate_update(peer, re, newpath, oldpath, mode);
 }
 
 /*
@@ -389,7 +369,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 	if ((p = prefix_best(re)) == NULL)
 		/* no eligible prefix, not even for 'evaluate all' */
 		return;
-	peer_generate_update(peer, re->rib_id, p, NULL, NULL, NULL, 0);
+	peer_generate_update(peer, re, NULL, NULL, 0);
 }
 
 static void
