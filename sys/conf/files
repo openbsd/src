@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.721 2023/02/04 23:11:59 mglocker Exp $
+#	$OpenBSD: files,v 1.722 2023/02/13 19:18:53 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -529,6 +529,10 @@ file	dev/ic/dwiic.c			dwiic
 # Freescale i.MX I2C controller
 device	imxiic: i2cbus
 file	dev/ic/imxiic.c			imxiic
+
+# Synopsis Designware Ethernet QoS
+device	dwqe: ether, ifnet, ifmedia, mii
+file	dev/ic/dwqe.c			dwqe
 
 # Qualcomm GPIO controller
 device	qcgpio
