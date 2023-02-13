@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_div.c,v 1.36 2023/01/31 06:08:23 jsing Exp $ */
+/* $OpenBSD: bn_div.c,v 1.37 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -338,10 +338,10 @@ BN_div_internal(BIGNUM *quotient, BIGNUM *remainder, const BIGNUM *numerator,
 	wnump = &(snum->d[num_n - 1]);
 
 	/* Setup to 'res' */
-	res->neg = (numerator->neg ^ divisor->neg);
 	if (!bn_wexpand(res, (loop + 1)))
 		goto err;
 	res->top = loop - no_branch;
+	BN_set_negative(res, numerator->neg ^ divisor->neg);
 	resp = &(res->d[loop - 1]);
 
 	/* space for temp */
@@ -414,8 +414,7 @@ BN_div_internal(BIGNUM *quotient, BIGNUM *remainder, const BIGNUM *numerator,
 		int neg = numerator->neg;
 
 		BN_rshift(remainder, snum, norm_shift);
-		if (!BN_is_zero(remainder))
-			remainder->neg = neg;
+		BN_set_negative(remainder, neg);
 	}
 
 	if (no_branch)

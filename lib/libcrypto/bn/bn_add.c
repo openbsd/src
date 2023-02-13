@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.21 2023/02/02 18:39:26 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.22 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -381,7 +381,8 @@ BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		}
 	}
 
-	r->neg = r_neg;
+	BN_set_negative(r, r_neg);
+
 	return ret;
 }
 
@@ -409,6 +410,7 @@ BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 		}
 	}
 
-	r->neg = r_neg;
+	BN_set_negative(r, r_neg);
+
 	return ret;
 }

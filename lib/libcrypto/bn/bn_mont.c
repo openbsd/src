@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.36 2023/02/01 06:23:13 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.37 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -413,9 +413,9 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 		if (!bn_wexpand(r, num))
 			return (0);
 		if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
-			r->neg = a->neg^b->neg;
 			r->top = num;
 			bn_correct_top(r);
+			BN_set_negative(r, a->neg ^ b->neg);
 			return (1);
 		}
 	}
@@ -471,7 +471,7 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	if (!bn_wexpand(r, max))
 		return (0);
 
-	r->neg ^= n->neg;
+	BN_set_negative(r, r->neg ^ n->neg);
 	np = n->d;
 	rp = r->d;
 
@@ -497,7 +497,7 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	if (!bn_wexpand(ret, nl))
 		return (0);
 	ret->top = nl;
-	ret->neg = r->neg;
+	BN_set_negative(ret, r->neg);
 
 	rp = ret->d;
 	ap = &(r->d[nl]);

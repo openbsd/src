@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.24 2023/02/09 09:58:53 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.25 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,9 +420,9 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	}
 
 	rr->top = rn;
-	rr->neg = 0;
-
 	bn_correct_top(rr);
+
+	rr->neg = 0;
 
 	if (rr != r)
 		BN_copy(r, rr);

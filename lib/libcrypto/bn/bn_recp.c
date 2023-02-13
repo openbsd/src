@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.17 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.18 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,8 +221,9 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 	}
 #endif
 
-	r->neg = BN_is_zero(r) ? 0 : m->neg;
-	d->neg = m->neg^recp->N.neg;
+	BN_set_negative(r, m->neg);
+	BN_set_negative(d, m->neg ^ recp->N.neg);
+
 	ret = 1;
 
 err:

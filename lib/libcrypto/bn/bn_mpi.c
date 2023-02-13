@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mpi.c,v 1.11 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_mpi.c,v 1.12 2023/02/13 04:25:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,7 +127,7 @@ BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
 			BN_free(a);
 		return (NULL);
 	}
-	a->neg = neg;
+	BN_set_negative(a, neg);
 	if (neg) {
 		BN_clear_bit(a, BN_num_bits(a) - 1);
 	}

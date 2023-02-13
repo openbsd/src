@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.20 2023/01/11 04:26:24 jsing Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.21 2023/02/13 04:25:37 jsing Exp $ */
 /*
  * Copyright (c) 2022, 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -83,9 +83,9 @@ bn_lshift(BIGNUM *r, const BIGNUM *a, int n)
 	}
 
 	r->top = count;
-	r->neg = a->neg;
-
 	bn_correct_top(r);
+
+	BN_set_negative(r, a->neg);
 
 	return 1;
 }
@@ -139,9 +139,9 @@ bn_rshift(BIGNUM *r, const BIGNUM *a, int n)
 	*dst = *src >> rshift;
 
 	r->top = count;
-	r->neg = a->neg;
-
 	bn_correct_top(r);
+
+	BN_set_negative(r, a->neg);
 
 	return 1;
 }
