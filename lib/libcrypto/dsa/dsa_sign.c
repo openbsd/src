@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_sign.c,v 1.24 2023/02/13 09:16:15 tb Exp $ */
+/* $OpenBSD: dsa_sign.c,v 1.25 2023/02/13 09:17:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,11 +72,12 @@ DSA_SIG_new(void)
 void
 DSA_SIG_free(DSA_SIG *sig)
 {
-	if (sig != NULL) {
-		BN_free(sig->r);
-		BN_free(sig->s);
-		free(sig);
-	}
+	if (sig == NULL)
+		return;
+
+	BN_free(sig->r);
+	BN_free(sig->s);
+	free(sig);
 }
 
 int
