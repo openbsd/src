@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_sign.c,v 1.23 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_sign.c,v 1.24 2023/02/13 09:16:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,18 +64,6 @@
 #include "dsa_local.h"
 
 DSA_SIG *
-DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
-{
-	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
-}
-
-int
-DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
-{
-	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
-}
-
-DSA_SIG *
 DSA_SIG_new(void)
 {
 	return calloc(1, sizeof(DSA_SIG));
@@ -89,4 +77,16 @@ DSA_SIG_free(DSA_SIG *sig)
 		BN_free(sig->s);
 		free(sig);
 	}
+}
+
+int
+DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+{
+	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
+}
+
+DSA_SIG *
+DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
+{
+	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 }
