@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.72 2023/01/14 15:12:27 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.73 2023/02/13 04:03:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -728,12 +728,9 @@ BN_mask_bits(BIGNUM *a, int n)
 }
 
 void
-BN_set_negative(BIGNUM *a, int b)
+BN_set_negative(BIGNUM *bn, int neg)
 {
-	if (b && !BN_is_zero(a))
-		a->neg = 1;
-	else
-		a->neg = 0;
+	bn->neg = (neg != 0) && !BN_is_zero(bn);
 }
 
 int
