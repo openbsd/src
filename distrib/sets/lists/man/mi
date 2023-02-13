@@ -1884,6 +1884,7 @@
 ./usr/share/man/man4/safte.4
 ./usr/share/man/man4/sbus.4
 ./usr/share/man/man4/schsio.4
+./usr/share/man/man4/scmi.4
 ./usr/share/man/man4/scsi.4
 ./usr/share/man/man4/sd.4
 ./usr/share/man/man4/sdhc.4

@@ -271,6 +271,8 @@
 ./usr/include/dev/ic/dwhdmi.h
 ./usr/include/dev/ic/dwiicreg.h
 ./usr/include/dev/ic/dwiicvar.h
+./usr/include/dev/ic/dwqereg.h
+./usr/include/dev/ic/dwqevar.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
 ./usr/include/dev/ic/fxpreg.h
