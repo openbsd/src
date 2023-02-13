@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1x509.c,v 1.3 2022/04/27 17:43:41 jsing Exp $ */
+/* $OpenBSD: asn1x509.c,v 1.4 2023/02/13 09:50:47 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -28,14 +28,14 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-const char *dsa_test_key = \
-    "-----BEGIN DSA PRIVATE KEY-----\n" \
-    "MIH5AgEAAkEAt+CNNryEe8t2SkjuP0azjOKjSMXsw3GzjLS5c+vFLQKs0zIuPp8F\n" \
-    "I/z5t8vcNt/D8EyzQZWxgCfoasHqDOJvRwIVAKrJMyIMt9iJtaS31cyIJmIDVlZX\n" \
-    "AkEAs1/Uy+x0+1C1n7V3eJxuBdO/LUalbrZM5PfcwDshf9kcQNLsRu5zTZkU0OX/\n" \
-    "8xANz+ue2o6LON2sTAtuEfSM1QJBAIDRt0rQGGrFCRJ4O39Iqlf27yIO6Gq1ppbE\n" \
-    "Wvsvz4YSIZsG02vlBlzVIhULftNnkpN59MFtIjx8RsbEQ4YTnSICFDXPf/UIRvdH\n" \
-    "20NV++tnUZYUAXM+\n" \
+const char *dsa_test_key =
+    "-----BEGIN DSA PRIVATE KEY-----\n"
+    "MIH5AgEAAkEAt+CNNryEe8t2SkjuP0azjOKjSMXsw3GzjLS5c+vFLQKs0zIuPp8F\n"
+    "I/z5t8vcNt/D8EyzQZWxgCfoasHqDOJvRwIVAKrJMyIMt9iJtaS31cyIJmIDVlZX\n"
+    "AkEAs1/Uy+x0+1C1n7V3eJxuBdO/LUalbrZM5PfcwDshf9kcQNLsRu5zTZkU0OX/\n"
+    "8xANz+ue2o6LON2sTAtuEfSM1QJBAIDRt0rQGGrFCRJ4O39Iqlf27yIO6Gq1ppbE\n"
+    "Wvsvz4YSIZsG02vlBlzVIhULftNnkpN59MFtIjx8RsbEQ4YTnSICFDXPf/UIRvdH\n"
+    "20NV++tnUZYUAXM+\n"
     "-----END DSA PRIVATE KEY-----\n";
 
 unsigned char dsa_test_asn1_pubkey[] = {
@@ -72,11 +72,11 @@ unsigned char dsa_test_asn1_pubkey[] = {
 	0x43, 0x86, 0x13, 0x9d, 0x22,
 };
 
-const char *ec_test_key = \
-    "-----BEGIN EC PRIVATE KEY-----\n" \
-    "MHcCAQEEIEDkF84aPdBNu4vbPE+QV3EP9ULp4Enr1N0lz4vzuc2boAoGCCqGSM49\n" \
-    "AwEHoUQDQgAEUQGHBjYwbfHvI3QqdDy8ftNU5UvQqh6TH6upIrtz4CVccxnWO2+s\n" \
-    "qSMOu1z5KnGIOVf2kLQ2S2iMahyFMezr8g==\n" \
+const char *ec_test_key =
+    "-----BEGIN EC PRIVATE KEY-----\n"
+    "MHcCAQEEIEDkF84aPdBNu4vbPE+QV3EP9ULp4Enr1N0lz4vzuc2boAoGCCqGSM49\n"
+    "AwEHoUQDQgAEUQGHBjYwbfHvI3QqdDy8ftNU5UvQqh6TH6upIrtz4CVccxnWO2+s\n"
+    "qSMOu1z5KnGIOVf2kLQ2S2iMahyFMezr8g==\n"
     "-----END EC PRIVATE KEY-----\n";
 
 unsigned char ec_test_asn1_pubkey[] = {
@@ -94,16 +94,16 @@ unsigned char ec_test_asn1_pubkey[] = {
 	0xec, 0xeb, 0xf2,
 };
 
-const char *rsa_test_key = \
-    "-----BEGIN PRIVATE KEY-----\n" \
-    "MIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA4Fs6ljFFQw/ElDf5\n" \
-    "LTghVw972PVpQuKPQvwb1cWbV3+7W5sXOcoM/RvwzO7WeppkeltVCBoKaQd+9e2Z\n" \
-    "BHtYhwIDAQABAkEAhWv7dWIrrGvuHa8D0i51NU8R+b5IMOyHAfDnpMN1VByWcBdb\n" \
-    "G7ZJsEYlO1Tbx1zFQOVyrDUY2hn0YttPjWys0QIhAP9+FRhHCYye/EY14zSa+lxb\n" \
-    "ljOPjWgddMdJBcPOVNUNAiEA4M1QUtIcTnTnfvcxvEBIhbmSR8fRvZYAeT5EoTKM\n" \
-    "puMCIQD9898X8JRHWEg9qZabVWiBoO+ddJUD5jOLWsQGKvMbiQIgBOQyxTqRJxvg\n" \
-    "FaEnUeNMMKyzBCDS7X8gD4NNVvyUluUCIQC/lnO9xYi6S4BFMwHFEUY0jLr5vgsR\n" \
-    "+esRU9dLkMqt+w==\n" \
+const char *rsa_test_key =
+    "-----BEGIN PRIVATE KEY-----\n"
+    "MIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEA4Fs6ljFFQw/ElDf5\n"
+    "LTghVw972PVpQuKPQvwb1cWbV3+7W5sXOcoM/RvwzO7WeppkeltVCBoKaQd+9e2Z\n"
+    "BHtYhwIDAQABAkEAhWv7dWIrrGvuHa8D0i51NU8R+b5IMOyHAfDnpMN1VByWcBdb\n"
+    "G7ZJsEYlO1Tbx1zFQOVyrDUY2hn0YttPjWys0QIhAP9+FRhHCYye/EY14zSa+lxb\n"
+    "ljOPjWgddMdJBcPOVNUNAiEA4M1QUtIcTnTnfvcxvEBIhbmSR8fRvZYAeT5EoTKM\n"
+    "puMCIQD9898X8JRHWEg9qZabVWiBoO+ddJUD5jOLWsQGKvMbiQIgBOQyxTqRJxvg\n"
+    "FaEnUeNMMKyzBCDS7X8gD4NNVvyUluUCIQC/lnO9xYi6S4BFMwHFEUY0jLr5vgsR\n"
+    "+esRU9dLkMqt+w==\n"
     "-----END PRIVATE KEY-----\n";
 
 unsigned char rsa_test_asn1_pubkey[] = {
