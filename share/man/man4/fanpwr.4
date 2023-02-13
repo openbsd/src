@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fanpwr.4,v 1.1 2018/06/02 12:30:37 kettenis Exp $
+.\"	$OpenBSD: fanpwr.4,v 1.2 2023/02/13 19:18:23 kettenis Exp $
 .\"
 .\" Copyright (c) 2018 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2018 $
+.Dd $Mdocdate: February 13 2023 $
 .Dt FANPWR 4
 .Os
 .Sh NAME
@@ -25,8 +25,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Fairchild FAN53555 and Silergy
-SYR827/828 voltage regulators.
+driver provides support for the Fairchild FAN53555, Silergy SYR827/828
+and Tang Cheng TCS4525 voltage regulators.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4
