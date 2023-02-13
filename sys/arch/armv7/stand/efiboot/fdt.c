@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.9 2022/11/05 18:56:09 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.10 2023/02/13 16:16:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -30,6 +30,7 @@ void	*skip_property(uint32_t *);
 void	*skip_props(uint32_t *);
 void	*skip_node_name(uint32_t *);
 void	*skip_node(void *);
+void	*skip_nops(uint32_t *);
 void	*fdt_parent_node_recurse(void *, void *);
 
 static int tree_inited = 0;
@@ -39,7 +40,7 @@ unsigned int
 fdt_check_head(void *fdt)
 {
 	struct fdt_head *fh;
-	uint32_t *ptr;
+	uint32_t *ptr, *tok;
 
 	fh = fdt;
 	ptr = (uint32_t *)fdt;
@@ -50,8 +51,8 @@ fdt_check_head(void *fdt)
 	if (betoh32(fh->fh_version) > FDT_CODE_VERSION)
 		return 0;
 
-	if (betoh32(*(ptr + (betoh32(fh->fh_struct_off) / 4))) !=
-	    FDT_NODE_BEGIN)
+	tok = skip_nops(ptr + (betoh32(fh->fh_struct_off) / 4));
+	if (betoh32(*tok) != FDT_NODE_BEGIN)
 		return 0;
 
 	/* check for end signature on version 17 blob */
@@ -154,6 +155,16 @@ fdt_add_str(char *name)
 /*
  * Utility functions for skipping parts of tree.
  */
+
+void *
+skip_nops(uint32_t *ptr)
+{
+	while (betoh32(*ptr) == FDT_NOP)
+		ptr++;
+
+	return ptr;
+}
+
 void *
 skip_property(uint32_t *ptr)
 {
@@ -163,7 +174,7 @@ skip_property(uint32_t *ptr)
 	/* move forward by magic + size + nameid + rounded up property size */
 	ptr += 3 + roundup(size, sizeof(uint32_t)) / sizeof(uint32_t);
 
-	return ptr;
+	return skip_nops(ptr);
 }
 
 void *
@@ -179,8 +190,10 @@ void *
 skip_node_name(uint32_t *ptr)
 {
 	/* skip name, aligned to 4 bytes, this is NULL term., so must add 1 */
-	return ptr + roundup(strlen((char *)ptr) + 1,
+	ptr += roundup(strlen((char *)ptr) + 1,
 	    sizeof(uint32_t)) / sizeof(uint32_t);
+
+	return skip_nops(ptr);
 }
 
 /*
@@ -346,7 +359,7 @@ skip_node(void *node)
 	while (betoh32(*ptr) == FDT_NODE_BEGIN)
 		ptr = skip_node(ptr);
 
-	return (ptr + 1);
+	return skip_nops(ptr + 1);
 }
 
 /*
@@ -365,7 +378,7 @@ fdt_next_node(void *node)
 	ptr = node;
 
 	if (node == NULL) {
-		ptr = (uint32_t *)tree.tree;
+		ptr = skip_nops((uint32_t *)tree.tree);
 		return (betoh32(*ptr) == FDT_NODE_BEGIN) ? ptr : NULL;
 	}
 
@@ -384,10 +397,12 @@ fdt_next_node(void *node)
 	if (betoh32(*ptr) != FDT_NODE_END)
 		return NULL;
 
-	if (betoh32(*(ptr + 1)) != FDT_NODE_BEGIN)
+	ptr = skip_nops(ptr + 1);
+
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return NULL;
 
-	return (ptr + 1);
+	return ptr;
 }
 
 /*
