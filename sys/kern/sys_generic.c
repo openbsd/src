@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.152 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.153 2023/02/13 09:42:45 mvs Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -596,15 +596,16 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	struct timespec zerots = {};
 	fd_mask bits[6];
 	fd_set *pibits[3], *pobits[3];
-	int error, ncollected = 0, nevents = 0;
+	int error, nfiles, ncollected = 0, nevents = 0;
 	u_int ni;
 
 	if (nd < 0)
 		return (EINVAL);
-	if (nd > p->p_fd->fd_nfiles) {
-		/* forgiving; slightly wrong */
-		nd = p->p_fd->fd_nfiles;
-	}
+
+	nfiles = READ_ONCE(p->p_fd->fd_nfiles);
+	if (nd > nfiles)
+		nd = nfiles;
+
 	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
 	if (ni > sizeof(bits[0])) {
 		caddr_t mbits;
@@ -643,8 +644,11 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 	}
 #endif
 
-	if (sigmask)
+	if (sigmask) {
+		KERNEL_LOCK();
 		dosigsuspend(p, *sigmask &~ sigcantmask);
+		KERNEL_UNLOCK();
+	}
 
 	/* Register kqueue events */
 	error = pselregister(p, pibits, pobits, nd, &nevents, &ncollected);
@@ -948,8 +952,11 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
 
-	if (sigmask)
+	if (sigmask) {
+		KERNEL_LOCK();
 		dosigsuspend(p, *sigmask &~ sigcantmask);
+		KERNEL_UNLOCK();
+	}
 
 	/* Register kqueue events */
 	ppollregister(p, pl, nfds, &nevents, &ncollected);
