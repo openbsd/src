@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2022 2023/02/12 10:39:16 mvs Exp 
+ *	OpenBSD: pcidevs,v 1.2023 2023/02/13 08:01:52 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8528,7 +8528,8 @@
 #define	PCI_PRODUCT_RICOH_R5U852	0xe852		/* 5U852 SD/MMC */
 
 /* Rockchip products */
-#define	PCI_PRODUCT_ROCKCHIP_RK3399_RC	0x0100		/* RK3399 Root Complex */
+#define	PCI_PRODUCT_ROCKCHIP_RK3399	0x0100		/* RK3399 */
+#define	PCI_PRODUCT_ROCKCHIP_RK3566	0x3566		/* RK3566 */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
