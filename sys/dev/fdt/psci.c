@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.12 2022/12/10 10:13:58 patrick Exp $	*/
+/*	$OpenBSD: psci.c,v 1.13 2023/02/13 19:26:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -262,6 +262,17 @@ smccc_version(void)
 
 	/* Treat NOT_SUPPORTED as 1.0 */
 	return 0x10000;
+}
+
+int32_t
+smccc(uint32_t func_id, register_t arg0, register_t arg1, register_t arg2)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn)
+		return (*sc->sc_callfn)(func_id, arg0, arg1, arg2);
+
+	return PSCI_NOT_SUPPORTED;
 }
 
 int32_t

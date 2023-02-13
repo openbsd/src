@@ -19,4 +19,6 @@ void	psci_flush_bp(void);
 int	psci_flush_bp_has_bhb(void);
 int	psci_method(void);
 
+int32_t	smccc(uint32_t, register_t, register_t, register_t);
+
 #endif /* _SYS_DEV_FDT_PSCIVAR_H_ */
