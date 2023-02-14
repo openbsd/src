@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.2 2023/02/14 17:58:26 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.3 2023/02/14 18:31:02 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -52,6 +52,54 @@ bn_ct_eq_zero_mask(BN_ULONG w)
 {
 	return 0 - bn_ct_eq_zero(w);
 }
+#endif
+
+/*
+ * Big number primitives are named as the operation followed by a suffix
+ * that indicates the number of words that it operates on, where 'w' means
+ * single word, 'dw' means double word, 'tw' means triple word and 'qw' means
+ * quadruple word. Unless otherwise noted, the size of the output is implied
+ * based on its inputs, for example bn_mulw() takes two single word inputs
+ * and is going to produce a double word result.
+ *
+ * Where a function implements multiple operations, these are listed in order.
+ * For example, a function that computes (r1:r0) = a * b + c is named
+ * bn_mulw_addw(), producing a double word result.
+ */
+
+/*
+ * bn_addw() computes (r1:r0) = a + b, where both inputs are single words,
+ * producing a double word result. The value of r1 is the carry from the
+ * addition.
+ */
+#ifndef HAVE_BN_ADDW
+#ifdef BN_LLONG
+static inline void
+bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULLONG r;
+
+	r = (BN_ULLONG)a + (BN_ULLONG)b;
+
+	*out_r1 = r >> BN_BITS2;
+	*out_r0 = r & BN_MASK2;
+}
+#else
+
+static inline void
+bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r1, r0, c1, c2;
+
+	c1 = a | b;
+	c2 = a & b;
+	r0 = a + b;
+	r1 = ((c1 & ~r0) | c2) >> (BN_BITS2 - 1); /* carry */
+
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
 #endif
 
 #ifndef HAVE_BN_UMUL_HILO
@@ -185,6 +233,71 @@ bn_umul_hi(BN_ULONG a, BN_ULONG b)
 	bn_umul_hilo(a, b, &h, &l);
 
 	return h;
+}
+#endif
+
+/*
+ * bn_mulw_addw() computes (r1:r0) = a * b + c with all inputs being single
+ * words, producing a double word result.
+ */
+#ifndef HAVE_BN_MULW_ADDW
+static inline void
+bn_mulw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r1, r0;
+
+	bn_umul_hilo(a, b, &r1, &r0);
+	bn_addw(r0, c, &carry, &r0);
+	r1 += carry;
+
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_mulw_addw_addw() computes (r1:r0) = a * b + c + d with all inputs being
+ * single words, producing a double word result.
+ */
+#ifndef HAVE_BN_MULW_ADDW_ADDW
+static inline void
+bn_mulw_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG d,
+    BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r1, r0;
+
+	bn_mulw_addw(a, b, c, &r1, &r0);
+	bn_addw(r0, d, &carry, &r0);
+	r1 += carry;
+
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_mulw_addtw() computes (r2:r1:r0) = a * b + (c2:c1:c0), where a and b are
+ * single words and (c2:c1:c0) is a triple word, producing a triple word result.
+ * The caller must ensure that the inputs provided do not result in c2
+ * overflowing.
+ */
+#ifndef HAVE_BN_MULW_ADDTW
+static inline void
+bn_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
+    BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r2, r1, r0, x1, x0;
+
+	bn_umul_hilo(a, b, &x1, &x0);
+	bn_addw(c0, x0, &carry, &r0);
+	x1 += carry;
+	bn_addw(c1, x1, &carry, &r1);
+	r2 = c2 + carry;
+
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
 }
 #endif
 
