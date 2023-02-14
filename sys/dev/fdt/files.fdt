@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.178 2023/02/13 19:26:15 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.179 2023/02/14 08:26:59 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -198,7 +198,7 @@ file	dev/fdt/psci.c			psci needs-flag
 # ARM System Control and Management Interface
 device	scmi
 attach	scmi at fdt
-file	dev/fdt/scmi.c
+file	dev/fdt/scmi.c			scmi
 
 attach	virtio at fdt with virtio_mmio
 file	dev/fdt/virtio_mmio.c		virtio_mmio
