@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.256 2023/01/20 10:30:41 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.257 2023/02/14 15:33:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -984,9 +984,9 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				break;
 			}
 			if (idx == PFD_PIPE_SESSION) {
+				/* RDE and RTR engine can reload concurrently */
 				imsg_compose(ibuf_rtr, IMSG_RECONF_DONE, 0,
 				    0, -1, NULL, 0);
-			} else if (idx == PFD_PIPE_RTR) {
 				imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0,
 				    0, -1, NULL, 0);
 
