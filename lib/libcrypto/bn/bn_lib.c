@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.74 2023/02/14 18:01:15 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.75 2023/02/14 18:06:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -220,26 +220,31 @@ BN_value_one(void)
 	return (&const_one);
 }
 
+#ifndef HAVE_BN_WORD_CLZ
 int
-BN_num_bits_word(BN_ULONG l)
+bn_word_clz(BN_ULONG w)
 {
-	BN_ULONG x, mask;
-	int bits;
-	unsigned int shift;
+	BN_ULONG bits, mask, shift;
 
-	/* Constant time calculation of floor(log2(l)) + 1. */
-	bits = (l != 0);
-	shift = BN_BITS4;	/* On _LP64 this is 32, otherwise 16. */
-	do {
-		x = l >> shift;
-		/* If x is 0, set mask to 0, otherwise set it to all 1s. */
-		mask = ((~x & (x - 1)) >> (BN_BITS2 - 1)) - 1;
-		bits += shift & mask;
-		/* If x is 0, leave l alone, otherwise set l = x. */
-		l ^= (x ^ l) & mask;
-	} while ((shift /= 2) != 0);
+	bits = shift = BN_BITS2;
+	mask = 0;
 
-	return bits;
+	while ((shift >>= 1) != 0) {
+		bits += (shift & mask) - (shift & ~mask);
+		mask = bn_ct_ne_zero_mask(w >> bits);
+	}
+	bits += 1 & mask;
+
+	bits -= bn_ct_eq_zero(w);
+
+	return BN_BITS2 - bits;
+}
+#endif
+
+int
+BN_num_bits_word(BN_ULONG w)
+{
+	return BN_BITS2 - bn_word_clz(w);
 }
 
 int
