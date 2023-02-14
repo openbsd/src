@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.75 2023/02/14 18:06:06 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.76 2023/02/14 18:22:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,7 +251,6 @@ int
 BN_num_bits(const BIGNUM *a)
 {
 	int i = a->top - 1;
-
 
 	if (BN_is_zero(a))
 		return 0;
@@ -917,9 +916,15 @@ BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
 }
 
 int
-BN_is_zero(const BIGNUM *a)
+BN_is_zero(const BIGNUM *bn)
 {
-	return a->top == 0;
+	BN_ULONG bits = 0;
+	int i;
+
+	for (i = 0; i < bn->top; i++)
+		bits |= bn->d[i];
+
+	return bits == 0;
 }
 
 int
