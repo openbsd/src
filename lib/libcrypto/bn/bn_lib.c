@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.73 2023/02/13 04:03:38 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.74 2023/02/14 18:01:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
+#include "bn_internal.h"
 
 BIGNUM *
 BN_new(void)
@@ -730,7 +731,7 @@ BN_mask_bits(BIGNUM *a, int n)
 void
 BN_set_negative(BIGNUM *bn, int neg)
 {
-	bn->neg = (neg != 0) && !BN_is_zero(bn);
+	bn->neg = ~BN_is_zero(bn) & bn_ct_ne_zero(neg);
 }
 
 int
