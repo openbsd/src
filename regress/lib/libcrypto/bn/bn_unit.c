@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.2 2022/12/06 18:23:29 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.3 2023/02/14 15:08:15 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -69,12 +69,36 @@ test_bn_print_null_derefs(void)
 	return failed;
 }
 
+static int
+test_bn_num_bits_word(void)
+{
+	BN_ULONG w = 1;
+	int i, num_bits;
+	int failed = 0;
+
+	if ((num_bits = BN_num_bits_word(0)) != 0) {
+		warnx("BN_num_bits_word(0): want 0, got %d", num_bits);
+		failed |= 1;
+	}
+
+	for (i = 0; i < BN_BITS2; i++) {
+		if ((num_bits = BN_num_bits_word(w << i)) != i + 1) {
+			warnx("BN_num_bits_word(0x%llx): want %d, got %d",
+			    (unsigned long long)(w << i), i + 1, num_bits);
+			failed |= 1;
+		}
+	}
+
+	return failed;
+}
+
 int
 main(void)
 {
 	int failed = 0;
 
 	failed |= test_bn_print_null_derefs();
+	failed |= test_bn_num_bits_word();
 
 	return failed;
 }
