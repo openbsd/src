@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.8 2023/02/09 09:16:26 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.9 2023/02/14 18:45:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,68 +327,7 @@ struct bn_gencb_st {
 #define Lw(t)    (((BN_ULONG)(t))&BN_MASK2)
 #define Hw(t)    (((BN_ULONG)((t)>>BN_BITS2))&BN_MASK2)
 
-#ifdef BN_LLONG
-#define mul_add(r,a,w,c) { \
-	BN_ULLONG t; \
-	t=(BN_ULLONG)w * (a) + (r) + (c); \
-	(r)= Lw(t); \
-	(c)= Hw(t); \
-	}
-
-#define mul(r,a,w,c) { \
-	BN_ULLONG t; \
-	t=(BN_ULLONG)w * (a) + (c); \
-	(r)= Lw(t); \
-	(c)= Hw(t); \
-	}
-
-#elif defined(BN_UMULT_LOHI)
-#define mul_add(r,a,w,c) {		\
-	BN_ULONG high,low,ret,tmp=(a);	\
-	ret =  (r);			\
-	BN_UMULT_LOHI(low,high,w,tmp);	\
-	ret += (c);			\
-	(c) =  (ret<(c))?1:0;		\
-	(c) += high;			\
-	ret += low;			\
-	(c) += (ret<low)?1:0;		\
-	(r) =  ret;			\
-	}
-
-#define mul(r,a,w,c)	{		\
-	BN_ULONG high,low,ret,ta=(a);	\
-	BN_UMULT_LOHI(low,high,w,ta);	\
-	ret =  low + (c);		\
-	(c) =  high;			\
-	(c) += (ret<low)?1:0;		\
-	(r) =  ret;			\
-	}
-
-#elif defined(BN_UMULT_HIGH)
-#define mul_add(r,a,w,c) {		\
-	BN_ULONG high,low,ret,tmp=(a);	\
-	ret =  (r);			\
-	high=  BN_UMULT_HIGH(w,tmp);	\
-	ret += (c);			\
-	low =  (w) * tmp;		\
-	(c) =  (ret<(c))?1:0;		\
-	(c) += high;			\
-	ret += low;			\
-	(c) += (ret<low)?1:0;		\
-	(r) =  ret;			\
-	}
-
-#define mul(r,a,w,c)	{		\
-	BN_ULONG high,low,ret,ta=(a);	\
-	low =  (w) * ta;		\
-	high=  BN_UMULT_HIGH(w,ta);	\
-	ret =  low + (c);		\
-	(c) =  high;			\
-	(c) += (ret<low)?1:0;		\
-	(r) =  ret;			\
-	}
-
-#else
+#ifndef BN_LLONG
 /*************************************************************
  * No long long type
  */
@@ -432,38 +371,8 @@ struct bn_gencb_st {
 	(ho)=h; \
 	}
 
-#define mul_add(r,a,bl,bh,c) { \
-	BN_ULONG l,h; \
- \
-	h= (a); \
-	l=LBITS(h); \
-	h=HBITS(h); \
-	mul64(l,h,(bl),(bh)); \
- \
-	/* non-multiply part */ \
-	l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
-	(c)=(r); \
-	l=(l+(c))&BN_MASK2; if (l < (c)) h++; \
-	(c)=h&BN_MASK2; \
-	(r)=l; \
-	}
-
-#define mul(r,a,bl,bh,c) { \
-	BN_ULONG l,h; \
- \
-	h= (a); \
-	l=LBITS(h); \
-	h=HBITS(h); \
-	mul64(l,h,(bl),(bh)); \
- \
-	/* non-multiply part */ \
-	l+=(c); if ((l&BN_MASK2) < (c)) h++; \
-	(c)=h&BN_MASK2; \
-	(r)=l&BN_MASK2; \
-	}
 #endif /* !BN_LLONG */
 
-/* mul_add_c(a,b,c0,c1,c2)  -- c+=a*b for three word number c=(c2,c1,c0) */
 /* mul_add_c2(a,b,c0,c1,c2) -- c+=2*a*b for three word number c=(c2,c1,c0) */
 /* sqr_add_c(a,i,c0,c1,c2)  -- c+=a[i]^2 for three word number c=(c2,c1,c0) */
 /* sqr_add_c2(a,i,c0,c1,c2) -- c+=2*a[i]*a[j] for three word number c=(c2,c1,c0) */
@@ -473,14 +382,6 @@ struct bn_gencb_st {
  * Keep in mind that additions to multiplication result can not
  * overflow, because its high half cannot be all-ones.
  */
-#define mul_add_c(a,b,c0,c1,c2)		do {	\
-	BN_ULONG hi;				\
-	BN_ULLONG t = (BN_ULLONG)(a)*(b);	\
-	t += c0;		/* no carry */	\
-	c0 = (BN_ULONG)Lw(t);			\
-	hi = (BN_ULONG)Hw(t);			\
-	c1 = (c1+hi)&BN_MASK2; if (c1<hi) c2++;	\
-	} while(0)
 
 #define mul_add_c2(a,b,c0,c1,c2)	do {	\
 	BN_ULONG hi;				\
@@ -512,13 +413,6 @@ struct bn_gencb_st {
  * Keep in mind that additions to hi can not overflow, because
  * the high word of a multiplication result cannot be all-ones.
  */
-#define mul_add_c(a,b,c0,c1,c2)		do {	\
-	BN_ULONG ta = (a), tb = (b);		\
-	BN_ULONG lo, hi;			\
-	BN_UMULT_LOHI(lo,hi,ta,tb);		\
-	c0 += lo; hi += (c0<lo)?1:0;		\
-	c1 += hi; c2 += (c1<hi)?1:0;		\
-	} while(0)
 
 #define mul_add_c2(a,b,c0,c1,c2)	do {	\
 	BN_ULONG ta = (a), tb = (b);		\
@@ -546,13 +440,6 @@ struct bn_gencb_st {
  * Keep in mind that additions to hi can not overflow, because
  * the high word of a multiplication result cannot be all-ones.
  */
-#define mul_add_c(a,b,c0,c1,c2)		do {	\
-	BN_ULONG ta = (a), tb = (b);		\
-	BN_ULONG lo = ta * tb;			\
-	BN_ULONG hi = BN_UMULT_HIGH(ta,tb);	\
-	c0 += lo; hi += (c0<lo)?1:0;		\
-	c1 += hi; c2 += (c1<hi)?1:0;		\
-	} while(0)
 
 #define mul_add_c2(a,b,c0,c1,c2)	do {	\
 	BN_ULONG ta = (a), tb = (b), tt;	\
@@ -580,13 +467,6 @@ struct bn_gencb_st {
  * Keep in mind that additions to hi can not overflow, because
  * the high word of a multiplication result cannot be all-ones.
  */
-#define mul_add_c(a,b,c0,c1,c2)		do {	\
-	BN_ULONG lo = LBITS(a), hi = HBITS(a);	\
-	BN_ULONG bl = LBITS(b), bh = HBITS(b);	\
-	mul64(lo,hi,bl,bh);			\
-	c0 = (c0+lo)&BN_MASK2; if (c0<lo) hi++;	\
-	c1 = (c1+hi)&BN_MASK2; if (c1<hi) c2++;	\
-	} while(0)
 
 #define mul_add_c2(a,b,c0,c1,c2)	do {	\
 	BN_ULONG tt;				\
