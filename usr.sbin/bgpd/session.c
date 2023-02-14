@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.440 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.441 2023/02/14 15:37:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -258,14 +258,6 @@ session_main(int debug, int verbose)
 				/* new peer that needs init? */
 				if (p->state == STATE_NONE)
 					init_peer(p);
-
-				/* reinit due? */
-				if (p->reconf_action == RECONF_REINIT) {
-					session_stop(p, ERR_CEASE_ADMIN_RESET);
-					if (!p->conf.down)
-						timer_set(&p->timers,
-						    Timer_IdleHold, 0);
-				}
 
 				/* deletion due? */
 				if (p->reconf_action == RECONF_DELETE) {
@@ -580,7 +572,7 @@ init_peer(struct peer *p)
 	if (p->conf.down)
 		timer_stop(&p->timers, Timer_IdleHold); /* no autostart */
 	else
-		timer_set(&p->timers, Timer_IdleHold, 0); /* start ASAP */
+		timer_set(&p->timers, Timer_IdleHold, SESSION_CLEAR_DELAY);
 
 	p->stats.last_updown = getmonotime();
 
