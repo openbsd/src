@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.188 2023/02/13 19:18:53 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.189 2023/02/14 19:06:18 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -91,8 +91,9 @@ plgpio*		at fdt? early 1
 plrtc*		at fdt?
 pluart*		at fdt?
 psci*		at fdt? early 1
-syscon*		at fdt? early 1
 pwmfan*		at fdt?
+scmi*		at fdt?
+syscon*		at fdt? early 1
 
 virtio*		at fdt?
 virtio*		at pci?
