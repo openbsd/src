@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.40 2023/02/13 15:50:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.41 2023/02/14 12:14:07 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -3628,8 +3628,10 @@ struct iwx_rx_mpdu_desc_v3 {
 		 * TSF value on air rise (INA), only valid if
 		 * IWX_RX_MPDU_PHY_TSF_OVERLOAD isn't set
 		 */
-		uint32_t tsf_on_air_rise0;
-		uint32_t tsf_on_air_rise1;
+		struct {
+			uint32_t tsf_on_air_rise0;
+			uint32_t tsf_on_air_rise1;
+		};
 
 		struct {
 			uint32_t phy_data0;
@@ -3658,8 +3660,10 @@ struct iwx_rx_mpdu_desc_v1 {
 	uint8_t mac_context;
 	uint32_t gp2_on_air_rise;
 	union {
-		uint32_t tsf_on_air_rise0;
-		uint32_t tsf_on_air_rise1;
+		struct {
+			uint32_t tsf_on_air_rise0;
+			uint32_t tsf_on_air_rise1;
+		};
 		struct {
 			uint32_t phy_data0;
 			uint32_t phy_data1;
