@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.65 2022/08/02 20:01:12 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.66 2023/02/14 17:15:15 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -231,17 +231,21 @@ fargs_parse(size_t argc, char *argv[], struct opts *opts)
 		j = strlen(cp);
 		if (f->remote &&
 		    strncasecmp(cp, "rsync://", 8) == 0) {
-			/* rsync://path */
+			/* rsync://host[:port]/path */
+			size_t module_offset = len;
 			cp += 8;
-			if ((ccp = strchr(cp, ':')))	/* skip :port */
+			/* skip :port */
+			if ((ccp = strchr(cp, ':')) != NULL) {
 				*ccp = '\0';
+				module_offset += strcspn(ccp + 1, "/") + 1;
+			}
 			if (strncmp(cp, f->host, len) ||
 			    (cp[len] != '/' && cp[len] != '\0'))
 				errx(ERR_SYNTAX, "different remote host: %s",
 				    f->sources[i]);
 			memmove(f->sources[i],
-				f->sources[i] + len + 8 + 1,
-				j - len - 8);
+				f->sources[i] + module_offset + 8 + 1,
+				j - module_offset - 8);
 		} else if (f->remote && strncmp(cp, "::", 2) == 0) {
 			/* ::path */
 			memmove(f->sources[i],
