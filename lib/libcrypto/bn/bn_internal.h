@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.1 2023/01/31 05:48:39 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.2 2023/02/14 17:58:26 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,38 @@
 
 #ifndef HEADER_BN_INTERNAL_H
 #define HEADER_BN_INTERNAL_H
+
+#ifndef HAVE_BN_CT_NE_ZERO
+static inline int
+bn_ct_ne_zero(BN_ULONG w)
+{
+	return (w | ~(w - 1)) >> (BN_BITS2 - 1);
+}
+#endif
+
+#ifndef HAVE_BN_CT_NE_ZERO_MASK
+static inline BN_ULONG
+bn_ct_ne_zero_mask(BN_ULONG w)
+{
+	return 0 - bn_ct_ne_zero(w);
+}
+#endif
+
+#ifndef HAVE_BN_CT_EQ_ZERO
+static inline int
+bn_ct_eq_zero(BN_ULONG w)
+{
+	return 1 - bn_ct_ne_zero(w);
+}
+#endif
+
+#ifndef HAVE_BN_CT_EQ_ZERO_MASK
+static inline BN_ULONG
+bn_ct_eq_zero_mask(BN_ULONG w)
+{
+	return 0 - bn_ct_eq_zero(w);
+}
+#endif
 
 #ifndef HAVE_BN_UMUL_HILO
 #ifdef BN_LLONG
