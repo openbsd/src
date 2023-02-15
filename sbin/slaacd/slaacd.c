@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.67 2022/11/27 15:19:38 kn Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.68 2023/02/15 13:47:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
 	    SOCK_NONBLOCK, AF_INET6)) == -1)
 		fatal("route socket");
-	shutdown(SHUT_RD, routesock);
+	shutdown(routesock, SHUT_RD);
 
 	event_init();
 

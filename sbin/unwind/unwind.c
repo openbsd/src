@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.67 2021/12/18 10:34:19 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.68 2023/02/15 13:47:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -278,7 +278,7 @@ main(int argc, char *argv[])
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW | SOCK_CLOEXEC |
 	    SOCK_NONBLOCK, 0)) == -1)
 		fatal("route socket");
-	shutdown(SHUT_RD, routesock);
+	shutdown(routesock, SHUT_RD);
 
 	if ((ta_fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644)) == -1)
 		log_warn("%s", TRUST_ANCHOR_FILE);
