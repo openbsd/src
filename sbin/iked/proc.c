@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.35 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.36 2023/02/15 20:44:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -39,23 +39,10 @@ enum privsep_procid privsep_process;
 void	 proc_open(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, size_t);
 void	 proc_close(struct privsep *);
-int	 proc_ispeer(struct privsep_proc *, unsigned int, enum privsep_procid);
 void	 proc_shutdown(struct privsep_proc *);
 void	 proc_sig_handler(int, short, void *);
 void	 proc_range(struct privsep *, enum privsep_procid, int *, int *);
 int	 proc_dispatch_null(int, struct privsep_proc *, struct imsg *);
-
-int
-proc_ispeer(struct privsep_proc *procs, unsigned int nproc,
-    enum privsep_procid type)
-{
-	unsigned int	i;
-
-	for (i = 0; i < nproc; i++)
-		if (procs[i].p_id == type)
-			return (1);
-	return (0);
-}
 
 void
 proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
