@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.3 2023/02/14 18:31:02 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.4 2023/02/15 04:46:49 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -156,7 +156,7 @@ bn_umul_hilo(BN_ULONG a, BN_ULONG b, BN_ULONG *out_h, BN_ULONG *out_l)
 	c2 = l & x;
 	l += x;
 	h += ((c1 & ~l) | c2) >> (BN_BITS2 - 1); /* carry */
-	
+
 	/* (bh * al) << BN_BITS4, partition the result across h:l with carry. */
 	x = bh * al;
 	h += x >> BN_BITS4;
