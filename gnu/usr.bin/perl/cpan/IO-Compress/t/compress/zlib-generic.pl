@@ -6,8 +6,8 @@ use bytes;
 use Test::More ;
 use CompTestUtils;
 
-BEGIN 
-{ 
+BEGIN
+{
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
@@ -32,10 +32,10 @@ sub myGZreadFile
     my $init = shift ;
 
 
-    my $fil = new $UncompressClass $filename,
+    my $fil = $UncompressClass->can('new')->( $UncompressClass, $filename,
                                     -Strict   => 1,
                                     -Append   => 1
-                                    ;
+                                    );
 
     my $data = '';
     $data = $init if defined $init ;
@@ -65,7 +65,7 @@ sub myGZreadFile
         title "flush" ;
 
 
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
 
         my $hello = <<EOM ;
 hello world
@@ -74,7 +74,7 @@ EOM
 
         {
           my $x ;
-          ok $x = new $CompressClass $name  ;
+          ok $x = $CompressClass->can('new')->( $CompressClass, $name );
 
           ok $x->write($hello), "write" ;
           ok $x->flush(Z_FINISH), "flush";
@@ -83,7 +83,7 @@ EOM
 
         {
           my $uncomp;
-          ok my $x = new $UncompressClass $name, -Append => 1  ;
+          ok my $x = $UncompressClass->can('new')->( $UncompressClass, $name, -Append => 1 );
 
           my $len ;
           1 while ($len = $x->read($uncomp)) > 0 ;
@@ -104,16 +104,16 @@ EOM
         my $buffer = '';
         {
           my $x ;
-          ok $x = new $CompressClass(\$buffer) ;
+          ok $x = $CompressClass->can('new')->( $CompressClass, \$buffer);
           ok $x->close ;
-      
+
         }
 
         my $keep = $buffer ;
         my $uncomp= '';
         {
           my $x ;
-          ok $x = new $UncompressClass(\$buffer, Append => 1)  ;
+          ok $x = $UncompressClass->can('new')->( $UncompressClass, \$buffer, Append => 1)  ;
 
           1 while $x->read($uncomp) > 0  ;
 
@@ -125,21 +125,21 @@ EOM
 
     }
 
-    
+
     {
         title "inflateSync on plain file";
 
         my $hello = "I am a HAL 9000 computer" x 2001 ;
 
-        my $k = new $UncompressClass(\$hello, Transparent => 1);
+        my $k = $UncompressClass->can('new')->( $UncompressClass, \$hello, Transparent => 1);
         ok $k ;
-     
+
         # Skip to the flush point -- no-op for plain file
         my $status = $k->inflateSync();
-        is $status, 1 
+        is $status, 1
             or diag $k->error() ;
-     
-        my $rest; 
+
+        my $rest;
         is $k->read($rest, length($hello)), length($hello)
             or diag $k->error() ;
         ok $rest eq $hello ;
@@ -156,23 +156,23 @@ EOM
         my $goodbye = "Will I dream?" x 2010;
         my ($x, $err, $answer, $X, $Z, $status);
         my $Answer ;
-     
-        ok ($x = new $CompressClass(\$Answer));
+
+        ok ($x = $CompressClass->can('new')->( $CompressClass, \$Answer));
         ok $x ;
-     
+
         is $x->write($hello), length($hello);
-    
+
         # create a flush point
         ok $x->flush(Z_FULL_FLUSH) ;
-         
+
         is $x->write($goodbye), length($goodbye);
-    
+
         ok $x->close() ;
-     
+
         my $k;
-        $k = new $UncompressClass(\$Answer, BlockSize => 1);
+        $k = $UncompressClass->can('new')->( $UncompressClass, \$Answer, BlockSize => 1);
         ok $k ;
-     
+
         my $initial;
         is $k->read($initial, 1), 1 ;
         is $initial, substr($hello, 0, 1);
@@ -181,9 +181,9 @@ EOM
         $status = $k->inflateSync();
         is $status, 1, "   inflateSync returned 1"
             or diag $k->error() ;
-     
-        my $rest; 
-        is $k->read($rest, length($hello) + length($goodbye)), 
+
+        my $rest;
+        is $k->read($rest, length($hello) + length($goodbye)),
                 length($goodbye)
             or diag $k->error() ;
         ok $rest eq $goodbye, " got expected output" ;
@@ -199,26 +199,26 @@ EOM
         my $hello = "I am a HAL 9000 computer" x 2001 ;
         my ($x, $err, $answer, $X, $Z, $status);
         my $Answer ;
-     
-        ok ($x = new $CompressClass(\$Answer));
+
+        ok ($x = $CompressClass->can('new')->( $CompressClass, \$Answer));
         ok $x ;
-     
+
         is $x->write($hello), length($hello);
-    
+
         ok $x->close() ;
-     
-        my $k = new $UncompressClass(\$Answer, BlockSize => 1);
+
+        my $k = $UncompressClass->can('new')->( $UncompressClass, \$Answer, BlockSize => 1);
         ok $k ;
-     
+
         my $initial;
         is $k->read($initial, 1), 1 ;
         is $initial, substr($hello, 0, 1);
 
         # Skip to the flush point
         $status = $k->inflateSync();
-        is $status, 0 
+        is $status, 0
             or diag $k->error() ;
-     
+
         ok $k->close();
         is $k->inflateSync(), 0 ;
     }
@@ -227,7 +227,3 @@ EOM
 
 
 1;
-
-
-
-

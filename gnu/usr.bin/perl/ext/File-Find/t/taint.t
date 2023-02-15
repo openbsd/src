@@ -1,5 +1,24 @@
 #!./perl -T
 use strict;
+
+BEGIN {
+    require File::Spec;
+    if ($ENV{PERL_CORE}) {
+        # May be doing dynamic loading while @INC is all relative
+        @INC = map { $_ = File::Spec->rel2abs($_); /(.*)/; $1 } @INC;
+    }
+
+    if ($^O eq 'MSWin32' || $^O eq 'cygwin' || $^O eq 'VMS') {
+        # This is a hack - at present File::Find does not produce native names
+        # on Win32 or VMS, so force File::Spec to use Unix names.
+        # must be set *before* importing File::Find
+        require File::Spec::Unix;
+        @File::Spec::ISA = 'File::Spec::Unix';
+    }
+    require File::Find;
+    import File::Find;
+}
+
 use Test::More;
 BEGIN {
     plan(
@@ -16,6 +35,7 @@ use Testing qw(
     dir_path
     file_path
 );
+use Errno ();
 
 my %Expect_File = (); # what we expect for $_
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname
@@ -169,8 +189,21 @@ create_file_ok( file_path('fb_taint', 'fb_ord') );
 mkdir_ok( dir_path('fb_taint', 'fba'), 0770  );
 create_file_ok( file_path('fb_taint', 'fba', 'fba_ord') );
 SKIP: {
-	skip "Creating symlink", 1, unless $symlink_exists;
-	ok( symlink('../fb_taint','fa_taint/fsl'), 'Created symbolic link' );
+    skip "Creating symlink", 1, unless $symlink_exists;
+    if (symlink('../fb_taint','fa_taint/fsl')) {
+        pass('Created symbolic link' );
+    }
+    else {
+        my $error = 0 + $!;
+        if ($^O eq "MSWin32" &&
+            ($error == &Errno::ENOSYS || $error == &Errno::EPERM)) {
+            $symlink_exists = 0;
+            skip "symbolic links not available", 1;
+        }
+        else {
+            fail('Created symbolic link');
+        }
+    }
 }
 create_file_ok( file_path('fa_taint', 'fa_ord') );
 
@@ -201,7 +234,8 @@ delete @Expect_Dir{ dir_path('fb_taint'), dir_path('fba') } unless $symlink_exis
 File::Find::find( {wanted => \&wanted_File_Dir_prune, untaint => 1,
 		   untaint_pattern => qr|^(.+)$|}, topdir('fa_taint') );
 
-is(scalar keys %Expect_File, 0, 'Found all expected files');
+is(scalar keys %Expect_File, 0, 'Found all expected files')
+    or diag "Not found " . join(" ", sort keys %Expect_File);
 
 # don't untaint at all, should die
 %Expect_File = ();

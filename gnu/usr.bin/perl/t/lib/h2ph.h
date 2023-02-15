@@ -91,7 +91,7 @@ typedef struct a_struct {
  */
 
 typedef enum _days_of_week { sun, mon, tue, wed, thu, fri, sat, Sun=0, Mon,
-			     Tue, Wed, Thu, Fri, Sat } days_of_week;
+                             Tue, Wed, Thu, Fri, Sat } days_of_week;
 
 /* 
  * Some moderate flexing of tri-graph pre substitution.
@@ -103,11 +103,11 @@ typedef enum _days_of_week { sun, mon, tue, wed, thu, fri, sat, Sun=0, Mon,
 ??= define SOMETHING_ELSE_TRIGRAPHIC_2 "??("          /* | ??(|  [| */
  ??= define SOMETHING_ELSE_TRIGRAPHIC_3 "??)"         /* | ??)|  ]| */
 ??=define SOMETHING_ELSE_TRIGRAPHIC_4  "??-0"         /* | ??-|  ~| */
-	??= define SOMETHING_ELSE_TRIGRAPHIC_5 "??/ " /* | ??/|  \| */
+        ??= define SOMETHING_ELSE_TRIGRAPHIC_5 "??/ " /* | ??/|  \| */
 ??= define SOMETHING_ELSE_TRIGRAPHIC_6 "??<"          /* | ??<|  {| */
 ??=define SOMETHING_ELSE_TRIGRAPHIC_7  "??="          /* | ??=|  #| */
 ??= define SOMETHING_ELSE_TRIGRAPHIC_8 "??>"          /* | ??>|  }| */
-	??=endif
+        ??=endif
 
 // test C++-style comment
 

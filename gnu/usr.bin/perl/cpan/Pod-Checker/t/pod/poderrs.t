@@ -121,6 +121,8 @@ L</OoPs>
 L<abc
 def>
 L<>
+L</>
+L<wheeee|/>
 L<   aha>
 L<oho   >
 L<  weehee  >

@@ -7,12 +7,12 @@ use Test::More ;
 use CompTestUtils;
 
 our ($BadPerl, $UncompressClass);
- 
-BEGIN 
-{ 
+
+BEGIN
+{
     plan(skip_all => "Extra Tied Filehandle needs Perl 5.6 or better - you have Perl $]" )
         if $] < 5.006 ;
-     
+
     my $tests ;
 
     $BadPerl = ($] >= 5.006 and $] <= 5.008) ;
@@ -44,10 +44,10 @@ sub myGZreadFile
     my $init = shift ;
 
 
-    my $fil = new $UncompressClass $filename,
+    my $fil = $UncompressClass->can('new')->( $UncompressClass, $filename,
                                     -Strict   => 1,
                                     -Append   => 1
-                                    ;
+                                    );
 
     my $data ;
     $data = $init if defined $init ;
@@ -75,7 +75,7 @@ sub run
             # Write
             # these tests come almost 100% from IO::String
 
-            my $lex = new LexFile my $name ;
+            my $lex = LexFile->new( my $name );
 
             my $io = $CompressClass->new($name);
 
@@ -101,7 +101,7 @@ sub run
             }
 
             my $foo = "1234567890";
-            
+
             ok syswrite($io, $foo, length($foo)) == length($foo) ;
             if ( $] < 5.6 )
               { is $io->syswrite($foo, length $foo), length $foo }
@@ -142,17 +142,17 @@ and a single line.
 
 EOT
 
-            my $lex = new LexFile my $name ;
+            my $lex = LexFile->new( my $name );
 
-            my $iow = new $CompressClass $name ;
+            my $iow = $CompressClass->can('new')->( $CompressClass, $name );
             print $iow $str ;
             close $iow;
 
             my @tmp;
             my $buf;
             {
-                my $io = new $UncompressClass $name ;
-            
+                my $io = $UncompressClass->can('new')->( $UncompressClass, $name );
+
                 ok ! $io->eof;
                 ok ! eof $io;
                 is $io->tell(), 0 ;
@@ -162,11 +162,11 @@ EOT
                     or print "# Got " . scalar(@lines) . " lines, expected 6\n" ;
                 is $lines[1], "of a paragraph\n" ;
                 is join('', @lines), $str ;
-                is $., 6; 
+                is $., 6;
         #print "TELL says " . tell($io) , " should be ${ \length($str) }\n" ;
                 is $io->tell(), length($str) ;
                 is tell($io), length($str) ;
-            
+
                 ok $io->eof;
                 ok eof $io;
 
@@ -176,8 +176,8 @@ EOT
                           defined($io->getc)     ||
                           read($io, $buf, 100)   != 0) ;
             }
-            
-            
+
+
             {
                 local $/;  # slurp mode
                 my $io = $UncompressClass->new($name);
@@ -185,27 +185,27 @@ EOT
                 my @lines = $io->getlines;
                 ok $io->eof;
                 ok @lines == 1 && $lines[0] eq $str;
-            
+
                 $io = $UncompressClass->new($name);
                 ok ! $io->eof;
                 my $line = <$io>;
                 ok $line eq $str;
                 ok $io->eof;
             }
-            
+
             {
                 local $/ = "";  # paragraph mode
                 my $io = $UncompressClass->new($name);
                 ok ! $io->eof;
                 my @lines = <$io>;
                 ok $io->eof;
-                ok @lines == 2 
+                ok @lines == 2
                     or print "# Got " . scalar(@lines) . " lines, expected 2\n" ;
                 ok $lines[0] eq "This is an example\nof a paragraph\n\n\n"
                     or print "# $lines[0]\n";
                 ok $lines[1] eq "and a single line.\n\n";
             }
-            
+
             {
                 local $/ = "is";
                 my $io = $UncompressClass->new($name);
@@ -217,26 +217,26 @@ EOT
                     push(@lines, $_);
                     $err++ if $. != ++$no;
                 }
-            
+
                 ok $err == 0 ;
                 ok $io->eof;
-            
-                ok @lines == 3 
+
+                ok @lines == 3
                     or print "# Got " . scalar(@lines) . " lines, expected 3\n" ;
                 ok join("-", @lines) eq
                                  "This- is- an example\n" .
                                 "of a paragraph\n\n\n" .
                                 "and a single line.\n\n";
             }
-            
-            
+
+
             # Test read
-            
+
             {
                 my $io = $UncompressClass->new($name);
 
                 ok $io, "opened ok" ;
-            
+
                 #eval { read($io, $buf, -1); } ;
                 #like $@, mkErr("length parameter is negative"), "xxx $io $UncompressClass $RawInflateError" ;
 
@@ -247,22 +247,22 @@ EOT
 
                 ok read($io, $buf, 3) == 3 ;
                 ok $buf eq "Thi";
-            
+
                 ok sysread($io, $buf, 3, 2) == 3 ;
                 ok $buf eq "Ths i"
                     or print "# [$buf]\n" ;;
                 ok ! $io->eof;
-            
+
         #        $io->seek(-4, 2);
-        #    
+        #
         #        ok ! $io->eof;
-        #    
+        #
         #        ok read($io, $buf, 20) == 4 ;
         #        ok $buf eq "e.\n\n";
-        #    
+        #
         #        ok read($io, $buf, 20) == 0 ;
         #        ok $buf eq "";
-        #   
+        #
         #        ok ! $io->eof;
             }
 
@@ -273,11 +273,11 @@ EOT
         {
             title "seek tests" ;
 
-            my $lex = new LexFile my $name ;
+            my $lex = LexFile->new( my $name );
 
             my $first = "beginning" ;
             my $last  = "the end" ;
-            my $iow = new $CompressClass $name ;
+            my $iow = $CompressClass->can('new')->( $CompressClass, $name );
             print $iow $first ;
             ok seek $iow, 10, SEEK_CUR ;
             is tell($iow), length($first)+10;
@@ -305,7 +305,7 @@ EOT
         {
             # seek error cases
             my $b ;
-            my $a = new $CompressClass(\$b)  ;
+            my $a = $CompressClass->can('new')->( $CompressClass, \$b)  ;
 
             ok ! $a->error() ;
             eval { seek($a, -1, 10) ; };
@@ -318,7 +318,7 @@ EOT
             close $a ;
 
 
-            my $u = new $UncompressClass(\$b)  ;
+            my $u = $UncompressClass->can('new')->( $UncompressClass, \$b)  ;
 
             eval { seek($u, -1, 10) ; };
             like $@, mkErr("seek: unknown value, 10, for whence parameter");
@@ -333,7 +333,7 @@ EOT
         {
             title 'fileno' ;
 
-            my $lex = new LexFile my $name ;
+            my $lex = LexFile->new( my $name );
 
             my $hello = <<EOM ;
 hello world
@@ -342,9 +342,9 @@ EOM
 
             {
               my $fh ;
-              ok $fh = new IO::File ">$name" ;
+              ok $fh = IO::File->new( ">$name" );
               my $x ;
-              ok $x = new $CompressClass $fh  ;
+              ok $x = $CompressClass->can('new')->( $CompressClass, $fh );
 
               ok $x->fileno() == fileno($fh) ;
               ok $x->fileno() == fileno($x) ;
@@ -356,8 +356,8 @@ EOM
             my $uncomp;
             {
               my $x ;
-              ok my $fh1 = new IO::File "<$name" ;
-              ok $x = new $UncompressClass $fh1, -Append => 1  ;
+              ok my $fh1 = IO::File->new( "<$name" );
+              ok $x = $UncompressClass->can('new')->( $UncompressClass, $fh1, -Append => 1 );
               ok $x->fileno() == fileno $fh1 ;
               ok $x->fileno() == fileno $x ;
 

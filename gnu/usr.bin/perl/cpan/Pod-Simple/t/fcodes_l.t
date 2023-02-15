@@ -7,8 +7,16 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 101 };
+
+BEGIN {
+  require FindBin;
+  unshift @INC, $FindBin::Bin . '/lib';
+  require helpers;
+  helpers->import;
+}
 
 #use Pod::Simple::Debug (10);
 
@@ -17,7 +25,7 @@ ok 1;
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
-sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
+
 my $x = 'Pod::Simple::XMLOutStream';
 
 print "##### Testing L codes via x class $x...\n";

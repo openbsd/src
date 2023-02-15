@@ -6,9 +6,16 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 6 };
 
+BEGIN {
+  require FindBin;
+  unshift @INC, $FindBin::Bin . '/lib';
+  require helpers;
+  helpers->import;
+}
 #my $d;
 #use Pod::Simple::Debug (3);
 
@@ -17,7 +24,6 @@ ok 1;
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
-sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
 
 my $x = 'Pod::Simple::XMLOutStream';
 

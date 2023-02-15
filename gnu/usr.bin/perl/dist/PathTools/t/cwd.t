@@ -187,6 +187,10 @@ rmtree($test_dirs[0], 0, 0);
 SKIP: {
     skip "no symlinks on this platform", 2+$EXTRA_ABSPATH_TESTS unless $Config{d_symlink} && $^O !~ m!^(qnx|nto)!;
 
+    # on Win32 GetCurrentDirectory() includes the symlink if
+    # you chdir() to a path including the symlink.
+    skip "Win32 symlinks are unusual", 2+$EXTRA_ABSPATH_TESTS if $^O eq "MSWin32";
+
     my $file = "linktest";
     mkpath([$Test_Dir], 0, 0777);
     symlink $Test_Dir, $file;

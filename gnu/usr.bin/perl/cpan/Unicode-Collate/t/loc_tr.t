@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -80,14 +75,14 @@ ok($objTr->lt("u\x{308}", "U\x{308}"));
 
 # 29
 
-ok($objTr->eq("c\x{327}", pack('U', 0xE7)));
-ok($objTr->eq("C\x{327}", pack('U', 0xC7)));
+ok($objTr->eq("c\x{327}", _pack_U(0xE7)));
+ok($objTr->eq("C\x{327}", _pack_U(0xC7)));
 ok($objTr->eq("g\x{306}", "\x{11F}"));
 ok($objTr->eq("G\x{306}", "\x{11E}"));
-ok($objTr->eq("I\x{300}", pack('U', 0xCC)));
-ok($objTr->eq("I\x{301}", pack('U', 0xCD)));
-ok($objTr->eq("I\x{302}", pack('U', 0xCE)));
-ok($objTr->eq("I\x{308}", pack('U', 0xCF)));
+ok($objTr->eq("I\x{300}", _pack_U(0xCC)));
+ok($objTr->eq("I\x{301}", _pack_U(0xCD)));
+ok($objTr->eq("I\x{302}", _pack_U(0xCE)));
+ok($objTr->eq("I\x{308}", _pack_U(0xCF)));
 ok($objTr->eq("I\x{304}", "\x{12A}"));
 ok($objTr->eq("I\x{306}", "\x{12C}"));
 ok($objTr->eq("I\x{328}", "\x{12E}"));
@@ -95,14 +90,14 @@ ok($objTr->eq("I\x{307}", "\x{130}"));
 
 # 41
 
-ok($objTr->eq("o\x{308}", pack('U', 0xF6)));
-ok($objTr->eq("O\x{308}", pack('U', 0xD6)));
+ok($objTr->eq("o\x{308}", _pack_U(0xF6)));
+ok($objTr->eq("O\x{308}", _pack_U(0xD6)));
 ok($objTr->eq("o\x{308}\x{304}", "\x{22B}"));
 ok($objTr->eq("O\x{308}\x{304}", "\x{22A}"));
 ok($objTr->eq("s\x{327}", "\x{15F}"));
 ok($objTr->eq("S\x{327}", "\x{15E}"));
-ok($objTr->eq("u\x{308}", pack('U', 0xFC)));
-ok($objTr->eq("U\x{308}", pack('U', 0xDC)));
+ok($objTr->eq("u\x{308}", _pack_U(0xFC)));
+ok($objTr->eq("U\x{308}", _pack_U(0xDC)));
 ok($objTr->eq("u\x{308}\x{300}", "\x{1DC}"));
 ok($objTr->eq("U\x{308}\x{300}", "\x{1DB}"));
 ok($objTr->eq("u\x{308}\x{301}", "\x{1D8}"));

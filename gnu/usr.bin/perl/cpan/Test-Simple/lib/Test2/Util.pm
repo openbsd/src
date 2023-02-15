@@ -2,7 +2,7 @@ package Test2::Util;
 use strict;
 use warnings;
 
-our $VERSION = '1.302175';
+our $VERSION = '1.302190';
 
 use POSIX();
 use Config qw/%Config/;
@@ -49,7 +49,8 @@ sub _can_thread {
 
     # Threads are broken on perl 5.10.0 built with gcc 4.8+
     if ($] == 5.010000 && $Config{'ccname'} eq 'gcc' && $Config{'gccversion'}) {
-        my @parts = split /\./, $Config{'gccversion'};
+        return 0 unless $Config{'gccversion'} =~ m/^(\d+)\.(\d+)/;
+        my @parts = split /[\.\s]+/, $Config{'gccversion'};
         return 0 if $parts[0] > 4 || ($parts[0] == 4 && $parts[1] >= 8);
     }
 
@@ -438,7 +439,7 @@ F<http://github.com/Test-More/test-more/>.
 
 =head1 COPYRIGHT
 
-Copyright 2019 Chad Granum E<lt>exodist@cpan.orgE<gt>.
+Copyright 2020 Chad Granum E<lt>exodist@cpan.orgE<gt>.
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

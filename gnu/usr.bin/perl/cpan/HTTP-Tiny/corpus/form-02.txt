@@ -1,7 +1,7 @@
 url
   http://example.com/new
 content
-  key|value|name|John Doe|noise|!@#$%^&*()
+  key|value|name|John Doe|undef|<undef>|noise|!@#$%^&*()
 datatype
   HASH
 ----------
@@ -10,9 +10,9 @@ Host: example.com
 Connection: close
 User-Agent: HTTP-Tiny/VERSION
 Content-Type: application/x-www-form-urlencoded
-Content-Length: 60
+Content-Length: 67
 
-key=value&name=John+Doe&noise=%21%40%23%24%25%5E%26%2A%28%29
+key=value&name=John+Doe&noise=%21%40%23%24%25%5E%26%2A%28%29&undef=
 ----------
 HTTP/1.1 201 Created
 Date: Thu, 03 Feb 1994 00:00:00 GMT

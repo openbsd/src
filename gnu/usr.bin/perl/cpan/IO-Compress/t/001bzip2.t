@@ -14,8 +14,8 @@ use bytes;
 use Test::More ;
 use CompTestUtils;
 
-BEGIN 
-{ 
+BEGIN
+{
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
@@ -40,10 +40,10 @@ sub myBZreadFile
     my $init = shift ;
 
 
-    my $fil = new $UncompressClass $filename,
+    my $fil = $UncompressClass->can('new')->( $UncompressClass, $filename,
                                     -Strict   => 1,
                                     -Append   => 1
-                                    ;
+                                    );
 
     my $data = '';
     $data = $init if defined $init ;
@@ -66,7 +66,7 @@ sub myBZreadFile
         title "BlockSize100K => $stringValue";
         my $err = "Parameter 'BlockSize100K' must be an unsigned int, got '$stringValue'";
         my $bz ;
-        eval { $bz = new IO::Compress::Bzip2(\$buffer, BlockSize100K => $value) };
+        eval { $bz = IO::Compress::Bzip2->new(\$buffer, BlockSize100K => $value) };
         like $@,  mkErr("IO::Compress::Bzip2: $err"),
             "  value $stringValue is bad";
         is $Bzip2Error, "IO::Compress::Bzip2: $err",
@@ -80,7 +80,7 @@ sub myBZreadFile
         title "BlockSize100K => $stringValue";
         my $err = "Parameter 'BlockSize100K' not between 1 and 9, got $stringValue";
         my $bz ;
-        eval { $bz = new IO::Compress::Bzip2(\$buffer, BlockSize100K => $value) };
+        eval { $bz = IO::Compress::Bzip2->new(\$buffer, BlockSize100K => $value) };
         like $@,  mkErr("IO::Compress::Bzip2: $err"),
             "  value $stringValue is bad";
         is $Bzip2Error,  "IO::Compress::Bzip2: $err",
@@ -94,7 +94,7 @@ sub myBZreadFile
         title "WorkFactor => $stringValue";
         my $err = "Parameter 'WorkFactor' must be an unsigned int, got '$stringValue'";
         my $bz ;
-        eval { $bz = new IO::Compress::Bzip2(\$buffer, WorkFactor => $value) };
+        eval { $bz = IO::Compress::Bzip2->new(\$buffer, WorkFactor => $value) };
         like $@,  mkErr("IO::Compress::Bzip2: $err"),
             "  value $stringValue is bad";
         is $Bzip2Error, "IO::Compress::Bzip2: $err",
@@ -108,7 +108,7 @@ sub myBZreadFile
         title "WorkFactor => $stringValue";
         my $err = "Parameter 'WorkFactor' not between 0 and 250, got $stringValue";
         my $bz ;
-        eval { $bz = new IO::Compress::Bzip2(\$buffer, WorkFactor => $value) };
+        eval { $bz = IO::Compress::Bzip2->new(\$buffer, WorkFactor => $value) };
         like $@,  mkErr("IO::Compress::Bzip2: $err"),
             "  value $stringValue is bad";
         is $Bzip2Error,  "IO::Compress::Bzip2: $err",
@@ -130,7 +130,7 @@ sub myBZreadFile
         title "Small => $stringValue";
         my $err = "Parameter 'Small' must be an int, got '$stringValue'";
         my $bz ;
-        eval { $bz = new IO::Uncompress::Bunzip2(\$buffer, Small => $value) };
+        eval { $bz = IO::Uncompress::Bunzip2->new(\$buffer, Small => $value) };
         like $@,  mkErr("IO::Uncompress::Bunzip2: $err"),
             "  value $stringValue is bad";
         is $Bunzip2Error, "IO::Uncompress::Bunzip2: $err",
@@ -151,9 +151,9 @@ EOM
     for my $value ( 1 .. 9 )
     {
         title "$CompressClass - BlockSize100K => $value";
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
         my $bz ;
-        $bz = new IO::Compress::Bzip2($name, BlockSize100K => $value)
+        $bz = IO::Compress::Bzip2->new($name, BlockSize100K => $value)
             or diag $IO::Compress::Bzip2::Bzip2Error ;
         ok $bz, "  bz object ok";
         $bz->write($hello);
@@ -165,9 +165,9 @@ EOM
     for my $value ( 0 .. 250 )
     {
         title "$CompressClass - WorkFactor => $value";
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
         my $bz ;
-        $bz = new IO::Compress::Bzip2($name, WorkFactor => $value);
+        $bz = IO::Compress::Bzip2->new($name, WorkFactor => $value);
         ok $bz, "  bz object ok";
         $bz->write($hello);
         $bz->close($hello);
@@ -178,16 +178,16 @@ EOM
     for my $value ( 0 .. 1 )
     {
         title "$UncompressClass - Small => $value";
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
         my $bz ;
-        $bz = new IO::Compress::Bzip2($name);
+        $bz = IO::Compress::Bzip2->new($name);
         ok $bz, "  bz object ok";
         $bz->write($hello);
         $bz->close($hello);
 
-        my $fil = new $UncompressClass $name,
+        my $fil = $UncompressClass->can('new')->( $UncompressClass, $name,
                                        Append  => 1,
-                                       Small   => $value ;
+                                       Small   => $value );
 
         my $data = '';
         1 while $fil->read($data) > 0;
@@ -200,7 +200,3 @@ EOM
 
 
 1;
-
-
-
-

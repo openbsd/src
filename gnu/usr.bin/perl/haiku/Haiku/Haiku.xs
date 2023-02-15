@@ -23,7 +23,6 @@ static void
 haiku_do_debug_printf(pTHX_ SV *sv,
     void (*printfFunc)(const char*,...))
 {
-    dVAR;
 
     if (!sv)
 	return;
@@ -55,7 +54,6 @@ haiku_do_debug_printf(pTHX_ SV *sv,
 
 XS(haiku_debug_printf)
 {
-    dVAR;
     dXSARGS;
     dORIGMARK;
     SV *sv;
@@ -78,7 +76,6 @@ XS(haiku_debug_printf)
 
 XS(haiku_ktrace_printf)
 {
-    dVAR;
     dXSARGS;
     dORIGMARK;
     SV *sv;
@@ -101,7 +98,6 @@ XS(haiku_ktrace_printf)
 
 XS(haiku_debugger)
 {
-    dVAR;
     dXSARGS;
     dORIGMARK;
     SV *sv;

@@ -27,7 +27,7 @@ so is both a bug fix and an incompatibility.
 
 All digits in a run still have to come from the same set of ten digits.
 
-L<[perl #133547]|https://rt.perl.org/Ticket/Display.html?id=133547>
+L<[GH #16704]|https://github.com/Perl/perl5/issues/16704>
 
 =head1 Modules and Pragmata
 
@@ -75,7 +75,7 @@ To work around that, the initial build of the F<perl> executable expects to
 find F<libperl.dylib> in the build directory, and the library path is then
 adjusted during installation to point to the installed library.
 
-L<[perl #126706]|https://rt.perl.org/Ticket/Display.html?id=126706>
+L<[GH #15057]|https://github.com/Perl/perl5/issues/15057>
 
 =back
 
@@ -99,7 +99,7 @@ to replace the input file, while code like:
 
 will not.  Partly resolves [perl #133659].
 
-L<[perl #133659]|https://rt.perl.org/Ticket/Display.html?id=133659>
+L<[GH #16748]|https://github.com/Perl/perl5/issues/16748>
 
 =item *
 
@@ -114,7 +114,7 @@ because the child's stdin would be closed on exec.  This has now been fixed.
 C<pack "u", "invalid uuencoding"> now properly NUL terminates the zero-length
 SV produced.
 
-L<[perl #132655]|https://rt.perl.org/Ticket/Display.html?id=132655>
+L<[GH #16343]|https://github.com/Perl/perl5/issues/16343>
 
 =item *
 
@@ -122,7 +122,7 @@ Failing to compile a format now aborts compilation.  Like other errors in
 sub-parses this could leave the parser in a strange state, possibly crashing
 perl if compilation continued.
 
-L<[perl #132158]|https://rt.perl.org/Ticket/Display.html?id=132158>
+L<[GH #16169]|https://github.com/Perl/perl5/issues/16169>
 
 =item *
 

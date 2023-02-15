@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 1373;
+use Test::More tests => 1457;
 
 my $class;
 
@@ -122,6 +122,10 @@ __END__
 0xffffffffffffff:72057594037927935
 0x100000000000000:72057594037927936
 0x100000000000001:72057594037927937
+
+0X10:16
+x10:16
+X10:16
 
 NaN:NaN
 +inf:NaN

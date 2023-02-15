@@ -9,7 +9,7 @@ WriteMakefile(NAME => 'Pod::Functions',
 	      LICENSE => 'perl',
 	      PREREQ_PM => {},
 	      ABSTRACT_FROM => 'Functions_pm.PL',
-	      AUTHOR => 'Perl 5 Porters <perlbug@perl.org>',
+	      AUTHOR => 'Perl 5 Porters <perl5-porters@perl.org>',
 	      INSTALLDIRS => 'perl',
 	      PL_FILES => {}, # Stop EU::MM defaulting this to run our PL
 	      PM => {'Functions.pm' => '$(INST_LIBDIR)/Functions.pm'},

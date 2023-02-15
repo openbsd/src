@@ -1,6 +1,6 @@
 package PerlIO;
 
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 
 # Map layer name to package that defines it
 our %alias;
@@ -234,12 +234,6 @@ like C<:utf8>.  An example of a possible use might be:
     # back to un-encoded
 
 A more elegant (and safer) interface is needed.
-
-=item :win32
-
-On Win32 platforms this I<experimental> layer uses the native "handle" IO
-rather than the unix-like numeric file descriptor layer. Known to be
-buggy as of Perl 5.8.2.
 
 =back
 

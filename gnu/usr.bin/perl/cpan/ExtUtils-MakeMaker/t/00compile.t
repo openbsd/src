@@ -5,6 +5,7 @@ BEGIN {
 }
 chdir 't';
 
+use warnings;
 use Test::More;
 
 my $Has_Test_Pod;

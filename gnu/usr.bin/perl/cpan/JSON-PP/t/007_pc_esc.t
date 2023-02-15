@@ -7,6 +7,7 @@
 
 use Test::More;
 use strict;
+use warnings;
 use utf8;
 BEGIN { plan tests => 17 };
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
@@ -16,7 +17,7 @@ use JSON::PP;
 #########################
 my ($js,$obj,$str);
 
-my $pc = new JSON::PP;
+my $pc = JSON::PP->new;
 
 $obj = {test => qq|abc"def|};
 $str = $pc->encode($obj);

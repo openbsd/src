@@ -792,7 +792,7 @@ Perl's future on them, please contact us.
 
 We believe that Perl has long been unable to build on mixed endian
 architectures (such as PDP-11s), and intend to remove any remaining
-support code. Similarly, code supporting the long umaintained GNU
+support code. Similarly, code supporting the long unmaintained GNU
 dld will be removed soon if no-one makes themselves known as an
 active user.
 

@@ -6,12 +6,20 @@
 # -- Jarkko Hietaniemi	since Mar 1997
 # -- Daniel S. Lewart	since Sep 1997
 
+use strict;
+use warnings;
+
 use Math::Complex 1.54;
+
+# they are used later in the test and not exported by Math::Complex
+*_stringify_cartesian = \&Math::Complex::_stringify_cartesian;
+*_stringify_polar     = \&Math::Complex::_stringify_polar;
 
 our $vax_float = (pack("d",1) =~ /^[\x80\x10]\x40/);
 our $has_inf   = !$vax_float;
 
 my ($args, $op, $target, $test, $test_set, $try, $val, $zvalue, @set, @val);
+my ($bad, $z);
 
 $test = 0;
 $| = 1;

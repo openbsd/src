@@ -9,10 +9,13 @@ BEGIN {
 
 use Test::More;
 
+use strict;
+use warnings;
+
 plan tests => 36;
 
 
-$Why = 'Just testing the todo interface.';
+my $Why = 'Just testing the todo interface.';
 
 my $is_todo;
 TODO: {

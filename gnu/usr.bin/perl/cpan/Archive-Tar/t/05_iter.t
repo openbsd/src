@@ -1,8 +1,10 @@
 BEGIN { chdir 't' if -d 't' }
 
-use Test::More 'no_plan';
+use Test::More;
 use strict;
 use lib '../lib';
+
+plan skip_all => "File contains an alien character set" if ord "A" != 65;
 
 my $Class   = 'Archive::Tar';
 my $FClass  = 'Archive::Tar::File';
@@ -63,3 +65,5 @@ for my $index ( \0, 0 .. $#Expect ) {
 	$dotest->("all");
     }
 }
+
+done_testing;

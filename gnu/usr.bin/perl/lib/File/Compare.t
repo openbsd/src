@@ -17,7 +17,7 @@ BEGIN {
   }
 }
 
-use Test::More ( tests => 16 );
+use Test::More;
 use File::Compare qw(compare compare_text);
 
 # Upon success, compare() and compare_text() return a Unix-ish 0
@@ -131,6 +131,8 @@ SKIP: {
     like($@, qr/to\s+undefined/,
         "compare() fails: second argument undefined");
 }
+
+done_testing();
 
 sub get_valid_whitespace {
     return ' ' unless $^O eq 'VMS';

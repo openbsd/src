@@ -7,14 +7,14 @@
 
 struct StdioStore
 {
-	/* astdin...astderr are the amigaos file descriptors */
-	long astdin;
-	long astdout;
-	long astderr;
-	/* oldstdin...oldstderr are the amigados file handles */
-	long oldstdin;
-	long oldstdout;
-	long oldstderr;
+        /* astdin...astderr are the amigaos file descriptors */
+        long astdin;
+        long astdout;
+        long astderr;
+        /* oldstdin...oldstderr are the amigados file handles */
+        long oldstdin;
+        long oldstdout;
+        long oldstderr;
 };
 
 typedef struct StdioStore StdioStore;
@@ -32,12 +32,12 @@ void amigaos_stdio_restore(pTHX_ const StdioStore *store);
  * then pass it through task->tc_UserData or as arg to new pthread */
 struct UserData
 {
-	struct Task *parent;
-	I32 did_pipes;
-	int pp;
-	SV **sp;
-	SV **mark;
-	PerlInterpreter *my_perl;
+        struct Task *parent;
+        I32 did_pipes;
+        int pp;
+        SV **sp;
+        SV **mark;
+        PerlInterpreter *my_perl;
 };
 
 void amigaos_fork_set_userdata(

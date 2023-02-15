@@ -1,21 +1,21 @@
+use strict;
+use warnings;
+
 use IO::Zlib;
 
 sub ok
 {
     my ($no, $ok) = @_ ;
-
-    #++ $total ;
-    #++ $totalBad unless $ok ;
-
     print "ok $no\n" if $ok ;
     print "not ok $no\n" unless $ok ;
 }
 
-$name="test.gz";
+my $name = "test.gz";
 
 print "1..10\n";
 
-$text = "abcd";
+my $text = "abcd";
+my $file;
 
 ok(1, $file = IO::Zlib->new($name, "wb"));
 ok(2, $file->print($text));

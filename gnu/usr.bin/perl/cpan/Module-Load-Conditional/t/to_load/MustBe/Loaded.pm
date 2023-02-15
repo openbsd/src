@@ -1,5 +1,6 @@
 package MustBe::Loaded;
+use strict;
 
-$VERSION = 0.01;
+our $VERSION = 0.01;
 
 1;

@@ -723,7 +723,7 @@ The C<*$glob> on the second line returns a new immutable glob.  That new
 glob is made an alias to C<*bar>.  Then it is discarded.  So the second
 assignment has no effect.
 
-See L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=77810> for
+See L<https://github.com/Perl/perl5/issues/10625> for
 more detail.
 
 =head3 Magic variables outside the main package
@@ -4441,7 +4441,7 @@ take a block as their first argument, like
 
     foo { ... $_ ...} list
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=67694>
+See also: L<https://github.com/Perl/perl5/issues/9798>
 
 =item *
 

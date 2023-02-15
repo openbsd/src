@@ -1,10 +1,6 @@
 #!./perl
 
 BEGIN {
-    unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: not perlio\n";
-	exit 0;
-    }
     require Config;
     if (($Config::Config{'extensions'} !~ m!\bPerlIO/via\b!) ){
         print "1..0 # Skip -- Perl configured without PerlIO::via module\n";

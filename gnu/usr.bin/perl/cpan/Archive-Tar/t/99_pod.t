@@ -16,6 +16,8 @@ find( sub { push @files, File::Spec->catfile(
                     File::Spec->splitdir( $File::Find::dir ), $_
                 ) if /\.p(?:l|m|od)$/ }, File::Spec->catdir(qw(.. blib lib) ));
 
+plan skip_all => "No tests to run" unless scalar @files;
+
 plan tests => scalar @files;
 for my $file ( @files ) {
     pod_file_ok( $file );

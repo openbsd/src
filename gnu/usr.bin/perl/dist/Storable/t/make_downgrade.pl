@@ -90,7 +90,7 @@ lock_hash %uhash;
 
 uuencode_it (\%uhash, "Locked hash with utf8 keys");
 
-my (%pre56, %pre58);
+my %pre58;
 
 while (my ($key, $val) = each %uhash) {
   # hash keys are always stored downgraded to bytes if possible, with a flag
@@ -98,9 +98,6 @@ while (my ($key, $val) = each %uhash) {
   # Whereas scalars are stored as is.
   utf8::encode ($key) if ord $key > 256;
   $pre58{$key} = $val;
-  utf8::encode ($val) unless $val eq "ch\xe5teau";
-  $pre56{$key} = $val;
 
 }
-uuencode_it (\%pre56, "Hash with utf8 keys for pre 5.6");
 uuencode_it (\%pre58, "Hash with utf8 keys for 5.6");

@@ -13,8 +13,6 @@ use Config;
 use Data::Dumper;
 
 BEGIN {
-    plan skip_all => 'Data::Dumper was not built'
-        if $Config{extensions} !~ m{\b Data/Dumper \b}x;
     plan skip_all => 'Need 64-bit pointers for this test'
         if $Config{ptrsize} < 8;
     plan skip_all => 'Need ~10 GiB of core for this test'

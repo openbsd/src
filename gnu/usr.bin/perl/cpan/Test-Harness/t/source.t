@@ -242,11 +242,12 @@ SKIP: {
     my $symlink = File::Spec->catfile( $dir, 'source_link.T' );
     my $source  = TAP::Parser::Source->new;
 
-    eval { symlink( File::Spec->rel2abs($test), $symlink ) };
+    my $did_symlink = eval { symlink( File::Spec->rel2abs($test), $symlink ) };
     if ( my $e = $@ ) {
         diag($@);
         die "aborting test";
     }
+    skip "symlink not successful: $!", 9 unless $did_symlink;
 
     $source->raw( \$symlink );
     my $meta = $source->assemble_meta;

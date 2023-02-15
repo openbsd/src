@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -31,16 +23,19 @@ use Unicode::Collate::Locale;
 
 ok(1);
 
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
 #########################
 
-my $auml = pack 'U', 0xE4;
-my $Auml = pack 'U', 0xC4;
-my $ouml = pack 'U', 0xF6;
-my $Ouml = pack 'U', 0xD6;
-my $uuml = pack 'U', 0xFC;
-my $Uuml = pack 'U', 0xDC;
-my $eses = pack 'U', 0xDF;
-my $Eses = pack 'U', 0x1E9E;
+my $auml = _pack_U(0xE4);
+my $Auml = _pack_U(0xC4);
+my $ouml = _pack_U(0xF6);
+my $Ouml = _pack_U(0xD6);
+my $uuml = _pack_U(0xFC);
+my $Uuml = _pack_U(0xDC);
+my $eses = _pack_U(0xDF);
+my $Eses = _pack_U(0x1E9E);
 
 my $objDeAtPhone = Unicode::Collate::Locale->
     new(locale => 'DE_AT_phonebook', normalization => undef);

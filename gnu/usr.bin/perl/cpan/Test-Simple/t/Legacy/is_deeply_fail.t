@@ -11,6 +11,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 use Test::Builder;
 require Test::Simple::Catch;

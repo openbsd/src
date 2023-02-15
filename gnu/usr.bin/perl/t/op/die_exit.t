@@ -63,7 +63,7 @@ open STDERR, '>', $tempfile or die "Can't open temp error file $tempfile:  $!";
 foreach my $test (@tests) {
     my($bang, $query, $code) = @$test;
     $code ||= 'die;';
-    if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
+    if ($^O eq 'MSWin32' || $^O eq 'VMS') {
         system(qq{$^X -e "\$! = $bang; \$? = $query; $code"});
     }
     else {

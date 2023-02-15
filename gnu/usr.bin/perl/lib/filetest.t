@@ -6,7 +6,7 @@ BEGIN {
 }
 
 use Config;
-use Test::More tests => 15;
+use Test::More;
 
 # these two should be kept in sync with the pragma itself
 # if hint bits are changed there, other things *will* break
@@ -98,3 +98,5 @@ SKIP: {
     unlink $tstfile;
     warn "Can't remove $tstfile: $!" if -e $tstfile;
 }
+
+done_testing();

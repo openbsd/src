@@ -7,7 +7,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 82;
+use Test::More;
 
 my $ro_err = qr/^Modification of a read-only value attempted/;
 
@@ -188,3 +188,5 @@ is( Internals::SvREFCNT($foo), $big_count, "reference count unsigned");
     eval { &Internals::SvREFCNT($foo, 0..3);};
     like($@, qr/\Q$usage\E/);
 }
+
+done_testing();

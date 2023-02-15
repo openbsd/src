@@ -2,7 +2,7 @@
 
 use strict;
 use Config;
- 
+
 BEGIN {
     if(-d "lib" && -f "TEST") {
         if ($Config{'extensions'} !~ /\bDB_File\b/ ) {
@@ -12,7 +12,7 @@ BEGIN {
     }
 }
 
-use DB_File; 
+use DB_File;
 use Fcntl;
 use File::Temp qw(tempdir) ;
 
@@ -25,7 +25,7 @@ our ($dbh, $Dfile, $bad_ones, $FA);
     sub try::TIEARRAY { bless [], "try" }
     sub try::FETCHSIZE { $FA = 1 }
     $FA = 0 ;
-    my @a ; 
+    my @a ;
     tie @a, 'try' ;
     my $a = @a ;
 }
@@ -76,12 +76,12 @@ sub docat
 }
 
 sub docat_del
-{ 
+{
     my $file = shift;
     my $result = docat($file);
     unlink $file ;
     return $result;
-}   
+}
 
 sub safeUntie
 {
@@ -114,7 +114,7 @@ EOM
         print STDERR <<EOM ;
 #
 # You can safely ignore the errors if you're never going to use the
-# broken functionality (recno databases with a modified bval). 
+# broken functionality (recno databases with a modified bval).
 # Otherwise you'll have to upgrade your DB library.
 #
 # If you want to use Berkeley DB version 1, then 1.85 and 1.86 are the
@@ -129,25 +129,25 @@ sub normalise
 {
     return unless $^O eq 'cygwin' ;
     foreach (@_)
-      { s#\r\n#\n#g }     
+      { s#\r\n#\n#g }
 }
 
-BEGIN 
-{ 
-    { 
-        local $SIG{__DIE__} ; 
-        eval { require Data::Dumper ; import Data::Dumper } ; 
+BEGIN
+{
+    {
+        local $SIG{__DIE__} ;
+        eval { require Data::Dumper; Data::Dumper->import(); } ;
     }
- 
+
     if ($@) {
         *Dumper = sub { my $a = shift; return "[ @{ $a } ]" } ;
-    }          
+    }
 }
 
 my $splice_tests = 10 + 12 + 1; # ten regressions, plus the randoms
 my $total_tests = 181 ;
 $total_tests += $splice_tests if $FA ;
-print "1..$total_tests\n";   
+print "1..$total_tests\n";
 
 my $TEMPDIR = tempdir( CLEANUP => 1 );
 chdir $TEMPDIR;
@@ -159,7 +159,7 @@ umask(0);
 
 # Check the interface to RECNOINFO
 
-$dbh = new DB_File::RECNOINFO ;
+$dbh = DB_File::RECNOINFO->new();
 ok(1, ! defined $dbh->{bval}) ;
 ok(2, ! defined $dbh->{cachesize}) ;
 ok(3, ! defined $dbh->{psize}) ;
@@ -297,7 +297,7 @@ my $ok = 1 ;
 my $j = 0 ;
 foreach (@data)
 {
-   $ok = 0, last if $_ ne $h[$j ++] ; 
+   $ok = 0, last if $_ ne $h[$j ++] ;
 }
 ok(52, $ok );
 
@@ -328,7 +328,7 @@ unlink $Dfile;
     # Check bval defaults to \n
 
     my @h = () ;
-    my $dbh = new DB_File::RECNOINFO ;
+    my $dbh = DB_File::RECNOINFO->new();
     ok(59, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
     $h[0] = "abc" ;
     $h[1] = "def" ;
@@ -343,7 +343,7 @@ unlink $Dfile;
     # Change bval
 
     my @h = () ;
-    my $dbh = new DB_File::RECNOINFO ;
+    my $dbh = DB_File::RECNOINFO->new();
     $dbh->{bval} = "-" ;
     ok(62, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
     $h[0] = "abc" ;
@@ -361,7 +361,7 @@ unlink $Dfile;
     # Check R_FIXEDLEN with default bval (space)
 
     my @h = () ;
-    my $dbh = new DB_File::RECNOINFO ;
+    my $dbh = DB_File::RECNOINFO->new();
     $dbh->{flags} = R_FIXEDLEN ;
     $dbh->{reclen} = 5 ;
     ok(65, tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $dbh ) ;
@@ -380,7 +380,7 @@ unlink $Dfile;
     # Check R_FIXEDLEN with user-defined bval
 
     my @h = () ;
-    my $dbh = new DB_File::RECNOINFO ;
+    my $dbh = DB_File::RECNOINFO->new();
     $dbh->{flags} = R_FIXEDLEN ;
     $dbh->{bval} = "-" ;
     $dbh->{reclen} = 5 ;
@@ -428,27 +428,27 @@ unlink $Dfile;
    @ISA=qw(DB_File);
    @EXPORT = @DB_File::EXPORT ;
 
-   sub STORE { 
+   sub STORE {
         my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::STORE($key, $value * 2) ;
    }
 
-   sub FETCH { 
+   sub FETCH {
         my $self = shift ;
         my $key = shift ;
         $self->SUPER::FETCH($key) - 1 ;
    }
 
-   sub put { 
+   sub put {
         my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::put($key, $value * 3) ;
    }
 
-   sub get { 
+   sub get {
         my $self = shift ;
         $self->SUPER::get($_[0], $_[1]) ;
         $_[1] -= 2 ;
@@ -467,7 +467,7 @@ EOM
 
     close FILE  or die "Could not close: $!";
 
-    BEGIN { push @INC, '.'; } 
+    BEGIN { push @INC, '.'; }
     eval 'use SubDB ; ';
     main::ok(72, $@ eq "") ;
     my @h ;
@@ -520,11 +520,11 @@ EOM
 
     # $# sets array to same length
     $self = tie @h, 'DB_File', $Dfile, O_RDWR, 0640, $DB_RECNO ;
-    ok(87, $self) 
+    ok(87, $self)
         or warn "# $DB_File::Error\n";
     if ($FA)
       { $#h = 3 }
-    else 
+    else
       { $self->STORESIZE(4) }
     ok(88, $FA ? $#h == 3 : $self->length() == 4) ;
     undef $self ;
@@ -536,7 +536,7 @@ EOM
     ok(91, $self = tie @h, 'DB_File', $Dfile, O_RDWR, 0640, $DB_RECNO ) ;
     if ($FA)
       { $#h = 6 }
-    else 
+    else
       { $self->STORESIZE(7) }
     ok(92, $FA ? $#h == 6 : $self->length() == 7) ;
     undef $self ;
@@ -548,7 +548,7 @@ EOM
     ok(95, $self = tie @h, 'DB_File', $Dfile, O_RDWR, 0640, $DB_RECNO ) ;
     if ($FA)
       { $#h = 2 }
-    else 
+    else
       { $self->STORESIZE(3) }
     ok(96, $FA ? $#h == 2 : $self->length() == 3) ;
     undef $self ;
@@ -573,23 +573,23 @@ EOM
    {
        my($fk, $sk, $fv, $sv) = @_ ;
 
-       print "# Fetch Key   : expected '$fk' got '$fetch_key'\n" 
+       print "# Fetch Key   : expected '$fk' got '$fetch_key'\n"
            if $fetch_key ne $fk ;
-       print "# Fetch Value : expected '$fv' got '$fetch_value'\n" 
+       print "# Fetch Value : expected '$fv' got '$fetch_value'\n"
            if $fetch_value ne $fv ;
-       print "# Store Key   : expected '$sk' got '$store_key'\n" 
+       print "# Store Key   : expected '$sk' got '$store_key'\n"
            if $store_key ne $sk ;
-       print "# Store Value : expected '$sv' got '$store_value'\n" 
+       print "# Store Value : expected '$sv' got '$store_value'\n"
            if $store_value ne $sv ;
-       print "# \$_          : expected 'original' got '$_'\n" 
+       print "# \$_          : expected 'original' got '$_'\n"
            if $_ ne 'original' ;
 
        return
-           $fetch_key   eq $fk && $store_key   eq $sk && 
+           $fetch_key   eq $fk && $store_key   eq $sk &&
            $fetch_value eq $fv && $store_value eq $sv &&
            $_ eq 'original' ;
    }
-   
+
    ok(99, $db = tie(@h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) );
 
    $db->filter_fetch_key   (sub { $fetch_key = $_ }) ;
@@ -614,15 +614,15 @@ EOM
    ok(104, checkOutput( 0, "", "", "")) ;
 
    # replace the filters, but remember the previous set
-   my ($old_fk) = $db->filter_fetch_key   
+   my ($old_fk) = $db->filter_fetch_key
                         (sub { ++ $_ ; $fetch_key = $_ }) ;
-   my ($old_sk) = $db->filter_store_key   
+   my ($old_sk) = $db->filter_store_key
                         (sub { $_ *= 2 ; $store_key = $_ }) ;
-   my ($old_fv) = $db->filter_fetch_value 
+   my ($old_fv) = $db->filter_fetch_value
                         (sub { $_ = "[$_]"; $fetch_value = $_ }) ;
-   my ($old_sv) = $db->filter_store_value 
+   my ($old_sv) = $db->filter_store_value
                         (sub { s/o/x/g; $store_value = $_ }) ;
-   
+
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $h[1] = "Joe" ;
    #                   fk   sk     fv    sv
@@ -637,7 +637,7 @@ EOM
    ok(108, $db->FIRSTKEY() == 1) ;
    #                   fk   sk     fv    sv
    ok(109, checkOutput( 1, "", "", "")) ;
-   
+
    # put the original filters back
    $db->filter_fetch_key   ($old_fk);
    $db->filter_store_key   ($old_sk);
@@ -679,7 +679,7 @@ EOM
    unlink $Dfile;
 }
 
-{    
+{
     # DBM Filter with a closure
 
     use warnings ;
@@ -697,8 +697,8 @@ EOM
         my $count = 0 ;
         my @kept = () ;
 
-        return sub { ++$count ; 
-                     push @kept, $_ ; 
+        return sub { ++$count ;
+                     push @kept, $_ ;
                      $result{$name} = "$name - $count: [@kept]" ;
                    }
     }
@@ -741,7 +741,7 @@ EOM
     undef $db ;
     ok(144, safeUntie \@h);
     unlink $Dfile;
-}               
+}
 
 {
    # DBM Filter recursion detection
@@ -756,7 +756,7 @@ EOM
 
    eval '$h[1] = 1234' ;
    ok(146, $@ =~ /^recursion detected in filter_store_key at/ );
-   
+
    undef $db ;
    ok(147, safeUntie \@h);
    unlink $Dfile;
@@ -768,7 +768,7 @@ EOM
 
   my $file = "xyzt" ;
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     use warnings FATAL => qw(all);
     use strict ;
@@ -778,7 +778,7 @@ EOM
     unlink $filename ;
 
     my @h ;
-    my $x = tie @h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_RECNO 
+    my $x = tie @h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_RECNO
         or die "Cannot open file 'text': $!\n" ;
 
     # Add a few key/value pairs to the file
@@ -786,7 +786,7 @@ EOM
     $h[1] = "blue" ;
     $h[2] = "yellow" ;
 
-    $FA ? push @h, "green", "black" 
+    $FA ? push @h, "green", "black"
         : $x->push("green", "black") ;
 
     my $elements = $FA ? scalar @h : $x->length ;
@@ -795,7 +795,7 @@ EOM
     my $last = $FA ? pop @h : $x->pop ;
     print "popped $last\n" ;
 
-    $FA ? unshift @h, "white" 
+    $FA ? unshift @h, "white"
         : $x->unshift("white") ;
     my $first = $FA ? shift @h : $x->shift ;
     print "shifted $first\n" ;
@@ -811,7 +811,7 @@ EOM
     untie @h ;
 
     unlink $filename ;
-  }  
+  }
 
   ok(148, docat_del($file) eq <<'EOM') ;
 The array contains 5 entries
@@ -824,21 +824,21 @@ EOM
 
   my $save_output = "xyzt" ;
   {
-    my $redirect = new Redirect $save_output ;
+    my $redirect = Redirect->new( $save_output );
 
     use warnings FATAL => qw(all);
     use strict ;
     our (@h, $H, $file, $i);
     use DB_File ;
     use Fcntl ;
-    
+
     $file = "text" ;
 
     unlink $file ;
 
-    $H = tie @h, "DB_File", $file, O_RDWR|O_CREAT, 0640, $DB_RECNO 
+    $H = tie @h, "DB_File", $file, O_RDWR|O_CREAT, 0640, $DB_RECNO
         or die "Cannot open file $file: $!\n" ;
-    
+
     # first create a text file to play with
     $h[0] = "zero" ;
     $h[1] = "one" ;
@@ -846,12 +846,12 @@ EOM
     $h[3] = "three" ;
     $h[4] = "four" ;
 
-    
+
     # Print the records in order.
     #
     # The length method is needed here because evaluating a tied
     # array in a scalar context does not return the number of
-    # elements in the array.  
+    # elements in the array.
 
     print "\nORIGINAL\n" ;
     foreach $i (0 .. $H->length - 1) {
@@ -887,16 +887,16 @@ EOM
     # same again, but use the API functions instead
     print "\nREVERSE again\n" ;
     my ($s, $k, $v)  = (0, 0, 0) ;
-    for ($s = $H->seq($k, $v, R_LAST) ; 
-             $s == 0 ; 
+    for ($s = $H->seq($k, $v, R_LAST) ;
+             $s == 0 ;
              $s = $H->seq($k, $v, R_PREV))
       { print "$k: $v\n" }
 
     undef $H ;
-    untie @h ;    
+    untie @h ;
 
     unlink $file ;
-  }  
+  }
 
   ok(149, docat_del($save_output) eq <<'EOM') ;
 
@@ -926,14 +926,14 @@ REVERSE again
 1: New One
 0: first
 EOM
-   
+
 }
 
 {
     # Bug ID 20001013.009
     #
     # test that $hash{KEY} = undef doesn't produce the warning
-    #     Use of uninitialized value in null operation 
+    #     Use of uninitialized value in null operation
     use warnings ;
     use strict ;
     use DB_File ;
@@ -942,8 +942,8 @@ EOM
     my @h ;
     my $a = "";
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
-    
-    tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
+
+    tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO
         or die "Can't open file: $!\n" ;
     $h[0] = undef;
     ok(150, $a eq "") ;
@@ -962,8 +962,8 @@ EOM
 
     unlink $Dfile;
     my @h ;
-    
-    tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
+
+    tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO
         or die "Can't open file: $!\n" ;
     @h = (); ;
     ok(152, $a eq "") ;
@@ -1064,7 +1064,7 @@ EOM
     # Regression Test for bug 30237
     # Check that substr can be used in the key to db_put
     # and that db_put does not trigger the warning
-    # 
+    #
     #     Use of uninitialized value in subroutine entry
 
 
@@ -1090,7 +1090,7 @@ EOM
         $db->put(substr($key,0, 1), $value) ;
     }
 
-    ok 170, $warned eq '' 
+    ok 170, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # db-put with substr of value
@@ -1103,7 +1103,7 @@ EOM
         $db->put($ix, substr($value,0)) ;
     }
 
-    ok 171, $warned eq '' 
+    ok 171, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # via the tied array is not a problem, but check anyway
@@ -1117,7 +1117,7 @@ EOM
         $h[substr($key,0,1)] = $value ;
     }
 
-    ok 172, $warned eq '' 
+    ok 172, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # via the tied array is not a problem, but check anyway
@@ -1131,7 +1131,7 @@ EOM
         $h[$ix] = substr($value,0) ;
     }
 
-    ok 173, $warned eq '' 
+    ok 173, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     my %bad = () ;
@@ -1141,7 +1141,7 @@ EOM
          $status = $db->seq($key, $value, R_NEXT ) ) {
 
         #print "# key [$key] value [$value]\n" ;
-        if (defined $remember{$key} && defined $value && 
+        if (defined $remember{$key} && defined $value &&
              $remember{$key} eq $value) {
             delete $remember{$key} ;
         }
@@ -1149,7 +1149,7 @@ EOM
             $bad{$key} = $value ;
         }
     }
-    
+
     ok 174, keys %bad == 0 ;
     ok 175, keys %remember == 0 ;
 
@@ -1162,7 +1162,7 @@ EOM
     $status = $db->put(undef, $value) ;
     ok 176, $status == 0
       or print "# put failed - status $status\n";
-    ok 177, $warned eq '' 
+    ok 177, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
     $warned = '';
 
@@ -1173,7 +1173,7 @@ EOM
         or print "# get failed - status $status\n" ;
     ok(179, $db->get(undef, $value) == 0) or print "# get failed\n" ;
     ok 180, $value eq 'fred' or print "# got [$value]\n" ;
-    ok 181, $warned eq '' 
+    ok 181, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
     $warned = '';
 
@@ -1200,8 +1200,8 @@ exit unless $FA ;
 
     unlink $Dfile;
     my @tied ;
-    
-    tie @tied, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
+
+    tie @tied, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO
         or die "Can't open file: $!\n" ;
 
     # uninitialized offset
@@ -1261,15 +1261,15 @@ exit unless $FA ;
     unlink $Dfile;
 }
 
-# 
+#
 # These are a few regression tests: bundles of five arguments to pass
 # to test_splice().  The first four arguments correspond to those
 # given to splice(), and the last says which context to call it in
 # (scalar, list or void).
-# 
+#
 # The expected result is not needed because we get that by running
 # Perl's built-in splice().
-# 
+#
 my @tests = ([ [ 'falsely', 'dinosaur', 'remedy', 'commotion',
                  'rarely', 'paleness' ],
                -4, -2,
@@ -1309,7 +1309,7 @@ my @tests = ([ [ 'falsely', 'dinosaur', 'remedy', 'commotion',
                undef, undef,
                [ 'otrb', 'stje', 'ixrpw', 'vxfx', 'lhhf' ],
                'scalar' ],
-             
+
              [ [ 'riheb' ], -8, undef, [], 'void' ],
 
              [ [ 'uft', 'qnxs', '' ],
@@ -1355,7 +1355,7 @@ else {
     ok($testnum++, not $failed);
 }
 
-die "testnum ($testnum) != total_tests ($total_tests) + 1" 
+die "testnum ($testnum) != total_tests ($total_tests) + 1"
     if $testnum != $total_tests + 1;
 
 exit ;
@@ -1363,21 +1363,21 @@ exit ;
 # Subroutines for SPLICE testing
 
 # test_splice()
-# 
+#
 # Test the new splice() against Perl's built-in one.  The first four
 # parameters are those passed to splice(), except that the lists must
 # be (explicitly) passed by reference, and are not actually modified.
 # (It's just a test!)  The last argument specifies the context in
 # which to call the functions: 'list', 'scalar', or 'void'.
-# 
+#
 # Returns:
 #   undef, if the two splices give the same results for the given
 #     arguments and context;
-# 
+#
 #   an error message showing the difference, otherwise.
-# 
+#
 # Reads global variable $tmp.
-# 
+#
 sub test_splice {
     die 'usage: test_splice(array, offset, length, list, context)' if @_ != 5;
     my ($array, $offset, $length, $list, $context) = @_;
@@ -1385,20 +1385,20 @@ sub test_splice {
     my @list = @$list;
 
     unlink $tmp;
-    
+
     my @h;
     my $H = tie @h, 'DB_File', $tmp, O_CREAT|O_RDWR, 0644, $DB_RECNO
       or die "cannot open $tmp: $!";
 
     my $i = 0;
     foreach ( @array ) { $h[$i++] = $_ }
-    
+
     return "basic DB_File sanity check failed"
       if list_diff(\@array, \@h);
 
     # Output from splice():
     # Returned value (munged a bit), error msg, warnings
-    # 
+    #
     my ($s_r, $s_error, @s_warnings);
 
     my $gather_warning = sub { push @s_warnings, $_[0] };
@@ -1491,7 +1491,7 @@ sub test_splice {
     while (@s_warnings) {
         my $sw  = shift @s_warnings;
         my $msw = shift @ms_warnings;
-        
+
         if (defined $sw and defined $msw) {
             $msw =~ s/ \(.+\)$//;
             $msw =~ s/ in splice$// if $] < 5.006;
@@ -1506,10 +1506,10 @@ sub test_splice {
             return "one warning defined, another undef";
         }
     }
-    
+
     undef $H;
     untie @h;
-    
+
     open(TEXT, $tmp) or die "cannot open $tmp: $!";
     @h = <TEXT>; normalise @h; chomp @h;
     close TEXT or die "cannot close $tmp: $!";
@@ -1532,10 +1532,10 @@ sub test_splice {
 #   reference to second list
 #
 # Returns true iff they differ.  Only works for lists of (string or
-# undef). 
-# 
+# undef).
+#
 # Surely there is a better way to do this?
-# 
+#
 sub list_diff {
     die 'usage: list_diff(ref to first list, ref to second list)'
       if @_ != 2;
@@ -1555,15 +1555,15 @@ sub list_diff {
         }
     }
     return 0;
-} 
+}
 
 
 # rand_test()
-# 
+#
 # Think up a random ARRAY, OFFSET, LENGTH, LIST, and context.
 # ARRAY or LIST might be empty, and OFFSET or LENGTH might be
 # undefined.  Return a 'test' - a listref of these five things.
-# 
+#
 sub rand_test {
     die 'usage: rand_test()' if @_;
     my @contexts = qw<list scalar void>;
@@ -1596,5 +1596,3 @@ sub rand_word {
     }
     return $r;
 }
-
-

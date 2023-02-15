@@ -1,32 +1,37 @@
+use strict;
+use warnings;
+
 use IO::Zlib;
 
 sub ok
 {
     my ($no, $ok) = @_ ;
-
-    #++ $total ;
-    #++ $totalBad unless $ok ;
-
     print "ok $no\n" if $ok ;
     print "not ok $no\n" unless $ok ;
 }
 
 print "1..10\n";
 
-$hello = <<EOM ;
+my $hello = <<EOM ;
 hello world
 this is a test
 EOM
 
-$name = "test$$";
+my $name = "test$$";
 
-if (open(FH, ">$name")) {
+if (open(FH, ">$name"))
+{
     binmode FH;
     print FH $hello;
     close FH;
-} else {
+}
+else
+{
     die "$name: $!";
 }
+
+my $file;
+my $uncomp;
 
 ok(1, $file = IO::Zlib->new());
 ok(2, $file->open($name, "rb"));
@@ -42,4 +47,3 @@ unlink($name);
 ok(9, $hello eq $uncomp);
 
 ok(10, !defined(IO::Zlib->new($name, "rb")));
-

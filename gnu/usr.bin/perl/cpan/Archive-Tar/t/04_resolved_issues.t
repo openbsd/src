@@ -157,7 +157,10 @@ use_ok( $FileClass );
 ### bug #43513: [PATCH] Accept wrong checksums from SunOS and HP-UX tar
 ### like GNU tar does. See here for details:
 ### http://www.gnu.org/software/tar/manual/tar.html#SEC139
-{   ok( 1,                      "Testing bug 43513" );
+SKIP: {
+    skip "File contains an alien character set", 5 if ord "A" != 65;
+
+    ok( 1,                      "Testing bug 43513" );
 
     my $src = File::Spec->catfile( qw[src header signed.tar] );
     my $tar = $Class->new;

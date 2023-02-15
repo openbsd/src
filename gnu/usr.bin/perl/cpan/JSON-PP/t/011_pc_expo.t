@@ -3,6 +3,7 @@
 
 use Test::More;
 use strict;
+use warnings;
 BEGIN { plan tests => 8 + 2 };
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
@@ -10,7 +11,7 @@ use JSON::PP;
 
 #########################
 my ($js,$obj);
-my $pc = new JSON::PP;
+my $pc = JSON::PP->new;
 
 $js  = q|[-12.34]|;
 $obj = $pc->decode($js);

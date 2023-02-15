@@ -10,8 +10,8 @@ time_t Time_Zero = 0;
 
 /* Visual C++ 2008's difftime() can't do negative times */
 double my_difftime(time_t left, time_t right) {
-	double diff = (double)left - (double)right;
-	return diff;
+        double diff = (double)left - (double)right;
+        return diff;
 }
 
 void check_date_max( struct tm * (*date_func)(const time_t *), char *func_name ) {

@@ -1,5 +1,5 @@
-#ifndef PERL_SEEN_HV_MACRO_H /* compile once */
-#define PERL_SEEN_HV_MACRO_H
+#ifndef PERL_SEEN_HV_MACRO_H_ /* compile once */
+#define PERL_SEEN_HV_MACRO_H_
 
 #if IVSIZE == 8
 #define CAN64BITHASH
@@ -31,7 +31,7 @@
 
 #ifndef U8TO16_LE
   #define _shifted_octet(type,ptr,idx,shift) (((type)(((U8*)(ptr))[(idx)]))<<(shift))
-    #ifdef USE_UNALIGNED_PTR_DEREF
+    #if defined(USE_UNALIGNED_PTR_DEREF) && (BYTEORDER == 0x1234 || BYTEORDER == 0x12345678)
         #define U8TO16_LE(ptr)   (*((const U16*)(ptr)))
         #define U8TO32_LE(ptr)   (*((const U32*)(ptr)))
         #define U8TO64_LE(ptr)   (*((const U64*)(ptr)))

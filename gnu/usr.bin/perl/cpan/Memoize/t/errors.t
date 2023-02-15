@@ -21,7 +21,7 @@ $n = 4;
 my $dummyfile = './dummydb';
 use Fcntl;
 my %args = ( DB_File => [],
-             GDBM_File => [$dummyfile, 2, 0666],
+             GDBM_File => [$dummyfile, \&GDBM_File::GDBM_NEWDB, 0666],
              ODBM_File => [$dummyfile, O_RDWR|O_CREAT, 0666],
              NDBM_File => [$dummyfile, O_RDWR|O_CREAT, 0666],
              SDBM_File => [$dummyfile, O_RDWR|O_CREAT, 0666],
@@ -29,7 +29,7 @@ my %args = ( DB_File => [],
 for $mod (qw(DB_File GDBM_File SDBM_File ODBM_File NDBM_File)) {
   eval {
     require "$mod.pm";
-    tie my %cache => $mod, @{$args{$mod}};
+    tie my %cache => $mod, map { (ref($_) eq 'CODE') ? &$_ : $_ } @{$args{$mod}};
     memoize(sub {}, LIST_CACHE => [HASH => \%cache ]);
   };
   print $@ =~ /can only store scalars/

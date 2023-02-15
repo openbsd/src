@@ -35,7 +35,7 @@ sub run
     {
         # Check that the class destructor will call close
 
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
 
         my $hello = <<EOM ;
 hello world
@@ -44,7 +44,7 @@ EOM
 
 
         {
-          ok my $x = new $CompressClass $name, -AutoClose => 1  ;
+          ok my $x = $CompressClass->can('new')->( $CompressClass, $name, -AutoClose => 1 );
 
           ok $x->write($hello) ;
         }
@@ -56,59 +56,59 @@ EOM
         # Tied filehandle destructor
 
 
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
 
         my $hello = <<EOM ;
 hello world
 this is a test
 EOM
 
-        my $fh = new IO::File "> $name" ;
+        my $fh = IO::File->new( "> $name" );
 
         {
-          ok my $x = new $CompressClass $fh, -AutoClose => 1  ;
+          ok my $x = $CompressClass->can('new')->( $CompressClass, $fh, -AutoClose => 1 );
 
           $x->write($hello) ;
         }
 
         ok anyUncompress($name) eq $hello ;
     }
-    
+
     {
         title "Testing DESTROY doesn't clobber \$! etc ";
 
-        my $lex = new LexFile my $name ;
+        my $lex = LexFile->new( my $name );
 
         my $out;
         my $result;
-        
+
         {
-            ok my $z = new $CompressClass($name); 
+            ok my $z = $CompressClass->can('new')->( $CompressClass, $name );
             $z->write("abc") ;
             $! = 22 ;
 
             cmp_ok $!, '==', 22, '  $! is 22';
         }
-        
+
         cmp_ok $!, '==', 22, "  \$! has not been changed by $CompressClass destructor";
 
-                
+
         {
                 my $uncomp;
-                ok my $x = new $UncompressClass($name, -Append => 1)  ;
-                
+                ok my $x = $UncompressClass->can('new')->( $UncompressClass, $name, -Append => 1)  ;
+
                 my $len ;
                 1 while ($len = $x->read($result)) > 0 ;
-                
+
                 $! = 22 ;
 
                 cmp_ok $!, '==', 22, '  $! is 22';
-        }    
-           
+        }
+
         cmp_ok $!, '==', 22, "  \$! has not been changed by $UncompressClass destructor";
-                
+
         is $result, "abc", "  Got uncompressed content ok";
- 
+
     }
 }
 

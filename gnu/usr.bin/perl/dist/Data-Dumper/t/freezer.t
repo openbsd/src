@@ -3,16 +3,9 @@
 # test a few problems with the Freezer option, not a complete Freezer
 # test suite yet
 
-BEGIN {
-    require Config; import Config;
-    no warnings 'once';
-    if ($Config{'extensions'} !~ /\bData\/Dumper\b/) {
-        print "1..0 # Skip: Data::Dumper was not built\n";
-        exit 0;
-    }
-}
-
 use strict;
+use warnings;
+
 use Test::More tests =>  8;
 use Data::Dumper;
 use lib qw( ./t/lib );

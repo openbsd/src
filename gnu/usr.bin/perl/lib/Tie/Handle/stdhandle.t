@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 29;
+use Test::More;
 
 use_ok('Tie::StdHandle');
 
@@ -87,3 +87,5 @@ ok(eof($f), "eof");
 ok(close($f), "close");
 
 unlink("afile");
+
+done_testing();

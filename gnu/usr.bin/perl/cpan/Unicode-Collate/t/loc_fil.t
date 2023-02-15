@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -62,8 +57,8 @@ $objFil->change(level => 3);
 ok($objFil->lt("ng", "Ng"));
 ok($objFil->lt("Ng", "NG"));
 ok($objFil->lt("n\x{303}", "N\x{303}"));
-ok($objFil->eq("n\x{303}", pack('U', 0xF1)));
-ok($objFil->eq("N\x{303}", pack('U', 0xD1)));
+ok($objFil->eq("n\x{303}", _pack_U(0xF1)));
+ok($objFil->eq("N\x{303}", _pack_U(0xD1)));
 
 # 16
 

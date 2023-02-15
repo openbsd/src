@@ -3,7 +3,7 @@
 use warnings;
 use strict;
 use Config;
- 
+
 BEGIN {
     if(-d "lib" && -f "TEST") {
         if ($Config{'extensions'} !~ /\bDB_File\b/ ) {
@@ -29,7 +29,7 @@ EOM
     }
 }
 
-use DB_File; 
+use DB_File;
 use Fcntl;
 use File::Temp qw(tempdir) ;
 
@@ -41,7 +41,7 @@ sub ok
 {
     my $no = shift ;
     my $result = shift ;
- 
+
     print "not " unless $result ;
     print "ok $no\n" ;
 }
@@ -84,7 +84,7 @@ sub lexical
 }
 
 sub docat
-{ 
+{
     my $file = shift;
     local $/ = undef ;
     open(CAT,$file) || die "Cannot open $file: $!";
@@ -92,20 +92,20 @@ sub docat
     close(CAT);
     $result = normalise($result) ;
     return $result ;
-}   
+}
 
 sub docat_del
-{ 
+{
     my $file = shift;
     my $result = docat($file);
     unlink $file ;
     return $result ;
-}   
+}
 
 sub normalise
 {
     my $data = shift ;
-    $data =~ s#\r\n#\n#g 
+    $data =~ s#\r\n#\n#g
         if $^O eq 'cygwin' ;
 
     return $data ;
@@ -123,7 +123,7 @@ sub safeUntie
 
 
 my $db185mode =  ($DB_File::db_version == 1 && ! $DB_File::db_185_compat) ;
-my $null_keys_allowed = ($DB_File::db_ver < 2.004010 
+my $null_keys_allowed = ($DB_File::db_ver < 2.004010
                                 || $DB_File::db_ver >= 3.1 );
 
 my $TEMPDIR = tempdir( CLEANUP => 1 );
@@ -136,7 +136,7 @@ umask(0);
 
 # Check the interface to BTREEINFO
 
-my $dbh = new DB_File::BTREEINFO ;
+my $dbh = DB_File::BTREEINFO->new();
 ok(1, ! defined $dbh->{flags}) ;
 ok(2, ! defined $dbh->{cachesize}) ;
 ok(3, ! defined $dbh->{psize}) ;
@@ -311,11 +311,11 @@ ok(33, join(':',200..400) eq join(':',@foo) );
 
 # Check R_NOOVERWRITE flag will make put fail when attempting to overwrite
 # an existing record.
- 
+
 my $status = $X->put( 'x', 'newvalue', R_NOOVERWRITE) ;
 ok(34, $status == 1 );
- 
-# check that the value of the key 'x' has not been changed by the 
+
+# check that the value of the key 'x' has not been changed by the
 # previous test
 ok(35, $h{'x'} eq 'X' );
 
@@ -414,7 +414,7 @@ $status = $X->get('y', $value) ;
 ok(63, 1) ; # hard-wire to always pass. the previous test ($status == 1)
             # only worked because of a bug in 1.85/6
 
-# use seq to walk forwards through a file 
+# use seq to walk forwards through a file
 
 $status = $X->seq($key, $value, R_FIRST) ;
 ok(64, $status == 0 );
@@ -429,7 +429,7 @@ while (($status = $X->seq($key, $value, R_NEXT)) == 0)
 ok(65, $status == 1 );
 ok(66, $ok == 1 );
 
-# use seq to walk backwards through a file 
+# use seq to walk backwards through a file
 $status = $X->seq($key, $value, R_LAST) ;
 ok(67, $status == 0 );
 $previous = $key ;
@@ -480,7 +480,7 @@ undef $Y ;
 untie %h ;
 
 # Duplicate keys
-my $bt = new DB_File::BTREEINFO ;
+my $bt = DB_File::BTREEINFO->new();
 $bt->{flags} = R_DUP ;
 my ($YY, %hh);
 ok(74, $YY = tie(%hh, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $bt )) ;
@@ -519,7 +519,7 @@ my %smith = $YY->get_dup('Smith', 1) ;
 ok(82, keys %smith == 1 && $smith{'John'}) ;
 
 my %wall = $YY->get_dup('Wall', 1) ;
-ok(83, keys %wall == 3 && $wall{'Larry'} == 1 && $wall{'Stone'} == 1 
+ok(83, keys %wall == 3 && $wall{'Larry'} == 1 && $wall{'Stone'} == 1
                 && $wall{'Brick'} == 2);
 
 undef $YY ;
@@ -531,53 +531,53 @@ unlink $Dfile;
 my $Dfile1 = "btree1" ;
 my $Dfile2 = "btree2" ;
 my $Dfile3 = "btree3" ;
- 
-my $dbh1 = new DB_File::BTREEINFO ;
-$dbh1->{compare} = sub { 
+
+my $dbh1 = DB_File::BTREEINFO->new();
+$dbh1->{compare} = sub {
         no warnings 'numeric' ;
-        $_[0] <=> $_[1] } ; 
- 
-my $dbh2 = new DB_File::BTREEINFO ;
+        $_[0] <=> $_[1] } ;
+
+my $dbh2 = DB_File::BTREEINFO->new();
 $dbh2->{compare} = sub { $_[0] cmp $_[1] } ;
- 
-my $dbh3 = new DB_File::BTREEINFO ;
+
+my $dbh3 = DB_File::BTREEINFO->new();
 $dbh3->{compare} = sub { length $_[0] <=> length $_[1] } ;
- 
- 
+
+
 my (%g, %k);
 tie(%h, 'DB_File',$Dfile1, O_RDWR|O_CREAT, 0640, $dbh1 ) or die $!;
 tie(%g, 'DB_File',$Dfile2, O_RDWR|O_CREAT, 0640, $dbh2 ) or die $!;
 tie(%k, 'DB_File',$Dfile3, O_RDWR|O_CREAT, 0640, $dbh3 ) or die $!;
- 
+
 my @Keys = qw( 0123 12 -1234 9 987654321 def  ) ;
 my (@srt_1, @srt_2, @srt_3);
-{ 
+{
   no warnings 'numeric' ;
-  @srt_1 = sort { $a <=> $b } @Keys ; 
+  @srt_1 = sort { $a <=> $b } @Keys ;
 }
 @srt_2 = sort { $a cmp $b } @Keys ;
 @srt_3 = sort { length $a <=> length $b } @Keys ;
- 
+
 foreach (@Keys) {
     $h{$_} = 1 ;
     $g{$_} = 1 ;
     $k{$_} = 1 ;
 }
- 
+
 sub ArrayCompare
 {
     my($a, $b) = @_ ;
- 
+
     return 0 if @$a != @$b ;
- 
+
     foreach (0 .. @$a - 1)
     {
         return 0 unless $$a[$_] eq $$b[$_];
     }
- 
+
     1 ;
 }
- 
+
 ok(84, ArrayCompare (\@srt_1, [keys %h]) );
 ok(85, ArrayCompare (\@srt_2, [keys %g]) );
 ok(86, ArrayCompare (\@srt_3, [keys %k]) );
@@ -646,27 +646,27 @@ unlink $Dfile1 ;
    @ISA=qw(DB_File);
    @EXPORT = @DB_File::EXPORT ;
 
-   sub STORE { 
+   sub STORE {
         my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::STORE($key, $value * 2) ;
    }
 
-   sub FETCH { 
+   sub FETCH {
         my $self = shift ;
         my $key = shift ;
         $self->SUPER::FETCH($key) - 1 ;
    }
 
-   sub put { 
+   sub put {
         my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::put($key, $value * 3) ;
    }
 
-   sub get { 
+   sub get {
         my $self = shift ;
         $self->SUPER::get($_[0], $_[1]) ;
         $_[1] -= 2 ;
@@ -685,7 +685,7 @@ EOM
 
     close FILE ;
 
-    BEGIN { push @INC, '.'; }    
+    BEGIN { push @INC, '.'; }
     eval 'use SubDB ; ';
     main::ok(91, $@ eq "") ;
     my %h ;
@@ -731,11 +731,11 @@ EOM
    {
        my($fk, $sk, $fv, $sv) = @_ ;
        return
-           $fetch_key eq $fk && $store_key eq $sk && 
+           $fetch_key eq $fk && $store_key eq $sk &&
            $fetch_value eq $fv && $store_value eq $sv &&
            $_ eq 'original' ;
    }
-   
+
    ok(101, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE ) );
 
    $db->filter_fetch_key   (sub { $fetch_key = $_ }) ;
@@ -760,15 +760,15 @@ EOM
    ok(106, checkOutput( "fred", "", "", "")) ;
 
    # replace the filters, but remember the previous set
-   my ($old_fk) = $db->filter_fetch_key   
+   my ($old_fk) = $db->filter_fetch_key
                         (sub { $_ = uc $_ ; $fetch_key = $_ }) ;
-   my ($old_sk) = $db->filter_store_key   
+   my ($old_sk) = $db->filter_store_key
                         (sub { $_ = lc $_ ; $store_key = $_ }) ;
-   my ($old_fv) = $db->filter_fetch_value 
+   my ($old_fv) = $db->filter_fetch_value
                         (sub { $_ = "[$_]"; $fetch_value = $_ }) ;
-   my ($old_sv) = $db->filter_store_value 
+   my ($old_sv) = $db->filter_store_value
                         (sub { s/o/x/g; $store_value = $_ }) ;
-   
+
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $h{"Fred"} = "Joe" ;
    #                   fk   sk     fv    sv
@@ -825,7 +825,7 @@ EOM
    unlink $Dfile;
 }
 
-{    
+{
     # DBM Filter with a closure
 
     use warnings ;
@@ -843,8 +843,8 @@ EOM
         my $count = 0 ;
         my @kept = () ;
 
-        return sub { ++$count ; 
-                     push @kept, $_ ; 
+        return sub { ++$count ;
+                     push @kept, $_ ;
                      $result{$name} = "$name - $count: [@kept]" ;
                    }
     }
@@ -887,7 +887,7 @@ EOM
     undef $db ;
     untie %h;
     unlink $Dfile;
-}               
+}
 
 {
    # DBM Filter recursion detection
@@ -902,7 +902,7 @@ EOM
 
    eval '$h{1} = 1234' ;
    ok(146, $@ =~ /^recursion detected in filter_store_key at/ );
-   
+
    undef $db ;
    untie %h;
    unlink $Dfile;
@@ -915,7 +915,7 @@ EOM
 
   my $file = "xyzt" ;
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 1
     ###
@@ -936,7 +936,7 @@ EOM
     $DB_BTREE->{'compare'} = \&Compare ;
 
     unlink "tree" ;
-    tie %h, "DB_File", "tree", O_RDWR|O_CREAT, 0640, $DB_BTREE 
+    tie %h, "DB_File", "tree", O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open file 'tree': $!\n" ;
 
     # Add a key/value pair to the file
@@ -957,7 +957,7 @@ EOM
     untie %h ;
 
     unlink "tree" ;
-  }  
+  }
 
   delete $DB_BTREE->{'compare'} ;
 
@@ -966,9 +966,9 @@ mouse
 Smith
 Wall
 EOM
-   
+
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 2
     ###
@@ -981,13 +981,13 @@ EOM
 
     $filename = "tree" ;
     unlink $filename ;
- 
+
     # Enable duplicate records
     $DB_BTREE->{'flags'} = R_DUP ;
- 
-    tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
+
+    tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
- 
+
     # Add some key/value pairs to the file
     $h{'Wall'} = 'Larry' ;
     $h{'Wall'} = 'Brick' ; # Note the duplicate key
@@ -1003,7 +1003,7 @@ EOM
     untie %h ;
 
     unlink $filename ;
-  }  
+  }
 
   ok(148, docat_del($file) eq ($db185mode ? <<'EOM' : <<'EOM') ) ;
 Smith -> John
@@ -1020,7 +1020,7 @@ mouse -> mickey
 EOM
 
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 3
     ###
@@ -1028,25 +1028,25 @@ EOM
     use warnings FATAL => qw(all) ;
     use strict ;
     use DB_File ;
- 
+
     my ($filename, $x, %h, $status, $key, $value);
 
     $filename = "tree" ;
     unlink $filename ;
- 
+
     # Enable duplicate records
     $DB_BTREE->{'flags'} = R_DUP ;
- 
-    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
+
+    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
- 
+
     # Add some key/value pairs to the file
     $h{'Wall'} = 'Larry' ;
     $h{'Wall'} = 'Brick' ; # Note the duplicate key
     $h{'Wall'} = 'Brick' ; # Note the duplicate key and value
     $h{'Smith'} = 'John' ;
     $h{'mouse'} = 'mickey' ;
- 
+
     # iterate through the btree using seq
     # and print each key/value pair.
     $key = $value = 0 ;
@@ -1054,8 +1054,8 @@ EOM
          $status == 0 ;
          $status = $x->seq($key, $value, R_NEXT) )
       {  print "$key -> $value\n" }
- 
- 
+
+
     undef $x ;
     untie %h ;
   }
@@ -1076,7 +1076,7 @@ EOM
 
 
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 4
     ###
@@ -1084,17 +1084,17 @@ EOM
     use warnings FATAL => qw(all) ;
     use strict ;
     use DB_File ;
- 
+
     my ($filename, $x, %h);
 
     $filename = "tree" ;
- 
+
     # Enable duplicate records
     $DB_BTREE->{'flags'} = R_DUP ;
- 
-    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
+
+    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
- 
+
     my $cnt  = $x->get_dup("Wall") ;
     print "Wall occurred $cnt times\n" ;
 
@@ -1107,10 +1107,10 @@ EOM
 
     @list = $x->get_dup("Smith") ;
     print "Smith => [@list]\n" ;
- 
+
     @list = $x->get_dup("Dog") ;
-    print "Dog => [@list]\n" ; 
- 
+    print "Dog => [@list]\n" ;
+
     undef $x ;
     untie %h ;
   }
@@ -1125,7 +1125,7 @@ Dog => []
 EOM
 
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 5
     ###
@@ -1133,23 +1133,23 @@ EOM
     use warnings FATAL => qw(all) ;
     use strict ;
     use DB_File ;
- 
+
     my ($filename, $x, %h, $found);
 
     $filename = "tree" ;
- 
+
     # Enable duplicate records
     $DB_BTREE->{'flags'} = R_DUP ;
- 
-    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
+
+    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
 
-    $found = ( $x->find_dup("Wall", "Larry") == 0 ? "" : "not") ; 
+    $found = ( $x->find_dup("Wall", "Larry") == 0 ? "" : "not") ;
     print "Larry Wall is $found there\n" ;
-    
-    $found = ( $x->find_dup("Wall", "Harry") == 0 ? "" : "not") ; 
+
+    $found = ( $x->find_dup("Wall", "Harry") == 0 ? "" : "not") ;
     print "Harry Wall is $found there\n" ;
-    
+
     undef $x ;
     untie %h ;
   }
@@ -1160,7 +1160,7 @@ Harry Wall is not there
 EOM
 
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 6
     ###
@@ -1168,22 +1168,22 @@ EOM
     use warnings FATAL => qw(all) ;
     use strict ;
     use DB_File ;
- 
+
     my ($filename, $x, %h, $found);
 
     $filename = "tree" ;
- 
+
     # Enable duplicate records
     $DB_BTREE->{'flags'} = R_DUP ;
- 
-    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
+
+    $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
 
     $x->del_dup("Wall", "Larry") ;
 
-    $found = ( $x->find_dup("Wall", "Larry") == 0 ? "" : "not") ; 
+    $found = ( $x->find_dup("Wall", "Larry") == 0 ? "" : "not") ;
     print "Larry Wall is $found there\n" ;
-    
+
     undef $x ;
     untie %h ;
 
@@ -1195,7 +1195,7 @@ Larry Wall is not there
 EOM
 
   {
-    my $redirect = new Redirect $file ;
+    my $redirect = Redirect->new( $file );
 
     # BTREE example 7
     ###
@@ -1221,22 +1221,22 @@ EOM
 
     $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE
         or die "Cannot open $filename: $!\n";
- 
+
     # Add some key/value pairs to the file
     $h{'mouse'} = 'mickey' ;
     $h{'Wall'} = 'Larry' ;
-    $h{'Walls'} = 'Brick' ; 
+    $h{'Walls'} = 'Brick' ;
     $h{'Smith'} = 'John' ;
- 
+
 
     $key = $value = 0 ;
     print "IN ORDER\n" ;
     for ($st = $x->seq($key, $value, R_FIRST) ;
          $st == 0 ;
          $st = $x->seq($key, $value, R_NEXT) )
-        
+
       {  print "$key -> $value\n" }
- 
+
     print "\nPARTIAL MATCH\n" ;
 
     match "Wa" ;
@@ -1269,7 +1269,7 @@ EOM
     # Bug ID 20001013.009
     #
     # test that $hash{KEY} = undef doesn't produce the warning
-    #     Use of uninitialized value in null operation 
+    #     Use of uninitialized value in null operation
     use warnings ;
     use strict ;
     use DB_File ;
@@ -1278,7 +1278,7 @@ EOM
     my %h ;
     my $a = "";
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
-    
+
     tie %h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_BTREE
         or die "Can't open file: $!\n" ;
     $h{ABC} = undef;
@@ -1298,7 +1298,7 @@ EOM
     my %h ;
     my $a = "";
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
-    
+
     tie %h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_BTREE
         or die "Can't open file: $!\n" ;
     %h = (); ;
@@ -1351,7 +1351,7 @@ EOM
 
 {
     # now an error to pass 'compare' a non-code reference
-    my $dbh = new DB_File::BTREEINFO ;
+    my $dbh = DB_File::BTREEINFO->new();
 
     eval { $dbh->{compare} = 2 };
     ok(162, $@ =~ /^Key 'compare' not associated with a code reference at/);
@@ -1366,10 +1366,10 @@ EOM
 #    # recursion detection in btree
 #    my %hash ;
 #    unlink $Dfile;
-#    my $dbh = new DB_File::BTREEINFO ;
+#    my $dbh = DB_File::BTREEINFO->new();
 #    $dbh->{compare} = sub { $hash{3} = 4 ; length $_[0] } ;
-# 
-# 
+#
+#
 #    my (%h);
 #    ok(164, tie(%hash, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh ) );
 #
@@ -1394,14 +1394,14 @@ ok(165,1);
     my $h1_count = 0;
     my $h2_count = 0;
     unlink $Dfile, $Dfile2;
-    my $dbh1 = new DB_File::BTREEINFO ;
-    $dbh1->{compare} = sub { ++ $h1_count ; $_[0] cmp $_[1] } ; 
+    my $dbh1 = DB_File::BTREEINFO->new();
+    $dbh1->{compare} = sub { ++ $h1_count ; $_[0] cmp $_[1] } ;
 
-    my $dbh2 = new DB_File::BTREEINFO ;
-    $dbh2->{compare} = sub { ;++ $h2_count ; $_[0] cmp $_[1] } ; 
- 
- 
- 
+    my $dbh2 = DB_File::BTREEINFO->new();
+    $dbh2->{compare} = sub { ;++ $h2_count ; $_[0] cmp $_[1] } ;
+
+
+
     my (%h);
     ok(166, tie(%hash1, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh1 ) );
     ok(167, tie(%hash2, 'DB_File',$Dfile2, O_RDWR|O_CREAT, 0640, $dbh2 ) );
@@ -1457,7 +1457,7 @@ ok(165,1);
    ok(175, $h{"fred"} eq "joe");
 
    ok(176, $db->FIRSTKEY() eq "fred") ;
-   
+
    eval { my @r= grep { $h{$_} } (1, 2, 3) };
    ok (177, ! $@);
 
@@ -1518,7 +1518,7 @@ ok(165,1);
     # Regression Test for bug 30237
     # Check that substr can be used in the key to db_put
     # and that db_put does not trigger the warning
-    # 
+    #
     #     Use of uninitialized value in subroutine entry
 
 
@@ -1543,7 +1543,7 @@ ok(165,1);
         $db->put(substr($key,0), $value) ;
     }
 
-    ok 189, $warned eq '' 
+    ok 189, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # db-put with substr of value
@@ -1556,7 +1556,7 @@ ok(165,1);
         $db->put($key, substr($value,0)) ;
     }
 
-    ok 190, $warned eq '' 
+    ok 190, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # via the tied hash is not a problem, but check anyway
@@ -1570,7 +1570,7 @@ ok(165,1);
         $h{substr($key,0)} = $value ;
     }
 
-    ok 191, $warned eq '' 
+    ok 191, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     # via the tied hash is not a problem, but check anyway
@@ -1584,7 +1584,7 @@ ok(165,1);
         $h{$key} = substr($value,0) ;
     }
 
-    ok 192, $warned eq '' 
+    ok 192, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
 
     my %bad = () ;
@@ -1594,7 +1594,7 @@ ok(165,1);
          $status = $db->seq($key, $value, R_NEXT ) ) {
 
         #print "# key [$key] value [$value]\n" ;
-        if (defined $remember{$key} && defined $value && 
+        if (defined $remember{$key} && defined $value &&
              $remember{$key} eq $value) {
             delete $remember{$key} ;
         }
@@ -1602,7 +1602,7 @@ ok(165,1);
             $bad{$key} = $value ;
         }
     }
-    
+
     ok 193, keys %bad == 0 ;
     ok 194, keys %remember == 0 ;
 
@@ -1610,11 +1610,11 @@ ok(165,1);
     print "# bad     -- $key $value\n" while ($key, $value) = each %bad;
 
     # Make sure this fix does not break code to handle an undef key
-    # Berkeley DB undef key is bron between versions 2.3.16 and 
+    # Berkeley DB undef key is bron between versions 2.3.16 and
     my $value = 'fred';
     $warned = '';
     $db->put(undef, $value) ;
-    ok 195, $warned eq '' 
+    ok 195, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
     $warned = '';
 
@@ -1623,7 +1623,7 @@ ok(165,1);
     $value = '' ;
     $db->get(undef, $value) ;
     ok 196, $no_NULL || $value eq 'fred' or print "# got [$value]\n" ;
-    ok 197, $warned eq '' 
+    ok 197, $warned eq ''
       or print "# Caught warning [$warned]\n" ;
     $warned = '';
 
@@ -1658,7 +1658,7 @@ ok(165,1);
 #   ok(204, $db->get($k, $v, R_CURSOR)) ;
 #
 #   ok(205, keys %h == 1) ;
-#   
+#
 #   undef $db ;
 #   untie %h;
 #   unlink $Dfile;

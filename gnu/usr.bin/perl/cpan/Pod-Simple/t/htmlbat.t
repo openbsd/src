@@ -8,6 +8,7 @@ BEGIN {
 
 # Time-stamp: "2004-05-24 02:07:47 ADT"
 use strict;
+use warnings;
 my $DEBUG = 0;
 
 #sub Pod::Simple::HTMLBatch::DEBUG () {5};

@@ -1,6 +1,8 @@
 #ifndef PERL_TIME64_CONFIG_H_
 #    define PERL_TIME64_CONFIG_H_
 
+#include "reentr.h"
+
 /* Configuration
    -------------
    Define as appropriate for your system.

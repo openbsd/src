@@ -18,7 +18,7 @@ I<Adapted from a suggestion by Dan Muey>
 It may be common (for example at your main lexicon) that
 the hash keys and values coincide. Like that
 
-    q{Hello, tell me your name} 
+    q{Hello, tell me your name}
       => q{Hello, tell me your name}
 
 It would be nice to just write:
@@ -27,10 +27,10 @@ It would be nice to just write:
 
 and have this magically inflated to the first form.
 Among the advantages of such representation, that would
-lead to  
-smaller files, less prone to mistyping or mispasting, 
-and handy to someone translating it which can simply 
-copy the main lexicon and enter the translation 
+lead to 
+smaller files, less prone to mistyping or mispasting,
+and handy to someone translating it which can simply
+copy the main lexicon and enter the translation
 instead of having to remove the value first.
 
 That can be achieved by overriding C<init>
@@ -70,25 +70,25 @@ should be more time expensive as an option.
 
 I<After CPAN RT #36136 (L<https://rt.cpan.org/Ticket/Display.html?id=36136>)>
 
-The documentation of L<Locale::Maketext> advises that 
+The documentation of L<Locale::Maketext> advises that
 the standard bracket method C<numf> is limited and that
 you must override that for better results. It even
 suggests the use of L<Number::Format>.
 
 One such defect of standard C<numf> is to not be
 able to use a certain decimal precision.
-For example, 
+For example,
 
     $lh->maketext('pi is [numf,_1]', 355/113);
 
 outputs
 
-    pi is 3.14159292035398 
+    pi is 3.14159292035398
 
-Since pi ≈ 355/116 is only accurate 
+Since pi ≈ 355/116 is only accurate
 to 6 decimal places, you would want to say:
 
-    $lh->maketext('pi is [numf,_1,6]', 355/113); 
+    $lh->maketext('pi is [numf,_1,6]', 355/113);
 
 and get "pi is 3.141592".
 
@@ -132,14 +132,14 @@ like that:
 
     use base qw(Wuu);
 
-and then 
+and then
 
     my $lh = Wuu->get_handle('pt');
     $lh->maketext('A [numf,_1,3] km de distância', 1550.2222);
 
 would return "A 1.550,222 km de distância".
 
-Notice that the standard utility methods of 
+Notice that the standard utility methods of
 C<Locale::Maketext> are irremediably limited
 because they could not aim to do everything
 that could be expected from them in different languages,

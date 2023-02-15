@@ -654,7 +654,7 @@ VM/ESA
 Swapping of $< and $>
 
 For more information about this future deprecation, see L<the relevant RT
-ticket|https://rt.perl.org/rt3/Ticket/Display.html?id=96212>.
+ticket|https://github.com/Perl/perl5/issues/11547>.
 
 =item *
 

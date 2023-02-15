@@ -6,7 +6,7 @@ BEGIN {
 }
 
 use lib qw(t t/compress);
- 
+
 use strict;
 use warnings;
 use bytes;
@@ -38,7 +38,7 @@ EOM
     {
         title "AnyInflate with Non-compressed data (File $file)" ;
 
-        my $lex = new LexFile my $output;
+        my $lex = LexFile->new( my $output );
         my $input ;
 
         if ($file) {
@@ -52,12 +52,12 @@ EOM
 
         my $unc ;
         my $keep = $buffer ;
-        $unc = new IO::Uncompress::AnyInflate $input, -Transparent => 0 ;
+        $unc = IO::Uncompress::AnyInflate->new( $input, -Transparent => 0 );
         ok ! $unc,"  no AnyInflate object when -Transparent => 0" ;
         is $buffer, $keep ;
 
         $buffer = $keep ;
-        $unc = new IO::Uncompress::AnyInflate \$buffer, -Transparent => 1 ;
+        $unc = IO::Uncompress::AnyInflate->new( \$buffer, -Transparent => 1 );
         ok $unc, "  AnyInflate object when -Transparent => 1"  ;
 
         my $uncomp ;

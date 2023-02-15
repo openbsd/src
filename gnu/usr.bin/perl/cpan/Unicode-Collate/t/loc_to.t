@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -138,26 +133,26 @@ ok($objTo->lt("u\x{304}", "U\x{304}"));
 
 # 77
 
-ok($objTo->eq("a\x{301}", pack('U', 0xE1)));
-ok($objTo->eq("a\x{341}", pack('U', 0xE1)));
-ok($objTo->eq("A\x{301}", pack('U', 0xC1)));
-ok($objTo->eq("A\x{341}", pack('U', 0xC1)));
-ok($objTo->eq("e\x{301}", pack('U', 0xE9)));
-ok($objTo->eq("e\x{341}", pack('U', 0xE9)));
-ok($objTo->eq("E\x{301}", pack('U', 0xC9)));
-ok($objTo->eq("E\x{341}", pack('U', 0xC9)));
-ok($objTo->eq("i\x{301}", pack('U', 0xED)));
-ok($objTo->eq("i\x{341}", pack('U', 0xED)));
-ok($objTo->eq("I\x{301}", pack('U', 0xCD)));
-ok($objTo->eq("I\x{341}", pack('U', 0xCD)));
-ok($objTo->eq("o\x{301}", pack('U', 0xF3)));
-ok($objTo->eq("o\x{341}", pack('U', 0xF3)));
-ok($objTo->eq("O\x{301}", pack('U', 0xD3)));
-ok($objTo->eq("O\x{341}", pack('U', 0xD3)));
-ok($objTo->eq("u\x{301}", pack('U', 0xFA)));
-ok($objTo->eq("u\x{341}", pack('U', 0xFA)));
-ok($objTo->eq("U\x{301}", pack('U', 0xDA)));
-ok($objTo->eq("U\x{341}", pack('U', 0xDA)));
+ok($objTo->eq("a\x{301}", _pack_U(0xE1)));
+ok($objTo->eq("a\x{341}", _pack_U(0xE1)));
+ok($objTo->eq("A\x{301}", _pack_U(0xC1)));
+ok($objTo->eq("A\x{341}", _pack_U(0xC1)));
+ok($objTo->eq("e\x{301}", _pack_U(0xE9)));
+ok($objTo->eq("e\x{341}", _pack_U(0xE9)));
+ok($objTo->eq("E\x{301}", _pack_U(0xC9)));
+ok($objTo->eq("E\x{341}", _pack_U(0xC9)));
+ok($objTo->eq("i\x{301}", _pack_U(0xED)));
+ok($objTo->eq("i\x{341}", _pack_U(0xED)));
+ok($objTo->eq("I\x{301}", _pack_U(0xCD)));
+ok($objTo->eq("I\x{341}", _pack_U(0xCD)));
+ok($objTo->eq("o\x{301}", _pack_U(0xF3)));
+ok($objTo->eq("o\x{341}", _pack_U(0xF3)));
+ok($objTo->eq("O\x{301}", _pack_U(0xD3)));
+ok($objTo->eq("O\x{341}", _pack_U(0xD3)));
+ok($objTo->eq("u\x{301}", _pack_U(0xFA)));
+ok($objTo->eq("u\x{341}", _pack_U(0xFA)));
+ok($objTo->eq("U\x{301}", _pack_U(0xDA)));
+ok($objTo->eq("U\x{341}", _pack_U(0xDA)));
 
 ok($objTo->eq("a\x{304}", "\x{101}"));
 ok($objTo->eq("A\x{304}", "\x{100}"));

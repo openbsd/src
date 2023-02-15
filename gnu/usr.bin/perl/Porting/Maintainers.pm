@@ -21,7 +21,7 @@ our @EXPORT_OK = qw(%Modules %Maintainers
 		show_results process_options files_to_modules
 		finish_tap_output
 		reload_manifest);
-our $VERSION = 0.13;
+our $VERSION = 0.14;
 
 require Exporter;
 
@@ -355,7 +355,7 @@ sub duplicated_maintainers {
 
 sub warn_maintainer {
     my $name = shift;
-    ok($files{$name}, "$name has a maintainer (see Porting/Maintainer.pl)");
+    ok($files{$name}, "$name has a maintainer (see Porting/Maintainers.pl)");
 }
 
 sub missing_maintainers {

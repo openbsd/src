@@ -1,5 +1,5 @@
 package Testing;
-use 5.006_001;
+use 5.008_001;
 use strict;
 use warnings;
 require Exporter;

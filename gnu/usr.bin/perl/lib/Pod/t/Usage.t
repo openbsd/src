@@ -8,7 +8,6 @@ BEGIN {
 use File::Basename;
 use File::Spec;
 use Test::More;
-plan tests => 8;
 
 use_ok( 'Pod::Usage' );
 
@@ -57,7 +56,6 @@ SKIP: {
         "-input   => q{$0}",
     );
     my $cq = (($^O eq 'MSWin32'
-               || $^O eq 'NetWare'
                || $^O eq 'VMS') ? '"'
               : "");
     my @params = ( "${cq}-I../lib$cq",  "${cq}-MPod::Usage$cq", '-e' );
@@ -98,6 +96,7 @@ my $pod2usage = $$fake_out;
 
 is( $pod2usage, $pod2text, 'Verbose level >= 2 eq pod2text' );
 
+done_testing();
 
 package CatchOut;
 sub TIEHANDLE { bless \( my $self ), shift }

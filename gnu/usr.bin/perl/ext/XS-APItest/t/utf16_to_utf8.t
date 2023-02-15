@@ -4,9 +4,9 @@ use strict;
 use Test::More;
 use Encode;
 
-plan skip_all => 'Unclear how EBCIDC should behave' if ord "A" != 65;
-
-use XS::APItest qw(utf16_to_utf8 utf16_to_utf8_reversed);
+# Bug in Encode, non chars are rejected
+use XS::APItest qw(utf16_to_utf8 utf16_to_utf8_reversed
+                   utf8_to_utf16 utf8_to_utf16_reversed);
 
 for my $ord (0, 10, 13, 78, 255, 256, 0xD7FF, 0xE000, 0xFFFD,
 	     0x10000, 0x10FC00, 0x103FF, 0x10FFFD) {
@@ -15,13 +15,17 @@ for my $ord (0, 10, 13, 78, 255, 256, 0xD7FF, 0xE000, 0xFFFD,
 	for my $suffix ('', "\0", "Moo!") {
 	    my $string = $prefix . $chr . $suffix;
 	    my $name = sprintf "for chr $ord prefix %d, suffix %d",
-		length $prefix, length $suffix;
+		               length $prefix, length $suffix;
 	    my $as_utf8 = $string;
 	    utf8::encode($as_utf8);
-	    is(utf16_to_utf8(encode('UTF-16BE', $string)), $as_utf8,
-	       "utf16_to_utf8 $name");
+            my $be_16 = encode('UTF-16BE', $string);
+            my $le_16 = encode('UTF-16LE', $string);
+	    is(utf16_to_utf8($be_16), $as_utf8, "utf16_to_utf8 $name");
+	    is(utf8_to_utf16($as_utf8), $be_16, "utf8_to_utf16 $name");
 	    is(utf16_to_utf8_reversed(encode('UTF-16LE', $string)), $as_utf8,
 	       "utf16_to_utf8_reversed $name");
+	    is(utf8_to_utf16_reversed($as_utf8), $le_16,
+               "utf8_to_utf16_reversed $name");
 	}
     }
 }
@@ -65,5 +69,20 @@ $got = eval {utf16_to_utf8($in, 2)};
 like($@, qr/^Malformed UTF-16 surrogate at/, 'Lone surrogate croaks');
 (ok(!defined $got, 'hence eval returns undef')) or
     diag(join ', ', map {ord $_} split //, $got);
+
+{   # This example is published by Unicode, so verifies we aren't just
+    # internally consistent; we conform to the Standard
+    my $utf16_of_U10302 = utf8_to_utf16(chr 0x10302);
+    is(substr($utf16_of_U10302, 0, 1), chr 0xD8);
+    is(substr($utf16_of_U10302, 1, 1), chr 0x00);
+    is(substr($utf16_of_U10302, 2, 1), chr 0xDF);
+    is(substr($utf16_of_U10302, 3, 1), chr 0x02);
+
+    $utf16_of_U10302 = utf8_to_utf16_reversed(chr 0x10302);
+    is(substr($utf16_of_U10302, 0, 1), chr 0x00);
+    is(substr($utf16_of_U10302, 1, 1), chr 0xD8);
+    is(substr($utf16_of_U10302, 2, 1), chr 0x02);
+    is(substr($utf16_of_U10302, 3, 1), chr 0xDF);
+}
 
 done_testing;

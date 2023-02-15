@@ -47,7 +47,7 @@ is_deeply($one->trace, $trace, "Trace has all data");
 
 $one = $CLASS->new;
 ok(!$one->uuid, "no uuid attribute");
-ok(!$one->about->{uuid}, "no uuid in about facet");
+ok(!($one->about && $one->about->{uuid}), "no uuid in about facet");
 $one->set_uuid(123);
 is($one->about->{uuid}, 123, "Set uuid in about facet");
 is($one->uuid, 123, "set uuid attribute");

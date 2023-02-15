@@ -7,7 +7,7 @@ BEGIN {
 
 use integer;
 
-use Test::More tests => 15;
+use Test::More;
 use Config;
 
 my $x = 4.5;
@@ -67,3 +67,5 @@ SKIP: {
     is($@, '', 'IV_MIN % -1 succeeds');
     is($biff, 0, 'IV_MIN % -1 == 0');
 }
+
+done_testing();

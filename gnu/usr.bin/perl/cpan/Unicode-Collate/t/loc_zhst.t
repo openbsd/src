@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -206,61 +201,61 @@ ok($objZhS->lt("u\x{308}", "U\x{308}"));
 
 ok($objZhS->eq("a\x{304}", "\x{101}"));
 ok($objZhS->eq("A\x{304}", "\x{100}"));
-ok($objZhS->eq("a\x{301}", pack('U', 0xE1)));
+ok($objZhS->eq("a\x{301}", _pack_U(0xE1)));
 ok($objZhS->eq("a\x{301}", "a\x{341}"));
-ok($objZhS->eq("A\x{301}", pack('U', 0xC1)));
+ok($objZhS->eq("A\x{301}", _pack_U(0xC1)));
 ok($objZhS->eq("A\x{301}", "A\x{341}"));
 ok($objZhS->eq("a\x{30C}", "\x{1CE}"));
 ok($objZhS->eq("A\x{30C}", "\x{1CD}"));
-ok($objZhS->eq("a\x{300}", pack('U', 0xE0)));
+ok($objZhS->eq("a\x{300}", _pack_U(0xE0)));
 ok($objZhS->eq("a\x{300}", "a\x{340}"));
-ok($objZhS->eq("A\x{300}", pack('U', 0xC0)));
+ok($objZhS->eq("A\x{300}", _pack_U(0xC0)));
 ok($objZhS->eq("A\x{300}", "A\x{340}"));
 ok($objZhS->eq("e\x{304}", "\x{113}"));
 ok($objZhS->eq("E\x{304}", "\x{112}"));
-ok($objZhS->eq("e\x{301}", pack('U', 0xE9)));
+ok($objZhS->eq("e\x{301}", _pack_U(0xE9)));
 ok($objZhS->eq("e\x{301}", "e\x{341}"));
-ok($objZhS->eq("E\x{301}", pack('U', 0xC9)));
+ok($objZhS->eq("E\x{301}", _pack_U(0xC9)));
 ok($objZhS->eq("E\x{301}", "E\x{341}"));
 ok($objZhS->eq("e\x{30C}", "\x{11B}"));
 ok($objZhS->eq("E\x{30C}", "\x{11A}"));
-ok($objZhS->eq("e\x{300}", pack('U', 0xE8)));
+ok($objZhS->eq("e\x{300}", _pack_U(0xE8)));
 ok($objZhS->eq("e\x{300}", "e\x{340}"));
-ok($objZhS->eq("E\x{300}", pack('U', 0xC8)));
+ok($objZhS->eq("E\x{300}", _pack_U(0xC8)));
 ok($objZhS->eq("E\x{300}", "E\x{340}"));
-ok($objZhS->eq("e\x{302}\x{304}", pack('U*', 0xEA, 0x304)));
-ok($objZhS->eq("E\x{302}\x{304}", pack('U*', 0xCA, 0x304)));
+ok($objZhS->eq("e\x{302}\x{304}", _pack_U(0xEA, 0x304)));
+ok($objZhS->eq("E\x{302}\x{304}", _pack_U(0xCA, 0x304)));
 ok($objZhS->eq("e\x{302}\x{301}", "\x{1EBF}"));
 ok($objZhS->eq("e\x{302}\x{301}", "e\x{302}\x{341}"));
 ok($objZhS->eq("E\x{302}\x{301}", "\x{1EBE}"));
 ok($objZhS->eq("E\x{302}\x{301}", "E\x{302}\x{341}"));
-ok($objZhS->eq("e\x{302}\x{301}", pack('U*', 0xEA, 0x301)));
-ok($objZhS->eq("e\x{302}\x{301}", pack('U*', 0xEA, 0x341)));
-ok($objZhS->eq("E\x{302}\x{301}", pack('U*', 0xCA, 0x301)));
-ok($objZhS->eq("E\x{302}\x{301}", pack('U*', 0xCA, 0x341)));
-ok($objZhS->eq("e\x{302}\x{30C}", pack('U*', 0xEA, 0x30C)));
-ok($objZhS->eq("E\x{302}\x{30C}", pack('U*', 0xCA, 0x30C)));
+ok($objZhS->eq("e\x{302}\x{301}", _pack_U(0xEA, 0x301)));
+ok($objZhS->eq("e\x{302}\x{301}", _pack_U(0xEA, 0x341)));
+ok($objZhS->eq("E\x{302}\x{301}", _pack_U(0xCA, 0x301)));
+ok($objZhS->eq("E\x{302}\x{301}", _pack_U(0xCA, 0x341)));
+ok($objZhS->eq("e\x{302}\x{30C}", _pack_U(0xEA, 0x30C)));
+ok($objZhS->eq("E\x{302}\x{30C}", _pack_U(0xCA, 0x30C)));
 ok($objZhS->eq("e\x{302}\x{300}", "\x{1EC1}"));
 ok($objZhS->eq("e\x{302}\x{300}", "e\x{302}\x{340}"));
 ok($objZhS->eq("E\x{302}\x{300}", "\x{1EC0}"));
 ok($objZhS->eq("E\x{302}\x{300}", "E\x{302}\x{340}"));
-ok($objZhS->eq("e\x{302}\x{300}", pack('U*', 0xEA, 0x300)));
-ok($objZhS->eq("e\x{302}\x{300}", pack('U*', 0xEA, 0x340)));
-ok($objZhS->eq("E\x{302}\x{300}", pack('U*', 0xCA, 0x300)));
-ok($objZhS->eq("E\x{302}\x{300}", pack('U*', 0xCA, 0x340)));
-ok($objZhS->eq("e\x{302}", pack('U', 0xEA)));
-ok($objZhS->eq("E\x{302}", pack('U', 0xCA)));
+ok($objZhS->eq("e\x{302}\x{300}", _pack_U(0xEA, 0x300)));
+ok($objZhS->eq("e\x{302}\x{300}", _pack_U(0xEA, 0x340)));
+ok($objZhS->eq("E\x{302}\x{300}", _pack_U(0xCA, 0x300)));
+ok($objZhS->eq("E\x{302}\x{300}", _pack_U(0xCA, 0x340)));
+ok($objZhS->eq("e\x{302}", _pack_U(0xEA)));
+ok($objZhS->eq("E\x{302}", _pack_U(0xCA)));
 ok($objZhS->eq("i\x{304}", "\x{12B}"));
 ok($objZhS->eq("I\x{304}", "\x{12A}"));
-ok($objZhS->eq("i\x{301}", pack('U', 0xED)));
+ok($objZhS->eq("i\x{301}", _pack_U(0xED)));
 ok($objZhS->eq("i\x{301}", "i\x{341}"));
-ok($objZhS->eq("I\x{301}", pack('U', 0xCD)));
+ok($objZhS->eq("I\x{301}", _pack_U(0xCD)));
 ok($objZhS->eq("I\x{301}", "I\x{341}"));
 ok($objZhS->eq("i\x{30C}", "\x{1D0}"));
 ok($objZhS->eq("I\x{30C}", "\x{1CF}"));
-ok($objZhS->eq("i\x{300}", pack('U', 0xEC)));
+ok($objZhS->eq("i\x{300}", _pack_U(0xEC)));
 ok($objZhS->eq("i\x{300}", "i\x{340}"));
-ok($objZhS->eq("I\x{300}", pack('U', 0xCC)));
+ok($objZhS->eq("I\x{300}", _pack_U(0xCC)));
 ok($objZhS->eq("I\x{300}", "I\x{340}"));
 ok($objZhS->eq("m\x{301}", "\x{1E3F}"));
 ok($objZhS->eq("m\x{301}", "m\x{341}"));
@@ -280,54 +275,54 @@ ok($objZhS->eq("N\x{300}", "\x{1F8}"));
 ok($objZhS->eq("N\x{300}", "N\x{340}"));
 ok($objZhS->eq("o\x{304}", "\x{14D}"));
 ok($objZhS->eq("O\x{304}", "\x{14C}"));
-ok($objZhS->eq("o\x{301}", pack('U', 0xF3)));
+ok($objZhS->eq("o\x{301}", _pack_U(0xF3)));
 ok($objZhS->eq("o\x{301}", "o\x{341}"));
-ok($objZhS->eq("O\x{301}", pack('U', 0xD3)));
+ok($objZhS->eq("O\x{301}", _pack_U(0xD3)));
 ok($objZhS->eq("O\x{301}", "O\x{341}"));
 ok($objZhS->eq("o\x{30C}", "\x{1D2}"));
 ok($objZhS->eq("O\x{30C}", "\x{1D1}"));
-ok($objZhS->eq("o\x{300}", pack('U', 0xF2)));
+ok($objZhS->eq("o\x{300}", _pack_U(0xF2)));
 ok($objZhS->eq("o\x{300}", "o\x{340}"));
-ok($objZhS->eq("O\x{300}", pack('U', 0xD2)));
+ok($objZhS->eq("O\x{300}", _pack_U(0xD2)));
 ok($objZhS->eq("O\x{300}", "O\x{340}"));
 ok($objZhS->eq("u\x{304}", "\x{16B}"));
 ok($objZhS->eq("U\x{304}", "\x{16A}"));
-ok($objZhS->eq("u\x{301}", pack('U', 0xFA)));
+ok($objZhS->eq("u\x{301}", _pack_U(0xFA)));
 ok($objZhS->eq("u\x{301}", "u\x{341}"));
-ok($objZhS->eq("U\x{301}", pack('U', 0xDA)));
+ok($objZhS->eq("U\x{301}", _pack_U(0xDA)));
 ok($objZhS->eq("U\x{301}", "U\x{341}"));
 ok($objZhS->eq("u\x{30C}", "\x{1D4}"));
 ok($objZhS->eq("U\x{30C}", "\x{1D3}"));
-ok($objZhS->eq("u\x{300}", pack('U', 0xF9)));
+ok($objZhS->eq("u\x{300}", _pack_U(0xF9)));
 ok($objZhS->eq("u\x{300}", "u\x{340}"));
-ok($objZhS->eq("U\x{300}", pack('U', 0xD9)));
+ok($objZhS->eq("U\x{300}", _pack_U(0xD9)));
 ok($objZhS->eq("U\x{300}", "U\x{340}"));
 ok($objZhS->eq("u\x{308}\x{304}", "\x{1D6}"));
 ok($objZhS->eq("U\x{308}\x{304}", "\x{1D5}"));
-ok($objZhS->eq("u\x{308}\x{304}", pack('U*', 0xFC, 0x304)));
-ok($objZhS->eq("U\x{308}\x{304}", pack('U*', 0xDC, 0x304)));
+ok($objZhS->eq("u\x{308}\x{304}", _pack_U(0xFC, 0x304)));
+ok($objZhS->eq("U\x{308}\x{304}", _pack_U(0xDC, 0x304)));
 ok($objZhS->eq("u\x{308}\x{301}", "\x{1D8}"));
 ok($objZhS->eq("u\x{308}\x{301}", "u\x{308}\x{341}"));
 ok($objZhS->eq("U\x{308}\x{301}", "\x{1D7}"));
 ok($objZhS->eq("U\x{308}\x{301}", "U\x{308}\x{341}"));
-ok($objZhS->eq("u\x{308}\x{301}", pack('U*', 0xFC, 0x301)));
-ok($objZhS->eq("u\x{308}\x{301}", pack('U*', 0xFC, 0x341)));
-ok($objZhS->eq("U\x{308}\x{301}", pack('U*', 0xDC, 0x301)));
-ok($objZhS->eq("U\x{308}\x{301}", pack('U*', 0xDC, 0x341)));
+ok($objZhS->eq("u\x{308}\x{301}", _pack_U(0xFC, 0x301)));
+ok($objZhS->eq("u\x{308}\x{301}", _pack_U(0xFC, 0x341)));
+ok($objZhS->eq("U\x{308}\x{301}", _pack_U(0xDC, 0x301)));
+ok($objZhS->eq("U\x{308}\x{301}", _pack_U(0xDC, 0x341)));
 ok($objZhS->eq("u\x{308}\x{30C}", "\x{1DA}"));
 ok($objZhS->eq("U\x{308}\x{30C}", "\x{1D9}"));
-ok($objZhS->eq("u\x{308}\x{30C}", pack('U*', 0xFC, 0x30C)));
-ok($objZhS->eq("U\x{308}\x{30C}", pack('U*', 0xDC, 0x30C)));
+ok($objZhS->eq("u\x{308}\x{30C}", _pack_U(0xFC, 0x30C)));
+ok($objZhS->eq("U\x{308}\x{30C}", _pack_U(0xDC, 0x30C)));
 ok($objZhS->eq("u\x{308}\x{300}", "\x{1DC}"));
 ok($objZhS->eq("u\x{308}\x{300}", "u\x{308}\x{340}"));
 ok($objZhS->eq("U\x{308}\x{300}", "\x{1DB}"));
 ok($objZhS->eq("U\x{308}\x{300}", "U\x{308}\x{340}"));
-ok($objZhS->eq("u\x{308}\x{300}", pack('U*', 0xFC, 0x300)));
-ok($objZhS->eq("u\x{308}\x{300}", pack('U*', 0xFC, 0x340)));
-ok($objZhS->eq("U\x{308}\x{300}", pack('U*', 0xDC, 0x300)));
-ok($objZhS->eq("U\x{308}\x{300}", pack('U*', 0xDC, 0x340)));
-ok($objZhS->eq("u\x{308}", pack('U', 0xFC)));
-ok($objZhS->eq("U\x{308}", pack('U', 0xDC)));
+ok($objZhS->eq("u\x{308}\x{300}", _pack_U(0xFC, 0x300)));
+ok($objZhS->eq("u\x{308}\x{300}", _pack_U(0xFC, 0x340)));
+ok($objZhS->eq("U\x{308}\x{300}", _pack_U(0xDC, 0x300)));
+ok($objZhS->eq("U\x{308}\x{300}", _pack_U(0xDC, 0x340)));
+ok($objZhS->eq("u\x{308}", _pack_U(0xFC)));
+ok($objZhS->eq("U\x{308}", _pack_U(0xDC)));
 
 # 274
 

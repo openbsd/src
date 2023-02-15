@@ -5,10 +5,7 @@ use strict;
 use warnings;
 use Carp;
 
-require Exporter;
-#use AutoLoader;
-
-our @ISA = qw(Exporter);
+use Exporter 'import';
 
 # Items to export into callers namespace by default. Note: do not export
 # names by default without a very good reason. Use EXPORT_OK instead.
@@ -26,7 +23,7 @@ our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw(
 );
 
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
 require XSLoader;
 XSLoader::load('Amiga::Exec', $VERSION);
@@ -74,8 +71,8 @@ This a  perl class / module to enables you to use various low level Amiga featur
     # Wait for signla
 
     use Amiga::Exec;
-    my $result = Amiga::ARexx->Wait('SignalMask' => $signalmask, 'TimeOut' => $timeoutinusecs);                                                                          );
-
+    my $result = Amiga::ARexx->Wait('SignalMask' => $signalmask,
+                                    'TimeOut' => $timeoutinusecs);
 
 =head1 DESCRIPTION
 

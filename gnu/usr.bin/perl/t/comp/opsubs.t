@@ -1,4 +1,4 @@
-#!./perl -Tw
+#!./perl -w
 
 # Uncomment this for testing, but don't leave it in for "production", as
 # we've not yet verified that use works.
@@ -147,12 +147,13 @@ is( &qw('amper'), "qw-amper", "&qw() is func" );
 
 # qx operator
 can_ok( 'main', "qx" );
-eval "qx('unqualified'".
-     ($^O eq 'MSWin32' ? " 2>&1)" : ")");
-TODO: {
-    local $::TODO = $^O eq 'MSWin32' ? "Tainting of PATH not working of Windows" : $::TODO;
-    like( $@, qr/^Insecure/, "qx('unqualified') doesn't work" );
-}
+eval q{
+    BEGIN {
+        *CORE::GLOBAL::readpipe = sub { die "readpipe called" };
+    }
+    qx('unqualified');
+};
+like( $@, qr/^readpipe called/, "qx('unqualified') is oper" );
 is( main::qx('main'), "qx-main", "main::qx() is func" );
 is( &qx('amper'), "qx-amper", "&qx() is func" );
 

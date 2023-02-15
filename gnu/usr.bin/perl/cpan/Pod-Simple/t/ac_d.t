@@ -6,6 +6,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 14 };
 
@@ -17,8 +18,6 @@ print "# Pod::Simple version $Pod::Simple::VERSION\n";
 
 $Pod::Simple::XMLOutStream::ATTR_PAD   = ' ';
 $Pod::Simple::XMLOutStream::SORT_ATTRS = 1; # for predictably testable output
-
-#sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
 
 $Pod::Simple::XMLOutStream::ATTR_PAD   = ' ';
 $Pod::Simple::XMLOutStream::SORT_ATTRS = 1; # for predictably testable output

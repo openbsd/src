@@ -1,5 +1,8 @@
 #!perl
 
+use strict;
+use warnings;
+
 use Test::More 0.60;
 
 # Test::More 0.60 required because:
@@ -30,6 +33,7 @@ $VAR1 = bless( {}, 'a\'b' );
 PERL
 
 is($dt, $o, "package name in bless is escaped if needed");
+no strict 'vars';
 is_deeply(scalar eval($dt), $t, "eval reverts dump");
 }
 
@@ -41,6 +45,7 @@ $VAR1 = bless( {}, 'a\\' );
 PERL
 
 is($dt, $o, "package name in bless is escaped if needed");
+no strict 'vars';
 is_deeply(scalar eval($dt), $t, "eval reverts dump");
 }
 SKIP: {

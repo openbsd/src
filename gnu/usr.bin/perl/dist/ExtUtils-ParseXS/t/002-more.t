@@ -9,7 +9,7 @@ use ExtUtils::CBuilder;
 use attributes;
 use overload;
 
-plan tests => 30;
+plan tests => 33;
 
 my ($source_file, $obj_file, $lib_file);
 
@@ -22,8 +22,7 @@ push @INC, '.';
 use Carp; $SIG{__WARN__} = \&Carp::cluck;
 
 # See the comments about this in 001-basics.t
-@INC = map { File::Spec->rel2abs($_) } @INC
-    if $^O =~ /android/;
+@INC = map { File::Spec->rel2abs($_) } @INC;
 
 #########################
 
@@ -48,7 +47,7 @@ SKIP: {
 }
 
 SKIP: {
-  skip "no dynamic loading", 26
+  skip "no dynamic loading", 29
     if !$b->have_compiler || !$Config{usedl};
   my $module = 'XSMore';
   $lib_file = $b->link( objects => $obj_file, module_name => $module );
@@ -86,11 +85,20 @@ SKIP: {
   ok overload::Overloaded(XSMore->new), 'the FALLBACK keyword';
   is abs(XSMore->new), 42, 'the OVERLOAD keyword';
 
+  my $overload_sub_name = "XSMore::More::(+";
+  is prototype(\&$overload_sub_name), "", 'OVERLOAD following prototyped xsub';
+
   my @a;
   XSMore::hook(\@a);
   is_deeply \@a, [qw(INIT CODE POSTCALL CLEANUP)], 'the INIT & POSTCALL & CLEANUP keywords';
 
   is_deeply [XSMore::outlist()], [ord('a'), ord('b')], 'the OUTLIST keyword';
+
+  is_deeply [XSMore::outlist_bool("a", "b")], [ !0, "ab" ],
+             "OUTLIST with a bool RETVAL";
+
+  is_deeply [XSMore::outlist_int("c", "d")], [ 11, "cd" ],
+             "OUTLIST with an int RETVAL";
 
   # eval so compile-time sees any prototype
   is_deeply [ eval 'XSMore::outlist()' ], [ord('a'), ord('b')], 'OUTLIST prototypes';

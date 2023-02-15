@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -31,24 +23,27 @@ use Unicode::Collate::Locale;
 
 ok(1);
 
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
 #########################
 
-my $eth  = pack 'U', 0xF0;
-my $ETH  = pack 'U', 0xD0;
-my $thrn = pack 'U', 0xFE;
-my $THRN = pack 'U', 0xDE;
-my $uuml = pack 'U', 0xFC;
-my $Uuml = pack 'U', 0xDC;
-my $ae   = pack 'U', 0xE6;
-my $AE   = pack 'U', 0xC6;
-my $auml = pack 'U', 0xE4;
-my $Auml = pack 'U', 0xC4;
-my $ostk = pack 'U', 0xF8;
-my $Ostk = pack 'U', 0xD8;
-my $ouml = pack 'U', 0xF6;
-my $Ouml = pack 'U', 0xD6;
-my $arng = pack 'U', 0xE5;
-my $Arng = pack 'U', 0xC5;
+my $eth  = _pack_U(0xF0);
+my $ETH  = _pack_U(0xD0);
+my $thrn = _pack_U(0xFE);
+my $THRN = _pack_U(0xDE);
+my $uuml = _pack_U(0xFC);
+my $Uuml = _pack_U(0xDC);
+my $ae   = _pack_U(0xE6);
+my $AE   = _pack_U(0xC6);
+my $auml = _pack_U(0xE4);
+my $Auml = _pack_U(0xC4);
+my $ostk = _pack_U(0xF8);
+my $Ostk = _pack_U(0xD8);
+my $ouml = _pack_U(0xF6);
+my $Ouml = _pack_U(0xD6);
+my $arng = _pack_U(0xE5);
+my $Arng = _pack_U(0xC5);
 
 my $objDa = Unicode::Collate::Locale->
     new(locale => 'DA', normalization => undef);

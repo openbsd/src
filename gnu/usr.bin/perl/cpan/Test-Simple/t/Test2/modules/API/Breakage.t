@@ -1,6 +1,11 @@
 use strict;
 use warnings;
 
+if ($] lt "5.008") {
+    print "1..0 # SKIP Test cannot run on perls below 5.8.0 because local doesn't work on hash keys.\n";
+    exit 0;
+}
+
 use Test2::IPC;
 use Test2::Tools::Tiny;
 use Test2::API::Breakage;
@@ -31,15 +36,13 @@ for my $meth (qw/upgrade_suggested upgrade_required known_broken/) {
     ok(!$CLASS->report(1), "Still nothing to report");
 
     {
-        local %INC = (
-            %INC,
-            'T2Test/UG1.pm' => 'T2Test/UG1.pm',
-            'T2Test/UG2.pm' => 'T2Test/UG2.pm',
-            'T2Test/UR1.pm' => 'T2Test/UR1.pm',
-            'T2Test/UR2.pm' => 'T2Test/UR2.pm',
-            'T2Test/KB1.pm' => 'T2Test/KB1.pm',
-            'T2Test/KB2.pm' => 'T2Test/KB2.pm',
-        );
+        local $INC{"T2Test/UG1.pm"} = "T2Test/UG1.pm";
+        local $INC{"T2Test/UG2.pm"} = "T2Test/UG2.pm";
+        local $INC{"T2Test/UR1.pm"} = "T2Test/UR1.pm";
+        local $INC{"T2Test/UR2.pm"} = "T2Test/UR2.pm";
+        local $INC{"T2Test/KB1.pm"} = "T2Test/KB1.pm";
+        local $INC{"T2Test/KB2.pm"} = "T2Test/KB2.pm";
+
         local $T2Test::UG1::VERSION = '0.9';
         local $T2Test::UG2::VERSION = '0.9';
         local $T2Test::UR1::VERSION = '0.9';

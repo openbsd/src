@@ -21,12 +21,10 @@ env:
         # threads often cause build issues
         - CONFIGURE_ARGS='-Uusethreads'
         - CONFIGURE_ARGS='-Dusethreads'
-        # it's easy to miss dVAR
-        - CONFIGURE_ARGS='-DPERL_GLOBAL_STRUCT_PRIVATE'
-        # test scripts can be sensitive to PERL_UNICODE, and check long doubles
-        - CONFIGURE_ARGS='-Duseshrplib -Dusesitecustomize -Duselongdouble' PERL_UNICODE='' LANG='en_US.UTF-8'
-        # we've rarely had a problem with non-Englush locales, and exercise quadmath
-        - CONFIGURE_ARGS='-Duseshrplib -Dusequadmath -Dusecbacktrace -Dusethreads' PERL_UNICODE='' LANG='de_DE.UTF-8'
+        # check long doubles
+        - CONFIGURE_ARGS='-Duseshrplib -Dusesitecustomize -Duselongdouble'
+        # exercise quadmath
+        - CONFIGURE_ARGS='-Duseshrplib -Dusequadmath -Dusecbacktrace -Dusethreads'
 
 matrix:
   fast_finish: true

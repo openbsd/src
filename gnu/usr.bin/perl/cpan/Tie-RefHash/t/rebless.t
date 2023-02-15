@@ -16,8 +16,7 @@ use Tie::RefHash;
   sub new { bless { }, shift };
 
   package Elk;
-  use vars qw/@ISA/;
-  @ISA = "Moose";
+  our @ISA = "Moose";
 }
 
 $\ = "\n";

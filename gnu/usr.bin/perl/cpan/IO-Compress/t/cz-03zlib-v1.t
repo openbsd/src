@@ -14,8 +14,10 @@ use Test::More ;
 use CompTestUtils;
 use Symbol;
 
-BEGIN 
-{ 
+use constant ZLIB_1_2_12_0 => 0x12C0;
+
+BEGIN
+{
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
@@ -48,7 +50,7 @@ my $len   = length $hello ;
 
 # Check zlib_version and ZLIB_VERSION are the same.
 SKIP: {
-    skip "TEST_SKIP_VERSION_CHECK is set", 1 
+    skip "TEST_SKIP_VERSION_CHECK is set", 1
         if $ENV{TEST_SKIP_VERSION_CHECK};
     is Compress::Zlib::zlib_version, ZLIB_VERSION,
         "ZLIB_VERSION matches Compress::Zlib::zlib_version" ;
@@ -145,11 +147,11 @@ ok !defined uncompress (\$compr) ;
 $hello = "I am a HAL 9000 computer" ;
 my @hello = split('', $hello) ;
 my ($err, $X, $status);
- 
+
 ok  (($x, $err) = deflateInit( {-Bufsize => 1} ) ) ;
 ok $x ;
 ok $err == Z_OK ;
- 
+
 my $Answer = '';
 foreach (@hello)
 {
@@ -158,20 +160,20 @@ foreach (@hello)
 
     $Answer .= $X ;
 }
- 
+
 ok $status == Z_OK ;
 
 ok    ((($X, $status) = $x->flush())[1] == Z_OK ) ;
 $Answer .= $X ;
- 
- 
+
+
 my @Answer = split('', $Answer) ;
- 
+
 my $k;
 ok (($k, $err) = inflateInit( {-Bufsize => 1}) ) ;
 ok $k ;
 ok $err == Z_OK ;
- 
+
 my $GOT = '';
 my $Z;
 foreach (@Answer)
@@ -179,9 +181,9 @@ foreach (@Answer)
     ($Z, $status) = $k->inflate($_) ;
     $GOT .= $Z ;
     last if $status == Z_STREAM_END or $status != Z_OK ;
- 
+
 }
- 
+
 ok $status == Z_STREAM_END ;
 ok $GOT eq $hello ;
 
@@ -190,11 +192,11 @@ title 'deflate/inflate - small buffer with a number';
 # ==============================
 
 $hello = 6529 ;
- 
+
 ok (($x, $err) = deflateInit( {-Bufsize => 1} ) ) ;
 ok $x ;
 ok $err == Z_OK ;
- 
+
 ok !defined $x->msg() ;
 ok $x->total_in() == 0 ;
 ok $x->total_out() == 0 ;
@@ -204,19 +206,19 @@ $Answer = '';
 
     $Answer .= $X ;
 }
- 
+
 ok $status == Z_OK ;
 
 ok   ((($X, $status) = $x->flush())[1] == Z_OK ) ;
 $Answer .= $X ;
- 
+
 ok !defined $x->msg() ;
 ok $x->total_in() == length $hello ;
 ok $x->total_out() == length $Answer ;
 
- 
+
 @Answer = split('', $Answer) ;
- 
+
 ok (($k, $err) = inflateInit( {-Bufsize => 1}) ) ;
 ok $k ;
 ok $err == Z_OK ;
@@ -224,16 +226,16 @@ ok $err == Z_OK ;
 ok !defined $k->msg() ;
 ok $k->total_in() == 0 ;
 ok $k->total_out() == 0 ;
- 
+
 $GOT = '';
 foreach (@Answer)
 {
     ($Z, $status) = $k->inflate($_) ;
     $GOT .= $Z ;
     last if $status == Z_STREAM_END or $status != Z_OK ;
- 
+
 }
- 
+
 ok $status == Z_STREAM_END ;
 ok $GOT eq $hello ;
 
@@ -242,27 +244,27 @@ is $k->total_in(), length $Answer ;
 ok $k->total_out() == length $hello ;
 
 
- 
+
 title 'deflate/inflate - larger buffer';
 # ==============================
 
 
 ok $x = deflateInit() ;
- 
+
 ok ((($X, $status) = $x->deflate($contents))[1] == Z_OK) ;
 
 my $Y = $X ;
- 
- 
+
+
 ok ((($X, $status) = $x->flush() )[1] == Z_OK ) ;
 $Y .= $X ;
- 
- 
- 
+
+
+
 ok $k = inflateInit() ;
- 
+
 ($Z, $status) = $k->inflate($Y) ;
- 
+
 ok $status == Z_STREAM_END ;
 ok $contents eq $Z ;
 
@@ -272,7 +274,7 @@ title 'deflate/inflate - preset dictionary';
 my $dictionary = "hello" ;
 ok $x = deflateInit({-Level => Z_BEST_COMPRESSION,
 			 -Dictionary => $dictionary}) ;
- 
+
 my $dictID = $x->dict_adler() ;
 
 ($X, $status) = $x->deflate($hello) ;
@@ -281,9 +283,9 @@ ok $status == Z_OK ;
 ok $status == Z_OK ;
 $X .= $Y ;
 $x = 0 ;
- 
+
 ok $k = inflateInit(-Dictionary => $dictionary) ;
- 
+
 ($Z, $status) = $k->inflate($X);
 ok $status == Z_STREAM_END ;
 ok $k->dict_adler() == $dictID;
@@ -296,7 +298,7 @@ ok $hello eq $Z ;
 #print "status=[$status] hello=[$hello] Z=[$Z]\n";
 #}
 #ok $status == Z_STREAM_END ;
-#ok $hello eq $Z  
+#ok $hello eq $Z
 # or print "status=[$status] hello=[$hello] Z=[$Z]\n";
 
 
@@ -306,19 +308,19 @@ ok $hello eq $Z ;
 
 title 'inflate - check remaining buffer after Z_STREAM_END';
 # ===================================================
- 
+
 {
     ok $x = deflateInit(-Level => Z_BEST_COMPRESSION ) ;
- 
+
     ($X, $status) = $x->deflate($hello) ;
     ok $status == Z_OK ;
     ($Y, $status) = $x->flush() ;
     ok $status == Z_OK ;
     $X .= $Y ;
     $x = 0 ;
- 
+
     ok $k = inflateInit()  ;
- 
+
     my $first = substr($X, 0, 2) ;
     my $last  = substr($X, 2) ;
     ($Z, $status) = $k->inflate($first);
@@ -337,9 +339,9 @@ title 'inflate - check remaining buffer after Z_STREAM_END';
 title 'memGzip & memGunzip';
 {
     my ($name, $name1, $name2, $name3);
-    my $lex = new LexFile $name, $name1, $name2, $name3 ;
+    my $lex = LexFile->new( $name, $name1, $name2, $name3 );
     my $buffer = <<EOM;
-some sample 
+some sample
 text
 
 EOM
@@ -361,14 +363,14 @@ EOM
 
     # uncompress with gzopen
     ok my $fil = gzopen($name, "rb") ;
- 
+
     is $fil->gzread($uncomp, 0), 0 ;
     ok (($x = $fil->gzread($uncomp)) == $len) ;
- 
+
     ok ! $fil->gzclose ;
 
     ok $uncomp eq $buffer ;
- 
+
     #1 while unlink $name ;
 
     # now check that memGunzip can deal with it.
@@ -376,10 +378,10 @@ EOM
     ok defined $ungzip ;
     ok $buffer eq $ungzip ;
     is $gzerrno, 0;
- 
-    # now do the same but use a reference 
 
-    $dest = memGzip(\$buffer) ; 
+    # now do the same but use a reference
+
+    $dest = memGzip(\$buffer) ;
     ok length $dest ;
     is $gzerrno, 0;
 
@@ -391,13 +393,13 @@ EOM
 
     # uncompress with gzopen
     ok $fil = gzopen($name1, "rb") ;
- 
+
     ok (($x = $fil->gzread($uncomp)) == $len) ;
- 
+
     ok ! $fil->gzclose ;
 
     ok $uncomp eq $buffer ;
- 
+
     # now check that memGunzip can deal with it.
     my $keep = $dest;
     $ungzip = memGunzip(\$dest) ;
@@ -459,7 +461,7 @@ EOM
     ok ! defined $ungzip ;
     cmp_ok $gzerrno, "==", Z_DATA_ERROR ;
 
- 
+
     #1 while unlink $name ;
 
     # check corrupt header -- too short
@@ -520,7 +522,7 @@ EOM
 {
     title "Check all bytes can be handled";
 
-    my $lex = new LexFile my $name ;
+    my $lex = LexFile->new( my $name );
     my $data = join '', map { chr } 0x00 .. 0xFF;
     $data .= "\r\nabd\r\n";
 
@@ -548,7 +550,7 @@ title 'memGunzip with a gzopen created file';
 {
     my $name = "test.gz" ;
     my $buffer = <<EOM;
-some sample 
+some sample
 text
 
 EOM
@@ -572,50 +574,50 @@ EOM
 
     # Check - MAX_WBITS
     # =================
-    
+
     $hello = "Test test test test test";
     @hello = split('', $hello) ;
-     
+
     ok (($x, $err) = deflateInit( -Bufsize => 1, -WindowBits => -MAX_WBITS() ) ) ;
     ok $x ;
     ok $err == Z_OK ;
-     
+
     $Answer = '';
     foreach (@hello)
     {
         ($X, $status) = $x->deflate($_) ;
         last unless $status == Z_OK ;
-    
+
         $Answer .= $X ;
     }
-     
+
     ok $status == Z_OK ;
-    
+
     ok   ((($X, $status) = $x->flush())[1] == Z_OK ) ;
     $Answer .= $X ;
-     
-     
+
+
     @Answer = split('', $Answer) ;
-    # Undocumented corner -- extra byte needed to get inflate to return 
-    # Z_STREAM_END when done.  
-    push @Answer, " " ; 
-     
+    # Undocumented corner -- extra byte needed to get inflate to return
+    # Z_STREAM_END when done.
+    push @Answer, " " ;
+
     ok (($k, $err) = inflateInit(-Bufsize => 1, -WindowBits => -MAX_WBITS()) ) ;
     ok $k ;
     ok $err == Z_OK ;
-     
+
     $GOT = '';
     foreach (@Answer)
     {
         ($Z, $status) = $k->inflate($_) ;
         $GOT .= $Z ;
         last if $status == Z_STREAM_END or $status != Z_OK ;
-     
+
     }
-     
+
     ok $status == Z_STREAM_END ;
     ok $GOT eq $hello ;
-    
+
 }
 
 {
@@ -626,32 +628,32 @@ EOM
     my $hello = "I am a HAL 9000 computer" x 2001 ;
     my $goodbye = "Will I dream?" x 2010;
     my ($err, $answer, $X, $status, $Answer);
-     
+
     ok (($x, $err) = deflateInit() ) ;
     ok $x ;
     ok $err == Z_OK ;
-     
+
     ($Answer, $status) = $x->deflate($hello) ;
     ok $status == Z_OK ;
-    
+
     # create a flush point
     ok ((($X, $status) = $x->flush(Z_FULL_FLUSH))[1] == Z_OK ) ;
     $Answer .= $X ;
-     
+
     ($X, $status) = $x->deflate($goodbye) ;
     ok $status == Z_OK ;
     $Answer .= $X ;
-    
+
     ok ((($X, $status) = $x->flush())[1] == Z_OK ) ;
     $Answer .= $X ;
-     
+
     my ($first, @Answer) = split('', $Answer) ;
-     
+
     my $k;
     ok (($k, $err) = inflateInit()) ;
     ok $k ;
     ok $err == Z_OK ;
-     
+
     ($Z, $status) = $k->inflate($first) ;
     ok $status == Z_OK ;
 
@@ -661,11 +663,11 @@ EOM
         my $byte = shift @Answer;
         $status = $k->inflateSync($byte) ;
         last unless $status == Z_DATA_ERROR;
-     
+
     }
 
     ok $status == Z_OK;
-     
+
     my $GOT = '';
     my $Z = '';
     foreach (@Answer)
@@ -675,9 +677,9 @@ EOM
         $GOT .= $Z if defined $Z ;
         # print "x $status\n";
         last if $status == Z_STREAM_END or $status != Z_OK ;
-     
+
     }
-     
+
     # zlib 1.0.9 returns Z_STREAM_END here, all others return Z_DATA_ERROR
     ok $status == Z_DATA_ERROR || $status == Z_STREAM_END ;
     ok $GOT eq $goodbye ;
@@ -687,20 +689,29 @@ EOM
     $Answer =~ /^(.)(.*)$/ ;
     my ($initial, $rest) = ($1, $2);
 
-    
+
     ok (($k, $err) = inflateInit()) ;
     ok $k ;
     ok $err == Z_OK ;
-     
+
     ($Z, $status) = $k->inflate($initial) ;
     ok $status == Z_OK ;
 
     $status = $k->inflateSync($rest) ;
     ok $status == Z_OK;
-     
+
     ($GOT, $status) = $k->inflate($rest) ;
-     
-    ok $status == Z_DATA_ERROR ;
+
+    # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0)
+    {
+        cmp_ok $status, '==', Z_STREAM_END ;
+    }
+    else
+    {
+        cmp_ok $status, '==', Z_DATA_ERROR ;
+    }
+
     ok $Z . $GOT eq $goodbye ;
 }
 
@@ -710,7 +721,7 @@ EOM
     my $hello = "I am a HAL 9000 computer" x 2001 ;
     my $goodbye = "Will I dream?" x 2010;
     my ($input, $err, $answer, $X, $status, $Answer);
-     
+
     ok (($x, $err) = deflateInit(-Level    => Z_BEST_COMPRESSION,
                                      -Strategy => Z_DEFAULT_STRATEGY) ) ;
     ok $x ;
@@ -718,11 +729,11 @@ EOM
 
     ok $x->get_Level()    == Z_BEST_COMPRESSION;
     ok $x->get_Strategy() == Z_DEFAULT_STRATEGY;
-     
+
     ($Answer, $status) = $x->deflate($hello) ;
     ok $status == Z_OK ;
     $input .= $hello;
-    
+
     # error cases
     eval { $x->deflateParams() };
     #like $@, mkErr("^Compress::Raw::Zlib::deflateParams needs Level and/or Strategy");
@@ -736,56 +747,56 @@ EOM
 
     ok $x->get_Level()    == Z_BEST_COMPRESSION;
     ok $x->get_Strategy() == Z_DEFAULT_STRATEGY;
-     
+
     # change both Level & Strategy
     $status = $x->deflateParams(-Level => Z_BEST_SPEED, -Strategy => Z_HUFFMAN_ONLY) ;
     ok $status == Z_OK ;
-    
+
     ok $x->get_Level()    == Z_BEST_SPEED;
     ok $x->get_Strategy() == Z_HUFFMAN_ONLY;
-     
+
     ($X, $status) = $x->deflate($goodbye) ;
     ok $status == Z_OK ;
     $Answer .= $X ;
     $input .= $goodbye;
-    
-    # change only Level 
+
+    # change only Level
     $status = $x->deflateParams(-Level => Z_NO_COMPRESSION) ;
     ok $status == Z_OK ;
-    
+
     ok $x->get_Level()    == Z_NO_COMPRESSION;
     ok $x->get_Strategy() == Z_HUFFMAN_ONLY;
-     
+
     ($X, $status) = $x->deflate($goodbye) ;
     ok $status == Z_OK ;
     $Answer .= $X ;
     $input .= $goodbye;
-    
+
     # change only Strategy
     $status = $x->deflateParams(-Strategy => Z_FILTERED) ;
     ok $status == Z_OK ;
-    
+
     ok $x->get_Level()    == Z_NO_COMPRESSION;
     ok $x->get_Strategy() == Z_FILTERED;
-     
+
     ($X, $status) = $x->deflate($goodbye) ;
     ok $status == Z_OK ;
     $Answer .= $X ;
     $input .= $goodbye;
-    
+
     ok ((($X, $status) = $x->flush())[1] == Z_OK ) ;
     $Answer .= $X ;
-     
+
     my ($first, @Answer) = split('', $Answer) ;
-     
+
     my $k;
     ok (($k, $err) = inflateInit()) ;
     ok $k ;
     ok $err == Z_OK ;
-     
+
     ($Z, $status) = $k->inflate($Answer) ;
 
-    ok $status == Z_STREAM_END 
+    ok $status == Z_STREAM_END
         or print "# status $status\n";
     ok $Z  eq $input ;
 }
@@ -840,28 +851,28 @@ if ($] >= 5.005)
     # test inflate with a substr
 
     ok my $x = deflateInit() ;
-     
+
     ok ((my ($X, $status) = $x->deflate($contents))[1] == Z_OK) ;
-    
+
     my $Y = $X ;
 
-     
-     
+
+
     ok ((($X, $status) = $x->flush() )[1] == Z_OK ) ;
     $Y .= $X ;
-     
+
     my $append = "Appended" ;
     $Y .= $append ;
-     
+
     ok $k = inflateInit() ;
-     
+
     #($Z, $status) = $k->inflate(substr($Y, 0, -1)) ;
     ($Z, $status) = $k->inflate(substr($Y, 0)) ;
-     
+
     ok $status == Z_STREAM_END ;
     ok $contents eq $Z ;
     is $Y, $append;
-    
+
 }
 
 if ($] >= 5.005)
@@ -869,27 +880,27 @@ if ($] >= 5.005)
     # deflate/inflate in scalar context
 
     ok my $x = deflateInit() ;
-     
+
     my $X = $x->deflate($contents);
-    
+
     my $Y = $X ;
 
-     
-     
+
+
     $X = $x->flush();
     $Y .= $X ;
-     
+
     my $append = "Appended" ;
     $Y .= $append ;
-     
+
     ok $k = inflateInit() ;
-     
+
     $Z = $k->inflate(substr($Y, 0, -1)) ;
     #$Z = $k->inflate(substr($Y, 0)) ;
-     
+
     ok $contents eq $Z ;
     is $Y, $append;
-    
+
 }
 
 {
@@ -897,8 +908,8 @@ if ($] >= 5.005)
 
     # CRC32 of this data should have the high bit set
     # value in ascii is ZgRNtjgSUW
-    my $data = "\x5a\x67\x52\x4e\x74\x6a\x67\x53\x55\x57"; 
-    my $expected_crc = 0xCF707A2B ; # 3480255019 
+    my $data = "\x5a\x67\x52\x4e\x74\x6a\x67\x53\x55\x57";
+    my $expected_crc = 0xCF707A2B ; # 3480255019
 
     my $crc = crc32($data) ;
     is $crc, $expected_crc;
@@ -912,7 +923,7 @@ if ($] >= 5.005)
     my $data = "\x6c\x70\x73\x63\x4f\x56\x73\x41\x4a\x69\x55\x66" .
                "\x4e\x43\x6f\x6d\x6b\x4f\x66\x57\x59\x42\x63\x50" .
                "\x68\x48\x5a\x5b\x62\x54";
-    my $expected_crc = 0xAAD60AC7 ; # 2866154183 
+    my $expected_crc = 0xAAD60AC7 ; # 2866154183
     my $crc = adler32($data) ;
     is $crc, $expected_crc;
 }
@@ -930,11 +941,11 @@ if ($] >= 5.005)
     ok length $compressed > 4096 ;
     ok my $out = memGunzip(\$compressed) ;
     is $gzerrno, 0;
-     
+
     ok $contents eq $out ;
     is length $out, length $contents ;
 
-    
+
 }
 
 
@@ -946,7 +957,7 @@ some text
 EOM
 
     my $good ;
-    ok my $x = new IO::Compress::Gzip \$good, Append => 1, -HeaderCRC => 1 ;
+    ok my $x = IO::Compress::Gzip->new( \$good, Append => 1, -HeaderCRC => 1 );
     ok $x->write($string) ;
     ok  $x->close ;
 
@@ -996,8 +1007,8 @@ some text
 EOM
 
     my $truncated ;
-    ok  my $x = new IO::Compress::Gzip \$truncated, Append => 1, -HeaderCRC => 1, Strict => 0,
-				-ExtraField => "hello" x 10  ;
+    ok  my $x = IO::Compress::Gzip->new( \$truncated, Append => 1, -HeaderCRC => 1, Strict => 0,
+				-ExtraField => "hello" x 10 );
     ok  $x->write($string) ;
     ok  $x->close ;
 
@@ -1018,7 +1029,7 @@ some text
 EOM
 
     my $truncated ;
-    ok  my $x = new IO::Compress::Gzip \$truncated, Append => 1, -Name => $Name;
+    ok  my $x = IO::Compress::Gzip->new( \$truncated, Append => 1, -Name => $Name );
     ok  $x->write($string) ;
     ok  $x->close ;
 
@@ -1037,7 +1048,7 @@ some text
 EOM
 
     my $truncated ;
-    ok  my $x = new IO::Compress::Gzip \$truncated, -Comment => $Comment;
+    ok  my $x = IO::Compress::Gzip->new( \$truncated, -Comment => $Comment );
     ok  $x->write($string) ;
     ok  $x->close ;
 
@@ -1054,7 +1065,7 @@ some text
 EOM
 
     my $truncated ;
-    ok  my $x = new IO::Compress::Gzip \$truncated, -HeaderCRC => 1;
+    ok  my $x = IO::Compress::Gzip->new( \$truncated, -HeaderCRC => 1 );
     ok  $x->write($string) ;
     ok  $x->close ;
 
@@ -1071,19 +1082,19 @@ some text
 EOM
 
     my $buffer ;
-    ok  my $x = new IO::Compress::Gzip \$buffer, 
+    ok  my $x = IO::Compress::Gzip->new( \$buffer,
                              -Append     => 1,
                              -Strict     => 0,
                              -HeaderCRC  => 1,
                              -Name       => "Fred",
                              -ExtraField => "Extra",
-                             -Comment    => 'Comment';
+                             -Comment    => 'Comment' );
     ok  $x->write($string) ;
     ok  $x->close ;
 
     ok defined $buffer ;
 
-    ok my $got = memGunzip($buffer) 
+    ok my $got = memGunzip($buffer)
         or diag "gzerrno is $gzerrno" ;
     is $got, $string ;
     is $gzerrno, 0;
@@ -1098,7 +1109,7 @@ some text
 EOM
 
     my $good ;
-    ok  my $x = new IO::Compress::Gzip \$good, Append => 1 ;
+    ok  my $x = IO::Compress::Gzip->new( \$good, Append => 1 );
     ok  $x->write($string) ;
     ok  $x->close ;
 
@@ -1176,7 +1187,7 @@ sub trickle
     title "Append & MultiStream Tests";
     # rt.24041
 
-    my $lex = new LexFile my $name ;
+    my $lex = LexFile->new( my $name );
     my $data1 = "the is the first";
     my $data2 = "and this is the second";
     my $trailing = "some trailing data";
@@ -1185,7 +1196,7 @@ sub trickle
 
     title "One file";
     $fil = gzopen($name, "wb") ;
-    ok $fil, "opened first file"; 
+    ok $fil, "opened first file";
     is $fil->gzwrite($data1), length $data1, "write data1" ;
     ok ! $fil->gzclose(), "Closed";
 
@@ -1194,7 +1205,7 @@ sub trickle
 
     title "Two files";
     $fil = gzopen($name, "ab") ;
-    ok $fil, "opened second file"; 
+    ok $fil, "opened second file";
     is $fil->gzwrite($data2), length $data2, "write data2" ;
     ok ! $fil->gzclose(), "Closed";
 
@@ -1214,12 +1225,12 @@ sub trickle
     title "gzclose & gzflush return codes";
     # rt.29215
 
-    my $lex = new LexFile my $name ;
+    my $lex = LexFile->new( my $name );
     my $data1 = "the is some text";
     my $status;
 
     $fil = gzopen($name, "wb") ;
-    ok $fil, "opened first file"; 
+    ok $fil, "opened first file";
     is $fil->gzwrite($data1), length $data1, "write data1" ;
     $status = $fil->gzflush(0xfff);
     ok   $status, "flush not ok" ;
@@ -1233,17 +1244,17 @@ sub trickle
 {
     title "repeated calls to flush - no compression";
 
-    my ($err, $x, $X, $status, $data); 
- 
+    my ($err, $x, $X, $status, $data);
+
     ok( ($x, $err) = deflateInit ( ), "Create deflate object" );
     isa_ok $x, "Compress::Raw::Zlib::deflateStream" ;
     cmp_ok $err, '==', Z_OK, "status is Z_OK" ;
 
-    
+
     ($data, $status) = $x->flush(Z_SYNC_FLUSH) ;
-    cmp_ok  $status, '==', Z_OK, "flush returned Z_OK" ;    
+    cmp_ok  $status, '==', Z_OK, "flush returned Z_OK" ;
     ($data, $status) = $x->flush(Z_SYNC_FLUSH) ;
-    cmp_ok  $status, '==', Z_OK, "second flush returned Z_OK" ;    
+    cmp_ok  $status, '==', Z_OK, "second flush returned Z_OK" ;
     is $data, "", "no output from second flush";
 }
 
@@ -1251,18 +1262,18 @@ sub trickle
     title "repeated calls to flush - after compression";
 
     my $hello = "I am a HAL 9000 computer" ;
-    my ($err, $x, $X, $status, $data); 
- 
+    my ($err, $x, $X, $status, $data);
+
     ok( ($x, $err) = deflateInit ( ), "Create deflate object" );
     isa_ok $x, "Compress::Raw::Zlib::deflateStream" ;
     cmp_ok $err, '==', Z_OK, "status is Z_OK" ;
- 
+
     ($data, $status) = $x->deflate($hello) ;
     cmp_ok $status, '==', Z_OK, "deflate returned Z_OK" ;
-    
+
     ($data, $status) = $x->flush(Z_SYNC_FLUSH) ;
-    cmp_ok  $status, '==', Z_OK, "flush returned Z_OK" ;    
+    cmp_ok  $status, '==', Z_OK, "flush returned Z_OK" ;
     ($data, $status) = $x->flush(Z_SYNC_FLUSH) ;
-    cmp_ok  $status, '==', Z_OK, "second flush returned Z_OK" ;    
+    cmp_ok  $status, '==', Z_OK, "second flush returned Z_OK" ;
     is $data, "", "no output from second flush";
 }

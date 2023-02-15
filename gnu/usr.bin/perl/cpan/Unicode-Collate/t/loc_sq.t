@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -144,10 +139,10 @@ ok($objSq->lt("Zh", "ZH"));
 
 # 93
 
-ok($objSq->eq("c\x{327}", pack('U', 0xE7)));
-ok($objSq->eq("C\x{327}", pack('U', 0xC7)));
-ok($objSq->eq("e\x{308}", pack('U', 0xEB)));
-ok($objSq->eq("E\x{308}", pack('U', 0xCB)));
+ok($objSq->eq("c\x{327}", _pack_U(0xE7)));
+ok($objSq->eq("C\x{327}", _pack_U(0xC7)));
+ok($objSq->eq("e\x{308}", _pack_U(0xEB)));
+ok($objSq->eq("E\x{308}", _pack_U(0xCB)));
 
 # 97
 

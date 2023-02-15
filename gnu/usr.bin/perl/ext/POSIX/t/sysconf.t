@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use File::Spec;
 use POSIX;
 
@@ -110,12 +111,12 @@ SKIP: {
 
     -c $TTY
 	or skip("$TTY not a character file", $n);
-    open(TTY, '<', $TTY)
+    open(my $LEXTTY, '<', $TTY)
 	or skip("failed to open $TTY: $!", $n);
-    -t TTY
-	or skip("TTY ($TTY) not a terminal file", $n);
+    -t $LEXTTY
+	or skip("$LEXTTY ($TTY) not a terminal file", $n);
 
-    my $fd = fileno(TTY);
+    my $fd = fileno($LEXTTY);
 
     # testing fpathconf() on a terminal file
     for my $constant (@path_consts_terminal) {
@@ -123,7 +124,7 @@ SKIP: {
 			  "calling fpathconf($fd, $constant) ($TTY)");
     }
     
-    close($fd);
+    close($LEXTTY);
     # testing pathconf() on a terminal file
     for my $constant (@path_consts_terminal) {
 	_check_and_report(sub { pathconf($TTY, shift) }, $constant,
@@ -157,7 +158,9 @@ SKIP: {
 }
 
 END {
-    1 while unlink($fifo);
+    if ($fifo) {
+        1 while unlink($fifo);
+    }
 }
 
 SKIP: {

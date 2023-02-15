@@ -14,6 +14,38 @@ features are available.
 The deprecated features will be grouped by the version of Perl in
 which they will be removed.
 
+=head2 Perl 5.40
+
+=head3 Downgrading a C<use VERSION> to below v5.11
+
+Once Perl has seen a C<use VERSION> declaration that requests a version
+C<v5.11> or above, a subsequent second declaration that requests an earlier
+version will print a deprecation warning. For example,
+
+    use v5.14;
+    say "We can use v5.14's features here";
+
+    use v5.10;        # This prints a warning
+
+This behaviour will be removed in Perl 5.40; such a subsequent request will
+become a compile-time error.
+
+This is because of an intended related change to the interaction between
+C<use VERSION> and C<use strict>. If you specify a version >= 5.11, strict is
+enabled implicitly. If you request a version < 5.11, strict will become
+disabled I<even if you had previously written> C<use strict>. This was not
+the previous behaviour of C<use VERSION>, which at present will track
+explicitly-enabled strictness flags independently.
+
+=head2 Perl 5.38
+
+=head3 Pod::Html utility functions
+
+The definition and documentation of three utility functions previously
+importable from L<Pod::Html> were moved to new package L<Pod::Html::Util> in
+Perl 5.36.  While they remain importable from L<Pod::Html> in Perl 5.36, as of
+Perl 5.38 they will only be importable, on request, from L<Pod::Html::Util>.
+
 =head2 Perl 5.34
 
 There are no deprecations or fatalizations scheduled for Perl 5.34.
@@ -171,8 +203,8 @@ C<< File::Glob >> has a function called C<< glob >>, which just calls
 C<< bsd_glob >>.
 
 C<< File::Glob::glob() >> was deprecated in Perl 5.8. A deprecation
-message was issued from Perl 5.26 onwards, and the function has now
-disappeared in Perl 5.30.
+message was issued from Perl 5.26 onwards, the function became fatal
+in Perl 5.30, and was removed entirely in Perl 5.32.
 
 Code using C<< File::Glob::glob() >> should call
 C<< File::Glob::bsd_glob() >> instead.
@@ -183,7 +215,7 @@ C<< File::Glob::bsd_glob() >> instead.
 
 Before Perl 5.10, setting C<< $* >> to a true value globally enabled
 multi-line matching within a string. This relique from the past lost
-its special meaning in 5.10. Use of this variable will be a fatal error
+its special meaning in 5.10. Use of this variable became a fatal error
 in Perl 5.30, freeing the variable up for a future special meaning.
 
 To enable multiline matching one should use the C<< /m >> regexp
@@ -196,7 +228,7 @@ a whole file) with C<< use re '/m' >>.
 This variable used to have a special meaning -- it could be used
 to control how numbers were formatted when printed. This seldom
 used functionality was removed in Perl 5.10. In order to free up
-the variable for a future special meaning, its use will be a fatal
+the variable for a future special meaning, its use became a fatal
 error in Perl 5.30.
 
 To specify how numbers are formatted when printed, one is advised
@@ -219,8 +251,8 @@ of C<< CORE::glob >>, and hence, C<< File::Glob::glob >> should not
 be used.
 
 C<< File::Glob::glob() >> was deprecated in Perl 5.8. A deprecation
-message was issued from Perl 5.26 onwards, and the function will
-disappear in Perl 5.30.
+message was issued from Perl 5.26 onwards, and in Perl 5.30 this was
+turned into a fatal error.
 
 Code using C<< File::Glob::glob() >> should call
 C<< File::Glob::bsd_glob() >> instead.
@@ -232,7 +264,7 @@ See L</Unescaped left braces in regular expressions> above.
 =head3 Unqualified C<dump()>
 
 Use of C<dump()> instead of C<CORE::dump()> was deprecated in Perl 5.8,
-and an unqualified C<dump()> will no longer be available in Perl 5.30.
+and an unqualified C<dump()> is no longer available as of Perl 5.30.
 
 See L<perlfunc/dump>.
 
@@ -288,7 +320,7 @@ code.  To avoid this a future version of perl will throw an exception when
 any of sysread(), recv(), syswrite() or send() are called on handle with the
 C<:utf8> layer.
 
-In Perl 5.30, it will no longer be possible to use sysread(), recv(),
+As of Perl 5.30, it is no longer be possible to use sysread(), recv(),
 syswrite() or send() to read or send bytes from/to :utf8 handles.
 
 

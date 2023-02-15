@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -79,21 +74,21 @@ ok($objWo->lt("o\x{301}", "O\x{301}"));
 
 # 28
 
-ok($objWo->eq("a\x{300}", pack('U', 0xE0)));
-ok($objWo->eq("a\x{340}", pack('U', 0xE0)));
-ok($objWo->eq("A\x{300}", pack('U', 0xC0)));
-ok($objWo->eq("A\x{340}", pack('U', 0xC0)));
-ok($objWo->eq("e\x{301}", pack('U', 0xE9)));
-ok($objWo->eq("e\x{341}", pack('U', 0xE9)));
-ok($objWo->eq("E\x{301}", pack('U', 0xC9)));
-ok($objWo->eq("E\x{341}", pack('U', 0xC9)));
-ok($objWo->eq("e\x{308}", pack('U', 0xEB)));
-ok($objWo->eq("E\x{308}", pack('U', 0xCB)));
-ok($objWo->eq("n\x{303}", pack('U', 0xF1)));
-ok($objWo->eq("N\x{303}", pack('U', 0xD1)));
-ok($objWo->eq("o\x{301}", pack('U', 0xF3)));
-ok($objWo->eq("o\x{341}", pack('U', 0xF3)));
-ok($objWo->eq("O\x{301}", pack('U', 0xD3)));
-ok($objWo->eq("O\x{341}", pack('U', 0xD3)));
+ok($objWo->eq("a\x{300}", _pack_U(0xE0)));
+ok($objWo->eq("a\x{340}", _pack_U(0xE0)));
+ok($objWo->eq("A\x{300}", _pack_U(0xC0)));
+ok($objWo->eq("A\x{340}", _pack_U(0xC0)));
+ok($objWo->eq("e\x{301}", _pack_U(0xE9)));
+ok($objWo->eq("e\x{341}", _pack_U(0xE9)));
+ok($objWo->eq("E\x{301}", _pack_U(0xC9)));
+ok($objWo->eq("E\x{341}", _pack_U(0xC9)));
+ok($objWo->eq("e\x{308}", _pack_U(0xEB)));
+ok($objWo->eq("E\x{308}", _pack_U(0xCB)));
+ok($objWo->eq("n\x{303}", _pack_U(0xF1)));
+ok($objWo->eq("N\x{303}", _pack_U(0xD1)));
+ok($objWo->eq("o\x{301}", _pack_U(0xF3)));
+ok($objWo->eq("o\x{341}", _pack_U(0xF3)));
+ok($objWo->eq("O\x{301}", _pack_U(0xD3)));
+ok($objWo->eq("O\x{341}", _pack_U(0xD3)));
 
 # 44

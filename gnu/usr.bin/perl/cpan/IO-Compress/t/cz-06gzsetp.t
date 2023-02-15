@@ -9,10 +9,10 @@ use lib qw(t t/compress);
 use strict;
 use warnings;
 use bytes;
- 
+
 use Test::More ;
 use CompTestUtils;
- 
+
 use Compress::Zlib 2 ;
 
 use IO::Compress::Gzip ;
@@ -26,9 +26,9 @@ use IO::Uncompress::RawInflate ;
 
 our ($extra);
 
- 
-BEGIN 
-{ 
+
+BEGIN
+{
     # use Test::NoWarnings, if available
     $extra = 0 ;
     $extra = 1
@@ -43,12 +43,12 @@ plan tests => 51 + $extra ;
 
 # Check zlib_version and ZLIB_VERSION are the same.
 SKIP: {
-    skip "TEST_SKIP_VERSION_CHECK is set", 1 
+    skip "TEST_SKIP_VERSION_CHECK is set", 1
         if $ENV{TEST_SKIP_VERSION_CHECK};
     is Compress::Zlib::zlib_version, ZLIB_VERSION,
         "ZLIB_VERSION matches Compress::Zlib::zlib_version" ;
 }
- 
+
 {
     # gzsetparams
     title "Testing gzsetparams";
@@ -59,13 +59,13 @@ SKIP: {
     my $len_goodbye = length $goodbye;
 
     my ($input, $err, $answer, $X, $status, $Answer);
-     
-    my $lex = new LexFile my $name ;
+
+    my $lex = LexFile->new( my $name );
     ok my $x = gzopen($name, "wb");
 
     $input .= $hello;
     is $x->gzwrite($hello), $len_hello, "gzwrite returned $len_hello" ;
-    
+
     # Error cases
     eval { $x->gzsetparams() };
     like $@, mkErr('^Usage: Compress::Zlib::gzFile::gzsetparams\(file, level, strategy\)');
@@ -73,14 +73,14 @@ SKIP: {
     # Change both Level & Strategy
     $status = $x->gzsetparams(Z_BEST_SPEED, Z_HUFFMAN_ONLY) ;
     cmp_ok $status, '==', Z_OK, "status is Z_OK";
-    
+
     $input .= $goodbye;
     is $x->gzwrite($goodbye), $len_goodbye, "gzwrite returned $len_goodbye" ;
-    
+
     ok ! $x->gzclose, "closed" ;
 
     ok my $k = gzopen($name, "rb") ;
-     
+
     # calling gzsetparams on reading is not allowed.
     $status = $k->gzsetparams(Z_BEST_SPEED, Z_HUFFMAN_ONLY) ;
     cmp_ok $status, '==', Z_STREAM_ERROR, "status is Z_STREAM_ERROR" ;
@@ -116,29 +116,29 @@ foreach my $CompressClass ('IO::Compress::Gzip',
     #my ($input, $err, $answer, $X, $status, $Answer);
     my $compressed;
 
-    ok my $x = new $CompressClass(\$compressed) ;
+    ok my $x = $CompressClass->can('new')->( $CompressClass, \$compressed) ;
 
     my $input .= $hello;
     is $x->write($hello), $len_hello, "wrote $len_hello bytes" ;
-    
+
     # Change both Level & Strategy
     ok $x->deflateParams(Z_BEST_SPEED, Z_HUFFMAN_ONLY), "deflateParams ok";
 
     $input .= $goodbye;
     is $x->write($goodbye), $len_goodbye, "wrote  $len_goodbye bytes" ;
-    
+
     ok $x->close, "closed  $CompressClass object" ;
 
-    my $k = new $UncompressClass(\$compressed);
+    my $k = $UncompressClass->can('new')->( $UncompressClass, \$compressed);
     isa_ok $k, $UncompressClass;
-     
+
     my $len = length $input ;
     my $uncompressed;
-    is $k->read($uncompressed, $len), $len 
+    is $k->read($uncompressed, $len), $len
        or diag "$IO::Uncompress::Gunzip::GunzipError" ;
 
-    ok $uncompressed eq  $input, "got expected uncompressed data" 
-        or diag("unc len = " . length($uncompressed) . ", input len = " .  
+    ok $uncompressed eq  $input, "got expected uncompressed data"
+        or diag("unc len = " . length($uncompressed) . ", input len = " .
                 length($input) . "\n") ;
     ok $k->eof, "eof" ;
     ok $k->close, "closed" ;

@@ -1,9 +1,5 @@
 #!perl
 BEGIN {
-    unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: not perlio\n";
-	exit 0;
-    }
     require Config;
     unless ($Config::Config{'usethreads'}) {
         print "1..0 # Skip -- need threads for this test\n";

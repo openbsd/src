@@ -30,7 +30,7 @@ sub writeFile
 
 END { unlink keys %files if keys %files }
 
-use Test::More tests => 189;
+use Test::More;
 
 BEGIN { use_ok('DBM_Filter') };
 my $db_file;
@@ -728,3 +728,4 @@ sub checkRaw
 
 }
 
+done_testing();

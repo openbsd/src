@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 BEGIN {
         if ($ENV{PERL_CORE}) {
                 chdir 't' if -d 't';
@@ -7,10 +10,12 @@ BEGIN {
 
 use MIME::QuotedPrint;
 
-$x70 = "x" x 70;
+my $x70 = "x" x 70;
 
-$IsASCII  = ord('A') == 65;
-$IsEBCDIC = ord('A') == 193;
+my $IsASCII  = ord('A') == 65;
+my $IsEBCDIC = ord('A') == 193;
+
+my @tests;
 
 if ($IsASCII) {
 
@@ -191,18 +196,18 @@ y. -- H. L. Mencken=\n"],
   die sprintf "Unknown character set: ord('A') == %d\n", ord('A');
 }
 
-$notests = @tests + 16;
+my $notests = @tests + 16;
 print "1..$notests\n";
 
-$testno = 0;
+my $testno = 0;
 for (@tests) {
     $testno++;
-    ($plain, $encoded) = @$_;
+    my ($plain, $encoded) = @$_;
     if (ord('A') == 193) {  # EBCDIC 8 bit chars are different
         if ($testno == 2) { $plain =~ s/\xe5/\x47/; $plain =~ s/\xe6/\x9c/g; $plain =~ s/\xf8/\x70/; }
         if ($testno == 7) { $plain =~ s/\xff/\xdf/; }
     }
-    $x = encode_qp($plain);
+    my $x = encode_qp($plain);
     if ($x ne $encoded) {
 	print "Encode test failed\n";
 	print "Got:      '$x'\n";

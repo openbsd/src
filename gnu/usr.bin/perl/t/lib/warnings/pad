@@ -47,11 +47,13 @@ EXPECT
 "my" variable $p masks earlier declaration in same scope at - line 8.
 ########
 # pad.c
+use feature 'state' ;
 use warnings 'shadow' ;
 our $x ;
 my $x ;
+state $x ;
 our $y = my $y ;
-our $p ;
+our $p = state $p ;
 package X ;
 my $p ;
 package main ;
@@ -59,20 +61,51 @@ no warnings 'shadow' ;
 our $z ;
 my $z ;
 our $t = my $t ;
-our $q ;
+our $q = state $q ;
 package X ;
 my $q ;
+state $q;
 EXPECT
-"my" variable $x masks earlier declaration in same scope at - line 4.
-"my" variable $y masks earlier declaration in same statement at - line 5.
-"my" variable $p masks earlier declaration in same scope at - line 8.
+"my" variable $x masks earlier declaration in same scope at - line 5.
+"state" variable $x masks earlier declaration in same scope at - line 6.
+"my" variable $y masks earlier declaration in same statement at - line 7.
+"state" variable $p masks earlier declaration in same statement at - line 8.
+"my" variable $p masks earlier declaration in same scope at - line 10.
 ########
 # pad.c
+use feature 'state' ;
+use warnings 'shadow';
+state $x ;
+state $x ;
+my $x ;
+our $x ;
+state $y = state $y ;
+state $p = my $p ;
+state $z = our $z ;
+package X ;
+state $p ;
+package main ;
+no warnings 'shadow' ;
+state $x ;
+state $y ;
+state $p ;
+EXPECT
+"state" variable $x masks earlier declaration in same scope at - line 5.
+"my" variable $x masks earlier declaration in same scope at - line 6.
+"our" variable $x masks earlier declaration in same scope at - line 7.
+"state" variable $y masks earlier declaration in same statement at - line 8.
+"my" variable $p masks earlier declaration in same statement at - line 9.
+"our" variable $z masks earlier declaration in same statement at - line 10.
+"state" variable $p masks earlier declaration in same scope at - line 12.
+########
+# pad.c
+use feature 'state';
 use warnings 'shadow' ;
 my $x ;
 our $x ;
+state $x;
 my $y = our $y ;
-my $p ;
+my $p = state $p ;
 package X ;
 our $p ;
 package main ;
@@ -80,13 +113,17 @@ no warnings 'shadow' ;
 my $z ;
 our $z ;
 my $t = our $t ;
-my $q ;
+my $z = state $z;
+my $q;
+state $q;
 package X ;
 our $q ;
 EXPECT
-"our" variable $x masks earlier declaration in same scope at - line 4.
-"our" variable $y masks earlier declaration in same statement at - line 5.
-"our" variable $p masks earlier declaration in same scope at - line 8.
+"our" variable $x masks earlier declaration in same scope at - line 5.
+"state" variable $x masks earlier declaration in same scope at - line 6.
+"our" variable $y masks earlier declaration in same statement at - line 7.
+"state" variable $p masks earlier declaration in same statement at - line 8.
+"our" variable $p masks earlier declaration in same scope at - line 10.
 ########
 # pad.c
 use warnings 'closure' ;

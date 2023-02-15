@@ -7,6 +7,7 @@ BEGIN {
 chdir 't';
 
 use strict;
+use warnings;
 use Test::More tests => 1;
 use MakeMaker::Test::Utils;
 use ExtUtils::MakeMaker;

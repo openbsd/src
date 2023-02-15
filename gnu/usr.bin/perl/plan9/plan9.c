@@ -1,20 +1,31 @@
 #include "EXTERN.h"
 #include "perl.h"
+#include "./plan9/math.h"
 
-/* Functions mentioned in <sys/socket.h> but not implemented */
+#define _PLAN9_SOURCE
+#include <u.h>
 
-int getsockopt(int a, int b, int c, void *d, int *e)
-{
-    croak("Function \"getsockopt\" not implemented in this version of perl.");
-    return (int)NULL; 
+/** Function fpclassify(double) is required by sv.c, which was refactored in perl-5.24 era and uses other libraries to classify floating points. **/
+
+/* See /sys/src/lib/port/frexp.c */
+#define SHIFT 20
+
+int fpclassify(double d) {
+        FPdbleword x;
+
+        /* order matters: only isNaN can operate on NaN */
+        if ( isNaN(d) )
+                return FP_NAN;
+        else if ( isInf(d, 0) )
+                return FP_INFINITE;
+        else if ( d == 0 )
+                return FP_ZERO;
+
+        x.x = fabs(d);
+        return (x.hi >> SHIFT) ? FP_NORMAL : FP_SUBNORMAL;
 }
 
-int setsockopt(int a, int b, int c, void *d, int *e)
-{
-    croak("Function \"setsockopt\" not implemented in this version of perl.");
-    return (int)NULL;
-}
-
+/* Functions mentioned in /sys/include/ape/sys/socket.h but not implemented */
 
 int recvmsg(int a, struct msghdr *b, int c)
 {
@@ -29,7 +40,7 @@ int sendmsg(int a, struct msghdr *b, int c)
 } 
 
 
-/* Functions mentioned in <netdb.h> but not implemented */
+/* Functions mentioned in /sys/include/ape/sys/netdb.h but not implemented */
 struct netent *getnetbyname(const char *a)
 {
     croak("Function \"getnetbyname\" not implemented in this version of perl.");
@@ -111,24 +122,4 @@ void endprotoent()
 void endservent()
 {
     croak("Function \"endservent\" not implemented in this version of perl.");
-}
-
-int tcdrain(int)
-{
-croak("Function \"tcdrain\" not implemented in this version of perl.");
-}
-
-int tcflow(int, int)
-{
-croak("Function \"tcflow\" not implemented in this version of perl.");
-}
-
-int tcflush(int, int)
-{
-croak("Function \"tcflush\" not implemented in this version of perl.");
-}
-
-int tcsendbreak(int, int)
-{
-croak("Function \"tcsendbreak\" not implemented in this version of perl.");
 }

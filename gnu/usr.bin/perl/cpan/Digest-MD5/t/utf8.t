@@ -7,10 +7,12 @@ BEGIN {
     }
 }
 
-print "1..5\n";
-
 use strict;
+use warnings;
+
 use Digest::MD5 qw(md5_hex);
+
+print "1..5\n";
 
 my $str;
 $str = "foo\xFF\x{100}";

@@ -11,6 +11,8 @@ use strict;
 
 use Test::More;
 use Config;
+use File::Temp 'tempdir';
+use File::Spec;
 
 BEGIN {
     plan(skip_all => "GDBM_File was not built")
@@ -24,8 +26,6 @@ BEGIN {
     use_ok('GDBM_File');
 }
 
-unlink <fatal_dbmx*>;
-
 open my $fh, '<', $^X or die "Can't open $^X: $!";
 my $fileno = fileno $fh;
 isnt($fileno, undef, "Can find next available file descriptor");
@@ -35,8 +35,10 @@ is((open $fh, "<&=$fileno"), undef,
    "Check that we cannot open fileno $fileno. \$! is $!");
 
 umask(0);
+my $wd = tempdir(CLEANUP => 1);
 my %h;
-isa_ok(tie(%h, 'GDBM_File', 'fatal_dbmx', GDBM_WRCREAT, 0640), 'GDBM_File');
+isa_ok(tie(%h, 'GDBM_File', File::Spec->catfile($wd, 'fatal_dbmx'),
+           GDBM_WRCREAT, 0640), 'GDBM_File');
 
 isnt((open $fh, "<&=$fileno"), undef, "dup fileno $fileno")
     or diag("\$! = $!");
@@ -63,4 +65,3 @@ SKIP: {
          'expected error message from GDBM_File');
 }
 
-unlink <fatal_dbmx*>;

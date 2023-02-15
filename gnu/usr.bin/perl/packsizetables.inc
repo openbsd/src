@@ -19,7 +19,7 @@ STATIC const packprops_t packprops[512] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0,
     /* C */ sizeof(unsigned char),
-#if defined(HAS_LONG_DOUBLE) && defined(USE_LONG_DOUBLE)
+#if defined(HAS_LONG_DOUBLE)
     /* D */ LONG_DOUBLESIZE,
 #else
     0,
@@ -154,7 +154,7 @@ STATIC const packprops_t packprops[512] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     /* C */ sizeof(unsigned char),
-#if defined(HAS_LONG_DOUBLE) && defined(USE_LONG_DOUBLE)
+#if defined(HAS_LONG_DOUBLE)
     /* D */ LONG_DOUBLESIZE,
 #else
     0,

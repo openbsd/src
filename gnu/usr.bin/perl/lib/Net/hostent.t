@@ -19,7 +19,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 7;
+use Test::More;
 
 BEGIN { use_ok 'Net::hostent' }
 
@@ -48,6 +48,14 @@ ok(defined $i,  "gethostbyaddr('127.0.0.1')") ||
 
 is( inet_ntoa($i->addr), "127.0.0.1",   'addr from gethostbyaddr' );
 
+$i = gethost("127.0.0.1");
+ok(defined $i,  "gethost('127.0.0.1')");
+is( inet_ntoa($i->addr), "127.0.0.1",   'addr from gethost' );
+
+"127.0.0.1" =~ /(.*)/;
+$i = gethost($1);
+ok(defined $i, 'gethost on capture variable');
+
 # need to skip the name comparisons on Win32 because windows will
 # return the name of the machine instead of "localhost" when resolving
 # 127.0.0.1 or even "localhost"
@@ -57,7 +65,7 @@ is( inet_ntoa($i->addr), "127.0.0.1",   'addr from gethostbyaddr' );
 
 SKIP: {
     skip "Windows will return the machine name instead of 'localhost'", 2
-      if $^O eq 'MSWin32' or $^O eq 'NetWare' or $^O eq 'cygwin';
+      if $^O eq 'MSWin32' or $^O eq 'cygwin';
 
     print "# name = " . $h->name . ", aliases = " . join (",", @{$h->aliases}) . "\n";
 
@@ -94,3 +102,5 @@ SKIP: {
     }
 }
 }
+
+done_testing();

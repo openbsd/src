@@ -5,11 +5,12 @@
 
 use Test::More;
 
+use strict;
+use warnings;
+
 my @f = qw(abs cos exp log sin sqrt);
 
 plan tests => scalar @f;
-
-use strict;
 
 use Math::Complex;
 

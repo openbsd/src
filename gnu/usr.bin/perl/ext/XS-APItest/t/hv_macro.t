@@ -202,17 +202,23 @@ if ($is_wide) {
         "rotl64(n,1) and rotr64(n,1) return different results" );
 }
 if ($is_wide) {
-    my $seed  = "perl is for good";
+    push @INC, '../../t';
+    require 'charset_tools.pl';
+
+    # The values here are from the ASCII/Unicode code points; so if on EBCDIC
+    # we need # to convert from native to uni to get the same values
+
+    my $seed  = native_to_uni("perl is for good");
     my $state = XS::APItest::HvMacro::siphash_seed_state($seed);
     is(
         sprintf( "%016x",
-            XS::APItest::HvMacro::siphash24( $state, "Larry wall is BDFL" ) ),
+            XS::APItest::HvMacro::siphash24( $state, native_to_uni("Larry wall is BDFL")) ),
         "71a11e065cefc12c",
         "Siphash24 seems to work"
     );
     is(
         sprintf( "%016x",
-            XS::APItest::HvMacro::siphash13( $state, "Larry wall is BDFL" ) ),
+            XS::APItest::HvMacro::siphash13( $state, native_to_uni("Larry wall is BDFL" ))),
         "adee71f47e49757a",
         "Siphash13 seems to work"
     );

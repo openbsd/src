@@ -24,11 +24,11 @@ BEGIN {
     use_ok('IO::Compress::Zip', qw(:all)) ;
     use_ok('IO::Uncompress::Unzip', qw(unzip $UnzipError)) ;
 
-    eval { 
-           require IO::Compress::Bzip2 ; 
-           import  IO::Compress::Bzip2 2.010 ; 
-           require IO::Uncompress::Bunzip2 ; 
-           import  IO::Uncompress::Bunzip2 2.010 ; 
+    eval {
+           require IO::Compress::Bzip2 ;
+           IO::Compress::Bzip2->import( 2.010 );
+           require IO::Uncompress::Bunzip2 ;
+           IO::Uncompress::Bunzip2->import( 2.010 );
          } ;
 
 }
@@ -38,7 +38,7 @@ sub getContent
 {
     my $filename = shift;
 
-    my $u = new IO::Uncompress::Unzip $filename, Append => 1, @_
+    my $u = IO::Uncompress::Unzip->new( $filename, Append => 1, @_ )
         or die "Cannot open $filename: $UnzipError";
 
     isa_ok $u, "IO::Uncompress::Unzip";
@@ -59,7 +59,7 @@ sub getContent
     }
 
     die "Error processing $filename: $status $!\n"
-        if $status < 0 ;    
+        if $status < 0 ;
 
     return @content;
 }
@@ -69,7 +69,7 @@ sub getContent
 {
     title "Create a simple zip - All Deflate";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = (
                    'hello',
@@ -77,16 +77,16 @@ sub getContent
                    'goodbye ',
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_DEFLATE);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_DEFLATE);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -102,7 +102,7 @@ SKIP:
     skip "IO::Compress::Bzip2 not available", 9
         unless defined $IO::Compress::Bzip2::VERSION;
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = (
                    'hello',
@@ -110,16 +110,16 @@ SKIP:
                    'goodbye ',
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_BZIP2, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_BZIP2, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_BZIP2);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_BZIP2);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -135,7 +135,7 @@ SKIP:
     skip "IO::Compress::Bzip2 not available", 9
         unless $IO::Compress::Bzip2::VERSION;
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = (
                    'hello',
@@ -143,16 +143,16 @@ SKIP:
                    'goodbye ',
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_BZIP2);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_DEFLATE);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -164,7 +164,7 @@ SKIP:
 {
     title "Create a simple zip - All STORE";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = (
                    'hello',
@@ -172,16 +172,16 @@ SKIP:
                    'goodbye ',
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_STORE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_STORE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_STORE);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_STORE);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -193,24 +193,24 @@ SKIP:
 {
     title "Create a simple zip - Deflate + STORE";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = qw(
-                   hello 
+                   hello
                        and
-                   goodbye 
+                   goodbye
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_STORE);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_DEFLATE);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -222,7 +222,7 @@ SKIP:
 {
     title "Create a simple zip - Deflate + zero length STORE";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my @content = (
                    'hello ',
@@ -230,16 +230,16 @@ SKIP:
                    'goodbye ',
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_DEFLATE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
     $zip->newStream(Name=> "two", Method => ZIP_CM_STORE);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
     $zip->newStream(Name=> "three", Method => ZIP_CM_DEFLATE);
-    is $zip->write($content[2]), length($content[2]), "write"; 
-    ok $zip->close(), "closed";                    
+    is $zip->write($content[2]), length($content[2]), "write";
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -251,7 +251,7 @@ SKIP:
 {
     title "RT #72548";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my $blockSize = 1024 * 16;
 
@@ -260,16 +260,16 @@ SKIP:
                    "x" x ($blockSize + 1)
                    );
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_STORE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_STORE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content[0]), length($content[0]), "write"; 
+    is $zip->write($content[0]), length($content[0]), "write";
 
     $zip->newStream(Name=> "two", Method => ZIP_CM_STORE);
-    is $zip->write($content[1]), length($content[1]), "write"; 
+    is $zip->write($content[1]), length($content[1]), "write";
 
-    ok $zip->close(), "closed";                    
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1, BlockSize => $blockSize);
 
@@ -280,15 +280,15 @@ SKIP:
 {
     title "Zip file with a single zero-length file";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one", Method => ZIP_CM_STORE, Stream => 0;
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one", Method => ZIP_CM_STORE, Stream => 0 );
     isa_ok $zip, "IO::Compress::Zip";
 
     $zip->newStream(Name=> "two", Method => ZIP_CM_STORE);
-    ok $zip->close(), "closed";                    
+    ok $zip->close(), "closed";
 
     my @got = getContent($file1);
 
@@ -307,13 +307,13 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
     my $content = "a single line\n";
     my $zip ;
 
-    my $status = zip \$content => \$zip, 
-                    Method => $method, 
-                    Stream => 0, 
+    my $status = zip \$content => \$zip,
+                    Method => $method,
+                    Stream => 0,
                     Name => "123";
     is $status, 1, "  Created a zip file";
 
-    my $u = new IO::Uncompress::Unzip \$zip;
+    my $u = IO::Uncompress::Unzip->new( \$zip );
     isa_ok $u, "IO::Uncompress::Unzip";
 
     is $u->getline, $content, "  Read first line ok";
@@ -324,39 +324,39 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
 
 {
     title "isMethodAvailable" ;
-    
+
     ok IO::Compress::Zip::isMethodAvailable(ZIP_CM_STORE), "ZIP_CM_STORE available";
     ok IO::Compress::Zip::isMethodAvailable(ZIP_CM_DEFLATE), "ZIP_CM_DEFLATE available";
     #ok IO::Compress::Zip::isMethodAvailable(ZIP_CM_STORE), "ZIP_CM_STORE available";
-    
-    ok ! IO::Compress::Zip::isMethodAvailable(999), "999 not available";    
+
+    ok ! IO::Compress::Zip::isMethodAvailable(999), "999 not available";
 }
 
 {
     title "Member & Comment 0";
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my $content = 'hello' ;
-                 
 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "0", Comment => "0" ;
+
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "0", Comment => "0" );
     isa_ok $zip, "IO::Compress::Zip";
 
-    is $zip->write($content), length($content), "write"; 
+    is $zip->write($content), length($content), "write";
 
-    ok $zip->close(), "closed";                    
+    ok $zip->close(), "closed";
 
 
 
-    my $u = new IO::Uncompress::Unzip $file1, Append => 1, @_
+    my $u = IO::Uncompress::Unzip->new( $file1, Append => 1, @_ )
         or die "Cannot open $file1: $UnzipError";
 
     isa_ok $u, "IO::Uncompress::Unzip";
 
     my $name = $u->getHeaderInfo()->{Name};
-    
+
     is $u->getHeaderInfo()->{Name}, "0", "Name is '0'";
 }
 
@@ -365,12 +365,12 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
     title "nexStream regression";
     # https://github.com/pmqs/IO-Compress/issues/3
 
-    my $lex = new LexFile my $file1;
+    my $lex = LexFile->new( my $file1 );
 
     my $content1 = qq["organisation_path","collection_occasion_key","episode_key"\n] ;
-                 
-    my $zip = new IO::Compress::Zip $file1,
-                    Name => "one";
+
+    my $zip = IO::Compress::Zip->new( $file1,
+                    Name => "one" );
     isa_ok $zip, "IO::Compress::Zip";
 
     print $zip $content1;
@@ -384,16 +384,16 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
 EOM
     print $zip $content2;
 
-    ok $zip->close(), "closed";                    
+    ok $zip->close(), "closed";
 
 
-    my $u = new IO::Uncompress::Unzip $file1, Append => 1, @_
+    my $u = IO::Uncompress::Unzip->new( $file1, Append => 1, @_ )
         or die "Cannot open $file1: $UnzipError";
 
     isa_ok $u, "IO::Uncompress::Unzip";
 
     my $name = $u->getHeaderInfo()->{Name};
-    
+
     is $u->getHeaderInfo()->{Name}, "one", "Name is 'one'";
 
     ok $u->nextStream(), "nextStream OK";

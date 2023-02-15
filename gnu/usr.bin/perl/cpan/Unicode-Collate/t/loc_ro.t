@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -87,12 +82,12 @@ ok($objRo->eq("T\x{327}", "T\x{326}"));
 
 ok($objRo->eq("a\x{306}", "\x{103}"));
 ok($objRo->eq("A\x{306}", "\x{102}"));
-ok($objRo->eq("a\x{302}", pack('U', 0xE2)));
-ok($objRo->eq("A\x{302}", pack('U', 0xC2)));
+ok($objRo->eq("a\x{302}", _pack_U(0xE2)));
+ok($objRo->eq("A\x{302}", _pack_U(0xC2)));
 ok($objRo->eq("d\x{335}", "\x{111}"));
 ok($objRo->eq("D\x{335}", "\x{110}"));
-ok($objRo->eq("i\x{302}", pack('U', 0xEE)));
-ok($objRo->eq("I\x{302}", pack('U', 0xCE)));
+ok($objRo->eq("i\x{302}", _pack_U(0xEE)));
+ok($objRo->eq("I\x{302}", _pack_U(0xCE)));
 ok($objRo->eq("s\x{327}", "\x{15F}"));
 ok($objRo->eq("s\x{326}", "\x{219}"));
 ok($objRo->eq("S\x{327}", "\x{15E}"));

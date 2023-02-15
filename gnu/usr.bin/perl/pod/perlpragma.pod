@@ -51,8 +51,7 @@ The minimal implementation of the package C<MyMaths> would be something like
 this:
 
     package MyMaths;
-    use warnings;
-    use strict;
+    use v5.36;
     use myint();
     use overload '+' => sub {
         my ($l, $r) = @_;
@@ -78,8 +77,7 @@ The interaction with the Perl compilation happens inside package C<myint>:
 
     package myint;
 
-    use strict;
-    use warnings;
+    use v5.36;
 
     sub import {
         $^H{"myint/in_effect"} = 1;

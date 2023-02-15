@@ -15,6 +15,9 @@ BEGIN {
     }
 }
 
+use strict;
+use Config;
+
 skip_all("requires compilation with the fork emulation")
   unless $Config{'d_pseudofork'};
 
@@ -22,8 +25,6 @@ skip_all("requires compilation with the fork emulation")
 
 # manual test counting because the forks confuse test.pl
 print "1..4\n";
-
-use Config;
 
 # find a safe signal, the implementation shouldn't be doing anything
 # funky with NUMdd signals

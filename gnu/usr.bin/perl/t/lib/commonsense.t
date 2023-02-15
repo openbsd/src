@@ -17,8 +17,7 @@ if (($Config{'extensions'} !~ /\bFcntl\b/) ){
 if (($Config{'extensions'} !~ /\bIO\s/) ){
   BAIL_OUT("Perl configured without IO module");
 }
-# hey, DOS users do not need this kind of common sense ;-)
-if ($^O ne 'dos' && ($Config{'extensions'} !~ /\bFile\/Glob\b/) ){
+if (($Config{'extensions'} !~ /\bFile\/Glob\b/) ){
   BAIL_OUT("Perl configured without File::Glob module");
 }
 

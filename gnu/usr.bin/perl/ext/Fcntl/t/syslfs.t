@@ -53,7 +53,7 @@ $| = 1;
 print "# checking whether we have sparse files...\n";
 
 # Known have-nots.
-if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
+if ($^O eq 'MSWin32' || $^O eq 'VMS') {
     plan(skip_all => "no sparse files in $^O");
 }
 

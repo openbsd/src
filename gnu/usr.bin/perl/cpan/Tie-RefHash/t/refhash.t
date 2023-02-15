@@ -288,8 +288,8 @@ END
 
     # Test storing and removing under ordinary keys
     my @things = ('boink', 0, 1, '', undef);
-    foreach my $key (map { dumped($_) } @things) {
-        foreach my $value ((map { dumped($_) } @things), '$ref') {
+    foreach my $key (map dumped($_), @things) {
+        foreach my $value ((map dumped($_), @things), '$ref') {
             push @r, split /\n/, <<"END"
             \$h{$key} = $value;
             $STD_TESTS;

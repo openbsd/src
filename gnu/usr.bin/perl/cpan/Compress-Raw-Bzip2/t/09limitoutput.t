@@ -13,8 +13,8 @@ use bytes;
 use Test::More ;
 use CompTestUtils;
 
-BEGIN 
-{ 
+BEGIN
+{
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
@@ -22,7 +22,7 @@ BEGIN
 
     plan tests => 88 + $extra ;
 
-    use_ok('Compress::Raw::Bzip2') ; 
+    use_ok('Compress::Raw::Bzip2') ;
 }
 
 
@@ -30,7 +30,7 @@ BEGIN
 my $hello = "I am a HAL 9000 computer" x 2001;
 my $tmp = $hello ;
 
-my ($err, $x, $X, $status); 
+my ($err, $x, $X, $status);
 
 ok( ($x, $err) = new Compress::Raw::Bzip2 (1));
 ok $x ;
@@ -52,7 +52,7 @@ cmp_ok $x->bzclose($out), '==', BZ_STREAM_END, "  bzflush returned BZ_STREAM_END
     ok $GOT eq $hello;
 
 }
-     
+
 sub getOut { my $x = ''; return \$x }
 
 for my $bufsize (1, 2, 3, 13, 4096, 1024*10)
@@ -68,7 +68,7 @@ for my $bufsize (1, 2, 3, 13, 4096, 1024*10)
                                                     ));
     ok $k ;
     cmp_ok $err, '==', BZ_OK, "  status is BZ_OK" ;
- 
+
     is $k->total_in_lo32(), 0, "  total_in_lo32 == 0" ;
     is $k->total_out_lo32(), 0, "  total_out_lo32 == 0" ;
     my $GOT = getOut();
@@ -83,7 +83,7 @@ for my $bufsize (1, 2, 3, 13, 4096, 1024*10)
         last if $status != BZ_OK;
         $deltaOK = 0 if length($GOT) - $prev > $bufsize;
     }
-     
+
     ok $deltaOK, "  Output Delta never > $bufsize";
     cmp_ok $looped, '>=', 1, "  looped $looped";
     is length($tmp), 0, "  length of input buffer is zero";
@@ -98,7 +98,7 @@ sub getit
 {
     my $obj = shift ;
     my $input = shift;
-    
+
     my $data ;
     1 while $obj->bzinflate($input, $data) != BZ_STREAM_END ;
     return \$data ;
@@ -106,9 +106,9 @@ sub getit
 
 {
     title "regression test";
-    
-    my ($err, $x, $X, $status); 
-    
+
+    my ($err, $x, $X, $status);
+
     ok( ($x, $err) = new Compress::Raw::Bzip2 (1));
     ok $x ;
     cmp_ok $err, '==', BZ_OK, "  status is BZ_OK" ;
@@ -117,11 +117,11 @@ sub getit
     my $line2 = "second line\n" ;
     my $text = $line1 . $line2 ;
     my $tmp = $text;
-   
+
     my $out ;
     $status = $x->bzdeflate($tmp, $out) ;
     cmp_ok $status, '==', BZ_RUN_OK, "  status is BZ_RUN_OK" ;
-    
+
     cmp_ok $x->bzclose($out), '==', BZ_STREAM_END, "  bzclose returned BZ_STREAM_END" ;
 
     my $k;
@@ -130,10 +130,9 @@ sub getit
             #LimitOutput => 1
                                                     ));
 
-                                                        
+
     my $c = getit($k, $out);
     is $$c, $text;
-    
-                                              
-}
 
+
+}

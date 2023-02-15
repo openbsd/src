@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test::More tests => 16;
 
 require ExtUtils::MM_Any;

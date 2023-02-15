@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use bytes;
 
-use Test::More ; 
+use Test::More ;
 use CompTestUtils;
 
 BEGIN {
@@ -36,35 +36,35 @@ EOM
 sub My::testParseParameters()
 {
     eval { ParseParameters(1, {}, 1) ; };
-    like $@, mkErr(': Expected even number of parameters, got 1'), 
+    like $@, mkErr(': Expected even number of parameters, got 1'),
             "Trap odd number of params";
 
     eval { ParseParameters(1, {}, undef) ; };
-    like $@, mkErr(': Expected even number of parameters, got 1'), 
+    like $@, mkErr(': Expected even number of parameters, got 1'),
             "Trap odd number of params";
 
     eval { ParseParameters(1, {}, []) ; };
-    like $@, mkErr(': Expected even number of parameters, got 1'), 
+    like $@, mkErr(': Expected even number of parameters, got 1'),
             "Trap odd number of params";
 
     eval { ParseParameters(1, {'fred' => [Parse_boolean, 0]}, fred => 'joe') ; };
-    like $@, mkErr("Parameter 'fred' must be an int, got 'joe'"), 
+    like $@, mkErr("Parameter 'fred' must be an int, got 'joe'"),
             "wanted unsigned, got undef";
 
     eval { ParseParameters(1, {'fred' => [Parse_unsigned, 0]}, fred => undef) ; };
-    like $@, mkErr("Parameter 'fred' must be an unsigned int, got 'undef'"), 
+    like $@, mkErr("Parameter 'fred' must be an unsigned int, got 'undef'"),
             "wanted unsigned, got undef";
 
     eval { ParseParameters(1, {'fred' => [Parse_signed, 0]}, fred => undef) ; };
-    like $@, mkErr("Parameter 'fred' must be a signed int, got 'undef'"), 
+    like $@, mkErr("Parameter 'fred' must be a signed int, got 'undef'"),
             "wanted signed, got undef";
 
     eval { ParseParameters(1, {'fred' => [Parse_signed, 0]}, fred => 'abc') ; };
-    like $@, mkErr("Parameter 'fred' must be a signed int, got 'abc'"), 
+    like $@, mkErr("Parameter 'fred' must be a signed int, got 'abc'"),
             "wanted signed, got 'abc'";
 
     eval { ParseParameters(1, {'fred' => [Parse_code, undef]}, fred => 'abc') ; };
-    like $@, mkErr("Parameter 'fred' must be a code reference, got 'abc'"), 
+    like $@, mkErr("Parameter 'fred' must be a code reference, got 'abc'"),
             "wanted code, got 'abc'";
 
 
@@ -76,25 +76,25 @@ sub My::testParseParameters()
             if $Config{useithreads};
 
         eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => 'abc') ; };
-        like $@, mkErr("Parameter 'fred' not writable"), 
+        like $@, mkErr("Parameter 'fred' not writable"),
                 "wanted writable, got readonly";
 
-        skip '\\ returns mutable value in 5.19.3', 1 
+        skip '\\ returns mutable value in 5.19.3', 1
             if $] >= 5.019003;
 
         eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => \'abc') ; };
-        like $@, mkErr("Parameter 'fred' not writable"), 
+        like $@, mkErr("Parameter 'fred' not writable"),
                 "wanted writable, got readonly";
     }
 
     my @xx;
     eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => \@xx) ; };
-    like $@, mkErr("Parameter 'fred' not a scalar reference"), 
+    like $@, mkErr("Parameter 'fred' not a scalar reference"),
             "wanted scalar reference";
 
     local *ABC;
     eval { ParseParameters(1, {'fred' => [Parse_writable_scalar, 0]}, fred => *ABC) ; };
-    like $@, mkErr("Parameter 'fred' not a scalar"), 
+    like $@, mkErr("Parameter 'fred' not a scalar"),
             "wanted scalar";
 
     eval { ParseParameters(1, {'fred' => [Parse_any, 0]}, fred => 1, fred => 2) ; };
@@ -137,58 +137,58 @@ sub My::testParseParameters()
     {
         my $got1 = ParseParameters(1, {'fred' => [Parse_writable_scalar, undef]}, $got) ;
         is $got1, $got, "Same object";
-    
+
         ok $got1->parsed('fred'), "parsed" ;
         $xx_ref = $got1->getValue('fred');
-        
+
         $$xx_ref = 777 ;
         is $xx, 777;
     }
 
-    for my $type (Parse_unsigned, Parse_signed, Parse_any)    
+    for my $type (Parse_unsigned, Parse_signed, Parse_any)
     {
         my $value = 0;
         my $got1 ;
         eval { $got1 = ParseParameters(1, {'fred' => [$type, 1]}, fred => $value) } ;
-    
+
         ok ! $@;
         ok $got1->parsed('fred'), "parsed ok" ;
         is $got1->getValue('fred'), 0;
-    }    
+    }
 
     {
         # setValue/getValue
         my $value = 0;
         my $got1 ;
         eval { $got1 = ParseParameters(1, {'fred' => [Parse_any, 1]}, fred => $value) } ;
-    
+
         ok ! $@;
         ok $got1->parsed('fred'), "parsed ok" ;
         is $got1->getValue('fred'), 0;
         $got1->setValue('fred' => undef);
-        is $got1->getValue('fred'), undef;        
-    }  
-    
+        is $got1->getValue('fred'), undef;
+    }
+
     {
         # twice
         my $value = 0;
-        
+
         my $got = IO::Compress::Base::Parameters::new();
 
-       
+
         ok $got->parse({'fred' => [Parse_any, 1]}, fred => $value) ;
 
         ok $got->parsed('fred'), "parsed ok" ;
         is $got->getValue('fred'), 0;
-        
-        ok $got->parse({'fred' => [Parse_any, 1]}, fred => undef) ;  
+
+        ok $got->parse({'fred' => [Parse_any, 1]}, fred => undef) ;
         ok $got->parsed('fred'), "parsed ok" ;
-        is $got->getValue('fred'), undef;   
-        
-        ok $got->parse({'fred' => [Parse_any, 1]}, fred => 7) ;  
+        is $got->getValue('fred'), undef;
+
+        ok $got->parse({'fred' => [Parse_any, 1]}, fred => 7) ;
         ok $got->parsed('fred'), "parsed ok" ;
-        is $got->getValue('fred'), 7;   
-    }      
+        is $got->getValue('fred'), 7;
+    }
 }
 
 
@@ -208,7 +208,7 @@ My::testParseParameters();
 {
     title "whatIsInput" ;
 
-    my $lex = new LexFile my $out_file ;
+    my $lex = LexFile->new( my $out_file );
     open FH, ">$out_file" ;
     is whatIsInput(*FH), 'handle', "Match filehandle" ;
     close FH ;
@@ -227,7 +227,7 @@ My::testParseParameters();
 {
     title "whatIsOutput" ;
 
-    my $lex = new LexFile my $out_file ;
+    my $lex = LexFile->new( my $out_file );
     open FH, ">$out_file" ;
     is whatIsOutput(*FH), 'handle', "Match filehandle" ;
     close FH ;
@@ -248,34 +248,34 @@ My::testParseParameters();
 {
     title "U64" ;
 
-    my $x = new U64();
+    my $x = U64->new();
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 0, "  getLow is 0";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $x = new U64(1,2);
+    $x = U64->new(1,2);
     is $x->getHigh, 1, "  getHigh is 1";
     is $x->getLow, 2, "  getLow is 2";
     ok $x->is64bit(), " is64bit";
 
-    $x = new U64(0xFFFFFFFF,2);
+    $x = U64->new(0xFFFFFFFF,2);
     is $x->getHigh, 0xFFFFFFFF, "  getHigh is 0xFFFFFFFF";
     is $x->getLow, 2, "  getLow is 2";
     ok $x->is64bit(), " is64bit";
 
-    $x = new U64(7, 0xFFFFFFFF);
+    $x = U64->new(7, 0xFFFFFFFF);
     is $x->getHigh, 7, "  getHigh is 7";
     is $x->getLow, 0xFFFFFFFF, "  getLow is 0xFFFFFFFF";
     ok $x->is64bit(), " is64bit";
 
-    $x = new U64(666);
+    $x = U64->new(666);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 666, "  getLow is 666";
     ok ! $x->is64bit(), " ! is64bit";
 
     title "U64 - add" ;
 
-    $x = new U64(0, 1);
+    $x = U64->new(0, 1);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 1, "  getLow is 1";
     ok ! $x->is64bit(), " ! is64bit";
@@ -285,7 +285,7 @@ My::testParseParameters();
     is $x->getLow, 2, "  getLow is 2";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $x = new U64(0, 0xFFFFFFFE);
+    $x = U64->new(0, 0xFFFFFFFE);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 0xFFFFFFFE, "  getLow is 0xFFFFFFFE";
     is $x->get32bit(),  0xFFFFFFFE, "  get32bit is 0xFFFFFFFE";
@@ -320,8 +320,8 @@ My::testParseParameters();
     is $x->get64bit(),  0xFFFFFFFF+3, "  get64bit is 0x100000002";
     ok $x->is64bit(), " is64bit";
 
-    $x = new U64(1, 0xFFFFFFFE);
-    my $y = new U64(2, 3);
+    $x = U64->new(1, 0xFFFFFFFE);
+    my $y = U64->new(2, 3);
 
     $x->add($y);
     is $x->getHigh, 4, "  getHigh is 4";
@@ -330,7 +330,7 @@ My::testParseParameters();
 
     title "U64 - subtract" ;
 
-    $x = new U64(0, 1);
+    $x = U64->new(0, 1);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 1, "  getLow is 1";
     ok ! $x->is64bit(), " ! is64bit";
@@ -340,7 +340,7 @@ My::testParseParameters();
     is $x->getLow, 0, "  getLow is 0";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $x = new U64(1, 0);
+    $x = U64->new(1, 0);
     is $x->getHigh, 1, "  getHigh is 1";
     is $x->getLow, 0, "  getLow is 0";
     is $x->get32bit(),  0, "  get32bit is 0xFFFFFFFE";
@@ -354,16 +354,16 @@ My::testParseParameters();
     is $x->get64bit(),  0xFFFFFFFF, "  get64bit is 0xFFFFFFFF";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $x = new U64(2, 2);
-    $y = new U64(1, 3);
+    $x = U64->new(2, 2);
+    $y = U64->new(1, 3);
 
     $x->subtract($y);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 0xFFFFFFFF, "  getLow is 1";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $x = new U64(0x01CADCE2, 0x4E815983);
-    $y = new U64(0x19DB1DE, 0xD53E8000); # NTFS to Unix time delta
+    $x = U64->new(0x01CADCE2, 0x4E815983);
+    $y = U64->new(0x19DB1DE, 0xD53E8000); # NTFS to Unix time delta
 
     $x->subtract($y);
     is $x->getHigh, 0x2D2B03, "  getHigh is 2D2B03";
@@ -372,17 +372,17 @@ My::testParseParameters();
 
     title "U64 - equal" ;
 
-    $x = new U64(0, 1);
+    $x = U64->new(0, 1);
     is $x->getHigh, 0, "  getHigh is 0";
     is $x->getLow, 1, "  getLow is 1";
     ok ! $x->is64bit(), " ! is64bit";
 
-    $y = new U64(0, 1);
+    $y = U64->new(0, 1);
     is $y->getHigh, 0, "  getHigh is 0";
     is $y->getLow, 1, "  getLow is 1";
     ok ! $y->is64bit(), " ! is64bit";
 
-    my $z = new U64(0, 2);
+    my $z = U64->new(0, 2);
     is $z->getHigh, 0, "  getHigh is 0";
     is $z->getLow, 2, "  getLow is 2";
     ok ! $z->is64bit(), " ! is64bit";
@@ -391,14 +391,14 @@ My::testParseParameters();
     ok !$x->equal($z), "  ! equal";
 
     title "U64 - clone" ;
-    $x = new U64(21, 77);
+    $x = U64->new(21, 77);
     $z =  U64::clone($x);
     is $z->getHigh, 21, "  getHigh is 21";
     is $z->getLow, 77, "  getLow is 77";
 
     title "U64 - cmp.gt" ;
-    $x = new U64 1;
-    $y = new U64 0;
+    $x = U64->new( 1 );
+    $y = U64->new( 0 );
     cmp_ok $x->cmp($y), '>', 0, "  cmp > 0";
     is $x->gt($y), 1, "  gt";
     cmp_ok $y->cmp($x), '<', 0, "  cmp < 0";

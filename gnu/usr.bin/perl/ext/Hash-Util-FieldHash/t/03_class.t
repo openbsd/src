@@ -1,10 +1,8 @@
-#!perl
-use strict; use warnings;
+use strict;
+use warnings;
 use Test::More;
-my $n_tests = 0;
-
 use Config;
-BEGIN { $n_tests += 2 }
+
 {
     my $p = Impostor->new( 'Donald Duck');
     is( $p->greeting, "Hi, I'm Donald Duck", "blank title");
@@ -13,9 +11,9 @@ BEGIN { $n_tests += 2 }
 }
 
 # thread support?
-BEGIN { $n_tests += 5 }
-SKIP: {
-    skip "No thread support", 5 unless $Config{ usethreads};
+subtest 'threads' => sub {
+    plan skip_all => "No thread support" unless $Config{usethreads};
+
     require threads;
     treads->import if threads->can( 'import');
 
@@ -42,9 +40,8 @@ SKIP: {
         }
     )->join;
     is( $ans, "Hi, I'm Mr Donald Duck", "double thread: got greeting");
-}
+};
 
-BEGIN { plan tests => $n_tests }
 
 ############################################################################
 
@@ -100,7 +97,7 @@ BEGIN {
         }
 
         sub title { $assumed_title{ shift()} }
-        
+
         sub assume_title {
             my $p = shift;
             $assumed_title{ $p} = shift || '';
@@ -108,3 +105,5 @@ BEGIN {
         }
     }
 }
+
+done_testing;

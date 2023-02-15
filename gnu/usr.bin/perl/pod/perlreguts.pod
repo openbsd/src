@@ -111,6 +111,8 @@ C<regnode> is the smallest struct needed, and has a field structure which is
 shared with all the other larger structures.  (Outside this document, the term
 "regnode" is sometimes used to mean "regop", which could be confusing.)
 
+=for apidoc Cyh||regnode
+
 The "next" pointers of all regops except C<BRANCH> implement concatenation;
 a "next" pointer with a C<BRANCH> on both ends of it is connecting two
 alternatives.  [Here we have one of the subtle syntax dependencies: an
@@ -696,6 +698,9 @@ about what state it stores, with the result that two consecutive lines in the
 code can actually be running in totally different contexts due to the
 simulated recursion.
 
+=for apidoc pregcomp
+=for apidoc pregexec
+
 =head3 Start position and no-match optimisations
 
 C<re_intuit_start()> is responsible for handling start points and no-match
@@ -824,29 +829,18 @@ The following structure is used as the C<pprivate> struct by perl's
 regex engine. Since it is specific to perl it is only of curiosity
 value to other engine implementations.
 
- typedef struct regexp_internal {
-         U32 *offsets;           /* offset annotations 20001228 MJD
-                                  * data about mapping the program to
-                                  * the string*/
-         regnode *regstclass;    /* Optional startclass as identified or
-                                  * constructed by the optimiser */
-         struct reg_data *data;  /* Additional miscellaneous data used
-                                  * by the program.  Used to make it
-                                  * easier to clone and free arbitrary
-                                  * data that the regops need. Often the
-                                  * ARG field of a regop is an index
-                                  * into this structure */
-         regnode program[1];     /* Unwarranted chumminess with
-                                  * compiler. */
- } regexp_internal;
+    typedef struct regexp_internal {
+        regnode *regstclass;
+        struct reg_data *data;
+        struct reg_code_blocks *code_blocks;
+        U32 proglen;
+        U32 name_list_idx;
+        regnode program[1];
+    } regexp_internal;
+
+Description of the attributes is as follows:
 
 =over 5
-
-=item C<offsets>
-
-Offsets holds a mapping of offset in the C<program>
-to offset in the C<precomp> string. This is only used by ActiveState's
-visual regex debugger.
 
 =item C<regstclass>
 
@@ -874,6 +868,42 @@ product. Each element in the data array has a corresponding element in the
 what array. During compilation regops that need special structures stored
 will add an element to each array using the add_data() routine and then store
 the index in the regop.
+
+In modern perls the 0th element of this structure is reserved and is NEVER
+used to store anything of use. This is to allow things that need to index
+into this array to represent "no value".
+
+=item C<code_blocks>
+
+This optional structure is used to manage C<(?{})> constructs in the
+pattern.  It is made up of the following structures.
+
+    /* record the position of a (?{...}) within a pattern */
+    struct reg_code_block {
+        STRLEN start;
+        STRLEN end;
+        OP     *block;
+        REGEXP *src_regex;
+    };
+
+    /* array of reg_code_block's plus header info */
+    struct reg_code_blocks {
+        int refcnt; /* we may be pointed to from a regex
+                       and from the savestack */
+        int  count; /* how many code blocks */
+        struct reg_code_block *cb; /* array of reg_code_block's */
+    };
+
+=item C<proglen>
+
+Stores the length of the compiled program in units of regops.
+
+=item C<name_list_idx>
+
+This is the index into the data array where an AV is stored that contains
+the names of any named capture buffers in the pattern, should there be
+any. This is only used in the debugging version of the regex engine and
+when RXp_PAREN_NAMES(prog) is true. It will be 0 if there is no such data.
 
 =item C<program>
 

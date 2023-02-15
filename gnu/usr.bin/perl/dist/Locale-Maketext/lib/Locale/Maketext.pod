@@ -45,7 +45,7 @@ derive a "project class".
 The project class (with a name like "TkBocciBall::Localize",
 which you then use in your module) is in turn the base class
 for all the "language classes" for your project
-(with names "TkBocciBall::Localize::it", 
+(with names "TkBocciBall::Localize::it",
 "TkBocciBall::Localize::en",
 "TkBocciBall::Localize::fr", etc.).
 
@@ -122,9 +122,9 @@ If it runs thru the entire given list of language-tags, and finds no classes
 for those exact terms, it then tries "superordinate" language classes.
 So if no "en-US" class (i.e., YourProjClass::en_us)
 was found, nor classes for anything else in that list, we then try
-its superordinate, "en" (i.e., YourProjClass::en), and so on thru 
+its superordinate, "en" (i.e., YourProjClass::en), and so on thru
 the other language-tags in the given list: "es".
-(The other language-tags in our example list: 
+(The other language-tags in our example list:
 happen to have no superordinates.)
 
 If none of those language-tags leads to loadable classes, we then
@@ -307,9 +307,9 @@ interested in hearing about it.)
 These two methods are discussed in the section "Controlling
 Lookup Failure".
 
-=item $lh->blacklist(@list)
+=item $lh->denylist(@list) <or> $lh->blacklist(@list)
 
-=item $lh->whitelist(@list)
+=item $lh->allowlist(@list) <or> $lh->whitelist(@list)
 
 These methods are discussed in the section "Bracket Notation
 Security".
@@ -331,7 +331,7 @@ Bracket Notation or not).
 =item $language->quant($number, $singular, $plural, $negative)
 
 This is generally meant to be called from inside Bracket Notation
-(which is discussed later), as in 
+(which is discussed later), as in
 
      "Your search matched [quant,_1,document]!"
 
@@ -482,8 +482,8 @@ to YourProjClass . "::".  So this:
     'en-US', 'fr', 'kon', 'i-klingon', 'i-klingon-romanized'
   );
 
-will try loading the classes 
-YourProjClass::en_us (note lowercase!), YourProjClass::fr, 
+will try loading the classes
+YourProjClass::en_us (note lowercase!), YourProjClass::fr,
 YourProjClass::kon,
 YourProjClass::i_klingon
 and YourProjClass::i_klingon_romanized.  (And it'll stop at the
@@ -875,17 +875,17 @@ bracket notation methods from normal class or object methods. This
 design makes it vulnerable to format string attacks whenever it is
 used to process strings provided by untrusted users.
 
-Locale::Maketext does support blacklist and whitelist functionality
+Locale::Maketext does support denylist and allowlist functionality
 to limit which methods may be called as bracket notation methods.
 
-By default, Locale::Maketext blacklists all methods in the
+By default, Locale::Maketext denies all methods in the
 Locale::Maketext namespace that begin with the '_' character,
 and all methods which include Perl's namespace separator characters.
 
-The default blacklist for Locale::Maketext also prevents use of the
+The default denylist for Locale::Maketext also prevents use of the
 following methods in bracket notation:
 
-  blacklist
+  denylist
   encoding
   fail_with
   failure_handler_auto
@@ -896,44 +896,56 @@ following methods in bracket notation:
   language_tag
   maketext
   new
+  allowlist
   whitelist
+  blacklist
 
-This list can be extended by either blacklisting additional "known bad"
-methods, or whitelisting only "known good" methods.
+This list can be extended by either deny-listing additional "known bad"
+methods, or allow-listing only "known good" methods.
 
 To prevent specific methods from being called in bracket notation, use
-the blacklist() method:
+the denylist() method:
 
   my $lh = MyProgram::L10N->get_handle();
-  $lh->blacklist(qw{my_internal_method my_other_method});
+  $lh->denylist(qw{my_internal_method my_other_method});
   $lh->maketext('[my_internal_method]'); # dies
 
 To limit the allowed bracked notation methods to a specific list, use the
-whitelist() method:
+allowlist() method:
 
   my $lh = MyProgram::L10N->get_handle();
-  $lh->whitelist('numerate', 'numf');
+  $lh->allowlist('numerate', 'numf');
   $lh->maketext('[_1] [numerate, _1,shoe,shoes]', 12); # works
   $lh->maketext('[my_internal_method]'); # dies
 
-The blacklist() and whitelist() methods extend their internal lists
-whenever they are called. To reset the blacklist or whitelist, create
+The denylist() and allowlist() methods extend their internal lists
+whenever they are called. To reset the denylist or allowlist, create
 a new maketext object.
 
   my $lh = MyProgram::L10N->get_handle();
-  $lh->blacklist('numerate');
-  $lh->blacklist('numf');
+  $lh->denylist('numerate');
+  $lh->denylist('numf');
   $lh->maketext('[_1] [numerate,_1,shoe,shoes]', 12); # dies
 
 For lexicons that use an internal cache, translations which have already
 been cached in their compiled form are not affected by subsequent changes
-to the whitelist or blacklist settings. Lexicons that use an external
-cache will have their cache cleared whenever the whitelist of blacklist
-setings change.  The difference between the two types of caching is explained
+to the allowlist or denylist settings. Lexicons that use an external
+cache will have their cache cleared whenever the allowlist or denylist
+settings change.  The difference between the two types of caching is explained
 in the "Readonly Lexicons" section.
 
-Methods disallowed by the blacklist cannot be permitted by the
-whitelist.
+Methods disallowed by the denylist cannot be permitted by the
+allowlist.
+
+NOTE: denylist() is the preferred method name to use instead of the
+historical and non-inclusive method blacklist(). blacklist() may be
+removed in a future release of this package and so it's use should be
+removed from usage.
+
+NOTE: allowlist() is the preferred method name to use instead of the
+historical and non-inclusive method whitelist(). whitelist() may be
+removed in a future release of this package and so it's use should be
+removed from usage.
 
 =head1 AUTO LEXICONS
 
@@ -981,7 +993,7 @@ but since you anticipate localizing this, you write:
   }
 
 Now, right after you've just written the above lines, you'd
-normally have to go open the file 
+normally have to go open the file
 ThisProject/I18N/en.pm, and immediately add an entry:
 
   "Couldn't find file \"[_1]\"!\n"
@@ -1212,7 +1224,7 @@ _AUTO lexicon.)
 
 =item *
 
-Go and write your program.  Everywhere in your program where 
+Go and write your program.  Everywhere in your program where
 you would say:
 
   print "Foobar $thing stuff\n";
@@ -1256,7 +1268,7 @@ following phrase.
 
 =item *
 
-You may at this point want to consider whether your base class 
+You may at this point want to consider whether your base class
 (Projname::L10N), from which all lexicons inherit from (Projname::L10N::en,
 Projname::L10N::es, etc.), should be an _AUTO lexicon.  It may be true
 that in theory, all needed messages will be in each language class;
@@ -1375,7 +1387,7 @@ I recommend reading all of these:
 L<Locale::Maketext::TPJ13|Locale::Maketext::TPJ13> -- my I<The Perl
 Journal> article about Maketext.  It explains many important concepts
 underlying Locale::Maketext's design, and some insight into why
-Maketext is better than the plain old approach of having 
+Maketext is better than the plain old approach of having
 message catalogs that are just databases of sprintf formats.
 
 L<File::Findgrep|File::Findgrep> is a sample application/module

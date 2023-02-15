@@ -9,7 +9,7 @@ BEGIN {
 
 plan tests => 2;
 
-{ # This test is malloc senstive.  Right now on some platforms anyway, space
+{ # This test is malloc sensitive.  Right now on some platforms anyway, space
   # for the final \xff needs to be mallocd, and that's what caused the
   # problem, because the '-' had already been parsed and was later added
   # without making space for it

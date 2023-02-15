@@ -5,10 +5,20 @@ use 5.008001;
 use strict;
 use warnings;
 
+use Test::More;
+
+BEGIN {
+    if (!eval { require Socket }) {
+        plan skip_all => "no Socket";
+    }
+    elsif (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
+        plan skip_all => "EBCDIC but no Convert::EBCDIC";
+    }
+}
+
 use Config;
 use File::Temp 'tempfile';
 use Net::POP3;
-use Test::More;
 
 my $debug = 0; # Net::POP3 Debug => ..
 

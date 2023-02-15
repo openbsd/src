@@ -3,8 +3,11 @@
 # Dave Rolsky found a bug where if current_test() is used and no
 # tests are run via Test::Builder it will blow up.
 
+use strict;
+use warnings;
+
 use Test::Builder;
-$TB = Test::Builder->new;
+my $TB = Test::Builder->new;
 $TB->plan(tests => 2);
 print "ok 1\n";
 print "ok 2\n";

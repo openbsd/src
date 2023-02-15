@@ -1,6 +1,6 @@
 =head1 NAME
 
-Escape Sequences Test
+Escape Sequences Test: Recalling the Glory "<&&&>" of Ampersands
 
 =head1 DESCRIPTION
 

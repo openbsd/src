@@ -1,3 +1,41 @@
+IO 1.50
+   * Bump to 1.50 after cpantesters run.
+
+IO 1.49_01
+   * Update IO.xs to conform to ppport.h 3.68 recommendations
+
+IO 1.49
+   * Send bug reports to https://github.com/perl/perl5/issues
+   * dist/IO/IO.xs: Rmv defns that ppport.h supplies
+
+IO 1.48
+   * Fix for undefined warning in GH #18238
+
+IO 1.47
+   * Implement sync() for win32
+   * Add missing quotes to IO::Socket::INET example
+
+IO 1.46
+   * style: Detabify indentation of the C code maintained by the core.
+   * Update search.cpan.org URLs
+
+IO 1.45
+  * Put IO::Socket constructor error messages in $IO::Socket::errstr as well
+    as $@, to encourage better practices
+
+IO 1.44
+  * IO::Handle::error() now checks both the input and output stream
+    for error.  This is an issue for sockets and character devices.  GH #6799
+  * IO::Handle::clearerr() now clears the error on both input and
+    output streams.
+
+IO 1.43
+  * only cache the protocol for sockets when one is supplied,
+    otherwise protocol could return an incorrect protocol.  This means
+    that on platforms that don't support SO_PROTOCOL (or don't support
+    it for some socket types) protocol() can now return undef.
+
+
 IO 1.42 - Jan 20 2020 - Todd Rinaldo
   * Point IO support to perl/perl5 not dual-life/IO
 

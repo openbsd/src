@@ -6,7 +6,7 @@ BEGIN {
     }
 }
 use strict;
-use Test::More 'no_plan';
+use Test::More;
 
 BEGIN {use_ok 'Config::Extensions', '%Extensions'};
 
@@ -31,3 +31,5 @@ while (my ($key, $val) = each %Extensions) {
     my $type = $val . '_ext';
     like($Config{$type}, $re, "$key is $type");
 }
+
+done_testing();

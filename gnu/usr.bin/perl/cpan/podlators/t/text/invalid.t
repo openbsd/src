@@ -55,7 +55,8 @@ sub check_document {
 
 # Document whose only content is an invalid command.
 ## no critic (ValuesAndExpressions::ProhibitEscapedCharacters)
-check_document("=\xa0", 'invalid command');
+my $invalid_char = chr utf8::unicode_to_native(0xa0);
+check_document("=$invalid_char", 'invalid command');
 
 # Document containing only a =cut.
 check_document('=cut', 'document with only =cut');

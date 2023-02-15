@@ -45,7 +45,7 @@ splitter +JSON::PP->new                  , ' 0.00E+00 ';
 
 {
    my $text = '[5],{"":1} , [ 1,2, 3], {"3":null}';
-   my $coder = new JSON::PP;
+   my $coder = JSON::PP->new;
    for (0 .. length $text) {
       my $a = substr $text, 0, $_;
       my $b = substr $text, $_;
@@ -69,7 +69,7 @@ splitter +JSON::PP->new                  , ' 0.00E+00 ';
 
 {
    my $text = '[x][5]';
-   my $coder = new JSON::PP;
+   my $coder = JSON::PP->new;
    $coder->incr_parse ($text);
    ok (!eval { $coder->incr_parse }, "sparse1");
    ok (!eval { $coder->incr_parse }, "sparse2");

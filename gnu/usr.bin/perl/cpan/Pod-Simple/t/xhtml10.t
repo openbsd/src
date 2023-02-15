@@ -7,8 +7,9 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use lib '../lib';
-use Test::More tests => 60;
+use Test::More tests => 62;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -199,6 +200,48 @@ is $results, <<'EOF', 'Should have the four-level index';
 <h3 id="Baz">Baz</h3>
 
 <h4 id="Howdy">Howdy</h4>
+
+EOF
+
+initialize($parser, $results);
+ok $parser->parse_string_document( "=head1 Foo\n\n=head2 Bar\n\n=head3 Baz\n\n=head4 Howdy\n\n=head5 Deep\n\n=head6 Thought" ),
+    'Parse six levels';
+is $results, <<'EOF', 'Should have the six-level index';
+<ul id="index">
+  <li><a href="#Foo">Foo</a>
+    <ul>
+      <li><a href="#Bar">Bar</a>
+        <ul>
+          <li><a href="#Baz">Baz</a>
+            <ul>
+              <li><a href="#Howdy">Howdy</a>
+                <ul>
+                  <li><a href="#Deep">Deep</a>
+                    <ul>
+                      <li><a href="#Thought">Thought</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h1 id="Foo">Foo</h1>
+
+<h2 id="Bar">Bar</h2>
+
+<h3 id="Baz">Baz</h3>
+
+<h4 id="Howdy">Howdy</h4>
+
+<h5 id="Deep">Deep</h5>
+
+<h6 id="Thought">Thought</h6>
 
 EOF
 

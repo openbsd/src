@@ -5,7 +5,7 @@ use Carp;
 
 require "dbm_filter_util.pl";
 
-use Test::More tests => 26;
+use Test::More;
 
 BEGIN { use_ok('DBM_Filter') };
 my $db_file;
@@ -94,3 +94,4 @@ undef $db2;
     is $@, '', "untie without inner references" ;
 }
 
+done_testing();

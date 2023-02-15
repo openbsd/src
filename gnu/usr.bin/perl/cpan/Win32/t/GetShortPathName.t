@@ -2,6 +2,16 @@ use strict;
 use Test;
 use Win32;
 
+BEGIN {
+    Win32::CreateFile("8dot3test_canary_GetShortPathName $$");
+    my $canary = Win32::GetShortPathName("8dot3test_canary_GetShortPathName $$");
+    unlink("8dot3test_canary_GetShortPathName $$");
+    if ( length $canary > 12 ) {
+        print "1..0 # Skip: The system and/or current volume is not configured to support short names.\n";
+        exit 0;        
+    }
+}
+
 my $path = "Long Path $$";
 unlink($path);
 END { unlink $path }

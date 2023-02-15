@@ -55,6 +55,7 @@ for my $c (@cases) {
         }
         else {
             {
+                no warnings 'uninitialized';
                 local $ENV{no_proxy} = $no_proxy;
                 my $ht = HTTP::Tiny->new();
                 is_deeply( $ht->no_proxy, $c->{expect}, "\$ENV{no_proxy} = $label" );

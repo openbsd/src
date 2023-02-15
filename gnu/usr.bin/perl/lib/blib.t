@@ -48,7 +48,7 @@ BEGIN {
     _cleanup( @blib_dirs );
 }
 
-use Test::More tests => 7;
+use Test::More;
 
 eval 'use blib;';
 ok( $@ =~ /Cannot find blib/, 'Fails if blib directory not found' );
@@ -80,5 +80,7 @@ else
 
 ok( grep(m|\Q$blib_lib\E$|, @INC[0,1])  == 1,     "  $blib_lib in \@INC");
 ok( grep(m|\Q$blib_arch\E$|, @INC[0,1]) == 1,     "  $blib_arch in \@INC");
+
+done_testing();
 
 END { _cleanup( @blib_dirs ); }

@@ -27,7 +27,7 @@
 #define SBOX32_WARN2(pat,v0,v1)
 #endif
 
-#ifndef PERL_SEEN_HV_FUNC_H
+#ifndef PERL_SEEN_HV_FUNC_H_
 #if !defined(U32) 
 #include <stdint.h>
 #define U32 uint32_t
@@ -1390,71 +1390,20 @@
 #define case_1_SBOX32(hash,state,key) /**/
 #endif
 
-#define XORSHIFT96_set(r,x,y,z,t) STMT_START {          \
-    t = (x ^ ( x << 10 ) );                             \
-    x = y; y = z;                                       \
-    r = z = (z ^ ( z >> 26 ) ) ^ ( t ^ ( t >> 5 ) );    \
-} STMT_END
-
 #define XORSHIFT128_set(r,x,y,z,w,t) STMT_START {       \
     t = ( x ^ ( x << 5 ) );                             \
     x = y; y = z; z = w;                                \
     r = w = ( w ^ ( w >> 29 ) ) ^ ( t ^ ( t >> 12 ) );  \
 } STMT_END
 
-#define SBOX32_SCRAMBLE32(v,prime) STMT_START {  \
-    v ^= (v>>9);                        \
-    v ^= (v<<21);                       \
-    v ^= (v>>16);                       \
-    v *= prime;                         \
-    v ^= (v>>17);                       \
-    v ^= (v<<15);                       \
-    v ^= (v>>23);                       \
-} STMT_END
-
 #ifndef SBOX32_CHURN_ROUNDS 
-#define SBOX32_CHURN_ROUNDS 5
-#endif
-#ifndef SBOX32_SKIP_MASK
-#define SBOX32_SKIP_MASK 0x3
+#define SBOX32_CHURN_ROUNDS 128
 #endif
 
 #define _SBOX32_CASE(len,hash,state,key) \
     /* FALLTHROUGH */ \
     case len: hash ^= state[ 1 + ( 256 * ( len - 1 ) ) + key[ len - 1 ] ];
 
-
-SBOX32_STATIC_INLINE void sbox32_seed_state96 (
-    const U8 *seed_ch,
-    U8 *state_ch
-) {
-    const U32 *seed= (const U32 *)seed_ch;
-    U32 *state= (U32 *)state_ch;
-    U32 *state_cursor = state + 1;
-    U32 *sbox32_end = state + 1 + (256 * SBOX32_MAX_LEN);
-    U32 s0 = seed[0] ^ 0x68736168; /* sbox */
-    U32 s1 = seed[1] ^ 0x786f6273; /* hash */
-    U32 s2 = seed[2] ^ 0x646f6f67; /* good */
-    U32 t1,t2,i;
-
-    /* make sure we have all non-zero state elements */
-    if (!s0) s0 = 1;
-    if (!s1) s1 = 2;
-    if (!s2) s2 = 4;
-
-    /* Do a bunch of mix rounds to avalanche the seedbits
-     * before we use them for the XORSHIFT rng. */
-    for ( i = 0; i < SBOX32_CHURN_ROUNDS; i++ )
-        SBOX32_MIX3(s0,s1,s2,"SEED STATE");
-
-    while ( state_cursor < sbox32_end ) {
-        U32 *row_end = state_cursor + 256; 
-        for ( ; state_cursor < row_end; state_cursor++ ) {
-            XORSHIFT96_set(*state_cursor,s0,s1,s2,t1);
-        }
-    }
-    XORSHIFT96_set(*state,s0,s1,s2,t2);
-}
 
 SBOX32_STATIC_INLINE void sbox32_seed_state128 (
     const U8 *seed_ch,
@@ -1464,8 +1413,8 @@ SBOX32_STATIC_INLINE void sbox32_seed_state128 (
     U32 *state= (U32 *)state_ch;
     U32 *state_cursor = state + 1;
     U32 *sbox32_end = state + 1 + (256 * SBOX32_MAX_LEN);
-    U32 s0 = seed[0] ^ 0x68736168; /* sbox */
-    U32 s1 = seed[1] ^ 0x786f6273; /* hash */
+    U32 s0 = seed[1] ^ 0x786f6273; /* sbox */
+    U32 s1 = seed[0] ^ 0x68736168; /* hash */
     U32 s2 = seed[2] ^ 0x646f6f67; /* good */
     U32 s3 = seed[3] ^ 0x74736166; /* fast */
     U32 t1,t2,i;
@@ -1475,9 +1424,23 @@ SBOX32_STATIC_INLINE void sbox32_seed_state128 (
     if (!s1) s1 = 2;
     if (!s2) s2 = 4;
     if (!s3) s3 = 8;
-    
+
     /* Do a bunch of mix rounds to avalanche the seedbits
      * before we use them for the XORSHIFT rng. */
+    for ( i = 0; i < SBOX32_CHURN_ROUNDS; i++ )
+        SBOX32_MIX4(s0,s1,s2,s3,"SEED STATE");
+
+    s0 ^= ~seed[3];
+    s1 ^= ~seed[2];
+    s2 ^= ~seed[1];
+    s3 ^= ~seed[0];
+
+    /* make sure we have all non-zero state elements, again */
+    if (!s0) s0 = 8;
+    if (!s1) s1 = 4;
+    if (!s2) s2 = 2;
+    if (!s3) s3 = 1;
+    
     for ( i = 0; i < SBOX32_CHURN_ROUNDS; i++ )
         SBOX32_MIX4(s0,s1,s2,s3,"SEED STATE");
 
@@ -1758,16 +1721,6 @@ SBOX32_STATIC_INLINE U32 sbox32_hash_with_state(
         case 0: break;
     }
     return hash;
-}
-
-SBOX32_STATIC_INLINE U32 sbox32_hash96(
-    const U8 *seed_ch,
-    const U8 *key,
-    const STRLEN key_len
-) {
-    U32 state[SBOX32_STATE_WORDS];
-    sbox32_seed_state96(seed_ch,(U8*)state);
-    return sbox32_hash_with_state((U8*)state,key,key_len);
 }
 
 SBOX32_STATIC_INLINE U32 sbox32_hash128(

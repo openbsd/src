@@ -43,7 +43,7 @@ if (! -e $Dfile) {
 }
 SKIP: {
     skip "different file permission semantics on $^O", 1
-	if $^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' || $^O eq 'cygwin' || $^O eq 'vos';
+	if $^O eq 'amigaos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'cygwin' || $^O eq 'vos';
     my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime,
 	$blksize,$blocks) = stat($Dfile);
     is($mode & 0777, 0640);

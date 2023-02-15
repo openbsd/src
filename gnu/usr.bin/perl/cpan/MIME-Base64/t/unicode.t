@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 BEGIN {
 	unless ($] >= 5.006) {
 		print "1..0\n";

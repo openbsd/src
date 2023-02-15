@@ -12,6 +12,8 @@ Porting/manifest_lib.pl - functions for managing manifests
 
 =head1 DESCRIPTION
 
+This file makes available one function, C<sort_manifest()>.
+
 =head2 C<sort_manifest>
 
 Treats its arguments as (chomped) lines from a MANIFEST file, and returns that
@@ -42,7 +44,8 @@ sub sort_manifest {
         $m =~ s!/!\0!g;
         # replace the extension (only one) by null null extension.
         # this puts any foo/blah.ext before any files in foo/blah/
-        $m =~ s!(\.[^.]+\z)!\0\0$1!;
+        $m =~ s{(?<!\A)(\.[^.]+\z)}{\0\0$1};
+
         # return the original string, and the munged filename
         [ $_, $m ];
     } @_;

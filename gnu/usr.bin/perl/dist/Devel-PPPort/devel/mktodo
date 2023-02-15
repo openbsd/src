@@ -53,7 +53,7 @@ our %opt = (
 # ppport.h, so we get, as patched by ppport.h, what gets added when
 
 GetOptions(\%opt, qw( base check! verbose install=s blead=s blead-version=s
-                      debug=i debug-start=s)) or die;
+                      debug=i debug-start=s skip-devels)) or die;
 
 identify();
 
@@ -74,5 +74,6 @@ for (my $i = 0; $i < @$perls_ref; $i++) {
   push @args, '--verbose' if $opt{verbose};
   push @args, '--nocheck' unless $opt{check};
   push @args, '--final', $this_perl->{'final'} if $this_perl->{'final'};
-  runperl('devel/mktodo.pl', @args) or die "error running mktodo.pl [$!] [$?]\n";
+  runperl('devel/mktodo.pl', @args)
+     or die "error running mktodo.pl [$!] [$?] " . join(" ", @args) . "\n";
 }

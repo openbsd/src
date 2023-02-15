@@ -45,7 +45,7 @@ print "# runFilter $name\n" ;
     return $@;
 }
 
-use Test::More tests => 21;
+use Test::More;
 
 BEGIN { use_ok('DBM_Filter') };
 my $db_file;
@@ -249,3 +249,4 @@ undef $db;
     is $@, '', "untie without inner references" ;
 }
 
+done_testing();

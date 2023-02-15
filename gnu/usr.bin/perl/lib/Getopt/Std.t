@@ -6,7 +6,9 @@ BEGIN {
 }
 
 use strict;
-use Test::More tests => 22;
+use warnings;
+
+use Test::More;
 use Getopt::Std;
 
 our ($warning, $opt_f, $opt_i, $opt_o, $opt_x, $opt_y, %opt);
@@ -90,3 +92,5 @@ my $expected;
         "getopt: single switch; switch expected argument, none provided; value undef");
     undef %opt;
 }
+
+done_testing();

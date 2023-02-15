@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -488,43 +483,43 @@ ok($objCu->eq("\x{476}", "\x{474}\x{30F}"));
 
 # latin equiv.
 
-ok($objCu->eq("a\x{300}", pack('U', 0xE0)));
-ok($objCu->eq("A\x{300}", pack('U', 0xC0)));
-ok($objCu->eq("e\x{300}", pack('U', 0xE8)));
-ok($objCu->eq("E\x{300}", pack('U', 0xC8)));
-ok($objCu->eq("i\x{300}", pack('U', 0xEC)));
-ok($objCu->eq("I\x{300}", pack('U', 0xCC)));
-ok($objCu->eq("o\x{300}", pack('U', 0xF2)));
-ok($objCu->eq("O\x{300}", pack('U', 0xD2)));
-ok($objCu->eq("u\x{300}", pack('U', 0xF9)));
-ok($objCu->eq("U\x{300}", pack('U', 0xD9)));
+ok($objCu->eq("a\x{300}", _pack_U(0xE0)));
+ok($objCu->eq("A\x{300}", _pack_U(0xC0)));
+ok($objCu->eq("e\x{300}", _pack_U(0xE8)));
+ok($objCu->eq("E\x{300}", _pack_U(0xC8)));
+ok($objCu->eq("i\x{300}", _pack_U(0xEC)));
+ok($objCu->eq("I\x{300}", _pack_U(0xCC)));
+ok($objCu->eq("o\x{300}", _pack_U(0xF2)));
+ok($objCu->eq("O\x{300}", _pack_U(0xD2)));
+ok($objCu->eq("u\x{300}", _pack_U(0xF9)));
+ok($objCu->eq("U\x{300}", _pack_U(0xD9)));
 ok($objCu->eq("y\x{300}", "\x{1EF3}"));
 ok($objCu->eq("Y\x{300}", "\x{1EF2}"));
 
-ok($objCu->eq("a\x{301}", pack('U', 0xE1)));
-ok($objCu->eq("A\x{301}", pack('U', 0xC1)));
-ok($objCu->eq("e\x{301}", pack('U', 0xE9)));
-ok($objCu->eq("E\x{301}", pack('U', 0xC9)));
-ok($objCu->eq("i\x{301}", pack('U', 0xED)));
-ok($objCu->eq("I\x{301}", pack('U', 0xCD)));
-ok($objCu->eq("o\x{301}", pack('U', 0xF3)));
-ok($objCu->eq("O\x{301}", pack('U', 0xD3)));
-ok($objCu->eq("u\x{301}", pack('U', 0xFA)));
-ok($objCu->eq("U\x{301}", pack('U', 0xDA)));
-ok($objCu->eq("y\x{301}", pack('U', 0xFD)));
-ok($objCu->eq("Y\x{301}", pack('U', 0xDD)));
+ok($objCu->eq("a\x{301}", _pack_U(0xE1)));
+ok($objCu->eq("A\x{301}", _pack_U(0xC1)));
+ok($objCu->eq("e\x{301}", _pack_U(0xE9)));
+ok($objCu->eq("E\x{301}", _pack_U(0xC9)));
+ok($objCu->eq("i\x{301}", _pack_U(0xED)));
+ok($objCu->eq("I\x{301}", _pack_U(0xCD)));
+ok($objCu->eq("o\x{301}", _pack_U(0xF3)));
+ok($objCu->eq("O\x{301}", _pack_U(0xD3)));
+ok($objCu->eq("u\x{301}", _pack_U(0xFA)));
+ok($objCu->eq("U\x{301}", _pack_U(0xDA)));
+ok($objCu->eq("y\x{301}", _pack_U(0xFD)));
+ok($objCu->eq("Y\x{301}", _pack_U(0xDD)));
 
-ok($objCu->eq("a\x{308}", pack('U', 0xE4)));
-ok($objCu->eq("A\x{308}", pack('U', 0xC4)));
-ok($objCu->eq("e\x{308}", pack('U', 0xEB)));
-ok($objCu->eq("E\x{308}", pack('U', 0xCB)));
-ok($objCu->eq("i\x{308}", pack('U', 0xEF)));
-ok($objCu->eq("I\x{308}", pack('U', 0xCF)));
-ok($objCu->eq("o\x{308}", pack('U', 0xF6)));
-ok($objCu->eq("O\x{308}", pack('U', 0xD6)));
-ok($objCu->eq("u\x{308}", pack('U', 0xFC)));
-ok($objCu->eq("U\x{308}", pack('U', 0xDC)));
-ok($objCu->eq("y\x{308}", pack('U', 0xFF)));
+ok($objCu->eq("a\x{308}", _pack_U(0xE4)));
+ok($objCu->eq("A\x{308}", _pack_U(0xC4)));
+ok($objCu->eq("e\x{308}", _pack_U(0xEB)));
+ok($objCu->eq("E\x{308}", _pack_U(0xCB)));
+ok($objCu->eq("i\x{308}", _pack_U(0xEF)));
+ok($objCu->eq("I\x{308}", _pack_U(0xCF)));
+ok($objCu->eq("o\x{308}", _pack_U(0xF6)));
+ok($objCu->eq("O\x{308}", _pack_U(0xD6)));
+ok($objCu->eq("u\x{308}", _pack_U(0xFC)));
+ok($objCu->eq("U\x{308}", _pack_U(0xDC)));
+ok($objCu->eq("y\x{308}", _pack_U(0xFF)));
 ok($objCu->eq("Y\x{308}", "\x{178}"));
 
 # 616

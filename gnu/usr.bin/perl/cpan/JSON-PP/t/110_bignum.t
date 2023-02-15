@@ -1,5 +1,6 @@
 
 use strict;
+use warnings;
 use Test::More;
 BEGIN { plan tests => 9 };
 
@@ -20,7 +21,7 @@ my $fix =  !$v       ? '+'
           : '';
 
 
-my $json = new JSON::PP;
+my $json = JSON::PP->new;
 
 $json->allow_nonref->allow_bignum(1);
 $json->convert_blessed->allow_blessed;

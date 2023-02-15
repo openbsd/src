@@ -80,3 +80,9 @@ lddlflags="$lddlflags $ldflags"
 #ldflags="$ldflags -s"
 #ccdlflags="$ccdlflags -s"
 #lddlflags="$lddlflags -s"
+
+# Seems that exporting _Thread_local doesn't work on cygwin. This 6 year old
+# gcc bug suggests that maybe the problem really is binutils, but either way
+# it still doesn't work, despite our probes looking good:
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=64697
+d_thread_local=undef

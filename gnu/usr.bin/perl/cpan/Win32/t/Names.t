@@ -7,7 +7,7 @@ BEGIN {
 }
 use Win32;
 
-my $tests = 14;
+my $tests = 16;
 $tests += 2 if Win32::IsWinNT();
 
 plan tests => $tests;
@@ -28,10 +28,15 @@ my $archname = eval { Win32::GetArchName() };
 is( $@, '', "Win32::GetArchName()" );
 cmp_ok( length($archname), '>=', 3, "  - checking returned architecture name" );
 
+# test Win32::GetChipArch()
+my $chiparch = eval { Win32::GetChipArch() };
+is( $@, '', "Win32::GetChipArch()" );
+like( $chiparch, '/^(0|5|6|9|12)$/', " - checking returned chip arch" );
+
 # test Win32::GetChipName()
 my $chipname = eval { Win32::GetChipName() };
 is( $@, '', "Win32::GetChipName()" );
-cmp_ok( length($chipname), '>=', 3, "  - checking returned chip name" );
+like( $chipname, '/^(0|386|486|586|2200|8664)$/', " - checking returned chip name");
 
 # test Win32::GetOSName()
 #  - scalar context

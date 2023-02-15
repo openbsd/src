@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -339,12 +334,12 @@ ok($objJa->eq("\x{FF9C}", "\x{30EF}"));
 ok($objJa->eq("\x{FF9D}", "\x{30F3}"));
 ok($objJa->eq("\x{FF9E}", "\x{3099}"));
 ok($objJa->eq("\x{FF9F}", "\x{309A}"));
-ok($objJa->eq("\x{FFE0}", pack('U', 0xA2)));
-ok($objJa->eq("\x{FFE1}", pack('U', 0xA3)));
-ok($objJa->eq("\x{FFE2}", pack('U', 0xAC)));
+ok($objJa->eq("\x{FFE0}", _pack_U(0xA2)));
+ok($objJa->eq("\x{FFE1}", _pack_U(0xA3)));
+ok($objJa->eq("\x{FFE2}", _pack_U(0xAC)));
 ok($objJa->eq("\x{FFE3}", "\ "));
-ok($objJa->eq("\x{FFE4}", pack('U', 0xA6)));
-ok($objJa->eq("\x{FFE5}", pack('U', 0xA5)));
+ok($objJa->eq("\x{FFE4}", _pack_U(0xA6)));
+ok($objJa->eq("\x{FFE5}", _pack_U(0xA5)));
 ok($objJa->eq("\x{FFE6}", "\x{20A9}"));
 ok($objJa->eq("\x{FFE8}", "\x{2502}"));
 ok($objJa->eq("\x{FFE9}", "\x{2190}"));

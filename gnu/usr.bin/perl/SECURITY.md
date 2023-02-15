@@ -12,8 +12,7 @@ membership mailing list monitored by the Perl security team.
 
 You should receive an initial response to your report within 72 hours.
 If you do not receive a response in that time, please contact
-the security team lead [John Lightsey](mailto:john@04755.net) and
-the Perl pumpking [SawyerX](mailto:xsawyerx@cpan.org).
+the [Perl Steering Council](mailto:steering-council@perl.org).
 
 When members of the security team reply to your messages, they will
 generally include the perl-security@perl.org address in the "To" or "CC"

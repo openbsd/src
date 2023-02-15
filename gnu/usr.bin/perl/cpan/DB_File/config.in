@@ -32,7 +32,7 @@ LIB	= /usr/local/BerkeleyDB/lib
 #    For older versions of Berkeley DB change both PREFIX and HASH to int.
 #    Version 1.71, 1.72 and 1.73 are known to need this change.
 #
-#    If you don't know what version you have have a look in the file db.h. 
+#    If you don't know what version you have have a look in the file db.h.
 #
 #    Search for the string "DB_VERSION_MAJOR". If it is present, you
 #    have Berkeley DB version 2 (or greater).
@@ -41,7 +41,7 @@ LIB	= /usr/local/BerkeleyDB/lib
 #    Check the return type from the prefix element. It should look like
 #    this in an older copy of db.h:
 #
-#        int      (*prefix)      __P((const DBT *, const DBT *));  
+#        int      (*prefix)      __P((const DBT *, const DBT *));
 #
 #    and like this in a more recent copy:
 #
@@ -54,7 +54,7 @@ LIB	= /usr/local/BerkeleyDB/lib
 #    Now find the definition of the HASHINFO typedef. Check the return
 #    type of the hash element. Older versions look like this:
 #
-#        int      (*hash) __P((const void *, size_t));      
+#        int      (*hash) __P((const void *, size_t));
 #
 #    newer like this:
 #
@@ -91,7 +91,7 @@ HASH	=	u_int32_t
 #    If you have changed the name of the library, uncomment the line
 #    below (by removing the leading #) and edit the line to use the name
 #    you have picked.
- 
+
 #DBNAME = -ldb-2.4.10
 
 # end of file config.in

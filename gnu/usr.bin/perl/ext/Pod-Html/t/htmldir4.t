@@ -1,33 +1,57 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
 use strict;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
 use Cwd;
-use File::Spec::Functions ':ALL';
-use Test::More tests => 2;
+
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
 
 my $cwd = cwd();
-my $data_pos = tell DATA; # to read <DATA> twice
 
-convert_n_test("htmldir4", "test --htmldir and --htmlroot 4a", 
- "--podpath=t",
- "--htmldir=t",
- "--outfile=". catfile('t', 'htmldir4.html'),
- "--quiet",
-);
+$args = {
+    podstub => "htmldir4",
+    description => "test --htmldir and --htmlroot 4a",
+    expect => $expect_raw,
+    p2h => {
+        podpath     => 't',
+        htmldir     => 't',
+        outfile     => catfile('t', 'htmldir4.html'),
+        quiet       => 1,
+    },
+    debug => $debug,
+};
+xconvert($args);
 
-seek DATA, $data_pos, 0; # to read <DATA> twice (expected output is the same)
+$args = {
+    podstub => "htmldir4",
+    description => "test --htmldir and --htmlroot 4b",
+    expect => $expect_raw,
+    p2h => {
+        podpath     => 't',
+        podroot     => $cwd,
+        htmldir     => catdir($cwd, 't'),
+        norecurse   => 1,
+        quiet       => 1,
+    },
+    debug => $debug,
+};
+xconvert($args);
 
-convert_n_test("htmldir4", "test --htmldir and --htmlroot 4b", 
- "--podpath=t",
- "--podroot=$cwd",
- "--htmldir=". catdir($cwd, 't'),
- "--norecurse",
- "--quiet",
-);
+done_testing;
 
 __DATA__
 <?xml version="1.0" ?>

@@ -7,13 +7,13 @@
 
 package VMS::Stdio;
 
-require 5.002;
+require 5.006;
 use Carp '&croak';
 use DynaLoader ();
-use Exporter ();
+use Exporter 'import';
 
-our $VERSION = '2.45';
-our @ISA = qw( Exporter DynaLoader IO::File );
+our $VERSION = '2.46';
+our @ISA = qw( DynaLoader IO::File );
 our @EXPORT = qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY &O_NOWAIT
               &O_RDONLY &O_RDWR  &O_TRUNC &O_WRONLY );
 our @EXPORT_OK = qw( &binmode &flush &getname &remove &rewind &sync &setdef &tmpnam

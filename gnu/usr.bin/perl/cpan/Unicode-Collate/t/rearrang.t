@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -31,6 +23,9 @@ use Unicode::Collate;
 
 ok(1);
 
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
 #########################
 
 my $Collator = Unicode::Collate->new(
@@ -49,7 +44,8 @@ ok($Collator->gt( "\x{E41}A",  "\x{E40}B"));
 ok($Collator->gt("A\x{E41}A", "A\x{E40}B"));
 
 $Collator->change(rearrange => [ 0x61 ]);
- # U+0061, 'a': This is a Unicode value, never a native value.
+
+# 0x61 FOR 'a' SHOULD BE A UNICODE CODE POINT, NOT A NATIVE CODE POINT.
 
 ok($Collator->gt("ab", "AB")); # as 'ba' > 'AB'
 

@@ -39,24 +39,24 @@
 /* #include <sys/cdefs.h> */
 
 typedef struct {
-	int gl_pathc;		/* Count of total paths so far. */
-	int gl_matchc;		/* Count of paths matching pattern. */
-	int gl_offs;		/* Reserved at beginning of gl_pathv. */
-	int gl_flags;		/* Copy of flags parameter to glob. */
-	char **gl_pathv;	/* List of paths matching pattern. */
-				/* Copy of errfunc parameter to glob. */
-	int (*gl_errfunc)(const char *, int);
+        int gl_pathc;		/* Count of total paths so far. */
+        int gl_matchc;		/* Count of paths matching pattern. */
+        int gl_offs;		/* Reserved at beginning of gl_pathv. */
+        int gl_flags;		/* Copy of flags parameter to glob. */
+        char **gl_pathv;	/* List of paths matching pattern. */
+                                /* Copy of errfunc parameter to glob. */
+        int (*gl_errfunc)(const char *, int);
 
-	/*
-	 * Alternate filesystem access methods for glob; replacement
-	 * versions of closedir(3), readdir(3), opendir(3), stat(2)
-	 * and lstat(2).
-	 */
-	void (*gl_closedir)(void *);
-	Direntry_t *(*gl_readdir)(void *);
-	void *(*gl_opendir)(const char *);
-	int (*gl_lstat)(const char *, Stat_t *);
-	int (*gl_stat)(const char *, Stat_t *);
+        /*
+         * Alternate filesystem access methods for glob; replacement
+         * versions of closedir(3), readdir(3), opendir(3), stat(2)
+         * and lstat(2).
+         */
+        void (*gl_closedir)(void *);
+        Direntry_t *(*gl_readdir)(void *);
+        void *(*gl_opendir)(const char *);
+        int (*gl_lstat)(const char *, Stat_t *);
+        int (*gl_stat)(const char *, Stat_t *);
 } glob_t;
 
 #define	GLOB_APPEND	0x0001	/* Append to output from previous call. */
@@ -75,7 +75,7 @@ typedef struct {
 #define	GLOB_NOCASE	0x1000	/* Treat filenames without regard for case. */
 #define	GLOB_ALPHASORT	0x2000	/* Alphabetic, not ASCII sort, like csh. */
 #define	GLOB_LIMIT	0x4000	/* Limit pattern match output to ARG_MAX
-				   (usually from limits.h). */
+                                   (usually from limits.h). */
 
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
 #define	GLOB_ABEND	(-2)	/* Unignored error. */

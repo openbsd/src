@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+package GitUtils;
 use strict;
 use warnings;
 use POSIX qw(strftime);

@@ -20,7 +20,7 @@ By default, L<Archive::Tar> doesn't allow extracting files outside the current
 working directory.  However, this secure extraction mode could be bypassed by
 putting a symlink and a regular file with the same name into the tar file.
 
-L<[perl #133250]|https://rt.perl.org/Ticket/Display.html?id=133250>
+L<[GH #16580]|https://github.com/Perl/perl5/issues/16580>
 L<[cpan #125523]|https://rt.cpan.org/Ticket/Display.html?id=125523>
 
 =head2 [CVE-2018-18311] Integer overflow leading to buffer overflow and segmentation fault
@@ -30,28 +30,28 @@ of the environment variable name and value exceeded around 0x7fffffff.  This
 could lead to writing beyond the end of an allocated buffer with attacker
 supplied data.
 
-L<[perl #133204]|https://rt.perl.org/Ticket/Display.html?id=133204>
+L<[GH #16560]|https://github.com/Perl/perl5/issues/16560>
 
 =head2 [CVE-2018-18312] Heap-buffer-overflow write in S_regatom (regcomp.c)
 
 A crafted regular expression could cause heap-buffer-overflow write during
 compilation, potentially allowing arbitrary code execution.
 
-L<[perl #133423]|https://rt.perl.org/Ticket/Display.html?id=133423>
+L<[GH #16649]|https://github.com/Perl/perl5/issues/16649>
 
 =head2 [CVE-2018-18313] Heap-buffer-overflow read in S_grok_bslash_N (regcomp.c)
 
 A crafted regular expression could cause heap-buffer-overflow read during
 compilation, potentially leading to sensitive information being leaked.
 
-L<[perl #133192]|https://rt.perl.org/Ticket/Display.html?id=133192>
+L<[GH #16554]|https://github.com/Perl/perl5/issues/16554>
 
 =head2 [CVE-2018-18314] Heap-buffer-overflow write in S_regatom (regcomp.c)
 
 A crafted regular expression could cause heap-buffer-overflow write during
 compilation, potentially allowing arbitrary code execution.
 
-L<[perl #131649]|https://rt.perl.org/Ticket/Display.html?id=131649>
+L<[GH #16041]|https://github.com/Perl/perl5/issues/16041>
 
 =head1 Incompatible Changes
 

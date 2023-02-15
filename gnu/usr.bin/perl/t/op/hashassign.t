@@ -310,15 +310,15 @@ foreach my $chr (60, 200, 600, 6000, 60000) {
 }
 
 # [perl #76716] Hash assignment should not zap weak refs.
-SKIP: {
- skip_if_miniperl("no dynamic loading on miniperl, no Scalar::Util", 2);
- my %tb;
- require Scalar::Util;
- Scalar::Util::weaken(my $p = \%tb);
- %tb = ();
- is $p, \%tb, "hash assignment should not zap weak refs";
- undef %tb;
- is $p, \%tb, "hash undef should not zap weak refs";
+{
+    my %tb;
+    no warnings 'experimental::builtin';
+    use builtin 'weaken';
+    weaken(my $p = \%tb);
+    %tb = ();
+    is $p, \%tb, "hash assignment should not zap weak refs";
+    undef %tb;
+    is $p, \%tb, "hash undef should not zap weak refs";
 }
 
 # test odd hash assignment warnings

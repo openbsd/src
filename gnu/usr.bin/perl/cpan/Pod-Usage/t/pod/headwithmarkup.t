@@ -1,5 +1,8 @@
 use Test::More tests => 1;
 
+use strict;
+use warnings;
+
 my $blib = $ENV{PERL_CORE} ? '-I../../lib' : '-Mblib';
 
 my $pl = $0;

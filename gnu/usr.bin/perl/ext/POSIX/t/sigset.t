@@ -7,7 +7,7 @@ use Config;
 plan(skip_all => "POSIX is unavailable")
     unless $Config{extensions} =~ /\bPOSIX\b/;
 plan(skip_all => "sigemptyset is unavailable on $^O")
-    if $^O eq 'MSWin32' || $^O eq 'NetWare';
+    if $^O eq 'MSWin32';
 
 require POSIX;
 POSIX->import();

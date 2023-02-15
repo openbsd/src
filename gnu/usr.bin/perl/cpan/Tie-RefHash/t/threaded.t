@@ -20,12 +20,11 @@ BEGIN {
     exit 0;
   }
   if ( $Config{usethreads} and !$Config{use5005threads}
-      and defined(&Scalar::Util::weaken)
-      and eval { require threads; threads->import; 1 }
+      and eval { +require threads; threads->import; 1 }
   ) {
     print "1..14\n";
   } else {
-    print "1..0 # Skip -- threads aren't enabled in your perl, or Scalar::Util::weaken is missing\n";
+    print "1..0 # Skip -- threads aren't enabled in your perl";
     exit 0;
   }
 }

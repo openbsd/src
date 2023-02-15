@@ -6,17 +6,23 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 23 };
 
 #use Pod::Simple::Debug (5);
+BEGIN {
+  require FindBin;
+  unshift @INC, $FindBin::Bin . '/lib';
+  require helpers;
+  helpers->import;
+}
 
 ok 1;
 
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
-sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
 
 print "# With weird leading whitespace...\n";
 # With weird whitespace

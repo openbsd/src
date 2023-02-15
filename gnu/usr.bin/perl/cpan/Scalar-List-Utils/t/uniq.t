@@ -158,7 +158,8 @@ SKIP: {
     package Googol;
 
     use overload '""' => sub { "1" . ( "0"x100 ) },
-                 'int' => sub { $_[0] };
+                 'int' => sub { $_[0] },
+                 fallback => 1;
 
     sub new { bless {}, $_[0] }
 

@@ -1,8 +1,10 @@
 # Test that md5 works on unaligned memory blocks
 
+use strict;
+use warnings;
+
 print "1..1\n";
 
-use strict;
 use Digest::MD5 qw(md5_hex);
 
 my $str = "\100" x 20;

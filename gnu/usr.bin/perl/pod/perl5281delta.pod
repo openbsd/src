@@ -21,14 +21,14 @@ of the environment variable name and value exceeded around 0x7fffffff.  This
 could lead to writing beyond the end of an allocated buffer with attacker
 supplied data.
 
-L<[perl #133204]|https://rt.perl.org/Ticket/Display.html?id=133204>
+L<[GH #16560]|https://github.com/Perl/perl5/issues/16560>
 
 =head2 [CVE-2018-18312] Heap-buffer-overflow write in S_regatom (regcomp.c)
 
 A crafted regular expression could cause heap-buffer-overflow write during
 compilation, potentially allowing arbitrary code execution.
 
-L<[perl #133423]|https://rt.perl.org/Ticket/Display.html?id=133423>
+L<[GH #16649]|https://github.com/Perl/perl5/issues/16649>
 
 =head1 Incompatible Changes
 
@@ -58,7 +58,7 @@ Perl 5.28 introduced an C<index()> optimization when comparing to -1 (or
 indirectly, e.g. >= 0).  When this optimization was triggered inside a C<when>
 clause it caused a warning ("Argument %s isn't numeric in smart match").  This
 has now been fixed.
-L<[perl #133368]|https://rt.perl.org/Ticket/Display.html?id=133368>
+L<[GH #16626]|https://github.com/Perl/perl5/issues/16626>
 
 =item *
 
@@ -69,7 +69,7 @@ not.  This has now been fixed.
 =item *
 
 The new in-place editing code no longer leaks directory handles.
-L<[perl #133314]|https://rt.perl.org/Ticket/Display.html?id=133314>
+L<[GH #16602]|https://github.com/Perl/perl5/issues/16602>
 
 =back
 

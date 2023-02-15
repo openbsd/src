@@ -10,7 +10,7 @@ This document describes differences between the 5.12.0 release and
 the 5.12.1 release.
 
 If you are upgrading from an earlier release such as 5.10.1, first read
-L<perl5120delta>, which describes differences between 5.10.1 and
+L<perl5120delta>, which describes differences between 5.10.0 and
 5.12.0.
 
 =head1 Incompatible Changes
@@ -46,7 +46,7 @@ just exports them directly as functions without the wrapper.
 
 =item *
 
-We upgraded L<CGI.pm> to version 3.49 to incorporate fixes for regressions
+We upgraded L<CGI> to version 3.49 to incorporate fixes for regressions
 introduced in the release we shipped with Perl 5.12.0.
 
 =item *
@@ -70,7 +70,7 @@ We upgraded L<Safe> to version 2.27 to wrap coderefs returned by C<reval()> and 
 
 =item *
 
-We added the new maintenance release policy to L<perlpolicy.pod>
+We added the new maintenance release policy to L<perlpolicy>
 
 =item *
 
@@ -79,7 +79,7 @@ in L<perlpodspec>
 
 =item *
 
-We added a missing explanation for a warning about C<:=> to L<perldiag.pod>
+We added a missing explanation for a warning about C<:=> to L<perldiag>
 
 =item *
 
@@ -91,11 +91,11 @@ We updated the GitHub mirror link in L<perlrepository> to mirrors/perl, not gith
 
 =item *
 
-We fixed a minor error in L<perl5114delta.pod>.
+We fixed a minor error in L<perl5114delta>.
 
 =item * 
 
-We replaced a mention of the now-obsolete L<Switch.pm> with F<given>/F<when>.
+We replaced a mention of the now-obsolete L<Switch> with F<given>/F<when>.
 
 =item *
 
@@ -103,11 +103,11 @@ We improved documentation about F<$sitelibexp/sitecustomize.pl> in L<perlrun>.
 
 =item * 
 
-We corrected L<perlmodlib.pod> which had unintentionally omitted a number of modules.
+We corrected L<perlmodlib> which had unintentionally omitted a number of modules.
 
 =item * 
 
-We updated the documentation for 'require' in L<perlfunc.pod> relating to putting Perl code in @INC.
+We updated the documentation for 'require' in L<perlfunc> relating to putting Perl code in @INC.
 
 =item *
 
@@ -115,11 +115,11 @@ We reinstated some erroneously-removed documentation about quotemeta in L<perlfu
 
 =item *
 
-We fixed an F<a2p> example in L<perlutil.pod>.
+We fixed an F<a2p> example in L<perlutil>.
 
 =item  *
 
-We filled in a blank in L<perlport.pod> with the release date of Perl 5.12.
+We filled in a blank in L<perlport> with the release date of Perl 5.12.
 
 =item  *
 
@@ -127,7 +127,7 @@ We fixed broken links in a number of perldelta files.
 
 =item * 
 
-The documentation for L<Carp.pm> incorrectly stated that the $Carp::Verbose
+The documentation for L<Carp> incorrectly stated that the $Carp::Verbose
 variable makes cluck generate stack backtraces.
 
 =item *
@@ -136,11 +136,11 @@ We fixed a number of typos in L<Pod::Functions>
 
 =item *
 
-We improved documentation of case-changing functions in L<perlfunc.pod>
+We improved documentation of case-changing functions in L<perlfunc>
 
 =item *
 
-We corrected L<perlgpl.pod> to contain the correct version of the GNU
+We corrected L<perlgpl> to contain the correct version of the GNU
 General Public License.
 
 
@@ -195,7 +195,7 @@ Filetests don't always expect an op on the stack, so we now use
 TOPs only if we're sure that we're not stat'ing the _ filehandle.
 This is indicated by OPf_KIDS (as checked in ck_ftst).
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74542>
+See also: L<https://github.com/Perl/perl5/issues/10335>
 
 =item *
 
@@ -219,7 +219,7 @@ utf8::is_utf8 now respects GMAGIC (e.g. $1)
 XS code using C<fputc()> or C<fputs()>: on Windows could cause an error
 due to their arguments being swapped.
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=72704>
+See also: L<https://github.com/Perl/perl5/issues/10156>
 
 =item *
 
@@ -228,14 +228,14 @@ in an obscure situation.  It happened when stuffing was performed on the
 last line of a file and the line ended with a statement that lacked a
 terminating semicolon.  
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74006>
+See also: L<https://github.com/Perl/perl5/issues/10273>
 
 =item *
 
 We fixed a bug that could cause \N{} constructs followed by a single . to
 be parsed incorrectly.
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74978>
+See also: L<https://github.com/Perl/perl5/issues/10367>
 
 =item *
 
@@ -243,21 +243,21 @@ See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74978>
 We fixed a bug that caused when(scalar) without an argument not to be
 treated as a syntax error.
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74114>
+See also: L<https://github.com/Perl/perl5/issues/10287>
 
 =item *
 
 We fixed a regression in the handling of labels immediately before string
 evals that was introduced in Perl 5.12.0.
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=74290>
+See also: L<https://github.com/Perl/perl5/issues/10301>
 
 =item *
 
 We fixed a regression in case-insensitive matching of folded characters
 in regular expressions introduced in Perl 5.10.1.
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=72998>
+See also: L<https://github.com/Perl/perl5/issues/10193>
 
 =back
 
@@ -342,7 +342,7 @@ take a block as their first argument, like
 
     foo { ... $_ ...} list
 
-See also: L<http://rt.perl.org/rt3/Public/Bug/Display.html?id=67694>
+See also: L<https://github.com/Perl/perl5/issues/9798>
 
 =item *
 

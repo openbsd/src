@@ -18,18 +18,18 @@ L<perl5243delta>, which describes differences between 5.24.2 and 5.24.3.
 
 A crafted regular expression could cause a heap buffer write overflow, with
 control over the bytes written.
-L<[perl #132227]|https://rt.perl.org/Public/Bug/Display.html?id=132227>
+L<[GH #16185]|https://github.com/Perl/perl5/issues/16185>
 
 =head2 [CVE-2018-6798] Heap-buffer-overflow in Perl__byte_dump_string (utf8.c)
 
 Matching a crafted locale dependent regular expression could cause a heap
 buffer read overflow and potentially information disclosure.
-L<[perl #132063]|https://rt.perl.org/Public/Bug/Display.html?id=132063>
+L<[GH #16143]|https://github.com/Perl/perl5/issues/16143>
 
 =head2 [CVE-2018-6913] heap-buffer-overflow in S_pack_rec
 
 C<pack()> could cause a heap buffer write overflow with a large item count.
-L<[perl #131844]|https://rt.perl.org/Public/Bug/Display.html?id=131844>
+L<[GH #16098]|https://github.com/Perl/perl5/issues/16098>
 
 =head2 Assertion failure in Perl__core_swash_init (utf8.c)
 
@@ -66,7 +66,7 @@ L<Module::CoreList> has been upgraded from version 5.20170922_24 to 5.20180414_2
 The C<readpipe()> built-in function now checks at compile time that it has only
 one parameter expression, and puts it in scalar context, thus ensuring that it
 doesn't corrupt the stack at runtime.
-L<[perl #4574]|https://rt.perl.org/Public/Bug/Display.html?id=4574>
+L<[GH #2793]|https://github.com/Perl/perl5/issues/2793>
 
 =back
 

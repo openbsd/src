@@ -1,20 +1,42 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
 use strict;
-use Test::More tests => 1;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
+use Cwd;
 
-convert_n_test("htmlescp", "html escape");
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
+
+$args = {
+    podstub => "htmlescp",
+    description => "html escape",
+    expect => $expect_raw,
+    debug => $debug,
+};
+
+xconvert($args);
+
+done_testing;
 
 __DATA__
 <?xml version="1.0" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>Escape Sequences Test</title>
+<title>Escape Sequences Test: Recalling the Glory &quot;&lt;&amp;&amp;&amp;&gt;&quot; of Ampersands</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rev="made" href="mailto:[PERLADMIN]" />
 </head>
@@ -30,7 +52,7 @@ __DATA__
 
 <h1 id="NAME">NAME</h1>
 
-<p>Escape Sequences Test</p>
+<p>Escape Sequences Test: Recalling the Glory &quot;&lt;&amp;&amp;&amp;&gt;&quot; of Ampersands</p>
 
 <h1 id="DESCRIPTION">DESCRIPTION</h1>
 

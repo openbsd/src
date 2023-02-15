@@ -1,5 +1,11 @@
 #!./perl
 
+use strict;
+use File::Temp qw( tempdir );
+use Cwd;
+
+no strict 'subs';
+
 BEGIN {
     require($ENV{PERL_CORE} ? "../../t/test.pl" : "./t/test.pl");
     plan(16);
@@ -7,10 +13,6 @@ BEGIN {
     use_ok('IO::Dir');
     IO::Dir->import(DIR_UNLINK);
 }
-
-use strict;
-use File::Temp qw( tempdir );
-use Cwd;
 
 my $cwd = cwd();
 

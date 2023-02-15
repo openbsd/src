@@ -1,13 +1,35 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
 use strict;
-use Test::More tests => 1;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
+use Cwd;
 
-convert_n_test("htmllink", "html links");
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
+
+$args = {
+    podstub => "htmllink",
+    description => "html links",
+    expect => $expect_raw,
+    debug => 1,
+};
+
+xconvert($args);
+
+done_testing;
 
 __DATA__
 <?xml version="1.0" ?>

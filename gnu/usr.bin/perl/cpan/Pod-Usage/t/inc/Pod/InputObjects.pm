@@ -10,6 +10,7 @@
 
 package Pod::InputObjects;
 use strict;
+use warnings;
 
 use vars qw($VERSION);
 $VERSION = '1.60';  ## Current version of this package
@@ -111,9 +112,9 @@ methods/attributes:
 =head2 B<new()>
 
         my $pod_input1 = Pod::InputSource->new(-handle => $filehandle);
-        my $pod_input2 = new Pod::InputSource(-handle => $filehandle,
-                                              -name   => $name);
-        my $pod_input3 = new Pod::InputSource(-handle => \*STDIN);
+        my $pod_input2 = Pod::InputSource->new(-handle => $filehandle,
+                                               -name   => $name);
+        my $pod_input3 = Pod::InputSource->new(-handle => \*STDIN);
         my $pod_input4 = Pod::InputSource->new(-handle => \*STDIN,
                                                -name => "(STDIN)");
 
@@ -236,8 +237,8 @@ It has the following methods/attributes:
         my $pod_para1 = Pod::Paragraph->new(-text => $text);
         my $pod_para2 = Pod::Paragraph->new(-name => $cmd,
                                             -text => $text);
-        my $pod_para3 = new Pod::Paragraph(-text => $text);
-        my $pod_para4 = new Pod::Paragraph(-name => $cmd,
+        my $pod_para3 = Pod::Paragraph->new(-text => $text);
+        my $pod_para4 = Pod::Paragraph->new(-name => $cmd,
                                            -text => $text);
         my $pod_para5 = Pod::Paragraph->new(-name => $cmd,
                                             -text => $text,
@@ -426,15 +427,15 @@ It has the following methods/attributes:
 
         my $pod_seq1 = Pod::InteriorSequence->new(-name => $cmd
                                                   -ldelim => $delimiter);
-        my $pod_seq2 = new Pod::InteriorSequence(-name => $cmd,
+        my $pod_seq2 = Pod::InteriorSequence->new(-name => $cmd,
                                                  -ldelim => $delimiter);
-        my $pod_seq3 = new Pod::InteriorSequence(-name => $cmd,
+        my $pod_seq3 = Pod::InteriorSequence->new(-name => $cmd,
                                                  -ldelim => $delimiter,
                                                  -file => $filename,
                                                  -line => $line_number);
 
-        my $pod_seq4 = new Pod::InteriorSequence(-name => $cmd, $ptree);
-        my $pod_seq5 = new Pod::InteriorSequence($cmd, $ptree);
+        my $pod_seq4 = Pod::InteriorSequence->new(-name => $cmd, $ptree);
+        my $pod_seq5 = Pod::InteriorSequence->new($cmd, $ptree);
 
 This is a class method that constructs a C<Pod::InteriorSequence> object
 and returns a reference to the new interior sequence object. It should
@@ -481,11 +482,11 @@ sub new {
     };
 
     ## Initialize contents if they havent been already
-    my $ptree = $self->{'-ptree'} || new Pod::ParseTree();
+    my $ptree = $self->{'-ptree'} || Pod::ParseTree->new();
     if ( ref $ptree =~ /^(ARRAY)?$/ ) {
         ## We have an array-ref, or a normal scalar. Pass it as an
         ## an argument to the ptree-constructor
-        $ptree = new Pod::ParseTree($1 ? [$ptree] : $ptree);
+        $ptree = Pod::ParseTree->new($1 ? [$ptree] : $ptree);
     }
     $self->{'-ptree'} = $ptree;
 
@@ -740,9 +741,7 @@ itself contain a parse-tree (since interior sequences may be nested).
 =head2 Pod::ParseTree-E<gt>B<new()>
 
         my $ptree1 = Pod::ParseTree->new;
-        my $ptree2 = new Pod::ParseTree;
-        my $ptree4 = Pod::ParseTree->new($array_ref);
-        my $ptree3 = new Pod::ParseTree($array_ref);
+        my $ptree2 = Pod::ParseTree->new($array_ref);
 
 This is a class method that constructs a C<Pod::Parse_tree> object and
 returns a reference to the new parse-tree. If a single-argument is given,

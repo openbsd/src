@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -136,16 +131,16 @@ ok($objEe->lt("\x{28B}", "\x{1B2}"));
 
 # 94
 
-ok($objEe->eq("a\x{302}", pack('U', 0xE2)));
-ok($objEe->eq("A\x{302}", pack('U', 0xC2)));
-ok($objEe->eq("e\x{302}", pack('U', 0xEA)));
-ok($objEe->eq("E\x{302}", pack('U', 0xCA)));
-ok($objEe->eq("i\x{302}", pack('U', 0xEE)));
-ok($objEe->eq("I\x{302}", pack('U', 0xCE)));
-ok($objEe->eq("o\x{302}", pack('U', 0xF4)));
-ok($objEe->eq("O\x{302}", pack('U', 0xD4)));
-ok($objEe->eq("u\x{302}", pack('U', 0xFB)));
-ok($objEe->eq("U\x{302}", pack('U', 0xDB)));
+ok($objEe->eq("a\x{302}", _pack_U(0xE2)));
+ok($objEe->eq("A\x{302}", _pack_U(0xC2)));
+ok($objEe->eq("e\x{302}", _pack_U(0xEA)));
+ok($objEe->eq("E\x{302}", _pack_U(0xCA)));
+ok($objEe->eq("i\x{302}", _pack_U(0xEE)));
+ok($objEe->eq("I\x{302}", _pack_U(0xCE)));
+ok($objEe->eq("o\x{302}", _pack_U(0xF4)));
+ok($objEe->eq("O\x{302}", _pack_U(0xD4)));
+ok($objEe->eq("u\x{302}", _pack_U(0xFB)));
+ok($objEe->eq("U\x{302}", _pack_U(0xDB)));
 ok($objEe->eq("y\x{302}", "\x{177}"));
 ok($objEe->eq("Y\x{302}", "\x{176}"));
 

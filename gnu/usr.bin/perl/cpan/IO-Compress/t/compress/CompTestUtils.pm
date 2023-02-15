@@ -9,13 +9,13 @@ use bytes;
 #use lib qw(t t/compress);
 
 use Carp ;
-#use Test::More ; 
+#use Test::More ;
 
 
 
 sub title
 {
-    #diag "" ; 
+    #diag "" ;
     ok(1, $_[0]) ;
     #diag "" ;
 }
@@ -26,7 +26,7 @@ sub like_eval
 }
 
 BEGIN {
-    eval { 
+    eval {
        require File::Temp;
      } ;
 
@@ -38,7 +38,7 @@ BEGIN {
 
     our ($index);
     $index = '00000';
-    
+
     sub new
     {
         my $self = shift ;
@@ -72,7 +72,7 @@ BEGIN {
     $index = '00000';
     our ($useTempFile);
     our ($useTempDir);
-    
+
     sub new
     {
         my $self = shift ;
@@ -115,11 +115,11 @@ BEGIN {
                 # autogenerate the name if none supplied
                 $_ = "tmpdir" . $$ . "X" . $index ++ . ".tmp" ;
             }
-            foreach (@_) 
-            { 
+            foreach (@_)
+            {
                 rmtree $_, {verbose => 0, safe => 1}
-                    if -d $_; 
-                mkdir $_, 0777 
+                    if -d $_;
+                mkdir $_, 0777
             }
             bless [ @_ ], $self ;
         }
@@ -131,10 +131,10 @@ BEGIN {
         if (! $useTempFile)
         {
             my $self = shift ;
-            foreach (@$self) 
-            { 
+            foreach (@$self)
+            {
                 rmtree $_, {verbose => 0, safe => 1}
-                    if -d $_ ; 
+                    if -d $_ ;
             }
         }
     }
@@ -150,15 +150,15 @@ sub readFile
     {
         my $pos = tell($f);
         seek($f, 0,0);
-        @strings = <$f> ;	
+        @strings = <$f> ;
         seek($f, 0, $pos);
     }
     else
     {
-        open (F, "<$f") 
+        open (F, "<$f")
             or croak "Cannot open $f: $!\n" ;
         binmode F;
-        @strings = <F> ;	
+        @strings = <F> ;
         close F ;
     }
 
@@ -175,7 +175,7 @@ sub writeFile
 {
     my($filename, @strings) = @_ ;
     1 while unlink $filename ;
-    open (F, ">$filename") 
+    open (F, ">$filename")
         or croak "Cannot open $filename: $!\n" ;
     binmode F;
     foreach (@strings) {
@@ -191,10 +191,10 @@ sub GZreadFile
 
     my ($uncomp) = "" ;
     my $line = "" ;
-    my $fil = gzopen($filename, "rb") 
+    my $fil = gzopen($filename, "rb")
         or croak "Cannopt open '$filename': $Compress::Zlib::gzerrno" ;
 
-    $uncomp .= $line 
+    $uncomp .= $line
         while $fil->gzread($line) > 0;
 
     $fil->gzclose ;
@@ -248,14 +248,14 @@ sub readHeaderInfo
 some text
 EOM
 
-    ok my $x = new IO::Compress::Gzip $name, %opts 
+    ok my $x = IO::Compress::Gzip->new( $name, %opts )
         or diag "GzipError is $IO::Compress::Gzip::GzipError" ;
     ok $x->write($string) ;
     ok $x->close ;
 
     #is GZreadFile($name), $string ;
 
-    ok my $gunz = new IO::Uncompress::Gunzip $name, Strict => 0
+    ok my $gunz = IO::Uncompress::Gunzip->new( $name, Strict => 0 )
         or diag "GunzipError is $IO::Uncompress::Gunzip::GunzipError" ;
     ok my $hdr = $gunz->getHeaderInfo();
     my $uncomp ;
@@ -562,12 +562,13 @@ sub anyUncompress
     }
 
     my $out = '';
-    my $o = new IO::Uncompress::AnyUncompress \$data, 
-                    Append => 1, 
-                    Transparent => 0, 
+    my $o = IO::Uncompress::AnyUncompress->new( \$data,
+                    Append => 1,
+                    Transparent => 0,
                     RawInflate => 1,
                     UnLzma     => 1,
                     @opts
+            )
         or croak "Cannot open buffer/file: $AnyUncompressError" ;
 
     1 while $o->read($out) > 0 ;
@@ -622,13 +623,14 @@ sub getHeaders
     }
 
     my $out = '';
-    my $o = new IO::Uncompress::AnyUncompress \$data, 
-                MultiStream => 1, 
-                Append => 1, 
-                Transparent => 0, 
+    my $o = IO::Uncompress::AnyUncompress->new( \$data,
+                MultiStream => 1,
+                Append => 1,
+                Transparent => 0,
                 RawInflate => 1,
                 UnLzma     => 1,
                 @opts
+            )
         or croak "Cannot open buffer/file: $AnyUncompressError" ;
 
     1 while $o->read($out) > 0 ;
@@ -667,7 +669,7 @@ sub mkComplete
         );
     }
 
-    my $z = new $class( \$buffer, %params)
+    my $z = $class->can('new')->( $class, \$buffer, %params)
         or croak "Cannot create $class object: $$Error";
     $z->write($data);
     $z->close();
@@ -675,7 +677,7 @@ sub mkComplete
     my $unc = getInverse($class);
     anyUncompress(\$buffer) eq $data
         or die "bad bad bad";
-    my $u = new $unc( \$buffer);
+    my $u = $unc->can('new')->( $unc, \$buffer);
     my $info = $u->getHeaderInfo() ;
 
 

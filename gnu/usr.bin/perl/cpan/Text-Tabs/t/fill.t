@@ -1,6 +1,9 @@
-#!/usr/bin/perl -w -I.
+use strict; use warnings;
 
-@tests = (split(/\nEND\n/s, <<DONE));
+BEGIN { require './t/lib/ok.pl' }
+use Text::Wrap;
+
+my @tests = (split(/\nEND\n/s, <<DONE));
 TEST1
 Cyberdog Information
 
@@ -47,16 +50,9 @@ END
 DONE
 
 
-$| = 1;
-
 my $numtests = scalar(@tests) / 2;
 print "1..$numtests\n";
 
-use Text::Wrap;
-
-$rerun = $ENV{'PERL_DL_NONLAZY'} ? 0 : 1;
-
-$tn = 1;
 while (@tests) {
 	my $in = shift(@tests);
 	my $out = shift(@tests);
@@ -65,40 +61,5 @@ while (@tests) {
 
 	my $back = fill('    ', ' ', $in);
 
-	if ($back eq $out) {
-		print "ok $tn\n";
-	} elsif ($rerun) {
-		my $oi = $in;
-		write_file("#o", $back);
-		write_file("#e", $out);
-		foreach ($in, $back, $out) {
-			s/\t/^I\t/gs;
-			s/\n/\$\n/gs;
-		}
-		print "------------ input ------------\n";
-		print $in;
-		print "\n------------ output -----------\n";
-		print $back;
-		print "\n------------ expected ---------\n";
-		print $out;
-		print "\n-------------------------------\n";
-		$Text::Wrap::debug = 1;
-		fill('    ', ' ', $oi);
-		exit(1);
-	} else {
-		print "not ok $tn\n";
-	}
-	$tn++;
-}
-
-sub write_file
-{
-	my ($f, @data) = @_;
-
-	local(*F);
-
-	open(F, ">$f") || die "open >$f: $!";
-	(print F @data) || die "write $f: $!";
-	close(F) || die "close $f: $!";
-	return 1;
+	ok( $back eq $out );
 }

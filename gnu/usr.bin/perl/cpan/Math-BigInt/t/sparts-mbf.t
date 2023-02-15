@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 1840;
+use Test::More tests => 1848;
 
 use Math::BigFloat;
 
@@ -42,6 +42,37 @@ while (<DATA>) {
         is($x,        $x_str,    "input is unmodified");
     }
 
+}
+
+# Verify that the accuracy of the significand and the exponent depends on the
+# accuracy of the invocand, if set, not the class.
+
+note(qq|\nVerify that accuracy depends on invocand, not class.\n\n|);
+
+{
+    Math::BigFloat -> accuracy(20);
+    my $x = Math::BigFloat -> new("3"); # accuray is 20
+    $x -> accuracy(10);                 # reduce accuray to 10
+
+    my ($mant, $expo) = $x -> sparts();
+    cmp_ok($mant, '==', 3, "value of significand");
+    cmp_ok($expo, '==', 0, "value of exponent");
+    cmp_ok($mant -> accuracy(), '==', 10, "accuracy of significand");
+    cmp_ok($expo -> accuracy(), '==', 20, "accuracy of exponent");
+}
+
+note(qq|\nVerify that precision depends on invocand, not class.\n\n|);
+
+{
+    Math::BigFloat -> precision(20);
+    my $x = Math::BigFloat -> new("3"); # precision is 20
+    $x -> precision(10);                # reduce precision to 10
+
+    my ($mant, $expo) = $x -> sparts();
+    cmp_ok($mant, '==', 3, "value of significand");
+    cmp_ok($expo, '==', 0, "value of exponent");
+    cmp_ok($mant -> precision(), '==', 10, "precision of significand");
+    cmp_ok($expo -> precision(), '==', 20, "precision of exponent");
 }
 
 __DATA__

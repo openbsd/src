@@ -1,7 +1,7 @@
 package open;
 use warnings;
 
-our $VERSION = '1.12';
+our $VERSION = '1.13';
 
 require 5.008001; # for PerlIO::get_layers()
 
@@ -120,20 +120,11 @@ sub import {
     ${^OPEN} = join("\0", $in, $out);
     if ($std) {
 	if ($in) {
-	    if ($in =~ /:utf8\b/) {
-		    binmode(STDIN,  ":utf8");
-		} elsif ($in =~ /(\w+\(.+\))/) {
-		    binmode(STDIN,  ":$1");
-		}
+	    binmode STDIN, $in;
 	}
 	if ($out) {
-	    if ($out =~ /:utf8\b/) {
-		binmode(STDOUT,  ":utf8");
-		binmode(STDERR,  ":utf8");
-	    } elsif ($out =~ /(\w+\(.+\))/) {
-		binmode(STDOUT,  ":$1");
-		binmode(STDERR,  ":$1");
-	    }
+	    binmode(STDOUT, $out);
+	    binmode(STDERR, $out);
 	}
     }
 }
@@ -242,6 +233,10 @@ effect on handles that are opened in that scope, you can isolate the call
 to this pragma in its own lexical scope.
 
     { use open ':std', IO => ':encoding(UTF-8)' }
+
+Before Perl 5.34, C<:std> would only apply the first layer provided that is
+either C<:utf8> or has a layer argument, e.g. C<:encoding(UTF-8)>. Since
+Perl 5.34 it will apply the same layer stack it provides to C<${^OPEN}>.
 
 =head1 IMPLEMENTATION DETAILS
 

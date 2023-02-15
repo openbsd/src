@@ -6,17 +6,14 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-use Config;
-
-$Config{d_getcwd}
-  or plan skip_all => "no getcwd";
+defined &Internals::getcwd
+  or plan skip_all => "no Internals::getcwd";
 
 my $cwd = Internals::getcwd();
-ok(!defined $cwd || $cwd ne "",
-   "Internals::getcwd() returned a reasonable result");
 
-if (defined $cwd) {
-    ok(-d $cwd, "check a success result is a directory");
+if (ok(defined $cwd, "Internals::getcwd() returned a defined result")) {
+    isnt($cwd, "", "Internals::getcwd() returned a non-empty result");
+    ok(-d $cwd, "Internals::getcwd() result is a directory");
 }
 
 done_testing();

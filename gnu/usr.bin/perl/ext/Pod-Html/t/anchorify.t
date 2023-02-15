@@ -1,7 +1,7 @@
-# -*- perl -*-
 use strict;
-use Pod::Html qw( anchorify );
-use Test::More tests => 1;
+use warnings;
+use Pod::Html::Util qw( anchorify relativize_url );
+use Test::More;
 
 my @filedata;
 {
@@ -42,10 +42,24 @@ is_deeply(
     "Got expected POD heads"
 );
 
+{
+    # adapted from 'installhtml'
+    my $file = '/home/username/tmp/installhtml/pod/perlipc';
+    my $capture = 'NAME';
+    my $expected_url = '/home/username/tmp/installhtml/pod/perlipc/NAME.html';
+    my $expected_relativized_url = 'perlipc/NAME.html';
+    my $url = "$file/@{[anchorify(qq($capture))]}.html" ;
+    is($url, $expected_url, "anchorify() returned expected value");
+    my $relativized_url = relativize_url( $url, "$file.html" );
+    is($relativized_url, $expected_relativized_url, "relativize_url() returned expected value");
+}
+
+done_testing;
+
 __DATA__
 =head1 NAME
 
-anchorify - Test C<Pod::Html::anchorify()>
+anchorify - Test C<Pod::Html::Util::anchorify()>
 
 =head1 DESCRIPTION
 

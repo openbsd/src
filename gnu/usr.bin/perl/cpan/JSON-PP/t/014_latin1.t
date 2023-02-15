@@ -1,6 +1,7 @@
 # copied over from JSON::XS and modified to use JSON::PP
 
 use strict;
+use warnings;
 use Test::More;
 BEGIN { plan tests => 4 };
 

@@ -21,11 +21,11 @@ print "1..6\n";
 
 print "ok 1\n";
 
-$dupout = IO::Handle->new->fdopen( \*STDOUT ,"w");
-$duperr = IO::Handle->new->fdopen( \*STDERR ,"w");
+my $dupout = IO::Handle->new->fdopen( \*STDOUT ,"w");
+my $duperr = IO::Handle->new->fdopen( \*STDERR ,"w");
 
-$stdout = \*STDOUT; bless $stdout, "IO::File"; # "IO::Handle";
-$stderr = \*STDERR; bless $stderr, "IO::Handle";
+my $stdout = \*STDOUT; bless $stdout, "IO::File"; # "IO::Handle";
+my $stderr = \*STDERR; bless $stderr, "IO::Handle";
 
 $stdout->open( "Io.dup","w") || die "Can't open stdout";
 $stderr->fdopen($stdout,"w");
@@ -34,9 +34,9 @@ print $stdout "ok 2\n";
 print $stderr "ok 3\n";
 
 # Since some systems don't have echo, we use Perl.
-$echo = qq{$^X -le "print q(ok %d)"};
+my $echo = qq{$^X -le "print q(ok %d)"};
 
-$cmd = sprintf $echo, 4;
+my $cmd = sprintf $echo, 4;
 print `$cmd`;
 
 $cmd = sprintf "$echo 1>&2", 5;

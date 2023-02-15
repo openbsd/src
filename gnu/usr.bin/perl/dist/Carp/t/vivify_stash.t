@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 BEGIN { print "1..5\n"; }
 
 our $has_utf8; BEGIN { $has_utf8 = exists($::{"utf8::"}); }
@@ -18,7 +21,8 @@ eval { sub { Carp::longmess() }->(\1) };
 print $@ eq '' ? "ok 4 # longmess check1\n" : "not ok 4 # longmess check1\n# $@";
 
 # overload:: glob without hash
-undef *{"overload::"};
+# Clear overload quoted so it happens to the runtime stash.
+{ no strict 'refs'; undef *{"overload::"} }
 eval { sub { Carp::longmess() }->(\1) };
 print $@ eq '' ? "ok 5 # longmess check2\n" : "not ok 5 # longmess check2\n# $@";
 

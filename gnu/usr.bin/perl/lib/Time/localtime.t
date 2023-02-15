@@ -7,8 +7,6 @@ BEGIN {
     @times   = (-2**55, -2**50, -2**33, -2**31-1, -1, 0, 1, 2**31-1, 2**33, 2**50, 2**55, time);
     @methods = qw(sec min hour mday mon year wday yday isdst);
 
-    plan tests => (@times * (@methods + 1)) + 1;
-
     use_ok Time::localtime;
 }
 
@@ -21,3 +19,5 @@ for my $time (@times) {
         is $localtime->$method, shift @localtime, "localtime($time)->$method";
     }
 }
+
+done_testing();

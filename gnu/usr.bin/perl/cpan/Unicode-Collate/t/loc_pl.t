@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -110,10 +105,10 @@ ok($objPl->eq("n\x{301}", "\x{144}"));
 ok($objPl->eq("n\x{341}", "\x{144}"));
 ok($objPl->eq("N\x{301}", "\x{143}"));
 ok($objPl->eq("N\x{341}", "\x{143}"));
-ok($objPl->eq("o\x{301}", pack('U', 0xF3)));
-ok($objPl->eq("o\x{341}", pack('U', 0xF3)));
-ok($objPl->eq("O\x{301}", pack('U', 0xD3)));
-ok($objPl->eq("O\x{341}", pack('U', 0xD3)));
+ok($objPl->eq("o\x{301}", _pack_U(0xF3)));
+ok($objPl->eq("o\x{341}", _pack_U(0xF3)));
+ok($objPl->eq("O\x{301}", _pack_U(0xD3)));
+ok($objPl->eq("O\x{341}", _pack_U(0xD3)));
 ok($objPl->eq("s\x{301}", "\x{15B}"));
 ok($objPl->eq("s\x{341}", "\x{15B}"));
 ok($objPl->eq("S\x{301}", "\x{15A}"));

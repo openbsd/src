@@ -6,10 +6,6 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-if ($^O eq 'dos') {
-    skip_all("no multitasking");
-}
-
 plan tests => 3;
 watchdog(10, $^O eq 'MSWin32' ? "alarm" : '');
 

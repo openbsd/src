@@ -36,10 +36,4 @@ cmp_ok($t1->fetch($a), '==', $h, 'Found');
 is($t1->fetch($h), 0, 'Not found');
 is($t1->fetch($c), 0, 'Not found');
 
-$t1->clear();
-
-is($t1->fetch($a), 0, 'Not found');
-is($t1->fetch($h), 0, 'Not found');
-is($t1->fetch($c), 0, 'Not found');
-
 done_testing();

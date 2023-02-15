@@ -90,7 +90,7 @@ _		fail	fail
 CASE_DATA
 
   require version;
-  version->import( qw/is_strict is_lax/ );
+  'version'->import( qw/is_strict is_lax/ );
   for my $case ( split qr/\n/, $strict_lax_data ) {
     my ($v, $strict, $lax) = split qr/\t+/, $case;
     main::ok( $strict eq 'pass' ? is_strict($v) : ! is_strict($v), "is_strict($v) [$strict]" );

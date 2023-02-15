@@ -35,7 +35,7 @@ sub tryout {
   require GDBM_File;
   my ($tiepack, $file, $testno) = @_;
 
-  tie my %cache => $tiepack, $file, O_RDWR | O_CREAT, 0666
+  tie my %cache => $tiepack, $file, &GDBM_File::GDBM_NEWDB, 0666
     or die $!;
 
   memoize 'c5', 

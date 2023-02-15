@@ -25,7 +25,7 @@ assignment variants (C<&= |= ^= &.= |.= ^.=>).
 To use this, enable the "bitwise" feature and disable the
 "experimental::bitwise" warnings category.  See L<perlop/Bitwise String
 Operators> for details.
-L<[perl #123466]|https://rt.perl.org/Ticket/Display.html?id=123466>.
+L<[GH #14348]|https://github.com/Perl/perl5/issues/14348>.
 
 =head2 New double-diamond operator
 
@@ -138,7 +138,7 @@ See L<perlref/Assigning to References>
 =head2 C<prototype> with no arguments
 
 C<prototype()> with no arguments now infers C<$_>.
-L<[perl #123514]|https://rt.perl.org/Ticket/Display.html?id=123514>.
+L<[GH #14376]|https://github.com/Perl/perl5/issues/14376>.
 
 =head2 New C<:const> subroutine attribute
 
@@ -258,14 +258,14 @@ list (if any).
 The C<&> prototype character now accepts only anonymous subs (C<sub
 {...}>), things beginning with C<\&>, or an explicit C<undef>.  Formerly
 it erroneously also allowed references to arrays, hashes, and lists.
-L<[perl #4539]|https://rt.perl.org/Ticket/Display.html?id=4539>.
-L<[perl #123062]|https://rt.perl.org/Ticket/Display.html?id=123062>.
-L<[perl #123062]|https://rt.perl.org/Ticket/Display.html?id=123475>.
+L<[GH #2776]|https://github.com/Perl/perl5/issues/2776>.
+L<[GH #14186]|https://github.com/Perl/perl5/issues/14186>.
+L<[GH #14353]|https://github.com/Perl/perl5/issues/14353>.
 
 In addition, the C<\&> prototype was allowing subroutine calls, whereas
 now it only allows subroutines: C<&foo> is still permitted as an argument,
 while C<&foo()> and C<foo()> no longer are.
-L<[perl #77860]|https://rt.perl.org/Ticket/Display.html?id=77860>.
+L<[GH #10633]|https://github.com/Perl/perl5/issues/10633>.
 
 =head2 C<use encoding> is now lexical
 
@@ -280,7 +280,7 @@ List slices now return an empty list only if the original list was empty
 (or if there are no indices).  Formerly, a list slice would return an empty
 list if all indices fell outside the original list; now it returns a list
 of C<undef> values in that case.
-L<[perl #114498]|https://rt.perl.org/Ticket/Display.html?id=114498>.
+L<[GH #12335]|https://github.com/Perl/perl5/issues/12335>.
 
 =head2 C<\N{}> with a sequence of multiple spaces is now a fatal error
 
@@ -365,7 +365,7 @@ scopes, no other Perl operations will
 be affected by locale; only C<$!> and C<$^E> stringification.  The
 C<bytes> pragma causes the UTF-8 flag to not be set, just as in previous
 Perl releases.  This resolves
-L<[perl #112208]|https://rt.perl.org/Ticket/Display.html?id=112208>.
+L<[GH #12035]|https://github.com/Perl/perl5/issues/12035>.
 
 =head2 Support for C<?PATTERN?> without explicit operator has been removed
 
@@ -590,14 +590,14 @@ skipped over.  The same applies to C<state> variables.
 
 Many internal functions have been refactored to improve performance and reduce
 their memory footprints.
-L<[perl #121436]|https://rt.perl.org/Ticket/Display.html?id=121436>
-L<[perl #121906]|https://rt.perl.org/Ticket/Display.html?id=121906>
-L<[perl #121969]|https://rt.perl.org/Ticket/Display.html?id=121969>
+L<[GH #13659]|https://github.com/Perl/perl5/issues/13659>
+L<[GH #13856]|https://github.com/Perl/perl5/issues/13856>
+L<[GH #13874]|https://github.com/Perl/perl5/issues/13874>
 
 =item *
 
 C<-T> and C<-B> filetests will return sooner when an empty file is detected.
-L<[perl #121489]|https://rt.perl.org/Ticket/Display.html?id=121489>
+L<[GH #13686]|https://github.com/Perl/perl5/issues/13686>
 
 =item *
 
@@ -607,7 +607,7 @@ Hash lookups where the key is a constant are faster.
 
 Subroutines with an empty prototype and a body containing just C<undef> are now
 eligible for inlining.
-L<[perl #122728]|https://rt.perl.org/Ticket/Display.html?id=122728>
+L<[GH #14077]|https://github.com/Perl/perl5/issues/14077>
 
 =item *
 
@@ -619,7 +619,7 @@ so accessing it will cause the stash entry to be upgraded to a typeglob
 This optimization does not currently apply to XSUBs or exported
 subroutines, and method calls will undo it, since they cache things in
 typeglobs.
-L<[perl #120441]|https://rt.perl.org/Ticket/Display.html?id=120441>
+L<[GH #13392]|https://github.com/Perl/perl5/issues/13392>
 
 =item *
 
@@ -662,7 +662,7 @@ Tests can now be run in parallel.
 L<attributes> has been upgraded to version 0.27.
 
 The usage of C<memEQs> in the XS has been corrected.
-L<[perl #122701]|https://rt.perl.org/Ticket/Display.html?id=122701>
+L<[GH #14072]|https://github.com/Perl/perl5/issues/14072>
 
 Avoid reading beyond the end of a buffer. [perl #122629]
 
@@ -683,8 +683,8 @@ C<qr//blahblah> op.
 C<B::PMOP> now provides a C<pmregexp> method returning a C<B::REGEXP> object.
 Two new classes, C<B::PADNAME> and C<B::PADNAMELIST>, have been introduced.
 
-A bug where, after an ithread creation or psuedofork, special/immortal SVs in
-the child ithread/psuedoprocess did not have the correct class of
+A bug where, after an ithread creation or pseudofork, special/immortal SVs in
+the child ithread/pseudoprocess did not have the correct class of
 C<B::SPECIAL>, has been fixed.
 The C<id> and C<outid> PADLIST methods have been added.
 
@@ -738,7 +738,7 @@ cases where the assignment is optimized away.
 It now deparses C<our(I<LIST>)> and typed lexical (C<my Dog $spot>) correctly.
 
 Deparse C<$#_> as that instead of as C<$#{_}>.
-L<[perl #123947]|https://rt.perl.org/Ticket/Display.html?id=123947>
+L<[GH #14545]|https://github.com/Perl/perl5/issues/14545>
 
 BEGIN blocks at the end of the enclosing scope are now deparsed in the
 right place.  [perl #77452]
@@ -828,7 +828,7 @@ L<Carp> has been upgraded to version 1.36.
 C<Carp::Heavy> now ignores version mismatches with Carp if Carp is newer
 than 1.12, since C<Carp::Heavy>'s guts were merged into Carp at that
 point.
-L<[perl #121574]|https://rt.perl.org/Ticket/Display.html?id=121574>
+L<[GH #13708]|https://github.com/Perl/perl5/issues/13708>
 
 Carp now handles non-ASCII platforms better.
 
@@ -877,7 +877,7 @@ recursion when dumping deep data structures.
 Changes to resolve Coverity issues.
 XS dumps incorrectly stored the name of code references stored in a
 GLOB.
-L<[perl #122070]|https://rt.perl.org/Ticket/Display.html?id=122070>
+L<[GH #13911]|https://github.com/Perl/perl5/issues/13911>
 
 =item *
 
@@ -914,7 +914,7 @@ Hardcodes features for Perls older than 5.15.7.
 L<ExtUtils::CBuilder> has been upgraded to version 0.280221.
 
 Fixes a regression on Android.
-L<[perl #122675]|https://rt.perl.org/Ticket/Display.html?id=122675>
+L<[GH #14064]|https://github.com/Perl/perl5/issues/14064>
 
 =item *
 
@@ -922,7 +922,7 @@ L<ExtUtils::Manifest> has been upgraded to version 1.70.
 
 Fixes a bug with C<maniread()>'s handling of quoted filenames and improves
 C<manifind()> to follow symlinks.
-L<[perl #122415]|https://rt.perl.org/Ticket/Display.html?id=122415>
+L<[GH #14003]|https://github.com/Perl/perl5/issues/14003>
 
 =item *
 
@@ -1040,15 +1040,14 @@ Don't turn leading C<//> into C</> on Cygwin. [perl #122635]
 L<perl5db.pl> has been upgraded to version 1.49.
 
 The debugger would cause an assertion failure.
-L<[perl #124127]|https://rt.perl.org/Ticket/Display.html?id=124127>
+L<[GH #14605]|https://github.com/Perl/perl5/issues/14605>
 
 C<fork()> in the debugger under C<tmux> will now create a new window for
-the forked process. L<[perl
-#121333]|https://rt.perl.org/Ticket/Display.html?id=121333>
+the forked process. L<[GH #13602]|https://github.com/Perl/perl5/issues/13602>
 
 The debugger now saves the current working directory on startup and
-restores it when you restart your program with C<R> or C<rerun>. L<[perl
-#121509]|https://rt.perl.org/Ticket/Display.html?id=121509>
+restores it when you restart your program with C<R> or C<rerun>.
+L<[GH #13691]|https://github.com/Perl/perl5/issues/13691>
 
 =item *
 
@@ -1238,7 +1237,7 @@ Note that C<SvSetSV> doesn't do set magic.
 C<sv_usepvn_flags> - fix documentation to mention the use of C<Newx> instead of
 C<malloc>.
 
-L<[perl #121869]|https://rt.perl.org/Ticket/Display.html?id=121869>
+L<[GH #13835]|https://github.com/Perl/perl5/issues/13835>
 
 =item *
 
@@ -1320,7 +1319,7 @@ Improve documentation of C<< our >>.
 
 C<-l> now notes that it will return false if symlinks aren't supported by the
 file system.
-L<[perl #121523]|https://rt.perl.org/Ticket/Display.html?id=121523>
+L<[GH #13695]|https://github.com/Perl/perl5/issues/13695>
 
 =item *
 
@@ -1330,7 +1329,7 @@ C<system PROGRAM LIST> will reliably avoid using the shell.
 
 This has also been noted in L<perlport>.
 
-L<[perl #122046]|https://rt.perl.org/Ticket/Display.html?id=122046>
+L<[GH #13907]|https://github.com/Perl/perl5/issues/13907>
 
 =back
 
@@ -1390,7 +1389,7 @@ recommended.
 =item *
 
 Updated documentation for the C<test.valgrind> C<make> target.
-L<[perl #121431]|https://rt.perl.org/Ticket/Display.html?id=121431>
+L<[GH #13658]|https://github.com/Perl/perl5/issues/13658>
 
 =item *
 
@@ -1572,7 +1571,7 @@ Comments added on algorithmic complexity and tied hashes.
 =item *
 
 An ambiguity in the documentation of the C<...> statement has been corrected.
-L<[perl #122661]|https://rt.perl.org/Ticket/Display.html?id=122661>
+L<[GH #14054]|https://github.com/Perl/perl5/issues/14054>
 
 =item *
 
@@ -2055,7 +2054,7 @@ required fewer arguments than were supplied, but might be used in the
 future for I<e.g.> L<perlfunc/pack>.
 
 The warnings category C<< redundant >> is new. See also
-L<[perl #121025]|https://rt.perl.org/Ticket/Display.html?id=121025>.
+L<[GH #13534]|https://github.com/Perl/perl5/issues/13534>.
 
 =item *
 
@@ -2224,7 +2223,7 @@ L<Global symbol "%s" requires explicit package name|perldiag/"Global symbol "%s"
 
 This message has had '(did you forget to declare "my %s"?)' appended to it, to
 make it more helpful to new Perl programmers.
-L<[perl #121638]|https://rt.perl.org/Ticket/Display.html?id=121638>
+L<[GH #13732]|https://github.com/Perl/perl5/issues/13732>
 
 =item *
 
@@ -2292,8 +2291,8 @@ constants; I<e.g.>, C<-Inf>.
 
 Compile-time checking of constant dereferencing (I<e.g.>, C<< my_constant->() >>)
 has been removed, since it was not taking overloading into account.
-L<[perl #69456]|https://rt.perl.org/Ticket/Display.html?id=69456>
-L<[perl #122607]|https://rt.perl.org/Ticket/Display.html?id=122607>
+L<[GH #9891]|https://github.com/Perl/perl5/issues/9891>
+L<[GH #14044]|https://github.com/Perl/perl5/issues/14044>
 
 =back
 
@@ -2320,7 +2319,7 @@ separate distributions (C<App::find2perl>, C<App::s2p>, C<App::a2p>).
 
 F<h2ph> now handles hexadecimal constants in the compiler's predefined
 macro definitions, as visible in C<$Config{cppsymbols}>.
-L<[perl #123784]|https://rt.perl.org/Ticket/Display.html?id=123784>.
+L<[GH #14491]|https://github.com/Perl/perl5/issues/14491>.
 
 =back
 
@@ -2346,7 +2345,7 @@ C<llroundl()>.
 =item *
 
 F<Configure> with C<-Dmksymlinks> should now be faster.
-L<[perl #122002]|https://rt.perl.org/Ticket/Display.html?id=122002>.
+L<[GH #13890]|https://github.com/Perl/perl5/issues/13890>.
 
 =item *
 
@@ -2377,7 +2376,7 @@ For example:
 
 See L<perlhacktips/valgrind> for more information.
 
-L<[perl #121431]|https://rt.perl.org/Ticket/Display.html?id=121431>
+L<[GH #13658]|https://github.com/Perl/perl5/issues/13658>
 
 =item *
 
@@ -2445,9 +2444,9 @@ working correctly.  See L</Infinity and NaN (not-a-number) handling improved>.
 =item IRIX and Tru64 platforms are working again.
 
 Some C<make test> failures remain:
-L<[perl #123977]|https://rt.perl.org/Ticket/Display.html?id=123977>
-and L<[perl #125298]|https://rt.perl.org/Ticket/Display.html?id=125298>
-for IRIX; L<[perl #124212]|https://rt.perl.org/Ticket/Display.html?id=124212>,
+L<[GH #14557]|https://github.com/Perl/perl5/issues/14557>
+and L<[GH #14727]|https://github.com/Perl/perl5/issues/14727>
+for IRIX; L<[GH #14629]|https://github.com/Perl/perl5/issues/14629>,
 L<[cpan #99605]|https://rt.cpan.org/Public/Bug/Display.html?id=99605>, and
 L<[cpan #104836]|https://rt.cpan.org/Ticket/Display.html?id=104836> for Tru64.
 
@@ -2531,14 +2530,14 @@ a fix for legacy feature checking status.
 
 F<miniperl.exe> is now built with C<-fno-strict-aliasing>, allowing 64-bit
 builds to complete on GCC 4.8.
-L<[perl #123976]|https://rt.perl.org/Ticket/Display.html?id=123976>
+L<[GH #14556]|https://github.com/Perl/perl5/issues/14556>
 
 =item *
 
 C<nmake minitest> now works on Win32.  Due to dependency issues you
 need to build C<nmake test-prep> first, and a small number of the
 tests fail.
-L<[perl #123394]|https://rt.perl.org/Ticket/Display.html?id=123394>
+L<[GH #14318]|https://github.com/Perl/perl5/issues/14318>
 
 =item *
 
@@ -2549,7 +2548,7 @@ C<USE_CPLUSPLUS> to the value "define".
 
 The list form of piped open has been implemented for Win32.  Note: unlike
 C<system LIST> this does not fall back to the shell.
-L<[perl #121159]|https://rt.perl.org/Ticket/Display.html?id=121159>
+L<[GH #13574]|https://github.com/Perl/perl5/issues/13574>
 
 =item *
 
@@ -2586,7 +2585,7 @@ C<%I64d> is now being used instead of C<%lld> for MinGW.
 In the experimental C<:win32> layer, a crash in C<open> was fixed. Also
 opening F</dev/null> (which works under Win32 Perl's default C<:unix>
 layer) was implemented for C<:win32>.
-L<[perl #122224]|https://rt.perl.org/Ticket/Display.html?id=122224>
+L<[GH #13968]|https://github.com/Perl/perl5/issues/13968>
 
 =item *
 
@@ -2604,7 +2603,7 @@ since v5.14 due to performance reasons, but the OpenBSD project believes
 the tradeoff is worth it and would prefer that users who need the speed
 specifically ask for it.
 
-L<[perl #122000]|https://rt.perl.org/Ticket/Display.html?id=122000>.
+L<[GH #13888]|https://github.com/Perl/perl5/issues/13888>.
 
 =item Solaris
 
@@ -2620,7 +2619,7 @@ F</opt/solarisstudio*>.
 Builds on Solaris 10 with C<-Dusedtrace> would fail early since make
 didn't follow implied dependencies to build C<perldtrace.h>.  Added an
 explicit dependency to C<depend>.
-L<[perl #120120]|https://rt.perl.org/Ticket/Display.html?id=120120>
+L<[GH #13334]|https://github.com/Perl/perl5/issues/13334>
 
 =item *
 
@@ -2754,7 +2753,7 @@ C<op_convert_list> and added to the API.
 The C<sv_magic()> function no longer forbids "ext" magic on read-only
 values.  After all, perl can't know whether the custom magic will modify
 the SV or not.
-L<[perl #123103]|https://rt.perl.org/Ticket/Display.html?id=123103>.
+L<[GH #14202]|https://github.com/Perl/perl5/issues/14202>.
 
 =item *
 
@@ -2780,7 +2779,7 @@ get-magic that stores their values as IVs, and those IVs are used when
 testing their values in C<pp_dbstate()>.  This prevents perl from
 recursing infinitely if an overloaded object is assigned to any of those
 variables.
-L<[perl #122445]|https://rt.perl.org/Ticket/Display.html?id=122445>.
+L<[GH #14013]|https://github.com/Perl/perl5/issues/14013>.
 
 =item *
 
@@ -2827,8 +2826,8 @@ C<cv_name()> is a new API function that can be passed a CV or GV.  It
 returns an SV containing the name of the subroutine, for use in
 diagnostics.
 
-L<[perl #116735]|https://rt.perl.org/Ticket/Display.html?id=116735>
-L<[perl #120441]|https://rt.perl.org/Ticket/Display.html?id=120441>
+L<[GH #12767]|https://github.com/Perl/perl5/issues/12767>
+L<[GH #13392]|https://github.com/Perl/perl5/issues/13392>
 
 =item *
 
@@ -2839,7 +2838,7 @@ name, or whether it could be passed a CV instead.  Whatever value is
 passed will be acceptable to C<cv_name()>.  C<cv_set_call_checker()>
 guarantees there will be a GV, but it may have to create one on the fly,
 which is inefficient.
-L<[perl #116735]|https://rt.perl.org/Ticket/Display.html?id=116735>
+L<[GH #12767]|https://github.com/Perl/perl5/issues/12767>
 
 =item *
 
@@ -2848,7 +2847,7 @@ call a function and reify a GV.  For those cases where it has been used as a
 boolean, C<CvHASGV> has been added, which will return true for CVs that
 notionally have GVs, but without reifying the GV.  C<CvGV> also returns a GV
 now for lexical subs.
-L<[perl #120441]|https://rt.perl.org/Ticket/Display.html?id=120441>
+L<[GH #13392]|https://github.com/Perl/perl5/issues/13392>
 
 =item *
 
@@ -2907,7 +2906,7 @@ public API, such as C<cast_i32()>, remain unaffected.
 
 The C<PADNAME> and C<PADNAMELIST> types are now separate types, and no
 longer simply aliases for SV and AV.
-L<[perl #123223]|https://rt.perl.org/Ticket/Display.html?id=123223>.
+L<[GH #14250]|https://github.com/Perl/perl5/issues/14250>.
 
 =item *
 
@@ -2966,89 +2965,89 @@ C<pack("D", $x)> and C<pack("F", $x)> now zero the padding on x86 long
 double builds.  Under some build options on GCC 4.8 and later, they used
 to either overwrite the zero-initialized padding, or bypass the
 initialized buffer entirely.  This caused F<op/pack.t> to fail.
-L<[perl #123971]|https://rt.perl.org/Ticket/Display.html?id=123971>
+L<[GH #14554]|https://github.com/Perl/perl5/issues/14554>
 
 =item *
 
 Extending an array cloned from a parent thread could result in "Modification of
 a read-only value attempted" errors when attempting to modify the new elements.
-L<[perl #124127]|https://rt.perl.org/Ticket/Display.html?id=124127>
+L<[GH #14605]|https://github.com/Perl/perl5/issues/14605>
 
 =item *
 
 An assertion failure and subsequent crash with C<< *x=<y> >> has been fixed.
-L<[perl #123790]|https://rt.perl.org/Ticket/Display.html?id=123790>
+L<[GH #14493]|https://github.com/Perl/perl5/issues/14493>
 
 =item *
 
 A possible crashing/looping bug related to compiling lexical subs has been
 fixed.
-L<[perl #124099]|https://rt.perl.org/Ticket/Display.html?id=124099>
+L<[GH #14596]|https://github.com/Perl/perl5/issues/14596>
 
 =item *
 
 UTF-8 now works correctly in function names, in unquoted HERE-document
 terminators, and in variable names used as array indexes.
-L<[perl #124113]|https://rt.perl.org/Ticket/Display.html?id=124113>
+L<[GH #14601]|https://github.com/Perl/perl5/issues/14601>
 
 =item *
 
 Repeated global pattern matches in scalar context on large tainted strings were
 exponentially slow depending on the current match position in the string.
-L<[perl #123202]|https://rt.perl.org/Ticket/Display.html?id=123202>
+L<[GH #14238]|https://github.com/Perl/perl5/issues/14238>
 
 =item *
 
 Various crashes due to the parser getting confused by syntax errors have been
 fixed.
-L<[perl #123801]|https://rt.perl.org/Ticket/Display.html?id=123801>
-L<[perl #123802]|https://rt.perl.org/Ticket/Display.html?id=123802>
-L<[perl #123955]|https://rt.perl.org/Ticket/Display.html?id=123955>
-L<[perl #123995]|https://rt.perl.org/Ticket/Display.html?id=123995>
+L<[GH #14496]|https://github.com/Perl/perl5/issues/14496>
+L<[GH #14497]|https://github.com/Perl/perl5/issues/14497>
+L<[GH #14548]|https://github.com/Perl/perl5/issues/14548>
+L<[GH #14564]|https://github.com/Perl/perl5/issues/14564>
 
 =item *
 
 C<split> in the scope of lexical C<$_> has been fixed not to fail assertions.
-L<[perl #123763]|https://rt.perl.org/Ticket/Display.html?id=123763>
+L<[GH #14483]|https://github.com/Perl/perl5/issues/14483>
 
 =item *
 
 C<my $x : attr> syntax inside various list operators no longer fails
 assertions.
-L<[perl #123817]|https://rt.perl.org/Ticket/Display.html?id=123817>
+L<[GH #14500]|https://github.com/Perl/perl5/issues/14500>
 
 =item *
 
 An C<@> sign in quotes followed by a non-ASCII digit (which is not a valid
 identifier) would cause the parser to crash, instead of simply trying the
 C<@> as literal.  This has been fixed.
-L<[perl #123963]|https://rt.perl.org/Ticket/Display.html?id=123963>
+L<[GH #14553]|https://github.com/Perl/perl5/issues/14553>
 
 =item *
 
 C<*bar::=*foo::=*glob_with_hash> has been crashing since Perl 5.14, but no
 longer does.
-L<[perl #123847]|https://rt.perl.org/Ticket/Display.html?id=123847>
+L<[GH #14512]|https://github.com/Perl/perl5/issues/14512>
 
 =item *
 
 C<foreach> in scalar context was not pushing an item on to the stack, resulting
 in bugs.  (S<C<print 4, scalar do { foreach(@x){} } + 1>> would print 5.)
 It has been fixed to return C<undef>.
-L<[perl #124004]|https://rt.perl.org/Ticket/Display.html?id=124004>
+L<[GH #14569]|https://github.com/Perl/perl5/issues/14569>
 
 =item *
 
 Several cases of data used to store environment variable contents in core C
 code being potentially overwritten before being used have been fixed.
-L<[perl #123748]|https://rt.perl.org/Ticket/Display.html?id=123748>
+L<[GH #14476]|https://github.com/Perl/perl5/issues/14476>
 
 =item *
 
 Some patterns starting with C</.*..../> matched against long strings have
 been slow since v5.8, and some of the form C</.*..../i> have been slow
 since v5.18. They are now all fast again.
-L<[perl #123743]|https://rt.perl.org/Ticket/Display.html?id=123743>.
+L<[GH #14475]|https://github.com/Perl/perl5/issues/14475>.
 
 =item *
 
@@ -3057,7 +3056,7 @@ an invalid value.  Previously if you set C<$/> to a reference to an
 array, for example, perl would produce a runtime error and not set
 C<PL_rs>, but Perl code that checked C<$/> would see the array
 reference.
-L<[perl #123218]|https://rt.perl.org/Ticket/Display.html?id=123218>.
+L<[GH #14245]|https://github.com/Perl/perl5/issues/14245>.
 
 =item *
 
@@ -3071,16 +3070,16 @@ the POSIX class was negated: C<[:^ascii:]>.  This is now fixed.
 
 Perl 5.14.0 introduced a bug whereby S<C<eval { LABEL: }>> would crash.  This
 has been fixed.
-L<[perl #123652]|https://rt.perl.org/Ticket/Display.html?id=123652>.
+L<[GH #14438]|https://github.com/Perl/perl5/issues/14438>.
 
 =item *
 
 Various crashes due to the parser getting confused by syntax errors have
 been fixed.
-L<[perl #123617]|https://rt.perl.org/Ticket/Display.html?id=123617>.
-L<[perl #123737]|https://rt.perl.org/Ticket/Display.html?id=123737>.
-L<[perl #123753]|https://rt.perl.org/Ticket/Display.html?id=123753>.
-L<[perl #123677]|https://rt.perl.org/Ticket/Display.html?id=123677>.
+L<[GH #14421]|https://github.com/Perl/perl5/issues/14421>.
+L<[GH #14472]|https://github.com/Perl/perl5/issues/14472>.
+L<[GH #14480]|https://github.com/Perl/perl5/issues/14480>.
+L<[GH #14447]|https://github.com/Perl/perl5/issues/14447>.
 
 =item *
 
@@ -3088,12 +3087,12 @@ Code like C</$a[/> used to read the next line of input and treat it as
 though it came immediately after the opening bracket.  Some invalid code
 consequently would parse and run, but some code caused crashes, so this is
 now disallowed.
-L<[perl #123712]|https://rt.perl.org/Ticket/Display.html?id=123712>.
+L<[GH #14462]|https://github.com/Perl/perl5/issues/14462>.
 
 =item *
 
 Fix argument underflow for C<pack>.
-L<[perl #123874]|https://rt.perl.org/Ticket/Display.html?id=123874>.
+L<[GH #14525]|https://github.com/Perl/perl5/issues/14525>.
 
 =item *
 
@@ -3103,7 +3102,7 @@ instead of faulting.
 =item *
 
 C<stat -t> is now no longer treated as stackable, just like C<-t stat>.
-L<[perl #123816]|https://rt.perl.org/Ticket/Display.html?id=123816>.
+L<[GH #14499]|https://github.com/Perl/perl5/issues/14499>.
 
 =item *
 
@@ -3126,19 +3125,19 @@ other crashes has been fixed.  This occurred only in patterns compiled
 with C</i> while taking into account the current POSIX locale (which usually
 means they have to be compiled within the scope of C<S<use locale>>),
 and there must be a string of at least 128 consecutive bytes to match.
-L<[perl #123539]|https://rt.perl.org/Ticket/Display.html?id=123539>.
+L<[GH #14389]|https://github.com/Perl/perl5/issues/14389>.
 
 =item *
 
 C<s///g> now works on very long strings (where there are more than 2
 billion iterations) instead of dying with 'Substitution loop'.
-L<[perl #103260]|https://rt.perl.org/Ticket/Display.html?id=103260>.
-L<[perl #123071]|https://rt.perl.org/Ticket/Display.html?id=123071>.
+L<[GH #11742]|https://github.com/Perl/perl5/issues/11742>.
+L<[GH #14190]|https://github.com/Perl/perl5/issues/14190>.
 
 =item *
 
 C<gmtime> no longer crashes with not-a-number values.
-L<[perl #123495]|https://rt.perl.org/Ticket/Display.html?id=123495>.
+L<[GH #14365]|https://github.com/Perl/perl5/issues/14365>.
 
 =item *
 
@@ -3151,7 +3150,7 @@ both been fixed to extend the stack first.
 C<prototype()> with no arguments used to read the previous item on the
 stack, so S<C<print "foo", prototype()>> would print foo's prototype.
 It has been fixed to infer C<$_> instead.
-L<[perl #123514]|https://rt.perl.org/Ticket/Display.html?id=123514>.
+L<[GH #14376]|https://github.com/Perl/perl5/issues/14376>.
 
 =item *
 
@@ -3169,14 +3168,14 @@ Some cases of nested lexical state subs inside anonymous subs could cause
 When trying to emit warnings, perl's default debugger (F<perl5db.pl>) was
 sometimes giving 'Undefined subroutine &DB::db_warn called' instead.  This
 bug, which started to occur in Perl 5.18, has been fixed.
-L<[perl #123553]|https://rt.perl.org/Ticket/Display.html?id=123553>.
+L<[GH #14400]|https://github.com/Perl/perl5/issues/14400>.
 
 =item *
 
 Certain syntax errors in substitutions, such as C<< s/${<>{})// >>, would
 crash, and had done so since Perl 5.10.  (In some cases the crash did not
 start happening till 5.16.)  The crash has, of course, been fixed.
-L<[perl #123542]|https://rt.perl.org/Ticket/Display.html?id=123542>.
+L<[GH #14391]|https://github.com/Perl/perl5/issues/14391>.
 
 =item *
 
@@ -3185,7 +3184,7 @@ a repeat expression like S<C<33 x ~3>> could cause a large buffer
 overflow since the new output buffer size was not correctly handled by
 C<SvGROW()>.  An expression like this now properly produces a memory wrap
 panic.
-L<[perl #123554]|https://rt.perl.org/Ticket/Display.html?id=123554>.
+L<[GH #14401]|https://github.com/Perl/perl5/issues/14401>.
 
 =item *
 
@@ -3193,32 +3192,32 @@ C<< formline("@...", "a"); >> would crash.  The C<FF_CHECKNL> case in
 C<pp_formline()> didn't set the pointer used to mark the chop position,
 which led to the C<FF_MORE> case crashing with a segmentation fault.
 This has been fixed.
-L<[perl #123538]|https://rt.perl.org/Ticket/Display.html?id=123538>.
+L<[GH #14388]|https://github.com/Perl/perl5/issues/14388>.
 
 =item *
 
 A possible buffer overrun and crash when parsing a literal pattern during
 regular expression compilation has been fixed.
-L<[perl #123604]|https://rt.perl.org/Ticket/Display.html?id=123604>.
+L<[GH #14416]|https://github.com/Perl/perl5/issues/14416>.
 
 =item *
 
 C<fchmod()> and C<futimes()> now set C<$!> when they fail due to being
 passed a closed file handle.
-L<[perl #122703]|https://rt.perl.org/Ticket/Display.html?id=122703>.
+L<[GH #14073]|https://github.com/Perl/perl5/issues/14073>.
 
 =item *
 
 C<op_free()> and C<scalarvoid()> no longer crash due to a stack overflow
 when freeing a deeply recursive op tree.
-L<[perl #108276]|https://rt.perl.org/Ticket/Display.html?id=108276>.
+L<[GH #11866]|https://github.com/Perl/perl5/issues/11866>.
 
 =item *
 
 In Perl 5.20.0, C<$^N> accidentally had the internal UTF-8 flag turned off
 if accessed from a code block within a regular expression, effectively
 UTF-8-encoding the value.  This has been fixed.
-L<[perl #123135]|https://rt.perl.org/Ticket/Display.html?id=123135>.
+L<[GH #14211]|https://github.com/Perl/perl5/issues/14211>.
 
 =item *
 
@@ -3230,7 +3229,7 @@ which means that C<(semctl(-1,0,0,0))[0]> no longer gives an
 
 C<else{foo()}> with no space before C<foo> is now better at assigning the
 right line number to that statement.
-L<[perl #122695]|https://rt.perl.org/Ticket/Display.html?id=122695>.
+L<[GH #14070]|https://github.com/Perl/perl5/issues/14070>.
 
 =item *
 
@@ -3239,7 +3238,7 @@ itself writes directly to the array.  This caused a bug, preventing this
 assignment from being used in lvalue context.  So
 C<(@a=split//,"foo")=bar()> was an error.  (This bug probably goes back to
 Perl 3, when the optimisation was added.) It has now been fixed.
-L<[perl #123057]|https://rt.perl.org/Ticket/Display.html?id=123057>.
+L<[GH #14183]|https://github.com/Perl/perl5/issues/14183>.
 
 =item *
 
@@ -3247,7 +3246,7 @@ When an argument list fails the checks specified by a subroutine
 signature (which is still an experimental feature), the resulting error
 messages now give the file and line number of the caller, not of the
 called subroutine.
-L<[perl #121374]|https://rt.perl.org/Ticket/Display.html?id=121374>.
+L<[GH #13643]|https://github.com/Perl/perl5/issues/13643>.
 
 =item *
 
@@ -3255,14 +3254,14 @@ The flip-flop operators (C<..> and C<...> in scalar context) used to maintain
 a separate state for each recursion level (the number of times the
 enclosing sub was called recursively), contrary to the documentation.  Now
 each closure has one internal state for each flip-flop.
-L<[perl #122829]|https://rt.perl.org/Ticket/Display.html?id=122829>.
+L<[GH #14110]|https://github.com/Perl/perl5/issues/14110>.
 
 =item *
 
 The flip-flop operator (C<..> in scalar context) would return the same
 scalar each time, unless the containing subroutine was called recursively.
 Now it always returns a new scalar.
-L<[perl #122829]|https://rt.perl.org/Ticket/Display.html?id=122829>.
+L<[GH #14110]|https://github.com/Perl/perl5/issues/14110>.
 
 =item *
 
@@ -3270,7 +3269,7 @@ C<use>, C<no>, statement labels, special blocks (C<BEGIN>) and pod are now
 permitted as the first thing in a C<map> or C<grep> block, the block after
 C<print> or C<say> (or other functions) returning a handle, and within
 C<${...}>, C<@{...}>, etc.
-L<[perl #122782]|https://rt.perl.org/Ticket/Display.html?id=122782>.
+L<[GH #14088]|https://github.com/Perl/perl5/issues/14088>.
 
 =item *
 
@@ -3283,7 +3282,7 @@ C<$_>.
 
 C<(...) x ...> in scalar context used to corrupt the stack if one operand
 was an object with "x" overloading, causing erratic behavior.
-L<[perl #121827]|https://rt.perl.org/Ticket/Display.html?id=121827>.
+L<[GH #13811]|https://github.com/Perl/perl5/issues/13811>.
 
 =item *
 
@@ -3361,7 +3360,7 @@ started doing so in 5.18.
 
 C<index()> and C<rindex()> no longer crash when used on strings over 2GB in
 size.
-L<[perl #121562]|https://rt.perl.org/Ticket/Display.html?id=121562>.
+L<[GH #13700]|https://github.com/Perl/perl5/issues/13700>.
 
 =item *
 
@@ -3442,19 +3441,19 @@ mirror character.
 
 C<< s///e >> on tainted UTF-8 strings corrupted C<< pos() >>. This bug,
 introduced in 5.20, is now fixed.
-L<[perl #122148]|https://rt.perl.org/Ticket/Display.html?id=122148>.
+L<[GH #13948]|https://github.com/Perl/perl5/issues/13948>.
 
 =item *
 
 A non-word boundary in a regular expression (C<< \B >>) did not always
 match the end of the string; in particular C<< q{} =~ /\B/ >> did not
 match. This bug, introduced in perl 5.14, is now fixed.
-L<[perl #122090]|https://rt.perl.org/Ticket/Display.html?id=122090>.
+L<[GH #13917]|https://github.com/Perl/perl5/issues/13917>.
 
 =item *
 
 C<< " P" =~ /(?=.*P)P/ >> should match, but did not. This is now fixed.
-L<[perl #122171]|https://rt.perl.org/Ticket/Display.html?id=122171>.
+L<[GH #13954]|https://github.com/Perl/perl5/issues/13954>.
 
 =item *
 
@@ -3462,13 +3461,13 @@ Failing to compile C<use Foo> in an C<eval> could leave a spurious
 C<BEGIN> subroutine definition, which would produce a "Subroutine
 BEGIN redefined" warning on the next use of C<use>, or other C<BEGIN>
 block.
-L<[perl #122107]|https://rt.perl.org/Ticket/Display.html?id=122107>.
+L<[GH #13926]|https://github.com/Perl/perl5/issues/13926>.
 
 =item *
 
 C<method { BLOCK } ARGS> syntax now correctly parses the arguments if they
 begin with an opening brace.
-L<[perl #46947]|https://rt.perl.org/Ticket/Display.html?id=46947>.
+L<[GH #9085]|https://github.com/Perl/perl5/issues/9085>.
 
 =item *
 
@@ -3476,19 +3475,19 @@ External libraries and Perl may have different ideas of what the locale is.
 This is problematic when parsing version strings if the locale's numeric
 separator has been changed.  Version parsing has been patched to ensure
 it handles the locales correctly.
-L<[perl #121930]|https://rt.perl.org/Ticket/Display.html?id=121930>.
+L<[GH #13863]|https://github.com/Perl/perl5/issues/13863>.
 
 =item *
 
 A bug has been fixed where zero-length assertions and code blocks inside of a
 regex could cause C<pos> to see an incorrect value.
-L<[perl #122460]|https://rt.perl.org/Ticket/Display.html?id=122460>.
+L<[GH #14016]|https://github.com/Perl/perl5/issues/14016>.
 
 =item *
 
 Dereferencing of constants now works correctly for typeglob constants.  Previously
 the glob was stringified and its name looked up.  Now the glob itself is used.
-L<[perl #69456]|https://rt.perl.org/Ticket/Display.html?id=69456>
+L<[GH #9891]|https://github.com/Perl/perl5/issues/9891>
 
 =item *
 
@@ -3501,7 +3500,7 @@ syntax error when it guesses the latter), since it can only be a block.
 
 S<C<undef $reference>> now frees the referent immediately, instead of hanging on
 to it until the next statement.
-L<[perl #122556]|https://rt.perl.org/Ticket/Display.html?id=122556>
+L<[GH #14032]|https://github.com/Perl/perl5/issues/14032>
 
 =item *
 
@@ -3545,7 +3544,7 @@ first character in the sequence is used, again just as before.
 
 Tainted constants evaluated at compile time no longer cause unrelated
 statements to become tainted.
-L<[perl #122669]|https://rt.perl.org/Ticket/Display.html?id=122669>
+L<[GH #14059]|https://github.com/Perl/perl5/issues/14059>
 
 =item *
 
@@ -3563,7 +3562,7 @@ package of the C<our> sub, instead of the package of the invocant.
 
 The parser no longer gets confused by C<\U=> within a double-quoted string.  It
 used to produce a syntax error, but now compiles it correctly.
-L<[perl #80368]|https://rt.perl.org/Ticket/Display.html?id=80368>
+L<[GH #10882]|https://github.com/Perl/perl5/issues/10882>
 
 =item *
 
@@ -3584,7 +3583,7 @@ Perl 5.20.0 introduced a regression in which a UTF-8 encoded regular
 expression pattern that contains a single ASCII lowercase letter did not
 match its uppercase counterpart. That has been fixed in both 5.20.1 and
 5.22.0.
-L<[perl #122655]|https://rt.perl.org/Ticket/Display.html?id=122655>
+L<[GH #14051]|https://github.com/Perl/perl5/issues/14051>
 
 =item *
 
@@ -3597,7 +3596,7 @@ false at compile time and true at run time.
 Loading Unicode tables during a regular expression match could cause assertion
 failures under debugging builds if the previous match used the very same
 regular expression.
-L<[perl #122747]|https://rt.perl.org/Ticket/Display.html?id=122747>
+L<[GH #14081]|https://github.com/Perl/perl5/issues/14081>
 
 =item *
 
@@ -3626,7 +3625,7 @@ routine.
 Aliasing (I<e.g.>, via S<C<*x = *y>>) could confuse list assignments that mention the
 two names for the same variable on either side, causing wrong values to be
 assigned.
-L<[perl #15667]|https://rt.perl.org/Ticket/Display.html?id=15667>
+L<[GH #5788]|https://github.com/Perl/perl5/issues/5788>
 
 =item *
 
@@ -3642,7 +3641,7 @@ unfortunate side-effect of also treating S<C<split /\A/>> like S<C<split /^/m>>,
 which it should not.  This has been fixed.  (Note, however, that S<C<split /^x/>>
 does not behave like S<C<split /^x/m>>, which is also considered to be a bug and
 will be fixed in a future version.)
-L<[perl #122761]|https://rt.perl.org/Ticket/Display.html?id=122761>
+L<[GH #14086]|https://github.com/Perl/perl5/issues/14086>
 
 =item *
 
@@ -3682,7 +3681,7 @@ they produce errors.
 
 An assertion failure when parsing C<sort> with debugging enabled has been
 fixed.
-L<[perl #122771]|https://rt.perl.org/Ticket/Display.html?id=122771>.
+L<[GH #14087]|https://github.com/Perl/perl5/issues/14087>.
 
 =item *
 
@@ -3697,7 +3696,7 @@ the optimizer into assuming a limit of 1.
 =item *
 
 Fatal warnings no longer prevent the output of syntax errors.
-L<[perl #122966]|https://rt.perl.org/Ticket/Display.html?id=122966>.
+L<[GH #14155]|https://github.com/Perl/perl5/issues/14155>.
 
 =item *
 
@@ -3709,12 +3708,12 @@ produced.
 
 Fixed the issue that caused C<< make distclean >> to incorrectly leave some
 files behind.
-L<[perl #122820]|https://rt.perl.org/Ticket/Display.html?id=122820>.
+L<[GH #14108]|https://github.com/Perl/perl5/issues/14108>.
 
 =item *
 
 AIX now sets the length in C<< getsockopt >> correctly.
-L<[perl #120835]|https://rt.perl.org/Ticket/Display.html?id=120835>.
+L<[GH #13484]|https://github.com/Perl/perl5/issues/13484>.
 L<[cpan #91183]|https://rt.cpan.org/Ticket/Display.html?id=91183>.
 L<[cpan #85570]|https://rt.cpan.org/Ticket/Display.html?id=85570>.
 
@@ -3722,18 +3721,18 @@ L<[cpan #85570]|https://rt.cpan.org/Ticket/Display.html?id=85570>.
 
 The optimization phase of a regexp compilation could run "forever" and
 exhaust all memory under certain circumstances; now fixed.
-L<[perl #122283]|https://rt.perl.org/Ticket/Display.html?id=122283>.
+L<[GH #13984]|https://github.com/Perl/perl5/issues/13984>.
 
 =item *
 
 The test script F<< t/op/crypt.t >> now uses the SHA-256 algorithm if the
 default one is disabled, rather than giving failures.
-L<[perl #121591]|https://rt.perl.org/Ticket/Display.html?id=121591>.
+L<[GH #13715]|https://github.com/Perl/perl5/issues/13715>.
 
 =item *
 
 Fixed an off-by-one error when setting the size of a shared array.
-L<[perl #122950]|https://rt.perl.org/Ticket/Display.html?id=122950>.
+L<[GH #14151]|https://github.com/Perl/perl5/issues/14151>.
 
 =item *
 
@@ -3743,7 +3742,7 @@ compilation. In particular, a C<while(1)> within a sublist, I<e.g.>
     sub foo { () = ($a, my $b, ($c, do { while(1) {} })) }
 
 The bug was introduced in 5.20.0
-L<[perl #122995]|https://rt.perl.org/Ticket/Display.html?id=122995>.
+L<[GH #14165]|https://github.com/Perl/perl5/issues/14165>.
 
 =item *
 
@@ -3751,14 +3750,14 @@ On Win32, if a variable was C<local>-ized in a pseudo-process that later
 forked, restoring the original value in the child pseudo-process caused
 memory corruption and a crash in the child pseudo-process (and therefore the
 OS process).
-L<[perl #40565]|https://rt.perl.org/Ticket/Display.html?id=40565>.
+L<[GH #8641]|https://github.com/Perl/perl5/issues/8641>.
 
 =item *
 
 Calling C<write> on a format with a C<^**> field could produce a panic
 in C<sv_chop()> if there were insufficient arguments or if the variable
 used to fill the field was empty.
-L<[perl #123245]|https://rt.perl.org/Ticket/Display.html?id=123245>.
+L<[GH #14255]|https://github.com/Perl/perl5/issues/14255>.
 
 =item *
 
@@ -3770,7 +3769,7 @@ appear in error messages.
 The C<\@> subroutine prototype no longer flattens parenthesized arrays
 (taking a reference to each element), but takes a reference to the array
 itself.
-L<[perl #47363]|https://rt.perl.org/Ticket/Display.html?id=47363>.
+L<[GH #9111]|https://github.com/Perl/perl5/issues/9111>.
 
 =item *
 
@@ -3778,7 +3777,7 @@ A block containing nothing except a C-style C<for> loop could corrupt the
 stack, causing lists outside the block to lose elements or have elements
 overwritten.  This could happen with C<map { for(...){...} } ...> and with
 lists containing C<do { for(...){...} }>.
-L<[perl #123286]|https://rt.perl.org/Ticket/Display.html?id=123286>.
+L<[GH #14269]|https://github.com/Perl/perl5/issues/14269>.
 
 =item *
 
@@ -3788,7 +3787,7 @@ S<C<for(scalar($#foo)) { ... }>> can modify C<$#foo> through C<$_>.
 =item *
 
 C<qr/@array(?{block})/> no longer dies with "Bizarre copy of ARRAY".
-L<[perl #123344]|https://rt.perl.org/Ticket/Display.html?id=123344>.
+L<[GH #14292]|https://github.com/Perl/perl5/issues/14292>.
 
 =item *
 
@@ -3801,7 +3800,7 @@ In perl 5.20.0, C<sort CORE::fake> where 'fake' is anything other than a
 keyword, started chopping off the last 6 characters and treating the result
 as a sort sub name.  The previous behavior of treating C<CORE::fake> as a
 sort sub name has been restored.
-L<[perl #123410]|https://rt.perl.org/Ticket/Display.html?id=123410>.
+L<[GH #14323]|https://github.com/Perl/perl5/issues/14323>.
 
 =item *
 
@@ -3819,7 +3818,7 @@ C<${^LAST_FH}> ends up undefined.
 
 C<(...) x ...> in void context now applies scalar context to the left-hand
 argument, instead of the context the current sub was called in.
-L<[perl #123020]|https://rt.perl.org/Ticket/Display.html?id=123020>.
+L<[GH #14174]|https://github.com/Perl/perl5/issues/14174>.
 
 =back
 
@@ -3831,7 +3830,7 @@ L<[perl #123020]|https://rt.perl.org/Ticket/Display.html?id=123020>.
 
 C<pack>-ing a NaN on a perl compiled with Visual C 6 does not behave properly,
 leading to a test failure in F<t/op/infnan.t>.
-L<[perl 125203]|https://rt.perl.org/Ticket/Display.html?id=125203>
+L<[GH #14705]|https://github.com/Perl/perl5/issues/14705>
 
 =item *
 

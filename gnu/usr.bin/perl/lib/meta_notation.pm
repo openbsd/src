@@ -42,7 +42,6 @@ sub _meta_notation ($) {
         $string =~ s/([\240-\377])/sprintf("M-%c"  ,ord($1)&0177)/eg;
     }
     else {
-        no warnings 'experimental::regex_sets';
         # Leave alone things above \xff
         $string =~ s/( (?[ [\x00-\xFF] & [:^print:]])) /
                   sprintf("\\x{%X}", ord($1))/xaeg;

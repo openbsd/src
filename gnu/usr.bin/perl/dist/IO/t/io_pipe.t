@@ -37,18 +37,20 @@ my $is_win32=$^O eq 'MSWin32' ? "MSWin32 has broken pipes" : "";
 $| = 1;
 print "1..10\n";
 
+my $pipe;
+
 if ($is_win32) {
     print "ok $_ # skipped: $is_win32\n" for 1..4;
 } else {
-    $pipe = new IO::Pipe->reader($perl, '-e', 'print qq(not ok 1\n)');
+    $pipe = IO::Pipe->new()->reader($perl, '-e', 'print qq(not ok 1\n)');
     while (<$pipe>) {
       s/^not //;
       print;
     }
     $pipe->close or print "# \$!=$!\nnot ";
     print "ok 2\n";
-    $cmd = 'BEGIN{$SIG{ALRM} = sub {print qq(not ok 4\n); exit}; alarm 10} s/not //';
-    $pipe = new IO::Pipe->writer($perl, '-pe', $cmd);
+    my $cmd = 'BEGIN{$SIG{ALRM} = sub {print qq(not ok 4\n); exit}; alarm 10} s/not //';
+    $pipe = IO::Pipe->new()->writer($perl, '-pe', $cmd);
     print $pipe "not ok 3\n" ;
     $pipe->close or print "# \$!=$!\nnot ";
     print "ok 4\n";
@@ -61,9 +63,9 @@ if ($^O eq 'os2' and
     exit 0;
 }
 
-$pipe = new IO::Pipe;
+$pipe = IO::Pipe->new();
 
-$pid = fork();
+my $pid = fork();
 
 if($pid)
  {
@@ -76,7 +78,7 @@ if($pid)
 elsif(defined $pid)
  {
   $pipe->reader;
-  $stdin = bless \*STDIN, "IO::Handle";
+  my $stdin = bless \*STDIN, "IO::Handle";
   $stdin->fdopen($pipe,"r");
   exec $^X, '-pne', 'tr/YX/ko/';
  }
@@ -88,8 +90,8 @@ else
 if ($is_win32) {
     print "ok $_ # skipped: $is_win32\n" for 7..8;
 } else {
-    $pipe = new IO::Pipe;
-    $pid = fork();
+    $pipe = IO::Pipe->new();
+    my $pid = fork();
 
     if($pid)
  {
@@ -105,7 +107,7 @@ if ($is_win32) {
  {
   $pipe->writer;
 
-  $stdout = bless \*STDOUT, "IO::Handle";
+  my $stdout = bless \*STDOUT, "IO::Handle";
   $stdout->fdopen($pipe,"w");
   print STDOUT "not ok 7\n";
   my @echo = 'echo';
@@ -122,7 +124,7 @@ if ($is_win32) {
 if ($is_win32) {
     print "ok $_ # skipped: $is_win32\n" for 9;
 } else {
-    $pipe = new IO::Pipe;
+    $pipe = IO::Pipe->new;
     $pipe->writer;
 
     $SIG{'PIPE'} = 'broken_pipe';

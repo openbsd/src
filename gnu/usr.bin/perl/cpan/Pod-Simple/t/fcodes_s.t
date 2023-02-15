@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 80 };
 
@@ -17,7 +18,8 @@ ok 1;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
 my $x = 'Pod::Simple::XMLOutStream';
-sub e ($$) { $x->_duo(@_) }
+
+sub e { $x->_duo(@_) }
 
 $Pod::Simple::XMLOutStream::ATTR_PAD   = ' ';
 $Pod::Simple::XMLOutStream::SORT_ATTRS = 1; # for predictably testable output
@@ -221,7 +223,7 @@ ok(
 use Pod::Simple::HTML;
 my $PERLDOC = "https://metacpan.org/pod";
 my $MANURL = "http://man.he.net/man";
-sub x ($) {
+sub x {
     Pod::Simple::HTML->_out(
         sub {  $_[0]->bare_output(1)  },
         "=pod\n\n$_[0]",

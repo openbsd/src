@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use strict;
+use warnings;
+
 # This is a test of WriteEmptyMakefile.
 
 BEGIN {

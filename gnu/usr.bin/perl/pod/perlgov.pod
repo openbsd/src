@@ -298,7 +298,7 @@ to select a new Steering Council.
 Any Core Team member may propose amending the Perl Rules of Governance by
 sending a proposal to the Steering Council.  The Steering Council must decide
 to approve or reject the proposal.  If approved, the Steering Council will
-administer an Amendment Vote.
+organize an Amendment Vote.
 
 =head3 Rules for Voting
 
@@ -379,11 +379,11 @@ Governance".
 
 =head3 Term
 
-A new Steering Council will be chosen by a Term Election within two weeks after
-each stable feature release (that is, change to C<PERL_REVISION> or
-C<PERL_VERSION>) or after two years, whichever comes first. The council members
-will serve until the completion of the next Term Election unless they are
-removed.
+A new Steering Council will be chosen by a Term Election after each stable
+feature release (that is, change to C<PERL_REVISION> or C<PERL_VERSION>) or
+after two years, whichever comes first. The Term Election will be organized
+within two weeks of the triggering event. The council members will serve until
+the completion of the next Term Election unless they are removed.
 
 =head3 Removal
 
@@ -392,6 +392,12 @@ Steering Council members may resign their position at any time.
 Whenever there are vacancies on the Steering Council, the council will
 organize a Special Election within one week after the vacancy occurs.  If the
 entire Steering Council is ever vacant, a Term Election will be held instead.
+
+The Steering Council may defer the Special Election for up to twelve weeks.
+Their intent to do so must be publicly stated to the Core Team.  If any active
+Core Team member objects within one week, the Special Election must be
+organized within two weeks.  At any time, the Steering Council may choose to
+cancel the deferment and immediately commence organizing a Special Election.
 
 If a Steering Council member is deceased, or drops out of touch and cannot be
 contacted for a month or longer, then the rest of the council may vote to
@@ -422,11 +428,14 @@ may share a statement about their candidacy with the Core Team.
 
 =item 2
 
-Active Core Team Members vote by ranking all candidates.  Voting is performed
-anonymously.  After voting is complete, candidates are ranked using the
-Condorcet Internet Voting Service's proportional representation mode.  If a tie
-occurs, it may be resolved by mutual agreement among the tied candidates, or
-else the tie will be resolved through random selection by the Vote
+If there are no more candidates than open seats, no vote is required.  The
+candidates will be declared to have won when the nomination period ends.
+
+Otherwise, active Core Team Members vote by ranking all candidates.  Voting is
+performed anonymously.  After voting is complete, candidates are ranked using
+the Condorcet Internet Voting Service's proportional representation mode.  If a
+tie occurs, it may be resolved by mutual agreement among the tied candidates,
+or else the tie will be resolved through random selection by the Vote
 Administrator.
 
 =back
@@ -466,66 +475,89 @@ Vote, then the Core Team will select a Vote Administrator by consensus.  If
 consensus cannot be reached within one week, the President of The Perl
 Foundation will select a Vote Administrator.
 
+=head1 Steering Council Members
+
+=over
+
+=item * Neil Bowers
+
+=item * Paul Evans
+
+=item * Ricardo Signes
+
+=back
+
 =head1 Core Team Members
 
 The current members of the Perl Core Team are:
 
-=over
+=head2 Active Members
 
-=item * Abhijit Menon-Sen (inactive)
+=over 4
 
-=item * Andy Dougherty
+=item Chad Granum <exodist7@gmail.com>
 
-=item * Chad Granum
+=item Chris 'BinGOs' Williams <chris@bingosnet.co.uk>
 
-=item * Chris 'BinGOs' Williams
+=item Craig Berry <craigberry@mac.com>
 
-=item * Craig Berry
+=item Dagfinn Ilmari Mannsåker <ilmari@ilmari.org>
 
-=item * Dagfinn Ilmari Mannsåker
+=item David Golden <xdg@xdg.me>
 
-=item * Dave Mitchell
+=item David Mitchell <davem@iabyn.com>
 
-=item * David Golden
+=item H. Merijn Brand <perl5@tux.freedom.nl>
 
-=item * H. Merijn Brand
+=item Hugo van der Sanden <hv@crypt.org>
 
-=item * Hugo van der Sanden
+=item James E Keenan <jkeenan@cpan.org>
 
-=item * James E Keenan
+=item Jason McIntosh <jmac@jmac.org>
 
-=item * Jan Dubois (inactive)
+=item Karen Etheridge <ether@cpan.org>
 
-=item * Jesse Vincent (inactive)
+=item Karl Williamson <khw@cpan.org>
 
-=item * Karen Etheridge
+=item Leon Timmermans <fawaka@gmail.com>
 
-=item * Karl Williamson
+=item Matthew Horsfall <wolfsage@gmail.com>
 
-=item * Leon Timmermans
+=item Max Maischein <cpan@corion.net>
 
-=item * Matthew Horsfall
+=item Neil Bowers <neilb@neilb.org>
 
-=item * Max Maischein
+=item Nicholas Clark <nick@ccl4.org>
 
-=item * Nicholas Clark
+=item Nicolas R <atoomic@cpan.org>
 
-=item * Nicolas R.
+=item Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>
 
-=item * Paul "LeoNerd" Evans
+=item Philippe "BooK" Bruhat <book@cpan.org>
 
-=item * Philippe "BooK" Bruhat
+=item Ricardo Signes <rjbs@semiotic.systems>
 
-=item * Ricardo Signes
+=item Steve Hay <steve.m.hay@googlemail.com>
 
-=item * Sawyer X
+=item Stuart Mackintosh <stuart@perlfoundation.org>
 
-=item * Steve Hay
+=item Todd Rinaldo <toddr@cpanel.net>
 
-=item * Stuart Mackintosh
-
-=item * Todd Rinaldo
-
-=item * Tony Cook
+=item Tony Cook <tony@develop-help.com>
 
 =back
+
+=head2 Inactive Members
+
+=over 4
+
+=item Abhijit Menon-Sen <ams@toroid.org>
+
+=item Andy Dougherty <doughera@lafayette.edu>
+
+=item Jan Dubois <jan@jandubois.com>
+
+=item Jesse Vincent <jesse@fsck.com>
+
+=back
+

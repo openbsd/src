@@ -9,6 +9,7 @@
 
 package Pod::Parser;
 use strict;
+use warnings;
 
 ## These "variables" are used as local "glob aliases" for performance
 use vars qw($VERSION @ISA %myData %myOpts @input_stack);
@@ -67,7 +68,7 @@ Pod::Parser - base class for creating POD filters and translators
 
     ## Create a parser object and have it parse file whose name was
     ## given on the command-line (use STDIN if no files were given).
-    $parser = new MyParser();
+    $parser = MyParser->new();
     $parser->parse_from_filehandle(\*STDIN)  if (@ARGV == 0);
     for (@ARGV) { $parser->parse_from_file($_); }
 
@@ -212,7 +213,7 @@ use Exporter;
 BEGIN {
    if ($] < 5.006) {
       require Symbol;
-      import Symbol;
+      Symbol->import;
    }
 }
 @ISA = qw(Exporter);
@@ -416,8 +417,7 @@ subclass objects as well as base class objects, provided you use
 any of the following constructor invocation styles:
 
     my $parser1 = MyParser->new();
-    my $parser2 = new MyParser();
-    my $parser3 = $parser2->new();
+    my $parser2 = $parser1->new();
 
 where C<MyParser> is some subclass of B<Pod::Parser>.
 
@@ -434,7 +434,7 @@ associative array (or hash-table) my be passed to the B<new()>
 constructor, as in:
 
     my $parser1 = MyParser->new( MYDATA => $value1, MOREDATA => $value2 );
-    my $parser2 = new MyParser( -myflag => 1 );
+    my $parser2 = MyParser->new( -myflag => 1 );
 
 All arguments passed to the B<new()> constructor will be treated as
 key/value pairs in a hash-table. The newly constructed object will be
@@ -977,7 +977,7 @@ sub parse_paragraph {
         }
     }
     ## Save the attributes indicating how the command was specified.
-    $pod_para = new Pod::Paragraph(
+    $pod_para = Pod::Paragraph->new(
           -name      => $cmd,
           -text      => $text,
           -prefix    => $pfx,
@@ -1563,7 +1563,7 @@ sub _push_input_stream {
     $myData{_INFILE}  = '(unknown)'  unless (defined  $myData{_INFILE});
     $myData{_INPUT}   = $in_fh;
     my $input_top     = $myData{_TOP_STREAM}
-                      = new Pod::InputSource(
+                      = Pod::InputSource->new(
                             -name        => $myData{_INFILE},
                             -handle      => $in_fh,
                             -was_cutting => $myData{_CUTTING}
@@ -1712,7 +1712,7 @@ following:
 
     package main;
     ...
-    my $parser = new MyPodParserTree(...);
+    my $parser = MyPodParserTree->new(...);
     $parser->parse_from_file(...);
     my $paragraphs_ref = $parser->{'-paragraphs'};
 
@@ -1727,7 +1727,7 @@ interface for all parse-tree nodes. The result would look something like:
 
     sub begin_pod {
         my $self = shift;
-        $self->{'-ptree'} = new Pod::ParseTree;  ## initialize parse-tree
+        $self->{'-ptree'} = Pod::ParseTree->new();  ## initialize parse-tree
     }
 
     sub parse_tree {
@@ -1759,7 +1759,7 @@ interface for all parse-tree nodes. The result would look something like:
 
     package main;
     ...
-    my $parser = new MyPodParserTree2(...);
+    my $parser = MyPodParserTree2->new(...);
     $parser->parse_from_file(...);
     my $ptree = $parser->parse_tree;
     ...

@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use strict;
 
 BEGIN {
     unshift @INC, 't/lib';
@@ -162,6 +163,7 @@ is( ExtUtils::Packlist::packlist_file({ packfile => 'pl' }), 'pl',
 is( ExtUtils::Packlist::packlist_file($pl), 'eplist',
 	'packlist_file() should fetch packlist from ExtUtils::Packlist object' );
 
+my $w  = 0;
 BEGIN {
 	# Call mkfh at BEGIN time, to make sure it does not trigger "Used
 	# once" warnings.

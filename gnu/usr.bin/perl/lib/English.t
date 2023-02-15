@@ -6,7 +6,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 58;
+use Test::More;
 
 use English qw( -no_match_vars ) ;
 use Config;
@@ -33,11 +33,7 @@ $ORS = "\n";
 
 {
 	local(*IN, *OUT);
-	if ($^O ne 'dos') {
-	    pipe(IN, OUT);
-	} else {
-	    open(OUT, ">", "en.tmp");
-	}
+        pipe(IN, OUT);
 	select(OUT);
 	$| = 1;
 	print 'ok', '7';
@@ -48,7 +44,6 @@ $ORS = "\n";
 	my $close = close OUT;
 	ok( !($close) == $CHILD_ERROR, '$CHILD_ERROR should be false' );
 
-	open(IN, "<", "en.tmp") if ($^O eq 'dos');
 	my $foo = <IN>;
 	like( $foo, qr/ok 7/, '$OFS' );
 
@@ -168,6 +163,9 @@ main::ok( !$POSTMATCH, '$POSTMATCH disabled' );
     local $" = 'frooble';
     ::is $LIST_SEPARATOR, 'frooble';
 }
+
+# because of the 'package' statements above, we have to prefix Test::More::
+Test::More::done_testing();
 
 __END__
 This is a line.

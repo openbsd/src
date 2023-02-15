@@ -5,6 +5,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Config;
 
 use Test::More;

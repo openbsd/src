@@ -35,7 +35,7 @@ sub dircontent {
   my $tempdirstr = shift;
   my $str = "Contents of $dir (should not contain \"$tempdirstr\"):\n";
   opendir(my $DH, $dir) or die "opendir failed; $!";
-  my @contents = grep { $_ !~ /^\.+/; } readdir($DH);
+  my @contents = grep $_ !~ /^\.+/, readdir($DH);
   closedir($DH);
   for my $ls (@contents) {
     $str .= "  $ls\n";

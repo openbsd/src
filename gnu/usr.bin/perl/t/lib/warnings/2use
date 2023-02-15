@@ -79,6 +79,57 @@ EXPECT
 Useless use of a constant ("foobar") in void context at - line 3.
 ########
 
+# Check -negative import with no other args
+use warnings qw(-syntax);
+sub foo { 'foo' }
+my $a =+ 1 ;          # syntax:        shouldn't warn, it was never turned on
+*foo = sub { 'bar' }; # redefine:      shouldn't warn, it was never turned on
+$a = 'foo' . undef;   # uninitialized: shouldn't warn, it was never turned on
+EXPECT
+########
+
+# Check -negative import after turning all warnings on
+use warnings qw(all -syntax);
+sub foo { 'foo' }
+my $a =+ 1 ;          # syntax:        shouldn't warn, we've turned that off
+*foo = sub { 'bar' }; # redefine:      should warn, as there was an explicit 'all'
+$a = 'foo' . undef;   # uninitialized: should warn, as there was an explicit 'all'
+EXPECT
+Subroutine main::foo redefined at - line 6.
+Use of uninitialized value in concatenation (.) or string at - line 7.
+########
+
+# Check -negative import with an explicit import
+use warnings qw(redefine -syntax);
+sub foo { 'foo' }
+my $a =+ 1 ;          # syntax:        shouldn't warn, it was never turned on
+*foo = sub { 'bar' }; # redefine:      should warn, as there was an explicit 'redefine'
+$a = 'foo' . undef;   # uninitialized: shouldn't warn, as explicit 'redefine' means no implicit 'all'
+EXPECT
+Subroutine main::foo redefined at - line 6.
+########
+
+# Check multiple -negative imports
+use warnings qw(all -syntax -uninitialized);
+sub foo { 'foo' }
+my $a =+ 1 ;          # syntax:        shouldn't warn, we've turned that off
+*foo = sub { 'bar' }; # redefine:      should warn, as there was an explicit 'all'
+$a = 'foo' . undef;   # uninitialized: shouldn't warn, we've turned it off
+EXPECT
+Subroutine main::foo redefined at - line 6.
+########
+
+# Check mixed list of +ve and -ve imports
+use warnings qw(all -once -syntax parenthesis);
+sub foo { 'foo' }
+*foo = sub { 'bar' };  # redefined:   should warn, as it was turned on by 'all'
+my $a =+ 1 ;           # syntax:      shouldn't warn, we've turned that off
+my $foo, $bar = @_;    # parenthesis: should warn, as we turned that back on after disabling 'syntax'
+EXPECT
+Parentheses missing around "my" list at - line 7.
+Subroutine main::foo redefined at - line 5.
+########
+
 --FILE-- abc
 my $a =+ 1 ;
 1;

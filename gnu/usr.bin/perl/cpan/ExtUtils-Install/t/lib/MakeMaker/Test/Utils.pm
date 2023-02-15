@@ -1,7 +1,7 @@
 package MakeMaker::Test::Utils;
+use strict;
 
 use File::Spec;
-use strict;
 use Config;
 
 require Exporter;

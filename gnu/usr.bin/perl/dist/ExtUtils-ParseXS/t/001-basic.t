@@ -1,10 +1,12 @@
 #!/usr/bin/perl
 
 use strict;
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Config;
 use DynaLoader;
 use ExtUtils::CBuilder;
+use lib (-d 't' ? File::Spec->catdir(qw(t lib)) : 'lib');
+use PrimitiveCapture;
 
 my ($source_file, $obj_file, $lib_file);
 
@@ -15,13 +17,14 @@ push @INC, '.';
 
 use Carp; $SIG{__WARN__} = \&Carp::cluck;
 
-# Some trickery for Android. If we leave @INC as-is, it'll have '.' in it.
-# Later on, the 'require XSTest' end up in DynaLoader looking for
-# ./PL_XSTest.so, but unless our current directory happens to be in
-# LD_LIBRARY_PATH, Android's linker will never find the file, and the test
-# will fail.  Instead, if we have all absolute paths, it'll just work.
-@INC = map { File::Spec->rel2abs($_) } @INC
-    if $^O =~ /android/;
+# The linker on some platforms doesn't like loading libraries using relative
+# paths. Android won't find relative paths, and system perl on macOS will
+# refuse to load relative paths. The path that DynaLoader uses to load the
+# .so or .bundle file is based on the @INC path that the library is loaded
+# from. The XSTest module we're using for testing is in the current directory,
+# so we need an absolute path in @INC rather than '.'. Just convert all of the
+# paths to absolute for simplicity.
+@INC = map { File::Spec->rel2abs($_) } @INC;
 
 #########################
 
@@ -174,6 +177,16 @@ unless ($ENV{PERL_NO_CLEANUP}) {
     1 while unlink $_;
   }
 }
+}
+#####################################################################
+
+{ # third block: broken typemap
+my $pxs = ExtUtils::ParseXS->new;
+tie *FH, 'Foo';
+my $stderr = PrimitiveCapture::capture_stderr(sub {
+  $pxs->process_file(filename => 'XSBroken.xs', output => \*FH);
+});
+like $stderr, '/No INPUT definition/', "Exercise typemap error";
 }
 #####################################################################
 

@@ -1,1 +1,2 @@
+use strict;
 1;

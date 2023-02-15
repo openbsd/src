@@ -38,7 +38,7 @@
 #endif
 #endif
 
-#ifndef PERL_SEEN_HV_FUNC_H
+#ifndef PERL_SEEN_HV_FUNC_H_
 #if !defined(U64)
 #include <stdint.h>
 #define U64 uint64_t
@@ -145,7 +145,7 @@ void zaphod32_seed_state (
     if (!state[0]) state[0] = 1;
     if (!state[1]) state[1] = 2;
     if (!state[2]) state[2] = 4;
-    /* these are pseduo-randomly selected primes between 2**31 and 2**32
+    /* these are pseudo-randomly selected primes between 2**31 and 2**32
      * (I generated a big list and then randomly chose some from the list) */
     ZAPHOD32_SCRAMBLE32(state[0],0x9fade23b);
     ZAPHOD32_SCRAMBLE32(state[1],0xaa6f908d);

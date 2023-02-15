@@ -14,7 +14,7 @@ BEGIN {
 
 use Thread qw(:DEFAULT async yield);
 
-use Test::More tests => 13;
+use Test::More;
 
 my $lock;
 {
@@ -93,4 +93,4 @@ COND_:
     is($thr->join(), 3, "->join returned thread's tid");
 }
 
-# EOF
+done_testing();

@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 #
 # Verify that objectify() is able to convert a "foreign" object into what we
 # want, when what we want is Math::BigFloat or subclass thereof.

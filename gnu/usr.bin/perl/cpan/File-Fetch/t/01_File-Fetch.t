@@ -235,7 +235,7 @@ for my $entry (@map) {
 }
 
 ### git:// tests ###
-{   my $uri = 'git://github.com/Perl-Toolchain-Gang/file-fetch.git';
+{   my $uri = 'https://github.com/Perl-Toolchain-Gang/file-fetch.git';
 
     for (qw[git]) {
         local $ENV{GIT_CONFIG_NOSYSTEM} = 1;

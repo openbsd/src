@@ -5,7 +5,7 @@ BEGIN {
     push @INC, '../lib';
 }
 
-use Test::More tests => 12;
+use Test::More;
 
 BEGIN {
     use_ok( 'less' );
@@ -34,3 +34,5 @@ use less 'random acts';
 is_deeply([sort less->of],[sort qw(random acts)],'less random acts');
 
 is(scalar less->of('random'),1,'less random');
+
+done_testing();

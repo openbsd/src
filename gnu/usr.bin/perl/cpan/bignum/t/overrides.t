@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 # Test behaviour of hex and oct overrides in detail, and also how the three
 # modules interact.
 
-use Test::More tests => 35;
+use Test::More tests => 31;
 
 my $hex_called;
 my $oct_called;
@@ -33,30 +33,32 @@ BEGIN {
     is oct(@_), "16", 'bigint oct override provides scalar context';
   SKIP:
     {
-        skip "no lexical hex/oct", 2 unless $] > do { no bigint; 5.009004 };
+        skip "no lexical hex/oct", 2 unless $] > "5.009004";
         is ref hex(1), 'Math::BigInt',
-          'bigint hex() works when bignum and bigrat are loaded';
+          'bigint hex() works when bigfloat and bigrat are loaded';
         is ref oct(1), 'Math::BigInt',
-          'bigint oct() works when bignum and bigrat are loaded';
+          'bigint oct() works when bigfloat and bigrat are loaded';
     }
 }
+
 {
-    use bignum;
+    use bigfloat;
     $_ = "20";
-    is hex, "32", 'bignum hex override without arguments infers $_';
-    is oct, "16", 'bignum oct override without arguments infers $_';
+    is hex, "32", 'bigfloat hex override without arguments infers $_';
+    is oct, "16", 'bigfloat oct override without arguments infers $_';
     @_ = 1..20;
-    is hex(@_), "32", 'bignum hex override provides scalar context';
-    is oct(@_), "16", 'bignum oct override provides scalar context';
+    is hex(@_), "32", 'bigfloat hex override provides scalar context';
+    is oct(@_), "16", 'bigfloat oct override provides scalar context';
   SKIP:
     {
-        skip "no lexical hex/oct", 2 unless $] > 5.009004;
-        is ref hex(1), 'Math::BigInt',
-          'bignum hex() works when bigint and bigrat are loaded';
-        is ref oct(1), 'Math::BigInt',
-          'bignum oct() works when bigint and bigrat are loaded';
+        skip "no lexical hex/oct", 2 unless $] > "5.009004";
+        is ref hex(1), 'Math::BigFloat',
+          'bigfloat hex() works when bigint and bigrat are loaded';
+        is ref oct(1), 'Math::BigFloat',
+          'bigfloat oct() works when bigint and bigrat are loaded';
     }
 }
+
 {
     use bigrat;
     $_ = "20";
@@ -67,11 +69,11 @@ BEGIN {
     is oct(@_), "16", 'bigrat oct override provides scalar context';
   SKIP:
     {
-        skip "no lexical hex/oct", 2 unless $] > 5.009004;
-        is ref hex(1), 'Math::BigInt',
-          'bigrat hex() works when bignum and bigint are loaded';
-        is ref oct(1), 'Math::BigInt',
-          'bigrat oct() works when bignum and bigint are loaded';
+        skip "no lexical hex/oct", 2 unless $] > "5.009004";
+        is ref hex(1), 'Math::BigRat',
+          'bigrat hex() works when bigfloat and bigint are loaded';
+        is ref oct(1), 'Math::BigRat',
+          'bigrat oct() works when bigfloat and bigint are loaded';
     }
 }
 
@@ -94,21 +96,23 @@ is $oct_called, 1, 'existing oct overrides are called';
     ::is oct("20"), "16", 'exported oct function works with "decimal"';
     # (used to return 20 because it thought it was decimal)
 }
+
 {
     package _importer2;
-    use bignum 'hex', 'oct';
-    ::is \&hex, \&bignum::hex, 'bignum exports hex';
-    ::is \&oct, \&bignum::oct, 'bignum exports oct';
-    ::is \&hex, \&bigint::hex, 'bignum exports same hex as bigint';
-    ::is \&oct, \&bigint::oct, 'bignum exports same oct as bigint';
+    use bigfloat 'hex', 'oct';
+    ::is \&hex, \&bigfloat::hex, 'bigfloat exports hex';
+    ::is \&oct, \&bigfloat::oct, 'bigfloat exports oct';
+#    ::is \&hex, \&bigint::hex, 'bigfloat exports same hex as bigint';
+#    ::is \&oct, \&bigint::oct, 'bigfloat exports same oct as bigint';
 }
+
 {
     package _importer3;
     use bigrat 'hex', 'oct';
     ::is \&hex, \&bigrat::hex, 'bigrat exports hex';
     ::is \&oct, \&bigrat::oct, 'bigrat exports oct';
-    ::is \&hex, \&bigint::hex, 'bigrat exports same hex as bigint';
-    ::is \&oct, \&bigint::oct, 'bigrat exports same oct as bigint';
+#    ::is \&hex, \&bigint::hex, 'bigrat exports same hex as bigint';
+#    ::is \&oct, \&bigint::oct, 'bigrat exports same oct as bigint';
 }
 is ref(hex 0), "", 'hex export is not global';
 is ref(oct 0), "", 'oct export is not global';

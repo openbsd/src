@@ -27,13 +27,13 @@ below.
 An optimization to avoid problems with COW and deliberately overallocated PVs
 has been disabled because it interfered with another, more important,
 optimization, causing a slowdown on some platforms.
-L<[perl #121975]|https://rt.perl.org/Ticket/Display.html?id=121975>
+L<[GH #13878]|https://github.com/Perl/perl5/issues/13878>
 
 =item *
 
 Returning a string from a lexical variable could be slow in some cases.  This
 has now been fixed.
-L<[perl #121977]|https://rt.perl.org/Ticket/Display.html?id=121977>
+L<[GH #13880]|https://github.com/Perl/perl5/issues/13880>
 
 =back
 
@@ -80,7 +80,7 @@ The PathTools module collection has been upgraded from version 3.47 to 3.48.
 
 Fallbacks are now in place when cross-compiling for Android and
 C<$Config::Config{sh}> is not yet defined.
-L<[perl #121963]|https://rt.perl.org/Ticket/Display.html?id=121963>
+L<[GH #13872]|https://github.com/Perl/perl5/issues/13872>
 
 =item *
 
@@ -108,7 +108,7 @@ External libraries and Perl may have different ideas of what the locale is.
 This is problematic when parsing version strings if the locale's numeric
 separator has been changed.  Version parsing has been patched to ensure it
 handles the locales correctly.
-L<[perl #121930]|https://rt.perl.org/Ticket/Display.html?id=121930>
+L<[GH #13863]|https://github.com/Perl/perl5/issues/13863>
 
 =back
 
@@ -124,7 +124,7 @@ L<[perl #121930]|https://rt.perl.org/Ticket/Display.html?id=121930>
 
 C<av_len> - Emphasize that this returns the highest index in the array, not the
 size of the array.
-L<[perl #120386]|https://rt.perl.org/Ticket/Display.html?id=120386>
+L<[GH #13377]|https://github.com/Perl/perl5/issues/13377>
 
 =item *
 
@@ -134,7 +134,7 @@ Note that C<SvSetSV> doesn't do set magic.
 
 C<sv_usepvn_flags> - Fix documentation to mention the use of C<NewX> instead of
 C<malloc>.
-L<[perl #121869]|https://rt.perl.org/Ticket/Display.html?id=121869>
+L<[GH #13835]|https://github.com/Perl/perl5/issues/13835>
 
 =item *
 
@@ -154,25 +154,25 @@ Clarify the meaning of C<-B> and C<-T>.
 
 C<-l> now notes that it will return false if symlinks aren't supported by the
 file system.
-L<[perl #121523]|https://rt.perl.org/Ticket/Display.html?id=121523>
+L<[GH #13695]|https://github.com/Perl/perl5/issues/13695>
 
 =item *
 
 Note that C<each>, C<keys> and C<values> may produce different orderings for
 tied hashes compared to other perl hashes.
-L<[perl #121404]|https://rt.perl.org/Ticket/Display.html?id=121404>
+L<[GH #13650]|https://github.com/Perl/perl5/issues/13650>
 
 =item *
 
 Note that C<exec LIST> and C<system LIST> may fall back to the shell on Win32.
 Only C<exec PROGRAM LIST> and C<system PROGRAM LIST> indirect object syntax
 will reliably avoid using the shell.  This has also been noted in L<perlport>.
-L<[perl #122046]|https://rt.perl.org/Ticket/Display.html?id=122046>
+L<[GH #13907]|https://github.com/Perl/perl5/issues/13907>
 
 =item *
 
 Clarify the meaning of C<our>.
-L<[perl #122132]|https://rt.perl.org/Ticket/Display.html?id=122132>
+L<[GH #13938]|https://github.com/Perl/perl5/issues/13938>
 
 =back
 
@@ -183,7 +183,7 @@ L<[perl #122132]|https://rt.perl.org/Ticket/Display.html?id=122132>
 =item *
 
 Explain various ways of modifying an existing SV's buffer.
-L<[perl #116925]|https://rt.perl.org/Ticket/Display.html?id=116925>
+L<[GH #12813]|https://github.com/Perl/perl5/issues/12813>
 
 =back
 
@@ -256,7 +256,7 @@ Information about Unicode behaviour has been added.
 
 Building Perl no longer writes to the source tree when configured with
 F<Configure>'s B<-Dmksymlinks> option.
-L<[perl #121585]|https://rt.perl.org/Ticket/Display.html?id=121585>
+L<[GH #13712]|https://github.com/Perl/perl5/issues/13712>
 
 =back
 
@@ -314,13 +314,13 @@ to do so, before returning to Perl.
 
 A bug has been fixed where zero-length assertions and code blocks inside of a
 regex could cause C<pos> to see an incorrect value.
-L<[perl #122460]|https://rt.perl.org/Ticket/Display.html?id=122460>
+L<[GH #14016]|https://github.com/Perl/perl5/issues/14016>
 
 =item *
 
 Using C<s///e> on tainted utf8 strings could issue bogus "Malformed UTF-8
 character (unexpected end of string)" warnings.  This has now been fixed.
-L<[perl #122148]|https://rt.perl.org/Ticket/Display.html?id=122148>
+L<[GH #13948]|https://github.com/Perl/perl5/issues/13948>
 
 =item *
 

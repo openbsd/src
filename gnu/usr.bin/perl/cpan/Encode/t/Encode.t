@@ -25,19 +25,10 @@ my @character_set = ('0'..'9', 'A'..'Z', 'a'..'z');
 my @source = qw(ascii iso8859-1 cp1250);
 my @destiny = qw(cp1047 cp37 posix-bc);
 my @ebcdic_sets = qw(cp1047 cp37 posix-bc);
-plan tests => 38+$n*@encodings + 2*@source*@destiny*@character_set + 2*@ebcdic_sets*256 + 6 + 3 + 3*8 + 2;
+plan tests => 38+$n*@encodings + 2*@source*@destiny*@character_set + 2*@ebcdic_sets*256 + 6 + 3*8;
 
 my $str = join('',map(chr($_),0x20..0x7E));
 my $cpy = $str;
-is length($str),from_to($cpy,'iso8859-1','Unicode'),"Length Wrong";
-is $cpy,$str,"ASCII mangled by translating from iso8859-1 to Unicode";
-$cpy = $str;
-is from_to($cpy,'Unicode','iso8859-1'),length($str),"Length wrong";
-is $cpy,$str,"ASCII mangled by translating from Unicode to iso8859-1";
-
-$str = join('',map(chr($_),0xa0..0xff));
-$cpy = $str;
-is length($str),from_to($cpy,'iso8859-1','Unicode'),"Length Wrong";
 
 my $sym = Encode->getEncoding('symbol');
 my $uni = $sym->decode(encode(ascii => 'a'));

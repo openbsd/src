@@ -1,24 +1,16 @@
-#!/usr/bin/perl -I.
+use strict; use warnings;
 
-# From: Dan Jacobson <jidanni at jidanni dot org>
-
-use Text::Wrap qw(wrap $columns $huge $break);
+BEGIN { require './t/lib/ok.pl' }
+use Text::Wrap;
 
 print "1..1\n";
 
-$huge='overflow';
+$Text::Wrap::huge='overflow';
 $Text::Wrap::columns=9;
-$break=".(?<=[,.])";
+$Text::Wrap::break=".(?<=[,.])";
 eval {
 $a=$a=wrap('','',
 "mmmm,n,ooo,ppp.qqqq.rrrrr,sssssssssssss,ttttttttt,uu,vvv wwwwwwwww####\n");
 };
 
-if ($@) {
-	my $e = $@;
-	$e =~ s/^/# /gm;
-	print $e;
-}
-print $@ ? "not ok 1\n" : "ok 1\n";
-
-
+ok( !$@ ) or diag( $@ );

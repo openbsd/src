@@ -75,6 +75,10 @@ sub  get_compiled ($) {
     }
 
     $_ = shift @lines;
+    unless (defined $_) {
+        die "Unexpected compilation result: '$result'\n"
+          . " Compiled from '$actual_pattern'";
+    }
 
     s/ \s* \( \d+ \) \s* //x;   # Get rid of the node branch
     s/ ^ \s* \d+ : \s* //x;     # ... And the node number

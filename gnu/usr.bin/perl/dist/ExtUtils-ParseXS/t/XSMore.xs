@@ -38,6 +38,36 @@ outlist(int* a, int* b){
 	*b = 'b';
 }
 
+STATIC bool
+outlist_bool(const char *a, const char *b, char **c)
+{
+   dTHX;
+   STRLEN lena = strlen(a);
+   STRLEN lenb = strlen(b);
+   STRLEN lenc = lena + lenb;
+   Newx(*c, lenc+1, char);
+   strcpy(*c, a);
+   strcat(*c, b);
+   SAVEFREEPV(*c);
+
+   return TRUE;
+}
+
+STATIC int
+outlist_int(const char *a, const char *b, char **c)
+{
+   dTHX;
+   STRLEN lena = strlen(a);
+   STRLEN lenb = strlen(b);
+   STRLEN lenc = lena + lenb;
+   Newx(*c, lenc+1, char);
+   strcpy(*c, a);
+   strcat(*c, b);
+   SAVEFREEPV(*c);
+
+   return 11;
+}
+
 STATIC int
 len(const char* const s, int const l){
 	PERL_UNUSED_ARG(s);
@@ -201,6 +231,12 @@ CLEANUP:
 void
 outlist(OUTLIST int a, OUTLIST int b)
 
+bool
+outlist_bool(const char *a, const char *b, OUTLIST char *c)
+
+int
+outlist_int(const char *a, const char *b, OUTLIST char *c)
+
 int
 len(char* s, int length(s))
 
@@ -215,3 +251,17 @@ INCLUDE: XSInclude.xsh
 # for testing #else directive
 
 #endif
+
+MODULE=XSMore PACKAGE=XSMore::More
+
+void
+dummy()
+PROTOTYPE: $$$$$
+CODE:
+  NOOP;
+
+void
+should_not_have_prototype()
+OVERLOAD: +
+CODE:
+  NOOP;

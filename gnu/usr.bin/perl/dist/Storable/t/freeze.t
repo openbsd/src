@@ -125,7 +125,6 @@ thaw $frozen;			# used to segfault here
 pass("Didn't segfault");
 
 SKIP: {
-    skip 'no av_exists', 2 unless $] >= 5.006;
     my (@a, @b);
     eval '
         $a = []; $#$a = 2; $a->[1] = undef;

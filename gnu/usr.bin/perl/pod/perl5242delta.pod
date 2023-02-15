@@ -55,7 +55,7 @@ L<Module::CoreList> has been upgraded from version 5.20170114_24 to 5.20170715_2
 
 Fixed a crash with C<s///l> where it thought it was dealing with UTF-8 when it
 wasn't.
-L<[perl #129038]|https://rt.perl.org/Ticket/Display.html?id=129038>
+L<[GH #15543]|https://github.com/Perl/perl5/issues/15543>
 
 =back
 

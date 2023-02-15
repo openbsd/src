@@ -1,23 +1,32 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
 BEGIN {
-    die "Run me from outside the t/ directory, please" unless -d 't';
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
-# test the directory cache
-# XXX test --flush and %Pages being loaded/used for cross references
-
 use strict;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
 use Cwd;
-use Pod::Html;
-use Data::Dumper;
-use Test::More tests => 10;
+use Pod::Html::Util qw(
+    unixify
+);
 
-my $cwd = Pod::Html::_unixify(Cwd::cwd());
-my $infile = "t/cache.pod";
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my $args;
+
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
+
+my $cwd = unixify(Cwd::cwd());
+my $infile = catfile('t', 'cache.pod');
 my $outfile = "cacheout.html";
 my $cachefile = "pod2htmd.tmp";
-my $tcachefile = "t/pod2htmd.tmp";
+my $tcachefile = catfile('t', 'pod2htmd.tmp');
 
 unlink $cachefile, $tcachefile;
 is(-f $cachefile, undef, "No cache file to start");
@@ -70,3 +79,5 @@ close $cache;
 1 while unlink $tcachefile;
 is(-f $cachefile, undef, "No cache file to end");
 is(-f $tcachefile, undef, "No cache file to end");
+
+done_testing;

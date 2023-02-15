@@ -18,18 +18,18 @@ L<perl5261delta>, which describes differences between 5.26.0 and 5.26.1.
 
 A crafted regular expression could cause a heap buffer write overflow, with
 control over the bytes written.
-L<[perl #132227]|https://rt.perl.org/Public/Bug/Display.html?id=132227>
+L<[GH #16185]|https://github.com/Perl/perl5/issues/16185>
 
 =head2 [CVE-2018-6798] Heap-buffer-overflow in Perl__byte_dump_string (utf8.c)
 
 Matching a crafted locale dependent regular expression could cause a heap
 buffer read overflow and potentially information disclosure.
-L<[perl #132063]|https://rt.perl.org/Public/Bug/Display.html?id=132063>
+L<[GH #16143]|https://github.com/Perl/perl5/issues/16143>
 
 =head2 [CVE-2018-6913] heap-buffer-overflow in S_pack_rec
 
 C<pack()> could cause a heap buffer write overflow with a large item count.
-L<[perl #131844]|https://rt.perl.org/Public/Bug/Display.html?id=131844>
+L<[GH #16098]|https://github.com/Perl/perl5/issues/16098>
 
 =head2 Assertion failure in Perl__core_swash_init (utf8.c)
 
@@ -97,11 +97,11 @@ points that match this property: U+200C (ZERO WIDTH NON-JOINER) and U+200D
 
 Visual C++ compiler version detection has been improved to work on non-English
 language systems.
-L<[perl #132421]|https://rt.perl.org/Public/Bug/Display.html?id=132421>
+L<[GH #16235]|https://github.com/Perl/perl5/issues/16235>
 
 We now set C<$Config{libpth}> correctly for 64-bit builds using Visual C++
 versions earlier than 14.1.
-L<[perl #132484]|https://rt.perl.org/Public/Bug/Display.html?id=132484>
+L<[GH #16269]|https://github.com/Perl/perl5/issues/16269>
 
 =back
 
@@ -114,18 +114,18 @@ L<[perl #132484]|https://rt.perl.org/Public/Bug/Display.html?id=132484>
 The C<readpipe()> built-in function now checks at compile time that it has only
 one parameter expression, and puts it in scalar context, thus ensuring that it
 doesn't corrupt the stack at runtime.
-L<[perl #4574]|https://rt.perl.org/Public/Bug/Display.html?id=4574>
+L<[GH #2793]|https://github.com/Perl/perl5/issues/2793>
 
 =item *
 
 Fixed a use after free bug in C<pp_list> introduced in Perl 5.27.1.
-L<[perl #131954]|https://rt.perl.org/Public/Bug/Display.html?id=131954>
+L<[GH #16124]|https://github.com/Perl/perl5/issues/16124>
 
 =item *
 
 Parsing a C<sub> definition could cause a use after free if the C<sub> keyword
 was followed by whitespace including newlines (and comments).
-L<[perl #131836]|https://rt.perl.org/Public/Bug/Display.html?id=131836>
+L<[GH #16097]|https://github.com/Perl/perl5/issues/16097>
 
 =item *
 
@@ -137,26 +137,26 @@ L<[perl #131949]|https://rt.perl.org/Public/Bug/Display.html?id=131949>
 
 Accesses to C<${^LAST_FH}> no longer assert after using any of a variety of I/O
 operations on a non-glob.
-L<[perl #128263]|https://rt.perl.org/Public/Bug/Display.html?id=128263>
+L<[GH #15372]|https://github.com/Perl/perl5/issues/15372>
 
 =item *
 
 C<sort> now performs correct reference counting when aliasing C<$a> and C<$b>,
 thus avoiding premature destruction and leakage of scalars if they are
 re-aliased during execution of the sort comparator.
-L<[perl #92264]|https://rt.perl.org/Public/Bug/Display.html?id=92264>
+L<[GH #11422]|https://github.com/Perl/perl5/issues/11422>
 
 =item *
 
 Some convoluted kinds of regexp no longer cause an arithmetic overflow when
 compiled.
-L<[perl #131893]|https://rt.perl.org/Public/Bug/Display.html?id=131893>
+L<[GH #16113]|https://github.com/Perl/perl5/issues/16113>
 
 =item *
 
 Fixed a duplicate symbol failure with B<-flto -mieee-fp> builds.  F<pp.c>
 defined C<_LIB_VERSION> which B<-lieee> already defines.
-L<[perl #131786]|https://rt.perl.org/Public/Bug/Display.html?id=131786>
+L<[GH #16086]|https://github.com/Perl/perl5/issues/16086>
 
 =item *
 
@@ -172,7 +172,7 @@ earlier.
 Previously compilation could continue in order to report other errors, but the
 failed sub-parse could leave partly parsed constructs on the parser
 shift-reduce stack, confusing the parser, leading to perl crashes.
-L<[perl #125351]|https://rt.perl.org/Public/Bug/Display.html?id=125351>
+L<[GH #14739]|https://github.com/Perl/perl5/issues/14739>
 
 =back
 

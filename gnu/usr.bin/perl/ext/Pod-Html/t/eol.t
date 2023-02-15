@@ -1,6 +1,7 @@
-#!./perl -w
-
-use Test::More tests => 3;
+use strict;
+use warnings;
+use Pod::Html;
+use Test::More;
 
 my $podfile = "$$.pod";
 my $infile = "$$.in";
@@ -34,15 +35,13 @@ crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf crlf
 __EOF__
 close $pod or die $!;
 
-use Pod::Html;
-
 my $i = 0;
 foreach my $eol ("\r", "\n", "\r\n") {
     open $pod, '<', $podfile or die "$podfile: $!";
     open my $in, '>', $infile  or die "$infile: $!";
     while (<$pod>) {
-	s/[\r\n]+/$eol/g;
-	print $in $_;
+        s/[\r\n]+/$eol/g;
+        print $in $_;
     }
     close $pod or die $!;
     close $in or die $!;
@@ -69,3 +68,5 @@ is($cksum[1], $cksum[2], "LF vs CRLF");
 END {
     1 while unlink $podfile, $infile, @outfile, 'pod2htmd.tmp';
 }
+
+done_testing;

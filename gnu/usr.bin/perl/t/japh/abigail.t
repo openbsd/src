@@ -94,7 +94,6 @@ plan tests => 130;
     # I do not have access to those platforms to test
     # things out. So, we'll skip things....
     if ($^O eq 'MSWin32' ||
-        $^O eq 'NetWare' ||
         $^O eq 'VMS') {
             skip "Your platform quotes differently.", 3;
             last;
@@ -122,7 +121,6 @@ plan tests => 130;
 
 {
     if ($^O eq 'MSWin32' ||
-        $^O eq 'NetWare' ||
         $^O eq 'VMS') {
             skip "Your platform quotes differently.", 1;
             last;
@@ -414,7 +412,6 @@ SWITCHES
 -l
 SKIP: No longer works in 5.8.2 and beyond.
 SKIP_OS: MSWin32
-SKIP_OS: NetWare
 
 #######  rand
 srand 123456;$-=rand$_--=>@[[$-,$_]=@[[$_,$-]for(reverse+1..(@[=split

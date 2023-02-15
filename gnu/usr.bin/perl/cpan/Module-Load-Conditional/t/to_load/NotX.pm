@@ -1,15 +1,16 @@
-$VERSION = 1;
+use strict;
+our $VERSION = 1;
 
 package Y;
 
-$VERSION = 2;
+our $VERSION = 2;
 
 package NotX;
 
-$VERSION = 3;
+our $VERSION = 3;
 
 package X;
 
-$VERSION = 4;
+our $VERSION = 4;
 
 1;

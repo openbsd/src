@@ -182,7 +182,7 @@ ok( fstr($ph) eq 'a:1,b:2,c:3' );
 $ph = fields::phash([qw/a b c/], [1, 2, 3]);
 ok( fstr($ph) eq 'a:1,b:2,c:3' );
 
-# The way exists() works with psuedohashes changed from 5.005 to 5.6
+# The way exists() works with pseudohashes changed from 5.005 to 5.6
 $ph = fields::phash([qw/a b c/], [1]);
 if( $] > 5.006 ) {
     ok( !( exists $ph->{b} or exists $ph->{c} or !exists $ph->{a} ) );

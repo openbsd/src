@@ -1,6 +1,9 @@
 # Testing verbatim sections
 use strict;
+use warnings;
+
 use Test;
+
 BEGIN { plan tests => 31 };
 
 #use Pod::Simple::Debug (6);
@@ -10,13 +13,16 @@ ok 1;
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
-sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
+
+BEGIN {
+  require FindBin;
+  unshift @INC, $FindBin::Bin . '/lib';
+  require helpers;
+  helpers->import;
+}
 
 &ok( e "", "" );
 &ok( e "\n", "", );
-
-
-
 
 &ok( e "\n=pod\n\n foo bar baz", "\n=pod\n\n foo bar baz" );
 &ok( e "\n=pod\n\n foo bar baz", "\n=pod\n\n foo bar baz\n" );

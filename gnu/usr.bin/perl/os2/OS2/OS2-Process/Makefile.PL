@@ -35,7 +35,7 @@ sub create_constants {
 	  '-M^(HWND|WM|SC|SWP|WC|PROG|QW|EDI|WS|QWS|QWP|QWL|FF|FI|LS|FS|FCF|BS|MS|TBM|CF|CFI|FID|MB|MBID|CF|CFI|SPTR)_',
 	    '-F', '-DINCL_NLS -DINCL_BASE -DINCL_PM', # Define more symbols
 	      'os2emx.h'	# EMX version of OS/2 API
-    and warn("Can't build module with contants, falling back to no constants"),
+    and warn("Can't build module with constants, falling back to no constants"),
       return;
   rename 'OS2/Process/Const', 'Process_constants'
     or warn("Error renaming module, falling back to no constants: $!"),

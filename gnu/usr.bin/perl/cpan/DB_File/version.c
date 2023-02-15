@@ -1,6 +1,6 @@
-/* 
+/*
 
- version.c -- Perl 5 interface to Berkeley DB 
+ version.c -- Perl 5 interface to Berkeley DB
 
  written by Paul Marquess <pmqs@cpan.org>
  last modified 2nd Jan 2002
@@ -23,7 +23,7 @@
 */
 
 #define PERL_NO_GET_CONTEXT
-#include "EXTERN.h"  
+#include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 
@@ -36,9 +36,9 @@ __getBerkeleyDBInfo(void)
 __getBerkeleyDBInfo()
 #endif
 {
-#ifdef dTHX     
+#ifdef dTHX
     dTHX;
-#endif    
+#endif
     SV * version_sv = perl_get_sv("DB_File::db_version", GV_ADD|GV_ADDMULTI) ;
     SV * ver_sv = perl_get_sv("DB_File::db_ver", GV_ADD|GV_ADDMULTI) ;
     SV * compat_sv = perl_get_sv("DB_File::db_185_compat", GV_ADD|GV_ADDMULTI) ;
@@ -53,22 +53,22 @@ __getBerkeleyDBInfo()
                 /* || Patch != DB_VERSION_PATCH) */
 
         croak("\nDB_File was build with libdb version %d.%d.%d,\nbut you are attempting to run it with libdb version %d.%d.%d\n",
-                DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH, 
+                DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH,
                 Major, Minor, Patch) ;
-    
+
     /* check that libdb is recent enough  -- we need 2.3.4 or greater */
     if (Major == 2 && (Minor < 3 || (Minor ==  3 && Patch < 4)))
         croak("DB_File needs Berkeley DB 2.3.4 or greater, you have %d.%d.%d\n",
                  Major, Minor, Patch) ;
- 
+
     {
         char buffer[40] ;
         sprintf(buffer, "%d.%d", Major, Minor) ;
-        sv_setpv(version_sv, buffer) ; 
+        sv_setpv(version_sv, buffer) ;
         sprintf(buffer, "%d.%03d%03d", Major, Minor, Patch) ;
-        sv_setpv(ver_sv, buffer) ; 
+        sv_setpv(ver_sv, buffer) ;
     }
- 
+
 #else /* ! DB_VERSION_MAJOR */
     sv_setiv(version_sv, 1) ;
     sv_setiv(ver_sv, 1) ;

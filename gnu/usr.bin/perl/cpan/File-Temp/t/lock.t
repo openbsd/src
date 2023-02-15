@@ -43,7 +43,7 @@ if ($@) {
 ok( !$status, "File $fh is locked" );
 
 # Now get a tempfile with locking disabled
-$fh = new File::Temp( EXLOCK => 0 );
+$fh = File::Temp->new( EXLOCK => 0 );
 
 eval {
    local $SIG{ALRM} = sub { die "alarm\n" }; # NB: \n required

@@ -1,5 +1,34 @@
 CHANGES
 -------
+2.74  2020-09-09 09:21:39 rurban
+      Features
+      - Add ICMPv6_NI_REPLY support.
+      Bugfixes
+      - Fix icmp payload offset to match icmpv6 (JimC Leones GH #21)
+        Skip the 20 byte header to reliably find the various return types.
+        This unifies icmpv6 with icmp better.
+      - Fix $SOCKET::VERSION eval (Petr Pavlu, PR #22)
+      META Changes
+      - Fix and improve the META repository as hashref, license as arrayref
+        (Tom Hukins, PR #19)
+      - add TEST_REQUIRES
+      - sort MANIFEST
+      - add windows smokers: appveyor
+      Test fixes
+      - Improve the tcp test to localhost, when there is no route to localhost
+        (freebsd mostly)
+      - TODO a flaky 450_service.t on 127.0.0.1 on port 2 on Windows (analog to freebsd, ...)
+        (Christian Walde, PR #20)
+      - Skip 501_ping_icmpv6.t when icmpv6 cannot be initialized. Mostly due to missing
+        icmpv6 support. (GH #15)
+      - add more xt tests: t/602_kwalitee.t, t/603_meta.t, t/604_manifest.t
+
+2.73  Thu Feb 27 14:32:25 CET 2020 (rurban)
+      Bugfixes
+       - Fix shadowing of hash options in constructor (Patrick Heesom, RT #131919)
+       - Fix icmp v4 length with given bytes/data_size option (Patrick Heesom, RT #131919)
+       - Call _resolv as class method (Marc Reissner, GH #16)
+
 2.72  Thu 28 Mar 2019 09:01:39 AM CET (rurban)
       Features
       - add .cirrus.yml smoker https://cirrus-ci.com/github/rurban/Net-Ping

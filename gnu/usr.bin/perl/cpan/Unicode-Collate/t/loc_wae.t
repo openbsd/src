@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -96,11 +91,11 @@ ok($objWae->gt("U\x{308}U\x{308}", "u9"));
 
 $objWae->change(level => 3);
 
-ok($objWae->eq("a\x{301}", pack('U', 0xE1)));
-ok($objWae->eq("e\x{301}", pack('U', 0xE9)));
-ok($objWae->eq("i\x{301}", pack('U', 0xED)));
-ok($objWae->eq("o\x{301}", pack('U', 0xF3)));
-ok($objWae->eq("u\x{301}", pack('U', 0xFA)));
+ok($objWae->eq("a\x{301}", _pack_U(0xE1)));
+ok($objWae->eq("e\x{301}", _pack_U(0xE9)));
+ok($objWae->eq("i\x{301}", _pack_U(0xED)));
+ok($objWae->eq("o\x{301}", _pack_U(0xF3)));
+ok($objWae->eq("u\x{301}", _pack_U(0xFA)));
 ok($objWae->eq("a\x{301}", "aa"));
 ok($objWae->eq("e\x{301}", "ee"));
 ok($objWae->eq("i\x{301}", "ii"));
@@ -116,9 +111,9 @@ ok($objWae->eq("s\x{30C}", "sch"));
 
 # 60
 
-my $a1 = pack('U', 0xE4);
-my $o1 = pack('U', 0xF6);
-my $u1 = pack('U', 0xFC);
+my $a1 = _pack_U(0xE4);
+my $o1 = _pack_U(0xF6);
+my $u1 = _pack_U(0xFC);
 my $a2 = "a\x{308}";
 my $o2 = "o\x{308}";
 my $u2 = "u\x{308}";
@@ -127,8 +122,8 @@ ok($objWae->eq($a1, $a2));
 ok($objWae->eq($o1, $o2));
 ok($objWae->eq($u1, $u2));
 
-ok($objWae->eq("a\x{303}", pack('U', 0xE3)));
-ok($objWae->eq("o\x{303}", pack('U', 0xF5)));
+ok($objWae->eq("a\x{303}", _pack_U(0xE3)));
+ok($objWae->eq("o\x{303}", _pack_U(0xF5)));
 ok($objWae->eq("u\x{303}", "\x{169}"));
 
 # 66

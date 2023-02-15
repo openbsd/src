@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;

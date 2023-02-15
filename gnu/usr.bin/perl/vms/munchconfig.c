@@ -253,7 +253,7 @@ main(int argc, char *argv[])
       /* Did we find one? */
       if ('$' != LineBuffer[LineBufferLoop]) {
         /* Nope, spit out the value */
-	OutBuf[OutBufPos++] = LineBuffer[LineBufferLoop];
+        OutBuf[OutBufPos++] = LineBuffer[LineBufferLoop];
       } else {
         /* Yes, we did. Is it escaped? */
         if ((LineBufferLoop > 0) && ('\\' == LineBuffer[LineBufferLoop -
@@ -289,8 +289,8 @@ main(int argc, char *argv[])
                 ConfigSubLoop++) {
               if (!strcmp(TokenBuffer, ConfigSub[ConfigSubLoop].Tag)) {
                 char *cp = ConfigSub[ConfigSubLoop].Value;
-		GotIt = 1;
-		while (*cp) OutBuf[OutBufPos++] = *(cp++);
+                GotIt = 1;
+                while (*cp) OutBuf[OutBufPos++] = *(cp++);
                 break;
               }
             }
@@ -298,9 +298,9 @@ main(int argc, char *argv[])
             /* Did we find something? If not, spit out what was in our */
             /* buffer */
             if (!GotIt) {
-	      char *cp = TokenBuffer;
-	      OutBuf[OutBufPos++] = '$';
-	      while (*cp) OutBuf[OutBufPos++] = *(cp++);
+              char *cp = TokenBuffer;
+              OutBuf[OutBufPos++] = '$';
+              while (*cp) OutBuf[OutBufPos++] = *(cp++);
             }
             
           } else {
@@ -322,17 +322,17 @@ main(int argc, char *argv[])
       LineBufferLoop = 0;
       OutBuf[OutBufPos] = '\0';
       for (i = 0; i <= 1; i++) {
-	while (!isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
-	while ( isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+        while (!isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+        while ( isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
       }
       while (*cp) {
-	while (isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
-	if (!incomment && *cp == '/' && *(cp+1) == '*') incomment = 1;
-	while (*cp && !isspace(*cp)) {
-	  if (incomment) LineBuffer[LineBufferLoop++] = *cp;
-	  cp++;
-	}
-	if (incomment && *cp == '*' && *(cp+1) == '/') incomment = 0;
+        while (isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+        if (!incomment && *cp == '/' && *(cp+1) == '*') incomment = 1;
+        while (*cp && !isspace(*cp)) {
+          if (incomment) LineBuffer[LineBufferLoop++] = *cp;
+          cp++;
+        }
+        if (incomment && *cp == '*' && *(cp+1) == '/') incomment = 0;
       }
       LineBuffer[LineBufferLoop] = '\0';
       puts(LineBuffer);

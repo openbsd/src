@@ -9,8 +9,8 @@ perl5301delta - what is new for perl v5.30.1
 This document describes differences between the 5.30.0 release and the 5.30.1
 release.
 
-If you are upgrading from an earlier release such as 5.29.0, first read
-L<perl5300delta>, which describes differences between 5.29.0 and 5.30.0.
+If you are upgrading from an earlier release such as 5.28.0, first read
+L<perl5300delta>, which describes differences between 5.28.0 and 5.30.0.
 
 =head1 Incompatible Changes
 

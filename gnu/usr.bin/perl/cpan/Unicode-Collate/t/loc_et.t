@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -83,14 +78,14 @@ ok($objEt->eq("s\x{30C}", "\x{161}"));
 ok($objEt->eq("S\x{30C}", "\x{160}"));
 ok($objEt->eq("z\x{30C}", "\x{17E}"));
 ok($objEt->eq("Z\x{30C}", "\x{17D}"));
-ok($objEt->eq("o\x{303}", pack('U', 0xF5)));
-ok($objEt->eq("O\x{303}", pack('U', 0xD5)));
-ok($objEt->eq("a\x{308}", pack('U', 0xE4)));
-ok($objEt->eq("A\x{308}", pack('U', 0xC4)));
-ok($objEt->eq("o\x{308}", pack('U', 0xF6)));
-ok($objEt->eq("O\x{308}", pack('U', 0xD6)));
-ok($objEt->eq("u\x{308}", pack('U', 0xFC)));
-ok($objEt->eq("U\x{308}", pack('U', 0xDC)));
+ok($objEt->eq("o\x{303}", _pack_U(0xF5)));
+ok($objEt->eq("O\x{303}", _pack_U(0xD5)));
+ok($objEt->eq("a\x{308}", _pack_U(0xE4)));
+ok($objEt->eq("A\x{308}", _pack_U(0xC4)));
+ok($objEt->eq("o\x{308}", _pack_U(0xF6)));
+ok($objEt->eq("O\x{308}", _pack_U(0xD6)));
+ok($objEt->eq("u\x{308}", _pack_U(0xFC)));
+ok($objEt->eq("U\x{308}", _pack_U(0xDC)));
 
 # 40
 

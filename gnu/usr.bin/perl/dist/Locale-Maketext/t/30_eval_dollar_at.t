@@ -28,7 +28,7 @@ my $err = eval {
    $lh->maketext('this is ] an error');
 };
 is($err, undef, "no return from eval");
-like("$@", qr/Unbalanced\s'\]',\sin/ms, '$@ shows that ] was unbalanced');  
+like("$@", qr/Unbalanced\s'\]',\sin/ms, '$@ shows that ] was unbalanced'); 
 
 # _try_use doesn't pollute $@
 $@ = 'foo2';

@@ -12,8 +12,7 @@ use Math::BigInt::Lib;
 
 our @ISA = ('Math::BigInt::Lib');
 
-#my $BASE_LEN = 4;
-my $BASE_LEN = 9;
+my $BASE_LEN = 5;
 my $BASE     = 0 + ("1" . ("0" x $BASE_LEN));
 my $MAX_VAL  = $BASE - 1;
 
@@ -25,8 +24,8 @@ sub _new {
     my $p = int($n / $BASE_LEN);
     my $q = $n % $BASE_LEN;
 
-    my $format = $] < 5.9008 ? "a$BASE_LEN" x $p
-                             : "(a$BASE_LEN)*";
+    my $format = $] < 5.008 ? "a$BASE_LEN" x $p
+                            : "(a$BASE_LEN)*";
     $format = "a$q" . $format if $q > 0;
 
     my $self = [ reverse(map { 0 + $_ } unpack($format, $str)) ];
@@ -34,7 +33,7 @@ sub _new {
 }
 
 ##############################################################################
-# convert back to string and number
+# convert to string
 
 sub _str {
     my ($class, $x) = @_;

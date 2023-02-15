@@ -1,6 +1,17 @@
 # copied over from JSON::XS and modified to use JSON::PP
 
+package JSON::PP::freeze;
+
+1;
+
+package JSON::PP::tojson;
+
+1;
+
+package main;
+
 use strict;
+use warnings;
 use Test::More;
 BEGIN { plan tests => 20 };
 BEGIN { $^W = 0 } # hate
@@ -47,8 +58,8 @@ sub JSON::PP::freeze::THAW {
    777
 }
 
-my $obj = bless { k => 1 }, JSON::PP::freeze::;
-my $enc = $json->encode ($obj);
+$obj = bless { k => 1 }, JSON::PP::freeze::;
+$enc = $json->encode ($obj);
 ok ($enc eq '("JSON::PP::freeze")[3,1,2]');
 
 my $dec = $json->decode ($enc);

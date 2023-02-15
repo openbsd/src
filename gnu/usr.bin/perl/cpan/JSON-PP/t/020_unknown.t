@@ -1,11 +1,10 @@
 use strict;
+use warnings;
 
 use Test::More;
 BEGIN { plan tests => 10 };
 BEGIN { $ENV{PERL_JSON_BACKEND} = 0; }
 
-
-use strict;
 use JSON::PP;
 
 my $json = JSON::PP->new;

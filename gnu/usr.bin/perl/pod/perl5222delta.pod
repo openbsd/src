@@ -17,12 +17,12 @@ L<perl5221delta>, which describes differences between 5.22.0 and 5.22.1.
 =head2 Fix out of boundary access in Win32 path handling
 
 This is CVE-2015-8608.  For more information see
-L<[perl #126755]|https://rt.perl.org/Ticket/Display.html?id=126755>.
+L<[GH #15067]|https://github.com/Perl/perl5/issues/15067>.
 
 =head2 Fix loss of taint in C<canonpath()>
 
 This is CVE-2015-8607.  For more information see
-L<[perl #126862]|https://rt.perl.org/Ticket/Display.html?id=126862>.
+L<[GH #15084]|https://github.com/Perl/perl5/issues/15084>.
 
 =head2 Set proper umask before calling C<mkstemp(3)>
 
@@ -37,14 +37,14 @@ regardless of current umask.
 
 This has been fixed by using umask C<0177> instead.
 
-L<[perl #127322]|https://rt.perl.org/Ticket/Display.html?id=127322>
+L<[GH #15135]|https://github.com/Perl/perl5/issues/15135>
 
 =head2 Avoid accessing uninitialized memory in Win32 C<crypt()>
 
 Validation that will detect both a short salt and invalid characters in the
 salt has been added.
 
-L<[perl #126922]|https://rt.perl.org/Ticket/Display.html?id=126922>
+L<[GH #15091]|https://github.com/Perl/perl5/issues/15091>
 
 =head2 Remove duplicate environment variables from C<environ>
 
@@ -84,7 +84,7 @@ L<Module::CoreList> has been upgraded from version 5.20151213 to 5.20160429.
 The version number of L<Digest::SHA> listed for Perl 5.18.4 was wrong and has
 been corrected.  Likewise for the version number of L<Config> in 5.18.3 and
 5.18.4.
-L<[perl #127624]|https://rt.perl.org/Ticket/Display.html?id=127624>
+L<[GH #15202]|https://github.com/Perl/perl5/issues/15202>
 
 =back
 
@@ -126,14 +126,14 @@ require an input object file that uses the probes in the F<.d> file.
 
 Previously the probe would fail and cause a build failure.
 
-L<[perl #122287]|https://rt.perl.org/Ticket/Display.html?id=122287>
+L<[GH #13985]|https://github.com/Perl/perl5/issues/13985>
 
 =item *
 
 F<Configure> no longer probes for F<libnm> by default.  Originally this was the
 "New Math" library, but the name has been re-used by the GNOME NetworkManager.
 
-L<[perl #127131]|https://rt.perl.org/Ticket/Display.html?id=127131>
+L<[GH #15115]|https://github.com/Perl/perl5/issues/15115>
 
 =item *
 
@@ -155,7 +155,7 @@ Compiling perl with B<-DPERL_MEM_LOG> now works again.
 
 Compiling perl with B<-Dusecbacktrace> on Darwin now works again.
 
-L<[perl #127764]|https://rt.perl.org/Ticket/Display.html?id=127764>
+L<[GH #15245]|https://github.com/Perl/perl5/issues/15245>
 
 =item OS X/Darwin
 
@@ -166,7 +166,7 @@ atfork handler using the libc C<setenv()> function to update the environment.
 
 Perl now uses C<setenv()>/C<unsetenv()> to update the environment on OS X.
 
-L<[perl #126240]|https://rt.perl.org/Ticket/Display.html?id=126240>
+L<[GH #14955]|https://github.com/Perl/perl5/issues/14955>
 
 =item ppc64el
 
@@ -190,7 +190,7 @@ subroutine definition with a prototype has been seen, then any subsequent stub
 (or definition) of the same subroutine with an attribute was causing an
 assertion failure because of a null pointer.
 
-L<[perl #126845]|https://rt.perl.org/Ticket/Display.html?id=126845>
+L<[GH #15081]|https://github.com/Perl/perl5/issues/15081>
 
 =back
 
@@ -202,7 +202,7 @@ L<[perl #126845]|https://rt.perl.org/Ticket/Display.html?id=126845>
 
 Calls to the placeholder C<&PL_sv_yes> used internally when an C<import()> or
 C<unimport()> method isn't found now correctly handle scalar context.
-L<[perl #126042]|https://rt.perl.org/Ticket/Display.html?id=126042>
+L<[GH #14902]|https://github.com/Perl/perl5/issues/14902>
 
 =item *
 
@@ -210,19 +210,19 @@ The L<C<pipe()>|perlfunc/pipe> operator would assert for C<DEBUGGING> builds
 instead of producing the correct error message.  The condition asserted on is
 detected and reported on correctly without the assertions, so the assertions
 were removed.
-L<[perl #126480]|https://rt.perl.org/Ticket/Display.html?id=126480>
+L<[GH #15015]|https://github.com/Perl/perl5/issues/15015>
 
 =item *
 
 In some cases, failing to parse a here-doc would attempt to use freed memory.
 This was caused by a pointer not being restored correctly.
-L<[perl #126443]|https://rt.perl.org/Ticket/Display.html?id=126443>
+L<[GH #15009]|https://github.com/Perl/perl5/issues/15009>
 
 =item *
 
 Perl now reports more context when it sees an array where it expects to see an
 operator, and avoids an assertion failure.
-L<[perl #123737]|https://rt.perl.org/Ticket/Display.html?id=123737>
+L<[GH #14472]|https://github.com/Perl/perl5/issues/14472>
 
 =item *
 
@@ -230,19 +230,19 @@ If a here-doc was found while parsing another operator, the parser had already
 read end of file, and the here-doc was not terminated, perl could produce an
 assertion or a segmentation fault.  This now reliably complains about the
 unterminated here-doc.
-L<[perl #125540]|https://rt.perl.org/Ticket/Display.html?id=125540>
+L<[GH #14789]|https://github.com/Perl/perl5/issues/14789>
 
 =item *
 
 Parsing beyond the end of the buffer when processing a C<#line> directive with
 no filename is now avoided.
-L<[perl #127334]|https://rt.perl.org/Ticket/Display.html?id=127334>
+L<[GH #15139]|https://github.com/Perl/perl5/issues/15139>
 
 =item *
 
 Perl 5.22.0 added support for the C99 hexadecimal floating point notation, but
 sometimes misparsed hex floats.  This has been fixed.
-L<[perl #127183]|https://rt.perl.org/Ticket/Display.html?id=127183>
+L<[GH #15120]|https://github.com/Perl/perl5/issues/15120>
 
 =item *
 
@@ -250,56 +250,56 @@ Certain regex patterns involving a complemented posix class in an inverted
 bracketed character class, and matching something else optionally would
 improperly fail to match.  An example of one that could fail is
 C<qr/_?[^\Wbar]\x{100}/>.  This has been fixed.
-L<[perl #127537]|https://rt.perl.org/Ticket/Display.html?id=127537>
+L<[GH #15181]|https://github.com/Perl/perl5/issues/15181>
 
 =item *
 
 Fixed an issue with L<C<pack()>|perlfunc/pack> where C<< pack "H" >> (and
 C<< pack "h" >>) could read past the source when given a non-utf8 source and a
 utf8 target.
-L<[perl #126325]|https://rt.perl.org/Ticket/Display.html?id=126325>
+L<[GH #14977]|https://github.com/Perl/perl5/issues/14977>
 
 =item *
 
 Fixed some cases where perl would abort due to a segmentation fault, or a
 C-level assert.
-L<[perl #126193]|https://rt.perl.org/Ticket/Display.html?id=126193>
-L<[perl #126257]|https://rt.perl.org/Ticket/Display.html?id=126257>
-L<[perl #126258]|https://rt.perl.org/Ticket/Display.html?id=126258>
-L<[perl #126405]|https://rt.perl.org/Ticket/Display.html?id=126405>
-L<[perl #126602]|https://rt.perl.org/Ticket/Display.html?id=126602>
-L<[perl #127773]|https://rt.perl.org/Ticket/Display.html?id=127773>
-L<[perl #127786]|https://rt.perl.org/Ticket/Display.html?id=127786>
+L<[GH #14941]|https://github.com/Perl/perl5/issues/14941>
+L<[GH #14962]|https://github.com/Perl/perl5/issues/14962>
+L<[GH #14963]|https://github.com/Perl/perl5/issues/14963>
+L<[GH #14997]|https://github.com/Perl/perl5/issues/14997>
+L<[GH #15039]|https://github.com/Perl/perl5/issues/15039>
+L<[GH #15247]|https://github.com/Perl/perl5/issues/15247>
+L<[GH #15251]|https://github.com/Perl/perl5/issues/15251>
 
 =item *
 
 A memory leak when setting C<$ENV{foo}> on Darwin has been fixed.
-L<[perl #126240]|https://rt.perl.org/Ticket/Display.html?id=126240>
+L<[GH #14955]|https://github.com/Perl/perl5/issues/14955>
 
 =item *
 
 Perl now correctly raises an error when trying to compile patterns with
 unterminated character classes while there are trailing backslashes.
-L<[perl #126141]|https://rt.perl.org/Ticket/Display.html?id=126141>
+L<[GH #14919]|https://github.com/Perl/perl5/issues/14919>
 
 =item *
 
 C<NOTHING> regops and C<EXACTFU_SS> regops in C<make_trie()> are now handled
 properly.
-L<[perl #126206]|https://rt.perl.org/Ticket/Display.html?id=126206>
+L<[GH #14945]|https://github.com/Perl/perl5/issues/14945>
 
 =item *
 
 Perl now only tests C<semctl()> if we have everything needed to use it.  In
 FreeBSD the C<semctl()> entry point may exist, but it can be disabled by
 policy.
-L<[perl #127533]|https://rt.perl.org/Ticket/Display.html?id=127533>
+L<[GH #15180]|https://github.com/Perl/perl5/issues/15180>
 
 =item *
 
 A regression that allowed undeclared barewords as hash keys to work despite
 strictures has been fixed.
-L<[perl #126981]|https://rt.perl.org/Ticket/Display.html?id=126981>
+L<[GH #15099]|https://github.com/Perl/perl5/issues/15099>
 
 =item *
 

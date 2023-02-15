@@ -13,7 +13,7 @@ sub run
     my $UncompressClass = getInverse($CompressClass);
     my $Error           = getErrorRef($CompressClass);
     my $UnError         = getErrorRef($UncompressClass);
-    
+
 #    my $hello = <<EOM ;
 #hello world
 #this is a test
@@ -23,7 +23,7 @@ sub run
 
     # ASCII hex equivalent of the text above. This makes the test
     # harness behave identically on an EBCDIC platform.
-    my $hello = 
+    my $hello =
       "\x68\x65\x6c\x6c\x6f\x20\x77\x6f\x72\x6c\x64\x0a\x74\x68\x69\x73" .
       "\x20\x69\x73\x20\x61\x20\x74\x65\x73\x74\x0a\x73\x6f\x6d\x65\x20" .
       "\x6d\x6f\x72\x65\x20\x73\x74\x75\x66\x66\x20\x6f\x6e\x20\x74\x68" .
@@ -52,9 +52,9 @@ sub run
 
             foreach my $i (1 .. $fingerprint_size-1)
             {
-                my $lex = new LexFile my $name ;
+                my $lex = LexFile->new( my $name );
                 my $input;
-            
+
                 title "Fingerprint Truncation - length $i, Transparent $trans";
 
                 my $part = substr($compressed, 0, $i);
@@ -68,9 +68,9 @@ sub run
                     $input = \$part;
                 }
 
-                my $gz = new $UncompressClass $input,
+                my $gz = $UncompressClass->can('new')->( $UncompressClass, $input,
                                               -BlockSize   => $blocksize,
-                                              -Transparent => $trans;
+                                              -Transparent => $trans );
                 if ($trans) {
                     ok $gz;
                     ok ! $gz->error() ;
@@ -92,9 +92,9 @@ sub run
             #
             foreach my $i ($fingerprint_size .. $header_size -1)
             {
-                my $lex = new LexFile my $name ;
+                my $lex = LexFile->new( my $name );
                 my $input;
-            
+
                 title "Header Truncation - length $i, Source $fb, Transparent $trans";
 
                 my $part = substr($compressed, 0, $i);
@@ -107,10 +107,10 @@ sub run
                 {
                     $input = \$part;
                 }
-                
-                ok ! defined new $UncompressClass $input,
+
+                ok ! defined $UncompressClass->can('new')->( $UncompressClass, $input,
                                                   -BlockSize   => $blocksize,
-                                                  -Transparent => $trans;
+                                                  -Transparent => $trans );
                 #ok $gz->eof() ;
             }
 
@@ -118,15 +118,15 @@ sub run
             # In this case the uncompression object will have been created,
             # so need to check that subsequent reads from the object fail
             if ($header_size > 0)
-            {            
+            {
                 for my $mode (qw(block line para record slurp))
                 {
 
                     title "Corruption after header - Mode $mode, Source $fb, Transparent $trans";
-                    
-                    my $lex = new LexFile my $name ;
+
+                    my $lex = LexFile->new( my $name );
                     my $input;
-                
+
                     my $part = substr($compressed, 0, $header_size);
                     # Append corrupt data
                     $part .= "\xFF" x 100 ;
@@ -139,11 +139,11 @@ sub run
                     {
                         $input = \$part;
                     }
-                    
-                    ok my $gz = new $UncompressClass $input,
+
+                    ok my $gz = $UncompressClass->can('new')->( $UncompressClass, $input,
                                                      -Strict      => 1,
                                                      -BlockSize   => $blocksize,
-                                                     -Transparent => $trans
+                                                     -Transparent => $trans )
                          or diag $$UnError;
 
                     my $un ;
@@ -184,19 +184,19 @@ sub run
             }
 
             # Back to truncation tests
-            
+
             foreach my $i ($header_size .. length($compressed) - 1 - $trailer_size)
             {
                 next if $i == 0 ;
-         
+
                 for my $mode (qw(block line))
                 {
 
                     title "Compressed Data Truncation - length $i, MOde $mode, Source $fb, Transparent $trans";
 
-                    my $lex = new LexFile my $name ;
+                    my $lex = LexFile->new( my $name );
                     my $input;
-                
+
                     my $part = substr($compressed, 0, $i);
                     if ($fb eq 'filehandle')
                     {
@@ -207,11 +207,11 @@ sub run
                     {
                         $input = \$part;
                     }
-                    
-                    ok my $gz = new $UncompressClass $input,
+
+                    ok my $gz = $UncompressClass->can('new')->( $UncompressClass, $input,
                                                      -Strict      => 1,
                                                      -BlockSize   => $blocksize,
-                                                     -Transparent => $trans
+                                                     -Transparent => $trans )
                          or diag $$UnError;
 
                     my $un ;
@@ -227,12 +227,12 @@ sub run
                     }
                     ok $gz->error() ;
                     cmp_ok $gz->errorNo(), '<', 0 ;
-                    # ok $gz->eof() 
+                    # ok $gz->eof()
                     #     or die "EOF";
                     $gz->close();
                 }
             }
-            
+
             # RawDeflate and Zstandard do not have a trailer
             next if $CompressClass eq 'IO::Compress::RawDeflate' ;
             next if $CompressClass eq 'IO::Compress::Zstd' ;
@@ -242,9 +242,9 @@ sub run
             {
                 foreach my $lax (0, 1)
                 {
-                    my $lex = new LexFile my $name ;
+                    my $lex = LexFile->new( my $name );
                     my $input;
-                
+
                     ok 1, "Compressed Trailer Truncation - Length $i, Lax $lax, Transparent $trans" ;
                     my $part = substr($compressed, 0, $i);
                     if ($fb eq 'filehandle')
@@ -256,12 +256,12 @@ sub run
                     {
                         $input = \$part;
                     }
-                    
-                    ok my $gz = new $UncompressClass $input,
+
+                    ok my $gz = $UncompressClass->can('new')->( $UncompressClass, $input,
                                                      -BlockSize   => $blocksize,
                                                      -Strict      => !$lax,
-                                                     -Append      => 1,   
-                                                     -Transparent => $trans;
+                                                     -Append      => 1,
+                                                     -Transparent => $trans );
                     my $un = '';
                     my $status = 1 ;
                     $status = $gz->read($un) while $status > 0 ;
@@ -269,7 +269,7 @@ sub run
                     if ($lax)
                     {
                         is $un, $hello;
-                        is $status, 0 
+                        is $status, 0
                             or diag "Status $status Error is " . $gz->error() ;
                         ok $gz->eof()
                             or diag "Status $status Error is " . $gz->error() ;
@@ -277,13 +277,13 @@ sub run
                     }
                     else
                     {
-                        cmp_ok $status, "<", 0 
+                        cmp_ok $status, "<", 0
                             or diag "Status $status Error is " . $gz->error() ;
                         ok $gz->eof()
                             or diag "Status $status Error is " . $gz->error() ;
                         ok $gz->error() ;
                     }
-                    
+
                     $gz->close();
                 }
             }
@@ -292,4 +292,3 @@ sub run
 }
 
 1;
-

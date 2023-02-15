@@ -6,7 +6,7 @@ BEGIN {
     require "./test.pl";
     require Config;
     $Config::Config{d_pseudofork}
-        or skip_all("no psuedo-fork");
+        or skip_all("no pseudo-fork");
     eval 'use Errno';
     die $@ if $@ and !is_miniperl();
 }

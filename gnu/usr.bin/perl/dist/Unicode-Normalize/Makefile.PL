@@ -1,4 +1,6 @@
-require 5.006001;
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
 
 my $clean = {};
@@ -6,7 +8,7 @@ my $clean = {};
 my $mm_ver = ExtUtils::MakeMaker->VERSION;
 
 if (-f "Normalize.xs") {
-    print STDERR "Making header files for XS...\n";
+    print "Making header files for XS...\n";
 
     do './mkheader' or die $@ || "mkheader: $!";
 
@@ -29,14 +31,14 @@ WriteMakefile(
     'clean'             => $clean,
     'depend'            => { 'Normalize.o' => '$(H_FILES)' },
     'PREREQ_PM'         => {
-        Carp            => 0,
-        constant        => 0,
-        DynaLoader      => 0,
-        Exporter        => 0,
-        File::Spec      => 0,
-        strict          => 0,
-        warnings        => 0,
-        SelectSaver     => 0,
+        'Carp'          => 0,
+        'constant'      => 0,
+        'DynaLoader'    => 0,
+        'Exporter'      => 0,
+        'File::Spec'    => 0,
+        'strict'        => 0,
+        'warnings'      => 0,
+        'SelectSaver'   => 0,
     },
     ($mm_ver < 6.48 ? () : MIN_PERL_VERSION => 5.6.0),
     ($mm_ver < 6.46 ? () : (META_MERGE => {

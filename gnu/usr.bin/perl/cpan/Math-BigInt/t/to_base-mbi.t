@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 24;
+use Test::More tests => 30;
 
 my $class;
 
@@ -42,6 +42,13 @@ while (<DATA>) {
 __END__
 
 # Base 2
+
+0:2:0
+1:2:1
+2:2:10
+0:2:ab:a
+1:2:ab:b
+2:2:ab:ba
 
 250:2:11111010
 250:2:01:11111010

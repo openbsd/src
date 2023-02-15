@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 BEGIN {
     if ($ENV{'PERL_CORE'}){
         chdir 't' if -d 't';
@@ -5,7 +8,6 @@ BEGIN {
     }
 }
 
-use strict;
 use MIME::Base64;
 
 print "1..283\n";

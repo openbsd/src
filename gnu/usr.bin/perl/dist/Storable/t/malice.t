@@ -63,7 +63,7 @@ sub test_hash {
   is (ref $clone, "HASH", "Get hash back");
   is (scalar keys %$clone, 1, "with 1 key");
   is ((keys %$clone)[0], "perl", "which is correct");
-  is ($clone->{perl}, "rules");
+  is ($clone->{perl}, "rules", "Got expected value when looking up key in clone");
 }
 
 sub test_header {
@@ -238,7 +238,7 @@ sub test_things {
   }
 }
 
-ok (defined store(\%hash, $file));
+ok (defined store(\%hash, $file), "store() returned defined value");
 
 my $expected = 20 + length ($file_magic_str) + $other_magic + $fancy;
 my $length = -s $file;
@@ -266,7 +266,7 @@ test_things($stored, \&freeze_and_thaw, 'string');
 # Network order.
 unlink $file or die "Can't unlink '$file': $!";
 
-ok (defined nstore(\%hash, $file));
+ok (defined nstore(\%hash, $file), "nstore() returned defined value");
 
 $expected = 20 + length ($file_magic_str) + $network_magic + $fancy;
 $length = -s $file;

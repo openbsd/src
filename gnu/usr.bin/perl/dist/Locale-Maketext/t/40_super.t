@@ -24,17 +24,17 @@ my @in = grep m/\S/, split /[\n\r]/, q{
    hai pt-br fr => hai pt-br fr  pt
 
 # Now test multi-part complicateds:
-   pt-br-janeiro fr => pt-br-janeiro fr pt-br pt 
+   pt-br-janeiro fr => pt-br-janeiro fr pt-br pt
 pt-br-janeiro de fr => pt-br-janeiro de fr pt-br pt
 pt-br-janeiro de pt fr => pt-br-janeiro de pt fr pt-br
 
-ja    pt-br-janeiro fr => ja pt-br-janeiro fr pt-br pt 
+ja    pt-br-janeiro fr => ja pt-br-janeiro fr pt-br pt
 ja pt-br-janeiro de fr => ja pt-br-janeiro de fr pt-br pt
 ja pt-br-janeiro de pt fr => ja pt-br-janeiro de pt fr pt-br
 
 pt-br-janeiro de pt-br fr => pt-br-janeiro de pt-br fr pt
  # an odd case, since we don't filter for uniqueness in this sub
- 
+
 };
 
 $Locale::Maketext::MATCH_SUPERS_TIGHTLY = 0;

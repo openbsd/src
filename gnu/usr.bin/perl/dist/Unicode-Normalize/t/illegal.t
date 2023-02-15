@@ -1,16 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Normalize cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Normalize cannot get a Unicode code point\n";
-	exit 0;
-    }
-}
-
-BEGIN {
     if ($ENV{PERL_CORE}) {
         chdir('t') if -d 't';
         @INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -43,14 +32,7 @@ use warnings;
 
 BEGIN { $| = 1; print "1..113\n"; }
 my $count = 0;
-sub ok ($;$) {
-    my $p = my $r = shift;
-    if (@_) {
-	my $x = shift;
-	$p = !defined $x ? !defined $r : !defined $r ? 0 : $r eq $x;
-    }
-    print $p ? "ok" : "not ok", ' ', ++$count, "\n";
-}
+sub ok { Unicode::Normalize::ok(\$count, @_) }
 
 ok(1);
 
@@ -77,7 +59,7 @@ for my $u (0xD800, 0xDFFF, 0xFDD0, 0xFDEF, 0xFEFF, 0xFFFE, 0xFFFF,
 our $proc;    # before the last starter
 our $unproc;  # the last starter and after
 
-sub _pack_U   { Unicode::Normalize::pack_U(@_) }
+sub _pack_U   { Unicode::Normalize::dot_t_pack_U(@_) }
 
 ($proc, $unproc) = splitOnLastStarter(_pack_U(0x41, 0x300, 0x327, 0xFFFF));
 ok($proc   eq _pack_U(0x41, 0x300, 0x327));

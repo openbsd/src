@@ -74,7 +74,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip("mbtowc() not present", 5) unless $Config{d_mbtowc};
+    skip("mbtowc() not present", 5) unless $Config{d_mbtowc} || $Config{d_mbrtowc};
 
     my $wide;
 
@@ -119,7 +119,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip("mbtowc or wctomb() not present", 2) unless $Config{d_mbtowc} && $Config{d_wctomb};
+    skip("wctomb() not present", 2) unless $Config{d_wctomb} || $Config{d_wcrtomb};
 
     fresh_perl_is('use POSIX; &POSIX::wctomb(undef,0); my $string; my $len = &POSIX::wctomb($string, ord "A"); print "$len:$string"',
       "1:A", {}, 'wctomb() works on ASCII input');

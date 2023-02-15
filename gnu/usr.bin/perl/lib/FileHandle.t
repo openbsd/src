@@ -13,7 +13,7 @@ BEGIN {
 use strict;
 use FileHandle;
 autoflush STDOUT 1;
-use Test::More (tests => 12);
+use Test::More;
 my $TB = Test::More->builder;
 
 my $mystdout = new_from_fd FileHandle 1,"w";
@@ -57,13 +57,11 @@ ok(! $|, "handle not auto-flushing current output channel");
 autoflush STDOUT 1;
 ok($|, "handle auto-flushing current output channel");
 
-SKIP: {
-    skip "No fork or pipe on DOS", 1 if ($^O eq 'dos');
-
+{
     my ($rd,$wr) = FileHandle::pipe;
     my $non_forking = (
         $^O eq 'VMS' || $^O eq 'os2' || $^O eq 'amigaos' ||
-        $^O eq 'MSWin32' || $^O eq 'NetWare' || $Config{d_fork} ne 'define'
+        $^O eq 'MSWin32' || $Config{d_fork} ne 'define'
     );
     my $content = "Writing to one end of a pipe, reading from the other\n";
     if ($non_forking) {
@@ -90,7 +88,8 @@ SKIP: {
             die "fork failed: $!";
         }
     }
-
-} # END: SKIP for dos
+}
 
 ok(!FileHandle->new('', 'r'), "Can't open empty filename");
+
+done_testing();

@@ -34,3 +34,40 @@ sub _header {
     is_deeply(_header($handle->read_response_header), $exp, "->read_response_header LF");
 }
 
+{
+    # broken status-line
+    my $response = join $LF, "HTTP/08.15 66x   Foo\nbar", 'Foo: Foo', 'Bar: Bar', '', '';
+    my $fh       = tmpfile($response);
+    my $handle   = HTTP::Tiny::Handle->new(fh => $fh);
+    my $res      = eval{ $handle->read_response_header };
+    my $err      = $@;
+    like $err, qr/Malformed Status-Line: /, '->read_response_header diagnoses malformed status line';
+}
+
+{
+    my $response = join $LF, "HTTP/2.0 200 Okish", 'Foo: Foo', 'Bar: Bar', '', '';
+    my $fh       = tmpfile($response);
+    my $handle   = HTTP::Tiny::Handle->new(fh => $fh);
+    my $res      = eval{ $handle->read_response_header };
+    my $err      = $@;
+    like $err, qr/Unsupported HTTP protocol: /, '->read_response_header unsupported HTTP protocol';
+}
+
+{
+    # strict RFC7230#3.1.2 compliance, require space after code
+    my $response = join $LF, 'HTTP/1.1 200 ', 'Foo: Foo', 'Bar: Bar', '', '';
+    my $fh       = tmpfile($response);
+    my $handle   = HTTP::Tiny::Handle->new(fh => $fh);
+    my $exp      = [ 200, '', { foo => 'Foo', bar => 'Bar' }, 'HTTP/1.1' ];
+    is_deeply(_header($handle->read_response_header), $exp, "->read_response_header empty phrase preceded by SP");
+}
+
+{
+    # practical RFC7230#3.1.2 interpretation, require space after code
+    # only if there is a reason-phrase
+    my $response = join $LF, 'HTTP/1.1 200', 'Foo: Foo', 'Bar: Bar', '', '';
+    my $fh       = tmpfile($response);
+    my $handle   = HTTP::Tiny::Handle->new(fh => $fh);
+    my $exp      = [ 200, '', { foo => 'Foo', bar => 'Bar' }, 'HTTP/1.1' ];
+    is_deeply(_header($handle->read_response_header), $exp, "->read_response_header empty phrase without preceding SP");
+}

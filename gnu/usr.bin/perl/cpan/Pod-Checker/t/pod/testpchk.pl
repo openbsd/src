@@ -1,8 +1,10 @@
 package TestPodChecker;
 
+use strict;
+use File::Basename qw(basename dirname fileparse);
+use File::Spec;
+
 BEGIN {
-   use File::Basename;
-   use File::Spec;
    push @INC, '..';
    my $THISDIR = dirname $0;
    unshift @INC, $THISDIR;
@@ -14,7 +16,7 @@ BEGIN {
 }
 
 use Pod::Checker;
-use vars qw(@ISA @EXPORT $MYPKG);
+use vars qw(@ISA @EXPORT @EXPORT_OK $MYPKG);
 #use strict;
 #use diagnostics;
 use Carp;

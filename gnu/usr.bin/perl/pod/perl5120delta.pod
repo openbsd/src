@@ -573,7 +573,7 @@ could create names that are, for example, made up entirely of punctuation
 symbols. It is now deprecated to make names that don't begin with an
 alphabetic character, and aren't alphanumeric or contain other than
 a very few other characters, namely spaces, dashes, parentheses
-and colons. Because of the added meaning of C<\N> (See L</C<\N>
+and colons. Because of the added meaning of C<\N> (See C<L</\N>
 experimental regex escape>), names that look like curly brace -enclosed
 quantifiers won't work. For example, C<\N{3,4}> now means to match 3 to
 4 non-newlines; before a custom name C<3,4> could have been created.

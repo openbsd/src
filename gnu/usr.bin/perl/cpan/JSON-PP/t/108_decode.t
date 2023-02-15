@@ -2,6 +2,7 @@
 # decode on Perl 5.005, 5.6, 5.8 or later
 #
 use strict;
+use warnings;
 use Test::More;
 
 BEGIN { plan tests => 6 };

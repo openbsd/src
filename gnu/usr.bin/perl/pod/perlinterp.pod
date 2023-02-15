@@ -145,6 +145,9 @@ things like C<if> which choose the next op dynamically at run time. The
 C<PERL_ASYNC_CHECK> makes sure that things like signals interrupt
 execution if required.
 
+=for apidoc_section $embedding
+=for apidoc Amh|void|PERL_ASYNC_CHECK
+
 The actual functions called are known as PP code, and they're spread
 between four files: F<pp_hot.c> contains the "hot" code, which is most
 often used and highly optimized, F<pp_sys.c> contains all the
@@ -171,12 +174,16 @@ provide a way to capture the current PC and SP registers and later
 restore them; i.e. a C<longjmp()> continues at the point in code where
 a previous C<setjmp()> was done, with anything further up on the C
 stack being lost. This is why code should always save values using
-C<SAVE_FOO> rather than in auto variables.
+C<SAVE_I<FOO>> rather than in auto variables.
 
 The perl core wraps C<setjmp()> etc in the macros C<JMPENV_PUSH> and
 C<JMPENV_JUMP>. The basic rule of perl exceptions is that C<exit>, and
 C<die> (in the absence of C<eval>) perform a C<JMPENV_JUMP(2)>, while
 C<die> within C<eval> does a C<JMPENV_JUMP(3)>.
+
+=for apidoc_section $exceptions
+=for apidoc Amh|void|JMPENV_PUSH|int v
+=for apidoc Amh|void|JMPENV_JUMP|int v
 
 At entry points to perl, such as C<perl_parse()>, C<perl_run()> and
 C<call_sv(cv, G_EVAL)> each does a C<JMPENV_PUSH>, then enter a runops
@@ -192,6 +199,8 @@ This normally passes control back to the guard. In the case of
 C<perl_run> and C<call_sv>, a non-null C<PL_restartop> triggers
 re-entry to the runops loop. The is the normal way that C<die> or
 C<croak> is handled within an C<eval>.
+
+=for apidoc Amnh|OP *|PL_restartop
 
 Sometimes ops are executed within an inner runops loop, such as tie,
 sort or overload code. In this case, something like
@@ -741,6 +750,9 @@ have a tied array, the C<PUSH> subroutine receives the object and the
 value to be pushed, and that's exactly what we have here - the tied
 object, retrieved with C<SvTIED_obj>, and the value, the SV C<val>.
 
+=for apidoc_section $magic
+=for apidoc Amh||SvTIED_obj|SV *sv|MAGIC *mg
+
      5	PUTBACK;
 
 Next we tell Perl to update the global stack pointer from our internal
@@ -812,7 +824,7 @@ next operator to run back to the main run loop.
 
 Most of these macros are explained in L<perlapi>, and some of the more
 important ones are explained in L<perlxs> as well. Pay special
-attention to L<perlguts/Background and PERL_IMPLICIT_CONTEXT> for
+attention to L<perlguts/Background and MULTIPLICITY> for
 information on the C<[pad]THX_?> macros.
 
 =head1 FURTHER READING

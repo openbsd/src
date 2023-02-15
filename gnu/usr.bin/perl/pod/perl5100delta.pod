@@ -290,7 +290,7 @@ Cwd::cwd() may return a short directory name, and glob() may return short
 names as well.  On the NTFS file system these short names can always be
 represented in the ANSI codepage.  This will not be true for all other file
 system drivers; e.g. the FAT filesystem stores short filenames in the OEM
-codepage, so some files on FAT volumes remain unaccessible through the
+codepage, so some files on FAT volumes remain inaccessible through the
 ANSI APIs.
 
 Similarly, $^X, @INC, and $ENV{PATH} are preprocessed at startup to make

@@ -1,14 +1,12 @@
 package IPC::Open2;
 
 use strict;
-our ($VERSION, @ISA, @EXPORT);
 
-require 5.000;
-require Exporter;
+require 5.006;
+use Exporter 'import';
 
-$VERSION	= 1.05;
-@ISA		= qw(Exporter);
-@EXPORT		= qw(open2);
+our $VERSION	= 1.06;
+our @EXPORT		= qw(open2);
 
 =head1 NAME
 

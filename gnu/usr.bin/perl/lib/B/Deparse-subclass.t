@@ -4,7 +4,7 @@
 # publicise an API for subclassing B::Deparse they can prevent us from
 # gratuitously breaking conventions that CPAN modules already use.
 
-use Test::More tests => 2;
+use Test::More;
 
 use B::Deparse;
 
@@ -22,3 +22,5 @@ like  $nm->coderef2text(sub { my($a, $b, $c) }),
 like  $nm->coderef2text(sub { my $c; /(??{ $c })/; }),
       qr/\Q(??{\E \$c_groovy/,
      'overriding padname works for renaming lexicals in regexp blocks';
+
+done_testing();

@@ -32,7 +32,7 @@ cmp_ok(scalar @a, '>=', 3, 'explicit use of the GLOB_NOCASE flag');
 
 # Test Win32 backslash nastiness...
 SKIP: {
-    skip 'Not Win32 or NetWare', 3 unless $^O eq 'MSWin32' || $^O eq 'NetWare';
+    skip 'Not Win32', 3 unless $^O eq 'MSWin32';
 
     @a = File::Glob::bsd_glob("op\\g*.t");
     cmp_ok(scalar @a, '>=', 8);

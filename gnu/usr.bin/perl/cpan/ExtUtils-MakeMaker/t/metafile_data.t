@@ -3,6 +3,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test::More;
 BEGIN {
   eval { require CPAN::Meta; CPAN::Meta->VERSION(2.143240) }

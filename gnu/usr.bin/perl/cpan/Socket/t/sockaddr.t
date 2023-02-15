@@ -1,5 +1,6 @@
 #!./perl
 
+use v5.6.1;
 use strict;
 use warnings;
 
@@ -11,7 +12,7 @@ use Socket qw(
     sockaddr_family
     sockaddr_un
 );
-use Test::More tests => 46;
+use Test::More tests => 50;
 
 # inet_aton, inet_ntoa
 {
@@ -82,8 +83,8 @@ SKIP: {
     is(sockaddr_family(scalar sockaddr_in(200,v10.30.50.70)), AF_INET,
         'sockaddr_in in scalar context packs');
 
-    my $warnings = 0;
-    local $SIG{__WARN__} = sub { $warnings++ };
+    my $warnings = "";
+    local $SIG{__WARN__} = sub { $warnings .= $_[0]; };
     ok( !eval { pack_sockaddr_in 0, undef; 1 },
         'pack_sockaddr_in undef addr is fatal' );
     ok( !eval { unpack_sockaddr_in undef; 1 },
@@ -92,14 +93,19 @@ SKIP: {
     ok( eval { pack_sockaddr_in undef, "\0\0\0\0"; 1 },
         'pack_sockaddr_in undef port is allowed' );
 
-    is( $warnings, 0, 'undefined values produced no warnings' );
+    is( $warnings, "", 'undefined values produced no warnings' );
+
+    ok( eval { pack_sockaddr_in 98765, "\0\0\0\0"; 1 },
+        'pack_sockaddr_in oversized port is allowed' );
+    like( $warnings, qr/^Port number above 0xFFFF, will be truncated to 33229 for Socket::pack_sockaddr_in at /,
+        'pack_sockaddr_in oversized port warning' );
 }
 
 # pack_sockaddr_in6, unpack_sockaddr_in6
 # sockaddr_in6
 SKIP: {
-    skip "No AF_INET6", 13 unless my $AF_INET6 = eval { Socket::AF_INET6() };
-    skip "Cannot pack_sockaddr_in6()", 13 unless my $sin6 = eval { Socket::pack_sockaddr_in6(0x1234, "0123456789abcdef", 0, 89) };
+    skip "No AF_INET6", 15 unless my $AF_INET6 = eval { Socket::AF_INET6() };
+    skip "Cannot pack_sockaddr_in6()", 15 unless my $sin6 = eval { Socket::pack_sockaddr_in6(0x1234, "0123456789abcdef", 0, 89) };
 
     ok(defined $sin6, 'pack_sockaddr_in6 defined');
 
@@ -118,8 +124,8 @@ SKIP: {
     is(sockaddr_family(scalar Socket::sockaddr_in6(0x1357, "02468ace13579bdf")), $AF_INET6,
         'sockaddr_in6 in scalar context packs' );
 
-    my $warnings = 0;
-    local $SIG{__WARN__} = sub { $warnings++ };
+    my $warnings = "";
+    local $SIG{__WARN__} = sub { $warnings .= $_[0]; };
     ok( !eval { Socket::pack_sockaddr_in6( 0, undef ); 1 },
         'pack_sockaddr_in6 undef addr is fatal' );
     ok( !eval { Socket::unpack_sockaddr_in6( undef ); 1 },
@@ -128,7 +134,12 @@ SKIP: {
     ok( eval { Socket::pack_sockaddr_in6( undef, "\0"x16 ); 1 },
         'pack_sockaddr_in6 undef port is allowed' );
 
-    is( $warnings, 0, 'undefined values produced no warnings' );
+    is( $warnings, "", 'undefined values produced no warnings' );
+
+    ok( eval { Socket::pack_sockaddr_in6( 98765, "\0"x16 ); 1 },
+        'pack_sockaddr_in6 oversized port is allowed' );
+    like( $warnings, qr/^Port number above 0xFFFF, will be truncated to 33229 for Socket::pack_sockaddr_in6 at /,
+        'pack_sockaddr_in6 oversized port warning' );
 }
 
 # sockaddr_un on abstract paths

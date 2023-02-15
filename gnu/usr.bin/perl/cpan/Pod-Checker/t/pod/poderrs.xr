@@ -33,38 +33,40 @@
 *** ERROR: An E<...> surrounding strange content at line 105 in file t/pod/poderrs.t
 *** ERROR: Unknown E content in E<unknown_entity> at line 105 in file t/pod/poderrs.t
 *** ERROR: An empty L<> at line 121 in file t/pod/poderrs.t
+*** ERROR: L<> contains only '/' at line 121 in file t/pod/poderrs.t
 *** ERROR: L<> starts or ends with whitespace at line 121 in file t/pod/poderrs.t
 *** ERROR: L<> starts or ends with whitespace at line 121 in file t/pod/poderrs.t
 *** ERROR: L<> starts or ends with whitespace at line 121 in file t/pod/poderrs.t
-*** ERROR: Unterminated L<<< ... >>> sequence at line 137 in file t/pod/poderrs.t
+*** WARNING: empty link at line 121 in file t/pod/poderrs.t
 *** ERROR: Unterminated L<<< ... >>> sequence at line 139 in file t/pod/poderrs.t
-*** ERROR: alternative text 'some text with / in it' contains non-escaped | or / at line 143 in file t/pod/poderrs.t
-*** ERROR: =back doesn't take any parameters, but you said =back 200 at line 150 in file t/pod/poderrs.t
-*** ERROR: A non-empty Z<> at line 158 in file t/pod/poderrs.t
-*** ERROR: An empty X<> at line 160 in file t/pod/poderrs.t
-*** ERROR: An empty E<> at line 164 in file t/pod/poderrs.t
-*** ERROR: =over should be: '=over' or '=over positive_number' at line 166 in file t/pod/poderrs.t
-*** ERROR: You can't have =items (as at line 170) unless the first thing after the =over is an =item at line 166 in file t/pod/poderrs.t
-*** WARNING: =item has no contents at line 176 in file t/pod/poderrs.t
-*** ERROR: Expected '=item *' at line 178 in file t/pod/poderrs.t
+*** ERROR: Unterminated L<<< ... >>> sequence at line 141 in file t/pod/poderrs.t
+*** ERROR: alternative text 'some text with / in it' contains non-escaped | or / at line 145 in file t/pod/poderrs.t
+*** ERROR: =back doesn't take any parameters, but you said =back 200 at line 152 in file t/pod/poderrs.t
+*** WARNING: A non-empty Z<> at line 160 in file t/pod/poderrs.t
+*** ERROR: An empty X<> at line 162 in file t/pod/poderrs.t
+*** ERROR: An empty E<> at line 166 in file t/pod/poderrs.t
+*** ERROR: =over should be: '=over' or '=over positive_number' at line 168 in file t/pod/poderrs.t
+*** ERROR: You can't have =items (as at line 172) unless the first thing after the =over is an =item at line 168 in file t/pod/poderrs.t
+*** WARNING: =item has no contents at line 178 in file t/pod/poderrs.t
 *** ERROR: Expected '=item *' at line 180 in file t/pod/poderrs.t
-*** WARNING: line containing nothing but whitespace in paragraph at line 187 in file t/pod/poderrs.t
-*** ERROR: You can't have =items (as at line 188) unless the first thing after the =over is an =item at line 184 in file t/pod/poderrs.t
-*** ERROR: Expected '=item *' at line 204 in file t/pod/poderrs.t
-*** ERROR: Expected '=item *' at line 208 in file t/pod/poderrs.t
-*** ERROR: You have '=item 3' instead of the expected '=item 2' at line 218 in file t/pod/poderrs.t
-*** ERROR: Expected '=item 3' at line 222 in file t/pod/poderrs.t
-*** ERROR: Expected '=item 4' at line 224 in file t/pod/poderrs.t
-*** ERROR: Expected text after =item, not a bullet at line 234 in file t/pod/poderrs.t
-*** ERROR: Expected text after =item, not a number at line 238 in file t/pod/poderrs.t
-*** WARNING: empty =over/=back block at line 253 in file t/pod/poderrs.t
-*** ERROR: Spurious text after =pod at line 263 in file t/pod/poderrs.t
-*** ERROR: Spurious text after =cut at line 267 in file t/pod/poderrs.t
-*** WARNING: empty section in previous paragraph at line 283 in file t/pod/poderrs.t
-*** ERROR: empty =head1 at line 305 in file t/pod/poderrs.t
-*** ERROR: =over without closing =back at line 311 in file t/pod/poderrs.t
-*** ERROR: =begin :xml without matching =end :xml at line 317 in file t/pod/poderrs.t
-*** ERROR: =begin html without matching =end html at line 313 in file t/pod/poderrs.t
+*** ERROR: Expected '=item *' at line 182 in file t/pod/poderrs.t
+*** WARNING: line containing nothing but whitespace in paragraph at line 189 in file t/pod/poderrs.t
+*** ERROR: You can't have =items (as at line 190) unless the first thing after the =over is an =item at line 186 in file t/pod/poderrs.t
+*** ERROR: Expected '=item *' at line 206 in file t/pod/poderrs.t
+*** ERROR: Expected '=item *' at line 210 in file t/pod/poderrs.t
+*** ERROR: You have '=item 3' instead of the expected '=item 2' at line 220 in file t/pod/poderrs.t
+*** ERROR: Expected '=item 3' at line 224 in file t/pod/poderrs.t
+*** ERROR: Expected '=item 4' at line 226 in file t/pod/poderrs.t
+*** ERROR: Expected text after =item, not a bullet at line 236 in file t/pod/poderrs.t
+*** ERROR: Expected text after =item, not a number at line 240 in file t/pod/poderrs.t
+*** WARNING: empty =over/=back block at line 255 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =pod at line 265 in file t/pod/poderrs.t
+*** ERROR: Spurious text after =cut at line 269 in file t/pod/poderrs.t
+*** WARNING: empty section in previous paragraph at line 285 in file t/pod/poderrs.t
+*** ERROR: empty =head1 at line 307 in file t/pod/poderrs.t
+*** ERROR: =over without closing =back at line 313 in file t/pod/poderrs.t
+*** ERROR: =begin :xml without matching =end :xml at line 319 in file t/pod/poderrs.t
+*** ERROR: =begin html without matching =end html at line 315 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'begin or begin' at line 115 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'end with begin' at line 115 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'OoPs' at line 115 in file t/pod/poderrs.t
@@ -72,7 +74,7 @@
 *** ERROR: unresolved internal link ' aha' at line 121 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'oho ' at line 121 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link ' weehee ' at line 121 in file t/pod/poderrs.t
-*** ERROR: unresolved internal link 'link_to_nowhere' at line 319 in file t/pod/poderrs.t
+*** ERROR: unresolved internal link 'link_to_nowhere' at line 321 in file t/pod/poderrs.t
 *** WARNING: multiple occurrences (2) of link target '*' at line - in file t/pod/poderrs.t
 *** WARNING: multiple occurrences (2) of link target '1' at line - in file t/pod/poderrs.t
 *** WARNING: multiple occurrences (2) of link target 'Misc' at line - in file t/pod/poderrs.t

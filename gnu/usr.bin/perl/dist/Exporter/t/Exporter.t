@@ -1,5 +1,8 @@
 #!perl -w
 
+use strict;
+use warnings;
+
 # Can't use Test::Simple/More, they depend on Exporter.
 my $test;
 sub ok ($;$) {
@@ -18,39 +21,36 @@ sub ok ($;$) {
 
 BEGIN {
     $test = 1;
-    print "1..33\n";
+    print "1..34\n";
     require Exporter;
     ok( 1, 'Exporter compiled' );
 }
 
 
-BEGIN {
-    # Methods which Exporter says it implements.
-    @Exporter_Methods = qw(import
+our @Exporter_Methods = qw(import
                            export_to_level
                            require_version
                            export_fail
                           );
-}
 
 
 package Testing;
 require Exporter;
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
 # Make sure Testing can do everything its supposed to.
 foreach my $meth (@::Exporter_Methods) {
     ::ok( Testing->can($meth), "subclass can $meth()" );
 }
 
-%EXPORT_TAGS = (
+our %EXPORT_TAGS = (
                 This => [qw(stuff %left)],
                 That => [qw(Above the @wailing)],
                 tray => [qw(Fasten $seatbelt)],
                );
-@EXPORT    = qw(lifejacket is);
-@EXPORT_OK = qw(under &your $seat);
-$VERSION = '1.05';
+our @EXPORT    = qw(lifejacket is);
+our @EXPORT_OK = qw(under &your $seat);
+our $VERSION = '1.05';
 
 ::ok( Testing->require_version(1.05),   'require_version()' );
 eval { Testing->require_version(1.11); 1 };
@@ -168,15 +168,15 @@ Testing->import('!/e/');
 
 
 package More::Testing;
-@ISA = qw(Exporter);
-$VERSION = 0;
+our @ISA = qw(Exporter);
+our $VERSION = 0;
 eval { More::Testing->require_version(0); 1 };
 ::ok(!$@,       'require_version(0) and $VERSION = 0');
 
 
 package Yet::More::Testing;
-@ISA = qw(Exporter);
-$VERSION = 0;
+our @ISA = qw(Exporter);
+our $VERSION = 0;
 eval { Yet::More::Testing->require_version(10); 1 };
 ::ok($@ !~ /\(undef\)/,       'require_version(10) and $VERSION = 0');
 
@@ -185,8 +185,8 @@ my $warnings;
 BEGIN {
     local $SIG{__WARN__} = sub { $warnings = join '', @_ };
     package Testing::Unused::Vars;
-    @ISA = qw(Exporter);
-    @EXPORT = qw(this $TODO that);
+    our @ISA = qw(Exporter);
+    our @EXPORT = qw(this $TODO that);
 
     package Foo;
     Testing::Unused::Vars->import;
@@ -196,8 +196,8 @@ BEGIN {
   print "# $warnings\n";
 
 package Moving::Target;
-@ISA = qw(Exporter);
-@EXPORT_OK = qw (foo);
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw (foo);
 
 sub foo {"This is foo"};
 sub bar {"This is bar"};
@@ -215,12 +215,11 @@ Moving::Target->import ('bar');
 ::ok (bar() eq "This is bar", "imported bar after EXPORT_OK changed");
 
 package The::Import;
-
 use Exporter 'import';
 
 ::ok(\&import == \&Exporter::import, "imported the import routine");
 
-@EXPORT = qw( wibble );
+our @EXPORT = qw( wibble );
 sub wibble {return "wobble"};
 
 package Use::The::Import;
@@ -238,8 +237,8 @@ eval { Carp::croak() };
 
 package Exporter::for::Tied::_;
 
-@ISA = 'Exporter';
-@EXPORT = 'foo';
+our @ISA = 'Exporter';
+our @EXPORT = 'foo';
 
 package Tied::_;
 
@@ -253,3 +252,8 @@ sub TIESCALAR{bless[]}
  }
 }
 ::ok(1, 'import with tied $_');
+
+# this should be loaded, but make sure
+require Exporter::Heavy;
+::ok(Exporter->VERSION eq Exporter::Heavy->VERSION,
+    'Exporter and Exporter::Heavy have matching versions');

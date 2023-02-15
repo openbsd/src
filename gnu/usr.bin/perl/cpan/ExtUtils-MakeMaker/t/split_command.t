@@ -6,6 +6,8 @@ BEGIN {
 
 chdir 't';
 
+use strict;
+use warnings;
 use Config;
 use ExtUtils::MM;
 use MakeMaker::Test::Utils;
@@ -31,12 +33,12 @@ my @test_args = qw(foo bar baz yar car har ackapicklerootyjamboree);
 my @cmds = $mm->split_command($echo, @test_args);
 isnt( @cmds, 0 );
 
-@results = _run(@cmds);
+my @results = _run(@cmds);
 is( join('', @results), join('', @test_args));
 
 
 my %test_args = ( foo => 42, bar => 23, car => 'har' );
-$even_args = $mm->oneliner(q{print !(@ARGV % 2)});
+my $even_args = $mm->oneliner(q{print !(@ARGV % 2)});
 @cmds = $mm->split_command($even_args, %test_args);
 isnt( @cmds, 0 );
 

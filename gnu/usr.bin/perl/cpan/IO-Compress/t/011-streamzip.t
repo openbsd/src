@@ -15,17 +15,17 @@ use Test::More ;
 use CompTestUtils;
 use IO::Uncompress::Unzip 'unzip' ;
 
-BEGIN 
-{ 
+BEGIN
+{
     plan(skip_all => "Needs Perl 5.005 or better - you have Perl $]" )
         if $] < 5.005 ;
-    
+
     # use Test::NoWarnings, if available
     my $extra = 0 ;
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 8 + $extra ;
+    plan tests => 136 + $extra ;
 }
 
 
@@ -35,7 +35,7 @@ $Inc = '"-MExtUtils::testlib"'
 
 my $Perl = ($ENV{'FULLPERL'} or $^X or 'perl') ;
 $Perl = qq["$Perl"] if $^O eq 'MSWin32' ;
- 
+
 $Perl = "$Perl $Inc -w" ;
 #$Perl .= " -Mblib " ;
 my $binDir = $ENV{PERL_CORE} ? "../ext/IO-Compress/bin/"
@@ -43,7 +43,7 @@ my $binDir = $ENV{PERL_CORE} ? "../ext/IO-Compress/bin/"
 
 my $hello1 = <<EOM ;
 hello
-this is 
+this is
 a test
 message
 x ttttt
@@ -54,7 +54,7 @@ EOM
 
 
 
-my $lex = new LexFile my $stderr ;
+my $lex = LexFile->new( my $stderr );
 
 
 sub check
@@ -62,7 +62,7 @@ sub check
     my $command = shift ;
     my $expected = shift ;
 
-    my $lex = new LexFile my $stderr ;
+    my $lex = LexFile->new( my $stderr );
 
     my $cmd = "$command 2>$stderr";
     my $stdout = `$cmd` ;
@@ -93,7 +93,7 @@ sub check
     title "streamzip" ;
 
     my ($infile, $outfile);
-    my $lex = new LexFile $infile, $outfile ;
+    my $lex = LexFile->new( $infile, $outfile );
 
     writeFile($infile, $hello1) ;
     check "$Perl ${binDir}/streamzip <$infile >$outfile";
@@ -104,15 +104,102 @@ sub check
 }
 
 {
-    title "streamzip" ;
+    title "streamzip - zipfile option" ;
 
     my ($infile, $outfile);
-    my $lex = new LexFile $infile, $outfile ;
+    my $lex = LexFile->new( $infile, $outfile );
 
     writeFile($infile, $hello1) ;
-    check "$Perl ${binDir}/streamzip -zipfile=$outfile <$infile";
+    check "$Perl ${binDir}/streamzip -zipfile $outfile <$infile";
 
     my $uncompressed ;
     unzip $outfile => \$uncompressed;
     is $uncompressed, $hello1;
+}
+
+for my $method (qw(store deflate bzip2 lzma xz zstd))
+{
+    SKIP:
+    {
+        if ($method eq 'lzma')
+        {
+            eval { require IO::Compress::Lzma } ;
+            skip "Method 'lzma' needs IO::Compress::Lzma\n", 8
+                if $@;
+        }
+
+        if ($method eq 'zstd')
+        {
+            eval { require IO::Compress::Zstd } ;
+            skip "Method 'zstd' needs IO::Compress::Zstd\n", 8
+                if $@;
+        }
+
+        if ($method eq 'xz')
+        {
+            eval { require IO::Compress::Xz } ;
+            skip "Method 'zstd' needs IO::Compress::Xz\n", 8
+                if $@;
+        }
+
+        {
+            title "streamzip method $method" ;
+
+            my ($infile, $outfile);
+            my $lex = LexFile->new( $infile, $outfile );
+
+            writeFile($infile, $hello1) ;
+            check "$Perl ${binDir}/streamzip -method $method <$infile >$outfile";
+
+            my $uncompressed ;
+            unzip $outfile => \$uncompressed;
+            is $uncompressed, $hello1;
+        }
+
+        {
+            title "streamzip $method- zipfile option" ;
+
+            my ($infile, $outfile);
+            my $lex = LexFile->new( $infile, $outfile );
+
+            writeFile($infile, $hello1) ;
+            check "$Perl ${binDir}/streamzip -zipfile $outfile -method $method <$infile";
+
+            my $uncompressed ;
+            unzip $outfile => \$uncompressed;
+            is $uncompressed, $hello1;
+        }
+    }
+}
+
+for my $level (0 ..9)
+{
+    {
+        title "streamzip level $level" ;
+
+        my ($infile, $outfile);
+        my $lex = LexFile->new( $infile, $outfile );
+
+        writeFile($infile, $hello1) ;
+        check "$Perl ${binDir}/streamzip -$level <$infile >$outfile";
+
+        my $uncompressed ;
+        unzip $outfile => \$uncompressed;
+        is $uncompressed, $hello1;
+    }
+
+    {
+        title "streamzip level $level- zipfile option" ;
+
+        my ($infile, $outfile);
+        my $lex = LexFile->new( $infile, $outfile );
+
+        writeFile($infile, $hello1) ;
+        check "$Perl ${binDir}/streamzip -zipfile $outfile -$level <$infile";
+
+        my $uncompressed ;
+        unzip $outfile => \$uncompressed;
+        is $uncompressed, $hello1;
+    }
+
 }

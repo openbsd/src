@@ -165,11 +165,21 @@ chmod 0644, $COMPRESS_FILE;
     }
 }
 
+my $ebcdic_skip_msg = "File contains an alien character set";
+
 ### read tests ###
-{   my @to_try = ($TAR_FILE);
-    push @to_try, $TGZ_FILE if $Class->has_zlib_support;
-    push @to_try, $TBZ_FILE if $Class->has_bzip2_support;
-    push @to_try, $TXZ_FILE if $Class->has_xz_support;
+SKIP: {
+    my @to_try;
+
+    if (ord 'A' == 65) {
+        push @to_try, $TAR_FILE;
+        push @to_try, $TGZ_FILE if $Class->has_zlib_support;
+        push @to_try, $TBZ_FILE if $Class->has_bzip2_support;
+        push @to_try, $TXZ_FILE if $Class->has_xz_support;
+    }
+    else {
+        skip $ebcdic_skip_msg, 4;
+    }
 
     for my $type( @to_try ) {
 
@@ -352,7 +362,11 @@ chmod 0644, $COMPRESS_FILE;
 }
 
 ### rename/replace_content tests ###
-{   my $tar     = $Class->new;
+
+SKIP: {
+    skip $ebcdic_skip_msg, 9 if ord "A" != 65;
+
+    my $tar     = $Class->new;
     my $from    = 'c';
     my $to      = 'e';
 
@@ -383,7 +397,10 @@ chmod 0644, $COMPRESS_FILE;
 }
 
 ### remove tests ###
-{   my $remove  = 'c';
+SKIP: {
+    skip $ebcdic_skip_msg, 3 if ord "A" != 65;
+
+    my $remove  = 'c';
     my $tar     = $Class->new;
 
     ok( $tar->read( $TAR_FILE ),    "Read in '$TAR_FILE'" );
@@ -399,6 +416,8 @@ chmod 0644, $COMPRESS_FILE;
 
 ### write + read + extract tests ###
 SKIP: {                             ### pesky warnings
+    skip $ebcdic_skip_msg, 326 if ord "A" != 65;
+
     skip('no IO::String', 326) if   !$Archive::Tar::HAS_PERLIO &&
                                     !$Archive::Tar::HAS_PERLIO &&
                                     !$Archive::Tar::HAS_IO_STRING &&
@@ -508,7 +527,10 @@ SKIP: {                             ### pesky warnings
 
 
 ### limited read + extract tests ###
-{   my $tar     = $Class->new;
+SKIP: {                             ### pesky warnings
+    skip $ebcdic_skip_msg, 8 if ord "A" != 65;
+
+    my $tar     = $Class->new;
     my @files   = $tar->read( $TAR_FILE, 0, { limit => 1 } );
     my $obj     = $files[0];
 
@@ -549,7 +571,10 @@ SKIP: {                             ### pesky warnings
 
 
 ### clear tests ###
-{   my $tar     = $Class->new;
+SKIP: {                             ### pesky warnings
+    skip $ebcdic_skip_msg, 3 if ord "A" != 65;
+
+    my $tar     = $Class->new;
     my @files   = $tar->read( $TAR_FILE );
 
     my $cnt = $tar->list_files();
@@ -805,7 +830,7 @@ sub slurp_compressed_file {
     ### gzip
     } else {
         require IO::Zlib;
-        $fh = new IO::Zlib;
+        $fh = IO::Zlib->new();
         $fh->open( $file, READ_ONLY->(1) )
             or warn( "Error opening '$file' with IO::Zlib" ), return
     }

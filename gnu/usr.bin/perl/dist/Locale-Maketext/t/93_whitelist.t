@@ -47,50 +47,50 @@ my $res;
 
 # _internal_method not blocked by default
 $res = eval { $lh->maketext('[_internal_method]') };
-is( $res, "_internal_method_response", '_internal_method allowed when no whitelist defined' );
-is( $@, '', 'no exception thrown by use of _internal_method without whitelist setting' );
+is( $res, "_internal_method_response", '_internal_method allowed when no allowlist defined' );
+is( $@, '', 'no exception thrown by use of _internal_method without allowlist setting' );
 
-# whitelisting sprintf
+# allowlisting sprintf
 $lh->whitelist('sprintf');
 
-# _internal_method blocked by whitelist
+# _internal_method blocked by allowlist
 $res = eval { $lh->maketext('[_internal_method]') };
 is( $res, undef, 'no return value from blocked expansion' );
-like( $@, qr/Can't use .* as a method name/, '_internal_method blocked in bracket notation by whitelist' );
+like( $@, qr/Can't use .* as a method name/, '_internal_method blocked in bracket notation by allowlist' );
 
-# sprintf allowed by whitelist
+# sprintf allowed by allowlist
 $res = eval { $lh->maketext('[sprintf,%s,hello]') };
-is( $res, "hello", 'sprintf allowed in bracket notation by whitelist' );
-is( $@,   '',      'no exception thrown by use of sprintf with whitelist' );
+is( $res, "hello", 'sprintf allowed in bracket notation by allowlist' );
+is( $@,   '',      'no exception thrown by use of sprintf with allowlist' );
 
-# custom_handler blocked by whitelist
+# custom_handler blocked by allowlist
 $res = eval { $lh->maketext('[custom_handler]') };
 is( $res, undef, 'no return value from blocked expansion' );
-like( $@, qr/Can't use .* as a method name/, 'custom_handler blocked in bracket notation by whitelist' );
+like( $@, qr/Can't use .* as a method name/, 'custom_handler blocked in bracket notation by allowlist' );
 
-# adding custom_handler to whitelist
+# adding custom_handler to allowlist
 $lh->whitelist('custom_handler');
 
-# sprintf still allowed by whitelist
+# sprintf still allowed by allowlist
 $res = eval { $lh->maketext('[sprintf,%s,hello]') };
-is( $res, "hello", 'sprintf allowed in bracket notation by whitelist' );
-is( $@,   '',      'no exception thrown by use of sprintf with whitelist' );
+is( $res, "hello", 'sprintf allowed in bracket notation by allowlist' );
+is( $@,   '',      'no exception thrown by use of sprintf with allowlist' );
 
-# custom_handler allowed by whitelist
+# custom_handler allowed by allowlist
 $res = eval { $lh->maketext('[custom_handler]') };
-is( $res, "custom_handler_response", 'custom_handler allowed in bracket notation by whitelist' );
-is( $@, '', 'no exception thrown by use of custom_handler with whitelist' );
+is( $res, "custom_handler_response", 'custom_handler allowed in bracket notation by allowlist' );
+is( $@, '', 'no exception thrown by use of custom_handler with allowlist' );
 
-# _internal_method blocked by whitelist
+# _internal_method blocked by allowlist
 $res = eval { $lh->maketext('[_internal_method]') };
 is( $res, undef, 'no return value from blocked expansion' );
-like( $@, qr/Can't use .* as a method name/, '_internal_method blocked in bracket notation by whitelist' );
+like( $@, qr/Can't use .* as a method name/, '_internal_method blocked in bracket notation by allowlist' );
 
-# adding fail_with to whitelist
+# adding fail_with to allowlist
 $lh->whitelist('fail_with');
 
 # fail_with still blocked by blacklist
 $res = eval { $lh->maketext('[fail_with,xyzzy]') };
 is( $res, undef, 'no return value from blocked expansion' );
-like( $@, qr/Can't use .* as a method name/, 'fail_with blocked in bracket notation by blacklist even when whitelisted' );
+like( $@, qr/Can't use .* as a method name/, 'fail_with blocked in bracket notation by blacklist even when allowlisted' );
 

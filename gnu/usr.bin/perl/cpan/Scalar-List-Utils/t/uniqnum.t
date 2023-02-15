@@ -130,7 +130,7 @@ if( $Config{ivsize} == 8 ) {
 }
 
 # Populate @in with UV-NV pairs of equivalent values.
-# Each of these values is exactly representable as 
+# Each of these values is exactly representable as
 # either a UV or an NV.
 
 my @in = (1 << $ls, 2 ** $ls,
@@ -181,7 +181,7 @@ if( $Config{ivsize} == 8 && $Config{nvsize} == 8 ) {
 }
 
 # uniqnum should discard each of the NVs as being a
-# duplicate of the preceding UV. 
+# duplicate of the preceding UV.
 
 is_deeply( [ uniqnum @in],
            [ @correct],

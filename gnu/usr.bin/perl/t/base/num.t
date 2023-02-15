@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..53\n";
+print "1..56\n";
 
 # First test whether the number stringification works okay.
 # (Testing with == would exercise the IV/NV part, not the PV.)
@@ -211,3 +211,14 @@ print $a eq "16702650"     ? "ok 52\n" : "not ok 52 # $a\n";
 
 $a = 0B1101; "$a";
 print $a eq "13"           ? "ok 53\n" : "not ok 53 # $a\n";
+
+# 0odddd octal constants
+
+$a = 0o100; "$a";
+print $a eq "64"       ? "ok 54\n" : "not ok 54 # $a\n";
+
+$a = 0o100; "$a";
+print $a + 1 == 0o101  ? "ok 55\n" : "not ok 55 #" . $a + 1 . "\n";
+
+$a = 0O1703; "$a";
+print $a eq "963"      ? "ok 56\n" : "not ok 56 # $a\n";

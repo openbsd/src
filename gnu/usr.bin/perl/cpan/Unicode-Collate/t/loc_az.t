@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate::Locale;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -112,14 +107,14 @@ ok($objAz->lt("z", "Z"));
 
 # 58
 
-ok($objAz->eq("c\x{327}", pack('U', 0xE7)));
-ok($objAz->eq("C\x{327}", pack('U', 0xC7)));
+ok($objAz->eq("c\x{327}", _pack_U(0xE7)));
+ok($objAz->eq("C\x{327}", _pack_U(0xC7)));
 ok($objAz->eq("g\x{306}", "\x{11F}"));
 ok($objAz->eq("G\x{306}", "\x{11E}"));
-ok($objAz->eq("I\x{300}", pack('U', 0xCC)));
-ok($objAz->eq("I\x{301}", pack('U', 0xCD)));
-ok($objAz->eq("I\x{302}", pack('U', 0xCE)));
-ok($objAz->eq("I\x{308}", pack('U', 0xCF)));
+ok($objAz->eq("I\x{300}", _pack_U(0xCC)));
+ok($objAz->eq("I\x{301}", _pack_U(0xCD)));
+ok($objAz->eq("I\x{302}", _pack_U(0xCE)));
+ok($objAz->eq("I\x{308}", _pack_U(0xCF)));
 ok($objAz->eq("I\x{304}", "\x{12A}"));
 ok($objAz->eq("I\x{306}", "\x{12C}"));
 ok($objAz->eq("I\x{328}", "\x{12E}"));
@@ -127,14 +122,14 @@ ok($objAz->eq("I\x{307}", "\x{130}"));
 
 # 70
 
-ok($objAz->eq("o\x{308}", pack('U', 0xF6)));
-ok($objAz->eq("O\x{308}", pack('U', 0xD6)));
+ok($objAz->eq("o\x{308}", _pack_U(0xF6)));
+ok($objAz->eq("O\x{308}", _pack_U(0xD6)));
 ok($objAz->eq("o\x{308}\x{304}", "\x{22B}"));
 ok($objAz->eq("O\x{308}\x{304}", "\x{22A}"));
 ok($objAz->eq("s\x{327}", "\x{15F}"));
 ok($objAz->eq("S\x{327}", "\x{15E}"));
-ok($objAz->eq("u\x{308}", pack('U', 0xFC)));
-ok($objAz->eq("U\x{308}", pack('U', 0xDC)));
+ok($objAz->eq("u\x{308}", _pack_U(0xFC)));
+ok($objAz->eq("U\x{308}", _pack_U(0xDC)));
 ok($objAz->eq("u\x{308}\x{300}", "\x{1DC}"));
 ok($objAz->eq("U\x{308}\x{300}", "\x{1DB}"));
 ok($objAz->eq("u\x{308}\x{301}", "\x{1D8}"));

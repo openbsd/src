@@ -61,9 +61,8 @@ CLOO
     local $SIG{__WARN__} = sub { $stderr .= join '', @_ };
 
     $mm->check_hints;
-    is( $stderr, <<OUT, 'hint files produce errors' );
-Argh!
-OUT
+    my $Escaped_Hint_File = quotemeta($Hint_File);
+    like( $stderr, qr{^Failed to run hint file $Escaped_Hint_File: Argh!\n\z}, 'hint files produce errors' );
 }
 
 END {

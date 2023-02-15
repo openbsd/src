@@ -6,8 +6,8 @@ use bytes;
 use Test::More ;
 use CompTestUtils;
 
-BEGIN 
-{ 
+BEGIN
+{
     plan skip_all => "Encode is not available"
         if $] < 5.006 ;
 
@@ -15,7 +15,7 @@ BEGIN
 
     plan skip_all => "Encode is not available"
         if $@ ;
-    
+
     # use Test::NoWarnings, if available
     my $extra = 0 ;
 
@@ -34,16 +34,16 @@ sub run
     my $UnError         = getErrorRef($UncompressClass);
 
 
-    my $string = "\x{df}\x{100}\x80"; 
+    my $string = "\x{df}\x{100}\x80";
     my $encString = Encode::encode_utf8($string);
     my $buffer = $encString;
 
     #for my $from ( qw(filename filehandle buffer) )
     {
 #        my $input ;
-#        my $lex = new LexFile my $name ;
+#        my $lex = LexFile->new( my $name );
 #
-#        
+#
 #        if ($from eq 'buffer')
 #          { $input = \$buffer }
 #        elsif ($from eq 'filename')
@@ -53,14 +53,14 @@ sub run
 #        }
 #        elsif ($from eq 'filehandle')
 #        {
-#            $input = new IO::File "<$name" ;
+#            $input = IO::File->new( "<$name" );
 #        }
 
         for my $to ( qw(filehandle buffer))
         {
             title "OO Mode: To $to, Encode by hand";
 
-            my $lex2 = new LexFile my $name2 ;
+            my $lex2 = LexFile->new( my $name2 );
             my $output;
             my $buffer;
 
@@ -72,29 +72,29 @@ sub run
             }
             elsif ($to eq 'filehandle')
             {
-                $output = new IO::File ">$name2" ;
+                $output = IO::File->new( ">$name2" );
             }
 
 
             my $out ;
-            my $cs = new $CompressClass($output, AutoClose =>1);
+            my $cs = $CompressClass->can('new')->( $CompressClass, $output, AutoClose =>1);
             $cs->print($encString);
             $cs->close();
 
             my $input;
             if ($to eq 'buffer')
               { $input = \$buffer }
-            else 
+            else
             {
                 $input = $name2 ;
             }
 
-            my $ucs = new $UncompressClass($input, Append => 1);
+            my $ucs = $UncompressClass->can('new')->( $UncompressClass, $input, Append => 1);
             my $got;
             1 while $ucs->read($got) > 0 ;
-            
+
             is  $got, $encString, "  Expected output";
-            
+
             my $decode = Encode::decode_utf8($got);
 
 
@@ -108,36 +108,36 @@ sub run
         title "Catch wide characters";
 
         my $out;
-        my $cs = new $CompressClass(\$out);
+        my $cs = $CompressClass->can('new')->( $CompressClass, \$out);
         my $a = "a\xFF\x{100}";
         eval { $cs->syswrite($a) };
-        like($@, qr/Wide character in ${CompressClass}::write/, 
+        like($@, qr/Wide character in ${CompressClass}::write/,
                  "  wide characters in ${CompressClass}::write");
 
     }
-    
+
     {
         title "Unknown encoding";
         my $output;
-        eval { my $cs = new $CompressClass(\$output, Encode => 'fred'); } ;
-        like($@, qr/${CompressClass}: Encoding 'fred' is not available/, 
+        eval { my $cs = $CompressClass->can('new')->( $CompressClass, \$output, Encode => 'fred'); } ;
+        like($@, qr/${CompressClass}: Encoding 'fred' is not available/,
                  "  Encoding 'fred' is not available");
     }
-    
+
     {
         title "Encode option";
-        
+
         for my $to ( qw(filehandle filename buffer))
         {
             title "Encode: To $to, Encode option";
 
-            my $lex2 = new LexFile my $name2 ;
+            my $lex2 = LexFile->new( my $name2 );
             my $output;
             my $buffer;
 
             if ($to eq 'buffer')
-            { 
-                $output = \$buffer 
+            {
+                $output = \$buffer
             }
             elsif ($to eq 'filename')
             {
@@ -145,18 +145,18 @@ sub run
             }
             elsif ($to eq 'filehandle')
             {
-                $output = new IO::File ">$name2" ;
+                $output = IO::File->new( ">$name2" );
             }
 
             my $out ;
-            my $cs = new $CompressClass($output, AutoClose =>1, Encode => 'utf8');
+            my $cs = $CompressClass->can('new')->( $CompressClass, $output, AutoClose =>1, Encode => 'utf8');
             ok $cs->print($string);
             ok $cs->close();
 
             my $input;
             if ($to eq 'buffer')
-            { 
-                $input = \$buffer 
+            {
+                $input = \$buffer
             }
             elsif ($to eq 'filename')
             {
@@ -164,35 +164,34 @@ sub run
             }
             else
             {
-                $input = new IO::File "<$name2" ;
+                $input = IO::File->new( "<$name2" );
             }
-            
+
             {
-                my $ucs = new $UncompressClass($input, AutoClose =>1, Append => 1);
+                my $ucs = $UncompressClass->can('new')->( $UncompressClass, $input, AutoClose =>1, Append => 1);
                 my $got;
                 1 while $ucs->read($got) > 0 ;
                 ok length($got) > 0;
                 is  $got, $encString, "  Expected output";
-                
+
                 my $decode = Encode::decode_utf8($got);
-    
+
                 is  $decode, $string, "  Expected output";
             }
-            
-     
+
+
 #            {
-#                my $ucs = new $UncompressClass($input, Append => 1, Decode => 'utf8');
+#                my $ucs = $UncompressClass->can('new')->( $UncompressClass, $input, Append => 1, Decode => 'utf8');
 #                my $got;
 #                1 while $ucs->read($got) > 0 ;
-#                ok length($got) > 0;    
+#                ok length($got) > 0;
 #                is  $got, $string, "  Expected output";
-#            }            
-        }        
+#            }
+        }
     }
 
 }
 
 
- 
-1;
 
+1;

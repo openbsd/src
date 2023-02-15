@@ -156,11 +156,6 @@ foreach (@processes) {
       die "Was supposed to have number $copy_s3, got error $@"
 	unless defined $copy_s3;
       my $bit = ok (($copy_s3 ^ $copy1) == 0, "$process $copy1 (bitpattern)");
-      # This is sick. 5.005_03 survives without the IV/UV flag, and somehow
-      # gets it right, providing you don't have side effects of conversion.
-#      local $TODO;
-#      $TODO = "pre 5.6 doesn't have flag to distinguish IV/UV"
-#        if $] < 5.005_56 and $copy1 > $max_iv;
       my $sign = ok (($copy_s2 <=> 0) == ($copy2 <=> 0),
                      "$process $copy1 (sign)");
 

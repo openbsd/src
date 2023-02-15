@@ -6,20 +6,27 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
-BEGIN { plan tests => 19 };
+BEGIN { plan tests => 23 };
 
 #use Pod::Simple::Debug (6);
+
+BEGIN {
+  require FindBin;
+  unshift @INC, $FindBin::Bin . '/lib';
+  require helpers;
+  helpers->import;
+}
 
 ok 1;
 
 use Pod::Simple::DumpAsXML;
 use Pod::Simple::XMLOutStream;
 print "# Pod::Simple version $Pod::Simple::VERSION\n";
-sub e ($$) { Pod::Simple::DumpAsXML->_duo(@_) }
 
 
-print "# Simple tests for head1 - head4...\n";
+print "# Simple tests for head1 - head6...\n";
 ok( Pod::Simple::XMLOutStream->_out("\n=head1 Chacha\n\n"),
     '<Document><head1>Chacha</head1></Document>'
 );
@@ -31,6 +38,12 @@ ok( Pod::Simple::XMLOutStream->_out("\n=head3 Chacha\n\n"),
 );
 ok( Pod::Simple::XMLOutStream->_out("\n=head4 Chacha\n\n"),
     '<Document><head4>Chacha</head4></Document>'
+);
+ok( Pod::Simple::XMLOutStream->_out("\n=head5 Chacha\n\n"),
+    '<Document><head5>Chacha</head5></Document>'
+);
+ok( Pod::Simple::XMLOutStream->_out("\n=head6 Chacha\n\n"),
+    '<Document><head6>Chacha</head6></Document>'
 );
 
 print "# Testing whitespace equivalence...\n";
@@ -57,7 +70,7 @@ ok( Pod::Simple::XMLOutStream->_out("=head1     Cha   cha\tcha   \n"),
 
 
 
-print "# Testing head2, head3, head4 more...\n";
+print "# Testing head2 ... head6 more...\n";
 
 ok( Pod::Simple::XMLOutStream->_out("=head2     Cha   cha\tcha   \n"),
     '<Document><head2>Cha cha cha</head2></Document>'
@@ -67,6 +80,12 @@ ok( Pod::Simple::XMLOutStream->_out("=head3     Cha   cha\tcha   \n"),
 );
 ok( Pod::Simple::XMLOutStream->_out("=head4     Cha   cha\tcha   \n"),
     '<Document><head4>Cha cha cha</head4></Document>'
+);
+ok( Pod::Simple::XMLOutStream->_out("=head5     Cha   cha\tcha   \n"),
+    '<Document><head5>Cha cha cha</head5></Document>'
+);
+ok( Pod::Simple::XMLOutStream->_out("=head6     Cha   cha\tcha   \n"),
+    '<Document><head6>Cha cha cha</head6></Document>'
 );
 
 print "# Testing entity expansion...\n";

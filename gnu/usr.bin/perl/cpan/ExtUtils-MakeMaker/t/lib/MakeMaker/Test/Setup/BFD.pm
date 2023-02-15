@@ -5,6 +5,7 @@ require Exporter;
 @EXPORT = qw(setup_recurs teardown_recurs);
 
 use strict;
+use warnings;
 use File::Path;
 use File::Basename;
 use MakeMaker::Test::Utils;

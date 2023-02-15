@@ -11,7 +11,7 @@ BEGIN {
 }
 
 $| = 1;
-use Test::More 'tests' => 140;
+use Test::More;
 
 
 my $ii = 36028797018963971;  # 2^55 + 3
@@ -273,4 +273,4 @@ is($$oo, $cnt++, 'overload called once');
     }
 }
 
-# EOF
+done_testing();

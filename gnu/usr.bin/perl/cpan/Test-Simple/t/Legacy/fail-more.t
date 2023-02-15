@@ -133,7 +133,7 @@ OUT
 ERR
 
 #line 132
-isn't("foo", "foo",'foo isn\'t foo?' );
+isn::t("foo", "foo",'foo isn\'t foo?' );
 out_ok( <<OUT, <<ERR );
 not ok - foo isn't foo?
 OUT

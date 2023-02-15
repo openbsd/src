@@ -194,7 +194,7 @@ L<Test::Harness> has been upgraded from version 3.36 to 3.36_01.
 
 L<XSLoader> has been upgraded from version 0.21 to 0.22, fixing a security hole
 in which binary files could be loaded from a path outside of C<@INC>.
-L<[perl #128528]|https://rt.perl.org/Public/Bug/Display.html?id=128528>
+L<[GH #15418]|https://github.com/Perl/perl5/issues/15418>
 
 =back
 

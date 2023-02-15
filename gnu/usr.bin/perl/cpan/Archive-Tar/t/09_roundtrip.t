@@ -4,6 +4,8 @@ use Test::More;
 use strict;
 use lib '../lib';
 
+plan skip_all => "Files contain an alien character set" if ord "A" != 65;
+
 use File::Spec ();
 use File::Temp qw( tempfile );
 

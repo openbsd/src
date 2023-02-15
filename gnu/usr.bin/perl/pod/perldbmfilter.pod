@@ -84,8 +84,7 @@ the database and have them removed when you read from the database. As I'm
 sure you have already guessed, this is a problem that DBM Filters can
 fix very easily.
 
-    use strict;
-    use warnings;
+    use v5.36;
     use SDBM_File;
     use Fcntl;
 
@@ -132,8 +131,7 @@ when reading.
 
 Here is a DBM Filter that does it:
 
-    use strict;
-    use warnings;
+    use v5.36;
     use DB_File;
     my %hash;
     my $filename = "filt";

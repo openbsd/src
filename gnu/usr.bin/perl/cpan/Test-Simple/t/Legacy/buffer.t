@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 # HARNESS-NO-STREAM
 
+use strict;
+use warnings;
+
 BEGIN {
     if( $ENV{PERL_CORE} ) {
         chdir 't';
@@ -16,7 +19,7 @@ my $T = Test::Builder->new;
 $T->no_ending(1);
 
 for my $num (1..10) {
-    $tnum = $num * 2;
+    my $tnum = $num * 2;
     pass("I'm ok");
     $T->current_test($tnum);
     print "ok $tnum - You're ok\n";

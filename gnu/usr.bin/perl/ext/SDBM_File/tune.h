@@ -12,7 +12,7 @@
 
 #define SEEDUPS			/* always detect duplicates */
 #define BADMESS			/* generate a message for worst case:
-				   cannot make room after SPLTMAX splits */
+                                   cannot make room after SPLTMAX splits */
 /*
  * misc
  */

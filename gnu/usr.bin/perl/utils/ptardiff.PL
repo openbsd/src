@@ -28,7 +28,7 @@ print "Extracting $file (with variable substitutions)\n";
 print OUT <<"!GROK!THIS!";
 $Config{startperl}
     eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
-	if \$running_under_some_shell;
+	if 0; # ^ Run only under a shell
 !GROK!THIS!
 
 use File::Spec;

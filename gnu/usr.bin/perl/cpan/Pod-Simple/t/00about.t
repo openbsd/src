@@ -12,6 +12,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 my @modules;
 BEGIN {

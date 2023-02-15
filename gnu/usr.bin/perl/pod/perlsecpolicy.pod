@@ -29,8 +29,7 @@ security team.
 
 You should receive an initial response to your report within 72 hours.
 If you do not receive a response in that time, please contact
-the security team lead L<John Lightsey|mailto:john@04755.net> and
-the L<Perl steering council|mailto:steering-council@perl.org>.
+the L<Perl Steering Council|mailto:steering-council@perl.org>.
 
 When members of the security team reply to your messages, they will
 generally include the perl-security@perl.org address in the "To" or "CC"
@@ -92,8 +91,10 @@ core Perl repository
 =back
 
 Files under the F<cpan/> directory in Perl's repository and release tarballs are
-developed and maintained independently. The Perl security team does not handle
-security issues for these modules.
+developed and maintained independently. The Perl security team does not
+directly handle security issues for these modules, but since this code is
+bundled with Perl, we will assist in forwarding the issue to the relevant
+maintainer(s) and you can still report these issues to us in secrecy.
 
 =head2 Bugs that may qualify as security issues in Perl
 
@@ -296,9 +297,8 @@ open and transparent as possible about the state of your security report.
 
 New vulnerability reports will receive an initial reply within 72 hours
 from the time they arrive at the security team's mailing list. If you do
-not receive any response in that time, contact the security team lead
-L<John Lightsey|mailto:john@04755.net> and the the L<Perl steering
-council|mailto:steering-council@perl.org>.
+not receive any response in that time, contact the
+L<Perl Steering Council|mailto:steering-council@perl.org>.
 
 The initial response sent by the security team will confirm your message was
 received and provide an estimated time frame for the security team's

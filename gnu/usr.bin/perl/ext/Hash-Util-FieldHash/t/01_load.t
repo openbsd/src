@@ -1,7 +1,7 @@
-#!perl
-use strict; use warnings;
+use strict;
+use warnings;
 
-use Test::More tests => 8;
+use Test::More;
 
 # see that Hash::Util::FieldHash and Hash::Util load and export what
 # they should
@@ -47,3 +47,4 @@ BEGIN {
     );
 }
 
+done_testing;

@@ -23,8 +23,6 @@ my @prgs;
 
 use Test::More;
 
-plan tests => scalar @prgs;
-
 require "dumpvar.pl";
 
 sub unctrl    { print dumpvar::unctrl($_[0]), "\n" }
@@ -83,6 +81,8 @@ for (@prgs) {
 	}
     }
 }
+
+done_testing();
 
 package TieOut;
 

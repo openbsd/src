@@ -15,13 +15,11 @@ plan(7);
 # [perl #130814] can reallocate lineptr while looking ahead for
 # "Missing $ on loop variable" diagnostic.
 my $result = fresh_perl(
-    " foreach m0\n\$" . ("v" x 0x2000),
+    " foreach my\n\$" . ("v" x 0x2000),
     { stderr => 1 },
 );
 is($result . "\n", <<EXPECT);
-syntax error at - line 3, near "foreach m0
-"
-Identifier too long at - line 3.
+Identifier too long at - line 2.
 EXPECT
 
 fresh_perl_is(<<'EOS', <<'EXPECT', {}, "check zero vars");

@@ -27,8 +27,8 @@ ok((Win32::GetFullPathName(substr($cwd,2)))[1], $file);
 
 ok(scalar Win32::GetFullPathName('/Foo Bar/'), substr($cwd,0,2)."\\Foo Bar\\");
 
-chdir($dir);
-ok(scalar Win32::GetFullPathName('.'), $dir);
+chdir(my $dird = $dir !~ /^[A-Z]:$/ ? $dir : "$dir\\");
+ok(scalar Win32::GetFullPathName('.'), $dird);
 
 ok((Win32::GetFullPathName($file))[0], "$dir\\");
 ok((Win32::GetFullPathName($file))[1], $file);

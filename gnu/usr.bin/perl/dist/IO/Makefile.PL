@@ -11,7 +11,7 @@ my $define = "";
 
 unless ( $PERL_CORE or exists $Config{'i_poll'} ) {
     my @inc = split( /\s+/, join( " ", $Config{'usrinc'}, $Config{'incpth'}, $Config{'locincpth'} ) );
-    foreach $path (@inc) {
+    foreach my $path (@inc) {
         if ( -f $path . "/poll.h" ) {
             $define .= "-DI_POLL ";
             last;

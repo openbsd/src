@@ -24,7 +24,13 @@ use strict;
 our @ISA = qw(Overloaded);
 
 use overload
-  q{""} => sub { $_[0]->{string} },
-  q{0+} => sub { $_[0]->{num} };
+  q{""} => sub {
+    @_ == 3 or die "Expected 3 parameters";
+    $_[0]->{string};
+  },
+  q{0+} => sub {
+    @_ == 3 or die "Expected 3 parameters";
+    $_[0]->{num};
+  };
 
 1;

@@ -6,6 +6,7 @@ BEGIN {
 
 use strict;
 use warnings;
+use Config;
 
 # use lib 't/lib';
 
@@ -16,7 +17,20 @@ use Test::Harness qw(execute_tests);
 # unset this global when self-testing ('testcover' and etc issue)
 local $ENV{HARNESS_PERL_SWITCHES};
 
-my $TEST_DIR = 't/sample-tests';
+my $TEST_DIR       = 't/sample-tests';
+my $NoTaintSupport = exists($Config{taint_support}) && !$Config{taint_support};
+
+my @test_list      = qw(descriptive die die_head_end die_last_minute duplicates
+                        head_end head_fail inc_taint junk_before_plan lone_not_bug
+                        no_nums no_output schwern sequence_misparse shbang_misparse
+                        simple simple_fail skip skip_nomsg skipall skipall_nomsg
+                        stdout_stderr taint todo_inline
+                        todo_misparse too_many vms_nit
+                        );
+
+if ($NoTaintSupport) {
+    @test_list = grep { $_ !~ /taint/ && $_ ne 'shbang_misparse' } @test_list;
+}
 
 {
 
@@ -44,14 +58,7 @@ my $TEST_DIR = 't/sample-tests';
             }
         },
         join(
-            ',', qw(
-              descriptive die die_head_end die_last_minute duplicates
-              head_end head_fail inc_taint junk_before_plan lone_not_bug
-              no_nums no_output schwern sequence_misparse shbang_misparse
-              simple simple_fail skip skip_nomsg skipall skipall_nomsg
-              stdout_stderr taint todo_inline
-              todo_misparse too_many vms_nit
-              )
+            ',', @test_list
           ) => {
             'failed' => {
                 "$TEST_DIR/die" => {
@@ -94,6 +101,7 @@ my $TEST_DIR = 't/sample-tests';
                     'name'   => "$TEST_DIR/head_fail",
                     'wstat'  => ''
                 },
+                $NoTaintSupport ? () : (
                 "$TEST_DIR/inc_taint" => {
                     'canon'  => 1,
                     'estat'  => 1,
@@ -101,7 +109,7 @@ my $TEST_DIR = 't/sample-tests';
                     'max'    => 1,
                     'name'   => "$TEST_DIR/inc_taint",
                     'wstat'  => '256'
-                },
+                }),
                 "$TEST_DIR/no_nums" => {
                     'canon'  => 3,
                     'estat'  => '',
@@ -162,15 +170,15 @@ my $TEST_DIR = 't/sample-tests';
                 }
             },
             'totals' => {
-                'bad'         => 12,
+                'bad'         => ($NoTaintSupport ? 11 : 12),
                 'bonus'       => 1,
-                'files'       => 27,
-                'good'        => 15,
-                'max'         => 76,
-                'ok'          => 78,
+                'files'       => ($NoTaintSupport ? 24 : 27),
+                'good'        => ($NoTaintSupport ? 13 : 15),
+                'max'         => ($NoTaintSupport ? 72 : 76),
+                'ok'          => ($NoTaintSupport ? 75 : 78),
                 'skipped'     => 2,
                 'sub_skipped' => 2,
-                'tests'       => 27,
+                'tests'       => ($NoTaintSupport ? 24 : 27),
                 'todo'        => 2
             }
           },
@@ -316,6 +324,7 @@ my $TEST_DIR = 't/sample-tests';
             }
         },
         'inc_taint' => {
+            'skip_if' => sub { $NoTaintSupport },
             'failed' => {
                 "$TEST_DIR/inc_taint" => {
                     'canon'  => 1,
@@ -455,6 +464,7 @@ my $TEST_DIR = 't/sample-tests';
             }
         },
         'shbang_misparse' => {
+            'skip_if' => sub { $NoTaintSupport },
             'failed' => {},
             'todo'   => {},
             'totals' => {
@@ -620,9 +630,10 @@ my $TEST_DIR = 't/sample-tests';
             }
         },
         'taint' => {
-            'failed' => {},
-            'todo'   => {},
-            'totals' => {
+            'skip_if' => sub { $NoTaintSupport },
+            'failed'  => {},
+            'todo'    => {},
+            'totals'  => {
                 'bad'         => 0,
                 'bonus'       => 0,
                 'files'       => 1,
@@ -636,9 +647,10 @@ my $TEST_DIR = 't/sample-tests';
             }
         },
         'taint_warn' => {
-            'failed' => {},
-            'todo'   => {},
-            'totals' => {
+            'skip_if' => sub { $NoTaintSupport },
+            'failed'  => {},
+            'todo'    => {},
+            'totals'  => {
                 'bad'         => 0,
                 'bonus'       => 0,
                 'files'       => 1,
@@ -811,6 +823,10 @@ my $TEST_DIR = 't/sample-tests';
                 skip
                   "Test '$test_key' can't run properly in this environment", 4
                   if $skip_if->();
+            }
+
+            if (($test_key eq 'inc_taint' || $test_key eq 'shbang_misparse') && $NoTaintSupport) {
+                skip "your perl was built without taint support", 4;
             }
 
             my @test_names = split( /,/, $test_key );

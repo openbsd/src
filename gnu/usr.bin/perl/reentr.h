@@ -41,6 +41,12 @@
 
 #ifdef USE_REENTRANT_API
 
+/* For thread-safe builds, alternative methods are used to make calls to this
+ * safe. */
+#ifdef USE_THREAD_SAFE_LOCALE
+#   undef HAS_SETLOCALE_R
+#endif
+ 
 /* Deprecations: some platforms have the said reentrant interfaces
  * but they are declared obsolete and are not to be used.  Often this
  * means that the platform has threadsafed the interfaces (hopefully).
@@ -647,165 +653,165 @@
 typedef struct {
 
 #  ifdef HAS_ASCTIME_R
-	char*	_asctime_buffer;
-	size_t	_asctime_size;
+        char*	_asctime_buffer;
+        size_t	_asctime_size;
 #  endif /* HAS_ASCTIME_R */
 
 #  ifdef HAS_CRYPT_R
 #  if CRYPT_R_PROTO == REENTRANT_PROTO_B_CCD
-	CRYPTD* _crypt_data;
+        CRYPTD* _crypt_data;
 #  else
-	struct crypt_data *_crypt_struct_buffer;
+        struct crypt_data *_crypt_struct_buffer;
 #  endif
 #  endif /* HAS_CRYPT_R */
 
 #  ifdef HAS_CTIME_R
-	char*	_ctime_buffer;
-	size_t	_ctime_size;
+        char*	_ctime_buffer;
+        size_t	_ctime_size;
 #  endif /* HAS_CTIME_R */
 
 #  ifdef HAS_GETGRNAM_R
-	struct group	_grent_struct;
-	char*	_grent_buffer;
-	size_t	_grent_size;
+        struct group	_grent_struct;
+        char*	_grent_buffer;
+        size_t	_grent_size;
 #   ifdef USE_GRENT_PTR
-	struct group*	_grent_ptr;
+        struct group*	_grent_ptr;
 #   endif
 #   ifdef USE_GRENT_FPTR
-	FILE*	_grent_fptr;
+        FILE*	_grent_fptr;
 #   endif
 #  endif /* HAS_GETGRNAM_R */
 
 #  ifdef HAS_GETHOSTBYNAME_R
-	struct hostent	_hostent_struct;
+        struct hostent	_hostent_struct;
 #   if GETHOSTBYNAME_R_PROTO == REENTRANT_PROTO_I_CSD
-	struct hostent_data	_hostent_data;
+        struct hostent_data	_hostent_data;
 #   else
-	char*	_hostent_buffer;
-	size_t	_hostent_size;
+        char*	_hostent_buffer;
+        size_t	_hostent_size;
 #   endif
 #   ifdef USE_HOSTENT_PTR
-	struct hostent*	_hostent_ptr;
+        struct hostent*	_hostent_ptr;
 #   endif
 #   ifdef USE_HOSTENT_ERRNO
-	int	_hostent_errno;
+        int	_hostent_errno;
 #   endif
 #  endif /* HAS_GETHOSTBYNAME_R */
 
 #  ifdef HAS_GETLOGIN_R
-	char*	_getlogin_buffer;
-	size_t	_getlogin_size;
+        char*	_getlogin_buffer;
+        size_t	_getlogin_size;
 #  endif /* HAS_GETLOGIN_R */
 
 #  ifdef HAS_GETNETBYNAME_R
-	struct netent	_netent_struct;
+        struct netent	_netent_struct;
 #   if GETNETBYNAME_R_PROTO == REENTRANT_PROTO_I_CSD
-	struct netent_data	_netent_data;
+        struct netent_data	_netent_data;
 #   else
-	char*	_netent_buffer;
-	size_t	_netent_size;
+        char*	_netent_buffer;
+        size_t	_netent_size;
 #   endif
 #   ifdef USE_NETENT_PTR
-	struct netent*	_netent_ptr;
+        struct netent*	_netent_ptr;
 #   endif
 #   ifdef USE_NETENT_ERRNO
-	int	_netent_errno;
+        int	_netent_errno;
 #   endif
 #  endif /* HAS_GETNETBYNAME_R */
 
 #  ifdef HAS_GETPROTOBYNAME_R
-	struct protoent	_protoent_struct;
+        struct protoent	_protoent_struct;
 #   if GETPROTOBYNAME_R_PROTO == REENTRANT_PROTO_I_CSD
-	struct protoent_data	_protoent_data;
+        struct protoent_data	_protoent_data;
 #   else
-	char*	_protoent_buffer;
-	size_t	_protoent_size;
+        char*	_protoent_buffer;
+        size_t	_protoent_size;
 #   endif
 #   ifdef USE_PROTOENT_PTR
-	struct protoent*	_protoent_ptr;
+        struct protoent*	_protoent_ptr;
 #   endif
 #   ifdef USE_PROTOENT_ERRNO
-	int	_protoent_errno;
+        int	_protoent_errno;
 #   endif
 #  endif /* HAS_GETPROTOBYNAME_R */
 
 #  ifdef HAS_GETPWNAM_R
-	struct passwd	_pwent_struct;
-	char*	_pwent_buffer;
-	size_t	_pwent_size;
+        struct passwd	_pwent_struct;
+        char*	_pwent_buffer;
+        size_t	_pwent_size;
 #   ifdef USE_PWENT_PTR
-	struct passwd*	_pwent_ptr;
+        struct passwd*	_pwent_ptr;
 #   endif
 #   ifdef USE_PWENT_FPTR
-	FILE*	_pwent_fptr;
+        FILE*	_pwent_fptr;
 #   endif
 #  endif /* HAS_GETPWNAM_R */
 
 #  ifdef HAS_GETSERVBYNAME_R
-	struct servent	_servent_struct;
+        struct servent	_servent_struct;
 #   if GETSERVBYNAME_R_PROTO == REENTRANT_PROTO_I_CCSD
-	struct servent_data	_servent_data;
+        struct servent_data	_servent_data;
 #   else
-	char*	_servent_buffer;
-	size_t	_servent_size;
+        char*	_servent_buffer;
+        size_t	_servent_size;
 #   endif
 #   ifdef USE_SERVENT_PTR
-	struct servent*	_servent_ptr;
+        struct servent*	_servent_ptr;
 #   endif
 #   ifdef USE_SERVENT_ERRNO
-	int	_servent_errno;
+        int	_servent_errno;
 #   endif
 #  endif /* HAS_GETSERVBYNAME_R */
 
 #  ifdef HAS_GETSPNAM_R
-	struct spwd	_spent_struct;
-	char*	_spent_buffer;
-	size_t	_spent_size;
+        struct spwd	_spent_struct;
+        char*	_spent_buffer;
+        size_t	_spent_size;
 #   ifdef USE_SPENT_PTR
-	struct spwd*	_spent_ptr;
+        struct spwd*	_spent_ptr;
 #   endif
 #   ifdef USE_SPENT_FPTR
-	FILE*	_spent_fptr;
+        FILE*	_spent_fptr;
 #   endif
 #  endif /* HAS_GETSPNAM_R */
 
 #  ifdef HAS_GMTIME_R
-	struct tm _gmtime_struct;
+        struct tm _gmtime_struct;
 #  endif /* HAS_GMTIME_R */
 
 #  ifdef HAS_LOCALTIME_R
-	struct tm _localtime_struct;
+        struct tm _localtime_struct;
 #  endif /* HAS_LOCALTIME_R */
 
 #  ifdef HAS_READDIR_R
-	struct dirent*	_readdir_struct;
-	size_t	_readdir_size;
+        struct dirent*	_readdir_struct;
+        size_t	_readdir_size;
 #   if READDIR_R_PROTO == REENTRANT_PROTO_I_TSR
-	struct dirent*	_readdir_ptr;
+        struct dirent*	_readdir_ptr;
 #   endif
 #  endif /* HAS_READDIR_R */
 
 #  ifdef HAS_READDIR64_R
-	struct dirent64*	_readdir64_struct;
-	size_t	_readdir64_size;
+        struct dirent64*	_readdir64_struct;
+        size_t	_readdir64_size;
 #   if READDIR64_R_PROTO == REENTRANT_PROTO_I_TSR
-	struct dirent64*	_readdir64_ptr;
+        struct dirent64*	_readdir64_ptr;
 #   endif
 #  endif /* HAS_READDIR64_R */
 
 #  ifdef HAS_SETLOCALE_R
-	char*	_setlocale_buffer;
-	size_t	_setlocale_size;
+        char*	_setlocale_buffer;
+        size_t	_setlocale_size;
 #  endif /* HAS_SETLOCALE_R */
 
 #  ifdef HAS_STRERROR_R
-	char*	_strerror_buffer;
-	size_t	_strerror_size;
+        char*	_strerror_buffer;
+        size_t	_strerror_size;
 #  endif /* HAS_STRERROR_R */
 
 #  ifdef HAS_TTYNAME_R
-	char*	_ttyname_buffer;
-	size_t	_ttyname_size;
+        char*	_ttyname_buffer;
+        size_t	_ttyname_size;
 #  endif /* HAS_TTYNAME_R */
 
 

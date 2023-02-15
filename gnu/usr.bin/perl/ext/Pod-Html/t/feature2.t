@@ -1,28 +1,45 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
-
 BEGIN {
-    require "./t/pod2html-lib.pl";
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
 use strict;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
 use Cwd;
-use Test::More tests => 2;
+
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
+
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
 
 my $cwd = cwd();
 
 my $warn;
 $SIG{__WARN__} = sub { $warn .= $_[0] };
 
-convert_n_test("feature2", "misc pod-html features 2", 
- "--backlink",
- "--header",
- "--podpath=.",
- "--podroot=$cwd",
- "--norecurse",
- "--verbose",
- "--quiet",
- );
+$args = {
+    podstub => "feature2",
+    description => "misc pod-html features 2",
+    expect => $expect_raw,
+    p2h => {
+        backlink    => 1,
+        header      => 1,
+        podpath     => '.',
+        podroot     => $cwd,
+        norecurse   => 1,
+        verbose     => 1,
+    },
+    debug => $debug,
+};
+xconvert($args);
 
 like($warn,
     qr(
@@ -32,6 +49,8 @@ like($warn,
     \ suitable\ replacement:\ link\ remains\ unresolved\.\n\z
     )x,
     "misc pod-html --verbose warnings");
+
+done_testing;
 
 __DATA__
 <?xml version="1.0" ?>

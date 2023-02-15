@@ -24,7 +24,6 @@ BEGIN {
 }
 
 BEGIN {
-    plan tests => 5;
     use_ok('User::grent');
 }
 
@@ -41,3 +40,4 @@ is( $grent->gid, $grent[2],     '   gid' );
 
 # Testing pretty much anything else is unportable.
 
+done_testing();

@@ -20,8 +20,9 @@ use constant NOT_ZERO => "__NOT_ZERO__";
 
 use TAP::Parser;
 
-my $IsVMS   = $^O eq 'VMS';
-my $IsWin32 = $^O eq 'MSWin32';
+my $IsVMS          = $^O eq 'VMS';
+my $IsWin32        = $^O eq 'MSWin32';
+my $NoTaintSupport = exists($Config{taint_support}) && !$Config{taint_support};
 
 my $SAMPLE_TESTS = File::Spec->catdir(
     File::Spec->curdir,
@@ -1361,6 +1362,7 @@ my %samples = (
         parse_errors  => [],
         'exit'        => 0,
         wait          => 0,
+        skip_if       => sub {$NoTaintSupport},
         version       => 12,
     },
     'die' => {

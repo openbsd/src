@@ -1,30 +1,33 @@
+use strict;
+use warnings;
+
 use IO::Zlib;
 
 sub ok
 {
     my ($no, $ok) = @_ ;
-
-    #++ $total ;
-    #++ $totalBad unless $ok ;
-
     print "ok $no\n" if $ok ;
     print "not ok $no\n" unless $ok ;
 }
 
-$name="test.gz";
+my $name = "test.gz";
 
 print "1..17\n";
 
-$hello = <<EOM ;
+my $hello = <<EOM ;
 hello world
 this is a test
 EOM
+
+my $file;
 
 ok(1, $file = IO::Zlib->new($name, "wb"));
 ok(2, $file->print($hello));
 ok(3, $file->opened());
 ok(4, $file->close());
 ok(5, !$file->opened());
+
+my $uncomp;
 
 ok(6, $file = IO::Zlib->new());
 ok(7, $file->open($name, "rb"));

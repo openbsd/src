@@ -6,6 +6,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 #sub Pod::Simple::Search::DEBUG () {5};
 

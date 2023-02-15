@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 #
 # Verify that
 #   - Math::BigInt::objectify() calls as_int() (or as_number(), as a fallback)

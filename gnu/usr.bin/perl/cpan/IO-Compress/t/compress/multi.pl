@@ -47,7 +47,7 @@ EOM
 even more stuff
 EOM
 
-    my $b0length = length $buffers[0];  
+    my $b0length = length $buffers[0];
     my $bufcount = @buffers;
 
     {
@@ -55,7 +55,7 @@ EOM
         my $gz ;
         my $hsize ;
         my %headers = () ;
-        
+
 
         foreach my $fb ( qw( file filehandle buffer ) )
         {
@@ -71,11 +71,11 @@ EOM
                                   Strict     => 1,
                                   Comment    => "this is a comment",
                                   ExtraField => ["so" => "me extra"],
-                                  HeaderCRC  => 1); 
+                                  HeaderCRC  => 1);
 
                 }
 
-                my $lex = new LexFile my $name ;
+                my $lex = LexFile->new( my $name );
                 my $output ;
                 if ($fb eq 'buffer')
                 {
@@ -84,14 +84,14 @@ EOM
                 }
                 elsif ($fb eq 'filehandle')
                 {
-                    $output = new IO::File ">$name" ;
+                    $output = IO::File->new( ">$name" );
                 }
                 else
                 {
                     $output = $name ;
                 }
 
-                my $x = new $CompressClass($output, AutoClose => 1, %headers);
+                my $x = $CompressClass->can('new')->($CompressClass, $output, AutoClose => 1, %headers);
                 isa_ok $x, $CompressClass, '  $x' ;
 
                 foreach my $buffer (@buffs) {
@@ -106,12 +106,12 @@ EOM
                     $cc = $output ;
                     if ($fb eq 'filehandle')
                     {
-                        $cc = new IO::File "<$name" ;
+                        $cc = IO::File->new( "<$name" );
                     }
-                    my @opts = $unc ne $UncompressClass 
+                    my @opts = $unc ne $UncompressClass
                                     ? (RawInflate => 1)
                                     : ();
-                    my $gz = new $unc($cc,
+                    my $gz = $unc->can('new')->($unc, $cc,
                                    @opts,
                                    Strict      => 1,
                                    AutoClose   => 1,
@@ -142,12 +142,12 @@ EOM
                     $cc = $output ;
                     if ($fb eq 'filehandle')
                     {
-                        $cc = new IO::File "<$name" ;
+                        $cc = IO::File->new( "<$name" );
                     }
-                    my @opts = $unc ne $UncompressClass 
+                    my @opts = $unc ne $UncompressClass
                                     ? (RawInflate => 1)
                                     : ();
-                    my $gz = new $unc($cc,
+                    my $gz = $unc->can('new')->( $unc, $cc,
                                    @opts,
                                    Strict      => 1,
                                    AutoClose   => 1,
@@ -183,12 +183,12 @@ EOM
                     $cc = $output ;
                     if ($fb eq 'filehandle')
                     {
-                        $cc = new IO::File "<$name" ;
+                        $cc = IO::File->new( "<$name" );
                     }
-                    my @opts = $unc ne $UncompressClass 
+                    my @opts = $unc ne $UncompressClass
                                     ? (RawInflate => 1)
                                     : ();
-                    my $gz = new $unc($cc,
+                    my $gz = $unc->can('new')->( $unc, $cc,
                                    @opts,
                                    Strict      => 1,
                                    AutoClose   => 1,
@@ -210,13 +210,13 @@ EOM
                             $un .= $_;
                         }
                         is $., $lines, "    \$. is $lines";
-                        
+
                         ok ! $gz->error(), "      ! error()"
                             or diag "Error is " . $gz->error() ;
                         ok $gz->eof(), "      eof()";
                         is $gz->streamCount(), $stream, "    streamCount is $stream"
                             or diag "Stream count is " . $gz->streamCount();
-                        is $un, $buff, "    expected output" 
+                        is $un, $buff, "    expected output"
                             or diag "Stream count is " . $gz->streamCount();                        ;
                         #is $gz->tell(), length $buff, "    tell is ok";
                         is $gz->nextStream(), 1, "    nextStream ok";

@@ -16,12 +16,7 @@ sub BEGIN {
             exit 0;
         }
     } else {
-	if ($] < 5.005) {
-	    print "1..0 # Skip: No Hash::Util pre 5.005\n";
-	    exit 0;
-	    # And doing this seems on 5.004 seems to create bogus warnings about
-	    # uninitialized variables, or coredumps in Perl_pp_padsv
-	} elsif (!eval "require Hash::Util") {
+	if (!eval "require Hash::Util") {
             if ($@ =~ /Can\'t locate Hash\/Util\.pm in \@INC/s) {
                 print "1..0 # Skip: No Hash::Util:\n";
                 exit 0;

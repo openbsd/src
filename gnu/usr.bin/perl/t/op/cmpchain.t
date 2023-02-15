@@ -7,7 +7,7 @@ BEGIN {
 }
 
 use feature "isa";
-no warnings qw(experimental::smartmatch experimental::isa);
+no warnings qw(experimental::smartmatch);
 
 my @cheqop = qw(== != eq ne);
 my @nceqop = qw(<=> cmp ~~);

@@ -6,7 +6,7 @@
 # This script is run just after metaconfig, and it
 # is run ONLY ONCE. Not to be used afterwards
 #
-# Copyright (C) 2005-2012 by H.Merijn Brand (m)'12 [22-09-2012]
+# Copyright (C) 2005-2020 by H.Merijn Brand (m)'20 [23-08-2020]
 #
 # You may distribute under the terms of either the GNU General Public
 # License or the Artistic License, as specified in the README file.
@@ -15,14 +15,13 @@ use strict;
 use warnings;
 
 my ($cSH, $ch, @ch, %ch) = ("config_h.SH");
-open $ch, '<', $cSH or die "Cannot open $cSH: $!\n";
+open $ch, "<", $cSH or die "Cannot open $cSH: $!\n";
 {   local $/ = "\n\n";
     @ch = <$ch>;
     close  $ch;
     }
 
-sub ch_index ()
-{
+sub ch_index {
     %ch = ();
     foreach my $ch (0 .. $#ch) {
 	while ($ch[$ch] =~ m{^/\* ([A-Z]\w+)}gm) {
@@ -45,14 +44,14 @@ my $changed;
 do {
     $changed = 0;
     foreach my $sym (keys %dep) {
-	ch_index;
+	ch_index ();
 	foreach my $dep (@{$dep{$sym}}) {
 	    print STDERR "Check if $sym\t($ch{$sym}) precedes $dep\t($ch{$dep})\n";
 	    $ch{$sym} < $ch{$dep} and next;
 	    my $ch = splice @ch, $ch{$sym}, 1;
 	    splice @ch, $ch{$dep}, 0, $ch;
 	    $changed++;
-	    ch_index;
+	    ch_index ();
 	    }
 	}
     } while ($changed);
@@ -65,19 +64,20 @@ for (grep m{echo .Extracting \$CONFIG_H} => @ch) {
 	qq{*)}, "";
     s{^(?=echo .Extracting)}{$case}m;
     }
-push @ch, ";;\nesac\n";
 
+unless ($ch[0] =~ m/THIS IS A GENERATED FILE/) {
+    unshift @ch, join "\n" =>
+	"#!/bin/sh",
+	"#",
+	"# THIS IS A GENERATED FILE",
+	"# DO NOT HAND-EDIT",
+	"#",
+	"# See Porting/config_h.pl",
+	"",
+	"";
+    push @ch, ";;\nesac\n";
+    }
 
-open  $ch, '>', $cSH or die "Cannot write $cSH: $!\n";
-print $ch <<EOW;
-#!/bin/sh
-#
-# THIS IS A GENERATED FILE
-# DO NOT HAND-EDIT
-#
-# See Porting/config_h.pl
-
-EOW
-
+open  $ch, ">", $cSH or die "Cannot write $cSH: $!\n";
 print $ch @ch;
 close $ch;

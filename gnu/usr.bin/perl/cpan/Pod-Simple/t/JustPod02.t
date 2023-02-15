@@ -78,6 +78,10 @@ other interesting bits.
 
 =head4  Level "4 C<heading>
 
+=head5  Level "5 B<heading>
+
+=head6  Level "6 I<heading>
+
 Now try again with B<intermixed> F<text>.
 
 =head1 This C<is> a "level 1" heading
@@ -93,6 +97,14 @@ Text.
 Text.
 
 =head4 Level "4 C<heading>
+
+Text.
+
+=head5  Level "5 B<heading>
+
+Text.
+
+=head6  Level "6 I<heading>
 
 Text.
 

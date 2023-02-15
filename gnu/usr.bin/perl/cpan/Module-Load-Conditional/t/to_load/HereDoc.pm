@@ -1,4 +1,5 @@
 package HereDoc;
+use strict;
 $HereDoc::VERSION = 1;
 
 sub magic {

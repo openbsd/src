@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -31,6 +23,9 @@ use Unicode::Collate::Locale;
 
 ok(1);
 
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
 #########################
 
 my $objTa = Unicode::Collate::Locale->
@@ -45,7 +40,7 @@ my $v    = "\x{BCD}";
 
 for my $h (0, 1) {
     no warnings 'utf8';
-    my $t = $h ? pack('U', 0xFFFF) : "";
+    my $t = $h ? _pack_U(0xFFFF) : "";
     $objTa->change(highestFFFF => 1) if $h;
 
     ok($objTa->lt("\x{B94}$t",   "\x{B82}"));

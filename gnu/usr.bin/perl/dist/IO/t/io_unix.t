@@ -43,7 +43,7 @@ BEGIN {
     }
 }
 
-$PATH = "sock-$$";
+my $PATH = "sock-$$";
 
 if ($^O eq 'os2') {	# Can't create sockets with relative path...
   require Cwd;
@@ -64,7 +64,7 @@ unlink($PATH) or $^O eq 'os2' or die "Can't unlink $PATH: $!";
 $| = 1;
 print "1..5\n";
 
-$listen = IO::Socket::UNIX->new(Local => $PATH, Listen => 0);
+my $listen = IO::Socket::UNIX->new(Local => $PATH, Listen => 0);
 
 # Sometimes UNIX filesystems are mounted for security reasons
 # with "nodev" option which spells out "no" for creating UNIX
@@ -73,7 +73,7 @@ $listen = IO::Socket::UNIX->new(Local => $PATH, Listen => 0);
 unless (defined $listen) {
     eval { require File::Temp };
     unless ($@) {
-	import File::Temp 'mktemp';
+	File::Temp->import( 'mktemp' );
 	for my $TMPDIR ($ENV{TMPDIR}, "/tmp") {
 	    if (defined $TMPDIR && -d $TMPDIR && -w $TMPDIR) {
 		$PATH = mktemp("$TMPDIR/sXXXXXXXX");
@@ -86,9 +86,9 @@ unless (defined $listen) {
 }
 print "ok 1\n";
 
-if($pid = fork()) {
+if (my $pid = fork()) {
 
-    $sock = $listen->accept();
+    my $sock = $listen->accept();
 
     if (defined $sock) {
 	print "ok 2\n";
@@ -111,7 +111,7 @@ if($pid = fork()) {
     }
 } elsif(defined $pid) {
 
-    $sock = IO::Socket::UNIX->new(Peer => $PATH) or die "$!";
+    my $sock = IO::Socket::UNIX->new(Peer => $PATH) or die "$!";
 
     print $sock "ok 3\n";
 

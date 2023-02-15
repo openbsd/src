@@ -3,15 +3,15 @@ use strict;
 use warnings;
 use bytes;
 
-use Test::More ; 
+use Test::More ;
 use CompTestUtils;
 
 use Compress::Raw::Zlib 2 ;
 
-BEGIN 
-{ 
-    plan(skip_all => "Merge needs Zlib 1.2.1 or better - you have Zlib "  
-                . Compress::Raw::Zlib::zlib_version()) 
+BEGIN
+{
+    plan(skip_all => "Merge needs Zlib 1.2.1 or better - you have Zlib "
+                . Compress::Raw::Zlib::zlib_version())
         if ZLIB_VERNUM() < 0x1210 ;
 
     # use Test::NoWarnings, if available
@@ -32,7 +32,7 @@ sub run
     my $Error           = getErrorRef($CompressClass);
     my $UnError         = getErrorRef($UncompressClass);
 
-    # Tests     
+    # Tests
     #   destination is a file that doesn't exist -- should work ok unless AnyDeflate
     #   destination isn't compressed at all
     #   destination is compressed but wrong format
@@ -43,7 +43,7 @@ sub run
     {
         title "Misc error cases";
 
-        eval { new Compress::Raw::Zlib::InflateScan Bufsize => 0} ;
+        eval { Compress::Raw::Zlib::InflateScan->new( Bufsize => 0 ) } ;
         like $@, mkErr("^Compress::Raw::Zlib::InflateScan::new: Bufsize must be >= 1, you specified 0"), "  catch bufsize == 0";
 
         eval { Compress::Raw::Zlib::inflateScanStream::createDeflateStream(undef, Bufsize => 0) } ;
@@ -58,23 +58,23 @@ sub run
         {
             if ($to_file)
               { title "$CompressClass - Merge to filename that isn't writable" }
-            else  
+            else
               { title "$CompressClass - Merge to filehandle that isn't writable" }
 
-            my $lex = new LexFile my $out_file ;
+            my $lex = LexFile->new( my $out_file );
 
             # create empty file
             open F, ">$out_file" ; print F "x"; close F;
             ok   -e $out_file, "  file exists" ;
             ok  !-z $out_file, "  and is not empty" ;
-            
+
             # make unwritable
             is chmod(0444, $out_file), 1, "  chmod worked" ;
             ok   -e $out_file, "  still exists after chmod" ;
 
             SKIP:
             {
-                skip "Cannot create non-writable file", 3 
+                skip "Cannot create non-writable file", 3
                     if -w $out_file ;
 
                 ok ! -w $out_file, "  chmod made file unwritable" ;
@@ -83,10 +83,10 @@ sub run
                 if ($to_file)
                   { $dest = $out_file }
                 else
-                  { $dest = new IO::File "<$out_file"  }
+                  { $dest = IO::File->new( "<$out_file" ) }
 
                 my $gz = $CompressClass->new($dest, Merge => 1) ;
-                
+
                 ok ! $gz, "  Did not create $CompressClass object";
 
                 ok $$Error, "  Got error message" ;
@@ -99,7 +99,7 @@ sub run
     # output is not compressed at all
     {
 
-        my $lex = new LexFile my $out_file ;
+        my $lex = LexFile->new( my $out_file );
 
         foreach my $to_file ( qw(buffer file handle ) )
         {
@@ -120,7 +120,7 @@ sub run
 
                 if ($to_file eq 'handle')
                 {
-                    $buffer = new IO::File "+<$out_file" 
+                    $buffer = IO::File->new( "+<$out_file" )
                         or die "# Cannot open $out_file: $!";
                 }
                 else
@@ -138,7 +138,7 @@ sub run
     # output is empty
     {
 
-        my $lex = new LexFile my $out_file ;
+        my $lex = LexFile->new( my $out_file );
 
         foreach my $to_file ( qw(buffer file handle ) )
         {
@@ -159,7 +159,7 @@ sub run
 
                 if ($to_file eq 'handle')
                 {
-                    $buffer = new IO::File "+<$out_file" 
+                    $buffer = IO::File->new( "+<$out_file" )
                         or die "# Cannot open $out_file: $!";
                 }
                 else
@@ -182,12 +182,12 @@ sub run
     {
         title "$CompressClass - Merge to file that doesn't exist";
 
-        my $lex = new LexFile my $out_file ;
-        
+        my $lex = LexFile->new( my $out_file );
+
         ok ! -e $out_file, "  Destination file, '$out_file', does not exist";
 
-        ok my $gz1 = $CompressClass->new($out_file, Merge => 1)
-            or die "# $CompressClass->new failed: $$Error\n";
+        ok my $gz1 = $CompressClass->can('new')->( $CompressClass, $out_file, Merge => 1)
+            or die "# $CompressClass->new(...) failed: $$Error\n";
         #hexDump($buffer);
         $gz1->write("FGHI");
         $gz1->close();
@@ -200,13 +200,13 @@ sub run
 
     {
 
-        my $lex = new LexFile my $out_file ;
+        my $lex = LexFile->new( my $out_file );
 
         foreach my $to_file ( qw( buffer file handle ) )
         {
             foreach my $content (undef, '', 'x', 'abcde')
             {
-                #next if ! defined $content && $to_file; 
+                #next if ! defined $content && $to_file;
 
                 my $buffer ;
                 my $disp_content = defined $content ? $content : '<undef>' ;
@@ -245,10 +245,10 @@ sub run
                     #
                     #}
 
-                my $dest = $buffer ;    
+                my $dest = $buffer ;
                 if ($to_file eq 'handle')
                 {
-                    $dest = new IO::File "+<$buffer" ;
+                    $dest = IO::File->new( "+<$buffer" );
                 }
 
                 my $gz1 = $CompressClass->new($dest, Merge => 1, AutoClose => 1)
@@ -278,7 +278,7 @@ sub run
 
         my $buffer ;
 
-        my $lex = new LexFile my $out_file ;
+        my $lex = LexFile->new( my $out_file );
 
         foreach my $to_file (0, 1)
         {
@@ -298,7 +298,7 @@ sub run
                     $buffer = \$x ;
                     title "$TopType to Buffer, content is '$disp_content'";
                 }
-                
+
 
                 ok $Func->(\$content, $buffer), " Compress content";
                 #hexDump($buffer);

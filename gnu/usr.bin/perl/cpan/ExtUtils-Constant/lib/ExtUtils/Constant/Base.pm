@@ -5,7 +5,7 @@ use vars qw($VERSION);
 use Carp;
 use Text::Wrap;
 use ExtUtils::Constant::Utils qw(C_stringify perl_stringify);
-$VERSION = '0.06';
+$VERSION = '0.07';
 
 use constant is_perl56 => ($] < 5.007 && $] > 5.005_50);
 
@@ -716,7 +716,7 @@ sub normalise_items
       # tr///c is broken on 5.6.1 for utf8, so my original tr/\0-\177//c
       # doesn't work. Upgrade to 5.8
       # if ($name !~ tr/\0-\177//c || $] < 5.005_50) {
-      if ($name =~ tr/\0-\177// == length $name || $] < 5.005_50
+      if ($name !~ /[[:^ascii:]]/ || $] < 5.005_50
 	 || $args->{disable_utf8_duplication}) {
         # No characters outside 7 bit ASCII.
         if (exists $items->{$name}) {

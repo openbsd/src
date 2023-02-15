@@ -5,7 +5,7 @@
 /* Return default value and print no error message */
 int matherr( struct exception *err )
   {
-	return 1;
+        return 1;
   }
 
 #endif

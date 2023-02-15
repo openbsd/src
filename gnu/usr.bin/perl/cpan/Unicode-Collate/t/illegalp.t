@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -27,8 +19,14 @@ sub ok ($;$) {
     print $p ? "ok" : "not ok", ' ', ++$count, "\n";
 }
 
+use Unicode::Collate;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
+#########################
 
 #
 # No test for Unicode::Collate is included in this .t file.
@@ -63,26 +61,26 @@ ok(1);
 no warnings 'utf8';
 
 ok("\x{206F}!" lt "\x{D800}!");
-ok(pack('U*', 0x206F, 0x21) lt pack('U*', 0xD800, 0x21));
+ok(_pack_U(0x206F, 0x21) lt _pack_U(0xD800, 0x21));
 
 ok("\x{D800}!" lt "\x{DFFF}!");
-ok(pack('U*', 0xD800, 0x21) lt pack('U*', 0xDFFF, 0x21));
+ok(_pack_U(0xD800, 0x21) lt _pack_U(0xDFFF, 0x21));
 
 ok("\x{DFFF}!" lt "\x{FDD0}!");
-ok(pack('U*', 0xDFFF, 0x21) lt pack('U*', 0xFDD0, 0x21) );
+ok(_pack_U(0xDFFF, 0x21) lt _pack_U(0xFDD0, 0x21) );
 
 ok("\x{FDD0}!" lt "\x{FFFB}!");
-ok(pack('U*', 0xFDD0, 0x21) lt pack('U*', 0xFFFB, 0x21));
+ok(_pack_U(0xFDD0, 0x21) lt _pack_U(0xFFFB, 0x21));
 
 ok("\x{FFFB}!" lt "\x{FFFE}!");
-ok(pack('U*', 0xFFFB, 0x21) lt pack('U*', 0xFFFE, 0x21));
+ok(_pack_U(0xFFFB, 0x21) lt _pack_U(0xFFFE, 0x21));
 
 ok("\x{FFFE}!" lt "\x{FFFF}!");
-ok(pack('U*', 0xFFFE, 0x21) lt pack('U*', 0xFFFF, 0x21));
+ok(_pack_U(0xFFFE, 0x21) lt _pack_U(0xFFFF, 0x21));
 
 ok("\x{FFFF}!" lt "\x{1D165}!");
-ok(pack('U*', 0xFFFF, 0x21) lt pack('U*', 0x1D165, 0x21));
+ok(_pack_U(0xFFFF, 0x21) lt _pack_U(0x1D165, 0x21));
 
 ok("\000!" lt "\x{FFFF}!");
-ok(pack('U*', 0, 0x21) lt pack('U*', 0xFFFF, 0x21));
+ok(_pack_U(0, 0x21) lt _pack_U(0xFFFF, 0x21));
 

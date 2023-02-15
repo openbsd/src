@@ -11,7 +11,7 @@ BEGIN {
 }
 
 use DirHandle;
-use Test::More tests => 31;
+use Test::More;
 
 # Fetching the list of files in two different ways and expecting them 
 # to be the same is a race condition when tests are running in parallel.
@@ -133,3 +133,5 @@ ok(! $bbdot->close(),
 if ($chdir) {
   chdir "..";
 }
+
+done_testing();

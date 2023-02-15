@@ -18,8 +18,8 @@ BEGIN {
         if $] < 5.005 ;
 
     plan(skip_all => "IO::Compress::Bzip2 not available" )
-        unless eval { require IO::Compress::Bzip2; 
-                      require IO::Uncompress::Bunzip2; 
+        unless eval { require IO::Compress::Bzip2;
+                      require IO::Uncompress::Bunzip2;
                       1
                     } ;
 
@@ -48,11 +48,11 @@ sub zipGetHeader
     my $got ;
 
     ok zip($in, \$out, %opts), "  zip ok" ;
-    ok unzip(\$out, \$got), "  unzip ok" 
+    ok unzip(\$out, \$got), "  unzip ok"
         or diag $UnzipError ;
     is $got, $content, "  got expected content" ;
 
-    my $gunz = new IO::Uncompress::Unzip \$out, Strict => 0
+    my $gunz = IO::Uncompress::Unzip->new( \$out, Strict => 0 )
         or diag "UnzipError is $IO::Uncompress::Unzip::UnzipError" ;
     ok $gunz, "  Created IO::Uncompress::Unzip object";
     my $hdr = $gunz->getHeaderInfo();
@@ -63,7 +63,7 @@ sub zipGetHeader
     ok $gunz->close, "  closed ok" ;
 
     return $hdr ;
-    
+
 }
 
 
@@ -79,8 +79,8 @@ for my $input (0, 1)
             {
                 title "Input $input, Stream $stream, Zip64 $zip64, Method $method";
 
-                my $lex1 = new LexFile my $file1;
-                my $lex2 = new LexFile my $file2;
+                my $lex1 = LexFile->new( my $file1 );
+                my $lex2 = LexFile->new( my $file2 );
                 my $content = "hello ";
                 my $in ;
 
@@ -95,9 +95,9 @@ for my $input (0, 1)
                 }
 
 
-                ok zip($in => $file1 , Method => $method, 
+                ok zip($in => $file1 , Method => $method,
                                        Zip64  => $zip64,
-                                       Stream => $stream), " zip ok" 
+                                       Stream => $stream), " zip ok"
                     or diag $ZipError ;
 
                 my $got ;
@@ -106,7 +106,7 @@ for my $input (0, 1)
 
                 is $got, $content, "  content ok";
 
-                my $u = new IO::Uncompress::Unzip $file1
+                my $u = IO::Uncompress::Unzip->new( $file1 )
                     or diag $ZipError ;
 
                 my $hdr = $u->getHeaderInfo();
@@ -133,7 +133,7 @@ for my $stream (0, 1)
             my $file1;
             my $file2;
             my $zipfile;
-            my $lex = new LexFile $file1, $file2, $zipfile;
+            my $lex = LexFile->new( $file1, $file2, $zipfile );
 
             my $content1 = "hello ";
             writeFile($file1, $content1);
@@ -145,9 +145,9 @@ for my $stream (0, 1)
                             $file2 => $content2,
                           );
 
-            ok zip([$file1, $file2] => $zipfile , Method => $method, 
+            ok zip([$file1, $file2] => $zipfile , Method => $method,
                                                   Zip64  => $zip64,
-                                                  Stream => $stream), " zip ok" 
+                                                  Stream => $stream), " zip ok"
                 or diag $ZipError ;
 
             for my $file ($file1, $file2)
@@ -163,4 +163,3 @@ for my $stream (0, 1)
 }
 
 # TODO add more error cases
-

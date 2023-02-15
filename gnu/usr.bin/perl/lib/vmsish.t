@@ -10,7 +10,7 @@ $perl = VMS::Filespec::vmsify($perl) if $^O eq 'VMS';
 
 my $Invoke_Perl = qq(MCR $perl "-I[-.lib]");
 
-use Test::More tests => 29;
+use Test::More;
 
 SKIP: {
     skip("tests for non-VMS only", 1) if $^O eq 'VMS';
@@ -182,6 +182,8 @@ is($?,0,"outer lex scope of vmsish [POSIX status]");
   ok(abs($utcmtime - $vmsmtime + $offset) <= 10,"(stat) UTC: $utcmtime  VMS: $vmsmtime");
 }
 }
+
+done_testing();
 
 #====== need this to make sure error messages come out, even if
 #       they were turned off in invoking procedure

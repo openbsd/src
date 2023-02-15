@@ -6,8 +6,8 @@ use warnings;
 use Test::More tests => 8;
 use HTTP::Tiny;
 
-# a couple tests to ensure that we get the default agent expected, the coorect
-# agent when specified, and the correct agent when specifified with a space at
+# a couple tests to ensure that we get the default agent expected, the correct
+# agent when specified, and the correct agent when specified with a space at
 # the end of the string (as LWP::UserAgent does)
 
 

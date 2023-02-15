@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 65;
+use Test::More;
 
 BEGIN { use_ok 'File::Basename' }
 
@@ -184,3 +184,5 @@ SKIP: {
     ok tainted(dirname($TAINT.'/perl/lib//'));
     ok all_tainted(fileparse($TAINT.'/dir/draft.book7','\.book\d+'));
 }
+
+done_testing();
