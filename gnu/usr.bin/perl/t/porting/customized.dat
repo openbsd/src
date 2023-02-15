@@ -1,6 +1,8 @@
 # Regenerate this file using:
 #     cd t
 #     ./perl -I../lib porting/customized.t --regen
+Digest::MD5 cpan/Digest-MD5/MD5.xs 3d56a25a9eaed20712d50223c19dd193444072bd
+Digest::MD5 cpan/Digest-MD5/t/files.t 889559c1419ab72f32a24160095018a3240e82ba
 ExtUtils::Constant cpan/ExtUtils-Constant/lib/ExtUtils/Constant/Base.pm 7560e1018f806db5689dee78728ccb8374aea741
 ExtUtils::Constant cpan/ExtUtils-Constant/t/Constant.t 165e9c7132b003fd192d32a737b0f51f9ba4999e
 Filter::Util::Call pod/perlfilter.pod 545265af2f45741a0e59eecdd0cfc0c9e490c1e8
@@ -20,10 +22,11 @@ Net::Ping dist/Net-Ping/t/010_pingecho.t 218d7a9ee5b6d03ba2544210acaf6585f8dc550
 Net::Ping dist/Net-Ping/t/450_service.t f6578680f2872d7fc9f24dd75388d55654761875
 Net::Ping dist/Net-Ping/t/500_ping_icmp.t 3eeb60181c01b85f876bd6658644548fdf2e24d4
 Net::Ping dist/Net-Ping/t/501_ping_icmpv6.t cd719bca662b054b676dd2ee6e0c73c7a5e50cf9
-Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm 582be34c077c9ff44d99914724a0cc2140bcd48c
+Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm d97aa26b722e6e3120b19ee0d7cf9af04dfdfb7f
 Socket cpan/Socket/Socket.pm a993d3a80844b2c89a63d1f815d2e0ed0034a4f5
 Socket cpan/Socket/Socket.xs 146541e7deb5593f0469740a6e38bfd0b42c0329
 Test::Harness cpan/Test-Harness/t/harness.t 38b13cfc479d37d91c104b97dd364a74dfde0f2f
+version vutil.c 8f1e65848649b125b6e2d3a91d54f5e147d12e41
 Win32API::File cpan/Win32API-File/File.pm 8fd212857f821cb26648878b96e57f13bf21b99e
 Win32API::File cpan/Win32API-File/File.xs beb870fed4490d2faa547b4a8576b8d64d1d27c5
 libnet cpan/libnet/lib/Net/Cmd.pm effaa3ba5c2ea320869d0c769aa206fb75d7dd89

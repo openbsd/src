@@ -32,6 +32,47 @@ BEGIN {
 
 }
 
+sub test_zlib_header_matches_library
+{
+SKIP: {
+    skip "TEST_SKIP_VERSION_CHECK is set", 1
+        if $ENV{TEST_SKIP_VERSION_CHECK};
+
+    if (Compress::Raw::Zlib::is_zlibng_native())
+    {
+        my $zlibng_h = Compress::Raw::Zlib::ZLIBNG_VERSION ;
+        my $libzng   = Compress::Raw::Zlib::zlibng_version();
+        is($zlibng_h, $libzng, "ZLIBNG_VERSION ($zlibng_h) matches Compress::Raw::Zlib::zlibng_version")
+            or diag <<EOM;
+
+The version of zlib-ng.h does not match the version of libz-ng
+
+You have zlib-ng.h version $zlibng_h
+     and libz-ng   version $libzng
+
+You probably have two versions of zlib-ng installed on your system.
+Try removing the one you don't want to use and rebuild.
+EOM
+    }
+    else
+    {
+        my $zlib_h = ZLIB_VERSION ;
+        my $libz   = Compress::Raw::Zlib::zlib_version();
+        is($zlib_h, $libz, "ZLIB_VERSION ($zlib_h) matches Compress::Raw::Zlib::zlib_version")
+            or diag <<EOM;
+
+The version of zlib.h does not match the version of libz
+
+You have zlib.h version $zlib_h
+     and libz   version $libz
+
+You probably have two versions of zlib installed on your system.
+Try removing the one you don't want to use and rebuild.
+EOM
+    }
+    }
+}
+
 
 {
     package LexFile ;

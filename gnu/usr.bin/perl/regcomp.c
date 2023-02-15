@@ -6748,18 +6748,88 @@ S_study_chunk(pTHX_
     assert(!frame);
     DEBUG_STUDYDATA("pre-fin", data, depth, is_inf, min, stopmin, delta);
 
+    /* is this pattern infinite? Eg, consider /(a|b+)/ */
+    if (is_inf_internal)
+        delta = OPTIMIZE_INFTY;
+
+    /* deal with (*ACCEPT), Eg, consider /(foo(*ACCEPT)|bop)bar/ */
     if (min > stopmin) {
-        /* stopmin might be shorter than min if we saw an (*ACCEPT). If
-        this is the case then it means this pattern is variable length
-        and we need to ensure that the delta accounts for it. delta
-        represents the difference between min length and max length for
-        this part of the pattern. */
-        delta += min - stopmin;
+        /*
+        At this point 'min' represents the minimum length string we can
+        match while *ignoring* the implication of ACCEPT, and 'delta'
+        represents the difference between the minimum length and maximum
+        length, and if the pattern matches an infinitely long string
+        (consider the + and * quantifiers) then we use the special delta
+        value of OPTIMIZE_INFTY to represent it. 'stopmin' is the
+        minimum length that can be matched *and* accepted.
+
+        A pattern is accepted when matching was successful *and*
+        complete, and thus there is no further matching needing to be
+        done, no backtracking to occur, etc. Prior to the introduction
+        of ACCEPT the only opcode that signaled acceptance was the END
+        opcode, which is always the very last opcode in a regex program.
+        ACCEPT is thus conceptually an early successful return out of
+        the matching process. stopmin starts out as OPTIMIZE_INFTY to
+        represent "the entire pattern", and is ratched down to the
+        "current min" if necessary when an ACCEPT opcode is encountered.
+
+        Thus stopmin might be smaller than min if we saw an (*ACCEPT),
+        and we now need to account for it in both min and delta.
+        Consider that in a pattern /AB/ normally the min length it can
+        match can be computed as min(A)+min(B). But (*ACCEPT) means
+        that it might be something else, not even neccesarily min(A) at
+        all. Consider
+
+             A  = /(foo(*ACCEPT)|x+)/
+             B  = /whop/
+             AB = /(foo(*ACCEPT)|x+)whop/
+
+        The min for A is 1 for "x" and the delta for A is OPTIMIZE_INFTY
+        for "xxxxx...", its stopmin is 3 for "foo". The min for B is 4 for
+        "whop", and the delta of 0 as the pattern is of fixed length, the
+        stopmin would be OPTIMIZE_INFTY as it does not contain an ACCEPT.
+        When handling AB we expect to see a min of 5 for "xwhop", and a
+        delta of OPTIMIZE_INFTY for "xxxxx...whop", and a stopmin of 3
+        for "foo". This should result in a final min of 3 for "foo", and
+        a final delta of OPTIMIZE_INFTY for "xxxxx...whop".
+
+        In something like /(dude(*ACCEPT)|irk)x{3,7}/ we would have a
+        min of 6 for "irkxxx" and a delta of 4 for "irkxxxxxxx", and the
+        stop min would be 4 for "dude". This should result in a final
+        min of 4 for "dude", and a final delta of 6, for "irkxxxxxxx".
+
+        When min is smaller than stopmin then we can ignore it. In the
+        fragment /(x{10,20}(*ACCEPT)|a)b+/, we would have a min of 2,
+        and a delta of OPTIMIZE_INFTY, and a stopmin of 10. Obviously
+        the ACCEPT doesn't reduce the minimum length of the string that
+        might be matched, nor affect the maximum length.
+
+        In something like /foo(*ACCEPT)ba?r/ we would have a min of 5
+        for "foobr", a delta of 1 for "foobar", and a stopmin of 3 for
+        "foo". We currently turn this into a min of 3 for "foo" and a
+        delta of 3 for "foobar" even though technically "foobar" isn't
+        possible. ACCEPT affects some aspects of the optimizer, like
+        length computations and mandatory substring optimizations, but
+        there are other optimzations this routine perfoms that are not
+        affected and this compromise simplifies implementation.
+
+        It might be helpful to consider that this C function is called
+        recursively on the pattern in a bottom up fashion, and that the
+        min returned by a nested call may be marked as coming from an
+        ACCEPT, causing its callers to treat the returned min as a
+        stopmin as the recursion unwinds. Thus a single ACCEPT can affect
+        multiple calls into this function in different ways.
+        */
+
+        if (OPTIMIZE_INFTY - delta >= min - stopmin)
+            delta += min - stopmin;
+        else
+            delta = OPTIMIZE_INFTY;
         min = stopmin;
     }
 
     *scanp = scan;
-    *deltap = is_inf_internal ? OPTIMIZE_INFTY : delta;
+    *deltap = delta;
 
     if (flags & SCF_DO_SUBSTR && is_inf)
         data->pos_delta = OPTIMIZE_INFTY - data->pos_min;
@@ -6790,7 +6860,9 @@ S_study_chunk(pTHX_
 }
 
 /* add a data member to the struct reg_data attached to this regex, it should
- * always return a non-zero return */
+ * always return a non-zero return. the 's' argument is the type of the items
+ * being added and the n is the number of items. The length of 's' should match
+ * the number of items. */
 STATIC U32
 S_add_data(RExC_state_t* const pRExC_state, const char* const s, const U32 n)
 {

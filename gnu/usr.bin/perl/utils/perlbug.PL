@@ -354,13 +354,12 @@ This program provides an easy way to send a thank-you message back to the
 authors and maintainers of perl.
 
 If you wish to generate a bug report, please run it without the -T flag
-(or run the program perlbug rather than perlthanks)
 EOF
 	} else {
 	    paraprint <<"EOF";
 This program provides an easy way to generate a bug report for the core
 perl distribution (along with tests or patches).  To send a thank-you
-note to $thanksaddress instead of a bug report, please run 'perlthanks'.
+note to $thanksaddress instead of a bug report, please use the -T flag.
 
 The GitHub issue tracker at https://github.com/Perl/perl5/issues is the
 best place to submit your report so it can be tracked and resolved.
@@ -1267,8 +1266,6 @@ S<[ B<-S> ]> S<[ B<-t> ]>  S<[ B<-d> ]>  S<[ B<-h> ]> S<[ B<-T> ]>
 B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
  S<[ B<-ok> | B<-okay> | B<-nok> | B<-nokay> ]>
 
-B<perlthanks>
-
 =head1 DESCRIPTION
 
 
@@ -1404,8 +1401,8 @@ by Perl's test suite).
 
 =item Can you use C<perlbug> to submit a thank-you note?
 
-Yes, you can do this by either using the C<-T> option, or by invoking
-the program as C<perlthanks>. Thank-you notes are good. It makes people
+Yes, you can do this by using the C<-T> option.
+Thank-you notes are good. It makes people
 smile. 
 
 =back

@@ -44,7 +44,7 @@ sub run_tests {
 
     watchdog(($ENV{PERL_TEST_TIME_OUT_FACTOR} || 1)
              * (($::running_as_thread && $::running_as_thread)
-                ? 150 : 225));
+                ? 150 : 540));
 
     {
         # [perl #120446]

@@ -209,6 +209,7 @@ extra_dep='
 cpan/Pod-Simple/pm_to_blib: dist/if/pm_to_blib
 ext/Pod-Functions/pm_to_blib: cpan/Pod-Simple/pm_to_blib cpan/Pod-Escapes/pm_to_blib pod/perlfunc.pod
 cpan/IO-Compress/pm_to_blib: dist/lib/pm_to_blib
+lib/auto/Term/ReadKey/ReadKey.so: lib/auto/Cwd/Cwd.so
 '
 for f in $dynamic_ext; do
     : the dependency named here will never exist
@@ -496,7 +497,7 @@ shextract=`SH_to_target $SH`
 ## In the following dollars and backticks do not need the extra backslash.
 $spitshell >>$Makefile <<!GROK!THIS!
 
-private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) git_version.h lib/buildcustomize.pl
+private = preplibrary \$(CONFIGPM) \$(CONFIGPOD) lib/buildcustomize.pl
 
 # Files to be built with variable substitution before miniperl
 # is available.
@@ -672,15 +673,16 @@ $(MANIFEST_SRT):	MANIFEST $(PERL_EXE)
 
 .PHONY: all utilities
 
+# OpenBSD uses pre-generated lib/Config_git.pl and git_version.h files
 # Both git_version.h and lib/Config_git.pl are built
 # by make_patchnum.pl.
-git_version.h: lib/Config_git.pl
-
-lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
-	$(MINIPERL) make_patchnum.pl
-
-# make sure that we recompile perl.c if the git version changes
-perl$(OBJ_EXT): git_version.h
+#git_version.h: lib/Config_git.pl
+#
+#lib/Config_git.pl: $(MINIPERL_EXE) make_patchnum.pl
+#	$(MINIPERL) make_patchnum.pl
+#
+## make sure that we recompile perl.c if the git version changes
+#perl$(OBJ_EXT): git_version.h
 
 !NO!SUBS!
 
@@ -1111,10 +1113,7 @@ $(CONFIGPOD): config.sh $(MINIPERL_EXE) configpm Porting/Glossary lib/Config_git
 unidatafiles $(unidatafiles) pod/perluniprops.pod: uni.data
 
 uni.data: $(MINIPERL_EXE) $(CONFIGPM) lib/unicore/mktables $(nonxs_ext)
-	$(MINIPERL) lib/unicore/mktables -C lib/unicore -P pod -maketest -makelist -p
-#	Commented out so always runs, mktables looks at far more files than we
-#	can in this makefile to decide if needs to run or not
-#	touch uni.data
+	touch uni.data
 
 # $(PERL_EXE) and ext because pod_lib.pl needs Digest::MD5
 # But also this ensures that all extensions are built before we try to scan
@@ -1362,7 +1361,7 @@ _mopup:
 	-rm -f *perl.xok
 	-rm -f cygwin.c libperl*.def libperl*.dll cygperl*.dll *.exe.stackdump
 	-rm -f $(PERL_EXE) $(MINIPERL_EXE) $(LIBPERL) libperl.* microperl
-	-rm -f config.arch config.over $(DTRACE_H)
+	-rm -f $(DTRACE_H)
 
 _cleaner1:
 	-cd os2; rm -f Makefile
@@ -1427,10 +1426,10 @@ _cleaner2:
 	-rmdir lib/TAP/Formatter lib/TAP lib/Sys/Syslog lib/Sys lib/Sub
 	-rmdir lib/Search lib/Scalar lib/Pod/Text lib/Pod/Simple
 	-rmdir lib/Pod/Perldoc lib/Pod/Html lib/PerlIO/via lib/PerlIO lib/Perl
-	-rmdir lib/Parse/CPAN lib/Parse lib/Params lib/Net/FTP lib/Module/Load
-	-rmdir lib/Module/CoreList lib/Module lib/Memoize lib/Math/BigRat
-	-rmdir lib/Math/BigInt lib/Math/BigFloat lib/Math lib/MIME
-	-rmdir lib/Locale/Maketext lib/Locale lib/List/Util lib/List
+	-rmdir lib/Parse/CPAN lib/Parse lib/Params lib/OpenBSD lib/Net/FTP
+	-rmdir lib/Module/Load lib/Module/CoreList lib/Module lib/Memoize
+	-rmdir lib/Math/BigRat lib/Math/BigInt lib/Math/BigFloat lib/Math
+	-rmdir lib/MIME lib/Locale/Maketext lib/Locale lib/List/Util lib/List
 	-rmdir lib/JSON/PP lib/JSON lib/IPC lib/IO/Uncompress/Adapter
 	-rmdir lib/IO/Uncompress lib/IO/Socket lib/IO/Compress/Zlib
 	-rmdir lib/IO/Compress/Zip lib/IO/Compress/Gzip lib/IO/Compress/Base

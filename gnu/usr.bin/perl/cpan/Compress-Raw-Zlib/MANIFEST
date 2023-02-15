@@ -1,0 +1,51 @@
+README
+Changes
+t/000prereq.t
+t/01version.t
+t/02zlib.t
+t/07bufsize.t
+t/09limitoutput.t
+t/18lvalue.t
+t/19nonpv.t
+t/99pod.t
+t/Test/Builder.pm
+t/Test/More.pm
+t/Test/Simple.pm
+t/compress/CompTestUtils.pm
+t/meta-json.t
+t/meta-yaml.t
+Zlib.xs
+typemap
+Makefile.PL
+private/MakeUtil.pm
+MANIFEST
+ppport.h
+config.in
+zlib-src/adler32.c
+zlib-src/compress.c
+zlib-src/crc32.c
+zlib-src/crc32.h
+zlib-src/deflate.c
+zlib-src/deflate.h
+zlib-src/infback.c
+zlib-src/inffast.c
+zlib-src/inffast.h
+zlib-src/inffixed.h
+zlib-src/inflate.c
+zlib-src/inflate.h
+zlib-src/inftrees.c
+zlib-src/inftrees.h
+zlib-src/trees.c
+zlib-src/trees.h
+zlib-src/uncompr.c
+zlib-src/zconf.h
+zlib-src/zlib.h
+zlib-src/zutil.c
+zlib-src/zutil.h
+fallback/constants.h
+fallback/constants.xs
+lib/Compress/Raw/Zlib.pm
+examples/filtdef    Perl
+examples/filtinf    Perl
+META.yml                                 Module meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)

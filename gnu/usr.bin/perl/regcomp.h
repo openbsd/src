@@ -112,6 +112,45 @@ typedef struct regexp_internal {
 
 /* this is where the old regcomp.h started */
 
+
+/* Define the various regnode structures. These all should be a multiple
+ * of 32 bits large, and they should by and large correspond with each other
+ * in terms of naming, etc. Things can and will break in subtle ways if you
+ * change things without care. If you look at regexp.h you will see it
+ * contains this:
+ *
+ * struct regnode {
+ *   U8  flags;
+ *   U8  type;
+ *   U16 next_off;
+ * };
+ *
+ * This structure is the base unit of elements in the regexp program. When
+ * we increment our way through the program we increment by the size of this
+ * structure, and in all cases where regnode sizing is considered it is in
+ * units of this structure.
+ *
+ * This implies that no regnode style structure should contain 64 bit
+ * aligned members. Since the base regnode is 32 bits any member might
+ * not be 64 bit aligned no matter how you might try to pad out the
+ * struct itself (the regnode_ssc is special in this regard as it is
+ * never used in a program directly). If you want to store 64 bit
+ * members you need to store them specially. The struct regnode_p and the
+ * ARGp() and ARGp_SET() macros and related inline functions provide an example
+ * solution. Note they deal with a slightly more complicated problem than simple
+ * alignment, as pointers may be 32 bits or 64 bits depending on platform,
+ * but they illustrate the pattern to follow if you want to put a 64 bit value
+ * into a regnode.
+
+ * NOTE: Ideally we do not put pointers into the regnodes in a program. Instead
+ * we put them in the "data" part of the regexp structure and store the index into
+ * the data in the pointers in the regnode. This allows the pointer to be handled
+ * properly during clone/free operations (eg refcount bookkeeping). See S_add_data(),
+ * Perl_regdupe_internal(), Perl_regfree_internal() in regcomp.c for how the data
+ * array can be used, the letters 'arsSu' all refer to different types of SV that
+ * we already have support for in the data array.
+ */
+
 struct regnode_string {
     U8	str_len;
     U8  type;
@@ -145,12 +184,25 @@ struct regnode_1 {
 };
 
 /* Node whose argument is 'SV *'.  This needs to be used very carefully in
- * situations where pointers won't become invalid because of, say re-mallocs */
+ * situations where pointers won't become invalid because of, say re-mallocs.
+ *
+ * Note that this regnode type is problematic and should not be used or copied
+ * and will be removed in the future. Pointers should be stored in the data[]
+ * array and an index into the data array stored in the regnode, which allows the
+ * pointers to be handled properly during clone/free operations on the regexp
+ * data structure. As a byproduct it also saves space, often we use a 16 bit
+ * member to store indexes into the data[] array.
+ *
+ * Also note that the weird storage here is because regnodes are 32 bit aligned,
+ * which means we cannot have a 64 bit aligned member. To make things more annoying
+ * the size of a pointer may vary by platform. Thus we use a character array, and
+ * then use inline functions to copy the data in or out.
+ * */
 struct regnode_p {
     U8	flags;
     U8  type;
     U16 next_off;
-    SV * arg1;
+    char arg1_sv_ptr_bytes[sizeof(SV *)];
 };
 
 /* Similar to a regnode_1 but with an extra signed argument */
@@ -204,14 +256,18 @@ struct regnode_charclass_posixl {
 };
 
 /* A synthetic start class (SSC); is a regnode_charclass_posixl_fold, plus an
- * extra SV*, used only during its construction and which is not used by
- * regexec.c.  Note that the 'next_off' field is unused, as the SSC stands
- * alone, so there is never a next node.  Also, there is no alignment issue,
- * because these are declared or allocated as a complete unit so the compiler
- * takes care of alignment.  This is unlike the other regnodes which are
- * allocated in terms of multiples of a single-argument regnode.  SSC nodes can
- * have a pointer field because there is no alignment issue, and because it is
- * set to NULL after construction, before any cloning of the pattern */
+ * extra SV*, used only during regex construction and which is not used by the
+ * main machinery in regexec.c and which does not get embedded in the final compiled
+ * regex program.
+ *
+ * Because it does not get embedded it does not have to comply with the alignment
+ * and sizing constraints required for a normal regnode structure: it MAY contain
+ * pointers or members of whatever size needed and the compiler will do the right
+ * thing. (Every other regnode type is 32 bit aligned.)
+ *
+ * Note that the 'next_off' field is unused, as the SSC stands alone, so there is
+ * never a next node.
+ */
 struct regnode_ssc {
     U8	flags;                      /* ANYOF_MATCHES_POSIXL bit must go here */
     U8  type;
@@ -268,16 +324,16 @@ struct regnode_ssc {
 #undef ARG2
 
 #define ARG(p) ARG_VALUE(ARG_LOC(p))
-#define ARGp(p) ARG_VALUE(ARGp_LOC(p))
+#define ARGp(p) ARGp_VALUE_inline(p)
 #define ARG1(p) ARG_VALUE(ARG1_LOC(p))
 #define ARG2(p) ARG_VALUE(ARG2_LOC(p))
 #define ARG2L(p) ARG_VALUE(ARG2L_LOC(p))
 
 #define ARG_SET(p, val) ARG__SET(ARG_LOC(p), (val))
-#define ARGp_SET(p, val) ARG__SET(ARGp_LOC(p), (val))
 #define ARG1_SET(p, val) ARG__SET(ARG1_LOC(p), (val))
 #define ARG2_SET(p, val) ARG__SET(ARG2_LOC(p), (val))
 #define ARG2L_SET(p, val) ARG__SET(ARG2L_LOC(p), (val))
+#define ARGp_SET(p, val) ARGp_SET_inline((p),(val))
 
 #undef NEXT_OFF
 #undef NODE_ALIGN
@@ -362,7 +418,7 @@ struct regnode_ssc {
 
 #define	NODE_ALIGN(node)
 #define	ARG_LOC(p)	(((struct regnode_1 *)p)->arg1)
-#define ARGp_LOC(p)	(((struct regnode_p *)p)->arg1)
+#define ARGp_BYTES_LOC(p)  (((struct regnode_p *)p)->arg1_sv_ptr_bytes)
 #define	ARG1_LOC(p)	(((struct regnode_2 *)p)->arg1)
 #define	ARG2_LOC(p)	(((struct regnode_2 *)p)->arg2)
 #define ARG2L_LOC(p)	(((struct regnode_2L *)p)->arg2)
@@ -404,6 +460,22 @@ struct regnode_ssc {
                     FILL_ADVANCE_NODE(offset, op);                      \
                     (offset) += 2;                                      \
     } STMT_END
+
+/* define these after we define the normal macros, so we can use
+ * ARGp_BYTES_LOC(n) */
+
+static inline SV *
+ARGp_VALUE_inline(struct regnode *node) {
+    SV *ptr;
+    memcpy(&ptr, ARGp_BYTES_LOC(node), sizeof(ptr));
+
+    return ptr;
+}
+
+static inline void
+ARGp_SET_inline(struct regnode *node, SV *ptr) {
+    memcpy(ARGp_BYTES_LOC(node), &ptr, sizeof(ptr));
+}
 
 #define REG_MAGIC 0234
 

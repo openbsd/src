@@ -2225,7 +2225,8 @@ Called by init_main.  Initializes PERL_*
 sub init_PERM {
     my($self) = shift;
 
-    $self->{PERM_DIR} = 755  unless defined $self->{PERM_DIR};
+    my $perm_dir = $self->{PERL_CORE} ? 770 : 755;
+    $self->{PERM_DIR} = $perm_dir  unless defined $self->{PERM_DIR};
     $self->{PERM_RW}  = 644  unless defined $self->{PERM_RW};
     $self->{PERM_RWX} = 755  unless defined $self->{PERM_RWX};
 

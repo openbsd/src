@@ -120,6 +120,8 @@ SKIP: {
       skip "no Socket::SO_PROTOCOL", 1 if !defined(eval { Socket::SO_PROTOCOL });
       skip "SO_PROTOCOL defined but not implemented", 1
          if !defined $new->sockopt(Socket::SO_PROTOCOL);
+      skip "SO_PROTOCOL returns chosen protocol on OpenBSD", 1
+         if $^O eq 'openbsd';
       is($new->protocol(), $p, 'protocol match');
     }
     SKIP: {

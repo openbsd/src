@@ -1,0 +1,10 @@
+# suppressions file for address sanitizer
+
+leak:Perl_yylex
+leak:Perl_yyparse
+leak:Perl_init_i18nl10n
+leak:Perl_newSTATEOP
+leak:S_optimize_op
+leak:Perl_re_op_compile
+leak:S_doeval_compile
+leak:Perl_re_dup_guts

@@ -11,7 +11,6 @@ use warnings;
 use bytes;
 
 use Test::More  ;
-use CompTestUtils;
 
 use constant ZLIB_1_2_12_0 => 0x12C0;
 
@@ -39,6 +38,8 @@ BEGIN
     use_ok('Compress::Raw::Zlib', 2) ;
 }
 
+use CompTestUtils;
+
 
 my $Zlib_ver = Compress::Raw::Zlib::zlib_version ;
 
@@ -50,12 +51,7 @@ EOM
 my $len   = length $hello ;
 
 # Check zlib_version and ZLIB_VERSION are the same.
-SKIP: {
-    skip "TEST_SKIP_VERSION_CHECK is set", 1
-        if $ENV{TEST_SKIP_VERSION_CHECK};
-    is Compress::Raw::Zlib::zlib_version, ZLIB_VERSION,
-        "ZLIB_VERSION matches Compress::Raw::Zlib::zlib_version" ;
-}
+test_zlib_header_matches_library();
 
 {
     title "Error Cases" ;
@@ -492,7 +488,8 @@ SKIP:
     }
 
     # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
-    if (ZLIB_VERNUM >= ZLIB_1_2_12_0)
+    # ZLIB_NG has the fix for all versions
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0 ||  Compress::Raw::Zlib::is_zlibng)
     {
         cmp_ok $status, '==', Z_STREAM_END ;
     }
@@ -526,7 +523,7 @@ SKIP:
     $GOT = '';
     $status = $k->inflate($rest, $GOT);
     # Z_STREAM_END returned by 1.12.2, Z_DATA_ERROR for older zlib
-    if (ZLIB_VERNUM >= ZLIB_1_2_12_0 )
+    if (ZLIB_VERNUM >= ZLIB_1_2_12_0 || Compress::Raw::Zlib::is_zlibng)
     {
         cmp_ok $status, '==', Z_STREAM_END ;
     }
@@ -1023,7 +1020,7 @@ SKIP:
 
     my $flags = Compress::Raw::Zlib::zlibCompileFlags;
 
-    if (ZLIB_VERNUM() < 0x1210)
+    if (!Compress::Raw::Zlib::is_zlibng && ZLIB_VERNUM() < 0x1210)
     {
         is $flags, 0, "zlibCompileFlags == 0 if < 1.2.1";
     }

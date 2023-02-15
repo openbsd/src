@@ -31,52 +31,183 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include "zlib.h"
+#if USE_ZLIB_NG
+#  include "zlib-ng.h"
+#else
+#  include "zlib.h"
+#endif
+
 
 /* zlib prior to 1.06 doesn't know about z_off_t */
 #ifndef z_off_t
 #  define z_off_t   long
 #endif
 
-#if  ! defined(ZLIB_VERNUM) || ZLIB_VERNUM < 0x1200
+#if ! USE_ZLIB_NG && (! defined(ZLIB_VERNUM) || ZLIB_VERNUM < 0x1200)
 #  define NEED_DUMMY_BYTE_AT_END
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1210
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1210)
 #  define MAGIC_APPEND
 #  define AT_LEAST_ZLIB_1_2_1
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1221
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1221)
 #  define AT_LEAST_ZLIB_1_2_2_1
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1222
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1222)
 #  define AT_LEAST_ZLIB_1_2_2_2
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1223
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1223)
 #  define AT_LEAST_ZLIB_1_2_2_3
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1230)
 #  define AT_LEAST_ZLIB_1_2_3
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1252
+#if USE_ZLIB_NG || (defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1252)
 /*
     Use Z_SOLO to build source means need own malloc/free
  */
 #  define AT_LEAST_ZLIB_1_2_5_2
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1280
-#  define AT_LEAST_ZLIB_1_2_8
+
+/* zlib vs zlib-ng */
+
+#if USE_ZLIB_NG
+
+/* zlibng native */
+
+#  define HAVE_ZLIB_NG_NATIVE       TRUE
+#  define HAVE_ZLIB_NG_COMPAT       FALSE
+
+#  ifndef ZLIBNG_VER_STATUS
+#    define ZLIBNG_VER_STATUS 0
+#  endif
+
+#  ifndef ZLIBNG_VER_MODIFIED
+#    define ZLIBNG_VER_MODIFIED 0
+#  endif
+
+#  define CRZ_adlerInitial          zng_adler32(0L, Z_NULL, 0)
+#  define CRZ_crcInitial            zng_crc32(0L, Z_NULL, 0)
+
+#  define CRZ_ZSTREAM               zng_stream
+
+
+
+#  define CRZ_adler32               zng_adler32
+#  define CRZ_adler32_combine       zng_adler32_combine
+#  define CRZ_crc32                 zng_crc32
+#  define CRZ_crc32_combine         zng_crc32_combine
+#  define CRZ_deflate               zng_deflate
+#  define CRZ_deflateEnd            zng_deflateEnd
+#  define CRZ_deflateInit           zng_deflateInit
+#  define CRZ_deflateInit2          zng_deflateInit2
+#  define CRZ_deflateParams         zng_deflateParams
+#  define CRZ_deflatePrime          zng_deflatePrime
+#  define CRZ_deflateReset          zng_deflateReset
+#  define CRZ_deflateSetDictionary  zng_deflateSetDictionary
+#  define CRZ_deflateTune           zng_deflateTune
+#  define CRZ_inflate               zng_inflate
+#  define CRZ_inflateEnd            zng_inflateEnd
+#  define CRZ_inflateInit2          zng_inflateInit2
+#  define CRZ_inflateReset          zng_inflateReset
+#  define CRZ_inflateSetDictionary  zng_inflateSetDictionary
+#  define CRZ_inflateSync           zng_inflateSync
+#  define CRZ_zlibCompileFlags      zng_zlibCompileFlags
+
+
+/* zlib  symbols & functions */
+
+// #  define CRZ_ZLIB_VERSION          ZLIBNG_VERSION
+// #  define ZLIB_VERSION              ZLIBNG_VERSION
+#  define CRZ_ZLIB_VERSION          ""
+#  define ZLIB_VERSION              ""
+
+// #  define CRZ_zlibVersion           zlibng_version
+// #  define CRZ_zlib_version          zlibng_version
+
+   const char *CRZ_zlibVersion(void)  { return ""; }
+   const char *CRZ_zlib_version(void) { return ""; }
+
+
+#else /* zlib specific */
+
+
+#  define HAVE_ZLIB_NG_NATIVE       FALSE
+
+/* Is this real zlib or zlib-ng in compat mode */
+#  ifdef ZLIBNG_VERSION
+     /* zlib-ng in compat mode */
+#    define HAVE_ZLIB_NG_COMPAT     TRUE
+
+#    ifndef ZLIBNG_VER_STATUS
+#      define ZLIBNG_VER_STATUS 0
+#    endif
+
+#    ifndef ZLIBNG_VER_MODIFIED
+#      define ZLIBNG_VER_MODIFIED 0
+#    endif
+
+   const char *zlibng_version(void)  { return ZLIBNG_VERSION ; }
+
+
+#  else
+     /* zlib native mode */
+
+#    define HAVE_ZLIB_NG_COMPAT     FALSE
+
+     /* zlib doesn't have the ZLIBNG synbols, so create them */
+#    define ZLIBNG_VERSION          ""
+#    define ZLIBNG_VERNUM           0
+#    define ZLIBNG_VER_MAJOR        0
+#    define ZLIBNG_VER_MINOR        0
+#    define ZLIBNG_VER_REVISION     0
+#    define ZLIBNG_VER_STATUS       0
+#    define ZLIBNG_VER_MODIFIED     0
+#    define ZLIBNG_VERNUM           0
+
+   const char *zlibng_version(void) { return ""; }
+
+#  endif
+
+
+
+#  define CRZ_adlerInitial          adler32(0L, Z_NULL, 0)
+#  define CRZ_crcInitial            crc32(0L, Z_NULL, 0)
+
+#  define CRZ_ZSTREAM               z_stream
+
+#  define CRZ_adler32               adler32
+#  define CRZ_adler32_combine       adler32_combine
+#  define CRZ_crc32                 crc32
+#  define CRZ_crc32_combine         crc32_combine
+#  define CRZ_deflate               deflate
+#  define CRZ_deflateEnd            deflateEnd
+#  define CRZ_deflateInit           deflateInit
+#  define CRZ_deflateInit2          deflateInit2
+#  define CRZ_deflateParams         deflateParams
+#  define CRZ_deflatePrime          deflatePrime
+#  define CRZ_deflateReset          deflateReset
+#  define CRZ_deflateSetDictionary  deflateSetDictionary
+#  define CRZ_deflateTune           deflateTune
+#  define CRZ_inflate               inflate
+#  define CRZ_inflateEnd            inflateEnd
+#  define CRZ_inflateInit2          inflateInit2
+#  define CRZ_inflateReset          inflateReset
+#  define CRZ_inflateSetDictionary  inflateSetDictionary
+#  define CRZ_inflateSync           inflateSync
+#  define CRZ_zlibCompileFlags      zlibCompileFlags
+#  define CRZ_zlibVersion           zlibVersion
+#  define CRZ_zlib_version          zlibVersion
+
 #endif
 
-#if  defined(ZLIB_VERNUM) && ZLIB_VERNUM >= 0x1290
-#  define AT_LEAST_ZLIB_1_2_9
-#endif
 
 #ifdef USE_PPPORT_H
 #  define NEED_sv_2pvbyte
@@ -132,8 +263,8 @@ typedef struct di_stream {
 #define FLAG_LIMIT_OUTPUT       16
     uLong    crc32 ;
     uLong    adler32 ;
-    z_stream stream;
-    uLong     bufsize;
+    CRZ_ZSTREAM stream;
+    uLong    bufsize;
     SV *     dictionary ;
     uLong    dict_adler ;
     int      last_error ;
@@ -252,8 +383,6 @@ typedef di_stream * Compress__Raw__Zlib__inflateScanStream ;
 #  define GZIP_OS_CODE OS_CODE
 #endif
 
-#define adlerInitial adler32(0L, Z_NULL, 0)
-#define crcInitial crc32(0L, Z_NULL, 0)
 
 /* static const char * const my_z_errmsg[] = { */
 static const char my_z_errmsg[][32] = {
@@ -410,10 +539,10 @@ rotate(list, len, rot)
 
 static void
 #ifdef CAN_PROTOTYPE
-DispHex(void * ptr, int length)
+DispHex(const void * ptr, int length)
 #else
 DispHex(ptr, length)
-    void * ptr;
+    const void * ptr;
     int length;
 #endif
 {
@@ -478,7 +607,11 @@ DispStream(s, message)
         printf("           avail_out %lu\n",  (unsigned long)s->stream.avail_out);
         printf("           total_in  %ld\n",  s->stream.total_in);
         printf("           total_out %ld\n",  s->stream.total_out);
+#if ! USE_ZLIB_NG
         printf("           adler     %ld\n",  s->stream.adler    );
+#else
+        printf("           adler     %u\n",  s->stream.adler    );
+#endif
         printf("    bufsize          %ld\n",  s->bufsize);
         printf("    dictionary       %p\n",   s->dictionary);
         printf("    dict_adler       0x%ld\n",s->dict_adler);
@@ -557,9 +690,9 @@ PostInitStream(s, flags, bufsize, windowBits)
     s->flags    = flags ;
     s->zip_mode = (windowBits < 0) ;
     if (flags & FLAG_CRC32)
-        s->crc32 = crcInitial ;
+        s->crc32 = CRZ_crcInitial ;
     if (flags & FLAG_ADLER32)
-        s->adler32 = adlerInitial ;
+        s->adler32 = CRZ_adlerInitial ;
 }
 
 
@@ -648,7 +781,7 @@ flushToBuffer(di_stream* s, int flush)
 {
     dTHX;
     int ret ;
-    z_stream * strm = &s->stream;
+    CRZ_ZSTREAM * strm = &s->stream;
 
     Bytef* output = s->deflateParams_out_buffer ;
 
@@ -695,7 +828,7 @@ flushParams(di_stream* s)
 {
     dTHX;
     int ret ;
-    z_stream * strm = &s->stream;
+    CRZ_ZSTREAM * strm = &s->stream;
 
     Bytef* output = s->deflateParams_out_buffer ;
     uLong total_output = s->deflateParams_out_length;
@@ -715,7 +848,7 @@ flushParams(di_stream* s)
         strm->next_out  = output + total_output;
         strm->avail_out = s->bufsize;
 
-        ret = deflateParams(&(s->stream), s->Level, s->Strategy);
+        ret = CRZ_deflateParams(&(s->stream), s->Level, s->Strategy);
         /* fprintf(stderr, "deflateParams %d %s %lu\n", ret,
             GetErrorString(ret),  s->bufsize - strm->avail_out); */
 
@@ -750,9 +883,11 @@ PROTOTYPES:	DISABLE
 INCLUDE: constants.xs
 
 BOOT:
+#if ! USE_ZLIB_NG
     /* Check this version of zlib is == 1 */
-    if (zlibVersion()[0] != '1')
-	croak("Compress::Raw::Zlib needs zlib version 1.x\n") ;
+    if (CRZ_zlibVersion()[0] != '1')
+        croak("Compress::Raw::Zlib needs zlib version 1.x\n") ;
+#endif
 
     {
         /* Create the $os_code scalar */
@@ -766,40 +901,62 @@ BOOT:
         sv_setiv(os_code_sv, Perl_crz_BUILD_ZLIB) ;
     }
 
-
-#define Zip_zlib_version()	(const char*)zlib_version
+#define Zip_zlib_version()	(const char*)CRZ_zlib_version()
 const char*
 Zip_zlib_version()
+
+const char*
+zlibng_version()
+
+#define Zip_is_zlib_native()	(! (HAVE_ZLIB_NG_NATIVE || HAVE_ZLIB_NG_COMPAT))
+bool
+Zip_is_zlib_native()
+
+#define Zip_is_zlibng_native()	(bool)HAVE_ZLIB_NG_NATIVE
+bool
+Zip_is_zlibng_native()
+
+#define Zip_is_zlibng_compat()	(bool)HAVE_ZLIB_NG_COMPAT
+bool
+Zip_is_zlibng_compat()
+
+#define Zip_is_zlibng()	(bool)(HAVE_ZLIB_NG_NATIVE || HAVE_ZLIB_NG_COMPAT)
+bool
+Zip_is_zlibng()
 
 unsigned
 ZLIB_VERNUM()
     CODE:
 #ifdef ZLIB_VERNUM
         RETVAL = ZLIB_VERNUM ;
+#elif USE_ZLIB_NG
+        RETVAL = 0 ;
 #else
         /* 1.1.4 => 0x1140 */
-        RETVAL  = (ZLIB_VERSION[0] - '0') << 12 ;
-        RETVAL += (ZLIB_VERSION[2] - '0') <<  8 ;
-        RETVAL += (ZLIB_VERSION[4] - '0') <<  4 ;
-        if (strlen(ZLIB_VERSION) > 5)
-            RETVAL += (ZLIB_VERSION[6] - '0')  ;
+        RETVAL  = (CRZ_ZLIB_VERSION[0] - '0') << 12 ;
+        RETVAL += (CRZ_ZLIB_VERSION[2] - '0') <<  8 ;
+        RETVAL += (CRZ_ZLIB_VERSION[4] - '0') <<  4 ;
+        if (strlen(CRZ_ZLIB_VERSION) > 5)
+            RETVAL += (CRZ_ZLIB_VERSION[6] - '0')  ;
 #endif
     OUTPUT:
         RETVAL
 
 
 #ifndef AT_LEAST_ZLIB_1_2_1
-#define zlibCompileFlags() 0
+#  define Zip_zlibCompileFlags  0
+#else
+#  define Zip_zlibCompileFlags  CRZ_zlibCompileFlags
 #endif
 uLong
-zlibCompileFlags()
+Zip_zlibCompileFlags()
 
 MODULE = Compress::Raw::Zlib	PACKAGE = Compress::Raw::Zlib	PREFIX = Zip_
 
-#define Zip_adler32(buf, adler) adler32(adler, buf, (uInt)len)
+#define Zip_adler32(buf, adler) CRZ_adler32(adler, buf, (uInt)len)
 
 uLong
-Zip_adler32(buf, adler=adlerInitial)
+Zip_adler32(buf, adler=CRZ_adlerInitial)
         uLong    adler = NO_INIT
         STRLEN   len = NO_INIT
         Bytef *  buf = NO_INIT
@@ -814,18 +971,18 @@ Zip_adler32(buf, adler=adlerInitial)
 	buf = (Byte*)SvPVbyte(sv, len) ;
 
 	if (items < 2)
-	  adler = adlerInitial;
+	  adler = CRZ_adlerInitial;
 	else if (SvOK(ST(1)))
 	  adler = SvUV(ST(1)) ;
 	else
-	  adler = adlerInitial;
+	  adler = CRZ_adlerInitial;
     OUTPUT:
         RETVAL
 
-#define Zip_crc32(buf, crc, offset) crc32(crc, buf+offset, (uInt)len-offset)
+#define Zip_crc32(buf, crc, offset) CRZ_crc32(crc, buf+offset, (uInt)len-offset)
 
 uLong
-Zip_crc32(buf, crc=crcInitial, offset=0)
+Zip_crc32(buf, crc=CRZ_crcInitial, offset=0)
         uLong    crc = NO_INIT
         STRLEN   len = NO_INIT
         Bytef *  buf = NO_INIT
@@ -844,11 +1001,11 @@ Zip_crc32(buf, crc=crcInitial, offset=0)
 	  croak("Offset out of range in Compress::Raw::Zlib::crc32");
 
 	if (items < 2)
-	  crc = crcInitial;
+	  crc = CRZ_crcInitial;
 	else if (SvOK(ST(1)))
 	  crc = SvUV(ST(1)) ;
 	else
-	  crc = crcInitial;
+	  crc = CRZ_crcInitial;
 
 uLong
 crc32_combine(crc1, crc2, len2)
@@ -860,7 +1017,7 @@ crc32_combine(crc1, crc2, len2)
         crc1 = crc1; crc2 = crc2 ; len2 = len2; /* Silence -Wall */
         croak("crc32_combine needs zlib 1.2.3 or better");
 #else
-        RETVAL = crc32_combine(crc1, crc2, len2);
+        RETVAL = CRZ_crc32_combine(crc1, crc2, len2);
 #endif
     OUTPUT:
         RETVAL
@@ -876,7 +1033,7 @@ adler32_combine(adler1, adler2, len2)
         adler1 = adler1; adler2 = adler2 ; len2 = len2; /* Silence -Wall */
         croak("adler32_combine needs zlib 1.2.3 or better");
 #else
-        RETVAL = adler32_combine(adler1, adler2, len2);
+        RETVAL = CRZ_adler32_combine(adler1, adler2, len2);
 #endif
     OUTPUT:
         RETVAL
@@ -909,7 +1066,7 @@ _deflateInit(flags,level, method, windowBits, memLevel, strategy, bufsize, dicti
         s->MemLevel   = memLevel;
         s->Strategy   = strategy;
 
-        err = deflateInit2(&(s->stream), level,
+        err = CRZ_deflateInit2(&(s->stream), level,
 			   method, windowBits, memLevel, strategy);
 
         if (trace) {
@@ -924,7 +1081,7 @@ _deflateInit(flags,level, method, windowBits, memLevel, strategy, bufsize, dicti
             if (DO_UTF8(dictionary) && !sv_utf8_downgrade(dictionary, 1))
                 croak("Wide character in Compress::Raw::Zlib::Deflate::new dicrionary parameter");
 #endif
-	    err = deflateSetDictionary(&(s->stream), (const Bytef*) SvPVX(dictionary), SvCUR(dictionary)) ;
+	    err = CRZ_deflateSetDictionary(&(s->stream), (const Bytef*) SvPVX(dictionary), SvCUR(dictionary)) ;
         if (trace)
             warn("deflateSetDictionary returned %d\n", err);
 	    s->dict_adler = s->stream.adler ;
@@ -975,7 +1132,7 @@ _inflateInit(flags, windowBits, bufsize, dictionary)
 
         s->WindowBits = windowBits;
 
-        err = inflateInit2(&(s->stream), windowBits);
+        err = CRZ_inflateInit2(&(s->stream), windowBits);
         if (err != Z_OK) {
             Safefree(s) ;
             s = NULL ;
@@ -986,7 +1143,7 @@ _inflateInit(flags, windowBits, bufsize, dictionary)
         if (s->WindowBits < 0) {
             STRLEN dlen;
             const Bytef* b = (const Bytef*)SvPVbyte(dictionary, dlen);
-            err = inflateSetDictionary(&(s->stream),
+            err = CRZ_inflateSetDictionary(&(s->stream),
                 b, dlen);
             if (err != Z_OK) {
                 Safefree(s) ;
@@ -1038,7 +1195,7 @@ DualType
 deflateReset(s)
     Compress::Raw::Zlib::deflateStream   s
   CODE:
-      RETVAL = deflateReset(&(s->stream)) ;
+      RETVAL = CRZ_deflateReset(&(s->stream)) ;
       if (RETVAL == Z_OK) {
 	  PostInitStream(s, s->flags, s->bufsize, s->WindowBits) ;
       }
@@ -1071,10 +1228,10 @@ deflate (s, buf, output)
     s->stream.avail_in = origlen;
 
     if (s->flags & FLAG_CRC32)
-        s->crc32 = crc32(s->crc32, s->stream.next_in, s->stream.avail_in) ;
+        s->crc32 = CRZ_crc32(s->crc32, s->stream.next_in, s->stream.avail_in) ;
 
     if (s->flags & FLAG_ADLER32)
-        s->adler32 = adler32(s->adler32, s->stream.next_in, s->stream.avail_in) ;
+        s->adler32 = CRZ_adler32(s->adler32, s->stream.next_in, s->stream.avail_in) ;
 
     /* and retrieve the output buffer */
     output = deRef_l(output, "deflate") ;
@@ -1143,7 +1300,7 @@ deflate (s, buf, output)
           /* Perl_sv_dump(output); */
         }
 
-        RETVAL = deflate(&(s->stream), Z_NO_FLUSH);
+        RETVAL = CRZ_deflate(&(s->stream), Z_NO_FLUSH);
         /*
         if (RETVAL != Z_STREAM_ERROR) {
             int done = increment -  s->stream.avail_out ;
@@ -1181,7 +1338,7 @@ DESTROY(s)
   CODE:
     if (trace)
         printf("Compress::Raw::Zlib::deflateStream::DESTROY %p\n", s);
-    deflateEnd(&s->stream) ;
+    CRZ_deflateEnd(&s->stream) ;
     if (s->dictionary)
 	SvREFCNT_dec(s->dictionary) ;
 #ifndef SETP_BYTE
@@ -1273,7 +1430,7 @@ flush(s, output, f=Z_FINISH)
           /* Perl_sv_dump(output); */
         }
 
-        RETVAL = deflate(&(s->stream), f);
+        RETVAL = CRZ_deflate(&(s->stream), f);
         /*
         if (RETVAL != Z_STREAM_ERROR) {
             int done = availableout -  s->stream.avail_out ;
@@ -1449,7 +1606,7 @@ char*
 msg(s)
         Compress::Raw::Zlib::deflateStream   s
     CODE:
-	RETVAL = s->stream.msg;
+	RETVAL = (char*)s->stream.msg;
     OUTPUT:
 	RETVAL
 
@@ -1466,7 +1623,7 @@ deflateTune(s, good_length, max_lazy, nice_length, max_chain)
         nice_length = nice_length; max_chain = max_chain; /* Silence -Wall */
         croak("deflateTune needs zlib 1.2.2.3 or better");
 #else
-	RETVAL = deflateTune(&(s->stream), good_length, max_lazy, nice_length, max_chain);
+	RETVAL = CRZ_deflateTune(&(s->stream), good_length, max_lazy, nice_length, max_chain);
 #endif
     OUTPUT:
 	RETVAL
@@ -1483,7 +1640,7 @@ DualType
 inflateReset(s)
     Compress::Raw::Zlib::inflateStream   s
   CODE:
-      RETVAL = inflateReset(&(s->stream)) ;
+      RETVAL = CRZ_inflateReset(&(s->stream)) ;
       if (RETVAL == Z_OK) {
 	  PostInitStream(s, s->flags, s->bufsize, s->WindowBits) ;
       }
@@ -1582,7 +1739,7 @@ inflate (s, buf, output, eof=FALSE)
  s->stream.avail_out);
 DispStream(s, "BEFORE");
 Perl_sv_dump(output); */
-        RETVAL = inflate(&(s->stream), Z_SYNC_FLUSH);
+        RETVAL = CRZ_inflate(&(s->stream), Z_SYNC_FLUSH);
         /* printf("INFLATE returned %d %s, avail in %d, out %d\n", RETVAL,
  GetErrorString(RETVAL), s->stream.avail_in, s->stream.avail_out); */
 
@@ -1591,7 +1748,7 @@ Perl_sv_dump(output); */
             STRLEN dlen;
             const Bytef* b = (const Bytef*)SvPV(s->dictionary, dlen) ;
             s->dict_adler = s->stream.adler ;
-            RETVAL = inflateSetDictionary(&(s->stream),
+            RETVAL = CRZ_inflateSetDictionary(&(s->stream),
                 b, dlen);
             if (RETVAL == Z_OK)
                 continue;
@@ -1621,8 +1778,8 @@ Perl_sv_dump(output); */
         }
     }
 #ifdef NEED_DUMMY_BYTE_AT_END
-    if (eof && RETVAL == Z_OK && s->flags & FLAG_LIMIT_OUTPUT == 0) {
-        Bytef* nextIn =  s->stream.next_in;
+    if (eof && RETVAL == Z_OK && (s->flags & FLAG_LIMIT_OUTPUT) == 0) {
+        Bytef* nextIn =  (Bytef*)s->stream.next_in;
         uInt availIn =  s->stream.avail_in;
         s->stream.next_in = (Bytef*) " ";
         s->stream.avail_in = 1;
@@ -1635,7 +1792,7 @@ Perl_sv_dump(output); */
             s->stream.avail_out = increment;
             bufinc *= 2 ;
         }
-        RETVAL = inflate(&(s->stream), Z_SYNC_FLUSH);
+        RETVAL = CRZ_inflate(&(s->stream), Z_SYNC_FLUSH);
         s->stream.next_in = nextIn ;
         s->stream.avail_in  = availIn ;
     }
@@ -1661,12 +1818,12 @@ Perl_sv_dump(output); */
         SvSETMAGIC(output);
 
         if (s->flags & FLAG_CRC32 )
-            s->crc32 = crc32(s->crc32,
+            s->crc32 = CRZ_crc32(s->crc32,
 				(const Bytef*)SvPVX(output)+prefix_length,
             			SvCUR(output)-prefix_length) ;
 
         if (s->flags & FLAG_ADLER32)
-            s->adler32 = adler32(s->adler32,
+            s->adler32 = CRZ_adler32(s->adler32,
 				(const Bytef*)SvPVX(output)+prefix_length,
             			SvCUR(output)-prefix_length) ;
 
@@ -1730,7 +1887,7 @@ inflateSync (s, buf)
     s->stream.next_out = (Bytef*) NULL;
     s->stream.avail_out = 0;
 
-    RETVAL = inflateSync(&(s->stream));
+    RETVAL = CRZ_inflateSync(&(s->stream));
     s->last_error = RETVAL ;
 
     /* fix the input buffer */
@@ -1749,7 +1906,7 @@ void
 DESTROY(s)
     Compress::Raw::Zlib::inflateStream	s
   CODE:
-    inflateEnd(&s->stream) ;
+    CRZ_inflateEnd(&s->stream) ;
     if (s->dictionary)
 	SvREFCNT_dec(s->dictionary) ;
 #ifndef SETP_BYTE
@@ -1815,7 +1972,7 @@ char*
 msg(s)
 	Compress::Raw::Zlib::inflateStream   s
     CODE:
-	RETVAL = s->stream.msg;
+	RETVAL = (char*)s->stream.msg;
     OUTPUT:
 	RETVAL
 
@@ -1847,7 +2004,7 @@ void
 DESTROY(s)
     Compress::Raw::Zlib::inflateScanStream	s
   CODE:
-    inflateEnd(&s->stream) ;
+    CRZ_inflateEnd(&s->stream) ;
     if (s->dictionary)
 	SvREFCNT_dec(s->dictionary) ;
 #ifndef SETP_BYTE
@@ -1869,7 +2026,7 @@ DualType
 inflateReset(s)
     Compress::Raw::Zlib::inflateScanStream   s
   CODE:
-      RETVAL = inflateReset(&(s->stream)) ;
+      RETVAL = CRZ_inflateReset(&(s->stream)) ;
       if (RETVAL == Z_OK) {
 	  PostInitStream(s, s->flags, s->bufsize, s->WindowBits) ;
       }
@@ -1916,7 +2073,7 @@ scan(s, buf, out=NULL, eof=FALSE)
         /* DispStream(s, "before inflate\n"); */
 
         /* inflate and check for errors */
-        RETVAL = inflate(&(s->stream), Z_BLOCK);
+        RETVAL = CRZ_inflate(&(s->stream), Z_BLOCK);
 
         if (start_len > 1 && ! eof_mode)
             s->window_lastByte = *(s->stream.next_in - 1 ) ;
@@ -1926,11 +2083,11 @@ scan(s, buf, out=NULL, eof=FALSE)
             break ;
 
         if (s->flags & FLAG_CRC32 )
-            s->crc32 = crc32(s->crc32, s->window + s->window_have,
+            s->crc32 = CRZ_crc32(s->crc32, s->window + s->window_have,
                              WINDOW_SIZE - s->window_have - s->stream.avail_out);
 
         if (s->flags & FLAG_ADLER32)
-            s->adler32 = adler32(s->adler32, s->window + s->window_have,
+            s->adler32 = CRZ_adler32(s->adler32, s->window + s->window_have,
                                  WINDOW_SIZE - s->window_have - s->stream.avail_out);
 
         s->uncompressedBytes =
@@ -2107,11 +2264,11 @@ _createDeflateStream(inf_s, flags,level, method, windowBits, memLevel, strategy,
         s->MemLevel   = memLevel;
         s->Strategy   = strategy;
 
-        err = deflateInit2(&(s->stream), level,
+        err = CRZ_deflateInit2(&(s->stream), level,
 			   method, windowBits, memLevel, strategy);
 
 	if (err == Z_OK) {
-	    err = deflateSetDictionary(&(s->stream), inf_s->window, inf_s->window_have);
+	    err = CRZ_deflateSetDictionary(&(s->stream), inf_s->window, inf_s->window_have);
 	    s->dict_adler = s->stream.adler ;
 	}
 
@@ -2128,7 +2285,7 @@ _createDeflateStream(inf_s, flags,level, method, windowBits, memLevel, strategy,
             s->stream.total_in  = inf_s->stream.total_out ;
             if (inf_s->window_left) {
                 /* printf("** window_left %d, window_lastByte %d\n", inf_s->window_left, inf_s->window_lastByte); */
-                deflatePrime(&(s->stream), 8 - inf_s->window_left, inf_s->window_lastByte);
+                CRZ_deflatePrime(&(s->stream), 8 - inf_s->window_left, inf_s->window_lastByte);
             }
         }
     }

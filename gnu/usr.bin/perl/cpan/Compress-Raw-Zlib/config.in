@@ -16,11 +16,12 @@
 #    Setting the Gzip OS Code
 #
 
-BUILD_ZLIB      = True
-INCLUDE         = ./zlib-src
-LIB             = ./zlib-src
+BUILD_ZLIB      = False
+INCLUDE         = /usr/include
+LIB             = /usr/lib
 OLD_ZLIB        = False
 GZIP_OS_CODE    = AUTO_DETECT
+USE_ZLIB_NG     = False
 
 
 # end of file config.in

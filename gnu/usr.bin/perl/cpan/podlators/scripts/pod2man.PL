@@ -71,12 +71,13 @@ my $stdin;
 # Parse our options, trying to retain backward compatibility with pod2man but
 # allowing short forms as well.  --lax is currently ignored.
 my %options;
+$options{utf8} = 1;
 Getopt::Long::config ('bundling_override');
 GetOptions (\%options, 'center|c=s', 'date|d=s', 'errors=s', 'fixed=s',
             'fixedbold=s', 'fixeditalic=s', 'fixedbolditalic=s', 'help|h',
             'lax|l', 'lquote=s', 'name|n=s', 'nourls', 'official|o',
             'quotes|q=s', 'release|r=s', 'rquote=s', 'section|s=s', 'stderr',
-            'verbose|v', 'utf8|u')
+            'verbose|v', 'utf8|u!')
     or exit 1;
 pod2usage (0) if $options{help};
 
@@ -126,7 +127,7 @@ exit $status;
 __END__
 
 =for stopwords
-en em --stderr stderr --utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris URL
+en em --stderr stderr --no-utf8 UTF-8 overdo markup MT-LEVEL Allbery Solaris URL
 troff troff-specific formatters uppercased Christiansen --nourls UTC prepend
 lquote rquote
 
@@ -141,7 +142,7 @@ pod2man [B<--center>=I<string>] [B<--date>=I<string>] [B<--errors>=I<style>]
     [B<--fixedbolditalic>=I<font>] [B<--name>=I<name>] [B<--nourls>]
     [B<--official>] [B<--release>=I<version>] [B<--section>=I<manext>]
     [B<--quotes>=I<quotes>] [B<--lquote>=I<quote>] [B<--rquote>=I<quote>]
-    [B<--stderr>] [B<--utf8>] [B<--verbose>] [I<input> [I<output>] ...]
+    [B<--stderr>] [B<--no-utf8>] [B<--verbose>] [I<input> [I<output>] ...]
 
 pod2man B<--help>
 
@@ -344,19 +345,10 @@ to C<--errors=stderr> and is supported for backward compatibility.
 
 =item B<-u>, B<--utf8>
 
-By default, B<pod2man> produces the most conservative possible *roff
-output to try to ensure that it will work with as many different *roff
-implementations as possible.  Many *roff implementations cannot handle
-non-ASCII characters, so this means all non-ASCII characters are converted
-either to a *roff escape sequence that tries to create a properly accented
-character (at least for troff output) or to C<X>.
-
-This option says to instead output literal UTF-8 characters.  If your
-*roff implementation can handle it, this is the best output format to use
-and avoids corruption of documents containing non-ASCII characters.
-However, be warned that *roff source with literal UTF-8 characters is not
-supported by many implementations and may even result in segfaults and
-other bad behavior.
+This option allows B<pod2man> to output literal UTF-8 characters.
+On OpenBSD, it is enabled by default and can be disabled with
+B<--no-utf8>, in which case non-ASCII characters are converted
+either to *roff escape sequences or to C<X>.
 
 Be aware that, when using this option, the input encoding of your POD
 source should be properly declared unless it's US-ASCII.  Pod::Simple will

@@ -18,103 +18,79 @@ BEGIN
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 2 + $extra ;
+    plan tests => 9 + $extra ;
 
     use_ok('Compress::Raw::Zlib', 2) ;
 }
 
-sub bit
-{
-    return 1 << $_[0];
-}
+use CompTestUtils;
 
-{
-
-    my $zlib_h = ZLIB_VERSION ;
-    my $libz   = Compress::Raw::Zlib::zlib_version;
-    my $ZLIB_VERNUM = sprintf ("0x%X", Compress::Raw::Zlib::ZLIB_VERNUM()) ;
-    my $flags = Compress::Raw::Zlib::zlibCompileFlags();
-
-    my %sizes = (
-        0   => '16 bit',
-        1   => '32 bit',
-        2   => '64 bit',
-        3   => 'other'
-    );
-    my $uIntSize       = $sizes{ ($flags >> 0) & 0x3 };
-    my $uLongSize      = $sizes{ ($flags >> 2) & 0x3 };
-    my $pointerSize    = $sizes{ ($flags >> 4) & 0x3 };
-    my $zOffSize       = $sizes{ ($flags >> 6) & 0x3 };
-
-    my @compiler_options;
-    push @compiler_options, 'ZLIB_DEBUG'  if $flags & bit(8) ;
-    push @compiler_options, 'ASM'         if $flags & bit(9) ;
-    push @compiler_options, 'ZLIB_WINAPI' if $flags & bit(10) ;
-    push @compiler_options, 'None'        unless @compiler_options;
-    my $compiler_options = join ", ", @compiler_options;
-
-    my @one_time;
-    push @one_time, 'BUILDFIXED'  if $flags & bit(12) ;
-    push @one_time, 'DYNAMIC_CRC_TABLE'  if $flags & bit(13) ;
-    push @one_time, 'None'        unless @one_time;
-    my $one_time = join ", ", @one_time;
-
-    my @library;
-    push @library, 'NO_GZCOMPRESS'  if $flags & bit(16) ;
-    push @library, 'NO_GZIP'  if $flags & bit(17) ;
-    push @library, 'None'        unless @library;
-    my $library = join ", ", @library;
-
-    my @operational;
-    push @operational, 'PKZIP_BUG_WORKAROUND'  if $flags & bit(20) ;
-    push @operational, 'FASTEST'  if $flags & bit(21) ;
-    push @operational, 'None'        unless @operational;
-    my $operational = join ", ", @operational;
-
-    diag <<EOM ;
-
-
-Compress::Raw::Zlib::VERSION        $Compress::Raw::Zlib::VERSION
-
-ZLIB_VERSION (from zlib.h)          $zlib_h
-zlib_version (from zlib library)    $libz
-
-ZLIB_VERNUM                         $ZLIB_VERNUM
-BUILD_ZLIB                          $Compress::Raw::Zlib::BUILD_ZLIB
-GZIP_OS_CODE                        $Compress::Raw::Zlib::gzip_os_code
-
-zlibCompileFlags                    $flags
-  Type Sizes
-    size of uInt                    $uIntSize
-    size of uLong                   $uLongSize
-    size of pointer                 $pointerSize
-    size of z_off_t                 $zOffSize
-  Compiler Options                  $compiler_options
-  One-time table building           $one_time
-  Library content                   $library
-  Operation variations              $operational
-
-EOM
-}
 
 # Check zlib_version and ZLIB_VERSION are the same.
+test_zlib_header_matches_library();
 
-SKIP: {
-    skip "TEST_SKIP_VERSION_CHECK is set", 1
-        if $ENV{TEST_SKIP_VERSION_CHECK};
+SKIP:
+{
+    # If running a github workflow that tests upstream zlib/zlib-ng, check we have the version requested
 
-    my $zlib_h = ZLIB_VERSION ;
-    my $libz   = Compress::Raw::Zlib::zlib_version;
+    # Not github or not asking for explicit verson, so skip
+    skip "Not github", 7
+        if ! (defined $ENV{GITHUB_ACTION} && defined $ENV{ZLIB_VERSION}) ;
 
-    is($zlib_h, $libz, "ZLIB_VERSION ($zlib_h) matches Compress::Raw::Zlib::zlib_version")
-        or diag <<EOM;
+    my $expected_version =  $ENV{ZLIB_VERSION} ;
+    # zlib prefixes tags with a "v", so remove
+    $expected_version =~ s/^v//i;
 
-The version of zlib.h does not match the version of libz
+    skip "Skipping version tests for 'develop' branch", 7
+        if ($expected_version eq 'develop') ;
 
-You have zlib.h version $zlib_h
-     and libz   version $libz
+    if ($ENV{USE_ZLIB_NG})
+    {
+        # zlib-ng native
+        my $zv = Compress::Raw::Zlib::zlibng_version();
+        is substr($zv, 0, length($expected_version)), $expected_version, "Expected version is $expected_version";
+        ok ! Compress::Raw::Zlib::is_zlib_native(), "! is_zlib_native";
+        ok   Compress::Raw::Zlib::is_zlibng(), "is_zlibng";
+        ok   Compress::Raw::Zlib::is_zlibng_native(), "is_zlibng_native";
+        ok ! Compress::Raw::Zlib::is_zlibng_compat(), "! is_zlibng_compat";
+        is   Compress::Raw::Zlib::zlib_version(), '', "zlib_version() should be empty";
+        is   Compress::Raw::Zlib::ZLIB_VERSION, '', "ZLIB_VERSION should be empty";
+    }
+    elsif ($ENV{ZLIB_NG_PRESENT})
+    {
+        # zlib-ng compat
+        my %zlibng2zlib = (
+            '2.0.0' => '1.2.11.zlib-ng',
+            '2.0.1' => '1.2.11.zlib-ng',
+            '2.0.2' => '1.2.11.zlib-ng',
+            '2.0.3' => '1.2.11.zlib-ng',
+            '2.0.4' => '1.2.11.zlib-ng',
+            '2.0.5' => '1.2.11.zlib-ng',
+            '2.0.6' => '1.2.11.zlib-ng',
+        );
 
-You probably have two versions of zlib installed on your system.
-Try removing the one you don't want to use and rebuild.
-EOM
+        my $zv = Compress::Raw::Zlib::zlibng_version();
+
+        my $compat_ver = $zlibng2zlib{$expected_version};
+
+        is substr($zv, 0, length($expected_version)), $expected_version, "Expected Version is $expected_version";
+        ok ! Compress::Raw::Zlib::is_zlib_native(), "! is_zlib_native";
+        ok   Compress::Raw::Zlib::is_zlibng(), "is_zlibng";
+        ok ! Compress::Raw::Zlib::is_zlibng_native(), "! is_zlibng_native";
+        ok   Compress::Raw::Zlib::is_zlibng_compat(), "is_zlibng_compat";
+        is   Compress::Raw::Zlib::zlib_version(), $compat_ver, "zlib_version() should be $compat_ver";
+        is   Compress::Raw::Zlib::ZLIB_VERSION, $compat_ver, "ZLIB_VERSION should be $compat_ver";
+    }
+    else
+    {
+        # zlib native
+        my $zv = Compress::Raw::Zlib::zlib_version();
+        is substr($zv, 0, length($expected_version)), $expected_version, "Expected Version is $expected_version";
+        ok   Compress::Raw::Zlib::is_zlib_native(), "is_zlib_native";
+        ok ! Compress::Raw::Zlib::is_zlibng(), "! is_zlibng";
+        ok ! Compress::Raw::Zlib::is_zlibng_native(), "! is_zlibng_native";
+        ok ! Compress::Raw::Zlib::is_zlibng_compat(), "! is_zlibng_compat";
+        is   Compress::Raw::Zlib::zlibng_version(), '', "zlibng_version() should be empty";
+        is   Compress::Raw::Zlib::ZLIBNG_VERSION, '', "ZLIBNG_VERSION should be empty";    }
+
 }

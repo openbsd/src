@@ -24,6 +24,7 @@ _quick3p=
 .for page sect file in \
     corelist 1				utils/corelist \
     cpan 1				utils/cpan \
+    DebugWrap 1				lib/perl5db.t \
     enc2xs 1				utils/enc2xs \
     encguess 1				utils/encguess \
     h2ph 1				utils/h2ph \
@@ -84,6 +85,9 @@ _quick3p=
     perl5303delta 1			pod/perl5303delta.pod \
     perl5320delta 1			pod/perl5320delta.pod \
     perl5321delta 1			pod/perl5321delta.pod \
+    perl5340delta 1			pod/perl5340delta.pod \
+    perl5341delta 1			pod/perl5341delta.pod \
+    perl5360delta 1			pod/perl5360delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -114,6 +118,7 @@ _quick3p=
     perldeprecation 1			pod/perldeprecation.pod \
     perldiag 1				pod/perldiag.pod \
     perldoc 1				lib/perldoc.pod \
+    perldocstyle 1			pod/perldocstyle.pod \
     perldsc 1				pod/perldsc.pod \
     perlembed 1				pod/perlembed.pod \
     perlexperiment 1			pod/perlexperiment.pod \
@@ -211,11 +216,12 @@ _quick3p=
     pod2man 1				cpan/podlators/blib/script/pod2man \
     pod2text 1				cpan/podlators/blib/script/pod2text \
     pod2usage 1				cpan/Pod-Usage/blib/script/pod2usage \
+    podbuildtoc 1			pod/buildtoc \
     podchecker 1			cpan/Pod-Checker/blib/script/podchecker \
     prove 1				utils/prove \
     splain 1				utils/splain \
     streamzip 1				utils/streamzip \
-    xsubpp 1				lib/ExtUtils/xsubpp \
+    xsubpp 1				utils/xsubpp \
     AnyDBM_File 3p			lib/AnyDBM_File.pm \
     App::Cpan 3p			lib/App/Cpan.pm \
     App::Prove 3p			lib/App/Prove.pm \
@@ -246,10 +252,12 @@ _quick3p=
     B::Xref 3p				lib/B/Xref.pm \
     base 3p				lib/base.pm \
     Benchmark 3p			lib/Benchmark.pm \
+    bigfloat 3p				lib/bigfloat.pm \
     bigint 3p				lib/bigint.pm \
     bignum 3p				lib/bignum.pm \
     bigrat 3p				lib/bigrat.pm \
     blib 3p				lib/blib.pm \
+    builtin 3p				lib/builtin.pm \
     bytes 3p				lib/bytes.pm \
     Carp 3p				lib/Carp.pm \
     charnames 3p			lib/charnames.pm \
@@ -377,6 +385,7 @@ _quick3p=
     ExtUtils::MM_MacOS 3p		lib/ExtUtils/MM_MacOS.pm \
     ExtUtils::MM_NW5 3p			lib/ExtUtils/MM_NW5.pm \
     ExtUtils::MM_OS2 3p			lib/ExtUtils/MM_OS2.pm \
+    ExtUtils::MM_OS390 3p		lib/ExtUtils/MM_OS390.pm \
     ExtUtils::MM_QNX 3p			lib/ExtUtils/MM_QNX.pm \
     ExtUtils::MM_Unix 3p		lib/ExtUtils/MM_Unix.pm \
     ExtUtils::MM_UWIN 3p		lib/ExtUtils/MM_UWIN.pm \
@@ -390,6 +399,7 @@ _quick3p=
     ExtUtils::ParseXS::Constants 3p	lib/ExtUtils/ParseXS/Constants.pm \
     ExtUtils::ParseXS::Eval 3p		lib/ExtUtils/ParseXS/Eval.pm \
     ExtUtils::ParseXS::Utilities 3p	lib/ExtUtils/ParseXS/Utilities.pm \
+    ExtUtils::PL2Bat 3p			lib/ExtUtils/PL2Bat.pm \
     ExtUtils::testlib 3p		lib/ExtUtils/testlib.pm \
     ExtUtils::Typemaps 3p		lib/ExtUtils/Typemaps.pm \
     ExtUtils::Typemaps::Cmd 3p		lib/ExtUtils/Typemaps/Cmd.pm \
@@ -557,6 +567,7 @@ _quick3p=
     Pod::Escapes 3p			lib/Pod/Escapes.pm \
     Pod::Functions 3p			lib/Pod/Functions.pm \
     Pod::Html 3p			lib/Pod/Html.pm \
+    Pod::Html::Util 3p			lib/Pod/Html/Util.pm \
     Pod::Man 3p				lib/Pod/Man.pm \
     Pod::ParseLink 3p			lib/Pod/ParseLink.pm \
     Pod::Perldoc 3p			lib/Pod/Perldoc.pm \
@@ -673,6 +684,10 @@ _quick3p=
     Test2::API::Breakage 3p		lib/Test2/API/Breakage.pm \
     Test2::API::Context 3p		lib/Test2/API/Context.pm \
     Test2::API::Instance 3p		lib/Test2/API/Instance.pm \
+    Test2::API::InterceptResult 3p	lib/Test2/API/InterceptResult.pm \
+    Test2::API::InterceptResult::Event 3p	lib/Test2/API/InterceptResult/Event.pm \
+    Test2::API::InterceptResult::Hub 3p	lib/Test2/API/InterceptResult/Hub.pm \
+    Test2::API::InterceptResult::Squasher 3p	lib/Test2/API/InterceptResult/Squasher.pm \
     Test2::API::Stack 3p		lib/Test2/API/Stack.pm \
     Test2::Event 3p			lib/Test2/Event.pm \
     Test2::Event::Bail 3p		lib/Test2/Event/Bail.pm \

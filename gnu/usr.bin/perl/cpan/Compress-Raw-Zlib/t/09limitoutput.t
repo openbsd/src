@@ -11,7 +11,6 @@ use warnings;
 use bytes;
 
 use Test::More ;
-use CompTestUtils;
 
 BEGIN
 {
@@ -20,12 +19,14 @@ BEGIN
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 107 + $extra ;
+    plan tests => 108 + $extra ;
 
     use_ok('Compress::Raw::Zlib', 2) ;
 }
 
+use CompTestUtils;
 
+test_zlib_header_matches_library();
 
 my $hello = "I am a HAL 9000 computer" x 2001;
 my $tmp = $hello ;
