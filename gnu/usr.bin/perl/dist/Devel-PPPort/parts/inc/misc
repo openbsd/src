@@ -19,6 +19,7 @@ MUTABLE_PTR
 NVTYPE
 PERLIO_FUNCS_CAST
 PERLIO_FUNCS_DECL
+PERL_STATIC_INLINE
 PERL_UNUSED_ARG
 PERL_UNUSED_CONTEXT
 PERL_UNUSED_DECL
@@ -38,6 +39,12 @@ ASSUME
 
 =implementation
 
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+__UNDEFINED__ PERL_STATIC_INLINE static inline
+#else
+__UNDEFINED__ PERL_STATIC_INLINE static
+#endif
+
 __UNDEFINED__ cBOOL(cbool) ((cbool) ? (bool)1 : (bool)0)
 __UNDEFINED__ OpHAS_SIBLING(o)      (cBOOL((o)->op_sibling))
 __UNDEFINED__ OpSIBLING(o)          (0 + (o)->op_sibling)
@@ -52,7 +59,7 @@ __UNDEFINED__ __ASSERT_(statement)  assert(statement),
 __UNDEFINED__ __ASSERT_(statement)
 #endif
 
-__UNDEFINED__  __has_builtin(x) 0
+__UNDEF_NOT_PROVIDED__  __has_builtin(x) 0
 
 #if __has_builtin(__builtin_unreachable)
 #  define D_PPP_HAS_BUILTIN_UNREACHABLE
@@ -220,7 +227,11 @@ __UNDEFINED__ SvRXOK(sv) (!!SvRX(sv))
 #endif
 
 __UNDEFINED__  NOOP          /*EMPTY*/(void)0
-__UNDEFINED__  dNOOP         extern int /*@unused@*/ Perl___notused PERL_UNUSED_DECL
+
+#if { VERSION < 5.6.1 } && { VERSION < 5.27.7 }
+#undef dNOOP
+__UNDEFINED__ dNOOP struct Perl___notused_struct
+#endif
 
 #ifndef NVTYPE
 #  if defined(USE_LONG_DOUBLE) && defined(HAS_LONG_DOUBLE)
@@ -278,7 +289,9 @@ __UNDEF_NOT_PROVIDED__  PERL_GCC_BRACE_GROUPS_FORBIDDEN
 #  endif
 #endif
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN) && !defined(__cplusplus)
+#if  ! defined(__GNUC__) || defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN) || defined(__cplusplus)
+#    undef PERL_USE_GCC_BRACE_GROUPS
+#else
 #  ifndef PERL_USE_GCC_BRACE_GROUPS
 #    define PERL_USE_GCC_BRACE_GROUPS
 #  endif

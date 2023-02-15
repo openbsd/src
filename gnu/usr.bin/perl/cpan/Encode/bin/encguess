@@ -61,7 +61,7 @@ encguess - guess character encodings of files
 
 =head1 VERSION
 
-$Id: encguess,v 0.2 2016/08/04 03:15:58 dankogai Exp $
+$Id: encguess,v 0.3 2020/12/02 01:28:17 dankogai Exp $
 
 =head1 SYNOPSIS
 
@@ -78,7 +78,7 @@ show this message and exit.
 =item -s
 
 specify a list of "suspect encoding types" to test, 
-seperated by either C<:> or C<,>
+separated by either C<:> or C<,>
 
 =item -S
 

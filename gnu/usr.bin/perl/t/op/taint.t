@@ -15,9 +15,17 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Config;
 
-plan tests => 1052;
+my $NoTaintSupport = exists($Config{taint_support}) && !$Config{taint_support};
+
+if ($NoTaintSupport) {
+    skip_all("your perl was built without taint support");
+    exit 0;
+}
+
+plan tests => 1054;
 
 $| = 1;
 
@@ -44,14 +52,11 @@ BEGIN {
 
 my $Is_VMS      = $^O eq 'VMS';
 my $Is_MSWin32  = $^O eq 'MSWin32';
-my $Is_NetWare  = $^O eq 'NetWare';
-my $Is_Dos      = $^O eq 'dos';
 my $Is_Cygwin   = $^O eq 'cygwin';
 my $Is_OpenBSD  = $^O eq 'openbsd';
 my $Is_MirBSD   = $^O eq 'mirbsd';
 my $Invoke_Perl = $Is_VMS      ? 'MCR Sys$Disk:[]Perl.exe' :
                   $Is_MSWin32  ? '.\perl'               :
-                  $Is_NetWare  ? 'perl'                 :
                                  './perl'               ;
 my @MoreEnv = qw/IFS CDPATH ENV BASH_ENV/;
 
@@ -94,14 +99,14 @@ my $TAINT0;
 
 # This taints each argument passed. All must be lvalues.
 # Side effect: It also stringifies them. :-(
-sub taint_these (@) {
+sub taint_these :prototype(@) {
     for (@_) { $_ .= $TAINT }
 }
 
 # How to identify taint when you see it
-sub tainted ($) {
+sub tainted :prototype($) {
     local $@;   # Don't pollute caller's value.
-    not eval { join("",@_), kill 0; 1 };
+    not eval { no warnings; join("", @_), kill 0; 1 };
 }
 
 sub is_tainted {
@@ -125,8 +130,8 @@ sub violates_taint {
 }
 
 # We need an external program to call.
-my $ECHO = ($Is_MSWin32 ? ".\\tmpecho$$" : ($Is_NetWare ? "tmpecho$$" : "./tmpecho$$"));
-END { unlink $ECHO }
+my $ECHO = ($Is_MSWin32 ? ".\\tmpecho$$" : "./tmpecho$$");
+END { unlink $ECHO unless $NoTaintSupport }
 open my $fh, '>', $ECHO or die "Can't create $ECHO: $!";
 print $fh 'print "@ARGV\n"', "\n";
 close $fh;
@@ -148,7 +153,7 @@ my $TEST = 'TEST';
 
     SKIP: {
         skip "Environment tainting tests skipped", 4
-          if $Is_MSWin32 || $Is_NetWare || $Is_VMS || $Is_Dos;
+          if $Is_MSWin32 || $Is_VMS;
 
 	my @vars = ('PATH', @MoreEnv);
 	while (my $v = $vars[0]) {
@@ -169,7 +174,7 @@ my $TEST = 'TEST';
     }
 
     my $tmp;
-    if ($^O eq 'os2' || $^O eq 'amigaos' || $Is_MSWin32 || $Is_NetWare || $Is_Dos) {
+    if ($^O eq 'os2' || $^O eq 'amigaos' || $Is_MSWin32) {
 	print "# all directories are writeable\n";
     }
     else {
@@ -1183,7 +1188,7 @@ SKIP: {
     my $arg = tempfile();
     open $fh, '>', $arg or die "Can't create $arg: $!";
     print $fh q{
-	eval { join('', @ARGV), kill 0 };
+	eval { my $x = join('', @ARGV), kill 0 };
 	exit 0 if $@ =~ /^Insecure dependency/;
 	print "# Oops: \$@ was [$@]\n";
 	exit 1;
@@ -1306,8 +1311,7 @@ violates_taint(sub { link $TAINT, '' }, 'link');
     # We do not want the whole taint.t to fail
     # just because Errno possibly failing.
     ok(eval('$!{ENOENT}') ||
-	$! == 2 || # File not found
-	($Is_Dos && $! == 22));
+	$! == 2); # File not found
 
     violates_taint(sub { open FOO, "> $foo" }, 'open', 'open for write');
     violates_taint(sub { open my $fh, '>', $foo }, 'open', 'open for write');
@@ -1497,7 +1501,11 @@ violates_taint(sub { link $TAINT, '' }, 'link');
 	unlink($symlink);
 	my $sl = "/something/naughty";
 	# it has to be a real path on Mac OS
-	symlink($sl, $symlink) or die "symlink: $!\n";
+	unless (symlink($sl, $symlink)) {
+            skip "symlink not available or no priviliges", 1,
+                if $^O eq "MSWin32";
+            die "symlink: $!\n";
+        }
 	my $readlink = readlink($symlink);
 	is_tainted($readlink);
 	unlink($symlink);
@@ -1506,6 +1514,7 @@ violates_taint(sub { link $TAINT, '' }, 'link');
 
 # test bitwise ops (regression bug)
 {
+    no warnings 'numeric';
     my $why = "y";
     my $j = "x" | $why;
     isnt_tainted($j);
@@ -1562,8 +1571,8 @@ SKIP: {
             warn "# shmget failed: $!\n";
         }
 
-        skip "SysV shared memory operation failed", 1 unless 
-          $rcvd eq $sent;
+        skip "SysV shared memory operation failed", 1
+            unless defined $rcvd and $rcvd eq $sent;
 
         is_tainted($rcvd, "shmread");
     }
@@ -1655,7 +1664,7 @@ SKIP: {
 
     our $has_fcntl;
     BEGIN {
-	eval { require Fcntl; import Fcntl; };
+	eval { require Fcntl; Fcntl->import; };
 	unless ($@) {
 	    $has_fcntl = 1;
 	}
@@ -1751,11 +1760,11 @@ SKIP: {
     while (my ($k, $v) = each %ENV) {
 	if (!tainted($v) &&
 	    # These we have explicitly untainted or set earlier.
-	    $k !~ /^(BASH_ENV|CDPATH|ENV|IFS|PATH|PERL_CORE|TEMP|TERM|TMP)$/) {
+	    $k !~ /^(BASH_ENV|CDPATH|ENV|IFS|PATH|PERL_CORE|TEMP|TERM|TMP|PERL5LIB)$/) {
 	    push @untainted, "# '$k' = '$v'\n";
 	}
     }
-    is("@untainted", "");
+    is("@untainted", "", "untainted");
 }
 
 
@@ -2072,14 +2081,15 @@ SKIP:
 		   q/sprintf doesn't like tainted formats/);
     violates_taint(sub { sprintf($TAINT . "# %s\n", "foo") }, 'sprintf',
 		   q/sprintf doesn't like tainted format expressions/);
-    eval { sprintf("# %s\n", $TAINT . "foo") };
+    eval { my $str = sprintf("# %s\n", $TAINT . "foo") };
     is($@, '', q/sprintf accepts other tainted args/);
 }
 
 {
     # 40708
     my $n  = 7e9;
-    8e9 - $n;
+    my $sub = 8e9 - $n;
+    is ( $sub, 1000000000, '8e9 - 7e9' );
 
     my $val = $n;
     is ($val, '7000000000', 'Assignment to untainted variable');
@@ -2100,6 +2110,7 @@ SKIP:
     seek $fh, 0, 2 or die $!;
     $tainted = <$fh>;
 
+    no warnings 'uninitialized';
     eval 'eval $tainted';
     like ($@, qr/^Insecure dependency in eval/);
 }
@@ -2137,7 +2148,7 @@ foreach my $ord (78, 163, 256) {
           my $x = crypt($_[0], $alg . $_[1]);
           $x
       }
-      sub co { my $x = ~$_[0]; $x }
+      sub co { no warnings 'numeric'; my $x = ~$_[0]; $x }
       my ($a, $b);
       $a = cr('hello', 'foo' . $TAINT);
       $b = cr('hello', 'foo');
@@ -2167,7 +2178,7 @@ foreach my $ord (78, 163, 256) {
 
     is_tainted($string, "still tainted data");
 
-    my @got = split /[!,]/, $string;
+    @got = split /[!,]/, $string;
 
     # each @got would be useful here, but I want the test for earlier perls
     for my $i (0 .. $#data) {
@@ -2177,7 +2188,7 @@ foreach my $ord (78, 163, 256) {
 
     is_tainted($string, "still tainted data");
 
-    my @got = split /!/, $string;
+    @got = split /!/, $string;
 
     # each @got would be useful here, but I want the test for earlier perls
     for my $i (0 .. $#data) {
@@ -2249,6 +2260,7 @@ foreach my $ord (78, 163, 256) {
 {
     for my $var1 ($TAINT, "123") {
 	for my $var2 ($TAINT0, "456") {
+        no warnings q(redundant);
 	    is( tainted(sprintf '%s', $var1, $var2), tainted($var1),
 		"sprintf '%s', '$var1', '$var2'" );
 	    is( tainted(sprintf ' %s', $var1, $var2), tainted($var1),
@@ -2266,7 +2278,7 @@ foreach my $ord (78, 163, 256) {
 
 {
     use re 'taint';
-    "abc".$TAINT =~ /(.*)/; # make $1 tainted
+    my $x = "abc".$TAINT =~ /(.*)/; # make $1 tainted
     is_tainted($1, '$1 should be tainted');
 
     my $untainted = "abcdef";
@@ -2300,17 +2312,17 @@ end
     is_tainted($^A, "tainted formline argument makes a tainted accumulator");
     $^A = "";
     isnt_tainted($^A, "accumulator can be explicitly untainted");
-    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    formline('@' .('<'x5) . ' | @*', 'hallo', 'welt');
     isnt_tainted($^A, "accumulator still untainted");
     $^A = "" . $TAINT;
     is_tainted($^A, "accumulator can be explicitly tainted");
-    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    formline('@' .('<'x5) . ' | @*', 'hallo', 'welt');
     is_tainted($^A, "accumulator still tainted");
     $^A = "";
     isnt_tainted($^A, "accumulator untainted again");
-    formline('@' .('<'*5) . ' | @*', 'hallo', 'welt');
+    formline('@' .('<'x5) . ' | @*', 'hallo', 'welt');
     isnt_tainted($^A, "accumulator still untainted");
-    formline('@' .('<'*(5+$TAINT0)) . ' | @*', 'hallo', 'welt');
+    formline('@' .('<'x(5+$TAINT0)) . ' | @*', 'hallo', 'welt');
     is_tainted($^A, "the accumulator should be tainted already");
     is_tainted($^A, "tainted formline picture makes a tainted accumulator");
 }
@@ -2386,7 +2398,7 @@ end
 {
     SKIP: {
         skip "Environment tainting tests skipped", 1
-          if $Is_MSWin32 || $Is_NetWare || $Is_VMS || $Is_Dos;
+          if $Is_MSWin32 || $Is_VMS;
 
         local $ENV{XX} = '\p{IsB}';   # Making it an environment variable taints it
 
@@ -2448,7 +2460,9 @@ EOF
     BEGIN { no strict 'refs'; my $v = $old_env_path; *{"::C"} = sub () { $v }; }
     ok(tainted C, "constant is tainted properly");
     ok(!tainted "", "tainting not broken yet");
-    index(undef, C);
+    no warnings 'uninitialized';
+    my $ix = index(undef, C);
+    is( $ix, -1, q[index(undef, C)] );
     ok(!tainted "", "tainting still works after index() of the constant");
 }
 
@@ -2509,7 +2523,7 @@ SKIP: {
 # reset() and tainted undef (?!)
 $::x = "foo";
 $_ = "$TAINT".reset "x";
-is eval { eval $::x.1 }, 1, 'reset does not taint undef';
+is eval { no warnings; eval $::x.1 }, 1, 'reset does not taint undef';
 
 # [perl #122669]
 {

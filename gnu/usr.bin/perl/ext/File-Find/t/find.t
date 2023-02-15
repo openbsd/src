@@ -24,13 +24,8 @@ BEGIN {
 }
 
 my $symlink_exists = eval { symlink("",""); 1 };
-my $test_count = 111;
-$test_count += 127 if $symlink_exists;
-$test_count += 26 if $^O eq 'MSWin32';
-$test_count += 2 if $^O eq 'MSWin32' and $symlink_exists;
 
 use Test::More;
-plan tests => $test_count;
 use lib qw( ./t/lib );
 use Testing qw(
     create_file_ok
@@ -39,6 +34,7 @@ use Testing qw(
     dir_path
     file_path
 );
+use Errno ();
 
 my %Expect_File = (); # what we expect for $_
 my %Expect_Name = (); # what we expect for $File::Find::name/fullname
@@ -252,7 +248,17 @@ create_file_ok( file_path('fb', $testing_basenames[0]) );
 mkdir_ok( dir_path('fb', 'fba'), 0770  );
 create_file_ok( file_path('fb', 'fba', $testing_basenames[1]) );
 if ($symlink_exists) {
-    symlink_ok('../fb','fa/fsl');
+    if (symlink('../fb','fa/fsl')) {
+        pass("able to symlink from ../fb to fa/fsl");
+    }
+    else {
+        if ($^O eq "MSWin32" && ($! == &Errno::ENOSYS || $! == &Errno::EPERM)) {
+            $symlink_exists = 0;
+        }
+        else {
+            fail("able to symlink from ../fb to fa/fsl");
+        }
+    }
 }
 create_file_ok( file_path('fa', $testing_basenames[2]) );
 
@@ -885,6 +891,7 @@ if ($^O eq 'MSWin32') {
                    dir_path('fb') => 1,
                    dir_path('fba') => 1);
 
+    $FastFileTests_OK = 0;
     File::Find::find( {wanted => \&wanted_File_Dir}, topdir('fa'));
     is( scalar(keys %Expect_File), 0, "Got no files, as expected" );
 
@@ -1104,3 +1111,5 @@ if ($^O eq 'MSWin32') {
     like($@, qr/invalid top directory/,
         "find() correctly died due to undefined top directory");
 }
+
+done_testing();

@@ -1,6 +1,6 @@
 package Tie::Hash;
 
-our $VERSION = '1.05';
+our $VERSION = '1.06';
 
 =head1 NAME
 
@@ -60,7 +60,7 @@ as methods C<TIEHASH>, C<EXISTS> and C<CLEAR>. The B<Tie::StdHash> and
 B<Tie::ExtraHash> packages
 provide most methods for hashes described in L<perltie> (the exceptions
 are C<UNTIE> and C<DESTROY>).  They cause tied hashes to behave exactly like standard hashes,
-and allow for selective overwriting of methods.  B<Tie::Hash> grandfathers the
+and allow for selective overwriting of methods.  B<Tie::Hash> has legacy support for the
 C<new> method: it is used if C<TIEHASH> is not defined
 in the case a class forgets to include a C<TIEHASH> method.
 
@@ -195,7 +195,7 @@ sub new {
     $pkg->TIEHASH(@_);
 }
 
-# Grandfather "new"
+# Legacy support for new()
 
 sub TIEHASH {
     my $pkg = shift;

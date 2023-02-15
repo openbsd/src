@@ -108,7 +108,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = 1 | $b[$Y] ;
 EXPECT
-Use of uninitialized value within @a in bitwise or (|) at - line 4.
+Use of uninitialized value $a[1] in bitwise or (|) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -118,7 +118,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = 1 & $b[$Y] ;
 EXPECT
-Use of uninitialized value within @a in bitwise and (&) at - line 4.
+Use of uninitialized value $a[1] in bitwise and (&) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -128,7 +128,7 @@ no warnings 'uninitialized' ;
 my $Y = 1 ; 
 $x = ~$b[$Y] ;
 EXPECT
-Use of uninitialized value within @a in 1's complement (~) at - line 4.
+Use of uninitialized value $a[1] in 1's complement (~) at - line 4.
 ########
 # sv.c
 use warnings 'uninitialized' ;
@@ -210,6 +210,19 @@ EXPECT
 Use of uninitialized value $a in join or string at - line 4.
 Use of uninitialized value $a in concatenation (.) or string at - line 5.
 Use of uninitialized value $a in concatenation (.) or string at - line 6.
+########
+# NAME https://github.com/Perl/perl5/issues/19147
+use warnings 'uninitialized';
+my %x;
+my @z;
+my $y;
+-$x{$y};
+-$z[$y];
+EXPECT
+Use of uninitialized value $y in hash element at - line 5.
+Use of uninitialized value $x{""} in negation (-) at - line 5.
+Use of uninitialized value $y in array element at - line 6.
+Use of uninitialized value $z[0] in negation (-) at - line 6.
 ########
 # sv.c 
 use warnings 'numeric' ;
@@ -424,3 +437,18 @@ undef *Foo::;
 *Foo::f =sub {};
 EXPECT
 Subroutine f redefined at - line 5.
+########
+# sv.c
+use warnings 'redefine';
+sub fred { 1 }
+sub barney() { 2 }
+sub wilma() { 3 }
+# local redefines of subs shouldn't warn...
+local *fred = sub {};
+local(*fred) = sub {};
+# ...unless they're constant
+local *barney = \&fred;
+local(*wilma) = \&fred;
+EXPECT
+Constant subroutine main::barney redefined at - line 10.
+Constant subroutine main::wilma redefined at - line 11.

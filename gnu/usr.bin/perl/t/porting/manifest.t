@@ -86,14 +86,16 @@ SKIP: {
 SKIP: {
     find_git_or_skip(6);
     my %seen; # De-dup ls-files output (can appear more than once)
-    chomp(my @repo= grep {
+    my @repo= grep {
+        chomp();
         !m{\.git_patch$} &&
         !m{\.gitattributes$} &&
         !m{\.gitignore$} &&
         !m{\.mailmap$} &&
         !m{^\.github/} &&
+        -e $_ &&
         !$seen{$_}++
-        } `git ls-files`);
+    } `git ls-files`;
     skip("git ls-files didnt work",3)
         if !@repo;
     is( 0+@repo, 0+@files, "git ls-files gives the same number of files as MANIFEST lists");

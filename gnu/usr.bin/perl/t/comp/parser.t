@@ -8,7 +8,7 @@ BEGIN {
     chdir 't' if -d 't';
 }
 
-print "1..188\n";
+print "1..191\n";
 
 sub failed {
     my ($got, $expected, $name) = @_;
@@ -243,7 +243,7 @@ eval q[
 like($@, qr/Missing right curly/, 'nested sub syntax error' );
 
 eval q[
-    sub { my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$r);
+    sub { my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s);
 	    sub { my $z
 ];
 like($@, qr/Missing right curly/, 'nested sub syntax error 2' );
@@ -256,7 +256,7 @@ eval q[
 like($@, qr/Can't locate DieDieDie.pm/, 'croak cleanup' );
 
 eval q[
-    sub { my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$r);
+    sub { my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s);
 	    use DieDieDie;
 ];
 
@@ -265,7 +265,7 @@ like($@, qr/Can't locate DieDieDie.pm/, 'croak cleanup 2' );
 
 eval q[
     my @a;
-    my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s,$r);
+    my ($a,$b,$c,$d,$e,$f,$g,$h,$i,$j,$k,$l,$m,$n,$o,$p,$q,$r,$s);
     @a =~ s/a/b/; # compile-time error
     use DieDieDie;
 ];
@@ -334,15 +334,29 @@ like($@, qr/BEGIN failed--compilation aborted/, 'BEGIN 7' );
   like($@, qr/Identifier too long/, "too long id in glob ctx");
 
   eval qq[ for $xFC ];
-  like($@, qr/Missing \$ on loop variable/,
+  like($@, qr/^Missing \$ on loop variable /,
        "252 char id ok, but a different error");
   eval qq[ for $xFD; ];
-  like($@, qr/Identifier too long/, "too long id in for ctx");
+  like($@, qr/^Missing \$ on loop variable /, "too long id in for ctx");
 
   # the specific case from the ticket
+  # however the parsing code in yyl_foreach has now changed
   my $x = "x" x 257;
   eval qq[ for $x ];
-  like($@, qr/Identifier too long/, "too long id ticket case");
+  like($@, qr/^Missing \$ on loop variable /, "too long id ticket case");
+
+  # as PL_tokenbuf is now PL_parser->tokenbuf, the "buffer overflow" that was
+  # reported in GH #9993 now corrupts some other part of the parser structure.
+  # Currently, that seems to be the line number. Hence this test will fail if
+  # the fix from commit 0b3da58dfdc35079 is reversed. (However, as the later
+  # commit 61bc22580524a6d9 changed the code (now) in yyl_foreach() from
+  # scan_ident() to scan_word(), to recreate the problem one needs to apply
+  # the buggy change to the calculation of the variable `e` in scan_word()
+  # instead.
+
+  my $x = "x" x 260;
+  eval qq[ for my $x \$foo ];
+  like($@, qr/at \(eval \d+\) line 1[,.]/, "line number is reported correctly");
 }
 
 {
@@ -513,16 +527,18 @@ is $@, "Illegal division by zero at maggapom line 2.\n",
 is +(${[{a=>214}]}[0])->{a}, 214, '($array[...])->{...}';
 
 # This used to fail an assertion because of the OPf_SPECIAL flag on an
-# OP_GV that started out as an OP_CONST.  No test output is necessary, as
-# successful parsing is sufficient.
-sub FILE1 () { 1 }
-sub dummy { tell FILE1 }
+# OP_GV that started out as an OP_CONST.
+
+  sub FILE1 () { 1 }
+  sub dummy { tell FILE1 }
 
 # More potential multideref assertion failures
 # OPf_PARENS on OP_RV2SV in subscript
-$x[($_)];
+  $x[($_)];
+  is(1,1, "PASS: Previous line successfully parsed. OPf_PARENS on OP_RV2SV");
 # OPf_SPECIAL on OP_GV in subscript
-$x[FILE1->[0]];
+  $x[FILE1->[0]];
+  is(1,1, "PASS: Previous line successfully parsed. OPf_SPECIAL on OP_GV");
 
 # Used to crash [perl #123542]
 eval 's /${<>{}) //';
@@ -637,10 +653,10 @@ check($this_file, 3, "bare line");
 # line 5
 check($this_file, 5, "bare line with leading space");
 
-#line 7 
+#line 7
 check($this_file, 7, "trailing space still valid");
 
-# line 11 
+# line 11
 check($this_file, 11, "leading and trailing");
 
 #	line 13
@@ -664,7 +680,7 @@ check(qr/^CLINK CLOINK BZZT$/, 31, "filename with spaces in quotes");
 #line 37 "THOOM	THOOM"
 check(qr/^THOOM	THOOM$/, 37, "filename with tabs in quotes");
 
-#line 41 "GLINK PLINK GLUNK DINK" 
+#line 41 "GLINK PLINK GLUNK DINK"
 check(qr/^GLINK PLINK GLUNK DINK$/, 41, "a space after the quotes");
 
 #line 43 "BBFRPRAFPGHPP

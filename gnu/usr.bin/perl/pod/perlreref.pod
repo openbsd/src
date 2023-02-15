@@ -217,6 +217,7 @@ Quantifiers are greedy by default and match the B<longest> leftmost.
    {n,m}   {n,m}?  {n,m}+     Must occur at least n times
                               but no more than m times
    {n,}    {n,}?   {n,}+      Must occur at least n times
+   {,n}    {,n}?   {,n}+      Must occur at most n times
    {n}     {n}?    {n}+       Must occur exactly n times
    *       *?      *+         0 or more times (same as {0,})
    +       +?      ++         1 or more times (same as {1,})
@@ -225,8 +226,6 @@ Quantifiers are greedy by default and match the B<longest> leftmost.
 The possessive forms (new in Perl 5.10) prevent backtracking: what gets
 matched by a pattern with a possessive quantifier will not be backtracked
 into, even if that causes the whole match to fail.
-
-There is no quantifier C<{,n}>. That's currently illegal.
 
 =head2 EXTENDED CONSTRUCTS
 

@@ -18,7 +18,7 @@ which is a trimmed-down Linux system enhanced with several tools for
 managing the NAS. There are several flavours of hardware: Marvell
 Armada (ARMv5tel, ARMv7l), Intel Atom (i686, x86_64), Freescale QorIQ
 (PPC), and more. For a full list see the
-L<Synology FAQ|https://forum.synology.com/wiki/index.php/What_kind_of_CPU_does_my_NAS_have>.
+L<Synology FAQ|https://kb.synology.com/en-global/DSM/tutorial/What_kind_of_CPU_does_my_NAS_have>.
 
 Since it is based on Linux, the NAS can run many popular Linux
 software packages, including Perl. In fact, Synology provides a

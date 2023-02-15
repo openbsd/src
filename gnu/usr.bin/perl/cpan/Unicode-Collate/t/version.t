@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -31,11 +23,14 @@ use Unicode::Collate;
 
 ok(1);
 
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
 #########################
 
 # Fix me when UCA and/or keys.txt is upgraded.
-my $UCA_Version = "36";
-my $Base_Unicode_Version = "10.0.0";
+my $UCA_Version = "43";
+my $Base_Unicode_Version = "13.0.0";
 my $Key_Version = "3.1.1";
 
 ok(Unicode::Collate::UCA_Version, $UCA_Version);

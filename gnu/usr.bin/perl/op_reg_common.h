@@ -137,8 +137,8 @@ get_regex_charset(const U32 flags)
  *  directly in the #define because doing so confuses regcomp.pl.
  *  (2**n - 1) is n 1 bits, so the below gets the contiguous bits between the
  *  beginning and ending shifts */
-#if RXf_PMf_COMPILETIME != (((1 << (_RXf_PMf_SHIFT_COMPILETIME))-1) \
-                            & (~((1 << RXf_PMf_STD_PMMOD_SHIFT)-1)))
+#if RXf_PMf_COMPILETIME != ((nBIT_MASK(_RXf_PMf_SHIFT_COMPILETIME)) \
+                        & (~(nBIT_MASK( RXf_PMf_STD_PMMOD_SHIFT))))
 #   error RXf_PMf_COMPILETIME is invalid
 #endif
 

@@ -14,30 +14,25 @@
 
 #ifdef VMS
 #  define PERL_FILE_IS_ABSOLUTE(f) \
-	(*(f) == '/'							\
-	 || (strchr(f,':')						\
-	     || ((*(f) == '[' || *(f) == '<')				\
-		 && (isWORDCHAR((f)[1]) || memCHRs("$-_]>",(f)[1])))))
+        (*(f) == '/'							\
+         || (strchr(f,':')						\
+             || ((*(f) == '[' || *(f) == '<')				\
+                 && (isWORDCHAR((f)[1]) || memCHRs("$-_]>",(f)[1])))))
 
 #elif defined(WIN32) || defined(__CYGWIN__)
 #  define PERL_FILE_IS_ABSOLUTE(f) \
-	(*(f) == '/' || *(f) == '\\'		/* UNC/rooted path */	\
-	 || ((f)[0] && (f)[1] == ':'))		/* drive name */
-#elif defined(NETWARE)
+        (*(f) == '/' || *(f) == '\\'		/* UNC/rooted path */	\
+         || ((f)[0] && (f)[1] == ':'))		/* drive name */
+#elif defined(DOSISH)
 #  define PERL_FILE_IS_ABSOLUTE(f) \
-	(((f)[0] && (f)[1] == ':')		/* drive name */	\
-	 || ((f)[0] == '\\' && (f)[1] == '\\')	/* UNC path */	\
-	 ||	((f)[3] == ':'))				/* volume name, currently only sys */
-#elif defined(DOSISH) || defined(__SYMBIAN32__)
-#  define PERL_FILE_IS_ABSOLUTE(f) \
-	(*(f) == '/'							\
-	 || ((f)[0] && (f)[1] == ':'))		/* drive name */
-#else	/* NEITHER DOSISH NOR SYMBIANISH */
+        (*(f) == '/'							\
+         || ((f)[0] && (f)[1] == ':'))		/* drive name */
+#else	/* NOT DOSISH */
 #  define PERL_FILE_IS_ABSOLUTE(f)	(*(f) == '/')
 #endif
 
 /*
-=head1 Miscellaneous Functions
+=for apidoc_section $string
 
 =for apidoc ibcmp
 
@@ -47,10 +42,16 @@ This is a synonym for S<C<(! foldEQ())>>
 
 This is a synonym for S<C<(! foldEQ_locale())>>
 
+=for apidoc ibcmp_utf8
+
+This is a synonym for S<C<(! foldEQ_utf8())>>
+
 =cut
 */
 #define ibcmp(s1, s2, len)         cBOOL(! foldEQ(s1, s2, len))
 #define ibcmp_locale(s1, s2, len)  cBOOL(! foldEQ_locale(s1, s2, len))
+#define ibcmp_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2) \
+                    cBOOL(! foldEQ_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2))
 
 /* outside the core, perl.h undefs HAS_QUAD if IV isn't 64-bit
    We can't swap this to HAS_QUAD, because the logic here affects the type of
@@ -183,7 +184,7 @@ typedef struct {
 /* uses var file to set default filename for newXS_deffile to use for CvFILE */
 #define HSf_SETXSUBFN 0x00000020
 #define HSf_POPMARK 0x00000040 /* popmark mode or you must supply ax and items */
-#define HSf_IMP_CXT 0x00000080 /* ABI, threaded/PERL_IMPLICIT_CONTEXT, pTHX_ present */
+#define HSf_IMP_CXT 0x00000080 /* ABI, threaded/MULTIPLICITY, pTHX_ present */
 #define HSm_INTRPSIZE 0xFFFF0000 /* ABI, interp struct size */
 /* A mask of bits in the key which must always match between a XS mod and interp.
    Also if all ABI bits in a key are true, skip all ABI checks, it is very
@@ -197,7 +198,7 @@ typedef struct {
 /* if in the future "" and NULL must be separated, XSVERLEN would be 0
 means arg not present, 1 is empty string/null byte */
 /* (((key) & 0x0000FF00) >> 8) is less efficient on Visual C */
-#define HS_GETXSVERLEN(key) ((key) >> 8 & 0xFF)
+#define HS_GETXSVERLEN(key) ((U8) ((key) >> 8))
 #define HS_GETAPIVERLEN(key) ((key) & HSm_APIVERLEN)
 
 /* internal to util.h macro to create a packed handshake key, all args must be constants */
@@ -220,7 +221,7 @@ means arg not present, 1 is empty string/null byte */
    not public API. This more friendly version already collected all ABI info */
 /* U32 return = (bool setxsubfn, bool popmark, "litteral_string_api_ver",
    "litteral_string_xs_ver") */
-#ifdef PERL_IMPLICIT_CONTEXT
+#ifdef MULTIPLICITY
 #  define HS_KEY(setxsubfn, popmark, apiver, xsver) \
     HS_KEYp(sizeof(PerlInterpreter), TRUE, setxsubfn, popmark, \
     sizeof("" apiver "")-1, sizeof("" xsver "")-1)
@@ -242,7 +243,7 @@ returning NULL if not found.  The terminating NUL bytes are not compared.
 */
 
 
-#define instr(haystack, needle) strstr(haystack, needle)
+#define instr(haystack, needle) strstr((char *) haystack, (char *) needle)
 
 #ifdef HAS_MEMMEM
 #   define ninstr(big, bigend, little, lend)                                \

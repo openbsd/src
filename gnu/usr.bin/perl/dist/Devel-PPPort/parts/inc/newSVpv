@@ -31,11 +31,25 @@ __UNDEFINED__  newSVpvn_utf8(s, len, u)  newSVpvn_flags((s), (len), (u) ? SVf_UT
 __UNDEFINED__  SVf_UTF8  0
 
 #ifndef newSVpvn_flags
-#if defined(PERL_USE_GCC_BRACE_GROUPS)
-# define newSVpvn_flags(s, len, flags) ({ SV *_sv = newSVpvn(D_PPP_CONSTPV_ARG((s)), (len)); SvFLAGS(_sv) |= ((flags) & SVf_UTF8); ((flags) & SVs_TEMP) ? sv_2mortal(_sv) : _sv; })
-#else
-# define newSVpvn_flags(s, len, flags) ((PL_Sv = newSVpvn(D_PPP_CONSTPV_ARG((s)), (len))), SvFLAGS(PL_Sv) |= ((flags) & SVf_UTF8), (((flags) & SVs_TEMP) ? sv_2mortal(PL_Sv) : PL_Sv))
-#endif
+#  if defined(PERL_USE_GCC_BRACE_GROUPS)
+#    define newSVpvn_flags(s, len, flags)                       \
+        ({                                                      \
+            SV * sv = newSVpvn(D_PPP_CONSTPV_ARG(s), (len));    \
+            SvFLAGS(sv) |= ((flags) & SVf_UTF8);                \
+            if ((flags) & SVs_TEMP) sv = sv_2mortal(sv);        \
+            sv;                                                 \
+        })
+#  else
+     PERL_STATIC_INLINE SV* D_PPP_newSVpvn_flags(const char *const s, const STRLEN len, const U32 flags)
+     {
+        dTHX;
+        SV * sv = newSVpvn(s, len);
+        SvFLAGS(sv) |= (flags & SVf_UTF8);
+        if (flags & SVs_TEMP) return sv_2mortal(sv);
+        return sv;
+     }
+#    define newSVpvn_flags(s, len, flags) D_PPP_newSVpvn_flags((s), (len), (flags))
+#  endif
 #endif
 
 =xsubs

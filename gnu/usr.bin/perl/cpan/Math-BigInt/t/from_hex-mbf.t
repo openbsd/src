@@ -1,14 +1,14 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 729;
+use Test::More tests => 785;
 
 my $class;
 
 BEGIN { $class = 'Math::BigFloat'; }
-BEGIN { use_ok($class, '1.999710'); }
+BEGIN { use_ok($class, '1.999821'); }
 
 my @data;
 my $space = "\t\r\n ";
@@ -88,7 +88,9 @@ __END__
 0x0.0p+0:0
 
 0xcafe:51966
+0Xcafe:51966
 xcafe:51966
+Xcafe:51966
 cafe:51966
 
 0x1.9p+3:12.5
@@ -96,7 +98,8 @@ cafe:51966
 -0x.789abcdefp+32:-2023406814.9375
 0x12.3456789ap+31:39093746765
 
+0x.p+0:NaN
+
 NaN:NaN
 +inf:NaN
 -inf:NaN
-0x.p+0:NaN

@@ -22,12 +22,9 @@ I<github.com>.
 
 You can make a read-only clone of the repository by running:
 
-  % git clone git://github.com/Perl/perl5.git perl
+  % git clone git@github.com:Perl/perl5.git perl
 
-This uses the git protocol (port 9418).
-
-If you cannot use the git protocol for firewall reasons, you can also
-clone via http:
+If you cannot use that for firewall reasons, you can also clone via http:
 
   % git clone https://github.com/Perl/perl5.git perl
 
@@ -555,6 +552,60 @@ to push your changes back with the C<camel> remote:
 
 The C<fetch> command just updates the C<camel> refs, as the objects
 themselves should have been fetched when pulling from C<origin>.
+
+=head2 Working with Github pull requests
+
+Pull requests typically originate from outside of the C<Perl/perl.git>
+repository, so if you want to test or work with it locally a vanilla
+C<git fetch> from the C<Perl/perl5.git> repository won't fetch it.
+
+However Github does provide a mechanism to fetch a pull request to a
+local branch.  They are available on Github remotes under C<pull/>, so
+you can use C<< git fetch pull/I<PRID>/head:I<localname> >> to make a
+local copy.  eg.  to fetch pull request 9999 to the local branch
+C<local-branch-name> run:
+
+  git fetch origin pull/9999/head:local-branch-name
+
+and then:
+
+  git checkout local-branch-name
+
+Note: this branch is not rebased on C<blead>, so instead of the
+checkout above, you might want:
+
+  git rebase origin/blead local-branch-name
+
+which rebases C<local-branch-name> on C<blead>, and checks it out.
+
+Alternatively you can configure the remote to fetch all pull requests
+as remote-tracking branches.  To do this edit the remote in
+F<.git/config>, for example if your github remote is C<origin> you'd
+have:
+
+  [remote "origin"]
+          url = git@github.com:/Perl/perl5.git
+          fetch = +refs/heads/*:refs/remotes/origin/*
+
+Add a line to map the remote pull request branches to remote-tracking
+branches:
+
+  [remote "origin"]
+          url = git@github.com:/Perl/perl5.git
+          fetch = +refs/heads/*:refs/remotes/origin/*
+          fetch = +refs/pull/*/head:refs/remotes/origin/pull/*
+
+and then do a fetch as normal:
+
+  git fetch origin
+
+This will create a remote-tracking branch for every pull request, including
+closed requests.
+
+To remove those remote-tracking branches, remove the line added above
+and prune:
+
+  git fetch -p origin # or git remote prune origin
 
 =head2 Accepting a patch
 

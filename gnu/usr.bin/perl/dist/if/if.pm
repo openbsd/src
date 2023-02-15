@@ -1,6 +1,6 @@
 package if;
-
-$VERSION = '0.0608';
+use strict;
+our $VERSION = '0.0610';
 
 sub work {
   my $method = shift() ? 'import' : 'unimport';
@@ -92,7 +92,7 @@ version of the module.
 
 =head1 SEE ALSO
 
-L<Module::Requires> can be used to conditionally load one or modules,
+L<Module::Requires> can be used to conditionally load one or more modules,
 with constraints based on the version of the module.
 Unlike C<if> though, L<Module::Requires> is not a core module.
 

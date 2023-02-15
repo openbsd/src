@@ -82,7 +82,6 @@ my @names =
    {name=>"NULL", value=>"0"},
    {name=>"_POSIX_JOB_CONTROL", type=>"YES", default=>["IV", "0"]},
    {name=>"_POSIX_SAVED_IDS", type=>"YES", default=>["IV", "0"]},
-   {name=>'FLT_ROUNDS', type=>"NV", not_constant=>1},
    {name=>"HUGE_VAL", type=>"NV", not_constant=>1,
     macro=>[<<'END', "#endif\n"],
 #if (defined(USE_LONG_DOUBLE) && defined(HUGE_VALL)) || defined(HUGE_VAL)
@@ -95,17 +94,19 @@ END
 #else
                    HUGE_VAL
 #endif
-                           '});
+                           '},
+   # POSIX says these are constant expressions, but if these are not available
+   # we might fallback to NV_INF/NV_NAN which may be not constants.
+   {name=>"INFINITY", type=>"NV", not_constant=>1},
+   {name=>"NAN",      type=>"NV", not_constant=>1});
 
 if ($Config{d_double_has_inf}) {
     push @names,
-        {name=>"INFINITY", type=>"NV", value=>"NV_INF", not_constant=>1},
         {name=>"Inf", type=>"NV", value=>"NV_INF", not_constant=>1},
 }
 
 if ($Config{d_double_has_nan}) {
     push @names,
-        {name=>"NAN", type=>"NV", value=>"NV_NAN", not_constant=>1},
         {name=>"NaN", type=>"NV", value=>"NV_NAN", not_constant=>1};
 }
 
@@ -116,15 +117,18 @@ push @names, {name=>$_, type=>"NV", not_constant=>1}
   foreach (qw(DBL_MAX FLT_MAX LDBL_MAX LDBL_MIN LDBL_EPSILON
 	       DBL_EPSILON DBL_MIN FLT_EPSILON FLT_MIN));
 
-push @names, {name=>$_, type=>"NV"}
+push @names, {name=>$_, type=>"IV"}
   foreach (qw(DBL_DIG DBL_MANT_DIG DBL_MAX_10_EXP DBL_MAX_EXP DBL_MIN_10_EXP
 	      DBL_MIN_EXP FLT_DIG FLT_MANT_DIG FLT_MAX_10_EXP FLT_MAX_EXP
 	      FLT_MIN_10_EXP FLT_MIN_EXP FLT_RADIX LDBL_DIG LDBL_MANT_DIG
 	      LDBL_MAX_10_EXP LDBL_MAX_EXP LDBL_MIN_10_EXP LDBL_MIN_EXP));
 
-push @names, {name=>$_, type=>"NV"}
+push @names, {name=>$_, type=>"IV"}
   foreach (qw(FP_ILOGB0 FP_ILOGBNAN FP_INFINITE FP_NAN FP_NORMAL
-              FP_SUBNORMAL FP_ZERO M_1_PI M_2_PI M_2_SQRTPI M_E M_LN10 M_LN2
+              FP_SUBNORMAL FP_ZERO));
+
+push @names, {name=>$_, type=>"NV"}
+  foreach (qw(M_1_PI M_2_PI M_2_SQRTPI M_E M_LN10 M_LN2
               M_LOG10E M_LOG2E M_PI M_PI_2 M_PI_4 M_SQRT1_2 M_SQRT2));
 
 push @names, {name=>$_, type=>"IV"}

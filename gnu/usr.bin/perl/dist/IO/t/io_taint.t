@@ -24,11 +24,11 @@ plan(tests => 5);
 END { unlink "./__taint__$$" }
 
 use IO::File;
-my $x = new IO::File "> ./__taint__$$" || die("Cannot open ./__taint__$$\n");
+my $x = IO::File->new( "> ./__taint__$$" ) || die("Cannot open ./__taint__$$\n");
 print $x "$$\n";
 $x->close;
 
-$x = new IO::File "< ./__taint__$$" || die("Cannot open ./__taint__$$\n");
+$x = IO::File->new( "< ./__taint__$$" ) || die("Cannot open ./__taint__$$\n");
 chop(my $unsafe = <$x>);
 eval { kill 0 * $unsafe };
 SKIP: {
@@ -39,7 +39,7 @@ $x->close;
 
 # We could have just done a seek on $x, but technically we haven't tested
 # seek yet...
-$x = new IO::File "< ./__taint__$$" || die("Cannot open ./__taint__$$\n");
+$x = IO::File->new( "< ./__taint__$$" ) || die("Cannot open ./__taint__$$\n");
 $x->untaint;
 ok(!$?); # Calling the method worked
 chop($unsafe = <$x>);

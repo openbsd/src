@@ -47,7 +47,7 @@ is($dc, 0, 'No destruction yet');
 
 $b = $a+5;
 
-is($dc, 1, 'object descruction via reassignment to variable');
+is($dc, 1, 'object destruction via reassignment to variable');
 
 my $xxx = 'b';
 $xxx = 'c' . ($xxx || 'e');

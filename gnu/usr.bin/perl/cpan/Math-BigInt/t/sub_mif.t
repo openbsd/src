@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 # test rounding, accuracy, precision and fallback, round_mode and mixing
 # of classes

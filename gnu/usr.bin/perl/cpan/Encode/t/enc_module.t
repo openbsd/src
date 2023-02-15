@@ -1,4 +1,4 @@
-# $Id: enc_module.t,v 2.5 2016/11/29 23:29:23 dankogai Exp $
+# $Id: enc_module.t,v 2.6 2022/04/07 03:06:40 dankogai Exp dankogai $
 # This file is in euc-jp
 BEGIN {
     require Config; import Config;
@@ -19,7 +19,7 @@ BEGIN {
     exit(0);
     }
     if ($] >= 5.025 and !$Config{usecperl}) {
-    print "1..0 # Skip: encoding pragma not supported in Perl 5.26\n";
+    print "1..0 # Skip: encoding pragma not supported in Perl 5.25 or later\n";
     exit(0);
     }
 }

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use IO::Select;
+use Errno;
 
 use base 'TAP::Object';
 
@@ -17,11 +18,11 @@ TAP::Parser::Multiplexer - Multiplex multiple TAP::Parsers
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
 
 =head1 SYNOPSIS
 
@@ -130,9 +131,10 @@ sub _iter {
             return ( $parser, $stash, $result );
         }
 
-        unless (@ready) {
+        until (@ready) {
             return unless $sel->count;
             @ready = $sel->can_read;
+            last if @ready || $! != Errno::EINTR;
         }
 
         my ( $h, $parser, $stash, @handles ) = @{ shift @ready };

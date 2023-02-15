@@ -11,7 +11,7 @@ use 5.006;
 
 use strict;
 use warnings;
-our $VERSION = '7.44_01';
+our $VERSION = '7.64';
 $VERSION =~ tr/_//d;
 
 use ExtUtils::MakeMaker::Config;
@@ -52,12 +52,16 @@ sub _unix_os2_ext {
     require Text::ParseWords;
 
     my ( @searchpath );    # from "-L/path" entries in $potential_libs
-    my ( @libpath ) = Text::ParseWords::quotewords( '\s+', 0, $Config{'libpth'} || '' );
+    my ( @libpath ) = Text::ParseWords::shellwords( $Config{'libpth'} || '' );
     my ( @ldloadlibs, @bsloadlibs, @extralibs, @ld_run_path, %ld_run_path_seen );
     my ( @libs,       %libs_seen );
     my ( $fullname,   @fullname );
     my ( $pwd )   = cwd();    # from Cwd.pm
     my ( $found ) = 0;
+	if ($Config{gccversion}) {
+		chomp(my @incpath = grep s/^ //, grep { /^#include </ .. /^End of search / } `$Config{cc} -E -v - </dev/null 2>&1 >/dev/null`);
+		unshift @libpath, map { s{/include[^/]*}{/lib}; $_ } @incpath
+	}
 
     if ( $^O eq 'darwin' or $^O eq 'next' )  {
         # 'escape' Mach-O ld -framework and -F flags, so they aren't dropped later on
@@ -65,7 +69,7 @@ sub _unix_os2_ext {
         $potential_libs =~ s/(^|\s)(-F)\s*(\S+)/$1-Wl,$2 -Wl,$3/g;
     }
 
-    foreach my $thislib ( Text::ParseWords::quotewords( '\s+', 0, $potential_libs) ) {
+    foreach my $thislib ( Text::ParseWords::shellwords($potential_libs) ) {
         my ( $custom_name ) = '';
 
         # Handle possible linker path arguments.

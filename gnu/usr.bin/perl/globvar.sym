@@ -12,12 +12,14 @@ PL_c9_utf8_dfa_tab
 PL_charclass
 PL_check
 PL_core_reg_engine
+PL_deBruijn_bitpos_tab32
+PL_deBruijn_bitpos_tab64
+PL_EXACTFish_bitmask
+PL_EXACT_REQ8_bitmask
 PL_extended_utf8_dfa_tab
 PL_fold
 PL_fold_latin1
 PL_fold_locale
-PL_freq
-PL_global_struct_size
 PL_hexdigit
 PL_inf
 PL_interp_size

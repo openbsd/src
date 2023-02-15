@@ -18,7 +18,9 @@ extern "C" {
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "reentr.h"
 #ifdef USE_PPPORT_H
+#define NEED_ck_warner
 #  include "ppport.h"
 #endif
 #if defined(__CYGWIN__) && defined(HAS_W32API_WINDOWS_H)
@@ -41,12 +43,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-#define PERL_VERSION_DECIMAL(r,v,s) (r*1000000 + v*1000 + s)
-#define PERL_DECIMAL_VERSION \
-        PERL_VERSION_DECIMAL(PERL_REVISION,PERL_VERSION,PERL_SUBVERSION)
-#define PERL_VERSION_GE(r,v,s) \
-        (PERL_DECIMAL_VERSION >= PERL_VERSION_DECIMAL(r,v,s))
 
 #ifndef GCC_DIAG_IGNORE
 #  define GCC_DIAG_IGNORE(x)
@@ -139,8 +135,12 @@ typedef struct {
     unsigned __int64 reset_time;
 } my_cxt_t;
 
-/* Visual C++ 2013 and older don't have the timespec structure */
-#  if defined(_MSC_VER) && _MSC_VER < 1900
+/* Visual C++ 2013 and older don't have the timespec structure.
+ * Neither do mingw.org compilers with MinGW runtimes older than 3.22. */
+#  if((defined(_MSC_VER) && _MSC_VER < 1900) || \
+      (defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR) && \
+      defined(__MINGW32_MAJOR_VERSION) && (__MINGW32_MAJOR_VERSION < 3 || \
+      (__MINGW32_MAJOR_VERSION == 3 && __MINGW32_MINOR_VERSION < 22))))
 struct timespec {
     time_t tv_sec;
     long   tv_nsec;
@@ -322,193 +322,6 @@ _clock_getres(clockid_t clock_id, struct timespec *tp)
 }
 
 #endif /* #if defined(WIN32) || defined(CYGWIN_WITH_W32API) */
-
-#if !defined(HAS_GETTIMEOFDAY) && defined(VMS)
-#  define HAS_GETTIMEOFDAY
-
-#  include <lnmdef.h>
-#  include <time.h> /* gettimeofday */
-#  include <stdlib.h> /* qdiv */
-#  include <starlet.h> /* sys$gettim */
-#  include <descrip.h>
-#  ifdef __VAX
-#    include <lib$routines.h> /* lib$ediv() */
-#  endif
-
-/*
-        VMS binary time is expressed in 100 nano-seconds since
-        system base time which is 17-NOV-1858 00:00:00.00
-*/
-
-#  define DIV_100NS_TO_SECS  10000000L
-#  define DIV_100NS_TO_USECS 10L
-
-/*
-        gettimeofday is supposed to return times since the epoch
-        so need to determine this in terms of VMS base time
-*/
-static $DESCRIPTOR(dscepoch,"01-JAN-1970 00:00:00.00");
-
-#  ifdef __VAX
-static long base_adjust[2]={0L,0L};
-#  else
-static __int64 base_adjust=0;
-#  endif
-
-/*
-
-   If we don't have gettimeofday, then likely we are on a VMS machine that
-   operates on local time rather than UTC...so we have to zone-adjust.
-   This code gleefully swiped from VMS.C
-
-*/
-/* method used to handle UTC conversions:
- *   1 == CRTL gmtime();  2 == SYS$TIMEZONE_DIFFERENTIAL;  3 == no correction
- */
-static int gmtime_emulation_type;
-/* number of secs to add to UTC POSIX-style time to get local time */
-static long int utc_offset_secs;
-static struct dsc$descriptor_s fildevdsc =
-    { 12, DSC$K_DTYPE_T, DSC$K_CLASS_S, "LNM$FILE_DEV" };
-static struct dsc$descriptor_s *fildev[] = { &fildevdsc, NULL };
-
-static time_t toutc_dst(time_t loc) {
-    struct tm *rsltmp;
-
-    if ((rsltmp = localtime(&loc)) == NULL) return -1;
-    loc -= utc_offset_secs;
-    if (rsltmp->tm_isdst) loc -= 3600;
-    return loc;
-}
-
-static time_t toloc_dst(time_t utc) {
-    struct tm *rsltmp;
-
-    utc += utc_offset_secs;
-    if ((rsltmp = localtime(&utc)) == NULL) return -1;
-    if (rsltmp->tm_isdst) utc += 3600;
-    return utc;
-}
-
-#  define _toutc(secs)  ((secs) == (time_t) -1 ? (time_t) -1 : \
-          ((gmtime_emulation_type || timezone_setup()), \
-          (gmtime_emulation_type == 1 ? toutc_dst(secs) : \
-          ((secs) - utc_offset_secs))))
-
-#  define _toloc(secs)  ((secs) == (time_t) -1 ? (time_t) -1 : \
-          ((gmtime_emulation_type || timezone_setup()), \
-          (gmtime_emulation_type == 1 ? toloc_dst(secs) : \
-          ((secs) + utc_offset_secs))))
-
-static int
-timezone_setup(void)
-{
-    struct tm *tm_p;
-
-    if (gmtime_emulation_type == 0) {
-        int dstnow;
-        time_t base = 15 * 86400; /* 15jan71; to avoid month/year ends between    */
-                                  /* results of calls to gmtime() and localtime() */
-                                  /* for same &base */
-
-        gmtime_emulation_type++;
-        if ((tm_p = gmtime(&base)) == NULL) { /* CRTL gmtime() is a fake */
-            char off[LNM$C_NAMLENGTH+1];;
-
-            gmtime_emulation_type++;
-            if (!Perl_vmstrnenv("SYS$TIMEZONE_DIFFERENTIAL",off,0,fildev,0)) {
-                gmtime_emulation_type++;
-                utc_offset_secs = 0;
-                Perl_warn(aTHX_ "no UTC offset information; assuming local time is UTC");
-            }
-            else { utc_offset_secs = atol(off); }
-        }
-        else { /* We've got a working gmtime() */
-            struct tm gmt, local;
-
-            gmt = *tm_p;
-            tm_p = localtime(&base);
-            local = *tm_p;
-            utc_offset_secs  = (local.tm_mday - gmt.tm_mday) * 86400;
-            utc_offset_secs += (local.tm_hour - gmt.tm_hour) * 3600;
-            utc_offset_secs += (local.tm_min  - gmt.tm_min)  * 60;
-            utc_offset_secs += (local.tm_sec  - gmt.tm_sec);
-        }
-    }
-    return 1;
-}
-
-
-int
-gettimeofday (struct timeval *tp, void *tpz)
-{
-    long ret;
-#  ifdef __VAX
-    long quad[2];
-    long quad1[2];
-    long div_100ns_to_secs;
-    long div_100ns_to_usecs;
-    long quo,rem;
-    long quo1,rem1;
-#  else
-    __int64 quad;
-    __qdiv_t ans1,ans2;
-#  endif
-    /*
-        In case of error, tv_usec = 0 and tv_sec = VMS condition code.
-        The return from function is also set to -1.
-        This is not exactly as per the manual page.
-    */
-
-    tp->tv_usec = 0;
-
-#  ifdef __VAX
-    if (base_adjust[0]==0 && base_adjust[1]==0) {
-#  else
-    if (base_adjust==0) { /* Need to determine epoch adjustment */
-#  endif
-        ret=sys$bintim(&dscepoch,&base_adjust);
-        if (1 != (ret &&1)) {
-            tp->tv_sec = ret;
-            return -1;
-        }
-    }
-
-    ret=sys$gettim(&quad); /* Get VMS system time */
-    if ((1 && ret) == 1) {
-#  ifdef __VAX
-        quad[0] -= base_adjust[0]; /* convert to epoch offset */
-        quad[1] -= base_adjust[1]; /* convert 2nd half of quadword */
-        div_100ns_to_secs = DIV_100NS_TO_SECS;
-        div_100ns_to_usecs = DIV_100NS_TO_USECS;
-        lib$ediv(&div_100ns_to_secs,&quad,&quo,&rem);
-        quad1[0] = rem;
-        quad1[1] = 0L;
-        lib$ediv(&div_100ns_to_usecs,&quad1,&quo1,&rem1);
-        tp->tv_sec = quo; /* Whole seconds */
-        tp->tv_usec = quo1; /* Micro-seconds */
-#  else
-        quad -= base_adjust; /* convert to epoch offset */
-        ans1=qdiv(quad,DIV_100NS_TO_SECS);
-        ans2=qdiv(ans1.rem,DIV_100NS_TO_USECS);
-        tp->tv_sec = ans1.quot; /* Whole seconds */
-        tp->tv_usec = ans2.quot; /* Micro-seconds */
-#  endif
-    } else {
-        tp->tv_sec = ret;
-        return -1;
-    }
-#  ifdef VMSISH_TIME
-#    ifdef RTL_USES_UTC
-    if (VMSISH_TIME) tp->tv_sec = _toloc(tp->tv_sec);
-#    else
-    if (!VMSISH_TIME) tp->tv_sec = _toutc(tp->tv_sec);
-#    endif
-#  endif
-    return 0;
-}
-#endif /* #if !defined(HAS_GETTIMEOFDAY) && defined(VMS) */
-
 
  /* Do not use H A S _ N A N O S L E E P
   * so that Perl Configure doesn't scan for it (and pull in -lrt and
@@ -1086,7 +899,7 @@ nsec_without_unslept(struct timespec *sleepfor,
 /* In case Perl and/or Devel::PPPort are too old, minimally emulate
  * IS_SAFE_PATHNAME() (which looks for zero bytes in the pathname). */
 #ifndef IS_SAFE_PATHNAME
-#  if PERL_VERSION >= 12 /* Perl_ck_warner is 5.10.0 -> */
+#  if PERL_VERSION_GE(5,12,0) /* Perl_ck_warner is 5.10.0 -> */
 #    ifdef WARN_SYSCALLS
 #      define WARNEMUCAT WARN_SYSCALLS /* 5.22.0 -> */
 #    else
@@ -1380,7 +1193,7 @@ gettimeofday()
         int status;
         status = gettimeofday (&Tp, NULL);
         if (status == 0) {
-            if (GIMME == G_ARRAY) {
+            if (GIMME == G_LIST) {
                 EXTEND(sp, 2);
                 PUSHs(sv_2mortal(newSViv(Tp.tv_sec)));
                 PUSHs(sv_2mortal(newSViv(Tp.tv_usec)));
@@ -1437,7 +1250,7 @@ setitimer(which, seconds, interval = 0)
         if (setitimer(which, &newit, &oldit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_value))));
-            if (GIMME == G_ARRAY) {
+            if (GIMME == G_LIST) {
                 EXTEND(sp, 1);
                 PUSHs(sv_2mortal(newSVnv(TV2NV(oldit.it_interval))));
             }
@@ -1457,7 +1270,7 @@ getitimer(which)
         if (getitimer(which, &nowit) == 0) {
             EXTEND(sp, 1);
             PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_value))));
-            if (GIMME == G_ARRAY) {
+            if (GIMME == G_LIST) {
                 EXTEND(sp, 1);
                 PUSHs(sv_2mortal(newSVnv(TV2NV(nowit.it_interval))));
             }
@@ -1710,7 +1523,7 @@ PROTOTYPE: ;$
         Zero(&fakeop, 1, OP);
         fakeop.op_type = ix ? OP_LSTAT : OP_STAT;
         fakeop.op_ppaddr = PL_ppaddr[fakeop.op_type];
-        fakeop.op_flags = GIMME_V == G_ARRAY ? OPf_WANT_LIST :
+        fakeop.op_flags = GIMME_V == G_LIST ? OPf_WANT_LIST :
             GIMME_V == G_SCALAR ? OPf_WANT_SCALAR : OPf_WANT_VOID;
         PL_op = &fakeop;
         (void)fakeop.op_ppaddr(aTHX);

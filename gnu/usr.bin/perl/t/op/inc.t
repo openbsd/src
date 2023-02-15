@@ -188,10 +188,10 @@ cmp_ok($a, '==', 2147483647, "postdecrement properly downgrades from double");
 
 SKIP: {
     if ($Config{uselongdouble} &&
-        ($Config{long_double_style_ieee_doubledouble})) {
+        ($Config{d_long_double_style_ieee_doubledouble})) {
         skip "the double-double format is weird", 1;
     }
-    unless ($Config{double_style_ieee}) {
+    unless ($Config{d_double_style_ieee}) {
         skip "the doublekind $Config{doublekind} is not IEEE", 1;
     }
 
@@ -253,6 +253,22 @@ EOC
 
 	warnings_like($code, [(qr/Lost precision when ${act}rementing -?\d+/) x 2],
 		      "$description under use warnings 'imprecision'");
+    }
+
+    # Verify warnings on incrementing/decrementing large values
+    # whose integral part will not fit in NVs. [GH #18333]
+    foreach ([$start_n - 4, '$i++', 'negative large value', 'inc'],
+             [$start_p + 4, '$i--', 'positive large value', 'dec']) {
+	my ($start, $action, $description, $act) = @$_;
+	my $code = eval << "EOC" or die $@;
+sub {
+    use warnings 'imprecision';
+    my \$i = \$start;
+    $action;
+}
+EOC
+        warning_like($code, qr/Lost precision when ${act}rementing /,
+                     "${act}rementing $description under use warnings 'imprecision'");
     }
 
     $found = 1;
@@ -383,6 +399,48 @@ is $store::called, 4, 'STORE called on "my" target';
     like $@, qr/Modification of a read-only value/, 'use int; *GLOB126637++';
     eval 'my $y = $_-- for *GLOB126637';
     like $@, qr/Modification of a read-only value/, 'use int; *GLOB126637--';
+}
+
+# Exercises sv_inc() incrementing UV to UV, UV to NV
+SKIP: {
+    $a = ~1; # assumed to be UV_MAX - 1
+
+    if ($Config{uvsize} eq '4') {
+        cmp_ok(++$a, '==', 4294967295, "preincrement to UV_MAX");
+        cmp_ok(++$a, '==', 4294967296, "preincrement past UV_MAX");
+    }
+    elsif ($Config{uvsize} eq '8') {
+        cmp_ok(++$a, '==', 18446744073709551615, "preincrement to UV_MAX");
+        # assumed that NV can hold 2 ** 64 without rounding.
+        cmp_ok(++$a, '==', 18446744073709551616, "preincrement past UV_MAX");
+    }
+    else {
+        skip "the uvsize $Config{uvsize} is neither 4 nor 8", 2;
+    }
+} # SKIP
+
+# Incrementing/decrementing Inf/NaN should not trigger 'imprecision' warnings
+# [GH #18333, #18388]
+# Note these tests only check for warnings; t/op/infnan.t has tests that
+# checks the result of incrementing/decrementing Inf/NaN.
+foreach my $infnan ('+Inf', '-Inf', 'NaN') {
+    my $start = $infnan + 0;
+  SKIP: {
+      skip "NV does not have $infnan", 2
+          unless ($infnan eq 'NaN' ? $Config{d_double_has_nan} : $Config{d_double_has_inf});
+      foreach (['$i++', 'inc'],
+               ['$i--', 'dec']) {
+          my ($action, $act) = @$_;
+          my $code = eval <<"EOC" or die $@;
+sub {
+    use warnings 'imprecision';
+    my \$i = \$start;
+    $action;
+}
+EOC
+          warning_is($code, undef, "${act}rementing $infnan under use warnings 'imprecision'");
+      }
+    } # SKIP
 }
 
 done_testing();

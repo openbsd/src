@@ -20,6 +20,11 @@ There is a central directory for the Perl community: L<https://perl.org>
 maintained by the Perl Foundation (L<https://www.perlfoundation.org/>),
 which tracks and provides services for a variety of other community sites.
 
+=head3 Raku
+
+Perl's sister language, Raku (formerly known as Perl 6), maintains its own
+directory of community resources at L<https://raku.org/community/>.
+
 =head2 Mailing Lists and Newsgroups
 
 Perl runs on e-mail; there is no doubt about it. The Camel book was originally
@@ -39,8 +44,8 @@ own IRC network, L<irc://irc.perl.org>. General (not help-oriented) chat can be
 found at L<irc://irc.perl.org/#perl>. Many other more specific chats are also
 hosted on the network. Information about irc.perl.org is located on the
 network's website: L<https://www.irc.perl.org>. For a more help-oriented #perl,
-check out L<irc://irc.freenode.net/#perl>. Raku development also has a
-presence in L<irc://irc.freenode.net/#raku-dev>. Most Perl-related channels
+check out L<irc://irc.libera.chat/#perl>
+(L<webchat|https://web.libera.chat/#perl>). Most Perl-related channels
 will be kind enough to point you in the right direction if you ask nicely.
 
 Any large IRC network (Dalnet, EFnet) is also likely to have a #perl channel,
@@ -66,11 +71,11 @@ this site provides quality articles mostly about technical details of Perl.
 Many members of the community have a Perl-related blog on this site. If
 you'd like to join them, you can sign up for free.
 
-=item L<http://perlsphere.net/>
+=item L<https://perl.theplanetarium.org/>
 
-Perlsphere is one of several aggregators of Perl-related blog feeds.
+Planet Perl is one of several aggregators of Perl-related blog feeds.
 
-=item L<http://perlweekly.com/>
+=item L<https://perlweekly.com/>
 
 Perl Weekly is a weekly mailing list that keeps you up to date on conferences,
 releases and notable blog posts.

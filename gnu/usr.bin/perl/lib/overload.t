@@ -10,6 +10,29 @@ BEGIN {
     }
 }
 
+my $no_taint_support = exists($Config::Config{taint_support})
+                     && !$Config::Config{taint_support};
+
+my %skip_fetch_count_when_no_taint = (
+    '<${$ts}> RT57012_OV' => 1,
+    '<use integer; ${$ts}> RT57012_OV' => 1,
+    '<do {&{$ts} for 1,2}> RT57012_OV' => 1,
+    '<use integer; do {&{$ts} for 1,2}> RT57012_OV' => 1,
+    '<*RT57012B = *{$ts}; our $RT57012B> RT57012_OV' => 1,
+    '<use integer; *RT57012B = *{$ts}; our $RT57012B> RT57012_OV' => 1,
+);
+
+sub is_if_taint_supported {
+    my ($got, $expected, $name, @mess) = @_;
+    if ($expected && $no_taint_support) {
+        return skip("your perl was built without taint support");
+    }
+    else {
+        return is($got, $expected, $name, @mess);
+    }
+}
+
+
 package Oscalar;
 use overload ( 
 				# Anonymous subroutines:
@@ -1390,7 +1413,8 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 }
 
 {
-    use Scalar::Util 'weaken';
+    no warnings 'experimental::builtin';
+    use builtin 'weaken';
 
     package Shklitza;
     use overload '""' => sub {"CLiK KLAK"};
@@ -1977,8 +2001,10 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 	    my $plain_term = $int . sprintf $sub_term, '$plain';
 	    my $exp = do {no warnings 'experimental::smartmatch'; eval $plain_term };
 	    diag("eval of plain_term <$plain_term> gave <$@>") if $@;
-	    is(tainted($exp), $exp_taint,
-			"<$plain_term> taint of expected return");
+	    SKIP: {
+		is_if_taint_supported(tainted($exp), $exp_taint,
+		    "<$plain_term> taint of expected return");
+	    }
 
 	    for my $ov_pkg (qw(RT57012_OV RT57012_OV_FB)) {
 		next if $ov_pkg eq 'RT57012_OV_FB'
@@ -2009,8 +2035,10 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 		    # ref rather than a copy, so stringify it to
 		    # find out if its tainted
 		    $res = "$res" if $res_term =~ /\+\+|--/;
-		    is(tainted($res), $exp_taint,
+		    SKIP: {
+			is_if_taint_supported(tainted($res), $exp_taint,
 			    "$desc taint of result return");
+		    }
 		    is($res, $exp, "$desc return value");
 		    my $fns =($ov_pkg eq 'RT57012_OV_FB')
 				? $exp_fb_funcs : $exp_funcs;
@@ -2023,7 +2051,14 @@ foreach my $op (qw(<=> == != < <= > >=)) {
 		    next if $var eq '$oload';
 		    my $exp_fetch = ($var eq '$ts') ?
 			    $exp_fetch_s : $exp_fetch_a;
-		    is($fetches, $exp_fetch, "$desc FETCH count");
+		    SKIP: {
+			if ($skip_fetch_count_when_no_taint{$desc} && $no_taint_support) {
+			    skip("your perl was built without taint support");
+			}
+			else {
+			    is($fetches, $exp_fetch, "$desc FETCH count");
+			}
+		    }
 		    is($stores, $exp_store, "$desc STORE count");
 
 		}

@@ -1,5 +1,5 @@
 If you read this file _as_is_, just ignore the equal signs on the left.
-This file is written in the POD format (see [.POD]PERLPOD.POD;1) which is
+This file is written in the POD format (see [.pod]perlpod.pod) which is
 specially designed to be readable as is.
 
 =head1 NAME
@@ -46,10 +46,9 @@ In addition to VMS and DCL you will need three things:
 
 =item 1  A C compiler. 
 
-HP (formerly Compaq, more formerly DEC) C for VMS (VAX, Alpha, or Itanium).
-Various ancient versions of DEC C had some caveats, so if you're using a 
-version older than 7.x on Alpha or Itanium or 6.x on VAX, you may need to 
-upgrade to get a successful build.
+VSI (formerly DEC/Compaq/HP/HPE) C for VMS (Alpha or Itanium). Various
+ancient versions of DEC C had some caveats, so if you're using a version
+older than 7.x, you may need to upgrade to get a successful build.
 
 There have been no recent reports of builds using Gnu C, but latent
 (and most likely outdated) support for it is still present in various
@@ -71,10 +70,10 @@ since anyone's tested it that we're not sure.
 
 All development and testing of Perl on VMS takes place on ODS-5 volumes with
 extended parse enabled in the environment via the command C<SET PROCESS/PARSE=EXTENDED>.
-Latent support for ODS-2 volumes (including on VAX) is still present, but the number
-of components that require ODS-5 features is steadily growing and ODS-2 support may be
-completely removed in a future release.
-
+Latent support for ODS-2 volumes is still present, but there have been some reports
+that it no longer works, and even if it builds, there will be many test failures,
+mostly related to the failure to preserve filename case. ODS-2 support may be
+explicity disabled in a future release.
 
 =back
 
@@ -132,21 +131,17 @@ of the source code for perl as well as modules and scripts that you may
 wish to add later) hence you probably want to have GUNZIP.EXE and 
 VMSTAR.EXE on your VMS machine.
 
-If you want to include socket support, you'll need a TCP/IP stack and either
-DEC C, or socket libraries.  See the "Socket Support (optional)" topic 
-for more details.
-
 =head1 Unpacking the Perl source code
 
 You may need to set up a foreign symbol for the unpacking utility of
 choice.  Once you have done so, use a command like the following to
 unpack the archive:
 
-    vmstar -xvf perl-5^.32^.1.tar
+    vmstar -xvf perl-5^.36^.0.tar
 
 Then set default to the top-level source directory like so:
 
-    set default [.perl-5^.32^.1]
+    set default [.perl-5^.36^.0]
 
 and proceed with configuration as described in the next section.
 
@@ -216,7 +211,7 @@ More help with configure.com is available from:
     @configure "-h"
 
 If you find yourself reconfiguring and rebuilding  then be sure to also follow
-the advice in the "Cleaning up and starting  fresh (optional)" and the checklist
+the advice in the "Cleaning up and starting fresh (optional)" and the checklist
 of items in the "CAVEATS" sections below.
 
 =head2 Changing compile-time options (optional) for Perl on VMS
@@ -229,13 +224,6 @@ inappropriate changes to configure.com or config_h.SH can render perl
 unbuildable; odds are that there's nothing in there you'll need to
 change. Note also that non-default options are tested less than default
 options, so you may end up being more of a pioneer than you intend to be.
-
-=head2 Socket Support (optional) for Perl on VMS
-
-Perl includes a number of functions for IP sockets, which are available if
-you choose to compile Perl with socket support.  It does this via the socket
-routines built into the CRTL regarless of which TCP/IP stack your system
-has.
 
 =head1 Building Perl
 
@@ -301,15 +289,16 @@ didn't do anything special, use .EXE), and "[.subdir]test.t" is the test
 that failed. For example, with a normal Perl build, if the test indicated
 that t/op/time failed, then you'd do this:
 
-    @ .vms]test .EXE "" "-v" [.OP]TIME.t
+    @ .vms]test .EXE "" "-v" [.op]time.t
 
 Note that test names are reported in UNIX syntax and relative to the
 top-level build directory.  When supplying them individually to the test
-driver, you can use either UNIX or VMS syntax, but you must give the path
+driver, you must specify them in Unix format if they are outside of the [.t]
+directory; otherwise VMS syntax is ok. Note that you must also give the path
 relative to the [.t] directory and you must also add the .t extension to the
-filename.  So, for example if the test lib/Math/Trig fails, you would run:
+filename.  So, for example if the test lib/warnings.t fails, you would run:
 
-    @[.vms]test .EXE "" -"v" [-.lib.math]trig.t
+    @[.vms]test .EXE "" -"v" "../lib/warnings.t"
 
 When you send in a bug report for failed tests, please include the output
 from this command, which is run from the main source directory:
@@ -477,8 +466,8 @@ Probably the single biggest gotcha in compiling Perl is giving the wrong
 switches to MMS/MMK when you build. Use I<exactly> what the configure.com 
 script prints!
 
-Be sure that the process that you use to build perl has a PGFLQ greater
-than 100000.  Be sure to have a correct local time zone to UTC offset
+Be sure that the process that you use to build Perl has a PGFLQUO of at
+least 400000.  Be sure to have a correct local time zone to UTC offset
 defined (in seconds) in the logical name SYS$TIMEZONE_DIFFERENTIAL before
 running the regression test suite.  The SYS$MANAGER:UTC$CONFIGURE_TDF.COM 
 procedure will help you set that logical for your system but may require 
@@ -491,30 +480,22 @@ A final thing that causes trouble is leftover pieces from a failed
 build.  If things go wrong make sure you do a "(MMK|MMS|make) realclean"
 before you rebuild.
 
-=head2 GNU issues with Perl on VMS
-
-It has been a while since the GNU utilities such as GCC or GNU make
-were used to build perl on VMS.  Hence they may require a great deal
-of source code modification to work again.
-
 =head2 Floating Point Considerations
 
 Prior to 5.8.0, Perl simply accepted the default floating point options of the
-C compiler, namely representing doubles with D_FLOAT on VAX and G_FLOAT on
-Alpha.  Single precision floating point values are represented in F_FLOAT
-format when either D_FLOAT or G_FLOAT is in use for doubles.  Beginning with
-5.8.0, Alpha builds now use IEEE floating point formats by default, which in
-VMS parlance are S_FLOAT for singles and T_FLOAT for doubles.  IEEE is not
-available on VAX, so F_FLOAT and D_FLOAT remain the defaults for singles and
-doubles respectively.  Itanium builds have always used IEEE by default. The 
-available non-default options are G_FLOAT on VAX and D_FLOAT or G_FLOAT on 
-Alpha or Itanium.
+C compiler, namely representing doubles with G_FLOAT on Alpha.  Single
+precision floating point values are represented in F_FLOAT format when either
+D_FLOAT or G_FLOAT is in use for doubles.  Beginning with 5.8.0, Alpha builds
+now use IEEE floating point formats by default, which in VMS parlance are S_FLOAT
+for singles and T_FLOAT for doubles.  Itanium builds have always used IEEE by
+default. The  available non-default options are D_FLOAT or G_FLOAT on Alpha
+or Itanium.
 
-The use of IEEE on Alpha or Itanium introduces NaN, infinity, and denormalization
-capabilities not available with D_FLOAT and G_FLOAT.  When using one of those
-non-IEEE formats, silent underflow and overflow are emulated in the conversion
-of strings to numbers, but it is preferable to get the real thing by using
-IEEE where possible.
+The use of IEEE introduces NaN, infinity, and denormalization capabilities not
+available with D_FLOAT and G_FLOAT.  When using one of those non-IEEE formats,
+silent underflow and overflow are emulated in the conversion of strings to
+numbers, but it is preferable to get the real thing by using IEEE where possible.
+You are likely to see quite a few test failures when not using IEEE floating point.
 
 Regardless of what floating point format you consider preferable, be aware
 that the choice may have an impact on compatibility with external libraries,
@@ -525,11 +506,9 @@ G_FLOAT, or T_FLOAT depending on what your Perl was configured with.  When
 written to disk, the value can only be retrieved later by a Perl configured
 with the same floating point option that was in effect when it was created.
 
-To obtain a non-IEEE build on Alpha or Itanium, simply answer no to the
-"Use IEEE math?" question during the configuration.  To obtain an option
-different from the C compiler default on any platform, put in the option that
-you want in answer to the "Any additional cc flags?" question.  For example, to
-obtain a G_FLOAT build on VAX, put in C</FLOAT=G_FLOAT>.
+To obtain a non-IEEE build, simply answer no to the "Use IEEE math?" question
+during the configuration or specify -"Uuseieee" as a parameter to configure.com
+on the command line.
 
 =head1 Mailing Lists
 
@@ -555,12 +534,12 @@ Vmsperl pages on the web include:
     L<http://www.sidhe.org/vmsperl/index.html>
     L<https://www.cpan.org/modules/by-module/VMS/>
     L<https://www.nntp.perl.org/group/perl.vmsperl/>
-    L<http://h71000.www7.hp.com/openvms/products/ips/apache/csws_modperl.html>
+    L<https://sourceforge.net/projects/vmsperlkit/>
 
 =head1 SEE ALSO
 
 Perl information for users and programmers about the port of perl to VMS is
-available from the [.POD]PERLVMS.POD file that gets installed as L<perlvms>.
+available from the [.pod]perlvms.pod file that gets installed as L<perlvms>.
 For administrators the perlvms document also includes a detailed discussion 
 of extending vmsperl with CPAN modules after Perl has been installed.
 

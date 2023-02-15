@@ -80,9 +80,8 @@ for my $module (sort keys %OUTPUT) {
         $got =~ s{ \A .* \n [.]nh \n }{}xms;
     }
 
-    # OS/390 is EBCDIC, which apparently uses a different character for ESC.
-    # Try to convert so that the test still works.
-    if ($^O eq 'os390' && $module eq 'Pod::Text::Termcap') {
+    # Try to convert on EBCDIC boxes so that the test still works.
+    if (ord "A" == 193 && $module eq 'Pod::Text::Termcap') {
         $got =~ tr{\033}{\047};
     }
 

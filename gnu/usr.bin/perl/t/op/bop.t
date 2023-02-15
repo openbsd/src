@@ -4,8 +4,6 @@
 # test the bit operators '&', '|', '^', '~', '<<', and '>>'
 #
 
-use warnings;
-
 BEGIN {
     chdir 't' if -d 't';
     require "./test.pl";
@@ -14,11 +12,13 @@ BEGIN {
     require Config;
 }
 
+use warnings;
+
 # Tests don't have names yet.
 # If you find tests are failing, please try adding names to tests to track
 # down where the failure is, and supply your new names as a patch.
 # (Just-in-time test naming)
-plan tests => 502;
+plan tests => 510;
 
 # numerics
 ok ((0xdead & 0xbeef) == 0x9ead);
@@ -32,6 +32,30 @@ ok ((33023 >> 7) == 257);
 
 # signed vs. unsigned
 ok ((~0 > 0 && do { use integer; ~0 } == -1));
+
+{   # GH #18639
+    my $iv_min = -(~0 >> 1) - 1;
+    my $shifted;
+    { use integer; $shifted = $iv_min << 0 };
+    is($shifted, $iv_min, "IV_MIN << 0 yields IV_MIN under 'use integer'");
+}
+
+# GH #18691
+# Exercise some corner cases on shifting more bits than the size of IV/UV.
+# All these should work even if the shift amount doesn't fit in IV or UV.
+is(4 << 2147483648, 0, "4 << 2147483648 yields 0");
+is(16 << 4294967295, 0, "16 << 4294967295 yields 0");
+is(8 >> 4294967296, 0, "8 >> 4294967296 yields 0");
+is(11 << 18446744073709551615, 0, "11 << 18446744073709551615 yields 0");
+is(do { use integer; -9 >> 18446744073709551616 }, -1,
+   "-9 >> 18446744073709551616 under 'use integer' yields -1");
+is(do { use integer; -4 << -2147483648 }, -1,
+   "-4 << -2147483648 under 'use integer' yields -1");
+# Quotes around -9223372036854775808 below are to make it a single term.
+# Without quotes, it will be parsed as an expression with an unary minus
+# operator which will clip the result to IV range under "use integer".
+is(do { use integer; -5 >> '-9223372036854775808' }, 0,
+   "-5 >> -9223372036854775808 under 'use integer' yields 0");
 
 my $bits = 0;
 for (my $i = ~0; $i; $i >>= 1) { ++$bits; }

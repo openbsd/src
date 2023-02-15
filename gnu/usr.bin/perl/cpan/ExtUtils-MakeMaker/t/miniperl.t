@@ -4,6 +4,7 @@
 # This mostly means no XS modules.
 
 use strict;
+use warnings;
 use lib 't/lib';
 
 use Test::More;

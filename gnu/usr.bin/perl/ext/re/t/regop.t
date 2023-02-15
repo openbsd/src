@@ -140,7 +140,6 @@ Freeing REx: "[f][o][o][b][a][r]"
 minlen 3
 ---
 # Compiling REx "(?:ABCP|ABCG|ABCE|ABCB|ABCA|ABCD)"
-# Got 164 bytes for offset annotations.
 #     TRIE(NATIVE): W:6 C:24 Uq:7 Min:4 Max:4
 #       Char : Match Base  Ofs     A   B   C   P   G   E   D
 #       State|---------------------------------------------------
@@ -166,8 +165,6 @@ minlen 3
 #       <D> 
 #   20: END (0)
 # anchored "ABC" at 0 (checking anchored) minlen 4 
-# Offsets: [20]
-# 	1:4[3] 3:4[15] 19:32[0] 20:34[0] 
 # Guessing start of match in sv for REx "(?:ABCP|ABCG|ABCE|ABCB|ABCA|ABCD)" against "ABCD"
 # Found anchored substr "ABC" at offset 0...
 # Guessed: match at offset 0
@@ -210,8 +207,6 @@ anchored "ABC" at 0
 #  47: EOL(48)
 #  48: END(0)
 #floating ""$ at 3..4 (checking floating) stclass "EXACTF <.>" minlen 3
-#Offsets: [48]
-#        1:1[1] 3:2[1] 5:2[81] 45:83[1] 47:84[1] 48:85[0]
 #Guessing start of match, REx "(\.COM|\.EXE|\.BAT|\.CMD|\.VBS|\.VBE|\.JS|\.JSE|\.WSF|\.WSH|..." against "D:dev/perl/ver/28321_/perl.exe"...
 #Found floating substr ""$ at offset 30...
 #Starting position does not contradict /^/m...
@@ -233,7 +228,6 @@ anchored "ABC" at 0
 #Freeing REx: "(\\.COM|\\.EXE|\\.BAT|\\.CMD|\\.VBS|\\.VBE|\\.JS|\\.JSE|\\."......
 %MATCHED%
 floating ""$ at 3..4 (checking floating)
-#1:1[1] 3:2[1] 5:2[64] 45:83[1] 47:84[1] 48:85[0]
 #stclass EXACTF <.> minlen 3
 #Found floating substr ""$ at offset 30...
 #Does not contradict STCLASS...
@@ -241,22 +235,16 @@ floating ""$ at 3..4 (checking floating)
 #Matching stclass EXACTF <.> against ".exe"
 ---
 #Compiling REx "[q]"
-#size 3 nodes Got 7 bytes for offset annotations.
 #first at 1
 #Final program:
 #   1: EXACT <q>(3)
 #   3: END(0)
 #anchored "q" at 0 (checking anchored isall) minlen 1
-#Offsets: [3]
-#        1:1[3] 3:4[0]
 #Guessing start of match, REx "[q]" against "q"...
 #Found anchored substr "q" at offset 0...
 #Guessed: match at offset 0
 #%MATCHED%
 #Freeing REx: "[q]"
-Got 7 bytes for offset annotations.
-Offsets: [3]
-1:1[3] 3:4[0]
 %MATCHED%        
 Freeing REx: "[q]"
 ---
@@ -281,7 +269,6 @@ Freeing REx: "[q]"
 Freeing REx: "^(\S{1,9}):\s*(\d+)$"
 ---
 #Compiling REx "(?(DEFINE)(?<foo>foo))(?(DEFINE)(?<bar>(?&foo)bar))(?(DEFINE"...
-#Got 532 bytes for offset annotations.
 study_chunk_recursed_count: 5
 #Final program:
 #   1: DEFINEP (3)
@@ -317,8 +304,6 @@ study_chunk_recursed_count: 5
 #  61:   TAIL (62)
 #  62: END (0)
 minlen 0
-#Offsets: [66]
-#        1:3[0] 3:10[0] 5:17[1] 7:18[3] 9:21[1] 11:21[0] 13:22[0] 14:25[0] 16:32[0] 18:39[1] 20:41[3] 23:47[3] 25:50[1] 27:50[0] 29:51[0] 30:54[0] 32:61[0] 34:68[1] 36:70[3] 39:76[3] 41:79[1] 43:79[0] 45:80[0] 46:83[0] 48:90[0] 50:97[1] 52:99[3] 55:105[3] 57:108[1] 59:108[0] 61:109[0] 62:110[0]
 #Matching REx "(?(DEFINE)(?<foo>foo))(?(DEFINE)(?<bar>(?&foo)bar))(?(DEFINE"... against ""
 #   0 <> <>                   |  1:DEFINEP(3)
 #   0 <> <>                   |  3:IFTHEN(14)

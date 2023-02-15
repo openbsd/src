@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # test the helper math routines in Math::BigFloat
 

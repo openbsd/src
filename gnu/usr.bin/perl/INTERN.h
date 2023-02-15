@@ -19,8 +19,7 @@
 #undef EXTCONST
 #undef dEXTCONST
 
-#  if (defined(WIN32) && defined(__MINGW32__) && ! defined(PERL_IS_MINIPERL)) \
-     || defined(__SYMBIAN32__)
+#  if (defined(WIN32) && defined(__MINGW32__) && ! defined(PERL_IS_MINIPERL))
 #    ifdef __cplusplus
 #      define EXT	__declspec(dllexport)
 #      define dEXT

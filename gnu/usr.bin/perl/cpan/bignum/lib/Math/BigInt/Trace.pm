@@ -1,48 +1,76 @@
-#!perl
+# -*- mode: perl; -*-
 
 package Math::BigInt::Trace;
 
-require 5.010;
 use strict;
 use warnings;
 
 use Exporter;
 use Math::BigInt;
 
-our ($accuracy, $precision, $round_mode, $div_scale);
-
 our @ISA = qw(Exporter Math::BigInt);
 
-our $VERSION = '0.51';
+our $VERSION = '0.65';
 
 use overload;                   # inherit overload from Math::BigInt
 
 # Globals
-$accuracy = $precision = undef;
-$round_mode = 'even';
-$div_scale = 40;
+our $accuracy   = undef;
+our $precision  = undef;
+our $round_mode = 'even';
+our $div_scale  = 40;
 
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
     my $value = shift;
+
     my $a = $accuracy;
     $a = $_[0] if defined $_[0];
+
     my $p = $precision;
     $p = $_[1] if defined $_[1];
-    my $self = Math::BigInt->new($value, $a, $p, $round_mode);
-    bless $self, $class;
-    print "MBI new '$value' => '$self' (", ref($self), ")";
+
+    my $self = $class -> SUPER::new($value, $a, $p, $round_mode);
+
+    printf "Math::BigInt new '%s' => '%s' (%s)\n",
+      $value, $self, ref($self);
+
     return $self;
 }
 
 sub import {
-    print "MBI import ", join(' ', @_);
-    my $self = shift;
-    Math::BigInt::import($self, @_);            # need it for subclasses
-#    $self->export_to_level(1, $self, @_);       # need this ?
-    @_ = ();
+    my $class = shift;
+
+    printf "%s -> import(%s)\n", $class, join(", ", @_);
+
+    # we catch the constants, the rest goes to parent
+
+    my $constant = grep { $_ eq ':constant' } @_;
+    my @a = grep { $_ ne ':constant' } @_;
+
+    if ($constant) {
+        overload::constant
+
+            integer => sub {
+                $class -> new(shift);
+            },
+
+            float   => sub {
+                $class -> new(shift);
+            },
+
+            binary  => sub {
+                # E.g., a literal 0377 shall result in an object whose value
+                # is decimal 255, but new("0377") returns decimal 377.
+                return $class -> from_oct($_[0]) if $_[0] =~ /^0_*[0-7]/;
+                $class -> new(shift);
+            };
+    }
+
+    $class -> SUPER::import(@a);                # need it for subclasses
+    #$self -> export_to_level(1, $class, @_);    # need this ?
 }
 
 1;

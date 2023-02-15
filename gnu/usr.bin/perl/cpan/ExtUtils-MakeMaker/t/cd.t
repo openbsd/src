@@ -4,6 +4,8 @@ BEGIN {
     unshift @INC, 't/lib/';
 }
 
+use strict;
+use warnings;
 use File::Temp qw[tempdir];
 my $tmpdir = tempdir( DIR => 't', CLEANUP => 1 );
 use Cwd; my $cwd = getcwd; END { chdir $cwd } # so File::Temp can cleanup
@@ -21,7 +23,7 @@ my @cd_args = ($dir, "command1", "command2");
 {
     package Test::MM_Win32;
     use ExtUtils::MM_Win32;
-    @ISA = qw(ExtUtils::MM_Win32);
+    our @ISA = qw(ExtUtils::MM_Win32);
 
     my $mm = bless {}, 'Test::MM_Win32';
 

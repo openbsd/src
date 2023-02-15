@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -16,7 +8,7 @@ BEGIN {
 
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..174\n"; } # 62 + 8 x @Versions
+BEGIN { $| = 1; print "1..214\n"; } # 62 + 8 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -30,6 +22,11 @@ sub ok ($;$) {
 use Unicode::Collate;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
+
+#########################
 
 ##### 1
 
@@ -268,35 +265,59 @@ ok($el->viewSortKey("L\x{FF2C}\x{216C}\x{2112}\x{24C1}"),
 
 ##### 62
 
-my @Versions = (9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36);
+my @Versions = ( 8,  9, 11, 14, 16, 18, 20, 22, 24, 26,
+		28, 30, 32, 34, 36, 38, 40, 41, 43);
 
 for my $v (@Versions) {
     $Collator->change(UCA_Version => $v);
+
+    # primary weights
+    my $pri1 = '0A0C 0A0D';
+    my $pri2 = '0A0C 039F 0A0D';
+    my $pri3 = $v >= 9 ? 'FB40 CE02' : '4E02';
+
+    # secondary weights
+    my $sec1 = '0020';
+    my $sec2 = '0020 0020';
+    my $sec3 = '0020 0020 0020';
+
+    # tertiary weights
+    my $ter1 = '0002';
+    my $ter2 = '0002 0002';
+    my $ter3 = '0002 0002 0002';
+
+    # quaternary weights
+    my $eququat = 'FFFF 039F FFFF';
+    my $hanquat = $v >= 36 || $v == 8 ? 'FFFF' : 'FFFF FFFF';
+
+    # separators
+    my $sep1 = $v >= 9 ? ' |'  : '|';
+    my $sep2 = $v >= 9 ? ' | ' : '|';
+
     my $app = $v >= 26 ? ' |]' : ']';
-    my $sec = $v >= 36 ? '' : ' FFFF';
 
     $Collator->change(variable => 'Shifted', level => 4);
     ok($Collator->viewSortKey("1+2"),
-	'[0A0C 0A0D | 0020 0020 | 0002 0002 | FFFF 039F FFFF'.$app);
+	"[$pri1$sep2$sec2$sep2$ter2$sep2$eququat$app");
     ok($Collator->viewSortKey("\x{4E02}"),
-	'[FB40 CE02 | 0020 | 0002 | FFFF'.$sec.$app);
+	"[$pri3$sep2$sec1$sep2$ter1$sep2$hanquat$app");
 
     $Collator->change(variable => 'Shift-Trimmed');
     ok($Collator->viewSortKey("1+2"),
-	'[0A0C 0A0D | 0020 0020 | 0002 0002 | 039F'.$app);
+	"[$pri1$sep2$sec2$sep2$ter2$sep2"."039F$app");
     ok($Collator->viewSortKey("\x{4E02}"),
-	'[FB40 CE02 | 0020 | 0002 |'.$app);
+	"[$pri3$sep2$sec1$sep2$ter1$sep1$app");
 
     $Collator->change(variable => 'Non-ignorable', level => 3);
     ok($Collator->viewSortKey("1+2"),
-	'[0A0C 039F 0A0D | 0020 0020 0020 | 0002 0002 0002 |]');
+	"[$pri2$sep2$sec3$sep2$ter3$sep1]");
     ok($Collator->viewSortKey("\x{4E02}"),
-	'[FB40 CE02 | 0020 | 0002 |]');
+	"[$pri3$sep2$sec1$sep2$ter1$sep1]");
 
     $Collator->change(variable => 'Blanked');
     ok($Collator->viewSortKey("1+2"),
-	'[0A0C 0A0D | 0020 0020 | 0002 0002 |]');
+	"[$pri1$sep2$sec2$sep2$ter2$sep1]");
     ok($Collator->viewSortKey("\x{4E02}"),
-	'[FB40 CE02 | 0020 | 0002 |]');
+	"[$pri3$sep2$sec1$sep2$ter1$sep1]");
 }
 

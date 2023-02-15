@@ -12,7 +12,7 @@ $DOWARN = 1; # enable run-time warnings now
 
 use Config;
 
-plan( tests => 52 );
+plan( tests => 54 );
 
 eval 'use v5.5.640';
 is( $@, '', "use v5.5.640; $@");
@@ -266,6 +266,23 @@ sub { $_[0] = v3;
 
 *{"\3"} = *DATA;
 is( (readline v3), "This is what we expect to see!\n", "v-strings even work in Mordor" );
+
+{
+    # disable warnings just for the following test
+    local $DOWARN = 0;
+
+    # Keep a list of all warnings issued in this test
+    my @warnings = ();
+    local $SIG{__WARN__} = sub { push @warnings, @_; };
+
+    # This should *not* result in a warning
+    eval { my $foo; "This doesn't need to be here...".$foo; };
+    is( scalar @warnings, 0, "Warnings are disabled by default pre 5.35" );
+
+    # This *should* result in a warning
+    eval { use v5.035; my $foo; "This doesn't need to be here...".$foo; };
+    is( scalar @warnings, 1, "Warnings are enabled by default post 5.35" );
+}
 
 __DATA__
 This is what we expect to see!

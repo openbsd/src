@@ -440,15 +440,13 @@ $::ra = [ bless [], 'A' ];
 pass 'no crash when freeing array that is being cleared';
 
 # [perl #85670] Copying magic to elements
-SKIP: {
-    skip "no Scalar::Util::weaken on miniperl", 1, if is_miniperl;
-    require Scalar::Util;
-    package glelp {
-	Scalar::Util::weaken ($a = \@ISA);
-	@ISA = qw(Foo);
-	Scalar::Util::weaken ($a = \$ISA[0]);
-	::is @ISA, 1, 'backref magic is not copied to elements';
-    }
+package glelp {
+    no warnings 'experimental::builtin';
+    use builtin 'weaken';
+    weaken ($a = \@ISA);
+    @ISA = qw(Foo);
+    weaken ($a = \$ISA[0]);
+    ::is @ISA, 1, 'backref magic is not copied to elements';
 }
 package peen {
     $#ISA = -1;

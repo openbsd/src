@@ -60,8 +60,8 @@ for my $test (
     [ G_VOID,    [ qw(a p q) ], [ 0 ],           '3 args, G_VOID' ],
     [ G_SCALAR,  [ ],           [ qw(y 1) ],     '0 args, G_SCALAR' ],
     [ G_SCALAR,  [ qw(a p q) ], [ qw(y 1) ],     '3 args, G_SCALAR' ],
-    [ G_ARRAY,   [ ],           [ qw(x 1) ],     '0 args, G_ARRAY' ],
-    [ G_ARRAY,   [ qw(a p q) ], [ qw(b p x 3) ], '3 args, G_ARRAY' ],
+    [ G_LIST,    [ ],           [ qw(x 1) ],     '0 args, G_LIST' ],
+    [ G_LIST,    [ qw(a p q) ], [ qw(b p x 3) ], '3 args, G_LIST' ],
     [ G_DISCARD, [ ],           [ qw(0) ],       '0 args, G_DISCARD' ],
     [ G_DISCARD, [ qw(a p q) ], [ qw(0) ],       '3 args, G_DISCARD' ],
 )
@@ -89,7 +89,7 @@ for my $test (
     ok(eq_array( [ call_method('meth', $flags, $obj, @$args) ], $expected),
 	"$description call_method('meth')");
 
-    my $returnval = ((($flags & G_WANT) == G_ARRAY) || ($flags & G_DISCARD))
+    my $returnval = ((($flags & G_WANT) == G_LIST) || ($flags & G_DISCARD))
 	? [0] : [ undef, 1 ];
     for my $keep (0, G_KEEPERR) {
 	my $desc = $description . ($keep ? ' G_KEEPERR' : '');
@@ -313,12 +313,12 @@ for my $fn_type (qw(eval_pv eval_sv call_sv)) {
 		}
 	    }
 	    elsif ($fn_type eq 'eval_sv') {
-		$desc = "eval_sv('$code', G_ARRAY|$keep_desc)";
-		@ret = eval_sv($code, G_ARRAY|$keep);
+		$desc = "eval_sv('$code', G_LIST|$keep_desc)";
+		@ret = eval_sv($code, G_LIST|$keep);
 	    }
 	    elsif ($fn_type eq 'call_sv') {
-		$desc = "call_sv('$code', G_EVAL|G_ARRAY|$keep_desc)";
-		@ret = call_sv($code, G_EVAL|G_ARRAY|$keep);
+		$desc = "call_sv('$code', G_EVAL|G_LIST|$keep_desc)";
+		@ret = call_sv($code, G_EVAL|G_LIST|$keep);
 	    }
 	    is(scalar @ret, ($expect_success && $fn_type ne 'eval_pv') ? 2 : 1,
 			    "$desc - number of returned args");

@@ -8,7 +8,8 @@
  *
  */
 
-#ifndef PERL_REGCOMP_H_
+#if ! defined(PERL_REGCOMP_H_) && (   defined(PERL_CORE)            \
+                                   || defined(PERL_EXT_RE_BUILD))
 #define PERL_REGCOMP_H_
 
 #include "regcharclass.h"
@@ -24,11 +25,6 @@
 
 /* Not for production use: */
 #define PERL_ENABLE_EXPERIMENTAL_REGEX_OPTIMISATIONS 0
-
-/* Activate offsets code - set to if 1 to enable */
-#ifdef DEBUGGING
-#define RE_TRACK_PATTERN_OFFSETS
-#endif
 
 /*
  * Structure for regexp "program".  This is essentially a linear encoding
@@ -64,25 +60,22 @@
 /* This is the stuff that used to live in regexp.h that was truly
    private to the engine itself. It now lives here. */
 
- typedef struct regexp_internal {
-        union {
-	    U32 *offsets;           /* offset annotations 20001228 MJD
-                                       data about mapping the program to the
-                                       string -
-                                       offsets[0] is proglen when this is used
-                                       */
-            U32 proglen;
-        } u;
-
+typedef struct regexp_internal {
         regnode *regstclass;    /* Optional startclass as identified or constructed
                                    by the optimiser */
         struct reg_data *data;	/* Additional miscellaneous data used by the program.
                                    Used to make it easier to clone and free arbitrary
                                    data that the regops need. Often the ARG field of
-                                   a regop is an index into this structure */
-	struct reg_code_blocks *code_blocks;/* positions of literal (?{}) */
-        int name_list_idx;	/* Optional data index of an array of paren names */
-	regnode program[1];	/* Unwarranted chumminess with compiler. */
+                                   a regop is an index into this structure. NOTE the
+                                   0th element of this structure is NEVER used and is
+                                   strictly reserved for internal purposes. */
+        struct reg_code_blocks *code_blocks;/* positions of literal (?{}) */
+        U32 proglen;            /* size of the compiled program in regnodes */
+        U32 name_list_idx;      /* Optional data index of an array of paren names,
+                                   only valid when RXp_PAREN_NAMES(prog) is true,
+                                   0 means "no value" like any other index into the
+                                   data array.*/
+        regnode program[1];	/* Unwarranted chumminess with compiler. */
 } regexp_internal;
 
 #define RXi_SET(x,y) (x)->pprivate = (void*)(y)   
@@ -255,11 +248,11 @@ struct regnode_ssc {
    ((1<<32)-1), while on the Cray T90, sizeof(short)==8 and U16_MAX is
    ((1<<64)-1).  To limit stack growth to reasonable sizes, supply a
    smaller default.
-	--Andy Dougherty  11 June 1998
+        --Andy Dougherty  11 June 1998
 */
 #if SHORTSIZE > 2
 #  ifndef REG_INFTY
-#    define REG_INFTY ((1<<16)-1)
+#    define REG_INFTY  nBIT_UMAX(16)
 #  endif
 #endif
 
@@ -310,8 +303,8 @@ struct regnode_ssc {
 
 #define	OP(p)		((p)->type)
 #define FLAGS(p)	((p)->flags)	/* Caution: Doesn't apply to all      \
-					   regnode types.  For some, it's the \
-					   character set of the regnode */
+                                           regnode types.  For some, it's the \
+                                           character set of the regnode */
 #define	STR_LENs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
                                     ((struct regnode_string *)p)->str_len)
 #define	STRINGs(p)	(__ASSERT_(OP(p) != LEXACT && OP(p) != LEXACT_REQ8)  \
@@ -359,7 +352,7 @@ struct regnode_ssc {
     } STMT_END
 
 #define ANYOFR_BASE_BITS    20
-#define ANYOFRbase(p)   (ARG(p) & ((1 << ANYOFR_BASE_BITS) - 1))
+#define ANYOFRbase(p)   (ARG(p) & nBIT_MASK(ANYOFR_BASE_BITS))
 #define ANYOFRdelta(p)  (ARG(p) >> ANYOFR_BASE_BITS)
 
 #undef NODE_ALIGN
@@ -467,7 +460,7 @@ struct regnode_ssc {
  *      regex is compiled.  In this case, we don't know until runtime what it
  *      will match, so we have to assume it could match anything, including
  *      code points that ordinarily would be in the bitmap.  A flag bit is
- *      necessary to indicate this , though it can be shared with the item 3)
+ *      necessary to indicate this, though it can be shared with the item 3)
  *      flag, as that only occurs under /d, and this only occurs under non-d.
  *      This case is quite uncommon in the field, and the /(?[ ...])/ construct
  *      is a better way to accomplish what this feature does.  This case also
@@ -500,7 +493,7 @@ struct regnode_ssc {
  * Another possibility is based on the fact that ANYOF_MATCHES_POSIXL is
  * redundant with the node type ANYOFPOSIXL.  That flag could be removed, but
  * at the expense of extra code in regexec.c.  The flag has been retained
- * because it allows us to see if we need to call reginsert, or just use the
+ * because it allows us to see if we need to call reginclass, or just use the
  * bitmap in one test.
  *
  * If this is done, an extension would be to make all ANYOFL nodes contain the
@@ -591,7 +584,7 @@ struct regnode_ssc {
  * are cautioned about its shared nature */
 #define ANYOF_SHARED_d_MATCHES_ALL_NON_UTF8_NON_ASCII_non_d_WARN_SUPER 0x80
 
-#define ANYOF_FLAGS_ALL		(0xff & ~0x10)
+#define ANYOF_FLAGS_ALL		((U8) ~0x10)
 
 #define ANYOF_LOCALE_FLAGS (ANYOFL_FOLD | ANYOF_MATCHES_POSIXL)
 
@@ -679,30 +672,32 @@ struct regnode_ssc {
 
 #define ANYOF_BIT(c)		(1U << ((c) & 7))
 
+#define ANYOF_POSIXL_BITMAP(p)  (((regnode_charclass_posixl*) (p))->classflags)
+
 #define POSIXL_SET(field, c)	((field) |= (1U << (c)))
-#define ANYOF_POSIXL_SET(p, c)	POSIXL_SET(((regnode_charclass_posixl*) (p))->classflags, (c))
+#define ANYOF_POSIXL_SET(p, c)	POSIXL_SET(ANYOF_POSIXL_BITMAP(p), (c))
 
 #define POSIXL_CLEAR(field, c) ((field) &= ~ (1U <<(c)))
-#define ANYOF_POSIXL_CLEAR(p, c) POSIXL_CLEAR(((regnode_charclass_posixl*) (p))->classflags, (c))
+#define ANYOF_POSIXL_CLEAR(p, c) POSIXL_CLEAR(ANYOF_POSIXL_BITMAP(p), (c))
 
 #define POSIXL_TEST(field, c)	((field) & (1U << (c)))
-#define ANYOF_POSIXL_TEST(p, c)	POSIXL_TEST(((regnode_charclass_posixl*) (p))->classflags, (c))
+#define ANYOF_POSIXL_TEST(p, c)	POSIXL_TEST(ANYOF_POSIXL_BITMAP(p), (c))
 
 #define POSIXL_ZERO(field)	STMT_START { (field) = 0; } STMT_END
-#define ANYOF_POSIXL_ZERO(ret)	POSIXL_ZERO(((regnode_charclass_posixl*) (ret))->classflags)
+#define ANYOF_POSIXL_ZERO(ret)	POSIXL_ZERO(ANYOF_POSIXL_BITMAP(ret))
 
 #define ANYOF_POSIXL_SET_TO_BITMAP(p, bits)                                 \
-     STMT_START {                                                           \
-                    ((regnode_charclass_posixl*) (p))->classflags = (bits); \
-     } STMT_END
+                STMT_START { ANYOF_POSIXL_BITMAP(p) = (bits); } STMT_END
 
 /* Shifts a bit to get, eg. 0x4000_0000, then subtracts 1 to get 0x3FFF_FFFF */
-#define ANYOF_POSIXL_SETALL(ret) STMT_START { ((regnode_charclass_posixl*) (ret))->classflags = ((1U << ((ANYOF_POSIXL_MAX) - 1))) - 1; } STMT_END
+#define ANYOF_POSIXL_SETALL(ret)                                            \
+                STMT_START {                                                \
+                    ANYOF_POSIXL_BITMAP(ret) = nBIT_MASK(ANYOF_POSIXL_MAX); \
+                } STMT_END
 #define ANYOF_CLASS_SETALL(ret) ANYOF_POSIXL_SETALL(ret)
 
 #define ANYOF_POSIXL_TEST_ANY_SET(p)                               \
-        ((ANYOF_FLAGS(p) & ANYOF_MATCHES_POSIXL)                           \
-	 && (((regnode_charclass_posixl*)(p))->classflags))
+        ((ANYOF_FLAGS(p) & ANYOF_MATCHES_POSIXL) && ANYOF_POSIXL_BITMAP(p))
 #define ANYOF_CLASS_TEST_ANY_SET(p) ANYOF_POSIXL_TEST_ANY_SET(p)
 
 /* Since an SSC always has this field, we don't have to test for that; nor do
@@ -711,12 +706,11 @@ struct regnode_ssc {
                             cBOOL(((regnode_ssc*)(p))->classflags)
 #define ANYOF_POSIXL_SSC_TEST_ALL_SET(p) /* Are all bits set? */       \
         (((regnode_ssc*) (p))->classflags                              \
-                        == ((1U << ((ANYOF_POSIXL_MAX) - 1))) - 1)
+                                        == nBIT_MASK(ANYOF_POSIXL_MAX))
 
 #define ANYOF_POSIXL_TEST_ALL_SET(p)                                   \
-        ((ANYOF_FLAGS(p) & ANYOF_MATCHES_POSIXL)                               \
-         && ((regnode_charclass_posixl*) (p))->classflags              \
-                        == ((1U << ((ANYOF_POSIXL_MAX) - 1))) - 1)
+        ((ANYOF_FLAGS(p) & ANYOF_MATCHES_POSIXL)                       \
+         && ANYOF_POSIXL_BITMAP(p) == nBIT_MASK(ANYOF_POSIXL_MAX))
 
 #define ANYOF_POSIXL_OR(source, dest) STMT_START { (dest)->classflags |= (source)->classflags ; } STMT_END
 #define ANYOF_CLASS_OR(source, dest) ANYOF_POSIXL_OR((source), (dest))
@@ -731,9 +725,9 @@ struct regnode_ssc {
 #define ANYOF_BITMAP_TEST(p, c)	cBOOL(ANYOF_BITMAP_BYTE(p, c) &   ANYOF_BIT(c))
 
 #define ANYOF_BITMAP_SETALL(p)		\
-	memset (ANYOF_BITMAP(p), 255, ANYOF_BITMAP_SIZE)
+        memset (ANYOF_BITMAP(p), 255, ANYOF_BITMAP_SIZE)
 #define ANYOF_BITMAP_CLEARALL(p)	\
-	Zero (ANYOF_BITMAP(p), ANYOF_BITMAP_SIZE)
+        Zero (ANYOF_BITMAP(p), ANYOF_BITMAP_SIZE)
 
 /*
  * Utility definitions.
@@ -750,6 +744,8 @@ struct regnode_ssc {
 
 #define REG_ZERO_LEN_SEEN                   0x00000001
 #define REG_LOOKBEHIND_SEEN                 0x00000002
+/* add a short form alias to keep the line length police happy */
+#define REG_LB_SEEN                         REG_LOOKBEHIND_SEEN
 #define REG_GPOS_SEEN                       0x00000004
 /* spare */
 #define REG_RECURSE_SEEN                    0x00000020
@@ -883,9 +879,9 @@ struct _reg_trie_state {
 /* info per word; indexed by wordnum */
 typedef struct {
     U16  prev;	/* previous word in acceptance chain; eg in
-		 * zzz|abc|ab/ after matching the chars abc, the
-		 * accepted word is #2, and the previous accepted
-		 * word is #3 */
+                 * zzz|abc|ab/ after matching the chars abc, the
+                 * accepted word is #2, and the previous accepted
+                 * word is #3 */
     U32 len;	/* how many chars long is this word? */
     U32 accept;	/* accept state for this word */
 } reg_trie_wordinfo;
@@ -993,7 +989,6 @@ further group, as currently only the low three bytes are used.
     PEEP
     TRIE
     PROGRAM
-    OFFSETS
 
     Execute Options:
 
@@ -1004,7 +999,6 @@ further group, as currently only the low three bytes are used.
     Extra Options
 
     TRIE
-    OFFSETS
 
 If you modify any of these make sure you make corresponding changes to
 re.pm, especially to the documentation.
@@ -1030,8 +1024,6 @@ re.pm, especially to the documentation.
 /* Extra */
 #define RE_DEBUG_EXTRA_MASK              0x3FF0000
 #define RE_DEBUG_EXTRA_TRIE              0x0010000
-#define RE_DEBUG_EXTRA_OFFSETS           0x0020000
-#define RE_DEBUG_EXTRA_OFFDEBUG          0x0040000
 #define RE_DEBUG_EXTRA_STATE             0x0080000
 #define RE_DEBUG_EXTRA_OPTIMISE          0x0100000
 #define RE_DEBUG_EXTRA_BUFFERS           0x0400000
@@ -1070,8 +1062,6 @@ re.pm, especially to the documentation.
 /* Extra */
 #define DEBUG_EXTRA_r(x) DEBUG_r( \
     if (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_MASK)) x  )
-#define DEBUG_OFFSETS_r(x) DEBUG_r( \
-    if (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_OFFSETS)) x  )
 #define DEBUG_STATE_r(x) DEBUG_r( \
     if (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_STATE)) x )
 #define DEBUG_STACK_r(x) DEBUG_r( \
@@ -1082,9 +1072,6 @@ re.pm, especially to the documentation.
 #define DEBUG_OPTIMISE_MORE_r(x) DEBUG_r( \
     if (DEBUG_v_TEST || ((RE_DEBUG_EXTRA_OPTIMISE|RE_DEBUG_COMPILE_OPTIMISE) == \
          RE_DEBUG_FLAG(RE_DEBUG_EXTRA_OPTIMISE|RE_DEBUG_COMPILE_OPTIMISE))) x )
-#define MJD_OFFSET_DEBUG(x) DEBUG_r( \
-    if (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_OFFDEBUG)) \
-        Perl_warn_nocontext x )
 #define DEBUG_TRIE_COMPILE_MORE_r(x) DEBUG_TRIE_COMPILE_r( \
     if (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_TRIE)) x )
 #define DEBUG_TRIE_EXECUTE_MORE_r(x) DEBUG_TRIE_EXECUTE_r( \
@@ -1120,7 +1107,7 @@ re.pm, especially to the documentation.
  * the defaults if not done already */
 #define DECLARE_AND_GET_RE_DEBUG_FLAGS                                         \
     volatile IV re_debug_flags = 0;  PERL_UNUSED_VAR(re_debug_flags);          \
-    STMT_START {                                                               \
+    DEBUG_r({                              \
         SV * re_debug_flags_sv = NULL;                                         \
                      /* get_sv() can return NULL during global destruction. */ \
         re_debug_flags_sv = PL_curcop ? get_sv(RE_DEBUG_FLAGS, GV_ADD) : NULL; \
@@ -1131,7 +1118,7 @@ re.pm, especially to the documentation.
                             RE_DEBUG_COMPILE_DUMP | RE_DEBUG_EXECUTE_MASK );   \
             re_debug_flags=SvIV(re_debug_flags_sv);                            \
         }                                                                      \
-    } STMT_END
+    })
 
 #define isDEBUG_WILDCARD (DEBUG_v_TEST || RE_DEBUG_FLAG(RE_DEBUG_EXTRA_WILDCARD))
 
@@ -1175,18 +1162,18 @@ re.pm, especially to the documentation.
 #define FIRST_NON_ASCII_DECIMAL_DIGIT 0x660  /* ARABIC_INDIC_DIGIT_ZERO */
 
 typedef enum {
-	TRADITIONAL_BOUND = _CC_WORDCHAR,
-	GCB_BOUND,
-	LB_BOUND,
-	SB_BOUND,
-	WB_BOUND
+        TRADITIONAL_BOUND = _CC_WORDCHAR,
+        GCB_BOUND,
+        LB_BOUND,
+        SB_BOUND,
+        WB_BOUND
 } bound_type;
 
 /* This unpacks the FLAGS field of ANYOF[HR]x nodes.  The value it contains
  * gives the strict lower bound for the UTF-8 start byte of any code point
  * matchable by the node, and a loose upper bound as well.
  *
- * The low bound is stored in the upper 6 bits, plus 0xC0.
+ * The low bound is stored as 0xC0 + ((the upper 6 bits) >> 2)
  * The loose upper bound is determined from the lowest 2 bits and the low bound
  * (called x) as follows:
  *

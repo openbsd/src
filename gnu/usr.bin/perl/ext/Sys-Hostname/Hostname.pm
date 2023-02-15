@@ -4,9 +4,8 @@ use strict;
 
 use Carp;
 
-require Exporter;
+use Exporter 'import';
 
-our @ISA     = qw/ Exporter /;
 our @EXPORT  = qw/ hostname /;
 
 our $VERSION;
@@ -16,7 +15,7 @@ use warnings ();
 our $host;
 
 BEGIN {
-    $VERSION = '1.23';
+    $VERSION = '1.24';
     {
 	local $SIG{__DIE__};
 	eval {

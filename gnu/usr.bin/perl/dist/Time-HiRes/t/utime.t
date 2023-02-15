@@ -132,9 +132,15 @@ if ($^O eq 'cygwin') {
     $atime = 1.1111111;
     $mtime = 2.2222222;
 }
+if ($^O eq 'dragonfly') {
+    # Dragonfly (hammer2?) timestamps have less precision.
+    $atime = 1.111111;
+    $mtime = 2.222222;
+}
 print "# \$^O = $^O, atime = $atime, mtime = $mtime\n";
 
 my $skip_atime = $^O eq 'netbsd' && tempfile_has_noatime_mount();
+$skip_atime = 1 if $^O eq 'dragonfly'; # noatime by default
 
 if ($skip_atime) {
     printf("# Skipping atime tests because tempfiles seem to be in a filesystem mounted with 'noatime' ($^O)\n'");

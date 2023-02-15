@@ -1,7 +1,38 @@
-/* Originally this program just generated uudmap.h
+/* generate_uudmap.c:
+
+   Create three .h files, whose names are specified as argv[1..3],
+   but are usually uudmap.h, bitcount.h and mg_data.h.
+
+   It uses mg_raw.h as input, plus it relies on the C compiler knowing
+   the ord value of character literals under EBCDIC, to generate output
+   tables on an order which are platform-specific.
+
+   The outputs are:
+
+     uudmap.h:
+         The values which will populate PL_uumap[], as used by
+         unpack('u').
+
+     bitcount.h
+          The values which will populate PL_bitcount[]:
+          this is a count of bits for each U8 value 0..255.
+          (I'm not sure why this has to be generated - surely it's
+          platform-independent - DAPM.)
+
+     mg_data.h
+          Takes the input from mg_raw.h and sorts by it magic char;
+          the values will populate PL_magic_data[]: this is an array of
+          per-magic U8 values containing an index into PL_magic_vtables[]
+          plus two flags:
+             PERL_MAGIC_READONLY_ACCEPTABLE
+             PERL_MAGIC_VALUE_MAGIC
+
+   Originally this program just generated uudmap.h
    However, when we later wanted to generate bitcount.h, it was easier to
    refactor it and keep the same name, than either alternative - rename it,
-   or duplicate all of the Makefile logic for a second program.  */
+   or duplicate all of the Makefile logic for a second program.
+   Ditto when mg_data.h was added.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +71,13 @@ format_mg_data(FILE *out, const void *thing, size_t count) {
 
   while (1) {
       if (p->value) {
-	  fprintf(out, "    %s\n    %s", p->comment, p->value);
+          fprintf(out, "    %s\n    %s", p->comment, p->value);
       } else {
-	  fputs("    0", out);
+          fputs("    0", out);
       }
       ++p;
       if (!--count)
-	  break;
+          break;
       fputs(",\n", out);
   }
   fputc('\n', out);
@@ -63,7 +94,7 @@ format_char_block(FILE *out, const void *thing, size_t count) {
     if (count) {
       fputs(", ", out);
       if (!(count & 15)) {
-	fputs("\n    ", out);
+        fputs("\n    ", out);
       }
     }
   }
@@ -72,23 +103,28 @@ format_char_block(FILE *out, const void *thing, size_t count) {
 
 static void
 output_to_file(const char *progname, const char *filename,
-	       void (format_function)(FILE *out, const void *thing, size_t count),
-	       const void *thing, size_t count) {
+               void (format_function)(FILE *out, const void *thing, size_t count),
+               const void *thing, size_t count,
+               const char *header
+) {
   FILE *const out = fopen(filename, "w");
 
   if (!out) {
     fprintf(stderr, "%s: Could not open '%s': %s\n", progname, filename,
-	    strerror(errno));
+            strerror(errno));
     exit(1);
   }
 
-  fputs("{\n", out);
+  fprintf(out, "/* %s:\n", filename);
+  fprintf(out, " * THIS FILE IS AUTO-GENERATED DURING THE BUILD by: %s\n",
+                progname);
+  fprintf(out, " *\n%s\n*/\n{\n", header);
   format_function(out, thing, count);
   fputs("}\n", out);
 
   if (fclose(out)) {
     fprintf(stderr, "%s: Could not close '%s': %s\n", progname, filename,
-	    strerror(errno));
+            strerror(errno));
     exit(1);
   }
 }
@@ -123,7 +159,9 @@ int main(int argc, char **argv) {
   PL_uudmap[(U8)' '] = 0;
 
   output_to_file(argv[0], argv[1], &format_char_block,
-		 (const void *)PL_uudmap, sizeof(PL_uudmap));
+                 (const void *)PL_uudmap, sizeof(PL_uudmap),
+        " * These values will populate PL_uumap[], as used by unpack('u')"
+  );
 
   for (bits = 1; bits < 256; bits++) {
     if (bits & 1)	PL_bitcount[bits]++;
@@ -137,7 +175,10 @@ int main(int argc, char **argv) {
   }
 
   output_to_file(argv[0], argv[2], &format_char_block,
-		 (const void *)PL_bitcount, sizeof(PL_bitcount));
+                 (const void *)PL_bitcount, sizeof(PL_bitcount),
+     " * These values will populate PL_bitcount[]:\n"
+     " * this is a count of bits for each U8 value 0..255"
+  );
 
   while (p->value) {
       mg_data[p->type].value = p->value;
@@ -146,7 +187,13 @@ int main(int argc, char **argv) {
   }
       
   output_to_file(argv[0], argv[3], &format_mg_data,
-		 (const void *)mg_data, sizeof(mg_data)/sizeof(mg_data[0]));
+                 (const void *)mg_data, sizeof(mg_data)/sizeof(mg_data[0]),
+     " * These values will populate PL_magic_data[]: this is an array of\n"
+     " * per-magic U8 values containing an index into PL_magic_vtables[]\n"
+     " * plus two flags:\n"
+     " *    PERL_MAGIC_READONLY_ACCEPTABLE\n"
+     " *    PERL_MAGIC_VALUE_MAGIC"
+  );
 
   return 0;
 }

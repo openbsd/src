@@ -57,7 +57,7 @@ Some Irix cc versions, e.g. 7.3.1.1m (try cc -version) have been known
 to have issues (coredumps) when compiling perl.c.  If you've used
 -OPT:fast_io=ON and this happens, try removing it.  If that fails, or
 you didn't use that, then try adjusting other optimization options
-(-LNO, -INLINE, -O3 to -O2, etcetera).  The compiler bug has been
+(-LNO, -INLINE, -O3 to -O2, et cetera).  The compiler bug has been
 reported to SGI.  (Allen Smith <easmith@beatrice.rutgers.edu>)
 
 =head2 Linker Problems in Irix
@@ -114,7 +114,7 @@ Ignore the warning.
 In IRIX 5.3 and with Perl 5.8.1 (Perl 5.8.0 didn't compile in IRIX 5.3)
 the following failures are known.
 
- Failed Test                  Stat Wstat Total Fail  Failed  List of Failed
+ Failed Test                  Stat Wstat Total Fail  Failed|Failing List
  -----------------------------------------------------------------------
  ../ext/List/Util/t/shuffle.t    0   139    ??   ??       %  ??
  ../lib/Math/Trig.t            255 65280    29   12  41.38%  24-29

@@ -35,16 +35,16 @@ do_spawnvp (const char *path, const char * const *argv)
     rsignal_save(SIGQUIT, (Sighandler_t) SIG_IGN, &qhand);
     childpid = spawnvp(_P_NOWAIT,path,argv);
     if (childpid < 0) {
-	status = -1;
-	if(ckWARN(WARN_EXEC))
-	    Perl_warner(aTHX_ packWARN(WARN_EXEC),"Can't spawn \"%s\": %s",
-		    path,Strerror (errno));
+        status = -1;
+        if(ckWARN(WARN_EXEC))
+            Perl_warner(aTHX_ packWARN(WARN_EXEC),"Can't spawn \"%s\": %s",
+                    path,Strerror (errno));
     } else {
-	do {
-	    result = wait4pid(childpid, &status, 0);
-	} while (result == -1 && errno == EINTR);
-	if(result < 0)
-	    status = -1;
+        do {
+            result = wait4pid(childpid, &status, 0);
+        } while (result == -1 && errno == EINTR);
+        if(result < 0)
+            status = -1;
     }
     (void)rsignal_restore(SIGINT, &ihand);
     (void)rsignal_restore(SIGQUIT, &qhand);
@@ -98,7 +98,7 @@ do_spawn (char *cmd)
 
     ENTER;
     while (*cmd && isSPACE(*cmd))
-	cmd++;
+        cmd++;
 
     if (strBEGINs (cmd,"/bin/sh") && isSPACE (cmd[7]))
         cmd+=5;
@@ -106,32 +106,32 @@ do_spawn (char *cmd)
     /* save an extra exec if possible */
     /* see if there are shell metacharacters in it */
     if (strstr (cmd,"..."))
-	goto doshell;
+        goto doshell;
     if (*cmd=='.' && isSPACE (cmd[1]))
-	goto doshell;
+        goto doshell;
     if (strBEGINs (cmd,"exec") && isSPACE (cmd[4]))
-	goto doshell;
+        goto doshell;
     for (s=cmd; *s && isALPHA (*s); s++) ;	/* catch VAR=val gizmo */
     if (*s=='=')
         goto doshell;
 
     for (s=cmd; *s; s++)
-	if (strchr (metachars,*s))
-	{
-	    if (*s=='\n' && s[1]=='\0')
-	    {
-		*s='\0';
-		break;
-	    }
-	doshell:
-	    command[0] = "sh";
-	    command[1] = "-c";
-	    command[2] = cmd;
-	    command[3] = NULL;
+        if (strchr (metachars,*s))
+        {
+            if (*s=='\n' && s[1]=='\0')
+            {
+                *s='\0';
+                break;
+            }
+        doshell:
+            command[0] = "sh";
+            command[1] = "-c";
+            command[2] = cmd;
+            command[3] = NULL;
 
-	    result = do_spawnvp("sh",command);
-	    goto leave;
-	}
+            result = do_spawnvp("sh",command);
+            goto leave;
+        }
 
     Newx (argv, (s-cmd)/2+2, const char*);
     SAVEFREEPV(argv);
@@ -139,18 +139,18 @@ do_spawn (char *cmd)
     SAVEFREEPV(cmd);
     a=argv;
     for (s=cmd; *s;) {
-	while (*s && isSPACE (*s)) s++;
-	if (*s)
-	    *(a++)=s;
-	while (*s && !isSPACE (*s)) s++;
-	if (*s)
-	    *s++='\0';
+        while (*s && isSPACE (*s)) s++;
+        if (*s)
+            *(a++)=s;
+        while (*s && !isSPACE (*s)) s++;
+        if (*s)
+            *s++='\0';
     }
     *a = (char*)NULL;
     if (!argv[0])
         result = -1;
     else
-	result = do_spawnvp(argv[0],(const char * const *)argv);
+        result = do_spawnvp(argv[0],(const char * const *)argv);
 leave:
     LEAVE;
     return result;
@@ -163,12 +163,11 @@ wide_to_utf8(const wchar_t *wbuf)
     char *buf;
     int wlen = 0;
     char *oldlocale;
-    dVAR;
 
     /* Here and elsewhere in this file, we have a critical section to prevent
      * another thread from changing the locale out from under us.  XXX But why
      * not just use uvchr_to_utf8? */
-    LOCALE_LOCK;
+    SETLOCALE_LOCK;
 
     oldlocale = setlocale(LC_CTYPE, NULL);
     setlocale(LC_CTYPE, "utf-8");
@@ -181,7 +180,7 @@ wide_to_utf8(const wchar_t *wbuf)
     if (oldlocale) setlocale(LC_CTYPE, oldlocale);
     else setlocale(LC_CTYPE, "C");
 
-    LOCALE_UNLOCK;
+    SETLOCALE_UNLOCK;
 
     return buf;
 }
@@ -193,9 +192,8 @@ utf8_to_wide(const char *buf)
     mbstate_t mbs;
     char *oldlocale;
     int wlen = sizeof(wchar_t)*strlen(buf);
-    dVAR;
 
-    LOCALE_LOCK;
+    SETLOCALE_LOCK;
 
     oldlocale = setlocale(LC_CTYPE, NULL);
 
@@ -207,7 +205,7 @@ utf8_to_wide(const char *buf)
     if (oldlocale) setlocale(LC_CTYPE, oldlocale);
     else setlocale(LC_CTYPE, "C");
 
-    LOCALE_UNLOCK;
+    SETLOCALE_UNLOCK;
 
     return wbuf;
 }
@@ -223,12 +221,12 @@ XS(Cygwin_cwd)
        There is Cwd->cwd() usage in the wild, and previous versions didn't die.
      */
     if(items > 1)
-	Perl_croak(aTHX_ "Usage: Cwd::cwd()");
+        Perl_croak(aTHX_ "Usage: Cwd::cwd()");
     if((cwd = getcwd(NULL, -1))) {
-	ST(0) = sv_2mortal(newSVpv(cwd, 0));
-	free(cwd);
-	SvTAINTED_on(ST(0));
-	XSRETURN(1);
+        ST(0) = sv_2mortal(newSVpv(cwd, 0));
+        free(cwd);
+        SvTAINTED_on(ST(0));
+        XSRETURN(1);
     }
     XSRETURN_UNDEF;
 }
@@ -245,7 +243,7 @@ XS(XS_Cygwin_pid_to_winpid)
     pid = (pid_t)SvIV(ST(0));
 
     if ((RETVAL = cygwin_internal(CW_CYGWIN_PID_TO_WINPID, pid)) > 0) {
-	XSprePUSH; PUSHi((IV)RETVAL);
+        XSprePUSH; PUSHi((IV)RETVAL);
         XSRETURN(1);
     }
     XSRETURN_UNDEF;
@@ -290,10 +288,10 @@ XS(XS_Cygwin_win_to_posix_path)
 
     src_path = SvPV(ST(0), len);
     if (items == 2)
-	absolute_flag = SvTRUE(ST(1));
+        absolute_flag = SvTRUE(ST(1));
 
     if (!len)
-	Perl_croak(aTHX_ "can't convert empty path");
+        Perl_croak(aTHX_ "can't convert empty path");
     isutf8 = SvUTF8(ST(0));
 
 #if (CYGWIN_VERSION_API_MINOR >= 181)
@@ -301,73 +299,72 @@ XS(XS_Cygwin_win_to_posix_path)
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
     if (isutf8) {
-	int what = absolute_flag ? CCP_WIN_W_TO_POSIX : CCP_WIN_W_TO_POSIX | CCP_RELATIVE;
-	STRLEN wlen = sizeof(wchar_t)*(len + 260 + 1001);
-	wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
-	wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
-	if (!IN_BYTES) {
-	    mbstate_t mbs;
+        int what = absolute_flag ? CCP_WIN_W_TO_POSIX : CCP_WIN_W_TO_POSIX | CCP_RELATIVE;
+        STRLEN wlen = sizeof(wchar_t)*(len + 260 + 1001);
+        wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
+        wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
+        if (!IN_BYTES) {
+            mbstate_t mbs;
             char *oldlocale;
-            dVAR;
 
-            LOCALE_LOCK;
+            SETLOCALE_LOCK;
 
             oldlocale = setlocale(LC_CTYPE, NULL);
             setlocale(LC_CTYPE, "utf-8");
-	    /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
-	    wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
-	    if (wlen > 0)
-		err = cygwin_conv_path(what, wpath, wbuf, wlen);
+            /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
+            wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
+            if (wlen > 0)
+                err = cygwin_conv_path(what, wpath, wbuf, wlen);
             if (oldlocale) setlocale(LC_CTYPE, oldlocale);
             else setlocale(LC_CTYPE, "C");
 
-            LOCALE_UNLOCK;
-	} else { /* use bytes; assume already ucs-2 encoded bytestream */
-	    err = cygwin_conv_path(what, src_path, wbuf, wlen);
-	}
-	if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-	    int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
-	    wbuf = (wchar_t *) realloc(&wbuf, newlen);
-	    err = cygwin_conv_path(what, wpath, wbuf, newlen);
-	    wlen = newlen;
-	}
-	/* utf16_to_utf8(*p, *d, bytlen, *newlen) */
-	posix_path = (char *) safemalloc(wlen*3);
-	Perl_utf16_to_utf8(aTHX_ (U8*)&wpath, (U8*)posix_path, wlen*2, &len);
-	/*
-	wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
-	posix_path = (char *) safemalloc(wlen+1);
-	wcsrtombs(posix_path, (const wchar_t **)&wbuf, wlen, NULL);
-	*/
+            SETLOCALE_UNLOCK;
+        } else { /* use bytes; assume already ucs-2 encoded bytestream */
+            err = cygwin_conv_path(what, src_path, wbuf, wlen);
+        }
+        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
+            int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
+            wbuf = (wchar_t *) realloc(&wbuf, newlen);
+            err = cygwin_conv_path(what, wpath, wbuf, newlen);
+            wlen = newlen;
+        }
+        /* utf16_to_utf8(*p, *d, bytlen, *newlen) */
+        posix_path = (char *) safemalloc(wlen*3);
+        Perl_utf16_to_utf8(aTHX_ (U8*)&wpath, (U8*)posix_path, wlen*2, &len);
+        /*
+        wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
+        posix_path = (char *) safemalloc(wlen+1);
+        wcsrtombs(posix_path, (const wchar_t **)&wbuf, wlen, NULL);
+        */
     } else {
-	int what = absolute_flag ? CCP_WIN_A_TO_POSIX : CCP_WIN_A_TO_POSIX | CCP_RELATIVE;
-	posix_path = (char *) safemalloc (len + 260 + 1001);
-	err = cygwin_conv_path(what, src_path, posix_path, len + 260 + 1001);
-	if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-	    int newlen = cygwin_conv_path(what, src_path, posix_path, 0);
-	    posix_path = (char *) realloc(&posix_path, newlen);
-	    err = cygwin_conv_path(what, src_path, posix_path, newlen);
-	}
+        int what = absolute_flag ? CCP_WIN_A_TO_POSIX : CCP_WIN_A_TO_POSIX | CCP_RELATIVE;
+        posix_path = (char *) safemalloc (len + 260 + 1001);
+        err = cygwin_conv_path(what, src_path, posix_path, len + 260 + 1001);
+        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
+            int newlen = cygwin_conv_path(what, src_path, posix_path, 0);
+            posix_path = (char *) realloc(&posix_path, newlen);
+            err = cygwin_conv_path(what, src_path, posix_path, newlen);
+        }
     }
 #else
     posix_path = (char *) safemalloc (len + 260 + 1001);
     if (absolute_flag)
-	err = cygwin_conv_to_full_posix_path(src_path, posix_path);
+        err = cygwin_conv_to_full_posix_path(src_path, posix_path);
     else
-	err = cygwin_conv_to_posix_path(src_path, posix_path);
+        err = cygwin_conv_to_posix_path(src_path, posix_path);
 #endif
     if (!err) {
-	EXTEND(SP, 1);
-	ST(0) = sv_2mortal(newSVpv(posix_path, 0));
-	if (isutf8) { /* src was utf-8, so result should also */
-	    /* TODO: convert ANSI (local windows encoding) to utf-8 on cygwin-1.5 */
-	    SvUTF8_on(ST(0));
-	}
-	safefree(posix_path);
+        EXTEND(SP, 1);
+        ST(0) = sv_2mortal(newSVpv(posix_path, 0));
+        if (isutf8) { /* src was utf-8, so result should also */
+            /* TODO: convert ANSI (local windows encoding) to utf-8 on cygwin-1.5 */
+            SvUTF8_on(ST(0));
+        }
+        safefree(posix_path);
         XSRETURN(1);
     } else {
-	safefree(posix_path);
-	XSRETURN_UNDEF;
+        safefree(posix_path);
+        XSRETURN_UNDEF;
     }
 }
 
@@ -385,80 +382,79 @@ XS(XS_Cygwin_posix_to_win_path)
 
     src_path = SvPVx(ST(0), len);
     if (items == 2)
-	absolute_flag = SvTRUE(ST(1));
+        absolute_flag = SvTRUE(ST(1));
 
     if (!len)
-	Perl_croak(aTHX_ "can't convert empty path");
+        Perl_croak(aTHX_ "can't convert empty path");
     isutf8 = SvUTF8(ST(0));
 #if (CYGWIN_VERSION_API_MINOR >= 181)
     /* Check utf8 flag and use wide api then.
        Size calculation: On overflow let cygwin_conv_path calculate the final size.
      */
     if (isutf8) {
-	int what = absolute_flag ? CCP_POSIX_TO_WIN_W : CCP_POSIX_TO_WIN_W | CCP_RELATIVE;
-	int wlen = sizeof(wchar_t)*(len + 260 + 1001);
-	wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
-	wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
-	char *oldlocale;
-        dVAR;
+        int what = absolute_flag ? CCP_POSIX_TO_WIN_W : CCP_POSIX_TO_WIN_W | CCP_RELATIVE;
+        int wlen = sizeof(wchar_t)*(len + 260 + 1001);
+        wchar_t *wpath = (wchar_t *) safemalloc(sizeof(wchar_t)*len);
+        wchar_t *wbuf = (wchar_t *) safemalloc(wlen);
+        char *oldlocale;
 
-        LOCALE_LOCK;
+        SETLOCALE_LOCK;
 
-	oldlocale = setlocale(LC_CTYPE, NULL);
-	setlocale(LC_CTYPE, "utf-8");
-	if (!IN_BYTES) {
-	    mbstate_t mbs;
-	    /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
-	    wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
-	    if (wlen > 0)
-		err = cygwin_conv_path(what, wpath, wbuf, wlen);
-	} else { /* use bytes; assume already ucs-2 encoded bytestream */
-	    err = cygwin_conv_path(what, src_path, wbuf, wlen);
-	}
-	if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-	    int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
-	    wbuf = (wchar_t *) realloc(&wbuf, newlen);
-	    err = cygwin_conv_path(what, wpath, wbuf, newlen);
-	    wlen = newlen;
-	}
-	/* also see utf8.c: Perl_utf16_to_utf8() or Encoding::_bytes_to_utf8(sv, "UCS-2BE"); */
-	wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
-	win_path = (char *) safemalloc(wlen+1);
-	wcsrtombs(win_path, (const wchar_t **)&wbuf, wlen, NULL);
-	if (oldlocale) setlocale(LC_CTYPE, oldlocale);
-	else setlocale(LC_CTYPE, "C");
+        oldlocale = setlocale(LC_CTYPE, NULL);
+        setlocale(LC_CTYPE, "utf-8");
+        if (!IN_BYTES) {
+            mbstate_t mbs;
+            /* utf8_to_uvchr_buf(src_path, src_path + wlen, wpath) or Encoding::_utf8_to_bytes(sv, "UCS-2BE"); */
+            wlen = mbsrtowcs(wpath, (const char**)&src_path, wlen, &mbs);
+            if (wlen > 0)
+                err = cygwin_conv_path(what, wpath, wbuf, wlen);
+        } else { /* use bytes; assume already ucs-2 encoded bytestream */
+            err = cygwin_conv_path(what, src_path, wbuf, wlen);
+        }
+        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
+            int newlen = cygwin_conv_path(what, wpath, wbuf, 0);
+            wbuf = (wchar_t *) realloc(&wbuf, newlen);
+            err = cygwin_conv_path(what, wpath, wbuf, newlen);
+            wlen = newlen;
+        }
+        /* also see utf8.c: Perl_utf16_to_utf8() or Encoding::_bytes_to_utf8(sv, "UCS-2BE"); */
+        wlen = wcsrtombs(NULL, (const wchar_t **)&wbuf, wlen, NULL);
+        win_path = (char *) safemalloc(wlen+1);
+        wcsrtombs(win_path, (const wchar_t **)&wbuf, wlen, NULL);
+        if (oldlocale) setlocale(LC_CTYPE, oldlocale);
+        else setlocale(LC_CTYPE, "C");
 
-        LOCALE_UNLOCK;
+        SETLOCALE_UNLOCK;
     } else {
-	int what = absolute_flag ? CCP_POSIX_TO_WIN_A : CCP_POSIX_TO_WIN_A | CCP_RELATIVE;
-	win_path = (char *) safemalloc(len + 260 + 1001);
-	err = cygwin_conv_path(what, src_path, win_path, len + 260 + 1001);
-	if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
-	    int newlen = cygwin_conv_path(what, src_path, win_path, 0);
-	    win_path = (char *) realloc(&win_path, newlen);
-	    err = cygwin_conv_path(what, src_path, win_path, newlen);
-	}
+        int what = absolute_flag ? CCP_POSIX_TO_WIN_A : CCP_POSIX_TO_WIN_A | CCP_RELATIVE;
+        win_path = (char *) safemalloc(len + 260 + 1001);
+        err = cygwin_conv_path(what, src_path, win_path, len + 260 + 1001);
+        if (err == ENOSPC) { /* our space assumption was wrong, not enough space */
+            int newlen = cygwin_conv_path(what, src_path, win_path, 0);
+            win_path = (char *) realloc(&win_path, newlen);
+            err = cygwin_conv_path(what, src_path, win_path, newlen);
+        }
     }
 #else
     if (isutf8)
-	Perl_warn(aTHX_ "can't convert utf8 path");
+        Perl_warn(aTHX_ "can't convert utf8 path");
     win_path = (char *) safemalloc(len + 260 + 1001);
     if (absolute_flag)
-	err = cygwin_conv_to_full_win32_path(src_path, win_path);
+        err = cygwin_conv_to_full_win32_path(src_path, win_path);
     else
-	err = cygwin_conv_to_win32_path(src_path, win_path);
+        err = cygwin_conv_to_win32_path(src_path, win_path);
 #endif
     if (!err) {
-	EXTEND(SP, 1);
-	ST(0) = sv_2mortal(newSVpv(win_path, 0));
-	if (isutf8) {
-	    SvUTF8_on(ST(0));
-	}
-	safefree(win_path);
-	XSRETURN(1);
+        EXTEND(SP, 1);
+        ST(0) = sv_2mortal(newSVpv(win_path, 0));
+        if (isutf8) {
+            SvUTF8_on(ST(0));
+        }
+        safefree(win_path);
+        XSRETURN(1);
     } else {
-	safefree(win_path);
-	XSRETURN_UNDEF;
+        safefree(win_path);
+        XSRETURN_UNDEF;
     }
 }
 
@@ -473,12 +469,12 @@ XS(XS_Cygwin_mount_table)
 
     setmntent (0, 0);
     while ((mnt = getmntent (0))) {
-	AV* av = newAV();
-	av_push(av, newSVpvn(mnt->mnt_dir, strlen(mnt->mnt_dir)));
-	av_push(av, newSVpvn(mnt->mnt_fsname, strlen(mnt->mnt_fsname)));
-	av_push(av, newSVpvn(mnt->mnt_type, strlen(mnt->mnt_type)));
-	av_push(av, newSVpvn(mnt->mnt_opts, strlen(mnt->mnt_opts)));
-	XPUSHs(sv_2mortal(newRV_noinc((SV*)av)));
+        AV* av = newAV();
+        av_push(av, newSVpvn(mnt->mnt_dir, strlen(mnt->mnt_dir)));
+        av_push(av, newSVpvn(mnt->mnt_fsname, strlen(mnt->mnt_fsname)));
+        av_push(av, newSVpvn(mnt->mnt_type, strlen(mnt->mnt_type)));
+        av_push(av, newSVpvn(mnt->mnt_opts, strlen(mnt->mnt_opts)));
+        XPUSHs(sv_2mortal(newRV_noinc((SV*)av)));
     }
     endmntent (0);
     PUTBACK;
@@ -497,13 +493,13 @@ XS(XS_Cygwin_mount_flags)
     pathname = SvPV_nolen(ST(0));
 
     if (strEQ(pathname, "/cygdrive")) {
-	char user[PATH_MAX];
-	char system[PATH_MAX];
-	char user_flags[PATH_MAX];
-	char system_flags[PATH_MAX];
+        char user[PATH_MAX];
+        char system[PATH_MAX];
+        char user_flags[PATH_MAX];
+        char system_flags[PATH_MAX];
 
-	cygwin_internal (CW_GET_CYGDRIVE_INFO, user, system,
-			 user_flags, system_flags);
+        cygwin_internal (CW_GET_CYGDRIVE_INFO, user, system,
+                         user_flags, system_flags);
 
         if (strlen(user) > 0) {
             sprintf(flags, "%s,cygdrive,%s", user_flags, user);
@@ -511,56 +507,56 @@ XS(XS_Cygwin_mount_flags)
             sprintf(flags, "%s,cygdrive,%s", system_flags, system);
         }
 
-	ST(0) = sv_2mortal(newSVpv(flags, 0));
-	XSRETURN(1);
+        ST(0) = sv_2mortal(newSVpv(flags, 0));
+        XSRETURN(1);
 
     } else {
-	struct mntent *mnt;
-	int found = 0;
-	setmntent (0, 0);
-	while ((mnt = getmntent (0))) {
-	    if (strEQ(pathname, mnt->mnt_dir)) {
-		strcpy(flags, mnt->mnt_type);
-		if (strlen(mnt->mnt_opts) > 0) {
-		    strcat(flags, ",");
-		    strcat(flags, mnt->mnt_opts);
-		}
-		found++;
-		break;
-	    }
-	}
-	endmntent (0);
+        struct mntent *mnt;
+        int found = 0;
+        setmntent (0, 0);
+        while ((mnt = getmntent (0))) {
+            if (strEQ(pathname, mnt->mnt_dir)) {
+                strcpy(flags, mnt->mnt_type);
+                if (strlen(mnt->mnt_opts) > 0) {
+                    strcat(flags, ",");
+                    strcat(flags, mnt->mnt_opts);
+                }
+                found++;
+                break;
+            }
+        }
+        endmntent (0);
 
-	/* Check if arg is the current volume moint point if not default,
-	 * and then use CW_GET_CYGDRIVE_INFO also.
-	 */
-	if (!found) {
-	    char user[PATH_MAX];
-	    char system[PATH_MAX];
-	    char user_flags[PATH_MAX];
-	    char system_flags[PATH_MAX];
+        /* Check if arg is the current volume moint point if not default,
+         * and then use CW_GET_CYGDRIVE_INFO also.
+         */
+        if (!found) {
+            char user[PATH_MAX];
+            char system[PATH_MAX];
+            char user_flags[PATH_MAX];
+            char system_flags[PATH_MAX];
 
-	    cygwin_internal (CW_GET_CYGDRIVE_INFO, user, system,
-			     user_flags, system_flags);
+            cygwin_internal (CW_GET_CYGDRIVE_INFO, user, system,
+                             user_flags, system_flags);
 
-	    if (strlen(user) > 0) {
-		if (strNE(user,pathname)) {
-		    sprintf(flags, "%s,cygdrive,%s", user_flags, user);
-		    found++;
-		}
-	    } else {
-		if (strNE(user,pathname)) {
-		    sprintf(flags, "%s,cygdrive,%s", system_flags, system);
-		    found++;
-		}
-	    }
-	}
-	if (found) {
-	    ST(0) = sv_2mortal(newSVpv(flags, 0));
-	    XSRETURN(1);
-	} else {
-	    XSRETURN_UNDEF;
-	}
+            if (strlen(user) > 0) {
+                if (strNE(user,pathname)) {
+                    sprintf(flags, "%s,cygdrive,%s", user_flags, user);
+                    found++;
+                }
+            } else {
+                if (strNE(user,pathname)) {
+                    sprintf(flags, "%s,cygdrive,%s", system_flags, system);
+                    found++;
+                }
+            }
+        }
+        if (found) {
+            ST(0) = sv_2mortal(newSVpv(flags, 0));
+            XSRETURN(1);
+        } else {
+            XSRETURN_UNDEF;
+        }
     }
 }
 

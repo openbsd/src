@@ -3,11 +3,11 @@
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
-    require './charset_tools.pl';
     set_up_inc('../lib');
+    require './charset_tools.pl';
 }
 
-plan tests => 176;
+plan tests => 197;
 
 $FS = ':';
 
@@ -66,6 +66,21 @@ is($_, '1:2:3:4 5 6', "Split into a specified number of fields, defined by a sca
 @ary = split(' ','1 2 3 4 5 6', $x);
 $cnt = split(' ','1 2 3 4 5 6', $x);
 is($cnt, scalar(@ary), "Check element count from previous test");
+
+# Can we do it with the empty pattern?
+$_ = join(':', split(//, '123', -1));
+is($_, '1:2:3:', "Split with empty pattern and LIMIT == -1");
+$_ = join(':', split(//, '123', 0));
+is($_, '1:2:3', "Split with empty pattern and LIMIT == 0");
+$_ = join(':', split(//, '123', 2));
+is($_, '1:23', "Split into specified number of fields with empty pattern");
+$_ = join(':', split(//, '123', 6));
+is($_, '1:2:3:', "Split with empty pattern and LIMIT > length");
+for (-1..5) {
+    @ary = split(//, '123', $_);
+    $cnt = split(//, '123', $_);
+    is($cnt, scalar(@ary), "Check empty pattern element count with LIMIT == $_");
+}
 
 # Does the 999 suppress null field chopping?
 $_ = join(':', split(/:/,'1:2:3:4:5:6:::', 999));
@@ -648,6 +663,19 @@ is "@a", '1 2 3', 'assignment to split-to-array (stacked)';
     is (+@a, 0, "empty utf8 string");
 }
 
+# correct stack adjustments (gh#18232)
+{
+    sub foo { return @_ }
+    my @a = foo(1, scalar split " ", "a b");
+    is(join('', @a), "12", "Scalar split to a sub parameter");
+}
+
+{
+    sub foo { return @_ }
+    my @a = foo(1, scalar(@x = split " ", "a b"));
+    is(join('', @a), "12", "Split to @x then use scalar result as a sub parameter");
+}
+
 fresh_perl_is(<<'CODE', '', {}, "scalar split stack overflow");
 map{int"";split//.0>60for"0000000000000000"}split// for"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 CODE
@@ -666,4 +694,34 @@ CODE
         my @result = split($separator,$text);
         ok(eq_array(\@result,['a','b']), "Resulting in ('a','b')");
     }
+}
+
+# check that the (@ary = split) optimisation survives @ary being modified
+
+fresh_perl_is('my @ary; @ary = split(/\w(?{ @ary[1000] = 1 })/, "abc");',
+        '',{},'(@ary = split ...) survives @ary being Renew()ed');
+fresh_perl_is('my @ary; @ary = split(/\w(?{ undef @ary })/, "abc");',
+        '',{},'(@ary = split ...) survives an (undef @ary)');
+
+# check the (@ary = split) optimisation survives stack-not-refcounted bugs
+fresh_perl_is('our @ary; @ary = split(/\w(?{ *ary = 0 })/, "abc");',
+        '',{},'(@ary = split ...) survives @ary destruction via typeglob');
+fresh_perl_is('my $ary = []; @$ary = split(/\w(?{ $ary = [] })/, "abc");',
+        '',{},'(@ary = split ...) survives @ary destruction via reassignment');
+
+# gh18515: check that we spot and flag specific regexps for special treatment
+SKIP: {
+	skip_if_miniperl("special-case patterns: need dynamic loading", 4);
+	for ([ q{" "}, 'WHITE' ],
+		[ q{/\\s+/}, 'WHITE' ],
+		[ q{/^/}, 'START_ONLY' ],
+		[ q{//}, 'NULL' ],
+	) {
+		my($pattern, $flag) = @$_;
+		my $prog = "split $pattern";
+		my $expect = qr{^r->extflags:.*\b$flag\b}m;
+		fresh_perl_like($prog, $expect, {
+			switches => [ '-Mre=Debug,COMPILE', '-c' ],
+		}, "special-case pattern for $prog");
+	}
 }

@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # Test blog function (and bpow, since it uses blog), as well as bexp().
 

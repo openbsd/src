@@ -6,7 +6,7 @@ BEGIN {
     $INC{"feature.pm"} = 1; # so we don't attempt to load feature.pm
 }
 
-print "1..84\n";
+print "1..85\n";
 
 # Can't require test.pl, as we're testing the use/require mechanism here.
 
@@ -87,7 +87,7 @@ eval q{ use v5.5.630; };
 is ($@, '');
 
 eval q{ use 10.0.2; };
-like ($@, qr/^Perl v10\.0\.2 required/);
+like ($@, qr/^\QPerl v10.0.2 required\E/);
 
 eval "use 5.000";	# implicit semicolon
 is ($@, '');
@@ -96,28 +96,28 @@ eval "use 5.000;";
 is ($@, '');
 
 eval "use 6.000;";
-like ($@, qr/Perl v6\.0\.0 required--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v6.0.0 required--this is only $^V, stopped\E/);
 
 eval "no 6.000;";
 is ($@, '');
 
 eval "no 5.000;";
-like ($@, qr/Perls since v5\.0\.0 too modern--this is \Q$^V\E, stopped/);
+like ($@, qr/\QPerls since v5.0.0 too modern--this is $^V, stopped\E/);
 
 eval "use 5.6;";
-like ($@, qr/Perl v5\.600\.0 required \(did you mean v5\.6\.0\?\)--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v5.600.0 required (did you mean v5.6.0?)--this is only $^V, stopped\E/);
 
 eval "use 5.8;";
-like ($@, qr/Perl v5\.800\.0 required \(did you mean v5\.8\.0\?\)--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v5.800.0 required (did you mean v5.8.0?)--this is only $^V, stopped\E/);
 
 eval "use 5.9;";
-like ($@, qr/Perl v5\.900\.0 required \(did you mean v5\.9\.0\?\)--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v5.900.0 required (did you mean v5.9.0?)--this is only $^V, stopped\E/);
 
 eval "use 5.10;";
-like ($@, qr/Perl v5\.100\.0 required \(did you mean v5\.10\.0\?\)--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v5.100.0 required (did you mean v5.10.0?)--this is only $^V, stopped\E/);
 
 eval "use 5.11;";
-like ($@, qr/Perl v5\.110\.0 required \(did you mean v5\.11\.0\?\)--this is only \Q$^V\E, stopped/);
+like ($@, qr/\QPerl v5.110.0 required (did you mean v5.11.0?)--this is only $^V, stopped\E/);
 
 eval sprintf "use %.6f;", $];
 is ($@, '');
@@ -127,14 +127,14 @@ eval sprintf "use %.6f;", $] - 0.000001;
 is ($@, '');
 
 eval sprintf("use %.6f;", $] + 1);
-like ($@, qr/Perl v6.\d+.\d+ required--this is only \Q$^V\E, stopped/);
+like ($@, qr/Perl v6\.\d+\.\d+ required--this is only \Q$^V\E, stopped/a);
 
 eval sprintf "use %.6f;", $] + 0.00001;
-like ($@, qr/Perl v5.\d+.\d+ required--this is only \Q$^V\E, stopped/);
+like ($@, qr/Perl v5\.\d+\.\d+ required--this is only \Q$^V\E, stopped/a);
 
 # check that "use 5.11.0" (and higher) loads strictures
 eval 'use 5.11.0; ${"foo"} = "bar";';
-like ($@, qr/Can't use string \("foo"\) as a SCALAR ref while "strict refs" in use/);
+like ($@, qr/\QCan't use string ("foo") as a SCALAR ref while "strict refs" in use\E/);
 # but that they can be disabled
 eval 'use 5.11.0; no strict "refs"; ${"foo"} = "bar";';
 is ($@, "");
@@ -149,8 +149,14 @@ like $@, qr/^Can't use string/,
 eval 'use strict "subs"; use 5.012; ${"foo"} = "bar"';
 like $@, qr/^Can't use string/,
     'explicit use strict "subs" does not stop ver decl from enabling refs';
-eval 'use 5.012; use 5.01; ${"foo"} = "bar"';
-is $@, "", 'use 5.01 overrides implicit strict from prev ver decl';
+{
+    my $warnings = "";
+    local $SIG{__WARN__} = sub { $warnings .= $_[0] };
+    eval 'use 5.012; use 5.01; ${"foo"} = "bar"';
+    is $@, "", 'use 5.01 overrides implicit strict from prev ver decl';
+    like $warnings, qr/^Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at /,
+        'use 5.01 after use 5.012 provokes deprecation warning';
+}
 eval 'no strict "subs"; use 5.012; ${"foo"} = "bar"';
 ok $@, 'no strict subs allows ver decl to enable refs';
 eval 'no strict "subs"; use 5.012; $nonexistent_pack_var';
@@ -202,39 +208,39 @@ is("@test_use::got", "joe");
     is ($@, '');
 
     eval "use test_use v100.105";
-    like ($@, qr/test_use version v100.105.0 required--this is only version v35\.360\.0/);
+    like ($@, qr/\Qtest_use version v100.105.0 required--this is only version v35.360.0\E/);
 
     eval "use test_use 33.55";
     is ($@, '');
 
     eval "use test_use 100.105";
-    like ($@, qr/test_use version 100.105 required--this is only version 35.36/);
+    like ($@, qr/\Qtest_use version 100.105 required--this is only version 35.36\E/);
 
     local $test_use::VERSION = '35.36';
     eval "use test_use v33.55";
     like ($@, '');
 
     eval "use test_use v100.105";
-    like ($@, qr/test_use version v100.105.0 required--this is only version v35\.360\.0/);
+    like ($@, qr/\Qtest_use version v100.105.0 required--this is only version v35.360.0\E/);
 
     eval "use test_use 33.55";
     is ($@, '');
 
     eval "use test_use 100.105";
-    like ($@, qr/test_use version 100.105 required--this is only version 35.36/);
+    like ($@, qr/\Qtest_use version 100.105 required--this is only version 35.36\E/);
 
     local $test_use::VERSION = v35.36;
     eval "use test_use v33.55";
     is ($@, '');
 
     eval "use test_use v100.105";
-    like ($@, qr/test_use version v100.105.0 required--this is only version v35\.36\.0/);
+    like ($@, qr/\Qtest_use version v100.105.0 required--this is only version v35.36.0\E/);
 
     eval "use test_use 33.55";
     is ($@, '');
 
     eval "use test_use 100.105";
-    like ($@, qr/test_use version 100.105 required--this is only version v35.36/);
+    like ($@, qr/\Qtest_use version 100.105 required--this is only version v35.36\E/);
 }
 
 
@@ -243,7 +249,7 @@ is("@test_use::got", "joe");
     #   Check that a .pm file with no package or VERSION doesn't core.
     # (git commit 2658f4d9934aba5f8b23afcc078dc12b3a40223)
     eval "use test_use_14937 3";
-    like ($@, qr/^test_use_14937 defines neither package nor VERSION--version check failed at/);
+    like ($@, qr/^\Qtest_use_14937 defines neither package nor VERSION--version check failed at\E/);
 }
 
 my @ver = split /\./, sprintf "%vd", $^V;
@@ -277,7 +283,7 @@ foreach my $index (-3..+3) {
 	if ($index > 0) {
 	    # The future
 	    like ($@,
-		  qr/Perl $v_version required--this is only \Q$^V\E, stopped/,
+		  qr/\QPerl $v_version required--this is only $^V, stopped\E/,
 		  "use $version");
 	} else {
 	    # The present or past
@@ -288,7 +294,7 @@ foreach my $index (-3..+3) {
 	if ($index <= 0) {
 	    # The present or past
 	    like ($@,
-		  qr/Perls since $v_version too modern--this is \Q$^V\E, stopped/,
+		  qr/\QPerls since $v_version too modern--this is $^V, stopped\E/,
 		  "no $version");
 	} else {
 	    # future

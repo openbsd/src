@@ -1,5 +1,6 @@
+use strict;
 use warnings;
-no warnings "once";
+
 use Config;
 
 use IPC::Open3 1.0103 qw(open3);
@@ -353,6 +354,7 @@ for my $bodge_job ( 2, 1, 0 ) { SKIP: {
         print "# required B\n";
     }
     my $accum = '';
+    no warnings 'once';
     local *CORE::GLOBAL::caller = sub {
         local *__ANON__ = "fakecaller";
         my @c = CORE::caller(@_);
@@ -480,7 +482,7 @@ SKIP:
     );
 
     package Foo::No::Autovivify;
-    $CARP_NOT = 1;
+    our $CARP_NOT = 1;
     eval { Carp::croak(1) };
     ::ok(
         !defined *{$Foo::No::Autovivify::{CARP_NOT}}{ARRAY},

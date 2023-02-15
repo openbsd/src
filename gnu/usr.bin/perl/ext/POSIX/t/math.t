@@ -110,17 +110,15 @@ SKIP: {
     ok(!isinf(42), "isinf 42");
     ok(!isnan(42), "isnan Inf");
   SKIP: {
-      skip("no inf", 4) unless $Config{d_double_has_inf};
+      skip("no inf", 3) unless $Config{d_double_has_inf};
       ok(!isfinite(Inf), "isfinite Inf");
-      ok(isinf(INFINITY), "isinf INFINITY");
       ok(isinf(Inf), "isinf Inf");
       ok(!isnan(Inf), "isnan Inf");
     }
   SKIP: {
-      skip("no nan", 5) unless $Config{d_double_has_nan};
+      skip("no nan", 4) unless $Config{d_double_has_nan};
       ok(!isfinite(NaN), "isfinite NaN");
       ok(!isinf(NaN), "isinf NaN");
-      ok(isnan(NAN), "isnan NAN");
       ok(isnan(NaN), "isnan NaN");
       cmp_ok(nan(), '!=', nan(), 'nan');
     }
@@ -274,5 +272,28 @@ SKIP: {
       ok(!issignaling(NaN), "issignaling NaN");
     }
 } # SKIP
+
+SKIP: {
+    skip('no INFINITY', 4) unless defined &INFINITY;
+    # Note that if INFINITY were a bareword, it would be numified to +Inf,
+    # which might confuse following tests.
+    # But this cannot happen as long as "use strict" is effective.
+    ok(isinf(INFINITY), "isinf INFINITY");
+    is(INFINITY, 'Inf', "INFINITY is Perl's Inf");
+    cmp_ok(INFINITY, '>', ($Config{uselongdouble} ? POSIX::LDBL_MAX : POSIX::DBL_MAX),
+           "INFINITY > DBL_MAX");
+    ok(!signbit(INFINITY), "signbit(INFINITY)");
+}
+
+SKIP: {
+    skip('no NAN', 5) unless defined &NAN;
+    ok(isnan(NAN()), "isnan NAN");
+    # Using like() rather than is() is to deal with non-zero payload
+    # (currently this is not the case, but someday Perl might stringify it...)
+    like(NAN, qr/^NaN/, "NAN is Perl's NaN");
+    cmp_ok(NAN, '!=', NAN, "NAN != NAN");
+    ok(!(NAN == NAN), "NAN == NAN");
+    ok(!signbit(NAN), "signbit(NAN)");
+}
 
 done_testing();

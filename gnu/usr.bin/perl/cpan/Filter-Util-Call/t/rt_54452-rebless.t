@@ -6,6 +6,13 @@ if ($] < 5.004_55) {
   exit 0;
 }
 
+BEGIN {
+    if ($ENV{PERL_CORE}) {
+        require Cwd;
+        unshift @INC, Cwd::cwd();
+    }
+}
+
 use strict;
 use warnings;
 

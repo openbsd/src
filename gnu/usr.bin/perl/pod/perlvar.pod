@@ -25,15 +25,27 @@ to hold data captured by backreferences after a regular expression
 match.
 
 Since Perl v5.6.0, Perl variable names may also be alphanumeric strings
-preceded by a caret.  These must all be written in the form C<${^Foo}>;
-the braces are not optional.  C<${^Foo}> denotes the scalar variable
+preceded by a caret.  These must all be written using the demarcated
+variable form using curly braces such as C<${^Foo}>;
+the braces are B<not> optional.  C<${^Foo}> denotes the scalar variable
 whose name is considered to be a control-C<F> followed by two C<o>'s.
+(See L<perldata/"Demarcated variable names using braces"> for more
+information on this form of spelling a variable name or specifying
+access to an element of an array or a hash).
 These variables are
 reserved for future special uses by Perl, except for the ones that
 begin with C<^_> (caret-underscore).  No
 name that begins with C<^_> will acquire a special
 meaning in any future version of Perl; such names may therefore be
 used safely in programs.  C<$^_> itself, however, I<is> reserved.
+
+Note that you also B<must> use the demarcated form to access subscripts
+of variables of this type when interpolating, for instance to access the
+first element of the C<@{^CAPTURE}> variable inside of a double quoted
+string you would write C<"${^CAPTURE[0]}"> and NOT C<"${^CAPTURE}[0]">
+which would mean to reference a scalar variable named C<${^CAPTURE}> and
+not index 0 of the magic C<@{^CAPTURE}> array which is populated by the
+regex engine.
 
 Perl identifiers that begin with digits or
 punctuation characters are exempt from the effects of the C<package>
@@ -257,6 +269,10 @@ legacy process name such as ps, top and killall will recognize the
 name you set when assigning to C<$0>.  The string you supply will be
 cut off at 16 bytes, this is a limitation imposed by Linux.
 
+Wide characters are invalid in C<$0> values. For historical reasons,
+though, Perl accepts them and encodes them to UTF-8. When this
+happens a wide-character warning is triggered.
+
 Mnemonic: same as B<sh> and B<ksh>.
 
 =item $REAL_GROUP_ID
@@ -371,7 +387,7 @@ it really means
 
 But don't put
 
-    @foo{$x,$y,$z}	# a slice--note the @
+    @foo{$x,$y,$z}     # a slice--note the @
 
 which means
 
@@ -443,8 +459,9 @@ When comparing C<$]>, numeric comparison operators should be used, but the
 variable should be stringified first to avoid issues where its original
 numeric value is inaccurate.
 
-See also the documentation of C<use VERSION> and C<require VERSION>
-for a convenient way to fail if the running Perl interpreter is too old.
+See also the documentation of L<C<use VERSION>|perlfunc/use VERSION> and
+C<require VERSION> for a convenient way to fail if the running Perl
+interpreter is too old.
 
 See L</$^V> for a representation of the Perl version as a L<version>
 object, which allows more flexible string comparisons.
@@ -593,11 +610,11 @@ X<%SIG>
 The hash C<%SIG> contains signal handlers for signals.  For example:
 
     sub handler {   # 1st argument is signal name
-	my($sig) = @_;
-	print "Caught a SIG$sig--shutting down\n";
-	close(LOG);
-	exit(0);
-	}
+        my($sig) = @_;
+        print "Caught a SIG$sig--shutting down\n";
+        close(LOG);
+        exit(0);
+    }
 
     $SIG{'INT'}  = \&handler;
     $SIG{'QUIT'} = \&handler;
@@ -613,12 +630,12 @@ the same effect as C<'DEFAULT'>.
 Here are some other examples:
 
     $SIG{"PIPE"} = "Plumber";   # assumes main::Plumber (not
-				# recommended)
+                                # recommended)
     $SIG{"PIPE"} = \&Plumber;   # just fine; assume current
-				# Plumber
+                                # Plumber
     $SIG{"PIPE"} = *Plumber;    # somewhat esoteric
     $SIG{"PIPE"} = Plumber();   # oops, what did Plumber()
-				# return??
+                                # return??
 
 Be sure not to use a bareword as the name of a signal handler,
 lest you inadvertently call it.
@@ -715,10 +732,6 @@ X<$^V> X<$PERL_VERSION>
 These are documented in the generated file lib/Config.pod.  This looks
 like as good a place as any to give notice that they are documented.
 
-=for apidoc hAmn|int|PERL_VERSION
-=for apidoc hAmn|int|PERL_REVISION
-=for apidoc hAmn|int|PERL_SUBVERSION
-
 The revision, version, and subversion of the Perl interpreter,
 represented as a L<version> object.
 
@@ -750,22 +763,6 @@ literal v-string, which can't be easily printed or compared, whereas
 the behavior of C<$]> is unchanged on all versions of Perl.
 
 Mnemonic: use ^V for a version object.
-
-=item ${^WIN32_SLOPPY_STAT}
-X<${^WIN32_SLOPPY_STAT}> X<sitecustomize> X<sitecustomize.pl>
-
-If this variable is set to a true value, then C<stat()> on Windows will
-not try to open the file.  This means that the link count cannot be
-determined and file attributes may be out of date if additional
-hardlinks to the file exist.  On the other hand, not opening the file
-is considerably faster, especially for files on network drives.
-
-This variable could be set in the F<sitecustomize.pl> file to
-configure the local Perl installation to use "sloppy" C<stat()> by
-default.  See the documentation for B<-f> in L<perlrun|perlrun/-f>
-for more information about site customization.
-
-This variable was added in Perl v5.10.0.
 
 =item $EXECUTABLE_NAME
 
@@ -802,9 +799,9 @@ following statements:
     use Config;
     my $this_perl = $^X;
     if ($^O ne 'VMS') {
-	$this_perl .= $Config{_exe}
-	  unless $this_perl =~ m/$Config{_exe}$/i;
-	}
+        $this_perl .= $Config{_exe}
+        unless $this_perl =~ m/$Config{_exe}$/i;
+    }
 
 Because many operating systems permit anyone with read access to
 the Perl program file to make a copy of it, patch the copy, and
@@ -817,9 +814,9 @@ command or referenced as a file.
     use Config;
     my $secure_perl_path = $Config{perlpath};
     if ($^O ne 'VMS') {
-	$secure_perl_path .= $Config{_exe}
-	    unless $secure_perl_path =~ m/$Config{_exe}$/i;
-	}
+        $secure_perl_path .= $Config{_exe}
+        unless $secure_perl_path =~ m/$Config{_exe}$/i;
+    }
 
 =back
 
@@ -830,8 +827,8 @@ effects.  Perl sets these variables when it has a successful match, so
 you should check the match result before using them.  For instance:
 
     if( /P(A)TT(ER)N/ ) {
-	print "I found $1 and $2\n";
-	}
+        print "I found $1 and $2\n";
+    }
 
 These variables are read-only and dynamically-scoped, unless we note
 otherwise.
@@ -849,13 +846,13 @@ by this bit of code:
 
     {
     OUTER:
-	show_n() if $outer =~ m/$pattern/;
+        show_n() if $outer =~ m/$pattern/;
 
-	INNER: {
-	    show_n() if $inner =~ m/$pattern/;
-	    }
+        INNER: {
+            show_n() if $inner =~ m/$pattern/;
+        }
 
-	show_n();
+        show_n();
     }
 
 The output shows that while in the C<OUTER> block, the values of C<$1>
@@ -888,9 +885,9 @@ this:
     print $`, $&, $'; # bad: performance hit
 
     print             # good: no performance hit
-	substr($str, 0,     $-[0]),
-	substr($str, $-[0], $+[0]-$-[0]),
-	substr($str, $+[0]);
+    substr($str, 0,     $-[0]),
+    substr($str, $-[0], $+[0]-$-[0]),
+    substr($str, $+[0]);
 
 In Perl 5.10.0 the C</p> match operator flag and the C<${^PREMATCH}>,
 C<${^MATCH}>, and C<${^POSTMATCH}> variables were introduced, that allowed
@@ -953,7 +950,14 @@ See also L<<< /$<I<digits>> ($1, $2, ...) >>>, L</%{^CAPTURE}> and
 L</%{^CAPTURE_ALL}>.
 
 Note that unlike most other regex magic variables there is no single
-letter equivalent to C<@{^CAPTURE}>.
+letter equivalent to C<@{^CAPTURE}>. Also be aware that when
+interpolating subscripts of this array you B<must> use the demarcated
+variable form, for instance
+
+    print "${^CAPTURE[0]}"
+
+see L<perldata/"Demarcated variable names using braces"> for more
+information on this form and its uses.
 
 This variable was added in 5.25.7
 
@@ -1034,7 +1038,7 @@ enclosed by the current BLOCK).  Example:
 
     local $_ = 'abcdefghi';
     /def/;
-    print "$`:$&:$'\n";  	# prints abc:def:ghi
+    print "$`:$&:$'\n";       # prints abc:def:ghi
 
 See L</Performance issues> above for the serious performance implications
 of using this variable (even once) in your code.
@@ -1365,22 +1369,22 @@ example:
     my $content = '';
     open my $fh, "<", "foo" or die $!;
     {
-	local $/;
-	$content = <$fh>;
+        local $/;
+        $content = <$fh>;
     }
     close $fh;
 
 Here is an example of how your own code can go broken:
 
     for ( 1..3 ){
-	$\ = "\r\n";
-	nasty_break();
-	print "$_";
+        $\ = "\r\n";
+        nasty_break();
+        print "$_";
     }
 
     sub nasty_break {
-	$\ = "\f";
-	# do something with $_
+        $\ = "\f";
+        # do something with $_
     }
 
 You probably expect this code to print the equivalent of
@@ -1519,7 +1523,7 @@ be better for something. :-)
 
 Setting C<$/> to an empty string -- the so-called I<paragraph mode> -- merits
 special attention.  When C<$/> is set to C<""> and the entire file is read in
-with that setting, any sequence of consecutive newlines C<"\n\n"> at the
+with that setting, any sequence of one or more consecutive newlines at the
 beginning of the file is discarded.  With the exception of the final record in
 the file, each sequence of characters ending in two or more newlines is
 treated as one record and is read in to end in exactly two newlines.  If the
@@ -1770,9 +1774,9 @@ execution of this statement, perl may have set all four special error
 variables:
 
     eval q{
-	open my $pipe, "/cdrom/install |" or die $!;
-	my @res = <$pipe>;
-	close $pipe or die "bad pipe: $?, $!";
+        open my $pipe, "/cdrom/install |" or die $!;
+        my @res = <$pipe>;
+        close $pipe or die "bad pipe: $?, $!";
     };
 
 When perl executes the C<eval()> expression, it translates the
@@ -1811,8 +1815,8 @@ X<$^CHILD_ERROR_NATIVE>
 The native status returned by the last pipe close, backtick (C<``>)
 command, successful call to C<wait()> or C<waitpid()>, or from the
 C<system()> operator.  On POSIX-like systems this value can be decoded
-with the WIFEXITED, WEXITSTATUS, WIFSIGNALED, WTERMSIG, WIFSTOPPED,
-WSTOPSIG and WIFCONTINUED functions provided by the L<POSIX> module.
+with the WIFEXITED, WEXITSTATUS, WIFSIGNALED, WTERMSIG, WIFSTOPPED, and
+WSTOPSIG functions provided by the L<POSIX> module.
 
 Under VMS this reflects the actual VMS exit status; i.e. it is the
 same as C<$?> when the pragma C<use vmsish 'status'> is in effect.
@@ -1857,11 +1861,11 @@ X<$^S> X<$EXCEPTIONS_BEING_CAUGHT>
 
 Current state of the interpreter.
 
-	$^S         State
-	---------   -------------------------------------
-	undef       Parsing module, eval, or main program
-	true (1)    Executing an eval
-	false (0)   Otherwise
+    $^S         State
+    ---------   -------------------------------------
+    undef       Parsing module, eval, or main program
+    true (1)    Executing an eval or try block
+    false (0)   Otherwise
 
 The first state may happen in C<$SIG{__DIE__}> and C<$SIG{__WARN__}>
 handlers.
@@ -1892,6 +1896,10 @@ It has the same scoping as the C<$^H> and C<%^H> variables.  The exact
 values are considered internal to the L<warnings> pragma and may change
 between versions of Perl.
 
+Each time a statement completes being compiled, the current value of
+C<${^WARNING_BITS}> is stored with that statement, and can later be
+retrieved via C<(caller($level))[9]>.
+
 This variable was added in Perl v5.6.0.
 
 =item $OS_ERROR
@@ -1909,17 +1917,18 @@ corresponding to C<errno>.
 
 Many system or library calls set C<errno> if they fail,
 to indicate the cause of failure.  They usually do B<not>
-set C<errno> to zero if they succeed.  This means C<errno>,
-hence C<$!>, is meaningful only I<immediately> after a B<failure>:
+set C<errno> to zero if they succeed and may set C<errno> to a
+non-zero value on success.  This means C<errno>, hence C<$!>, is
+meaningful only I<immediately> after a B<failure>:
 
     if (open my $fh, "<", $filename) {
-		# Here $! is meaningless.
-		...
+        # Here $! is meaningless.
+        ...
     }
     else {
-		# ONLY here is $! meaningful.
-		...
-		# Already here $! might be meaningless.
+        # ONLY here is $! meaningful.
+        ...
+        # Already here $! might be meaningless.
     }
     # Since here we might have either success or failure,
     # $! is meaningless.
@@ -1929,6 +1938,9 @@ of the C<open()> operator.  Assignment to C<$!> is similarly ephemeral.
 It can be used immediately before invoking the C<die()> operator,
 to set the exit value, or to inspect the system error string
 corresponding to error I<n>, or to restore C<$!> to a meaningful state.
+
+Perl itself may set C<errno> to a non-zero on failure even if no
+system call is performed.
 
 Mnemonic: What just went bang?
 
@@ -1976,7 +1988,7 @@ given to C<exit()>.  You can modify C<$?> in an C<END> subroutine to
 change the exit status of your program.  For example:
 
     END {
-	$? = 1 if $? == 255;  # die would make it 255
+        $? = 1 if $? == 255;  # die would make it 255
     }
 
 Under VMS, the pragma C<use vmsish 'status'> makes C<$?> reflect the
@@ -2036,36 +2048,6 @@ L<perlrun/B<-D>I<number>>.  The contents of this variable also affects the
 debugger operation.  See L<perldebguts/Debugger Internals>.
 
 Mnemonic: value of B<-D> switch.
-
-=item ${^ENCODING}
-X<${^ENCODING}>
-
-This variable is no longer supported.
-
-It used to hold the I<object reference> to the C<Encode> object that was
-used to convert the source code to Unicode.
-
-Its purpose was to allow your non-ASCII Perl
-scripts not to have to be written in UTF-8; this was
-useful before editors that worked on UTF-8 encoded text were common, but
-that was long ago.  It caused problems, such as affecting the operation
-of other modules that weren't expecting it, causing general mayhem.
-
-If you need something like this functionality, it is recommended that use
-you a simple source filter, such as L<Filter::Encoding>.
-
-If you are coming here because code of yours is being adversely affected
-by someone's use of this variable, you can usually work around it by
-doing this:
-
- local ${^ENCODING};
-
-near the beginning of the functions that are getting broken.  This
-undefines the variable during the scope of execution of the including
-function.
-
-This variable was added in Perl 5.8.2 and removed in 5.26.0.
-Setting it to anything other than C<undef> was made fatal in Perl 5.28.0.
 
 =item ${^GLOBAL_PHASE}
 X<${^GLOBAL_PHASE}>
@@ -2184,6 +2166,10 @@ This variable contains compile-time hints for the Perl interpreter.  At the
 end of compilation of a BLOCK the value of this variable is restored to the
 value when the interpreter started to compile the BLOCK.
 
+Each time a statement completes being compiled, the current value of
+C<$^H> is stored with that statement, and can later be retrieved via
+C<(caller($level))[8]>.
+
 When perl begins to parse any block construct that provides a lexical scope
 (e.g., eval body, required file, subroutine body, loop body, or conditional
 block), the existing value of C<$^H> is saved, but its value is left unchanged.
@@ -2200,8 +2186,8 @@ different pragmatic flags.  Here's an example:
     sub add_100 { $^H |= 0x100 }
 
     sub foo {
-	BEGIN { add_100() }
-	bar->baz($boon);
+        BEGIN { add_100() }
+        bar->baz($boon);
     }
 
 Consider what happens during execution of the BEGIN block.  At this point
@@ -2218,7 +2204,7 @@ demonstrates how C<use strict 'vars'> is implemented.  Here's a conditional
 version of the same lexical pragma:
 
     BEGIN {
-	require strict; strict->import('vars') if $condition
+        require strict; strict->import('vars') if $condition
     }
 
 This variable was added in Perl 5.003.
@@ -2231,6 +2217,10 @@ it useful for implementation of lexically scoped pragmas.  See
 L<perlpragma>.   All the entries are stringified when accessed at
 runtime, so only simple values can be accommodated.  This means no
 pointers to objects, for example.
+
+Each time a statement completes being compiled, the current value of
+C<%^H> is stored with that statement, and can later be retrieved via
+C<(caller($level))[10]>.
 
 When putting items into C<%^H>, in order to avoid conflicting with other
 users of the hash there is a convention regarding which keys to use.
@@ -2346,6 +2336,9 @@ X<${^TAINT}>
 Reflects if taint mode is on or off.  1 for on (the program was run with
 B<-T>), 0 for off, -1 when only taint warnings are enabled (i.e. with
 B<-t> or B<-TU>).
+
+Note: if your perl was built without taint support (see L<perlsec>),
+then C<${^TAINT}> will always be 0, even if the program was run with B<-T>).
 
 This variable is read-only.
 
@@ -2469,6 +2462,43 @@ Assigning 0 to it is permitted, but any other value will produce an error.
 Mnemonic: [ begins subscripts.
 
 Deprecated in Perl v5.12.0.
+
+=item ${^ENCODING}
+X<${^ENCODING}>
+
+This variable is no longer supported.
+
+It used to hold the I<object reference> to the C<Encode> object that was
+used to convert the source code to Unicode.
+
+Its purpose was to allow your non-ASCII Perl
+scripts not to have to be written in UTF-8; this was
+useful before editors that worked on UTF-8 encoded text were common, but
+that was long ago.  It caused problems, such as affecting the operation
+of other modules that weren't expecting it, causing general mayhem.
+
+If you need something like this functionality, it is recommended that use
+you a simple source filter, such as L<Filter::Encoding>.
+
+If you are coming here because code of yours is being adversely affected
+by someone's use of this variable, you can usually work around it by
+doing this:
+
+ local ${^ENCODING};
+
+near the beginning of the functions that are getting broken.  This
+undefines the variable during the scope of execution of the including
+function.
+
+This variable was added in Perl 5.8.2 and removed in 5.26.0.
+Setting it to anything other than C<undef> was made fatal in Perl 5.28.0.
+
+=item ${^WIN32_SLOPPY_STAT}
+X<${^WIN32_SLOPPY_STAT}> X<sitecustomize> X<sitecustomize.pl>
+
+This variable no longer has any function.
+
+This variable was added in Perl v5.10.0 and removed in Perl v5.34.0.
 
 =back
 

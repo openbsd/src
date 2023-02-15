@@ -20,7 +20,8 @@ to do that first.
 
 =head1 COMMON PROBLEMS
 
-Perl source plays by ANSI C89 rules: no C99 (or C++) extensions.
+Perl source now permits some specific C99 features which we know are
+supported by all platforms, but mostly plays by ANSI C89 rules.
 You don't care about some particular platform having broken Perl? I
 hear there is still a strong demand for J2EE programmers.
 
@@ -43,7 +44,7 @@ APIs, for example:
 The first one explicitly passes in the context, which is needed for
 e.g. threaded builds.  The second one does that implicitly; do not get
 them mixed.  If you are not passing in a aTHX_, you will need to do a
-dTHX (or a dVAR) as the first thing in the function.
+dTHX as the first thing in the function.
 
 See L<perlguts/"How multiple interpreters and concurrency are
 supported"> for further discussion about context.
@@ -80,12 +81,6 @@ right combination of C<const>s:
     static const char * const yippee[] =
         {"hi", "ho", "silver"};
 
-There is a way to completely hide any modifiable globals (they are all
-moved to heap), the compilation setting
-C<-DPERL_GLOBAL_STRUCT_PRIVATE>.  It is not normally used, but can be
-used for testing, read more about it in L<perlguts/"Background and
-PERL_IMPLICIT_CONTEXT">.
-
 =item *
 
 Not exporting your new function
@@ -117,6 +112,203 @@ L<perlguts>.
 
 =back
 
+=head2 C99
+
+Starting from 5.35.5 we now permit some C99 features in the core C source.
+However, code in dual life extensions still needs to be C89 only, because it
+needs to compile against earlier version of Perl running on older platforms.
+Also note that our headers need to also be valid as C++, because XS extensions
+written in C++ need to include them, hence I<member structure initialisers>
+can't be used in headers.
+
+C99 support is still far from complete on all platforms we currently support.
+As a baseline we can only assume C89 semantics with the specific C99 features
+described below, which we've verified work everywhere.  It's fine to probe for
+additional C99 features and use them where available, providing there is also a
+fallback for compilers that don't support the feature.  For example, we use C11
+thread local storage when available, but fall back to POSIX thread specific
+APIs otherwise, and we use C<char> for booleans if C<< <stdbool.h> >> isn't
+available.
+
+Code can use (and rely on) the following C99 features being present
+
+=over
+
+=item *
+
+mixed declarations and code
+
+=item *
+
+64 bit integer types
+
+For consistency with the existing source code, use the typedefs C<I64> and
+C<U64>, instead of using C<long long> and C<unsigned long long> directly.
+
+=item *
+
+variadic macros
+
+    void greet(char *file, unsigned int line, char *format, ...);
+    #define logged_greet(...) greet(__FILE__, __LINE__, __VA_ARGS__);
+
+Note that C<__VA_OPT__> is a gcc extension not yet in any published standard.
+
+=item *
+
+declarations in for loops
+
+    for (const char *p = message; *p; ++p) {
+        putchar(*p);
+    }
+
+=item *
+
+member structure initialisers
+
+But not in headers, as support was only added to C++ relatively recently.
+
+Hence this is fine in C and XS code, but not headers:
+
+    struct message {
+        char *action;
+        char *target;
+    };
+
+    struct message mcguffin = {
+        .target = "member structure initialisers",
+        .action = "Built"
+     };
+
+=item *
+
+flexible array members
+
+This is standards conformant:
+
+    struct greeting {
+        unsigned int len;
+        char message[];
+    };
+
+However, the source code already uses the "unwarranted chumminess with the
+compiler" hack in many places:
+
+    struct greeting {
+        unsigned int len;
+        char message[1];
+    };
+
+Strictly it B<is> undefined behaviour accessing beyond C<message[0]>, but this
+has been a commonly used hack since K&R times, and using it hasn't been a
+practical issue anywhere (in the perl source or any other common C code).
+Hence it's unclear what we would gain from actively changing to the C99
+approach.
+
+=item *
+
+C<//> comments
+
+All compilers we tested support their use. Not all humans we tested support
+their use.
+
+=back
+
+Code explicitly should not use any other C99 features. For example
+
+=over 4
+
+=item *
+
+variable length arrays
+
+Not supported by B<any> MSVC, and this is not going to change.
+
+Even "variable" length arrays where the variable is a constant expression
+are syntax errors under MSVC.
+
+=item *
+
+C99 types in C<< <stdint.h> >>
+
+Use C<PERL_INT_FAST8_T> etc as defined in F<handy.h>
+
+=item *
+
+C99 format strings in C<< <inttypes.h> >>
+
+C<snprintf> in the VMS libc only added support for C<PRIdN> etc very recently,
+meaning that there are live supported installations without this, or formats
+such as C<%zu>.
+
+(perl's C<sv_catpvf> etc use parser code code in C<sv.c>, which supports the
+C<z> modifier, along with perl-specific formats such as C<SVf>.)
+
+=back
+
+If you want to use a C99 feature not listed above then you need to do one of
+
+=over 4
+
+=item *
+
+Probe for it in F<Configure>, set a variable in F<config.sh>, and add fallback logic in the headers for platforms which don't have it.
+
+=item *
+
+Write test code and verify that it works on platforms we need to support, before relying on it unconditionally.
+
+=back
+
+Likely you want to repeat the same plan as we used to get the current C99
+feature set. See the message at https://markmail.org/thread/odr4fjrn72u2fkpz
+for the C99 probes we used before. Note that the two most "fussy" compilers
+appear to be MSVC and the vendor compiler on VMS. To date all the *nix
+compilers have been far more flexible in what they support.
+
+On *nix platforms, F<Configure> attempts to set compiler flags appropriately.
+All vendor compilers that we tested defaulted to C99 (or C11) support.
+However, older versions of gcc default to C89, or permit I<most> C99 (with
+warnings), but forbid I<declarations in for loops> unless C<-std=gnu99> is
+added. The alternative C<-std=c99> B<might> seem better, but using it on some
+platforms can prevent C<< <unistd.h> >> declaring some prototypes being
+declared, which breaks the build. gcc's C<-ansi> flag implies C<-std=c89> so we
+can no longer set that, hence the Configure option C<-gccansipedantic> now only
+adds C<-pedantic>.
+
+The Perl core source code files (the ones at the top level of the source code
+distribution) are automatically compiled with as many as possible of the
+C<-std=gnu99>, C<-pedantic>, and a selection of C<-W> flags (see
+cflags.SH). Files in F<ext/> F<dist/> F<cpan/> etc are compiled with the same
+flags as the installed perl would use to compile XS extensions.
+
+Basically, it's safe to assume that F<Configure> and F<cflags.SH> have
+picked the best combination of flags for the version of gcc on the platform,
+and attempting to add more flags related to enforcing a C dialect will
+cause problems either locally, or on other systems that the code is shipped
+to.
+
+We believe that the C99 support in gcc 3.1 is good enough for us, but we don't
+have a 19 year old gcc handy to check this :-)
+If you have ancient vendor compilers that don't default to C99, the flags
+you might want to try are
+
+=over 4
+
+=item AIX
+
+C<-qlanglvl=stdc99>
+
+=item HP/UX
+
+C<-AC99>
+
+=item Solaris
+
+C<-xc99>
+
+=back
+
 =head2 Portability problems
 
 The following are common causes of compilation and/or execution
@@ -125,28 +317,8 @@ reading.  Please test your changes with as many C compilers and
 platforms as possible; we will, anyway, and it's nice to save oneself
 from public embarrassment.
 
-If using gcc, you can add the C<-std=c89> option which will hopefully
-catch most of these unportabilities.  (However it might also catch
-incompatibilities in your system's header files.)
-
-Use the Configure C<-Dgccansipedantic> flag to enable the gcc C<-ansi
--pedantic> flags which enforce stricter ANSI rules.
-
-If using the C<gcc -Wall> note that not all the possible warnings (like
-C<-Wuninitialized>) are given unless you also compile with C<-O>.
-
-Note that if using gcc, starting from Perl 5.9.5 the Perl core source
-code files (the ones at the top level of the source code distribution,
-but not e.g. the extensions under ext/) are automatically compiled with
-as many as possible of the C<-std=c89>, C<-ansi>, C<-pedantic>, and a
-selection of C<-W> flags (see cflags.SH).
-
 Also study L<perlport> carefully to avoid any bad assumptions about the
 operating system, filesystems, character set, and so forth.
-
-You may once in a while try a "make microperl" to see whether we can
-still compile Perl with just the bare minimum of interfaces.  (See
-README.micro.)
 
 Do not assume an operating system indicates a certain compiler.
 
@@ -192,8 +364,8 @@ other words, "long long" is not a portable way to specify 64 bits, and
 Instead, use the definitions IV, UV, IVSIZE, I32SIZE, and so forth.
 Avoid things like I32 because they are B<not> guaranteed to be
 I<exactly> 32 bits, they are I<at least> 32 bits, nor are they
-guaranteed to be B<int> or B<long>.  If you really explicitly need
-64-bit variables, use I64 and U64, but only if guarded by HAS_QUAD.
+guaranteed to be B<int> or B<long>.  If you explicitly need
+64-bit variables, use I64 and U64.
 
 =item *
 
@@ -412,40 +584,6 @@ between compilers, you might need to (int).
 
 =item *
 
-Using //-comments
-
-  // This function bamfoodles the zorklator.   /* BAD */
-
-That is C99 or C++.  Perl is C89.  Using the //-comments is silently
-allowed by many C compilers but cranking up the ANSI C89 strictness
-(which we like to do) causes the compilation to fail.
-
-=item *
-
-Mixing declarations and code
-
-  void zorklator()
-  {
-    int n = 3;
-    set_zorkmids(n);    /* BAD */
-    int q = 4;
-
-That is C99 or C++.  Some C compilers allow that, but you shouldn't.
-
-The gcc option C<-Wdeclaration-after-statement> scans for such
-problems (by default on starting from Perl 5.9.4).
-
-=item *
-
-Introducing variables inside for()
-
-  for(int i = ...; ...; ...) {    /* BAD */
-
-That is C99 or C++.  While it would indeed be awfully nice to have that
-also in C89, to limit the scope of the loop variable, alas, we cannot.
-
-=item *
-
 Mixing signed char pointers with unsigned char pointers
 
   int foo(char *s) { ... }
@@ -527,19 +665,14 @@ The gcc option C<-Wformat> scans for such problems.
 
 =item *
 
-Blindly using variadic macros
-
-gcc has had them for a while with its own syntax, and C99 brought them
-with a standardized syntax.  Don't use the former, and use the latter
-only if the HAS_C99_VARIADIC_MACROS is defined.
-
-=item *
-
 Blindly passing va_list
 
 Not all platforms support passing va_list to further varargs (stdarg)
 functions.  The right thing to do is to copy the va_list using the
 Perl_va_copy() if the NEED_VA_COPY is defined.
+
+=for apidoc_section $genconfig
+=for apidoc Amnh||NEED_VA_COPY
 
 =item *
 
@@ -547,9 +680,11 @@ Using gcc statement expressions
 
    val = ({...;...;...});    /* BAD */
 
-While a nice extension, it's not portable.  The Perl code does
-admittedly use them if available to gain some extra speed (essentially
-as a funky form of inlining), but you shouldn't.
+While a nice extension, it's not portable.  Historically, Perl used
+them in macros if available to gain some extra speed (essentially
+as a funky form of inlining), but we now support (or emulate) C99
+C<static inline> functions, so use them instead. Declare functions as
+C<PERL_STATIC_INLINE> to transparently fall back to emulation where needed.
 
 =item *
 
@@ -612,33 +747,16 @@ L<http://sourceforge.net/p/predef/wiki/Home/>
 Assuming the contents of static memory pointed to by the return values
 of Perl wrappers for C library functions doesn't change.  Many C library
 functions return pointers to static storage that can be overwritten by
-subsequent calls to the same or related functions.  Perl has
-light-weight wrappers for some of these functions, and which don't make
-copies of the static memory.  A good example is the interface to the
-environment variables that are in effect for the program.  Perl has
-C<PerlEnv_getenv> to get values from the environment.  But the return is
-a pointer to static memory in the C library.  If you are using the value
-to immediately test for something, that's fine, but if you save the
-value and expect it to be unchanged by later processing, you would be
-wrong, but perhaps you wouldn't know it because different C library
-implementations behave differently, and the one on the platform you're
-testing on might work for your situation.  But on some platforms, a
-subsequent call to C<PerlEnv_getenv> or related function WILL overwrite
-the memory that your first call points to.  This has led to some
-hard-to-debug problems.  Do a L<perlapi/savepv> to make a copy, thus
-avoiding these problems.  You will have to free the copy when you're
-done to avoid memory leaks.  If you don't have control over when it gets
-freed, you'll need to make the copy in a mortal scalar, like so:
+subsequent calls to the same or related functions.  Perl has wrappers
+for some of these functions.  Originally many of those wrappers returned
+those volatile pointers.  But over time almost all of them have evolved
+to return stable copies.  To cope with the remaining ones, do a
+L<perlapi/savepv> to make a copy, thus avoiding these problems.  You
+will have to free the copy when you're done to avoid memory leaks.  If
+you don't have control over when it gets freed, you'll need to make the
+copy in a mortal scalar, like so
 
- if ((s = PerlEnv_getenv("foo") == NULL) {
-    ... /* handle NULL case */
- }
- else {
-     s = SvPVX(sv_2mortal(newSVpv(s, 0)));
- }
-
-The above example works only if C<"s"> is C<NUL>-terminated; otherwise
-you have to pass its length to C<newSVpv>.
+ SvPVX(sv_2mortal(newSVpv(volatile_string, 0)))
 
 =back
 
@@ -677,7 +795,7 @@ library functions instead.  In this case C<memchr> can be used to see if
 C<c> is in C<"list"> and works even if C<c> is C<NUL>.  These functions
 need an additional parameter to give the string length.
 In the case of literal string parameters, perl has defined macros that
-calculate the length for you.  See L<perlapi/Miscellaneous Functions>.
+calculate the length for you.  See L<perlapi/String Handling>.
 
 =item *
 
@@ -751,6 +869,10 @@ Do not use strtol() or strtoul()
 Use grok_atoUV() instead.  strtol() or strtoul() (or their IV/UV-friendly
 macro disguises, Strtol() and Strtoul(), or Atol() and Atoul() are
 affected by locale, which is bad.
+
+=for apidoc_section $numeric
+=for apidoc AmhD||Atol|const char * nptr
+=for apidoc AmhD||Atoul|const char * nptr
 
 =back
 
@@ -1000,6 +1122,9 @@ We can also dump out this op: the current op is always stored in
 C<PL_op>, and we can dump it with C<Perl_op_dump>.  This'll give us
 similar output to CPAN module B::Debug.
 
+=for apidoc_section $debugging
+=for apidoc Amnh||PL_op
+
     (gdb) print Perl_op_dump(PL_op)
     {
     13  TYPE = add  ===> 14
@@ -1105,8 +1230,8 @@ cut-and-pasted code changes, all the other spots should probably be
 changed, too.  Therefore such code should probably be turned into a
 subroutine or a macro.
 
-cpd (L<http://pmd.sourceforge.net/cpd.html>) is part of the pmd project
-(L<http://pmd.sourceforge.net/>).  pmd was originally written for static
+cpd (L<https://pmd.github.io/latest/pmd_userdocs_cpd.html>) is part of the pmd project
+(L<https://pmd.github.io/>).  pmd was originally written for static
 analysis of Java code, but later the cpd part of it was extended to
 parse also C and C++.
 
@@ -1132,12 +1257,11 @@ coding nose clean.
 
 The C<-Wall> is by default on.
 
-The C<-ansi> (and its sidekick, C<-pedantic>) would be nice to be on
-always, but unfortunately they are not safe on all platforms, they can
-for example cause fatal conflicts with the system headers (Solaris
-being a prime example).  If Configure C<-Dgccansipedantic> is used, the
-C<cflags> frontend selects C<-ansi -pedantic> for the platforms where
-they are known to be safe.
+It would be nice for C<-pedantic>) to be on always, but unfortunately it is not
+safe on all platforms - for example fatal conflicts with the system headers
+(Solaris being a prime example).  If Configure C<-Dgccansipedantic> is used,
+the C<cflags> frontend selects C<-pedantic> for the platforms where it is known
+to be safe.
 
 The following extra flags are added:
 
@@ -1161,11 +1285,11 @@ C<-Wwrite-strings>
 
 =item *
 
-C<-Werror=declaration-after-statement>
+C<-Werror=pointer-arith>
 
 =item *
 
-C<-Werror=pointer-arith>
+C<-Werror=vla>
 
 =back
 
@@ -1272,7 +1396,7 @@ To get valgrind and for more information see
 AddressSanitizer ("ASan") consists of a compiler instrumentation module
 and a run-time C<malloc> library. ASan is available for a variety of
 architectures, operating systems, and compilers (see project link below).
-It checks for unsafe memory usage, such as use after free and buffer 
+It checks for unsafe memory usage, such as use after free and buffer
 overflow conditions, and is fast enough that you can easily compile your
 debugging or optimized perl with it. Modern versions of ASan check for
 memory leaks by default on most platforms, otherwise (e.g. x86_64 OS X)
@@ -1457,6 +1581,51 @@ on the use of F<gcov> and basic block profiling with gcc, see the
 latest GNU CC manual.  As of gcc 4.8, this is at
 L<http://gcc.gnu.org/onlinedocs/gcc/Gcov-Intro.html#Gcov-Intro>
 
+=head2 callgrind profiling
+
+callgrind is a valgrind tool for profiling source code. Paired
+with kcachegrind (a Qt based UI), it gives you an overview of
+where code is taking up time, as well as the ability
+to examine callers, call trees, and more. One of its benefits
+is you can use it on perl and XS modules that have not been
+compiled with debugging symbols.
+
+If perl is compiled with debugging symbols (C<-g>), you can view
+the annotated source and click around, much like Devel::NYTProf's
+HTML output.
+
+For basic usage:
+
+    valgrind --tool=callgrind ./perl ...
+
+By default it will write output to F<callgrind.out.PID>, but you
+can change that with C<--callgrind-out-file=...>
+
+To view the data, do:
+
+    kcachegrind callgrind.out.PID
+
+If you'd prefer to view the data in a terminal, you can use
+F<callgrind_annotate>. In it's basic form:
+
+    callgrind_annotate callgrind.out.PID | less
+
+Some useful options are:
+
+=over 4
+
+=item * --threshold
+
+Percentage of counts (of primary sort event) we are interested in.
+The default is 99%, 100% might show things that seem to be missing.
+
+=item * --auto
+
+Annotate all source files containing functions that helped reach
+the event count threshold.
+
+=back
+
 =head1 MISCELLANEOUS TRICKS
 
 =head2 PERL_DESTRUCT_LEVEL
@@ -1510,6 +1679,9 @@ As C<-Dm> is using the PerlIO layer for output, it will by itself
 allocate quite a bunch of SVs, which are hidden to avoid recursion.  You
 can bypass the PerlIO layer if you use the SV logging provided by
 C<-DPERL_MEM_LOG> instead.
+
+=for apidoc_section $debugging
+=for apidoc Amnh||PL_sv_serial
 
 =head2 PERL_MEM_LOG
 
@@ -1678,25 +1850,23 @@ bugs in the past.
 
 =head2 When is a bool not a bool?
 
-On pre-C99 compilers, C<bool> is defined as equivalent to C<char>.
-Consequently assignment of any larger type to a C<bool> is unsafe and may be
-truncated.  The C<cBOOL> macro exists to cast it correctly; you may also find
-that using it is shorter and clearer than writing out the equivalent
-conditional expression longhand.
+There wasn't necessarily a standard C<bool> type on compilers prior to
+C99, and so some workarounds were created.  The C<TRUE> and C<FALSE>
+macros are still available as alternatives for C<true> and C<false>.
+And the C<cBOOL> macro was created to correctly cast to a true/false
+value in all circumstances, but should no longer be necessary.
+Using S<C<(bool)> I<expr>>> should now always work.
 
-On those platforms and compilers where C<bool> really is a boolean (C++,
-C99), it is easy to forget the cast.  You can force C<bool> to be a C<char>
-by compiling with C<-Accflags=-DPERL_BOOL_AS_CHAR>.  You may also wish to
-run C<Configure> with something like
+There are no plans to remove any of C<TRUE>, C<FALSE>, nor C<cBOOL>.
+
+=head2 Finding unsafe truncations
+
+You may wish to run C<Configure> with something like
 
     -Accflags='-Wconversion -Wno-sign-conversion -Wno-shorten-64-to-32'
 
 or your compiler's equivalent to make it easier to spot any unsafe truncations
 that show up.
-
-The C<TRUE> and C<FALSE> macros are available for situations where using them
-would clarify intent. (But they always just mean the same as the integers 1 and
-0 regardless, so using them isn't compulsory.)
 
 =head2 The .i Targets
 

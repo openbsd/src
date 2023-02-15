@@ -3,9 +3,17 @@
 use strict;
 use warnings;
 
-use Test::More tests => 5;
-
+use Config;
+use Test::More;
 use Scalar::Util qw(tainted);
+
+if (exists($Config{taint_support}) && not $Config{taint_support}) {
+    plan skip_all => "your perl was built without taint support";
+}
+else {
+    plan tests => 5;
+}
+
 
 ok( !tainted(1), 'constant number');
 

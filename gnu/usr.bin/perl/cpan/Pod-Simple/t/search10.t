@@ -8,6 +8,7 @@ BEGIN {
 # Time-stamp: "2004-05-23 22:38:58 ADT"
 
 use strict;
+use warnings;
 
 #sub Pod::Simple::Search::DEBUG () {5};
 

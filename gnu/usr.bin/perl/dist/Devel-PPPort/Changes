@@ -1,5 +1,29 @@
 Revision history for Devel-PPPort
 
+3.68 - 2022-03-18
+
+ * fix newSVsv_flags: rename variable to fix C++ compilation issue
+ * Update dNOOP definition for Perl < 5.27.7
+
+3.67 - 2022-03-08
+
+  * fix utf8.t with recent development versions of Perl
+  * utf8_to_uvchr_buf: Workaround bugs in Perl (BBC)
+  * v5.35.9 was returning an incorrect value
+  * fix dereference empty string
+
+3.66 - 2022-03-02
+
+  * Fix corrupted release (missing files)
+
+3.65 - 2022-03-02
+
+  * Enable AppVeyor CI
+  * Fix CROAK_IF_ERROR without BRACE GROUPS
+  * Refactor to use static inline function in multiple parts/inc
+  * devel/regenerate: Add --skip-devels option
+  * Don't list has_builtin as being provided
+
 3.64 - 2022-02-01
   * Fix: better support for STMT_START / STMT_END definition
   * Fix: Only use '-Wdeclaration-after-statement' if possible
@@ -13,7 +37,7 @@ Revision history for Devel-PPPort
   * Backport NOT_REACHED
   * Backport G_LIST
   * various internal changes
-  
+
 3.62 - 2020-10-16
   * Restore missing PPPort.pm
   * Fix metaCPAN indexing

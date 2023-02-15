@@ -1972,13 +1972,14 @@ write STRICT;
 close STRICT or die "Could not close: $!";
 is cat('Op_write.tmp'), "oof:\n", 'pragmata on format line';
 
-SKIP: {
-   skip "no weak refs" unless eval { require Scalar::Util };
+{
+   no warnings 'experimental::builtin';
+   use builtin 'weaken';
    sub Potshriggley {
 format Potshriggley =
 .
    }
-   Scalar::Util::weaken(my $x = *Potshriggley{FORMAT});
+   weaken(my $x = *Potshriggley{FORMAT});
    undef *Potshriggley;
    is $x, undef, 'formats in subs do not leak';
 }
@@ -2054,7 +2055,7 @@ fresh_perl_is('for(1..2){formline*0}', '', { stderr => 1 } , "#130722 - assertio
 # Just a complete test for format, including top-, left- and bottom marging
 # and format detection through glob entries
 
-if ($^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'dos' ||
+if ($^O eq 'VMS' || $^O eq 'MSWin32' ||
     ($^O eq 'os2' and not eval '$OS2::can_fork')) {
   $test = curr_test();
  SKIP: {

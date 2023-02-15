@@ -11,7 +11,7 @@ use warnings;
 use Getopt::Std;
 use Config;
 my @orig_ARGV = @ARGV;
-our $VERSION  = do { my @r = (q$Revision: 2.23 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
+our $VERSION  = do { my @r = (q$Revision: 2.24 $ =~ /\d+/g); sprintf "%d."."%02d" x $#r, @r };
 
 # These may get re-ordered.
 # RAW is a do_now as inserted by &enter
@@ -249,7 +249,12 @@ if ($cname =~ /\.(c|xs)$/i) # VMS may have upcased filenames with DECC$ARGV_PARS
 END
   }
 
-  if ($cname =~ /(\w+)\.xs$/)
+  if ($cname =~ /\.c$/i && $Config{ccname} eq "gcc")
+   {
+    print C qq(#pragma GCC diagnostic ignored "-Wc++-compat"\n);
+   }
+
+  if ($cname =~ /\.xs$/i)
    {
     print C "#define PERL_NO_GET_CONTEXT\n";
     print C "#include <EXTERN.h>\n";
@@ -259,15 +264,15 @@ END
   print C "#include \"encode.h\"\n\n";
 
  }
-elsif ($cname =~ /\.enc$/)
+elsif ($cname =~ /\.enc$/i)
  {
   $doEnc = 1;
  }
-elsif ($cname =~ /\.ucm$/)
+elsif ($cname =~ /\.ucm$/i)
  {
   $doUcm = 1;
  }
-elsif ($cname =~ /\.pet$/)
+elsif ($cname =~ /\.pet$/i)
  {
   $doPet = 1;
  }

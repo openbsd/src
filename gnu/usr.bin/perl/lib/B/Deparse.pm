@@ -8,6 +8,7 @@
 # but essentially none of his code remains.
 
 package B::Deparse;
+use strict;
 use Carp;
 use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
 	 OPf_WANT OPf_WANT_VOID OPf_WANT_SCALAR OPf_WANT_LIST
@@ -21,7 +22,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
          OPpPADHV_ISKEYS OPpRV2HV_ISKEYS
          OPpCONCAT_NESTED
          OPpMULTICONCAT_APPEND OPpMULTICONCAT_STRINGIFY OPpMULTICONCAT_FAKE
-         OPpTRUEBOOL OPpINDEX_BOOLNEG
+         OPpTRUEBOOL OPpINDEX_BOOLNEG OPpDEFER_FINALLY
 	 SVf_IOK SVf_NOK SVf_ROK SVf_POK SVpad_OUR SVf_FAKE SVs_RMG SVs_SMG
 	 SVs_PADTMP SVpad_TYPED
          CVf_METHOD CVf_LVALUE
@@ -52,8 +53,7 @@ use B qw(class main_root main_start main_cv svref_2object opnumber perlstring
         MDEREF_SHIFT
     );
 
-$VERSION = '1.54';
-use strict;
+our $VERSION = '1.64';
 our $AUTOLOAD;
 use warnings ();
 require feature;
@@ -272,7 +272,8 @@ BEGIN {
 
 BEGIN { for (qw[ const stringify rv2sv list glob pushmark null aelem
 		 kvaslice kvhslice padsv argcheck
-                 nextstate dbstate rv2av rv2hv helem custom ]) {
+                 nextstate dbstate rv2av rv2hv helem pushdefer leavetrycatch
+                 custom ]) {
     eval "sub OP_\U$_ () { " . opnumber($_) . "}"
 }}
 
@@ -280,6 +281,7 @@ BEGIN { for (qw[ const stringify rv2sv list glob pushmark null aelem
 # possibly undoing optimisations along the way.
 
 sub DEBUG { 0 }
+use if DEBUG, 'Data::Dumper';
 
 sub _pessimise_walk {
     my ($self, $startop) = @_;
@@ -446,7 +448,7 @@ sub next_todo {
 	# emit the sub.
 	my @text;
 	my $flags = $name->FLAGS;
-	push @text,
+        my $category =
 	    !$cv || $seq <= $name->COP_SEQ_RANGE_LOW
 		? $self->keyword($flags & SVpad_OUR
 				    ? "our"
@@ -454,6 +456,24 @@ sub next_todo {
 					? "state"
 					: "my") . " "
 		: "";
+
+        # Skip lexical 'state' subs imported from the builtin::
+        # package, since they are created automatically by
+        #     use builtin "foo"
+        if ($cv && $category =~  /\bstate\b/) {
+            my $globname;
+            my $gv = $cv->GV;
+            if (
+                   $gv
+                && defined (($globname = $gv->object_2svref))
+                && $$globname =~ /^\*builtin::/
+            ) {
+                return '';
+            }
+        }
+
+	push @text, $category;
+
 	# XXX We would do $self->keyword("sub"), but ‘my CORE::sub’
 	#     doesn’t work and ‘my sub’ ignores a &sub in scope.  I.e.,
 	#     we have a core bug here.
@@ -821,16 +841,6 @@ sub new {
     return $self;
 }
 
-{
-    # Mask out the bits that L<warnings::register> uses
-    my $WARN_MASK;
-    BEGIN {
-	$WARN_MASK = $warnings::Bits{all} | $warnings::DeadBits{all};
-    }
-    sub WARN_MASK () {
-	return $WARN_MASK;
-    }
-}
 
 # Initialise the contextual information, either from
 # defaults provided with the ambient_pragmas method,
@@ -838,9 +848,7 @@ sub new {
 sub init {
     my $self = shift;
 
-    $self->{'warnings'} = defined ($self->{'ambient_warnings'})
-				? $self->{'ambient_warnings'} & WARN_MASK
-				: undef;
+    $self->{'warnings'} = $self->{'ambient_warnings'};
     $self->{'hints'}    = $self->{'ambient_hints'};
     $self->{'hinthash'} = $self->{'ambient_hinthash'};
 
@@ -1731,6 +1739,12 @@ sub scopeop {
 	    $body = $self->deparse($body, 1);
 	    return "$body $name $cond";
 	}
+        elsif($kid->type == OP_PUSHDEFER &&
+            $kid->private & OPpDEFER_FINALLY &&
+            $kid->sibling->type == OP_LEAVETRYCATCH &&
+            null($kid->sibling->sibling)) {
+            return $self->pp_leavetrycatch_with_finally($kid->sibling, $kid, $cx);
+        }
     } else {
 	$kid = $op->first;
     }
@@ -2074,7 +2088,7 @@ sub pragmata {
     my $warnings = $op->warnings;
     my $warning_bits;
     if ($warnings->isa("B::SPECIAL") && $$warnings == 4) {
-	$warning_bits = $warnings::Bits{"all"} & WARN_MASK;
+	$warning_bits = $warnings::Bits{"all"};
     }
     elsif ($warnings->isa("B::SPECIAL") && $$warnings == 5) {
         $warning_bits = $warnings::NONE;
@@ -2083,14 +2097,24 @@ sub pragmata {
 	$warning_bits = undef;
     }
     else {
-	$warning_bits = $warnings->PV & WARN_MASK;
+	$warning_bits = $warnings->PV;
     }
 
-    if (defined ($warning_bits) and
-       !defined($self->{warnings}) || $self->{'warnings'} ne $warning_bits) {
-	push @text,
-	    $self->declare_warnings($self->{'warnings'}, $warning_bits);
-	$self->{'warnings'} = $warning_bits;
+    my ($w1, $w2);
+    # The number of valid bit positions may have grown (by a byte or
+    # more) since the last warnings state, by custom warnings
+    # categories being registered in the meantime. Normalise the
+    # bitmasks first so they may be fairly compared.
+    $w1 = defined($self->{warnings})
+                ? warnings::_expand_bits($self->{warnings})
+                : undef;
+    $w2 = defined($warning_bits)
+                ? warnings::_expand_bits($warning_bits)
+                : undef;
+
+    if (defined($w2) and !defined($w1) || $w1 ne $w2) {
+	push @text, $self->declare_warnings($w1, $w2);
+	$self->{'warnings'} = $w2;
     }
 
     my $hints = $op->hints;
@@ -2175,13 +2199,13 @@ sub pp_nextstate {
 sub declare_warnings {
     my ($self, $from, $to) = @_;
     $from //= '';
-    my $all = (warnings::bits("all") & WARN_MASK);
-    unless ((($from & WARN_MASK) & ~$all) =~ /[^\0]/) {
+    my $all = warnings::bits("all");
+    unless (($from & ~$all) =~ /[^\0]/) {
         # no FATAL bits need turning off
-        if (   ($to & WARN_MASK) eq $all) {
+        if (   $to eq $all) {
             return $self->keyword("use") . " warnings;\n";
         }
-        elsif (($to & WARN_MASK) eq ("\0"x length($to) & WARN_MASK)) {
+        elsif ($to eq ("\0"x length($to))) {
             return $self->keyword("no") . " warnings;\n";
         }
     }
@@ -2303,6 +2327,10 @@ my %feature_keywords = (
     evalbytes=>'evalbytes',
     __SUB__ => '__SUB__',
    fc       => 'fc',
+   try      => 'try',
+   catch    => 'try',
+   finally  => 'try',
+   defer    => 'defer',
 );
 
 # keywords that are strong and also have a prototype
@@ -2471,7 +2499,7 @@ sub unop {
 	    return $self->maybe_parens(
 			$self->keyword($name) . " $kid", $cx, 16
 		   );
-	}   
+	}
 	return $self->maybe_parens_unop($name, $kid, $cx);
     } else {
 	return $self->maybe_parens(
@@ -2511,7 +2539,7 @@ sub pp_each { unop(@_, "each") }
 sub pp_values { unop(@_, "values") }
 sub pp_keys { unop(@_, "keys") }
 { no strict 'refs'; *{"pp_r$_"} = *{"pp_$_"} for qw< keys each values >; }
-sub pp_boolkeys { 
+sub pp_boolkeys {
     # no name because its an optimisation op that has no keyword
     unop(@_,"");
 }
@@ -3950,7 +3978,21 @@ sub loop_common {
 	} else {
 	    $ary = $self->deparse($ary, 1);
 	}
-	if (null $var) {
+
+        if ($enter->flags & OPf_PARENS) {
+            # for my ($x, $y, ...) ...
+            # for my ($foo, $bar) () stores the count (less 1) in the targ of
+            # the ITER op. For the degenerate case of 1 var ($x), the
+            # TARG is zero, so it works anyway
+            my $iter_targ = $kid->first->first->targ;
+            my @vars;
+            my $targ = $enter->targ;
+            while ($iter_targ-- >= 0) {
+                push @vars, $self->padname_sv($targ)->PVX;
+                ++$targ;
+            }
+            $var = 'my (' . join(', ', @vars) . ')';
+        } elsif (null $var) {
             $var = $self->pp_padsv($enter, 1, 1);
 	} elsif ($var->name eq "rv2gv") {
 	    $var = $self->pp_rv2sv($var, 1);
@@ -4052,6 +4094,47 @@ sub for_loop {
 sub pp_leavetry {
     my $self = shift;
     return "eval {\n\t" . $self->pp_leave(@_) . "\n\b}";
+}
+
+sub pp_leavetrycatch_with_finally {
+    my $self = shift;
+    my ($op, $finallyop) = @_;
+
+    # Expect that the first three kids should be (entertrycatch, poptry, catch)
+    my $entertrycatch = $op->first;
+    $entertrycatch->name eq "entertrycatch" or die "Expected entertrycatch as first child of leavetrycatch";
+
+    my $tryblock = $entertrycatch->sibling;
+    $tryblock->name eq "poptry" or die "Expected poptry as second child of leavetrycatch";
+
+    my $catch = $tryblock->sibling;
+    $catch->name eq "catch" or die "Expected catch as third child of leavetrycatch";
+
+    my $catchblock = $catch->first->sibling;
+    my $name = $catchblock->name;
+    unless ($name eq "scope" || $name eq "leave") {
+      die "Expected scope or leave as second child of catch, got $name instead";
+    }
+
+    my $trycode = scopeop(0, $self, $tryblock);
+    my $catchvar = $self->padname($catch->targ);
+    my $catchcode = $name eq 'scope' ? scopeop(0, $self, $catchblock)
+                                     : scopeop(1, $self, $catchblock);
+
+    my $finallycode = "";
+    if($finallyop) {
+        my $body = $self->deparse($finallyop->first->first);
+        $finallycode = "\nfinally {\n\t$body\n\b}";
+    }
+
+    return "try {\n\t$trycode\n\b}\n" .
+           "catch($catchvar) {\n\t$catchcode\n\b}$finallycode\cK";
+}
+
+sub pp_leavetrycatch {
+    my $self = shift;
+    my ($op, @args) = @_;
+    return $self->pp_leavetrycatch_with_finally($op, undef, @args);
 }
 
 sub _op_is_or_was {
@@ -5267,7 +5350,7 @@ sub re_unback {
     # the insane complexity here is due to the behaviour of "\c\"
     $str =~ s/
                 # these two lines ensure that the backslash we're about to
-                # remove isn't preceeded by something which makes it part
+                # remove isn't preceded by something which makes it part
                 # of a \c
 
                 (^ | [^\\] | \\c\\)             # $1
@@ -5380,9 +5463,15 @@ sub const {
 	return $self->const_dumper($sv, $cx);
     }
     if (class($sv) eq "SPECIAL") {
-	# sv_undef, sv_yes, sv_no
-	return $$sv == 3 ? $self->maybe_parens("!1", $cx, 21)
-			 : ('undef', '1')[$$sv-1];
+	# PL_sv_undef etc
+        # return yes/no as boolean expressions rather than integers to
+        # preserve their boolean-ness
+	return
+            $$sv == 1 ? 'undef'                            : # PL_sv_undef
+            $$sv == 2 ? $self->maybe_parens("!0", $cx, 21) : # PL_sv_yes
+            $$sv == 3 ? $self->maybe_parens("!1", $cx, 21) : # PL_sv_no
+            $$sv == 7 ? '0'                                : # PL_sv_zero
+                        '"???"';
     }
     if (class($sv) eq "NULL") {
        return 'undef';
@@ -5403,10 +5492,10 @@ sub const {
 	if ($nv == 0) {
 	    if (pack("F", $nv) eq pack("F", 0)) {
 		# positive zero
-		return "0";
+		return "0.0";
 	    } else {
 		# negative zero
-		return $self->maybe_parens("-.0", $cx, 21);
+		return $self->maybe_parens("-0.0", $cx, 21);
 	    }
 	} elsif (1/$nv == 0) {
 	    if ($nv > 0) {
@@ -5443,6 +5532,10 @@ sub const {
 		return $self->maybe_parens("$mant * 2**$exp", $cx, 19);
 	    }
 	}
+
+        # preserve NV-ness: output as NNN.0 rather than NNN
+        $str .= ".0" if $str =~ /^-?[0-9]+$/;
+
 	$str = $self->maybe_parens($str, $cx, 21) if $nv < 0;
 	return $str;
     } elsif ($sv->FLAGS & SVf_ROK && $sv->can("RV")) {
@@ -5658,38 +5751,24 @@ sub double_delim {
 # Escape a characrter.
 # Only used by tr///, so backslashes hyphens
 
-sub pchr { # ASCII
+sub pchr {
     my($n) = @_;
-    if ($n == ord '\\') {
-	return '\\\\';
-    } elsif ($n == ord "-") {
-	return "\\-";
-    } elsif (utf8::native_to_unicode($n) >= utf8::native_to_unicode(ord(' '))
-             and utf8::native_to_unicode($n) <= utf8::native_to_unicode(ord('~')))
-    {
-        # I'm presuming a regex is not ok here, otherwise we could have used
-        # /[[:print:]]/a to get here
-	return chr($n);
-    } elsif ($n == ord "\a") {
-	return '\\a';
-    } elsif ($n == ord "\b") {
-	return '\\b';
-    } elsif ($n == ord "\t") {
-	return '\\t';
-    } elsif ($n == ord "\n") {
-	return '\\n';
-    } elsif ($n == ord "\e") {
-	return '\\e';
-    } elsif ($n == ord "\f") {
-	return '\\f';
-    } elsif ($n == ord "\r") {
-	return '\\r';
-    } elsif ($n >= ord("\cA") and $n <= ord("\cZ")) {
-	return '\\c' . $unctrl{chr $n};
-    } else {
-#	return '\x' . sprintf("%02x", $n);
-	return '\\' . sprintf("%03o", $n);
-    }
+    return sprintf("\\x{%X}", $n) if $n > 255;
+    return '\\\\' if $n == ord '\\';
+    return "\\-" if $n == ord "-";
+    # I'm presuming a regex is not ok here, otherwise we could have used
+    # /[[:print:]]/a to get here
+    return chr($n) if (        utf8::native_to_unicode($n)
+                            >= utf8::native_to_unicode(ord(' '))
+                        and    utf8::native_to_unicode($n)
+                            <= utf8::native_to_unicode(ord('~')));
+
+    my $mnemonic_pos = index("\a\b\e\f\n\r\t", chr($n));
+    return "\\" . substr("abefnrt", $mnemonic_pos, 1) if $mnemonic_pos >= 0;
+
+    return '\\c' . $unctrl{chr $n} if $n >= ord("\cA") and $n <= ord("\cZ");
+#   return '\x' . sprintf("%02x", $n);
+    return '\\' . sprintf("%03o", $n);
 }
 
 # Convert a list of characters into a string suitable for tr/// search or
@@ -5765,92 +5844,170 @@ sub tr_decode_byte {
     return ($from, $to);
 }
 
-sub tr_chr {
-    my $x = shift;
-    if ($x == ord "-") {
-	return "\\-";
-    } elsif ($x == ord "\\") {
-	return "\\\\";
-    } else {
-	return chr $x;
-    }
-}
+my $infinity = ~0 >> 1;     # IV_MAX
 
-sub tr_invmap {
-    my ($invlist_ref, $map_ref) = @_;
+sub tr_append_to_invlist {
+    my ($list_ref, $current, $next) = @_;
 
-    my $infinity = ~0 >> 1;     # IV_MAX
-    my $from = "";
-    my $to = "";
+    # Appends the range $current..$next-1 to the inversion list $list_ref
 
-    for my $i (0.. @$invlist_ref - 1) {
-        my $this_from = $invlist_ref->[$i];
-        my $map = $map_ref->[$i];
-        my $upper = ($i < @$invlist_ref - 1)
-                     ? $invlist_ref->[$i+1]
-                     : $infinity;
-        my $range = $upper - $this_from - 1;
-        if (DEBUG) {
-            print STDERR "i=$i, from=$this_from, upper=$upper, range=$range\n";
-        }
-        next if $map == ~0;
-        next if $map == ~0 - 1;
-        $from .= tr_chr($this_from);
-        $to .= tr_chr($map);
-        next if $range == 0;    # Single code point
-        if ($range == 1) {      # Adjacent code points
-            $from .= tr_chr($this_from + 1);
-            $to   .= tr_chr($map + 1);
-        }
-        elsif ($upper != $infinity) {
-            $from .= "-" . tr_chr($this_from + $range);
-            $to   .= "-" . tr_chr($map + $range);
+    printf STDERR "%d: %d..%d %s", __LINE__, $current, $next, Dumper $list_ref if DEBUG;
+
+    if (@$list_ref && $list_ref->[-1] == $current) {
+
+        # The new range extends the current final one.  If it is a finite
+        # rane, replace the current final by the new ending.
+        if (defined $next) {
+            $list_ref->[-1] = $next;
         }
         else {
-            $from .= "-INFTY";
-            $to   .= "-INFTY";
+            # The new range extends to infinity, which means the current end
+            # of the inversion list is dangling.  Removing it causes things to
+            # work.
+            pop @$list_ref;
         }
     }
+    else {  # The new range starts after the current final one; add it as a
+            # new range
+        push @$list_ref, $current;
+        push @$list_ref, $next if defined $next;
+    }
 
-    return ($from, $to);
+    print STDERR __LINE__, ": ", Dumper $list_ref if DEBUG;
+}
+
+sub tr_invlist_to_string {
+    my ($list_ref, $to_complement) = @_;
+
+    # Stringify the inversion list $list_ref, possibly complementing it first.
+    # CAUTION: this can modify $list_ref.
+
+    print STDERR __LINE__, ": ", Dumper $list_ref if DEBUG;
+
+    if ($to_complement) {
+
+        # Complementing an inversion list is done by prepending a 0 if it
+        # doesn't have one there already; otherwise removing the leading 0.
+        if ($list_ref->[0] == 0) {
+            shift @$list_ref;
+        }
+        else {
+            unshift @$list_ref, 0;
+        }
+
+        print STDERR __LINE__, ": ", Dumper $list_ref if DEBUG;
+    }
+
+    my $output = "";
+
+    # Every other element is in the list.
+    for (my $i = 0; $i < @$list_ref; $i += 2) {
+        my $base = $list_ref->[$i];
+        $output .= pchr($base);
+        last unless defined $list_ref->[$i+1];
+
+        # The beginning of the next element starts the range of items not in
+        # the list.
+        my $upper = $list_ref->[$i+1] - 1;
+        my $range = $upper - $base;
+        $output .= '-' if $range > 1; # Adjacent characters don't have a
+                                      # minus, though it would be legal to do
+                                      # so
+        $output .= pchr($upper) if $range > 0;
+    }
+
+    print STDERR __LINE__, ": tr_invlist_to_string() returning '$output'\n"
+                                                                       if DEBUG;
+    return $output;
+}
+
+my $unmapped = ~0;
+my $special_handling = ~0 - 1;
+
+sub dump_invmap {
+    my ($invlist_ref, $map_ref) = @_;
+
+    for my $i (0 .. @$invlist_ref - 1) {
+        printf STDERR "[%d]\t%x\t", $i, $invlist_ref->[$i];
+        my $map = $map_ref->[$i];
+        if ($map == $unmapped) {
+            print STDERR "TR_UNMAPPED\n";
+        }
+        elsif ($map == $special_handling) {
+            print STDERR "TR_SPECIAL\n";
+        }
+        else {
+            printf STDERR "%x\n", $map;
+        }
+    }
 }
 
 sub tr_decode_utf8 {
     my($tr_av, $flags) = @_;
-    printf STDERR "flags=0x%x\n", $flags if DEBUG;
+
+    printf STDERR "\n%s: %d: flags=0x%x\n", __FILE__, __LINE__, $flags if DEBUG;
+
     my $invlist = $tr_av->ARRAYelt(0);
     my @invlist = unpack("J*", $invlist->PV);
     my @map = unpack("J*", $tr_av->ARRAYelt(1)->PV);
 
-    if (DEBUG) {
-        for my $i (0 .. @invlist - 1) {
-            printf STDERR "[%d]\t%x\t", $i, $invlist[$i];
-            my $map = $map[$i];
-            if ($map == ~0) {
-                print STDERR "TR_UNMAPPED\n";
-            }
-            elsif ($map == ~0 - 1) {
-                print STDERR "TR_SPECIAL\n";
-            }
-            else {
-                printf STDERR "%x\n", $map;
-            }
+    dump_invmap(\@invlist, \@map) if DEBUG;
+
+    my @from;
+    my @to;
+
+    # Go through the whole map
+    for (my $i = 0; $i < @invlist; $i++) {
+        my $map = $map[$i];
+        printf STDERR "%d: i=%d, source=%x, map=%x\n",
+                      __LINE__, $i, $invlist[$i], $map if DEBUG;
+
+        # Ignore any lines that are unmapped
+        next if $map == $unmapped;
+
+        # Calculate this component of the mapping;  First the lhs
+        my $this_from = $invlist[$i];
+        my $next_from = $invlist[$i+1] if $i < @invlist - 1;
+
+        # The length of the rhs is the same as the lhs, except when special
+        my $next_map = $map - $this_from + $next_from
+                            if $map != $special_handling && defined $next_from;
+
+        if (DEBUG) {
+            printf STDERR "%d: i=%d, from=%x, to=%x",
+                          __LINE__, $i, $this_from, $map;
+            printf STDERR ", next_from=%x,", $next_from if defined $next_from;
+            printf STDERR ", next_map=%x", $next_map if defined $next_map;
+            print  STDERR "\n";
         }
+
+        # Add the lhs.
+        tr_append_to_invlist(\@from, $this_from, $next_from);
+
+        # And, the rhs; special handling doesn't get output as it really is an
+        # unmatched rhs
+        tr_append_to_invlist(\@to, $map, $next_map) if $map != $special_handling;
     }
 
-    my ($from, $to) = tr_invmap(\@invlist, \@map);
+    # Done with the input.
 
-    if ($flags & OPpTRANS_COMPLEMENT) {
-        shift @map;
-        pop @invlist;
-        my $throw_away;
-        ($from, $throw_away) = tr_invmap(\@invlist, \@map);
+    my $to;
+    if (join("", @from) eq join("", @to)) {
+
+        # the rhs is suppressed if identical to the left.  That's because
+        # tr/ABC/ABC/ can be written as tr/ABC//.  (Do this comparison before
+        # any complementing)
+        $to = "";
+    }
+    else {
+        $to = tr_invlist_to_string(\@to, 0);  # rhs not complemented
     }
 
-    if (DEBUG) {
-        print STDERR "Returning ", escape_str($from), "/",
-                                   escape_str($to), "\n";
-    }
+    my $from = tr_invlist_to_string(\@from,
+                                   ($flags & OPpTRANS_COMPLEMENT) != 0);
+
+    print STDERR "Returning ", escape_str($from), "/",
+                               escape_str($to), "\n" if DEBUG;
     return (escape_str($from), escape_str($to));
 }
 
@@ -6485,6 +6642,33 @@ sub pp_argdefelem {
     return $expr;
 }
 
+
+sub pp_pushdefer {
+    my $self = shift;
+    my($op, $cx) = @_;
+    # defer block body is stored in the ->first of an OP_NULL that is
+    # ->first of OP_PUSHDEFER
+    my $body = $self->deparse($op->first->first);
+    return "defer {\n\t$body\n\b}\cK";
+}
+
+sub builtin1 {
+    my $self = shift;
+    my ($op, $cx, $name) = @_;
+    my $arg = $self->deparse($op->first);
+    # TODO: work out if lexical alias is present somehow...
+    return "builtin::$name($arg)";
+}
+
+sub pp_is_bool  { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "is_bool"); }
+sub pp_is_weak  { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "is_weak"); }
+sub pp_weaken   { builtin1(@_, "weaken"); }
+sub pp_unweaken { builtin1(@_, "unweaken"); }
+sub pp_blessed  { builtin1(@_, "blessed"); }
+sub pp_refaddr  { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "refaddr"); }
+sub pp_reftype  { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "reftype"); }
+sub pp_ceil     { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "ceil"); }
+sub pp_floor    { $_[0]->maybe_targmy(@_[1,2], \&builtin1, "floor"); }
 
 1;
 __END__

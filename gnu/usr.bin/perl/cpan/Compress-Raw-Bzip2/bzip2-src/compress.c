@@ -253,8 +253,8 @@ void sendMTFValues ( EState* s )
    --*/
 
 
-   UInt16 cost[BZ_N_GROUPS];
-   Int32  fave[BZ_N_GROUPS];
+   UInt16 cost[BZ_N_GROUPS] = {0, 0, 0, 0, 0, 0};
+   Int32  fave[BZ_N_GROUPS] = {0, 0, 0, 0, 0, 0};
 
    UInt16* mtfv = s->mtfv;
 

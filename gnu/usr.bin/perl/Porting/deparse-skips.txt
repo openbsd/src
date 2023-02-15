@@ -42,7 +42,6 @@ mro/isarev.t
 mro/isarev_utf8.t
 op/attrhand.t             # Custom attrs ignored; also AH provides none
 op/caller.t
-op/each.t                 # utf8ness of deparsed strings
 op/goto.t
 op/gv.t                   # glob copy constants
 op/hexfp.t
@@ -52,7 +51,6 @@ op/length.t               # utf8ness of deparsed strings
 op/lexsub.t
 op/local.t
 op/lvref.t
-op/not.t
 op/overload_integer.t
 op/override.t
 op/pack.t
@@ -94,6 +92,10 @@ uni/tie.t
 uni/universal.t
 uni/variables.t
 ../cpan/Archive-Tar/t/03_file.t         # constant sub ref: FOO->()
+
+# Most autodie tests currently fail under Deparse because
+# the %^H initialisation values are stringifed refs rather
+# than real refs.
 ../cpan/autodie/t/autodie.t
 ../cpan/autodie/t/basic_exceptions.t
 ../cpan/autodie/t/binmode.t
@@ -107,6 +109,7 @@ uni/variables.t
 ../cpan/autodie/t/dbmopen.t
 ../cpan/autodie/t/eval_error.t
 ../cpan/autodie/t/exception_class.t
+../cpan/autodie/t/exception_nonref.t
 ../cpan/autodie/t/exceptions.t
 ../cpan/autodie/t/exec.t
 ../cpan/autodie/t/filehandles.t
@@ -121,6 +124,7 @@ uni/variables.t
 ../cpan/autodie/t/kill.t
 ../cpan/autodie/t/lethal.t
 ../cpan/autodie/t/mkdir.t
+../cpan/autodie/t/no-default.t
 ../cpan/autodie/t/open.t
 ../cpan/autodie/t/read.t
 ../cpan/autodie/t/recv.t
@@ -134,28 +138,63 @@ uni/variables.t
 ../cpan/autodie/t/utf8_open.t
 ../cpan/autodie/t/utime.t
 ../cpan/autodie/t/version_tag.t
+
 ../cpan/AutoLoader/t/01AutoLoader.t
-../cpan/bignum/t/big_e_pi.t
+
+
+# -------------
+#
+# The big*/Big* modules generally fail because the code references in
+# user-defined hints get stringified when deparsed, e.g.
+#
+#    BEGIN {
+#        $^H{'binary'} = 'CODE(0x21158a0)';
+#        $^H{'float'} = 'CODE(0x1a6ab18)';
+#        $^H{'integer'} = 'CODE(0x1a6abc0)';
+#    }
+
 ../cpan/bignum/t/bigexp.t
 ../cpan/bignum/t/bigint.t
 ../cpan/bignum/t/bignum.t
 ../cpan/bignum/t/bigrat.t
-../cpan/bignum/t/bii_e_pi.t
-../cpan/bignum/t/biinfnan.t
-../cpan/bignum/t/bir_e_pi.t
-../cpan/bignum/t/bninfnan.t
-../cpan/bignum/t/brinfnan.t
+../cpan/bignum/t/const-bigint.t
+../cpan/bignum/t/const-bignum.t
+../cpan/bignum/t/const-bigrat.t
+../cpan/bignum/t/e_pi-bigint.t
+../cpan/bignum/t/e_pi-bignum.t
+../cpan/bignum/t/e_pi-bigrat.t
+../cpan/bignum/t/import-bigint.t
+../cpan/bignum/t/import-bignum.t
+../cpan/bignum/t/import-bigrat.t
 ../cpan/bignum/t/in_effect.t
+../cpan/bignum/t/infnan-bigint.t
+../cpan/bignum/t/infnan-bignum.t
+../cpan/bignum/t/infnan-bigrat.t
 ../cpan/bignum/t/option_a.t
 ../cpan/bignum/t/option_l.t
 ../cpan/bignum/t/option_p.t
 ../cpan/bignum/t/overrides.t
 ../cpan/bignum/t/ratopt_a.t
-../cpan/bignum/t/scope_f.t
-../cpan/bignum/t/scope_i.t
-../cpan/bignum/t/scope_r.t
-../cpan/Math-BigInt/t/constant.t
-../cpan/Math-BigInt/t/const_mbf.t
+../cpan/bignum/t/scope-bigint.t
+../cpan/bignum/t/scope-bignum.t
+../cpan/bignum/t/scope-bigrat.t
+../cpan/bignum/t/scope-nested-const.t
+
+# -------------
+
+
+# This one does a plan('skip_all') in a BEGIN block, which stops the rest
+# of the test file from being compiled
+../cpan/ExtUtils-MakeMaker/t/MM_VMS.t
+
+# see comment above about bignum failures
+../cpan/Math-BigInt/t/const-mbf.t
+../cpan/Math-BigInt/t/const-mbi.t
+
+# see comment above about bignum failures
+../cpan/Math-BigRat/t/const-mbr.t
+
+
 ../cpan/Scalar-List-Utils/t/uniq.t
 ../cpan/Term-Cap/test.pl
 ../cpan/Test-Simple/t/Legacy/Builder/carp.t
@@ -182,6 +221,9 @@ uni/variables.t
 ../dist/threads/t/blocks.t
 ../ext/B/t/b.t
 ../ext/B/t/optree_constants.t
+# for (...) {} currently gets deparsed as for (...) { (); }
+# which has a slightly different optree
+../ext/B/t/optree_for.t
 ../ext/B/t/optree_samples.t
 ../ext/Devel-Peek/t/Peek.t
 ../ext/IPC-Open3/t/IPC-Open2.t

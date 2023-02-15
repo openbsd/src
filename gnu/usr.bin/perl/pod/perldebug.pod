@@ -14,6 +14,9 @@ L<perldebtut>, which is a tutorial introduction to the debugger.
 If you're looking for the nitty gritty details of how the debugger is
 I<implemented>, you may prefer to read L<perldebguts>.
 
+For in-depth technical usage details, see L<perl5db.pl>, the documentation
+of the debugger itself.
+
 =head1 The Perl Debugger
 
 If you invoke Perl with the B<-d> switch, your script runs under the
@@ -80,6 +83,16 @@ Debug a given program via the C<Devel::ptkdb> GUI.
 Debug a given program using threads (experimental).
 
 =back
+
+If Perl is called with the C<-d> switch, the variable C<$^P> will hold a true
+value. This is useful if you need to know if your code is running under the
+debugger:
+
+    if ( $^P ) {
+        # running under the debugger
+    }
+
+See L<perlvar/$^P> for more information on the variable.
 
 =head2 Debugger Commands
 
@@ -676,9 +689,9 @@ working example of something along the lines of:
 =head2 Configurable Options
 
 The debugger has numerous options settable using the C<o> command,
-either interactively or from the environment or an rc file.
-(./.perldb or ~/.perldb under Unix.)
-
+either interactively or from the environment or an rc file. The file
+is named F<./.perldb> or F<~/.perldb> under Unix with F</dev/tty>,
+F<perldb.ini> otherwise.
 
 =over 12
 
@@ -737,7 +750,7 @@ X<debugger option, LineInfo>
 
 File or pipe to print line number info to.  If it is a pipe (say,
 C<|visual_perl_db>), then a short message is used.  This is the
-mechanism used to interact with a slave editor or visual debugger,
+mechanism used to interact with a client editor or visual debugger,
 such as the special C<vi> or C<emacs> hooks, or the C<ddd> graphical
 debugger.
 
@@ -1206,6 +1219,7 @@ You do have C<use strict> and C<use warnings> enabled, don't you?
 
 L<perldebtut>,
 L<perldebguts>,
+L<perl5db.pl>,
 L<re>,
 L<DB>,
 L<Devel::NYTProf>,

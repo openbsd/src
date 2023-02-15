@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use File::Path;
 use Config;
 my @INSTDIRS = ('../dummy-install', '../dummy  install');

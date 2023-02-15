@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use strict;
 
 # Test ExtUtils::Install.
 
@@ -6,7 +7,6 @@ BEGIN {
     unshift @INC, 't/lib';
 }
 
-use strict;
 use TieOut;
 use File::Path;
 use File::Spec;

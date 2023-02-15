@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 4038            # tests in require'd file
+use Test::More tests => 4280            # tests in require'd file
                          + 20;          # tests in this file
 
 use Math::BigInt only => 'Calc';

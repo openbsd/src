@@ -100,13 +100,13 @@ sub guard::DESTROY {
 }
 
 # Weak references to pad hashes
-SKIP: {
-    skip_if_miniperl("No Scalar::Util::weaken under miniperl", 1);
+{
     my $ref;
-    require Scalar::Util;
+    no warnings 'experimental::builtin';
+    use builtin 'weaken';
     {
         my %hash;
-        Scalar::Util::weaken($ref = \%hash);
+        weaken($ref = \%hash);
         1;  # the previous statement must not be the last
     }
     is $ref, undef, 'weak refs to pad hashes go stale on scope exit';

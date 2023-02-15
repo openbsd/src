@@ -9,7 +9,7 @@ BEGIN {
     set_up_inc(qw '../lib ../cpan/Perl-OSType/lib');
 }
 
-plan(tests => 57 + 27*14);
+plan(tests => 58 + 27*14);
 
 if ($^O =~ /MSWin32|cygwin|msys/ && !is_miniperl) {
   require Win32; # for IsAdminUser()
@@ -384,4 +384,12 @@ SKIP: {
     ok(!-B "TEST\0-", '-B on name with \0');
     ok(!-f "TEST\0-", '-f on name with \0');
     ok(!-r "TEST\0-", '-r on name with \0');
+}
+
+{
+    # github #18293
+    "" =~ /(.*)/;
+    my $x = $1; # call magic on $1, setting the pv to ""
+    "test.pl" =~ /(.*)/;
+    ok(-f -r $1, "stacked handles on a name with magic");
 }

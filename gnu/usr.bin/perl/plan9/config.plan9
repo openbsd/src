@@ -2,12 +2,12 @@
  * This file is mangled by fndvers (and perhaps other scripts) to produce
  * the config.h for Plan 9. It was handwritten because the standard
  * configuration scripts were written in a shell dialect incomprehensible
- * to Plan 9. 
+ * to Plan 9.
  * config.h for Plan 9
- * Version: 5.8.0
- */                 
+ * Version: blead
+ */
 
-/* Configuration time: 21-Oct-1996 15:11
+/* First configuration time: 21-Oct-1996 15:11
  * Configured by: Luther Huffman, lutherh@stratcom.com
  * Target system: Plan 9
  */
@@ -18,19 +18,46 @@
  *
  */
 
+/* Last configuration time: June 2020
+ * Configured by: David Romano, unobe@cpan.org
+ * Target system: Plan 9/9front
+ */
+
 #ifndef _config_h_
 #define _config_h_
+
+/* CHARBITS:
+ *	This symbol contains the size of a char, so that the C preprocessor
+ *	can make decisions based on it.
+ */
+#define CHARBITS 8		/**/
+
 
 /* CAT2:
  *	This macro catenates 2 tokens together.
  */
 
-#define CAT2(a,b)a ## b
+#if 42 == 1
+#define CAT2(a,b)      a/**/b
+#define STRINGIFY(a)   "a"
+               /* If you can get stringification with catify, tell me how! */
+#endif
+#if 42 == 42
+#define PeRl_CaTiFy(a, b)      a ## b
+#define PeRl_StGiFy(a) #a
+/* the additional level of indirection enables these macros to be
+ * used as arguments to other macros.  See K&R 2nd ed., page 231. */
+#define CAT2(a,b)      PeRl_CaTiFy(a,b)
+#define StGiFy(a)      PeRl_StGiFy(a)
+#define STRINGIFY(a)   PeRl_StGiFy(a)
+#endif
+#if 42 != 1 && 42 != 42
+#   include "Bletch: How does this C preprocessor catenate tokens?"
+#endif
+
 #define CAT3(a,b,c)a ## b ## c
 #define CAT4(a,b,c,d)a ## b ## c ## d
 #define CAT5(a,b,c,d,e)a ## b ## c ## d ## e
-#define StGiFy(a)# a
-#define STRINGIFY(a)StGiFy(a)
 #define SCAT2(a,b)StGiFy(a) StGiFy(b)
 #define SCAT3(a,b,c)StGiFy(a) StGiFy(b) StGiFy(c)
 #define SCAT4(a,b,c,d)StGiFy(a) StGiFy(b) StGiFy(c) StGiFy(d)
@@ -52,16 +79,22 @@
 # endif
 #endif
 
-/* BIN:
- *	This symbol holds the path of the bin directory where the package will
- *	be installed. Program must be prepared to deal with ~name substitution.
+/* BYTEORDER:
+ *	This symbol holds the hexadecimal constant defined in byteorder,
+ *	in a UV, i.e. 0x1234 or 0x4321 or 0x12345678, etc...
+ *	If the compiler supports cross-compiling or multiple-architecture
+ *	binaries (eg. on NeXT systems), use compiler-defined macros to
+ *	determine the byte order.
+ *	On NeXT 3.2 (and greater), you can build "Fat" Multiple Architecture
+ *	Binaries (MAB) on either big endian or little endian machines.
+ *	The endian-ness is available at compile-time.  This only matters
+ *	for perl, where the config.h can be generated and installed on
+ *	one system, and used by a different architecture to build an
+ *	extension.  Older versions of NeXT that might not have
+ *	defined either *_ENDIAN__ were all on Motorola 680x0 series,
+ *	so the default case (for NeXT) is big endian to catch them.
+ *	This might matter for NeXT 3.0.
  */
-/* BIN_EXP:
- *	This symbol is the filename expanded version of the BIN symbol, for
- *	programs that do not want to deal with that at run-time.
- */
-#define BIN "/_P9P_OBJTYPE/bin"	/*  */
-#define BIN_EXP "/_P9P_OBJTYPE/bin"	/*  */
 
 /* LOC_SED:
  *	This symbol holds the complete pathname to the sed program.
@@ -202,7 +235,7 @@
 #define HAS_GETLOGIN		/**/
 
 /* HAS_GETPGID:
- *	This symbol, if defined, indicates to the C program that 
+ *	This symbol, if defined, indicates to the C program that
  *	the getpgid(pid) function is available to get the
  *	process group id.
  */
@@ -244,7 +277,7 @@
  *	This symbol, if defined, indicates that the link routine is
  *	available to create hard links.
  */
-/* #define HAS_LINK	/ **/
+/* #define HAS_LINK	/**/
 
 /* HAS_LOCALECONV:
  *	This symbol, if defined, indicates that the localeconv routine is
@@ -262,11 +295,11 @@
  *	This symbol, if defined, indicates that the lstat routine is
  *	available to do file stats on symbolic links.
  */
-/*#define HAS_LSTAT		/ **/
+/*#define HAS_LSTAT		/**/
 
 /* HAS_MBLEN:
  *	This symbol, if defined, indicates that the mblen routine is available
- *	to find the number of bytes in a multibye character.
+ *	to find the number of bytes in a multibyte character.
  */
 #define HAS_MBLEN		/**/
 
@@ -382,7 +415,7 @@
  *	This symbol, if defined, indicates that the readlink routine is
  *	available to read the value of a symbolic link.
  */
-/*#define HAS_READLINK		/ **/
+/*#define HAS_READLINK		/**/
 
 /* HAS_RENAME:
  *	This symbol, if defined, indicates that the rename routine is available
@@ -434,7 +467,7 @@
  *	This symbol, if defined, indicates that the setpgid(pid, gpid)
  *	routine is available to set process group ID.
  */
-#define HAS_SETPGID	/ **/
+#define HAS_SETPGID	/**/
 
 /* HAS_SETPGRP2:
  *	This symbol, if defined, indicates that the setpgrp2() (as in DG/UX)
@@ -502,7 +535,7 @@
  *	This symbol, if defined, indicates that the strtod routine is
  *	available to provide better numeric string conversion than atof().
  */
-#define HAS_STRTOD	/**/
+/*#define HAS_STRTOD	/**/
 
 /* HAS_STRTOL:
  *	This symbol, if defined, indicates that the strtol routine is available
@@ -520,7 +553,7 @@
  *	This symbol, if defined, indicates that the symlink routine is available
  *	to create symbolic links.
  */
-/*#define HAS_SYMLINK	/ **/
+/*#define HAS_SYMLINK	/**/
 
 /* HAS_SYSCALL:
  *	This symbol, if defined, indicates that the syscall routine is
@@ -654,7 +687,7 @@
 #define	I_LOCALE		/**/
 
 /* I_NET_ERRNO:
- *	This symbol, if defined, indicates that <net/errno.h> exists and 
+ *	This symbol, if defined, indicates that <net/errno.h> exists and
  *	should be included.
  */
 /*#define I_NET_ERRNO		/* config-skip */
@@ -865,17 +898,6 @@
  */
 #define PLAN9           /**/
 
-/* MEM_ALIGNBYTES:
- *	This symbol contains the number of bytes required to align a
- *	double, or a long double when applicable. Usual values are 2,
- *	4 and 8. The default is eight, for safety.
- */
-#if defined(MULTIARCH)
-#  define MEM_ALIGNBYTES 8
-#else
-#define MEM_ALIGNBYTES 4
-#endif
-
 /* ARCHLIB:
  *	This variable, if defined, holds the name of the directory in
  *	which the user wants to put architecture-dependent public
@@ -920,8 +942,8 @@
  *	This symbol is the filename expanded version of the BIN symbol, for
  *	programs that do not want to deal with that at run-time.
  */
-#define BIN "/usr/bin"	/**/
-#define BIN_EXP "/usr/bin"	/**/
+#define BIN "/_P9P_OBJTYPE/bin"	/*  */
+#define BIN_EXP "/_P9P_OBJTYPE/bin"	/*  */
 
 /* BYTEORDER:
  *	This symbol holds the hexadecimal constant defined in byteorder,
@@ -965,30 +987,6 @@
 #else
 #define BYTEORDER 0x1234	/* large digits for MSB */
 #endif /* NeXT */
-
-/* CAT2:
- *	This macro catenates 2 tokens together.
- */
-/* STRINGIFY:
- *	This macro surrounds its token with double quotes.
- */
-#if 42 == 1
-#define CAT2(a,b)	a/**/b
-#define STRINGIFY(a)	"a"
-		/* If you can get stringification with catify, tell me how! */
-#endif
-#if 42 == 42
-#define PeRl_CaTiFy(a, b)	a ## b	
-#define PeRl_StGiFy(a)	#a
-/* the additional level of indirection enables these macros to be
- * used as arguments to other macros.  See K&R 2nd ed., page 231. */
-#define CAT2(a,b)	PeRl_CaTiFy(a,b)
-#define StGiFy(a)	PeRl_StGiFy(a)
-#define STRINGIFY(a)	PeRl_StGiFy(a)
-#endif
-#if 42 != 1 && 42 != 42
-#   include "Bletch: How does this C preprocessor concatenate tokens?"
-#endif
 
 /* CPPSTDIN:
  *	This symbol contains the first part of the string which will invoke
@@ -1233,7 +1231,7 @@
  *	This symbol, if defined, indicates that the "fast stdio"
  *	is available to manipulate the stdio buffers directly.
  */
-/*#define HAS_FAST_STDIO		/ **/
+/*#define HAS_FAST_STDIO		/**/
 
 /* HAS_FCHDIR:
  *	This symbol, if defined, indicates that the fchdir routine is
@@ -1311,7 +1309,8 @@
 
 /* HAS_FPCLASSIFY:
  *	This symbol, if defined, indicates that the fpclassify routine is
- *	available to classify doubles.  Available for example in HP-UX.
+ *	available to classify doubles.  Available for example in HP-UX and
+ *  Plan9/9front.
  *	The returned values are defined in <math.h> and are
  *
  *           FP_NORMAL     Normalized
@@ -1321,7 +1320,7 @@
  *           FP_NAN        NaN
  *
  */
-/*#define HAS_FPCLASSIFY		/ **/
+#define HAS_FPCLASSIFY		/ **/
 
 /* HAS_FPOS64_T:
  *	This symbol will be defined if the C compiler supports fpos64_t.
@@ -1707,11 +1706,11 @@
  *	REENTRANT_PROTO_T_ABC macros of reentr.h if d_gmtime_r
  *	is defined.
  */
-/*#define HAS_GMTIME_R	   / **/
+#define HAS_GMTIME_R	   / **/
 #define GMTIME_R_PROTO 0	   /**/
 
 /* HAS_GNULIBC:
- *	This symbol, if defined, indicates to the C program that 
+ *	This symbol, if defined, indicates to the C program that
  *	the GNU C library is being used.  A better check is to use
  *	the __GLIBC__ and __GLIBC_MINOR__ symbols supplied with glibc.
  */
@@ -1754,7 +1753,7 @@
  *	This symbol, if defined, indicates that the ilogbl routine is
  *	available.  If scalbnl is also present we can emulate frexpl.
  */
-/*#define HAS_ILOGBL		/ **/
+/*#define HAS_ILOGBL		/**/
 
 /* HAS_INT64_T:
  *     This symbol will defined if the C compiler supports int64_t.
@@ -1764,7 +1763,7 @@
 #define     HAS_INT64_T               /**/
 
 /* HAS_ISASCII:
- *	This manifest constant lets the C program know that isascii 
+ *	This manifest constant lets the C program know that isascii
  *	is available.
  */
 /*#define HAS_ISASCII		/ **/
@@ -1824,29 +1823,68 @@
  *	REENTRANT_PROTO_T_ABC macros of reentr.h if d_localtime_r
  *	is defined.
  */
-/*#define HAS_LOCALTIME_R	   / **/
-/*#define LOCALTIME_R_NEEDS_TZSET	   / **/
+#define HAS_LOCALTIME_R
+#define LOCALTIME_R_NEEDS_TZSET	   / **/
 #define LOCALTIME_R_PROTO 0	   /**/
-
+#ifdef LOCALTIME_R_NEEDS_TZSET
+#define L_R_TZSET tzset(),
+#else
+#define L_R_TZSET
+#endif
 /* HAS_LONG_DOUBLE:
  *	This symbol will be defined if the C compiler supports long
  *	doubles.
  */
 /* LONG_DOUBLESIZE:
- *	This symbol contains the size of a long double, so that the 
+ *	This symbol contains the size of a long double, so that the
  *	C preprocessor can make decisions based on it.  It is only
- *	defined if the system supports long doubles.
+ *	defined if the system supports long doubles.  Note that this
+ *	is sizeof(long double), which may include unused bytes.
  */
-#define HAS_LONG_DOUBLE		/**/
+/* HAS_LDEXPL:
+ *	This symbol, if defined, indicates that the ldexpl routine is
+ *	available to shift a long double floating-point number
+ *	by an integral power of 2.
+ */
+/* LONG_DOUBLEKIND:
+ *	LONG_DOUBLEKIND will be one of
+ *	LONG_DOUBLE_IS_DOUBLE
+ *	LONG_DOUBLE_IS_IEEE_754_128_BIT_LITTLE_ENDIAN
+ *	LONG_DOUBLE_IS_IEEE_754_128_BIT_BIG_ENDIAN
+ *	LONG_DOUBLE_IS_X86_80_BIT_LITTLE_ENDIAN
+ *	LONG_DOUBLE_IS_X86_80_BIT_BIG_ENDIAN
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_LE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_BE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_LE
+ *	LONG_DOUBLE_IS_UNKNOWN_FORMAT
+ *	It is only defined if the system supports long doubles.
+ */
+/*#define  HAS_LDEXPL		/ **/
+#define HAS_LONG_DOUBLE		/ **/
 #ifdef HAS_LONG_DOUBLE
 #define LONG_DOUBLESIZE 8		/**/
+#define LONG_DOUBLEKIND 0		/**/
+#define LONG_DOUBLE_IS_DOUBLE				0
+#define LONG_DOUBLE_IS_IEEE_754_128_BIT_LITTLE_ENDIAN	1
+#define LONG_DOUBLE_IS_IEEE_754_128_BIT_BIG_ENDIAN	2
+#define LONG_DOUBLE_IS_X86_80_BIT_LITTLE_ENDIAN		3
+#define LONG_DOUBLE_IS_X86_80_BIT_BIG_ENDIAN		4
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_LE	5
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE	6
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_BE	7
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_LE	8
+#define LONG_DOUBLE_IS_UNKNOWN_FORMAT			-1
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LITTLE_ENDIAN	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_LE /* back-compat */
+#define LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BIG_ENDIAN	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE /* back-compat */
 #endif
+
 
 /* HAS_LONG_LONG:
  *	This symbol will be defined if the C compiler supports long long.
  */
 /* LONGLONGSIZE:
- *	This symbol contains the size of a long long, so that the 
+ *	This symbol contains the size of a long long, so that the
  *	C preprocessor can make decisions based on it.  It is only
  *	defined if the system supports long long.
  */
@@ -1948,7 +1986,7 @@
 /*#define OLD_PTHREAD_CREATE_JOINABLE  / **/
 
 /* HAS_PTHREAD_YIELD:
- *	This symbol, if defined, indicates that the pthread_yield 
+ *	This symbol, if defined, indicates that the pthread_yield
  *	routine is available to yield the execution of the current
  *	thread.	 sched_yield is preferable to pthread_yield.
  */
@@ -2024,7 +2062,7 @@
  *	This symbol, if defined, indicates that the scalbnl routine is
  *	available.  If ilogbl is also present we can emulate frexpl.
  */
-/*#define HAS_SCALBNL		/ **/
+/*#define HAS_SCALBNL		/**/
 
 /* HAS_SENDMSG:
  *	This symbol, if defined, indicates that the sendmsg routine is
@@ -2569,8 +2607,8 @@
  *	This symbol holds the type used for the second argument to
  *	getgroups() and setgroups().  Usually, this is the same as
  *	gidtype (gid_t) , but sometimes it isn't.
- *	It can be int, ushort, gid_t, etc... 
- *	It may be necessary to include <sys/types.h> to get any 
+ *	It can be int, ushort, gid_t, etc...
+ *	It may be necessary to include <sys/types.h> to get any
  *	typedef'ed information.  This is only required if you have
  *	getgroups() or setgroups()..
  */
@@ -2731,6 +2769,12 @@
 /*#define PWGECOS	/ **/
 /*#define PWPASSWD	/ **/
 
+/* I_QUADMATH:
+ *	This symbol, if defined, indicates that <quadmath.h> exists and
+ *	should be included.
+ */
+/*#define	I_QUADMATH		/ **/
+
 /* I_SHADOW:
  *	This symbol, if defined, indicates that <shadow.h> exists and
  *	should be included.
@@ -2842,6 +2886,27 @@
  */
 /*#define INSTALL_USR_BIN_PERL	/ **/
 
+/* DOUBLEINFBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes for the double precision infinity.
+ */
+/* DOUBLENANBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes (0xHH) for the double precision not-a-number.
+ */
+/* LONGDBLINFBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes for the long double precision infinity.
+ */
+/* LONGDBLNANBYTES:
+ *	This symbol, if defined, is a comma-separated list of
+ *	hexadecimal bytes (0xHH) for the long double precision not-a-number.
+ */
+#define DOUBLEINFBYTES  0xe2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x7f		/**/
+#define DOUBLENANBYTES  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf8, 0x7f		/**/
+#define LONGDBLINFBYTES 0xe2, 0xff, 0xff, 0xff, 0xff, 0xff, 0xef, 0x7f		/**/
+#define LONGDBLNANBYTES 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00		/**/
+
 /* PERL_PRIfldbl:
  *	This symbol, if defined, contains the string used by stdio to
  *	format long doubles (format 'f') for output.
@@ -2894,7 +2959,7 @@
 #define MYMALLOC			/**/
 
 /* Mode_t:
- *	This symbol holds the type used to declare file modes 
+ *	This symbol holds the type used to declare file modes
  *	for systems calls.  It is usually mode_t, but may be
  *	int or unsigned short.  It may be necessary to include <sys/types.h>
  *	to get any typedef'ed information.
@@ -3044,6 +3109,16 @@
  *	This symbol contains the number of bits a variable of type NVTYPE
  *	can preserve of a variable of type UVTYPE.
  */
+/* NV_OVERFLOWS_INTEGERS_AT:
+ *	This symbol gives the largest integer value that NVs can hold. This
+ *	value + 1.0 cannot be stored accurately. It is expressed as constant
+ *	floating point expression to reduce the chance of decimale/binary
+ *	conversion issues. If it can not be determined, the value 0 is given.
+ */
+/* NV_ZERO_IS_ALLBITS_ZERO:
+ *	This symbol, if defined, indicates that a variable of type NVTYPE
+ *	stores 0.0 in memory as all bits zero.
+ */
 #define	IVTYPE		long		/**/
 #define	UVTYPE		unsigned long		/**/
 #define	I8TYPE		char		/**/
@@ -3070,8 +3145,10 @@
 #define	U64SIZE		8	/**/
 #endif
 #define	NVSIZE		8		/**/
-/*#define	NV_PRESERVES_UV
+#define	NV_PRESERVES_UV
 #define	NV_PRESERVES_UV_BITS	31
+#define	NV_OVERFLOWS_INTEGERS_AT	256.0*256.0*256.0*256.0*256.0*256.0*2.0*2.0*2.0*2.0*2.0
+#undef	NV_ZERO_IS_ALLBITS_ZERO
 
 /* IVdf:
  *	This symbol defines the format string used for printing a Perl IV
@@ -3131,8 +3208,8 @@
  *	This symbol contains the ~name expanded version of PRIVLIB, to be used
  *	in programs that are not prepared to deal with ~ expansion at run-time.
  */
-#define PRIVLIB "/sys/lib/perl/5.32.1"		/**/
-#define PRIVLIB_EXP "/sys/lib/perl/5.32.1"		/**/
+#define PRIVLIB "/sys/lib/perl/_P9P_VERSION"		/**/
+#define PRIVLIB_EXP "/sys/lib/perl/_P9P_VERSION"		/**/
 
 /* PTRSIZE:
  *	This symbol contains the size of a pointer, so that the C preprocessor
@@ -3179,7 +3256,7 @@
 /* Select_fd_set_t:
  *	This symbol holds the type used for the 2nd, 3rd, and 4th
  *	arguments to select.  Usually, this is 'fd_set *', if HAS_FD_SET
- *	is defined, and 'int *' otherwise.  This is only useful if you 
+ *	is defined, and 'int *' otherwise.  This is only useful if you
  *	have select(), of course.
  */
 #define Select_fd_set_t 	fd_set*	/**/
@@ -3205,10 +3282,10 @@
  *	The signals in the list are separated with commas, and the indices
  *	within that list and the SIG_NAME list match, so it's easy to compute
  *	the signal name from a number or vice versa at the price of a small
- *	dynamic linear lookup. 
+ *	dynamic linear lookup.
  *	Duplicates are allowed, but are moved to the end of the list.
  *	The signal number corresponding to sig_name[i] is sig_number[i].
- *	if (i < NSIG) then sig_number[i] == i.  
+ *	if (i < NSIG) then sig_number[i] == i.
  *	The last element is 0, corresponding to the 0 at the end of
  *	the sig_name list.
  */
@@ -3259,9 +3336,9 @@
  *	removed.  The elements in inc_version_list (inc_version_list.U) can
  *	be tacked onto this variable to generate a list of directories to search.
  */
-#define SITELIB "/sys/lib/perl/5.32.1/site_perl"		/**/
-#define SITELIB_EXP "/sys/lib/perl/5.32.1/site_perl"		/**/
-#define SITELIB_STEM "/sys/lib/perl/5.32.1/site_perl"		/**/
+#define SITELIB "/sys/lib/perl/_P9P_VERSION/site_perl"		/**/
+#define SITELIB_EXP "/sys/lib/perl/_P9P_VERSION/site_perl"		/**/
+#define SITELIB_STEM "/sys/lib/perl/_P9P_VERSION/site_perl"		/**/
 
 /* Size_t_size:
  *	This symbol holds the size of a Size_t in bytes.
@@ -3297,7 +3374,7 @@
  *	script to make sure (one hopes) that it runs with perl and not
  *	some shell.
  */
-#define STARTPERL "#!/bin/perl"		/**/
+#define STARTPERL "#!/bin/perl-_P9P_VERSION"		/**/
 
 /* STDCHAR:
  *	This symbol is defined to be the type of char used in stdio.h.
@@ -3338,6 +3415,27 @@
  *	<sys/types.h> to get any typedef'ed information.
  */
 #define Uid_t uid_t		/* UID type */
+
+/* GMTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* GMTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function gmtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MAX:
+ *	This symbol contains the maximum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+/* LOCALTIME_MIN:
+ *	This symbol contains the minimum value for the time_t offset that
+ *	the system function localtime () accepts, and defaults to 0
+ */
+#define GMTIME_MAX		2147483647	/**/
+#define GMTIME_MIN		0	/**/
+#define LOCALTIME_MAX	2147483647	/**/
+#define LOCALTIME_MIN	0	/**/
 
 /* USE_64_BIT_INT:
  *	This symbol, if defined, indicates that 64-bit integers should
@@ -3415,6 +3513,14 @@
 #define	USE_PERLIO		/**/
 #endif
 
+/* USE_QUADMATH:
+ *	This symbol, if defined, indicates that the quadmath library should
+ *	be used when available.
+ */
+#ifndef USE_QUADMATH
+/*#define	USE_QUADMATH		/ **/
+#endif
+
 /* USE_SOCKS:
  *	This symbol, if defined, indicates that Perl should
  *	be built to use socks.
@@ -3427,10 +3533,6 @@
  *	This symbol, if defined, indicates that Perl should be built to
  *	use the interpreter-based threading implementation.
  */
-/* USE_5005THREADS:
- *	This symbol, if defined, indicates that Perl should be built to
- *	use the 5.005-based threading implementation.
- */
 /* OLD_PTHREADS_API:
  *	This symbol, if defined, indicates that Perl should
  *	be built to use the old draft POSIX threads API.
@@ -3440,11 +3542,8 @@
  *	try to use the various _r versions of library functions.
  *	This is extremely experimental.
  */
-/*#define	USE_5005THREADS		/ **/
 /*#define	USE_ITHREADS		/ **/
-#if defined(USE_5005THREADS) && !defined(USE_ITHREADS)
-#define		USE_THREADS		/* until src is revised*/
-#endif
+/*#define		USE_THREADS		/ **/
 /*#define	OLD_PTHREADS_API		/ **/
 /*#define	USE_REENTRANT_API	/ **/
 
@@ -3452,11 +3551,11 @@
  *	If defined, this symbol contains the name of a private library.
  *	The library is private in the sense that it needn't be in anyone's
  *	execution path, but it should be accessible by the world.
- *	It may have a ~ on the front. 
+ *	It may have a ~ on the front.
  *	The standard distribution will put nothing in this directory.
  *	Vendors who distribute perl may wish to place their own
  *	architecture-dependent modules and extensions in this directory with
- *		MakeMaker Makefile.PL INSTALLDIRS=vendor 
+ *		MakeMaker Makefile.PL INSTALLDIRS=vendor
  *	or equivalent.  See INSTALL for details.
  */
 /* PERL_VENDORARCH_EXP:
@@ -3549,13 +3648,13 @@
  *	This symbol, if defined, indicates that the copysignl routine is
  *	available.  If aintl is also present we can emulate modfl.
  */
-/*#define HAS_COPYSIGNL		/ **/
+/*#define HAS_COPYSIGNL		/**/
 
 /* USE_CPLUSPLUS:
  *	This symbol, if defined, indicates that a C++ compiler was
  *	used to compiled Perl and will be used to compile extensions.
  */
-/*#define USE_CPLUSPLUS		/ **/
+/*#define USE_CPLUSPLUS		/**/
 
 /* HAS_DBMINIT_PROTO:
  *	This symbol, if defined, indicates that the system provides

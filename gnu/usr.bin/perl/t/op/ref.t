@@ -170,6 +170,33 @@ SKIP: {
     ok (eval { "x" =~ $x }, "REGEXP with mother_re still matches");
 }
 
+# test dereferencing errors
+{
+    format STDERR =
+.
+    my $ref;
+    foreach $ref (*STDOUT{IO}, *STDERR{FORMAT}) {
+	eval q/ $$ref /;
+	like($@, qr/Not a SCALAR reference/, "Scalar dereference");
+	eval q/ @$ref /;
+	like($@, qr/Not an ARRAY reference/, "Array dereference");
+	eval q/ %$ref /;
+	like($@, qr/Not a HASH reference/, "Hash dereference");
+	eval q/ &$ref /;
+	like($@, qr/Not a CODE reference/, "Code dereference");
+    }
+
+    $ref = *STDERR{FORMAT};
+    eval q/ *$ref /;
+    like($@, qr/Not a GLOB reference/, "Glob dereference");
+
+    $ref = *STDOUT{IO};
+    eval q/ *$ref /;
+    is($@, '', "Glob dereference of PVIO is acceptable");
+
+    is($ref, *{$ref}{IO}, "IO slot of the temporary glob is set correctly");
+}
+
 # Test the ref operator.
 
 sub PVBM () { 'foo' }
@@ -631,33 +658,6 @@ is ( (sub {"bar"})[0]->(), "bar", 'code deref from list slice w/ ->' );
            "deref of undef from list slice fails" );
 }
 
-# test dereferencing errors
-{
-    format STDERR =
-.
-    my $ref;
-    foreach $ref (*STDOUT{IO}, *STDERR{FORMAT}) {
-	eval q/ $$ref /;
-	like($@, qr/Not a SCALAR reference/, "Scalar dereference");
-	eval q/ @$ref /;
-	like($@, qr/Not an ARRAY reference/, "Array dereference");
-	eval q/ %$ref /;
-	like($@, qr/Not a HASH reference/, "Hash dereference");
-	eval q/ &$ref /;
-	like($@, qr/Not a CODE reference/, "Code dereference");
-    }
-
-    $ref = *STDERR{FORMAT};
-    eval q/ *$ref /;
-    like($@, qr/Not a GLOB reference/, "Glob dereference");
-
-    $ref = *STDOUT{IO};
-    eval q/ *$ref /;
-    is($@, '', "Glob dereference of PVIO is acceptable");
-
-    is($ref, *{$ref}{IO}, "IO slot of the temporary glob is set correctly");
-}
-
 # these will segfault if they fail
 
 my $pvbm = PVBM;
@@ -724,16 +724,15 @@ is (runperl(
 # it doesn't trigger a panic with multiple rounds of global cleanup
 # (Perl_sv_clean_all).
 
-SKIP: {
-    skip_if_miniperl('no Scalar::Util under miniperl', 4);
-
+{
     local $ENV{PERL_DESTRUCT_LEVEL} = 2;
 
     # we do all permutations of array/hash, 1ref/2ref, to account
     # for the different way backref magic is stored
 
     fresh_perl_is(<<'EOF', 'ok', { stderr => 1 }, 'array with 1 weak ref');
-use Scalar::Util qw(weaken);
+no warnings 'experimental::builtin';
+use builtin qw(weaken);
 my $r = [];
 Internals::SvREFCNT(@$r, 9);
 my $r1 = $r;
@@ -742,7 +741,8 @@ print "ok";
 EOF
 
     fresh_perl_is(<<'EOF', 'ok', { stderr => 1 }, 'array with 2 weak refs');
-use Scalar::Util qw(weaken);
+no warnings 'experimental::builtin';
+use builtin qw(weaken);
 my $r = [];
 Internals::SvREFCNT(@$r, 9);
 my $r1 = $r;
@@ -753,7 +753,8 @@ print "ok";
 EOF
 
     fresh_perl_is(<<'EOF', 'ok', { stderr => 1 }, 'hash with 1 weak ref');
-use Scalar::Util qw(weaken);
+no warnings 'experimental::builtin';
+use builtin qw(weaken);
 my $r = {};
 Internals::SvREFCNT(%$r, 9);
 my $r1 = $r;
@@ -762,7 +763,8 @@ print "ok";
 EOF
 
     fresh_perl_is(<<'EOF', 'ok', { stderr => 1 }, 'hash with 2 weak refs');
-use Scalar::Util qw(weaken);
+no warnings 'experimental::builtin';
+use builtin qw(weaken);
 my $r = {};
 Internals::SvREFCNT(%$r, 9);
 my $r1 = $r;
@@ -774,12 +776,12 @@ EOF
 
 }
 
-SKIP:{
-    skip_if_miniperl "no Scalar::Util on miniperl", 1;
+{
     my $error;
     *hassgropper::DESTROY = sub {
-        require Scalar::Util;
-        eval { Scalar::Util::weaken($_[0]) };
+        no warnings 'experimental::builtin';
+        use builtin qw(weaken);
+        eval { weaken($_[0]) };
         $error = $@;
         # This line caused a crash before weaken refused to weaken a
         # read-only reference:

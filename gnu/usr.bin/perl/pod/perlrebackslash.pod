@@ -186,6 +186,10 @@ digits.  Thus C<\N{U+0041}> means C<LATIN CAPITAL LETTER A>, and you will
 rarely see it written without the two leading zeros.  C<\N{U+0041}> means
 "A" even on EBCDIC machines (where the ordinal value of "A" is not 0x41).
 
+Blanks may freely be inserted adjacent to but within the braces
+enclosing the name or code point.  So S<C<\N{ U+0041 }>> is perfectly
+legal.
+
 It is even possible to give your own names to characters and character
 sequences by using the L<charnames> module.  These custom names are
 lexically scoped, and so a given code point may have different names
@@ -218,7 +222,7 @@ meaning by the regex engine, and will match "as is".
 =head3 Octal escapes
 
 There are two forms of octal escapes.  Each is used to specify a character by
-its code point specified in octal notation.
+its code point specified in base 8.
 
 One form, available starting in Perl 5.14 looks like C<\o{...}>, where the dots
 represent one or more octal digits.  It can be used for any Unicode character.
@@ -260,6 +264,9 @@ Mnemonic: I<0>ctal or I<o>ctal.
  $str =~ /P\053/;    # No match, "\053" is "+" and taken literally.
  /\o{23073}/         # Black foreground, white background smiling face.
  /\o{4801234567}/    # Raises a warning, and yields chr(4).
+ /\o{ 400}/          # LATIN CAPITAL LETTER A WITH MACRON
+ /\o{ 400 }/         # Same. These show blanks are allowed adjacent to
+                     # the braces
 
 =head4 Disambiguation rules between old-style octal escapes and backreferences
 
@@ -326,6 +333,8 @@ Mnemonic: heI<x>adecimal.
                     # the Unicode character 2602 is an umbrella.
  /\x{263B}/         # Black smiling face.
  /\x{263b}/         # Same, the hex digits A - F are case insensitive.
+ /\x{ 263b }/       # Same, showing optional blanks adjacent to the
+                    # braces
 
 =head2 Modifiers
 
@@ -440,7 +449,9 @@ Mnemonic: I<g>roup.
 
  /(\w+) \g1/;    # Finds a duplicated word, (e.g. "cat cat").
  /(\w+) \1/;     # Same thing; written old-style.
- /(.)(.)\g2\g1/;  # Match a four letter palindrome (e.g. "ABBA").
+ /(\w+) \g{1}/;  # Same, using the safer braced notation
+ /(\w+) \g{ 1 }/;# Same, showing optional blanks adjacent to the braces
+ /(.)(.)\g2\g1/; # Match a four letter palindrome (e.g. "ABBA").
 
 
 =head3 Relative referencing
@@ -460,6 +471,7 @@ even if the larger pattern also contains capture groups.
     (B)      # Group 3
     \g{-1}   # Refers to group 3 (B)
     \g{-3}   # Refers to group 1 (A)
+    \g{ -3 } # Same, showing optional blanks adjacent to the braces
   )
  /x;         # Matches "ABBA".
 
@@ -480,11 +492,16 @@ hyphen.
 
 =head4 Examples
 
- /(?<word>\w+) \g{word}/ # Finds duplicated word, (e.g. "cat cat")
- /(?<word>\w+) \k{word}/ # Same.
- /(?<word>\w+) \k<word>/ # Same.
+ /(?<word>\w+) \g{word}/   # Finds duplicated word, (e.g. "cat cat")
+ /(?<word>\w+) \k{word}/   # Same.
+ /(?<word>\w+) \g{ word }/ # Same, showing optional blanks adjacent to
+                           # the braces
+ /(?<word>\w+) \k{ word }/ # Same.
+ /(?<word>\w+) \k<word>/   # Same.  There are no braces, so no blanks
+                           # are permitted
  /(?<letter1>.)(?<letter2>.)\g{letter2}\g{letter1}/
-                         # Match a four letter palindrome (e.g. "ABBA")
+                           # Match a four letter palindrome (e.g.
+                           # "ABBA")
 
 =head2 Assertions
 
@@ -540,7 +557,8 @@ boundary type specified inside the braces.  The boundary
 types are given a few paragraphs below.  C<\B{...}> matches at any place
 between characters where C<\b{...}> of the same type doesn't match.
 
-C<\b> when not immediately followed by a C<"{"> matches at any place
+C<\b> when not immediately followed by a C<"{"> is available in all
+Perls.  It matches at any place
 between a word (something matched by C<\w>) and a non-word character
 (C<\W>); C<\B> when not immediately followed by a C<"{"> matches at any
 place between characters where C<\b> doesn't match.  To get better
@@ -576,7 +594,7 @@ The boundary types are:
 
 This matches a Unicode "Grapheme Cluster Boundary".  (Actually Perl
 always uses the improved "extended" grapheme cluster").  These are
-explained below under L</C<\X>>.  In fact, C<\X> is another way to get
+explained below under C<L</\X>>.  In fact, C<\X> is another way to get
 the same functionality.  It is equivalent to C</.+?\b{gcb}/>.  Use
 whichever is most convenient for your situation.
 

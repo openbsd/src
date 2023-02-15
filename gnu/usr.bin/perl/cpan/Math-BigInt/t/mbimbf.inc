@@ -680,7 +680,8 @@ eval { $x = $mbf->new(1);
 like($@, qr/^bround\(\) needs positive accuracy/,
     qq|"\$x->bround(-2)" gives warning as expected|);
 
-# test whether rounding to higher accuracy is no-op
+note("test whether rounding to higher accuracy is no-op");
+
 $x = $mbf->new(1);
 $x->{_a} = 4;
 is($x, "1.000", q|$x = "1.000"|);
@@ -695,65 +696,76 @@ $x->bround(6);                  # must be no-op
 is($x->{_a}, 3, q|$x->{_a} = 3|);
 is($x, "1230", q|$x = "1230"|);
 
-# bround(n) should set _a
+note("bround(n) should set _a");
+
 $x->bround(2);                  # smaller works
 is($x, "1200", q|$x = "1200"|);
 is($x->{_a}, 2, q|$x->{_a} = 2|);
 
 # bround(-n) is undocumented and only used by MBF
-# bround(-n) should set _a
+
+note("bround(-n) should set _a");
+
 $x = $mbi->new(12345);
 $x->bround(-1);
 is($x, "12300", q|$x = "12300"|);
 is($x->{_a}, 4, q|$x->{_a} = 4|);
 
-# bround(-n) should set _a
+note("bround(-n) should set _a");
+
 $x = $mbi->new(12345);
 $x->bround(-2);
 is($x, "12000", q|$x = "12000"|);
 is($x->{_a}, 3, q|$x->{_a} = 3|);
 
-# bround(-n) should set _a
+note("bround(-n) should set _a");
+
 $x = $mbi->new(12345);
 $x->{_a} = 5;
 $x->bround(-3);
 is($x, "10000", q|$x = "10000"|);
 is($x->{_a}, 2, q|$x->{_a} = 2|);
 
-# bround(-n) should set _a
+note("bround(-n) should set _a");
+
 $x = $mbi->new(12345);
 $x->{_a} = 5;
 $x->bround(-4);
 is($x, "0", q|$x = "0"|);
 is($x->{_a}, 1, q|$x->{_a} = 1|);
 
-# bround(-n) should be no-op if n too big
+note("bround(-n) should be no-op if n too big");
+
 $x = $mbi->new(12345);
 $x->bround(-5);
 is($x, "0", q|$x = "0"|);               # scale to "big" => 0
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
-# bround(-n) should be no-op if n too big
+note("bround(-n) should be no-op if n too big");
+
 $x = $mbi->new(54321);
 $x->bround(-5);
 is($x, "100000", q|$x = "100000"|);     # used by MBF to round 0.0054321 at 0.0_6_00000
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
-# bround(-n) should be no-op if n too big
+note("bround(-n) should be no-op if n too big");
+
 $x = $mbi->new(54321);
 $x->{_a} = 5;
 $x->bround(-6);
 is($x, "100000", q|$x = "100000"|);     # no-op
 is($x->{_a}, 0, q|$x->{_a} = 0|);
 
-# bround(n) should set _a
+note("bround(n) should set _a");
+
 $x = $mbi->new(12345);
 $x->{_a} = 5;
 $x->bround(5);                          # must be no-op
 is($x, "12345", q|$x = "12345"|);
 is($x->{_a}, 5, q|$x->{_a} = 5|);
 
-# bround(n) should set _a
+note("bround(n) should set _a");
+
 $x = $mbi->new(12345);
 $x->{_a} = 5;
 $x->bround(6);                          # must be no-op
@@ -776,13 +788,14 @@ $x = $mbf->new("12340");
 $x->bfround(2);
 is($x, "12340", q|$x = "12340"|);
 
-# MBI::bfround should clear A for negative P
+note("MBI::bfround should clear A for negative P");
+
 $x = $mbi->new("1234");
 $x->accuracy(3);
 $x->bfround(-2);
 is($x->{_a}, undef, q|$x->{_a} = undef|);
 
-# test that bfround() and bround() work with large numbers
+note("test that bfround() and bround() work with large numbers");
 
 $x = $mbf->new(1)->bdiv(5678, undef, -63);
 is($x, "0.000176118351532229658330398027474462839027826699542092286016203",
@@ -801,13 +814,15 @@ is($x, "0.00017611835153222965833039802747446283902782"
        . q|669954209228601620288834096512856639662"|);
 
 ###############################################################################
-# rounding with already set precision/accuracy
+
+note("rounding with already set precision/accuracy");
 
 $x = $mbf->new(1);
 $x->{_p} = -5;
 is($x, "1.00000", q|$x = "1.00000"|);
 
-# further rounding donw
+note("further rounding down");
+
 is($x->bfround(-2), "1.00", q|$x->bfround(-2) = "1.00"|);
 is($x->{_p}, -2, q|$x->{_p} = -2|);
 
@@ -821,7 +836,8 @@ $x->{_a} = 5;
 is($x->bround(2), "1.2", q|$x->bround(2) = "1.2"|);
 is($x->{_a}, 2, q|$x->{_a} = 2|);
 
-# mantissa/exponent format and A/P
+note("mantissa/exponent format and A/P");
+
 $x = $mbf->new("12345.678");
 $x->accuracy(4);
 is($x, "12350", q|$x = "12350"|);
@@ -833,13 +849,14 @@ is($x->{_p}, undef, q|$x->{_p} = undef|);
 #is($x->{_m}->{_p}, undef, q|$x->{_m}->{_p} = undef|);
 #is($x->{_e}->{_p}, undef, q|$x->{_e}->{_p} = undef|);
 
-# check for no A/P in case of fallback
-# result
+note("check for no A/P in case of fallback result");
+
 $x = $mbf->new(100) / 3;
 is($x->{_a}, undef, q|$x->{_a} = undef|);
 is($x->{_p}, undef, q|$x->{_p} = undef|);
 
-# result & remainder
+note("result & remainder");
+
 $x = $mbf->new(100) / 3;
 ($x, $y) = $x->bdiv(3);
 is($x->{_a}, undef, q|$x->{_a} = undef|);

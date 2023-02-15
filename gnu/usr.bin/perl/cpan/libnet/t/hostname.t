@@ -7,10 +7,10 @@ use warnings;
 
 BEGIN {
     if (!eval { require Socket }) {
-        print "1..0 # no Socket\n"; exit 0;
+        print "1..0 # Skip: no Socket\n"; exit 0;
     }
     if (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
-        print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
+        print "1..0 # Skip: EBCDIC but no Convert::EBCDIC\n"; exit 0;
     }
 }
 
@@ -18,7 +18,7 @@ use Net::Domain qw(hostname domainname hostdomain hostfqdn);
 use Net::Config;
 
 unless($NetConfig{test_hosts}) {
-    print "1..0\n";
+    print "1..0 # Skip: test_hosts not enabled in config\n";
     exit 0;
 }
 

@@ -5,6 +5,8 @@ use warnings;
 
 use Test::More 0.89;
 
+plan skip_all => 'This module is a no-op on perls earlier than 5.010' if "$]" < 5.010000;
+
 local $SIG{__WARN__} = sub { fail("Got unexpected warning"); diag($_[0]) };
 
 if ($] >= 5.010000) {
@@ -17,45 +19,26 @@ END
 }
 
 if ($] >= 5.010001) {
-	if (eval '
-		no warnings "experimental";
-		use feature "switch";
-		if(0) { when(3) {} }
-		1;
-	') {
-		is (eval <<'END', 1, 'switch compiles') or diag $@;
-		use experimental 'switch';
-		sub bar { 1 };
-		given(1) {
-			when (\&bar) {
-				pass("bar matches 1");
-			}
-			default {
-				fail("bar matches 1");
-			}
+	is (eval <<'END', 1, 'switch compiles') or diag $@;
+	use experimental 'switch';
+	sub bar { 1 };
+	given(1) {
+		when (\&bar) {
+			pass("bar matches 1");
 		}
-		1;
-END
-	} else {
-		is (eval <<'END', 1, 'switch compiles') or diag $@;
-		use experimental 'switch';
-		sub bar { 1 };
-		given(1) {
-			whereso (\&bar) {
-				pass("bar matches 1");
-			}
+		default {
 			fail("bar matches 1");
 		}
-		1;
-END
 	}
+	1;
+END
 }
 
 if ($] >= 5.010001) {
 	is (eval <<'END', 1, 'smartmatch compiles') or diag $@;
 	use experimental 'smartmatch';
-	{ package Baz; use overload "~~" => sub { 1 }; }
-	is(1 ~~ bless({}, "Baz"), 1, "is 1");
+	sub baz { 1 };
+	is(1 ~~ \&baz, 1, "is 1");
 	1;
 END
 }

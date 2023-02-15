@@ -16,9 +16,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require Config; import Config;
     require './test.pl';
     set_up_inc('../lib','.','../ext/re');
+    require Config; import Config;
 }
 
 skip_all('no re module') unless defined &DynaLoader::boot_DynaLoader;
@@ -44,7 +44,7 @@ sub run_tests {
 
     watchdog(($ENV{PERL_TEST_TIME_OUT_FACTOR} || 1)
              * (($::running_as_thread && $::running_as_thread)
-                ? 150 : 540));
+                ? 150 : 225));
 
     {
         # [perl #120446]

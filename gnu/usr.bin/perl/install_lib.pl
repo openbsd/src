@@ -4,9 +4,9 @@
 # Probably installhtml needs to join the club.
 
 use strict;
-use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_NetWare $Is_AmigaOS
+use vars qw($Is_VMS $Is_W32 $Is_OS2 $Is_Cygwin $Is_Darwin $Is_AmigaOS
 	    %opts $packlist);
-use subs qw(unlink link chmod chown);
+use subs qw(unlink link chmod);
 require File::Path;
 require File::Copy;
 
@@ -48,7 +48,6 @@ $Is_W32 = $^O eq 'MSWin32';
 $Is_OS2 = $^O eq 'os2';
 $Is_Cygwin = $^O eq 'cygwin';
 $Is_Darwin = $^O eq 'darwin';
-$Is_NetWare = $Config{osname} eq 'NetWare';
 $Is_AmigaOS = $^O eq 'amigaos';
 
 sub unlink {
@@ -59,7 +58,7 @@ sub unlink {
 
     foreach my $name (@names) {
 	next unless -e $name;
-	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin || $Is_NetWare || $Is_AmigaOS);
+	chmod 0777, $name if ($Is_OS2 || $Is_W32 || $Is_Cygwin || $Is_AmigaOS);
 	print "  unlink $name\n" if $opts{verbose};
 	( CORE::unlink($name) and ++$cnt
 	  or warn "Couldn't unlink $name: $!\n" ) unless $opts{notify};
@@ -99,9 +98,6 @@ sub link {
 		unless -f $to and (chmod(0666, $to), unlink $to)
 			and File::Copy::copy($from, $to) and ++$success;
 	}
-	if (defined($opts{uid}) || defined($opts{gid})) {
-	    chown($opts{uid}, $opts{gid}, $to) if $success;
-	}
 	$packlist->{$xto} = { type => 'file' };
     }
     $success;
@@ -110,27 +106,16 @@ sub link {
 sub chmod {
     my($mode,$name) = @_;
 
-    return if ($^O eq 'dos');
     printf "  chmod %o %s\n", $mode, $name if $opts{verbose};
     CORE::chmod($mode,$name)
 	|| warn sprintf("Couldn't chmod %o %s: $!\n", $mode, $name)
       unless $opts{notify};
 }
 
-sub chown {
-    my($uid,$gid,$name) = @_;
-
-    return if ($^O eq 'dos');
-    printf "  chown %s:%s %s\n", $uid, $gid, $name if $opts{verbose};
-    CORE::chown($uid,$gid,$name)
-	|| warn sprintf("Couldn't chown %s:%s %s: $!\n", $uid, $gid, $name)
-      unless $opts{notify};
-}
-
 sub samepath {
     my($p1, $p2) = @_;
 
-    return (lc($p1) eq lc($p2)) if ($Is_W32 || $Is_NetWare);
+    return (lc($p1) eq lc($p2)) if ($Is_W32);
 
     return 1
         if $p1 eq $p2;
@@ -158,8 +143,7 @@ sub safe_rename {
 }
 
 sub mkpath {
-    File::Path::make_path(shift, {owner=>$opts{uid}, group=>$opts{gid},
-        mode=>0777, verbose=>$opts{verbose}}) unless $opts{notify};
+    File::Path::mkpath(shift , $opts{verbose}, 0777) unless $opts{notify};
 }
 
 sub unixtoamiga

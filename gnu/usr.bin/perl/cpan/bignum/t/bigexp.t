@@ -1,14 +1,14 @@
-#!perl
+# -*- mode: perl; -*-
 
 ###############################################################################
-# test for bug #18025: bignum/bigrat can lead to a number that is both 1 and 0
+# test for bug #18025: bigfloat/bigrat can lead to a number that is both 1 and 0
 
 use strict;
 use warnings;
 
 use Test::More tests => 4;
 
-use bignum;
+use bigfloat;
 
 my $ln_ev = -7 / (10 ** 17);
 my $ev    = exp($ln_ev);

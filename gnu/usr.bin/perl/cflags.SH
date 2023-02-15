@@ -146,8 +146,7 @@ stdflags=''
 # one individually.
 # TODO:  Ponder whether to migrate this back to Configure so hints files can
 # tweak it.  Also, be paranoid about whether results we've deduced in Configure
-# (especially about things like long long, which are not in C89) will still be
-# valid if we now add flags like -std=c89.
+# will still be valid if we now add flags like -std=c99.
 
 pedantic=''
 case "$gccansipedantic" in
@@ -159,34 +158,42 @@ case "$gccversion" in
 [12].*) ;; # gcc versions 1 (gasp!) and 2 are not good for this.
 Intel*) ;; # # Is that you, Intel C++?
 #
-# NOTE 1: the -std=c89 without -pedantic is a bit pointless.
-# Just -std=c89 means "if there is room for interpretation,
-# interpret the C89 way."  It does NOT mean "strict C89" on its own.
+# These comments are adapted from the originals, which were for -std=c89.
+# I believe that my updates close to correct, and better than throwing the
+# entire comments away, but please check for discrepencies.
+#
+# NOTE 1: the -std=c99 without -pedantic is a bit pointless.
+# Just -std=c99 means "if there is room for interpretation,
+# interpret the C99 way."  It does NOT mean "strict C99" on its own.
 # You need to add the -pedantic for that.  To do this with Configure,
-# do -Dgccansipedantic (note that the -ansi is included in any case,
-# the option is a bit oddly named, for historical reasons.)
+# do -Dgccansipedantic (note that this is named from the time when we also
+# added the -ansi option. That forces -std=c89, so we no longer use it.)
+# *Because* we aren't adding -std=c99 if we don't have to, but will add -W,
+# some versions of gcc will accept C99 code but warn about not-C89 features.
+# (If we added -std=c99 then the warnings enabled by -W would be consistent)
+# Hence we add -Wno-long-long and -Wno-declaration-after-statement to cover
+# these cases.
 #
 # NOTE 2: -pedantic necessitates adding a couple of flags:
 # * -PERL_GCC_PEDANTIC so that the perl code can adapt: there's nothing
 #   added by gcc itself to indicate pedanticness.
 # * -Wno-overlength-strings under -DDEBUGGING because quite many of
 #   the LEAVE_with_name() and assert() calls generate string literals
-#   longer then the ANSI minimum of 509 bytes.
+#   longer then the ANSI C99 minimum of 4095 bytes.
 #
 # NOTE 3: the relative order of these options matters:
 # -Wextra before -W
-# -std=c89 before -ansi
-# -pedantic* before -Werror=d-a-s
+# -W before -Wno-long-long -Wno-declaration-after-statement
 #
-*) warns="-std=c89 -ansi $pedantic \
+*) warns="$pedantic \
 	-Werror=pointer-arith \
+	-Werror=vla \
 	-Wextra -W \
+	-Wno-long-long -Wno-declaration-after-statement \
 	-Wc++-compat -Wwrite-strings"
-   # declaration after statement is normal in C++ rather than an
-   # extension and compilers complain if we try to warn about it
-   case "$d_cplusplus" in
-   define) ;;
-   *) warns="$warns -Werror=declaration-after-statement" ;;
+   case " $ccflags " in
+   *" -std="*) ;; # Already have -std=...
+   *) warns="-std=c99 $warns" ;;
    esac
    for opt in $warns
     do
@@ -214,17 +221,6 @@ Intel*) ;; # # Is that you, Intel C++?
                  echo "cflags.SH: Adding $opt."
                  stdflags="$stdflags $opt"
                  ;;
-               -ansi)
-                 # -std=c89 is the modern form of -ansi, so add
-                 # -ansi only if -std=c89 is not there already.
-                 case " $stdflags " in
-                 *-std=c89*) ;;
-                 *)
-                   echo "cflags.SH: Adding $opt."
-                   stdflags="$stdflags $opt"
-                   ;;
-                 esac
-                 ;;
                -W)
                  # -Wextra is the modern form of -W, so add
                  # -W only if -Wextra is not there already.
@@ -236,16 +232,6 @@ Intel*) ;; # # Is that you, Intel C++?
                    ;;
                  esac
                  ;;
-               -Werror=declaration-after-statement)
-                  # -pedantic* (with -std=c89) covers -Werror=d-a-s.
-                  case "$stdflags$warn" in
-                  *-std=c89*-pedantic*|*-pedantic*-std=c89*) ;;
-                  *)
-                     echo "cflags.SH: Adding $opt."
-                     warn="$warn $opt"
-                     ;;
-                  esac
-                  ;;
                -Werror=pointer-arith)
                   # -pedantic* covers -Werror=p-a
                   case "$warn" in
@@ -292,22 +278,14 @@ case "$gccversion" in
 *)
   case "$warn$ccflags" in
   *-pedantic*)
-    # If we have -Duse64bitint (or equivalent) in effect and the quadtype
-    # has become 'long long', gcc -pedantic* becomes unbearable
-    # (moreso when combined with -Wall) because long long and LL and %lld|%Ld
-    # become warn-worthy.  So let's drop the -pedantic in that case.
-    #
-    # Similarly, since 'long long' isn't part of C89, FreeBSD 6.2 headers
-    # don't declare atoll() under -std=c89, but we need it.  In general,
-    # insisting on -std=c89 is inconsistent with insisting on using
-    # 'long long'. So drop -std=c89 and -ansi as well if we're using
-    # 'long long' as our main integral type.
+    # For -std=c99 -pedantic, only the %Ld format seems to be warn-worthy.
+    # 'long long' and '%lld' are now kosher.
     #
     # usedtrace (DTrace) uses unportable features (dollars in identifiers,
     # and gcc statement expressions), it is just easier to turn off pedantic.
     remove=''
     case "$quadtype:$ivtype:$sPRId64:$usedtrace" in
-    *"long long"*|*lld*|*Ld*) remove='long long' ;;
+    **Ld*) remove='Ld' ;;
     *) case "$usedtrace" in
        define) remove='usedtrace' ;;
        esac
@@ -315,10 +293,9 @@ case "$gccversion" in
     esac
     case "$remove" in
     '') ;;
-    *) echo "cflags.SH: Removing -pedantic*, -std=c89, and -ansi because of $remove."
-      ccflags=`echo $ccflags|sed -e 's/-pedantic-errors/ /' -e 's/-pedantic/ /' -e 's/-std=c89/ /' -e 's/-ansi/ /' -e 's/-DPERL_GCC_PEDANTIC/ /'`
-      warn=`echo $warn|sed -e 's/-pedantic-errors/ /' -e 's/-pedantic/ /' -e 's/-ansi/ /' -e 's/-DPERL_GCC_PEDANTIC/ /'`
-      stdflags=`echo $stdflags|sed -e 's/-std=c89/ /'`
+    *) echo "cflags.SH: Removing -pedantic* -ansi because of $remove."
+      ccflags=`echo $ccflags|sed -e 's/-pedantic-errors/ /' -e 's/-pedantic/ /'`
+      warn=`echo $warn|sed -e 's/-pedantic-errors/ /' -e 's/-pedantic/ /'`
       ;;
     esac
     ;;
@@ -357,13 +334,7 @@ case "$cc" in
   # Extra paranoia in case people have bad canned ccflags:
   # bad in the sense that the flags are accepted by g++,
   # but then whined about.
-  #
-  # -Werror=d-a-s option is valid for g++, by definition,
-  # but we remove it just for cleanliness and shorter command lines.
-  for f in -Wdeclaration-after-statement \
-		-Werror=declaration-after-statement \
-		-Wc++-compat \
-		-std=c89
+  for f in -Wc++-compat -std=c99
   do
     case "$ccflags$warn" in
     *"$f"*)
@@ -376,8 +347,7 @@ case "$cc" in
   ;;
 esac
 
-for f in -Wdeclaration-after-statement -Werror=declaration-after-statement \
-         -Wpointer-arith -Werror=pointer-arith
+for f in -Wpointer-arith -Werror=pointer-arith
 do
   case "$cppflags" in
   *"$f"*)

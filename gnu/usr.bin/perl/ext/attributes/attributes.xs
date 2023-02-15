@@ -204,7 +204,7 @@ usage:
 	Perl_sv_sethek(aTHX_ TARG, HvNAME_HEK(SvSTASH(sv)));
 #if 0	/* this was probably a bad idea */
     else if (SvPADMY(sv))
-	sv_setsv(TARG, &PL_sv_no);	/* unblessed lexical */
+	sv_setbool(TARG, FALSE);	/* unblessed lexical */
 #endif
     else {
 	const HV *stash = NULL;

@@ -15,6 +15,10 @@
 #  include "ppport.h"
 #endif
 
+#if defined(HAS_READLINK) && !defined(PerlLIO_readlink)
+#define PerlLIO_readlink readlink
+#endif
+
 #ifdef I_UNISTD
 #   include <unistd.h>
 #endif
@@ -84,6 +88,9 @@ bsd_realpath(const char *path, char resolved[MAXPATHLEN])
 	unsigned symlinks;
 	int serrno;
 	char remaining[MAXPATHLEN], next_token[MAXPATHLEN];
+#ifdef PERL_IMPLICIT_SYS
+        dTHX;
+#endif
 
 	serrno = errno;
 	symlinks = 0;
@@ -119,15 +126,24 @@ bsd_realpath(const char *path, char resolved[MAXPATHLEN])
 
             p = strchr(remaining, '/');
             s = p ? p : remaining + remaining_len;
+
             if ((STRLEN)(s - remaining) >= (STRLEN)sizeof(next_token)) {
                 errno = ENAMETOOLONG;
                 return (NULL);
             }
             memcpy(next_token, remaining, s - remaining);
             next_token[s - remaining] = '\0';
-            remaining_len -= s - remaining;
-            if (p != NULL)
-                memmove(remaining, s + 1, remaining_len + 1);
+
+            /* shift first component off front of path, including '/' */
+            if (p) {
+                s++; /* skip '/' */
+                remaining_len -= s - remaining;
+                /* the +1 includes the trailing '\0' */
+                memmove(remaining, s, remaining_len + 1);
+            }
+            else
+                remaining_len = 0;
+
             if (resolved[resolved_len - 1] != '/') {
                 if (resolved_len + 1 >= MAXPATHLEN) {
                     errno = ENAMETOOLONG;
@@ -166,8 +182,8 @@ bsd_realpath(const char *path, char resolved[MAXPATHLEN])
             }
 #if defined(HAS_LSTAT) && defined(HAS_READLINK) && defined(HAS_SYMLINK)
             {
-                struct stat sb;
-                if (lstat(resolved, &sb) != 0) {
+                Stat_t sb;
+                if (PerlLIO_lstat(resolved, &sb) != 0) {
                     if (errno == ENOENT && p == NULL) {
                         errno = serrno;
                         return (resolved);
@@ -182,7 +198,7 @@ bsd_realpath(const char *path, char resolved[MAXPATHLEN])
                         errno = ELOOP;
                         return (NULL);
                     }
-                    slen = readlink(resolved, symlink, sizeof(symlink) - 1);
+                    slen = PerlLIO_readlink(resolved, symlink, sizeof(symlink) - 1);
                     if (slen < 0)
                         return (NULL);
                     symlink[slen] = '\0';

@@ -318,9 +318,6 @@ NaN:1:NaN
 5/2:2.5
 3/2:1.5
 5/4:1.25
-NaN:NaN
-+inf:inf
--inf:-inf
 
 &fnan
 abc:NaN
@@ -361,10 +358,6 @@ inf/-5:-inf
 -inf/-5:inf
 123:123
 -123.4567:-1234567/10000
-# invalid inputs
-1__2:NaN
-1E1__2:NaN
-11__2E2:NaN
 #1.E3:NaN
 .2E-3.:NaN
 #1e3e4:NaN

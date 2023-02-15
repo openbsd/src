@@ -6,6 +6,12 @@ BEGIN {
     require './test.pl';
 }
 
+use Config;
+
+if (exists($Config{taint_support}) && !$Config{taint_support}) {
+    skip_all("perl built without taint support");
+}
+
 plan tests => 13;
 
 my $Perl = which_perl();

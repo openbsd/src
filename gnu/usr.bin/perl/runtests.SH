@@ -40,8 +40,9 @@ export PATH || (echo "OOPS, this isn't sh.  Desperation time.  I will feed mysel
 # descendents of this script run cpan/ExtUtils-Constant/t/Constant.t
 # which itelf invokes make, the warnings ensue.
 
-unset MAKEFLAGS
-
+if [ "x$MAKEFLAGS" != "x" ]; then
+    unset MAKEFLAGS
+fi
 
 case $# in
     0)

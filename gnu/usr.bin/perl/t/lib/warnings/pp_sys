@@ -624,13 +624,6 @@ Unsuccessful open on filename containing newline at - line 5.
 ########
 # pp_sys.c [pp_sysread]
 use warnings 'io' ;
-if ($^O eq 'dos') {
-    print <<EOM ;
-SKIPPED
-# skipped on dos
-EOM
-    exit ;
-}
 my $file = "./xcv" ;
 open(F, ">$file") ; 
 binmode F;
@@ -645,11 +638,11 @@ sysread(NONEXISTENT, $a, 10);
 read(NONEXISTENT, $a, 10);
 unlink $file ;
 EXPECT
-Filehandle F opened only for output at - line 13.
-sysread() on closed filehandle F at - line 18.
-read() on closed filehandle F at - line 19.
-sysread() on unopened filehandle NONEXISTENT at - line 20.
-read() on unopened filehandle NONEXISTENT at - line 21.
+Filehandle F opened only for output at - line 6.
+sysread() on closed filehandle F at - line 11.
+read() on closed filehandle F at - line 12.
+sysread() on unopened filehandle NONEXISTENT at - line 13.
+read() on unopened filehandle NONEXISTENT at - line 14.
 ########
 # pp_sys.c [pp_binmode]
 use warnings 'unopened' ;

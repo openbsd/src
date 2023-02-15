@@ -121,11 +121,13 @@ been warned.
 
 =head1 FLAG VALUES
 
-The C<flags> parameter in all the I<call_*> functions is one of G_VOID,
-G_SCALAR, or G_ARRAY, which indicate the call context, OR'ed together
+The C<flags> parameter in all the I<call_*> functions is one of C<G_VOID>,
+C<G_SCALAR>, or C<G_LIST>, which indicate the call context, OR'ed together
 with a bit mask of any combination of the other G_* symbols defined below.
 
 =head2  G_VOID
+
+=for apidoc AmnUh||G_VOID
 
 Calls the Perl subroutine in a void context.
 
@@ -151,6 +153,8 @@ be 0.
 
 
 =head2  G_SCALAR
+
+=for apidoc AmnUh||G_SCALAR
 
 Calls the Perl subroutine in a scalar context.  This is the default
 context flag setting for all the I<call_*> functions.
@@ -190,9 +194,12 @@ I<call_*> function.  The section L</Returning a List in Scalar
 Context> shows an example of this behavior.
 
 
-=head2 G_ARRAY
+=head2 G_LIST
 
-Calls the Perl subroutine in a list context.
+=for apidoc AmnUh||G_LIST
+
+Calls the Perl subroutine in a list context. Prior to Perl version
+5.35.1 this was called C<G_ARRAY>.
 
 As with G_SCALAR, this flag has 2 effects:
 
@@ -218,16 +225,18 @@ If 0, then you have specified the G_DISCARD flag.
 If not 0, then it will be a count of the number of items returned by
 the subroutine. These items will be stored on the Perl stack.  The
 section L</Returning a List of Values> gives an example of using the
-G_ARRAY flag and the mechanics of accessing the returned items from the
+G_LIST flag and the mechanics of accessing the returned items from the
 Perl stack.
 
 =head2 G_DISCARD
+
+=for apidoc AmnUh||G_DISCARD
 
 By default, the I<call_*> functions place the items returned from
 by the Perl subroutine on the stack.  If you are not interested in
 these items, then setting this flag will make Perl get rid of them
 automatically for you.  Note that it is still possible to indicate a
-context to the Perl subroutine by using either G_SCALAR or G_ARRAY.
+context to the Perl subroutine by using either G_SCALAR or G_LIST.
 
 If you do not set this flag then it is I<very> important that you make
 sure that any temporaries (i.e., parameters passed to the Perl
@@ -238,6 +247,8 @@ Dispose of Temporaries> discusses the specific circumstances where you
 can ignore the problem and let Perl deal with it for you.
 
 =head2 G_NOARGS
+
+=for apidoc AmnUh||G_NOARGS
 
 Whenever a Perl subroutine is called using one of the I<call_*>
 functions, it is assumed by default that parameters are to be passed to
@@ -275,6 +286,8 @@ belongs to C<joe>.
 
 =head2 G_EVAL
 
+=for apidoc AmnUh||G_EVAL
+
 It is possible for the Perl subroutine you are calling to terminate
 abnormally, e.g., by calling I<die> explicitly or by not actually
 existing.  By default, when either of these events occurs, the
@@ -302,7 +315,7 @@ If G_DISCARD is specified, the return value will always be 0.
 
 =item *
 
-If G_ARRAY is specified I<and> an error has occurred, the return value
+If G_LIST is specified I<and> an error has occurred, the return value
 will always be 0.
 
 =item *
@@ -318,6 +331,8 @@ from the stack.
 See L</Using G_EVAL> for details on using G_EVAL.
 
 =head2 G_KEEPERR
+
+=for apidoc AmnUh||G_KEEPERR
 
 Using the G_EVAL flag described above will always set C<$@>: clearing
 it if there was no error, and setting it to describe the error if there
@@ -358,7 +373,7 @@ use of this flag.
 As mentioned above, you can determine the context of the currently
 executing subroutine in Perl with I<wantarray>.  The equivalent test
 can be made in C by using the C<GIMME_V> macro, which returns
-C<G_ARRAY> if you have been called in a list context, C<G_SCALAR> if
+C<G_LIST> if you have been called in a list context, C<G_SCALAR> if
 in a scalar context, or C<G_VOID> if in a void context (i.e., the
 return value will not be used).  An older version of this macro is
 called C<GIMME>; in a void context it returns C<G_SCALAR> instead of
@@ -736,7 +751,7 @@ and this is the C function
         PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
-        count = call_pv("AddSubtract", G_ARRAY);
+        count = call_pv("AddSubtract", G_LIST);
 
         SPAGAIN;
 
@@ -766,7 +781,7 @@ Notes
 
 =item 1.
 
-We wanted list context, so G_ARRAY was used.
+We wanted list context, so G_LIST was used.
 
 =item 2.
 
@@ -993,7 +1008,7 @@ equivalent of C<$@>.  We use a local temporary, C<err_tmp>, since
 C<ERRSV> is a macro that calls a function, and C<SvTRUE(ERRSV)> would
 end up calling that function multiple times.
 
-=for apidoc Amnh|GV *|PL_errgv
+=for apidoc AmnUh|GV *|PL_errgv
 
 =item 3.
 
@@ -1853,7 +1868,7 @@ of Values> recoded to use C<ST> instead of C<POP*>.
         PUSHs(sv_2mortal(newSViv(b)));
         PUTBACK;
 
-        count = call_pv("AddSubtract", G_ARRAY);
+        count = call_pv("AddSubtract", G_LIST);
 
         SPAGAIN;
         SP -= count;
@@ -1949,7 +1964,7 @@ The pattern of macro calls is like this:
 
     dMULTICALL;			/* Declare local variables */
     U8 gimme = G_SCALAR;	/* context of the call: G_SCALAR,
-				 * G_ARRAY, or G_VOID */
+				 * G_LIST, or G_VOID */
 
     PUSH_MULTICALL(cv);		/* Set up the context for calling cv,
 				   and set local vars appropriately */

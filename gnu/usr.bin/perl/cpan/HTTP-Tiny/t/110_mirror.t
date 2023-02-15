@@ -6,8 +6,8 @@ use warnings;
 use File::Basename;
 use Test::More 0.88;
 use lib 't';
-use Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
-                  set_socket_source sort_headers $CRLF $LF];
+use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+  clear_socket_source set_socket_source sort_headers $CRLF $LF];
 use HTTP::Tiny;
 use File::Temp qw/tempdir/;
 use File::Spec;
@@ -64,6 +64,7 @@ for my $file ( dir_list("corpus", qr/^mirror/ ) ) {
   my $req_fh = tmpfile();
 
   my $http = HTTP::Tiny->new( keep_alive => 0 );
+  clear_socket_source();
   set_socket_source($req_fh, $res_fh);
 
   my @call_args = %options ? ($url, $tempfile, \%options) : ($url, $tempfile);

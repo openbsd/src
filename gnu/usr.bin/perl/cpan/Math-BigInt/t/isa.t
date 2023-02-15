@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
@@ -20,7 +20,7 @@ isa_ok($class->new(123), 'Math::BigInt');
 # ditto for plain Math::BigInt
 isa_ok(Math::BigInt->new(123), 'Math::BigInt');
 
-# But Math::BigFloats aren't
+# But Math::BigFloat objects aren't
 ok(!Math::BigFloat->new(123)->isa('Math::BigInt'),
    "A Math::BigFloat isn't a Math::BigInt");
 

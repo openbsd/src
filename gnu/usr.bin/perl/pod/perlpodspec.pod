@@ -206,7 +206,7 @@ Pod commands:
 
 =over
 
-=item "=head1", "=head2", "=head3", "=head4"
+=item "=head1", "=head2", "=head3", "=head4", "=head5", "=head6"
 
 This command indicates that the text in the remainder of the paragraph
 is a heading.  That text may contain formatting codes.  Examples:
@@ -214,6 +214,11 @@ is a heading.  That text may contain formatting codes.  Examples:
   =head1 Object Attributes
 
   =head3 What B<Not> to Do!
+
+Both C<=head5> and C<=head6> were added in 2020 and might not be
+supported on all Pod parsers. L<Pod::Simple> 3.41 was released on October
+2020 and supports both of these providing support for all
+L<Pod::Simple>-based Pod parsers.
 
 =item "=pod"
 

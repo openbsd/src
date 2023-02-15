@@ -4,7 +4,7 @@ perlfaq5 - Files and Formats
 
 =head1 VERSION
 
-version 5.20200523
+version 5.20210520
 
 =head1 DESCRIPTION
 
@@ -1164,13 +1164,6 @@ close the file at block exit. If the file is already open, just use this:
 You can also use a localized C<@ARGV> to eliminate the C<open>:
 
     my $var = do { local( @ARGV, $/ ) = $file; <> };
-
-For ordinary files you can also use the C<read> function.
-
-    read( $fh, $var, -s $fh );
-
-That third argument tests the byte size of the data on the C<$fh> filehandle
-and reads that many bytes into the buffer C<$var>.
 
 =head2 How can I read in a file by paragraphs?
 X<file, reading by paragraphs>

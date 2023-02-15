@@ -22,6 +22,7 @@ use Test qw(plan ok skip);
 use File::Spec;
 #use utf8;
 use strict;
+use warnings;
 my(@testfiles, %xmlfiles, %wouldxml);
 #use Pod::Simple::Debug (10);
 BEGIN { 

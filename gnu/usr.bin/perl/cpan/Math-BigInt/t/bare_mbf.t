@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 2830;
+use Test::More tests => 3070;
 
 use lib 't';
 

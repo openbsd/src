@@ -117,68 +117,68 @@ extern int rc;
 
 #define MUTEX_INIT(m) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = _rmutex_create(m,0)))				\
-	    Perl_croak_nocontext("panic: MUTEX_INIT: rc=%i", rc);	\
+        int rc;							\
+        if ((rc = _rmutex_create(m,0)))				\
+            Perl_croak_nocontext("panic: MUTEX_INIT: rc=%i", rc);	\
     } STMT_END
 #define MUTEX_LOCK(m) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = _rmutex_request(m,_FMR_IGNINT)))		\
-	    Perl_croak_nocontext("panic: MUTEX_LOCK: rc=%i", rc);	\
+        int rc;							\
+        if ((rc = _rmutex_request(m,_FMR_IGNINT)))		\
+            Perl_croak_nocontext("panic: MUTEX_LOCK: rc=%i", rc);	\
     } STMT_END
 #define MUTEX_UNLOCK(m) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = _rmutex_release(m)))				\
-	    Perl_croak_nocontext("panic: MUTEX_UNLOCK: rc=%i", rc);	\
+        int rc;							\
+        if ((rc = _rmutex_release(m)))				\
+            Perl_croak_nocontext("panic: MUTEX_UNLOCK: rc=%i", rc);	\
     } STMT_END
 #define MUTEX_DESTROY(m) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = _rmutex_close(m)))				\
-	    Perl_croak_nocontext("panic: MUTEX_DESTROY: rc=%i", rc);	\
+        int rc;							\
+        if ((rc = _rmutex_close(m)))				\
+            Perl_croak_nocontext("panic: MUTEX_DESTROY: rc=%i", rc);	\
     } STMT_END
 
 #define COND_INIT(c) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = DosCreateEventSem(NULL,c,0,0)))		\
-	    Perl_croak_nocontext("panic: COND_INIT: rc=%i", rc);	\
+        int rc;							\
+        if ((rc = DosCreateEventSem(NULL,c,0,0)))		\
+            Perl_croak_nocontext("panic: COND_INIT: rc=%i", rc);	\
     } STMT_END
 #define COND_SIGNAL(c) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)\
-	    Perl_croak_nocontext("panic: COND_SIGNAL, rc=%ld", rc);	\
+        int rc;							\
+        if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)\
+            Perl_croak_nocontext("panic: COND_SIGNAL, rc=%ld", rc);	\
     } STMT_END
 #define COND_BROADCAST(c) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)\
-	    Perl_croak_nocontext("panic: COND_BROADCAST, rc=%i", rc);	\
+        int rc;							\
+        if ((rc = DosPostEventSem(*(c))) && rc != OS2_ERROR_ALREADY_POSTED)\
+            Perl_croak_nocontext("panic: COND_BROADCAST, rc=%i", rc);	\
     } STMT_END
 /* #define COND_WAIT(c, m) \
     STMT_START {						\
-	if (WaitForSingleObject(*(c),INFINITE) == WAIT_FAILED)	\
-	    Perl_croak_nocontext("panic: COND_WAIT");		\
+        if (WaitForSingleObject(*(c),INFINITE) == WAIT_FAILED)	\
+            Perl_croak_nocontext("panic: COND_WAIT");		\
     } STMT_END
 */
 #define COND_WAIT(c, m) os2_cond_wait(c,m)
 
 #define COND_WAIT_win32(c, m) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = SignalObjectAndWait(*(m),*(c),INFINITE,FALSE)))	\
-	    Perl_croak_nocontext("panic: COND_WAIT");			\
-	else							\
-	    MUTEX_LOCK(m);					\
+        int rc;							\
+        if ((rc = SignalObjectAndWait(*(m),*(c),INFINITE,FALSE)))	\
+            Perl_croak_nocontext("panic: COND_WAIT");			\
+        else							\
+            MUTEX_LOCK(m);					\
     } STMT_END
 #define COND_DESTROY(c) \
     STMT_START {						\
-	int rc;							\
-	if ((rc = DosCloseEventSem(*(c))))			\
-	    Perl_croak_nocontext("panic: COND_DESTROY, rc=%i", rc);	\
+        int rc;							\
+        if ((rc = DosCloseEventSem(*(c))))			\
+            Perl_croak_nocontext("panic: COND_DESTROY, rc=%i", rc);	\
     } STMT_END
 /*#define THR ((struct thread *) TlsGetValue(PL_thr_key))
 */
@@ -191,10 +191,10 @@ extern int rc;
 #  define pthread_getspecific(k)	(*(k))
 #  define pthread_setspecific(k,v)	(*(k)=(v),0)
 #  define pthread_key_create(keyp,flag)			\
-	( DosAllocThreadLocalMemory(1,(unsigned long**)keyp)	\
-	  ? Perl_croak_nocontext("LocalMemory"),1	\
-	  : 0						\
-	)
+        ( DosAllocThreadLocalMemory(1,(unsigned long**)keyp)	\
+          ? Perl_croak_nocontext("LocalMemory"),1	\
+          : 0						\
+        )
 #endif /* USE_SLOW_THREAD_SPECIFIC */
 #define pthread_key_delete(keyp)
 #define pthread_self()			_gettid()
@@ -204,7 +204,7 @@ extern int rc;
 int pthread_join(pthread_t tid, void **status);
 int pthread_detach(pthread_t tid);
 int pthread_create(pthread_t *tid, const pthread_attr_t *attr,
-		   void *(*start_routine)(void*), void *arg);
+                   void *(*start_routine)(void*), void *arg);
 #endif /* PTHREAD_INCLUDED */
 
 #define THREADS_ELSEWHERE
@@ -410,21 +410,13 @@ void *emx_realloc (void *, size_t);
 /* This guy is needed for quick stdstd  */
 
 #if defined(USE_STDIO_PTR) && defined(STDIO_PTR_LVALUE) && defined(STDIO_CNT_LVALUE)
-	/* Perl uses ungetc only with successful return */
+        /* Perl uses ungetc only with successful return */
 #  define ungetc(c,fp) \
-	(FILE_ptr(fp) > FILE_base(fp) && c == (int)*(FILE_ptr(fp) - 1) \
-	 ? (--FILE_ptr(fp), ++FILE_cnt(fp), (int)c) : ungetc(c,fp))
+        (FILE_ptr(fp) > FILE_base(fp) && c == (int)*(FILE_ptr(fp) - 1) \
+         ? (--FILE_ptr(fp), ++FILE_cnt(fp), (int)c) : ungetc(c,fp))
 #endif
 
 #define PERLIO_IS_BINMODE_FD(fd) _PERLIO_IS_BINMODE_FD(fd)
-
-#ifdef __GNUG__
-# define HAS_BOOL 
-#endif
-#ifndef HAS_BOOL
-# define bool char
-# define HAS_BOOL 1
-#endif
 
 #include <emx/io.h> /* for _fd_flags() prototype */
 
@@ -500,8 +492,8 @@ extern OS2_Perl_data_t OS2_Perl_data;
 #define set_Perl_HAB_f	(OS2_Perl_flags |= Perl_HAB_set_f)
 #define set_Perl_HAB(h) (set_Perl_HAB_f, Perl_hab = h)
 #define _obtain_Perl_HAB (init_PMWIN_entries(),				\
-			  Perl_hab = (*PMWIN_entries.Initialize)(0),	\
-			  set_Perl_HAB_f, Perl_hab)
+                          Perl_hab = (*PMWIN_entries.Initialize)(0),	\
+                          set_Perl_HAB_f, Perl_hab)
 #define perl_hab_GET()	(Perl_HAB_set ? Perl_hab : _obtain_Perl_HAB)
 #define Acquire_hab()	perl_hab_GET()
 #define Perl_hmq	((HMQ)OS2_Perl_data.phmq)
@@ -524,11 +516,11 @@ struct PMWIN_entries_t {
     unsigned long (*CreateMsgQueue)(unsigned long hab, long cmsg);
     int (*DestroyMsgQueue)(unsigned long hmq);
     int (*PeekMsg)(unsigned long hab, struct _QMSG *pqmsg,
-		   unsigned long hwndFilter, unsigned long msgFilterFirst,
-		   unsigned long msgFilterLast, unsigned long fl);
+                   unsigned long hwndFilter, unsigned long msgFilterFirst,
+                   unsigned long msgFilterLast, unsigned long fl);
     int (*GetMsg)(unsigned long hab, struct _QMSG *pqmsg,
-		  unsigned long hwndFilter, unsigned long msgFilterFirst,
-		  unsigned long msgFilterLast);
+                  unsigned long hwndFilter, unsigned long msgFilterFirst,
+                  unsigned long msgFilterLast);
     void * (*DispatchMsg)(unsigned long hab, struct _QMSG *pqmsg);
     unsigned long (*GetLastError)(unsigned long hab);
     unsigned long (*CancelShutdown)(unsigned long hmq, unsigned long fCancelAlways);
@@ -543,7 +535,7 @@ void init_PMWIN_entries(void);
 
 #if _EMX_CRT_REV_ >= 60
 # define os2_setsyserrno(rc)	(Perl_rc = rc, errno = errno_isOS2_set, \
-				_setsyserrno(rc))
+                                _setsyserrno(rc))
 #else
 # define os2_setsyserrno(rc)	(Perl_rc = rc, errno = errno_isOS2)
 #endif
@@ -562,11 +554,11 @@ void init_PMWIN_entries(void);
   ((expr) ? : (CroakWinError(die,name1 name2), 0))
 
 #define FillOSError(rc) (os2_setsyserrno(rc),				\
-			Perl_severity = SEVERITY_ERROR) 
+                        Perl_severity = SEVERITY_ERROR) 
 
 #define WinError_2_Perl_rc	\
  (	init_PMWIN_entries(),	\
-	Perl_rc=(*PMWIN_entries.GetLastError)(perl_hab_GET()) )
+        Perl_rc=(*PMWIN_entries.GetLastError)(perl_hab_GET()) )
 
 /* Calling WinGetLastError() resets the error code of the current thread.
    Since for some Win* API return value 0 is normal, one needs to call
@@ -576,9 +568,9 @@ void init_PMWIN_entries(void);
 /* At this moment init_PMWIN_entries() should be a nop (WinInitialize should
    be called already, right?), so we do not risk stepping over our own error */
 #define FillWinError (	WinError_2_Perl_rc,				\
-			Perl_severity = ERRORIDSEV(Perl_rc),		\
-			Perl_rc = ERRORIDERROR(Perl_rc),		\
-			os2_setsyserrno(Perl_rc))
+                        Perl_severity = ERRORIDSEV(Perl_rc),		\
+                        Perl_rc = ERRORIDERROR(Perl_rc),		\
+                        os2_setsyserrno(Perl_rc))
 
 #define STATIC_FILE_LENGTH 127
 
@@ -726,38 +718,38 @@ enum entries_ordinals {
 
 /* This flavor caches the procedure pointer (named as p__Win#name) locally */
 #define DeclWinFuncByORD_CACHE(ret,name,o,at,args)	\
-	DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,0,1)
+        DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,0,1)
 
 /* This flavor may reset the last error before the call (if ret=0 may be OK) */
 #define DeclWinFuncByORD_CACHE_resetError(ret,name,o,at,args)	\
-	DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,1,1)
+        DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,1,1)
 
 /* Two flavors below do the same as above, but do not auto-croak */
 /* This flavor caches the procedure pointer (named as p__Win#name) locally */
 #define DeclWinFuncByORD_CACHE_survive(ret,name,o,at,args)	\
-	DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,0,0)
+        DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,0,0)
 
 /* This flavor may reset the last error before the call (if ret=0 may be OK) */
 #define DeclWinFuncByORD_CACHE_resetError_survive(ret,name,o,at,args)	\
-	DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,1,0)
+        DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,1,0)
 
 #define DeclWinFuncByORD_CACHE_r(ret,name,o,at,args,r,die)	\
   static ret (*CAT2(p__Win,name)) at;				\
   static ret name at {						\
-	if (!CAT2(p__Win,name))					\
-	    AssignFuncPByORD(CAT2(p__Win,name), o);		\
-	if (r) ResetWinError();					\
-	return SaveCroakWinError(CAT2(p__Win,name) args, die, "[Win]", STRINGIFY(name)); }
+        if (!CAT2(p__Win,name))					\
+            AssignFuncPByORD(CAT2(p__Win,name), o);		\
+        if (r) ResetWinError();					\
+        return SaveCroakWinError(CAT2(p__Win,name) args, die, "[Win]", STRINGIFY(name)); }
 
 /* These flavors additionally assume ORD is name with prepended ORD_Win  */
 #define DeclWinFunc_CACHE(ret,name,at,args)	\
-	DeclWinFuncByORD_CACHE(ret,name,CAT2(ORD_Win,name),at,args)
+        DeclWinFuncByORD_CACHE(ret,name,CAT2(ORD_Win,name),at,args)
 #define DeclWinFunc_CACHE_resetError(ret,name,at,args)	\
-	DeclWinFuncByORD_CACHE_resetError(ret,name,CAT2(ORD_Win,name),at,args)
+        DeclWinFuncByORD_CACHE_resetError(ret,name,CAT2(ORD_Win,name),at,args)
 #define DeclWinFunc_CACHE_survive(ret,name,at,args)	\
-	DeclWinFuncByORD_CACHE_survive(ret,name,CAT2(ORD_Win,name),at,args)
+        DeclWinFuncByORD_CACHE_survive(ret,name,CAT2(ORD_Win,name),at,args)
 #define DeclWinFunc_CACHE_resetError_survive(ret,name,at,args)	\
-	DeclWinFuncByORD_CACHE_resetError_survive(ret,name,CAT2(ORD_Win,name),at,args)
+        DeclWinFuncByORD_CACHE_resetError_survive(ret,name,CAT2(ORD_Win,name),at,args)
 
 void ResetWinError(void);
 void CroakWinError(int die, char *name);
@@ -815,12 +807,12 @@ void croak_with_os2error(char *s) __attribute__((noreturn));
 
 /* propagates rc */
 #define os2win_croak(rc,msg)						\
-	SaveCroakWinError((expr), 1 /* die */, /* no prefix */, (msg))
+        SaveCroakWinError((expr), 1 /* die */, /* no prefix */, (msg))
 
 /* propagates rc; use with functions which may return 0 on success */
 #define os2win_croak_0OK(rc,msg)					\
-	SaveCroakWinError((ResetWinError, (expr)),			\
-			  1 /* die */, /* no prefix */, (msg))
+        SaveCroakWinError((ResetWinError, (expr)),			\
+                          1 /* die */, /* no prefix */, (msg))
 
 #ifdef PERL_CORE
 int os2_do_spawn(pTHX_ char *cmd);
@@ -840,7 +832,7 @@ int os2_do_aspawn(pTHX_ SV *really, SV **vmark, SV **vsp);
 #  define	LOG_DEBUG	7	/* debug-level messages */
 
 #  define	LOG_PRIMASK	0x007	/* mask to extract priority part (internal) */
-				/* extract priority */
+                                /* extract priority */
 #  define	LOG_PRI(p)	((p) & LOG_PRIMASK)
 #  define	LOG_MAKEPRI(fac, pri)	(((fac) << 3) | (pri))
 
@@ -855,7 +847,7 @@ int os2_do_aspawn(pTHX_ SV *really, SV **vmark, SV **vsp);
 #  define	LOG_NEWS	(7<<3)	/* network news subsystem */
 #  define	LOG_UUCP	(8<<3)	/* UUCP subsystem */
 #  define	LOG_CRON	(15<<3)	/* clock daemon */
-	/* other codes through 15 reserved for system use */
+        /* other codes through 15 reserved for system use */
 #  define	LOG_LOCAL0	(16<<3)	/* reserved for local use */
 #  define	LOG_LOCAL1	(17<<3)	/* reserved for local use */
 #  define	LOG_LOCAL2	(18<<3)	/* reserved for local use */
@@ -867,14 +859,14 @@ int os2_do_aspawn(pTHX_ SV *really, SV **vmark, SV **vsp);
 
 #  define	LOG_NFACILITIES	24	/* current number of facilities */
 #  define	LOG_FACMASK	0x03f8	/* mask to extract facility part */
-				/* facility of pri */
+                                /* facility of pri */
 #  define	LOG_FAC(p)	(((p) & LOG_FACMASK) >> 3)
 
 /*
  * arguments to setlogmask.
  */
 #  define	LOG_MASK(pri)	(1 << (pri))		/* mask for one priority */
-#  define	LOG_UPTO(pri)	((1 << ((pri)+1)) - 1)	/* all priorities through pri */
+#  define       LOG_UPTO(pri)   nBIT_MASK((pri)+1)      /* all priorities through pri */
 
 /*
  * Option flags for openlog.
@@ -1080,7 +1072,7 @@ unsigned long   LIS_pPIB;       /* Pointer to PIB */
 /* ************************************************************ */
 #define Dos32QuerySysState DosQuerySysState
 #define QuerySysState(flags, pid, buf, bufsz) \
-	Dos32QuerySysState(flags, 0,  pid, 0, buf, bufsz)
+        Dos32QuerySysState(flags, 0,  pid, 0, buf, bufsz)
 
 #define QSS_PROCESS	1
 #define QSS_MODULE	4
@@ -1091,156 +1083,156 @@ unsigned long   LIS_pPIB;       /* Pointer to PIB */
 #ifdef _OS2_H
 
 APIRET APIENTRY Dos32QuerySysState(ULONG func,ULONG arg1,ULONG pid,
-			ULONG _res_,PVOID buf,ULONG bufsz);
+                        ULONG _res_,PVOID buf,ULONG bufsz);
 typedef struct {
-	ULONG	threadcnt;
-	ULONG	proccnt;
-	ULONG	modulecnt;
+        ULONG	threadcnt;
+        ULONG	proccnt;
+        ULONG	modulecnt;
 } QGLOBAL, *PQGLOBAL;
 
 typedef struct {
-	ULONG	rectype;
-	USHORT	threadid;
-	USHORT	slotid;
-	ULONG	sleepid;
-	ULONG	priority;
-	ULONG	systime;
-	ULONG	usertime;
-	UCHAR	state;
-	UCHAR	_reserved1_;	/* padding to ULONG */
-	USHORT	_reserved2_;	/* padding to ULONG */
+        ULONG	rectype;
+        USHORT	threadid;
+        USHORT	slotid;
+        ULONG	sleepid;
+        ULONG	priority;
+        ULONG	systime;
+        ULONG	usertime;
+        UCHAR	state;
+        UCHAR	_reserved1_;	/* padding to ULONG */
+        USHORT	_reserved2_;	/* padding to ULONG */
 } QTHREAD, *PQTHREAD;
 
 typedef struct {
-	USHORT	sfn;
-	USHORT	refcnt;
-	USHORT	flags1;
-	USHORT	flags2;
-	USHORT	accmode1;
-	USHORT	accmode2;
-	ULONG	filesize;
-	USHORT  volhnd;
-	USHORT	attrib;
-	USHORT	_reserved_;
+        USHORT	sfn;
+        USHORT	refcnt;
+        USHORT	flags1;
+        USHORT	flags2;
+        USHORT	accmode1;
+        USHORT	accmode2;
+        ULONG	filesize;
+        USHORT  volhnd;
+        USHORT	attrib;
+        USHORT	_reserved_;
 } QFDS, *PQFDS;
 
 typedef struct qfile {
-	ULONG		rectype;
-	struct qfile	*next;
-	ULONG		opencnt;
-	PQFDS		filedata;
-	char		name[1];
+        ULONG		rectype;
+        struct qfile	*next;
+        ULONG		opencnt;
+        PQFDS		filedata;
+        char		name[1];
 } QFILE, *PQFILE;
 
 typedef struct {
-	ULONG	rectype;
-	PQTHREAD threads;
-	USHORT	pid;
-	USHORT	ppid;
-	ULONG	type;
-	ULONG	state;
-	ULONG	sessid;
-	USHORT	hndmod;
-	USHORT	threadcnt;
-	ULONG	privsem32cnt;
-	ULONG	_reserved2_;
-	USHORT	sem16cnt;
-	USHORT	dllcnt;
-	USHORT	shrmemcnt;
-	USHORT	fdscnt;
-	PUSHORT	sem16s;
-	PUSHORT	dlls;
-	PUSHORT	shrmems;
-	PUSHORT	fds;
+        ULONG	rectype;
+        PQTHREAD threads;
+        USHORT	pid;
+        USHORT	ppid;
+        ULONG	type;
+        ULONG	state;
+        ULONG	sessid;
+        USHORT	hndmod;
+        USHORT	threadcnt;
+        ULONG	privsem32cnt;
+        ULONG	_reserved2_;
+        USHORT	sem16cnt;
+        USHORT	dllcnt;
+        USHORT	shrmemcnt;
+        USHORT	fdscnt;
+        PUSHORT	sem16s;
+        PUSHORT	dlls;
+        PUSHORT	shrmems;
+        PUSHORT	fds;
 } QPROCESS, *PQPROCESS;
 
 typedef struct sema {
-	struct sema *next;
-	USHORT	refcnt;
-	UCHAR	sysflags;
-	UCHAR	sysproccnt;
-	ULONG	_reserved1_;
-	USHORT	index;
-	CHAR	name[1];
+        struct sema *next;
+        USHORT	refcnt;
+        UCHAR	sysflags;
+        UCHAR	sysproccnt;
+        ULONG	_reserved1_;
+        USHORT	index;
+        CHAR	name[1];
 } QSEMA, *PQSEMA;
 
 typedef struct {
-	ULONG	rectype;
-	ULONG	_reserved1_;
-	USHORT	_reserved2_;
-	USHORT	syssemidx;
-	ULONG	index;
-	QSEMA	sema;
+        ULONG	rectype;
+        ULONG	_reserved1_;
+        USHORT	_reserved2_;
+        USHORT	syssemidx;
+        ULONG	index;
+        QSEMA	sema;
 } QSEMSTRUC, *PQSEMSTRUC;
 
 typedef struct {
-	USHORT	pid;
-	USHORT	opencnt;
+        USHORT	pid;
+        USHORT	opencnt;
 } QSEMOWNER32, *PQSEMOWNER32;
 
 typedef struct {
-	PQSEMOWNER32	own;
-	PCHAR		name;
-	PVOID		semrecs; /* array of associated sema's */
-	USHORT		flags;
-	USHORT		semreccnt;
-	USHORT		waitcnt;
-	USHORT		_reserved_;	/* padding to ULONG */
+        PQSEMOWNER32	own;
+        PCHAR		name;
+        PVOID		semrecs; /* array of associated sema's */
+        USHORT		flags;
+        USHORT		semreccnt;
+        USHORT		waitcnt;
+        USHORT		_reserved_;	/* padding to ULONG */
 } QSEMSMUX32, *PQSEMSMUX32;
 
 typedef struct {
-	PQSEMOWNER32	own;
-	PCHAR		name;
-	PQSEMSMUX32	mux;
-	USHORT		flags;
-	USHORT		postcnt;
+        PQSEMOWNER32	own;
+        PCHAR		name;
+        PQSEMSMUX32	mux;
+        USHORT		flags;
+        USHORT		postcnt;
 } QSEMEV32, *PQSEMEV32;
 
 typedef struct {
-	PQSEMOWNER32	own;
-	PCHAR		name;
-	PQSEMSMUX32	mux;
-	USHORT		flags;
-	USHORT		refcnt;
-	USHORT		thrdnum;
-	USHORT		_reserved_;	/* padding to ULONG */
+        PQSEMOWNER32	own;
+        PCHAR		name;
+        PQSEMSMUX32	mux;
+        USHORT		flags;
+        USHORT		refcnt;
+        USHORT		thrdnum;
+        USHORT		_reserved_;	/* padding to ULONG */
 } QSEMMUX32, *PQSEMMUX32;
 
 typedef struct semstr32 {
-	struct semstr *next;
-	QSEMEV32 evsem;
-	QSEMMUX32  muxsem;
-	QSEMSMUX32 smuxsem;
+        struct semstr *next;
+        QSEMEV32 evsem;
+        QSEMMUX32  muxsem;
+        QSEMSMUX32 smuxsem;
 } QSEMSTRUC32, *PQSEMSTRUC32;
 
 typedef struct shrmem {
-	struct shrmem *next;
-	USHORT	hndshr;
-	USHORT	selshr;
-	USHORT	refcnt;
-	CHAR	name[1];
+        struct shrmem *next;
+        USHORT	hndshr;
+        USHORT	selshr;
+        USHORT	refcnt;
+        CHAR	name[1];
 } QSHRMEM, *PQSHRMEM;
 
 typedef struct module {
-	struct module *next;
-	USHORT	hndmod;
-	USHORT	type;
-	ULONG	refcnt;
-	ULONG	segcnt;
-	PVOID	_reserved_;
-	PCHAR	name;
-	USHORT	modref[1];
+        struct module *next;
+        USHORT	hndmod;
+        USHORT	type;
+        ULONG	refcnt;
+        ULONG	segcnt;
+        PVOID	_reserved_;
+        PCHAR	name;
+        USHORT	modref[1];
 } QMODULE, *PQMODULE;
 
 typedef struct {
-	PQGLOBAL	gbldata;
-	PQPROCESS	procdata;
-	PQSEMSTRUC	semadata;
-	PQSEMSTRUC32	sem32data;
-	PQSHRMEM	shrmemdata;
-	PQMODULE	moddata;
-	PVOID		_reserved2_;
-	PQFILE		filedata;
+        PQGLOBAL	gbldata;
+        PQPROCESS	procdata;
+        PQSEMSTRUC	semadata;
+        PQSEMSTRUC32	sem32data;
+        PQSHRMEM	shrmemdata;
+        PQMODULE	moddata;
+        PVOID		_reserved2_;
+        PQFILE		filedata;
 } QTOPLEVEL, *PQTOPLEVEL;
 /* ************************************************************ */
 

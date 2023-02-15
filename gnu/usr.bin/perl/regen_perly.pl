@@ -76,11 +76,11 @@ EOF
 
 # Don't change this to add new bison versions without testing that the generated
 # files actually work :-) Win32 in particular may not like them. :-(
-unless ($version =~ /\b(1\.875[a-z]?|2\.[0134567]|3\.[0-4])\b/) { die <<EOF; }
+unless ($version =~ /\b(2\.[567]|3\.[0-7])\b/) { die <<EOF; }
 
 You have the wrong version of bison in your path; currently versions
-1.875, 2.0-2.7 or 3.0-3.4 are known to work.  Try installing
-    http://ftp.gnu.org/gnu/bison/bison-2.5.1.tar.gz
+2.5-2.7 or 3.0-3.7 are known to work.  Try installing
+    http://ftp.gnu.org/gnu/bison/bison-3.3.tar.gz
 or similar.  Your bison identifies itself as:
 
 $version
@@ -133,8 +133,7 @@ open my $tmph_fh, '<', $tmph_file or die "Can't open $tmph_file: $!\n";
 }
 
 my $endcore_done = 0;
-# Token macros need to be generated manually from bison 2.4 on
-my $gather_tokens = $version >= 2.4 ? undef : 0;
+my $gather_tokens = 0;
 my $tokens;
 while (<$tmph_fh>) {
     # bison 2.6 adds header guards, which break things because of where we
@@ -163,10 +162,10 @@ j
 	$endcore_done = 1;
     }
     next if /^#line \d+ ".*"/;
-    if (not defined $gather_tokens) {
+    if (!$gather_tokens) {
 	$gather_tokens = 1 if /^\s* enum \s* yytokentype \s* \{/x;
     }
-    elsif ($gather_tokens) {
+    else {
 	if (/^\# \s* endif/x) { # The #endif just after the end of the token enum
 	    $gather_tokens = 0;
 	    $_ .= "\n/* Tokens.  */\n$tokens";
@@ -188,12 +187,24 @@ foreach ($act_fh, $tab_fh, $h_fh) {
 exit 0;
 
 
-# extract the tables and actions from the generated .c file
+# extract the symbol kinds, tables and actions from the generated .c file
 
 sub extract {
     my $clines = shift;
     my $tablines;
     my $actlines;
+
+    # extract the symbol kind table if it exists
+    $clines =~ m@
+        (?:
+            ^/\* \s* Symbol \s+ kind\. \s* \*/\n
+        )?
+        enum \s+ yysymbol_kind_t \s* \{
+        .*?
+        \} \s* ;\n
+        typedef \s+ enum \s+ \w+ \s+ \w+ ; \n+
+    @xms
+        and $tablines .= $&;
 
     my $last_table = $version >= 3 ? 'yyr2' : 'yystos';
     $clines =~ m@
@@ -207,7 +218,7 @@ sub extract {
 	}\s*;				# end of last table
     @xms
 	or die "Can't extract tables from $tmpc_file\n";
-    $tablines = $&;
+    $tablines .= $&;
 
 
     # extract all the cases in the big action switch statement
@@ -222,6 +233,9 @@ sub extract {
 
     # Remove extraneous comments from bison 2.4
     $actlines =~ s!\s* /\* \s* Line \s* \d+ \s* of \s* yacc\.c \s* \*/!!gx;
+
+    # Remove extraneous comments from bison 3.x
+    $actlines =~ s!\s* /\* \s* yacc\.c : \d+ \s* \*/!!gx;
 
     # C<#line 188 "perlytmp.c"> gets picked up by make depend, so remove them.
     $actlines =~ s/^#line \d+ "\Q$tmpc_file\E".*$//gm;
@@ -308,7 +322,7 @@ sub make_type_tab {
 	    /xsm
 	or die "Can't extract yytname[] from table string\n";
     my $fields = $1;
-    $fields =~ s{"([^"]+)"}
+    $fields =~ s{"((?:[^"\\]|\\.)+)"}
 		{ "toketype_" .
 		    (defined $tokens{$1} ? $tokens{$1} : $default_token)
 		}ge;

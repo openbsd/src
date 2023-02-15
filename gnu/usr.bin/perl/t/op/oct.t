@@ -1,12 +1,12 @@
 #!./perl
 
-# Tests 51 onwards are intentionally not all-warnings-clean
+# Tests 53 onwards are intentionally not all-warnings-clean
 
 chdir 't' if -d 't';
 require './test.pl';
 use strict;
 
-plan(tests => 77);
+plan(tests => 79);
 
 foreach(['0b1_0101', 0b101_01],
 	['0b10_101', 0_2_5],
@@ -55,6 +55,9 @@ foreach(['0b1_0101', 0b101_01],
 	["XCAFE", 0xCAFE],
 	["0B101001", 0b101001],
 	["B101001", 0b101001],
+        # Additional syntax for octals
+        ["0o7_654_321", 2054353],
+        ["O4567", 0o4_567],
        ) {
     my ($string, $value) = @$_;
     my $result = oct $string;

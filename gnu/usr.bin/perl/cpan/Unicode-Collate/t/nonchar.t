@@ -1,30 +1,13 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
-    if ($ENV{PERL_CORE}) {
-	chdir('t') if -d 't';
-	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
-    }
-}
-
-
-BEGIN {
-    use Unicode::Collate;
-
-#    unless (exists &Unicode::Collate::bootstrap or 5.008 <= $]) {
-#	print "1..0 # skipped: XSUB, or Perl 5.8.0 or later".
-#		" needed for this test\n";
     unless (5.008 <= $]) {
 	print "1..0 # skipped: Perl 5.8.0 or later needed for this test\n";
 	print $@;
 	exit;
+    }
+    if ($ENV{PERL_CORE}) {
+	chdir('t') if -d 't';
+	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
     }
 }
 
@@ -41,7 +24,12 @@ sub ok ($;$) {
     print $p ? "ok" : "not ok", ' ', ++$count, "\n";
 }
 
+use Unicode::Collate;
+
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 

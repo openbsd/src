@@ -14,7 +14,7 @@ BEGIN {
         )
     );
     require $coretests;
-    use_ok('version', 0.9924);
+    use_ok('version', 0.9929);
 }
 
 BaseTests("version","new","qv");
@@ -46,4 +46,10 @@ ok defined($v), 'Fix for RT #47980';
     eval { $x = "version"; print version::new };
     like $@, qr'Usage: version::new\(class, version\)',
 	'No implicit object creation when called as function';
+}
+
+{
+    eval { version::vcmp($^V) };
+    like $@, qr{Usage: version::\S+\(lobj, robj, \.\.\.\)},
+	'vcmp method throws error on single argument';
 }

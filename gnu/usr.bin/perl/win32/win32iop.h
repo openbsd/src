@@ -69,6 +69,7 @@ DllExport  FILE*	win32_tmpfile(void);
 DllExport  void		win32_abort(void);
 DllExport  int  	win32_fstat(int fd,Stat_t *sbufptr);
 DllExport  int  	win32_stat(const char *name,Stat_t *sbufptr);
+DllExport  int  	win32_lstat(const char *name,Stat_t *sbufptr);
 DllExport  int		win32_pipe( int *phandles, unsigned int psize, int textmode );
 DllExport  PerlIO*	win32_popen( const char *command, const char *mode );
 DllExport  PerlIO*	win32_popenlist(const char *mode, IV narg, SV **args);
@@ -87,7 +88,7 @@ DllExport  int		win32_isatty(int fd);
 DllExport  int		win32_read(int fd, void *buf, unsigned int cnt);
 DllExport  int		win32_write(int fd, const void *buf, unsigned int cnt);
 DllExport  int		win32_spawnvp(int mode, const char *cmdname,
-			      const char *const *argv);
+                              const char *const *argv);
 DllExport  int		win32_mkdir(const char *dir, int mode);
 DllExport  int		win32_rmdir(const char *dir);
 DllExport  int		win32_chdir(const char *dir);
@@ -136,6 +137,8 @@ DllExport  char*	win32_longpath(char *path);
 DllExport  char*	win32_ansipath(const WCHAR *path);
 DllExport  int		win32_ioctl(int i, unsigned int u, char *data);
 DllExport  int          win32_link(const char *oldname, const char *newname);
+DllExport  int          win32_symlink(const char *oldname, const char *newname);
+DllExport  int          win32_readlink(const char *path, char *buf, size_t bufsiz);
 DllExport  int		win32_unlink(const char *f);
 DllExport  int		win32_utime(const char *f, struct utimbuf *t);
 DllExport  int		win32_gettimeofday(struct timeval *tp, void *not_used);
@@ -241,6 +244,7 @@ END_EXTERN_C
 #  undef stat
 #endif
 #define stat(pth,bufptr)   	win32_stat(pth,bufptr)
+#define lstat(pth,bufptr)   	win32_lstat(pth,bufptr)
 #define longpath(pth)   	win32_longpath(pth)
 #define ansipath(pth)   	win32_ansipath(pth)
 #define rename(old,new)		win32_rename(old,new)
@@ -285,7 +289,6 @@ END_EXTERN_C
 #define access(p,m)		win32_access(p,m)
 #define chmod(p,m)		win32_chmod(p,m)
 
-
 #if !defined(MYMALLOC) || !defined(PERL_CORE)
 #undef malloc
 #undef calloc
@@ -307,6 +310,8 @@ END_EXTERN_C
 #define times			win32_times
 #define ioctl			win32_ioctl
 #define link			win32_link
+#define symlink			win32_symlink
+#define readlink		win32_readlink
 #define unlink			win32_unlink
 #define utime			win32_utime
 #define gettimeofday		win32_gettimeofday

@@ -123,7 +123,7 @@ is($` . $& . $', "abc");
 # check that scope cleanup happens right when there's a continue block
 {
     my $var = 16;
-    my (@got_var, @got_i);
+    my ($got_var, $got_i);
     while (my $i = ++$var) {
 	next if $i == 17;
 	last if $i > 17;

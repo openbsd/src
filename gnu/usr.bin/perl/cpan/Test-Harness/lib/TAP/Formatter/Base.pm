@@ -58,11 +58,11 @@ TAP::Formatter::Base - Base class for harness output delegates
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
 
 =head1 DESCRIPTION
 
@@ -387,7 +387,30 @@ sub _summary_test_header {
     $spaces = ' ' unless $spaces;
     my $output = $self->_get_output_method($parser);
     my $wait   = $parser->wait;
-    defined $wait or $wait = '(none)';
+
+    if (defined $wait) {
+        my $signum = $wait & 0x7f;
+
+        my $description;
+
+        if ($signum) {
+            require Config;
+            my @names = split ' ', $Config::Config{'sig_name'};
+            $description = "Signal: $names[$signum]";
+
+            my $dumped = $wait & 0x80;
+            $description .= ', dumped core' if $dumped;
+        }
+        elsif ($wait != 0) {
+            $description = sprintf 'exited %d', ($wait >> 8);
+        }
+
+        $wait .= " ($description)" if $wait != 0;
+    }
+    else {
+        $wait = '(none)';
+    }
+
     $self->$output(
         sprintf "$test$spaces(Wstat: %s Tests: %d Failed: %d)\n",
         $wait, $parser->tests_run, scalar $parser->failed

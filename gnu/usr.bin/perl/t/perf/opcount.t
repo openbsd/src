@@ -20,8 +20,6 @@ BEGIN {
 use warnings;
 use strict;
 
-plan 2583;
-
 use B ();
 
 
@@ -268,7 +266,6 @@ test_opcount(0, 'barewords can be constant-folded',
              });
 
 {
-    no warnings 'experimental::signatures';
     use feature 'signatures';
 
     my @a;
@@ -675,3 +672,113 @@ test_opcount(0, "multiconcat: local assign",
                     concat      => 0,
                     sassign     => 1,
                 });
+
+{
+    use feature 'try';
+    no warnings 'experimental::try';
+
+    test_opcount(0, "try/catch: catch block is optimized",
+                    sub { my @a; try {} catch($e) { $a[0] } },
+                    {
+                        aelemfast_lex => 1,
+                        aelem         => 0,
+                    });
+}
+
+{
+    use feature 'defer';
+    no warnings 'experimental::defer';
+
+    test_opcount(0, "pushdefer: block is optimized",
+                    sub { my @a; defer { $a[0] } },
+                    {
+                        aelemfast_lex => 1,
+                        aelem         => 0,
+                    });
+}
+
+# builtin:: function calls should be replaced with efficient op implementations
+no warnings 'experimental::builtin';
+
+test_opcount(0, "builtin::true/false are replaced with constants",
+                sub { my $x = builtin::true(); my $y = builtin::false() },
+                {
+                    entersub => 0,
+                    const    => 2,
+                });
+
+test_opcount(0, "builtin::is_bool is replaced with direct opcode",
+                sub { my $x; my $y; $y = builtin::is_bool($x); },
+                {
+                    entersub => 0,
+                    is_bool  => 1,
+                    padsv    => 3, # OA_TARGLEX applies so only 3, not 4
+                    sassign  => 0,
+                });
+
+test_opcount(0, "builtin::is_bool gets constant-folded",
+                sub { builtin::is_bool(123); },
+                {
+                    entersub => 0,
+                    is_bool  => 0,
+                    const    => 1,
+                });
+
+test_opcount(0, "builtin::weaken is replaced with direct opcode",
+                sub { my $x = []; builtin::weaken($x); },
+                {
+                    entersub => 0,
+                    weaken   => 1,
+                });
+
+test_opcount(0, "builtin::unweaken is replaced with direct opcode",
+                sub { my $x = []; builtin::unweaken($x); },
+                {
+                    entersub => 0,
+                    unweaken => 1,
+                });
+
+test_opcount(0, "builtin::is_weak is replaced with direct opcode",
+                sub { builtin::is_weak([]); },
+                {
+                    entersub => 0,
+                    is_weak  => 1,
+                });
+
+test_opcount(0, "builtin::blessed is replaced with direct opcode",
+                sub { builtin::blessed([]); },
+                {
+                    entersub => 0,
+                    blessed  => 1,
+                });
+
+test_opcount(0, "builtin::refaddr is replaced with direct opcode",
+                sub { builtin::refaddr([]); },
+                {
+                    entersub => 0,
+                    refaddr  => 1,
+                });
+
+test_opcount(0, "builtin::reftype is replaced with direct opcode",
+                sub { builtin::reftype([]); },
+                {
+                    entersub => 0,
+                    reftype  => 1,
+                });
+
+my $one_point_five = 1.5;   # Prevent const-folding.
+test_opcount(0, "builtin::ceil is replaced with direct opcode",
+                sub { builtin::ceil($one_point_five); },
+                {
+                    entersub => 0,
+                    ceil     => 1,
+                });
+
+test_opcount(0, "builtin::floor is replaced with direct opcode",
+                sub { builtin::floor($one_point_five); },
+                {
+                    entersub => 0,
+                    floor    => 1,
+                });
+
+done_testing();

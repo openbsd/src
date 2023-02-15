@@ -47,7 +47,7 @@ my $extract_version = sprintf("%vd", $^V);
 print OUT <<"!GROK!THIS!";
 $Config{startperl}
     eval 'exec $Config{perlpath} -S \$0 \${1+"\$@"}'
-	if \$running_under_some_shell;
+	if 0; # ^ Run only under a shell
 
 my \$config_tag1 = '$extract_version - $Config{cf_time}';
 
@@ -354,12 +354,13 @@ This program provides an easy way to send a thank-you message back to the
 authors and maintainers of perl.
 
 If you wish to generate a bug report, please run it without the -T flag
+(or run the program perlbug rather than perlthanks)
 EOF
 	} else {
 	    paraprint <<"EOF";
 This program provides an easy way to generate a bug report for the core
 perl distribution (along with tests or patches).  To send a thank-you
-note to $thanksaddress instead of a bug report, please use the -T flag.
+note to $thanksaddress instead of a bug report, please run 'perlthanks'.
 
 The GitHub issue tracker at https://github.com/Perl/perl5/issues is the
 best place to submit your report so it can be tracked and resolved.
@@ -1266,6 +1267,8 @@ S<[ B<-S> ]> S<[ B<-t> ]>  S<[ B<-d> ]>  S<[ B<-h> ]> S<[ B<-T> ]>
 B<perlbug> S<[ B<-v> ]> S<[ B<-r> I<returnaddress> ]>
  S<[ B<-ok> | B<-okay> | B<-nok> | B<-nokay> ]>
 
+B<perlthanks>
+
 =head1 DESCRIPTION
 
 
@@ -1312,9 +1315,6 @@ those which indicate you haven't also tested the current stable
 release of Perl, are likely to receive less attention from the
 volunteers who build and maintain Perl than reports about bugs in
 the current release.
-
-This tool isn't appropriate for reporting bugs in any version
-prior to Perl 5.0.
 
 =item Are you sure what you have is a bug?
 
@@ -1404,8 +1404,8 @@ by Perl's test suite).
 
 =item Can you use C<perlbug> to submit a thank-you note?
 
-Yes, you can do this by using the C<-T> option.
-Thank-you notes are good. It makes people
+Yes, you can do this by either using the C<-T> option, or by invoking
+the program as C<perlthanks>. Thank-you notes are good. It makes people
 smile. 
 
 =back

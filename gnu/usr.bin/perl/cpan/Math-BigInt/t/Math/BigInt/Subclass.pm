@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 package Math::BigInt::Subclass;
 
@@ -8,24 +8,21 @@ use strict;
 use warnings;
 
 use Exporter;
-use Math::BigInt 1.64;
-
-# $lib is for the "lib => " test
-our $lib;
-our ($accuracy, $precision, $round_mode, $div_scale);
+use Math::BigInt;
 
 our @ISA = qw(Math::BigInt Exporter);
 our @EXPORT_OK = qw(bgcd objectify);
 
-our $VERSION = "0.06";
+our $VERSION = "0.07";
 
 use overload;                   # inherit overload from BigInt
 
 # Globals
-$accuracy = $precision = undef;
-$round_mode = 'even';
-$div_scale = 40;
-$lib = '';
+our $accuracy   = undef;
+our $precision  = undef;
+our $round_mode = Math::BigInt::Subclass -> round_mode();
+our $div_scale  = Math::BigInt::Subclass -> div_scale();
+our $lib = '';
 
 sub new {
     my $proto = shift;

@@ -18,15 +18,6 @@ use warnings;
 use Carp;
 use File::Spec;
 
-BEGIN {
-    unless ("A" eq pack('U', 0x41)) {
-	die "Unicode::Collate cannot stringify a Unicode code point\n";
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	die "Unicode::Collate cannot get a Unicode code point\n";
-    }
-}
-
 use constant TRUE  => 1;
 use constant FALSE => "";
 use constant VCE_TEMPLATE => 'Cn4';
@@ -140,7 +131,8 @@ foreach my $tbl (@tripletable) {
     my $init = $tbl->{init};
 
     open my $fh_h, ">$file" or croak "$PACKAGE: $file can't be made";
-    binmode $fh_h; select $fh_h;
+    binmode $fh_h;
+    my $old_fh = select $fh_h;
     my %val;
 
     print << 'EOF';
@@ -195,6 +187,7 @@ EOF
     }
     print "};\n\n";
     close $fh_h;
+    select $old_fh;
 }
 
 1;

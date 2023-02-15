@@ -14,8 +14,6 @@ BEGIN {
 	$^W = 0;
 }
 
-our ( $foo, @bar, %baz );
-
 use lib ("./t/lib");
 use TieOut;
 use Test::More tests => 88;
@@ -28,7 +26,10 @@ ok( $d = Dumpvalue->new(), 'create a new Dumpvalue object' );
 $d->set( globPrint => 1, dumpReused => 1 );
 is( $d->{globPrint}, 1, 'set an option correctly' );
 is( $d->get('globPrint'), 1, 'get an option correctly' );
-is( $d->get('globPrint', 'dumpReused'), qw( 1 1 ), 'get multiple options' );
+is_deeply( [ $d->get('globPrint', 'dumpReused') ],
+    [ 1, 1 ],
+    'get multiple options'
+);
 
 # check to see if unctrl works
 is( ref( Dumpvalue::unctrl(*FOO) ), 'GLOB', 'unctrl should not modify GLOB' );
@@ -179,13 +180,13 @@ undef $DB::signal;
 $foo = 1;
 $d->dumpglob( '', 2, 'foo', local *foo = \$foo );
 is( $out->read, "  \$foo = 1\n", 'dumped glob for $foo correctly' );
-@bar = (1, 2);
+our @bar = (1, 2);
 
 # the key name is a little different here
 $d->dumpglob( '', 0, 'boo', *bar );
 is( $out->read, "\@boo = (\n   0..1  1 2\n)\n", 'dumped glob for @bar fine' );
 
-%baz = ( one => 1, two => 2 );
+our %baz = ( one => 1, two => 2 );
 $d->dumpglob( '', 0, 'baz', *baz );
 is( $out->read, "\%baz = (\n   'one' => 1, 'two' => 2\n)\n",
 	'dumped glob for %baz fine' );
@@ -223,8 +224,11 @@ like( $out->read, qr/&TieOut::read in/, 'dumpsub found sub fine' );
 
 # test findsubs
 is( $d->findsubs(), undef, 'findsubs returns nothing without %DB::sub' );
-$DB::sub{'TieOut::read'} = 'TieOut';
-is( $d->findsubs( \&TieOut::read ), 'TieOut::read', 'findsubs reported sub' );
+{
+    no warnings 'once';
+    $DB::sub{'TieOut::read'} = 'TieOut';
+    is( $d->findsubs( \&TieOut::read ), 'TieOut::read', 'findsubs reported sub' );
+}
 
 # now that it's capable of finding the package...
 $d->dumpsub( '', 'TieOut::read' );
@@ -256,26 +260,26 @@ is( $d->hashUsage({ one => [ 1, 2, 3 ]}, 'c'), 6, 'complex hash okay' );
 is( $out->read, "\%c = 1 item (keys: 3; values: 3; total: 6 bytes)\n",
 	'hashUsage complex message okay' );
 
-$foo = 'one';
-@foo = ('two');
-%foo = ( three => '123' );
-is( $d->globUsage(\*foo, 'foo'), 14, 'globUsage reports length correctly' );
-like( $out->read, qr/\@foo =.+\%foo =/s, 'globValue message okay' );
+our $folly = 'one';
+our @folly = ('two');
+our %folly = ( three => '123' );
+is( $d->globUsage(\*folly, 'folly'), 14, 'globUsage reports length correctly' );
+like( $out->read, qr/\@folly =.+\%folly =/s, 'globValue message okay' );
 
 # and now, the real show
 $d->dumpValue(undef);
 is( $out->read, "undef\n", 'dumpValue caught undef value okay' );
-$d->dumpValue($foo);
+$d->dumpValue($folly);
 is( $out->read, "'one'\n", 'dumpValue worked' );
-$d->dumpValue(@foo);
+$d->dumpValue(@folly);
 is( $out->read, "'two'\n", 'dumpValue worked on array' );
-$d->dumpValue(\$foo);
+$d->dumpValue(\$folly);
 is( $out->read, "-> 'one'\n", 'dumpValue worked on scalar ref' );
 
 # dumpValues (the rest of these should be caught by unwrap)
 $d->dumpValues(undef);
 is( $out->read, "undef\n", 'dumpValues caught undef value fine' );
-$d->dumpValues(\@foo);
+$d->dumpValues(\@folly);
 is( $out->read, "0  0..0  'two'\n", 'dumpValues worked on array ref' );
 $d->dumpValues('one', 'two');
 is( $out->read, "0..1  'one' 'two'\n", 'dumpValues worked on multiple values' );

@@ -577,3 +577,19 @@ isa		derived class test	ck_isa		s2
 
 cmpchain_and	comparison chaining	ck_null		|
 cmpchain_dup	comparand shuffling	ck_null		1
+
+entertrycatch	try {block}		ck_trycatch	|
+leavetrycatch	try {block} exit	ck_null		@
+poptry		pop try			ck_null		@
+catch		catch {} block		ck_null		|
+pushdefer	push defer {} block	ck_null		|
+
+is_bool		boolean type test	ck_null		fsT1
+is_weak		weakref type test	ck_null		fsT1
+weaken		reference weaken	ck_null		1
+unweaken	reference unweaken	ck_null		1
+blessed		blessed			ck_null		fs1
+refaddr		refaddr			ck_null		fsT1
+reftype		reftype			ck_null		fsT1
+ceil		ceil			ck_null		fsT1
+floor		floor			ck_null		fsT1

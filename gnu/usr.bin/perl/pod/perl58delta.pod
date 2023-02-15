@@ -409,7 +409,7 @@ File handles can be marked as accepting Perl's internal encoding of Unicode
 Note for EBCDIC users: the pseudo layer ":utf8" is erroneously named
 for you since it's not UTF-8 what you will be getting but instead
 UTF-EBCDIC.  See L<perlunicode>, L<utf8>, and
-http://www.unicode.org/unicode/reports/tr16/ for more information.
+http://www.unicode.org/reports/tr16/ for more information.
 In future releases this naming may change.  See L<perluniintro>
 for more information about UTF-8.
 

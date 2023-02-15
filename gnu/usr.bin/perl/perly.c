@@ -53,6 +53,24 @@ typedef signed char yysigned_char;
 # define YY_NULLPTR NULL
 #endif
 
+#ifndef YY_CAST
+# ifdef __cplusplus
+#  define YY_CAST(Type, Val) static_cast<Type> (Val)
+#  define YY_REINTERPRET_CAST(Type, Val) reinterpret_cast<Type> (Val)
+# else
+#  define YY_CAST(Type, Val) ((Type) (Val))
+#  define YY_REINTERPRET_CAST(Type, Val) ((Type) (Val))
+# endif
+#endif
+
+#ifndef YY_ATTRIBUTE_UNUSED
+# if defined __GNUC__ && 2 < __GNUC__ + (7 <= __GNUC_MINOR__)
+#  define YY_ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+# else
+#  define YY_ATTRIBUTE_UNUSED
+# endif
+#endif
+
 /* contains all the parser state tables; auto-generated from perly.y */
 #include "perly.tab"
 
@@ -75,15 +93,15 @@ typedef signed char yysigned_char;
 #  define YYDPRINTF(Args)			\
 do {						\
     if (yydebug)				\
-	YYFPRINTF Args;				\
+        YYFPRINTF Args;				\
 } while (0)
 
 #  define YYDSYMPRINTF(Title, Token, Value)			\
 do {								\
     if (yydebug) {						\
-	YYFPRINTF (Perl_debug_log, "%s ", Title);		\
-	yysymprint (aTHX_ Perl_debug_log,  Token, Value);	\
-	YYFPRINTF (Perl_debug_log, "\n");			\
+        YYFPRINTF (Perl_debug_log, "%s ", Title);		\
+        yysymprint (aTHX_ Perl_debug_log,  Token, Value);	\
+        YYFPRINTF (Perl_debug_log, "\n");			\
     }								\
 } while (0)
 
@@ -96,15 +114,15 @@ yysymprint(pTHX_ PerlIO * const yyoutput, int yytype, const YYSTYPE * const yyva
 {
     PERL_UNUSED_CONTEXT;
     if (yytype < YYNTOKENS) {
-	YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
+        YYFPRINTF (yyoutput, "token %s (", yytname[yytype]);
 #   ifdef YYPRINT
-	YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+        YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
 #   else
-	YYFPRINTF (yyoutput, "0x%" UVxf, (UV)yyvaluep->ival);
+        YYFPRINTF (yyoutput, "0x%" UVxf, (UV)yyvaluep->ival);
 #   endif
     }
     else
-	YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
+        YYFPRINTF (yyoutput, "nterm %s (", yytname[yytype]);
 
     YYFPRINTF (yyoutput, ")");
 }
@@ -121,36 +139,36 @@ yy_stack_print (pTHX_ const yy_parser *parser)
 
     min = parser->ps - 8 + 1;
     if (min <= parser->stack)
-	min = parser->stack + 1;
+        min = parser->stack + 1;
 
     PerlIO_printf(Perl_debug_log, "\nindex:");
     for (ps = min; ps <= parser->ps; ps++)
-	PerlIO_printf(Perl_debug_log, " %8d", (int)(ps - parser->stack));
+        PerlIO_printf(Perl_debug_log, " %8d", (int)(ps - parser->stack));
 
     PerlIO_printf(Perl_debug_log, "\nstate:");
     for (ps = min; ps <= parser->ps; ps++)
-	PerlIO_printf(Perl_debug_log, " %8d", ps->state);
+        PerlIO_printf(Perl_debug_log, " %8d", ps->state);
 
     PerlIO_printf(Perl_debug_log, "\ntoken:");
     for (ps = min; ps <= parser->ps; ps++)
-	PerlIO_printf(Perl_debug_log, " %8.8s", ps->name);
+        PerlIO_printf(Perl_debug_log, " %8.8s", ps->name);
 
     PerlIO_printf(Perl_debug_log, "\nvalue:");
     for (ps = min; ps <= parser->ps; ps++) {
-	switch (yy_type_tab[yystos[ps->state]]) {
-	case toketype_opval:
-	    PerlIO_printf(Perl_debug_log, " %8.8s",
-		  ps->val.opval
-		    ? PL_op_name[ps->val.opval->op_type]
-		    : "(Nullop)"
-	    );
-	    break;
-	case toketype_ival:
-	    PerlIO_printf(Perl_debug_log, " %8" IVdf, (IV)ps->val.ival);
-	    break;
-	default:
-	    PerlIO_printf(Perl_debug_log, " %8" UVxf, (UV)ps->val.ival);
-	}
+        switch (yy_type_tab[yystos[ps->state]]) {
+        case toketype_opval:
+            PerlIO_printf(Perl_debug_log, " %8.8s",
+                  ps->val.opval
+                    ? PL_op_name[ps->val.opval->op_type]
+                    : "(Nullop)"
+            );
+            break;
+        case toketype_ival:
+            PerlIO_printf(Perl_debug_log, " %8" IVdf, (IV)ps->val.ival);
+            break;
+        default:
+            PerlIO_printf(Perl_debug_log, " %8" UVxf, (UV)ps->val.ival);
+        }
     }
     PerlIO_printf(Perl_debug_log, "\n\n");
 }
@@ -158,7 +176,7 @@ yy_stack_print (pTHX_ const yy_parser *parser)
 #  define YY_STACK_PRINT(parser)	\
 do {					\
     if (yydebug && DEBUG_v_TEST)	\
-	yy_stack_print (aTHX_ parser);	\
+        yy_stack_print (aTHX_ parser);	\
 } while (0)
 
 
@@ -172,15 +190,15 @@ yy_reduce_print (pTHX_ int yyrule)
     int yyi;
     const unsigned int yylineno = yyrline[yyrule];
     YYFPRINTF (Perl_debug_log, "Reducing stack by rule %d (line %u), ",
-			  yyrule - 1, yylineno);
+                          yyrule - 1, yylineno);
     /* Print the symbols being reduced, and their result.  */
 #if PERL_BISON_VERSION >= 30000 /* 3.0+ */
     for (yyi = 0; yyi < yyr2[yyrule]; yyi++)
-	YYFPRINTF (Perl_debug_log, "%s ",
+        YYFPRINTF (Perl_debug_log, "%s ",
             yytname [yystos[(PL_parser->ps)[yyi + 1 - yyr2[yyrule]].state]]);
 #else
     for (yyi = yyprhs[yyrule]; 0 <= yyrhs[yyi]; yyi++)
-	YYFPRINTF (Perl_debug_log, "%s ", yytname [yyrhs[yyi]]);
+        YYFPRINTF (Perl_debug_log, "%s ", yytname [yyrhs[yyi]]);
 #endif
     YYFPRINTF (Perl_debug_log, "-> %s\n", yytname [yyr1[yyrule]]);
 }
@@ -188,7 +206,7 @@ yy_reduce_print (pTHX_ int yyrule)
 #  define YY_REDUCE_PRINT(Rule)		\
 do {					\
     if (yydebug)			\
-	yy_reduce_print (aTHX_ Rule);		\
+        yy_reduce_print (aTHX_ Rule);		\
 } while (0)
 
 #else /* !DEBUGGING */
@@ -208,32 +226,32 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
     int i = 0;
 
     if (!parser->stack)
-	return;
+        return;
 
     YYDPRINTF ((Perl_debug_log, "clearing the parse stack\n"));
 
     for (i=0; i< parser->yylen; i++) {
-	SvREFCNT_dec(ps[-i].compcv);
+        SvREFCNT_dec(ps[-i].compcv);
     }
     ps -= parser->yylen;
 
     /* now free whole the stack, including the just-reduced ops */
 
     while (ps > parser->stack) {
-	LEAVE_SCOPE(ps->savestack_ix);
-	if (yy_type_tab[yystos[ps->state]] == toketype_opval
-	    && ps->val.opval)
-	{
-	    if (ps->compcv && (ps->compcv != PL_compcv)) {
-		PL_compcv = ps->compcv;
-		PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
-		PL_comppad_name = PadlistNAMES(CvPADLIST(PL_compcv));
-	    }
-	    YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
-	    op_free(ps->val.opval);
-	}
-	SvREFCNT_dec(ps->compcv);
-	ps--;
+        LEAVE_SCOPE(ps->savestack_ix);
+        if (yy_type_tab[yystos[ps->state]] == toketype_opval
+            && ps->val.opval)
+        {
+            if (ps->compcv && (ps->compcv != PL_compcv)) {
+                PL_compcv = ps->compcv;
+                PAD_SET_CUR_NOSAVE(CvPADLIST(PL_compcv), 1);
+                PL_comppad_name = PadlistNAMES(CvPADLIST(PL_compcv));
+            }
+            YYDPRINTF ((Perl_debug_log, "(freeing op)\n"));
+            op_free(ps->val.opval);
+        }
+        SvREFCNT_dec(ps->compcv);
+        ps--;
     }
 
     Safefree(parser->stack);
@@ -247,7 +265,6 @@ S_clear_yystack(pTHX_  const yy_parser *parser)
 int
 Perl_yyparse (pTHX_ int gramtype)
 {
-    dVAR;
     int yystate;
     int yyn;
     int yyresult;
@@ -262,7 +279,7 @@ Perl_yyparse (pTHX_ int gramtype)
 #define YYPUSHSTACK  parser->ps = ++ps
 
     /* The variable used to return semantic value and location from the
-	  action routines: ie $$.  */
+          action routines: ie $$.  */
     YYSTYPE yyval;
 
     YYDPRINTF ((Perl_debug_log, "Starting parse\n"));
@@ -280,7 +297,7 @@ Perl_yyparse (pTHX_ int gramtype)
 
     /* initialise state for this parse */
     parser->yychar = gramtype;
-    yytoken = YYTRANSLATE(NATIVE_TO_UNI(parser->yychar));
+    yytoken = YYTRANSLATE((int)NATIVE_TO_UNI(parser->yychar));
 
     parser->yyerrstatus = 0;
     parser->yylen = 0;
@@ -352,11 +369,11 @@ Perl_yyparse (pTHX_ int gramtype)
                  * characters in that range, but all tokens it returns are
                  * either 0, or above 255.  There could be a problem if NULs
                  * weren't 0, or were ever returned as raw chars by yylex() */
-                yytoken = YYTRANSLATE(NATIVE_TO_UNI(parser->yychar));
+                yytoken = YYTRANSLATE((int)NATIVE_TO_UNI(parser->yychar));
             }
 
             /* make sure no-one's changed yychar since the last call to yylex */
-            assert(yytoken == YYTRANSLATE(NATIVE_TO_UNI(parser->yychar)));
+            assert(yytoken == YYTRANSLATE((int)NATIVE_TO_UNI(parser->yychar)));
             YYDSYMPRINTF("lookahead token is", yytoken, &parser->yylval);
 
 
@@ -575,7 +592,7 @@ Perl_yyparse (pTHX_ int gramtype)
   yyacceptlab:
     yyresult = 0;
     for (ps=parser->ps; ps > parser->stack; ps--) {
-	SvREFCNT_dec(ps->compcv);
+        SvREFCNT_dec(ps->compcv);
     }
     parser->ps = parser->stack; /* disable cleanup */
     goto yyreturn;

@@ -32,14 +32,14 @@ while (<DATA>) {
 
 my ($c, $h) = map {
     open_new($_, '>',
-	     { by => 'regen/overload.pl', file => $_, style => '*',
-	       copyright => [1997, 1998, 2000, 2001, 2005 .. 2007, 2011] });
+             { by => 'regen/overload.pl', file => $_, style => '*',
+               copyright => [1997, 1998, 2000, 2001, 2005 .. 2007, 2011] });
 } 'overload.inc', 'overload.h';
 
 mkdir("lib/overload", 0777) unless -d 'lib/overload';
 my $p = open_new('lib/overload/numbers.pm', '>',
-		 { by => 'regen/overload.pl',
-		   file => 'lib/overload/numbers.pm', copyright => [2008] });
+                 { by => 'regen/overload.pl',
+                   file => 'lib/overload/numbers.pm', copyright => [2008] });
 
 {
 local $" = "\n    ";
@@ -70,7 +70,7 @@ for (0..$#enums) {
     my $l =   3 - int((length($enums[$_]) + 9) / 8);
     $l = 1 if $l < 1;
     printf $h "    %s_amg,%s/* 0x%02x %-8s */\n", $enums[$_],
-	("\t" x $l), $_, $op;
+        ("\t" x $l), $_, $op;
 }
 
 print $h <<'EOF';

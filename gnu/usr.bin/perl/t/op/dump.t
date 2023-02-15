@@ -25,6 +25,9 @@ skip_all("only tested on devel builds")
 skip_all("no point in dumping on $^O")
   unless $^O =~ /^(linux|.*bsd|solaris|darwin)$/;
 
+skip_all("GH 18847: excessive writes to /var/log/messages on FreeBSD")
+    if $^O eq 'freebsd';
+
 skip_all("avoid coredump under ASan")
   if  $Config{ccflags} =~ /-fsanitize=/;
 

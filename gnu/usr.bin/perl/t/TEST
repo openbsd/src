@@ -76,21 +76,11 @@ my %temp_no_core = (
      '../dist/Unicode-Normalize' => 1,
     );
 
-# temporary workaround Apr 2017.  These need '.' in @INC.
-# Ideally this # list will eventually be empty
-
-my %temp_needs_dot  = map { $_ => 1 } qw(
-    ../cpan/Filter-Util-Call
-    ../cpan/libnet
-    ../cpan/Test-Simple
-);
-
-
 # delete env vars that may influence the results
 # but allow override via *_TEST env var if wanted
 # (e.g. PERL5OPT_TEST=-d:NYTProf)
 my @bad_env_vars = qw(
-    PERL5LIB PERLLIB PERL5OPT
+    PERL5LIB PERLLIB PERL5OPT PERL_UNICODE
     PERL_YAML_BACKEND PERL_JSON_BACKEND
 );
 
@@ -178,7 +168,8 @@ if ($show_elapsed_time) { require Time::HiRes }
 my %timings = (); # testname => [@et] pairs if $show_elapsed_time.
 
 # Roll your own File::Find!
-sub _find_tests { our @found=(); push @ARGV, _find_files('\.t$', $_[0]) }
+our @found;
+sub _find_tests { @found=(); push @ARGV, _find_files('\.t$', $_[0]) }
 sub _find_files {
     my($patt, @dirs) = @_;
     for my $dir (@dirs) {
@@ -187,7 +178,6 @@ sub _find_files {
 	    next if $skip{$f};
 
 	    my $fullpath = "$dir/$f";
-	    
 	    if (-d $fullpath) {
 		_find_files($patt, $fullpath);
 	    } elsif ($f =~ /$patt/) {
@@ -253,9 +243,6 @@ sub _scan_test {
 		}
 		if ($temp_no_core{$run_dir}) {
 		    $testswitch = $testswitch . ',NC';
-		}
-		if($temp_needs_dot{$run_dir}) {
-		    $testswitch = $testswitch . ',DOT';
 		}
 	    }
 	} elsif ($test =~ m!^\.\./lib!) {
@@ -408,6 +395,7 @@ sub _tests_from_manifest {
     my %skip;
     my %extensions = _populate_hash($extensions);
     my %known_extensions = _populate_hash($known_extensions);
+    my %printed_skip_warning;
 
     foreach (keys %known_extensions) {
 	$skip{$_} = 1 unless $extensions{$_};
@@ -421,7 +409,7 @@ sub _tests_from_manifest {
 		my $t = $1;
 		my $extension = $2;
 
-		next if ord "A" != 65
+		if (    ord "A" != 65
 		     && defined $extension
 		     && $extension =~ m! \b (?:
 						Archive-Tar/
@@ -447,7 +435,12 @@ sub _tests_from_manifest {
 					      | Module-Metadata/
 					      | PerlIO-via-QuotedPrint/
 					    )
-				       !x;
+				       !x)
+		{
+		    print STDERR "Skipping testing of $extension on EBCDIC\n"
+				     unless $printed_skip_warning{$extension}++;
+		    next;
+		}
 
 		if (!$::core || $t =~ m!^lib/[a-z]!) {
 		    if (defined $extension) {
@@ -481,7 +474,7 @@ unless (@ARGV) {
     }
     unless ($::core) {
 	_find_tests('porting');
-	_find_tests("lib"); 
+        _find_tests("lib");
     }
     # Config.pm may be broken for make minitest. And this is only a refinement
     # for skipping tests on non-default builds, so it is allowed to fail.

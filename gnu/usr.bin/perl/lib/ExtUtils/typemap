@@ -217,38 +217,54 @@ T_REF_IV_REF
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type *, tmp);
 	}
-	else
-	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
+	else {
+		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
+	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+			\"$var\", \"$ntype\",
+			refstr, $arg
+		);
+	}
 T_REF_IV_PTR
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type, tmp);
 	}
-	else
-	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
+	else {
+		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
+	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+			\"$var\", \"$ntype\",
+			refstr, $arg
+		);
+	}
 T_PTROBJ
 	if (SvROK($arg) && sv_derived_from($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = INT2PTR($type,tmp);
 	}
-	else
-	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
+	else {
+		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
+	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+			\"$var\", \"$ntype\",
+			refstr, $arg
+		);
+	}
 T_PTRDESC
 	if (sv_isa($arg, \"${ntype}\")) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    ${type}_desc = (\U${type}_DESC\E*) tmp;
 	    $var = ${type}_desc->ptr;
 	}
-	else
-	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
+	else {
+		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
+	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+			\"$var\", \"$ntype\",
+			refstr, $arg
+		);
+	}
 T_REFREF
 	if (SvROK($arg)) {
 	    IV tmp = SvIV((SV*)SvRV($arg));
@@ -263,10 +279,14 @@ T_REFOBJ
 	    IV tmp = SvIV((SV*)SvRV($arg));
 	    $var = *INT2PTR($type,tmp);
 	}
-	else
-	    Perl_croak_nocontext(\"%s: %s is not of type %s\",
+	else {
+		const char* refstr = SvROK($arg) ? \"\" : SvOK($arg) ? \"scalar \" : \"undef\";
+	    Perl_croak_nocontext(\"%s: Expected %s to be of type %s; got %s%\" SVf \" instead\",
 			${$ALIAS?\q[GvNAME(CvGV(cv))]:\qq[\"$pname\"]},
-			\"$var\", \"$ntype\")
+			\"$var\", \"$ntype\",
+			refstr, $arg
+		);
+	}
 T_OPAQUE
 	$var = *($type *)SvPV_nolen($arg)
 T_OPAQUEPTR
@@ -295,23 +315,23 @@ T_OUT
 #############################################################################
 OUTPUT
 T_SV
-	$arg = $var;
+	${ "$var" eq "RETVAL" ? \"$arg = $var;" : \"sv_setsv_mg($arg, $var);" }
 T_SVREF
 	$arg = newRV((SV*)$var);
 T_SVREF_REFCOUNT_FIXED
-	$arg = newRV_noinc((SV*)$var);
+	${ "$var" eq "RETVAL" ? \"$arg = newRV_noinc((SV*)$var);" : \"sv_setrv_noinc($arg, (SV*)$var);" }
 T_AVREF
 	$arg = newRV((SV*)$var);
 T_AVREF_REFCOUNT_FIXED
-	$arg = newRV_noinc((SV*)$var);
+	${ "$var" eq "RETVAL" ? \"$arg = newRV_noinc((SV*)$var);" : \"sv_setrv_noinc($arg, (SV*)$var);" }
 T_HVREF
 	$arg = newRV((SV*)$var);
 T_HVREF_REFCOUNT_FIXED
-	$arg = newRV_noinc((SV*)$var);
+	${ "$var" eq "RETVAL" ? \"$arg = newRV_noinc((SV*)$var);" : \"sv_setrv_noinc($arg, (SV*)$var);" }
 T_CVREF
 	$arg = newRV((SV*)$var);
 T_CVREF_REFCOUNT_FIXED
-	$arg = newRV_noinc((SV*)$var);
+	${ "$var" eq "RETVAL" ? \"$arg = newRV_noinc((SV*)$var);" : \"sv_setrv_noinc($arg, (SV*)$var);" }
 T_IV
 	sv_setiv($arg, (IV)$var);
 T_UV

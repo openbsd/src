@@ -1,31 +1,40 @@
-#!perl
+# -*- mode: perl; -*-
+
+# Test Math::BigInt::Calc
 
 use strict;
 use warnings;
 
-use Test::More tests => 460;
+use Test::More tests => 524;
 
 use Math::BigInt::Calc;
 
-my ($BASE_LEN, undef, $AND_BITS, $XOR_BITS, $OR_BITS,
-    $BASE_LEN_SMALL, $MAX_VAL)
-  = Math::BigInt::Calc->_base_len();
+my ($BASE_LEN, $BASE, $AND_BITS, $XOR_BITS, $OR_BITS,
+    $BASE_LEN_SMALL, $MAX_VAL,
+    $MAX_BITS, $MAX_EXP_F, $MAX_EXP_I, $USE_INT)
+  = Math::BigInt::Calc -> _base_len();
 
-print "# BASE_LEN = $BASE_LEN\n";
-print "# MAX_VAL  = $MAX_VAL\n";
-print "# AND_BITS = $AND_BITS\n";
-print "# XOR_BITS = $XOR_BITS\n";
-print "# IOR_BITS = $OR_BITS\n";
+note(<<"EOF");
 
-# testing of Math::BigInt::Calc
+BASE_LEN  = $BASE_LEN
+BASE      = $BASE
+MAX_VAL   = $MAX_VAL
+AND_BITS  = $AND_BITS
+XOR_BITS  = $XOR_BITS
+OR_BITS   = $OR_BITS
+MAX_EXP_F = $MAX_EXP_F
+MAX_EXP_I = $MAX_EXP_I
+USE_INT   = $USE_INT
+EOF
 
-my $LIB = 'Math::BigInt::Calc';         # pass classname to sub's
+my $LIB = 'Math::BigInt::Calc';
+my $REF = 'Math::BigInt::Calc';
 
 # _new and _str
 
 my $x = $LIB->_new("123");
 my $y = $LIB->_new("321");
-is(ref($x), "Math::BigInt::Calc", q|ref($x) is an Math::BigInt::Calc|);
+is(ref($x), $REF, q|ref($x) is a $REF|);
 is($LIB->_str($x), 123,     qq|$LIB->_str(\$x) = 123|);
 is($LIB->_str($y), 321,     qq|$LIB->_str(\$y) = 321|);
 
@@ -80,46 +89,38 @@ is($LIB->_str($rr), 2,   qq|$LIB->_str(\$rr) = 2|);
 
 # is_zero, _is_one, _one, _zero
 
-is($LIB->_is_zero($x) || 0, 0, qq/$LIB->_is_zero(\$x) || 0 = 0/);
-is($LIB->_is_one($x)  || 0, 0, qq/$LIB->_is_one(\$x)  || 0 = 0/);
+ok(! $LIB->_is_zero($x), qq|$LIB->_is_zero(\$x)|);
+ok(! $LIB->_is_one($x),  qq|$LIB->_is_one(\$x)|);
 
 is($LIB->_str($LIB->_zero()), "0", qq|$LIB->_str($LIB->_zero()) = "0"|);
 is($LIB->_str($LIB->_one()),  "1", qq|$LIB->_str($LIB->_one())  = "1"|);
 
 # _two() and _ten()
 
-is($LIB->_str($LIB->_two()),    "2",  qq|$LIB->_str($LIB->_two()) = "2"|);
-is($LIB->_str($LIB->_ten()),    "10", qq|$LIB->_str($LIB->_ten()) = "10"|);
-is($LIB->_is_ten($LIB->_two()), 0,    qq|$LIB->_is_ten($LIB->_two()) = 0|);
-is($LIB->_is_two($LIB->_two()), 1,    qq|$LIB->_is_two($LIB->_two()) = 1|);
-is($LIB->_is_ten($LIB->_ten()), 1,    qq|$LIB->_is_ten($LIB->_ten()) = 1|);
-is($LIB->_is_two($LIB->_ten()), 0,    qq|$LIB->_is_two($LIB->_ten()) = 0|);
+is($LIB->_str($LIB->_two()), "2",  qq|$LIB->_str($LIB->_two()) = "2"|);
+is($LIB->_str($LIB->_ten()), "10", qq|$LIB->_str($LIB->_ten()) = "10"|);
 
-is($LIB->_is_one($LIB->_one()), 1,    qq|$LIB->_is_one($LIB->_one()) = 1|);
-is($LIB->_is_one($LIB->_two()), 0,    qq|$LIB->_is_one($LIB->_two()) = 0|);
-is($LIB->_is_one($LIB->_ten()), 0,    qq|$LIB->_is_one($LIB->_ten()) = 0|);
+ok(! $LIB->_is_ten($LIB->_two()), qq|$LIB->_is_ten($LIB->_two()) is false|);
+ok(  $LIB->_is_two($LIB->_two()), qq|$LIB->_is_two($LIB->_two()) is true|);
+ok(  $LIB->_is_ten($LIB->_ten()), qq|$LIB->_is_ten($LIB->_ten()) is true|);
+ok(! $LIB->_is_two($LIB->_ten()), qq|$LIB->_is_two($LIB->_ten()) is false|);
 
-is($LIB->_is_one($LIB->_zero()) || 0, 0,
-   qq/$LIB->_is_one($LIB->_zero()) || 0 = 0/);
+ok(  $LIB->_is_one($LIB->_one()), qq|$LIB->_is_one($LIB->_one()) is true|);
+ok(! $LIB->_is_one($LIB->_two()), qq|$LIB->_is_one($LIB->_two()) is false|);
+ok(! $LIB->_is_one($LIB->_ten()), qq|$LIB->_is_one($LIB->_ten()) is false|);
 
-is($LIB->_is_zero($LIB->_zero()), 1,
-   qq|$LIB->_is_zero($LIB->_zero()) = 1|);
-
-is($LIB->_is_zero($LIB->_one()) || 0, 0,
-   qq/$LIB->_is_zero($LIB->_one()) || 0 = 0/);
+ok(! $LIB->_is_one($LIB->_zero()),  qq/$LIB->_is_one($LIB->_zero()) is false/);
+ok(  $LIB->_is_zero($LIB->_zero()), qq|$LIB->_is_zero($LIB->_zero()) is true|);
+ok(! $LIB->_is_zero($LIB->_one()),  qq/$LIB->_is_zero($LIB->_one()) is false/);
 
 # is_odd, is_even
 
-is($LIB->_is_odd($LIB->_one()), 1,
-   qq/$LIB->_is_odd($LIB->_one()) = 1/);
-is($LIB->_is_odd($LIB->_zero()) || 0, 0,
-   qq/$LIB->_is_odd($LIB->_zero()) || 0 = 0/);
-is($LIB->_is_even($LIB->_one()) || 0, 0,
-   qq/$LIB->_is_even($LIB->_one()) || 0 = 0/);
-is($LIB->_is_even($LIB->_zero()), 1,
-   qq/$LIB->_is_even($LIB->_zero()) = 1/);
+ok(  $LIB->_is_odd($LIB->_one()),   qq/$LIB->_is_odd($LIB->_one()) is true/);
+ok(! $LIB->_is_odd($LIB->_zero()),  qq/$LIB->_is_odd($LIB->_zero()) is false/);
+ok(! $LIB->_is_even($LIB->_one()),  qq/$LIB->_is_even($LIB->_one()) is false/);
+ok(  $LIB->_is_even($LIB->_zero()), qq/$LIB->_is_even($LIB->_zero()) is true/);
 
-# _len
+# _alen and _len
 
 for my $method (qw/_alen _len/) {
     $x = $LIB->_new("1");
@@ -348,8 +349,7 @@ is($LIB->_str($y), 123, qq|$LIB->_str(\$y) = 123|);
 foreach (qw/1 12 123 1234 12345 1234567 12345678 123456789 1234567890/) {
 
     $x = $LIB->_new("$_");
-    is(ref($x), "Math::BigInt::Calc",
-       q|ref($x) = "Math::BigInt::Calc"|);
+    is(ref($x), $REF, q|ref($x) = "$REF"|);
     is($LIB->_str($x), "$_", qq|$LIB->_str(\$x) = "$_"|);
 
     $x = $LIB->_num($x);
@@ -524,7 +524,6 @@ $LIB->_fac($x);
 is($LIB->_str($x), "6227020800",
    qq|$LIB->_str(\$x) = "6227020800"|);
 
-##############################################################################
 # _inc and _dec
 
 for (qw/1 11 121 1231 12341 1234561 12345671 123456781 1234567891/) {
@@ -545,13 +544,30 @@ for (qw/19 119 1219 12319 1234519 12345619 123456719 1234567819/) {
     is($LIB->_str($x), $_, qq|$LIB->_str(\$x) = $_|);
 }
 
-for (qw/999 9999 99999 9999999 99999999 999999999 9999999999 99999999999/) {
-    $x = $LIB->_new("$_");
+for (1 .. 20) {
+    my $p = "9" x $_;                       # = $q - 1
+    my $q = "1" . ("0" x $_);               # = $p + 1
+
+    $x = $LIB->_new("$p");
     $LIB->_inc($x);
-    my $expected = '1' . '0' x (length($_));
-    is($LIB->_str($x), $expected, qq|$LIB->_str(\$x) = $expected|);
+    is($LIB->_str($x), $q, qq|\$x = $LIB->_new("$p"); $LIB->_inc()|);
+
+    $x = $LIB->_new("$q");
     $LIB->_dec($x);
-    is($LIB->_str($x), $_, qq|$LIB->_str(\$x) = $_|);
+    is($LIB->_str($x), $p, qq|\$x = $LIB->_new("$q"); $LIB->_dec()|);
+}
+
+for (1 .. 20) {
+    my $p = "1" . ("0" x $_);               # = $q - 1
+    my $q = "1" . ("0" x ($_ - 1)) . "1";   # = $p + 1
+
+    $x = $LIB->_new("$p");
+    $LIB->_inc($x);
+    is($LIB->_str($x), $q, qq|\$x = $LIB->_new("$p"); $LIB->_inc()|);
+
+    $x = $LIB->_new("$q");
+    $LIB->_dec($x);
+    is($LIB->_str($x), $p, qq|\$x = $LIB->_new("$q"); $LIB->_dec()|);
 }
 
 $x = $LIB->_new("1000");
@@ -560,11 +576,7 @@ is($LIB->_str($x), "1001", qq|$LIB->_str(\$x) = "1001"|);
 $LIB->_dec($x);
 is($LIB->_str($x), "1000", qq|$LIB->_str(\$x) = "1000"|);
 
-my $BL;
-{
-    no strict 'refs';
-    $BL = &{"$LIB"."::_base_len"}();
-}
+my $BL = $LIB -> _base_len();
 
 $x = '1' . '0' x $BL;
 $z = '1' . '0' x ($BL - 1);
@@ -764,7 +776,3 @@ is($LIB->_check(123), "123 is not a reference",
     is(@$x, 1, q|@$x = 1|);
     is($x->[0], 0, q|$x->[0] = 0|);
 }
-
-# done
-
-1;

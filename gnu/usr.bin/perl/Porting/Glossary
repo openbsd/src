@@ -276,6 +276,10 @@ comm (Loc.U):
 	full pathname (if any) of the comm program.  After Configure runs,
 	the value is reset to a plain "comm" and is not useful.
 
+compiler_warning (compiler_warning.U):
+	This variable holds the command to check if the file specified as a
+	parameter contains a compiler warning
+
 compress (Loc.U):
 	This variable is defined but not used by Configure.
 	The value is the empty string and is not useful.
@@ -447,6 +451,11 @@ d_atolf (atolf.U):
 d_atoll (atoll.U):
 	This variable conditionally defines the HAS_ATOLL symbol, which
 	indicates to the C program that the atoll() routine is available.
+
+d_attribute_always_inline (d_attribut.U):
+	This variable conditionally defines HASATTRIBUTE_ALWAYS_INLINE,
+	which indicates that the C compiler can know that certain
+	functions should always be inlined.
 
 d_attribute_deprecated (d_attribut.U):
 	This variable conditionally defines HASATTRIBUTE_DEPRECATED, which
@@ -886,6 +895,16 @@ d_fegetround (d_fegetround.U):
 	This variable conditionally defines HAS_FEGETROUND if fegetround() is
 	available to get the floating point rounding mode.
 
+d_ffs (d_ffs.U):
+	This variable conditionally defines the HAS_FFS symbol, which
+	indicates to the C program that the ffs() routine is available
+	to find the first bit which is set in its integer argument.
+
+d_ffsl (d_ffs.U):
+	This variable conditionally defines the HAS_FFSL symbol, which
+	indicates to the C program that the ffsl() routine is available
+	to find the first bit which is set in its long integer argument.
+
 d_fgetpos (d_fgetpos.U):
 	This variable conditionally defines HAS_FGETPOS if fgetpos() is
 	available to get the file position indicator.
@@ -1065,6 +1084,11 @@ d_getcwd (d_getcwd.U):
 	This variable conditionally defines the HAS_GETCWD symbol, which
 	indicates to the C program that the getcwd() routine is available
 	to get the current working directory.
+
+d_getenv_preserves_other_thread (d_getenv_thread.U):
+	This variable conditionally defines the GETENV_PRESERVES_OTHER_THREAD
+	symbol, which indicates to the C program that the getenv() system call
+	does not zap the static buffer in a different thread.
 
 d_getespwnam (d_getespwnam.U):
 	This variable conditionally defines HAS_GETESPWNAM if getespwnam() is
@@ -1601,7 +1625,7 @@ d_long_double_style_ieee_extended (d_longdbl.U):
 	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE_EXTENDED
 	if the long double is the 80-bit IEEE 754 extended precision.
 	Note that despite the 'extended' this is less than the 'std',
-	since thisis an extension of the double precision.
+	since this is an extension of the double precision.
 
 d_long_double_style_ieee_std (d_longdbl.U):
 	This variable conditionally defines LONG_DOUBLE_STYLE_IEEE_STD
@@ -1663,10 +1687,14 @@ d_malloc_size (d_malloc_size.U):
 	This symbol, if defined, indicates that the malloc_size
 	routine is available for use.
 
+d_malloc_usable_size (d_malloc_size.U):
+	This symbol, if defined, indicates that the malloc_usable_size
+	routine is available for use.
+
 d_mblen (d_mblen.U):
 	This variable conditionally defines the HAS_MBLEN symbol, which
 	indicates to the C program that the mblen() routine is available
-	to find the number of bytes in a multibye character.
+	to find the number of bytes in a multibyte character.
 
 d_mbrlen (d_mbrlen.U):
 	This variable conditionally defines the HAS_MBRLEN symbol if the
@@ -1691,7 +1719,7 @@ d_mbtowc (d_mbtowc.U):
 d_memmem (d_memmem.U):
 	This variable conditionally defines the HAS_MEMMEM symbol, which
 	indicates to the C program that the memmem() routine is available
-	to return a pointer to the start of the first occurance of a
+	to return a pointer to the start of the first occurrence of a
 	substring in a memory area (or NULL if not found).
 
 d_memrchr (d_memrchr.U):
@@ -1870,6 +1898,16 @@ d_nice (d_nice.U):
 d_nl_langinfo (d_nl_langinfo.U):
 	This variable conditionally defines the HAS_NL_LANGINFO symbol, which
 	indicates to the C program that the nl_langinfo() routine is available.
+
+d_nl_langinfo_l (d_nl_langinfo_l.U):
+	This variable contains the eventual value of the
+	HAS_NL_LANGINFO_L symbol, which indicates if the
+	nl_langinfo_l() function exists.
+
+d_non_int_bitfields (d_bitfield.U):
+	This variable conditionally defines HAS_NON_INT_BITFIELDS
+	which indicates that the C compiler accepts struct bitfields of sizes
+	that aren't 'int' or 'unsigned int'
 
 d_nv_preserves_uv (perlxv.U):
 	This variable indicates whether a variable of type nvtype
@@ -2491,6 +2529,10 @@ d_sockaddr_sa_len (d_socket.U):
 	which indicates that a struct sockaddr structure has the sa_len
 	member.
 
+d_sockaddr_storage (d_socket.U):
+	This variable conditionally defines the HAS_SOCKADDR_STORAGE symbol,
+	which indicates the availability of a struct sockaddr_storage.
+
 d_sockatmark (d_sockatmark.U):
 	This variable conditionally defines the HAS_SOCKATMARK symbol, which
 	indicates to the C program that the sockatmark() routine is available.
@@ -2680,6 +2722,10 @@ d_strxfrm (d_strxfrm.U):
 	This variable conditionally defines HAS_STRXFRM if strxfrm() is
 	available to transform strings.
 
+d_strxfrm_l (d_strxfrm_l.U):
+	This variable conditionally defines HAS_STRXFRM_L if strxfrm_l() is
+	available to transform strings.
+
 d_suidsafe (d_dosuid.U):
 	This variable conditionally defines SETUID_SCRIPTS_ARE_SECURE_NOW
 	if setuid scripts can be secure.  This test looks in /dev/fd/.
@@ -2740,6 +2786,10 @@ d_tgamma (d_tgamma.U):
 	This variable conditionally defines the HAS_TGAMMA symbol, which
 	indicates to the C program that the tgamma() routine is available
 	for the gamma function.  See also d_lgamma.
+
+d_thread_local (d_thread_local.U):
+	This variable conditionally defines the PERL_THREAD_LOCAL symbol. In
+	turn that gives a linkage specification for thread-local storage.
 
 d_thread_safe_nl_langinfo_l (d_nl_langinfo_l.U):
 	This variable contains the eventual value of the
@@ -2901,6 +2951,11 @@ d_wait4 (d_wait4.U):
 d_waitpid (d_waitpid.U):
 	This variable conditionally defines HAS_WAITPID if waitpid() is
 	available to wait for child process.
+
+d_wcrtomb (d_wcrtomb.U):
+	This variable conditionally defines the HAS_WCRTOMB symbol if the
+	wcrtomb() routine is available to be used to convert a wide character
+	into a multi-byte character.
 
 d_wcscmp (d_wcscmp.U):
 	This variable conditionally defines the HAS_WCSCMP symbol if the
@@ -3817,8 +3872,8 @@ i_wctype (i_wctype.U):
 	that indicates whether a C program may include <wctype.h>.
 
 i_xlocale (d_newlocale.U):
-	This symbol, if defined, indicates to the C program that it should
-	include <xlocale.h> to get uselocale() and its friends
+	This symbol, if defined, indicates to the C program that the
+	header xlocale.h is available.  See also xlocale_needed.
 
 ignore_versioned_solibs (libs.U):
 	This variable should be non-empty if non-versioned shared
@@ -4652,6 +4707,10 @@ PERL_SUBVERSION (Oldsyms.U):
 	development subversions.
 	This value is manually set in patchlevel.h
 
+perl_thread_local (d_thread_local.U):
+	This variable gives the value for the PERL_THREAD_LOCAL symbol (when
+	defined), which gives a linkage specification for thread-local storage.
+
 PERL_VERSION (Oldsyms.U):
 	In a Perl version number such as 5.6.2, this is the 6.
 	This value is manually set in patchlevel.h
@@ -5255,6 +5314,13 @@ ssizetype (ssizetype.U):
 	of bytes or an error condition.  It must be a signed type.
 	We will pick a type such that sizeof(SSize_t) == sizeof(Size_t).
 
+st_dev_sign (st_dev_def.U):
+	This variable contains the signedness of struct stat's st_dev.
+	1 for unsigned, -1 for signed.
+
+st_dev_size (st_dev_def.U):
+	This variable contains the size of struct stat's st_dev in bytes.
+
 st_ino_sign (st_ino_def.U):
 	This variable contains the signedness of struct stat's st_ino.
 	1 for unsigned, -1 for signed.
@@ -5499,11 +5565,6 @@ uquadtype (quadtype.U):
 	unsigned int, unsigned long long, uint64_t, or whatever type is
 	used for 64-bit integers.
 
-use5005threads (usethreads.U):
-	This variable conditionally defines the USE_5005THREADS symbol,
-	and indicates that Perl should be built to use the 5.005-based
-	threading implementation. Only valid up to 5.8.x.
-
 use64bitall (use64bits.U):
 	This variable conditionally defines the USE_64_BIT_ALL symbol,
 	and indicates that 64-bit integer types should be used
@@ -5529,6 +5590,11 @@ usecbacktrace (usebacktrace.U):
 usecrosscompile (Cross.U):
 	This variable conditionally defines the USE_CROSS_COMPILE symbol,
 	and indicates that Perl has been cross-compiled.
+
+usedefaultstrict (usedefaultstrict.U):
+	This setting provides a mechanism for perl developers to enable
+	strict by default. These defaults do not apply when perl is run
+	via -e or -E.
 
 usedevel (Devel.U):
 	This variable indicates that Perl was configured with development
@@ -5853,6 +5919,10 @@ xlibpth (libpth.U):
 	This variable holds extra path (space-separated) used to find
 	libraries on this platform, for example CPU-specific libraries
 	(on multi-CPU platforms) may be listed here.
+
+xlocale_needed (d_newlocale.U):
+	This symbol, if defined, indicates that the C program should
+	include <xlocale.h> to get newlocale() and its friends.
 
 yacc (yacc.U):
 	This variable holds the name of the compiler compiler we

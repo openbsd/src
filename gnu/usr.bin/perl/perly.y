@@ -31,7 +31,7 @@
 
 /*  Make the parser re-entrant. */
 
-%pure-parser
+%define api.pure
 
 %start grammar
 
@@ -45,7 +45,22 @@
 
 %token <ival> GRAMPROG GRAMEXPR GRAMBLOCK GRAMBARESTMT GRAMFULLSTMT GRAMSTMTSEQ GRAMSUBSIGNATURE
 
-%token <ival> '{' '}' '[' ']' '-' '+' '@' '%' '&' '=' '.'
+%token <ival> PERLY_AMPERSAND
+%token <ival> PERLY_BRACE_OPEN
+%token <ival> PERLY_BRACE_CLOSE
+%token <ival> PERLY_BRACKET_OPEN
+%token <ival> PERLY_BRACKET_CLOSE
+%token <ival> PERLY_COMMA
+%token <ival> PERLY_DOLLAR
+%token <ival> PERLY_DOT
+%token <ival> PERLY_EQUAL_SIGN
+%token <ival> PERLY_MINUS
+%token <ival> PERLY_PERCENT_SIGN
+%token <ival> PERLY_PLUS
+%token <ival> PERLY_SEMICOLON
+%token <ival> PERLY_SLASH
+%token <ival> PERLY_SNAIL
+%token <ival> PERLY_STAR
 
 %token <opval> BAREWORD METHOD FUNCMETH THING PMFUNC PRIVATEREF QWLIST
 %token <opval> FUNC0OP FUNC0SUB UNIOPSUB LSTOPSUB
@@ -54,6 +69,7 @@
 %token <ival> FORMAT SUB SIGSUB ANONSUB ANON_SIGSUB PACKAGE USE
 %token <ival> WHILE UNTIL IF UNLESS ELSE ELSIF CONTINUE FOR
 %token <ival> GIVEN WHEN DEFAULT
+%token <ival> TRY CATCH FINALLY
 %token <ival> LOOPEX DOTDOT YADAYADA
 %token <ival> FUNC0 FUNC1 FUNC UNIOP LSTOP
 %token <ival> MULOP ADDOP
@@ -61,38 +77,41 @@
 %token <ival> LOCAL MY REQUIRE
 %token <ival> COLONATTR FORMLBRACK FORMRBRACK
 %token <ival> SUBLEXSTART SUBLEXEND
+%token <ival> DEFER
 
 %type <ival> grammar remember mremember
 %type <ival>  startsub startanonsub startformsub
 
 %type <ival> mintro
 
-%type <opval> stmtseq fullstmt labfullstmt barestmt block mblock else
+%type <opval> stmtseq fullstmt labfullstmt barestmt block mblock else finally
 %type <opval> expr term subscripted scalar ary hsh arylen star amper sideff
+%type <opval> condition
+%type <opval> empty
 %type <opval> sliceme kvslice gelem
 %type <opval> listexpr nexpr texpr iexpr mexpr mnexpr
 %type <opval> optlistexpr optexpr optrepl indirob listop method
 %type <opval> formname subname proto cont my_scalar my_var
-%type <opval> refgen_topic formblock
+%type <opval> list_of_scalars my_list_of_scalars refgen_topic formblock
 %type <opval> subattrlist myattrlist myattrterm myterm
 %type <opval> termbinop termunop anonymous termdo
 %type <opval> termrelop relopchain termeqop eqopchain
 %type <ival>  sigslurpsigil
 %type <opval> sigvarname sigdefault sigscalarelem sigslurpelem
-%type <opval> sigelem siglist siglistornull subsigguts subsignature optsubsignature
+%type <opval> sigelem siglist optsiglist subsigguts subsignature optsubsignature
 %type <opval> subbody optsubbody sigsubbody optsigsubbody
 %type <opval> formstmtseq formline formarg
 
 %nonassoc <ival> PREC_LOW
 %nonassoc LOOPEX
 
-%left <ival> OROP DOROP
+%left <ival> OROP
 %left <ival> ANDOP
 %right <ival> NOTOP
 %nonassoc LSTOP LSTOPSUB
-%left <ival> ','
+%left PERLY_COMMA
 %right <ival> ASSIGNOP
-%right <ival> '?' ':'
+%right <ival> PERLY_QUESTION_MARK PERLY_COLON
 %nonassoc DOTDOT
 %left <ival> OROR DORDOR
 %left <ival> ANDAND
@@ -106,13 +125,13 @@
 %left ADDOP
 %left MULOP
 %left <ival> MATCHOP
-%right <ival> '!' '~' UMINUS REFGEN
+%right <ival> PERLY_EXCLAMATION_MARK PERLY_TILDE UMINUS REFGEN
 %right <ival> POWOP
 %nonassoc <ival> PREINC PREDEC POSTINC POSTDEC POSTJOIN
 %left <ival> ARROW
-%nonassoc <ival> ')'
-%left <ival> '('
-%left '[' '{'
+%nonassoc <ival> PERLY_PAREN_CLOSE
+%left <ival> PERLY_PAREN_OPEN
+%left PERLY_BRACKET_OPEN PERLY_BRACE_OPEN
 
 %% /* RULES */
 
@@ -124,7 +143,7 @@ grammar	:	GRAMPROG
 			}
 		remember stmtseq
 			{
-			  newPROG(block_end($3,$4));
+			  newPROG(block_end($remember,$stmtseq));
 			  PL_compiling.cop_seq = 0;
 			  $$ = 0;
 			}
@@ -135,7 +154,7 @@ grammar	:	GRAMPROG
 			}
 		optexpr
 			{
-			  PL_eval_root = $3;
+			  PL_eval_root = $optexpr;
 			  $$ = 0;
 			}
 	|	GRAMBLOCK
@@ -146,7 +165,7 @@ grammar	:	GRAMPROG
 		block
 			{
 			  PL_pad_reset_pending = TRUE;
-			  PL_eval_root = $3;
+			  PL_eval_root = $block;
 			  $$ = 0;
 			  yyunlex();
 			  parser->yychar = yytoken = YYEOF;
@@ -159,7 +178,7 @@ grammar	:	GRAMPROG
 		barestmt
 			{
 			  PL_pad_reset_pending = TRUE;
-			  PL_eval_root = $3;
+			  PL_eval_root = $barestmt;
 			  $$ = 0;
 			  yyunlex();
 			  parser->yychar = yytoken = YYEOF;
@@ -172,7 +191,7 @@ grammar	:	GRAMPROG
 		fullstmt
 			{
 			  PL_pad_reset_pending = TRUE;
-			  PL_eval_root = $3;
+			  PL_eval_root = $fullstmt;
 			  $$ = 0;
 			  yyunlex();
 			  parser->yychar = yytoken = YYEOF;
@@ -184,7 +203,7 @@ grammar	:	GRAMPROG
 			}
 		stmtseq
 			{
-			  PL_eval_root = $3;
+			  PL_eval_root = $stmtseq;
 			  $$ = 0;
 			}
 	|	GRAMSUBSIGNATURE
@@ -194,62 +213,66 @@ grammar	:	GRAMPROG
 			}
 		subsigguts
 			{
-			  PL_eval_root = $3;
+			  PL_eval_root = $subsigguts;
 			  $$ = 0;
 			}
 	;
 
 /* An ordinary block */
-block	:	'{' remember stmtseq '}'
-			{ if (parser->copline > (line_t)$1)
-			      parser->copline = (line_t)$1;
-			  $$ = block_end($2, $3);
+block	:	PERLY_BRACE_OPEN remember stmtseq PERLY_BRACE_CLOSE
+			{ if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
+			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
+			  $$ = block_end($remember, $stmtseq);
 			}
+	;
+
+empty
+	:	%empty          { $$ = NULL; }
 	;
 
 /* format body */
-formblock:	'=' remember ';' FORMRBRACK formstmtseq ';' '.'
-			{ if (parser->copline > (line_t)$1)
-			      parser->copline = (line_t)$1;
-			  $$ = block_end($2, $5);
+formblock:	PERLY_EQUAL_SIGN remember PERLY_SEMICOLON FORMRBRACK formstmtseq PERLY_SEMICOLON PERLY_DOT
+			{ if (parser->copline > (line_t)$PERLY_EQUAL_SIGN)
+			      parser->copline = (line_t)$PERLY_EQUAL_SIGN;
+			  $$ = block_end($remember, $formstmtseq);
 			}
 	;
 
-remember:	/* NULL */	/* start a full lexical scope */
+remember:	%empty	/* start a full lexical scope */
 			{ $$ = block_start(TRUE);
 			  parser->parsed_sub = 0; }
 	;
 
-mblock	:	'{' mremember stmtseq '}'
-			{ if (parser->copline > (line_t)$1)
-			      parser->copline = (line_t)$1;
-			  $$ = block_end($2, $3);
+mblock	:	PERLY_BRACE_OPEN mremember stmtseq PERLY_BRACE_CLOSE
+			{ if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
+			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
+			  $$ = block_end($mremember, $stmtseq);
 			}
 	;
 
-mremember:	/* NULL */	/* start a partial lexical scope */
+mremember:	%empty	/* start a partial lexical scope */
 			{ $$ = block_start(FALSE);
 			  parser->parsed_sub = 0; }
 	;
 
 /* A sequence of statements in the program */
-stmtseq	:	/* NULL */
-			{ $$ = NULL; }
-	|	stmtseq fullstmt
-			{   $$ = op_append_list(OP_LINESEQ, $1, $2);
+stmtseq
+	:	empty
+	|	stmtseq[list] fullstmt
+			{   $$ = op_append_list(OP_LINESEQ, $list, $fullstmt);
 			    PL_pad_reset_pending = TRUE;
-			    if ($1 && $2)
+			    if ($list && $fullstmt)
 				PL_hints |= HINT_BLOCK_SCOPE;
 			}
 	;
 
 /* A sequence of format lines */
-formstmtseq:	/* NULL */
-			{ $$ = NULL; }
-	|	formstmtseq formline
-			{   $$ = op_append_list(OP_LINESEQ, $1, $2);
+formstmtseq
+	:	empty
+	|	formstmtseq[list] formline
+			{   $$ = op_append_list(OP_LINESEQ, $list, $formline);
 			    PL_pad_reset_pending = TRUE;
-			    if ($1 && $2)
+			    if ($list && $formline)
 				PL_hints |= HINT_BLOCK_SCOPE;
 			}
 	;
@@ -257,35 +280,35 @@ formstmtseq:	/* NULL */
 /* A statement in the program, including optional labels */
 fullstmt:	barestmt
 			{
-			  $$ = $1 ? newSTATEOP(0, NULL, $1) : NULL;
+			  $$ = $barestmt ? newSTATEOP(0, NULL, $barestmt) : NULL;
 			}
 	|	labfullstmt
-			{ $$ = $1; }
+			{ $$ = $labfullstmt; }
 	;
 
 labfullstmt:	LABEL barestmt
 			{
-                          SV *label = cSVOPx_sv($1);
+                          SV *label = cSVOPx_sv($LABEL);
 			  $$ = newSTATEOP(SvFLAGS(label) & SVf_UTF8,
-                                            savepv(SvPVX_const(label)), $2);
-                          op_free($1);
+                                            savepv(SvPVX_const(label)), $barestmt);
+                          op_free($LABEL);
 			}
-	|	LABEL labfullstmt
+	|	LABEL labfullstmt[list]
 			{
-                          SV *label = cSVOPx_sv($1);
+                          SV *label = cSVOPx_sv($LABEL);
 			  $$ = newSTATEOP(SvFLAGS(label) & SVf_UTF8,
-                                            savepv(SvPVX_const(label)), $2);
-                          op_free($1);
+                                            savepv(SvPVX_const(label)), $list);
+                          op_free($LABEL);
 			}
 	;
 
 /* A bare statement, lacking label and other aspects of state op */
 barestmt:	PLUGSTMT
-			{ $$ = $1; }
+			{ $$ = $PLUGSTMT; }
 	|	FORMAT startformsub formname formblock
 			{
 			  CV *fmtcv = PL_compcv;
-			  newFORM($2, $3, $4);
+			  newFORM($startformsub, $formname, $formblock);
 			  $$ = NULL;
 			  if (CvOUTSIDE(fmtcv) && !CvEVAL(CvOUTSIDE(fmtcv))) {
 			      pad_add_weakref(fmtcv);
@@ -296,16 +319,16 @@ barestmt:	PLUGSTMT
                     /* sub declaration or definition not within scope
                        of 'use feature "signatures"'*/
 			{
-                          init_named_cv(PL_compcv, $2);
+                          init_named_cv(PL_compcv, $subname);
 			  parser->in_my = 0;
 			  parser->in_my_stash = NULL;
 			}
                     proto subattrlist optsubbody
 			{
 			  SvREFCNT_inc_simple_void(PL_compcv);
-			  $2->op_type == OP_CONST
-			      ? newATTRSUB($3, $2, $5, $6, $7)
-			      : newMYSUB($3, $2, $5, $6, $7)
+			  $subname->op_type == OP_CONST
+			      ? newATTRSUB($startsub, $subname, $proto, $subattrlist, $optsubbody)
+			      : newMYSUB($startsub, $subname, $proto, $subattrlist, $optsubbody)
 			  ;
 			  $$ = NULL;
 			  intro_my();
@@ -317,82 +340,82 @@ barestmt:	PLUGSTMT
                      * allowed in a declaration)
                      */
 			{
-                          init_named_cv(PL_compcv, $2);
+                          init_named_cv(PL_compcv, $subname);
 			  parser->in_my = 0;
 			  parser->in_my_stash = NULL;
 			}
                     subattrlist optsigsubbody
 			{
 			  SvREFCNT_inc_simple_void(PL_compcv);
-			  $2->op_type == OP_CONST
-			      ? newATTRSUB($3, $2, NULL, $5, $6)
-			      : newMYSUB(  $3, $2, NULL, $5, $6)
+			  $subname->op_type == OP_CONST
+			      ? newATTRSUB($startsub, $subname, NULL, $subattrlist, $optsigsubbody)
+			      : newMYSUB(  $startsub, $subname, NULL, $subattrlist, $optsigsubbody)
 			  ;
 			  $$ = NULL;
 			  intro_my();
 			  parser->parsed_sub = 1;
 			}
-	|	PACKAGE BAREWORD BAREWORD ';'
+	|	PACKAGE BAREWORD[version] BAREWORD[package] PERLY_SEMICOLON
 			{
-			  package($3);
-			  if ($2)
-			      package_version($2);
+			  package($package);
+			  if ($version)
+			      package_version($version);
 			  $$ = NULL;
 			}
 	|	USE startsub
 			{ CvSPECIAL_on(PL_compcv); /* It's a BEGIN {} */ }
-		BAREWORD BAREWORD optlistexpr ';'
+		BAREWORD[version] BAREWORD[module] optlistexpr PERLY_SEMICOLON
 			{
 			  SvREFCNT_inc_simple_void(PL_compcv);
-			  utilize($1, $2, $4, $5, $6);
+			  utilize($USE, $startsub, $version, $module, $optlistexpr);
 			  parser->parsed_sub = 1;
 			  $$ = NULL;
 			}
-	|	IF '(' remember mexpr ')' mblock else
+	|	IF PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock else
 			{
-			  $$ = block_end($3,
-			      newCONDOP(0, $4, op_scope($6), $7));
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember,
+			      newCONDOP(0, $mexpr, op_scope($mblock), $else));
+			  parser->copline = (line_t)$IF;
 			}
-	|	UNLESS '(' remember mexpr ')' mblock else
+	|	UNLESS PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock else
 			{
-			  $$ = block_end($3,
-                              newCONDOP(0, $4, $7, op_scope($6)));
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember,
+                              newCONDOP(0, $mexpr, $else, op_scope($mblock)));
+			  parser->copline = (line_t)$UNLESS;
 			}
-	|	GIVEN '(' remember mexpr ')' mblock
+	|	GIVEN PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock
 			{
-			  $$ = block_end($3, newGIVENOP($4, op_scope($6), 0));
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember, newGIVENOP($mexpr, op_scope($mblock), 0));
+			  parser->copline = (line_t)$GIVEN;
 			}
-	|	WHEN '(' remember mexpr ')' mblock
-			{ $$ = block_end($3, newWHENOP($4, op_scope($6))); }
+	|	WHEN PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock
+			{ $$ = block_end($remember, newWHENOP($mexpr, op_scope($mblock))); }
 	|	DEFAULT block
-			{ $$ = newWHENOP(0, op_scope($2)); }
-	|	WHILE '(' remember texpr ')' mintro mblock cont
+			{ $$ = newWHENOP(0, op_scope($block)); }
+	|	WHILE PERLY_PAREN_OPEN remember texpr PERLY_PAREN_CLOSE mintro mblock cont
 			{
-			  $$ = block_end($3,
+			  $$ = block_end($remember,
 				  newWHILEOP(0, 1, NULL,
-				      $4, $7, $8, $6));
-			  parser->copline = (line_t)$1;
+				      $texpr, $mblock, $cont, $mintro));
+			  parser->copline = (line_t)$WHILE;
 			}
-	|	UNTIL '(' remember iexpr ')' mintro mblock cont
+	|	UNTIL PERLY_PAREN_OPEN remember iexpr PERLY_PAREN_CLOSE mintro mblock cont
 			{
-			  $$ = block_end($3,
+			  $$ = block_end($remember,
 				  newWHILEOP(0, 1, NULL,
-				      $4, $7, $8, $6));
-			  parser->copline = (line_t)$1;
+				      $iexpr, $mblock, $cont, $mintro));
+			  parser->copline = (line_t)$UNTIL;
 			}
-	|	FOR '(' remember mnexpr ';'
+	|	FOR PERLY_PAREN_OPEN remember mnexpr[init_mnexpr] PERLY_SEMICOLON
 			{ parser->expect = XTERM; }
-		texpr ';'
+		texpr PERLY_SEMICOLON
 			{ parser->expect = XTERM; }
-		mintro mnexpr ')'
+		mintro mnexpr[iterate_mnexpr] PERLY_PAREN_CLOSE
 		mblock
 			{
-			  OP *initop = $4;
+			  OP *initop = $init_mnexpr;
 			  OP *forop = newWHILEOP(0, 1, NULL,
-				      scalar($7), $13, $11, $10);
+				      scalar($texpr), $mblock, $iterate_mnexpr, $mintro);
 			  if (initop) {
 			      forop = op_prepend_elem(OP_LINESEQ, initop,
 				  op_append_elem(OP_LINESEQ,
@@ -400,80 +423,105 @@ barestmt:	PLUGSTMT
 				      forop));
 			  }
 			  PL_hints |= HINT_BLOCK_SCOPE;
-			  $$ = block_end($3, forop);
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember, forop);
+			  parser->copline = (line_t)$FOR;
 			}
-	|	FOR MY remember my_scalar '(' mexpr ')' mblock cont
+	|	FOR MY remember my_scalar PERLY_PAREN_OPEN mexpr PERLY_PAREN_CLOSE mblock cont
 			{
-			  $$ = block_end($3, newFOROP(0, $4, $6, $8, $9));
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember, newFOROP(0, $my_scalar, $mexpr, $mblock, $cont));
+			  parser->copline = (line_t)$FOR;
 			}
-	|	FOR scalar '(' remember mexpr ')' mblock cont
+	|	FOR MY remember PERLY_PAREN_OPEN my_list_of_scalars PERLY_PAREN_CLOSE PERLY_PAREN_OPEN mexpr PERLY_PAREN_CLOSE mblock cont
 			{
-			  $$ = block_end($4, newFOROP(0,
-				      op_lvalue($2, OP_ENTERLOOP), $5, $7, $8));
-			  parser->copline = (line_t)$1;
+                          if ($my_list_of_scalars->op_type == OP_PADSV)
+                            /* degenerate case of 1 var: for my ($x) ....
+                               Flag it so it can be special-cased in newFOROP */
+                                $my_list_of_scalars->op_flags |= OPf_PARENS;
+			  $$ = block_end($remember, newFOROP(0, $my_list_of_scalars, $mexpr, $mblock, $cont));
+			  parser->copline = (line_t)$FOR;
+			}
+	|	FOR scalar PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock cont
+			{
+			  $$ = block_end($remember, newFOROP(0,
+				      op_lvalue($scalar, OP_ENTERLOOP), $mexpr, $mblock, $cont));
+			  parser->copline = (line_t)$FOR;
 			}
 	|	FOR my_refgen remember my_var
-			{ parser->in_my = 0; $<opval>$ = my($4); }
-		'(' mexpr ')' mblock cont
+			{ parser->in_my = 0; $<opval>$ = my($my_var); }[variable]
+		PERLY_PAREN_OPEN mexpr PERLY_PAREN_CLOSE mblock cont
 			{
 			  $$ = block_end(
-				$3,
+				$remember,
 				newFOROP(0,
 					 op_lvalue(
 					    newUNOP(OP_REFGEN, 0,
-						    $<opval>5),
+						    $<opval>variable),
 					    OP_ENTERLOOP),
-					 $7, $9, $10)
+					 $mexpr, $mblock, $cont)
 			  );
-			  parser->copline = (line_t)$1;
+			  parser->copline = (line_t)$FOR;
 			}
-	|	FOR REFGEN refgen_topic '(' remember mexpr ')' mblock cont
+	|	FOR REFGEN refgen_topic PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock cont
 			{
-			  $$ = block_end($5, newFOROP(
+			  $$ = block_end($remember, newFOROP(
 				0, op_lvalue(newUNOP(OP_REFGEN, 0,
-						     $3),
-					     OP_ENTERLOOP), $6, $8, $9));
-			  parser->copline = (line_t)$1;
+						     $refgen_topic),
+					     OP_ENTERLOOP), $mexpr, $mblock, $cont));
+			  parser->copline = (line_t)$FOR;
 			}
-	|	FOR '(' remember mexpr ')' mblock cont
+	|	FOR PERLY_PAREN_OPEN remember mexpr PERLY_PAREN_CLOSE mblock cont
 			{
-			  $$ = block_end($3,
-				  newFOROP(0, NULL, $4, $6, $7));
-			  parser->copline = (line_t)$1;
+			  $$ = block_end($remember,
+				  newFOROP(0, NULL, $mexpr, $mblock, $cont));
+			  parser->copline = (line_t)$FOR;
+			}
+	|       TRY mblock[try] CATCH PERLY_PAREN_OPEN 
+			{ parser->in_my = 1; }
+	        remember scalar 
+			{ parser->in_my = 0; intro_my(); }
+		PERLY_PAREN_CLOSE mblock[catch] finally
+			{
+			  $$ = newTRYCATCHOP(0,
+				  $try, $scalar, block_end($remember, op_scope($catch)));
+			  if($finally)
+			      $$ = op_wrap_finally($$, $finally);
+			  parser->copline = (line_t)$TRY;
 			}
 	|	block cont
 			{
 			  /* a block is a loop that happens once */
 			  $$ = newWHILEOP(0, 1, NULL,
-				  NULL, $1, $2, 0);
+				  NULL, $block, $cont, 0);
 			}
-	|	PACKAGE BAREWORD BAREWORD '{' remember
+	|	PACKAGE BAREWORD[version] BAREWORD[package] PERLY_BRACE_OPEN remember
 			{
-			  package($3);
-			  if ($2) {
-			      package_version($2);
+			  package($package);
+			  if ($version) {
+			      package_version($version);
 			  }
 			}
-		stmtseq '}'
+		stmtseq PERLY_BRACE_CLOSE
 			{
 			  /* a block is a loop that happens once */
 			  $$ = newWHILEOP(0, 1, NULL,
-				  NULL, block_end($5, $7), NULL, 0);
-			  if (parser->copline > (line_t)$4)
-			      parser->copline = (line_t)$4;
+				  NULL, block_end($remember, $stmtseq), NULL, 0);
+			  if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
+			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
 			}
-	|	sideff ';'
+	|	sideff PERLY_SEMICOLON
 			{
-			  $$ = $1;
+			  $$ = $sideff;
 			}
-	|	YADAYADA ';'
+	|	DEFER mblock
+			{
+			  $$ = newDEFEROP(0, op_scope($2));
+			}
+	|	YADAYADA PERLY_SEMICOLON
 			{
 			  $$ = newLISTOP(OP_DIE, 0, newOP(OP_PUSHMARK, 0),
 				newSVOP(OP_CONST, 0, newSVpvs("Unimplemented")));
 			}
-	|	';'
+	|	PERLY_SEMICOLON
 			{
 			  $$ = NULL;
 			  parser->copline = NOLINE;
@@ -483,12 +531,12 @@ barestmt:	PLUGSTMT
 /* Format line */
 formline:	THING formarg
 			{ OP *list;
-			  if ($2) {
-			      OP *term = $2;
-			      list = op_append_elem(OP_LIST, $1, term);
+			  if ($formarg) {
+			      OP *term = $formarg;
+			      list = op_append_elem(OP_LIST, $THING, term);
 			  }
 			  else {
-			      list = $1;
+			      list = $THING;
 			  }
 			  if (parser->copline == NOLINE)
 			       parser->copline = CopLINE(PL_curcop)-1;
@@ -498,70 +546,80 @@ formline:	THING formarg
 			}
 	;
 
-formarg	:	/* NULL */
-			{ $$ = NULL; }
+formarg
+	:	empty
 	|	FORMLBRACK stmtseq FORMRBRACK
-			{ $$ = op_unscope($2); }
+			{ $$ = op_unscope($stmtseq); }
 	;
+
+condition: expr
+;
 
 /* An expression which may have a side-effect */
 sideff	:	error
 			{ $$ = NULL; }
-	|	expr
-			{ $$ = $1; }
-	|	expr IF expr
-			{ $$ = newLOGOP(OP_AND, 0, $3, $1); }
-	|	expr UNLESS expr
-			{ $$ = newLOGOP(OP_OR, 0, $3, $1); }
-	|	expr WHILE expr
-			{ $$ = newLOOPOP(OPf_PARENS, 1, scalar($3), $1); }
-	|	expr UNTIL iexpr
-			{ $$ = newLOOPOP(OPf_PARENS, 1, $3, $1); }
-	|	expr FOR expr
-			{ $$ = newFOROP(0, NULL, $3, $1, NULL);
-			  parser->copline = (line_t)$2; }
-	|	expr WHEN expr
-			{ $$ = newWHENOP($3, op_scope($1)); }
+	|	expr[body]
+			{ $$ = $body; }
+	|	expr[body] IF condition
+			{ $$ = newLOGOP(OP_AND, 0, $condition, $body); }
+	|	expr[body] UNLESS condition
+			{ $$ = newLOGOP(OP_OR, 0, $condition, $body); }
+	|	expr[body] WHILE condition
+			{ $$ = newLOOPOP(OPf_PARENS, 1, scalar($condition), $body); }
+	|	expr[body] UNTIL iexpr
+			{ $$ = newLOOPOP(OPf_PARENS, 1, $iexpr, $body); }
+	|	expr[body] FOR condition
+			{ $$ = newFOROP(0, NULL, $condition, $body, NULL);
+			  parser->copline = (line_t)$FOR; }
+	|	expr[body] WHEN condition
+			{ $$ = newWHENOP($condition, op_scope($body)); }
 	;
 
 /* else and elsif blocks */
-else	:	/* NULL */
-			{ $$ = NULL; }
+else
+	:	empty
 	|	ELSE mblock
 			{
-			  ($2)->op_flags |= OPf_PARENS;
-			  $$ = op_scope($2);
+			  ($mblock)->op_flags |= OPf_PARENS;
+			  $$ = op_scope($mblock);
 			}
-	|	ELSIF '(' mexpr ')' mblock else
-			{ parser->copline = (line_t)$1;
+	|	ELSIF PERLY_PAREN_OPEN mexpr PERLY_PAREN_CLOSE mblock else[else.recurse]
+			{ parser->copline = (line_t)$ELSIF;
 			    $$ = newCONDOP(0,
-				newSTATEOP(OPf_SPECIAL,NULL,$3),
-				op_scope($5), $6);
+				newSTATEOP(OPf_SPECIAL,NULL,$mexpr),
+				op_scope($mblock), $[else.recurse]);
 			  PL_hints |= HINT_BLOCK_SCOPE;
 			}
 	;
 
 /* Continue blocks */
-cont	:	/* NULL */
-			{ $$ = NULL; }
+cont
+	:	empty
 	|	CONTINUE block
-			{ $$ = op_scope($2); }
+			{ $$ = op_scope($block); }
+	;
+
+/* Finally blocks */
+finally	:	%empty
+			{ $$ = NULL; }
+	|	FINALLY block
+			{ $$ = op_scope($block); }
 	;
 
 /* determine whether there are any new my declarations */
-mintro	:	/* NULL */
+mintro	:	%empty
 			{ $$ = (PL_min_intro_pending &&
 			    PL_max_intro_pending >=  PL_min_intro_pending);
 			  intro_my(); }
 
 /* Normal expression */
-nexpr	:	/* NULL */
-			{ $$ = NULL; }
+nexpr
+	:	empty
 	|	sideff
 	;
 
 /* Boolean expression */
-texpr	:	/* NULL means true */
+texpr	:	%empty /* NULL means true */
 			{ YYSTYPE tmplval;
 			  (void)scan_num("1", &tmplval);
 			  $$ = tmplval.opval; }
@@ -570,34 +628,34 @@ texpr	:	/* NULL means true */
 
 /* Inverted boolean expression */
 iexpr	:	expr
-			{ $$ = invert(scalar($1)); }
+			{ $$ = invert(scalar($expr)); }
 	;
 
 /* Expression with its own lexical scope */
 mexpr	:	expr
-			{ $$ = $1; intro_my(); }
+			{ $$ = $expr; intro_my(); }
 	;
 
 mnexpr	:	nexpr
-			{ $$ = $1; intro_my(); }
+			{ $$ = $nexpr; intro_my(); }
 	;
 
-formname:	BAREWORD	{ $$ = $1; }
-	|	/* NULL */	{ $$ = NULL; }
+formname:	BAREWORD	{ $$ = $BAREWORD; }
+	|	empty
 	;
 
-startsub:	/* NULL */	/* start a regular subroutine scope */
+startsub:	%empty	/* start a regular subroutine scope */
 			{ $$ = start_subparse(FALSE, 0);
 			    SAVEFREESV(PL_compcv); }
 
 	;
 
-startanonsub:	/* NULL */	/* start an anonymous subroutine scope */
+startanonsub:	%empty	/* start an anonymous subroutine scope */
 			{ $$ = start_subparse(FALSE, CVf_ANON);
 			    SAVEFREESV(PL_compcv); }
 	;
 
-startformsub:	/* NULL */	/* start a format subroutine scope */
+startformsub:	%empty	/* start a format subroutine scope */
 			{ $$ = start_subparse(TRUE, 0);
 			    SAVEFREESV(PL_compcv); }
 	;
@@ -608,23 +666,23 @@ subname	:	BAREWORD
 	;
 
 /* Subroutine prototype */
-proto	:	/* NULL */
-			{ $$ = NULL; }
+proto
+	:	empty
 	|	THING
 	;
 
 /* Optional list of subroutine attributes */
-subattrlist:	/* NULL */
-			{ $$ = NULL; }
+subattrlist
+	:	empty
 	|	COLONATTR THING
-			{ $$ = $2; }
+			{ $$ = $THING; }
 	|	COLONATTR
 			{ $$ = NULL; }
 	;
 
 /* List of attributes for a "my" variable declaration */
 myattrlist:	COLONATTR THING
-			{ $$ = $2; }
+			{ $$ = $THING; }
 	|	COLONATTR
 			{ $$ = NULL; }
 	;
@@ -636,24 +694,24 @@ myattrlist:	COLONATTR THING
  */
 
 /* the '' or 'foo' part of a '$' or '@foo' etc signature variable  */
-sigvarname:     /* NULL */
+sigvarname:     %empty
 			{ parser->in_my = 0; $$ = NULL; }
         |       PRIVATEREF
-                        { parser->in_my = 0; $$ = $1; }
+                        { parser->in_my = 0; $$ = $PRIVATEREF; }
 	;
 
 sigslurpsigil:
-                '@'
+                PERLY_SNAIL
                         { $$ = '@'; }
-        |       '%'
+        |       PERLY_PERCENT_SIGN
                         { $$ = '%'; }
 
 /* @, %, @foo, %foo */
 sigslurpelem: sigslurpsigil sigvarname sigdefault/* def only to catch errors */ 
                         {
-                            I32 sigil   = $1;
-                            OP *var     = $2;
-                            OP *defexpr = $3;
+                            I32 sigil   = $sigslurpsigil;
+                            OP *var     = $sigvarname;
+                            OP *defexpr = $sigdefault;
 
                             if (parser->sig_slurpy)
                                 yyerror("Multiple slurpy parameters not allowed");
@@ -668,20 +726,20 @@ sigslurpelem: sigslurpsigil sigvarname sigdefault/* def only to catch errors */
 	;
 
 /* default part of sub signature scalar element: i.e. '= default_expr' */
-sigdefault:	/* NULL */
-			{ $$ = NULL; }
+sigdefault
+	:	empty
         |       ASSIGNOP
                         { $$ = newOP(OP_NULL, 0); }
         |       ASSIGNOP term
-                        { $$ = $2; }
+                        { $$ = $term; }
 
 
 /* subroutine signature scalar element: e.g. '$x', '$=', '$x = $default' */
 sigscalarelem:
-                '$' sigvarname sigdefault
+                PERLY_DOLLAR sigvarname sigdefault
                         {
-                            OP *var     = $2;
-                            OP *defexpr = $3;
+                            OP *var     = $sigvarname;
+                            OP *defexpr = $sigdefault;
 
                             if (parser->sig_slurpy)
                                 yyerror("Slurpy parameter not last");
@@ -744,38 +802,38 @@ sigscalarelem:
 
 /* subroutine signature element: e.g. '$x = $default' or '%h' */
 sigelem:        sigscalarelem
-                        { parser->in_my = KEY_sigvar; $$ = $1; }
+                        { parser->in_my = KEY_sigvar; $$ = $sigscalarelem; }
         |       sigslurpelem
-                        { parser->in_my = KEY_sigvar; $$ = $1; }
+                        { parser->in_my = KEY_sigvar; $$ = $sigslurpelem; }
 	;
 
 /* list of subroutine signature elements */
 siglist:
-	 	siglist ','
-			{ $$ = $1; }
-	|	siglist ',' sigelem
+	 	siglist[list] PERLY_COMMA
+			{ $$ = $list; }
+	|	siglist[list] PERLY_COMMA sigelem[element]
 			{
-			  $$ = op_append_list(OP_LINESEQ, $1, $3);
+			  $$ = op_append_list(OP_LINESEQ, $list, $element);
 			}
-        |	sigelem  %prec PREC_LOW
-			{ $$ = $1; }
+        |	sigelem[element]  %prec PREC_LOW
+			{ $$ = $element; }
 	;
 
 /* () or (....) */
-siglistornull:		/* NULL */
-			{ $$ = NULL; }
+optsiglist
+	:	empty
 	|	siglist
-			{ $$ = $1; }
+	;
 
 /* optional subroutine signature */
-optsubsignature:	/* NULL */
-			{ $$ = NULL; }
+optsubsignature
+	:	empty
 	|	subsignature
-			{ $$ = $1; }
+	;
 
 /* Subroutine signature */
-subsignature:	'(' subsigguts ')'
-			{ $$ = $2; }
+subsignature:	PERLY_PAREN_OPEN subsigguts PERLY_PAREN_CLOSE
+			{ $$ = $subsigguts; }
 
 subsigguts:
                         {
@@ -788,9 +846,9 @@ subsigguts:
                             parser->sig_slurpy   = 0;
                             parser->in_my        = KEY_sigvar;
                         }
-                siglistornull
+                optsiglist
 			{
-                            OP            *sigops = $2;
+                            OP            *sigops = $optsiglist;
                             struct op_argcheck_aux *aux;
                             OP            *check;
 
@@ -799,10 +857,6 @@ subsigguts:
                                     "subroutine signatures not enabled");
 
                             /* We shouldn't get here otherwise */
-                            Perl_ck_warner_d(aTHX_
-                                packWARN(WARN_EXPERIMENTAL__SIGNATURES),
-                                "The signatures feature is experimental");
-
                             aux = (struct op_argcheck_aux*)
                                     PerlMemShared_malloc(
                                         sizeof(struct op_argcheck_aux));
@@ -830,6 +884,8 @@ subsigguts:
                             $$ = newUNOP_AUX(OP_ARGCHECK, 0, sigops, NULL);
                             op_null($$);
 
+			    CvSIGNATURE_on(PL_compcv);
+
                             parser->in_my = 0;
                             /* tell the toker that attrributes can follow
                              * this sig, but only so that the toker
@@ -846,103 +902,104 @@ subsigguts:
 	;
 
 /* Optional subroutine body (for named subroutine declaration) */
-optsubbody:	subbody { $$ = $1; }
-	|	';'	{ $$ = NULL; }
+optsubbody
+	:	subbody
+	|	PERLY_SEMICOLON	{ $$ = NULL; }
 	;
 
 
 /* Subroutine body (without signature) */
-subbody:	remember  '{' stmtseq '}'
+subbody:	remember  PERLY_BRACE_OPEN stmtseq PERLY_BRACE_CLOSE
 			{
-			  if (parser->copline > (line_t)$2)
-			      parser->copline = (line_t)$2;
-			  $$ = block_end($1, $3);
+			  if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
+			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
+			  $$ = block_end($remember, $stmtseq);
 			}
 	;
 
 
 /* optional [ Subroutine body with optional signature ] (for named
  * subroutine declaration) */
-optsigsubbody:	sigsubbody { $$ = $1; }
-	|	';'	   { $$ = NULL; }
+optsigsubbody
+	:	sigsubbody
+	|	PERLY_SEMICOLON	   { $$ = NULL; }
+	;
 
 /* Subroutine body with optional signature */
-sigsubbody:	remember optsubsignature '{' stmtseq '}'
+sigsubbody:	remember optsubsignature PERLY_BRACE_OPEN stmtseq PERLY_BRACE_CLOSE
 			{
-			  if (parser->copline > (line_t)$3)
-			      parser->copline = (line_t)$3;
-			  $$ = block_end($1,
-				op_append_list(OP_LINESEQ, $2, $4));
+			  if (parser->copline > (line_t)$PERLY_BRACE_OPEN)
+			      parser->copline = (line_t)$PERLY_BRACE_OPEN;
+			  $$ = block_end($remember,
+				op_append_list(OP_LINESEQ, $optsubsignature, $stmtseq));
  			}
  	;
 
 
 /* Ordinary expressions; logical combinations */
-expr	:	expr ANDOP expr
-			{ $$ = newLOGOP(OP_AND, 0, $1, $3); }
-	|	expr OROP expr
-			{ $$ = newLOGOP($2, 0, $1, $3); }
-	|	expr DOROP expr
-			{ $$ = newLOGOP(OP_DOR, 0, $1, $3); }
+expr	:	expr[lhs] ANDOP expr[rhs]
+			{ $$ = newLOGOP(OP_AND, 0, $lhs, $rhs); }
+	|	expr[lhs] OROP[operator] expr[rhs]
+			{ $$ = newLOGOP($operator, 0, $lhs, $rhs); }
 	|	listexpr %prec PREC_LOW
 	;
 
 /* Expressions are a list of terms joined by commas */
-listexpr:	listexpr ','
-			{ $$ = $1; }
-	|	listexpr ',' term
+listexpr:	listexpr[list] PERLY_COMMA
+			{ $$ = $list; }
+	|	listexpr[list] PERLY_COMMA term
 			{
-			  OP* term = $3;
-			  $$ = op_append_elem(OP_LIST, $1, term);
+			  OP* term = $term;
+			  $$ = op_append_elem(OP_LIST, $list, term);
 			}
 	|	term %prec PREC_LOW
 	;
 
 /* List operators */
 listop	:	LSTOP indirob listexpr /* map {...} @args or print $fh @args */
-			{ $$ = op_convert_list($1, OPf_STACKED,
-				op_prepend_elem(OP_LIST, newGVREF($1,$2), $3) );
+			{ $$ = op_convert_list($LSTOP, OPf_STACKED,
+				op_prepend_elem(OP_LIST, newGVREF($LSTOP,$indirob), $listexpr) );
 			}
-	|	FUNC '(' indirob expr ')'      /* print ($fh @args */
-			{ $$ = op_convert_list($1, OPf_STACKED,
-				op_prepend_elem(OP_LIST, newGVREF($1,$3), $4) );
+	|	FUNC PERLY_PAREN_OPEN indirob expr PERLY_PAREN_CLOSE      /* print ($fh @args */
+			{ $$ = op_convert_list($FUNC, OPf_STACKED,
+				op_prepend_elem(OP_LIST, newGVREF($FUNC,$indirob), $expr) );
 			}
-	|	term ARROW method '(' optexpr ')' /* $foo->bar(list) */
+	|	term ARROW method PERLY_PAREN_OPEN optexpr PERLY_PAREN_CLOSE /* $foo->bar(list) */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST,
-				    op_prepend_elem(OP_LIST, scalar($1), $5),
-				    newMETHOP(OP_METHOD, 0, $3)));
+				    op_prepend_elem(OP_LIST, scalar($term), $optexpr),
+				    newMETHOP(OP_METHOD, 0, $method)));
 			}
 	|	term ARROW method                     /* $foo->bar */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
-				op_append_elem(OP_LIST, scalar($1),
-				    newMETHOP(OP_METHOD, 0, $3)));
+				op_append_elem(OP_LIST, scalar($term),
+				    newMETHOP(OP_METHOD, 0, $method)));
 			}
 	|	METHOD indirob optlistexpr           /* new Class @args */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST,
-				    op_prepend_elem(OP_LIST, $2, $3),
-				    newMETHOP(OP_METHOD, 0, $1)));
+				    op_prepend_elem(OP_LIST, $indirob, $optlistexpr),
+				    newMETHOP(OP_METHOD, 0, $METHOD)));
 			}
-	|	FUNCMETH indirob '(' optexpr ')'    /* method $object (@args) */
+	|	FUNCMETH indirob PERLY_PAREN_OPEN optexpr PERLY_PAREN_CLOSE    /* method $object (@args) */
 			{ $$ = op_convert_list(OP_ENTERSUB, OPf_STACKED,
 				op_append_elem(OP_LIST,
-				    op_prepend_elem(OP_LIST, $2, $4),
-				    newMETHOP(OP_METHOD, 0, $1)));
+				    op_prepend_elem(OP_LIST, $indirob, $optexpr),
+				    newMETHOP(OP_METHOD, 0, $FUNCMETH)));
 			}
 	|	LSTOP optlistexpr                    /* print @args */
-			{ $$ = op_convert_list($1, 0, $2); }
-	|	FUNC '(' optexpr ')'                 /* print (@args) */
-			{ $$ = op_convert_list($1, 0, $3); }
+			{ $$ = op_convert_list($LSTOP, 0, $optlistexpr); }
+	|	FUNC PERLY_PAREN_OPEN optexpr PERLY_PAREN_CLOSE                 /* print (@args) */
+			{ $$ = op_convert_list($FUNC, 0, $optexpr); }
 	|	FUNC SUBLEXSTART optexpr SUBLEXEND          /* uc($arg) from "\U..." */
-			{ $$ = op_convert_list($1, 0, $3); }
+			{ $$ = op_convert_list($FUNC, 0, $optexpr); }
 	|	LSTOPSUB startanonsub block /* sub f(&@);   f { foo } ... */
 			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $<opval>$ = newANONATTRSUB($2, 0, NULL, $3); }
+			  $<opval>$ = newANONATTRSUB($startanonsub, 0, NULL, $block); }[anonattrsub]
 		    optlistexpr		%prec LSTOP  /* ... @bar */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
 				 op_append_elem(OP_LIST,
-				   op_prepend_elem(OP_LIST, $<opval>4, $5), $1));
+				   op_prepend_elem(OP_LIST, $<opval>anonattrsub, $optlistexpr), $LSTOPSUB));
 			}
 	;
 
@@ -952,151 +1009,151 @@ method	:	METHOD
 	;
 
 /* Some kind of subscripted expression */
-subscripted:    gelem '{' expr ';' '}'        /* *main::{something} */
-                        /* In this and all the hash accessors, ';' is
+subscripted:    gelem PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE        /* *main::{something} */
+                        /* In this and all the hash accessors, PERLY_SEMICOLON is
                          * provided by the tokeniser */
-			{ $$ = newBINOP(OP_GELEM, 0, $1, scalar($3)); }
-	|	scalar '[' expr ']'          /* $array[$element] */
-			{ $$ = newBINOP(OP_AELEM, 0, oopsAV($1), scalar($3));
+			{ $$ = newBINOP(OP_GELEM, 0, $gelem, scalar($expr)); }
+	|	scalar[array] PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE          /* $array[$element] */
+			{ $$ = newBINOP(OP_AELEM, 0, oopsAV($array), scalar($expr));
 			}
-	|	term ARROW '[' expr ']'      /* somearef->[$element] */
+	|	term[array_reference] ARROW PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE      /* somearef->[$element] */
 			{ $$ = newBINOP(OP_AELEM, 0,
-					ref(newAVREF($1),OP_RV2AV),
-					scalar($4));
+					ref(newAVREF($array_reference),OP_RV2AV),
+					scalar($expr));
 			}
-	|	subscripted '[' expr ']'    /* $foo->[$bar]->[$baz] */
+	|	subscripted[array_reference] PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE    /* $foo->[$bar]->[$baz] */
 			{ $$ = newBINOP(OP_AELEM, 0,
-					ref(newAVREF($1),OP_RV2AV),
-					scalar($3));
+					ref(newAVREF($array_reference),OP_RV2AV),
+					scalar($expr));
 			}
-	|	scalar '{' expr ';' '}'    /* $foo{bar();} */
-			{ $$ = newBINOP(OP_HELEM, 0, oopsHV($1), jmaybe($3));
+	|	scalar[hash] PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE    /* $foo{bar();} */
+			{ $$ = newBINOP(OP_HELEM, 0, oopsHV($hash), jmaybe($expr));
 			}
-	|	term ARROW '{' expr ';' '}' /* somehref->{bar();} */
+	|	term[hash_reference] ARROW PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE /* somehref->{bar();} */
 			{ $$ = newBINOP(OP_HELEM, 0,
-					ref(newHVREF($1),OP_RV2HV),
-					jmaybe($4)); }
-	|	subscripted '{' expr ';' '}' /* $foo->[bar]->{baz;} */
+					ref(newHVREF($hash_reference),OP_RV2HV),
+					jmaybe($expr)); }
+	|	subscripted[hash_reference] PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE /* $foo->[bar]->{baz;} */
 			{ $$ = newBINOP(OP_HELEM, 0,
-					ref(newHVREF($1),OP_RV2HV),
-					jmaybe($3)); }
-	|	term ARROW '(' ')'          /* $subref->() */
+					ref(newHVREF($hash_reference),OP_RV2HV),
+					jmaybe($expr)); }
+	|	term[code_reference] ARROW PERLY_PAREN_OPEN PERLY_PAREN_CLOSE          /* $subref->() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-				   newCVREF(0, scalar($1)));
+				   newCVREF(0, scalar($code_reference)));
 			  if (parser->expect == XBLOCK)
 			      parser->expect = XOPERATOR;
 			}
-	|	term ARROW '(' expr ')'     /* $subref->(@args) */
+	|	term[code_reference] ARROW PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE     /* $subref->(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-				   op_append_elem(OP_LIST, $4,
-				       newCVREF(0, scalar($1))));
+				   op_append_elem(OP_LIST, $expr,
+				       newCVREF(0, scalar($code_reference))));
 			  if (parser->expect == XBLOCK)
 			      parser->expect = XOPERATOR;
 			}
 
-	|	subscripted '(' expr ')'   /* $foo->{bar}->(@args) */
+	|	subscripted[code_reference] PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE   /* $foo->{bar}->(@args) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-				   op_append_elem(OP_LIST, $3,
-					       newCVREF(0, scalar($1))));
+				   op_append_elem(OP_LIST, $expr,
+					       newCVREF(0, scalar($code_reference))));
 			  if (parser->expect == XBLOCK)
 			      parser->expect = XOPERATOR;
 			}
-	|	subscripted '(' ')'        /* $foo->{bar}->() */
+	|	subscripted[code_reference] PERLY_PAREN_OPEN PERLY_PAREN_CLOSE        /* $foo->{bar}->() */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-				   newCVREF(0, scalar($1)));
+				   newCVREF(0, scalar($code_reference)));
 			  if (parser->expect == XBLOCK)
 			      parser->expect = XOPERATOR;
 			}
-	|	'(' expr ')' '[' expr ']'            /* list slice */
-			{ $$ = newSLICEOP(0, $5, $2); }
-	|	QWLIST '[' expr ']'            /* list literal slice */
-			{ $$ = newSLICEOP(0, $3, $1); }
-	|	'(' ')' '[' expr ']'                 /* empty list slice! */
-			{ $$ = newSLICEOP(0, $4, NULL); }
+	|	PERLY_PAREN_OPEN expr[list] PERLY_PAREN_CLOSE PERLY_BRACKET_OPEN expr[slice] PERLY_BRACKET_CLOSE            /* list slice */
+			{ $$ = newSLICEOP(0, $slice, $list); }
+	|	QWLIST PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE            /* list literal slice */
+			{ $$ = newSLICEOP(0, $expr, $QWLIST); }
+	|	PERLY_PAREN_OPEN PERLY_PAREN_CLOSE PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE                 /* empty list slice! */
+			{ $$ = newSLICEOP(0, $expr, NULL); }
     ;
 
 /* Binary operators between terms */
-termbinop:	term ASSIGNOP term                     /* $x = $y, $x += $y */
-			{ $$ = newASSIGNOP(OPf_STACKED, $1, $2, $3); }
-	|	term POWOP term                        /* $x ** $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term MULOP term                        /* $x * $y, $x x $y */
-			{   if ($2 != OP_REPEAT)
-				scalar($1);
-			    $$ = newBINOP($2, 0, $1, scalar($3));
+termbinop:	term[lhs] ASSIGNOP term[rhs]                     /* $x = $y, $x += $y */
+			{ $$ = newASSIGNOP(OPf_STACKED, $lhs, $ASSIGNOP, $rhs); }
+	|	term[lhs] POWOP term[rhs]                        /* $x ** $y */
+			{ $$ = newBINOP($POWOP, 0, scalar($lhs), scalar($rhs)); }
+	|	term[lhs] MULOP term[rhs]                        /* $x * $y, $x x $y */
+			{   if ($MULOP != OP_REPEAT)
+				scalar($lhs);
+			    $$ = newBINOP($MULOP, 0, $lhs, scalar($rhs));
 			}
-	|	term ADDOP term                        /* $x + $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term SHIFTOP term                      /* $x >> $y, $x << $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+	|	term[lhs] ADDOP term[rhs]                        /* $x + $y */
+			{ $$ = newBINOP($ADDOP, 0, scalar($lhs), scalar($rhs)); }
+	|	term[lhs] SHIFTOP term[rhs]                      /* $x >> $y, $x << $y */
+			{ $$ = newBINOP($SHIFTOP, 0, scalar($lhs), scalar($rhs)); }
 	|	termrelop %prec PREC_LOW               /* $x > $y, etc. */
-			{ $$ = $1; }
+			{ $$ = $termrelop; }
 	|	termeqop %prec PREC_LOW                /* $x == $y, $x cmp $y */
-			{ $$ = $1; }
-	|	term BITANDOP term                     /* $x & $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term BITOROP term                      /* $x | $y */
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
-	|	term DOTDOT term                       /* $x..$y, $x...$y */
-			{ $$ = newRANGE($2, scalar($1), scalar($3)); }
-	|	term ANDAND term                       /* $x && $y */
-			{ $$ = newLOGOP(OP_AND, 0, $1, $3); }
-	|	term OROR term                         /* $x || $y */
-			{ $$ = newLOGOP(OP_OR, 0, $1, $3); }
-	|	term DORDOR term                       /* $x // $y */
-			{ $$ = newLOGOP(OP_DOR, 0, $1, $3); }
-	|	term MATCHOP term                      /* $x =~ /$y/ */
-			{ $$ = bind_match($2, $1, $3); }
+			{ $$ = $termeqop; }
+	|	term[lhs] BITANDOP term[rhs]                     /* $x & $y */
+			{ $$ = newBINOP($BITANDOP, 0, scalar($lhs), scalar($rhs)); }
+	|	term[lhs] BITOROP term[rhs]                      /* $x | $y */
+			{ $$ = newBINOP($BITOROP, 0, scalar($lhs), scalar($rhs)); }
+	|	term[lhs] DOTDOT term[rhs]                       /* $x..$y, $x...$y */
+			{ $$ = newRANGE($DOTDOT, scalar($lhs), scalar($rhs)); }
+	|	term[lhs] ANDAND term[rhs]                       /* $x && $y */
+			{ $$ = newLOGOP(OP_AND, 0, $lhs, $rhs); }
+	|	term[lhs] OROR term[rhs]                         /* $x || $y */
+			{ $$ = newLOGOP(OP_OR, 0, $lhs, $rhs); }
+	|	term[lhs] DORDOR term[rhs]                       /* $x // $y */
+			{ $$ = newLOGOP(OP_DOR, 0, $lhs, $rhs); }
+	|	term[lhs] MATCHOP term[rhs]                      /* $x =~ /$y/ */
+			{ $$ = bind_match($MATCHOP, $lhs, $rhs); }
     ;
 
 termrelop:	relopchain %prec PREC_LOW
-			{ $$ = cmpchain_finish($1); }
-	|	term NCRELOP term
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+			{ $$ = cmpchain_finish($relopchain); }
+	|	term[lhs] NCRELOP term[rhs]
+			{ $$ = newBINOP($NCRELOP, 0, scalar($lhs), scalar($rhs)); }
 	|	termrelop NCRELOP
 			{ yyerror("syntax error"); YYERROR; }
 	|	termrelop CHRELOP
 			{ yyerror("syntax error"); YYERROR; }
 	;
 
-relopchain:	term CHRELOP term
-			{ $$ = cmpchain_start($2, $1, $3); }
-	|	relopchain CHRELOP term
-			{ $$ = cmpchain_extend($2, $1, $3); }
+relopchain:	term[lhs] CHRELOP term[rhs]
+			{ $$ = cmpchain_start($CHRELOP, $lhs, $rhs); }
+	|	relopchain[lhs] CHRELOP term[rhs]
+			{ $$ = cmpchain_extend($CHRELOP, $lhs, $rhs); }
 	;
 
 termeqop:	eqopchain %prec PREC_LOW
-			{ $$ = cmpchain_finish($1); }
-	|	term NCEQOP term
-			{ $$ = newBINOP($2, 0, scalar($1), scalar($3)); }
+			{ $$ = cmpchain_finish($eqopchain); }
+	|	term[lhs] NCEQOP term[rhs]
+			{ $$ = newBINOP($NCEQOP, 0, scalar($lhs), scalar($rhs)); }
 	|	termeqop NCEQOP
 			{ yyerror("syntax error"); YYERROR; }
 	|	termeqop CHEQOP
 			{ yyerror("syntax error"); YYERROR; }
 	;
 
-eqopchain:	term CHEQOP term
-			{ $$ = cmpchain_start($2, $1, $3); }
-	|	eqopchain CHEQOP term
-			{ $$ = cmpchain_extend($2, $1, $3); }
+eqopchain:	term[lhs] CHEQOP term[rhs]
+			{ $$ = cmpchain_start($CHEQOP, $lhs, $rhs); }
+	|	eqopchain[lhs] CHEQOP term[rhs]
+			{ $$ = cmpchain_extend($CHEQOP, $lhs, $rhs); }
 	;
 
 /* Unary operators and terms */
-termunop : '-' term %prec UMINUS                       /* -$x */
-			{ $$ = newUNOP(OP_NEGATE, 0, scalar($2)); }
-	|	'+' term %prec UMINUS                  /* +$x */
-			{ $$ = $2; }
+termunop : PERLY_MINUS term %prec UMINUS                       /* -$x */
+			{ $$ = newUNOP(OP_NEGATE, 0, scalar($term)); }
+	|	PERLY_PLUS term %prec UMINUS                  /* +$x */
+			{ $$ = $term; }
 
-	|	'!' term                               /* !$x */
-			{ $$ = newUNOP(OP_NOT, 0, scalar($2)); }
-	|	'~' term                               /* ~$x */
-			{ $$ = newUNOP($1, 0, scalar($2)); }
+	|	PERLY_EXCLAMATION_MARK term                               /* !$x */
+			{ $$ = newUNOP(OP_NOT, 0, scalar($term)); }
+	|	PERLY_TILDE term                               /* ~$x */
+			{ $$ = newUNOP($PERLY_TILDE, 0, scalar($term)); }
 	|	term POSTINC                           /* $x++ */
 			{ $$ = newUNOP(OP_POSTINC, 0,
-					op_lvalue(scalar($1), OP_POSTINC)); }
+					op_lvalue(scalar($term), OP_POSTINC)); }
 	|	term POSTDEC                           /* $x-- */
 			{ $$ = newUNOP(OP_POSTDEC, 0,
-					op_lvalue(scalar($1), OP_POSTDEC));}
+					op_lvalue(scalar($term), OP_POSTDEC));}
 	|	term POSTJOIN    /* implicit join after interpolated ->@ */
 			{ $$ = op_convert_list(OP_JOIN, 0,
 				       op_append_elem(
@@ -1105,184 +1162,179 @@ termunop : '-' term %prec UMINUS                       /* -$x */
 					    newSVOP(OP_CONST,0,
 						    newSVpvs("\""))
 					)),
-					$1
+					$term
 				       ));
 			}
 	|	PREINC term                            /* ++$x */
 			{ $$ = newUNOP(OP_PREINC, 0,
-					op_lvalue(scalar($2), OP_PREINC)); }
+					op_lvalue(scalar($term), OP_PREINC)); }
 	|	PREDEC term                            /* --$x */
 			{ $$ = newUNOP(OP_PREDEC, 0,
-					op_lvalue(scalar($2), OP_PREDEC)); }
+					op_lvalue(scalar($term), OP_PREDEC)); }
 
     ;
 
 /* Constructors for anonymous data */
-anonymous:	'[' expr ']'
-			{ $$ = newANONLIST($2); }
-	|	'[' ']'
-			{ $$ = newANONLIST(NULL);}
-	|	HASHBRACK expr ';' '}'	%prec '(' /* { foo => "Bar" } */
-			{ $$ = newANONHASH($2); }
-	|	HASHBRACK ';' '}'	%prec '(' /* { } (';' by tokener) */
-			{ $$ = newANONHASH(NULL); }
-	|	ANONSUB     startanonsub proto subattrlist subbody    %prec '('
+anonymous
+	:	PERLY_BRACKET_OPEN optexpr PERLY_BRACKET_CLOSE
+			{ $$ = newANONLIST($optexpr); }
+	|	HASHBRACK optexpr PERLY_SEMICOLON PERLY_BRACE_CLOSE	%prec PERLY_PAREN_OPEN /* { foo => "Bar" } */
+			{ $$ = newANONHASH($optexpr); }
+	|	ANONSUB     startanonsub proto subattrlist subbody    %prec PERLY_PAREN_OPEN
 			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $$ = newANONATTRSUB($2, $3, $4, $5); }
-	|	ANON_SIGSUB startanonsub subattrlist sigsubbody %prec '('
+			  $$ = newANONATTRSUB($startanonsub, $proto, $subattrlist, $subbody); }
+	|	ANON_SIGSUB startanonsub subattrlist sigsubbody %prec PERLY_PAREN_OPEN
 			{ SvREFCNT_inc_simple_void(PL_compcv);
-			  $$ = newANONATTRSUB($2, NULL, $3, $4); }
+			  $$ = newANONATTRSUB($startanonsub, NULL, $subattrlist, $sigsubbody); }
     ;
 
 /* Things called with "do" */
 termdo	:       DO term	%prec UNIOP                     /* do $filename */
-			{ $$ = dofile($2, $1);}
-	|	DO block	%prec '('               /* do { code */
-			{ $$ = newUNOP(OP_NULL, OPf_SPECIAL, op_scope($2));}
+			{ $$ = dofile($term, $DO);}
+	|	DO block	%prec PERLY_PAREN_OPEN               /* do { code */
+			{ $$ = newUNOP(OP_NULL, OPf_SPECIAL, op_scope($block));}
         ;
 
-term	:	termbinop
+term[product]	:	termbinop
 	|	termunop
 	|	anonymous
 	|	termdo
-	|	term '?' term ':' term
-			{ $$ = newCONDOP(0, $1, $3, $5); }
-	|	REFGEN term                          /* \$x, \@y, \%z */
-			{ $$ = newUNOP(OP_REFGEN, 0, $2); }
-	|	MY REFGEN term
-			{ $$ = newUNOP(OP_REFGEN, 0, localize($3,1)); }
+	|	term[condition] PERLY_QUESTION_MARK term[then] PERLY_COLON term[else]
+			{ $$ = newCONDOP(0, $condition, $then, $else); }
+	|	REFGEN term[operand]                          /* \$x, \@y, \%z */
+			{ $$ = newUNOP(OP_REFGEN, 0, $operand); }
 	|	myattrterm	%prec UNIOP
-			{ $$ = $1; }
-	|	LOCAL term	%prec UNIOP
-			{ $$ = localize($2,0); }
-	|	'(' expr ')'
-			{ $$ = sawparens($2); }
+			{ $$ = $myattrterm; }
+	|	LOCAL term[operand]	%prec UNIOP
+			{ $$ = localize($operand,0); }
+	|	PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE
+			{ $$ = sawparens($expr); }
 	|	QWLIST
-			{ $$ = $1; }
-	|	'(' ')'
+			{ $$ = $QWLIST; }
+	|	PERLY_PAREN_OPEN PERLY_PAREN_CLOSE
 			{ $$ = sawparens(newNULLLIST()); }
-	|	scalar	%prec '('
-			{ $$ = $1; }
-	|	star	%prec '('
-			{ $$ = $1; }
-	|	hsh 	%prec '('
-			{ $$ = $1; }
-	|	ary 	%prec '('
-			{ $$ = $1; }
-	|	arylen 	%prec '('                    /* $#x, $#{ something } */
-			{ $$ = newUNOP(OP_AV2ARYLEN, 0, ref($1, OP_AV2ARYLEN));}
+	|	scalar	%prec PERLY_PAREN_OPEN
+			{ $$ = $scalar; }
+	|	star	%prec PERLY_PAREN_OPEN
+			{ $$ = $star; }
+	|	hsh 	%prec PERLY_PAREN_OPEN
+			{ $$ = $hsh; }
+	|	ary 	%prec PERLY_PAREN_OPEN
+			{ $$ = $ary; }
+	|	arylen 	%prec PERLY_PAREN_OPEN                    /* $#x, $#{ something } */
+			{ $$ = newUNOP(OP_AV2ARYLEN, 0, ref($arylen, OP_AV2ARYLEN));}
 	|       subscripted
-			{ $$ = $1; }
-	|	sliceme '[' expr ']'                     /* array slice */
+			{ $$ = $subscripted; }
+	|	sliceme PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE                     /* array slice */
 			{ $$ = op_prepend_elem(OP_ASLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_ASLICE, 0,
-					list($3),
-					ref($1, OP_ASLICE)));
-			  if ($$ && $1)
+					list($expr),
+					ref($sliceme, OP_ASLICE)));
+			  if ($$ && $sliceme)
 			      $$->op_private |=
-				  $1->op_private & OPpSLICEWARNING;
+				  $sliceme->op_private & OPpSLICEWARNING;
 			}
-	|	kvslice '[' expr ']'                 /* array key/value slice */
+	|	kvslice PERLY_BRACKET_OPEN expr PERLY_BRACKET_CLOSE                 /* array key/value slice */
 			{ $$ = op_prepend_elem(OP_KVASLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_KVASLICE, 0,
-					list($3),
-					ref(oopsAV($1), OP_KVASLICE)));
-			  if ($$ && $1)
+					list($expr),
+					ref(oopsAV($kvslice), OP_KVASLICE)));
+			  if ($$ && $kvslice)
 			      $$->op_private |=
-				  $1->op_private & OPpSLICEWARNING;
+				  $kvslice->op_private & OPpSLICEWARNING;
 			}
-	|	sliceme '{' expr ';' '}'                 /* @hash{@keys} */
+	|	sliceme PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE                 /* @hash{@keys} */
 			{ $$ = op_prepend_elem(OP_HSLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_HSLICE, 0,
-					list($3),
-					ref(oopsHV($1), OP_HSLICE)));
-			  if ($$ && $1)
+					list($expr),
+					ref(oopsHV($sliceme), OP_HSLICE)));
+			  if ($$ && $sliceme)
 			      $$->op_private |=
-				  $1->op_private & OPpSLICEWARNING;
+				  $sliceme->op_private & OPpSLICEWARNING;
 			}
-	|	kvslice '{' expr ';' '}'                 /* %hash{@keys} */
+	|	kvslice PERLY_BRACE_OPEN expr PERLY_SEMICOLON PERLY_BRACE_CLOSE                 /* %hash{@keys} */
 			{ $$ = op_prepend_elem(OP_KVHSLICE,
 				newOP(OP_PUSHMARK, 0),
 				    newLISTOP(OP_KVHSLICE, 0,
-					list($3),
-					ref($1, OP_KVHSLICE)));
-			  if ($$ && $1)
+					list($expr),
+					ref($kvslice, OP_KVHSLICE)));
+			  if ($$ && $kvslice)
 			      $$->op_private |=
-				  $1->op_private & OPpSLICEWARNING;
+				  $kvslice->op_private & OPpSLICEWARNING;
 			}
-	|	THING	%prec '('
-			{ $$ = $1; }
+	|	THING	%prec PERLY_PAREN_OPEN
+			{ $$ = $THING; }
 	|	amper                                /* &foo; */
-			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($1)); }
-	|	amper '(' ')'                 /* &foo() or foo() */
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1));
+			{ $$ = newUNOP(OP_ENTERSUB, 0, scalar($amper)); }
+	|	amper PERLY_PAREN_OPEN PERLY_PAREN_CLOSE                 /* &foo() or foo() */
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($amper));
 			}
-	|	amper '(' expr ')'          /* &foo(@args) or foo(@args) */
+	|	amper PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE          /* &foo(@args) or foo(@args) */
 			{
 			  $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-				op_append_elem(OP_LIST, $3, scalar($1)));
+				op_append_elem(OP_LIST, $expr, scalar($amper)));
 			}
 	|	NOAMP subname optlistexpr       /* foo @args (no parens) */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-			    op_append_elem(OP_LIST, $3, scalar($2)));
+			    op_append_elem(OP_LIST, $optlistexpr, scalar($subname)));
 			}
-	|	term ARROW '$' '*'
-			{ $$ = newSVREF($1); }
-	|	term ARROW '@' '*'
-			{ $$ = newAVREF($1); }
-	|	term ARROW '%' '*'
-			{ $$ = newHVREF($1); }
-	|	term ARROW '&' '*'
+	|	term[operand] ARROW PERLY_DOLLAR PERLY_STAR
+			{ $$ = newSVREF($operand); }
+	|	term[operand] ARROW PERLY_SNAIL PERLY_STAR
+			{ $$ = newAVREF($operand); }
+	|	term[operand] ARROW PERLY_PERCENT_SIGN PERLY_STAR
+			{ $$ = newHVREF($operand); }
+	|	term[operand] ARROW PERLY_AMPERSAND PERLY_STAR
 			{ $$ = newUNOP(OP_ENTERSUB, 0,
-				       scalar(newCVREF($3,$1))); }
-	|	term ARROW '*' '*'	%prec '('
-			{ $$ = newGVREF(0,$1); }
+				       scalar(newCVREF($PERLY_AMPERSAND,$operand))); }
+	|	term[operand] ARROW PERLY_STAR PERLY_STAR	%prec PERLY_PAREN_OPEN
+			{ $$ = newGVREF(0,$operand); }
 	|	LOOPEX  /* loop exiting command (goto, last, dump, etc) */
-			{ $$ = newOP($1, OPf_SPECIAL);
+			{ $$ = newOP($LOOPEX, OPf_SPECIAL);
 			    PL_hints |= HINT_BLOCK_SCOPE; }
-	|	LOOPEX term
-			{ $$ = newLOOPEX($1,$2); }
+	|	LOOPEX term[operand]
+			{ $$ = newLOOPEX($LOOPEX,$operand); }
 	|	NOTOP listexpr                       /* not $foo */
-			{ $$ = newUNOP(OP_NOT, 0, scalar($2)); }
+			{ $$ = newUNOP(OP_NOT, 0, scalar($listexpr)); }
 	|	UNIOP                                /* Unary op, $_ implied */
-			{ $$ = newOP($1, 0); }
+			{ $$ = newOP($UNIOP, 0); }
 	|	UNIOP block                          /* eval { foo }* */
-			{ $$ = newUNOP($1, 0, $2); }
-	|	UNIOP term                           /* Unary op */
-			{ $$ = newUNOP($1, 0, $2); }
+			{ $$ = newUNOP($UNIOP, 0, $block); }
+	|	UNIOP term[operand]                           /* Unary op */
+			{ $$ = newUNOP($UNIOP, 0, $operand); }
 	|	REQUIRE                              /* require, $_ implied */
-			{ $$ = newOP(OP_REQUIRE, $1 ? OPf_SPECIAL : 0); }
-	|	REQUIRE term                         /* require Foo */
-			{ $$ = newUNOP(OP_REQUIRE, $1 ? OPf_SPECIAL : 0, $2); }
+			{ $$ = newOP(OP_REQUIRE, $REQUIRE ? OPf_SPECIAL : 0); }
+	|	REQUIRE term[operand]                         /* require Foo */
+			{ $$ = newUNOP(OP_REQUIRE, $REQUIRE ? OPf_SPECIAL : 0, $operand); }
 	|	UNIOPSUB
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1)); }
-	|	UNIOPSUB term                        /* Sub treated as unop */
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($UNIOPSUB)); }
+	|	UNIOPSUB term[operand]                        /* Sub treated as unop */
 			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED,
-			    op_append_elem(OP_LIST, $2, scalar($1))); }
+			    op_append_elem(OP_LIST, $operand, scalar($UNIOPSUB))); }
 	|	FUNC0                                /* Nullary operator */
-			{ $$ = newOP($1, 0); }
-	|	FUNC0 '(' ')'
-			{ $$ = newOP($1, 0);}
+			{ $$ = newOP($FUNC0, 0); }
+	|	FUNC0 PERLY_PAREN_OPEN PERLY_PAREN_CLOSE
+			{ $$ = newOP($FUNC0, 0);}
 	|	FUNC0OP       /* Same as above, but op created in toke.c */
-			{ $$ = $1; }
-	|	FUNC0OP '(' ')'
-			{ $$ = $1; }
+			{ $$ = $FUNC0OP; }
+	|	FUNC0OP PERLY_PAREN_OPEN PERLY_PAREN_CLOSE
+			{ $$ = $FUNC0OP; }
 	|	FUNC0SUB                             /* Sub treated as nullop */
-			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($1)); }
-	|	FUNC1 '(' ')'                        /* not () */
-			{ $$ = ($1 == OP_NOT)
-                          ? newUNOP($1, 0, newSVOP(OP_CONST, 0, newSViv(0)))
-                          : newOP($1, OPf_SPECIAL); }
-	|	FUNC1 '(' expr ')'                   /* not($foo) */
-			{ $$ = newUNOP($1, 0, $3); }
+			{ $$ = newUNOP(OP_ENTERSUB, OPf_STACKED, scalar($FUNC0SUB)); }
+	|	FUNC1 PERLY_PAREN_OPEN PERLY_PAREN_CLOSE                        /* not () */
+			{ $$ = ($FUNC1 == OP_NOT)
+                          ? newUNOP($FUNC1, 0, newSVOP(OP_CONST, 0, newSViv(0)))
+                          : newOP($FUNC1, OPf_SPECIAL); }
+	|	FUNC1 PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE                   /* not($foo) */
+			{ $$ = newUNOP($FUNC1, 0, $expr); }
 	|	PMFUNC /* m//, s///, qr//, tr/// */
 			{
-			    if (   $1->op_type != OP_TRANS
-			        && $1->op_type != OP_TRANSR
-				&& (((PMOP*)$1)->op_pmflags & PMf_HAS_CV))
+			    if (   $PMFUNC->op_type != OP_TRANS
+			        && $PMFUNC->op_type != OP_TRANSR
+				&& (((PMOP*)$PMFUNC)->op_pmflags & PMf_HAS_CV))
 			    {
 				$<ival>$ = start_subparse(FALSE, CVf_ANON);
 				SAVEFREESV(PL_compcv);
@@ -1290,58 +1342,72 @@ term	:	termbinop
 				$<ival>$ = 0;
 			}
 		    SUBLEXSTART listexpr optrepl SUBLEXEND
-			{ $$ = pmruntime($1, $4, $5, 1, $<ival>2); }
+			{ $$ = pmruntime($PMFUNC, $listexpr, $optrepl, 1, $<ival>2); }
 	|	BAREWORD
 	|	listop
 	|	PLUGEXPR
 	;
 
 /* "my" declarations, with optional attributes */
-myattrterm:	MY myterm myattrlist
-			{ $$ = my_attrs($2,$3); }
+myattrterm
+	:	MY myterm myattrlist
+			{ $$ = my_attrs($myterm,$myattrlist); }
 	|	MY myterm
-			{ $$ = localize($2,1); }
+			{ $$ = localize($myterm,1); }
 	|	MY REFGEN myterm myattrlist
-			{ $$ = newUNOP(OP_REFGEN, 0, my_attrs($3,$4)); }
+			{ $$ = newUNOP(OP_REFGEN, 0, my_attrs($myterm,$myattrlist)); }
+	|	MY REFGEN term[operand]
+			{ $$ = newUNOP(OP_REFGEN, 0, localize($operand,1)); }
 	;
 
 /* Things that can be "my"'d */
-myterm	:	'(' expr ')'
-			{ $$ = sawparens($2); }
-	|	'(' ')'
+myterm	:	PERLY_PAREN_OPEN expr PERLY_PAREN_CLOSE
+			{ $$ = sawparens($expr); }
+	|	PERLY_PAREN_OPEN PERLY_PAREN_CLOSE
 			{ $$ = sawparens(newNULLLIST()); }
 
-	|	scalar	%prec '('
-			{ $$ = $1; }
-	|	hsh 	%prec '('
-			{ $$ = $1; }
-	|	ary 	%prec '('
-			{ $$ = $1; }
+	|	scalar	%prec PERLY_PAREN_OPEN
+			{ $$ = $scalar; }
+	|	hsh 	%prec PERLY_PAREN_OPEN
+			{ $$ = $hsh; }
+	|	ary 	%prec PERLY_PAREN_OPEN
+			{ $$ = $ary; }
 	;
 
 /* Basic list expressions */
-optlistexpr:	/* NULL */ %prec PREC_LOW
-			{ $$ = NULL; }
-	|	listexpr    %prec PREC_LOW
-			{ $$ = $1; }
+optlistexpr
+	:	empty                   %prec PREC_LOW
+	|	listexpr                %prec PREC_LOW
 	;
 
-optexpr:	/* NULL */
-			{ $$ = NULL; }
+optexpr
+	:	empty
 	|	expr
-			{ $$ = $1; }
 	;
 
-optrepl:	/* NULL */
-			{ $$ = NULL; }
-	|	'/' expr
-			{ $$ = $2; }
+optrepl
+	:	empty
+	|	PERLY_SLASH expr        { $$ = $expr; }
 	;
 
 /* A little bit of trickery to make "for my $foo (@bar)" actually be
    lexical */
 my_scalar:	scalar
-			{ parser->in_my = 0; $$ = my($1); }
+			{ parser->in_my = 0; $$ = my($scalar); }
+	;
+
+/* A list of scalars for "for my ($foo, $bar) (@baz)"  */
+list_of_scalars:	list_of_scalars[list] PERLY_COMMA
+			{ $$ = $list; }
+	|		list_of_scalars[list] PERLY_COMMA scalar
+			{
+			  $$ = op_append_elem(OP_LIST, $list, $scalar);
+			}
+	|		scalar %prec PREC_LOW
+	;
+
+my_list_of_scalars:	list_of_scalars
+			{ parser->in_my = 0; $$ = $list_of_scalars; }
 	;
 
 my_var	:	scalar
@@ -1357,59 +1423,59 @@ my_refgen:	MY REFGEN
 	|	REFGEN MY
 	;
 
-amper	:	'&' indirob
-			{ $$ = newCVREF($1,$2); }
+amper	:	PERLY_AMPERSAND indirob
+			{ $$ = newCVREF($PERLY_AMPERSAND,$indirob); }
 	;
 
-scalar	:	'$' indirob
-			{ $$ = newSVREF($2); }
+scalar	:	PERLY_DOLLAR indirob
+			{ $$ = newSVREF($indirob); }
 	;
 
-ary	:	'@' indirob
-			{ $$ = newAVREF($2);
-			  if ($$) $$->op_private |= $1;
+ary	:	PERLY_SNAIL indirob
+			{ $$ = newAVREF($indirob);
+			  if ($$) $$->op_private |= $PERLY_SNAIL;
 			}
 	;
 
-hsh	:	'%' indirob
-			{ $$ = newHVREF($2);
-			  if ($$) $$->op_private |= $1;
+hsh	:	PERLY_PERCENT_SIGN indirob
+			{ $$ = newHVREF($indirob);
+			  if ($$) $$->op_private |= $PERLY_PERCENT_SIGN;
 			}
 	;
 
 arylen	:	DOLSHARP indirob
-			{ $$ = newAVREF($2); }
-	|	term ARROW DOLSHARP '*'
-			{ $$ = newAVREF($1); }
+			{ $$ = newAVREF($indirob); }
+	|	term ARROW DOLSHARP PERLY_STAR
+			{ $$ = newAVREF($term); }
 	;
 
-star	:	'*' indirob
-			{ $$ = newGVREF(0,$2); }
+star	:	PERLY_STAR indirob
+			{ $$ = newGVREF(0,$indirob); }
 	;
 
 sliceme	:	ary
-	|	term ARROW '@'
-			{ $$ = newAVREF($1); }
+	|	term ARROW PERLY_SNAIL
+			{ $$ = newAVREF($term); }
 	;
 
 kvslice	:	hsh
-	|	term ARROW '%'
-			{ $$ = newHVREF($1); }
+	|	term ARROW PERLY_PERCENT_SIGN
+			{ $$ = newHVREF($term); }
 	;
 
 gelem	:	star
-	|	term ARROW '*'
-			{ $$ = newGVREF(0,$1); }
+	|	term ARROW PERLY_STAR
+			{ $$ = newGVREF(0,$term); }
 	;
 
 /* Indirect objects */
 indirob	:	BAREWORD
-			{ $$ = scalar($1); }
+			{ $$ = scalar($BAREWORD); }
 	|	scalar %prec PREC_LOW
-			{ $$ = scalar($1); }
+			{ $$ = scalar($scalar); }
 	|	block
-			{ $$ = op_scope($1); }
+			{ $$ = op_scope($block); }
 
 	|	PRIVATEREF
-			{ $$ = $1; }
+			{ $$ = $PRIVATEREF; }
 	;

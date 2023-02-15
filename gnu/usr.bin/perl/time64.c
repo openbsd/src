@@ -374,7 +374,7 @@ struct TM *Perl_gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_isdst  = 0;
 
 #ifdef HAS_TM_TM_ZONE
-    p->tm_zone   = (char *)"UTC";
+    p->tm_zone   = "UTC";
 #endif
 
     v_tm_sec  = (int)Perl_fmod(time, 60.0);
@@ -479,7 +479,7 @@ struct TM *Perl_localtime64_r (const Time64_T *time, struct TM *local_tm)
     struct tm safe_date;
     const struct tm * result;
     struct TM gm_tm;
-    Year orig_year;
+    Year orig_year = 0; /* initialise to avoid spurious compiler warning */
     int month_diff;
     const bool use_system = SHOULD_USE_SYSTEM_LOCALTIME(*time);
     dTHX;

@@ -435,7 +435,7 @@ SKIP: {
     (my $package = basename($filename)) =~ s/\.pm$//;
     print $fh <<"EOF";
 package $package;
-use parent $CLASS;
+use base $CLASS;
 1;
 EOF
     close $fh;
@@ -581,8 +581,8 @@ SKIP: {
 
     { # https://rt.cpan.org/Ticket/Display.html?id=88495
 	@ver::ISA = $CLASS;
-	is ref(ver->new), 'ver', 'ver can inherit from version';
-	is ref(ver->qv("1.2.3")), 'ver', 'ver can inherit from version';
+	is ref('ver'->new), 'ver', 'ver can inherit from version';
+	is ref('ver'->qv("1.2.3")), 'ver', 'ver can inherit from version';
     }
 
     { # discovered while integrating with bleadperl

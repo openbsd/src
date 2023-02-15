@@ -25,7 +25,7 @@ use Test::More
 my $cwd  = abs_path;
 my $perl = which_perl;
 my $make = make_run();
-my $mm = bless { NAME => "Foo", MAKE => $Config{make}, PARENT_NAME => '' }, "MM";
+my $mm = bless { NAME => "Foo", MAKE => $Config{make}, PARENT_NAME => '', PERL_SRC => '' }, "MM";
 $mm->init_INST;   # *PERLRUN needs INIT_*
 $mm->init_PERL;   # generic ECHO needs ABSPERLRUN
 $mm->init_tools;  # need ECHO

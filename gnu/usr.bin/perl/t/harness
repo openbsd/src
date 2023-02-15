@@ -92,12 +92,11 @@ if ($ENV{HARNESS_OPTIONS}) {
 
 if (@ARGV) {
     # If you want these run in speed order, just use prove
-    if ($^O eq 'MSWin32') {
-	@tests = map(glob($_),@ARGV);
-    }
-    else {
-	@tests = @ARGV;
-    }
+
+    # Note: we use glob even on *nix and not just on Windows
+    # because arguments might be passed in via the TEST_ARGS
+    # env var where they wont be expanded by the shell.
+    @tests = map(glob($_),@ARGV);
     # This is a hack to force config_heavy.pl to be loaded, before the
     # prep work for running a test changes directory.
     1 if $Config{d_fork};
@@ -117,17 +116,29 @@ if (@ARGV) {
     unless (@tests) {
 	my @seq = <base/*.t>;
 
-	my @next = qw(comp run cmd io re opbasic op uni mro lib porting perf);
-	push @next, 'japh' if $torture;
-	push @next, 'win32' if $^O eq 'MSWin32';
-	push @next, 'benchmark' if $ENV{PERL_BENCHMARK};
-	push @next, 'bigmem' if $ENV{PERL_TEST_MEMORY};
+        my @last;
+	my @next = qw(comp run cmd);
+
+        # The remaining core tests are either intermixed with the non-core for
+        # more parallelism (if PERL_TEST_HARNESS_ASAP is set non-zero) or done
+        # after the above basic sanity tests, before any non-core ones.
+        my $which = $ENV{PERL_TEST_HARNESS_ASAP} ? \@last : \@next;
+
+        push @$which, qw(io re opbasic op uni mro lib porting perf);
+	push @$which, 'japh' if $torture;
+	push @$which, 'win32' if $^O eq 'MSWin32';
+	push @$which, 'benchmark' if $ENV{PERL_BENCHMARK};
+	push @$which, 'bigmem' if $ENV{PERL_TEST_MEMORY};
+
 	# Hopefully TAP::Parser::Scheduler will support this syntax soon.
 	# my $next = { par => '{' . join (',', @next) . '}/*.t' };
 	my $next = { par => [
 			     map { "$_/*.t" } @next
 			    ] };
 	@tests = _extract_tests ($next);
+
+	my $last = { par => '{' . join (',', @last) . '}/*.t' };
+	@last = _extract_tests ($last);
 
 	# This is a bit of a game, because we only want to sort these tests in
 	# speed order. base/*.t wants to run first, and ext,lib etc last and in
@@ -147,7 +158,6 @@ if (@ARGV) {
 	@tests = (@seq, @tests);
 	push @seq, $next;
 
-	my @last;
 	push @last,
 	    _tests_from_manifest($Config{extensions}, $Config{known_extensions});
 	my %times;
@@ -171,7 +181,7 @@ if (@ARGV) {
 
             # Keep a list of the distinct directory names, and another list of
             # those which contain a file whose name begins with a 0
-            if ( m! \A \.\. /
+            if ( m! \A (?: \.\. / )?
                                 ( .*? )         # $1 is the directory path name
                             /
                                 ( [^/]* \.t )   # $2 is the .t name
@@ -189,7 +199,7 @@ if (@ARGV) {
         # directory containing such files should be tested in serial order.
         #
         # Add exceptions to the above rule
-        for (qw(ext/Pod-Html/t cpan/IO-Zlib/t ext/File-Find/t)) {
+        for (qw(cpan/IO-Zlib/t ext/File-Find/t)) {
             $serials{$_} = 1;
         }
 
@@ -210,7 +220,7 @@ if (@ARGV) {
 	for (@last) {
             # Treat every file in each non-serial directory as its own
             # "directory", so that it can be executed in parallel
-            m! \A ( \.\. / (?: $non_serials )
+            m! \A ( (?: \.\. / )? (?: $non_serials )
                          / [^/]+ \.t \z | .* [/] ) !x
                 or die "'$_'";
 	    push @{$dir{$1}}, $_;

@@ -1,12 +1,9 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
+    unless (5.008 <= $]) {
+	print "1..0 # skipped: Perl 5.8.0 or later needed for this test\n";
+	print $@;
+	exit;
     }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
@@ -14,23 +11,9 @@ BEGIN {
     }
 }
 
-
-BEGIN {
-    use Unicode::Collate;
-
-#    unless (exists &Unicode::Collate::bootstrap or 5.008 <= $]) {
-#	print "1..0 # skipped: XSUB, or Perl 5.8.0 or later".
-#		" needed for this test\n";
-    unless (5.008 <= $]) {
-	print "1..0 # skipped: Perl 5.8.0 or later needed for this test\n";
-	print $@;
-	exit;
-    }
-}
-
 use strict;
 use warnings;
-BEGIN { $| = 1; print "1..156\n"; } # 81 + 5 x @Versions
+BEGIN { $| = 1; print "1..176\n"; } # 81 + 5 x @Versions
 my $count = 0;
 sub ok ($;$) {
     my $p = my $r = shift;
@@ -41,7 +24,12 @@ sub ok ($;$) {
     print $p ? "ok" : "not ok", ' ', ++$count, "\n";
 }
 
+use Unicode::Collate;
+
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -192,7 +180,8 @@ my $out = Unicode::Collate->new(
     overrideOut => sub { 0xFFFD },
 );
 
-my @Versions = (8, 9, 11, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36);
+my @Versions = ( 8,  9, 11, 14, 16, 18, 20, 22, 24, 26,
+		28, 30, 32, 34, 36, 38, 40, 41, 43);
 
 for my $v (@Versions) {
     $out->change(UCA_Version => $v);

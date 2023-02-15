@@ -137,7 +137,7 @@ instead:
 
 : # use perl
     eval 'exec /usr/local/bin/perl -S $0 ${1+"$@"}'
-        if $running_under_some_shell;
+        if 0; # ^ Run only under a shell
 
 =head2 Using Perl in "native" BS2000
 

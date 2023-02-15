@@ -108,4 +108,10 @@ is sprintf("%s", splice @a, 0, 1, undef), "",
         "croak when splicing into readonly array";
 }
 
+# GH#18667 - av_extend_guts must zero duplicate SV*s
+fresh_perl_is('my @data = (undef) x 4; splice @data, 1, 1;
+    splice @data, 2, 1; $data[3] = undef; splice @data, 3, 1;',
+    '', {}, 'GH#18667 - av_extend_guts must zero duplicate SV*s');
+
+
 done_testing;

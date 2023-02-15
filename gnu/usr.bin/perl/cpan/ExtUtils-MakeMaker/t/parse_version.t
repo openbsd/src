@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use strict;
+use warnings;
+
 BEGIN {
     unshift @INC, 't/lib';
 }
@@ -19,13 +22,13 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
                 q[*FOO::VERSION = \'1.11';]     => '1.11',
                 '$VERSION = 0.02'               => 0.02,
                 '$VERSION = 0.0'                => 0.0,
-                '$VERSION = -1.0'               => -1.0,
+                '$VERSION = -1.0'               => 'undef',
                 '$VERSION = undef'              => 'undef',
                 '$wibble  = 1.0'                => undef,
                 q[my $VERSION = '1.01']         => 'undef',
                 q[local $VERSION = '1.02']      => 'undef',
                 q[local $FOO::VERSION = '1.30'] => 'undef',
-                q[if( $Foo::VERSION >= 3.00 ) {]=> 'undef',
+                q[if( $Foo::VERSION >= 3.00 ) {]=> undef,
                 q[our $VERSION = '1.23';]       => '1.23',
                 q[$CGI::VERSION='3.63']         => '3.63',
                 q[$VERSION = "1.627"; # ==> ALSO update the version in the pod text below!] => '1.627',
@@ -44,7 +47,6 @@ my %versions = (q[$VERSION = '1.00']            => '1.00',
                 '$VERSION = substr(q$Revision: 2.8 $, 10) + 2 . "";'                   => '4.8',
                 q[our $VERSION = do { my @r = ( q$Revision: 2.7 $ =~ /\d+/g ); sprintf "%d." . "%02d" x $#r, @r };] => '2.07', # Fucking seriously?
                 'elsif ( $Something::VERSION >= 1.99 )' => undef,
-
                );
 
 if( $Has_Version ) {
@@ -60,11 +62,9 @@ if( "$]" >= 5.011001 ) {
     $versions{'package Foo::Bar v1.2.3;'  } = 'v1.2.3';
     $versions{' package Foo::Bar 1.23 ;'  } = '1.23';
     $versions{"package Foo'Bar 1.23;"     } = '1.23';
-    $versions{"package Foo::Bar 1.2.3;"   } = '1.2.3';
     $versions{'package Foo 1.230;'        } = '1.230';
-    $versions{'package Foo 1.23_01;'      } = '1.23_01';
-    $versions{'package Foo v1.23_01;'     } = 'v1.23_01';
-    $versions{q["package Foo 1.23"]}        = 'undef';
+    $versions{q["package Foo 1.23"]}        = undef;
+    $versions{q[our $VERSION = "1.00 / the fucking fuck";]} = 'undef';
     $versions{<<'END'}                      = '1.23';
 package Foo 1.23;
 our $VERSION = 2.34;
@@ -88,10 +88,7 @@ if( "$]" >= 5.014 ) {
     $versions{'package Foo::Bar v1.2.3 { }'  } = 'v1.2.3';
     $versions{' package Foo::Bar 1.23 { }'   } = '1.23';
     $versions{"package Foo'Bar 1.23 { }"     } = '1.23';
-    $versions{"package Foo::Bar 1.2.3 { }"   } = '1.2.3';
     $versions{'package Foo 1.230 { }'        } = '1.230';
-    $versions{'package Foo 1.23_01 { }'      } = '1.23_01';
-    $versions{'package Foo v1.23_01 { }'     } = 'v1.23_01';
     $versions{<<'END'}                      = '1.23';
 package Foo 1.23 {
 our $VERSION = 2.34;

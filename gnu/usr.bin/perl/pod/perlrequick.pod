@@ -84,7 +84,7 @@ In the last regex, the forward slash C<'/'> is also backslashed,
 because it is used to delimit the regex.
 
 Most of the metacharacters aren't always special, and other characters
-(such as the ones delimitting the pattern) become special under various
+(such as the ones delimiting the pattern) become special under various
 circumstances.  This can be confusing and lead to unexpected results.
 L<S<C<use re 'strict'>>|re/'strict' mode> can notify you of potential
 pitfalls.
@@ -363,6 +363,10 @@ C<a{n,}> = match at least C<n> or more times
 
 =item *
 
+C<a{,n}> = match C<n> times or fewer
+
+=item *
+
 C<a{n}> = match exactly C<n> times
 
 =back
@@ -374,7 +378,7 @@ Here are some examples:
     /(\w+)\s+\g1/;    # match doubled words of arbitrary length
     $year =~ /^\d{2,4}$/;  # make sure year is at least 2 but not more
                            # than 4 digits
-    $year =~ /^\d{4}$|^\d{2}$/; # better match; throw out 3 digit dates
+    $year =~ /^\d{ 4 }$|^\d{2}$/; # better match; throw out 3 digit dates
 
 These quantifiers will try to match as much of the string as possible,
 while still allowing the regex to match.  So we have

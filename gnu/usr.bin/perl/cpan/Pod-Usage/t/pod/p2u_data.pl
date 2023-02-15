@@ -1,4 +1,7 @@
 use Pod::Usage;
+use strict;
+use warnings;
+
 pod2usage(-verbose => 2, -exit => 17, -input => \*DATA);
 
 __DATA__

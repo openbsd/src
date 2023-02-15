@@ -4,8 +4,8 @@ perlrun - how to execute the Perl interpreter
 
 =head1 SYNOPSIS
 
-B<perl>	S<[ B<-sTtuUWX> ]>
-	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
+B<perl>	S<[ B<-gsTtuUWX> ]>
+	S<[ B<-h?v> ] [ B<-V>[:I<configvar>] ]>
 	S<[ B<-cw> ] [ B<-d>[B<t>][:I<debugger>] ] [ B<-D>[I<number/list>] ]>
 	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
 	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ] [ B<-f> ]>
@@ -212,7 +212,7 @@ advised to use a specific path if you care about a specific version.
 or if you just want to be running at least version, place a statement
 like this at the top of your program:
 
-    use 5.014;
+    use v5.14;
 
 =head2 Command Switches
 X<perl, command switches> X<command switches>
@@ -241,8 +241,10 @@ terminated by the null character, you can say this:
     find . -name '*.orig' -print0 | perl -n0e unlink
 
 The special value 00 will cause Perl to slurp files in paragraph mode.
+
 Any value 0400 or above will cause Perl to slurp files whole, but by convention
-the value 0777 is the one normally used for this purpose.
+the value 0777 is the one normally used for this purpose. The L</-g> flag
+is a simpler alias for it.
 
 You can also specify the separator character using hexadecimal notation:
 B<-0xI<HHH...>>, where the C<I<H>> are valid hexadecimal digits.  Unlike
@@ -409,6 +411,8 @@ B<-D14> is equivalent to B<-Dtls>):
       2048  u  Tainting checks
       4096  U  Unofficial, User hacking (reserved for private,
                unreleased use)
+      8192  h  Show hash randomization debug output (changes to
+               PL_hash_rand_bits and their origin)
      16384  X  Scratchpad allocation
      32768  D  Cleaning up
      65536  S  Op slab allocation
@@ -511,10 +515,26 @@ quotes. You can't use literal whitespace or NUL characters in the pattern.
 
 B<-F> implicitly sets both L</-a> and L</-n>.
 
+=item B<-g>
+X<-g>
+
+undefines the input record separator (C<L<$E<sol>|perlvar/$E<sol>>>) and thus
+enables the slurp mode. In other words, it causes Perl to read whole
+files at once, instead of line by line.
+
+This flag is a simpler alias for L<-0777|/-0[octalE<sol>hexadecimal]>.
+
+Mnemonics: gobble, grab, gulp.
+
 =item B<-h>
 X<-h>
 
 prints a summary of the options.
+
+=item B<-?>
+X<-?>
+
+synonym for B<-h>: prints a summary of the options.
 
 =item B<-i>[I<extension>]
 X<-i> X<in-place>
@@ -762,7 +782,7 @@ X<-s>
 enables rudimentary switch parsing for switches on the command
 line after the program name but before any filename arguments (or before
 an argument of B<-->).  Any switch found there is removed from @ARGV and sets the
-corresponding variable in the Perl program.  The following program
+corresponding variable in the Perl program, in the main package.  The following program
 prints "1" if the program is invoked with a B<-xyz> switch, and "abc"
 if it is invoked with B<-xyz=abc>.
 
@@ -772,7 +792,8 @@ if it is invoked with B<-xyz=abc>.
 Do note that a switch like B<--help> creates the variable C<${-help}>, which is
 not compliant with C<use strict "refs">.  Also, when using this option on a
 script with warnings enabled you may get a lot of spurious "used only once"
-warnings.
+warnings. For these reasons, use of B<-s> is discouraged. See L<Getopt::Long>
+for much more flexible switch parsing.
 
 =item B<-S>
 X<-S>
@@ -797,7 +818,7 @@ Bourne shell:
 
     #!/usr/bin/perl
     eval 'exec /usr/bin/perl -wS $0 ${1+"$@"}'
-	    if $running_under_some_shell;
+	    if 0; # ^ Run only under a shell
 
 The system ignores the first line and feeds the program to F</bin/sh>,
 which proceeds to try to execute the Perl program as a shell script.
@@ -805,8 +826,8 @@ The shell executes the second line as a normal shell command, and thus
 starts up the Perl interpreter.  On some systems $0 doesn't always
 contain the full pathname, so the L</-S> tells Perl to search for the
 program if necessary.  After Perl locates the program, it parses the
-lines and ignores them because the variable $running_under_some_shell
-is never true.  If the program will be interpreted by csh, you will need
+lines and ignores them because the check 'if 0' is never true.
+If the program will be interpreted by csh, you will need
 to replace C<${1+"$@"}> with C<$*>, even though that doesn't understand
 embedded spaces (and such) in the argument list.  To start up I<sh> rather
 than I<csh>, some systems may have to replace the C<#!> line with a line
@@ -816,7 +837,7 @@ will work under any of I<csh>, I<sh>, or Perl, such as the following:
 
 	eval '(exit $?0)' && eval 'exec perl -wS $0 ${1+"$@"}'
 	& eval 'exec /usr/bin/perl -wS $0 $argv:q'
-		if $running_under_some_shell;
+		if 0; # ^ Run only under a shell
 
 If the filename supplied contains directory separators (and so is an
 absolute or relative pathname), and if that file is not found,
@@ -839,6 +860,8 @@ B<Note: This is not a substitute for C<-T>!> This is meant to be
 used I<only> as a temporary development aid while securing legacy code:
 for real production code and for new secure code written from scratch,
 always use the real L</-T>.
+
+This has no effect if your perl was built without taint support.
 
 =item B<-T>
 X<-T>
@@ -957,7 +980,7 @@ X<-X>
 Disables all warnings regardless of C<use warnings> or C<$^W>.
 See L<warnings>.
 
-Forbidden in L</C<PERL5OPT>>.
+Forbidden in C<L</PERL5OPT>>.
 
 =item B<-x>
 X<-x>
@@ -1098,13 +1121,6 @@ X<:unix>
 
 Low-level layer that calls C<read>, C<write>, C<lseek>, etc.
 
-=item :win32
-X<:win32>
-
-On Win32 platforms this I<experimental> layer uses native "handle" IO
-rather than a Unix-like numeric file descriptor layer. Known to be
-buggy in this release (5.30).
-
 =back
 
 The default set of layers should give acceptable results on all platforms.
@@ -1120,9 +1136,7 @@ on the version and vendor of the C compiler. Using our own C<:crlf> layer as
 the buffer avoids those issues and makes things more uniform.
 
 This release (5.30) uses C<:unix> as the bottom layer on Win32, and so still
-uses the C compiler's numeric file descriptor routines. There is an
-experimental native C<:win32> layer, which is expected to be enhanced and
-may eventually become the default under Win32.
+uses the C compiler's numeric file descriptor routines.
 
 The PERLIO environment variable is completely ignored when Perl
 is run in taint mode.
@@ -1250,8 +1264,11 @@ in hexadecimal, and may include a leading 0x. Truncated patterns
 are treated as though they are suffixed with sufficient 0's as required.
 
 If the option is provided, and C<PERL_PERTURB_KEYS> is NOT set, then
-a value of '0' implies C<PERL_PERTURB_KEYS=0> and any other value
-implies C<PERL_PERTURB_KEYS=2>.
+a value of '0' implies C<PERL_PERTURB_KEYS=0>/C<PERL_PERTURB_KEYS=NO>
+and any other value implies
+C<PERL_PERTURB_KEYS=2>/C<PERL_PERTURB_KEYS=DETERMINISTIC>. See the
+documentation for L<PERL_PERTURB_KEYS|/PERL_PERTURB_KEYS> for important
+caveats regarding the C<DETERMINISTIC> mode.
 
 B<PLEASE NOTE: The hash seed is sensitive information>. Hashes are
 randomized to protect against local and remote attacks against Perl
@@ -1274,11 +1291,22 @@ When set to C<"1"> or C<"RANDOM"> then traversing keys will be randomized.
 Every time a hash is inserted into the key order will change in a random
 fashion. The order may not be repeatable in a following program run
 even if the PERL_HASH_SEED has been specified. This is the default
-mode for perl.
+mode for perl when no PERL_HASH_SEED has been explicitly provided.
 
 When set to C<"2"> or C<"DETERMINISTIC"> then inserting keys into a hash
-will cause the key order to change, but in a way that is repeatable
-from program run to program run.
+will cause the key order to change, but in a way that is repeatable from
+program run to program run, provided that the same hash seed is used,
+and that the code does not itself perform any non-deterministic
+operations and also provided exactly the same environment context.
+Adding or removing an environment variable may and likely will change
+the key order. If any part of the code builds a hash using non-
+deterministic keys, for instance a hash keyed by the stringified form of
+a reference, or the address of the objects it contains, then this may
+and likely will have a global effect on the key order of *every* hash in
+the process. To work properly this setting MUST be coupled with the
+L<PERL_HASH_SEED|/"PERL_HASH_SEED"> to produce deterministic results,
+and in fact, if you do set the C<PERL_HASH_SEED> explicitly you do not
+need to set this as well, it will be automatically set to this mode.
 
 B<NOTE:> Use of this option is considered insecure, and is intended only
 for debugging non-deterministic behavior in Perl's hash function. Do

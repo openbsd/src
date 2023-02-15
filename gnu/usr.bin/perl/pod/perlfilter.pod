@@ -410,8 +410,7 @@ Here is the complete Debug filter:
 
     package Debug;
 
-    use strict;
-    use warnings;
+    use v5.36;
     use Filter::Util::Call;
 
     use constant TRUE => 1;
@@ -570,7 +569,7 @@ code chunks beginning with the division operator C</>. As a workaround
 you must use C<m/.../> or C<m?...?> for such patterns. Also, the presence of
 regexes specified with raw C<?...?> delimiters may cause mysterious
 errors. The workaround is to use C<m?...?> instead.  See
-L<https://search.cpan.org/perldoc?Switch#LIMITATIONS>
+L<https://metacpan.org/pod/Switch#LIMITATIONS>.
 
 Currently the content of the C<__DATA__> block is not filtered.
 

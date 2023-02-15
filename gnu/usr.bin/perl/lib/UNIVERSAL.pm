@@ -1,6 +1,6 @@
 package UNIVERSAL;
 
-our $VERSION = '1.13';
+our $VERSION = '1.14';
 
 # UNIVERSAL should not contain any extra subs/methods beyond those
 # that it exists to define. The existence of import() below is a historical
@@ -87,7 +87,10 @@ inherits from (or is itself) the name of the package C<TYPE> or
 inherits from package C<TYPE>.
 
 If you're not sure what you have (the C<VAL> case), wrap the method call in an
-C<eval> block to catch the exception if C<VAL> is undefined.
+C<eval> block to catch the exception if C<VAL> is undefined or an unblessed
+reference. The L<C<isa> operator|perlop/"Class Instance Operator"> is an
+alternative that simply returns false in this case, so the C<eval> is not
+needed.
 
 If you want to be sure that you're calling C<isa> as a method, not a class,
 check the invocand with C<blessed> from L<Scalar::Util> first:

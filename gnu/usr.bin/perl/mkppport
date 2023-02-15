@@ -8,7 +8,6 @@ use File::Copy qw( copy );
 use File::Basename qw( dirname );
 
 use feature 'signatures';
-no warnings 'experimental::signatures';
 
 my $rootdir = dirname($0);
 

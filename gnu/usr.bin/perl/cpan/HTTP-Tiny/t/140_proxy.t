@@ -17,8 +17,9 @@ BEGIN {
 
 # Require a true value
 for my $proxy (undef, "", 0){
-    local $ENV{all_proxy} = undef;
-    local $ENV{ALL_PROXY} = undef;
+    no warnings 'uninitialized';
+    local $ENV{all_proxy};
+    local $ENV{ALL_PROXY};
     local $ENV{http_proxy} = $proxy;
     my $c = HTTP::Tiny->new();
     ok(!defined $c->http_proxy);
@@ -78,6 +79,16 @@ for my $var ( qw/http_proxy https_proxy all_proxy/ ) {
     ok(!defined $c->http_proxy,
         "http_proxy not set from HTTP_PROXY if REQUEST_METHOD set");
 
+}
+
+# allow CGI_HTTP_PROXY with REQUEST_METHOD
+{
+    local $ENV{HTTP_PROXY} = "http://localhost:8080";
+    local $ENV{CGI_HTTP_PROXY} = "http://localhost:9090";
+    local $ENV{REQUEST_METHOD} = 'GET';
+    my $c = HTTP::Tiny->new();
+    is($c->http_proxy, "http://localhost:9090",
+        "http_proxy set from CGI_HTTP_PROXY if REQUEST_METHOD set");
 }
 
 done_testing();

@@ -44,6 +44,7 @@ my @toolchain = qw(cpan/AutoLoader/lib
 		   cpan/version/lib
 		   cpan/Getopt-Long/lib
 		   cpan/Text-ParseWords/lib
+                   cpan/ExtUtils-PL2Bat/lib
 		   );
 
 # These are for XS building on Win32, since nonxs and xs build simultaneously

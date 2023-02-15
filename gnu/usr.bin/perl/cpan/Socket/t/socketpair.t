@@ -1,9 +1,14 @@
 #!./perl -w
 
+use v5.6.1;
+use strict;
+use warnings;
+
 my $child;
 my $can_fork;
 my $has_perlio;
 
+our %Config;
 BEGIN {
     require Config; import Config;
     $can_fork = $Config{'d_fork'} || $Config{'d_pseudofork'};
@@ -63,8 +68,9 @@ if( !$Config{d_alarm} ) {
 } elsif( !$can_fork ) {
     plan skip_all => "fork() not implemented on this platform";
 } else {
+    my ($lefth, $righth);
     # This should fail but not die if there is real socketpair
-    eval {socketpair LEFT, RIGHT, -1, -1, -1};
+    eval {socketpair $lefth, $righth, -1, -1, -1};
     if ($@ =~ /^Unsupported socket function "socketpair" called/ ||
 	$! =~ /^The operation requested is not supported./) { # Stratus VOS
 	plan skip_all => 'No socketpair (real or emulated)';
@@ -81,90 +87,95 @@ if( !$Config{d_alarm} ) {
 # But we'll install an alarm handler in case any of the races below fail.
 $SIG{ALRM} = sub {die "Unexpected alarm during testing"};
 
-ok (socketpair (LEFT, RIGHT, AF_UNIX, SOCK_STREAM, PF_UNSPEC),
-    "socketpair (LEFT, RIGHT, AF_UNIX, SOCK_STREAM, PF_UNSPEC)")
-    or print STDERR "# \$\! = $!\n";
-
-if ($has_perlio) {
-    binmode(LEFT,  ":bytes");
-    binmode(RIGHT, ":bytes");
-}
-
 my @left = ("hello ", "world\n");
 my @right = ("perl ", "rules!"); # Not like I'm trying to bias any survey here.
 
-foreach (@left) {
-    # is (syswrite (LEFT, $_), length $_, "write " . _qq ($_) . " to left");
-    is (syswrite (LEFT, $_), length $_, "syswrite to left");
-}
-foreach (@right) {
-    # is (syswrite (RIGHT, $_), length $_, "write " . _qq ($_) . " to right");
-    is (syswrite (RIGHT, $_), length $_, "syswrite to right");
-}
-
-# stream socket, so our writes will become joined:
-my ($buffer, $expect);
-$expect = join '', @right;
-undef $buffer;
-is (read (LEFT, $buffer, length $expect), length $expect, "read on left");
-is ($buffer, $expect, "content what we expected?");
-$expect = join '', @left;
-undef $buffer;
-is (read (RIGHT, $buffer, length $expect), length $expect, "read on right");
-is ($buffer, $expect, "content what we expected?");
-
-ok (shutdown(LEFT, SHUT_WR), "shutdown left for writing");
-# This will hang forever if eof is buggy, and alarm doesn't interrupt system
-# Calls. Hence the child process minder.
-SKIP: {
-    skip "SCO Unixware / OSR have a bug with shutdown",2 if $^O =~ /^(?:svr|sco)/;
-    local $SIG{ALRM} = sub { warn "EOF on right took over 3 seconds" };
-    local $TODO = "Known problems with unix sockets on $^O"
-	if $^O eq 'hpux'   || $^O eq 'super-ux';
-    alarm 3;
-    $! = 0;
-    ok (eof RIGHT, "right is at EOF");
-    local $TODO = "Known problems with unix sockets on $^O"
-	if $^O eq 'unicos' || $^O eq 'unicosmk';
-    is ($!, '', 'and $! should report no error');
-    alarm 60;
-}
-
-my $err = $!;
-$SIG{PIPE} = 'IGNORE';
-{
-    local $SIG{ALRM} =
-	sub { warn "syswrite to left didn't fail within 3 seconds" };
-    alarm 3;
-    # Split the system call from the is() - is() does IO so
-    # (say) a flush may do a seek which on a pipe may disturb errno
-    my $ans = syswrite (LEFT, "void");
-    $err = $!;
-    is ($ans, undef, "syswrite to shutdown left should fail");
-    alarm 60;
-}
-{
-    # This may need skipping on some OSes - restoring value saved above
-    # should help
-    $! = $err;
-    ok (($!{EPIPE} or $!{ESHUTDOWN}), '$! should be EPIPE or ESHUTDOWN')
-	or printf STDERR "# \$\! = %d (%s)\n", $err, $err;
-}
-
 my @gripping = (chr 255, chr 127);
-foreach (@gripping) {
-    is (syswrite (RIGHT, $_), length $_, "syswrite to right");
+
+{
+    my ($lefth, $righth);
+
+    ok (socketpair ($lefth, $righth, AF_UNIX, SOCK_STREAM, PF_UNSPEC),
+	"socketpair (\$lefth, \$righth, AF_UNIX, SOCK_STREAM, PF_UNSPEC)")
+	or print STDERR "# \$\! = $!\n";
+
+    if ($has_perlio) {
+	binmode($lefth,  ":bytes");
+	binmode($righth, ":bytes");
+    }
+
+    foreach (@left) {
+	# is (syswrite ($lefth, $_), length $_, "write " . _qq ($_) . " to left");
+	is (syswrite ($lefth, $_), length $_, "syswrite to left");
+    }
+    foreach (@right) {
+	# is (syswrite ($righth, $_), length $_, "write " . _qq ($_) . " to right");
+	is (syswrite ($righth, $_), length $_, "syswrite to right");
+    }
+
+    # stream socket, so our writes will become joined:
+    my ($buffer, $expect);
+    $expect = join '', @right;
+    undef $buffer;
+    is (read ($lefth, $buffer, length $expect), length $expect, "read on left");
+    is ($buffer, $expect, "content what we expected?");
+    $expect = join '', @left;
+    undef $buffer;
+    is (read ($righth, $buffer, length $expect), length $expect, "read on right");
+    is ($buffer, $expect, "content what we expected?");
+
+    ok (shutdown($lefth, SHUT_WR), "shutdown left for writing");
+    # This will hang forever if eof is buggy, and alarm doesn't interrupt system
+    # Calls. Hence the child process minder.
+    SKIP: {
+	skip "SCO Unixware / OSR have a bug with shutdown",2 if $^O =~ /^(?:svr|sco)/;
+	local $SIG{ALRM} = sub { warn "EOF on right took over 3 seconds" };
+	local $TODO = "Known problems with unix sockets on $^O"
+	    if $^O eq 'hpux'   || $^O eq 'super-ux';
+	alarm 3;
+	$! = 0;
+	ok (eof $righth, "right is at EOF");
+	local $TODO = "Known problems with unix sockets on $^O"
+	    if $^O eq 'unicos' || $^O eq 'unicosmk';
+	is ($!, '', 'and $! should report no error');
+	alarm 60;
+    }
+
+    my $err = $!;
+    $SIG{PIPE} = 'IGNORE';
+    {
+	local $SIG{ALRM} =
+	    sub { warn "syswrite to left didn't fail within 3 seconds" };
+	alarm 3;
+	# Split the system call from the is() - is() does IO so
+	# (say) a flush may do a seek which on a pipe may disturb errno
+	my $ans = syswrite ($lefth, "void");
+	$err = $!;
+	is ($ans, undef, "syswrite to shutdown left should fail");
+	alarm 60;
+    }
+    {
+	# This may need skipping on some OSes - restoring value saved above
+	# should help
+	$! = $err;
+	ok (($!{EPIPE} or $!{ESHUTDOWN}), '$! should be EPIPE or ESHUTDOWN')
+	    or printf STDERR "# \$\! = %d (%s)\n", $err, $err;
+    }
+
+    foreach (@gripping) {
+	is (syswrite ($righth, $_), length $_, "syswrite to right");
+    }
+
+    ok (!eof $lefth, "left is not at EOF");
+
+    $expect = join '', @gripping;
+    undef $buffer;
+    is (read ($lefth, $buffer, length $expect), length $expect, "read on left");
+    is ($buffer, $expect, "content what we expected?");
+
+    ok (close $lefth, "close left");
+    ok (close $righth, "close right");
 }
-
-ok (!eof LEFT, "left is not at EOF");
-
-$expect = join '', @gripping;
-undef $buffer;
-is (read (LEFT, $buffer, length $expect), length $expect, "read on left");
-is ($buffer, $expect, "content what we expected?");
-
-ok (close LEFT, "close left");
-ok (close RIGHT, "close right");
 
 
 # And now datagrams
@@ -172,44 +183,49 @@ ok (close RIGHT, "close right");
 # guarantee that the stack won't drop a UDP packet, even if it is for localhost.
 
 SKIP: {
-    skip "No usable SOCK_DGRAM for socketpair", 24 if ($^O =~ /^(MSWin32|os2)\z/);
     skip "alarm doesn't interrupt I/O on this Perl", 24 if "$]" < 5.008;
+
+    my $success = socketpair my $lefth, my $righth, AF_UNIX, SOCK_DGRAM, PF_UNSPEC;
+
+    skip "No useable SOCK_DGRAM for socketpair", 24 if !$success and
+	($!{EAFNOSUPPORT} or $!{EOPNOTSUPP} or $!{EPROTONOSUPPORT} or $!{EPROTOTYPE});
+    # Maybe this test is redundant now?
+    skip "No usable SOCK_DGRAM for socketpair", 24 if ($^O =~ /^(MSWin32|os2)\z/);
     local $TODO = "socketpair not supported on $^O" if $^O eq 'nto';
 
-    ok (socketpair (LEFT, RIGHT, AF_UNIX, SOCK_DGRAM, PF_UNSPEC),
-	"socketpair (LEFT, RIGHT, AF_UNIX, SOCK_DGRAM, PF_UNSPEC)")
+    ok ($success, "socketpair (\$left, \$righth, AF_UNIX, SOCK_DGRAM, PF_UNSPEC)")
 	or print STDERR "# \$\! = $!\n";
 
     if ($has_perlio) {
-	binmode(LEFT,  ":bytes");
-	binmode(RIGHT, ":bytes");
+	binmode($lefth,  ":bytes");
+	binmode($righth, ":bytes");
     }
 
     foreach (@left) {
-	# is (syswrite (LEFT, $_), length $_, "write " . _qq ($_) . " to left");
-	is (syswrite (LEFT, $_), length $_, "syswrite to left");
+	# is (syswrite ($lefth, $_), length $_, "write " . _qq ($_) . " to left");
+	is (syswrite ($lefth, $_), length $_, "syswrite to left");
     }
     foreach (@right) {
-	# is (syswrite (RIGHT, $_), length $_, "write " . _qq ($_) . " to right");
-	is (syswrite (RIGHT, $_), length $_, "syswrite to right");
+	# is (syswrite ($righth, $_), length $_, "write " . _qq ($_) . " to right");
+	is (syswrite ($righth, $_), length $_, "syswrite to right");
     }
 
     # stream socket, so our writes will become joined:
-    my ($total);
+    my ($total, $buffer);
     $total = join '', @right;
-    foreach $expect (@right) {
+    foreach my $expect (@right) {
 	undef $buffer;
-	is (sysread (LEFT, $buffer, length $total), length $expect, "read on left");
+	is (sysread ($lefth, $buffer, length $total), length $expect, "read on left");
 	is ($buffer, $expect, "content what we expected?");
     }
     $total = join '', @left;
-    foreach $expect (@left) {
+    foreach my $expect (@left) {
 	undef $buffer;
-	is (sysread (RIGHT, $buffer, length $total), length $expect, "read on right");
+	is (sysread ($righth, $buffer, length $total), length $expect, "read on right");
 	is ($buffer, $expect, "content what we expected?");
     }
 
-    ok (shutdown(LEFT, 1), "shutdown left for writing");
+    ok (shutdown($lefth, 1), "shutdown left for writing");
 
     # eof uses buffering. eof is indicated by a sysread of zero.
     # but for a datagram socket there's no way it can know nothing will ever be
@@ -222,7 +238,7 @@ SKIP: {
 	print "# Approximate forever as 3 seconds. Wait 'forever'...\n";
 	alarm 3;
 	undef $buffer;
-	is (sysread (RIGHT, $buffer, 1), undef,
+	is (sysread ($righth, $buffer, 1), undef,
 	    "read on right should be interrupted");
 	is ($alarmed, 1, "alarm should have fired");
     }
@@ -230,18 +246,18 @@ SKIP: {
     alarm 30;
 
     foreach (@gripping) {
-	is (syswrite (RIGHT, $_), length $_, "syswrite to right");
+	is (syswrite ($righth, $_), length $_, "syswrite to right");
     }
 
     $total = join '', @gripping;
-    foreach $expect (@gripping) {
+    foreach my $expect (@gripping) {
 	undef $buffer;
-	is (sysread (LEFT, $buffer, length $total), length $expect, "read on left");
+	is (sysread ($lefth, $buffer, length $total), length $expect, "read on left");
 	is ($buffer, $expect, "content what we expected?");
     }
 
-    ok (close LEFT, "close left");
-    ok (close RIGHT, "close right");
+    ok (close $lefth, "close left");
+    ok (close $righth, "close right");
 
 } # end of DGRAM SKIP
 

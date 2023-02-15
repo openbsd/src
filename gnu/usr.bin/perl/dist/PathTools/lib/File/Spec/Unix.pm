@@ -3,7 +3,7 @@ package File::Spec::Unix;
 use strict;
 use Cwd ();
 
-our $VERSION = '3.78';
+our $VERSION = '3.84';
 $VERSION =~ tr/_//d;
 
 =head1 NAME
@@ -530,7 +530,7 @@ Copyright (c) 2004 by the Perl 5 Porters.  All rights reserved.
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
-Please submit bug reports and patches to perlbug@perl.org.
+Please submit bug reports at L<https://github.com/Perl/perl5/issues>.
 
 =head1 SEE ALSO
 

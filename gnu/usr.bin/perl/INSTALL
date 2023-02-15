@@ -37,9 +37,8 @@ To explicitly name the perl binary, use the command
 "make install PERLNAME=myperl".
 
 Building perl from source requires an ANSI compliant C compiler.
-A minimum of C89 is required. Some features available in C99 will
-be probed for and used when found. The perl build process does not
-rely on anything more than C89.
+C89 with a minimal subset of C99 features is required. Some other
+features available in C99 will be probed for and used when found.
 
 These options, and many more, are explained in further detail below.
 
@@ -89,10 +88,12 @@ potential incompatibilities introduced with this release.  A few of
 the most important issues are listed below, but you should refer
 to F<pod/perldelta.pod> for more detailed information.
 
-B<WARNING:> This version is not binary compatible with versions of Perl
-earlier than 5.32.0.  If you have built extensions (i.e. modules that
-include C code) using an earlier version of Perl, you will need to
-rebuild and reinstall those extensions.
+=head3 Compatibility with earlier versions
+
+B<WARNING:> This version is not binary compatible with earlier versions
+of Perl.  If you have built extensions (i.e. modules that include C code)
+using an earlier version of Perl, you will need to rebuild and reinstall
+those extensions.
 
 Pure perl modules without XS or C code should continue to work fine
 without reinstallation.  See the discussion below on
@@ -107,6 +108,41 @@ installed copy of the perllocal.pod file for a (possibly incomplete)
 list of locally installed modules.  Also see the L<CPAN> module's
 C<autobundle> function for one way to make a "bundle" of your currently
 installed modules.
+
+=head3 C99
+
+With 5.36 we changed our C compiler baseline requirement from "ANSI C89" to
+"C89 plus some specific C99 features".  We have been using C99 features
+optionally for some time - we now additionally B<rely> on a few in the core C
+code and installed headers, which we know work on all supported compilers on
+all platforms we target.  Because earlier versions of Perl still compile with
+strictly ANSI C89 compilers and there are still a few installations in the
+wild which use these very old compilers, XS code that targets earlier versions
+of Perl must not B<rely> on C99 features - that includes XS code in this
+distribution that is dual life on CPAN.  To test that XS code can build on
+such compilers, some authors configure their perl builds with compiler flags
+to warn or raise errors on C99 specific features, most often for mixed
+declarations and code.  This obviously will not work if you attempt it for
+this release - it will not build.  However, XS authors should be aware that
+this means
+
+=over 4
+
+=item *
+
+If you change the C compiler flags in your F<Makefile.PL> or similar to add
+such warnings or errors, you must now only do it for 5.35.4 or earlier.
+
+=item *
+
+Do not rely on now being able to use C99 features in your XS code, even for
+platforms with C99 compilers - some installations of earlier versions of perl
+are deliberately configured to enforce C89 standards so that locally authored
+extension code conforms to them.  If you choose to require C99 for your code,
+that's fine, but do so knowing that if you distribute it, some installations
+of perl are configured to fault C99.
+
+=back
 
 =head1 Run Configure
 
@@ -132,7 +168,31 @@ Configure supports a number of useful options.  Run
 
 	Configure -h
 
-to get a listing.  See the F<Porting/Glossary> file for a complete list of
+to get a listing.
+
+Many Configure switches are expressed as C<key=value> pairs, for example:
+
+    -Dcc=clang
+
+Sometimes the value to be supplied for a switch is a string which contains
+spaces.  In that case, the value needs to be quoted so as to delimit that
+"shell word" from any following switch.  Example:
+
+    sh ./Configure -des \
+        -Doptimize="-O2 -pipe -fstack-protector -fno-strict-aliasing" \
+        -Dusedevel
+
+Once Configure has run, you will be able to access configuration data via
+entries in the file F<config.sh>.
+
+    config_arg0='./Configure'
+    config_args='-des -Doptimize=-O2 -pipe -fstack-protector -fno-strict-aliasing -Dusedevel'
+    config_argc=3
+    config_arg1='-des'
+    config_arg2='-Doptimize=-O2 -pipe -fstack-protector -fno-strict-aliasing'
+    config_arg3='-Dusedevel'
+
+See the F<Porting/Glossary> file for a complete list of
 Configure variables you can set and their definitions.
 
 =over 4
@@ -368,17 +428,16 @@ insecure and are not recommended for production use.>
 
 Since Perl 5.18 we have included support for multiple hash functions,
 although from time to time we change which functions we support,
-and which function is default (currently SBOX+STADTX on 64 bit builds
+and which function is default (currently SBOX+SIPHASH13 on 64 bit builds
 and SBOX+ZAPHOD32 for 32 bit builds). You can choose a different
 algorithm by defining one of the following symbols during configure.
-Note that there security implications of which hash function you choose
+Note that there are security implications regarding which hash function you choose
 to use. The functions are listed roughly by how secure they are believed
 to be, with the one believed to be most secure at release time being PERL_HASH_FUNC_SIPHASH.
 
     PERL_HASH_FUNC_SIPHASH
     PERL_HASH_FUNC_SIPHASH13
     PERL_HASH_FUNC_ZAPHOD32
-    PERL_HASH_FUNC_STADTX
 
 In addition, these, (or custom hash functions), may be "fronted" by the
 SBOX32 hash function for keys under a chosen size. This hash function is
@@ -388,10 +447,10 @@ and which has rather expensive setup costs (relatively speaking), both in
 terms of performance and more importantly in terms of memory. SBOX32
 requires 1k of storage per character it can hash, and it must populate that
 storage with 256 32-bit random values as well. In practice the RNG we use
-for seeding the SBOX32 storage is very efficient and populating the table
+for seeding the SBOX32 storage is very efficient, and populating the table
 required for hashing even fairly long keys is negligible as we only do it
-during startup. By default we build with SBOX32 enabled, but you change that
-by setting
+during startup. By default we build with SBOX32 enabled, but you can change
+that by setting
 
    PERL_HASH_USE_SBOX32_ALSO
 
@@ -418,7 +477,16 @@ the type of key traversal randomization to be used by defining one of these:
 
 Since Perl 5.18 the seed used for the hash function is randomly selected
 at process start, which can be overridden by specifying a seed by setting
-the PERL_HASH_SEED environment variable.
+the PERL_HASH_SEED environment variable. Be aware that
+PERL_PERTURB_KEYS_DETERMINISTIC and the equivalent environment variable
+setting will produce the same results if and only if the code does not
+put non-deterministic data into a hash, and the code is executed in exactly
+the same context in terms of the environment. If the code populates a hash
+with random data, or builds a hash using the address of its items, or
+if the code is run in a different environment context with a different
+number or selection of environment variables then the result may differ.
+DETERMINISTIC in this context means "if everything else is kept the same
+the same results should be observed".
 
 You can change this behavior so that your perl is built with a hard coded
 seed with the define
@@ -444,7 +512,7 @@ See L<perlrun/PERL_HASH_SEED> and L<perlrun/PERL_PERTURB_KEYS> for
 details on the environment variables, and L<perlsec/Algorithmic
 Complexity Attacks> for further security details.
 
-The C<PERL_HASH_SEED> and PERL_PERTURB_KEYS> environment variables can
+The C<PERL_HASH_SEED> and C<PERL_PERTURB_KEYS> environment variables can
 be disabled by building configuring perl with
 C<-Accflags=-DNO_PERL_HASH_ENV>.
 
@@ -506,7 +574,7 @@ You can elect to build a shared libperl by
 To build a shared libperl, the environment variable controlling shared
 library search (LD_LIBRARY_PATH in most systems, DYLD_LIBRARY_PATH for
 Darwin, LD_LIBRARY_PATH/SHLIB_PATH
-for HP-UX, LIBPATH for AIX, PATH for Cygwin) must be set up to include
+for HP-UX, LIBPATH for AIX and z/OS, PATH for Cygwin) must be set up to include
 the Perl build directory because that's where the shared libperl will
 be created.  Configure arranges makefile to have the correct shared
 library search settings.  You can find the name of the environment
@@ -615,7 +683,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.32.1.
+By default, Configure will use the following directories for 5.36.0.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -1545,10 +1613,11 @@ retesting with the various PERL variables unset.
 =item LD_LIBRARY_PATH
 
 If you run into dynamic loading problems, check your setting of
-the LD_LIBRARY_PATH environment variable.  If you're creating a static
-Perl library (libperl.a rather than libperl.so) it should build
-fine with LD_LIBRARY_PATH unset, though that may depend on details
-of your local setup.
+the LD_LIBRARY_PATH environment variable (or on some systems the equivalent
+with a different name, see L</Building a shared Perl library>).  If you're
+creating a static Perl library (libperl.a rather than libperl.so) it should
+build fine with LD_LIBRARY_PATH unset, though that may depend on details of
+your local setup.
 
 =item nm extraction
 
@@ -2437,8 +2506,7 @@ L<https://www.chiark.greenend.org.uk/~sgtatham/bugs.html>
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.32.1 is not binary compatible with versions of Perl earlier than
-5.32.0.
+Perl 5.36.0 is not binary compatible with earlier versions of Perl.
 In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one stable version of Perl
@@ -2513,9 +2581,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.32.1
+	sh Configure -Dprefix=/opt/perl5.36.0
 
-and adding /opt/perl5.32.1/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.36.0/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2528,13 +2596,13 @@ seriously consider using a separate directory, since development
 subversions may not have all the compatibility wrinkles ironed out
 yet.
 
-=head2 Upgrading from 5.31.11 or earlier
+=head2 Upgrading from 5.35.11 or earlier
 
-B<Perl 5.32.1 may not be binary compatible with Perl 5.31.11 or
+B<Perl 5.36.0 may not be binary compatible with Perl 5.35.11 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.32.1.  If you find you do need to rebuild an extension with
-5.32.1, you may safely do so without disturbing the older
+used with 5.36.0.  If you find you do need to rebuild an extension with
+5.36.0, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2567,15 +2635,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.32.1 is as follows (under $Config{prefix}):
+in Linux with perl-5.36.0 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.32.1/strict.pm
-  ./lib/perl5/5.32.1/warnings.pm
-  ./lib/perl5/5.32.1/i686-linux/File/Glob.pm
-  ./lib/perl5/5.32.1/feature.pm
-  ./lib/perl5/5.32.1/XSLoader.pm
-  ./lib/perl5/5.32.1/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.36.0/strict.pm
+  ./lib/perl5/5.36.0/warnings.pm
+  ./lib/perl5/5.36.0/i686-linux/File/Glob.pm
+  ./lib/perl5/5.36.0/feature.pm
+  ./lib/perl5/5.36.0/XSLoader.pm
+  ./lib/perl5/5.36.0/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its

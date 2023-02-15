@@ -35,12 +35,12 @@ my @categories = qw(
     Modules Objects Socket SysV   User      Network Time
 );
 
-ok( eq_array( \@Type_Order, \@categories ),
+is_deeply( \@Type_Order, \@categories,
     '@Type_Order' );
 
 my @cat_keys = grep exists $Type_Description{ $_ } => @Type_Order;
 
-ok( eq_array( \@cat_keys, \@categories ),
+is_deeply( \@cat_keys, \@categories,
     'keys() %Type_Description' );
 
 SKIP: {

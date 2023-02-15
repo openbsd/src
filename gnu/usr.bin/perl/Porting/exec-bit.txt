@@ -14,15 +14,20 @@ cpan/autodie/t/chmod.t
 cpan/CPAN-Meta-YAML/t/tml
 cpan/Test-Harness/t/source_tests/source.sh
 cpan/Test-Harness/t/source_tests/source_args.sh
+dist/Devel-PPPort/devel/mkapidoc.pl
 dist/Devel-PPPort/devel/mktodo
 dist/Devel-PPPort/devel/regenerate
 dist/Devel-PPPort/devel/scanprov
+dist/Devel-PPPort/devel/update_release_date.pl
 dist/Devel-PPPort/soak
 installperl
 installman
 makedepend.SH
 metaconfig.SH
 myconfig.SH
+plan9/fndvers
+plan9/setup.rc
+plan9/uninstall.rc
 regen/embed.pl
 regen/feature.pl
 regen/keywords.pl
@@ -37,7 +42,6 @@ Porting/bench.pl
 Porting/bisect.pl
 Porting/bisect-example.sh
 Porting/bisect-runner.pl
-Porting/check83.pl
 Porting/checkAUTHORS.pl
 Porting/checkURL.pl
 Porting/checkVERSION.pl
@@ -61,6 +65,7 @@ Porting/newtests-perldelta.pl
 Porting/perlhist_calculate.pl
 Porting/sort_perldiag.pl
 Porting/sync-with-cpan
+Porting/updateAUTHORS.pl
 Porting/valgrindpp.pl
 Cross/generate_config_sh
 Cross/warp

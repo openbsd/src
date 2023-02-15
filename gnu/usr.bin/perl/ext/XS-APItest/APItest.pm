@@ -1,11 +1,10 @@
 package XS::APItest;
 
-{ use 5.011001; } # 5.11 is a long long time ago... What gives with this?
 use strict;
 use warnings;
 use Carp;
 
-our $VERSION = '1.09';
+our $VERSION = '1.22';
 
 require XSLoader;
 
@@ -56,14 +55,6 @@ sub import {
 
 use vars '$WARNINGS_ON_BOOTSTRAP';
 use vars map "\$${_}_called_PP", qw(BEGIN UNITCHECK CHECK INIT END);
-
-BEGIN {
-    # This is arguably a hack, but it disposes of the UNITCHECK block without
-    # needing to preprocess the source code
-    if ($] < 5.009) {
-       eval 'sub UNITCHECK (&) {}; 1' or die $@;
-    }
-}
 
 # Do these here to verify that XS code and Perl code get called at the same
 # times
@@ -226,7 +217,7 @@ arg is passed as the args to the called function. They return whatever
 the C function itself pushed onto the stack, plus the return value from
 the function; for example
 
-    call_sv( sub { @_, 'c' }, G_ARRAY,  'a', 'b');
+    call_sv( sub { @_, 'c' }, G_LIST,  'a', 'b');
     # returns 'a', 'b', 'c', 3
     call_sv( sub { @_ },      G_SCALAR, 'a', 'b');
     # returns 'b', 1

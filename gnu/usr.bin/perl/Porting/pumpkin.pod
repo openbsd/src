@@ -101,12 +101,11 @@ always match the regular expression:
 C<$1> in the pattern is always an even number for maintenance
 versions, and odd for developer releases.
 
-In the past it has been observed that pumpkings tend to invent new
-naming conventions on the fly. If you are a pumpking, before you
-invent a new name for any of the three types of perl distributions,
-please inform the guys from the CPAN who are doing indexing and
-provide the trees of symlinks and the like. They will have to know
-I<in advance> what you decide.
+In the past, release managers sometimes invented naming conventions on the fly.
+If you are releasing perl, before you invent a new name for any of the three
+types of perl distributions, please inform the people from the CPAN who are
+doing indexing and provide the trees of symlinks and the like. They will have
+to know I<in advance> what you decide.
 
 =head2 Why is it called the patch pumpkin?
 
@@ -192,7 +191,7 @@ If you have many machine-specific #defines or #includes, consider
 creating an "osish.h" (F<os2ish.h>, F<vmsish.h>, and so on) and including
 that in F<perl.h>.  If you have several machine-specific files (function
 emulations, function stubs, build utility wrappers) you may create a
-separate subdirectory (djgpp, win32) and put the files in there.
+separate subdirectory (vms, win32) and put the files in there.
 Remember to update C<MANIFEST> when you add files.
 
 If your system supports dynamic loading but none of the existing
@@ -481,9 +480,9 @@ committer will forget to update F<PPPort.pm>, it's the best to diff for
 changes in .h files when making a new release and making sure that
 F<PPPort.pm> contains them all.
 
-The pumpking can delegate the synchronization responsibility to anybody
-else, but the release process is the only place where we can make sure
-that no new macros fell through the cracks.
+The Steering Council can delegate the synchronization responsibility to
+anybody else, but the release process is the only place where we can make
+sure that no new macros fell through the cracks.
 
 
 =head2 Todo
@@ -543,9 +542,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xf -
+	gzip -d -c perl5.004_07.tar.gz | tar -xof -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xf -
+	gzip -d -c perl5.004_08.tar.gz | tar -xof -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove
@@ -1378,10 +1377,10 @@ files propagate the copyright years of the generating file(s).
 
 The files of Perl source code distribution do carry a lot of
 copyrights, by various people.  (There are many copyrights embedded in
-perl.c, for example.)  The most straightforward thing for pumpkings to
+perl.c, for example.)  The most straightforward thing for perl releasers to
 do is to simply update Larry's copyrights at the beginning of the
 *.[hcy], *.pl, and README files, and leave all other
-copyrights alone.  Doing more than that requires quite a bit of tracking. 
+copyrights alone.  Doing more than that requires quite a bit of tracking.
 
 =back
 

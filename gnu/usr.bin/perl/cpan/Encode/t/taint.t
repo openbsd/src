@@ -4,6 +4,7 @@ use Encode qw(encode decode);
 local %Encode::ExtModule = %Encode::Config::ExtModule;
 use Scalar::Util qw(tainted);
 use Test::More;
+use Config;
 my $taint = substr($ENV{PATH},0,0);
 my $str = "dan\x{5f3e}" . $taint;                 # tainted string to encode
 my $bin = encode('UTF-8', $str);                  # tainted binary to decode
@@ -11,7 +12,12 @@ my $notaint = "";
 my $notaint_str = "dan\x{5f3e}" . $notaint;
 my $notaint_bin = encode('UTF-8', $notaint_str);
 my @names = Encode->encodings(':all');
-plan tests => 4 * @names + 2;
+if (exists($Config{taint_support}) && not $Config{taint_support}) {
+    plan skip_all => "your perl was built without taint support";
+}
+else {
+    plan tests => 4 * @names + 2;
+}
 for my $name (@names) {
     my ($d, $e, $s);
     eval {

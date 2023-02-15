@@ -193,8 +193,10 @@ retry:
   # If there were warnings, we ask the user before continuing when creating
   # the base files of blead.  This leads to a potential early exit when things
   # aren't working right.
+  my $is_blead = 0;
   if ($opt{blead} && $opt{base}) {
     undef $opt{blead};  # Only warn once.
+    $is_blead = 1;      # But let the code below know
     if (@{$r->{stderr}}) {
         print STDERR "Warnings and errors from compiling blead:\n";
         print STDERR @{$r->{stderr}};
@@ -204,7 +206,7 @@ retry:
     }
     else {
         print STDERR "blead compiled without warnings nor errors.\n"
-                   . "Proceeding with everything else\n";
+                   . "Proceeding with everything else\n\n";
     }
   }
 
@@ -317,9 +319,16 @@ retry:
 
   # Display each newly found undefined symbol, and add it to the list of todo
   # symbols
-  for (@new) {
-    display_sym('new', @$_);
-    $todo{$_->[0]} = $_->[1];
+  if (@new) {
+    for (@new) {
+        display_sym('new', @$_);
+        $todo{$_->[0]} = $_->[1];
+    }
+
+    if ($is_blead) {
+        ask_or_quit("\nUndefined symbols in blead indicate a bug in blead\n"
+                  . "Shall I proceed?");
+    }
   }
 
   print STDERR __LINE__, ": %todo at end of iteration ", Dumper \%todo

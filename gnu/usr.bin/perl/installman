@@ -154,7 +154,7 @@ sub pod2man {
 	    next;
 	}
 
-	if ($^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'uwin' || $^O eq 'cygwin') {
+	if ($^O eq 'os2' || $^O eq 'amigaos' || $^O eq 'cygwin') {
             $manpage =~ s#::#.#g;
 	}
         my $tmp = "${mandir}/${manpage}.tmp";

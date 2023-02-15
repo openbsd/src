@@ -4,7 +4,7 @@ BEGIN {
     require Config; import Config;
     if (!$Config{'d_fork'}
        # open2/3 supported on win32
-       && $^O ne 'MSWin32' && $^O ne 'NetWare')
+       && $^O ne 'MSWin32')
     {
 	print "1..0\n";
 	exit 0;
@@ -23,7 +23,7 @@ use POSIX ":sys_wait_h";
 my $perl = $^X;
 
 sub cmd_line {
-	if ($^O eq 'MSWin32' || $^O eq 'NetWare') {
+	if ($^O eq 'MSWin32') {
 		my $cmd = shift;
 		$cmd =~ tr/\r\n//d;
 		$cmd =~ s/"/\\"/g;

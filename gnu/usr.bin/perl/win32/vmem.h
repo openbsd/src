@@ -93,26 +93,26 @@ public:
 
     inline BOOL CreateOk(void)
     {
-	return TRUE;
+        return TRUE;
     };
 
 protected:
 #ifdef _USE_LINKED_LIST
     void LinkBlock(PMEMORY_BLOCK_HEADER ptr)
     {
-	PMEMORY_BLOCK_HEADER next = m_Dummy.pNext;
-	m_Dummy.pNext = ptr;
-	ptr->pPrev = &m_Dummy;
-	ptr->pNext = next;
+        PMEMORY_BLOCK_HEADER next = m_Dummy.pNext;
+        m_Dummy.pNext = ptr;
+        ptr->pPrev = &m_Dummy;
+        ptr->pNext = next;
         ptr->owner = this;
-	next->pPrev = ptr;
+        next->pPrev = ptr;
     }
     void UnlinkBlock(PMEMORY_BLOCK_HEADER ptr)
     {
-	PMEMORY_BLOCK_HEADER next = ptr->pNext;
-	PMEMORY_BLOCK_HEADER prev = ptr->pPrev;
-	prev->pNext = next;
-	next->pPrev = prev;
+        PMEMORY_BLOCK_HEADER next = ptr->pNext;
+        PMEMORY_BLOCK_HEADER prev = ptr->pPrev;
+        prev->pNext = next;
+        next->pPrev = prev;
     }
 
     MEMORY_BLOCK_HEADER	m_Dummy;
@@ -136,7 +136,7 @@ VMem::~VMem(void)
 {
 #ifdef _USE_LINKED_LIST
     while (m_Dummy.pNext != &m_Dummy) {
-	Free(m_Dummy.pNext+1);
+        Free(m_Dummy.pNext+1);
     }
     DeleteCriticalSection(&m_cs);
 #endif
@@ -148,8 +148,8 @@ void* VMem::Malloc(size_t size)
     GetLock();
     PMEMORY_BLOCK_HEADER ptr = (PMEMORY_BLOCK_HEADER)malloc(size+sizeof(MEMORY_BLOCK_HEADER));
     if (!ptr) {
-	FreeLock();
-	return NULL;
+        FreeLock();
+        return NULL;
     }
     LinkBlock(ptr);
     FreeLock();
@@ -163,11 +163,11 @@ void* VMem::Realloc(void* pMem, size_t size)
 {
 #ifdef _USE_LINKED_LIST
     if (!pMem)
-	return Malloc(size);
+        return Malloc(size);
 
     if (!size) {
-	Free(pMem);
-	return NULL;
+        Free(pMem);
+        return NULL;
     }
 
     GetLock();
@@ -175,8 +175,8 @@ void* VMem::Realloc(void* pMem, size_t size)
     UnlinkBlock(ptr);
     ptr = (PMEMORY_BLOCK_HEADER)realloc(ptr, size+sizeof(MEMORY_BLOCK_HEADER));
     if (!ptr) {
-	FreeLock();
-	return NULL;
+        FreeLock();
+        return NULL;
     }
     LinkBlock(ptr);
     FreeLock();
@@ -191,25 +191,25 @@ void VMem::Free(void* pMem)
 {
 #ifdef _USE_LINKED_LIST
     if (pMem) {
-	PMEMORY_BLOCK_HEADER ptr = (PMEMORY_BLOCK_HEADER)(((char*)pMem)-sizeof(MEMORY_BLOCK_HEADER));
+        PMEMORY_BLOCK_HEADER ptr = (PMEMORY_BLOCK_HEADER)(((char*)pMem)-sizeof(MEMORY_BLOCK_HEADER));
         if (ptr->owner != this) {
-	    if (ptr->owner) {
+            if (ptr->owner) {
 #if 1
-	    	int *nowhere = NULL;
-	    	Perl_warn_nocontext("Free to wrong pool %p not %p",this,ptr->owner);
-            	*nowhere = 0; /* this segfault is deliberate, 
-            	                 so you can see the stack trace */
+                int *nowhere = NULL;
+                Perl_warn_nocontext("Free to wrong pool %p not %p",this,ptr->owner);
+                *nowhere = 0; /* this segfault is deliberate, 
+                                 so you can see the stack trace */
 #else
                 ptr->owner->Free(pMem);	
 #endif
-	    }
-	    return;
+            }
+            return;
         }
-	GetLock();
-	UnlinkBlock(ptr);
-	ptr->owner = NULL;
-	free(ptr);
-	FreeLock();
+        GetLock();
+        UnlinkBlock(ptr);
+        ptr->owner = NULL;
+        free(ptr);
+        FreeLock();
     }
 #else /*_USE_LINKED_LIST*/
     free(pMem);
@@ -238,7 +238,7 @@ int VMem::IsLocked(void)
      * skirt the issue for now. */
     BOOL bAccessed = TryEnterCriticalSection(&m_cs);
     if(bAccessed) {
-	LeaveCriticalSection(&m_cs);
+        LeaveCriticalSection(&m_cs);
     }
     return !bAccessed;
 #else
@@ -251,7 +251,7 @@ long VMem::Release(void)
 {
     long lCount = InterlockedDecrement(&m_lRefCount);
     if(!lCount)
-	delete this;
+        delete this;
     return lCount;
 }
 
@@ -411,9 +411,9 @@ public:
     inline BOOL CreateOk(void)
     {
 #ifdef _USE_BUDDY_BLOCKS
-	return TRUE;
+        return TRUE;
 #else
-	return m_hHeap != NULL;
+        return m_hHeap != NULL;
 #endif
     };
 
@@ -425,7 +425,7 @@ protected:
 
     int HeapAdd(void* ptr, size_t size
 #ifdef USE_BIGBLOCK_ALLOC
-	, BOOL bBigBlock
+        , BOOL bBigBlock
 #endif
     );
 
@@ -434,35 +434,35 @@ protected:
 #ifdef _USE_BUDDY_BLOCKS
     inline PBLOCK GetFreeListLink(int index)
     {
-	if (index >= nListEntries)
-	    index = nListEntries-1;
-	return &m_FreeList[index].Dummy[sizeofTag];
+        if (index >= nListEntries)
+            index = nListEntries-1;
+        return &m_FreeList[index].Dummy[sizeofTag];
     }
     inline PBLOCK GetOverSizeFreeList(void)
     {
-	return &m_FreeList[nListEntries-1].Dummy[sizeofTag];
+        return &m_FreeList[nListEntries-1].Dummy[sizeofTag];
     }
     inline PBLOCK GetEOLFreeList(void)
     {
-	return &m_FreeList[nListEntries].Dummy[sizeofTag];
+        return &m_FreeList[nListEntries].Dummy[sizeofTag];
     }
 
     void AddToFreeList(PBLOCK block, size_t size)
     {
-	PBLOCK pFreeList = GetFreeListLink(CalcEntry(size));
-	PBLOCK next = NEXT(pFreeList);
-	NEXT(pFreeList) = block;
-	SetLink(block, pFreeList, next);
-	PREV(next) = block;
+        PBLOCK pFreeList = GetFreeListLink(CalcEntry(size));
+        PBLOCK next = NEXT(pFreeList);
+        NEXT(pFreeList) = block;
+        SetLink(block, pFreeList, next);
+        PREV(next) = block;
     }
 #endif
     inline size_t CalcAllocSize(size_t size)
     {
-	/*
-	 * Adjust the real size of the block to be a multiple of sizeof(long), and add
-	 * the overhead for the boundary tags.  Disallow negative or zero sizes.
-	 */
-	return (size < minBlockSize) ? minAllocSize : (size_t)ROUND_UP(size) + blockOverhead;
+        /*
+         * Adjust the real size of the block to be a multiple of sizeof(long), and add
+         * the overhead for the boundary tags.  Disallow negative or zero sizes.
+         */
+        return (size < minBlockSize) ? minAllocSize : (size_t)ROUND_UP(size) + blockOverhead;
     }
 
 #ifdef _USE_BUDDY_BLOCKS
@@ -491,8 +491,8 @@ VMem::VMem()
     m_lRefCount = 1;
 #ifndef _USE_BUDDY_BLOCKS
     BOOL bRet = (NULL != (m_hHeap = HeapCreate(HEAP_NO_SERIALIZE,
-				lAllocStart,	/* initial size of heap */
-				0)));		/* no upper limit on size of heap */
+                                lAllocStart,	/* initial size of heap */
+                                0)));		/* no upper limit on size of heap */
     ASSERT(bRet);
 #endif
 
@@ -514,14 +514,14 @@ VMem::~VMem(void)
     DeleteCriticalSection(&m_cs);
 #ifdef _USE_BUDDY_BLOCKS
     for(int index = 0; index < m_nHeaps; ++index) {
-	VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
+        VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
     }
 #else /* !_USE_BUDDY_BLOCKS */
 #ifdef USE_BIGBLOCK_ALLOC
     for(int index = 0; index < m_nHeaps; ++index) {
-	if (m_heaps[index].bBigBlock) {
-	    VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
-	}
+        if (m_heaps[index].bBigBlock) {
+            VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
+        }
     }
 #endif
     BOOL bRet = HeapDestroy(m_hHeap);
@@ -533,15 +533,15 @@ void VMem::ReInit(void)
 {
     for(int index = 0; index < m_nHeaps; ++index) {
 #ifdef _USE_BUDDY_BLOCKS
-	VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
+        VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
 #else
 #ifdef USE_BIGBLOCK_ALLOC
-	if (m_heaps[index].bBigBlock) {
-	    VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
-	}
-	else
+        if (m_heaps[index].bBigBlock) {
+            VirtualFree(m_heaps[index].base, 0, MEM_RELEASE);
+        }
+        else
 #endif
-	    HeapFree(m_hHeap, HEAP_NO_SERIALIZE, m_heaps[index].base);
+            HeapFree(m_hHeap, HEAP_NO_SERIALIZE, m_heaps[index].base);
 #endif /* _USE_BUDDY_BLOCKS */
     }
 
@@ -559,9 +559,9 @@ void VMem::Init(void)
      * Set the next allocation size.
      */
     for (int index = 0; index < nListEntries; ++index) {
-	pFreeList = GetFreeListLink(index);
-	SIZE(pFreeList) = PSIZE(pFreeList+minAllocSize) = 0;
-	PREV(pFreeList) = NEXT(pFreeList) = pFreeList;
+        pFreeList = GetFreeListLink(index);
+        SIZE(pFreeList) = PSIZE(pFreeList+minAllocSize) = 0;
+        PREV(pFreeList) = NEXT(pFreeList) = pFreeList;
     }
     pFreeList = GetEOLFreeList();
     SIZE(pFreeList) = PSIZE(pFreeList+minAllocSize) = 0;
@@ -592,7 +592,7 @@ void* VMem::Malloc(size_t size)
      */
     size_t realsize = CalcAllocSize(size);
     if((int)realsize < minAllocSize || size == 0)
-	return NULL;
+        return NULL;
 
 #ifdef _USE_BUDDY_BLOCKS
     /*
@@ -602,78 +602,78 @@ void* VMem::Malloc(size_t size)
      * split the block if needed, stop at end of list marker
      */
     {
-	int index = CalcEntry(realsize);
-	if (index < nListEntries-1) {
-	    ptr = GetFreeListLink(index);
-	    lsize = SIZE(ptr);
-	    if (lsize >= realsize) {
-		rem = lsize - realsize;
-		if(rem < minAllocSize) {
-		    /* Unlink the block from the free list. */
-		    Unlink(ptr);
-		}
-		else {
-		    /*
-		     * split the block
-		     * The remainder is big enough to split off into a new block.
-		     * Use the end of the block, resize the beginning of the block
-		     * no need to change the free list.
-		     */
-		    SetTags(ptr, rem);
-		    ptr += SIZE(ptr);
-		    lsize = realsize;
-		}
-		SetTags(ptr, lsize | 1);
-		return ptr;
-	    }
-	    ptr = m_pRover;
-	    lsize = SIZE(ptr);
-	    if (lsize >= realsize) {
-		rem = lsize - realsize;
-		if(rem < minAllocSize) {
-		    /* Unlink the block from the free list. */
-		    Unlink(ptr);
-		}
-		else {
-		    /*
-		     * split the block
-		     * The remainder is big enough to split off into a new block.
-		     * Use the end of the block, resize the beginning of the block
-		     * no need to change the free list.
-		     */
-		    SetTags(ptr, rem);
-		    ptr += SIZE(ptr);
-		    lsize = realsize;
-		}
-		SetTags(ptr, lsize | 1);
-		return ptr;
-	    }
-	    ptr = GetFreeListLink(index+1);
-	    while (NEXT(ptr)) {
-		lsize = SIZE(ptr);
-		if (lsize >= realsize) {
-		    size_t rem = lsize - realsize;
-		    if(rem < minAllocSize) {
-			/* Unlink the block from the free list. */
-			Unlink(ptr);
-		    }
-		    else {
-			/*
-			 * split the block
-			 * The remainder is big enough to split off into a new block.
-			 * Use the end of the block, resize the beginning of the block
-			 * no need to change the free list.
-			 */
-			SetTags(ptr, rem);
-			ptr += SIZE(ptr);
-			lsize = realsize;
-		    }
-		    SetTags(ptr, lsize | 1);
-		    return ptr;
-		}
-		ptr += sizeof(FREE_LIST_ENTRY);
-	    }
-	}
+        int index = CalcEntry(realsize);
+        if (index < nListEntries-1) {
+            ptr = GetFreeListLink(index);
+            lsize = SIZE(ptr);
+            if (lsize >= realsize) {
+                rem = lsize - realsize;
+                if(rem < minAllocSize) {
+                    /* Unlink the block from the free list. */
+                    Unlink(ptr);
+                }
+                else {
+                    /*
+                     * split the block
+                     * The remainder is big enough to split off into a new block.
+                     * Use the end of the block, resize the beginning of the block
+                     * no need to change the free list.
+                     */
+                    SetTags(ptr, rem);
+                    ptr += SIZE(ptr);
+                    lsize = realsize;
+                }
+                SetTags(ptr, lsize | 1);
+                return ptr;
+            }
+            ptr = m_pRover;
+            lsize = SIZE(ptr);
+            if (lsize >= realsize) {
+                rem = lsize - realsize;
+                if(rem < minAllocSize) {
+                    /* Unlink the block from the free list. */
+                    Unlink(ptr);
+                }
+                else {
+                    /*
+                     * split the block
+                     * The remainder is big enough to split off into a new block.
+                     * Use the end of the block, resize the beginning of the block
+                     * no need to change the free list.
+                     */
+                    SetTags(ptr, rem);
+                    ptr += SIZE(ptr);
+                    lsize = realsize;
+                }
+                SetTags(ptr, lsize | 1);
+                return ptr;
+            }
+            ptr = GetFreeListLink(index+1);
+            while (NEXT(ptr)) {
+                lsize = SIZE(ptr);
+                if (lsize >= realsize) {
+                    size_t rem = lsize - realsize;
+                    if(rem < minAllocSize) {
+                        /* Unlink the block from the free list. */
+                        Unlink(ptr);
+                    }
+                    else {
+                        /*
+                         * split the block
+                         * The remainder is big enough to split off into a new block.
+                         * Use the end of the block, resize the beginning of the block
+                         * no need to change the free list.
+                         */
+                        SetTags(ptr, rem);
+                        ptr += SIZE(ptr);
+                        lsize = realsize;
+                    }
+                    SetTags(ptr, lsize | 1);
+                    return ptr;
+                }
+                ptr += sizeof(FREE_LIST_ENTRY);
+            }
+        }
     }
 #endif
 
@@ -684,46 +684,46 @@ void* VMem::Malloc(size_t size)
     ptr = m_pRover;	/* start searching at rover */
     int loops = 2;	/* allow two times through the loop  */
     for(;;) {
-	lsize = SIZE(ptr);
-	ASSERT((lsize&1)==0);
-	/* is block big enough? */
-	if(lsize >= realsize) {	
-	    /* if the remainder is too small, don't bother splitting the block. */
-	    rem = lsize - realsize;
-	    if(rem < minAllocSize) {
-		if(m_pRover == ptr)
-		    m_pRover = NEXT(ptr);
+        lsize = SIZE(ptr);
+        ASSERT((lsize&1)==0);
+        /* is block big enough? */
+        if(lsize >= realsize) {	
+            /* if the remainder is too small, don't bother splitting the block. */
+            rem = lsize - realsize;
+            if(rem < minAllocSize) {
+                if(m_pRover == ptr)
+                    m_pRover = NEXT(ptr);
 
-		/* Unlink the block from the free list. */
-		Unlink(ptr);
-	    }
-	    else {
-		/*
-		 * split the block
-		 * The remainder is big enough to split off into a new block.
-		 * Use the end of the block, resize the beginning of the block
-		 * no need to change the free list.
-		 */
-		SetTags(ptr, rem);
-		ptr += SIZE(ptr);
-		lsize = realsize;
-	    }
-	    /* Set the boundary tags to mark it as allocated. */
-	    SetTags(ptr, lsize | 1);
-	    return ((void *)ptr);
-	}
+                /* Unlink the block from the free list. */
+                Unlink(ptr);
+            }
+            else {
+                /*
+                 * split the block
+                 * The remainder is big enough to split off into a new block.
+                 * Use the end of the block, resize the beginning of the block
+                 * no need to change the free list.
+                 */
+                SetTags(ptr, rem);
+                ptr += SIZE(ptr);
+                lsize = realsize;
+            }
+            /* Set the boundary tags to mark it as allocated. */
+            SetTags(ptr, lsize | 1);
+            return ((void *)ptr);
+        }
 
-	/*
-	 * This block was unsuitable.  If we've gone through this list once already without
-	 * finding anything, allocate some new memory from the heap and try again.
-	 */
-	ptr = NEXT(ptr);
-	if(ptr == m_pRover) {
-	    if(!(loops-- && Getmem(realsize))) {
-		return NULL;
-	    }
-	    ptr = m_pRover;
-	}
+        /*
+         * This block was unsuitable.  If we've gone through this list once already without
+         * finding anything, allocate some new memory from the heap and try again.
+         */
+        ptr = NEXT(ptr);
+        if(ptr == m_pRover) {
+            if(!(loops-- && Getmem(realsize))) {
+                return NULL;
+            }
+            ptr = m_pRover;
+        }
     }
 }
 
@@ -733,24 +733,24 @@ void* VMem::Realloc(void* block, size_t size)
 
     /* if size is zero, free the block. */
     if(size == 0) {
-	Free(block);
-	return (NULL);
+        Free(block);
+        return (NULL);
     }
 
     /* if block pointer is NULL, do a Malloc(). */
     if(block == NULL)
-	return Malloc(size);
+        return Malloc(size);
 
     /*
      * Grow or shrink the block in place.
      * if the block grows then the next block will be used if free
      */
     if(Expand(block, size) != NULL)
-	return block;
+        return block;
 
     size_t realsize = CalcAllocSize(size);
     if((int)realsize < minAllocSize)
-	return NULL;
+        return NULL;
 
     /*
      * see if the previous block is free, and is it big enough to cover the new size
@@ -760,46 +760,46 @@ void* VMem::Realloc(void* block, size_t size)
     size_t cursize = SIZE(ptr) & ~1;
     size_t psize = PSIZE(ptr);
     if((psize&1) == 0 && (psize + cursize) >= realsize) {
-	PBLOCK prev = ptr - psize;
-	if(m_pRover == prev)
-	    m_pRover = NEXT(prev);
+        PBLOCK prev = ptr - psize;
+        if(m_pRover == prev)
+            m_pRover = NEXT(prev);
 
-	/* Unlink the next block from the free list. */
-	Unlink(prev);
+        /* Unlink the next block from the free list. */
+        Unlink(prev);
 
-	/* Copy contents of old block to new location, make it the current block. */
-	memmove(prev, ptr, cursize);
-	cursize += psize;	/* combine sizes */
-	ptr = prev;
+        /* Copy contents of old block to new location, make it the current block. */
+        memmove(prev, ptr, cursize);
+        cursize += psize;	/* combine sizes */
+        ptr = prev;
 
-	size_t rem = cursize - realsize;
-	if(rem >= minAllocSize) {
-	    /*
-	     * The remainder is big enough to be a new block.  Set boundary
-	     * tags for the resized block and the new block.
-	     */
-	    prev = ptr + realsize;
-	    /*
-	     * add the new block to the free list.
-	     * next block cannot be free
-	     */
-	    SetTags(prev, rem);
+        size_t rem = cursize - realsize;
+        if(rem >= minAllocSize) {
+            /*
+             * The remainder is big enough to be a new block.  Set boundary
+             * tags for the resized block and the new block.
+             */
+            prev = ptr + realsize;
+            /*
+             * add the new block to the free list.
+             * next block cannot be free
+             */
+            SetTags(prev, rem);
 #ifdef _USE_BUDDY_BLOCKS
-	    AddToFreeList(prev, rem);
+            AddToFreeList(prev, rem);
 #else
-	    AddToFreeList(prev, m_pFreeList);
+            AddToFreeList(prev, m_pFreeList);
 #endif
-	    cursize = realsize;
+            cursize = realsize;
         }
-	/* Set the boundary tags to mark it as allocated. */
-	SetTags(ptr, cursize | 1);
+        /* Set the boundary tags to mark it as allocated. */
+        SetTags(ptr, cursize | 1);
         return ((void *)ptr);
     }
 
     /* Allocate a new block, copy the old to the new, and free the old. */
     if((ptr = (PBLOCK)Malloc(size)) != NULL) {
-	memmove(ptr, block, cursize-blockOverhead);
-	Free(block);
+        memmove(ptr, block, cursize-blockOverhead);
+        Free(block);
     }
     return ((void *)ptr);
 }
@@ -810,15 +810,15 @@ void VMem::Free(void* p)
 
     /* Ignore null pointer. */
     if(p == NULL)
-	return;
+        return;
 
     PBLOCK ptr = (PBLOCK)p;
 
     /* Check for attempt to free a block that's already free. */
     size_t size = SIZE(ptr);
     if((size&1) == 0) {
-	MEMODSlx("Attempt to free previously freed block", (long)p);
-	return;
+        MEMODSlx("Attempt to free previously freed block", (long)p);
+        return;
     }
     size &= ~1;	/* remove allocated tag */
 
@@ -828,12 +828,12 @@ void VMem::Free(void* p)
 #endif
     size_t psize = PSIZE(ptr);
     if((psize&1) == 0) {
-	ptr -= psize;	/* point to previous block */
-	size += psize;	/* merge the sizes of the two blocks */
+        ptr -= psize;	/* point to previous block */
+        size += psize;	/* merge the sizes of the two blocks */
 #ifdef _USE_BUDDY_BLOCKS
-	Unlink(ptr);
+        Unlink(ptr);
 #else
-	linked = TRUE;	/* it's already on the free list */
+        linked = TRUE;	/* it's already on the free list */
 #endif
     }
 
@@ -841,15 +841,15 @@ void VMem::Free(void* p)
     PBLOCK next = ptr + size;	/* point to next physical block */
     size_t nsize = SIZE(next);
     if((nsize&1) == 0) {
-	/* block is free move rover if needed */
-	if(m_pRover == next)
-	    m_pRover = NEXT(next);
+        /* block is free move rover if needed */
+        if(m_pRover == next)
+            m_pRover = NEXT(next);
 
-	/* unlink the next block from the free list. */
-	Unlink(next);
+        /* unlink the next block from the free list. */
+        Unlink(next);
 
-	/* merge the sizes of this block and the next block. */
-	size += nsize;
+        /* merge the sizes of this block and the next block. */
+        size += nsize;
     }
 
     /* Set the boundary tags for the block; */
@@ -857,10 +857,10 @@ void VMem::Free(void* p)
 
     /* Link the block to the head of the free list. */
 #ifdef _USE_BUDDY_BLOCKS
-	AddToFreeList(ptr, size);
+        AddToFreeList(ptr, size);
 #else
     if(!linked) {
-	AddToFreeList(ptr, m_pFreeList);
+        AddToFreeList(ptr, m_pFreeList);
     }
 #endif
 }
@@ -883,7 +883,7 @@ int VMem::IsLocked(void)
      * skirt the issue for now. */
     BOOL bAccessed = TryEnterCriticalSection(&m_cs);
     if(bAccessed) {
-	LeaveCriticalSection(&m_cs);
+        LeaveCriticalSection(&m_cs);
     }
     return !bAccessed;
 #else
@@ -897,7 +897,7 @@ long VMem::Release(void)
 {
     long lCount = InterlockedDecrement(&m_lRefCount);
     if(!lCount)
-	delete this;
+        delete this;
     return lCount;
 }
 
@@ -923,30 +923,30 @@ int VMem::Getmem(size_t requestSize)
      * adjust up
      */
     if(size < (unsigned long)m_lAllocSize)
-	size = m_lAllocSize;
+        size = m_lAllocSize;
 
     /* Update the size to allocate on the next request */
     if(m_lAllocSize != lAllocMax)
-	m_lAllocSize <<= 2;
+        m_lAllocSize <<= 2;
 
 #ifndef _USE_BUDDY_BLOCKS
     if(m_nHeaps != 0
 #ifdef USE_BIGBLOCK_ALLOC
-	&& !m_heaps[m_nHeaps-1].bBigBlock
+        && !m_heaps[m_nHeaps-1].bBigBlock
 #endif
-		    ) {
-	/* Expand the last allocated heap */
-	ptr = HeapReAlloc(m_hHeap, HEAP_REALLOC_IN_PLACE_ONLY|HEAP_NO_SERIALIZE,
-		m_heaps[m_nHeaps-1].base,
-		m_heaps[m_nHeaps-1].len + size);
-	if(ptr != 0) {
-	    HeapAdd(((char*)ptr) + m_heaps[m_nHeaps-1].len, size
+                    ) {
+        /* Expand the last allocated heap */
+        ptr = HeapReAlloc(m_hHeap, HEAP_REALLOC_IN_PLACE_ONLY|HEAP_NO_SERIALIZE,
+                m_heaps[m_nHeaps-1].base,
+                m_heaps[m_nHeaps-1].len + size);
+        if(ptr != 0) {
+            HeapAdd(((char*)ptr) + m_heaps[m_nHeaps-1].len, size
 #ifdef USE_BIGBLOCK_ALLOC
-		, FALSE
+                , FALSE
 #endif
-		);
-	    return -1;
-	}
+                );
+            return -1;
+        }
     }
 #endif /* _USE_BUDDY_BLOCKS */
 
@@ -957,7 +957,7 @@ int VMem::Getmem(size_t requestSize)
      * the above ROUND_UP64K may not have added any memory to include this.
      */
     if(size == requestSize)
-	size = (size_t)ROUND_UP64K(requestSize+(blockOverhead));
+        size = (size_t)ROUND_UP64K(requestSize+(blockOverhead));
 
 Restart:
 #ifdef _USE_BUDDY_BLOCKS
@@ -966,8 +966,8 @@ Restart:
 #ifdef USE_BIGBLOCK_ALLOC
     bBigBlock = FALSE;
     if (size >= nMaxHeapAllocSize) {
-	bBigBlock = TRUE;
-	ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
+        bBigBlock = TRUE;
+        ptr = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
     }
     else
 #endif
@@ -975,28 +975,28 @@ Restart:
 #endif /* _USE_BUDDY_BLOCKS */
 
     if (!ptr) {
-	/* try to allocate a smaller chunk */
-	size >>= 1;
-	if(size > requestSize)
-	    goto Restart;
+        /* try to allocate a smaller chunk */
+        size >>= 1;
+        if(size > requestSize)
+            goto Restart;
     }
 
     if(ptr == 0) {
-	MEMODSlx("HeapAlloc failed on size!!!", size);
-	return 0;
+        MEMODSlx("HeapAlloc failed on size!!!", size);
+        return 0;
     }
 
 #ifdef _USE_BUDDY_BLOCKS
     if (HeapAdd(ptr, size)) {
-	VirtualFree(ptr, 0, MEM_RELEASE);
-	return 0;
+        VirtualFree(ptr, 0, MEM_RELEASE);
+        return 0;
     }
 #else
 #ifdef USE_BIGBLOCK_ALLOC
     if (HeapAdd(ptr, size, bBigBlock)) {
-	if (bBigBlock) {
-	    VirtualFree(ptr, 0, MEM_RELEASE);
-	}
+        if (bBigBlock) {
+            VirtualFree(ptr, 0, MEM_RELEASE);
+        }
     }
 #else
     HeapAdd(ptr, size);
@@ -1015,7 +1015,7 @@ int VMem::HeapAdd(void* p, size_t size
 
     /* Check size, then round size down to next long word boundary. */
     if(size < minAllocSize)
-	return -1;
+        return -1;
 
     size = (size_t)ROUND_DOWN(size);
     PBLOCK ptr = (PBLOCK)p;
@@ -1023,47 +1023,47 @@ int VMem::HeapAdd(void* p, size_t size
 #ifdef USE_BIGBLOCK_ALLOC
     if (!bBigBlock) {
 #endif
-	/*
-	 * Search for another heap area that's contiguous with the bottom of this new area.
-	 * (It should be extremely unusual to find one that's contiguous with the top).
-	 */
-	for(index = 0; index < m_nHeaps; ++index) {
-	    if(ptr == m_heaps[index].base + (int)m_heaps[index].len) {
-		/*
-		 * The new block is contiguous with a previously allocated heap area.  Add its
-		 * length to that of the previous heap.  Merge it with the dummy end-of-heap
-		 * area marker of the previous heap.
-		 */
-		m_heaps[index].len += size;
-		break;
-	    }
-	}
+        /*
+         * Search for another heap area that's contiguous with the bottom of this new area.
+         * (It should be extremely unusual to find one that's contiguous with the top).
+         */
+        for(index = 0; index < m_nHeaps; ++index) {
+            if(ptr == m_heaps[index].base + (int)m_heaps[index].len) {
+                /*
+                 * The new block is contiguous with a previously allocated heap area.  Add its
+                 * length to that of the previous heap.  Merge it with the dummy end-of-heap
+                 * area marker of the previous heap.
+                 */
+                m_heaps[index].len += size;
+                break;
+            }
+        }
 #ifdef USE_BIGBLOCK_ALLOC
     }
     else {
-	index = m_nHeaps;
+        index = m_nHeaps;
     }
 #endif
 
     if(index == m_nHeaps) {
-	/* The new block is not contiguous, or is BigBlock.  Add it to the heap list. */
-	if(m_nHeaps == maxHeaps) {
-	    return -1;	/* too many non-contiguous heaps */
-	}
-	m_heaps[m_nHeaps].base = ptr;
-	m_heaps[m_nHeaps].len = size;
+        /* The new block is not contiguous, or is BigBlock.  Add it to the heap list. */
+        if(m_nHeaps == maxHeaps) {
+            return -1;	/* too many non-contiguous heaps */
+        }
+        m_heaps[m_nHeaps].base = ptr;
+        m_heaps[m_nHeaps].len = size;
 #ifdef USE_BIGBLOCK_ALLOC
-	m_heaps[m_nHeaps].bBigBlock = bBigBlock;
+        m_heaps[m_nHeaps].bBigBlock = bBigBlock;
 #endif
-	m_nHeaps++;
+        m_nHeaps++;
 
-	/*
-	 * Reserve the first LONG in the block for the ending boundary tag of a dummy
-	 * block at the start of the heap area.
-	 */
-	size -= blockOverhead;
-	ptr += blockOverhead;
-	PSIZE(ptr) = 1;	/* mark the dummy previous block as allocated */
+        /*
+         * Reserve the first LONG in the block for the ending boundary tag of a dummy
+         * block at the start of the heap area.
+         */
+        size -= blockOverhead;
+        ptr += blockOverhead;
+        PSIZE(ptr) = 1;	/* mark the dummy previous block as allocated */
     }
 
     /*
@@ -1091,36 +1091,36 @@ void* VMem::Expand(void* block, size_t size)
      */
     size_t realsize = CalcAllocSize(size);
     if((int)realsize < minAllocSize || size == 0)
-	return NULL;
+        return NULL;
 
     PBLOCK ptr = (PBLOCK)block; 
 
     /* if the current size is the same as requested, do nothing. */
     size_t cursize = SIZE(ptr) & ~1;
     if(cursize == realsize) {
-	return block;
+        return block;
     }
 
     /* if the block is being shrunk, convert the remainder of the block into a new free block. */
     if(realsize <= cursize) {
-	size_t nextsize = cursize - realsize;	/* size of new remainder block */
-	if(nextsize >= minAllocSize) {
-	    /*
-	     * Split the block
-	     * Set boundary tags for the resized block and the new block.
-	     */
-	    SetTags(ptr, realsize | 1);
-	    ptr += realsize;
+        size_t nextsize = cursize - realsize;	/* size of new remainder block */
+        if(nextsize >= minAllocSize) {
+            /*
+             * Split the block
+             * Set boundary tags for the resized block and the new block.
+             */
+            SetTags(ptr, realsize | 1);
+            ptr += realsize;
 
-	    /*
-	     * add the new block to the free list.
-	     * call Free to merge this block with next block if free
-	     */
-	    SetTags(ptr, nextsize | 1);
-	    Free(ptr);
-	}
+            /*
+             * add the new block to the free list.
+             * call Free to merge this block with next block if free
+             */
+            SetTags(ptr, nextsize | 1);
+            Free(ptr);
+        }
 
-	return block;
+        return block;
     }
 
     PBLOCK next = ptr + cursize;
@@ -1128,39 +1128,39 @@ void* VMem::Expand(void* block, size_t size)
 
     /* Check the next block for consistency.*/
     if((nextsize&1) == 0 && (nextsize + cursize) >= realsize) {
-	/*
-	 * The next block is free and big enough.  Add the part that's needed
-	 * to our block, and split the remainder off into a new block.
-	 */
-	if(m_pRover == next)
-	    m_pRover = NEXT(next);
+        /*
+         * The next block is free and big enough.  Add the part that's needed
+         * to our block, and split the remainder off into a new block.
+         */
+        if(m_pRover == next)
+            m_pRover = NEXT(next);
 
-	/* Unlink the next block from the free list. */
-	Unlink(next);
-	cursize += nextsize;	/* combine sizes */
+        /* Unlink the next block from the free list. */
+        Unlink(next);
+        cursize += nextsize;	/* combine sizes */
 
-	size_t rem = cursize - realsize;	/* size of remainder */
-	if(rem >= minAllocSize) {
-	    /*
-	     * The remainder is big enough to be a new block.
-	     * Set boundary tags for the resized block and the new block.
-	     */
-	    next = ptr + realsize;
-	    /*
-	     * add the new block to the free list.
-	     * next block cannot be free
-	     */
-	    SetTags(next, rem);
+        size_t rem = cursize - realsize;	/* size of remainder */
+        if(rem >= minAllocSize) {
+            /*
+             * The remainder is big enough to be a new block.
+             * Set boundary tags for the resized block and the new block.
+             */
+            next = ptr + realsize;
+            /*
+             * add the new block to the free list.
+             * next block cannot be free
+             */
+            SetTags(next, rem);
 #ifdef _USE_BUDDY_BLOCKS
-	    AddToFreeList(next, rem);
+            AddToFreeList(next, rem);
 #else
-	    AddToFreeList(next, m_pFreeList);
+            AddToFreeList(next, m_pFreeList);
 #endif
-	    cursize = realsize;
+            cursize = realsize;
         }
-	/* Set the boundary tags to mark it as allocated. */
-	SetTags(ptr, cursize | 1);
-	return ((void *)ptr);
+        /* Set the boundary tags to mark it as allocated. */
+        SetTags(ptr, cursize | 1);
+        return ((void *)ptr);
     }
     return NULL;
 }
@@ -1172,70 +1172,70 @@ void VMem::MemoryUsageMessage(char *str, long x, long y, int c)
 {
     char szBuffer[512];
     if(str) {
-	if(!m_pLog)
-	    m_pLog = fopen(LOG_FILENAME, "w");
-	sprintf(szBuffer, str, x, y, c);
-	fputs(szBuffer, m_pLog);
+        if(!m_pLog)
+            m_pLog = fopen(LOG_FILENAME, "w");
+        sprintf(szBuffer, str, x, y, c);
+        fputs(szBuffer, m_pLog);
     }
     else {
-	if(m_pLog) {
-	    fflush(m_pLog);
-	    fclose(m_pLog);
-	    m_pLog = 0;
-	}
+        if(m_pLog) {
+            fflush(m_pLog);
+            fclose(m_pLog);
+            m_pLog = 0;
+        }
     }
 }
 
 void VMem::WalkHeap(int complete)
 {
     if(complete) {
-	MemoryUsageMessage(NULL, 0, 0, 0);
-	size_t total = 0;
-	for(int i = 0; i < m_nHeaps; ++i) {
-	    total += m_heaps[i].len;
-	}
-	MemoryUsageMessage("VMem heaps used %d. Total memory %08x\n", m_nHeaps, total, 0);
+        MemoryUsageMessage(NULL, 0, 0, 0);
+        size_t total = 0;
+        for(int i = 0; i < m_nHeaps; ++i) {
+            total += m_heaps[i].len;
+        }
+        MemoryUsageMessage("VMem heaps used %d. Total memory %08x\n", m_nHeaps, total, 0);
 
-	/* Walk all the heaps - verify structures */
-	for(int index = 0; index < m_nHeaps; ++index) {
-	    PBLOCK ptr = m_heaps[index].base;
-	    size_t size = m_heaps[index].len;
+        /* Walk all the heaps - verify structures */
+        for(int index = 0; index < m_nHeaps; ++index) {
+            PBLOCK ptr = m_heaps[index].base;
+            size_t size = m_heaps[index].len;
 #ifndef _USE_BUDDY_BLOCKS
 #ifdef USE_BIGBLOCK_ALLOC
-	    if (!m_heaps[m_nHeaps].bBigBlock)
+            if (!m_heaps[m_nHeaps].bBigBlock)
 #endif
-		ASSERT(HeapValidate(m_hHeap, HEAP_NO_SERIALIZE, ptr));
+                ASSERT(HeapValidate(m_hHeap, HEAP_NO_SERIALIZE, ptr));
 #endif
 
-	    /* set over reserved header block */
-	    size -= blockOverhead;
-	    ptr += blockOverhead;
-	    PBLOCK pLast = ptr + size;
-	    ASSERT(PSIZE(ptr) == 1); /* dummy previous block is allocated */
-	    ASSERT(SIZE(pLast) == 1); /* dummy next block is allocated */
-	    while(ptr < pLast) {
-		ASSERT(ptr > m_heaps[index].base);
-		size_t cursize = SIZE(ptr) & ~1;
-		ASSERT((PSIZE(ptr+cursize) & ~1) == cursize);
-		MemoryUsageMessage("Memory Block %08x: Size %08x %c\n", (long)ptr, cursize, (SIZE(ptr)&1) ? 'x' : ' ');
-		if(!(SIZE(ptr)&1)) {
-		    /* this block is on the free list */
-		    PBLOCK tmp = NEXT(ptr);
-		    while(tmp != ptr) {
-			ASSERT((SIZE(tmp)&1)==0);
-			if(tmp == m_pFreeList)
-			    break;
-			ASSERT(NEXT(tmp));
-			tmp = NEXT(tmp);
-		    }
-		    if(tmp == ptr) {
-			MemoryUsageMessage("Memory Block %08x: Size %08x free but not in free list\n", (long)ptr, cursize, 0);
-		    }
-		}
-		ptr += cursize;
-	    }
-	}
-	MemoryUsageMessage(NULL, 0, 0, 0);
+            /* set over reserved header block */
+            size -= blockOverhead;
+            ptr += blockOverhead;
+            PBLOCK pLast = ptr + size;
+            ASSERT(PSIZE(ptr) == 1); /* dummy previous block is allocated */
+            ASSERT(SIZE(pLast) == 1); /* dummy next block is allocated */
+            while(ptr < pLast) {
+                ASSERT(ptr > m_heaps[index].base);
+                size_t cursize = SIZE(ptr) & ~1;
+                ASSERT((PSIZE(ptr+cursize) & ~1) == cursize);
+                MemoryUsageMessage("Memory Block %08x: Size %08x %c\n", (long)ptr, cursize, (SIZE(ptr)&1) ? 'x' : ' ');
+                if(!(SIZE(ptr)&1)) {
+                    /* this block is on the free list */
+                    PBLOCK tmp = NEXT(ptr);
+                    while(tmp != ptr) {
+                        ASSERT((SIZE(tmp)&1)==0);
+                        if(tmp == m_pFreeList)
+                            break;
+                        ASSERT(NEXT(tmp));
+                        tmp = NEXT(tmp);
+                    }
+                    if(tmp == ptr) {
+                        MemoryUsageMessage("Memory Block %08x: Size %08x free but not in free list\n", (long)ptr, cursize, 0);
+                    }
+                }
+                ptr += cursize;
+            }
+        }
+        MemoryUsageMessage(NULL, 0, 0, 0);
     }
 }
 #endif	/* _DEBUG_MEM */

@@ -79,7 +79,8 @@ stash, and a pointer to your C<mro_alg> structure:
     meta = HvMROMETA(stash);
     private_sv = MRO_GET_PRIVATE_DATA(meta, &my_mro_alg);
 
-=for apidoc mro_get_private_data
+=for apidoc Amh|struct mro_meta *|HvMROMETA|HV *hv
+=for apidoc Amh|SV*|MRO_GET_PRIVATE_DATA|struct mro_meta *const smeta|const struct mro_alg *const which
 
 To set your private value, call C<Perl_mro_set_private_data()>:
 

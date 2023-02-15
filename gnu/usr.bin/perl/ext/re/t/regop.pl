@@ -1,4 +1,4 @@
-use re Debug=>qw(DUMP EXECUTE OFFSETS TRIEC TEST);
+use re Debug=>qw(DUMP EXECUTE TRIEC TEST);
 my @tests=(
   XY     =>  'X(A|[B]Q||C|D)Y' ,
   foobar =>  '[f][o][o][b][a][r]',

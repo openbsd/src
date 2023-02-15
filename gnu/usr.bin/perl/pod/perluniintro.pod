@@ -151,7 +151,7 @@ serious Unicode work.  The maintenance release 5.6.1 fixed many of the
 problems of the initial Unicode implementation, but for example
 regular expressions still do not work with Unicode in 5.6.1.
 Perl v5.14.0 is the first release where Unicode support is
-(almost) seamlessly integrable without some gotchas. (There are a few
+(almost) seamlessly integratable without some gotchas. (There are a few
 exceptions. Firstly, some differences in L<quotemeta|perlfunc/quotemeta>
 were fixed starting in Perl 5.16.0. Secondly, some differences in
 L<the range operator|perlop/Range Operators> were fixed starting in
@@ -160,7 +160,7 @@ started in Perl 5.28.0.)
 
 To enable this
 seamless support, you should C<use feature 'unicode_strings'> (which is
-automatically selected if you C<use 5.012> or higher).  See L<feature>.
+automatically selected if you C<use v5.12> or higher).  See L<feature>.
 (5.14 also fixes a number of bugs and departures from the Unicode
 standard.)
 
@@ -184,7 +184,7 @@ as Unicodeness cannot be avoided, the data is transparently upgraded
 to Unicode.  Prior to Perl v5.14.0, the upgrade was not completely
 transparent (see L<perlunicode/The "Unicode Bug">), and for backwards
 compatibility, full transparency is not gained unless C<use feature
-'unicode_strings'> (see L<feature>) or C<use 5.012> (or higher) is
+'unicode_strings'> (see L<feature>) or C<use v5.12> (or higher) is
 selected.
 
 Internally, Perl currently uses either whatever the native eight-bit
@@ -605,7 +605,7 @@ CAPITAL LETTER A's should be considered equal, or even A's of any case.
 
 The long answer is that you need to consider character normalization
 and casing issues: see L<Unicode::Normalize>, Unicode Technical Report #15,
-L<Unicode Normalization Forms|https://www.unicode.org/unicode/reports/tr15> and
+L<Unicode Normalization Forms|https://www.unicode.org/reports/tr15> and
 sections on case mapping in the L<Unicode Standard|https://www.unicode.org>.
 
 As of Perl 5.8.0, the "Full" case-folding of I<Case
@@ -630,7 +630,7 @@ C<0x00C1> > C<0x00C0>.
 The long answer is that "it depends", and a good answer cannot be
 given without knowing (at the very least) the language context.
 See L<Unicode::Collate>, and I<Unicode Collation Algorithm>
-L<https://www.unicode.org/unicode/reports/tr10/>
+L<https://www.unicode.org/reports/tr10/>
 
 =back
 
@@ -701,7 +701,7 @@ Very little work should be needed since nothing changes until you
 generate Unicode data.  The most important thing is getting input as
 Unicode; for that, see the earlier I/O discussion.
 To get full seamless Unicode support, add
-C<use feature 'unicode_strings'> (or C<use 5.012> or higher) to your
+C<use feature 'unicode_strings'> (or C<use v5.12> or higher) to your
 script.
 
 =item *
@@ -923,7 +923,7 @@ L<https://www.unicode.org/>
 
 Unicode FAQ
 
-L<https://www.unicode.org/unicode/faq/>
+L<https://www.unicode.org/faq/>
 
 =item *
 

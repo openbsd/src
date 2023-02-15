@@ -1,10 +1,10 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 2830            # tests in require'd file
-                         + 6;           # tests in this file
+use Test::More tests => 3070            # tests in require'd file
+                         + 8;           # tests in this file
 
 use lib 't';
 
@@ -34,3 +34,9 @@ $ms += $bf;
 is($ms, 46, '$ms is 46');
 is($ms->{_custom}, 1, '$ms has custom attribute $ms->{_custom}');
 is(ref($ms), $CLASS, "\$ms is not an object of class '$CLASS'");
+
+cmp_ok(Math::BigFloat::Subclass -> div_scale(), "==", 40,
+      "Math::BigFloat::Subclass gets 'div_scale' from parent");
+
+is(Math::BigFloat::Subclass -> round_mode(), "even",
+   "Math::BigFloat::Subclass gets 'round_mode' from parent");

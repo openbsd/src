@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 # use Module(); doesn't call import() - thanx for cpan testers David. M. Town
 # and Andreas Marcel Riechert for spotting it. It is fixed by the same code

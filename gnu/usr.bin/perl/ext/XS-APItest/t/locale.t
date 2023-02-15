@@ -128,6 +128,7 @@ SKIP: {
     I18N::Langinfo->import(keys %items) if $has_nl_langinfo;
 
     foreach my $formal_item (sort keys %items) {
+      SKIP:
         if (exists $correct_C_responses{$formal_item}) {
             my $correct = $correct_C_responses{$formal_item};
             my $item = eval $items{$formal_item};
@@ -137,9 +138,11 @@ SKIP: {
                 is ($result, $correct,
                     "Returns expected value" . "('$correct') for $formal_item");
             }
+            elsif (defined $result) {
+                pass("Returns a value (in this case '$result') for $formal_item");
+            }
             else {
-                ok (defined $result,
-                    "Returns a value (in this case '$result') for $formal_item");
+                fail("Returned undef for $formal_item");
             }
         }
     }

@@ -4,12 +4,10 @@
 #include "XSUB.h"
 #ifdef USE_PPPORT_H
 #  define NEED_my_snprintf
+#  define NEED_my_sprintf
 #  define NEED_sv_2pv_flags
+#  define NEED_utf8_to_uvchr_buf
 #  include "ppport.h"
-#endif
-
-#if PERL_VERSION < 8
-#  define DD_USE_OLD_ID_FORMAT
 #endif
 
 #ifndef strlcpy
@@ -23,30 +21,8 @@
 /* These definitions are ASCII only.  But the pure-perl .pm avoids
  * calling this .xs file for releases where they aren't defined */
 
-#ifndef isASCII
-#   define isASCII(c) (((UV) (c)) < 128)
-#endif
-
 #ifndef ESC_NATIVE          /* \e */
-#   define ESC_NATIVE 27
-#endif
-
-#ifndef isPRINT
-#   define isPRINT(c) (((UV) (c)) >= ' ' && ((UV) (c)) < 127)
-#endif
-
-#ifndef isALPHA
-#   define isALPHA(c) (   (((UV) (c)) >= 'a' && ((UV) (c)) <= 'z')          \
-                       || (((UV) (c)) <= 'Z' && ((UV) (c)) >= 'A'))
-#endif
-
-#ifndef isIDFIRST
-#   define isIDFIRST(c) (isALPHA(c) || (c) == '_')
-#endif
-
-#ifndef isWORDCHAR
-#   define isWORDCHAR(c) (isIDFIRST(c)                                      \
-                          || (((UV) (c)) >= '0' && ((UV) (c)) <= '9'))
+#   define ESC_NATIVE LATIN1_TO_NATIVE(27)
 #endif
 
 /* SvPVCLEAR only from perl 5.25.6 */
@@ -101,61 +77,7 @@ static I32 DD_dump (pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval,
                     HV *seenhv, AV *postav, const I32 level, SV *apad,
                     Style *style);
 
-#ifndef HvNAME_get
-#define HvNAME_get HvNAME
-#endif
-
-/* Perls 7 through portions of 15 used utf8_to_uvchr() which didn't have a
- * length parameter.  This wrongly allowed reading beyond the end of buffer
- * given malformed input */
-
-#if PERL_VERSION <= 6 /* Perl 5.6 and earlier */
-
-UV
-Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
-{
-    const UV uv = utf8_to_uv(s, send - s, retlen,
-                    ckWARN(WARN_UTF8) ? 0 : UTF8_ALLOW_ANY);
-    return UNI_TO_NATIVE(uv);
-}
-
-# if !defined(PERL_IMPLICIT_CONTEXT)
-#  define utf8_to_uvchr_buf	     Perl_utf8_to_uvchr_buf
-# else
-#  define utf8_to_uvchr_buf(a,b,c) Perl_utf8_to_uvchr_buf(aTHX_ a,b,c)
-# endif
-
-#endif /* PERL_VERSION <= 6 */
-
-/* Perl 5.7 through part of 5.15 */
-#if PERL_VERSION > 6 && PERL_VERSION <= 15 && ! defined(utf8_to_uvchr_buf)
-
-UV
-Perl_utf8_to_uvchr_buf(pTHX_ U8 *s, U8 *send, STRLEN *retlen)
-{
-    /* We have to discard <send> for these versions; hence can read off the
-     * end of the buffer if there is a malformation that indicates the
-     * character is longer than the space available */
-
-    return utf8_to_uvchr(s, retlen);
-}
-
-# if !defined(PERL_IMPLICIT_CONTEXT)
-#  define utf8_to_uvchr_buf	     Perl_utf8_to_uvchr_buf
-# else
-#  define utf8_to_uvchr_buf(a,b,c) Perl_utf8_to_uvchr_buf(aTHX_ a,b,c)
-# endif
-
-#endif /* PERL_VERSION > 6 && <= 15 */
-
-/* Changes in 5.7 series mean that now IOK is only set if scalar is
-   precisely integer but in 5.6 and earlier we need to do a more
-   complex test  */
-#if PERL_VERSION <= 6
-#define DD_is_integer(sv) (SvIOK(sv) && (SvIsUV(val) ? SvUV(sv) == SvNV(sv) : SvIV(sv) == SvNV(sv)))
-#else
 #define DD_is_integer(sv) SvIOK(sv)
-#endif
 
 /* does a glob name need to be protected? */
 static bool
@@ -332,13 +254,10 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
                 normal++;
             }
         }
-        else if (! isASCII(k) && k > ' ') {
-            /* High ordinal non-printable code point.  (The test that k is
-             * above SPACE should be optimized out by the compiler on
-             * non-EBCDIC platforms; otherwise we could put an #ifdef around
-             * it, but it's better to have just a single code path when
-             * possible.  All but one of the non-ASCII EBCDIC controls are low
-             * ordinal; that one is the only one above SPACE.)
+        else if (! UTF8_IS_INVARIANT(k)) {
+            /* We treat as low ordinal any code point whose representation is
+             * the same under UTF-8 as not.  Thus, this is a high ordinal code
+             * point.
              *
              * If UTF-8, output as hex, regardless of useqq.  This means there
              * is an overhead of 4 chars '\x{}'.  Then count the number of hex
@@ -350,13 +269,11 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
                 * first byte */
                 increment = (k == 0 && *s != '\0') ? 1 : UTF8SKIP(s);
 
-                grow += 4 + (k <= 0xFF ? 2 : k <= 0xFFF ? 3 : k <= 0xFFFF ? 4 :
-#if UVSIZE == 4
-                    8 /* We may allocate a bit more than the minimum here.  */
-#else
-                    k <= 0xFFFFFFFF ? 8 : UVSIZE * 4
-#endif
-                    );
+                grow += 6;  /* Smallest we do is "\x{FF}" */
+                k >>= 4;
+                while ((k >>= 4) != 0) {   /* Add space for each nibble */
+                    grow++;
+                }
             }
             else if (useqq) {   /* Not utf8, must be <= 0xFF, hence 2 hex
                                  * digits. */
@@ -370,18 +287,15 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
                              * outputs the raw char */
             normal++;
         }
-        else {  /* Is qq, low ordinal, non-printable.  Output escape
-                 * sequences */
+        else {  /* Is qq, non-printable.  Output escape sequences */
             if (   k == '\a' || k == '\b' || k == '\t' || k == '\n' || k == '\r'
                 || k == '\f' || k == ESC_NATIVE)
             {
                 grow += 2;  /* 1 char plus backslash */
             }
-            else /* The other low ordinals are output as an octal escape
+            else /* The other non-printable controls are output as an octal escape
                   * sequence */
-                 if (s + 1 >= send || (   *(U8*)(s+1) >= '0'
-                                       && *(U8*)(s+1) <= '9'))
-            {
+                 if (s + 1 >= send || isDIGIT(*(s+1))) {
                 /* When the following character is a digit, use 3 octal digits
                  * plus backslash, as using fewer digits would concatenate the
                  * following char into this one */
@@ -411,38 +325,23 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
             U8 c0 = *(U8 *)s;
             UV k;
 
-            if (do_utf8
-                && ! isASCII(c0)
-                    /* Exclude non-ASCII low ordinal controls.  This should be
-                     * optimized out by the compiler on ASCII platforms; if not
-                     * could wrap it in a #ifdef EBCDIC, but better to avoid
-                     * #if's if possible */
-                && c0 > ' '
-            ) {
+            if (do_utf8 && ! UTF8_IS_INVARIANT(c0)) {
 
-                /* When in UTF-8, we output all non-ascii chars as \x{}
-                 * reqardless of useqq, except for the low ordinal controls on
-                 * EBCDIC platforms */
+                /* In UTF-8, we output as \x{} all chars that require more than
+                 * a single byte in UTF-8 to represent. */
                 k = utf8_to_uvchr_buf((U8*)s, (U8*) send, NULL);
 
                 /* treat invalid utf8 byte by byte.  This loop iteration gets the
                 * first byte */
                 increment = (k == 0 && *s != '\0') ? 1 : UTF8SKIP(s);
 
-#if PERL_VERSION < 10
-                sprintf(r, "\\x{%" UVxf "}", k);
-                r += strlen(r);
-                /* my_sprintf is not supported by ppport.h */
-#else
                 r = r + my_sprintf(r, "\\x{%" UVxf "}", k);
-#endif
                 continue;
             }
 
             /* Here 1) isn't UTF-8; or
-             *      2) the current character is ASCII; or
-             *      3) it is an EBCDIC platform and is a low ordinal
-             *         non-ASCII control.
+             *      2) the current character is represented as the same single
+             *         byte regardless of the string's UTF-8ness
              * In each case the character occupies just one byte */
             k = *(U8*)s;
             increment = 1;
@@ -477,9 +376,7 @@ esc_q_utf8(pTHX_ SV* sv, const char *src, STRLEN slen, I32 do_utf8, I32 useqq)
 		     * since we only encode characters \377 and under, or
 		     * \x177 and under for a unicode string
 		     */
-                    next_is_digit = (s + 1 >= send )
-                                    ? FALSE
-                                    : (*(U8*)(s+1) >= '0' && *(U8*)(s+1) <= '9');
+                    next_is_digit = (s + 1 < send && isDIGIT(*(s+1)));
 
 		    /* faster than
 		     * r = r + my_sprintf(r, "%o", k);
@@ -565,13 +462,13 @@ deparsed_output(pTHX_ SV *val)
      * the stack moving underneath anything that directly or indirectly calls
      * Perl_load_module()". If we're in an older Perl, we can't rely on that
      * stack, and must create a fresh sacrificial stack of our own. */
-#if PERL_VERSION < 20
+#if PERL_VERSION_LT(5,20,0)
     PUSHSTACKi(PERLSI_REQUIRE);
 #endif
 
     load_module(PERL_LOADMOD_NOIMPORT, pkg, 0);
 
-#if PERL_VERSION < 20
+#if PERL_VERSION_LT(5,20,0)
     POPSTACK;
     SPAGAIN;
 #endif
@@ -610,6 +507,142 @@ deparsed_output(pTHX_ SV *val)
     return text;
 }
 
+static void
+dump_regexp(pTHX_ SV *retval, SV *val)
+{
+    STRLEN rlen;
+    SV *sv_pattern = NULL;
+    SV *sv_flags = NULL;
+    const char *rval;
+    const U8 *rend;
+    U8 *p;
+    CV *re_pattern_cv = get_cv("re::regexp_pattern", 0);
+    int do_utf8;
+
+    if (!re_pattern_cv) {
+        sv_pattern = val;
+    }
+    else {
+        dSP;
+        I32 count;
+        ENTER;
+        SAVETMPS;
+        PUSHMARK(SP);
+        XPUSHs(val);
+        PUTBACK;
+        count = call_sv((SV*)re_pattern_cv, G_ARRAY);
+        SPAGAIN;
+        if (count >= 2) {
+            sv_flags = POPs;
+            sv_pattern = POPs;
+            SvREFCNT_inc(sv_flags);
+            SvREFCNT_inc(sv_pattern);
+        }
+        PUTBACK;
+        FREETMPS;
+        LEAVE;
+        if (sv_pattern) {
+            sv_2mortal(sv_pattern);
+            sv_2mortal(sv_flags);
+        }
+    }
+
+    assert(sv_pattern);
+
+    sv_catpvs(retval, "qr/");
+
+    /* The strategy here is from commit 7894fbab1e479c2c (in June 1999) with a
+     * bug fix in Feb 2012 (commit de5ef703c7d8db65).
+     * We need to ensure that / is escaped as \/
+     * To be efficient, we want to avoid copying byte-for-byte, so we scan the
+     * string looking for "things we need to escape", and each time we find
+     * something, we copy over the verbatim section, before writing out the
+     * escaped part. At the end, if there's some verbatim section left, we copy
+     * that over to finish.
+     * The complication (perl #58608) is that we must not convert \/ to \\/
+     * (as that would be a syntax error), so we need to walk the string looking
+     * for either
+     *   \ and the character immediately after (together)
+     *   a character
+     * and only for the latter, do we need to escape /
+     *
+     * Of course, to add to the fun, we also need to escape Unicode characters
+     * to \x{...} notation (whether they are "escaped" by \ or stand alone).
+     *
+     * which means we need to output qr// notation
+     * even if the input was expressed as q'' (eg q'$foo')
+     *
+     * We can do all this in one pass if we are careful...
+     */
+
+    rval = SvPV(sv_pattern, rlen);
+    p = (U8 *)rval;
+    rend = p + rlen;
+    do_utf8 = DO_UTF8(sv_pattern);
+
+    while (p < rend) {
+        UV k = *p;
+        int saw_backslash = k == '\\';
+
+        if (saw_backslash) {
+            if (++p == rend) {
+                /* Oh my, \ at the end. Is this possible? */
+                break;
+            }
+            /* Otherwise we look at the next octet */
+            k = *p;
+        }
+
+        if (/* / that was not backslashed */
+            (k == '/' && !saw_backslash)
+            /* $ that was not backslashed, unless it is at the end of the regex
+               or it is followed by | or it is followed by ) */
+            || (k == '$' && !saw_backslash
+                && (p + 1 != rend && p[1] != '|' && p[1] != ')'))
+            /* or need to use \x{} notation. */
+            || (do_utf8 && ! UTF8_IS_INVARIANT(k)))
+        {
+            STRLEN to_copy = p - (U8 *) rval;
+            if (to_copy) {
+                /* If saw_backslash is true, this will copy the \ for us too. */
+                sv_catpvn(retval, rval, to_copy);
+            }
+            if (k == '/') {
+                sv_catpvs(retval, "\\/");
+                ++p;
+            }
+            else if (k == '$') {
+                /* this approach suggested by Eirik Berg Hanssen: */
+                sv_catpvs(retval, "${\\q($)}");
+                ++p;
+            }
+            else {
+                /* If there was a \, we have copied it already, so all that is
+                 * left to do here is the \x{...} escaping.
+                 *
+                 * Since this is a pattern, presumably created by perl, we can
+                 * assume it is well-formed */
+                k = utf8_to_uvchr_buf(p, rend, NULL);
+                sv_catpvf(retval, "\\x{%" UVxf "}", k);
+                p += UTF8SKIP(p);
+            }
+            rval = (const char *) p;
+        }
+        else {
+            ++p;
+        }
+    }
+
+    rlen = rend - (U8 *) rval;
+    if (rlen) {
+        sv_catpvn(retval, rval, rlen);
+    }
+    sv_catpvs(retval, "/");
+
+    if (sv_flags)
+        sv_catsv(retval, sv_flags);
+}
+
 /*
  * This ought to be split into smaller functions. (it is one long function since
  * it exactly parallels the perl version, which was one long thing for
@@ -622,12 +655,8 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
     char tmpbuf[128];
     Size_t i;
     char *c, *r, *realpack;
-#ifdef DD_USE_OLD_ID_FORMAT
-    char id[128];
-#else
     UV id_buffer;
     char *const id = (char *)&id_buffer;
-#endif
     SV **svp;
     SV *sv, *ipad, *ival;
     SV *blesspad = Nullsv;
@@ -679,12 +708,8 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	
 	ival = SvRV(val);
 	realtype = SvTYPE(ival);
-#ifdef DD_USE_OLD_ID_FORMAT
-        idlen = my_snprintf(id, sizeof(id), "0x%" UVxf, PTR2UV(ival));
-#else
 	id_buffer = PTR2UV(ival);
 	idlen = sizeof(id_buffer);
-#endif
 	if (SvOBJECT(ival))
 	    realpack = HvNAME_get(SvSTASH(ival));
 	else
@@ -735,11 +760,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		    return 1;
 		}
 		else {
-#ifdef DD_USE_OLD_ID_FORMAT
-		    warn("ref name not found for %s", id);
-#else
 		    warn("ref name not found for 0x%" UVxf, PTR2UV(ival));
-#endif
 		    return 0;
 		}
 	    }
@@ -768,9 +789,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
         /* regexps dont have to be blessed into package "Regexp"
          * they can be blessed into any package. 
          */
-#if PERL_VERSION < 8
-	if (realpack && *realpack == 'R' && strEQ(realpack, "Regexp")) 
-#elif PERL_VERSION < 11
+#if PERL_VERSION_LT(5,11,0)
         if (realpack && realtype == SVt_PVMG && mg_find(ival, PERL_MAGIC_qr))
 #else        
         if (realpack && realtype == SVt_REGEXP) 
@@ -816,64 +835,11 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
         ipad = sv_x(aTHX_ Nullsv, SvPVX_const(style->xpad), SvCUR(style->xpad), level+1);
         sv_2mortal(ipad);
 
-        if (is_regex) 
-        {
-            STRLEN rlen;
-	    SV *sv_pattern = NULL;
-	    SV *sv_flags = NULL;
-	    CV *re_pattern_cv;
-	    const char *rval;
-	    const char *rend;
-	    const char *slash;
-
-	    if ((re_pattern_cv = get_cv("re::regexp_pattern", 0))) {
-	      dSP;
-	      I32 count;
-	      ENTER;
-	      SAVETMPS;
-	      PUSHMARK(SP);
-	      XPUSHs(val);
-	      PUTBACK;
-	      count = call_sv((SV*)re_pattern_cv, G_ARRAY);
-	      SPAGAIN;
-	      if (count >= 2) {
-		sv_flags = POPs;
-	        sv_pattern = POPs;
-		SvREFCNT_inc(sv_flags);
-		SvREFCNT_inc(sv_pattern);
-	      }
-	      PUTBACK;
-	      FREETMPS;
-	      LEAVE;
-	      if (sv_pattern) {
-	        sv_2mortal(sv_pattern);
-	        sv_2mortal(sv_flags);
-	      }
-	    }
-	    else {
-	      sv_pattern = val;
-	    }
-	    assert(sv_pattern);
-	    rval = SvPV(sv_pattern, rlen);
-	    rend = rval+rlen;
-	    slash = rval;
-	    sv_catpvs(retval, "qr/");
-	    for (;slash < rend; slash++) {
-	      if (*slash == '\\') { ++slash; continue; }
-	      if (*slash == '/') {    
-		sv_catpvn(retval, rval, slash-rval);
-		sv_catpvs(retval, "\\/");
-		rlen -= slash-rval+1;
-		rval = slash+1;
-	      }
-	    }
-	    sv_catpvn(retval, rval, rlen);
-	    sv_catpvs(retval, "/");
-	    if (sv_flags)
-	      sv_catsv(retval, sv_flags);
+        if (is_regex) {
+            dump_regexp(aTHX_ retval, val);
 	} 
         else if (
-#if PERL_VERSION < 9
+#if PERL_VERSION_LT(5,9,0)
 		realtype <= SVt_PVBM
 #else
 		realtype <= SVt_PVMG
@@ -956,12 +922,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 		
 		ilen = inamelen;
 		sv_setiv(ixsv, ix);
-#if PERL_VERSION < 10
-                (void) sprintf(iname+ilen, "%" IVdf, (IV)ix);
-		ilen = strlen(iname);
-#else
                 ilen = ilen + my_sprintf(iname+ilen, "%" IVdf, (IV)ix);
-#endif
 		iname[ilen++] = ']'; iname[ilen] = '\0';
                 if (style->indent >= 3) {
 		    sv_catsv(retval, totpad);
@@ -1029,7 +990,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	
 	    /* If requested, get a sorted/filtered array of hash keys */
 	    if (style->sortkeys) {
-#if PERL_VERSION >= 8
 		if (style->sortkeys == &PL_sv_yes) {
 		    keys = newAV();
 		    (void)hv_iterinit((HV*)ival);
@@ -1038,19 +998,19 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 			(void)SvREFCNT_inc(sv);
 			av_push(keys, sv);
 		    }
-# ifdef USE_LOCALE_COLLATE
-#       ifdef IN_LC     /* Use this if available */
+#ifdef USE_LOCALE_COLLATE
+#  ifdef IN_LC     /* Use this if available */
                     if (IN_LC(LC_COLLATE))
-#       else
+#  else
                     if (IN_LOCALE)
-#       endif
+#  endif
                     {
                         sortsv(AvARRAY(keys),
 			   av_len(keys)+1,
                            Perl_sv_cmp_locale);
                     }
                     else
-# endif
+#endif
                     {
                         sortsv(AvARRAY(keys),
 			   av_len(keys)+1,
@@ -1058,7 +1018,6 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
                     }
 		}
                 else
-#endif
 		{
 		    dSP; ENTER; SAVETMPS; PUSHMARK(sp);
 		    XPUSHs(sv_2mortal(newRV_inc(ival))); PUTBACK;
@@ -1286,12 +1245,8 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	const MAGIC *mg;
 	
 	if (namelen) {
-#ifdef DD_USE_OLD_ID_FORMAT
-	    idlen = my_snprintf(id, sizeof(id), "0x%" UVxf, PTR2UV(val));
-#else
 	    id_buffer = PTR2UV(val);
 	    idlen = sizeof(id_buffer);
-#endif
 	    if ((svp = hv_fetch(seenhv, id, idlen, FALSE)) &&
 		(sv = *svp) && SvROK(sv) &&
 		(seenentry = (AV*)SvRV(sv)))
@@ -1350,11 +1305,7 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	    if(i) ++c, --i;			/* just get the name */
 	    if (memBEGINs(c, i, "main::")) {
 		c += 4;
-#if PERL_VERSION < 7
-		if (i == 6 || (i == 7 && c[6] == '\0'))
-#else
 		if (i == 6)
-#endif
 		    i = 0; else i -= 4;
 	    }
             if (globname_needs_quote(c,i)) {
@@ -1427,9 +1378,9 @@ DD_dump(pTHX_ SV *val, const char *name, STRLEN namelen, SV *retval, HV *seenhv,
 	}
 #ifdef SvVOK
 	else if (SvMAGICAL(val) && (mg = mg_find(val, 'V'))) {
-# if !defined(PL_vtbl_vstring) && PERL_VERSION < 17
+# if !defined(PL_vtbl_vstring) && PERL_VERSION_LT(5,17,0)
 	    SV * const vecsv = sv_newmortal();
-#  if PERL_VERSION < 10
+#  if PERL_VERSION_LT(5,10,0)
 	    scan_vstring(mg->mg_ptr, vecsv);
 #  else
 	    scan_vstring(mg->mg_ptr, mg->mg_ptr + mg->mg_len, vecsv);
@@ -1502,8 +1453,7 @@ Data_Dumper_Dumpxs(href, ...)
             SV *apad = &PL_sv_undef;
             Style style;
 
-            SV *name, *val = &PL_sv_undef, *varname = &PL_sv_undef;
-	    char tmpbuf[1024];
+            SV *name_sv, *val = &PL_sv_undef, *varname = &PL_sv_undef;
 	    I32 gimme = GIMME_V;
 
 	    if (!SvROK(href)) {		/* call new to get an object first */
@@ -1542,7 +1492,7 @@ Data_Dumper_Dumpxs(href, ...)
             style.pad = style.xpad = style.sep = style.pair = style.sortkeys
                 = style.freezer = style.toaster = style.bless = &PL_sv_undef;
 	    seenhv = NULL;
-	    name = sv_newmortal();
+            name_sv = sv_newmortal();
 	
 	    retval = newSVpvs_flags("", SVs_TEMP);
 	    if (SvROK(href)
@@ -1603,14 +1553,6 @@ Data_Dumper_Dumpxs(href, ...)
                         style.sortkeys = NULL;
                     else if (SvROK(sv) && SvTYPE(SvRV(sv)) == SVt_PVCV)
                         style.sortkeys = sv;
-                    else if (PERL_VERSION < 8)
-                        /* 5.6 doesn't make sortsv() available to XS code,
-                         * so we must use this helper instead. Note that we
-                         * always allocate this mortal SV, but it will be
-                         * used only if at least one hash is encountered
-                         * while dumping recursively; an older version
-                         * allocated it lazily as needed. */
-                        style.sortkeys = sv_2mortal(newSVpvs("Data::Dumper::_sortkeys"));
                     else
                         /* flag to use sortsv() for sorting hash keys */
                         style.sortkeys = &PL_sv_yes;
@@ -1625,6 +1567,8 @@ Data_Dumper_Dumpxs(href, ...)
 		valstr = newSVpvs_flags("", SVs_TEMP);
 		for (i = 0; i <= imax; ++i) {
 		    SV *newapad;
+                    char *name;
+                    STRLEN name_len;
 		
 		    av_clear(postav);
 		    if ((svp = av_fetch(todumpav, i, FALSE)))
@@ -1632,48 +1576,51 @@ Data_Dumper_Dumpxs(href, ...)
 		    else
 			val = &PL_sv_undef;
 		    if ((svp = av_fetch(namesav, i, TRUE))) {
-			sv_setsv(name, *svp);
-			if (SvOK(*svp) && !SvPOK(*svp))
-			    (void)SvPV_nolen_const(name);
+                        if (SvOK(*svp)) {
+                            sv_setsv(name_sv, *svp);
+                            name = SvPV(name_sv, name_len);
+                        }
+                        else {
+                            name = NULL;
+                        }
 		    }
-		    else
-			(void)SvOK_off(name);
+                    else {
+                        name = NULL;
+                    }
 		
-		    if (SvPOK(name)) {
-			if ((SvPVX_const(name))[0] == '*') {
+                    if (name) {
+                        if (*name == '*') {
 			    if (SvROK(val)) {
 				switch (SvTYPE(SvRV(val))) {
 				case SVt_PVAV:
-				    (SvPVX(name))[0] = '@';
+                                    *name = '@';
 				    break;
 				case SVt_PVHV:
-				    (SvPVX(name))[0] = '%';
+                                    *name = '%';
 				    break;
 				case SVt_PVCV:
-				    (SvPVX(name))[0] = '*';
+                                    *name = '*';
 				    break;
 				default:
-				    (SvPVX(name))[0] = '$';
+                                    *name = '$';
 				    break;
 				}
 			    }
 			    else
-				(SvPVX(name))[0] = '$';
+                                *name = '$';
 			}
-			else if ((SvPVX_const(name))[0] != '$')
-			    sv_insert(name, 0, 0, "$", 1);
+                        else if (*name != '$') {
+                            sv_insert(name_sv, 0, 0, "$", 1);
+                            name = SvPV(name_sv, name_len);
+                        }
 		    }
 		    else {
-			STRLEN nchars;
-			sv_setpvs(name, "$");
-			sv_catsv(name, varname);
-			nchars = my_snprintf(tmpbuf, sizeof(tmpbuf), "%" IVdf,
-                                                                     (IV)(i+1));
-			sv_catpvn(name, tmpbuf, nchars);
+                        sv_setpvf(name_sv, "$%" SVf "%" IVdf, SVfARG(varname), (IV)(i+1));
+                        name = SvPV(name_sv, name_len);
 		    }
 		
                     if (style.indent >= 2 && !terse) {
-			SV * const tmpsv = sv_x(aTHX_ NULL, " ", 1, SvCUR(name)+3);
+                        SV * const tmpsv = sv_x(aTHX_ NULL, " ", 1, name_len + 3);
 			newapad = sv_2mortal(newSVsv(apad));
 			sv_catsv(newapad, tmpsv);
 			SvREFCNT_dec(tmpsv);
@@ -1684,7 +1631,7 @@ Data_Dumper_Dumpxs(href, ...)
                     ENTER;
                     SAVETMPS;
 		    PUTBACK;
-		    DD_dump(aTHX_ val, SvPVX_const(name), SvCUR(name), valstr, seenhv,
+                    DD_dump(aTHX_ val, name, name_len, valstr, seenhv,
                             postav, 0, newapad, &style);
 		    SPAGAIN;
                     FREETMPS;
@@ -1693,7 +1640,7 @@ Data_Dumper_Dumpxs(href, ...)
 		    postlen = av_len(postav);
 		    if (postlen >= 0 || !terse) {
 			sv_insert(valstr, 0, 0, " = ", 3);
-			sv_insert(valstr, 0, 0, SvPVX_const(name), SvCUR(name));
+                        sv_insert(valstr, 0, 0, name, name_len);
 			sv_catpvs(valstr, ";");
 		    }
                     sv_catsv(retval, style.pad);

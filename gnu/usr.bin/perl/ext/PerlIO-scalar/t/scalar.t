@@ -1,10 +1,6 @@
 #!./perl
 
 BEGIN {
-    unless (find PerlIO::Layer 'perlio') {
-	print "1..0 # Skip: not perlio\n";
-	exit 0;
-    }
     require Config;
     if (($Config::Config{'extensions'} !~ m!\bPerlIO/scalar\b!) ){
         print "1..0 # Skip -- Perl configured without PerlIO::scalar module\n";
@@ -17,7 +13,7 @@ use Errno qw(EACCES);
 
 $| = 1;
 
-use Test::More tests => 123;
+use Test::More tests => 125;
 
 my $fh;
 my $var = "aaa\n";
@@ -181,12 +177,19 @@ EOF
 
 # [perl #40267] PerlIO::scalar doesn't respect readonly-ness
 {
+    my $warn;
+    local $SIG{__WARN__} = sub { $warn = "@_" };
     ok(!(defined open(F, '>', \undef)), "[perl #40267] - $!");
+    is($warn, undef, "no warning with warnings off");
     close F;
 
+    use warnings 'layer';
+    undef $warn;
     my $ro = \43;
     ok(!(defined open(F, '>', $ro)), $!);
     is($!+0, EACCES, "check we get a read-onlyish error code");
+    like($warn, qr/Modification of a read-only value attempted/,
+         "check we did warn");
     close F;
     # but we can read from it
     ok(open(F, '<', $ro), $!);
@@ -346,7 +349,7 @@ sub has_trailing_nul(\$) {
     return $trailing eq "\0";
 }
 SKIP: {
-    if ($Config::Config{'extensions'} !~ m!\bPerlIO/scalar\b!) {
+    if ($Config::Config{'extensions'} !~ m!\bB\b!) {
 	skip "no B", 4;
     }
     require B;

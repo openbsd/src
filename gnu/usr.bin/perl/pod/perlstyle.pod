@@ -16,6 +16,13 @@ disable.  The B<-w> flag and C<$^W> variable should not be used for this
 purpose since they can affect code you use but did not write, such as
 modules from core or CPAN.
 
+A concise way to arrange for this is to use the
+L<C<use VERSION>|perlfunc/use VERSION> syntax, requesting a version 5.36
+or above, which will enable both the C<strict> and C<warnings> pragmata (as
+well as several other useful L<named features|feature/AVAILABLE FEATURES>).
+
+    use v5.36;
+
 Regarding aesthetics of code lay out, about the only thing Larry
 cares strongly about is that the closing curly bracket of
 a multi-line BLOCK should line up with the keyword that started the construct.

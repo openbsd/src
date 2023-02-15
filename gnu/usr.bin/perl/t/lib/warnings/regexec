@@ -223,7 +223,6 @@ eval { require POSIX; POSIX->import("locale_h") };
 if ($@) {
     print("SKIPPED\n# no POSIX\n"),exit;
 }
-no warnings 'experimental::regex_sets';
 use warnings 'locale';
 use locale;
 setlocale(&POSIX::LC_CTYPE, "C");
@@ -233,14 +232,14 @@ setlocale(&POSIX::LC_CTYPE, "C");
 ":" =~ /(?[ \: ])/;
 no warnings 'locale';
 EXPECT
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
+Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 12.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 13.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 13.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 14.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 14.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 15.
 Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 15.
-Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
-Use of (?[ ]) for non-UTF-8 locale is wrong.  Assuming a UTF-8 locale at - line 16.
 ########
 # NAME (?[ ]) in UTF-8 locale
 require '../loc_tools.pl';
@@ -255,7 +254,6 @@ my $utf8_locale = find_utf8_ctype_locale();
 unless ($utf8_locale) {
     print("SKIPPED\n# No UTF-8 locale available\n"),exit;
 }
-no warnings 'experimental::regex_sets';
 use warnings 'locale';
 use locale;
 setlocale(&POSIX::LC_CTYPE, $utf8_locale);

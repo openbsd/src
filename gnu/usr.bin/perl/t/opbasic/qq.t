@@ -8,7 +8,7 @@ BEGIN {
 # This file uses a specially crafted is() function rather than that found in
 # t/test.pl or Test::More.  Hence, we place this file in directory t/opbasic.
 
-print q(1..28
+print q(1..30
 );
 
 # This is() function is written to avoid ""
@@ -47,6 +47,7 @@ is ("\xx9", chr (0) . 'x9');	# This will warn. \x9 is tab in EBCDIC too?
 is ("\x9_E", chr (9) . '_E');	# This will warn
 
 is ("\x{4E}", chr 78);
+is ("\x{ 4E }", chr 78);
 is ("\x{6_9}", chr 105);
 is ("\x{_6_3}", chr 99);
 is ("\x{_6B}", chr 107);
@@ -68,6 +69,7 @@ is ("\400", chr 0x100);
 is ("\600", chr 0x180);
 is ("\777", chr 0x1FF);
 is ("a\o{120}b", "a" . chr(0x50) . "b");
+is ("a\o{ 120 }b", "a" . chr(0x50) . "b");
 is ("a\o{400}b", "a" . chr(0x100) . "b");
 is ("a\o{1000}b", "a" . chr(0x200) . "b");
 

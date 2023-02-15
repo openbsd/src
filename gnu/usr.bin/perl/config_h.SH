@@ -255,7 +255,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 
 /* HAS_MBLEN:
  *	This symbol, if defined, indicates that the mblen routine is available
- *	to find the number of bytes in a multibye character.
+ *	to find the number of bytes in a multibyte character.
  */
 #$d_mblen HAS_MBLEN		/**/
 
@@ -1576,7 +1576,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_endpent HAS_ENDPROTOENT		/**/
 
 /* HAS_ENDPWENT:
- *	This symbol, if defined, indicates that the getgrent routine is
+ *	This symbol, if defined, indicates that the endpwent routine is
  *	available for finalizing sequential access of the passwd database.
  */
 #$d_endpwent HAS_ENDPWENT		/**/
@@ -1767,6 +1767,8 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_BE
  *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LE_BE
  *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BE_LE
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_LITTLE_ENDIAN
+ *	LONG_DOUBLE_IS_DOUBLEDOUBLE_128_BIT_BIG_ENDIAN
  *	LONG_DOUBLE_IS_VAX_H_FLOAT
  *	LONG_DOUBLE_IS_UNKNOWN_FORMAT
  *	It is only defined if the system supports long doubles.
@@ -2004,11 +2006,11 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol, if defined, indicates that the union semun is
  *	defined by including <sys/sem.h>.  If not, the user code
  *	probably needs to define it as:
- *	union semun {
+ *	 union semun {
  *	    int val;
  *	    struct semid_ds *buf;
  *	    unsigned short *array;
- *	}
+ *	 }
  */
 /* USE_SEMCTL_SEMUN:
  *	This symbol, if defined, indicates that union semun is
@@ -2337,6 +2339,13 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_atanh HAS_ATANH		/**/
 
+/* HAS_NON_INT_BITFIELDS:
+ *	This symbol, if defined, indicates that the C compiler accepts, without
+ *	error or warning, struct bitfields that are declared with sizes other
+ *	than plain 'int'; for example 'unsigned char' is accepted.
+ */
+#$d_non_int_bitfields HAS_NON_INT_BITFIELDS	/**/
+
 /* HAS_BUILTIN_CHOOSE_EXPR:
  *	Can we handle GCC builtin for compile-time ternary-like expressions
  */
@@ -2512,6 +2521,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	mode.
  */
 #$d_fegetround HAS_FEGETROUND	/**/
+
+/* HAS_FFS:
+ *	This symbol, if defined, indicates that the ffs routine is available
+ *	to find the first bit set in its argument.  If it's not available,
+ *	roll your own.
+ */
+/* HAS_FFSL:
+ *	This symbol, if defined, indicates that the ffsl routine is available
+ *	to find the first bit set in its argument.  If it's not available,
+ *	roll your own.
+ */
+#$d_ffs HAS_FFS		/**/
+#$d_ffsl HAS_FFSL		/**/
 
 /* HAS_FINITE:
  *	This symbol, if defined, indicates that the finite routine is
@@ -3019,7 +3041,7 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 
 /* HAS_MEMMEM:
  *	This symbol, if defined, indicates that the memmem routine is
- *	available to return a pointer to the start of the first occurance
+ *	available to return a pointer to the start of the first occurrence
  *	of a substring in a memory area (or NULL if not found).
  *	In glibc, memmem is a GNU extension.  The function is visible in
  *	libc, but the prototype is only visible if _GNU_SOURCE is #defined.
@@ -3120,14 +3142,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	available to return the name of the locale for a category mask.
  */
 /* I_XLOCALE:
- *	This symbol, if defined, indicates to the C program that it should
- *	include <xlocale.h> to get uselocale() and its friends.
+ *	This symbol, if defined, indicates to the C program that the
+ *	header xlocale.h is available.  See also NEED_XLOCALE_H
+ */
+/* NEED_XLOCALE_H:
+ *	This symbol, if defined, indicates that the C program should
+ *	include <xlocale.h> to get newlocale() and its friends.
  */
 #$d_newlocale	HAS_NEWLOCALE	/**/
 #$d_freelocale	HAS_FREELOCALE	/**/
 #$d_uselocale	HAS_USELOCALE	/**/
 #$d_duplocale	HAS_DUPLOCALE	/**/
 #$d_querylocale	HAS_QUERYLOCALE	/**/
+#$xlocale_needed	NEED_XLOCALE_H	/**/
 #$i_xlocale	I_XLOCALE               /**/
 
 /* HAS_NEXTAFTER:
@@ -3451,6 +3478,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	available to convert strings to unsigned long longs (quads).
  */
 #$d_strtouq HAS_STRTOUQ		/**/
+
+/* HAS_STRXFRM_L:
+ *	This symbol, if defined, indicates that the strxfrm_l() routine is
+ *	available to transform strings.
+ */
+#$d_strxfrm_l HAS_STRXFRM_L	/**/
 
 /* HAS_SYSCALL_PROTO:
  *	This symbol, if defined, indicates that the system provides
@@ -4165,6 +4198,16 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #define SELECT_MIN_BITS	$selectminbits	/**/
 
+/* ST_DEV_SIZE:
+ *	This variable contains the size of struct stat's st_dev in bytes.
+ */
+/* ST_DEV_SIGN:
+ *	This symbol holds the signedness of struct stat's st_dev.
+ *	1 for unsigned, -1 for signed.
+ */
+#define ST_DEV_SIGN $st_dev_sign	/* st_dev sign */
+#define ST_DEV_SIZE $st_dev_size	/* st_dev size */
+
 /* ST_INO_SIZE:
  *	This variable contains the size of struct stat's st_ino in bytes.
  */
@@ -4246,6 +4289,12 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	be built with support for backtrace.
  */
 #$usecbacktrace USE_C_BACKTRACE		/**/
+
+/* USE_STRICT_BY_DEFAULT:
+ *	This symbol, if defined, enables additional defaults.
+ *	At this time it only enables implicit strict by default.
+ */
+#$usedefaultstrict USE_STRICT_BY_DEFAULT	/* use strict by default */
 
 /* USE_DTRACE:
  *	This symbol, if defined, indicates that Perl should
@@ -4567,6 +4616,19 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #$d_endservent_r HAS_ENDSERVENT_R	/**/
 #define ENDSERVENT_R_PROTO $endservent_r_proto	/**/
 
+/* GETENV_PRESERVES_OTHER_THREAD:
+ *	This symbol, if defined, indicates that the getenv system call doesn't
+ *	zap the static buffer of getenv() in a different thread.
+ *
+ *	The typical getenv() implementation will return a pointer to the proper
+ *	position in **environ.  But some may instead copy them to a static
+ *	buffer in getenv().  If there is a per-thread instance of that buffer,
+ *	or the return points to **environ, then a many-reader/1-writer mutex
+ *	will work; otherwise an exclusive locking mutex is required to prevent
+ *	races.
+ */
+#$d_getenv_preserves_other_thread GETENV_PRESERVES_OTHER_THREAD	/**/
+
 /* HAS_GETGRENT_R:
  *	This symbol, if defined, indicates that the getgrent_r routine
  *	is available to getgrent re-entrantly.
@@ -4863,6 +4925,9 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
 #define L_R_TZSET
 #endif
 
+/* L_R_TZSET:
+ *	If localtime_r() needs tzset, it is defined in this define
+ */
 /* LOCALTIME_R_PROTO:
  *	This symbol encodes the prototype of localtime_r.
  *	It is zero if d_localtime_r is undef, and one of the
@@ -4884,10 +4949,15 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_mbrtowc HAS_MBRTOWC	/**/
 
+/* HAS_NL_LANGINFO_L:
+ *	This symbol, when defined, indicates presence of the nl_langinfo_l()
+ *	function
+ */
 /* HAS_THREAD_SAFE_NL_LANGINFO_L:
  *	This symbol, when defined, indicates presence of the nl_langinfo_l()
  *	function, and that it is thread-safe.
  */
+#$d_nl_langinfo_l HAS_NL_LANGINFO_L	/**/
 #$d_thread_safe_nl_langinfo_l HAS_THREAD_SAFE_NL_LANGINFO_L	/**/
 
 /* OLD_PTHREAD_CREATE_JOINABLE:
@@ -5106,6 +5176,18 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  */
 #$d_strtold_l HAS_STRTOLD_L		/**/
 
+/* PERL_THREAD_LOCAL:
+ *	This symbol, if defined, gives a linkage specification for thread-local
+ *	storage. For example, for a C11 compiler this will be _Thread_local.
+ *	Beware, some compilers are sensitive to the C language standard they are
+ *	told to parse. For example, suncc defaults to C11, so our probe will
+ *	report that _Thread_local can be used. However, if the -std=c99 is later
+ *	added to the compiler flags, then _Thread_local will become a syntax
+ *	error. Hence it is important for these flags to be consistent between
+ *	probing and use.
+ */
+#$d_thread_local PERL_THREAD_LOCAL $perl_thread_local	/**/
+
 /* HAS_TMPNAM_R:
  *	This symbol, if defined, indicates that the tmpnam_r routine
  *	is available to tmpnam re-entrantly.
@@ -5154,10 +5236,11 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	This symbol, if defined, indicates that Perl should be built to
  *	use the interpreter-based threading implementation.
  */
-/* USE_5005THREADS:
- *	This symbol, if defined, indicates that Perl should be built to
- *	use the 5.005-based threading implementation.
- *	Only valid up to 5.8.x.
+/* USE_THREADS:
+ *	This symbol, if defined, indicates that Perl should
+ *	be built to use threads.  At present, it is a synonym for
+ *	and USE_ITHREADS, but eventually the source ought to be
+ *	changed to use this to mean _any_ threading implementation.
  */
 /* OLD_PTHREADS_API:
  *	This symbol, if defined, indicates that Perl should
@@ -5168,11 +5251,8 @@ sed <<!GROK!THIS! >$CONFIG_H -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un
  *	try to use the various _r versions of library functions.
  *	This is extremely experimental.
  */
-#$use5005threads	USE_5005THREADS		/**/
 #$useithreads	USE_ITHREADS		/**/
-#if defined(USE_5005THREADS) && !defined(USE_ITHREADS)
-#define		USE_THREADS		/* until src is revised*/
-#endif
+#$usethreads		USE_THREADS		/**/
 #$d_oldpthreads	OLD_PTHREADS_API		/**/
 #$usereentrant	USE_REENTRANT_API	/**/
 

@@ -16,15 +16,18 @@ $| = 1;
 
 BEGIN {
     chdir 't' if -d 't';
-    require Config; import Config;
-    require './test.pl'; require './charset_tools.pl';
-    require './loc_tools.pl';
+    require './test.pl';
     set_up_inc('../lib', '.', '../ext/re');
+    require Config; import Config;
+    require './charset_tools.pl';
+    require './loc_tools.pl';
 }
 
 skip_all_without_unicode_tables();
 
-plan tests => 1022;  # Update this when adding/deleting tests.
+my $has_locales = locales_enabled('LC_CTYPE');
+
+plan tests => 1046;  # Update this when adding/deleting tests.
 
 run_tests() unless caller;
 
@@ -554,7 +557,7 @@ sub run_tests {
         my $locale;
 
       SKIP: {
-            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
+            skip 'Locales not available', 1 unless $has_locales;
 
             use locale;
             $locale = qr/\b\v$/;
@@ -568,21 +571,21 @@ sub run_tests {
         is(qr/abc$dual/,    '(?^u:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
 
       SKIP: {
-            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
+            skip 'Locales not available', 1 unless $has_locales;
 
             is(qr/abc$locale/,    '(?^u:abc(?^l:\b\v$))', 'Verify retains l when interpolated under unicode_strings');
         }
 
         no feature 'unicode_strings';
       SKIP: {
-            skip 'Locales not available', 1 unless locales_enabled('LC_CTYPE');
+            skip 'Locales not available', 1 unless $has_locales;
             is(qr/abc$locale/,    '(?^:abc(?^l:\b\v$))', 'Verify retains l when interpolated outside locale and unicode strings');
         }
 
         is(qr/def$unicode/,    '(?^:def(?^u:\b\v$))', 'Verify retains u when interpolated outside locale and unicode strings');
 
       SKIP: {
-            skip 'Locales not available', 2 unless locales_enabled('LC_CTYPE');
+            skip 'Locales not available', 2 unless $has_locales;
 
              use locale;
             is(qr/abc$dual/,    '(?^l:abc(?^:\b\v$))', 'Verify retains d meaning when interpolated under locale');
@@ -667,7 +670,47 @@ sub run_tests {
         @_ = /(bbb)/g;
         is("@_", "", $message);
     }
-
+    {
+        my $message = 'ACCEPT and CLOSE - ';
+        $_ = "aced";
+        #12           3  4  5
+        /((a?(*ACCEPT)())())()/
+            or die "Failed to match";
+        is($1,"a",$message . "buffer 1 is defined with expected value");
+        is($2,"a",$message . "buffer 2 is defined with expected value");
+        ok(!defined($3),$message . "buffer 3 is not defined");
+        ok(!defined($4),$message . "buffer 4 is not defined");
+        ok(!defined($5),$message . "buffer 5 is not defined");
+        ok(!defined($6),$message . "buffer 6 is not defined");
+        $message= 'NO ACCEPT and CLOSE - ';
+        /((a?())())()/
+            or die "Failed to match";
+        is($1,"a",$message . "buffer 1 is defined with expected value");
+        is($2,"a",$message . "buffer 2 is defined with expected value");
+        is($3,"", $message . "buffer 3 is defined with expected value");
+        is($4,"", $message . "buffer 4 is defined with expected value");
+        is($5,"",$message . "buffer 5 is defined with expected value");
+        ok(!defined($6),$message . "buffer 6 is not defined");
+        #12           3  4  5
+        $message = 'ACCEPT and CLOSE - ';
+        /((a?(*ACCEPT)(c))(e))(d)/
+            or die "Failed to match";
+        is($1,"a",$message . "buffer 1 is defined with expected value");
+        is($2,"a",$message . "buffer 2 is defined with expected value");
+        ok(!defined($3),$message . "buffer 3 is not defined");
+        ok(!defined($4),$message . "buffer 4 is not defined");
+        ok(!defined($5),$message . "buffer 5 is not defined");
+        ok(!defined($6),$message . "buffer 6 is not defined");
+        $message= 'NO ACCEPT and CLOSE - ';
+        /((a?(c))(e))(d)/
+            or die "Failed to match";
+        is($1,"ace", $message . "buffer 1 is defined with expected value");
+        is($2,"ac", $message . "buffer 2 is defined with expected value");
+        is($3,"c", $message . "buffer 3 is defined with expected value");
+        is($4,"e", $message . "buffer 4 is defined with expected value");
+        is($5,"d", $message . "buffer 5 is defined with expected value");
+        ok(!defined($6),$message . "buffer 6 is not defined");
+    }
     {
         my $message = '@- and @+ and @{^CAPTURE} tests';
 
@@ -1451,6 +1494,8 @@ EOP
                                     if $charset ne 'l'
                                     && (! defined $locale || $locale ne 'C');
                             if ($charset eq 'l') {
+                                skip 'Locales not available', 2
+                                                            unless $has_locales;
                                 if (! defined $locale) {
                                     skip "No UTF-8 locale", 2;
                                 }
@@ -1902,14 +1947,31 @@ EOP
             }
         }
         {
-            fresh_perl_is('
+            my $is_cygwin = $^O eq "cygwin";
+            local $::TODO = "this flaps on github cygwin vm, but not on cygwin iron #18129"
+              if $is_cygwin;
+            my $expected = "Timeout";
+            my $code = '
                 BEGIN{require q(test.pl);}
                 watchdog(3);
-                $SIG{ALRM} = sub {print "Timeout\n"; exit(1)};
+                $SIG{ALRM} = sub {print "'.$expected.'\n"; exit(1)};
                 alarm 1;
                 $_ = "a" x 1000 . "b" x 1000 . "c" x 1000;
                 /.*a.*b.*c.*[de]/;
-            ',"Timeout",{},"Test Perl 73464")
+                print "increase the multipliers in the regex above to run the regex longer";
+            ';
+            # this flaps on github cygwin vm, but not on cygwin iron #18129
+            # so on cygwin it's run for 50 seconds to see if it fails eventually
+            my $max = $is_cygwin ? 50 : 1;
+            my ($iter, $result, $status);
+            for my $i (1..$max) {
+                $iter = $i;
+                $result = fresh_perl($code,{});
+                $status = $?;
+                last if $result ne $expected;
+            }
+            is($result, $expected, "Test Perl 73464")
+              or diag "PROG:", $code, "STATUS:", $status, "failed on iteration: $iter";
         }
 
         {   # [perl #128686], crashed the the interpreter

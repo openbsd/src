@@ -91,7 +91,7 @@ while (<DATA>) {
     } elsif ($f eq "bone") {
         $try .= " \$x->bone('$args[1]');";
     # some unary ops
-    } elsif ($f =~ /^b(nan|floor|ceil|int|sstr|neg|abs|inc|dec|not|sqrt|d?fac)$/) {
+    } elsif ($f =~ /^b(nan|floor|ceil|int|sstr|neg|abs|inc|dec|not|sqrt)$/) {
         $try .= " \$x->$f();";
     } elsif ($f eq "length") {
         $try .= ' $x->length();';
@@ -231,7 +231,7 @@ sub is_valid {
     my ($x, $f, $c) = @_;
 
     # The checks here are loosened a bit to allow Math::BigInt or
-    # Math::BigFloats to pass
+    # Math::BigFloat objects to pass
 
     my $e = 0;         # error?
 
@@ -430,7 +430,6 @@ NaN:-inf:
 0b100000000000000000000000000000001:4294967297
 0b1000000000000000000000000000000001:8589934593
 0b10000000000000000000000000000000001:17179869185
-0b__101:NaN
 0b1_0_1:5
 0b0_0_0_1:1
 # hex input
@@ -443,7 +442,6 @@ NaN:-inf:
 0x12345678:305419896
 0x1_2_3_4_56_78:305419896
 0xa_b_c_d_e_f:11259375
-0x__123:NaN
 0x9:9
 0x11:17
 0x21:33
@@ -493,10 +491,6 @@ abc:NaN
 # only one underscore between two digits
 _123:NaN
 _123_:NaN
-123_:NaN
-1__23:NaN
-1E1__2:NaN
-1_E12:NaN
 1E_12:NaN
 1_E_12:NaN
 +_1E12:NaN
@@ -1290,41 +1284,6 @@ abc:NaN,NaN
 0:0,0
 +inf:inf,inf
 -inf:-inf,inf
-
-&bfac
--1:NaN
-NaNfac:NaN
-+inf:inf
--inf:NaN
-0:1
-1:1
-2:2
-3:6
-4:24
-5:120
-6:720
-10:3628800
-11:39916800
-12:479001600
-
-&bdfac
-NaN:NaN
--1:NaN
-+inf:inf
--inf:NaN
-0:1
-1:1
-2:2
-3:3
-4:8
-5:15
-6:48
-7:105
-8:384
-9:945
-10:3840
-11:10395
-12:46080
 
 &bpow
 abc:12:NaN

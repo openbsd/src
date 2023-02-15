@@ -4,7 +4,7 @@ use Carp;
 use warnings;
 use strict;
 our $AUTOLOAD;
-our $VERSION = '1.01'; # remember to update version in POD!
+our $VERSION = '1.02'; # remember to update version in POD!
 # $DB::single=1;
 
 my %symcache;
@@ -73,21 +73,49 @@ sub import {
 		    local $Exporter::ExportLevel = 2;
 		    $tieclass->import(eval $args);
 	        }
-		$attr =~ s/__CALLER__/caller(1)/e;
-		$attr = caller()."::".$attr unless $attr =~ /::/;
-	        eval qq{
-	            sub $attr : ATTR(VAR) {
-			my (\$ref, \$data) = \@_[2,4];
-			my \$was_arrayref = ref \$data eq 'ARRAY';
-			\$data = [ \$data ] unless \$was_arrayref;
-			my \$type = ref(\$ref)||"value (".(\$ref||"<undef>").")";
-			 (\$type eq 'SCALAR')? tie \$\$ref,'$tieclass',$tiedata
-			:(\$type eq 'ARRAY') ? tie \@\$ref,'$tieclass',$tiedata
-			:(\$type eq 'HASH')  ? tie \%\$ref,'$tieclass',$tiedata
-			: die "Can't autotie a \$type\n"
-	            } 1
-	        } or die "Internal error: $@";
-	    }
+                my $code = qq{
+                    : ATTR(VAR) {
+                        my (\$ref, \$data) = \@_[2,4];
+                        my \$was_arrayref = ref \$data eq 'ARRAY';
+                        \$data = [ \$data ] unless \$was_arrayref;
+                        my \$type = ref(\$ref)||"value (".(\$ref||"<undef>").")";
+                          (\$type eq 'SCALAR')? tie \$\$ref,'$tieclass',$tiedata
+                        :(\$type eq 'ARRAY') ? tie \@\$ref,'$tieclass',$tiedata
+                        :(\$type eq 'HASH')  ? tie \%\$ref,'$tieclass',$tiedata
+                        : die "Can't autotie a \$type\n"
+                    }
+                };
+
+                if ($attr =~ /\A__CALLER__::/) {
+                    no strict 'refs';
+                    my $add_import = caller;
+                    my $next = defined &{ $add_import . '::import' } && \&{ $add_import . '::import' };
+                    *{ $add_import . '::import' } = sub {
+                        my $caller = caller;
+                        my $full_attr = $attr;
+                        $full_attr =~ s/__CALLER__/$caller/;
+                        eval qq{ sub $full_attr $code 1; }
+                            or die "Internal error: $@";
+
+                        goto &$next
+                            if $next;
+                        my $uni = defined &UNIVERSAL::import && \&UNIVERSAL::import;
+                        for my $isa (@{ $add_import . '::ISA' }) {
+                            if (my $import = $isa->can('import')) {
+                                goto &$import
+                                    if $import != $uni;
+                            }
+                        }
+                        goto &$uni
+                            if $uni;
+                    };
+                }
+                else {
+                    $attr = caller()."::".$attr unless $attr =~ /::/;
+                    eval qq{ sub $attr $code 1; }
+                      or die "Internal error: $@";
+                }
+            }
         }
         else {
             croak "Can't understand $_"; 
@@ -272,7 +300,7 @@ Attribute::Handlers - Simpler definition of attribute handlers
 
 =head1 VERSION
 
-This document describes version 1.01 of Attribute::Handlers.
+This document describes version 1.02 of Attribute::Handlers.
 
 =head1 SYNOPSIS
 
@@ -672,13 +700,13 @@ and need to export their attributes to any module that calls them. To
 facilitate this, Attribute::Handlers recognizes a special "pseudo-class" --
 C<__CALLER__>, which may be specified as the qualifier of an attribute:
 
-    package Tie::Me::Kangaroo:Down::Sport;
+    package Tie::Me::Kangaroo::Down::Sport;
 
     use Attribute::Handlers autotie =>
 	 { '__CALLER__::Roo' => __PACKAGE__ };
 
 This causes Attribute::Handlers to define the C<Roo> attribute in the package
-that imports the Tie::Me::Kangaroo:Down::Sport module.
+that imports the Tie::Me::Kangaroo::Down::Sport module.
 
 Note that it is important to quote the __CALLER__::Roo identifier because
 a bug in perl 5.8 will refuse to parse it and cause an unknown error.

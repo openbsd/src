@@ -1,6 +1,6 @@
-# NameAliases-13.0.0.txt
-# Date: 2019-09-09, 19:47:00 GMT [KW, LI]
-# © 2019 Unicode®, Inc.
+# NameAliases-14.0.0.txt
+# Date: 2020-10-21, 22:28:00 GMT [KW, LI]
+# © 2020 Unicode®, Inc.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
@@ -270,6 +270,7 @@
 180C;FVS2;abbreviation
 180D;FVS3;abbreviation
 180E;MVS;abbreviation
+180F;FVS4;abbreviation
 200B;ZWSP;abbreviation
 200C;ZWNJ;abbreviation
 200D;ZWJ;abbreviation
@@ -293,6 +294,7 @@
 2B7A;LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
 2B7C;RIGHTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE VERTICAL STROKE;correction
 A015;YI SYLLABLE ITERATION MARK;correction
+AA6E;MYANMAR LETTER KHAMTI LLA;correction
 FE00;VS1;abbreviation
 FE01;VS2;abbreviation
 FE02;VS3;abbreviation

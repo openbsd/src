@@ -9,11 +9,7 @@ BEGIN {
     }
 }
 use OptreeCheck;
-use Config;
 plan tests => 18;
-
-SKIP: {
-skip "no perlio in this build", 4 unless $Config::Config{useperlio};
 
 # The regression this was testing is that the first aelemfast, derived
 # from a lexical array, is supposed to be a BASEOP "<0>", while the
@@ -84,8 +80,6 @@ EOT_EOT
 # -           <1> ex-rv2sv sK/1 ->4
 # 3              <$> gvsv(*1) s ->4
 EONT_EONT
-
-} #skip
 
 my $t = <<'EOT_EOT';
 # 8  <@> leave[1 ref] vKP/REFC ->(end)

@@ -7,7 +7,7 @@ my $File;
 
 BEGIN {
     $File = __FILE__;
-    require strict; import strict;
+    require strict; strict->import();
 }
 
 use Test::More tests => 12;

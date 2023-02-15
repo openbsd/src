@@ -1,10 +1,11 @@
 #!./perl
 
+use strict;
 use warnings;
 use Text::ParseWords;
 use Test::More tests => 27;
 
-@words = shellwords(qq(foo "bar quiz" zoo));
+my @words = shellwords(qq(foo "bar quiz" zoo));
 is($words[0], 'foo');
 is($words[1], 'bar quiz');
 is($words[2], 'zoo');
@@ -23,10 +24,10 @@ is($words[2], 'zoo');
 is(join(";", @words), qq(4; ;3; ;2; ;1; ;0));
 
 # Big ol' nasty test (thanks, Joerk!)
-$string = 'aaaa"bbbbb" cc\\ cc \\\\\\"dddd" eee\\\\\\"ffff" "gg"';
+my $string = 'aaaa"bbbbb" cc\\ cc \\\\\\"dddd" eee\\\\\\"ffff" "gg"';
 
 # First with $keep == 1
-$result = join('|', parse_line('\s+', 1, $string));
+my $result = join('|', parse_line('\s+', 1, $string));
 is($result, 'aaaa"bbbbb"|cc\\ cc|\\\\\\"dddd" eee\\\\\\"ffff"|"gg"');
 
 # Now, $keep == 0
@@ -39,7 +40,7 @@ $result = join('|', parse_line('\s+', 0, $string));
 is($result, 'aaaabbbbb|cc cc|\\"dddd eee\\\\\\"ffff|gg');
 
 # Make sure @nested_quotewords does the right thing
-@lists = nested_quotewords('\s+', 0, 'a b c', '1 2 3', 'x y z');
+my @lists = nested_quotewords('\s+', 0, 'a b c', '1 2 3', 'x y z');
 is (@lists, 3);
 is (@{$lists[0]}, 3);
 is (@{$lists[1]}, 3);

@@ -49,9 +49,22 @@ __UNDEFINED__ PERL_LOADMOD_NOIMPORT     0x2
 __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
 
 #if defined(PERL_USE_GCC_BRACE_GROUPS)
-# define D_PPP_CROAK_IF_ERROR(cond) ({ SV *_errsv; ((cond) && (_errsv = ERRSV) && (SvROK(_errsv) || SvTRUE(_errsv)) && (croak_sv(_errsv), 1)); })
+# define D_PPP_CROAK_IF_ERROR(cond) ({              \
+    SV *_errsv;                                     \
+    (   (cond)                                      \
+     && (_errsv = ERRSV)                            \
+     && (SvROK(_errsv) || SvTRUE(_errsv))           \
+     && (croak_sv(_errsv), 1));                     \
+  })
 #else
-# define D_PPP_CROAK_IF_ERROR(cond) ((cond) && (SvROK(ERRSV) || SvTRUE(ERRSV)) && (croak_sv(ERRSV), 1))
+  PERL_STATIC_INLINE void D_PPP_CROAK_IF_ERROR(int cond) {
+    dTHX;
+    SV *errsv;
+    if (!cond) return;
+    errsv = ERRSV;
+    if (SvROK(errsv) || SvTRUE(errsv)) croak_sv(errsv);
+  }
+# define D_PPP_CROAK_IF_ERROR(cond) D_PPP_CROAK_IF_ERROR(cond)
 #endif
 
 #ifndef G_METHOD

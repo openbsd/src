@@ -17,8 +17,9 @@ $| = 1;
 
 BEGIN {
     chdir 't' if -d 't';
-    require './test.pl'; require './charset_tools.pl';
+    require './test.pl';
     set_up_inc('../lib');
+	require './charset_tools.pl';
 }
 
 our @global;

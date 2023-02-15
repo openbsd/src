@@ -316,7 +316,9 @@ TRIE_tb                        # Z added by devel/scanprov
 UNISKIP_BY_MSB                 # Z added by devel/scanprov
 UNLESSM_t8                     # Z added by devel/scanprov
 UNLESSM_tb                     # Z added by devel/scanprov
+utf16_to_utf8                  # Z added by devel/scanprov
 utf16_to_utf8_base             # F added by devel/scanprov
+utf16_to_utf8_reversed         # Z added by devel/scanprov
 UTF8_IS_PERL_EXTENDED          # Z added by devel/scanprov
 utf8_to_utf16                  # Z added by devel/scanprov
 utf8_to_utf16_base             # F added by devel/scanprov

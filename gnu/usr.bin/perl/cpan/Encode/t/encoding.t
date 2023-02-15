@@ -13,7 +13,7 @@ BEGIN {
     exit(0);
     }
     if ($] >= 5.025 and !$Config{usecperl}) {
-    print "1..0 # Skip: encoding pragma not supported in Perl 5.26\n";
+    print "1..0 # Skip: encoding pragma not supported in Perl 5.25 or later\n";
     exit(0);
     }
 }

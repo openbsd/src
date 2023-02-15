@@ -566,7 +566,7 @@ fi
 # * Does not fully support the IEEE special numbers NaN and INF.
 # * Does not support IEEE status flags for overflow, underflow,
 #   and other conditions. These flags have no meaning for the 128-bit
-#   long double inplementation.
+#   long double implementation.
 # * The 128-bit long double data type does not support the following math
 #   APIs: atanhl, cbrtl, copysignl, exp2l, expm1l, fdiml, fmal, fmaxl,
 #   fminl, hypotl, ilogbl, llrintl, llroundl, log1pl, log2l, logbl,

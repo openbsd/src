@@ -14,6 +14,7 @@ use Unicode::UCD qw(prop_aliases
 require './regen/regen_lib.pl';
 require './regen/charset_translations.pl';
 require './lib/unicore/UCD.pl';
+require './regen/mph.pl';
 use re "/aa";
 
 # This program outputs charclass_invlists.h, which contains various inversion
@@ -52,7 +53,7 @@ my $table_name_prefix = "UNI_";
 my $enum_name_re = qr / ^ [[:alpha:]] \w* $ /ax;
 
 my $out_fh = open_new('charclass_invlists.h', '>',
-		      {style => '*', by => 'regen/mk_invlists.pl',
+                      {style => '*', by => 'regen/mk_invlists.pl',
                       from => "Unicode::UCD"});
 
 my $in_file_pound_if = "";
@@ -1029,13 +1030,20 @@ sub _Perl_IVCF {
     }
 
     # Now go through and make some adjustments.  We add synthetic entries for
-    # two cases.
-    # 1) Two or more code points can fold to the same multiple character,
+    # three cases.
+    # 1) If the fold of a Latin1-range character is above that range, some
+    #    coding in regexec.c can be saved by creating a reverse map here.  The
+    #    impetus for this is that U+B5 (MICRO SIGN) folds to the Greek small
+    #    mu (U+3BC).  That fold isn't done at regex pattern compilation time
+    #    if it means that the pattern would have to be translated into UTF-8,
+    #    whose operation is slower.  At run time, having this reverse
+    #    translation eliminates some special cases in the code.
+    # 2) Two or more code points can fold to the same multiple character,
     #    sequence, as U+FB05 and U+FB06 both fold to 'st'.  This code is only
     #    for single character folds, but FB05 and FB06 are single characters
     #    that are equivalent folded, so we add entries so that they are
     #    considered to fold to each other
-    # 2) If two or more above-Latin1 code points fold to the same Latin1 range
+    # 3) If two or more above-Latin1 code points fold to the same Latin1 range
     #    one, we also add entries so that they are considered to fold to each
     #    other.  This is so that under /aa or /l matching, where folding to
     #    their Latin1 range code point is illegal, they still can fold to each
@@ -1048,9 +1056,28 @@ sub _Perl_IVCF {
         # scalar
         if (scalar $new{$fold}->@* == 1) {
             $new{$fold} = $new{$fold}[0];
+
+            # Handle case 1) above: if there were a Latin1 range code point
+            # whose fold is above that range, this creates an extra entry that
+            # maps the other direction, and would save some special case code.
+            # (The one current case of this is handled in the else clause
+            # below.)
+            $new{$new{$fold}} = $fold if $new{$fold} < 256 && $fold > 255;
         }
         else {
 
+            # Handle case 1) when there are multiple things that fold to an
+            # above-Latin1 code point, at least one of which is in Latin1.
+            if (! $folds_to_string && $fold > 255) {
+                foreach my $cp ($new{$fold}->@*) {
+                    if ($cp < 256) {
+                        my @new_entry = grep { $_ != $cp } $new{$fold}->@*;
+                        push @new_entry, $fold;
+                        $new{$cp}->@* = @new_entry;
+                    }
+                }
+            }
+                
             # Otherwise, sort numerically.  This places the highest code point
             # in the list at the tail end.  This is because Unicode keeps the
             # lowercase code points as higher ordinals than the uppercase, at
@@ -1517,10 +1544,15 @@ sub output_LB_table() {
         }
     }
 
-    # LB30b Do not break between an emoji base and an emoji modifier.
+    # LB30b Do not break between an emoji base (or potential emoji) and an
+    # emoji modifier.
+
     # EB × EM
+    # [\p{Extended_Pictographic}&\p{Cn}] × EM
     $lb_table[$lb_enums{'E_Base'}][$lb_enums{'E_Modifier'}]
                                                 = $lb_actions{'LB_NOBREAK'};
+    $lb_table[$lb_enums{'Unassigned_Extended_Pictographic_Ideographic'}]
+                      [$lb_enums{'E_Modifier'}] = $lb_actions{'LB_NOBREAK'};
 
     # LB30a Break between two regional indicator symbols if and only if there
     # are an even number of regional indicators preceding the position of the
@@ -1535,6 +1567,8 @@ sub output_LB_table() {
     # parentheses.
 
     # (AL | HL | NU) × [OP-[\p{ea=F}\p{ea=W}\p{ea=H}]]
+    # (what we call CP and OP here have already been modified by mktables to
+    # exclude the ea items
     $lb_table[$lb_enums{'Alphabetic'}][$lb_enums{'Open_Punctuation'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Hebrew_Letter'}][$lb_enums{'Open_Punctuation'}]
@@ -1569,18 +1603,6 @@ sub output_LB_table() {
                                                 = $lb_actions{'LB_NOBREAK'};
 
     # LB27 Treat a Korean Syllable Block the same as ID.
-    # (JL | JV | JT | H2 | H3) × IN
-    $lb_table[$lb_enums{'JL'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'JV'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'JT'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'H2'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-    $lb_table[$lb_enums{'H3'}][$lb_enums{'Inseparable'}]
-                                                = $lb_actions{'LB_NOBREAK'};
-
     # (JL | JV | JT | H2 | H3) × PO
     $lb_table[$lb_enums{'JL'}][$lb_enums{'Postfix_Numeric'}]
                                                 = $lb_actions{'LB_NOBREAK'};
@@ -1757,6 +1779,9 @@ sub output_LB_table() {
     # PR × (ID | EB | EM)
     $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'Ideographic'}]
                                                 = $lb_actions{'LB_NOBREAK'};
+    $lb_table[$lb_enums{'Prefix_Numeric'}]
+        [$lb_enums{'Unassigned_Extended_Pictographic_Ideographic'}]
+                                                = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'E_Base'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'Prefix_Numeric'}][$lb_enums{'E_Modifier'}]
@@ -1765,6 +1790,8 @@ sub output_LB_table() {
     # (ID | EB | EM) × PO
     $lb_table[$lb_enums{'Ideographic'}][$lb_enums{'Postfix_Numeric'}]
                                                 = $lb_actions{'LB_NOBREAK'};
+    $lb_table[$lb_enums{'Unassigned_Extended_Pictographic_Ideographic'}]
+                 [$lb_enums{'Postfix_Numeric'}] = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'E_Base'}][$lb_enums{'Postfix_Numeric'}]
                                                 = $lb_actions{'LB_NOBREAK'};
     $lb_table[$lb_enums{'E_Modifier'}][$lb_enums{'Postfix_Numeric'}]
@@ -2388,6 +2415,14 @@ sub sanitize_name ($) {
     return $sanitized;
 }
 
+sub token_name
+{
+    my $name = sanitize_name(shift);
+    warn "$name contains non-word" if $name =~ /\W/;
+
+    return "$table_name_prefix\U$name"
+}
+
 switch_pound_if ('ALL', 'PERL_IN_REGCOMP_C');
 
 output_invlist("Latin1", [ 0, 256 ]);
@@ -2436,7 +2471,7 @@ my @props;
 push @props, sort { prop_name_for_cmp($a) cmp prop_name_for_cmp($b) } qw(
                     &UpperLatin1
                     _Perl_GCB,EDGE,E_Base,E_Base_GAZ,E_Modifier,Glue_After_Zwj,LV,Prepend,Regional_Indicator,SpacingMark,ZWJ,ExtPict_XX
-                    _Perl_LB,EDGE,Close_Parenthesis,Hebrew_Letter,Next_Line,Regional_Indicator,ZWJ,Contingent_Break,E_Base,E_Modifier,H2,H3,JL,JT,JV,Word_Joiner,East_Asian_CP,East_Asian_OP
+                    _Perl_LB,EDGE,Close_Parenthesis,Hebrew_Letter,Next_Line,Regional_Indicator,ZWJ,Contingent_Break,E_Base,E_Modifier,H2,H3,JL,JT,JV,Word_Joiner,East_Asian_CP,East_Asian_OP,Unassigned_Extended_Pictographic_Ideographic
                     _Perl_SB,EDGE,SContinue,CR,Extend,LF
                     _Perl_WB,Perl_Tailored_HSpace,EDGE,UNKNOWN,CR,Double_Quote,E_Base,E_Base_GAZ,E_Modifier,Extend,Glue_After_Zwj,Hebrew_Letter,LF,MidNumLet,Newline,Regional_Indicator,Single_Quote,ZWJ,ExtPict_XX,ExtPict_LE
                     _Perl_SCX,Latin,Inherited,Unknown,Kore,Jpan,Hanb,INVALID
@@ -3303,7 +3338,7 @@ for my $i (0 .. @perl_prop_synonyms - 1) {
 }
 
 my $uni_pl = open_new('lib/unicore/uni_keywords.pl', '>',
-		      {style => '*', by => 'regen/mk_invlists.pl',
+                      {style => '*', by => 'regen/mk_invlists.pl',
                       from => "Unicode::UCD"});
 {
     print $uni_pl "\%Unicode::UCD::uni_prop_ptrs_indices = (\n";
@@ -3315,26 +3350,37 @@ my $uni_pl = open_new('lib/unicore/uni_keywords.pl', '>',
 
 read_only_bottom_close_and_rename($uni_pl, \@sources);
 
-require './regen/mph.pl';
+if (my $file= $ENV{DUMP_KEYWORDS_FILE}) {
+    require Data::Dumper;
 
-sub token_name
-{
-    my $name = sanitize_name(shift);
-    warn "$name contains non-word" if $name =~ /\W/;
-
-    return "$table_name_prefix\U$name"
+    open my $ofh, ">", $file
+        or die "Failed to open DUMP_KEYWORDS_FILE '$file' for write: $!";
+    print $ofh Data::Dumper->new([\%keywords],['*keywords'])
+                           ->Sortkeys(1)->Useqq(1)->Dump();
+    close $ofh;
+    print "Wrote keywords to '$file'.\n";
 }
 
 my $keywords_fh = open_new('uni_keywords.h', '>',
-		  {style => '*', by => 'regen/mk_invlists.pl',
+                  {style => '*', by => 'regen/mk_invlists.pl',
                   from => "mph.pl"});
 
-my ($second_level, $seed1, $length_all_keys, $smart_blob, $rows)
-                        = MinimalPerfectHash::make_mph_from_hash(\%keywords);
-print $keywords_fh MinimalPerfectHash::make_algo($second_level, $seed1,
-                                                 $length_all_keys, $smart_blob,
-                                                 $rows, undef, undef, undef,
-                                                 'match_uniprop' );
+print $keywords_fh "\n#if defined(PERL_CORE) || defined(PERL_EXT_RE_BUILD)\n\n";
+
+my $mph= MinimalPerfectHash->new(
+    source_hash => \%keywords,
+    match_name => "match_uniprop",
+    simple_split => $ENV{SIMPLE_SPLIT} // 0,
+    randomize_squeeze => $ENV{RANDOMIZE_SQUEEZE} // 1,
+    max_same_in_squeeze => $ENV{MAX_SAME} // 5,
+    srand_seed => (lc($ENV{SRAND_SEED}//"") eq "auto")
+                  ? undef
+                  : $ENV{SRAND_SEED} // 1785235451, # I let perl pick a number
+);
+$mph->make_mph_with_split_keys();
+print $keywords_fh $mph->make_algo();
+
+print $keywords_fh "\n#endif /* #if defined(PERL_CORE) || defined(PERL_EXT_RE_BUILD) */\n";
 
 push @sources, 'regen/mph.pl';
 read_only_bottom_close_and_rename($keywords_fh, \@sources);

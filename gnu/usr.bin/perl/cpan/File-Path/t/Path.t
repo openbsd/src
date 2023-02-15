@@ -3,7 +3,7 @@
 
 use strict;
 
-use Test::More tests => 165;
+use Test::More tests => 167;
 use Config;
 use Fcntl ':mode';
 use lib './t';
@@ -845,7 +845,18 @@ SKIP: {
     my ($least_deep, $next_deepest, $deepest) =
         create_3_level_subdirs( qw| b5wj8CJcc7gl XTJe2C3WGLg5 VZ_y2T0XfKu3 | );
     my (@created, $error);
+    my $warn;
+    local $SIG{__WARN__} = sub { $warn = shift };
     @created = mkpath($deepest, { mode => 0711, uid => $>, error => \$error });
+    SKIP: {
+        my $skip_count = 1;
+        skip "Warning should only appear on Windows", $skip_count
+            unless $^O eq 'MSWin32';
+        like($warn,
+            qr/Option\(s\) implausible on Win32 passed to mkpath\(\) or make_path\(\)/,
+            'make_path with final hashref warned due to options implausible on Win32'
+        );
+    }
     is(scalar(@created), 3, "Provide valid 'uid' argument: 3 subdirectories created");
 
     cleanup_3_level_subdirs($least_deep);
@@ -897,7 +908,18 @@ SKIP: {
     my ($least_deep, $next_deepest, $deepest) =
         create_3_level_subdirs( qw| BEcigvaBNisY rd4lJ1iZRyeS OyQnDPIBxP2K | );
     my (@created, $error);
+    my $warn;
+    local $SIG{__WARN__} = sub { $warn = shift };
     @created = mkpath($deepest, { mode => 0711, group => $(, error => \$error });
+    SKIP: {
+        my $skip_count = 1;
+        skip "Warning should only appear on Windows", $skip_count
+            unless $^O eq 'MSWin32';
+        like($warn,
+            qr/Option\(s\) implausible on Win32 passed to mkpath\(\) or make_path\(\)/,
+            'make_path with final hashref warned due to options implausible on Win32'
+        );
+    }
     is(scalar(@created), 3, "Provide valid 'group' argument: 3 subdirectories created");
 
     cleanup_3_level_subdirs($least_deep);

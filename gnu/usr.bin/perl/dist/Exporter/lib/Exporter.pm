@@ -1,16 +1,13 @@
 package Exporter;
 
-require 5.006;
-
-# Be lean.
-#use strict;
-#no strict 'refs';
+use strict;
+no strict 'refs';
 
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.74';
-our (%Cache);
+our $VERSION = '5.77';
+our %Cache;
 
 sub as_heavy {
   require Exporter::Heavy;
@@ -105,14 +102,20 @@ Exporter - Implements default import method for modules
 In module F<YourModule.pm>:
 
   package YourModule;
-  require Exporter;
-  our @ISA = qw(Exporter);
+  use Exporter 'import';
   our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
 or
 
   package YourModule;
-  use Exporter 'import'; # gives you Exporter's import() method directly
+  require Exporter;
+  our @ISA = qw(Exporter);  # inherit all of Exporter's methods
+  our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+
+or
+
+  package YourModule;
+  use parent 'Exporter';  # inherit all of Exporter's methods
   our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
 
 In other files which wish to use C<YourModule>:
@@ -146,8 +149,8 @@ symbols can represent functions, scalars, arrays, hashes, or typeglobs.
 The symbols must be given by full name with the exception that the
 ampersand in front of a function is optional, e.g.
 
-    our @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
-    our @EXPORT_OK = qw(&bfunc %hash *typeglob); # explicit prefix on &bfunc
+  our @EXPORT    = qw(afunc $scalar @array);   # afunc is a function
+  our @EXPORT_OK = qw(&bfunc %hash *typeglob); # explicit prefix on &bfunc
 
 If you are only exporting function names it is recommended to omit the
 ampersand, as the implementation is faster this way.
@@ -312,7 +315,7 @@ Note: Be careful not to modify C<@_> at all before you call export_to_level
 
 By including Exporter in your C<@ISA> you inherit an Exporter's import() method
 but you also inherit several other helper methods which you probably don't
-want.  To avoid this you can do:
+want and complicate the inheritance tree.  To avoid this you can do:
 
   package YourModule;
   use Exporter qw(import);
@@ -476,8 +479,8 @@ This may happen for instance with mutually recursive
 modules, which are affected by the time the relevant
 constructions are executed.
 
-The ideal (but a bit ugly) way to never have to think
-about that is to use C<BEGIN> blocks.  So the first part
+The ideal way to never have to think about that is to use
+C<BEGIN> blocks and the simple import method.  So the first part
 of the L</SYNOPSIS> code could be rewritten as:
 
   package YourModule;
@@ -485,16 +488,27 @@ of the L</SYNOPSIS> code could be rewritten as:
   use strict;
   use warnings;
 
-  our (@ISA, @EXPORT_OK);
+  use Exporter 'import';
   BEGIN {
-     require Exporter;
-     @ISA = qw(Exporter);
-     @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+    our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
+  }
+
+Or if you need to inherit from Exporter:
+
+  package YourModule;
+
+  use strict;
+  use warnings;
+
+  BEGIN {
+    require Exporter;
+    our @ISA = qw(Exporter);  # inherit all of Exporter's methods
+    our @EXPORT_OK = qw(munge frobnicate);  # symbols to export on request
   }
 
 The C<BEGIN> will assure that the loading of F<Exporter.pm>
 and the assignments to C<@ISA> and C<@EXPORT_OK> happen
-immediately, leaving no room for something to get awry
+immediately like C<use>, leaving no room for something to get awry
 or just plain wrong.
 
 With respect to loading C<Exporter> and inheriting, there
@@ -505,7 +519,7 @@ are alternatives with the use of modules like C<base> and C<parent>.
   use parent qw(Exporter);
 
 Any of these statements are nice replacements for
-C<BEGIN { require Exporter; @ISA = qw(Exporter); }>
+C<BEGIN { require Exporter; our @ISA = qw(Exporter); }>
 with the same compile-time effect.  The basic difference
 is that C<base> code interacts with declared C<fields>
 while C<parent> is a streamlined version of the older

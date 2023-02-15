@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # Test that accuracy() and precision() in BigInt/BigFloat do not disturb
 # the rounding force in BigRat.

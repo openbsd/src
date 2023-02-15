@@ -16,30 +16,8 @@
  * Edit those files and run 'make regen_headers' to effect changes.
  */
 
-/* (Doing namespace management portably in C is really gross.) */
-
-/*
-   The following combinations of MULTIPLICITY and PERL_IMPLICIT_CONTEXT
-   are supported:
-     1) none
-     2) MULTIPLICITY	# supported for compatibility
-     3) MULTIPLICITY && PERL_IMPLICIT_CONTEXT
-
-   All other combinations of these flags are errors.
-
-   only #3 is supported directly, while #2 is a special
-   case of #3 (supported by redefining vTHX appropriately).
-*/
-
 #if defined(MULTIPLICITY)
-/* cases 2 and 3 above */
-
-#  if defined(PERL_IMPLICIT_CONTEXT)
-#    define vTHX	aTHX
-#  else
-#    define vTHX	PERL_GET_INTERP
-#  endif
-
+#  define vTHX	aTHX
 #define PL_AboveLatin1		(vTHX->IAboveLatin1)
 #define PL_Assigned_invlist	(vTHX->IAssigned_invlist)
 #define PL_CCC_non0_non230	(vTHX->ICCC_non0_non230)
@@ -107,7 +85,6 @@
 #define PL_comppad_name_floor	(vTHX->Icomppad_name_floor)
 #define PL_constpadix		(vTHX->Iconstpadix)
 #define PL_cop_seqmax		(vTHX->Icop_seqmax)
-#define PL_cryptseen		(vTHX->Icryptseen)
 #define PL_curcop		(vTHX->Icurcop)
 #define PL_curcopdb		(vTHX->Icurcopdb)
 #define PL_curlocales		(vTHX->Icurlocales)
@@ -205,6 +182,7 @@
 #define PL_maxsysfd		(vTHX->Imaxsysfd)
 #define PL_mbrlen_ps		(vTHX->Imbrlen_ps)
 #define PL_mbrtowc_ps		(vTHX->Imbrtowc_ps)
+#define PL_mem_log		(vTHX->Imem_log)
 #define PL_memory_debug_header	(vTHX->Imemory_debug_header)
 #define PL_mess_sv		(vTHX->Imess_sv)
 #define PL_min_intro_pending	(vTHX->Imin_intro_pending)
@@ -255,6 +233,7 @@
 #define PL_phase		(vTHX->Iphase)
 #define PL_pidstatus		(vTHX->Ipidstatus)
 #define PL_preambleav		(vTHX->Ipreambleav)
+#define PL_prevailing_version	(vTHX->Iprevailing_version)
 #define PL_profiledata		(vTHX->Iprofiledata)
 #define PL_psig_name		(vTHX->Ipsig_name)
 #define PL_psig_pend		(vTHX->Ipsig_pend)
@@ -375,134 +354,5 @@
 #define PL_xsubfilename		(vTHX->Ixsubfilename)
 
 #endif	/* MULTIPLICITY */
-
-#if defined(PERL_GLOBAL_STRUCT)
-
-#define PL_C_locale_obj		(my_vars->GC_locale_obj)
-#define PL_GC_locale_obj	(my_vars->GC_locale_obj)
-#define PL_appctx		(my_vars->Gappctx)
-#define PL_Gappctx		(my_vars->Gappctx)
-#define PL_check		(my_vars->Gcheck)
-#define PL_Gcheck		(my_vars->Gcheck)
-#define PL_check_mutex		(my_vars->Gcheck_mutex)
-#define PL_Gcheck_mutex		(my_vars->Gcheck_mutex)
-#define PL_csighandler1p	(my_vars->Gcsighandler1p)
-#define PL_Gcsighandler1p	(my_vars->Gcsighandler1p)
-#define PL_csighandler3p	(my_vars->Gcsighandler3p)
-#define PL_Gcsighandler3p	(my_vars->Gcsighandler3p)
-#define PL_csighandlerp		(my_vars->Gcsighandlerp)
-#define PL_Gcsighandlerp	(my_vars->Gcsighandlerp)
-#define PL_curinterp		(my_vars->Gcurinterp)
-#define PL_Gcurinterp		(my_vars->Gcurinterp)
-#define PL_do_undump		(my_vars->Gdo_undump)
-#define PL_Gdo_undump		(my_vars->Gdo_undump)
-#define PL_dollarzero_mutex	(my_vars->Gdollarzero_mutex)
-#define PL_Gdollarzero_mutex	(my_vars->Gdollarzero_mutex)
-#define PL_env_mutex		(my_vars->Genv_mutex)
-#define PL_Genv_mutex		(my_vars->Genv_mutex)
-#define PL_fold_locale		(my_vars->Gfold_locale)
-#define PL_Gfold_locale		(my_vars->Gfold_locale)
-#define PL_hash_chars		(my_vars->Ghash_chars)
-#define PL_Ghash_chars		(my_vars->Ghash_chars)
-#define PL_hash_seed_set	(my_vars->Ghash_seed_set)
-#define PL_Ghash_seed_set	(my_vars->Ghash_seed_set)
-#define PL_hash_seed_w		(my_vars->Ghash_seed_w)
-#define PL_Ghash_seed_w		(my_vars->Ghash_seed_w)
-#define PL_hash_state_w		(my_vars->Ghash_state_w)
-#define PL_Ghash_state_w	(my_vars->Ghash_state_w)
-#define PL_hints_mutex		(my_vars->Ghints_mutex)
-#define PL_Ghints_mutex		(my_vars->Ghints_mutex)
-#define PL_keyword_plugin	(my_vars->Gkeyword_plugin)
-#define PL_Gkeyword_plugin	(my_vars->Gkeyword_plugin)
-#define PL_keyword_plugin_mutex	(my_vars->Gkeyword_plugin_mutex)
-#define PL_Gkeyword_plugin_mutex	(my_vars->Gkeyword_plugin_mutex)
-#define PL_lc_numeric_mutex	(my_vars->Glc_numeric_mutex)
-#define PL_Glc_numeric_mutex	(my_vars->Glc_numeric_mutex)
-#define PL_locale_mutex		(my_vars->Glocale_mutex)
-#define PL_Glocale_mutex	(my_vars->Glocale_mutex)
-#define PL_malloc_mutex		(my_vars->Gmalloc_mutex)
-#define PL_Gmalloc_mutex	(my_vars->Gmalloc_mutex)
-#define PL_mmap_page_size	(my_vars->Gmmap_page_size)
-#define PL_Gmmap_page_size	(my_vars->Gmmap_page_size)
-#define PL_my_ctx_mutex		(my_vars->Gmy_ctx_mutex)
-#define PL_Gmy_ctx_mutex	(my_vars->Gmy_ctx_mutex)
-#define PL_my_cxt_index		(my_vars->Gmy_cxt_index)
-#define PL_Gmy_cxt_index	(my_vars->Gmy_cxt_index)
-#define PL_my_cxt_keys		(my_vars->Gmy_cxt_keys)
-#define PL_Gmy_cxt_keys		(my_vars->Gmy_cxt_keys)
-#define PL_my_cxt_keys_size	(my_vars->Gmy_cxt_keys_size)
-#define PL_Gmy_cxt_keys_size	(my_vars->Gmy_cxt_keys_size)
-#define PL_op_mutex		(my_vars->Gop_mutex)
-#define PL_Gop_mutex		(my_vars->Gop_mutex)
-#define PL_op_seq		(my_vars->Gop_seq)
-#define PL_Gop_seq		(my_vars->Gop_seq)
-#define PL_op_sequence		(my_vars->Gop_sequence)
-#define PL_Gop_sequence		(my_vars->Gop_sequence)
-#define PL_perlio_debug_fd	(my_vars->Gperlio_debug_fd)
-#define PL_Gperlio_debug_fd	(my_vars->Gperlio_debug_fd)
-#define PL_perlio_fd_refcnt	(my_vars->Gperlio_fd_refcnt)
-#define PL_Gperlio_fd_refcnt	(my_vars->Gperlio_fd_refcnt)
-#define PL_perlio_fd_refcnt_size	(my_vars->Gperlio_fd_refcnt_size)
-#define PL_Gperlio_fd_refcnt_size	(my_vars->Gperlio_fd_refcnt_size)
-#define PL_perlio_mutex		(my_vars->Gperlio_mutex)
-#define PL_Gperlio_mutex	(my_vars->Gperlio_mutex)
-#ifdef __VMS
-#define PL_perllib_sep		(my_vars->Gperllib_sep)
-#define PL_Gperllib_sep		(my_vars->Gperllib_sep)
-#endif
-#define PL_ppaddr		(my_vars->Gppaddr)
-#define PL_Gppaddr		(my_vars->Gppaddr)
-#ifdef OS2
-#define PL_sh_path		(my_vars->Gsh_path)
-#define PL_Gsh_path		(my_vars->Gsh_path)
-#endif
-#define PL_sig_defaulting	(my_vars->Gsig_defaulting)
-#define PL_Gsig_defaulting	(my_vars->Gsig_defaulting)
-#define PL_sig_handlers_initted	(my_vars->Gsig_handlers_initted)
-#define PL_Gsig_handlers_initted	(my_vars->Gsig_handlers_initted)
-#define PL_sig_ignoring		(my_vars->Gsig_ignoring)
-#define PL_Gsig_ignoring	(my_vars->Gsig_ignoring)
-#define PL_sig_trapped		(my_vars->Gsig_trapped)
-#define PL_Gsig_trapped		(my_vars->Gsig_trapped)
-#define PL_sigfpe_saved		(my_vars->Gsigfpe_saved)
-#define PL_Gsigfpe_saved	(my_vars->Gsigfpe_saved)
-#define PL_strategy_accept	(my_vars->Gstrategy_accept)
-#define PL_Gstrategy_accept	(my_vars->Gstrategy_accept)
-#define PL_strategy_dup		(my_vars->Gstrategy_dup)
-#define PL_Gstrategy_dup	(my_vars->Gstrategy_dup)
-#define PL_strategy_dup2	(my_vars->Gstrategy_dup2)
-#define PL_Gstrategy_dup2	(my_vars->Gstrategy_dup2)
-#define PL_strategy_mkstemp	(my_vars->Gstrategy_mkstemp)
-#define PL_Gstrategy_mkstemp	(my_vars->Gstrategy_mkstemp)
-#define PL_strategy_open	(my_vars->Gstrategy_open)
-#define PL_Gstrategy_open	(my_vars->Gstrategy_open)
-#define PL_strategy_open3	(my_vars->Gstrategy_open3)
-#define PL_Gstrategy_open3	(my_vars->Gstrategy_open3)
-#define PL_strategy_pipe	(my_vars->Gstrategy_pipe)
-#define PL_Gstrategy_pipe	(my_vars->Gstrategy_pipe)
-#define PL_strategy_socket	(my_vars->Gstrategy_socket)
-#define PL_Gstrategy_socket	(my_vars->Gstrategy_socket)
-#define PL_strategy_socketpair	(my_vars->Gstrategy_socketpair)
-#define PL_Gstrategy_socketpair	(my_vars->Gstrategy_socketpair)
-#define PL_sv_placeholder	(my_vars->Gsv_placeholder)
-#define PL_Gsv_placeholder	(my_vars->Gsv_placeholder)
-#define PL_thr_key		(my_vars->Gthr_key)
-#define PL_Gthr_key		(my_vars->Gthr_key)
-#define PL_timesbase		(my_vars->Gtimesbase)
-#define PL_Gtimesbase		(my_vars->Gtimesbase)
-#define PL_use_safe_putenv	(my_vars->Guse_safe_putenv)
-#define PL_Guse_safe_putenv	(my_vars->Guse_safe_putenv)
-#define PL_user_def_props	(my_vars->Guser_def_props)
-#define PL_Guser_def_props	(my_vars->Guser_def_props)
-#define PL_user_def_props_aTHX	(my_vars->Guser_def_props_aTHX)
-#define PL_Guser_def_props_aTHX	(my_vars->Guser_def_props_aTHX)
-#define PL_user_prop_mutex	(my_vars->Guser_prop_mutex)
-#define PL_Guser_prop_mutex	(my_vars->Guser_prop_mutex)
-#define PL_veto_cleanup		(my_vars->Gveto_cleanup)
-#define PL_Gveto_cleanup	(my_vars->Gveto_cleanup)
-#define PL_watch_pvx		(my_vars->Gwatch_pvx)
-#define PL_Gwatch_pvx		(my_vars->Gwatch_pvx)
-
-#endif /* PERL_GLOBAL_STRUCT */
 
 /* ex: set ro: */

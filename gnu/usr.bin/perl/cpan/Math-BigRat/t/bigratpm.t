@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 905;
+use Test::More tests => 899;
 
 use Math::BigRat lib => 'Calc';
 

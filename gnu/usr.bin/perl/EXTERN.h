@@ -19,14 +19,14 @@
 #undef EXTCONST
 #undef dEXTCONST
 
-#  if (defined(WIN32) || defined(__SYMBIAN32__)) && !defined(PERL_STATIC_SYMS)
+#  if defined(WIN32) && !defined(PERL_STATIC_SYMS)
     /* miniperl should not export anything */
 #    if defined(PERL_IS_MINIPERL)
 #      define EXT extern
 #      define dEXT 
 #      define EXTCONST extern const
 #      define dEXTCONST const
-#    elif defined(PERLDLL) || defined(__SYMBIAN32__)
+#    elif defined(PERLDLL)
 #      define EXT EXTERN_C __declspec(dllexport)
 #      define dEXT 
 #      define EXTCONST EXTERN_C __declspec(dllexport) const

@@ -20,6 +20,9 @@ BEGIN {
     require Config; import Config;
     require './test.pl';
     skip_all_if_miniperl("No Scalar::Util under miniperl");
+    if (exists($Config{taint_support}) && !$Config{taint_support}) {
+        skip_all("built without taint support");
+    }
 }
 
 use strict;

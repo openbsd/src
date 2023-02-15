@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # Test bpi() and bexp()
 

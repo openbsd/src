@@ -19,13 +19,13 @@ BEGIN
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
 
-    my $VERSION = '2.093';
+    my $VERSION = '2.103';
     my @NAMES = qw(
-			
+
 			);
 
     my @OPT = qw(
-			
+
 			);
 
     plan tests => 1 + @NAMES + @OPT + $extra ;
@@ -43,15 +43,14 @@ BEGIN
         eval " require $name " ;
         if ($@)
         {
-            ok 1, "$name not available" 
+            ok 1, "$name not available"
         }
-        else  
+        else
         {
             my $ver = eval("\$${name}::VERSION");
-            is $ver, $VERSION, "$name version should be $VERSION" 
+            is $ver, $VERSION, "$name version should be $VERSION"
                 or diag "$name version is $ver, need $VERSION" ;
-        }         
+        }
     }
-    
-}
 
+}

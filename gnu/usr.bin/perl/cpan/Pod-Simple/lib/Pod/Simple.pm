@@ -8,6 +8,7 @@ use integer;
 use Pod::Escapes 1.04 ();
 use Pod::Simple::LinkSection ();
 use Pod::Simple::BlackBox ();
+use Pod::Simple::TiedOutFH;
 #use utf8;
 
 use vars qw(
@@ -18,11 +19,11 @@ use vars qw(
 );
 
 @ISA = ('Pod::Simple::BlackBox');
-$VERSION = '3.40';
+$VERSION = '3.43';
 
 @Known_formatting_codes = qw(I B C L E F S X Z); 
 %Known_formatting_codes = map(($_=>1), @Known_formatting_codes);
-@Known_directives       = qw(head1 head2 head3 head4 item over back); 
+@Known_directives       = qw(head1 head2 head3 head4 head5 head6 item over back); 
 %Known_directives       = map(($_=>'Plain'), @Known_directives);
 $NL = $/ unless defined $NL;
 
@@ -202,7 +203,6 @@ sub output_string {
   my $this = shift;
   return $this->{'output_string'} unless @_;  # GET.
   
-  require Pod::Simple::TiedOutFH;
   my $x = (defined($_[0]) and ref($_[0])) ? $_[0] : \( $_[0] );
   $$x = '' unless defined $$x;
   DEBUG > 4 and print STDERR "# Output string set to $x ($$x)\n";

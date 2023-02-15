@@ -12,7 +12,7 @@ use IO::Handle;
 use Exporter ();
 
 our @ISA = qw(Exporter);
-our $VERSION = "1.41";
+our $VERSION = "1.49";
 
 our @EXPORT = qw( POLLIN
 	      POLLOUT
@@ -197,7 +197,7 @@ L<poll(2)>, L<IO::Handle>, L<IO::Select>
 =head1 AUTHOR
 
 Graham Barr. Currently maintained by the Perl Porters.  Please report all
-bugs to <perlbug@perl.org>.
+bugs at L<https://github.com/Perl/perl5/issues>.
 
 =head1 COPYRIGHT
 

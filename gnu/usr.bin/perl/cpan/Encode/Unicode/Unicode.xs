@@ -1,5 +1,5 @@
 /*
- $Id: Unicode.xs,v 2.19 2019/01/21 03:09:59 dankogai Exp $
+ $Id: Unicode.xs,v 2.20 2021/07/23 02:26:54 dankogai Exp $
  */
 
 #define IN_UNICODE_XS
@@ -361,6 +361,10 @@ CODE:
     }
 
     if (!temp_result) shrink_buffer(result);
+
+    /* Make sure we have a trailing NUL: */
+    *SvEND(result) = '\0';
+
     if (SvTAINTED(str)) SvTAINTED_on(result); /* propagate taintedness */
     XSRETURN(1);
 }

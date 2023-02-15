@@ -31,7 +31,7 @@ our %opt = (
 );
 
 GetOptions(\%opt, qw( check! verbose yes install=s blead=s blead-version=s
-                      debug=i debug-start=s)) or die pod2usage();
+                      debug=i debug-start=s skip-devels)) or die pod2usage();
 
 identify();
 
@@ -41,7 +41,10 @@ unless (-e 'parts/embed.fnc' and -e 'parts/apidoc.fnc') {
 }
 
 if (! $opt{'yes'}) {
-    ask_or_quit("Are you SURE you have:\n1) updated parts/embed.fnc to latest blead?\n2) run devel/mkapidoc.pl to update parts/apidoc.fnc?\n3) run devel/mkppport_fnc.pl to update parts/ppport.fnc?\n");
+    ask_or_quit("Are you SURE you have:\n1) updated parts/embed.fnc to"
+              . "latest blead?\n2) run devel/mkapidoc.pl to update"
+              . " parts/apidoc.fnc?\n3) run devel/mkppport_fnc.pl to"
+              . "update parts/ppport.fnc?\n");
 }
 
 my $files_glob_pattern = '[12345789]*';
@@ -153,6 +156,7 @@ push @perlargs, "--debug=$opt{debug}" if $opt{debug};
 push @perlargs, "--install=$opt{install}" if $opt{install};
 push @perlargs, "--blead=$opt{blead}" if $opt{blead};
 push @perlargs, "--debug-start=$opt{'debug-start'}" if $opt{'debug-start'};
+push @perlargs, "--skip-devels" if $opt{'skip-devels'};
 
 my $T0 = time;
 my @args = ddverbose();
@@ -228,6 +232,7 @@ regenerate - Automatically regenerate Devel::PPPort's API information
   --verbose      show verbose output
   --yes          the answer to all the standard questions is 'yes',
                  can be used to nohup this.
+  --skip-devels  do not look at development-only releases
 
 =head1 COPYRIGHT
 

@@ -46,7 +46,7 @@ BEGIN {
                      lock_hash_recurse unlock_hash_recurse
                      lock_hashref_recurse unlock_hashref_recurse
                     );
-    plan tests => 244 + @Exported_Funcs;
+    plan tests => 250 + @Exported_Funcs;
     use_ok 'Hash::Util', @Exported_Funcs;
 }
 foreach my $func (@Exported_Funcs) {
@@ -597,7 +597,27 @@ ok(defined($hash_seed) && $hash_seed ne '', "hash_seed $hash_seed");
     my $h2= hash_value("bar");
     is( $h1, hash_value("foo") );
     is( $h2, hash_value("bar") );
+
+    my $seed= hash_seed();
+    my $h1s= hash_value("foo",$seed);
+    my $h2s= hash_value("bar",$seed);
+
+    is( $h1s, hash_value("foo",$seed) );
+    is( $h2s, hash_value("bar",$seed) );
+
+    $seed= join "", map { chr $_ } 1..length($seed);
+
+    my $h1s2= hash_value("foo",$seed);
+    my $h2s2= hash_value("bar",$seed);
+
+    is( $h1s2, hash_value("foo",$seed) );
+    is( $h2s2, hash_value("bar",$seed) );
+
+    isnt($h1s,$h1s2);
+    isnt($h1s,$h1s2);
+
 }
+
 {
     my @info1= bucket_info({});
     my @info2= bucket_info({1..10});

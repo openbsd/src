@@ -10,7 +10,7 @@ use XS::APItest;
 # clone_with_stack creates a clone of the perl interpreter including
 # the stack, then destroys the original interpreter and runs the
 # remaining code using the new one.
-# This is like doing a psuedo-fork and exiting the parent.
+# This is like doing a pseudo-fork and exiting the parent.
 
 use Config;
 if (not $Config{'useithreads'}) {

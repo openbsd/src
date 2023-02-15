@@ -7,10 +7,6 @@ BEGIN {
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    if (!$Config::Config{useperlio}) {
-        print "1..0 # Skip -- need perlio to walk the optree\n";
-        exit 0;
-    }
 }
 
 use OptreeCheck;

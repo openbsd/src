@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlintro -- a brief introduction and overview of Perl
+perlintro - a brief introduction and overview of Perl
 
 =head1 DESCRIPTION
 
@@ -77,7 +77,7 @@ to be executable first, so C<chmod 755 script.pl> (under Unix).
 directly the path to your perl executable, like in C<#!/usr/bin/perl>).
 
 For more information, including instructions for other platforms such as
-Windows and Mac OS, read L<perlrun>.
+Windows, read L<perlrun>.
 
 =head2 Safety net
 
@@ -93,8 +93,21 @@ problems in your code.  They check different things so you need both.  A
 potential problem caught by C<use strict;> will cause your code to stop
 immediately when it is encountered, while C<use warnings;> will merely
 give a warning (like the command-line switch B<-w>) and let your code run.
-To read more about them check their respective manual pages at L<strict>
+To read more about them, check their respective manual pages at L<strict>
 and L<warnings>.
+
+A C<L<use v5.35|perlfunc/use VERSION>> (or higher) declaration will
+enable both C<strict> and C<warnings>:
+
+  #!/usr/bin/perl
+  use v5.35;
+
+In addition to enabling the C<strict> and C<warnings> pragmata, this
+declaration will also activate a
+L<"feature bundle"|feature/FEATURE BUNDLES>; a collection of named
+features that enable many of the more recent additions and changes to the
+language, as well as occasionally removing older features found to have
+been mistakes in design and discouraged.
 
 =head2 Basic syntax overview
 
@@ -161,9 +174,8 @@ A scalar represents a single value:
  my $answer = 42;
 
 Scalar values can be strings, integers or floating point numbers, and Perl
-will automatically convert between them as required.  There is no need
-to pre-declare your variable types, but you have to declare them using
-the C<my> keyword the first time you use them.  (This is one of the
+will automatically convert between them as required.  You have to declare
+them using the C<my> keyword the first time you use them.  (This is one of the
 requirements of C<use strict;>.)
 
 Scalar values can be used in various ways:
@@ -172,8 +184,8 @@ Scalar values can be used in various ways:
  print "The animal is $animal\n";
  print "The square of $answer is ", $answer * $answer, "\n";
 
-There are a number of "magic" scalars with names that look like
-punctuation or line noise.  These special variables are used for all
+Perl defines a number of special scalars with short names, often single
+punctuation marks or digits. These variables are used for all
 kinds of purposes, and are documented in L<perlvar>.  The only one you
 need to know about for now is C<$_> which is the "default variable".
 It's used as the default argument to a number of functions in Perl, and
@@ -326,9 +338,7 @@ running the program.  Using C<strict> is highly recommended.
 
 =head2 Conditional and looping constructs
 
-Perl has most of the usual conditional and looping constructs.  As of Perl
-5.10, it even has a case/switch statement (spelled C<given>/C<when>).  See
-L<perlsyn/"Switch Statements"> for more details.
+Perl has most of the usual conditional and looping constructs.
 
 The conditions can be any Perl expression.  See the list of operators in
 the next section for information on comparison and boolean logic operators,

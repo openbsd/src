@@ -59,6 +59,5 @@ RX_SUBOFFSET                   # Z added by devel/scanprov
 SAWAMPERSAND_LEFT              # Z added by devel/scanprov
 SAWAMPERSAND_MIDDLE            # Z added by devel/scanprov
 SAWAMPERSAND_RIGHT             # Z added by devel/scanprov
-sv_len_utf8_nomg               # F added by devel/scanprov
 UTF8_IS_ABOVE_LATIN1           # Z added by devel/scanprov
 WARN_EXPERIMENTAL              # E

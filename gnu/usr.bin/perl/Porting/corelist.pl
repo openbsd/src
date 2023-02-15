@@ -69,10 +69,10 @@ if ($cpan) {
         warn "Reading the module list from $modlistfile.gz";
         open $fh, '-|', "$zcat $modlistfile.gz";
     } else {
-        warn "About to fetch 02packages from ftp.funet.fi. This may take a few minutes\n";
-	my $gzipped_content = fetch_url('http://ftp.funet.fi/pub/CPAN/modules/02packages.details.txt.gz');
+        warn "About to fetch 02packages from www.cpan.org. This may take a few minutes\n";
+	my $gzipped_content = fetch_url('http://www.cpan.org/modules/02packages.details.txt.gz');
 	unless ($gzipped_content) {
-            die "Unable to read 02packages.details.txt from either your CPAN mirror or ftp.funet.fi";
+            die "Unable to read 02packages.details.txt from either your CPAN mirror or www.cpan.org";
         }
 	IO::Uncompress::Gunzip::gunzip(\$gzipped_content, \$content, Transparent => 0)
 	    or die "Can't gunzip content: $IO::Uncompress::Gunzip::GunzipError";
@@ -96,6 +96,12 @@ if ($cpan) {
 
 find(
     sub {
+        if (-d) {
+          my @parts = File::Spec->splitdir($File::Find::name);
+          # be careful not to skip inc::latest
+          return $File::Find::prune = 1 if @parts == 3 and ($parts[-1] eq 'inc' or $parts[-1] eq 't');
+        }
+
         /(\.pm|_pm\.PL)$/ or return;
         /PPPort\.pm$/ and return;
         my $module = $File::Find::name;
@@ -105,7 +111,7 @@ find(
         $version =~ /\d/ and $version = "'$version'";
 
         # some heuristics to figure out the module name from the file name
-        $module =~ s{^(lib|cpan|dist|(?:symbian/)?ext|os2/OS2)/}{}
+        $module =~ s{^(lib|cpan|dist|ext|os2/OS2)/}{}
 			and $1 ne 'lib'
             and (
             $module =~ s{\b(\w+)/\1\b}{$1},
@@ -130,7 +136,6 @@ find(
         $module_to_file{$module} = $File::Find::name;
     },
     'os2/OS2',
-    'symbian/ext',
     'lib',
     'ext',
 	'cpan',
@@ -216,7 +221,7 @@ while ( my ( $module, $file ) = each %module_to_file ) {
     my $meta_YAML_path = "authors/id/$dist";
     $meta_YAML_path =~ s/(?:tar\.gz|tar\.bz2|zip|tgz)$/meta/
 	or die "ERROR: bad meta YAML path: '$meta_YAML_path'";
-    my $meta_YAML_url = 'http://ftp.funet.fi/pub/CPAN/' . $meta_YAML_path;
+    my $meta_YAML_url = 'http://www.cpan.org/' . $meta_YAML_path;
 
     if ( -e "$cpan/$meta_YAML_path" ) {
         $dist_to_meta_YAML{$dist} = parse_cpan_meta(slurp_utf8( $cpan . "/" . $meta_YAML_path ));

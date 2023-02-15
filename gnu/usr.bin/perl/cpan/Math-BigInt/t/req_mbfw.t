@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 # check that requiring Math::BigFloat and then calling import() works
 

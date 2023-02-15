@@ -16,7 +16,7 @@ Perl has special debugging hooks at compile-time and run-time used
 to create debugging environments.  These hooks are not to be confused
 with the I<perl -Dxxx> command described in L<perlrun|perlrun/-Dletters>,
 which is usable only if a special Perl is built per the instructions in
-the F<INSTALL> podpage in the Perl source tree.
+the F<INSTALL> file in the Perl source tree.
 
 For example, whenever you call Perl's built-in C<caller> function
 from the package C<DB>, the arguments that the corresponding stack
@@ -56,9 +56,9 @@ looks like C<(eval 34)>.
 
 =item *
 
-Each scalar C<${"_<$filename"}> contains C<"_<$filename">.  This is
+Each scalar C<${"_<$filename"}> contains C<$filename>.  This is
 also the case for evaluated strings that contain subroutines, or
-which are currently being executed.  The $filename for C<eval>ed
+which are currently being executed.  The C<$filename> for C<eval>ed
 strings looks like C<(eval 34)>.
 
 =item *
@@ -686,20 +686,20 @@ will be lost.
                              (string folded)
 
  EXACTFAA         str        Like EXACT, but match using /iaa rules;
-                             (string folded except in non-UTF8 patterns:
-                             MICRO, SHARP S; folded length <= unfolded)
+                             (string folded except MICRO in non-UTF8
+                             patterns; doesn't contain SHARP S unless
+                             UTF-8; folded length <= unfolded)
+ EXACTFAA_NO_TRIE str        Like EXACTFAA, (string not UTF-8, folded
+                             except: MICRO, SHARP S; folded length <=
+                             unfolded, not currently trie-able)
 
  EXACTFUP         str        Like EXACT, but match using /iu rules;
-                             (string not UTF-8, folded except MICRO,
-                             SHARP S: hence Problematic)
+                             (string not UTF-8, folded except MICRO:
+                             hence Problematic)
 
  EXACTFLU8        str        Like EXACTFU, but use /il, UTF-8, (string
                              is folded, and everything in it is above
                              255
- EXACTFAA_NO_TRIE str        Like EXACT, but match using /iaa rules
-                             (string not UTF-8, not guaranteed to be
-                             folded, not currently trie-able)
-
  EXACT_REQ8       str        Like EXACT, but only UTF-8 encoded targets
                              can match
  LEXACT_REQ8      len:str 1  Like LEXACT, but only UTF-8 encoded targets
@@ -710,6 +710,24 @@ will be lost.
  EXACTFU_S_EDGE   str        /di rules, but nothing in it precludes /ui,
                              except begins and/or ends with [Ss];
                              (string not UTF-8; compile-time only)
+
+ # New charclass like patterns
+ LNBREAK          none       generic newline pattern
+
+ # Trie Related
+
+ # Behave the same as A|LIST|OF|WORDS would. The '..C' variants
+ # have inline charclass data (ascii only), the 'C' store it in the
+ # structure.
+
+ TRIE             trie 1     Match many EXACT(F[ALU]?)? at once.
+                             flags==type
+ TRIEC            trie       Same as TRIE, but with embedded charclass
+                  charclass  data
+
+ AHOCORASICK      trie 1     Aho Corasick stclass. flags==type
+ AHOCORASICKC     trie       Same as AHOCORASICK, but with embedded
+                  charclass  charclass data
 
  # Do nothing types
 
@@ -797,21 +815,6 @@ will be lost.
  # This is not used yet
  RENUM            off 1 1    Group with independently numbered parens.
 
- # Trie Related
-
- # Behave the same as A|LIST|OF|WORDS would. The '..C' variants
- # have inline charclass data (ascii only), the 'C' store it in the
- # structure.
-
- TRIE             trie 1     Match many EXACT(F[ALU]?)? at once.
-                             flags==type
- TRIEC            trie       Same as TRIE, but with embedded charclass
-                  charclass  data
-
- AHOCORASICK      trie 1     Aho Corasick stclass. flags==type
- AHOCORASICKC     trie       Same as AHOCORASICK, but with embedded
-                  charclass  charclass data
-
  # Regex Subroutines
  GOSUB            num/ofs 2L recurse to paren arg1 at (signed) ofs arg2
 
@@ -842,8 +845,9 @@ will be lost.
  # Control what to keep in $&.
  KEEPS            no         $& begins here.
 
- # New charclass like patterns
- LNBREAK          none       generic newline pattern
+ # Validate that lookbehind IFMATCH and UNLESSM end at the right place
+ LOOKBEHIND_END   no         Return from lookbehind (IFMATCH/UNLESSM)
+                             and validate position
 
  # SPECIAL  REGOPS
 
@@ -1089,8 +1093,9 @@ never touched.
 =head1 SEE ALSO
 
 L<perldebug>,
+L<perl5db.pl>,
 L<perlguts>,
-L<perlrun>
+L<perlrun>,
 L<re>,
 and
 L<Devel::DProf>.

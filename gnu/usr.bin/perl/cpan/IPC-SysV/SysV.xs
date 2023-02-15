@@ -12,9 +12,11 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#define NEED_sv_2pv_flags
-#define NEED_sv_pvn_force_flags
-#include "ppport.h"
+#ifndef NO_PPPORT_H
+#  define NEED_sv_2pv_flags
+#  define NEED_sv_pvn_force_flags
+#  include "ppport.h"
+#endif
 
 #include <sys/types.h>
 
@@ -346,8 +348,8 @@ void
 memread(addr, sv, pos, size)
     SV *addr
     SV *sv
-    int pos
-    int size
+    UV pos
+    UV size
   CODE:
     char *caddr = (char *) sv2addr(addr);
     char *dst;
@@ -371,13 +373,13 @@ void
 memwrite(addr, sv, pos, size)
     SV *addr
     SV *sv
-    int pos
-    int size
+    UV pos
+    UV size
   CODE:
     char *caddr = (char *) sv2addr(addr);
     STRLEN len;
     const char *src = SvPV_const(sv, len);
-    int n = ((int) len > size) ? size : (int) len;
+    unsigned int n = ((unsigned int) len > size) ? size : (unsigned int) len;
     Copy(src, caddr + pos, n, char);
     if (n < size)
     {

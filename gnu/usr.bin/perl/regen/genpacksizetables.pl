@@ -125,4 +125,4 @@ Q			Uquad_t	IVSIZE >= 8
 f			float
 d			double
 F			=NVSIZE
-D			=LONG_DOUBLESIZE	defined(HAS_LONG_DOUBLE) && defined(USE_LONG_DOUBLE)
+D			=LONG_DOUBLESIZE	defined(HAS_LONG_DOUBLE)

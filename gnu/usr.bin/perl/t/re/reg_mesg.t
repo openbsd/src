@@ -14,6 +14,12 @@ skip_all_without_unicode_tables();
 use strict;
 use open qw(:utf8 :std);
 
+# Show that it works when all warnings are enabled upon invocation.  This file
+# includes tests that the default warnings are enabled by default, and the
+# non-default ones aren't.
+use warnings;
+BEGIN { ${^WARNING_BITS} = undef }  # Kludge to restore default warnings
+
 # Kind of a kludge to mark warnings to be expected only if we are testing
 # under "use re 'strict'"
 my $only_strict_marker = ':expected_only_under_strict';
@@ -130,7 +136,13 @@ my @death =
 
  '/(?<= .*)/' =>  'Lookbehind longer than 255 not implemented in regex m/(?<= .*)/',
 
+ '/(?<= a+)/' =>  'Lookbehind longer than 255 not implemented in regex m/(?<= a+)/',
+ '/(?<= a{255})/' =>  'Lookbehind longer than 255 not implemented in regex m/(?<= a{255})/',
+ '/(?<= a{0,255})/' =>  'Lookbehind longer than 255 not implemented in regex m/(?<= a{0,255})/',
+ '/(?<= a{200}b{55})/' =>  'Lookbehind longer than 255 not implemented in regex m/(?<= a{200}b{55})/',
+
  '/(?<= x{1000})/' => 'Lookbehind longer than 255 not implemented in regex m/(?<= x{1000})/',
+ '/(?<= (?&x))(?<x>x+)/' => 'Lookbehind longer than 255 not implemented in regex m/(?<= (?&x))(?<x>x+)/',
 
  '/(?@)/' => 'Sequence (?@...) not implemented {#} m/(?@{#})/',
 
@@ -174,7 +186,10 @@ my @death =
  '/((x)/' => 'Unmatched ( {#} m/({#}(x)/',
  '/{(}/' => 'Unmatched ( {#} m/{({#}}/',    # [perl #127599]
 
- "/x{$inf_p1}/" => "Quantifier in {,} bigger than $inf_m1 {#} m/x{{#}$inf_p1}/",
+ "/x{$inf_p1}/" => "Quantifier in {,} bigger than $inf_m1 {#} m/x{$inf_p1\{#}}/",
+ "/x{$inf_p1,}/" => "Quantifier in {,} bigger than $inf_m1 {#} m/x{$inf_p1\{#},}/",
+ "/x{01,2}/" => "Invalid quantifier in {,} {#} m/x{01{#},2}/",
+ "/x{1,02}/" => "Invalid quantifier in {,} {#} m/x{1,02{#}}/",
 
 
  '/x**/' => 'Nested quantifiers {#} m/x**{#}/',
@@ -191,20 +206,22 @@ my @death =
 
  '/\g/' => 'Unterminated \g... pattern {#} m/\g{#}/',
  '/\g{1/' => 'Unterminated \g{...} pattern {#} m/\g{1{#}/',
+ '/\g{-abc}/' => 'Group name must start with a non-digit word character {#} m/\g{-{#}abc}/',
+ '/(?<;x/' => 'Group name must start with a non-digit word character {#} m/(?<;{#}x/',
 
  'my $m = "\\\"; $m =~ $m', => 'Trailing \ in regex m/\/',
 
- '/\x{1/' => 'Missing right brace on \x{} {#} m/\x{1{#}/',
+ '/\x{ 1 /' => 'Missing right brace on \x{} {#} m/\x{ 1{#} /',
  '/\x{X/' => 'Missing right brace on \x{} {#} m/\x{{#}X/',
 
  '/[\x{X]/' => 'Missing right brace on \x{} {#} m/[\x{{#}X]/',
- '/[\x{A]/' => 'Missing right brace on \x{} {#} m/[\x{A{#}]/',
+ '/[\x{ A ]/' => 'Missing right brace on \x{} {#} m/[\x{ A{#} ]/',
 
- '/\o{1/' => 'Missing right brace on \o{} {#} m/\o{1{#}/',
- '/\o{X/' => 'Missing right brace on \o{} {#} m/\o{{#}X/',
+ '/\o{ 1 /' => 'Missing right brace on \o{} {#} m/\o{ 1{#} /',
+ '/\o{X/'   => 'Missing right brace on \o{} {#} m/\o{{#}X/',
 
  '/[\o{X]/' => 'Missing right brace on \o{} {#} m/[\o{{#}X]/',
- '/[\o{7]/' => 'Missing right brace on \o{} {#} m/[\o{7{#}]/',
+ '/[\o{ 7 ]/' => 'Missing right brace on \o{} {#} m/[\o{ 7{#} ]/',
 
  '/[[:barf:]]/' => 'POSIX class [:barf:] unknown {#} m/[[:barf:]{#}]/',
 
@@ -263,6 +280,7 @@ my @death =
  'm/(?[[^\N{LATIN CAPITAL LETTER A WITH MACRON AND GRAVE}]])/' => '\N{} here is restricted to one character {#} m/(?[[^\N{U+100.300{#}}]])/',
  'm/(?[ \p{Digit} & (?^(?[ \p{Thai} | \p{Lao} ]))])/' => 'Sequence (?^(...) not recognized {#} m/(?[ \p{Digit} & (?^({#}?[ \p{Thai} | \p{Lao} ]))])/',
  'm/(?[ \p{Digit} & (?(?[ \p{Thai} | \p{Lao} ]))])/' => 'Unexpected character {#} m/(?[ \p{Digit} & (?{#}(?[ \p{Thai} | \p{Lao} ]))])/',
+ 'm/\p{Is_Is_Any}/' => 'Unknown user-defined property name \p{main::Is_Is_Any}',
  'm/\o{/' => 'Missing right brace on \o{} {#} m/\o{{#}/',
  'm/\o/' => 'Missing braces on \o{} {#} m/\o{#}/',
  'm/\o{}/' => 'Empty \o{} {#} m/\o{}{#}/',
@@ -306,10 +324,10 @@ my @death =
  '/\w{/' => 'Unescaped left brace in regex is illegal here {#} m/\w{{#}/',
  '/\q{/' => 'Unescaped left brace in regex is illegal here {#} m/\q{{#}/',
  '/\A{/' => 'Unescaped left brace in regex is illegal here {#} m/\A{{#}/',
- '/.{, 4 }/' => 'Unescaped left brace in regex is illegal here {#} m/.{{#}, 4 }/',
- '/[x]{, 4}/'       => 'Unescaped left brace in regex is illegal here {#} m/[x]{{#}, 4}/',
- '/\p{Latin}{,4 }/' => 'Unescaped left brace in regex is illegal here {#} m/\p{Latin}{{#},4 }/',
- '/(?<=/' => 'Sequence (?... not terminated {#} m/(?<={#}/',                        # [perl #128170]
+ '/(?<=/' => 'Sequence (?<=... not terminated {#} m/(?<={#}/',                        # [perl #128170]
+ '/(?<!/' => 'Sequence (?<!... not terminated {#} m/(?<!{#}/',
+ '/(?!/' => 'Sequence (?!... not terminated {#} m/(?!{#}/',
+ '/(?=/' => 'Sequence (?=... not terminated {#} m/(?={#}/',
  '/\p{vertical  tab}/' => 'Can\'t find Unicode property definition "vertical  tab" {#} m/\\p{vertical  tab}{#}/', # [perl #132055]
  "/$bug133423/" => "Unexpected ']' with no following ')' in (?[... {#} m/(?[(?^:(?[\\ ]))\\]{#} |2[^^]\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80])R.\\670/",
  '/[^/' => 'Unmatched [ {#} m/[{#}^/', # [perl #133767]
@@ -332,6 +350,8 @@ my @death =
  '/\p{gc=:[\pS]:}/' => 'Use of \'\\pS\' is not allowed in Unicode property wildcard subpatterns {#} m/[\\pS{#}]/',
  '/\p{gc=:[\PS]:}/' => 'Use of \'\\PS\' is not allowed in Unicode property wildcard subpatterns {#} m/[\\PS{#}]/',
  '/(?[\p{name=KATAKANA LETTER AINU P}])/' => 'Unicode string properties are not implemented in (?[...]) {#} m/(?[\p{name=KATAKANA LETTER AINU P}{#}])/',
+ '/(?[ (?^x:(?[ ])) ])/' => 'Incomplete expression within \'(?[ ])\' {#} m/(?[ (?^x:(?[ {#}])) ])/',
+ '/(?[ (?x:(?[ ])) ])/'  => 'Incomplete expression within \'(?[ ])\' {#} m/(?[ (?x:(?[ {#}])) ])/', # GH #16779
 );
 
 # These are messages that are death under 'use re "strict"', and may or may
@@ -427,6 +447,10 @@ my @death_only_under_strict = (
                    => 'Unescaped left brace in regex is illegal here {#} m/\p{Latin}{{#}/',
     '/\x{100}\x/'  => "",
                    => "Empty \\x {#} m/\\x{100}\\x{#}/",
+    '/\o{ 1 20 }/' => 'Non-octal character \' \' terminates \o early.  Resolved as "\o{001}" {#} m/\o{ 1 20 }{#}/',
+                   => 'Non-octal character {#} m/\\o{ 1 {#}20 }/',
+    '/\x{ 5 0 }/'  => 'Non-hex character \' \' terminates \x early.  Resolved as "\x{05}" {#} m/\x{ 5 0 }{#}/',
+                   => 'Non-hex character {#} m/\\x{ 5 {#}0 }/',
 );
 
 # These need the character 'ネ' as a marker for mark_as_utf8()
@@ -455,7 +479,10 @@ my @death_utf8 = mark_as_utf8(
 
  '/ネ((ネ)/' => 'Unmatched ( {#} m/ネ({#}(ネ)/',
 
- "/ネ{$inf_p1}ネ/" => "Quantifier in {,} bigger than $inf_m1 {#} m/ネ{{#}$inf_p1}ネ/",
+ "/ネ{$inf_p1}ネ/" => "Quantifier in {,} bigger than $inf_m1 {#} m/ネ{$inf_p1\{#}}ネ/",
+ "/ネ{$inf_p1,}ネ/" => "Quantifier in {,} bigger than $inf_m1 {#} m/ネ{$inf_p1\{#},}ネ/",
+ "/ネ{01}ネ/" => "Invalid quantifier in {,} {#} m/ネ{01{#}}ネ/",
+ "/ネ{1,02}ネ/" => "Invalid quantifier in {,} {#} m/ネ{1,02{#}}ネ/",
 
 
  '/ネ**ネ/' => 'Nested quantifiers {#} m/ネ**{#}ネ/',
@@ -703,16 +730,34 @@ my @warning_utf8_only_under_strict = mark_as_utf8(
 
 push @warning_only_under_strict, @warning_utf8_only_under_strict;
 
-my @experimental_regex_sets = (
-    '/(?[ \t ])/' => 'The regex_sets feature is experimental {#} m/(?[{#} \t ])/',
-    'use utf8; /utf8 ネ (?[ [\tネ] ])/' => do { use utf8; 'The regex_sets feature is experimental {#} m/utf8 ネ (?[{#} [\tネ] ])/' },
-    '/noutf8 ネ (?[ [\tネ] ])/' => 'The regex_sets feature is experimental {#} m/noutf8 ネ (?[{#} [\tネ] ])/',
+my @experimental_vlb = (
+    '/(?<=(p|qq|rrr))/' => 'Variable length positive lookbehind with capturing' .
+                           ' is experimental {#} m/(?<=(p|qq|rrr)){#}/',
+    '/(?<!(p|qq|rrr))/' => 'Variable length negative lookbehind with capturing' .
+                           ' is experimental {#} m/(?<!(p|qq|rrr)){#}/',
+    '/(?| (?=(foo)) | (?<=(foo)|p) )/'
+            => 'Variable length positive lookbehind with capturing' .
+               ' is experimental {#} m/(?| (?=(foo)) | (?<=(foo)|p) ){#}/',
+    '/(?| (?=(foo)) | (?<=(foo)|p) )/x'
+            => 'Variable length positive lookbehind with capturing' .
+               ' is experimental {#} m/(?| (?=(foo)) | (?<=(foo)|p) ){#}/',
+    '/(?| (?=(foo)) | (?<!(foo)|p) )/'
+            => 'Variable length negative lookbehind with capturing' .
+               ' is experimental {#} m/(?| (?=(foo)) | (?<!(foo)|p) ){#}/',
+    '/(?| (?=(foo)) | (?<!(foo)|p) )/x'
+            => 'Variable length negative lookbehind with capturing' .
+               ' is experimental {#} m/(?| (?=(foo)) | (?<!(foo)|p) ){#}/',
+    '/(?<!(foo|bop(*ACCEPT)|bar)baz)/'
+            => 'Variable length negative lookbehind with capturing' .
+               ' is experimental {#} m/(?<!(foo|bop(*ACCEPT)|bar)baz){#}/',
+    '/(?<=(foo|bop(*ACCEPT)|bar)baz)/'
+            => 'Variable length positive lookbehind with capturing' .
+               ' is experimental {#} m/(?<=(foo|bop(*ACCEPT)|bar)baz){#}/',
 );
 
 my @wildcard = (
     'm!(?[\p{name=/KATAKANA/}])$!' =>
     [
-     'The regex_sets feature is experimental {#} m/(?[{#}\p{name=/KATAKANA/}])$/',
      'The Unicode property wildcards feature is experimental',
      'Using just the single character results returned by \p{} in (?[...]) {#} m/(?[\p{name=/KATAKANA/}{#}])$/'
     ], # [GH #17732] Null pointer deref
@@ -751,7 +796,6 @@ for my $strict ("", "use re 'strict';") {
             fail("$0: Internal error: '$death[$i]' should have an error message");
         }
         else {
-            no warnings 'experimental::regex_sets';
             no warnings 'experimental::re_strict';
             no warnings 'experimental::uniprop_wildcards';
 
@@ -805,29 +849,28 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
         }
     }
 
-    foreach my $ref (\@warning_tests,
-                     \@experimental_regex_sets,
-                     \@wildcard,
-                     \@deprecated)
-    {
+    foreach my $ref (
+        \@warning_tests,
+        \@wildcard,
+        \@deprecated,
+        \@experimental_vlb,
+    ){
         my $warning_type;
-        my $turn_off_warnings = "";
         my $default_on;
         if ($ref == \@warning_tests) {
             $warning_type = 'regexp, digit';
-            $turn_off_warnings = "no warnings 'experimental::regex_sets';";
             $default_on = $strict;
         }
         elsif ($ref == \@deprecated) {
             $warning_type = 'regexp, deprecated';
             $default_on = 1;
         }
-        elsif ($ref == \@experimental_regex_sets) {
-            $warning_type = 'experimental::regex_sets';
+        elsif ($ref == \@wildcard) {
+            $warning_type = 'experimental::uniprop_wildcards';
             $default_on = 1;
         }
-        elsif ($ref == \@wildcard) {
-            $warning_type = 'experimental::regex_sets, experimental::uniprop_wildcards';
+        elsif ($ref == \@experimental_vlb) {
+            $warning_type = 'experimental::vlb';
             $default_on = 1;
         }
         else {
@@ -855,7 +898,7 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
             if (is($@, "", "$strict $regex did not die")) {
                 my @got = capture_warnings(sub {
                                         $_ = "x";
-                                        eval "$strict $turn_off_warnings $regex" });
+                                        eval "$strict $regex" });
                 my $count = @expect;
                 if (! is(scalar @got, scalar @expect,
                             "... and gave expected number ($count) of warnings"))
@@ -879,7 +922,9 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                         diag("GOT\n'$got[$i]'\nEXPECT\n'$expect[$i]'");
                     }
                     else {
-                        ok (0 == capture_warnings(sub {
+                            # Turning off this type of warning should make the
+                            # count go down by at least 1.
+                        ok ($count - 1 >= capture_warnings(sub {
                             $_ = "x";
                             eval "$strict no warnings '$warning_type'; $regex;" }
                            ),
@@ -889,11 +934,16 @@ for my $strict ("",  "no warnings 'experimental::re_strict'; use re 'strict';") 
                         # correct.  This test relies on the fact that we
                         # are outside the scope of any ‘use warnings’.
                         local $^W;
-                        my @warns = capture_warnings(sub { $_ = "x";
-                                                        eval "$strict $regex" });
+                        my @warns = capture_warnings(sub {
+                                            $_ = "x";
+                                            eval "$strict $regex"
+                                            });
                         # Warning should be on as well if is testing
                         # '(?[...])' which turns on strict
-                        if ($this_default_on || grep { $_ =~ /\Q(?[/ } @expect ) {
+                        if (   $this_default_on
+                            || (    grep { $_ =~ /\Q(?[/ } @expect
+                                and $ref != \@warning_tests))
+                        {
                            ok @warns > 0, "... and the warning is on by default";
                         }
                         elsif (! (ok @warns == 0,

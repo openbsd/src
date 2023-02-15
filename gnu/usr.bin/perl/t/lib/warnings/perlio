@@ -56,17 +56,3 @@ close F;
 END { 1 while unlink "bb" } # KEEP THIS WITH THE LAST TEST.
 EXPECT
 Unknown PerlIO layer "xyz" at - line 5.
-########
-# NAME :win32 experimental warning
-# SKIP ?$^O ne "MSWin32" && ":win32 only available on Win32"
-open my $fh, ">:win32", "temp.txt" or die $^E;
-END { unlink "temp.txt"; }
-EXPECT
-PerlIO layer ':win32' is experimental at - line 1.
-########
-# NAME :win32 experimental warning disabled
-# SKIP ?$^O ne "MSWin32" && ":win32 only available on Win32"
-no warnings "experimental::win32_perlio";
-open my $fh, ">:win32", "temp.txt" or die $^E;
-END { unlink "temp.txt"; }
-EXPECT

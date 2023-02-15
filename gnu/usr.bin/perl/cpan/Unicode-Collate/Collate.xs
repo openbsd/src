@@ -58,11 +58,15 @@
 #define CJK_UidF61    (0x9FCC) /* Unicode 6.1 */
 #define CJK_UidF80    (0x9FD5) /* Unicode 8.0 */
 #define CJK_UidF100   (0x9FEA) /* Unicode 10.0 */
+#define CJK_UidF110   (0x9FEF) /* Unicode 11.0 */
+#define CJK_UidF130   (0x9FFC) /* Unicode 13.0 */
 
 #define CJK_ExtAIni   (0x3400) /* Unicode 3.0 */
 #define CJK_ExtAFin   (0x4DB5) /* Unicode 3.0 */
+#define CJK_ExtA130   (0x4DBF) /* Unicode 13.0 */
 #define CJK_ExtBIni  (0x20000) /* Unicode 3.1 */
 #define CJK_ExtBFin  (0x2A6D6) /* Unicode 3.1 */
+#define CJK_ExtB130  (0x2A6DD) /* Unicode 13.0 */
 #define CJK_ExtCIni  (0x2A700) /* Unicode 5.2 */
 #define CJK_ExtCFin  (0x2B734) /* Unicode 5.2 */
 #define CJK_ExtDIni  (0x2B740) /* Unicode 6.0 */
@@ -71,6 +75,8 @@
 #define CJK_ExtEFin  (0x2CEA1) /* Unicode 8.0 */
 #define CJK_ExtFIni  (0x2CEB0) /* Unicode 10.0 */
 #define CJK_ExtFFin  (0x2EBE0) /* Unicode 10.0 */
+#define CJK_ExtGIni  (0x30000) /* Unicode 13.0 */
+#define CJK_ExtGFin  (0x3134A) /* Unicode 13.0 */
 
 #define CJK_CompIni  (0xFA0E)
 #define CJK_CompFin  (0xFA29)
@@ -80,10 +86,17 @@ static const STDCHAR UnifiedCompat[] = {
 
 #define TangIdeoIni  (0x17000) /* Unicode 9.0 */
 #define TangIdeoFin  (0x187EC) /* Unicode 9.0 */
+#define TangIdeo110  (0x187F1) /* Unicode 11.0 */
+#define TangIdeo120  (0x187F7) /* Unicode 12.0 */
 #define TangCompIni  (0x18800) /* Unicode 9.0 */
 #define TangCompFin  (0x18AF2) /* Unicode 9.0 */
+#define TangComp130  (0x18AFF) /* Unicode 13.0 */
+#define TangSuppIni  (0x18D00) /* Unicode 13.0 */
+#define TangSuppFin  (0x18D08) /* Unicode 13.0 */
 #define NushuIni     (0x1B170) /* Unicode 10.0 */
 #define NushuFin     (0x1B2FB) /* Unicode 10.0 */
+#define KhitanIni    (0x18B00) /* Unicode 13.0 */
+#define KhitanFin    (0x18CD5) /* Unicode 13.0 */
 
 #define codeRange(bcode, ecode)	((bcode) <= code && code <= (ecode))
 
@@ -283,39 +296,58 @@ _derivCE_9 (code)
     _derivCE_32 = 6
     _derivCE_34 = 7
     _derivCE_36 = 8
+    _derivCE_38 = 9
+    _derivCE_40 = 10
+    _derivCE_43 = 11
   PREINIT:
     UV base, aaaa, bbbb;
     U8 a[VCE_Length + 1] = "\x00\x00\x00\x00\x00\x00\x00\x00\x00";
     U8 b[VCE_Length + 1] = "\x00\x00\x00\x00\x00\x00\x00\x00\x00";
-    bool basic_unified = 0, tangut = 0, nushu = 0;
+    bool basic_unified = 0, tangut = 0, nushu = 0, khitan = 0;
   PPCODE:
     if (codeRange(CJK_UidIni, CJK_CompFin)) {
 	if (codeRange(CJK_CompIni, CJK_CompFin))
 	    basic_unified = (bool)UnifiedCompat[code - CJK_CompIni];
 	else
-	    basic_unified = (ix >= 8 ? (code <= CJK_UidF100) :
-			     ix >= 6 ? (code <= CJK_UidF80) :
-			     ix == 5 ? (code <= CJK_UidF61) :
-			     ix >= 3 ? (code <= CJK_UidF52) :
-			     ix == 2 ? (code <= CJK_UidF51) :
-			     ix == 1 ? (code <= CJK_UidF41) :
-				       (code <= CJK_UidFin));
+	    basic_unified = (ix >= 11 ? (code <= CJK_UidF130) :
+			     ix >= 9  ? (code <= CJK_UidF110) :
+			     ix == 8  ? (code <= CJK_UidF100) :
+			     ix >= 6  ? (code <= CJK_UidF80) :
+			     ix == 5  ? (code <= CJK_UidF61) :
+			     ix >= 3  ? (code <= CJK_UidF52) :
+			     ix == 2  ? (code <= CJK_UidF51) :
+			     ix == 1  ? (code <= CJK_UidF41) :
+				        (code <= CJK_UidFin));
     } else {
-	if (ix >= 7)
-	    tangut = (codeRange(TangIdeoIni, TangIdeoFin) ||
-		      codeRange(TangCompIni, TangCompFin));
+	if (ix >= 7) {
+	    tangut = (ix >= 11) ? (codeRange(TangIdeoIni, TangIdeo120) ||
+				   codeRange(TangCompIni, TangComp130) ||
+				   codeRange(TangSuppIni, TangSuppFin)) :
+		     (ix == 10) ? (codeRange(TangIdeoIni, TangIdeo120) ||
+				   codeRange(TangCompIni, TangCompFin)) :
+		     (ix == 9)  ? (codeRange(TangIdeoIni, TangIdeo110) ||
+				   codeRange(TangCompIni, TangCompFin)) :
+				  (codeRange(TangIdeoIni, TangIdeoFin) ||
+				   codeRange(TangCompIni, TangCompFin));
+	}
 	if (ix >= 8)
 	    nushu = (codeRange(NushuIni, NushuFin));
+	if (ix >= 11)
+	    khitan = (codeRange(KhitanIni, KhitanFin));
     }
     base = tangut
 	    ? 0xFB00 :
 	   nushu
 	    ? 0xFB01 :
+	   khitan
+	    ? 0xFB02 :
 	   basic_unified
 	    ? 0xFB40 : /* CJK */
-	   ((codeRange(CJK_ExtAIni, CJK_ExtAFin))
+	   ((ix >= 11 ? codeRange(CJK_ExtAIni, CJK_ExtA130)
+		      : codeRange(CJK_ExtAIni, CJK_ExtAFin))
 		||
-	    (codeRange(CJK_ExtBIni, CJK_ExtBFin))
+	    (ix >= 11 ? codeRange(CJK_ExtBIni, CJK_ExtB130)
+		      : codeRange(CJK_ExtBIni, CJK_ExtBFin))
 		||
 	    (ix >= 3 && codeRange(CJK_ExtCIni, CJK_ExtCFin))
 		||
@@ -323,12 +355,15 @@ _derivCE_9 (code)
 		||
 	    (ix >= 6 && codeRange(CJK_ExtEIni, CJK_ExtEFin))
 		||
-	    (ix >= 8 && codeRange(CJK_ExtFIni, CJK_ExtFFin)))
+	    (ix >= 8 && codeRange(CJK_ExtFIni, CJK_ExtFFin))
+		||
+	   (ix >= 11 && codeRange(CJK_ExtGIni, CJK_ExtGFin)))
 	    ? 0xFB80   /* CJK ext. */
 	    : 0xFBC0;  /* others */
-    aaaa = tangut || nushu ? base : base + (code >> 15);
+    aaaa = tangut || nushu || khitan ? base : base + (code >> 15);
     bbbb = (tangut ? (code - TangIdeoIni) :
-	    nushu  ? (code - NushuIni) : (code & 0x7FFF)) | 0x8000;
+	    nushu  ? (code - NushuIni) :
+	    khitan ? (code - KhitanIni) : (code & 0x7FFF)) | 0x8000;
     a[1] = (U8)(aaaa >> 8);
     a[2] = (U8)(aaaa & 0xFF);
     b[1] = (U8)(bbbb >> 8);
@@ -389,7 +424,9 @@ _isUIdeo (code, uca_vers)
 	if (codeRange(CJK_CompIni, CJK_CompFin))
 	    basic_unified = (bool)UnifiedCompat[code - CJK_CompIni];
 	else
-	    basic_unified = (uca_vers >= 36 ? (code <= CJK_UidF100) :
+	    basic_unified = (uca_vers >= 43 ? (code <= CJK_UidF130) :
+			     uca_vers >= 38 ? (code <= CJK_UidF110) :
+			     uca_vers >= 36 ? (code <= CJK_UidF100) :
 			     uca_vers >= 32 ? (code <= CJK_UidF80) :
 			     uca_vers >= 24 ? (code <= CJK_UidF61) :
 			     uca_vers >= 20 ? (code <= CJK_UidF52) :
@@ -402,7 +439,11 @@ _isUIdeo (code, uca_vers)
 		||
 	(codeRange(CJK_ExtAIni, CJK_ExtAFin))
 		||
+	(uca_vers >= 43 && codeRange(CJK_ExtAIni, CJK_ExtA130))
+		||
 	(uca_vers >=  8 && codeRange(CJK_ExtBIni, CJK_ExtBFin))
+		||
+	(uca_vers >= 43 && codeRange(CJK_ExtBIni, CJK_ExtB130))
 		||
 	(uca_vers >= 20 && codeRange(CJK_ExtCIni, CJK_ExtCFin))
 		||
@@ -411,6 +452,8 @@ _isUIdeo (code, uca_vers)
 	(uca_vers >= 32 && codeRange(CJK_ExtEIni, CJK_ExtEFin))
 		||
 	(uca_vers >= 36 && codeRange(CJK_ExtFIni, CJK_ExtFFin))
+		||
+	(uca_vers >= 43 && codeRange(CJK_ExtGIni, CJK_ExtGFin))
     );
 OUTPUT:
     RETVAL

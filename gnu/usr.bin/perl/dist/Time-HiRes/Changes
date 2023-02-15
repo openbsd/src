@@ -2,6 +2,20 @@ Revision history for the Perl extension Time::HiRes.
 
 {{NEXT}}
 
+ - Remove obsolete vms code
+ - Use core version compare
+
+1.9764 [2020-08-10]
+ - Fix a bunch of repeated-word typos
+ - Fix compilation with Visual C++ 2013 and older
+ - Implement clock_gettime() and clock_getres() for win32
+ - Remove workaround for an ancient Devel::PPPort bug
+ - Remove the remains of MacOS classic support
+ - Remove code for perls older than 5.6
+ - Remove vestiges of mpeix support (removed in 5.17.x)
+ - Remove trailing blanks
+ - Add links to pod
+
 1.9760 [2019-02-18]
  - make utime() available only if we have both fd and name setting
    [RT #133030]

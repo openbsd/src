@@ -1,4 +1,7 @@
 require 5.006001;
+
+use strict;
+use warnings;
 use ExtUtils::MakeMaker;
 
 my $clean = {};
@@ -21,11 +24,11 @@ WriteMakefile(
     'VERSION_FROM'      => 'Collate.pm', # finds $VERSION
     'clean'             => $clean,
     'PREREQ_PM'         => {
-        Carp            => 0,
-        File::Spec      => 0,
-        XSLoader        => 0,
-        constant        => 0,
-        strict          => 0,
-        warnings        => 0,
+	'Carp'          => 0,
+	'File::Spec'    => 0,
+	'XSLoader'      => 0,
+	'constant'      => 0,
+	'strict'        => 0,
+	'warnings'      => 0,
     },
 );

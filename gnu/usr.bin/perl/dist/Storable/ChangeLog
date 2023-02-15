@@ -1,4 +1,36 @@
-2010-01-27 10:27:00 TonyC
+2021-08-30 07:46:52 nwclark
+    version 3.25
+        * No changes from previous version
+
+2021-08-25 08:05:16 nwclark
+    version 3.24_50
+        * Remove code and tests only present to support perls before 5.6.1
+          Storable implicitly needs >= v5.6.1.
+        * Use SvPVCLEAR from ppport.h
+        * Remove XS code "commented" out with #if 0
+        * Refactor store_lhash() to remove some code duplication
+        * Avoid calling hv_iterval() twice for each hash entry
+        * Fix a bug in the recursion depth check in store_lhash()
+
+unreleased
+    version 3.24
+        * Fix a (possible) typo in Sntohl
+
+unreleased
+    version 3.23
+        * Fix typos
+        * avoid stderr noise in t/canonical.t
+
+2020-07-31 19:36:37 atoomic
+    version 3.22
+        * use PERL_COMPARE macros
+
+2020-04-23 13:33:05 ilmari
+    version 3.21
+        * fix repeated-word typos
+        * fix t/huge.t PERL_TEST_MEMORY diagnostic messages
+
+2020-01-27 10:27:00 TonyC
     version 3.20
         * fix a format string and arguments for some debugging text
         * linkify references to alternatives to Storable

@@ -185,8 +185,8 @@ same as ISO-8859-1, often called Latin 1.
  isupper(c)  isUPPER(c)        isUPPER_L1(c)        isUPPER_LC(c)
  isxdigit(c) isXDIGIT(c)       isXDIGIT_L1(c)       isXDIGIT_LC(c)
 
- tolower(c)  toLOWER(c)        toLOWER_L1(c)        toLOWER_LC(c)
- toupper(c)  toUPPER(c)                             toUPPER_LC(c)
+ tolower(c)  toLOWER(c)        toLOWER_L1(c)
+ toupper(c)  toUPPER(c)
 
 To emphasize that you are operating only on ASCII characters, you can
 append C<_A> to each of the macros in the ASCII column: C<isALPHA_A>,
@@ -196,7 +196,7 @@ C<isDIGIT_A>, and so on.
 is an C<isASCII_L1>, which is identical to C<isASCII>;  the
 latter name is clearer.  There is no entry in the Latin1 column for
 C<toupper> because the result can be non-Latin1.  You have to use
-C<toUPPER_uni>, as described in L<perlapi/Character case changing>.)
+C<toUPPER_uvchr>, as described in L<perlapi/Character case changing>.)
 
 =head2 F<stdlib.h> functions
 

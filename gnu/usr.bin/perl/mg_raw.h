@@ -62,7 +62,7 @@
       "/* tiedscalar 'q' Tied scalar or handle */" },
     { 'r', "want_vtbl_regexp | PERL_MAGIC_READONLY_ACCEPTABLE | PERL_MAGIC_VALUE_MAGIC",
       "/* qr 'r' Precompiled qr// regex */" },
-    { 'S', "magic_vtable_max",
+    { 'S', "want_vtbl_sig",
       "/* sig 'S' %SIG hash */" },
     { 's', "want_vtbl_sigelem",
       "/* sigelem 's' %SIG hash element */" },

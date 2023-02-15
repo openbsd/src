@@ -126,7 +126,7 @@ rules apply:
 That is, a "start" character followed by any number of "continue"
 characters.  Perl requires every character in an identifier to also
 match C<\w> (this prevents some problematic cases); and Perl
-additionally accepts identfier names beginning with an underscore.
+additionally accepts identifier names beginning with an underscore.
 
 If not under C<use utf8>, the source is treated as ASCII + 128 extra
 generic characters, and identifiers should match
@@ -444,6 +444,7 @@ integer formats:
  0xff                # hex
  0xdead_beef         # more hex
  0377                # octal (only numbers, begins with 0)
+ 0o12_345            # alternative octal (introduced in Perl 5.33.5)
  0b011011            # binary
  0x1.999ap-4         # hexadecimal floating point (the 'p' is required)
 
@@ -502,12 +503,14 @@ and POSIX::setlocale() has been called, the character used for the
 decimal separator is affected by the LC_NUMERIC locale.
 See L<perllocale> and L<POSIX>.
 
-As in some shells, you can enclose the variable name in braces to
-disambiguate it from following alphanumerics (and underscores).
-You must also do
-this when interpolating a variable into a string to separate the
-variable name from a following double-colon or an apostrophe, since
-these would be otherwise treated as a package separator:
+=head3 Demarcated variable names using braces
+
+As in some shells, you can enclose the variable name in braces as a
+demarcator to disambiguate it from following alphanumerics and
+underscores or other text. You must also do this when interpolating a
+variable into a string to separate the variable name from a following
+double-colon or an apostrophe since these would be otherwise treated as
+a package separator:
 X<interpolation>
 
     $who = "Larry";
@@ -519,13 +522,95 @@ C<$who::0>, and a C<$who's> variable.  The last two would be the
 $0 and the $s variables in the (presumably) non-existent package
 C<who>.
 
-In fact, a simple identifier within such curlies is forced to be
-a string, and likewise within a hash subscript.  Neither need
-quoting.  Our earlier example, C<$days{'Feb'}> can be written as
-C<$days{Feb}> and the quotes will be assumed automatically.  But
-anything more complicated in the subscript will be interpreted as an
-expression.  This means for example that C<$version{2.0}++> is
-equivalent to C<$version{2}++>, not to C<$version{'2.0'}++>.
+In fact, a simple identifier within such curly braces is forced to be a
+string, and likewise within a hash subscript. Neither need quoting. Our
+earlier example, C<$days{'Feb'}> can be written as C<$days{Feb}> and the
+quotes will be assumed automatically. But anything more complicated in
+the subscript will be interpreted as an expression. This means for
+example that C<$version{2.0}++> is equivalent to C<$version{2}++>, not
+to C<$version{'2.0'}++>.
+
+There is a similar problem with interpolation with text that looks like
+array or hash access notation. Placing a simple variable like C<$who>
+immediately in front of text like C<"[1]"> or C<"{foo}"> would cause the
+variable to be interpolated as accessing an element of C<@who> or a
+value stored in C<%who>:
+
+    $who = "Larry Wall";
+    print "$who[1] is the father of Perl.\n";
+
+would attempt to access index 1 of an array named C<@who>. Again, using
+braces will prevent this from happening:
+
+    $who = "Larry Wall";
+    print "${who}[1] is the father of Perl.\n";
+
+will be treated the same as
+
+    $who = "Larry Wall";
+    print $who . "[1] is the father of Perl.\n";
+
+This notation also applies to more complex variable descriptions,
+such as array or hash access with subscripts. For instance
+
+    @name = qw(Larry Curly Moe);
+    print "Also ${name[0]}[1] was a member\n";
+
+Without the braces the above example would be parsed as a two level
+array subscript in the C<@name> array, and under C<use strict> would
+likely produce a fatal exception, as it would be parsed like this:
+
+    print "Also " . $name[0][1] . " was a member\n";
+
+and not as the intended:
+
+    print "Also " . $name[0] . "[1] was a member\n";
+
+A similar result may be derived by using a backslash on the first
+character of the subscript or package notation that is not part of
+the variable you want to access. Thus the above example could also
+be written:
+
+    @name = qw(Larry Curly Moe);
+    print "Also $name[0]\[1] was a member\n";
+
+however for some special variables (multi character caret variables) the
+demarcated form using curly braces is the B<only> way you can reference
+the variable at all, and the only way you can access a subscript of the
+variable via interpolation.
+
+Consider the magic array C<@{^CAPTURE}> which is populated by the
+regex engine with the contents of all of the capture buffers in a
+pattern (see L<perlvar> and L<perlre>). The B<only> way you can
+access one of these members inside of a string is via the braced
+(demarcated) form:
+
+    "abc"=~/(.)(.)(.)/
+        and print "Second buffer is ${^CAPTURE[1]}";
+
+is equivalent to
+
+    "abc"=~/(.)(.)(.)/
+        and print "Second buffer is " . ${^CAPTURE}[1];
+
+Saying C<@^CAPTURE> is a syntax error, so it B<must> be referenced as
+C<@{^CAPTURE}>, and to access one of its elements in normal code you
+would write C< ${^CAPTURE}[1] >. However when interpolating in a string
+C<"${^CAPTURE}[1]"> would be equivalent to C<${^CAPTURE} . "[1]">,
+which does not even refer to the same variable! Thus the subscripts must
+B<also> be placed B<inside> of the braces: C<"${^CAPTURE[1]}">.
+
+The demarcated form using curly braces can be used with all the
+different types of variable access, including array and hash slices. For
+instance code like the following:
+
+    @name = qw(Larry Curly Moe);
+    local $" = " and ";
+    print "My favorites were @{name[1,2]}.\n";
+
+would output
+
+    My favorites were Curly and Moe.
 
 =head3 Special floating point: infinity (Inf) and not-a-number (NaN)
 
@@ -606,7 +691,8 @@ X<line> X<file> X<package>
 
 The two control characters ^D and ^Z, and the tokens __END__ and __DATA__
 may be used to indicate the logical end of the script before the actual
-end of file.  Any following text is ignored.
+end of file.  Any following text is ignored by the interpreter unless
+read by the program as described below.
 
 Text after __DATA__ may be read via the filehandle C<PACKNAME::DATA>,
 where C<PACKNAME> is the package that was current when the __DATA__
@@ -618,6 +704,11 @@ compatibility with older scripts written before __DATA__ was
 introduced, __END__ behaves like __DATA__ in the top level script (but
 not in files loaded with C<require> or C<do>) and leaves the remaining
 contents of the file accessible via C<main::DATA>.
+
+  while (my $line = <DATA>) { print $line; }
+  close DATA;
+  __DATA__
+  Hello world.
 
 The C<DATA> file handle by default has whatever PerlIO layers were
 in place when Perl read the file to parse the source.  Normally that
@@ -1026,9 +1117,9 @@ values of the array or hash.
     foreach (@array[ 4 .. 10 ]) { s/peter/paul/ } 
 
     foreach (@hash{qw[key1 key2]}) {
-        s/^\s+//;           # trim leading whitespace
-        s/\s+$//;           # trim trailing whitespace
-        s/(\w+)/\u\L$1/g;   # "titlecase" words
+        s/^\s+//;                       # trim leading whitespace
+        s/\s+$//;                       # trim trailing whitespace
+        s/\b(\w)(\w*)\b/\u$1\L$2/g;     # "titlecase" words
     }
 
 As a special exception, when you slice a list (but not an array or a hash),

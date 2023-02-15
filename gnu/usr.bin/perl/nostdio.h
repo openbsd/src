@@ -25,7 +25,7 @@ struct _FILE;
 #define FILE struct _FILE
 #endif
 
-#ifndef EBCDIC
+#if !defined(OEMVS)
 
 #define _CANNOT "CANNOT"
 

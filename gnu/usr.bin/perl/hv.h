@@ -28,6 +28,13 @@
 #   define PERL_HASH_ITER_BUCKET(iter)      (((iter)->xhv_riter) ^ ((iter)->xhv_rand))
 #endif
 
+#ifdef PERL_USE_UNSHARED_KEYS_IN_LARGE_HASHES
+#define LARGE_HASH_HEURISTIC(hv,new_max) S_large_hash_heuristic(aTHX_ (hv), (new_max))
+#else
+#define LARGE_HASH_HEURISTIC(hv,new_max) 0
+#endif
+
+
 /* entry in hash value chain */
 struct he {
     /* Keep hent_next first in this structure, because sv_free_arenas take
@@ -36,8 +43,8 @@ struct he {
     HE		*hent_next;	/* next entry in chain */
     HEK		*hent_hek;	/* hash key */
     union {
-	SV	*hent_val;	/* scalar value that was hashed */
-	Size_t	hent_refcount;	/* references for this shared hash key */
+        SV	*hent_val;	/* scalar value that was hashed */
+        Size_t	hent_refcount;	/* references for this shared hash key */
     } he_valu;
 };
 
@@ -139,22 +146,24 @@ struct xpvhv {
     STRLEN      xhv_max;        /* subscript of last element of xhv_array */
 };
 
-/*
-=head1 Hash Manipulation Functions
+struct xpvhv_with_aux {
+    HV         *xmg_stash;      /* class package */
+    union _xmgu xmg_u;
+    STRLEN      xhv_keys;       /* total keys, including placeholders */
+    STRLEN      xhv_max;        /* subscript of last element of xhv_array */
+    struct xpvhv_aux xhv_aux;
+};
 
+/*
 =for apidoc AmnU||HEf_SVKEY
 This flag, used in the length slot of hash entries and magic structures,
 specifies the structure contains an C<SV*> pointer where a C<char*> pointer
 is to be expected.  (For information only--not to be used).
 
-=head1 Handy Values
-
 =for apidoc ADmnU||Nullhv
 Null HV pointer.
 
 (deprecated - use C<(HV *)NULL> instead)
-
-=head1 Hash Manipulation Functions
 
 =for apidoc Am|char*|HvNAME|HV* stash
 Returns the package name of a stash, or C<NULL> if C<stash> isn't a stash.
@@ -162,6 +171,10 @@ See C<L</SvSTASH>>, C<L</CvSTASH>>.
 
 =for apidoc Am|STRLEN|HvNAMELEN|HV *stash
 Returns the length of the stash's name.
+
+Disfavored forms of HvNAME and HvNAMELEN; suppress mention of them
+=for apidoc Cmh|char*|HvNAME_get|HV* stash
+=for apidoc Amh|I32|HvNAMELEN_get|HV* stash
 
 =for apidoc Am|unsigned char|HvNAMEUTF8|HV *stash
 Returns true if the name is in UTF-8 encoding.
@@ -244,18 +257,6 @@ C<SV*>.
 
 #define PERL_HASH_DEFAULT_HvMAX 7
 
-/* During hsplit(), if HvMAX(hv)+1 (the new bucket count) is >= this value,
- * we preallocate the HvAUX() struct.
- * The assumption being that we are using so much space anyway we might
- * as well allocate the extra bytes and speed up later keys()
- * or each() operations. We don't do this to small hashes as we assume
- * that a) it will be easy/fast to resize them to add the iterator, and b) that
- * many of them will be objects which won't be traversed. Larger hashes however
- * will take longer to extend, and the size of the aux struct is swamped by the
- * overall length of the bucket array.
- * */
-#define PERL_HV_ALLOC_AUX_SIZE (1 << 9)
-
 /* these hash entry flags ride on hent_klen (for use only in magic/tied HVs) */
 #define HEf_SVKEY	-2	/* hent_key is an SV* */
 
@@ -268,7 +269,13 @@ C<SV*>.
 
 =for apidoc Am|STRLEN|HvFILL|HV *const hv
 
-See L</hv_fill>.
+Returns the number of hash buckets that happen to be in use.
+
+As of perl 5.25 this function is used only for debugging
+purposes, and the number of used hash buckets is not
+in any way cached, thus this function can be costly
+to execute as it must iterate over all the buckets in the
+hash.
 
 =cut
 
@@ -277,7 +284,7 @@ See L</hv_fill>.
 #define HvMAX(hv)	((XPVHV*)  SvANY(hv))->xhv_max
 /* This quite intentionally does no flag checking first. That's your
    responsibility.  */
-#define HvAUX(hv)	((struct xpvhv_aux*)&(HvARRAY(hv)[HvMAX(hv)+1]))
+#define HvAUX(hv)       (&(((struct xpvhv_with_aux*)  SvANY(hv))->xhv_aux))
 #define HvRITER(hv)	(*Perl_hv_riter_p(aTHX_ MUTABLE_HV(hv)))
 #define HvEITER(hv)	(*Perl_hv_eiter_p(aTHX_ MUTABLE_HV(hv)))
 #define HvRITER_set(hv,r)	Perl_hv_riter_set(aTHX_ MUTABLE_HV(hv), r)
@@ -306,16 +313,16 @@ See L</hv_fill>.
  )
 /* This macro may go away without notice.  */
 #define HvNAME_HEK(hv) \
-	(SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name ? HvNAME_HEK_NN(hv) : NULL)
+        (SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name ? HvNAME_HEK_NN(hv) : NULL)
 #define HvNAME_get(hv) \
-	((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
-			 ? HEK_KEY(HvNAME_HEK_NN(hv)) : NULL)
+        ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
+                         ? HEK_KEY(HvNAME_HEK_NN(hv)) : NULL)
 #define HvNAMELEN_get(hv) \
-	((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
-				 ? HEK_LEN(HvNAME_HEK_NN(hv)) : 0)
+        ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
+                                 ? HEK_LEN(HvNAME_HEK_NN(hv)) : 0)
 #define HvNAMEUTF8(hv) \
-	((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
-				 ? HEK_UTF8(HvNAME_HEK_NN(hv)) : 0)
+        ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvNAME_HEK_NN(hv)) \
+                                 ? HEK_UTF8(HvNAME_HEK_NN(hv)) : 0)
 #define HvENAME_HEK_NN(hv)                                             \
  (                                                                      \
   HvAUX(hv)->xhv_name_count > 0   ? HvAUX(hv)->xhv_name_u.xhvnameu_names[0] : \
@@ -324,19 +331,16 @@ See L</hv_fill>.
                                     HvAUX(hv)->xhv_name_u.xhvnameu_name \
  )
 #define HvENAME_HEK(hv) \
-	(SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name ? HvENAME_HEK_NN(hv) : NULL)
+        (SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name ? HvENAME_HEK_NN(hv) : NULL)
 #define HvENAME_get(hv) \
    ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvAUX(hv)->xhv_name_count != -1) \
-			 ? HEK_KEY(HvENAME_HEK_NN(hv)) : NULL)
+                         ? HEK_KEY(HvENAME_HEK_NN(hv)) : NULL)
 #define HvENAMELEN_get(hv) \
    ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvAUX(hv)->xhv_name_count != -1) \
-				 ? HEK_LEN(HvENAME_HEK_NN(hv)) : 0)
+                                 ? HEK_LEN(HvENAME_HEK_NN(hv)) : 0)
 #define HvENAMEUTF8(hv) \
    ((SvOOK(hv) && HvAUX(hv)->xhv_name_u.xhvnameu_name && HvAUX(hv)->xhv_name_count != -1) \
-				 ? HEK_UTF8(HvENAME_HEK_NN(hv)) : 0)
-
-/* the number of keys (including any placeholders) - NOT PART OF THE API */
-#define XHvTOTALKEYS(xhv)	((xhv)->xhv_keys)
+                                 ? HEK_UTF8(HvENAME_HEK_NN(hv)) : 0)
 
 /*
  * HvKEYS gets the number of keys that actually exist(), and is provided
@@ -345,11 +349,18 @@ See L</hv_fill>.
  */
 #define HvKEYS(hv)		HvUSEDKEYS(hv)
 #define HvUSEDKEYS(hv)		(HvTOTALKEYS(hv) - HvPLACEHOLDERS_get(hv))
-#define HvTOTALKEYS(hv)		XHvTOTALKEYS((XPVHV*)  SvANY(hv))
+#define HvTOTALKEYS(hv)         (((XPVHV*) SvANY(hv))->xhv_keys)
 #define HvPLACEHOLDERS(hv)	(*Perl_hv_placeholders_p(aTHX_ MUTABLE_HV(hv)))
 #define HvPLACEHOLDERS_get(hv)	(SvMAGIC(hv) ? Perl_hv_placeholders_get(aTHX_ (const HV *)hv) : 0)
 #define HvPLACEHOLDERS_set(hv,p)	Perl_hv_placeholders_set(aTHX_ MUTABLE_HV(hv), p)
 
+/* This (now) flags whether *new* keys in the hash will be allocated from the
+ * shared string table. We have a heuristic to call HvSHAREKEYS_off() if a hash
+ * is "getting large". After which, the first keys in that hash will be from
+ * the shared string table, but subsequent keys will not be.
+ *
+ * If we didn't do this, we'd have to reallocate all keys when we switched this
+ * flag, which would be work for no real gain. */
 #define HvSHAREKEYS(hv)		(SvFLAGS(hv) & SVphv_SHAREKEYS)
 #define HvSHAREKEYS_on(hv)	(SvFLAGS(hv) |= SVphv_SHAREKEYS)
 #define HvSHAREKEYS_off(hv)	(SvFLAGS(hv) &= ~SVphv_SHAREKEYS)
@@ -385,24 +396,24 @@ See L</hv_fill>.
 #define HeVAL(he)		(he)->he_valu.hent_val
 #define HeHASH(he)		HEK_HASH(HeKEY_hek(he))
 #define HePV(he,lp)		((HeKLEN(he) == HEf_SVKEY) ?		\
-				 SvPV(HeKEY_sv(he),lp) :		\
-				 ((lp = HeKLEN(he)), HeKEY(he)))
+                                 SvPV(HeKEY_sv(he),lp) :		\
+                                 ((lp = HeKLEN(he)), HeKEY(he)))
 #define HeUTF8(he)		((HeKLEN(he) == HEf_SVKEY) ?		\
-				 SvUTF8(HeKEY_sv(he)) :			\
-				 (U32)HeKUTF8(he))
+                                 SvUTF8(HeKEY_sv(he)) :			\
+                                 (U32)HeKUTF8(he))
 
 #define HeSVKEY(he)		((HeKEY(he) && 				\
-				  HeKLEN(he) == HEf_SVKEY) ?		\
-				 HeKEY_sv(he) : NULL)
+                                  HeKLEN(he) == HEf_SVKEY) ?		\
+                                 HeKEY_sv(he) : NULL)
 
 #define HeSVKEY_force(he)	(HeKEY(he) ?				\
-				 ((HeKLEN(he) == HEf_SVKEY) ?		\
-				  HeKEY_sv(he) :			\
-				  newSVpvn_flags(HeKEY(he),		\
+                                 ((HeKLEN(he) == HEf_SVKEY) ?		\
+                                  HeKEY_sv(he) :			\
+                                  newSVpvn_flags(HeKEY(he),		\
                                                  HeKLEN(he),            \
                                                  SVs_TEMP |             \
                                       ( HeKUTF8(he) ? SVf_UTF8 : 0 ))) : \
-				 &PL_sv_undef)
+                                 &PL_sv_undef)
 #define HeSVKEY_set(he,sv)	((HeKLEN(he) = HEf_SVKEY), (HeKEY_sv(he) = sv))
 
 #ifndef PERL_CORE
@@ -416,17 +427,15 @@ See L</hv_fill>.
 
 #define HVhek_UTF8	0x01 /* Key is utf8 encoded. */
 #define HVhek_WASUTF8	0x02 /* Key is bytes here, but was supplied as utf8. */
-#define HVhek_UNSHARED	0x08 /* This key isn't a shared hash key. */
+#define HVhek_NOTSHARED 0x04 /* This key isn't a shared hash key. */
 /* the following flags are options for functions, they are not stored in heks */
 #define HVhek_FREEKEY	0x100 /* Internal flag to say key is Newx()ed.  */
 #define HVhek_PLACEHOLD	0x200 /* Internal flag to create placeholder.
                                * (may change, but Storable is a core module) */
 #define HVhek_KEYCANONICAL 0x400 /* Internal flag - key is in canonical form.
-				    If the string is UTF-8, it cannot be
-				    converted to bytes. */
-#define HVhek_MASK	0xFF
-
-#define HVhek_ENABLEHVKFLAGS        (HVhek_MASK & ~(HVhek_UNSHARED))
+                                    If the string is UTF-8, it cannot be
+                                    converted to bytes. */
+#define HVhek_ENABLEHVKFLAGS        (HVhek_UTF8|HVhek_WASUTF8)
 
 #define HEK_UTF8(hek)		(HEK_FLAGS(hek) & HVhek_UTF8)
 #define HEK_UTF8_on(hek)	(HEK_FLAGS(hek) |= HVhek_UTF8)
@@ -444,9 +453,9 @@ See L</hv_fill>.
 #else
 #  define MALLOC_OVERHEAD 16
 #  define PERL_HV_ARRAY_ALLOC_BYTES(size) \
-			(((size) < 64)					\
-			 ? (size) * sizeof(HE*)				\
-			 : (size) * sizeof(HE*) * 2 - MALLOC_OVERHEAD)
+                        (((size) < 64)					\
+                         ? (size) * sizeof(HE*)				\
+                         : (size) * sizeof(HE*) * 2 - MALLOC_OVERHEAD)
 #endif
 
 /* Flags for hv_iternext_flags.  */
@@ -461,33 +470,33 @@ See L</hv_fill>.
 
 #define share_hek_hek(hek)						\
     (++(((struct shared_he *)(((char *)hek)				\
-			      - STRUCT_OFFSET(struct shared_he,		\
-					      shared_he_hek)))		\
-	->shared_he_he.he_valu.hent_refcount),				\
+                              - STRUCT_OFFSET(struct shared_he,		\
+                                              shared_he_hek)))		\
+        ->shared_he_he.he_valu.hent_refcount),				\
      hek)
 
 #define hv_store_ent(hv, keysv, val, hash)				\
     ((HE *) hv_common((hv), (keysv), NULL, 0, 0, HV_FETCH_ISSTORE,	\
-		      (val), (hash)))
+                      (val), (hash)))
 
 #define hv_exists_ent(hv, keysv, hash)					\
     cBOOL(hv_common((hv), (keysv), NULL, 0, 0, HV_FETCH_ISEXISTS, 0, (hash)))
 #define hv_fetch_ent(hv, keysv, lval, hash)				\
     ((HE *) hv_common((hv), (keysv), NULL, 0, 0,			\
-		      ((lval) ? HV_FETCH_LVALUE : 0), NULL, (hash)))
+                      ((lval) ? HV_FETCH_LVALUE : 0), NULL, (hash)))
 #define hv_delete_ent(hv, key, flags, hash)				\
     (MUTABLE_SV(hv_common((hv), (key), NULL, 0, 0, (flags) | HV_DELETE,	\
-			  NULL, (hash))))
+                          NULL, (hash))))
 
 #define hv_store_flags(hv, key, klen, val, hash, flags)			\
     ((SV**) hv_common((hv), NULL, (key), (klen), (flags),		\
-		      (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), (val),	\
-		      (hash)))
+                      (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), (val),	\
+                      (hash)))
 
 #define hv_store(hv, key, klen, val, hash)				\
     ((SV**) hv_common_key_len((hv), (key), (klen),			\
-			      (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV),	\
-			      (val), (hash)))
+                              (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV),	\
+                              (val), (hash)))
 
 
 
@@ -496,45 +505,48 @@ See L</hv_fill>.
 
 #define hv_fetch(hv, key, klen, lval)					\
     ((SV**) hv_common_key_len((hv), (key), (klen), (lval)		\
-			      ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)	\
-			      : HV_FETCH_JUST_SV, NULL, 0))
+                              ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)	\
+                              : HV_FETCH_JUST_SV, NULL, 0))
 
 #define hv_delete(hv, key, klen, flags)					\
     (MUTABLE_SV(hv_common_key_len((hv), (key), (klen),			\
-				  (flags) | HV_DELETE, NULL, 0)))
+                                  (flags) | HV_DELETE, NULL, 0)))
 
 /* Provide 's' suffix subs for constant strings (and avoid needing to count
  * chars). See STR_WITH_LEN in handy.h - because these are macros we cant use
  * STR_WITH_LEN to do the work, we have to unroll it. */
 #define hv_existss(hv, key) \
-    hv_exists((hv), ("" key ""), (sizeof(key)-1))
+    hv_exists((hv), ASSERT_IS_LITERAL(key), (sizeof(key)-1))
 
 #define hv_fetchs(hv, key, lval) \
-    hv_fetch((hv), ("" key ""), (sizeof(key)-1), (lval))
+    hv_fetch((hv), ASSERT_IS_LITERAL(key), (sizeof(key)-1), (lval))
 
 #define hv_deletes(hv, key, flags) \
-    hv_delete((hv), ("" key ""), (sizeof(key)-1), (flags))
+    hv_delete((hv), ASSERT_IS_LITERAL(key), (sizeof(key)-1), (flags))
 
 #define hv_name_sets(hv, name, flags) \
-    hv_name_set((hv),("" name ""),(sizeof(name)-1), flags)
+    hv_name_set((hv),ASSERT_IS_LITERAL(name),(sizeof(name)-1), flags)
 
 #define hv_stores(hv, key, val) \
-    hv_store((hv), ("" key ""), (sizeof(key)-1), (val), 0)
+    hv_store((hv), ASSERT_IS_LITERAL(key), (sizeof(key)-1), (val), 0)
 
 #ifdef PERL_CORE
 # define hv_storehek(hv, hek, val) \
     hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek),	\
-	      HV_FETCH_ISSTORE|HV_FETCH_JUST_SV, (val), HEK_HASH(hek))
+              HV_FETCH_ISSTORE|HV_FETCH_JUST_SV, (val), HEK_HASH(hek))
 # define hv_fetchhek(hv, hek, lval) \
     ((SV **)								\
      hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek),	\
-	       (lval)							\
-		? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)			\
-		: HV_FETCH_JUST_SV,					\
-	       NULL, HEK_HASH(hek)))
+               (lval)							\
+                ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)			\
+                : HV_FETCH_JUST_SV,					\
+               NULL, HEK_HASH(hek)))
 # define hv_deletehek(hv, hek, flags) \
     hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek), \
-	      (flags)|HV_DELETE, NULL, HEK_HASH(hek))
+              (flags)|HV_DELETE, NULL, HEK_HASH(hek))
+#define hv_existshek(hv, hek)                                           \
+    cBOOL(hv_common((hv), NULL, HEK_KEY(hek), HEK_LEN(hek), HEK_UTF8(hek), \
+                    HV_FETCH_ISEXISTS, NULL, HEK_HASH(hek)))
 #endif
 
 /* This refcounted he structure is used for storing the hints used for lexical
@@ -547,9 +559,7 @@ struct refcounted_he;
 
 /* flags for the refcounted_he API */
 #define REFCOUNTED_HE_KEY_UTF8		0x00000001
-#ifdef PERL_CORE
-# define REFCOUNTED_HE_EXISTS		0x00000002
-#endif
+#define REFCOUNTED_HE_EXISTS		0x00000002
 
 #ifdef PERL_CORE
 
@@ -563,10 +573,10 @@ struct refcounted_he {
     HEK                  *refcounted_he_hek;	/* hint key */
 #endif
     union {
-	IV                refcounted_he_u_iv;
-	UV                refcounted_he_u_uv;
-	STRLEN            refcounted_he_u_len;
-	void		 *refcounted_he_u_ptr;	/* Might be useful in future */
+        IV                refcounted_he_u_iv;
+        UV                refcounted_he_u_uv;
+        STRLEN            refcounted_he_u_len;
+        void		 *refcounted_he_u_ptr;	/* Might be useful in future */
     } refcounted_he_val;
     U32	                  refcounted_he_refcnt;	/* reference count */
     /* First byte is flags. Then NUL-terminated value. Then for ithreads,
@@ -612,9 +622,9 @@ instead of a string/length pair, and no precomputed hash.
 #ifdef USE_ITHREADS
 /* A big expression to find the key offset */
 #define REF_HE_KEY(chain)						\
-	((((chain->refcounted_he_data[0] & 0x60) == 0x40)		\
-	    ? chain->refcounted_he_val.refcounted_he_u_len + 1 : 0)	\
-	 + 1 + chain->refcounted_he_data)
+        ((((chain->refcounted_he_data[0] & 0x60) == 0x40)		\
+            ? chain->refcounted_he_val.refcounted_he_u_len + 1 : 0)	\
+         + 1 + chain->refcounted_he_data)
 #endif
 
 #  ifdef USE_ITHREADS

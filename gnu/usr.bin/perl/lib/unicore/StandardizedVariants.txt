@@ -1,7 +1,7 @@
-# StandardizedVariants-13.0.0.txt
-# Date: 2019-05-21, 17:56:00 GMT [KW, LI, RP]
-# © 2019 Unicode®, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# StandardizedVariants-14.0.0.txt
+# Date: 2021-01-26, 18:20:00 GMT [KW, LI, RP]
+# © 2021 Unicode®, Inc.
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Specification of the variation sequences that are defined in the
 # Unicode Standard.
@@ -26,13 +26,13 @@
 #
 # For more information on standardized variation sequences,
 # see Section 23.4, Variation Selectors,
-# in The Unicode Standard, Version 13.0.
+# in The Unicode Standard, Version 14.0.
 #
 # For more information on the Ideographic Variation Database,
-# see http://www.unicode.org/ivd/
+# see https://www.unicode.org/ivd/
 #
 # For more information on emoji variation sequences,
-# see http://www.unicode.org/reports/tr51/
+# see https://www.unicode.org/reports/tr51/
 #
 # Format:
 #   Field 0: the variation sequence
@@ -76,6 +76,62 @@
 2ACB FE00; with stroke through bottom members; # SUBSET OF ABOVE NOT EQUAL TO
 2ACC FE00; with stroke through bottom members; # SUPERSET OF ABOVE NOT EQUAL TO
 FF10 FE00; short diagonal stroke form; # FULLWIDTH DIGIT ZERO
+
+# Mathematical alphabet script variants
+
+1D49C FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL A
+212C FE00;  chancery style; #  SCRIPT CAPITAL B
+1D49E FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL C
+1D49F FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL D
+2130 FE00;  chancery style; #  SCRIPT CAPITAL E
+2131 FE00;  chancery style; #  SCRIPT CAPITAL F
+1D4A2 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL G
+210B FE00;  chancery style; #  SCRIPT CAPITAL H
+2110 FE00;  chancery style; #  SCRIPT CAPITAL I
+1D4A5 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL J
+1D4A6 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL K
+2112 FE00;  chancery style; #  SCRIPT CAPITAL L
+2133 FE00;  chancery style; #  SCRIPT CAPITAL M
+1D4A9 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL N
+1D4AA FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL O
+1D4AB FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL P
+1D4AC FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL Q
+211B FE00;  chancery style; #  SCRIPT CAPITAL R
+1D4AE FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL S
+1D4AF FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL T
+1D4B0 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL U
+1D4B1 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL V
+1D4B2 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL W
+1D4B3 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL X
+1D4B4 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL Y
+1D4B5 FE00; chancery style; #  MATHEMATICAL SCRIPT CAPITAL Z
+
+1D49C FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL A
+212C FE01;  roundhand style; #  SCRIPT CAPITAL B
+1D49E FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL C
+1D49F FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL D
+2130 FE01;  roundhand style; #  SCRIPT CAPITAL E
+2131 FE01;  roundhand style; #  SCRIPT CAPITAL F
+1D4A2 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL G
+210B FE01;  roundhand style; #  SCRIPT CAPITAL H
+2110 FE01;  roundhand style; #  SCRIPT CAPITAL I
+1D4A5 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL J
+1D4A6 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL K
+2112 FE01;  roundhand style; #  SCRIPT CAPITAL L
+2133 FE01;  roundhand style; #  SCRIPT CAPITAL M
+1D4A9 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL N
+1D4AA FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL O
+1D4AB FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL P
+1D4AC FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL Q
+211B FE01;  roundhand style; #  SCRIPT CAPITAL R
+1D4AE FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL S
+1D4AF FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL T
+1D4B0 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL U
+1D4B1 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL V
+1D4B2 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL W
+1D4B3 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL X
+1D4B4 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL Y
+1D4B5 FE01; roundhand style; #  MATHEMATICAL SCRIPT CAPITAL Z
 
 # East Asian punctuation positional variants
 

@@ -32,7 +32,8 @@ local $SIG{__WARN__} = sub { croak($_[0]) };
 # Try a POD document where the only command is invalid.  Make sure it succeeds
 # and doesn't throw an exception.
 ## no critic (ValuesAndExpressions::ProhibitEscapedCharacters)
-ok(eval { $parser->parse_string_document("=\xa0") },
+my $invalid_char = chr utf8::unicode_to_native(0xa0);
+ok(eval { $parser->parse_string_document("=$invalid_char") },
     'Parsed invalid document');
 is($@, q{}, '...with no errors');
 ## use critic

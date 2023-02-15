@@ -20,8 +20,7 @@ for my $end (0, 1) {
 		$end ? @$_[0, 1] : @$_[1, 0]
 	} (
                 # Create UTF-16.
-		[ 0xFE, 0xFF ], map [ 0, utf8::native_to_unicode(ord($_)) ],
-                                                    split //, "print 1;\nprint 2"
+		[ 0xFE, 0xFF ], map [ 0, ord($_) ], split //, "print 1;\nprint 2"
 	);
 	fresh_perl_is($prog, "12", {}, "BOM indicates $encoding");
 }

@@ -45,6 +45,7 @@ AmnT|void|PERL_MAGIC_glob
 AmnT|void|PERL_MAGIC_mutex
 AmnT|void|PERL_MAGIC_overload
 AmnT|void|PERL_MAGIC_overload_elem
+AmnT|void|PERL_STATIC_INLINE
 AmnT|void|Perl_warner_nocontext
 AmnT|void|PL_bufend
 AmnT|void|PL_bufptr

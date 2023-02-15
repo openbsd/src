@@ -282,6 +282,20 @@ The following compound statements may be used to control flow:
 
     PHASE BLOCK
 
+As of Perl 5.36, you can iterate over multiple values at a time by specifying
+a list of lexicals within parentheses:
+
+    no warnings "experimental::for_list";
+    LABEL for my (VAR, VAR) (LIST) BLOCK
+    LABEL for my (VAR, VAR) (LIST) BLOCK continue BLOCK
+    LABEL foreach my (VAR, VAR) (LIST) BLOCK
+    LABEL foreach my (VAR, VAR) (LIST) BLOCK continue BLOCK
+
+If enabled by the experimental C<try> feature, the following may also be used
+
+    try BLOCK catch (VAR) BLOCK
+    try BLOCK catch (VAR) BLOCK finally BLOCK
+
 The experimental C<given> statement is I<not automatically enabled>; see
 L</"Switch Statements"> below for how to do so, and the attendant caveats.
 
@@ -315,7 +329,7 @@ by a colon.  The LABEL identifies the loop for the loop control
 statements C<next>, C<last>, and C<redo>.
 If the LABEL is omitted, the loop control statement
 refers to the innermost enclosing loop.  This may include dynamically
-looking back your call-stack at run time to find the LABEL.  Such
+searching through your call-stack at run time to find the LABEL.  Such
 desperate behavior triggers a warning if you use the C<use warnings>
 pragma or the B<-w> flag.
 
@@ -431,7 +445,7 @@ This is caused by the fact that a block by itself acts as a loop that
 executes once, see L</"Basic BLOCKs">.
 
 The form C<while/if BLOCK BLOCK>, available in Perl 4, is no longer
-available.   Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
+available.  Replace any occurrence of C<if BLOCK> by C<if (do BLOCK)>.
 
 =head2 For Loops
 X<for> X<foreach>
@@ -455,8 +469,22 @@ is the same as this:
 There is one minor difference: if variables are declared with C<my>
 in the initialization section of the C<for>, the lexical scope of
 those variables is exactly the C<for> loop (the body of the loop
-and the control sections).
+and the control sections).  To illustrate:
 X<my>
+
+    my $i = 'samba';
+    for (my $i = 1; $i <= 4; $i++) {
+        print "$i\n";
+    }
+    print "$i\n";
+
+when executed, gives:
+
+    1
+    2
+    3
+    4
+    samba
 
 As a special case, if the test in the C<for> loop (or the corresponding
 C<while> loop) is empty, it is treated as true.  That is, both
@@ -499,8 +527,8 @@ is therefore visible only within the loop.  Otherwise, the variable is
 implicitly local to the loop and regains its former value upon exiting
 the loop.  If the variable was previously declared with C<my>, it uses
 that variable instead of the global one, but it's still localized to
-the loop.  This implicit localization occurs I<only> in a C<foreach>
-loop.
+the loop.  This implicit localization occurs I<only> for non C-style
+loops.
 X<my> X<local>
 
 The C<foreach> keyword is actually a synonym for the C<for> keyword, so
@@ -516,11 +544,11 @@ X<alias>
 
 If any part of LIST is an array, C<foreach> will get very confused if
 you add or remove elements within the loop body, for example with
-C<splice>.   So don't do that.
+C<splice>.  So don't do that.
 X<splice>
 
 C<foreach> probably won't do what you expect if VAR is a tied or other
-special variable.   Don't do that either.
+special variable.  Don't do that either.
 
 As of Perl 5.22, there is an experimental variant of this loop that accepts
 a variable preceded by a backslash for VAR, in which case the items in the
@@ -530,6 +558,24 @@ The variable needn't be a scalar in this case, and the backslash may be
 followed by C<my>.  To use this form, you must enable the C<refaliasing>
 feature via C<use feature>.  (See L<feature>.  See also L<perlref/Assigning
 to References>.)
+
+As of Perl 5.36, you can iterate over multiple values at a time.
+You can only iterate with lexical scalars as the iterator variables - unlike
+list assignment, it's not possible to use C<undef> to signify a value that
+isn't wanted.  This is a limitation of the current implementation, and might
+be changed in the future.
+
+If the size of the LIST is not an exact multiple of the number of iterator
+variables, then on the last iteration the "excess" iterator variables are
+aliases to C<undef>, as if the LIST had C<, undef> appended as many times as
+needed for its length to become an exact multiple.  This happens whether
+LIST is a literal LIST or an array - ie arrays are not extended if their
+size is not a multiple of the iteration size, consistent with iterating an
+array one-at-a-time.  As these padding elements are not lvalues, attempting
+to modify them will fail, consistent with the behaviour when iterating a
+list with literal C<undef>s.  If this is not the behaviour you desire, then
+before the loop starts either explicitly extend your array to be an exact
+multiple, or explicitly throw an exception.
 
 Examples:
 
@@ -553,7 +599,18 @@ Examples:
     use feature "refaliasing";
     no warnings "experimental::refaliasing";
     foreach \my %hash (@array_of_hash_references) {
-        # do something which each %hash
+        # do something with each %hash
+    }
+
+    foreach my ($foo, $bar, $baz) (@list) {
+        # do something three-at-a-time
+    }
+
+    foreach my ($key, $value) (%hash) {
+        # iterate over the hash
+        # The hash is immediately copied to a flat list before the loop
+        # starts. The list contains copies of keys but aliases of values.
+        # This is the same behaviour as for $var (%hash) {...}
     }
 
 Here's how a C programmer might code up a particular algorithm in Perl:
@@ -592,6 +649,96 @@ block.  The reward for this discovery is this cautionary advice:  The
 return value of a C<for> loop is unspecified and may change without notice.
 Do not rely on it.
 
+=head2 Try Catch Exception Handling
+X<try> X<catch> X<finally>
+
+The C<try>/C<catch> syntax provides control flow relating to exception
+handling. The C<try> keyword introduces a block which will be executed when it
+is encountered, and the C<catch> block provides code to handle any exception
+that may be thrown by the first.
+
+    try {
+        my $x = call_a_function();
+        $x < 100 or die "Too big";
+        send_output($x);
+    }
+    catch ($e) {
+        warn "Unable to output a value; $e";
+    }
+    print "Finished\n";
+
+Here, the body of the C<catch> block (i.e. the C<warn> statement) will be
+executed if the initial block invokes the conditional C<die>, or if either of
+the functions it invokes throws an uncaught exception. The C<catch> block can
+inspect the C<$e> lexical variable in this case to see what the exception was.
+If no exception was thrown then the C<catch> block does not happen. In either
+case, execution will then continue from the following statement - in this
+example the C<print>.
+
+The C<catch> keyword must be immediately followed by a variable declaration in
+parentheses, which introduces a new variable visible to the body of the
+subsequent block. Inside the block this variable will contain the exception
+value that was thrown by the code in the C<try> block. It is not necessary
+to use the C<my> keyword to declare this variable; this is implied (similar
+as it is for subroutine signatures).
+
+Both the C<try> and the C<catch> blocks are permitted to contain control-flow
+expressions, such as C<return>, C<goto>, or C<next>/C<last>/C<redo>. In all
+cases they behave as expected without warnings. In particular, a C<return>
+expression inside the C<try> block will make its entire containing function
+return - this is in contrast to its behaviour inside an C<eval> block, where
+it would only make that block return.
+
+Like other control-flow syntax, C<try> and C<catch> will yield the last
+evaluated value when placed as the final statement in a function or a C<do>
+block. This permits the syntax to be used to create a value. In this case
+remember not to use the C<return> expression, or that will cause the
+containing function to return.
+
+    my $value = do {
+        try {
+            get_thing(@args);
+        }
+        catch ($e) {
+            warn "Unable to get thing - $e";
+            $DEFAULT_THING;
+        }
+    };
+
+As with other control-flow syntax, C<try> blocks are not visible to
+C<caller()> (just as for example, C<while> or C<foreach> loops are not).
+Successive levels of the C<caller> result can see subroutine calls and
+C<eval> blocks, because those affect the way that C<return> would work. Since
+C<try> blocks do not intercept C<return>, they are not of interest to
+C<caller>.
+
+The C<try> and C<catch> blocks may optionally be followed by a third block
+introduced by the C<finally> keyword. This third block is executed after the
+rest of the construct has finished.
+
+    try {
+        call_a_function();
+    }
+    catch ($e) {
+        warn "Unable to call; $e";
+    }
+    finally {
+        print "Finished\n";
+    }
+
+The C<finally> block is equivalent to using a C<defer> block and will be
+invoked in the same situations; whether the C<try> block completes
+successfully, throws an exception, or transfers control elsewhere by using
+C<return>, a loop control, or C<goto>.
+
+Unlike the C<try> and C<catch> blocks, a C<finally> block is not permitted to
+C<return>, C<goto> or use any loop controls. The final expression value is
+ignored, and does not affect the return value of the containing function even
+if it is placed last in the function.
+
+This syntax is currently experimental and must be enabled with
+C<use feature 'try'>. It emits a warning in the C<experimental::try> category.
+
 =head2 Basic BLOCKs
 X<block>
 
@@ -626,6 +773,87 @@ Such constructs are quite frequently used, both because older versions of
 Perl had no official C<switch> statement, and also because the new version
 described immediately below remains experimental and can sometimes be confusing.
 
+=head2 defer blocks
+X<defer>
+
+A block prefixed by the C<defer> modifier provides a section of code which
+runs at a later time during scope exit.
+
+A C<defer> block can appear at any point where a regular block or other
+statement is permitted. If the flow of execution reaches this statement, the
+body of the block is stored for later, but not invoked immediately. When the
+flow of control leaves the containing block for any reason, this stored block
+is executed on the way past. It provides a means of deferring execution until
+a later time. This acts similarly to syntax provided by some other languages,
+often using keywords named C<try / finally>.
+
+This syntax is available if enabled by the C<defer> named feature, and is
+currently experimental. If experimental warnings are enabled it will emit a
+warning when used.
+
+    use feature 'defer';
+
+    {
+        say "This happens first";
+        defer { say "This happens last"; }
+
+        say "And this happens inbetween";
+    }
+
+If multiple C<defer> blocks are contained in a single scope, they are
+executed in LIFO order; the last one reached is the first one executed.
+
+The code stored by the C<defer> block will be invoked when control leaves
+its containing block due to regular fallthrough, explicit C<return>,
+exceptions thrown by C<die> or propagated by functions called by it, C<goto>,
+or any of the loop control statements C<next>, C<last> or C<redo>.
+
+If the flow of control does not reach the C<defer> statement itself then its
+body is not stored for later execution. (This is in direct contrast to the
+code provided by an C<END> phaser block, which is always enqueued by the
+compiler, regardless of whether execution ever reached the line it was given
+on.)
+
+    use feature 'defer';
+
+    {
+        defer { say "This will run"; }
+        return;
+        defer { say "This will not"; }
+    }
+
+Exceptions thrown by code inside a C<defer> block will propagate to the
+caller in the same way as any other exception thrown by normal code.
+
+If the C<defer> block is being executed due to a thrown exception and throws
+another one it is not specified what happens, beyond that the caller will
+definitely receive an exception.
+
+Besides throwing an exception, a C<defer> block is not permitted to
+otherwise alter the control flow of its surrounding code. In particular, it
+may not cause its containing function to C<return>, nor may it C<goto> a
+label, or control a containing loop using C<next>, C<last> or C<redo>. These
+constructions are however, permitted entirely within the body of the
+C<defer>.
+
+    use feature 'defer';
+
+    {
+        defer {
+            foreach ( 1 .. 5 ) {
+                last if $_ == 3;     # this is permitted
+            }
+        }
+    }
+
+    {
+        foreach ( 6 .. 10 ) {
+            defer {
+                last if $_ == 8;     # this is not
+            }
+        }
+    }
+
 =head2 Switch Statements
 
 X<switch> X<case> X<given> X<when> X<default>
@@ -637,8 +865,8 @@ right), you can say
 
 to enable an experimental switch feature.  This is loosely based on an
 old version of a Raku proposal, but it no longer resembles the Raku
-construct.   You also get the switch feature whenever you declare that your
-code prefers to run under a version of Perl that is 5.10 or later.  For
+construct.  You also get the switch feature whenever you declare that your
+code prefers to run under a version of Perl between 5.10 and 5.34.  For
 example:
 
     use v5.14;

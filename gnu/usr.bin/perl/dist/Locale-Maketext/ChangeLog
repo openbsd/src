@@ -1,5 +1,14 @@
 Revision history for Perl suite Locale::Maketext
 
+2022-04-14
+   * Release 1.31 to CPAN
+   * White space cleanup.
+
+2022-01-14
+   * Release 1.30 to CPAN
+   * Provide alternate methods allowlist and denylist for
+     whitelist and blacklist, respectively
+
 2020-01-19
     * Release 1.29 to CPAN
     * Replace multiple 'use vars' by 'our'

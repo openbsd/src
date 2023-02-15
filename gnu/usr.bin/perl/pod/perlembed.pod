@@ -98,6 +98,8 @@ When you use Perl from C, your C program will--usually--allocate,
 "run", and deallocate a I<PerlInterpreter> object, which is defined by
 the perl library.
 
+=for apidoc Ayh||PerlInterpreter
+
 If your copy of Perl is recent enough to contain this documentation
 (version 5.002 or later), then the perl library (and I<EXTERN.h> and
 I<perl.h>, which you'll also need) will reside in a directory
@@ -882,6 +884,8 @@ behaviour might not be appropriate when embedding perl and can be
 disabled by assigning the value C<1> to the variable C<PL_origalen>
 before perl_parse() is called.
 
+=for apidoc Amnh||PL_origalen
+
 The F<persistent.c> example above is for instance likely to segfault
 when $0 is assigned to if the C<PL_origalen = 1;> assignment is
 removed.  This because perl will try to write to the read only memory
@@ -1108,6 +1112,8 @@ C pre-processor symbol C<HAS_SKIP_LOCALE_INIT>.  This allows code that
 has to work with multiple Perl versions to do some sort of work-around
 when confronted with an earlier Perl.
 
+=for apidoc Amnh||HAS_SKIP_LOCALE_INIT
+
 If your program is using the POSIX 2008 multi-thread locale
 functionality, you should switch into the global locale and set that up
 properly before starting the Perl interpreter.  It will then properly
@@ -1125,7 +1131,7 @@ you will have to write the explicit full form
 
     Perl_warn(aTHX_ "%d bottles of beer on the wall", bottlecount);
 
-(See L<perlguts/"Background and PERL_IMPLICIT_CONTEXT"> for the explanation
+(See L<perlguts/"Background and MULTIPLICITY"> for the explanation
 of the C<aTHX_>. )  Hiding the short forms is very useful for avoiding
 all sorts of nasty (C preprocessor or otherwise) conflicts with other
 software packages (Perl defines about 2400 APIs with these short names,

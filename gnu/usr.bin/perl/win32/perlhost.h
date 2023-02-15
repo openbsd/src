@@ -32,10 +32,10 @@ public:
     /* Constructors */
     CPerlHost(void);
     CPerlHost(struct IPerlMem** ppMem, struct IPerlMem** ppMemShared,
-		 struct IPerlMem** ppMemParse, struct IPerlEnv** ppEnv,
-		 struct IPerlStdIO** ppStdIO, struct IPerlLIO** ppLIO,
-		 struct IPerlDir** ppDir, struct IPerlSock** ppSock,
-		 struct IPerlProc** ppProc);
+                 struct IPerlMem** ppMemParse, struct IPerlEnv** ppEnv,
+                 struct IPerlStdIO** ppStdIO, struct IPerlLIO** ppLIO,
+                 struct IPerlDir** ppDir, struct IPerlSock** ppSock,
+                 struct IPerlProc** ppProc);
     CPerlHost(CPerlHost& host);
     ~CPerlHost(void);
 
@@ -61,11 +61,11 @@ public:
     inline void Free(void* ptr) { m_pVMem->Free(ptr); };
     inline void* Calloc(size_t num, size_t size)
     {
-	size_t count = num*size;
-	void* lpVoid = Malloc(count);
-	if (lpVoid)
-	    ZeroMemory(lpVoid, count);
-	return lpVoid;
+        size_t count = num*size;
+        void* lpVoid = Malloc(count);
+        if (lpVoid)
+            ZeroMemory(lpVoid, count);
+        return lpVoid;
     };
     inline void GetLock(void) { m_pVMem->GetLock(); };
     inline void FreeLock(void) { m_pVMem->FreeLock(); };
@@ -78,33 +78,33 @@ public:
     inline int IsLockedShared(void) { return m_pVMemShared->IsLocked(); };
     inline void* MallocShared(size_t size)
     {
-	void *result;
-	GetLockShared();
-	result = m_pVMemShared->Malloc(size);
-	FreeLockShared();
-	return result;
+        void *result;
+        GetLockShared();
+        result = m_pVMemShared->Malloc(size);
+        FreeLockShared();
+        return result;
     };
     inline void* ReallocShared(void* ptr, size_t size)
     {
-	void *result;
-	GetLockShared();
-	result = m_pVMemShared->Realloc(ptr, size);
-	FreeLockShared();
-	return result;
+        void *result;
+        GetLockShared();
+        result = m_pVMemShared->Realloc(ptr, size);
+        FreeLockShared();
+        return result;
     };
     inline void FreeShared(void* ptr)
     {
-	GetLockShared();
-	m_pVMemShared->Free(ptr);
-	FreeLockShared();
+        GetLockShared();
+        m_pVMemShared->Free(ptr);
+        FreeLockShared();
     };
     inline void* CallocShared(size_t num, size_t size)
     {
-	size_t count = num*size;
-	void* lpVoid = MallocShared(count);
-	if (lpVoid)
-	    ZeroMemory(lpVoid, count);
-	return lpVoid;
+        size_t count = num*size;
+        void* lpVoid = MallocShared(count);
+        if (lpVoid)
+            ZeroMemory(lpVoid, count);
+        return lpVoid;
     };
 
 /* IPerlMemParse */
@@ -119,11 +119,11 @@ public:
     inline void FreeParse(void* ptr) { m_pVMemParse->Free(ptr); };
     inline void* CallocParse(size_t num, size_t size)
     {
-	size_t count = num*size;
-	void* lpVoid = MallocParse(count);
-	if (lpVoid)
-	    ZeroMemory(lpVoid, count);
-	return lpVoid;
+        size_t count = num*size;
+        void* lpVoid = MallocParse(count);
+        if (lpVoid)
+            ZeroMemory(lpVoid, count);
+        return lpVoid;
     };
 
 /* IPerlEnv */
@@ -131,11 +131,11 @@ public:
     int Putenv(const char *envstring);
     inline char *Getenv(const char *varname, unsigned long *len)
     {
-	*len = 0;
-	char *e = Getenv(varname);
-	if (e)
-	    *len = strlen(e);
-	return e;
+        *len = 0;
+        char *e = Getenv(varname);
+        if (e)
+            *len = strlen(e);
+        return e;
     }
     void* CreateChildEnv(void) { return CreateLocalEnvironmentStrings(*m_pvDir); };
     void FreeChildEnv(void* pStr) { FreeLocalEnvironmentStrings((char*)pStr); };
@@ -146,12 +146,12 @@ public:
 
     inline LPSTR GetIndex(DWORD &dwIndex)
     {
-	if(dwIndex < m_dwEnvCount)
-	{
-	    ++dwIndex;
-	    return m_lppEnvList[dwIndex-1];
-	}
-	return NULL;
+        if(dwIndex < m_dwEnvCount)
+        {
+            ++dwIndex;
+            return m_lppEnvList[dwIndex-1];
+        }
+        return NULL;
     };
 
 protected:
@@ -524,7 +524,7 @@ PerlEnvSiteLibPath(struct IPerlEnv* piPerl, const char *pl, STRLEN *const len)
 
 char*
 PerlEnvVendorLibPath(struct IPerlEnv* piPerl, const char *pl,
-		     STRLEN *const len)
+                     STRLEN *const len)
 {
     return win32_get_vendorlib(pl, len);
 }
@@ -833,17 +833,17 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 
     /* open the file in the same mode */
     if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_RD) {
-	mode[0] = 'r';
-	mode[1] = 0;
+        mode[0] = 'r';
+        mode[1] = 0;
     }
     else if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_WR) {
-	mode[0] = 'a';
-	mode[1] = 0;
+        mode[0] = 'a';
+        mode[1] = 0;
     }
     else if (PERLIO_FILE_flag(pf) & PERLIO_FILE_flag_RW) {
-	mode[0] = 'r';
-	mode[1] = '+';
-	mode[2] = 0;
+        mode[0] = 'r';
+        mode[1] = '+';
+        mode[2] = 0;
     }
 
     /* it appears that the binmode is attached to the
@@ -854,7 +854,7 @@ PerlStdIOFdupopen(struct IPerlStdIO* piPerl, FILE* pf)
 
     /* move the file pointer to the same position */
     if (!fgetpos(pf, &pos)) {
-	fsetpos(pfdup, &pos);
+        fsetpos(pfdup, &pos);
     }
     return pfdup;
 }
@@ -986,6 +986,18 @@ PerlLIOLink(struct IPerlLIO* piPerl, const char*oldname, const char *newname)
     return win32_link(oldname, newname);
 }
 
+int
+PerlLIOSymLink(struct IPerlLIO* piPerl, const char*oldname, const char *newname)
+{
+    return win32_symlink(oldname, newname);
+}
+
+int
+PerlLIOReadLink(struct IPerlLIO* piPerl, const char *path, char *buf, size_t bufsiz)
+{
+    return win32_readlink(path, buf, bufsiz);
+}
+
 Off_t
 PerlLIOLseek(struct IPerlLIO* piPerl, int handle, Off_t offset, int origin)
 {
@@ -995,7 +1007,7 @@ PerlLIOLseek(struct IPerlLIO* piPerl, int handle, Off_t offset, int origin)
 int
 PerlLIOLstat(struct IPerlLIO* piPerl, const char *path, Stat_t *buffer)
 {
-    return win32_stat(path, buffer);
+    return win32_lstat(path, buffer);
 }
 
 char*
@@ -1098,6 +1110,8 @@ const struct IPerlLIO perlLIO =
     PerlLIOUnlink,
     PerlLIOUtime,
     PerlLIOWrite,
+    PerlLIOSymLink,
+    PerlLIOReadLink
 };
 
 
@@ -1710,24 +1724,24 @@ win32_start_child(LPVOID arg)
 
     /* push a zero on the stack (we are the child) */
     {
-	dSP;
-	dTARGET;
-	PUSHi(0);
-	PUTBACK;
+        dSP;
+        dTARGET;
+        PUSHi(0);
+        PUTBACK;
     }
 
     /* continue from next op */
     PL_op = PL_op->op_next;
 
     {
-	dJMPENV;
-	volatile int oldscope = 1; /* We are responsible for all scopes */
+        dJMPENV;
+        volatile int oldscope = 1; /* We are responsible for all scopes */
 
 restart:
-	JMPENV_PUSH(status);
-	switch (status) {
-	case 0:
-	    CALLRUNOPS(aTHX);
+        JMPENV_PUSH(status);
+        switch (status) {
+        case 0:
+            CALLRUNOPS(aTHX);
             /* We may have additional unclosed scopes if fork() was called
              * from within a BEGIN block.  See perlfork.pod for more details.
              * We cannot clean up these other scopes because they belong to a
@@ -1738,48 +1752,48 @@ restart:
                 PL_scopestack[oldscope-1] = PL_scopestack[PL_scopestack_ix-1];
                 PL_scopestack_ix = oldscope;
             }
-	    status = 0;
-	    break;
-	case 2:
-	    while (PL_scopestack_ix > oldscope)
-		LEAVE;
-	    FREETMPS;
-	    PL_curstash = PL_defstash;
-	    if (PL_curstash != PL_defstash) {
-		SvREFCNT_dec(PL_curstash);
-		PL_curstash = (HV *)SvREFCNT_inc(PL_defstash);
-	    }
-	    if (PL_endav && !PL_minus_c) {
-		PERL_SET_PHASE(PERL_PHASE_END);
-		call_list(oldscope, PL_endav);
-	    }
-	    status = STATUS_EXIT;
-	    break;
-	case 3:
-	    if (PL_restartop) {
-		POPSTACK_TO(PL_mainstack);
-		PL_op = PL_restartop;
-		PL_restartop = (OP*)NULL;
-		goto restart;
-	    }
-	    PerlIO_printf(Perl_error_log, "panic: restartop\n");
-	    FREETMPS;
-	    status = 1;
-	    break;
-	}
-	JMPENV_POP;
+            status = 0;
+            break;
+        case 2:
+            while (PL_scopestack_ix > oldscope)
+                LEAVE;
+            FREETMPS;
+            PL_curstash = PL_defstash;
+            if (PL_curstash != PL_defstash) {
+                SvREFCNT_dec(PL_curstash);
+                PL_curstash = (HV *)SvREFCNT_inc(PL_defstash);
+            }
+            if (PL_endav && !PL_minus_c) {
+                PERL_SET_PHASE(PERL_PHASE_END);
+                call_list(oldscope, PL_endav);
+            }
+            status = STATUS_EXIT;
+            break;
+        case 3:
+            if (PL_restartop) {
+                POPSTACK_TO(PL_mainstack);
+                PL_op = PL_restartop;
+                PL_restartop = (OP*)NULL;
+                goto restart;
+            }
+            PerlIO_printf(Perl_error_log, "panic: restartop\n");
+            FREETMPS;
+            status = 1;
+            break;
+        }
+        JMPENV_POP;
 
-	/* XXX hack to avoid perl_destruct() freeing optree */
+        /* XXX hack to avoid perl_destruct() freeing optree */
         win32_checkTLS(my_perl);
-	PL_main_root = (OP*)NULL;
+        PL_main_root = (OP*)NULL;
     }
 
     win32_checkTLS(my_perl);
     /* close the std handles to avoid fd leaks */
     {
-	do_close(PL_stdingv, FALSE);
-	do_close(gv_fetchpv("STDOUT", TRUE, SVt_PVIO), FALSE); /* PL_stdoutgv - ISAGN */
-	do_close(PL_stderrgv, FALSE);
+        do_close(PL_stdingv, FALSE);
+        do_close(gv_fetchpv("STDOUT", TRUE, SVt_PVIO), FALSE); /* PL_stdoutgv - ISAGN */
+        do_close(PL_stderrgv, FALSE);
     }
 
     /* destroy everything (waits for any pseudo-forked children) */
@@ -1806,22 +1820,22 @@ PerlProcFork(struct IPerlProc* piPerl)
     CPerlHost *h;
 
     if (w32_num_pseudo_children >= MAXIMUM_WAIT_OBJECTS) {
-	errno = EAGAIN;
-	return -1;
+        errno = EAGAIN;
+        return -1;
     }
     h = new CPerlHost(*(CPerlHost*)w32_internal_host);
     PerlInterpreter *new_perl = perl_clone_using((PerlInterpreter*)aTHX,
-						 CLONEf_COPY_STACKS,
-						 h->m_pHostperlMem,
-						 h->m_pHostperlMemShared,
-						 h->m_pHostperlMemParse,
-						 h->m_pHostperlEnv,
-						 h->m_pHostperlStdIO,
-						 h->m_pHostperlLIO,
-						 h->m_pHostperlDir,
-						 h->m_pHostperlSock,
-						 h->m_pHostperlProc
-						 );
+                                                 CLONEf_COPY_STACKS,
+                                                 h->m_pHostperlMem,
+                                                 h->m_pHostperlMemShared,
+                                                 h->m_pHostperlMemParse,
+                                                 h->m_pHostperlEnv,
+                                                 h->m_pHostperlStdIO,
+                                                 h->m_pHostperlLIO,
+                                                 h->m_pHostperlDir,
+                                                 h->m_pHostperlSock,
+                                                 h->m_pHostperlProc
+                                                 );
     new_perl->Isys_intern.internal_host = h;
     h->host_perl = new_perl;
 #  ifdef PERL_SYNC_FORK
@@ -1835,15 +1849,15 @@ PerlProcFork(struct IPerlProc* piPerl)
         (w32_message_hwnd == NULL) ? (HWND)NULL : (HWND)INVALID_HANDLE_VALUE;
 #    ifdef USE_RTL_THREAD_API
     handle = (HANDLE)_beginthreadex((void*)NULL, 0, win32_start_child,
-				    (void*)new_perl, 0, (unsigned*)&id);
+                                    (void*)new_perl, 0, (unsigned*)&id);
 #    else
     handle = CreateThread(NULL, 0, win32_start_child,
-			  (LPVOID)new_perl, 0, &id);
+                          (LPVOID)new_perl, 0, &id);
 #    endif
     PERL_SET_THX(aTHX);	/* XXX perl_clone*() set TLS */
     if (!handle) {
-	errno = EAGAIN;
-	return -1;
+        errno = EAGAIN;
+        return -1;
     }
     w32_pseudo_child_handles[w32_num_pseudo_children] = handle;
     w32_pseudo_child_pids[w32_num_pseudo_children] = id;
@@ -1971,20 +1985,20 @@ CPerlHost::CPerlHost(void)
 
 #define SETUPEXCHANGE(xptr, iptr, table) \
     STMT_START {				\
-	if (xptr) {				\
-	    iptr = *xptr;			\
-	    *xptr = &table;			\
-	}					\
-	else {					\
-	    iptr = &table;			\
-	}					\
+        if (xptr) {				\
+            iptr = *xptr;			\
+            *xptr = &table;			\
+        }					\
+        else {					\
+            iptr = &table;			\
+        }					\
     } STMT_END
 
 CPerlHost::CPerlHost(struct IPerlMem** ppMem, struct IPerlMem** ppMemShared,
-		 struct IPerlMem** ppMemParse, struct IPerlEnv** ppEnv,
-		 struct IPerlStdIO** ppStdIO, struct IPerlLIO** ppLIO,
-		 struct IPerlDir** ppDir, struct IPerlSock** ppSock,
-		 struct IPerlProc** ppProc)
+                 struct IPerlMem** ppMemParse, struct IPerlEnv** ppEnv,
+                 struct IPerlStdIO** ppStdIO, struct IPerlLIO** ppLIO,
+                 struct IPerlDir** ppDir, struct IPerlSock** ppSock,
+                 struct IPerlProc** ppProc)
 {
     InterlockedIncrement(&num_hosts);
     m_pvDir = new VDir(0);
@@ -2059,7 +2073,7 @@ CPerlHost::CPerlHost(CPerlHost& host)
     LPSTR lpPtr;
     DWORD dwIndex = 0;
     while(lpPtr = host.GetIndex(dwIndex))
-	Add(lpPtr);
+        Add(lpPtr);
 }
 
 CPerlHost::~CPerlHost(void)
@@ -2078,13 +2092,13 @@ CPerlHost::Find(LPCSTR lpStr)
     LPSTR lpPtr;
     LPSTR* lppPtr = Lookup(lpStr);
     if(lppPtr != NULL) {
-	for(lpPtr = *lppPtr; *lpPtr != '\0' && *lpPtr != '='; ++lpPtr)
-	    ;
+        for(lpPtr = *lppPtr; *lpPtr != '\0' && *lpPtr != '='; ++lpPtr)
+            ;
 
-	if(*lpPtr == '=')
-	    ++lpPtr;
+        if(*lpPtr == '=')
+            ++lpPtr;
 
-	return lpPtr;
+        return lpPtr;
     }
     return NULL;
 }
@@ -2098,26 +2112,26 @@ lookup(const void *arg1, const void *arg2)
     ptr1 = *(char**)arg1;
     ptr2 = *(char**)arg2;
     for(;;) {
-	c1 = *ptr1++;
-	c2 = *ptr2++;
-	if(c1 == '\0' || c1 == '=') {
-	    if(c2 == '\0' || c2 == '=')
-		break;
+        c1 = *ptr1++;
+        c2 = *ptr2++;
+        if(c1 == '\0' || c1 == '=') {
+            if(c2 == '\0' || c2 == '=')
+                break;
 
-	    return -1; // string 1 < string 2
-	}
-	else if(c2 == '\0' || c2 == '=')
-	    return 1; // string 1 > string 2
-	else if(c1 != c2) {
-	    c1 = toupper(c1);
-	    c2 = toupper(c2);
-	    if(c1 != c2) {
-		if(c1 < c2)
-		    return -1; // string 1 < string 2
+            return -1; // string 1 < string 2
+        }
+        else if(c2 == '\0' || c2 == '=')
+            return 1; // string 1 > string 2
+        else if(c1 != c2) {
+            c1 = toupper(c1);
+            c2 = toupper(c2);
+            if(c1 != c2) {
+                if(c1 < c2)
+                    return -1; // string 1 < string 2
 
-		return 1; // string 1 > string 2
-	    }
-	}
+                return 1; // string 1 > string 2
+            }
+        }
     }
     return 0;
 }
@@ -2126,7 +2140,7 @@ LPSTR*
 CPerlHost::Lookup(LPCSTR lpStr)
 {
     if (!lpStr)
-	return NULL;
+        return NULL;
     return (LPSTR*)bsearch(&lpStr, m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), lookup);
 }
 
@@ -2139,26 +2153,26 @@ compare(const void *arg1, const void *arg2)
     ptr1 = *(char**)arg1;
     ptr2 = *(char**)arg2;
     for(;;) {
-	c1 = *ptr1++;
-	c2 = *ptr2++;
-	if(c1 == '\0' || c1 == '=') {
-	    if(c1 == c2)
-		break;
+        c1 = *ptr1++;
+        c2 = *ptr2++;
+        if(c1 == '\0' || c1 == '=') {
+            if(c1 == c2)
+                break;
 
-	    return -1; // string 1 < string 2
-	}
-	else if(c2 == '\0' || c2 == '=')
-	    return 1; // string 1 > string 2
-	else if(c1 != c2) {
-	    c1 = toupper(c1);
-	    c2 = toupper(c2);
-	    if(c1 != c2) {
-		if(c1 < c2)
-		    return -1; // string 1 < string 2
+            return -1; // string 1 < string 2
+        }
+        else if(c2 == '\0' || c2 == '=')
+            return 1; // string 1 > string 2
+        else if(c1 != c2) {
+            c1 = toupper(c1);
+            c2 = toupper(c2);
+            if(c1 != c2) {
+                if(c1 < c2)
+                    return -1; // string 1 < string 2
 
-		return 1; // string 1 > string 2
-	    }
-	}
+                return 1; // string 1 > string 2
+            }
+        }
     }
     return 0;
 }
@@ -2172,23 +2186,23 @@ CPerlHost::Add(LPCSTR lpStr)
     // replacing ?
     lpPtr = Lookup(lpStr);
     if (lpPtr != NULL) {
-	// must allocate things via host memory allocation functions 
-	// rather than perl's Renew() et al, as the perl interpreter
-	// may either not be initialized enough when we allocate these,
-	// or may already be dead when we go to free these
-	*lpPtr = (char*)Realloc(*lpPtr, length * sizeof(char));
-	strcpy(*lpPtr, lpStr);
+        // must allocate things via host memory allocation functions 
+        // rather than perl's Renew() et al, as the perl interpreter
+        // may either not be initialized enough when we allocate these,
+        // or may already be dead when we go to free these
+        *lpPtr = (char*)Realloc(*lpPtr, length * sizeof(char));
+        strcpy(*lpPtr, lpStr);
     }
     else {
-	m_lppEnvList = (LPSTR*)Realloc(m_lppEnvList, (m_dwEnvCount+1) * sizeof(LPSTR));
-	if (m_lppEnvList) {
-	    m_lppEnvList[m_dwEnvCount] = (char*)Malloc(length * sizeof(char));
-	    if (m_lppEnvList[m_dwEnvCount] != NULL) {
-		strcpy(m_lppEnvList[m_dwEnvCount], lpStr);
-		++m_dwEnvCount;
-		qsort(m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), compare);
-	    }
-	}
+        m_lppEnvList = (LPSTR*)Realloc(m_lppEnvList, (m_dwEnvCount+1) * sizeof(LPSTR));
+        if (m_lppEnvList) {
+            m_lppEnvList[m_dwEnvCount] = (char*)Malloc(length * sizeof(char));
+            if (m_lppEnvList[m_dwEnvCount] != NULL) {
+                strcpy(m_lppEnvList[m_dwEnvCount], lpStr);
+                ++m_dwEnvCount;
+                qsort(m_lppEnvList, m_dwEnvCount, sizeof(LPSTR), compare);
+            }
+        }
     }
 }
 
@@ -2198,7 +2212,7 @@ CPerlHost::CalculateEnvironmentSpace(void)
     DWORD index;
     DWORD dwSize = 0;
     for(index = 0; index < m_dwEnvCount; ++index)
-	dwSize += strlen(m_lppEnvList[index]) + 1;
+        dwSize += strlen(m_lppEnvList[index]) + 1;
 
     return dwSize;
 }
@@ -2243,13 +2257,13 @@ CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
 
     // step over current directory stuff
     while(*lpTmp == '=')
-	lpTmp += strlen(lpTmp) + 1;
+        lpTmp += strlen(lpTmp) + 1;
 
     // save the start of the environment strings
     lpEnvPtr = lpTmp;
     for(dwSize = 1; *lpTmp != '\0'; lpTmp += strlen(lpTmp) + 1) {
-	// calculate the size of the environment strings
-	dwSize += strlen(lpTmp) + 1;
+        // calculate the size of the environment strings
+        dwSize += strlen(lpTmp) + 1;
     }
 
     // add the size of current directories
@@ -2261,57 +2275,57 @@ CPerlHost::CreateLocalEnvironmentStrings(VDir &vDir)
     Newx(lpStr, dwSize, char);
     lpPtr = lpStr;
     if(lpStr != NULL) {
-	// build the local environment
-	lpStr = vDir.BuildEnvironmentSpace(lpStr);
+        // build the local environment
+        lpStr = vDir.BuildEnvironmentSpace(lpStr);
 
-	dwEnvIndex = 0;
-	lpLocalEnv = GetIndex(dwEnvIndex);
-	while(*lpEnvPtr != '\0') {
-	    if(!lpLocalEnv) {
-		// all environment overrides have been added
-		// so copy string into place
-		strcpy(lpStr, lpEnvPtr);
-		nLength = strlen(lpEnvPtr) + 1;
-		lpStr += nLength;
-		lpEnvPtr += nLength;
-	    }
-	    else {
-		// determine which string to copy next
-		compVal = compare(&lpEnvPtr, &lpLocalEnv);
-		if(compVal < 0) {
-		    strcpy(lpStr, lpEnvPtr);
-		    nLength = strlen(lpEnvPtr) + 1;
-		    lpStr += nLength;
-		    lpEnvPtr += nLength;
-		}
-		else {
-		    char *ptr = strchr(lpLocalEnv, '=');
-		    if(ptr && ptr[1]) {
-			strcpy(lpStr, lpLocalEnv);
-			lpStr += strlen(lpLocalEnv) + 1;
-		    }
-		    lpLocalEnv = GetIndex(dwEnvIndex);
-		    if(compVal == 0) {
-			// this string was replaced
-			lpEnvPtr += strlen(lpEnvPtr) + 1;
-		    }
-		}
-	    }
-	}
+        dwEnvIndex = 0;
+        lpLocalEnv = GetIndex(dwEnvIndex);
+        while(*lpEnvPtr != '\0') {
+            if(!lpLocalEnv) {
+                // all environment overrides have been added
+                // so copy string into place
+                strcpy(lpStr, lpEnvPtr);
+                nLength = strlen(lpEnvPtr) + 1;
+                lpStr += nLength;
+                lpEnvPtr += nLength;
+            }
+            else {
+                // determine which string to copy next
+                compVal = compare(&lpEnvPtr, &lpLocalEnv);
+                if(compVal < 0) {
+                    strcpy(lpStr, lpEnvPtr);
+                    nLength = strlen(lpEnvPtr) + 1;
+                    lpStr += nLength;
+                    lpEnvPtr += nLength;
+                }
+                else {
+                    char *ptr = strchr(lpLocalEnv, '=');
+                    if(ptr && ptr[1]) {
+                        strcpy(lpStr, lpLocalEnv);
+                        lpStr += strlen(lpLocalEnv) + 1;
+                    }
+                    lpLocalEnv = GetIndex(dwEnvIndex);
+                    if(compVal == 0) {
+                        // this string was replaced
+                        lpEnvPtr += strlen(lpEnvPtr) + 1;
+                    }
+                }
+            }
+        }
 
-	while(lpLocalEnv) {
-	    // still have environment overrides to add
-	    // so copy the strings into place if not an override
-	    char *ptr = strchr(lpLocalEnv, '=');
-	    if(ptr && ptr[1]) {
-		strcpy(lpStr, lpLocalEnv);
-		lpStr += strlen(lpLocalEnv) + 1;
-	    }
-	    lpLocalEnv = GetIndex(dwEnvIndex);
-	}
+        while(lpLocalEnv) {
+            // still have environment overrides to add
+            // so copy the strings into place if not an override
+            char *ptr = strchr(lpLocalEnv, '=');
+            if(ptr && ptr[1]) {
+                strcpy(lpStr, lpLocalEnv);
+                lpStr += strlen(lpLocalEnv) + 1;
+            }
+            lpLocalEnv = GetIndex(dwEnvIndex);
+        }
 
-	// add final NULL
-	*lpStr = '\0';
+        // add final NULL
+        *lpStr = '\0';
     }
 
     // release the process environment strings
@@ -2324,10 +2338,10 @@ void
 CPerlHost::Reset(void)
 {
     if(m_lppEnvList != NULL) {
-	for(DWORD index = 0; index < m_dwEnvCount; ++index) {
-	    Free(m_lppEnvList[index]);
-	    m_lppEnvList[index] = NULL;
-	}
+        for(DWORD index = 0; index < m_dwEnvCount; ++index) {
+            Free(m_lppEnvList[index]);
+            m_lppEnvList[index] = NULL;
+        }
     }
     m_dwEnvCount = 0;
     Free(m_lppEnvList);
@@ -2340,13 +2354,13 @@ CPerlHost::Clearenv(void)
     char ch;
     LPSTR lpPtr, lpStr, lpEnvPtr;
     if (m_lppEnvList != NULL) {
-	/* set every entry to an empty string */
-	for(DWORD index = 0; index < m_dwEnvCount; ++index) {
-	    char* ptr = strchr(m_lppEnvList[index], '=');
-	    if(ptr) {
-		*++ptr = 0;
-	    }
-	}
+        /* set every entry to an empty string */
+        for(DWORD index = 0; index < m_dwEnvCount; ++index) {
+            char* ptr = strchr(m_lppEnvList[index], '=');
+            if(ptr) {
+                *++ptr = 0;
+            }
+        }
     }
 
     /* get the process environment strings */
@@ -2354,19 +2368,19 @@ CPerlHost::Clearenv(void)
 
     /* step over current directory stuff */
     while(*lpStr == '=')
-	lpStr += strlen(lpStr) + 1;
+        lpStr += strlen(lpStr) + 1;
 
     while(*lpStr) {
-	lpPtr = strchr(lpStr, '=');
-	if(lpPtr) {
-	    ch = *++lpPtr;
-	    *lpPtr = 0;
-	    Add(lpStr);
-	    if (m_bTopLevel)
-		(void)win32_putenv(lpStr);
-	    *lpPtr = ch;
-	}
-	lpStr += strlen(lpStr) + 1;
+        lpPtr = strchr(lpStr, '=');
+        if(lpPtr) {
+            ch = *++lpPtr;
+            *lpPtr = 0;
+            Add(lpStr);
+            if (m_bTopLevel)
+                (void)win32_putenv(lpStr);
+            *lpPtr = ch;
+        }
+        lpStr += strlen(lpStr) + 1;
     }
 
     win32_freeenvironmentstrings(lpEnvPtr);
@@ -2377,9 +2391,9 @@ char*
 CPerlHost::Getenv(const char *varname)
 {
     if (!m_bTopLevel) {
-	char *pEnv = Find(varname);
-	if (pEnv && *pEnv)
-	    return pEnv;
+        char *pEnv = Find(varname);
+        if (pEnv && *pEnv)
+            return pEnv;
     }
     return win32_getenv(varname);
 }
@@ -2389,7 +2403,7 @@ CPerlHost::Putenv(const char *envstring)
 {
     Add(envstring);
     if (m_bTopLevel)
-	return win32_putenv(envstring);
+        return win32_putenv(envstring);
 
     return 0;
 }
@@ -2399,12 +2413,12 @@ CPerlHost::Chdir(const char *dirname)
 {
     int ret;
     if (!dirname) {
-	errno = ENOENT;
-	return -1;
+        errno = ENOENT;
+        return -1;
     }
     ret = m_pvDir->SetCurrentDirectoryA((char*)dirname);
     if(ret < 0) {
-	errno = ENOENT;
+        errno = ENOENT;
     }
     return ret;
 }

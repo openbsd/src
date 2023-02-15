@@ -486,7 +486,7 @@ executable code for that command or program.
 First, many systems have "internal" commands that are built-in to the
 shell or OS and while these commands can be invoked, there is no
 corresponding file.  Second, some operating systems (e.g., Cygwin,
-DJGPP, OS/2, and VOS) have required suffixes for executable files;
+OS/2, and VOS) have required suffixes for executable files;
 these suffixes are generally permitted on the command name but are not
 required.  Thus, a command like C<perl> might exist in a file named
 F<perl>, F<perl.exe>, or F<perl.pm>, depending on the operating system.
@@ -1013,11 +1013,6 @@ Also see:
 
 =item *
 
-The djgpp environment for DOS, L<http://www.delorie.com/djgpp/>
-and L<perldos>.
-
-=item *
-
 The EMX environment for DOS, OS/2, etc. emx@iaehv.nl,
 L<ftp://hobbes.nmsu.edu/pub/os2/dev/emx/>  Also L<perlos2>.
 
@@ -1038,11 +1033,6 @@ The ActiveState Pages, L<https://www.activestate.com/>
 
 The Cygwin environment for Win32; F<README.cygwin> (installed
 as L<perlcygwin>), L<https://www.cygwin.com/>
-
-=item *
-
-The U/WIN environment for Win32,
-L<http://www.research.att.com/sw/tools/uwin/>
 
 =item *
 
@@ -1466,12 +1456,6 @@ See also:
 
 Amiga, F<README.amiga> (installed as L<perlamiga>).
 
-=item *
-
-A free perl5-based PERL.NLM for Novell Netware is available in
-precompiled binary and source code form from L<http://www.novell.com/>
-as well as from CPAN.
-
 =item  *
 
 S<Plan 9>, F<README.plan9>
@@ -1526,6 +1510,9 @@ C<-x>, C<-o>.
 (Win32, VMS, S<RISC OS>)
 C<-g>, C<-k>, C<-l>, C<-u>, C<-A> are not particularly meaningful.
 
+(Win32)
+C<-l> returns true for both symlinks and directory junctions.
+
 (VMS, S<RISC OS>)
 C<-p> is not particularly meaningful.
 
@@ -1570,6 +1557,12 @@ filehandle may be closed, or pointer may be in a different position.
 (Win32)
 The value returned by L<C<tell>|perlfunc/tell FILEHANDLE> may be affected
 after the call, and the filehandle may be flushed.
+
+=item chdir
+
+(Win32)
+The current directory reported by the system may include any symbolic
+links specified to chdir().
 
 =item chmod
 
@@ -1654,9 +1647,6 @@ code.
 
 (SunOS, Solaris, HP-UX)
 Does not automatically flush output handles on some platforms.
-
-(Symbian OS)
-Not supported.
 
 =item exit
 
@@ -1949,7 +1939,7 @@ but usually by no more than an hour.
 Not implemented.
 
 (Win32)
-Return values (especially for device and inode) may be bogus.
+Treats directory junctions as symlinks.
 
 =item msgctl
 
@@ -1979,8 +1969,12 @@ implications for your code.
 
 =item readlink
 
-(Win32, VMS, S<RISC OS>)
+(VMS, S<RISC OS>)
 Not implemented.
+
+(Win32)
+readlink() on a directory junction returns the object name, not a
+simple path.
 
 =item rename
 
@@ -2077,9 +2071,6 @@ C<ctime> not supported on UFS.
 (Win32)
 C<ctime> is creation time instead of inode change time.
 
-(Win32)
-C<dev> and C<ino> are not meaningful.
-
 (VMS)
 C<dev> and C<ino> are not necessarily reliable.
 
@@ -2095,16 +2086,21 @@ meaningful and will differ between stat calls on the same file.
 Some versions of cygwin when doing a C<stat("foo")> and not finding it
 may then attempt to C<stat("foo.exe")>.
 
-(Win32)
-C<stat> needs to open the file to determine the link count
-and update attributes that may have been changed through hard links.
-Setting L<C<${^WIN32_SLOPPY_STAT}>|perlvar/${^WIN32_SLOPPY_STAT}> to a
-true value speeds up C<stat> by not performing this operation.
-
 =item symlink
 
-(Win32, S<RISC OS>)
+(S<RISC OS>)
 Not implemented.
+
+(Win32)
+Requires either elevated permissions or developer mode and a
+sufficiently recent version of Windows 10. You can check whether the current
+process has the required privileges using the
+L<Win32::IsSymlinkCreationAllowed()|Win32/Win32::IsSymlinkCreationAllowed()>
+function.
+
+Since Windows needs to know whether the target is a directory or not when
+creating the link the target Perl will only create the link as a directory
+link when the target exists and is a directory.
 
 (VMS)
 Implemented on 64 bit VMS 8.3.  VMS requires the symbolic link to be in Unix
@@ -2301,8 +2297,6 @@ F<ext/Win32CORE/t/win32core.t> - may fail on recent cygwin installs.
 
 =back
 
-=item Symbian
-
 =item NetBSD
 
 =item FreeBSD
@@ -2333,8 +2327,6 @@ Caveats:
 
 =back
 
-=item Symbian (Series 60 v3, 3.2 and 5 - what else?)
-
 =item Stratus VOS / OpenVOS
 
 =item AIX
@@ -2352,6 +2344,22 @@ ensure you have that library installed when building perl.
 =back
 
 =head1 EOL Platforms
+
+=head2 (Perl 5.36)
+
+The following platforms were supported by a previous version of
+Perl but have been officially removed from Perl's source code
+as of 5.36:
+
+=over
+
+=item NetWare
+
+=item DOS/DJGPP
+
+=item AT&T UWIN
+
+=back
 
 =head2 (Perl 5.20)
 
@@ -2534,10 +2542,10 @@ L<http://www.cpan.org/ports/index.html> for binary distributions.
 =head1 SEE ALSO
 
 L<perlaix>, L<perlamiga>, L<perlbs2000>,
-L<perlcygwin>, L<perldos>,
+L<perlcygwin>,
 L<perlebcdic>, L<perlfreebsd>, L<perlhurd>, L<perlhpux>, L<perlirix>,
-L<perlmacos>, L<perlmacosx>,
-L<perlnetware>, L<perlos2>, L<perlos390>, L<perlos400>,
+L<perlmacosx>,
+L<perlos2>, L<perlos390>, L<perlos400>,
 L<perlplan9>, L<perlqnx>, L<perlsolaris>, L<perltru64>,
 L<perlunicode>, L<perlvms>, L<perlvos>, L<perlwin32>, and L<Win32>.
 

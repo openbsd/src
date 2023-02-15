@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # test that overloaded compare works when NaN are involved
 

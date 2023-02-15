@@ -191,7 +191,8 @@ sub test_precomputed_hashes {
 }
 
 {
-    use Scalar::Util 'weaken';
+    no warnings 'experimental::builtin';
+    use builtin 'weaken';
     my %h;
     fill_hash_with_nulls(\%h);
     my @objs;
@@ -289,6 +290,59 @@ pass("hv_store works on the hint hash");
     my %hash = ( "\xff" => 1, "\x{100}" => 1 );
     my @keys = sort ( XS::APItest::Hash::test_force_keys(\%hash) );
     is_deeply(\@keys, [ sort keys %hash ], "check HeSVKEY_force()");
+}
+
+# Test that mg_copy is called when expected (and not called when not)
+# No (other) tests in core will fail if the implementation of `keys %tied_hash`
+# is (accidentally) changed to also call hv_iterval() and trigger mg_copy.
+# However, this behaviour is visible, and tested by Variable::Magic on CPAN.
+
+{
+    my %h;
+    my $obj = tie %h, 'Tie::StdHash';
+    sv_magic_mycopy(\%h);
+
+    is(sv_magic_mycopy_count(\%h), 0);
+
+    $h{perl} = "rules";
+
+    is(sv_magic_mycopy_count(\%h), 1);
+
+    is($h{perl}, "rules", "found key");
+
+    is(sv_magic_mycopy_count(\%h), 2);
+
+    # keys *doesn't* trigger copy magic, so the count is still 2
+    my @flat = keys %h;
+
+    is(sv_magic_mycopy_count(\%h), 2);
+
+    @flat = values %h;
+
+    is(sv_magic_mycopy_count(\%h), 3);
+
+    @flat = each %h;
+
+    is(sv_magic_mycopy_count(\%h), 4);
+}
+
+{
+    # There are two API variants - hv_delete and hv_delete_ent. The Perl
+    # interpreter exclusively uses hv_delete_ent. Only XS code uses hv_delete.
+    # Hence the problem case could only be triggered by XS code called on
+    # symbol tables, and with particular non-ASCII keys:
+
+    # Deleting a key with WASUTF from a stash used to trigger a use-after free:
+    my $key = "\xFF\x{100}";
+    chop $key;
+    ++$main::{$key};
+    is(XS::APItest::Hash::delete(\%main::, $key), 1,
+       "hv_delete doesn't trigger a use-after free");
+
+    # Perl code has always used this API, which never had the problem:
+    ++$main::{$key};
+    is(XS::APItest::Hash::delete_ent(\%main::, $key), 1,
+       "hv_delete_ent never triggered a use-after free, but test it anyway");
 }
 
 done_testing;

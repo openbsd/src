@@ -1,5 +1,9 @@
 #!./perl -wT
 
+use strict;
+use warnings;
+use Config;
+
 # This tests plain 'use locale' and adorned 'use locale ":not_characters"'
 # Because these pragmas are compile time, and I (khw) am trying to test
 # without using 'eval' as much as possible, which might cloud the issue,  the
@@ -31,6 +35,9 @@
 my $is_ebcdic = ord("A") == 193;
 my $os = lc $^O;
 
+# Configure now lets you build a perl that silently ignores taint features
+my $NoTaintSupport = exists($Config{taint_support}) && !$Config{taint_support};
+
 no warnings 'locale';  # We test even weird locales; and do some scary things
                        # in ok locales
 
@@ -50,7 +57,6 @@ BEGIN {
     require Config; import Config;
 }
 
-use strict;
 use feature 'fc';
 
 # =1 adds debugging output; =2 increases the verbosity somewhat
@@ -159,7 +165,12 @@ sub check_taint ($;$) {
 
     # Extra blanks are so aligns with taint_not output
     $message_tail = ":     $message_tail" if $message_tail;
-    ok is_tainted($_[0]), "verify that is tainted$message_tail";
+    if ($NoTaintSupport) {
+        skip("your perl was built without taint support");
+    }
+    else {
+        ok is_tainted($_[0]), "verify that is tainted$message_tail";
+    }
 }
 
 sub check_taint_not ($;$) {

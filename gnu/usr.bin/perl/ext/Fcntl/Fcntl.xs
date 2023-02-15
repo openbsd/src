@@ -36,7 +36,6 @@
 static void
 XS_Fcntl_S_ISREG(pTHX_ CV* cv)
 {
-    dVAR;
     dXSARGS;
     dXSI32;
     /* Preserve the semantics of the perl code, which was:

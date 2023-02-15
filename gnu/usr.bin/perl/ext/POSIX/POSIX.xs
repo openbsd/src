@@ -1,17 +1,6 @@
 #define PERL_EXT_POSIX
 #define PERL_EXT
 
-#ifdef NETWARE
-	#define _POSIX_
-	/*
-	 * Ideally this should be somewhere down in the includes
-	 * but putting it in other places is giving compiler errors.
-	 * Also here I am unable to check for HAS_UNAME since it wouldn't have
-	 * yet come into the file at this stage - sgp 18th Oct 2000
-	 */
-	#include <sys/utsname.h>
-#endif	/* NETWARE */
-
 #define PERL_NO_GET_CONTEXT
 
 #include "EXTERN.h"
@@ -280,7 +269,7 @@ static int not_here(const char *s);
 #  define c99_rint	rintq
 #  define c99_round	roundq
 #  define c99_scalbn	scalbnq
-#  define c99_signbit	signbitq
+/* We already define Perl_signbit to signbitq in perl.h. */
 #  define c99_tgamma	tgammaq
 #  define c99_trunc	truncq
 #  define bessel_j0 j0q
@@ -331,9 +320,7 @@ static int not_here(const char *s);
 #  define c99_rint	rintl
 #  define c99_round	roundl
 #  define c99_scalbn	scalbnl
-#  ifdef HAS_SIGNBIT /* possibly bad assumption */
-#    define c99_signbit	signbitl
-#  endif
+/* We already define Perl_signbit in perl.h. */
 #  define c99_tgamma	tgammal
 #  define c99_trunc	truncl
 #else
@@ -376,9 +363,6 @@ static int not_here(const char *s);
 #  define c99_round	round
 #  define c99_scalbn	scalbn
 /* We already define Perl_signbit in perl.h. */
-#  ifdef HAS_SIGNBIT
-#    define c99_signbit	signbit
-#  endif
 #  define c99_tgamma	tgamma
 #  define c99_trunc	trunc
 #endif
@@ -420,6 +404,22 @@ static int not_here(const char *s);
 #  undef c99_scalbn
 #  undef c99_tgamma
 #  undef c99_trunc
+#endif
+
+/* The cc with NetBSD 8.0 and 9.0 claims to be a C11 hosted compiler,
+ * but doesn't define several functions required by C99, let alone C11.
+ * http://gnats.netbsd.org/53234
+ */
+#if defined(USE_LONG_DOUBLE) && defined(__NetBSD__) \
+  && !defined(NETBSD_HAVE_FIXED_LONG_DOUBLE_MATH)
+#  undef c99_expm1
+#  undef c99_lgamma
+#  undef c99_log1p
+#  undef c99_log2
+#  undef c99_nexttoward
+#  undef c99_remainder
+#  undef c99_remquo
+#  undef c99_tgamma
 #endif
 
 #ifndef isunordered
@@ -561,9 +561,6 @@ static int not_here(const char *s);
 #endif
 #ifndef HAS_SCALBN
 #  undef c99_scalbn
-#endif
-#ifndef HAS_SIGNBIT
-#  undef c99_signbit
 #endif
 #ifndef HAS_TGAMMA
 #  undef c99_tgamma
@@ -1020,6 +1017,11 @@ static NV my_log2(NV x)
 
 /* XXX nexttoward */
 
+/* GCC's FLT_ROUNDS is (wrongly) hardcoded to 1 (at least up to 11.x) */
+#if defined(PERL_IS_GCC) /* && __GNUC__ < XXX */
+#  define BROKEN_FLT_ROUNDS
+#endif
+
 static int my_fegetround()
 {
 #ifdef HAS_FEGETROUND
@@ -1317,7 +1319,7 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
 #ifdef NV_PAYLOAD_DEBUG
     Perl_warn(aTHX_ "a[%d] = %" UVxf "\n", i, a[i]);
 #endif
-    payload *= UV_MAX;
+    payload *= (NV) UV_MAX;
     payload += a[i];
   }
 #ifdef NV_PAYLOAD_DEBUG
@@ -1351,11 +1353,11 @@ static NV_PAYLOAD_TYPE S_getpayload(NV nv)
 #include <fcntl.h>
 
 #ifdef HAS_TZNAME
-#  if !defined(WIN32) && !defined(__CYGWIN__) && !defined(NETWARE) && !defined(__UWIN__)
+#  if !defined(WIN32) && !defined(__CYGWIN__)
 extern char *tzname[];
 #  endif
 #else
-#if !defined(WIN32) && !defined(__UWIN__) || (defined(__MINGW32__) && !defined(tzname))
+#if !defined(WIN32) || (defined(__MINGW32__) && !defined(tzname))
 char *tzname[] = { "" , "" };
 #endif
 #endif
@@ -1375,7 +1377,7 @@ char *tzname[] = { "" , "" };
 #if defined (__CYGWIN__)
 #    define tzname _tzname
 #endif
-#if defined (WIN32) || defined (NETWARE)
+#if defined (WIN32)
 #  undef mkfifo
 #  define mkfifo(a,b) not_here("mkfifo")
 #  define ttyname(a) (char*)not_here("ttyname")
@@ -1402,15 +1404,13 @@ char *tzname[] = { "" , "" };
 #  define sigdelset(a,b)	not_here("sigdelset")
 #  define sigfillset(a)		not_here("sigfillset")
 #  define sigismember(a,b)	not_here("sigismember")
-#ifndef NETWARE
 #  undef setuid
 #  undef setgid
 #  define setuid(a)		not_here("setuid")
 #  define setgid(a)		not_here("setgid")
-#endif	/* NETWARE */
-#ifndef USE_LONG_DOUBLE
+#if !defined(USE_LONG_DOUBLE) && !defined(USE_QUADMATH)
 #  define strtold(s1,s2)	not_here("strtold")
-#endif  /* USE_LONG_DOUBLE */
+#endif  /* !(USE_LONG_DOUBLE) && !(USE_QUADMATH) */
 #else
 
 #  ifndef HAS_MKFIFO
@@ -1436,7 +1436,7 @@ char *tzname[] = { "" , "" };
 #  ifdef I_UTIME
 #    include <utime.h>
 #  endif
-#endif /* WIN32 || NETWARE */
+#endif /* WIN32 */
 #endif /* __VMS */
 
 typedef int SysRet;
@@ -1531,9 +1531,7 @@ END_EXTERN_C
 #define tcsetpgrp(a,b) not_here("tcsetpgrp")
 #endif
 #ifndef HAS_TIMES
-#ifndef NETWARE
 #define times(a) not_here("times")
-#endif	/* NETWARE */
 #endif
 #ifndef HAS_UNAME
 #define uname(a) not_here("uname")
@@ -1543,13 +1541,13 @@ END_EXTERN_C
 #endif
 
 #if ! defined(HAS_MBLEN) && ! defined(HAS_MBRLEN)
-#define mblen(a,b) not_here("mblen")
+#  define mblen(a,b) not_here("mblen")
 #endif
 #if ! defined(HAS_MBTOWC) && ! defined(HAS_MBRTOWC)
-#define mbtowc(pwc, s, n) not_here("mbtowc")
+#  define mbtowc(pwc, s, n) not_here("mbtowc")
 #endif
-#ifndef HAS_WCTOMB
-#define wctomb(s, wchar) not_here("wctomb")
+#if ! defined(HAS_WCTOMB) && ! defined(HAS_WCRTOMB)
+#  define wctomb(s, wchar) not_here("wctomb")
 #endif
 #if !defined(HAS_MBLEN) && !defined(HAS_MBSTOWCS) && !defined(HAS_MBTOWC) && !defined(HAS_WCSTOMBS) && !defined(HAS_WCTOMB)
 /* If we don't have these functions, then we wouldn't have gotten a typedef
@@ -1562,7 +1560,7 @@ END_EXTERN_C
 #endif
 #endif
 
-#ifndef HAS_LOCALECONV
+#if ! defined(HAS_LOCALECONV) && ! defined(HAS_LOCALECONV_L)
 #   define localeconv() not_here("localeconv")
 #else
 struct lconv_offset {
@@ -1670,7 +1668,7 @@ static const struct lconv_offset lconv_integers[] = {
  * in the first place, though. -- Ingo Weinhold
  */
 #if defined(__HAIKU__)
-#    define WMUNGE(x) (((x) & 0xFF00) >> 8 | ((x) & 0x00FF) << 8)
+#    define WMUNGE(x) (((x) & 0xFF00) >> 8 | (((U8) (x)) << 8))
 #else
 #    define WMUNGE(x) (x)
 #endif
@@ -1788,6 +1786,7 @@ fix_win32_tzenv(void)
     char* newenv;
     const char* perl_tz_env = win32_getenv("TZ");
     const char* crt_tz_env = getenv("TZ");
+
     if (perl_tz_env == NULL)
         perl_tz_env = "";
     if (crt_tz_env == NULL)
@@ -2158,8 +2157,7 @@ localeconv()
 	sv_2mortal((SV*)RETVAL);
 #  if defined(USE_ITHREADS)                         \
    && defined(HAS_POSIX_2008_LOCALE)                \
-   && defined(HAS_LOCALECONV_L)                     \
-   && defined(HAS_DUPLOCALE)
+   && defined(HAS_LOCALECONV_L)
 
         cur = uselocale((locale_t) 0);
         if (cur == LC_GLOBAL_LOCALE) {
@@ -2169,8 +2167,8 @@ localeconv()
 
         lcbuf = localeconv_l(cur);
 #  else
-        LOCALE_LOCK_V;  /* Prevent interference with other threads using
-                           localeconv() */
+        LOCALECONV_LOCK;    /* Prevent interference with other threads using
+                               localeconv() */
 #    ifdef TS_W32_BROKEN_LOCALECONV
         /* This is a workaround for a Windows bug prior to VS 15, in which
          * localeconv only looks at the global locale.  We toggle to the global
@@ -2255,7 +2253,7 @@ localeconv()
         Safefree(save_global);
         Safefree(save_thread);
 #    endif
-        LOCALE_UNLOCK_V;
+        LOCALECONV_UNLOCK;
 #  endif
         RESTORE_LC_NUMERIC();
 #endif  /* HAS_LOCALECONV */
@@ -2508,13 +2506,47 @@ acos(x)
 
 IV
 fegetround()
+    PROTOTYPE:
+    ALIAS:
+        FLT_ROUNDS = 1
     CODE:
+        switch (ix) {
+        case 0:
+        default:
 #ifdef HAS_FEGETROUND
-	RETVAL = my_fegetround();
+            RETVAL = my_fegetround();
 #else
-	RETVAL = -1;
-	not_here("fegetround");
+            RETVAL = -1;
+            not_here("fegetround");
 #endif
+            break;
+        case 1:
+#if defined(FLT_ROUNDS) && !defined(BROKEN_FLT_ROUNDS)
+            RETVAL = FLT_ROUNDS;
+#elif defined(HAS_FEGETROUND) || defined(HAS_FPGETROUND) || defined(__osf__)
+            switch (my_fegetround()) {
+                /* C standard seems to say that each of the FE_* macros is
+                   defined if and only if the implementation supports it. */
+#  ifdef FE_TOWARDZERO
+            case FE_TOWARDZERO: RETVAL = 0;  break;
+#  endif
+#  ifdef FE_TONEAREST
+            case FE_TONEAREST:  RETVAL = 1;  break;
+#  endif
+#  ifdef FE_UPWARD
+            case FE_UPWARD:     RETVAL = 2;  break;
+#  endif
+#  ifdef FE_DOWNWARD
+            case FE_DOWNWARD:   RETVAL = 3;  break;
+#  endif
+            default:            RETVAL = -1; break;
+            }
+#else
+            RETVAL = -1;
+            not_here("FLT_ROUNDS");
+#endif
+            break;
+        }
     OUTPUT:
 	RETVAL
 
@@ -2610,16 +2642,7 @@ fpclassify(x)
 	    break;
 	case 8:
 	default:
-#ifdef Perl_signbit
 	    RETVAL = Perl_signbit(x);
-#else
-	    RETVAL = (x < 0);
-#ifdef DOUBLE_IS_IEEE_FORMAT
-            if (x == -0.0) {
-              RETVAL = TRUE;
-            }
-#endif
-#endif
 	    break;
 	}
     OUTPUT:
@@ -2968,14 +2991,13 @@ sigaction(sig, optaction, oldaction = 0)
 	SV *			optaction
 	POSIX::SigAction	oldaction
     CODE:
-#if defined(WIN32) || defined(NETWARE) || (defined(__amigaos4__) && defined(__NEWLIB__))
+#if defined(WIN32) || (defined(__amigaos4__) && defined(__NEWLIB__))
 	RETVAL = not_here("sigaction");
 #else
 # This code is really grody because we are trying to make the signal
 # interface look beautiful, which is hard.
 
 	{
-	    dVAR;
 	    POSIX__SigAction action;
 	    GV *siggv = gv_fetchpvs("SIG", GV_ADD, SVt_PVHV);
 	    struct sigaction act;
@@ -3361,9 +3383,9 @@ mblen(s, n = ~0)
             memzero(&PL_mbrlen_ps, sizeof(PL_mbrlen_ps));
             RETVAL = 0;
 #else
-            LOCALE_LOCK;
+            MBLEN_LOCK;
             RETVAL = mblen(NULL, 0);
-            LOCALE_UNLOCK;
+            MBLEN_UNLOCK;
 #endif
         }
         else {  /* Not resetting state */
@@ -3383,9 +3405,9 @@ mblen(s, n = ~0)
 #else
                 /* Locking prevents races, but locales can be switched out
                  * without locking, so this isn't a cure all */
-                LOCALE_LOCK;
+                MBLEN_LOCK;
                 RETVAL = mblen(string, len);
-                LOCALE_UNLOCK;
+                MBLEN_UNLOCK;
 #endif
             }
         }
@@ -3412,9 +3434,9 @@ mbtowc(pwc, s, n = ~0)
             memzero(&PL_mbrtowc_ps, sizeof(PL_mbrtowc_ps));
             RETVAL = 0;
 #else
-            LOCALE_LOCK;
+            MBTOWC_LOCK;
             RETVAL = mbtowc(NULL, NULL, 0);
-            LOCALE_UNLOCK;
+            MBTOWC_UNLOCK;
 #endif
         }
         else {  /* Not resetting state */
@@ -3433,9 +3455,9 @@ mbtowc(pwc, s, n = ~0)
 #else
                 /* Locking prevents races, but locales can be switched out
                  * without locking, so this isn't a cure all */
-                LOCALE_LOCK;
+                MBTOWC_LOCK;
                 RETVAL = mbtowc(&wc, string, len);
-                LOCALE_UNLOCK;
+                MBTOWC_UNLOCK;
 #endif
                 if (RETVAL >= 0) {
                     sv_setiv_mg(pwc, wc);
@@ -3467,9 +3489,9 @@ wctomb(s, wchar)
              * But probably memzero would too */
             RETVAL = wcrtomb(NULL, L'\0', &PL_wcrtomb_ps);
 #else
-            LOCALE_LOCK;
+            WCTOMB_LOCK;
             RETVAL = wctomb(NULL, L'\0');
-            LOCALE_UNLOCK;
+            WCTOMB_UNLOCK;
 #endif
         }
         else {  /* Not resetting state */
@@ -3479,9 +3501,9 @@ wctomb(s, wchar)
 #else
             /* Locking prevents races, but locales can be switched out without
              * locking, so this isn't a cure all */
-            LOCALE_LOCK;
+            WCTOMB_LOCK;
             RETVAL = wctomb(buffer, wchar);
-            LOCALE_UNLOCK;
+            WCTOMB_UNLOCK;
 #endif
             if (RETVAL >= 0) {
                 sv_setpvn_mg(s, buffer, RETVAL);
@@ -3507,7 +3529,7 @@ strtod(str)
 	num = strtod(str, &unparsed);
         RESTORE_LC_NUMERIC();
 	PUSHs(sv_2mortal(newSVnv(num)));
-	if (GIMME_V == G_ARRAY) {
+	if (GIMME_V == G_LIST) {
 	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
@@ -3529,7 +3551,7 @@ strtold(str)
 	num = strtold(str, &unparsed);
         RESTORE_LC_NUMERIC();
 	PUSHs(sv_2mortal(newSVnv(num)));
-	if (GIMME_V == G_ARRAY) {
+	if (GIMME_V == G_LIST) {
 	    EXTEND(SP, 1);
 	    if (unparsed)
 		PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
@@ -3551,11 +3573,11 @@ strtol(str, base = 0)
             num = strtol(str, &unparsed, base);
 #if IVSIZE < LONGSIZE
             if (num < IV_MIN || num > IV_MAX)
-                PUSHs(sv_2mortal(newSVnv((double)num)));
+                PUSHs(sv_2mortal(newSVnv((NV)num)));
             else
 #endif
                 PUSHs(sv_2mortal(newSViv((IV)num)));
-            if (GIMME_V == G_ARRAY) {
+            if (GIMME_V == G_LIST) {
                 EXTEND(SP, 1);
                 if (unparsed)
                     PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
@@ -3565,7 +3587,7 @@ strtol(str, base = 0)
         } else {
 	    SETERRNO(EINVAL, LIB_INVARG);
             PUSHs(&PL_sv_undef);
-            if (GIMME_V == G_ARRAY) {
+            if (GIMME_V == G_LIST) {
                EXTEND(SP, 1);
                PUSHs(&PL_sv_undef);
             }
@@ -3583,13 +3605,13 @@ strtoul(str, base = 0)
 	PERL_UNUSED_VAR(base);
 	if (base == 0 || inRANGE(base, 2, 36)) {
             num = strtoul(str, &unparsed, base);
-#if IVSIZE <= LONGSIZE
-            if (num > IV_MAX)
-                PUSHs(sv_2mortal(newSVnv((double)num)));
+#if UVSIZE < LONGSIZE
+            if (num > UV_MAX)
+                PUSHs(sv_2mortal(newSVnv((NV)num)));
             else
 #endif
-                PUSHs(sv_2mortal(newSViv((IV)num)));
-            if (GIMME_V == G_ARRAY) {
+                PUSHs(sv_2mortal(newSVuv((UV)num)));
+            if (GIMME_V == G_LIST) {
                 EXTEND(SP, 1);
                 if (unparsed)
                     PUSHs(sv_2mortal(newSViv(strlen(unparsed))));
@@ -3599,7 +3621,7 @@ strtoul(str, base = 0)
 	} else {
 	    SETERRNO(EINVAL, LIB_INVARG);
             PUSHs(&PL_sv_undef);
-            if (GIMME_V == G_ARRAY) {
+            if (GIMME_V == G_LIST) {
                EXTEND(SP, 1);
                PUSHs(&PL_sv_undef);
             }

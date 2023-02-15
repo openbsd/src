@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use strict;
-
+use warnings;
 use TieOut;
 use MakeMaker::Test::Utils;
 use Config;

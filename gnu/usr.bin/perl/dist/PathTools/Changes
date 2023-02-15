@@ -1,5 +1,35 @@
 Revision history for Perl distribution PathTools.
 
+3.81
+
+- compare inode numbers as strings (github #18788)
+
+3.80
+
+- use the PerlLIO_*() functions for lstat() and readlink() to support
+  Win32 symlink support added to perl.
+
+- skip a test that assumes getcwd() doesn't return symlinks on Win32, where
+  it can.
+
+3.79
+
+- fix an off-by-one in bsd_realpath()
+
+3.78
+
+- fallback to Internals::getcwd() for getcwd() if available (requires
+  $Config{d_getcwd})
+
+3.77
+
+- don't translate "..." to "..\.." on Win32
+
+3.76
+
+- test t/cwd_enoent.t - also accept ESTALE for a directory that no
+  longer exists (github #16699)
+
 3.75
 - Fix t/abs2rel.t on 5.8.8 by changing mkpath call to be
   compatible with older File::Path

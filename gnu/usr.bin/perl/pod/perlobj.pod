@@ -751,6 +751,16 @@ appending "::" to it, like we saw earlier:
 
   my $file = new File:: $path, $data;
 
+Indirect object syntax is only available when the 
+L<C<"indirect">|feature/The 'indirect' feature> named feature is enabled.
+This is enabled by default, but can be disabled if requested.  This
+feature is present in older feature version bundles, but was removed
+from the C<:5.36> bundle; so a L<C<use VERSION>|perlfunc/use VERSION>
+declaration of C<v5.36> or above will also disable the feature.
+
+    use v5.36;
+    # indirect object syntax is no longer available
+
 =head2 C<bless>, C<blessed>, and C<ref>
 
 As we saw earlier, an object is simply a data structure that has been
@@ -1001,8 +1011,7 @@ Here's an example of a module as a blessed scalar:
 
   package Time;
 
-  use strict;
-  use warnings;
+  use v5.36;
 
   sub new {
       my $class = shift;
@@ -1013,7 +1022,7 @@ Here's an example of a module as a blessed scalar:
 
   sub epoch {
       my $self = shift;
-      return ${ $self };
+      return $$self;
   }
 
   my $time = Time->new();
@@ -1040,8 +1049,7 @@ to support inside-out object implementations.
 
   package Time;
 
-  use strict;
-  use warnings;
+  use v5.36;
 
   use Hash::Util::FieldHash 'fieldhash';
 

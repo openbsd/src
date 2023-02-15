@@ -12,14 +12,24 @@
 
 use Config;
 use strict;
+use warnings;
+use feature 'state';
 
 eval { require POSIX; import POSIX 'locale_h'; };
 my $has_locale_h = ! $@;
 
 my @known_categories = ( qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY
                             LC_NUMERIC LC_TIME LC_ADDRESS LC_IDENTIFICATION
-                            LC_MEASUREMENT LC_PAPER LC_TELEPHONE));
+                            LC_MEASUREMENT LC_PAPER LC_TELEPHONE LC_SYNTAX
+                            LC_TOD));
 my @platform_categories;
+
+sub is_category_valid($) {
+    my $cat_name = shift =~ s/^LC_//r;
+
+    # Recognize Configure option to exclude a category
+    return $Config{ccflags} !~ /\bD?NO_LOCALE_$cat_name\b/;
+}
 
 # LC_ALL can be -1 on some platforms.  And, in fact the implementors could
 # legally use any integer to represent any category.  But it makes the most
@@ -43,7 +53,7 @@ if ($has_locale_h) {
             # number) if the platform doesn't support this category, so we
             # have an entry for all the ones that might be specified in calls
             # to us.
-            $number = $number_for_missing_category-- if $@;
+            $number = $number_for_missing_category--;
         }
         elsif (   $number !~ / ^ -? \d+ $ /x
                || $number <=  $max_bad_category_number)
@@ -89,11 +99,7 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     # Adds the locale given by the first parameter to the list given by the
     # 3rd iff the platform supports the locale in each of the category numbers
     # given by the 2nd parameter, which is either a single category or a
-    # reference to a list of categories.  The list MUST be sorted so that
-    # CTYPE is first, COLLATE is last unless ALL is present, in which case
-    # that comes after COLLATE.  This is because locale.c detects bad locales
-    # only with CTYPE, and COLLATE on some platforms can core dump if it is a
-    # bad locale.
+    # reference to a list of categories.
     #
     # The 4th parameter is true if to accept locales that aren't apparently
     # fully compatible with Perl.
@@ -136,10 +142,34 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
     # Incompatible locales aren't warned about unless using locales.
     use locale;
 
+    # Sort the input so CTYPE is first, COLLATE comes after all but ALL.  This
+    # is because locale.c detects bad locales only with CTYPE, and COLLATE on
+    # some platforms can core dump if it is a bad locale.
+    my @sorted;
+    my $has_ctype = 0;
+    my $has_all = 0;
+    my $has_collate = 0;
     foreach my $category (@$categories) {
         die "category '$category' must instead be a number"
                                             unless $category =~ / ^ -? \d+ $ /x;
+        if ($category_name{$category} eq 'CTYPE') {
+            $has_ctype = 1;
+        }
+        elsif ($category_name{$category} eq 'ALL') {
+            $has_all = 1;
+        }
+        elsif ($category_name{$category} eq 'COLLATE') {
+            $has_collate = 1;
+        }
+        else {
+            push @sorted, $category unless grep { $_ == $category } @sorted;
+        }
+    }
+    push @sorted, $category_number{'COLLATE'} if $has_collate;
+    push @sorted, $category_number{'ALL'} if $has_all;
+    unshift @sorted, $category_number{'CTYPE'} if $has_ctype || ! $allow_incompatible;
 
+    foreach my $category (@sorted) {
         return unless setlocale($category, $locale);
         last if $badutf8 || ! $plays_well;
     }
@@ -182,30 +212,39 @@ sub valid_locale_categories() {
     # Returns a list of the locale categories (expressed as strings, like
     # "LC_ALL) known to this program that are available on this platform.
 
-    return @platform_categories;
+    return grep { is_category_valid($_) } @platform_categories;
 }
 
 sub locales_enabled(;$) {
-    # Returns 0 if no locale handling is available on this platform; otherwise
-    # 1.
+    # If no parameter is specified, the function returns 1 if there is any
+    # "safe" locale handling available to the caller; otherwise 0.  Safeness
+    # is defined here as the caller operating in the main thread of a program,
+    # or if threaded locales are safe on the platform and Configured to be
+    # used.  This sub is used for testing purposes, and for those, this
+    # definition of safety is sufficient, and necessary to get some tests to
+    # run on certain configurations on certain platforms.  But beware that the
+    # main thread can change the locale of any subthreads unless
+    # ${^SAFE_LOCALES} is non-zero.
     #
-    # The optional parameter is a reference to a list of individual POSIX
-    # locale categories.  If any of the individual categories specified by the
-    # optional parameter is all digits (and an optional leading minus), it is
-    # taken to be the C enum for the category (e.g., &POSIX::LC_CTYPE).
-    # Otherwise it should be a string name of the category, like 'LC_TIME'.
-    # The initial 'LC_' is optional.  It is a fatal error to call this with
-    # something that isn't a known category to this file.
+    # Use the optional parameter to discover if a particular category or
+    # categories are available on the system.  1 is returned if the global
+    # criteria described in the previous paragraph are true, AND if all the
+    # specified categories are available on the platform and Configured to be
+    # used.  Otherwise 0 is returned.  The parameter is either a single POSIX
+    # locale category or a reference to a list of them.  Each category must be
+    # its name as a string, like 'LC_TIME' (the initial 'LC_' is optional), or
+    # the number this platform uses to signify the category (e.g.,
+    # 'locales_enabled(&POSIX::LC_CTYPE)'
     #
-    # This optional parameter denotes which POSIX locale categories must be
-    # available on the platform.  If any aren't available, this function
-    # returns 0; otherwise it returns 1 and changes the list for the caller so
-    # that any category names are converted into their equivalent numbers, and
-    # sorts it to match the expectations of _trylocale.
+    # When the function returns 1 and a parameter was specified as a list
+    # reference, the reference will be altered on return to point to an
+    # equivalent list such that  the categories are numeric instead of strings
+    # and sorted to meet the input expectations of _trylocale().
     #
-    # It is acceptable for the second parameter to be just a simple scalar
-    # denoting a single category (either name or number).  No conversion into
-    # a number is done in this case.
+    # It is a fatal error to call this with something that isn't a known
+    # category to this file.  If this happens, look first for a typo, and
+    # second if you are using a category unknown to Perl.  In the latter case
+    # a bug report should be submitted.
 
     # khw cargo-culted the '?' in the pattern on the next line.
     return 0 if $Config{ccflags} =~ /\bD?NO_LOCALE\b/;
@@ -214,6 +253,16 @@ sub locales_enabled(;$) {
     # normally would be available
     return 0 if ! defined &DynaLoader::boot_DynaLoader;
 
+    # Don't test locales where they aren't safe.  On systems with unsafe
+    # threads, for the purposes of testing, we consider the main thread safe,
+    # and all other threads unsafe.
+    if (! ${^SAFE_LOCALES}) {
+        return 0 if $^O eq 'os390'; # Threaded locales don't work well here
+        require threads;
+        return 0 if threads->tid() != 0;
+    }
+
+    # If no setlocale, we need the POSIX 2008 alternatives
     if (! $Config{d_setlocale}) {
         return 0 if $Config{ccflags} =~ /\bD?NO_POSIX_2008_LOCALE\b/;
         return 0 unless $Config{d_newlocale};
@@ -225,7 +274,7 @@ sub locales_enabled(;$) {
     # Done with the global possibilities.  Now check if any passed in category
     # is disabled.
 
-    my $categories_ref = shift;
+    my $categories_ref = $_[0];
     my $return_categories_numbers = 0;
     my @categories_numbers;
     my $has_LC_ALL = 0;
@@ -234,9 +283,14 @@ sub locales_enabled(;$) {
     if (defined $categories_ref) {
         my @local_categories_copy;
 
-        if (ref $categories_ref) {
-            @local_categories_copy = @$$categories_ref;
+        my $reftype = ref $categories_ref;
+        if ($reftype eq 'ARRAY') {
+            @local_categories_copy = @$categories_ref;
             $return_categories_numbers = 1;
+        }
+        elsif ($reftype ne "") {
+            die "Parameter to locales_enabled() must be an ARRAY;"
+              . " instead you used a $reftype";
         }
         else {  # Single category passed in
             @local_categories_copy = $categories_ref;
@@ -264,8 +318,9 @@ sub locales_enabled(;$) {
                     unless defined $number;
             }
 
-            return 0 if    $number <= $max_bad_category_number
-                        || $Config{ccflags} =~ /\bD?NO_LOCALE_$name\b/;
+            return 0 if     $number <= $max_bad_category_number
+                       || ! is_category_valid($name);
+
 
             eval "defined &POSIX::LC_$name";
             return 0 if $@;
@@ -296,7 +351,8 @@ sub locales_enabled(;$) {
         if ($has_LC_ALL) {
             push @categories_numbers, $category_number{'ALL'};
         }
-        $$categories_ref = \@categories_numbers;
+
+        @$categories_ref = @categories_numbers;
     }
 
     return 1;
@@ -315,11 +371,11 @@ sub find_locales ($;$) {
     # multiple) for all of them.  Each category can be a name (like 'LC_ALL'
     # or simply 'ALL') or the C enum value for the category.
 
-    my $categories = shift;
+    my $input_categories = shift;
     my $allow_incompatible = shift // 0;
 
-    $categories = [ $categories ] unless ref $categories;
-    return unless locales_enabled(\$categories);
+    my @categories = (ref $input_categories) ? $input_categories->@* : $input_categories;
+    return unless locales_enabled(\@categories);
 
     # Note, the subroutine call above converts the $categories into a form
     # suitable for _trylocale().
@@ -330,18 +386,15 @@ sub find_locales ($;$) {
     # so re-enable the tests for Windows XP onwards.
     my $winxp = ($^O eq 'MSWin32' && defined &Win32::GetOSVersion &&
                     join('.', (Win32::GetOSVersion())[1..2]) >= 5.1);
-    return if ((($^O eq 'MSWin32' && !$winxp) || $^O eq 'NetWare')
+    return if (($^O eq 'MSWin32' && !$winxp)
                 && $Config{cc} =~ /^(cl|gcc|g\+\+|ici)/i);
 
-    # UWIN seems to loop after taint tests, just skip for now
-    return if ($^O =~ /^uwin/);
-
     my @Locale;
-    _trylocale("C", $categories, \@Locale, $allow_incompatible);
-    _trylocale("POSIX", $categories, \@Locale, $allow_incompatible);
+    _trylocale("C", \@categories, \@Locale, $allow_incompatible);
+    _trylocale("POSIX", \@categories, \@Locale, $allow_incompatible);
 
     if ($Config{d_has_C_UTF8} && $Config{d_has_C_UTF8} eq 'true') {
-        _trylocale("C.UTF-8", $categories, \@Locale, $allow_incompatible);
+        _trylocale("C.UTF-8", \@categories, \@Locale, $allow_incompatible);
     }
 
     # There's no point in looking at anything more if we know that setlocale
@@ -349,13 +402,13 @@ sub find_locales ($;$) {
     return sort @Locale if defined $Config{d_setlocale_accepts_any_locale_name};
 
     foreach (1..16) {
-        _trylocale("ISO8859-$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("iso8859$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("iso8859-$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("iso_8859_$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("isolatin$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("isolatin-$_", $categories, \@Locale, $allow_incompatible);
-        _trylocale("iso_latin_$_", $categories, \@Locale, $allow_incompatible);
+        _trylocale("ISO8859-$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("iso8859$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("iso8859-$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("iso_8859_$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("isolatin$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("isolatin-$_", \@categories, \@Locale, $allow_incompatible);
+        _trylocale("iso_latin_$_", \@categories, \@Locale, $allow_incompatible);
     }
 
     # Sanitize the environment so that we can run the external 'locale'
@@ -376,7 +429,7 @@ sub find_locales ($;$) {
             # locales will cause all IO hadles to default to (assume) utf8
             next unless utf8::valid($_);
             chomp;
-            _trylocale($_, $categories, \@Locale, $allow_incompatible);
+            _trylocale($_, \@categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } elsif ($^O eq 'VMS'
@@ -388,7 +441,7 @@ sub find_locales ($;$) {
         opendir(LOCALES, "SYS\$I18N_LOCALE:");
         while ($_ = readdir(LOCALES)) {
             chomp;
-            _trylocale($_, $categories, \@Locale, $allow_incompatible);
+            _trylocale($_, \@categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } elsif (($^O eq 'openbsd' || $^O eq 'bitrig' ) && -e '/usr/share/locale') {
@@ -400,7 +453,7 @@ sub find_locales ($;$) {
         opendir(LOCALES, '/usr/share/locale');
         while ($_ = readdir(LOCALES)) {
             chomp;
-            _trylocale($_, $categories, \@Locale, $allow_incompatible);
+            _trylocale($_, \@categories, \@Locale, $allow_incompatible);
         }
         close(LOCALES);
     } else { # Final fallback.  Try our list of locales hard-coded here
@@ -421,7 +474,8 @@ sub find_locales ($;$) {
         }
 
         # The rest of the locales are in this file.
-        push @Data, <DATA>; close DATA;
+        state @my_data = <DATA>; close DATA if fileno DATA;
+        push @Data, @my_data;
 
         foreach my $line (@Data) {
             chomp $line;
@@ -431,30 +485,30 @@ sub find_locales ($;$) {
                                                      unless defined $locale_name;
             my @enc = _decode_encodings($encodings);
             foreach my $loc (split(/ /, $locale_name)) {
-                _trylocale($loc, $categories, \@Locale, $allow_incompatible);
+                _trylocale($loc, \@categories, \@Locale, $allow_incompatible);
                 foreach my $enc (@enc) {
-                    _trylocale("$loc.$enc", $categories, \@Locale,
+                    _trylocale("$loc.$enc", \@categories, \@Locale,
                                                             $allow_incompatible);
                 }
                 $loc = lc $loc;
                 foreach my $enc (@enc) {
-                    _trylocale("$loc.$enc", $categories, \@Locale,
+                    _trylocale("$loc.$enc", \@categories, \@Locale,
                                                             $allow_incompatible);
                 }
             }
             foreach my $lang (split(/ /, $language_codes)) {
-                _trylocale($lang, $categories, \@Locale, $allow_incompatible);
+                _trylocale($lang, \@categories, \@Locale, $allow_incompatible);
                 foreach my $country (split(/ /, $country_codes)) {
                     my $lc = "${lang}_${country}";
-                    _trylocale($lc, $categories, \@Locale, $allow_incompatible);
+                    _trylocale($lc, \@categories, \@Locale, $allow_incompatible);
                     foreach my $enc (@enc) {
-                        _trylocale("$lc.$enc", $categories, \@Locale,
+                        _trylocale("$lc.$enc", \@categories, \@Locale,
                                                             $allow_incompatible);
                     }
                     my $lC = "${lang}_\U${country}";
-                    _trylocale($lC, $categories, \@Locale, $allow_incompatible);
+                    _trylocale($lC, \@categories, \@Locale, $allow_incompatible);
                     foreach my $enc (@enc) {
-                        _trylocale("$lC.$enc", $categories, \@Locale,
+                        _trylocale("$lC.$enc", \@categories, \@Locale,
                                                             $allow_incompatible);
                     }
                 }

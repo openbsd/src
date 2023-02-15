@@ -1875,13 +1875,13 @@ L<perllocale>, L<perlfunc>, L<perlunicode>, L<utf8>.
 
 =head1 REFERENCES
 
-L<http://anubis.dkuug.dk/i18n/charmaps>
+L<http://std.dkuug.dk/i18n/charmaps>
 
 L<https://www.unicode.org/>
 
-L<https://www.unicode.org/unicode/reports/tr16/>
+L<https://www.unicode.org/reports/tr16/>
 
-L<http://www.wps.com/projects/codes/>
+L<https://www.sr-ix.com/Archive/CharCodeHist/index.html>
 B<ASCII: American Standard Code for Information Infiltration> Tom Jennings,
 September 1999.
 

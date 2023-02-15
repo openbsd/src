@@ -474,7 +474,7 @@ EOFCODE
                 \$got = "$repl";
 EOFCODE
         }
-        $code = "no warnings 'experimental::regex_sets';$code" if $regex_sets;
+        $code = "$code" if $regex_sets;
         #$code.=qq[\n\$expect="$expect";\n];
         #use Devel::Peek;
         #die Dump($code) if $pat=~/\\h/ and $subject=~/\x{A0}/;

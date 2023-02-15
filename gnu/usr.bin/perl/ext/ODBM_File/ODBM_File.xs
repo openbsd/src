@@ -181,6 +181,14 @@ int
 odbm_DELETE(db, key)
 	ODBM_File	db
 	datum_key	key
+	CODE:
+            /* don't warn about 'delete' being a C++ keyword */
+            GCC_DIAG_IGNORE_STMT(-Wc++-compat);
+	    RETVAL = odbm_DELETE(db, key);
+            GCC_DIAG_RESTORE_STMT;
+	OUTPUT:
+	  RETVAL
+
 
 datum_key
 odbm_FIRSTKEY(db)

@@ -100,14 +100,50 @@ my @dual_tests = (
 ["7 [Ultimate]",                    "7",       2, 6, 1, 0x01         ],
 
 ["8",                               "8",       2, 6, 2               ],
-["2008 [R2]",                       "2008",    2, 6, 1, 0x00, 2, 89  ],
-["2012",                            "2012",    2, 6, 2, 0x00, 2, 89  ],
+["2008 [R2 Standard]",              "2008",    2, 6, 1, 0x07, 2, 89  ],
+["2012 [Standard]",                 "2012",    2, 6, 2, 0x07, 2, 89  ],
 ["[Small Business Server] 2008 R2", "2008",    2, 6, 1, 0x09, 2, 89  ],
 
 ["8.1",                             "8.1",     2, 6, 3               ],
 ["2012 [R2]",                       "2012",    2, 6, 3, 0x00, 2, 89  ],
+);
 
-["10",                              "10",      2, 10, 0              ],
+my @win10_tests = (
+["10 [Build 9840]",                                                "10", 2, 10, 0, 0x00, 0, 0, 9840],
+
+["10 [Version 1507 (Preview Build 9841)]",                         "10", 2, 10, 0, 0x00, 0, 0, 9841],
+["10 [Version 1507 (RTM)]",                                        "10", 2, 10, 0, 0x00, 0, 0, 10240],
+
+["10 [Version 1511 (November Update) (Preview Build 10525)]",      "10", 2, 10, 0, 0x00, 0, 0, 10525],
+["10 [Version 1511 (November Update)]",                            "10", 2, 10, 0, 0x00, 0, 0, 10586],
+
+["10 [Version 1607 (Anniversary Update) (Preview Build 11082)]",   "10", 2, 10, 0, 0x00, 0, 0, 11082],
+["10 [Version 1607 (Anniversary Update)]",                         "10", 2, 10, 0, 0x00, 0, 0, 14393],
+
+["10 [Version 1703 (Creators Update) (Preview Build 14901)]",      "10", 2, 10, 0, 0x00, 0, 0, 14901],
+["10 [Version 1703 (Creators Update)]",                            "10", 2, 10, 0, 0x00, 0, 0, 15063],
+
+["10 [Version 1709 (Fall Creators Update) (Preview Build 16170)]", "10", 2, 10, 0, 0x00, 0, 0, 16170],
+["10 [Version 1709 (Fall Creators Update)]",                       "10", 2, 10, 0, 0x00, 0, 0, 16299],
+
+["10 [Version 1803 (April 2018 Update) (Preview Build 16353)]",    "10", 2, 10, 0, 0x00, 0, 0, 16353],
+["10 [Version 1803 (April 2018 Update)]",                          "10", 2, 10, 0, 0x00, 0, 0, 17134],
+
+["10 [Version 1809 (October 2018 Update) (Preview Build 17604)]",  "10", 2, 10, 0, 0x00, 0, 0, 17604],
+["10 [Version 1809 (October 2018 Update)]",                        "10", 2, 10, 0, 0x00, 0, 0, 17763],
+
+["10 [Version 1903 (May 2019 Update) (Preview Build 18204)]",      "10", 2, 10, 0, 0x00, 0, 0, 18204],
+["10 [Version 1903 (May 2019 Update)]",                            "10", 2, 10, 0, 0x00, 0, 0, 18362],
+
+["2016 [Version 1607]",                                    "2016",    2, 10, 0, 0x07, 2, 0, 14393],
+["2019 [Version 1809]",                                    "2019",    2, 10, 0, 0x07, 2, 0, 17763],
+
+["Server [Version 1709]",                                  "Server",  2, 10, 0, 0x07, 2, 0, 16299],
+["Server [Version 1803]",                                  "Server",  2, 10, 0, 0x07, 2, 0, 17134],
+# The 1809 version from the semi-annual channel will identify as "Windows Server 2019 Version 1809"
+#["Server [Version 1809]",                                 "Server",  2, 10, 0, 0x07, 2, 0, 17763],
+["Server [Version 1903]",                                  "Server",  2, 10, 0, 0x07, 2, 0, 18362],
+["Server [Build 12345]",                                   "Server",  2, 10, 0, 0x07, 2, 0, 12345],
 
 );
 
@@ -116,12 +152,12 @@ my @ia64_tests = (
 ["2003 [Enterprise Edition for Itanium-based Systems]", "2003", 2, 5, 2, 0x0002, 2, 0],
 );
 
-plan tests => 6 * (@intel_tests + @amd64_tests + 2*@dual_tests + @ia64_tests);
+plan tests => 6 * (@intel_tests + @amd64_tests + 2*@dual_tests + @ia64_tests) + 3 * @win10_tests;
 
 # Test internal implementation function
 sub check {
     my($test, $arch) = @_;
-    my($pretty, $expect, $id, $major, $minor, $sm, $pt, $metrics) = @$test;
+    my($pretty, $expect, $id, $major, $minor, $sm, $pt, $metrics, $build) = @$test;
     $metrics = [$metrics] if defined($metrics) && not ref $metrics;
 
     my $tag = "";
@@ -133,7 +169,7 @@ sub check {
     # and 2003/2008 start with "Windows Server"
     unless ($pretty eq "Win32s") {
 	my $prefix = "Windows";
-	$prefix .= " Server" if $pretty =~ /^20(03|08|12)/;
+	$prefix .= " Server" if $pretty =~ /^20(03|08|12|16|19)/;
 	$pretty = "$prefix $pretty";
     }
 
@@ -148,7 +184,7 @@ sub check {
 
     # We pass the same value for $suitemask and $productinfo.  The former is
     # used for Windows up to 2003, the latter is used for Vista and later.
-    my($os, $desc) = Win32::_GetOSName("", $major||0, $minor||0, 0,
+    my($os, $desc) = Win32::_GetOSName("", $major||0, $minor||0, $build,
 				       $id, $sm||0, $pt||1, $sm||0, $arch, $metrics);
     my $display = Win32::GetOSDisplayName($os, $desc);
 
@@ -156,6 +192,8 @@ sub check {
     is($display, $pretty);
     is($os, "Win$expect", "os:   $os");
     is($desc, $tag, "desc: $desc");
+
+    next if $major == 10;
 
     my $sp = "Service Pack 42";
     ($os, $desc) = Win32::_GetOSName($sp, $major||0, $minor||0, 0,
@@ -168,7 +206,7 @@ sub check {
     is($desc,    $expect,       "desc:    $desc");
 }
 
-check($_, Win32::PROCESSOR_ARCHITECTURE_INTEL) for @intel_tests, @dual_tests;
+check($_, Win32::PROCESSOR_ARCHITECTURE_INTEL) for @intel_tests, @dual_tests, @win10_tests;
 check($_, Win32::PROCESSOR_ARCHITECTURE_AMD64) for @amd64_tests, @dual_tests;
 check($_, Win32::PROCESSOR_ARCHITECTURE_IA64)  for @ia64_tests;
 

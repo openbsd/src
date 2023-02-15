@@ -59,3 +59,18 @@ grok_atoUV(number, endsv)
 	    PUSHs(sv_2mortal(newSViv(0)));
 	  }
 	}
+
+void
+my_strtod(s)
+        SV *s
+    PREINIT:
+        SV *sv = newSVsv(s);
+        char *endptr = NULL;
+        NV nv;
+    PPCODE:
+        nv = my_strtod(SvPV_force_nolen(sv), &endptr);
+        PUSHs(sv_2mortal(newSVnv(nv)));
+        if (endptr) {
+            sv_chop(sv, endptr);
+            PUSHs(sv_2mortal(sv));
+        }

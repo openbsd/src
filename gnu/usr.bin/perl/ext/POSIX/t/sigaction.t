@@ -4,7 +4,7 @@ BEGIN{
 	# Don't do anything if POSIX is missing, or sigaction missing.
 	use Config;
 	eval 'use POSIX';
-	if($@ || $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'dos' ||
+	if($@ || $^O eq 'MSWin32' ||
 	   ($^O eq 'VMS' && !$Config{'d_sigaction'})) {
 		print "1..0\n";
 		exit 0;
@@ -202,7 +202,7 @@ SKIP: {
     $skip{pid}{$^O} = $skip{uid}{$^O} = "not set for kill()"
         if (($^O.$Config{osvers}) =~ /^darwin[0-8]\./
             ||
-            ($^O.$Config{osvers}) =~ /^openbsd[0-6]\./
+            ($^O.$Config{osvers}) =~ /^openbsd[0-7]\./
             ||
             ($^O eq 'gnu')
             ||

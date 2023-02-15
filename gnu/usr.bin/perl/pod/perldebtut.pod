@@ -421,8 +421,8 @@ For more on references see L<perlref> and L<perlreftut>
 Here's a simple program which converts between Celsius and Fahrenheit, it too
 has a problem:
 
- #!/usr/bin/perl -w
- use strict;
+ #!/usr/bin/perl
+ use v5.36;
 
  my $arg = $ARGV[0] || '-c20';
 
@@ -715,6 +715,7 @@ place to go), and of course, experiment.
 
 L<perldebug>, 
 L<perldebguts>, 
+L<perl5db.pl>,
 L<perldiag>,
 L<perlrun>
 

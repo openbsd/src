@@ -1,6 +1,6 @@
-# IndicSyllabicCategory-13.0.0.txt
-# Date: 2019-07-22, 19:55:00 GMT [KW, RP]
-# © 2019 Unicode®, Inc.
+# IndicSyllabicCategory-14.0.0.txt
+# Date: 2021-05-22, 01:01:00 GMT [KW, RP]
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -225,6 +225,7 @@ AAF5          ; Visarga # Mc       MEETEI MAYEK VOWEL SIGN VISARGA
 0ABC          ; Nukta # Mn       GUJARATI SIGN NUKTA
 0AFD..0AFF    ; Nukta # Mn   [3] GUJARATI SIGN THREE-DOT NUKTA ABOVE..GUJARATI SIGN TWO-CIRCLE NUKTA ABOVE
 0B3C          ; Nukta # Mn       ORIYA SIGN NUKTA
+0C3C          ; Nukta # Mn       TELUGU SIGN NUKTA
 0CBC          ; Nukta # Mn       KANNADA SIGN NUKTA
 0F39          ; Nukta # Mn       TIBETAN MARK TSA -PHRU
 1B34          ; Nukta # Mn       BALINESE SIGN REREKAN
@@ -303,7 +304,8 @@ A9C0          ; Virama # Mc       JAVANESE PANGKON
 0F84          ; Pure_Killer # Mn       TIBETAN MARK HALANTA
 103A          ; Pure_Killer # Mn       MYANMAR SIGN ASAT
 1714          ; Pure_Killer # Mn       TAGALOG SIGN VIRAMA
-1734          ; Pure_Killer # Mn       HANUNOO SIGN PAMUDPOD
+1715          ; Pure_Killer # Mc       TAGALOG SIGN PAMUDPOD
+1734          ; Pure_Killer # Mc       HANUNOO SIGN PAMUDPOD
 17D1          ; Pure_Killer # Mn       KHMER SIGN VIRIAM
 1A7A          ; Pure_Killer # Mn       TAI THAM SIGN RA HAAM
 1BAA          ; Pure_Killer # Mc       SUNDANESE SIGN PAMAAEH
@@ -311,6 +313,7 @@ A9C0          ; Virama # Mc       JAVANESE PANGKON
 A82C          ; Pure_Killer # Mn       SYLOTI NAGRI SIGN ALTERNATE HASANTA
 A953          ; Pure_Killer # Mc       REJANG VIRAMA
 ABED          ; Pure_Killer # Mn       MEETEI MAYEK APUN IYEK
+11070         ; Pure_Killer # Mn       BRAHMI SIGN OLD TAMIL VIRAMA
 11134         ; Pure_Killer # Mn       CHAKMA MAAYYAA
 112EA         ; Pure_Killer # Mn       KHUDAWADI SIGN VIRAMA
 1172B         ; Pure_Killer # Mn       AHOM SIGN KILLER
@@ -408,6 +411,7 @@ AAE0..AAE1    ; Vowel_Independent # Lo   [2] MEETEI MAYEK LETTER E..MEETEI MAYEK
 ABCE..ABCF    ; Vowel_Independent # Lo   [2] MEETEI MAYEK LETTER UN..MEETEI MAYEK LETTER I
 ABD1          ; Vowel_Independent # Lo       MEETEI MAYEK LETTER ATIYA
 11005..11012  ; Vowel_Independent # Lo  [14] BRAHMI LETTER A..BRAHMI LETTER AU
+11071..11072  ; Vowel_Independent # Lo   [2] BRAHMI LETTER OLD TAMIL SHORT E..BRAHMI LETTER OLD TAMIL SHORT O
 11083..1108C  ; Vowel_Independent # Lo  [10] KAITHI LETTER A..KAITHI LETTER AU
 11103..11106  ; Vowel_Independent # Lo   [4] CHAKMA LETTER AA..CHAKMA LETTER E
 11183..11190  ; Vowel_Independent # Lo  [14] SHARADA LETTER A..SHARADA LETTER AU
@@ -617,9 +621,11 @@ ABE9..ABEA    ; Vowel_Dependent # Mc   [2] MEETEI MAYEK VOWEL SIGN CHEINAP..MEET
 10A05..10A06  ; Vowel_Dependent # Mn   [2] KHAROSHTHI VOWEL SIGN E..KHAROSHTHI VOWEL SIGN O
 10A0C..10A0D  ; Vowel_Dependent # Mn   [2] KHAROSHTHI VOWEL LENGTH MARK..KHAROSHTHI SIGN DOUBLE RING BELOW
 11038..11045  ; Vowel_Dependent # Mn  [14] BRAHMI VOWEL SIGN AA..BRAHMI VOWEL SIGN AU
+11073..11074  ; Vowel_Dependent # Mn   [2] BRAHMI VOWEL SIGN OLD TAMIL SHORT E..BRAHMI VOWEL SIGN OLD TAMIL SHORT O
 110B0..110B2  ; Vowel_Dependent # Mc   [3] KAITHI VOWEL SIGN AA..KAITHI VOWEL SIGN II
 110B3..110B6  ; Vowel_Dependent # Mn   [4] KAITHI VOWEL SIGN U..KAITHI VOWEL SIGN AI
 110B7..110B8  ; Vowel_Dependent # Mc   [2] KAITHI VOWEL SIGN O..KAITHI VOWEL SIGN AU
+110C2         ; Vowel_Dependent # Mn       KAITHI VOWEL SIGN VOCALIC R
 11127..1112B  ; Vowel_Dependent # Mn   [5] CHAKMA VOWEL SIGN A..CHAKMA VOWEL SIGN UU
 1112C         ; Vowel_Dependent # Mc       CHAKMA VOWEL SIGN E
 1112D..11132  ; Vowel_Dependent # Mn   [6] CHAKMA VOWEL SIGN AI..CHAKMA AU MARK
@@ -813,8 +819,8 @@ AA74..AA76    ; Consonant_Placeholder # Lo   [3] MYANMAR LOGOGRAM KHAMTI OAY..MY
 106E..1070    ; Consonant # Lo   [3] MYANMAR LETTER EASTERN PWO KAREN NNA..MYANMAR LETTER EASTERN PWO KAREN GHWA
 1075..1081    ; Consonant # Lo  [13] MYANMAR LETTER SHAN KA..MYANMAR LETTER SHAN HA
 108E          ; Consonant # Lo       MYANMAR LETTER RUMAI PALAUNG FA
-1703..170C    ; Consonant # Lo  [10] TAGALOG LETTER KA..TAGALOG LETTER YA
-170E..1711    ; Consonant # Lo   [4] TAGALOG LETTER LA..TAGALOG LETTER HA
+1703..1711    ; Consonant # Lo  [15] TAGALOG LETTER KA..TAGALOG LETTER HA
+171F          ; Consonant # Lo       TAGALOG LETTER ARCHAIC RA
 1723..1731    ; Consonant # Lo  [15] HANUNOO LETTER KA..HANUNOO LETTER HA
 1743..1751    ; Consonant # Lo  [15] BUHID LETTER KA..BUHID LETTER HA
 1763..176C    ; Consonant # Lo  [10] TAGBANWA LETTER KA..TAGBANWA LETTER YA
@@ -827,7 +833,7 @@ AA74..AA76    ; Consonant_Placeholder # Lo   [3] MYANMAR LOGOGRAM KHAMTI OAY..MY
 1A20..1A4C    ; Consonant # Lo  [45] TAI THAM LETTER HIGH KA..TAI THAM LETTER LOW HA
 1A53..1A54    ; Consonant # Lo   [2] TAI THAM LETTER LAE..TAI THAM LETTER GREAT SA
 1B13..1B33    ; Consonant # Lo  [33] BALINESE LETTER KA..BALINESE LETTER HA
-1B45..1B4B    ; Consonant # Lo   [7] BALINESE LETTER KAF SASAK..BALINESE LETTER ASYURA SASAK
+1B45..1B4C    ; Consonant # Lo   [8] BALINESE LETTER KAF SASAK..BALINESE LETTER ARCHAIC JNYA
 1B8A..1BA0    ; Consonant # Lo  [23] SUNDANESE LETTER KA..SUNDANESE LETTER HA
 1BAE..1BAF    ; Consonant # Lo   [2] SUNDANESE LETTER KHA..SUNDANESE LETTER SYA
 1BBB..1BBD    ; Consonant # Lo   [3] SUNDANESE LETTER REU..SUNDANESE LETTER BHA
@@ -863,6 +869,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 10A15..10A17  ; Consonant # Lo   [3] KHAROSHTHI LETTER CA..KHAROSHTHI LETTER JA
 10A19..10A35  ; Consonant # Lo  [29] KHAROSHTHI LETTER NYA..KHAROSHTHI LETTER VHA
 11013..11037  ; Consonant # Lo  [37] BRAHMI LETTER KA..BRAHMI LETTER OLD TAMIL NNNA
+11075         ; Consonant # Lo       BRAHMI LETTER OLD TAMIL LLA
 1108D..110AF  ; Consonant # Lo  [35] KAITHI LETTER KA..KAITHI LETTER HA
 11107..11126  ; Consonant # Lo  [32] CHAKMA LETTER KAA..CHAKMA LETTER HAA
 11144         ; Consonant # Lo       CHAKMA LETTER LHAA
@@ -888,6 +895,7 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 1168A..116AA  ; Consonant # Lo  [33] TAKRI LETTER KA..TAKRI LETTER RRA
 116B8         ; Consonant # Lo       TAKRI LETTER ARCHAIC KHA
 11700..1171A  ; Consonant # Lo  [27] AHOM LETTER KA..AHOM LETTER ALTERNATE BA
+11740..11746  ; Consonant # Lo   [7] AHOM LETTER CA..AHOM LETTER LLA
 1180A..1182B  ; Consonant # Lo  [34] DOGRA LETTER KA..DOGRA LETTER RRA
 1190C..11913  ; Consonant # Lo   [8] DIVES AKURU LETTER KA..DIVES AKURU LETTER JA
 11915..11916  ; Consonant # Lo   [2] DIVES AKURU LETTER NYA..DIVES AKURU LETTER TTA
@@ -910,6 +918,8 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 # [Not derivable]
 
 09CE          ; Consonant_Dead # Lo       BENGALI LETTER KHANDA TA
+0C5D          ; Consonant_Dead # Lo       TELUGU LETTER NAKAARA POLLU
+0CDD          ; Consonant_Dead # Lo       KANNADA LETTER NAKAARA POLLU
 0D54..0D56    ; Consonant_Dead # Lo   [3] MALAYALAM LETTER CHILLU M..MALAYALAM LETTER CHILLU LLL
 0D7A..0D7F    ; Consonant_Dead # Lo   [6] MALAYALAM LETTER CHILLU NN..MALAYALAM LETTER CHILLU K
 1CF2..1CF3    ; Consonant_Dead # Lo   [2] VEDIC SIGN ARDHAVISARGA..VEDIC SIGN ROTATED ARDHAVISARGA
@@ -975,9 +985,6 @@ ABD2..ABDA    ; Consonant # Lo   [9] MEETEI MAYEK LETTER GOK..MEETEI MAYEK LETTE
 # [Not derivable]
 
 17CC          ; Consonant_Succeeding_Repha # Mn       KHMER SIGN ROBAT
-1B03          ; Consonant_Succeeding_Repha # Mn       BALINESE SIGN SURANG
-1B81          ; Consonant_Succeeding_Repha # Mn       SUNDANESE SIGN PANGLAYAR
-A982          ; Consonant_Succeeding_Repha # Mn       JAVANESE SIGN LAYAR
 
 # ================================================
 
@@ -1043,11 +1050,14 @@ AA35..AA36    ; Consonant_Medial # Mn   [2] CHAM CONSONANT SIGN LA..CHAM CONSONA
 1939          ; Consonant_Final # Mn       LIMBU SIGN MUKPHRENG
 19C1..19C7    ; Consonant_Final # Lo   [7] NEW TAI LUE LETTER FINAL V..NEW TAI LUE LETTER FINAL B
 1A58..1A59    ; Consonant_Final # Mn   [2] TAI THAM SIGN MAI KANG LAI..TAI THAM CONSONANT SIGN FINAL NGA
+1B03          ; Consonant_Final # Mn       BALINESE SIGN SURANG
+1B81          ; Consonant_Final # Mn       SUNDANESE SIGN PANGLAYAR
 1BBE..1BBF    ; Consonant_Final # Lo   [2] SUNDANESE LETTER FINAL K..SUNDANESE LETTER FINAL M
 1BF0..1BF1    ; Consonant_Final # Mn   [2] BATAK CONSONANT SIGN NG..BATAK CONSONANT SIGN H
 1C2D..1C33    ; Consonant_Final # Mn   [7] LEPCHA CONSONANT SIGN K..LEPCHA CONSONANT SIGN T
 A94F..A951    ; Consonant_Final # Mn   [3] REJANG CONSONANT SIGN NG..REJANG CONSONANT SIGN R
 A952          ; Consonant_Final # Mc       REJANG CONSONANT SIGN H
+A982          ; Consonant_Final # Mn       JAVANESE SIGN LAYAR
 AA40..AA42    ; Consonant_Final # Lo   [3] CHAM LETTER FINAL K..CHAM LETTER FINAL NG
 AA43          ; Consonant_Final # Mn       CHAM CONSONANT SIGN FINAL NG
 AA44..AA4B    ; Consonant_Final # Lo   [8] CHAM LETTER FINAL CH..CHAM LETTER FINAL SS

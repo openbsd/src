@@ -32,7 +32,7 @@ my $ZLIB_LIBRARY_NAME = $^O eq 'MSWin32' ? 'zlib' : 'z' ;
 # ExtUtils::Install.
 
 # Don't ask if MM_USE_DEFAULT is set -- enables perl core building on cygwin
-if ($^O =~ /cygwin/i and $ExtUtils::Install::VERSION < 1.39 
+if ($^O =~ /cygwin/i and $ExtUtils::Install::VERSION < 1.39
         and not ($ENV{PERL_MM_USE_DEFAULT} or $ENV{PERL_CORE}))
 {
     print <<EOM ;
@@ -55,7 +55,7 @@ EOM
 
     if ($answer =~ /^yes|y/i)
     {
-	print "continuing...\n" 
+	print "continuing...\n"
     }
     else
     {
@@ -68,18 +68,34 @@ EOM
 
 ParseCONFIG() ;
 
-UpDowngrade(getPerlFiles('MANIFEST')) 
+UpDowngrade(getPerlFiles('MANIFEST'))
     unless $ENV{PERL_CORE};
 
-WriteMakefile( 
+my $OPT_Z_PREFIX =  '-DZ_PREFIX' ;
+my $OPT_ZLIB_INCLUDE = "-I$ZLIB_INCLUDE";
+my $OPT_ZLIB_LIB = "-L$ZLIB_LIB" ;
+
+if (! $BUILD_ZLIB)
+{
+    # When using  the system supplied zlib, we don't want to use our bespoke prefix
+    $OPT_Z_PREFIX =  '';
+
+    $OPT_ZLIB_INCLUDE = ''
+        if $ZLIB_INCLUDE eq './zlib-src' ;
+
+    $OPT_ZLIB_LIB = ''
+        if $ZLIB_LIB eq './zlib-src' ;
+}
+
+WriteMakefile(
     NAME         => 'Compress::Raw::Zlib',
     VERSION_FROM => 'lib/Compress/Raw/Zlib.pm',
-    INC          => "-I$ZLIB_INCLUDE" ,
-    DEFINE       => "-DNO_VIZ $OLD_ZLIB $WALL -DGZIP_OS_CODE=$GZIP_OS_CODE $USE_PPPORT_H" ,
+    INC          => $OPT_ZLIB_INCLUDE ,
+    DEFINE       => "-DNO_VIZ -DZ_SOLO $OLD_ZLIB $WALL $OPT_Z_PREFIX -DGZIP_OS_CODE=$GZIP_OS_CODE $USE_PPPORT_H -DPerl_crz_BUILD_ZLIB=$BUILD_ZLIB" ,
     XS           => { 'Zlib.xs' => 'Zlib.c'},
     'depend'     => { 'Makefile'   => 'config.in' },
     'clean'      => { FILES        => '*.c constants.h constants.xs' },
-    'dist'       => { COMPRESS     => 'gzip', 
+    'dist'       => { COMPRESS     => 'gzip',
                       TARFLAGS     => '-chvf',
                       SUFFIX       => 'gz',
                       DIST_DEFAULT => 'MyTrebleCheck tardist',
@@ -88,15 +104,15 @@ WriteMakefile(
     (
       $BUILD_ZLIB
         ? zlib_files($ZLIB_LIB)
-        : (LIBS => [ "-L$ZLIB_LIB -l$ZLIB_LIBRARY_NAME " ])
+        : (LIBS => [ "$OPT_ZLIB_LIB -l$ZLIB_LIBRARY_NAME " ])
     ),
     OPTIMIZE => $OPTIMIZE,
 
     INSTALLDIRS => ($] >= 5.009 && $] < 5.011 ? 'perl' : 'site'),
 
-     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }  
+     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }
         ? ( META_MERGE  => {
-    
+
                 "meta-spec" => { version => 2 },
 
                 no_index => {
@@ -104,7 +120,7 @@ WriteMakefile(
                 },
 
                 resources   => {
-                
+
                     bugtracker  => {
                         web     => 'https://github.com/pmqs/Compress-Raw-Zlib/issues'
                     },
@@ -115,15 +131,15 @@ WriteMakefile(
                         type    => 'git',
                         url     => 'git://github.com/pmqs/Compress-Raw-Zlib.git',
                         web     => 'https://github.com/pmqs/Compress-Raw-Zlib',
-                    },        
+                    },
                 },
-              } 
-            ) 
+              }
+            )
         : ()
     ),
 
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
-        ('LICENSE'  => 'perl')         : ()),    
+        ('LICENSE'  => 'perl')         : ()),
 
 ) ;
 
@@ -201,13 +217,13 @@ if (eval {require ExtUtils::Constant; 1}) {
         die "The following names are missing from \@EXPORT in Zlib.pm\n" .
             "\t$missing\n" ;
     }
-    
+
     push @names, { name => 'ZLIB_VERSION', type => 'PV' };
-    
-    push @names, map { { name => $_, 
-                         macro => version_Macro $verSpecificNames{$_} 
-                       } 
-                     } 
+
+    push @names, map { { name => $_,
+                         macro => version_Macro $verSpecificNames{$_}
+                       }
+                     }
                  keys %verSpecificNames ;
 
     ExtUtils::Constant::WriteConstants(
@@ -215,10 +231,10 @@ if (eval {require ExtUtils::Constant; 1}) {
                                      NAMES => \@names,
                                      C_FILE  => 'constants.h',
                                      XS_FILE  => 'constants.xs',
-                                                                       
+
                                     );
 
-} 
+}
 else {
     foreach my $name (qw( constants.h constants.xs ))
     {
@@ -263,14 +279,14 @@ sub ParseCONFIG
 
     # check parsed values
     my @missing = () ;
-    die "The following keys are missing from $CONFIG  [@missing]\n" 
+    die "The following keys are missing from $CONFIG  [@missing]\n"
         if @missing = keys %Parsed ;
 
     $ZLIB_INCLUDE = defined $ENV{'ZLIB_INCLUDE'}
-                        ? $ENV{'ZLIB_INCLUDE'} 
+                        ? $ENV{'ZLIB_INCLUDE'}
                         : $Info{'INCLUDE'} ;
-    $ZLIB_LIB = defined $ENV{'ZLIB_LIB'} 
-                    ?$ENV{'ZLIB_LIB'} 
+    $ZLIB_LIB = defined $ENV{'ZLIB_LIB'}
+                    ?$ENV{'ZLIB_LIB'}
                     : $Info{'LIB'} ;
 
     if ($^O eq 'VMS') {
@@ -279,19 +295,19 @@ sub ParseCONFIG
     }
 
     my $y = defined $ENV{'OLD_ZLIB'}
-                ? $ENV{'OLD_ZLIB'} 
+                ? $ENV{'OLD_ZLIB'}
                 : $Info{'OLD_ZLIB'} ;
     $OLD_ZLIB = '-DOLD_ZLIB' if $y and $y =~ /^yes|on|true|1$/i;
 
-    my $x = defined $ENV{'BUILD_ZLIB'} 
-                ? $ENV{'BUILD_ZLIB'} 
+    my $x = defined $ENV{'BUILD_ZLIB'}
+                ? $ENV{'BUILD_ZLIB'}
                 : $Info{'BUILD_ZLIB'} ;
 
     if ($x and $x =~ /^yes|on|true|1$/i ) {
 
         $BUILD_ZLIB = 1 ;
 
-	# ZLIB_LIB & ZLIB_INCLUDE must point to the same place when 
+	# ZLIB_LIB & ZLIB_INCLUDE must point to the same place when
 	# BUILD_ZLIB is specified.
 	die "INCLUDE & LIB must be the same when BUILD_ZLIB is True\n"
 	    if $ZLIB_LIB ne $ZLIB_INCLUDE ;
@@ -309,8 +325,8 @@ sub ParseCONFIG
 	print "Building Zlib enabled\n" ;
     }
 
-    $GZIP_OS_CODE = defined $ENV{'GZIP_OS_CODE'} 
-                          ? $ENV{'GZIP_OS_CODE'} 
+    $GZIP_OS_CODE = defined $ENV{'GZIP_OS_CODE'}
+                          ? $ENV{'GZIP_OS_CODE'}
                           : $Info{'GZIP_OS_CODE'} ;
 
 	die "GZIP_OS_CODE not 'AUTO_DETECT' or a number between 0 and 255\n"
@@ -322,7 +338,7 @@ sub ParseCONFIG
         print "Auto Detect Gzip OS Code..\n" ;
         $GZIP_OS_CODE = getOSCode() ;
     }
-    
+
     my $name = getOSname($GZIP_OS_CODE);
     print "Setting Gzip OS Code to $GZIP_OS_CODE [$name]\n" ;
 
@@ -347,22 +363,22 @@ sub zlib_files
 
     my @h_files = ();
     my @c_files = ();
-    
+
     if (-f catfile($dir, "infback.c")) {
         # zlib 1.2.0 or greater
         #
-        @h_files = qw(crc32.h    inffast.h inflate.h  trees.h    zconf.in.h 
-    	              zutil.h    deflate.h inffixed.h inftrees.h zconf.h  
-    		      zlib.h 
+        @h_files = qw(crc32.h    inffast.h inflate.h  trees.h    zconf.in.h
+    	              zutil.h    deflate.h inffixed.h inftrees.h zconf.h
+    		      zlib.h
     		 );
         @c_files = qw(adler32  crc32   infback  inflate  uncompr
-    		      compress deflate inffast  inftrees  
-    		      trees    zutil 
+    		      compress deflate inffast  inftrees
+    		      trees    zutil
     		 );
     }
     else {
         # zlib 1.1.x
-    
+
         @h_files = qw(deflate.h  infcodes.h inftrees.h zconf.h zutil.h
     		      infblock.h inffast.h  infutil.h  zlib.h
     		 );
@@ -371,20 +387,20 @@ sub zlib_files
     		      inftrees infcodes infutil  inffast
     		 );
     }
-    
+
     @h_files = map { catfile($dir, $_)  } @h_files ;
     my @o_files = map { "$_\$(OBJ_EXT)" } 'Zlib', @c_files;
     @c_files = map { "$_.c" } 'Zlib', @c_files ;
 
     foreach my $file (@c_files)
       { copy(catfile($dir, $file), '.') }
-    
+
     return (
         #'H'         =>  [ @h_files ],
     	'C'         =>  [ @c_files ] ,
         #'OBJECT'    => qq[ @o_files ],
         'OBJECT'    => q[ $(O_FILES) ],
-        
+
 
            ) ;
 }
@@ -418,7 +434,7 @@ BEGIN
     [ ''        => 255,  'Unknown OS'                   ],
   );
 
-  %OSnames = map { $$_[1] => $$_[2] }  
+  %OSnames = map { $$_[1] => $$_[2] }
              @GZIP_OS_Names ;
 }
 
@@ -447,4 +463,3 @@ sub getOSname
 }
 
 # end of file Makefile.PL
-

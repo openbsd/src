@@ -24,43 +24,6 @@ delete $ENV{PERL5LIB};
 delete $ENV{PERL5OPT};
 delete $ENV{PERL_USE_UNSAFE_INC};
 
-
-# Run perl with specified environment and arguments, return (STDOUT, STDERR)
-sub runperl_and_capture {
-  local *F;
-  my ($env, $args) = @_;
-
-  local %ENV = %ENV;
-  delete $ENV{PERLLIB};
-  delete $ENV{PERL5LIB};
-  delete $ENV{PERL5OPT};
-  delete $ENV{PERL_USE_UNSAFE_INC};
-  my $pid = fork;
-  return (0, "Couldn't fork: $!") unless defined $pid;   # failure
-  if ($pid) {                   # parent
-    wait;
-    return (0, "Failure in child.\n") if ($?>>8) == $FAILURE_CODE;
-
-    open my $stdout, '<', $STDOUT
-	or return (0, "Couldn't read $STDOUT file: $!");
-    open my $stderr, '<', $STDERR
-	or return (0, "Couldn't read $STDERR file: $!");
-    local $/;
-    # Empty file with <$stderr> returns nothing in list context
-    # (because there are no lines) Use scalar to force it to ''
-    return (scalar <$stdout>, scalar <$stderr>);
-  } else {                      # child
-    for my $k (keys %$env) {
-      $ENV{$k} = $env->{$k};
-    }
-    open STDOUT, '>', $STDOUT or exit $FAILURE_CODE;
-    open STDERR, '>', $STDERR and do { exec $PERL, @$args };
-    # it did not work:
-    print STDOUT "IWHCWJIHCI\cNHJWCJQWKJQJWCQW\n";
-    exit $FAILURE_CODE;
-  }
-}
-
 sub try {
   my ($env, $args, $stdout, $stderr) = @_;
   my ($actual_stdout, $actual_stderr) = runperl_and_capture($env, $args);
@@ -160,10 +123,15 @@ try({PERL5OPT => '-w -w'},
     '-w -w',
     '');
 
-try({PERL5OPT => '-t'},
-    ['-e', 'print ${^TAINT}'],
-    '-1',
-    '');
+SKIP: {
+    if (exists($Config{taint_support}) && !$Config{taint_support}) {
+        skip("built without taint support", 2);
+    }
+    try({PERL5OPT => '-t'},
+        ['-e', 'print ${^TAINT}'],
+        '-1',
+        '');
+}
 
 try({PERL5OPT => '-W'},
     ['-I../lib','-e', 'local $^W = 0;  no warnings;  print $x'],

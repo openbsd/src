@@ -16,7 +16,7 @@ push @extra, 'LICENSE' => 'perl_5'
 push @extra, 'META_MERGE' => {
         resources => {
             repository  => 'git://perl5.git.perl.org/perl.git',
-            bugtracker  => 'https://rt.perl.org/rt3/',
+            bugtracker  => 'https://github.com/Perl/perl5/issues',
             homepage    => "http://dev.perl.org/",
             license     => [ 'http://dev.perl.org/licenses/' ],
         },

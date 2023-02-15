@@ -14,11 +14,11 @@ use Devel::Tokenizer::C 0.05;
 require './regen/regen_lib.pl';
 
 my $h = open_new('keywords.h', '>',
-		 { by => 'regen/keywords.pl', from => 'its data',
-		   file => 'keywords.h', style => '*',
-		   copyright => [1994 .. 1997, 1999 .. 2002, 2005 .. 2007]});
+                 { by => 'regen/keywords.pl', from => 'its data',
+                   file => 'keywords.h', style => '*',
+                   copyright => [1994 .. 1997, 1999 .. 2002, 2005 .. 2007]});
 my $c = open_new('keywords.c', '>',
-		 { by => 'regen/keywords.pl', from => 'its data', style => '*'});
+                 { by => 'regen/keywords.pl', from => 'its data', style => '*'});
 
 my %by_strength;
 
@@ -47,14 +47,18 @@ my %feature_kw = (
     __SUB__   => '__SUB__',
     fc        => 'fc',
     isa       => 'isa',
+    try       => 'try',
+    catch     => 'try',
+    finally   => 'try',
+    defer     => 'defer',
 );
 
 my %pos = map { ($_ => 1) } @{$by_strength{'+'}};
 
 my $t = Devel::Tokenizer::C->new(TokenFunc     => \&perl_keyword,
-				 TokenString   => 'name',
-				 StringLength  => 'len',
-				 MergeSwitches => 1,
+                                 TokenString   => 'name',
+                                 StringLength  => 'len',
+                                 MergeSwitches => 1,
                                 );
 
 $t->add_tokens(@{$by_strength{'+'}}, @{$by_strength{'-'}}, 'elseif');
@@ -132,6 +136,7 @@ __END__
 -bless
 -break
 -caller
++catch
 -chdir
 -chmod
 -chomp
@@ -149,6 +154,7 @@ __END__
 -dbmclose
 -dbmopen
 +default
++defer
 +defined
 +delete
 -die
@@ -174,6 +180,7 @@ __END__
 -fc
 -fcntl
 -fileno
++finally
 -flock
 +for
 +foreach
@@ -339,6 +346,7 @@ __END__
 -time
 -times
 +tr
++try
 -truncate
 -uc
 -ucfirst

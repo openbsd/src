@@ -19,7 +19,7 @@ use Test::More;
 
 use Unicode::UCD qw(charinfo charprop charprops_all);
 
-my $expected_version = '13.0.0';
+my $expected_version = '14.0.0';
 my $current_version = Unicode::UCD::UnicodeVersion;
 my $v_unicode_version = pack "C*", split /\./, $current_version;
 my $unknown_script = ($v_unicode_version lt v5.0.0)
@@ -786,7 +786,7 @@ SKIP:
         skip("Latin range count will be wrong when using older Unicode release",
              2) if $current_version lt $expected_version;
         my $n1 = @$r1;
-        is($n1, 32, "number of ranges in Latin script (Unicode $expected_version)") if $::IS_ASCII;
+        is($n1, 38, "number of ranges in Latin script (Unicode $expected_version)") if $::IS_ASCII;
         shift @$r1 while @$r1;
         my $r2 = charscript('Latin');
         is(@$r2, $n1, "modifying results should not mess up internal caches");
@@ -800,6 +800,8 @@ SKIP:
 if ($v_unicode_version ge v4.1.0) {
     use Unicode::UCD qw(namedseq);
 
+    is(namedseq("KEYCAP DIGIT ZERO"), "0\x{FE0F}\x{20E3}",
+                "namedseq with char that varies under EBCDIC");
     is(namedseq("KATAKANA LETTER AINU P"), "\x{31F7}\x{309A}", "namedseq");
     is(namedseq("KATAKANA LETTER AINU Q"), undef);
     is(namedseq(), undef);
@@ -1596,45 +1598,9 @@ is(@list, 0, "prop_invmap('Perl_Charnames') returns <undef> since internal-Perl-
 @list = prop_invmap("Is_Is_Any");
 is(@list, 0, "prop_invmap('Is_Is_Any') returns <undef> since two is's");
 
-# The files for these properties are not used by Perl, but are retained for
-# backwards compatibility with applications that read them directly, with
-# comments in them that their use is deprecated.  Until such time as we remove
-# them completely, we test that they exist, are correct, and that their
-# formats haven't changed.  This hash contains the info needed to test them as
-# if they were regular properties.  'replaced_by' gives the equivalent
-# property now used by Perl.
-my %legacy_props = (
-            Legacy_Case_Folding =>        { replaced_by => 'cf',
-                                            file => 'To/Fold',
-                                            swash_name => 'ToFold'
-                                          },
-            Legacy_Lowercase_Mapping =>   { replaced_by => 'lc',
-                                            file => 'To/Lower',
-                                            swash_name => 'ToLower'
-                                          },
-            Legacy_Titlecase_Mapping =>   { replaced_by => 'tc',
-                                            file => 'To/Title',
-                                            swash_name => 'ToTitle'
-                                          },
-            Legacy_Uppercase_Mapping =>   { replaced_by => 'uc',
-                                            file => 'To/Upper',
-                                            swash_name => 'ToUpper'
-                                          },
-            Legacy_Perl_Decimal_Digit =>  { replaced_by => 'Perl_Decimal_Digit',
-                                            file => 'To/Digit',
-                                            swash_name => 'ToDigit'
-                                           },
-        );
-
-foreach my $legacy_prop (keys %legacy_props) {
-    @list = prop_invmap($legacy_prop);
-    is(@list, 0, "'$legacy_prop' is unknown to prop_invmap");
-}
-
 # The files for these properties shouldn't have their formats changed in case
 # applications use them (though such use is deprecated).
-my @legacy_file_format = (keys %legacy_props,
-                          qw( Bidi_Mirroring_Glyph
+my @legacy_file_format = (qw( Bidi_Mirroring_Glyph
                               NFKC_Casefold
                            )
                           );
@@ -1658,8 +1624,7 @@ my %tested_invmaps;
 # lists returned by prop_invlist(), which has already been tested.
 
 PROPERTY:
-foreach my $prop (sort(keys %props), sort keys %legacy_props) {
-    my $is_legacy = 0;
+foreach my $prop (sort(keys %props)) {
     my $loose_prop = &Unicode::UCD::loose_name(lc $prop);
     my $suppressed = grep { $_ eq $loose_prop }
                           @Unicode::UCD::suppressed_properties;
@@ -1673,39 +1638,12 @@ foreach my $prop (sort(keys %props), sort keys %legacy_props) {
     if (! $name) {
 
         # Here, Perl doesn't know about this property.  It could be a
-        # suppressed one, or a legacy one.
-        if (grep { $prop eq $_ } keys %legacy_props) {
-
-            # For legacy properties, we look up the modern equivalent
-            # property instead; later massaging the results to look like the
-            # known format of the legacy property.  We add info about the
-            # legacy property to the data structures for the rest of the
-            # properties; this is to avoid more special cases for the legacies
-            # in the code below
-            $full_name = $name = $prop;
-            $actual_lookup_prop = $legacy_props{$prop}->{'replaced_by'};
-            my $base_file = $legacy_props{$prop}->{'file'};
-
-            # This legacy property is otherwise unknown to Perl; so shouldn't
-            # have any information about it already.
-            ok(! exists $Unicode::UCD::loose_property_to_file_of{$loose_prop},
-               "There isn't a hash entry for file lookup of $prop");
-            $Unicode::UCD::loose_property_to_file_of{$loose_prop} = $base_file;
-
-            ok(! exists $Unicode::UCD::file_to_swash_name{$loose_prop},
-               "There isn't a hash entry for swash lookup of $prop");
-            $Unicode::UCD::file_to_swash_name{$base_file}
-                                        = $legacy_props{$prop}->{'swash_name'};
-            $display_prop = $prop;
-            $is_legacy = 1;
-        }
-        else {
+        # suppressed one
             if (! $suppressed) {
                 fail("prop_invmap('$prop')");
                 diag("is unknown to prop_aliases(), and we need it in order to test prop_invmap");
             }
             next PROPERTY;
-        }
     }
 
     # Normalize the short name, as it is stored in the hashes under the
@@ -1727,49 +1665,6 @@ foreach my $prop (sort(keys %props), sort keys %legacy_props) {
 
     my ($invlist_ref, $invmap_ref, $format, $missing) = prop_invmap($actual_lookup_prop);
     my $return_ref = [ $invlist_ref, $invmap_ref, $format, $missing ];
-
-
-    # The legacy property files all are expanded out so that each range is 1
-    # element long.  That isn't true of the modern equivalent we use to check
-    # those files for correctness against.  So take the output of the proxy
-    # and expand it to match the legacy file.
-    if ($is_legacy) {
-        my @expanded_list;
-        my @expanded_map;
-        for my $i (0 .. @$invlist_ref - 1 - 1) {
-            if (ref $invmap_ref->[$i] || $invmap_ref->[$i] eq $missing) {
-
-                # No adjustments should be done for the default mapping and
-                # the multi-char ones.
-                push @expanded_list, $invlist_ref->[$i];
-                push @expanded_map, $invmap_ref->[$i];
-            }
-            else {
-
-                # Expand the range into separate elements for each item.
-                my $offset = 0;
-                for my $j ($invlist_ref->[$i] .. $invlist_ref->[$i+1] -1) {
-                    push @expanded_list, $j;
-                    push @expanded_map, $invmap_ref->[$i] + $offset;
-
-                    # The 'ae' format is for Legacy_Perl_Decimal_Digit; the
-                    # other 4 are kept with leading zeros in the file, so
-                    # convert to that.
-                    $expanded_map[-1] = sprintf("%04X", $expanded_map[-1])
-                                                            if $format ne 'ae';
-                    $offset++;
-                }
-            }
-        }
-
-        # Final element is taken as is.  The map should always be to the
-        # default value, so don't do a sprintf like we did above.
-        push @expanded_list, $invlist_ref->[-1];
-        push @expanded_map, $invmap_ref->[-1];
-
-        $invlist_ref = \@expanded_list;
-        $invmap_ref = \@expanded_map;
-    }
 
     # If have already tested this property under a different name, merely
     # compare the return from now with the saved one from before.
@@ -1860,11 +1755,6 @@ foreach my $prop (sort(keys %props), sort keys %legacy_props) {
                 diag("The missings should be \"\"; got '$missing'");
                 next PROPERTY;
             }
-        }
-        elsif ($missing ne "0" && ! grep { $prop eq $_ } keys %legacy_props) {
-            fail("prop_invmap('$display_prop')");
-            diag("The missings should be '0'; got '$missing'");
-            next PROPERTY;
         }
     }
     elsif ($missing =~ /[<>]/) {
@@ -2060,21 +1950,18 @@ foreach my $prop (sort(keys %props), sort keys %legacy_props) {
                               ? "%04X"
                               : $file_range_format;
 
-        # Certain of the proxy properties have to be adjusted to match the
-        # real ones.
-        if ($full_name
-                 =~ /^(Legacy_)?(Case_Folding|(Lower|Title|Upper)case_Mapping)/)
+        # Combination properties, where the same file contains mappings to both
+        # the simple and full versions, have to be adjusted when looking at
+        # the full versions.
+        if ($full_name =~ /^ (   Case_Folding
+                              | (Lower|Title|Upper) case_Mapping )
+                           $ /x)
         {
-
-            # Here we have either
-            #   1) Case_Folding; or
-            #   2) a proxy that is a full mapping, which means that what the
-            #      real property is is the equivalent simple mapping.
-            # In both cases, the file will have a standard list containing
-            # simple mappings (to a single code point), and a specials hash
-            # which contains all the mappings that are to multiple code
-            # points.  First, extract a list containing all the file's simple
-            # mappings.
+            # The file will have a standard list containing simple mappings
+            # (to a single code point), and a specials hash which contains all
+            # the mappings that are to multiple code points.
+            #
+            # First, extract a list containing all the file's simple mappings.
             my @list;
             for (split "\n", $official) {
                 my ($start, $end, $value) = / ^ (.+?) \t (.*?) \t (.+?)

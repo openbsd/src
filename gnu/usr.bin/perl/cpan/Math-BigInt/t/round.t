@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 # test rounding with non-integer A and P parameters
 

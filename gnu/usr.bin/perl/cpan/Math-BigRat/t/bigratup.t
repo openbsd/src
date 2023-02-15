@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # Test whether $Math::BigInt::upgrade breaks our neck
 

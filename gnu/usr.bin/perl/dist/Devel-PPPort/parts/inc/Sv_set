@@ -15,6 +15,7 @@ __UNDEFINED__
 SV_NOSTEAL
 sv_setsv_flags
 newSVsv_nomg
+newSVsv_flags
 
 =implementation
 
@@ -34,6 +35,7 @@ __UNDEFINED__ SV_NOSTEAL 16
     }                                                                              \
   } STMT_END
 #else
+#define sv_setsv_flags(dstr, sstr, flags)                                          \
   (                                                                                \
     (((flags) & SV_NOSTEAL) && (sstr) && (SvFLAGS((SV *)(sstr)) & SVs_TEMP)) ? (   \
       SvTEMP_off((SV *)(sstr)),                                                    \
@@ -101,10 +103,24 @@ __UNDEFINED__ sv_setsv_flags(dstr, sstr, flags)                                 
   )
 #endif
 
-#if defined(PERL_USE_GCC_BRACE_GROUPS)
-__UNDEFINED__ newSVsv_flags(sv, flags) ({ SV *_sv = newSV(0); sv_setsv_flags(_sv, (sv), (flags)); _sv; })
-#else
-__UNDEFINED__ newSVsv_flags(sv, flags) ((PL_Sv = newSV(0)), sv_setsv_flags(PL_Sv, (sv), (flags)), PL_Sv)
+#ifndef newSVsv_flags
+#  if defined(PERL_USE_GCC_BRACE_GROUPS)
+#    define  newSVsv_flags(sv, flags)                       \
+        ({                                                  \
+            SV *n= newSV(0);                             \
+            sv_setsv_flags(n, (sv), (flags));             \
+            n;                                            \
+        })
+#  else
+    PERL_STATIC_INLINE SV* D_PPP_newSVsv_flags(SV *const old, I32 flags)
+        {
+            dTHX;
+            SV *n= newSV(0);
+            sv_setsv_flags(n, old, flags);
+            return n;
+        }
+#    define  newSVsv_flags(sv, flags) D_PPP_newSVsv_flags(sv, flags)
+#  endif
 #endif
 
 __UNDEFINED__ newSVsv_nomg(sv) newSVsv_flags((sv), SV_NOSTEAL)

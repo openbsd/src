@@ -6,8 +6,9 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    require "./test.pl"; require './charset_tools.pl';
+    require "./test.pl";
     set_up_inc( qw(. ../lib ../cpan/parent/lib) );
+	require './charset_tools.pl';
 }
 
 use strict;

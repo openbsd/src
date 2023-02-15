@@ -8,7 +8,7 @@ print "1..12\n";
 use IO::Handle;
 use IO::Poll qw(/POLL/);
 
-my $poll = new IO::Poll;
+my $poll = IO::Poll->new();
 
 my $stdout = \*STDOUT;
 my $dupout = IO::Handle->new_from_fd(fileno($stdout),"w");

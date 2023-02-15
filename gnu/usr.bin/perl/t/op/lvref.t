@@ -538,11 +538,10 @@ like $@,
   is s(3), 1, 'padstale alias should not reset state'
 }
 
-SKIP: {
-    skip_without_dynamic_extension('List/Util');
-    require Scalar::Util;
+{
     my $a;
-    Scalar::Util::weaken($r = \$a);
+    no warnings 'experimental::builtin';
+    builtin::weaken($r = \$a);
     \$a = $r;
     pass 'no crash when assigning \$lex = $weakref_to_lex'
 }

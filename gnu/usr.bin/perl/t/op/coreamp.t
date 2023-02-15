@@ -8,10 +8,11 @@
 # Other tests for CORE subs are in coresubs.t
 
 BEGIN {
-    chdir 't' if -d 't';
-    require "./test.pl"; require './charset_tools.pl';
-    $^P |= 0x100;
-    set_up_inc( qw(. ../lib ../dist/if) );
+  chdir 't' if -d 't';
+  require "./test.pl";
+  set_up_inc( qw(. ../lib ../dist/if) );
+  require './charset_tools.pl';
+  $^P |= 0x100; # Provide informative "file" names for evals
 }
 
 no warnings 'experimental::smartmatch';
@@ -31,15 +32,15 @@ package sov {
 }
 
 my %op_desc = (
- evalbytes=> 'eval "string"',
- join     => 'join or string',
- pos      => 'match position',
- prototype=> 'subroutine prototype',
- readline => '<HANDLE>',
- readpipe => 'quoted execution (``, qx)',
- reset    => 'symbol reset',
- ref      => 'reference-type operator',
- undef    => 'undef operator',
+  evalbytes => 'eval "string"',
+  join      => 'join or string',
+  pos       => 'match position',
+  prototype => 'subroutine prototype',
+  readline  => '<HANDLE>',
+  readpipe  => 'quoted execution (``, qx)',
+  reset     => 'symbol reset',
+  ref       => 'reference-type operator',
+  undef     => 'undef operator',
 );
 sub op_desc($) {
   return $op_desc{$_[0]} || $_[0];
@@ -93,7 +94,7 @@ sub test_proto {
     eval " &CORE::$o((1)x($maxargs+1)) ";
     my $desc = quotemeta op_desc($o);
     like $@, qr/^Too many arguments for $desc at /,
-        "&$o with too many args";
+      "&$o with too many args";
   }
   elsif ($p =~ '^([$*]+);?\z') { # Fixed-length $$$ or ***
     my $args = length $1;
@@ -129,46 +130,46 @@ sub test_proto {
     eval " &CORE::$o((1)x($minargs-1)) ";
     my $desc = quotemeta op_desc($o);
     like $@, qr/^Not enough arguments for $desc at /,
-       "&$o with too few args";
+      "&$o with too few args";
   }
   elsif ($p =~ /^\*\\\$\$(;?)\$\z/) { #  *\$$$ and *\$$;$
     $tests += 5;
 
     eval "&CORE::$o(1,1,1,1,1)";
     like $@, qr/^Too many arguments for $o at /,
-         "&$o with too many args";
+      "&$o with too many args";
     eval " &CORE::$o((1)x(\$1?2:3)) ";
     like $@, qr/^Not enough arguments for $o at /,
-         "&$o with too few args";
+      "&$o with too few args";
     eval " &CORE::$o(1,[],1,1) ";
     like $@, qr/^Type of arg 2 to &CORE::$o must be scalar reference at /,
-        "&$o with array ref arg";
+      "&$o with array ref arg";
     eval " &CORE::$o(1,1,1,1) ";
     like $@, qr/^Type of arg 2 to &CORE::$o must be scalar reference at /,
-        "&$o with scalar arg";
+      "&$o with scalar arg";
     eval " &CORE::$o(1,bless([], 'sov'),1,1) ";
     like $@, qr/^Type of arg 2 to &CORE::$o must be scalar reference at /,
-        "&$o with non-scalar arg w/scalar overload (which does not count)";
+      "&$o with non-scalar arg w/scalar overload (which does not count)";
   }
   elsif ($p =~ /^\\%\$*\z/) { #  \% and \%$$
     $tests += 5;
 
     eval "&CORE::$o(" . join(",", (1) x length $p) . ")";
     like $@, qr/^Too many arguments for $o at /,
-         "&$o with too many args";
+      "&$o with too many args";
     eval " &CORE::$o(" . join(",", (1) x (length($p)-2)) . ") ";
     like $@, qr/^Not enough arguments for $o at /,
-         "&$o with too few args";
+      "&$o with too few args";
     my $moreargs = ",1" x (length($p) - 2);
     eval " &CORE::$o([]$moreargs) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash reference at /,
-        "&$o with array ref arg";
+      "&$o with array ref arg";
     eval " &CORE::$o(*foo$moreargs) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash reference at /,
-        "&$o with typeglob arg";
+      "&$o with typeglob arg";
     eval " &CORE::$o(bless([], 'hov')$moreargs) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash reference at /,
-        "&$o with non-hash arg with hash overload (which does not count)";
+      "&$o with non-hash arg with hash overload (which does not count)";
   }
   elsif ($p =~ /^(;)?\\\[(\$\@%&?\*)](\$\@)?\z/) {
     $tests += 3;
@@ -189,16 +190,16 @@ sub test_proto {
     eval " &CORE::$o(2$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
                 ) \[\Q$2\E\] at /,
-        "&$o with non-ref arg";
+      "&$o with non-ref arg";
     eval " &CORE::$o(*STDOUT{IO}$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
                 ) \[\Q$2\E\] at /,
-        "&$o with ioref arg";
+      "&$o with ioref arg";
     my $class = ref *DATA{IO};
     eval " &CORE::$o(bless(*DATA{IO}, 'hov')$more_args) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one of(?x:
                 ) \[\Q$2\E\] at /,
-        "&$o with ioref arg with hash overload (which does not count)";
+      "&$o with ioref arg with hash overload (which does not count)";
     bless *DATA{IO}, $class;
     if (do {$2 !~ /&/}) {
       $tests++;
@@ -206,7 +207,7 @@ sub test_proto {
       like $@, qr/^Type of arg 1 to &CORE::$o must be reference to one (?x:
                   )of \[\Q$2\E\] at /,
         "&$o with coderef arg";
-    }    
+    }
   }
   elsif ($p =~ /^;?\\\@([\@;])?/) { #   ;\@   \@@   \@;$$@
     $tests += 7;
@@ -214,7 +215,7 @@ sub test_proto {
     if ($1) {
       eval { &{"CORE::$o"}() };
       like $@, qr/^Not enough arguments for $o at /,
-         "&$o with too few args";
+        "&$o with too few args";
     }
     else {
       eval " &CORE::$o(\\\@1,2) ";
@@ -223,56 +224,56 @@ sub test_proto {
     }
     eval " &CORE::$o(2) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with non-ref arg";
+      "&$o with non-ref arg";
     eval " &CORE::$o(*STDOUT{IO}) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with ioref arg";
+      "&$o with ioref arg";
     my $class = ref *DATA{IO};
     eval " &CORE::$o(bless(*DATA{IO}, 'aov')) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with ioref arg with array overload (which does not count)";
+      "&$o with ioref arg with array overload (which does not count)";
     bless *DATA{IO}, $class;
     eval " &CORE::$o(\\&scriggle) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with coderef arg";
+      "&$o with coderef arg";
     eval " &CORE::$o(\\\$_) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with scalarref arg";
+      "&$o with scalarref arg";
     eval " &CORE::$o({}) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be array reference at /,
-        "&$o with hashref arg";
+      "&$o with hashref arg";
   }
   elsif ($p eq '\[%@]') {
     $tests += 7;
 
     eval " &CORE::$o(\\%1,2) ";
     like $@, qr/^Too many arguments for ${\op_desc($o)} at /,
-        "&$o with too many args";
+      "&$o with too many args";
     eval { &{"CORE::$o"}() };
     like $@, qr/^Not enough arguments for $o at /,
-         "&$o with too few args";
+      "&$o with too few args";
     eval " &CORE::$o(2) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash or array (?x:
                 )reference at /,
-        "&$o with non-ref arg";
+      "&$o with non-ref arg";
     eval " &CORE::$o(*STDOUT{IO}) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash or array (?x:
                 )reference at /,
-        "&$o with ioref arg";
+      "&$o with ioref arg";
     my $class = ref *DATA{IO};
     eval " &CORE::$o(bless(*DATA{IO}, 'hov')) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash or array (?x:
                 )reference at /,
-        "&$o with ioref arg with hash overload (which does not count)";
+      "&$o with ioref arg with hash overload (which does not count)";
     bless *DATA{IO}, $class;
     eval " &CORE::$o(\\&scriggle) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash or array (?x:
                 )reference at /,
-        "&$o with coderef arg";
+      "&$o with coderef arg";
     eval " &CORE::$o(\\\$_) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be hash or array (?x:
                 )reference at /,
-        "&$o with scalarref arg";
+      "&$o with scalarref arg";
   }
   elsif ($p eq ';\[$*]') {
     $tests += 4;
@@ -280,16 +281,16 @@ sub test_proto {
     my $desc = quotemeta op_desc($o);
     eval " &CORE::$o(1,2) ";
     like $@, qr/^Too many arguments for $desc at /,
-        "&$o with too many args";
+      "&$o with too many args";
     eval " &CORE::$o([]) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
-        "&$o with array ref arg";
+      "&$o with array ref arg";
     eval " &CORE::$o(1) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
-        "&$o with scalar arg";
+      "&$o with scalar arg";
     eval " &CORE::$o(bless([], 'sov')) ";
     like $@, qr/^Type of arg 1 to &CORE::$o must be scalar reference at /,
-        "&$o with non-scalar arg w/scalar overload (which does not count)";
+      "&$o with non-scalar arg w/scalar overload (which does not count)";
   }
 
   else {
@@ -319,26 +320,26 @@ test_proto 'abs', -5, 5;
 
 SKIP:
 {
-    if ($^O eq "MSWin32" && is_miniperl) {
-        $tests += 8;
-        skip "accept() not available in Win32 miniperl", 8
-    }
-    $tests += 6;
-    test_proto 'accept';
-    eval q{
-      is &CORE::accept(qw{foo bar}), undef, "&accept";
-      lis [&{"CORE::accept"}(qw{foo bar})], [undef], "&accept in list context";
+  if ($^O eq "MSWin32" && is_miniperl) {
+    $tests += 8;
+    skip "accept() not available in Win32 miniperl", 8
+  }
+  $tests += 6;
+  test_proto 'accept';
+  eval q{
+    is &CORE::accept(qw{foo bar}), undef, "&accept";
+    lis [&{"CORE::accept"}(qw{foo bar})], [undef], "&accept in list context";
 
-      &myaccept(my $foo, my $bar);
-      is ref $foo, 'GLOB', 'CORE::accept autovivifies its first argument';
-      is $bar, undef, 'CORE::accept does not autovivify its second argument';
-      use strict;
-      undef $foo;
-      eval { 'myaccept'->($foo, $bar) };
-      like $@, qr/^Can't use an undefined value as a symbol reference at/,
-      'CORE::accept will not accept undef 2nd arg under strict';
-      is ref $foo, 'GLOB', 'CORE::accept autovivs its first arg under strict';
-    };
+    &myaccept(my $foo, my $bar);
+    is ref $foo, 'GLOB', 'CORE::accept autovivifies its first argument';
+    is $bar, undef, 'CORE::accept does not autovivify its second argument';
+    use strict;
+    undef $foo;
+    eval { 'myaccept'->($foo, $bar) };
+    like $@, qr/^Can't use an undefined value as a symbol reference at/,
+    'CORE::accept will not accept undef 2nd arg under strict';
+    is ref $foo, 'GLOB', 'CORE::accept autovivs its first arg under strict';
+  };
 }
 
 test_proto 'alarm';
@@ -348,13 +349,13 @@ test_proto 'bind';
 $tests += 3;
 SKIP:
 {
-    skip "bind() not available in Win32 miniperl", 3
-      if $^O eq "MSWin32" && is_miniperl();
-    is &CORE::bind('foo', 'bear'), undef, "&bind";
-    lis [&CORE::bind('foo', 'bear')], [undef], "&bind in list context";
-    eval { &mybind(my $foo, "bear") };
-    like $@, qr/^Bad symbol for filehandle at/,
-         'CORE::bind dies with undef first arg';
+  skip "bind() not available in Win32 miniperl", 3
+    if $^O eq "MSWin32" && is_miniperl();
+  is &CORE::bind('foo', 'bear'), undef, "&bind";
+  lis [&CORE::bind('foo', 'bear')], [undef], "&bind in list context";
+  eval { &mybind(my $foo, "bear") };
+  like $@, qr/^Bad symbol for filehandle at/,
+    'CORE::bind dies with undef first arg';
 }
 
 test_proto 'binmode';
@@ -366,12 +367,13 @@ is &mybinmode(foo), undef, '&binmode with one arg';
 test_proto 'bless';
 $tests += 3;
 like &CORE::bless([],'parcel'), qr/^parcel=ARRAY/, "&bless";
-like join(" ", &CORE::bless([],'parcel')),
-     qr/^parcel=ARRAY(?!.* )/, "&bless in list context";
+like join(" ", &CORE::bless([],'parcel')), qr/^parcel=ARRAY(?!.* )/,
+  "&bless in list context";
 like &mybless([]), qr/^main=ARRAY/, '&bless with one arg';
 
 test_proto 'break';
-{ $tests ++;
+{
+  $tests ++;
   my $tmp;
   CORE::given(1) {
     CORE::when(1) {
@@ -385,22 +387,22 @@ test_proto 'break';
 test_proto 'caller';
 $tests += 4;
 sub caller_test {
-    is scalar &CORE::caller, 'hadhad', '&caller';
-    is scalar &CORE::caller(1), 'main', '&caller(1)';
-    lis [&CORE::caller], [caller], '&caller in list context';
-    # The last element of caller in list context is a hint hash, which
-    # may be a different hash for caller vs &CORE::caller, so an eq com-
-    # parison (which lis() uses for convenience) won’t work.  So just
-    # pop the last element, since the rest are sufficient to prove that
-    # &CORE::caller works.
-    my @ampcaller = &CORE::caller(1);
-    my @caller    = caller(1);
-    pop @ampcaller; pop @caller;
-    lis \@ampcaller, \@caller, '&caller(1) in list context';
+  is scalar &CORE::caller, 'hadhad', '&caller';
+  is scalar &CORE::caller(1), 'main', '&caller(1)';
+  lis [&CORE::caller], [caller], '&caller in list context';
+  # The last element of caller in list context is a hint hash, which
+  # may be a different hash for caller vs &CORE::caller, so an eq com-
+  # parison (which lis() uses for convenience) won’t work.  So just
+  # pop the last element, since the rest are sufficient to prove that
+  # &CORE::caller works.
+  my @ampcaller = &CORE::caller(1);
+  my @caller    = caller(1);
+  pop @ampcaller; pop @caller;
+  lis \@ampcaller, \@caller, '&caller(1) in list context';
 }
 sub {
-   package hadhad;
-   ::caller_test();
+  package hadhad;
+  ::caller_test();
 }->();
 
 test_proto 'chmod';
@@ -423,23 +425,23 @@ test_proto 'close';
 {
   last if is_miniperl;
   $tests += 3;
-  
+
   open my $fh, ">", \my $buffalo;
   print $fh 'an address in the outskirts of Jersey';
   ok &CORE::close($fh), '&CORE::close retval';
   print $fh 'lalala';
   is $buffalo, 'an address in the outskirts of Jersey',
-     'effect of &CORE::close';
+    'effect of &CORE::close';
   # This has to be a separate variable from $fh, as re-using the same
   # variable can cause the tests to pass by accident.  That actually hap-
   # pened during developement, because the second close() was reading
   # beyond the end of the stack and finding a $fh left over from before.
   open my $fh2, ">", \($buffalo = '');
   select+(select($fh2), do {
-     print "Nasusiro Tokasoni";
-     &CORE::close();
-     print "jfd";
-     is $buffalo, "Nasusiro Tokasoni", '&CORE::close with no args';
+    print "Nasusiro Tokasoni";
+    &CORE::close();
+    print "jfd";
+    is $buffalo, "Nasusiro Tokasoni", '&CORE::close with no args';
   })[0];
 }
 lis [&CORE::close('tototootot')], [''], '&close in list context'; ++$tests;
@@ -453,10 +455,10 @@ test_proto 'connect';
 $tests += 2;
 SKIP:
 {
-    skip "connect() not available in Win32 miniperl", 2
-      if $^O eq "MSWin32" && is_miniperl();
-    is &CORE::connect('foo','bar'), undef, '&connect';
-    lis [&myconnect('foo','bar')], [undef], '&connect in list context';
+  skip "connect() not available in Win32 miniperl", 2
+    if $^O eq "MSWin32" && is_miniperl();
+  is &CORE::connect('foo','bar'), undef, '&connect';
+  lis [&myconnect('foo','bar')], [undef], '&connect in list context';
 }
 
 test_proto 'continue';
@@ -497,7 +499,7 @@ eval { dier('quinquangle') };
 is $@, "quinquangle at frob line 6.\n", '&CORE::die'; $tests ++;
 
 test_proto $_ for qw(
- endgrent endhostent endnetent endprotoent endpwent endservent
+  endgrent endhostent endnetent endprotoent endpwent endservent
 );
 
 test_proto 'evalbytes';
@@ -646,8 +648,8 @@ SKIP: {
 
 test_proto 'kill'; # set up mykill alias
 if ($^O ne 'riscos') {
-    $tests ++;
-    ok( &mykill(0, $$), '&kill' );
+  $tests ++;
+  ok( &mykill(0, $$), '&kill' );
 }
 
 test_proto 'lc', 'A', 'a';
@@ -704,9 +706,8 @@ test_proto 'ord', chr(utf8::unicode_to_native(64)), utf8::unicode_to_native(64);
 
 test_proto 'pack';
 $tests += 2;
-my $Perl_as_a_hex_string = join "", map
-                                    { sprintf("%2X", utf8::unicode_to_native($_)) }
-                                    0x50, 0x65, 0x72, 0x6c;
+my $Perl_as_a_hex_string =
+  join "", map { sprintf("%2X", utf8::unicode_to_native($_)) } 0x50, 0x65, 0x72, 0x6c;
 is &mypack("H*", $Perl_as_a_hex_string), 'Perl', '&pack';
 lis [&mypack("H*", $Perl_as_a_hex_string)], ['Perl'], '&pack in list context';
 
@@ -760,8 +761,8 @@ test_proto 'rand';
 $tests += 3;
 my $r = &CORE::rand;
 ok eval {
-    use warnings FATAL => qw{numeric uninitialized};
-    $r >= 0 && $r < 1;
+  use warnings FATAL => qw{numeric uninitialized};
+  $r >= 0 && $r < 1;
 }, '&rand returns a valid number';
 unlike join(" ", &CORE::rand), qr/ /, '&rand in list context';
 &cmp_ok(&CORE::rand(78), qw '< 78', '&rand with 1 arg');
@@ -814,14 +815,14 @@ use if !is_miniperl, File::Temp, 'tempdir';
 
 test_proto 'rename';
 {
-    last if is_miniperl;
-    $tests ++;
-    my $dir = tempdir(uc cleanup => 1);
-    my $tmpfilenam = catfile $dir, 'aaa';
-    open my $fh, ">", $tmpfilenam or die "cannot open $tmpfilenam: $!";
-    close $fh or die "cannot close $tmpfilenam: $!";
-    &myrename("$tmpfilenam", $tmpfilenam = catfile $dir,'bbb');
-    ok open(my $fh, '>', $tmpfilenam), '&rename';
+  last if is_miniperl;
+  $tests ++;
+  my $dir = tempdir(uc cleanup => 1);
+  my $tmpfilenam = catfile $dir, 'aaa';
+  open my $fh, ">", $tmpfilenam or die "cannot open $tmpfilenam: $!";
+  close $fh or die "cannot close $tmpfilenam: $!";
+  &myrename("$tmpfilenam", $tmpfilenam = catfile $dir,'bbb');
+  ok open(my $fh, '>', $tmpfilenam), '&rename';
 }
 
 test_proto 'ref', [], 'ARRAY';
@@ -862,11 +863,11 @@ lis [&myscalar(3)], [3], '&scalar in list cx';
 
 test_proto 'seek';
 {
-    last if is_miniperl;
-    $tests += 1;
-    open my $fh, "<", \"misled" or die $!;
-    &myseek($fh, 2, 0);
-    is <$fh>, 'sled', '&seek in action';
+  last if is_miniperl;
+  $tests += 1;
+  open my $fh, "<", \"misled" or die $!;
+  &myseek($fh, 2, 0);
+  is <$fh>, 'sled', '&seek in action';
 }
 
 test_proto 'seekdir';
@@ -875,7 +876,7 @@ test_proto 'seekdir';
 $tests += 8;
 *myselect = \&CORE::select;
 is defined prototype &myselect, defined prototype "CORE::select",
-   'prototype of &select (or lack thereof)';
+  'prototype of &select (or lack thereof)';
 is &myselect, select, '&select with no args';
 {
   my $prev = select;
@@ -886,18 +887,18 @@ is &myselect, select, '&select with no args';
 }
 eval { &myselect(1,2) };
 like $@, qr/^Not enough arguments for select system call at /,
-      ,'&myselect($two,$args)';
+  '&myselect($two,$args)';
 eval { &myselect(1,2,3) };
 like $@, qr/^Not enough arguments for select system call at /,
-      ,'&myselect($with,$three,$args)';
+  '&myselect($with,$three,$args)';
 eval { &myselect(1,2,3,4,5) };
 like $@, qr/^Too many arguments for select system call at /,
-      ,'&myselect($a,$total,$of,$five,$args)';
+  '&myselect($a,$total,$of,$five,$args)';
 unless ($^O eq "MSWin32" && is_miniperl) {
-    &myselect((undef)x3,.25);
-    # Just have to assume that worked. :-) If we get here, at least it didn’t
-    # crash or anything.
-    # select() is unimplemented in Win32 miniperl
+  &myselect((undef)x3,.25);
+  # Just have to assume that worked. :-) If we get here, at least it didn’t
+  # crash or anything.
+  # select() is unimplemented in Win32 miniperl
 }
 
 test_proto "sem$_" for qw "ctl get op";
@@ -1036,7 +1037,7 @@ test_proto 'times';
 $tests += 2;
 like &mytimes, qr/^[\d.]+\z/, '&times in scalar context';
 like join('-',&mytimes), qr/^[\d.]+-[\d.]+-[\d.]+-[\d.]+\z/,
-   '&times in list context';
+  '&times in list context';
 
 test_proto 'uc', 'aa', 'AA';
 test_proto 'ucfirst', 'aa', "Aa";
@@ -1075,12 +1076,10 @@ undef @_;
 
 test_proto 'unpack';
 $tests += 2;
-my $abcd_as_a_hex_string = join "", map
-                                    { sprintf("%2X", utf8::unicode_to_native($_)) }
-                                    0x61, 0x62, 0x63, 0x64;
-my $bcde_as_a_hex_string = join "", map
-                                    { sprintf("%2X", utf8::unicode_to_native($_)) }
-                                    0x62, 0x63, 0x64, 0x65;
+my $abcd_as_a_hex_string =
+  join "", map { sprintf("%2X", utf8::unicode_to_native($_)) } 0x61, 0x62, 0x63, 0x64;
+my $bcde_as_a_hex_string =
+  join "", map { sprintf("%2X", utf8::unicode_to_native($_)) } 0x62, 0x63, 0x64, 0x65;
 $_ = 'abcd';
 is &myunpack("H*"), $abcd_as_a_hex_string, '&unpack with one arg';
 is &myunpack("H*", "bcde"), $bcde_as_a_hex_string, '&unpack with two arg';
@@ -1146,7 +1145,7 @@ test_proto 'write';
 $tests ++;
 eval {&mywrite};
 like $@, qr'^Undefined format "STDOUT" called',
-   "&write without arguments can handle the null";
+  "&write without arguments can handle the null";
 
 # This is just a check to make sure we have tested everything.  If we
 # haven’t, then either the sub needs to be tested or the list in
@@ -1155,16 +1154,16 @@ like $@, qr'^Undefined format "STDOUT" called',
   last if is_miniperl;
   require File::Spec::Functions;
   my $keywords_file =
-   File::Spec::Functions::catfile(
+    File::Spec::Functions::catfile(
       File::Spec::Functions::updir,'regen','keywords.pl'
-   );
+    );
   my %nottest_words = map { $_ => 1 } qw(
     AUTOLOAD BEGIN CHECK CORE DESTROY END INIT UNITCHECK
     __DATA__ __END__
-    and cmp default do dump else elsif eq eval for foreach format ge given goto
-    grep gt if isa last le local lt m map my ne next no or our package print
-    printf q qq qr qw qx redo require return s say sort state sub tr unless
-    until use when while x xor y
+    and catch cmp default defer do dump else elsif eq eval finally for foreach
+    format ge given goto grep gt if isa last le local lt m map my ne next no
+    or our package print printf q qq qr qw qx redo require return s say sort
+    state sub tr try unless until use when while x xor y
   );
   open my $kh, $keywords_file
     or die "$0 cannot open $keywords_file: $!";
@@ -1175,7 +1174,7 @@ like $@, qr'^Undefined format "STDOUT" called',
       $tests ++;
       ok   exists &{"my$word"}
         || (eval{&{"CORE::$word"}}, $@ =~ /cannot be called directly/),
-     "$word either has been tested or is not ampable";
+        "$word either has been tested or is not ampable";
     }
   }
 }

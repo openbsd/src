@@ -1,13 +1,16 @@
 #!./perl
 
+use strict;
+use warnings;
+
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
+    require './charset_tools.pl';
     set_up_inc('../lib');
 }
 
-plan tests => 59;
-
+my %h;
 $h{'abc'} = 'ABC';
 $h{'def'} = 'DEF';
 $h{'jkl','mno'} = "JKL\034MNO";
@@ -39,15 +42,15 @@ $h{'x'} = 'X';
 $h{'y'} = 'Y';
 $h{'z'} = 'Z';
 
-@keys = keys %h;
-@values = values %h;
+my @keys = keys %h;
+my @values = values %h;
 
 is ($#keys, 29, "keys");
 is ($#values, 29, "values");
 
-$i = 0;		# stop -w complaints
+my $i = 0;		# stop -w complaints
 
-while (($key,$value) = each(%h)) {
+while (my ($key,$value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i]
         && (('a' lt 'A' && $key lt $value) || $key gt $value)) {
 	$key =~ y/a-z/A-Z/;
@@ -65,9 +68,9 @@ SKIP: {
     require Hash::Util;
     sub Hash::Util::num_buckets (\%);
 
-    $size = Hash::Util::num_buckets(%h);
+    my $size = Hash::Util::num_buckets(%h);
     keys %h = $size * 5;
-    $newsize = Hash::Util::num_buckets(%h);
+    my $newsize = Hash::Util::num_buckets(%h);
     is ($newsize, $size * 8, "resize");
     keys %h = 1;
     $size = Hash::Util::num_buckets(%h);
@@ -82,44 +85,58 @@ SKIP: {
 }
 
 # test scalar each
-%hash = 1..20;
-$total = 0;
+my %hash = 1..20;
+my $total = 0;
+my $key;
 $total += $key while $key = each %hash;
 is ($total, 100, "test scalar each");
 
-for (1..3) { @foo = each %hash }
+for (1..3) { my @foo = each %hash }
 keys %hash;
 $total = 0;
 $total += $key while $key = each %hash;
 is ($total, 100, "test scalar keys resets iterator");
 
-for (1..3) { @foo = each %hash }
+for (1..3) { my @foo = each %hash }
 $total = 0;
 $total += $key while $key = each %hash;
 isnt ($total, 100, "test iterator of each is being maintained");
 
-for (1..3) { @foo = each %hash }
+for (1..3) { my @foo = each %hash }
 values %hash;
 $total = 0;
 $total += $key while $key = each %hash;
 is ($total, 100, "test values keys resets iterator");
 
+is (keys(%hash), 10, "keys (%hash)");
 SKIP: {
-    skip "no Hash::Util on miniperl", 3, if is_miniperl;
+    skip "no Hash::Util on miniperl", 8, if is_miniperl;
     require Hash::Util;
     sub Hash::Util::num_buckets (\%);
 
-    $size = Hash::Util::num_buckets(%hash);
-    keys(%hash) = $size / 2;
-    is ($size, Hash::Util::num_buckets(%hash),
+    my $size = Hash::Util::num_buckets(%hash);
+    cmp_ok($size, '>=', keys %hash, 'sanity check - more buckets than keys');
+    %hash = ();
+    is(Hash::Util::num_buckets(%hash), $size,
+       "size doesn't change when hash is emptied");
+
+    %hash = split /, /, 'Pugh, Pugh, Barney McGrew, Cuthbert, Dibble, Grubb';
+    is (keys(%hash), 3, "now 3 keys");
+    # 3 keys won't be enough to trigger any "must grow" criteria:
+    is(Hash::Util::num_buckets(%hash), $size,
+       "size doesn't change with 3 keys");
+
+    keys(%hash) = keys(%hash);
+    is (Hash::Util::num_buckets(%hash), $size,
 	"assign to keys does not shrink hash bucket array");
+    is (keys(%hash), 3, "still 3 keys");
     keys(%hash) = $size + 100;
-    isnt ($size, Hash::Util::num_buckets(%hash),
-	  "assignment to keys of a number not large enough does not change size");
-    is (keys(%hash), 10, "keys (%hash)");
+    cmp_ok(Hash::Util::num_buckets(%hash), '>', $size,
+           "assign to keys will grow hash bucket array");
+    is (keys(%hash), 3, "but still 3 keys");
 }
 
-@tests = (&next_test, &next_test, &next_test);
+@::tests = (&next_test, &next_test, &next_test);
 {
     package Obj;
     sub DESTROY { print "ok $::tests[1] # DESTROY called\n"; }
@@ -133,7 +150,7 @@ SKIP: {
 }
 
 # Check for Unicode hash keys.
-%u = ("\x{12}", "f", "\x{123}", "fo", "\x{1234}",  "foo");
+my %u = ("\x{12}", "f", "\x{123}", "fo", "\x{1234}",  "foo");
 $u{"\x{12345}"}  = "bar";
 @u{"\x{10FFFD}"} = "zap";
 
@@ -144,8 +161,8 @@ foreach (keys %u) {
 }
 ok (eq_hash(\%u, \%u2), "copied unicode hash keys correctly?");
 
-$a = "\xe3\x81\x82"; $A = "\x{3042}";
-%b = ( $a => "non-utf8");
+my $a = byte_utf8a_to_utf8n("\xe3\x81\x82"); my $A = "\x{3042}";
+my %b = ( $a => "non-utf8");
 %u = ( $A => "utf8");
 
 is (exists $b{$A}, '', "utf8 key in bytes hash");
@@ -155,26 +172,12 @@ pass ("if we got here change 8056 worked");
 print "# $u{$_}\n" for keys %u; # Used to core dump before change #8056.
 pass ("change 8056 is thanks to Inaba Hiroto");
 
-# on EBCDIC chars are mapped differently so pick something that needs encoding
-# there too.
-$d = pack("U*", 0xe3, 0x81, 0xAF);
-{ use bytes; $ol = bytes::length($d) }
-cmp_ok ($ol, '>', 3, "check encoding on EBCDIC");
-%u = ($d => "downgrade");
-for (keys %u) {
-    is (length, 3, "check length"); 
-    is ($_, pack("U*", 0xe3, 0x81, 0xAF), "check value");
-}
-{
-    { use bytes; is (bytes::length($d), $ol) }
-}
-
 {
     my %u;
-    my $u0 = pack("U0U", 0x00FF);
-    my $b0 = "\xC3\xBF";          # 0xCB 0xBF is U+00FF in UTF-8
+    my $u0 = pack("U0U", 0x00B6);
+    my $b0 = byte_utf8a_to_utf8n("\xC2\xB6"); # 0xC2 0xB6 is U+00B6 in UTF-8
     my $u1 = pack("U0U", 0x0100);
-    my $b1 = "\xC4\x80";          # 0xC4 0x80 is U+0100 in UTF-8
+    my $b1 = byte_utf8a_to_utf8n("\xC4\x80"); # 0xC4 0x80 is U+0100 in UTF-8
 
     $u{$u0} = 1;
     $u{$b0} = 2; 
@@ -182,8 +185,8 @@ for (keys %u) {
     $u{$b1} = 4;
 
     is(scalar keys %u, 4, "four different Unicode keys"); 
-    is($u{$u0}, 1, "U+00FF        -> 1");
-    is($u{$b0}, 2, "U+00C3 U+00BF -> 2");
+    is($u{$u0}, 1, "U+00B6        -> 1");
+    is($u{$b0}, 2, "U+00C2 U+00B6 -> 2");
     is($u{$u1}, 3, "U+0100        -> 3 ");
     is($u{$b1}, 4, "U+00C4 U+0080 -> 4");
 }
@@ -282,13 +285,38 @@ for my $k (qw(each keys values)) {
     }
     ok(!$warned, "no warnings 'internal' silences each() after insert warnings");
 }
+{
+    # Test that the call to hv_iternext_flags() that calls prime_env_iter()
+    # produces the results consistent with subsequent iterations of %ENV
+    my $raw = run_perl(switches => ['-l'],
+                       prog => 'for (1,2) { @a = keys %ENV; print scalar @a; print for @a }');
+    my @lines = split /\n/, $raw;
+    my $count1 = shift @lines;
+    my @got1 = splice @lines, 0, $count1;
+    my $count2 = shift @lines;
+    is($count1, $count2, 'both iterations of %ENV returned the same count of keys');
+    is(scalar @lines, $count2, 'second iteration of %ENV printed all keys');
+    is(join("\n", sort @got1), join("\n", sort @lines), 'both iterations of %ENV returned identical keys');
+}
+
+fresh_perl_like('$a = keys %ENV; $b = () = keys %ENV; $c = keys %ENV; print qq=$a,$b,$c=',
+                qr/^([1-9][0-9]*),\1,\1$/,
+                undef,
+                'keys %ENV in scalar context triggers prime_env_iter if needed');
+fresh_perl_like('$a = $ENV{PATH}; $a = $ENV{q=DCL$PATH=}; $a = keys %ENV; $b = () = keys %ENV; $c = keys %ENV; print qq=$a,$b,$c=',
+                qr/^([1-9][0-9]*),\1,\1$/,
+                undef,
+                '%ENV lookup, and keys %ENV in scalar context remain consistent');
 
 use feature 'refaliasing';
 no warnings 'experimental::refaliasing';
 $a = 7;
+my %h2;
 \$h2{f} = \$a;
 ($a, $b) = (each %h2);
 is "$a $b", "f 7", 'each in list assignment';
 $a = 7;
 ($a, $b) = (3, values %h2);
 is "$a $b", "3 7", 'values in list assignment';
+
+done_testing();

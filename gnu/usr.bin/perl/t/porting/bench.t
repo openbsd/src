@@ -27,7 +27,8 @@ skip_all "not linux"   unless $^O eq 'linux';
 skip_all "no valgrind" unless -x '/bin/valgrind' || -x '/usr/bin/valgrind';
 # Address sanitizer clashes horribly with cachegrind
 skip_all "not with ASAN" if $Config{ccflags} =~ /sanitize=address/;
-skip_all "cachegrind broken" if system "( ulimit -c 0; valgrind -q --tool=cachegrind --cachegrind-out-file=/dev/null $^X -e0 ) 2>/dev/null";
+# If this takes more than 15 second then something is very wrong
+skip_all "cachegrind broken" if system "( ulimit -c 0; ulimit -t 15; valgrind -q --tool=cachegrind --cachegrind-out-file=/dev/null $^X -e0 ) 2>/dev/null";
 
 
 my $bench_pl = "Porting/bench.pl";

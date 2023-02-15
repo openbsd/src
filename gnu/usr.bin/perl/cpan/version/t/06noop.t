@@ -7,10 +7,10 @@
 use Test::More qw/no_plan/;
 
 BEGIN {
-    use_ok('version', 0.9924);
+    use_ok('version', 0.9929);
 }
 
-my $v1 = version->new('1.2');
+my $v1 = 'version'->new('1.2');
 eval {$v1 = $v1 + 1};
 like $@, qr/operation not supported with version object/, 'No math ops with version objects';
 eval {$v1 = $v1 - 1};

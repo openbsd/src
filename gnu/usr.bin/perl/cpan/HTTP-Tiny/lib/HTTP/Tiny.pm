@@ -4,7 +4,7 @@ use strict;
 use warnings;
 # ABSTRACT: A small, simple, correct HTTP/1.1 client
 
-our $VERSION = '0.076';
+our $VERSION = '0.080';
 
 sub _croak { require Carp; Carp::croak(@_) }
 
@@ -26,8 +26,8 @@ sub _croak { require Carp; Carp::croak(@_) }
 #pod   scheme, host and port) (defaults to 1)
 #pod * C<max_redirect> — Maximum number of redirects allowed (defaults to 5)
 #pod * C<max_size> — Maximum response size in bytes (only when not using a data
-#pod   callback).  If defined, responses larger than this will return an
-#pod   exception.
+#pod   callback).  If defined, requests with responses larger than this will return
+#pod   a 599 status code.
 #pod * C<http_proxy> — URL of a proxy server to use for HTTP connections
 #pod   (default is C<$ENV{http_proxy}> — if set)
 #pod * C<https_proxy> — URL of a proxy server to use for HTTPS connections
@@ -38,23 +38,26 @@ sub _croak { require Carp; Carp::croak(@_) }
 #pod   be a comma-separated string or an array reference. (default is
 #pod   C<$ENV{no_proxy}> —)
 #pod * C<timeout> — Request timeout in seconds (default is 60) If a socket open,
-#pod   read or write takes longer than the timeout, an exception is thrown.
+#pod   read or write takes longer than the timeout, the request response status code
+#pod   will be 599.
 #pod * C<verify_SSL> — A boolean that indicates whether to validate the SSL
 #pod   certificate of an C<https> — connection (default is false)
 #pod * C<SSL_options> — A hashref of C<SSL_*> — options to pass through to
 #pod   L<IO::Socket::SSL>
 #pod
+#pod An accessor/mutator method exists for each attribute.
+#pod
 #pod Passing an explicit C<undef> for C<proxy>, C<http_proxy> or C<https_proxy> will
 #pod prevent getting the corresponding proxies from the environment.
 #pod
-#pod Exceptions from C<max_size>, C<timeout> or other errors will result in a
-#pod pseudo-HTTP status code of 599 and a reason of "Internal Exception". The
-#pod content field in the response will contain the text of the exception.
+#pod Errors during request execution will result in a pseudo-HTTP status code of 599
+#pod and a reason of "Internal Exception". The content field in the response will
+#pod contain the text of the error.
 #pod
 #pod The C<keep_alive> parameter enables a persistent connection, but only to a
-#pod single destination scheme, host and port.  Also, if any connection-relevant
-#pod attributes are modified, or if the process ID or thread ID change, the
-#pod persistent connection will be dropped.  If you want persistent connections
+#pod single destination scheme, host and port.  If any connection-relevant
+#pod attributes are modified via accessor, or if the process ID or thread ID change,
+#pod the persistent connection will be dropped.  If you want persistent connections
 #pod across multiple destinations, use multiple HTTP::Tiny objects.
 #pod
 #pod See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
@@ -152,7 +155,7 @@ sub _set_proxies {
     # http proxy
     if (! exists $self->{http_proxy} ) {
         # under CGI, bypass HTTP_PROXY as request sets it from Proxy header
-        local $ENV{HTTP_PROXY} if $ENV{REQUEST_METHOD};
+        local $ENV{HTTP_PROXY} = ($ENV{CGI_HTTP_PROXY} || "") if $ENV{REQUEST_METHOD};
         $self->{http_proxy} = $ENV{http_proxy} || $ENV{HTTP_PROXY} || $self->{proxy};
     }
 
@@ -186,7 +189,7 @@ sub _set_proxies {
     return;
 }
 
-#pod =method get|head|put|post|delete
+#pod =method get|head|put|post|patch|delete
 #pod
 #pod     $response = $http->get($url);
 #pod     $response = $http->get($url, \%options);
@@ -200,7 +203,7 @@ sub _set_proxies {
 #pod
 #pod =cut
 
-for my $sub_name ( qw/get head put post delete/ ) {
+for my $sub_name ( qw/get head put post patch delete/ ) {
     my $req_method = uc $sub_name;
     no strict 'refs';
     eval <<"HERE"; ## no critic
@@ -416,8 +419,8 @@ sub mirror {
 #pod     redirects in the same order that redirections occurred.  If it does
 #pod     not exist, then no redirections occurred.
 #pod
-#pod On an exception during the execution of the request, the C<status> field will
-#pod contain 599, and the C<content> field will contain the text of the exception.
+#pod On an error during the execution of the request, the C<status> field will
+#pod contain 599, and the C<content> field will contain the text of the error.
 #pod
 #pod =cut
 
@@ -434,7 +437,7 @@ sub request {
     for ( 0 .. 1 ) {
         $response = eval { $self->_request($method, $url, $args) };
         last unless $@ && $idempotent{$method}
-            && $@ =~ m{^(?:Socket closed|Unexpected end)};
+            && $@ =~ m{^(?:Socket closed|Unexpected end|SSL read error)};
     }
 
     if (my $e = $@) {
@@ -490,6 +493,8 @@ sub www_form_urlencode {
     my @terms;
     while( @params ) {
         my ($key, $value) = splice(@params, 0, 2);
+        _croak("form data keys must not be undef")
+            if !defined($key);
         if ( ref $value eq 'ARRAY' ) {
             unshift @params, map { $key => $_ } @$value;
         }
@@ -573,16 +578,8 @@ sub can_ssl {
 sub connected {
     my ($self) = @_;
 
-    # If a socket exists...
-    if ($self->{handle} && $self->{handle}{fh}) {
-        my $socket = $self->{handle}{fh};
-
-        # ...and is connected, return the peer host and port.
-        if ($socket->connected) {
-            return wantarray
-                ? ($socket->peerhost, $socket->peerport)
-                : join(':', $socket->peerhost, $socket->peerport);
-        }
+    if ( $self->{handle} ) {
+        return $self->{handle}->connected;
     }
     return;
 }
@@ -599,13 +596,19 @@ my %DefaultPort = (
 sub _agent {
     my $class = ref($_[0]) || $_[0];
     (my $default_agent = $class) =~ s{::}{-}g;
-    return $default_agent . "/" . $class->VERSION;
+    my $version = $class->VERSION;
+    $default_agent .= "/$version" if defined $version;
+    return $default_agent;
 }
 
 sub _request {
     my ($self, $method, $url, $args) = @_;
 
     my ($scheme, $host, $port, $path_query, $auth) = $self->_split_url($url);
+
+    if ($scheme ne 'http' && $scheme ne 'https') {
+      die(qq/Unsupported URL scheme '$scheme'\n/);
+    }
 
     my $request = {
         method    => $method,
@@ -659,6 +662,7 @@ sub _request {
     }
 
     if ( $self->{keep_alive}
+        && $handle->connected
         && $known_message_length
         && $response->{protocol} eq 'HTTP/1.1'
         && ($response->{headers}{connection} || '') ne 'close'
@@ -812,13 +816,25 @@ sub _prepare_headers_and_cb {
     $request->{headers}{'connection'}   = "close"
         unless $self->{keep_alive};
 
+    # Some servers error on an empty-body PUT/POST without a content-length
+    if ( $request->{method} eq 'PUT' || $request->{method} eq 'POST' ) {
+        if (!defined($args->{content}) || !length($args->{content}) ) {
+            $request->{headers}{'content-length'} = 0;
+        }
+    }
+
     if ( defined $args->{content} ) {
-        if (ref $args->{content} eq 'CODE') {
-            $request->{headers}{'content-type'} ||= "application/octet-stream";
-            $request->{headers}{'transfer-encoding'} = 'chunked'
-              unless $request->{headers}{'content-length'}
+        if ( ref $args->{content} eq 'CODE' ) {
+            if ( exists $request->{'content-length'} && $request->{'content-length'} == 0 ) {
+                $request->{cb} = sub { "" };
+            }
+            else {
+                $request->{headers}{'content-type'} ||= "application/octet-stream";
+                $request->{headers}{'transfer-encoding'} = 'chunked'
+                  unless exists $request->{headers}{'content-length'}
                   || $request->{headers}{'transfer-encoding'};
-            $request->{cb} = $args->{content};
+                $request->{cb} = $args->{content};
+            }
         }
         elsif ( length $args->{content} ) {
             my $content = $args->{content};
@@ -988,6 +1004,7 @@ my $unsafe_char = qr/[^A-Za-z0-9\-\._~]/;
 
 sub _uri_escape {
     my ($self, $str) = @_;
+    return "" if !defined $str;
     if ( $] ge '5.008' ) {
         utf8::encode($str);
     }
@@ -1014,7 +1031,7 @@ use Socket     qw[SOL_SOCKET SO_KEEPALIVE];
 # not intended for general, per-client use and may be removed in the future
 my $SOCKET_CLASS =
     $ENV{PERL_HTTP_TINY_IPV4_ONLY} ? 'IO::Socket::INET' :
-    eval { require IO::Socket::IP; IO::Socket::IP->VERSION(0.25) } ? 'IO::Socket::IP' :
+    eval { require IO::Socket::IP; IO::Socket::IP->VERSION(0.32) } ? 'IO::Socket::IP' :
     'IO::Socket::INET';
 
 sub BUFSIZE () { 32768 } ## no critic
@@ -1062,9 +1079,7 @@ sub connect {
     if ( $scheme eq 'https' ) {
         $self->_assert_ssl;
     }
-    elsif ( $scheme ne 'http' ) {
-      die(qq/Unsupported URL scheme '$scheme'\n/);
-    }
+
     $self->{fh} = $SOCKET_CLASS->new(
         PeerHost  => $peer,
         PeerPort  => $port,
@@ -1095,6 +1110,16 @@ sub connect {
     $self->{tid} = _get_tid();
 
     return $self;
+}
+
+sub connected {
+    my ($self) = @_;
+    if ( $self->{fh} && $self->{fh}->connected ) {
+        return wantarray
+          ? ( $self->{fh}->peerhost, $self->{fh}->peerport )
+          : join( ':', $self->{fh}->peerhost, $self->{fh}->peerport );
+    }
+    return;
 }
 
 sub start_ssl {
@@ -1185,6 +1210,11 @@ sub read {
         $buf  = substr($self->{rbuf}, 0, $take, '');
         $len -= $take;
     }
+
+    # Ignore SIGPIPE because SSL reads can result in writes that might error.
+    # See "Expecting exactly the same behavior as plain sockets" in
+    # https://metacpan.org/dist/IO-Socket-SSL/view/lib/IO/Socket/SSL.pod#Common-Usage-Errors
+    local $SIG{PIPE} = 'IGNORE';
 
     while ($len > 0) {
         $self->can_read
@@ -1376,7 +1406,8 @@ sub read_body {
 sub write_body {
     @_ == 2 || die(q/Usage: $handle->write_body(request)/ . "\n");
     my ($self, $request) = @_;
-    if ($request->{headers}{'content-length'}) {
+    if (exists $request->{headers}{'content-length'}) {
+        return unless $request->{headers}{'content-length'};
         return $self->write_content_body($request);
     }
     else {
@@ -1493,10 +1524,11 @@ sub read_response_header {
 
     my $line = $self->readline;
 
-    $line =~ /\A (HTTP\/(0*\d+\.0*\d+)) [\x09\x20]+ ([0-9]{3}) [\x09\x20]+ ([^\x0D\x0A]*) \x0D?\x0A/x
+    $line =~ /\A (HTTP\/(0*\d+\.0*\d+)) [\x09\x20]+ ([0-9]{3}) (?: [\x09\x20]+ ([^\x0D\x0A]*) )? \x0D?\x0A/x
       or die(q/Malformed Status-Line: / . $Printable->($line). "\n");
 
     my ($protocol, $version, $status, $reason) = ($1, $2, $3, $4);
+    $reason = "" unless defined $reason;
 
     die (qq/Unsupported HTTP protocol: $protocol\n/)
         unless $version =~ /0*1\.0*[01]/;
@@ -1672,7 +1704,7 @@ HTTP::Tiny - A small, simple, correct HTTP/1.1 client
 
 =head1 VERSION
 
-version 0.076
+version 0.080
 
 =head1 SYNOPSIS
 
@@ -1741,7 +1773,7 @@ C<max_redirect> — Maximum number of redirects allowed (defaults to 5)
 
 =item *
 
-C<max_size> — Maximum response size in bytes (only when not using a data callback).  If defined, responses larger than this will return an exception.
+C<max_size> — Maximum response size in bytes (only when not using a data callback).  If defined, requests with responses larger than this will return a 599 status code.
 
 =item *
 
@@ -1761,7 +1793,7 @@ C<no_proxy> — List of domain suffixes that should not be proxied.  Must be a c
 
 =item *
 
-C<timeout> — Request timeout in seconds (default is 60) If a socket open, read or write takes longer than the timeout, an exception is thrown.
+C<timeout> — Request timeout in seconds (default is 60) If a socket open, read or write takes longer than the timeout, the request response status code will be 599.
 
 =item *
 
@@ -1773,22 +1805,24 @@ C<SSL_options> — A hashref of C<SSL_*> — options to pass through to L<IO::So
 
 =back
 
+An accessor/mutator method exists for each attribute.
+
 Passing an explicit C<undef> for C<proxy>, C<http_proxy> or C<https_proxy> will
 prevent getting the corresponding proxies from the environment.
 
-Exceptions from C<max_size>, C<timeout> or other errors will result in a
-pseudo-HTTP status code of 599 and a reason of "Internal Exception". The
-content field in the response will contain the text of the exception.
+Errors during request execution will result in a pseudo-HTTP status code of 599
+and a reason of "Internal Exception". The content field in the response will
+contain the text of the error.
 
 The C<keep_alive> parameter enables a persistent connection, but only to a
-single destination scheme, host and port.  Also, if any connection-relevant
-attributes are modified, or if the process ID or thread ID change, the
-persistent connection will be dropped.  If you want persistent connections
+single destination scheme, host and port.  If any connection-relevant
+attributes are modified via accessor, or if the process ID or thread ID change,
+the persistent connection will be dropped.  If you want persistent connections
 across multiple destinations, use multiple HTTP::Tiny objects.
 
 See L</SSL SUPPORT> for more on the C<verify_SSL> and C<SSL_options> attributes.
 
-=head2 get|head|put|post|delete
+=head2 get|head|put|post|patch|delete
 
     $response = $http->get($url);
     $response = $http->get($url, \%options);
@@ -1948,8 +1982,8 @@ C<redirects> If this field exists, it is an arrayref of response hash references
 
 =back
 
-On an exception during the execution of the request, the C<status> field will
-contain 599, and the C<content> field will contain the text of the exception.
+On an error during the execution of the request, the C<status> field will
+contain 599, and the C<content> field will contain the text of the error.
 
 =head2 www_form_urlencode
 
@@ -2012,8 +2046,8 @@ verify_SSL
 =head1 SSL SUPPORT
 
 Direct C<https> connections are supported only if L<IO::Socket::SSL> 1.56 or
-greater and L<Net::SSLeay> 1.49 or greater are installed. An exception will be
-thrown if new enough versions of these modules are not installed or if the SSL
+greater and L<Net::SSLeay> 1.49 or greater are installed. An error will occur
+if new enough versions of these modules are not installed or if the SSL
 encryption fails. You can also use C<HTTP::Tiny::can_ssl()> utility function
 that returns boolean to see if the required modules are installed.
 
@@ -2083,7 +2117,7 @@ system-specific default locations for a CA certificate file:
 
 =back
 
-An exception will be raised if C<verify_SSL> is true and no CA certificate file
+An error will be occur if C<verify_SSL> is true and no CA certificate file
 is available.
 
 If you desire complete control over SSL connections, the C<SSL_options> attribute
@@ -2127,7 +2161,7 @@ all_proxy or ALL_PROXY
 If the C<REQUEST_METHOD> environment variable is set, then this might be a CGI
 process and C<HTTP_PROXY> would be set from the C<Proxy:> header, which is a
 security risk.  If C<REQUEST_METHOD> is set, C<HTTP_PROXY> (the upper case
-variant only) is ignored.
+variant only) is ignored, but C<CGI_HTTP_PROXY> is considered instead.
 
 Tunnelling C<https> over an C<http> proxy using the CONNECT method is
 supported.  If your proxy uses C<https> itself, you can not tunnel C<https>
@@ -2178,7 +2212,7 @@ L<HTTP/1.1 specifications|http://www.w3.org/Protocols/>:
 It attempts to meet all "MUST" requirements of the specification, but does not
 implement all "SHOULD" requirements.  (Note: it was developed against the
 earlier RFC 2616 specification and may not yet meet the revised RFC 7230-7235
-spec.)
+spec.) Additionally, HTTP::Tiny supports the C<PATCH> method of RFC 5789.
 
 Some particular limitations of note include:
 
@@ -2268,7 +2302,7 @@ L<Net::SSLeay> - Required for SSL support
 
 =back
 
-=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
+=for :stopwords cpan testmatrix url bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
 
 =head1 SUPPORT
 
@@ -2303,7 +2337,7 @@ David Golden <dagolden@cpan.org>
 
 =head1 CONTRIBUTORS
 
-=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry David Golden Mitchell Dean Pearce Edward Zborowski Felipe Gasper James Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař Serguei Trouchelle Shoichi Kaji SkyMarshal Sören Kornetzki Steve Grazzini Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook
+=for stopwords Alan Gardner Alessandro Ghedini A. Sinan Unur Brad Gilbert brian m. carlson Chris Nehren Weyl Claes Jakobsson Clinton Gormley Craig Berry David Golden Mitchell Dean Pearce Edward Zborowski Felipe Gasper Greg Kennedy James E Keenan Raspass Jeremy Mates Jess Robinson Karen Etheridge Lukas Eklund Martin J. Evans Martin-Louis Bright Matthew Horsfall Michael R. Davis Mike Doherty Nicolas Rochelemagne Olaf Alders Olivier Mengué Petr Písař sanjay-cpu Serguei Trouchelle Shoichi Kaji SkyMarshal Sören Kornetzki Steve Grazzini Syohei YOSHIDA Tatsuhiko Miyagawa Tom Hukins Tony Cook Xavier Guimard
 
 =over 4
 
@@ -2373,6 +2407,14 @@ Felipe Gasper <felipe@felipegasper.com>
 
 =item *
 
+Greg Kennedy <kennedy.greg@gmail.com>
+
+=item *
+
+James E Keenan <jkeenan@cpan.org>
+
+=item *
+
 James Raspass <jraspass@gmail.com>
 
 =item *
@@ -2401,6 +2443,14 @@ Martin-Louis Bright <mlbright@gmail.com>
 
 =item *
 
+Matthew Horsfall <wolfsage@gmail.com>
+
+=item *
+
+Michael R. Davis <mrdvt92@users.noreply.github.com>
+
+=item *
+
 Mike Doherty <doherty@cpan.org>
 
 =item *
@@ -2418,6 +2468,10 @@ Olivier Mengué <dolmen@cpan.org>
 =item *
 
 Petr Písař <ppisar@redhat.com>
+
+=item *
+
+sanjay-cpu <snjkmr32@gmail.com>
 
 =item *
 
@@ -2455,11 +2509,15 @@ Tom Hukins <tom@eborcom.com>
 
 Tony Cook <tony@develop-help.com>
 
+=item *
+
+Xavier Guimard <yadd@debian.org>
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2018 by Christian Hansen.
+This software is copyright (c) 2021 by Christian Hansen.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.

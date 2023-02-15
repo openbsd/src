@@ -7,7 +7,7 @@ use warnings;
 
 BEGIN { chdir 't' if -d 't'; require './test.pl'; }
 
-plan(tests => 36);
+plan(tests => 53);
 
 {
     print <<'';   # Yow!
@@ -284,3 +284,109 @@ EOM
 
 fresh_perl_like('flock  _$', qr/Not enough arguments for flock/, {stderr => 1},
                 "[perl #129190] intuit_method() invalidates PL_bufptr");
+
+# Below are tests for the single set of Latin1 range paired string delimiters
+# enabled by a feature, when the string isn't UTF-8.  It is more convenient to
+# do all the UTF-8 testing for this feature in t/lib/croak/toke and
+# t/lib/warnings/toke.
+use feature 'evalbytes';
+my $lhs = "\N{U+AB}";
+utf8::downgrade($lhs);
+my $rhs = "\N{U+BB}";
+utf8::downgrade($rhs);
+
+my @warnings;
+local $SIG{__WARN__} = sub {
+    my $warning = $_[0];
+    chomp $warning;
+    push @warnings, ($warning =~ s/\n/\n# /sgr);
+};
+
+evalbytes <<EOS;
+use feature 'extra_paired_delimiters';
+
+my \$warns = q$lhs this string uses paired latin1 delimiters $rhs;
+
+no warnings 'experimental::extra_paired_delimiters';
+
+my \$nowarn = q$lhs this string uses paired latin1 delimiters $rhs;
+no feature 'extra_paired_delimiters';
+my \$warn2= q$lhs this string uses lhs delimiter fore/aft $lhs;
+my \$warn3= q$rhs this string uses rhs delimiter fore/aft $rhs;
+EOS
+
+is($@, "", "Various tests of string delims $lhs/$rhs returned without error");
+is(@warnings, 3, "And the expected number of warnings were generated");
+like($warnings[0],
+     qr/Use of '$lhs' is experimental as a string delimiter at/,
+     'And the first warning is as expected');
+like($warnings[1],
+     qr/Use of '$lhs' is deprecated as a string delimiter at/,
+     'And the second warning is as expected');
+like($warnings[2],
+     qr/Use of '$rhs' is deprecated as a string delimiter at/,
+     'And the third warning is as expected');
+
+undef @warnings;
+evalbytes <<EOS;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my \$warn2= q$lhs this string uses lhs delimiter fore/aft $lhs;
+EOS
+
+like($@, qr/Can't find string terminator "$rhs" anywhere before EOF/,
+     "Using paired delimiter both fore/aft fails as expected");
+is(@warnings, 0, "With no warnings generated");
+
+undef @warnings;
+evalbytes <<EOS;
+no warnings 'deprecated';
+my \$warn2= q$lhs this string uses lhs delimiter fore/aft $rhs;
+EOS
+
+like($@, qr/Can't find string terminator "$lhs" anywhere before EOF/,
+     "Using extra paired delimiter outside scope fails as expected");
+is(@warnings, 0, "With no warnings generated");
+
+undef @warnings;
+evalbytes <<EOS;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my \$warn2= q$rhs this string reverses the delimiters $lhs;
+EOS
+
+is($@, "", "Reversing delimiters works, as expected"
+   . " within scope of extra delims");
+is(@warnings, 0, "With no warnings generated");
+
+undef @warnings;
+evalbytes <<EOS;
+no warnings 'deprecated';
+my \$warn2= q$rhs this string uses lhs delimiter fore/aft $lhs;
+EOS
+
+like($@, qr/Can't find string terminator "$rhs" anywhere before EOF/,
+     "Using terminating paired delimiter fore, opening aft fails as expected"
+   . " outside scope of extra delims");
+is(@warnings, 0, "With no warnings generated");
+
+undef @warnings;
+evalbytes <<EOS;
+no warnings 'experimental::extra_paired_delimiters';
+use feature 'extra_paired_delimiters';
+my \$good= q$lhs this $lhs string has $lhs $lhs nested $rhs paired $rhs $rhs delimiters $rhs;
+EOS
+
+is($@, "", "Using nested extra paired delimiters works");
+is(@warnings, 0, "With no warnings generated");
+
+undef @warnings;
+evalbytes <<EOS;
+no warnings 'experimental::extra_paired_delimiters';
+use feature 'extra_paired_delimiters';
+my \$good= q$lhs this $lhs string has $lhs too few closing $lhs nested $rhs paired rhs $rhs delimiters $rhs;
+EOS
+
+like($@, qr/Can't find string terminator "$rhs" anywhere before EOF/,
+     "Using too few closing delims in nesting fails as expected");
+is(@warnings, 0, "With no warnings generated");

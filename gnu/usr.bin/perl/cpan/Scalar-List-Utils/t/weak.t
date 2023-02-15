@@ -5,12 +5,8 @@ use warnings;
 
 use Config;
 
-use Scalar::Util ();
-use Test::More  ((grep { /weaken/ } @Scalar::Util::EXPORT_FAIL) and !$ENV{PERL_CORE})
-    ? (skip_all => 'weaken requires XS version')
-    : (tests => 28);
-
-Scalar::Util->import(qw(weaken unweaken isweak));
+use Scalar::Util qw(weaken unweaken isweak);
+use Test::More tests => 28;
 
 # two references, one is weakened, the other is then undef'ed.
 {

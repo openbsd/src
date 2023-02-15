@@ -25,7 +25,7 @@ BEGIN
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
 
-    my $VERSION = '2.093';
+    my $VERSION = '2.103';
     my @NAMES = qw(
 			Compress::Raw::Bzip2
 			Compress::Raw::Zlib
@@ -60,7 +60,7 @@ BEGIN
 
 			);
 
-    my @OPT = qw(			
+    my @OPT = qw(
 			);
 
     plan tests => 1 + 2 + @NAMES + @OPT + $extra ;
@@ -76,21 +76,21 @@ BEGIN
         eval " require $name " ;
         if ($@)
         {
-            ok 1, "$name not available" 
+            ok 1, "$name not available"
         }
-        else  
+        else
         {
             my $ver = eval("\$${name}::VERSION");
-            is $ver, $VERSION, "$name version should be $VERSION" 
+            is $ver, $VERSION, "$name version should be $VERSION"
                 or diag "$name version is $ver, need $VERSION" ;
-        }         
+        }
     }
 
     # need zlib 1.2.0 or better
-    
+
     cmp_ok Compress::Raw::Zlib::ZLIB_VERNUM(), ">=", 0x1200
-        or diag "IO::Compress needs zlib 1.2.0 or better, you have " . Compress::Raw::Zlib::zlib_version(); 
-    
+        or diag "IO::Compress needs zlib 1.2.0 or better, you have " . Compress::Raw::Zlib::zlib_version();
+
     use_ok('Scalar::Util') ;
 
 }
@@ -99,4 +99,3 @@ ok gotScalarUtilXS(), "Got XS Version of Scalar::Util"
     or diag <<EOM;
 You don't have the XS version of Scalar::Util
 EOM
-

@@ -55,7 +55,11 @@ sub output_table_start($$$;$) {
     my ($out_fh, $TYPE, $name, $size) = @_;
 
     $size = "" unless defined $size;
-    my $declaration = "EXTCONST $TYPE $name\[$size\]";
+
+    # Anything locale related will be written on
+    my $const = ($name !~ /locale/i) ? 'CONST' : "";
+
+    my $declaration = "EXT$const $TYPE $name\[$size\]";
     print $out_fh <<EOF;
 #  ifndef DOINIT
     $declaration;
@@ -71,6 +75,8 @@ sub output_table_end($) {
 sub output_table ($$;$) {
     my $table_ref = shift;
     my $name = shift;
+
+    my $size = @$table_ref;
 
     # 0 => print in decimal
     # 1 => print in hex (translates code point to code point)
@@ -141,7 +147,7 @@ EOF
     my $TYPE = 'U8';
     $TYPE = 'U16' if grep { $_ > 255 } @$table_ref;
 
-    output_table_start $out_fh, $TYPE, $name;
+    output_table_start $out_fh, $TYPE, $name, $size;
 
     # First the headers for the columns
     print $out_fh get_column_headers($row_hdr_length, $field_width);
@@ -378,6 +384,9 @@ END
  * is A-Z; all other code points map to themselves */
 END
         output_table(\@ascii_fold, "PL_fold");
+
+        # This table is also the correct folding for the default C locale
+        output_table(\@ascii_fold, "PL_fold_locale");
     }
 
     {

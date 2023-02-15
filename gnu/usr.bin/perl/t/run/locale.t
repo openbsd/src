@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 
 ########
 # These tests are here instead of lib/locale.t because
@@ -37,7 +38,7 @@ if (defined $ARGV[0] && $ARGV[0] ne "") {
 }
 
 # reset the locale environment
-delete local @ENV{'LANG', (grep /^LC_[A-Z]+$/, keys %ENV)};
+delete local @ENV{'LANGUAGE', 'LANG', (grep /^LC_[A-Z]+$/, keys %ENV)};
 
 # If user wants this to happen, they set the environment variable AND use
 # 'debug'
@@ -466,7 +467,7 @@ SKIP: {
         # anyway.  If the POSIX 2008 locale functions are being used, the
         # syntax becomes mostly irrelevant, so do the test anyway if they are.
         # It's a lot of trouble to figure out in a perl script.
-        if ($Config{d_setlocale_accepts_any_locale_name} eq 'true')
+        if ($Config{d_setlocale_accepts_any_locale_name})
         {
             skip("Can't distinguish between valid and invalid locale names on this system", 2);
         }
@@ -489,25 +490,51 @@ SKIP: {
             }
         }
 
-        fresh_perl(<<"EOF",
+        fresh_perl_is(<<"EOF",
                 use locale;
                 use POSIX;
                 POSIX::setlocale(LC_ALL, "$invalid_string");
 EOF
-            {});
-        is ($?, 0, "In setting complicated invalid LC_ALL, final individ category doesn't need a \';'");
+            "", { eval $switches },
+            "In setting complicated invalid LC_ALL, final individ category doesn't need a \';'");
 
         skip("no non-C locale available", 1 ) unless $non_C_locale;
-        fresh_perl(<<"EOF",
+        fresh_perl_is(<<"EOF",
                 use locale;
                 use POSIX;
                 POSIX::setlocale(LC_ALL, "$valid_string");
 EOF
-            {});
-        is ($?, 0, "In setting complicated valid LC_ALL, final individ category doesn't need a \';'");
-
+            "", { eval $switches },
+            "In setting complicated valid LC_ALL, final individ category doesn't need a \';'");
     }
 
+}
+
+SKIP:
+{
+    use locale;
+    # look for an english locale (so a < B, hopefully)
+    my ($en) = grep /^en_/, @locales;
+    defined $en
+        or skip "didn't find a suitable locale", 1;
+    POSIX::setlocale(LC_COLLATE, $en);
+    unless ("a" lt "B") {
+        skip "didn't find a suitable locale", 1;
+    }
+    fresh_perl_is(<<'EOF', "ok\n", { args => [ $en ] }, "check for failed assertion");
+use locale ':collate';
+use POSIX qw(setlocale LC_COLLATE);
+if (setlocale(LC_COLLATE, shift)) {
+     my $x = "a";
+     my $y = "B";
+     print $x lt $y ? "ok\n" : "not ok\n";
+     $x = "c"; # should empty the collxfrm magic but not remove it
+     # which the free code asserts on
+}
+else {
+     print "ok\n";
+}
+EOF
 }
 
 done_testing();

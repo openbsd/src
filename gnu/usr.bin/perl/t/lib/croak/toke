@@ -100,9 +100,10 @@ Can't find string terminator '"' anywhere before EOF at - line 1.
 # NAME Unterminated q// with non-ASCII delimiter, under utf8
 BEGIN { binmode STDERR, ":utf8" }
 use utf8;
+no warnings 'deprecated';
 q«
 EXPECT
-Can't find string terminator "«" anywhere before EOF at - line 3.
+Can't find string terminator "«" anywhere before EOF at - line 4.
 ########
 # NAME Unterminated q// with non-Latin-1 delimiter
 BEGIN { binmode STDERR, ":utf8" }
@@ -110,6 +111,44 @@ use utf8;
 q 옷
 EXPECT
 Can't find string terminator "옷" anywhere before EOF at - line 3.
+########
+# NAME extra paired delimiters Latin1 range in UTF-8
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my $good = q«this string has a mirrored terminator»;
+my $bad = q«this string needs to have a mirrored terminator«;
+EXPECT
+Can't find string terminator "»" anywhere before EOF at - line 6.
+########
+# NAME reversed extra paired delimiters Latin1 range in UTF-8
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my $good = q»this string has a mirrored terminator«;
+my $bad = q»this string needs to have a mirrored terminator»;
+EXPECT
+Can't find string terminator "«" anywhere before EOF at - line 6.
+########
+# NAME paired non-ASCII Latin1 delimiters need feature enabled, in UTF-8
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+my $good = q«this string works as before without the feature enabled«;
+no warnings 'deprecated';
+my $bad = q«this string has a mirrored terminator»;
+EXPECT
+Use of '«' is deprecated as a string delimiter at - line 3.
+Can't find string terminator "«" anywhere before EOF at - line 5.
+########
+# NAME paired above Latin1 delimiters need feature enabled
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+my $bad = q《this string has a mirrored terminator》;
+EXPECT
+Use of '《' is deprecated as a string delimiter at - line 3.
+Can't find string terminator "《" anywhere before EOF at - line 3.
 ########
 # NAME /\N{/
 /\N{/
@@ -397,11 +436,12 @@ Execution of - aborted due to compilation errors.
 # NAME (Might be a runaway multi-line...) with Latin-1 delimiters in utf8
 BEGIN { binmode STDERR, ':utf8' }
 use utf8;
+no warnings 'deprecated';
 q«
 « time
 EXPECT
-syntax error at - line 4, near "« time"
-  (Might be a runaway multi-line «« string starting on line 3)
+syntax error at - line 5, near "« time"
+  (Might be a runaway multi-line «« string starting on line 4)
 Execution of - aborted due to compilation errors.
 ########
 # NAME (Might be a runaway multi-line...) with non-Latin-1 delimiters
@@ -450,11 +490,10 @@ Execution of - aborted due to compilation errors.
 ########
 # NAME signature with non-"=" assignop #131777
 use feature 'signatures';
-no warnings 'experimental::signatures';
 sub foo ($a += 1)
 EXPECT
-Illegal operator following parameter in a subroutine signature at - line 3, near "($a += 1"
-syntax error at - line 3, near "($a += 1"
+Illegal operator following parameter in a subroutine signature at - line 2, near "($a += 1"
+syntax error at - line 2, near "($a += 1"
 Execution of - aborted due to compilation errors.
 ########
 # NAME tr/// range with empty \N{} at the start
@@ -503,7 +542,7 @@ EXPECT
 syntax error at - line 4, next token ???
 Execution of - aborted due to compilation errors.
 ########
-# NAME [perl #134045] incomplete hex number
+# NAME [perl #134125] [gh #17010] incomplete hex number
 0x x 2;
 0xx 2;
 0x_;

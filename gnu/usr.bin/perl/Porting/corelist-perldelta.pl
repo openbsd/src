@@ -129,7 +129,7 @@ sub latest_two_perl_versions {
 # The pragmata were found by doing something like:
 #   say for sort grep { $_ eq lc $_ and !exists $Modules{$_}}
 #     keys %{$Module::CoreList::version{'5.019003'}}
-# and manually filtering out pragamata that were already covered.
+# and manually filtering out pragmata that were already covered.
 #
 # It is currently not possible to differentiate between a removed module and a removed
 # distribution. Therefore, the removed hashref contains every module that has been removed, even if
@@ -307,7 +307,7 @@ sub do_update_existing {
   binmode($out);
   print $out $text;
   close $out;
-  say "The New and Updated Modules and Pragamata sections in $existing have been updated";
+  say "The New and Updated Modules and Pragmata sections in $existing have been updated";
   say "Please ensure the Removed Modules and Pragmata section is up-to-date";
 }
 
@@ -496,7 +496,7 @@ sub do_check {
   sub sort_items_in_section {
     my ($section) = @_;
 
-    # if we could not parse the module name, it will be uninitalized
+    # if we could not parse the module name, it will be uninitialized
     # in sort. This is not a problem as it will just result in these
     # sections being placed near the beginning of the section
     no warnings 'uninitialized';

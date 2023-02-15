@@ -51,7 +51,7 @@ SKIP: {
     # This conditional of "No tzset()" is stolen from ext/POSIX/t/time.t
     skip "No tzset()", 1
         if $^O eq "VMS" || $^O eq "cygwin" ||
-           $^O eq "djgpp" || $^O eq "MSWin32" || $^O eq "dos" ||
+           $^O eq "MSWin32" ||
            $^O eq "interix";
 
 # check that localtime respects changes to $ENV{TZ}

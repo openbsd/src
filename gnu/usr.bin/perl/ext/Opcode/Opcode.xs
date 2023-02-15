@@ -55,6 +55,7 @@ op_names_init(pTHX)
     dMY_CXT;
 
     op_named_bits = newHV();
+    hv_ksplit(op_named_bits, PL_maxo);
     op_names = get_op_names();
     for(i=0; i < PL_maxo; ++i) {
 	SV * const sv = newSViv(i);
@@ -68,7 +69,7 @@ op_names_init(pTHX)
     bitmap = (U8*)SvPV(opset_all, len);
     memset(bitmap, 0xFF, len-1); /* deal with last byte specially, see below */
     /* Take care to set the right number of bits in the last byte */
-    bitmap[len-1] = (PL_maxo & 0x07) ? ((~(0xFF << (PL_maxo & 0x07))) & 0xFF)
+    bitmap[len-1] = (PL_maxo & 0x07) ? ((U8) (~(0xFF << (PL_maxo & 0x07))))
                                      : 0xFF;
     put_op_bitspec(aTHX_ STR_WITH_LEN(":all"), opset_all); /* don't mortalise */
 }
@@ -237,7 +238,8 @@ opmask_addlocal(pTHX_ SV *opset, char *op_mask_buf) /* Localise PL_op_mask then 
      * is disallowed by Borland
      */
     if (opcode_debug >= 2)
-	SAVEDESTRUCTOR((void(*)(void*))Perl_warn,"PL_op_mask restored");
+	SAVEDESTRUCTOR((void(*)(void*))Perl_warn_nocontext,
+            "PL_op_mask restored");
     PL_op_mask = &op_mask_buf[0];
     if (orig_op_mask)
 	Copy(orig_op_mask, PL_op_mask, PL_maxo, char);
@@ -535,7 +537,7 @@ CODE:
 void
 opcodes()
 PPCODE:
-    if (GIMME_V == G_ARRAY) {
+    if (GIMME_V == G_LIST) {
 	croak("opcodes in list context not yet implemented"); /* XXX */
     }
     else {

@@ -1,6 +1,6 @@
-# IndicPositionalCategory-13.0.0.txt
-# Date: 2019-07-23, 00:01:00 GMT [KW, RP]
-# © 2019 Unicode®, Inc.
+# IndicPositionalCategory-14.0.0.txt
+# Date: 2021-05-22, 01:01:00 GMT [KW, RP]
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -25,8 +25,8 @@
 #
 # In addition to combining marks associated with Indic scripts, the
 # Indic_Positional_Category has non-trivial values for special signs
-# associated with Indic_Syllabic_Category=Consonant_Prefixed or
-# Indic_Syllabic_Category=Consonant_Preceding_Repha. Those signs
+# associated with Indic_Syllabic_Category=Consonant_Prefixed
+# or Indic_Syllabic_Category=Consonant_Preceding_Repha. Those signs
 # have General_Category=Lo, rather than being combining marks.
 # They occur in initial position in syllabic structure. However, when
 # rendered, they appear as marks positioned with respect to another
@@ -184,6 +184,8 @@
 1087..108C    ; Right # Mc   [6] MYANMAR SIGN SHAN TONE-2..MYANMAR SIGN SHAN COUNCIL TONE-3
 108F          ; Right # Mc       MYANMAR SIGN RUMAI PALAUNG TONE-5
 109A..109C    ; Right # Mc   [3] MYANMAR SIGN KHAMTI TONE-1..MYANMAR VOWEL SIGN AITON A
+1715          ; Right # Mc       TAGALOG SIGN PAMUDPOD
+1734          ; Right # Mc       HANUNOO SIGN PAMUDPOD
 17B6          ; Right # Mc       KHMER VOWEL SIGN AA
 17C7..17C8    ; Right # Mc   [2] KHMER SIGN REAHMUK..KHMER SIGN YUUKALEAPINTU
 1923..1924    ; Right # Mc   [2] LIMBU VOWEL SIGN EE..LIMBU VOWEL SIGN AI
@@ -512,6 +514,8 @@ ABE5          ; Top # Mn       MEETEI MAYEK VOWEL SIGN ANAP
 11001         ; Top # Mn       BRAHMI SIGN ANUSVARA
 11038..1103B  ; Top # Mn   [4] BRAHMI VOWEL SIGN AA..BRAHMI VOWEL SIGN II
 11042..11046  ; Top # Mn   [5] BRAHMI VOWEL SIGN E..BRAHMI VIRAMA
+11070         ; Top # Mn       BRAHMI SIGN OLD TAMIL VIRAMA
+11073..11074  ; Top # Mn   [2] BRAHMI VOWEL SIGN OLD TAMIL SHORT E..BRAHMI VOWEL SIGN OLD TAMIL SHORT O
 11080..11081  ; Top # Mn   [2] KAITHI SIGN CANDRABINDU..KAITHI SIGN ANUSVARA
 110B5..110B6  ; Top # Mn   [2] KAITHI VOWEL SIGN E..KAITHI VOWEL SIGN AI
 11100..11102  ; Top # Mn   [3] CHAKMA SIGN CANDRABINDU..CHAKMA SIGN VISARGA
@@ -602,6 +606,7 @@ ABE5          ; Top # Mn       MEETEI MAYEK VOWEL SIGN ANAP
 0B41..0B44    ; Bottom # Mn   [4] ORIYA VOWEL SIGN U..ORIYA VOWEL SIGN VOCALIC RR
 0B4D          ; Bottom # Mn       ORIYA SIGN VIRAMA
 0B62..0B63    ; Bottom # Mn   [2] ORIYA VOWEL SIGN VOCALIC L..ORIYA VOWEL SIGN VOCALIC LL
+0C3C          ; Bottom # Mn       TELUGU SIGN NUKTA
 0C56          ; Bottom # Mn       TELUGU AI LENGTH MARK
 0C62..0C63    ; Bottom # Mn   [2] TELUGU VOWEL SIGN VOCALIC L..TELUGU VOWEL SIGN VOCALIC LL
 0CBC          ; Bottom # Mn       KANNADA SIGN NUKTA
@@ -630,7 +635,7 @@ ABE5          ; Top # Mn       MEETEI MAYEK VOWEL SIGN ANAP
 1082          ; Bottom # Mn       MYANMAR CONSONANT SIGN SHAN MEDIAL WA
 108D          ; Bottom # Mn       MYANMAR SIGN SHAN COUNCIL EMPHATIC TONE
 1713..1714    ; Bottom # Mn   [2] TAGALOG VOWEL SIGN U..TAGALOG SIGN VIRAMA
-1733..1734    ; Bottom # Mn   [2] HANUNOO VOWEL SIGN U..HANUNOO SIGN PAMUDPOD
+1733          ; Bottom # Mn       HANUNOO VOWEL SIGN U
 1753          ; Bottom # Mn       BUHID VOWEL SIGN U
 1773          ; Bottom # Mn       TAGBANWA VOWEL SIGN U
 17BB..17BD    ; Bottom # Mn   [3] KHMER VOWEL SIGN U..KHMER VOWEL SIGN UA
@@ -675,6 +680,7 @@ ABED          ; Bottom # Mn       MEETEI MAYEK APUN IYEK
 1103C..11041  ; Bottom # Mn   [6] BRAHMI VOWEL SIGN U..BRAHMI VOWEL SIGN VOCALIC LL
 110B3..110B4  ; Bottom # Mn   [2] KAITHI VOWEL SIGN U..KAITHI VOWEL SIGN UU
 110B9..110BA  ; Bottom # Mn   [2] KAITHI SIGN VIRAMA..KAITHI SIGN NUKTA
+110C2         ; Bottom # Mn       KAITHI VOWEL SIGN VOCALIC R
 1112A..1112B  ; Bottom # Mn   [2] CHAKMA VOWEL SIGN U..CHAKMA VOWEL SIGN UU
 11131..11132  ; Bottom # Mn   [2] CHAKMA O MARK..CHAKMA AU MARK
 11173         ; Bottom # Mn       MAHAJANI SIGN NUKTA

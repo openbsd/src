@@ -3,7 +3,8 @@
 use strict ;
 require 5.006 ;
 
-$::VERSION = '2.093' ;
+$::VERSION = '2.106' ;
+$::DEP_VERSION = '2.103';
 
 use lib '.';
 use private::MakeUtil;
@@ -12,10 +13,10 @@ use ExtUtils::MakeMaker 5.16 ;
 UpDowngrade(getPerlFiles('MANIFEST'))
     unless $ENV{PERL_CORE};
 
-WriteMakefile( 
+WriteMakefile(
     NAME         => 'IO::Compress',
     VERSION_FROM => 'lib/IO/Compress/Base.pm',
-    'dist'       => { COMPRESS     => 'gzip', 
+    'dist'       => { COMPRESS     => 'gzip',
                       TARFLAGS     => '-chvf',
                       SUFFIX       => 'gz',
                       DIST_DEFAULT => 'MyTrebleCheck tardist',
@@ -24,15 +25,16 @@ WriteMakefile(
     (
       $ENV{SKIP_FOR_CORE}
         ? ()
-	    : (PREREQ_PM   => { 'Compress::Raw::Bzip2' => $::VERSION,
-		                    'Compress::Raw::Zlib'   => $::VERSION,
+	    : (PREREQ_PM   => { 'Compress::Raw::Bzip2' => $::DEP_VERSION,
+		                    'Compress::Raw::Zlib'  => $::DEP_VERSION,
 		                    'Scalar::Util'  => 0,
-		                    $] >= 5.005 && $] < 5.006   
-                                ? ('File::BSDGlob' => 0) 
+                            'Encode'        => 0,
+		                    $] >= 5.005 && $] < 5.006
+                                ? ('File::BSDGlob' => 0)
                                 : () }
 	      )
     ),
-       
+
     (
     $] >= 5.005
         ? (ABSTRACT => 'IO Interface to compressed data files/buffers',
@@ -43,16 +45,16 @@ WriteMakefile(
     INSTALLDIRS => ($] >= 5.009 && $] < 5.011 ? 'perl' : 'site'),
 
     EXE_FILES => ['bin/zipdetails', 'bin/streamzip'],
-    
+
     (
     $] >= 5.009 && $] <= 5.011001 && ! $ENV{PERL_CORE}
         ? (INSTALLPRIVLIB    => '$(INSTALLARCHLIB)')
         : ()
     ),
 
-     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }  
+     ( eval { ExtUtils::MakeMaker->VERSION(6.46) }
         ? ( META_MERGE  => {
-    
+
                 "meta-spec" => { version => 2 },
 
                 no_index => {
@@ -60,7 +62,7 @@ WriteMakefile(
                 },
 
                 resources   => {
-                
+
                     bugtracker  => {
                         web     => 'https://github.com/pmqs/IO-Compress/issues'
                     },
@@ -71,17 +73,16 @@ WriteMakefile(
                         type    => 'git',
                         url     => 'git://github.com/pmqs/IO-Compress.git',
                         web     => 'https://github.com/pmqs/IO-Compress',
-                    },        
+                    },
                 },
-              } 
-            ) 
+              }
+            )
         : ()
     ),
 
     ((ExtUtils::MakeMaker->VERSION() gt '6.30') ?
-        ('LICENSE'  => 'perl')         : ()),    
+        ('LICENSE'  => 'perl')         : ()),
 
 ) ;
 
 # end of file Makefile.PL
-

@@ -13,7 +13,7 @@ BEGIN {
     plan skip_all => "Lengthy Tests Disabled\n" .
                      "set COMPRESS_ZLIB_RUN_ALL or COMPRESS_ZLIB_RUN_MOST to run this test suite"
         unless defined $ENV{COMPRESS_ZLIB_RUN_ALL} or defined $ENV{COMPRESS_ZLIB_RUN_MOST};
-    
+
     # use Test::NoWarnings, if available
     $extra = 0 ;
     $extra = 1
@@ -54,11 +54,11 @@ EOM
             for my $useBuf (0 .. 1)
             {
                 print "#\n# BlockSize $blocksize, Length $i, Buffer $useBuf\n#\n" ;
-                my $lex = new LexFile my $name ;
-        
+                my $lex = LexFile->new( my $name );
+
                 my $prime = substr($compressed, 0, $i);
                 my $rest = substr($compressed, $i);
-        
+
                 my $start  ;
                 if ($useBuf) {
                     $start = \$rest ;
@@ -68,20 +68,20 @@ EOM
                     writeFile($name, $rest);
                 }
 
-                #my $gz = new $UncompressClass $name,
-                my $gz = new $UncompressClass $start,
+                #my $gz = $UncompressClass->can('new')->( $UncompressClass, $name,
+                my $gz = $UncompressClass->can('new')->( $UncompressClass, $start,
                                               -Append      => 1,
                                               -BlockSize   => $blocksize,
                                               -Prime       => $prime,
                                               -Transparent => 0
-                                              ;
+                                             );
                 ok $gz;
                 ok ! $gz->error() ;
                 my $un ;
                 my $status = 1 ;
                 $status = $gz->read($un) while $status > 0 ;
                 is $status, 0 ;
-                ok ! $gz->error() 
+                ok ! $gz->error()
                     or print "Error is '" . $gz->error() . "'\n";
                 is $un, $hello ;
                 ok $gz->eof() ;
@@ -90,5 +90,5 @@ EOM
         }
     }
 }
- 
+
 1;

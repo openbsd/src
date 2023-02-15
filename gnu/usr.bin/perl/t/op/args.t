@@ -76,9 +76,6 @@ sub local2 { local $_[0]; last L }
 L: { local2 }
 pass("last to label");
 
-# the following test for local(@_) used to be in t/op/nothr5005.t (because it
-# failed with 5005threads)
-
 $|=1;
 
 sub foo { local(@_) = ('p', 'q', 'r'); }

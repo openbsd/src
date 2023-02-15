@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # test inf/NaN handling all in one place
 # Thanx to Jarkko for the excellent explanations and the tables

@@ -12,7 +12,7 @@ CPAN::HandleConfig - internal configuration handling for CPAN.pm
 
 =cut 
 
-$VERSION = "5.5011"; # see also CPAN::Config::VERSION at end of file
+$VERSION = "5.5012"; # see also CPAN::Config::VERSION at end of file
 
 %can = (
         commit   => "Commit changes to disk",
@@ -25,8 +25,9 @@ $VERSION = "5.5011"; # see also CPAN::Config::VERSION at end of file
 # A1: svn diff -r 757:758 # where dagolden added test_report [git e997b71de88f1019a1472fc13cb97b1b7f96610f]
 # A2: svn diff -r 985:986 # where andk added yaml_module [git 312b6d9b12b1bdec0b6e282d853482145475021f]
 # A3: 1. add new config option to %keys below
-#     2. add a Pod description in CPAN::FirstTime; it should include a
-#        prompt line; see others for examples
+#     2. add a Pod description in CPAN::FirstTime in the DESCRIPTION
+#        section; it should include a prompt line; see others for
+#        examples
 #     3. add a "matcher" section in CPAN::FirstTime::init that includes
 #        a prompt function; see others for examples
 #     4. add config option to documentation section in CPAN.pm
@@ -98,6 +99,7 @@ $VERSION = "5.5011"; # see also CPAN::Config::VERSION at end of file
      "prerequisites_policy",
      "proxy_pass",
      "proxy_user",
+     "pushy_https",
      "randomize_urllist",
      "recommends_policy",
      "scan_cache",
@@ -561,6 +563,23 @@ sub load {
     my @miss = $self->missing_config_data;
     CPAN->debug("do_init[$do_init]loading[$loading]miss[@miss]") if $CPAN::DEBUG;
     return unless $do_init || @miss;
+    if (@miss==1 and $miss[0] eq "pushy_https" && !$do_init) {
+        $CPAN::Frontend->myprint(<<'END');
+
+Starting with version 2.29 of the cpan shell, a new download mechanism
+is the default which exclusively uses cpan.org as the host to download
+from. The configuration variable pushy_https can be used to (de)select
+the new mechanism. Please read more about it and make your choice
+between the old and the new mechanism by running
+
+    o conf init pushy_https
+
+Once you have done that and stored the config variable this dialog
+will disappear.
+END
+
+        return;
+    }
 
     # I'm not how we'd ever wind up in a recursive loop, but I'm leaving
     # this here for safety's sake -- dagolden, 2011-01-19
@@ -677,6 +696,7 @@ sub missing_config_data {
          "no_proxy",
          #"pager",
          "prerequisites_policy",
+         "pushy_https",
          "scan_cache",
          #"tar",
          #"unzip",
@@ -776,7 +796,7 @@ sub prefs_lookup {
 
     use strict;
     use vars qw($AUTOLOAD $VERSION);
-    $VERSION = "5.5011";
+    $VERSION = "5.5012";
 
     # formerly CPAN::HandleConfig was known as CPAN::Config
     sub AUTOLOAD { ## no critic

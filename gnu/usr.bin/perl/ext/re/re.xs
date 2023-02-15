@@ -11,7 +11,7 @@
 
 #undef dXSBOOTARGSXSAPIVERCHK
 /* skip API version checking due to different interp struct size but,
-   this hack is until #123007 is resolved */
+   this hack is until GitHub issue #14169 is resolved */
 #define dXSBOOTARGSXSAPIVERCHK dXSBOOTARGSNOVERCHK
 
 START_EXTERN_C
@@ -54,6 +54,10 @@ extern SV*      my_reg_qr_package(pTHX_ REGEXP * const rx);
 #if defined(USE_ITHREADS)
 extern void*	my_regdupe (pTHX_ REGEXP * const r, CLONE_PARAMS *param);
 #endif
+extern void     my_regprop(pTHX_
+    const regexp *prog, SV* sv, const regnode* o,
+    const regmatch_info *reginfo, const RExC_state_t *pRExC_state
+);
 
 EXTERN_C const struct regexp_engine my_reg_engine;
 EXTERN_C const struct regexp_engine wild_reg_engine;
@@ -100,6 +104,8 @@ const struct regexp_engine wild_reg_engine = {
         my_re_op_compile,
 };
 
+#define newSVbool_(x) newSViv((x) ? 1 : 0)
+
 MODULE = re	PACKAGE = re
 
 void
@@ -143,3 +149,94 @@ PPCODE:
     XSRETURN_UNDEF;
 }
 
+SV *
+optimization(sv)
+    SV * sv
+PROTOTYPE: $
+PREINIT:
+    REGEXP *re;
+    regexp *r;
+    struct reg_substr_datum * data;
+    HV *hv;
+CODE:
+{
+    re = SvRX(sv);
+    if (!re) {
+        XSRETURN_UNDEF;
+    }
+
+    /* only for re engines we know about */
+    if (   RX_ENGINE(re) != &my_reg_engine
+        && RX_ENGINE(re) != &wild_reg_engine
+        && RX_ENGINE(re) != &PL_core_reg_engine)
+    {
+        XSRETURN_UNDEF;
+    }
+
+    if (!PL_colorset) {
+        reginitcolors();
+    }
+
+    r = ReANY(re);
+    hv = newHV();
+
+    hv_stores(hv, "minlen", newSViv(r->minlen));
+    hv_stores(hv, "minlenret", newSViv(r->minlenret));
+    hv_stores(hv, "gofs", newSViv(r->gofs));
+
+    data = &r->substrs->data[0];
+    hv_stores(hv, "anchored", data->substr
+            ? newSVsv(data->substr) : &PL_sv_undef);
+    hv_stores(hv, "anchored utf8", data->utf8_substr
+            ? newSVsv(data->utf8_substr) : &PL_sv_undef);
+    hv_stores(hv, "anchored min offset", newSViv(data->min_offset));
+    hv_stores(hv, "anchored max offset", newSViv(data->max_offset));
+    hv_stores(hv, "anchored end shift", newSViv(data->end_shift));
+
+    data = &r->substrs->data[1];
+    hv_stores(hv, "floating", data->substr
+            ? newSVsv(data->substr) : &PL_sv_undef);
+    hv_stores(hv, "floating utf8", data->utf8_substr
+            ? newSVsv(data->utf8_substr) : &PL_sv_undef);
+    hv_stores(hv, "floating min offset", newSViv(data->min_offset));
+    hv_stores(hv, "floating max offset", newSViv(data->max_offset));
+    hv_stores(hv, "floating end shift", newSViv(data->end_shift));
+
+    hv_stores(hv, "checking", newSVpv(
+        (!r->check_substr && !r->check_utf8)
+            ? "none"
+        : (    r->check_substr == r->substrs->data[1].substr
+            && r->check_utf8   == r->substrs->data[1].utf8_substr
+        )
+            ? "floating"
+        : "anchored"
+    , 0));
+
+    hv_stores(hv, "noscan", newSVbool_(r->intflags & PREGf_NOSCAN));
+    hv_stores(hv, "isall", newSVbool_(r->extflags & RXf_CHECK_ALL));
+    hv_stores(hv, "anchor SBOL", newSVbool_(r->intflags & PREGf_ANCH_SBOL));
+    hv_stores(hv, "anchor MBOL", newSVbool_(r->intflags & PREGf_ANCH_MBOL));
+    hv_stores(hv, "anchor GPOS", newSVbool_(r->intflags & PREGf_ANCH_GPOS));
+    hv_stores(hv, "skip", newSVbool_(r->intflags & PREGf_SKIP));
+    hv_stores(hv, "implicit", newSVbool_(r->intflags & PREGf_IMPLICIT));
+
+    {
+        RXi_GET_DECL(r, ri);
+        if (ri->regstclass) {
+            SV* sv = newSV(0);
+            /* not Perl_regprop, we must have the DEBUGGING version */
+            my_regprop(aTHX_ r, sv, ri->regstclass, NULL, NULL);
+            hv_stores(hv, "stclass", sv);
+        } else {
+            hv_stores(hv, "stclass", &PL_sv_undef);
+        }
+    }
+
+    RETVAL = newRV_noinc((SV *)hv);
+}
+OUTPUT:
+    RETVAL
+
+#
+# ex: set ts=8 sts=4 sw=4 et:
+#

@@ -6,7 +6,7 @@
 # Additional rules supported: perl_, aout_test, aout_install, use them
 # for a.out style perl (which may fork).
 
-perl_fullversion="5.00${PERL_VERSION}_$PERL_SUBVERSION"
+perl_fullversion="${PERL_REVISION}.00${PERL_VERSION}_${PERL_SUBVERSION}"
 case "$archname" in
  *-thread*)	perl_fullversion="${perl_fullversion}-threaded";;
 esac

@@ -47,7 +47,6 @@ Summary of my $package (revision $revision $version_patchlevel_string) configura
     uselongdouble=$uselongdouble
     usemymalloc=$usemymalloc
     default_inc_excludes_dot=$default_inc_excludes_dot
-    bincompat5005=undef
   Compiler:
     cc='$cc'
     ccflags ='$ccflags'

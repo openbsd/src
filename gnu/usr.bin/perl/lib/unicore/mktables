@@ -22,6 +22,7 @@ BEGIN { # Get the time the script started running; do it at compilation to
 require 5.010_001;
 use strict;
 use warnings;
+use builtin qw(refaddr);
 use Carp;
 use Config;
 use File::Find;
@@ -32,7 +33,7 @@ use re "/aa";
 
 use feature 'state';
 use feature 'signatures';
-no warnings 'experimental::signatures';
+no warnings qw( experimental::builtin );
 
 sub DEBUG () { 0 }  # Set to 0 for production; 1 for development
 my $debugging_build = $Config{"ccflags"} =~ /-DDEBUGGING/;
@@ -48,7 +49,7 @@ sub NON_ASCII_PLATFORM { ord("A") != 65 }
 # expected, a warning will be generated.  If an older version is being
 # compiled, any bounds tests that fail in the generated test file (-maketest
 # option) will be marked as TODO.
-my $version_of_mk_invlist_bounds = v13.0.0;
+my $version_of_mk_invlist_bounds = v14.0.0;
 
 ##########################################################################
 #
@@ -698,8 +699,8 @@ my $file_list = 'mktables.lst'; # File to store input and output file names.
                                # nothing on the list has changed since the
                                # previous build
 my $make_list = 1;             # ? Should we write $file_list.  Set to always
-                               # make a list so that when the pumpking is
-                               # preparing a release, s/he won't have to do
+                               # make a list so that when the release manager
+                               # is preparing a release, they won't have to do
                                # special things
 my $glob_list = 0;             # ? Should we try to include unknown .txt files
                                # in the input.
@@ -946,7 +947,7 @@ my %why_obsolete;    # Documentation only
 
 {   # Closure
     my $simple = 'Perl uses the more complete version';
-    my $unihan = 'Unihan properties are by default not enabled in the Perl core.  Instead use CPAN: Unicode::Unihan';
+    my $unihan = 'Unihan properties are by default not enabled in the Perl core.';
 
     my $other_properties = 'other properties';
     my $contributory = "Used by Unicode internally for generating $other_properties and not intended to be used stand-alone";
@@ -1278,14 +1279,10 @@ my $MAP_PROXIED = 1;    # The map table for the property isn't written out,
                         # reconstruct this table
 my $INTERNAL_ONLY = 2;  # The file for this table is written out, but it is
                         # for Perl's internal use only
-my $LEGACY_ONLY = 3;    # Like $INTERNAL_ONLY, but not actually used by Perl.
-                        # Is for backwards compatibility for applications that
-                        # read the file directly, so it's format is
-                        # unchangeable.
-my $SUPPRESSED = 4;     # The file for this table is not written out, and as a
+my $SUPPRESSED = 3;     # The file for this table is not written out, and as a
                         # result, we don't bother to do many computations on
                         # it.
-my $PLACEHOLDER = 5;    # Like $SUPPRESSED, but we go through all the
+my $PLACEHOLDER = 4;    # Like $SUPPRESSED, but we go through all the
                         # computations anyway, as the values are needed for
                         # things to work.  This happens when we have Perl
                         # extensions that depend on Unicode tables that
@@ -1452,7 +1449,7 @@ my @missing_early_files;   # Generated list of absent files that we need to
 my @files_actually_output; # List of files we generated.
 my @more_Names;            # Some code point names are compound; this is used
                            # to store the extra components of them.
-my $E_FLOAT_PRECISION = 2; # The minimum number of digits after the decimal
+my $E_FLOAT_PRECISION = 3; # The minimum number of digits after the decimal
                            # point of a normalized floating point number
                            # needed to match before we consider it equivalent
                            # to a candidate rational
@@ -1498,10 +1495,7 @@ sub objaddr($addr) {
     # every call, and the program is structured so that this is never called
     # for a non-blessed object.
 
-    no overloading; # If overloaded, numifying below won't work.
-
-    # Numifying a ref gives its address.
-    return pack 'J', $addr;
+    return pack 'J', refaddr $addr;
 }
 
 # These are used only if $annotate is true.
@@ -1862,7 +1856,7 @@ package main;
             # Use typeglob to give the anonymous subroutine the name we want
             *$destroy_name = sub {
                 my $self = shift;
-                my $addr = do { no overloading; pack 'J', $self; };
+                my $addr = pack 'J', refaddr $self;
 
                 $self->$destroy_callback if $destroy_callback;
                 foreach my $field (keys %{$package_fields{$package}}) {
@@ -1958,7 +1952,7 @@ package main;
                 # determine using 'eq' for scalars and '==' otherwise.
                 *$subname = sub ($self, $value) {
                     use strict "refs";
-                    my $addr = do { no overloading; pack 'J', $self; };
+                    my $addr = pack 'J', refaddr $self;
                     if (ref $value) {
                         return if grep { $value == $_ } @{$field->{$addr}};
                     }
@@ -1984,13 +1978,13 @@ package main;
                 # than just 'readable_'), then create a subroutine that
                 # assumes the data is an array.  Otherwise just a scalar
                 my $subname = "${package}::${protected}$name";
-                if (grep { /^a/i } @_
+                if (grep { /^a/i } (@accessors)
                     or length($access) > length('readable_'))
                 {
                     no strict "refs";
                     *$subname = sub ($_addr) {
                         use strict "refs";
-                        my $addr = do { no overloading; pack 'J', $_addr; };
+                        my $addr = pack 'J', refaddr $_addr;
                         if (ref $field->{$addr} ne 'ARRAY') {
                             my $type = ref $field->{$addr};
                             $type = 'scalar' unless $type;
@@ -2011,8 +2005,7 @@ package main;
                     no strict "refs";
                     *$subname = sub ($addr) {
                         use strict "refs";
-                        no overloading;
-                        return $field->{pack 'J', $addr};
+                        return $field->{pack 'J', refaddr $addr};
                     }
                 }
             }
@@ -2022,8 +2015,7 @@ package main;
                 *$subname = sub ($self, $value) {
                     use strict "refs";
                     # $self is $_[0]; $value is $_[1]
-                    no overloading;
-                    $field->{pack 'J', $self} = $value;
+                    $field->{pack 'J', refaddr $self} = $value;
                     return;
                 }
             }
@@ -2328,7 +2320,7 @@ sub trace { return main::trace(@_); }
         my $class = shift;
 
         my $self = bless \do{ my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Set defaults
         $handler{$addr} = \&main::process_generic_property_file;
@@ -2644,7 +2636,7 @@ END
         ".=" => \&main::_operator_dot_equal,
     ;
 
-    sub _operator_stringify($self) {
+    sub _operator_stringify($self, $other="", $reversed=0) {
         return __PACKAGE__ . " object for " . $self->file;
     }
 
@@ -2656,7 +2648,7 @@ END
         # flag to make sure extracted files are processed early
         state $seen_non_extracted = 0;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $file = $file{$addr};
 
@@ -2903,7 +2895,7 @@ END
         # been added via insert_lines() will be returned in $_ before the file
         # is read again.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Here the file is open (or if the handle is not a ref, is an open
         # 'virtual' file).  Get the next line; any inserted lines get priority
@@ -3084,7 +3076,7 @@ END
         # insertion code will sort and coalesce the individual code points
         # into appropriate ranges.)
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         while (1) {
 
@@ -3159,7 +3151,7 @@ END
 #        # an each_line_handler() on the line.
 #
 #        my $self = shift;
-#        my $addr = do { no overloading; pack 'J', $self; };
+#        my $addr = pack 'J', refaddr $self;
 #
 #        foreach my $inserted_ref (@{$added_lines{$addr}}) {
 #            my ($adjusted, $line) = @{$inserted_ref};
@@ -3198,8 +3190,7 @@ END
         # Each inserted line is an array, with the first element being 0 to
         # indicate that this line hasn't been adjusted, and needs to be
         # processed.
-        no overloading;
-        push @{$added_lines{pack 'J', $self}}, map { [ 0, $_ ] } @lines;
+        push @{$added_lines{pack 'J', refaddr $self}}, map { [ 0, $_ ] } @lines;
         return;
     }
 
@@ -3217,12 +3208,11 @@ END
         # use that to call only those handlers whose index is after it on the
         # stack.  But this is overkill for what is needed now.
 
-        trace $_[0] if main::DEBUG && $to_trace;
+        trace $self if main::DEBUG && $to_trace;
 
         # Each inserted line is an array, with the first element being 1 to
         # indicate that this line has been adjusted
-        no overloading;
-        push @{$added_lines{pack 'J', $self}}, map { [ 1, $_ ] } @lines;
+        push @{$added_lines{pack 'J', refaddr $self}}, map { [ 1, $_ ] } @lines;
         return;
     }
 
@@ -3232,7 +3222,7 @@ END
         # element, and the property in the 2nd.  However, since these lines
         # can be stacked up, the return is an array of all these arrays.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # If not accepting a list return, just return the first one.
         return shift @{$missings{$addr}} unless wantarray;
@@ -3257,8 +3247,6 @@ END
 
         # Find what code points are assigned in this release
         main::calculate_Assigned() if ! defined $Assigned;
-
-        my $addr = do { no overloading; pack 'J', $self; };
 
         my ($range, @remainder)
             = split /\s*;\s*/, $_, -1; # -1 => retain trailing null fields
@@ -3306,7 +3294,7 @@ END
         # Hangul syllables in this release only are something else, so if
         # using such data, we have to override it
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $object = main::property_ref($property{$addr});
         $object->add_map($FIRST_REMOVED_HANGUL_SYLLABLE,
@@ -3318,9 +3306,7 @@ END
     sub _insert_property_into_line($self) {
         # Add a property field to $_, if this file requires it.
 
-        my $addr = do { no overloading; pack 'J', $self; };
-        my $property = $property{$addr};
-
+        my $property = $property{pack 'J', refaddr $self};
         $_ =~ s/(;|$)/; $property$1/;
         return;
     }
@@ -3332,7 +3318,7 @@ END
         # only outputs the first instance of each message, incrementing a
         # count so the totals can be output at the end of the file.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $message = 'Unexpected line' unless $message;
 
@@ -3368,12 +3354,6 @@ package Multi_Default;
 # defaults, and for all but that final default, an eval string that generates
 # the class that it applies to.
 
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
 {   # Closure
 
     main::setup_package();
@@ -3404,7 +3384,7 @@ no warnings 'experimental::signatures';
         my $class = shift;
 
         my $self = bless \do{my $anonymous_scalar}, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         while (@_ > 1) {
             my $default = shift;
@@ -3420,9 +3400,7 @@ no warnings 'experimental::signatures';
     sub get_next_defaults($self) {
         # Iterates and returns the next class of defaults.
 
-        my $addr = do { no overloading; pack 'J', $self; };
-
-        return each %{$class_defaults{$addr}};
+        return each %{$class_defaults{pack 'J', refaddr $self}};
     }
 }
 
@@ -3431,12 +3409,6 @@ package Alias;
 # An alias is one of the names that a table goes by.  This class defines them
 # including some attributes.  Everything is currently setup in the
 # constructor.
-
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 
 {   # Closure
@@ -3475,7 +3447,7 @@ no warnings 'experimental::signatures';
         my $class = shift;
 
         my $self = bless \do { my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $name{$addr} = shift;
         $loose_match{$addr} = shift;
@@ -3509,12 +3481,6 @@ package Range;
 # map to.  Type 0 values have the standardized version of the value stored as
 # well, so as to not have to recalculate it a lot.
 
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
-
 sub trace { return main::trace(@_); }
 
 {   # Closure
@@ -3541,7 +3507,7 @@ sub trace { return main::trace(@_); }
 
     sub new($class, $_addr, $_end, @_args) {
         my $self = bless \do { my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $start{$addr} = $_addr;
         $end{$addr}   = $_end;
@@ -3566,8 +3532,8 @@ sub trace { return main::trace(@_); }
         ".=" => \&main::_operator_dot_equal,
     ;
 
-    sub _operator_stringify($self) {
-        my $addr = do { no overloading; pack 'J', $self; };
+    sub _operator_stringify($self, $other="", $reversed=0) {
+        my $addr = pack 'J', refaddr $self;
 
         # Output it like '0041..0065 (value)'
         my $return = sprintf("%04X", $start{$addr})
@@ -3590,7 +3556,7 @@ sub trace { return main::trace(@_); }
         # of writing there are 368676 non-special objects, but the standard
         # form is only requested for 22047 of them - ie about 6%.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return $standard_form{$addr} if defined $standard_form{$addr};
 
@@ -3602,7 +3568,7 @@ sub trace { return main::trace(@_); }
     sub dump($self, $indent) {
         # Human, not machine readable.  For machine readable, comment out this
         # entire routine and let the standard one take effect.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $return = $indent
                     . sprintf("%04X", $start{$addr})
@@ -3620,12 +3586,6 @@ sub trace { return main::trace(@_); }
 } # End closure
 
 package _Range_List_Base;
-
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 # Base class for range lists.  A range list is simply an ordered list of
 # ranges, so that the ranges with the lowest starting numbers are first in it.
@@ -3694,7 +3654,7 @@ sub trace { return main::trace(@_); }
         return _union($class, $initialize, %args) if defined $initialize;
 
         $self = bless \do { my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Optional parent object, only for debug info.
         $owner_name_of{$addr} = delete $args{'Owner'};
@@ -3723,8 +3683,8 @@ sub trace { return main::trace(@_); }
         ".=" => \&main::_operator_dot_equal,
     ;
 
-    sub _operator_stringify($self) {
-        my $addr = do { no overloading; pack 'J', $self; };
+    sub _operator_stringify($self, $other="", $reversed=0) {
+        my $addr = pack 'J', refaddr $self;
 
         return "Range_List attached to '$owner_name_of{$addr}'"
                                                 if $owner_name_of{$addr};
@@ -3789,8 +3749,7 @@ sub trace { return main::trace(@_); }
             if (! defined $arg) {
                 my $message = "";
                 if (defined $self) {
-                    no overloading;
-                    $message .= $owner_name_of{pack 'J', $self};
+                    $message .= $owner_name_of{pack 'J', refaddr $self};
                 }
                 Carp::my_carp_bug($message . "Undefined argument to _union.  No union done.");
                 return;
@@ -3815,8 +3774,7 @@ sub trace { return main::trace(@_); }
             else {
                 my $message = "";
                 if (defined $self) {
-                    no overloading;
-                    $message .= $owner_name_of{pack 'J', $self};
+                    $message .= $owner_name_of{pack 'J', refaddr $self};
                 }
                 Carp::my_carp_bug($message . "Cannot take the union of a $type.  No union done.");
                 return;
@@ -3863,8 +3821,7 @@ sub trace { return main::trace(@_); }
     }
 
     sub range_count($self) {        # Return the number of ranges in the range list
-        no overloading;
-        return scalar @{$ranges{pack 'J', $self}};
+        return scalar @{$ranges{pack 'J', refaddr $self}};
     }
 
     sub min($self) {
@@ -3874,7 +3831,7 @@ sub trace { return main::trace(@_); }
         # and having to worry about changing it as ranges are added and
         # deleted.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # If the range list is empty, return a large value that isn't adjacent
         # to any that could be in the range list, for simpler tests
@@ -3895,8 +3852,7 @@ sub trace { return main::trace(@_); }
         #   range[$i-1]->end < $codepoint <= range[$i]->end
         # So is in the table if and only iff it is at least the start position
         # of range $i.
-        no overloading;
-        return 0 if $ranges{pack 'J', $self}->[$i]->start > $codepoint;
+        return 0 if $ranges{pack 'J', refaddr $self}->[$i]->start > $codepoint;
         return $i + 1;
     }
 
@@ -3906,8 +3862,7 @@ sub trace { return main::trace(@_); }
         return unless $i;
 
         # contains() returns 1 beyond where we should look
-        no overloading;
-        return $ranges{pack 'J', $self}->[$i-1];
+        return $ranges{pack 'J', refaddr $self}->[$i-1];
     }
 
     sub value_of($self, $codepoint) {
@@ -3933,7 +3888,7 @@ sub trace { return main::trace(@_); }
         #   range[$i-1]->end < $codepoint <= range[$i]->end
         # Returns undef if no such $i is possible (e.g. at end of table), or
         # if there is an error.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return if $code_point > $max{$addr};
         my $r = $ranges{$addr};                # The current list of ranges
@@ -4121,7 +4076,7 @@ sub trace { return main::trace(@_); }
 
         Carp::carp_extra_args(\%args) if main::DEBUG && %args;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         if ($operation ne '+' && $operation ne '-') {
             Carp::my_carp_bug("$owner_name_of{$addr}First parameter to _add_delete must be '+' or '-'.  No action taken.");
@@ -4766,15 +4721,14 @@ sub trace { return main::trace(@_); }
     }
 
     sub reset_each_range($self) {  # reset the iterator for each_range();
-        no overloading;
-        undef $each_range_iterator{pack 'J', $self};
+        undef $each_range_iterator{pack 'J', refaddr $self};
         return;
     }
 
     sub each_range($self) {
         # Iterate over each range in a range list.  Results are undefined if
         # the range list is changed during the iteration.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return if $self->is_empty;
 
@@ -4788,7 +4742,7 @@ sub trace { return main::trace(@_); }
     }
 
     sub count($self) {        # Returns count of code points in range list
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $count = 0;
         foreach my $range (@{$ranges{$addr}}) {
@@ -4802,15 +4756,14 @@ sub trace { return main::trace(@_); }
     }
 
     sub is_empty($self) { # Returns boolean as to if a range list is empty
-        no overloading;
-        return scalar @{$ranges{pack 'J', $self}} == 0;
+        return scalar @{$ranges{pack 'J', refaddr $self}} == 0;
     }
 
     sub hash($self) {
         # Quickly returns a scalar suitable for separating tables into
         # buckets, i.e. it is a hash function of the contents of a table, so
         # there are relatively few conflicts.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # These are quickly computable.  Return looks like 'min..max;count'
         return $self->min . "..$max{$addr};" . scalar @{$ranges{$addr}};
@@ -4819,12 +4772,6 @@ sub trace { return main::trace(@_); }
 
 package Range_List;
 use parent '-norequire', '_Range_List_Base';
-
-use warnings;
-use strict;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 # A Range_List is a range list for match tables; i.e. the range values are
 # not significant.  Thus a number of operations can be safely added to it,
@@ -5147,7 +5094,6 @@ sub trace { return main::trace(@_); }
         # Return a code point that's part of the range list.  Returns nothing
         # if the table is empty or we can't find a suitable code point.  This
         # used only for making the test script.
-        my $addr = do { no overloading; pack 'J', $self; };
 
         # On first pass, don't choose less desirable code points; if no good
         # one is found, repeat, allowing a less desirable one to be selected.
@@ -5184,12 +5130,6 @@ sub trace { return main::trace(@_); }
 
 package Range_Map;
 use parent '-norequire', '_Range_List_Base';
-
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 # A Range_Map is a range list in which the range values (called maps) are
 # significant, and hence shouldn't be manipulated by our other code, which
@@ -5228,12 +5168,6 @@ no warnings 'experimental::signatures';
 } # End of closure for package Range_Map
 
 package _Base_Table;
-
-use strict;
-use warnings;
-
-use feature 'signatures';
-no warnings 'experimental::signatures';
 
 # A table is the basic data structure that gets written out into a file for
 # use by the Perl core.  This is the abstract base class implementing the
@@ -5378,7 +5312,7 @@ sub trace { return main::trace(@_); }
         my $class = shift;
 
         my $self = bless \do { my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my %args = @_;
 
@@ -5563,8 +5497,7 @@ END
     sub ranges {
         # Returns the array of ranges associated with this table.
 
-        no overloading;
-        return $range_list{pack 'J', shift}->ranges;
+        return $range_list{pack 'J', refaddr shift}->ranges;
     }
 
     sub add_alias {
@@ -5605,7 +5538,7 @@ END
         # release
         $name = ucfirst($name) unless $name =~ /^k[A-Z]/;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Figure out if should be loosely matched if not already specified.
         if (! defined $loose_match) {
@@ -5666,8 +5599,7 @@ END
 
         # This name may be shorter than any existing ones, so clear the cache
         # of the shortest, so will have to be recalculated.
-        no overloading;
-        undef $short_name{pack 'J', $self};
+        undef $short_name{pack 'J', refaddr $self};
         return;
     }
 
@@ -5686,7 +5618,7 @@ END
         # Any name with alphabetics is preferred over an all numeric one, even
         # if longer.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # For efficiency, don't recalculate, but this means that adding new
         # aliases could change what the shortest is, so the code that does
@@ -5789,15 +5721,13 @@ END
     }
 
     sub add_description($self, $description) { # Adds the parameter as a short description.
-        no overloading;
-        push @{$description{pack 'J', $self}}, $description;
+        push @{$description{pack 'J', refaddr $self}}, $description;
 
         return;
     }
 
     sub add_note($self, $note) { # Adds the parameter as a short note.
-        no overloading;
-        push @{$note{pack 'J', $self}}, $note;
+        push @{$note{pack 'J', refaddr $self}}, $note;
 
         return;
     }
@@ -5808,8 +5738,7 @@ END
 
         chomp $comment;
 
-        no overloading;
-        push @{$comment{pack 'J', $self}}, $comment;
+        push @{$comment{pack 'J', refaddr $self}}, $comment;
 
         return;
     }
@@ -5819,7 +5748,7 @@ END
         # context, returns the array of comments.  In scalar, returns a string
         # of each element joined together with a period ending each.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
         my @list = @{$comment{$addr}};
         return @list if wantarray;
         my $return = "";
@@ -5836,7 +5765,7 @@ END
         # Initialize the table with the argument which is any valid
         # initialization for range lists.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Replace the current range list with a new one of the same exact
         # type.
@@ -5890,7 +5819,7 @@ END
         # a range equals this one, don't write
         # the range
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
         my $write_as_invlist = $write_as_invlist{$addr};
 
         # Start with the header
@@ -6511,7 +6440,7 @@ END
                         $next_start = 0;
                         redo;
                     }
-                }
+                } # End of redo block
             } # End of loop through all the table's ranges
 
             push @OUT, @annotation; # Add orphaned annotation, if any
@@ -6546,7 +6475,7 @@ END
     sub set_status($self, $status, $info) {    # Set the table's status
         # status The status enum value
         # info Any message associated with it.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $status{$addr} = $status;
         $status_info{$addr} = $info;
@@ -6554,7 +6483,7 @@ END
     }
 
     sub set_fate($self, $fate, $reason=undef) {  # Set the fate of a table
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return if $fate{$addr} == $fate;    # If no-op
 
@@ -6588,7 +6517,7 @@ END
         # Don't allow changes to the table from now on.  This stores a stack
         # trace of where it was called, so that later attempts to modify it
         # can immediately show where it got locked.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $locked{$addr} = "";
 
@@ -6612,7 +6541,7 @@ END
     sub carp_if_locked($self) {
         # Return whether a table is locked or not, and, by the way, complain
         # if is locked
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return 0 if ! $locked{$addr};
         Carp::my_carp_bug("Can't modify a locked table. Stack trace of locking:\n$locked{$addr}\n\n");
@@ -6620,8 +6549,7 @@ END
     }
 
     sub set_file_path($self, @path) { # Set the final directory path for this table
-        no overloading;
-        @{$file_path{pack 'J', $self}} = @path;
+        @{$file_path{pack 'J', refaddr $self}} = @path;
         return
     }
 
@@ -6717,23 +6645,13 @@ sub trace { return main::trace(@_); }
     main::set_access('anomalous_entries',       # Append singular, read plural
                     \%anomalous_entries,
                     'readable_array');
-
-    my %replacement_property;
-    # Certain files are unused by Perl itself, and are kept only for backwards
-    # compatibility for programs that used them before Unicode::UCD existed.
-    # These are termed legacy properties.  At some point they may be removed,
-    # but for now mark them as legacy.  If non empty, this is the name of the
-    # property to use instead (i.e., the modern equivalent).
-    main::set_access('replacement_property', \%replacement_property, 'r');
-
     my %to_output_map;
     # Enum as to whether or not to write out this map table, and how:
     #   0               don't output
     #   $EXTERNAL_MAP   means its existence is noted in the documentation, and
     #                   it should not be removed nor its format changed.  This
     #                   is done for those files that have traditionally been
-    #                   output.  Maps of legacy-only properties default to
-    #                   this.
+    #                   output.
     #   $INTERNAL_MAP   means Perl reserves the right to do anything it wants
     #                   with this file
     #   $OUTPUT_ADJUSTED means that it is an $INTERNAL_MAP, and instead of
@@ -6758,17 +6676,9 @@ sub trace { return main::trace(@_); }
         my $default_map = delete $args{'Default_Map'};
         my $property = delete $args{'_Property'};
         my $full_name = delete $args{'Full_Name'};
-        my $replacement_property = delete $args{'Replacement_Property'} // "";
         my $to_output_map = delete $args{'To_Output_Map'};
 
-        # Rest of parameters passed on; legacy properties have several common
-        # other attributes
-        if ($replacement_property) {
-            $args{"Fate"} = $LEGACY_ONLY;
-            $args{"Range_Size_1"} = 1;
-            $args{"Perl_Extension"} = 1;
-            $args{"UCD"} = 0;
-        }
+        # Rest of parameters passed on
 
         my $range_list = Range_Map->new(Owner => $property);
 
@@ -6781,13 +6691,10 @@ sub trace { return main::trace(@_); }
                                     Write_As_Invlist => 0,
                                     %args);
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $anomalous_entries{$addr} = [];
         $default_map{$addr} = $default_map;
-        $replacement_property{$addr} = $replacement_property;
-        $to_output_map = $EXTERNAL_MAP if ! defined $to_output_map
-                                          && $replacement_property;
         $to_output_map{$addr} = $to_output_map;
 
         $self->initialize($initialize) if defined $initialize;
@@ -6800,8 +6707,7 @@ sub trace { return main::trace(@_); }
         qw("") => "_operator_stringify",
     ;
 
-    sub _operator_stringify {
-        my $self = shift;
+    sub _operator_stringify($self, $other="", $reversed=0) {
 
         my $name = $self->property->full_name;
         $name = '""' if $name eq "";
@@ -6820,7 +6726,7 @@ sub trace { return main::trace(@_); }
 
     sub add_map {
         # Add a range of code points to the list of specially-handled code
-        # points.  $MULTI_CP is assumed if the type of special is not passed
+        # points.  0 is assumed if the type of special is not passed
         # in.
 
         my $self = shift;
@@ -6835,8 +6741,6 @@ sub trace { return main::trace(@_); }
         # Can't change the table if locked.
         return if $self->carp_if_locked;
 
-        my $addr = do { no overloading; pack 'J', $self; };
-
         $self->_range_list->add_map($lower, $upper,
                                     $string,
                                     @_,
@@ -6847,7 +6751,7 @@ sub trace { return main::trace(@_); }
     sub append_to_body($self) {
         # Adds to the written HERE document of the table's body any anomalous
         # entries in the table..
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return "" unless @{$anomalous_entries{$addr}};
         return join("\n", @{$anomalous_entries{$addr}}) . "\n";
@@ -6868,9 +6772,6 @@ sub trace { return main::trace(@_); }
                         . "'.  Not added;");
             return;
         }
-
-        my $addr = do { no overloading; pack 'J', $self; };
-        my $other_addr = do { no overloading; pack 'J', $other; };
 
         local $to_trace = 0 if main::DEBUG;
 
@@ -6899,7 +6800,7 @@ sub trace { return main::trace(@_); }
                             . " present, must be 'full_name'");
         }
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Convert the input to the standard equivalent, if any (won't have any
         # for $STRING properties)
@@ -6944,7 +6845,7 @@ sub trace { return main::trace(@_); }
 
     sub to_output_map($self) {
         # Returns boolean: should we write this map table?
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # If overridden, use that
         return $to_output_map{$addr} if defined $to_output_map{$addr};
@@ -6994,12 +6895,8 @@ sub trace { return main::trace(@_); }
             $return .= $INTERNAL_ONLY_HEADER;
         }
         else {
-            my $property_name = $self->property->replacement_property;
-
-            # The legacy-only properties were gotten above; but there are some
-            # other properties whose files are in current use that have fixed
-            # formats.
-            $property_name = $self->property->full_name unless $property_name;
+            # Other properties have fixed formats.
+            my $property_name = $self->property->full_name;
 
             $return .= <<END;
 
@@ -7026,7 +6923,7 @@ END
         # No sense generating a comment if aren't going to write it out.
         return if ! $self->to_output_map;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $property = $self->property;
 
@@ -7087,7 +6984,7 @@ END
         else {
             my $map_to;
             if ($default_map eq "") {
-                $map_to = 'the null string';
+                $map_to = 'the empty string';
             }
             elsif ($default_map eq $CODE_POINT) {
                 $map_to = "itself";
@@ -7205,7 +7102,7 @@ END
         # Called in the middle of write when it finds a range it doesn't know
         # how to handle.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $type = $range->type;
 
@@ -7347,7 +7244,7 @@ END
         # be for all ranges missing from it.  It also includes any code points
         # which have map_types that don't go in the main table.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $name = $self->property->swash_name;
 
@@ -7434,7 +7331,7 @@ END
             $return .= ' # code point maps to itself';
         }
         elsif ($default_map eq "") {
-            $return .= ' # code point maps to the null string';
+            $return .= ' # code point maps to the empty string';
         }
         $return .= "\n";
 
@@ -7446,7 +7343,7 @@ END
     sub write($self) {
         # Write the table to the file.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Clear the temporaries
         undef @multi_code_point_maps;
@@ -7713,7 +7610,7 @@ sub trace { return main::trace(@_); }
                                       Format => $EMPTY_FORMAT,
                                       Write_As_Invlist => 1,
                                       );
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $conflicting{$addr} = [ ];
         $equivalents{$addr} = [ ];
@@ -7770,8 +7667,6 @@ sub trace { return main::trace(@_); }
 
                         return if $self->carp_if_locked;
 
-                        my $addr = do { no overloading; pack 'J', $self; };
-
                         if (ref $other) {
 
                             # Change the range list of this table to be the
@@ -7821,8 +7716,7 @@ sub trace { return main::trace(@_); }
                 },
     ;
 
-    sub _operator_stringify {
-        my $self = shift;
+    sub _operator_stringify($self, $other="", $reversed=0) {
 
         my $name = $self->complete_name;
         return "Table '$name'";
@@ -7880,7 +7774,7 @@ sub trace { return main::trace(@_); }
                                         # be an optional parameter.
         Carp::carp_extra_args(\@_) if main::DEBUG && @_;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Check if the conflicting name is exactly the same as any existing
         # alias in this table (as long as there is a real object there to
@@ -7923,8 +7817,7 @@ sub trace { return main::trace(@_); }
         }
 
         # Two tables are equivalent if they have the same leader.
-        no overloading;
-        return $leader{pack 'J', $self} == $leader{pack 'J', $other};
+        return $leader{pack 'J', refaddr $self} == $leader{pack 'J', refaddr $other};
         return;
     }
 
@@ -7961,7 +7854,7 @@ sub trace { return main::trace(@_); }
         my $are_equivalent = $self->is_set_equivalent_to($other);
         return if ! defined $are_equivalent || $are_equivalent;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
         my $current_leader = ($related) ? $parent{$addr} : $leader{$addr};
 
         if ($related) {
@@ -8000,8 +7893,8 @@ sub trace { return main::trace(@_); }
             return;
         }
 
-        my $leader = do { no overloading; pack 'J', $current_leader; };
-        my $other_addr = do { no overloading; pack 'J', $other; };
+        my $leader = pack 'J', refaddr $current_leader;
+        my $other_addr = pack 'J', refaddr $other;
 
         # Any tables that are equivalent to or children of this table must now
         # instead be equivalent to or (children) to the new leader (parent),
@@ -8018,7 +7911,7 @@ sub trace { return main::trace(@_); }
             next if $table == $other;
             trace "setting $other to be the leader of $table, status=$status" if main::DEBUG && $to_trace;
 
-            my $table_addr = do { no overloading; pack 'J', $table; };
+            my $table_addr = pack 'J', refaddr $table;
             $leader{$table_addr} = $other;
             $matches_all{$table_addr} = $matches_all;
             $self->_set_range_list($other->_range_list);
@@ -8051,8 +7944,7 @@ sub trace { return main::trace(@_); }
             Carp::my_carp_bug("Can't set $self to be the complement of $other, which itself is the complement of " . $other->complement);
             return;
         }
-        my $addr = do { no overloading; pack 'J', $self; };
-        $complement{$addr} = $other;
+        $complement{pack 'J', refaddr $self} = $other;
 
         # Be sure the other property knows we are depending on them; or the
         # other table if it is one in the current property.
@@ -8340,7 +8232,7 @@ sub trace { return main::trace(@_); }
 
         return unless $debugging_build;
 
-        my $addr = do { no overloading; pack 'J', $leader; };
+        my $addr = pack 'J', refaddr $leader;
 
         if ($leader{$addr} != $leader) {
             Carp::my_carp_bug(<<END
@@ -8408,7 +8300,7 @@ END
                 && $parent == $property->table('N')
                 && defined (my $yes = $property->table('Y')))
             {
-                my $yes_addr = do { no overloading; pack 'J', $yes; };
+                my $yes_addr = pack 'J', refaddr $yes;
                 @yes_perl_synonyms
                     = grep { $_->property == $perl }
                                     main::uniques($yes,
@@ -8424,12 +8316,12 @@ END
             my @conflicting;        # Will hold the table conflicts.
 
             # Look at the parent, any yes synonyms, and all the children
-            my $parent_addr = do { no overloading; pack 'J', $parent; };
+            my $parent_addr = pack 'J', refaddr $parent;
             for my $table ($parent,
                            @yes_perl_synonyms,
                            @{$children{$parent_addr}})
             {
-                my $table_addr = do { no overloading; pack 'J', $table; };
+                my $table_addr = pack 'J', refaddr $table;
                 my $table_property = $table->property;
 
                 # Tables are separated by a blank line to create a grouping.
@@ -8894,7 +8786,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         my %args = @_;
 
         $self = bless \do { my $anonymous_scalar }, $class;
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         $directory{$addr} = delete $args{'Directory'};
         $file{$addr} = delete $args{'File'};
@@ -8938,8 +8830,8 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         '-=' => "_minus_and_equal",
     ;
 
-    sub _operator_stringify {
-        return "Property '" .  shift->full_name . "'";
+    sub _operator_stringify($self, $other="", $reversed=0) {
+        return "Property '" .  $self->full_name . "'";
     }
 
     sub _minus_and_equal($self, $other, $reversed=0) {
@@ -8957,8 +8849,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
             return;
         }
         else {
-            no overloading;
-            $map{pack 'J', $self}->delete_range($other, $other);
+            $map{pack 'J', refaddr $self}->delete_range($other, $other);
         }
         return $self;
     }
@@ -8971,7 +8862,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         my $name = shift;
         my %args = @_;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $table = $table_ref{$addr}{$name};
         my $standard_name = main::standardize($name);
@@ -9045,7 +8936,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
 
     sub delete_match_table($self, $table_to_remove) {
         # Delete the table referred to by $2 from the property $1.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Remove all names that refer to it.
         foreach my $key (keys %{$table_ref{$addr}}) {
@@ -9060,7 +8951,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
     sub table($self, $name) {
         # Return a pointer to the match table (with name given by the
         # parameter) associated with this property; undef if none.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         return $table_ref{$addr}{$name} if defined $table_ref{$addr}{$name};
 
@@ -9078,8 +8969,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         # Return a list of pointers to all the match tables attached to this
         # property
 
-        no overloading;
-        return main::uniques(values %{$table_ref{pack 'J', shift}});
+        return main::uniques(values %{$table_ref{pack 'J', refaddr shift}});
     }
 
     sub directory {
@@ -9088,7 +8978,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         # priority;  'undef' is returned if the type isn't defined;
         # or $map_directory for everything else.
 
-        my $addr = do { no overloading; pack 'J', shift; };
+        my $addr = pack 'J', refaddr shift;
 
         return $directory{$addr} if defined $directory{$addr};
         return undef if $type{$addr} == $UNKNOWN;
@@ -9105,16 +8995,13 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         # but otherwise the standard name is used.  This is different from the
         # external_name, so that the rest of the files, like in lib can use
         # the standard name always, without regard to historical precedent.
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Swash names are used only on either
-        # 1) legacy-only properties, because the formats for these are
-        #    unchangeable, and they have had these lines in them; or
-        # 2) regular or internal-only map tables
-        # 3) otherwise there should be no access to the
+        # 1) regular or internal-only map tables
+        # 2) otherwise there should be no access to the
         #    property map table from other parts of Perl.
         return if $map{$addr}->fate != $ORDINARY
-                  && $map{$addr}->fate != $LEGACY_ONLY
                   && ! ($map{$addr}->name =~ /^_/
                         && $map{$addr}->fate == $INTERNAL_ONLY);
 
@@ -9129,7 +9016,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         # The whole point of this pseudo property is match tables.
         return 1 if $self == $perl;
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # Don't generate tables of code points that match the property values
         # of a string property.  Such a list would most likely have many
@@ -9156,8 +9043,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
             return;
         }
 
-        no overloading;
-        return $map{pack 'J', $self}->map_add_or_replace_non_nulls($map{pack 'J', $other});
+        return $map{pack 'J', refaddr $self}->map_add_or_replace_non_nulls($map{pack 'J', refaddr $other});
     }
 
     sub set_proxy_for {
@@ -9193,7 +9079,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
             return;
         }
 
-        { no overloading; $type{pack 'J', $self} = $type; }
+        $type{pack 'J', refaddr $self} = $type;
         return if $type != $BINARY && $type != $FORCED_BINARY;
 
         my $yes = $self->table('Y');
@@ -9232,7 +9118,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         my $map = shift;    # What the range maps to.
         # Rest of parameters passed on.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         # If haven't the type of the property, gather information to figure it
         # out.
@@ -9281,7 +9167,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         # We have been keeping track of what the property values have been,
         # and now have the necessary information to figure out the type.
 
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
 
         my $type = $type{$addr};
 
@@ -9337,7 +9223,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
 
     # $reaons - Ignored unless suppressing
     sub set_fate($self, $fate, $reason=undef) {
-        my $addr = do { no overloading; pack 'J', $self; };
+        my $addr = pack 'J', refaddr $self;
         if ($fate >= $SUPPRESSED) {
             $why_suppressed{$self->complete_name} = $reason;
         }
@@ -9381,7 +9267,6 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
                     initialize
                     inverse_list
                     is_empty
-                    replacement_property
                     name
                     note
                     perl_extension
@@ -9416,8 +9301,7 @@ sub trace { return main::trace(@_) if main::DEBUG && $to_trace }
         *$sub = sub {
             use strict "refs";
             my $self = shift;
-            no overloading;
-            return $map{pack 'J', $self}->$sub(@_);
+            return $map{pack 'J', refaddr $self}->$sub(@_);
         }
     }
 
@@ -9436,7 +9320,7 @@ sub display_chr {
     return "\x{25CC}$chr";
 }
 
-sub join_lines($return) {
+sub join_lines($input) {
     # Returns lines of the input joined together, so that they can be folded
     # properly.
     # This causes continuation lines to be joined together into one long line
@@ -9449,7 +9333,7 @@ sub join_lines($return) {
     # blank is inserted after a period ending a line.
 
     # Initialize the return with the first line.
-    my ( @lines ) = split "\n", $return;
+    my ($return, @lines) = split "\n", $input;
 
     # If the first line is null, it was an empty line, add the \n back in
     $return = "\n" if $return eq "";
@@ -9830,7 +9714,7 @@ sub UCD_name ($table, $alias) {
         else {
 
             # Keep track of cycles in the input, and refuse to infinitely loop
-            my $addr = do { no overloading; pack 'J', $item; };
+            my $addr = pack 'J', refaddr $item;
             if (defined $main::already_output{$addr}) {
                 return "${indent}ALREADY OUTPUT: $item\n";
             }
@@ -9948,14 +9832,14 @@ sub dump_inside_out( $object, $fields_ref ) {
     # Dump inside-out hashes in an object's state by converting them to a
     # regular hash and then calling simple_dumper on that.
 
-    my $addr = do { no overloading; pack 'J', $object; };
+    my $addr = pack 'J', refaddr $object;
 
     my %hash;
     foreach my $key (keys %$fields_ref) {
         $hash{$key} = $fields_ref->{$key}{$addr};
     }
 
-    return simple_dumper(\%hash, @_);
+    return simple_dumper(\%hash, $object, $fields_ref);
 }
 
 sub _operator_dot($self, $other="", $reversed=0) {
@@ -9969,7 +9853,7 @@ sub _operator_dot($self, $other="", $reversed=0) {
         }
         else {
             my $ref = ref $$which;
-            my $addr = do { no overloading; pack 'J', $$which; };
+            my $addr = pack 'J', refaddr $$which;
             $$which = "$ref ($addr)";
         }
     }
@@ -10851,7 +10735,7 @@ sub process_NormalizationsTest($file) {
     } # End of looping through the file
 }
 
-sub output_perl_charnames_line ($a, $b) {
+sub output_perl_charnames_line ($code_point, $name) {
 
     # Output the entries in Perl_charnames specially, using 5 digits instead
     # of four.  This makes the entries a constant length, and simplifies
@@ -10859,7 +10743,7 @@ sub output_perl_charnames_line ($a, $b) {
     # ordinals, but they are all private use or noncharacters which do not
     # have names, so won't be in this table.
 
-    return sprintf "%05X\n%s\n\n", $_[0], $_[1];
+    return sprintf "%05X\n%s\n\n", $code_point, $name;
 }
 
 { # Closure
@@ -10973,7 +10857,7 @@ sub output_perl_charnames_line ($a, $b) {
                     $file->carp_bad_line("Unexpected property '$property_name'.  Skipped");
                     next LINE;
                 }
-                { no overloading; $property_addr = pack 'J', $property_object; }
+                $property_addr = pack 'J', refaddr $property_object;
 
                 # Defer changing names until have a line that is acceptable
                 # (the 'next' statement above means is unacceptable)
@@ -11025,7 +10909,7 @@ sub output_perl_charnames_line ($a, $b) {
                                             if $file->has_missings_defaults;
                     foreach my $default_ref (@missings_list) {
                         my $default = $default_ref->[0];
-                        my $addr = do { no overloading; pack 'J', property_ref($default_ref->[1]); };
+                        my $addr = pack 'J', refaddr property_ref($default_ref->[1]);
 
                         # For string properties, the default is just what the
                         # file says, but non-string properties should already
@@ -12276,26 +12160,6 @@ sub filter_old_style_arabic_shaping {
                 Carp::my_carp_bug("Need to process UnicodeData before SpecialCasing.  Only special casing will be generated.");
             }
 
-            # Create a table in the old-style format and with the original
-            # file name for backwards compatibility with applications that
-            # read it directly.  The new tables contain both the simple and
-            # full maps, and the old are missing simple maps when there is a
-            # conflicting full one.  Probably it would have been ok to add
-            # those to the legacy version, as was already done in 5.14 to the
-            # case folding one, but this was not done, out of an abundance of
-            # caution.  The tables are set up here before we deal with the
-            # full maps so that as we handle those, we can override the simple
-            # maps for them in the legacy table, and merely add them in the
-            # new-style one.
-            my $legacy = Property->new("Legacy_" . $full_casing_full_name,
-                                File => $full_casing_full_name
-                                                          =~ s/case_Mapping//r,
-                                Format => $HEX_FORMAT,
-                                Default_Map => $CODE_POINT,
-                                Initialize => $full_casing_table,
-                                Replacement_Property => $full_casing_full_name,
-            );
-
             $full_casing_table->add_comment(join_lines( <<END
 This file includes both the simple and full case changing maps.  The simple
 ones are in the main body of the table below, and the full ones adding to or
@@ -12411,14 +12275,7 @@ END
             }
             else {
 
-                # The mapping goes into both the legacy table, in which it
-                # replaces the simple one...
-                $file->insert_adjusted_lines("$fields[0]; Legacy_"
-                                             . $object->full_name
-                                             . "; $fields[$i]");
-
-                # ... and the regular table, in which it is additional,
-                # beyond the simple mapping.
+                # The mapping is additional, beyond the simple mapping.
                 $file->insert_adjusted_lines("$fields[0]; "
                                              . $object->name
                                             . "; "
@@ -13707,25 +13564,6 @@ END
     $gc->table('Ll')->set_caseless_equivalent($LC);
     $gc->table('Lu')->set_caseless_equivalent($LC);
 
-    # Create digit and case fold tables with the original file names for
-    # backwards compatibility with applications that read them directly.
-    my $Digit = Property->new("Legacy_Perl_Decimal_Digit",
-                              Default_Map => "",
-                              File => 'Digit',    # Trad. location
-                              Directory => $map_directory,
-                              Type => $STRING,
-                              Replacement_Property => "Perl_Decimal_Digit",
-                              Initialize => property_ref('Perl_Decimal_Digit'),
-                            );
-    $Digit->add_comment(join_lines(<<END
-This file gives the mapping of all code points which represent a single
-decimal digit [0-9] to their respective digits.  For example, the code point
-U+0031 (an ASCII '1') is mapped to a numeric 1.  These code points are those
-that have Numeric_Type=Decimal; not special things, like subscripts nor Roman
-numerals.
-END
-    ));
-
     # Make sure this assumption in perl core code is valid in this Unicode
     # release, with known exceptions
     foreach my $range (property_ref('Numeric-Type')->table('Decimal')->ranges) {
@@ -13737,16 +13575,6 @@ END
                     . " decimal digits.  Code in regcomp.c assumes it does,"
                     . " and will have to be fixed.  Proceeding anyway.");
     }
-
-    Property->new('Legacy_Case_Folding',
-                    File => "Fold",
-                    Directory => $map_directory,
-                    Default_Map => $CODE_POINT,
-                    Type => $STRING,
-                    Replacement_Property => "Case_Folding",
-                    Format => $HEX_FORMAT,
-                    Initialize => property_ref('cf'),
-    );
 
     # Mark the scx table as the parent of the corresponding sc table for those
     # which are identical.  This causes the pod for the script table to refer
@@ -15021,17 +14849,21 @@ END
 
         # The Present_In property is the cumulative age properties.  The first
         # one hence is identical to the first age one.
-        my $previous_in = $in->add_match_table($first_age->name);
-        $previous_in->set_equivalent_to($first_age, Related => 1);
+        my $first_in = $in->add_match_table($first_age->name);
+        $first_in->set_equivalent_to($first_age, Related => 1);
 
         my $description_start = "Code point's usage introduced in version ";
         $first_age->add_description($description_start . $first_age->name);
+        foreach my $alias ($first_age->aliases) {   # Include its aliases
+            $first_in->add_alias($alias->name);
+        }
 
         # To construct the accumulated values, for each of the age tables
         # starting with the 2nd earliest, merge the earliest with it, to get
         # all those code points existing in the 2nd earliest.  Repeat merging
         # the new 2nd earliest with the 3rd earliest to get all those existing
         # in the 3rd earliest, and so on.
+        my $previous_in = $first_in;
         foreach my $current_age (@rest_ages) {
             next if $current_age->name !~ /^[\d.]*$/;   # Skip the non-numeric
 
@@ -15068,6 +14900,9 @@ Code point's usage has not been assigned in any Unicode release thus far.
 END
         );
         $unassigned->set_equivalent_to($age_default, Related => 1);
+        foreach my $alias ($age_default->aliases) {
+            $unassigned->add_alias($alias->name);
+        }
     }
 
     my $patws = $perl->add_match_table('_Perl_PatWS',
@@ -15207,13 +15042,14 @@ END
     # created equivalence class whose name is a combination of the property
     # and the old class name, leaving unchanged everything that doesn't match
     # the non-UCD property.
-    my $pictographic_emoji = property_ref('ExtPict');
-    if (defined $pictographic_emoji) {
+    my $ep = property_ref('ExtPict');
+    $ep = $ep->table('Y') if defined $ep;
+    if (defined $ep) {
         foreach my $base_property (property_ref('GCB'),
                                    property_ref('WB'))
         {
             my $property = property_ref('_Perl_' . $base_property->name);
-            foreach my $range ($pictographic_emoji->table('Y')->ranges) {
+            foreach my $range ($ep->ranges) {
                 foreach my $i ($range->start .. $range->end) {
                     my $current = $property->value_of($i);
                     $current = $property->table($current)->short_name;
@@ -15228,15 +15064,9 @@ END
     # omitted in the default algorithm remapped to what
     # http://www.unicode.org/reports/tr14 says they should be.
     #
-    # Original 	   Resolved  General_Category
-    # AI, SG, XX      AL      Any
-    # SA              CM      Only Mn or Mc
-    # SA              AL      Any except Mn and Mc
-    # CJ              NS      Any
-    #
-    # All property values are also written out in their long form, as
-    # regen/mk_invlist.pl expects that.  This also fixes occurrences of the
-    # typo in early Unicode versions: 'inseperable'.
+    # First, create a plain copy, but with all property values written out in
+    # their long form, as regen/mk_invlist.pl expects that, and also fix
+    # occurrences of the typo in early Unicode versions: 'inseperable'.
     my $perl_lb = property_ref('_Perl_LB');
     if (! defined $perl_lb) {
         $perl_lb = Property->new('_Perl_LB',
@@ -15255,8 +15085,19 @@ END
         }
     }
 
+    # What tr14 says is this:
+
+    # Original 	   Resolved  General_Category
+    # AI, SG, XX      AL      Any
+    # SA              CM      Only Mn or Mc
+    # SA              AL      Any except Mn and Mc
+    # CJ              NS      Any
+
     $perl_lb->set_default_map('Alphabetic', 'full_name');    # XX -> AL
+
     my $ea = property_ref('East_Asian_Width');
+    my $Cn_EP;
+    $Cn_EP = $ep & $gc->table('Unassigned') if defined $ep;
 
     for my $range ($perl_lb->ranges) {
         my $value = standardize($range->value);
@@ -15281,6 +15122,21 @@ END
                 else {
                     $perl_lb->add_map($i, $i, 'Alphabetic',
                                       Replace => $UNCONDITIONALLY);
+                }
+            }
+        }
+        elsif (defined $ep && $value eq standardize('Ideographic')) {
+
+            # Unicode 14 adds a rule to not break lines before any potential
+            # EBase,  They say that any unassigned code point that is ExtPict,
+            # is potentially an EBase.  In 14.0, all such ones are in the
+            # ExtPict=ID category.  We must split that category for the
+            # pairwise rule table to work.
+            for my $i ($range->start .. $range->end) {
+                if ($Cn_EP->contains($i)) {
+                    $perl_lb->add_map($i, $i,
+                                'Unassigned_Extended_Pictographic_Ideographic',
+                                Replace => $UNCONDITIONALLY);
                 }
             }
         }
@@ -16952,7 +16808,7 @@ below briefly mentions other data that Unicode provides.)
 
 Perl can provide access to all non-provisional Unicode character properties,
 though not all are enabled by default.  The omitted ones are the Unihan
-properties (accessible via the CPAN module L<Unicode::Unihan>) and certain
+properties and certain
 deprecated or Unicode-internal properties.  (An installation may choose to
 recompile Perl's tables to change this.  See L</Unicode character
 properties that are NOT accepted by Perl>.)
@@ -17339,6 +17195,11 @@ sub make_Name_pm () {
     my @name = <<END;
 $HEADER
 $INTERNAL_ONLY_HEADER
+
+=head1 NAME -- Internal generated file for use by charnames
+
+=cut
+
 END
 
     # Convert these structures to output format.
@@ -18239,8 +18100,7 @@ sub write_all_tables() {
 
                 # We also create for Unicode::UCD a list of aliases for
                 # the property.  The list starts with the property name;
-                # then its full name.  Legacy properties are not listed in
-                # Unicode::UCD.
+                # then its full name.
                 my @property_list;
                 my @standard_list;
                 if ( $property->fate <= $MAP_PROXIED) {
@@ -18780,6 +18640,8 @@ Expect(0, 0x2028, '\p{Print}', ""); # Bug # 71722
 Expect(0, 0x2029, '\p{Print}', ""); # Bug # 71722
 Expect(1, 0xFF10, '\p{XDigit}', ""); # Bug # 71726
 Error('\p{InKana}');    # 'Kana' is not a block so InKana shouldn't compile
+Expect(1, 0xB6, '\p{In=V1_1}', ""); # Didn't use to work
+Expect(1, 0x3A2,'\p{In=NA}', "");   # Didn't use to work
 
 # Make sure this gets tested; it was not part of the official test suite at
 # the time this was added.  Note that this is as it would appear in the
@@ -20112,7 +19974,6 @@ use warnings;
 
 use feature 'signatures';
 
-no warnings 'experimental::signatures';
 no warnings 'experimental::uniprop_wildcards';
 
 # Test qr/\X/ and the \p{} regular expression constructs.  This file is
@@ -20386,7 +20247,7 @@ sub _test_break($template, $break_type) {
             if ($modifier =~ / ^ l (.*) /x) {
                 my $locale = $1;
                 $display_locale = "(locale = $locale)";
-                POSIX::setlocale(&POSIX::LC_CTYPE, $locale);
+                POSIX::setlocale(POSIX::LC_CTYPE(), $locale);
                 $modifier = 'l';
             }
 

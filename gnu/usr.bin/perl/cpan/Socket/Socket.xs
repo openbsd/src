@@ -228,9 +228,9 @@ static SV *my_newSVpvn_flags(pTHX_ const char *s, STRLEN len, U32 flags)
 # define SvRV_set(sv, val) (SvRV(sv) = (val))
 #endif /* !SvRV_set */
 
-#ifndef SvPV_nomg
-# define SvPV_nomg SvPV
-#endif /* !SvPV_nomg */
+#ifndef SvPVbyte_nomg
+# define SvPVbyte_nomg SvPV
+#endif /* !SvPVbyte_nomg */
 
 #ifndef HEK_FLAGS
 # define HEK_FLAGS(hek) 0
@@ -296,6 +296,10 @@ static void *my_hv_common_key_len(pTHX_ HV *hv, const char *key, I32 kl,
 #ifndef mPUSHs
 # define mPUSHs(s) PUSHs(sv_2mortal(s))
 #endif /* !mPUSHs */
+
+#ifndef G_LIST
+# define G_LIST G_ARRAY
+#endif /* !G_LIST */
 
 #ifndef CvCONST_on
 # undef newCONSTSUB
@@ -610,14 +614,14 @@ static void xs_getaddrinfo(pTHX_ CV *cv)
 
 	SvGETMAGIC(host);
 	if(SvOK(host)) {
-		hostname = SvPV_nomg(host, len);
+		hostname = SvPVbyte_nomg(host, len);
 		if (!len)
 			hostname = NULL;
 	}
 
 	SvGETMAGIC(service);
 	if(SvOK(service)) {
-		servicename = SvPV_nomg(service, len);
+		servicename = SvPVbyte_nomg(service, len);
 		if (!len)
 			servicename = NULL;
 	}
@@ -729,8 +733,13 @@ static void xs_getnameinfo(pTHX_ CV *cv)
 #endif
 
 	err = getnameinfo((struct sockaddr *)sa, addr_len,
-			want_host ? host : NULL, want_host ? sizeof(host) : 0,
-			want_serv ? serv : NULL, want_serv ? sizeof(serv) : 0,
+#ifdef OS390    /* This OS requires both parameters to be non-NULL */
+			host, sizeof(host),
+			serv, sizeof(serv),
+#else
+                        want_host ? host : NULL, want_host ? sizeof(host) : 0,
+                        want_serv ? serv : NULL, want_serv ? sizeof(serv) : 0,
+#endif
 			flags);
 
 	Safefree(sa);
@@ -764,20 +773,33 @@ inet_aton(host)
 	char *	host
 	CODE:
 	{
+#ifdef HAS_GETADDRINFO
+	struct addrinfo *res;
+	struct addrinfo hints = {0};
+	hints.ai_family = AF_INET;
+	if (!getaddrinfo(host, NULL, &hints, &res)) {
+		ST(0) = sv_2mortal(newSVpvn(
+			(char *)&(((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr),
+			4));
+		freeaddrinfo(res);
+		XSRETURN(1);
+	}
+#else
 	struct in_addr ip_address;
 	struct hostent * phe;
-
 	if ((*host != '\0') && inet_aton(host, &ip_address)) {
 		ST(0) = sv_2mortal(newSVpvn((char *)&ip_address, sizeof(ip_address)));
 		XSRETURN(1);
 	}
 #ifdef HAS_GETHOSTBYNAME
+	/* gethostbyname is not thread-safe */
 	phe = gethostbyname(host);
 	if (phe && phe->h_addrtype == AF_INET && phe->h_length == 4) {
 		ST(0) = sv_2mortal(newSVpvn((char *)phe->h_addr, phe->h_length));
 		XSRETURN(1);
 	}
-#endif
+#endif /* HAS_GETHOSTBYNAME */
+#endif /* HAS_GETADDRINFO */
 	XSRETURN_UNDEF;
 	}
 
@@ -794,10 +816,10 @@ inet_ntoa(ip_address_sv)
 	ip_address = SvPVbyte(ip_address_sv, addrlen);
 	if (addrlen == sizeof(addr) || addrlen == 4)
 		addr.s_addr =
-		    (ip_address[0] & 0xFF) << 24 |
-		    (ip_address[1] & 0xFF) << 16 |
-		    (ip_address[2] & 0xFF) <<  8 |
-		    (ip_address[3] & 0xFF);
+		    (unsigned long)(ip_address[0] & 0xFF) << 24 |
+		    (unsigned long)(ip_address[1] & 0xFF) << 16 |
+		    (unsigned long)(ip_address[2] & 0xFF) <<  8 |
+		    (unsigned long)(ip_address[3] & 0xFF);
 	else
 		croak("Bad arg length for %s, length is %" UVuf
                       ", should be %" UVuf,
@@ -843,7 +865,7 @@ pack_sockaddr_un(pathname)
 
 	Zero(&sun_ad, sizeof(sun_ad), char);
 	sun_ad.sun_family = AF_UNIX;
-	pathname_pv = SvPV(pathname,len);
+	pathname_pv = SvPVbyte(pathname,len);
 	if (len > sizeof(sun_ad.sun_path)) {
 	    warn("Path length (%" UVuf ") is longer than maximum supported length"
 	         " (%" UVuf ") and will be truncated",
@@ -910,9 +932,9 @@ unpack_sockaddr_un(sun_sv)
 	if (!SvOK(sun_sv))
 	    croak("Undefined address for %s", "Socket::unpack_sockaddr_un");
 	sun_ad = SvPVbyte(sun_sv,sockaddrlen);
-#   if defined(__linux__) || defined(HAS_SOCKADDR_SA_LEN)
-	/* On Linux or *BSD sockaddrlen on sockets returned by accept, recvfrom,
-	   getpeername and getsockname is not equal to sizeof(addr). */
+#   if defined(__linux__) || defined(__CYGWIN__) || defined(HAS_SOCKADDR_SA_LEN)
+	/* On Linux, Cygwin or *BSD sockaddrlen on sockets returned by accept,
+	 * recvfrom, getpeername and getsockname is not equal to sizeof(addr). */
 	if (sockaddrlen < sizeof(addr)) {
 	  Copy(sun_ad, &addr, sockaddrlen, char);
 	  Zero(((char*)&addr) + sockaddrlen, sizeof(addr) - sockaddrlen, char);
@@ -974,8 +996,12 @@ pack_sockaddr_in(port_sv, ip_address_sv)
 	STRLEN addrlen;
 	unsigned short port = 0;
 	char * ip_address;
-	if (SvOK(port_sv))
+	if (SvOK(port_sv)) {
 		port = SvUV(port_sv);
+		if (SvUV(port_sv) > 0xFFFF)
+			warn("Port number above 0xFFFF, will be truncated to %d for %s",
+				port, "Socket::pack_sockaddr_in");
+	}
 	if (!SvOK(ip_address_sv))
 		croak("Undefined address for %s", "Socket::pack_sockaddr_in");
 	if (DO_UTF8(ip_address_sv) && !sv_utf8_downgrade(ip_address_sv, 1))
@@ -1026,7 +1052,7 @@ unpack_sockaddr_in(sin_sv)
 	}
 	ip_address_sv = newSVpvn((char *)&addr.sin_addr, sizeof(addr.sin_addr));
 
-	if(GIMME_V == G_ARRAY) {
+	if(GIMME_V == G_LIST) {
 	    EXTEND(SP, 2);
 	    mPUSHi(ntohs(addr.sin_port));
 	    mPUSHs(ip_address_sv);
@@ -1049,8 +1075,12 @@ pack_sockaddr_in6(port_sv, sin6_addr, scope_id=0, flowinfo=0)
 	struct sockaddr_in6 sin6;
 	char * addrbytes;
 	STRLEN addrlen;
-	if (SvOK(port_sv))
+	if (SvOK(port_sv)) {
 		port = SvUV(port_sv);
+		if (SvUV(port_sv) > 0xFFFF)
+			warn("Port number above 0xFFFF, will be truncated to %d for %s",
+				port, "Socket::pack_sockaddr_in6");
+	}
 	if (!SvOK(sin6_addr))
 		croak("Undefined address for %s", "Socket::pack_sockaddr_in6");
 	if (DO_UTF8(sin6_addr) && !sv_utf8_downgrade(sin6_addr, 1))
@@ -1106,7 +1136,7 @@ unpack_sockaddr_in6(sin6_sv)
 		      "Socket::unpack_sockaddr_in6", sin6.sin6_family, AF_INET6);
 	ip_address_sv = newSVpvn((char *)&sin6.sin6_addr, sizeof(sin6.sin6_addr));
 
-	if(GIMME_V == G_ARRAY) {
+	if(GIMME_V == G_LIST) {
 	    EXTEND(SP, 4);
 	    mPUSHi(ntohs(sin6.sin6_port));
 	    mPUSHs(ip_address_sv);
@@ -1145,7 +1175,7 @@ inet_ntop(af, ip_address_sv)
 	if (DO_UTF8(ip_address_sv) && !sv_utf8_downgrade(ip_address_sv, 1))
 		croak("Wide character in %s", "Socket::inet_ntop");
 
-	ip_address = SvPV(ip_address_sv, addrlen);
+	ip_address = SvPVbyte(ip_address_sv, addrlen);
 
 	switch(af) {
 	  case AF_INET:

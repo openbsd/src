@@ -5,17 +5,26 @@ use warnings;
 
 use base 'TAP::Object';
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
 
-my $ESCAPE_CHAR = qr{ [ \x00-\x1f \" ] }x;
+                             # No EBCDIC support on early perls
+*from_native = (ord "A" == 65 || $] < 5.008)
+             ? sub { return shift }
+             : sub { utf8::native_to_unicode(shift) };
+
+my $ESCAPE_CHAR = qr{ [ [:cntrl:] \" ] }x;
 my $ESCAPE_KEY  = qr{ (?: ^\W ) | $ESCAPE_CHAR }x;
 
-my @UNPRINTABLE = qw(
-  z    x01  x02  x03  x04  x05  x06  a
-  x08  t    n    v    f    r    x0e  x0f
-  x10  x11  x12  x13  x14  x15  x16  x17
-  x18  x19  x1a  e    x1c  x1d  x1e  x1f
-);
+my @UNPRINTABLE;
+$UNPRINTABLE[$_] = sprintf("x%02x", from_native($_)) for 0 .. ord(" ") - 1;
+$UNPRINTABLE[ord "\0"] = 'z';
+$UNPRINTABLE[ord "\a"] = 'a';
+$UNPRINTABLE[ord "\t"] = 't';
+$UNPRINTABLE[ord "\n"] = 'n';
+$UNPRINTABLE[ord "\cK"] = 'v';
+$UNPRINTABLE[ord "\f"] = 'f';
+$UNPRINTABLE[ord "\r"] = 'r';
+$UNPRINTABLE[ord "\e"] = 'e';
 
 # new() implementation supplied by TAP::Object
 
@@ -76,7 +85,7 @@ sub _enc_scalar {
     if ( $val =~ /$rule/ ) {
         $val =~ s/\\/\\\\/g;
         $val =~ s/"/\\"/g;
-        $val =~ s/ ( [\x00-\x1f] ) / '\\' . $UNPRINTABLE[ ord($1) ] /gex;
+        $val =~ s/ ( [[:cntrl:]] ) / '\\' . $UNPRINTABLE[ ord($1) ] /gex;
         return qq{"$val"};
     }
 
@@ -146,7 +155,7 @@ TAP::Parser::YAMLish::Writer - Write YAMLish data
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =head1 SYNOPSIS
 

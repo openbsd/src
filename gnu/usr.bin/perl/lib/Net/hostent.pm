@@ -2,7 +2,7 @@ package Net::hostent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.02';
+our $VERSION = '1.03';
 our (@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 our (
       $h_name, @h_aliases,
@@ -58,13 +58,14 @@ sub gethostbyaddr ($;$) {
 } 
 
 sub gethost($) {
-    if ($_[0] =~ /^\d+(?:\.\d+(?:\.\d+(?:\.\d+)?)?)?$/) {
-	require Socket;
-	&gethostbyaddr(Socket::inet_aton(shift));
+    my $addr = shift;
+    if ($addr =~ /^\d+(?:\.\d+(?:\.\d+(?:\.\d+)?)?)?$/) {
+       require Socket;
+       &gethostbyaddr(Socket::inet_aton($addr));
     } else {
-	&gethostbyname;
-    } 
-} 
+       &gethostbyname($addr);
+    }
+}
 
 1;
 __END__

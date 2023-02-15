@@ -10,8 +10,8 @@ is at L<https://github.com/Perl/perl5/blob/blead/Porting/todo.pod>.
 The tasks we think are smaller or easier are listed first. Anyone is welcome
 to work on any of these, but it's a good idea to first contact
 I<perl5-porters@perl.org> to avoid duplication of effort, and to learn from
-any previous attempts. By all means contact a pumpking privately first if you
-prefer.
+any previous attempts. By all means contact the Steering Council privately
+first if you prefer.
 
 Whilst patches to make the list shorter are most welcome, ideas to add to
 the list are also encouraged. Check the perl5-porters archives for past
@@ -77,7 +77,7 @@ automated with a bit of perl, specifically the generation of
 
 =back
 
-See F<Porting/how_to_write_a_perldelta.pod> for details.
+See L<how_to_write_a_perldelta> for details.
 
 =head2 Make Schwern poorer
 
@@ -486,7 +486,7 @@ Natively 64-bit systems need neither -Duse64bitint nor -Duse64bitall.
 On these systems, it might be the default compilation mode, and there
 is currently no guarantee that passing no use64bitall option to the
 Configure process will build a 32bit perl. Implementing -Duse32bit*
-options would be nice for perl 5.32.1.
+options would be nice for perl 5.36.0.
 
 =head2 Profile Perl - am I hot or not?
 
@@ -760,7 +760,7 @@ L</"Virtualize operating system access">.
 Currently the %ENV entries are always byte strings.
 See L</"Virtualize operating system access">.
 
-(See RT ticket #113536 for information on Win32's handling of %ENV,
+(See github issue gh12161 for information on Win32's handling of %ENV,
 which was fixed to work with native ANSI codepage characters in the
 environment, but still doesn't work with other characters outside of
 that codepage present in the environment.)
@@ -943,8 +943,8 @@ This does not:
     $ perl -we 'my $pie = 42'
 
 Logically all lexicals used only once should warn, if the user asks for
-warnings.  An unworked RT ticket (#5087) has been open for almost seven
-years for this discrepancy.
+warnings.  An unworked ticket (gh3073) was open for many years for this
+discrepancy.
 
 =head2 state variable initialization in list context
 
@@ -996,9 +996,9 @@ demonstrated.
 =head2 C</w> regex modifier
 
 That flag would enable to match whole words, and also to interpolate
-arrays as alternations. With it, C</P/w> would be roughly equivalent to:
+arrays as alternations. With it, C<m/P/w> would be roughly equivalent to:
 
-    do { local $"='|'; /\b(?:P)\b/ }
+    do { local $"='|'; m/\b(?:P)\b/ }
 
 See
 L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2007-01/msg00400.html>
@@ -1165,12 +1165,6 @@ combines the code in pp_entersub, pp_leavesub.  This should probably
 be done 1st in XS, and using B::Generate to patch the new OP into the
 optrees.
 
-=head2 Add C<0odddd>
-
-It has been proposed that octal constants be specifiable through the syntax
-C<0oddddd>, parallel to the existing construct to specify hex constants
-C<0xddddd>
-
 =head2 Revisit the regex super-linear cache code
 
 Perl executes regexes using the traditional backtracking algorithm, which
@@ -1189,7 +1183,7 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2013-01/msg00339.html>
 =head1 Big projects
 
 Tasks that will get your name mentioned in the description of the "Highlights
-of 5.32.1"
+of 5.36.0"
 
 =head2 make ithreads more robust
 

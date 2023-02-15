@@ -10,9 +10,8 @@ plan(36);
 
 $TST = 'TST';
 
-$Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'NetWare' or $^O eq 'dos' or
-              $^O eq 'os2' or $^O eq 'cygwin' or
-              $^O =~ /^uwin/);
+$Is_Dosish = ($^O eq 'MSWin32' or
+              $^O eq 'os2' or $^O eq 'cygwin');
 
 open($TST, 'harness') || (die "Can't open harness");
 binmode $TST if $Is_Dosish;
@@ -55,7 +54,7 @@ ok($., "current line number \$. is not null");
 
 $curline = $.;
 open(OTHER, 'harness') || (die "Can't open harness: $!");
-binmode OTHER if (($^O eq 'MSWin32') || ($^O eq 'NetWare'));
+binmode OTHER if ($^O eq 'MSWin32');
 
 {
     local($.);

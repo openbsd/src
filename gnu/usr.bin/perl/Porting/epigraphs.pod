@@ -17,6 +17,230 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.35.11 - Marcel Allain and Pierre Souvestre, "Fantômas"
+
+L<Announced on 2022-04-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2022/04/msg263644.html>
+
+"Fantômas."
+  "What did you say?"
+  "I said: Fantômas."
+  "And what does that mean?"
+  "Nothing. . . . Everything!"
+  "But what is it?"
+  "Nobody. . . . And yet, yes, it is somebody!"
+  "And what does the somebody do?"
+  "Spreads terror!"
+
+=head2 v5.35.10 - John Connolly, The Killing Kind
+
+L<Announced on 2022-03-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2022/03/msg263388.html>
+
+Tante Marie knew the nature of this world. She roamed through it, saw it
+for what it was, and understood her place in it, her responsibility to
+those who dwelt within it and beyond. Now, slowly, I too have begun to
+understand, to recognize a duty to the rest, to those whom I have never
+known as much as to those whom I have loved. The nature of humanity, its
+essence, is to feel another's pain as one's own, and to act to take that
+pain away. There is a nobility in compassion, a beauty in empathy,
+a grace in forgiveness.
+
+=head2 v5.35.9 - Sten Nadolny, The discovery of slowness
+
+L<Announced on 2022-02-20 by Renee Baecker|https://www.nntp.perl.org/group/perl.perl5.porters/2022/02/msg262928.html>
+
+"John's eyes and ears," Dr. Orme wrote to the captain,
+"retain every impression for a peculiarly long time. His apparent
+slowness of mind and his inertia are nothing but the result of
+exaggerated care taken by his brain in contemplating every kind
+of detail. His enormous patience..." He crossed out the last phrase.
+
+=head2 v5.35.8 - Miguel de Cervantes Saavedra, Don Quijote
+
+L<Announced on 2022-01-20 by Nicolas R|https://www.nntp.perl.org/group/perl.perl5.porters/2022/01/msg262478.html>
+
+Finally, from so little sleeping and so much reading,
+his brain dried up and he went completely out of his mind.
+
+=head2 v5.35.7 - Charles Dickens, Bleak House
+
+L<Announced on 2021-12-20 by Neil Bowers|https://www.nntp.perl.org/group/perl.perl5.porters/2021/12/msg262290.html>
+
+There were two classes of charitable people:
+one, the people who did a little and made a great deal of noise;
+the other, the people who did a great deal and made no noise at all.
+
+=head2 v5.35.6 - Hannu Rajaniemi, The Quantum Thief
+
+L<Announced on 2021-11-22 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2021/11/msg261958.html>
+
+"I have to say you were very clever. The chocolate tasted subtly wrong.
+He is in the dress, isn't he? His mind. You used the fabber to put it
+there. They had just finished the original: you melted it and made a
+copy."
+
+=head2 v5.35.5 - Frank Herbert, Heretics of Dune
+
+L<Announced on 2021-10-21 by Leon Timmermans|https://www.nntp.perl.org/group/perl.perl5.porters/2021/10/msg261779.html>
+
+Again, she sent the light beam along the mounded melange. Her attention was
+drawn to a strip of the wall above the spice. More words! Still in Chakobsa,
+written with a cutter in a fine flowing script, there was another message:
+  "A REVERENT MOTHER WILL READ MY WORDS"
+Something cold settled in Odrade's guts. She moved to her right with the light,
+plowing through an empire's ransom in melange. There was more to the message.
+  "I BEQUEATH TO YOU MY FEAR AND LONELINESS. TO YOU I GIVE THE CERTAINTY THAT
+THE BODY AND SOUL OF THE BENE GESSERIT WILL MEET THE SAME FATE AS ALL OTHER
+BODIES AND ALL OTHER SOULS".
+Another paragraph of the message beckoned to the right of this one. She plowed
+through the cloying melange and stopped to read.
+  "WHAT IS SURVIVAL IF YOU DO NOT SURVIVE AS A WHOLE? ASK THE BENE TLEILAX THAT!
+WHAT IF YOU NO LONGER HEAR THE MUSIC OF LIFE? MEMORIES ARE NOT ENOUGH UNLESS
+THEY CALL YOU TO NOBLE PURPOSE!"
+
+=head2 v5.35.4 - Tom Scharpling, "Comet", from Steven Universe
+
+L<Announced on 2021-09-20 by Matthew Horsfall|https://www.nntp.perl.org/group/perl.perl5.porters/2021/09/msg261577.html>
+
+  Some say I have no direction
+  That I'm a light-speed distraction
+  That's a knee-jerk reaction
+
+  Still, this is the final frontier
+  Everything is so clear
+  To my destiny I steer
+
+  This life in the stars is all I've ever known
+  Stars and stardust in infinite space is my only home
+
+  But the moment that I hit the stage
+  Thousands of voices are calling my name
+  And I know in my heart it's been worth it all of the while
+
+  And as my albums fly off of the shelves
+  Handing out autographed pics of myself
+  This life I chose isn't easy but sure is one heck of a ride
+
+  At the moment that I hit the stage
+  I hear the universe calling my name
+  And I know deep down in my heart I have nothing to fear
+
+  And as the solar wind blows through my hair,
+  Knowing I have so much more left to share
+  A wandering spirit who's tearing its way through the cold atmosphere
+
+  I'll fly like a comet
+  Soar like a comet
+  Crash like a comet
+  I'm just a comet
+
+=head2 v5.35.3 - Logan Pearsall Smith
+
+L<Announced on 2021-08-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2021/08/msg261393.html>
+
+The test of a vocation is the love of the drudgery it involves.
+
+=head2 v5.35.2 - Freeman Dyson
+
+L<Announced on 2021-07-23 by Neil Bowers|https://www.nntp.perl.org/group/perl.perl5.porters/2021/07/msg260926.html>
+
+There is a great satisfaction in building good tools for other people to use.
+
+=head2 v5.35.1 - Sam Schube
+
+L<Announced on 2021-06-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2021/06/msg260592.html>
+
+His first marriage ended. A new relationship with an old friend
+straightened him out. “I realized that I can't live like I was and be
+with Naomi,” he said. “I wanted to become a better man for her. At
+first. Then it was for myself too.” He started seeing a therapist. There
+were limits: He told her he wasn't interested in exploring the part of
+him that wanted to do stunts. “I know that needs looking at,” he said.
+“But I didn't want to break the machine.”
+
+It wasn't just about jeopardizing his livelihood, he explained. Doing
+stunts “was exciting. It's something that I did with my friends. And I
+was decent at it.” It wasn't so much about the stunts themselves, which
+were terrifying, as about how completing them made him feel. He loved,
+he said, “the exhilaration and relief, once you get on the other side of
+the stunt. Or when you come to. You wake up, you're like, ‘Oh, was that
+good?’ And they're like, ‘That was great.’ You got a good bit when
+there's seven people standing over you, snapping their fingers.” When we
+spoke, he still hadn't broached the topic in therapy. “I'll talk about
+it eventually,” he said. “It's not something I need to know this second.”
+
+=head2 v5.35.0 - Miguel de Unamuno
+
+L<Announced on 2021-05-20 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2021/05/msg260116.html>
+
+We should try to be the parents of our future rather than the offspring of our
+past.
+
+=head2 v5.34.1 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": Limericks published in "More Nonsense"
+
+L<Announced on 2022-03-13 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2022/03/msg263342.html>
+
+  There was a Young Lady whose nose,
+  Continually prospers and grows;
+  When it grew out of sight, she exclaimed in a fright,
+  'Oh! Farewell to the end of my nose!'
+
+=head2 v5.34.1-RC2 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": Limericks for the 1846 and 1855 editions of "A Book of Nonsense"
+
+L<Announced on 2022-03-06 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2022/03/msg263261.html>
+
+  There was an Old Lady whose folly,
+  Induced her to sit in a holly;
+  Whereon by a thorn, her dress being torn,
+  She quickly became melancholy.
+
+=head2 v5.34.1-RC1 - Edward Lear, ed. Vivien Noakes, "The Complete Nonsense and Other Verse": Additional limericks for the 1861 edition of "A Book of Nonsense"
+
+L<Announced on 2022-02-27 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2022/02/msg263129.html>
+
+  There was an Old Person whose habits,
+  Induced him to feed upon Rabbits;
+  When he'd eaten eighteen, he turned perfectly green,
+  Upon which he relinquished those habits.
+
+=head2 v5.34.0 - Aberjhani
+
+L<Announced on 2021-05-20 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2021/05/msg260110.html>
+
+Our greatest power as nations and individuals is not the ability to employ assault weapons, suicide bombers, and drones to destroy each other.
+The greater more creative powers with which we may arm ourselves are grace and compassion sufficient enough to love and save each other.
+
+=head2 v5.34.0-RC2 - Nelson Mandela, The Long Walk to Freedom
+
+L<Announced on 2021-05-15 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2021/05/msg260066.html>
+
+No one is born hating another person because of the color of his skin, or his background, or his religion. People must learn to hate, and if they can learn to hate, they can be taught to love, for love comes more naturally to the human heart than its opposite.
+
+=head2 v5.34.0-RC1 - Paul Tremblay, The Cabin at the End of the World
+
+L<Announced on 2021-05-04 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2021/05/msg260029.html>
+
+He’d irrationally hoped he could somehow put off indefinitely the future day on which she would recognize cruelty, ignorance, and injustice were the struts and pillars of the social order, as unavoidable and inevitable as the weather.
+
+=head2 v5.33.9 - Abraham Lincoln
+
+L<Announced on 2021-04-20 by toddr|https://www.nntp.perl.org/group/perl.perl5.porters/2021/04/msg259954.html>
+
+Seven minutes ago... we, your forefathers, were brought forth upon a most excellent adventure conceived by our new friends, Bill... and Ted. These two great gentlemen are dedicated to a proposition which was true in my time, just as it's true today. Be excellent to each other!
+
+=head2 v5.33.8 - David Bowie, "Heroes"
+
+L<Announced on 2021-03-20 by atoomic|https://www.nntp.perl.org/group/perl.perl5.porters/2021/03/msg259358.html>
+
+Tomorrow belongs to those who can hear it coming.
+
+=head2 v5.33.7 - Johann Wolfgang von Goethe, The Sorrows of Young Werther
+
+L<Announced on 2021-02-20 by Renée Bäcker|https://www.nntp.perl.org/group/perl.perl5.porters/2021/02/msg259169.html>
+
+The human race is a monotonous affair. Most people spend the greatest part of
+their time working in order to live, and what little freedom remains so fills
+them with fear that they seek out any and every means to be rid of it.
+
 =head2 v5.33.6 - Edward R. Murrow
 
 L<Announced on 2021-01-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2021/01/msg258843.html>
@@ -88,6 +312,21 @@ L<Announced on 2020-08-20 by Karen Etheridge|https://www.nntp.perl.org/group/per
 L<Announed on 2020-07-17 by Sawyer X|https://www.nntp.perl.org/group/perl.perl5.porters/2020/07/msg258033.html>
 
   The man who moves a mountain begins by carrying away small stones.
+
+=head2 v5.32.1 - Mikhail Bulgakov, trans. Michael Glenny, "The Master and Margarita"
+
+L<Announced on 2021-01-23 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2021/01/msg258868.html>
+
+As the warning bells rang, inquisitive people were peeping into the star
+dressing room.  Among them were jugglers in bright robes and turbans, a
+roller-skater in a knitted cardigan, a comedian with a powdered white
+face and a make-up man.  The celebrated guest artiste amazed everyone
+with his unusually long, superbly cut tail coat and by wearing a black
+domino.  Even more astounding were the black magician's two companions:
+a tall man in checks with an unsteady pince-nez and a fat black cat
+which walked into the dressing room on its hind legs and casually sat
+down on the divan, blinking in the light of the unshaded lamps round the
+make-up mirror.
 
 =head2 v5.32.1-RC1 - Mikhail Bulgakov, trans. Michael Glenny, "The Heart of a Dog"
 

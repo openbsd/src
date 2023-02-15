@@ -7,10 +7,6 @@
 #
 
 sub BEGIN {
-    if ($] < 5.006) {
-	print "1..0 # Skip: no utf8 support\n";
-	exit 0;
-    }
     unshift @INC, 't';
     unshift @INC, 't/compat' if $] < 5.006002;
     require Config; import Config;

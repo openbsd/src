@@ -7,7 +7,8 @@ use File::Basename;
 use Test::More 0.88;
 use lib 't';
 use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
-  hashify connect_args set_socket_source sort_headers $CRLF $LF];
+  hashify connect_args clear_socket_source set_socket_source sort_headers
+  $CRLF $LF];
 
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
@@ -42,6 +43,7 @@ for my $file ( dir_list("corpus", qr/^get/ ) ) {
   my $req_fh = tmpfile();
 
   my $http = HTTP::Tiny->new(keep_alive => 0, %new_args);
+  clear_socket_source();
   set_socket_source($req_fh, $res_fh);
 
   (my $url_basename = $url) =~ s{.*/}{};

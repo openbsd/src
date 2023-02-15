@@ -21,10 +21,9 @@ to work correctly, with the C<#!> adjusted to work on your system:
 
  #!/usr/bin/env perl
 
+ use v5.36;     # or later to get "unicode_strings" feature,
+                #   plus strict, warnings
  use utf8;      # so literals and identifiers can be in UTF-8
- use v5.12;     # or later to get "unicode_strings" feature
- use strict;    # quote strings, declare variables
- use warnings;  # on by default
  use warnings  qw(FATAL utf8);    # fatalize encoding glitches
  use open      qw(:std :encoding(UTF-8)); # undeclared streams in UTF-8
  use charnames qw(:full :short);  # unneeded in v5.16
@@ -696,17 +695,15 @@ When run, the following program produces this nicely aligned output:
     寿司............... €9.99
     包子............... €7.50
 
-Here's that program; tested on v5.14.
+Here's that program.
 
  #!/usr/bin/env perl
  # umenu - demo sorting and printing of Unicode food
  #
  # (obligatory and increasingly long preamble)
  #
+ use v5.36;
  use utf8;
- use v5.14;                       # for locale sorting
- use strict;
- use warnings;
  use warnings  qw(FATAL utf8);    # fatalize encoding faults
  use open      qw(:std :encoding(UTF-8)); # undeclared streams in UTF-8
  use charnames qw(:full :short);  # unneeded in v5.16
@@ -718,11 +715,6 @@ Here's that program; tested on v5.14.
 
  # cpan modules
  use Unicode::GCString;           # from CPAN
-
- # forward defs
- sub pad($$$);
- sub colwidth(_);
- sub entitle(_);
 
  my %price = (
      "γύρος"             => 6.50, # gyros
@@ -747,7 +739,7 @@ Here's that program; tested on v5.14.
      "お好み焼き"        => 8.00, # okonomiyaki, Japanese
  );
 
- my $width = 5 + max map { colwidth } keys %price;
+ my $width = 5 + max map { colwidth($_) } keys %price;
 
  # So the Asian stuff comes out in an order that someone
  # who reads those scripts won't freak out over; the
@@ -759,18 +751,15 @@ Here's that program; tested on v5.14.
      printf " €%.2f\n", $price{$item};
  }
 
- sub pad($$$) {
-     my($str, $width, $padchar) = @_;
+ sub pad ($str, $width, $padchar) {
      return $str . ($padchar x ($width - colwidth($str)));
  }
 
- sub colwidth(_) {
-     my($str) = @_;
+ sub colwidth ($str) {
      return Unicode::GCString->new($str)->columns;
  }
 
- sub entitle(_) {
-     my($str) = @_;
+ sub entitle ($str) {
      $str =~ s{ (?=\pL)(\S)     (\S*) }
               { ucfirst($1) . lc($2)  }xge;
      return $str;

@@ -215,7 +215,7 @@ static struct perlos2_state_t {
 
 const Perl_PFN * const pExtFCN = (Perl_po2()->po2_ExtFCN);
 
-#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+#if defined(USE_ITHREADS)
 
 typedef void (*emx_startroutine)(void *);
 typedef void* (*pthreads_startroutine)(void *);
@@ -246,7 +246,7 @@ pthreads_state_string(enum pthreads_state state)
 {
   if (state < 0 || state >= sizeof(pthreads_states)/sizeof(*pthreads_states)) {
     snprintf(pthreads_state_buf, sizeof(pthreads_state_buf),
-	     "unknown thread state %d", (int)state);
+             "unknown thread state %d", (int)state);
     return pthreads_state_buf;
   }
   return pthreads_states[state];
@@ -269,53 +269,53 @@ pthread_join(perl_os_thread tid, void **status)
 {
     MUTEX_LOCK(&start_thread_mutex);
     if (tid < 1 || tid >= thread_join_count) {
-	MUTEX_UNLOCK(&start_thread_mutex);
-	if (tid != pthread_not_existant)
-	    Perl_croak_nocontext("panic: join with a thread with strange ordinal %d", (int)tid);
-	Perl_warn_nocontext("panic: join with a thread which could not start");
-	*status = 0;
-	return 0;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        if (tid != pthread_not_existant)
+            Perl_croak_nocontext("panic: join with a thread with strange ordinal %d", (int)tid);
+        Perl_warn_nocontext("panic: join with a thread which could not start");
+        *status = 0;
+        return 0;
     }
     switch (thread_join_data[tid].state) {
     case pthreads_st_exited:
-	thread_join_data[tid].state = pthreads_st_exited_waited;
-	*status = thread_join_data[tid].status;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	COND_SIGNAL(&thread_join_data[tid].cond);    
-	break;
+        thread_join_data[tid].state = pthreads_st_exited_waited;
+        *status = thread_join_data[tid].status;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        COND_SIGNAL(&thread_join_data[tid].cond);    
+        break;
     case pthreads_st_waited:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("join with a thread with a waiter");
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("join with a thread with a waiter");
+        break;
     case pthreads_st_norun:
     {
-	int state = (int)thread_join_data[tid].status;
+        int state = (int)thread_join_data[tid].status;
 
-	thread_join_data[tid].state = pthreads_st_none;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("panic: join with a thread which could not run"
-			     " due to attempt of tid reuse (state='%s')",
-			     pthreads_state_string(state));
-	break;
+        thread_join_data[tid].state = pthreads_st_none;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("panic: join with a thread which could not run"
+                             " due to attempt of tid reuse (state='%s')",
+                             pthreads_state_string(state));
+        break;
     }
     case pthreads_st_run:
     {
-	perl_cond cond;
+        perl_cond cond;
 
-	thread_join_data[tid].state = pthreads_st_waited;
-	thread_join_data[tid].status = (void *)status;
-	COND_INIT(&thread_join_data[tid].cond);
-	cond = thread_join_data[tid].cond;
-	COND_WAIT(&thread_join_data[tid].cond, &start_thread_mutex);
-	COND_DESTROY(&cond);
-	MUTEX_UNLOCK(&start_thread_mutex);
-	break;
+        thread_join_data[tid].state = pthreads_st_waited;
+        thread_join_data[tid].status = (void *)status;
+        COND_INIT(&thread_join_data[tid].cond);
+        cond = thread_join_data[tid].cond;
+        COND_WAIT(&thread_join_data[tid].cond, &start_thread_mutex);
+        COND_DESTROY(&cond);
+        MUTEX_UNLOCK(&start_thread_mutex);
+        break;
     }
     default:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("panic: join with thread in unknown thread state: '%s'", 
-	      pthreads_state_string(thread_join_data[tid].state));
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("panic: join with thread in unknown thread state: '%s'", 
+              pthreads_state_string(thread_join_data[tid].state));
+        break;
     }
     return 0;
 }
@@ -327,9 +327,9 @@ typedef struct {
 } pthr_startit;
 
 /* The lock is used:
-	a) Since we temporarily usurp the caller interp, so malloc() may
-	   use it to decide on debugging the call;
-	b) Since *args is on the caller's stack.
+        a) Since we temporarily usurp the caller interp, so malloc() may
+           use it to decide on debugging the call;
+        b) Since *args is on the caller's stack.
  */
 void
 pthread_startit(void *arg1)
@@ -341,40 +341,40 @@ pthread_startit(void *arg1)
     int state;
 
     if (tid <= 1) {
-	/* Can't croak, the setjmp() is not in scope... */
-	char buf[80];
+        /* Can't croak, the setjmp() is not in scope... */
+        char buf[80];
 
-	snprintf(buf, sizeof(buf),
-		 "panic: thread with strange ordinal %d created\n\r", tid);
-	write(2,buf,strlen(buf));
-	MUTEX_UNLOCK(&start_thread_mutex);
-	return;
+        snprintf(buf, sizeof(buf),
+                 "panic: thread with strange ordinal %d created\n\r", tid);
+        write(2,buf,strlen(buf));
+        MUTEX_UNLOCK(&start_thread_mutex);
+        return;
     }
     /* Until args.sub resets it, makes debugging Perl_malloc() work: */
     PERL_SET_CONTEXT(0);
     if (tid >= thread_join_count) {
-	int oc = thread_join_count;
-	
-	thread_join_count = tid + 5 + tid/5;
-	if (thread_join_data) {
-	    Renew(thread_join_data, thread_join_count, thread_join_t);
-	    Zero(thread_join_data + oc, thread_join_count - oc, thread_join_t);
-	} else {
-	    Newxz(thread_join_data, thread_join_count, thread_join_t);
-	}
+        int oc = thread_join_count;
+        
+        thread_join_count = tid + 5 + tid/5;
+        if (thread_join_data) {
+            Renew(thread_join_data, thread_join_count, thread_join_t);
+            Zero(thread_join_data + oc, thread_join_count - oc, thread_join_t);
+        } else {
+            Newxz(thread_join_data, thread_join_count, thread_join_t);
+        }
     }
     if (thread_join_data[tid].state != pthreads_st_none) {
-	/* Can't croak, the setjmp() is not in scope... */
-	char buf[80];
+        /* Can't croak, the setjmp() is not in scope... */
+        char buf[80];
 
-	snprintf(buf, sizeof(buf),
-		 "panic: attempt to reuse thread id %d (state='%s')\n\r",
-		 tid, pthreads_state_string(thread_join_data[tid].state));
-	write(2,buf,strlen(buf));
-	thread_join_data[tid].status = (void*)thread_join_data[tid].state;
-	thread_join_data[tid].state = pthreads_st_norun;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	return;
+        snprintf(buf, sizeof(buf),
+                 "panic: attempt to reuse thread id %d (state='%s')\n\r",
+                 tid, pthreads_state_string(thread_join_data[tid].state));
+        write(2,buf,strlen(buf));
+        thread_join_data[tid].status = (void*)thread_join_data[tid].state;
+        thread_join_data[tid].state = pthreads_st_norun;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        return;
     }
     thread_join_data[tid].state = pthreads_st_run;
     /* Now that we copied/updated the guys, we may release the caller... */
@@ -383,35 +383,35 @@ pthread_startit(void *arg1)
     MUTEX_LOCK(&start_thread_mutex);
     switch (thread_join_data[tid].state) {
     case pthreads_st_waited:
-	COND_SIGNAL(&thread_join_data[tid].cond);
-	thread_join_data[tid].state = pthreads_st_none;
-	*((void**)thread_join_data[tid].status) = rc;
-	break;
+        COND_SIGNAL(&thread_join_data[tid].cond);
+        thread_join_data[tid].state = pthreads_st_none;
+        *((void**)thread_join_data[tid].status) = rc;
+        break;
     case pthreads_st_detached:
-	thread_join_data[tid].state = pthreads_st_none;
-	break;
+        thread_join_data[tid].state = pthreads_st_none;
+        break;
     case pthreads_st_run:
-	/* Somebody can wait on us; cannot exit, since OS can reuse the tid
-	   and our waiter will get somebody else's status. */
-	thread_join_data[tid].state = pthreads_st_exited;
-	thread_join_data[tid].status = rc;
-	COND_INIT(&thread_join_data[tid].cond);
-	COND_WAIT(&thread_join_data[tid].cond, &start_thread_mutex);
-	COND_DESTROY(&thread_join_data[tid].cond);
-	thread_join_data[tid].state = pthreads_st_none;	/* Ready to reuse */
-	break;
+        /* Somebody can wait on us; cannot exit, since OS can reuse the tid
+           and our waiter will get somebody else's status. */
+        thread_join_data[tid].state = pthreads_st_exited;
+        thread_join_data[tid].status = rc;
+        COND_INIT(&thread_join_data[tid].cond);
+        COND_WAIT(&thread_join_data[tid].cond, &start_thread_mutex);
+        COND_DESTROY(&thread_join_data[tid].cond);
+        thread_join_data[tid].state = pthreads_st_none;	/* Ready to reuse */
+        break;
     default:
-	state = thread_join_data[tid].state;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("panic: unexpected thread state on exit: '%s'",
-			     pthreads_state_string(state));
+        state = thread_join_data[tid].state;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("panic: unexpected thread state on exit: '%s'",
+                             pthreads_state_string(state));
     }
     MUTEX_UNLOCK(&start_thread_mutex);
 }
 
 int
 pthread_create(perl_os_thread *tidp, const pthread_attr_t *attr, 
-	       void *(*start_routine)(void*), void *arg)
+               void *(*start_routine)(void*), void *arg)
 {
     dTHX;
     pthr_startit args;
@@ -424,11 +424,11 @@ pthread_create(perl_os_thread *tidp, const pthread_attr_t *attr,
     /* Test suite creates 31 extra threads;
        on machine without shared-memory-hogs this stack sizeis OK with 31: */
     *tidp = _beginthread(pthread_startit, /*stack*/ NULL, 
-			 /*stacksize*/ 4*1024*1024, (void*)&args);
+                         /*stacksize*/ 4*1024*1024, (void*)&args);
     if (*tidp == -1) {
-	*tidp = pthread_not_existant;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	return EINVAL;
+        *tidp = pthread_not_existant;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        return EINVAL;
     }
     MUTEX_LOCK(&start_thread_mutex);		/* Wait for init to proceed */
     MUTEX_UNLOCK(&start_thread_mutex);
@@ -440,45 +440,45 @@ pthread_detach(perl_os_thread tid)
 {
     MUTEX_LOCK(&start_thread_mutex);
     if (tid < 1 || tid >= thread_join_count) {
-	MUTEX_UNLOCK(&start_thread_mutex);
-	if (tid != pthread_not_existant)
-	    Perl_croak_nocontext("panic: detach of a thread with strange ordinal %d", (int)tid);
-	Perl_warn_nocontext("detach of a thread which could not start");
-	return 0;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        if (tid != pthread_not_existant)
+            Perl_croak_nocontext("panic: detach of a thread with strange ordinal %d", (int)tid);
+        Perl_warn_nocontext("detach of a thread which could not start");
+        return 0;
     }
     switch (thread_join_data[tid].state) {
     case pthreads_st_waited:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("detach on a thread with a waiter");
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("detach on a thread with a waiter");
+        break;
     case pthreads_st_run:
-	thread_join_data[tid].state = pthreads_st_detached;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	break;
+        thread_join_data[tid].state = pthreads_st_detached;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        break;
     case pthreads_st_exited:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	COND_SIGNAL(&thread_join_data[tid].cond);    
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        COND_SIGNAL(&thread_join_data[tid].cond);    
+        break;
     case pthreads_st_detached:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_warn_nocontext("detach on an already detached thread");
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_warn_nocontext("detach on an already detached thread");
+        break;
     case pthreads_st_norun:
     {
-	int state = (int)thread_join_data[tid].status;
+        int state = (int)thread_join_data[tid].status;
 
-	thread_join_data[tid].state = pthreads_st_none;
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("panic: detaching thread which could not run"
-			     " due to attempt of tid reuse (state='%s')",
-			     pthreads_state_string(state));
-	break;
+        thread_join_data[tid].state = pthreads_st_none;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("panic: detaching thread which could not run"
+                             " due to attempt of tid reuse (state='%s')",
+                             pthreads_state_string(state));
+        break;
     }
     default:
-	MUTEX_UNLOCK(&start_thread_mutex);
-	Perl_croak_nocontext("panic: detach of a thread with unknown thread state: '%s'", 
-	      pthreads_state_string(thread_join_data[tid].state));
-	break;
+        MUTEX_UNLOCK(&start_thread_mutex);
+        Perl_croak_nocontext("panic: detach of a thread with unknown thread state: '%s'", 
+              pthreads_state_string(thread_join_data[tid].state));
+        break;
     }
     return 0;
 }
@@ -490,13 +490,13 @@ os2_cond_wait(perl_cond *c, perl_mutex *m)
     int rc;
     STRLEN n_a;
     if ((rc = DosResetEventSem(*c,&n_a)) && (rc != ERROR_ALREADY_RESET))
-	Perl_rc = CheckOSError(rc), croak_with_os2error("panic: COND_WAIT-reset");
+        Perl_rc = CheckOSError(rc), croak_with_os2error("panic: COND_WAIT-reset");
     if (m) MUTEX_UNLOCK(m);					
     if (CheckOSError(DosWaitEventSem(*c,SEM_INDEFINITE_WAIT))
-	&& (rc != ERROR_INTERRUPT))
-	croak_with_os2error("panic: COND_WAIT");		
+        && (rc != ERROR_INTERRUPT))
+        croak_with_os2error("panic: COND_WAIT");		
     if (rc == ERROR_INTERRUPT)
-	errno = EINTR;
+        errno = EINTR;
     if (m) MUTEX_LOCK(m);
     return 0;
 } 
@@ -533,8 +533,8 @@ static const struct {
   {&pmwin_handle, NULL, 912},		/* WinDispatchMsg */
   {&pmwin_handle, NULL, 753},		/* WinGetLastError */
   {&pmwin_handle, NULL, 705},		/* WinCancelShutdown */
-	/* These are needed in extensions.
-	   How to protect PMSHAPI: it comes through EMX functions? */
+        /* These are needed in extensions.
+           How to protect PMSHAPI: it comes through EMX functions? */
   {&rexx_handle,    "RexxStart", 0},
   {&rexx_handle,    "RexxVariablePool", 0},
   {&rexxapi_handle, "RexxRegisterFunctionExe", 0},
@@ -549,7 +549,7 @@ static const struct {
   {&pmshapi_handle, "PRF32WRITEPROFILEDATA", 0},
 
   /* At least some of these do not work by name, since they need
-	WIN32 instead of WIN... */
+        WIN32 instead of WIN... */
 #if 0
   These were generated with
     nm I:\emx\lib\os2.a  | fgrep -f API-list | grep = > API-list-entries
@@ -646,8 +646,8 @@ loadModule(const char *modname, int fail)
     HMODULE h = (HMODULE)dlopen(modname, 0);
 
     if (!h && fail)
-	Perl_croak_nocontext("Error loading module '%s': %s", 
-			     modname, dlerror());
+        Perl_croak_nocontext("Error loading module '%s': %s", 
+                             modname, dlerror());
     return h;
 }
 
@@ -662,7 +662,7 @@ my_type()
     
     if (!(_emx_env & 0x200)) return 1; /* not OS/2. */
     if (CheckOSError(DosGetInfoBlocks(&tib, &pib))) 
-	return -1; 
+        return -1; 
     
     return (pib->pib_ultype);
 }
@@ -675,9 +675,9 @@ my_type_set(int type)
     PIB *pib;
     
     if (!(_emx_env & 0x200))
-	Perl_croak_nocontext("Can't set type on DOS"); /* not OS/2. */
+        Perl_croak_nocontext("Can't set type on DOS"); /* not OS/2. */
     if (CheckOSError(DosGetInfoBlocks(&tib, &pib))) 
-	croak_with_os2error("Error getting info blocks");
+        croak_with_os2error("Error getting info blocks");
     pib->pib_ultype = type;
 }
 
@@ -685,54 +685,54 @@ PFN
 loadByOrdinal(enum entries_ordinals ord, int fail)
 {
     if (sizeof(loadOrdinals)/sizeof(loadOrdinals[0]) != ORD_NENTRIES)
-	    Perl_croak_nocontext(
-		 "Wrong size of loadOrdinals array: expected %d, actual %d", 
-		 sizeof(loadOrdinals)/sizeof(loadOrdinals[0]), ORD_NENTRIES);
+            Perl_croak_nocontext(
+                 "Wrong size of loadOrdinals array: expected %d, actual %d", 
+                 sizeof(loadOrdinals)/sizeof(loadOrdinals[0]), ORD_NENTRIES);
     if (ExtFCN[ord] == NULL) {
-	PFN fcn = (PFN)-1;
-	APIRET rc;
+        PFN fcn = (PFN)-1;
+        APIRET rc;
 
-	if (!loadOrdinals[ord].dll->handle) {
-	    if (loadOrdinals[ord].dll->requires_pm && my_type() < 2) { /* FS */
-		char *s = getenv("PERL_ASIF_PM");
-		
-		if (!s || !atoi(s)) {
-		    /* The module will not function well without PM.
-		       The usual way to detect PM is the existence of the mutex
-		       \SEM32\PMDRAG.SEM. */
-		    HMTX hMtx = 0;
+        if (!loadOrdinals[ord].dll->handle) {
+            if (loadOrdinals[ord].dll->requires_pm && my_type() < 2) { /* FS */
+                char *s = PerlEnv_getenv("PERL_ASIF_PM");
 
-		    if (CheckOSError(DosOpenMutexSem("\\SEM32\\PMDRAG.SEM",
-						     &hMtx)))
-			Perl_croak_nocontext("Looks like we have no PM; will not load DLL %s without $ENV{PERL_ASIF_PM}",
-					     loadOrdinals[ord].dll->modname);
-		    DosCloseMutexSem(hMtx);
-		}
-	    }
-	    MUTEX_LOCK(&perlos2_state_mutex);
-	    loadOrdinals[ord].dll->handle
-		= loadModule(loadOrdinals[ord].dll->modname, fail);
-	    MUTEX_UNLOCK(&perlos2_state_mutex);
-	}
-	if (!loadOrdinals[ord].dll->handle)
-	    return 0;			/* Possible with FAIL==0 only */
-	if (CheckOSError(DosQueryProcAddr(loadOrdinals[ord].dll->handle,
-					  loadOrdinals[ord].entrypoint,
-					  loadOrdinals[ord].entryname,&fcn))) {
-	    char buf[20], *s = (char*)loadOrdinals[ord].entryname;
+                if (!s || !atoi(s)) {
+                    /* The module will not function well without PM.
+                       The usual way to detect PM is the existence of the mutex
+                       \SEM32\PMDRAG.SEM. */
+                    HMTX hMtx = 0;
 
-	    if (!fail)
-		return 0;
-	    if (!s)
-		sprintf(s = buf, "%d", loadOrdinals[ord].entrypoint);
-	    Perl_croak_nocontext(
-		 "This version of OS/2 does not support %s.%s", 
-		 loadOrdinals[ord].dll->modname, s);
-	}
-	ExtFCN[ord] = fcn;
+                    if (CheckOSError(DosOpenMutexSem("\\SEM32\\PMDRAG.SEM",
+                                                     &hMtx)))
+                        Perl_croak_nocontext("Looks like we have no PM; will not load DLL %s without $ENV{PERL_ASIF_PM}",
+                                             loadOrdinals[ord].dll->modname);
+                    DosCloseMutexSem(hMtx);
+                }
+            }
+            MUTEX_LOCK(&perlos2_state_mutex);
+            loadOrdinals[ord].dll->handle
+                = loadModule(loadOrdinals[ord].dll->modname, fail);
+            MUTEX_UNLOCK(&perlos2_state_mutex);
+        }
+        if (!loadOrdinals[ord].dll->handle)
+            return 0;			/* Possible with FAIL==0 only */
+        if (CheckOSError(DosQueryProcAddr(loadOrdinals[ord].dll->handle,
+                                          loadOrdinals[ord].entrypoint,
+                                          loadOrdinals[ord].entryname,&fcn))) {
+            char buf[20], *s = (char*)loadOrdinals[ord].entryname;
+
+            if (!fail)
+                return 0;
+            if (!s)
+                sprintf(s = buf, "%d", loadOrdinals[ord].entrypoint);
+            Perl_croak_nocontext(
+                 "This version of OS/2 does not support %s.%s", 
+                 loadOrdinals[ord].dll->modname, s);
+        }
+        ExtFCN[ord] = fcn;
     } 
     if ((long)ExtFCN[ord] == -1)
-	Perl_croak_nocontext("panic queryaddr");
+        Perl_croak_nocontext("panic queryaddr");
     return ExtFCN[ord];
 }
 
@@ -742,7 +742,7 @@ init_PMWIN_entries(void)
     int i;
 
     for (i = ORD_WinInitialize; i <= ORD_WinCancelShutdown; i++)
-	((PFN*)&PMWIN_entries)[i - ORD_WinInitialize] = loadByOrdinal(i, 1);
+        ((PFN*)&PMWIN_entries)[i - ORD_WinInitialize] = loadByOrdinal(i, 1);
 }
 
 /*****************************************************/
@@ -765,7 +765,7 @@ DeclVoidFuncByORD(endservent,  ORD_ENDSERVENT,  (void), ())
 
 /* priorities */
 static const signed char priors[] = {0, 1, 3, 2}; /* Last two interchanged,
-						     self inverse. */
+                                                     self inverse. */
 #define QSS_INI_BUFFER 1024
 
 ULONG (*pDosVerifyPidTid) (PID pid, TID tid);
@@ -778,28 +778,28 @@ get_sysinfo(ULONG pid, ULONG flags)
     PQTOPLEVEL psi;
 
     if (pid) {
-	if (!pidtid_lookup) {
-	    pidtid_lookup = 1;
-	    *(PFN*)&pDosVerifyPidTid = loadByOrdinal(ORD_DosVerifyPidTid, 0);
-	}
-	if (pDosVerifyPidTid) {	/* Warp3 or later */
-	    /* Up to some fixpak QuerySysState() kills the system if a non-existent
-	       pid is used. */
-	    if (CheckOSError(pDosVerifyPidTid(pid, 1)))
-		return 0;
+        if (!pidtid_lookup) {
+            pidtid_lookup = 1;
+            *(PFN*)&pDosVerifyPidTid = loadByOrdinal(ORD_DosVerifyPidTid, 0);
+        }
+        if (pDosVerifyPidTid) {	/* Warp3 or later */
+            /* Up to some fixpak QuerySysState() kills the system if a non-existent
+               pid is used. */
+            if (CheckOSError(pDosVerifyPidTid(pid, 1)))
+                return 0;
         }
     }
     Newx(pbuffer, buf_len, char);
     /* QSS_PROCESS | QSS_MODULE | QSS_SEMAPHORES | QSS_SHARED */
     rc = QuerySysState(flags, pid, pbuffer, buf_len);
     while (rc == ERROR_BUFFER_OVERFLOW) {
-	Renew(pbuffer, buf_len *= 2, char);
-	rc = QuerySysState(flags, pid, pbuffer, buf_len);
+        Renew(pbuffer, buf_len *= 2, char);
+        rc = QuerySysState(flags, pid, pbuffer, buf_len);
     }
     if (rc) {
-	FillOSError(rc);
-	Safefree(pbuffer);
-	return 0;
+        FillOSError(rc);
+        Safefree(pbuffer);
+        return 0;
     }
     psi = (PQTOPLEVEL)pbuffer;
     if (psi && pid && psi->procdata && pid != psi->procdata->pid) {
@@ -836,28 +836,28 @@ setpriority(int which, int pid, int val)
   if (priors[(32 - val) >> 5] + 1 == (prio >> 8)) {
       /* Do not change class. */
       return CheckOSError(DosSetPriority((pid < 0) 
-					 ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
-					 0, 
-					 (32 - val) % 32 - (prio & 0xFF), 
-					 abs(pid)))
+                                         ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
+                                         0, 
+                                         (32 - val) % 32 - (prio & 0xFF), 
+                                         abs(pid)))
       ? -1 : 0;
   } else /* if ((32 - val) % 32 == (prio & 0xFF)) */ {
       /* Documentation claims one can change both class and basevalue,
        * but I find it wrong. */
       /* Change class, but since delta == 0 denotes absolute 0, correct. */
       if (CheckOSError(DosSetPriority((pid < 0) 
-				      ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
-				      priors[(32 - val) >> 5] + 1, 
-				      0, 
-				      abs(pid)))) 
-	  return -1;
+                                      ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
+                                      priors[(32 - val) >> 5] + 1, 
+                                      0, 
+                                      abs(pid)))) 
+          return -1;
       if ( ((32 - val) % 32) == 0 ) return 0;
       return CheckOSError(DosSetPriority((pid < 0) 
-					 ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
-					 0, 
-					 (32 - val) % 32, 
-					 abs(pid)))
-	  ? -1 : 0;
+                                         ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
+                                         0, 
+                                         (32 - val) % 32, 
+                                         abs(pid)))
+          ? -1 : 0;
   } 
 }
 
@@ -891,7 +891,7 @@ spawn_sighandler(int sig)
      */
     
     if (spawn_killed) 
-	sig = SIGKILL;			/* Try harder. */
+        sig = SIGKILL;			/* Try harder. */
     kill(spawn_pid, sig);
     spawn_killed = 1;
 }
@@ -899,40 +899,40 @@ spawn_sighandler(int sig)
 static int
 result(pTHX_ int flag, int pid)
 {
-	int r, status;
-	Signal_t (*ihand)();     /* place to save signal during system() */
-	Signal_t (*qhand)();     /* place to save signal during system() */
+        int r, status;
+        Signal_t (*ihand)();     /* place to save signal during system() */
+        Signal_t (*qhand)();     /* place to save signal during system() */
 #ifndef __EMX__
-	RESULTCODES res;
-	int rpid;
+        RESULTCODES res;
+        int rpid;
 #endif
 
-	if (pid < 0 || flag != 0)
-		return pid;
+        if (pid < 0 || flag != 0)
+                return pid;
 
 #ifdef __EMX__
-	spawn_pid = pid;
-	spawn_killed = 0;
-	ihand = rsignal(SIGINT, &spawn_sighandler);
-	qhand = rsignal(SIGQUIT, &spawn_sighandler);
-	do {
-	    r = wait4pid(pid, &status, 0);
-	} while (r == -1 && errno == EINTR);
-	rsignal(SIGINT, ihand);
-	rsignal(SIGQUIT, qhand);
+        spawn_pid = pid;
+        spawn_killed = 0;
+        ihand = rsignal(SIGINT, &spawn_sighandler);
+        qhand = rsignal(SIGQUIT, &spawn_sighandler);
+        do {
+            r = wait4pid(pid, &status, 0);
+        } while (r == -1 && errno == EINTR);
+        rsignal(SIGINT, ihand);
+        rsignal(SIGQUIT, qhand);
 
-	PL_statusvalue = (U16)status;
-	if (r < 0)
-		return -1;
-	return status & 0xFFFF;
+        PL_statusvalue = (U16)status;
+        if (r < 0)
+                return -1;
+        return status & 0xFFFF;
 #else
-	ihand = rsignal(SIGINT, SIG_IGN);
-	r = DosWaitChild(DCWA_PROCESS, DCWW_WAIT, &res, &rpid, pid);
-	rsignal(SIGINT, ihand);
-	PL_statusvalue = res.codeResult << 8 | res.codeTerminate;
-	if (r)
-		return -1;
-	return PL_statusvalue;
+        ihand = rsignal(SIGINT, SIG_IGN);
+        r = DosWaitChild(DCWA_PROCESS, DCWW_WAIT, &res, &rpid, pid);
+        rsignal(SIGINT, ihand);
+        PL_statusvalue = res.codeResult << 8 | res.codeTerminate;
+        if (r)
+                return -1;
+        return PL_statusvalue;
 #endif
 }
 
@@ -952,19 +952,19 @@ file_type(char *path)
     ULONG apptype;
     
     if (!(_emx_env & 0x200)) 
-	Perl_croak_nocontext("file_type not implemented on DOS"); /* not OS/2. */
+        Perl_croak_nocontext("file_type not implemented on DOS"); /* not OS/2. */
     if (CheckOSError(DosQueryAppType(path, &apptype))) {
-	switch (rc) {
-	case ERROR_FILE_NOT_FOUND:
-	case ERROR_PATH_NOT_FOUND:
-	    return -1;
-	case ERROR_ACCESS_DENIED:	/* Directory with this name found? */
-	    return -3;
-	default:			/* Found, but not an
-					   executable, or some other
-					   read error. */
-	    return -2;
-	}
+        switch (rc) {
+        case ERROR_FILE_NOT_FOUND:
+        case ERROR_PATH_NOT_FOUND:
+            return -1;
+        case ERROR_ACCESS_DENIED:	/* Directory with this name found? */
+            return -3;
+        default:			/* Found, but not an
+                                           executable, or some other
+                                           read error. */
+            return -2;
+        }
     }    
     return apptype;
 }
@@ -972,375 +972,374 @@ file_type(char *path)
 /* Spawn/exec a program, revert to shell if needed. */
 
 extern ULONG _emx_exception (	EXCEPTIONREPORTRECORD *,
-				EXCEPTIONREGISTRATIONRECORD *,
+                                EXCEPTIONREGISTRATIONRECORD *,
                                 CONTEXTRECORD *,
                                 void *);
 
 int
 do_spawn_ve(pTHX_ SV *really, const char **argv, U32 flag, U32 execf, char *inicmd, U32 addflag)
 {
-	int trueflag = flag;
-	int rc, pass = 1;
-	char *real_name = NULL;			/* Shut down the warning */
-	char const * args[4];
-	static const char * const fargs[4] 
-	    = { "/bin/sh", "-c", "\"$@\"", "spawn-via-shell", };
-	const char * const *argsp = fargs;
-	int nargs = 4;
-	int force_shell;
- 	int new_stderr = -1, nostderr = 0;
-	int fl_stderr = 0;
-	STRLEN n_a;
-	char *buf;
-	PerlIO *file;
-	
-	if (flag == P_WAIT)
-		flag = P_NOWAIT;
-	if (really) {
-	    real_name = SvPV(really, n_a);
-	    real_name = savepv(real_name);
-	    SAVEFREEPV(real_name);
-	    if (!*real_name)
-		really = NULL;
-	}
+        int trueflag = flag;
+        int rc, pass = 1;
+        char *real_name = NULL;			/* Shut down the warning */
+        char const * args[4];
+        static const char * const fargs[4] 
+            = { "/bin/sh", "-c", "\"$@\"", "spawn-via-shell", };
+        const char * const *argsp = fargs;
+        int nargs = 4;
+        int force_shell;
+        int new_stderr = -1, nostderr = 0;
+        int fl_stderr = 0;
+        STRLEN n_a;
+        char *buf;
+        PerlIO *file;
+        
+        if (flag == P_WAIT)
+                flag = P_NOWAIT;
+        if (really) {
+            real_name = SvPV(really, n_a);
+            real_name = savepv(real_name);
+            SAVEFREEPV(real_name);
+            if (!*real_name)
+                really = NULL;
+        }
 
       retry:
-	if (strEQ(argv[0],"/bin/sh")) 
-	    argv[0] = PL_sh_path;
+        if (strEQ(argv[0],"/bin/sh")) 
+            argv[0] = PL_sh_path;
 
-	/* We should check PERL_SH* and PERLLIB_* as well? */
-	if (!really || pass >= 2)
-	    real_name = argv[0];
-	if (real_name[0] != '/' && real_name[0] != '\\'
-	    && !(real_name[0] && real_name[1] == ':' 
-		 && (real_name[2] == '/' || real_name[2] != '\\'))
-	    ) /* will spawnvp use PATH? */
-	    TAINT_ENV();	/* testing IFS here is overkill, probably */
+        /* We should check PERL_SH* and PERLLIB_* as well? */
+        if (!really || pass >= 2)
+            real_name = argv[0];
+        if (real_name[0] != '/' && real_name[0] != '\\'
+            && !(real_name[0] && real_name[1] == ':' 
+                 && (real_name[2] == '/' || real_name[2] != '\\'))
+            ) /* will spawnvp use PATH? */
+            TAINT_ENV();	/* testing IFS here is overkill, probably */
 
       reread:
-	force_shell = 0;
-	if (_emx_env & 0x200) { /* OS/2. */ 
-	    int type = file_type(real_name);
-	  type_again:
-	    if (type == -1) {		/* Not found */
-		errno = ENOENT;
-		rc = -1;
-		goto do_script;
-	    }
-	    else if (type == -2) {		/* Not an EXE */
-		errno = ENOEXEC;
-		rc = -1;
-		goto do_script;
-	    }
-	    else if (type == -3) {		/* Is a directory? */
-		/* Special-case this */
-		char tbuf[512];
-		int l = strlen(real_name);
+        force_shell = 0;
+        if (_emx_env & 0x200) { /* OS/2. */ 
+            int type = file_type(real_name);
+          type_again:
+            if (type == -1) {		/* Not found */
+                errno = ENOENT;
+                rc = -1;
+                goto do_script;
+            }
+            else if (type == -2) {		/* Not an EXE */
+                errno = ENOEXEC;
+                rc = -1;
+                goto do_script;
+            }
+            else if (type == -3) {		/* Is a directory? */
+                /* Special-case this */
+                char tbuf[512];
+                int l = strlen(real_name);
 
-		if (l + 5 <= sizeof tbuf) {
-		    strcpy(tbuf, real_name);
-		    strcpy(tbuf + l, ".exe");
-		    type = file_type(tbuf);
-		    if (type >= -3)
-			goto type_again;
-		}
-		
-		errno = ENOEXEC;
-		rc = -1;
-		goto do_script;
-	    }
-	    switch (type & 7) {
-		/* Ignore WINDOWCOMPAT and FAPI, start them the same type we are. */
-	    case FAPPTYP_WINDOWAPI: 
-	    {	/* Apparently, kids are started basing on startup type, not the morphed type */
-		if (os2_mytype != 3) {	/* not PM */
-		    if (flag == P_NOWAIT)
-			flag = P_PM;
-		    else if ((flag & 7) != P_PM && (flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
-			Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting PM process with flag=%d, mytype=%d",
-			     flag, os2_mytype);
-		}
-	    }
-	    break;
-	    case FAPPTYP_NOTWINDOWCOMPAT: 
-	    {
-		if (os2_mytype != 0) {	/* not full screen */
-		    if (flag == P_NOWAIT)
-			flag = P_SESSION;
-		    else if ((flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
-			Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting Full Screen process with flag=%d, mytype=%d",
-			     flag, os2_mytype);
-		}
-	    }
-	    break;
-	    case FAPPTYP_NOTSPEC: 
-		/* Let the shell handle this... */
-		force_shell = 1;
-		buf = "";		/* Pacify a warning */
-		file = 0;		/* Pacify a warning */
-		goto doshell_args;
-		break;
-	    }
-	}
+                if (l + 5 <= sizeof tbuf) {
+                    strcpy(tbuf, real_name);
+                    strcpy(tbuf + l, ".exe");
+                    type = file_type(tbuf);
+                    if (type >= -3)
+                        goto type_again;
+                }
+                
+                errno = ENOEXEC;
+                rc = -1;
+                goto do_script;
+            }
+            switch (type & 7) {
+                /* Ignore WINDOWCOMPAT and FAPI, start them the same type we are. */
+            case FAPPTYP_WINDOWAPI: 
+            {	/* Apparently, kids are started basing on startup type, not the morphed type */
+                if (os2_mytype != 3) {	/* not PM */
+                    if (flag == P_NOWAIT)
+                        flag = P_PM;
+                    else if ((flag & 7) != P_PM && (flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
+                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting PM process with flag=%d, mytype=%d",
+                             flag, os2_mytype);
+                }
+            }
+            break;
+            case FAPPTYP_NOTWINDOWCOMPAT: 
+            {
+                if (os2_mytype != 0) {	/* not full screen */
+                    if (flag == P_NOWAIT)
+                        flag = P_SESSION;
+                    else if ((flag & 7) != P_SESSION && ckWARN(WARN_EXEC))
+                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Starting Full Screen process with flag=%d, mytype=%d",
+                             flag, os2_mytype);
+                }
+            }
+            break;
+            case FAPPTYP_NOTSPEC: 
+                /* Let the shell handle this... */
+                force_shell = 1;
+                buf = "";		/* Pacify a warning */
+                file = 0;		/* Pacify a warning */
+                goto doshell_args;
+                break;
+            }
+        }
 
-	if (addflag) {
-	    addflag = 0;
-	    new_stderr = dup(2);		/* Preserve stderr */
-	    if (new_stderr == -1) {
-		if (errno == EBADF)
-		    nostderr = 1;
-		else {
-		    rc = -1;
-		    goto finish;
-		}
-	    } else
-		fl_stderr = fcntl(2, F_GETFD);
-	    rc = dup2(1,2);
-	    if (rc == -1)
-		goto finish;
-	    fcntl(new_stderr, F_SETFD, FD_CLOEXEC);
-	}
+        if (addflag) {
+            addflag = 0;
+            new_stderr = dup(2);		/* Preserve stderr */
+            if (new_stderr == -1) {
+                if (errno == EBADF)
+                    nostderr = 1;
+                else {
+                    rc = -1;
+                    goto finish;
+                }
+            } else
+                fl_stderr = fcntl(2, F_GETFD);
+            rc = dup2(1,2);
+            if (rc == -1)
+                goto finish;
+            fcntl(new_stderr, F_SETFD, FD_CLOEXEC);
+        }
 
 #if 0
-	rc = result(aTHX_ trueflag, spawnvp(flag,real_name,argv));
+        rc = result(aTHX_ trueflag, spawnvp(flag,real_name,argv));
 #else
-	if (execf == EXECF_TRUEEXEC)
-	    rc = execvp(real_name,argv);
-	else if (execf == EXECF_EXEC)
-	    rc = spawnvp(trueflag | P_OVERLAY,real_name,argv);
-	else if (execf == EXECF_SPAWN_NOWAIT)
-	    rc = spawnvp(flag,real_name,argv);
+        if (execf == EXECF_TRUEEXEC)
+            rc = execvp(real_name,argv);
+        else if (execf == EXECF_EXEC)
+            rc = spawnvp(trueflag | P_OVERLAY,real_name,argv);
+        else if (execf == EXECF_SPAWN_NOWAIT)
+            rc = spawnvp(flag,real_name,argv);
         else if (execf == EXECF_SYNC)
-	    rc = spawnvp(trueflag,real_name,argv);
+            rc = spawnvp(trueflag,real_name,argv);
         else				/* EXECF_SPAWN, EXECF_SPAWN_BYFLAG */
-	    rc = result(aTHX_ trueflag, 
-			spawnvp(flag,real_name,argv));
+            rc = result(aTHX_ trueflag, 
+                        spawnvp(flag,real_name,argv));
 #endif 
-	if (rc < 0 && pass == 1) {
-	      do_script:
-	  if (real_name == argv[0]) {
-	    int err = errno;
+        if (rc < 0 && pass == 1) {
+              do_script:
+          if (real_name == argv[0]) {
+            int err = errno;
 
-	    if (err == ENOENT || err == ENOEXEC) {
-		/* No such file, or is a script. */
-		/* Try adding script extensions to the file name, and
-		   search on PATH. */
-		char *scr = find_script(argv[0], TRUE, NULL, 0);
+            if (err == ENOENT || err == ENOEXEC) {
+                /* No such file, or is a script. */
+                /* Try adding script extensions to the file name, and
+                   search on PATH. */
+                char *scr = find_script(argv[0], TRUE, NULL, 0);
 
-		if (scr) {
-		    char *s = 0, *s1;
-		    SV *scrsv = sv_2mortal(newSVpv(scr, 0));
-		    SV *bufsv = sv_newmortal();
+                if (scr) {
+                    char *s = 0, *s1;
+                    SV *scrsv = sv_2mortal(newSVpv(scr, 0));
+                    SV *bufsv = sv_newmortal();
 
                     Safefree(scr);
-		    scr = SvPV(scrsv, n_a); /* free()ed later */
+                    scr = SvPV(scrsv, n_a); /* free()ed later */
 
-		    file = PerlIO_open(scr, "r");
-		    argv[0] = scr;
-		    if (!file)
-			goto panic_file;
+                    file = PerlIO_open(scr, "r");
+                    argv[0] = scr;
+                    if (!file)
+                        goto panic_file;
 
-		    buf = sv_gets(bufsv, file, 0 /* No append */);
-		    if (!buf)
-			buf = "";	/* XXX Needed? */
-		    if (!buf[0]) {	/* Empty... */
+                    buf = sv_gets(bufsv, file, 0 /* No append */);
+                    if (!buf)
+                        buf = "";	/* XXX Needed? */
+                    if (!buf[0]) {	/* Empty... */
                         struct stat statbuf;
-			PerlIO_close(file);
-			/* Special case: maybe from -Zexe build, so
-			   there is an executable around (contrary to
-			   documentation, DosQueryAppType sometimes (?)
-			   does not append ".exe", so we could have
-			   reached this place). */
-			sv_catpvs(scrsv, ".exe");
-	                argv[0] = scr = SvPV(scrsv, n_a);	/* Reload */
+                        PerlIO_close(file);
+                        /* Special case: maybe from -Zexe build, so
+                           there is an executable around (contrary to
+                           documentation, DosQueryAppType sometimes (?)
+                           does not append ".exe", so we could have
+                           reached this place). */
+                        sv_catpvs(scrsv, ".exe");
+                        argv[0] = scr = SvPV(scrsv, n_a);	/* Reload */
                         if (PerlLIO_stat(scr,&statbuf) >= 0
                             && !S_ISDIR(statbuf.st_mode)) {	/* Found */
-				real_name = scr;
-				pass++;
-				goto reread;
-			} else {		/* Restore */
-				SvCUR_set(scrsv, SvCUR(scrsv) - 4);
-				*SvEND(scrsv) = 0;
-			}
-		    }
-		    if (PerlIO_close(file) != 0) { /* Failure */
-		      panic_file:
-			if (ckWARN(WARN_EXEC))
-			   Perl_warner(aTHX_ packWARN(WARN_EXEC), "Error reading \"%s\": %s", 
-			     scr, Strerror(errno));
-			buf = "";	/* Not #! */
-			goto doshell_args;
-		    }
-		    if (buf[0] == '#') {
-			if (buf[1] == '!')
-			    s = buf + 2;
-		    } else if (buf[0] == 'e') {
-			if (strBEGINs(buf, "extproc")
-			    && isSPACE(buf[7]))
-			    s = buf + 8;
-		    } else if (buf[0] == 'E') {
-			if (strBEGINs(buf, "EXTPROC")
-			    && isSPACE(buf[7]))
-			    s = buf + 8;
-		    }
-		    if (!s) {
-			buf = "";	/* Not #! */
-			goto doshell_args;
-		    }
-		    
-		    s1 = s;
-		    nargs = 0;
-		    argsp = args;
-		    while (1) {
-			/* Do better than pdksh: allow a few args,
-			   strip trailing whitespace.  */
-			while (isSPACE(*s))
-			    s++;
-			if (*s == 0) 
-			    break;
-			if (nargs == 4) {
-			    nargs = -1;
-			    break;
-			}
-			args[nargs++] = s;
-			while (*s && !isSPACE(*s))
-			    s++;
-			if (*s == 0) 
-			    break;
-			*s++ = 0;
-		    }
-		    if (nargs == -1) {
-			Perl_warner(aTHX_ packWARN(WARN_EXEC), "Too many args on %.*s line of \"%s\"",
-			     s1 - buf, buf, scr);
-			nargs = 4;
-			argsp = fargs;
-		    }
-		    /* Can jump from far, buf/file invalid if force_shell: */
-		  doshell_args:
-		    {
-			char **a = argv;
-			const char *exec_args[2];
+                                real_name = scr;
+                                pass++;
+                                goto reread;
+                        } else {		/* Restore */
+                                SvCUR_set(scrsv, SvCUR(scrsv) - 4);
+                                *SvEND(scrsv) = 0;
+                        }
+                    }
+                    if (PerlIO_close(file) != 0) { /* Failure */
+                      panic_file:
+                        if (ckWARN(WARN_EXEC))
+                           Perl_warner(aTHX_ packWARN(WARN_EXEC), "Error reading \"%s\": %s", 
+                             scr, Strerror(errno));
+                        buf = "";	/* Not #! */
+                        goto doshell_args;
+                    }
+                    if (buf[0] == '#') {
+                        if (buf[1] == '!')
+                            s = buf + 2;
+                    } else if (buf[0] == 'e') {
+                        if (strBEGINs(buf, "extproc")
+                            && isSPACE(buf[7]))
+                            s = buf + 8;
+                    } else if (buf[0] == 'E') {
+                        if (strBEGINs(buf, "EXTPROC")
+                            && isSPACE(buf[7]))
+                            s = buf + 8;
+                    }
+                    if (!s) {
+                        buf = "";	/* Not #! */
+                        goto doshell_args;
+                    }
+                    
+                    s1 = s;
+                    nargs = 0;
+                    argsp = args;
+                    while (1) {
+                        /* Do better than pdksh: allow a few args,
+                           strip trailing whitespace.  */
+                        while (isSPACE(*s))
+                            s++;
+                        if (*s == 0) 
+                            break;
+                        if (nargs == 4) {
+                            nargs = -1;
+                            break;
+                        }
+                        args[nargs++] = s;
+                        while (*s && !isSPACE(*s))
+                            s++;
+                        if (*s == 0) 
+                            break;
+                        *s++ = 0;
+                    }
+                    if (nargs == -1) {
+                        Perl_warner(aTHX_ packWARN(WARN_EXEC), "Too many args on %.*s line of \"%s\"",
+                             s1 - buf, buf, scr);
+                        nargs = 4;
+                        argsp = fargs;
+                    }
+                    /* Can jump from far, buf/file invalid if force_shell: */
+                  doshell_args:
+                    {
+                        char **a = argv;
+                        const char *exec_args[2];
 
-			if (force_shell 
-			    || (!buf[0] && file)) { /* File without magic */
-			    /* In fact we tried all what pdksh would
-			       try.  There is no point in calling
-			       pdksh, we may just emulate its logic. */
-			    char *shell = getenv("EXECSHELL");
-			    char *shell_opt = NULL;
+                        if (force_shell 
+                            || (!buf[0] && file)) { /* File without magic */
+                            /* In fact we tried all what pdksh would
+                               try.  There is no point in calling
+                               pdksh, we may just emulate its logic. */
+                            char *shell = PerlEnv_getenv("EXECSHELL");
+                            char *shell_opt = NULL;
+                            if (!shell) {
+                                char *s;
 
-			    if (!shell) {
-				char *s;
+                                shell_opt = "/c";
+                                shell = PerlEnv_getenv("OS2_SHELL");
+                                if (inicmd) { /* No spaces at start! */
+                                    s = inicmd;
+                                    while (*s && !isSPACE(*s)) {
+                                        if (*s++ == '/') {
+                                            inicmd = NULL; /* Cannot use */
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!inicmd) {
+                                    s = argv[0];
+                                    while (*s) { 
+                                        /* Dosish shells will choke on slashes
+                                           in paths, fortunately, this is
+                                           important for zeroth arg only. */
+                                        if (*s == '/') 
+                                            *s = '\\';
+                                        s++;
+                                    }
+                                }
+                            }
+                            /* If EXECSHELL is set, we do not set */
+                            
+                            if (!shell)
+                                shell = ((_emx_env & 0x200)
+                                         ? "c:/os2/cmd.exe"
+                                         : "c:/command.com");
+                            nargs = shell_opt ? 2 : 1;	/* shell file args */
+                            exec_args[0] = shell;
+                            exec_args[1] = shell_opt;
+                            argsp = exec_args;
+                            if (nargs == 2 && inicmd) {
+                                /* Use the original cmd line */
+                                /* XXXX This is good only until we refuse
+                                        quoted arguments... */
+                                argv[0] = inicmd;
+                                argv[1] = NULL;
+                            }
+                        } else if (!buf[0] && inicmd) { /* No file */
+                            /* Start with the original cmdline. */
+                            /* XXXX This is good only until we refuse
+                                    quoted arguments... */
 
-				shell_opt = "/c";
-				shell = getenv("OS2_SHELL");
-				if (inicmd) { /* No spaces at start! */
-				    s = inicmd;
-				    while (*s && !isSPACE(*s)) {
-					if (*s++ == '/') {
-					    inicmd = NULL; /* Cannot use */
-					    break;
-					}
-				    }
-				}
-				if (!inicmd) {
-				    s = argv[0];
-				    while (*s) { 
-					/* Dosish shells will choke on slashes
-					   in paths, fortunately, this is
-					   important for zeroth arg only. */
-					if (*s == '/') 
-					    *s = '\\';
-					s++;
-				    }
-				}
-			    }
-			    /* If EXECSHELL is set, we do not set */
-			    
-			    if (!shell)
-				shell = ((_emx_env & 0x200)
-					 ? "c:/os2/cmd.exe"
-					 : "c:/command.com");
-			    nargs = shell_opt ? 2 : 1;	/* shell file args */
-			    exec_args[0] = shell;
-			    exec_args[1] = shell_opt;
-			    argsp = exec_args;
-			    if (nargs == 2 && inicmd) {
-				/* Use the original cmd line */
-				/* XXXX This is good only until we refuse
-				        quoted arguments... */
-				argv[0] = inicmd;
-				argv[1] = NULL;
-			    }
-			} else if (!buf[0] && inicmd) { /* No file */
-			    /* Start with the original cmdline. */
-			    /* XXXX This is good only until we refuse
-			            quoted arguments... */
+                            argv[0] = inicmd;
+                            argv[1] = NULL;
+                            nargs = 2;	/* shell -c */
+                        } 
 
-			    argv[0] = inicmd;
-			    argv[1] = NULL;
-			    nargs = 2;	/* shell -c */
-			} 
+                        while (a[1])		/* Get to the end */
+                            a++;
+                        a++;			/* Copy finil NULL too */
+                        while (a >= argv) {
+                            *(a + nargs) = *a;	/* argv was preallocated to be
+                                                   long enough. */
+                            a--;
+                        }
+                        while (--nargs >= 0) /* XXXX Discard const... */
+                            argv[nargs] = (char*)argsp[nargs];
+                        /* Enable pathless exec if #! (as pdksh). */
+                        pass = (buf[0] == '#' ? 2 : 3);
+                        goto retry;
+                    }
+                }
+                /* Not found: restore errno */
+                errno = err;
+            }
+          } else if (errno == ENOEXEC) { /* Cannot transfer `real_name' via shell. */
+                if (rc < 0 && ckWARN(WARN_EXEC))
+                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s script `%s' with ARGV[0] being `%s'", 
+                         ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
+                          ? "spawn" : "exec"),
+                         real_name, argv[0]);
+                goto warned;
+          } else if (errno == ENOENT) { /* Cannot transfer `real_name' via shell. */
+                if (rc < 0 && ckWARN(WARN_EXEC))
+                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)", 
+                         ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
+                          ? "spawn" : "exec"),
+                         real_name, argv[0]);
+                goto warned;
+          }
+        } else if (rc < 0 && pass == 2 && errno == ENOENT) { /* File not found */
+            char *no_dir = strrchr(argv[0], '/');
 
-			while (a[1])		/* Get to the end */
-			    a++;
-			a++;			/* Copy finil NULL too */
-			while (a >= argv) {
-			    *(a + nargs) = *a;	/* argv was preallocated to be
-						   long enough. */
-			    a--;
-			}
-			while (--nargs >= 0) /* XXXX Discard const... */
-			    argv[nargs] = (char*)argsp[nargs];
-			/* Enable pathless exec if #! (as pdksh). */
-			pass = (buf[0] == '#' ? 2 : 3);
-			goto retry;
-		    }
-		}
-		/* Not found: restore errno */
-		errno = err;
-	    }
-	  } else if (errno == ENOEXEC) { /* Cannot transfer `real_name' via shell. */
-		if (rc < 0 && ckWARN(WARN_EXEC))
-		    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s script `%s' with ARGV[0] being `%s'", 
-			 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-			  ? "spawn" : "exec"),
-			 real_name, argv[0]);
-		goto warned;
-	  } else if (errno == ENOENT) { /* Cannot transfer `real_name' via shell. */
-		if (rc < 0 && ckWARN(WARN_EXEC))
-		    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s `%s' with ARGV[0] being `%s' (looking for executables only, not found)", 
-			 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-			  ? "spawn" : "exec"),
-			 real_name, argv[0]);
-		goto warned;
-	  }
-	} else if (rc < 0 && pass == 2 && errno == ENOENT) { /* File not found */
-	    char *no_dir = strrchr(argv[0], '/');
-
-	    /* Do as pdksh port does: if not found with /, try without
-	       path. */
-	    if (no_dir) {
-		argv[0] = no_dir + 1;
-		pass++;
-		goto retry;
-	    }
-	}
-	if (rc < 0 && ckWARN(WARN_EXEC))
-	    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s\n", 
-		 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
-		  ? "spawn" : "exec"),
-		 real_name, Strerror(errno));
+            /* Do as pdksh port does: if not found with /, try without
+               path. */
+            if (no_dir) {
+                argv[0] = no_dir + 1;
+                pass++;
+                goto retry;
+            }
+        }
+        if (rc < 0 && ckWARN(WARN_EXEC))
+            Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s\n", 
+                 ((execf != EXECF_EXEC && execf != EXECF_TRUEEXEC) 
+                  ? "spawn" : "exec"),
+                 real_name, Strerror(errno));
       warned:
-	if (rc < 0 && (execf != EXECF_SPAWN_NOWAIT) 
-	    && ((trueflag & 0xFF) == P_WAIT)) 
-	    rc = -1;
+        if (rc < 0 && (execf != EXECF_SPAWN_NOWAIT) 
+            && ((trueflag & 0xFF) == P_WAIT)) 
+            rc = -1;
 
   finish:
     if (new_stderr != -1) {	/* How can we use error codes? */
-	dup2(new_stderr, 2);
-	close(new_stderr);
-	fcntl(2, F_SETFD, fl_stderr);
+        dup2(new_stderr, 2);
+        close(new_stderr);
+        fcntl(2, F_SETFD, fl_stderr);
     } else if (nostderr)
        close(2);
     return rc;
@@ -1357,14 +1356,14 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 
     ENTER;
 #ifdef TRYSHELL
-    if ((shell = getenv("EMXSHELL")) != NULL)
-    	copt = "-c";
-    else if ((shell = getenv("SHELL")) != NULL)
-    	copt = "-c";
-    else if ((shell = getenv("COMSPEC")) != NULL)
-    	copt = "/C";
+    if ((shell = PerlEnv_getenv("EMXSHELL")) != NULL)
+        copt = "-c";
+    else if ((shell = PerlEnv_getenv("SHELL")) != NULL)
+        copt = "-c";
+    else if ((shell = PerlEnv_getenv("COMSPEC")) != NULL)
+        copt = "/C";
     else
-    	shell = "cmd.exe";
+        shell = "cmd.exe";
 #else
     /* Consensus on perl5-porters is that it is _very_ important to
        have a shell which will not change between computers with the
@@ -1375,81 +1374,81 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
 #endif 
 
     while (*cmd && isSPACE(*cmd))
-	cmd++;
+        cmd++;
 
     if (strBEGINs(cmd,"/bin/sh") && isSPACE(cmd[7])) {
-	STRLEN l = strlen(PL_sh_path);
-	
-	Newx(news, strlen(cmd) - 7 + l + 1, char);
-	strcpy(news, PL_sh_path);
-	strcpy(news + l, cmd + 7);
-	cmd = news;
+        STRLEN l = strlen(PL_sh_path);
+        
+        Newx(news, strlen(cmd) - 7 + l + 1, char);
+        strcpy(news, PL_sh_path);
+        strcpy(news + l, cmd + 7);
+        cmd = news;
     }
 
     /* save an extra exec if possible */
     /* see if there are shell metacharacters in it */
 
     if (*cmd == '.' && isSPACE(cmd[1]))
-	goto doshell;
+        goto doshell;
 
     if (strBEGINs(cmd,"exec") && isSPACE(cmd[4]))
-	goto doshell;
+        goto doshell;
 
     for (s = cmd; *s && isALPHA(*s); s++) ;	/* catch VAR=val gizmo */
     if (*s == '=')
-	goto doshell;
+        goto doshell;
 
     for (s = cmd; *s; s++) {
-	if (*s != ' ' && !isALPHA(*s) && memCHRs("$&*(){}[]'\";\\|?<>~`\n",*s)) {
-	    if (*s == '\n' && s[1] == '\0') {
-		*s = '\0';
-		break;
-	    } else if (*s == '\\' && !seenspace) {
-		continue;		/* Allow backslashes in names */
-	    } else if (*s == '>' && s >= cmd + 3
-			&& s[-1] == '2' && s[1] == '&' && s[2] == '1'
-			&& isSPACE(s[-2]) ) {
-		char *t = s + 3;
+        if (*s != ' ' && !isALPHA(*s) && memCHRs("$&*(){}[]'\";\\|?<>~`\n",*s)) {
+            if (*s == '\n' && s[1] == '\0') {
+                *s = '\0';
+                break;
+            } else if (*s == '\\' && !seenspace) {
+                continue;		/* Allow backslashes in names */
+            } else if (*s == '>' && s >= cmd + 3
+                        && s[-1] == '2' && s[1] == '&' && s[2] == '1'
+                        && isSPACE(s[-2]) ) {
+                char *t = s + 3;
 
-		while (*t && isSPACE(*t))
-		    t++;
-		if (!*t) {
-		    s[-2] = '\0';
-		    mergestderr = 1;
-		    break;		/* Allow 2>&1 as the last thing */
-		}
-	    }
-	    /* We do not convert this to do_spawn_ve since shell
-	       should be smart enough to start itself gloriously. */
-	  doshell:
-	    if (execf == EXECF_TRUEEXEC)
+                while (*t && isSPACE(*t))
+                    t++;
+                if (!*t) {
+                    s[-2] = '\0';
+                    mergestderr = 1;
+                    break;		/* Allow 2>&1 as the last thing */
+                }
+            }
+            /* We do not convert this to do_spawn_ve since shell
+               should be smart enough to start itself gloriously. */
+          doshell:
+            if (execf == EXECF_TRUEEXEC)
                 rc = execl(shell,shell,copt,cmd,(char*)0);
-	    else if (execf == EXECF_EXEC)
+            else if (execf == EXECF_EXEC)
                 rc = spawnl(P_OVERLAY,shell,shell,copt,cmd,(char*)0);
-	    else if (execf == EXECF_SPAWN_NOWAIT)
+            else if (execf == EXECF_SPAWN_NOWAIT)
                 rc = spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0);
-	    else if (execf == EXECF_SPAWN_BYFLAG)
+            else if (execf == EXECF_SPAWN_BYFLAG)
                 rc = spawnl(flag,shell,shell,copt,cmd,(char*)0);
-	    else {
-		/* In the ak code internal P_NOWAIT is P_WAIT ??? */
-		if (execf == EXECF_SYNC)
-		   rc = spawnl(P_WAIT,shell,shell,copt,cmd,(char*)0);
-		else
-		   rc = result(aTHX_ P_WAIT,
-			       spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
-		if (rc < 0 && ckWARN(WARN_EXEC))
-		    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s", 
-			 (execf == EXECF_SPAWN ? "spawn" : "exec"),
-			 shell, Strerror(errno));
-		if (rc < 0)
-		    rc = -1;
-	    }
-	    if (news)
-		Safefree(news);
-	    goto leave;
-	} else if (*s == ' ' || *s == '\t') {
-	    seenspace = 1;
-	}
+            else {
+                /* In the ak code internal P_NOWAIT is P_WAIT ??? */
+                if (execf == EXECF_SYNC)
+                   rc = spawnl(P_WAIT,shell,shell,copt,cmd,(char*)0);
+                else
+                   rc = result(aTHX_ P_WAIT,
+                               spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
+                if (rc < 0 && ckWARN(WARN_EXEC))
+                    Perl_warner(aTHX_ packWARN(WARN_EXEC), "Can't %s \"%s\": %s", 
+                         (execf == EXECF_SPAWN ? "spawn" : "exec"),
+                         shell, Strerror(errno));
+                if (rc < 0)
+                    rc = -1;
+            }
+            if (news)
+                Safefree(news);
+            goto leave;
+        } else if (*s == ' ' || *s == '\t') {
+            seenspace = 1;
+        }
     }
 
     /* cmd="a" may lead to "sh", "-c", "\"$@\"", "a", "a.cmd", NULL */
@@ -1459,20 +1458,20 @@ do_spawn3(pTHX_ char *cmd, int execf, int flag)
     SAVEFREEPV(cmd);
     a = argv;
     for (s = cmd; *s;) {
-	while (*s && isSPACE(*s)) s++;
-	if (*s)
-	    *(a++) = s;
-	while (*s && !isSPACE(*s)) s++;
-	if (*s)
-	    *s++ = '\0';
+        while (*s && isSPACE(*s)) s++;
+        if (*s)
+            *(a++) = s;
+        while (*s && !isSPACE(*s)) s++;
+        if (*s)
+            *s++ = '\0';
     }
     *a = NULL;
     if (argv[0])
-	rc = do_spawn_ve(aTHX_ NULL, argv, flag, execf, cmd, mergestderr);
+        rc = do_spawn_ve(aTHX_ NULL, argv, flag, execf, cmd, mergestderr);
     else
-    	rc = -1;
+        rc = -1;
     if (news)
-	Safefree(news);
+        Safefree(news);
 leave:
     LEAVE;
     return rc;
@@ -1495,37 +1494,37 @@ os2_aspawn_4(pTHX_ SV *really, SV **args, I32 cnt, int execing)
 
     ENTER;
     if (cnt) {
-	Newx(argv, cnt + 3, char*); /* 3 extra to expand #! */
-	SAVEFREEPV(argv);
-	a = argv;
+        Newx(argv, cnt + 3, char*); /* 3 extra to expand #! */
+        SAVEFREEPV(argv);
+        a = argv;
 
-	if (cnt > 1 && SvNIOKp(*argp) && !SvPOKp(*argp)) {
-	    flag = SvIVx(*argp);
-	    flag_set = 1;
-	} else
-	    --argp;
+        if (cnt > 1 && SvNIOKp(*argp) && !SvPOKp(*argp)) {
+            flag = SvIVx(*argp);
+            flag_set = 1;
+        } else
+            --argp;
 
-	while (++argp < last) {
-	    if (*argp) {
-		char *arg = SvPVx(*argp, n_a);
-		arg = savepv(arg);
-		SAVEFREEPV(arg);
-		*a++ = arg;
-	    } else
-		*a++ = "";
-	}
-	*a = NULL;
+        while (++argp < last) {
+            if (*argp) {
+                char *arg = SvPVx(*argp, n_a);
+                arg = savepv(arg);
+                SAVEFREEPV(arg);
+                *a++ = arg;
+            } else
+                *a++ = "";
+        }
+        *a = NULL;
 
-	if ( flag_set && (a == argv + 1)
-	     && !really && execing == ASPAWN_WAIT ) { 		/* One arg? */
-	    rc = do_spawn3(aTHX_ a[-1], EXECF_SPAWN_BYFLAG, flag);
-	} else {
-	    const int execf[3] = {EXECF_SPAWN, EXECF_EXEC, EXECF_SPAWN_NOWAIT};
-	    
-	    rc = do_spawn_ve(aTHX_ really, argv, flag, execf[execing], NULL, 0);
-	}
+        if ( flag_set && (a == argv + 1)
+             && !really && execing == ASPAWN_WAIT ) { 		/* One arg? */
+            rc = do_spawn3(aTHX_ a[-1], EXECF_SPAWN_BYFLAG, flag);
+        } else {
+            const int execf[3] = {EXECF_SPAWN, EXECF_EXEC, EXECF_SPAWN_NOWAIT};
+            
+            rc = do_spawn_ve(aTHX_ really, argv, flag, execf[execing], NULL, 0);
+        }
     } else
-    	rc = -1;
+        rc = -1;
     LEAVE;
     return rc;
 }
@@ -1583,63 +1582,63 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
     this = (*mode == 'w');
     that = !this;
     if (TAINTING_get) {
-	taint_env();
-	taint_proper("Insecure %s%s", "EXEC");
+        taint_env();
+        taint_proper("Insecure %s%s", "EXEC");
     }
     if (pipe(p) < 0)
-	return NULL;
+        return NULL;
     /* Now we need to spawn the child. */
     if (p[this] == (*mode == 'r')) {	/* if fh 0/1 was initially closed. */
-	int new = dup(p[this]);
+        int new = dup(p[this]);
 
-	if (new == -1)
-	    goto closepipes;
-	close(p[this]);
-	p[this] = new;
+        if (new == -1)
+            goto closepipes;
+        close(p[this]);
+        p[this] = new;
     }
     newfd = dup(*mode == 'r');		/* Preserve std* */
     if (newfd == -1) {		
-	/* This cannot happen due to fh being bad after pipe(), since
-	   pipe() should have created fh 0 and 1 even if they were
-	   initially closed.  But we closed p[this] before.  */
-	if (errno != EBADF) {
-	  closepipes:
-	    close(p[0]);
-	    close(p[1]);
-	    return NULL;
-	}
+        /* This cannot happen due to fh being bad after pipe(), since
+           pipe() should have created fh 0 and 1 even if they were
+           initially closed.  But we closed p[this] before.  */
+        if (errno != EBADF) {
+          closepipes:
+            close(p[0]);
+            close(p[1]);
+            return NULL;
+        }
     } else
-	fh_fl = fcntl(*mode == 'r', F_GETFD);
+        fh_fl = fcntl(*mode == 'r', F_GETFD);
     if (p[that] != (*mode == 'r')) {	/* if fh 0/1 was initially closed. */
-	dup2(p[that], *mode == 'r');
-	close(p[that]);
+        dup2(p[that], *mode == 'r');
+        close(p[that]);
     }
     /* Where is `this' and newfd now? */
     fcntl(p[this], F_SETFD, FD_CLOEXEC);
     if (newfd != -1)
-	fcntl(newfd, F_SETFD, FD_CLOEXEC);
+        fcntl(newfd, F_SETFD, FD_CLOEXEC);
     if (cnt) {	/* Args: "Real cmd", before first arg, the last, execing */
-	pid = os2_aspawn_4(aTHX_ NULL, args, cnt, ASPAWN_NOWAIT);
+        pid = os2_aspawn_4(aTHX_ NULL, args, cnt, ASPAWN_NOWAIT);
     } else
-	pid = do_spawn_nowait(aTHX_ cmd);
+        pid = do_spawn_nowait(aTHX_ cmd);
     if (newfd == -1)
-	close(*mode == 'r');		/* It was closed initially */
+        close(*mode == 'r');		/* It was closed initially */
     else if (newfd != (*mode == 'r')) {	/* Probably this check is not needed */
-	dup2(newfd, *mode == 'r');	/* Return std* back. */
-	close(newfd);
-	fcntl(*mode == 'r', F_SETFD, fh_fl);
+        dup2(newfd, *mode == 'r');	/* Return std* back. */
+        close(newfd);
+        fcntl(*mode == 'r', F_SETFD, fh_fl);
     } else
-	fcntl(*mode == 'r', F_SETFD, fh_fl);
+        fcntl(*mode == 'r', F_SETFD, fh_fl);
     if (p[that] == (*mode == 'r'))
-	close(p[that]);
+        close(p[that]);
     if (pid == -1) {
-	close(p[this]);
-	return NULL;
+        close(p[this]);
+        return NULL;
     }
     if (p[that] < p[this]) {		/* Make fh as small as possible */
-	dup2(p[this], p[that]);
-	close(p[this]);
-	p[this] = p[that];
+        dup2(p[this], p[that]);
+        close(p[this]);
+        p[this] = p[that];
     }
     sv = *av_fetch(PL_fdpid,p[this],TRUE);
     (void)SvUPGRADE(sv,SVt_IV);
@@ -1653,12 +1652,13 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
     SV *sv;
 
     if (cnt)
-	Perl_croak(aTHX_ "List form of piped open not implemented");
+        Perl_croak(aTHX_ "List form of piped open not implemented");
 
 #  ifdef TRYSHELL
     res = popen(cmd, mode);
 #  else
-    char *shell = getenv("EMXSHELL");
+
+    char *shell = PerlEnv_getenv("EMXSHELL");
 
     my_setenv("EMXSHELL", PL_sh_path);
     res = popen(cmd, mode);
@@ -1666,7 +1666,7 @@ my_syspopen4(pTHX_ char *cmd, char *mode, I32 cnt, SV** args)
 #  endif 
     sv = *av_fetch(PL_fdpid, PerlIO_fileno(res), TRUE);
     (void)SvUPGRADE(sv,SVt_IV);
-    SvIVX(sv) = -1;			/* A cooky. */
+    SvIVX(sv) = -2;                     /* A cooky. */
     return res;
 
 #endif /* USE_POPEN */
@@ -1726,16 +1726,16 @@ static void
 massage_os2_attr(struct stat *st)
 {
     if ( ((st->st_mode & S_IFMT) != S_IFREG
-	  && (st->st_mode & S_IFMT) != S_IFDIR)
+          && (st->st_mode & S_IFMT) != S_IFDIR)
          || !(st->st_attr & (FILE_ARCHIVED | FILE_HIDDEN | FILE_SYSTEM)))
-	return;
+        return;
 
     if ( st->st_attr & FILE_ARCHIVED )
-	st->st_mode |= (os2_stat_archived | os2_stat_force);
+        st->st_mode |= (os2_stat_archived | os2_stat_force);
     if ( st->st_attr & FILE_HIDDEN )
-	st->st_mode |= (os2_stat_hidden | os2_stat_force);
+        st->st_mode |= (os2_stat_hidden | os2_stat_force);
     if ( st->st_attr & FILE_SYSTEM )
-	st->st_mode |= (os2_stat_system | os2_stat_force);
+        st->st_mode |= (os2_stat_system | os2_stat_force);
 }
 
     /* First attempt used DosQueryFSAttach which crashed the system when
@@ -1748,15 +1748,15 @@ os2_stat(const char *name, struct stat *st)
 
     if ( ( l < 8 || l > 9) || strnicmp(name, "/dev/", 5) != 0
          || (    stricmp(name + 5, "con") != 0
-	      && stricmp(name + 5, "tty") != 0
-	      && stricmp(name + 5, "nul") != 0
-	      && stricmp(name + 5, "null") != 0) ) {
-	int s = stat(name, st);
+              && stricmp(name + 5, "tty") != 0
+              && stricmp(name + 5, "nul") != 0
+              && stricmp(name + 5, "null") != 0) ) {
+        int s = stat(name, st);
 
-	if (s)
-	    return s;
-	massage_os2_attr(st);
-	return 0;
+        if (s)
+            return s;
+        massage_os2_attr(st);
+        return 0;
     }
 
     memset(st, 0, sizeof *st);
@@ -1774,7 +1774,7 @@ os2_fstat(int handle, struct stat *st)
     int s = fstat(handle, st);
 
     if (s)
-	return s;
+        return s;
     massage_os2_attr(st);
     return 0;
 }
@@ -1786,15 +1786,15 @@ os2_chmod (const char *name, int pmode)	/* Modelled after EMX src/lib/io/chmod.c
     int attr, rc;
 
     if (!(pmode & os2_stat_force))
-	return chmod(name, pmode);
+        return chmod(name, pmode);
 
     attr = __chmod (name, 0, 0);           /* Get attributes */
     if (attr < 0)
-	return -1;
+        return -1;
     if (pmode & S_IWRITE)
-	attr &= ~FILE_READONLY;
+        attr &= ~FILE_READONLY;
     else
-	attr |= FILE_READONLY;
+        attr |= FILE_READONLY;
     /* New logic */
     attr &= ~(FILE_ARCHIVED | FILE_HIDDEN | FILE_SYSTEM);
 
@@ -1822,9 +1822,9 @@ sys_alloc(int size) {
     APIRET rc = DosAllocMem(&got, size, PAG_COMMIT | PAG_WRITE);
 
     if (rc == ERROR_NOT_ENOUGH_MEMORY) {
-	return (void *) -1;
+        return (void *) -1;
     } else if ( rc ) 
-	Perl_croak_nocontext("Got an error from DosAllocMem: %li", (long)rc);
+        Perl_croak_nocontext("Got an error from DosAllocMem: %li", (long)rc);
     return got;
 }
 
@@ -1837,19 +1837,19 @@ const char *tmppath = TMPPATH1;
 void
 settmppath()
 {
-    char *p = getenv("TMP"), *tpath;
+    char *p = PerlEnv_getenv("TMP"), *tpath;
     int len;
 
-    if (!p) p = getenv("TEMP");
-    if (!p) p = getenv("TMPDIR");
+    if (!p) p = PerlEnv_getenv("TEMP");
+    if (!p) p = PerlEnv_getenv("TMPDIR");
     if (!p) return;
     len = strlen(p);
     tpath = (char *)malloc(len + strlen(TMPPATH1) + 2);
     if (tpath) {
-	strcpy(tpath, p);
-	tpath[len] = '/';
-	strcpy(tpath + len + 1, TMPPATH1);
-	tmppath = tpath;
+        strcpy(tpath, p);
+        tpath[len] = '/';
+        strcpy(tpath + len + 1, TMPPATH1);
+        tmppath = tpath;
     }
 }
 
@@ -1859,23 +1859,23 @@ XS(XS_File__Copy_syscopy)
 {
     dXSARGS;
     if (items < 2 || items > 3)
-	Perl_croak_nocontext("Usage: File::Copy::syscopy(src,dst,flag=0)");
+        Perl_croak_nocontext("Usage: File::Copy::syscopy(src,dst,flag=0)");
     {
-	STRLEN n_a;
-	char *	src = (char *)SvPV(ST(0),n_a);
-	char *	dst = (char *)SvPV(ST(1),n_a);
-	U32	flag;
-	int	RETVAL, rc;
-	dXSTARG;
+        STRLEN n_a;
+        char *	src = (char *)SvPV(ST(0),n_a);
+        char *	dst = (char *)SvPV(ST(1),n_a);
+        U32	flag;
+        int	RETVAL, rc;
+        dXSTARG;
 
-	if (items < 3)
-	    flag = 0;
-	else {
-	    flag = (unsigned long)SvIV(ST(2));
-	}
+        if (items < 3)
+            flag = 0;
+        else {
+            flag = (unsigned long)SvIV(ST(2));
+        }
 
-	RETVAL = !CheckOSError(DosCopy(src, dst, flag));
-	XSprePUSH; PUSHi((IV)RETVAL);
+        RETVAL = !CheckOSError(DosCopy(src, dst, flag));
+        XSprePUSH; PUSHi((IV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -1883,21 +1883,21 @@ XS(XS_File__Copy_syscopy)
 /* APIRET APIENTRY DosReplaceModule (PCSZ pszOld, PCSZ pszNew, PCSZ pszBackup); */
 
 DeclOSFuncByORD(ULONG,replaceModule,ORD_DosReplaceModule,
-		(char *old, char *new, char *backup), (old, new, backup))
+                (char *old, char *new, char *backup), (old, new, backup))
 
 XS(XS_OS2_replaceModule); /* prototype to pass -Wmissing-prototypes */
 XS(XS_OS2_replaceModule)
 {
     dXSARGS;
     if (items < 1 || items > 3)
-	Perl_croak(aTHX_ "Usage: OS2::replaceModule(target [, source [, backup]])");
+        Perl_croak(aTHX_ "Usage: OS2::replaceModule(target [, source [, backup]])");
     {
-	char *	target = (char *)SvPV_nolen(ST(0));
-	char *	source = (items < 2) ? NULL : (char *)SvPV_nolen(ST(1));
-	char *	backup = (items < 3) ? NULL : (char *)SvPV_nolen(ST(2));
+        char *	target = (char *)SvPV_nolen(ST(0));
+        char *	source = (items < 2) ? NULL : (char *)SvPV_nolen(ST(1));
+        char *	backup = (items < 3) ? NULL : (char *)SvPV_nolen(ST(2));
 
-	if (!replaceModule(target, source, backup))
-	    croak_with_os2error("replaceModule() error");
+        if (!replaceModule(target, source, backup))
+            croak_with_os2error("replaceModule() error");
     }
     XSRETURN_YES;
 }
@@ -1906,8 +1906,8 @@ XS(XS_OS2_replaceModule)
                                   ULONG ulParm2, ULONG ulParm3); */
 
 DeclOSFuncByORD(ULONG,perfSysCall,ORD_DosPerfSysCall,
-		(ULONG ulCommand, ULONG ulParm1, ULONG ulParm2, ULONG ulParm3),
-		(ulCommand, ulParm1, ulParm2, ulParm3))
+                (ULONG ulCommand, ULONG ulParm1, ULONG ulParm2, ULONG ulParm3),
+                (ulCommand, ulParm1, ulParm2, ulParm3))
 
 #ifndef CMD_KI_RDCNT
 #  define CMD_KI_RDCNT	0x63
@@ -1925,10 +1925,10 @@ typedef unsigned long long myCPUUTIL[4];	/* time/idle/busy/intr */
 NO_OUTPUT ULONG
 perfSysCall(ULONG ulCommand, ULONG ulParm1, ULONG ulParm2, ULONG ulParm3)
     PREINIT:
-	ULONG rc;
+        ULONG rc;
     POSTCALL:
-	if (!RETVAL)
-	    croak_with_os2error("perfSysCall() error");
+        if (!RETVAL)
+            croak_with_os2error("perfSysCall() error");
  */
 
 static int
@@ -1937,7 +1937,7 @@ numprocessors(void)
     ULONG res;
 
     if (DosQuerySysInfo(QSV_NUMPROCESSORS, QSV_NUMPROCESSORS, (PVOID)&res, sizeof(res)))
-	return 1;			/* Old system? */
+        return 1;			/* Old system? */
     return res;
 }
 
@@ -1946,64 +1946,64 @@ XS(XS_OS2_perfSysCall)
 {
     dXSARGS;
     if (items < 0 || items > 4)
-	Perl_croak(aTHX_ "Usage: OS2::perfSysCall(ulCommand = CMD_KI_RDCNT, ulParm1= 0, ulParm2= 0, ulParm3= 0)");
+        Perl_croak(aTHX_ "Usage: OS2::perfSysCall(ulCommand = CMD_KI_RDCNT, ulParm1= 0, ulParm2= 0, ulParm3= 0)");
     SP -= items;
     {
-	dXSTARG;
-	ULONG RETVAL, ulCommand, ulParm1, ulParm2, ulParm3, res;
-	myCPUUTIL u[64];
-	int total = 0, tot2 = 0;
+        dXSTARG;
+        ULONG RETVAL, ulCommand, ulParm1, ulParm2, ulParm3, res;
+        myCPUUTIL u[64];
+        int total = 0, tot2 = 0;
 
-	if (items < 1)
-	    ulCommand = CMD_KI_RDCNT;
-	else {
-	    ulCommand = (ULONG)SvUV(ST(0));
-	}
+        if (items < 1)
+            ulCommand = CMD_KI_RDCNT;
+        else {
+            ulCommand = (ULONG)SvUV(ST(0));
+        }
 
-	if (items < 2) {
-	    total = (ulCommand == CMD_KI_RDCNT ? numprocessors() : 0);
-	    ulParm1 = (total ? (ULONG)u : 0);
+        if (items < 2) {
+            total = (ulCommand == CMD_KI_RDCNT ? numprocessors() : 0);
+            ulParm1 = (total ? (ULONG)u : 0);
 
-	    if (total > C_ARRAY_LENGTH(u))
-		croak("Unexpected number of processors: %d", total);
-	} else {
-	    ulParm1 = (ULONG)SvUV(ST(1));
-	}
+            if (total > C_ARRAY_LENGTH(u))
+                croak("Unexpected number of processors: %d", total);
+        } else {
+            ulParm1 = (ULONG)SvUV(ST(1));
+        }
 
-	if (items < 3) {
-	    tot2 = (ulCommand == CMD_KI_GETQTY);
-	    ulParm2 = (tot2 ? (ULONG)&res : 0);
-	} else {
-	    ulParm2 = (ULONG)SvUV(ST(2));
-	}
+        if (items < 3) {
+            tot2 = (ulCommand == CMD_KI_GETQTY);
+            ulParm2 = (tot2 ? (ULONG)&res : 0);
+        } else {
+            ulParm2 = (ULONG)SvUV(ST(2));
+        }
 
-	if (items < 4)
-	    ulParm3 = 0;
-	else {
-	    ulParm3 = (ULONG)SvUV(ST(3));
-	}
+        if (items < 4)
+            ulParm3 = 0;
+        else {
+            ulParm3 = (ULONG)SvUV(ST(3));
+        }
 
-	RETVAL = perfSysCall(ulCommand, ulParm1, ulParm2, ulParm3);
-	if (!RETVAL)
-	    croak_with_os2error("perfSysCall() error");
-	XSprePUSH;
-	if (total) {
-	    int i,j;
+        RETVAL = perfSysCall(ulCommand, ulParm1, ulParm2, ulParm3);
+        if (!RETVAL)
+            croak_with_os2error("perfSysCall() error");
+        XSprePUSH;
+        if (total) {
+            int i,j;
 
-	    if (GIMME_V != G_ARRAY) {
-		PUSHn(u[0][0]);		/* Total ticks on the first processor */
-		XSRETURN(1);
-	    }
-	    EXTEND(SP, 4*total);
-	    for (i=0; i < total; i++)
-		for (j=0; j < 4; j++)
-		    PUSHs(sv_2mortal(newSVnv(u[i][j])));
-	    XSRETURN(4*total);
-	}
-	if (tot2) {
-	    PUSHu(res);
-	    XSRETURN(1);
-	}
+            if (GIMME_V != G_LIST) {
+                PUSHn(u[0][0]);		/* Total ticks on the first processor */
+                XSRETURN(1);
+            }
+            EXTEND(SP, 4*total);
+            for (i=0; i < total; i++)
+                for (j=0; j < 4; j++)
+                    PUSHs(sv_2mortal(newSVnv(u[i][j])));
+            XSRETURN(4*total);
+        }
+        if (tot2) {
+            PUSHu(res);
+            XSRETURN(1);
+        }
     }
     XSRETURN_EMPTY;
 }
@@ -2025,8 +2025,8 @@ mod2fname(pTHX_ SV *sv)
     if (SvTYPE(sv) != SVt_PVAV) 
       Perl_croak_nocontext("Not array reference given to mod2fname");
 
-    avlen = av_tindex((AV*)sv);
-    if (avlen < 0) 
+    avlen = av_count((AV*)sv);
+    if (avlen == 0)
       Perl_croak_nocontext("Empty array reference given to mod2fname");
 
     s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
@@ -2034,16 +2034,15 @@ mod2fname(pTHX_ SV *sv)
     len = strlen(s);
     if (len < 6) pos = len;
     while (*s) {
-	sum = 33 * sum + *(s++);	/* Checksumming first chars to
-					 * get the capitalization into c.s. */
+        sum = 33 * sum + *(s++);	/* Checksumming first chars to
+                                         * get the capitalization into c.s. */
     }
-    avlen --;
-    while (avlen >= 0) {
-	s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
-	while (*s) {
-	    sum = 33 * sum + *(s++);	/* 7 is primitive mod 13. */
-	}
-	avlen --;
+    while (avlen > 0) {
+        s = SvPV(*av_fetch((AV*)sv, avlen, FALSE), n_a);
+        while (*s) {
+            sum = 33 * sum + *(s++);	/* 7 is primitive mod 13. */
+        }
+        avlen --;
     }
    /* We always load modules as *specific* DLLs, and with the full name.
       When loading a specific DLL by its full name, one cannot get a
@@ -2067,15 +2066,15 @@ XS(XS_DynaLoader_mod2fname)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: DynaLoader::mod2fname(sv)");
+        Perl_croak_nocontext("Usage: DynaLoader::mod2fname(sv)");
     {
-	SV *	sv = ST(0);
-	char *	RETVAL;
-	dXSTARG;
+        SV *	sv = ST(0);
+        char *	RETVAL;
+        dXSTARG;
 
-	RETVAL = mod2fname(aTHX_ sv);
-	sv_setpv(TARG, RETVAL);
-	XSprePUSH; PUSHTARG;
+        RETVAL = mod2fname(aTHX_ sv);
+        sv_setpv(TARG, RETVAL);
+        XSprePUSH; PUSHTARG;
     }
     XSRETURN(1);
 }
@@ -2083,75 +2082,75 @@ XS(XS_DynaLoader_mod2fname)
 char *
 os2error(int rc)
 {
-	dTHX;
-	ULONG len;
-	char *s;
-	int number = SvTRUE(get_sv("OS2::nsyserror", GV_ADD));
+        dTHX;
+        ULONG len;
+        char *s;
+        int number = SvTRUE(get_sv("OS2::nsyserror", GV_ADD));
 
         if (!(_emx_env & 0x200)) return ""; /* Nop if not OS/2. */
-	if (rc == 0)
-		return "";
-	if (number) {
-	    sprintf(os2error_buf, "SYS%04d=%#x: ", rc, rc);
-	    s = os2error_buf + strlen(os2error_buf);
-	} else
-	    s = os2error_buf;
-	if (DosGetMessage(NULL, 0, s, sizeof(os2error_buf) - 1 - (s-os2error_buf), 
-			  rc, "OSO001.MSG", &len)) {
-	    char *name = "";
+        if (rc == 0)
+                return "";
+        if (number) {
+            sprintf(os2error_buf, "SYS%04d=%#x: ", rc, rc);
+            s = os2error_buf + strlen(os2error_buf);
+        } else
+            s = os2error_buf;
+        if (DosGetMessage(NULL, 0, s, sizeof(os2error_buf) - 1 - (s-os2error_buf), 
+                          rc, "OSO001.MSG", &len)) {
+            char *name = "";
 
-	    if (!number) {
-		sprintf(os2error_buf, "SYS%04d=%#x: ", rc, rc);
-		s = os2error_buf + strlen(os2error_buf);
-	    }
-	    switch (rc) {
-	    case PMERR_INVALID_HWND:
-		name = "PMERR_INVALID_HWND";
-		break;
-	    case PMERR_INVALID_HMQ:
-		name = "PMERR_INVALID_HMQ";
-		break;
-	    case PMERR_CALL_FROM_WRONG_THREAD:
-		name = "PMERR_CALL_FROM_WRONG_THREAD";
-		break;
-	    case PMERR_NO_MSG_QUEUE:
-		name = "PMERR_NO_MSG_QUEUE";
-		break;
-	    case PMERR_NOT_IN_A_PM_SESSION:
-		name = "PMERR_NOT_IN_A_PM_SESSION";
-		break;
-	    case PMERR_INVALID_ATOM:
-		name = "PMERR_INVALID_ATOM";
-		break;
-	    case PMERR_INVALID_HATOMTBL:
-		name = "PMERR_INVALID_HATOMTMB";
-		break;
-	    case PMERR_INVALID_INTEGER_ATOM:
-		name = "PMERR_INVALID_INTEGER_ATOM";
-		break;
-	    case PMERR_INVALID_ATOM_NAME:
-		name = "PMERR_INVALID_ATOM_NAME";
-		break;
-	    case PMERR_ATOM_NAME_NOT_FOUND:
-		name = "PMERR_ATOM_NAME_NOT_FOUND";
-		break;
-	    }
-	    sprintf(s, "%s%s[No description found in OSO001.MSG]", 
-		    name, (*name ? "=" : ""));
-	} else {
-		s[len] = '\0';
-		if (len && s[len - 1] == '\n')
-			s[--len] = 0;
-		if (len && s[len - 1] == '\r')
-			s[--len] = 0;
-		if (len && s[len - 1] == '.')
-			s[--len] = 0;
-		if (len >= 10 && number && strnEQ(s, os2error_buf, 7)
-		    && s[7] == ':' && s[8] == ' ')
-		    /* Some messages start with SYSdddd:, some not */
-		    Move(s + 9, s, (len -= 9) + 1, char);
-	}
-	return os2error_buf;
+            if (!number) {
+                sprintf(os2error_buf, "SYS%04d=%#x: ", rc, rc);
+                s = os2error_buf + strlen(os2error_buf);
+            }
+            switch (rc) {
+            case PMERR_INVALID_HWND:
+                name = "PMERR_INVALID_HWND";
+                break;
+            case PMERR_INVALID_HMQ:
+                name = "PMERR_INVALID_HMQ";
+                break;
+            case PMERR_CALL_FROM_WRONG_THREAD:
+                name = "PMERR_CALL_FROM_WRONG_THREAD";
+                break;
+            case PMERR_NO_MSG_QUEUE:
+                name = "PMERR_NO_MSG_QUEUE";
+                break;
+            case PMERR_NOT_IN_A_PM_SESSION:
+                name = "PMERR_NOT_IN_A_PM_SESSION";
+                break;
+            case PMERR_INVALID_ATOM:
+                name = "PMERR_INVALID_ATOM";
+                break;
+            case PMERR_INVALID_HATOMTBL:
+                name = "PMERR_INVALID_HATOMTMB";
+                break;
+            case PMERR_INVALID_INTEGER_ATOM:
+                name = "PMERR_INVALID_INTEGER_ATOM";
+                break;
+            case PMERR_INVALID_ATOM_NAME:
+                name = "PMERR_INVALID_ATOM_NAME";
+                break;
+            case PMERR_ATOM_NAME_NOT_FOUND:
+                name = "PMERR_ATOM_NAME_NOT_FOUND";
+                break;
+            }
+            sprintf(s, "%s%s[No description found in OSO001.MSG]", 
+                    name, (*name ? "=" : ""));
+        } else {
+                s[len] = '\0';
+                if (len && s[len - 1] == '\n')
+                        s[--len] = 0;
+                if (len && s[len - 1] == '\r')
+                        s[--len] = 0;
+                if (len && s[len - 1] == '.')
+                        s[--len] = 0;
+                if (len >= 10 && number && strnEQ(s, os2error_buf, 7)
+                    && s[7] == ':' && s[8] == ' ')
+                    /* Some messages start with SYSdddd:, some not */
+                    Move(s + 9, s, (len -= 9) + 1, char);
+        }
+        return os2error_buf;
 }
 
 void
@@ -2197,12 +2196,12 @@ execname2buffer(char *buf, STRLEN l, char *oname)
   p = buf;
   while (*p) {
     if (*p == '\\')
-	*p = '/';
+        *p = '/';
     if (*p == '/') {
-	if (ok && *oname != '/' && *oname != '\\')
-	    ok = 0;
+        if (ok && *oname != '/' && *oname != '\\')
+            ok = 0;
     } else if (ok && tolower(*oname) != tolower(*p))
-	ok = 0;	
+        ok = 0;	
     p++;
     oname++;
   }
@@ -2235,32 +2234,32 @@ Perl_OS2_handler_install(void *handler, enum Perlos2_handler how)
 
     switch (how) {
       case Perlos2_handler_mangle:
-	perllib_mangle_installed = (char *(*)(char *s, unsigned int l))handler;
-	return 1;
+        perllib_mangle_installed = (char *(*)(char *s, unsigned int l))handler;
+        return 1;
       case Perlos2_handler_perl_sh:
-	s = (char *)handler;
-	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perl_sh");
-	perl_sh_installed = savepv(s);
-	return 1;
+        s = (char *)handler;
+        s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perl_sh");
+        perl_sh_installed = savepv(s);
+        return 1;
       case Perlos2_handler_perllib_from:
-	s = (char *)handler;
-	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_from");
-	oldl = strlen(s);
-	oldp = savepv(s);
-	return 1;
+        s = (char *)handler;
+        s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_from");
+        oldl = strlen(s);
+        oldp = savepv(s);
+        return 1;
       case Perlos2_handler_perllib_to:
-	s = (char *)handler;
-	s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_to");
-	newl = strlen(s);
-	newp = savepv(s);
-	strcpy(mangle_ret, newp);
-	s = mangle_ret - 1;
-	while (*++s)
-	    if (*s == '\\')
-		*s = '/';
-	return 1;
+        s = (char *)handler;
+        s = dir_subst(s, strlen(s), b, sizeof b, 0, "handler_perllib_to");
+        newl = strlen(s);
+        newp = savepv(s);
+        strcpy(mangle_ret, newp);
+        s = mangle_ret - 1;
+        while (*++s)
+            if (*s == '\\')
+                *s = '/';
+        return 1;
       default:
-	return 0;
+        return 0;
     }
 }
 
@@ -2272,115 +2271,115 @@ dir_subst(char *s, unsigned int l, char *b, unsigned int bl, enum dir_subst_e fl
     STRLEN froml = 0, tol = 0, rest = 0;	/* froml: likewise */
 
     if (l >= 2 && s[0] == '~') {
-	switch (s[1]) {
-	  case 'i': case 'I':
-	    from = "installprefix";	break;
-	  case 'd': case 'D':
-	    from = "dll";		break;
-	  case 'e': case 'E':
-	    from = "exe";		break;
-	  default:
-	    from = NULL;
-	    froml = l + 1;			/* Will not match */
-	    break;
-	}
-	if (from)
-	    froml = strlen(from) + 1;
-	if (l >= froml && strnicmp(s + 2, from + 1, froml - 2) == 0) {
-	    int strip = 1;
+        switch (s[1]) {
+          case 'i': case 'I':
+            from = "installprefix";	break;
+          case 'd': case 'D':
+            from = "dll";		break;
+          case 'e': case 'E':
+            from = "exe";		break;
+          default:
+            from = NULL;
+            froml = l + 1;			/* Will not match */
+            break;
+        }
+        if (from)
+            froml = strlen(from) + 1;
+        if (l >= froml && strnicmp(s + 2, from + 1, froml - 2) == 0) {
+            int strip = 1;
 
-	    switch (s[1]) {
-	      case 'i': case 'I':
-		strip = 0;
-		tol = strlen(INSTALL_PREFIX);
-		if (tol >= bl) {
-		    if (flags & dir_subst_fatal)
-			Perl_croak_nocontext("INSTALL_PREFIX too long: `%s'", INSTALL_PREFIX);
-		    else
-			return NULL;
-		}
-		memcpy(b, INSTALL_PREFIX, tol + 1);
-		to = b;
-		e = b + tol;
-		break;
-	      case 'd': case 'D':
-		if (flags & dir_subst_fatal) {
-		    dTHX;
+            switch (s[1]) {
+              case 'i': case 'I':
+                strip = 0;
+                tol = strlen(INSTALL_PREFIX);
+                if (tol >= bl) {
+                    if (flags & dir_subst_fatal)
+                        Perl_croak_nocontext("INSTALL_PREFIX too long: `%s'", INSTALL_PREFIX);
+                    else
+                        return NULL;
+                }
+                memcpy(b, INSTALL_PREFIX, tol + 1);
+                to = b;
+                e = b + tol;
+                break;
+              case 'd': case 'D':
+                if (flags & dir_subst_fatal) {
+                    dTHX;
 
-		    to = dllname2buffer(aTHX_ b, bl);
-		} else {				/* No Perl present yet */
-		    HMODULE self = find_myself();
-		    APIRET rc = DosQueryModuleName(self, bl, b);
+                    to = dllname2buffer(aTHX_ b, bl);
+                } else {				/* No Perl present yet */
+                    HMODULE self = find_myself();
+                    APIRET rc = DosQueryModuleName(self, bl, b);
 
-		    if (rc)
-			return 0;
-		    to = b - 1;
-		    while (*++to)
-			if (*to == '\\')
-			    *to = '/';
-		    to = b;
-		}
-		break;
-	      case 'e': case 'E':
-		if (flags & dir_subst_fatal) {
-		    dTHX;
+                    if (rc)
+                        return 0;
+                    to = b - 1;
+                    while (*++to)
+                        if (*to == '\\')
+                            *to = '/';
+                    to = b;
+                }
+                break;
+              case 'e': case 'E':
+                if (flags & dir_subst_fatal) {
+                    dTHX;
 
-		    to = execname2buffer(b, bl, PL_origargv[0]);
-	        } else
-		    to = execname2buffer(b, bl, NULL);
-		break;
-	    }
-	    if (!to)
-		return NULL;
-	    if (strip) {
-		e = strrchr(to, '/');
-		if (!e && (flags & dir_subst_fatal))
-		    Perl_croak_nocontext("%s: Can't parse EXE/DLL name: '%s'", msg, to);
-		else if (!e)
-		    return NULL;
-		*e = 0;
-	    }
-	    s += froml; l -= froml;
-	    if (!l)
-		return to;
-	    if (!tol)
-		tol = strlen(to);
+                    to = execname2buffer(b, bl, PL_origargv[0]);
+                } else
+                    to = execname2buffer(b, bl, NULL);
+                break;
+            }
+            if (!to)
+                return NULL;
+            if (strip) {
+                e = strrchr(to, '/');
+                if (!e && (flags & dir_subst_fatal))
+                    Perl_croak_nocontext("%s: Can't parse EXE/DLL name: '%s'", msg, to);
+                else if (!e)
+                    return NULL;
+                *e = 0;
+            }
+            s += froml; l -= froml;
+            if (!l)
+                return to;
+            if (!tol)
+                tol = strlen(to);
 
-	    while (l >= 3 && (s[0] == '/' || s[0] == '\\')
-		   && s[1] == '.' && s[2] == '.'
-		   && (l == 3 || s[3] == '/' || s[3] == '\\' || s[3] == ';')) {
-		e = strrchr(b, '/');
-		if (!e && (flags & dir_subst_fatal))
-			Perl_croak_nocontext("%s: Error stripping dirs from EXE/DLL/INSTALLDIR name", msg);
-		else if (!e)
-			return NULL;
-		*e = 0;
-		l -= 3; s += 3;
-	    }
-	    if (l && s[0] != '/' && s[0] != '\\' && s[0] != ';')
-		*e++ = '/';
-	}
+            while (l >= 3 && (s[0] == '/' || s[0] == '\\')
+                   && s[1] == '.' && s[2] == '.'
+                   && (l == 3 || s[3] == '/' || s[3] == '\\' || s[3] == ';')) {
+                e = strrchr(b, '/');
+                if (!e && (flags & dir_subst_fatal))
+                        Perl_croak_nocontext("%s: Error stripping dirs from EXE/DLL/INSTALLDIR name", msg);
+                else if (!e)
+                        return NULL;
+                *e = 0;
+                l -= 3; s += 3;
+            }
+            if (l && s[0] != '/' && s[0] != '\\' && s[0] != ';')
+                *e++ = '/';
+        }
     }						/* Else: copy as is */
     if (l && (flags & dir_subst_pathlike)) {
-	STRLEN i = 0;
+        STRLEN i = 0;
 
-	while ( i < l - 2 && s[i] != ';')	/* May have ~char after `;' */
-	    i++;
-	if (i < l - 2) {			/* Found */
-	    rest = l - i - 1;
-	    l = i + 1;
-	}
+        while ( i < l - 2 && s[i] != ';')	/* May have ~char after `;' */
+            i++;
+        if (i < l - 2) {			/* Found */
+            rest = l - i - 1;
+            l = i + 1;
+        }
     }
     if (e + l >= b + bl) {
-	if (flags & dir_subst_fatal)
-	    Perl_croak_nocontext("%s: name `%s%s' too long", msg, b, s);
-	else
-	    return NULL;
+        if (flags & dir_subst_fatal)
+            Perl_croak_nocontext("%s: name `%s%s' too long", msg, b, s);
+        else
+            return NULL;
     }
     memcpy(e, s, l);
     if (rest) {
-	e = dir_subst(s + l, rest, e + l, bl - (e + l - b), flags, msg);
-	return e ? b : e;
+        e = dir_subst(s + l, rest, e + l, bl - (e + l - b), flags, msg);
+        return e ? b : e;
     }
     e[l] = 0;
     return b;
@@ -2390,15 +2389,15 @@ char *
 perllib_mangle_with(char *s, unsigned int l, char *from, unsigned int froml, char *to, unsigned int tol)
 {
     if (!to)
-	return s;
+        return s;
     if (l == 0)
-	l = strlen(s);
+        l = strlen(s);
     if (l < froml || strnicmp(from, s, froml) != 0)
-	return s;
+        return s;
     if (l + tol - froml > STATIC_FILE_LENGTH || tol > STATIC_FILE_LENGTH)
-	Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
+        Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
     if (to && to != mangle_ret)
-	memcpy(mangle_ret, to, tol);
+        memcpy(mangle_ret, to, tol);
     strcpy(mangle_ret + tol, s + froml);
     return mangle_ret;
 }
@@ -2409,44 +2408,44 @@ perllib_mangle(char *s, unsigned int l)
     char *name;
 
     if (perllib_mangle_installed && (name = perllib_mangle_installed(s,l)))
-	return name;
+        return name;
     if (!newp && !notfound) {
-	newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
-		      STRINGIFY(PERL_VERSION) STRINGIFY(PERL_SUBVERSION)
-		      "_PREFIX");
-	if (!newp)
-	    newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
-			  STRINGIFY(PERL_VERSION) "_PREFIX");
-	if (!newp)
-	    newp = getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION) "_PREFIX");
-	if (!newp)
-	    newp = getenv(name = "PERLLIB_PREFIX");
-	if (newp) {
-	    char *s, b[300];
-	    
-	    oldp = newp;
-	    while (*newp && !isSPACE(*newp) && *newp != ';')
-		newp++;			/* Skip old name. */
-	    oldl = newp - oldp;
-	    s = dir_subst(oldp, oldl, b, sizeof b, dir_subst_fatal, name);
-	    oldp = savepv(s);
-	    oldl = strlen(s);
-	    while (*newp && (isSPACE(*newp) || *newp == ';'))
-		newp++;			/* Skip whitespace. */
-	    Perl_OS2_handler_install((void *)newp, Perlos2_handler_perllib_to);
-	    if (newl == 0 || oldl == 0)
-		Perl_croak_nocontext("Malformed %s", name);
-	} else
-	    notfound = 1;
+        newp = PerlEnv_getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
+                      STRINGIFY(PERL_VERSION) STRINGIFY(PERL_SUBVERSION)
+                      "_PREFIX");
+        if (!newp)
+            newp = PerlEnv_getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION)
+                          STRINGIFY(PERL_VERSION) "_PREFIX");
+        if (!newp)
+            newp = PerlEnv_getenv(name = "PERLLIB_" STRINGIFY(PERL_REVISION) "_PREFIX");
+        if (!newp)
+            newp = PerlEnv_getenv(name = "PERLLIB_PREFIX");
+        if (newp) {
+            char *s, b[300];
+            
+            oldp = newp;
+            while (*newp && !isSPACE(*newp) && *newp != ';')
+                newp++;			/* Skip old name. */
+            oldl = newp - oldp;
+            s = dir_subst(oldp, oldl, b, sizeof b, dir_subst_fatal, name);
+            oldp = savepv(s);
+            oldl = strlen(s);
+            while (*newp && (isSPACE(*newp) || *newp == ';'))
+                newp++;			/* Skip whitespace. */
+            Perl_OS2_handler_install((void *)newp, Perlos2_handler_perllib_to);
+            if (newl == 0 || oldl == 0)
+                Perl_croak_nocontext("Malformed %s", name);
+        } else
+            notfound = 1;
     }
     if (!newp)
-	return s;
+        return s;
     if (l == 0)
-	l = strlen(s);
+        l = strlen(s);
     if (l < oldl || strnicmp(oldp, s, oldl) != 0)
-	return s;
+        return s;
     if (l + newl - oldl > STATIC_FILE_LENGTH || newl > STATIC_FILE_LENGTH)
-	Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
+        Perl_croak_nocontext("Malformed PERLLIB_PREFIX");
     strcpy(mangle_ret + newl, s + oldl);
     return mangle_ret;
 }
@@ -2466,15 +2465,15 @@ Create_HMQ(int serve, char *message)	/* Assumes morphing */
     /* 64 messages if before OS/2 3.0, ignored otherwise */
     Perl_hmq = (*PMWIN_entries.CreateMsgQueue)(perl_hab_GET(), 64);
     if (!Perl_hmq) {
-	dTHX;
+        dTHX;
 
-	SAVEINT(rmq_cnt);		/* Allow catch()ing. */
-	if (rmq_cnt++)
-	    _exit(188);		/* Panic can try to create a window. */
-	CroakWinError(1, message ? message : "Cannot create a message queue");
+        SAVEINT(rmq_cnt);		/* Allow catch()ing. */
+        if (rmq_cnt++)
+            _exit(188);		/* Panic can try to create a window. */
+        CroakWinError(1, message ? message : "Cannot create a message queue");
     }
     if (serve != -1)
-	(*PMWIN_entries.CancelShutdown)(Perl_hmq, !serve);
+        (*PMWIN_entries.CancelShutdown)(Perl_hmq, !serve);
     /* We may have loaded some modules */
     _control87(fpflag, MCW_EM); /* Some modules reset FP flags on (un)load */
 }
@@ -2492,28 +2491,28 @@ Perl_Register_MQ(int serve)
     Perl_hmq_refcnt = 0;		/* Be extra safe */
     DosGetInfoBlocks(&tib, &pib);
     if (!Perl_morph_refcnt) {    
-	Perl_os2_initial_mode = pib->pib_ultype;
-	/* Try morphing into a PM application. */
-	if (pib->pib_ultype != 3)		/* 2 is VIO */
-	    pib->pib_ultype = 3;		/* 3 is PM */	
+        Perl_os2_initial_mode = pib->pib_ultype;
+        /* Try morphing into a PM application. */
+        if (pib->pib_ultype != 3)		/* 2 is VIO */
+            pib->pib_ultype = 3;		/* 3 is PM */	
     }
     Create_HMQ(-1,			/* We do CancelShutdown ourselves */
-	       "Cannot create a message queue, or morph to a PM application");
+               "Cannot create a message queue, or morph to a PM application");
     if ((serve & REGISTERMQ_IMEDIATE_UNMORPH)) {
-	if (!Perl_morph_refcnt && Perl_os2_initial_mode != 3)
-	    pib->pib_ultype = Perl_os2_initial_mode;
+        if (!Perl_morph_refcnt && Perl_os2_initial_mode != 3)
+            pib->pib_ultype = Perl_os2_initial_mode;
     }
   }
     if (serve & REGISTERMQ_WILL_SERVE) {
-	if ( Perl_hmq_servers <= 0	/* Safe to inform us on shutdown, */
-	     && Perl_hmq_refcnt > 0 )	/* this was switched off before... */
-	    (*PMWIN_entries.CancelShutdown)(Perl_hmq, 0);
-	Perl_hmq_servers++;
+        if ( Perl_hmq_servers <= 0	/* Safe to inform us on shutdown, */
+             && Perl_hmq_refcnt > 0 )	/* this was switched off before... */
+            (*PMWIN_entries.CancelShutdown)(Perl_hmq, 0);
+        Perl_hmq_servers++;
     } else if (!Perl_hmq_servers)	/* Do not inform us on shutdown */
-	(*PMWIN_entries.CancelShutdown)(Perl_hmq, 1);
+        (*PMWIN_entries.CancelShutdown)(Perl_hmq, 1);
     Perl_hmq_refcnt++;
     if (!(serve & REGISTERMQ_IMEDIATE_UNMORPH))
-	Perl_morph_refcnt++;
+        Perl_morph_refcnt++;
     return Perl_hmq;
 }
 
@@ -2524,14 +2523,14 @@ Perl_Serve_Messages(int force)
     QMSG msg;
 
     if (Perl_hmq_servers > 0 && !force)
-	return 0;
+        return 0;
     if (Perl_hmq_refcnt <= 0)
-	Perl_croak_nocontext("No message queue");
+        Perl_croak_nocontext("No message queue");
     while ((*PMWIN_entries.PeekMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0, PM_REMOVE)) {
-	cnt++;
-	if (msg.msg == WM_QUIT)
-	    Perl_croak_nocontext("QUITing...");
-	(*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
+        cnt++;
+        if (msg.msg == WM_QUIT)
+            Perl_croak_nocontext("QUITing...");
+        (*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
     }
     return cnt;
 }
@@ -2542,17 +2541,17 @@ Perl_Process_Messages(int force, I32 *cntp)
     QMSG msg;
 
     if (Perl_hmq_servers > 0 && !force)
-	return 0;
+        return 0;
     if (Perl_hmq_refcnt <= 0)
-	Perl_croak_nocontext("No message queue");
+        Perl_croak_nocontext("No message queue");
     while ((*PMWIN_entries.GetMsg)(Perl_hab, &msg, NULLHANDLE, 0, 0)) {
-	if (cntp)
-	    (*cntp)++;
-	(*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
-	if (msg.msg == WM_DESTROY)
-	    return -1;
-	if (msg.msg == WM_CREATE)
-	    return +1;
+        if (cntp)
+            (*cntp)++;
+        (*PMWIN_entries.DispatchMsg)(Perl_hab, &msg);
+        if (msg.msg == WM_DESTROY)
+            return -1;
+        if (msg.msg == WM_CREATE)
+            return +1;
     }
     Perl_croak_nocontext("QUITing...");
 }
@@ -2561,34 +2560,34 @@ void
 Perl_Deregister_MQ(int serve)
 {
     if (serve & REGISTERMQ_WILL_SERVE)
-	Perl_hmq_servers--;
+        Perl_hmq_servers--;
 
     if (--Perl_hmq_refcnt <= 0) {
-	unsigned fpflag = _control87(0,0);
+        unsigned fpflag = _control87(0,0);
 
-	init_PMWIN_entries();			/* To be extra safe */
-	(*PMWIN_entries.DestroyMsgQueue)(Perl_hmq);
-	Perl_hmq = 0;
-	/* We may have (un)loaded some modules */
-	_control87(fpflag, MCW_EM); /* Some modules reset FP flags on (un)load */
+        init_PMWIN_entries();			/* To be extra safe */
+        (*PMWIN_entries.DestroyMsgQueue)(Perl_hmq);
+        Perl_hmq = 0;
+        /* We may have (un)loaded some modules */
+        _control87(fpflag, MCW_EM); /* Some modules reset FP flags on (un)load */
     } else if ((serve & REGISTERMQ_WILL_SERVE) && Perl_hmq_servers <= 0)
-	(*PMWIN_entries.CancelShutdown)(Perl_hmq, 1); /* Last server exited */
+        (*PMWIN_entries.CancelShutdown)(Perl_hmq, 1); /* Last server exited */
     if (!(serve & REGISTERMQ_IMEDIATE_UNMORPH) && (--Perl_morph_refcnt <= 0)) {
-	/* Try morphing back from a PM application. */
-	PPIB pib;
-	PTIB tib;
+        /* Try morphing back from a PM application. */
+        PPIB pib;
+        PTIB tib;
 
-	DosGetInfoBlocks(&tib, &pib);
-	if (pib->pib_ultype == 3)		/* 3 is PM */
-	    pib->pib_ultype = Perl_os2_initial_mode;
-	else
-	    Perl_warn_nocontext("Unexpected program mode %d when morphing back from PM",
-				pib->pib_ultype);
+        DosGetInfoBlocks(&tib, &pib);
+        if (pib->pib_ultype == 3)		/* 3 is PM */
+            pib->pib_ultype = Perl_os2_initial_mode;
+        else
+            Perl_warn_nocontext("Unexpected program mode %d when morphing back from PM",
+                                pib->pib_ultype);
     }
 }
 
 #define sys_is_absolute(path) ( isALPHA((path)[0]) && (path)[1] == ':' \
-				&& ((path)[2] == '/' || (path)[2] == '\\'))
+                                && ((path)[2] == '/' || (path)[2] == '\\'))
 #define sys_is_rooted _fnisabs
 #define sys_is_relative _fnisrel
 #define current_drive _getdrive
@@ -2601,21 +2600,21 @@ XS(XS_OS2_Error)
 {
     dXSARGS;
     if (items != 2)
-	Perl_croak_nocontext("Usage: OS2::Error(harderr, exception)");
+        Perl_croak_nocontext("Usage: OS2::Error(harderr, exception)");
     {
-	int	arg1 = SvIV(ST(0));
-	int	arg2 = SvIV(ST(1));
-	int	a = ((arg1 ? FERR_ENABLEHARDERR : FERR_DISABLEHARDERR)
-		     | (arg2 ? FERR_ENABLEEXCEPTION : FERR_DISABLEEXCEPTION));
-	int	RETVAL = ((arg1 ? 1 : 0) | (arg2 ? 2 : 0));
-	unsigned long rc;
+        int	arg1 = SvIV(ST(0));
+        int	arg2 = SvIV(ST(1));
+        int	a = ((arg1 ? FERR_ENABLEHARDERR : FERR_DISABLEHARDERR)
+                     | (arg2 ? FERR_ENABLEEXCEPTION : FERR_DISABLEEXCEPTION));
+        int	RETVAL = ((arg1 ? 1 : 0) | (arg2 ? 2 : 0));
+        unsigned long rc;
 
-	if (CheckOSError(DosError(a)))
-	    Perl_croak_nocontext("DosError(%d) failed: %s", a, os2error(Perl_rc));
-	ST(0) = sv_newmortal();
-	if (DOS_harderr_state >= 0)
-	    sv_setiv(ST(0), DOS_harderr_state);
-	DOS_harderr_state = RETVAL;
+        if (CheckOSError(DosError(a)))
+            Perl_croak_nocontext("DosError(%d) failed: %s", a, os2error(Perl_rc));
+        ST(0) = sv_newmortal();
+        if (DOS_harderr_state >= 0)
+            sv_setiv(ST(0), DOS_harderr_state);
+        DOS_harderr_state = RETVAL;
     }
     XSRETURN(1);
 }
@@ -2624,29 +2623,29 @@ XS(XS_OS2_Errors2Drive)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: OS2::Errors2Drive(drive)");
+        Perl_croak_nocontext("Usage: OS2::Errors2Drive(drive)");
     {
-	STRLEN n_a;
-	SV  *sv = ST(0);
-	int	suppress = SvOK(sv);
-	char	*s = suppress ? SvPV(sv, n_a) : NULL;
-	char	drive = (s ? *s : 0);
-	unsigned long rc;
+        STRLEN n_a;
+        SV  *sv = ST(0);
+        int	suppress = SvOK(sv);
+        char	*s = suppress ? SvPV(sv, n_a) : NULL;
+        char	drive = (s ? *s : 0);
+        unsigned long rc;
 
-	if (suppress && !isALPHA(drive))
-	    Perl_croak_nocontext("Non-char argument '%c' to OS2::Errors2Drive()", drive);
-	if (CheckOSError(DosSuppressPopUps((suppress
-					    ? SPU_ENABLESUPPRESSION 
-					    : SPU_DISABLESUPPRESSION),
-					   drive)))
-	    Perl_croak_nocontext("DosSuppressPopUps(%c) failed: %s", drive,
-				 os2error(Perl_rc));
-	ST(0) = sv_newmortal();
-	if (DOS_suppression_state > 0)
-	    sv_setpvn(ST(0), &DOS_suppression_state, 1);
-	else if (DOS_suppression_state == 0)
+        if (suppress && !isALPHA(drive))
+            Perl_croak_nocontext("Non-char argument '%c' to OS2::Errors2Drive()", drive);
+        if (CheckOSError(DosSuppressPopUps((suppress
+                                            ? SPU_ENABLESUPPRESSION 
+                                            : SPU_DISABLESUPPRESSION),
+                                           drive)))
+            Perl_croak_nocontext("DosSuppressPopUps(%c) failed: %s", drive,
+                                 os2error(Perl_rc));
+        ST(0) = sv_newmortal();
+        if (DOS_suppression_state > 0)
+            sv_setpvn(ST(0), &DOS_suppression_state, 1);
+        else if (DOS_suppression_state == 0)
             SvPVCLEAR(ST(0));
-	DOS_suppression_state = drive;
+        DOS_suppression_state = drive;
     }
     XSRETURN(1);
 }
@@ -2669,49 +2668,49 @@ async_mssleep(ULONG ms, int switch_priority) {
     return !_sleep2(ms);
 
   os2cp_croak(DosCreateEventSem(NULL,	     /* Unnamed */
-				&hevEvent1,  /* Handle of semaphore returned */
-				DC_SEM_SHARED, /* Shared needed for DosAsyncTimer */
-				FALSE),      /* Semaphore is in RESET state  */
-	      "DosCreateEventSem");
+                                &hevEvent1,  /* Handle of semaphore returned */
+                                DC_SEM_SHARED, /* Shared needed for DosAsyncTimer */
+                                FALSE),      /* Semaphore is in RESET state  */
+              "DosCreateEventSem");
 
   if (ms >= switch_priority)
     switch_priority = 0;
   if (switch_priority) {
     if (CheckOSError(DosGetInfoBlocks(&tib, &pib))) 
-	switch_priority = 0;
+        switch_priority = 0;
     else {
-	/* In Warp3, to switch scheduling to 8ms step, one needs to do 
-	   DosAsyncTimer() in time-critical thread.  On laters versions,
-	   more and more cases of wait-for-something are covered.
+        /* In Warp3, to switch scheduling to 8ms step, one needs to do 
+           DosAsyncTimer() in time-critical thread.  On laters versions,
+           more and more cases of wait-for-something are covered.
 
-	   It turns out that on Warp3fp42 it is the priority at the time
-	   of DosAsyncTimer() which matters.  Let's hope that this works
-	   with later versions too...		XXXX
-	 */
-	priority = (tib->tib_ptib2->tib2_ulpri);
-	if ((priority & 0xFF00) == 0x0300) /* already time-critical */
-	    switch_priority = 0;
-	/* Make us time-critical.  Just modifying TIB is not enough... */
-	/* tib->tib_ptib2->tib2_ulpri = 0x0300;*/
-	/* We do not want to run at high priority if a signal causes us
-	   to longjmp() out of this section... */
-	if (DosEnterMustComplete(&nesting))
-	    switch_priority = 0;
-	else
-	    DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, 0, 0);
+           It turns out that on Warp3fp42 it is the priority at the time
+           of DosAsyncTimer() which matters.  Let's hope that this works
+           with later versions too...		XXXX
+         */
+        priority = (tib->tib_ptib2->tib2_ulpri);
+        if ((priority & 0xFF00) == 0x0300) /* already time-critical */
+            switch_priority = 0;
+        /* Make us time-critical.  Just modifying TIB is not enough... */
+        /* tib->tib_ptib2->tib2_ulpri = 0x0300;*/
+        /* We do not want to run at high priority if a signal causes us
+           to longjmp() out of this section... */
+        if (DosEnterMustComplete(&nesting))
+            switch_priority = 0;
+        else
+            DosSetPriority(PRTYS_THREAD, PRTYC_TIMECRITICAL, 0, 0);
     }
   }
 
   if ((badrc = DosAsyncTimer(ms,
-			     (HSEM) hevEvent1,	/* Semaphore to post        */
-			     &htimerEvent1)))	/* Timer handler (returned) */
+                             (HSEM) hevEvent1,	/* Semaphore to post        */
+                             &htimerEvent1)))	/* Timer handler (returned) */
      e = "DosAsyncTimer";
 
   if (switch_priority && tib->tib_ptib2->tib2_ulpri == 0x0300) {
-	/* Nobody switched priority while we slept...  Ignore errors... */
-	/* tib->tib_ptib2->tib2_ulpri = priority; */	/* Get back... */
-	if (!(rc = DosSetPriority(PRTYS_THREAD, (priority>>8) & 0xFF, 0, 0)))
-	    rc = DosSetPriority(PRTYS_THREAD, 0, priority & 0xFF, 0);
+        /* Nobody switched priority while we slept...  Ignore errors... */
+        /* tib->tib_ptib2->tib2_ulpri = priority; */	/* Get back... */
+        if (!(rc = DosSetPriority(PRTYS_THREAD, (priority>>8) & 0xFF, 0, 0)))
+            rc = DosSetPriority(PRTYS_THREAD, 0, priority & 0xFF, 0);
   }
   if (switch_priority)
       rc = DosExitMustComplete(&nesting);	/* Ignore errors */
@@ -2743,7 +2742,7 @@ XS(XS_OS2_ms_sleep)		/* for testing only... */
     ULONG ms, lim;
 
     if (items > 2 || items < 1)
-	Perl_croak_nocontext("Usage: OS2::ms_sleep(wait_ms [, high_priority_limit])");
+        Perl_croak_nocontext("Usage: OS2::ms_sleep(wait_ms [, high_priority_limit])");
     ms = SvUV(ST(0));
     lim = items > 1 ? SvUV(ST(1)) : ms + 1;
     async_mssleep(ms, lim);
@@ -2761,22 +2760,22 @@ XS(XS_OS2_Timer)
     ULONG rc;
 
     if (items != 0)
-	Perl_croak_nocontext("Usage: OS2::Timer()");
+        Perl_croak_nocontext("Usage: OS2::Timer()");
     if (!freq) {
-	*(PFN*)&pDosTmrQueryFreq = loadByOrdinal(ORD_DosTmrQueryFreq, 0);
-	*(PFN*)&pDosTmrQueryTime = loadByOrdinal(ORD_DosTmrQueryTime, 0);
-	MUTEX_LOCK(&perlos2_state_mutex);
-	if (!freq)
-	    if (CheckOSError(pDosTmrQueryFreq(&freq)))
-		croak_with_os2error("DosTmrQueryFreq");
-	MUTEX_UNLOCK(&perlos2_state_mutex);
+        *(PFN*)&pDosTmrQueryFreq = loadByOrdinal(ORD_DosTmrQueryFreq, 0);
+        *(PFN*)&pDosTmrQueryTime = loadByOrdinal(ORD_DosTmrQueryTime, 0);
+        MUTEX_LOCK(&perlos2_state_mutex);
+        if (!freq)
+            if (CheckOSError(pDosTmrQueryFreq(&freq)))
+                croak_with_os2error("DosTmrQueryFreq");
+        MUTEX_UNLOCK(&perlos2_state_mutex);
     }
     if (CheckOSError(pDosTmrQueryTime(&count)))
-	croak_with_os2error("DosTmrQueryTime");
+        croak_with_os2error("DosTmrQueryTime");
     {    
-	dXSTARG;
+        dXSTARG;
 
-	XSprePUSH; PUSHn(((NV)count)/freq);
+        XSprePUSH; PUSHn(((NV)count)/freq);
     }
     XSRETURN(1);
 }
@@ -2786,11 +2785,11 @@ XS(XS_OS2_msCounter)
     dXSARGS;
 
     if (items != 0)
-	Perl_croak_nocontext("Usage: OS2::msCounter()");
+        Perl_croak_nocontext("Usage: OS2::msCounter()");
     {    
-	dXSTARG;
+        dXSTARG;
 
-	XSprePUSH; PUSHu(msCounter());
+        XSprePUSH; PUSHu(msCounter());
     }
     XSRETURN(1);
 }
@@ -2801,13 +2800,13 @@ XS(XS_OS2__InfoTable)
     int is_local = 0;
 
     if (items > 1)
-	Perl_croak_nocontext("Usage: OS2::_infoTable([isLocal])");
+        Perl_croak_nocontext("Usage: OS2::_infoTable([isLocal])");
     if (items == 1)
-	is_local = (int)SvIV(ST(0));
+        is_local = (int)SvIV(ST(0));
     {    
-	dXSTARG;
+        dXSTARG;
 
-	XSprePUSH; PUSHu(InfoTable(is_local));
+        XSprePUSH; PUSHu(InfoTable(is_local));
     }
     XSRETURN(1);
 }
@@ -2872,76 +2871,76 @@ XS(XS_OS2_DevCap)
 {
     dXSARGS;
     if (items > 2)
-	Perl_croak_nocontext("Usage: OS2::DevCap()");
+        Perl_croak_nocontext("Usage: OS2::DevCap()");
     {
-	/* Device Capabilities Data Buffer (10 extra w.r.t. Warp 4.5) */
-	LONG   si[CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1];
-	int i = 0, j = 0, how = DevCap_dc;
-	HDC hScreenDC;
-	DEVOPENSTRUC doStruc= {0L, (PSZ)"DISPLAY", NULL, 0L, 0L, 0L, 0L, 0L, 0L};
-	ULONG rc1 = NO_ERROR;
-	HWND hwnd;
-	static volatile int devcap_loaded;
+        /* Device Capabilities Data Buffer (10 extra w.r.t. Warp 4.5) */
+        LONG   si[CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1];
+        int i = 0, j = 0, how = DevCap_dc;
+        HDC hScreenDC;
+        DEVOPENSTRUC doStruc= {0L, (PSZ)"DISPLAY", NULL, 0L, 0L, 0L, 0L, 0L, 0L};
+        ULONG rc1 = NO_ERROR;
+        HWND hwnd;
+        static volatile int devcap_loaded;
 
-	if (!devcap_loaded) {
-	    *(PFN*)&pWinOpenWindowDC = loadByOrdinal(ORD_WinOpenWindowDC, 0);
-	    *(PFN*)&pDevOpenDC = loadByOrdinal(ORD_DevOpenDC, 0);
-	    *(PFN*)&pDevCloseDC = loadByOrdinal(ORD_DevCloseDC, 0);
-	    *(PFN*)&pDevQueryCaps = loadByOrdinal(ORD_DevQueryCaps, 0);
-	    devcap_loaded = 1;
-	}
+        if (!devcap_loaded) {
+            *(PFN*)&pWinOpenWindowDC = loadByOrdinal(ORD_WinOpenWindowDC, 0);
+            *(PFN*)&pDevOpenDC = loadByOrdinal(ORD_DevOpenDC, 0);
+            *(PFN*)&pDevCloseDC = loadByOrdinal(ORD_DevCloseDC, 0);
+            *(PFN*)&pDevQueryCaps = loadByOrdinal(ORD_DevQueryCaps, 0);
+            devcap_loaded = 1;
+        }
 
-	if (items >= 2)
-	    how = SvIV(ST(1));
-	if (!items) {			/* Get device contents from PM */
-	    hScreenDC = pDevOpenDC(perl_hab_GET(), OD_MEMORY, (PSZ)"*", 0,
-				  (PDEVOPENDATA)&doStruc, NULLHANDLE);
-	    if (CheckWinError(hScreenDC))
-		croak_with_os2error("DevOpenDC() failed");
-	} else if (how == DevCap_dc)
-	    hScreenDC = (HDC)SvIV(ST(0));
-	else {				/* DevCap_hwnd */
-	    if (!Perl_hmq)
-		Perl_croak(aTHX_ "Getting a window's device context without a message queue would lock PM");
-	    hwnd = (HWND)SvIV(ST(0));
-	    hScreenDC = pWinOpenWindowDC(hwnd); /* No need to DevCloseDC() */
-	    if (CheckWinError(hScreenDC))
-		croak_with_os2error("WinOpenWindowDC() failed");
-	}
-	if (CheckWinError(pDevQueryCaps(hScreenDC,
-					CAPS_FAMILY, /* W3 documented caps */
-					CAPS_DEVICE_POLYSET_POINTS
-					  - CAPS_FAMILY + 1,
-					si)))
-	    rc1 = Perl_rc;
-	else {
-	    EXTEND(SP,2*(CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1));
-	    while (i < CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1) {
-		ST(j) = sv_newmortal();
-		sv_setpv(ST(j++), dc_fields[i]);
-		ST(j) = sv_newmortal();
-		sv_setiv(ST(j++), si[i]);
-		i++;
-	    }
-	    i = CAPS_DEVICE_POLYSET_POINTS + 1;
-	    while (i < CAPS_DEVICE_POLYSET_POINTS + 11) { /* Just in case... */
-		LONG l;
+        if (items >= 2)
+            how = SvIV(ST(1));
+        if (!items) {			/* Get device contents from PM */
+            hScreenDC = pDevOpenDC(perl_hab_GET(), OD_MEMORY, (PSZ)"*", 0,
+                                  (PDEVOPENDATA)&doStruc, NULLHANDLE);
+            if (CheckWinError(hScreenDC))
+                croak_with_os2error("DevOpenDC() failed");
+        } else if (how == DevCap_dc)
+            hScreenDC = (HDC)SvIV(ST(0));
+        else {				/* DevCap_hwnd */
+            if (!Perl_hmq)
+                Perl_croak(aTHX_ "Getting a window's device context without a message queue would lock PM");
+            hwnd = (HWND)SvIV(ST(0));
+            hScreenDC = pWinOpenWindowDC(hwnd); /* No need to DevCloseDC() */
+            if (CheckWinError(hScreenDC))
+                croak_with_os2error("WinOpenWindowDC() failed");
+        }
+        if (CheckWinError(pDevQueryCaps(hScreenDC,
+                                        CAPS_FAMILY, /* W3 documented caps */
+                                        CAPS_DEVICE_POLYSET_POINTS
+                                          - CAPS_FAMILY + 1,
+                                        si)))
+            rc1 = Perl_rc;
+        else {
+            EXTEND(SP,2*(CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1));
+            while (i < CAPS_DEVICE_POLYSET_POINTS - CAPS_FAMILY + 1) {
+                ST(j) = sv_newmortal();
+                sv_setpv(ST(j++), dc_fields[i]);
+                ST(j) = sv_newmortal();
+                sv_setiv(ST(j++), si[i]);
+                i++;
+            }
+            i = CAPS_DEVICE_POLYSET_POINTS + 1;
+            while (i < CAPS_DEVICE_POLYSET_POINTS + 11) { /* Just in case... */
+                LONG l;
 
-		if (CheckWinError(pDevQueryCaps(hScreenDC, i, 1, &l)))
-		    break;
-		EXTEND(SP, j + 2);
-		ST(j) = sv_newmortal();
-		sv_setiv(ST(j++), i);
-		ST(j) = sv_newmortal();
-		sv_setiv(ST(j++), l);
-		i++;
-	    }	    
-	}
-	if (!items && CheckWinError(pDevCloseDC(hScreenDC)))
-	    Perl_warn_nocontext("DevCloseDC() failed: %s", os2error(Perl_rc));
-	if (rc1)
-	    Perl_rc = rc1, croak_with_os2error("DevQueryCaps() failed");
-	XSRETURN(j);
+                if (CheckWinError(pDevQueryCaps(hScreenDC, i, 1, &l)))
+                    break;
+                EXTEND(SP, j + 2);
+                ST(j) = sv_newmortal();
+                sv_setiv(ST(j++), i);
+                ST(j) = sv_newmortal();
+                sv_setiv(ST(j++), l);
+                i++;
+            }	    
+        }
+        if (!items && CheckWinError(pDevCloseDC(hScreenDC)))
+            Perl_warn_nocontext("DevCloseDC() failed: %s", os2error(Perl_rc));
+        if (rc1)
+            Perl_rc = rc1, croak_with_os2error("DevQueryCaps() failed");
+        XSRETURN(j);
     }
 }
 
@@ -3058,64 +3057,64 @@ const char * const sv_keys[] = {
   "106",
   "107",
 /*  "CSYSVALUES",*/
-					/* In recent DDK the limit is 108 */
+                                        /* In recent DDK the limit is 108 */
 };
 
 XS(XS_OS2_SysValues)
 {
     dXSARGS;
     if (items > 2)
-	Perl_croak_nocontext("Usage: OS2::SysValues(which = -1, hwndDesktop = HWND_DESKTOP)");
+        Perl_croak_nocontext("Usage: OS2::SysValues(which = -1, hwndDesktop = HWND_DESKTOP)");
     {
-	int i = 0, j = 0, which = -1;
-	HWND hwnd = HWND_DESKTOP;
-	static volatile int sv_loaded;
-	LONG RETVAL;
+        int i = 0, j = 0, which = -1;
+        HWND hwnd = HWND_DESKTOP;
+        static volatile int sv_loaded;
+        LONG RETVAL;
 
-	if (!sv_loaded) {
-	    *(PFN*)&pWinQuerySysValue = loadByOrdinal(ORD_WinQuerySysValue, 0);
-	    sv_loaded = 1;
-	}
+        if (!sv_loaded) {
+            *(PFN*)&pWinQuerySysValue = loadByOrdinal(ORD_WinQuerySysValue, 0);
+            sv_loaded = 1;
+        }
 
-	if (items == 2)
-	    hwnd = (HWND)SvIV(ST(1));
-	if (items >= 1)
-	    which = (int)SvIV(ST(0));
-	if (which == -1) {
-	    EXTEND(SP,2*C_ARRAY_LENGTH(sv_keys));
-	    while (i < C_ARRAY_LENGTH(sv_keys)) {
-		ResetWinError();
-		RETVAL = pWinQuerySysValue(hwnd, i);
-		if ( !RETVAL
-		     && !(sv_keys[i][0] >= '0' && sv_keys[i][0] <= '9'
-			  && i <= SV_PRINTSCREEN) ) {
-		    FillWinError;
-		    if (Perl_rc) {
-			if (i > SV_PRINTSCREEN)
-			    break; /* May be not present on older systems */
-			croak_with_os2error("SysValues():");
-		    }
-		    
-		}
-		ST(j) = sv_newmortal();
-		sv_setpv(ST(j++), sv_keys[i]);
-		ST(j) = sv_newmortal();
-		sv_setiv(ST(j++), RETVAL);
-		i++;
-	    }
-	    XSRETURN(2 * i);
-	} else {
-	    dXSTARG;
+        if (items == 2)
+            hwnd = (HWND)SvIV(ST(1));
+        if (items >= 1)
+            which = (int)SvIV(ST(0));
+        if (which == -1) {
+            EXTEND(SP,2*C_ARRAY_LENGTH(sv_keys));
+            while (i < C_ARRAY_LENGTH(sv_keys)) {
+                ResetWinError();
+                RETVAL = pWinQuerySysValue(hwnd, i);
+                if ( !RETVAL
+                     && !(sv_keys[i][0] >= '0' && sv_keys[i][0] <= '9'
+                          && i <= SV_PRINTSCREEN) ) {
+                    FillWinError;
+                    if (Perl_rc) {
+                        if (i > SV_PRINTSCREEN)
+                            break; /* May be not present on older systems */
+                        croak_with_os2error("SysValues():");
+                    }
+                    
+                }
+                ST(j) = sv_newmortal();
+                sv_setpv(ST(j++), sv_keys[i]);
+                ST(j) = sv_newmortal();
+                sv_setiv(ST(j++), RETVAL);
+                i++;
+            }
+            XSRETURN(2 * i);
+        } else {
+            dXSTARG;
 
-	    ResetWinError();
-	    RETVAL = pWinQuerySysValue(hwnd, which);
-	    if (!RETVAL) {
-		FillWinError;
-		if (Perl_rc)
-		    croak_with_os2error("SysValues():");
-	    }
-	    XSprePUSH; PUSHi((IV)RETVAL);
-	}
+            ResetWinError();
+            RETVAL = pWinQuerySysValue(hwnd, which);
+            if (!RETVAL) {
+                FillWinError;
+                if (Perl_rc)
+                    croak_with_os2error("SysValues():");
+            }
+            XSprePUSH; PUSHi((IV)RETVAL);
+        }
     }
 }
 
@@ -3123,22 +3122,22 @@ XS(XS_OS2_SysValues_set)
 {
     dXSARGS;
     if (items < 2 || items > 3)
-	Perl_croak_nocontext("Usage: OS2::SysValues_set(which, val, hwndDesktop = HWND_DESKTOP)");
+        Perl_croak_nocontext("Usage: OS2::SysValues_set(which, val, hwndDesktop = HWND_DESKTOP)");
     {
-	int which = (int)SvIV(ST(0));
-	LONG val = (LONG)SvIV(ST(1));
-	HWND hwnd = HWND_DESKTOP;
-	static volatile int svs_loaded;
+        int which = (int)SvIV(ST(0));
+        LONG val = (LONG)SvIV(ST(1));
+        HWND hwnd = HWND_DESKTOP;
+        static volatile int svs_loaded;
 
-	if (!svs_loaded) {
-	    *(PFN*)&pWinSetSysValue = loadByOrdinal(ORD_WinSetSysValue, 0);
-	    svs_loaded = 1;
-	}
+        if (!svs_loaded) {
+            *(PFN*)&pWinSetSysValue = loadByOrdinal(ORD_WinSetSysValue, 0);
+            svs_loaded = 1;
+        }
 
-	if (items == 3)
-	    hwnd = (HWND)SvIV(ST(2));
-	if (CheckWinError(pWinSetSysValue(hwnd, which, val)))
-	    croak_with_os2error("SysValues_set()");
+        if (items == 3)
+            hwnd = (HWND)SvIV(ST(2));
+        if (CheckWinError(pWinSetSysValue(hwnd, which, val)))
+            croak_with_os2error("SysValues_set()");
     }
     XSRETURN_YES;
 }
@@ -3183,40 +3182,40 @@ XS(XS_OS2_SysInfo)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak_nocontext("Usage: OS2::SysInfo()");
+        Perl_croak_nocontext("Usage: OS2::SysInfo()");
     {
-	/* System Information Data Buffer (10 extra w.r.t. Warp 4.5) */
-	ULONG   si[C_ARRAY_LENGTH(si_fields) + 10];
-	APIRET  rc	= NO_ERROR;	/* Return code            */
-	int i = 0, j = 0, last = QSV_MAX_WARP3;
+        /* System Information Data Buffer (10 extra w.r.t. Warp 4.5) */
+        ULONG   si[C_ARRAY_LENGTH(si_fields) + 10];
+        APIRET  rc	= NO_ERROR;	/* Return code            */
+        int i = 0, j = 0, last = QSV_MAX_WARP3;
 
-	if (CheckOSError(DosQuerySysInfo(1L, /* Request documented system */
-					 last, /* info for Warp 3 */
-					 (PVOID)si,
-					 sizeof(si))))
-	    croak_with_os2error("DosQuerySysInfo() failed");
-	while (++last <= C_ARRAY_LENGTH(si)) {
-	    if (CheckOSError(DosQuerySysInfo(last, last, /* One entry only */
-					     (PVOID)(si+last-1),
-					     sizeof(*si)))) {
-		if (Perl_rc != ERROR_INVALID_PARAMETER)
-		    croak_with_os2error("DosQuerySysInfo() failed");
-		break;
-	    }
-	}
-	last--;			/* Count of successfully processed offsets */
-	EXTEND(SP,2*last);
-	while (i < last) {
-	    ST(j) = sv_newmortal();
-	    if (i < C_ARRAY_LENGTH(si_fields))
-		sv_setpv(ST(j++),  si_fields[i]);
-	    else
-		sv_setiv(ST(j++),  i + 1);
-	    ST(j) = sv_newmortal();
-	    sv_setuv(ST(j++), si[i]);
-	    i++;
-	}
-	XSRETURN(2 * last);
+        if (CheckOSError(DosQuerySysInfo(1L, /* Request documented system */
+                                         last, /* info for Warp 3 */
+                                         (PVOID)si,
+                                         sizeof(si))))
+            croak_with_os2error("DosQuerySysInfo() failed");
+        while (++last <= C_ARRAY_LENGTH(si)) {
+            if (CheckOSError(DosQuerySysInfo(last, last, /* One entry only */
+                                             (PVOID)(si+last-1),
+                                             sizeof(*si)))) {
+                if (Perl_rc != ERROR_INVALID_PARAMETER)
+                    croak_with_os2error("DosQuerySysInfo() failed");
+                break;
+            }
+        }
+        last--;			/* Count of successfully processed offsets */
+        EXTEND(SP,2*last);
+        while (i < last) {
+            ST(j) = sv_newmortal();
+            if (i < C_ARRAY_LENGTH(si_fields))
+                sv_setpv(ST(j++),  si_fields[i]);
+            else
+                sv_setiv(ST(j++),  i + 1);
+            ST(j) = sv_newmortal();
+            sv_setuv(ST(j++), si[i]);
+            i++;
+        }
+        XSRETURN(2 * last);
     }
 }
 
@@ -3226,27 +3225,27 @@ XS(XS_OS2_SysInfoFor)
     int count = (items == 2 ? (int)SvIV(ST(1)) : 1);
 
     if (items < 1 || items > 2)
-	Perl_croak_nocontext("Usage: OS2::SysInfoFor(id[,count])");
+        Perl_croak_nocontext("Usage: OS2::SysInfoFor(id[,count])");
     {
-	/* System Information Data Buffer (10 extra w.r.t. Warp 4.5) */
-	ULONG   si[C_ARRAY_LENGTH(si_fields) + 10];
-	APIRET  rc	= NO_ERROR;	/* Return code            */
-	int i = 0;
-	int start = (int)SvIV(ST(0));
+        /* System Information Data Buffer (10 extra w.r.t. Warp 4.5) */
+        ULONG   si[C_ARRAY_LENGTH(si_fields) + 10];
+        APIRET  rc	= NO_ERROR;	/* Return code            */
+        int i = 0;
+        int start = (int)SvIV(ST(0));
 
-	if (count > C_ARRAY_LENGTH(si) || count <= 0)
-	    Perl_croak(aTHX_ "unexpected count %d for OS2::SysInfoFor()", count);
-	if (CheckOSError(DosQuerySysInfo(start,
-					 start + count - 1,
-					 (PVOID)si,
-					 sizeof(si))))
-	    croak_with_os2error("DosQuerySysInfo() failed");
-	EXTEND(SP,count);
-	while (i < count) {
-	    ST(i) = sv_newmortal();
-	    sv_setiv(ST(i), si[i]);
-	    i++;
-	}
+        if (count > C_ARRAY_LENGTH(si) || count <= 0)
+            Perl_croak(aTHX_ "unexpected count %d for OS2::SysInfoFor()", count);
+        if (CheckOSError(DosQuerySysInfo(start,
+                                         start + count - 1,
+                                         (PVOID)si,
+                                         sizeof(si))))
+            croak_with_os2error("DosQuerySysInfo() failed");
+        EXTEND(SP,count);
+        while (i < count) {
+            ST(i) = sv_newmortal();
+            sv_setiv(ST(i), si[i]);
+            i++;
+        }
     }
     XSRETURN(count);
 }
@@ -3255,19 +3254,19 @@ XS(XS_OS2_BootDrive)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak_nocontext("Usage: OS2::BootDrive()");
+        Perl_croak_nocontext("Usage: OS2::BootDrive()");
     {
-	ULONG   si[1] = {0};	/* System Information Data Buffer */
-	APIRET  rc    = NO_ERROR;	/* Return code            */
-	char c;
-	dXSTARG;
-	
-	if (CheckOSError(DosQuerySysInfo(QSV_BOOT_DRIVE, QSV_BOOT_DRIVE,
-					 (PVOID)si, sizeof(si))))
-	    croak_with_os2error("DosQuerySysInfo() failed");
-	c = 'a' - 1 + si[0];
-	sv_setpvn(TARG, &c, 1);
-	XSprePUSH; PUSHTARG;
+        ULONG   si[1] = {0};	/* System Information Data Buffer */
+        APIRET  rc    = NO_ERROR;	/* Return code            */
+        char c;
+        dXSTARG;
+        
+        if (CheckOSError(DosQuerySysInfo(QSV_BOOT_DRIVE, QSV_BOOT_DRIVE,
+                                         (PVOID)si, sizeof(si))))
+            croak_with_os2error("DosQuerySysInfo() failed");
+        c = 'a' - 1 + si[0];
+        sv_setpvn(TARG, &c, 1);
+        XSprePUSH; PUSHTARG;
     }
     XSRETURN(1);
 }
@@ -3276,14 +3275,14 @@ XS(XS_OS2_Beep)
 {
     dXSARGS;
     if (items > 2)			/* Defaults as for WinAlarm(ERROR) */
-	Perl_croak_nocontext("Usage: OS2::Beep(freq = 440, ms = 100)");
+        Perl_croak_nocontext("Usage: OS2::Beep(freq = 440, ms = 100)");
     {
-	ULONG freq	= (items > 0 ? (ULONG)SvUV(ST(0)) : 440);
-	ULONG ms	= (items > 1 ? (ULONG)SvUV(ST(1)) : 100);
-	ULONG rc;
+        ULONG freq	= (items > 0 ? (ULONG)SvUV(ST(0)) : 440);
+        ULONG ms	= (items > 1 ? (ULONG)SvUV(ST(1)) : 100);
+        ULONG rc;
 
-	if (CheckOSError(DosBeep(freq, ms)))
-	    croak_with_os2error("SysValues_set()");
+        if (CheckOSError(DosBeep(freq, ms)))
+            croak_with_os2error("SysValues_set()");
     }
     XSRETURN_YES;
 }
@@ -3294,13 +3293,13 @@ XS(XS_OS2_MorphPM)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: OS2::MorphPM(serve)");
+        Perl_croak_nocontext("Usage: OS2::MorphPM(serve)");
     {
-	bool  serve = SvOK(ST(0));
-	unsigned long   pmq = perl_hmq_GET(serve);
-	dXSTARG;
+        bool  serve = SvOK(ST(0));
+        unsigned long   pmq = perl_hmq_GET(serve);
+        dXSTARG;
 
-	XSprePUSH; PUSHi((IV)pmq);
+        XSprePUSH; PUSHi((IV)pmq);
     }
     XSRETURN(1);
 }
@@ -3309,11 +3308,11 @@ XS(XS_OS2_UnMorphPM)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: OS2::UnMorphPM(serve)");
+        Perl_croak_nocontext("Usage: OS2::UnMorphPM(serve)");
     {
-	bool  serve = SvOK(ST(0));
+        bool  serve = SvOK(ST(0));
 
-	perl_hmq_UNSET(serve);
+        perl_hmq_UNSET(serve);
     }
     XSRETURN(0);
 }
@@ -3322,13 +3321,13 @@ XS(XS_OS2_Serve_Messages)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: OS2::Serve_Messages(force)");
+        Perl_croak_nocontext("Usage: OS2::Serve_Messages(force)");
     {
-	bool  force = SvOK(ST(0));
-	unsigned long   cnt = Perl_Serve_Messages(force);
-	dXSTARG;
+        bool  force = SvOK(ST(0));
+        unsigned long   cnt = Perl_Serve_Messages(force);
+        dXSTARG;
 
-	XSprePUSH; PUSHi((IV)cnt);
+        XSprePUSH; PUSHi((IV)cnt);
     }
     XSRETURN(1);
 }
@@ -3337,26 +3336,26 @@ XS(XS_OS2_Process_Messages)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	Perl_croak_nocontext("Usage: OS2::Process_Messages(force [, cnt])");
+        Perl_croak_nocontext("Usage: OS2::Process_Messages(force [, cnt])");
     {
-	bool  force = SvOK(ST(0));
-	unsigned long   cnt;
-	dXSTARG;
+        bool  force = SvOK(ST(0));
+        unsigned long   cnt;
+        dXSTARG;
 
-	if (items == 2) {
-	    I32 cntr;
-	    SV *sv = ST(1);
+        if (items == 2) {
+            I32 cntr;
+            SV *sv = ST(1);
 
-	    (void)SvIV(sv);		/* Force SvIVX */	    
-	    if (!SvIOK(sv))
-		Perl_croak_nocontext("Can't upgrade count to IV");
-	    cntr = SvIVX(sv);
-	    cnt =  Perl_Process_Messages(force, &cntr);
-	    SvIVX(sv) = cntr;
-	} else {
-	    cnt =  Perl_Process_Messages(force, NULL);
+            (void)SvIV(sv);		/* Force SvIVX */	    
+            if (!SvIOK(sv))
+                Perl_croak_nocontext("Can't upgrade count to IV");
+            cntr = SvIVX(sv);
+            cnt =  Perl_Process_Messages(force, &cntr);
+            SvIVX(sv) = cntr;
+        } else {
+            cnt =  Perl_Process_Messages(force, NULL);
         }
-	XSprePUSH; PUSHi((IV)cnt);
+        XSprePUSH; PUSHi((IV)cnt);
     }
     XSRETURN(1);
 }
@@ -3365,14 +3364,14 @@ XS(XS_Cwd_current_drive)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak_nocontext("Usage: Cwd::current_drive()");
+        Perl_croak_nocontext("Usage: Cwd::current_drive()");
     {
-	char	RETVAL;
-	dXSTARG;
+        char	RETVAL;
+        dXSTARG;
 
-	RETVAL = current_drive();
-	sv_setpvn(TARG, (char *)&RETVAL, 1);
-	XSprePUSH; PUSHTARG;
+        RETVAL = current_drive();
+        sv_setpvn(TARG, (char *)&RETVAL, 1);
+        XSprePUSH; PUSHTARG;
     }
     XSRETURN(1);
 }
@@ -3381,15 +3380,15 @@ XS(XS_Cwd_sys_chdir)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: Cwd::sys_chdir(path)");
+        Perl_croak_nocontext("Usage: Cwd::sys_chdir(path)");
     {
-	STRLEN n_a;
-	char *	path = (char *)SvPV(ST(0),n_a);
-	bool	RETVAL;
+        STRLEN n_a;
+        char *	path = (char *)SvPV(ST(0),n_a);
+        bool	RETVAL;
 
-	RETVAL = sys_chdir(path);
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = sys_chdir(path);
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3398,15 +3397,15 @@ XS(XS_Cwd_change_drive)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: Cwd::change_drive(d)");
+        Perl_croak_nocontext("Usage: Cwd::change_drive(d)");
     {
-	STRLEN n_a;
-	char	d = (char)*SvPV(ST(0),n_a);
-	bool	RETVAL;
+        STRLEN n_a;
+        char	d = (char)*SvPV(ST(0),n_a);
+        bool	RETVAL;
 
-	RETVAL = change_drive(d);
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = change_drive(d);
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3415,15 +3414,15 @@ XS(XS_Cwd_sys_is_absolute)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: Cwd::sys_is_absolute(path)");
+        Perl_croak_nocontext("Usage: Cwd::sys_is_absolute(path)");
     {
-	STRLEN n_a;
-	char *	path = (char *)SvPV(ST(0),n_a);
-	bool	RETVAL;
+        STRLEN n_a;
+        char *	path = (char *)SvPV(ST(0),n_a);
+        bool	RETVAL;
 
-	RETVAL = sys_is_absolute(path);
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = sys_is_absolute(path);
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3432,15 +3431,15 @@ XS(XS_Cwd_sys_is_rooted)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: Cwd::sys_is_rooted(path)");
+        Perl_croak_nocontext("Usage: Cwd::sys_is_rooted(path)");
     {
-	STRLEN n_a;
-	char *	path = (char *)SvPV(ST(0),n_a);
-	bool	RETVAL;
+        STRLEN n_a;
+        char *	path = (char *)SvPV(ST(0),n_a);
+        bool	RETVAL;
 
-	RETVAL = sys_is_rooted(path);
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = sys_is_rooted(path);
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3449,15 +3448,15 @@ XS(XS_Cwd_sys_is_relative)
 {
     dXSARGS;
     if (items != 1)
-	Perl_croak_nocontext("Usage: Cwd::sys_is_relative(path)");
+        Perl_croak_nocontext("Usage: Cwd::sys_is_relative(path)");
     {
-	STRLEN n_a;
-	char *	path = (char *)SvPV(ST(0),n_a);
-	bool	RETVAL;
+        STRLEN n_a;
+        char *	path = (char *)SvPV(ST(0),n_a);
+        bool	RETVAL;
 
-	RETVAL = sys_is_relative(path);
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = sys_is_relative(path);
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3466,16 +3465,16 @@ XS(XS_Cwd_sys_cwd)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak_nocontext("Usage: Cwd::sys_cwd()");
+        Perl_croak_nocontext("Usage: Cwd::sys_cwd()");
     {
-	char p[MAXPATHLEN];
-	char *	RETVAL;
+        char p[MAXPATHLEN];
+        char *	RETVAL;
 
-	/* Can't use TARG, since tainting behaves differently */
-	RETVAL = _getcwd2(p, MAXPATHLEN);
-	ST(0) = sv_newmortal();
-	sv_setpv(ST(0), RETVAL);
-	SvTAINTED_on(ST(0));
+        /* Can't use TARG, since tainting behaves differently */
+        RETVAL = _getcwd2(p, MAXPATHLEN);
+        ST(0) = sv_newmortal();
+        sv_setpv(ST(0), RETVAL);
+        SvTAINTED_on(ST(0));
     }
     XSRETURN(1);
 }
@@ -3484,131 +3483,131 @@ XS(XS_Cwd_sys_abspath)
 {
     dXSARGS;
     if (items > 2)
-	Perl_croak_nocontext("Usage: Cwd::sys_abspath(path = '.', dir = NULL)");
+        Perl_croak_nocontext("Usage: Cwd::sys_abspath(path = '.', dir = NULL)");
     {
-	STRLEN n_a;
-	char *	path = items ? (char *)SvPV(ST(0),n_a) : ".";
-	char *	dir, *s, *t, *e;
-	char p[MAXPATHLEN];
-	char *	RETVAL;
-	int l;
-	SV *sv;
+        STRLEN n_a;
+        char *	path = items ? (char *)SvPV(ST(0),n_a) : ".";
+        char *	dir, *s, *t, *e;
+        char p[MAXPATHLEN];
+        char *	RETVAL;
+        int l;
+        SV *sv;
 
-	if (items < 2)
-	    dir = NULL;
-	else {
-	    dir = (char *)SvPV(ST(1),n_a);
-	}
-	if (path[0] == '.' && (path[1] == '/' || path[1] == '\\')) {
-	    path += 2;
-	}
-	if (dir == NULL) {
-	    if (_abspath(p, path, MAXPATHLEN) == 0) {
-		RETVAL = p;
-	    } else {
-		RETVAL = NULL;
-	    }
-	} else {
-	    /* Absolute with drive: */
-	    if ( sys_is_absolute(path) ) {
-		if (_abspath(p, path, MAXPATHLEN) == 0) {
-		    RETVAL = p;
-		} else {
-		    RETVAL = NULL;
-		}
-	    } else if (path[0] == '/' || path[0] == '\\') {
-		/* Rooted, but maybe on different drive. */
-		if (isALPHA(dir[0]) && dir[1] == ':' ) {
-		    char p1[MAXPATHLEN];
+        if (items < 2)
+            dir = NULL;
+        else {
+            dir = (char *)SvPV(ST(1),n_a);
+        }
+        if (path[0] == '.' && (path[1] == '/' || path[1] == '\\')) {
+            path += 2;
+        }
+        if (dir == NULL) {
+            if (_abspath(p, path, MAXPATHLEN) == 0) {
+                RETVAL = p;
+            } else {
+                RETVAL = NULL;
+            }
+        } else {
+            /* Absolute with drive: */
+            if ( sys_is_absolute(path) ) {
+                if (_abspath(p, path, MAXPATHLEN) == 0) {
+                    RETVAL = p;
+                } else {
+                    RETVAL = NULL;
+                }
+            } else if (path[0] == '/' || path[0] == '\\') {
+                /* Rooted, but maybe on different drive. */
+                if (isALPHA(dir[0]) && dir[1] == ':' ) {
+                    char p1[MAXPATHLEN];
 
-		    /* Need to prepend the drive. */
-		    p1[0] = dir[0];
-		    p1[1] = dir[1];
-		    Copy(path, p1 + 2, strlen(path) + 1, char);
-		    RETVAL = p;
-		    if (_abspath(p, p1, MAXPATHLEN) == 0) {
-			RETVAL = p;
-		    } else {
-			RETVAL = NULL;
-		    }
-		} else if (_abspath(p, path, MAXPATHLEN) == 0) {
-		    RETVAL = p;
-		} else {
-		    RETVAL = NULL;
-		}
-	    } else {
-		/* Either path is relative, or starts with a drive letter. */
-		/* If the path starts with a drive letter, then dir is
-		   relevant only if 
-		   a/b)	it is absolute/x:relative on the same drive.  
-		   c)	path is on current drive, and dir is rooted
-		   In all the cases it is safe to drop the drive part
-		   of the path. */
-		if ( !sys_is_relative(path) ) {
-		    if ( ( ( sys_is_absolute(dir)
-			     || (isALPHA(dir[0]) && dir[1] == ':' 
-				 && strnicmp(dir, path,1) == 0)) 
-			   && strnicmp(dir, path,1) == 0)
-			 || ( !(isALPHA(dir[0]) && dir[1] == ':')
-			      && toupper(path[0]) == current_drive())) {
-			path += 2;
-		    } else if (_abspath(p, path, MAXPATHLEN) == 0) {
-			RETVAL = p; goto done;
-		    } else {
-			RETVAL = NULL; goto done;
-		    }
-		}
-		{
-		    /* Need to prepend the absolute path of dir. */
-		    char p1[MAXPATHLEN];
+                    /* Need to prepend the drive. */
+                    p1[0] = dir[0];
+                    p1[1] = dir[1];
+                    Copy(path, p1 + 2, strlen(path) + 1, char);
+                    RETVAL = p;
+                    if (_abspath(p, p1, MAXPATHLEN) == 0) {
+                        RETVAL = p;
+                    } else {
+                        RETVAL = NULL;
+                    }
+                } else if (_abspath(p, path, MAXPATHLEN) == 0) {
+                    RETVAL = p;
+                } else {
+                    RETVAL = NULL;
+                }
+            } else {
+                /* Either path is relative, or starts with a drive letter. */
+                /* If the path starts with a drive letter, then dir is
+                   relevant only if 
+                   a/b)	it is absolute/x:relative on the same drive.  
+                   c)	path is on current drive, and dir is rooted
+                   In all the cases it is safe to drop the drive part
+                   of the path. */
+                if ( !sys_is_relative(path) ) {
+                    if ( ( ( sys_is_absolute(dir)
+                             || (isALPHA(dir[0]) && dir[1] == ':' 
+                                 && strnicmp(dir, path,1) == 0)) 
+                           && strnicmp(dir, path,1) == 0)
+                         || ( !(isALPHA(dir[0]) && dir[1] == ':')
+                              && toupper(path[0]) == current_drive())) {
+                        path += 2;
+                    } else if (_abspath(p, path, MAXPATHLEN) == 0) {
+                        RETVAL = p; goto done;
+                    } else {
+                        RETVAL = NULL; goto done;
+                    }
+                }
+                {
+                    /* Need to prepend the absolute path of dir. */
+                    char p1[MAXPATHLEN];
 
-		    if (_abspath(p1, dir, MAXPATHLEN) == 0) {
-			int l = strlen(p1);
+                    if (_abspath(p1, dir, MAXPATHLEN) == 0) {
+                        int l = strlen(p1);
 
-			if (p1[ l - 1 ] != '/') {
-			    p1[ l ] = '/';
-			    l++;
-			}
-			Copy(path, p1 + l, strlen(path) + 1, char);
-			if (_abspath(p, p1, MAXPATHLEN) == 0) {
-			    RETVAL = p;
-			} else {
-			    RETVAL = NULL;
-			}
-		    } else {
-			RETVAL = NULL;
-		    }
-		}
-	      done:
-	    }
-	}
-	if (!RETVAL)
-	    XSRETURN_EMPTY;
-	/* Backslashes are already converted to slashes. */
-	/* Remove trailing slashes */
-	l = strlen(RETVAL);
-	while (l > 0 && RETVAL[l-1] == '/')
-	    l--;
-	ST(0) = sv_newmortal();
-	sv_setpvn( sv = (SV*)ST(0), RETVAL, l);
-	/* Remove duplicate slashes, skipping the first three, which
-	   may be parts of a server-based path */
-	s = t = 3 + SvPV_force(sv, n_a);
-	e = SvEND(sv);
-	/* Do not worry about multibyte chars here, this would contradict the
-	   eventual UTFization, and currently most other places break too... */
-	while (s < e) {
-	    if (s[0] == t[-1] && s[0] == '/')
-		s++;				/* Skip duplicate / */
-	    else
-		*t++ = *s++;
-	}
-	if (t < e) {
-	    *t = 0;
-	    SvCUR_set(sv, t - SvPVX(sv));
-	}
-	if (!items)
-	    SvTAINTED_on(ST(0));
+                        if (p1[ l - 1 ] != '/') {
+                            p1[ l ] = '/';
+                            l++;
+                        }
+                        Copy(path, p1 + l, strlen(path) + 1, char);
+                        if (_abspath(p, p1, MAXPATHLEN) == 0) {
+                            RETVAL = p;
+                        } else {
+                            RETVAL = NULL;
+                        }
+                    } else {
+                        RETVAL = NULL;
+                    }
+                }
+              done:
+            }
+        }
+        if (!RETVAL)
+            XSRETURN_EMPTY;
+        /* Backslashes are already converted to slashes. */
+        /* Remove trailing slashes */
+        l = strlen(RETVAL);
+        while (l > 0 && RETVAL[l-1] == '/')
+            l--;
+        ST(0) = sv_newmortal();
+        sv_setpvn( sv = (SV*)ST(0), RETVAL, l);
+        /* Remove duplicate slashes, skipping the first three, which
+           may be parts of a server-based path */
+        s = t = 3 + SvPV_force(sv, n_a);
+        e = SvEND(sv);
+        /* Do not worry about multibyte chars here, this would contradict the
+           eventual UTFization, and currently most other places break too... */
+        while (s < e) {
+            if (s[0] == t[-1] && s[0] == '/')
+                s++;				/* Skip duplicate / */
+            else
+                *t++ = *s++;
+        }
+        if (t < e) {
+            *t = 0;
+            SvCUR_set(sv, t - SvPVX(sv));
+        }
+        if (!items)
+            SvTAINTED_on(ST(0));
     }
     XSRETURN(1);
 }
@@ -3626,13 +3625,13 @@ ExtLIBPATH(ULONG ord, PSZ path, IV type, int fatal)
     PFN f = loadByOrdinal(ord, fatal);	/* if fatal: load or die! */
 
     if (!f)				/* Impossible with fatal */
-	return Perl_rc;
+        return Perl_rc;
     if (type > 0)
-	what = END_LIBPATH;
+        what = END_LIBPATH;
     else if (type == 0)
-	what = BEGIN_LIBPATH;
+        what = BEGIN_LIBPATH;
     else
-	what = LIBPATHSTRICT;
+        what = LIBPATHSTRICT;
     return (*(PELP)f)(path, what);
 }
 
@@ -3657,31 +3656,31 @@ XS(XS_Cwd_extLibpath)
 {
     dXSARGS;
     if (items < 0 || items > 1)
-	Perl_croak_nocontext("Usage: OS2::extLibpath(type = 0)");
+        Perl_croak_nocontext("Usage: OS2::extLibpath(type = 0)");
     {
-	IV	type;
-	char	to[1024];
-	U32	rc;
-	char *	RETVAL;
-	dXSTARG;
-	STRLEN l;
+        IV	type;
+        char	to[1024];
+        U32	rc;
+        char *	RETVAL;
+        dXSTARG;
+        STRLEN l;
 
-	if (items < 1)
-	    type = 0;
-	else {
-	    type = SvIV(ST(0));
-	}
+        if (items < 1)
+            type = 0;
+        else {
+            type = SvIV(ST(0));
+        }
 
-	to[0] = 1; to[1] = 0;		/* Sometimes no error reported */
-	RETVAL = extLibpath(to, type, 1);	/* Make errors fatal */
-	if (RETVAL && RETVAL[0] == 1 && RETVAL[1] == 0)
-	    Perl_croak_nocontext("panic OS2::extLibpath parameter");
-	l = strlen(to);
-	if (l >= sizeof(to))
-	    early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
-			to, "'\r\n");		/* Will not return */
-	sv_setpv(TARG, RETVAL);
-	XSprePUSH; PUSHTARG;
+        to[0] = 1; to[1] = 0;		/* Sometimes no error reported */
+        RETVAL = extLibpath(to, type, 1);	/* Make errors fatal */
+        if (RETVAL && RETVAL[0] == 1 && RETVAL[1] == 0)
+            Perl_croak_nocontext("panic OS2::extLibpath parameter");
+        l = strlen(to);
+        if (l >= sizeof(to))
+            early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
+                        to, "'\r\n");		/* Will not return */
+        sv_setpv(TARG, RETVAL);
+        XSprePUSH; PUSHTARG;
     }
     XSRETURN(1);
 }
@@ -3690,23 +3689,23 @@ XS(XS_Cwd_extLibpath_set)
 {
     dXSARGS;
     if (items < 1 || items > 2)
-	Perl_croak_nocontext("Usage: OS2::extLibpath_set(s, type = 0)");
+        Perl_croak_nocontext("Usage: OS2::extLibpath_set(s, type = 0)");
     {
-	STRLEN n_a;
-	char *	s = (char *)SvPV(ST(0),n_a);
-	IV	type;
-	U32	rc;
-	bool	RETVAL;
+        STRLEN n_a;
+        char *	s = (char *)SvPV(ST(0),n_a);
+        IV	type;
+        U32	rc;
+        bool	RETVAL;
 
-	if (items < 2)
-	    type = 0;
-	else {
-	    type = SvIV(ST(1));
-	}
+        if (items < 2)
+            type = 0;
+        else {
+            type = SvIV(ST(1));
+        }
 
-	RETVAL = extLibpath_set(s, type, 1);	/* Make errors fatal */
-	ST(0) = boolSV(RETVAL);
-	if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
+        RETVAL = extLibpath_set(s, type, 1);	/* Make errors fatal */
+        ST(0) = boolSV(RETVAL);
+        if (SvREFCNT(ST(0))) sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
@@ -3719,53 +3718,53 @@ fill_extLibpath(int type, char *pre, char *post, int replace, char *msg)
     ULONG rc;
 
     if (!pre && !post)
-	return 0;
+        return 0;
     if (pre) {
-	pre = dir_subst(pre, strlen(pre), buf1, sizeof buf1, dir_subst_pathlike, msg);
-	if (!pre)
-	    return ERROR_INVALID_PARAMETER;
-	l = strlen(pre);
-	if (l >= sizeof(buf)/2)
-	    return ERROR_BUFFER_OVERFLOW;
-	s = pre - 1;
-	while (*++s)
-	    if (*s == '/')
-		*s = '\\';			/* Be extra cautious */
-	memcpy(to, pre, l);
-	if (!l || to[l-1] != ';')
-	    to[l++] = ';';
-	to += l;
+        pre = dir_subst(pre, strlen(pre), buf1, sizeof buf1, dir_subst_pathlike, msg);
+        if (!pre)
+            return ERROR_INVALID_PARAMETER;
+        l = strlen(pre);
+        if (l >= sizeof(buf)/2)
+            return ERROR_BUFFER_OVERFLOW;
+        s = pre - 1;
+        while (*++s)
+            if (*s == '/')
+                *s = '\\';			/* Be extra cautious */
+        memcpy(to, pre, l);
+        if (!l || to[l-1] != ';')
+            to[l++] = ';';
+        to += l;
     }
 
     if (!replace) {
       to[0] = 1; to[1] = 0;		/* Sometimes no error reported */
       rc = ExtLIBPATH(ORD_DosQueryExtLibpath, to, type, 0);	/* Do not croak */
       if (rc)
-	return rc;
+        return rc;
       if (to[0] == 1 && to[1] == 0)
-	return ERROR_INVALID_PARAMETER;
+        return ERROR_INVALID_PARAMETER;
       to += strlen(to);
       if (buf + sizeof(buf) - 1 <= to)	/* Buffer overflow */
-	early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
-		    buf, "'\r\n");		/* Will not return */
+        early_error("Buffer overflow while getting BEGIN/ENDLIBPATH: `",
+                    buf, "'\r\n");		/* Will not return */
       if (to > buf && to[-1] != ';')
-	*to++ = ';';
+        *to++ = ';';
     }
     if (post) {
-	post = dir_subst(post, strlen(post), buf1, sizeof buf1, dir_subst_pathlike, msg);
-	if (!post)
-	    return ERROR_INVALID_PARAMETER;
-	l = strlen(post);
-	if (l + to - buf >= sizeof(buf) - 1)
-	    return ERROR_BUFFER_OVERFLOW;
-	s = post - 1;
-	while (*++s)
-	    if (*s == '/')
-		*s = '\\';			/* Be extra cautious */
-	memcpy(to, post, l);
-	if (!l || to[l-1] != ';')
-	    to[l++] = ';';
-	to += l;
+        post = dir_subst(post, strlen(post), buf1, sizeof buf1, dir_subst_pathlike, msg);
+        if (!post)
+            return ERROR_INVALID_PARAMETER;
+        l = strlen(post);
+        if (l + to - buf >= sizeof(buf) - 1)
+            return ERROR_BUFFER_OVERFLOW;
+        s = post - 1;
+        while (*++s)
+            if (*s == '/')
+                *s = '\\';			/* Be extra cautious */
+        memcpy(to, post, l);
+        if (!l || to[l-1] != ';')
+            to[l++] = ';';
+        to += l;
     }
     *to = 0;
     rc = ExtLIBPATH(ORD_DosSetExtLibpath, buf, type, 0); /* Do not croak */
@@ -3775,13 +3774,13 @@ fill_extLibpath(int type, char *pre, char *post, int replace, char *msg)
 /* Input: Address, BufLen
 APIRET APIENTRY
 DosQueryModFromEIP (HMODULE * hmod, ULONG * obj, ULONG BufLen, PCHAR Buf,
-		    ULONG * Offset, ULONG Address);
+                    ULONG * Offset, ULONG Address);
 */
 
 DeclOSFuncByORD(APIRET, _DosQueryModFromEIP,ORD_DosQueryModFromEIP,
-			(HMODULE * hmod, ULONG * obj, ULONG BufLen, PCHAR Buf,
-			ULONG * Offset, ULONG Address),
-			(hmod, obj, BufLen, Buf, Offset, Address))
+                        (HMODULE * hmod, ULONG * obj, ULONG BufLen, PCHAR Buf,
+                        ULONG * Offset, ULONG Address),
+                        (hmod, obj, BufLen, Buf, Offset, Address))
 
 static SV*
 module_name_at(void *pp, enum module_name_how how)
@@ -3793,22 +3792,22 @@ module_name_at(void *pp, enum module_name_how how)
     ULONG obj, offset, rc, addr = (ULONG)pp;
 
     if (how & mod_name_HMODULE) {
-	if ((how & ~mod_name_HMODULE) == mod_name_shortname)
-	    Perl_croak(aTHX_ "Can't get short module name from a handle");
-	mod = (HMODULE)pp;
-	how &= ~mod_name_HMODULE;
+        if ((how & ~mod_name_HMODULE) == mod_name_shortname)
+            Perl_croak(aTHX_ "Can't get short module name from a handle");
+        mod = (HMODULE)pp;
+        how &= ~mod_name_HMODULE;
     } else if (!_DosQueryModFromEIP(&mod, &obj, sizeof(buf), buf, &offset, addr))
-	return &PL_sv_undef;
+        return &PL_sv_undef;
     if (how == mod_name_handle)
-	return newSVuv(mod);
+        return newSVuv(mod);
     /* Full name... */
     if ( how != mod_name_shortname
-	 && CheckOSError(DosQueryModuleName(mod, sizeof(buf), buf)) )
-	return &PL_sv_undef;
+         && CheckOSError(DosQueryModuleName(mod, sizeof(buf), buf)) )
+        return &PL_sv_undef;
     while (*p) {
-	if (*p == '\\')
-	    *p = '/';
-	p++;
+        if (*p == '\\')
+            *p = '/';
+        p++;
     }
     return newSVpv(buf, 0);
 }
@@ -3817,13 +3816,13 @@ static SV*
 module_name_of_cv(SV *cv, enum module_name_how how)
 {
     if (!cv || !SvROK(cv) || SvTYPE(SvRV(cv)) != SVt_PVCV || !CvXSUB(SvRV(cv))) {
-	dTHX;
+        dTHX;
 
-	if (how & mod_name_C_function)
-	    return module_name_at((void*)SvIV(cv), how & ~mod_name_C_function);
-	else if (how & mod_name_HMODULE)
-	    return module_name_at((void*)SvIV(cv), how);
-	Perl_croak(aTHX_ "Not an XSUB reference");
+        if (how & mod_name_C_function)
+            return module_name_at((void*)SvIV(cv), how & ~mod_name_C_function);
+        else if (how & mod_name_HMODULE)
+            return module_name_at((void*)SvIV(cv), how);
+        Perl_croak(aTHX_ "Not an XSUB reference");
     }
     return module_name_at(CvXSUB(SvRV(cv)), how);
 }
@@ -3832,52 +3831,52 @@ XS(XS_OS2_DLLname)
 {
     dXSARGS;
     if (items > 2)
-	Perl_croak(aTHX_ "Usage: OS2::DLLname( [ how, [\\&xsub] ] )");
+        Perl_croak(aTHX_ "Usage: OS2::DLLname( [ how, [\\&xsub] ] )");
     {
-	SV *	RETVAL;
-	int	how;
+        SV *	RETVAL;
+        int	how;
 
-	if (items < 1)
-	    how = mod_name_full;
-	else {
-	    how = (int)SvIV(ST(0));
-	}
-	if (items < 2)
-	    RETVAL = module_name(how);
-	else
-	    RETVAL = module_name_of_cv(ST(1), how);
-	ST(0) = RETVAL;
-	sv_2mortal(ST(0));
+        if (items < 1)
+            how = mod_name_full;
+        else {
+            how = (int)SvIV(ST(0));
+        }
+        if (items < 2)
+            RETVAL = module_name(how);
+        else
+            RETVAL = module_name_of_cv(ST(1), how);
+        ST(0) = RETVAL;
+        sv_2mortal(ST(0));
     }
     XSRETURN(1);
 }
 
 DeclOSFuncByORD(INT, _Dos32QueryHeaderInfo, ORD_Dos32QueryHeaderInfo,
-			(ULONG r1, ULONG r2, PVOID buf, ULONG szbuf, ULONG fnum),
-			(r1, r2, buf, szbuf, fnum))
+                        (ULONG r1, ULONG r2, PVOID buf, ULONG szbuf, ULONG fnum),
+                        (r1, r2, buf, szbuf, fnum))
 
 XS(XS_OS2__headerInfo)
 {
     dXSARGS;
     if (items > 4 || items < 2)
-	Perl_croak(aTHX_ "Usage: OS2::_headerInfo(req,size[,handle,[offset]])");
+        Perl_croak(aTHX_ "Usage: OS2::_headerInfo(req,size[,handle,[offset]])");
     {
-	ULONG	req = (ULONG)SvIV(ST(0));
-	STRLEN	size = (STRLEN)SvIV(ST(1)), n_a;
-	ULONG	handle = (items >= 3 ? (ULONG)SvIV(ST(2)) : 0);
-	ULONG	offset = (items >= 4 ? (ULONG)SvIV(ST(3)) : 0);
+        ULONG	req = (ULONG)SvIV(ST(0));
+        STRLEN	size = (STRLEN)SvIV(ST(1)), n_a;
+        ULONG	handle = (items >= 3 ? (ULONG)SvIV(ST(2)) : 0);
+        ULONG	offset = (items >= 4 ? (ULONG)SvIV(ST(3)) : 0);
 
-	if (size <= 0)
-	    Perl_croak(aTHX_ "OS2::_headerInfo(): unexpected size: %d", (int)size);
-	ST(0) = newSVpvs("");
-	SvGROW(ST(0), size + 1);
-	sv_2mortal(ST(0));
+        if (size <= 0)
+            Perl_croak(aTHX_ "OS2::_headerInfo(): unexpected size: %d", (int)size);
+        ST(0) = newSVpvs("");
+        SvGROW(ST(0), size + 1);
+        sv_2mortal(ST(0));
 
-	if (!_Dos32QueryHeaderInfo(handle, offset, SvPV(ST(0), n_a), size, req)) 
-	    Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
-		       req, size, handle, offset, os2error(Perl_rc));
-	SvCUR_set(ST(0), size);
-	*SvEND(ST(0)) = 0;
+        if (!_Dos32QueryHeaderInfo(handle, offset, SvPV(ST(0), n_a), size, req)) 
+            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+                       req, size, handle, offset, os2error(Perl_rc));
+        SvCUR_set(ST(0), size);
+        *SvEND(ST(0)) = 0;
     }
     XSRETURN(1);
 }
@@ -3889,29 +3888,29 @@ XS(XS_OS2_libPath)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak(aTHX_ "Usage: OS2::libPath()");
+        Perl_croak(aTHX_ "Usage: OS2::libPath()");
     {
-	ULONG	size;
-	STRLEN	n_a;
+        ULONG	size;
+        STRLEN	n_a;
 
-	if (!_Dos32QueryHeaderInfo(0, 0, &size, sizeof(size), 
-				   DQHI_QUERYLIBPATHSIZE)) 
-	    Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
-		       DQHI_QUERYLIBPATHSIZE, sizeof(size), 0, 0,
-		       os2error(Perl_rc));
-	ST(0) = newSVpvs("");
-	SvGROW(ST(0), size + 1);
-	sv_2mortal(ST(0));
+        if (!_Dos32QueryHeaderInfo(0, 0, &size, sizeof(size), 
+                                   DQHI_QUERYLIBPATHSIZE)) 
+            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+                       DQHI_QUERYLIBPATHSIZE, sizeof(size), 0, 0,
+                       os2error(Perl_rc));
+        ST(0) = newSVpvs("");
+        SvGROW(ST(0), size + 1);
+        sv_2mortal(ST(0));
 
-	/* We should be careful: apparently, this entry point does not
-	   pay attention to the size argument, so may overwrite
-	   unrelated data! */
-	if (!_Dos32QueryHeaderInfo(0, 0, SvPV(ST(0), n_a), size,
-				   DQHI_QUERYLIBPATH)) 
-	    Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
-		       DQHI_QUERYLIBPATH, size, 0, 0, os2error(Perl_rc));
-	SvCUR_set(ST(0), size);
-	*SvEND(ST(0)) = 0;
+        /* We should be careful: apparently, this entry point does not
+           pay attention to the size argument, so may overwrite
+           unrelated data! */
+        if (!_Dos32QueryHeaderInfo(0, 0, SvPV(ST(0), n_a), size,
+                                   DQHI_QUERYLIBPATH)) 
+            Perl_croak(aTHX_ "OS2::_headerInfo(%ld,%ld,%ld,%ld) error: %s",
+                       DQHI_QUERYLIBPATH, size, 0, 0, os2error(Perl_rc));
+        SvCUR_set(ST(0), size);
+        *SvEND(ST(0)) = 0;
     }
     XSRETURN(1);
 }
@@ -3923,15 +3922,15 @@ XS(XS_OS2__control87)
 {
     dXSARGS;
     if (items != 2)
-	Perl_croak(aTHX_ "Usage: OS2::_control87(new,mask)");
+        Perl_croak(aTHX_ "Usage: OS2::_control87(new,mask)");
     {
-	unsigned	new = (unsigned)SvIV(ST(0));
-	unsigned	mask = (unsigned)SvIV(ST(1));
-	unsigned	RETVAL;
-	dXSTARG;
+        unsigned	new = (unsigned)SvIV(ST(0));
+        unsigned	mask = (unsigned)SvIV(ST(1));
+        unsigned	RETVAL;
+        dXSTARG;
 
-	RETVAL = _control87(new, mask);
-	XSprePUSH; PUSHi((IV)RETVAL);
+        RETVAL = _control87(new, mask);
+        XSprePUSH; PUSHi((IV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -3942,30 +3941,30 @@ XS(XS_OS2_mytype)
     int which = 0;
 
     if (items < 0 || items > 1)
-	Perl_croak(aTHX_ "Usage: OS2::mytype([which])");
+        Perl_croak(aTHX_ "Usage: OS2::mytype([which])");
     if (items == 1)
-	which = (int)SvIV(ST(0));
+        which = (int)SvIV(ST(0));
     {
-	unsigned	RETVAL;
-	dXSTARG;
+        unsigned	RETVAL;
+        dXSTARG;
 
-	switch (which) {
-	case 0:
-	    RETVAL = os2_mytype;	/* Reset after fork */
-	    break;
-	case 1:
-	    RETVAL = os2_mytype_ini;	/* Before any fork */
-	    break;
-	case 2:
-	    RETVAL = Perl_os2_initial_mode;	/* Before first morphing */
-	    break;
-	case 3:
-	    RETVAL = my_type();		/* Morphed type */
-	    break;
-	default:
-	    Perl_croak(aTHX_ "OS2::mytype(which): unknown which=%d", which);
-	}
-	XSprePUSH; PUSHi((IV)RETVAL);
+        switch (which) {
+        case 0:
+            RETVAL = os2_mytype;	/* Reset after fork */
+            break;
+        case 1:
+            RETVAL = os2_mytype_ini;	/* Before any fork */
+            break;
+        case 2:
+            RETVAL = Perl_os2_initial_mode;	/* Before first morphing */
+            break;
+        case 3:
+            RETVAL = my_type();		/* Morphed type */
+            break;
+        default:
+            Perl_croak(aTHX_ "OS2::mytype(which): unknown which=%d", which);
+        }
+        XSprePUSH; PUSHi((IV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -3977,9 +3976,9 @@ XS(XS_OS2_mytype_set)
     int type;
 
     if (items == 1)
-	type = (int)SvIV(ST(0));
+        type = (int)SvIV(ST(0));
     else
-	Perl_croak(aTHX_ "Usage: OS2::mytype_set(type)");
+        Perl_croak(aTHX_ "Usage: OS2::mytype_set(type)");
     my_type_set(type);
     XSRETURN_YES;
 }
@@ -3989,13 +3988,13 @@ XS(XS_OS2_get_control87)
 {
     dXSARGS;
     if (items != 0)
-	Perl_croak(aTHX_ "Usage: OS2::get_control87()");
+        Perl_croak(aTHX_ "Usage: OS2::get_control87()");
     {
-	unsigned	RETVAL;
-	dXSTARG;
+        unsigned	RETVAL;
+        dXSTARG;
 
-	RETVAL = get_control87();
-	XSprePUSH; PUSHi((IV)RETVAL);
+        RETVAL = get_control87();
+        XSprePUSH; PUSHi((IV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -4005,27 +4004,27 @@ XS(XS_OS2_set_control87)
 {
     dXSARGS;
     if (items < 0 || items > 2)
-	Perl_croak(aTHX_ "Usage: OS2::set_control87(new=MCW_EM, mask=MCW_EM)");
+        Perl_croak(aTHX_ "Usage: OS2::set_control87(new=MCW_EM, mask=MCW_EM)");
     {
-	unsigned	new;
-	unsigned	mask;
-	unsigned	RETVAL;
-	dXSTARG;
+        unsigned	new;
+        unsigned	mask;
+        unsigned	RETVAL;
+        dXSTARG;
 
-	if (items < 1)
-	    new = MCW_EM;
-	else {
-	    new = (unsigned)SvIV(ST(0));
-	}
+        if (items < 1)
+            new = MCW_EM;
+        else {
+            new = (unsigned)SvIV(ST(0));
+        }
 
-	if (items < 2)
-	    mask = MCW_EM;
-	else {
-	    mask = (unsigned)SvIV(ST(1));
-	}
+        if (items < 2)
+            mask = MCW_EM;
+        else {
+            mask = (unsigned)SvIV(ST(1));
+        }
 
-	RETVAL = set_control87(new, mask);
-	XSprePUSH; PUSHi((IV)RETVAL);
+        RETVAL = set_control87(new, mask);
+        XSprePUSH; PUSHi((IV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -4034,20 +4033,20 @@ XS(XS_OS2_incrMaxFHandles)		/* DosSetRelMaxFH */
 {
     dXSARGS;
     if (items < 0 || items > 1)
-	Perl_croak(aTHX_ "Usage: OS2::incrMaxFHandles(delta = 0)");
+        Perl_croak(aTHX_ "Usage: OS2::incrMaxFHandles(delta = 0)");
     {
-	LONG	delta;
-	ULONG	RETVAL, rc;
-	dXSTARG;
+        LONG	delta;
+        ULONG	RETVAL, rc;
+        dXSTARG;
 
-	if (items < 1)
-	    delta = 0;
-	else
-	    delta = (LONG)SvIV(ST(0));
+        if (items < 1)
+            delta = 0;
+        else
+            delta = (LONG)SvIV(ST(0));
 
-	if (CheckOSError(DosSetRelMaxFH(&delta, &RETVAL)))
-	    croak_with_os2error("OS2::incrMaxFHandles(): DosSetRelMaxFH() error");
-	XSprePUSH; PUSHu((UV)RETVAL);
+        if (CheckOSError(DosSetRelMaxFH(&delta, &RETVAL)))
+            croak_with_os2error("OS2::incrMaxFHandles(): DosSetRelMaxFH() error");
+        XSprePUSH; PUSHu((UV)RETVAL);
     }
     XSRETURN(1);
 }
@@ -4062,24 +4061,24 @@ connectNPipe(ULONG hpipe, int wait, ULONG restore, ULONG oflags)
     ULONG ret = ERROR_INTERRUPT, rc, flags;
 
     if (restore && wait)
-	os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
+        os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
     /* DosSetNPHState fails if more bits than NP_NOWAIT|NP_READMODE_MESSAGE */
     oflags &= (NP_NOWAIT | NP_READMODE_MESSAGE);
     flags = (oflags & ~NP_NOWAIT) | (wait > 0 ? NP_WAIT : NP_NOWAIT);
     /* We know (o)flags unless wait == 0 && restore */
     if (wait && (flags != oflags))
-	os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
+        os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
     while (ret == ERROR_INTERRUPT)
-	ret = DosConnectNPipe(hpipe);
+        ret = DosConnectNPipe(hpipe);
     (void)CheckOSError(ret);
     if (restore && wait && (flags != oflags))
-	os2cp_croak(DosSetNPHState(hpipe, oflags), "DosSetNPHState() back");
+        os2cp_croak(DosSetNPHState(hpipe, oflags), "DosSetNPHState() back");
     /* We know flags unless wait == 0 && restore */
     if ( ((wait || restore) ? (flags & NP_NOWAIT) : 1)
-	 && (ret == ERROR_PIPE_NOT_CONNECTED) )
-	return 0;			/* normal return value */
+         && (ret == ERROR_PIPE_NOT_CONNECTED) )
+        return 0;			/* normal return value */
     if (ret == NO_ERROR)
-	return 1;
+        return 1;
     croak_with_os2error("DosConnectNPipe()");
 }
 
@@ -4087,196 +4086,196 @@ connectNPipe(ULONG hpipe, int wait, ULONG restore, ULONG oflags)
 NO_OUTPUT ULONG
 DosCreateNPipe(PCSZ pszName, OUTLIST HPIPE hpipe, ULONG ulOpenMode, int connect = 1, int count = 1, ULONG ulInbufLength = 8192, ULONG ulOutbufLength = ulInbufLength, ULONG ulPipeMode = count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ULONG ulTimeout = 0)
    PREINIT:
-	ULONG rc;
+        ULONG rc;
    C_ARGS:
-	pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout
+        pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout
    POSTCALL:
-	if (CheckOSError(RETVAL))
-	    croak_with_os2error("OS2::mkpipe() error");
+        if (CheckOSError(RETVAL))
+            croak_with_os2error("OS2::mkpipe() error");
 */
 XS(XS_OS2_pipe); /* prototype to pass -Wmissing-prototypes */
 XS(XS_OS2_pipe)
 {
     dXSARGS;
     if (items < 2 || items > 8)
-	Perl_croak(aTHX_ "Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
+        Perl_croak(aTHX_ "Usage: OS2::pipe(pszName, ulOpenMode, connect= 1, count= 1, ulInbufLength= 8192, ulOutbufLength= ulInbufLength, ulPipeMode= count | NP_NOWAIT | NP_TYPE_BYTE | NP_READMODE_BYTE, ulTimeout= 0)");
     {
-	ULONG	RETVAL;
-	PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
-	HPIPE	hpipe;
-	SV	*OpenMode = ST(1);
-	ULONG	ulOpenMode;
-	int	connect = 0, count, message_r = 0, message = 0, b = 0;
-	ULONG	ulInbufLength,	ulOutbufLength,	ulPipeMode, ulTimeout, rc;
-	STRLEN	len;
-	char	*s, buf[10], *s1, *perltype = NULL;
-	PerlIO	*perlio;
-	double	timeout;
+        ULONG	RETVAL;
+        PCSZ	pszName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
+        HPIPE	hpipe;
+        SV	*OpenMode = ST(1);
+        ULONG	ulOpenMode;
+        int	connect = 0, count, message_r = 0, message = 0, b = 0;
+        ULONG	ulInbufLength,	ulOutbufLength,	ulPipeMode, ulTimeout, rc;
+        STRLEN	len;
+        char	*s, buf[10], *s1, *perltype = NULL;
+        PerlIO	*perlio;
+        double	timeout;
 
-	if (!pszName || !*pszName)
-	    Perl_croak(aTHX_ "OS2::pipe(): empty pipe name");
-	s = SvPV(OpenMode, len);
-	if (memEQs(s, len, "wait")) {	/* DosWaitNPipe() */
-	    ULONG ms = 0xFFFFFFFF, ret = ERROR_INTERRUPT; /* Indefinite */
+        if (!pszName || !*pszName)
+            Perl_croak(aTHX_ "OS2::pipe(): empty pipe name");
+        s = SvPV(OpenMode, len);
+        if (memEQs(s, len, "wait")) {	/* DosWaitNPipe() */
+            ULONG ms = 0xFFFFFFFF, ret = ERROR_INTERRUPT; /* Indefinite */
 
-	    if (items == 3) {
-		timeout = (double)SvNV(ST(2));
-		ms = timeout * 1000;
-		if (timeout < 0)
-		    ms = 0xFFFFFFFF; /* Indefinite */
-		else if (timeout && !ms)
-		    ms = 1;
-	    } else if (items > 3)
-		Perl_croak(aTHX_ "OS2::pipe(): too many arguments for wait-for-connect: %ld", (long)items);
+            if (items == 3) {
+                timeout = (double)SvNV(ST(2));
+                ms = timeout * 1000;
+                if (timeout < 0)
+                    ms = 0xFFFFFFFF; /* Indefinite */
+                else if (timeout && !ms)
+                    ms = 1;
+            } else if (items > 3)
+                Perl_croak(aTHX_ "OS2::pipe(): too many arguments for wait-for-connect: %ld", (long)items);
 
-	    while (ret == ERROR_INTERRUPT)
-		ret = DosWaitNPipe(pszName, ms);	/* XXXX Update ms? */
-	    os2cp_croak(ret, "DosWaitNPipe()");
-	    XSRETURN_YES;
-	}
-	if (memEQs(s, len, "call")) {	/* DosCallNPipe() */
-	    ULONG ms = 0xFFFFFFFF, got; /* Indefinite */
-	    STRLEN l;
-	    char *s;
-	    char buf[8192];
-	    STRLEN ll = sizeof(buf);
-	    char *b = buf;
+            while (ret == ERROR_INTERRUPT)
+                ret = DosWaitNPipe(pszName, ms);	/* XXXX Update ms? */
+            os2cp_croak(ret, "DosWaitNPipe()");
+            XSRETURN_YES;
+        }
+        if (memEQs(s, len, "call")) {	/* DosCallNPipe() */
+            ULONG ms = 0xFFFFFFFF, got; /* Indefinite */
+            STRLEN l;
+            char *s;
+            char buf[8192];
+            STRLEN ll = sizeof(buf);
+            char *b = buf;
 
-	    if (items < 3 || items > 5)
-		Perl_croak(aTHX_ "usage: OS2::pipe(pszName, 'call', write [, timeout= 0xFFFFFFFF, buffsize = 8192])");
-	    s = SvPV(ST(2), l);
-	    if (items >= 4) {
-		timeout = (double)SvNV(ST(3));
-		ms = timeout * 1000;
-		if (timeout < 0)
-		    ms = 0xFFFFFFFF; /* Indefinite */
-		else if (timeout && !ms)
-		    ms = 1;
-	    }
-	    if (items >= 5) {
-		STRLEN lll = SvUV(ST(4));
-		SV *sv = NEWSV(914, lll);
+            if (items < 3 || items > 5)
+                Perl_croak(aTHX_ "usage: OS2::pipe(pszName, 'call', write [, timeout= 0xFFFFFFFF, buffsize = 8192])");
+            s = SvPV(ST(2), l);
+            if (items >= 4) {
+                timeout = (double)SvNV(ST(3));
+                ms = timeout * 1000;
+                if (timeout < 0)
+                    ms = 0xFFFFFFFF; /* Indefinite */
+                else if (timeout && !ms)
+                    ms = 1;
+            }
+            if (items >= 5) {
+                STRLEN lll = SvUV(ST(4));
+                SV *sv = NEWSV(914, lll);
 
-		sv_2mortal(sv);
-		ll = lll;
-		b = SvPVX(sv);
-	    }	    
+                sv_2mortal(sv);
+                ll = lll;
+                b = SvPVX(sv);
+            }	    
 
-	    os2cp_croak(DosCallNPipe(pszName, s, l, b, ll, &got, ms),
-			"DosCallNPipe()");
-	    XSRETURN_PVN(b, got);
-	}
-	s1 = buf;
-	if (len && len <= 3 && !(*s >= '0' && *s <= '9')) {
-	    int r, w, R, W;
+            os2cp_croak(DosCallNPipe(pszName, s, l, b, ll, &got, ms),
+                        "DosCallNPipe()");
+            XSRETURN_PVN(b, got);
+        }
+        s1 = buf;
+        if (len && len <= 3 && !(*s >= '0' && *s <= '9')) {
+            int r, w, R, W;
 
-	    r = strchr(s, 'r') != 0;
-	    w = strchr(s, 'w') != 0;
-	    R = strchr(s, 'R') != 0;
-	    W = strchr(s, 'W') != 0;
-	    b = strchr(s, 'b') != 0;
-	    if (r + w + R + W + b != len || (r && R) || (w && W))
-		Perl_croak(aTHX_ "OS2::pipe(): unknown OpenMode argument: `%s'", s);
-	    if ((r || R) && (w || W))
-		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_DUPLEX;
-	    else if (r || R)
-		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_INBOUND;
-	    else
-		ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_OUTBOUND;
-	    if (R)
-		message = message_r = 1;
-	    if (W)
-		message = 1;
-	    else if (w && R)
-		Perl_croak(aTHX_ "OS2::pipe(): can't have message read mode for non-message pipes");
-	} else
-	    ulOpenMode = (ULONG)SvUV(OpenMode);	/* ST(1) */
+            r = strchr(s, 'r') != 0;
+            w = strchr(s, 'w') != 0;
+            R = strchr(s, 'R') != 0;
+            W = strchr(s, 'W') != 0;
+            b = strchr(s, 'b') != 0;
+            if (r + w + R + W + b != len || (r && R) || (w && W))
+                Perl_croak(aTHX_ "OS2::pipe(): unknown OpenMode argument: `%s'", s);
+            if ((r || R) && (w || W))
+                ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_DUPLEX;
+            else if (r || R)
+                ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_INBOUND;
+            else
+                ulOpenMode = NP_INHERIT | NP_NOWRITEBEHIND | NP_ACCESS_OUTBOUND;
+            if (R)
+                message = message_r = 1;
+            if (W)
+                message = 1;
+            else if (w && R)
+                Perl_croak(aTHX_ "OS2::pipe(): can't have message read mode for non-message pipes");
+        } else
+            ulOpenMode = (ULONG)SvUV(OpenMode);	/* ST(1) */
 
-	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX
-	     || (ulOpenMode & 0x3) == NP_ACCESS_INBOUND )
-	    *s1++ = 'r';
-	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
-	    *s1++ = '+';
-	if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
-	    *s1++ = 'w';
-	if (b)
-	    *s1++ = 'b';
-	*s1 = 0;
-	if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
-	    perltype = "+<&";
-	else if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
-	    perltype = ">&";
-	else
-	    perltype = "<&";
+        if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX
+             || (ulOpenMode & 0x3) == NP_ACCESS_INBOUND )
+            *s1++ = 'r';
+        if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
+            *s1++ = '+';
+        if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
+            *s1++ = 'w';
+        if (b)
+            *s1++ = 'b';
+        *s1 = 0;
+        if ( (ulOpenMode & 0x3) == NP_ACCESS_DUPLEX )
+            perltype = "+<&";
+        else if ( (ulOpenMode & 0x3) == NP_ACCESS_OUTBOUND )
+            perltype = ">&";
+        else
+            perltype = "<&";
 
-	if (items < 3)
-	    connect = -1;			/* no wait */
-	else if (SvTRUE(ST(2))) {
-	    s = SvPV(ST(2), len);
-	    if (memEQs(s, len, "nowait"))
-		connect = -1;			/* no wait */
-	    else if (memEQs(s, len, "wait"))
-		connect = 1;			/* wait */
-	    else
-		Perl_croak(aTHX_ "OS2::pipe(): unknown connect argument: `%s'", s);
-	}
+        if (items < 3)
+            connect = -1;			/* no wait */
+        else if (SvTRUE(ST(2))) {
+            s = SvPV(ST(2), len);
+            if (memEQs(s, len, "nowait"))
+                connect = -1;			/* no wait */
+            else if (memEQs(s, len, "wait"))
+                connect = 1;			/* wait */
+            else
+                Perl_croak(aTHX_ "OS2::pipe(): unknown connect argument: `%s'", s);
+        }
 
-	if (items < 4)
-	    count = 1;
-	else
-	    count = (int)SvIV(ST(3));
+        if (items < 4)
+            count = 1;
+        else
+            count = (int)SvIV(ST(3));
 
-	if (items < 5)
-	    ulInbufLength = 8192;
-	else
-	    ulInbufLength = (ULONG)SvUV(ST(4));
+        if (items < 5)
+            ulInbufLength = 8192;
+        else
+            ulInbufLength = (ULONG)SvUV(ST(4));
 
-	if (items < 6)
-	    ulOutbufLength = ulInbufLength;
-	else
-	    ulOutbufLength = (ULONG)SvUV(ST(5));
+        if (items < 6)
+            ulOutbufLength = ulInbufLength;
+        else
+            ulOutbufLength = (ULONG)SvUV(ST(5));
 
-	if (count < -1 || count == 0 || count >= 255)
-	    Perl_croak(aTHX_ "OS2::pipe(): count should be -1 or between 1 and 254: %ld", (long)count);
-	if (count < 0 )
-	    count = 255;		/* Unlimited */
+        if (count < -1 || count == 0 || count >= 255)
+            Perl_croak(aTHX_ "OS2::pipe(): count should be -1 or between 1 and 254: %ld", (long)count);
+        if (count < 0 )
+            count = 255;		/* Unlimited */
 
-	ulPipeMode = count;
-	if (items < 7)
-	    ulPipeMode |= (NP_WAIT 
-			   | (message ? NP_TYPE_MESSAGE : NP_TYPE_BYTE)
-			   | (message_r ? NP_READMODE_MESSAGE : NP_READMODE_BYTE));
-	else
-	    ulPipeMode |= (ULONG)SvUV(ST(6));
+        ulPipeMode = count;
+        if (items < 7)
+            ulPipeMode |= (NP_WAIT 
+                           | (message ? NP_TYPE_MESSAGE : NP_TYPE_BYTE)
+                           | (message_r ? NP_READMODE_MESSAGE : NP_READMODE_BYTE));
+        else
+            ulPipeMode |= (ULONG)SvUV(ST(6));
 
-	if (items < 8)
-	    timeout = 0;
-	else
-	    timeout = (double)SvNV(ST(7));
-	ulTimeout = timeout * 1000;
-	if (timeout < 0)
-	    ulTimeout = 0xFFFFFFFF; /* Indefinite */
-	else if (timeout && !ulTimeout)
-	    ulTimeout = 1;
+        if (items < 8)
+            timeout = 0;
+        else
+            timeout = (double)SvNV(ST(7));
+        ulTimeout = timeout * 1000;
+        if (timeout < 0)
+            ulTimeout = 0xFFFFFFFF; /* Indefinite */
+        else if (timeout && !ulTimeout)
+            ulTimeout = 1;
 
-	RETVAL = DosCreateNPipe(pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout);
-	if (CheckOSError(RETVAL))
-	    croak_with_os2error("OS2::pipe(): DosCreateNPipe() error");
+        RETVAL = DosCreateNPipe(pszName, &hpipe, ulOpenMode, ulPipeMode, ulInbufLength, ulOutbufLength, ulTimeout);
+        if (CheckOSError(RETVAL))
+            croak_with_os2error("OS2::pipe(): DosCreateNPipe() error");
 
-	if (connect)
-	    connectNPipe(hpipe, connect, 1, 0);	/* XXXX wait, retval */
-	hpipe = __imphandle(hpipe);
+        if (connect)
+            connectNPipe(hpipe, connect, 1, 0);	/* XXXX wait, retval */
+        hpipe = __imphandle(hpipe);
 
-	perlio = PerlIO_fdopen(hpipe, buf);
-	ST(0) = sv_newmortal();
-	{
-	    GV *gv = (GV *)sv_newmortal();
-	    gv_init_pvn(gv, gv_stashpvs("OS2::pipe",1),"__ANONIO__",10,0);
-	    if ( do_open6(gv, perltype, strlen(perltype), perlio, NULL, 0) )
-		sv_setsv(ST(0), sv_bless(newRV((SV*)gv), gv_stashpv("IO::Handle",1)));
-	    else
-		ST(0) = &PL_sv_undef;
-	}
+        perlio = PerlIO_fdopen(hpipe, buf);
+        ST(0) = sv_newmortal();
+        {
+            GV *gv = (GV *)sv_newmortal();
+            gv_init_pvn(gv, gv_stashpvs("OS2::pipe",1),"__ANONIO__",10,0);
+            if ( do_open6(gv, perltype, strlen(perltype), perlio, NULL, 0) )
+                sv_setsv(ST(0), sv_bless(newRV((SV*)gv), gv_stashpv("IO::Handle",1)));
+            else
+                ST(0) = &PL_sv_undef;
+        }
     }
     XSRETURN(1);
 }
@@ -4286,155 +4285,155 @@ XS(XS_OS2_pipeCntl)
 {
     dXSARGS;
     if (items < 2 || items > 3)
-	Perl_croak(aTHX_ "Usage: OS2::pipeCntl(pipe, op [, wait])");
+        Perl_croak(aTHX_ "Usage: OS2::pipeCntl(pipe, op [, wait])");
     {
-	ULONG	rc;
-	PerlIO *perlio = IoIFP(sv_2io(ST(0)));
-	IV	fn = PerlIO_fileno(perlio);
-	HPIPE	hpipe = (HPIPE)fn;
-	STRLEN	len;
-	char	*s = SvPV(ST(1), len);
-	int	wait = 0, disconnect = 0, connect = 0, message = -1, query = 0;
-	int	peek = 0, state = 0, info = 0;
+        ULONG	rc;
+        PerlIO *perlio = IoIFP(sv_2io(ST(0)));
+        IV	fn = PerlIO_fileno(perlio);
+        HPIPE	hpipe = (HPIPE)fn;
+        STRLEN	len;
+        char	*s = SvPV(ST(1), len);
+        int	wait = 0, disconnect = 0, connect = 0, message = -1, query = 0;
+        int	peek = 0, state = 0, info = 0;
 
-	if (fn < 0)
-	    Perl_croak(aTHX_ "OS2::pipeCntl(): not a pipe");	
-	if (items == 3)
-	    wait = (SvTRUE(ST(2)) ? 1 : -1);
+        if (fn < 0)
+            Perl_croak(aTHX_ "OS2::pipeCntl(): not a pipe");	
+        if (items == 3)
+            wait = (SvTRUE(ST(2)) ? 1 : -1);
 
-	switch (len) {
-	case 4:
-	    if (strEQ(s, "byte"))
-		message = 0;
-	    else if (strEQ(s, "peek"))
-		peek = 1;
-	    else if (strEQ(s, "info"))
-		info = 1;
-	    else
-		goto unknown;
-	    break;
-	case 5:
-	    if (strEQ(s, "reset"))
-		disconnect = connect = 1;
-	    else if (strEQ(s, "state"))
-		query = 1;
-	    else
-		goto unknown;
-	    break;
-	case 7:
-	    if (strEQ(s, "connect"))
-		connect = 1;
-	    else if (strEQ(s, "message"))
-		message = 1;
-	    else
-		goto unknown;
-	    break;
-	case 9:
-	    if (!strEQ(s, "readstate"))
-		goto unknown;
-	    state = 1;
-	    break;
-	case 10:
-	    if (!strEQ(s, "disconnect"))
-		goto unknown;
-	    disconnect = 1;
-	    break;
-	default:
-	  unknown:
-	    Perl_croak(aTHX_ "OS2::pipeCntl(): unknown argument: `%s'", s);
-	    break;
-	}
+        switch (len) {
+        case 4:
+            if (strEQ(s, "byte"))
+                message = 0;
+            else if (strEQ(s, "peek"))
+                peek = 1;
+            else if (strEQ(s, "info"))
+                info = 1;
+            else
+                goto unknown;
+            break;
+        case 5:
+            if (strEQ(s, "reset"))
+                disconnect = connect = 1;
+            else if (strEQ(s, "state"))
+                query = 1;
+            else
+                goto unknown;
+            break;
+        case 7:
+            if (strEQ(s, "connect"))
+                connect = 1;
+            else if (strEQ(s, "message"))
+                message = 1;
+            else
+                goto unknown;
+            break;
+        case 9:
+            if (!strEQ(s, "readstate"))
+                goto unknown;
+            state = 1;
+            break;
+        case 10:
+            if (!strEQ(s, "disconnect"))
+                goto unknown;
+            disconnect = 1;
+            break;
+        default:
+          unknown:
+            Perl_croak(aTHX_ "OS2::pipeCntl(): unknown argument: `%s'", s);
+            break;
+        }
 
-	if (items == 3 && !connect)
-	    Perl_croak(aTHX_ "OS2::pipeCntl(): no wait argument for `%s'", s);
+        if (items == 3 && !connect)
+            Perl_croak(aTHX_ "OS2::pipeCntl(): no wait argument for `%s'", s);
 
-	XSprePUSH;		/* Do not need arguments any more */
-	if (disconnect) {
-	    os2cp_croak(DosDisConnectNPipe(hpipe), "OS2::pipeCntl(): DosDisConnectNPipe()");
-	    PerlIO_clearerr(perlio);
-	}
-	if (connect) {
-	    if (!connectNPipe(hpipe, wait , 1, 0))
-		XSRETURN_IV(-1);
-	}
-	if (query) {
-	    ULONG flags;
+        XSprePUSH;		/* Do not need arguments any more */
+        if (disconnect) {
+            os2cp_croak(DosDisConnectNPipe(hpipe), "OS2::pipeCntl(): DosDisConnectNPipe()");
+            PerlIO_clearerr(perlio);
+        }
+        if (connect) {
+            if (!connectNPipe(hpipe, wait , 1, 0))
+                XSRETURN_IV(-1);
+        }
+        if (query) {
+            ULONG flags;
 
-	    os2cp_croak(DosQueryNPHState(hpipe, &flags), "DosQueryNPHState()");
-	    XSRETURN_UV(flags);
-	}
-	if (peek || state || info) {
-	    ULONG BytesRead, PipeState;
-	    AVAILDATA BytesAvail;
+            os2cp_croak(DosQueryNPHState(hpipe, &flags), "DosQueryNPHState()");
+            XSRETURN_UV(flags);
+        }
+        if (peek || state || info) {
+            ULONG BytesRead, PipeState;
+            AVAILDATA BytesAvail;
 
-	    os2cp_croak( DosPeekNPipe(hpipe, NULL, 0, &BytesRead, &BytesAvail,
-				      &PipeState), "DosPeekNPipe() for state");
-	    if (state) {
-		EXTEND(SP, 3);
-		mPUSHu(PipeState);
-		/*   Bytes (available/in-message) */
-		mPUSHi(BytesAvail.cbpipe);
-		mPUSHi(BytesAvail.cbmessage);
-		XSRETURN(3);
-	    } else if (info) {
-		/* L S S C C C/Z*
-		   ID of the (remote) computer
-		   buffers (out/in)
-		   instances (max/actual)
-		 */
-		struct pipe_info_t {
-		    ULONG id;			/* char id[4]; */
-		    PIPEINFO pInfo;
-		    char buf[512];
-		} b;
-		int size;
+            os2cp_croak( DosPeekNPipe(hpipe, NULL, 0, &BytesRead, &BytesAvail,
+                                      &PipeState), "DosPeekNPipe() for state");
+            if (state) {
+                EXTEND(SP, 3);
+                mPUSHu(PipeState);
+                /*   Bytes (available/in-message) */
+                mPUSHi(BytesAvail.cbpipe);
+                mPUSHi(BytesAvail.cbmessage);
+                XSRETURN(3);
+            } else if (info) {
+                /* L S S C C C/Z*
+                   ID of the (remote) computer
+                   buffers (out/in)
+                   instances (max/actual)
+                 */
+                struct pipe_info_t {
+                    ULONG id;			/* char id[4]; */
+                    PIPEINFO pInfo;
+                    char buf[512];
+                } b;
+                int size;
 
-		os2cp_croak( DosQueryNPipeInfo(hpipe, 1, &b.pInfo, sizeof(b) - STRUCT_OFFSET(struct pipe_info_t, pInfo)),
-			     "DosQueryNPipeInfo(1)");
-		os2cp_croak( DosQueryNPipeInfo(hpipe, 2, &b.id, sizeof(b.id)),
-			     "DosQueryNPipeInfo(2)");
-		size = b.pInfo.cbName;
-		/* Trailing 0 is included in cbName - undocumented; so
-		   one should always extract with Z* */
-		if (size)		/* name length 254 or less */
-		    size--;
-		else
-		    size = strlen(b.pInfo.szName);
-		EXTEND(SP, 6);
-		mPUSHp(b.pInfo.szName, size);
-		mPUSHu(b.id);
-		mPUSHi(b.pInfo.cbOut);
-		mPUSHi(b.pInfo.cbIn);
-		mPUSHi(b.pInfo.cbMaxInst);
-		mPUSHi(b.pInfo.cbCurInst);
-		XSRETURN(6);
-	    } else if (BytesAvail.cbpipe == 0) {
-		XSRETURN_NO;
-	    } else {
-		SV *tmp = NEWSV(914, BytesAvail.cbpipe);
-		char *s = SvPVX(tmp);
+                os2cp_croak( DosQueryNPipeInfo(hpipe, 1, &b.pInfo, sizeof(b) - STRUCT_OFFSET(struct pipe_info_t, pInfo)),
+                             "DosQueryNPipeInfo(1)");
+                os2cp_croak( DosQueryNPipeInfo(hpipe, 2, &b.id, sizeof(b.id)),
+                             "DosQueryNPipeInfo(2)");
+                size = b.pInfo.cbName;
+                /* Trailing 0 is included in cbName - undocumented; so
+                   one should always extract with Z* */
+                if (size)		/* name length 254 or less */
+                    size--;
+                else
+                    size = strlen(b.pInfo.szName);
+                EXTEND(SP, 6);
+                mPUSHp(b.pInfo.szName, size);
+                mPUSHu(b.id);
+                mPUSHi(b.pInfo.cbOut);
+                mPUSHi(b.pInfo.cbIn);
+                mPUSHi(b.pInfo.cbMaxInst);
+                mPUSHi(b.pInfo.cbCurInst);
+                XSRETURN(6);
+            } else if (BytesAvail.cbpipe == 0) {
+                XSRETURN_NO;
+            } else {
+                SV *tmp = NEWSV(914, BytesAvail.cbpipe);
+                char *s = SvPVX(tmp);
 
-		sv_2mortal(tmp);
-		os2cp_croak( DosPeekNPipe(hpipe, s, BytesAvail.cbpipe, &BytesRead,
-					  &BytesAvail, &PipeState), "DosPeekNPipe()");
-		SvCUR_set(tmp, BytesRead);
-		*SvEND(tmp) = 0;
-		SvPOK_on(tmp);
-		XSprePUSH; PUSHs(tmp);
-		XSRETURN(1);
-	    }
-	}
-	if (message > -1) {
-	    ULONG oflags, flags;
+                sv_2mortal(tmp);
+                os2cp_croak( DosPeekNPipe(hpipe, s, BytesAvail.cbpipe, &BytesRead,
+                                          &BytesAvail, &PipeState), "DosPeekNPipe()");
+                SvCUR_set(tmp, BytesRead);
+                *SvEND(tmp) = 0;
+                SvPOK_on(tmp);
+                XSprePUSH; PUSHs(tmp);
+                XSRETURN(1);
+            }
+        }
+        if (message > -1) {
+            ULONG oflags, flags;
 
-	    os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
-	    /* DosSetNPHState fails if more bits than NP_NOWAIT|NP_READMODE_MESSAGE */
-	    oflags &= (NP_NOWAIT | NP_READMODE_MESSAGE);
-	    flags = (oflags & NP_NOWAIT)
-		| (message ? NP_READMODE_MESSAGE : NP_READMODE_BYTE);
-	    if (flags != oflags)
-		os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
-	}
+            os2cp_croak(DosQueryNPHState(hpipe, &oflags), "DosQueryNPHState()");
+            /* DosSetNPHState fails if more bits than NP_NOWAIT|NP_READMODE_MESSAGE */
+            oflags &= (NP_NOWAIT | NP_READMODE_MESSAGE);
+            flags = (oflags & NP_NOWAIT)
+                | (message ? NP_READMODE_MESSAGE : NP_READMODE_BYTE);
+            if (flags != oflags)
+                os2cp_croak(DosSetNPHState(hpipe, flags), "DosSetNPHState()");
+        }
     }
     XSRETURN_YES;
 }
@@ -4443,65 +4442,65 @@ XS(XS_OS2_pipeCntl)
 NO_OUTPUT ULONG
 DosOpen(PCSZ pszFileName, OUTLIST HFILE hFile, OUTLIST ULONG ulAction, ULONG ulOpenFlags, ULONG ulOpenMode = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ULONG ulAttribute = FILE_NORMAL, ULONG ulFileSize = 0, PEAOP2 pEABuf = NULL);
    PREINIT:
-	ULONG rc;
+        ULONG rc;
    C_ARGS:
-	pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf
+        pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf
    POSTCALL:
-	if (CheckOSError(RETVAL))
-	    croak_with_os2error("OS2::open() error");
+        if (CheckOSError(RETVAL))
+            croak_with_os2error("OS2::open() error");
 */
 XS(XS_OS2_open); /* prototype to pass -Wmissing-prototypes */
 XS(XS_OS2_open)
 {
     dXSARGS;
     if (items < 2 || items > 6)
-	Perl_croak(aTHX_ "Usage: OS2::open(pszFileName, ulOpenMode, ulOpenFlags= OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ulAttribute= FILE_NORMAL, ulFileSize= 0, pEABuf= NULL)");
+        Perl_croak(aTHX_ "Usage: OS2::open(pszFileName, ulOpenMode, ulOpenFlags= OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW, ulAttribute= FILE_NORMAL, ulFileSize= 0, pEABuf= NULL)");
     {
 #line 39 "pipe.xs"
-	ULONG rc;
+        ULONG rc;
 #line 113 "pipe.c"
-	ULONG	RETVAL;
-	PCSZ	pszFileName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
-	HFILE	hFile;
-	ULONG	ulAction;
-	ULONG	ulOpenMode = (ULONG)SvUV(ST(1));
-	ULONG	ulOpenFlags;
-	ULONG	ulAttribute;
-	ULONG	ulFileSize;
-	PEAOP2	pEABuf;
+        ULONG	RETVAL;
+        PCSZ	pszFileName = ( SvOK(ST(0)) ? (PCSZ)SvPV_nolen(ST(0)) : NULL );
+        HFILE	hFile;
+        ULONG	ulAction;
+        ULONG	ulOpenMode = (ULONG)SvUV(ST(1));
+        ULONG	ulOpenFlags;
+        ULONG	ulAttribute;
+        ULONG	ulFileSize;
+        PEAOP2	pEABuf;
 
-	if (items < 3)
-	    ulOpenFlags = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
-	else {
-	    ulOpenFlags = (ULONG)SvUV(ST(2));
-	}
+        if (items < 3)
+            ulOpenFlags = OPEN_ACTION_OPEN_IF_EXISTS | OPEN_ACTION_FAIL_IF_NEW;
+        else {
+            ulOpenFlags = (ULONG)SvUV(ST(2));
+        }
 
-	if (items < 4)
-	    ulAttribute = FILE_NORMAL;
-	else {
-	    ulAttribute = (ULONG)SvUV(ST(3));
-	}
+        if (items < 4)
+            ulAttribute = FILE_NORMAL;
+        else {
+            ulAttribute = (ULONG)SvUV(ST(3));
+        }
 
-	if (items < 5)
-	    ulFileSize = 0;
-	else {
-	    ulFileSize = (ULONG)SvUV(ST(4));
-	}
+        if (items < 5)
+            ulFileSize = 0;
+        else {
+            ulFileSize = (ULONG)SvUV(ST(4));
+        }
 
-	if (items < 6)
-	    pEABuf = NULL;
-	else {
-	    pEABuf = (PEAOP2)SvUV(ST(5));
-	}
+        if (items < 6)
+            pEABuf = NULL;
+        else {
+            pEABuf = (PEAOP2)SvUV(ST(5));
+        }
 
-	RETVAL = DosOpen(pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf);
-	if (CheckOSError(RETVAL))
-	    croak_with_os2error("OS2::open() error");
-	XSprePUSH;	EXTEND(SP,2);
-	PUSHs(sv_newmortal());
-	sv_setuv(ST(0), (UV)hFile);
-	PUSHs(sv_newmortal());
-	sv_setuv(ST(1), (UV)ulAction);
+        RETVAL = DosOpen(pszFileName, &hFile, &ulAction, ulFileSize, ulAttribute, ulOpenFlags, ulOpenMode, pEABuf);
+        if (CheckOSError(RETVAL))
+            croak_with_os2error("OS2::open() error");
+        XSprePUSH;	EXTEND(SP,2);
+        PUSHs(sv_newmortal());
+        sv_setuv(ST(0), (UV)hFile);
+        PUSHs(sv_newmortal());
+        sv_setuv(ST(1), (UV)ulAction);
     }
     XSRETURN(2);
 }
@@ -4511,15 +4510,15 @@ Xs_OS2_init(pTHX)
 {
     char *file = __FILE__;
     {
-	GV *gv;
+        GV *gv;
 
-	if (_emx_env & 0x200) {	/* OS/2 */
+        if (_emx_env & 0x200) {	/* OS/2 */
             newXS("File::Copy::syscopy", XS_File__Copy_syscopy, file);
             newXS("Cwd::extLibpath", XS_Cwd_extLibpath, file);
             newXS("Cwd::extLibpath_set", XS_Cwd_extLibpath_set, file);
             newXS("OS2::extLibpath", XS_Cwd_extLibpath, file);
             newXS("OS2::extLibpath_set", XS_Cwd_extLibpath_set, file);
-	}
+        }
         newXS("OS2::Error", XS_OS2_Error, file);
         newXS("OS2::Errors2Drive", XS_OS2_Errors2Drive, file);
         newXS("OS2::SysInfo", XS_OS2_SysInfo, file);
@@ -4560,33 +4559,33 @@ Xs_OS2_init(pTHX)
         newXSproto("OS2::pipe", XS_OS2_pipe, file, "$$;$$$$$$");
         newXSproto("OS2::pipeCntl", XS_OS2_pipeCntl, file, "$$;$");
         newXSproto("OS2::open", XS_OS2_open, file, "$$;$$$$");
-	gv = gv_fetchpv("OS2::is_aout", TRUE, SVt_PV);
-	GvMULTI_on(gv);
+        gv = gv_fetchpv("OS2::is_aout", TRUE, SVt_PV);
+        GvMULTI_on(gv);
 #ifdef PERL_IS_AOUT
-	sv_setiv(GvSV(gv), 1);
+        sv_setiv(GvSV(gv), 1);
 #endif
-	gv = gv_fetchpv("OS2::is_static", TRUE, SVt_PV);
-	GvMULTI_on(gv);
+        gv = gv_fetchpv("OS2::is_static", TRUE, SVt_PV);
+        GvMULTI_on(gv);
 #ifdef PERL_IS_AOUT
-	sv_setiv(GvSV(gv), 1);
+        sv_setiv(GvSV(gv), 1);
 #endif
-	gv = gv_fetchpv("OS2::can_fork", TRUE, SVt_PV);
-	GvMULTI_on(gv);
-	sv_setiv(GvSV(gv), exe_is_aout());
-	gv = gv_fetchpv("OS2::emx_rev", TRUE, SVt_PV);
-	GvMULTI_on(gv);
-	sv_setiv(GvSV(gv), _emx_rev);
-	sv_setpv(GvSV(gv), _emx_vprt);
-	SvIOK_on(GvSV(gv));
-	gv = gv_fetchpv("OS2::emx_env", TRUE, SVt_PV);
-	GvMULTI_on(gv);
-	sv_setiv(GvSV(gv), _emx_env);
-	gv = gv_fetchpv("OS2::os_ver", TRUE, SVt_PV);
-	GvMULTI_on(gv);
-	sv_setnv(GvSV(gv), _osmajor + 0.001 * _osminor);
-	gv = gv_fetchpv("OS2::nsyserror", TRUE, SVt_PV);
-	GvMULTI_on(gv);
-	sv_setiv(GvSV(gv), 1);		/* DEFAULT: Show number on syserror */
+        gv = gv_fetchpv("OS2::can_fork", TRUE, SVt_PV);
+        GvMULTI_on(gv);
+        sv_setiv(GvSV(gv), exe_is_aout());
+        gv = gv_fetchpv("OS2::emx_rev", TRUE, SVt_PV);
+        GvMULTI_on(gv);
+        sv_setiv(GvSV(gv), _emx_rev);
+        sv_setpv(GvSV(gv), _emx_vprt);
+        SvIOK_on(GvSV(gv));
+        gv = gv_fetchpv("OS2::emx_env", TRUE, SVt_PV);
+        GvMULTI_on(gv);
+        sv_setiv(GvSV(gv), _emx_env);
+        gv = gv_fetchpv("OS2::os_ver", TRUE, SVt_PV);
+        GvMULTI_on(gv);
+        sv_setnv(GvSV(gv), _osmajor + 0.001 * _osminor);
+        gv = gv_fetchpv("OS2::nsyserror", TRUE, SVt_PV);
+        GvMULTI_on(gv);
+        sv_setiv(GvSV(gv), 1);		/* DEFAULT: Show number on syserror */
     }
     return 0;
 }
@@ -4605,13 +4604,13 @@ my_emx_init(void *layout) {
     /* Can't just call emx_init(), since it moves the stack pointer */
     /* It also busts a lot of registers, so be extra careful */
     __asm__(	"pushf\n"
-		"pusha\n"
-		"movl %%esp, %1\n"
-		"push %0\n"
-		"call __emx_init\n"
-		"movl %1, %%esp\n"
-		"popa\n"
-		"popf\n" : : "r" (layout), "m" (old_esp)	);
+                "pusha\n"
+                "movl %%esp, %1\n"
+                "push %0\n"
+                "call __emx_init\n"
+                "movl %1, %%esp\n"
+                "popa\n"
+                "popf\n" : : "r" (layout), "m" (old_esp)	);
 }
 
 struct layout_table_t {
@@ -4640,11 +4639,11 @@ my_os_version() {
     /* Can't just call __os_version(), since it does not follow C
        calling convention: it busts a lot of registers, so be extra careful */
     __asm__(	"pushf\n"
-		"pusha\n"
-		"call ___os_version\n"
-		"movl %%eax, %0\n"
-		"popa\n"
-		"popf\n" : "=m" (osv_res)	);
+                "pusha\n"
+                "call ___os_version\n"
+                "movl %%eax, %0\n"
+                "popa\n"
+                "popf\n" : "=m" (osv_res)	);
 
     return osv_res;
 }
@@ -4662,9 +4661,9 @@ force_init_emx_runtime(EXCEPTIONREGISTRATIONRECORD *preg, ULONG flags)
     char buf[512];
     static struct layout_table_t layout_table;
     struct {
-	char buf[48*1024]; /* _emx_init() requires 32K, cmd.exe has 64K only */
-	double alignment1;
-	EXCEPTIONREGISTRATIONRECORD xreg;
+        char buf[48*1024]; /* _emx_init() requires 32K, cmd.exe has 64K only */
+        double alignment1;
+        EXCEPTIONREGISTRATIONRECORD xreg;
     } *newstack;
     char *s;
 
@@ -4678,23 +4677,23 @@ force_init_emx_runtime(EXCEPTIONREGISTRATIONRECORD *preg, ULONG flags)
     oldstackend = tib->tib_pstacklimit;
 
     if ( (char*)&s < (char*)oldstack + 4*1024 
-	 || (char *)oldstackend < (char*)oldstack + 52*1024 )
-	early_error("It is a lunacy to try to run EMX Perl ",
-		    "with less than 64K of stack;\r\n",
-		    "  at least with non-EMX starter...\r\n");
+         || (char *)oldstackend < (char*)oldstack + 52*1024 )
+        early_error("It is a lunacy to try to run EMX Perl ",
+                    "with less than 64K of stack;\r\n",
+                    "  at least with non-EMX starter...\r\n");
 
     /* Minimize the damage to the stack via reducing the size of argv. */
     if (flags & FORCE_EMX_INIT_CONTRACT_ARGV) {
-	pib->pib_pchcmd = "\0\0";	/* Need 3 concatenated strings */
-	pib->pib_pchcmd = "\0";		/* Ended by an extra \0. */
+        pib->pib_pchcmd = "\0\0";	/* Need 3 concatenated strings */
+        pib->pib_pchcmd = "\0";		/* Ended by an extra \0. */
     }
 
     newstack = alloca(sizeof(*newstack));
     /* Emulate the stack probe */
     s = ((char*)newstack) + sizeof(*newstack);
     while (s > (char*)newstack) {
-	s[-1] = 0;
-	s -= 4096;
+        s[-1] = 0;
+        s -= 4096;
     }
 
     /* Reassigning stack is documented to work */
@@ -4708,38 +4707,38 @@ force_init_emx_runtime(EXCEPTIONREGISTRATIONRECORD *preg, ULONG flags)
        Check whether it is inside the new stack.  */
     buf[0] = 0;
     if (tib->tib_pexchain >= tib->tib_pstacklimit
-	|| tib->tib_pexchain < tib->tib_pstack) {
-	error = 1;
-	sprintf(buf,
-		"panic: ExceptionHandler misplaced: not %#lx <= %#lx < %#lx\n",
-		(unsigned long)tib->tib_pstack,
-		(unsigned long)tib->tib_pexchain,
-		(unsigned long)tib->tib_pstacklimit);	
-	goto finish;
+        || tib->tib_pexchain < tib->tib_pstack) {
+        error = 1;
+        sprintf(buf,
+                "panic: ExceptionHandler misplaced: not %#lx <= %#lx < %#lx\n",
+                (unsigned long)tib->tib_pstack,
+                (unsigned long)tib->tib_pexchain,
+                (unsigned long)tib->tib_pstacklimit);	
+        goto finish;
     }
     if (tib->tib_pexchain != &(newstack->xreg)) {
-	sprintf(buf, "ExceptionHandler misplaced: %#lx != %#lx\n",
-		(unsigned long)tib->tib_pexchain,
-		(unsigned long)&(newstack->xreg));	
+        sprintf(buf, "ExceptionHandler misplaced: %#lx != %#lx\n",
+                (unsigned long)tib->tib_pexchain,
+                (unsigned long)&(newstack->xreg));	
     }
     rc = DosUnsetExceptionHandler((EXCEPTIONREGISTRATIONRECORD *)tib->tib_pexchain);
     if (rc)
-	sprintf(buf + strlen(buf), 
-		"warning: DosUnsetExceptionHandler rc=%#lx=%lu\n", rc, rc);
+        sprintf(buf + strlen(buf), 
+                "warning: DosUnsetExceptionHandler rc=%#lx=%lu\n", rc, rc);
 
     if (preg) {
-	/* ExceptionRecords should be on stack, in a correct order.  Sigh... */
-	preg->prev_structure = 0;
-	preg->ExceptionHandler = _emx_exception;
-	rc = DosSetExceptionHandler(preg);
-	if (rc) {
-	    sprintf(buf + strlen(buf),
-		    "warning: DosSetExceptionHandler rc=%#lx=%lu\n", rc, rc);
-	    DosWrite(2, buf, strlen(buf), &out);
-	    emx_exception_init = 1;	/* Do it around spawn*() calls */
-	}
+        /* ExceptionRecords should be on stack, in a correct order.  Sigh... */
+        preg->prev_structure = 0;
+        preg->ExceptionHandler = _emx_exception;
+        rc = DosSetExceptionHandler(preg);
+        if (rc) {
+            sprintf(buf + strlen(buf),
+                    "warning: DosSetExceptionHandler rc=%#lx=%lu\n", rc, rc);
+            DosWrite(2, buf, strlen(buf), &out);
+            emx_exception_init = 1;	/* Do it around spawn*() calls */
+        }
     } else
-	emx_exception_init = 1;		/* Do it around spawn*() calls */
+        emx_exception_init = 1;		/* Do it around spawn*() calls */
 
   finish:
     /* Restore the damage */
@@ -4749,16 +4748,16 @@ force_init_emx_runtime(EXCEPTIONREGISTRATIONRECORD *preg, ULONG flags)
     tib->tib_pstack = oldstack;
     emx_runtime_init = 1;
     if (buf[0])
-	DosWrite(2, buf, strlen(buf), &out);
+        DosWrite(2, buf, strlen(buf), &out);
     if (error)
-	exit(56);
+        exit(56);
 }
 
 static void
 jmp_out_of_atexit(void)
 {
     if (longjmp_at_exit)
-	longjmp(at_exit_buf, 1);
+        longjmp(at_exit_buf, 1);
 }
 
 extern void _CRT_term(void);
@@ -4767,34 +4766,34 @@ void
 Perl_OS2_term(void **p, int exitstatus, int flags)
 {
     if (!emx_runtime_secondary)
-	return;
+        return;
 
     /* The principal executable is not running the same CRTL, so there
        is nobody to shutdown *this* CRTL except us... */
     if (flags & FORCE_EMX_DEINIT_EXIT) {
-	if (p && !emx_exception_init)
-	    DosUnsetExceptionHandler((EXCEPTIONREGISTRATIONRECORD *)p);
-	/* Do not run the executable's CRTL's termination routines */
-	exit(exitstatus);		/* Run at-exit, flush buffers, etc */
+        if (p && !emx_exception_init)
+            DosUnsetExceptionHandler((EXCEPTIONREGISTRATIONRECORD *)p);
+        /* Do not run the executable's CRTL's termination routines */
+        exit(exitstatus);		/* Run at-exit, flush buffers, etc */
     }
     /* Run at-exit list, and jump out at the end */
     if ((flags & FORCE_EMX_DEINIT_RUN_ATEXIT) && !setjmp(at_exit_buf)) {
-	longjmp_at_exit = 1;
-	exit(exitstatus);		/* The first pass through "if" */
+        longjmp_at_exit = 1;
+        exit(exitstatus);		/* The first pass through "if" */
     }
 
     /* Get here if we managed to jump out of exit(), or did not run atexit. */
     longjmp_at_exit = 0;		/* Maybe exit() is called again? */
 #if 0 /* _atexit_n is not exported */
     if (flags & FORCE_EMX_DEINIT_RUN_ATEXIT)
-	_atexit_n = 0;			/* Remove the atexit() handlers */
+        _atexit_n = 0;			/* Remove the atexit() handlers */
 #endif
     /* Will segfault on program termination if we leave this dangling... */
     if (p && !emx_exception_init)
-	DosUnsetExceptionHandler((EXCEPTIONREGISTRATIONRECORD *)p);
+        DosUnsetExceptionHandler((EXCEPTIONREGISTRATIONRECORD *)p);
     /* Typically there is no need to do this, done from _DLL_InitTerm() */
     if (flags & FORCE_EMX_DEINIT_CRT_TERM)
-	_CRT_term();			/* Flush buffers, etc. */
+        _CRT_term();			/* Flush buffers, etc. */
     /* Now it is a good time to call exit() in the caller's CRTL... */
 }
 
@@ -4810,11 +4809,11 @@ check_emx_runtime(char **env, EXCEPTIONREGISTRATIONRECORD *preg)
     static int emx_init_done = 0;
 
     /*  If _environ is not set, this code sits in a DLL which
-	uses a CRT DLL which not compatible with the executable's
-	CRT library.  Some parts of the DLL are not initialized.
+        uses a CRT DLL which not compatible with the executable's
+        CRT library.  Some parts of the DLL are not initialized.
      */
     if (_environ != NULL)
-	return;				/* Properly initialized */
+        return;				/* Properly initialized */
 
     /* It is not DOS, so we may use OS/2 API now */
     /* Some data we manipulate is static; protect ourselves from
@@ -4823,92 +4822,92 @@ check_emx_runtime(char **env, EXCEPTIONREGISTRATIONRECORD *preg)
 
     rc1 = DosEnterCritSec();
     if (!hmtx_emx_init)
-	rc = DosCreateMutexSem(NULL, &hmtx_emx_init, 0, TRUE); /*Create owned*/
+        rc = DosCreateMutexSem(NULL, &hmtx_emx_init, 0, TRUE); /*Create owned*/
     else
-	maybe_inited = 1;
+        maybe_inited = 1;
 
     if (rc != NO_ERROR)
-	hmtx_emx_init = NULLHANDLE;
+        hmtx_emx_init = NULLHANDLE;
 
     if (rc1 == NO_ERROR)
-	DosExitCritSec();
+        DosExitCritSec();
     DosExitMustComplete(&count);
 
     while (maybe_inited) { /* Other thread did or is doing the same now */
-	if (emx_init_done)
-	    return;
-	rc = DosRequestMutexSem(hmtx_emx_init,
-				(ULONG) SEM_INDEFINITE_WAIT);  /* Timeout (none) */
-	if (rc == ERROR_INTERRUPT)
-	    continue;
-	if (rc != NO_ERROR) {
-	    char buf[80];
-	    ULONG out;
+        if (emx_init_done)
+            return;
+        rc = DosRequestMutexSem(hmtx_emx_init,
+                                (ULONG) SEM_INDEFINITE_WAIT);  /* Timeout (none) */
+        if (rc == ERROR_INTERRUPT)
+            continue;
+        if (rc != NO_ERROR) {
+            char buf[80];
+            ULONG out;
 
-	    sprintf(buf,
-		    "panic: EMX backdoor init: DosRequestMutexSem error: %lu=%#lx\n", rc, rc);	    
-	    DosWrite(2, buf, strlen(buf), &out);
-	    return;
-	}
-	DosReleaseMutexSem(hmtx_emx_init);
-	return;
+            sprintf(buf,
+                    "panic: EMX backdoor init: DosRequestMutexSem error: %lu=%#lx\n", rc, rc);	    
+            DosWrite(2, buf, strlen(buf), &out);
+            return;
+        }
+        DosReleaseMutexSem(hmtx_emx_init);
+        return;
     }
 
     /*  If the executable does not use EMX.DLL, EMX.DLL is not completely
-	initialized either.  Uninitialized EMX.DLL returns 0 in the low
-	nibble of __os_version().  */
+        initialized either.  Uninitialized EMX.DLL returns 0 in the low
+        nibble of __os_version().  */
     v_emx = my_os_version();
 
     /*	_osmajor and _osminor are normally set in _DLL_InitTerm of CRT DLL
-	(=>_CRT_init=>_entry2) via a call to __os_version(), then
-	reset when the EXE initialization code calls _text=>_init=>_entry2.
-	The first time they are wrongly set to 0; the second time the
-	EXE initialization code had already called emx_init=>initialize1
-	which correctly set version_major, version_minor used by
-	__os_version().  */
+        (=>_CRT_init=>_entry2) via a call to __os_version(), then
+        reset when the EXE initialization code calls _text=>_init=>_entry2.
+        The first time they are wrongly set to 0; the second time the
+        EXE initialization code had already called emx_init=>initialize1
+        which correctly set version_major, version_minor used by
+        __os_version().  */
     v_crt = (_osmajor | _osminor);
 
     if ((_emx_env & 0x200) && !(v_emx & 0xFFFF)) {	/* OS/2, EMX uninit. */ 
-	force_init_emx_runtime( preg,
-				FORCE_EMX_INIT_CONTRACT_ARGV 
-				| FORCE_EMX_INIT_INSTALL_ATEXIT );
-	emx_wasnt_initialized = 1;
-	/* Update CRTL data basing on now-valid EMX runtime data */
-	if (!v_crt) {		/* The only wrong data are the versions. */
-	    v_emx = my_os_version();			/* *Now* it works */
-	    *(unsigned char *)&_osmajor = v_emx & 0xFF;	/* Cast out const */
-	    *(unsigned char *)&_osminor = (v_emx>>8) & 0xFF;
-	}
+        force_init_emx_runtime( preg,
+                                FORCE_EMX_INIT_CONTRACT_ARGV 
+                                | FORCE_EMX_INIT_INSTALL_ATEXIT );
+        emx_wasnt_initialized = 1;
+        /* Update CRTL data basing on now-valid EMX runtime data */
+        if (!v_crt) {		/* The only wrong data are the versions. */
+            v_emx = my_os_version();			/* *Now* it works */
+            *(unsigned char *)&_osmajor = v_emx & 0xFF;	/* Cast out const */
+            *(unsigned char *)&_osminor = (v_emx>>8) & 0xFF;
+        }
     }
     emx_runtime_secondary = 1;
     /* if (flags & FORCE_EMX_INIT_INSTALL_ATEXIT) */
     atexit(jmp_out_of_atexit);		/* Allow run of atexit() w/o exit()  */
 
     if (env == NULL) {			/* Fetch from the process info block */
-	int c = 0;
-	PPIB pib;
-	PTIB tib;
-	char *e, **ep;
+        int c = 0;
+        PPIB pib;
+        PTIB tib;
+        char *e, **ep;
 
-	DosGetInfoBlocks(&tib, &pib);
-	e = pib->pib_pchenv;
-	while (*e) {			/* Get count */
-	    c++;
-	    e = e + strlen(e) + 1;
-	}
-	Newx(env, c + 1, char*);
-	ep = env;
-	e = pib->pib_pchenv;
-	while (c--) {
-	    *ep++ = e;
-	    e = e + strlen(e) + 1;
-	}
-	*ep = NULL;
+        DosGetInfoBlocks(&tib, &pib);
+        e = pib->pib_pchenv;
+        while (*e) {			/* Get count */
+            c++;
+            e = e + strlen(e) + 1;
+        }
+        Newx(env, c + 1, char*);
+        ep = env;
+        e = pib->pib_pchenv;
+        while (c--) {
+            *ep++ = e;
+            e = e + strlen(e) + 1;
+        }
+        *ep = NULL;
     }
     _environ = _org_environ = env;
     emx_init_done = 1;
     if (hmtx_emx_init)
-	DosReleaseMutexSem(hmtx_emx_init);
+        DosReleaseMutexSem(hmtx_emx_init);
 }
 
 #define ENTRY_POINT 0x10000
@@ -4918,16 +4917,16 @@ exe_is_aout(void)
 {
     struct layout_table_t *layout;
     if (emx_wasnt_initialized)
-	return 0;
+        return 0;
     /* Now we know that the principal executable is an EMX application 
        - unless somebody did already play with delayed initialization... */
     /* With EMX applications to determine whether it is AOUT one needs
        to examine the start of the executable to find "layout" */
     if ( *(unsigned char*)ENTRY_POINT != 0x68		/* PUSH n */
-	 || *(unsigned char*)(ENTRY_POINT+5) != 0xe8	/* CALL */
-	 || *(unsigned char*)(ENTRY_POINT+10) != 0xeb	/* JMP */
-	 || *(unsigned char*)(ENTRY_POINT+12) != 0xe8)	/* CALL */
-	return 0;					/* ! EMX executable */
+         || *(unsigned char*)(ENTRY_POINT+5) != 0xe8	/* CALL */
+         || *(unsigned char*)(ENTRY_POINT+10) != 0xeb	/* JMP */
+         || *(unsigned char*)(ENTRY_POINT+12) != 0xe8)	/* CALL */
+        return 0;					/* ! EMX executable */
     /* Fix alignment */
     Copy((char*)(ENTRY_POINT+1), &layout, 1, struct layout_table_t*);
     return !(layout->flags & 2);			
@@ -4953,25 +4952,25 @@ Perl_OS2_init3(char **env, void **preg, int flags)
     settmppath();
     OS2_Perl_data.xs_init = &Xs_OS2_init;
     if (perl_sh_installed) {
-	int l = strlen(perl_sh_installed);
+        int l = strlen(perl_sh_installed);
 
-	Newx(PL_sh_path, l + 1, char);
-	memcpy(PL_sh_path, perl_sh_installed, l + 1);
-    } else if ( (shell = getenv("PERL_SH_DRIVE")) ) {
-	Newx(PL_sh_path, strlen(SH_PATH) + 1, char);
-	strcpy(PL_sh_path, SH_PATH);
-	PL_sh_path[0] = shell[0];
-    } else if ( (shell = getenv("PERL_SH_DIR")) ) {
-	int l = strlen(shell), i;
+        Newx(PL_sh_path, l + 1, char);
+        memcpy(PL_sh_path, perl_sh_installed, l + 1);
+    } else if ( (shell = PerlEnv_getenv("PERL_SH_DRIVE")) ) {
+        Newx(PL_sh_path, strlen(SH_PATH) + 1, char);
+        strcpy(PL_sh_path, SH_PATH);
+        PL_sh_path[0] = shell[0];
+    } else if ( (shell = PerlEnv_getenv("PERL_SH_DIR")) ) {
+        int l = strlen(shell), i;
 
-	while (l && (shell[l-1] == '/' || shell[l-1] == '\\'))
-	    l--;
-	Newx(PL_sh_path, l + 8, char);
-	strncpy(PL_sh_path, shell, l);
-	strcpy(PL_sh_path + l, "/sh.exe");
-	for (i = 0; i < l; i++) {
-	    if (PL_sh_path[i] == '\\') PL_sh_path[i] = '/';
-	}
+        while (l && (shell[l-1] == '/' || shell[l-1] == '\\'))
+            l--;
+        Newx(PL_sh_path, l + 8, char);
+        strncpy(PL_sh_path, shell, l);
+        strcpy(PL_sh_path + l, "/sh.exe");
+        for (i = 0; i < l; i++) {
+            if (PL_sh_path[i] == '\\') PL_sh_path[i] = '/';
+        }
     }
     MUTEX_INIT(&start_thread_mutex);
     MUTEX_INIT(&perlos2_state_mutex);
@@ -4979,25 +4978,25 @@ Perl_OS2_init3(char **env, void **preg, int flags)
     os2_mytype_ini = os2_mytype;
     Perl_os2_initial_mode = -1;		/* Uninit */
 
-    s = getenv("PERL_BEGINLIBPATH");
+    s = PerlEnv_getenv("PERL_BEGINLIBPATH");
     if (s)
       rc = fill_extLibpath(0, s, NULL, 1, "PERL_BEGINLIBPATH");
     else
-      rc = fill_extLibpath(0, getenv("PERL_PRE_BEGINLIBPATH"), getenv("PERL_POST_BEGINLIBPATH"), 0, "PERL_(PRE/POST)_BEGINLIBPATH");
+      rc = fill_extLibpath(0, PerlEnv_getenv("PERL_PRE_BEGINLIBPATH"), PerlEnv_getenv("PERL_POST_BEGINLIBPATH"), 0, "PERL_(PRE/POST)_BEGINLIBPATH");
     if (!rc) {
-	s = getenv("PERL_ENDLIBPATH");
-	if (s)
-	    rc = fill_extLibpath(1, s, NULL, 1, "PERL_ENDLIBPATH");
-	else
-	    rc = fill_extLibpath(1, getenv("PERL_PRE_ENDLIBPATH"), getenv("PERL_POST_ENDLIBPATH"), 0, "PERL_(PRE/POST)_ENDLIBPATH");
+        s = PerlEnv_getenv("PERL_ENDLIBPATH");
+        if (s)
+            rc = fill_extLibpath(1, s, NULL, 1, "PERL_ENDLIBPATH");
+        else
+            rc = fill_extLibpath(1, PerlEnv_getenv("PERL_PRE_ENDLIBPATH"), PerlEnv_getenv("PERL_POST_ENDLIBPATH"), 0, "PERL_(PRE/POST)_ENDLIBPATH");
     }
     if (rc) {
-	char buf[1024];
+        char buf[1024];
 
-	snprintf(buf, sizeof buf, "Error setting BEGIN/ENDLIBPATH: %s\n",
-		 os2error(rc));
-	DosWrite(2, buf, strlen(buf), &rc);
-	exit(2);
+        snprintf(buf, sizeof buf, "Error setting BEGIN/ENDLIBPATH: %s\n",
+                 os2error(rc));
+        DosWrite(2, buf, strlen(buf), &rc);
+        exit(2);
     }
 
     _emxload_env("PERL_EMXLOAD_SECS");
@@ -5012,10 +5011,10 @@ fd_ok(int fd)
 
     if (!(_emx_env & 0x200)) return 1;		/* not OS/2. */
     if (fd >= max_fh) {				/* Renew */
-	LONG delta = 0;
+        LONG delta = 0;
 
-	if (DosSetRelMaxFH(&delta, &max_fh))	/* Assume it OK??? */
-	    return 1;
+        if (DosSetRelMaxFH(&delta, &max_fh))	/* Assume it OK??? */
+            return 1;
     }
     return fd < max_fh;
 }
@@ -5025,7 +5024,7 @@ int
 dup2(int from, int to)
 {
     if (fd_ok(from < to ? to : from))
-	return _dup2(from, to);
+        return _dup2(from, to);
     errno = EBADF;
     return -1;
 }
@@ -5034,7 +5033,7 @@ int
 dup(int from)
 {
     if (fd_ok(from))
-	return _dup(from);
+        return _dup(from);
     errno = EBADF;
     return -1;
 }
@@ -5045,14 +5044,17 @@ dup(int from)
 char *
 my_tmpnam (char *str)
 {
-    char *p = getenv("TMP"), *tpath;
+    char *p = PerlEnv_getenv("TMP"), *tpath;
 
-    if (!p) p = getenv("TEMP");
+    if (!p) p = PerlEnv_getenv("TEMP");
+    ENV_LOCK;
     tpath = tempnam(p, "pltmp");
     if (str && tpath) {
-	strcpy(str, tpath);
-	return str;
+        strcpy(str, tpath);
+        ENV_UNLOCK;
+        return str;
     }
+    ENV_UNLOCK;
     return tpath;
 }
 
@@ -5063,10 +5065,10 @@ my_tmpfile ()
 
     stat(".", &s);
     if (s.st_mode & S_IWOTH) {
-	return tmpfile();
+        return tmpfile();
     }
     return fopen(my_tmpnam(NULL), "w+b"); /* Race condition, but
-					     grants TMP. */
+                                             grants TMP. */
 }
 
 #undef rmdir
@@ -5083,17 +5085,17 @@ my_rmdir (__const__ char *s)
     int rc;
 
     if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX mkdir fails... */
-	if (l >= sizeof b)
-	    Newx(buf, l + 1, char);
-	strcpy(buf,s);
-	while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
-	    l--;
-	buf[l] = 0;
-	s = buf;
+        if (l >= sizeof b)
+            Newx(buf, l + 1, char);
+        strcpy(buf,s);
+        while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
+            l--;
+        buf[l] = 0;
+        s = buf;
     }
     rc = rmdir(s);
     if (b != buf)
-	Safefree(buf);
+        Safefree(buf);
     return rc;
 }
 
@@ -5108,17 +5110,17 @@ my_mkdir (__const__ char *s, long perm)
     int rc;
 
     if (s[l-1] == '/' || s[l-1] == '\\') {	/* EMX mkdir fails... */
-	if (l >= sizeof b)
-	    Newx(buf, l + 1, char);
-	strcpy(buf,s);
-	while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
-	    l--;
-	buf[l] = 0;
-	s = buf;
+        if (l >= sizeof b)
+            Newx(buf, l + 1, char);
+        strcpy(buf,s);
+        while (l > 1 && (s[l-1] == '/' || s[l-1] == '\\'))
+            l--;
+        buf[l] = 0;
+        s = buf;
     }
     rc = mkdir(s, perm);
     if (b != buf)
-	Safefree(buf);
+        Safefree(buf);
     return rc;
 }
 
@@ -5137,11 +5139,11 @@ my_flock(int handle, int o)
   if (use_my_flock == -1) {
    MUTEX_LOCK(&perlos2_state_mutex);
    if (use_my_flock == -1) {
-    char *s = getenv("USE_PERL_FLOCK");
+    char *s = PerlEnv_getenv("USE_PERL_FLOCK");
     if (s)
-	use_my_flock = atoi(s);
+        use_my_flock = atoi(s);
     else 
-	use_my_flock = 1;
+        use_my_flock = 1;
    }
    MUTEX_UNLOCK(&perlos2_state_mutex);
   }
@@ -5243,11 +5245,11 @@ static int
 use_my_pwent(void)
 {
   if (_my_pwent == -1) {
-    char *s = getenv("USE_PERL_PWENT");
+    char *s = PerlEnv_getenv("USE_PERL_PWENT");
     if (s)
-	_my_pwent = atoi(s);
+        _my_pwent = atoi(s);
     else 
-	_my_pwent = 1;
+        _my_pwent = 1;
   }
   return _my_pwent;
 }
@@ -5316,11 +5318,12 @@ passw_wrap(struct passwd *p)
     char *s;
 
     if (!p || (p->pw_passwd && *p->pw_passwd)) /* Not a dangerous password */
-	return p;
+        return p;
     pw = *p;
-    s = getenv("PW_PASSWD");
+    s = PerlEnv_getenv("PW_PASSWD");
     if (!s)
-	s = (char*)pw_p;		/* Make match impossible */
+        s = (char*)pw_p;		/* Make match impossible */
+
 
     pw.pw_passwd = s;
     return &pw;    
@@ -5329,12 +5332,18 @@ passw_wrap(struct passwd *p)
 struct passwd *
 my_getpwuid (uid_t id)
 {
+    /* On Linux, only getpwuid_r is thread safe, and even then not if the
+     * locale changes */
+
     return passw_wrap(getpwuid(id));
 }
 
 struct passwd *
 my_getpwnam (__const__ char *n)
 {
+    /* On Linux, only getpwnam_r is thread safe, and even then not if the
+     * locale changes */
+
     return passw_wrap(getpwnam(n));
 }
 
@@ -5362,7 +5371,7 @@ gcvt_os2 (double value, int digits, char *buffer)
 #undef fork
 int fork_with_resources()
 {
-#if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && !defined(USE_SLOW_THREAD_SPECIFIC)
+#if defined(USE_ITHREADS) && !defined(USE_SLOW_THREAD_SPECIFIC)
   dTHX;
   void *ctx = PERL_GET_CONTEXT;
 #endif
@@ -5370,57 +5379,57 @@ int fork_with_resources()
   int rc = fork();
 
   if (rc == 0) {			/* child */
-#if (defined(USE_5005THREADS) || defined(USE_ITHREADS)) && !defined(USE_SLOW_THREAD_SPECIFIC)
+#if defined(USE_ITHREADS) && !defined(USE_SLOW_THREAD_SPECIFIC)
     ALLOC_THREAD_KEY;			/* Acquire the thread-local memory */
     PERL_SET_CONTEXT(ctx);		/* Reinit the thread-local memory */
 #endif
     
     {					/* Reload loaded-on-demand DLLs */
-	struct dll_handle_t *dlls = dll_handles;
+        struct dll_handle_t *dlls = dll_handles;
 
-	while (dlls->modname) {
-	    char dllname[260], fail[260];
-	    ULONG rc;
+        while (dlls->modname) {
+            char dllname[260], fail[260];
+            ULONG rc;
 
-	    if (!dlls->handle) {	/* Was not loaded */
-		dlls++;
-		continue;
-	    }
-	    /* It was loaded in the parent.  We need to reload it. */
+            if (!dlls->handle) {	/* Was not loaded */
+                dlls++;
+                continue;
+            }
+            /* It was loaded in the parent.  We need to reload it. */
 
-	    rc = DosQueryModuleName(dlls->handle, sizeof(dllname), dllname);
-	    if (rc) {
-		Perl_warn_nocontext("Can't find DLL name for the module `%s' by the handle %d, rc=%lu=%#lx",
-				    dlls->modname, (int)dlls->handle, rc, rc);
-		dlls++;
-		continue;
-	    }
-	    rc = DosLoadModule(fail, sizeof fail, dllname, &dlls->handle);
-	    if (rc)
-		Perl_warn_nocontext("Can't load DLL `%s', possible problematic module `%s'",
-				    dllname, fail);
-	    dlls++;
-	}
+            rc = DosQueryModuleName(dlls->handle, sizeof(dllname), dllname);
+            if (rc) {
+                Perl_warn_nocontext("Can't find DLL name for the module `%s' by the handle %d, rc=%lu=%#lx",
+                                    dlls->modname, (int)dlls->handle, rc, rc);
+                dlls++;
+                continue;
+            }
+            rc = DosLoadModule(fail, sizeof fail, dllname, &dlls->handle);
+            if (rc)
+                Perl_warn_nocontext("Can't load DLL `%s', possible problematic module `%s'",
+                                    dllname, fail);
+            dlls++;
+        }
     }
     
     {					/* Support message queue etc. */
-	os2_mytype = my_type();
-	/* Apparently, subprocesses (in particular, fork()) do not
-	   inherit the morphed state, so os2_mytype is the same as
-	   os2_mytype_ini. */
+        os2_mytype = my_type();
+        /* Apparently, subprocesses (in particular, fork()) do not
+           inherit the morphed state, so os2_mytype is the same as
+           os2_mytype_ini. */
 
-	if (Perl_os2_initial_mode != -1
-	    && Perl_os2_initial_mode != os2_mytype) {
-					/* XXXX ??? */
-	}
+        if (Perl_os2_initial_mode != -1
+            && Perl_os2_initial_mode != os2_mytype) {
+                                        /* XXXX ??? */
+        }
     }
     if (Perl_HAB_set)
-	(void)_obtain_Perl_HAB;
+        (void)_obtain_Perl_HAB;
     if (Perl_hmq_refcnt) {
-	if (my_type() != 3)
-	    my_type_set(3);
-	Create_HMQ(Perl_hmq_servers != 0,
-		   "Cannot create a message queue on fork");
+        if (my_type() != 3)
+            my_type_set(3);
+        Create_HMQ(Perl_hmq_servers != 0,
+                   "Cannot create a message queue on fork");
     }
 
     /* We may have loaded some modules */
@@ -5445,7 +5454,7 @@ myDosGetInfoSeg(PGINFOSEG *pGlobal, PLINFOSEG *pLocal)
            _THUNK_FLAT (&lSel);
            _THUNK_CALL (Dos16GetInfoSeg)));
     if (rc)
-	return rc;
+        return rc;
     *pGlobal = MAKEPGINFOSEG(gSel);
     *pLocal  = MAKEPLINFOSEG(lSel);
     return rc;

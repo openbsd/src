@@ -183,31 +183,30 @@ The square brackets make a reference to a new array with a I<copy>
 of what's in @array at the time of the assignment.  This is what
 you want.
 
-Note that this will produce something similar, but it's
-much harder to read:
+Note that this will produce something similar:
 
     # Either without strict or having an outer-scope my @array;
     # declaration.
     for my $i (1..10) {
         @array = 0 .. $i;
-        @{$AoA[$i]} = @array;
+        $AoA[$i]->@* = @array;
     }
 
 Is it the same?  Well, maybe so--and maybe not.  The subtle difference
 is that when you assign something in square brackets, you know for sure
 it's always a brand new reference with a new I<copy> of the data.
-Something else could be going on in this new case with the C<@{$AoA[$i]}>
-dereference on the left-hand-side of the assignment.  It all depends on
-whether C<$AoA[$i]> had been undefined to start with, or whether it
-already contained a reference.  If you had already populated @AoA with
-references, as in
+Something else could be going on in this new case with the
+C<< $AoA[$i]->@* >> dereference on the left-hand-side of the assignment.
+It all depends on whether C<$AoA[$i]> had been undefined to start with,
+or whether it already contained a reference.  If you had already
+populated @AoA with references, as in
 
     $AoA[3] = \@another_array;
 
 Then the assignment with the indirection on the left-hand-side would
 use the existing reference that was already there:
 
-    @{$AoA[3]} = @array;
+    $AoA[3]->@* = @array;
 
 Of course, this I<would> have the "interesting" effect of clobbering
 @another_array.  (Have you ever noticed how when a programmer says
@@ -241,12 +240,24 @@ much more easily understood constructors C<[]> and C<{}> instead of
 relying upon lexical (or dynamic) scoping and hidden reference-counting to
 do the right thing behind the scenes.
 
+Note also that there exists another way to write a dereference!  These
+two lines are equivalent:
+
+    $AoA[$i]->@* = @array;
+    @{ $AoA[$i] } = @array;
+
+The first form, called I<postfix dereference> is generally easier to
+read, because the expression can be read from left to right, and there
+are no enclosing braces to balance.  On the other hand, it is also
+newer.  It was added to the language in 2014, so you will often
+encounter the other form, I<circumfix dereference>, in older code.
+
 In summary:
 
     $AoA[$i] = [ @array ];     # usually best
     $AoA[$i] = \@array;        # perilous; just how my() was that array?
-    @{ $AoA[$i] } = @array;    # way too tricky for most programmers
-
+    $AoA[$i]->@*  = @array;    # way too tricky for most programmers
+    @{ $AoA[$i] } = @array;    # just as tricky, and also harder to read
 
 =head1 CAVEAT ON PRECEDENCE
 X<dereference, precedence> X<dereferencing, precedence>
@@ -269,17 +280,16 @@ dereference the thing at that subscript.  That's fine in C, but this isn't C.
 The seemingly equivalent construct in Perl, C<$$aref[$i]> first does
 the deref of $aref, making it take $aref as a reference to an
 array, and then dereference that, and finally tell you the I<i'th> value
-of the array pointed to by $AoA. If you wanted the C notion, you'd have to
-write C<${$AoA[$i]}> to force the C<$AoA[$i]> to get evaluated first
-before the leading C<$> dereferencer.
+of the array pointed to by $AoA. If you wanted the C notion, you could
+write C<< $AoA[$i]->$* >> to explicitly dereference the I<i'th> item,
+reading left to right.
 
-=head1 WHY YOU SHOULD ALWAYS C<use strict>
+=head1 WHY YOU SHOULD ALWAYS C<use VERSION>
 
 If this is starting to sound scarier than it's worth, relax.  Perl has
-some features to help you avoid its most common pitfalls.  The best
-way to avoid getting confused is to start every program like this:
+some features to help you avoid its most common pitfalls.  One way to avoid
+getting confused is to start every program with:
 
-    #!/usr/bin/perl -w
     use strict;
 
 This way, you'll be forced to declare all your variables with my() and
@@ -299,6 +309,19 @@ because you were accidentally accessing C<@aref>, an undeclared
 variable, and it would thereby remind you to write instead:
 
     print $aref->[2][2]
+
+Since Perl version 5.12, a C<use VERSION> declaration will also enable the
+C<strict> pragma.  In addition, it will also enable a feature bundle,
+giving more useful features.  Since version 5.36 it will also enable the
+C<warnings> pragma.  Often the best way to activate all these things at
+once is to start a file with:
+
+    use v5.36;
+
+In this way, every file will start with C<strict>, C<warnings>, and many
+useful named features all switched on, as well as several older features
+being switched off (such as L<C<indirect>|feature/The 'indirect' feature>).
+For more information, see L<perlfunc/use VERSION>.
 
 =head1 DEBUGGING
 X<data structure, debugging> X<complex data structure, debugging>
@@ -330,16 +353,15 @@ For example, given the assignment to $AoA above, here's the debugger output:
 
 =head1 CODE EXAMPLES
 
-Presented with little comment (these will get their own manpages someday)
-here are short code examples illustrating access of various
-types of data structures.
+Presented with little comment here are short code examples illustrating
+access of various types of data structures.
 
 =head1 ARRAYS OF ARRAYS
 X<array of arrays> X<AoA>
 
 =head2 Declaration of an ARRAY OF ARRAYS
 
- @AoA = (
+ my @AoA = (
         [ "fred", "barney" ],
         [ "george", "jane", "elroy" ],
         [ "homer", "marge", "bart" ],
@@ -353,18 +375,18 @@ X<array of arrays> X<AoA>
  }
 
  # calling a function
- for $i ( 1 .. 10 ) {
+ for my $i ( 1 .. 10 ) {
      $AoA[$i] = [ somefunc($i) ];
  }
 
  # using temp vars
- for $i ( 1 .. 10 ) {
-     @tmp = somefunc($i);
+ for my $i ( 1 .. 10 ) {
+     my @tmp = somefunc($i);
      $AoA[$i] = [ @tmp ];
  }
 
  # add to an existing row
- push @{ $AoA[0] }, "wilma", "betty";
+ push $AoA[0]->@*, "wilma", "betty";
 
 =head2 Access and Printing of an ARRAY OF ARRAYS
 
@@ -375,19 +397,19 @@ X<array of arrays> X<AoA>
  $AoA[1][1] =~ s/(\w)/\u$1/;
 
  # print the whole thing with refs
- for $aref ( @AoA ) {
+ for my $aref ( @AoA ) {
      print "\t [ @$aref ],\n";
  }
 
  # print the whole thing with indices
- for $i ( 0 .. $#AoA ) {
-     print "\t [ @{$AoA[$i]} ],\n";
+ for my $i ( 0 .. $#AoA ) {
+     print "\t [ $AoA[$i]->@* ],\n";
  }
 
  # print the whole thing one at a time
- for $i ( 0 .. $#AoA ) {
-     for $j ( 0 .. $#{ $AoA[$i] } ) {
-         print "elt $i $j is $AoA[$i][$j]\n";
+ for my $i ( 0 .. $#AoA ) {
+     for my $j ( 0 .. $AoA[$i]->$#* ) {
+         print "elem at ($i, $j) is $AoA[$i][$j]\n";
      }
  }
 
@@ -396,7 +418,7 @@ X<hash of arrays> X<HoA>
 
 =head2 Declaration of a HASH OF ARRAYS
 
- %HoA = (
+ my %HoA = (
         flintstones        => [ "fred", "barney" ],
         jetsons            => [ "george", "jane", "elroy" ],
         simpsons           => [ "homer", "marge", "bart" ],
@@ -413,25 +435,25 @@ X<hash of arrays> X<HoA>
 
  # reading from file; more temps
  # flintstones: fred barney wilma dino
- while ( $line = <> ) {
-     ($who, $rest) = split /:\s*/, $line, 2;
-     @fields = split ' ', $rest;
+ while ( my $line = <> ) {
+     my ($who, $rest) = split /:\s*/, $line, 2;
+     my @fields = split ' ', $rest;
      $HoA{$who} = [ @fields ];
  }
 
  # calling a function that returns a list
- for $group ( "simpsons", "jetsons", "flintstones" ) {
+ for my $group ( "simpsons", "jetsons", "flintstones" ) {
      $HoA{$group} = [ get_family($group) ];
  }
 
  # likewise, but using temps
- for $group ( "simpsons", "jetsons", "flintstones" ) {
-     @members = get_family($group);
+ for my $group ( "simpsons", "jetsons", "flintstones" ) {
+     my @members = get_family($group);
      $HoA{$group} = [ @members ];
  }
 
  # append new members to an existing family
- push @{ $HoA{"flintstones"} }, "wilma", "betty";
+ push $HoA{flintstones}->@*, "wilma", "betty";
 
 =head2 Access and Printing of a HASH OF ARRAYS
 
@@ -442,32 +464,32 @@ X<hash of arrays> X<HoA>
  $HoA{simpsons}[1] =~ s/(\w)/\u$1/;
 
  # print the whole thing
- foreach $family ( keys %HoA ) {
-     print "$family: @{ $HoA{$family} }\n"
+ foreach my $family ( keys %HoA ) {
+     print "$family: $HoA{$family}->@* \n"
  }
 
  # print the whole thing with indices
- foreach $family ( keys %HoA ) {
+ foreach my $family ( keys %HoA ) {
      print "family: ";
-     foreach $i ( 0 .. $#{ $HoA{$family} } ) {
+     foreach my $i ( 0 .. $HoA{$family}->$#* ) {
          print " $i = $HoA{$family}[$i]";
      }
      print "\n";
  }
 
  # print the whole thing sorted by number of members
- foreach $family ( sort { @{$HoA{$b}} <=> @{$HoA{$a}} } keys %HoA ) {
-     print "$family: @{ $HoA{$family} }\n"
+ foreach my $family ( sort { $HoA{$b}->@* <=> $HoA{$a}->@* } keys %HoA ) {
+     print "$family: $HoA{$family}->@* \n"
  }
 
  # print the whole thing sorted by number of members and name
- foreach $family ( sort {
-                            @{$HoA{$b}} <=> @{$HoA{$a}}
-                                        ||
-                                    $a cmp $b
+ foreach my $family ( sort {
+                            $HoA{$b}->@* <=> $HoA{$a}->@*
+                                          ||
+                                      $a cmp $b
             } keys %HoA )
  {
-     print "$family: ", join(", ", sort @{ $HoA{$family} }), "\n";
+     print "$family: ", join(", ", sort $HoA{$family}->@* ), "\n";
  }
 
 =head1 ARRAYS OF HASHES
@@ -475,7 +497,7 @@ X<array of hashes> X<AoH>
 
 =head2 Declaration of an ARRAY OF HASHES
 
- @AoH = (
+ my @AoH = (
         {
             Lead     => "fred",
             Friend   => "barney",
@@ -497,9 +519,9 @@ X<array of hashes> X<AoH>
  # reading from file
  # format: LEAD=fred FRIEND=barney
  while ( <> ) {
-     $rec = {};
-     for $field ( split ) {
-         ($key, $value) = split /=/, $field;
+     my $rec = {};
+     for my $field ( split ) {
+         my ($key, $value) = split /=/, $field;
          $rec->{$key} = $value;
      }
      push @AoH, $rec;
@@ -515,7 +537,7 @@ X<array of hashes> X<AoH>
 
  # calling a function  that returns a key/value pair list, like
  # "lead","fred","daughter","pebbles"
- while ( %fields = getnextpairset() ) {
+ while ( my %fields = getnextpairset() ) {
      push @AoH, { %fields };
  }
 
@@ -537,27 +559,27 @@ X<array of hashes> X<AoH>
  $AoH[1]{lead} =~ s/(\w)/\u$1/;
 
  # print the whole thing with refs
- for $href ( @AoH ) {
+ for my $href ( @AoH ) {
      print "{ ";
-     for $role ( keys %$href ) {
+     for my $role ( keys %$href ) {
          print "$role=$href->{$role} ";
      }
      print "}\n";
  }
 
  # print the whole thing with indices
- for $i ( 0 .. $#AoH ) {
+ for my $i ( 0 .. $#AoH ) {
      print "$i is { ";
-     for $role ( keys %{ $AoH[$i] } ) {
+     for my $role ( keys $AoH[$i]->%* ) {
          print "$role=$AoH[$i]{$role} ";
      }
      print "}\n";
  }
 
  # print the whole thing one at a time
- for $i ( 0 .. $#AoH ) {
-     for $role ( keys %{ $AoH[$i] } ) {
-         print "elt $i $role is $AoH[$i]{$role}\n";
+ for my $i ( 0 .. $#AoH ) {
+     for my $role ( keys $AoH[$i]->%* ) {
+         print "elem at ($i, $role) is $AoH[$i]{$role}\n";
      }
  }
 
@@ -566,7 +588,7 @@ X<hash of hashes> X<HoH>
 
 =head2 Declaration of a HASH OF HASHES
 
- %HoH = (
+ my %HoH = (
         flintstones => {
                 lead      => "fred",
                 pal       => "barney",
@@ -589,43 +611,44 @@ X<hash of hashes> X<HoH>
  # flintstones: lead=fred pal=barney wife=wilma pet=dino
  while ( <> ) {
      next unless s/^(.*?):\s*//;
-     $who = $1;
-     for $field ( split ) {
-         ($key, $value) = split /=/, $field;
+     my $who = $1;
+     for my $field ( split ) {
+         my ($key, $value) = split /=/, $field;
          $HoH{$who}{$key} = $value;
      }
+ }
 
 
  # reading from file; more temps
  while ( <> ) {
      next unless s/^(.*?):\s*//;
-     $who = $1;
-     $rec = {};
+     my $who = $1;
+     my $rec = {};
      $HoH{$who} = $rec;
-     for $field ( split ) {
-         ($key, $value) = split /=/, $field;
+     for my $field ( split ) {
+         my ($key, $value) = split /=/, $field;
          $rec->{$key} = $value;
      }
  }
 
  # calling a function  that returns a key,value hash
- for $group ( "simpsons", "jetsons", "flintstones" ) {
+ for my $group ( "simpsons", "jetsons", "flintstones" ) {
      $HoH{$group} = { get_family($group) };
  }
 
  # likewise, but using temps
- for $group ( "simpsons", "jetsons", "flintstones" ) {
-     %members = get_family($group);
+ for my $group ( "simpsons", "jetsons", "flintstones" ) {
+     my %members = get_family($group);
      $HoH{$group} = { %members };
  }
 
  # append new members to an existing family
- %new_folks = (
+ my %new_folks = (
      wife => "wilma",
      pet  => "dino",
  );
 
- for $what (keys %new_folks) {
+ for my $what (keys %new_folks) {
      $HoH{flintstones}{$what} = $new_folks{$what};
  }
 
@@ -638,18 +661,18 @@ X<hash of hashes> X<HoH>
  $HoH{simpsons}{lead} =~ s/(\w)/\u$1/;
 
  # print the whole thing
- foreach $family ( keys %HoH ) {
+ foreach my $family ( keys %HoH ) {
      print "$family: { ";
-     for $role ( keys %{ $HoH{$family} } ) {
+     for my $role ( keys $HoH{$family}->%* ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
  }
 
  # print the whole thing  somewhat sorted
- foreach $family ( sort keys %HoH ) {
+ foreach my $family ( sort keys %HoH ) {
      print "$family: { ";
-     for $role ( sort keys %{ $HoH{$family} } ) {
+     for my $role ( sort keys $HoH{$family}->%* ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
@@ -657,28 +680,25 @@ X<hash of hashes> X<HoH>
 
 
  # print the whole thing sorted by number of members
- foreach $family ( sort { keys %{$HoH{$b}} <=> keys %{$HoH{$a}} }
-                                                             keys %HoH )
- {
+ foreach my $family ( sort { $HoH{$b}->%* <=> $HoH{$a}->%* } keys %HoH ) {
      print "$family: { ";
-     for $role ( sort keys %{ $HoH{$family} } ) {
+     for my $role ( sort keys $HoH{$family}->%* ) {
          print "$role=$HoH{$family}{$role} ";
      }
      print "}\n";
  }
 
  # establish a sort order (rank) for each role
- $i = 0;
+ my $i = 0;
+ my %rank;
  for ( qw(lead wife son daughter pal pet) ) { $rank{$_} = ++$i }
 
  # now print the whole thing sorted by number of members
- foreach $family ( sort { keys %{ $HoH{$b} } <=> keys %{ $HoH{$a} } }
-                                                             keys %HoH )
- {
+ foreach my $family ( sort { $HoH{$b}->%* <=> $HoH{$a}->%* } keys %HoH ) {
      print "$family: { ";
      # and print these according to rank order
-     for $role ( sort { $rank{$a} <=> $rank{$b} }
-                                               keys %{ $HoH{$family} } )
+     for my $role ( sort { $rank{$a} <=> $rank{$b} }
+                                               keys $HoH{$family}->%* )
      {
          print "$role=$HoH{$family}{$role} ";
      }
@@ -694,7 +714,7 @@ X<record> X<structure> X<struct>
 Here's a sample showing how to create and use a record whose fields are of
 many different sorts:
 
-     $rec = {
+     my $rec = {
          TEXT      => $string,
          SEQUENCE  => [ @old_values ],
          LOOKUP    => { %some_table },
@@ -706,12 +726,12 @@ many different sorts:
      print $rec->{TEXT};
 
      print $rec->{SEQUENCE}[0];
-     $last = pop @ { $rec->{SEQUENCE} };
+     my $last = pop $rec->{SEQUENCE}->@*;
 
      print $rec->{LOOKUP}{"key"};
-     ($first_k, $first_v) = each %{ $rec->{LOOKUP} };
+     my ($first_k, $first_v) = each $rec->{LOOKUP}->%*;
 
-     $answer = $rec->{THATCODE}->($arg);
+     my $answer = $rec->{THATCODE}->($arg);
      $answer = $rec->{THISCODE}->($arg1, $arg2);
 
      # careful of extra block braces on fh ref
@@ -723,7 +743,7 @@ many different sorts:
 
 =head2 Declaration of a HASH OF COMPLEX RECORDS
 
-     %TV = (
+     my %TV = (
         flintstones => {
             series   => "flintstones",
             nights   => [ qw(monday thursday friday) ],
@@ -764,14 +784,14 @@ many different sorts:
      # sometimes it's easiest to do that
 
      # here's a piece by piece build up
-     $rec = {};
+     my $rec = {};
      $rec->{series} = "flintstones";
      $rec->{nights} = [ find_days() ];
 
-     @members = ();
+     my @members = ();
      # assume this file in field=value syntax
      while (<>) {
-         %fields = split /[\s=]+/;
+         my %fields = split /[\s=]+/;
          push @members, { %fields };
      }
      $rec->{members} = [ @members ];
@@ -787,10 +807,10 @@ many different sorts:
      # to an array of the kids' records without having duplicate
      # records and thus update problems.
      ###########################################################
-     foreach $family (keys %TV) {
-         $rec = $TV{$family}; # temp pointer
-         @kids = ();
-         for $person ( @{ $rec->{members} } ) {
+     foreach my $family (keys %TV) {
+         my $rec = $TV{$family}; # temp pointer
+         my @kids = ();
+         for my $person ( $rec->{members}->@* ) {
              if ($person->{role} =~ /kid|son|daughter/) {
                  push @kids, $person;
              }
@@ -812,16 +832,16 @@ many different sorts:
      # both point to the same underlying anonymous hash table
 
      # print the whole thing
-     foreach $family ( keys %TV ) {
+     foreach my $family ( keys %TV ) {
          print "the $family";
-         print " is on during @{ $TV{$family}{nights} }\n";
+         print " is on during $TV{$family}{nights}->@*\n";
          print "its members are:\n";
-         for $who ( @{ $TV{$family}{members} } ) {
+         for my $who ( $TV{$family}{members}->@* ) {
              print " $who->{name} ($who->{role}), age $who->{age}\n";
          }
          print "it turns out that $TV{$family}{lead} has ";
-         print scalar ( @{ $TV{$family}{kids} } ), " kids named ";
-         print join (", ", map { $_->{name} } @{ $TV{$family}{kids} } );
+         print scalar ( $TV{$family}{kids}->@* ), " kids named ";
+         print join (", ", map { $_->{name} } $TV{$family}{kids}->@* );
          print "\n";
      }
 

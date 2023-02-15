@@ -52,8 +52,6 @@ eval {
 };
 
 if(@sorted_order) {
-    local $::TODO;
-    $::TODO = "Unicode::Collate not working on EBCDIC" if $::IS_EBCDIC || $::IS_EBCDIC;
     ok(eq_array(\@current_order, \@sorted_order), "Files are referenced in order") or
         print_right_order();
 }

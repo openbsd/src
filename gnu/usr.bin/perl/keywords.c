@@ -203,7 +203,7 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           goto unknown;
       }
 
-    case 3: /* 29 tokens of length 3 */
+    case 3: /* 30 tokens of length 3 */
       switch (name[0])
       {
         case 'E':
@@ -463,13 +463,27 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           }
 
         case 't':
-          if (name[1] == 'i' &&
-              name[2] == 'e')
-          {                                       /* tie              */
-            return -KEY_tie;
-          }
+          switch (name[1])
+          {
+            case 'i':
+              if (name[2] == 'e')
+              {                                   /* tie              */
+                return -KEY_tie;
+              }
 
-          goto unknown;
+              goto unknown;
+
+            case 'r':
+              if (name[2] == 'y')
+              {                                   /* try              */
+                return (all_keywords || FEATURE_TRY_IS_ENABLED ? KEY_try : 0);
+              }
+
+              goto unknown;
+
+            default:
+              goto unknown;
+          }
 
         case 'u':
           if (name[1] == 's' &&
@@ -964,7 +978,7 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           goto unknown;
       }
 
-    case 5: /* 39 tokens of length 5 */
+    case 5: /* 41 tokens of length 5 */
       switch (name[0])
       {
         case 'B':
@@ -1046,6 +1060,16 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
         case 'c':
           switch (name[1])
           {
+            case 'a':
+              if (name[2] == 't' &&
+                  name[3] == 'c' &&
+                  name[4] == 'h')
+              {                                   /* catch            */
+                return (all_keywords || FEATURE_TRY_IS_ENABLED ? KEY_catch : 0);
+              }
+
+              goto unknown;
+
             case 'h':
               switch (name[2])
               {
@@ -1117,6 +1141,17 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
             default:
               goto unknown;
           }
+
+        case 'd':
+          if (name[1] == 'e' &&
+              name[2] == 'f' &&
+              name[3] == 'e' &&
+              name[4] == 'r')
+          {                                       /* defer            */
+            return (all_keywords || FEATURE_DEFER_IS_ENABLED ? KEY_defer : 0);
+          }
+
+          goto unknown;
 
         case 'e':
           if (name[1] == 'l' &&
@@ -1917,7 +1952,7 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           goto unknown;
       }
 
-    case 7: /* 30 tokens of length 7 */
+    case 7: /* 31 tokens of length 7 */
       switch (name[0])
       {
         case 'D':
@@ -2045,17 +2080,35 @@ Perl_keyword (pTHX_ const char *name, I32 len, bool all_keywords)
           }
 
         case 'f':
-          if (name[1] == 'o' &&
-              name[2] == 'r' &&
-              name[3] == 'e' &&
-              name[4] == 'a' &&
-              name[5] == 'c' &&
-              name[6] == 'h')
-          {                                       /* foreach          */
-            return KEY_foreach;
-          }
+          switch (name[1])
+          {
+            case 'i':
+              if (name[2] == 'n' &&
+                  name[3] == 'a' &&
+                  name[4] == 'l' &&
+                  name[5] == 'l' &&
+                  name[6] == 'y')
+              {                                   /* finally          */
+                return (all_keywords || FEATURE_TRY_IS_ENABLED ? KEY_finally : 0);
+              }
 
-          goto unknown;
+              goto unknown;
+
+            case 'o':
+              if (name[2] == 'r' &&
+                  name[3] == 'e' &&
+                  name[4] == 'a' &&
+                  name[5] == 'c' &&
+                  name[6] == 'h')
+              {                                   /* foreach          */
+                return KEY_foreach;
+              }
+
+              goto unknown;
+
+            default:
+              goto unknown;
+          }
 
         case 'g':
           if (name[1] == 'e' &&
@@ -3451,5 +3504,5 @@ unknown:
 }
 
 /* Generated from:
- * f77998a5bc995c1b42d3d080de227ef5f11638bcd329367431d8f193aef2d3cc regen/keywords.pl
+ * b680fb3a27b173b65d9c4e534ad92897c925e336476879a6be1da18ac55cbe8b regen/keywords.pl
  * ex: set ro: */

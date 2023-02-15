@@ -1,13 +1,13 @@
-#!perl
+# -*- mode: perl; -*-
 
 ###############################################################################
 
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More tests => 3;
 
-my @CLASSES = qw/Math::BigInt Math::BigFloat Math::BigRat/;
+my @CLASSES = qw/Math::BigRat/;
 
 # bigrat (bug until v0.15)
 use bigrat a => 2;

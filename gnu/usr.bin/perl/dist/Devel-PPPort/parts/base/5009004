@@ -58,7 +58,6 @@ KEY_state                      # Z added by devel/scanprov
 LIKELY                         # U
 magic_clearhint                # F added by devel/scanprov
 magic_sethint                  # F added by devel/scanprov
-MJD_OFFSET_DEBUG               # Z added by devel/scanprov
 more_sv                        # F added by devel/scanprov
 my_snprintf                    # M added by devel/scanprov
 my_strlcat                     # U
@@ -124,7 +123,6 @@ RE_DEBUG_EXECUTE_MASK          # Z added by devel/scanprov
 RE_DEBUG_EXECUTE_MATCH         # Z added by devel/scanprov
 RE_DEBUG_EXECUTE_TRIE          # Z added by devel/scanprov
 RE_DEBUG_EXTRA_MASK            # Z added by devel/scanprov
-RE_DEBUG_EXTRA_OFFSETS         # Z added by devel/scanprov
 RE_DEBUG_EXTRA_STATE           # Z added by devel/scanprov
 RE_DEBUG_EXTRA_TRIE            # Z added by devel/scanprov
 RE_DEBUG_FLAG                  # Z added by devel/scanprov

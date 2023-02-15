@@ -207,7 +207,7 @@ new problems have been introduced.
 
 =item C<all>
 
-Run all tests in normal order. Multple options may be specified, so to
+Run all tests in normal order. Multiple options may be specified, so to
 run all tests with the failures from last time first:
 
     $ prove -b --state=failed,all,save

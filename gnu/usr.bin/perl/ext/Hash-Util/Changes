@@ -1,5 +1,14 @@
 Revision history for Perl extension Hash::Util.
 
+0.25, 0.24
+    Build fixes.
+
+0.23
+    Doc Fixes.
+
+0.22, 0.21
+    Build Fixes.
+
 0.20
     Add bucket_ratio, num_buckets, used_buckets as a back-compat
     shin for 5.25 where we remove the bucket data from scalar(%hash)

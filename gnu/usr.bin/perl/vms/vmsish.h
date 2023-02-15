@@ -102,7 +102,7 @@
 
 /* Our own contribution to PerlShr's global symbols . . . */
 
-#if !defined(PERL_IMPLICIT_CONTEXT)
+#if !defined(MULTIPLICITY)
 #define opendir			Perl_opendir
 #define rename			Perl_rename
 #define seekdir			Perl_seekdir
@@ -263,7 +263,7 @@
 #define HINT_M_VMSISH_STATUS	0x40000000 /* system, $? return VMS status */
 #define HINT_M_VMSISH_TIME	0x80000000 /* times are local, not UTC */
 
-#ifdef PERL_IMPLICIT_CONTEXT
+#ifdef MULTIPLICITY
 #  define TEST_VMSISH(h)	(my_perl && PL_curcop && (PL_curcop->cop_hints & (h)))
 #else
 #  define TEST_VMSISH(h)	(PL_curcop && (PL_curcop->cop_hints & (h)))
@@ -320,8 +320,8 @@ struct interp_intern {
 #  define PERL_FS_VER_FMT	"%d_%d_%d"
 #endif
 #define PERL_FS_VERSION		STRINGIFY(PERL_REVISION) "_" \
-				STRINGIFY(PERL_VERSION) "_" \
-				STRINGIFY(PERL_SUBVERSION)
+                                STRINGIFY(PERL_VERSION) "_" \
+                                STRINGIFY(PERL_SUBVERSION)
 /* Temporary; we need to add support for this to Configure.Com */
 #ifdef PERL_INC_VERSION_LIST
 #  undef PERL_INC_VERSION_LIST

@@ -2,8 +2,8 @@
 	if 0;	# In case running under some shell
 
 require 5;
+use ExtUtils::PL2Bat;
 use Getopt::Std;
-use Config;
 
 $0 =~ s|.*[/\\]||;
 
@@ -17,9 +17,6 @@ Usage:  $0 [-h]
         -o otherargs    arguments to invoke perl with in generated file
                             other than when run from Windows NT.  Defaults
                             to '-x -S "%0" %1 %2 %3 %4 %5 %6 %7 %8 %9'.
-        -a argstring    arguments to invoke perl with in generated file
-                            ignoring operating system (for compatibility
-                            with previous pl2bat versions).
         -u              update files that may have already been processed
                             by (some version of) pl2bat.
         -w              include "-w" on the /^#!.*perl/ line (unless
@@ -33,92 +30,30 @@ EOT
 
 my %OPT = ();
 warn($usage), exit(0) if !getopts('whun:o:a:s:',\%OPT) or $OPT{'h'};
-# NOTE: %0 is already enclosed in double quotes by cmd.exe, as appropriate
-$OPT{'n'} = '-x -S %0 %*' unless exists $OPT{'n'};
-$OPT{'o'} = '-x -S "%0" %1 %2 %3 %4 %5 %6 %7 %8 %9' unless exists $OPT{'o'};
-$OPT{'s'} = '/\\.plx?/' unless exists $OPT{'s'};
-$OPT{'s'} = ($OPT{'s'} =~ m#^/([^/]*[^/\$]|)\$?/?$# ? $1 : "\Q$OPT{'s'}\E");
+die '-a option has been removed' if $OPT{a};
 
-my $head;
-if(  defined( $OPT{'a'} )  ) {
-    $head = <<EOT;
-	\@rem = '--*-Perl-*--
-	\@echo off
-	perl $OPT{'a'}
-	goto endofperl
-	\@rem ';
-EOT
-} else {
-    $head = <<EOT;
-	\@rem = '--*-Perl-*--
-	\@echo off
-	if "%OS%" == "Windows_NT" goto WinNT
-	perl $OPT{'o'}
-	goto endofperl
-	:WinNT
-	perl $OPT{'n'}
-	if NOT "%COMSPEC%" == "%SystemRoot%\\system32\\cmd.exe" goto endofperl
-	if %errorlevel% == 9009 echo You do not have Perl in your PATH.
-	if errorlevel 1 goto script_failed_so_exit_with_non_zero_val 2>nul
-	goto endofperl
-	\@rem ';
-EOT
+my %key_for = (
+	n => 'ntargs',
+	o => 'otherargs',
+	a => 'argstring',
+	u => 'update',
+	w => 'usewarnings'
+);
+
+my %args;
+for my $old_key (keys %key_for) {
+	if (exists $OPT{$old_key}) {
+		$args{$key_for{$old_key}} = $OPT{$old_key};
+	}
 }
-$head =~ s/^\t//gm;
-my $headlines = 2 + ($head =~ tr/\n/\n/);
-my $tail = "\n__END__\n:endofperl\n";
-
-@ARGV = ('-') unless @ARGV;
-
-foreach ( @ARGV ) {
-    process($_);
+if (exists $OPT{s}) {
+	$args{strip_suffix} = $OPT{'s'} =~ m#^/([^/]*[^/\$]|)\$?/?$# ? qr/$1/ : qr/\Q$OPT{'s'}\E/;
 }
 
-sub process {
- my( $file )= @_;
-    my $myhead = $head;
-    my $linedone = 0;
-    my $taildone = 0;
-    my $linenum = 0;
-    my $skiplines = 0;
-    my $line;
-    my $start= $Config{startperl};
-    $start= "#!perl"   unless  $start =~ /^#!.*perl/;
-    open( FILE, '<', $file ) or die "$0: Can't open $file: $!";
-    @file = <FILE>;
-    foreach $line ( @file ) {
-	$linenum++;
-	if ( $line =~ /^:endofperl\b/ ) {
-	    if(  ! exists $OPT{'u'}  ) {
-		warn "$0: $file has already been converted to a batch file!\n";
-		return;
-	    }
-	    $taildone++;
-	}
-	if ( not $linedone and $line =~ /^#!.*perl/ ) {
-	    if(  exists $OPT{'u'}  ) {
-		$skiplines = $linenum - 1;
-		$line .= "#line ".(1+$headlines)."\n";
-	    } else {
-		$line .= "#line ".($linenum+$headlines)."\n";
-	    }
-	    $linedone++;
-	}
-	if ( $line =~ /^#\s*line\b/ and $linenum == 2 + $skiplines ) {
-	    $line = "";
-	}
-    }
-    close( FILE );
-    $file =~ s/$OPT{'s'}$//oi;
-    $file .= '.bat' unless $file =~ /\.bat$/i or $file =~ /^-$/;
-    open( FILE, '>', $file ) or die "Can't open $file: $!";
-    print FILE $myhead;
-    print FILE $start, ( $OPT{'w'} ? " -w" : "" ),
-	       "\n#line ", ($headlines+1), "\n" unless $linedone;
-    print FILE @file[$skiplines..$#file];
-    print FILE $tail unless $taildone;
-    close( FILE );
+for my $file (@ARGV) {
+	pl2bat(%args, in => $file);
 }
+
 __END__
 
 =head1 NAME

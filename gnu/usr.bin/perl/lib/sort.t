@@ -25,9 +25,7 @@ BEGIN {
 use strict;
 use warnings;
 
-use Test::More tests => @TestSizes * 2	# sort() tests
-			* 3		# number of pragmas to test
-			+ 2;		# tests for sort::current
+use Test::More;
 
 # Generate array of specified size for testing sort.
 #
@@ -148,7 +146,13 @@ main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 
 {
     use sort qw(stable);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    my $sort_current;
+    BEGIN {
+        my $a = "" ;
+        local $SIG{__WARN__} = sub {$a = $_[0]};
+        $sort_current = sort::current();
+        like($a, qr/\Asort::current is deprecated\b/, "sort::current warns");
+    }
     is($sort_current, 'stable', 'sort::current for stable');
     main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 }
@@ -157,7 +161,55 @@ main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 
 {
     use sort qw(defaults stable);
-    my $sort_current; BEGIN { $sort_current = sort::current(); }
+    my $sort_current;
+    BEGIN {
+        my $a = "" ;
+        local $SIG{__WARN__} = sub {$a = $_[0]};
+        $sort_current = sort::current();
+        like($a, qr/\Asort::current is deprecated\b/, "sort::current warns");
+    }
     is($sort_current, 'stable', 'sort::current after defaults stable');
     main(sub { sort {&{$_[0]}} @{$_[1]} }, 0);
 }
+
+# Tests added to check how sort::current is deprecated
+
+{
+    no sort qw(stable);
+    my $sort_current;
+    BEGIN {
+        my $a = "" ;
+        local $SIG{__WARN__} = sub {$a = $_[0]};
+        $sort_current = sort::current();
+        like($a, qr/\Asort::current is deprecated\b/, "sort::current warns");
+    }
+    is($sort_current, 'stable', 'sort::current *always* stable');
+}
+
+{
+    use sort qw(defaults);
+    my $sort_current;
+    BEGIN {
+        no warnings qw(deprecated);
+        my $a = "" ;
+        local $SIG{__WARN__} = sub {$a = $_[0]};
+        $sort_current = sort::current();
+        is($a, "", "sort::current warning can be disabled");
+    }
+    is($sort_current, 'stable', 'sort::current *always* stable');
+}
+
+{
+    use sort qw(stable);
+    my $sort_current;
+    BEGIN {
+        no warnings qw(deprecated);
+        my $a = "" ;
+        local $SIG{__WARN__} = sub {$a = $_[0]};
+        $sort_current = sort::current();
+        is($a, "", "sort::current warning can be disabled");
+    }
+    is($sort_current, 'stable', 'sort::current for stable');
+}
+
+done_testing();

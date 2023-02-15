@@ -40,7 +40,7 @@ foreach my $tuple (['cop.h'],
     push @depend, $path;
     open my $fh, '<', $path or die "Cannot open $path: $!";
     while (<$fh>) {
-	push @names, $1 if (/ \#define \s+ ( $pfx \w+ ) \s+
+	push @names, $1 if (/ ^ \s* \# \s* define \s+ ( $pfx \w+ ) \s+
             ( [()|\dx]+ [UuLl]{0,2}            # Parens, '|', digits, 'x',
                                                # followed by optional long,
                                                # unsigned qualifiers

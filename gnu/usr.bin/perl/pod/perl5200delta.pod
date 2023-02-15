@@ -1854,7 +1854,7 @@ F<perlbug> now has a C<-p> option for attaching patches with a bug report.
 
 L<perlbug> has been modified to supply the report template with CRLF line
 endings on Windows.
-[L<perl #121277|https://rt.perl.org/Public/Bug/Display.html?id=121277>]
+L<[GH #13612]|https://github.com/Perl/perl5/issues/13612>
 
 =item *
 
@@ -1976,7 +1976,7 @@ too, but B<-fwrapv> was broken before 4.3, and the optimizations probably won't
 go away), F<Configure> now adds B<-fwrapv> unless the user requests
 B<-fno-wrapv>, which disables B<-fwrapv>, or B<-fsanitize=undefined>, which
 turns the overflows B<-fwrapv> ignores into runtime errors.
-[L<perl #121505|https://rt.perl.org/Public/Bug/Display.html?id=121505>]
+L<[GH #13690]|https://github.com/Perl/perl5/issues/13690>
 
 =back
 
@@ -2190,7 +2190,7 @@ The time taken to build perl on Windows has been reduced quite significantly
 (time savings in the region of 30-40% are typically seen) by reducing the
 number of, usually failing, I/O calls for each L<C<require()>|perlfunc/require>
 (for B<miniperl.exe> only).
-[L<perl #121119|https://rt.perl.org/Public/Bug/Display.html?id=121119>]
+L<[GH #13566]|https://github.com/Perl/perl5/issues/13566>
 
 =item *
 
@@ -2198,7 +2198,7 @@ About 15 minutes of idle sleeping was removed from running C<make test> due to
 a bug in which the timeout monitor used for tests could not be cancelled once
 the test completes, and the full timeout period elapsed before running the next
 test file.
-[L<perl #121395|https://rt.perl.org/Public/Bug/Display.html?id=121395>]
+L<[GH #13647]|https://github.com/Perl/perl5/issues/13647>
 
 =item *
 
@@ -2209,7 +2209,7 @@ C<kill()> killed 1 process tree PID then it returned 0 instead of 1, and if
 C<kill()> was passed 2 invalid PIDs then it returned 2 instead of 0.  This has
 probably been the case since the process tree kill feature was implemented on
 Win32.  It has now been corrected to follow the documented behaviour.
-[L<perl #121230|https://rt.perl.org/Public/Bug/Display.html?id=121230>]
+L<[GH #13595]|https://github.com/Perl/perl5/issues/13595>
 
 =item *
 
@@ -2217,7 +2217,7 @@ When building a 64-bit perl, an uninitialized memory read in B<miniperl.exe>,
 used during the build process, could lead to a 4GB B<wperl.exe> being created.
 This has now been fixed.  (Note that B<perl.exe> itself was unaffected, but
 obviously B<wperl.exe> would have been completely broken.)
-[L<perl #121471|https://rt.perl.org/Public/Bug/Display.html?id=121471>]
+L<[GH #13677]|https://github.com/Perl/perl5/issues/13677>
 
 =item *
 
@@ -2226,30 +2226,30 @@ This was previously broken due to an incorrect definition of DllMain() in one
 of perl's source files.  Earlier B<gcc> versions were also affected when using
 version 4 of the w32api package.  Versions of B<gcc> available from
 L<http://mingw-w64.sourceforge.net/> were not affected.
-[L<perl #121643|https://rt.perl.org/Public/Bug/Display.html?id=121643>]
+L<[GH #13733]|https://github.com/Perl/perl5/issues/13733>
 
 =item *
 
 The test harness now has no failures when perl is built on a FAT drive with the
 Windows OS on an NTFS drive.
-[L<perl #21442|https://rt.perl.org/Public/Bug/Display.html?id=21442>]
+L<[GH #6348]|https://github.com/Perl/perl5/issues/6348>
 
 =item *
 
 When cloning the context stack in fork() emulation, Perl_cx_dup()
 would crash accessing parameter information for context stack entries
 that included no parameters, as with C<&foo;>.
-[L<perl #121721|https://rt.perl.org/Public/Bug/Display.html?id=121721>]
+L<[GH #13763]|https://github.com/Perl/perl5/issues/13763>
 
 =item *
 
 Introduced by
-L<perl #113536|https://rt.perl.org/Public/Bug/Display.html?id=113536>, a memory
+L<[GH #12161]|https://github.com/Perl/perl5/issues/12161>, a memory
 leak on every call to C<system> and backticks (C< `` >), on most Win32 Perls
 starting from 5.18.0 has been fixed.  The memory leak only occurred if you
 enabled pseudo-fork in your build of Win32 Perl, and were running that build on
 Server 2003 R2 or newer OS.  The leak does not appear on WinXP SP3.
-[L<perl #121676|https://rt.perl.org/Public/Bug/Display.html?id=121676>]
+L<[GH #13741]|https://github.com/Perl/perl5/issues/13741>
 
 =back
 
@@ -2497,7 +2497,7 @@ a NULL C<sv> being passed to sv_2*v* functions, is if XS code defines its own
 getter type Sv*V* macros, which check for NULL B<before> dereferencing and
 checking the SV's flags through public API Sv*OK* macros or directly using
 private API C<SvFLAGS>, and if C<sv> is NULL, then calling the sv_2*v functions
-with a NULL litteral or passing the C<sv> containing a NULL value.
+with a NULL literal or passing the C<sv> containing a NULL value.
 
 =item *
 
@@ -2914,7 +2914,7 @@ to, even when the subroutine was not an lvalue sub.  This has been fixed.
 In Perl v5.18.0 dualvars that had an empty string for the string part but a
 non-zero number for the number part starting being treated as true.  In
 previous versions they were treated as false, the string representation
-taking precedeence.  The old behaviour has been restored. [RT #118159]
+taking precedence.  The old behaviour has been restored. [RT #118159]
 
 =item *
 
@@ -3544,7 +3544,7 @@ An initial C<{> at the beginning of a format argument line was always
 interpreted as the beginning of a block prior to v5.18.  In Perl v5.18, it
 started being treated as an ambiguous token.  The parser would guess
 whether it was supposed to be an anonymous hash constructor or a block
-based on the contents.  Now the previous behavious has been restored.
+based on the contents.  Now the previous behaviour has been restored.
 [perl #119973]
 
 =item *
@@ -3591,7 +3591,7 @@ Fixed a crash when destroying a self-referencing GLOB.  [perl #121242]
 =item *
 
 L<IO::Socket> is known to fail tests on AIX 5.3.  There is
-L<a patch|https://rt.perl.org/Ticket/Display.html?id=120835> in the request
+L<a patch|https://github.com/Perl/perl5/issues/13484> in the request
 tracker, #120835, which may be applied to future releases.
 
 =item *

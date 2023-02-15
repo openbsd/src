@@ -16,11 +16,11 @@ TAP::Harness - Run test scripts with statistics
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
 
 $ENV{HARNESS_ACTIVE}  = 1;
 $ENV{HARNESS_VERSION} = $VERSION;
@@ -555,8 +555,11 @@ sub runtests {
         $self->_make_callback( 'after_runtests', $aggregate );
     };
     my $run = sub {
-        $self->aggregate_tests( $aggregate, @tests );
+        my $bailout;
+        eval { $self->aggregate_tests( $aggregate, @tests ); 1 }
+            or do { $bailout = $@ || 'unknown_error' };
         $finish->();
+        die $bailout if defined $bailout;
     };
 
     if ( $self->trap ) {
@@ -595,7 +598,12 @@ sub _after_test {
 }
 
 sub _bailout {
-    my ( $self, $result ) = @_;
+    my ( $self, $result, $parser, $session, $aggregate, $job ) = @_;
+
+    $self->finish_parser( $parser, $session );
+    $self->_after_test( $aggregate, $job, $parser );
+    $job->finish;
+
     my $explanation = $result->explanation;
     die "FAILED--Further testing stopped"
       . ( $explanation ? ": $explanation\n" : ".\n" );
@@ -619,13 +627,18 @@ sub _aggregate_parallel {
 
             my ( $parser, $session ) = $self->make_parser($job);
             $mux->add( $parser, [ $session, $job ] );
+
+            # The job has started: begin the timers
+            $parser->start_time( $parser->get_time );
+            $parser->start_times( $parser->get_times );
         }
 
         if ( my ( $parser, $stash, $result ) = $mux->next ) {
             my ( $session, $job ) = @$stash;
             if ( defined $result ) {
                 $session->result($result);
-                $self->_bailout($result) if $result->is_bailout;
+                $self->_bailout($result, $parser, $session, $aggregate, $job )
+                    if $result->is_bailout;
             }
             else {
 
@@ -657,7 +670,7 @@ sub _aggregate_single {
                 # Keep reading until input is exhausted in the hope
                 # of allowing any pending diagnostics to show up.
                 1 while $parser->next;
-                $self->_bailout($result);
+                $self->_bailout($result, $parser, $session, $aggregate, $job );
             }
         }
 

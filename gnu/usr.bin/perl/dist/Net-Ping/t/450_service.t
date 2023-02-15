@@ -78,7 +78,7 @@ is($p->ping("127.0.0.1"), 1, 'first port is reachable');
 $p->{port_num} = $port2;
 
 {
-    local $TODO = "Believed not to work on $^O" if $^O =~ /^(?:hpux|os390|freebsd)$/;
+    local $TODO = "Believed not to work on $^O" if $^O =~ /^(?:hpux|MSWin32|os390|freebsd)$/;
     is($p->ping("127.0.0.1"), 1, 'second port is reachable');
 }
 

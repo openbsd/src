@@ -319,11 +319,11 @@ my @ChangedFiles;
             }
         }
 
-        ### add entries to win32/Makefile and win32/makefile.mk
+        ### add entries to win32/Makefile
         ### they contain the following lines:
         # ./win32/makefile.mk:            ..\utils\ptardiff       \
         # ./win32/makefile.mk:        xsubpp instmodsh prove ptar ptardiff
-        for my $file ( qw[win32/Makefile win32/makefile.mk] ) {
+        for my $file ( qw[win32/Makefile] ) {
             unless ( `grep $bin $Repo/$file` ) {
                 print "    Adding $bin entries to $file..." if $Verbose;
 

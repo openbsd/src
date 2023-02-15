@@ -8,7 +8,7 @@ sigtrap - Perl pragma to enable simple signal handling
 
 use Carp;
 
-$VERSION = 1.09;
+$VERSION = '1.10';
 $Verbose ||= 0;
 
 sub import {
@@ -184,7 +184,7 @@ handlers.  You can have it install one of two handlers supplied by
 B<sigtrap> itself (one which provides a Perl stack trace and one which
 simply C<die()>s), or alternately you can supply your own handler for it
 to install.  It can be told only to install a handler for signals which
-are either untrapped or ignored.  It has a couple of lists of signals to
+are either untrapped or ignored.  It has three lists of signals to
 trap, plus you can supply your own list of signals.
 
 The arguments passed to the C<use> statement which invokes B<sigtrap>
@@ -307,7 +307,7 @@ signals which are already trapped or ignored:
 
     use sigtrap qw(die untrapped normal-signals);
 
-Die on receipt one of an of the B<normal-signals> which is currently
+Die on receipt one of any of the B<normal-signals> which is currently
 B<untrapped>, provide a stack trace on receipt of B<any> of the
 B<error-signals>:
 

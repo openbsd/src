@@ -8,7 +8,7 @@ BEGIN {
 }
 
 use strict;
-plan( tests => 414 );
+plan( tests => 415 );
 
 run_tests() unless caller;
 
@@ -356,6 +356,14 @@ my $x;
 ($x = (index($y, $z) == -1)) =~ s/^/a/;
 $x;
 EOS
+    }
+
+    {
+        my $s = "abc";
+        my $len = length($s);
+        utf8::upgrade($s);
+        length($s);
+        is(index($s, "", $len+1), 3, 'Overlong index doesn\'t confuse utf8 cache');
     }
 
 } # end of sub run_tests

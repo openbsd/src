@@ -59,7 +59,6 @@ BmPREVIOUS                     # Z added by devel/scanprov
 BmRARE                         # Z added by devel/scanprov
 BmUSEFUL                       # Z added by devel/scanprov
 BOL                            # Z added by devel/scanprov
-bool                           # Z added by devel/scanprov
 boot_core_UNIVERSAL            # F added by devel/scanprov
 BOUND                          # Z added by devel/scanprov
 BRANCH                         # Z added by devel/scanprov
@@ -371,7 +370,6 @@ gv_stashsv                     # T
 GvSV                           # T
 GvXPVGV                        # Z added by devel/scanprov
 HAS_ALARM                      # K added by devel/scanprov
-HAS_BOOL                       # Z added by devel/scanprov
 HAS_CHOWN                      # K added by devel/scanprov
 HAS_CHROOT                     # K added by devel/scanprov
 HAS_CRYPT                      # K added by devel/scanprov

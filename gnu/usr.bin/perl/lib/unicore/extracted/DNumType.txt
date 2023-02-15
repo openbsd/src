@@ -1,6 +1,6 @@
-# DerivedNumericType-13.0.0.txt
-# Date: 2019-09-08, 23:31:09 GMT
-# © 2019 Unicode®, Inc.
+# DerivedNumericType-14.0.0.txt
+# Date: 2021-03-08, 06:22:31 GMT
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -265,6 +265,7 @@ FF10..FF19    ; Decimal # Nd  [10] FULLWIDTH DIGIT ZERO..FULLWIDTH DIGIT NINE
 11D50..11D59  ; Decimal # Nd  [10] MASARAM GONDI DIGIT ZERO..MASARAM GONDI DIGIT NINE
 11DA0..11DA9  ; Decimal # Nd  [10] GUNJALA GONDI DIGIT ZERO..GUNJALA GONDI DIGIT NINE
 16A60..16A69  ; Decimal # Nd  [10] MRO DIGIT ZERO..MRO DIGIT NINE
+16AC0..16AC9  ; Decimal # Nd  [10] TANGSA DIGIT ZERO..TANGSA DIGIT NINE
 16B50..16B59  ; Decimal # Nd  [10] PAHAWH HMONG DIGIT ZERO..PAHAWH HMONG DIGIT NINE
 1D7CE..1D7FF  ; Decimal # Nd  [50] MATHEMATICAL BOLD DIGIT ZERO..MATHEMATICAL MONOSPACE DIGIT NINE
 1E140..1E149  ; Decimal # Nd  [10] NYIAKENG PUACHUE HMONG DIGIT ZERO..NYIAKENG PUACHUE HMONG DIGIT NINE
@@ -272,6 +273,6 @@ FF10..FF19    ; Decimal # Nd  [10] FULLWIDTH DIGIT ZERO..FULLWIDTH DIGIT NINE
 1E950..1E959  ; Decimal # Nd  [10] ADLAM DIGIT ZERO..ADLAM DIGIT NINE
 1FBF0..1FBF9  ; Decimal # Nd  [10] SEGMENTED DIGIT ZERO..SEGMENTED DIGIT NINE
 
-# Total code points: 650
+# Total code points: 660
 
 # EOF

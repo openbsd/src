@@ -407,7 +407,7 @@ and that's why the low order byte is stored at the lower address. To
 unpack such a (unsigned) short we'll have to use code C<v>. A repeat
 count unpacks all 12 shorts:
 
-   my( $ip, $cs, $flags, $ax, $bx, $cd, $dx, $si, $di, $bp, $ds, $es ) =
+   my( $ip, $cs, $flags, $ax, $bx, $cx, $dx, $si, $di, $bp, $ds, $es ) =
      unpack( 'v12', $frame );
 
 Alternatively, we could have used C<C> to unpack the individually
@@ -1033,7 +1033,7 @@ C standardese).
 Neither using offsets nor adding C<x>'s to bridge the gaps is satisfactory.
 (Just imagine what happens if the structure changes.) What we really need
 is a way of saying "skip as many bytes as required to the next multiple of N".
-In fluent Templatese, you say this with C<x!N> where N is replaced by the
+In fluent templates, you say this with C<x!N> where N is replaced by the
 appropriate value. Here's the next version of our struct packaging:
 
   my $gappy = pack( 'c x!2 s c x!4 l!', $c1, $s, $c2, $l );

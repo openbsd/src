@@ -856,7 +856,7 @@ tie %%Config, 'Config', {
 ENDOFTIE
 
 
-open(CONFIG_POD, '>', $Config_POD) or die "Can't open $Config_POD: $!";
+open(CONFIG_POD, '>:raw', $Config_POD) or die "Can't open $Config_POD: $!";
 print CONFIG_POD <<'ENDOFTAIL';
 =head1 NAME
 
@@ -1128,18 +1128,6 @@ my $orig_heavy_txt = "";
 }
 
 if ($orig_config_txt ne $config_txt or $orig_heavy_txt ne $heavy_txt) {
-    # During the build don't look in /usr/local for libs or includes
-    # but after, we want to let modules look there.
-    my $install_heavy_txt = $heavy_txt;
-    $install_heavy_txt =~ s,^(ccflags|cppflags)[^=]*='[^']+,$& -I/usr/local/include,gm;
-    $install_heavy_txt =~ s,^(ldflags|lddlflags)[^=]*='[^']+,$& -L/usr/local/lib,gm;
-
-    open INSTALL_CONFIG_HEAVY, ">", "$Config_heavy.install"
-         or die "Can't open install $Config_heavy: $!\n";
-    print INSTALL_CONFIG_HEAVY $install_heavy_txt;
-    close INSTALL_CONFIG_HEAVY;
-    print "updated install $Config_heavy\n";
-
     open CONFIG, ">", $Config_PM or die "Can't open $Config_PM: $!\n";
     open CONFIG_HEAVY, ">", $Config_heavy or die "Can't open $Config_heavy: $!\n";
     print CONFIG $config_txt;
@@ -1267,7 +1255,6 @@ cppflags:	185
 ptrsize:	185
 shrpenv:	185
 static_ext:	185
-use5005threads:	185
 uselargefiles:	185
 alignbytes:	184
 byteorder:	184

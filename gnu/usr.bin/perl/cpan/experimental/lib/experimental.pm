@@ -1,5 +1,5 @@
 package experimental;
-$experimental::VERSION = '0.020';
+$experimental::VERSION = '0.028';
 use strict;
 use warnings;
 use version ();
@@ -18,14 +18,20 @@ my %features = map { $_ => 1 } $] > 5.015006 ? keys %feature::feature : do {
 };
 
 my %min_version = (
+	args_array_with_signatures => '5.20.0',
 	array_base      => '5',
 	autoderef       => '5.14.0',
 	bitwise         => '5.22.0',
+	builtin         => '5.35.7',
 	const_attr      => '5.22.0',
 	current_sub     => '5.16.0',
 	declared_refs   => '5.26.0',
+	defer           => '5.35.4',
 	evalbytes       => '5.16.0',
+        extra_paired_delims => '5.35.9',
 	fc              => '5.16.0',
+	for_list        => '5.35.5',
+	isa             => '5.31.7',
 	lexical_topic   => '5.10.0',
 	lexical_subs    => '5.18.0',
 	postderef       => '5.20.0',
@@ -37,16 +43,18 @@ my %min_version = (
 	signatures      => '5.20.0',
 	state           => '5.10.0',
 	switch          => '5.10.0',
+	try             => '5.34.0',
 	unicode_eval    => '5.16.0',
 	unicode_strings => '5.12.0',
 );
-my %max_version = (
-	autoderef       => '5.23.1',
-	lexical_topic   => '5.23.4',
+my %removed_in_version = (
+	array_base      => '5.30.0',
+	autoderef       => '5.24.0',
+	lexical_topic   => '5.24.0',
 );
 
 $_ = version->new($_) for values %min_version;
-$_ = version->new($_) for values %max_version;
+$_ = version->new($_) for values %removed_in_version;
 
 my %additional = (
 	postderef     => ['postderef_qq'],
@@ -69,16 +77,12 @@ sub _enable {
 		croak "Can't enable unknown feature $pragma";
 	}
 	elsif ($] < $min_version{$pragma}) {
-		my $stable = $min_version{$pragma};
-		if ($stable->{version}[1] % 2) {
-			$stable = version->new(
-				"5.".($stable->{version}[1]+1).'.0'
-			);
-		}
+		my $stable = $min_version{$pragma}->stringify;
+		$stable =~ s/^ 5\. ([0-9]?[13579]) \. \d+ $/"5." . ($1 + 1) . ".0"/xe;
 		croak "Need perl $stable or later for feature $pragma";
 	}
-	elsif ($] >= ($max_version{$pragma} || 7)) {
-		croak "Experimental feature $pragma has been removed from perl in version $max_version{$pragma}";
+	elsif ($] >= ($removed_in_version{$pragma} || 7)) {
+		croak "Experimental feature $pragma has been removed from perl in version $removed_in_version{$pragma}";
 	}
 }
 
@@ -132,12 +136,12 @@ experimental - Experimental features made easy
 
 =head1 VERSION
 
-version 0.020
+version 0.027
 
 =head1 SYNOPSIS
 
- use experimental 'lexical_subs', 'smartmatch';
- my sub foo { $_[0] ~~ 1 }
+ use experimental 'lexical_subs', 'signatures';
+ my sub plus_one($value) { $value + 1 }
 
 =head1 DESCRIPTION
 
@@ -165,34 +169,61 @@ The supported features, documented further below, are:
 
 =over 4
 
+=item * C<args_array_with_signatures> - allow C<@_> to be used in signatured subs.
+
+This is supported on perl 5.20.0 and above, but is likely to be removed in the future.
+
 =item * C<array_base> - allow the use of C<$[> to change the starting index of C<@array>.
 
-This is supported on all versions of perl.
+This was removed in perl 5.30.0.
 
 =item * C<autoderef> - allow push, each, keys, and other built-ins on references.
 
-This was added in perl 5.14.0 and removed in perl 5.23.1.
+This was added in perl 5.14.0 and removed in perl 5.24.0.
 
 =item * C<bitwise> - allow the new stringwise bit operators
 
 This was added in perl 5.22.0.
 
+=item * C<builtin> - allow the use of the functions in the builtin:: namespace
+
+This was added in perl 5.36.0
+
 =item * C<const_attr> - allow the :const attribute on subs
 
 This was added in perl 5.22.0.
 
+=item * C<declared_refs> - enables aliasing via assignment to references
+
+This was added in perl 5.26.0.
+
+=item * C<defer> - enables the use of defer blocks
+
+This was added in perl 5.36.0
+
+=item * C<for_list> - allows iterating over multiple values at a time with C<for>
+
+This was added in perl 5.36.0
+
+=item * C<isa> - allow the use of the C<isa> infix operator
+
+This was added in perl 5.32.0.
+
 =item * C<lexical_topic> - allow the use of lexical C<$_> via C<my $_>.
 
-This was added in perl 5.10.0 and removed in perl 5.23.4.
+This was added in perl 5.10.0 and removed in perl 5.24.0.
 
 =item * C<lexical_subs> - allow the use of lexical subroutines.
 
 This was added in 5.18.0.
 
-=item * C<postderef> - allow the use of postfix dereferencing expressions,
-including in interpolating strings
+=item * C<postderef> - allow the use of postfix dereferencing expressions
 
-This was added in perl 5.20.0.
+This was added in perl 5.20.0, and became non-experimental (and always enabled) in 5.24.0.
+
+=item * C<postderef_qq> - allow the use of postfix dereferencing expressions inside interpolating strings
+
+This was added in perl 5.20.0, and became non-experimental (and always enabled) in 5.24.0.
 
 =item * C<re_strict> - enables strict mode in regular expressions
 
@@ -218,6 +249,10 @@ incompatibilities between 5.10.0 and 5.10.1.
 =item * C<switch> - allow the use of C<~~>, given, and when
 
 This was added in perl 5.10.0.
+
+=item * C<try> - allow the use of C<try> and C<catch>
+
+This was added in perl 5.34.0
 
 =item * C<win32_perlio> - allows the use of the :win32 IO layer.
 
@@ -252,7 +287,7 @@ be guaranteed in any way.
 
 =head1 SEE ALSO
 
-L<perlexperimental|perlexperimental> contains more information about experimental features.
+L<perlexperiment|perlexperiment> contains more information about experimental features.
 
 =head1 AUTHOR
 

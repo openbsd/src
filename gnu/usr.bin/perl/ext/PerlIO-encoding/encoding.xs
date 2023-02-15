@@ -5,6 +5,12 @@
 #define U8 U8
 
 #define OUR_DEFAULT_FB	"Encode::PERLQQ"
+#define OUR_STOP_AT_PARTIAL "Encode::STOP_AT_PARTIAL"
+#define OUR_LEAVE_SRC "Encode::LEAVE_SRC"
+
+/* This will be set during BOOT */
+static unsigned int encode_stop_at_partial = 0;
+static unsigned int encode_leave_src = 0;
 
 #if defined(USE_PERLIO)
 
@@ -164,6 +170,9 @@ PerlIOEncode_pushed(pTHX_ PerlIO * f, const char *mode, SV * arg, PerlIO_funcs *
     }
 
     e->chk = newSVsv(get_sv("PerlIO::encoding::fallback", 0));
+    if (SvROK(e->chk))
+        Perl_croak(aTHX_ "PerlIO::encoding::fallback must be an integer");
+    SvUV_set(e->chk, ((SvUV(e->chk) & ~encode_leave_src) | encode_stop_at_partial));
     e->inEncodeCall = 0;
 
     FREETMPS;
@@ -638,30 +647,36 @@ PROTOTYPES: ENABLE
 
 BOOT:
 {
-    SV *chk = get_sv("PerlIO::encoding::fallback", GV_ADD|GV_ADDMULTI);
     /*
      * we now "use Encode ()" here instead of
      * PerlIO/encoding.pm.  This avoids SEGV when ":encoding()"
      * is invoked without prior "use Encode". -- dankogai
      */
     PUSHSTACKi(PERLSI_MAGIC);
-    if (!get_cvs(OUR_DEFAULT_FB, 0)) {
-#if 0
-	/* This would just be an irritant now loading works */
-	Perl_warner(aTHX_ packWARN(WARN_IO), ":encoding without 'use Encode'");
-#endif
+    if (!get_cvs(OUR_STOP_AT_PARTIAL, 0)) {
 	/* The SV is magically freed by load_module */
 	load_module(PERL_LOADMOD_NOIMPORT, newSVpvs("Encode"), Nullsv, Nullsv);
 	assert(sp == PL_stack_sp);
     }
+
     PUSHMARK(sp);
     PUTBACK;
-    if (call_pv(OUR_DEFAULT_FB, G_SCALAR) != 1) {
+    if (call_pv(OUR_STOP_AT_PARTIAL, G_SCALAR) != 1) {
 	    /* should never happen */
-	    Perl_die(aTHX_ "%s did not return a value",OUR_DEFAULT_FB);
+	    Perl_die(aTHX_ "%s did not return a value", OUR_STOP_AT_PARTIAL);
     }
     SPAGAIN;
-    sv_setsv(chk, POPs);
+    encode_stop_at_partial = POPu;
+
+    PUSHMARK(sp);
+    PUTBACK;
+    if (call_pv(OUR_LEAVE_SRC, G_SCALAR) != 1) {
+	    /* should never happen */
+	    Perl_die(aTHX_ "%s did not return a value", OUR_LEAVE_SRC);
+    }
+    SPAGAIN;
+    encode_leave_src = POPu;
+
     PUTBACK;
 #ifdef PERLIO_LAYERS
     PerlIO_define_layer(aTHX_ PERLIO_FUNCS_CAST(&PerlIO_encode));

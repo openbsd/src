@@ -27,7 +27,6 @@ eval "#line 8 foo\nsub t005 (\$) (\$a) { }";
 like $@, qr{syntax error at foo line 8}, "error when not enabled 2";
 
 
-no warnings "experimental::signatures";
 use feature "signatures";
 
 sub t001 { $a || "z" }
@@ -37,129 +36,148 @@ is eval("t001(456)"), 123;
 is eval("t001(456, 789)"), 123;
 is $a, 123;
 
+sub _create_mismatch_regexp {
+    my ($funcname, $got, $expected, $flexible_str) = @_;
+
+    my $many_few_str = ($got > $expected) ? 'many' : 'few';
+
+    $flexible_str //= q<>;
+
+    return qr/\AToo $many_few_str arguments for subroutine '$funcname' \(got $got; expected $flexible_str$expected\) at \(eval \d+\) line 1\.\n\z/;
+}
+
+sub _create_flexible_mismatch_regexp {
+    my ($funcname, $got, $expected) = @_;
+
+    my $flexible_str = ($got > $expected) ? 'at most' : 'at least';
+    $flexible_str .= q< >;
+
+    return _create_mismatch_regexp($funcname, $got, $expected, $flexible_str);
+}
+
 sub t002 () { $a || "z" }
 is prototype(\&t002), undef;
 is eval("t002()"), 123;
 is eval("t002(456)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t002' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t002', 1, 0);
 is eval("t002(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t002' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t002', 2, 0);
 is $a, 123;
 
 sub t003 ( ) { $a || "z" }
 is prototype(\&t003), undef;
 is eval("t003()"), 123;
 is eval("t003(456)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t003' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t003', 1, 0);
 is eval("t003(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t003' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t003', 2, 0);
 is $a, 123;
 
 sub t006 ($a) { $a || "z" }
 is prototype(\&t006), undef;
 is eval("t006()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t006' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t006', 0, 1);
 is eval("t006(0)"), "z";
 is eval("t006(456)"), 456;
 is eval("t006(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t006' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t006', 2, 1);
 is eval("t006(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t006' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t006', 3, 1);
 is $a, 123;
 
 sub t007 ($a, $b) { $a.$b }
 is prototype(\&t007), undef;
 is eval("t007()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t007' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t007', 0, 2);
 is eval("t007(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t007' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t007', 1, 2);
 is eval("t007(456, 789)"), "456789";
 is eval("t007(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t007' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t007', 3, 2);
 is eval("t007(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t007' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t007', 4, 2);
 is $a, 123;
 
 sub t008 ($a, $b, $c) { $a.$b.$c }
 is prototype(\&t008), undef;
 is eval("t008()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t008' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t008', 0, 3);
 is eval("t008(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t008' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t008', 1, 3);
 is eval("t008(456, 789)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t008' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t008', 2, 3);
 is eval("t008(456, 789, 987)"), "456789987";
 is eval("t008(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t008' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t008', 4, 3);
 is $a, 123;
 
 sub t009 ($abc, $def) { $abc.$def }
 is prototype(\&t009), undef;
 is eval("t009()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t009' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t009', 0, 2);
 is eval("t009(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t009' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t009', 1, 2);
 is eval("t009(456, 789)"), "456789";
 is eval("t009(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t009' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t009', 3, 2);
 is eval("t009(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t009' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t009', 4, 2);
 is $a, 123;
 
 sub t010 ($a, $) { $a || "z" }
 is prototype(\&t010), undef;
 is eval("t010()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t010' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t010', 0, 2);
 is eval("t010(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t010' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t010', 1, 2);
 is eval("t010(0, 789)"), "z";
 is eval("t010(456, 789)"), 456;
 is eval("t010(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t010' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t010', 3, 2);
 is eval("t010(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t010' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t010', 4, 2);
 is $a, 123;
 
 sub t011 ($, $a) { $a || "z" }
 is prototype(\&t011), undef;
 is eval("t011()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t011' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t011', 0, 2);
 is eval("t011(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t011' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t011', 1, 2);
 is eval("t011(456, 0)"), "z";
 is eval("t011(456, 789)"), 789;
 is eval("t011(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t011' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t011', 3, 2);
 is eval("t011(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t011' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t011', 4, 2);
 is $a, 123;
 
 sub t012 ($, $) { $a || "z" }
 is prototype(\&t012), undef;
 is eval("t012()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t012' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t012', 0, 2);
 is eval("t012(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t012' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t012', 1, 2);
 is eval("t012(0, 789)"), 123;
 is eval("t012(456, 789)"), 123;
 is eval("t012(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t012' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t012', 3, 2);
 is eval("t012(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t012' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t012', 4, 2);
 is $a, 123;
 
 sub t013 ($) { $a || "z" }
 is prototype(\&t013), undef;
 is eval("t013()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t013' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t013', 0, 1);
 is eval("t013(0)"), 123;
 is eval("t013(456)"), 123;
 is eval("t013(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t013' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t013', 2, 1);
 is eval("t013(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t013' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t013', 3, 1);
 is eval("t013(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t013' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t013', 4, 1);
 is $a, 123;
 
 sub t014 ($a = 222) { $a // "z" }
@@ -169,9 +187,9 @@ is eval("t014(0)"), 0;
 is eval("t014(undef)"), "z";
 is eval("t014(456)"), 456;
 is eval("t014(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t014' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t014', 2, 1);
 is eval("t014(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t014' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t014', 3, 1);
 is $a, 123;
 
 sub t015 ($a = undef) { $a // "z" }
@@ -181,9 +199,9 @@ is eval("t015(0)"), 0;
 is eval("t015(undef)"), "z";
 is eval("t015(456)"), 456;
 is eval("t015(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t015' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t015', 2, 1);
 is eval("t015(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t015' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t015', 3, 1);
 is $a, 123;
 
 sub t016 ($a = do { $z++; 222 }) { $a // "z" }
@@ -195,9 +213,9 @@ is eval("t016(0)"), 0;
 is eval("t016(undef)"), "z";
 is eval("t016(456)"), 456;
 is eval("t016(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t016' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t016', 2, 1);
 is eval("t016(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t016' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t016', 3, 1);
 is $z, 1;
 is eval("t016()"), 222;
 is $z, 2;
@@ -213,9 +231,9 @@ is eval("t017(0)"), 0;
 is eval("t017(undef)"), "z";
 is eval("t017(456)"), 456;
 is eval("t017(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t017' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t017', 2, 1);
 is eval("t017(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t017' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t017', 3, 1);
 is $a, 123;
 
 sub t019 ($p = 222, $a = 333) { "$p/$a" }
@@ -225,7 +243,7 @@ is eval("t019(0)"), "0/333";
 is eval("t019(456)"), "456/333";
 is eval("t019(456, 789)"), "456/789";
 is eval("t019(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t019' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t019', 3, 2);
 is $a, 123;
 
 sub t020 :prototype($) { $_[0]."z" }
@@ -236,7 +254,7 @@ is eval("t021(0)"), "0/333";
 is eval("t021(456)"), "456/333";
 is eval("t021(456, 789)"), "456/789";
 is eval("t021(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t021' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t021', 3, 2);
 is $a, 123;
 
 sub t022 ($p = do { $z += 10; 222 }, $a = do { $z++; 333 }) { "$p/$a" }
@@ -250,7 +268,7 @@ is eval("t022(456)"), "456/333";
 is $z, 13;
 is eval("t022(456, 789)"), "456/789";
 is eval("t022(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t022' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t022', 3, 2);
 is $z, 13;
 is $a, 123;
 
@@ -259,7 +277,7 @@ is prototype(\&t023), undef;
 is eval("t023()"), "azy";
 is eval("t023(sub { \"x\".\$_[0].\"x\" })"), "xaxy";
 is eval("t023(sub { \"x\".\$_[0].\"x\" }, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t023' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t023', 2, 1);
 is $a, 123;
 
 sub t036 ($a = $a."x") { $a."y" }
@@ -268,7 +286,7 @@ is eval("t036()"), "123xy";
 is eval("t036(0)"), "0y";
 is eval("t036(456)"), "456y";
 is eval("t036(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t036' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t036', 2, 1);
 is $a, 123;
 
 sub t120 ($a = $_) { $a // "z" }
@@ -283,7 +301,7 @@ $_ = "___";
 is eval("t120(456)"), 456;
 $_ = "___";
 is eval("t120(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t120' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t120', 2, 1);
 is $a, 123;
 
 sub t121 ($a = caller) { $a // "z" }
@@ -293,13 +311,13 @@ is eval("t121(undef)"), "z";
 is eval("t121(0)"), 0;
 is eval("t121(456)"), 456;
 is eval("t121(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t121' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t121', 2, 1);
 is eval("package T121::Z; ::t121()"), "T121::Z";
 is eval("package T121::Z; ::t121(undef)"), "z";
 is eval("package T121::Z; ::t121(0)"), 0;
 is eval("package T121::Z; ::t121(456)"), 456;
 is eval("package T121::Z; ::t121(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t121' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t121', 2, 1);
 is $a, 123;
 
 sub t129 ($a = return 222) { $a."x" }
@@ -308,7 +326,7 @@ is eval("t129()"), "222";
 is eval("t129(0)"), "0x";
 is eval("t129(456)"), "456x";
 is eval("t129(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t129' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t129', 2, 1);
 is $a, 123;
 
 use feature "current_sub";
@@ -320,7 +338,7 @@ is eval("t122(1)"), "10";
 is eval("t122(5)"), "543210";
 is eval("t122(5, 789)"), "5789";
 is eval("t122(5, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t122' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t122', 3, 2);
 is $a, 123;
 
 sub t123 ($list = wantarray) { $list ? "list" : "scalar" }
@@ -332,7 +350,7 @@ is eval("(t123(0))[0]"), "scalar";
 is eval("scalar(t123(1))"), "list";
 is eval("(t123(1))[0]"), "list";
 is eval("t123(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t123' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t123', 2, 1);
 is $a, 123;
 
 sub t124 ($b = (local $a = $a + 1)) { "$a/$b" }
@@ -342,7 +360,7 @@ is $a, 123;
 is eval("t124(456)"), "123/456";
 is $a, 123;
 is eval("t124(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t124' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t124', 2, 1);
 is $a, 123;
 
 sub t125 ($c = (our $t125_counter)++) { $c }
@@ -355,7 +373,7 @@ is eval("t125(789)"), 789;
 is eval("t125()"), 3;
 is eval("t125()"), 4;
 is eval("t125(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t125' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t125', 2, 1);
 is $a, 123;
 
 use feature "state";
@@ -371,7 +389,7 @@ is $z, 223;
 is eval("t126()"), 222;
 is $z, 223;
 is eval("t126(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t126' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t126', 2, 1);
 is $z, 223;
 is $a, 123;
 
@@ -390,7 +408,7 @@ is eval("t127(789)"), 789;
 is eval("t127()"), 225;
 is eval("t127()"), 226;
 is eval("t127(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t127' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t127', 2, 1);
 is $z, 223;
 is $a, 123;
 
@@ -401,7 +419,7 @@ is eval("t037(0)"), "0/0x";
 is eval("t037(456)"), "456/456x";
 is eval("t037(456, 789)"), "456/789";
 is eval("t037(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t037' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t037', 3, 2);
 is $a, 123;
 
 sub t128 ($a = 222, $b = ($a = 333)) { "$a/$b" }
@@ -411,18 +429,21 @@ is eval("t128(0)"), "333/333";
 is eval("t128(456)"), "333/333";
 is eval("t128(456, 789)"), "456/789";
 is eval("t128(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t128' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t128', 3, 2);
 is $a, 123;
 
 sub t130 { join(",", @_).";".scalar(@_) }
-sub t131 ($a = 222, $b = goto &t130) { "$a/$b" }
+{
+    no warnings 'experimental::args_array_with_signatures';
+    sub t131 ($a = 222, $b = goto &t130) { "$a/$b" }
+}
 is prototype(\&t131), undef;
 is eval("t131()"), ";0";
 is eval("t131(0)"), "0;1";
 is eval("t131(456)"), "456;1";
 is eval("t131(456, 789)"), "456/789";
 is eval("t131(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t131' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t131', 3, 2);
 is $a, 123;
 
 eval "#line 8 foo\nsub t024 (\$a =) { }";
@@ -435,11 +456,11 @@ is eval("t025()"), 123;
 is eval("t025(0)"), 123;
 is eval("t025(456)"), 123;
 is eval("t025(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t025' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t025', 2, 1);
 is eval("t025(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t025' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t025', 3, 1);
 is eval("t025(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t025' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t025', 4, 1);
 is $a, 123;
 
 sub t026 ($ = 222) { $a // "z" }
@@ -448,11 +469,11 @@ is eval("t026()"), 123;
 is eval("t026(0)"), 123;
 is eval("t026(456)"), 123;
 is eval("t026(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t026' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t026', 2, 1);
 is eval("t026(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t026' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t026', 3, 1);
 is eval("t026(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t026' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t026', 4, 1);
 is $a, 123;
 
 sub t032 ($ = do { $z++; 222 }) { $a // "z" }
@@ -463,11 +484,11 @@ is $z, 1;
 is eval("t032(0)"), 123;
 is eval("t032(456)"), 123;
 is eval("t032(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t032' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t032', 2, 1);
 is eval("t032(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t032' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t032', 3, 1);
 is eval("t032(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t032' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t032', 4, 1);
 is $z, 1;
 is $a, 123;
 
@@ -477,11 +498,11 @@ is eval("t027()"), 123;
 is eval("t027(0)"), 123;
 is eval("t027(456)"), 123;
 is eval("t027(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t027' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t027', 2, 1);
 is eval("t027(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t027' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t027', 3, 1);
 is eval("t027(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t027' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t027', 4, 1);
 is $a, 123;
 
 sub t119 ($ =, $a = 333) { $a // "z" }
@@ -491,81 +512,81 @@ is eval("t119(0)"), 333;
 is eval("t119(456)"), 333;
 is eval("t119(456, 789)"), 789;
 is eval("t119(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t119' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t119', 3, 2);
 is eval("t119(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t119' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t119', 4, 2);
 is $a, 123;
 
 sub t028 ($a, $b = 333) { "$a/$b" }
 is prototype(\&t028), undef;
 is eval("t028()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t028' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t028', 0, 1);
 is eval("t028(0)"), "0/333";
 is eval("t028(456)"), "456/333";
 is eval("t028(456, 789)"), "456/789";
 is eval("t028(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t028' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t028', 3, 2);
 is $a, 123;
 
 sub t045 ($a, $ = 333) { "$a/" }
 is prototype(\&t045), undef;
 is eval("t045()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t045' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t045', 0, 1);
 is eval("t045(0)"), "0/";
 is eval("t045(456)"), "456/";
 is eval("t045(456, 789)"), "456/";
 is eval("t045(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t045' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t045', 3, 2);
 is $a, 123;
 
 sub t046 ($, $b = 333) { "$a/$b" }
 is prototype(\&t046), undef;
 is eval("t046()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t046' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t046', 0, 1);
 is eval("t046(0)"), "123/333";
 is eval("t046(456)"), "123/333";
 is eval("t046(456, 789)"), "123/789";
 is eval("t046(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t046' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t046', 3, 2);
 is $a, 123;
 
 sub t047 ($, $ = 333) { "$a/" }
 is prototype(\&t047), undef;
 is eval("t047()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t047' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t047', 0, 1);
 is eval("t047(0)"), "123/";
 is eval("t047(456)"), "123/";
 is eval("t047(456, 789)"), "123/";
 is eval("t047(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t047' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t047', 3, 2);
 is $a, 123;
 
 sub t029 ($a, $b, $c = 222, $d = 333) { "$a/$b/$c/$d" }
 is prototype(\&t029), undef;
 is eval("t029()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t029' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t029', 0, 2);
 is eval("t029(0)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t029' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t029', 1, 2);
 is eval("t029(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t029' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t029', 1, 2);
 is eval("t029(456, 789)"), "456/789/222/333";
 is eval("t029(456, 789, 987)"), "456/789/987/333";
 is eval("t029(456, 789, 987, 654)"), "456/789/987/654";
 is eval("t029(456, 789, 987, 654, 321)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t029' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t029', 5, 4);
 is eval("t029(456, 789, 987, 654, 321, 111)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t029' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t029', 6, 4);
 is $a, 123;
 
 sub t038 ($a, $b = $a."x") { "$a/$b" }
 is prototype(\&t038), undef;
 is eval("t038()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t038' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t038', 0, 1);
 is eval("t038(0)"), "0/0x";
 is eval("t038(456)"), "456/456x";
 is eval("t038(456, 789)"), "456/789";
 is eval("t038(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t038' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t038', 3, 2);
 is $a, 123;
 
 eval "#line 8 foo\nsub t030 (\$a = 222, \$b) { }";
@@ -660,7 +681,7 @@ is $@, qq{A slurpy parameter may not have a default value at foo line 8, near "=
 sub t041 ($a, @b) { $a.";".join("/", @b) }
 is prototype(\&t041), undef;
 is eval("t041()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t041' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t041', 0, 1);
 is eval("t041(0)"), "0;";
 is eval("t041(456)"), "456;";
 is eval("t041(456, 789)"), "456;789";
@@ -673,7 +694,7 @@ is $a, 123;
 sub t042 ($a, @) { $a.";" }
 is prototype(\&t042), undef;
 is eval("t042()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t042' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t042', 0, 1);
 is eval("t042(0)"), "0;";
 is eval("t042(456)"), "456;";
 is eval("t042(456, 789)"), "456;";
@@ -686,7 +707,7 @@ is $a, 123;
 sub t043 ($, @b) { $a.";".join("/", @b) }
 is prototype(\&t043), undef;
 is eval("t043()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t043' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t043', 0, 1);
 is eval("t043(0)"), "123;";
 is eval("t043(456)"), "123;";
 is eval("t043(456, 789)"), "123;789";
@@ -699,7 +720,7 @@ is $a, 123;
 sub t044 ($, @) { $a.";" }
 is prototype(\&t044), undef;
 is eval("t044()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t044' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t044', 0, 1);
 is eval("t044(0)"), "123;";
 is eval("t044(456)"), "123;";
 is eval("t044(456, 789)"), "123;";
@@ -712,7 +733,7 @@ is $a, 123;
 sub t049 ($a, %b) { $a.";".join("/", map { $_."=".$b{$_} } sort keys %b) }
 is prototype(\&t049), undef;
 is eval("t049()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t049' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t049', 0, 1);
 is eval("t049(222)"), "222;";
 is eval("t049(222, 456)"), undef;
 like $@, qr#\AOdd name/value argument for subroutine 'main::t049' at \(eval \d+\) line 1\.\n\z#;
@@ -729,11 +750,11 @@ is $a, 123;
 sub t051 ($a, $b, $c, @d) { "$a;$b;$c;".join("/", @d).";".scalar(@d) }
 is prototype(\&t051), undef;
 is eval("t051()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t051' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t051', 0, 3);
 is eval("t051(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t051' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t051', 1, 3);
 is eval("t051(456, 789)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t051' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t051', 2, 3);
 is eval("t051(456, 789, 987)"), "456;789;987;;0";
 is eval("t051(456, 789, 987, 654)"), "456;789;987;654;1";
 is eval("t051(456, 789, 987, 654, 321)"), "456;789;987;654/321;2";
@@ -743,9 +764,9 @@ is $a, 123;
 sub t052 ($a, $b, %c) { "$a;$b;".join("/", map { $_."=".$c{$_} } sort keys %c) }
 is prototype(\&t052), undef;
 is eval("t052()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t052' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t052', 0, 2);
 is eval("t052(222)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t052' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t052', 1, 2);
 is eval("t052(222, 333)"), "222;333;";
 is eval("t052(222, 333, 456)"), undef;
 like $@, qr#\AOdd name/value argument for subroutine 'main::t052' at \(eval \d+\) line 1\.\n\z#;
@@ -764,11 +785,11 @@ sub t053 ($a, $b, $c, %d) {
 }
 is prototype(\&t053), undef;
 is eval("t053()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t053' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t053', 0, 3);
 is eval("t053(222)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t053' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t053', 1, 3);
 is eval("t053(222, 333)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t053' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t053', 2, 3);
 is eval("t053(222, 333, 444)"), "222;333;444;";
 is eval("t053(222, 333, 444, 456)"), undef;
 like $@, qr#\AOdd name/value argument for subroutine 'main::t053' at \(eval \d+\) line 1\.\n\z#;
@@ -878,7 +899,7 @@ is $a, 123;
 sub t058 ($a, $b = 333, @c) { "$a;$b;".join("/", @c).";".scalar(@c) }
 is prototype(\&t058), undef;
 is eval("t058()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t058' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t058', 0, 1);
 is eval("t058(456)"), "456;333;;0";
 is eval("t058(456, 789)"), "456;789;;0";
 is eval("t058(456, 789, 987)"), "456;789;987;1";
@@ -956,27 +977,27 @@ EOF
 sub t080 ($a,,, $b) { $a.$b }
 is prototype(\&t080), undef;
 is eval("t080()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t080' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t080', 0, 2);
 is eval("t080(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t080' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t080', 1, 2);
 is eval("t080(456, 789)"), "456789";
 is eval("t080(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t080' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t080', 3, 2);
 is eval("t080(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t080' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t080', 4, 2);
 is $a, 123;
 
 sub t081 ($a, $b,,) { $a.$b }
 is prototype(\&t081), undef;
 is eval("t081()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t081' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t081', 0, 2);
 is eval("t081(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t081' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t081', 1, 2);
 is eval("t081(456, 789)"), "456789";
 is eval("t081(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t081' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t081', 3, 2);
 is eval("t081(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t081' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t081', 4, 2);
 is $a, 123;
 
 eval "#line 8 foo\nsub t082 (, \$a) { }";
@@ -988,14 +1009,14 @@ is $@, qq{syntax error at foo line 8, near "(,"\n};
 sub t084($a,$b){ $a.$b }
 is prototype(\&t084), undef;
 is eval("t084()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t084' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t084', 0, 2);
 is eval("t084(456)"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t084' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t084', 1, 2);
 is eval("t084(456, 789)"), "456789";
 is eval("t084(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t084' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t084', 3, 2);
 is eval("t084(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t084' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t084', 4, 2);
 is $a, 123;
 
 sub t085
@@ -1014,13 +1035,13 @@ sub t085
     { $a.$b }
 is prototype(\&t085), undef;
 is eval("t085()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t085' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t085', 0, 1);
 is eval("t085(456)"), "456333";
 is eval("t085(456, 789)"), "456789";
 is eval("t085(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t085' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t085', 3, 2);
 is eval("t085(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t085' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t085', 4, 2);
 is $a, 123;
 
 sub t086
@@ -1039,13 +1060,13 @@ sub t086
     { $a.$b }
 is prototype(\&t086), undef;
 is eval("t086()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t086' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t086', 0, 1);
 is eval("t086(456)"), "456333";
 is eval("t086(456, 789)"), "456789";
 is eval("t086(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t086' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t086', 3, 2);
 is eval("t086(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t086' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t086', 4, 2);
 is $a, 123;
 
 sub t087
@@ -1064,13 +1085,13 @@ sub t087
     { $a.$b }
 is prototype(\&t087), undef;
 is eval("t087()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t087' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t087', 0, 1);
 is eval("t087(456)"), "456333";
 is eval("t087(456, 789)"), "456789";
 is eval("t087(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t087' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t087', 3, 2);
 is eval("t087(456, 789, 987, 654)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t087' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t087', 4, 2);
 is $a, 123;
 
 eval "#line 8 foo\nsub t088 (\$ #foo\na) { }";
@@ -1134,25 +1155,25 @@ like $@, qr/\ACan't use global \%_ in subroutine signature at foo line 8/;
 my $t103 = sub ($a) { $a || "z" };
 is prototype($t103), undef;
 is eval("\$t103->()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 0, 1);
 is eval("\$t103->(0)"), "z";
 is eval("\$t103->(456)"), 456;
 is eval("\$t103->(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 2, 1);
 is eval("\$t103->(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 3, 1);
 is $a, 123;
 
 my $t118 = sub :prototype($) ($a) { $a || "z" };
 is prototype($t118), "\$";
 is eval("\$t118->()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 0, 1);
 is eval("\$t118->(0)"), "z";
 is eval("\$t118->(456)"), 456;
 is eval("\$t118->(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 2, 1);
 is eval("\$t118->(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::__ANON__' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::__ANON__', 3, 1);
 is $a, 123;
 
 sub t033 ($a = sub ($a) { $a."z" }) { $a->("a")."y" }
@@ -1160,7 +1181,7 @@ is prototype(\&t033), undef;
 is eval("t033()"), "azy";
 is eval("t033(sub { \"x\".\$_[0].\"x\" })"), "xaxy";
 is eval("t033(sub { \"x\".\$_[0].\"x\" }, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t033' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t033', 2, 1);
 is $a, 123;
 
 sub t133 ($a = sub ($a = 222) { $a."z" }) { $a->()."/".$a->("a") }
@@ -1168,7 +1189,7 @@ is prototype(\&t133), undef;
 is eval("t133()"), "222z/az";
 is eval("t133(sub { \"x\".(\$_[0] // \"u\").\"x\" })"), "xux/xax";
 is eval("t133(sub { \"x\".(\$_[0] // \"u\").\"x\" }, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t133' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t133', 2, 1);
 is $a, 123;
 
 sub t134 ($a = sub ($a, $t = sub { $_[0]."p" }) { $t->($a)."z" }) {
@@ -1180,7 +1201,7 @@ is eval("t134(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" })"),
     "xax/xbqx";
 is eval("t134(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" }, 789)"),
     undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t134' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t134', 2, 1);
 is $a, 123;
 
 sub t135 ($a = sub ($a, $t = sub ($p) { $p."p" }) { $t->($a)."z" }) {
@@ -1192,7 +1213,7 @@ is eval("t135(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" })"),
     "xax/xbqx";
 is eval("t135(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" }, 789)"),
     undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t135' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t135', 2, 1);
 is $a, 123;
 
 sub t132 (
@@ -1206,19 +1227,19 @@ is eval("t132(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" })"),
     "xax/xbqx";
 is eval("t132(sub { \"x\".(\$_[1] // sub{\$_[0]})->(\$_[0]).\"x\" }, 789)"),
     undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t132' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_flexible_mismatch_regexp('main::t132', 2, 1);
 is $a, 123;
 
 sub t104 :method ($a) { $a || "z" }
 is prototype(\&t104), undef;
 is eval("t104()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t104' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t104', 0, 1);
 is eval("t104(0)"), "z";
 is eval("t104(456)"), 456;
 is eval("t104(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t104' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t104', 2, 1);
 is eval("t104(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t104' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t104', 3, 1);
 is $a, 123;
 
 sub t105 :prototype($) ($a) { $a || "z" }
@@ -1236,13 +1257,13 @@ is $a, 123;
 sub t106 :prototype(@) ($a) { $a || "z" }
 is prototype(\&t106), "\@";
 is eval("t106()"), undef;
-like $@, qr/\AToo few arguments for subroutine 'main::t106' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t106', 0, 1);
 is eval("t106(0)"), "z";
 is eval("t106(456)"), 456;
 is eval("t106(456, 789)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t106' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t106', 2, 1);
 is eval("t106(456, 789, 987)"), undef;
-like $@, qr/\AToo many arguments for subroutine 'main::t106' at \(eval \d+\) line 1\.\n\z/;
+like $@, _create_mismatch_regexp('main::t106', 3, 1);
 is $a, 123;
 
 eval "#line 8 foo\nsub t107(\$a) :method { }";
@@ -1361,12 +1382,14 @@ is scalar(t145()), undef;
     }
     is ref(t149()), "ARRAY", "t149: closure can make new lexical a ref";
 
+    # Quiet the 'use of @_ is experimental' warnings
+    no warnings 'experimental::args_array_with_signatures';
+
     sub t150 ($a = do {@_ = qw(a b c); 1}, $b = 2) {
         is $a, 1,   "t150: a: growing \@_";
         is $b, "b", "t150: b: growing \@_";
     }
     t150();
-
 
     sub t151 ($a = do {tie @_, 'Tie::StdArray'; @_ = qw(a b c); 1}, $b = 2) {
         is $a, 1,   "t151: a: tied \@_";
@@ -1587,6 +1610,90 @@ while(<$kh>) {
     eval q{ sub ($1) {} };
     like $@, qr/Illegal operator following parameter in a subroutine signature/,
             'f($1)';
+}
+
+# check that various uses of @_ inside signatured subs causes "experimental"
+# warnings at compiletime
+{
+    sub warnings_from {
+        my ($code, $run) = @_;
+        my $warnings = "";
+        local $SIG{__WARN__} = sub { $warnings .= join "", @_ };
+        my $cv = eval qq{ sub(\$x) { $code }} or die "Cannot eval() - $@";
+        $run and $cv->(123);
+        return $warnings;
+    }
+
+    sub snailwarns_ok {
+        my ($opname, $code) = @_;
+        my $warnings = warnings_from $code;
+        ok($warnings =~ m/[Uu]se of \@_ in $opname with signatured subroutine is experimental at \(eval /,
+            "`$code` warns of experimental \@_") or
+            diag("Warnings were:\n$warnings");
+    }
+
+    sub snailwarns_runtime_ok {
+        my ($opname, $code) = @_;
+        my $warnings = warnings_from $code, 1;
+        ok($warnings =~ m/[Uu]se of \@_ in $opname with signatured subroutine is experimental at \(eval /,
+            "`$code` warns of experimental \@_") or
+            diag("Warnings were:\n$warnings");
+    }
+
+    sub not_snailwarns_ok {
+        my ($code) = @_;
+        my $warnings = warnings_from $code;
+        ok($warnings !~ m/[Uu]se of \@_ in .* with signatured subroutine is experimental at \(eval /,
+            "`$code` warns of experimental \@_") or
+            diag("Warnings were:\n$warnings");
+    }
+
+    # implicit @_
+    snailwarns_ok 'shift',            'shift';
+    snailwarns_ok 'pop',              'pop';
+    snailwarns_ok 'goto',             'goto &SUB'; # tail-call
+    snailwarns_ok 'subroutine entry', '&SUB'; # perl4-style
+
+    # explicit @_
+    snailwarns_ok 'shift',            'shift @_';
+    snailwarns_ok 'pop',              'pop @_';
+    snailwarns_ok 'array element',    '$_[0]';
+    snailwarns_ok 'array element',    'my $one = 1; $_[$one]';
+    snailwarns_ok 'push',             'push @_, 1';
+    snailwarns_ok 'unshift',          'unshift @_, 9';
+    snailwarns_ok 'splice',           'splice @_, 1, 2, 3';
+    snailwarns_ok 'keys on array',    'keys @_';
+    snailwarns_ok 'values on array',  'values @_';
+    snailwarns_ok 'each on array',    'each @_';
+    snailwarns_ok 'print',            'print "a", @_, "z"';
+    snailwarns_ok 'subroutine entry', 'func("a", @_, "z")';
+
+    # Also warns about @_ inside the signature params
+    like(warnings_from('sub ($x = shift) { }'),
+        qr/^Implicit use of \@_ in shift with signatured subroutine is experimental at \(eval /,
+        'Warns of experimental @_ in param default');
+    like(warnings_from('sub ($x = $_[0]) { }'),
+        qr/^Use of \@_ in array element with signatured subroutine is experimental at \(eval /,
+        'Warns of experimental @_ in param default');
+
+    # Inside eval() still counts, at runtime
+    snailwarns_runtime_ok 'array element', 'eval q( $_[0] )';
+
+    # still permitted without warning
+    not_snailwarns_ok 'my $f = sub { my $y = shift; }';
+    not_snailwarns_ok 'my $f = sub { my $y = $_[0]; }';
+    not_snailwarns_ok '\&SUB';
+}
+
+# Warnings can be disabled
+{
+    my $warnings = "";
+    local $SIG{__WARN__} = sub { $warnings .= join "", @_ };
+    eval q{
+        no warnings 'experimental::snail_in_signatures';
+        sub($x) { @_ = (1,2,3) }
+    };
+    is($warnings, "", 'No warnings emitted within scope of  no warnings "experimental"');
 }
 
 done_testing;

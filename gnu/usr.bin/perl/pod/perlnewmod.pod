@@ -237,11 +237,13 @@ Every developer publishing modules on CPAN needs a CPAN ID.  Visit
 C<L<http://pause.perl.org/>>, select "Request PAUSE Account", and wait for
 your request to be approved by the PAUSE administrators.
 
-=item C<perl Makefile.PL; make test; make distcheck; make dist>
+=item Make the tarball
 
 Once again, C<module-starter> or C<h2xs> has done all the work for you.
 They produce the standard C<Makefile.PL> you see when you download and
 install modules, and this produces a Makefile with a C<dist> target.
+
+    perl Makefile.PL && make test && make distcheck && make dist
 
 Once you've ensured that your module passes its own tests - always a
 good thing to make sure - you can C<make distcheck> to make sure
@@ -276,5 +278,4 @@ Updated by Kirrily "Skud" Robert, C<skud@cpan.org>
 L<perlmod>, L<perlmodlib>, L<perlmodinstall>, L<h2xs>, L<strict>,
 L<Carp>, L<Exporter>, L<perlpod>, L<Test::Simple>, L<Test::More>
 L<ExtUtils::MakeMaker>, L<Module::Build>, L<Module::Starter>
-L<http://www.cpan.org/>, Ken Williams' tutorial on building your own
-module at L<http://mathforum.org/~ken/perl_modules.html>
+L<http://www.cpan.org/>

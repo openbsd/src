@@ -129,6 +129,9 @@ BRANCH      BRANCH,     node 0 V  ; Match this alternative, or the next...
 
 #*Literals
 # NOTE: the relative ordering of these types is important do not change it
+# By convention, folding nodes begin with EXACTF; A digit 8 is in the name if
+# and only if it it requires a UTF-8 target string in order to successfully
+# match.
 
 EXACT       EXACT,      str       ; Match this string (flags field is the length).
 
@@ -144,11 +147,13 @@ EXACTFU     EXACT,      str	  ; Like EXACT, but match using /iu rules; (string f
 # they would fold to something that requires UTF-8.  SHARP S would normally
 # fold to 'ss', but because of /aa, it instead folds to a pair of LATIN SMALL
 # LETTER LONG S characters (U+017F)
-EXACTFAA    EXACT,      str	  ; Like EXACT, but match using /iaa rules; (string folded except in non-UTF8 patterns: MICRO, SHARP S; folded length <= unfolded)
+EXACTFAA    EXACT,      str	  ; Like EXACT, but match using /iaa rules; (string folded except MICRO in non-UTF8 patterns; doesn't contain SHARP S unless UTF-8; folded length <= unfolded)
+# must immediately follow EXACTFAA
+EXACTFAA_NO_TRIE  EXACT, str	  ; Like EXACTFAA, (string not UTF-8, folded except: MICRO, SHARP S; folded length <= unfolded, not currently trie-able)
 
 # End of important relative ordering.
 
-EXACTFUP    EXACT,      str	  ; Like EXACT, but match using /iu rules; (string not UTF-8, folded except MICRO, SHARP S: hence Problematic)
+EXACTFUP    EXACT,      str	  ; Like EXACT, but match using /iu rules; (string not UTF-8, folded except MICRO: hence Problematic)
 # In order for a non-UTF-8 EXACTFAA to think the pattern is pre-folded when
 # matching a UTF-8 target string, there would have to be something like an
 # EXACTFAA_MICRO which would not be considered pre-folded for UTF-8 targets,
@@ -156,9 +161,6 @@ EXACTFUP    EXACT,      str	  ; Like EXACT, but match using /iu rules; (string n
 # representable in the UTF-8 target string.
 
 EXACTFLU8   EXACT,      str	  ; Like EXACTFU, but use /il, UTF-8, (string is folded, and everything in it is above 255
-EXACTFAA_NO_TRIE  EXACT, str	  ; Like EXACT, but match using /iaa rules (string not UTF-8, not guaranteed to be folded, not currently trie-able)
-
-
 EXACT_REQ8   EXACT,      str      ; Like EXACT, but only UTF-8 encoded targets can match
 LEXACT_REQ8  EXACT,  len:str 1    ; Like LEXACT, but only UTF-8 encoded targets can match
 EXACTFU_REQ8 EXACT,    str        ; Like EXACTFU, but only UTF-8 encoded targets can match
@@ -166,6 +168,23 @@ EXACTFU_REQ8 EXACT,    str        ; Like EXACTFU, but only UTF-8 encoded targets
 # but these would be extremely uncommon
 
 EXACTFU_S_EDGE EXACT,   str       ; /di rules, but nothing in it precludes /ui, except begins and/or ends with [Ss]; (string not UTF-8; compile-time only)
+
+#*New charclass like patterns
+LNBREAK     LNBREAK,    none      ; generic newline pattern
+
+#*Trie Related
+
+#* Behave the same as A|LIST|OF|WORDS would. The '..C' variants
+#* have inline charclass data (ascii only), the 'C' store it in the
+#* structure.
+# NOTE: the relative order of the TRIE-like regops  is significant
+
+TRIE        TRIE,       trie 1    ; Match many EXACT(F[ALU]?)? at once. flags==type
+TRIEC       TRIE,trie charclass   ; Same as TRIE, but with embedded charclass data
+
+# For start classes, contains an added fail table.
+AHOCORASICK     TRIE,   trie 1    ; Aho Corasick stclass. flags==type
+AHOCORASICKC    TRIE,trie charclass   ; Same as AHOCORASICK, but with embedded charclass data
 
 #*Do nothing types
 
@@ -239,20 +258,6 @@ LOGICAL     LOGICAL,    no        ; Next opcode should set the flag only.
 #*This is not used yet
 RENUM       BRANCHJ,    off 1 . 1 ; Group with independently numbered parens.
 
-#*Trie Related
-
-#* Behave the same as A|LIST|OF|WORDS would. The '..C' variants
-#* have inline charclass data (ascii only), the 'C' store it in the
-#* structure.
-# NOTE: the relative order of the TRIE-like regops  is significant
-
-TRIE        TRIE,       trie 1    ; Match many EXACT(F[ALU]?)? at once. flags==type
-TRIEC       TRIE,trie charclass   ; Same as TRIE, but with embedded charclass data
-
-# For start classes, contains an added fail table.
-AHOCORASICK     TRIE,   trie 1    ; Aho Corasick stclass. flags==type
-AHOCORASICKC    TRIE,trie charclass   ; Same as AHOCORASICK, but with embedded charclass data
-
 #*Regex Subroutines
 GOSUB       GOSUB,      num/ofs 2L    ; recurse to paren arg1 at (signed) ofs arg2
 
@@ -277,10 +282,12 @@ CUTGROUP    VERB,       no-sv 1   ; On failure go to the next alternation in the
 #*Control what to keep in $&.
 KEEPS       KEEPS,      no        ; $& begins here.
 
-#*New charclass like patterns
-LNBREAK     LNBREAK,    none      ; generic newline pattern
+#*Validate that lookbehind IFMATCH and UNLESSM end at the right place
+LOOKBEHIND_END   END,        no        ; Return from lookbehind (IFMATCH/UNLESSM) and validate position
 
-# NEW STUFF SOMEWHERE ABOVE THIS LINE
+# NEW STUFF SOMEWHERE ABOVE THIS LINE.  Stuff that regexec.c: find_byclass()
+# and regrepeat() use should go way above, near LNBREAK to allow a more compact
+# jump table to be generated for their switch() statements
 
 ################################################################################
 

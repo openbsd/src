@@ -155,6 +155,7 @@ sub get_and_sort_perls($)
     my $starting;
     $starting = int_parse_version($opt->{'debug-start'})
                                                        if $opt->{'debug-start'};
+    my $skip_devels = $opt->{'skip-devels'} // 0;
 
     # Uses the opt structure parameter to find the perl versions to use this
     # run, and returns an array with a hash representing blead in the 0th
@@ -177,6 +178,19 @@ sub get_and_sort_perls($)
         my $version = `$perls[$i] -e 'print \$]'`;
         my $file = int_parse_version($version);
         $version = format_version($version);
+
+        if ($skip_devels) {
+            my ($super, $major, $minor) = parse_version($version);
+
+            # If skipping development releases, we still use blead (0th entry).
+            # Devel releases are odd numbered ones 5.6 and above, but use every
+            # release for below 5.6
+            if ($i != 0 && $major >= 6 && $major % 2 != 0) {
+                splice @perls, $i, 1;
+                last if $i >= @perls;
+                redo;
+            }
+        }
 
         # Make this entry a hash with its version, file name, and path
         $perls[$i] = { version =>  $version,

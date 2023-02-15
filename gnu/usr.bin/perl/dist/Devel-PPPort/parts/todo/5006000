@@ -119,6 +119,7 @@ SvIOK_notUV                    # U
 SvIOK_only_UV                  # U
 SvIOK_UV                       # U
 sv_len_utf8                    # U
+sv_len_utf8_nomg               # U
 SvPOK_only_UTF8                # U
 sv_pos_b2u                     # U
 sv_pos_u2b                     # U

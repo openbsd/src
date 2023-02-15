@@ -1,6 +1,8 @@
 #!/usr/bin/env perl
 
 use strict;
+use warnings;
+
 use Test::More tests => 4;
 
 # To find Digest::Dummy
@@ -17,6 +19,6 @@ is $d->digest, "ooo";
 $d = Digest->Dummy;
 is $d->digest, "ooo";
 
-$Digest::MMAP{"Dummy-24"} = [["NotThere"], "NotThereEither", ["Digest::Dummy", 24]];
+$Digest::MMAP{"Dummy-24"} = [ ["NotThere"], "NotThereEither", [ "Digest::Dummy", 24 ] ];
 $d = Digest->new("Dummy-24");
 is $d->digest, "24";

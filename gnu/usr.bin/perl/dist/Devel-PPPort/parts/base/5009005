@@ -181,7 +181,6 @@ QR_PAT_MODS                    # Z added by devel/scanprov
 re_compile                     # U
 RE_DEBUG_COMPILE_FLAGS         # Z added by devel/scanprov
 RE_DEBUG_EXTRA_BUFFERS         # Z added by devel/scanprov
-RE_DEBUG_EXTRA_OFFDEBUG        # Z added by devel/scanprov
 RE_DEBUG_EXTRA_OPTIMISE        # Z added by devel/scanprov
 RE_DEBUG_EXTRA_STACK           # Z added by devel/scanprov
 REF_HE_KEY                     # Z added by devel/scanprov
@@ -207,7 +206,6 @@ reg_scan_name                  # F added by devel/scanprov
 reg_skipcomment                # F added by devel/scanprov
 reg_temp_copy                  # F added by devel/scanprov
 require_tie_mod                # F added by devel/scanprov
-RE_TRACK_PATTERN_OFFSETS       # Z added by devel/scanprov
 RXapif_ALL                     # Z added by devel/scanprov
 RXapif_CLEAR                   # Z added by devel/scanprov
 RXapif_DELETE                  # Z added by devel/scanprov

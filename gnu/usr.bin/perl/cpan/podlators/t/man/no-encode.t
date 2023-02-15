@@ -38,14 +38,18 @@ BEGIN {
 
 # Ensure we don't get warnings by throwing an exception if we see any.  This
 # is overridden below when we enable utf8 and do expect a warning.
-local $SIG{__WARN__} = sub { die "No warnings expected\n" };
-
+local $SIG{__WARN__} = sub { die join("\n",
+                                      "No warnings expected; instead got:",
+                                      @_);
+                           };
 # First, check that everything works properly when utf8 isn't set.  We expect
 # to get accent-mangled ASCII output.  Don't use Test::Podlators, since it
 # wants to import Encode.
 #
 ## no critic (ValuesAndExpressions::ProhibitEscapedCharacters)
-my $pod = "=encoding latin1\n\n=head1 NAME\n\nBeyonc\xE9!";
+my $pod = "=encoding latin1\n\n=head1 NAME\n\nBeyonc"
+        . chr(utf8::unicode_to_native(0xE9))
+        . "!";
 my $parser = Pod::Man->new(utf8 => 0, name => 'test');
 my $output;
 $parser->output_string(\$output);

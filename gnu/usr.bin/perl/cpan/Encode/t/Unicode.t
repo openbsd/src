@@ -1,5 +1,5 @@
 #
-# $Id: Unicode.t,v 2.3 2012/08/05 23:08:49 dankogai Exp $
+# $Id: Unicode.t,v 2.4 2021/07/23 02:26:54 dankogai Exp $
 #
 # This script is written entirely in ASCII, even though quoted literals
 # do include non-BMP unicode characters -- Are you happy, jhi?
@@ -25,7 +25,7 @@ use Encode qw(encode decode find_encoding);
 
 #
 # see
-# http://www.unicode.org/unicode/reports/tr19/
+# http://www.unicode.org/reports/tr19/
 #
 
 my $dankogai   = "\x{5c0f}\x{98fc}\x{3000}\x{5f3e}";

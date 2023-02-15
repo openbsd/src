@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # check that using Math::BigFloat with "with" and "lib" at the same time works
 # broken in versions up to v1.63

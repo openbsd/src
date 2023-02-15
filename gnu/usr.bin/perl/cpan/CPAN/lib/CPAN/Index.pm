@@ -1,7 +1,7 @@
 package CPAN::Index;
 use strict;
 use vars qw($LAST_TIME $DATE_OF_02 $DATE_OF_03 $HAVE_REANIMATED $VERSION);
-$VERSION = "2.12";
+$VERSION = "2.29";
 @CPAN::Index::ISA = qw(CPAN::Debug);
 $LAST_TIME ||= 0;
 $DATE_OF_03 ||= 0;
@@ -137,7 +137,7 @@ sub reanimate_build_dir {
                     ));
       DISTRO: for $i (0..$#candidates) {
             my $dirent = $candidates[$i];
-            my $y = eval {CPAN->_yaml_loadfile(File::Spec->catfile($d,$dirent))};
+            my $y = eval {CPAN->_yaml_loadfile(File::Spec->catfile($d,$dirent), {loadblessed => 1})};
             if ($@) {
                 warn "Error while parsing file '$dirent'; error: '$@'";
                 next DISTRO;

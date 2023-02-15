@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc('../lib');
-    plan( tests => 97 ); # some tests are run in a BEGIN block
+    plan( tests => 111 ); # some tests are run in a BEGIN block
 }
 
 my @c;
@@ -335,16 +335,44 @@ $::testing_caller = 1;
 
 do './op/caller.pl' or die $@;
 
+# GH #15109
+# See that callers within a nested series of 'use's gets the right
+# filenames.
+{
+    local @INC = 'lib/GH_15109/';
+    # Apack use's Bpack which use's Cpack which populates @Cpack::caller
+    # with the file:N of all the callers
+    eval 'use Apack; 1';
+    is($@, "", "GH #15109 - eval");
+    is (scalar(@Cpack::callers), 10, "GH #15109 - callers count");
+    like($Cpack::callers[$_], qr{GH_15109/Bpack.pm:3}, "GH #15109 level $_") for 0..2;
+    like($Cpack::callers[$_], qr{GH_15109/Apack.pm:3}, "GH #15109 level $_") for 3..5;
+    like($Cpack::callers[$_], qr{\(eval \d+\):1}, "GH #15109 level $_") for 6..8;
+    like($Cpack::callers[$_], qr{caller\.t}, "GH #15109 level $_") for 9;
+
+    # GH #15109 followup - the original fix wasn't saving cop_warnings
+    # correctly and this code used to crash or fail valgrind
+
+    my $w = 0;
+    local $SIG{__WARN__} = sub { $w++ };
+    eval q{
+        use warnings;
+        no warnings 'numeric'; # ensure custom cop_warnings
+        use Foo;      # this used to mess up warnings flags
+        BEGIN { my $x = "foo" + 1; } # potential "numeric" warning
+    };
+    is ($@, "", "GH #15109 - eval okay");
+    is ($w, 0, "GH #15109 - warnings restored");
+}
+
 {
     package RT129239;
     BEGIN {
         my ($pkg, $file, $line) = caller;
         ::is $file, 'virtually/op/caller.t', "BEGIN block sees correct caller filename";
         ::is $line, 12345,                   "BEGIN block sees correct caller line";
-        TODO: {
-            local $::TODO = "BEGIN blocks have wrong caller package [perl #129239]";
-            ::is $pkg, 'RT129239',               "BEGIN block sees correct caller package";
-        }
+        ::is $pkg, 'RT129239',               "BEGIN block sees correct caller package";
 #line 12345 "virtually/op/caller.t"
     }
+
 }

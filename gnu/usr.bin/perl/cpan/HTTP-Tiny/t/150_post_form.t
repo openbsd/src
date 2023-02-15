@@ -7,8 +7,8 @@ use open IN => ':raw';
 use File::Basename;
 use Test::More 0.88;
 use lib 't';
-use Util    qw[tmpfile rewind slurp monkey_patch dir_list parse_case
-                  set_socket_source sort_headers $CRLF $LF];
+use Util qw[tmpfile rewind slurp monkey_patch dir_list parse_case
+  clear_socket_source set_socket_source sort_headers $CRLF $LF];
 use HTTP::Tiny;
 BEGIN { monkey_patch() }
 
@@ -38,6 +38,9 @@ for my $file ( dir_list("corpus", qr/^form/ ) ) {
   if ( $case->{datatype}[0] eq 'HASH' ) {
     while ( @params ) {
       my ($key, $value) = splice( @params, 0, 2 );
+      if ($value eq "<undef>") {
+          $value = undef;
+      }
       if ( ref $formdata->{$key} ) {
         push @{$formdata->{$key}}, $value;
       }
@@ -50,7 +53,7 @@ for my $file ( dir_list("corpus", qr/^form/ ) ) {
     }
   }
   else {
-    $formdata = [ @params ];
+    $formdata = [ map { $_ eq "<undef>" ? undef : $_ } @params ];
   }
 
   # setup mocking and test
@@ -58,6 +61,7 @@ for my $file ( dir_list("corpus", qr/^form/ ) ) {
   my $req_fh = tmpfile();
 
   my $http = HTTP::Tiny->new( keep_alive => 0 );
+  clear_socket_source();
   set_socket_source($req_fh, $res_fh);
 
   (my $url_basename = $url) =~ s{.*/}{};

@@ -18,7 +18,29 @@ my $opts = {
 };
 
 my %switches;
-getopts('byj', \%switches);
+getopts('nbyj', \%switches);
+
+=head1 SYNOPSIS
+
+  ./perl -Ilib Porting/makemeta
+
+=head1 OPTIONS
+
+=item B<-y>
+
+Update only META.yml
+
+The default is to update both, META.yml and META.json
+
+=item B<-n>
+
+Don't update any files, exit with 1 if changes would be made
+
+=item B<-b>
+
+No-op, kept for historical purposes
+
+=cut
 
 my @metafiles;
 if ( $switches{y} ) {
@@ -62,6 +84,7 @@ my $distmeta = {
 use lib "Porting";
 use File::Basename qw( dirname );
 use CPAN::Meta;
+use File::Spec;
 
 BEGIN {
     # Get function prototypes
@@ -74,7 +97,10 @@ my @CPAN  = grep { $Modules{$_}{CPAN} } keys %Modules;
 my @files = ('autodoc.pl', 'lib/unicore/mktables', 'TestInit.pm',
              'Porting/Maintainers.pm', 'Porting/perldelta_template.pod',
              map { get_module_files($_) } @CPAN);
-my @dirs  = ('cpan', 'win32', 'lib/perl5db', grep { -d $_ && $_  !~ /^cpan/ } map { get_module_pat($_) } @CPAN);
+my @extt = map { my $t = File::Spec->catdir($_, "t");
+                 -d $t ? ( $_ . "t" ) : () }
+  grep { /^ext\b/ } split ' ', $Modules{_PERLLIB}{FILES};
+my @dirs  = ('cpan', 'win32', 'lib/perl5db', @extt, grep { -d $_ && $_  !~ /^cpan/ } map { get_module_pat($_) } @CPAN);
 
 my %dirs;
 @dirs{@dirs} = ();
@@ -103,9 +129,19 @@ $distmeta->{no_index}->{directory} = \@dirs;
 
 my $meta = CPAN::Meta->create( $distmeta );
 foreach my $file ( @metafiles ) {
-  my $fh = open_new($file);
-  print $fh $meta->as_string( $opts->{$file} );
-  close_and_rename($fh);
+  my $new = $meta->as_string( $opts->{$file} );
+  if( $switches{n} ) {
+    open my $fh, '<:raw', $file;
+    local $/;
+    my $old = <$fh>;
+    if( $old ne $new ) {
+      exit 1;
+    }
+  } else {
+    my $fh = open_new($file);
+    print $fh $new;
+    close_and_rename($fh);
+  }
 }
 exit 0;
 

@@ -2,13 +2,15 @@
 
 # This file should really be extracted from a .PL file
 
+$| = 1;
 use strict;
 use Config;		# for config options in the makefile
 use File::Path qw(remove_tree);
 use File::Spec::Functions qw(rel2abs no_upwards);
 use Getopt::Long;	# for command-line parsing
 use Cwd;
-use Pod::Html 1.23 qw(anchorify relativize_url);
+use Pod::Html 1.32;
+use Pod::Html::Util 1.32 qw(anchorify relativize_url);
 
 =head1 NAME
 
@@ -44,7 +46,7 @@ Default is current directory.
 =item B<--podpath> POD search path
 
 The list of directories to search for .pod and .pm files to be converted.
-Default is 'podroot/.'.
+Default is 'podroot/lib'.
 
 =item B<--recurse> recurse on subdirectories
 
@@ -120,7 +122,7 @@ Usage: $0 --help --podpath=<name>:...:<name> --podroot=<name>
 
     --help      - this message
     --podpath   - colon-separated list of directories containing .pod and
-                  .pm files to be converted (. by default).
+                  .pm files to be converted ('lib/' by default).
     --podroot   - filesystem base directory from which all relative paths in
                   podpath stem (default is .).
     --htmldir   - directory to store resulting html files in relative
@@ -145,7 +147,7 @@ END_OF_USAGE
 my (@podpath, $podroot, $htmldir, $htmlroot, $recurse, @splithead,
     @splititem, $splitpod, $verbose, $pod2html, @ignore);
 
-@podpath = ( "." );	# colon-separated list of directories containing .pod
+@podpath = ( "lib" );	# colon-separated list of directories containing .pod
 			# and .pm files to be converted.
 $podroot = ".";		# assume the pods we want are here
 $htmldir = "";		# nothing for now...

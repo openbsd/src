@@ -1,5 +1,10 @@
 #!/usr/bin/perl -w
 
+use strict;
+use warnings;
+
+my $Testfile;
+
 BEGIN {
     unshift @INC, 't/lib/';
 }

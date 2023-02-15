@@ -11,7 +11,7 @@ BEGIN { *warnif = \&warnings::warnif }
 
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
-our $VERSION = '1.09';
+our $VERSION = '1.12';
 
 our @fields;
 our ( $st_dev, $st_ino, $st_mode,
@@ -83,7 +83,7 @@ sub _ingroup {
 # component (at which point we might as well just call Perl_cando and
 # have done with it).
     
-if (grep $^O eq $_, qw/os2 MSWin32 dos/) {
+if (grep $^O eq $_, qw/os2 MSWin32/) {
 
     # from doio.c
     *cando = sub { ($_[0][2] & $_[1]) ? 1 : "" };
@@ -234,7 +234,7 @@ File::stat - by-name interface to Perl's built-in stat() functions
 
  use File::stat;
  $st = stat($file) or die "No $file: $!";
- if ( ($st->mode & 0111) && $st->nlink > 1) ) {
+ if ( ($st->mode & 0111) && ($st->nlink > 1) ) {
      print "$file is executable with lotsa links\n";
  } 
 

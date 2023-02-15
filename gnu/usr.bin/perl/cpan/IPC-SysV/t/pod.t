@@ -8,21 +8,23 @@
 #
 ################################################################################
 
+use strict;
+use warnings;
+
+our %Config;
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     @INC = '../lib' if -d '../lib' && -d '../ext';
   }
 
-  require Test::More; import Test::More;
-  require Config; import Config;
+  require Test::More; Test::More->import;
+  require Config; Config->import;
 
   if ($ENV{'PERL_CORE'} && $Config{'extensions'} !~ m[\bIPC/SysV\b]) {
     plan(skip_all => 'IPC::SysV was not built');
   }
 }
-
-use strict;
 
 my @pods;
 
@@ -49,12 +51,12 @@ eval {
   require Test::Pod;
   $Test::Pod::VERSION >= 0.95
       or die "Test::Pod version only $Test::Pod::VERSION";
-  import Test::Pod tests => scalar @pods;
+  Test::Pod->import( tests => scalar @pods );
 };
 
 if ($@) {
   require Test::More;
-  import Test::More skip_all => "testing pod requires Test::Pod";
+  Test::More->import( skip_all => "testing pod requires Test::Pod" );
 }
 else {
   for my $pod (@pods) {

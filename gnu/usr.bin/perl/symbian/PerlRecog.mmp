@@ -1,9 +1,0 @@
-TARGET		PerlRecog.mdl
-TARGETTYPE	mdl
-UID		0x10003A19 0x102015F7
-TARGETPATH	\system\recogs
-SOURCE		PerlRecog.cpp
-USERINCLUDE	.
-SYSTEMINCLUDE	\epoc32\include
-LIBRARY		euser.lib efsrv.lib apmime.lib
-

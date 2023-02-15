@@ -413,9 +413,8 @@ like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
      qr/sub f\s*\(\$\)\s*\{\s*\}/,
     'predeclared prototyped subs';
 like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
-           prog => 'use Scalar::Util q-weaken-;
-                    sub f($);
-                    BEGIN { weaken($_=\$::{f}) }'),
+           prog => 'sub f($);
+                    BEGIN { use builtin q-weaken-; weaken($_=\$::{f}) }'),
      qr/sub f\s*\(\$\)\s*;/,
     'prototyped stub with weak reference to the stash entry';
 like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
@@ -535,7 +534,7 @@ like runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
 
 is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path ],
              prog => 'BEGIN { $::{f}=\!0 }'),
-   "sub BEGIN {\n    \$main::{'f'} = \\1;\n}\n",
+   "sub BEGIN {\n    \$main::{'f'} = \\!0;\n}\n",
    '&PL_sv_yes constant (used to croak)';
 
 is runperl(stderr => 1, switches => [ '-MO=-qq,Deparse', $path, '-T' ],
@@ -1496,6 +1495,49 @@ tr/\000-\375/A-C/cds;
 tr/\000-\375/A-D/cds;
 tr/\000-\375/A-I/cds;
 ####
+# tr/// with all the flags: empty replacement
+tr/\x{101}-\x{106}//;
+tr/\x{101}-\x{106}//c;
+tr/\x{101}-\x{106}//d;
+tr/\x{101}-\x{106}//s;
+tr/\x{101}-\x{106}//cd;
+tr/\x{101}-\x{106}//ds;
+tr/\x{101}-\x{106}//cs;
+tr/\x{101}-\x{106}//cds;
+tr/\x{101}-\x{106}//r;
+####
+# tr/// with all the flags: short replacement
+tr/\x{101}-\x{106}/\x{111}/;
+tr/\x{101}-\x{106}/\x{111}/c;
+tr/\x{101}-\x{106}/\x{111}/d;
+tr/\x{101}-\x{106}/\x{111}/s;
+tr/\x{101}-\x{106}/\x{111}/cd;
+tr/\x{101}-\x{106}/\x{111}/ds;
+tr/\x{101}-\x{106}/\x{111}/cs;
+tr/\x{101}-\x{106}/\x{111}/cds;
+tr/\x{101}-\x{106}/\x{111}/r;
+####
+# tr/// with all the flags: equal length replacement
+tr/\x{101}-\x{106}/\x{111}-\x{116}/;
+tr/\x{101}-\x{106}/\x{111}-\x{116}/c;
+tr/\x{101}-\x{106}/\x{111}-\x{116}/s;
+tr/\x{101}-\x{106}/\x{111}-\x{116}/cs;
+tr/\x{101}-\x{106}/\x{111}-\x{116}/r;
+####
+# tr across 255/256 boundary, complemented
+tr/\cA-\x{100}/AB/c;
+tr/\cA-\x{100}/A-C/c;
+tr/\cA-\x{100}/A-D/c;
+tr/\cA-\x{100}/A-I/c;
+tr/\cA-\x{100}/AB/cd;
+tr/\cA-\x{100}/A-C/cd;
+tr/\cA-\x{100}/A-D/cd;
+tr/\cA-\x{100}/A-I/cd;
+tr/\cA-\x{100}/AB/cds;
+tr/\cA-\x{100}/A-C/cds;
+tr/\cA-\x{100}/A-D/cds;
+tr/\cA-\x{100}/A-I/cds;
+####
 # [perl #119807] s//\(3)/ge should not warn when deparsed (\3 warns)
 s/foo/\(3);/eg;
 ####
@@ -2059,7 +2101,7 @@ no warnings "experimental::lexical_subs";
 my sub f {}
 print f();
 >>>>
-BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55"}
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55\x55\x55"}
 my sub f {
     
 }
@@ -2072,7 +2114,7 @@ no warnings 'experimental::lexical_subs';
 state sub f {}
 print f();
 >>>>
-BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55"}
+BEGIN {${^WARNING_BITS} = "\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x55\x54\x55\x55\x55\x55\x55\x55\x55"}
 state sub f {
     
 }
@@ -2485,6 +2527,18 @@ foreach \%_ ({5, 6}, {7, 8}) {
 }
 foreach \&a (sub { 9; } , sub { 10; } ) {
     die;
+}
+####
+# CONTEXT no warnings 'experimental::for_list';
+my %hash;
+foreach my ($key, $value) (%hash) {
+    study $_;
+}
+####
+# CONTEXT no warnings 'experimental::for_list';
+my @ducks;
+foreach my ($tick, $trick, $track) (@ducks) {
+    study $_;
 }
 ####
 # join $foo, pos
@@ -3119,3 +3173,60 @@ $a = int($c == $d != $e);
 $a = $b < ($c == $d != $e);
 $a = $b == ($c == $d != $e);
 $a = $b & $c == $d != $e;
+####
+# try/catch
+# CONTEXT use feature 'try'; no warnings 'experimental::try';
+try {
+    FIRST();
+}
+catch($var) {
+    SECOND();
+}
+####
+# CONTEXT use feature 'try'; no warnings 'experimental::try';
+try {
+    FIRST();
+}
+catch($var) {
+    my $x;
+    SECOND();
+}
+####
+# CONTEXT use feature 'try'; no warnings 'experimental::try';
+try {
+    FIRST();
+}
+catch($var) {
+    SECOND();
+}
+finally {
+    THIRD();
+}
+####
+# defer blocks
+# CONTEXT use feature "defer"; no warnings 'experimental::defer';
+defer {
+    $a = 123;
+}
+####
+# builtin:: functions
+# CONTEXT no warnings 'experimental::builtin';
+my $x;
+$x = builtin::is_bool(undef);
+$x = builtin::is_weak(undef);
+builtin::weaken($x);
+builtin::unweaken($x);
+$x = builtin::blessed(undef);
+$x = builtin::refaddr(undef);
+$x = builtin::reftype(undef);
+$x = builtin::ceil($x);
+$x = builtin::floor($x);
+####
+# boolean true preserved
+my $x = !0;
+####
+# boolean false preserved
+my $x = !1;
+####
+# const NV: NV-ness preserved
+my(@x) = (-2.0, -1.0, -0.0, 0.0, 1.0, 2.0);

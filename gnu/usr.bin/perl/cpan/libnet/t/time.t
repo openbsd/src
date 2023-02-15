@@ -5,22 +5,24 @@ use 5.008001;
 use strict;
 use warnings;
 
+use Test::More;
+
 BEGIN {
     if (!eval { require Socket }) {
-        print "1..0 # no Socket\n"; exit 0;
+        plan skip_all => "no Socket";
     }
-    if (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
-        print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
+    elsif (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
+        plan skip_all => "EBCDIC but no Convert::EBCDIC";
     }
+    else {
+        plan tests => 12;
+    }
+
     $INC{'IO/Socket.pm'} = 1;
     $INC{'IO/Select.pm'} = 1;
     $INC{'IO/Socket/INET.pm'} = 1;
 }
 
-(my $libnet_t = __FILE__) =~ s/time.t/libnet_t.pl/;
-require $libnet_t;
-
-print "1..12\n";
 # cannot use(), otherwise it will use IO::Socket and IO::Select
 eval{ require Net::Time; };
 ok( !$@, 'should be able to require() Net::Time safely' );

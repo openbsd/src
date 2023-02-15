@@ -6,6 +6,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Pod::Simple::Search;
 use Test;
 BEGIN { plan tests => 5 }

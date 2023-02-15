@@ -117,7 +117,7 @@ Perl_form_alien_digit_msg(pTHX_
 
         /* It also isn't a UTF-8 invariant character, so no display shortcuts
          * are available.  Use \\x{...} */
-	Perl_sv_setpvf(aTHX_ display_char, "\\x{%02x}", *first_bad);
+        Perl_sv_setpvf(aTHX_ display_char, "\\x{%02x}", *first_bad);
     }
 
     /* Ready to start building the message */
@@ -267,8 +267,10 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
  *          UV_MAX, which is normally illegal, reserved for internal use.
  *	UTF is true iff the string *s is encoded in UTF-8.
  */
-    char* e;
+    char * e;
+    char * rbrace;
     STRLEN numbers_len;
+    STRLEN trailing_blanks_len = 0;
     I32 flags = PERL_SCAN_ALLOW_UNDERSCORES
               | PERL_SCAN_DISALLOW_PREFIX
               | PERL_SCAN_SILENT_NON_PORTABLE
@@ -286,27 +288,44 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
     (*s)++;
 
     if (send <= *s || **s != '{') {
-	*message = "Missing braces on \\o{}";
-	return FALSE;
+        *message = "Missing braces on \\o{}";
+        return FALSE;
     }
 
-    e = (char *) memchr(*s, '}', send - *s);
-    if (!e) {
+    rbrace = (char *) memchr(*s, '}', send - *s);
+    if (!rbrace) {
         (*s)++;  /* Move past the '{' */
-        while (isOCTAL(**s)) { /* Position beyond the legal digits */
+
+        /* Position beyond the legal digits and blanks */
+        while (*s < send && isBLANK(**s)) {
             (*s)++;
         }
+
+        while (*s < send && isOCTAL(**s)) {
+            (*s)++;
+        }
+
         *message = "Missing right brace on \\o{}";
-	return FALSE;
+        return FALSE;
     }
 
-    (*s)++;    /* Point to expected first digit (could be first byte of utf8
-                  sequence if not a digit) */
+    /* Point to expected first digit (could be first byte of utf8 sequence if
+     * not a digit) */
+    (*s)++;
+    while (isBLANK(**s)) {
+        (*s)++;
+    }
+
+    e = rbrace;
+    while (*s < e && isBLANK(*(e - 1))) {
+        e--;
+    }
+
     numbers_len = e - *s;
     if (numbers_len == 0) {
         (*s)++;    /* Move past the '}' */
-	*message = "Empty \\o{}";
-	return FALSE;
+        *message = "Empty \\o{}";
+        return FALSE;
     }
 
     *uv = grok_oct(*s, &numbers_len, &flags, NULL);
@@ -314,13 +333,18 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
                  || (! allow_UV_MAX && *uv == UV_MAX)))
     {
         *message = form_cp_too_large_msg(8, *s, numbers_len, 0);
-        *s = e + 1;
+        *s = rbrace + 1;
         return FALSE;
+    }
+
+    while (isBLANK(**s)) {
+        trailing_blanks_len++;
+        (*s)++;
     }
 
     /* Note that if has non-octal, will ignore everything starting with that up
      * to the '}' */
-    if (numbers_len != (STRLEN) (e - *s)) {
+    if (numbers_len + trailing_blanks_len != (STRLEN) (e - *s)) {
         *s += numbers_len;
         if (strict) {
             *s += (UTF) ? UTF8_SAFE_SKIP(*s, send) : 1;
@@ -342,7 +366,7 @@ Perl_grok_bslash_o(pTHX_ char **s, const char * const send, UV *uv,
     }
 
     /* Return past the '}' */
-    *s = e + 1;
+    *s = rbrace + 1;
 
     return TRUE;
 }
@@ -391,7 +415,9 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
  *	UTF is true iff the string *s is encoded in UTF-8.
  */
     char* e;
+    char * rbrace;
     STRLEN numbers_len;
+    STRLEN trailing_blanks_len = 0;
     I32 flags = PERL_SCAN_DISALLOW_PREFIX
               | PERL_SCAN_SILENT_ILLDIGIT
               | PERL_SCAN_NOTIFY_ILLDIGIT
@@ -423,8 +449,8 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
     if (**s != '{') {
         numbers_len = (strict) ? 3 : 2;
 
-	*uv = grok_hex(*s, &numbers_len, &flags, NULL);
-	*s += numbers_len;
+        *uv = grok_hex(*s, &numbers_len, &flags, NULL);
+        *s += numbers_len;
 
         if (numbers_len != 2 && (strict || (flags & PERL_SCAN_NOTIFY_ILLDIGIT))) {
             if (numbers_len == 3) { /* numbers_len 3 only happens with strict */
@@ -449,21 +475,37 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
                 }
             }
         }
-	return TRUE;
+        return TRUE;
     }
 
-    e = (char *) memchr(*s, '}', send - *s);
-    if (!e) {
+    rbrace = (char *) memchr(*s, '}', send - *s);
+    if (!rbrace) {
         (*s)++;  /* Move past the '{' */
-        while (*s < send && isXDIGIT(**s)) { /* Position beyond legal digits */
+
+        /* Position beyond legal blanks and digits */
+        while (*s < send && isBLANK(**s)) {
             (*s)++;
         }
-	*message = "Missing right brace on \\x{}";
-	return FALSE;
+
+        while (*s < send && isXDIGIT(**s)) {
+            (*s)++;
+        }
+
+        *message = "Missing right brace on \\x{}";
+        return FALSE;
     }
 
     (*s)++;    /* Point to expected first digit (could be first byte of utf8
                   sequence if not a digit) */
+    while (isBLANK(**s)) {
+        (*s)++;
+    }
+
+    e = rbrace;
+    while (*s < e && isBLANK(*(e - 1))) {
+        e--;
+    }
+
     numbers_len = e - *s;
     if (numbers_len == 0) {
         if (strict) {
@@ -471,7 +513,7 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
             *message = "Empty \\x{}";
             return FALSE;
         }
-        *s = e + 1;
+        *s = rbrace + 1;
         *uv = 0;
         return TRUE;
     }
@@ -487,7 +529,12 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
         return FALSE;
     }
 
-    if (numbers_len != (STRLEN) (e - *s)) {
+    while (isBLANK(**s)) {
+        trailing_blanks_len++;
+        (*s)++;
+    }
+
+    if (numbers_len + trailing_blanks_len != (STRLEN) (e - *s)) {
         *s += numbers_len;
         if (strict) {
             *s += (UTF) ? UTF8_SAFE_SKIP(*s, send) : 1;
@@ -509,7 +556,7 @@ Perl_grok_bslash_x(pTHX_ char ** s, const char * const send, UV *uv,
     }
 
     /* Return past the '}' */
-    *s = e + 1;
+    *s = rbrace + 1;
 
     return TRUE;
 }

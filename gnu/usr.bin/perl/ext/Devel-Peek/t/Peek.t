@@ -8,14 +8,24 @@ BEGIN {
     }
     {
     package t;
-       my $core = !!$ENV{PERL_CORE};
-       require($core ? '../../t/test.pl' : './t/test.pl');
+        my $core = !!$ENV{PERL_CORE};
+        if ($core) {
+            require '../../t/test.pl';
+            require '../../t/charset_tools.pl';
+        }
+        else {
+            require './t/test.pl';
+            require './t/charset_tools.pl';
+        }
     }
 }
 
 use Test::More;
 
-use Devel::Peek;
+BEGIN {
+    use_ok 'Devel::Peek';
+}
+require Tie::Hash;
 
 our $DEBUG = 0;
 open(SAVERR, ">&STDERR") or die "Can't dup STDERR: $!";
@@ -38,9 +48,11 @@ sub do_test {
     my $pattern = $_[2];
     my $do_eval = $_[5];
     if (open(OUT,'>', "peek$$")) {
-	open(STDERR, ">&OUT") or die "Can't dup OUT: $!";
+        my $setup_stderr = sub { open(STDERR, ">&OUT") or die "Can't dup OUT: $!" };
         if ($do_eval) {
             my $sub = eval "sub { Dump $_[1] }";
+            die $@ if $@;
+            $setup_stderr->();
             $sub->();
             print STDERR "*****\n";
             # second dump to compare with the first to make sure nothing
@@ -48,6 +60,7 @@ sub do_test {
             $sub->();
         }
         else {
+            $setup_stderr->();
             Dump($_[1]);
             print STDERR "*****\n";
             # second dump to compare with the first to make sure nothing
@@ -92,6 +105,11 @@ sub do_test {
 		if $Config{ccflags} =~
 			/-DPERL_(?:OLD_COPY_ON_WRITE|NO_COW)\b/
 			    || $] < 5.019003;
+            if ($Config::Config{ccflags} =~ /-DNODEFAULT_SHAREKEYS\b/) {
+                $pattern =~ s/,SHAREKEYS\b//g;
+                $pattern =~ s/\bSHAREKEYS,//g;
+                $pattern =~ s/\bSHAREKEYS\b//g;
+            }
 	    print $pattern, "\n" if $DEBUG;
 	    my ($dump, $dump2) = split m/\*\*\*\*\*\n/, scalar <IN>;
 	    print $dump, "\n"    if $DEBUG;
@@ -234,6 +252,30 @@ do_test('reference to scalar',
     COW_REFCNT = 1
 ');
 
+do_test('immediate boolean',
+        !!0,
+'SV = PVNV\\($ADDR\\) at $ADDR
+  REFCNT = \d+
+  FLAGS = \\(.*\\)
+  IV = 0
+  NV = 0
+  PV = $ADDR "" \[BOOL PL_No\]
+  CUR = 0
+  LEN = 0
+') if $] >= 5.035004;
+
+do_test('assignment of boolean',
+        do { my $tmp = !!1 },
+'SV = PVNV\\($ADDR\\) at $ADDR
+  REFCNT = \d+
+  FLAGS = \\(.*\\)
+  IV = 1
+  NV = 1
+  PV = $ADDR "1" \[BOOL PL_Yes\]
+  CUR = 1
+  LEN = 0
+') if $] >= 5.035004;
+
 my $c_pattern;
 if ($type eq 'N') {
   $c_pattern = '
@@ -342,6 +384,8 @@ do_test('reference to named subroutine without prototype',
        \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$repeat_todo"
        \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$pattern"
        \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$do_eval"
+\s+\\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$setup_stderr"
+\s+\\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "&"
       \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$sub"
       \\d+\\. $ADDR<\\d+> FAKE "\\$DEBUG" flags=0x0 index=0
       \\d+\\. $ADDR<\\d+> \\(\\d+,\\d+\\) "\\$dump"
@@ -483,33 +527,33 @@ do_test('typeglob',
     FLAGS = $ADDR				# $] < 5.021004
     EGV = $ADDR\\t"a"');
 
-if (ord('A') == 193) {
-do_test('string with Unicode',
-	chr(256).chr(0).chr(512),
-'SV = PV\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\((?:PADTMP,)?POK,READONLY,pPOK,UTF8\\)	# $] < 5.019003
-  FLAGS = \\((?:PADTMP,)?POK,(?:IsCOW,)?pPOK,UTF8\\)	# $] >=5.019003
-  PV = $ADDR "\\\214\\\101\\\0\\\235\\\101"\\\0 \[UTF8 "\\\x\{100\}\\\x\{0\}\\\x\{200\}"\]
-  CUR = 5
-  LEN = \\d+
-  COW_REFCNT = 1					# $] < 5.019007
-');
-} else {
-do_test('string with Unicode',
-	chr(256).chr(0).chr(512),
-'SV = PV\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\((?:PADTMP,)?POK,READONLY,pPOK,UTF8\\)	# $] < 5.019003
-  FLAGS = \\((?:PADTMP,)?POK,(?:IsCOW,)?pPOK,UTF8\\)	# $] >=5.019003
-  PV = $ADDR "\\\304\\\200\\\0\\\310\\\200"\\\0 \[UTF8 "\\\x\{100\}\\\x\{0\}\\\x\{200\}"\]
-  CUR = 5
-  LEN = \\d+
-  COW_REFCNT = 1					# $] < 5.019007
-');
+# Get native character set representations for these code points
+my $cp100_bytes = t::byte_utf8a_to_utf8n("\xC4\x80");
+my $cp0_bytes =   t::byte_utf8a_to_utf8n("\x00");
+my $cp200_bytes = t::byte_utf8a_to_utf8n("\xC8\x80");
+
+# Convert to e.g., \\\\xC4
+my $prefix = '\\\\x';
+foreach my $ref (\$cp100_bytes, \$cp0_bytes, \$cp200_bytes) {
+    my $revised = "";
+    $$ref =~ s/(.)/sprintf("$prefix%02X", ord $1)/eg;
 }
 
-if (ord('A') == 193) {
+do_test('string with Unicode',
+	chr(256).chr(0).chr(512),
+'SV = PV\\($ADDR\\) at $ADDR
+  REFCNT = 1
+  FLAGS = \\((?:PADTMP,)?POK,READONLY,pPOK,UTF8\\)	# $] < 5.019003
+  FLAGS = \\((?:PADTMP,)?POK,(?:IsCOW,)?pPOK,UTF8\\)	# $] >=5.019003
+  PV = $ADDR "' . $cp100_bytes
+                . $cp0_bytes
+                . $cp200_bytes
+                . '"\\\0 \[UTF8 "\\\x\{100\}\\\x\{0\}\\\x\{200\}"\]
+  CUR = 5
+  LEN = \\d+
+  COW_REFCNT = 1					# $] < 5.019007
+');
+
 do_test('reference to hash containing Unicode',
 	{chr(256)=>chr(512)},
 'SV = $RV\\($ADDR\\) at $ADDR
@@ -524,11 +568,11 @@ do_test('reference to hash containing Unicode',
     KEYS = 1
     FILL = 1
     MAX = 7
-    Elt "\\\214\\\101" \[UTF8 "\\\x\{100\}"\] HASH = $ADDR
+    Elt "' . $cp100_bytes . '" \[UTF8 "\\\x\{100\}"\] HASH = $ADDR
     SV = PV\\($ADDR\\) at $ADDR
       REFCNT = 1
       FLAGS = \\(POK,(?:IsCOW,)?pPOK,UTF8\\)
-      PV = $ADDR "\\\235\\\101"\\\0 \[UTF8 "\\\x\{200\}"\]
+      PV = $ADDR "' . $cp200_bytes . '"\\\0 \[UTF8 "\\\x\{200\}"\]
       CUR = 2
       LEN = \\d+
       COW_REFCNT = 1				# $] < 5.019007
@@ -536,34 +580,6 @@ do_test('reference to hash containing Unicode',
 	$] >= 5.015
 	    ? undef
 	    : 'The hash iterator used in dump.c sets the OOK flag');
-} else {
-do_test('reference to hash containing Unicode',
-	{chr(256)=>chr(512)},
-'SV = $RV\\($ADDR\\) at $ADDR
-  REFCNT = 1
-  FLAGS = \\(ROK\\)
-  RV = $ADDR
-  SV = PVHV\\($ADDR\\) at $ADDR
-    REFCNT = [12]
-    FLAGS = \\(SHAREKEYS,HASKFLAGS\\)
-    ARRAY = $ADDR  \\(0:7, 1:1\\)
-    hash quality = 100.0%
-    KEYS = 1
-    FILL = 1
-    MAX = 7
-    Elt "\\\304\\\200" \[UTF8 "\\\x\{100\}"\] HASH = $ADDR
-    SV = PV\\($ADDR\\) at $ADDR
-      REFCNT = 1
-      FLAGS = \\(POK,(?:IsCOW,)?pPOK,UTF8\\)
-      PV = $ADDR "\\\310\\\200"\\\0 \[UTF8 "\\\x\{200\}"\]
-      CUR = 2
-      LEN = \\d+
-      COW_REFCNT = 1				# $] < 5.019007
-',      '',
-	$] >= 5.015
-	    ? undef
-	    : 'The hash iterator used in dump.c sets the OOK flag');
-}
 
 my $x="";
 $x=~/.??/g;
@@ -588,7 +604,7 @@ do_test('scalar with pos magic',
 ');
 
 #
-# TAINTEDDIR is not set on: OS2, AMIGAOS, WIN32, MSDOS
+# TAINTEDDIR is not set on: OS2, AMIGAOS, WIN32
 # environment variables may be invisibly case-forced, hence the (?i:PATH)
 # C<scalar(@ARGV)> is turned into an IV on VMS hence the (?:IV)?
 # Perl 5.18 ensures all env vars end up as strings only, hence the (?:,pIOK)?
@@ -982,6 +998,35 @@ SV = PVHV\($ADDR\) at $ADDR
     REFCNT = 1
     FLAGS = \(IOK,pIOK\)
     IV = 2
+HASH
+
+tie %tied, "Tie::StdHash";
+do_test('Dump %tied', '%tied', <<'HASH', "", undef, 1);
+SV = PVHV\($ADDR\) at $ADDR
+  REFCNT = 1
+  FLAGS = \(RMG,SHAREKEYS\)
+  MAGIC = $ADDR
+    MG_VIRTUAL = &PL_vtbl_pack
+    MG_TYPE = PERL_MAGIC_tied\(P\)
+    MG_FLAGS = 0x02
+      REFCOUNTED
+    MG_OBJ = $ADDR
+    SV = $RV\($ADDR\) at $ADDR
+      REFCNT = 1
+      FLAGS = \(ROK\)
+      RV = $ADDR
+      SV = PVHV\($ADDR\) at $ADDR
+        REFCNT = 1
+        FLAGS = \(OBJECT,SHAREKEYS\)
+        STASH = $ADDR	"Tie::StdHash"
+        ARRAY = 0x0
+        KEYS = 0
+        FILL = 0
+        MAX = 7
+  ARRAY = 0x0
+  KEYS = 0
+  FILL = 0
+  MAX = 7
 HASH
 
 $_ = "hello";
@@ -1503,4 +1548,58 @@ EODUMP
     $out =~ s/\(0x[0-9a-f]{3,}\)/(0xNNN)/g;
     is $out, $e, "DumpProg() has no 'Attempt to free X prematurely' warning";
 }
+
+{
+    my $epsilon_p = 1.0;
+    my $epsilon_n = 1.0;
+    if($Config{nvtype} eq 'long double' &&
+       $Config{longdblkind} >= 5 && $Config{longdblkind} <= 8) {
+      # For this (doubledouble) kind of NV we need to use a separate
+      # method for assigning values to $epsilon_p and $epsilon_n. 
+      # Theoretically, $epsilon_p should be set to 2 ** -107, and
+      # $epsilon_n to 2 ** -110. However, a known possible bug in "%.33g"
+      # formatting will render those values inaccurately, thereby
+      # incorrectly influencing the results of the "NV 1.0 + epsilon" 
+      # and "NV 1.0 - epsilon" tests. So we test for the presence of
+      # the bug, and set both of those "epsilon" variables to
+      # 2 ** -105 if the bug is detected.
+      # See the discussion at https://github.com/Perl/perl5/issues/19585.
+
+      if( sprintf("%.33g", 1.0 + (2 ** -108)) == 1
+          &&
+          sprintf("%.33g", 1.0 + (2 ** -107)) > 1 ) {
+
+          $epsilon_p = 2 ** -107;
+      }
+      else { $epsilon_p = 2 ** -105 } # Avoids the formatting bug.
+
+      if( sprintf("%.33g", 1.0 - (2 ** -111)) == 1
+          &&
+          sprintf("%.33g", 1.0 - (2 ** -110)) < 1 ) {
+
+          $epsilon_n = 2 ** -110;
+      }
+      else { $epsilon_n = 2 ** -105 } # Avoids the formatting bug.
+
+    }
+    else {
+        $epsilon_p /= 2 while 1.0 != 1.0 + $epsilon_p / 2;
+        $epsilon_n /= 2 while 1.0 != 1.0 - $epsilon_n / 2;
+    }
+
+    my $head = 'SV = NV\($ADDR\) at $ADDR
+(?:.+
+)*  ';
+    my $tail = '
+(?:.+
+)*';
+
+    do_test('NV 1.0', 1.0,
+            $head . 'NV = 1' . $tail);
+    do_test('NV 1.0 + epsilon', 1.0 + $epsilon_p,
+            $head . 'NV = 1\.00000000\d+' . $tail);
+    do_test('NV 1.0 - epsilon', 1.0 - $epsilon_n,
+            $head . 'NV = 0\.99999999\d+' . $tail);
+}
+
 done_testing();

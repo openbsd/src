@@ -1,6 +1,6 @@
-# ArabicShaping-13.0.0.txt
-# Date: 2020-01-31, 23:55:00 GMT [KW, RP]
-# © 2020 Unicode®, Inc.
+# ArabicShaping-14.0.0.txt
+# Date: 2021-05-21, 01:54:00 GMT [KW, RP]
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -13,11 +13,12 @@
 # exemplified in Tables 9-3, 9-8, 9-9, 9-10, 9-14, 9-15, 9-16, 9-19,
 # 9-20, 10-4, 10-5, 10-6, 10-7, and 19-5 of The Unicode Standard core
 # specification. This file also defines Joining_Type values for
-# Mongolian, Phags-pa, Psalter Pahlavi, Sogdian, Chorasmian, and Adlam positional shaping,
+# Mongolian, Phags-pa, Psalter Pahlavi, Sogdian, Old Uyghur, Chorasmian, 
+# and Adlam positional shaping,
 # and Joining_Type and Joining_Group values for Hanifi Rohingya positional shaping,
 # which are not listed in tables in the standard.
 #
-# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.4, 14.3, 14.10, 16.14, 19.4, and 19.9
+# See Sections 9.2, 9.3, 9.5, 10.5, 10.6, 13.5, 14.4, 14.10, 14.11, 16.14, 19.4, and 19.9
 # of The Unicode Standard core specification for more information.
 #
 # Each line contains four fields, separated by a semicolon.
@@ -44,7 +45,7 @@
 # Note that for cursive joining scripts which are typically rendered
 # top-to-bottom, rather than right-to-left, Joining_Type=L conventionally
 # refers to bottom joining, and Joining_Type=R conventionally refers
-# to top joining. See Section 14.3, Phags-pa for more information on the
+# to top joining. See Section 14.4, Phags-pa for more information on the
 # interpretation of joining types in vertical layout.
 #
 # Field 3: defines the joining group (property name: Joining_Group)
@@ -79,7 +80,7 @@
 # joining group values will be defined only if an explicit proposal
 # to define those values exactly has been approved by the UTC. This
 # is the convention exemplified by the N'Ko, Mandaic, Mongolian,
-# Phags-pa, Psalter Pahlavi, Sogdian, Chorasmian, and Adlam scripts.
+# Phags-pa, Psalter Pahlavi, Sogdian, Old Uyghur, Chorasmian, and Adlam scripts.
 # Only the Arabic, Manichaean, and Syriac scripts currently have
 # explicit joining group values defined for all characters, including
 # those which have only a single character in a particular Joining_Group
@@ -162,7 +163,7 @@
 0674; HIGH HAMZA; U; No_Joining_Group
 0675; HIGH HAMZA ALEF; R; ALEF
 0676; HIGH HAMZA WAW; R; WAW
-0677; HIGH HAMZA WAW WITH DAMMA ABOVE; R; WAW
+0677; HIGH HAMZA WAW WITH COMMA ABOVE; R; WAW
 0678; HIGH HAMZA DOTLESS YEH; D; YEH
 0679; DOTLESS BEH WITH TAH ABOVE; D; BEH
 067A; DOTLESS BEH WITH VERTICAL 2 DOTS ABOVE; D; BEH
@@ -240,9 +241,9 @@
 06C2; HEH GOAL WITH HAMZA ABOVE; D; HEH GOAL
 06C3; TEH MARBUTA GOAL; R; TEH MARBUTA GOAL
 06C4; WAW WITH ATTACHED RING WITHIN; R; WAW
-06C5; WAW WITH BAR; R; WAW
+06C5; WAW WITH LOOP; R; WAW
 06C6; WAW WITH V ABOVE; R; WAW
-06C7; WAW WITH DAMMA ABOVE; R; WAW
+06C7; WAW WITH COMMA ABOVE; R; WAW
 06C8; WAW WITH ALEF ABOVE; R; WAW
 06C9; WAW WITH INVERTED V ABOVE; R; WAW
 06CA; WAW WITH 2 DOTS ABOVE; R; WAW
@@ -432,6 +433,42 @@
 0869; MALAYALAM LLLA; R; MALAYALAM LLLA
 086A; MALAYALAM SSA; R; MALAYALAM SSA
 
+# Arabic Extended-B Characters
+
+0870; ALEF WITH ATTACHED FATHA; R; ALEF
+0871; ALEF WITH ATTACHED TOP RIGHT FATHA; R; ALEF
+0872; ALEF WITH RIGHT MIDDLE STROKE; R; ALEF
+0873; ALEF WITH LEFT MIDDLE STROKE; R; ALEF
+0874; ALEF WITH ATTACHED KASRA; R; ALEF
+0875; ALEF WITH ATTACHED BOTTOM RIGHT KASRA; R; ALEF
+0876; ALEF WITH ATTACHED ROUND DOT ABOVE; R; ALEF
+0877; ALEF WITH ATTACHED RIGHT ROUND DOT; R; ALEF
+0878; ALEF WITH ATTACHED LEFT ROUND DOT; R; ALEF
+0879; ALEF WITH ATTACHED ROUND DOT BELOW; R; ALEF
+087A; ALEF WITH DOT ABOVE; R; ALEF
+087B; ALEF WITH ATTACHED TOP RIGHT FATHA AND DOT ABOVE; R; ALEF
+087C; ALEF WITH RIGHT MIDDLE STROKE AND DOT ABOVE; R; ALEF
+087D; ALEF WITH ATTACHED BOTTOM RIGHT KASRA AND DOT ABOVE; R; ALEF
+087E; ALEF WITH ATTACHED TOP RIGHT FATHA AND LEFT RING; R; ALEF
+087F; ALEF WITH RIGHT MIDDLE STROKE AND LEFT RING; R; ALEF
+0880; ALEF WITH ATTACHED BOTTOM RIGHT KASRA AND LEFT RING; R; ALEF
+0881; ALEF WITH ATTACHED RIGHT HAMZA; R; ALEF
+0882; ALEF WITH ATTACHED LEFT HAMZA; R; ALEF
+0883; TATWEEL WITH OVERSTRUCK HAMZA; C; No_Joining_Group
+0884; TATWEEL WITH OVERSTRUCK WAW; C; No_Joining_Group
+0885; TATWEEL WITH TWO DOTS BELOW; C; No_Joining_Group
+0886; THIN YEH; D; THIN YEH
+0887; ARABIC BASELINE ROUND DOT; U; No_Joining_Group
+0888; ARABIC RAISED ROUND DOT; U; No_Joining_Group
+0889; DOTLESS NOON WITH INVERTED V ABOVE; D; NOON
+088A; HAH WITH INVERTED V BELOW; D; HAH
+088B; TAH WITH DOT BELOW; D; TAH
+088C; TAH WITH 3 DOTS BELOW; D; TAH
+088D; KEHEH WITH VERTICAL 2 DOTS BELOW; D; GAF
+088E; VERTICAL TAIL; R; VERTICAL TAIL
+0890; ARABIC POUND MARK ABOVE; U; No_Joining_Group
+0891; ARABIC PIASTRE MARK ABOVE; U; No_Joining_Group
+
 # Arabic Extended-A Characters
 
 08A0; DOTLESS BEH WITH V BELOW; D; BEH
@@ -455,6 +492,7 @@
 08B2; REH WITH DOT AND INVERTED V ABOVE; R; REH
 08B3; AIN WITH 3 DOTS BELOW; D; AIN
 08B4; KAF WITH DOT BELOW; D; KAF
+08B5; DOTLESS QAF WITH DOT BELOW; D; QAF
 08B6; BEH WITH MEEM ABOVE; D; BEH
 08B7; DOTLESS BEH WITH 3 DOTS BELOW AND MEEM ABOVE; D; BEH
 08B8; DOTLESS BEH WITH TEH ABOVE; D; BEH
@@ -473,6 +511,7 @@
 08C5; HAH WITH DOT BELOW AND 3 DOTS ABOVE; D; HAH
 08C6; HAH WITH DIAMOND 4 DOTS BELOW; D; HAH
 08C7; LAM WITH TAH ABOVE; D; LAM
+08C8; KEHEH WITH ELONGATED HAMZA ABOVE; D; GAF
 08E2; ARABIC DISPUTED END OF AYAH; U; No_Joining_Group
 
 # Mongolian Characters
@@ -818,6 +857,27 @@ A873; PHAGS-PA CANDRABINDU; U; No_Joining_Group
 10F52; SOGDIAN TEN; D; No_Joining_Group
 10F53; SOGDIAN TWENTY; D; No_Joining_Group
 10F54; SOGDIAN ONE HUNDRED; R; No_Joining_Group
+
+# Old Uyghur Characters
+
+10F70; OLD UYGHUR ALEPH; D; No_Joining_Group
+10F71; OLD UYGHUR BETH; D; No_Joining_Group
+10F72; OLD UYGHUR GIMEL-HETH; D; No_Joining_Group
+10F73; OLD UYGHUR WAW; D; No_Joining_Group
+10F74; OLD UYGHUR ZAYIN; R; No_Joining_Group
+10F75; OLD UYGHUR FINAL HETH; R; No_Joining_Group
+10F76; OLD UYGHUR YODH; D; No_Joining_Group
+10F77; OLD UYGHUR KAPH; D; No_Joining_Group
+10F78; OLD UYGHUR LAMEDH; D; No_Joining_Group
+10F79; OLD UYGHUR MEM; D; No_Joining_Group
+10F7A; OLD UYGHUR NUN; D; No_Joining_Group
+10F7B; OLD UYGHUR SAMEKH; D; No_Joining_Group
+10F7C; OLD UYGHUR PE; D; No_Joining_Group
+10F7D; OLD UYGHUR SADHE; D; No_Joining_Group
+10F7E; OLD UYGHUR RESH; D; No_Joining_Group
+10F7F; OLD UYGHUR SHIN; D; No_Joining_Group
+10F80; OLD UYGHUR TAW; D; No_Joining_Group
+10F81; OLD UYGHUR LESH; D; No_Joining_Group
 
 # Chorasmian Characters
 

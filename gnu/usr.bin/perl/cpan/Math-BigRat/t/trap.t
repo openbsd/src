@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # test that config( trap_nan => 1, trap_inf => 1) really works/dies
 

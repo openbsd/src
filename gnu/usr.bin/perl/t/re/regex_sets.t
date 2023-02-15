@@ -8,9 +8,9 @@
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
+    set_up_inc( '../lib','.','../ext/re' );
     require './charset_tools.pl';
     require './loc_tools.pl';
-    set_up_inc( '../lib','.','../ext/re' );
 }
 
 skip_all_without_unicode_tables();
@@ -21,7 +21,6 @@ use warnings;
 $| = 1;
 
 use utf8;
-no warnings 'experimental::regex_sets';
 
 like("a", qr/(?[ [a]      # This is a comment
                     ])/, 'Can ignore a comment');
@@ -173,13 +172,13 @@ for my $char ("٠", "٥", "٩") {
 
 # RT #126481 !! with syntax error panics
 {
-    fresh_perl_like('no warnings "experimental::regex_sets"; qr/(?[ ! ! (\w])/',
+    fresh_perl_like('qr/(?[ ! ! (\w])/',
                     qr/^Unmatched \(/, {},
                     'qr/(?[ ! ! (\w])/ doesnt panic');
 
     # The following didn't panic before, but easy to add this here with a
     # paren between the !!
-    fresh_perl_like('no warnings "experimental::regex_sets";qr/(?[ ! ( ! (\w)])/',
+    fresh_perl_like('qr/(?[ ! ( ! (\w)])/',
                     qr/^Unmatched \(/, {},
                     'qr/qr/(?[ ! ( ! (\w)])/');
 }
@@ -205,25 +204,32 @@ for my $char ("٠", "٥", "٩") {
 }
 
 {   # [perl #132167]
-    fresh_perl_is('no warnings "experimental::regex_sets";
-        print "c" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
+    fresh_perl_is(
+        'print "c" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
         1, {},
         'qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ]) compiles and properly matches');
-    fresh_perl_is('no warnings "experimental::regex_sets";
-        print "b" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
+    fresh_perl_is(
+        'print "b" =~ qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ])/;',
         "", {},
         'qr/(?[ ( \p{Uppercase} ) + (\p{Lowercase} - ([a] + [b]))  ]) compiles and properly matches');
 }
 
 {   # [perl #133889]    Caused assertion failure
-    fresh_perl_like('no warnings "experimental::regex_sets";
-        qr/(?[\P{Is0}])/', qr/\QUnknown user-defined property name "Is0"/, {}, "[perl #133889]");
+    fresh_perl_like(
+        'qr/(?[\P{Is0}])/', qr/\QUnknown user-defined property name "Is0"/, {}, "[perl #133889]");
 }
 
 {
     my $s = qr/(?x:(?[ [ x ] ]))/;
     like("x", qr/(?[ $s ])/ , "Modifier flags in interpolated set don't"
                             . " disrupt");
+}
+
+{   # GH #16779
+    like("x", qr/(?[ (?^x:(?[ [x] ])) ])/ ,
+         "Can use '^' flag in a nested call");
+    like("x", qr/(?[ (?x-imns:(?[ [x] ])) ])/ ,
+         "Can use various flags in a nested call");
 }
 
 done_testing();

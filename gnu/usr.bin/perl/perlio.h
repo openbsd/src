@@ -63,22 +63,26 @@ typedef PerlIOl *PerlIO;
 #define PerlIO PerlIO
 #define PERLIO_LAYERS 1
 
-/* PERLIO_FUNCS_CONST is now on by default for efficiency, PERLIO_FUNCS_CONST
-   can be removed 1 day once stable & then PerlIO vtables are permanently RO */
-#ifdef PERLIO_FUNCS_CONST
+/*
+=for apidoc_section $io
+=for apidoc Amu||PERLIO_FUNCS_DECL|PerlIO * ftab
+Declare C<ftab> to be a PerlIO function table, that is, of type
+C<PerlIO_funcs>.
+
+=for apidoc Ay|PerlIO_funcs *|PERLIO_FUNCS_CAST|PerlIO * func
+Cast the pointer C<func> to be of type S<C<PerlIO_funcs *>>.
+
+=cut
+*/
 #define PERLIO_FUNCS_DECL(funcs) const PerlIO_funcs funcs
 #define PERLIO_FUNCS_CAST(funcs) (PerlIO_funcs*)(funcs)
-#else
-#define PERLIO_FUNCS_DECL(funcs) PerlIO_funcs funcs
-#define PERLIO_FUNCS_CAST(funcs) (funcs)
-#endif
 
 PERL_CALLCONV void PerlIO_define_layer(pTHX_ PerlIO_funcs *tab);
 PERL_CALLCONV PerlIO_funcs *PerlIO_find_layer(pTHX_ const char *name,
                                               STRLEN len,
-				              int load);
+                                              int load);
 PERL_CALLCONV PerlIO *PerlIO_push(pTHX_ PerlIO *f, PERLIO_FUNCS_DECL(*tab),
-			          const char *mode, SV *arg);
+                                  const char *mode, SV *arg);
 PERL_CALLCONV void PerlIO_pop(pTHX_ PerlIO *f);
 PERL_CALLCONV AV* PerlIO_get_layers(pTHX_ PerlIO *f);
 PERL_CALLCONV void PerlIO_clone(pTHX_ PerlInterpreter *proto,
@@ -189,8 +193,8 @@ PERL_CALLCONV PerlIO *PerlIO_open(const char *, const char *);
 #endif
 #ifndef PerlIO_openn
 PERL_CALLCONV PerlIO *PerlIO_openn(pTHX_ const char *layers, const char *mode,
-				   int fd, int imode, int perm, PerlIO *old,
-				   int narg, SV **arg);
+                                   int fd, int imode, int perm, PerlIO *old,
+                                   int narg, SV **arg);
 #endif
 #ifndef PerlIO_eof
 PERL_CALLCONV int PerlIO_eof(PerlIO *);
@@ -315,11 +319,11 @@ PERL_CALLCONV int PerlIO_isutf8(PerlIO *);
 #endif
 #ifndef PerlIO_apply_layers
 PERL_CALLCONV int PerlIO_apply_layers(pTHX_ PerlIO *f, const char *mode,
-				      const char *names);
+                                      const char *names);
 #endif
 #ifndef PerlIO_binmode
 PERL_CALLCONV int PerlIO_binmode(pTHX_ PerlIO *f, int iotype, int omode,
-			  	 const char *names);
+                                 const char *names);
 #endif
 #ifndef PerlIO_getname
 PERL_CALLCONV char *PerlIO_getname(PerlIO *, char *);

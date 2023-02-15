@@ -2,6 +2,8 @@ package MakeMaker::Test::NoXS;
 
 # Disable all XS loading.
 
+use strict;
+use warnings;
 use Carp;
 
 require DynaLoader;
@@ -11,12 +13,18 @@ require XSLoader;
 delete $DynaLoader::{boot_DynaLoader};
 
 if ($^O eq 'MSWin32') {
+    # Load Win32. Then clear the stash of all other entries but GetCwd and SetChildShowWindow
+    # SetChildShowWindow and GetCwd are provided by perl core in modern perls, so we
+    # can use them in miniperl. on older perls, we can load them from Win32 so the
+    # test can proceed as normal.
+
     require Win32;
-    my $GetCwd = *{'Win32::GetCwd'}{CODE};
-    my $SetChildShowWindow = *{'Win32::SetChildShowWindow'}{CODE};
-    %{*main::Win32::{HASH}} = ();
-    *{'Win32::GetCwd'} = $GetCwd;
-    *{'Win32::SetChildShowWindow'} = $SetChildShowWindow;
+
+    foreach my $slot (keys %Win32::) {
+        next if $slot eq 'GetCwd';
+        next if $slot eq 'SetChildShowWindow';
+        delete $Win32::{$slot};
+    }
 }
 
 # This isn't 100%.  Things like Win32.pm will crap out rather than

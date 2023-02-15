@@ -1219,6 +1219,10 @@ sub grind_run {
     my %fds;          # map fds  to jobs
     my $select = IO::Select->new();
 
+    my $njobs     = scalar @jobs;
+    my $donejobs  = 0;
+    my $starttime = time();
+
     while (@jobs or $running) {
 
         if ($OPTS{debug}) {
@@ -1233,7 +1237,22 @@ sub grind_run {
             my ($id, $cmd) =@$job{qw(id cmd)};
 
             my ($in, $out, $pid);
-            warn "Starting $id\n" if $OPTS{verbose};
+            $donejobs++;
+            if($OPTS{verbose}) {
+                my $donefrac = $donejobs / $njobs;
+                my $eta = "";
+                # Once we've done at least 20% we'll have a good estimate of
+                # the total runtime, hence ETA
+                if($donefrac >= 0.2) {
+                    my $now = time();
+                    my $duration  = ($now - $starttime) / $donefrac;
+                    my $remaining = ($starttime + $duration) - $now;
+                    $eta = sprintf ", remaining %d:%02d",
+                        $remaining / 60, $remaining % 60;
+                }
+                warn sprintf "Starting %s (%d of %d, %.2f%%%s)\n",
+                    $id, $donejobs, $njobs, 100 * $donefrac, $eta;
+            }
             eval { $pid = IPC::Open2::open2($out, $in, $cmd); 1; }
                 or die "Error: while starting cachegrind subprocess"
                    ." for $id:\n$@";

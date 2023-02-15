@@ -1,3 +1,7 @@
+#!perl
+
+use strict;
+use warnings;
 
 BEGIN {
     chdir 't' if -d 't';
@@ -14,8 +18,11 @@ is(length($a), 1,  "length sanity check");
 is(substr($a, 0, 1), "\x{100}",  "substr sanity check");
 is(index($a, "\x{100}"),  0, "index sanity check");
 is(rindex($a, "\x{100}"), 0, "rindex sanity check");
-is(bytes::length($a), 2,  "bytes::length sanity check");
-is(bytes::chr(0x100), chr(0),  "bytes::chr sanity check");
+{
+    no warnings 'prototype'; # bytes::length() called too early to check prototype at...
+    is(bytes::length($a), 2,  "bytes::length sanity check");
+    is(bytes::chr(0x100), chr(0),  "bytes::chr sanity check");
+}
 
 {
     use bytes;

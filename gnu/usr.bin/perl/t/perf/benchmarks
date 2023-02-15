@@ -952,12 +952,14 @@
     },
     'expr::arith::add_lex_ni' => {
         desc    => 'add an int and an NV and assign to a lexical var',
-        setup   => 'my ($x,$y,$z) = (1, 2.2, 3.3);',
+        setup   => 'my ($y,$z) = (2.2, 3.3);',
+        pre     => 'my $x = 1', # after 1st iter gets upgraded to PVNV
         code    => '$z = $x + $y',
     },
     'expr::arith::add_pkg_ni' => {
         desc    => 'add an int and an NV and assign to a package var',
-        setup   => 'my ($x,$y); ($x,$y,$z) = (1, 2.2, 3.3);',
+        setup   => 'my ($y); ($y,$z) = (2.2, 3.3);',
+        pre     => 'my $x = 1', # after 1st iter gets upgraded to PVNV
         code    => '$z = $x + $y',
     },
     'expr::arith::add_lex_ss' => {

@@ -275,4 +275,42 @@ sub unitem {
     $initem = 0;
 }
 
+=head1 NAME
+
+pod/buildtoc - Generate table of contents
+
+=head1 DESCRIPTION
+
+This program generates a table of contents for the documentation included in the Perl core distribution.  This table of contents takes two forms:
+
+=over 4
+
+=item 1 F<pod/perltoc.pod>
+
+A file in Perl's Plain Old Documentation (POD) format found in the F<pod/> directory in the core distribution.  Once Perl is installed, this file becomes accessible system-wide via C<perldoc perltoc>.
+
+=item 2 F<pod/roffitall>
+
+A shell script originally written by Tom Christiansen and Raphael Manfredi, also found in the F<pod/> directory, which can be used to translate Perl documentation into F<man> pages.
+
+=back
+
+=head1 USAGE
+
+This program will typically B<not> need to be called directly by a user.  Rather, it is one of the last commands invoked during C<make test_prep>:
+
+    ./perl -Ilib -I. -f pod/buildtoc -q
+
+The only command-line switch is C<-q|--quiet>, which quiets some non-critical warnings.
+
+=head2 Diagnosing Problems
+
+This program C<require>s F<Porting/pod_lib.pl> and makes use of several subroutines found in that file:  C<get_pod_metadata()> and C<pods_to_install()> in particular.  Consequently, any warnings or exceptions you see when this program is running may be being passed through from those subroutines.  You may have to (a) examine those subroutines and/or (b) run that program from the command-line to fully understand what is causing such warnings or exceptions.
+
+=head2 AUTHORS and MAINTENANCE
+
+This program was introduced into the Perl 5 core distribution by Andy Dougherty, based on earlier work by Tom Christiansen.  It is maintained by the Perl 5 Porters.
+
+=cut
+
 # ex: set ts=8 sts=4 sw=4 et:

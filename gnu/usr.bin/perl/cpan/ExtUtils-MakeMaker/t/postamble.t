@@ -7,6 +7,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Config;
 use Test::More tests => 8;
 use MakeMaker::Test::Utils;

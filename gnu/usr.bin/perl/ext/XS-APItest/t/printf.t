@@ -1,12 +1,4 @@
-BEGIN {
-  require Config; import Config;
-  if ($Config{usequadmath}) {
-     print "1..0 # Skip: usequadmath\n";
-     exit(0);
-  }
-}
-
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 BEGIN { use_ok('XS::APItest') };
 
@@ -29,6 +21,7 @@ print_int(3);
 print_long(4);
 print_float(4);
 print_long_double() if $ldok;  # val=7 hardwired
+print_long_doubleL() if $ldok;  # val=7 hardwired
 
 print_flush();
 
@@ -47,8 +40,9 @@ is($output[2], "4", "print_long");
 is($output[3], "4.000", "print_float");
 
 SKIP: {
-   skip "No long doubles", 1 unless $ldok;
+   skip "No long doubles", 2 unless $ldok;
    is($output[4], "7.000", "print_long_double");
+   is($output[5], "7.000", "print_long_doubleL");
 }
 
 {

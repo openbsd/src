@@ -32,6 +32,9 @@
  *    but XS code may still explicitly use the long form, i.e.
  *    Perl_foo(aTHX_ ...)
  *
+ * This file can't just be cleaned out periodically, because that would break
+ * builds with -DPERL_NO_SHORT_NAMES
+ *
  * NOTE: ALL FUNCTIONS IN THIS FILE should have an entry with the 'b' flag in
  * embed.fnc.
  *
@@ -50,7 +53,7 @@
  *
  * Some blurb for perlapi.pod:
 
-=head1 Obsolete backwards compatibility functions
+ head1 Obsolete backwards compatibility functions
 
 Some of these are also deprecated.  You can exclude these from
 your compiled Perl by adding this option to Configure:
@@ -85,6 +88,7 @@ Perl_ref(pTHX_ OP *o, I32 type)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_unref
 
 Unsets the RV status of the SV, and decrements the reference count of
@@ -104,6 +108,7 @@ Perl_sv_unref(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $tainting
 =for apidoc sv_taint
 
 Taint an SV.  Use C<SvTAINTED_on> instead.
@@ -167,6 +172,7 @@ Perl_sv_2pv(pTHX_ SV *sv, STRLEN *lp)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_2pv_nolen
 
 Like C<sv_2pv()>, but doesn't return the length too.  You should usually
@@ -183,6 +189,7 @@ Perl_sv_2pv_nolen(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_2pvbyte_nolen
 
 Return a pointer to the byte-encoded representation of the SV.
@@ -202,6 +209,7 @@ Perl_sv_2pvbyte_nolen(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_2pvutf8_nolen
 
 Return a pointer to the UTF-8-encoded representation of the SV.
@@ -221,6 +229,7 @@ Perl_sv_2pvutf8_nolen(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_force_normal
 
 Undo various types of fakery on an SV: if the PV is a shared string, make
@@ -243,11 +252,11 @@ Perl_sv_force_normal(pTHX_ SV *sv)
  */
 
 void
-Perl_sv_setsv(pTHX_ SV *dstr, SV *sstr)
+Perl_sv_setsv(pTHX_ SV *dsv, SV *ssv)
 {
     PERL_ARGS_ASSERT_SV_SETSV;
 
-    sv_setsv_flags(dstr, sstr, SV_GMAGIC);
+    sv_setsv_flags(dsv, ssv, SV_GMAGIC);
 }
 
 /* sv_catpvn() is now a macro using Perl_sv_catpvn_flags();
@@ -262,20 +271,12 @@ Perl_sv_catpvn(pTHX_ SV *dsv, const char* sstr, STRLEN slen)
     sv_catpvn_flags(dsv, sstr, slen, SV_GMAGIC);
 }
 
-/*
-=for apidoc sv_catpvn_mg
-
-Like C<sv_catpvn>, but also handles 'set' magic.
-
-=cut
-*/
-
 void
-Perl_sv_catpvn_mg(pTHX_ SV *sv, const char *ptr, STRLEN len)
+Perl_sv_catpvn_mg(pTHX_ SV *dsv, const char *sstr, STRLEN len)
 {
     PERL_ARGS_ASSERT_SV_CATPVN_MG;
 
-    sv_catpvn_flags(sv,ptr,len,SV_GMAGIC|SV_SMAGIC);
+    sv_catpvn_flags(dsv,sstr,len,SV_GMAGIC|SV_SMAGIC);
 }
 
 /* sv_catsv() is now a macro using Perl_sv_catsv_flags();
@@ -283,30 +284,23 @@ Perl_sv_catpvn_mg(pTHX_ SV *sv, const char *ptr, STRLEN len)
  */
 
 void
-Perl_sv_catsv(pTHX_ SV *dstr, SV *sstr)
+Perl_sv_catsv(pTHX_ SV *dsv, SV *sstr)
 {
     PERL_ARGS_ASSERT_SV_CATSV;
 
-    sv_catsv_flags(dstr, sstr, SV_GMAGIC);
+    sv_catsv_flags(dsv, sstr, SV_GMAGIC);
 }
 
-/*
-=for apidoc sv_catsv_mg
-
-Like C<sv_catsv>, but also handles 'set' magic.
-
-=cut
-*/
-
 void
-Perl_sv_catsv_mg(pTHX_ SV *dsv, SV *ssv)
+Perl_sv_catsv_mg(pTHX_ SV *dsv, SV *sstr)
 {
     PERL_ARGS_ASSERT_SV_CATSV_MG;
 
-    sv_catsv_flags(dsv,ssv,SV_GMAGIC|SV_SMAGIC);
+    sv_catsv_flags(dsv,sstr,SV_GMAGIC|SV_SMAGIC);
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_iv
 
 A private implementation of the C<SvIVx> macro for compilers which can't
@@ -321,14 +315,15 @@ Perl_sv_iv(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_SV_IV;
 
     if (SvIOK(sv)) {
-	if (SvIsUV(sv))
-	    return (IV)SvUVX(sv);
-	return SvIVX(sv);
+        if (SvIsUV(sv))
+            return (IV)SvUVX(sv);
+        return SvIVX(sv);
     }
     return sv_2iv(sv);
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_uv
 
 A private implementation of the C<SvUVx> macro for compilers which can't
@@ -343,14 +338,15 @@ Perl_sv_uv(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_SV_UV;
 
     if (SvIOK(sv)) {
-	if (SvIsUV(sv))
-	    return SvUVX(sv);
-	return (UV)SvIVX(sv);
+        if (SvIsUV(sv))
+            return SvUVX(sv);
+        return (UV)SvIVX(sv);
     }
     return sv_2uv(sv);
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_nv
 
 A private implementation of the C<SvNVx> macro for compilers which can't
@@ -365,15 +361,17 @@ Perl_sv_nv(pTHX_ SV *sv)
     PERL_ARGS_ASSERT_SV_NV;
 
     if (SvNOK(sv))
-	return SvNVX(sv);
+        return SvNVX(sv);
     return sv_2nv(sv);
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_pv
 
 Use the C<SvPV_nolen> macro instead
 
+=for apidoc_section $SV
 =for apidoc sv_pvn
 
 A private implementation of the C<SvPV> macro for compilers which can't
@@ -388,8 +386,8 @@ Perl_sv_pvn(pTHX_ SV *sv, STRLEN *lp)
     PERL_ARGS_ASSERT_SV_PVN;
 
     if (SvPOK(sv)) {
-	*lp = SvCUR(sv);
-	return SvPVX(sv);
+        *lp = SvCUR(sv);
+        return SvPVX(sv);
     }
     return sv_2pv(sv, lp);
 }
@@ -401,8 +399,8 @@ Perl_sv_pvn_nomg(pTHX_ SV *sv, STRLEN *lp)
     PERL_ARGS_ASSERT_SV_PVN_NOMG;
 
     if (SvPOK(sv)) {
-	*lp = SvCUR(sv);
-	return SvPVX(sv);
+        *lp = SvCUR(sv);
+        return SvPVX(sv);
     }
     return sv_2pv_flags(sv, lp, 0);
 }
@@ -448,6 +446,7 @@ Perl_sv_pvbyte(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_pvbyte
 
 Use C<SvPVbyte_nolen> instead.
@@ -484,6 +483,7 @@ Perl_sv_pvutf8(pTHX_ SV *sv)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_pvutf8
 
 Use the C<SvPVutf8_nolen> macro instead
@@ -526,7 +526,7 @@ Perl_fprintf_nocontext(PerlIO *stream, const char *format, ...)
 
     /* Easier to special case this here than in embed.pl. (Look at what it
        generates for proto.h) */
-#ifdef PERL_IMPLICIT_CONTEXT
+#ifdef MULTIPLICITY
     PERL_ARGS_ASSERT_FPRINTF_NOCONTEXT;
 #endif
 
@@ -543,7 +543,7 @@ Perl_printf_nocontext(const char *format, ...)
     va_list arglist;
     int ret = 0;
 
-#ifdef PERL_IMPLICIT_CONTEXT
+#ifdef MULTIPLICITY
     PERL_ARGS_ASSERT_PRINTF_NOCONTEXT;
 #endif
 
@@ -605,6 +605,7 @@ Perl_gv_efullname3(pTHX_ SV *sv, const GV *gv, const char *prefix)
 }
 
 /*
+=for apidoc_section $GV
 =for apidoc gv_fetchmethod
 
 See L</gv_fetchmethod_autoload>.
@@ -638,12 +639,12 @@ Perl_hv_magic(pTHX_ HV *hv, GV *gv, int how)
 
 bool
 Perl_do_open(pTHX_ GV *gv, const char *name, I32 len, int as_raw,
-	     int rawmode, int rawperm, PerlIO *supplied_fp)
+             int rawmode, int rawperm, PerlIO *supplied_fp)
 {
     PERL_ARGS_ASSERT_DO_OPEN;
 
     return do_openn(gv, name, len, as_raw, rawmode, rawperm,
-		    supplied_fp, (SV **) NULL, 0);
+                    supplied_fp, (SV **) NULL, 0);
 }
 
 bool
@@ -702,6 +703,7 @@ Perl_is_utf8_string_loc(const U8 *s, const STRLEN len, const U8 **ep)
 }
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_nolocking
 
 Dummy routine which "locks" an SV when there is no locking module present.
@@ -722,6 +724,7 @@ Perl_sv_nolocking(pTHX_ SV *sv)
 
 
 /*
+=for apidoc_section $SV
 =for apidoc sv_nounlocking
 
 Dummy routine which "unlocks" an SV when there is no locking module present.
@@ -773,24 +776,16 @@ Perl_save_list(pTHX_ SV **sarg, I32 maxsarg)
     PERL_ARGS_ASSERT_SAVE_LIST;
 
     for (i = 1; i <= maxsarg; i++) {
-	SV *sv;
-	SvGETMAGIC(sarg[i]);
-	sv = newSV(0);
-	sv_setsv_nomg(sv,sarg[i]);
-	SSCHECK(3);
-	SSPUSHPTR(sarg[i]);		/* remember the pointer */
-	SSPUSHPTR(sv);			/* remember the value */
-	SSPUSHUV(SAVEt_ITEM);
+        SV *sv;
+        SvGETMAGIC(sarg[i]);
+        sv = newSV(0);
+        sv_setsv_nomg(sv,sarg[i]);
+        SSCHECK(3);
+        SSPUSHPTR(sarg[i]);		/* remember the pointer */
+        SSPUSHPTR(sv);			/* remember the value */
+        SSPUSHUV(SAVEt_ITEM);
     }
 }
-
-/*
-=for apidoc sv_usepvn_mg
-
-Like C<sv_usepvn>, but also handles 'set' magic.
-
-=cut
-*/
 
 void
 Perl_sv_usepvn_mg(pTHX_ SV *sv, char *ptr, STRLEN len)
@@ -800,15 +795,6 @@ Perl_sv_usepvn_mg(pTHX_ SV *sv, char *ptr, STRLEN len)
     sv_usepvn_flags(sv,ptr,len, SV_SMAGIC);
 }
 
-/*
-=for apidoc sv_usepvn
-
-Tells an SV to use C<ptr> to find its string value.  Implemented by
-calling C<sv_usepvn_flags> with C<flags> of 0, hence does not handle 'set'
-magic.  See C<L</sv_usepvn_flags>>.
-
-=cut
-*/
 
 void
 Perl_sv_usepvn(pTHX_ SV *sv, char *ptr, STRLEN len)
@@ -819,6 +805,7 @@ Perl_sv_usepvn(pTHX_ SV *sv, char *ptr, STRLEN len)
 }
 
 /*
+=for apidoc_section $pack
 =for apidoc unpack_str
 
 The engine implementing C<unpack()> Perl function.  Note: parameters C<strbeg>,
@@ -829,8 +816,8 @@ C<unpackstring> instead.
 
 SSize_t
 Perl_unpack_str(pTHX_ const char *pat, const char *patend, const char *s,
-		const char *strbeg, const char *strend, char **new_s, I32 ocnt,
-		U32 flags)
+                const char *strbeg, const char *strend, char **new_s, I32 ocnt,
+                U32 flags)
 {
     PERL_ARGS_ASSERT_UNPACK_STR;
 
@@ -842,11 +829,12 @@ Perl_unpack_str(pTHX_ const char *pat, const char *patend, const char *s,
 }
 
 /*
+=for apidoc_section $pack
 =for apidoc pack_cat
 
 The engine implementing C<pack()> Perl function.  Note: parameters
 C<next_in_list> and C<flags> are not used.  This call should not be used; use
-C<packlist> instead.
+C<L</packlist>> instead.
 
 =cut
 */
@@ -882,7 +870,7 @@ Perl_hv_fetch_ent(pTHX_ HV *hv, SV *keysv, I32 lval, U32 hash)
     PERL_ARGS_ASSERT_HV_FETCH_ENT;
 
     return (HE *)hv_common(hv, keysv, NULL, 0, 0, 
-		     (lval ? HV_FETCH_LVALUE : 0), NULL, hash);
+                     (lval ? HV_FETCH_LVALUE : 0), NULL, hash);
 }
 
 SV *
@@ -891,15 +879,15 @@ Perl_hv_delete_ent(pTHX_ HV *hv, SV *keysv, I32 flags, U32 hash)
     PERL_ARGS_ASSERT_HV_DELETE_ENT;
 
     return MUTABLE_SV(hv_common(hv, keysv, NULL, 0, 0, flags | HV_DELETE, NULL,
-				hash));
+                                hash));
 }
 
 SV**
 Perl_hv_store_flags(pTHX_ HV *hv, const char *key, I32 klen, SV *val, U32 hash,
-		    int flags)
+                    int flags)
 {
     return (SV**) hv_common(hv, NULL, key, klen, flags,
-			    (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), val, hash);
+                            (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), val, hash);
 }
 
 SV**
@@ -909,14 +897,14 @@ Perl_hv_store(pTHX_ HV *hv, const char *key, I32 klen_i32, SV *val, U32 hash)
     int flags;
 
     if (klen_i32 < 0) {
-	klen = -klen_i32;
-	flags = HVhek_UTF8;
+        klen = -klen_i32;
+        flags = HVhek_UTF8;
     } else {
-	klen = klen_i32;
-	flags = 0;
+        klen = klen_i32;
+        flags = 0;
     }
     return (SV **) hv_common(hv, NULL, key, klen, flags,
-			     (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), val, hash);
+                             (HV_FETCH_ISSTORE|HV_FETCH_JUST_SV), val, hash);
 }
 
 bool
@@ -928,11 +916,11 @@ Perl_hv_exists(pTHX_ HV *hv, const char *key, I32 klen_i32)
     PERL_ARGS_ASSERT_HV_EXISTS;
 
     if (klen_i32 < 0) {
-	klen = -klen_i32;
-	flags = HVhek_UTF8;
+        klen = -klen_i32;
+        flags = HVhek_UTF8;
     } else {
-	klen = klen_i32;
-	flags = 0;
+        klen = klen_i32;
+        flags = 0;
     }
     return cBOOL(hv_common(hv, NULL, key, klen, flags, HV_FETCH_ISEXISTS, 0, 0));
 }
@@ -946,15 +934,15 @@ Perl_hv_fetch(pTHX_ HV *hv, const char *key, I32 klen_i32, I32 lval)
     PERL_ARGS_ASSERT_HV_FETCH;
 
     if (klen_i32 < 0) {
-	klen = -klen_i32;
-	flags = HVhek_UTF8;
+        klen = -klen_i32;
+        flags = HVhek_UTF8;
     } else {
-	klen = klen_i32;
-	flags = 0;
+        klen = klen_i32;
+        flags = 0;
     }
     return (SV **) hv_common(hv, NULL, key, klen, flags,
-			     lval ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)
-			     : HV_FETCH_JUST_SV, NULL, 0);
+                             lval ? (HV_FETCH_JUST_SV | HV_FETCH_LVALUE)
+                             : HV_FETCH_JUST_SV, NULL, 0);
 }
 
 SV *
@@ -966,14 +954,14 @@ Perl_hv_delete(pTHX_ HV *hv, const char *key, I32 klen_i32, I32 flags)
     PERL_ARGS_ASSERT_HV_DELETE;
 
     if (klen_i32 < 0) {
-	klen = -klen_i32;
-	k_flags = HVhek_UTF8;
+        klen = -klen_i32;
+        k_flags = HVhek_UTF8;
     } else {
-	klen = klen_i32;
-	k_flags = 0;
+        klen = klen_i32;
+        k_flags = 0;
     }
     return MUTABLE_SV(hv_common(hv, NULL, key, klen, k_flags, flags | HV_DELETE,
-				NULL, 0));
+                                NULL, 0));
 }
 
 AV *
@@ -1115,6 +1103,7 @@ Perl_sv_2bool(pTHX_ SV *const sv)
 
 
 /*
+=for apidoc_section $custom
 =for apidoc custom_op_name
 Return the name for a given custom op.  This was once used by the C<OP_NAME>
 macro, but is no longer: it has only been kept for compatibility, and
@@ -1149,9 +1138,9 @@ Perl_newSUB(pTHX_ I32 floor, OP *o, OP *proto, OP *block)
 }
 
 SV *
-Perl_sv_mortalcopy(pTHX_ SV *const oldstr)
+Perl_sv_mortalcopy(pTHX_ SV *const oldsv)
 {
-    return Perl_sv_mortalcopy_flags(aTHX_ oldstr, SV_GMAGIC);
+    return Perl_sv_mortalcopy_flags(aTHX_ oldsv, SV_GMAGIC);
 }
 
 void
@@ -1177,6 +1166,7 @@ ASCII_TO_NEED(const UV enc, const UV ch)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc is_utf8_char
 
 Tests if some arbitrary number of bytes begins in a valid UTF-8
@@ -1202,6 +1192,7 @@ Perl_is_utf8_char(const U8 *s)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc is_utf8_char_buf
 
 This is identical to the macro L<perlapi/isUTF8_CHAR>.
@@ -1232,6 +1223,7 @@ Perl_valid_utf8_to_uvuni(pTHX_ const U8 *s, STRLEN *retlen)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc utf8_to_uvuni
 
 Returns the Unicode code point of the first character in the string C<s>
@@ -1265,11 +1257,14 @@ Perl_utf8_to_uvuni(pTHX_ const U8 *s, STRLEN *retlen)
 }
 
 /*
+=for apidoc_section $pad
 =for apidoc pad_compname_type
 
 Looks up the type of the lexical variable at position C<po> in the
 currently-compiling pad.  If the variable is typed, the stash of the
 class to which it is typed is returned.  If not, C<NULL> is returned.
+
+Use L<perlintern/C<PAD_COMPNAME_TYPE>> instead.
 
 =cut
 */
@@ -1288,7 +1283,7 @@ Perl_instr(const char *big, const char *little)
 {
     PERL_ARGS_ASSERT_INSTR;
 
-    return instr((char *) big, (char *) little);
+    return instr(big, little);
 }
 
 SV *
@@ -1330,6 +1325,7 @@ Perl_uvuni_to_utf8(pTHX_ U8 *d, UV uv)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc utf8n_to_uvuni
 
 Instead use L<perlapi/utf8_to_uvchr_buf>, or rarely, L<perlapi/utf8n_to_uvchr>.
@@ -1354,6 +1350,7 @@ Perl_utf8n_to_uvuni(pTHX_ const U8 *s, STRLEN curlen, STRLEN *retlen, U32 flags)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc uvuni_to_utf8_flags
 
 Instead you almost certainly want to use L<perlapi/uvchr_to_utf8> or
@@ -1378,6 +1375,7 @@ Perl_uvuni_to_utf8_flags(pTHX_ U8 *d, UV uv, UV flags)
 }
 
 /*
+=for apidoc_section $unicode
 =for apidoc utf8_to_uvchr
 
 Returns the native code point of the first character in the string C<s>

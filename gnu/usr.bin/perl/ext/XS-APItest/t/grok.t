@@ -68,33 +68,42 @@ foreach my $leader ('', ' ', '  ') {
 }
 
 # format tests
-my @groks =
-  (
-   # input, in flags, out uv, out flags
-   [ "1",    0,                  1,     IS_NUMBER_IN_UV ],
-   [ "1x",   0,                  undef, 0 ],
-   [ "1x",   PERL_SCAN_TRAILING, 1,     IS_NUMBER_IN_UV | IS_NUMBER_TRAILING ],
-   [ "3.1",  0,                  3,     IS_NUMBER_IN_UV | IS_NUMBER_NOT_INT ],
-   [ "3.1a", 0,                  undef, 0 ],
-   [ "3.1a", PERL_SCAN_TRAILING, 3,
-     IS_NUMBER_IN_UV | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
-   [ "3e5",  0,                  undef, IS_NUMBER_NOT_INT ],
-   [ "3e",   0,                  undef, 0 ],
-   [ "3e",   PERL_SCAN_TRAILING, 3,     IS_NUMBER_IN_UV | IS_NUMBER_TRAILING ],
-   [ "3e+",  0,                  undef, 0 ],
-   [ "3e+",  PERL_SCAN_TRAILING, 3,     IS_NUMBER_IN_UV | IS_NUMBER_TRAILING ],
-   [ "Inf",  0,                  undef,
-     IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT ],
-   [ "In",   0,                  undef, 0 ],
-   [ "Infin",0,                  undef, IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
-   # this doesn't work and hasn't been needed yet
-   #[ "Infin",PERL_SCAN_TRAILING, undef,
-   #  IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
-   [ "nan",  0,                  undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
-   # even without PERL_SCAN_TRAILING nan can have weird stuff trailing
-   [ "nanx", 0,                  undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
-   [ "nanx", PERL_SCAN_TRAILING, undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT | IS_NUMBER_TRAILING ],
-  );
+my @groks = (
+    # input, in flags, out uv, out flags
+    (map {
+        # Expect the same answer with or without SCAN_TRAILING
+        [ $_->[0], 0,                  $_->[1], $_->[2] ],
+        [ $_->[0], PERL_SCAN_TRAILING, $_->[1], $_->[2] ],
+    } (
+        [ "1",          1,     IS_NUMBER_IN_UV ],
+        [ "3.1",        3,     IS_NUMBER_IN_UV | IS_NUMBER_NOT_INT ],
+        [ "3e5",        undef, IS_NUMBER_NOT_INT ],
+        [ "Inf",        undef, IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT ],
+        [ "nan",        undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        [ "nanq",       undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        [ "nan(123)",   undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        # trailing whitespace is ok though
+        [ "1 ",         1,     IS_NUMBER_IN_UV ],
+        [ "nan(123 ) ", undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+    )),
+    (map {
+        # Trailing stuff should cause failure unless SCAN_TRAILING
+        [ $_->[0], 0,                  undef,   0 ],
+        [ $_->[0], PERL_SCAN_TRAILING, $_->[1], $_->[2] | IS_NUMBER_TRAILING ],
+    } (
+        [ "1x",         1,     IS_NUMBER_IN_UV ],
+        [ "3.1a",       3,     IS_NUMBER_IN_UV | IS_NUMBER_NOT_INT ],
+        [ "3e",         3,     IS_NUMBER_IN_UV ],
+        [ "3e+",        3,     IS_NUMBER_IN_UV ],
+        [ "Infin",      undef, IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT ],
+        [ "nanx",       undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        [ "nan(123 x)", undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        [ "nan(123) x", undef, IS_NUMBER_NAN | IS_NUMBER_NOT_INT ],
+        # TODO: this should probably be in the preceding section, parsed
+        # as invalid with or without SCAN_TRAILING. See GH #19464.
+        [ "In",         undef, 0 ],
+    )),
+);
 
 my $non_ieee_fp = ($Config{doublekind} == 9 ||
                    $Config{doublekind} == 10 ||

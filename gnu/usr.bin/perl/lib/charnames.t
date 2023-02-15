@@ -153,7 +153,7 @@ sub test_vianame ($$$) {
 
     # \p{name=} is always loose matching
     $all_pass &= like(chr($i), qr/^\p{name=$loose_name}$/,
-                      "Verify /\p{name=$loose_name}/ matches chr(0x$hex)");
+                      "Verify /\\p{name=$loose_name}/ matches chr(0x$hex)");
 
     $wildcard_count++;
 
@@ -181,7 +181,7 @@ sub test_vianame ($$$) {
 
         # \p{name=/.../} is always full matching
         $all_pass &= like(chr($i), qr!^\p{name=/$assembled/}!,
-                          "Verify /\p{name=/$assembled/} matches chr(0x$hex)");
+                          "Verify /\\p{name=/$assembled/} matches chr(0x$hex)");
     }
 
     return $all_pass;
@@ -198,6 +198,42 @@ sub test_vianame ($$$) {
   is(to_bytes("\N{be},\N{alpha},\N{hebrew:bet}"),
                                     "$encoded_be,$encoded_alpha,$encoded_bet",
               'Verify using scripts gives the correct UTF8');
+}
+
+{
+  my $caught_error;
+  local $SIG{__WARN__} = sub { $caught_error = shift; };
+  eval q{
+    use charnames qw(runic greek);
+    is($caught_error, undef, "no letter name clashes between runic and greek");
+  };
+}
+
+{
+  my $caught_error;
+  local $SIG{__WARN__} = sub { $caught_error = shift; };
+  eval q{
+    use charnames qw(hebrew arabic :full);
+    like(
+      $caught_error,
+      qr/charnames: some short character names may clash in \[ARABIC, HEBREW\], for example ALEF/,
+      "warned about potential character name clashes when asking for 'hebrew' and 'arabic'"
+    );
+    ok("\N{alef}"  eq "\N{HEBREW LETTER ALEF}",  '\N{alef} gives HEBREW LETTER ALEF because we asked for Hebrew first');
+    ok("\N{bet}"   eq "\N{HEBREW LETTER BET}",   '\N{bet} gives HEBREW LETTER BET');
+    ok("\N{sheen}" eq "\N{ARABIC LETTER SHEEN}", 'and \N{sheen} gives ARABIC LETTER SHEEN');
+  };
+  eval q{
+    use charnames qw(arabic hebrew :full);
+    like(
+      $caught_error,
+      qr/charnames: some short character names may clash in \[ARABIC, HEBREW\], for example ALEF/,
+      "warned about potential character name clashes when asking for 'arabic' and 'hebrew'"
+    );
+    ok("\N{alef}"  eq "\N{ARABIC LETTER ALEF}",  '\N{alef} gives ARABIC LETTER ALEF because we asked for Arabic first');
+    ok("\N{bet}"   eq "\N{HEBREW LETTER BET}",   '\N{bet} gives HEBREW LETTER BET');
+    ok("\N{sheen}" eq "\N{ARABIC LETTER SHEEN}", 'and \N{sheen} gives ARABIC LETTER SHEEN');
+  };
 }
 
 {
@@ -1348,9 +1384,9 @@ is("\N{U+1D0C5}", "\N{BYZANTINE MUSICAL SYMBOL FTHORA SKLIRON CHROMA VASIS}", 'V
             use charnames ":loose";
             is(charnames::string_vianame($loose_name), $utf8, "Verify string_vianame(\"$loose_name\") is the proper utf8");
 
-            like($utf8, qr/^\p{name=$name}$/, "Verify /\p{name=$name}\$/ is the proper utf8");
-            like($utf8, qr/^\p{name=$loose_name}$/, "Verify /\p{name=$loose_name}\$/ is the proper utf8");
-            like($utf8, qr!^\p{name=/\A$name\z/}!, "Verify /\p{name=/$\A$name\z/} is the proper utf8");
+            like($utf8, qr/^\p{name=$name}$/, "Verify /\\p{name=$name}\$/ is the proper utf8");
+            like($utf8, qr/^\p{name=$loose_name}$/, "Verify /\\p{name=$loose_name}\$/ is the proper utf8");
+            like($utf8, qr!^\p{name=/\A$name\z/}!, "Verify /\\p{name=/$\A$name\z/} is the proper utf8");
             #diag("$name, $utf8");
         }
         close $fh;

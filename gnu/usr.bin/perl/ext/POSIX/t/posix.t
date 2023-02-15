@@ -10,11 +10,12 @@ BEGIN {
     require 'loc_tools.pl';
 }
 
-use Test::More tests => 96;
+use Test::More tests => 98;
 
 use POSIX qw(fcntl_h signal_h limits_h _exit getcwd open read strftime write
 	     errno localeconv dup dup2 lseek access);
 use strict 'subs';
+use warnings;
 
 sub next_test {
     my $builder = Test::More->builder;
@@ -24,10 +25,8 @@ sub next_test {
 $| = 1;
 
 $Is_W32     = $^O eq 'MSWin32';
-$Is_Dos     = $^O eq 'dos';
 $Is_VMS     = $^O eq 'VMS';
 $Is_OS2     = $^O eq 'os2';
-$Is_UWin    = $^O eq 'uwin';
 $Is_OS390   = $^O eq 'os390';
 
 my $vms_unix_rpt = 0;
@@ -67,14 +66,12 @@ TODO:
 my $test = next_test();
 write(1,"ok $test\nnot ok $test\n", 5);
 
-SKIP: {
-    skip("no pipe() support on DOS", 2) if $Is_Dos;
-
+{
     @fds = POSIX::pipe();
     cmp_ok($fds[0], '>', $testfd, 'POSIX::pipe');
 
-    CORE::open($reader = \*READER, "<&=".$fds[0]);
-    CORE::open($writer = \*WRITER, ">&=".$fds[1]);
+    CORE::open(my $reader, "<&=".$fds[0]);
+    CORE::open(my $writer, ">&=".$fds[1]);
     my $test = next_test();
     print $writer "ok $test\n";
     close $writer;
@@ -83,7 +80,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip("no sigaction support on win32/dos", 6) if $Is_W32 || $Is_Dos;
+    skip("no sigaction support on win32", 6) if $Is_W32;
 
     my $sigset = new POSIX::SigSet 1, 3;
     $sigset->delset(1);
@@ -113,8 +110,9 @@ SKIP: {
     }
     sleep 1;
 
-    $todo = 1 if ($^O eq 'freebsd' && $Config{osvers} < 8)
-              || ($^O eq 'darwin' && $Config{osvers} < '6.6');
+    my ($major, $minor) = $Config{osvers} =~ / (\d+) \. (\d+) .* /x;
+    $todo = 1 if ($^O eq 'freebsd' && $major < 8)
+              || ($^O eq 'darwin' && "${major}.${minor}" < '6.6');
     printf "%s 11 - masked SIGINT received %s\n",
         $sigint_called ? "ok" : "not ok",
         $todo ? $why_todo : '';
@@ -247,11 +245,18 @@ SKIP: {
 }
 
 SKIP: {
-    skip("strtoul() not present", 2) unless $Config{d_strtoul};
+    skip("strtoul() not present", 4) unless $Config{d_strtoul};
 
     ($n, $x) = &POSIX::strtoul('88_TEARS');
     is($n, 88, 'strtoul() number');
     is($x, 6,  '          unparsed chars');
+
+    skip("'long' is not 64-bit", 2)
+        unless $Config{uvsize} >= $Config{longsize} && $Config{longsize} >= 8;
+    ($n, $x) = &POSIX::strtoul('abcdef0123456789', 16);
+    # Expected value is specified by a string to avoid unwanted NV conversion
+    is($n, '12379813738877118345', 'strtoul() 64-bit number');
+    is($x, 0,                      '          unparsed chars');
 }
 
 # Pick up whether we're really able to dynamically load everything.
@@ -350,11 +355,16 @@ is ($result, undef, "fgets should fail");
 like ($@, qr/^Unimplemented: POSIX::fgets\(\): Use method IO::Handle::gets\(\) instead/,
       "check its redef message");
 
-eval { use strict; POSIX->import("S_ISBLK"); my $x = S_ISBLK };
+eval {
+    use strict;
+    no warnings 'uninitialized'; # S_ISBLK normally has an arg
+    POSIX->import("S_ISBLK");
+    my $x = S_ISBLK
+};
 unlike( $@, qr/Can't use string .* as a symbol ref/, "Can import autoloaded constants" );
 
 SKIP: {
-    skip("locales not available", 26) unless locales_enabled(qw(NUMERIC MONETARY));
+    skip("locales not available", 26) unless locales_enabled([ qw(NUMERIC MONETARY) ]);
     skip("localeconv() not available", 26) unless $Config{d_locconv};
     my $conv = localeconv;
     is(ref $conv, 'HASH', 'localeconv returns a hash reference');
@@ -457,7 +467,7 @@ if ($^O eq 'vos') {
 } else {
  $| = 0;
  # The following line assumes buffered output, which may be not true:
- print '@#!*$@(!@#$' unless ($Is_OS2 || $Is_UWin || $Is_OS390 ||
+ print '@#!*$@(!@#$' unless ($Is_OS2 || $Is_OS390 ||
                             $Is_VMS ||
 			    (defined $ENV{PERLIO} &&
 			     $ENV{PERLIO} eq 'unix' &&

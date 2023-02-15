@@ -281,6 +281,34 @@ SKIP: {
     ), "0\n", {}, "fresh socket not inherited across exec");
 }
 
+SKIP:
+{
+    my $val;
+    {
+        package SetsockoptMagic;
+        sub TIESCALAR { bless {}, shift }
+        sub FETCH { $val }
+    }
+    # setsockopt() magic
+    socket(my $sock, PF_INET, SOCK_STREAM, $tcp);
+    $val = 0;
+    # set a known value
+    ok(setsockopt($sock, SOL_SOCKET, SO_REUSEADDR, 1),
+       "set known SO_REUSEADDR");
+    isnt(getsockopt($sock, SOL_SOCKET, SO_REUSEADDR), pack("i", 0),
+       "check that worked");
+    tie my $m, "SetsockoptMagic";
+    # trigger the magic with the value 0
+    $val = pack("i", 0);
+    my $temp = $m;
+
+    $val = 1;
+    ok(setsockopt($sock, SOL_SOCKET, SO_REUSEADDR, $m),
+       "set SO_REUSEADDR from magic");
+    isnt(getsockopt($sock, SOL_SOCKET, SO_REUSEADDR), pack("i", 0),
+       "check SO_REUSEADDR set correctly");
+}
+
 done_testing();
 
 my @child_tests;

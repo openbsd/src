@@ -34,10 +34,6 @@
 #define SMALLSORT (200)
 #endif
 
-/* Flags for sortsv_flags */
-#define SORTf_STABLE 1
-#define SORTf_UNSTABLE 2
-
 /*
  * The mergesort implementation is by Peter M. Mcilroy <pmcilroy@lucent.com>.
  *
@@ -541,8 +537,6 @@ S_sortsv_flags_impl(pTHX_ gptr *base, size_t nmemb, SVCOMPARE_t cmp, U32 flags)
 }
 
 /*
-=head1 SV Manipulation Functions
-
 =for apidoc sortsv_flags
 
 In-place sort an array of SV pointers with the given comparison routine,
@@ -669,7 +663,6 @@ sortsv_cmp_locale_desc(pTHX_ gptr *base, size_t nmemb, U32 flags)
 #endif
 
 /*
-=head1 Array Manipulation Functions
 
 =for apidoc sortsv
 
@@ -714,12 +707,8 @@ PP(pp_sort)
 
     if ((priv & OPpSORT_DESCEND) != 0)
         descending = 1;
-    if ((priv & OPpSORT_STABLE) != 0)
-        sort_flags |= SORTf_STABLE;
-    if ((priv & OPpSORT_UNSTABLE) != 0)
-        sort_flags |= SORTf_UNSTABLE;
 
-    if (gimme != G_ARRAY) {
+    if (gimme != G_LIST) {
         SP = MARK;
         EXTEND(SP,1);
         RETPUSHUNDEF;

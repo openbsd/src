@@ -1,5 +1,0 @@
-# MPK Symbols not defined in the sdk import files
-# Created by: Guruprasad on 25th May 2000
-kSemaphoreTimedWait,
-kEnterNetWare,
-kDelayThread

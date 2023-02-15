@@ -64,78 +64,78 @@ init_Win32CORE(pTHX)
      */
 
     static const struct {
-	char Win32__GetCwd [sizeof("Win32::GetCwd")];
-	char Win32__SetCwd [sizeof("Win32::SetCwd")];
-	char Win32__GetNextAvailDrive [sizeof("Win32::GetNextAvailDrive")];
-	char Win32__GetLastError [sizeof("Win32::GetLastError")];
-	char Win32__SetLastError [sizeof("Win32::SetLastError")];
-	char Win32__LoginName [sizeof("Win32::LoginName")];
-	char Win32__NodeName [sizeof("Win32::NodeName")];
-	char Win32__DomainName [sizeof("Win32::DomainName")];
-	char Win32__FsType [sizeof("Win32::FsType")];
-	char Win32__GetOSVersion [sizeof("Win32::GetOSVersion")];
-	char Win32__IsWinNT [sizeof("Win32::IsWinNT")];
-	char Win32__IsWin95 [sizeof("Win32::IsWin95")];
-	char Win32__FormatMessage [sizeof("Win32::FormatMessage")];
-	char Win32__Spawn [sizeof("Win32::Spawn")];
-	char Win32__GetTickCount [sizeof("Win32::GetTickCount")];
-	char Win32__GetShortPathName [sizeof("Win32::GetShortPathName")];
-	char Win32__GetFullPathName [sizeof("Win32::GetFullPathName")];
-	char Win32__GetLongPathName [sizeof("Win32::GetLongPathName")];
-	char Win32__CopyFile [sizeof("Win32::CopyFile")];
-	char Win32__Sleep [sizeof("Win32::Sleep")];
+        char Win32__GetCwd [sizeof("Win32::GetCwd")];
+        char Win32__SetCwd [sizeof("Win32::SetCwd")];
+        char Win32__GetNextAvailDrive [sizeof("Win32::GetNextAvailDrive")];
+        char Win32__GetLastError [sizeof("Win32::GetLastError")];
+        char Win32__SetLastError [sizeof("Win32::SetLastError")];
+        char Win32__LoginName [sizeof("Win32::LoginName")];
+        char Win32__NodeName [sizeof("Win32::NodeName")];
+        char Win32__DomainName [sizeof("Win32::DomainName")];
+        char Win32__FsType [sizeof("Win32::FsType")];
+        char Win32__GetOSVersion [sizeof("Win32::GetOSVersion")];
+        char Win32__IsWinNT [sizeof("Win32::IsWinNT")];
+        char Win32__IsWin95 [sizeof("Win32::IsWin95")];
+        char Win32__FormatMessage [sizeof("Win32::FormatMessage")];
+        char Win32__Spawn [sizeof("Win32::Spawn")];
+        char Win32__GetTickCount [sizeof("Win32::GetTickCount")];
+        char Win32__GetShortPathName [sizeof("Win32::GetShortPathName")];
+        char Win32__GetFullPathName [sizeof("Win32::GetFullPathName")];
+        char Win32__GetLongPathName [sizeof("Win32::GetLongPathName")];
+        char Win32__CopyFile [sizeof("Win32::CopyFile")];
+        char Win32__Sleep [sizeof("Win32::Sleep")];
     } fnname_table = {
-	"Win32::GetCwd",
-	"Win32::SetCwd",
-	"Win32::GetNextAvailDrive",
-	"Win32::GetLastError",
-	"Win32::SetLastError",
-	"Win32::LoginName",
-	"Win32::NodeName",
-	"Win32::DomainName",
-	"Win32::FsType",
-	"Win32::GetOSVersion",
-	"Win32::IsWinNT",
-	"Win32::IsWin95",
-	"Win32::FormatMessage",
-	"Win32::Spawn",
-	"Win32::GetTickCount",
-	"Win32::GetShortPathName",
-	"Win32::GetFullPathName",
-	"Win32::GetLongPathName",
-	"Win32::CopyFile",
-	"Win32::Sleep"
+        "Win32::GetCwd",
+        "Win32::SetCwd",
+        "Win32::GetNextAvailDrive",
+        "Win32::GetLastError",
+        "Win32::SetLastError",
+        "Win32::LoginName",
+        "Win32::NodeName",
+        "Win32::DomainName",
+        "Win32::FsType",
+        "Win32::GetOSVersion",
+        "Win32::IsWinNT",
+        "Win32::IsWin95",
+        "Win32::FormatMessage",
+        "Win32::Spawn",
+        "Win32::GetTickCount",
+        "Win32::GetShortPathName",
+        "Win32::GetFullPathName",
+        "Win32::GetLongPathName",
+        "Win32::CopyFile",
+        "Win32::Sleep"
     };
 
     static const unsigned char fnname_lens [] = {
-	sizeof("Win32::GetCwd"),
-	sizeof("Win32::SetCwd"),
-	sizeof("Win32::GetNextAvailDrive"),
-	sizeof("Win32::GetLastError"),
-	sizeof("Win32::SetLastError"),
-	sizeof("Win32::LoginName"),
-	sizeof("Win32::NodeName"),
-	sizeof("Win32::DomainName"),
-	sizeof("Win32::FsType"),
-	sizeof("Win32::GetOSVersion"),
-	sizeof("Win32::IsWinNT"),
-	sizeof("Win32::IsWin95"),
-	sizeof("Win32::FormatMessage"),
-	sizeof("Win32::Spawn"),
-	sizeof("Win32::GetTickCount"),
-	sizeof("Win32::GetShortPathName"),
-	sizeof("Win32::GetFullPathName"),
-	sizeof("Win32::GetLongPathName"),
-	sizeof("Win32::CopyFile"),
-	sizeof("Win32::Sleep")
+        sizeof("Win32::GetCwd"),
+        sizeof("Win32::SetCwd"),
+        sizeof("Win32::GetNextAvailDrive"),
+        sizeof("Win32::GetLastError"),
+        sizeof("Win32::SetLastError"),
+        sizeof("Win32::LoginName"),
+        sizeof("Win32::NodeName"),
+        sizeof("Win32::DomainName"),
+        sizeof("Win32::FsType"),
+        sizeof("Win32::GetOSVersion"),
+        sizeof("Win32::IsWinNT"),
+        sizeof("Win32::IsWin95"),
+        sizeof("Win32::FormatMessage"),
+        sizeof("Win32::Spawn"),
+        sizeof("Win32::GetTickCount"),
+        sizeof("Win32::GetShortPathName"),
+        sizeof("Win32::GetFullPathName"),
+        sizeof("Win32::GetLongPathName"),
+        sizeof("Win32::CopyFile"),
+        sizeof("Win32::Sleep")
     };
     const unsigned char * len = (const unsigned char *)&fnname_lens;
     const char * function = (char *)&fnname_table;
     while (function < (char *)&fnname_table + sizeof(fnname_table)) {
-	const char * const file = __FILE__;
-	CV * const cv = newXS(function, w32_CORE_all, file);
-	XSANY.any_ptr = (void *)function;
-	function += *len++;
+        const char * const file = __FILE__;
+        CV * const cv = newXS(function, w32_CORE_all, file);
+        XSANY.any_ptr = (void *)function;
+        function += *len++;
     }
 
 

@@ -49,7 +49,9 @@ while (<DATA>) {
         $try .= qq| \$x->accuracy($args[1]); \$x->precision($args[2]);|;
         $try .= ' $x->bstr();';
     # some unary ops
-    } elsif ($f =~ /^b(nan|floor|ceil|int|sstr|neg|abs|sgn|inc|dec|not|sqrt|exp|fac)$/) {
+    } elsif ($f =~ /^b(nan|floor|ceil|int|sstr|neg|abs|sgn|inc|dec|not|sqrt|exp)$/) {
+        $try .= qq| \$x->$f();|;
+    } elsif ($f =~ /^b[dt]?fac$/) {
         $try .= qq| \$x->$f();|;
     } elsif ($f =~ /^(numify|length|as_number)$/) {
         $try .= qq| \$x->$f();|;
@@ -113,6 +115,8 @@ while (<DATA>) {
             $try .= ' $x->bpow($y);';
         } elsif ($f eq "bnok") {
             $try .= ' $x->bnok($y);';
+        } elsif ($f eq "bmfac") {
+            $try .= ' $x->bmfac($y);';
         } elsif ($f eq "bcos") {
             $try .= ' $x->bcos($y);';
         } elsif ($f eq "bsin") {
@@ -179,9 +183,9 @@ while (<DATA>) {
 $x = Math::BigInt->new(1200);
 $y = $CLASS->new($x);
 is($y, 1200,
-   q|$x = Math::BigInt->new(1200); $y = $CLASS->new($x); # check $y|);
+   qq|\$x = Math::BigInt->new(1200); \$y = $CLASS->new(\$x); # check \$y|);
 is($x, 1200,
-   q|$x = Math::BigInt->new(1200); $y = $CLASS->new($x); # check $x|);
+   qq|\$x = Math::BigInt->new(1200); \$y = $CLASS->new(\$x); # check \$x|);
 
 ###############################################################################
 # Really huge, big, ultra-mega-biggy-monster exponents. Technically, the
@@ -515,6 +519,9 @@ abc:+0:NaN
 $div_scale = 40
 
 &bcos
+NaN:10:NaN
++inf:10:NaN
+-inf:10:NaN
 1.2:10:0.3623577545
 2.4:12:-0.737393715541
 0:10:1
@@ -523,6 +530,9 @@ $div_scale = 40
 1:12:0.540302305868
 
 &bsin
+NaN:10:NaN
++inf:10:NaN
+-inf:10:NaN
 1:10:0.8414709848
 0:10:0
 0:20:0
@@ -688,9 +698,6 @@ invalid:NaN
 123:123
 -123.4567:-123.4567
 # invalid inputs
-1__2:NaN
-1E1__2:NaN
-11__2E2:NaN
 .2E-3.:NaN
 1e3e4:NaN
 # strange, but valid
@@ -1981,10 +1988,10 @@ abc:1:abc:NaN
 3:-1:0
 
 &bfac
-Nanfac:NaN
--1:NaN
+invalid:NaN
 +inf:inf
 -inf:NaN
+-1:NaN
 0:1
 1:1
 2:2
@@ -1992,15 +1999,22 @@ Nanfac:NaN
 4:24
 5:120
 6:720
+7:5040
+8:40320
+9:362880
 10:3628800
 11:39916800
 12:479001600
+20:2432902008176640000
+22:1124000727777607680000
+69:171122452428141311372468338881272839092270544893520369393648040923257279754140647424000000000000000
 
 &bdfac
 NaN:NaN
--1:NaN
 +inf:inf
 -inf:NaN
+-2:NaN
+-1:1
 0:1
 1:1
 2:2
@@ -2014,6 +2028,126 @@ NaN:NaN
 10:3840
 11:10395
 12:46080
+
+&btfac
+NaN:NaN
++inf:inf
+-inf:NaN
+-3:NaN
+-2:1
+-1:1
+0:1
+1:1
+2:2
+3:3
+4:4
+5:10
+6:18
+7:28
+8:80
+9:162
+10:280
+11:880
+12:1944
+
+&bmfac
+
+7:-inf:NaN
+7:-1:NaN
+7:0:NaN
+7:2.5:NaN
+7:inf:7
+7:NaN:NaN
+
+NaN:1:NaN
++inf:1:inf
+-inf:1:NaN
+-1:1:NaN
+0:1:1
+1:1:1
+2:1:2
+3:1:6
+4:1:24
+5:1:120
+6:1:720
+7:1:5040
+8:1:40320
+9:1:362880
+10:1:3628800
+
+NaN:2:NaN
++inf:2:inf
+-inf:2:NaN
+-2:2:NaN
+-1:2:1
+0:2:1
+1:2:1
+2:2:2
+3:2:3
+4:2:8
+5:2:15
+6:2:48
+7:2:105
+8:2:384
+9:2:945
+10:2:3840
+
+NaN:3:NaN
++inf:3:inf
+-inf:3:NaN
+-3:3:NaN
+-2:3:1
+-1:3:1
+0:3:1
+1:3:1
+2:3:2
+3:3:3
+4:3:4
+5:3:10
+6:3:18
+7:3:28
+8:3:80
+9:3:162
+10:3:280
+
+NaN:4:NaN
++inf:4:inf
+-inf:4:NaN
+-4:4:NaN
+-3:4:1
+-2:4:1
+-1:4:1
+0:4:1
+1:4:1
+2:4:2
+3:4:3
+4:4:4
+5:4:5
+6:4:12
+7:4:21
+8:4:32
+9:4:45
+10:4:120
+
+NaN:5:NaN
++inf:5:inf
+-inf:5:NaN
+-5:5:NaN
+-4:5:1
+-3:5:1
+-2:5:1
+-1:5:1
+0:5:1
+1:5:1
+2:5:2
+3:5:3
+4:5:4
+5:5:5
+6:5:6
+7:5:14
+8:5:24
+9:5:36
+10:5:50
 
 &broot
 # sqrt()

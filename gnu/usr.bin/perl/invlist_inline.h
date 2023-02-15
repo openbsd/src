@@ -27,7 +27,7 @@
 #define FROM_INTERNAL_SIZE(x) ((x)/ sizeof(UV))
 
 PERL_STATIC_INLINE bool
-S_is_invlist(SV* const invlist)
+S_is_invlist(const SV* const invlist)
 {
     return invlist != NULL && SvTYPE(invlist) == SVt_INVLIST;
 }
@@ -145,7 +145,7 @@ S_invlist_highest(SV* const invlist)
     PERL_ARGS_ASSERT_INVLIST_HIGHEST;
 
     if (len == 0) {
-	return 0;
+        return 0;
     }
 
     array = invlist_array(invlist);
@@ -218,8 +218,8 @@ S_invlist_iternext(SV* invlist, UV* start, UV* end)
     PERL_ARGS_ASSERT_INVLIST_ITERNEXT;
 
     if (*pos >= len) {
-	*pos = (STRLEN) UV_MAX;	/* Force iterinit() to be required next time */
-	return FALSE;
+        *pos = (STRLEN) UV_MAX;	/* Force iterinit() to be required next time */
+        return FALSE;
     }
 
     array = invlist_array(invlist);
@@ -227,10 +227,10 @@ S_invlist_iternext(SV* invlist, UV* start, UV* end)
     *start = array[(*pos)++];
 
     if (*pos >= len) {
-	*end = UV_MAX;
+        *end = UV_MAX;
     }
     else {
-	*end = array[(*pos)++] - 1;
+        *end = array[(*pos)++] - 1;
     }
 
     return TRUE;

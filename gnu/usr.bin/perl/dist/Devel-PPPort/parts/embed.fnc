@@ -1519,7 +1519,8 @@ Apd	|SV*	|newSVrv	|NN SV *const rv|NULLOK const char *const classname
 ApMbdR	|SV*	|newSVsv	|NULLOK SV *const old
 AmdR	|SV*	|newSVsv_nomg	|NULLOK SV *const old
 AdpR	|SV*	|newSVsv_flags	|NULLOK SV *const old|I32 flags
-ApdR	|SV*	|newSV_type	|const svtype type
+ApdiR	|SV*	|newSV_type	|const svtype type
+ApdIR	|SV*    |newSV_type_mortal|const svtype type
 ApdR	|OP*	|newUNOP	|I32 type|I32 flags|NULLOK OP* first
 ApdR	|OP*	|newUNOP_AUX	|I32 type|I32 flags|NULLOK OP* first \
 				|NULLOK UNOP_AUX_item *aux
@@ -1879,7 +1880,7 @@ Apd	|int	|sv_isa		|NULLOK SV* sv|NN const char *const name
 Apd	|int	|sv_isobject	|NULLOK SV* sv
 Apd	|STRLEN	|sv_len		|NULLOK SV *const sv
 Apd	|STRLEN	|sv_len_utf8	|NULLOK SV *const sv
-p	|STRLEN	|sv_len_utf8_nomg|NN SV *const sv
+Apd	|STRLEN	|sv_len_utf8_nomg|NN SV *const sv
 Apd	|void	|sv_magic	|NN SV *const sv|NULLOK SV *const obj|const int how \
 				|NULLOK const char *const name|const I32 namlen
 Apd	|MAGIC *|sv_magicext	|NN SV *const sv|NULLOK SV *const obj|const int how \
@@ -2026,12 +2027,19 @@ EiR	|SV*	|invlist_contents|NN SV* const invlist		    \
 EixRT	|UV	|invlist_lowest|NN SV* const invlist
 ERS	|SV*	|make_exactf_invlist	|NN RExC_state_t *pRExC_state \
 					|NN regnode *node
+ES	|regnode_offset|reg_la_NOTHING	|NN RExC_state_t *pRExC_state \
+					|U32 flags|NN const char *type
+ES	|regnode_offset|reg_la_OPFAIL	|NN RExC_state_t *pRExC_state \
+					|U32 flags|NN const char *type
 ES	|regnode_offset|reg	|NN RExC_state_t *pRExC_state \
 				|I32 paren|NN I32 *flagp|U32 depth
 ES	|regnode_offset|regnode_guts|NN RExC_state_t *pRExC_state          \
-				|const U8 op				   \
-				|const STRLEN extra_len			   \
-				|NN const char* const name
+				|const STRLEN extra_len
+#ifdef DEBUGGING
+ES	|regnode_offset|regnode_guts_debug|NN RExC_state_t *pRExC_state     \
+				|const U8 op				    \
+				|const STRLEN extra_len
+#endif
 ES	|void	|change_engine_size|NN RExC_state_t *pRExC_state|const Ptrdiff_t size
 ES	|regnode_offset|reganode|NN RExC_state_t *pRExC_state|U8 op \
 				|U32 arg
@@ -2108,13 +2116,12 @@ ES	|void|add_above_Latin1_folds|NN RExC_state_t *pRExC_state|const U8 cp \
 				|NN SV** invlist
 ES	|regnode_offset|handle_named_backref|NN RExC_state_t *pRExC_state   \
 				|NN I32 *flagp				    \
-				|NN char * parse_start			    \
+				|NN char * backref_parse_start		    \
 				|char ch
 ESTR	|unsigned int|regex_set_precedence|const U8 my_operator
 ES	|regnode_offset|handle_regex_sets|NN RExC_state_t *pRExC_state \
 				|NULLOK SV ** return_invlist            \
-				|NN I32 *flagp|U32 depth                \
-				|NN char * const oregcomp_parse
+				|NN I32 *flagp|U32 depth
 ES	|void	|set_regex_pv	|NN RExC_state_t *pRExC_state|NN REGEXP *Rx
 #  if defined(DEBUGGING) && defined(ENABLE_REGEX_SETS_DEBUGGING)
 ES	|void	|dump_regex_sets_structures				    \
@@ -3165,7 +3172,7 @@ S	|STRLEN	|sv_pos_b2u_midway|NN const U8 *const s|NN const U8 *const target \
 S	|void	|assert_uft8_cache_coherent|NN const char *const func \
 		|STRLEN from_cache|STRLEN real|NN SV *const sv
 ST	|char *	|F0convert	|NV nv|NN char *const endbuf|NN STRLEN *const len
-S	|SV *	|more_sv
+Cp	|SV *	|more_sv
 S	|bool	|sv_2iuv_common	|NN SV *const sv
 S	|void	|glob_assign_glob|NN SV *const dsv|NN SV *const ssv \
 		|const int dtype
@@ -3174,7 +3181,7 @@ S	|void	|anonymise_cv_maybe	|NN GV *gv|NN CV *cv
 #endif
 
 : Used in sv.c and hv.c
-po	|void *	|more_bodies	|const svtype sv_type|const size_t body_size \
+Cpo	|void *	|more_bodies	|const svtype sv_type|const size_t body_size \
 				|const size_t arena_size
 EXpR	|SV*	|get_and_check_backslash_N_name|NN const char* s	\
 				|NN const char* e			\

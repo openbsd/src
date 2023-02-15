@@ -22,6 +22,7 @@ BEGIN {
     # Get function prototypes
     require './regen/regen_lib.pl';
 }
+
 use strict;
 
 # NOTE I don't think anyone actually knows what all of these properties mean,
@@ -243,6 +244,49 @@ EXTCONST U8 PL_${varname}_bitmask[] = {
 EOP
 }
 
+sub print_process_EXACTish {
+    my ($out)= @_;
+
+    # Creates some bitmaps for EXACTish nodes.
+
+    my @folded;
+    my @req8;
+
+    my $base;
+    for my $node (@ops) {
+        next unless $node->{type} eq 'EXACT';
+        my $name = $node->{name};
+        $base = $node->{id} if $name eq 'EXACT';
+
+        my $index = $node->{id} - $base;
+
+        # This depends entirely on naming conventions in regcomp.sym
+        $folded[$index] = $name =~ /^EXACTF/ || 0;
+        $req8[$index] = $name =~ /8/ || 0;
+    }
+
+    die "Can't cope with > 32 EXACTish nodes" if @folded > 32;
+
+    my $exactf = sprintf "%X", oct("0b" . join "", reverse @folded);
+    my $req8 =   sprintf "%X", oct("0b" . join "", reverse @req8);
+    print $out <<EOP,
+
+/* Is 'op', known to be of type EXACT, folding? */
+#define isEXACTFish(op) (__ASSERT_(PL_regkind[op] == EXACT) (PL_EXACTFish_bitmask & (1U << (op - EXACT))))
+
+/* Do only UTF-8 target strings match 'op', known to be of type EXACT? */
+#define isEXACT_REQ8(op) (__ASSERT_(PL_regkind[op] == EXACT) (PL_EXACT_REQ8_bitmask & (1U << (op - EXACT))))
+
+#ifndef DOINIT
+EXTCONST U32 PL_EXACTFish_bitmask;
+EXTCONST U32 PL_EXACT_REQ8_bitmask;
+#else
+EXTCONST U32 PL_EXACTFish_bitmask = 0x$exactf;
+EXTCONST U32 PL_EXACT_REQ8_bitmask = 0x$req8;
+#endif /* DOINIT */
+EOP
+}
+
 sub read_definition {
     my ( $file )= @_;
     my ( $seen_sep, $pod_comment )= "";
@@ -280,7 +324,7 @@ sub read_definition {
 
 # use fixed width to keep the diffs between regcomp.pl recompiles
 # as small as possible.
-my ( $width, $rwidth, $twidth )= ( 22, 12, 9 );
+my ( $base_name_width, $rwidth, $twidth )= ( 22, 12, 9 );
 
 sub print_state_defs {
     my ($out)= @_;
@@ -291,25 +335,125 @@ sub print_state_defs {
 #define %*s\t%d
 
 EOP
-        -$width,
+        -$base_name_width,
         REGNODE_MAX => $#ops,
-        -$width, REGMATCH_STATE_MAX => $#all;
+        -$base_name_width, REGMATCH_STATE_MAX => $#all;
 
     my %rev_type_alias= reverse %type_alias;
+    my $base_format = "#define %*s\t%d\t/* %#04x %s */\n";
+    my @withs;
+    my $in_states = 0;
+
+    my $max_name_width = 0;
+    for my $ref (\@ops, \@states) {
+        for my $node ($ref->@*) {
+            my $len = length $node->{name};
+            $max_name_width = $len if $max_name_width < $len;
+        }
+    }
+
+    die "Do a white-space only commit to increase \$base_name_width to"
+     .  " $max_name_width; then re-run"  if $base_name_width < $max_name_width;
+
+    print $out <<EOT;
+/* -- For regexec.c to switch on target being utf8 (t8) or not (tb, b='byte'); */
+#define with_t_UTF8ness(op, t_utf8) (((op) << 1) + (cBOOL(t_utf8)))
+/* -- same, but also with pattern (p8, pb) -- */
+#define with_tp_UTF8ness(op, t_utf8, p_utf8)                        \\
+\t\t(((op) << 2) + (cBOOL(t_utf8) << 1) + cBOOL(p_utf8))
+
+/* The #defines below give both the basic regnode and the expanded version for
+   switching on utf8ness */
+EOT
+
     for my $node (@ops) {
-        printf $out "#define\t%*s\t%d\t/* %#04x %s */\n",
-            -$width, $node->{name}, $node->{id}, $node->{id}, $node->{comment};
+        print_state_def_line($out, $node->{name}, $node->{id}, $node->{comment});
         if ( defined( my $alias= $rev_type_alias{ $node->{name} } ) ) {
-            printf $out "#define\t%*s\t%d\t/* %#04x %s */\n",
-                -$width, $alias, $node->{id}, $node->{id}, "type alias";
+            print_state_def_line($out, $alias, $node->{id}, $node->{comment});
         }
     }
 
     print $out "\t/* ------------ States ------------- */\n";
     for my $node (@states) {
-        printf $out "#define\t%*s\t(REGNODE_MAX + %d)\t/* %s */\n",
-            -$width, $node->{name}, $node->{id} - $#ops, $node->{comment};
+        print_state_def_line($out, $node->{name}, $node->{id}, $node->{comment});
     }
+}
+
+sub print_state_def_line
+{
+    my ($fh, $name, $id, $comment) = @_;
+
+    # The sub-names are like '_tb' or '_tb_p8' = max 6 chars wide
+    my $name_col_width = $base_name_width + 6;
+    my $base_id_width = 3;  # Max is '255' or 3 cols
+    my $mid_id_width  = 3;  # Max is '511' or 3 cols
+    my $full_id_width = 3;  # Max is '1023' but not close to using the 4th
+
+    my $line = "#define " . $name;
+    $line .= " " x ($name_col_width - length($name));
+
+    $line .= sprintf "%*s", $base_id_width, $id;
+    $line .= " " x $mid_id_width;
+    $line .= " " x ($full_id_width + 2);
+
+    $line .= "/* ";
+    my $hanging = length $line;     # Indent any subsequent line to this pos
+    $line .= sprintf "0x%02x", $id;
+
+    my $columns = 78;
+
+    # From the documentation: 'In fact, every resulting line will have length
+    # of no more than "$columns - 1"'
+    $line = wrap($columns + 1, "", " " x $hanging, "$line $comment");
+    chomp $line;            # wrap always adds a trailing \n
+    $line =~ s/ \s+ $ //x;  # trim, just in case.
+
+    # The comment may have wrapped.  Find the final \n and measure the length
+    # to the end.  If it is short enough, just append the ' */' to the line.
+    # If it is too close to the end of the space available, add an extra line
+    # that consists solely of blanks and the ' */'
+    my $len = length($line); my $rindex = rindex($line, "\n");
+    if (length($line) - rindex($line, "\n") - 1 <= $columns - 3) {
+        $line .= " */\n";
+    }
+    else {
+        $line .= "\n" . " " x ($hanging - 3) . "*/\n";
+    }
+
+    print $fh $line;
+
+    # And add the 2 subsidiary #defines used when switching on
+    # with_t_UTF8nes()
+    my $with_id_t = $id * 2;
+    for my $with (qw(tb  t8)) {
+        my $with_name = "${name}_$with";
+        print  $fh "#define ", $with_name;
+        print  $fh " " x ($name_col_width - length($with_name) + $base_id_width);
+        printf $fh "%*s", $mid_id_width, $with_id_t;
+        print  $fh " " x $full_id_width;
+        printf $fh "  /*";
+        print  $fh " " x (4 + 2);  # 4 is width of 0xHH that the base entry uses
+        printf $fh "0x%03x */\n", $with_id_t;
+
+        $with_id_t++;
+    }
+
+    # Finally add the 4 subsidiary #defines used when switching on
+    # with_tp_UTF8nes()
+    my $with_id_tp = $id * 4;
+    for my $with (qw(tb_pb  tb_p8  t8_pb  t8_p8)) {
+        my $with_name = "${name}_$with";
+        print  $fh "#define ", $with_name;
+        print  $fh " " x ($name_col_width - length($with_name) + $base_id_width + $mid_id_width);
+        printf $fh "%*s", $full_id_width, $with_id_tp;
+        printf $fh "  /*";
+        print  $fh " " x (4 + 2);  # 4 is width of 0xHH that the base entry uses
+        printf $fh "0x%03x */\n", $with_id_tp;
+
+        $with_id_tp++;
+    }
+
+    print $fh "\n"; # Blank line separates groups for clarity
 }
 
 sub print_regkind {
@@ -327,7 +471,7 @@ EOP
     foreach my $node (@all) {
         print Dumper($node) if !defined $node->{type} or !defined( $node->{name} );
         printf $out "\t%*s\t/* %*s */\n",
-            -1 - $twidth, "$node->{type},", -$width, $node->{name};
+            -1 - $twidth, "$node->{type},", -$base_name_width, $node->{name};
         print $out "\t/* ------------ States ------------- */\n"
             if $node->{id} == $#ops and $node->{id} != $#all;
     }
@@ -412,7 +556,7 @@ EOP
         my $size= $node->{longj} || 0;
 
         printf $out "\t%*s\t/* $sym%#04x */\n",
-            -3 - $width, qq("$node->{name}",), $node->{id} - $ofs;
+            -3 - $base_name_width, qq("$node->{name}",), $node->{id} - $ofs;
         if ( $node->{id} == $#ops and @ops != @all ) {
             print $out "\t/* ------------ States ------------- */\n";
             $ofs= $#ops;
@@ -618,7 +762,7 @@ format GuTS =
 .
 1;
 EOD
-    
+
     my $old_fh= select($guts);
     $~= "GuTS";
 
@@ -656,9 +800,11 @@ END_OF_DESCR
     close_and_rename($guts);
 }
 
+my $confine_to_core = 'defined(PERL_CORE) || defined(PERL_EXT_RE_BUILD)';
 read_definition("regcomp.sym");
 my $out= open_new( 'regnodes.h', '>',
     { by => 'regen/regcomp.pl', from => 'regcomp.sym' } );
+print $out "#if $confine_to_core\n\n";
 print_state_defs($out);
 print_regkind($out);
 wrap_ifdef_print(
@@ -671,6 +817,8 @@ print_reg_name($out);
 print_reg_extflags_name($out);
 print_reg_intflags_name($out);
 print_process_flags($out);
+print_process_EXACTish($out);
+print $out "\n#endif /* $confine_to_core */\n";
 read_only_bottom_close_and_rename($out);
 
 do_perldebguts();

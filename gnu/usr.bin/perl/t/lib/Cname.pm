@@ -2,6 +2,9 @@ package Cname;
 our $Evil='A';
 
 sub translator {
+
+    # Returns the input as a name, except for these special ones
+
     my $str = shift;
     if ( $str eq 'EVIL' ) {
         # Returns A first time, AB second, ABC third ... A-ZA the 27th time.
@@ -24,6 +27,7 @@ sub translator {
     if ( $str eq 'TOO-LONG-STR') {
        return 'A' x 256;
     }
+
     return $str;
 }
 

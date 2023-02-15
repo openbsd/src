@@ -292,7 +292,7 @@ starting in Perl v5.18, but prior to that, the sole difference was that the
 vertical tab (C<"\cK">) was not matched by C<\s>.
 
 The following table is a complete listing of characters matched by
-C<\s>, C<\h> and C<\v> as of Unicode 6.3.
+C<\s>, C<\h> and C<\v> as of Unicode 14.0.
 
 The first column gives the Unicode code point of the character (in hex format),
 the second column gives the (Unicode) name. The third column indicates
@@ -529,7 +529,9 @@ place before the bracketed class is parsed:
  $, = "\t| ";
  $a =~ m'[$,]';        # single-quotish: matches '$' or ','
  $a =~ q{[$,]}'        # same
- $a =~ m/[$,]/;        # double-quotish: matches "\t", "|", or " "
+ $a =~ m/[$,]/;        # double-quotish: Because we made an
+                       #   assignment to $, above, this now
+                       #   matches "\t", "|", or " "
 
 Characters that may carry a special meaning inside a character class are:
 C<\>, C<^>, C<->, C<[> and C<]>, and are discussed below. They can be
@@ -1034,14 +1036,8 @@ such as intersection. An example is
 
 This will match all the digit characters that are in the Thai script.
 
-This is an experimental feature available starting in 5.18, and is
-subject to change as we gain field experience with it.  Any attempt to
-use it will raise a warning, unless disabled via
-
- no warnings "experimental::regex_sets";
-
-Comments on this feature are welcome; send email to
-C<perl5-porters@perl.org>.
+This feature became available in Perl 5.18, as experimental; accepted in
+5.36.
 
 The rules used by L<C<use re 'strict>|re/'strict' mode> apply to this
 construct.
@@ -1179,46 +1175,29 @@ closing C<])> characters.
 
 Just as in all regular expressions, the pattern can be built up by
 including variables that are interpolated at regex compilation time.
-But its best to compile each sub-component.
+But currently each such sub-component should be an already-compiled
+extended bracketed character class.
 
  my $thai_or_lao = qr/(?[ \p{Thai} + \p{Lao} ])/;
- my $lower = qr/(?[ \p{Lower} + \p{Digit} ])/;
+ ...
+ qr/(?[ \p{Digit} & $thai_or_lao ])/;
 
-When these are embedded in another pattern, what they match does not
-change, regardless of parenthesization or what modifiers are in effect
-in that outer pattern.  If you fail to compile the subcomponents, you
-can get some nasty surprises.  For example:
+If you interpolate something else, the pattern may still compile (or it
+may die), but if it compiles, it very well may not behave as you would
+expect:
 
  my $thai_or_lao = '\p{Thai} + \p{Lao}';
- ...
  qr/(?[ \p{Digit} & $thai_or_lao ])/;
 
 compiles to
 
  qr/(?[ \p{Digit} & \p{Thai} + \p{Lao} ])/;
 
-But this does not have the effect that someone reading the source code
+This does not have the effect that someone reading the source code
 would likely expect, as the intersection applies just to C<\p{Thai}>,
-excluding the Laotian.  Its best to compile the subcomponents, but you
-could also parenthesize the component pieces:
-
- my $thai_or_lao = '( \p{Thai} + \p{Lao} )';
-
-But any modifiers will still apply to all the components:
-
- my $lower = '\p{Lower} + \p{Digit}';
- qr/(?[ \p{Greek} & $lower ])/i;
-
-matches upper case things.  So just, compile the subcomponents, as
-illustrated above.
+excluding the Laotian.
 
 Due to the way that Perl parses things, your parentheses and brackets
 may need to be balanced, even including comments.  If you run into any
 examples, please submit them to L<https://github.com/Perl/perl5/issues>,
 so that we can have a concrete example for this man page.
-
-We may change it so that things that remain legal uses in normal bracketed
-character classes might become illegal within this experimental
-construct.  One proposal, for example, is to forbid adjacent uses of the
-same character, as in C<(?[ [aa] ])>.  The motivation for such a change
-is that this usage is likely a typo, as the second "a" adds nothing.

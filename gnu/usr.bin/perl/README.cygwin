@@ -576,7 +576,6 @@ be kept as clean as possible.
  lib/ExtUtils/NOTES lib/ExtUtils/PATCHING lib/ExtUtils/README
  lib/Net/Ping/Changes lib/Test/Harness/Changes
  lib/Term/ANSIColor/ChangeLog lib/Term/ANSIColor/README
- README.symbian symbian/TODO
 
 =item Build, Configure, Make, Install
 
@@ -595,12 +594,9 @@ be kept as clean as possible.
  makedepend.SH         - uwinfix
  regen_lib.pl          - file permissions
 
- NetWare/Makefile
  plan9/mkfile
- symbian/sanity.pl symbian/sisify.pl
- hints/uwin.sh
  vms/descrip_mms.template
- win32/Makefile win32/makefile.mk
+ win32/Makefile
 
 =item Tests
 

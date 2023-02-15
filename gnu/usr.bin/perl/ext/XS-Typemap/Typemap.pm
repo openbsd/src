@@ -34,18 +34,23 @@ to the test script.
 use parent qw/ Exporter /;
 require XSLoader;
 
-our $VERSION = '0.17';
+our $VERSION = '0.19';
 
 our @EXPORT = (qw/
 	   T_SV
+           T_SV_output
 	   T_SVREF
 	   T_SVREF_REFCOUNT_FIXED
+           T_SVREF_REFCOUNT_FIXED_output
 	   T_AVREF
 	   T_AVREF_REFCOUNT_FIXED
+           T_AVREF_REFCOUNT_FIXED_output
 	   T_HVREF
 	   T_HVREF_REFCOUNT_FIXED
+	   T_HVREF_REFCOUNT_FIXED_output
 	   T_CVREF
 	   T_CVREF_REFCOUNT_FIXED
+	   T_CVREF_REFCOUNT_FIXED_output
 	   T_SYSRET_fail T_SYSRET_pass
 	   T_UV
 	   T_IV

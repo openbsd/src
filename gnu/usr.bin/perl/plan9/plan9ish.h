@@ -25,14 +25,14 @@
  *	getgrgid() routines are available to get group entries.
  *	The getgrent() has a separate definition, HAS_GETGRENT.
  */
-/*#define HAS_GROUP		/ **/
+/*#define HAS_GROUP		/**/
 
 /* HAS_PASSWD
  *	This symbol, if defined, indicates that the getpwnam() and
  *	getpwuid() routines are available to get password entries.
  *	The getpwent() has a separate definition, HAS_GETPWENT.
  */
-/*#define HAS_PASSWD		/ **/
+/*#define HAS_PASSWD		/**/
 
 #define HAS_KILL
 #define HAS_WAIT
@@ -42,7 +42,7 @@
  *	to remove all versions of a file if unlink() is called.  This is
  *	probably only relevant for VMS.
  */
-/* #define UNLINK_ALL_VERSIONS		/ **/
+/* #define UNLINK_ALL_VERSIONS		/**/
 
 /* PLAN9:
  *	This symbol, if defined, indicates that the program is running under
@@ -105,7 +105,7 @@
 
 #define BIT_BUCKET "/dev/null"
 #define PERL_SYS_INIT_BODY(c,v)				    \
-	MALLOC_CHECK_TAINT2(*c,*v) PERLIO_INIT; MALLOC_INIT
+        MALLOC_CHECK_TAINT2(*c,*v) PERLIO_INIT; MALLOC_INIT
 #define dXSUB_SYS dNOOP
 #define PERL_SYS_TERM_BODY()	PERLIO_TERM; MALLOC_TERM
 

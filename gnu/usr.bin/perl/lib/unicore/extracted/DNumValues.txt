@@ -1,6 +1,6 @@
-# DerivedNumericValues-13.0.0.txt
-# Date: 2019-09-08, 23:31:10 GMT
-# © 2019 Unicode®, Inc.
+# DerivedNumericValues-14.0.0.txt
+# Date: 2021-03-08, 06:22:32 GMT
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -106,6 +106,7 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 11D50         ; 0.0 ; ; 0 # Nd       MASARAM GONDI DIGIT ZERO
 11DA0         ; 0.0 ; ; 0 # Nd       GUNJALA GONDI DIGIT ZERO
 16A60         ; 0.0 ; ; 0 # Nd       MRO DIGIT ZERO
+16AC0         ; 0.0 ; ; 0 # Nd       TANGSA DIGIT ZERO
 16B50         ; 0.0 ; ; 0 # Nd       PAHAWH HMONG DIGIT ZERO
 16E80         ; 0.0 ; ; 0 # No       MEDEFAIDRIN DIGIT ZERO
 1D2E0         ; 0.0 ; ; 0 # No       MAYAN NUMERAL ZERO
@@ -121,7 +122,7 @@ FF10          ; 0.0 ; ; 0 # Nd       FULLWIDTH DIGIT ZERO
 1F10B..1F10C  ; 0.0 ; ; 0 # No   [2] DINGBAT CIRCLED SANS-SERIF DIGIT ZERO..DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ZERO
 1FBF0         ; 0.0 ; ; 0 # Nd       SEGMENTED DIGIT ZERO
 
-# Total code points: 83
+# Total code points: 84
 
 # ================================================
 
@@ -520,6 +521,7 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 1244F         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE BAN2
 12458         ; 1.0 ; ; 1 # Nl       CUNEIFORM NUMERIC SIGN ONE ESHE3
 16A61         ; 1.0 ; ; 1 # Nd       MRO DIGIT ONE
+16AC1         ; 1.0 ; ; 1 # Nd       TANGSA DIGIT ONE
 16B51         ; 1.0 ; ; 1 # Nd       PAHAWH HMONG DIGIT ONE
 16E81         ; 1.0 ; ; 1 # No       MEDEFAIDRIN DIGIT ONE
 16E94         ; 1.0 ; ; 1 # No       MEDEFAIDRIN DIGIT ONE ALTERNATE FORM
@@ -544,7 +546,7 @@ FF11          ; 1.0 ; ; 1 # Nd       FULLWIDTH DIGIT ONE
 1FBF1         ; 1.0 ; ; 1 # Nd       SEGMENTED DIGIT ONE
 2092A         ; 1.0 ; ; 1 # Lo       CJK UNIFIED IDEOGRAPH-2092A
 
-# Total code points: 140
+# Total code points: 141
 
 # ================================================
 
@@ -667,6 +669,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 12456         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAMIN
 12459         ; 2.0 ; ; 2 # Nl       CUNEIFORM NUMERIC SIGN TWO ESHE3
 16A62         ; 2.0 ; ; 2 # Nd       MRO DIGIT TWO
+16AC2         ; 2.0 ; ; 2 # Nd       TANGSA DIGIT TWO
 16B52         ; 2.0 ; ; 2 # Nd       PAHAWH HMONG DIGIT TWO
 16E82         ; 2.0 ; ; 2 # No       MEDEFAIDRIN DIGIT TWO
 16E95         ; 2.0 ; ; 2 # No       MEDEFAIDRIN DIGIT TWO ALTERNATE FORM
@@ -691,7 +694,7 @@ FF12          ; 2.0 ; ; 2 # Nd       FULLWIDTH DIGIT TWO
 1FBF2         ; 2.0 ; ; 2 # Nd       SEGMENTED DIGIT TWO
 22390         ; 2.0 ; ; 2 # Lo       CJK UNIFIED IDEOGRAPH-22390
 
-# Total code points: 139
+# Total code points: 140
 
 # ================================================
 
@@ -809,6 +812,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 12451         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN THREE BAN2
 12457         ; 3.0 ; ; 3 # Nl       CUNEIFORM NUMERIC SIGN NIGIDAESH
 16A63         ; 3.0 ; ; 3 # Nd       MRO DIGIT THREE
+16AC3         ; 3.0 ; ; 3 # Nd       TANGSA DIGIT THREE
 16B53         ; 3.0 ; ; 3 # Nd       PAHAWH HMONG DIGIT THREE
 16E83         ; 3.0 ; ; 3 # No       MEDEFAIDRIN DIGIT THREE
 16E96         ; 3.0 ; ; 3 # No       MEDEFAIDRIN DIGIT THREE ALTERNATE FORM
@@ -835,7 +839,7 @@ FF13          ; 3.0 ; ; 3 # Nd       FULLWIDTH DIGIT THREE
 22998         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-22998
 23B1B         ; 3.0 ; ; 3 # Lo       CJK UNIFIED IDEOGRAPH-23B1B
 
-# Total code points: 140
+# Total code points: 141
 
 # ================================================
 
@@ -948,6 +952,7 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 12452..12453  ; 4.0 ; ; 4 # Nl   [2] CUNEIFORM NUMERIC SIGN FOUR BAN2..CUNEIFORM NUMERIC SIGN FOUR BAN2 VARIANT FORM
 12469         ; 4.0 ; ; 4 # Nl       CUNEIFORM NUMERIC SIGN FOUR U VARIANT FORM
 16A64         ; 4.0 ; ; 4 # Nd       MRO DIGIT FOUR
+16AC4         ; 4.0 ; ; 4 # Nd       TANGSA DIGIT FOUR
 16B54         ; 4.0 ; ; 4 # Nd       PAHAWH HMONG DIGIT FOUR
 16E84         ; 4.0 ; ; 4 # No       MEDEFAIDRIN DIGIT FOUR
 1D2E4         ; 4.0 ; ; 4 # No       MAYAN NUMERAL FOUR
@@ -972,7 +977,7 @@ FF14          ; 4.0 ; ; 4 # Nd       FULLWIDTH DIGIT FOUR
 200E2         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-200E2
 2626D         ; 4.0 ; ; 4 # Lo       CJK UNIFIED IDEOGRAPH-2626D
 
-# Total code points: 131
+# Total code points: 132
 
 # ================================================
 
@@ -1088,6 +1093,7 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 12454..12455  ; 5.0 ; ; 5 # Nl   [2] CUNEIFORM NUMERIC SIGN FIVE BAN2..CUNEIFORM NUMERIC SIGN FIVE BAN2 VARIANT FORM
 1246A         ; 5.0 ; ; 5 # Nl       CUNEIFORM NUMERIC SIGN FIVE U VARIANT FORM
 16A65         ; 5.0 ; ; 5 # Nd       MRO DIGIT FIVE
+16AC5         ; 5.0 ; ; 5 # Nd       TANGSA DIGIT FIVE
 16B55         ; 5.0 ; ; 5 # Nd       PAHAWH HMONG DIGIT FIVE
 16E85         ; 5.0 ; ; 5 # No       MEDEFAIDRIN DIGIT FIVE
 1D2E5         ; 5.0 ; ; 5 # No       MAYAN NUMERAL FIVE
@@ -1111,7 +1117,7 @@ FF15          ; 5.0 ; ; 5 # Nd       FULLWIDTH DIGIT FIVE
 1FBF5         ; 5.0 ; ; 5 # Nd       SEGMENTED DIGIT FIVE
 20121         ; 5.0 ; ; 5 # Lo       CJK UNIFIED IDEOGRAPH-20121
 
-# Total code points: 129
+# Total code points: 130
 
 # ================================================
 
@@ -1214,6 +1220,7 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 1244E         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX ASH TENU
 1246B         ; 6.0 ; ; 6 # Nl       CUNEIFORM NUMERIC SIGN SIX U VARIANT FORM
 16A66         ; 6.0 ; ; 6 # Nd       MRO DIGIT SIX
+16AC6         ; 6.0 ; ; 6 # Nd       TANGSA DIGIT SIX
 16B56         ; 6.0 ; ; 6 # Nd       PAHAWH HMONG DIGIT SIX
 16E86         ; 6.0 ; ; 6 # No       MEDEFAIDRIN DIGIT SIX
 1D2E6         ; 6.0 ; ; 6 # No       MAYAN NUMERAL SIX
@@ -1235,7 +1242,7 @@ FF16          ; 6.0 ; ; 6 # Nd       FULLWIDTH DIGIT SIX
 1FBF6         ; 6.0 ; ; 6 # Nd       SEGMENTED DIGIT SIX
 20AEA         ; 6.0 ; ; 6 # Lo       CJK UNIFIED IDEOGRAPH-20AEA
 
-# Total code points: 113
+# Total code points: 114
 
 # ================================================
 
@@ -1335,6 +1342,7 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 12441..12443  ; 7.0 ; ; 7 # Nl   [3] CUNEIFORM NUMERIC SIGN SEVEN VARIANT FORM IMIN3..CUNEIFORM NUMERIC SIGN SEVEN VARIANT FORM IMIN B
 1246C         ; 7.0 ; ; 7 # Nl       CUNEIFORM NUMERIC SIGN SEVEN U VARIANT FORM
 16A67         ; 7.0 ; ; 7 # Nd       MRO DIGIT SEVEN
+16AC7         ; 7.0 ; ; 7 # Nd       TANGSA DIGIT SEVEN
 16B57         ; 7.0 ; ; 7 # Nd       PAHAWH HMONG DIGIT SEVEN
 16E87         ; 7.0 ; ; 7 # No       MEDEFAIDRIN DIGIT SEVEN
 1D2E7         ; 7.0 ; ; 7 # No       MAYAN NUMERAL SEVEN
@@ -1356,7 +1364,7 @@ FF17          ; 7.0 ; ; 7 # Nd       FULLWIDTH DIGIT SEVEN
 1FBF7         ; 7.0 ; ; 7 # Nd       SEGMENTED DIGIT SEVEN
 20001         ; 7.0 ; ; 7 # Lo       CJK UNIFIED IDEOGRAPH-20001
 
-# Total code points: 112
+# Total code points: 113
 
 # ================================================
 
@@ -1454,6 +1462,7 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 12444..12445  ; 8.0 ; ; 8 # Nl   [2] CUNEIFORM NUMERIC SIGN EIGHT VARIANT FORM USSU..CUNEIFORM NUMERIC SIGN EIGHT VARIANT FORM USSU3
 1246D         ; 8.0 ; ; 8 # Nl       CUNEIFORM NUMERIC SIGN EIGHT U VARIANT FORM
 16A68         ; 8.0 ; ; 8 # Nd       MRO DIGIT EIGHT
+16AC8         ; 8.0 ; ; 8 # Nd       TANGSA DIGIT EIGHT
 16B58         ; 8.0 ; ; 8 # Nd       PAHAWH HMONG DIGIT EIGHT
 16E88         ; 8.0 ; ; 8 # No       MEDEFAIDRIN DIGIT EIGHT
 1D2E8         ; 8.0 ; ; 8 # No       MAYAN NUMERAL EIGHT
@@ -1474,7 +1483,7 @@ FF18          ; 8.0 ; ; 8 # Nd       FULLWIDTH DIGIT EIGHT
 1F109         ; 8.0 ; ; 8 # No       DIGIT EIGHT COMMA
 1FBF8         ; 8.0 ; ; 8 # Nd       SEGMENTED DIGIT EIGHT
 
-# Total code points: 108
+# Total code points: 109
 
 # ================================================
 
@@ -1573,6 +1582,7 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 12446..12449  ; 9.0 ; ; 9 # Nl   [4] CUNEIFORM NUMERIC SIGN NINE VARIANT FORM ILIMMU..CUNEIFORM NUMERIC SIGN NINE VARIANT FORM ILIMMU A
 1246E         ; 9.0 ; ; 9 # Nl       CUNEIFORM NUMERIC SIGN NINE U VARIANT FORM
 16A69         ; 9.0 ; ; 9 # Nd       MRO DIGIT NINE
+16AC9         ; 9.0 ; ; 9 # Nd       TANGSA DIGIT NINE
 16B59         ; 9.0 ; ; 9 # Nd       PAHAWH HMONG DIGIT NINE
 16E89         ; 9.0 ; ; 9 # No       MEDEFAIDRIN DIGIT NINE
 1D2E9         ; 9.0 ; ; 9 # No       MAYAN NUMERAL NINE
@@ -1594,7 +1604,7 @@ FF19          ; 9.0 ; ; 9 # Nd       FULLWIDTH DIGIT NINE
 1FBF9         ; 9.0 ; ; 9 # Nd       SEGMENTED DIGIT NINE
 2F890         ; 9.0 ; ; 9 # Lo       CJK COMPATIBILITY IDEOGRAPH-2F890
 
-# Total code points: 112
+# Total code points: 113
 
 # ================================================
 

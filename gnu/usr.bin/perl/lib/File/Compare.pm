@@ -1,18 +1,14 @@
-package File::Compare;
+package File::Compare 1.1007;
 
-use 5.006;
-use strict;
+use v5.12;
 use warnings;
-our($VERSION, @ISA, @EXPORT, @EXPORT_OK, $Too_Big);
 
-require Exporter;
+use Exporter 'import';
 
-$VERSION = '1.1006';
-@ISA = qw(Exporter);
-@EXPORT = qw(compare);
-@EXPORT_OK = qw(cmp compare_text);
+our @EXPORT = qw(compare);
+our @EXPORT_OK = qw(cmp compare_text);
 
-$Too_Big = 1024 * 1024 * 2;
+our $Too_Big = 1024 * 1024 * 2;
 
 sub croak {
     require Carp;
@@ -127,8 +123,7 @@ sub compare_text {
 	if @_ == 3 && ref($cmp) ne 'CODE';
 
     # Using a negative buffer size puts compare into text_mode too
-    $cmp = -1 unless defined $cmp;
-    compare($from, $to, $cmp);
+    compare($from, $to, $cmp // -1);
 }
 
 1;
@@ -177,6 +172,3 @@ are equal, 1 if the files are unequal, or -1 if an error was encountered.
 
 File::Compare was written by Nick Ing-Simmons.
 Its original documentation was written by Chip Salzenberg.
-
-=cut
-

@@ -5,7 +5,7 @@ use warnings;
 no warnings 'surrogate';    # surrogates can be inputs to this
 use charnames ();
 
-our $VERSION = '0.75';
+our $VERSION = '0.78';
 
 sub DEBUG () { 0 }
 $|=1 if DEBUG;
@@ -1972,7 +1972,7 @@ Locale is not completely independent.  The I<turkic> field contains results to
 use when the locale is a Turkic language.
 
 For more information about case mappings see
-L<http://www.unicode.org/unicode/reports/tr21>
+L<http://www.unicode.org/reports/tr21>
 
 =cut
 
@@ -2219,7 +2219,7 @@ hash will not have any of the base keys, like C<code>, C<upper>, etc., but
 will contain only locale keys.
 
 For more information about case mappings see
-L<http://www.unicode.org/unicode/reports/tr21/>
+L<http://www.unicode.org/reports/tr21/>
 
 =cut
 
@@ -2346,25 +2346,23 @@ my %NAMEDSEQ;
 
 sub _namedseq {
     unless (%NAMEDSEQ) {
-        my $namedseqfh = openunicode("Name.pl");
-        local $_;
-        local $/ = "\n";
-        while (<$namedseqfh>) {
-            next if m/ ^ \s* \# /x;
-
-            # Each entry is currently two lines.  The first contains the code
+        my @list = split "\n", do "unicore/Name.pl";
+        for (my $i = 0; $i < @list; $i += 3) {
+            # Each entry is currently three lines.  The first contains the code
             # points in the sequence separated by spaces.  If this entry
             # doesn't have spaces, it isn't a named sequence.
-            if (/^ [0-9A-F]{4,5} (?: \  [0-9A-F]{4,5} )+ $ /x) {
-                my $sequence = $_;
-                chomp $sequence;
+            next unless $list[$i] =~ /^ [0-9A-F]{4,5} (?: \  [0-9A-F]{4,5} )+ $ /x;
 
-                # And the second is the name
-                my $name = <$namedseqfh>;
-                chomp $name;
-                my @s = map { chr(hex($_)) } split(' ', $sequence);
-                $NAMEDSEQ{$name} = join("", @s);
-            }
+            my $sequence = $list[$i];
+            chomp $sequence;
+
+            # And the second is the name
+            my $name = $list[$i+1];
+            chomp $name;
+            my @s = map { chr(hex($_)) } split(' ', $sequence);
+            $NAMEDSEQ{$name} = join("", @s);
+
+            # And the third is empty
         }
     }
 }
@@ -2448,7 +2446,7 @@ sub _numeric {
     use Unicode::UCD 'num';
 
     my $val = num("123");
-    my $one_quarter = num("\N{VULGAR FRACTION 1/4}");
+    my $one_quarter = num("\N{VULGAR FRACTION ONE QUARTER}");
     my $val = num("12a", \$valid_length);  # $valid_length contains 2
 
 C<num()> returns the numeric value of the input Unicode string; or C<undef> if it
@@ -3473,7 +3471,7 @@ points 97 through 122.  To get the mapping for any code point in this range,
 you take the offset it has from the beginning code point of the range, and add
 that to the mapping for that first code point.  So, the mapping for 122 ("z")
 is derived by taking the offset of 122 from 97 (=25) and adding that to 65,
-yielding 90 ("z").  Likewise for everything in between.
+yielding 90 ("Z").  Likewise for everything in between.
 
 Requiring this simple adjustment allows the returned arrays to be
 significantly smaller than otherwise, up to a factor of 10, speeding up
@@ -4727,7 +4725,7 @@ nor the punctuation.
 
 For blocks see L<http://www.unicode.org/Public/UNIDATA/Blocks.txt>
 
-For scripts see UTR #24: L<http://www.unicode.org/unicode/reports/tr24/>
+For scripts see UTR #24: L<http://www.unicode.org/reports/tr24/>
 
 =head2 B<Matching Scripts and Blocks>
 

@@ -1,8 +1,8 @@
 BEGIN {
 	chdir 't' if -d 't';
-	require Config; import Config;
     require './test.pl';
     set_up_inc('../lib');
+	require Config; import Config;
 	skip_all_without_perlio();
 }
 

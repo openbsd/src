@@ -245,10 +245,11 @@ for $f (sort { dictionary_order($a->{'name'}, $b->{'name'}) } @f) {
 
   # only public API members, except those in ppport.fnc are there because we
   # want them to be tested even if non-public.  X,M functions are supposed to
-  # be considered to have just the macro form public.
+  # be considered to have just the macro form public (but not if restricted by
+  # 'E').
       $f->{'flags'}{'A'}
   or  $f->{'ppport_fnc'}
-  or ($f->{'flags'}{'X'} and $f->{'flags'}{'M'})
+  or ($f->{'flags'}{'X'} and $f->{'flags'}{'M'} and ! $f->{'flags'}{'E'} )
   or next;
 
   # Don't test unorthodox things that we aren't set up to do

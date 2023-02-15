@@ -1,8 +1,9 @@
 package Text::ParseWords;
 
 use strict;
+use warnings;
 require 5.006;
-our $VERSION = "3.30";
+our $VERSION = "3.31";
 
 
 use Exporter;
@@ -190,31 +191,46 @@ Text::ParseWords - parse text into an array of tokens or array of arrays
 
 =head1 DESCRIPTION
 
-The &nested_quotewords() and &quotewords() functions accept a delimiter 
+The C<nested_quotewords()> and C<quotewords()> functions accept a delimiter 
 (which can be a regular expression)
 and a list of lines and then breaks those lines up into a list of
-words ignoring delimiters that appear inside quotes.  &quotewords()
-returns all of the tokens in a single long list, while &nested_quotewords()
-returns a list of token lists corresponding to the elements of @lines.
-&parse_line() does tokenizing on a single string.  The &*quotewords()
-functions simply call &parse_line(), so if you're only splitting
-one line you can call &parse_line() directly and save a function
+words ignoring delimiters that appear inside quotes.  C<quotewords()>
+returns all of the tokens in a single long list, while C<nested_quotewords()>
+returns a list of token lists corresponding to the elements of C<@lines>.
+C<parse_line()> does tokenizing on a single string.  The C<*quotewords()>
+functions simply call C<parse_line()>, so if you're only splitting
+one line you can call C<parse_line()> directly and save a function
 call.
 
-The $keep argument is a boolean flag.  If true, then the tokens are
-split on the specified delimiter, but all other characters (including
-quotes and backslashes) are kept in the tokens.  If $keep is false then the
-&*quotewords() functions remove all quotes and backslashes that are
+The C<$keep> controls what happens with delimters and special characters:
+
+=over 4
+
+=item true
+
+If true, then the tokens are split on the specified delimiter,
+but all other characters (including quotes and backslashes)
+are kept in the tokens.
+
+=item false
+
+If $keep is false then the C<*quotewords()> functions
+remove all quotes and backslashes that are
 not themselves backslash-escaped or inside of single quotes (i.e.,
-&quotewords() tries to interpret these characters just like the Bourne
+C<quotewords()> tries to interpret these characters just like the Bourne
 shell).  NB: these semantics are significantly different from the
 original version of this module shipped with Perl 5.000 through 5.004.
+
+=item C<"delimiters">
+
 As an additional feature, $keep may be the keyword "delimiters" which
 causes the functions to preserve the delimiters in each string as
 tokens in the token lists, in addition to preserving quote and
 backslash characters.
 
-&shellwords() is written as a special case of &quotewords(), and it
+=back
+
+C<shellwords()> is written as a special case of C<quotewords()>, and it
 does token parsing with whitespace as a delimiter-- similar to most
 Unix shells.
 
@@ -280,20 +296,28 @@ L<Text::CSV> - for parsing CSV files
 
 =head1 AUTHORS
 
-Maintainer: Alexandr Ciornii <alexchornyATgmail.com>.
+The original author is unknown,
+but presumably this evolved from C<shellwords.pl> in Perl 4.
 
-Previous maintainer: Hal Pomeranz <pomeranz@netcom.com>, 1994-1997 (Original
-author unknown).  Much of the code for &parse_line() (including the
-primary regexp) from Joerk Behrends <jbehrends@multimediaproduzenten.de>.
+Much of the code for C<parse_line()>
+(including the primary regexp)
+came from Joerk Behrends E<lt>jbehrends@multimediaproduzenten.deE<gt>.
 
-Examples section another documentation provided by John Heidemann 
-<johnh@ISI.EDU>
+Examples section and other documentation provided by
+John Heidemann E<lt>johnh@ISI.EDUE<gt>.
 
-Bug reports, patches, and nagging provided by lots of folks-- thanks
-everybody!  Special thanks to Michael Schwern <schwern@envirolink.org>
-for assuring me that a &nested_quotewords() would be useful, and to 
-Jeff Friedl <jfriedl@yahoo-inc.com> for telling me not to worry about
-error-checking (sort of-- you had to be there).
+Hal Pomeranz E<lt>pomeranz@netcom.comE<gt>
+maintained this from 1994 through 1999,
+and did the first CPAN release.
+
+Alexandr Ciornii E<lt>alexchornyATgmail.comE<gt>
+maintained this from 2008 to 2015.
+
+Many other people have contributed,
+with special thanks due to 
+Michael Schwern E<lt>schwern@envirolink.orgE<gt>
+and
+Jeff Friedl E<lt>jfriedl@yahoo-inc.comE<gt>.
 
 =head1 COPYRIGHT AND LICENSE
 

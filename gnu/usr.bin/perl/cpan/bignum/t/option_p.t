@@ -1,20 +1,36 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 
-my @CLASSES = qw/Math::BigInt Math::BigFloat/;
+{
+    my $class = "Math::BigInt";
 
-use bignum p => '12';
+    use bigint p => "12";
+    cmp_ok($class -> precision(), "==", 12, "$class precision = 12");
 
-foreach my $class (@CLASSES) {
-    is($class->precision(), 12, "$class precision = 12");
+    bigint -> import(precision => "23");
+    cmp_ok($class -> precision(), "==", 23, "$class precision = 23");
 }
 
-bignum->import(p => '42');
+{
+    my $class = "Math::BigFloat";
 
-foreach my $class (@CLASSES) {
-    is($class->precision(), 42, "$class precision = 42");
+    use bigfloat p => "13";
+    cmp_ok($class -> precision(), "==", 13, "$class precision = 12");
+
+    bigfloat -> import(precision => "24");
+    cmp_ok($class -> precision(), "==", 24, "$class precision = 23");
+}
+
+{
+    my $class = "Math::BigRat";
+
+    use bigrat p => "14";
+    cmp_ok($class -> precision(), "==", 14, "$class precision = 12");
+
+    bigrat -> import(precision => "25");
+    cmp_ok($class -> precision(), "==", 25, "$class precision = 23");
 }

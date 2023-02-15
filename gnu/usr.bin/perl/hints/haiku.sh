@@ -2,15 +2,15 @@
 # $Id$
 
 case "$prefix" in
-'') prefix="/boot/common" ;;
+'') prefix="$(finddir B_COMMON_DIRECTORY)" ;;
 *) ;; # pass the user supplied value through
 esac
 
-libpth='/boot/home/config/lib /boot/common/lib /system/lib'
-usrinc='/boot/develop/headers/posix'
-locinc='/boot/home/config/include /boot/common/include /boot/develop/headers'
+libpth="$(finddir B_USER_DEVELOP_DIRECTORY)/lib $(finddir B_SYSTEM_DEVELOP_DIRECTORY)/lib $(finddir B_COMMON_DIRECTORY)/lib /system/lib"
+usrinc="$(finddir B_SYSTEM_DEVELOP_DIRECTORY)/headers/posix"
+locinc="$(finddir B_USER_CONFIG_DIRECTORY)/develop/headers $(finddir B_COMMON_DIRECTORY)/headers $(finddir B_SYSTEM_DEVELOP_DIRECTORY)/headers"
 
-libc='/system/lib/libroot.so'
+libc="$(finddir B_SYSTEM_LIB_DIRECTORY)/libroot.so"
 libs='-lnetwork'
 
 # Use Haiku's malloc() by default.
@@ -30,6 +30,8 @@ d_syserrlst='undef'
 # Haiku uses gcc.
 cc="gcc"
 ld='gcc'
+
+ccflags="$ccflags -fno-stack-protector"
 
 # The runtime loader library path variable is LIBRARY_PATH.
 case "$ldlibpthname" in

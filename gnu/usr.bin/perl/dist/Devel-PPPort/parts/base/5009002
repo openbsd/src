@@ -2,7 +2,6 @@
 CopyD                          # E
 DEBUG_COMPILE_r                # Z added by devel/scanprov
 DEBUG_EXECUTE_r                # Z added by devel/scanprov
-DEBUG_OFFSETS_r                # Z added by devel/scanprov
 DEBUG_OPTIMISE_r               # Z added by devel/scanprov
 DEBUG_TRIE_COMPILE_MORE_r      # Z added by devel/scanprov
 DEBUG_TRIE_COMPILE_r           # Z added by devel/scanprov

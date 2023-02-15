@@ -61,74 +61,74 @@ again:
     FD_ZERO(&efd);
 
     for(i = 0 ; i < (int)nfds ; i++) {
-	int events = fds[i].events;
-	int fd = fds[i].fd;
+        int events = fds[i].events;
+        int fd = fds[i].fd;
 
-	fds[i].revents = 0;
+        fds[i].revents = 0;
 
-	if(fd < 0 || FD_ISSET(fd, &ifd))
-	    continue;
+        if(fd < 0 || FD_ISSET(fd, &ifd))
+            continue;
 
-	if(fd > n)
-	    n = fd;
+        if(fd > n)
+            n = fd;
 
-	if(events & POLL_CAN_READ)
-	    FD_SET(fd, &rfd);
+        if(events & POLL_CAN_READ)
+            FD_SET(fd, &rfd);
 
-	if(events & POLL_CAN_WRITE)
-	    FD_SET(fd, &wfd);
+        if(events & POLL_CAN_WRITE)
+            FD_SET(fd, &wfd);
 
-	if(events & POLL_HAS_EXCP)
-	    FD_SET(fd, &efd);
+        if(events & POLL_HAS_EXCP)
+            FD_SET(fd, &efd);
     }
 
     if(timeout >= 0) {
-	timebuf.tv_sec = timeout / 1000;
-	timebuf.tv_usec = (timeout % 1000) * 1000;
-	tbuf = &timebuf;
+        timebuf.tv_sec = timeout / 1000;
+        timebuf.tv_usec = (timeout % 1000) * 1000;
+        tbuf = &timebuf;
     }
 
     err = select(n+1,&rfd,&wfd,&efd,tbuf);
 
     if(err < 0) {
 #ifdef HAS_FSTAT
-	if(errno == EBADF) {
-	    for(i = 0 ; i < nfds ; i++) {
-		struct stat buf;
-		if((fstat(fds[i].fd,&buf) < 0) && (errno == EBADF)) {
-		    FD_SET(fds[i].fd, &ifd);
-		    goto again;
-		}
-	    }
-	}
+        if(errno == EBADF) {
+            for(i = 0 ; i < nfds ; i++) {
+                struct stat buf;
+                if((fstat(fds[i].fd,&buf) < 0) && (errno == EBADF)) {
+                    FD_SET(fds[i].fd, &ifd);
+                    goto again;
+                }
+            }
+        }
 #endif /* HAS_FSTAT */
-	return err;
+        return err;
     }
 
     count = 0;
 
     for(i = 0 ; i < (int)nfds ; i++) {
-	int revents = (fds[i].events & POLL_EVENTS_MASK);
-	int fd = fds[i].fd;
+        int revents = (fds[i].events & POLL_EVENTS_MASK);
+        int fd = fds[i].fd;
 
-	if(fd < 0)
-	    continue;
+        if(fd < 0)
+            continue;
 
-	if(FD_ISSET(fd, &ifd))
-	    revents = POLLNVAL;
-	else {
-	    if(!FD_ISSET(fd, &rfd))
-	        revents &= ~POLL_CAN_READ;
+        if(FD_ISSET(fd, &ifd))
+            revents = POLLNVAL;
+        else {
+            if(!FD_ISSET(fd, &rfd))
+                revents &= ~POLL_CAN_READ;
 
-	    if(!FD_ISSET(fd, &wfd))
-	        revents &= ~POLL_CAN_WRITE;
+            if(!FD_ISSET(fd, &wfd))
+                revents &= ~POLL_CAN_WRITE;
 
-	    if(!FD_ISSET(fd, &efd))
-	        revents &= ~POLL_HAS_EXCP;
-	}
+            if(!FD_ISSET(fd, &efd))
+                revents &= ~POLL_HAS_EXCP;
+        }
 
-	if((fds[i].revents = revents) != 0)
-	    count++;
+        if((fds[i].revents = revents) != 0)
+            count++;
     }
 
     return count; 

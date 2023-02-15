@@ -1,9 +1,9 @@
-#!perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 202;
+use Test::More tests => 203;
 
 # basic testing of Math::BigRat
 
@@ -346,7 +346,8 @@ $x = $mbr->new('-7/5')->bsstr();
 is($x, '-7/5');
 
 ##############################################################################
-# numify()
+
+note("numify()");
 
 my @array = qw/1 2 3 4 5 6 7 8 9/;
 $x = $mbr->new('8/8');
@@ -367,23 +368,60 @@ is($array[$x], 6);
 $x = $mbr->new('-8/1');
 is($array[$x], 2);      # -8 => 2
 
-$x = $mbr->new('33/8');
-is($x->numify() * 1000, 4125);
+require Math::Complex;
 
-$x = $mbr->new('-33/8');
-is($x->numify() * 1000, -4125);
+my $inf = $Math::Complex::Inf;
+my $nan = $inf - $inf;
 
-$x = $mbr->new('inf');
-is($x->numify(), 'inf');
+sub isnumeric {
+    my $value = shift;
+    ($value ^ $value) eq "0";
+}
 
-$x = $mbr->new('-inf');
-is($x->numify(), '-inf');
+subtest qq|$mbr -> new("33/8") -> numify()| => sub {
+    plan tests => 3;
 
-$x = $mbr->new('NaN');
-is($x->numify(), 'NaN');
+    $x = $mbr -> new("33/8") -> numify();
+    is(ref($x), "", '$x is a scalar');
+    ok(isnumeric($x), '$x is numeric');
+    cmp_ok($x, "==", 4.125, '$x has the right value');
+};
 
-$x = $mbr->new('4/3');
-is($x->numify(), 4/3);
+subtest qq|$mbr -> new("-33/8") -> numify()| => sub {
+    plan tests => 3;
+
+    $x = $mbr -> new("-33/8") -> numify();
+    is(ref($x), "", '$x is a scalar');
+    ok(isnumeric($x), '$x is numeric');
+    cmp_ok($x, "==", -4.125, '$x has the right value');
+};
+
+subtest qq|$mbr -> new("inf") -> numify()| => sub {
+    plan tests => 3;
+
+    $x = $mbr -> new("inf") -> numify();
+    is(ref($x), "", '$x is a scalar');
+    ok(isnumeric($x), '$x is numeric');
+    cmp_ok($x, "==", $inf, '$x has the right value');
+};
+
+subtest qq|$mbr -> new("-inf") -> numify()| => sub {
+    plan tests => 3;
+
+    $x = $mbr -> new("-inf") -> numify();
+    is(ref($x), "", '$x is a scalar');
+    ok(isnumeric($x), '$x is numeric');
+    cmp_ok($x, "==", -$inf, '$x has the right value');
+};
+
+subtest qq|$mbr -> new("NaN") -> numify()| => sub {
+    plan tests => 3;
+
+    $x = $mbr -> new("NaN") -> numify();
+    is(ref($x), "", '$x is a scalar');
+    ok(isnumeric($x), '$x is numeric');
+    cmp_ok($x, "!=", $nan, '$x has the right value');   # Note: NaN != NaN
+};
 
 ##############################################################################
 # as_hex(), as_bin(), as_oct()
@@ -469,6 +507,14 @@ $f = $x->as_float(5);
 
 is($x, '2/3', '$x unmodified');
 is($f, '0.66667', 'as_float(2/3, 5)');
+
+# Integers should be converted exactly.
+$x = Math::BigRat->new("3141592653589793238462643383279502884197169399375106");
+$f = $x->as_float();
+
+is($x, "3141592653589793238462643383279502884197169399375106", '$x unmodified');
+is($f, "3141592653589793238462643383279502884197169399375106",
+   'as_float(3141592653589793238462643383279502884197169399375106, 5)');
 
 ##############################################################################
 # int()

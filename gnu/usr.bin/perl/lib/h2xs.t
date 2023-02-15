@@ -154,19 +154,6 @@ Writing $name/MANIFEST
 EOXSFILES
 );
 
-my $total_tests = 3; # opening, closing and deleting the header file.
-for (my $i = $#tests; $i > 0; $i-=3) {
-  # 1 test for running it, 1 test for the expected result, and 1 for each file
-  # plus 1 to open and 1 to check for the use in lib/$name.pm and Makefile.PL
-  # And 1 more for our check for "bonus" files, 2 more for ExtUtil::Manifest.
-  # And 1 more to examine const-c.inc contents in tests that use $header.
-  # use the () to force list context and hence count the number of matches.
-  $total_tests += 9 + (() = $tests[$i] =~ /(Writing)/sg);
-  $total_tests++ if $tests[$i-2] =~ / \Q$header\E$/;
-}
-
-plan tests => $total_tests;
-
 ok (open (HEADER, '>', $header), "open '$header'");
 print HEADER <<HEADER or die $!;
 #define Camel 2
@@ -253,3 +240,5 @@ while (my ($args, $version, $expectation) = splice @tests, 0, 3) {
 }
 
 cmp_ok (unlink ($header), "==", 1, "unlink '$header'") or die "\$! is $!";
+
+done_testing();

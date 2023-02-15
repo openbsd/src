@@ -3,6 +3,8 @@
 # Test the Maxrecurse option
 
 use strict;
+use warnings;
+
 use Test::More tests => 32;
 use Data::Dumper;
 

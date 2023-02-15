@@ -79,11 +79,11 @@ You can get gzip from L<ftp://prep.ai.mit.edu/pub/gnu/>
 
 Or, you can combine this step with the next to save disk space:
 
-     gzip -dc yourmodule.tar.gz | tar -xf -
+     gzip -dc yourmodule.tar.gz | tar -xof -
 
 B. UNPACK
 
-Unpack the result with C<tar -xf yourmodule.tar>
+Unpack the result with C<tar -xof yourmodule.tar>
 
 C. BUILD
 
@@ -139,10 +139,7 @@ If you used WinZip, this was already done for you.
 
    C. BUILD
 
-You'll need the C<nmake> utility, available at
-L<http://download.microsoft.com/download/vc15/Patch/1.52/W95/EN-US/nmake15.exe>
-or dmake, available on CPAN.
-L<https://metacpan.org/release/dmake>
+You'll need either C<nmake> or C<gmake>.
 
 Does the module require compilation (i.e. does it have files that end
 in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it does, life is now
@@ -163,37 +160,6 @@ Go into the newly-created directory and type:
 While still in that directory, type:
 
       nmake install
-
-=item *
-
-B<If you're on the DJGPP port of DOS,>
-
-   A. DECOMPRESS
-
-djtarx ( L<ftp://ftp.delorie.com/pub/djgpp/current/v2/> )
-will both uncompress and unpack.
-
-   B. UNPACK
-
-See above.
-
-   C. BUILD
-
-Go into the newly-created directory and type:
-
-      perl Makefile.PL
-      make test
-
-You will need the packages mentioned in F<README.dos>
-in the Perl distribution.
-
-   D. INSTALL
-
-While still in that directory, type:
-
-     make install	
-
-You will need the packages mentioned in F<README.dos> in the Perl distribution.
 
 =item *
 

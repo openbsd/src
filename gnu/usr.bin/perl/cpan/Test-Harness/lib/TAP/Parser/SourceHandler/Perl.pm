@@ -21,11 +21,11 @@ TAP::Parser::SourceHandler::Perl - Stream TAP from a Perl executable
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =cut
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
 
 =head1 SYNOPSIS
 
@@ -62,7 +62,7 @@ won't need to use this module directly.
 Only votes if $source looks like a file.  Casts the following votes:
 
   0.9  if it has a shebang ala "#!...perl"
-  0.75 if it has any shebang
+  0.3  if it has any shebang
   0.8  if it's a .t file
   0.9  if it's a .pl file
   0.75 if it's in a 't' directory

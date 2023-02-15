@@ -421,7 +421,7 @@ STATIC const MGVTBL ithread_vtbl = {
     ithread_mg_free,    /* free */
     0,                  /* copy */
     ithread_mg_dup,     /* dup */
-#if (PERL_VERSION > 8) || (PERL_VERSION == 8 && PERL_SUBVERSION > 8)
+#if PERL_VERSION_GT(5,8,8)
     0                   /* local */
 #endif
 };
@@ -751,7 +751,7 @@ S_ithread_create(
     AV          *params;
     SV          **array;
 
-#if PERL_VERSION <= 8 && PERL_SUBVERSION <= 7
+#if PERL_VERSION_LE(5,8,7)
     SV         **tmps_tmp = PL_tmps_stack;
     IV           tmps_ix  = PL_tmps_ix;
 #endif
@@ -849,7 +849,7 @@ S_ithread_create(
      * context for the duration of our work for new interpreter.
      */
     {
-#if (PERL_VERSION > 13) || (PERL_VERSION == 13 && PERL_SUBVERSION > 1)
+#if PERL_VERSION_GE(5,13,2)
         CLONE_PARAMS *clone_param = Perl_clone_params_new(aTHX, thread->interp);
 #else
         CLONE_PARAMS clone_param_s;
@@ -859,7 +859,7 @@ S_ithread_create(
 
         MY_CXT_CLONE;
 
-#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
+#if PERL_VERSION_LT(5,13,2)
         clone_param->flags = 0;
 #endif
 
@@ -886,7 +886,7 @@ S_ithread_create(
            perl_clone() and sv_dup_inc(). Hence copy the parameters
            somewhere under our control first, before duplicating.  */
         if (num_params) {
-#if (PERL_VERSION > 8)
+#if PERL_VERSION_GE(5,9,0)
             Copy(parent_perl->Istack_base + params_start, array, num_params, SV *);
 #else
             Copy(parent_perl->Tstack_base + params_start, array, num_params, SV *);
@@ -897,11 +897,11 @@ S_ithread_create(
             }
         }
 
-#if (PERL_VERSION > 13) || (PERL_VERSION == 13 && PERL_SUBVERSION > 1)
+#if PERL_VERSION_GE(5,13,2)
         Perl_clone_params_del(clone_param);
 #endif
 
-#if PERL_VERSION <= 8 && PERL_SUBVERSION <= 7
+#if PERL_VERSION_LT(5,8,8)
         /* The code below checks that anything living on the tmps stack and
          * has been cloned (so it lives in the ptr_table) has a refcount
          * higher than 0.
@@ -1115,7 +1115,7 @@ ithread_create(...)
                     case 'A':
                     case 'l':
                     case 'L':
-                        context = G_ARRAY;
+                        context = G_LIST;
                         break;
                     case 's':
                     case 'S':
@@ -1130,11 +1130,11 @@ ithread_create(...)
                 }
             } else if ((svp = hv_fetchs(specs, "array", 0))) {
                 if (SvTRUE(*svp)) {
-                    context = G_ARRAY;
+                    context = G_LIST;
                 }
             } else if ((svp = hv_fetchs(specs, "list", 0))) {
                 if (SvTRUE(*svp)) {
-                    context = G_ARRAY;
+                    context = G_LIST;
                 }
             } else if ((svp = hv_fetchs(specs, "scalar", 0))) {
                 if (SvTRUE(*svp)) {
@@ -1156,7 +1156,7 @@ ithread_create(...)
         if (context == -1) {
             context = GIMME_V;  /* Implicit context */
         } else {
-            context |= (GIMME_V & (~(G_ARRAY|G_SCALAR|G_VOID)));
+            context |= (GIMME_V & (~(G_LIST|G_SCALAR|G_VOID)));
         }
 
         /* Create thread */
@@ -1201,7 +1201,7 @@ ithread_list(...)
         classname = (char *)SvPV_nolen(ST(0));
 
         /* Calling context */
-        list_context = (GIMME_V == G_ARRAY);
+        list_context = (GIMME_V == G_LIST);
 
         /* Running or joinable parameter */
         if (items > 1) {
@@ -1339,7 +1339,7 @@ ithread_join(...)
         /* Get the return value from the call_sv */
         /* Objects do not survive this process - FIXME */
         if ((thread->gimme & G_WANT) != G_VOID) {
-#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
+#if PERL_VERSION_LT(5,13,2)
             AV *params_copy;
             PerlInterpreter *other_perl;
             CLONE_PARAMS clone_params;
@@ -1726,9 +1726,9 @@ ithread_wantarray(...)
     CODE:
         PERL_UNUSED_VAR(items);
         thread = S_SV_to_ithread(aTHX_ ST(0));
-        ST(0) = ((thread->gimme & G_WANT) == G_ARRAY) ? &PL_sv_yes :
-                ((thread->gimme & G_WANT) == G_VOID)  ? &PL_sv_undef
-                                       /* G_SCALAR */ : &PL_sv_no;
+        ST(0) = ((thread->gimme & G_WANT) == G_LIST) ? &PL_sv_yes :
+                ((thread->gimme & G_WANT) == G_VOID) ? &PL_sv_undef
+                                      /* G_SCALAR */ : &PL_sv_no;
         /* XSRETURN(1); - implied */
 
 
@@ -1766,7 +1766,7 @@ ithread_error(...)
 
         /* If thread died, then clone the error into the calling thread */
         if (thread->state & PERL_ITHR_DIED) {
-#if (PERL_VERSION < 13) || (PERL_VERSION == 13 && PERL_SUBVERSION <= 1)
+#if PERL_VERSION_LT(5,13,2)
             PerlInterpreter *other_perl;
             CLONE_PARAMS clone_params;
             ithread *current_thread;

@@ -201,6 +201,13 @@ use strict;
     $args0{$_} = 1 for qw(entersub avhvswitch
                        rv2hv);                  # UNOPs that usurp bit 0
 
+    # Historically, bit ops used bit 0 to indicate 'use integer' in scope;
+    # For now, ban use of bits 0..1 as an arg count, in order to detect
+    # any residual code which conflates use of the HINT_INTEGER and
+    # OPpUSEINT flags
+
+    $args0{$_} = 1 for ops_with_check('ck_bitop');
+
     $args1{$_} = 1 for (
                         qw(reverse), # ck_fun(), but most bits stolen
                         qw(mapstart grepstart), # set in ck_fun, but
@@ -281,6 +288,16 @@ use strict;
 }
 
 
+# Are these bit ops in the scope of 'use integer'?
+#
+# Note that historically they used to use bit 0, which corresponded to
+# HINT_INTEGER (a bit flags within PL_hints). We deliberately choose
+# a value (2) different than that flag, and different to the two bits used
+# to store the argument count, to flush out any residual code which
+# conflates the two.
+
+addbits($_, 2 => qw(OPpUSEINT USEINT))
+    for ops_with_check('ck_bitop');
 
 # if NATIVE_HINTS is defined, op_private on cops holds the top 8 bits
 # of PL_hints, although only bits 6 & 7 are officially used for that
@@ -439,7 +456,7 @@ addbits($_, 3 => qw(OPpMAYBE_LVSUB LVSUB))
 
 
 
-for (qw(rv2hv padhv ref)) {
+for (qw(rv2hv padhv ref blessed)) {
     addbits($_,                           # e.g. %hash in (%hash || $foo) ...
         4 => qw(OPpMAYBE_TRUEBOOL BOOL?), # but cx not known till run time
         5 => qw(OPpTRUEBOOL       BOOL),
@@ -515,9 +532,9 @@ for (qw(trans transr)) {
     addbits($_,
         # There is a character in the lhs representable not using UTF-8 whose
         # replacement requires UTF-8.
-        0 => qw(OPpTRANS_CAN_FORCE_UTF8 CAN_FORCE_UTF8),
-
-        1 => qw(OPpTRANS_USE_SVOP   USE_SVOP),# This is implemented as an svop
+        0 => qw(OPpTRANS_CAN_FORCE_UTF8 CAN_FORCE_UTF8),    # 0-255 range
+                                              # character maps to 256-INF
+        1 => qw(OPpTRANS_USE_SVOP   USE_SVOP),# This is implemented an an svop
                                               # vs pvop
         2 => qw(OPpTRANS_IDENTICAL  IDENT),   # right side is same as left
         3 => qw(OPpTRANS_SQUASH     SQUASH),  # /s
@@ -676,8 +693,6 @@ addbits('sort',
     2 => qw(OPpSORT_REVERSE  REV    ), # Reversed sort
     3 => qw(OPpSORT_INPLACE  INPLACE), # sort in-place; eg @a = sort @a
     4 => qw(OPpSORT_DESCEND  DESC   ), # Descending sort
-    6 => qw(OPpSORT_STABLE   STABLE ), # Use a stable algorithm
-    7 => qw(OPpSORT_UNSTABLE UNSTABLE),# Use an unstable algorithm
 );
 
 
@@ -832,6 +847,9 @@ addbits('multiconcat',
 );
 
 
+addbits('pushdefer',
+    7 => qw(OPpDEFER_FINALLY FINALLY),
+);
 
 1;
 

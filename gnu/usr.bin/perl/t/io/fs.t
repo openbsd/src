@@ -16,7 +16,7 @@ if ($^O eq 'MSWin32') {
     ${^WIN32_SLOPPY_STAT} = 0;
 }
 
-if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
+if ($^O eq 'MSWin32') {
     $wd = `cd`;
 }
 elsif ($^O eq 'VMS') {
@@ -36,8 +36,8 @@ die "Can't get current working directory" if(!$wd);
 
 my $has_link            = $Config{d_link};
 my $accurate_timestamps =
-    !($^O eq 'MSWin32' || $^O eq 'NetWare' ||
-      $^O eq 'dos'     || $^O eq 'os2'     ||
+    !($^O eq 'MSWin32' ||
+      $^O eq 'os2'     ||
       $^O eq 'cygwin'  || $^O eq 'amigaos' ||
 	  $wd =~ m#$Config{afsroot}/#
      );
@@ -53,9 +53,8 @@ if (defined &Win32::IsWinNT && Win32::IsWinNT()) {
 }
 
 my $needs_fh_reopen =
-    $^O eq 'dos'
     # Not needed on HPFS, but needed on HPFS386 ?!
-    || $^O eq 'os2';
+    $^O eq 'os2';
 
 $needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 
@@ -67,7 +66,7 @@ plan tests => 61;
 my $tmpdir = tempfile();
 my $tmpdir1 = tempfile();
 
-if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
+if ($^O eq 'MSWin32') {
     `rmdir /s /q $tmpdir 2>nul`;
     `mkdir $tmpdir`;
 }
@@ -88,7 +87,7 @@ chdir $tmpdir;
 umask(022);
 
 SKIP: {
-    skip "bogus umask", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+    skip "bogus umask", 1 if ($^O eq 'MSWin32');
 
     is((umask(0)&0777), 022, 'umask'),
 }
@@ -128,7 +127,7 @@ SKIP: {
     }
 }
 
-$newmode = (($^O eq 'MSWin32') || ($^O eq 'NetWare')) ? 0444 : 0777;
+$newmode = ($^O eq 'MSWin32') ? 0444 : 0777;
 
 is(chmod($newmode,'a'), 1, "chmod succeeding");
 
@@ -265,6 +264,7 @@ SKIP: {
     check_utime_result($ut, $accurate_timestamps, $delta);
     # [perl #122703]
     close $fh;
+    $! = 0;
     ok(!utime($ut,$ut + $delta, $fh),
        "utime fails on a closed file handle");
     isnt($!+0, 0, "and errno was set");
@@ -291,8 +291,8 @@ chdir $wd || die "Can't cd back to '$wd' ($!)";
 # %PATH%. N.B. that $^O is 'cygwin' on Cygwin.
 
 SKIP: {
-    skip "Win32/Netware specific test", 2
-      unless ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+    skip "Win32 specific test", 2
+      unless ($^O eq 'MSWin32');
     skip "No symbolic links found to test with", 2
       unless  `ls -l perl 2>nul` =~ /^l.*->/;
 
@@ -448,7 +448,7 @@ SKIP: {
     require Errno;
 
     my $tmpdir = tempfile();
-    if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
+    if ($^O eq 'MSWin32') {
         `mkdir $tmpdir`;
     }
     elsif ($^O eq 'VMS') {
@@ -480,7 +480,7 @@ sub check_utime_result {
      $blksize,$blocks) = stat('b');
 
     SKIP: {
-        skip "bogus inode num", 1 if ($^O eq 'MSWin32') || ($^O eq 'NetWare');
+        skip "bogus inode num", 1 if ($^O eq 'MSWin32');
         ok($ino,    'non-zero inode num');
     }
 
@@ -500,7 +500,7 @@ sub check_utime_result {
         else {
             # Operating systems whose filesystems may be mounted with the noatime option
             # RT 132663
-            my %noatime_oses = map { $_ => 1 } ( qw| haiku netbsd | );
+            my %noatime_oses = map { $_ => 1 } ( qw| haiku netbsd dragonfly | );
             if ($^O =~ /\blinux\b/i) {
                 note("# Maybe stat() cannot get the correct atime, ".
                     "as happens via NFS on linux?");

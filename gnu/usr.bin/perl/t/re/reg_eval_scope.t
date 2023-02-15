@@ -223,7 +223,7 @@ CODE
 
 
 {
-    local $::TODO = "goto doesn't yet work in pseduo blocks";
+    local $::TODO = "goto doesn't yet work in pseudo blocks";
 fresh_perl_is <<'CODE',
 my $a=4; my $b=5;
 "a" =~ /(?{ goto FOO; print "X"; FOO: print "Y"; })a/;

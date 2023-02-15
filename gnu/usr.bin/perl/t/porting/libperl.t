@@ -9,11 +9,6 @@
 # - freebsd
 # and on other platforms, and if things seem odd, just give up (skip_all).
 #
-# Also, if the rarely-used builds options -DPERL_GLOBAL_STRUCT or
-# -DPERL_GLOBAL_STRUCT_PRIVATE are used, verify that they did what
-# they were meant to do, hide the global variables (see perlguts for
-# the details).
-#
 # Debugging tip: nm output (this script's input) can be faked by
 # giving one command line argument for this script: it should be
 # either the filename to read, or "-" for STDIN.  You can also append
@@ -328,12 +323,8 @@ ok($symbols{text}{'Perl_pp_uc'}{'pp.o'}, "has text Perl_pp_uc in pp.o");
 ok(exists $symbols{data}{const}, "has data const symbols");
 ok($symbols{data}{const}{PL_no_mem}{'globals.o'}, "has PL_no_mem");
 
-my $GS  = $Config{ccflags} =~ /-DPERL_GLOBAL_STRUCT\b/ ? 1 : 0;
-my $GSP = $Config{ccflags} =~ /-DPERL_GLOBAL_STRUCT_PRIVATE/ ? 1 : 0;
 my $nocommon = $Config{ccflags} =~ /-fno-common/ ? 1 : 0;
 
-print "# GS  = $GS\n";
-print "# GSP = $GSP\n";
 print "# nocommon = $nocommon\n";
 
 my %data_symbols;
@@ -344,114 +335,14 @@ for my $dtype (sort keys %{$symbols{data}}) {
     }
 }
 
-# The following tests differ between vanilla vs $GSP or $GS.
-
-if ($GSP) {
-    print "# -DPERL_GLOBAL_STRUCT_PRIVATE\n";
-    ok(!exists $data_symbols{PL_hash_seed}, "has no PL_hash_seed");
-    ok(!exists $data_symbols{PL_ppaddr}, "has no PL_ppaddr");
-
-    ok(! exists $symbols{data}{bss}, "has no data bss symbols")
-        or do {
-            my $bad = "BSS entries (there are supposed to be none):\n";
-            $bad .= "  bss sym: $_\n" for sort keys %{$symbols{data}{bss}};
-            diag($bad);
-        };
-
-    ok(! exists $symbols{data}{data} ||
-            # clang with ASAN seems to add this symbol to every object file:
-            !grep($_ ne '__unnamed_1', keys %{$symbols{data}{data}}),
-        "has no data data symbols")
-        or do {
-            my $bad = "DATA entries (there are supposed to be none):\n";
-            $bad .= "  data sym: $_\n" for sort keys %{$symbols{data}{data}};
-            diag($bad);
-        };
-
-    ok(! exists $symbols{data}{common}, "has no data common symbols")
-        or do {
-            my $bad = "COMMON entries (there are supposed to be none):\n";
-            $bad .= "  common sym: $_\n" for sort keys %{$symbols{data}{common}};
-            diag($bad);
-        };
-
-    # -DPERL_GLOBAL_STRUCT_PRIVATE should NOT have
-    # the extra text symbol for accessing the vars
-    # (as opposed to "just" -DPERL_GLOBAL_STRUCT)
-    ok(! exists $symbols{text}{Perl_GetVars}, "has no Perl_GetVars");
-} elsif ($GS) {
-    print "# -DPERL_GLOBAL_STRUCT\n";
-    ok(!exists $data_symbols{PL_hash_seed}, "has no PL_hash_seed");
-    ok(!exists $data_symbols{PL_ppaddr}, "has no PL_ppaddr");
-
-    if ($nocommon) {
-        $symbols{data}{common} = $symbols{data}{bss};
-        delete $symbols{data}{bss};
-    }
-
-    ok(! exists $symbols{data}{bss}, "has no data bss symbols")
-        or do {
-            my $bad = "BSS entries (there are supposed to be none):\n";
-            $bad .= "  bss sym: $_\n" for sort keys %{$symbols{data}{bss}};
-            diag($bad);
-        };
-
-
-    # These PerlIO data symbols are left visible with
-    # -DPERL_GLOBAL_STRUCT (as opposed to -DPERL_GLOBAL_STRUCT_PRIVATE)
-    my @PerlIO =
-        qw(
-           PerlIO_byte
-           PerlIO_crlf
-           PerlIO_pending
-           PerlIO_perlio
-           PerlIO_raw
-           PerlIO_remove
-           PerlIO_stdio
-           PerlIO_unix
-           PerlIO_utf8
-          );
-
-    # PL_magic_vtables is const with -DPERL_GLOBAL_STRUCT_PRIVATE but
-    # otherwise not const -- because of SWIG which wants to modify
-    # the table.  Evil SWIG, eeevil.
-
-    # my_cxt_index is used with PERL_IMPLICIT_CONTEXT, which
-    # -DPERL_GLOBAL_STRUCT has turned on.
-    eq_array([sort keys %{$symbols{data}{data}}],
-             [sort('PL_VarsPtr',
-                   @PerlIO,
-                   'PL_magic_vtables',
-                   'my_cxt_index')],
-             "data data symbols");
-
-    # Only one data common symbol, our "supervariable".
-    eq_array([sort keys %{$symbols{data}{common}}],
-             ['PL_Vars'],
-             "data common symbols");
-
-    ok($symbols{data}{data}{PL_VarsPtr}{'globals.o'}, "has PL_VarsPtr");
-    ok($symbols{data}{common}{PL_Vars}{'globals.o'}, "has PL_Vars");
-
-    # -DPERL_GLOBAL_STRUCT has extra text symbol for accessing the vars.
-    ok($symbols{text}{Perl_GetVars}{'util.o'}, "has Perl_GetVars");
-} else {
-    print "# neither -DPERL_GLOBAL_STRUCT nor -DPERL_GLOBAL_STRUCT_PRIVATE\n";
-
-    if ( !$symbols{data}{common} ) {
-        # This is likely because Perl was compiled with
-        # -Accflags="-fno-common"
-        $symbols{data}{common} = $symbols{data}{bss};
-    }
-
-    ok($symbols{data}{common}{PL_hash_seed_w}{'globals.o'}, "has PL_hash_seed_w");
-    ok($symbols{data}{data}{PL_ppaddr}{'globals.o'}, "has PL_ppaddr");
-
-    # None of the GLOBAL_STRUCT* business here.
-    ok(! exists $symbols{data}{data}{PL_VarsPtr}, "has no PL_VarsPtr");
-    ok(! exists $symbols{data}{common}{PL_Vars}, "has no PL_Vars");
-    ok(! exists $symbols{text}{Perl_GetVars}, "has no Perl_GetVars");
+if ( !$symbols{data}{common} ) {
+    # This is likely because Perl was compiled with
+    # -Accflags="-fno-common"
+    $symbols{data}{common} = $symbols{data}{bss};
 }
+
+ok($symbols{data}{common}{PL_hash_seed_w}{'globals.o'}, "has PL_hash_seed_w");
+ok($symbols{data}{data}{PL_ppaddr}{'globals.o'}, "has PL_ppaddr");
 
 # See the comments in the beginning for what "undefined symbols"
 # really means.  We *should* have many of those, that is a good thing.
@@ -581,8 +472,12 @@ if (defined $nm_err_tmp) {
         while (<$nm_err_fh>) {
             # OS X has weird error where nm warns about
             # "no name list" but then outputs fine.
+            # llvm-nm may also complain about 'no symbols'. In some
+            # versions this is exactly the string "no symbols\n" but in later
+            # versions becomes a string followed by ": no symbols\n". For this
+            # test it is typically "../libperl.a:perlapi.o: no symbols\n"
             if ( $^O eq 'darwin' ) {
-                if (/nm: no name list/ || /^no symbols$/ ) {
+                if (/nm: no name list/ || /^(.*: )?no symbols$/ ) {
                     print "# $^O ignoring $nm output: $_";
                     next;
                 }

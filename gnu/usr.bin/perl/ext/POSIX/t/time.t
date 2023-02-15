@@ -22,8 +22,8 @@ SKIP: {
     # actually do anything.  Cygwin works in some places, but not others.  The
     # other Win32's below are guesses.
     skip "No tzset()", 2
-       if $^O eq "VMS" || $^O eq "cygwin" || $^O eq "djgpp" ||
-          $^O eq "MSWin32" || $^O eq "dos" || $^O eq "interix";
+       if $^O eq "VMS" || $^O eq "cygwin" ||
+          $^O eq "MSWin32" || $^O eq "interix";
     tzset();
     my @tzname = tzname();
     like($tzname[0], qr/(GMT|UTC)/i, "tzset() to GMT/UTC");

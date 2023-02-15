@@ -78,6 +78,13 @@ L<https://help.github.com/en/articles/working-with-forks>.
 
   % git remote add fork git@github.com:MyUser/perl5.git
 
+For more information, see L<"Connecting to GitHub with SSH"|https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/connecting-to-github-with-ssh>.
+
+If you'd rather use an HTTPS URL for your C<git push> see L<"Cloning with
+HTTPS URLs"|https://docs.github.com/en/free-pro-team@latest/github/using-git/which-remote-url-should-i-use#cloning-with-https-urls>.
+
+  % git remote add fork https://github.com/MyUser/perl5.git
+
 Then, push your new branch to your fork.
 
   % git push -u fork mychange
@@ -168,7 +175,7 @@ L<perlgit>.
 You will need a copy of Git for your computer.  You can fetch a copy of
 the repository using the git protocol:
 
-  % git clone git://github.com/Perl/perl5.git perl
+  % git clone git@github.com:Perl/perl5.git perl
 
 This clones the repository and makes a local copy in the F<perl>
 directory.
@@ -184,24 +191,6 @@ You may access the repository over the web.  This allows you to browse
 the tree, see recent commits, subscribe to repository notifications,
 search for particular commits and more.  You may access it at
 L<https://github.com/Perl/perl5>.
-
-=head2 Read access via rsync
-
-You can also choose to use rsync to get a copy of the current source
-tree for the bleadperl branch and all maintenance branches:
-
-  % rsync -avz rsync://perl5.git.perl.org/perl-current .
-  % rsync -avz rsync://perl5.git.perl.org/perl-5.12.x .
-  % rsync -avz rsync://perl5.git.perl.org/perl-5.10.x .
-  % rsync -avz rsync://perl5.git.perl.org/perl-5.8.x .
-  % rsync -avz rsync://perl5.git.perl.org/perl-5.6.x .
-  % rsync -avz rsync://perl5.git.perl.org/perl-5.005xx .
-
-(Add the C<--delete> option to remove leftover files.)
-
-To get a full list of the available sync points:
-
-  % rsync perl5.git.perl.org::
 
 =head2 Write access via git
 
@@ -372,7 +361,11 @@ tabs to spaces will help this migration.
 
 =item *
 
-Try hard not to exceed 79-columns
+Try not to exceed 79 columns
+
+In general, we target 80 column lines.  When sticking to 80 columns would lead
+to torturous code or rework, it's fine to go longer.  Try to keep your excess
+past 80 to a minimum.
 
 =item *
 
@@ -534,9 +527,9 @@ In most cases, patches to modules in F<cpan/> should be sent upstream
 and should not be applied to the Perl core individually.  If a patch to
 a file in F<cpan/> absolutely cannot wait for the fix to be made
 upstream, released to CPAN and copied to blead, you must add (or
-update) a C<CUSTOMIZED> entry in the F<"Porting/Maintainers.pl"> file
+update) a C<CUSTOMIZED> entry in the F<Porting/Maintainers.pl> file
 to flag that a local modification has been made.  See
-F<"Porting/Maintainers.pl"> for more details.
+F<Porting/Maintainers.pl> for more details.
 
 In contrast, modules in the F<dist/> directory are maintained in the
 core.
@@ -903,9 +896,10 @@ Sets PERL_SKIP_TTY_TEST to true before running normal test.
 =head2 Parallel tests
 
 The core distribution can now run its regression tests in parallel on
-Unix-like platforms.  Instead of running C<make test>, set C<TEST_JOBS>
-in your environment to the number of tests to run in parallel, and run
-C<make test_harness>.  On a Bourne-like shell, this can be done as
+Unix-like and Windows platforms.  On Unix, instead of running C<make
+test>, set C<TEST_JOBS> in your environment to the number of tests to
+run in parallel, and run C<make test_harness>.  On a Bourne-like shell,
+this can be done as
 
     TEST_JOBS=3 make test_harness  # Run 3 tests in parallel
 
@@ -914,9 +908,23 @@ because L<TAP::Harness> needs to be able to schedule individual
 non-conflicting test scripts itself, and there is no standard interface
 to C<make> utilities to interact with their job schedulers.
 
-Note that currently some test scripts may fail when run in parallel
-(most notably F<dist/IO/t/io_dir.t>).  If necessary, run just the
-failing scripts again sequentially and see if the failures go away.
+Tests are normally run in a logical order, with the sanity tests first,
+then the main tests of the Perl core functionality, then the tests for
+the non-core modules.  On many-core systems, this may not use the
+hardware as effectively as possible.  By also specifying
+
+ TEST_JOBS=19 PERL_TEST_HARNESS_ASAP=1 make -j19 test_harness
+
+you signal that you want the tests to finish in wall-clock time as short
+as possible.  After the sanity tests are completed, this causes the
+remaining ones to be packed into the available cores as tightly as
+we know how.  This has its greatest effect on slower, many-core systems.
+Throughput was sped up by 20% on an outmoded 24-core system; less on
+more recent faster ones with fewer cores.
+
+Note that the command line above added a C<-j> parameter to make, so as
+to cause parallel compilation.  This may or may not work on your
+platform.
 
 =head2 Running tests by hand
 
@@ -1080,7 +1088,7 @@ C<make>, however, failed with output (excerpted) like this:
       mg.o reentr.o mro.o hv.o av.o run.o pp_hot.o sv.o \
       pp.o scope.o pp_ctl.o pp_sys.o doop.o doio.o regexec.o \
       utf8.o taint.o deb.o universal.o globals.o perlio.o \
-      perlapi.o numeric.o mathoms.o locale.o pp_pack.o pp_sort.o  \
+      numeric.o mathoms.o locale.o pp_pack.o pp_sort.o  \
       miniperlmain.o opmini.o perlmini.o
     pp.o: In function `Perl_pp_pow':
     pp.c:(.text+0x2db9): undefined reference to `pow'
@@ -1093,11 +1101,12 @@ Another P5P contributor recommended installation and use of Devel::PatchPerl
 for this situation, first to determine the version of perl at the commit in
 question, then to patch the source code at that point to facilitate a build.
 
-    $ perl -MDevel::PatchPerl -e \
-        'print Devel::PatchPerl->determine_version("/path/to/sourcecode"), "\n";'
-    5.11.1
-    $ perl -MDevel::PatchPerl -e \
-        'Devel::PatchPerl->patch_source("5.11.1", "/path/to/sourcecode");'
+ $ perl -MDevel::PatchPerl -e \
+     'print Devel::PatchPerl->determine_version("/path/to/sourcecode"),
+            "\n";'
+ 5.11.1
+ $ perl -MDevel::PatchPerl -e \
+     'Devel::PatchPerl->patch_source("5.11.1", "/path/to/sourcecode");'
 
 Once the source was patched, C<./Configure> and C<make test_prep> were called
 and completed successfully, enabling confirmation of the findings in RT
@@ -1144,7 +1153,7 @@ source, and we'll do that later on.
 Gisle Aas's "illustrated perlguts", also known as I<illguts>, has very
 helpful pictures:
 
-L<https://search.cpan.org/dist/illguts/>
+L<https://metacpan.org/release/RURBAN/illguts-0.49>
 
 =item * L<perlxstut> and L<perlxs>
 

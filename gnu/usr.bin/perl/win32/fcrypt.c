@@ -13,15 +13,15 @@
 typedef unsigned char des_cblock[8];
 
 typedef struct des_ks_struct
-	{
-	union	{
-		des_cblock _;
-		/* make sure things are correct size on machines with
-		 * 8 byte longs */
-		unsigned long pad[2];
-		} ks;
+        {
+        union	{
+                des_cblock _;
+                /* make sure things are correct size on machines with
+                 * 8 byte longs */
+                unsigned long pad[2];
+                } ks;
 #define _	ks._
-	} des_key_schedule[16];
+        } des_key_schedule[16];
 
 #define DES_KEY_SZ 	(sizeof(des_cblock))
 #define DES_ENCRYPT	1
@@ -31,14 +31,14 @@ typedef struct des_ks_struct
 #define HALF_ITERATIONS 8
 
 #define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
-			 l|=((unsigned long)(*((c)++)))<< 8, \
-			 l|=((unsigned long)(*((c)++)))<<16, \
-			 l|=((unsigned long)(*((c)++)))<<24)
+                         l|=((unsigned long)(*((c)++)))<< 8, \
+                         l|=((unsigned long)(*((c)++)))<<16, \
+                         l|=((unsigned long)(*((c)++)))<<24)
 
 #define l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff), \
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff), \
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff))
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>24)&0xff))
 
 static const unsigned long SPtrans[8][64]={
 { /* nibble 0 */
@@ -319,77 +319,77 @@ static const unsigned long skb[8][64]={
 
 /* See ecb_encrypt.c for a pseudo description of these macros. */
 #define PERM_OP(a,b,t,n,m) ((t)=((((a)>>(n))^(b))&(m)),\
-	(b)^=(t),\
-	(a)^=((t)<<(n)))
+        (b)^=(t),\
+        (a)^=((t)<<(n)))
 
 #define HPERM_OP(a,t,n,m) ((t)=((((a)<<(16-(n)))^(a))&(m)),\
-	(a)=(a)^(t)^(t>>(16-(n))))\
+        (a)=(a)^(t)^(t>>(16-(n))))\
 
 static const char shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 
 static int body(
-	unsigned long *out0,
-	unsigned long *out1,
-	des_key_schedule ks,
-	unsigned long Eswap0,
-	unsigned long Eswap1);
+        unsigned long *out0,
+        unsigned long *out1,
+        des_key_schedule ks,
+        unsigned long Eswap0,
+        unsigned long Eswap1);
 
 static int
 des_set_key(des_cblock *key, des_key_schedule schedule)
-	{
-	unsigned long c,d,t,s;
-	unsigned char *in;
-	unsigned long *k;
-	int i;
+        {
+        unsigned long c,d,t,s;
+        unsigned char *in;
+        unsigned long *k;
+        int i;
 
-	k=(unsigned long *)schedule;
-	in=(unsigned char *)key;
+        k=(unsigned long *)schedule;
+        in=(unsigned char *)key;
 
-	c2l(in,c);
-	c2l(in,d);
+        c2l(in,c);
+        c2l(in,d);
 
-	/* I now do it in 47 simple operations :-)
-	 * Thanks to John Fletcher (john_fletcher@lccmail.ocf.llnl.gov)
-	 * for the inspiration. :-) */
-	PERM_OP (d,c,t,4,0x0f0f0f0f);
-	HPERM_OP(c,t,-2,0xcccc0000);
-	HPERM_OP(d,t,-2,0xcccc0000);
-	PERM_OP (d,c,t,1,0x55555555);
-	PERM_OP (c,d,t,8,0x00ff00ff);
-	PERM_OP (d,c,t,1,0x55555555);
-	d=	(((d&0x000000ff)<<16)| (d&0x0000ff00)     |
-		 ((d&0x00ff0000)>>16)|((c&0xf0000000)>>4));
-	c&=0x0fffffff;
+        /* I now do it in 47 simple operations :-)
+         * Thanks to John Fletcher (john_fletcher@lccmail.ocf.llnl.gov)
+         * for the inspiration. :-) */
+        PERM_OP (d,c,t,4,0x0f0f0f0f);
+        HPERM_OP(c,t,-2,0xcccc0000);
+        HPERM_OP(d,t,-2,0xcccc0000);
+        PERM_OP (d,c,t,1,0x55555555);
+        PERM_OP (c,d,t,8,0x00ff00ff);
+        PERM_OP (d,c,t,1,0x55555555);
+        d=	(((d&0x000000ff)<<16)| (d&0x0000ff00)     |
+                 ((d&0x00ff0000)>>16)|((c&0xf0000000)>>4));
+        c&=0x0fffffff;
 
-	for (i=0; i<ITERATIONS; i++)
-		{
-		if (shifts2[i])
-			{ c=((c>>2)|(c<<26)); d=((d>>2)|(d<<26)); }
-		else
-			{ c=((c>>1)|(c<<27)); d=((d>>1)|(d<<27)); }
-		c&=0x0fffffff;
-		d&=0x0fffffff;
-		/* could be a few less shifts but I am to lazy at this
-		 * point in time to investigate */
-		s=	skb[0][ (c    )&0x3f                ]|
-			skb[1][((c>> 6)&0x03)|((c>> 7)&0x3c)]|
-			skb[2][((c>>13)&0x0f)|((c>>14)&0x30)]|
-			skb[3][((c>>20)&0x01)|((c>>21)&0x06) |
-			                      ((c>>22)&0x38)];
-		t=	skb[4][ (d    )&0x3f                ]|
-			skb[5][((d>> 7)&0x03)|((d>> 8)&0x3c)]|
-			skb[6][ (d>>15)&0x3f                ]|
-			skb[7][((d>>21)&0x0f)|((d>>22)&0x30)];
+        for (i=0; i<ITERATIONS; i++)
+                {
+                if (shifts2[i])
+                        { c=((c>>2)|(c<<26)); d=((d>>2)|(d<<26)); }
+                else
+                        { c=((c>>1)|(c<<27)); d=((d>>1)|(d<<27)); }
+                c&=0x0fffffff;
+                d&=0x0fffffff;
+                /* could be a few less shifts but I am to lazy at this
+                 * point in time to investigate */
+                s=	skb[0][ (c    )&0x3f                ]|
+                        skb[1][((c>> 6)&0x03)|((c>> 7)&0x3c)]|
+                        skb[2][((c>>13)&0x0f)|((c>>14)&0x30)]|
+                        skb[3][((c>>20)&0x01)|((c>>21)&0x06) |
+                                              ((c>>22)&0x38)];
+                t=	skb[4][ (d    )&0x3f                ]|
+                        skb[5][((d>> 7)&0x03)|((d>> 8)&0x3c)]|
+                        skb[6][ (d>>15)&0x3f                ]|
+                        skb[7][((d>>21)&0x0f)|((d>>22)&0x30)];
 
-		/* table contained 0213 4657 */
-		*(k++)=((t<<16)|(s&0x0000ffff))&0xffffffff;
-		s=     ((s>>16)|(t&0xffff0000));
-		
-		s=(s<<4)|(s>>28);
-		*(k++)=s&0xffffffff;
-		}
-	return(0);
-	}
+                /* table contained 0213 4657 */
+                *(k++)=((t<<16)|(s&0x0000ffff))&0xffffffff;
+                s=     ((s>>16)|(t&0xffff0000));
+                
+                s=(s<<4)|(s>>28);
+                *(k++)=s&0xffffffff;
+                }
+        return(0);
+        }
 
 /******************************************************************
  * modified stuff for crypt.
@@ -402,37 +402,37 @@ des_set_key(des_cblock *key, des_key_schedule schedule)
  */
 #ifdef ALT_ECB
 #define D_ENCRYPT(L,R,S) \
-	v=(R^(R>>16)); \
-	u=(v&E0); \
-	v=(v&E1); \
-	u=((u^(u<<16))^R^s[S  ])<<2; \
-	t=(v^(v<<16))^R^s[S+1]; \
-	t=(t>>2)|(t<<30); \
-	L^= \
-	*(unsigned long *)(des_SP+0x0100+((t    )&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0300+((t>> 8)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0500+((t>>16)&0xfc))+ \
-	*(unsigned long *)(des_SP+0x0700+((t>>24)&0xfc))+ \
-	*(unsigned long *)(des_SP+       ((u    )&0xfc))+ \
-  	*(unsigned long *)(des_SP+0x0200+((u>> 8)&0xfc))+ \
-  	*(unsigned long *)(des_SP+0x0400+((u>>16)&0xfc))+ \
- 	*(unsigned long *)(des_SP+0x0600+((u>>24)&0xfc));
+        v=(R^(R>>16)); \
+        u=(v&E0); \
+        v=(v&E1); \
+        u=((u^(u<<16))^R^s[S  ])<<2; \
+        t=(v^(v<<16))^R^s[S+1]; \
+        t=(t>>2)|(t<<30); \
+        L^= \
+        *(unsigned long *)(des_SP+0x0100+((t    )&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0300+((t>> 8)&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0500+((t>>16)&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0700+((t>>24)&0xfc))+ \
+        *(unsigned long *)(des_SP+       ((u    )&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0200+((u>> 8)&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0400+((u>>16)&0xfc))+ \
+        *(unsigned long *)(des_SP+0x0600+((u>>24)&0xfc));
 #else /* original version */
 #define D_ENCRYPT(L,R,S)	\
-	v=(R^(R>>16)); \
-	u=(v&E0); \
-	v=(v&E1); \
-	u=(u^(u<<16))^R^s[S  ]; \
-	t=(v^(v<<16))^R^s[S+1]; \
-	t=(t>>4)|(t<<28); \
-	L^=	SPtrans[1][(t    )&0x3f]| \
-		SPtrans[3][(t>> 8)&0x3f]| \
-		SPtrans[5][(t>>16)&0x3f]| \
-		SPtrans[7][(t>>24)&0x3f]| \
-		SPtrans[0][(u    )&0x3f]| \
-		SPtrans[2][(u>> 8)&0x3f]| \
-		SPtrans[4][(u>>16)&0x3f]| \
-		SPtrans[6][(u>>24)&0x3f];
+        v=(R^(R>>16)); \
+        u=(v&E0); \
+        v=(v&E1); \
+        u=(u^(u<<16))^R^s[S  ]; \
+        t=(v^(v<<16))^R^s[S+1]; \
+        t=(t>>4)|(t<<28); \
+        L^=	SPtrans[1][(t    )&0x3f]| \
+                SPtrans[3][(t>> 8)&0x3f]| \
+                SPtrans[5][(t>>16)&0x3f]| \
+                SPtrans[7][(t>>24)&0x3f]| \
+                SPtrans[0][(u    )&0x3f]| \
+                SPtrans[2][(u>> 8)&0x3f]| \
+                SPtrans[4][(u>>16)&0x3f]| \
+                SPtrans[6][(u>>24)&0x3f];
 #endif
 
 unsigned const char con_salt[128]={
@@ -466,7 +466,7 @@ unsigned const char cov_2char[64]={
 };
 
 /* the salt for classic DES crypt (which is all we implement here)
-   permits [./0-9A-Za-z], since '.' and '/' immediately preceed
+   permits [./0-9A-Za-z], since '.' and '/' immediately precede
    '0' we don't need individual checks for '.' and '/' 
 */
 #define good_for_salt(c) \
@@ -475,119 +475,119 @@ unsigned const char cov_2char[64]={
 
 char *
 des_fcrypt(const char *buf, const char *salt, char *buff)
-	{
-	unsigned int i,j,x,y;
-	unsigned long Eswap0,Eswap1;
-	unsigned long out[2],ll;
-	des_cblock key;
-	des_key_schedule ks;
-	unsigned char bb[9];
-	unsigned char *b=bb;
-	unsigned char c,u;
+        {
+        unsigned int i,j,x,y;
+        unsigned long Eswap0,Eswap1;
+        unsigned long out[2],ll;
+        des_cblock key;
+        des_key_schedule ks;
+        unsigned char bb[9];
+        unsigned char *b=bb;
+        unsigned char c,u;
 
         if (!good_for_salt(salt[0]) || !good_for_salt(salt[1])) {
             errno = EINVAL;
             return NULL;
         }
 
-	/* eay 25/08/92
-	 * If you call crypt("pwd","*") as often happens when you
-	 * have * as the pwd field in /etc/passwd, the function
-	 * returns *\0XXXXXXXXX
-	 * The \0 makes the string look like * so the pwd "*" would
-	 * crypt to "*".  This was found when replacing the crypt in
-	 * our shared libraries.  People found that the disbled
-	 * accounts effectivly had no passwd :-(. */
-	x=buff[0]=((salt[0] == '\0')?(char)'A':salt[0]);
-	Eswap0=con_salt[x];
-	x=buff[1]=((salt[1] == '\0')?(char)'A':salt[1]);
-	Eswap1=con_salt[x]<<4;
+        /* eay 25/08/92
+         * If you call crypt("pwd","*") as often happens when you
+         * have * as the pwd field in /etc/passwd, the function
+         * returns *\0XXXXXXXXX
+         * The \0 makes the string look like * so the pwd "*" would
+         * crypt to "*".  This was found when replacing the crypt in
+         * our shared libraries.  People found that the disbled
+         * accounts effectivly had no passwd :-(. */
+        x=buff[0]=((salt[0] == '\0')?(char)'A':salt[0]);
+        Eswap0=con_salt[x];
+        x=buff[1]=((salt[1] == '\0')?(char)'A':salt[1]);
+        Eswap1=con_salt[x]<<4;
 
-	for (i=0; i<8; i++)
-		{
-		c= *(buf++);
-		if (!c) break;
-		key[i]=(char)(c<<1);
-		}
-	for (; i<8; i++)
-		key[i]=0;
+        for (i=0; i<8; i++)
+                {
+                c= *(buf++);
+                if (!c) break;
+                key[i]=(char)(c<<1);
+                }
+        for (; i<8; i++)
+                key[i]=0;
 
-	des_set_key((des_cblock *)(key),ks);
-	body(&out[0],&out[1],ks,Eswap0,Eswap1);
+        des_set_key((des_cblock *)(key),ks);
+        body(&out[0],&out[1],ks,Eswap0,Eswap1);
 
-	ll=out[0]; l2c(ll,b);
-	ll=out[1]; l2c(ll,b);
-	y=0;
-	u=0x80;
-	bb[8]=0;
-	for (i=2; i<13; i++)
-		{
-		c=0;
-		for (j=0; j<6; j++)
-			{
-			c<<=1;
-			if (bb[y] & u) c|=1;
-			u>>=1;
-			if (!u)
-				{
-				y++;
-				u=0x80;
-				}
-			}
-		buff[i]=cov_2char[c];
-		}
-	buff[13]='\0';
-	return buff;
-	}
+        ll=out[0]; l2c(ll,b);
+        ll=out[1]; l2c(ll,b);
+        y=0;
+        u=0x80;
+        bb[8]=0;
+        for (i=2; i<13; i++)
+                {
+                c=0;
+                for (j=0; j<6; j++)
+                        {
+                        c<<=1;
+                        if (bb[y] & u) c|=1;
+                        u>>=1;
+                        if (!u)
+                                {
+                                y++;
+                                u=0x80;
+                                }
+                        }
+                buff[i]=cov_2char[c];
+                }
+        buff[13]='\0';
+        return buff;
+        }
 
 static int 
 body(	unsigned long *out0,
-	unsigned long *out1,
-	des_key_schedule ks,
-	unsigned long Eswap0,
-	unsigned long Eswap1)
-	{
-	unsigned long l,r,t,u,v;
+        unsigned long *out1,
+        des_key_schedule ks,
+        unsigned long Eswap0,
+        unsigned long Eswap1)
+        {
+        unsigned long l,r,t,u,v;
 #ifdef ALT_ECB
-	unsigned char *des_SP=(unsigned char *)SPtrans;
+        unsigned char *des_SP=(unsigned char *)SPtrans;
 #endif
-	unsigned long *s;
-	int i,j;
-	unsigned long E0,E1;
+        unsigned long *s;
+        int i,j;
+        unsigned long E0,E1;
 
-	l=0;
-	r=0;
+        l=0;
+        r=0;
 
-	s=(unsigned long *)ks;
-	E0=Eswap0;
-	E1=Eswap1;
+        s=(unsigned long *)ks;
+        E0=Eswap0;
+        E1=Eswap1;
 
-	for (j=0; j<25; j++)
-		{
-		for (i=0; i<(ITERATIONS*2); i+=4)
-			{
-			D_ENCRYPT(l,r,  i);	/*  1 */
-			D_ENCRYPT(r,l,  i+2);	/*  2 */
-			}
-		t=l;
-		l=r;
-		r=t;
-		}
-	t=r;
-	r=(l>>1)|(l<<31);
-	l=(t>>1)|(t<<31);
-	/* clear the top bits on machines with 8byte longs */
-	l&=0xffffffff;
-	r&=0xffffffff;
+        for (j=0; j<25; j++)
+                {
+                for (i=0; i<(ITERATIONS*2); i+=4)
+                        {
+                        D_ENCRYPT(l,r,  i);	/*  1 */
+                        D_ENCRYPT(r,l,  i+2);	/*  2 */
+                        }
+                t=l;
+                l=r;
+                r=t;
+                }
+        t=r;
+        r=(l>>1)|(l<<31);
+        l=(t>>1)|(t<<31);
+        /* clear the top bits on machines with 8byte longs */
+        l&=0xffffffff;
+        r&=0xffffffff;
 
-	PERM_OP(r,l,t, 1,0x55555555);
-	PERM_OP(l,r,t, 8,0x00ff00ff);
-	PERM_OP(r,l,t, 2,0x33333333);
-	PERM_OP(l,r,t,16,0x0000ffff);
-	PERM_OP(r,l,t, 4,0x0f0f0f0f);
+        PERM_OP(r,l,t, 1,0x55555555);
+        PERM_OP(l,r,t, 8,0x00ff00ff);
+        PERM_OP(r,l,t, 2,0x33333333);
+        PERM_OP(l,r,t,16,0x0000ffff);
+        PERM_OP(r,l,t, 4,0x0f0f0f0f);
 
-	*out0=l;
-	*out1=r;
-	return(0);
-	}
+        *out0=l;
+        *out1=r;
+        return(0);
+        }
 

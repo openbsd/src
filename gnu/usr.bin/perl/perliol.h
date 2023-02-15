@@ -21,10 +21,10 @@ struct _PerlIO_funcs {
     IV (*Pushed) (pTHX_ PerlIO *f, const char *mode, SV *arg, PerlIO_funcs *tab);
     IV (*Popped) (pTHX_ PerlIO *f);
     PerlIO *(*Open) (pTHX_ PerlIO_funcs *tab,
-		     PerlIO_list_t *layers, IV n,
-		     const char *mode,
-		     int fd, int imode, int perm,
-		     PerlIO *old, int narg, SV **args);
+                     PerlIO_list_t *layers, IV n,
+                     const char *mode,
+                     int fd, int imode, int perm,
+                     PerlIO *old, int narg, SV **args);
     IV (*Binmode)(pTHX_ PerlIO *f);
     SV *(*Getarg) (pTHX_ PerlIO *f, CLONE_PARAMS *param, int flags);
     IV (*Fileno) (pTHX_ PerlIO *f);
@@ -106,24 +106,14 @@ struct _PerlIO {
 #define PerlIOValid(f)     ((f) && *(f))
 
 /*--------------------------------------------------------------------------------------*/
-/* Data exports - EXTCONST rather than extern is needed for Cygwin */
-#undef EXTPERLIO 
-#ifdef PERLIO_FUNCS_CONST
-#define EXTPERLIO EXTCONST
-#else
-#define EXTPERLIO EXT
-#endif
-EXTPERLIO PerlIO_funcs PerlIO_unix;
-EXTPERLIO PerlIO_funcs PerlIO_perlio;
-EXTPERLIO PerlIO_funcs PerlIO_stdio;
-EXTPERLIO PerlIO_funcs PerlIO_crlf;
-EXTPERLIO PerlIO_funcs PerlIO_utf8;
-EXTPERLIO PerlIO_funcs PerlIO_byte;
-EXTPERLIO PerlIO_funcs PerlIO_raw;
-EXTPERLIO PerlIO_funcs PerlIO_pending;
-#ifdef WIN32
-EXTPERLIO PerlIO_funcs PerlIO_win32;
-#endif
+EXTCONST PerlIO_funcs PerlIO_unix;
+EXTCONST PerlIO_funcs PerlIO_perlio;
+EXTCONST PerlIO_funcs PerlIO_stdio;
+EXTCONST PerlIO_funcs PerlIO_crlf;
+EXTCONST PerlIO_funcs PerlIO_utf8;
+EXTCONST PerlIO_funcs PerlIO_byte;
+EXTCONST PerlIO_funcs PerlIO_raw;
+EXTCONST PerlIO_funcs PerlIO_pending;
 PERL_CALLCONV PerlIO *PerlIO_allocate(pTHX);
 PERL_CALLCONV SV *PerlIO_arg_fetch(PerlIO_list_t *av, IV n);
 #define PerlIOArg PerlIO_arg_fetch(layers,n)
@@ -151,7 +141,7 @@ typedef struct {
 } PerlIOBuf;
 
 PERL_CALLCONV int PerlIO_apply_layera(pTHX_ PerlIO *f, const char *mode,
-		    PerlIO_list_t *layers, IV n, IV max);
+                    PerlIO_list_t *layers, IV n, IV max);
 PERL_CALLCONV int PerlIO_parse_layers(pTHX_ PerlIO_list_t *av, const char *names);
 PERL_CALLCONV PerlIO_funcs *PerlIO_layer_fetch(pTHX_ PerlIO_list_t *av, IV n, PerlIO_funcs *def);
 

@@ -7,10 +7,6 @@ BEGIN {
         print "1..0 # Skip -- Perl configured without B module\n";
         exit 0;
     }
-    if (!$Config::Config{useperlio}) {
-        print "1..0 # Skip -- need perlio to walk the optree\n";
-        exit 0;
-    }
 }
 use OptreeCheck;
 plan tests => 38;
@@ -18,14 +14,6 @@ plan tests => 38;
 =head1 f_sort.t
 
 Code test snippets here are adapted from `perldoc -f map`
-
-Due to a bleadperl optimization (Dave Mitchell, circa apr 04), the
-(map|grep)(start|while) opcodes have different flags in 5.9, their
-private flags /1, /2 are gone in blead (for the cases covered)
-
-When the optree stuff was integrated into 5.8.6, these tests failed,
-and were todo'd.  They're now done, by version-specific tweaking in
-mkCheckRex(), therefore the skip is removed too.
 
 =head1 Test Notes
 
@@ -653,7 +641,7 @@ my ($expect, $expect_nt) = (<<'EOT_EOT', <<'EONT_EONT');
 # 3  <0> pushmark s
 # 4  <#> gv[*old] s
 # 5  <1> rv2av[t9] lKM/1
-# 6  <@> sort lKS*/STABLE
+# 6  <@> sort lKS*
 # 7  <0> pushmark s
 # 8  <#> gv[*new] s
 # 9  <1> rv2av[t2] lKRM*/1
@@ -665,7 +653,7 @@ EOT_EOT
 # 3  <0> pushmark s
 # 4  <$> gv(*old) s
 # 5  <1> rv2av[t5] lKM/1
-# 6  <@> sort lKS*/STABLE
+# 6  <@> sort lKS*
 # 7  <0> pushmark s
 # 8  <$> gv(*new) s
 # 9  <1> rv2av[t1] lKRM*/1

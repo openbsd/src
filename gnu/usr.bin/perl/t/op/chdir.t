@@ -29,9 +29,7 @@ use File::Spec::Functions qw(:DEFAULT splitdir rel2abs splitpath);
 # Can't use Cwd::abs_path() because it has different ideas about
 # path separators than File::Spec.
 sub abs_path {
-    my $d = rel2abs(curdir);
-    $d = lc($d) if $^O =~ /^uwin/;
-    $d;
+    return rel2abs(curdir);
 }
 
 my $Cwd = abs_path;

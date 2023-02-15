@@ -3,14 +3,9 @@
 use strict;
 use warnings;
 
-use Scalar::Util ();
-use Test::More  (grep { /dualvar/ } @Scalar::Util::EXPORT_FAIL)
-    ? (skip_all => 'dualvar requires XS version')
-    : (tests => 41);
+use Scalar::Util qw(dualvar isdual);
+use Test::More tests => 41;
 use Config;
-
-Scalar::Util->import('dualvar');
-Scalar::Util->import('isdual');
 
 my $var;
 $var = dualvar( 2.2,"string");

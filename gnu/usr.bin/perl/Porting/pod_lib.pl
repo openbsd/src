@@ -176,27 +176,55 @@ sub write_or_die {
 
 =item * Purpose
 
-Verify that a file contains exactly one contiguous run of lines which matches
-the passed in pattern. C<croak()>s if the pattern is not found, or found in
-more than one place.
+Verify that a makefile or makefile constructor contains exactly one contiguous
+run of lines which matches a given pattern. C<croak()>s if the pattern is not
+found, or found in more than one place.
+
+By "makefile or makefile constructor" we mean a file which is one of the
+right-hand values in this list of key-value pairs:
+
+            manifest => 'MANIFEST',
+            vms => 'vms/descrip_mms.template',
+            nmake => 'win32/Makefile',
+            gmake => 'win32/GNUmakefile',
+            podmak => 'win32/pod.mak',
+            unix => 'Makefile.SH',
+
+(Currently found in C<%Targets> in F<Porting/pod_rules.pl>.)
 
 =item * Arguments
 
 =over 4
 
-=item * Name of file
+=item * Name of target
+
+String holding the key of one element in C<%Targets> in F<Porting/pod_rules.pl>.
 
 =item * Contents of file
 
+String holding slurped contents of the file named in the value of the element
+in C<%Targets> in F<Porting/pod_rules.pl> named in the first argument.
+
 =item * Pattern of interest
 
+Compiled regular expression pertinent to a particular makefile constructor.
+
 =item * Name to report on error
+
+String holding description.
 
 =back
 
 =item * Return Value
 
 The contents of the file, with C<qr/\0+/> substituted for the pattern.
+
+=item * Example (drawn from F<Porting/pod_rules.pl> C<do_unix()>):
+
+    my $makefile_SH = slurp_or_die('./Makefile.SH');
+    my $re = qr/some\s+pattern/;
+    my $makefile_SH_out =
+        verify_contiguous('unix', $makefile_SH, $re, 'copy rules');
 
 =back
 
@@ -405,7 +433,7 @@ sub __prime_state {
     my $filename = "pod/$source";
     my $contents = slurp_or_die($filename);
     my @want =
-        $contents =~ /perldelta - what is new for perl v(5)\.(\d+)\.(\d+)\r?\n/;
+        $contents =~ /perldelta - what is new for perl v(\d+)\.(\d+)\.(\d+)\r?\n/;
     die "Can't extract version from $filename" unless @want;
     my $delta_leaf = join '', 'perl', @want, 'delta';
     $state{delta_target} = "$delta_leaf.pod";
@@ -521,6 +549,8 @@ sub __prime_state {
 
 =item * Purpose
 
+Create a data structure holding information about files containing text in POD format.
+
 =item * Arguments
 
 List of one or more arguments.
@@ -564,6 +594,14 @@ information about various types of POD files.
                         by 'perldoc' ]
   'copies'          => { # patch version perldelta =>
                         minor version perldelta }
+
+=item * Comment
+
+Instances where this subroutine is used may be found in these files:
+
+    pod/buildtoc
+    Porting/new-perldelta.pl
+    Porting/pod_rules.pl
 
 =back
 

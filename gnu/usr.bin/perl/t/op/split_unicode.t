@@ -6,7 +6,7 @@ BEGIN {
 }
 
 skip_all_if_miniperl("no dynamic loading on miniperl, no File::Spec (used by charnames)");
-plan(tests => 145);
+plan(tests => 147);
 
 {
     # check the special casing of split /\s/ and unicode
@@ -76,4 +76,15 @@ plan(tests => 145);
         );
     }
 
+}
+
+{
+    # Check empty pattern with specified field count on Unicode string
+    my $string = "\x{100}\x{101}\x{102}";
+    $_ = join(':', split(//, $string, 2));
+    is($_, "\x{100}:\x{101}\x{102}",
+            "Split into specified number of fields with empty pattern");
+    @ary = split(//, $string, 2);
+    $cnt = split(//, $string, 2);
+    is($cnt, scalar(@ary), "Check element count from previous test");
 }

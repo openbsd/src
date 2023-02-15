@@ -13,10 +13,10 @@ require Exporter;
 our @ISA        = qw(Exporter);
 our @EXPORT_OK  = qw(
   all any first min max minstr maxstr none notall product reduce reductions sum sum0
-  sample shuffle uniq uniqint uniqnum uniqstr
+  sample shuffle uniq uniqint uniqnum uniqstr zip zip_longest zip_shortest mesh mesh_longest mesh_shortest
   head tail pairs unpairs pairkeys pairvalues pairmap pairgrep pairfirst
 );
-our $VERSION    = "1.55";
+our $VERSION    = "1.62";
 our $XS_VERSION = $VERSION;
 $VERSION =~ tr/_//d;
 
@@ -57,7 +57,7 @@ List::Util - A selection of general-utility list subroutines
 
       pairs unpairs pairkeys pairvalues pairfirst pairgrep pairmap
 
-      shuffle uniq uniqint uniqnum uniqstr
+      shuffle uniq uniqint uniqnum uniqstr zip mesh
     );
 
 =head1 DESCRIPTION
@@ -652,6 +652,83 @@ all but the first C<$size> elements from C<@list>.
 
     @result = tail -2, qw( foo bar baz );
     # baz
+
+=head2 zip
+
+    my @result = zip [1..3], ['a'..'c'];
+    # [1, 'a'], [2, 'b'], [3, 'c']
+
+I<Since version 1.56.>
+
+Returns a list of array references, composed of elements from the given list
+of array references. Each array in the returned list is composed of elements
+at that corresponding position from each of the given input arrays. If any
+input arrays run out of elements before others, then C<undef> will be inserted
+into the result to fill in the gaps.
+
+The C<zip> function is particularly handy for iterating over multiple arrays
+at the same time with a C<foreach> loop, taking one element from each:
+
+    foreach ( zip \@xs, \@ys, \@zs ) {
+        my ($x, $y, $z) = @$_;
+        ...
+    }
+
+B<NOTE> to users of L<List::MoreUtils>: This function does not behave the same
+as C<List::MoreUtils::zip>, but is actually a non-prototyped equivalent to
+C<List::MoreUtils::zip_unflatten>. This function does not apply a prototype,
+so make sure to invoke it with references to arrays.
+
+For a function similar to the C<zip> function from C<List::MoreUtils>, see
+L<mesh>.
+
+    my @result = zip_shortest ...
+
+A variation of the function that differs in how it behaves when given input
+arrays of differing lengths. C<zip_shortest> will stop as soon as any one of
+the input arrays run out of elements, discarding any remaining unused values
+from the others.
+
+    my @result = zip_longest ...
+
+C<zip_longest> is an alias to the C<zip> function, provided simply to be
+explicit about that behaviour as compared to C<zip_shortest>.
+
+=head2 mesh
+
+    my @result = mesh [1..3], ['a'..'c'];
+    # (1, 'a', 2, 'b', 3, 'c')
+
+I<Since version 1.56.>
+
+Returns a list of items collected from elements of the given list of array
+references. Each section of items in the returned list is composed of elements
+at the corresponding position from each of the given input arrays. If any
+input arrays run out of elements before others, then C<undef> will be inserted
+into the result to fill in the gaps.
+
+This is similar to L<zip>, except that all of the ranges in the result are
+returned in one long flattened list, instead of being bundled into separate
+arrays.
+
+Because it returns a flat list of items, the C<mesh> function is particularly
+useful for building a hash out of two separate arrays of keys and values:
+
+    my %hash = mesh \@keys, \@values;
+
+    my $href = { mesh \@keys, \@values };
+
+B<NOTE> to users of L<List::MoreUtils>: This function is a non-prototyped
+equivalent to C<List::MoreUtils::mesh> or C<List::MoreUtils::zip> (themselves
+aliases of each other). This function does not apply a prototype, so make sure
+to invoke it with references to arrays.
+
+    my @result = mesh_shortest ...
+
+    my @result = mesh_longest ...
+
+These variations are similar to those of L<zip>, in that they differ in
+behaviour when one of the input lists runs out of elements before the others.
 
 =head1 CONFIGURATION VARIABLES
 

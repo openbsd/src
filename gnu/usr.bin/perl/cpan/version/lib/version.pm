@@ -8,7 +8,7 @@ if ($] >= 5.015) {
     warnings::register_categories(qw/version/);
 }
 
-our $VERSION = 0.9924;
+our $VERSION = 0.9929;
 our $CLASS = 'version';
 our (@ISA, $STRICT, $LAX);
 

@@ -16,6 +16,10 @@ text.
 Program to prepare dual-life distributions for insertion into the Perl 5
 F<lib/> and F<t/> directories.  Now thought to be largely superseded.
 
+=head2 F<add-pod-file>
+
+Program to facilitate addition of new F<.pod> files to F<pod/>.
+
 =head2 F<bench.pl>
 
 Do performance analysis on the code snippets in F<t/perf/benchmarks>.
@@ -29,18 +33,15 @@ Use C<git bisect> to pinpoint changes.
 A utility to find, and optionally bump, references to the perl version
 number in various files within the perl source.
 
-=head2 F<check83.pl>
-
-Performs pathname portability checks, including whether there are naming
-conflicts when names are truncated to the DOSish, case-ignoring 8.3 format.
-
 =head2 F<checkansi.pl>
 
 Check source code for ANSI-C violations.
 
 =head2 F<checkAUTHORS.pl>
 
-Used by F<t/porting/authors.t> to ensure the F<AUTHORS> list is up to date.
+Used by F<t/porting/authors.t> to ensure the F<AUTHORS> list is up to
+date. See also L<< /"F<updateAUTHORS.pl>" >> for a way to automatically
+fix issues found by this tool.
 
 =head2 F<checkcfguse.pl>
 
@@ -77,11 +78,6 @@ Checks that all the URLs in the Perl source are valid.
 
 Used by F<t/porting/cmp_version.t> to ensure changed modules have had their
 versions updated.
-
-=head2 F<cherrymaint>
-
-Command line tool to update cherrymaint; a tool for selecting commits from 
-blead to cherry-pick into stable perl versions.
 
 =head2 F<cmpVERSION.pl>
 
@@ -133,9 +129,18 @@ F<perldelta*> files.
 
 Generates info for Module::CoreList from this perl tree.
 
+=head2 F<core-team.json>
+
+The canonical list of Perl Core Team members, used to build perlgov.pod,
+produce election mailings, and all that sort of thing.
+
 =head2 F<deparse-skips.txt>
 
 List of test files to ignore/skip for deparse tests.
+
+=head2 F<docs-team-charter.pod>
+
+The charter of the Perl Documentation Team
 
 =head2 F<epigraphs.pod>
 
@@ -228,10 +233,6 @@ command-line.
 
 This script creates F<META.yml> and F<META.json> files.
 
-=head2 F<make_modlib_cpan.pl>
-
-This script generates the list of registered CPAN sites in F<perlmodlib.PL>.
-
 =head2 F<makerel>
 
 This script builds a Perl release tarball.
@@ -273,6 +274,11 @@ This script outputs the added tests between the two versions of Perl.
 =head2 F<perldelta_template.pod>
 
 Template for F<perldelta>.
+
+=head2 F<perlgov-team-update>
+
+This produces a new team list for F<perlgov.pod>, but does not, at present,
+insert that content into the file.
 
 =head2 F<perlhist_calculate.pl>
 
@@ -333,7 +339,7 @@ so there may be new things not covered here, or tools may need updating.
 This schedule lists the projected or historical development and release
 schedules for the next, current and previous stable versions of Perl. Dates
 with all question marks will only be releases if deemed necessary by the
-Pumpking.
+Steering Council.
 
 =head2 F<rt_list_patches>
 
@@ -372,6 +378,13 @@ to work on any of these, but it's a good idea to first contact
 I<perl5-porters@perl.org> to avoid duplication of effort, and to learn from
 any previous attempts.
 
+=head2 F<updateAUTHORS.pl>
+
+This script will automatically update AUTHORS and create .mailmap entries
+based on the git commit log history. If F<checkAUTHORS.pl> complains
+during testing you should run this. It will automatically fix most if not
+all AUTHORS related test fails.
+
 =head2 F<valgrindpp.pl>
 
 A post-processor for C<make test.valgrind>.  F<valgrindpp.pl> is a
@@ -379,6 +392,10 @@ post-processor for F<.valgrind> files created during C<make test.valgrind>. It
 collects all these files, extracts most of the information and produces a
 significantly shorter summary of all detected memory access errors and memory
 leaks.
+
+=head2 F<vote_admin_guide.pod>
+
+Guide for Vote Administrators for running Steering Council elections.
 
 =cut
 

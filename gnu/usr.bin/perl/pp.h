@@ -11,7 +11,7 @@
 #define PP(s) OP * Perl_##s(pTHX)
 
 /*
-=head1 Stack Manipulation Macros
+=for apidoc_section $stack
 
 =for apidoc AmnU||SP
 Stack pointer.  This is usually handled by C<xsubpp>.  See C<L</dSP>> and
@@ -53,6 +53,16 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #undef SP /* Solaris 2.7 i386 has this in /usr/include/sys/reg.h */
 #define SP sp
 #define MARK mark
+
+/*
+=for apidoc Amns||TARG
+
+C<TARG> is short for "target".  It is an entry in the pad that an OPs
+C<op_targ> refers to.  It is scratchpad space, often used as a return
+value for the OP, but some use it for other purposes.
+
+=cut
+*/
 #define TARG targ
 
 #define PUSHMARK(p) \
@@ -60,7 +70,7 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
         I32 * mark_stack_entry;                                       \
         if (UNLIKELY((mark_stack_entry = ++PL_markstack_ptr)          \
                                            == PL_markstack_max))      \
-	    mark_stack_entry = markstack_grow();                      \
+            mark_stack_entry = markstack_grow();                      \
         *mark_stack_entry  = (I32)((p) - PL_stack_base);              \
         DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,                 \
                 "MARK push %p %" IVdf "\n",                           \
@@ -91,6 +101,13 @@ Refetch the stack pointer.  Used after a callback.  See L<perlcall>.
 #define dTARGETSTACKED SV * GETTARGETSTACKED
 
 #define GETTARGET targ = PAD_SV(PL_op->op_targ)
+
+/*
+=for apidoc Amns||dTARGET
+Declare that this function uses C<TARG>
+
+=cut
+*/
 #define dTARGET SV * GETTARGET
 
 #define GETATARGET targ = (PL_op->op_flags & OPf_STACKED ? sp[-1] : PAD_SV(PL_op->op_targ))
@@ -503,7 +520,7 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 #define dPOPXiirl(X)	IV right = POPi; IV left = CAT2(X,i)
 
 #define USE_LEFT(sv) \
-	(SvOK(sv) || !(PL_op->op_flags & OPf_STACKED))
+        (SvOK(sv) || !(PL_op->op_flags & OPf_STACKED))
 #define dPOPXiirl_ul_nomg(X) \
     IV right = (sp--, SvIV_nomg(TOPp1s));		\
     SV *leftsv = CAT2(X,s);				\
@@ -537,18 +554,18 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 
 #define SWITCHSTACK(f,t) \
     STMT_START {							\
-	AvFILLp(f) = sp - PL_stack_base;				\
-	PL_stack_base = AvARRAY(t);					\
-	PL_stack_max = PL_stack_base + AvMAX(t);			\
-	sp = PL_stack_sp = PL_stack_base + AvFILLp(t);			\
-	PL_curstack = t;						\
+        AvFILLp(f) = sp - PL_stack_base;				\
+        PL_stack_base = AvARRAY(t);					\
+        PL_stack_max = PL_stack_base + AvMAX(t);			\
+        sp = PL_stack_sp = PL_stack_base + AvFILLp(t);			\
+        PL_curstack = t;						\
     } STMT_END
 
 #define EXTEND_MORTAL(n) \
     STMT_START {						\
-	SSize_t eMiX = PL_tmps_ix + (n);			\
-	if (UNLIKELY(eMiX >= PL_tmps_max))			\
-	    (void)Perl_tmps_grow_p(aTHX_ eMiX);			\
+        SSize_t eMiX = PL_tmps_ix + (n);			\
+        if (UNLIKELY(eMiX >= PL_tmps_max))			\
+            (void)Perl_tmps_grow_p(aTHX_ eMiX);			\
     } STMT_END
 
 #define AMGf_noright	1
@@ -564,14 +581,14 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 /* do SvGETMAGIC on the stack args before checking for overload */
 
 #define tryAMAGICun_MG(method, flags) STMT_START { \
-	if ( UNLIKELY((SvFLAGS(TOPs) & (SVf_ROK|SVs_GMG))) \
-		&& Perl_try_amagic_un(aTHX_ method, flags)) \
-	    return NORMAL; \
+        if ( UNLIKELY((SvFLAGS(TOPs) & (SVf_ROK|SVs_GMG))) \
+                && Perl_try_amagic_un(aTHX_ method, flags)) \
+            return NORMAL; \
     } STMT_END
 #define tryAMAGICbin_MG(method, flags) STMT_START { \
-	if ( UNLIKELY(((SvFLAGS(TOPm1s)|SvFLAGS(TOPs)) & (SVf_ROK|SVs_GMG))) \
-		&& Perl_try_amagic_bin(aTHX_ method, flags)) \
-	    return NORMAL; \
+        if ( UNLIKELY(((SvFLAGS(TOPm1s)|SvFLAGS(TOPs)) & (SVf_ROK|SVs_GMG))) \
+                && Perl_try_amagic_bin(aTHX_ method, flags)) \
+            return NORMAL; \
     } STMT_END
 
 #define AMG_CALLunary(sv,meth) \
@@ -582,24 +599,24 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
 
 #define tryAMAGICunTARGETlist(meth, jump)			\
     STMT_START {						\
-	dSP;							\
-	SV *tmpsv;						\
-	SV *arg= *sp;						\
+        dSP;							\
+        SV *tmpsv;						\
+        SV *arg= *sp;						\
         U8 gimme = GIMME_V;                                    \
-	if (UNLIKELY(SvAMAGIC(arg) &&				\
-	    (tmpsv = amagic_call(arg, &PL_sv_undef, meth,	\
-				 AMGf_want_list | AMGf_noright	\
-				|AMGf_unary))))                 \
+        if (UNLIKELY(SvAMAGIC(arg) &&				\
+            (tmpsv = amagic_call(arg, &PL_sv_undef, meth,	\
+                                 AMGf_want_list | AMGf_noright	\
+                                |AMGf_unary))))                 \
         {                                       		\
-	    SPAGAIN;						\
+            SPAGAIN;						\
             if (gimme == G_VOID) {                              \
                 NOOP;                                           \
             }                                                   \
-            else if (gimme == G_ARRAY) {			\
+            else if (gimme == G_LIST) {				\
                 SSize_t i;                                      \
                 SSize_t len;                                    \
                 assert(SvTYPE(tmpsv) == SVt_PVAV);              \
-                len = av_tindex((AV *)tmpsv) + 1;               \
+                len = av_count((AV *)tmpsv);                    \
                 (void)POPs; /* get rid of the arg */            \
                 EXTEND(sp, len);                                \
                 for (i = 0; i < len; ++i)                       \
@@ -612,25 +629,25 @@ Does not use C<TARG>.  See also C<L</XPUSHu>>, C<L</mPUSHu>> and C<L</PUSHu>>.
                     sp--;                                       \
                 SETTARG;                                        \
             }                                                   \
-	    PUTBACK;						\
-	    if (jump) {						\
-	        OP *jump_o = NORMAL->op_next;                   \
-		while (jump_o->op_type == OP_NULL)		\
-		    jump_o = jump_o->op_next;			\
-		assert(jump_o->op_type == OP_ENTERSUB);		\
-		(void)POPMARK;                                        \
-		return jump_o->op_next;				\
-	    }							\
-	    return NORMAL;					\
-	}							\
+            PUTBACK;						\
+            if (jump) {						\
+                OP *jump_o = NORMAL->op_next;                   \
+                while (jump_o->op_type == OP_NULL)		\
+                    jump_o = jump_o->op_next;			\
+                assert(jump_o->op_type == OP_ENTERSUB);		\
+                (void)POPMARK;                                        \
+                return jump_o->op_next;				\
+            }							\
+            return NORMAL;					\
+        }							\
     } STMT_END
 
 /* This is no longer used anywhere in the core. You might wish to consider
    calling amagic_deref_call() directly, as it has a cleaner interface.  */
 #define tryAMAGICunDEREF(meth)						\
     STMT_START {							\
-	sv = amagic_deref_call(*sp, CAT2(meth,_amg));			\
-	SPAGAIN;							\
+        sv = amagic_deref_call(*sp, CAT2(meth,_amg));			\
+        SPAGAIN;							\
     } STMT_END
 
 
@@ -665,13 +682,13 @@ True if this op will be the return value of an lvalue subroutine
 /* Used in various places that need to dereference a glob or globref */
 #  define MAYBE_DEREF_GV_flags(sv,phlags)                          \
     (                                                               \
-	(void)(phlags & SV_GMAGIC && (SvGETMAGIC(sv),0)),            \
-	isGV_with_GP(sv)                                              \
-	  ? (GV *)(sv)                                                \
-	  : SvROK(sv) && SvTYPE(SvRV(sv)) <= SVt_PVLV &&               \
-	    (SvGETMAGIC(SvRV(sv)), isGV_with_GP(SvRV(sv)))              \
-	     ? (GV *)SvRV(sv)                                            \
-	     : NULL                                                       \
+        (void)(phlags & SV_GMAGIC && (SvGETMAGIC(sv),0)),            \
+        isGV_with_GP(sv)                                              \
+          ? (GV *)(sv)                                                \
+          : SvROK(sv) && SvTYPE(SvRV(sv)) <= SVt_PVLV &&               \
+            (SvGETMAGIC(SvRV(sv)), isGV_with_GP(SvRV(sv)))              \
+             ? (GV *)SvRV(sv)                                            \
+             : NULL                                                       \
     )
 #  define MAYBE_DEREF_GV(sv)      MAYBE_DEREF_GV_flags(sv,SV_GMAGIC)
 #  define MAYBE_DEREF_GV_nomg(sv) MAYBE_DEREF_GV_flags(sv,0)

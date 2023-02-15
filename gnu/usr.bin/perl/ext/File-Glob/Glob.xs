@@ -108,7 +108,7 @@ iterate(pTHX_ bool(*globber)(pTHX_ AV *entries, const char *pat, STRLEN len, boo
         }
 
         if (!IS_SAFE_SYSCALL(pat, len, "pattern", "glob")) {
-            if (gimme != G_ARRAY)
+            if (gimme != G_LIST)
                 PUSHs(&PL_sv_undef);
             PUTBACK;
             return;
@@ -120,7 +120,7 @@ iterate(pTHX_ bool(*globber)(pTHX_ AV *entries, const char *pat, STRLEN len, boo
     }
 
     /* chuck it all out, quick or slow */
-    if (gimme == G_ARRAY) {
+    if (gimme == G_LIST) {
 	if (!on_stack && AvFILLp(entries) + 1) {
 	    EXTEND(SP, AvFILLp(entries)+1);
 	    Copy(AvARRAY(entries), SP+1, AvFILLp(entries)+1, SV *);
@@ -286,7 +286,7 @@ csh_glob(pTHX_ AV *entries, const char *pat, STRLEN len, bool is_utf8)
 		dMARK;
 		dORIGMARK;
 		/* short-circuit here for a fairly common case */
-		if (!patav && gimme == G_ARRAY) { PUTBACK; return TRUE; }
+		if (!patav && gimme == G_LIST) { PUTBACK; return TRUE; }
 		while (++MARK <= SP)
 		    av_push(entries, SvREFCNT_inc_simple_NN(*MARK));
 
@@ -323,7 +323,7 @@ doglob_iter_wrapper(pTHX_ AV *entries, const char *pattern, STRLEN len, bool is_
     {
 	dMARK;
 	dORIGMARK;
-	if (GIMME_V == G_ARRAY) { PUTBACK; return TRUE; }
+	if (GIMME_V == G_LIST) { PUTBACK; return TRUE; }
 	sv_upgrade((SV *)entries, SVt_PVAV);
 	while (++MARK <= SP)
 	    av_push(entries, SvREFCNT_inc_simple_NN(*MARK));

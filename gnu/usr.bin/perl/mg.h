@@ -12,10 +12,10 @@ struct mgvtbl {
     int		(*svt_get)	(pTHX_ SV *sv, MAGIC* mg);
     int		(*svt_set)	(pTHX_ SV *sv, MAGIC* mg);
     U32		(*svt_len)	(pTHX_ SV *sv, MAGIC* mg);
-    int		(*svt_clear)(pTHX_ SV *sv, MAGIC* mg);
+    int		(*svt_clear)    (pTHX_ SV *sv, MAGIC* mg);
     int		(*svt_free)	(pTHX_ SV *sv, MAGIC* mg);
     int		(*svt_copy)	(pTHX_ SV *sv, MAGIC* mg,
-    					SV *nsv, const char *name, I32 namlen);
+                                        SV *nsv, const char *name, I32 namlen);
     int		(*svt_dup)	(pTHX_ MAGIC *mg, CLONE_PARAMS *param);
     int		(*svt_local)(pTHX_ SV *nsv, MAGIC *mg);
 };
@@ -46,15 +46,24 @@ struct magic {
 #define MgTAINTEDDIR_on(mg)	(mg->mg_flags |= MGf_TAINTEDDIR)
 #define MgTAINTEDDIR_off(mg)	(mg->mg_flags &= ~MGf_TAINTEDDIR)
 
+/* Extracts the SV stored in mg, or NULL. */
+#define MgSV(mg)		(((int)((mg)->mg_len) == HEf_SVKEY) ?   \
+                                 MUTABLE_SV((mg)->mg_ptr) :	\
+                                 NULL)
+
+/* If mg contains an SV, these extract the PV stored in that SV;
+   otherwise, these extract the mg's mg_ptr/mg_len.
+   These do NOT account for the SV's UTF8 flag, so handle with care.
+*/
 #define MgPV(mg,lp)		((((int)(lp = (mg)->mg_len)) == HEf_SVKEY) ?   \
-				 SvPV(MUTABLE_SV((mg)->mg_ptr),lp) :	\
-				 (mg)->mg_ptr)
+                                 SvPV(MUTABLE_SV((mg)->mg_ptr),lp) :	\
+                                 (mg)->mg_ptr)
 #define MgPV_const(mg,lp)	((((int)(lp = (mg)->mg_len)) == HEf_SVKEY) ? \
-				 SvPV_const(MUTABLE_SV((mg)->mg_ptr),lp) :   \
-				 (const char*)(mg)->mg_ptr)
+                                 SvPV_const(MUTABLE_SV((mg)->mg_ptr),lp) :   \
+                                 (const char*)(mg)->mg_ptr)
 #define MgPV_nolen_const(mg)	(((((int)(mg)->mg_len)) == HEf_SVKEY) ?	\
-				 SvPV_nolen_const(MUTABLE_SV((mg)->mg_ptr)) : \
-				 (const char*)(mg)->mg_ptr)
+                                 SvPV_nolen_const(MUTABLE_SV((mg)->mg_ptr)) : \
+                                 (const char*)(mg)->mg_ptr)
 
 #define SvTIED_mg(sv,how) (SvRMAGICAL(sv) ? mg_find((sv),(how)) : NULL)
 #define SvTIED_obj(sv,mg) \
@@ -66,11 +75,11 @@ struct magic {
 # define MgBYTEPOS_set(mg,sv,pv,off) (			 \
     assert_((mg)->mg_type == PERL_MAGIC_regex_global)	  \
     SvPOK(sv) && (!SvGMAGICAL(sv) || sv_only_taint_gmagic(sv))  \
-	? (mg)->mg_len = (off), (mg)->mg_flags |= MGf_BYTES \
-	: ((mg)->mg_len = DO_UTF8(sv)			     \
-	    ? (SSize_t)utf8_length((U8 *)(pv), (U8 *)(pv)+(off)) \
-	    : (SSize_t)(off),					  \
-	   (mg)->mg_flags &= ~MGf_BYTES))
+        ? (mg)->mg_len = (off), (mg)->mg_flags |= MGf_BYTES \
+        : ((mg)->mg_len = DO_UTF8(sv)			     \
+            ? (SSize_t)utf8_length((U8 *)(pv), (U8 *)(pv)+(off)) \
+            : (SSize_t)(off),					  \
+           (mg)->mg_flags &= ~MGf_BYTES))
 #endif
 
 #define whichsig(pv) whichsig_pv(pv)

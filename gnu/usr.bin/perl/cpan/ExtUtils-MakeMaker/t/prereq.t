@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Config;
 use Test::More tests => 21;
 use File::Temp qw[tempdir];
@@ -132,10 +133,14 @@ ok( chdir 'Big-Dummy', "chdir'd to Big-Dummy" ) ||
             "strict"            => 99999,
         }
     );
-    is $warnings,
-    "Warning: prerequisite I::Do::Not::Exist 0 not found.\n".
-    sprintf("Warning: prerequisite strict 99999 not found. We have %s.\n",
-            $strict::VERSION), '2 bad prereq warnings';
+
+    my $strict_warn
+        = sprintf("Warning: prerequisite strict 99999 not found. We have %s.\n",
+                                                            $strict::VERSION);
+    # Done this way because EBCDIC sorts in a different order
+    ok(   $warnings =~ s/Warning: prerequisite I::Do::Not::Exist 0 not found\.\n//
+       && $warnings =~ s/\Q$strict_warn//
+       && $warnings eq "", '2 bad prereq warnings');
 
     $warnings = '';
     eval {

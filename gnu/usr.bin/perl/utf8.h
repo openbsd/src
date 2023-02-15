@@ -12,6 +12,21 @@
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
+ * A note on nomenclature:  The term UTF-8 is used loosely and inconsistently
+ * in Perl documentation.  For one, perl uses an extension of UTF-8 to
+ * represent code points that Unicode considers illegal.  For another, ASCII
+ * platform UTF-8 is usually conflated with EBCDIC platform UTF-EBCDIC, because
+ * outside some of the macros in this this file, the differences are hopefully
+ * invisible at the semantic level.
+ *
+ * UTF-EBCDIC has an isomorphic translation named I8 (for "Intermediate eight")
+ * which differs from UTF-8 only in a few details.  It is often useful to
+ * translate UTF-EBCDIC into this form for processing.  In general, macros and
+ * functions that are expecting their inputs to be either in I8 or UTF-8 are
+ * named UTF_foo (without an '8'), to indicate this.
+ *
+ * Unfortunately there are inconsistencies.
+ *
  */
 
 #ifndef PERL_UTF8_H_      /* Guard against recursive inclusion */
@@ -35,14 +50,6 @@
 #define FOLD_FLAGS_NOMIX_ASCII  0x4
 
 /*
-=head1 Unicode Support
-L<perlguts/Unicode Support> has an introduction to this API.
-
-See also L</Character classification>,
-and L</Character case changing>.
-Various functions outside this section also work specially with Unicode.
-Search for the string "utf8" in this document.
-
 =for apidoc is_ascii_string
 
 This is a misleadingly-named synonym for L</is_utf8_invariant_string>.
@@ -75,10 +82,19 @@ the string is invariant.
 #define utf8n_to_uvchr_error(s, len, lenp, flags, errors)                      \
                         utf8n_to_uvchr_msgs(s, len, lenp, flags, errors, 0)
 
+#define utf16_to_utf8(p, d, bytelen, newlen)                                \
+                            utf16_to_utf8_base(p, d, bytelen, newlen, 0, 1)
+#define utf16_to_utf8_reversed(p, d, bytelen, newlen)                       \
+                            utf16_to_utf8_base(p, d, bytelen, newlen, 1, 0)
+#define utf8_to_utf16(p, d, bytelen, newlen)                                \
+                            utf8_to_utf16_base(p, d, bytelen, newlen, 0, 1)
+#define utf8_to_utf16_reversed(p, d, bytelen, newlen)                       \
+                            utf8_to_utf16_base(p, d, bytelen, newlen, 1, 0)
+
 #define to_uni_fold(c, p, lenp) _to_uni_fold_flags(c, p, lenp, FOLD_FLAGS_FULL)
 
 #define foldEQ_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2) \
-		    foldEQ_utf8_flags(s1, pe1, l1, u1, s2, pe2, l2, u2, 0)
+                    foldEQ_utf8_flags(s1, pe1, l1, u1, s2, pe2, l2, u2, 0)
 #define FOLDEQ_UTF8_NOMIX_ASCII   (1 << 0)
 #define FOLDEQ_LOCALE             (1 << 1)
 #define FOLDEQ_S1_ALREADY_FOLDED  (1 << 2)
@@ -86,35 +102,31 @@ the string is invariant.
 #define FOLDEQ_S1_FOLDS_SANE      (1 << 4)
 #define FOLDEQ_S2_FOLDS_SANE      (1 << 5)
 
-#define ibcmp_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2) \
-		    cBOOL(! foldEQ_utf8(s1, pe1, l1, u1, s2, pe2, l2, u2))
+/* This will be described more fully below, but it turns out that the
+ * fundamental difference between UTF-8 and UTF-EBCDIC is that the former has
+ * the upper 2 bits of a continuation byte be '10', and the latter has the
+ * upper 3 bits be '101', leaving 6 and 5 significant bits respectively.
+ *
+ * It is helpful to know the EBCDIC value on ASCII platforms, mainly to avoid
+ * some #ifdef's */
+#define UTF_EBCDIC_CONTINUATION_BYTE_INFO_BITS 5
+
+/* See explanation below at 'UTF8_MAXBYTES' */
+#define ASCII_PLATFORM_UTF8_MAXBYTES 13
 
 #ifdef EBCDIC
-/* The equivalent of these macros but implementing UTF-EBCDIC
-   are in the following header file:
- */
 
-#include "utfebcdic.h"
+/* The equivalent of the next few macros but implementing UTF-EBCDIC are in the
+ * following header file: */
+#  include "utfebcdic.h"
 
-#else	/* ! EBCDIC */
+#  else	/* ! EBCDIC */
+
 START_EXTERN_C
 
-/*
-
-=for apidoc AmnU|STRLEN|UTF8_MAXBYTES
-
-The maximum width of a single UTF-8 encoded character, in bytes.
-
-NOTE: Strictly speaking Perl's UTF-8 should not be called UTF-8 since UTF-8
-is an encoding of Unicode, and Unicode's upper limit, 0x10FFFF, can be
-expressed with 4 bytes.  However, Perl thinks of UTF-8 as a way to encode
-non-negative integers in a binary format, even those above Unicode.
-
-=cut
- */
-#define UTF8_MAXBYTES 13
-
-#ifdef DOINIT
+#  ifndef DOINIT
+EXTCONST unsigned char PL_utf8skip[];
+#  else
 EXTCONST unsigned char PL_utf8skip[] = {
 /* 0x00 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* ascii */
 /* 0x10 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* ascii */
@@ -136,11 +148,9 @@ EXTCONST unsigned char PL_utf8skip[] = {
            /* Perl extended (never was official UTF-8).  Up to 36 bit */
 /* 0xFE */                             7,
            /* More extended, Up to 72 bits (64-bit + reserved) */
-/* 0xFF */                               UTF8_MAXBYTES
+/* 0xFF */                               ASCII_PLATFORM_UTF8_MAXBYTES
 };
-#else
-EXTCONST unsigned char PL_utf8skip[];
-#endif
+#  endif
 
 END_EXTERN_C
 
@@ -189,8 +199,8 @@ adding no time nor space requirements to the implementation.
 =cut
 */
 
-#define NATIVE_TO_LATIN1(ch)     (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) ((ch) | 0)))
-#define LATIN1_TO_NATIVE(ch)     (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) ((ch) | 0)))
+#define NATIVE_TO_LATIN1(ch)  (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))
+#define LATIN1_TO_NATIVE(ch)  (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))
 
 /* I8 is an intermediate version of UTF-8 used only in UTF-EBCDIC.  We thus
  * consider it to be identical to UTF-8 on ASCII platforms.  Strictly speaking
@@ -198,11 +208,11 @@ adding no time nor space requirements to the implementation.
  * because they are 8-bit encodings that serve the same purpose in Perl, and
  * rarely do we need to distinguish them.  The term "NATIVE_UTF8" applies to
  * whichever one is applicable on the current platform */
-#define NATIVE_UTF8_TO_I8(ch) (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) ((ch) | 0)))
-#define I8_TO_NATIVE_UTF8(ch) (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) ((ch) | 0)))
+#define NATIVE_UTF8_TO_I8(ch)  (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))
+#define I8_TO_NATIVE_UTF8(ch)  (__ASSERT_(FITS_IN_8_BITS(ch)) ((U8) (ch)))
 
-#define UNI_TO_NATIVE(ch)        ((UV) ((ch) | 0))
-#define NATIVE_TO_UNI(ch)        ((UV) ((ch) | 0))
+#define UNI_TO_NATIVE(ch)        ((UV) ASSERT_NOT_PTR(ch))
+#define NATIVE_TO_UNI(ch)        ((UV) ASSERT_NOT_PTR(ch))
 
 /*
 
@@ -237,10 +247,7 @@ possible to UTF-8-encode a single code point in different ways, but that is
 explicitly forbidden, and the shortest possible encoding should always be used
 (and that is what Perl does).  The non-shortest ones are called 'overlongs'.
 
- */
-
-/*
- Another way to look at it, as bits:
+Another way to look at it, as bits:
 
                   Code Points      1st Byte   2nd Byte   3rd Byte   4th Byte
 
@@ -263,27 +270,30 @@ are in the character. */
  * sequence contributes to the specification of the code point.  In the bit
  * maps above, you see that the first 2 bits are a constant '10', leaving 6 of
  * real information */
-#define UTF_ACCUMULATION_SHIFT		6
+#  define UTF_CONTINUATION_BYTE_INFO_BITS 6
 
 /* ^? is defined to be DEL on ASCII systems.  See the definition of toCTRL()
  * for more */
-#define QUESTION_MARK_CTRL  DEL_NATIVE
-
-/* Surrogates, non-character code points and above-Unicode code points are
- * problematic in some contexts.  This allows code that needs to check for
- * those to quickly exclude the vast majority of code points it will
- * encounter */
-#define isUTF8_POSSIBLY_PROBLEMATIC(c) (__ASSERT_(FITS_IN_8_BITS(c))        \
-                                        (U8) c >= 0xED)
-
-#define UNICODE_IS_PERL_EXTENDED(uv)    UNLIKELY((UV) (uv) > 0x7FFFFFFF)
+#  define QUESTION_MARK_CTRL  DEL_NATIVE
 
 #endif /* EBCDIC vs ASCII */
 
-/* 2**UTF_ACCUMULATION_SHIFT - 1.  This masks out all but the bits that carry
- * real information in a continuation byte.  This turns out to be 0x3F in
- * UTF-8, 0x1F in UTF-EBCDIC. */
-#define UTF_CONTINUATION_MASK  ((U8) ((1U << UTF_ACCUMULATION_SHIFT) - 1))
+/* It turns out that in a number of cases, that handling ASCII vs EBCDIC is a
+ * matter of being off-by-one.  So this is a convenience macro, used to avoid
+ * some #ifdefs. */
+#define ONE_IF_EBCDIC_ZERO_IF_NOT                                           \
+ (UTF_CONTINUATION_BYTE_INFO_BITS == UTF_EBCDIC_CONTINUATION_BYTE_INFO_BITS)
+
+/* Since the significant bits in a continuation byte are stored in the
+ * least-significant positions, we often find ourselves shifting by that
+ * amount.  This is a clearer name in such situations */
+#define UTF_ACCUMULATION_SHIFT  UTF_CONTINUATION_BYTE_INFO_BITS
+
+/* 2**info_bits - 1.  This masks out all but the bits that carry real
+ * information in a continuation byte.  This turns out to be 0x3F in UTF-8,
+ * 0x1F in UTF-EBCDIC. */
+#define UTF_CONTINUATION_MASK                                               \
+                        ((U8) nBIT_MASK(UTF_CONTINUATION_BYTE_INFO_BITS))
 
 /* For use in UTF8_IS_CONTINUATION().  This turns out to be 0xC0 in UTF-8,
  * E0 in UTF-EBCDIC */
@@ -292,8 +302,12 @@ are in the character. */
 /* This defines the bits that are to be in the continuation bytes of a
  * multi-byte UTF-8 encoded character that mark it is a continuation byte.
  * This turns out to be 0x80 in UTF-8, 0xA0 in UTF-EBCDIC.  (khw doesn't know
- * the underlying reason that B0 works here) */
+ * the underlying reason that B0 works here, except it just happens to work.
+ * One could solve for two linear equations and come up with it.) */
 #define UTF_CONTINUATION_MARK       (UTF_IS_CONTINUATION_MASK & 0xB0)
+
+/* This value is clearer in some contexts */
+#define UTF_MIN_CONTINUATION_BYTE  UTF_CONTINUATION_MARK
 
 /* Is the byte 'c' part of a multi-byte UTF8-8 encoded sequence, and not the
  * first byte thereof? */
@@ -304,7 +318,8 @@ are in the character. */
 /* Is the representation of the Unicode code point 'cp' the same regardless of
  * being encoded in UTF-8 or not? This is a fundamental property of
  * UTF-8,EBCDIC */
-#define OFFUNI_IS_INVARIANT(c) (((WIDEST_UTYPE)(c)) < UTF_CONTINUATION_MARK)
+#define OFFUNI_IS_INVARIANT(c)                                              \
+                        (((WIDEST_UTYPE)(c)) < UTF_MIN_CONTINUATION_BYTE)
 
 /*
 =for apidoc Am|bool|UVCHR_IS_INVARIANT|UV cp
@@ -316,59 +331,144 @@ C<cp> is Unicode if above 255; otherwise is platform-native.
 
 =cut
  */
-#if defined(__m88k__)
-/* XXX workaround: m88k gcc3 produces wrong code with NATIVE_TO_UNI() */
-#define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(cp))
-#else	/* the original one */
 #define UVCHR_IS_INVARIANT(cp)  (OFFUNI_IS_INVARIANT(NATIVE_TO_UNI(cp)))
-#endif
 
-/* Internal macro to be used only in this file to aid in constructing other
- * publicly accessible macros.
- * The number of bytes required to express this uv in UTF-8, for just those
- * uv's requiring 2 through 6 bytes, as these are common to all platforms and
- * word sizes.  The number of bytes needed is given by the number of leading 1
- * bits in the start byte.  There are 32 start bytes that have 2 initial 1 bits
- * (C0-DF); there are 16 that have 3 initial 1 bits (E0-EF); 8 that have 4
- * initial 1 bits (F0-F8); 4 that have 5 initial 1 bits (F9-FB), and 2 that
- * have 6 initial 1 bits (FC-FD).  The largest number a string of n bytes can
- * represent is       (the number of possible start bytes for 'n')
- *                  * (the number of possiblities for each start byte
- * The latter in turn is
- *                  2  ** (  (how many continuation bytes there are)
- *                         * (the number of bits of information each
- *                            continuation byte holds))
+/* This defines the 1-bits that are to be in the first byte of a multi-byte
+ * UTF-8 encoded character that mark it as a start byte and give the number of
+ * bytes that comprise the character. 'len' is that number.
  *
- * If we were on a platform where we could use a fast find first set bit
- * instruction (or count leading zeros instruction) this could be replaced by
- * using that to find the log2 of the uv, and divide that by the number of bits
- * of information in each continuation byte, adjusting for large cases and how
- * much information is in a start byte for that length */
-#define __COMMON_UNI_SKIP(uv)                                               \
-          (UV) (uv) < (32 * (1U << (    UTF_ACCUMULATION_SHIFT))) ? 2 :     \
-          (UV) (uv) < (16 * (1U << (2 * UTF_ACCUMULATION_SHIFT))) ? 3 :     \
-          (UV) (uv) < ( 8 * (1U << (3 * UTF_ACCUMULATION_SHIFT))) ? 4 :     \
-          (UV) (uv) < ( 4 * (1U << (4 * UTF_ACCUMULATION_SHIFT))) ? 5 :     \
-          (UV) (uv) < ( 2 * (1U << (5 * UTF_ACCUMULATION_SHIFT))) ? 6 :
+ * To illustrate: len = 2 => ((U8) ~ 0b0011_1111) or 1100_0000
+ *                      7 => ((U8) ~ 0b0000_0001) or 1111_1110
+ *                    > 7 =>  0xFF
+ *
+ * This is not to be used on a single-byte character.  As in many places in
+ * perl, U8 must be 8 bits
+ */
+#define UTF_START_MARK(len) ((U8) ~(0xFF >> (len)))
 
-/* Internal macro to be used only in this file.
- * This adds to __COMMON_UNI_SKIP the details at this platform's upper range.
- * For any-sized EBCDIC platforms, or 64-bit ASCII ones, we need one more test
- * to see if just 7 bytes is needed, or if the maximum is needed.  For 32-bit
- * ASCII platforms, everything is representable by 7 bytes */
-#if defined(UV_IS_QUAD) || defined(EBCDIC)
-#   define __BASE_UNI_SKIP(uv) (__COMMON_UNI_SKIP(uv)                       \
-     (UV) (uv) < ((UV) 1U << (6 * UTF_ACCUMULATION_SHIFT)) ? 7 : UTF8_MAXBYTES)
+/* Masks out the initial one bits in a start byte, leaving the following 0 bit
+ * and the real data bits.  'len' is the number of bytes in the multi-byte
+ * sequence that comprises the character.
+ *
+ * To illustrate: len = 2 => 0b0011_1111 works on start byte 110xxxxx
+ *                      6 => 0b0000_0011 works on start byte 1111110x
+ *                   >= 7 => There are no data bits in the start byte
+ * Note that on ASCII platforms, this can be passed a len=1 byte; and all the
+ * real data bits will be returned:
+                  len = 1 => 0b0111_1111
+ * This isn't true on EBCDIC platforms, where some len=1 bytes are of the form
+ * 0b101x_xxxx, so this can't be used there on single-byte characters. */
+#define UTF_START_MASK(len) (0xFF >> (len))
+
+/*
+
+=for apidoc AmnU|STRLEN|UTF8_MAXBYTES
+
+The maximum width of a single UTF-8 encoded character, in bytes.
+
+NOTE: Strictly speaking Perl's UTF-8 should not be called UTF-8 since UTF-8
+is an encoding of Unicode, and Unicode's upper limit, 0x10FFFF, can be
+expressed with 4 bytes.  However, Perl thinks of UTF-8 as a way to encode
+non-negative integers in a binary format, even those above Unicode.
+
+=cut
+
+The start byte 0xFE, never used in any ASCII platform UTF-8 specification, has
+an obvious meaning, namely it has its upper 7 bits set, so it should start a
+sequence of 7 bytes.  And in fact, this is exactly what standard UTF-EBCDIC
+does.
+
+The start byte FF, on the other hand could have several different plausible
+meanings:
+  1) The meaning in standard UTF-EBCDIC, namely as an FE start byte, with the
+     bottom bit that should be a fixed '0' to form FE, instead acting as an
+     info bit, 0 or 1.
+  2) That the sequence should have exactly 8 bytes.
+  3) That the next byte is to be treated as a sort of extended start byte,
+     which in combination with this one gives the total length of the sequence.
+     There are published UTF-8 extensions that do this, some string together
+     multiple initial FF start bytes to achieve arbitrary precision.
+  4) That the sequence has exactly n bytes, where n is what the implementation
+     chooses.
+
+Perl has chosen 4).
+The goal is to be able to represent 64-bit values in UTF-8 or UTF-EBCDIC.  That
+rules out items 1) and 2).  Item 3) has the deal-breaking disadvantage of
+requiring one to read more than one byte to determine the total length of the
+sequence.  So in Perl, a start byte of FF indicates a UTF-8 string consisting
+of the start byte, plus enough continuation bytes to encode a 64 bit value.
+This turns out to be 13 total bytes in UTF-8 and 14 in UTF-EBCDIC.  This is
+because we get zero info bits from the start byte, plus
+    12 * 6 bits of info per continuation byte (could encode 72-bit numbers) on
+                UTF-8 (khw knows not why 11, which would encode 66 bits wasn't
+                chosen instead); and
+    13 * 5 bits of info per byte (could encode 65-bit numbers) on UTF-EBCDIC
+
+The disadvantages of this method are:
+  1) There's potentially a lot of wasted bytes for all but the largest values.
+     For example, something that could be represented by 7 continuation bytes,
+     instead requires the full 12 or 13.
+  2) There would be problems should larger values, 128-bit say, ever need to be
+     represented.
+
+WARNING: This number must be in sync with the value in
+regen/charset_translations.pl. */
+#define UTF8_MAXBYTES                                                       \
+                (ASCII_PLATFORM_UTF8_MAXBYTES + ONE_IF_EBCDIC_ZERO_IF_NOT)
+
+/* Calculate how many bytes are necessary to represent a value whose most
+ * significant 1 bit is in bit position 'pos' of the word.  For 0x1, 'pos would
+ * be 0; and for 0x400, 'pos' would be 10, and the result would be:
+ *  EBCDIC floor((-1 + (10 + 5 - 1 - 1)) / (5 - 1))
+ *       = floor((-1 + (13)) / 4)
+ *       = floor(12 / 4)
+ *       = 3
+ *  ASCII  floor(( 0 + (10 + 6 - 1 - 1)) / (6 - 1))
+ *       = floor(14 / 5)
+ *       = 2
+ * The reason this works is because the number of bits needed to represent a
+ * value is proportional to (UTF_CONTINUATION_BYTE_INFO_BITS - 1).  The -1 is
+ * because each new continuation byte removes one bit of information from the
+ * start byte.
+ *
+ * This is a step function (we need to allocate a full extra byte if we
+ * overflow by just a single bit)
+ *
+ * The caller is responsible for making sure 'pos' is at least 8 (occupies 9
+ * bits), as it breaks down at the lower edge.  At the high end, if it returns
+ * 8 or more, Perl instead anomalously uses MAX_BYTES, so this would be wrong.
+ * */
+#define UNISKIP_BY_MSB_(pos)                                                \
+  ( ( -ONE_IF_EBCDIC_ZERO_IF_NOT  /* platform break pos's are off-by-one */ \
+     + (pos) + ((UTF_CONTINUATION_BYTE_INFO_BITS - 1) - 1))  /* Step fcn */ \
+   / (UTF_CONTINUATION_BYTE_INFO_BITS - 1))             /* take floor of */
+
+/* Compute the number of UTF-8 bytes required for representing the input uv,
+ * which must be a Unicode, not native value.
+ *
+ * This uses msbit_pos() which doesn't work on NUL, and UNISKIP_BY_MSB_ breaks
+ * down for small code points.  So first check if the input is invariant to get
+ * around that, and use a helper for high code points to accommodate the fact
+ * that above 7 btyes, the value is anomalous.  The helper is empty on
+ * platforms that don't go that high */
+#define OFFUNISKIP(uv)                                                      \
+    ((OFFUNI_IS_INVARIANT(uv))                                              \
+     ? 1                                                                    \
+     : (OFFUNISKIP_helper_(uv) UNISKIP_BY_MSB_(msbit_pos(uv))))
+
+/* We need to go to MAX_BYTES when we can't represent 'uv' by the number of
+ * information bits in 6 continuation bytes (when we get to 6, the start byte
+ * has no information bits to add to the total).  But on 32-bit ASCII
+ * platforms, that doesn't happen until 6*6 bits, so on those platforms, this
+ * will always be false */
+#if UVSIZE * CHARBITS > (6 * UTF_CONTINUATION_BYTE_INFO_BITS)
+#  define HAS_EXTRA_LONG_UTF8
+#  define OFFUNISKIP_helper_(uv)                                            \
+     UNLIKELY(uv > nBIT_UMAX(6 * UTF_CONTINUATION_BYTE_INFO_BITS))          \
+      ? UTF8_MAXBYTES :
 #else
-#   define __BASE_UNI_SKIP(uv) (__COMMON_UNI_SKIP(uv) 7)
+#  define OFFUNISKIP_helper_(uv)
 #endif
-
-/* The next two macros use the base macro defined above, and add in the tests
- * at the low-end of the range, for just 1 byte, yielding complete macros,
- * publicly accessible. */
-
-/* Input is a true Unicode (not-native) code point */
-#define OFFUNISKIP(uv) (OFFUNI_IS_INVARIANT(uv) ? 1 : __BASE_UNI_SKIP(uv))
 
 /*
 
@@ -379,10 +479,56 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
 
 =cut
  */
-#define UVCHR_SKIP(uv) ( UVCHR_IS_INVARIANT(uv) ? 1 : __BASE_UNI_SKIP(uv))
+#define UVCHR_SKIP(uv)  OFFUNISKIP(NATIVE_TO_UNI(uv))
 
-#define UTF_MIN_START_BYTE                                                  \
-     ((UTF_CONTINUATION_MARK >> UTF_ACCUMULATION_SHIFT) | UTF_START_MARK(2))
+#define NATIVE_SKIP(uv) UVCHR_SKIP(uv)  /* Old terminology */
+
+/* Most code which says UNISKIP is really thinking in terms of native code
+ * points (0-255) plus all those beyond.  This is an imprecise term, but having
+ * it means existing code continues to work.  For precision, use UVCHR_SKIP,
+ * NATIVE_SKIP, or OFFUNISKIP */
+#define UNISKIP(uv)   UVCHR_SKIP(uv)
+
+/* Compute the start byte for a given code point.  This requires the log2 of
+ * the code point, which is hard to compute at compile time, which this macro
+ * wants to be.  (Perhaps deBruijn sequences could be used.)  So a parameter
+ * for the number of bits the value occupies is passed in, which the programmer
+ * has had to figure out to get compile-time effect.  And asserts are used to
+ * make sure the value is correct.
+ *
+ * Since we are interested only in the start byte, we ignore the lower bits
+ * accounted for by the continuation bytes.  Each continuation byte eats up
+ * UTF_CONTINUATION_BYTE_INFO_BITS bits, so the number of continuation bytes
+ * needed is floor(bits / UTF_CONTINUATION_BYTE_INFO_BITS).  That number is fed
+ * to UTF_START_MARK() to get the upper part of the start byte.  The left over
+ * bits form the lower part which is OR'd with the mark
+ *
+ * Note that on EBCDIC platforms, this is actually the I8 */
+#define UTF_START_BYTE(uv, bits)                                            \
+           (__ASSERT_((uv) >> ((bits) - 1)) /* At least 'bits' */           \
+            __ASSERT_(((uv) & ~nBIT_MASK(bits)) == 0) /* No extra bits */   \
+              UTF_START_MARK(UNISKIP_BY_MSB_((bits) - 1))                   \
+            | ((uv) >> (((bits) / UTF_CONTINUATION_BYTE_INFO_BITS)          \
+                                * UTF_CONTINUATION_BYTE_INFO_BITS)))
+
+/* Compute the first continuation byte for a given code point.  This is mostly
+ * for compile-time, so how many bits it occupies is also passed in).
+ *
+ * We are interested in the first continuation byte, so we ignore the lower
+ * bits accounted for by the rest of the continuation bytes by right shifting
+ * out their info bit, and mask out the higher bits that will go into the start
+ * byte.
+ *
+ * Note that on EBCDIC platforms, this is actually the I8 */
+#define UTF_FIRST_CONT_BYTE(uv, bits)                                       \
+   (__ASSERT_((uv) >> ((bits) - 1)) /* At least 'bits' */                   \
+    __ASSERT_(((uv) & ~nBIT_MASK(bits)) == 0) /* No extra bits */           \
+       UTF_CONTINUATION_MARK                                                \
+    | (   UTF_CONTINUATION_MASK                                             \
+       & ((uv) >> ((((bits) / UTF_CONTINUATION_BYTE_INFO_BITS) - 1)         \
+                            * UTF_CONTINUATION_BYTE_INFO_BITS))))
+
+#define UTF_MIN_START_BYTE  UTF_START_BYTE(UTF_MIN_CONTINUATION_BYTE, 8)
 
 /* Is the byte 'c' the first byte of a multi-byte UTF8-8 encoded sequence?
  * This excludes invariants (they are single-byte).  It also excludes the
@@ -399,8 +545,7 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
 #  define UTF8_IS_START(c)  UTF8_IS_START_base(c)
 #endif
 
-#define UTF_MIN_ABOVE_LATIN1_BYTE                                           \
-                    ((0x100 >> UTF_ACCUMULATION_SHIFT) | UTF_START_MARK(2))
+#define UTF_MIN_ABOVE_LATIN1_BYTE  UTF_START_BYTE(0x100, 9)
 
 /* Is the UTF8-encoded byte 'c' the first byte of a sequence of bytes that
  * represent a code point > 255? */
@@ -411,18 +556,27 @@ encoded as UTF-8.  C<cp> is a native (ASCII or EBCDIC) code point if less than
  * UTF8_IS_NEXT_CHAR_DOWNGRADEABLE() instead if the input isn't known to
  * be well-formed. */
 #define UTF8_IS_DOWNGRADEABLE_START(c)	(__ASSERT_(FITS_IN_8_BITS(c))       \
-                inRANGE(NATIVE_UTF8_TO_I8(c),                               \
+                inRANGE_helper_(U8, NATIVE_UTF8_TO_I8(c),                   \
                         UTF_MIN_START_BYTE, UTF_MIN_ABOVE_LATIN1_BYTE - 1))
 
 /* The largest code point representable by two UTF-8 bytes on this platform.
- * As explained in the comments for __COMMON_UNI_SKIP, 32 start bytes with
- * UTF_ACCUMULATION_SHIFT bits of information each */
-#define MAX_UTF8_TWO_BYTE (32 * (1U << UTF_ACCUMULATION_SHIFT) - 1)
+ * The binary for that code point is:
+ *      1101_1111 10xx_xxxx in UTF-8, and
+ *      1101_1111 101y_yyyy in UTF-EBCDIC I8.
+ * where both x and y are 1, and shown this way to indicate there is one more x
+ * than there is y.  The number of x and y bits are their platform's respective
+ * UTF_CONTINUATION_BYTE_INFO_BITS.  Squeezing out the bits that don't
+ * contribute to the value, these evaluate to:
+ *      1_1111 xx_xxxx in UTF-8, and
+ *      1_1111 y_yyyy in UTF-EBCDIC I8.
+ * or, the maximum value of an unsigned with (5 + info_bit_count) bits */
+#define MAX_UTF8_TWO_BYTE  nBIT_UMAX(5 + UTF_CONTINUATION_BYTE_INFO_BITS)
 
 /* The largest code point representable by two UTF-8 bytes on any platform that
- * Perl runs on.  This value is constrained by EBCDIC which has 5 bits per
- * continuation byte */
-#define MAX_PORTABLE_UTF8_TWO_BYTE (32 * (1U << 5) - 1)
+ * Perl runs on. */
+#define MAX_PORTABLE_UTF8_TWO_BYTE                                          \
+                nBIT_UMAX(5 + MIN(       UTF_CONTINUATION_BYTE_INFO_BITS,   \
+                                  UTF_EBCDIC_CONTINUATION_BYTE_INFO_BITS))
 
 /*
 
@@ -442,8 +596,8 @@ uppercase/lowercase/titlecase/fold into.
  *
 =cut
 */
-#define UTF8_MAXBYTES_CASE	                                                \
-            MAX(UTF8_MAXBYTES, UTF8_MAX_FOLD_CHAR_EXPAND * OFFUNISKIP(0x10FFFF))
+#define UTF8_MAXBYTES_CASE	                                            \
+        MAX(UTF8_MAXBYTES, UTF8_MAX_FOLD_CHAR_EXPAND * UNISKIP_BY_MSB_(20))
 
 /* Rest of these are attributes of Unicode and perl's internals rather than the
  * encoding, or happen to be the same in both ASCII and EBCDIC (at least at
@@ -462,17 +616,6 @@ uppercase/lowercase/titlecase/fold into.
 #define I8_TO_NATIVE(ch)         I8_TO_NATIVE_UTF8(ch)
 #define NATIVE8_TO_UNI(ch)       NATIVE_TO_LATIN1(ch)
 
-/* This defines the 1-bits that are to be in the first byte of a multi-byte
- * UTF-8 encoded character that mark it as a start byte and give the number of
- * bytes that comprise the character. 'len' is the number of bytes in the
- * multi-byte sequence. */
-#define UTF_START_MARK(len) (((len) >  7) ? 0xFF : ((U8) (0xFE << (7-(len)))))
-
-/* Masks out the initial one bits in a start byte, leaving the real data ones.
- * Doesn't work on an invariant byte.  'len' is the number of bytes in the
- * multi-byte sequence that comprises the character. */
-#define UTF_START_MASK(len) (((len) >= 7) ? 0x00 : (0x1F >> ((len)-2)))
-
 /* Adds a UTF8 continuation byte 'new' of information to a running total code
  * point 'old' of all the continuation bytes so far.  This is designed to be
  * used in a loop to convert from UTF-8 to the code point represented.  Note
@@ -486,18 +629,9 @@ uppercase/lowercase/titlecase/fold into.
 
 /* This works in the face of malformed UTF-8. */
 #define UTF8_IS_NEXT_CHAR_DOWNGRADEABLE(s, e)                                 \
-                                       (   UTF8_IS_DOWNGRADEABLE_START(*(s))  \
-                                        && ( (e) - (s) > 1)                   \
+                                       (   ( (e) - (s) > 1)                   \
+                                        && UTF8_IS_DOWNGRADEABLE_START(*(s))  \
                                         && UTF8_IS_CONTINUATION(*((s)+1)))
-
-/* Number of bytes a code point occupies in UTF-8. */
-#define NATIVE_SKIP(uv) UVCHR_SKIP(uv)
-
-/* Most code which says UNISKIP is really thinking in terms of native code
- * points (0-255) plus all those beyond.  This is an imprecise term, but having
- * it means existing code continues to work.  For precision, use UVCHR_SKIP,
- * NATIVE_SKIP, or OFFUNISKIP */
-#define UNISKIP(uv)   UVCHR_SKIP(uv)
 
 /* Longer, but more accurate name */
 #define UTF8_IS_ABOVE_LATIN1_START(c)     UTF8_IS_ABOVE_LATIN1(c)
@@ -543,25 +677,25 @@ If there is a possibility of malformed input, use instead:
 
 =over
 
-=item L</C<UTF8_SAFE_SKIP>> if you know the maximum ending pointer in the
+=item C<L</UTF8_SAFE_SKIP>> if you know the maximum ending pointer in the
 buffer pointed to by C<s>; or
 
-=item L</C<UTF8_CHK_SKIP>> if you don't know it.
+=item C<L</UTF8_CHK_SKIP>> if you don't know it.
 
 =back
 
 It is better to restructure your code so the end pointer is passed down so that
 you know what it actually is at the point of this call, but if that isn't
-possible, L</C<UTF8_CHK_SKIP>> can minimize the chance of accessing beyond the end
+possible, C<L</UTF8_CHK_SKIP>> can minimize the chance of accessing beyond the end
 of the input buffer.
 
 =cut
  */
-#define UTF8SKIP(s)  PL_utf8skip[*(const U8*)(s)]
+#define UTF8SKIP(s)  PL_utf8skip[*(const U8*)(ASSERT_IS_PTR(s))]
 
 /*
 =for apidoc Am|STRLEN|UTF8_SKIP|char* s
-This is a synonym for L</C<UTF8SKIP>>
+This is a synonym for C<L</UTF8SKIP>>
 
 =cut
 */
@@ -571,8 +705,8 @@ This is a synonym for L</C<UTF8SKIP>>
 /*
 =for apidoc Am|STRLEN|UTF8_CHK_SKIP|char* s
 
-This is a safer version of L</C<UTF8SKIP>>, but still not as safe as
-L</C<UTF8_SAFE_SKIP>>.  This version doesn't blindly assume that the input
+This is a safer version of C<L</UTF8SKIP>>, but still not as safe as
+C<L</UTF8_SAFE_SKIP>>.  This version doesn't blindly assume that the input
 string pointed to by C<s> is well-formed, but verifies that there isn't a NUL
 terminating character before the expected end of the next character in C<s>.
 The length C<UTF8_CHK_SKIP> returns stops just before any such NUL.
@@ -583,13 +717,13 @@ beyond the end of the input buffer, even if it is malformed UTF-8.
 
 This macro is intended to be used by XS modules where the inputs could be
 malformed, and it isn't feasible to restructure to use the safer
-L</C<UTF8_SAFE_SKIP>>, for example when interfacing with a C library.
+C<L</UTF8_SAFE_SKIP>>, for example when interfacing with a C library.
 
 =cut
 */
 
 #define UTF8_CHK_SKIP(s)                                                       \
-            (s[0] == '\0' ? 1 : MIN(UTF8SKIP(s),                               \
+            (UNLIKELY(s[0] == '\0') ? 1 : MIN(UTF8SKIP(s),                     \
                                     my_strnlen((char *) (s), UTF8SKIP(s))))
 /*
 
@@ -601,7 +735,7 @@ returns beyond C<e>.  On DEBUGGING builds, it asserts that S<C<s E<lt>= e>>.
 =cut
  */
 #define UTF8_SAFE_SKIP(s, e)  (__ASSERT_((e) >= (s))                \
-                              ((e) - (s)) <= 0                      \
+                              UNLIKELY(((e) - (s)) <= 0)            \
                                ? 0                                  \
                                : MIN(((e) - (s)), UTF8_SKIP(s)))
 
@@ -627,10 +761,8 @@ The reason it works on both UTF-8 encoded strings and non-UTF-8 encoded, is
 that it returns TRUE in each for the exact same set of bit patterns.  It is
 valid on a subset of what UVCHR_IS_INVARIANT is valid on, so can just use that;
 and the compiler should optimize out anything extraneous given the
-implementation of the latter.  The |0 makes sure this isn't mistakenly called
-with a ptr argument.
-*/
-#define UTF8_IS_INVARIANT(c)	UVCHR_IS_INVARIANT((c) | 0)
+implementation of the latter. */
+#define UTF8_IS_INVARIANT(c)	UVCHR_IS_INVARIANT(ASSERT_NOT_PTR(c))
 
 /* Like the above, but its name implies a non-UTF8 input, which as the comments
  * above show, doesn't matter as to its implementation */
@@ -707,12 +839,12 @@ with a ptr argument.
                      : isWORDCHAR_utf8_safe((U8 *) p, (U8 *) e))
 #define isALNUM_lazy_if_safe(p, e, UTF) isWORDCHAR_lazy_if_safe(p, e, UTF)
 
-#define UTF8_MAXLEN UTF8_MAXBYTES
+#define UTF8_MAXLEN  UTF8_MAXBYTES
 
 /* A Unicode character can fold to up to 3 characters */
-#define UTF8_MAX_FOLD_CHAR_EXPAND 3
+#define UTF8_MAX_FOLD_CHAR_EXPAND  3
 
-#define IN_BYTES UNLIKELY(CopHINTS_get(PL_curcop) & HINT_BYTES)
+#define IN_BYTES  UNLIKELY(CopHINTS_get(PL_curcop) & HINT_BYTES)
 
 /*
 
@@ -732,12 +864,194 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
  * within 'use bytes'.  UTF-8 locales are not tested for here, but perhaps
  * could be */
 #define IN_UNI_8_BIT                                                    \
-	    ((    (      (CopHINTS_get(PL_curcop) & HINT_UNI_8_BIT))    \
+            ((    (      (CopHINTS_get(PL_curcop) & HINT_UNI_8_BIT))    \
                    || (   CopHINTS_get(PL_curcop) & HINT_LOCALE_PARTIAL \
                             /* -1 below is for :not_characters */       \
                        && _is_in_locale_category(FALSE, -1)))           \
               && (! IN_BYTES))
 
+#define UNICODE_SURROGATE_FIRST		0xD800
+#define UNICODE_SURROGATE_LAST		0xDFFF
+
+/*
+=for apidoc Am|bool|UNICODE_IS_SURROGATE|const UV uv
+
+Returns a boolean as to whether or not C<uv> is one of the Unicode surrogate
+code points
+
+=for apidoc Am|bool|UTF8_IS_SURROGATE|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
+of the Unicode surrogate code points; otherwise it evaluates to 0.  If
+non-zero, the value gives how many bytes starting at C<s> comprise the code
+point's representation.
+
+=cut
+ */
+
+#define UNICODE_IS_SURROGATE(uv) UNLIKELY(inRANGE(uv, UNICODE_SURROGATE_FIRST,  \
+                                                      UNICODE_SURROGATE_LAST))
+#define UTF8_IS_SURROGATE(s, e)      is_SURROGATE_utf8_safe(s, e)
+
+/*
+
+=for apidoc AmnU|UV|UNICODE_REPLACEMENT
+
+Evaluates to 0xFFFD, the code point of the Unicode REPLACEMENT CHARACTER
+
+=for apidoc Am|bool|UNICODE_IS_REPLACEMENT|const UV uv
+
+Returns a boolean as to whether or not C<uv> is the Unicode REPLACEMENT
+CHARACTER
+
+=for apidoc Am|bool|UTF8_IS_REPLACEMENT|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents the
+Unicode REPLACEMENT CHARACTER; otherwise it evaluates to 0.  If non-zero, the
+value gives how many bytes starting at C<s> comprise the code point's
+representation.
+
+=cut
+ */
+#define UNICODE_REPLACEMENT		0xFFFD
+#define UNICODE_IS_REPLACEMENT(uv)  UNLIKELY((UV) (uv) == UNICODE_REPLACEMENT)
+#define UTF8_IS_REPLACEMENT(s, send)                                         \
+    UNLIKELY(                                                                \
+        ((send) - (s)) >= ((SSize_t)(sizeof(REPLACEMENT_CHARACTER_UTF8) - 1))\
+             && memEQ((s), REPLACEMENT_CHARACTER_UTF8,                       \
+                      sizeof(REPLACEMENT_CHARACTER_UTF8) - 1))
+
+/* Max legal code point according to Unicode */
+#define PERL_UNICODE_MAX	0x10FFFF
+
+/*
+
+=for apidoc Am|bool|UNICODE_IS_SUPER|const UV uv
+
+Returns a boolean as to whether or not C<uv> is above the maximum legal Unicode
+code point of U+10FFFF.
+
+=cut
+*/
+
+#define UNICODE_IS_SUPER(uv)  UNLIKELY((UV) (uv) > PERL_UNICODE_MAX)
+
+/*
+=for apidoc Am|bool|UTF8_IS_SUPER|const U8 *s|const U8 *e
+
+Recall that Perl recognizes an extension to UTF-8 that can encode code
+points larger than the ones defined by Unicode, which are 0..0x10FFFF.
+
+This macro evaluates to non-zero if the first few bytes of the string starting
+at C<s> and looking no further than S<C<e - 1>> are from this UTF-8 extension;
+otherwise it evaluates to 0.  If non-zero, the return is how many bytes
+starting at C<s> comprise the code point's representation.
+
+0 is returned if the bytes are not well-formed extended UTF-8, or if they
+represent a code point that cannot fit in a UV on the current platform.  Hence
+this macro can give different results when run on a 64-bit word machine than on
+one with a 32-bit word size.
+
+Note that it is illegal in Perl to have code points that are larger than what can
+fit in an IV on the current machine; and illegal in Unicode to have any that
+this macro matches
+
+=cut
+
+ *		  ASCII		     EBCDIC I8
+ * U+10FFFF: \xF4\x8F\xBF\xBF	\xF9\xA1\xBF\xBF\xBF	max legal Unicode
+ * U+110000: \xF4\x90\x80\x80	\xF9\xA2\xA0\xA0\xA0
+ * U+110001: \xF4\x90\x80\x81	\xF9\xA2\xA0\xA0\xA1
+ */
+#define UTF_START_BYTE_110000_  UTF_START_BYTE(PERL_UNICODE_MAX + 1, 21)
+#define UTF_FIRST_CONT_BYTE_110000_                                         \
+                          UTF_FIRST_CONT_BYTE(PERL_UNICODE_MAX + 1, 21)
+#define UTF8_IS_SUPER(s, e)                                                 \
+    (   ((e) - (s)) >= UNISKIP_BY_MSB_(20)                                  \
+     && (       NATIVE_UTF8_TO_I8(s[0]) >= UTF_START_BYTE_110000_           \
+         && (   NATIVE_UTF8_TO_I8(s[0]) >  UTF_START_BYTE_110000_           \
+             || NATIVE_UTF8_TO_I8(s[1]) >= UTF_FIRST_CONT_BYTE_110000_)))   \
+     ? isUTF8_CHAR(s, e)                                                    \
+     : 0
+
+/*
+=for apidoc Am|bool|UNICODE_IS_NONCHAR|const UV uv
+
+Returns a boolean as to whether or not C<uv> is one of the Unicode
+non-character code points
+
+=cut
+*/
+
+/* Is 'uv' one of the 32 contiguous-range noncharacters? */
+#define UNICODE_IS_32_CONTIGUOUS_NONCHARS(uv)                               \
+                                    UNLIKELY(inRANGE(uv, 0xFDD0, 0xFDEF))
+
+/* Is 'uv' one of the 34 plane-ending noncharacters 0xFFFE, 0xFFFF, 0x1FFFE,
+ * 0x1FFFF, ... 0x10FFFE, 0x10FFFF, given that we know that 'uv' is not above
+ * the Unicode legal max */
+#define UNICODE_IS_END_PLANE_NONCHAR_GIVEN_NOT_SUPER(uv)                    \
+                                  UNLIKELY(((UV) (uv) & 0xFFFE) == 0xFFFE)
+
+#define UNICODE_IS_NONCHAR(uv)                                              \
+    (       UNLIKELY(UNICODE_IS_32_CONTIGUOUS_NONCHARS(uv))                 \
+     || (   UNLIKELY(UNICODE_IS_END_PLANE_NONCHAR_GIVEN_NOT_SUPER(uv))      \
+         && LIKELY(! UNICODE_IS_SUPER(uv))))
+
+/*
+=for apidoc Am|bool|UTF8_IS_NONCHAR|const U8 *s|const U8 *e
+
+Evaluates to non-zero if the first few bytes of the string starting at C<s> and
+looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
+of the Unicode non-character code points; otherwise it evaluates to 0.  If
+non-zero, the value gives how many bytes starting at C<s> comprise the code
+point's representation.
+
+=cut
+*/
+#define UTF8_IS_NONCHAR(s, e)  is_NONCHAR_utf8_safe(s,e)
+
+/* This is now machine generated, and the 'given' clause is no longer
+ * applicable */
+#define UTF8_IS_NONCHAR_GIVEN_THAT_NON_SUPER_AND_GE_PROBLEMATIC(s, e)       \
+                                                UTF8_IS_NONCHAR(s, e)
+
+/* Surrogates, non-character code points and above-Unicode code points are
+ * problematic in some contexts.  These macros allow code that needs to check
+ * for those to quickly exclude the vast majority of code points it will
+ * encounter.
+ *
+ * The lowest such code point is the smallest surrogate, U+D800.  We calculate
+ * the start byte of that.  0xD800 occupies 16 bits. */
+#define isUNICODE_POSSIBLY_PROBLEMATIC(uv) ((uv) >= UNICODE_SURROGATE_FIRST)
+#define isUTF8_POSSIBLY_PROBLEMATIC(c)                                      \
+    (NATIVE_UTF8_TO_I8(c) >= UTF_START_BYTE(UNICODE_SURROGATE_FIRST, 16))
+
+/* Perl extends Unicode so that it is possible to encode (as extended UTF-8 or
+ * UTF-EBCDIC) any 64-bit value.  No standard known to khw ever encoded higher
+ * than a 31 bit value.  On ASCII platforms this just meant arbitrarily saying
+ * nothing could be higher than this.  On these the start byte FD gets you to
+ * 31 bits, and FE and FF are forbidden as start bytes.  On EBCDIC platforms,
+ * FD gets you only to 26 bits; adding FE to mean 7 total bytes gets you to 30
+ * bits.  To get to 31 bits, they treated an initial FF byte idiosyncratically.
+ * It was considered to be the start byte FE meaning it had 7 total bytes, and
+ * the final 1 was treated as an information bit, getting you to 31 bits.
+ *
+ * Perl used to accept this idiosyncratic interpretation of FF, but now rejects
+ * it in order to get to being able to encode 64 bits.  The bottom line is that
+ * it is a Perl extension to use the start bytes FE and FF on ASCII platforms,
+ * and the start byte FF on EBCDIC ones.  That translates into that it is a
+ * Perl extension to represent anything occupying more than 31 bits on ASCII
+ * platforms; 30 bits on EBCDIC. */
+#define UNICODE_IS_PERL_EXTENDED(uv)                                        \
+          UNLIKELY((UV) (uv) > nBIT_UMAX(31 - ONE_IF_EBCDIC_ZERO_IF_NOT))
+#define UTF8_IS_PERL_EXTENDED(s)                                            \
+                           (UTF8SKIP(s) > 6 + ONE_IF_EBCDIC_ZERO_IF_NOT)
+
+/* Largest code point we accept from external sources */
+#define MAX_LEGAL_CP  ((UV)IV_MAX)
 
 #define UTF8_ALLOW_EMPTY		0x0001	/* Allow a zero length string */
 #define UTF8_GOT_EMPTY                  UTF8_ALLOW_EMPTY
@@ -834,99 +1148,6 @@ case any call to string overloading updates the internal UTF-8 encoding flag.
 #define UTF8_ALLOW_ANYUV   0
 #define UTF8_ALLOW_DEFAULT UTF8_ALLOW_ANYUV
 
-/*
-=for apidoc Am|bool|UTF8_IS_SURROGATE|const U8 *s|const U8 *e
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
-of the Unicode surrogate code points; otherwise it evaluates to 0.  If
-non-zero, the value gives how many bytes starting at C<s> comprise the code
-point's representation.
-
-=cut
- */
-#define UTF8_IS_SURROGATE(s, e)      is_SURROGATE_utf8_safe(s, e)
-
-
-#define UTF8_IS_REPLACEMENT(s, send) is_REPLACEMENT_utf8_safe(s,send)
-
-#define MAX_LEGAL_CP  ((UV)IV_MAX)
-
-/*
-=for apidoc Am|bool|UTF8_IS_SUPER|const U8 *s|const U8 *e
-
-Recall that Perl recognizes an extension to UTF-8 that can encode code
-points larger than the ones defined by Unicode, which are 0..0x10FFFF.
-
-This macro evaluates to non-zero if the first few bytes of the string starting
-at C<s> and looking no further than S<C<e - 1>> are from this UTF-8 extension;
-otherwise it evaluates to 0.  If non-zero, the value gives how many bytes
-starting at C<s> comprise the code point's representation.
-
-0 is returned if the bytes are not well-formed extended UTF-8, or if they
-represent a code point that cannot fit in a UV on the current platform.  Hence
-this macro can give different results when run on a 64-bit word machine than on
-one with a 32-bit word size.
-
-Note that it is illegal to have code points that are larger than what can
-fit in an IV on the current machine.
-
-=cut
-
- *		  ASCII		     EBCDIC I8
- * U+10FFFF: \xF4\x8F\xBF\xBF	\xF9\xA1\xBF\xBF\xBF	max legal Unicode
- * U+110000: \xF4\x90\x80\x80	\xF9\xA2\xA0\xA0\xA0
- * U+110001: \xF4\x90\x80\x81	\xF9\xA2\xA0\xA0\xA1
- */
-#ifdef EBCDIC
-#   define UTF8_IS_SUPER(s, e)                                              \
-                  ((    LIKELY((e) > (s) + 4)                               \
-                    &&      NATIVE_UTF8_TO_I8(*(s)) >= 0xF9                 \
-                    && (    NATIVE_UTF8_TO_I8(*(s)) >  0xF9                 \
-                        || (NATIVE_UTF8_TO_I8(*((s) + 1)) >= 0xA2))         \
-                    &&  LIKELY((s) + UTF8SKIP(s) <= (e)))                   \
-                    ?  is_utf8_char_helper(s, s + UTF8SKIP(s), 0) : 0)
-#else
-#   define UTF8_IS_SUPER(s, e)                                              \
-                   ((    LIKELY((e) > (s) + 3)                              \
-                     &&  (*(U8*) (s)) >= 0xF4                               \
-                     && ((*(U8*) (s)) >  0xF4 || (*((U8*) (s) + 1) >= 0x90))\
-                     &&  LIKELY((s) + UTF8SKIP(s) <= (e)))                  \
-                    ?  is_utf8_char_helper(s, s + UTF8SKIP(s), 0) : 0)
-#endif
-
-/* These are now machine generated, and the 'given' clause is no longer
- * applicable */
-#define UTF8_IS_NONCHAR_GIVEN_THAT_NON_SUPER_AND_GE_PROBLEMATIC(s, e)          \
-                                            cBOOL(is_NONCHAR_utf8_safe(s,e))
-
-/*
-=for apidoc Am|bool|UTF8_IS_NONCHAR|const U8 *s|const U8 *e
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8 that represents one
-of the Unicode non-character code points; otherwise it evaluates to 0.  If
-non-zero, the value gives how many bytes starting at C<s> comprise the code
-point's representation.
-
-=for apidoc AmnU|UV|UNICODE_REPLACEMENT
-
-Evaluates to 0xFFFD, the code point of the Unicode REPLACEMENT CHARACTER
-
-=cut
- */
-#define UTF8_IS_NONCHAR(s, e)                                                  \
-                UTF8_IS_NONCHAR_GIVEN_THAT_NON_SUPER_AND_GE_PROBLEMATIC(s, e)
-
-#define UNICODE_SURROGATE_FIRST		0xD800
-#define UNICODE_SURROGATE_LAST		0xDFFF
-#define UNICODE_REPLACEMENT		0xFFFD
-#define UNICODE_BYTE_ORDER_MARK		0xFEFF
-
-/* Though our UTF-8 encoding can go beyond this,
- * let's be conservative and do as Unicode says. */
-#define PERL_UNICODE_MAX	0x10FFFF
-
 #define UNICODE_WARN_SURROGATE         0x0001	/* UTF-16 surrogates */
 #define UNICODE_WARN_NONCHAR           0x0002	/* Non-char code points */
 #define UNICODE_WARN_SUPER             0x0004	/* Above 0x10FFFF */
@@ -961,30 +1182,9 @@ Evaluates to 0xFFFD, the code point of the Unicode REPLACEMENT CHARACTER
 #define UNICODE_ALLOW_SUPER	0
 #define UNICODE_ALLOW_ANY	0
 
-/* This matches the 2048 code points between UNICODE_SURROGATE_FIRST (0xD800) and
- * UNICODE_SURROGATE_LAST (0xDFFF) */
-#define UNICODE_IS_SURROGATE(uv)        (((UV) (uv) & (~0xFFFF | 0xF800))       \
-                                                                    == 0xD800)
-
-#define UNICODE_IS_REPLACEMENT(uv)	((UV) (uv) == UNICODE_REPLACEMENT)
-#define UNICODE_IS_BYTE_ORDER_MARK(uv)	((UV) (uv) == UNICODE_BYTE_ORDER_MARK)
-
-/* Is 'uv' one of the 32 contiguous-range noncharacters? */
-#define UNICODE_IS_32_CONTIGUOUS_NONCHARS(uv)      ((UV) (uv) >= 0xFDD0         \
-                                                 && (UV) (uv) <= 0xFDEF)
-
-/* Is 'uv' one of the 34 plane-ending noncharacters 0xFFFE, 0xFFFF, 0x1FFFE,
- * 0x1FFFF, ... 0x10FFFE, 0x10FFFF, given that we know that 'uv' is not above
- * the Unicode legal max */
-#define UNICODE_IS_END_PLANE_NONCHAR_GIVEN_NOT_SUPER(uv)                        \
-                                              (((UV) (uv) & 0xFFFE) == 0xFFFE)
-
-#define UNICODE_IS_NONCHAR(uv)                                                  \
-    (   UNICODE_IS_32_CONTIGUOUS_NONCHARS(uv)                                   \
-     || (   LIKELY( ! UNICODE_IS_SUPER(uv))                                     \
-         && UNICODE_IS_END_PLANE_NONCHAR_GIVEN_NOT_SUPER(uv)))
-
-#define UNICODE_IS_SUPER(uv)    ((UV) (uv) > PERL_UNICODE_MAX)
+#define UNICODE_BYTE_ORDER_MARK		0xFEFF
+#define UNICODE_IS_BYTE_ORDER_MARK(uv)	UNLIKELY((UV) (uv)                  \
+                                                == UNICODE_BYTE_ORDER_MARK)
 
 #define LATIN_SMALL_LETTER_SHARP_S      LATIN_SMALL_LETTER_SHARP_S_NATIVE
 #define LATIN_SMALL_LETTER_Y_WITH_DIAERESIS                                  \
@@ -1023,57 +1223,12 @@ Evaluates to 0xFFFD, the code point of the Unicode REPLACEMENT CHARACTER
 /* Character classes could also allow \b, but not patterns in general */
 #define UNI_DISPLAY_REGEX	(UNI_DISPLAY_ISPRINT|UNI_DISPLAY_BACKSLASH)
 
-#define ANYOF_FOLD_SHARP_S(node, input, end)	\
-	(ANYOF_BITMAP_TEST(node, LATIN_SMALL_LETTER_SHARP_S) && \
-	 (ANYOF_NONBITMAP(node)) && \
-	 (ANYOF_FLAGS(node) & ANYOF_LOC_NONBITMAP_FOLD) && \
-	 ((end) > (input) + 1) && \
-	 isALPHA_FOLD_EQ((input)[0], 's'))
-
+/* Should be removed; maybe deprecated, but not used in CPAN */
 #define SHARP_S_SKIP 2
 
 #define is_utf8_char_buf(buf, buf_end) isUTF8_CHAR(buf, buf_end)
 #define bytes_from_utf8(s, lenp, is_utf8p)                                  \
                             bytes_from_utf8_loc(s, lenp, is_utf8p, 0)
-
-/*
-
-=for apidoc Am|STRLEN|isUTF8_CHAR_flags|const U8 *s|const U8 *e| const U32 flags
-
-Evaluates to non-zero if the first few bytes of the string starting at C<s> and
-looking no further than S<C<e - 1>> are well-formed UTF-8, as extended by Perl,
-that represents some code point, subject to the restrictions given by C<flags>;
-otherwise it evaluates to 0.  If non-zero, the value gives how many bytes
-starting at C<s> comprise the code point's representation.  Any bytes remaining
-before C<e>, but beyond the ones needed to form the first code point in C<s>,
-are not examined.
-
-If C<flags> is 0, this gives the same results as C<L</isUTF8_CHAR>>;
-if C<flags> is C<UTF8_DISALLOW_ILLEGAL_INTERCHANGE>, this gives the same results
-as C<L</isSTRICT_UTF8_CHAR>>;
-and if C<flags> is C<UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE>, this gives
-the same results as C<L</isC9_STRICT_UTF8_CHAR>>.
-Otherwise C<flags> may be any combination of the C<UTF8_DISALLOW_I<foo>> flags
-understood by C<L</utf8n_to_uvchr>>, with the same meanings.
-
-The three alternative macros are for the most commonly needed validations; they
-are likely to run somewhat faster than this more general one, as they can be
-inlined into your code.
-
-Use L</is_utf8_string_flags>, L</is_utf8_string_loc_flags>, and
-L</is_utf8_string_loclen_flags> to check entire strings.
-
-=cut
-*/
-
-#define isUTF8_CHAR_flags(s, e, flags)                                      \
-    (UNLIKELY((e) <= (s))                                                   \
-    ? 0                                                                     \
-    : (UTF8_IS_INVARIANT(*s))                                               \
-      ? 1                                                                   \
-      : UNLIKELY(((e) - (s)) < UTF8SKIP(s))                                 \
-        ? 0                                                                 \
-        : is_utf8_char_helper(s, e, flags))
 
 /* Do not use; should be deprecated.  Use isUTF8_CHAR() instead; this is
  * retained solely for backwards compatibility */

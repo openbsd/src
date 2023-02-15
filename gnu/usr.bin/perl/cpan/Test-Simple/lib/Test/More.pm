@@ -17,7 +17,7 @@ sub _carp {
     return warn @_, " at $file line $line\n";
 }
 
-our $VERSION = '1.302175';
+our $VERSION = '1.302190';
 
 use Test::Builder::Module;
 our @ISA    = qw(Test::Builder::Module);
@@ -411,8 +411,8 @@ sub isnt ($$;$) {
     return $tb->isnt_eq(@_);
 }
 
-*isn't = \&isnt;
-# ' to unconfuse syntax higlighters
+# make this available as isn't()
+*isn::t = \&isnt;
 
 =item B<like>
 
@@ -1409,6 +1409,15 @@ and you'll know immediately when they're fixed.
 Once a todo test starts succeeding, simply move it outside the block.
 When the block is empty, delete it.
 
+Note that, if you leave $TODO unset or undef, Test::More reports failures
+as normal. This can be useful to mark the tests as expected to fail only
+in certain conditions, e.g.:
+
+    TODO: {
+        local $TODO = "$^O doesn't work yet. :(" if !_os_is_supported($^O);
+
+        ...
+    }
 
 =item B<todo_skip>
 

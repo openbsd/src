@@ -1,6 +1,6 @@
-# DerivedJoiningGroup-13.0.0.txt
-# Date: 2019-09-08, 23:31:07 GMT
-# © 2019 Unicode®, Inc.
+# DerivedJoiningGroup-14.0.0.txt
+# Date: 2021-05-11, 21:19:35 GMT
+# © 2021 Unicode®, Inc.
 # Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
 # For terms of use, see http://www.unicode.org/terms_of_use.html
 #
@@ -41,8 +41,9 @@
 0671..0673    ; Alef # Lo   [3] ARABIC LETTER ALEF WASLA..ARABIC LETTER ALEF WITH WAVY HAMZA BELOW
 0675          ; Alef # Lo       ARABIC LETTER HIGH HAMZA ALEF
 0773..0774    ; Alef # Lo   [2] ARABIC LETTER ALEF WITH EXTENDED ARABIC-INDIC DIGIT TWO ABOVE..ARABIC LETTER ALEF WITH EXTENDED ARABIC-INDIC DIGIT THREE ABOVE
+0870..0882    ; Alef # Lo  [19] ARABIC LETTER ALEF WITH ATTACHED FATHA..ARABIC LETTER ALEF WITH ATTACHED LEFT HAMZA
 
-# Total code points: 10
+# Total code points: 29
 
 # ================================================
 
@@ -110,10 +111,12 @@
 06AB          ; Gaf # Lo       ARABIC LETTER KAF WITH RING
 06AF..06B4    ; Gaf # Lo   [6] ARABIC LETTER GAF..ARABIC LETTER GAF WITH THREE DOTS ABOVE
 0762..0764    ; Gaf # Lo   [3] ARABIC LETTER KEHEH WITH DOT ABOVE..ARABIC LETTER KEHEH WITH THREE DOTS POINTING UPWARDS BELOW
+088D          ; Gaf # Lo       ARABIC LETTER KEHEH WITH TWO DOTS VERTICALLY BELOW
 08B0          ; Gaf # Lo       ARABIC LETTER GAF WITH INVERTED STROKE
 08C2          ; Gaf # Lo       ARABIC LETTER KEHEH WITH SMALL V
+08C8          ; Gaf # Lo       ARABIC LETTER GRAF
 
-# Total code points: 15
+# Total code points: 17
 
 # ================================================
 
@@ -131,11 +134,12 @@
 076E..076F    ; Hah # Lo   [2] ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH BELOW..ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH AND TWO DOTS
 0772          ; Hah # Lo       ARABIC LETTER HAH WITH SMALL ARABIC LETTER TAH ABOVE
 077C          ; Hah # Lo       ARABIC LETTER HAH WITH EXTENDED ARABIC-INDIC DIGIT FOUR BELOW
+088A          ; Hah # Lo       ARABIC LETTER HAH WITH INVERTED SMALL V BELOW
 08A2          ; Hah # Lo       ARABIC LETTER JEEM WITH TWO DOTS ABOVE
 08C1          ; Hah # Lo       ARABIC LETTER TCHEH WITH SMALL V
 08C5..08C6    ; Hah # Lo   [2] ARABIC LETTER JEEM WITH THREE DOTS ABOVE..ARABIC LETTER JEEM WITH THREE DOTS BELOW
 
-# Total code points: 21
+# Total code points: 22
 
 # ================================================
 
@@ -224,8 +228,9 @@
 0646          ; Noon # Lo       ARABIC LETTER NOON
 06B9..06BC    ; Noon # Lo   [4] ARABIC LETTER NOON WITH DOT BELOW..ARABIC LETTER NOON WITH RING
 0767..0769    ; Noon # Lo   [3] ARABIC LETTER NOON WITH TWO DOTS BELOW..ARABIC LETTER NOON WITH SMALL V
+0889          ; Noon # Lo       ARABIC LETTER NOON WITH INVERTED SMALL V
 
-# Total code points: 8
+# Total code points: 9
 
 # ================================================
 
@@ -245,8 +250,9 @@
 066F          ; Qaf # Lo       ARABIC LETTER DOTLESS QAF
 06A7..06A8    ; Qaf # Lo   [2] ARABIC LETTER QAF WITH DOT ABOVE..ARABIC LETTER QAF WITH THREE DOTS ABOVE
 08A5          ; Qaf # Lo       ARABIC LETTER QAF WITH DOT BELOW
+08B5          ; Qaf # Lo       ARABIC LETTER QAF WITH DOT BELOW AND NO DOTS ABOVE
 
-# Total code points: 5
+# Total code points: 6
 
 # ================================================
 
@@ -323,9 +329,10 @@
 
 0637..0638    ; Tah # Lo   [2] ARABIC LETTER TAH..ARABIC LETTER ZAH
 069F          ; Tah # Lo       ARABIC LETTER TAH WITH THREE DOTS ABOVE
+088B..088C    ; Tah # Lo   [2] ARABIC LETTER TAH WITH DOT BELOW..ARABIC LETTER TAH WITH THREE DOTS BELOW
 08A3          ; Tah # Lo       ARABIC LETTER TAH WITH TWO DOTS ABOVE
 
-# Total code points: 4
+# Total code points: 6
 
 # ================================================
 
@@ -722,5 +729,17 @@
 10D23         ; Hanifi_Rohingya_Kinna_Ya # Lo       HANIFI ROHINGYA MARK NA KHONNA
 
 # Total code points: 4
+
+# ================================================
+
+0886          ; Thin_Yeh # Lo       ARABIC LETTER THIN YEH
+
+# Total code points: 1
+
+# ================================================
+
+088E          ; Vertical_Tail # Lo       ARABIC VERTICAL TAIL
+
+# Total code points: 1
 
 # EOF

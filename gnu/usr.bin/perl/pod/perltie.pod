@@ -316,7 +316,7 @@ object I<this>. (Equivalent to C<scalar(@array)>).  For example:
 
     sub FETCHSIZE {
       my $self = shift;
-      return scalar @{$self->{ARRAY}};
+      return scalar $self->{ARRAY}->@*;
     }
 
 =item STORESIZE this, count
@@ -429,7 +429,7 @@ Remove last element of the array and return it.  For example:
 
     sub POP {
       my $self = shift;
-      return pop @{$self->{ARRAY}};
+      return pop $self->{ARRAY}->@*;
     }
 
 =item SHIFT this
@@ -440,7 +440,7 @@ and return it.  For example:
 
     sub SHIFT {
       my $self = shift;
-      return shift @{$self->{ARRAY}};
+      return shift $self->{ARRAY}->@*;
     }
 
 =item UNSHIFT this, LIST 
@@ -454,8 +454,8 @@ up to make room.  For example:
       my @list = @_;
       my $size = scalar( @list );
       # make room for our list
-      @{$self->{ARRAY}}[ $size .. $#{$self->{ARRAY}} + $size ]
-       = @{$self->{ARRAY}};
+      $self->{ARRAY}[ $size .. $self->{ARRAY}->$#* + $size ]->@*
+       = $self->{ARRAY}->@*
       $self->STORE( $_, $list[$_] ) foreach 0 .. $#list;
     }
 
@@ -484,7 +484,7 @@ In our example, we'll use a little shortcut if there is a I<LIST>:
         tie @list, __PACKAGE__, $self->{ELEMSIZE};
         @list   = @_;
       }
-      return splice @{$self->{ARRAY}}, $offset, $length, @list;
+      return splice $self->{ARRAY}->@*, $offset, $length, @list;
     }
 
 =item UNTIE this
@@ -599,7 +599,7 @@ necessarily an anonymous hash) will be accessed.
 Here's the constructor:
 
     sub TIEHASH {
-	my $self = shift;
+	my $class = shift;
 	my $user = shift || $>;
 	my $dotdir = shift || '';
 	croak "usage: @{[&whowasi]} [USER [DOTDIR]]" if @_;
@@ -622,7 +622,7 @@ Here's the constructor:
 	    $node->{LIST}{$dot} = undef;
 	}
 	closedir DIR;
-	return bless $node, $self;
+	return bless $node, $class;
     }
 
 It's probably worth mentioning that if you're going to filetest the
@@ -754,7 +754,7 @@ dangerous thing that they'll have to set CLOBBER to something higher than
      croak "@{[&whowasi]}: won't remove all dot files for $self->{USER}"
          unless $self->{CLOBBER} > 1;
      my $dot;
-     foreach $dot ( keys %{$self->{LIST}}) {
+     foreach $dot ( keys $self->{LIST}->%* ) {
          $self->DELETE($dot);
      }
  }
@@ -782,8 +782,8 @@ to iterate through the hash, such as via a keys(), values(), or each() call.
     sub FIRSTKEY {
 	carp &whowasi if $DEBUG;
 	my $self = shift;
-	my $a = keys %{$self->{LIST}};  # reset each() iterator
-	each %{$self->{LIST}}
+	my $a = keys $self->{LIST}->%*;  # reset each() iterator
+	each $self->{LIST}->%*
     }
 
 FIRSTKEY is always called in scalar context and it should just
@@ -808,8 +808,13 @@ thing, but we'll have to go through the LIST field indirectly.
     sub NEXTKEY  {
 	carp &whowasi if $DEBUG;
 	my $self = shift;
-	return each %{ $self->{LIST} }
+	return each $self->{LIST}->%*
     }
+
+If the object underlying your tied hash isn't a real hash and you don't have
+C<each> available, then you should return C<undef> or the empty list once you've
+reached the end of your list of keys. See L<C<each's own documentation>|perlfunc/each>
+for more details.
 
 =item SCALAR this
 X<SCALAR>
@@ -835,7 +840,7 @@ referenced by C<$self-E<gt>{LIST}>:
     sub SCALAR {
 	carp &whowasi if $DEBUG;
 	my $self = shift;
-	return scalar %{ $self->{LIST} }
+	return scalar $self->{LIST}->%*
     }
 
 NOTE: In perl 5.25 the behavior of scalar %hash on an untied hash changed
@@ -1065,8 +1070,7 @@ a scalar.
 
     package Remember;
 
-    use strict;
-    use warnings;
+    use v5.36;
     use IO::File;
 
     sub TIESCALAR {

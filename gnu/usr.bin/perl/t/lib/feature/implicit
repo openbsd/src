@@ -69,6 +69,7 @@ evalbytes;
 use 5;
 say "no"
 EXPECT
+Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 8.
 yes
 evalbytes sub
 say sub
@@ -80,6 +81,7 @@ print 'ss' =~ /$sharp_s/i ? "ok\n" : "nok\n";
 use v5.8.8;
 print 'ss' =~ /$sharp_s/i ? "ok\n" : "nok\n";
 EXPECT
+Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 5.
 ok
 nok
 ########
@@ -91,5 +93,6 @@ print eval "use utf8; q|$long_s|" eq $long_s ? "ok\n" : "nok\n";
 use v5.8.8;
 print eval "use utf8; q|$long_s|" eq "\x{17f}" ? "ok\n" : "nok\n";
 EXPECT
+Downgrading a use VERSION declaration to below v5.11 is deprecated, and will become fatal in Perl 5.40 at - line 6.
 ok
 ok

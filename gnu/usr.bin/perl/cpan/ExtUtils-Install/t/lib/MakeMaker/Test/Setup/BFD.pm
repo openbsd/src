@@ -1,10 +1,10 @@
 package MakeMaker::Test::Setup::BFD;
-
-@ISA = qw(Exporter);
-require Exporter;
-@EXPORT = qw(setup_recurs teardown_recurs);
-
 use strict;
+
+our @ISA = qw(Exporter);
+require Exporter;
+our @EXPORT = qw(setup_recurs teardown_recurs);
+
 use File::Path;
 use File::Basename;
 use MakeMaker::Test::Utils;

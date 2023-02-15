@@ -63,11 +63,26 @@ positive, but it's best to avoid it.
 
 =head2 What if I don't encode?
 
-Your text string will be sent using the bytes in Perl's internal format. In
-some cases, Perl will warn you that you're doing something wrong, with a
-friendly warning:
+It depends on what you output and how you output it.
 
-    Wide character in print at example.pl line 2.
+=head3 Output via a filehandle
+
+=over
+
+=item * If the string's characters are all code point 255 or lower, Perl
+outputs bytes that match those code points. This is what happens with encoded
+strings. It can also, though, happen with unencoded strings that happen to be
+all code point 255 or lower.
+
+=item * Otherwise, Perl outputs the string encoded as UTF-8. This only happens
+with strings you neglected to encode. Since that should not happen, Perl also
+throws a "wide character" warning in this case.
+
+=back
+
+=head3 Other output mechanisms (e.g., C<exec>, C<chdir>, ..)
+
+Your text string will be sent using the bytes in Perl's internal format.
 
 Because the internal format is often UTF-8, these bugs are hard to spot,
 because UTF-8 is usually the encoding you wanted! But don't be lazy, and don't

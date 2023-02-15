@@ -47,7 +47,7 @@ In order to preserve backward compatibility, Perl does not turn
 on full internal Unicode support unless the pragma
 L<S<C<use feature 'unicode_strings'>>|feature/The 'unicode_strings' feature>
 is specified.  (This is automatically
-selected if you S<C<use 5.012>> or higher.)  Failure to do this can
+selected if you S<C<use v5.12>> or higher.)  Failure to do this can
 trigger unexpected surprises.  See L</The "Unicode Bug"> below.
 
 This pragma doesn't affect I/O.  Nor does it change the internal
@@ -248,7 +248,7 @@ affected with newer perls.  See L</The "Unicode Bug">.
 
 =item *
 
-Within the scope of S<C<use 5.012>> or higher
+Within the scope of S<C<use v5.12>> or higher
 
 This implicitly turns on S<C<use feature 'unicode_strings'>>.
 
@@ -799,27 +799,31 @@ spacing horizontally.
 
 =item B<C<\p{Decomposition_Type: Non_Canonical}>>    (Short: C<\p{Dt=NonCanon}>)
 
-Matches a character that has a non-canonical decomposition.
+Matches a character that has any of the non-canonical decomposition
+types.  Canonical decompositions are introduced in the
+L</Extended Grapheme Clusters (Logical characters)> section above.
+However, many more characters have a different type of decomposition,
+generically called "compatible" decompositions, or "non-canonical".  The
+sequences that form these decompositions are not considered canonically
+equivalent to the pre-composed character.  An example is the
+C<"SUPERSCRIPT ONE">.  It is somewhat like a regular digit 1, but not
+exactly; its decomposition into the digit 1 is called a "compatible"
+decomposition, specifically a "super" (for "superscript") decomposition.
+There are several such compatibility decompositions (see
+L<https://www.unicode.org/reports/tr44>).  S<C<\p{Dt: Non_Canon}>> is a
+Perl extension that uses just one name to refer to the union of all of
+them.
 
-The L</Extended Grapheme Clusters (Logical characters)> section above
-talked about canonical decompositions.  However, many more characters
-have a different type of decomposition, a "compatible" or
-"non-canonical" decomposition.  The sequences that form these
-decompositions are not considered canonically equivalent to the
-pre-composed character.  An example is the C<"SUPERSCRIPT ONE">.  It is
-somewhat like a regular digit 1, but not exactly; its decomposition into
-the digit 1 is called a "compatible" decomposition, specifically a
-"super" decomposition.  There are several such compatibility
-decompositions (see L<https://www.unicode.org/reports/tr44>), including
-one called "compat", which means some miscellaneous type of
-decomposition that doesn't fit into the other decomposition categories
-that Unicode has chosen.
+Most Unicode characters don't have a decomposition, so their
+decomposition type is C<"None">.  Hence, C<Non_Canonical> is equivalent
+to
 
-Note that most Unicode characters don't have a decomposition, so their
-decomposition type is C<"None">.
+ qr/(?[ \P{DT=Canonical} - \p{DT=None} ])/
 
-For your convenience, Perl has added the C<Non_Canonical> decomposition
-type to mean any of the several compatibility decompositions.
+(Note that one of the non-canonical decompositions is named "compat",
+which could perhaps have been better named "miscellaneous".  It includes
+just the things that Unicode couldn't figure out a better generic name
+for.)
 
 =item B<C<\p{Graph}>>
 
@@ -1124,7 +1128,6 @@ Nor is the C<@I<unicode_property>@> form implemented.
 Here's a complete example of matching IPV4 internet protocol addresses
 in any (single) script
 
- no warnings 'experimental::regex_sets';
  no warnings 'experimental::uniprop_wildcards';
 
  # Can match a substring, so this intermediate regex needs to have
@@ -1156,7 +1159,7 @@ in any (single) script
 =head2 User-Defined Character Properties
 
 You can define your own binary character properties by defining subroutines
-whose names begin with C<"In"> or C<"Is">.  (The experimental feature
+whose names begin with C<"In"> or C<"Is">.  (The regex sets feature
 L<perlre/(?[ ])> provides an alternative which allows more complex
 definitions.)  The subroutines can be defined in any
 package.  They override any Unicode properties expressed as the same
@@ -1166,7 +1169,7 @@ C<\p{}> and C<\P{}> constructs; if you are using a user-defined property from a
 package other than the one you are in, you must specify its package in the
 C<\p{}> or C<\P{}> construct.
 
-    # assuming property Is_Foreign defined in Lang::
+    # assuming property IsForeign defined in Lang::
     package main;  # property package name required
     if ($txt =~ /\p{Lang::IsForeign}+/) { ... }
 
@@ -1329,7 +1332,7 @@ version 18, October 2016.
  RL1.1   Hex Notation                     - Done          [1]
  RL1.2   Properties                       - Done          [2]
  RL1.2a  Compatibility Properties         - Done          [3]
- RL1.3   Subtraction and Intersection     - Experimental  [4]
+ RL1.3   Subtraction and Intersection     - Done          [4]
  RL1.4   Simple Word Boundaries           - Done          [5]
  RL1.5   Simple Loose Matches             - Done          [6]
  RL1.6   Line Boundaries                  - Partial       [7]
@@ -1344,6 +1347,7 @@ C<\p{...}> C<\P{...}>.  This requirement is for a minimal list of
 properties.  Perl supports these.  See R2.7 for other properties.
 
 =item [3]
+
 Perl has C<\d> C<\D> C<\s> C<\S> C<\w> C<\W> C<\X> C<[:I<prop>:]>
 C<[:^I<prop>:]>, plus all the properties specified by
 L<https://www.unicode.org/reports/tr18/#Compatibility_Properties>.  These
@@ -1351,47 +1355,8 @@ are described above in L</Other Properties>
 
 =item [4]
 
-The experimental feature C<"(?[...])"> starting in v5.18 accomplishes
-this.
-
-See L<perlre/(?[ ])>.  If you don't want to use an experimental
-feature, you can use one of the following:
-
-=over 4
-
-=item *
-Regular expression lookahead
-
-You can mimic class subtraction using lookahead.
-For example, what UTS#18 might write as
-
-    [{Block=Greek}-[{UNASSIGNED}]]
-
-in Perl can be written as:
-
-    (?!\p{Unassigned})\p{Block=Greek}
-    (?=\p{Assigned})\p{Block=Greek}
-
-But in this particular example, you probably really want
-
-    \p{Greek}
-
-which will match assigned characters known to be part of the Greek script.
-
-=item *
-
-CPAN module C<L<Unicode::Regex::Set>>
-
-It does implement the full UTS#18 grouping, intersection, union, and
-removal (subtraction) syntax.
-
-=item *
-
-L</"User-Defined Character Properties">
-
-C<"+"> for union, C<"-"> for removal (set-difference), C<"&"> for intersection
-
-=back
+The regex sets feature C<"(?[...])"> starting in v5.18 accomplishes
+this.  See L<perlre/(?[ ])>.
 
 =item [5]
 C<\b> C<\B> meet most, but not all, the details of this requirement, but
@@ -2079,7 +2044,7 @@ You can see from the above that the effect of C<unicode_strings>
 increased over several Perl releases.  (And Perl's support for Unicode
 continues to improve; it's best to use the latest available release in
 order to get the most complete and accurate results possible.)  Note that
-C<unicode_strings> is automatically chosen if you S<C<use 5.012>> or
+C<unicode_strings> is automatically chosen if you S<C<use v5.12>> or
 higher.
 
 For Perls earlier than those described above, or when a string is passed

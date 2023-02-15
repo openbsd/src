@@ -57,29 +57,26 @@ Unmatched [ in regex; marked by <-- HERE in m/abc[ <-- HERE ﬁ[.00./ at - line 
 # NAME perl qr/(?[[[:word]]])/ XXX Why is 'syntax' lc?
 # OPTION fatal
 use warnings;
-no warnings 'experimental::regex_sets';
 qr/(?[[[:word]]])/;
 EXPECT
-Assuming NOT a POSIX class since there is no terminating ':' in regex; marked by <-- HERE in m/(?[[[:word <-- HERE ]]])/ at - line 4.
-Unexpected ']' with no following ')' in (?[... in regex; marked by <-- HERE in m/(?[[[:word]] <-- HERE ])/ at - line 4.
+Assuming NOT a POSIX class since there is no terminating ':' in regex; marked by <-- HERE in m/(?[[[:word <-- HERE ]]])/ at - line 3.
+Unexpected ']' with no following ')' in (?[... in regex; marked by <-- HERE in m/(?[[[:word]] <-- HERE ])/ at - line 3.
 ########
 # NAME qr/(?[ [[:digit: ])/
 # OPTION fatal
 use warnings;
-no warnings 'experimental::regex_sets';
 qr/(?[[[:digit: ])/;
 EXPECT
-Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[[:digit: ] <-- HERE )/ at - line 4.
-syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[[:digit: ]) <-- HERE / at - line 4.
+Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[[:digit: ] <-- HERE )/ at - line 3.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[[:digit: ]) <-- HERE / at - line 3.
 ########
 # NAME qr/(?[ [:digit: ])/
 # OPTION fatal
 use warnings;
-no warnings 'experimental::regex_sets';
 qr/(?[[:digit: ])/
 EXPECT
-Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[:digit: ] <-- HERE )/ at - line 4.
-syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[:digit: ]) <-- HERE / at - line 4.
+Assuming NOT a POSIX class since no blanks are allowed in one in regex; marked by <-- HERE in m/(?[[:digit: ] <-- HERE )/ at - line 3.
+syntax error in (?[...]) in regex; marked by <-- HERE in m/(?[[:digit: ]) <-- HERE / at - line 3.
 ########
 # NAME [perl #126141]
 # OPTION fatal

@@ -24,21 +24,21 @@
 /* structure of a directory entry */
 typedef struct direct 
 {
-	long	d_ino;			/* inode number (not used by MS-DOS)  */
-	long	d_namlen;		/* name length  */
-	char	d_name[257];		/* file name  */
+        long	d_ino;			/* inode number (not used by MS-DOS)  */
+        long	d_namlen;		/* name length  */
+        char	d_name[257];		/* file name  */
 } _DIRECT;
 
 /* structure for dir operations */
 typedef struct _dir_struc
 {
-	char	*start;			/* starting position */
-	char	*curr;			/* current position */
-	long	size;			/* allocated size of string table */
-	long	nfiles;			/* number of filenames in table */
-	struct direct dirstr;		/* directory structure to return */
-	void*	handle;			/* system handle */
-	char	*end;			/* position after last filename */
+        char	*start;			/* starting position */
+        char	*curr;			/* current position */
+        long	size;			/* allocated size of string table */
+        long	nfiles;			/* number of filenames in table */
+        struct direct dirstr;		/* directory structure to return */
+        void*	handle;			/* system handle */
+        char	*end;			/* position after last filename */
 } DIR;
 
 #if 0		/* these have moved to win32iop.h */

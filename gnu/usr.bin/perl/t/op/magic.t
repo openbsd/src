@@ -5,7 +5,7 @@ BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
     set_up_inc( '../lib' );
-    plan (tests => 192); # some tests are run in BEGIN block
+    plan (tests => 208); # some tests are run in BEGIN block
 }
 
 # Test that defined() returns true for magic variables created on the fly,
@@ -50,15 +50,12 @@ use Config;
 
 
 $Is_MSWin32  = $^O eq 'MSWin32';
-$Is_NetWare  = $^O eq 'NetWare';
 $Is_VMS      = $^O eq 'VMS';
-$Is_Dos      = $^O eq 'dos';
 $Is_os2      = $^O eq 'os2';
 $Is_Cygwin   = $^O eq 'cygwin';
 
 $PERL =
-   ($Is_NetWare ? 'perl'   :
-    $Is_VMS     ? $^X      :
+   ($Is_VMS     ? $^X      :
     $Is_MSWin32 ? '.\perl' :
                   './perl');
 
@@ -116,7 +113,7 @@ close FOO; # just mention it, squelch used-only-once
 
 SKIP: {
     skip('SIGINT not safe on this platform', 5)
-	if $Is_MSWin32 || $Is_NetWare || $Is_Dos;
+	if $Is_MSWin32;
   # the next tests are done in a subprocess because sh spits out a
   # newline onto stderr when a child process kills itself with SIGINT.
   # We use a pipe rather than system() because the VMS command buffer
@@ -352,7 +349,7 @@ EOF
     ok close(SCRIPT) or diag $!;
     ok chmod(0755, $script) or diag $!;
     $_ = $Is_VMS ? `$perl $script` : `$script`;
-    s/\.exe//i if $Is_Dos or $Is_Cygwin or $Is_os2;
+    s/\.exe//i if $Is_Cygwin or $Is_os2;
     s{is perl}{is $perl}; # for systems where $^X is only a basename
     s{\\}{/}g;
     if ($Is_MSWin32 || $Is_os2) {
@@ -365,7 +362,7 @@ EOF
      }
     }
     $_ = `$perl $script`;
-    s/\.exe//i if $Is_Dos or $Is_os2 or $Is_Cygwin;
+    s/\.exe//i if $Is_os2 or $Is_Cygwin;
     s{\\}{/}g;
     if ($Is_MSWin32 || $Is_os2) {
 	is uc $_, uc $s1;
@@ -434,6 +431,106 @@ EOP
     my $name_substr = substr($name, 0, 15);
     like($prctl, qr/$name_substr/, "Set process name through prctl() ($prctl)");
   }
+}
+
+# Check that assigning to $0 properly handles UTF-8-stored strings:
+{
+
+  # Test both ASCII and EBCDIC systems:
+  my $char = chr( utf8::native_to_unicode(0xe9) );
+
+  # We want $char_with_utf8_pv's PV to be UTF-8-encoded because we need to
+  # test that Perl translates UTF-8-stored code points to plain octets when
+  # assigning to $0.
+  #
+  my $char_with_utf8_pv = $char;
+  utf8::upgrade($char_with_utf8_pv);
+
+  # This will be the same logical code point as $char_with_utf8_pv, but
+  # implemented in Perl internally as a raw byte rather than UTF-8.
+  # (NB: $char is *probably* already utf8::downgrade()d, but let's not
+  # assume that to be the case.)
+  #
+  my $char_with_plain_pv = $char;
+  utf8::downgrade($char_with_plain_pv);
+
+  $0 = $char_with_utf8_pv;
+
+  # In case the assignment to $0 changed $char_with_utf8_pv, ensure that
+  # it is still interally double-UTF-8-encoded:
+  #
+  utf8::upgrade($char_with_utf8_pv);
+
+  is ($0, $char_with_utf8_pv, 'compare $0 to UTF8-flagged');
+  is ($0, $char_with_plain_pv, 'compare $0 to non-UTF8-flagged');
+
+  my $linux_cmdline_cr = sub {
+    my $skip = shift // 1;
+    open my $rfh, '<', "/proc/$$/cmdline"
+      or skip "failed to read '/proc/$$/cmdline': $!", $skip;
+    my $got = do { local $/; <$rfh> };
+
+    # Some kernels leave a trailing NUL on. Some add a bunch of spaces
+    # after that NUL. We want neither.
+    #
+    # A selection of kernels/distros tested:
+    #
+    #   4.18.0-348.20.1.el8_5.x86_64 (AlmaLinux 8.5): NUL then spaces
+    #   4.18.0-348.23.1.el8_5.x86_64 (AlmaLinux 8.5): NUL, spaces, then NUL
+    #   3.10.0-1160.62.1.el7.x86_64 (CentOS 7.9.2009): no NUL nor spaces
+    #   2.6.32-954.3.5.lve1.4.87.el6.x86_64 (CloudLinux 6.10): ^^ ditto
+    #
+    #   5.13.0-1025-raspi (Ubuntu 21.10): NUL only
+    #   5.10.103-v7+ (RaspiOS 10): NUL only
+    #
+    $got =~ s/\0[\s\0]*\z//;
+
+    return $got;
+  };
+
+  SKIP: {
+    my $skip_tests = 2;
+    skip "Test is for Linux, not $^O", $skip_tests if $^O ne 'linux';
+    my $slurp = $linux_cmdline_cr->($skip_tests);
+    is( $slurp, $char_with_utf8_pv,
+        '/proc cmdline shows as expected (compare to UTF8-flagged)' );
+    is( $slurp, $char_with_plain_pv,
+        '/proc cmdline shows as expected (compare to non-UTF8-flagged)' );
+  }
+
+  my $name_unicode = "haha\x{100}hoho";
+
+  my $name_utf8_bytes = $name_unicode;
+  utf8::encode($name_utf8_bytes);
+
+  my @warnings;
+  {
+    local $SIG{'__WARN__'} = sub { push @warnings, @_ };
+    $0 = $name_unicode;
+  }
+
+  is( 0 + @warnings, 1, 'warning after assignment of wide character' );
+  like( $warnings[0], qr<wide>i, '.. and the warning is about a wide character' );
+  is( $0, $name_utf8_bytes, '.. and the UTF-8 version is written' );
+
+  SKIP: {
+    my $skip_tests = 1;
+    skip "Test is for Linux, not $^O" if $^O ne 'linux';
+    is( $linux_cmdline_cr->($skip_tests), $name_utf8_bytes, '.. and /proc cmdline shows that');
+  }
+
+  @warnings = ();
+  local $SIG{'__WARN__'} = sub { push @warnings, @_ };
+  { local $0 = "alpha"; }
+  is( 0 + @warnings, 0, '$0 from wide -> local non-wide: no warning');
+
+  { local $0 = "$name_unicode-redux" }
+  is( 0 + @warnings, 1, 'one warning: wide -> local wide' );
+
+  $0 = "aaaa";
+  @warnings = ();
+  { local $0 = "$name_unicode-redux" }
+  is( 0 + @warnings, 1, 'one warning: non-wide -> local wide' );
 }
 
 {
@@ -541,7 +638,7 @@ is "@+", "10 1 6 10";
 }
 
 # Test for bug [perl #36434]
-# Can not do this test on VMS, and SYMBIAN according to comments
+# Can not do this test on VMS according to comments
 # in mg.c/Perl_magic_clear_all_env()
 SKIP: {
     skip('Can\'t make assignment to \%ENV on this system', 3) if $Is_VMS;
@@ -717,8 +814,6 @@ is ++${^MPEN}, 1, '${^MPEN} can be incremented';
 # ^^^^^^^^^ New tests go here ^^^^^^^^^
 
 SKIP: {
-    skip("%ENV manipulations fail or aren't safe on $^O", 20)
-	if $Is_Dos;
     skip "Win32 needs XS for env/shell tests", 20
         if $Is_MSWin32 && is_miniperl;
 
@@ -764,6 +859,11 @@ SKIP: {
 	$forced = $ENV{foo} = $chars;
 	ok(!utf8::is_utf8($forced) && $forced eq $bytes, 'ENV store downgrades utf8 in SV');
 	env_is(foo => $bytes, 'ENV store downgrades utf8 in setenv');
+	fail 'chars should still be wide!' if !utf8::is_utf8($chars);
+	$ENV{$chars} = 'widekey';
+	env_is("eh zero \x{A0}" => 'widekey', 'ENV store downgrades utf8 key in setenv');
+	fail 'chars should still be wide!' if !utf8::is_utf8($chars);
+	is( delete($ENV{$chars}), 'widekey', 'delete(%ENV) downgrades utf8 key' );
 
 	# warn when downgrading utf8 is not possible
 	$chars = "X-Day \x{1998}";
@@ -773,6 +873,12 @@ SKIP: {
 	  local $SIG{__WARN__} = sub { ++$warned if $_[0] =~ /^Wide character in setenv/; print "# @_" };
 	  $forced = $ENV{foo} = $chars;
 	  ok($warned == 1, 'ENV store warns about wide characters');
+	
+	  fail 'chars should still be wide!' if !utf8::is_utf8($chars);
+	  $ENV{$chars} = 'widekey';
+	  env_is($forced => 'widekey', 'ENV store takes utf8-encoded key in setenv');
+	
+	  ok($warned == 2, 'ENV key store warns about wide characters');
 	}
 	ok(!utf8::is_utf8($forced) && $forced eq $bytes, 'ENV store encodes high utf8 in SV');
 	env_is(foo => $bytes, 'ENV store encodes high utf8 in SV');
@@ -797,48 +903,63 @@ SKIP: {
 	env_is(__NoNeLoCaL => '');
 
     SKIP: {
-	    skip("\$0 check only on Linux and FreeBSD", 2)
-		unless $^O =~ /^(linux|android|freebsd)$/
-		    && open CMDLINE, "/proc/$$/cmdline";
+        skip("\$0 check only on Linux, Dragonfly BSD and FreeBSD", 2)
+        unless $^O =~ /^(linux|android|dragonfly|freebsd)$/;
 
-	    chomp(my $line = scalar <CMDLINE>);
-	    my $me = (split /\0/, $line)[0];
-	    is $me, $0, 'altering $0 is effective (testing with /proc/)';
-	    close CMDLINE;
-            skip("\$0 check with 'ps' only on Linux (but not Android) and FreeBSD", 1) if $^O eq 'android';
-            # perlbug #22811
-            my $mydollarzero = sub {
-              my($arg) = shift;
-              $0 = $arg if defined $arg;
-	      # In FreeBSD the ps -o command= will cause
-	      # an empty header line, grab only the last line.
-              my $ps = (`ps -o command= -p $$`)[-1];
-              return if $?;
-              chomp $ps;
-              printf "# 0[%s]ps[%s]\n", $0, $ps;
-              $ps;
-            };
-            my $ps = $mydollarzero->("x");
-            ok(!$ps  # we allow that something goes wrong with the ps command
-	       # In Linux 2.4 we would get an exact match ($ps eq 'x') but
-	       # in Linux 2.2 there seems to be something funny going on:
-	       # it seems as if the original length of the argv[] would
-	       # be stored in the proc struct and then used by ps(1),
-	       # no matter what characters we use to pad the argv[].
-	       # (And if we use \0:s, they are shown as spaces.)  Sigh.
-               || $ps =~ /^x\s*$/
-	       # FreeBSD cannot get rid of both the leading "perl :"
-	       # and the trailing " (perl)": some FreeBSD versions
-	       # can get rid of the first one.
-	       || ($^O eq 'freebsd' && $ps =~ m/^(?:perl: )?x(?: \(perl\))?$/),
-		       'altering $0 is effective (testing with `ps`)');
-	}
+        SKIP: {
+            skip("No procfs cmdline support", 1)
+                unless open CMDLINE, "/proc/$$/cmdline";
+
+            chomp(my $line = scalar <CMDLINE>);
+            my $me = (split /\0/, $line)[0];
+            is $me, $0, 'altering $0 is effective (testing with /proc/)';
+            close CMDLINE;
+        }
+        skip("No \$0 check with 'ps' on Android", 1) if $^O eq 'android';
+        # perlbug #22811
+        my $mydollarzero = sub {
+            my($arg) = shift;
+            $0 = $arg if defined $arg;
+            # In FreeBSD the ps -o command= will cause
+            # an empty header line, grab only the last line.
+            my $ps = (`ps -o command= -p $$`)[-1];
+            return if $?;
+            chomp $ps;
+            $ps;
+        };
+        my $ps = $mydollarzero->("x");
+        # we allow that something goes wrong with the ps command
+        !$ps && skip("The ps command failed", 1);
+        my $ps_re = ( $^O =~ /^(dragonfly|freebsd)$/ )
+            # FreeBSD cannot get rid of both the leading "perl :"
+            # and the trailing " (perl)": some FreeBSD versions
+            # can get rid of the first one.
+            ? qr/^(?:(?:mini)?perl: )?x(?: \((?:mini)?perl\))?$/
+            # In Linux 2.4 we would get an exact match ($ps eq 'x') but
+            # in Linux 2.2 there seems to be something funny going on:
+            # it seems as if the original length of the argv[] would
+            # be stored in the proc struct and then used by ps(1),
+            # no matter what characters we use to pad the argv[].
+            # (And if we use \0:s, they are shown as spaces.)  Sigh.
+           : qr/^x\s*$/
+        ;
+        like($ps, $ps_re, 'altering $0 is effective (testing with `ps`)');
+    }
 }
+
+# in some situations $SIG{ALRM} might be 'IGNORE', eg:
+# git rebase --exec='perl -e "print \$SIG{ALRM}" && git co -f' HEAD~2
+# will print out 'IGNORE'
+my $sig_alarm_expect= $SIG{ALRM};
+{
+	local %SIG = (%SIG, ALRM => sub {})
+};
+is $SIG{ALRM}, $sig_alarm_expect, '$SIG{ALRM} is as expected';
 
 # test case-insignificance of %ENV (these tests must be enabled only
 # when perl is compiled with -DENV_IS_CASELESS)
 SKIP: {
-    skip('no caseless %ENV support', 4) unless $Is_MSWin32 || $Is_NetWare;
+    skip('no caseless %ENV support', 4) unless $Is_MSWin32;
 
     %ENV = ();
     $ENV{'Foo'} = 'bar';

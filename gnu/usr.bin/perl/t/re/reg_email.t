@@ -10,7 +10,6 @@ BEGIN {
 }
 
 use strict;
-no warnings 'experimental::regex_sets';
 
 my $email = qr {
     (?(DEFINE)

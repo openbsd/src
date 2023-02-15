@@ -7,7 +7,7 @@
 #   Makefile creation script.
 #
 # COPYRIGHT
-#   Copyright (C) 2014, 2015 Steve Hay.  All rights reserved.
+#   Copyright (C) 2014-2015, 2020 Steve Hay.  All rights reserved.
 #
 # LICENCE
 #   This script is free software; you can redistribute it and/or modify it under
@@ -66,7 +66,7 @@ MAIN: {
         ABSTRACT => 'Collection of network protocol modules',
         AUTHOR   => 'Graham Barr <gbarr@pobox.com>, Steve Hay <shay@cpan.org>',
         LICENSE  => 'perl_5',
-        VERSION  => '3.11',
+        VERSION  => '3.13',
 
         META_MERGE => {
             'meta-spec' => {
@@ -76,7 +76,7 @@ MAIN: {
             resources => {
                 repository => {
                     type => 'git',
-                    url  => 'https://github.com/steve-m-hay/perl-libnet.git'
+                    web  => 'https://github.com/steve-m-hay/perl-libnet'
                 }
             },
 

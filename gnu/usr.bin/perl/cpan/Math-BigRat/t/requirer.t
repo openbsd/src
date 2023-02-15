@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # check that simple requiring BigRat works
 

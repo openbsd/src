@@ -1,6 +1,8 @@
 #!perl -w
 
 use strict;
+use warnings;
+
 use Config qw(%Config);
 use ExtUtils::MakeMaker;
 
@@ -30,7 +32,9 @@ WriteMakefile(
 		      },
     'META_MERGE'   => {
         resources  => {
-            repository => 'https://github.com/gisle/digest-md5',
+            license    => 'http://dev.perl.org/licenses/',
+            bugtracker => 'https://github.com/Dual-Life/digest-md5/issues',
+            repository => 'https://github.com/dual-Life/digest-md5/',
         }
     },
     @extra,

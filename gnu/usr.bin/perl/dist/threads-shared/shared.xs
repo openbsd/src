@@ -824,10 +824,7 @@ sharedsv_scalar_store(pTHX_ SV *sv, SV *ssv)
              * that any previous contents of ssv are correctly freed
              * by sv_setsv(). Not sure if there is a better, API-legal way
              * to achieve this */
-            tmpref = newSV_type(SVt_RV);
-            SvRV_set(tmpref, sobj);
-            SvROK_on(tmpref);
-            SvREFCNT_inc_simple_NN(sobj);
+            tmpref = newRV_inc(sobj);
             sv_setsv_nomg(ssv, tmpref);
             SvREFCNT_dec_NN(tmpref);
 
@@ -1183,7 +1180,7 @@ sharedsv_array_mg_free(pTHX_ SV *sv, MAGIC *mg)
  * This is called when perl is about to access an element of
  * the array -
  */
-#if PERL_VERSION >= 11
+#if PERL_VERSION_GE(5,11,0)
 static int
 sharedsv_array_mg_copy(pTHX_ SV *sv, MAGIC* mg,
                        SV *nsv, const char *name, I32 namlen)
@@ -1296,14 +1293,16 @@ static void
 Perl_sharedsv_init(pTHX)
 {
     dTHXc;
-    PL_sharedsv_space = perl_alloc();
-    perl_construct(PL_sharedsv_space);
-    /* The pair above leaves us in shared context (what dTHX would get),
-     * but aTHX still points to caller context */
-    aTHX = PL_sharedsv_space;
-    LEAVE; /* This balances the ENTER at the end of perl_construct.  */
-    PERL_SET_CONTEXT((aTHX = caller_perl));
-    recursive_lock_init(aTHX_ &PL_sharedsv_lock);
+    if (!PL_sharedsv_space) {
+        PL_sharedsv_space = perl_alloc();
+        perl_construct(PL_sharedsv_space);
+        /* The pair above leaves us in shared context (what dTHX would get),
+         * but aTHX still points to caller context */
+        aTHX = PL_sharedsv_space;
+        LEAVE; /* This balances the ENTER at the end of perl_construct.  */
+        PERL_SET_CONTEXT((aTHX = caller_perl));
+        recursive_lock_init(aTHX_ &PL_sharedsv_lock);
+    }
     PL_lockhook = &Perl_sharedsv_locksv;
     PL_sharehook = &Perl_sharedsv_share;
 #ifdef PL_destroyhook

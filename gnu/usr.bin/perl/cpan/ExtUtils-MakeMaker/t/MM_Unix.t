@@ -19,6 +19,7 @@ BEGIN {
 BEGIN { use_ok( 'ExtUtils::MM_Unix' ); }
 
 use strict;
+use warnings;
 use File::Spec;
 
 my $class = 'ExtUtils::MM_Unix';

@@ -22,8 +22,8 @@ BEGIN {
         unless defined $ENV{COMPRESS_ZLIB_RUN_ALL} or defined $ENV{COMPRESS_ZLIB_RUN_MOST};
 
     plan(skip_all => "IO::Compress::Bzip2 not available" )
-        unless eval { require IO::Compress::Bzip2; 
-                      require IO::Uncompress::Bunzip2; 
+        unless eval { require IO::Compress::Bzip2;
+                      require IO::Uncompress::Bunzip2;
                       1
                     } ;
 
@@ -86,7 +86,7 @@ for $content (@contents)
 
                 ok zip(\$content => \$zipped , Method => ZIP_CM_STORE,
                                                Zip64  => $zip64,
-                                               Stream => $stream), " zip ok" 
+                                               Stream => $stream), " zip ok"
                     or diag $ZipError ;
 
                 my $got ;
@@ -99,4 +99,3 @@ for $content (@contents)
         }
     }
 }
-

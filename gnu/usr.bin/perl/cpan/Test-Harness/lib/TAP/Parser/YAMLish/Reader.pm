@@ -5,16 +5,21 @@ use warnings;
 
 use base 'TAP::Object';
 
-our $VERSION = '3.42';
+our $VERSION = '3.44';
+
+                             # No EBCDIC support on early perls
+*to_native = (ord "A" == 65 || $] < 5.008)
+             ? sub { return shift }
+             : sub { utf8::unicode_to_native(shift) };
 
 # TODO:
 #   Handle blessed object syntax
 
 # Printable characters for escapes
 my %UNESCAPES = (
-    z => "\x00", a => "\x07", t    => "\x09",
-    n => "\x0a", v => "\x0b", f    => "\x0c",
-    r => "\x0d", e => "\x1b", '\\' => '\\',
+    z => "\x00", a => "\a",  t    => "\t",
+    n => "\n",   v => "\cK", f    => "\f",
+    r => "\r",   e => "\e",  '\\' => '\\',
 );
 
 my $QQ_STRING    = qr{ " (?:\\. | [^"])* " }x;
@@ -22,6 +27,7 @@ my $HASH_LINE    = qr{ ^ ($QQ_STRING|\S+) \s* : \s* (?: (.+?) \s* )? $ }x;
 my $IS_HASH_KEY  = qr{ ^ [\w\'\"] }x;
 my $IS_END_YAML  = qr{ ^ \.\.\. \s* $ }x;
 my $IS_QQ_STRING = qr{ ^ $QQ_STRING $ }x;
+my $IS_ARRAY_LINE = qr{ ^ - \s* ($QQ_STRING|\S+) }x;
 
 # new() implementation supplied by TAP::Object
 
@@ -117,7 +123,8 @@ sub _read_qq {
 
     $str =~ s/\\"/"/gx;
     $str =~ s/ \\ ( [tartan\\favez] | x([0-9a-fA-F]{2}) ) 
-                 / (length($1) > 1) ? pack("H2", $2) : $UNESCAPES{$1} /gex;
+                 / (length($1) > 1) ? pack("H2", to_native($2))
+                                    : $UNESCAPES{$1} /gex;
     return $str;
 }
 
@@ -240,8 +247,16 @@ sub _read_hash {
         my ( $key, $value ) = ( $self->_read_scalar($1), $2 );
         $self->_next;
 
+        my ( $next_line, $next_indent ) = $self->_peek;
+
         if ( defined $value ) {
             $hash->{$key} = $self->_read_scalar($value);
+        }
+        elsif (not defined $value                  # no explicit undef ("~") given
+               and $next_indent <= $limit          # next line is same or less indentation
+               and $next_line !~ $IS_ARRAY_LINE)   # arrays can start at same indent
+        {
+            $hash->{$key} = undef;
         }
         else {
             $hash->{$key} = $self->_read_nested;
@@ -269,7 +284,7 @@ TAP::Parser::YAMLish::Reader - Read YAMLish data from iterator
 
 =head1 VERSION
 
-Version 3.42
+Version 3.44
 
 =head1 SYNOPSIS
 

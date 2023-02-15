@@ -27,6 +27,7 @@ See L<perlsecpolicy> for additional information.
 
 =head2 Taint mode
 
+By default,
 Perl automatically enables a set of special security checks, called I<taint
 mode>, when it detects its program running with differing real and effective
 user or group IDs.  The setuid bit in Unix permissions is mode 04000, the
@@ -54,6 +55,11 @@ C<getpwxxx()> calls), and all file input are marked as "tainted".
 Tainted data may not be used directly or indirectly in any command
 that invokes a sub-shell, nor in any command that modifies files,
 directories, or processes, B<with the following exceptions>:
+
+Support for taint checks adds an overhead to all Perl programs,
+whether or not you're using the taint features.
+Perl 5.18 introduced C preprocessor symbols that can
+be used to disable the taint features.
 
 =over 4
 
@@ -235,8 +241,8 @@ Unix-like environments that support #! and setuid or setgid scripts.)
 
 =head2 Taint mode and @INC
 
-When the taint mode (C<-T>) is in effect, the environment variables
-C<PERL5LIB> and C<PERLLIB>
++When the taint mode (C<-T>) is in effect, the environment variables
++C<PERL5LIB>, C<PERLLIB>, and C<PERL_USE_UNSAFE_INC>
 are ignored by Perl.  You can still adjust C<@INC> from outside the
 program by using the C<-I> command line option as explained in
 L<perlrun|perlrun/-Idirectory>.  The two environment variables are
@@ -608,7 +614,7 @@ take its own security precautions such as turning on taint mode.  Where
 C<sudo> configuration dictates exactly which command can be run, the
 approved command may include a C<-T> option to perl to enable taint mode.
 
-In general, it is necessary to evaluate the suitaility of a script to
+In general, it is necessary to evaluate the suitability of a script to
 run under C<sudo> specifically with that kind of execution environment
 in mind.  It is neither necessary nor sufficient for the same script to
 be suitable to run in a traditional set-id arrangement, though many of

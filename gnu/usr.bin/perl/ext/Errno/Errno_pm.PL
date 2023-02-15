@@ -2,14 +2,11 @@ use ExtUtils::MakeMaker;
 use Config;
 use strict;
 
-our $VERSION = "1.30";
+our $VERSION = "1.36";
 
 my %err = ();
 
-# Symbian cross-compiling environment.
-my $IsSymbian = exists $ENV{SDK} && -d "$ENV{SDK}\\epoc32";
-
-my $IsMSWin32 = $^O eq 'MSWin32' && !$IsSymbian;
+my $IsMSWin32 = $^O eq 'MSWin32';
 
 unlink "Errno.pm" if -f "Errno.pm";
 unlink "Errno.tmp" if -f "Errno.tmp";
@@ -21,11 +18,18 @@ if ($Config{gccversion} ne '' && $^O eq 'MSWin32') {
     # MinGW complains "warning: #pragma system_header ignored outside include
     # file" if the header files are processed individually, so include them
     # all in .c file and process that instead.
+    my %seen;
     open INCS, '>', 'includes.c' or
 	die "Cannot open includes.c";
     foreach $file (@files) {
 	next if $file eq 'errno.c';
 	next unless -f $file;
+	if ( $file eq 'avx512vpopcntdqvlintrin.h' || $file eq 'avx512bwintrin.h' ) {
+		# "Never use <avx512bwintrin.h> directly; include <immintrin.h> instead."
+		# "Never use <avx512vpopcntdqvlintrin.h> directly; include <immintrin.h> instead."
+		$file = 'immintrin.h';
+	}
+	next if ++$seen{$file} > 1;
 	print INCS qq[#include "$file"\n];
     }
     close INCS;
@@ -127,7 +131,11 @@ sub get_files {
 	$file{'Sys$Library:DECC$RTLDEF.TLB'} = 1;
     } elsif ($^O eq 'os390') {
 	# OS/390 C compiler doesn't generate #file or #line directives
-	$file{'/usr/include/errno.h'} = 1;
+        # and it does not tag the header as 1047 (EBCDIC), so make a local
+        # copy and tag it
+        my $cp = `cp /usr/include/errno.h ./errno.h`;
+        my $chtag = `chtag -t -cIBM-1047 ./errno.h`;
+	$file{'./errno.h'} = 1;
     } elsif ($Config{archname} eq 'arm-riscos') {
 	# Watch out for cross compiling for RISC OS
 	my $dep = `echo "#include <errno.h>" | gcc -E -M -`;
@@ -143,32 +151,24 @@ sub get_files {
 	$file{$linux_errno_h} = 1;
     } elsif ($^O eq 'haiku') {
 	# hidden in a special place
-	$file{'/boot/develop/headers/posix/errno.h'} = 1;
+	$file{'/boot/system/develop/headers/posix/errno.h'} = 1;
 
     } elsif ($^O eq 'vos') {
 	# avoid problem where cpp returns non-POSIX pathnames
 	$file{'/system/include_library/errno.h'} = 1;
-    } elsif ($IsSymbian) {
-        my $SDK = $ENV{SDK};
-        $SDK =~ s!\\!/!g;
-	$file{"$SDK/epoc32/include/libc/sys/errno.h"} = 1;
     } else {
 	open(CPPI, '>', 'errno.c') or
 	    die "Cannot open errno.c";
 
-	if ($^O eq 'NetWare') {
-	    print CPPI "#include <nwerrno.h>\n";
-	} else {
-	    print CPPI "#include <errno.h>\n";
-	    if ($IsMSWin32) {
-		print CPPI qq[#include "../../win32/include/sys/errno2.h"\n];
-	    }
-	}
+        print CPPI "#include <errno.h>\n";
+        if ($IsMSWin32) {
+            print CPPI qq[#include "../../win32/include/sys/errno2.h"\n];
+        }
 
 	close(CPPI);
 
 	# invoke CPP and read the output
-	if ($IsMSWin32 || $^O eq 'NetWare') {
+	if ($IsMSWin32) {
 	    open(CPPO,"$Config{cpprun} $Config{cppflags} errno.c |") or
 		die "Cannot run '$Config{cpprun} $Config{cppflags} errno.c'";
 	} else {
@@ -179,7 +179,7 @@ sub get_files {
 
 	my $pat = '^#\s*(?:line)?\s*\d+\s+"([^"]+)"';
 	while(<CPPO>) {
-	    if ($^O eq 'os2' or $IsMSWin32 or $^O eq 'NetWare') {
+	    if ($^O eq 'os2' or $IsMSWin32) {
 		if (/$pat/o) {
 		   my $f = $1;
 		   $f =~ s,\\\\,/,g;
@@ -207,12 +207,8 @@ sub write_errno_pm {
     open(CPPI, '>', 'errno.c') or
 	die "Cannot open errno.c";
 
-    if ($^O eq 'NetWare') {
-	print CPPI "#include <nwerrno.h>\n";
-	} 
-    else {
-	print CPPI "#include <errno.h>\n";
-    }
+    print CPPI "#include <errno.h>\n";
+
     if ($IsMSWin32) {
 	print CPPI qq[#include "../../win32/include/sys/errno2.h"\n];
     }
@@ -239,17 +235,12 @@ sub write_errno_pm {
 	    $cpp =~ s/sys\$input//i;
 	    open(CPPO,"$cpp  errno.c |") or
 		die "Cannot exec $Config{cppstdin}";
-	} elsif ($IsMSWin32 || $^O eq 'NetWare') {
+	} elsif ($IsMSWin32) {
 	    my $cpp = "$Config{cpprun} $Config{cppflags}" .
 		$inhibit_linemarkers;
 	    open(CPPO,"$cpp errno.c |") or
 		die "Cannot run '$cpp errno.c'";
-	} elsif ($IsSymbian) {
-            my $cpp = "gcc -E -I$ENV{SDK}\\epoc32\\include\\libc" .
-		$inhibit_linemarkers ." -";
-	    open(CPPO,"$cpp < errno.c |")
-		or die "Cannot exec $cpp";
-        } else {
+	} else {
 	    my $cpp = default_cpp() . $inhibit_linemarkers;
 	    open(CPPO,"$cpp < errno.c |")
 		or die "Cannot exec $cpp";
@@ -289,7 +280,7 @@ sub write_errno_pm {
 #
 
 package Errno;
-require Exporter;
+use Exporter 'import';
 use strict;
 
 EDQ
@@ -310,7 +301,6 @@ CONFIG_CHECK_END
     print <<"EDQ";
 our \$VERSION = "$VERSION";
 \$VERSION = eval \$VERSION;
-our \@ISA = 'Exporter';
 
 my %err;
 

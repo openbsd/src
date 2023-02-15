@@ -68,21 +68,34 @@ function without an explicit return statement is called a subroutine, but
 there's really no difference from Perl's perspective.)
 X<subroutine, parameter> X<parameter>
 
-Any arguments passed in show up in the array C<@_>.
-(They may also show up in lexical variables introduced by a signature;
-see L</Signatures> below.)  Therefore, if
-you called a function with two arguments, those would be stored in
-C<$_[0]> and C<$_[1]>.  The array C<@_> is a local array, but its
-elements are aliases for the actual scalar parameters.  In particular,
-if an element C<$_[0]> is updated, the corresponding argument is
-updated (or an error occurs if it is not updatable).  If an argument
-is an array or hash element which did not exist when the function
-was called, that element is created only when (and if) it is modified
-or a reference to it is taken.  (Some earlier versions of Perl
-created the element whether or not the element was assigned to.)
-Assigning to the whole array C<@_> removes that aliasing, and does
-not update any arguments.
+In a subroutine that uses signatures (see L</Signatures> below),
+arguments are assigned into lexical variables introduced by the
+signature.  In the current implementation of perl they are also
+accessible in the C<@_> array in the same way as for non-signature
+subroutines, but accessing them in this manner is now discouraged inside
+such a signature-using subroutine.
+
+In a subroutine that does not use signatures, any arguments passed in
+show up in the array C<@_>.  Therefore, if you called a function with
+two arguments, those would be stored in C<$_[0]> and C<$_[1]>.  The
+array C<@_> is a local array, but its elements are aliases for the
+actual scalar parameters.  In particular, if an element C<$_[0]> is
+updated, the corresponding argument is updated (or an error occurs if it
+is not updatable).  If an argument is an array or hash element which did
+not exist when the function was called, that element is created only
+when (and if) it is modified or a reference to it is taken.  (Some
+earlier versions of Perl created the element whether or not the element
+was assigned to.) Assigning to the whole array C<@_> removes that
+aliasing, and does not update any arguments.
 X<subroutine, argument> X<argument> X<@_>
+
+When not using signatures, Perl does not otherwise provide a means to
+create named formal parameters. In practice all you do is assign to a
+C<my()> list of these.  Variables that aren't declared to be private are
+global variables.  For gory details on creating private variables, see
+L</"Private Variables via my()"> and L</"Temporary Values via local()">.
+To create protected environments for a set of functions in a separate
+package (and probably a separate file), see L<perlmod/"Packages">.
 
 A C<return> statement may be used to exit a subroutine, optionally
 specifying the returned value, which will be evaluated in the
@@ -98,16 +111,6 @@ value is returned.  If the last statement is a loop control structure
 like a C<foreach> or a C<while>, the returned value is unspecified.  The
 empty sub returns the empty list.
 X<subroutine, return value> X<return value> X<return>
-
-Aside from an experimental facility (see L</Signatures> below),
-Perl does not have named formal parameters.  In practice all you
-do is assign to a C<my()> list of these.  Variables that aren't
-declared to be private are global variables.  For gory details
-on creating private variables, see L</"Private Variables via my()">
-and L</"Temporary Values via local()">.  To create protected
-environments for a set of functions in a separate package (and
-probably a separate file), see L<perlmod/"Packages">.
-X<formal parameter> X<parameter, formal>
 
 Example:
 
@@ -238,11 +241,11 @@ to cheat if you know what you're doing.  See L</Prototypes> below.
 X<&>
 
 Since Perl 5.16.0, the C<__SUB__> token is available under C<use feature
-'current_sub'> and C<use 5.16.0>.  It will evaluate to a reference to the
+'current_sub'> and C<use v5.16>.  It will evaluate to a reference to the
 currently-running sub, which allows for recursive calls without knowing
 your subroutine's name.
 
-    use 5.16.0;
+    use v5.16;
     my $factorial = sub {
       my ($x) = @_;
       return 1 if $x == 1;
@@ -315,16 +318,15 @@ explicitly.  See L<perlmod/"BEGIN, UNITCHECK, CHECK, INIT and END">
 
 =head2 Signatures
 
-B<WARNING>: Subroutine signatures are experimental.  The feature may be
-modified or removed in future versions of Perl.
+X<formal parameter> X<parameter, formal>
 
-Perl has an experimental facility to allow a subroutine's formal
-parameters to be introduced by special syntax, separate from the
-procedural code of the subroutine body.  The formal parameter list
-is known as a I<signature>.  The facility must be enabled first by a
-pragmatic declaration, C<use feature 'signatures'>, and it will produce
-a warning unless the "experimental::signatures" warnings category is
-disabled.
+Perl has a facility to allow a subroutine's formal parameters to be
+declared by special syntax, separate from the procedural code of the
+subroutine body.  The formal parameter list is known as a I<signature>.
+
+This facility must be enabled before it can be used. It is enabled
+automatically by a C<use v5.36> (or higher) declaration, or more
+directly by C<use feature 'signatures'>, in the current scope.
 
 The signature is part of a subroutine's body.  Normally the body of a
 subroutine is simply a braced block of code, but when using a signature,
@@ -473,13 +475,37 @@ that the caller passed no arguments:
 	return 123;
     }
 
-When using a signature, the arguments are still available in the special
-array variable C<@_>, in addition to the lexical variables of the
-signature.  There is a difference between the two ways of accessing the
-arguments: C<@_> I<aliases> the arguments, but the signature variables
-get I<copies> of the arguments.  So writing to a signature variable
-only changes that variable, and has no effect on the caller's variables,
-but writing to an element of C<@_> modifies whatever the caller used to
+Prior to Perl 5.36 these were considered experimental, and emitted a
+warning in the C<experimental::signatures> category. From Perl 5.36
+onwards this no longer happens, though the warning category still exists
+for back-compatibility with code that attempts to disable it with a
+statement such as:
+
+    no warnings 'experimental::signatures';
+
+In the current perl implementation, when using a signature the arguments
+are still also available in the special array variable C<@_>.  However,
+accessing them via this array is now discouraged, and should not be
+relied upon in newly-written code as this ability may change in a future
+version.  Code that attempts to access the C<@_> array will produce
+warnings in the C<experimental::args_array_with_signatures> category when
+compiled:
+
+    sub f ($x) {
+        # This line emits the warning seen below
+        print "Arguments are @_";
+    }
+
+Z<>
+
+    Use of @_ in join or string with signatured subroutine is
+    experimental at ...
+
+There is a difference between the two ways of accessing the arguments:
+C<@_> I<aliases> the arguments, but the signature variables get
+I<copies> of the arguments.  So writing to a signature variable only
+changes that variable, and has no effect on the caller's variables, but
+writing to an element of C<@_> modifies whatever the caller used to
 supply that argument.
 
 There is a potential syntactic ambiguity between signatures and prototypes
@@ -1032,6 +1058,8 @@ also accepted.
     }
     # %hash is back to its original state
 
+This construct is supported since Perl v5.12.
+
 =head2 Lvalue subroutines
 X<lvalue> X<subroutine, lvalue>
 
@@ -1077,7 +1105,7 @@ X<my sub> X<state sub> X<our sub> X<subroutine, lexical>
 
 Beginning with Perl 5.18, you can declare a private subroutine with C<my>
 or C<state>.  As with state variables, the C<state> keyword is only
-available under C<use feature 'state'> or C<use 5.010> or higher.
+available under C<use feature 'state'> or C<use v5.10> or higher.
 
 Prior to Perl 5.26, lexical subroutines were deemed experimental and were
 available only under the C<use feature 'lexical_subs'> pragma.  They also
@@ -1467,7 +1495,7 @@ corresponding built-in.
    sub myjoin ($@)	   myjoin ":", $a, $b, $c
    sub mypop (\@)	   mypop @array
    sub mysplice (\@$$@)	   mysplice @array, 0, 2, @pushme
-   sub mykeys (\[%@])	   mykeys %{$hashref}
+   sub mykeys (\[%@])	   mykeys $hashref->%*
    sub myopen (*;$)	   myopen HANDLE, $name
    sub mypipe (**)	   mypipe READHANDLE, WRITEHANDLE
    sub mygrep (&@)	   mygrep { /foo/ } $a, $b, $c
@@ -1652,7 +1680,7 @@ inlining.  If the result after optimization and constant folding
 is either a constant or a lexically-scoped scalar which has no other
 references, then it will be used in place of function calls made
 without C<&>.  Calls made using C<&> are never inlined.  (See
-F<constant.pm> for an easy way to declare most constants.)
+L<constant> for an easy way to declare most constants.)
 
 The following functions would all be inlined:
 
@@ -1705,29 +1733,31 @@ has no other references.  Only the first example here will be inlined:
         *NOT_INLINED = sub () { $var };
     }
 
-A not so obvious caveat with this (see [RT #79908]) is that the
-variable will be immediately inlined, and will stop behaving like a
-normal lexical variable, e.g. this will print C<79907>, not C<79908>:
+A not so obvious caveat with this (see [RT #79908]) is what happens if the
+variable is potentially modifiable. For example:
 
     BEGIN {
-        my $x = 79907;
-        *RT_79908 = sub () { $x };
+        my $x = 10;
+        *FOO = sub () { $x };
         $x++;
     }
-    print RT_79908(); # prints 79907
+    print FOO(); # printed 10 prior to 5.32.0
 
-As of Perl 5.22, this buggy behavior, while preserved for backward
-compatibility, is detected and emits a deprecation warning.  If you want
-the subroutine to be inlined (with no warning), make sure the variable is
-not used in a context where it could be modified aside from where it is
-declared.
+From Perl 5.22 onwards this gave a deprecation warning, and from Perl 5.32
+onwards it became a run-time error. Previously the variable was
+immediately inlined, and stopped behaving like a normal lexical variable;
+so it printed C<10>, not C<11>.
+
+If you still want such a subroutine to be inlined (with no warning), make
+sure the variable is not used in a context where it could be modified
+aside from where it is declared.
 
     # Fine, no warning
     BEGIN {
         my $x = 54321;
         *INLINED = sub () { $x };
     }
-    # Warns.  Future Perl versions will stop inlining it.
+    # Error
     BEGIN {
         my $x;
         $x = 54321;
@@ -1754,11 +1784,11 @@ lexical variable you can easily force it to not be inlined by adding
 an explicit C<return>:
 
     BEGIN {
-        my $x = 79907;
-        *RT_79908 = sub () { return $x };
+        my $x = 10;
+        *FOO = sub () { return $x };
         $x++;
     }
-    print RT_79908(); # prints 79908
+    print FOO(); # prints 11
 
 The easiest way to tell if a subroutine was inlined is by using
 L<B::Deparse>.  Consider this example of two subroutines returning
@@ -1772,6 +1802,7 @@ without (with deparse output truncated for clarity):
  if (ONE ) {
      print ONE() if ONE ;
  }
+
  $ perl -MO=Deparse -le 'sub ONE () { 1 } if (ONE) { print ONE if ONE }'
  sub ONE () { 1 }
  do {

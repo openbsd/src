@@ -16,17 +16,12 @@ struct xpvcv {
 };
 
 /*
-=head1 Handy Values
+=for apidoc Ayh||CV
 
 =for apidoc ADmnU||Nullcv
 Null CV pointer.
 
 (deprecated - use C<(CV *)NULL> instead)
-
-=head1 CV Manipulation Functions
-
-This section documents functions to manipulate CVs which are code-values,
-or subroutines.  For more information, see L<perlguts>.
 
 =for apidoc Am|HV*|CvSTASH|CV* cv
 Returns the stash of the CV.  A stash is the symbol table hash, containing
@@ -68,7 +63,7 @@ See L<perlguts/Autoloading with XSUBs>.
 
 /* these CvPADLIST/CvRESERVED asserts can be reverted one day, once stabilized */
 #define CvPADLIST(sv)	  (*(assert_(!CvISXSUB((CV*)(sv))) \
-	&(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_padlist)))
+        &(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_padlist)))
 /* CvPADLIST_set is not public API, it can be removed one day, once stabilized */
 #ifdef DEBUGGING
 #  define CvPADLIST_set(sv, padlist) Perl_set_padlist((CV*)sv, padlist)
@@ -76,7 +71,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #  define CvPADLIST_set(sv, padlist) (CvPADLIST(sv) = (padlist))
 #endif
 #define CvHSCXT(sv)	  *(assert_(CvISXSUB((CV*)(sv))) \
-	&(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_hscxt))
+        &(((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_padlist_u.xcv_hscxt))
 #ifdef DEBUGGING
 #  if PTRSIZE == 8
 #    define PoisonPADLIST(sv) \
@@ -97,20 +92,20 @@ See L<perlguts/Autoloading with XSUBs>.
 
 /* These two are sometimes called on non-CVs */
 #define CvPROTO(sv)                               \
-	(                                          \
-	 SvPOK(sv)                                  \
-	  ? SvTYPE(sv) == SVt_PVCV && CvAUTOLOAD(sv) \
-	     ? SvEND(sv)+1 : SvPVX_const(sv)          \
-	  : NULL                                       \
-	)
+        (                                          \
+         SvPOK(sv)                                  \
+          ? SvTYPE(sv) == SVt_PVCV && CvAUTOLOAD(sv) \
+             ? SvEND(sv)+1 : SvPVX_const(sv)          \
+          : NULL                                       \
+        )
 #define CvPROTOLEN(sv)	                          \
-	(                                          \
-	 SvPOK(sv)                                  \
-	  ? SvTYPE(sv) == SVt_PVCV && CvAUTOLOAD(sv) \
-	     ? SvLEN(sv)-SvCUR(sv)-2                  \
-	     : SvCUR(sv)                               \
-	  : 0                                           \
-	)
+        (                                          \
+         SvPOK(sv)                                  \
+          ? SvTYPE(sv) == SVt_PVCV && CvAUTOLOAD(sv) \
+             ? SvLEN(sv)-SvCUR(sv)-2                  \
+             : SvCUR(sv)                               \
+          : 0                                           \
+        )
 
 #define CVf_METHOD	0x0001	/* CV is explicitly marked as a method */
 #define CVf_LVALUE	0x0002  /* CV return value can be used as lvalue */
@@ -122,11 +117,11 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_CLONED	0x0040	/* a clone of one of those */
 #define CVf_ANON	0x0080	/* CV is not pointed to by a GV */
 #define CVf_UNIQUE	0x0100	/* sub is only called once (eg PL_main_cv,
-				 * require, eval). */
+                                 * require, eval). */
 #define CVf_NODEBUG	0x0200	/* no DB::sub indirection for this CV
-				   (esp. useful for special XSUBs) */
+                                   (esp. useful for special XSUBs) */
 #define CVf_CVGV_RC	0x0400	/* CvGV is reference counted */
-#ifdef PERL_CORE
+#if defined(PERL_CORE) || defined(PERL_EXT)
 # define CVf_SLABBED	0x0800	/* Holds refcount on op slab  */
 #endif
 #define CVf_DYNFILE	0x1000	/* The filename is malloced  */
@@ -135,6 +130,7 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CVf_NAMED	0x8000  /* Has a name HEK */
 #define CVf_LEXICAL	0x10000 /* Omit package from name */
 #define CVf_ANONCONST	0x20000 /* :const - create anonconst op */
+#define CVf_SIGNATURE   0x40000 /* CV uses a signature */
 
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LVALUE|CVf_ANONCONST)
@@ -224,6 +220,10 @@ See L<perlguts/Autoloading with XSUBs>.
 #define CvANONCONST_on(cv)	(CvFLAGS(cv) |= CVf_ANONCONST)
 #define CvANONCONST_off(cv)	(CvFLAGS(cv) &= ~CVf_ANONCONST)
 
+#define CvSIGNATURE(cv)		(CvFLAGS(cv) & CVf_SIGNATURE)
+#define CvSIGNATURE_on(cv)	(CvFLAGS(cv) |= CVf_SIGNATURE)
+#define CvSIGNATURE_off(cv)	(CvFLAGS(cv) &= ~CVf_SIGNATURE)
+
 /* Flags for newXS_flags  */
 #define XS_DYNAMIC_FILENAME	0x01	/* The filename isn't static  */
 
@@ -231,8 +231,8 @@ PERL_STATIC_INLINE HEK *
 CvNAME_HEK(CV *sv)
 {
     return CvNAMED(sv)
-	? ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv_u.xcv_hek
-	: 0;
+        ? ((XPVCV*)MUTABLE_PTR(SvANY(sv)))->xcv_gv_u.xcv_hek
+        : 0;
 }
 
 /* helper for the common pattern:
@@ -247,15 +247,14 @@ CvNAME_HEK(CV *sv)
 /* This lowers the reference count of the previous value, but does *not*
    increment the reference count of the new value. */
 #define CvNAME_HEK_set(cv, hek) ( \
-	CvNAME_HEK((CV *)(cv))						 \
-	    ? unshare_hek(SvANY((CV *)(cv))->xcv_gv_u.xcv_hek)	  \
-	    : (void)0,						   \
-	((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_gv_u.xcv_hek = (hek), \
-	CvNAMED_on(cv)						     \
+        CvNAME_HEK((CV *)(cv))						 \
+            ? unshare_hek(SvANY((CV *)(cv))->xcv_gv_u.xcv_hek)	  \
+            : (void)0,						   \
+        ((XPVCV*)MUTABLE_PTR(SvANY(cv)))->xcv_gv_u.xcv_hek = (hek), \
+        CvNAMED_on(cv)						     \
     )
 
 /*
-=head1 CV reference counts and CvOUTSIDE
 
 =for apidoc m|bool|CvWEAKOUTSIDE|CV *cv
 

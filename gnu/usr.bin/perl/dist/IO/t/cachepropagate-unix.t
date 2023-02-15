@@ -50,7 +50,7 @@ my $p = $listener->protocol();
     # This is a TODO instead of a skip so if these ever implement SO_PROTOCOL
     # we'll be notified about the passing TODO so the test can be updated.
     local $TODO = "$^O doesn't support SO_PROTOCOL on AF_UNIX"
-        if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390)$/;
+        if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390|gnu)$/;
     ok(defined($p), 'protocol defined');
 }
 my $d = $listener->sockdomain();
@@ -105,7 +105,7 @@ SKIP: {
     {
         # see comment above
         local $TODO = "$^O doesn't support SO_PROTOCOL on AF_UNIX"
-            if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390)$/;
+            if $^O =~ /^(netbsd|darwin|cygwin|hpux|solaris|dragonfly|os390|gnu)$/;
         ok(defined($p), 'protocol defined');
     }
     $d = $listener->sockdomain();
@@ -120,8 +120,6 @@ SKIP: {
       skip "no Socket::SO_PROTOCOL", 1 if !defined(eval { Socket::SO_PROTOCOL });
       skip "SO_PROTOCOL defined but not implemented", 1
          if !defined $new->sockopt(Socket::SO_PROTOCOL);
-      skip "SO_PROTOCOL returns chosen protocol on OpenBSD", 1
-         if $^O eq 'openbsd';
       is($new->protocol(), $p, 'protocol match');
     }
     SKIP: {

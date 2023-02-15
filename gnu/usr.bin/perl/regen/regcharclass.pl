@@ -6,7 +6,6 @@ use warnings;
 use warnings FATAL => 'all';
 use Data::Dumper;
 $Data::Dumper::Useqq= 1;
-our $hex_fmt= "0x%02X";
 
 sub DEBUG () { 0 }
 $|=1 if DEBUG;
@@ -167,13 +166,13 @@ License or the Artistic License, as specified in the README file.
 #
 
 sub __uni_latin1 {
-    my $charset= shift;
+    my $charset = shift;
+    my $a2n= shift;
     my $str= shift;
     my $max= 0;
     my @cp;
     my @cp_high;
     my $only_has_invariants = 1;
-    my $a2n = get_a2n($charset);
     for my $ch ( split //, $str ) {
         my $cp= ord $ch;
         $max= $cp if $max < $cp;
@@ -226,10 +225,11 @@ sub __clean {
     #       ( ( (cond1) && (cond2) ) ? X : Y )
     # Also similarly handles expressions like:
     #       : (cond1) ? ( (cond2) ? X : Y ) : Y )
-    # Note the inclusion of the close paren in ([:()]) and the open paren in ([()]) is
-    # purely to ensure we have a balanced set of parens in the expression which makes
-    # it easier to understand the pattern in an editor that understands paren's, we do
-    # not expect either of these cases to actually fire. - Yves
+    # Note the inclusion of the close paren in ([:()]) and the open paren in
+    # ([()]) is purely to ensure we have a balanced set of parens in the
+    # expression which makes it easier to understand the pattern in an editor
+    # that understands paren's, we do not expect either of these cases to
+    # actually fire. - Yves
     1 while $expr =~ s/
         ([:()])  \s*
             ($parens) \s*
@@ -303,6 +303,41 @@ sub __cond_join {
     }
 }
 
+my $hex_fmt= "0x%02X";
+
+sub val_fmt
+{
+    my $self = shift;
+    my $arg = shift;
+    my $always_hex = shift // 0;    # Use \x{}; don't look for a mnemonic
+
+    # Format 'arg' using the printable character if it has one, or a %x if
+    # not, returning a string containing the result
+
+    # Return what always returned for an unexpected argument
+    return $hex_fmt unless defined $arg && $arg !~ /\D/;
+
+    # We convert only things inside Latin1
+    if (! $always_hex && $arg < 256) {
+
+        # Find the ASCII equivalent of this argument (as the current character
+        # set might not be ASCII)
+        my $char = chr $self->{n2a}->[$arg];
+
+        # If printable, return it, escaping \ and '
+        return "'$char'" if $char =~ /[^\\'[:^print:]]/a;
+        return "'\\\\'" if $char eq "\\";
+        return "'\''" if $char eq "'";
+
+        # Handle the mnemonic controls
+        my $pos = index("\a\b\e\f\n\r\t\cK", $char);
+        return "'\\" . substr("abefnrtv", $pos, 1) . "'" if $pos >= 0;
+    }
+
+    # Otherwise, just the input, formatted
+    return sprintf $hex_fmt, $arg;
+}
+
 # Methods
 
 # constructor
@@ -320,16 +355,24 @@ sub __cond_join {
 #
 # Each string is then stored in the 'strs' subhash as a hash record
 # made up of the results of __uni_latin1, using the keynames
-# 'low','latin1','utf8', as well as the synthesized 'LATIN1', 'high', and
-# 'UTF8' which hold a merge of 'low' and their lowercase equivalents.
+# 'low', 'latin1', 'utf8', as well as the synthesized 'LATIN1', 'high',
+# 'UTF8', and 'backwards_UTF8' which hold a merge of 'low' and their lowercase
+# equivalents.
 #
 # Size data is tracked per type in the 'size' subhash.
 #
 # Return an object
-#
+
+my %a2n;
+my %n2a;        # Inversion of a2n, for each character set
+my %I8_2_utf;
+my %utf_2_I8;   # Inversion of I8_2_utf, for each EBCDIC character set
+my @identity = (0..255);
+
 sub new {
     my $class= shift;
     my %opt= @_;
+    my %hash_return;
     for ( qw(op txt) ) {
         die "in " . __PACKAGE__ . " constructor '$_;' is a mandatory field"
           if !exists $opt{$_};
@@ -339,6 +382,26 @@ sub new {
         op    => $opt{op},
         title => $opt{title} || '',
     }, $class;
+
+    my $charset = $opt{charset};
+    $a2n{$charset} = get_a2n($charset);
+
+    # We need to construct the maps going the other way if not already done
+    unless (defined $n2a{$charset}) {
+        for (my $i = 0; $i < 256; $i++) {
+            $n2a{$charset}->[$a2n{$charset}->[$i]] = $i;
+        }
+    }
+
+    if ($charset =~ /ebcdic/i) {
+        $I8_2_utf{$charset} = get_I8_2_utf($charset);
+        unless (defined $utf_2_I8{$charset}) {
+            for (my $i = 0; $i < 256; $i++) {
+                $utf_2_I8{$charset}->[$I8_2_utf{$charset}->[$i]] = $i;
+            }
+        }
+    }
+
     foreach my $txt ( @{ $opt{txt} } ) {
         my $str= $txt;
         if ( $str =~ /^[""]/ ) {
@@ -346,7 +409,8 @@ sub new {
         } elsif ($str =~ / - /x ) { # A range:  Replace this element on the
                                     # list with its expansion
             my ($lower, $upper) = $str =~ / 0x (.+?) \s* - \s* 0x (.+) /x;
-            die "Format must be like '0xDEAD - 0xBEAF'; instead was '$str'" if ! defined $lower || ! defined $upper;
+            die "Format must be like '0xDEAD - 0xBEAF'; instead was '$str'"
+                                        if ! defined $lower || ! defined $upper;
             foreach my $cp (hex $lower .. hex $upper) {
                 push @{$opt{txt}}, sprintf "0x%X", $cp;
             }
@@ -389,18 +453,31 @@ sub new {
             die "eval '$1' failed: $@" if $@;
             push @{$opt{txt}}, @results;
             next;
+        } elsif ($str =~ / ^ % \s* ( .* ) /x) { # user-furnished sub() call
+            %hash_return = eval "$1";
+            die "eval '$1' failed: $@" if $@;
+            push @{$opt{txt}}, keys %hash_return;
+            die "Only one multi character expansion currently allowed per rule"
+                                                        if  $self->{multi_maps};
+            next;
         } else {
             die "Unparsable line: $txt\n";
         }
-        my ( $cp, $cp_high, $low, $latin1, $utf8 )= __uni_latin1( $opt{charset}, $str );
+        my ( $cp, $cp_high, $low, $latin1, $utf8 )
+                                    = __uni_latin1($charset, $a2n{$charset}, $str );
+        my $from;
+        if (defined $hash_return{"\"$str\""}) {
+            $from = $hash_return{"\"$str\""};
+            $from = $a2n{$charset}->[$from] if $from < 256;
+        }
         my $UTF8= $low   || $utf8;
         my $LATIN1= $low || $latin1;
         my $high = (scalar grep { $_ < 256 } @$cp) ? 0 : $utf8;
         #die Dumper($txt,$cp,$low,$latin1,$utf8)
         #    if $txt=~/NEL/ or $utf8 and @$utf8>3;
 
-        @{ $self->{strs}{$str} }{qw( str txt low utf8 latin1 high cp cp_high UTF8 LATIN1 )}=
-          ( $str, $txt, $low, $utf8, $latin1, $high, $cp, $cp_high, $UTF8, $LATIN1 );
+        @{ $self->{strs}{$str} }{qw( str txt low utf8 latin1 high cp cp_high UTF8 LATIN1 from )}=
+          ( $str, $txt, $low, $utf8, $latin1, $high, $cp, $cp_high, $UTF8, $LATIN1, $from );
         my $rec= $self->{strs}{$str};
         foreach my $key ( qw(low utf8 latin1 high cp cp_high UTF8 LATIN1) ) {
             $self->{size}{$key}{ 0 + @{ $self->{strs}{$str}{$key} } }++
@@ -411,7 +488,7 @@ sub new {
         $self->{has_low}   ||= $low && @$low;
         $self->{has_high}  ||= !$low && !$latin1;
     }
-    $self->{val_fmt}= $hex_fmt;
+    $self->{n2a} = $n2a{$charset};
     $self->{count}= 0 + keys %{ $self->{strs} };
     return $self;
 }
@@ -427,7 +504,7 @@ sub new {
 #
 
 sub make_trie {
-    my ( $self, $type, $maxlen )= @_;
+    my ( $self, $type, $maxlen, $backwards )= @_;
 
     my $strs= $self->{strs};
     my %trie;
@@ -438,7 +515,8 @@ sub make_trie {
         next unless $dat;
         next if $maxlen && @$dat > $maxlen;
         my $node= \%trie;
-        foreach my $elem ( @$dat ) {
+        my @ordered_dat = ($backwards) ? reverse @$dat : @$dat;
+        foreach my $elem ( @ordered_dat ) {
             $node->{$elem} ||= {};
             $node= $node->{$elem};
         }
@@ -471,11 +549,8 @@ sub pop_count ($) {
 #
 
 sub _optree {
-    my ( $self, $trie, $test_type, $ret_type, $else, $depth )= @_;
+    my ( $self, $trie, $test_type, $ret_type, $else, $depth, $backwards )= @_;
     return unless defined $trie;
-    if ( $self->{has_multi} and $ret_type =~ /cp|both/ ) {
-        die "Can't do 'cp' optree from multi-codepoint strings";
-    }
     $ret_type ||= 'len';
     $else= 0  unless defined $else;
     $depth= 0 unless defined $depth;
@@ -486,14 +561,17 @@ sub _optree {
     if (exists $trie->{''} ) {
         # we can now update the "else" value, anything failing to match
         # after this point should return the value from this.
+        my $prefix = $self->{strs}{ $trie->{''} };
         if ( $ret_type eq 'cp' ) {
-            $else= $self->{strs}{ $trie->{''} }{cp}[0];
-            $else= sprintf "$self->{val_fmt}", $else if $else > 9;
+            $else= $prefix->{from};
+            $else= $self->{strs}{ $trie->{''} }{cp}[0] unless defined $else;
+            $else= $self->val_fmt($else) if $else > 9;
         } elsif ( $ret_type eq 'len' ) {
             $else= $depth;
         } elsif ( $ret_type eq 'both') {
-            $else= $self->{strs}{ $trie->{''} }{cp}[0];
-            $else= sprintf "$self->{val_fmt}", $else if $else > 9;
+            $else= $prefix->{from};
+            $else= $self->{strs}{ $trie->{''} }{cp}[0] unless defined $else;
+            $else= $self->val_fmt($else) if $else > 9;
             $else= "len=$depth, $else";
         }
     }
@@ -505,7 +583,16 @@ sub _optree {
     # can return the "else" value.
     return $else if !@conds;
 
-    my $test = $test_type =~ /^cp/ ? "cp" : "((const U8*)s)[$depth]";
+    my $test;
+    if ($test_type =~ /^cp/) {
+        $test = "cp";
+    }
+    elsif ($backwards) {
+        $test = "*((const U8*)s - " . ($depth + 1) . ")";
+    }
+    else {
+        $test = "((const U8*)s)[$depth]";
+    }
 
     # First we loop over the possible keys/conditions and find out what they
     # look like; we group conditions with the same optree together.
@@ -515,7 +602,8 @@ sub _optree {
     foreach my $cond ( @conds ) {
 
         # get the optree for this child/condition
-        my $res= $self->_optree( $trie->{$cond}, $test_type, $ret_type, $else, $depth + 1 );
+        my $res= $self->_optree( $trie->{$cond}, $test_type, $ret_type,
+                                                $else, $depth + 1, $backwards );
         # convert it to a string with Dumper
         my $res_code= Dumper( $res );
 
@@ -526,7 +614,8 @@ sub _optree {
         }
     }
 
-    # now that we have deduped the optrees we construct a new optree containing the merged
+    # now that we have deduped the optrees we construct a new optree
+    # containing the merged
     # results.
     my %root;
     my $node= \%root;
@@ -554,10 +643,11 @@ sub _optree {
 sub optree {
     my $self= shift;
     my %opt= @_;
-    my $trie= $self->make_trie( $opt{type}, $opt{max_depth} );
+    my $trie= $self->make_trie( $opt{type}, $opt{max_depth}, $opt{backwards} );
     $opt{ret_type} ||= 'len';
     my $test_type= $opt{type} =~ /^cp/ ? 'cp' : 'depth';
-    return $self->_optree( $trie, $test_type, $opt{ret_type}, $opt{else}, 0 );
+    return $self->_optree( $trie, $test_type, $opt{ret_type}, $opt{else}, 0,
+                                                                    $opt{backwards} );
 }
 
 # my $optree= generic_optree(%opts);
@@ -574,10 +664,10 @@ sub generic_optree {
     my $test_type= 'depth';
     my $else= $opt{else} || 0;
 
-    my $latin1= $self->make_trie( 'latin1', $opt{max_depth} );
-    my $utf8= $self->make_trie( 'utf8',     $opt{max_depth} );
+    my $latin1= $self->make_trie( 'latin1', $opt{max_depth}, $opt{backwards} );
+    my $utf8= $self->make_trie( 'utf8',     $opt{max_depth}, $opt{backwards} );
 
-    $_= $self->_optree( $_, $test_type, $opt{ret_type}, $else, 0 )
+    $_= $self->_optree( $_, $test_type, $opt{ret_type}, $else, 0, $opt{backwards} )
       for $latin1, $utf8;
 
     if ( $utf8 ) {
@@ -586,9 +676,10 @@ sub generic_optree {
         $else= __cond_join( "!( is_utf8 )", $latin1, $else );
     }
     if ($opt{type} eq 'generic') {
-        my $low= $self->make_trie( 'low', $opt{max_depth} );
+        my $low= $self->make_trie( 'low', $opt{max_depth}, $opt{backwards} );
         if ( $low ) {
-            $else= $self->_optree( $low, $test_type, $opt{ret_type}, $else, 0 );
+            $else= $self->_optree( $low, $test_type, $opt{ret_type}, $else, 0,
+                                                                    $opt{backwards} );
         }
     }
 
@@ -641,8 +732,16 @@ sub length_optree {
             @size= sort { $a <=> $b } keys %{ $self->{size}{$type} };
         }
         for my $size ( @size ) {
-            my $optree= $self->$method( %opt, type => $type, max_depth => $size );
+            my $optree= $self->$method(%opt, type => $type, max_depth => $size);
             my $cond= "((e)-(s) > " . ( $size - 1 ).")";
+            $else= __cond_join( $cond, $optree, $else );
+        }
+    }
+    elsif ($opt{backwards}) {
+        my @size= sort { $a <=> $b } keys %{ $self->{size}{$type} };
+        for my $size ( @size ) {
+            my $optree= $self->$method(%opt, type => $type, max_depth => $size);
+            my $cond= "((s) - (e) > " . ( $size - 1 ).")";
             $else= __cond_join( $cond, $optree, $else );
         }
     }
@@ -660,10 +759,13 @@ sub length_optree {
 
         # If we do want more than the 0-255 range, find those, and if they
         # exist...
-        if ($opt{type} !~ /latin1/i && ($utf8 = $self->make_trie($trie_type, 0))) {
+        if (   $opt{type} !~ /latin1/i
+            && ($utf8 = $self->make_trie($trie_type, 0, $opt{backwards})))
+        {
 
             # ... get them into an optree, and set them up as the 'else' clause
-            $utf8 = $self->_optree( $utf8, 'depth', $opt{ret_type}, 0, 0 );
+            $utf8 = $self->_optree( $utf8, 'depth', $opt{ret_type}, 0, 0,
+                                                                    $opt{backwards} );
 
             # We could make this
             #   UTF8_IS_START(*s) && ((e) - (s)) >= UTF8SKIP(s))";
@@ -681,16 +783,18 @@ sub length_optree {
             # the case where the input isn't UTF-8.
             my $latin1;
             if ($method eq 'generic_optree') {
-                $latin1 = $self->make_trie( 'latin1', 1);
-                $latin1= $self->_optree( $latin1, 'depth', $opt{ret_type}, 0, 0 );
+                $latin1 = $self->make_trie( 'latin1', 1, $opt{backwards});
+                $latin1= $self->_optree($latin1, 'depth', $opt{ret_type}, 0, 0,
+                                                                    $opt{backwards});
             }
 
             # If we want the UTF-8 invariants, get those.
             my $low;
             if ($opt{type} !~ /non_low|high/
-                && ($low= $self->make_trie( 'low', 1)))
+                && ($low= $self->make_trie( 'low', 1, 0)))
             {
-                $low= $self->_optree( $low, 'depth', $opt{ret_type}, 0, 0 );
+                $low= $self->_optree( $low, 'depth', $opt{ret_type}, 0, 0,
+                                                                    $opt{backwards} );
 
                 # Expand out the UTF-8 invariants as a string so that we
                 # can use them as the conditional
@@ -852,25 +956,29 @@ sub calculate_mask(@) {
             my @bits_that_differ = pop_count($list[$i] ^ $list[$j]);
             my $differ_count = @bits_that_differ;
             my $key = join ",", @bits_that_differ;
-            push @{$hash{$differ_count}{$key}}, $list[$i] unless grep { $_ == $list[$i] } @{$hash{$differ_count}{$key}};
+            push @{$hash{$differ_count}{$key}}, $list[$i]
+                unless grep { $_ == $list[$i] } @{$hash{$differ_count}{$key}};
             push @{$hash{$differ_count}{$key}}, $list[$j];
         }
     }
 
-    print STDERR __LINE__, ": calculate_mask() called:  List of values grouped by differing bits: ", Dumper \%hash if DEBUG;
+    print STDERR __LINE__, ": calculate_mask() called:  List of values grouped",
+                                " by differing bits: ", Dumper \%hash if DEBUG;
 
     my @final_results;
     foreach my $count (reverse sort { $a <=> $b } keys %hash) {
         my $need = 2 ** $count;     # Need 8 values for 3 differing bits, etc
         foreach my $bits (sort keys $hash{$count}->%*) {
 
-            print STDERR __LINE__, ": For $count bit(s) difference ($bits), need $need; have ", scalar @{$hash{$count}{$bits}}, "\n" if DEBUG;
+            print STDERR __LINE__, ": For $count bit(s) difference ($bits),",
+            " need $need; have ", scalar @{$hash{$count}{$bits}}, "\n" if DEBUG;
 
             # Look only as long as there are at least as many elements in the
             # subset as are needed
             while ((my $cur_count = @{$hash{$count}{$bits}}) >= $need) {
 
-                print STDERR __LINE__, ": Looking at bit positions ($bits): ", Dumper $hash{$count}{$bits} if DEBUG;
+                print STDERR __LINE__, ": Looking at bit positions ($bits): ",
+                                          Dumper $hash{$count}{$bits} if DEBUG;
 
                 # Start with the first element in it
                 my $try_base = $hash{$count}{$bits}[0];
@@ -894,14 +1002,20 @@ sub calculate_mask(@) {
                     my $try_this = $hash{$count}{$bits}[$i];
                     my @positions = pop_count($try_base ^ $try_this);
 
-                    print STDERR __LINE__, ": $try_base vs $try_this: is (", join(',', @positions), ") a subset of ($bits)?" if DEBUG;;
+                    print STDERR __LINE__, ": $try_base vs $try_this: is (",
+                      join(',', @positions), ") a subset of ($bits)?" if DEBUG;
 
                     foreach my $pos (@positions) {
                         unless (grep { $pos == $_ } @bits) {
                             print STDERR "  No\n" if DEBUG;
                             my $remaining = $cur_count - $i - 1;
                             if ($remaining && @subset + $remaining < $need) {
-                                print STDERR __LINE__, ": Can stop trying $try_base, because even if all the remaining $remaining values work, they wouldn't add up to the needed $need when combined with the existing ", scalar @subset, " ones\n" if DEBUG;
+                                print STDERR __LINE__, ": Can stop trying",
+                                    " $try_base, because even if all the",
+                                    " remaining $remaining values work, they",
+                                    " wouldn't add up to the needed $need when",
+                                    " combined with the existing ",
+                                            scalar @subset, " ones\n" if DEBUG;
                                 last TRY;
                             }
                             next TRY;
@@ -916,7 +1030,8 @@ sub calculate_mask(@) {
                     $compare &= $try_this;
                 }
 
-                print STDERR __LINE__, ": subset (", join(", ", @subset), ") has ", scalar @subset, " elements; needs $need\n" if DEBUG;
+                print STDERR __LINE__, ": subset (", join(", ", @subset),
+                 ") has ", scalar @subset, " elements; needs $need\n" if DEBUG;
 
                 if (@subset < $need) {
                     shift @{$hash{$count}{$bits}};
@@ -931,14 +1046,17 @@ sub calculate_mask(@) {
                 $mask = ~$mask & 0xFF;
                 push @final_results, [$compare, $mask];
 
-                printf STDERR "%d: Got it: compare=%d=0x%X; mask=%X\n", __LINE__, $compare, $compare, $mask if DEBUG;
+                printf STDERR "%d: Got it: compare=%d=0x%X; mask=%X\n",
+                                __LINE__, $compare, $compare, $mask if DEBUG;
 
                 # These values are now spoken for.  Remove them from future
                 # consideration
                 foreach my $remove_count (sort keys %hash) {
                     foreach my $bits (sort keys %{$hash{$remove_count}}) {
                         foreach my $to_remove (@subset) {
-                            @{$hash{$remove_count}{$bits}} = grep { $_ != $to_remove } @{$hash{$remove_count}{$bits}};
+                            @{$hash{$remove_count}{$bits}}
+                                    = grep { $_ != $to_remove }
+                                                @{$hash{$remove_count}{$bits}};
                         }
                     }
                 }
@@ -977,75 +1095,207 @@ sub calculate_mask(@) {
 # - merges ranges of conditions, and joins the result with ||
 sub _cond_as_str {
     my ( $self, $op, $combine, $opts_ref )= @_;
-    my $cond= $op->{vals};
+    my @cond = ();
+    @cond = $op->{vals}->@* if defined $op->{vals};
     my $test= $op->{test};
     my $is_cp_ret = $opts_ref->{ret_type} eq "cp";
-    return "( $test )" if !defined $cond;
+    my $charset = $opts_ref->{charset};
+    return "( $test )" unless @cond;
 
-    # rangify the list.
-    my @ranges;
+    my (@ranges, @native_ranges);
+    my @native_conds;
+
+    # rangify the list.  As we encounter a new value, it is placed in a new
+    # subarray by itself.  If the next value is adjacent to it, the end point
+    # of the subarray is merely incremented; and so on.  When the next value
+    # that isn't adjacent to the previous one is encountered, Update() is
+    # called to hoist any single-element subarray to be a scalar.
     my $Update= sub {
         # We skip this if there are optimizations that
         # we can apply (below) to the individual ranges
         if ( ($is_cp_ret || $combine) && @ranges && ref $ranges[-1]) {
-            if ( $ranges[-1][0] == $ranges[-1][1] ) {
-                $ranges[-1]= $ranges[-1][0];
-            } elsif ( $ranges[-1][0] + 1 == $ranges[-1][1] ) {
-                $ranges[-1]= $ranges[-1][0];
-                push @ranges, $ranges[-1] + 1;
-            }
+            $ranges[-1] = $ranges[-1][0] if $ranges[-1][0] == $ranges[-1][1];
         }
     };
-    for my $condition ( @$cond ) {
-        if ( !@ranges || $condition != $ranges[-1][1] + 1 ) {
-            $Update->();
-            push @ranges, [ $condition, $condition ];
-        } else {
-            $ranges[-1][1]++;
+
+    # Parse things twice, using different approaches for representing things,
+    # afterwards choosing the alternative with the fewest branches
+    for my $i (0, 1) {
+
+        # Should we avoid using mnemonics for code points?
+        my $always_hex = 0;
+
+        # The second pass is all about using a transformation to see if it
+        # creates contiguous blocks that lead to fewer ranges or masking.  But
+        # single element ranges don't have any benefit, and so the transform
+        # is just extra work for them.  '$range_test' includes the transform
+        # for multi-element ranges, and '$original' maps a byte back to what
+        # it was without being transformed.  Thus we use '$range_test' and the
+        # transormed bytes on multi-element ranges, and plain '$test' and
+        # '$original' on single ones.  In the first pass these are effectively
+        # no-ops.
+        my $range_test = $test;
+        my $original = \@identity;
+
+        if ($i) {   # 2nd pass
+            # The second pass is only for non-ascii character sets, to see if
+            # a transform to Unicode/ASCII saves anything.
+            last if $charset =~ /ascii/i;
+
+            # If the first pass came up with a single range, we won't be able
+            # to do better than that, so don't try.
+            last if @ranges == 1;
+
+            # We calculated the native values the first iteration
+            @native_ranges = @ranges;
+            @native_conds = @cond;
+
+            # Start fresh
+            undef @ranges;
+            undef @cond;
+
+            # Determine the translation function, to/from UTF-8 or Latin1, and
+            # the corresponding transform of the condition to match
+            my $lookup;
+            if ($opts_ref->{type} =~ / ^ (?: utf8 | high ) $ /xi) {
+                $lookup = $utf_2_I8{$charset};
+                $original = $I8_2_utf{$charset};
+                $range_test = "NATIVE_UTF8_TO_I8($test)";
+            }
+            else {
+                $lookup = $n2a{$charset};
+                $original = $a2n{$charset};
+                $range_test = "NATIVE_TO_LATIN1($test)";
+            }
+
+            # Translate the native conditions (bytes) into the Unicode ones
+            for my $condition (@native_conds) {
+                push @cond, $lookup->[$condition];
+            }
+
+            # 'f' won't be the expected 'f' on this box
+            $always_hex = 1;
         }
-    }
-    $Update->();
 
-    return $self->_combine( $test, @ranges )
-      if $combine;
+        # Go through the code points (@cond) and collapse them as much as
+        # possible into ranges
+        for my $condition ( @cond ) {
+            if ( !@ranges || $condition != $ranges[-1][1] + 1 ) {
+                # Not adjacent to the existing range.  Remove that from being a
+                # range if only a single value;
+                $Update->();
+                push @ranges, [ $condition, $condition ];
+            } else {    # Adjacent to the existing range; add to the range
+                $ranges[-1][1]++;
+            }
+        }
+        $Update->();
 
-    if ($is_cp_ret) {
-        @ranges= map {
-            ref $_
-            ? sprintf(
-                "isRANGE( $test, $self->{val_fmt}, $self->{val_fmt} )",
-                @$_ )
-            : sprintf( "$self->{val_fmt} == $test", $_ );
-        } @ranges;
+        # _combine is used for cp type matching.  By having it here return, no
+        # second pass is done.  It could conceivably be restructured to have a
+        # second pass, but no current uses of script would actually gain any
+        # advantage by doing so, so the work hasn't been further considered.
+        return $self->_combine( $test, @ranges ) if $combine;
 
-        return "( " . join( " || ", @ranges ) . " )";
-    }
+        # If the input set has certain characteristics, we can optimize tests
+        # for it.
 
-    # If the input set has certain characteristics, we can optimize tests
-    # for it.  This doesn't apply if returning the code point, as we want
-    # each element of the set individually.  The code above is for this
-    # simpler case.
+        # If all bytes match, is trivially true; we don't need a 2nd pass
+        return 1 if @cond == 256;
 
-    return 1 if @$cond == 256;  # If all bytes match, is trivially true
+        # If this is a single UTF-8 range which includes all possible
+        # continuation bytes, and we aren't checking for well-formedness, this
+        # is trivially true.
+        #
+        # (In EBCDIC, this won't happen until the 2nd pass transforms the
+        # disjoint continuation byte ranges into a single I8 one.)
+        if (     @ranges == 1
+            && ! $opts_ref->{safe}
+            && ! $opts_ref->{no_length_checks}
+            &&   $opts_ref->{type} =~ / ^ (?: utf8 | high ) $ /xi
+            &&   $ranges[0]->[1] == 0xBF
+            &&   $ranges[0]->[0] == (($charset =~ /ascii/i)
+                                        ? 0x80 : 0xA0))
+        {
+            return 1;
+        }
 
-    my @masks;
-    if (@ranges > 1) {
+        my $loop_start = 0;
+        if (ref $ranges[0] && $ranges[0]->[0] == 0) {
 
-        # See if the entire set shares optimizable characteristics, and if so,
-        # return the optimization.  There is no need to do this on sets with
-        # just a single range, as that can be expressed with a single
-        # conditional.
-        @masks = calculate_mask(@$cond);
+            # If the first range matches all 256 possible bytes, it is
+            # trivially true.
+            if ($ranges[0]->[1] == 0xFF) {
+                die "Range spanning all bytes must be the only one"
+                                                                if @ranges > 1;
+                return 1;
+            }
+
+            # Here, the first range starts at 0, but doesn't match everything.
+            # But the condition doesn't have to worry about being < 0
+            $ranges[0] = "( $test <= "
+                        . $self->val_fmt($ranges[0]->[1], $always_hex) . " )";
+            $loop_start++;
+        }
+
+        my $loop_end = @ranges;
+        if (   @ranges
+            && ref $ranges[-1]
+            && $ranges[-1]->[1] == 0xFF
+            && $ranges[-1]->[0] != 0xFF)
+        {
+            # If the final range consists of more than one byte ending with
+            # the highest possible one, the condition doesn't have to worry
+            # about being > FF
+            $ranges[-1] = "( $test >= "
+                        . $self->val_fmt($ranges[-1]->[0], $always_hex) . " )";
+            $loop_end--;
+        }
+
+        # Look at each range to see if there any optimizations.  The
+        # formatting may be thrown away, so might be wasted effort; and khw
+        # supposes this could be restructured to delay that until the final
+        # method is chosen.  But that would be more coding work than
+        # warranted, as this is executed not that many times during a
+        # development cycle.
+        for (my $i = $loop_start; $i < $loop_end; $i++) {
+            if (! ref $ranges[$i]) {    # Trivial case: no range
+                $ranges[$i] =
+                    $self->val_fmt($original->[$ranges[$i]], $always_hex)
+                  . " == $test";
+            }
+            elsif ($ranges[$i]->[0] == $ranges[$i]->[1]) {
+                $ranges[$i] =           # Trivial case: single element range
+                     $self->val_fmt($original->[$ranges[$i]->[0]], $always_hex)
+                   . " == $test";
+            }
+            else {
+                $ranges[$i] = "inRANGE_helper_(U8, $range_test, "
+                        . $self->val_fmt($ranges[$i]->[0], $always_hex) .", "
+                        . $self->val_fmt($ranges[$i]->[1], $always_hex) . ")";
+            }
+        }
+
+        # Here, have collapsed the matched code points into ranges.  This code
+        # also sees if some of those different ranges have bit patterns which
+        # causes them to be combinable by ANDing with a mask.  There's no need
+        # to do this if we are already down to a single range.
+        next unless @ranges > 1;
+
+        my @masks = calculate_mask(@cond);
 
         # Stringify the output of calculate_mask()
         if (@masks) {
-            my @return;
+            my @masked;
             foreach my $mask_ref (@masks) {
                 if (defined $mask_ref->[1]) {
-                    push @return, sprintf "( ( $test & $self->{val_fmt} ) == $self->{val_fmt} )", $mask_ref->[1], $mask_ref->[0];
+                    push @masked, "( ( $range_test & "
+                        . $self->val_fmt($mask_ref->[1], $always_hex) . " ) == "
+                        . $self->val_fmt($mask_ref->[0], $always_hex) . " )";
                 }
                 else {  # An undefined mask means to use the value as-is
-                    push @return, sprintf "$test == $self->{val_fmt}", $mask_ref->[0];
+                    push @masked, "$test == "
+                    . $self->val_fmt($original->[$mask_ref->[0]], $always_hex);
                 }
             }
 
@@ -1053,82 +1303,29 @@ sub _cond_as_str {
             # ranges is 1 branch per range.  If our mask method yielded better
             # results, there is no sense trying something that is bound to be
             # worse.
-            if (@return < @ranges) {
-                return "( " . join( " || ", @return ) . " )";
+            if (@masked < @ranges) {
+                @ranges = @masked;
+                next;
             }
 
-            @masks = @return;
+            @masks = @masked;
         }
+
+        # If we found some mask possibilities, and they have fewer
+        # conditionals in them than the plain range method, convert to use the
+        # masks.
+        @ranges = @masks if @masks && @masks < @ranges;
+    }  # End of both passes
+
+    # If the two passes came up with two sets, use the one with the fewest
+    # conditionals (the number of ranges is a proxy for that).  If both have
+    # the same number, prefer the native, as that omits transformations.
+    if (@native_ranges && @native_ranges <= @ranges) {
+        @ranges = @native_ranges;
+        @cond = @native_conds;
     }
 
-    # Here, there was no entire-class optimization that was clearly better
-    # than doing things by ranges.  Look at each range.
-    my $range_count_extra = 0;
-    for (my $i = 0; $i < @ranges; $i++) {
-        if (! ref $ranges[$i]) {    # Trivial case: no range
-            $ranges[$i] = sprintf "$self->{val_fmt} == $test", $ranges[$i];
-        }
-        elsif ($ranges[$i]->[0] == $ranges[$i]->[1]) {
-            $ranges[$i] =           # Trivial case: single element range
-                    sprintf "$self->{val_fmt} == $test", $ranges[$i]->[0];
-        }
-        elsif ($ranges[$i]->[0] == 0) {
-            # If the range matches all 256 possible bytes, it is trivially
-            # true.
-            return 1 if $ranges[0]->[1] == 0xFF;    # @ranges must be 1 in
-                                                    # this case
-            $ranges[$i] = sprintf "( $test <= $self->{val_fmt} )",
-                                                               $ranges[$i]->[1];
-        }
-        elsif ($ranges[$i]->[1] == 255) {
-
-            # Similarly the max possible is 255, so can omit an upper bound
-            # test if the calculated max is the max possible one.
-            $ranges[$i] = sprintf "( $test >= $self->{val_fmt} )",
-                                                                $ranges[0]->[0];
-        }
-        else {
-            my $output = "";
-
-            # Well-formed UTF-8 continuation bytes on ascii platforms must be
-            # in the range 0x80 .. 0xBF.  If we know that the input is
-            # well-formed (indicated by not trying to be 'safe'), we can omit
-            # tests that verify that the input is within either of these
-            # bounds.  (No legal UTF-8 character can begin with anything in
-            # this range, so we don't have to worry about this being a
-            # continuation byte or not.)
-            if ($opts_ref->{charset} =~ /ascii/i
-                && (! $opts_ref->{safe} && ! $opts_ref->{no_length_checks})
-                && $opts_ref->{type} =~ / ^ (?: utf8 | high ) $ /xi)
-            {
-                # If the range is the entire legal range, it matches any legal
-                # byte, so we can omit both tests.  (This should happen only
-                # if the number of ranges is 1.)
-                if ($ranges[$i]->[0] == 0x80 && $ranges[$i]->[1] == 0xBF) {
-                    return 1;
-                }
-            }
-
-            # Here, it isn't the full range of legal continuation bytes.  We
-            # could just assume that there's nothing outside of the legal
-            # bounds.  But inRANGE() allows us to have a single conditional,
-            # so the only cost of making sure it's a legal UTF-8 continuation
-            # byte is an extra subtraction instruction, a trivial expense.
-            $ranges[$i] = sprintf("inRANGE($test, $self->{val_fmt},"
-                                                . " $self->{val_fmt} )",
-                                        $ranges[$i]->[0], $ranges[$i]->[1]);
-        }
-    }
-
-    # We have generated the list of bytes in two ways; one trying to use masks
-    # to cut the number of branches down, and the other to look at individual
-    # ranges (some of which could be cut down by using a mask for just it).
-    # We return whichever method uses the fewest branches.
-    return "( "
-           . join( " || ", (@masks && @masks < @ranges + $range_count_extra)
-                            ? @masks
-                            : @ranges)
-           . " )";
+    return "( " . join( " || ", @ranges) . " )";
 }
 
 # _combine
@@ -1144,17 +1341,17 @@ sub _combine {
         if ($item->[0] == 0) {  # UV's are never negative, so skip "0 <= "
                                 # test which could generate a compiler warning
                                 # that test is always true
-            $cstr= sprintf( "$test <= $self->{val_fmt}", $item->[1] );
+            $cstr= "$test <= " . $self->val_fmt($item->[1]);
         }
         else {
-            $cstr=
-          sprintf( "inRANGE($test, $self->{val_fmt}, $self->{val_fmt})",
-                   @$item );
+            $cstr = "inRANGE_helper_(UV, $test, "
+                  . $self->val_fmt($item->[0]) . ", "
+                  . $self->val_fmt($item->[1]) . ")";
         }
-        $gtv= sprintf "$self->{val_fmt}", $item->[1];
+        $gtv= $self->val_fmt($item->[1]);
     } else {
-        $cstr= sprintf( "$self->{val_fmt} == $test", $item );
-        $gtv= sprintf "$self->{val_fmt}", $item;
+        $cstr= $self->val_fmt($item) . " == $test";
+        $gtv= $self->val_fmt($item)
     }
     if ( @cond ) {
         my $combine= $self->_combine( $test, @cond );
@@ -1180,10 +1377,12 @@ sub _render {
     my $cond= $self->_cond_as_str( $op, $combine, $opts_ref );
     #no warnings 'recursion';   # This would allow really really inefficient
                                 # code to be generated.  See pod
-    my $yes= $self->_render( $op->{yes}, $combine, 1, $opts_ref, $def, $submacros );
+    my $yes= $self->_render( $op->{yes}, $combine, 1, $opts_ref, $def,
+                                                                    $submacros);
     return $yes if $cond eq '1';
 
-    my $no= $self->_render( $op->{no},   $combine, 0, $opts_ref, $def, $submacros );
+    my $no= $self->_render( $op->{no},   $combine, 0, $opts_ref, $def,
+                                                                    $submacros);
     return "( $cond )" if $yes eq '1' and $no eq '0';
     my ( $lb, $rb )= $brace ? ( "( ", " )" ) : ( "", "" );
     return "$lb$cond ? $yes : $no$rb"
@@ -1199,9 +1398,12 @@ sub _render {
 
     my $str= "$lb$cond ?$yes$ind: $no$rb";
     if (length $str > 6000) {
-        push @$submacros, sprintf "#define $def\n( %s )", "_part" . (my $yes_idx= 0+@$submacros), $yes;
-        push @$submacros, sprintf "#define $def\n( %s )", "_part" . (my $no_idx= 0+@$submacros), $no;
-        return sprintf "%s%s ? $def : $def%s", $lb, $cond, "_part$yes_idx", "_part$no_idx", $rb;
+        push @$submacros, sprintf "#define $def\n( %s )", "_part"
+                                  . (my $yes_idx= 0+@$submacros) . "_", $yes;
+        push @$submacros, sprintf "#define $def\n( %s )", "_part"
+                                  . (my $no_idx= 0+@$submacros) . "_", $no;
+        return sprintf "%s%s ? $def : $def%s", $lb, $cond,
+                                    "_part${yes_idx}_", "_part${no_idx}_", $rb;
     }
     return $str;
 }
@@ -1215,18 +1417,23 @@ sub _render {
 # Currently only used for type 'cp' macros.
 sub render {
     my ( $self, $op, $combine, $opts_ref, $def_fmt )= @_;
-    
-    my @submacros;
-    my $macro= sprintf "#define $def_fmt\n( %s )", "", $self->_render( $op, $combine, 0, $opts_ref, $def_fmt, \@submacros );
 
-    return join "\n\n", map { "/*** GENERATED CODE ***/\n" . __macro( __clean( $_ ) ) } @submacros, $macro;
+    my @submacros;
+    my $macro= sprintf "#define $def_fmt\n( %s )", "",
+                       $self->_render( $op, $combine, 0, $opts_ref, $def_fmt,
+                                                                 \@submacros);
+
+    return join "\n\n",
+            map { "/*** GENERATED CODE ***/\n" . __macro( __clean( $_ ) ) }
+                                                            @submacros, $macro;
 }
 
 # make_macro
 # make a macro of a given type.
 # calls into make_trie and (generic_|length_)optree as needed
 # Opts are:
-# type             : 'cp','cp_high', 'generic','high','low','latin1','utf8','LATIN1','UTF8'
+# type             : 'cp', 'cp_high', 'generic', 'high', 'low', 'latin1',
+#                    'utf8', 'LATIN1', 'UTF8' 'backwards_UTF8'
 # ret_type         : 'cp' or 'len'
 # safe             : don't assume is well-formed UTF-8, so don't skip any range
 #                    checks, and add length guards to macro
@@ -1253,10 +1460,12 @@ sub make_macro {
     my $type= $opts{type} || 'generic';
     if ($self->{has_multi}) {
         if ($type =~ /^cp/) {
-            die "Can't do a 'cp' on multi-codepoint character class '$self->{op}'"
+            die "Can't do a 'cp' on multi-codepoint character class"
+              . " '$self->{op}'"
         }
         elsif (! $opts{safe}) {
-            die "'safe' is required on multi-codepoint character class '$self->{op}'"
+            die "'safe' is required on multi-codepoint character class"
+               ." '$self->{op}'"
         }
     }
     my $ret_type= $opts{ret_type} || ( $opts{type} =~ /^cp/ ? 'cp' : 'len' );
@@ -1272,12 +1481,13 @@ sub make_macro {
     push @args, "e" if $opts{safe};
     push @args, "is_utf8" if $type =~ /generic/;
     push @args, "len" if $ret_type eq 'both';
-    my $pfx= $ret_type eq 'both'    ? 'what_len_' : 
+    my $pfx= $ret_type eq 'both'    ? 'what_len_' :
              $ret_type eq 'cp'      ? 'what_'     : 'is_';
     my $ext= $type     =~ /generic/ ? ''          : '_' . lc( $type );
     $ext .= '_non_low' if $type eq 'generic_non_low';
     $ext .= "_safe" if $opts{safe};
     $ext .= "_no_length_checks" if $opts{no_length_checks};
+    $ext .= "_backwards" if $opts{backwards};
     my $argstr= join ",", @args;
     my $def_fmt="$pfx$self->{op}$ext%s($argstr)";
     my $optree= $self->$method( %opts, type => $type, ret_type => $ret_type );
@@ -1296,17 +1506,18 @@ if ( !caller ) {
     if ( $path eq '-' ) {
         $out_fh= \*STDOUT;
     } else {
-	$out_fh = open_new( $path );
+        $out_fh = open_new( $path );
     }
     print $out_fh read_only_top( lang => 'C', by => $0,
-				 file => 'regcharclass.h', style => '*',
-				 copyright => [2007, 2011],
+                                 file => 'regcharclass.h', style => '*',
+                                 copyright => [2007, 2011],
                                  final => <<EOF,
 WARNING: These macros are for internal Perl core use only, and may be
 changed or removed without notice.
 EOF
     );
-    print $out_fh "\n#ifndef PERL_REGCHARCLASS_H_ /* Guard against nested #includes */\n#define PERL_REGCHARCLASS_H_\n";
+    print $out_fh "\n#ifndef PERL_REGCHARCLASS_H_ /* Guard against nested",
+                  " #includes */\n#define PERL_REGCHARCLASS_H_\n";
 
     my ( $op, $title, @txt, @types, %mods );
     my $doit= sub ($) {
@@ -1320,17 +1531,17 @@ EOF
 
         print $out_fh "/*\n\t$op: $title\n\n";
         print $out_fh join "\n", ( map { "\t$_" } @txt ), "*/", "";
-        my $obj= __PACKAGE__->new( op => $op, title => $title, txt => \@txt, charset => $charset);
+        my $obj= __PACKAGE__->new( op => $op, title => $title, txt => \@txt,
+                                                        charset => $charset);
 
         #die Dumper(\@types,\%mods);
 
         my @mods;
         push @mods, 'safe' if delete $mods{safe};
         push @mods, 'no_length_checks' if delete $mods{no_length_checks};
-        unshift @mods, 'fast' if delete $mods{fast} || ! @mods; # Default to 'fast'
-                                                                # do this one
-                                                                # first, as
-                                                                # traditional
+
+        # Default to 'fast' do this one first, as traditional
+        unshift @mods, 'fast' if delete $mods{fast} || ! @mods;
         if (%mods) {
             die "Unknown modifiers: ", join ", ", map { "'$_'" } sort keys %mods;
         }
@@ -1338,6 +1549,13 @@ EOF
         foreach my $type_spec ( @types ) {
             my ( $type, $ret )= split /-/, $type_spec;
             $ret ||= 'len';
+
+            my $backwards = 0;
+            if ($type eq 'backwards_UTF8') {
+                $type = 'UTF8';
+                $backwards = 1;
+            }
+
             foreach my $mod ( @mods ) {
 
                 # 'safe' is irrelevant with code point macros, so skip if
@@ -1353,7 +1571,9 @@ EOF
                     ret_type => $ret,
                     safe     => $mod eq 'safe' && $type !~ /^cp/,
                     charset  => $charset,
-                    no_length_checks => $mod eq 'no_length_checks' && $type !~ /^cp/,
+                    no_length_checks => $mod eq 'no_length_checks'
+                                     && $type !~ /^cp/,
+                    backwards => $backwards,
                 );
                 print $out_fh $macro, "\n";
             }
@@ -1397,7 +1617,7 @@ EOF
     print $out_fh "\n#endif /* PERL_REGCHARCLASS_H_ */\n";
 
     if($path eq '-') {
-	print $out_fh "/* ex: set ro: */\n";
+        print $out_fh "/* ex: set ro: */\n";
     } else {
         # Some of the sources for these macros come from Unicode tables
         my $sources_list = "lib/unicore/mktables.lst";
@@ -1481,6 +1701,9 @@ EOF
 #               class that can include any code point, adding the 'low' ones
 #               to what 'utf8' works on.  It is designed to take only an input
 #               UTF-8 parameter.
+#   backwards_UTF8  like 'UTF8', but designed to match backwards, so that the
+#               second parameter to the function is earlier in the string than
+#               the first.
 #   generic     generate a macro whose name is 'is_BASE".  It has a 2nd,
 #               boolean, parameter which indicates if the first one points to
 #               a UTF-8 string or not.  Thus it works in all circumstances.
@@ -1567,12 +1790,66 @@ XPERLSPACE: \p{XPerlSpace}
 => high cp_high : fast
 \p{XPerlSpace}
 
+SPACE: Backwards \p{XPerlSpace}
+=> backwards_UTF8 : safe
+\p{XPerlSpace}
+
 NONCHAR: Non character code points
 => UTF8 :safe
 \p{_Perl_Nchar}
 
+SHORTER_NON_CHARS:  # 3 bytes
+=> UTF8 :only_ascii_platform fast
+0xFDD0 - 0xFDEF
+0xFFFE - 0xFFFF
+
+LARGER_NON_CHARS:   # 4 bytes
+=> UTF8 :only_ascii_platform fast
+0x1FFFE - 0x1FFFF
+0x2FFFE - 0x2FFFF
+0x3FFFE - 0x3FFFF
+0x4FFFE - 0x4FFFF
+0x5FFFE - 0x5FFFF
+0x6FFFE - 0x6FFFF
+0x7FFFE - 0x7FFFF
+0x8FFFE - 0x8FFFF
+0x9FFFE - 0x9FFFF
+0xAFFFE - 0xAFFFF
+0xBFFFE - 0xBFFFF
+0xCFFFE - 0xCFFFF
+0xDFFFE - 0xDFFFF
+0xEFFFE - 0xEFFFF
+0xFFFFE - 0xFFFFF
+0x10FFFE - 0x10FFFF
+
+SHORTER_NON_CHARS:  # 4 bytes
+=> UTF8 :only_ebcdic_platform fast
+0xFDD0 - 0xFDEF
+0xFFFE - 0xFFFF
+0x1FFFE - 0x1FFFF
+0x2FFFE - 0x2FFFF
+0x3FFFE - 0x3FFFF
+
+LARGER_NON_CHARS:   # 5 bytes
+=> UTF8 :only_ebcdic_platform fast
+0x4FFFE - 0x4FFFF
+0x5FFFE - 0x5FFFF
+0x6FFFE - 0x6FFFF
+0x7FFFE - 0x7FFFF
+0x8FFFE - 0x8FFFF
+0x9FFFE - 0x9FFFF
+0xAFFFE - 0xAFFFF
+0xBFFFE - 0xBFFFF
+0xCFFFE - 0xCFFFF
+0xDFFFE - 0xDFFFF
+0xEFFFE - 0xEFFFF
+0xFFFFE - 0xFFFFF
+0x10FFFE - 0x10FFFF
+
+# Note that code in utf8.c is counting on the 'fast' version to look at no
+# more than two bytes
 SURROGATE: Surrogate code points
-=> UTF8 :safe
+=> UTF8 :safe fast
 \p{_Perl_Surrogate}
 
 QUOTEMETA: Meta-characters that \Q should quote
@@ -1580,36 +1857,36 @@ QUOTEMETA: Meta-characters that \Q should quote
 \p{_Perl_Quotemeta}
 
 MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
-=> UTF8 :safe
-&regcharclass_multi_char_folds::multi_char_folds('u', 'a')
+=> UTF8 UTF8-cp :safe
+%regcharclass_multi_char_folds::multi_char_folds('u', 'a')
 
 MULTI_CHAR_FOLD: multi-char strings that are folded to by a single character
-=> LATIN1 : safe
-&regcharclass_multi_char_folds::multi_char_folds('l', 'a')
+=> LATIN1 LATIN1-cp : safe
+%regcharclass_multi_char_folds::multi_char_folds('l', 'a')
 
 THREE_CHAR_FOLD: A three-character multi-char fold
 => UTF8 :safe
-&regcharclass_multi_char_folds::multi_char_folds('u', '3')
+%regcharclass_multi_char_folds::multi_char_folds('u', '3')
 
 THREE_CHAR_FOLD: A three-character multi-char fold
 => LATIN1 :safe
-&regcharclass_multi_char_folds::multi_char_folds('l', '3')
+%regcharclass_multi_char_folds::multi_char_folds('l', '3')
 
 THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
 => UTF8 :safe
-&regcharclass_multi_char_folds::multi_char_folds('u', 'h')
+%regcharclass_multi_char_folds::multi_char_folds('u', 'h')
 
 THREE_CHAR_FOLD_HEAD: The first two of three-character multi-char folds
 => LATIN1 :safe
-&regcharclass_multi_char_folds::multi_char_folds('l', 'h')
+%regcharclass_multi_char_folds::multi_char_folds('l', 'h')
 #
 #THREE_CHAR_FOLD_NON_FINAL: The first or middle character of multi-char folds
 #=> UTF8 :safe
-#&regcharclass_multi_char_folds::multi_char_folds('u', 'fm')
+#%regcharclass_multi_char_folds::multi_char_folds('u', 'fm')
 #
 #THREE_CHAR_FOLD_NON_FINAL: The first or middle character of multi-char folds
 #=> LATIN1 :safe
-#&regcharclass_multi_char_folds::multi_char_folds('l', 'fm')
+#%regcharclass_multi_char_folds::multi_char_folds('l', 'fm')
 
 FOLDS_TO_MULTI: characters that fold to multi-char strings
 => UTF8 :fast
@@ -1624,9 +1901,14 @@ PROBLEMATIC_LOCALE_FOLDEDS_START : The first folded character of folds which are
 \p{_Perl_Problematic_Locale_Foldeds_Start}
 
 PATWS: pattern white space
-=> generic cp : safe
+=> generic : safe
 \p{_Perl_PatWS}
 
-HANGUL_ED: Hangul syllables whose first character is \xED
+HANGUL_ED: Hangul syllables whose first UTF-8 byte is \xED
 => UTF8 :only_ascii_platform safe
 0xD000 - 0xD7FF
+
+HANGUL_ED: Hangul syllables whose first UTF-8 byte is \xED
+=> UTF8 :only_ebcdic_platform safe
+0x1 - 0x0
+# Alows fails on EBCDIC; there are no ED Hanguls there

@@ -36,9 +36,9 @@ fi
 
 mkdir .depending
 
-# This script should be called with 
+# This script should be called with
 #     sh ./makedepend MAKE=$(MAKE)
-case "$1" in 
+case "$1" in
 	MAKE=*) eval $1; shift ;;
 esac
 
@@ -112,114 +112,17 @@ $test -d UU || mkdir UU
 
 $MAKE clist || ($echo "Searching for .c files..."; \
 	$echo *.c | $tr ' ' $trnl | $egrep -v '\*' >.clist)
-for file in `$cat .clist`; do
-# for file in `cat /dev/null`; do
-    case "$osname" in
-    uwin)     uwinfix="-e s,\\\\\\\\,/,g -e s,\\([a-zA-Z]\\):/,/\\1/,g" ;;
-    os2)      uwinfix="-e s,\\\\\\\\,/,g" ;;
-    cygwin)   uwinfix="-e s,\\\\\\\\,/,g" ;;
-    posix-bc) uwinfix="-e s/\\*POSIX(\\(.*\\))/\\1/" ;;
-    vos)      uwinfix="-e s/\#/\\\#/" ;;
-    *)        uwinfix="" ;;
-    esac
-    case "$file" in
-    *.c) filebase=`basename $file .c` ;;
-    *.y) filebase=`basename $file .y` ;;
-    esac
-    case "$file" in
-    */*) finc="-I`echo $file | sed 's#/[^/]*$##'`" ;;
-    *)   finc= ;;
-    esac
-    $echo "Finding dependencies for $filebase$_o"
-    # Below, we strip out all but preprocessor directives.
-    # We have to take care of situations like
-    #       #if defined(FOO) BAR   /* comment line 1
-    #                                 more comment lines */
-    # If we just delete text starting from the '/*' to the end of line, we will
-    # screw up cases like
-    #      #if defined(FOO)    /* comment */ \
-    #          && defined(BAR) /* comment */ \
-    #          && defined(BAZ) /* comment */ \
-    #               etc.
-    # Also, in lines like
-    #      #defined FOO(a,b)    a/**/b
-    # the comment may be important and so needs to be retained.
-    # This code processes the single-line comments first; it assumes there is
-    # at most one straightforward comment per continued preprocessor line,
-    # replacing each non-empty comment (and its surrounding white space) by a
-    # single space.  (sed only has a greedy '*' quantifier, so this doesn't
-    # work right if there are multiple comments per line, and strings can look
-    # like comments to it; both are unlikely in a preprocessor statement.) Any
-    # continuation line is joined, and the process repeated on the enlarged
-    # line as long as there are continuations.  At the end, if there are any
-    # comments remaining, they are either completely empty or are like the
-    # first situation.  The latter are just deleted by first deleting to the
-    # end of line (including preceding white space) things that start with '/*'
-    # and the next char isn't a '*'; then things that start with '/**', but the
-    # next char isn't a '/'.  (Subsequent lines of the comment are irrelevant
-    # and get dropped.)  At the end, we unjoin very long lines to avoid
-    # preprocessor limitations
-    ( $echo "#line 2 \"$file\"";                               \
-      $sed -n <$file                                           \
-	-e "/^${filebase}_init(/q"                             \
-        -e ': tstcont'                                         \
-	-e '/^[ 	]*#/s|[ 	]*/\*..*\*/[ 	]*| |' \
-        -e '/\\$/{'                                            \
-            -e 'N'                                             \
-            -e 'b tstcont'                                     \
-        -e '}'                                                 \
-	-e 's/\\\n//g'                                         \
-	-e '/^#line/d'                                         \
-	-e '/^[ 	]*#/{'                                 \
-	    -e 's|[ 	]*/\*[^*].*$||'                        \
-	    -e 's|[ 	]*/\*\*[^/].*$||'                      \
-            -e 's/.\{255\}/&\\\n/g'                           \
-	    -e p                                               \
-	-e '}' ) >UU/$file.c
 
-    # We're not sure why this was there; the #endif is extraneous on modern z/OS
-    #if [ "$osname" = os390 -a "$file" = perly.c ]; then
-    #   $echo '#endif' >>UU/$file.c
-    #fi
+clist=`$cat .clist | $sed -e 's,$,.depends,'`
 
-    if [ "$osname" = os390 ]; then
-        $cppstdin $finc -I. $cppflags $cppminus <UU/$file.c |
-        $sed \
-    	    -e '/^#.*<stdin>/d' \
-	    -e '/^#.*"-"/d' \
-	    -e '/^#.*git_version\.h/d' \
-	    -e 's#\.[0-9][0-9]*\.c#'"$file.c#" \
-	    -e 's/^[	 ]*#[	 ]*line/#/' \
-	    -e '/^# *[0-9][0-9]* *[".\/]/!d' \
-	    -e 's/^.*"\(.*\)".*$/'$filebase'\$(OBJ_EXT): \1/' \
-	    -e 's/^# *[0-9][0-9]* \(.*\)$/'$filebase'\$(OBJ_EXT): \1/' \
-	    -e 's|: \./|: |' \
-	    -e 's|\.c\.c|.c|' $uwinfix | \
-        $uniq | $sort | $uniq >> .deptmp
-    else
-        $cppstdin $finc -I. $cppflags $cppminus <UU/$file.c >.cout 2>.cerr
-        $sed \
-	    -e '1d' \
-	    -e '/^#.*<stdin>/d' \
-            -e '/^#.*<builtin>/d' \
-            -e '/^#.*<built-in>/d' \
-            -e '/^#.*<command line>/d' \
-            -e '/^#.*<command-line>/d' \
-	    -e '/^#.*"-"/d' \
-	    -e '/^#.*"\/.*\/"/d' \
-	    -e '/: file path prefix .* never used$/d' \
-	    -e '/^#.*git_version\.h/d' \
-	    -e 's#\.[0-9][0-9]*\.c#'"$file.c#" \
-	    -e 's/^[	 ]*#[	 ]*line/#/' \
-	    -e '/^# *[0-9][0-9]* *[".\/]/!d' \
-	    -e 's/^.*"\(.*\)".*$/'$filebase'\$(OBJ_EXT): \1/' \
-	    -e 's/^# *[0-9][0-9]* \(.*\)$/'$filebase'\$(OBJ_EXT): \1/' \
-	    -e 's|: \./|: |' \
-           -e 's|\.c\.c|.c|' $uwinfix .cout .cerr| \
-        $uniq | $sort | $uniq >> .deptmp
-    fi
-    echo "$filebase\$(OBJ_EXT): $@" >> .deptmp
-done
+# Now, create a Makefile from .clist and run that in parallel
+# Makefiles creating more Makefiles
+# A Makefile exists to beget more Makefiles. Perl is
+# just a vehicle.
+rm -f $clist
+$MAKE $clist
+$cat $clist >.deptmp
+rm -f $clist
 
 $sed <$mf >$mf.new -e '1,/^# AUTOMATICALLY/!d'
 
@@ -235,6 +138,8 @@ if $test -s .deptmp; then
        -e 'h; s/mini\(perlmain\)/\1/p; g' \
        .deptmp >>$mf.new
 else
+    $echo "Should not get here"
+    exit 1
     $MAKE hlist || ($echo "Searching for .h files..."; \
 	$echo *.h | $tr ' ' $trnl | $egrep -v '\*' >.hlist)
     $echo "You don't seem to have a proper C preprocessor.  Using grep instead."

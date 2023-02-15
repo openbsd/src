@@ -9,7 +9,7 @@ use File::Path ();
 use POSIX ":sys_wait_h"; 
 @CPAN::Distribution::ISA = qw(CPAN::InfoObj);
 use vars qw($VERSION);
-$VERSION = "2.27";
+$VERSION = "2.33";
 
 my $run_allow_installing_within_test = 1; # boolean; either in test or in install, there is no third option
 
@@ -1445,8 +1445,14 @@ sub verifyCHECKSUM {
     local($") = "/";
     if (my $size = -s $lc_want) {
         $self->debug("lc_want[$lc_want]size[$size]") if $CPAN::DEBUG;
-        if ($self->CHECKSUM_check_file($lc_want,1)) {
-            return $self->{CHECKSUM_STATUS} = "OK";
+        my @stat = stat $lc_want;
+        my $epoch_starting_support_of_cpan_path = 1637471530;
+        if ($stat[9] >= $epoch_starting_support_of_cpan_path) {
+            if ($self->CHECKSUM_check_file($lc_want, 1)) {
+                return $self->{CHECKSUM_STATUS} = "OK";
+            }
+        } else {
+            unlink $lc_want;
         }
     }
     $lc_file = CPAN::FTP->localize("authors/id/@local",
@@ -1473,18 +1479,32 @@ sub SIG_check_file {
     my($self,$chk_file) = @_;
     my $rv = eval { Module::Signature::_verify($chk_file) };
 
-    if ($rv == Module::Signature::SIGNATURE_OK()) {
+    if ($rv eq Module::Signature::CANNOT_VERIFY()) {
+        $CPAN::Frontend->myprint(qq{\nSignature for }.
+                                 qq{file $chk_file could not be verified for an unknown reason. }.
+                                 $self->as_string.
+                                 qq{Module::Signature verification returned value $rv\n\n}
+                                );
+
+        my $wrap = qq{The manual says for this case: Cannot verify the
+OpenPGP signature, maybe due to the lack of a network connection to
+the key server, or if neither gnupg nor Crypt::OpenPGP exists on the
+system. You probably want to analyse the situation and if you cannot
+fix it you will have to decide whether you want to stop this session
+or you want to turn off signature verification. The latter would be
+done with the command 'o conf init check_sigs'};
+
+        $CPAN::Frontend->mydie(Text::Wrap::wrap("","",$wrap));
+    } if ($rv == Module::Signature::SIGNATURE_OK()) {
         $CPAN::Frontend->myprint("Signature for $chk_file ok\n");
         return $self->{SIG_STATUS} = "OK";
     } else {
-        $CPAN::Frontend->myprint(qq{\nSignature invalid for }.
-                                 qq{distribution file. }.
+        $CPAN::Frontend->mywarn(qq{\nSignature invalid for }.
+                                 qq{file $chk_file. }.
                                  qq{Please investigate.\n\n}.
-                                 $self->as_string,
-                                 $CPAN::META->instance(
-                                                       'CPAN::Author',
-                                                       $self->cpan_userid
-                                                      )->as_string);
+                                 $self->as_string.
+                                 qq{Module::Signature verification returned value $rv\n\n}
+                                );
 
         my $wrap = qq{I\'d recommend removing $chk_file. Its signature
 is invalid. Maybe you have configured your 'urllist' with
@@ -1519,20 +1539,44 @@ sub CHECKSUM_check_file {
 
     $file = $self->{localfile};
     $basename = File::Basename::basename($file);
+    my($signed_data);
     my $fh = FileHandle->new;
-    if (open $fh, $chk_file) {
-        local($/);
-        my $eval = <$fh>;
-        $eval =~ s/\015?\012/\n/g;
-        close $fh;
-        my($compmt) = Safe->new();
-        $cksum = $compmt->reval($eval);
-        if ($@) {
-            rename $chk_file, "$chk_file.bad";
-            Carp::confess($@) if $@;
+    if ($check_sigs) {
+        my $tempdir;
+        if ($CPAN::META->has_usable("File::Temp")) {
+            $tempdir = File::Temp::tempdir("CHECKSUMS-XXXX", CLEANUP => 1, DIR => "/tmp" );
+        } else {
+            $tempdir = File::Spec->catdir(File::Spec->tmpdir, "CHECKSUMS-$$");
+            File::Path::mkpath($tempdir);
         }
+        my $tempfile = File::Spec->catfile($tempdir, "CHECKSUMS.$$");
+        unlink $tempfile; # ignore missing file
+        my $devnull = File::Spec->devnull;
+        my $gpg = $CPAN::Config->{gpg} or
+            $CPAN::Frontend->mydie("Your configuration suggests that you do not have 'gpg' installed. This is needed to verify checksums with the config variable 'check_sigs' on. Please configure it with 'o conf init gpg'");
+        my $system = qq{"$gpg" --verify --batch --no-tty --output "$tempfile" "$chk_file" 2> "$devnull"};
+        0 == system $system or $CPAN::Frontend->mydie("gpg run was failing, cannot continue: $system");
+        open $fh, $tempfile or $CPAN::Frontend->mydie("Could not open $tempfile: $!");
+        local $/;
+        $signed_data = <$fh>;
+        close $fh;
+        File::Path::rmtree($tempdir);
     } else {
-        Carp::carp "Could not open $chk_file for reading";
+        my $fh = FileHandle->new;
+        if (open $fh, $chk_file) {
+            local($/);
+            $signed_data = <$fh>;
+        } else {
+            $CPAN::Frontend->mydie("Could not open $chk_file for reading");
+        }
+        close $fh;
+    }
+    $signed_data =~ s/\015?\012/\n/g;
+    my($compmt) = Safe->new();
+    $cksum = $compmt->reval($signed_data);
+    if ($@) {
+        rename $chk_file, "$chk_file.bad";
+        Carp::confess($@) if $@;
     }
 
     if (! ref $cksum or ref $cksum ne "HASH") {
@@ -1545,6 +1589,30 @@ for further processing, but got garbage instead.
         my $answer = CPAN::Shell::colorable_makemaker_prompt("Proceed nonetheless?", "no");
         $answer =~ /^\s*y/i or $CPAN::Frontend->mydie("Aborted.\n");
         $self->{CHECKSUM_STATUS} = "NIL -- CHECKSUMS file broken";
+        return;
+    } elsif (exists $cksum->{$basename} && ! exists $cksum->{$basename}{cpan_path}) {
+        $CPAN::Frontend->mywarn(qq{
+Warning: checksum file '$chk_file' not conforming.
+
+The cksum does not contain the key 'cpan_path' for '$basename'.
+});
+        my $answer = CPAN::Shell::colorable_makemaker_prompt("Proceed nonetheless?", "no");
+        $answer =~ /^\s*y/i or $CPAN::Frontend->mydie("Aborted.\n");
+        $self->{CHECKSUM_STATUS} = "NIL -- CHECKSUMS file without cpan_path";
+        return;
+    } elsif (exists $cksum->{$basename} && substr($self->{ID},0,length($cksum->{$basename}{cpan_path}))
+             ne $cksum->{$basename}{cpan_path}) {
+        $CPAN::Frontend->mywarn(qq{
+Warning: checksum file not matching path '$self->{ID}'.
+
+The cksum contain the key 'cpan_path=$cksum->{$basename}{cpan_path}'
+which does not match the ID of the distribution '$self->{ID}'.
+Something's suspicious might be going on here. Please investigate.
+
+});
+        my $answer = CPAN::Shell::colorable_makemaker_prompt("Proceed nonetheless?", "no");
+        $answer =~ /^\s*y/i or $CPAN::Frontend->mydie("Aborted.\n");
+        $self->{CHECKSUM_STATUS} = "NIL -- CHECKSUMS non-matching cpan_path vs. ID";
         return;
     } elsif (exists $cksum->{$basename}{sha256}) {
         $self->debug("Found checksum for $basename:" .

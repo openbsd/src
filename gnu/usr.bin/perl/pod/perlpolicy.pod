@@ -92,9 +92,9 @@ the Perl community should expect from Perl's developers:
 
 =item *
 
-We "officially" support the two most recent stable release series.  5.26.x
-and earlier are now out of support.  As of the release of 5.32.0, we will
-"officially" end support for Perl 5.28.x, other than providing security
+We "officially" support the two most recent stable release series.  5.30.x
+and earlier are now out of support.  As of the release of 5.36.0, we will
+"officially" end support for Perl 5.32.x, other than providing security
 updates as described below.
 
 =item *
@@ -606,8 +606,7 @@ question affirms they will not transgress again.
 Removals, like warnings, are public.
 
 The list of moderators will be public knowledge.  At present, it is:
-Karen Etheridge, Ricardo Signes, Sawyer X,
-Steffen Müller, Todd Rinaldo, Aaron Crane.
+Karen Etheridge, Neil Bowers, Nicholas Clark, Ricardo Signes, Todd Rinaldo.
 
 =head1 CREDITS
 

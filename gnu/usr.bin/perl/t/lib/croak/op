@@ -162,7 +162,7 @@ delete argument is not a HASH or ARRAY element or slice at - line 1.
 ########
 # NAME delete sort
 use warnings;
-delete sort; # used to warn about scalar context, too
+delete sort 1; # used to warn about scalar context, too
 EXPECT
 delete argument is not a HASH or ARRAY element or slice at - line 2.
 ########

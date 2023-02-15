@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # Math::BigFloat->new had a bug where it would assume any object is a
 # Math::BigInt which broke overloaded non-Math::BigInt objects.

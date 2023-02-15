@@ -15,7 +15,7 @@ An array of an array is just a regular old array @AoA that you can
 get at with two subscripts, like C<$AoA[3][2]>.  Here's a declaration
 of the array:
 
-    use 5.010;  # so we can use say()
+    use v5.10;  # so we can use say()
 
     # assign to our array, an array of array references
     @AoA = (
@@ -168,7 +168,7 @@ If you wanted just to append to a row, you'd have
 to do something a bit funnier looking:
 
     # add new columns to an existing row
-    push @{ $AoA[0] }, "wilma", "betty";   # explicit deref
+    push $AoA[0]->@*, "wilma", "betty";   # explicit deref
 
 =head2 Access and Printing
 
@@ -252,7 +252,7 @@ parsable Perl code.  For example:
 	   [ "george", "jane", "elroy" ],
 	   [ "homer", "marge", "bart" ],
  );
- push @{ $AoA[0] }, "wilma", "betty";
+ push $AoA[0]->@*, "wilma", "betty";
  show @AoA;
 
 will print out:
@@ -296,15 +296,9 @@ variable as before.
 
 That same loop could be replaced with a slice operation:
 
-    @part = @{$AoA[4]}[7..12];
+    @part = $AoA[4]->@[ 7..12 ];
 
-or spaced out a bit:
-
-    @part = @{ $AoA[4] } [ 7..12 ];
-
-But as you might well imagine, this can get pretty rough on the reader.
-
-Ah, but what if you wanted a I<two-dimensional slice>, such as having
+Now, what if you wanted a I<two-dimensional slice>, such as having
 $x run from 4..8 and $y run from 7 to 12?  Hmm... here's the simple way:
 
     @newAoA = ();
@@ -317,13 +311,13 @@ $x run from 4..8 and $y run from 7 to 12?  Hmm... here's the simple way:
 We can reduce some of the looping through slices
 
     for ($x = 4; $x <= 8; $x++) {
-	push @newAoA, [ @{ $AoA[$x] } [ 7..12 ] ];
+	push @newAoA, [ $AoA[$x]->@[ 7..12 ] ];
     }
 
 If you were into Schwartzian Transforms, you would probably
 have selected map for that
 
-    @newAoA = map { [ @{ $AoA[$_] } [ 7..12 ] ] } 4 .. 8;
+    @newAoA = map { [ $AoA[$_]->@[ 7..12 ] ] } 4 .. 8;
 
 Although if your manager accused you of seeking job security (or rapid
 insecurity) through inscrutable code, it would be hard to argue. :-)
@@ -336,7 +330,7 @@ If I were you, I'd put that in a function:
 	    $y_lo, $y_hi) = @_;
 
 	return map {
-	    [ @{ $lrr->[$_] } [ $y_lo .. $y_hi ] ]
+	    [ $lrr->[$_]->@[ $y_lo .. $y_hi ] ]
 	} $x_lo .. $x_hi;
     }
 

@@ -1,10 +1,10 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
 
-use Test::More tests => 4038            # tests in require'd file
-                         + 5;           # tests in this file
+use Test::More tests => 4280            # tests in require'd file
+                         + 7;           # tests in this file
 
 use lib 't';
 
@@ -32,3 +32,9 @@ $ms += $bi;
 is($ms, 46, '$ms is 46');
 is($ms->{_custom}, 1, '$ms has custom attribute $ms->{_custom}');
 is(ref($ms), $CLASS, "\$ms is not an object of class '$CLASS'");
+
+cmp_ok(Math::BigInt::Subclass -> div_scale(), "==", 40,
+      "Math::BigInt::Subclass gets 'div_scale' from parent");
+
+is(Math::BigInt::Subclass -> round_mode(), "even",
+   "Math::BigInt::Subclass gets 'round_mode' from parent");

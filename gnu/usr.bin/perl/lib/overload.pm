@@ -1,8 +1,12 @@
 package overload;
 
-our $VERSION = '1.31';
+use strict;
+no strict 'refs';
+no warnings 'experimental::builtin';
 
-%ops = (
+our $VERSION = '1.35';
+
+our %ops = (
     with_assign         => "+ - * / % ** << >> x .",
     assign              => "+= -= *= /= %= **= <<= >>= x= .=",
     num_comparison      => "< <= >  >= == !=",
@@ -26,7 +30,7 @@ my %ops_seen;
 sub nil {}
 
 sub OVERLOAD {
-  $package = shift;
+  my $package = shift;
   my %arg = @_;
   my $sub;
   *{$package . "::(("} = \&nil; # Make it findable via fetchmethod.
@@ -51,14 +55,14 @@ sub OVERLOAD {
 }
 
 sub import {
-  $package = (caller())[0];
+  my $package = (caller())[0];
   # *{$package . "::OVERLOAD"} = \&OVERLOAD;
   shift;
   $package->overload::OVERLOAD(@_);
 }
 
 sub unimport {
-  $package = (caller())[0];
+  my $package = (caller())[0];
   shift;
   *{$package . "::(("} = \&nil;
   for (@_) {
@@ -98,8 +102,7 @@ sub Method {
   if(ref $package) {
     local $@;
     local $!;
-    require Scalar::Util;
-    $package = Scalar::Util::blessed($package);
+    $package = builtin::blessed($package);
     return undef if !defined $package;
   }
   #my $meth = $package->can('(' . shift);
@@ -131,7 +134,7 @@ sub mycan {				# Real can would leave stubs.
   return undef;
 }
 
-%constants = (
+my %constants = (
 	      'integer'	  =>  0x1000, # HINT_NEW_INTEGER
 	      'float'	  =>  0x2000, # HINT_NEW_FLOAT
 	      'binary'	  =>  0x4000, # HINT_NEW_BINARY
@@ -969,7 +972,7 @@ Gives the string value of C<arg> as in the
 absence of stringify overloading.  If you
 are using this to get the address of a reference (useful for checking if two
 references point to the same thing) then you may be better off using
-C<Scalar::Util::refaddr()>, which is faster.
+C<builtin::refaddr()> or C<Scalar::Util::refaddr()>, which are faster.
 
 =item overload::Overloaded(arg)
 
@@ -978,6 +981,9 @@ Returns true if C<arg> is subject to overloading of some operations.
 =item overload::Method(obj,op)
 
 Returns C<undef> or a reference to the method that implements C<op>.
+
+Such a method always takes three arguments, which will be enforced if
+it is an XS method.
 
 =back
 
@@ -1239,7 +1245,7 @@ Put this in F<symbolic.pm> in your Perl library directory:
 
 This module is very unusual as overloaded modules go: it does not
 provide any usual overloaded operators, instead it provides an
-implementation for L</C<nomethod>>.  In this example the C<nomethod>
+implementation for C<L</nomethod>>.  In this example the C<nomethod>
 subroutine returns an object which encapsulates operations done over
 the objects: C<< symbolic->new(3) >> contains C<['n', 3]>, C<< 2 +
 symbolic->new(3) >> contains C<['+', 2, ['n', 3]]>.

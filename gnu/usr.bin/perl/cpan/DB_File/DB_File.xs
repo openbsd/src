@@ -6,7 +6,7 @@
 
  All comments/suggestions/problems are welcome
 
-     Copyright (c) 1995-2020 Paul Marquess. All rights reserved.
+     Copyright (c) 1995-2022 Paul Marquess. All rights reserved.
      This program is free software; you can redistribute it and/or
      modify it under the same terms as Perl itself.
 
@@ -473,7 +473,7 @@ typedef DBT DBTKEY ;
 #define croak_and_free(x)                                             \
     do                                                                \
     {                                                                 \
-        if (RETVAL->dbp) err_close(RETVAL) ;                           \
+        if (RETVAL->dbp) { err_close(RETVAL) ; }                      \
         Safefree(RETVAL);                                             \
         croak(x);                                                     \
     } while (0)
@@ -1527,12 +1527,12 @@ SV *   sv ;
         status = (RETVAL->dbp->open)(RETVAL->dbp, name, NULL, RETVAL->type,
                     Flags, mode) ;
 #endif
-        Trace(("open returned %d %s\n", status, db_strerror(status))) ; 
+        Trace(("open returned %d %s\n", status, db_strerror(status))) ;
 
         if (status == 0) {
 
             status = (RETVAL->dbp->cursor)(RETVAL->dbp, NULL, &RETVAL->cursor, 0) ;
-            Trace(("cursor returned %d %s\n", status, db_strerror(status))) ; 
+            Trace(("cursor returned %d %s\n", status, db_strerror(status))) ;
         }
 
         if (status)
@@ -2066,4 +2066,3 @@ filter_store_value(db, code)
     SV *        RETVAL = &PL_sv_undef ;
     CODE:
         DBM_setFilter(db->filter_store_value, code) ;
-

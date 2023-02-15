@@ -8,6 +8,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
 BEGIN { plan tests => 26 };
 use Pod::Simple::TextContent;

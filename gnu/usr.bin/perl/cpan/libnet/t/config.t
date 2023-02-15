@@ -5,15 +5,21 @@ use 5.008001;
 use strict;
 use warnings;
 
+use Test::More;
+
 BEGIN {
     if (!eval { require Socket }) {
-        print "1..0 # no Socket\n"; exit 0;
+        plan skip_all => "no Socket";
     }
+    elsif (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
+        plan skip_all => "EBCDIC but no Convert::EBCDIC";
+    }
+    else {
+        plan tests => 10;
+    }
+
     undef *{Socket::inet_aton};
     undef *{Socket::inet_ntoa};
-    if (ord('A') == 193 && !eval { require Convert::EBCDIC }) {
-        print "1..0 # EBCDIC but no Convert::EBCDIC\n"; exit 0;
-    }
     $INC{'Socket.pm'} = 1;
 }
 
@@ -45,13 +51,8 @@ sub inet_ntoa {
         return $names{$_[0]};
 }
 
+
 package main;
-
-
-(my $libnet_t = __FILE__) =~ s/config.t/libnet_t.pl/;
-require $libnet_t;
-
-print "1..10\n";
 
 use Net::Config;
 ok( exists $INC{'Net/Config.pm'}, 'Net::Config should have been used' );

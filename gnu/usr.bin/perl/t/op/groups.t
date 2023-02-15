@@ -25,7 +25,7 @@ skip_all('getgrgid() not implemented')
     unless eval { my($foo) = getgrgid(0); 1 };
 
 skip_all("No 'id' or 'groups'") if
-    $^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O =~ /lynxos/i;
+    $^O eq 'MSWin32' || $^O eq 'VMS' || $^O =~ /lynxos/i;
 
 Test();
 exit;
@@ -51,8 +51,22 @@ sub Test {
     my %basegroup = basegroups( $pwgid, $pwgnam );
     my @extracted_supplementary_groups = remove_basegroup( \ %basegroup, \ @extracted_groups );
 
-    plan 3;
+    plan 4;
 
+    {
+        my @warnings = do {
+            my @w;
+            local $SIG{'__WARN__'} = sub { push @w, @_ };
+
+            use warnings;
+            my $v = $( + 1;
+            $v = $) + 1;
+
+            @w;
+        };
+
+        is ("@warnings", "", 'Neither $( nor $) trigger warnings when used as number.' );
+    }
 
     # Test: The supplementary groups in $( should match the
     # getgroups(2) kernal API call.
@@ -136,7 +150,7 @@ sub Test {
         endgrent;
         skip "No group found we could add as a supplementary group", 1
             if (!@sup_group);
-        $) = "$) @sup_group[2]";
+        $) = "$) $sup_group[2]";
         my $ok = grep { $_ == $sup_group[2] } split ' ', $);
         ok $ok, "Group `$sup_group[0]' added as supplementary group";
     }

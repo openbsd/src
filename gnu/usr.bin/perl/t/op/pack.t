@@ -3,16 +3,10 @@
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl'; require './charset_tools.pl';
-    set_up_inc(qw '../lib ../dist/Math-BigInt/lib');
+    set_up_inc(qw '../lib ../cpan/Math-BigInt/lib');
 }
 
-# This is truth in an if statement, and could be a skip message
-my $no_endianness = $] > 5.009 ? '' :
-  "Endianness pack modifiers not available on this perl";
-my $no_signedness = $] > 5.009 ? '' :
-  "Signed/unsigned pack modifiers not available on this perl";
-
-plan tests => 14718;
+plan tests => 14720;
 
 use strict;
 use warnings qw(FATAL all);
@@ -23,9 +17,7 @@ my @valid_errors = (qr/^Invalid type '\w'/);
 
 my $ByteOrder = 'unknown';
 my $maybe_not_avail = '(?:hto[bl]e|[bl]etoh)';
-if ($no_endianness) {
-  push @valid_errors, qr/^Invalid type '[<>]'/;
-} elsif ($Config{byteorder} =~ /^1234(?:5678)?$/) {
+if ($Config{byteorder} =~ /^1234(?:5678)?$/) {
   $ByteOrder = 'little';
   $maybe_not_avail = '(?:htobe|betoh)';
 }
@@ -35,10 +27,6 @@ elsif ($Config{byteorder} =~ /^(?:8765)?4321$/) {
 }
 else {
   push @valid_errors, qr/^Can't (?:un)?pack (?:big|little)-endian .*? on this platform/;
-}
-
-if ($no_signedness) {
-  push @valid_errors, qr/^'!' allowed only after types sSiIlLxX in (?:un)?pack/;
 }
 
 for my $size ( 16, 32, 64 ) {
@@ -143,7 +131,7 @@ sub list_eq ($$) {
 }
 
 {
-    # check 'w'
+    note("check 'w'");
     my @x = (5,130,256,560,32000,3097152,268435455,1073741844, 2**33,
              '4503599627365785','23728385234614992549757750638446');
     my $x = pack('w*', @x);
@@ -163,46 +151,50 @@ sub list_eq ($$) {
 
     is(scalar(@y), 2);
     is($y[1], 130);
-    $x = pack('w*', 5000000000); $y = '';
-    eval {
-    use Math::BigInt;
-    $y = pack('w*', Math::BigInt::->new(5000000000));
-    };
-    is($x, $y);
 
-    $x = pack 'w', ~0;
-    $y = pack 'w', (~0).'';
-    is($x, $y);
-    is(unpack ('w',$x), ~0);
-    is(unpack ('w',$y), ~0);
+    SKIP: {
+        skip "no Scalar::Util (Math::BigInt prerequisite) on miniperl", 10, if is_miniperl();
+        $x = pack('w*', 5000000000); $y = '';
+        eval q{
+            use Math::BigInt;
+            $y = pack('w*', Math::BigInt::->new(5000000000));
+        };
+        is($x, $y, 'pack');
 
-    $x = pack 'w', ~0 - 1;
-    $y = pack 'w', (~0) - 2;
+        $x = pack 'w', ~0;
+        $y = pack 'w', (~0).'';
+        is($x, $y);
+        is(unpack ('w',$x), ~0);
+        is(unpack ('w',$y), ~0);
 
-    if (~0 - 1 == (~0) - 2) {
-        is($x, $y, "NV arithmetic");
-    } else {
-        isnt($x, $y, "IV/NV arithmetic");
+        $x = pack 'w', ~0 - 1;
+        $y = pack 'w', (~0) - 2;
+
+        if (~0 - 1 == (~0) - 2) {
+            is($x, $y, "NV arithmetic");
+        } else {
+            isnt($x, $y, "IV/NV arithmetic");
+        }
+        cmp_ok(unpack ('w',$x), '==', ~0 - 1);
+        cmp_ok(unpack ('w',$y), '==', ~0 - 2);
+
+        # These should spot that pack 'w' is using NV, not double, on platforms
+        # where IVs are smaller than doubles, and harmlessly pass elsewhere.
+        # (tests for change 16861)
+        my $x0 = 2**54+3;
+        my $y0 = 2**54-2;
+
+        $x = pack 'w', $x0;
+        $y = pack 'w', $y0;
+
+        if ($x0 == $y0) {
+            is($x, $y, "NV arithmetic");
+        } else {
+            isnt($x, $y, "IV/NV arithmetic");
+        }
+        cmp_ok(unpack ('w',$x), '==', $x0);
+        cmp_ok(unpack ('w',$y), '==', $y0);
     }
-    cmp_ok(unpack ('w',$x), '==', ~0 - 1);
-    cmp_ok(unpack ('w',$y), '==', ~0 - 2);
-
-    # These should spot that pack 'w' is using NV, not double, on platforms
-    # where IVs are smaller than doubles, and harmlessly pass elsewhere.
-    # (tests for change 16861)
-    my $x0 = 2**54+3;
-    my $y0 = 2**54-2;
-
-    $x = pack 'w', $x0;
-    $y = pack 'w', $y0;
-
-    if ($x0 == $y0) {
-        is($x, $y, "NV arithmetic");
-    } else {
-        isnt($x, $y, "IV/NV arithmetic");
-    }
-    cmp_ok(unpack ('w',$x), '==', $x0);
-    cmp_ok(unpack ('w',$y), '==', $y0);
 }
 
 
@@ -226,9 +218,8 @@ sub list_eq ($$) {
 
   # Check that the warning behaviour on the modifiers !, < and > is as we
   # expect it for this perl.
-  my $can_endian = $no_endianness ? '' : 'sSiIlLqQjJfFdDpP';
-  my $can_shriek = 'sSiIlL';
-  $can_shriek .= 'nNvV' unless $no_signedness;
+  my $can_endian = 'sSiIlLqQjJfFdDpP';
+  my $can_shriek = 'sSiIlLnNvV';
   # h and H can't do either, so act as sanity checks in blead
   foreach my $base (split '', 'hHsSiIlLqQjJfFdDpPnNvV') {
     foreach my $mod ('', '<', '>', '!', '<!', '>!', '!<', '!>') {
@@ -243,25 +234,15 @@ sub list_eq ($$) {
 	my $fails_endian = $mod =~ /[<>]/ && index ($can_endian, $base) == -1;
 	my $shriek_first = $mod =~ /^!/;
 
-	if ($no_endianness and ($mod eq '<!' or $mod eq '>!')) {
-	  # The ! isn't seem as part of $base. Instead it's seen as a modifier
-	  # on > or <
-	  $fails_shriek = 1;
-	  undef $fails_endian;
-	} elsif ($fails_shriek and $fails_endian) {
+	if ($fails_shriek and $fails_endian) {
 	  if ($shriek_first) {
 	    undef $fails_endian;
 	  }
 	}
 
 	if ($fails_endian) {
-	  if ($no_endianness) {
-	    # < and > are seen as pattern letters, not modifiers
-	    like ($@, qr/^Invalid type '[<>]'/, "pack can't $base$mod");
-	  } else {
-	    like ($@, qr/^'[<>]' allowed only after types/,
-		  "pack can't $base$mod");
-	  }
+          like ($@, qr/^'[<>]' allowed only after types/,
+                "pack can't $base$mod");
 	} elsif ($fails_shriek) {
 	  like ($@, qr/^'!' allowed only after types/,
 		"pack can't $base$mod");
@@ -272,23 +253,20 @@ sub list_eq ($$) {
     }
   }
 
- SKIP: {
-    skip $no_endianness, 2*3 + 2*8 if $no_endianness;
-    for my $mod (qw( ! < > )) {
-      eval { $x = pack "a$mod", 42 };
-      like ($@, qr/^'$mod' allowed only after types \S+ in pack/);
+  for my $mod (qw( ! < > )) {
+    eval { $x = pack "a$mod", 42 };
+    like ($@, qr/^'$mod' allowed only after types \S+ in pack/);
 
-      eval { $x = unpack "a$mod", 'x'x8 };
-      like ($@, qr/^'$mod' allowed only after types \S+ in unpack/);
-    }
+    eval { $x = unpack "a$mod", 'x'x8 };
+    like ($@, qr/^'$mod' allowed only after types \S+ in unpack/);
+  }
 
-    for my $mod (qw( <> >< !<> !>< <!> >!< <>! ><! )) {
-      eval { $x = pack "sI${mod}s", 42, 47, 11 };
-      like ($@, qr/^Can't use both '<' and '>' after type 'I' in pack/);
+  for my $mod (qw( <> >< !<> !>< <!> >!< <>! ><! )) {
+    eval { $x = pack "sI${mod}s", 42, 47, 11 };
+    like ($@, qr/^Can't use both '<' and '>' after type 'I' in pack/);
 
-      eval { $x = unpack "sI${mod}s", 'x'x16 };
-      like ($@, qr/^Can't use both '<' and '>' after type 'I' in unpack/);
-    }
+    eval { $x = unpack "sI${mod}s", 'x'x16 };
+    like ($@, qr/^Can't use both '<' and '>' after type 'I' in unpack/);
   }
 
  SKIP: {
@@ -351,17 +329,13 @@ print "# test the 'p' template\n";
 # literals
 is(unpack("p",pack("p","foo")), "foo");
 SKIP: {
-  skip $no_endianness, 2 if $no_endianness;
   is(unpack("p<",pack("p<","foo")), "foo");
   is(unpack("p>",pack("p>","foo")), "foo");
 }
 # scalars
 is(unpack("p",pack("p",239)), 239);
-SKIP: {
-  skip $no_endianness, 2 if $no_endianness;
-  is(unpack("p<",pack("p<",239)), 239);
-  is(unpack("p>",pack("p>",239)), 239);
-}
+is(unpack("p<",pack("p<",239)), 239);
+is(unpack("p>",pack("p>",239)), 239);
 
 # temps
 sub foo { my $a = "a"; return $a . $a++ . $a++ }
@@ -378,11 +352,8 @@ sub foo { my $a = "a"; return $a . $a++ . $a++ }
 
 # undef should give null pointer
 like(pack("p", undef), qr/^\0+$/);
-SKIP: {
-  skip $no_endianness, 2 if $no_endianness;
-  like(pack("p<", undef), qr/^\0+$/);
-  like(pack("p>", undef), qr/^\0+$/);
-}
+like(pack("p<", undef), qr/^\0+$/);
+like(pack("p>", undef), qr/^\0+$/);
 
 # Check for optimizer bug (e.g.  Digital Unix GEM cc with -O4 on DU V4.0B gives
 #                                4294967295 instead of -1)
@@ -402,17 +373,13 @@ while (my ($base, $expect) = splice @lengths, 0, 2) {
   my @formats = ($base);
   $base =~ /^[nv]/i or push @formats, "$base>", "$base<";
   for my $format (@formats) {
-  SKIP: {
-      skip $no_endianness, 1 if $no_endianness && $format =~ m/[<>]/;
-      skip $no_signedness, 1 if $no_signedness && $format =~ /[nNvV]!/;
-      my $len = length(pack($format, 0));
-      if ($expect > 0) {
-	is($expect, $len, "format '$format'");
-      } else {
-	$expect = -$expect;
-	ok ($len >= $expect, "format '$format'") ||
+    my $len = length(pack($format, 0));
+    if ($expect > 0) {
+      is($expect, $len, "format '$format'");
+    } else {
+      $expect = -$expect;
+      ok ($len >= $expect, "format '$format'") ||
 	  print "# format '$format' has length $len, expected >= $expect\n";
-      }
     }
   }
 }
@@ -688,13 +655,10 @@ is(pack("v", 0xdead), "\xad\xde");
 is(pack("N", 0xdeadbeef), "\xde\xad\xbe\xef");
 is(pack("V", 0xdeadbeef), "\xef\xbe\xad\xde");
 
-SKIP: {
-  skip $no_signedness, 4 if $no_signedness;
-  is(pack("n!", 0xdead), "\xde\xad");
-  is(pack("v!", 0xdead), "\xad\xde");
-  is(pack("N!", 0xdeadbeef), "\xde\xad\xbe\xef");
-  is(pack("V!", 0xdeadbeef), "\xef\xbe\xad\xde");
-}
+is(pack("n!", 0xdead), "\xde\xad");
+is(pack("v!", 0xdead), "\xad\xde");
+is(pack("N!", 0xdeadbeef), "\xde\xad\xbe\xef");
+is(pack("V!", 0xdeadbeef), "\xef\xbe\xad\xde");
 
 print "# test big-/little-endian conversion\n";
 
@@ -915,10 +879,10 @@ EOP
 
 
 {
-    is("1.20.300.4000", sprintf "%vd", pack("U*",utf8::native_to_unicode(1),utf8::native_to_unicode(20),300,4000));
-    is("1.20.300.4000", sprintf "%vd", pack("  U*",utf8::native_to_unicode(1),utf8::native_to_unicode(20),300,4000));
+    is("1.20.300.4000", sprintf "%vd", pack("U*",1,20,300,4000));
+    is("1.20.300.4000", sprintf "%vd", pack("  U*",1,20,300,4000));
 }
-isnt(v1.20.300.4000, sprintf "%vd", pack("C0U*",utf8::native_to_unicode(1),utf8::native_to_unicode(20),300,4000));
+isnt(v1.20.300.4000, sprintf "%vd", pack("C0U*",1,20,300,4000));
 
 my $rslt = join " ", map { ord } split "", byte_utf8a_to_utf8n("\xc7\xa2");
 # The ASCII UTF-8 of U+1E2 is "\xc7\xa2"
@@ -952,7 +916,7 @@ is("@{[unpack('U*', pack('U*', 100, 200))]}", "100 200");
 
     # does pack C0U create characters?
     # The U* is expecting Unicode, so convert to that.
-    is("@{[pack('C0U*', map { utf8::native_to_unicode($_) } 64, 202)]}",
+    is("@{[pack('C0U*', map { $_ } 64, 202)]}",
        pack("C*", 64, @bytes202));
 
     # does unpack U0U on byte data fail?
@@ -1067,30 +1031,26 @@ foreach (
     is(scalar unpack("w/a*", "\x02abc"), "ab");
 }
 
-SKIP: {
-  print "# group modifiers\n";
+print "# group modifiers\n";
 
-  skip $no_endianness, 3 * 2 + 3 * 2 + 1 if $no_endianness;
-
-  for my $t (qw{ (s<)< (sl>s)> (s(l(sl)<l)s)< }) {
-    print "# testing pattern '$t'\n";
-    eval { ($_) = unpack($t, 'x'x18); };
-    is($@, '');
-    eval { $_ = pack($t, (0)x6); };
-    is($@, '');
-  }
-
-  for my $t (qw{ (s<)> (sl>s)< (s(l(sl)<l)s)> }) {
-    print "# testing pattern '$t'\n";
-    eval { ($_) = unpack($t, 'x'x18); };
-    like($@, qr/Can't use '[<>]' in a group with different byte-order in unpack/);
-    eval { $_ = pack($t, (0)x6); };
-    like($@, qr/Can't use '[<>]' in a group with different byte-order in pack/);
-  }
-
-  is(pack('L<L>', (0x12345678)x2),
-     pack('(((L1)1)<)(((L)1)1)>1', (0x12345678)x2));
+for my $t (qw{ (s<)< (sl>s)> (s(l(sl)<l)s)< }) {
+  print "# testing pattern '$t'\n";
+  eval { ($_) = unpack($t, 'x'x18); };
+  is($@, '');
+  eval { $_ = pack($t, (0)x6); };
+  is($@, '');
 }
+
+for my $t (qw{ (s<)> (sl>s)< (s(l(sl)<l)s)> }) {
+  print "# testing pattern '$t'\n";
+  eval { ($_) = unpack($t, 'x'x18); };
+  like($@, qr/Can't use '[<>]' in a group with different byte-order in unpack/);
+  eval { $_ = pack($t, (0)x6); };
+  like($@, qr/Can't use '[<>]' in a group with different byte-order in pack/);
+}
+
+is(pack('L<L>', (0x12345678)x2),
+   pack('(((L1)1)<)(((L)1)1)>1', (0x12345678)x2));
 
 {
   sub compress_template {
@@ -1274,11 +1234,14 @@ SKIP: {
   @warning = ();
   my $x = pack( 'I,A', 4, 'X' );
   like( $warning[0], qr{Invalid type ','} );
+  is($x, pack( 'IA', 4, 'X' ), "Comma was ignored in pack string");
 
   # comma warning only once
   @warning = ();
   $x = pack( 'C(C,C)C,C', 65..71  );
   cmp_ok( scalar(@warning), '==', 1 );
+  is(join(",", unpack 'C(C,,,C),C,,C', $x), join(",", 65..69),
+     "Comma was ignored in unpack string");
 
   # forbidden code in []
   eval { my $x = pack( 'A[@4]', 'XXXX' ); };
@@ -1294,20 +1257,16 @@ SKIP: {
   eval { my @a = unpack( "C/", "\3" ); };
   like( $@, qr{Code missing after '/'} );
 
- SKIP: {
-    skip $no_endianness, 6 if $no_endianness;
-
-    # modifier warnings
-    @warning = ();
-    $x = pack "I>>s!!", 47, 11;
-    ($x) = unpack "I<<l!>!>", 'x'x20;
-    is(scalar @warning, 5);
-    like($warning[0], qr/Duplicate modifier '>' after 'I' in pack/);
-    like($warning[1], qr/Duplicate modifier '!' after 's' in pack/);
-    like($warning[2], qr/Duplicate modifier '<' after 'I' in unpack/);
-    like($warning[3], qr/Duplicate modifier '!' after 'l' in unpack/);
-    like($warning[4], qr/Duplicate modifier '>' after 'l' in unpack/);
-  }
+  # modifier warnings
+  @warning = ();
+  $x = pack "I>>s!!", 47, 11;
+  ($x) = unpack "I<<l!>!>", 'x'x20;
+  is(scalar @warning, 5);
+  like($warning[0], qr/Duplicate modifier '>' after 'I' in pack/);
+  like($warning[1], qr/Duplicate modifier '!' after 's' in pack/);
+  like($warning[2], qr/Duplicate modifier '<' after 'I' in unpack/);
+  like($warning[3], qr/Duplicate modifier '!' after 'l' in unpack/);
+  like($warning[4], qr/Duplicate modifier '>' after 'l' in unpack/);
 }
 
 {  # Repeat count [SUBEXPR]
@@ -1552,7 +1511,7 @@ my $U_1FFC_bytes = byte_utf8a_to_utf8n("\341\277\274");
     is(join(',', unpack("aC/CU",   "b\0$U_1FFC_bytes")), 'b,8188');
 
     # The U expects Unicode, so convert from native
-    my $first_byte = utf8::native_to_unicode(ord substr($U_1FFC_bytes, 0, 1));
+    my $first_byte = ord substr($U_1FFC_bytes, 0, 1);
 
     is(join(',', unpack("aU0C/UU", "b\0$U_1FFC_bytes")), "b,$first_byte");
     is(join(',', unpack("aU0C/CU", "b\0$U_1FFC_bytes")), "b,$first_byte");
@@ -1835,9 +1794,9 @@ my $U_1FFC_bytes = byte_utf8a_to_utf8n("\341\277\274");
        'normal A* strip leaves \xa0');
     is(unpack("U0C0A*", "ab \n" . uni_to_native("\xa0") . " \0"), "ab \n" . uni_to_native("\xa0"),
        'normal A* strip leaves \xa0 even if it got upgraded for technical reasons');
-    is(unpack("A*", pack("a*(U0U)a*", "ab \n", 0xa0, " \0")), "ab",
+    is(unpack("A*", pack("a*(U0U)a*", "ab \n", utf8::unicode_to_native(0xa0), " \0")), "ab",
        'upgraded strings A* removes \xa0');
-    is(unpack("A*", pack("a*(U0UU)a*", "ab \n", 0xa0, 0x1680, " \0")), "ab",
+    is(unpack("A*", pack("a*(U0UU)a*", "ab \n", utf8::unicode_to_native(0xa0), 0x1680, " \0")), "ab",
        'upgraded strings A* removes all unicode whitespace');
     is(unpack("A5", pack("a*(U0U)a*", "ab \n", 0x1680, "def", "ab")), "ab",
        'upgraded strings A5 removes all unicode whitespace');
@@ -2048,6 +2007,7 @@ SKIP:
 {
     # [perl #129149] the code below would write one past the end of the output
     # buffer, only detected by ASAN, not by valgrind
+    skip "ASCII-centric test",1 if $::IS_EBCDIC;
     $Config{ivsize} >= 8
       or skip "[perl #129149] need 64-bit for this test", 1;
     fresh_perl_is(<<'EOS', "ok\n", { stderr => 1 }, "pack W overflow");

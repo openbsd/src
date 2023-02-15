@@ -21,7 +21,7 @@ O = uav$(_O) udeb$(_O) udoio$(_O) udoop$(_O) udquote$(_O) udump$(_O) \
 	uregcomp$(_O) uregexec$(_O) urun$(_O) \
 	uscope$(_O) usv$(_O) utaint$(_O) utime64$(_O) utoke$(_O) \
 	unumeric$(_O) ulocale$(_O) umathoms$(_O) \
-	uuniversal$(_O) uutf8$(_O) uutil$(_O) uperlapi$(_O) ukeywords$(_O)
+	uuniversal$(_O) uutf8$(_O) uutil$(_O) ukeywords$(_O)
 
 microperl:	$(O)
 	$(LD) -o $@ $(O) $(LDFLAGS) $(LIBS)
@@ -81,7 +81,7 @@ udquote$(_O):	$(HE) dquote.c regcomp.h regnodes.h
 udump$(_O):	$(HE) dump.c regcomp.h regnodes.h
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) dump.c
 
-uglobals$(_O):	$(H) globals.c INTERN.h perlapi.h $(generated_headers)
+uglobals$(_O):	$(H) globals.c INTERN.h $(generated_headers)
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) globals.c
 
 ugv$(_O):	$(HE) gv.c
@@ -179,9 +179,6 @@ uutf8$(_O):	$(HE) utf8.c
 
 uutil$(_O):	$(HE) util.c
 	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) util.c
-
-uperlapi$(_O):	$(HE) perlapi.c perlapi.h
-	$(CC) $(CCFLAGS) -o $@ $(CFLAGS) perlapi.c
 
 uuudmap.h umg_data.h: ubitcount.h
 

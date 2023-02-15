@@ -26,7 +26,7 @@ PERL_BCDVERSION
 
 =implementation
 
-#define D_PPP_RELEASE_DATE 1643673600 /* 2022-02-01 */
+#define D_PPP_RELEASE_DATE 1647561600 /* 2022-03-18 */
 
 #if ! defined(PERL_REVISION) && ! defined(PERL_VERSION_MAJOR)
 #  if   !   defined(__PATCHLEVEL_H_INCLUDED__)                                  \

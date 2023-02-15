@@ -426,11 +426,45 @@ L<C<time>|/time>, L<C<times>|/times>
 
 =for Pod::Functions =!Non-functions
 
-C<and>, C<AUTOLOAD>, C<BEGIN>, C<CHECK>, C<cmp>, C<CORE>, C<__DATA__>,
-C<default>, C<DESTROY>, C<else>, C<elseif>, C<elsif>, C<END>, C<__END__>,
-C<eq>, C<for>, C<foreach>, C<ge>, C<given>, C<gt>, C<if>, C<INIT>, C<le>,
-C<lt>, C<ne>, C<not>, C<or>, C<UNITCHECK>, C<unless>, C<until>, C<when>,
-C<while>, C<x>, C<xor>
+C<and>,
+C<AUTOLOAD>,
+C<BEGIN>,
+C<catch>,
+C<CHECK>,
+C<cmp>,
+C<CORE>,
+C<__DATA__>,
+C<default>,
+C<defer>,
+C<DESTROY>,
+C<else>,
+C<elseif>,
+C<elsif>,
+C<END>,
+C<__END__>,
+C<eq>,
+C<finally>,
+C<for>,
+C<foreach>,
+C<ge>,
+C<given>,
+C<gt>,
+C<if>,
+C<INIT>,
+C<isa>,
+C<le>,
+C<lt>,
+C<ne>,
+C<not>,
+C<or>,
+C<try>,
+C<UNITCHECK>,
+C<unless>,
+C<until>,
+C<when>,
+C<while>,
+C<x>,
+C<xor>
 
 =back
 
@@ -669,7 +703,7 @@ Portability issues: L<perlport/-X>.
 To avoid confusing would-be users of your code with mysterious
 syntax errors, put something like this at the top of your script:
 
-    use 5.010;  # so filetest ops can stack
+    use v5.10;  # so filetest ops can stack
 
 =item abs VALUE
 X<abs> X<absolute>
@@ -988,6 +1022,11 @@ L<C<%^H>|perlvar/%^H> when the caller was compiled, or
 L<C<undef>|/undef EXPR> if L<C<%^H>|perlvar/%^H> was empty.  Do not
 modify the values of this hash, as they are the actual values stored in
 the optree.
+
+Note that the only types of call frames that are visible are subroutine
+calls and C<eval>. Other forms of context, such as C<while> or C<foreach>
+loops or C<try> blocks are not considered interesting to C<caller>, as they
+do not alter the behaviour of the C<return> expression.
 
 Furthermore, when called from within the DB package in
 list context, and with an argument, caller returns more
@@ -1607,10 +1646,10 @@ key, but deleting it does; see L<C<exists>|/exists EXPR>.
 In list context, usually returns the value or values deleted, or the last such
 element in scalar context.  The return list's length corresponds to that of
 the argument list: deleting non-existent elements returns the undefined value
-in their corresponding positions. When a
-L<keyE<sol>value hash slice|perldata/KeyE<sol>Value Hash Slices> is passed to
-C<delete>, the return value is a list of key/value pairs (two elements for each
-item deleted from the hash).
+in their corresponding positions. Since Perl 5.28, a
+L<keyE<sol>value hash slice|perldata/KeyE<sol>Value Hash Slices> can be passed
+to C<delete>, and the return value is a list of key/value pairs (two elements
+for each item deleted from the hash).
 
 L<C<delete>|/delete EXPR> may also be used on arrays and array slices,
 but its behavior is less straightforward.  Although
@@ -1675,10 +1714,10 @@ The EXPR can be arbitrarily complicated provided its
 final operation is an element or slice of an aggregate:
 
     delete $ref->[$x][$y]{$key};
-    delete @{$ref->[$x][$y]}{$key1, $key2, @morekeys};
+    delete $ref->[$x][$y]->@{$key1, $key2, @morekeys};
 
     delete $ref->[$x][$y][$index];
-    delete @{$ref->[$x][$y]}[$index1, $index2, @moreindices];
+    delete $ref->[$x][$y]->@[$index1, $index2, @moreindices];
 
 =item die LIST
 X<die> X<throw> X<exception> X<raise> X<$@> X<abort>
@@ -2007,6 +2046,15 @@ the iterator state used by anything else that might execute during the
 loop body.  To avoid these problems, use a C<foreach> loop rather than
 C<while>-C<each>.
 
+This extends to using C<each> on the result of an anonymous hash or
+array constructor.  A new underlying array or hash is created each
+time so each will always start iterating from scratch, eg:
+
+  # loops forever
+  while (my ($key, $value) = each @{ +{ a => 1 } }) {
+      print "$key=$value\n";
+  }
+
 This prints out your environment like the L<printenv(1)> program,
 but in a different order:
 
@@ -2034,8 +2082,8 @@ versions of Perl with mysterious syntax errors, put this sort of thing at
 the top of your file to signal that your code will work I<only> on Perls of
 a recent vintage:
 
-    use 5.012;	# so keys/values/each work on arrays
-    use 5.018;	# so each assigns to $_ in a lone while test
+    use v5.12;	# so keys/values/each work on arrays
+    use v5.18;	# so each assigns to $_ in a lone while test
 
 See also L<C<keys>|/keys HASH>, L<C<values>|/values HASH>, and
 L<C<sort>|/sort SUBNAME LIST>.
@@ -2194,29 +2242,13 @@ format definitions remain afterwards.
 =item Under the L<C<"unicode_eval"> feature|feature/The 'unicode_eval' and 'evalbytes' features>
 
 If this feature is enabled (which is the default under a C<use 5.16> or
-higher declaration), EXPR is considered to be
-in the same encoding as the surrounding program.  Thus if
-S<L<C<use utf8>|utf8>> is in effect, the string will be treated as being
-UTF-8 encoded.  Otherwise, the string is considered to be a sequence of
-independent bytes.  Bytes that correspond to ASCII-range code points
-will have their normal meanings for operators in the string.  The
-treatment of the other bytes depends on if the
-L<C<'unicode_strings"> feature|feature/The 'unicode_strings' feature> is
-in effect.
+higher declaration), Perl assumes that EXPR is a character string.
+Any S<C<use utf8>> or S<C<no utf8>> declarations within
+the string thus have no effect. Source filters are forbidden as well.
+(C<unicode_strings>, however, can appear within the string.)
 
-In a plain C<eval> without an EXPR argument, being in S<C<use utf8>> or
-not is irrelevant; the UTF-8ness of C<$_> itself determines the
-behavior.
-
-Any S<C<use utf8>> or S<C<no utf8>> declarations within the string have
-no effect, and source filters are forbidden.  (C<unicode_strings>,
-however, can appear within the string.)  See also the
-L<C<evalbytes>|/evalbytes EXPR> operator, which works properly with
-source filters.
-
-Variables defined outside the C<eval> and used inside it retain their
-original UTF-8ness.  Everything inside the string follows the normal
-rules for a Perl program with the given state of S<C<use utf8>>.
+See also the L<C<evalbytes>|/evalbytes EXPR> operator, which works properly
+with source filters.
 
 =item Outside the C<"unicode_eval"> feature
 
@@ -2228,8 +2260,26 @@ breaking existing programs:
 
 =item *
 
-It can lose track of whether something should be encoded as UTF-8 or
-not.
+Perl's internal storage of EXPR affects the behavior of the executed code.
+For example:
+
+    my $v = eval "use utf8; '$expr'";
+
+If $expr is C<"\xc4\x80"> (U+0100 in UTF-8), then the value stored in C<$v>
+will depend on whether Perl stores $expr "upgraded" (cf. L<utf8>) or
+not:
+
+=over
+
+=item * If upgraded, C<$v> will be C<"\xc4\x80"> (i.e., the
+C<use utf8> has no effect.)
+
+=item * If non-upgraded, C<$v> will be C<"\x{100}">.
+
+=back
+
+This is undesirable since being
+upgraded or not should not affect a string's behavior.
 
 =item *
 
@@ -2355,30 +2405,11 @@ X<evalbytes>
 
 This function is similar to a L<string eval|/eval EXPR>, except it
 always parses its argument (or L<C<$_>|perlvar/$_> if EXPR is omitted)
-as a string of independent bytes.
+as a byte string. If the string contains any code points above 255, then
+it cannot be a byte string, and the C<evalbytes> will fail with the error
+stored in C<$@>.
 
-If called when S<C<use utf8>> is in effect, the string will be assumed
-to be encoded in UTF-8, and C<evalbytes> will make a temporary copy to
-work from, downgraded to non-UTF-8.  If this is not possible
-(because one or more characters in it require UTF-8), the C<evalbytes>
-will fail with the error stored in C<$@>.
-
-Bytes that correspond to ASCII-range code points will have their normal
-meanings for operators in the string.  The treatment of the other bytes
-depends on if the L<C<'unicode_strings"> feature|feature/The
-'unicode_strings' feature> is in effect.
-
-Of course, variables that are UTF-8 and are referred to in the string
-retain that:
-
- my $a = "\x{100}";
- evalbytes 'print ord $a, "\n"';
-
-prints
-
- 256
-
-and C<$@> is empty.
+C<use utf8> and C<no utf8> within the string have their usual effect.
 
 Source filters activated within the evaluated code apply to the code
 itself.
@@ -3365,12 +3396,32 @@ X<glob> X<wildcard> X<filename, expansion> X<expand>
 =for Pod::Functions expand filenames using wildcards
 
 In list context, returns a (possibly empty) list of filename expansions on
-the value of EXPR such as the standard Unix shell F</bin/csh> would do.  In
+the value of EXPR such as the Unix shell Bash would do. In
 scalar context, glob iterates through such filename expansions, returning
-undef when the list is exhausted.  This is the internal function
-implementing the C<< <*.c> >> operator, but you can use it directly.  If
-EXPR is omitted, L<C<$_>|perlvar/$_> is used.  The C<< <*.c> >> operator
-is discussed in more detail in L<perlop/"I/O Operators">.
+L<C<undef>|/undef EXPR> when the list is exhausted. If EXPR is omitted,
+L<C<$_>|perlvar/$_> is used.
+
+    # List context
+    my @txt_files  = glob("*.txt");
+    my @perl_files = glob("*.pl *.pm");
+
+    # Scalar context
+    while (my $file = glob("*.mp3")) {
+        # Do stuff
+    }
+
+Glob also supports an alternate syntax using C<< < >> C<< > >> as
+delimiters. While this syntax is supported, it is recommended that you
+use C<glob> instead as it is more readable and searchable.
+
+    my @txt_files  = <"*.txt">;
+
+If you need case insensitive file globbing that can be achieved using the
+C<:nocase> parameter of the L<C<bsd_glob>|File::Glob/C<bsd_glob>> module.
+
+    use File::Glob qw(:globally :nocase);
+
+	my @txt = glob("readme*"); # README readme.txt Readme.md
 
 Note that L<C<glob>|/glob EXPR> splits its arguments on whitespace and
 treats
@@ -3383,23 +3434,23 @@ For example, to glob filenames that have an C<e> followed by a space
 followed by an C<f>, use one of:
 
     my @spacies = <"*e f*">;
-    my @spacies = glob '"*e f*"';
-    my @spacies = glob q("*e f*");
+    my @spacies = glob('"*e f*"');
+    my @spacies = glob(q("*e f*"));
 
 If you had to get a variable through, you could do this:
 
-    my @spacies = glob "'*${var}e f*'";
-    my @spacies = glob qq("*${var}e f*");
+    my @spacies = glob("'*${var}e f*'");
+    my @spacies = glob(qq("*${var}e f*"));
 
 If non-empty braces are the only wildcard characters used in the
 L<C<glob>|/glob EXPR>, no filenames are matched, but potentially many
 strings are returned.  For example, this produces nine strings, one for
 each pairing of fruits and colors:
 
-    my @many = glob "{apple,tomato,cherry}={green,yellow,red}";
+    my @many = glob("{apple,tomato,cherry}={green,yellow,red}");
 
 This operator is implemented using the standard C<File::Glob> extension.
-See L<File::Glob> for details, including
+See L<C<bsd_glob>|File::Glob/C<bsd_glob>> for details, including
 L<C<bsd_glob>|File::Glob/C<bsd_glob>>, which does not treat whitespace
 as a pattern separator.
 
@@ -3410,6 +3461,12 @@ is used as a C<while>/C<for> condition, then the condition actually
 tests for definedness of the expression's value, not for its regular
 truth value.
 
+Internal implemenation details:
+
+This is the internal function implementing the C<< <*.c> >> operator,
+but you can use it directly. The C<< <*.c> >> operator is discussed in
+more detail in L<perlop/"I/O Operators">.
+
 Portability issues: L<perlport/glob>.
 
 =item gmtime EXPR
@@ -3419,7 +3476,7 @@ X<gmtime> X<UTC> X<Greenwich>
 
 =for Pod::Functions convert UNIX time into record or string using Greenwich time
 
-Works just like L<C<localtime>|/localtime EXPR> but the returned values
+Works just like L<C<localtime>|/localtime EXPR>, but the returned values
 are localized for the standard Greenwich time zone.
 
 Note: When called in list context, $isdst, the last value
@@ -3584,6 +3641,20 @@ or after its end is treated as if it were the beginning or the end,
 respectively.  POSITION and the return value are based at zero.
 If the substring is not found, L<C<index>|/index STR,SUBSTR,POSITION>
 returns -1.
+
+Find characters or strings:
+
+    index("Perl is great", "P");     # Returns 0
+    index("Perl is great", "g");     # Returns 8
+    index("Perl is great", "great"); # Also returns 8
+
+Attempting to find something not there:
+
+    index("Perl is great", "Z");     # Returns -1 (not found)
+
+Using an offset to find the I<second> occurrence:
+
+    index("Perl is great", "e", 5);  # Returns 10
 
 =item int EXPR
 X<int> X<integer> X<truncate> X<trunc> X<floor>
@@ -3750,7 +3821,7 @@ versions of Perl with mysterious syntax errors, put this sort of thing at
 the top of your file to signal that your code will work I<only> on Perls of
 a recent vintage:
 
-    use 5.012;	# so keys/values/each work on arrays
+    use v5.12;	# so keys/values/each work on arrays
 
 See also L<C<each>|/each HASH>, L<C<values>|/values HASH>, and
 L<C<sort>|/sort SUBNAME LIST>.
@@ -3814,7 +3885,7 @@ See L<perlfork> for more details.
 
 If there is no I<LIST> of processes, no signal is sent, and the return
 value is 0.  This form is sometimes used, however, because it causes
-tainting checks to be run.  But see
+tainting checks to be run, if your perl support taint checks.  But see
 L<perlsec/Laundering and Detecting Tainted Data>.
 
 Portability issues: L<perlport/kill>.
@@ -3868,10 +3939,10 @@ X<lc> X<lowercase>
 
 =for Pod::Functions return lower-case version of a string
 
-Returns a lowercased version of EXPR.  This is the internal function
-implementing the C<\L> escape in double-quoted strings.
+Returns a lowercased version of EXPR.  If EXPR is omitted, uses
+L<C<$_>|perlvar/$_>.
 
-If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
+    my $str = lc("Perl is GREAT"); # "perl is great"
 
 What gets returned depends on several factors:
 
@@ -3917,6 +3988,12 @@ ASCII rules are used for the case change.  The lowercase of any character
 outside the ASCII range is the character itself.
 
 =back
+
+B<Note:> This is the internal function implementing the
+L<C<\L>|perlop/"Quote and Quote-like Operators"> escape in double-quoted
+strings.
+
+    my $str = "Perl is \LGREAT\E"; # "Perl is great"
 
 =item lcfirst EXPR
 X<lcfirst> X<lowercase>
@@ -4041,8 +4118,8 @@ C<$wday> is the day of the week, with 0 indicating Sunday and 3 indicating
 Wednesday.  C<$yday> is the day of the year, in the range C<0..364>
 (or C<0..365> in leap years.)
 
-C<$isdst> is true if the specified time occurs during Daylight Saving
-Time, false otherwise.
+C<$isdst> is true if the specified time occurs when Daylight Saving
+Time is in effect, false otherwise.
 
 If EXPR is omitted, L<C<localtime>|/localtime EXPR> uses the current
 time (as returned by L<C<time>|/time>).
@@ -4050,27 +4127,21 @@ time (as returned by L<C<time>|/time>).
 In scalar context, L<C<localtime>|/localtime EXPR> returns the
 L<ctime(3)> value:
 
-    my $now_string = localtime;  # e.g., "Thu Oct 13 04:54:34 1994"
+ my $now_string = localtime;  # e.g., "Thu Oct 13 04:54:34 1994"
 
-The format of this scalar value is B<not> locale-dependent but built
-into Perl.  For GMT instead of local time use the
-L<C<gmtime>|/gmtime EXPR> builtin.  See also the
-L<C<Time::Local>|Time::Local> module (for converting seconds, minutes,
-hours, and such back to the integer value returned by L<C<time>|/time>),
-and the L<POSIX> module's L<C<strftime>|POSIX/C<strftime>> and
-L<C<mktime>|POSIX/C<mktime>> functions.
+This scalar value is always in English, and is B<not> locale-dependent.
+To get similar but locale-dependent date strings, try for example:
 
-To get somewhat similar but locale-dependent date strings, set up your
-locale environment variables appropriately (please see L<perllocale>) and
-try for example:
+ use POSIX qw(strftime);
+ my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
+ # or for GMT formatted appropriately for your locale:
+ my $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
 
-    use POSIX qw(strftime);
-    my $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-    # or for GMT formatted appropriately for your locale:
-    my $now_string = strftime "%a %b %e %H:%M:%S %Y", gmtime;
-
-Note that C<%a> and C<%b>, the short forms of the day of the week
-and the month of the year, may not necessarily be three characters wide.
+C$now_string> will be formatted according to the current LC_TIME locale
+the program or thread is running in.  See L<perllocale> for how to set
+up and change that locale.  Note that C<%a> and C<%b>, the short forms
+of the day of the week and the month of the year, may not necessarily be
+three characters wide.
 
 The L<Time::gmtime> and L<Time::localtime> modules provide a convenient,
 by-name access mechanism to the L<C<gmtime>|/gmtime EXPR> and
@@ -4078,6 +4149,13 @@ L<C<localtime>|/localtime EXPR> functions, respectively.
 
 For a comprehensive date and time representation look at the
 L<DateTime> module on CPAN.
+
+For GMT instead of local time use the L<C<gmtime>|/gmtime EXPR> builtin.
+
+See also the L<C<Time::Local>|Time::Local> module (for converting
+seconds, minutes, hours, and such back to the integer value returned by
+L<C<time>|/time>), and the L<POSIX> module's
+L<C<mktime>|POSIX/C<mktime>> function.
 
 Portability issues: L<perlport/localtime>.
 
@@ -4312,9 +4390,8 @@ X<msgsnd>
 
 Calls the System V IPC function msgsnd to send the message MSG to the
 message queue ID.  MSG must begin with the native long integer message
-type, be followed by the length of the actual message, and then finally
-the message itself.  This kind of packing can be achieved with
-C<pack("l! a*", $type, $message)>.  Returns true if successful,
+type, followed by the message itself.  This kind of packing can be achieved
+with C<pack("l! a*", $type, $message)>.  Returns true if successful,
 false on error.  See also L<perlipc/"SysV IPC"> and the documentation
 for L<C<IPC::SysV>|IPC::SysV> and L<C<IPC::Msg>|IPC::Msg>.
 
@@ -4336,6 +4413,17 @@ A L<C<my>|/my VARLIST> declares the listed variables to be local
 more than one variable is listed, the list must be placed in
 parentheses.
 
+Note that with a parenthesised list, L<C<undef>|/undef EXPR> can be used
+as a dummy placeholder, for example to skip assignment of initial
+values:
+
+    my ( undef, $min, $hour ) = localtime;
+
+Redeclaring a variable in the same scope or statement will "shadow" the
+previous declaration, creating a new instance and preventing access to
+the previous one. This is usually undesired and, if warnings are enabled,
+will result in a warning in the C<shadow> category.
+
 The exact semantics and interface of TYPE and ATTRS are still
 evolving.  TYPE may be a bareword, a constant declared
 with L<C<use constant>|constant>, or L<C<__PACKAGE__>|/__PACKAGE__>.  It
@@ -4344,12 +4432,6 @@ currently bound to the use of the L<fields> pragma,
 and attributes are handled using the L<attributes> pragma, or starting
 from Perl 5.8.0 also via the L<Attribute::Handlers> module.  See
 L<perlsub/"Private Variables via my()"> for details.
-
-Note that with a parenthesised list, L<C<undef>|/undef EXPR> can be used
-as a dummy placeholder, for example to skip assignment of initial
-values:
-
-    my ( undef, $min, $hour ) = localtime;
 
 =item next LABEL
 X<next> X<continue>
@@ -4419,8 +4501,11 @@ X<oct> X<octal> X<hex> X<hexadecimal> X<binary> X<bin>
 =for Pod::Functions convert a string to an octal number
 
 Interprets EXPR as an octal string and returns the corresponding
-value.  (If EXPR happens to start off with C<0x>, interprets it as a
-hex string.  If EXPR starts off with C<0b>, it is interpreted as a
+value.  An octal string consists of octal digits and, as of Perl 5.33.5,
+an optional C<0o> or C<o> prefix.  Each octal digit may be preceded by
+a single underscore, which will be ignored.
+(If EXPR happens to start off with C<0x> or C<x>, interprets it as a
+hex string.  If EXPR starts off with C<0b> or C<b>, it is interpreted as a
 binary string.  Leading whitespace is ignored in all three cases.)
 The following will handle decimal, binary, octal, and hex in standard
 Perl notation:
@@ -4571,6 +4656,7 @@ filehandle. These affect how the input and output are processed (see
 L<open> and
 L<PerlIO> for more details).  For example:
 
+    # loads PerlIO::encoding automatically
     open(my $fh, "<:encoding(UTF-8)", $filename)
         || die "Can't open UTF-8 encoded $filename: $!";
 
@@ -4852,7 +4938,11 @@ An older style is to use a bareword as the filehandle, as
 
 Then you can use C<FH> as the filehandle, in C<< close FH >> and C<<
 <FH> >> and so on.  Note that it's a global variable, so this form is
-not recommended when dealing with filehandles other than Perl's built-in ones (e.g. STDOUT and STDIN).
+not recommended when dealing with filehandles other than Perl's built-in ones
+(e.g. STDOUT and STDIN).  In fact, using a bareword for the filehandle is
+an error when the C<bareword_filehandles> feature has been disabled.  This
+feature is disabled by default when in the scope of C<use v5.36.0> or later.
+
 
 =back
 
@@ -5029,7 +5119,7 @@ L<C<our>|/our VARLIST> declaration.  This applies immediately--even
 within the same statement.
 
     package Foo;
-    use strict;
+    use v5.36;  # which implies "use strict;"
 
     $Foo::foo = 23;
 
@@ -5046,7 +5136,7 @@ This works even if the package variable has not been used before, as
 package variables spring into existence when first used.
 
     package Foo;
-    use strict;
+    use v5.36;
 
     our $foo = 23;   # just like $Foo::foo = 23
 
@@ -5057,7 +5147,7 @@ long as there is no variable with that name is already in scope, you can then
 reference the package variable again even within the same statement.
 
     package Foo;
-    use strict;
+    use v5.36;
 
     my  $foo = $foo; # error, undeclared $foo on right-hand side
     our $foo = $foo; # no errors
@@ -5183,8 +5273,7 @@ of values, as follows:
     F  A Perl internal floating-point value (NV) in native format
     D  A float of long-double precision in native format.
          (Long doubles are available only if your system supports
-          long double values _and_ if Perl has been compiled to
-          support those.  Raises an exception otherwise.
+          long double values. Raises an exception otherwise.
           Note that there are different long double formats.)
 
     p  A pointer to a null-terminated string.
@@ -5193,7 +5282,10 @@ of values, as follows:
     u  A uuencoded string.
     U  A Unicode character number.  Encodes to a character in char-
        acter mode and UTF-8 (or UTF-EBCDIC in EBCDIC platforms) in
-       byte mode.
+       byte mode.  Also on EBCDIC platforms, the character number will
+       be the native EBCDIC value for character numbers below 256.
+       This allows most programs using this feature to not have to
+       care which type of platform they are running on.
 
     w  A BER compressed integer (not an ASN.1 BER, see perlpacktut
        for details).  Its bytes represent an unsigned integer in
@@ -5842,7 +5934,7 @@ symbol table the compiler uses for the rest of that block.  You can refer to
 identifiers in other packages than the current one by prefixing the identifier
 with the package name and a double colon, as in C<$SomePack::var>
 or C<ThatPack::INPUT_HANDLE>.  If package name is omitted, the C<main>
-package as assumed.  That is, C<$::sail> is equivalent to
+package is assumed.  That is, C<$::sail> is equivalent to
 C<$main::sail> (as well as to C<$main'sail>, still seen in ancient
 code, mostly from Perl 4).
 
@@ -6136,6 +6228,18 @@ Will both leave the sentence as is.
 Normally, when accepting literal string input from the user,
 L<C<quotemeta>|/quotemeta EXPR> or C<\Q> must be used.
 
+Beware that if you put literal backslashes (those not inside
+interpolated variables) between C<\Q> and C<\E>, double-quotish
+backslash interpolation may lead to confusing results.  If you
+I<need> to use literal backslashes within C<\Q...\E>,
+consult L<perlop/"Gory details of parsing quoted constructs">.
+
+Because the result of S<C<"\Q I<STRING> \E">> has all metacharacters
+quoted, there is no way to insert a literal C<$> or C<@> inside a
+C<\Q\E> pair.  If protected by C<\>, C<$> will be quoted to become
+C<"\\\$">; if not, it is interpreted as the start of an interpolated
+scalar.
+
 In Perl v5.14, all non-ASCII characters are quoted in non-UTF-8-encoded
 strings, but not quoted in UTF-8 strings.
 
@@ -6302,7 +6406,7 @@ versions of Perl with mysterious failures, put this sort of thing at the
 top of your file to signal that your code will work I<only> on Perls of a
 recent vintage:
 
-    use 5.012; # so readdir assigns to $_ in a lone while test
+    use v5.12; # so readdir assigns to $_ in a lone while test
 
 =item readline EXPR
 
@@ -6344,7 +6448,7 @@ if the result is not defined.
         ...
     }
 
-Note that you have can't handle L<C<readline>|/readline EXPR> errors
+Note that you can't handle L<C<readline>|/readline EXPR> errors
 that way with the C<ARGV> filehandle.  In that case, you have to open
 each element of L<C<@ARGV>|perlvar/@ARGV> yourself since
 L<C<eof>|/eof FILEHANDLE> handles C<ARGV> differently.
@@ -6516,7 +6620,9 @@ L<C<Scalar::Util::blessed()>|Scalar::Util/blessed> for information about
 blessing, and L<C<Scalar::Util::reftype()>|Scalar::Util/reftype> for
 information about physical types.  Use L<the C<isa> method|UNIVERSAL/C<<
 $obj->isa( TYPE ) >>> for class membership tests, though one must be
-sure of blessedness before attempting a method call.
+sure of blessedness before attempting a method call.  Alternatively, the
+L<C<isa> operator|perlop/"Class Instance Operator"> can test class
+membership without checking blessedness first.
 
 See also L<perlref> and L<perlobj>.
 
@@ -6526,7 +6632,8 @@ X<rename> X<move> X<mv> X<ren>
 =for Pod::Functions change a filename
 
 Changes the name of a file; an existing file NEWNAME will be
-clobbered.  Returns true for success, false otherwise.
+clobbered.  Returns true for success; on failure returns false and sets
+L<C<$!>|perlvar/$!>.
 
 Behavior of this function varies wildly depending on your system
 implementation.  For example, it will usually not work across file system
@@ -6957,7 +7064,7 @@ is the moral equivalent of these two:
     print(uc($bar), $baz);
 
 See L<perlop> for more details on unary operators and the comma operator,
-and L<perldata> for details on evaluating a hash in scalar contex.
+and L<perldata> for details on evaluating a hash in scalar context.
 
 =item seek FILEHANDLE,POSITION,WHENCE
 X<seek> X<fseek> X<filehandle, position>
@@ -7389,6 +7496,14 @@ X<sleep> X<pause>
 Causes the script to sleep for (integer) EXPR seconds, or forever if no
 argument is given.  Returns the integer number of seconds actually slept.
 
+EXPR should be a positive integer. If called with a negative integer,
+L<C<sleep>|/sleep EXPR> does not sleep but instead emits a warning, sets
+$! (C<errno>), and returns zero.
+
+C<sleep 0> is permitted, but a function call to the underlying platform
+implementation still occurs, with any side effects that may have.
+C<sleep 0> is therefore not exactly identical to not sleeping at all.
+
 May be interrupted if the process receives a signal such as C<SIGALRM>.
 
     eval {
@@ -7600,6 +7715,14 @@ Examples:
     package main;
     my @new = sort Other::backwards @old;
 
+    ## using a prototype with function signature
+    use feature 'signatures';
+    sub function_with_signature :prototype($$) ($one, $two) {
+        return $one <=> $two
+    }
+
+    my @new = sort function_with_signature @old;
+
     # guarantee stability
     use sort 'stable';
     my @new = sort { substr($a, 3, 5) cmp substr($b, 3, 5) } @old;
@@ -7692,6 +7815,9 @@ eliminate any C<NaN>s from the input list.
 
     my @result = sort { $a <=> $b } grep { $_ == $_ } @input;
 
+In this version of F<perl>, the C<sort> function is implemented via the
+mergesort algorithm.
+
 =item splice ARRAY,OFFSET,LENGTH,LIST
 X<splice>
 
@@ -7776,16 +7902,15 @@ to specify a pattern that varies at runtime.
 If PATTERN matches the empty string, the EXPR is split at the match
 position (between characters).  As an example, the following:
 
-    print join(':', split(/b/, 'abc')), "\n";
+    my @x = split(/b/, "abc"); # ("a", "c")
 
-uses the C<b> in C<'abc'> as a separator to produce the output C<a:c>.
+uses the C<b> in C<'abc'> as a separator to produce the list ("a", "c").
 However, this:
 
-    print join(':', split(//, 'abc')), "\n";
+    my @x = split(//, "abc"); # ("a", "b", "c")
 
-uses empty string matches as separators to produce the output
-C<a:b:c>; thus, the empty string may be used to split EXPR into a
-list of its component characters.
+uses empty string matches as separators; thus, the empty string
+may be used to split EXPR into a list of its component characters.
 
 As a special case for L<C<split>|/split E<sol>PATTERNE<sol>,EXPR,LIMIT>,
 the empty pattern given in
@@ -7810,7 +7935,18 @@ S<C<"\x20">>, but not e.g. S<C</ />>).  In this case, any leading
 whitespace in EXPR is removed before splitting occurs, and the PATTERN is
 instead treated as if it were C</\s+/>; in particular, this means that
 I<any> contiguous whitespace (not just a single space character) is used as
-a separator.  However, this special treatment can be avoided by specifying
+a separator.
+
+    my @x = split(" ", "  Quick brown fox\n");
+    # ("Quick", "brown", "fox")
+
+    my @x = split(" ", "RED\tGREEN\tBLUE");
+    # ("RED", "GREEN", "BLUE")
+
+Using split in this fashion is very similar to how
+L<C<qwE<sol>E<sol>>|/qwE<sol>STRINGE<sol>> works.
+
+However, this special treatment can be avoided by specifying
 the pattern S<C</ />> instead of the string S<C<" ">>, thereby allowing
 only a single space character to be a separator.  In earlier Perls this
 special case was restricted to the use of a plain S<C<" ">> as the
@@ -7818,7 +7954,7 @@ pattern argument to split; in Perl 5.18.0 and later this special case is
 triggered by any expression which evaluates to the simple string S<C<" ">>.
 
 As of Perl 5.28, this special-cased whitespace splitting works as expected in
-the scope of L<< S<C<"use feature 'unicode_strings">>|feature/The
+the scope of L<< S<C<"use feature 'unicode_strings'">>|feature/The
 'unicode_strings' feature >>. In previous versions, and outside the scope of
 that feature, it exhibits L<perlunicode/The "Unicode Bug">: characters that are
 whitespace according to Unicode rules but not according to ASCII rules can be
@@ -7835,18 +7971,10 @@ the LIMIT value C<1> means that EXPR may be split a maximum of zero
 times, producing a maximum of one field (namely, the entire value of
 EXPR).  For instance:
 
-    print join(':', split(//, 'abc', 1)), "\n";
-
-produces the output C<abc>, and this:
-
-    print join(':', split(//, 'abc', 2)), "\n";
-
-produces the output C<a:bc>, and each of these:
-
-    print join(':', split(//, 'abc', 3)), "\n";
-    print join(':', split(//, 'abc', 4)), "\n";
-
-produces the output C<a:b:c>.
+    my @x = split(//, "abc", 1); # ("abc")
+    my @x = split(//, "abc", 2); # ("a", "bc")
+    my @x = split(//, "abc", 3); # ("a", "b", "c")
+    my @x = split(//, "abc", 4); # ("a", "b", "c")
 
 If LIMIT is negative, it is treated as if it were instead arbitrarily
 large; as many fields as possible are produced.
@@ -7857,13 +7985,13 @@ trailing empty fields are stripped (empty leading fields are always
 preserved); if all fields are empty, then all fields are considered to
 be trailing (and are thus stripped in this case).  Thus, the following:
 
-    print join(':', split(/,/, 'a,b,c,,,')), "\n";
+    my @x = split(/,/, "a,b,c,,,"); # ("a", "b", "c")
 
-produces the output C<a:b:c>, but the following:
+produces only a three element list.
 
-    print join(':', split(/,/, 'a,b,c,,,', -1)), "\n";
+    my @x = split(/,/, "a,b,c,,,", -1); # ("a", "b", "c", "", "", "")
 
-produces the output C<a:b:c:::>.
+produces a six element list.
 
 In time-critical applications, it is worthwhile to avoid splitting
 into more fields than necessary.  Thus, when assigning to a list,
@@ -7879,23 +8007,21 @@ produces zero fields, regardless of the LIMIT specified.
 An empty leading field is produced when there is a positive-width
 match at the beginning of EXPR.  For instance:
 
-    print join(':', split(/ /, ' abc')), "\n";
+    my @x = split(/ /, " abc"); # ("", "abc")
 
-produces the output C<:abc>.  However, a zero-width match at the
+splits into two elements.  However, a zero-width match at the
 beginning of EXPR never produces an empty field, so that:
 
-    print join(':', split(//, ' abc'));
+    my @x = split(//, " abc"); # (" ", "a", "b", "c")
 
-produces the output S<C< :a:b:c>> (rather than S<C<: :a:b:c>>).
+splits into four elements instead of five.
 
 An empty trailing field, on the other hand, is produced when there is a
 match at the end of EXPR, regardless of the length of the match
 (of course, unless a non-zero LIMIT is given explicitly, such fields are
 removed, as in the last example).  Thus:
 
-    print join(':', split(//, ' abc', -1)), "\n";
-
-produces the output S<C< :a:b:c:>>.
+    my @x = split(//, " abc", -1); # (" ", "a", "b", "c", "")
 
 If the PATTERN contains
 L<capturing groups|perlretut/Grouping things and hierarchical matching>,
@@ -7910,20 +8036,20 @@ does B<not> count towards the LIMIT.  Consider the following expressions
 evaluated in list context (each returned list is provided in the associated
 comment):
 
-    split(/-|,/, "1-10,20", 3)
-    # ('1', '10', '20')
+    my @x = split(/-|,/    , "1-10,20", 3);
+    # ("1", "10", "20")
 
-    split(/(-|,)/, "1-10,20", 3)
-    # ('1', '-', '10', ',', '20')
+    my @x = split(/(-|,)/  , "1-10,20", 3);
+    # ("1", "-", "10", ",", "20")
 
-    split(/-|(,)/, "1-10,20", 3)
-    # ('1', undef, '10', ',', '20')
+    my @x = split(/-|(,)/  , "1-10,20", 3);
+    # ("1", undef, "10", ",", "20")
 
-    split(/(-)|,/, "1-10,20", 3)
-    # ('1', '-', '10', undef, '20')
+    my @x = split(/(-)|,/  , "1-10,20", 3);
+    # ("1", "-", "10", undef, "20")
 
-    split(/(-)|(,)/, "1-10,20", 3)
-    # ('1', '-', undef, '10', undef, ',', '20')
+    my @x = split(/(-)|(,)/, "1-10,20", 3);
+    # ("1", "-", undef, "10", undef, ",", "20")
 
 =item sprintf FORMAT, LIST
 X<sprintf>
@@ -8202,6 +8328,11 @@ as supported by the compiler used to build Perl:
    z           interpret integer as C types "size_t" or
                "ssize_t" on Perl 5.14 or later
 
+Note that, in general, using the C<l> modifier (for example, when writing
+C<"%ld"> or C<"%lu"> instead of C<"%d"> and C<"%u">) is unnecessary
+when used from Perl code.  Moreover, it may be harmful, for example on
+Windows 64-bit where a long is 32-bits.
+
 As of 5.14, none of these raises an exception if they are not supported on
 your platform.  However, if warnings are enabled, a warning of the
 L<C<printf>|warnings> warning class is issued on an unsupported
@@ -8212,7 +8343,7 @@ conversion flag.  Should you instead prefer an exception, do this:
 If you would like to know about a version dependency before you
 start running the program, put something like this at its top:
 
-    use 5.014;  # for hh/j/t/z/ printf modifiers
+    use v5.14;  # for hh/j/t/z/ printf modifiers
 
 You can find out whether your Perl supports quads via L<Config>:
 
@@ -8323,7 +8454,7 @@ L<C<srand>|/srand EXPR> uses that for the seed; otherwise it
 it returns the seed.  To signal that your code will work I<only> on Perls
 of a recent vintage:
 
-    use 5.014;	# so srand returns the seed
+    use v5.14;	# so srand returns the seed
 
 If L<C<srand>|/srand EXPR> is not called explicitly, it is called
 implicitly without a parameter at the first use of the
@@ -8536,6 +8667,11 @@ parentheses.  With a parenthesised list, L<C<undef>|/undef EXPR> can be
 used as a
 dummy placeholder.  However, since initialization of state variables in
 such lists is currently not possible this would serve no purpose.
+
+Redeclaring a variable in the same scope or statement will "shadow" the
+previous declaration, creating a new instance and preventing access to
+the previous one. This is usually undesired and, if warnings are enabled,
+will result in a warning in the C<shadow> category.
 
 L<C<state>|/state VARLIST> is available only if the
 L<C<"state"> feature|feature/The 'state' feature> is enabled or if it is
@@ -8775,8 +8911,7 @@ X<O_RDONLY> X<O_RDWR> X<O_WRONLY>
 For historical reasons, some values work on almost every system
 supported by Perl: 0 means read-only, 1 means write-only, and 2
 means read/write.  We know that these values do I<not> work under
-OS/390 and on the Macintosh; you probably don't want to
-use them in new code.
+OS/390; you probably don't want to use them in new code.
 
 If the file named by FILENAME does not exist and the
 L<C<open>|/open FILEHANDLE,MODE,EXPR> call creates
@@ -9266,15 +9401,22 @@ X<uc> X<uppercase> X<toupper>
 
 =for Pod::Functions return upper-case version of a string
 
-Returns an uppercased version of EXPR.  This is the internal function
-implementing the C<\U> escape in double-quoted strings.
-It does not attempt to do titlecase mapping on initial letters.  See
-L<C<ucfirst>|/ucfirst EXPR> for that.
+Returns an uppercased version of EXPR.  If EXPR is omitted, uses
+L<C<$_>|perlvar/$_>.
 
-If EXPR is omitted, uses L<C<$_>|perlvar/$_>.
+    my $str = uc("Perl is GREAT"); # "PERL IS GREAT"
 
 This function behaves the same way under various pragmas, such as in a locale,
 as L<C<lc>|/lc EXPR> does.
+
+If you want titlecase mapping on initial letters see
+L<C<ucfirst>|/ucfirst EXPR> instead.
+
+B<Note:> This is the internal function implementing the
+L<C<\U>|perlop/"Quote and Quote-like Operators"> escape in double-quoted
+strings.
+
+    my $str = "Perl is \Ugreat\E"; # "Perl is GREAT"
 
 =item ucfirst EXPR
 X<ucfirst> X<uppercase>
@@ -9511,8 +9653,6 @@ X<use> X<module> X<import>
 
 =item use Module
 
-=item use VERSION
-
 =for Pod::Functions load in a module at compile time and import its namespace
 
 Imports some semantics into the current package from the named module,
@@ -9523,44 +9663,6 @@ package.  It is exactly equivalent to
 
 except that Module I<must> be a bareword.
 The importation can be made conditional by using the L<if> module.
-
-In the C<use VERSION> form, VERSION may be either a v-string such as
-v5.24.1, which will be compared to L<C<$^V>|perlvar/$^V> (aka
-$PERL_VERSION), or a numeric argument of the form 5.024001, which will
-be compared to L<C<$]>|perlvar/$]>.  An exception is raised if VERSION
-is greater than the version of the current Perl interpreter; Perl will
-not attempt to parse the rest of the file.  Compare with
-L<C<require>|/require VERSION>, which can do a similar check at run
-time.  Symmetrically, C<no VERSION> allows you to specify that you
-want a version of Perl older than the specified one.
-
-Specifying VERSION as a numeric argument of the form 5.024001 should
-generally be avoided as older less readable syntax compared to
-v5.24.1. Before perl 5.8.0 released in 2002 the more verbose numeric
-form was the only supported syntax, which is why you might see it in
-
-    use v5.24.1;    # compile time version check
-    use 5.24.1;     # ditto
-    use 5.024_001;  # ditto; older syntax compatible with perl 5.6
-
-This is often useful if you need to check the current Perl version before
-L<C<use>|/use Module VERSION LIST>ing library modules that won't work
-with older versions of Perl.
-(We try not to do this more than we have to.)
-
-C<use VERSION> also lexically enables all features available in the requested
-version as defined by the L<feature> pragma, disabling any features
-not in the requested version's feature bundle.  See L<feature>.
-Similarly, if the specified Perl version is greater than or equal to
-5.12.0, strictures are enabled lexically as
-with L<C<use strict>|strict>.  Any explicit use of
-C<use strict> or C<no strict> overrides C<use VERSION>, even if it comes
-before it.  Later use of C<use VERSION>
-will override all behavior of a previous
-C<use VERSION>, possibly removing the C<strict> and C<feature> added by
-C<use VERSION>.  C<use VERSION> does not
-load the F<feature.pm> or F<strict.pm>
-files.
 
 The C<BEGIN> forces the L<C<require>|/require VERSION> and
 L<C<import>|/import LIST> to happen at compile time.  The
@@ -9653,16 +9755,75 @@ or no unimport method being found.
     no strict 'refs';
     no warnings;
 
-Care should be taken when using the C<no VERSION> form of L<C<no>|/no
-MODULE VERSION LIST>.  It is
-I<only> meant to be used to assert that the running Perl is of a earlier
-version than its argument and I<not> to undo the feature-enabling side effects
-of C<use VERSION>.
-
 See L<perlmodlib> for a list of standard modules and pragmas.  See
 L<perlrun|perlrun/-m[-]module> for the C<-M> and C<-m> command-line
 options to Perl that give L<C<use>|/use Module VERSION LIST>
 functionality from the command-line.
+
+=item use VERSION
+
+=for Pod::Functions enable Perl language features and declare required version
+
+Lexically enables all features available in the requested version as
+defined by the L<feature> pragma, disabling any features not in the
+requested version's feature bundle.  See L<feature>.
+
+VERSION may be either a v-string such as v5.24.1, which will be compared
+to L<C<$^V>|perlvar/$^V> (aka $PERL_VERSION), or a numeric argument of the
+form 5.024001, which will be compared to L<C<$]>|perlvar/$]>.  An
+exception is raised if VERSION is greater than the version of the current
+Perl interpreter; Perl will not attempt to parse the rest of the file.
+Compare with L<C<require>|/require VERSION>, which can do a similar check
+at run time.
+
+If the specified Perl version is 5.12 or higher, strictures are enabled
+lexically as with L<C<use strict>|strict>.  Similarly, if the specified
+Perl version is 5.35.0 or higher, L<warnings> are enabled.  Later use of
+C<use VERSION> will override all behavior of a previous C<use VERSION>,
+possibly removing the C<strict>, C<warnings>, and C<feature> added by it.
+C<use VERSION> does not load the F<feature.pm>, F<strict.pm>, or
+F<warnings.pm> files.
+
+In the current implementation, any explicit use of C<use strict> or
+C<no strict> overrides C<use VERSION>, even if it comes before it.
+However, this may be subject to change in a future release of Perl, so new
+code should not rely on this fact.  It is recommended that a
+C<use VERSION> declaration be the first significant statement within a
+file (possibly after a C<package> statement or any amount of whitespace or
+comment), so that its effects happen first, and other pragmata are applied
+after it.
+
+Specifying VERSION as a numeric argument of the form 5.024001 should
+generally be avoided as older less readable syntax compared to
+v5.24.1. Before perl 5.8.0 released in 2002 the more verbose numeric
+form was the only supported syntax, which is why you might see it in
+older code.
+
+    use v5.24.1;    # compile time version check
+    use 5.24.1;     # ditto
+    use 5.024_001;  # ditto; older syntax compatible with perl 5.6
+
+This is often useful if you need to check the current Perl version before
+L<C<use>|/use Module VERSION LIST>ing library modules that won't work
+with older versions of Perl.
+(We try not to do this more than we have to.)
+
+Symmetrically, C<no VERSION> allows you to specify that you want a version
+of Perl older than the specified one.  Historically this was added during
+early designs of the Raku language (formerly "Perl 6"), so that a Perl 5
+program could begin
+
+    no 6;
+
+to declare that it is not a Perl 6 program.  As the two languages have
+different implementations, file naming conventions, and other
+infrastructure, this feature is now little used in practice and should be
+avoided in newly-written code.
+
+Care should be taken when using the C<no VERSION> form, as it is I<only>
+meant to be used to assert that the running Perl is of a earlier version
+than its argument and I<not> to undo the feature-enabling side effects
+of C<use VERSION>.
 
 =item utime LIST
 X<utime>
@@ -9768,7 +9929,7 @@ versions of Perl with mysterious syntax errors, put this sort of thing at
 the top of your file to signal that your code will work I<only> on Perls of
 a recent vintage:
 
-    use 5.012;	# so keys/values/each work on arrays
+    use v5.12;	# so keys/values/each work on arrays
 
 See also L<C<keys>|/keys HASH>, L<C<each>|/each HASH>, and
 L<C<sort>|/sort SUBNAME LIST>.
@@ -10258,6 +10419,8 @@ This method keyword is documented in L<perlobj/"Destructors">.
 
 =item gt
 
+=item isa
+
 =item le
 
 =item lt
@@ -10329,6 +10492,28 @@ Statements">.
 
 These flow-control keywords related to the experimental switch feature are
 documented in L<perlsyn/"Switch Statements">.
+
+=back
+
+=over
+
+=item try
+
+=item catch
+
+=item finally
+
+These flow-control keywords related to the experimental C<try> feature are
+documented in L<perlsyn/"Try Catch Exception Handling">.
+
+=back
+
+=over
+
+=item defer
+
+This flow-control keyword related to the experimental C<defer> feature is
+documented in L<perlsyn/"defer blocks">.
 
 =back
 

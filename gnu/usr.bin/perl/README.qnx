@@ -173,7 +173,7 @@ we will pass to Configure through -Dsysroot.
 =head3 Preparing the target system
 
 It's quite possible that the target system doesn't have a readily
-available /tmp, so it's generall safer to do something like this:
+available /tmp, so it's generally safer to do something like this:
 
  $ ssh $TARGETUSER@$TARGETHOST 'rm -rf perl; mkdir perl; mkdir perl/tmp'
  $ export TARGETDIR=`ssh $TARGETUSER@$TARGETHOST pwd`/perl

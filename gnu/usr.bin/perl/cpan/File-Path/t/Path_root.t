@@ -112,7 +112,6 @@ sub max_g {
   my $max_gid   = 0;
   my $max_group = undef;
   while ( my @g = getgrent() ) {
-    print Dumper @g;
     if ($max_gid < $g[2]) {
       $max_gid = $g[2];
       $max_group = $g[0];

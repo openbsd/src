@@ -15,7 +15,7 @@
 # H.Merijn Brand [17 Feb 2004]
 # This comment is just to ensure that Configure will find variables that
 # are removed/replaced in patches on blead, but are still needed in the
-# 5.8.x, 5.6.x and 5.005.x maintainance tracks.
+# 5.8.x, 5.6.x and 5.005.x maintenance tracks.
 # metaconfig -m will scan all .SH files on this level (not deeper), and
 # not in other subfolders. This file is as good as any .SH
 # patch   references

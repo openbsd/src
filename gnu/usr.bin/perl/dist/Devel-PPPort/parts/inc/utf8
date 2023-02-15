@@ -182,10 +182,10 @@ __UNDEFINED__ REPLACEMENT_CHARACTER_UTF8  "\xDD\x72\x72\x70"
 #  error Unknown character set
 #endif
 
-#if { VERSION < 5.31.4 }
-        /* Versions prior to this accepted things that are now considered
-         * malformations, and didn't return -1 on error with warnings enabled
-         * */
+#if { VERSION < 5.35.10 }
+        /* Versions prior to 5.31.4 accepted things that are now considered
+         * malformations, and didn't return -1 on error with warnings enabled.
+         * Versions before 5.35.10 dereferenced empty input without checking */
 #  undef utf8_to_uvchr_buf
 #endif
 
@@ -228,6 +228,34 @@ __UNDEFINED__ REPLACEMENT_CHARACTER_UTF8  "\xDD\x72\x72\x70"
 UV
 utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
 {
+#    if { VERSION >= 5.31.4 }   /* But from above, must be < 5.35.10 */
+#      if { VERSION != 5.35.9 }
+
+    /* Versions less than 5.35.9 could dereference s on zero length, so
+     * pass it something where no harm comes from that. */
+    if (send <= s) s = send = (U8 *) "?";
+    return Perl_utf8_to_uvchr_buf_helper(aTHX_ s, send, retlen);
+
+#      else /* Below is 5.35.9, which also works on non-empty input, but
+               for empty input, can wrongly dereference, and additionally is
+               also just plain broken */
+    if (send > s) return Perl_utf8_to_uvchr_buf_helper(aTHX_ s, send, retlen);
+    if (! ckWARN_d(WARN_UTF8)) {
+        if (retlen) *retlen = 0;
+        return UNICODE_REPLACEMENT;
+    }
+    else {
+        s = send = (U8 *) "?";
+
+        /* Call just for its warning */
+        (void) Perl__utf8n_to_uvchr_msgs_helper(s, 0, NULL, 0, NULL, NULL);
+        if (retlen) *retlen = (STRLEN) -1;
+        return 0;
+    }
+
+#      endif
+#    else
+
     UV ret;
     STRLEN curlen;
     bool overflows = 0;
@@ -249,7 +277,7 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
         }
     }
 
-#    if { VERSION < 5.26.0 } && ! defined(EBCDIC)
+#      if { VERSION < 5.26.0 } && ! defined(EBCDIC)
 
     /* Perl did not properly detect overflow for much of its history on
      * non-EBCDIC platforms, often returning an overlong value which may or may
@@ -304,7 +332,7 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
     }
     else
 
-#    endif  /* < 5.26 */
+#      endif  /* < 5.26 */
 
         /* Here, we are either in a release that properly detects overflow, or
          * we have checked for overflow and the next statement is executing as
@@ -317,7 +345,7 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
                     s, curlen, retlen,   (UTF8_ALLOW_ANYUV
                                       & ~(UTF8_ALLOW_LONG|UTF8_ALLOW_EMPTY)));
 
-#    if { VERSION >= 5.26.0 } && { VERSION < 5.28.0 }
+#      if { VERSION >= 5.26.0 } && { VERSION < 5.28.0 }
 
     /* But actually, more modern versions restrict the UV to being no more than
      * what an IV can hold, so it could still have gotten it wrong about
@@ -326,7 +354,7 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
         overflows = 1;
     }
 
-#    endif
+#      endif
 
     if (UNLIKELY(overflows)) {
         if (! do_warnings) {
@@ -372,7 +400,7 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
              * modern version of this function returns */
             ret = UNICODE_REPLACEMENT;
 
-#    if { VERSION < 5.16.0 }
+#      if { VERSION < 5.16.0 }
 
             /* Versions earlier than this don't necessarily return the proper
              * length.  It should not extend past the end of string, nor past
@@ -384,11 +412,11 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
                 *retlen = D_PPP_MIN(*retlen, curlen);
                 *retlen = D_PPP_MIN(*retlen, UTF8SKIP(s));
                 do {
-#      ifdef UTF8_IS_CONTINUATION
+#        ifdef UTF8_IS_CONTINUATION
                     if (! UTF8_IS_CONTINUATION(s[i]))
-#      else       /* Versions without the above don't support EBCDIC anyway */
+#        else       /* Versions without the above don't support EBCDIC anyway */
                     if (s[i] < 0x80 || s[i] > 0xBF)
-#      endif
+#        endif
                     {
                         *retlen = i;
                         break;
@@ -396,12 +424,15 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
                 } while (++i < *retlen);
             }
 
-#    endif
+#      endif  /* end of < 5.16.0 */
 
         }
     }
 
     return ret;
+
+#    endif    /* end of < 5.31.4 */
+
 }
 
 #  endif
@@ -431,23 +462,80 @@ __UNDEFINED__  utf8_to_uvchr(s, lp)                                             
 /* Replace utf8_to_uvchr with utf8_to_uvchr_buf */
 
 #ifdef sv_len_utf8
-   /* Older Perl versions have broken sv_len_utf8() when passed sv does not have SVf_UTF8 flag set */
-   /* Also note that SvGETMAGIC() may change presence of SVf_UTF8 flag */
-#  if { VERSION < 5.17.5 }
+#  if { VERSION >= 5.17.5 }
+#    ifndef  sv_len_utf8_nomg
+#      if defined(PERL_USE_GCC_BRACE_GROUPS)
+#        define sv_len_utf8_nomg(sv)                                    \
+            ({                                                          \
+                SV *sv_ = (sv);                                         \
+                sv_len_utf8(!SvGMAGICAL(sv_)                            \
+                            ? sv_                                       \
+                            : sv_mortalcopy_flags(sv_, SV_NOSTEAL));    \
+            })
+#      else
+         PERL_STATIC_INLINE STRLEN D_PPP_sv_len_utf8_nomg(SV * sv)
+         {
+             dTHX;
+             if (SvGMAGICAL(sv))
+                 return sv_len_utf8(sv_mortalcopy_flags(sv,
+                                                        SV_NOSTEAL));
+             else return sv_len_utf8(sv);
+         }
+#        define  sv_len_utf8_nomg(sv) D_PPP_sv_len_utf8_nomg(sv)
+#      endif
+#    endif
+#  else /* < 5.17.5 */
+    /* Older Perl versions have broken sv_len_utf8() when passed sv does not
+     * have SVf_UTF8 flag set */
+    /* Also note that SvGETMAGIC() may change presence of SVf_UTF8 flag */
 #    undef sv_len_utf8
 #    if defined(PERL_USE_GCC_BRACE_GROUPS)
-#      define sv_len_utf8_nomg(sv) ({ SV *_sv2 = (sv); (SvUTF8(_sv2) ? Perl_sv_len_utf8(aTHX_ (!SvGMAGICAL(_sv2) ? _sv2 : sv_mortalcopy_flags(_sv2, SV_NOSTEAL))) : ({ STRLEN _len; SvPV_nomg(_sv2, _len); _len; })); })
-#      define sv_len_utf8(sv) ({ SV *_sv1 = (sv); SvGETMAGIC(_sv1); sv_len_utf8_nomg(_sv1); })
-#    else
-#      define sv_len_utf8_nomg(sv) (PL_Sv = (sv), (SvUTF8(PL_Sv) ? Perl_sv_len_utf8(aTHX_ (!SvGMAGICAL(PL_Sv) ? PL_Sv : sv_mortalcopy_flags(PL_Sv, SV_NOSTEAL))) : (SvPV_nomg(PL_Sv, PL_na), PL_na)))
-#      define sv_len_utf8(sv) (PL_Sv = (sv), SvGETMAGIC(PL_Sv), sv_len_utf8_nomg(PL_Sv))
+#      define sv_len_utf8_nomg(sv)                                          \
+        ({                                                                  \
+            SV *sv2 = (sv);                                                 \
+            STRLEN len;                                                     \
+            if (SvUTF8(sv2)) {                                              \
+                if (SvGMAGICAL(sv2))                                        \
+                    len = Perl_sv_len_utf8(aTHX_                            \
+                                           sv_mortalcopy_flags(sv2,         \
+                                                               SV_NOSTEAL));\
+                else                                                        \
+                    len = Perl_sv_len_utf8(aTHX_ sv2);                      \
+             }                                                              \
+             else SvPV_nomg(sv2, len);                                      \
+             len;                                                           \
+       })
+#      define sv_len_utf8(sv) ({ SV *_sv1 = (sv);                           \
+                                 SvGETMAGIC(_sv1);                          \
+                                 sv_len_utf8_nomg(_sv1);                    \
+                              })
+#    else   /* Below is no brace groups */
+       PERL_STATIC_INLINE STRLEN D_PPP_sv_len_utf8_nomg(SV * sv)
+       {
+          dTHX;
+          STRLEN len;
+          if (SvUTF8(sv)) {
+              if (SvGMAGICAL(sv))
+                  len = Perl_sv_len_utf8(aTHX_
+                                         sv_mortalcopy_flags(sv,
+                                                             SV_NOSTEAL));
+              else
+                  len = Perl_sv_len_utf8(aTHX_ sv);
+          }
+          else SvPV_nomg(sv, len);
+          return len;
+       }
+#      define sv_len_utf8_nomg(sv) D_PPP_sv_len_utf8_nomg(sv)
+
+       PERL_STATIC_INLINE STRLEN D_PPP_sv_len_utf8(SV * sv)
+       {
+          dTHX;
+          SvGETMAGIC(sv);
+          return sv_len_utf8_nomg(sv);
+       }
+#      define sv_len_utf8(sv) D_PPP_sv_len_utf8(sv)
 #    endif
-#  endif
-#  if defined(PERL_USE_GCC_BRACE_GROUPS)
-     __UNDEFINED__ sv_len_utf8_nomg(sv) ({ SV *_sv = (sv); sv_len_utf8(!SvGMAGICAL(_sv) ? _sv : sv_mortalcopy_flags(_sv, SV_NOSTEAL)); })
-#  else
-     __UNDEFINED__ sv_len_utf8_nomg(sv) ((PL_Sv = (sv)), sv_len_utf8(!SvGMAGICAL(PL_Sv) ? PL_Sv : sv_mortalcopy_flags(PL_Sv, SV_NOSTEAL)))
-#  endif
+#  endif    /* End of < 5.17.5 */
 #endif
 
 =xsinit

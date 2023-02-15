@@ -26,7 +26,6 @@ typedef struct {
 static IV
 PerlIOMmap_map(pTHX_ PerlIO *f)
 {
-    dVAR;
     PerlIOMmap * const m = PerlIOSelf(f, PerlIOMmap);
     const IV flags = PerlIOBase(f)->flags;
     IV code = 0;

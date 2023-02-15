@@ -14,11 +14,11 @@ use strict;
 
 # Some (safe?) bets.
 
-ok(keys %Config > 500, "Config has more than 500 entries");
+cmp_ok(keys %Config, '>', 500, "Config has more than 500 entries");
 
 my ($first) = Config::config_sh() =~ /^(\S+)=/m;
 die "Can't find first entry in Config::config_sh()" unless defined $first;
-print "# First entry is '$first'\n";
+note("First entry is '$first'");
 
 # It happens that the we know what the first key should be. This is somewhat
 # cheating, but there was briefly a bug where the key got a bonus newline.
@@ -31,11 +31,12 @@ ok(!exists($Config{"\n$first"}),
 is($Config{PERL_REVISION}, 5, "PERL_REVISION is 5");
 
 # Check that old config variable names are aliased to their new ones.
-my %grandfathers = ( PERL_VERSION       => 'PATCHLEVEL',
-                     PERL_SUBVERSION    => 'SUBVERSION',
-                     PERL_CONFIG_SH     => 'CONFIG'
-                   );
-while( my($new, $old) = each %grandfathers ) {
+my %legacy = (
+    PERL_VERSION       => 'PATCHLEVEL',
+    PERL_SUBVERSION    => 'SUBVERSION',
+    PERL_CONFIG_SH     => 'CONFIG'
+);
+while( my($new, $old) = each %legacy ) {
     isnt($Config{$new}, undef,       "$new is defined");
     is($Config{$new}, $Config{$old}, "$new is aliased to $old");
 }
@@ -150,7 +151,7 @@ my @api;
 
 my @rev = @Config{qw(PERL_API_REVISION PERL_API_VERSION PERL_API_SUBVERSION)};
 
-print ("# test tagged responses, multi-line and single-line\n");
+note("test tagged responses, multi-line and single-line");
 foreach my $api ($out3, $out4) {
     @api = $api =~ /PERL_API_(\w+)=(.*?)(?:;\n|\s)/mg;
     is($api[0], "REVISION", "REVISION tag");
@@ -161,7 +162,7 @@ foreach my $api ($out3, $out4) {
     is($api[3], "'$rev[2]'", "SUBVERSION is $rev[2]");
 }
 
-print("# test non-tagged responses, multi-line and single-line\n");
+note("test non-tagged responses, multi-line and single-line");
 foreach my $api ($out5, $out6) {
     @api = split /(?: |;\n)/, $api;
     is($api[0], "'$rev[0]'", "revision is $rev[0]");

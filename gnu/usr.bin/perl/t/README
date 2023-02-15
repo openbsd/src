@@ -22,14 +22,22 @@ This method pinpoints failed tests automatically.
 If you come up with new tests, please submit them to
 https://github.com/Perl/perl5/issues.
 
-Tests in the t/base/ directory ought to be runnable with plain miniperl.
-That is, they should not require Config.pm nor should they require any
-extensions to have been built.  TEST will abort if any tests in the
-t/base/ directory fail.
+Tests in the t/base/ directory must be runnable with plain miniperl alone.
+That is, they should not assume that require works, let alone that they can
+require Config.pm, strict or warnings.  This constraint is frustrating, but
+necessary as they exist to sanity test the rest of the test framework.
+TEST will abort if any tests in the t/base/ directory fail.
 
 Tests in the t/comp/, t/cmd/, t/run/, t/io/, t/op/ and t/uni/ directories
 should also be runnable by miniperl and not require Config.pm, but
 failures to comply will not cause TEST to abort like for t/base/.
+
+The comment in TEST explains the test bootstrapping order:
+
+* base first, as TEST bails out if that can't run
+* then comp, to validate that require works
+* then run, to validate that -M works
+* then we know we can -MTestInit for everything else, making life simpler
 
 Tests in t/perf/ are designed to test performance and optimisations,
 and also contain additional tools and files designed to run outside

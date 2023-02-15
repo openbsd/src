@@ -196,8 +196,8 @@ Cf. L</Prerequisites>.
 
 EMX runtime is required (may be substituted by RSX). Note that
 it is possible to make F<perl_.exe> to run under DOS without any
-external support by binding F<emx.exe>/F<rsx.exe> to it, see C<emxbind>. Note
-that under DOS for best results one should use RSX runtime, which
+external support by binding F<emx.exe>/F<rsx.exe> to it, see L<emxbind(1)>.
+Note that under DOS for best results one should use RSX runtime, which
 has much more functions working (like C<fork>, C<popen> and so on). In
 fact RSX is required if there is no VCPI present. Note the
 RSX requires DPMI.  Many implementations of DPMI are known to be very
@@ -300,7 +300,7 @@ with
 	perl ../../blah/foo.cmd arg1 arg2 arg3
 
 (note that the argument C<-my_opts> is taken care of by the C<extproc> line
-in your script, see L</C<extproc> on the first line>).
+in your script, see C<L</extproc>> on the first line).
 
 To understand what the above I<magic> does, read perl docs about C<-S>
 switch - see L<perlrun>, and cmdref about C<extproc>:
@@ -558,7 +558,7 @@ of this file.
 
 B<NOTE>. Because of a typo the binary installer of 5.00305
 would install a variable C<PERL_SHPATH> into F<Config.sys>. Please
-remove this variable and put L</C<PERL_SH_DIR>> instead.
+remove this variable and put C<L</PERL_SH_DIR>> instead.
 
 =head2 Manual binary installation
 
@@ -619,7 +619,7 @@ C<set PERLLIB_PREFIX> in F<Config.sys>, see L</"C<PERLLIB_PREFIX>">.
 
 =item Additional Perl modules
 
-  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.32.1/
+  unzip perl_ste.zip -d f:/perllib/lib/site_perl/5.36.0/
 
 Same remark as above applies.  Additionally, if this directory is not
 one of directories on @INC (and @INC is influenced by C<PERLLIB_PREFIX>), you
@@ -1367,7 +1367,7 @@ to find Perl DLL relatively to the location of the EXE file; or one may want
 to ignore the environment when setting the Perl-library search patch, etc.
 
 If you fill comfortable with I<embedding> interface (see L<perlembed>), such
-things are easy to do repeating the steps outlined in L/<Making
+things are easy to do repeating the steps outlined in L</Making
 executables with a custom collection of statically loaded extensions>, and
 doing more comprehensive edits to main() of F<perlmain.c>.  The people with
 little desire to understand Perl can just rename main(), and do necessary
@@ -2434,7 +2434,7 @@ would not.
 =head2 Priorities
 
 C<setpriority> and C<getpriority> are not compatible with earlier
-ports by Andreas Kaiser. See C<"setpriority, getpriority">.
+ports by Andreas Kaiser. See L</setpriority, getpriority>.
 
 =head2 DLL name mangling: pre 5.6.2
 

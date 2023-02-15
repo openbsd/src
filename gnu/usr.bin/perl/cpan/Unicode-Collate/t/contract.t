@@ -1,13 +1,5 @@
 
 BEGIN {
-    unless ('A' eq pack('U', 0x41)) {
-	print "1..0 # Unicode::Collate cannot pack a Unicode code point\n";
-	exit 0;
-    }
-    unless (0x41 == unpack('U', 'A')) {
-	print "1..0 # Unicode::Collate cannot get a Unicode code point\n";
-	exit 0;
-    }
     if ($ENV{PERL_CORE}) {
 	chdir('t') if -d 't';
 	@INC = $^O eq 'MacOS' ? qw(::lib) : qw(../lib);
@@ -30,6 +22,9 @@ sub ok ($;$) {
 use Unicode::Collate;
 
 ok(1);
+
+sub _pack_U   { Unicode::Collate::pack_U(@_) }
+sub _unpack_U { Unicode::Collate::unpack_U(@_) }
 
 #########################
 
@@ -103,7 +98,7 @@ ok($kjeNFD->eq("\x{45C}", "\x{43A}\x{301}\x{334}"));
 
 ok($aaNFD->lt("Z", "A\x{30A}\x{304}"));
 ok($aaNFD->eq("A", "A\x{304}\x{30A}"));
-ok($aaNFD->eq(pack('U', 0xE5), "A\x{30A}\x{304}"));
+ok($aaNFD->eq(_pack_U(0xE5), "A\x{30A}\x{304}"));
 ok($aaNFD->eq("A\x{304}", "A\x{304}\x{30A}"));
 ok($aaNFD->lt("Z", "A\x{327}\x{30A}"));
 ok($aaNFD->lt("Z", "A\x{30A}\x{327}"));
@@ -120,7 +115,7 @@ ok($aaNFD->lt("Z", "A\x{30A}\x{31A}"));
 
 ok($aaPre->lt("Z", "A\x{30A}\x{304}"));
 ok($aaPre->eq("A", "A\x{304}\x{30A}"));
-ok($aaPre->eq(pack('U', 0xE5), "A\x{30A}\x{304}"));
+ok($aaPre->eq(_pack_U(0xE5), "A\x{30A}\x{304}"));
 ok($aaPre->eq("A\x{304}", "A\x{304}\x{30A}"));
 ok($aaPre->lt("Z", "A\x{327}\x{30A}"));
 ok($aaPre->lt("Z", "A\x{30A}\x{327}"));
@@ -152,7 +147,7 @@ my $aaNoN = Unicode::Collate->new(
 
 ok($aaNoN->lt("Z", "A\x{30A}\x{304}"));
 ok($aaNoN->eq("A", "A\x{304}\x{30A}"));
-ok($aaNoN->eq(pack('U', 0xE5), "A\x{30A}\x{304}"));
+ok($aaNoN->eq(_pack_U(0xE5), "A\x{30A}\x{304}"));
 ok($aaNoN->eq("A\x{304}", "A\x{304}\x{30A}"));
 ok($aaNoN->eq("A", "A\x{327}\x{30A}"));
 ok($aaNoN->lt("Z", "A\x{30A}\x{327}"));

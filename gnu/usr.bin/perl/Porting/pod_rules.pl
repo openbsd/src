@@ -18,14 +18,12 @@ if (ord("A") == 193) {
 # --build-all tries to build everything
 # --build-foo updates foo as follows
 # --showfiles shows the files to be changed
-# --test exit if perl.pod, MANIFEST are consistent, and regenerated
-#   files are up to date, die otherwise.
+# --tap emit TAP (testing) output describing the state of the pod files
 
 %Targets = (
             manifest => 'MANIFEST',
             vms => 'vms/descrip_mms.template',
             nmake => 'win32/Makefile',
-            dmake => 'win32/makefile.mk',
             gmake => 'win32/GNUmakefile',
             podmak => 'win32/pod.mak',
             unix => 'Makefile.SH',
@@ -166,7 +164,6 @@ sub do_nmake {
 }
 
 # shut up used only once warning
-*do_dmake = *do_dmake = \&do_nmake;
 *do_gmake = *do_gmake = \&do_nmake;
 
 sub do_podmak {

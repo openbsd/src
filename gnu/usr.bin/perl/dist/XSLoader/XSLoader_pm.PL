@@ -1,4 +1,6 @@
 use strict;
+use warnings;
+
 use Config;
 # We require DynaLoader to make sure that mod2fname is loaded
 eval { require DynaLoader };
@@ -9,37 +11,15 @@ print OUT <<'EOT';
 # Generated from XSLoader_pm.PL (resolved %Config::Config value)
 # This file is unique for every OS
 
+use strict;
+no strict 'refs';
+
 package XSLoader;
 
-$VERSION = "0.30"; # remember to update version in POD!
-
-#use strict;
+our $VERSION = "0.31"; # remember to update version in POD!
 
 package DynaLoader;
 
-EOT
-
-# dlutils.c before 5.006 has this:
-#
-#    #ifdef DEBUGGING
-#        dl_debug = SvIV( perl_get_sv("DynaLoader::dl_debug", 0x04) );
-#    #endif
-#
-# where 0x04 is GV_ADDWARN, which causes a warning to be issued by the call
-# into XS below, if DynaLoader.pm hasn't been loaded.
-# It was changed to 0 in the commit(s) that added XSLoader to the core
-# (9cf41c4d23a47c8b and its parent 9426adcd48655815)
-# Hence to backport XSLoader to work silently with earlier DynaLoaders we need
-# to ensure that the variable exists:
-
-print OUT <<'EOT' if $] < 5.006;
-
-# enable debug/trace messages from DynaLoader perl code
-$dl_debug = $ENV{PERL_DL_DEBUG} || 0 unless defined $dl_debug;
-
-EOT
-
-print OUT <<'EOT';
 # No prizes for guessing why we don't say 'bootstrap DynaLoader;' here.
 # NOTE: All dl_*.xs (including dl_none.xs) define a dl_error() XSUB
 boot_DynaLoader('DynaLoader') if defined(&boot_DynaLoader) &&
@@ -208,41 +188,16 @@ print OUT <<'EOT';
     push(@DynaLoader::dl_shared_objects, $file); # record files loaded
     return &$xs(@_);
 }
-EOT
 
 # Can't test with DynaLoader->can('bootstrap_inherit') when building in the
 # core, as XSLoader gets built before DynaLoader.
-
-if ($] >= 5.006) {
-    print OUT <<'EOT';
 
 sub bootstrap_inherit {
     require DynaLoader;
     goto \&DynaLoader::bootstrap_inherit;
 }
 
-EOT
-} else {
-    print OUT <<'EOT';
-
-sub bootstrap_inherit {
-    # Versions of DynaLoader prior to 5.6.0 don't have bootstrap_inherit.
-    package DynaLoader;
-
-    my $module = $_[0];
-    local *DynaLoader::isa = *{"$module\::ISA"};
-    local @DynaLoader::isa = (@DynaLoader::isa, 'DynaLoader');
-    # Cannot goto due to delocalization.  Will report errors on a wrong line?
-    require DynaLoader;
-    DynaLoader::bootstrap(@_);
-}
-
-EOT
-}
-
-print OUT <<'EOT';
 1;
-
 
 __END__
 
@@ -252,7 +207,7 @@ XSLoader - Dynamically load C libraries into Perl code
 
 =head1 VERSION
 
-Version 0.30
+Version 0.31
 
 =head1 SYNOPSIS
 

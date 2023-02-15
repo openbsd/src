@@ -84,12 +84,20 @@ sub test_X_ops {
             }
             is($@, '', "Overload succeeds $desc");
 
-            if ($^O eq "VMS" && $op =~ /[rwxRWX]/) {
-                is($vwarn, 1, "warning about VMS ACLs $desc");
-            } else {
-                is($rv, eval "-$op \$file", "correct overload $desc")
-                    unless $access;
-                is($vwarn, undef, "no warnings about VMS ACLs $desc");
+            SKIP : {
+                if ($^O eq "haiku" && $op =~ /A/) {
+                    # atime is not stored on Haiku BFS
+                    # and stat always returns local time instead
+                    skip "testing -A $desc_tail on Haiku", 1;
+                }
+
+                if ($^O eq "VMS" && $op =~ /[rwxRWX]/) {
+                    is($vwarn, 1, "warning about VMS ACLs $desc");
+                } else {
+                    is($rv, eval "-$op \$file", "correct overload $desc")
+                        unless $access;
+                    is($vwarn, undef, "no warnings about VMS ACLs $desc");
+                }
             }
 
             # 111640 - File::stat bogus index check in overload
@@ -164,7 +172,6 @@ SKIP: {
 	}
 
 	main::skip("Win32: different stat-info on filehandle", 1) if $^O eq 'MSWin32';
-	main::skip("dos: inode number is fake on dos", 1) if $^O eq 'dos';
 
 	main::skip("OS/2: inode number is not constant on os/2", 1) if $^O eq 'os2';
 

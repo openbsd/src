@@ -242,7 +242,6 @@ http://www.pvhp.com/%7epvhp/
 http://www.leo.org
 http://www.madgoat.com
 http://www.mks.com/s390/gnu/
-http://www.research.att.com/sw/tools/uwin/
 http://www.tpj.com/
 http://safaribooksonline.com/
 http://use.perl.org/~autrijus/journal/25768

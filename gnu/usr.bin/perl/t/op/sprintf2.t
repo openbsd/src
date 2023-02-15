@@ -5,8 +5,8 @@
 BEGIN {
     chdir 't' if -d 't';
     require './test.pl';
-    require './charset_tools.pl';
     set_up_inc('../lib');
+    require './charset_tools.pl';
 }   
 
 # We'll run 12 extra tests (see below) if $Q is false.
@@ -701,7 +701,7 @@ SKIP: {
     skip("uselongdouble=" . ($Config{uselongdouble} ? 'define' : 'undef')
          . " longdblkind=$Config{longdblkind} os=$^O", 6)
         unless ($Config{uselongdouble} &&
-                ($Config{long_double_style_ieee_doubledouble})
+                ($Config{d_long_double_style_ieee_doubledouble})
                 # Gating on 'linux' (ppc) here is due to the differing
                 # double-double implementations: other (also big-endian)
                 # double-double platforms (e.g. AIX on ppc or IRIX on mips)
@@ -892,7 +892,7 @@ SKIP: {
     skip("non-80-bit-long-double", 17)
         unless ($Config{uselongdouble} &&
 		($Config{nvsize} == 16 || $Config{nvsize} == 12) &&
-		($Config{long_double_style_ieee_extended}));
+		($Config{d_long_double_style_ieee_extended}));
 
     {
         # The last normal for this format.
@@ -1176,6 +1176,48 @@ if ($Config{intsize} == 4 && $Config{uvsize} > 4 && $Config{sizesize} > 4) {
     is($x, "0\x{100}", "reasonable result");
     is($off1, 0, "offset at start");
     is($off2, 1, "offset after 0");
+}
+
+# %g formatting was broken on Ubuntu, Debian and perhaps other systems
+# for a long time. Here we verify that no such breakage still exists.
+# See https://github.com/Perl/perl5/issues/18170
+
+if($Config{nvsize} == 8) {
+    # double or 8-byte long double
+    TODO: {
+        local $::TODO = 'Extended precision %g formatting' if $^O eq 'cygwin'
+                                   or
+                               $^O eq 'VMS'
+                                   or
+                               ($^O eq 'MSWin32' and
+                                $Config{cc} eq 'cl' and
+                                $Config{ccversion} =~ /^(\d+)/ and
+                                $1 < 19);
+
+        cmp_ok(sprintf("%.54g", 0.3), 'eq', '0.299999999999999988897769753748434595763683319091796875',
+               "sprintf( \"%.54g\", 0.3 ) renders correctly");
+    }
+}
+elsif($Config{nvtype} eq 'long double' && ($Config{longdblkind} == 3 || $Config{longdblkind} == 4)) {
+    # 80-bit extended precision long double
+    TODO: {
+        local $::TODO = 'Extended precision %g formatting' if $^O eq 'cygwin';
+
+        cmp_ok(sprintf("%.64g", 0.3), 'eq', '0.3000000000000000000108420217248550443400745280086994171142578125',
+              "sprintf( \"%.64g\", 0.3 ) renders correctly");
+    }
+}
+elsif($Config{nvtype} eq 'long double' && $Config{longdblkind} >= 5 && $Config{longdblkind} <= 8) {
+    # double-double
+    cmp_ok(sprintf("%.108g", 0.1), 'eq',
+           '0.0999999999999999999999999999999996918512088980422635110435291864116290339037362855378887616097927093505859375',
+           "sprintf( \"%.108g\", 0.1 ) renders correctly");
+}
+else {
+    # IEEE-754 128-bit long double or __float128
+    cmp_ok(sprintf("%.115g", 0.3), 'eq',
+           '0.299999999999999999999999999999999990370350278063820734720110287075363407309491758923059023800306022167205810546875',
+           "sprintf( \"%.115g\", 0.3 ) renders correctly");
 }
 
 done_testing();

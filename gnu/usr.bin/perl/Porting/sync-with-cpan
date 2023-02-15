@@ -9,7 +9,7 @@ Porting/sync-with-cpan - Synchronize with CPAN distributions
     sh ./Configure
     perl Porting/sync-with-cpan <module>
 
-where <module> is the name it appears in the C<%Modules> hash
+where C<module> is the name it appears in the C<%Modules> hash
 of F<Porting/Maintainers.pl>
 
 =head1 DESCRIPTION
@@ -179,7 +179,7 @@ my @problematic = (
 sub usage
 {
     my $err = shift and select STDERR;
-    print "Usage: $0 module [args] [cpan package]\n";
+    print "Usage: $0 <module-or-dist> [args]\n";
     exit $err;
 }
 
@@ -269,8 +269,6 @@ EOF
     print "Hit return to continue; ^C to abort "; <STDIN>;
 }
 
-my $cpan_mod = @ARGV ? shift : $module;
-
 my  $distribution = $$info {DISTRIBUTION};
 
 my @files         = glob $$info {FILES};
@@ -293,25 +291,32 @@ my  $pkg_dir      = $files[0];
 
 my ($old_version) = $distribution =~ /-([0-9.]+(?:-TRIAL[0-9]*)?)\.tar\.gz/;
 
-my  $o_module     = $module;
-if ($cpan_mod =~ /-/ && $cpan_mod !~ /::/) {
-    $cpan_mod =~ s/-/::/g;
-}
-
 sub wget {
     my ($url, $saveas) = @_;
+    my $ht_res;
     eval {
+        require IO::Socket::SSL;
+        require Net::SSLeay;
         require HTTP::Tiny;
-        my $http= HTTP::Tiny->new();
-        $http->mirror( $url => $saveas );
-        1
+        my $http = HTTP::Tiny->new();
+        $ht_res  = $http->mirror( $url => $saveas );
+        1;
     } or
+       # Try harder to download the file
        # Some system do not have wget.  Fall back to curl if we do not
        # have it.  On Windows, `which wget` is not going to work, so
        # just use wget, as this script has always done.
        WIN32 || -x substr(`which wget`, 0, -1)
          ? system wget => $url, '-qO', $saveas
          : system curl => $url, '-sSo', $saveas;
+
+    # We were able to use HTTP::Tiny and it didn't have fatal errors,
+    # but we failed the request
+    if ( $ht_res && ! $ht_res->{'success'} ) {
+        die "Cannot retrieve file: $url\n" .
+            sprintf "Status: %s\nReason: %s\nContent: %s\n",
+            map $_ // '(unavailable)', @{$ht_res}{qw< status reason content >};
+    }
 }
 
 #
@@ -336,8 +341,9 @@ else {
         wget $package_url, $package_file;
     }
 
+    my $cpan_mod = $info->{MAIN_MODULE} // $module;
     open my $fh, '<', $package_file;
-    (my $new_line) = grep {/^$cpan_mod/} <$fh> # Yes, this needs a lot of memory
+    (my $new_line) = grep {/^\Q$cpan_mod\E /} <$fh> # Yes, this needs a lot of memory
                      or die "Cannot find $cpan_mod on CPAN\n";
     (undef, $new_version, my $new_path) = split ' ', $new_line;
     if (defined $version) {
@@ -392,7 +398,7 @@ if ($$info {EXCLUDED}) {
 
 FILE: for my $file ( find_type_f( $new_dir )) {
     my $old_file = $file;
-    $file =~ s{^$new_dir/}{};
+    $file =~ s{^\Q$new_dir\E/}{};
 
     next if $EXCLUDED_QQ{$file};
     for my $qr (@EXCLUDED_QR) {
@@ -660,15 +666,20 @@ print <<"EOF";
 
 =======================================================================
 
-$o_module is now at version $new_version
-Next, you should run a "make test".
+$module is now at version $new_version
+Next, you should run "make minitest" and then "make test".
 
-Hopefully that will complete successfully, but if not, you can make any
+Minitest uses miniperl, which does not support XS modules. The full test
+suite uses perl, which does. Minitest can fail - e.g. if a cpan module
+has added an XS dependency - even if the full test suite passes just fine.
+
+Hopefully all will complete successfully, but if not, you can make any
 changes you need to get the tests to pass. Don't forget that you'll need
 a "CUSTOMIZED" entry in Porting/Maintainers.pl if you change any of the
 files under cpan/$pkg_dir.
 
-Once all tests pass, you can "git add -u" and "git commit" the changes.
+Once all tests pass, you can "git add -u" and "git commit" the changes
+with a message along the lines of "Update Foo::Bar to v1.234".
 
 EOF
 

@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+# -*- mode: perl; -*-
 
 use strict;
 use warnings;
@@ -16,7 +16,7 @@ use overload;
 
 sub isa {
     my ($self, $class) = @_;
-    return if $class =~ /^Math::Big(Int|Float)/;    # we aren't one of these
+    return if $class =~ /^Math::Big(Int|Float$)/;   # we aren't one of these
     UNIVERSAL::isa($self, $class);
 }
 
@@ -43,8 +43,8 @@ $LIB            = "Math::BigInt::Calc";         # backend
 
 is(Math::BigFloat->upgrade(), $EXPECTED_CLASS,
    qq|Math::BigFloat->upgrade()|);
-is(Math::BigFloat->downgrade() || '', '',
-   qq/Math::BigFloat->downgrade() || ''/);
+is(Math::BigFloat->downgrade(), undef,
+   qq|Math::BigFloat->downgrade()|);
 
 $x = $CLASS->new(123);
 $y = $EXPECTED_CLASS->new(123);

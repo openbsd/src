@@ -1,7 +1,7 @@
 package charnames;
 use strict;
 use warnings;
-our $VERSION = '1.48';
+our $VERSION = '1.50';
 use unicore::Name;    # mktables-generated algorithmically-defined names
 use _charnames ();    # The submodule for this where most of the work gets done
 
@@ -50,7 +50,8 @@ sub vianame
     # can't change it because of backward compatibility.  New code can use
     # string_vianame() instead.
     my $ord = CORE::hex $1;
-    return pack("U", $ord) if $ord <= 255 || ! ((caller 0)[8] & $bytes::hint_bits);
+    return chr utf8::unicode_to_native($ord) if $ord <= 255
+                                         || ! ((caller 0)[8] & $bytes::hint_bits);
     _charnames::carp _charnames::not_legal_use_bytes_msg($arg, chr $ord);
     return;
   }
@@ -76,7 +77,8 @@ sub string_vianame {
   if ($arg =~ /^U\+([0-9a-fA-F]+)$/) {
 
     my $ord = CORE::hex $1;
-    return pack("U", $ord) if $ord <= 255 || ! ((caller 0)[8] & $bytes::hint_bits);
+    return chr utf8::unicode_to_native($ord) if $ord <= 255
+                                         || ! ((caller 0)[8] & $bytes::hint_bits);
 
     _charnames::carp _charnames::not_legal_use_bytes_msg($arg, chr $ord);
     return;

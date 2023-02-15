@@ -8,9 +8,13 @@
 #
 ################################################################################
 
+use strict;
+use warnings;
+
+our %Config;
 BEGIN {
-  require Test::More; import Test::More;
-  require Config; import Config;
+  require Test::More; Test::More->import;
+  require Config; Config->import;
 
   if ($ENV{'PERL_CORE'} && $Config{'extensions'} !~ m[\bIPC/SysV\b]) {
     plan(skip_all => 'IPC::SysV was not built');
@@ -30,7 +34,6 @@ plan(tests => 39);
 # Later the sem* tests will import more for themselves.
 
 use IPC::SysV qw(IPC_PRIVATE IPC_NOWAIT IPC_STAT IPC_RMID S_IRWXU);
-use strict;
 
 {
   my $did_diag = 0;

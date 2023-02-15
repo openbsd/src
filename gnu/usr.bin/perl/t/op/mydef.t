@@ -6,10 +6,17 @@ BEGIN {
     set_up_inc('../lib');
 }
 
-plan tests => 1;
-
 use strict;
 
 eval 'my $_';
 like $@, qr/^Can't use global \$_ in "my" at /;
 
+{
+    # using utf8 allows $_ to be declared with 'my'
+    # GH #18449
+    use utf8;
+    eval 'my $_;';
+    like $@, qr/^Can't use global \$_ in "my" at /;
+}
+
+done_testing;

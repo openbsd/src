@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use strict;
 
 # Make sure EUI works with MakeMaker
 
@@ -6,7 +7,6 @@ BEGIN {
     unshift @INC, 't/lib';
 }
 
-use strict;
 use Config;
 use ExtUtils::MakeMaker;
 

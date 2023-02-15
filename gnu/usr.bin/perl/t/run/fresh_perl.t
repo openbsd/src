@@ -194,8 +194,8 @@ BEGIN failed--compilation aborted at - line 1.
 ########
 BEGIN { undef = 0 }
 EXPECT
-Modification of a read-only value attempted at - line 1.
-BEGIN failed--compilation aborted at - line 1.
+Can't modify undef operator in scalar assignment at - line 1, near "0 }"
+BEGIN not safe after errors--compilation aborted at - line 1.
 ########
 {
     package foo;

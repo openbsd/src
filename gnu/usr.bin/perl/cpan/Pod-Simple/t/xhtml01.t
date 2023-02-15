@@ -7,8 +7,9 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use lib '../lib';
-use Test::More tests => 62;
+use Test::More tests => 64;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -51,7 +52,15 @@ initialize($parser, $results);
 $parser->parse_string_document( "=head4 Zort & Zog!" );
 is($results, qq{<h4 id="Zort-Zog">Zort &amp; Zog!</h4>\n\n}, "head4 level output");
 
-sub x ($;&) {
+initialize($parser, $results);
+$parser->parse_string_document( "=head5 I think so Brain, but..." );
+is($results, qq{<h5 id="I-think-so-Brain-but">I think so Brain, but...</h5>\n\n}, "head5 level output");
+
+initialize($parser, $results);
+$parser->parse_string_document( "=head6 Narf!" );
+is($results, qq{<h6 id="Narf">Narf!</h6>\n\n}, "head6 level output");
+
+sub x {
   my $code = $_[1];
   Pod::Simple::XHTML->_out(
   sub { $code->($_[0]) if $code },

@@ -95,8 +95,8 @@ hash_value(string,...)
         U8 *seedbuf= (U8 *)SvPV(ST(1),seedlen);
         if ( seedlen < PERL_HASH_SEED_BYTES ) {
             sv_dump(ST(1));
-            Perl_croak(aTHX_ "seed len must be at least %d long only got %"
-                             UVuf " bytes", PERL_HASH_SEED_BYTES, (UV)seedlen);
+            Perl_croak(aTHX_ "seed len must be at least %" UVuf " long only got %"
+                             UVuf " bytes", (UV)PERL_HASH_SEED_BYTES, (UV)seedlen);
         }
 
         PERL_HASH_WITH_SEED(seedbuf, uv, pv, len);
@@ -284,7 +284,7 @@ bucket_ratio(rhv)
     if (SvROK(rhv)) {
         rhv= SvRV(rhv);
         if ( SvTYPE(rhv)==SVt_PVHV ) {
-#if PERL_VERSION < 25
+#if PERL_VERSION_LT(5,25,0)
             SV *ret= Perl_hv_scalar(aTHX_ (HV*)rhv);
 #else
             SV *ret= Perl_hv_bucket_ratio(aTHX_ (HV*)rhv);

@@ -8,14 +8,15 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Test;
-BEGIN { plan tests => 14 };
+BEGIN { plan tests => 16 };
 
 #use Pod::Simple::Debug (10);
 
 use Pod::Simple::HTML;
 
-sub x ($;&) {
+sub x {
   my $code = $_[1];
   Pod::Simple::HTML->_out(
   sub{  $_[0]->bare_output(1); $code->($_[0]) if $code  },
@@ -75,6 +76,18 @@ ok(x(
 ok(x(
 '=head4 This, too, is a heading')
  => q{/\s*<h4><a[^<>]+>This,\s+too,\s+is\s+a\s+heading</a></h4>\s*$/},
+  "heading building"
+);
+
+ok(x(
+'=head5 The number of the heading shall be five')
+ => q{/\s*<h5><a[^<>]+>The\s+number\s+of\s+the\s+heading\s+shall\s+be\s+five</a></h5>\s*$/},
+  "heading building"
+);
+
+ok(x(
+'=head6 The sixth a heading is the perfect heading')
+ => q{/\s*<h6><a[^<>]+>The\s+sixth\s+a\s+heading\s+is\s+the\s+perfect\s+heading</a></h6>\s*$/},
   "heading building"
 );
 

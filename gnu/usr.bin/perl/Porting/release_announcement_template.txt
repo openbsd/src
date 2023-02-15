@@ -10,10 +10,10 @@ favorite CPAN mirror or find it at:
 
 https://metacpan.org/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/
 
-SHA1 digests for this release are:
+SHA256 digests for this release are:
 
- [TAR.GZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.gz
- [TAR.XZ SHA1]   perl-5.[VERSION.SUBVERSION].tar.xz
+ [TAR.GZ SHA256]   perl-5.[VERSION.SUBVERSION].tar.gz
+ [TAR.XZ SHA256]   perl-5.[VERSION.SUBVERSION].tar.xz
 
 You can find a full list of changes in the file "perldelta.pod" located in
 the "pod" directory inside the release and on the web at
@@ -22,8 +22,7 @@ https://metacpan.org/pod/release/[AUTHOR]/perl-5.[VERSION.SUBVERSION]/pod/perlde
 
 [ACKNOWLEDGEMENTS SECTION FROM PERLDELTA]
 
-We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE
-DATE].  The next major stable release of Perl 5, version 32.0, should
-appear in May 2020.
+We expect to release version [NEXT BLEAD VERSION.SUBVERSION] on [FUTURE DATE].
+The next major stable release of Perl should appear in the first half of 2022.
 
 [YOUR SALUTATION HERE]

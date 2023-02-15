@@ -12,6 +12,7 @@ BEGIN {
 }
 
 use utf8;
+require Config;
 
 plan tests => 315;
 
@@ -1032,9 +1033,12 @@ is($s, "AxBC", "utf8, DELETE");
     is($c, "\x20\x30\x40\x50\x60", "tr/\\x00-\\x1f//d");
 }
 
-($s) = keys %{{pie => 3}};
 SKIP: {
     if (!eval { require XS::APItest }) { skip "no XS::APItest", 2 }
+    skip "with NODEFAULT_SHAREKEYS there are few COWs", 2
+        if $Config::Config{ccflags} =~ /-DNODEFAULT_SHAREKEYS\b/;
+
+    ($s) = keys %{{pie => 3}};
     my $wasro = XS::APItest::SvIsCOW($s);
     ok $wasro, "have a COW";
     $s =~ tr/i//;

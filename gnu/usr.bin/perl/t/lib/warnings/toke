@@ -1464,9 +1464,13 @@ BEGIN not safe after errors--compilation aborted at - line 8.
 ########
 # toke.c
 # [perl #4362]
-eval "print q\xabfoo";
-print "ok\n" if
-    $@ =~ /Can't find string terminator "\xab" anywhere before EOF/;
+eval "no warnings 'deprecated'; print q\xabfoo";
+if ($@ =~ /Can't find string terminator "\xab" anywhere before EOF/) {
+    print "ok\n";
+}
+else {
+    print "not ok $@\n";
+}
 EXPECT
 ok
 ########
@@ -1642,7 +1646,6 @@ use utf8;
 my $a = qr ̂foobar̂;
 EXPECT
 Use of unassigned code point or non-standalone grapheme for a delimiter is not allowed at - line 8, near "= "
-Use of unassigned code point or non-standalone grapheme for a delimiter is not allowed at - line 8, near "= "
 Execution of - aborted due to compilation errors.
 ########
 # NAME  [perl #130567] Assertion failure
@@ -1743,3 +1746,41 @@ my $should_warn_multi= $array[0x1,0x2];
 EXPECT
 Multidimensional syntax $array[0x1,0x2] not supported at - line 8.
 Argument "B" isn't numeric in addition (+) at - line 6.
+########
+# NAME extra paired delimiters Latin1 range in UTF-8
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my $good = q<this string uses ASCII delimiter; no warning>;
+my $good2 = q«this string has mirrored delimiters in either order»;
+my $good3 = q»and reversed«;
+no feature 'extra_paired_delimiters';
+my $warn3 = q«this string starts and ends with the lhs terminator«;
+my $warn4 = q»this string starts and ends with the rhs mirror»;
+EXPECT
+Use of '«' is deprecated as a string delimiter at - line 9.
+Use of '»' is deprecated as a string delimiter at - line 10.
+########
+# NAME extra paired delimiters above Latin1 range
+BEGIN { binmode STDERR, ":utf8" }
+use utf8;
+use feature 'extra_paired_delimiters';
+no warnings 'experimental::extra_paired_delimiters';
+my $good = q<this string uses ASCII delimiter; no warning>;
+my $good2 = q《this string has a mirrored terminator》;
+my $warn2 = q》this string starts and ends with the rhs mirror》;
+my $good3 = q‹this string has mirrored delimiters in either order›;
+my $good3 = q›and reversed‹;
+no feature 'extra_paired_delimiters';
+my $warn3 = q《this string starts and ends with the lhs terminator《;
+my $warn4 = q》this string starts and ends with the rhs mirror》;
+my $warn5 = q‹this string starts and ends with the lhs terminator‹;
+my $warn6 = q›this string starts and ends with the rhs mirror›;
+EXPECT
+Use of '》' is deprecated as a string delimiter at - line 7.
+Use of '《' is deprecated as a string delimiter at - line 11.
+Use of '》' is deprecated as a string delimiter at - line 12.
+Use of '‹' is deprecated as a string delimiter at - line 13.
+Use of '›' is deprecated as a string delimiter at - line 14.
+########

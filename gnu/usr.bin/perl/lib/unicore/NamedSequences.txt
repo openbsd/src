@@ -1,10 +1,10 @@
-# NamedSequences-13.0.0.txt
-# Date: 2020-01-22, 19:12:00 GMT [KW, LI]
-# © 2020 Unicode®, Inc.
-# For terms of use, see http://www.unicode.org/terms_of_use.html
+# NamedSequences-14.0.0.txt
+# Date: 2021-08-03, 23:04:00 GMT [KW]
+# © 2021 Unicode®, Inc.
+# For terms of use, see https://www.unicode.org/terms_of_use.html
 #
 # Unicode Character Database
-# For documentation, see http://www.unicode.org/reports/tr44/
+# For documentation, see https://www.unicode.org/reports/tr44/
 #
 # Unicode Named Character Sequences
 #
@@ -28,7 +28,7 @@
 # <1000, 1001, 1002>
 #
 # For more information, see UAX #34: Unicode Named Character
-# Sequences, at http://www.unicode.org/unicode/reports/tr34/
+# Sequences, at https://www.unicode.org/reports/tr34/
 #
 # Note: The order of entries in this file is not significant.
 # However, entries are generally in script order corresponding
@@ -168,6 +168,35 @@ ARABIC SEQUENCE YEH WITH HAMZA ABOVE WITH E;0626 06D0
 ARABIC SEQUENCE YEH WITH HAMZA ABOVE WITH AE;0626 06D5
 ARABIC SEQUENCE NOON WITH KEHEH;0646 06A9
 
+# Entries that correspond to Indic characters with nuktas
+# that are also listed in CompositionExclusions.txt.
+# These characters decompose for normalized text, even
+# in NFC. Having named sequences for these helps in
+# certain specifications, including Label Generation Rules (LGR)
+# for Internationalized Domain Names (IDN).
+#
+# Provisional 2020-01-16, Approved 2021-07-27
+
+DEVANAGARI SEQUENCE FOR LETTER QA; 0915 093C
+DEVANAGARI SEQUENCE FOR LETTER KHHA; 0916 093C
+DEVANAGARI SEQUENCE FOR LETTER GHHA; 0917 093C
+DEVANAGARI SEQUENCE FOR LETTER ZA; 091C 093C
+DEVANAGARI SEQUENCE FOR LETTER DDDHA; 0921 093C
+DEVANAGARI SEQUENCE FOR LETTER RHA; 0922 093C
+DEVANAGARI SEQUENCE FOR LETTER FA; 092B 093C
+DEVANAGARI SEQUENCE FOR LETTER YYA; 092F 093C
+BENGALI SEQUENCE FOR LETTER RRA; 09A1 09BC
+BENGALI SEQUENCE FOR LETTER RHA; 09A2 09BC
+BENGALI SEQUENCE FOR LETTER YYA; 09AF 09BC
+GURMUKHI SEQUENCE FOR LETTER LLA; 0A32 0A3C
+GURMUKHI SEQUENCE FOR LETTER SHA; 0A38 0A3C
+GURMUKHI SEQUENCE FOR LETTER KHHA; 0A16 0A3C
+GURMUKHI SEQUENCE FOR LETTER GHHA; 0A17 0A3C
+GURMUKHI SEQUENCE FOR LETTER ZA; 0A1C 0A3C
+GURMUKHI SEQUENCE FOR LETTER FA; 0A2B 0A3C
+ORIYA SEQUENCE FOR LETTER RRA; 0B21 0B3C
+ORIYA SEQUENCE FOR LETTER RHA; 0B22 0B3C
+
 # Entry for a Bangla entity.
 # Provisional 2009-08-10, Approved 2010-05-14
 #
@@ -180,7 +209,7 @@ BENGALI LETTER KHINYA;0995 09CD 09B7
 #
 # A visual display of the Tamil named character sequences is available
 # in the documentation for the Unicode Standard. See Section 12.6, Tamil in
-# http://www.unicode.org/versions/latest/
+# https://www.unicode.org/versions/latest/
 
 TAMIL CONSONANT K;  0B95 0BCD
 TAMIL CONSONANT NG; 0B99 0BCD

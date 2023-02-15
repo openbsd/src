@@ -19,7 +19,7 @@ BEGIN
 
 require "dbm_filter_util.pl";
 
-use Test::More tests => 26;
+use Test::More;
 
 BEGIN { use_ok('DBM_Filter') };
 my $db_file;
@@ -122,3 +122,5 @@ undef $db2;
 }
 
 }
+
+done_testing();

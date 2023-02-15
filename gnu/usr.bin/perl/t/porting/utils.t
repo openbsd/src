@@ -76,12 +76,21 @@ foreach (@maybe) {
 
 printf "1..%d\n", scalar @victims;
 
+# Does this perl have 64 bit integers?
+my $has_64bit_ints = eval { pack "Q", 1 };
+
 foreach my $victim (@victims) {
  SKIP: {
         skip ("$victim uses $excuses{$victim}, so can't test with just core modules")
             if $excuses{$victim};
 
         my $got = runperl(switches => ['-c'], progfile => $victim, stderr => 1, nolib => 1);
+
+        # check to see if this script needs 64 bit integers.
+        if (!$has_64bit_ints and $got =~ /requires 64 bit integers/) {
+            skip("$victim requires 64 bit integers and this is a 32 bit Perl", 1);
+        }
+
         is($got, "$victim syntax OK\n", "$victim compiles")
             or diag("when executing perl with '-c $victim'");
     }

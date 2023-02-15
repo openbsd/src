@@ -47,7 +47,8 @@ sub configure
 
   if ($ENV{'PERL_CORE'}) {
     # clean out const-* files in the core
-    push @moreopts, realclean => { FILES => "const-c.inc const-xs.inc" };
+    push @moreopts, realclean => { FILES => "const-c.inc const-xs.inc" },
+                    DEFINE => '-DNO_PPPORT_H';
   }
   else {
     # IPC::SysV is in the core since 5.005

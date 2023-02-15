@@ -1227,4 +1227,13 @@ SKIP:
     }
 }
 
+{
+    my $replacement = chr(0xFFFD);
+    use bytes;
+    is(test_UTF8_IS_REPLACEMENT($replacement, length $replacement), 1,
+       "UTF8_IS_REPLACEMENT returns 1 on a REPLACEMENT character");
+    is(test_UTF8_IS_REPLACEMENT($replacement, length $replacement) - 1, 0,
+       "UTF8_IS_REPLACEMENT returns 0 on too short an input");
+}
+
 done_testing;

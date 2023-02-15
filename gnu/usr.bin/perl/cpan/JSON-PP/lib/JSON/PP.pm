@@ -14,7 +14,7 @@ use JSON::PP::Boolean;
 use Carp ();
 #use Devel::Peek;
 
-$JSON::PP::VERSION = '4.04';
+$JSON::PP::VERSION = '4.07';
 
 @JSON::PP::EXPORT = qw(encode_json decode_json from_json to_json);
 
@@ -201,12 +201,11 @@ sub boolean_values {
         my ($false, $true) = @_;
         $self->{false} = $false;
         $self->{true} = $true;
-        return ($false, $true);
     } else {
         delete $self->{false};
         delete $self->{true};
-        return;
     }
+    return $self;
 }
 
 sub get_boolean_values {
@@ -1564,6 +1563,11 @@ sub incr_parse {
                     }
                 }
 
+                unless ( $coder->get_utf8 ) {
+                    utf8::upgrade( $self->{incr_text} );
+                    utf8::decode( $self->{incr_text} );
+                }
+
                 my ($obj, $offset) = $coder->PP_decode_json( $self->{incr_text}, 0x00000001 );
                 push @ret, $obj;
                 use bytes;
@@ -1770,10 +1774,6 @@ JSON::PP - JSON::XS compatible pure-Perl module.
  
  use JSON;
 
-
-=head1 VERSION
-
-    4.04
 
 =head1 DESCRIPTION
 

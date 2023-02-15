@@ -20,8 +20,10 @@ expressions will allow you to manipulate text with surprising ease.
 What is a regular expression?  At its most basic, a regular expression
 is a template that is used to determine if a string has certain
 characteristics.  The string is most often some text, such as a line,
-sentence, web page, or even a whole book, but less commonly it could be
-some binary data as well.
+sentence, web page, or even a whole book, but it doesn't have to be.  It
+could be binary data, for example.  Biologists often use Perl to look
+for patterns in long DNA sequences.
+
 Suppose we want to determine if the text in variable, C<$var> contains
 the sequence of characters S<C<m u s h r o o m>>
 (blanks added for legibility).  We can write in Perl
@@ -29,8 +31,9 @@ the sequence of characters S<C<m u s h r o o m>>
  $var =~ m/mushroom/
 
 The value of this expression will be TRUE if C<$var> contains that
-sequence of characters, and FALSE otherwise.  The portion enclosed in
-C<'E<sol>'> characters denotes the characteristic we are looking for.
+sequence of characters anywhere within it, and FALSE otherwise.  The
+portion enclosed in C<'E<sol>'> characters denotes the characteristic we
+are looking for.
 We use the term I<pattern> for it.  The process of looking to see if the
 pattern occurs in the string is called I<matching>, and the C<"=~">
 operator along with the C<m//> tell Perl to try to match the pattern
@@ -135,7 +138,7 @@ And finally, the C<//> default delimiters for a match can be changed
 to arbitrary delimiters by putting an C<'m'> out front:
 
     "Hello World" =~ m!World!;   # matches, delimited by '!'
-    "Hello World" =~ m{World};   # matches, note the matching '{}'
+    "Hello World" =~ m{World};   # matches, note the paired '{}'
     "/usr/bin/perl" =~ m"/perl"; # matches after '/usr/bin',
                                  # '/' becomes an ordinary char
 
@@ -151,7 +154,7 @@ Let's consider how different regexps would match C<"Hello World">:
     "Hello World" =~ /oW/;     # doesn't match
     "Hello World" =~ /World /; # doesn't match
 
-The first regexp C<world> doesn't match because regexps are
+The first regexp C<world> doesn't match because regexps are by default
 case-sensitive.  The second regexp matches because the substring
 S<C<'o W'>> occurs in the string S<C<"Hello World">>.  The space
 character C<' '> is treated like any other character in a regexp and is
@@ -169,8 +172,8 @@ always match at the earliest possible point in the string:
     "That hat is red" =~ /hat/; # matches 'hat' in 'That'
 
 With respect to character matching, there are a few more points you
-need to know about.   First of all, not all characters can be used "as
-is" in a match.  Some characters, called I<metacharacters>, are
+need to know about.   First of all, not all characters can be used
+"as-is" in a match.  Some characters, called I<metacharacters>, are
 generally reserved for use in regexp notation.  The metacharacters are
 
     {}[]()^$.|*+?-#\
@@ -475,7 +478,7 @@ Because a period is a metacharacter, it needs to be escaped to match
 as an ordinary period. Because, for example, C<\d> and C<\w> are sets
 of characters, it is incorrect to think of C<[^\d\w]> as C<[\D\W]>; in
 fact C<[^\d\w]> is the same as C<[^\w]>, which is the same as
-C<[\W]>. Think DeMorgan's laws.
+C<[\W]>. Think De Morgan's laws.
 
 In actuality, the period and C<\d\s\w\D\S\W> abbreviations are
 themselves types of character classes, so the ones surrounded by
@@ -832,8 +835,8 @@ Counting the opening parentheses to get the correct number for a
 backreference is error-prone as soon as there is more than one
 capturing group.  A more convenient technique became available
 with Perl 5.10: relative backreferences. To refer to the immediately
-preceding capture group one now may write C<\g{-1}>, the next but
-last is available via C<\g{-2}>, and so on.
+preceding capture group one now may write C<\g-1> or C<\g{-1}>, the next but
+last is available via C<\g-2> or C<\g{-2}>, and so on.
 
 Another good reason in addition to readability and maintainability
 for using relative backreferences is illustrated by the following example,
@@ -928,7 +931,8 @@ this code
     $x = "Mmm...donut, thought Homer";
     $x =~ /^(Mmm|Yech)\.\.\.(donut|peas)/; # matches
     foreach $exp (1..$#-) {
-        print "Match $exp: '${$exp}' at position ($-[$exp],$+[$exp])\n";
+        no strict 'refs';
+        print "Match $exp: '$$exp' at position ($-[$exp],$+[$exp])\n";
     }
 
 prints
@@ -1047,9 +1051,16 @@ C<a{n,}> means: match at least C<n> or more times
 
 =item *
 
+C<a{,n}> means: match at most C<n> times, or fewer
+
+=item *
+
 C<a{n}> means: match exactly C<n> times
 
 =back
+
+If you like, you can add blanks (tab or space characters) within the
+braces, but adjacent to them, and/or next to the comma (if any).
 
 Here are some examples:
 
@@ -1059,6 +1070,9 @@ Here are some examples:
     /y(es)?/i;       # matches 'y', 'Y', or a case-insensitive 'yes'
     $year =~ /^\d{2,4}$/;  # make sure year is at least 2 but not more
                            # than 4 digits
+    $year =~ /^\d{ 2, 4 }$/;    # Same; for those who like wide open
+                                # spaces.
+    $year =~ /^\d{2, 4}$/;      # Same.
     $year =~ /^\d{4}$|^\d{2}$/; # better match; throw out 3-digit dates
     $year =~ /^\d{2}(\d{2})?$/; # same thing written differently.
                                 # However, this captures the last two
@@ -1218,6 +1232,11 @@ times, as few times as possible
 =item *
 
 C<a{n,}?> means: match at least C<n> times, but as few times as
+possible
+
+=item *
+
+C<a{,n}?> means: match at most C<n> times, but as few times as
 possible
 
 =item *
@@ -1389,8 +1408,12 @@ for C<a{0,1}+>
 =item *
 
 C<a{n,}+> means: match at least C<n> times, but as many times as possible,
-and don't give anything up. C<a*+> is short for C<a{0,}+> and C<a++> is
-short for C<a{1,}+>.
+and don't give anything up. C<a++> is short for C<a{1,}+>.
+
+=item *
+
+C<a{,n}+> means: match as many times as possible up to at most C<n>
+times, and don't give anything up. C<a*+> is short for C<a{0,}+>.
 
 =item *
 
@@ -1933,7 +1956,10 @@ terminated by C<\E> or thrown over by another C<\U> or C<\L>:
 If there is no C<\E>, case is converted until the end of the
 string. The regexps C<\L\u$word> or C<\u\L$word> convert the first
 character of C<$word> to uppercase and the rest of the characters to
-lowercase.
+lowercase.  (Beyond ASCII characters, it gets somewhat more complicated;
+C<\u> actually performs I<titlecase> mapping, which for most characters
+is the same as uppercase, but not for all; see
+L<https://unicode.org/faq/casemap_charprop.html#4>.)
 
 Control characters can be escaped with C<\c>, so that a control-Z
 character would be matched with C<\cZ>.  The escape sequence
@@ -1969,10 +1995,11 @@ C<\x>I<XY> (without curly braces and I<XY> are two hex digits) doesn't
 go further than 255.  (Starting in Perl 5.14, if you're an octal fan,
 you can also use C<\o{oct}>.)
 
-    /\x{263a}/;  # match a Unicode smiley face :)
+    /\x{263a}/;   # match a Unicode smiley face :)
+    /\x{ 263a }/; # Same
 
 B<NOTE>: In Perl 5.6.0 it used to be that one needed to say C<use
-utf8> to use any Unicode features.  This is no more the case: for
+utf8> to use any Unicode features.  This is no longer the case: for
 almost all Unicode processing, the explicit C<utf8> pragma is not
 needed.  (The only case where it matters is if your Perl script is in
 Unicode and encoded in UTF-8, then an explicit C<use utf8> is needed.)
@@ -1988,6 +2015,7 @@ could use
 
     $x = "abc\N{MERCURY}def";
     $x =~ /\N{MERCURY}/;   # matches
+    $x =~ /\N{ MERCURY }/; # Also matches
 
 One can also use "short" names:
 
@@ -2020,7 +2048,7 @@ The answer to requirement 2) is that a regexp (mostly)
 uses Unicode characters.  The "mostly" is for messy backward
 compatibility reasons, but starting in Perl 5.14, any regexp compiled in
 the scope of a C<use feature 'unicode_strings'> (which is automatically
-turned on within the scope of a C<use 5.012> or higher) will turn that
+turned on within the scope of a C<use v5.12> or higher) will turn that
 "mostly" into "always".  If you want to handle Unicode properly, you
 should ensure that C<'unicode_strings'> is turned on.
 Internally, this is encoded to bytes using either UTF-8 or a native 8
@@ -2049,16 +2077,16 @@ C<\p{Mark}>, meaning things like accent marks.
 
 The Unicode C<\p{Script}> and C<\p{Script_Extensions}> properties are
 used to categorize every Unicode character into the language script it
-is written in.  (C<Script_Extensions> is an improved version of
-C<Script>, which is retained for backward compatibility, and so you
-should generally use C<Script_Extensions>.)
-For example,
+is written in.  For example,
 English, French, and a bunch of other European languages are written in
 the Latin script.  But there is also the Greek script, the Thai script,
-the Katakana script, I<etc>.  You can test whether a character is in a
-particular script (based on C<Script_Extensions>) with, for example
-C<\p{Latin}>, C<\p{Greek}>, or C<\p{Katakana}>.  To test if it isn't in
-the Balinese script, you would use C<\P{Balinese}>.
+the Katakana script, I<etc>.  (C<Script> is an older, less advanced,
+form of C<Script_Extensions>, retained only for backwards
+compatibility.)  You can test whether a character is in a particular
+script  with, for example C<\p{Latin}>, C<\p{Greek}>, or
+C<\p{Katakana}>.  To test if it isn't in the Balinese script, you would
+use C<\P{Balinese}>.  (These all use C<Script_Extensions> under the
+hood, as that gives better results.)
 
 What we have described so far is the single form of the C<\p{...}> character
 classes.  There is also a compound form which you may run into.  These
@@ -2242,9 +2270,9 @@ Starting with this section, we will be discussing Perl's set of
 I<extended patterns>.  These are extensions to the traditional regular
 expression syntax that provide powerful new tools for pattern
 matching.  We have already seen extensions in the form of the minimal
-matching constructs C<??>, C<*?>, C<+?>, C<{n,m}?>, and C<{n,}?>.  Most
-of the extensions below have the form C<(?char...)>, where the
-C<char> is a character that determines the type of extension.
+matching constructs C<??>, C<*?>, C<+?>, C<{n,m}?>, C<{n,}?>, and
+C<{,n}?>.  Most of the extensions below have the form C<(?char...)>,
+where the C<char> is a character that determines the type of extension.
 
 The first extension is an embedded comment C<(?#text)>.  This embeds a
 comment into the regular expression without affecting its meaning.  The
@@ -2437,10 +2465,10 @@ parentheses and the second alternative C<\([^()]*\)>  matching a
 substring delimited by parentheses.  The problem with this regexp is
 that it is pathological: it has nested indeterminate quantifiers
 of the form C<(a+|b)+>.  We discussed in Part 1 how nested quantifiers
-like this could take an exponentially long time to execute if there
-was no match possible.  To prevent the exponential blowup, we need to
-prevent useless backtracking at some point.  This can be done by
-enclosing the inner quantifier as an independent subexpression:
+like this could take an exponentially long time to execute if no match
+were possible.  To prevent the exponential blowup, we need to prevent
+useless backtracking at some point.  This can be done by enclosing the
+inner quantifier as an independent subexpression:
 
     $x =~ /\( ( (?> [ ^ () ]+ ) | \([ ^ () ]* \) )+ \)/xx;
 
@@ -2549,7 +2577,7 @@ containing just one word character is a palindrome. Otherwise it must
 have a word character up front and the same at its end, with another
 palindrome in between.
 
-    /(?: (\w) (?...Here be a palindrome...) \g{-1} | \w? )/x
+ /(?: (\w) (?...Here be a palindrome...) \g{ -1 } | \w? )/x
 
 Adding C<\W*> at either end to eliminate what is to be ignored, we already
 have the full pattern:
@@ -2624,8 +2652,8 @@ section L</"Pragmas and debugging"> below.
 
 More fun with C<?{}>:
 
-    $x =~ /(?{print "Hi Mom!";})/;       # matches,
-                                         # prints 'Hi Mom!'
+    $x =~ /(?{print "Hi Mom!";})/;         # matches,
+                                           # prints 'Hi Mom!'
     $x =~ /(?{$c = 1;})(?{print "$c";})/;  # matches,
                                            # prints '1'
     $x =~ /(?{$c = 1;})(?{print "$^R";})/; # matches,
@@ -2840,7 +2868,8 @@ pragmas are
     @parts = ($tainted =~ /(\w+)\s+(\w+)/; # @parts is now tainted
 
 The C<taint> pragma causes any substrings from a match with a tainted
-variable to be tainted as well.  This is not normally the case, as
+variable to be tainted as well, if your perl supports tainting
+(see L<perlsec>).  This is not normally the case, as
 regexps are often used to extract the safe bits from a tainted
 variable.  Use C<taint> when you are not extracting safe bits, but are
 performing some other processing.  Both C<taint> and C<eval> pragmas

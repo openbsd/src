@@ -11,7 +11,7 @@ use File::Spec ();
 use CPAN::Mirrors ();
 use CPAN::Version ();
 use vars qw($VERSION $auto_config);
-$VERSION = "5.5314";
+$VERSION = "5.5317";
 
 =head1 NAME
 
@@ -59,8 +59,8 @@ higher distro-version number than the current one. It can
 then let the build of this distro fail when it would not represent the
 most up-to-date version of the distro.
 
-Note: choosing anyhing but 'yes' for this option will need
-Devel::DistnameInfo being installed for taking effect.
+Note: choosing anything but 'yes' for this option will need
+CPAN::DistnameInfo being installed for taking effect.
 
 Do you want to allow installing distros that are not indexed as the
 highest distro-version for all contained modules (yes, no, ask/yes,
@@ -126,7 +126,7 @@ To considerably speed up the initial CPAN shell startup, it is
 possible to use Storable to create a cache of metadata. If Storable is
 not available, the normal index mechanism will be used.
 
-Note: this mechanism is not used when use_sqlite is on and SQLLite is
+Note: this mechanism is not used when use_sqlite is on and SQLite is
 running.
 
 Cache metadata (yes/no)?
@@ -450,6 +450,20 @@ confirmation ('ask'), or just ignore them ('ignore').  Choosing
 Please set your policy to one of the three values.
 
 Policy on building prerequisites (follow, ask or ignore)?
+
+=item pushy_https
+
+Boolean. Defaults to true. If this option is true, the cpan shell will
+use https://cpan.org/ to download stuff from the CPAN. It will fall
+back to http://cpan.org/ if it can't handle https for some reason
+(missing modules, missing programs). Whenever it falls back to the
+http protocol, it will issue a warning.
+
+If this option is true, the option C<urllist> will be ignored.
+Consequently, if you want to work with local mirrors via your own
+configured list of URLs, you will have to choose no below.
+
+Do you want to turn the pushy_https behaviour on?
 
 =item randomize_urllist
 
@@ -1315,6 +1329,7 @@ sub init {
     # Let's assume they want to use the internet and make them turn it
     # off if they really don't.
     my_yn_prompt("connect_to_internet_ok" => 1, $matcher);
+    my_yn_prompt("pushy_https" => 1, $matcher);
 
     # Allow matching but don't show during manual config
     if ($matcher) {
@@ -1344,7 +1359,11 @@ sub init {
             );
         }
         else {
-            $CPAN::Config->{urllist} = [ 'http://www.cpan.org/' ];
+            # Hint: as of 2021-11: to get http, use http://www.cpan.org/
+            $CPAN::Config->{urllist} = [ 'https://cpan.org/' ];
+            $CPAN::Frontend->myprint(
+                "We initialized your 'urllist' to @{$CPAN::Config->{urllist}}. Type 'o conf init urllist' to change it.\n"
+            );
         }
     }
     elsif (!$matcher || "urllist" =~ $matcher) {
@@ -1362,8 +1381,14 @@ sub init {
     if ( $CPAN::Config->{install_help} eq 'local::lib' ) {
         if ( ! @{ $CPAN::Config->{urllist} } ) {
             $CPAN::Frontend->myprint(
-                "Skipping local::lib bootstrap because 'urllist' is not configured.\n"
+                "\nALERT: Skipping local::lib bootstrap because 'urllist' is not configured.\n"
             );
+        }
+        elsif (! $CPAN::Config->{make} ) {
+            $CPAN::Frontend->mywarn(
+                "\nALERT: Skipping local::lib bootstrap because 'make' is not configured.\n"
+            );
+            _beg_for_make(); # repetitive, but we don't want users to miss it
         }
         else {
             $CPAN::Frontend->myprint("\nAttempting to bootstrap local::lib...\n");
@@ -1645,12 +1670,17 @@ Windows users may want to follow this procedure when back in the CPAN shell:
     perl alien_nmake.pl
 
 This will install nmake on your system which can be used as a 'make'
-substitute. You can then revisit this dialog with
+substitute.
+
+HERE
+  }
+
+  $CPAN::Frontend->mywarn(<<"HERE");
+You can then retry the 'make' configuration step with
 
     o conf init make
 
 HERE
-  }
 }
 
 sub init_cpan_home {

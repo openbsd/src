@@ -119,7 +119,7 @@ Document purpose, scope and target applications
 
 =item *
 
-Document each publically accessible method or subroutine, including params and return values
+Document each publicly accessible method or subroutine, including params and return values
 
 =item *
 
@@ -497,7 +497,7 @@ The purpose, scope and target applications of your module
 
 =item *
 
-Use of each publically accessible method or subroutine, including
+Use of each publicly accessible method or subroutine, including
 parameters and return values
 
 =item *
@@ -699,8 +699,8 @@ Specify version requirements for other Perl modules in the
 pre-requisites in your Makefile.PL or Build.PL.
 
 Be sure to specify Perl version requirements both in Makefile.PL or
-Build.PL and with C<require 5.6.1> or similar.  See the section on
-C<use VERSION> of L<perlfunc/require> for details.
+Build.PL and with C<require 5.6.1> or similar.  See the documentation on
+L<C<use VERSION>|perlfunc/use VERSION> for details.
 
 =head2 Testing
 

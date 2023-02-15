@@ -48,7 +48,7 @@ foreach my $file (@ext) {
         or die "Can't parse '$file'";
 
     if ($path =~ /\.yml$/) {
-	next unless $path =~ s!^lib/!!;
+        next unless $path =~ s!^lib/!!;
     } elsif ($path =~ /\.pod$/) {
         unless ($path =~ s!^lib/!!) {
             # ExtUtils::MakeMaker will install it to a path based on the
@@ -72,12 +72,6 @@ foreach my $file (@ext) {
         while (<$fh>) {
             if (/^\s*package\s+([A-Za-z0-9_:]+)/) {
                 $package = $1;
-                last;
-            }
-            elsif (/^\s*package\s*$/) {
-                # If they're hiding their package name, we ignore them
-                ++$ignore{"/$path"};
-                $package='';
                 last;
             }
         }
@@ -160,7 +154,7 @@ sub edit_win32_makefile {
 }
 
 process('Makefile.SH', 'Makefile.SH', \&edit_makefile_SH, $TAP && '', $Verbose);
-foreach ('win32/Makefile', 'win32/makefile.mk', 'win32/GNUmakefile') {
+foreach ('win32/Makefile', 'win32/GNUmakefile') {
     process($_, $_, \&edit_win32_makefile, $TAP && '', $Verbose);
 }
 

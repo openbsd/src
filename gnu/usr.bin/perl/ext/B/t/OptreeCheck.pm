@@ -5,7 +5,7 @@ use warnings;
 our ($TODO, $Level, $using_open);
 require "test.pl";
 
-our $VERSION = '0.16';
+our $VERSION = '0.17';
 
 # now export checkOptree, and those test.pl functions used by tests
 our @EXPORT = qw( checkOptree plan skip skip_all pass is like unlike
@@ -314,21 +314,7 @@ our %gOpts = 	# values are replaced at runtime !!
     );
 
 
-# Not sure if this is too much cheating. Officially we say that
-# $Config::Config{usethreads} is true if some sort of threading is in
-# use, in which case we ought to be able to use it in place of the ||
-# below.  However, it is now possible to Configure perl with "threads"
-# but neither ithreads or 5005threads, which forces the re-entrant
-# APIs, but no perl user visible threading.
-
-# This seems to have the side effect that most of perl doesn't think
-# that it's threaded, hence the ops aren't threaded either.  Not sure
-# if this is actually a "supported" configuration, but given that
-# ponie uses it, it's going to be used by something official at least
-# in the interim. So it's nice for tests to all pass.
-
-our $threaded = 1
-  if $Config::Config{useithreads} || $Config::Config{use5005threads};
+our $threaded = 1 if $Config::Config{usethreads};
 our $platform = ($threaded) ? "threaded" : "plain";
 our $thrstat = ($threaded)  ? "threaded" : "nonthreaded";
 

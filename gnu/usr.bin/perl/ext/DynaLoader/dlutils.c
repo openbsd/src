@@ -27,10 +27,10 @@
 
 typedef struct {
     SV*		x_dl_last_error;	/* pointer to allocated memory for
-					   last error message */
+                                           last error message */
 #if defined(PERL_IN_DL_HPUX_XS) || defined(PERL_IN_DL_DLOPEN_XS)
     int		x_dl_nonlazy;		/* flag for immediate rather than lazy
-					   linking (spots unresolved symbol) */
+                                           linking (spots unresolved symbol) */
 #endif
 #ifdef DL_LOADONCEONLY
     HV *	x_dl_loaded_files;	/* only needed on a few systems */
@@ -62,8 +62,8 @@ START_MY_CXT
 #ifdef DEBUGGING
 #define DLDEBUG(level,code) \
     STMT_START {					\
-	dMY_CXT;					\
-	if (dl_debug>=level) { code; }			\
+        dMY_CXT;					\
+        if (dl_debug>=level) { code; }			\
     } STMT_END
 #else
 #define DLDEBUG(level,code)	NOOP
@@ -109,25 +109,25 @@ dl_generic_private_init(pTHX)	/* called by dl_*.xs dl_private_init() */
 #endif
 #ifdef DEBUGGING
     {
-	SV *sv = get_sv("DynaLoader::dl_debug", 0);
-	dl_debug = sv ? SvIV(sv) : 0;
+        SV *sv = get_sv("DynaLoader::dl_debug", 0);
+        dl_debug = sv ? SvIV(sv) : 0;
     }
 #endif
 
 #if defined(PERL_IN_DL_HPUX_XS) || defined(PERL_IN_DL_DLOPEN_XS)
-    if ( (perl_dl_nonlazy = getenv("PERL_DL_NONLAZY")) != NULL
-	&& grok_atoUV(perl_dl_nonlazy, &uv, NULL)
-	&& uv <= INT_MAX
+    if ( (perl_dl_nonlazy = PerlEnv_getenv("PERL_DL_NONLAZY")) != NULL
+        && grok_atoUV(perl_dl_nonlazy, &uv, NULL)
+        && uv <= INT_MAX
     ) {
-	dl_nonlazy = (int)uv;
+        dl_nonlazy = (int)uv;
     } else
-	dl_nonlazy = 0;
+        dl_nonlazy = 0;
     if (dl_nonlazy)
-	DLDEBUG(1,PerlIO_printf(Perl_debug_log, "DynaLoader bind mode is 'non-lazy'\n"));
+        DLDEBUG(1,PerlIO_printf(Perl_debug_log, "DynaLoader bind mode is 'non-lazy'\n"));
 #endif
 #ifdef DL_LOADONCEONLY
     if (!dl_loaded_files)
-	dl_loaded_files = newHV(); /* provide cache for dl_*.xs if needed */
+        dl_loaded_files = newHV(); /* provide cache for dl_*.xs if needed */
 #endif
 #ifdef DL_UNLOAD_ALL_AT_EXIT
     call_atexit(&dl_unload_all_files, (void*)0);
@@ -155,10 +155,10 @@ SaveError(pTHX_ const char* pat, ...)
     len++;		/* include terminating null char */
 
     {
-	dMY_CXT;
+        dMY_CXT;
     /* Copy message into dl_last_error (including terminating null char) */
-	sv_setpvn(MY_CXT.x_dl_last_error, message, len) ;
-	DLDEBUG(2,PerlIO_printf(Perl_debug_log, "DynaLoader: stored error msg '%s'\n",dl_last_error));
+        sv_setpvn(MY_CXT.x_dl_last_error, message, len) ;
+        DLDEBUG(2,PerlIO_printf(Perl_debug_log, "DynaLoader: stored error msg '%s'\n",dl_last_error));
     }
 }
 #endif

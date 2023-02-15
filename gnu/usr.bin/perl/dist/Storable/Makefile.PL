@@ -29,7 +29,7 @@ WriteMakefile(
                 'ExtUtils::MakeMaker' => '6.31',
             },
             TEST_REQUIRES => {
-                'Test::More' => '0.41',
+                'Test::More' => '0.82',
             },
            )
         : () ),

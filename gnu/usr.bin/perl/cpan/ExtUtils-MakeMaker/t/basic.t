@@ -13,6 +13,7 @@ BEGIN {
 }
 
 use strict;
+use warnings;
 use Config;
 use ExtUtils::MakeMaker;
 use utf8;
@@ -132,8 +133,11 @@ like( $ppd_html, qr{^\s*<REQUIRE NAME="strict::" />}m,  '  <REQUIRE>' );
 unlike( $ppd_html, qr{^\s*<REQUIRE NAME="warnings::" />}m,  'no <REQUIRE> for build_require' );
 
 my $archname = $Config{archname};
-if( "$]" >= 5.008 ) {
-    # XXX This is a copy of the internal logic, so it's not a great test
+# XXX This is a copy of the internal logic, so it's not a great test
+if( "$]" >= 5.010) {
+    $archname .= "-$^V->{version}->[0].$^V->{version}->[1]";
+}
+elsif( "$]" >= 5.008 ) {
     $archname .= "-$Config{PERL_REVISION}.$Config{PERL_VERSION}";
 }
 like( $ppd_html, qr{^\s*<ARCHITECTURE NAME="$archname" />}m,

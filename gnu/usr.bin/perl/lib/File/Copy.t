@@ -14,8 +14,6 @@ use Test::More;
 
 my $TB = Test::More->builder;
 
-plan tests => 466;
-
 # We are going to override rename() later on but Perl has to see an override
 # at compile time to honor it.
 BEGIN { *CORE::GLOBAL::rename = sub { CORE::rename($_[0], $_[1]) }; }
@@ -164,7 +162,10 @@ for my $cross_partition_test (0..1) {
     open(F, ">", "file-$$") or die $!;
     print F "dummy content\n";
     close F;
-    symlink("file-$$", "symlink-$$") or die $!;
+    if (!symlink("file-$$", "symlink-$$")) {
+        unlink "file-$$";
+        skip "Can't create symlink", 3;
+    }
 
     my $warnings = '';
     local $SIG{__WARN__} = sub { $warnings .= join '', @_ };
@@ -518,6 +519,7 @@ SKIP: {
     "copy with buffer above normal size";
 }
 
+done_testing();
 
 END {
     1 while unlink "copy-$$";

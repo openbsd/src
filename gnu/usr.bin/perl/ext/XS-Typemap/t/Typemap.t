@@ -6,7 +6,7 @@ BEGIN {
     }
 }
 
-use Test::More tests => 156;
+use Test::More tests => 170;
 
 use strict;
 #catch WARN_INTERNAL type errors, and anything else unexpected
@@ -33,6 +33,10 @@ note("T_SV");
 my $sv = "Testing T_SV";
 is( T_SV($sv), $sv);
 
+# T_SV with output
+is_deeply([ T_SV_output($sv) ], [], "T_SV_output: no return value");
+is($sv, "test", "T_SV_output: output written to");
+
 # T_SVREF - reference to Scalar
 note("T_SVREF");
 $sv .= "REF";
@@ -51,6 +55,14 @@ is( ${ T_SVREF_REFCOUNT_FIXED($svref) }, $$svref );
 eval { T_SVREF_REFCOUNT_FIXED( "fail - not ref" ) };
 ok( $@ );
 
+# output only
+SKIP:{
+   my $svr;
+   is_deeply([ T_SVREF_REFCOUNT_FIXED_output($svr) ], [ ], "call with non-ref lvalue, no return value");
+   ok(ref $svr, "output parameter now a reference")
+     or skip "Not a reference", 1;
+   is($$svr, "test", "reference to correct value");
+}
 
 # T_AVREF - reference to a perl Array
 note("T_AVREF");
@@ -67,6 +79,14 @@ is( T_AVREF_REFCOUNT_FIXED(\@array), \@array);
 eval { T_AVREF_REFCOUNT_FIXED( \$sv ) };
 ok( $@ );
 
+# output only
+SKIP:{
+   my $avr;
+   is_deeply([ T_AVREF_REFCOUNT_FIXED_output($avr) ], [ ], "call with non-ref lvalue, no return value");
+   ok(ref $avr, "output parameter now a reference")
+     or skip "Not a reference", 1;
+   is_deeply($avr, [ "test" ], "has expected entry");
+}
 
 # T_HVREF - reference to a perl Hash
 note("T_HVREF");
@@ -84,6 +104,14 @@ is( T_HVREF_REFCOUNT_FIXED(\%hash), \%hash);
 eval { T_HVREF_REFCOUNT_FIXED( \@array ) };
 ok( $@ );
 
+# output only
+SKIP:{
+   my $hvr;
+   is_deeply([ T_HVREF_REFCOUNT_FIXED_output($hvr) ], [ ], "call with non-ref lvalue, no return value");
+   ok(ref $hvr, "output parameter now a reference")
+     or skip "Not a reference", 1;
+   is($hvr->{test}, "value", "has expected key");
+}
 
 # T_CVREF - reference to perl subroutine
 note("T_CVREF");
@@ -98,6 +126,14 @@ is( T_CVREF_REFCOUNT_FIXED($sub), $sub );
 eval { T_CVREF_REFCOUNT_FIXED( \@array ) };
 ok( $@ );
 
+# output only
+SKIP:{
+   my $cvr;
+   is_deeply([ T_CVREF_REFCOUNT_FIXED_output($cvr) ], [ ], "call with non-ref lvalue, no return value");
+   ok(ref $cvr, "output parameter now a reference")
+     or skip "Not a reference", 1;
+   is($cvr, \&XSLoader::load, "ref to expected sub");
+}
 
 # T_SYSRET - system return values
 note("T_SYSRET");

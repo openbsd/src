@@ -1,30 +1,45 @@
-#!/usr/bin/perl -w                                         # -*- perl -*-
-
 BEGIN {
-    require "./t/pod2html-lib.pl";
-}
-
-END {
-    rem_test_dir();
+    use File::Spec::Functions ':ALL';
+    @INC = map { rel2abs($_) }
+             (qw| ./lib ./t/lib ../../lib |);
 }
 
 use strict;
+use warnings;
+use Test::More;
+use Testing qw( setup_testing_dir xconvert );
 use Cwd;
-use Test::More tests => 1;
+use Pod::Html::Util qw(
+    unixify
+);
 
-SKIP: {
-    my $output = make_test_dir();
-    skip "$output", 1 if $output;
+my $debug = 0;
+my $startdir = cwd();
+END { chdir($startdir) or die("Cannot change back to $startdir: $!"); }
+my ($expect_raw, $args);
+{ local $/; $expect_raw = <DATA>; }
 
-    my $cwd = Pod::Html::_unixify(cwd());
+my $tdir = setup_testing_dir( {
+    debug       => $debug,
+} );
 
-    convert_n_test("crossref", "cross references",
-     "--podpath=t:testdir/test.lib",
-     "--podroot=$cwd",
-     "--htmldir=$cwd",
-     "--quiet",
-    );
-}
+my $cwd = unixify(cwd());
+
+$args = {
+    podstub => "crossref",
+    description => "cross references",
+    expect => $expect_raw,
+    p2h => {
+        podpath    => 't:corpus/test.lib',
+        podroot    => $cwd,
+        htmldir    => $cwd,
+        quiet      => 1,
+    },
+    debug => $debug,
+};
+xconvert($args);
+
+done_testing;
 
 __DATA__
 <?xml version="1.0" ?>
@@ -64,15 +79,15 @@ __DATA__
 
 <p><a href="#non-existent-section">&quot;non existent section&quot;</a></p>
 
-<p><a href="../testdir/test.lib/var-copy.html">var-copy</a></p>
+<p><a href="../corpus/test.lib/var-copy.html">var-copy</a></p>
 
-<p><a href="../testdir/test.lib/var-copy.html#pod">&quot;$&quot;&quot; in var-copy</a></p>
+<p><a href="../corpus/test.lib/var-copy.html#pod">&quot;$&quot;&quot; in var-copy</a></p>
 
 <p><code>var-copy</code></p>
 
 <p><code>var-copy/$&quot;</code></p>
 
-<p><a href="../testdir/test.lib/podspec-copy.html#First">&quot;First:&quot; in podspec-copy</a></p>
+<p><a href="../corpus/test.lib/podspec-copy.html#First">&quot;First:&quot; in podspec-copy</a></p>
 
 <p><code>podspec-copy/First:</code></p>
 

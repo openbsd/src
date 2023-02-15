@@ -79,7 +79,7 @@ is($z, $y,  'basic multiline reading');
 is($count, 7,   '    line count');
 is($., 7,       '    $.' );
 
-$out = (($^O eq 'MSWin32') || $^O eq 'NetWare') ? `type $filename`
+$out = ($^O eq 'MSWin32') ? `type $filename`
     : ($^O eq 'VMS') ? `type $filename.;0`   # otherwise .LIS is assumed
     : `cat $filename`;
 

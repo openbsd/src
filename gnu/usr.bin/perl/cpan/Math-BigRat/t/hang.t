@@ -1,4 +1,4 @@
-#!perl
+# -*- mode: perl; -*-
 
 # test for bug #34584: hang in exp(1/2)
 

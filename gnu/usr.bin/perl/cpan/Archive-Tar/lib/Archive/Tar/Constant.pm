@@ -1,18 +1,20 @@
 package Archive::Tar::Constant;
 
+use strict;
+use warnings;
+
+use vars qw[$VERSION @ISA @EXPORT];
+
 BEGIN {
     require Exporter;
 
-    $VERSION    = '2.36';
+    $VERSION    = '2.40';
     @ISA        = qw[Exporter];
 
     require Time::Local if $^O eq "MacOS";
 }
 
 @EXPORT = Archive::Tar::Constant->_list_consts( __PACKAGE__ );
-
-use strict;
-use warnings;
 
 use constant FILE           => 0;
 use constant HARDLINK       => 1;
@@ -86,7 +88,10 @@ use constant XZ             => do { !$ENV{'PERL5_AT_NO_XZ'} and
                                 };
 
 use constant GZIP_MAGIC_NUM => qr/^(?:\037\213|\037\235)/;
-use constant BZIP_MAGIC_NUM => qr/^BZh\d/;
+
+                           # ASCII:  B   Z   h    0    9
+use constant BZIP_MAGIC_NUM => qr/^\x42\x5A\x68[\x30-\x39]/;
+
 use constant XZ_MAGIC_NUM   => qr/^\xFD\x37\x7A\x58\x5A\x00/;
 
 use constant CAN_CHOWN      => sub { ($> == 0 and $^O ne "MacOS" and $^O ne "MSWin32") };

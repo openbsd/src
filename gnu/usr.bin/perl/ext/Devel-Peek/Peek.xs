@@ -239,9 +239,7 @@ _mstats_to_hv(HV *hv, const struct mstats_buffer *b, int level)
 	    croak("Unexpected value for the key '%s' in the mstats hash", types[type]);
 	if (!SvOK(*svp)) {
 	    av = newAV();
-	    (void)SvUPGRADE(*svp, SVt_RV);
-	    SvRV_set(*svp, (SV*)av);
-	    SvROK_on(*svp);
+	    sv_setrv_noinc(*svp, (SV*)av);
 	} else
 	    av = (AV*)SvRV(*svp);
 
@@ -328,7 +326,6 @@ mstats2hash(SV *sv, SV *rv, int level)
 static void
 S_do_dump(pTHX_ SV *const sv, I32 lim)
 {
-    dVAR;
     SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", 0);
     const STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
     SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", 0);

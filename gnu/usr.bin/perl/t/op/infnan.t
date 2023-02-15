@@ -243,7 +243,7 @@ TODO: {
     local $::TODO;
     my $here = "$^O $Config{osvers}";
     $::TODO = "$here: pow (9**9**9) doesn't give Inf"
-        if $here =~ /^(?:hpux 10|os390)/;
+        if $here =~ /^(?:hpux 10)/;
     is(9**9**9, $PInf, "9**9**9 is Inf");
 }
 
@@ -394,7 +394,7 @@ TODO: {
     local $::TODO;
     my $here = "$^O $Config{osvers}";
     $::TODO = "$here: pow (9**9**9) doesn't give Inf"
-        if $here =~ /^(?:hpux 10|os390)/;
+        if $here =~ /^(?:hpux 10)/;
     is(sin(9**9**9), $NaN, "sin(9**9**9) is NaN");
 }
 
@@ -560,6 +560,32 @@ cmp_ok('-1e-9999', '==', 0,     "underflow to 0 (runtime) from neg");
             }
         }
     }
+}
+
+# "+Inf" should be converted to UV consistently
+{
+    my $uv_max = ~0;
+    my $x = 42;     # Some arbitrary integer.
+    $x = ' Inf ';   # Spaces will detect unwanted string/NV round-trip
+    is($x << 0, $uv_max, "' Inf ' converted to UV");
+    # Test twice just in case if SvUV is tricked by cached NV
+    is($x << 0, $uv_max, "second conversion of ' Inf ' to UV");
+    # Cached NV should be Inf even after conversion to UV returned UV_MAX
+    cmp_ok($x, '==', $PInf, "NV value of ' Inf ' after UV conversion");
+    # String value should not be changed
+    is($x, ' Inf ', "string shall be ' Inf ' after UV/NV conversion");
+}
+
+# "-Inf" should be converted to IV consistently
+{
+    use integer;
+    my $x = '-Inf';
+    my $y = $NInf;      # $NInf and $y shall be NV -Inf
+    my $z = $x | 0;     # "|" under "use integer;" requires IV operands
+    is($z, $y | 0, "'-Inf' should be converted to IV consistently");
+    # $z shall be IV_MIN here, but as the actual value of IV_MIN is not
+    # (easily) available in Perl so check its negative-ness as the next best.
+    cmp_ok($z, '<', 0, "'-Inf' should be converted to a negative IV");
 }
 
 done_testing();

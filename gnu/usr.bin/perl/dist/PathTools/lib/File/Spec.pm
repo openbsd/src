@@ -2,7 +2,7 @@ package File::Spec;
 
 use strict;
 
-our $VERSION = '3.78';
+our $VERSION = '3.84';
 $VERSION =~ tr/_//d;
 
 my %module = (
@@ -316,7 +316,7 @@ L<ExtUtils::MakeMaker>
 
 =head1 AUTHOR
 
-Currently maintained by Ken Williams C<< <KWILLIAMS@cpan.org> >>.
+Maintained by perl5-porters <F<perl5-porters@perl.org>>.
 
 The vast majority of the code was written by
 Kenneth Albanowski C<< <kjahds@kjahds.com> >>,

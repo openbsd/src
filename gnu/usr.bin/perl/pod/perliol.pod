@@ -374,6 +374,22 @@ it is pushed above a layer which does not support the interface.
 (Perl's C<sv_gets()> does not expect the streams fast C<gets> behaviour
 to change during one "get".)
 
+=for apidoc Amnh||PERLIO_F_APPEND
+=for apidoc_item || PERLIO_F_CANREAD
+=for apidoc_item ||PERLIO_F_CANWRITE
+=for apidoc_item ||PERLIO_F_CRLF
+=for apidoc_item ||PERLIO_F_EOF
+=for apidoc_item ||PERLIO_F_ERROR
+=for apidoc_item ||PERLIO_F_FASTGETS
+=for apidoc_item ||PERLIO_F_LINEBUF
+=for apidoc_item ||PERLIO_F_OPEN
+=for apidoc_item ||PERLIO_F_RDBUF
+=for apidoc_item ||PERLIO_F_TEMP
+=for apidoc_item ||PERLIO_F_TRUNCATE
+=for apidoc_item ||PERLIO_F_UNBUF
+=for apidoc_item ||PERLIO_F_UTF8
+=for apidoc_item ||PERLIO_F_WRBUF
+
 =back
 
 =head2 Methods in Detail
@@ -445,6 +461,12 @@ Used when the layer's open() accepts more arguments than usual. The
 extra arguments should come not before the C<MODE> argument. When this
 flag is used it's up to the layer to validate the args.
 
+=for apidoc  Amnh|| PERLIO_K_BUFFERED
+=for apidoc_item || PERLIO_K_CANCRLF
+=for apidoc_item || PERLIO_K_FASTGETS
+=for apidoc_item || PERLIO_K_MULTIARG
+=for apidoc_item || PERLIO_K_RAW
+
 =back
 
 =item Pushed
@@ -512,6 +534,8 @@ less than or equal to C<PL_maxsysfd>, and set for any file descriptor
 numbered higher.  For thread safety, when a layer opens a new file
 descriptor it should if possible open it with the close-on-exec flag
 initially set.
+
+=for apidoc Amnh||PL_maxsysfd
 
 The I<mode> string is an "C<fopen()>-like" string which would match
 the regular expression C</^[I#]?[rwa]\+?[bt]?$/>.

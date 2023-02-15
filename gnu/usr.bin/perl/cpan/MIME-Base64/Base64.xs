@@ -25,16 +25,10 @@ metamail, which comes with this message:
 */
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 #define PERL_NO_GET_CONTEXT     /* we want efficiency */
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#ifdef __cplusplus
-}
-#endif
 
 #define MAX_LINE  76 /* size of encoded lines */
 

@@ -37,6 +37,12 @@ sub loadopts {
     }
 }
 
+my $prebuilt; # are we making the prebuilt config used to bootstrap?
+if (@ARGV && $ARGV[0] eq '--prebuilt') {
+    ++$prebuilt;
+    shift;
+}
+
 my %opt;
 
 my $optref = loadopts();
@@ -117,16 +123,6 @@ elsif ($opt{cc} =~ /\bgcc\b/) {
     $int64  = 'long long';
 }
 
-# set large files options
-if ($opt{uselargefiles} eq 'define') {
-    $opt{lseeksize} = 8;
-    $opt{lseektype} = $int64;
-}
-else {
-    $opt{lseeksize} = 4;
-    $opt{lseektype} = 'long';
-}
-
 # set 64-bit options
 if ($opt{WIN64} eq 'define') {
     $opt{d_atoll} = 'define';
@@ -149,7 +145,7 @@ else {
 
 # set 64-bit-int options
 if ($opt{use64bitint} eq 'define') {
-    if ($opt{uselongdouble} eq 'define') {
+    if ($opt{uselongdouble} eq 'define' || $opt{usequadmath} eq 'define') {
         $opt{d_nv_preserves_uv} = 'define';
         $opt{nv_preserves_uv_bits} = 64;
     }
@@ -231,6 +227,32 @@ if ($opt{uselongdouble} eq 'define') {
     $opt{longdblkind} = 3;
     $opt{longdblmantbits} = 64;
 }
+# set __float128 options
+elsif ($opt{usequadmath} eq 'define') {
+    $opt{d_Gconvert} = 'sprintf((b),"%.*""Lg",(n),(x))';
+    $opt{d_PRIEUldbl} = 'define';
+    $opt{d_PRIFUldbl} = 'define';
+    $opt{d_PRIGUldbl} = 'define';
+    $opt{d_modflproto} = 'define';
+    $opt{d_strtold} = 'define';
+    $opt{d_PRIeldbl} = 'define';
+    $opt{d_PRIfldbl} = 'define';
+    $opt{d_PRIgldbl} = 'define';
+    $opt{d_SCNfldbl} = 'define';
+    $opt{nv_overflows_integers_at} = '256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*256.0*2.0';
+    $opt{nvsize} = 16;
+    $opt{nvtype} = '__float128';
+    $opt{nvEUformat} = '"QE"';
+    $opt{nvFUformat} = '"QF"';
+    $opt{nvGUformat} = '"QG"';
+    $opt{nveformat} = '"Qe"';
+    $opt{nvfformat} = '"Qf"';
+    $opt{nvgformat} = '"Qg"';
+    $opt{nvmantbits} = 112;
+    $opt{longdblkind} = 3;
+    $opt{longdblmantbits} = 64;
+    $opt{i_quadmath} = 'define';
+}
 else {
     $opt{d_Gconvert} = 'sprintf((b),"%.*g",(n),(x))';
     $opt{d_PRIEUldbl} = 'undef';
@@ -267,7 +289,7 @@ if ($opt{cc} =~ /\bcl/ and $opt{ccversion} =~ /^(\d+)/) {
 	$opt{sGMTIME_max} = 32535291599;
 	$opt{sLOCALTIME_max} = 32535244799;
     }
-    if ($ccversion >= 16) { # VC10+
+    if ($ccversion >= 16 && !$prebuilt) { # VC10+
 	$opt{i_stdint} = 'define';
     }
     if ($ccversion >= 19) { # VC14+
@@ -275,7 +297,7 @@ if ($opt{cc} =~ /\bcl/ and $opt{ccversion} =~ /^(\d+)/) {
 	$opt{stdio_bufsiz} = '(PERLIO_FILE_cnt(fp) + PERLIO_FILE_ptr(fp) - PERLIO_FILE_base(fp))';
 	$opt{stdio_cnt} = 'PERLIO_FILE_cnt(fp)';
 	$opt{stdio_ptr} = 'PERLIO_FILE_ptr(fp)';
-	$opt{i_stdbool} = 'define';
+	$opt{i_stdbool} = 'define' unless $prebuilt;
     }
 }
 # find out which MSVC this ICC is using

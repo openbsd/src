@@ -252,7 +252,7 @@ ok 1 child
 $| = 1;
 $\ = "\n";
 my $getenv;
-if ($^O eq 'MSWin32' || $^O eq 'NetWare') {
+if ($^O eq 'MSWin32') {
     $getenv = qq[$^X -e "print \$ENV{TST}"];
 }
 else {

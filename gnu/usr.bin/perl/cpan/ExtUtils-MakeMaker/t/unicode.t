@@ -6,6 +6,7 @@ BEGIN {
 chdir 't';
 
 use strict;
+use warnings;
 use ExtUtils::MM;
 use MakeMaker::Test::Utils qw(makefile_name make make_run run hash2files);
 use Test::More;
