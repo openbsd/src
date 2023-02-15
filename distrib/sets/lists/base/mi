@@ -964,6 +964,7 @@
 ./usr/libdata/perl5/ExtUtils/MM_MacOS.pm
 ./usr/libdata/perl5/ExtUtils/MM_NW5.pm
 ./usr/libdata/perl5/ExtUtils/MM_OS2.pm
+./usr/libdata/perl5/ExtUtils/MM_OS390.pm
 ./usr/libdata/perl5/ExtUtils/MM_QNX.pm
 ./usr/libdata/perl5/ExtUtils/MM_UWIN.pm
 ./usr/libdata/perl5/ExtUtils/MM_Unix.pm
@@ -983,6 +984,7 @@
 ./usr/libdata/perl5/ExtUtils/Miniperl.pm
 ./usr/libdata/perl5/ExtUtils/Mkbootstrap.pm
 ./usr/libdata/perl5/ExtUtils/Mksymlists.pm
+./usr/libdata/perl5/ExtUtils/PL2Bat.pm
 ./usr/libdata/perl5/ExtUtils/Packlist.pm
 ./usr/libdata/perl5/ExtUtils/ParseXS
 ./usr/libdata/perl5/ExtUtils/ParseXS.pm
@@ -1078,7 +1080,9 @@
 ./usr/libdata/perl5/Math/BigInt/Calc.pm
 ./usr/libdata/perl5/Math/BigInt/Lib.pm
 ./usr/libdata/perl5/Math/BigInt/Trace.pm
+./usr/libdata/perl5/Math/BigRat
 ./usr/libdata/perl5/Math/BigRat.pm
+./usr/libdata/perl5/Math/BigRat/Trace.pm
 ./usr/libdata/perl5/Math/Complex.pm
 ./usr/libdata/perl5/Math/Trig.pm
 ./usr/libdata/perl5/Memoize
@@ -1206,7 +1210,9 @@
 ./usr/libdata/perl5/Pod/Checker.pm
 ./usr/libdata/perl5/Pod/Escapes.pm
 ./usr/libdata/perl5/Pod/Functions.pm
+./usr/libdata/perl5/Pod/Html
 ./usr/libdata/perl5/Pod/Html.pm
+./usr/libdata/perl5/Pod/Html/Util.pm
 ./usr/libdata/perl5/Pod/Man.pm
 ./usr/libdata/perl5/Pod/ParseLink.pm
 ./usr/libdata/perl5/Pod/Perldoc
@@ -1357,6 +1363,12 @@
 ./usr/libdata/perl5/Test2/API/Breakage.pm
 ./usr/libdata/perl5/Test2/API/Context.pm
 ./usr/libdata/perl5/Test2/API/Instance.pm
+./usr/libdata/perl5/Test2/API/InterceptResult
+./usr/libdata/perl5/Test2/API/InterceptResult.pm
+./usr/libdata/perl5/Test2/API/InterceptResult/Event.pm
+./usr/libdata/perl5/Test2/API/InterceptResult/Facet.pm
+./usr/libdata/perl5/Test2/API/InterceptResult/Hub.pm
+./usr/libdata/perl5/Test2/API/InterceptResult/Squasher.pm
 ./usr/libdata/perl5/Test2/API/Stack.pm
 ./usr/libdata/perl5/Test2/Event
 ./usr/libdata/perl5/Test2/Event.pm
@@ -1562,10 +1574,12 @@
 ./usr/libdata/perl5/autodie/skip.pm
 ./usr/libdata/perl5/autouse.pm
 ./usr/libdata/perl5/base.pm
+./usr/libdata/perl5/bigfloat.pm
 ./usr/libdata/perl5/bigint.pm
 ./usr/libdata/perl5/bignum.pm
 ./usr/libdata/perl5/bigrat.pm
 ./usr/libdata/perl5/blib.pm
+./usr/libdata/perl5/builtin.pm
 ./usr/libdata/perl5/bytes.pm
 ./usr/libdata/perl5/bytes_heavy.pl
 ./usr/libdata/perl5/charnames.pm
@@ -1646,6 +1660,9 @@
 ./usr/libdata/perl5/pod/perl5303delta.pod
 ./usr/libdata/perl5/pod/perl5320delta.pod
 ./usr/libdata/perl5/pod/perl5321delta.pod
+./usr/libdata/perl5/pod/perl5340delta.pod
+./usr/libdata/perl5/pod/perl5341delta.pod
+./usr/libdata/perl5/pod/perl5360delta.pod
 ./usr/libdata/perl5/pod/perl561delta.pod
 ./usr/libdata/perl5/pod/perl56delta.pod
 ./usr/libdata/perl5/pod/perl581delta.pod
@@ -1683,7 +1700,7 @@
 ./usr/libdata/perl5/pod/perldeprecation.pod
 ./usr/libdata/perl5/pod/perldiag.pod
 ./usr/libdata/perl5/pod/perldoc.pod
-./usr/libdata/perl5/pod/perldos.pod
+./usr/libdata/perl5/pod/perldocstyle.pod
 ./usr/libdata/perl5/pod/perldsc.pod
 ./usr/libdata/perl5/pod/perldtrace.pod
 ./usr/libdata/perl5/pod/perlebcdic.pod
@@ -1728,14 +1745,12 @@
 ./usr/libdata/perl5/pod/perllinux.pod
 ./usr/libdata/perl5/pod/perllocale.pod
 ./usr/libdata/perl5/pod/perllol.pod
-./usr/libdata/perl5/pod/perlmacos.pod
 ./usr/libdata/perl5/pod/perlmacosx.pod
 ./usr/libdata/perl5/pod/perlmod.pod
 ./usr/libdata/perl5/pod/perlmodinstall.pod
 ./usr/libdata/perl5/pod/perlmodlib.pod
 ./usr/libdata/perl5/pod/perlmodstyle.pod
 ./usr/libdata/perl5/pod/perlmroapi.pod
-./usr/libdata/perl5/pod/perlnetware.pod
 ./usr/libdata/perl5/pod/perlnewmod.pod
 ./usr/libdata/perl5/pod/perlnumber.pod
 ./usr/libdata/perl5/pod/perlobj.pod
@@ -1775,7 +1790,6 @@
 ./usr/libdata/perl5/pod/perlsource.pod
 ./usr/libdata/perl5/pod/perlstyle.pod
 ./usr/libdata/perl5/pod/perlsub.pod
-./usr/libdata/perl5/pod/perlsymbian.pod
 ./usr/libdata/perl5/pod/perlsyn.pod
 ./usr/libdata/perl5/pod/perlsynology.pod
 ./usr/libdata/perl5/pod/perlthrtut.pod
@@ -1820,10 +1834,8 @@
 ./usr/libdata/perl5/unicore/To/Bpb.pl
 ./usr/libdata/perl5/unicore/To/Bpt.pl
 ./usr/libdata/perl5/unicore/To/Cf.pl
-./usr/libdata/perl5/unicore/To/Digit.pl
 ./usr/libdata/perl5/unicore/To/Ea.pl
 ./usr/libdata/perl5/unicore/To/EqUIdeo.pl
-./usr/libdata/perl5/unicore/To/Fold.pl
 ./usr/libdata/perl5/unicore/To/GCB.pl
 ./usr/libdata/perl5/unicore/To/Gc.pl
 ./usr/libdata/perl5/unicore/To/Hst.pl
@@ -1836,7 +1848,6 @@
 ./usr/libdata/perl5/unicore/To/Jt.pl
 ./usr/libdata/perl5/unicore/To/Lb.pl
 ./usr/libdata/perl5/unicore/To/Lc.pl
-./usr/libdata/perl5/unicore/To/Lower.pl
 ./usr/libdata/perl5/unicore/To/NFCQC.pl
 ./usr/libdata/perl5/unicore/To/NFDQC.pl
 ./usr/libdata/perl5/unicore/To/NFKCCF.pl
@@ -1851,9 +1862,7 @@
 ./usr/libdata/perl5/unicore/To/Sc.pl
 ./usr/libdata/perl5/unicore/To/Scx.pl
 ./usr/libdata/perl5/unicore/To/Tc.pl
-./usr/libdata/perl5/unicore/To/Title.pl
 ./usr/libdata/perl5/unicore/To/Uc.pl
-./usr/libdata/perl5/unicore/To/Upper.pl
 ./usr/libdata/perl5/unicore/To/Vo.pl
 ./usr/libdata/perl5/unicore/To/WB.pl
 ./usr/libdata/perl5/unicore/To/_PerlLB.pl
@@ -1867,6 +1876,7 @@
 ./usr/libdata/perl5/unicore/lib/Age/V110.pl
 ./usr/libdata/perl5/unicore/lib/Age/V120.pl
 ./usr/libdata/perl5/unicore/lib/Age/V130.pl
+./usr/libdata/perl5/unicore/lib/Age/V140.pl
 ./usr/libdata/perl5/unicore/lib/Age/V20.pl
 ./usr/libdata/perl5/unicore/lib/Age/V30.pl
 ./usr/libdata/perl5/unicore/lib/Age/V31.pl
@@ -2058,6 +2068,7 @@
 ./usr/libdata/perl5/unicore/lib/In/12_0.pl
 ./usr/libdata/perl5/unicore/lib/In/12_1.pl
 ./usr/libdata/perl5/unicore/lib/In/13_0.pl
+./usr/libdata/perl5/unicore/lib/In/14_0.pl
 ./usr/libdata/perl5/unicore/lib/In/2_0.pl
 ./usr/libdata/perl5/unicore/lib/In/2_1.pl
 ./usr/libdata/perl5/unicore/lib/In/3_0.pl
@@ -2100,7 +2111,6 @@
 ./usr/libdata/perl5/unicore/lib/InSC/Consona6.pl
 ./usr/libdata/perl5/unicore/lib/InSC/Consona7.pl
 ./usr/libdata/perl5/unicore/lib/InSC/Consona8.pl
-./usr/libdata/perl5/unicore/lib/InSC/Consona9.pl
 ./usr/libdata/perl5/unicore/lib/InSC/Consonan.pl
 ./usr/libdata/perl5/unicore/lib/InSC/Invisibl.pl
 ./usr/libdata/perl5/unicore/lib/InSC/Nukta.pl
@@ -2127,10 +2137,12 @@
 ./usr/libdata/perl5/unicore/lib/Jg/Kaf.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Lam.pl
 ./usr/libdata/perl5/unicore/lib/Jg/NoJoinin.pl
+./usr/libdata/perl5/unicore/lib/Jg/Noon.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Qaf.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Reh.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Sad.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Seen.pl
+./usr/libdata/perl5/unicore/lib/Jg/Tah.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Waw.pl
 ./usr/libdata/perl5/unicore/lib/Jg/Yeh.pl
 ./usr/libdata/perl5/unicore/lib/Jt
@@ -2374,6 +2386,7 @@
 ./usr/libdata/perl5/unicore/lib/Scx/Mult.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Mymr.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Nand.pl
+./usr/libdata/perl5/unicore/lib/Scx/Nko.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Orya.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Phlp.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Rohg.pl
@@ -2390,6 +2403,7 @@
 ./usr/libdata/perl5/unicore/lib/Scx/Thaa.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Tibt.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Tirh.pl
+./usr/libdata/perl5/unicore/lib/Scx/Vith.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Xsux.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Yezi.pl
 ./usr/libdata/perl5/unicore/lib/Scx/Yi.pl
@@ -2402,6 +2416,8 @@
 ./usr/libdata/perl5/unicore/lib/UIdeo/Y.pl
 ./usr/libdata/perl5/unicore/lib/Upper
 ./usr/libdata/perl5/unicore/lib/Upper/Y.pl
+./usr/libdata/perl5/unicore/lib/VS
+./usr/libdata/perl5/unicore/lib/VS/Y.pl
 ./usr/libdata/perl5/unicore/lib/Vo
 ./usr/libdata/perl5/unicore/lib/Vo/R.pl
 ./usr/libdata/perl5/unicore/lib/Vo/Tr.pl

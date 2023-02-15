@@ -72,6 +72,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perl.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perl_inc_macro.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perl_langinfo.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/perl_siphash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/perliol.h
@@ -88,8 +89,8 @@
 ./usr/libdata/perl5/powerpc-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/scope.h
-./usr/libdata/perl5/powerpc-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/sv.h
+./usr/libdata/perl5/powerpc-openbsd/CORE/sv_inline.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/thread.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/time64.h
 ./usr/libdata/perl5/powerpc-openbsd/CORE/time64_config.h

@@ -68,6 +68,7 @@
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perl.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perl_inc_macro.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perl_langinfo.h
+./usr/libdata/perl5/riscv64-openbsd/CORE/perl_siphash.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perlapi.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perlio.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/perliol.h
@@ -84,8 +85,8 @@
 ./usr/libdata/perl5/riscv64-openbsd/CORE/regnodes.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/sbox32_hash.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/scope.h
-./usr/libdata/perl5/riscv64-openbsd/CORE/stadtx_hash.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/sv.h
+./usr/libdata/perl5/riscv64-openbsd/CORE/sv_inline.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/thread.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/time64.h
 ./usr/libdata/perl5/riscv64-openbsd/CORE/time64_config.h
