@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.64 2023/02/13 19:19:29 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.65 2023/02/15 14:06:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -417,6 +417,32 @@ rkclock_lookup(struct rkclock_softc *sc, uint32_t idx)
 	}
 
 	return NULL;
+}
+
+uint32_t
+rkclock_external_frequency(const char *name)
+{
+	char buf[64] = {};
+	int len, node;
+
+	/*
+	 * Hunt through the device tree to find a fixed-rate clock
+	 * that has the requested clock output signal name.  This may
+	 * be too simple.
+	 */
+	node = OF_peer(0);
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		len = OF_getproplen(node, "clock-output-names");
+		if (len <= 0 || len > sizeof(buf))
+			continue;
+		OF_getprop(node, "clock-output-names", buf, sizeof(buf));
+		if (strcmp(buf, name) != 0)
+			continue;
+		if (OF_is_compatible(node, "fixed-clock"))
+			return OF_getpropint(node, "clock-frequency", 0);
+	}
+
+	return 0;
 }
 
 uint32_t
@@ -3006,6 +3032,17 @@ rk3399_pmu_reset(void *cookie, uint32_t *cells, int on)
 
 const struct rkclock rk3568_clocks[] = {
 	{
+		RK3568_ACLK_PHP, RK3568_CRU_CLKSEL_CON(30),
+		SEL(1, 0), 0,
+		{ RK3568_GPLL_300M, RK3568_GPLL_200M,
+		  RK3568_GPLL_100M, RK3568_XIN24M }
+	},
+	{
+		RK3568_PCLK_PHP, RK3568_CRU_CLKSEL_CON(30),
+		0, DIV(7, 4),
+		{ RK3568_ACLK_PHP }
+	},
+	{
 		RK3568_CLK_SDMMC0, RK3568_CRU_CLKSEL_CON(30),
 		SEL(10, 8), 0,
 		{ RK3568_XIN24M, RK3568_GPLL_400M, RK3568_GPLL_300M,
@@ -3016,6 +3053,65 @@ const struct rkclock rk3568_clocks[] = {
 		SEL(14, 12), 0,
 		{ RK3568_XIN24M, RK3568_GPLL_400M, RK3568_GPLL_300M,
 		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
+	},
+	{
+		RK3568_ACLK_GMAC0, 0, 0, 0,
+		{ RK3568_ACLK_PHP }
+	},
+	{
+		RK3568_PCLK_GMAC0, 0, 0, 0,
+		{ RK3568_PCLK_PHP }
+	},
+	{
+		RK3568_CLK_MAC0_2TOP, RK3568_CRU_CLKSEL_CON(31),
+		SEL(9, 8), 0,
+		{ RK3568_CPLL_125M, RK3568_CPLL_50M,
+		  RK3568_CPLL_25M, RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_MAC0_REFOUT, 0, 0, 0,
+		{ RK3568_CLK_MAC0_2TOP }
+	},
+	{
+		RK3568_CLK_GMAC0_PTP_REF, RK3568_CRU_CLKSEL_CON(31),
+		SEL(13, 12), 0,
+		{ RK3568_CPLL_62P5M, RK3568_GPLL_100M,
+		  RK3568_CPLL_50M, RK3568_XIN24M }
+	},
+	{
+		RK3568_ACLK_USB, RK3568_CRU_CLKSEL_CON(32),
+		SEL(1, 0), 0,
+		{ RK3568_GPLL_300M, RK3568_GPLL_200M,
+		  RK3568_GPLL_100M, RK3568_XIN24M }
+	},
+	{
+		RK3568_PCLK_USB, RK3568_CRU_CLKSEL_CON(32),
+		0, DIV(7, 4),
+		{ RK3568_ACLK_USB }
+	},
+	{
+		RK3568_ACLK_GMAC1, 0, 0, 0,
+		{ RK3568_ACLK_USB }
+	},
+	{
+		RK3568_PCLK_GMAC1, 0, 0, 0,
+		{ RK3568_PCLK_USB }
+	},
+	{
+		RK3568_CLK_MAC1_2TOP, RK3568_CRU_CLKSEL_CON(33),
+		SEL(9, 8), 0,
+		{ RK3568_CPLL_125M, RK3568_CPLL_50M,
+		  RK3568_CPLL_25M, RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_MAC1_REFOUT, 0, 0, 0,
+		{ RK3568_CLK_MAC1_2TOP }
+	},
+	{
+		RK3568_CLK_GMAC1_PTP_REF, RK3568_CRU_CLKSEL_CON(33),
+		SEL(13, 12), 0,
+		{ RK3568_CPLL_62P5M, RK3568_GPLL_100M,
+		  RK3568_CPLL_50M, RK3568_XIN24M }
 	},
 	{
 		RK3568_CLK_TSADC_TSEN, RK3568_CRU_CLKSEL_CON(51),
@@ -3098,8 +3194,65 @@ const struct rkclock rk3568_clocks[] = {
 		{ RK3568_CLK_I2C }
 	},
 	{
+		RK3568_SCLK_GMAC0, RK3568_CRU_CLKSEL_CON(31),
+		SEL(2, 2), 0,
+		{ RK3568_CLK_MAC0_2TOP, RK3568_GMAC0_CLKIN }
+	},
+	{
+		RK3568_SCLK_GMAC0_RGMII_SPEED, RK3568_CRU_CLKSEL_CON(31),
+		SEL(5, 4), 0,
+		{ RK3568_SCLK_GMAC0, RK3568_SCLK_GMAC0,
+		  RK3568_SCLK_GMAC0_DIV_50, RK3568_SCLK_GMAC0_DIV_5 }
+	},
+	{
+		RK3568_SCLK_GMAC0_RMII_SPEED, RK3568_CRU_CLKSEL_CON(31),
+		SEL(3, 3), 0,
+		{ RK3568_SCLK_GMAC0_DIV_20, RK3568_SCLK_GMAC0_DIV_2 }
+	},
+	{
+		RK3568_SCLK_GMAC0_RX_TX, RK3568_CRU_CLKSEL_CON(31),
+		SEL(1, 0), 0,
+		{ RK3568_SCLK_GMAC0_RGMII_SPEED, RK3568_SCLK_GMAC0_RMII_SPEED }
+	},
+	{
+		RK3568_SCLK_GMAC1, RK3568_CRU_CLKSEL_CON(33),
+		SEL(2, 2), 0,
+		{ RK3568_CLK_MAC1_2TOP, RK3568_GMAC1_CLKIN }
+	},
+	{
+		RK3568_SCLK_GMAC1_RGMII_SPEED, RK3568_CRU_CLKSEL_CON(33),
+		SEL(5, 4), 0,
+		{ RK3568_SCLK_GMAC1, RK3568_SCLK_GMAC1,
+		  RK3568_SCLK_GMAC1_DIV_50, RK3568_SCLK_GMAC1_DIV_5 }
+	},
+	{
+		RK3568_SCLK_GMAC1_RMII_SPEED, RK3568_CRU_CLKSEL_CON(33),
+		SEL(3, 3), 0,
+		{ RK3568_SCLK_GMAC1_DIV_20, RK3568_SCLK_GMAC1_DIV_2 }
+	},
+	{
+		RK3568_SCLK_GMAC1_RX_TX, RK3568_CRU_CLKSEL_CON(33),
+		SEL(1, 0), 0,
+		{ RK3568_SCLK_GMAC1_RGMII_SPEED, RK3568_SCLK_GMAC1_RMII_SPEED }
+	},
+	{
+		RK3568_CPLL_125M, RK3568_CRU_CLKSEL_CON(80),
+		0, DIV(4, 0),
+		{ RK3568_PLL_CPLL }
+	},
+	{
+		RK3568_CPLL_62P5M, RK3568_CRU_CLKSEL_CON(80),
+		0, DIV(12, 8),
+		{ RK3568_PLL_CPLL }
+	},
+	{
 		RK3568_CPLL_50M, RK3568_CRU_CLKSEL_CON(81),
 		0, DIV(4, 0),
+		{ RK3568_PLL_CPLL }
+	},
+	{
+		RK3568_CPLL_25M, RK3568_CRU_CLKSEL_CON(81),
+		0, DIV(13, 8),
 		{ RK3568_PLL_CPLL }
 	},
 	{
@@ -3115,6 +3268,11 @@ const struct rkclock rk3568_clocks[] = {
 	{
 		RK3568_GPLL_300M, RK3568_CRU_CLKSEL_CON(75),
 		0, DIV(12, 8),
+		{ RK3568_PLL_GPLL }
+	},
+	{
+		RK3568_GPLL_200M, RK3568_CRU_CLKSEL_CON(76),
+		0, DIV(4, 0),
 		{ RK3568_PLL_GPLL }
 	},
 	{
@@ -3251,6 +3409,34 @@ rk3568_get_frequency(void *cookie, uint32_t *cells)
 	case RK3568_PLL_VPLL:
 		return rk3328_get_pll(sc, RK3568_CRU_VPLL_CON(0));
 		break;
+	case RK3568_SCLK_GMAC0_DIV_50:
+		idx = RK3568_SCLK_GMAC0;
+		return rk3568_get_frequency(sc, &idx) / 50;
+	case RK3568_SCLK_GMAC0_DIV_5:
+		idx = RK3568_SCLK_GMAC0;
+		return rk3568_get_frequency(sc, &idx) / 5;
+	case RK3568_SCLK_GMAC0_DIV_20:
+		idx = RK3568_SCLK_GMAC0;
+		return rk3568_get_frequency(sc, &idx) / 20;
+	case RK3568_SCLK_GMAC0_DIV_2:
+		idx = RK3568_SCLK_GMAC0;
+		return rk3568_get_frequency(sc, &idx) / 2;
+	case RK3568_SCLK_GMAC1_DIV_50:
+		idx = RK3568_SCLK_GMAC1;
+		return rk3568_get_frequency(sc, &idx) / 50;
+	case RK3568_SCLK_GMAC1_DIV_5:
+		idx = RK3568_SCLK_GMAC1;
+		return rk3568_get_frequency(sc, &idx) / 5;
+	case RK3568_SCLK_GMAC1_DIV_20:
+		idx = RK3568_SCLK_GMAC1;
+		return rk3568_get_frequency(sc, &idx) / 20;
+	case RK3568_SCLK_GMAC1_DIV_2:
+		idx = RK3568_SCLK_GMAC1;
+		return rk3568_get_frequency(sc, &idx) / 2;
+	case RK3568_GMAC0_CLKIN:
+		return rkclock_external_frequency("gmac0_clkin");
+	case RK3568_GMAC1_CLKIN:
+		return rkclock_external_frequency("gmac1_clkin");
 	case RK3568_XIN24M:
 		return 24000000;
 	default:
