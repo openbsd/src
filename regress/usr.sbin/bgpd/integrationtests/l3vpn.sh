@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: l3vpn.sh,v 1.3 2022/11/14 17:23:43 claudio Exp $
+#	$OpenBSD: l3vpn.sh,v 1.4 2023/02/15 14:19:08 claudio Exp $
 
 set -e
 
@@ -87,11 +87,13 @@ ifconfig lo${RDOMAIN4} inet 127.0.0.1/8
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.l3vpn.rdomain1.conf
-sleep 1
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.l3vpn.rdomain2.conf
 
-sleep 3
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2v6 up
+sleep 1
 
 echo Check initial networks
 route -T ${RDOMAIN1} exec bgpctl show

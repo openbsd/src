@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ovs.sh,v 1.4 2022/03/08 07:50:34 claudio Exp $
+#	$OpenBSD: ovs.sh,v 1.5 2023/02/15 14:19:08 claudio Exp $
 
 set -e
 
@@ -86,7 +86,9 @@ route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.ovs.rdomain2.conf
 
-sleep 2
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+sleep 1
 
 echo test 1
 route -T ${RDOMAIN1} exec bgpctl sh rib ovs valid | \

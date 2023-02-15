@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.7 2022/03/04 11:01:15 claudio Exp $
+#	$OpenBSD: network_statement.sh,v 1.8 2023/02/15 14:19:08 claudio Exp $
 
 set -e
 
@@ -100,6 +100,10 @@ route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
 
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+sleep 1
+
 wait_until <<EOF
 route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2STATIC} | grep -q ${PAIR2STATIC}
 EOF
@@ -137,8 +141,6 @@ route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2RTABLE} | \
 	! grep ${PAIR2RTABLE}
 route -T ${RDOMAIN1} exec bgpctl sh rib ${PAIR2PRIORITY} | \
 	! grep ${PAIR2PRIORITY}
-
-sleep 1
 
 echo add routes
 route -T ${RDOMAIN2} add ${PAIR2STATIC} ${PAIR1IP}

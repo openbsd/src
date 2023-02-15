@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxprefixout.sh,v 1.1 2020/01/26 00:54:47 claudio Exp $
+#	$OpenBSD: maxprefixout.sh,v 1.2 2023/02/15 14:19:08 claudio Exp $
 
 set -e
 
@@ -70,7 +70,9 @@ route -T ${RDOMAIN1} exec ${BGPD} \
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.maxprefixout.rdomain2.conf
 
-sleep 3
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+sleep 1
 
 echo test1: add two networks
 route -T ${RDOMAIN1} exec bgpctl network add 10.12.58.0/24

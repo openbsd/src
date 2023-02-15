@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: maxcomm.sh,v 1.1 2022/05/31 09:50:26 claudio Exp $
+#	$OpenBSD: maxcomm.sh,v 1.2 2023/02/15 14:19:08 claudio Exp $
 
 set -e
 
@@ -67,11 +67,12 @@ ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
         -v -f ${BGPDCONFIGDIR}/bgpd.maxcomm.rdomain1.conf
-sleep 1
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.maxcomm.rdomain2.conf
+sleep 1
+route -T ${RDOMAIN1} exec bgpctl nei RDOMAIN2 up
+sleep 1
 
-sleep 2
 route -T ${RDOMAIN1} exec bgpctl sh rib | tee maxcomm.out
 sleep .2
 diff -u ${BGPDCONFIGDIR}/maxcomm.ok maxcomm.out
