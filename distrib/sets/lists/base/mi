@@ -761,7 +761,7 @@
 ./usr/lib/libpanel.so.6.0
 ./usr/lib/libpanelw.so.6.0
 ./usr/lib/libpcap.so.9.0
-./usr/lib/libperl.so.22.0
+./usr/lib/libperl.so.23.0
 ./usr/lib/libpthread.so.27.0
 ./usr/lib/libradius.so.1.0
 ./usr/lib/libreadline.so.4.0
