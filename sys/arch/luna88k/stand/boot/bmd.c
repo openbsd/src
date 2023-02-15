@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmd.c,v 1.5 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: bmd.c,v 1.6 2023/02/15 12:43:32 aoyama Exp $	*/
 /*	$NetBSD: bmd.c,v 1.2 2013/01/20 13:35:43 tsutsui Exp $	*/
 
 /*
@@ -299,8 +299,8 @@ bmdinit(void)
 
 	bp->bc_stat  = STAT_NORMAL;
 
-	bp->bc_xmin  = 8;
-	bp->bc_xmax  = 96;
+	bp->bc_xmin  = 12;
+	bp->bc_xmax  = 92;
 	bp->bc_ymin  = 2;
 	bp->bc_ymax  = 48;
 

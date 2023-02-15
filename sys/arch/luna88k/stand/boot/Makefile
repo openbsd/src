@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2023/01/13 15:49:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2023/02/15 12:43:32 aoyama Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -35,6 +35,7 @@ SRCS+=	sio.c
 SRCS+=	bmc.c bmd.c font.c kbd.c
 SRCS+=	sc.c sd.c
 SRCS+=	ufs_disksubr.c
+SRCS+=	logo.c
 
 # netboot support
 SRCS+=	if_le.c lance.c getsecs.c

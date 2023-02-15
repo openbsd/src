@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmc.c,v 1.2 2023/01/10 17:10:57 miod Exp $	*/
+/*	$OpenBSD: bmc.c,v 1.3 2023/02/15 12:43:32 aoyama Exp $	*/
 /*	$NetBSD: bmc.c,v 1.4 2013/01/21 11:58:12 tsutsui Exp $	*/
 
 /*
@@ -110,6 +110,7 @@ bmccninit(struct consdev *cp)
 {
 	sioinit();
 	bmdinit();
+	draw_logo();
 }
 
 int
