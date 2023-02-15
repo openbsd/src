@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.32 2023/02/14 18:37:15 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.33 2023/02/15 18:10:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,44 +65,6 @@
 #include "bn_arch.h"
 #include "bn_internal.h"
 #include "bn_local.h"
-
-/*
- * bn_mul_add_words() computes (carry:r[i]) = a[i] * w + r[i] + carry, where
- * a is an array of words and w is a single word. This should really be called
- * bn_mulw_add_words() since only one input is an array. This is used as a step
- * in the multiplication of word arrays.
- */
-#ifndef HAVE_BN_MUL_ADD_WORDS
-BN_ULONG
-bn_mul_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
-{
-	BN_ULONG carry = 0;
-
-	assert(num >= 0);
-	if (num <= 0)
-		return 0;
-
-#ifndef OPENSSL_SMALL_FOOTPRINT
-	while (num & ~3) {
-		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
-		bn_mulw_addw_addw(a[1], w, r[1], carry, &carry, &r[1]);
-		bn_mulw_addw_addw(a[2], w, r[2], carry, &carry, &r[2]);
-		bn_mulw_addw_addw(a[3], w, r[3], carry, &carry, &r[3]);
-		a += 4;
-		r += 4;
-		num -= 4;
-	}
-#endif
-	while (num) {
-		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
-		a++;
-		r++;
-		num--;
-	}
-
-	return carry;
-}
-#endif
 
 /*
  * bn_mul_comba4() computes r[] = a[] * b[] using Comba multiplication
@@ -265,6 +227,44 @@ bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 		r++;
 		num--;
 	}
+	return carry;
+}
+#endif
+
+/*
+ * bn_mul_add_words() computes (carry:r[i]) = a[i] * w + r[i] + carry, where
+ * a is an array of words and w is a single word. This should really be called
+ * bn_mulw_add_words() since only one input is an array. This is used as a step
+ * in the multiplication of word arrays.
+ */
+#ifndef HAVE_BN_MUL_ADD_WORDS
+BN_ULONG
+bn_mul_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
+{
+	BN_ULONG carry = 0;
+
+	assert(num >= 0);
+	if (num <= 0)
+		return 0;
+
+#ifndef OPENSSL_SMALL_FOOTPRINT
+	while (num & ~3) {
+		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
+		bn_mulw_addw_addw(a[1], w, r[1], carry, &carry, &r[1]);
+		bn_mulw_addw_addw(a[2], w, r[2], carry, &carry, &r[2]);
+		bn_mulw_addw_addw(a[3], w, r[3], carry, &carry, &r[3]);
+		a += 4;
+		r += 4;
+		num -= 4;
+	}
+#endif
+	while (num) {
+		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
+		a++;
+		r++;
+		num--;
+	}
+
 	return carry;
 }
 #endif
