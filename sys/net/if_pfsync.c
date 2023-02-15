@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.312 2023/01/04 10:31:55 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.313 2023/02/15 18:11:47 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2463,6 +2463,11 @@ pfsync_bulk_update(void *arg)
 	rw_enter_read(&pf_state_list.pfs_rwl);
 	st = sc->sc_bulk_next;
 	sc->sc_bulk_next = NULL;
+
+	if (st == NULL) {
+		rw_exit_read(&pf_state_list.pfs_rwl);
+		goto out;
+	}
 
 	for (;;) {
 		if (st->sync_state == PFSYNC_S_NONE &&
