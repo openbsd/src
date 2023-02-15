@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.46 2022/12/08 00:29:06 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.47 2023/02/15 14:13:38 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -575,10 +575,18 @@ efi_dma_constraint(void)
 		}
 	}
 
-	/* Raspberry Pi 4 is "special". */
+	/*
+	 * Some SoC's have DMA constraints that aren't explicitly
+	 * advertised.
+	 */
 	node = fdt_find_node("/");
 	if (fdt_node_is_compatible(node, "brcm,bcm2711"))
 		dma_constraint[1] = htobe64(0x3bffffff);
+	if (fdt_node_is_compatible(node, "rockchip,rk3566") ||
+	    fdt_node_is_compatible(node, "rockchip,rk3568") ||
+	    fdt_node_is_compatible(node, "rockchip,rk3588") ||
+	    fdt_node_is_compatible(node, "rockchip,rk3588s"))
+		dma_constraint[1] = htobe64(0xffffffff);
 
 	/* Pass DMA constraint. */
 	node = fdt_find_node("/chosen");
