@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.1 2023/02/13 19:18:53 patrick Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.2 2023/02/15 14:10:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -109,7 +109,7 @@ dwqe_attach(struct dwqe_softc *sc)
 	int i;
 
 	version = dwqe_read(sc, GMAC_VERSION);
-	printf(": rev 0x%02x, address %s", version & GMAC_VERSION_SNPS_MASK,
+	printf(": rev 0x%02x, address %s\n", version & GMAC_VERSION_SNPS_MASK,
 	    ether_sprintf(sc->sc_lladdr));
 
 	for (i = 0; i < 4; i++)
@@ -1011,7 +1011,7 @@ dwqe_encap(struct dwqe_softc *sc, struct mbuf *m, int *idx, int *used)
 	    *idx * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
 
 	dwqe_write(sc, GMAC_CHAN_TX_END_ADDR(0), DWQE_DMA_DVA(sc->sc_txring) +
-	    sc->sc_tx_cons * sizeof(*txd));
+	    frag * sizeof(*txd));
 
 	KASSERT(sc->sc_txbuf[cur].tb_m == NULL);
 	sc->sc_txbuf[*idx].tb_map = sc->sc_txbuf[cur].tb_map;
@@ -1130,11 +1130,11 @@ dwqe_fill_rx_ring(struct dwqe_softc *sc)
 			break;
 
 		/* TODO: check for 32-bit vs 64-bit support */
-		KASSERT((rxb->tb_map->dm_segs[0].ds_len >> 32) == 0);
+		KASSERT((rxb->tb_map->dm_segs[0].ds_addr >> 32) == 0);
 
 		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
-		rxd->sd_tdes0 = (uint32_t)rxb->tb_map->dm_segs[0].ds_len;
-		rxd->sd_tdes1 = (uint32_t)(rxb->tb_map->dm_segs[0].ds_len >> 32);
+		rxd->sd_tdes0 = (uint32_t)rxb->tb_map->dm_segs[0].ds_addr;
+		rxd->sd_tdes1 = (uint32_t)(rxb->tb_map->dm_segs[0].ds_addr >> 32);
 		rxd->sd_tdes2 = 0;
 		rxd->sd_tdes3 = RDES3_OWN | RDES3_IC | RDES3_BUF1V;
 

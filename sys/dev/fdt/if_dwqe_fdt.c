@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.1 2023/02/13 19:18:53 patrick Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.2 2023/02/15 14:10:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -85,7 +85,6 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t phy, phy_supply;
 	uint32_t axi_config;
-	uint32_t version;
 	int i, node;
 
 	sc->sc_node = faa->fa_node;
@@ -133,9 +132,6 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		clock_enable(faa->fa_node, "pclk_mac");
 	}
 	delay(5000);
-
-	version = dwqe_read(sc, GMAC_VERSION);
-	printf(": rev 0x%02x", version & GMAC_VERSION_SNPS_MASK);
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
