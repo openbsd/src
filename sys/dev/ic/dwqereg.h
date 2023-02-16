@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.1 2023/02/13 19:18:53 patrick Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.2 2023/02/16 14:43:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -45,8 +45,6 @@
 #define  GMAC_INT_MASK_LPIIM		(1 << 10)
 #define  GMAC_INT_MASK_PIM		(1 << 3)
 #define  GMAC_INT_MASK_RIM		(1 << 0)
-#define GMAC_MAC_ADDR0_HI	0x0040
-#define GMAC_MAC_ADDR0_LO	0x0044
 #define GMAC_QX_TX_FLOW_CTRL(x)	(0x0070 + (x) * 4)
 #define  GMAC_QX_TX_FLOW_CTRL_PT_SHIFT	16
 #define  GMAC_QX_TX_FLOW_CTRL_TFE	(1 << 0)
@@ -83,6 +81,8 @@
 #define  GMAC_MAC_MDIO_ADDR_C45E	(1 << 1)
 #define  GMAC_MAC_MDIO_ADDR_GB		(1 << 0)
 #define GMAC_MAC_MDIO_DATA	0x0204
+#define GMAC_MAC_ADDR0_HI	0x0300
+#define GMAC_MAC_ADDR0_LO	0x0304
 
 #define GMAC_MTL_OPERATION_MODE	0x0c00
 #define  GMAC_MTL_FRPE			(1 << 15)
