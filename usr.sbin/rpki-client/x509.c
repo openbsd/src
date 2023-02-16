@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.63 2023/02/09 22:50:07 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.64 2023/02/16 14:25:27 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -590,9 +590,24 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 	}
 
 	dp = sk_DIST_POINT_value(crldp, 0);
+	if (dp->CRLissuer != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL CRLIssuer field"
+		    " disallowed", fn);
+		goto out;
+	}
+	if (dp->reasons != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL Reasons field"
+		    " disallowed", fn);
+		goto out;
+	}
 	if (dp->distpoint == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "no distribution point name", fn);
+		goto out;
+	}
+	if (dp->distpoint->dpname != NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: nameRelativeToCRLIssuer"
+		    " disallowed", fn);
 		goto out;
 	}
 	if (dp->distpoint->type != GEN_OTHERNAME) {
