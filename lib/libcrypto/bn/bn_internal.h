@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.4 2023/02/15 04:46:49 tb Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.5 2023/02/16 04:42:20 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -100,6 +100,63 @@ bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	*out_r0 = r0;
 }
 #endif
+#endif
+
+/*
+ * bn_addw_addw() computes (r1:r0) = a + b + c, where all inputs are single
+ * words, producing a double word result.
+ */
+#ifndef HAVE_BN_ADDW_ADDW
+static inline void
+bn_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r1, r0;
+
+	bn_addw(a, b, &r1, &r0);
+	bn_addw(r0, c, &carry, &r0);
+	r1 += carry;
+
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_subw() computes r0 = a - b, where both inputs are single words,
+ * producing a single word result and borrow.
+ */
+#ifndef HAVE_BN_SUBW
+static inline void
+bn_subw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_borrow, BN_ULONG *out_r0)
+{
+	BN_ULONG borrow, r0;
+
+	r0 = a - b;
+	borrow = ((r0 | (b & ~a)) & (b | ~a)) >> (BN_BITS2 - 1);
+
+	*out_borrow = borrow;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_subw_subw() computes r0 = a - b - c, where all inputs are single words,
+ * producing a single word result and borrow.
+ */
+#ifndef HAVE_BN_SUBW_SUBW
+static inline void
+bn_subw_subw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_borrow,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG b1, b2, r0;
+
+	bn_subw(a, b, &b1, &r0);
+	bn_subw(r0, c, &b2, &r0);
+
+	*out_borrow = b1 + b2;
+	*out_r0 = r0;
+}
 #endif
 
 #ifndef HAVE_BN_UMUL_HILO

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.22 2023/02/13 04:25:37 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.23 2023/02/16 04:42:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,35 +64,31 @@
 
 #include "bn_arch.h"
 #include "bn_local.h"
+#include "bn_internal.h"
 
 BN_ULONG bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
 BN_ULONG bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
 
+/*
+ * bn_add_words() computes (carry:r[i]) = a[i] + b[i] + carry, where a and b
+ * are both arrays of words. Any carry resulting from the addition is returned.
+ */
 #ifndef HAVE_BN_ADD_WORDS
-#ifdef BN_LLONG
 BN_ULONG
 bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 {
-	BN_ULLONG ll = 0;
+	BN_ULONG carry = 0;
 
 	assert(n >= 0);
 	if (n <= 0)
-		return ((BN_ULONG)0);
+		return 0;
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n & ~3) {
-		ll += (BN_ULLONG)a[0] + b[0];
-		r[0] = (BN_ULONG)ll & BN_MASK2;
-		ll >>= BN_BITS2;
-		ll += (BN_ULLONG)a[1] + b[1];
-		r[1] = (BN_ULONG)ll & BN_MASK2;
-		ll >>= BN_BITS2;
-		ll += (BN_ULLONG)a[2] + b[2];
-		r[2] = (BN_ULONG)ll & BN_MASK2;
-		ll >>= BN_BITS2;
-		ll += (BN_ULLONG)a[3] + b[3];
-		r[3] = (BN_ULONG)ll & BN_MASK2;
-		ll >>= BN_BITS2;
+		bn_addw_addw(a[0], b[0], carry, &carry, &r[0]);
+		bn_addw_addw(a[1], b[1], carry, &carry, &r[1]);
+		bn_addw_addw(a[2], b[2], carry, &carry, &r[2]);
+		bn_addw_addw(a[3], b[3], carry, &carry, &r[3]);
 		a += 4;
 		b += 4;
 		r += 4;
@@ -100,109 +96,37 @@ bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	}
 #endif
 	while (n) {
-		ll += (BN_ULLONG)a[0] + b[0];
-		r[0] = (BN_ULONG)ll & BN_MASK2;
-		ll >>= BN_BITS2;
+		bn_addw_addw(a[0], b[0], carry, &carry, &r[0]);
 		a++;
 		b++;
 		r++;
 		n--;
 	}
-	return ((BN_ULONG)ll);
+	return carry;
 }
-#else /* !BN_LLONG */
-BN_ULONG
-bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
-{
-	BN_ULONG c, l, t;
-
-	assert(n >= 0);
-	if (n <= 0)
-		return ((BN_ULONG)0);
-
-	c = 0;
-#ifndef OPENSSL_SMALL_FOOTPRINT
-	while (n & ~3) {
-		t = a[0];
-		t = (t + c) & BN_MASK2;
-		c = (t < c);
-		l = (t + b[0]) & BN_MASK2;
-		c += (l < t);
-		r[0] = l;
-		t = a[1];
-		t = (t + c) & BN_MASK2;
-		c = (t < c);
-		l = (t + b[1]) & BN_MASK2;
-		c += (l < t);
-		r[1] = l;
-		t = a[2];
-		t = (t + c) & BN_MASK2;
-		c = (t < c);
-		l = (t + b[2]) & BN_MASK2;
-		c += (l < t);
-		r[2] = l;
-		t = a[3];
-		t = (t + c) & BN_MASK2;
-		c = (t < c);
-		l = (t + b[3]) & BN_MASK2;
-		c += (l < t);
-		r[3] = l;
-		a += 4;
-		b += 4;
-		r += 4;
-		n -= 4;
-	}
-#endif
-	while (n) {
-		t = a[0];
-		t = (t + c) & BN_MASK2;
-		c = (t < c);
-		l = (t + b[0]) & BN_MASK2;
-		c += (l < t);
-		r[0] = l;
-		a++;
-		b++;
-		r++;
-		n--;
-	}
-	return ((BN_ULONG)c);
-}
-#endif /* !BN_LLONG */
 #endif
 
+/*
+ * bn_sub_words() computes (borrow:r[i]) = a[i] - b[i] - borrow, where a and b
+ * are both arrays of words. Any borrow resulting from the subtraction is
+ * returned.
+ */
 #ifndef HAVE_BN_SUB_WORDS
 BN_ULONG
 bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 {
-	BN_ULONG t1, t2;
-	int c = 0;
+	BN_ULONG borrow = 0;
 
 	assert(n >= 0);
 	if (n <= 0)
-		return ((BN_ULONG)0);
+		return 0;
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
-	while (n&~3) {
-		t1 = a[0];
-		t2 = b[0];
-		r[0] = (t1 - t2 - c) & BN_MASK2;
-		if (t1 != t2)
-			c = (t1 < t2);
-		t1 = a[1];
-		t2 = b[1];
-		r[1] = (t1 - t2 - c) & BN_MASK2;
-		if (t1 != t2)
-			c = (t1 < t2);
-		t1 = a[2];
-		t2 = b[2];
-		r[2] = (t1 - t2 - c) & BN_MASK2;
-		if (t1 != t2)
-			c = (t1 < t2);
-		t1 = a[3];
-		t2 = b[3];
-		r[3] = (t1 - t2 - c) & BN_MASK2;
-		if (t1 != t2)
-			c = (t1 < t2);
+	while (n & ~3) {
+		bn_subw_subw(a[0], b[0], borrow, &borrow, &r[0]);
+		bn_subw_subw(a[1], b[1], borrow, &borrow, &r[1]);
+		bn_subw_subw(a[2], b[2], borrow, &borrow, &r[2]);
+		bn_subw_subw(a[3], b[3], borrow, &borrow, &r[3]);
 		a += 4;
 		b += 4;
 		r += 4;
@@ -210,26 +134,22 @@ bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	}
 #endif
 	while (n) {
-		t1 = a[0];
-		t2 = b[0];
-		r[0] = (t1 - t2 - c) & BN_MASK2;
-		if (t1 != t2)
-			c = (t1 < t2);
+		bn_subw_subw(a[0], b[0], borrow, &borrow, &r[0]);
 		a++;
 		b++;
 		r++;
 		n--;
 	}
-	return (c);
+	return borrow;
 }
 #endif
 
-#ifndef HAVE_BN_ADD
 /*
  * bn_add() computes a + b, storing the result in r (which may be the same as a
  * or b). The caller must ensure that r has been expanded to max(a->top, b->top)
  * words. Any carry resulting from the addition is returned.
  */
+#ifndef HAVE_BN_ADD
 BN_ULONG
 bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
 {
@@ -268,13 +188,13 @@ bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
 }
 #endif
 
-#ifndef HAVE_BN_SUB
 /*
  * bn_sub() computes a - b, storing the result in r (which may be the same as a
  * or b). The caller must ensure that the number of words in a is greater than
  * or equal to the number of words in b and that r has been expanded to
  * a->top words. Any borrow resulting from the subtraction is returned.
  */
+#ifndef HAVE_BN_SUB
 BN_ULONG
 bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
 {
