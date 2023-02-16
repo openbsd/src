@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.7 2023/02/16 10:41:03 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.8 2023/02/16 10:58:06 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -199,7 +199,8 @@ bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 static inline void
 bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
-	BN_ULONG a1, a0, b1, b0, r1, r0, c1, c2, x;
+	BN_ULONG a1, a0, b1, b0, r1, r0;
+	BN_ULONG carry, x;
 
 	a1 = a >> BN_BITS4;
 	a0 = a & BN_MASK2l;
@@ -212,20 +213,14 @@ bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	/* (a1 * b0) << BN_BITS4, partition the result across r1:r0 with carry. */
 	x = a1 * b0;
 	r1 += x >> BN_BITS4;
-	x <<= BN_BITS4;
-	c1 = r0 | x;
-	c2 = r0 & x;
-	r0 += x;
-	r1 += ((c1 & ~r0) | c2) >> (BN_BITS2 - 1); /* carry */
+	bn_addw(r0, x << BN_BITS4, &carry, &r0);
+	r1 += carry;
 
 	/* (b1 * a0) << BN_BITS4, partition the result across r1:r0 with carry. */
 	x = b1 * a0;
 	r1 += x >> BN_BITS4;
-	x <<= BN_BITS4;
-	c1 = r0 | x;
-	c2 = r0 & x;
-	r0 += x;
-	r1 += ((c1 & ~r0) | c2) >> (BN_BITS2 - 1); /* carry */
+	bn_addw(r0, x << BN_BITS4, &carry, &r0);
+	r1 += carry;
 
 	*out_r1 = r1;
 	*out_r0 = r0;
