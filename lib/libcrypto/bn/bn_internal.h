@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.5 2023/02/16 04:42:20 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.6 2023/02/16 10:02:02 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -258,13 +258,17 @@ bn_umul_hilo(BN_ULONG a, BN_ULONG b, BN_ULONG *out_h, BN_ULONG *out_l)
 	x = ah * bl;
 	acc1 += x & BN_MASK2l;
 	acc2 += (acc1 >> BN_BITS4) + (x >> BN_BITS4);
+	acc1 &= BN_MASK2l;
 	acc3 += acc2 >> BN_BITS4;
+	acc2 &= BN_MASK2l;
 
 	/* (bh * al) << BN_BITS4, partition the result across h:l. */
 	x = bh * al;
 	acc1 += x & BN_MASK2l;
 	acc2 += (acc1 >> BN_BITS4) + (x >> BN_BITS4);
+	acc1 &= BN_MASK2l;
 	acc3 += acc2 >> BN_BITS4;
+	acc2 &= BN_MASK2l;
 
 	*out_h = (acc3 << BN_BITS4) | acc2;
 	*out_l = (acc1 << BN_BITS4) | acc0;
