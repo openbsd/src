@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.84 2023/01/18 10:13:46 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.85 2023/02/16 04:07:33 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2023 $
+.Dd $Mdocdate: February 16 2023 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -214,6 +214,7 @@ By default
 .Nm
 will load all TAL files in
 .Pa /etc/rpki .
+TAL are small files containing a public key and URL endpoint address.
 .It Fl V
 Show the version and exit.
 .It Fl v
@@ -266,6 +267,11 @@ cached repository data.
 .It Pa /var/db/rpki-client/openbgpd
 default roa-set output file.
 .El
+.Pp
+All the top-level TAL are included, except the ARIN TAL which is not
+made available with terms compatible with open source.
+That public key is treated as a propriety object in a lengthy legal
+agreement regarding ARIN service restrictions.
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
