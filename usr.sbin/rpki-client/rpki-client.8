@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.85 2023/02/16 04:07:33 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.86 2023/02/16 20:06:15 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -278,59 +278,228 @@ agreement regarding ARIN service restrictions.
 .Xr openrsync 1 ,
 .Xr bgpd.conf 5
 .Sh STANDARDS
-The following standards are used or referenced in
-.Nm :
-.Bl -tag -width -Ds
-.It RFC 3370
-Cryptographic Message Syntax (CMS) Algorithms.
-.It RFC 3779
-X.509 Extensions for IP Addresses and AS Identifiers.
-.It RFC 4291
-IP Version 6 Addressing Architecture.
-.It RFC 4631
-Classless Inter-domain Routing (CIDR): The Internet Address Assignment
-and Aggregation Plan.
-.It RFC 5280
-Internet X.509 Public Key Infrastructure Certificate and Certificate
-Revocation List (CRL) Profile.
-.It RFC 5652
-Cryptographic Message Syntax (CMS).
-.It RFC 5781
-The rsync URI Scheme.
-.It RFC 5952
-A Recommendation for IPv6 Address Text Representation.
-.It RFC 6480
-An Infrastructure to Support Secure Internet Routing.
-.It RFC 6482 , draft-ietf-sidrops-rfc6482bis-01
-A Profile for Route Origin Authorizations (ROAs).
-.It RFC 6485
-The Profile for Algorithms and Key Sizes for Use in the Resource Public Key
-Infrastructure (RPKI).
-.It RFC 6486
-Manifests for the Resource Public Key Infrastructure (RPKI).
-.It RFC 6487
-A Profile for X.509 PKIX Resource Certificates.
-.It RFC 6488
-Signed Object Template for the Resource Public Key Infrastructure (RPKI).
-.It RFC 6493
-The Resource Public Key Infrastructure (RPKI) Ghostbusters Record.
-.It RFC 7318
-Policy Qualifiers in Resource Public Key Infrastructure (RPKI) Certificates.
-.It RFC 8182
-The RPKI Repository Delta Protocol (RRDP).
-.It RFC 8209
-A Profile for BGPsec Router Certificates, Certificate Revocation Lists, and
-Certification Requests.
-.It RFC 8630
-Resource Public Key Infrastructure (RPKI) Trust Anchor Locator.
-.It RFC 9092
-Finding and Using Geofeed Data.
-.It RFC 9323
-A Profile for RPKI Signed Checklists (RSCs).
-.It draft-ietf-sidrops-aspa-profile-10
-A Profile for Autonomous System Provider Authorization (ASPA).
-.It draft-ietf-sidrops-signed-tal-12
-RPKI Signed Object for Trust Anchor Key.
+.Rs
+.%T X.509 Extensions for IP Addresses and AS Identifiers
+.%N RFC 3779
+.%A Charles Lynn
+.%A Stephen Kent
+.%A Karen Seo
+.%U https://www.rfc-editor.org/rfc/rfc3779
+.%D Jun, 2004
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile
+.%N RFC 5280
+.%A David Cooper
+.%A Stefan Santesson
+.%A Stephen Farrell
+.%A Sharon Boeyen
+.%A Russell Housley
+.%A Tim Polk
+.%U https://www.rfc-editor.org/rfc/rfc5280
+.%D May, 2008
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Cryptographic Message Syntax (CMS)
+.%N RFC 5652
+.%A Russell Housley
+.%U https://www.rfc-editor.org/rfc/rfc5652
+.%D Sep, 2009
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T The rsync URI Scheme
+.%N RFC 5781
+.%A Samuel Weiler
+.%A Dave Ward
+.%A Russ Housley
+.%U https://www.rfc-editor.org/rfc/rfc5781
+.%D Feb, 2010
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T An Infrastructure to Support Secure Internet Routing
+.%N RFC 6480
+.%A Matt Lepinski
+.%A Stephen Kent
+.%U https://www.rfc-editor.org/rfc/rfc6480
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for Resource Certificate Repository Structure
+.%N RFC 6481
+.%A Geoff Huston
+.%A Robert Loomans
+.%A George Michaelson
+.%U https://www.rfc-editor.org/rfc/rfc6481
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T The Profile for Algorithms and Key Sizes for Use in the Resource Public Key Infrastructure (RPKI)
+.%N RFC 6485
+.%A Geoff Huston
+.%U https://www.rfc-editor.org/rfc/rfc6485
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for X.509 PKIX Resource Certificates
+.%N RFC 6487
+.%A Geoff Huston
+.%A George Michaelson
+.%A Robert Loomans
+.%U https://www.rfc-editor.org/rfc/rfc6487
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Signed Object Template for the Resource Public Key Infrastructure (RPKI)
+.%N RFC 6488
+.%A Matt Lepinski
+.%A Andrew Chi
+.%A Stephen Kent
+.%U https://www.rfc-editor.org/rfc/rfc6488
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T The Resource Public Key Infrastructure (RPKI) Ghostbusters Record
+.%N RFC 6493
+.%A Randy Bush
+.%U https://www.rfc-editor.org/rfc/rfc6493
+.%D Feb, 2012
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Policy Qualifiers in Resource Public Key Infrastructure (RPKI) Certificates
+.%N RFC 7318
+.%A Andrew Lee Newton
+.%A Geoff Huston
+.%U https://www.rfc-editor.org/rfc/rfc6493
+.%D Jul, 2014
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T The RPKI Repository Delta Protocol (RRDP)
+.%N RFC 8182
+.%A Tim Bruijnzeels
+.%A Oleg Muravskiy
+.%A Bryan Weber
+.%A Rob Austein
+.%U https://www.rfc-editor.org/rfc/rfc8182
+.%D Jul, 2017
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for BGPsec Router Certificates, Certificate Revocation Lists, and Certification Requests
+.%N RFC 8209
+.%A Mark Reynolds
+.%A Sean Turner
+.%A Stephen Kent
+.%U https://www.rfc-editor.org/rfc/rfc8209
+.%D Sep, 2017
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Resource Public Key Infrastructure (RPKI) Trust Anchor Locator
+.%N RFC 8630
+.%A Geoff Huston
+.%A Samuel Weiler
+.%A George Michaelson
+.%A Stephen Kent
+.%A Tim Bruijnzeels
+.%U https://www.rfc-editor.org/rfc/rfc8630
+.%D Aug, 2019
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Finding and Using Geofeed Data
+.%N RFC 9092
+.%A Randy Bush
+.%A Massimo Candela
+.%A Warren Kumari
+.%A Russ Housley
+.%U https://www.rfc-editor.org/rfc/rfc9092
+.%D Jul, 2021
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T Manifests for the Resource Public Key Infrastructure (RPKI)
+.%N RFC 9286
+.%A Rob Austein
+.%A Geoff Huston
+.%A Stephen Kent
+.%A Matt Lepinski
+.%U https://www.rfc-editor.org/rfc/rfc9286
+.%D Jun, 2022
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T RPKI Signed Object for Trust Anchor Key
+.%A Carlos Martinez
+.%A George Michaelson
+.%A Tom Harrison
+.%A Tim Bruijnzeels
+.%A Rob Austein
+.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-signed-tal
+.%D Oct, 2022
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for RPKI Signed Checklists (RSCs)
+.%N RFC 9323
+.%A Job Snijders
+.%A Tom Harrison
+.%A Ben Maddison
+.%U https://www.rfc-editor.org/rfc/rfc9323
+.%D Nov, 2022
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for Route Origin Authorizations (ROAs)
+.%A Job Snijders
+.%A Matt Lepinski
+.%A Derrick Kong
+.%A Stephen Kent
+.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-rfc6482bis
+.%D Nov, 2022
+.%I IETF
+.Re
+.Pp
+.Rs
+.%T A Profile for Autonomous System Provider Authorization (ASPA)
+.%A Alexander Azimov
+.%A Eugene Uskov
+.%A Randy Bush
+.%A Job Snijders
+.%A Russ Housley
+.%A Ben Maddison
+.%U https://datatracker.ietf.org/doc/html/draft-ietf-sidrops-aspa-profile
+.%D Jan, 2023
+.%I IETF
+.Re
 .El
 .Sh HISTORY
 .Nm
