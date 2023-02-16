@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.3 2023/02/04 11:48:55 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.4 2023/02/16 10:41:03 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -22,20 +22,20 @@
 
 #if 0 /* Needs testing and enabling. */
 #if defined(__GNUC__)
-#define HAVE_BN_UMUL_HILO
+#define HAVE_BN_MULW
 
 static inline void
-bn_umul_hilo(BN_ULONG a, BN_ULONG b, BN_ULONG *out_h, BN_ULONG *out_l)
+bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
-	BN_ULONG h, l;
+	BN_ULONG r1, r0;
 
 	/* Unsigned multiplication using a mulhdu/mul pair. */
 	__asm__ ("mulhdu %0, %2, %3; mul %1, %2, %3"
-	    : "=&r"(h), "=r"(l)
+	    : "=&r"(r1), "=r"(r0)
 	    : "r"(a), "r"(b));
 
-	*out_h = h;
-	*out_l = l;
+	*out_r1 = r1;
+	*out_r0 = r0;
 }
 #endif /* __GNUC__ */
 #endif

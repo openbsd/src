@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.11 2023/02/04 14:00:18 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.12 2023/02/16 10:41:03 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -63,24 +63,24 @@ bn_div_rem_words_inline(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
 #endif /* __GNUC__ */
 
 #if defined(__GNUC__)
-#define HAVE_BN_UMUL_HILO
+#define HAVE_BN_MULW
 
 static inline void
-bn_umul_hilo(BN_ULONG a, BN_ULONG b, BN_ULONG *out_h, BN_ULONG *out_l)
+bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
-	BN_ULONG h, l;
+	BN_ULONG r1, r0;
 
 	/*
 	 * Unsigned multiplication of %rax, with the double word result being
 	 * stored in %rdx:%rax.
 	 */
 	__asm__ ("mulq %3"
-	    : "=d"(h), "=a"(l)
+	    : "=d"(r1), "=a"(r0)
 	    : "a"(a), "rm"(b)
 	    : "cc");
 
-	*out_h = h;
-	*out_l = l;
+	*out_r1 = r1;
+	*out_r0 = r0;
 }
 #endif /* __GNUC__ */
 

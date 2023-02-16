@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.25 2023/02/13 04:25:37 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.26 2023/02/16 10:41:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,17 +193,17 @@ bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n & ~3) {
-		bn_umul_hilo(a[0], a[0], &r[1], &r[0]);
-		bn_umul_hilo(a[1], a[1], &r[3], &r[2]);
-		bn_umul_hilo(a[2], a[2], &r[5], &r[4]);
-		bn_umul_hilo(a[3], a[3], &r[7], &r[6]);
+		bn_mulw(a[0], a[0], &r[1], &r[0]);
+		bn_mulw(a[1], a[1], &r[3], &r[2]);
+		bn_mulw(a[2], a[2], &r[5], &r[4]);
+		bn_mulw(a[3], a[3], &r[7], &r[6]);
 		a += 4;
 		r += 8;
 		n -= 4;
 	}
 #endif
 	while (n) {
-		bn_umul_hilo(a[0], a[0], &r[1], &r[0]);
+		bn_mulw(a[0], a[0], &r[1], &r[0]);
 		a++;
 		r += 2;
 		n--;
