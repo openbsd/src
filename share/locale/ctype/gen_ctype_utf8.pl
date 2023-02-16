@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#	$OpenBSD: gen_ctype_utf8.pl,v 1.7 2021/05/16 22:48:05 afresh1 Exp $	#
+#	$OpenBSD: gen_ctype_utf8.pl,v 1.8 2023/02/16 01:06:01 afresh1 Exp $	#
 use 5.022;
 use warnings;
 
@@ -402,8 +402,8 @@ sub codepoint_columns
 	my ( $code, $charinfo ) = @_;
 	return undef unless defined $code;
 
-	# Private use areas are _most likely_ used by one column glyphs                                                 
-	return 1 if $charinfo->{category} eq 'Co';                                                                      
+	# Private use areas are _most likely_ used by one column glyphs
+	return 1 if $charinfo->{category} eq 'Co';
 
 	return 0 if $charinfo->{category} eq 'Mn';
 	return 0 if $charinfo->{category} eq 'Me';
