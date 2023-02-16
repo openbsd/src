@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.110 2023/02/09 08:00:31 guenther Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.111 2023/02/16 08:50:57 claudio Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -335,8 +335,11 @@ ktruser(struct proc *p, const char *id, const void *addr, size_t len)
 		else
 			memp = stkbuf;
 		error = copyin(addr, memp, len);
-		if (error == 0)
+		if (error == 0) {
+			KERNEL_LOCK();
 			ktrwrite2(p, &kth, &ktp, sizeof(ktp), memp, len);
+			KERNEL_UNLOCK();
+		}
 		if (memp != stkbuf)
 			free(memp, M_TEMP, len);
 	}
