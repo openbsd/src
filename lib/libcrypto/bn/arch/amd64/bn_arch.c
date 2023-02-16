@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.c,v 1.4 2023/02/04 14:00:18 jsing Exp $ */
+/*	$OpenBSD: bn_arch.c,v 1.5 2023/02/16 11:13:05 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -116,5 +116,13 @@ bn_sqr_comba8(BN_ULONG *rd, const BN_ULONG *ad)
 {
 	/* XXX - consider using non-alt on CPUs that have the ADX extension. */
 	bignum_sqr_8_16_alt((uint64_t *)rd, (uint64_t *)ad);
+}
+#endif
+
+#ifdef HAVE_BN_WORD_CLZ
+int
+bn_word_clz(BN_ULONG w)
+{
+	return word_clz(w);
 }
 #endif

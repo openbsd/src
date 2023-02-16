@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.12 2023/02/16 10:41:03 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.13 2023/02/16 11:13:05 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -38,6 +38,8 @@
 
 #define HAVE_BN_SUB
 #define HAVE_BN_SUB_WORDS
+
+#define HAVE_BN_WORD_CLZ
 
 #if defined(__GNUC__)
 #define HAVE_BN_DIV_REM_WORDS_INLINE
