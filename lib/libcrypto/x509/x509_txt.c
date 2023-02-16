@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.27 2022/11/29 12:23:43 tb Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.28 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,4 +193,4 @@ X509_verify_cert_error_string(long n)
 		return "Unknown certificate verification error";
 	}
 }
-LCRYPTO_ALIAS(X509_verify_cert_error_string)
+LCRYPTO_ALIAS(X509_verify_cert_error_string);

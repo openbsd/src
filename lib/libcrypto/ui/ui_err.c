@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_err.c,v 1.11 2022/11/12 13:16:10 beck Exp $ */
+/* $OpenBSD: ui_err.c,v 1.12 2023/02/16 08:38:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -93,4 +93,4 @@ ERR_load_UI_strings(void)
 	}
 #endif
 }
-LCRYPTO_ALIAS(ERR_load_UI_strings)
+LCRYPTO_ALIAS(ERR_load_UI_strings);

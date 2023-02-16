@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.110 2022/12/26 07:18:53 jmc Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.111 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -668,7 +668,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	/* if we succeed we have a chain in ctx->chain */
 	return (chain_count > 0 && ctx->chain != NULL);
 }
-LCRYPTO_ALIAS(X509_verify_cert)
+LCRYPTO_ALIAS(X509_verify_cert);
 
 /* Given a STACK_OF(X509) find the issuer of cert (if any)
  */
@@ -2012,7 +2012,7 @@ X509_cmp_current_time(const ASN1_TIME *ctm)
 {
 	return X509_cmp_time(ctm, NULL);
 }
-LCRYPTO_ALIAS(X509_cmp_current_time)
+LCRYPTO_ALIAS(X509_cmp_current_time);
 
 /*
  * Compare a possibly unvalidated ASN1_TIME string against a time_t
@@ -2052,7 +2052,7 @@ X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 {
 	return X509_cmp_time_internal(ctm, cmp_time, 0);
 }
-LCRYPTO_ALIAS(X509_cmp_time)
+LCRYPTO_ALIAS(X509_cmp_time);
 
 
 ASN1_TIME *
@@ -2060,14 +2060,14 @@ X509_gmtime_adj(ASN1_TIME *s, long adj)
 {
 	return X509_time_adj(s, adj, NULL);
 }
-LCRYPTO_ALIAS(X509_gmtime_adj)
+LCRYPTO_ALIAS(X509_gmtime_adj);
 
 ASN1_TIME *
 X509_time_adj(ASN1_TIME *s, long offset_sec, time_t *in_time)
 {
 	return X509_time_adj_ex(s, 0, offset_sec, in_time);
 }
-LCRYPTO_ALIAS(X509_time_adj)
+LCRYPTO_ALIAS(X509_time_adj);
 
 ASN1_TIME *
 X509_time_adj_ex(ASN1_TIME *s, int offset_day, long offset_sec, time_t *in_time)
@@ -2080,7 +2080,7 @@ X509_time_adj_ex(ASN1_TIME *s, int offset_day, long offset_sec, time_t *in_time)
 
 	return ASN1_TIME_adj(s, t, offset_day, offset_sec);
 }
-LCRYPTO_ALIAS(X509_time_adj_ex)
+LCRYPTO_ALIAS(X509_time_adj_ex);
 
 int
 X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
@@ -2120,7 +2120,7 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 			return 0;
 	return 1;
 }
-LCRYPTO_ALIAS(X509_get_pubkey_parameters)
+LCRYPTO_ALIAS(X509_get_pubkey_parameters);
 
 int
 X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -2131,77 +2131,77 @@ X509_STORE_CTX_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX,
 	    argl, argp, new_func, dup_func, free_func);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_ex_new_index)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_ex_new_index);
 
 int
 X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
 {
 	return CRYPTO_set_ex_data(&ctx->ex_data, idx, data);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_ex_data)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_ex_data);
 
 void *
 X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx)
 {
 	return CRYPTO_get_ex_data(&ctx->ex_data, idx);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_ex_data)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_ex_data);
 
 int
 X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
 {
 	return ctx->error;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_error)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_error);
 
 void
 X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
 {
 	ctx->error = err;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_error)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_error);
 
 int
 X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
 {
 	return ctx->error_depth;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_error_depth)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_error_depth);
 
 void
 X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth)
 {
 	ctx->error_depth = depth;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_error_depth)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_error_depth);
 
 X509 *
 X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
 {
 	return ctx->current_cert;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_current_cert)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_current_cert);
 
 void
 X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x)
 {
 	ctx->current_cert = x;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_current_cert)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_current_cert);
 
 STACK_OF(X509) *
 X509_STORE_CTX_get_chain(X509_STORE_CTX *ctx)
 {
 	return ctx->chain;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_chain)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_chain);
 
 STACK_OF(X509) *
 X509_STORE_CTX_get0_chain(X509_STORE_CTX *xs)
 {
 	return xs->chain;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_chain)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_chain);
 
 STACK_OF(X509) *
 X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
@@ -2218,70 +2218,70 @@ X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 	}
 	return chain;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get1_chain)
+LCRYPTO_ALIAS(X509_STORE_CTX_get1_chain);
 
 X509 *
 X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx)
 {
 	return ctx->current_issuer;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_current_issuer)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_current_issuer);
 
 X509_CRL *
 X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx)
 {
 	return ctx->current_crl;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_current_crl)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_current_crl);
 
 X509_STORE_CTX *
 X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
 {
 	return ctx->parent;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_parent_ctx)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_parent_ctx);
 
 X509_STORE *
 X509_STORE_CTX_get0_store(X509_STORE_CTX *xs)
 {
 	return xs->store;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_store)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_store);
 
 void
 X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 {
 	ctx->cert = x;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_cert)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_cert);
 
 void
 X509_STORE_CTX_set_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
 	ctx->untrusted = sk;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_chain)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_chain);
 
 void
 X509_STORE_CTX_set0_crls(X509_STORE_CTX *ctx, STACK_OF(X509_CRL) *sk)
 {
 	ctx->crls = sk;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls)
+LCRYPTO_ALIAS(X509_STORE_CTX_set0_crls);
 
 int
 X509_STORE_CTX_set_purpose(X509_STORE_CTX *ctx, int purpose)
 {
 	return X509_STORE_CTX_purpose_inherit(ctx, 0, purpose, 0);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_purpose);
 
 int
 X509_STORE_CTX_set_trust(X509_STORE_CTX *ctx, int trust)
 {
 	return X509_STORE_CTX_purpose_inherit(ctx, 0, 0, trust);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_trust)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_trust);
 
 /* This function is used to set the X509_STORE_CTX purpose and trust
  * values. This is intended to be used when another structure has its
@@ -2337,7 +2337,7 @@ X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 		ctx->param->trust = trust;
 	return 1;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit)
+LCRYPTO_ALIAS(X509_STORE_CTX_purpose_inherit);
 
 X509_STORE_CTX *
 X509_STORE_CTX_new(void)
@@ -2351,7 +2351,7 @@ X509_STORE_CTX_new(void)
 	}
 	return ctx;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_new)
+LCRYPTO_ALIAS(X509_STORE_CTX_new);
 
 void
 X509_STORE_CTX_free(X509_STORE_CTX *ctx)
@@ -2362,7 +2362,7 @@ X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 	X509_STORE_CTX_cleanup(ctx);
 	free(ctx);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_free)
+LCRYPTO_ALIAS(X509_STORE_CTX_free);
 
 int
 X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
@@ -2484,7 +2484,7 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_init)
+LCRYPTO_ALIAS(X509_STORE_CTX_init);
 
 /* Set alternative lookup method: just a STACK of trusted certificates.
  * This avoids X509_STORE nastiness where it isn't needed.
@@ -2496,14 +2496,14 @@ X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	ctx->other_ctx = sk;
 	ctx->get_issuer = get_issuer_sk;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_trusted_stack)
+LCRYPTO_ALIAS(X509_STORE_CTX_trusted_stack);
 
 void
 X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
 	X509_STORE_CTX_trusted_stack(ctx, sk);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set0_trusted_stack)
+LCRYPTO_ALIAS(X509_STORE_CTX_set0_trusted_stack);
 
 void
 X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
@@ -2527,35 +2527,35 @@ X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	    ctx, &(ctx->ex_data));
 	memset(&ctx->ex_data, 0, sizeof(CRYPTO_EX_DATA));
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_cleanup)
+LCRYPTO_ALIAS(X509_STORE_CTX_cleanup);
 
 void
 X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth)
 {
 	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_depth)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_depth);
 
 void
 X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags)
 {
 	X509_VERIFY_PARAM_set_flags(ctx->param, flags);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_flags)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_flags);
 
 void
 X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags, time_t t)
 {
 	X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_time)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_time);
 
 int
 (*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))(int, X509_STORE_CTX *)
 {
 	return ctx->verify_cb;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_verify_cb)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_verify_cb);
 
 void
 X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
@@ -2563,28 +2563,28 @@ X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 {
 	ctx->verify_cb = verify_cb;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_verify_cb)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_verify_cb);
 
 int
 (*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))(X509_STORE_CTX *)
 {
 	return ctx->verify;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_verify)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_verify);
 
 void
 X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx, int (*verify)(X509_STORE_CTX *))
 {
 	ctx->verify = verify;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_verify)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_verify);
 
 X509_STORE_CTX_check_issued_fn
 X509_STORE_get_check_issued(X509_STORE *store)
 {
 	return store->check_issued;
 }
-LCRYPTO_ALIAS(X509_STORE_get_check_issued)
+LCRYPTO_ALIAS(X509_STORE_get_check_issued);
 
 void
 X509_STORE_set_check_issued(X509_STORE *store,
@@ -2592,35 +2592,35 @@ X509_STORE_set_check_issued(X509_STORE *store,
 {
 	store->check_issued = check_issued;
 }
-LCRYPTO_ALIAS(X509_STORE_set_check_issued)
+LCRYPTO_ALIAS(X509_STORE_set_check_issued);
 
 X509_STORE_CTX_check_issued_fn
 X509_STORE_CTX_get_check_issued(X509_STORE_CTX *ctx)
 {
 	return ctx->check_issued;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_check_issued)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_check_issued);
 
 X509 *
 X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
 {
 	return ctx->cert;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_cert)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_cert);
 
 STACK_OF(X509) *
 X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
 {
 	return ctx->untrusted;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_untrusted)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_untrusted);
 
 void
 X509_STORE_CTX_set0_untrusted(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 {
 	ctx->untrusted = sk;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set0_untrusted)
+LCRYPTO_ALIAS(X509_STORE_CTX_set0_untrusted);
 
 void
 X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
@@ -2628,28 +2628,28 @@ X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	sk_X509_pop_free(ctx->chain, X509_free);
 	ctx->chain = sk;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set0_verified_chain)
+LCRYPTO_ALIAS(X509_STORE_CTX_set0_verified_chain);
 
 X509_POLICY_TREE *
 X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
 {
 	return ctx->tree;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_policy_tree)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_policy_tree);
 
 int
 X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
 {
 	return ctx->explicit_policy;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_explicit_policy)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_explicit_policy);
 
 int
 X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
 {
 	return ctx->num_untrusted;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get_num_untrusted)
+LCRYPTO_ALIAS(X509_STORE_CTX_get_num_untrusted);
 
 int
 X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
@@ -2660,14 +2660,14 @@ X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
 		return 0;
 	return X509_VERIFY_PARAM_inherit(ctx->param, param);
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set_default)
+LCRYPTO_ALIAS(X509_STORE_CTX_set_default);
 
 X509_VERIFY_PARAM *
 X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx)
 {
 	return ctx->param;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_param)
+LCRYPTO_ALIAS(X509_STORE_CTX_get0_param);
 
 void
 X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
@@ -2676,7 +2676,7 @@ X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 		X509_VERIFY_PARAM_free(ctx->param);
 	ctx->param = param;
 }
-LCRYPTO_ALIAS(X509_STORE_CTX_set0_param)
+LCRYPTO_ALIAS(X509_STORE_CTX_set0_param);
 
 /*
  * Check if |bits| are adequate for |security level|.

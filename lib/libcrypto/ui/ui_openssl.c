@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_openssl.c,v 1.27 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: ui_openssl.c,v 1.28 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) and others
  * for the OpenSSL project 2001.
  */
@@ -167,7 +167,7 @@ UI_OpenSSL(void)
 {
 	return &ui_openssl;
 }
-LCRYPTO_ALIAS(UI_OpenSSL)
+LCRYPTO_ALIAS(UI_OpenSSL);
 
 /* The following function makes sure that info and error strings are printed
    before any prompt. */

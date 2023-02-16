@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_add.c,v 1.21 2022/11/12 13:03:28 beck Exp $ */
+/* $OpenBSD: p12_add.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -90,7 +90,7 @@ PKCS12_item_pack_safebag(void *obj, const ASN1_ITEM *it, int nid1, int nid2)
 	safebag->type = OBJ_nid2obj(nid2);
 	return safebag;
 }
-LCRYPTO_ALIAS(PKCS12_item_pack_safebag)
+LCRYPTO_ALIAS(PKCS12_item_pack_safebag);
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 data Contentinfo */
 PKCS7 *
@@ -118,7 +118,7 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_pack_p7data)
+LCRYPTO_ALIAS(PKCS12_pack_p7data);
 
 /* Unpack SAFEBAGS from PKCS#7 data ContentInfo */
 STACK_OF(PKCS12_SAFEBAG) *
@@ -130,7 +130,7 @@ PKCS12_unpack_p7data(PKCS7 *p7)
 	}
 	return ASN1_item_unpack(p7->d.data, &PKCS12_SAFEBAGS_it);
 }
-LCRYPTO_ALIAS(PKCS12_unpack_p7data)
+LCRYPTO_ALIAS(PKCS12_unpack_p7data);
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
 
@@ -177,7 +177,7 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_pack_p7encdata)
+LCRYPTO_ALIAS(PKCS12_pack_p7encdata);
 
 STACK_OF(PKCS12_SAFEBAG) *
 PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
@@ -188,14 +188,14 @@ PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass, int passlen)
 	    &PKCS12_SAFEBAGS_it, pass, passlen,
 	    p7->d.encrypted->enc_data->enc_data, 1);
 }
-LCRYPTO_ALIAS(PKCS12_unpack_p7encdata)
+LCRYPTO_ALIAS(PKCS12_unpack_p7encdata);
 
 PKCS8_PRIV_KEY_INFO *
 PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag, const char *pass, int passlen)
 {
 	return PKCS8_decrypt(bag->value.shkeybag, pass, passlen);
 }
-LCRYPTO_ALIAS(PKCS12_decrypt_skey)
+LCRYPTO_ALIAS(PKCS12_decrypt_skey);
 
 int
 PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
@@ -205,7 +205,7 @@ PKCS12_pack_authsafes(PKCS12 *p12, STACK_OF(PKCS7) *safes)
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(PKCS12_pack_authsafes)
+LCRYPTO_ALIAS(PKCS12_pack_authsafes);
 
 STACK_OF(PKCS7) *
 PKCS12_unpack_authsafes(const PKCS12 *p12)
@@ -217,4 +217,4 @@ PKCS12_unpack_authsafes(const PKCS12 *p12)
 	return ASN1_item_unpack(p12->authsafes->d.data,
 	    &PKCS12_AUTHSAFES_it);
 }
-LCRYPTO_ALIAS(PKCS12_unpack_authsafes)
+LCRYPTO_ALIAS(PKCS12_unpack_authsafes);

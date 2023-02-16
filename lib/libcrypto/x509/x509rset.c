@@ -1,4 +1,4 @@
-/* $OpenBSD: x509rset.c,v 1.11 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509rset.c,v 1.12 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,14 +73,14 @@ X509_REQ_set_version(X509_REQ *x, long version)
 	x->req_info->enc.modified = 1;
 	return (ASN1_INTEGER_set(x->req_info->version, version));
 }
-LCRYPTO_ALIAS(X509_REQ_set_version)
+LCRYPTO_ALIAS(X509_REQ_set_version);
 
 long
 X509_REQ_get_version(const X509_REQ *x)
 {
 	return ASN1_INTEGER_get(x->req_info->version);
 }
-LCRYPTO_ALIAS(X509_REQ_get_version)
+LCRYPTO_ALIAS(X509_REQ_get_version);
 
 int
 X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
@@ -90,14 +90,14 @@ X509_REQ_set_subject_name(X509_REQ *x, X509_NAME *name)
 	x->req_info->enc.modified = 1;
 	return (X509_NAME_set(&x->req_info->subject, name));
 }
-LCRYPTO_ALIAS(X509_REQ_set_subject_name)
+LCRYPTO_ALIAS(X509_REQ_set_subject_name);
 
 X509_NAME *
 X509_REQ_get_subject_name(const X509_REQ *x)
 {
 	return x->req_info->subject;
 }
-LCRYPTO_ALIAS(X509_REQ_get_subject_name)
+LCRYPTO_ALIAS(X509_REQ_get_subject_name);
 
 int
 X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
@@ -107,4 +107,4 @@ X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
 	x->req_info->enc.modified = 1;
 	return (X509_PUBKEY_set(&x->req_info->pubkey, pkey));
 }
-LCRYPTO_ALIAS(X509_REQ_set_pubkey)
+LCRYPTO_ALIAS(X509_REQ_set_pubkey);

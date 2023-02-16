@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_pku.c,v 1.2 2022/11/14 17:48:50 beck Exp $ */
+/* $OpenBSD: x509_pku.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -116,28 +116,28 @@ d2i_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD **a, const unsigned char **in, long len)
 	return (PKEY_USAGE_PERIOD *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PKEY_USAGE_PERIOD_it);
 }
-LCRYPTO_ALIAS(d2i_PKEY_USAGE_PERIOD)
+LCRYPTO_ALIAS(d2i_PKEY_USAGE_PERIOD);
 
 int
 i2d_PKEY_USAGE_PERIOD(PKEY_USAGE_PERIOD *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PKEY_USAGE_PERIOD_it);
 }
-LCRYPTO_ALIAS(i2d_PKEY_USAGE_PERIOD)
+LCRYPTO_ALIAS(i2d_PKEY_USAGE_PERIOD);
 
 PKEY_USAGE_PERIOD *
 PKEY_USAGE_PERIOD_new(void)
 {
 	return (PKEY_USAGE_PERIOD *)ASN1_item_new(&PKEY_USAGE_PERIOD_it);
 }
-LCRYPTO_ALIAS(PKEY_USAGE_PERIOD_new)
+LCRYPTO_ALIAS(PKEY_USAGE_PERIOD_new);
 
 void
 PKEY_USAGE_PERIOD_free(PKEY_USAGE_PERIOD *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PKEY_USAGE_PERIOD_it);
 }
-LCRYPTO_ALIAS(PKEY_USAGE_PERIOD_free)
+LCRYPTO_ALIAS(PKEY_USAGE_PERIOD_free);
 
 static int
 i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method, PKEY_USAGE_PERIOD *usage,

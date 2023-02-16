@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_lib.c,v 1.2 2022/11/14 17:48:49 beck Exp $ */
+/* $OpenBSD: pcy_lib.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -72,7 +72,7 @@ X509_policy_tree_level_count(const X509_POLICY_TREE *tree)
 		return 0;
 	return tree->nlevel;
 }
-LCRYPTO_ALIAS(X509_policy_tree_level_count)
+LCRYPTO_ALIAS(X509_policy_tree_level_count);
 
 X509_POLICY_LEVEL *
 X509_policy_tree_get0_level(const X509_POLICY_TREE *tree, int i)
@@ -81,7 +81,7 @@ X509_policy_tree_get0_level(const X509_POLICY_TREE *tree, int i)
 		return NULL;
 	return tree->levels + i;
 }
-LCRYPTO_ALIAS(X509_policy_tree_get0_level)
+LCRYPTO_ALIAS(X509_policy_tree_get0_level);
 
 STACK_OF(X509_POLICY_NODE) *
 X509_policy_tree_get0_policies(const X509_POLICY_TREE *tree)
@@ -90,7 +90,7 @@ X509_policy_tree_get0_policies(const X509_POLICY_TREE *tree)
 		return NULL;
 	return tree->auth_policies;
 }
-LCRYPTO_ALIAS(X509_policy_tree_get0_policies)
+LCRYPTO_ALIAS(X509_policy_tree_get0_policies);
 
 STACK_OF(X509_POLICY_NODE) *
 X509_policy_tree_get0_user_policies(const X509_POLICY_TREE *tree)
@@ -102,7 +102,7 @@ X509_policy_tree_get0_user_policies(const X509_POLICY_TREE *tree)
 	else
 		return tree->user_policies;
 }
-LCRYPTO_ALIAS(X509_policy_tree_get0_user_policies)
+LCRYPTO_ALIAS(X509_policy_tree_get0_user_policies);
 
 /* X509_POLICY_LEVEL stuff */
 
@@ -120,7 +120,7 @@ X509_policy_level_node_count(X509_POLICY_LEVEL *level)
 		n += sk_X509_POLICY_NODE_num(level->nodes);
 	return n;
 }
-LCRYPTO_ALIAS(X509_policy_level_node_count)
+LCRYPTO_ALIAS(X509_policy_level_node_count);
 
 X509_POLICY_NODE *
 X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i)
@@ -134,7 +134,7 @@ X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i)
 	}
 	return sk_X509_POLICY_NODE_value(level->nodes, i);
 }
-LCRYPTO_ALIAS(X509_policy_level_get0_node)
+LCRYPTO_ALIAS(X509_policy_level_get0_node);
 
 /* X509_POLICY_NODE stuff */
 
@@ -145,7 +145,7 @@ X509_policy_node_get0_policy(const X509_POLICY_NODE *node)
 		return NULL;
 	return node->data->valid_policy;
 }
-LCRYPTO_ALIAS(X509_policy_node_get0_policy)
+LCRYPTO_ALIAS(X509_policy_node_get0_policy);
 
 STACK_OF(POLICYQUALINFO) *
 X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node)
@@ -154,7 +154,7 @@ X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node)
 		return NULL;
 	return node->data->qualifier_set;
 }
-LCRYPTO_ALIAS(X509_policy_node_get0_qualifiers)
+LCRYPTO_ALIAS(X509_policy_node_get0_qualifiers);
 
 const X509_POLICY_NODE *
 X509_policy_node_get0_parent(const X509_POLICY_NODE *node)
@@ -163,4 +163,4 @@ X509_policy_node_get0_parent(const X509_POLICY_NODE *node)
 		return NULL;
 	return node->parent;
 }
-LCRYPTO_ALIAS(X509_policy_node_get0_parent)
+LCRYPTO_ALIAS(X509_policy_node_get0_parent);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_util.c,v 1.13 2022/12/23 02:20:28 jsing Exp $ */
+/* $OpenBSD: ui_util.c,v 1.14 2023/02/16 08:38:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,7 +70,7 @@ UI_UTIL_read_pw_string(char *buf, int length, const char *prompt, int verify)
 	explicit_bzero(buff, BUFSIZ);
 	return (ret);
 }
-LCRYPTO_ALIAS(UI_UTIL_read_pw_string)
+LCRYPTO_ALIAS(UI_UTIL_read_pw_string);
 
 int
 UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
@@ -95,4 +95,4 @@ UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt, int verify)
 		ok = 0;
 	return (ok);
 }
-LCRYPTO_ALIAS(UI_UTIL_read_pw)
+LCRYPTO_ALIAS(UI_UTIL_read_pw);

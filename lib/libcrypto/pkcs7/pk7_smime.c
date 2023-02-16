@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.25 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.26 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -111,7 +111,7 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS7_sign)
+LCRYPTO_ALIAS(PKCS7_sign);
 
 int
 PKCS7_final(PKCS7 *p7, BIO *data, int flags)
@@ -140,7 +140,7 @@ err:
 
 	return ret;
 }
-LCRYPTO_ALIAS(PKCS7_final)
+LCRYPTO_ALIAS(PKCS7_final);
 
 /* Check to see if a cipher exists and if so add S/MIME capabilities */
 
@@ -223,7 +223,7 @@ err:
 		sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS7_sign_add_signer)
+LCRYPTO_ALIAS(PKCS7_sign_add_signer);
 
 /* Search for a digest matching SignerInfo digest type and if found
  * copy across.
@@ -426,7 +426,7 @@ err:
 
 	return ret;
 }
-LCRYPTO_ALIAS(PKCS7_verify)
+LCRYPTO_ALIAS(PKCS7_verify);
 
 STACK_OF(X509) *
 PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
@@ -485,7 +485,7 @@ PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 	}
 	return signers;
 }
-LCRYPTO_ALIAS(PKCS7_get0_signers)
+LCRYPTO_ALIAS(PKCS7_get0_signers);
 
 /* Build a complete PKCS#7 enveloped data */
 
@@ -529,7 +529,7 @@ err:
 	PKCS7_free(p7);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS7_encrypt)
+LCRYPTO_ALIAS(PKCS7_encrypt);
 
 int
 PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
@@ -596,4 +596,4 @@ PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 		return ret;
 	}
 }
-LCRYPTO_ALIAS(PKCS7_decrypt)
+LCRYPTO_ALIAS(PKCS7_decrypt);

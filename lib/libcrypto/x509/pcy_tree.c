@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.5 2022/12/26 07:18:53 jmc Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.6 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -657,7 +657,7 @@ X509_policy_tree_free(X509_POLICY_TREE *tree)
 	free(tree->levels);
 	free(tree);
 }
-LCRYPTO_ALIAS(X509_policy_tree_free)
+LCRYPTO_ALIAS(X509_policy_tree_free);
 
 /* Application policy checking function.
  * Return codes:
@@ -770,4 +770,4 @@ error:
 
 	return 0;
 }
-LCRYPTO_ALIAS(X509_policy_check)
+LCRYPTO_ALIAS(X509_policy_check);

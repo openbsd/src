@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.14 2022/11/12 12:11:14 beck Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.15 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,7 +66,7 @@ i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)p7, in, flags,
 	    &PKCS7_it);
 }
-LCRYPTO_ALIAS(i2d_PKCS7_bio_stream)
+LCRYPTO_ALIAS(i2d_PKCS7_bio_stream);
 
 int
 PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
@@ -74,7 +74,7 @@ PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 	return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *) p7, in, flags,
 	    "PKCS7", &PKCS7_it);
 }
-LCRYPTO_ALIAS(PEM_write_bio_PKCS7_stream)
+LCRYPTO_ALIAS(PEM_write_bio_PKCS7_stream);
 
 int
 SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
@@ -92,11 +92,11 @@ SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)p7, data, flags,
 	    ctype_nid, NID_undef, mdalgs, &PKCS7_it);
 }
-LCRYPTO_ALIAS(SMIME_write_PKCS7)
+LCRYPTO_ALIAS(SMIME_write_PKCS7);
 
 PKCS7 *
 SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 {
 	return (PKCS7 *)SMIME_read_ASN1(bio, bcont, &PKCS7_it);
 }
-LCRYPTO_ALIAS(SMIME_read_PKCS7)
+LCRYPTO_ALIAS(SMIME_read_PKCS7);

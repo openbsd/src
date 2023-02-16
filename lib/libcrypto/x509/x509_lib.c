@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.6 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.7 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -85,7 +85,7 @@ X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(X509V3_EXT_add)
+LCRYPTO_ALIAS(X509V3_EXT_add);
 
 static int
 ext_cmp(const X509V3_EXT_METHOD * const *a, const X509V3_EXT_METHOD * const *b)
@@ -133,7 +133,7 @@ X509V3_EXT_get_nid(int nid)
 		return NULL;
 	return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
-LCRYPTO_ALIAS(X509V3_EXT_get_nid)
+LCRYPTO_ALIAS(X509V3_EXT_get_nid);
 
 const X509V3_EXT_METHOD *
 X509V3_EXT_get(X509_EXTENSION *ext)
@@ -144,7 +144,7 @@ X509V3_EXT_get(X509_EXTENSION *ext)
 		return NULL;
 	return X509V3_EXT_get_nid(nid);
 }
-LCRYPTO_ALIAS(X509V3_EXT_get)
+LCRYPTO_ALIAS(X509V3_EXT_get);
 
 int
 X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
@@ -154,7 +154,7 @@ X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist)
 			return 0;
 	return 1;
 }
-LCRYPTO_ALIAS(X509V3_EXT_add_list)
+LCRYPTO_ALIAS(X509V3_EXT_add_list);
 
 int
 X509V3_EXT_add_alias(int nid_to, int nid_from)
@@ -179,7 +179,7 @@ X509V3_EXT_add_alias(int nid_to, int nid_from)
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(X509V3_EXT_add_alias)
+LCRYPTO_ALIAS(X509V3_EXT_add_alias);
 
 void
 X509V3_EXT_cleanup(void)
@@ -187,7 +187,7 @@ X509V3_EXT_cleanup(void)
 	sk_X509V3_EXT_METHOD_pop_free(ext_list, ext_list_free);
 	ext_list = NULL;
 }
-LCRYPTO_ALIAS(X509V3_EXT_cleanup)
+LCRYPTO_ALIAS(X509V3_EXT_cleanup);
 
 static void
 ext_list_free(X509V3_EXT_METHOD *ext)
@@ -205,7 +205,7 @@ X509V3_add_standard_extensions(void)
 {
 	return 1;
 }
-LCRYPTO_ALIAS(X509V3_add_standard_extensions)
+LCRYPTO_ALIAS(X509V3_add_standard_extensions);
 
 /* Return an extension internal structure */
 
@@ -223,7 +223,7 @@ X509V3_EXT_d2i(X509_EXTENSION *ext)
 		    method->it);
 	return method->d2i(NULL, &p, ext->value->length);
 }
-LCRYPTO_ALIAS(X509V3_EXT_d2i)
+LCRYPTO_ALIAS(X509V3_EXT_d2i);
 
 /* Get critical flag and decoded version of extension from a NID.
  * The "idx" variable returns the last found extension and can
@@ -289,7 +289,7 @@ X509V3_get_d2i(const STACK_OF(X509_EXTENSION) *x, int nid, int *crit, int *idx)
 		*crit = -1;
 	return NULL;
 }
-LCRYPTO_ALIAS(X509V3_get_d2i)
+LCRYPTO_ALIAS(X509V3_get_d2i);
 
 /* This function is a general extension append, replace and delete utility.
  * The precise operation is governed by the 'flags' value. The 'crit' and
@@ -371,4 +371,4 @@ err:
 		X509V3error(errcode);
 	return 0;
 }
-LCRYPTO_ALIAS(X509V3_add1_i2d)
+LCRYPTO_ALIAS(X509V3_add1_i2d);

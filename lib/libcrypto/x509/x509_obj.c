@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_obj.c,v 1.21 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_obj.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -179,4 +179,4 @@ err:
 		BUF_MEM_free(b);
 	return (NULL);
 }
-LCRYPTO_ALIAS(X509_NAME_oneline)
+LCRYPTO_ALIAS(X509_NAME_oneline);

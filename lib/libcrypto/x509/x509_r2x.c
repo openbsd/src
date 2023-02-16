@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.15 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.16 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -116,4 +116,4 @@ err:
 	X509_free(ret);
 	return NULL;
 }
-LCRYPTO_ALIAS(X509_REQ_to_X509)
+LCRYPTO_ALIAS(X509_REQ_to_X509);

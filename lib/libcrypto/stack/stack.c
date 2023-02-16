@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.21 2022/11/11 19:18:55 beck Exp $ */
+/* $OpenBSD: stack.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,7 @@ int
 
 	return old;
 }
-LCRYPTO_ALIAS(sk_set_cmp_func)
+LCRYPTO_ALIAS(sk_set_cmp_func);
 
 _STACK *
 sk_dup(_STACK *sk)
@@ -106,14 +106,14 @@ err:
 		sk_free(ret);
 	return (NULL);
 }
-LCRYPTO_ALIAS(sk_dup)
+LCRYPTO_ALIAS(sk_dup);
 
 _STACK *
 sk_new_null(void)
 {
 	return sk_new((int (*)(const void *, const void *))0);
 }
-LCRYPTO_ALIAS(sk_new_null)
+LCRYPTO_ALIAS(sk_new_null);
 
 _STACK *
 sk_new(int (*c)(const void *, const void *))
@@ -137,7 +137,7 @@ err:
 	free(ret);
 	return (NULL);
 }
-LCRYPTO_ALIAS(sk_new)
+LCRYPTO_ALIAS(sk_new);
 
 int
 sk_insert(_STACK *st, void *data, int loc)
@@ -164,7 +164,7 @@ sk_insert(_STACK *st, void *data, int loc)
 	st->sorted = 0;
 	return (st->num);
 }
-LCRYPTO_ALIAS(sk_insert)
+LCRYPTO_ALIAS(sk_insert);
 
 void *
 sk_delete_ptr(_STACK *st, void *p)
@@ -176,7 +176,7 @@ sk_delete_ptr(_STACK *st, void *p)
 			return (sk_delete(st, i));
 	return (NULL);
 }
-LCRYPTO_ALIAS(sk_delete_ptr)
+LCRYPTO_ALIAS(sk_delete_ptr);
 
 void *
 sk_delete(_STACK *st, int loc)
@@ -194,7 +194,7 @@ sk_delete(_STACK *st, int loc)
 	st->num--;
 	return (ret);
 }
-LCRYPTO_ALIAS(sk_delete)
+LCRYPTO_ALIAS(sk_delete);
 
 static int
 internal_find(_STACK *st, void *data, int ret_val_options)
@@ -226,28 +226,28 @@ sk_find(_STACK *st, void *data)
 {
 	return internal_find(st, data, OBJ_BSEARCH_FIRST_VALUE_ON_MATCH);
 }
-LCRYPTO_ALIAS(sk_find)
+LCRYPTO_ALIAS(sk_find);
 
 int
 sk_find_ex(_STACK *st, void *data)
 {
 	return internal_find(st, data, OBJ_BSEARCH_VALUE_ON_NOMATCH);
 }
-LCRYPTO_ALIAS(sk_find_ex)
+LCRYPTO_ALIAS(sk_find_ex);
 
 int
 sk_push(_STACK *st, void *data)
 {
 	return (sk_insert(st, data, st->num));
 }
-LCRYPTO_ALIAS(sk_push)
+LCRYPTO_ALIAS(sk_push);
 
 int
 sk_unshift(_STACK *st, void *data)
 {
 	return (sk_insert(st, data, 0));
 }
-LCRYPTO_ALIAS(sk_unshift)
+LCRYPTO_ALIAS(sk_unshift);
 
 void *
 sk_shift(_STACK *st)
@@ -258,7 +258,7 @@ sk_shift(_STACK *st)
 		return (NULL);
 	return (sk_delete(st, 0));
 }
-LCRYPTO_ALIAS(sk_shift)
+LCRYPTO_ALIAS(sk_shift);
 
 void *
 sk_pop(_STACK *st)
@@ -269,7 +269,7 @@ sk_pop(_STACK *st)
 		return (NULL);
 	return (sk_delete(st, st->num - 1));
 }
-LCRYPTO_ALIAS(sk_pop)
+LCRYPTO_ALIAS(sk_pop);
 
 void
 sk_zero(_STACK *st)
@@ -281,7 +281,7 @@ sk_zero(_STACK *st)
 	memset(st->data, 0, sizeof(st->data)*st->num);
 	st->num = 0;
 }
-LCRYPTO_ALIAS(sk_zero)
+LCRYPTO_ALIAS(sk_zero);
 
 void
 sk_pop_free(_STACK *st, void (*func)(void *))
@@ -295,7 +295,7 @@ sk_pop_free(_STACK *st, void (*func)(void *))
 			func(st->data[i]);
 	sk_free(st);
 }
-LCRYPTO_ALIAS(sk_pop_free)
+LCRYPTO_ALIAS(sk_pop_free);
 
 void
 sk_free(_STACK *st)
@@ -305,7 +305,7 @@ sk_free(_STACK *st)
 	free(st->data);
 	free(st);
 }
-LCRYPTO_ALIAS(sk_free)
+LCRYPTO_ALIAS(sk_free);
 
 int
 sk_num(const _STACK *st)
@@ -314,7 +314,7 @@ sk_num(const _STACK *st)
 		return -1;
 	return st->num;
 }
-LCRYPTO_ALIAS(sk_num)
+LCRYPTO_ALIAS(sk_num);
 
 void *
 sk_value(const _STACK *st, int i)
@@ -323,7 +323,7 @@ sk_value(const _STACK *st, int i)
 		return NULL;
 	return st->data[i];
 }
-LCRYPTO_ALIAS(sk_value)
+LCRYPTO_ALIAS(sk_value);
 
 void *
 sk_set(_STACK *st, int i, void *value)
@@ -333,7 +333,7 @@ sk_set(_STACK *st, int i, void *value)
 	st->sorted = 0;
 	return (st->data[i] = value);
 }
-LCRYPTO_ALIAS(sk_set)
+LCRYPTO_ALIAS(sk_set);
 
 void
 sk_sort(_STACK *st)
@@ -351,7 +351,7 @@ sk_sort(_STACK *st)
 		st->sorted = 1;
 	}
 }
-LCRYPTO_ALIAS(sk_sort)
+LCRYPTO_ALIAS(sk_sort);
 
 int
 sk_is_sorted(const _STACK *st)
@@ -360,4 +360,4 @@ sk_is_sorted(const _STACK *st)
 		return 1;
 	return st->sorted;
 }
-LCRYPTO_ALIAS(sk_is_sorted)
+LCRYPTO_ALIAS(sk_is_sorted);

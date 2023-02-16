@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.29 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.30 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,84 +80,84 @@ d2i_X509_bio(BIO *bp, X509 **x509)
 {
 	return ASN1_item_d2i_bio(&X509_it, bp, x509);
 }
-LCRYPTO_ALIAS(d2i_X509_bio)
+LCRYPTO_ALIAS(d2i_X509_bio);
 
 int
 i2d_X509_bio(BIO *bp, X509 *x509)
 {
 	return ASN1_item_i2d_bio(&X509_it, bp, x509);
 }
-LCRYPTO_ALIAS(i2d_X509_bio)
+LCRYPTO_ALIAS(i2d_X509_bio);
 
 X509 *
 d2i_X509_fp(FILE *fp, X509 **x509)
 {
 	return ASN1_item_d2i_fp(&X509_it, fp, x509);
 }
-LCRYPTO_ALIAS(d2i_X509_fp)
+LCRYPTO_ALIAS(d2i_X509_fp);
 
 int
 i2d_X509_fp(FILE *fp, X509 *x509)
 {
 	return ASN1_item_i2d_fp(&X509_it, fp, x509);
 }
-LCRYPTO_ALIAS(i2d_X509_fp)
+LCRYPTO_ALIAS(i2d_X509_fp);
 
 X509_CRL *
 d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
 {
 	return ASN1_item_d2i_bio(&X509_CRL_it, bp, crl);
 }
-LCRYPTO_ALIAS(d2i_X509_CRL_bio)
+LCRYPTO_ALIAS(d2i_X509_CRL_bio);
 
 int
 i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl)
 {
 	return ASN1_item_i2d_bio(&X509_CRL_it, bp, crl);
 }
-LCRYPTO_ALIAS(i2d_X509_CRL_bio)
+LCRYPTO_ALIAS(i2d_X509_CRL_bio);
 
 X509_CRL *
 d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
 {
 	return ASN1_item_d2i_fp(&X509_CRL_it, fp, crl);
 }
-LCRYPTO_ALIAS(d2i_X509_CRL_fp)
+LCRYPTO_ALIAS(d2i_X509_CRL_fp);
 
 int
 i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl)
 {
 	return ASN1_item_i2d_fp(&X509_CRL_it, fp, crl);
 }
-LCRYPTO_ALIAS(i2d_X509_CRL_fp)
+LCRYPTO_ALIAS(i2d_X509_CRL_fp);
 
 X509_REQ *
 d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
 {
 	return ASN1_item_d2i_bio(&X509_REQ_it, bp, req);
 }
-LCRYPTO_ALIAS(d2i_X509_REQ_bio)
+LCRYPTO_ALIAS(d2i_X509_REQ_bio);
 
 int
 i2d_X509_REQ_bio(BIO *bp, X509_REQ *req)
 {
 	return ASN1_item_i2d_bio(&X509_REQ_it, bp, req);
 }
-LCRYPTO_ALIAS(i2d_X509_REQ_bio)
+LCRYPTO_ALIAS(i2d_X509_REQ_bio);
 
 X509_REQ *
 d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
 {
 	return ASN1_item_d2i_fp(&X509_REQ_it, fp, req);
 }
-LCRYPTO_ALIAS(d2i_X509_REQ_fp)
+LCRYPTO_ALIAS(d2i_X509_REQ_fp);
 
 int
 i2d_X509_REQ_fp(FILE *fp, X509_REQ *req)
 {
 	return ASN1_item_i2d_fp(&X509_REQ_it, fp, req);
 }
-LCRYPTO_ALIAS(i2d_X509_REQ_fp)
+LCRYPTO_ALIAS(i2d_X509_REQ_fp);
 
 #ifndef OPENSSL_NO_RSA
 RSA *
@@ -165,56 +165,56 @@ d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 {
 	return ASN1_item_d2i_bio(&RSAPrivateKey_it, bp, rsa);
 }
-LCRYPTO_ALIAS(d2i_RSAPrivateKey_bio)
+LCRYPTO_ALIAS(d2i_RSAPrivateKey_bio);
 
 int
 i2d_RSAPrivateKey_bio(BIO *bp, RSA *rsa)
 {
 	return ASN1_item_i2d_bio(&RSAPrivateKey_it, bp, rsa);
 }
-LCRYPTO_ALIAS(i2d_RSAPrivateKey_bio)
+LCRYPTO_ALIAS(i2d_RSAPrivateKey_bio);
 
 RSA *
 d2i_RSAPrivateKey_fp(FILE *fp, RSA **rsa)
 {
 	return ASN1_item_d2i_fp(&RSAPrivateKey_it, fp, rsa);
 }
-LCRYPTO_ALIAS(d2i_RSAPrivateKey_fp)
+LCRYPTO_ALIAS(d2i_RSAPrivateKey_fp);
 
 int
 i2d_RSAPrivateKey_fp(FILE *fp, RSA *rsa)
 {
 	return ASN1_item_i2d_fp(&RSAPrivateKey_it, fp, rsa);
 }
-LCRYPTO_ALIAS(i2d_RSAPrivateKey_fp)
+LCRYPTO_ALIAS(i2d_RSAPrivateKey_fp);
 
 RSA *
 d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 {
 	return ASN1_item_d2i_bio(&RSAPublicKey_it, bp, rsa);
 }
-LCRYPTO_ALIAS(d2i_RSAPublicKey_bio)
+LCRYPTO_ALIAS(d2i_RSAPublicKey_bio);
 
 int
 i2d_RSAPublicKey_bio(BIO *bp, RSA *rsa)
 {
 	return ASN1_item_i2d_bio(&RSAPublicKey_it, bp, rsa);
 }
-LCRYPTO_ALIAS(i2d_RSAPublicKey_bio)
+LCRYPTO_ALIAS(i2d_RSAPublicKey_bio);
 
 RSA *
 d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
 {
 	return ASN1_item_d2i_fp(&RSAPublicKey_it, fp, rsa);
 }
-LCRYPTO_ALIAS(d2i_RSAPublicKey_fp)
+LCRYPTO_ALIAS(d2i_RSAPublicKey_fp);
 
 int
 i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa)
 {
 	return ASN1_item_i2d_fp(&RSAPublicKey_it, fp, rsa);
 }
-LCRYPTO_ALIAS(i2d_RSAPublicKey_fp)
+LCRYPTO_ALIAS(i2d_RSAPublicKey_fp);
 #endif
 
 #ifndef OPENSSL_NO_DSA
@@ -223,28 +223,28 @@ d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 {
 	return ASN1_item_d2i_bio(&DSAPrivateKey_it, bp, dsa);
 }
-LCRYPTO_ALIAS(d2i_DSAPrivateKey_bio)
+LCRYPTO_ALIAS(d2i_DSAPrivateKey_bio);
 
 int
 i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa)
 {
 	return ASN1_item_i2d_bio(&DSAPrivateKey_it, bp, dsa);
 }
-LCRYPTO_ALIAS(i2d_DSAPrivateKey_bio)
+LCRYPTO_ALIAS(i2d_DSAPrivateKey_bio);
 
 DSA *
 d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 {
 	return ASN1_item_d2i_fp(&DSAPrivateKey_it, fp, dsa);
 }
-LCRYPTO_ALIAS(d2i_DSAPrivateKey_fp)
+LCRYPTO_ALIAS(d2i_DSAPrivateKey_fp);
 
 int
 i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 {
 	return ASN1_item_i2d_fp(&DSAPrivateKey_it, fp, dsa);
 }
-LCRYPTO_ALIAS(i2d_DSAPrivateKey_fp)
+LCRYPTO_ALIAS(i2d_DSAPrivateKey_fp);
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -253,28 +253,28 @@ d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
 {
 	return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, bp, eckey);
 }
-LCRYPTO_ALIAS(d2i_ECPrivateKey_bio)
+LCRYPTO_ALIAS(d2i_ECPrivateKey_bio);
 
 int
 i2d_ECPrivateKey_bio(BIO *bp, EC_KEY *eckey)
 {
 	return ASN1_i2d_bio_of(EC_KEY, i2d_ECPrivateKey, bp, eckey);
 }
-LCRYPTO_ALIAS(i2d_ECPrivateKey_bio)
+LCRYPTO_ALIAS(i2d_ECPrivateKey_bio);
 
 EC_KEY *
 d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
 {
 	return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, fp, eckey);
 }
-LCRYPTO_ALIAS(d2i_ECPrivateKey_fp)
+LCRYPTO_ALIAS(d2i_ECPrivateKey_fp);
 
 int
 i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey)
 {
 	return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, eckey);
 }
-LCRYPTO_ALIAS(i2d_ECPrivateKey_fp)
+LCRYPTO_ALIAS(i2d_ECPrivateKey_fp);
 #endif
 
 X509_SIG *
@@ -282,28 +282,28 @@ d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 {
 	return ASN1_item_d2i_bio(&X509_SIG_it, bp, p8);
 }
-LCRYPTO_ALIAS(d2i_PKCS8_bio)
+LCRYPTO_ALIAS(d2i_PKCS8_bio);
 
 int
 i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
 {
 	return ASN1_item_i2d_bio(&X509_SIG_it, bp, p8);
 }
-LCRYPTO_ALIAS(i2d_PKCS8_bio)
+LCRYPTO_ALIAS(i2d_PKCS8_bio);
 
 X509_SIG *
 d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 {
 	return ASN1_item_d2i_fp(&X509_SIG_it, fp, p8);
 }
-LCRYPTO_ALIAS(d2i_PKCS8_fp)
+LCRYPTO_ALIAS(d2i_PKCS8_fp);
 
 int
 i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
 {
 	return ASN1_item_i2d_fp(&X509_SIG_it, fp, p8);
 }
-LCRYPTO_ALIAS(i2d_PKCS8_fp)
+LCRYPTO_ALIAS(i2d_PKCS8_fp);
 
 PKCS8_PRIV_KEY_INFO *
 d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO **p8inf)
@@ -311,7 +311,7 @@ d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO **p8inf)
 	return ASN1_item_d2i_bio(&PKCS8_PRIV_KEY_INFO_it, bp,
 	    p8inf);
 }
-LCRYPTO_ALIAS(d2i_PKCS8_PRIV_KEY_INFO_bio)
+LCRYPTO_ALIAS(d2i_PKCS8_PRIV_KEY_INFO_bio);
 
 int
 i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
@@ -319,7 +319,7 @@ i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
 	return ASN1_item_i2d_bio(&PKCS8_PRIV_KEY_INFO_it, bp,
 	    p8inf);
 }
-LCRYPTO_ALIAS(i2d_PKCS8_PRIV_KEY_INFO_bio)
+LCRYPTO_ALIAS(i2d_PKCS8_PRIV_KEY_INFO_bio);
 
 PKCS8_PRIV_KEY_INFO *
 d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO **p8inf)
@@ -327,7 +327,7 @@ d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO **p8inf)
 	return ASN1_item_d2i_fp(&PKCS8_PRIV_KEY_INFO_it, fp,
 	    p8inf);
 }
-LCRYPTO_ALIAS(d2i_PKCS8_PRIV_KEY_INFO_fp)
+LCRYPTO_ALIAS(d2i_PKCS8_PRIV_KEY_INFO_fp);
 
 int
 i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
@@ -335,7 +335,7 @@ i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
 	return ASN1_item_i2d_fp(&PKCS8_PRIV_KEY_INFO_it, fp,
 	    p8inf);
 }
-LCRYPTO_ALIAS(i2d_PKCS8_PRIV_KEY_INFO_fp)
+LCRYPTO_ALIAS(i2d_PKCS8_PRIV_KEY_INFO_fp);
 
 EVP_PKEY *
 d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
@@ -343,14 +343,14 @@ d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 	return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey,
 	    bp, a);
 }
-LCRYPTO_ALIAS(d2i_PrivateKey_bio)
+LCRYPTO_ALIAS(d2i_PrivateKey_bio);
 
 int
 i2d_PrivateKey_bio(BIO *bp, EVP_PKEY *pkey)
 {
 	return ASN1_i2d_bio_of(EVP_PKEY, i2d_PrivateKey, bp, pkey);
 }
-LCRYPTO_ALIAS(i2d_PrivateKey_bio)
+LCRYPTO_ALIAS(i2d_PrivateKey_bio);
 
 EVP_PKEY *
 d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
@@ -358,14 +358,14 @@ d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 	return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey,
 	    fp, a);
 }
-LCRYPTO_ALIAS(d2i_PrivateKey_fp)
+LCRYPTO_ALIAS(d2i_PrivateKey_fp);
 
 int
 i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey)
 {
 	return ASN1_i2d_fp_of(EVP_PKEY, i2d_PrivateKey, fp, pkey);
 }
-LCRYPTO_ALIAS(i2d_PrivateKey_fp)
+LCRYPTO_ALIAS(i2d_PrivateKey_fp);
 
 int
 i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
@@ -380,7 +380,7 @@ i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	return ret;
 }
-LCRYPTO_ALIAS(i2d_PKCS8PrivateKeyInfo_bio)
+LCRYPTO_ALIAS(i2d_PKCS8PrivateKeyInfo_bio);
 
 int
 i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
@@ -394,7 +394,7 @@ i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
 	PKCS8_PRIV_KEY_INFO_free(p8inf);
 	return ret;
 }
-LCRYPTO_ALIAS(i2d_PKCS8PrivateKeyInfo_fp)
+LCRYPTO_ALIAS(i2d_PKCS8PrivateKeyInfo_fp);
 
 int
 X509_verify(X509 *a, EVP_PKEY *r)
@@ -404,7 +404,7 @@ X509_verify(X509 *a, EVP_PKEY *r)
 	return (ASN1_item_verify(&X509_CINF_it, a->sig_alg,
 	    a->signature, a->cert_info, r));
 }
-LCRYPTO_ALIAS(X509_verify)
+LCRYPTO_ALIAS(X509_verify);
 
 int
 X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
@@ -412,7 +412,7 @@ X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 	return (ASN1_item_verify(&X509_REQ_INFO_it,
 	    a->sig_alg, a->signature, a->req_info, r));
 }
-LCRYPTO_ALIAS(X509_REQ_verify)
+LCRYPTO_ALIAS(X509_REQ_verify);
 
 int
 NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -420,7 +420,7 @@ NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
 	return (ASN1_item_verify(&NETSCAPE_SPKAC_it,
 	    a->sig_algor, a->signature, a->spkac, r));
 }
-LCRYPTO_ALIAS(NETSCAPE_SPKI_verify)
+LCRYPTO_ALIAS(NETSCAPE_SPKI_verify);
 
 int
 X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
@@ -430,7 +430,7 @@ X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	    x->cert_info->signature, x->sig_alg, x->signature,
 	    x->cert_info, pkey, md));
 }
-LCRYPTO_ALIAS(X509_sign)
+LCRYPTO_ALIAS(X509_sign);
 
 int
 X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
@@ -440,7 +440,7 @@ X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 	    x->cert_info->signature, x->sig_alg, x->signature,
 	    x->cert_info, ctx);
 }
-LCRYPTO_ALIAS(X509_sign_ctx)
+LCRYPTO_ALIAS(X509_sign_ctx);
 
 int
 X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
@@ -448,7 +448,7 @@ X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 	return (ASN1_item_sign(&X509_REQ_INFO_it,
 	    x->sig_alg, NULL, x->signature, x->req_info, pkey, md));
 }
-LCRYPTO_ALIAS(X509_REQ_sign)
+LCRYPTO_ALIAS(X509_REQ_sign);
 
 int
 X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
@@ -456,7 +456,7 @@ X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
 	return ASN1_item_sign_ctx(&X509_REQ_INFO_it,
 	    x->sig_alg, NULL, x->signature, x->req_info, ctx);
 }
-LCRYPTO_ALIAS(X509_REQ_sign_ctx)
+LCRYPTO_ALIAS(X509_REQ_sign_ctx);
 
 int
 X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
@@ -465,7 +465,7 @@ X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md)
 	return(ASN1_item_sign(&X509_CRL_INFO_it, x->crl->sig_alg,
 	    x->sig_alg, x->signature, x->crl, pkey, md));
 }
-LCRYPTO_ALIAS(X509_CRL_sign)
+LCRYPTO_ALIAS(X509_CRL_sign);
 
 int
 X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
@@ -474,7 +474,7 @@ X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
 	return ASN1_item_sign_ctx(&X509_CRL_INFO_it,
 	    x->crl->sig_alg, x->sig_alg, x->signature, x->crl, ctx);
 }
-LCRYPTO_ALIAS(X509_CRL_sign_ctx)
+LCRYPTO_ALIAS(X509_CRL_sign_ctx);
 
 int
 NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
@@ -482,7 +482,7 @@ NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md)
 	return (ASN1_item_sign(&NETSCAPE_SPKAC_it,
 	    x->sig_algor, NULL, x->signature, x->spkac, pkey, md));
 }
-LCRYPTO_ALIAS(NETSCAPE_SPKI_sign)
+LCRYPTO_ALIAS(NETSCAPE_SPKI_sign);
 
 int
 X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
@@ -494,7 +494,7 @@ X509_pubkey_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 		return 0;
 	return EVP_Digest(key->data, key->length, md, len, type, NULL);
 }
-LCRYPTO_ALIAS(X509_pubkey_digest)
+LCRYPTO_ALIAS(X509_pubkey_digest);
 
 int
 X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
@@ -503,7 +503,7 @@ X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
 	return (ASN1_item_digest(&X509_it, type, (char *)data,
 	    md, len));
 }
-LCRYPTO_ALIAS(X509_digest)
+LCRYPTO_ALIAS(X509_digest);
 
 int
 X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
@@ -512,7 +512,7 @@ X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
 	return (ASN1_item_digest(&X509_CRL_it, type, (char *)data,
 	    md, len));
 }
-LCRYPTO_ALIAS(X509_CRL_digest)
+LCRYPTO_ALIAS(X509_CRL_digest);
 
 int
 X509_REQ_digest(const X509_REQ *data, const EVP_MD *type, unsigned char *md,
@@ -521,7 +521,7 @@ X509_REQ_digest(const X509_REQ *data, const EVP_MD *type, unsigned char *md,
 	return (ASN1_item_digest(&X509_REQ_it, type, (char *)data,
 	    md, len));
 }
-LCRYPTO_ALIAS(X509_REQ_digest)
+LCRYPTO_ALIAS(X509_REQ_digest);
 
 int
 X509_NAME_digest(const X509_NAME *data, const EVP_MD *type, unsigned char *md,
@@ -530,7 +530,7 @@ X509_NAME_digest(const X509_NAME *data, const EVP_MD *type, unsigned char *md,
 	return (ASN1_item_digest(&X509_NAME_it, type, (char *)data,
 	    md, len));
 }
-LCRYPTO_ALIAS(X509_NAME_digest)
+LCRYPTO_ALIAS(X509_NAME_digest);
 
 int
 X509_up_ref(X509 *x)
@@ -538,4 +538,4 @@ X509_up_ref(X509 *x)
 	int i = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 	return i > 1 ? 1 : 0;
 }
-LCRYPTO_ALIAS(X509_up_ref)
+LCRYPTO_ALIAS(X509_up_ref);

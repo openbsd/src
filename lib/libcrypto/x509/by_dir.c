@@ -1,4 +1,4 @@
-/* $OpenBSD: by_dir.c,v 1.43 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: by_dir.c,v 1.44 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,7 @@ X509_LOOKUP_hash_dir(void)
 {
 	return &x509_dir_lookup;
 }
-LCRYPTO_ALIAS(X509_LOOKUP_hash_dir)
+LCRYPTO_ALIAS(X509_LOOKUP_hash_dir);
 
 static int
 dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,

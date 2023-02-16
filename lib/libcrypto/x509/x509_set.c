@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.22 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: x509_set.c,v 1.23 2023/02/16 08:38:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,14 +70,14 @@ X509_get0_extensions(const X509 *x)
 {
 	return x->cert_info->extensions;
 }
-LCRYPTO_ALIAS(X509_get0_extensions)
+LCRYPTO_ALIAS(X509_get0_extensions);
 
 const X509_ALGOR *
 X509_get0_tbs_sigalg(const X509 *x)
 {
 	return x->cert_info->signature;
 }
-LCRYPTO_ALIAS(X509_get0_tbs_sigalg)
+LCRYPTO_ALIAS(X509_get0_tbs_sigalg);
 
 int
 X509_set_version(X509 *x, long version)
@@ -90,14 +90,14 @@ X509_set_version(X509 *x, long version)
 	}
 	return (ASN1_INTEGER_set(x->cert_info->version, version));
 }
-LCRYPTO_ALIAS(X509_set_version)
+LCRYPTO_ALIAS(X509_set_version);
 
 long
 X509_get_version(const X509 *x)
 {
 	return ASN1_INTEGER_get(x->cert_info->version);
 }
-LCRYPTO_ALIAS(X509_get_version)
+LCRYPTO_ALIAS(X509_get_version);
 
 int
 X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
@@ -116,7 +116,7 @@ X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 	}
 	return (in != NULL);
 }
-LCRYPTO_ALIAS(X509_set_serialNumber)
+LCRYPTO_ALIAS(X509_set_serialNumber);
 
 int
 X509_set_issuer_name(X509 *x, X509_NAME *name)
@@ -125,7 +125,7 @@ X509_set_issuer_name(X509 *x, X509_NAME *name)
 		return (0);
 	return (X509_NAME_set(&x->cert_info->issuer, name));
 }
-LCRYPTO_ALIAS(X509_set_issuer_name)
+LCRYPTO_ALIAS(X509_set_issuer_name);
 
 int
 X509_set_subject_name(X509 *x, X509_NAME *name)
@@ -134,14 +134,14 @@ X509_set_subject_name(X509 *x, X509_NAME *name)
 		return (0);
 	return (X509_NAME_set(&x->cert_info->subject, name));
 }
-LCRYPTO_ALIAS(X509_set_subject_name)
+LCRYPTO_ALIAS(X509_set_subject_name);
 
 const ASN1_TIME *
 X509_get0_notBefore(const X509 *x)
 {
 	return X509_getm_notBefore(x);
 }
-LCRYPTO_ALIAS(X509_get0_notBefore)
+LCRYPTO_ALIAS(X509_get0_notBefore);
 
 ASN1_TIME *
 X509_getm_notBefore(const X509 *x)
@@ -150,7 +150,7 @@ X509_getm_notBefore(const X509 *x)
 		return (NULL);
 	return x->cert_info->validity->notBefore;
 }
-LCRYPTO_ALIAS(X509_getm_notBefore)
+LCRYPTO_ALIAS(X509_getm_notBefore);
 
 int
 X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
@@ -169,21 +169,21 @@ X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 	}
 	return (in != NULL);
 }
-LCRYPTO_ALIAS(X509_set_notBefore)
+LCRYPTO_ALIAS(X509_set_notBefore);
 
 int
 X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
 	return X509_set_notBefore(x, tm);
 }
-LCRYPTO_ALIAS(X509_set1_notBefore)
+LCRYPTO_ALIAS(X509_set1_notBefore);
 
 const ASN1_TIME *
 X509_get0_notAfter(const X509 *x)
 {
 	return X509_getm_notAfter(x);
 }
-LCRYPTO_ALIAS(X509_get0_notAfter)
+LCRYPTO_ALIAS(X509_get0_notAfter);
 
 ASN1_TIME *
 X509_getm_notAfter(const X509 *x)
@@ -192,7 +192,7 @@ X509_getm_notAfter(const X509 *x)
 		return (NULL);
 	return x->cert_info->validity->notAfter;
 }
-LCRYPTO_ALIAS(X509_getm_notAfter)
+LCRYPTO_ALIAS(X509_getm_notAfter);
 
 int
 X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
@@ -211,14 +211,14 @@ X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 	}
 	return (in != NULL);
 }
-LCRYPTO_ALIAS(X509_set_notAfter)
+LCRYPTO_ALIAS(X509_set_notAfter);
 
 int
 X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
 	return X509_set_notAfter(x, tm);
 }
-LCRYPTO_ALIAS(X509_set1_notAfter)
+LCRYPTO_ALIAS(X509_set1_notAfter);
 
 int
 X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
@@ -227,18 +227,18 @@ X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 		return (0);
 	return (X509_PUBKEY_set(&(x->cert_info->key), pkey));
 }
-LCRYPTO_ALIAS(X509_set_pubkey)
+LCRYPTO_ALIAS(X509_set_pubkey);
 
 int
 X509_get_signature_type(const X509 *x)
 {
 	return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg->algorithm));
 }
-LCRYPTO_ALIAS(X509_get_signature_type)
+LCRYPTO_ALIAS(X509_get_signature_type);
 
 X509_PUBKEY *
 X509_get_X509_PUBKEY(const X509 *x)
 {
 	return x->cert_info->key;
 }
-LCRYPTO_ALIAS(X509_get_X509_PUBKEY)
+LCRYPTO_ALIAS(X509_get_X509_PUBKEY);

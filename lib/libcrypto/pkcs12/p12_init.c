@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.15 2022/11/12 13:03:28 beck Exp $ */
+/* $OpenBSD: p12_init.c,v 1.16 2023/02/16 08:38:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -98,4 +98,4 @@ err:
 		PKCS12_free(pkcs12);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS12_init)
+LCRYPTO_ALIAS(PKCS12_init);
