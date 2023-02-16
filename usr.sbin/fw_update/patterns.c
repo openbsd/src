@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.7 2023/01/24 01:40:22 jsg Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.8 2023/02/16 03:09:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -98,7 +98,7 @@ main(void)
 	printf("%s\n", "bwfm");
 	printf("%s\n", "bwi");
 	printf("%s\n", "intel");
-	printf("%s\n", "intel ^cpu0:*Intel(R)");
+	printf("%s\n", "intel ^cpu0:*Intel");
 	printf("%s\n", "inteldrm");
 	print_devices("inteldrm", i915_devices, nitems(i915_devices));
 	printf("%s\n", "ipw");
