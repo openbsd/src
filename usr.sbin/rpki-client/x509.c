@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.64 2023/02/16 14:25:27 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.65 2023/02/16 14:34:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -610,7 +610,7 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 		    " disallowed", fn);
 		goto out;
 	}
-	if (dp->distpoint->type != GEN_OTHERNAME) {
+	if (dp->distpoint->type != 0) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "expected GEN_OTHERNAME, have %d", fn, dp->distpoint->type);
 		goto out;
