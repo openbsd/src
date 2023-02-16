@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1227 2023/02/09 10:38:41 kn Exp $
+#	$OpenBSD: install.sub,v 1.1228 2023/02/16 18:10:28 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -109,28 +109,6 @@ wait_cgiinfo() {
 # Utils functions
 # ------------------------------------------------------------------------------
 
-# Sort and print unique list of provided arguments.
-bsort() {
-	local _a=$1 _b _l
-
-	(($#)) && shift || return
-
-	for _b; do
-		[[ $_a == "$_b" ]] && continue
-		if [[ $_a > $_b ]]; then
-			_l="$_a $_l" _a=$_b
-		else
-			_l="$_b $_l"
-		fi
-	done
-
-	# Output the smallest value found.
-	(($#)) && echo -n "$_a " || echo -n "$_a"
-
-	# Sort remaining values.
-	bsort $_l
-}
-
 # Test the first argument against the remaining ones, return success on a match.
 isin() {
 	local _a=$1 _b
@@ -161,6 +139,17 @@ rmel() {
 		[[ $_a != "$_b" ]] && _c="${_c:+$_c }$_b"
 	done
 	echo -n "$_c"
+}
+
+# Sort and print unique list of provided arguments.
+bsort() {
+	local _a _l
+
+	set -s -- $@
+	for _a; do
+		_l=$(addel $_a $_l)
+	done
+	echo -n $_l
 }
 
 # If possible, print the timestamp received from the ftplist.cgi output,
