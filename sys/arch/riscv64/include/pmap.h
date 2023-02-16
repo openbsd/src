@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.6 2021/05/16 03:29:35 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.7 2023/02/16 20:32:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -116,7 +116,6 @@ void	pmap_postinit(void);
 #endif /* _KERNEL && !_LOCORE */
 
 #ifndef _LOCORE
-#define __HAVE_VM_PAGE_MD
 struct vm_page_md {
 	struct mutex pv_mtx;
 	LIST_HEAD(,pte_desc) pv_list;
