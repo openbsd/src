@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.155 2023/01/16 05:32:05 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.156 2023/02/17 18:01:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -920,8 +920,6 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 
 	if (ktr->ktr_code & KTRC_CODE_SYSCALL)
 		(void)printf("(via syscall) ");
-	else if (ktr->ktr_code & KTRC_CODE__SYSCALL)
-		(void)printf("(via __syscall) ");
 	code = ktr->ktr_code & KTRC_CODE_MASK;
 	if (code >= SYS_MAXSYSCALL || code < 0)
 		(void)printf("[%d]", code);
