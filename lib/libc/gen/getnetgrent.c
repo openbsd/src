@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetgrent.c,v 1.30 2023/01/04 13:00:11 jsg Exp $	*/
+/*	$OpenBSD: getnetgrent.c,v 1.31 2023/02/17 18:00:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -517,12 +517,14 @@ _ng_makekey(const char *s1, const char *s2, size_t len)
 	return buf;
 }
 
+#ifdef DEBUG_NG
 static void
 _ng_print(char *buf, size_t len, const struct netgroup *ng)
 {
 	(void) snprintf(buf, len, "(%s,%s,%s)", _NG_EMPTY(ng->ng_host),
 	    _NG_EMPTY(ng->ng_user), _NG_EMPTY(ng->ng_domain));
 }
+#endif
 
 
 /*
