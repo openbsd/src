@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.244 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.245 2023/02/17 18:08:32 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -267,10 +268,19 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #ifdef MACHINE_STACK_GROWS_UP
 	size_t slen;
 #endif
+	vaddr_t pc = PROC_PC(p);
 	char *stack;
 	struct ps_strings arginfo;
-	struct vmspace *vm;
+	struct vmspace *vm = p->p_vmspace;
 	struct vnode *otvp;
+
+	if (vm->vm_execve &&
+	    (pc >= vm->vm_execve_end || pc < vm->vm_execve)) {
+		printf("%s(%d): execve %lx outside %lx-%lx\n", pr->ps_comm,
+		    pr->ps_pid, pc, vm->vm_execve, vm->vm_execve_end);
+		sigabort(p);
+		return (0);
+	}
 
 	/* get other threads to stop */
 	if ((error = single_thread_set(p, SINGLE_UNWIND, 1)))
