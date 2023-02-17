@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.15 2016/09/04 15:29:21 tb Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.16 2023/02/17 18:00:35 miod Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -984,7 +984,7 @@ meputmac(char *cp, int constant)
 		 */
 		if (((np - cp) > constant) &&
 		    (inquote || (chars[(unsigned char)cp[0]] == LETTER))) {
-			for (cp = cp; cp < np; cp++)
+			for (; cp < np; cp++)
 				putchar(*cp);
 			last = np[-1];
 			found++;
