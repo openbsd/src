@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.1 2023/02/04 23:11:59 mglocker Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.2 2023/02/17 08:01:03 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -26,7 +26,7 @@
 #define UFSHCI_MAX_UNITS		32
 
 /*
- * Controller Capabilties Registers
+ * Controller Capabilities Registers
  */
 
 /* Controller Capabilities */
@@ -219,9 +219,9 @@
 #define UFSHCI_UTRD_DW2_OCS_SUCCESS	0x00 /* Success */
 #define UFSHCI_UTRD_DW2_OCS_ICTA	0x01 /* Invalid Command Table Attr. */
 #define UFSHCI_UTRD_DW2_OCS_IPA		0x02 /* Invalid PRDT Attr. */
-#define UFSHCI_UTRD_DW2_OCS_MDBS	0x03 /* Missmatch Data Buffer Size */
-#define UFSHCI_UTRD_DW2_OCS_MRUS	0x04 /* Missmatch Response UPIU Size */
-#define UFSHCI_UTRD_DW2_OCS_CF		0x05 /* Communcation Failure */
+#define UFSHCI_UTRD_DW2_OCS_MDBS	0x03 /* Mismatch Data Buffer Size */
+#define UFSHCI_UTRD_DW2_OCS_MRUS	0x04 /* Mismatch Response UPIU Size */
+#define UFSHCI_UTRD_DW2_OCS_CF		0x05 /* Communication Failure */
 #define UFSHCI_UTRD_DW2_OCS_ABRT	0x06 /* Aborted */
 #define UFSHCI_UTRD_DW2_OCS_FE		0x07 /* Fatal Error */
 #define UFSHCI_UTRD_DW2_OCS_DFE		0x08 /* Device Fatal Error */
@@ -289,9 +289,9 @@ struct ufshci_ucd_prdt {
 #define UFSHCI_UTMRD_DW2_OCS_SUCCESS	0x00 /* Success */
 #define UFSHCI_UTMRD_DW2_OCS_ICTA	0x01 /* Invalid Command Table Attr. */
 #define UFSHCI_UTMRD_DW2_OCS_IPA	0x02 /* Invalid PRDT Attr. */
-#define UFSHCI_UTMRD_DW2_OCS_MDBS	0x03 /* Missmatch Data Buffer Size */
-#define UFSHCI_UTMRD_DW2_OCS_MRUS	0x04 /* Missmatch Response UPIU Size */
-#define UFSHCI_UTMRD_DW2_OCS_CF		0x05 /* Communcation Failure */
+#define UFSHCI_UTMRD_DW2_OCS_MDBS	0x03 /* Mismatch Data Buffer Size */
+#define UFSHCI_UTMRD_DW2_OCS_MRUS	0x04 /* Mismatch Response UPIU Size */
+#define UFSHCI_UTMRD_DW2_OCS_CF		0x05 /* Communication Failure */
 #define UFSHCI_UTMRD_DW2_OCS_ABRT	0x06 /* Aborted */
 #define UFSHCI_UTMRD_DW2_OCS_FE		0x07 /* Fatal Error */
 #define UFSHCI_UTMRD_DW2_OCS_DFE	0x08 /* Device Fatal Error */
