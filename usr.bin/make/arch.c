@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.92 2022/12/26 19:16:02 jmc Exp $ */
+/*	$OpenBSD: arch.c,v 1.93 2023/02/17 17:59:36 miod Exp $ */
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -116,10 +116,8 @@ typedef struct Arch_ {
 	char name[1];		/* Archive name. */
 } Arch;
 
-/* Used to get to ar's field sizes.  */
-static struct ar_hdr *dummy;
-#define AR_NAME_SIZE		(sizeof(dummy->ar_name))
-#define AR_DATE_SIZE		(sizeof(dummy->ar_date))
+#define AR_NAME_SIZE		(sizeof(((struct ar_hdr *)0)->ar_name))
+#define AR_DATE_SIZE		(sizeof(((struct ar_hdr *)0)->ar_date))
 
 /* Each archive member is tied to an arch_member structure,
  * suitable for hashing.  */

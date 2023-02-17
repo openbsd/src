@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.27 2021/10/24 10:05:22 jsg Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.28 2023/02/17 17:59:36 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,6 @@
  * First are the DBM routines, which call the NDBM routines, and
  * the NDBM routines, which call the DB routines.
  */
-static DBM *__cur_db;
 
 static DBM *_dbm_open(const char *, const char *, int, mode_t);
 
