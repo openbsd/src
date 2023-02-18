@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.21 2022/08/23 06:35:53 tb Exp $	*/
+/*	$OpenBSD: random.c,v 1.22 2023/02/18 08:52:39 miod Exp $	*/
 /*	$NetBSD: random.c,v 1.3 1995/04/22 07:44:05 cgd Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ int
 clz64(uint64_t x)
 {
 	static const uint64_t mask[] = {
-		0xffffffff00000000, 0xffff0000, 0xff00, 0xf0, 0xc, 0x2,
+		0xffffffff00000000ULL, 0xffff0000, 0xff00, 0xf0, 0xc, 0x2,
 	};
 	static const int zeroes[] = {
 		32, 16, 8, 4, 2, 1,
