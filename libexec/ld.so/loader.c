@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.210 2023/01/29 20:30:56 gnezdo Exp $ */
+/*	$OpenBSD: loader.c,v 1.211 2023/02/18 01:22:50 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,6 +30,7 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
 #include <sys/exec.h>
 #ifdef __i386__
 # include <machine/vmparam.h>
@@ -316,7 +317,7 @@ _dl_setup_env(const char *argv0, char **envp)
 int
 _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 {
-	elf_object_t *dynobj;
+	elf_object_t *dynobj, *obj;
 	Elf_Dyn *dynp;
 	unsigned int loop;
 	int libcount;
@@ -410,6 +411,21 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 
 	_dl_cache_grpsym_list_setup(object);
 
+	for (obj = _dl_objects; booting && obj != NULL; obj = obj->next) {
+		char *soname = (char *)obj->Dyn.info[DT_SONAME];
+		struct sym_res sr;
+
+		if (soname && _dl_strncmp(soname, "libc.so.", 8))
+			continue;
+		sr = _dl_find_symbol("execve",
+		    SYM_SEARCH_SELF|SYM_PLT|SYM_WARNNOTFOUND, NULL, obj);
+		if (sr.sym)
+			_dl_pinsyscall(SYS_execve,
+			    (void *)sr.obj->obj_base + sr.sym->st_value,
+			    sr.sym->st_size);
+		_dl_memset(&sr, 0, sizeof sr);
+		break;
+	}
 	return(0);
 }
 
