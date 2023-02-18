@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.12 2022/08/10 16:58:16 patrick Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.13 2023/02/18 14:32:02 dv Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -143,20 +143,15 @@ acpipwrres_attach(struct device *parent, struct device *self, void *aux)
 int
 acpipwrres_ref_incr(struct acpipwrres_softc *sc, struct aml_node *node)
 {
-	struct aml_value		res;
-
 	if (!acpipwrres_hascons(sc, node))
 		return (1);
 
 	DPRINTF(("%s: dev %s ON %d\n", DEVNAME(sc), node->name,
 	    sc->sc_cons_ref));
 
-	if (sc->sc_cons_ref++ == 0) {
-		memset(&res, 0, sizeof(res));
+	if (sc->sc_cons_ref++ == 0)
 		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_ON", 0,
-		    NULL, &res);
-		aml_freevalue(&res);
-	}
+		    NULL, NULL);
 
 	return (0);
 }
@@ -164,20 +159,15 @@ acpipwrres_ref_incr(struct acpipwrres_softc *sc, struct aml_node *node)
 int
 acpipwrres_ref_decr(struct acpipwrres_softc *sc, struct aml_node *node)
 {
-	struct aml_value		res;
-
 	if (!acpipwrres_hascons(sc, node))
 		return (1);
 
 	DPRINTF(("%s: dev %s OFF %d\n", DEVNAME(sc), node->name,
 	    sc->sc_cons_ref));
 
-	if (--sc->sc_cons_ref == 0) {
-		memset(&res, 0, sizeof(res));
+	if (--sc->sc_cons_ref == 0)
 		aml_evalname(sc->sc_acpi, sc->sc_devnode, "_OFF", 0,
-		    NULL, &res);
-		aml_freevalue(&res);
-	}
+		    NULL, NULL);
 
 	return (0);
 }
