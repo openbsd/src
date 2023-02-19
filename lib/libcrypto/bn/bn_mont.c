@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.41 2023/02/19 13:51:00 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.42 2023/02/19 15:45:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,18 +123,6 @@
 #include "bn_local.h"
 
 #define MONT_WORD /* use the faster word-based algorithm */
-
-/* Used for montgomery multiplication */
-struct bn_mont_ctx_st {
-	int ri;        /* number of bits in R */
-	BIGNUM RR;     /* used to convert to montgomery form */
-	BIGNUM N;      /* The modulus */
-	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
-	                * (Ni is only stored for bignum algorithm) */
-	BN_ULONG n0[2];/* least significant word(s) of Ni;
-	                  (type changed with 0.9.9, was "BN_ULONG n0;" before) */
-	int flags;
-};
 
 BN_MONT_CTX *
 BN_MONT_CTX_new(void)
