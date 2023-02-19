@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.152 2023/01/24 16:18:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.153 2023/02/19 12:23:27 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10994,13 +10994,20 @@ iwx_wakeup(struct iwx_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int err;
 
+	rw_enter_write(&sc->ioctl_rwl);
+
 	err = iwx_start_hw(sc);
-	if (err)
+	if (err) {
+		rw_exit(&sc->ioctl_rwl);
 		return err;
+	}
 
 	err = iwx_init_hw(sc);
-	if (err)
+	if (err) {
+		iwx_stop_device(sc);
+		rw_exit(&sc->ioctl_rwl);
 		return err;
+	}
 
 	refcnt_init(&sc->task_refs);
 	ifq_clr_oactive(&ifp->if_snd);
@@ -11011,6 +11018,7 @@ iwx_wakeup(struct iwx_softc *sc)
 	else
 		ieee80211_begin_scan(ifp);
 
+	rw_exit(&sc->ioctl_rwl);
 	return 0;
 }
 
