@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.26 2022/03/31 17:27:15 naddy Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.27 2023/02/19 21:33:38 aisha Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: February 19 2023 $
 .Dt AUTH_OPEN 3
 .Os
 .Sh NAME
@@ -328,10 +328,6 @@ function.
 The generated challenge is returned.
 .Dv NULL
 is returned on error or if no challenge was generated.
-The challenge can also be extracted by the
-.Fn auth_getchallenge
-function, which simply returns the last challenge generated
-for this session.
 .Pp
 The
 .Fn auth_check_change
