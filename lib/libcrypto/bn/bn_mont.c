@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.40 2023/02/19 13:44:29 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.41 2023/02/19 13:51:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -330,35 +330,39 @@ err:
 }
 
 BN_MONT_CTX *
-BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock, const BIGNUM *mod,
+BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
     BN_CTX *ctx)
 {
-	int got_write_lock = 0;
-	BN_MONT_CTX *ret;
+	BN_MONT_CTX *mctx = NULL;
 
 	CRYPTO_r_lock(lock);
-	if (!*pmont) {
-		CRYPTO_r_unlock(lock);
-		CRYPTO_w_lock(lock);
-		got_write_lock = 1;
+	mctx = *pmctx;
+	CRYPTO_r_unlock(lock);
 
-		if (!*pmont) {
-			ret = BN_MONT_CTX_new();
-			if (ret && !BN_MONT_CTX_set(ret, mod, ctx))
-				BN_MONT_CTX_free(ret);
-			else
-				*pmont = ret;
-		}
+	if (mctx != NULL)
+		goto done;
+
+	if ((mctx = BN_MONT_CTX_new()) == NULL)
+		goto err;
+	if (!BN_MONT_CTX_set(mctx, mod, ctx))
+		goto err;
+
+	CRYPTO_w_lock(lock);
+	if (*pmctx != NULL) {
+		/* Someone else raced us... */
+		BN_MONT_CTX_free(mctx);
+		mctx = *pmctx;
+	} else {
+		*pmctx = mctx;
 	}
+	CRYPTO_w_unlock(lock);
 
-	ret = *pmont;
-
-	if (got_write_lock)
-		CRYPTO_w_unlock(lock);
-	else
-		CRYPTO_r_unlock(lock);
-
-	return ret;
+	goto done;
+ err:
+	BN_MONT_CTX_free(mctx);
+	mctx = NULL;
+ done:
+	return mctx;
 }
 
 #ifdef OPENSSL_NO_ASM
