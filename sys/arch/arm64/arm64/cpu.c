@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.84 2023/02/09 23:35:06 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.85 2023/02/19 17:16:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -240,6 +240,7 @@ struct cfdriver cpu_cd = {
 };
 
 void	cpu_opp_init(struct cpu_info *, uint32_t);
+void	cpu_psci_init(struct cpu_info *);
 
 void	cpu_flush_bp_noop(void);
 void	cpu_flush_bp_psci(void);
@@ -879,6 +880,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	if (opp)
 		cpu_opp_init(ci, opp);
 
+	cpu_psci_init(ci);
+
 	printf("\n");
 }
 
@@ -1112,11 +1115,18 @@ void
 cpu_halt(void)
 {
 	struct cpu_info *ci = curcpu();
+	vaddr_t start_va;
+	paddr_t ci_pa, start_pa;
 	int count = 0;
 	u_long psw;
+	int32_t status;
 
 	KERNEL_ASSERT_UNLOCKED();
 	SCHED_ASSERT_UNLOCKED();
+
+	start_va = (vaddr_t)cpu_hatch_secondary;
+	pmap_extract(pmap_kernel(), start_va, &start_pa);
+	pmap_extract(pmap_kernel(), (vaddr_t)ci, &ci_pa);
 
 	psw = intr_disable();
 
@@ -1141,7 +1151,15 @@ cpu_halt(void)
 	    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
 
 	while ((ci->ci_flags & CPUF_GO) == 0) {
-		__asm volatile("wfi");
+#if NPSCI > 0
+		if (ci->ci_psci_suspend_param) {
+			status = psci_cpu_suspend(ci->ci_psci_suspend_param,
+			    start_pa, ci_pa);
+			if (status != PSCI_SUCCESS)
+				ci->ci_psci_suspend_param = 0;
+		} else
+#endif
+			__asm volatile("wfi");
 		count++;
 	}
 
@@ -1193,7 +1211,6 @@ cpu_init_primary(void)
 
 	cpu_startclock();
 
-	cpu_suspended = 1;
 	longjmp(&cpu_suspend_jmpbuf);
 }
 
@@ -1204,54 +1221,8 @@ cpu_suspend_primary(void)
 	vaddr_t start_va;
 	paddr_t ci_pa, start_pa;
 	uint64_t ttbr1;
-
-	if (!psci_can_suspend()) {
-		int count = 0;
-
-		/*
-		 * If PSCI doesn't support SYSTEM_SUSPEND, spin in a
-		 * low power state waiting for an interrupt that wakes
-		 * us up again.
-		 */
-
-		/* Mask clock interrupts. */
-		WRITE_SPECIALREG(cntv_ctl_el0,
-		    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
-
-		/*
-		 * All non-wakeup interrupts should be masked at this
-		 * point; re-enable interrupts such that wakeup
-		 * interrupts actually wake us up.  Set a flag such
-		 * that drivers can tell we're suspended and change
-		 * their behaviour accordingly.  They can wake us up
-		 * by clearing the flag.
-		 */
-		cpu_suspended = 1;
-		intr_enable_wakeup();
-
-		while (cpu_suspended) {
-			__asm volatile("wfi");
-			count++;
-		}
-
-		intr_disable_wakeup();
-
-		/* Unmask clock interrupts. */
-		WRITE_SPECIALREG(cntv_ctl_el0,
-		    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
-
-		printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
-
-		return 0;
-	}
-
-	cpu_suspended = 0;
-	setjmp(&cpu_suspend_jmpbuf);
-	if (cpu_suspended) {
-		/* XXX wait for debug output from SCP on Allwinner A64 */
-		delay(200000);
-		return 0;
-	}
+	int32_t status;
+	int count = 0;
 
 	__asm("mrs %x0, ttbr1_el1": "=r"(ttbr1));
 	ci->ci_ttbr1 = ttbr1;
@@ -1262,10 +1233,64 @@ cpu_suspend_primary(void)
 	pmap_extract(pmap_kernel(), (vaddr_t)ci, &ci_pa);
 
 #if NPSCI > 0
-	psci_system_suspend(start_pa, ci_pa);
+	if (psci_can_suspend()) {
+		if (setjmp(&cpu_suspend_jmpbuf)) {
+			/* XXX wait for debug output on Allwinner A64 */
+			delay(200000);
+			return 0;
+		}
+
+		psci_system_suspend(start_pa, ci_pa);
+
+		return EOPNOTSUPP;
+	}
 #endif
 
-	return EOPNOTSUPP;
+	if (setjmp(&cpu_suspend_jmpbuf))
+		goto resume;
+
+	/*
+	 * If PSCI doesn't support SYSTEM_SUSPEND, spin in a low power
+	 * state waiting for an interrupt that wakes us up again.
+	 */
+
+	/* Mask clock interrupts. */
+	WRITE_SPECIALREG(cntv_ctl_el0,
+	    READ_SPECIALREG(cntv_ctl_el0) | CNTV_CTL_IMASK);
+
+	/*
+	 * All non-wakeup interrupts should be masked at this point;
+	 * re-enable interrupts such that wakeup interrupts actually
+	 * wake us up.  Set a flag such that drivers can tell we're
+	 * suspended and change their behaviour accordingly.  They can
+	 * wake us up by clearing the flag.
+	 */
+	cpu_suspended = 1;
+	intr_enable_wakeup();
+
+	while (cpu_suspended) {
+#if NPSCI > 0
+		if (ci->ci_psci_suspend_param) {
+			status = psci_cpu_suspend(ci->ci_psci_suspend_param,
+			    start_pa, ci_pa);
+			if (status != PSCI_SUCCESS)
+				ci->ci_psci_suspend_param = 0;
+		} else
+#endif
+			__asm volatile("wfi");
+		count++;
+	}
+
+resume:
+	intr_disable_wakeup();
+
+	/* Unmask clock interrupts. */
+	WRITE_SPECIALREG(cntv_ctl_el0,
+	    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
+
+	printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
+
+	return 0;
 }
 
 #ifdef MULTIPROCESSOR
@@ -1607,4 +1632,110 @@ cpu_opp_set_cooling_level(void *cookie, uint32_t *cells, uint32_t level)
 		ci->ci_opp_max = opp_max;
 		task_add(systq, &cpu_opp_task);
 	}
+}
+
+
+void
+cpu_psci_init(struct cpu_info *ci)
+{
+	uint32_t *domains;
+	uint32_t *domain;
+	uint32_t *states;
+	uint32_t ncells;
+	uint32_t cluster;
+	int idx, len, node;
+
+	/*
+	 * Hunt for the deppest idle state for this CPU.  This is
+	 * fairly complicated as it requires traversing quite a few
+	 * nodes in the device tree.  The first step is to look up the
+	 * "psci" power domain for this CPU.
+	 */
+
+	idx = OF_getindex(ci->ci_node, "psci", "power-domain-names");
+	if (idx < 0)
+		return;
+
+	len = OF_getproplen(ci->ci_node, "power-domains");
+	if (len <= 0)
+		return;
+
+	domains = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(ci->ci_node, "power-domains", domains, len);
+
+	domain = domains;
+	while (domain && domain < domains + (len / sizeof(uint32_t))) {
+		if (idx == 0)
+			break;
+
+		node = OF_getnodebyphandle(domain[0]);
+		if (node == 0)
+			break;
+
+		ncells = OF_getpropint(node, "#power-domain-cells", 0);
+		domain = domain + ncells + 1;
+		idx--;
+	}
+
+	node = idx == 0 ? OF_getnodebyphandle(domain[0]) : 0;
+	free(domains, M_TEMP, len);
+	if (node == 0)
+		return;
+
+	/*
+	 * We found the "psci" power domain.  If this power domain has
+	 * a parent power domain, stash its phandle away for later.
+	 */
+	 
+	cluster = OF_getpropint(node, "power-domains", 0);
+
+	/*
+	 * Get the deepest idle state for the CPU; this should be the
+	 * last one that is listed.
+	 */
+
+	len = OF_getproplen(node, "domain-idle-states");
+	if (len < sizeof(uint32_t))
+		return;
+
+	states = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "domain-idle-states", states, len);
+
+	node = OF_getnodebyphandle(states[len / sizeof(uint32_t) - 1]);
+	free(states, M_TEMP, len);
+	if (node == 0)
+		return;
+
+	ci->ci_psci_suspend_param =
+		OF_getpropint(node, "arm,psci-suspend-param", 0);
+
+	/*
+	 * Qualcomm Snapdragon always seem to operate in OS Initiated
+	 * mode.  This means that the last CPU to suspend can pick the
+	 * idle state that powers off the entire cluster.  In our case
+	 * that will always be the primary CPU.
+	 */
+
+	if (ci->ci_flags & CPUF_AP)
+		return;
+
+	node = OF_getnodebyphandle(cluster);
+	if (node == 0)
+		return;
+
+	/*
+	 * Get the deepest idle state for the cluster; this should be
+	 * the last one that is listed.
+	 */
+
+	states = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "domain-idle-states", states, len);
+
+	node = OF_getnodebyphandle(states[len / sizeof(uint32_t) - 1]);
+	free(states, M_TEMP, len);
+	if (node == 0)
+		return;
+
+	ci->ci_psci_suspend_param =
+		OF_getpropint(node, "arm,psci-suspend-param", 0);
 }

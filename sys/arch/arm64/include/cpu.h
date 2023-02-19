@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.34 2022/12/31 00:30:21 patrick Exp $ */
+/* $OpenBSD: cpu.h,v 1.35 2023/02/19 17:16:13 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -141,6 +141,8 @@ struct cpu_info {
 
 	uint64_t		ci_ttbr1;
 	vaddr_t			ci_el1_stkend;
+
+	uint32_t		ci_psci_suspend_param;
 
 	struct opp_table	*ci_opp_table;
 	volatile int		ci_opp_idx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.13 2023/02/13 19:26:15 kettenis Exp $	*/
+/*	$OpenBSD: psci.c,v 1.14 2023/02/19 17:16:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -37,6 +37,11 @@ extern void (*powerdownfn)(void);
 #define SMCCC_ARCH_WORKAROUND_3	0x80003fff
 
 #define PSCI_VERSION		0x84000000
+#ifdef __LP64__
+#define CPU_SUSPEND		0xc4000001
+#else
+#define CPU_SUSPEND		0x84000001
+#endif
 #define CPU_OFF			0x84000002
 #ifdef __LP64__
 #define CPU_ON			0xc4000003
@@ -56,12 +61,13 @@ struct psci_softc {
 	struct device	 sc_dev;
 	register_t	 (*sc_callfn)(register_t, register_t, register_t,
 			     register_t);
-	uint32_t	 sc_psci_version; 
+	uint32_t	 sc_psci_version;
 	uint32_t	 sc_system_off;
 	uint32_t	 sc_system_reset;
 	uint32_t	 sc_system_suspend;
 	uint32_t	 sc_cpu_on;
 	uint32_t	 sc_cpu_off;
+	uint32_t	 sc_cpu_suspend;
 
 	uint32_t	 sc_smccc_version;
 	uint32_t	 sc_method;
@@ -131,6 +137,7 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_system_reset = SYSTEM_RESET;
 		sc->sc_cpu_on = CPU_ON;
 		sc->sc_cpu_off = CPU_OFF;
+		sc->sc_cpu_suspend = CPU_SUSPEND;
 	} else if (OF_is_compatible(faa->fa_node, "arm,psci")) {
 		sc->sc_system_off = OF_getpropint(faa->fa_node,
 		    "system_off", 0);
@@ -138,6 +145,8 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 		    "system_reset", 0);
 		sc->sc_cpu_on = OF_getpropint(faa->fa_node, "cpu_on", 0);
 		sc->sc_cpu_off = OF_getpropint(faa->fa_node, "cpu_off", 0);
+		sc->sc_cpu_suspend = OF_getpropint(faa->fa_node,
+		    "cpu_suspend", 0);
 	}
 
 	psci_sc = sc;
@@ -327,6 +336,19 @@ psci_cpu_on(register_t target_cpu, register_t entry_point_address,
 
 	if (sc && sc->sc_callfn && sc->sc_cpu_on != 0)
 		return (*sc->sc_callfn)(sc->sc_cpu_on, target_cpu,
+		    entry_point_address, context_id);
+
+	return PSCI_NOT_SUPPORTED;
+}
+
+int32_t
+psci_cpu_suspend(register_t power_state, register_t entry_point_address,
+    register_t context_id)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn && sc->sc_cpu_suspend != 0)
+		return (*sc->sc_callfn)(sc->sc_cpu_suspend, power_state,
 		    entry_point_address, context_id);
 
 	return PSCI_NOT_SUPPORTED;
