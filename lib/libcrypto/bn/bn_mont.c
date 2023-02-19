@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.38 2023/02/19 13:27:49 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.39 2023/02/19 13:33:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,6 +172,24 @@ BN_MONT_CTX_free(BN_MONT_CTX *mont)
 		free(mont);
 }
 
+BN_MONT_CTX *
+BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
+{
+	if (to == from)
+		return (to);
+
+	if (!BN_copy(&(to->RR), &(from->RR)))
+		return NULL;
+	if (!BN_copy(&(to->N), &(from->N)))
+		return NULL;
+	if (!BN_copy(&(to->Ni), &(from->Ni)))
+		return NULL;
+	to->ri = from->ri;
+	to->n0[0] = from->n0[0];
+	to->n0[1] = from->n0[1];
+	return (to);
+}
+
 int
 BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 {
@@ -303,24 +321,6 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 err:
 	BN_CTX_end(ctx);
 	return ret;
-}
-
-BN_MONT_CTX *
-BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
-{
-	if (to == from)
-		return (to);
-
-	if (!BN_copy(&(to->RR), &(from->RR)))
-		return NULL;
-	if (!BN_copy(&(to->N), &(from->N)))
-		return NULL;
-	if (!BN_copy(&(to->Ni), &(from->Ni)))
-		return NULL;
-	to->ri = from->ri;
-	to->n0[0] = from->n0[0];
-	to->n0[1] = from->n0[1];
-	return (to);
 }
 
 BN_MONT_CTX *
