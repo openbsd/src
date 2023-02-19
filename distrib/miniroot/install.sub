@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1228 2023/02/16 18:10:28 kn Exp $
+#	$OpenBSD: install.sub,v 1.1229 2023/02/19 23:46:22 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2034,7 +2034,7 @@ install_disk() {
 	if ! ask_yn "Is the disk partition already mounted?" yes; then
 		ask_which "disk" "contains the $MODE media" \
 			'$(bsort $(get_dkdevs))' \
-			'$(bsort $(rmel $ROOTDISK $(get_dkdevs)))'
+			'$(get_dkdevs_uninitialized)'
 		[[ $resp == done ]] && return 1
 
 		# Ensure the device file exists and mount the fs on /mnt2.
