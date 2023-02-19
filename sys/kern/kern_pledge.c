@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.303 2023/02/11 23:22:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.304 2023/02/19 18:46:46 anton Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -112,6 +112,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_sendsyslog] = PLEDGE_ALWAYS,	/* stack protector reporting */
 	[SYS_thrkill] = PLEDGE_ALWAYS,		/* raise, abort, stack pro */
 	[SYS_utrace] = PLEDGE_ALWAYS,		/* ltrace(1) from ld.so */
+	[SYS_pinsyscall] = PLEDGE_ALWAYS,
 
 	/* "getting" information about self is considered safe */
 	[SYS_getuid] = PLEDGE_STDIO,
