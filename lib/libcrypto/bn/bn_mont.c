@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.39 2023/02/19 13:33:23 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.40 2023/02/19 13:44:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,6 +118,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "bn_local.h"
 
@@ -138,56 +139,61 @@ struct bn_mont_ctx_st {
 BN_MONT_CTX *
 BN_MONT_CTX_new(void)
 {
-	BN_MONT_CTX *ret;
+	BN_MONT_CTX *mctx;
 
-	if ((ret = malloc(sizeof(BN_MONT_CTX))) == NULL)
-		return (NULL);
+	if ((mctx = calloc(1, sizeof(BN_MONT_CTX))) == NULL)
+		return NULL;
+	mctx->flags = BN_FLG_MALLOCED;
 
-	BN_MONT_CTX_init(ret);
-	ret->flags = BN_FLG_MALLOCED;
-	return (ret);
+	BN_init(&mctx->RR);
+	BN_init(&mctx->N);
+	BN_init(&mctx->Ni);
+
+	return mctx;
 }
 
 void
-BN_MONT_CTX_init(BN_MONT_CTX *ctx)
+BN_MONT_CTX_init(BN_MONT_CTX *mctx)
 {
-	ctx->ri = 0;
-	BN_init(&(ctx->RR));
-	BN_init(&(ctx->N));
-	BN_init(&(ctx->Ni));
-	ctx->n0[0] = ctx->n0[1] = 0;
-	ctx->flags = 0;
+	memset(mctx, 0, sizeof(*mctx));
+
+	BN_init(&mctx->RR);
+	BN_init(&mctx->N);
+	BN_init(&mctx->Ni);
 }
 
 void
-BN_MONT_CTX_free(BN_MONT_CTX *mont)
+BN_MONT_CTX_free(BN_MONT_CTX *mctx)
 {
-	if (mont == NULL)
+	if (mctx == NULL)
 		return;
 
-	BN_clear_free(&(mont->RR));
-	BN_clear_free(&(mont->N));
-	BN_clear_free(&(mont->Ni));
-	if (mont->flags & BN_FLG_MALLOCED)
-		free(mont);
+	BN_free(&mctx->RR);
+	BN_free(&mctx->N);
+	BN_free(&mctx->Ni);
+
+	if (mctx->flags & BN_FLG_MALLOCED)
+		free(mctx);
 }
 
 BN_MONT_CTX *
-BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
+BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
 {
-	if (to == from)
-		return (to);
+	if (dst == src)
+		return dst;
 
-	if (!BN_copy(&(to->RR), &(from->RR)))
+	if (!BN_copy(&dst->RR, &src->RR))
 		return NULL;
-	if (!BN_copy(&(to->N), &(from->N)))
+	if (!BN_copy(&dst->N, &src->N))
 		return NULL;
-	if (!BN_copy(&(to->Ni), &(from->Ni)))
+	if (!BN_copy(&dst->Ni, &src->Ni))
 		return NULL;
-	to->ri = from->ri;
-	to->n0[0] = from->n0[0];
-	to->n0[1] = from->n0[1];
-	return (to);
+
+	dst->ri = src->ri;
+	dst->n0[0] = src->n0[0];
+	dst->n0[1] = src->n0[1];
+
+	return dst;
 }
 
 int
