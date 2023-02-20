@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.152 2023/02/07 14:30:48 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.153 2023/02/20 14:16:59 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 7 2023 $
+.Dd $Mdocdate: February 20 2023 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -489,115 +489,122 @@ The
 .Fl A
 option and the editor command
 .Cm A
-automatically create a disklabel with a set of partitions
-suitable for a majority of
+create disklabels that distribute a disk's free space into a set of
+partitions appropriate for an
 .Ox
-installations.
-Any existing
-.Ox
-disklabel on the disk is ignored, but native partitions
-that would normally be spoofed are preserved in the disklabel,
-and are not modified during the allocation process.
+installation.
+The exact set of partitions created depends on available free space,
+how fragmented the free space is
+and some machine dependent variables, but will be approximately:
+.Bl -column "/usr/X11R6" \
+"999MB \(en 999MB" "999MB \(en 999MB" "999MB \(en 999MB" \
+"< 700MB"
+.It \
+Ta Sy > 10GB Free Ta Sy > 2.5GB Ta Sy > 700MB Ta \
+Sy < 700MB
+.It Sy / \
+Ta 150MB \(en \0\01GB Ta 800MB \(en \0\02GB Ta 700MB \(en \0\04GB Ta \
+1MB \(en 2GB
+.It Sy swap \
+Ta \080MB \(en 256MB Ta \080MB \(en 256MB Ta \0\01MB \(en 256MB Ta
+.It Sy /usr \
+Ta 1.5GB \(en \030GB Ta 1.5GB \(en \030GB Ta Ta
+.It Sy /home \
+Ta \0\01GB \(en 300GB Ta 256MB \(en \0\02GB Ta Ta
+.It Sy /tmp \
+Ta 120MB \(en \0\04GB Ta Ta Ta
+.It Sy /var \
+Ta \080MB \(en \0\04GB Ta Ta Ta
+.It Sy /usr/X11R6 \
+Ta 384MB \(en \0\01GB Ta Ta Ta
+.It Sy /usr/local \
+Ta \0\01GB \(en \020GB Ta Ta Ta
+.It Sy /usr/src \
+Ta 1.5GB \(en \0\03GB Ta Ta Ta
+.It Sy /usr/obj \
+Ta \0\05GB \(en \0\06GB Ta Ta Ta
+.El
 .Pp
-Disk size determines the set of partitions which are created.
-Each partition is allocated space between a specified minimum
-and maximum.
-Initially, each partition is allocated its minimum space;
-remaining space is split between the partitions according to the
-given percentages,
-up to their maximum allowed space.
-Space left after all partitions have reached their maximum size
-is left unallocated.
-The sizes below are approximations,
-and may vary from architecture to architecture.
+The
+.Fl A
+option displays the partition set that would be created and
+.Fl wA
+writes it to disk.
 .Pp
-.Sy Disks >= 10 Gigabytes
-.Bd -literal -offset indent -compact
-/		 5% of disk.  150M \(en 1G
-swap		10% of disk.   80M \(en 2x max physical memory
-/tmp		 8% of disk.  120M \(en 4G
-/var		13% of disk.   80M \(en 4G + 2x size of crash dump
-/usr		10% of disk. 1500M \(en 30G
-/usr/X11R6	 3% of disk.  384M \(en 1G
-/usr/local	15% of disk.    1G \(en 20G
-/usr/src	 2% of disk. 1500M \(en 3G
-/usr/obj	 4% of disk.    5G \(en 6G
-/home		30% of disk.    1G \(en 300G
-.Ed
+If the default set is not suitable an alternative one can be specified via
+.Fl T .
+Each line of input describes one partition using two or three fields.
+There must not be whitespace before the first field,
+fields are separated by whitespace and fields cannot contain whitespace.
 .Pp
-.Sy Disks > 2.5 Gigabytes
-.Bd -literal -offset indent -compact
-/		 5% of disk.  800M \(en 2G
-swap		10% of disk.   80M \(en 2x max physical memory
-/usr		78% of disk. 1300M \(en 3G
-/home		 7% of disk.  256M \(en 2G
-.Ed
+The first field is the partition's mount point or one of the
+special tokens
+.Sq RAID
+or
+.Sq SWAP .
 .Pp
-.Sy Disks > 700 Megabytes
-.Bd -literal -offset indent -compact
-/		95% of disk. 700M \(en 4G
-swap		 5% of disk.   1M \(en 2x max physical memory
-.Ed
-.Pp
-A template for the automatic allocation can be passed to disklabel using
-the
-.Fl T
-option.
-The template consists of one line per partition, each giving partition type or
-mount point, min-max size range, and percentage of disk, space-separated.
-Max can be unlimited by specifying
+The second field is the size of the partition.
+This can be a simple
+.Sq *
+to make the partition as large as possible,
+an exact size (e.g. 1G) or a size range.
+A size range consists of a minimum size, a
+.Sq \(en ,
+a maximum size and an optional percentage field (e.g. 1M-10G 25%).
+An unlimited maximum size is specified with
 .Sq * .
-If max size and percentage of disk are omitted, the partition is
-created with the exact min size or unlimited if min is
-.Sq * .
-.Bd -literal -offset indent
-/		250M
-swap		80M-256M 10%
-/tmp		120M-4G	8%
-/var		80M-4G	13%
-/usr		1.5G-3G	5%
-/usr/X11R6	512M-1G	3%
-/usr/local	2G-10G	10%
-/usr/src	1.5G-3G	2%
-/usr/obj	1.3G-2G	4%
-/home		1G-*	45%
-.Ed
 .Pp
-The partition type
-.Dq RAID
-denotes partitions suitable as
-.Xr softraid 4
-chunks.
-.Bd -literal -offset indent
-RAID		1M-*	100%
-.Ed
+When all partitions in the set have been allocated their minimum
+amount of space, the remaining free space is distributed between
+the partitions up to their maximum size.
+How much of the remaining free space a partition receives is given
+by the percentage field.
+If no percentage is provided it is assumed to be 100%.
+If percentages are specified they should add up to exactly 100.
 .Sh FILES
 .Bl -tag -width "/etc/disktabXXX"
 .It Pa /etc/disktab
 Disk description file.
 .El
 .Sh EXAMPLES
-Display the in-core label for sd0 as obtained via
-.Pa /dev/rsd0c :
+Display, respectively, the current label, the default label and the
+default auto allocation for sd0:
+.Bd -literal -offset indent
+# disklabel sd0
+# disklabel -d sd0
+# disklabel -A sd0
+.Ed
 .Pp
-.Dl # disklabel sd0
+Write the default auto allocation to sd0:
 .Pp
-Create a label for sd0 based on information for
-.Dq sd2212
-found in
-.Pa /etc/disktab :
+.Dl # disklabel -wA sd0
 .Pp
-.Dl # disklabel -w /dev/rsd0c sd2212 foo
-.Pp
-Read the on-disk label from a disk with DUID 3eb7f9da875cb9ee,
-edit it and reinstall in-core as well as on-disk:
+Edit the label for the disk with DUID 3eb7f9da875cb9ee:
 .Pp
 .Dl # disklabel -E 3eb7f9da875cb9ee
 .Pp
-Restore the on-disk and in-core label for sd0 from information in
+Restore the label for sd0 from information in
 .Pa mylabel :
 .Pp
 .Dl # disklabel -R sd0 mylabel
+.Pp
+Put largest contiguous area of free space on sd0 into a single RAID partition:
+.Dl # echo 'RAID *' | disklabel -wAT- sd0
+.Pp
+Write the auto allocation defined in
+.Pa /template
+to sd0:
+.Pp
+.Dl # disklabel -wAT/template sd0
+.Pp
+A template file that results in an auto allocation similar to the
+default one for a disk with 5GB of free space is:
+.Bl -column /home 1300MM256M 75% -offset indent
+.It / Ta \0800M\(en2G Ta \05%
+.It swap Ta \0\080M\(en256M Ta 10%
+.It /usr Ta 1300M\(en\)3G Ta 75%
+.It /home Ta \0256M\(en2G Ta 10%
+.El
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while
