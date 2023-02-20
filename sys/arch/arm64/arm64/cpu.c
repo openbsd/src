@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.85 2023/02/19 17:16:13 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.86 2023/02/20 00:01:16 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1686,7 +1686,7 @@ cpu_psci_init(struct cpu_info *ci)
 	 * We found the "psci" power domain.  If this power domain has
 	 * a parent power domain, stash its phandle away for later.
 	 */
-	 
+ 
 	cluster = OF_getpropint(node, "power-domains", 0);
 
 	/*
@@ -1716,8 +1716,10 @@ cpu_psci_init(struct cpu_info *ci)
 	 * that will always be the primary CPU.
 	 */
 
+#ifdef MULTIPROCESSOR
 	if (ci->ci_flags & CPUF_AP)
 		return;
+#endif
 
 	node = OF_getnodebyphandle(cluster);
 	if (node == 0)
