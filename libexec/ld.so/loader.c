@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.211 2023/02/18 01:22:50 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.212 2023/02/20 00:51:57 gnezdo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -415,7 +415,7 @@ _dl_load_dep_libs(elf_object_t *object, int flags, int booting)
 		char *soname = (char *)obj->Dyn.info[DT_SONAME];
 		struct sym_res sr;
 
-		if (soname && _dl_strncmp(soname, "libc.so.", 8))
+		if (!soname || _dl_strncmp(soname, "libc.so.", 8))
 			continue;
 		sr = _dl_find_symbol("execve",
 		    SYM_SEARCH_SELF|SYM_PLT|SYM_WARNNOTFOUND, NULL, obj);
