@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.50 2022/05/09 22:42:53 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.51 2023/02/20 01:55:41 kn Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 2009 Kenneth R. Westerback
@@ -31,6 +31,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+# Turn off Strict Bourne shell.
+set +o sh
 
 export VNAME=$(sysctl -n kern.osrelease)
 export VERSION="${VNAME%.*}${VNAME#*.}"
