@@ -1,7 +1,7 @@
-/*	$OpenBSD: sti_pci.c,v 1.9 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.10 2023/02/20 09:08:47 miod Exp $	*/
 
 /*
- * Copyright (c) 2006, 2007 Miodrag Vallat.
+ * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,8 +66,8 @@ sti_pci_match(struct device *parent, void *cf, void *aux)
 {
 	struct pci_attach_args *paa = aux;
 
-	return (pci_matchbyid(paa, sti_pci_devices,
-	    sizeof(sti_pci_devices) / sizeof(sti_pci_devices[0])));
+	return pci_matchbyid(paa, sti_pci_devices,
+	    sizeof(sti_pci_devices) / sizeof(sti_pci_devices[0]));
 }
 
 void
@@ -93,6 +93,74 @@ sti_pci_attach(struct device *parent, struct device *self, void *aux)
 	    spc->sc_romh, STI_CODEBASE_MAIN) == 0)
 		startuphook_establish(sti_end_attach, spc);
 }
+
+/*
+ * Enable PCI ROM.
+ */
+void
+sti_pci_enable_rom(struct sti_softc *sc)
+{
+	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
+	pcireg_t address;
+
+	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
+		address |= PCI_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
+		SET(sc->sc_flags, STI_ROM_ENABLED);
+	}
+}
+
+/*
+ * Disable PCI ROM.
+ */
+void
+sti_pci_disable_rom(struct sti_softc *sc)
+{
+	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
+	pcireg_t address;
+
+	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
+		address &= ~PCI_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
+
+		CLR(sc->sc_flags, STI_ROM_ENABLED);
+	}
+}
+
+/*
+ * We have to be extremely careful with output in this file, as the
+ * device we are trying to attach might be the console, and we are
+ * still using the PDC routines for output at this point.
+ *
+ * On some devices, if not all, PDC routines assume the STI ROM is *NOT*
+ * mapped when they are invoked, and they will cause the system to freeze
+ * if it is mapped.
+ *
+ * As a result, we need to make sure the ROM is not mapped when invoking
+ * printf(). The following wrapper takes care of this to reduce the risk
+ * of making a mistake.
+ */
+
+static int
+sti_local_printf(struct sti_softc *sc, const char *fmt, ...)
+{
+	va_list ap;
+	int rc;
+	int enabled = sc->sc_flags & STI_ROM_ENABLED;
+
+	if (enabled)
+		sti_pci_disable_rom(sc);
+	va_start(ap, fmt);
+	rc = vprintf(fmt, ap);
+	if (enabled)
+		sti_pci_enable_rom(sc);
+
+	return rc;
+}
+
+#define printf(fmt, ...) sti_local_printf(sc, fmt, ## __VA_ARGS__)
 
 /*
  * Grovel the STI ROM image.
@@ -124,7 +192,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	romsize = PCI_ROM_SIZE(mask);
 	rc = bus_space_map(pa->pa_memt, PCI_ROM_ADDR(address), romsize,
 	    0, &romh);
-	sti_pci_disable_rom(sc);
 	if (rc != 0) {
 		printf("%s: can't map PCI ROM (%d)\n",
 		    sc->sc_dev.dv_xname, rc);
@@ -137,14 +204,12 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 
 	selected = (bus_addr_t)-1;
 	for (offs = 0; offs < romsize; offs += subsize) {
-		sti_pci_enable_rom(sc);
 		/*
 		 * Check for a valid ROM header.
 		 */
 		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 0);
 		tmp = letoh32(tmp);
 		if (tmp != 0x55aa0000) {
-			sti_pci_disable_rom(sc);
 			if (offs == 0) {
 				printf("%s: invalid PCI ROM header signature"
 				    " (%08x)\n",
@@ -160,7 +225,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 4);
 		tmp = letoh32(tmp);
 		if (tmp != 0x00000001) {	/* 1 == STI ROM */
-			sti_pci_disable_rom(sc);
 			if (offs == 0) {
 				printf("%s: invalid PCI ROM type (%08x)\n",
 				    sc->sc_dev.dv_xname, tmp);
@@ -174,10 +238,8 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		subsize <<= 9;
 
 #ifdef STIDEBUG
-		sti_pci_disable_rom(sc);
 		printf("ROM offset %08lx size %08lx type %08x",
 		    offs, subsize, tmp);
-		sti_pci_enable_rom(sc);
 #endif
 
 		/*
@@ -191,7 +253,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
 		tmp = letoh32(tmp);
 		if (tmp != 0x50434952) {	/* PCIR */
-			sti_pci_disable_rom(sc);
 			if (offs == 0) {
 				printf("%s: invalid PCI data signature"
 				    " (%08x)\n",
@@ -207,7 +268,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		}
 
 		tmp = bus_space_read_1(pa->pa_memt, romh, suboffs + 0x14);
-		sti_pci_disable_rom(sc);
 #ifdef STIDEBUG
 		printf(" code %02x", tmp);
 #endif
@@ -252,7 +312,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	 * Read the STI region BAR assignments.
 	 */
 
-	sti_pci_enable_rom(sc);
 	offs = selected +
 	    (bus_addr_t)bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
 	for (i = 0; i < STI_REGION_MAX; i++) {
@@ -271,7 +330,6 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 	stiromsize = (bus_addr_t)bus_space_read_4(pa->pa_memt, romh,
 	    offs + 0x18);
 	stiromsize = letoh32(stiromsize);
-	sti_pci_disable_rom(sc);
 
 	/*
 	 * Replace our mapping with a smaller mapping of only the area
@@ -287,14 +345,14 @@ sti_check_rom(struct sti_pci_softc *spc, struct pci_attach_args *pa)
 		goto fail2;
 	}
 
-	return (0);
+	sti_pci_disable_rom(sc);
+	return 0;
 
 fail:
 	bus_space_unmap(pa->pa_memt, romh, romsize);
 fail2:
 	sti_pci_disable_rom(sc);
-
-	return (rc);
+	return rc;
 }
 
 /*
@@ -311,69 +369,33 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 
 	if (bar == 0) {
 		sc->bases[region] = 0;
-		return (0);
+		return 0;
 	}
 
-#ifdef DIAGNOSTIC
 	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
-		sti_pci_disable_rom(sc);
+#ifdef DIAGNOSTIC
 		printf("%s: unexpected bar %02x for region %d\n",
 		    sc->sc_dev.dv_xname, bar, region);
-		sti_pci_enable_rom(sc);
-	}
 #endif
+		return EINVAL;
+	}
 
 	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
 
-	if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO)
-		rc = pci_io_find(pa->pa_pc, pa->pa_tag, bar, &addr, &size);
-	else
-		rc = pci_mem_find(pa->pa_pc, pa->pa_tag, bar, &addr, &size,
-		    NULL);
+	if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
+		rc = pci_io_find(pa->pa_pc, pa->pa_tag, bar,
+		    &addr, &size);
+	} else {
+		rc = pci_mem_find(pa->pa_pc, pa->pa_tag, bar,
+		    &addr, &size, NULL);
+	}
 
 	if (rc != 0) {
-		sti_pci_disable_rom(sc);
 		printf("%s: invalid bar %02x for region %d\n",
 		    sc->sc_dev.dv_xname, bar, region);
-		sti_pci_enable_rom(sc);
-		return (rc);
+		return rc;
 	}
 
 	sc->bases[region] = addr;
-	return (0);
-}
-
-/*
- * Enable PCI ROM.
- */
-void
-sti_pci_enable_rom(struct sti_softc *sc)
-{
-	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
-	pcireg_t address;
-
-	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
-		address |= PCI_ROM_ENABLE;
-		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
-		SET(sc->sc_flags, STI_ROM_ENABLED);
-	}
-}
-
-/*
- * Disable PCI ROM.
- */
-void
-sti_pci_disable_rom(struct sti_softc *sc)
-{
-	struct sti_pci_softc *spc = (struct sti_pci_softc *)sc;
-	pcireg_t address;
-
-	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_ROM_REG);
-		address &= ~PCI_ROM_ENABLE;
-		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_ROM_REG, address);
-
-		CLR(sc->sc_flags, STI_ROM_ENABLED);
-	}
+	return 0;
 }
