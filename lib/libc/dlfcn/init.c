@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.13 2023/02/21 14:41:51 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.14 2023/02/21 14:46:41 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -71,6 +71,12 @@ extern Elf_Ehdr __executable_start[] __attribute__((weak));
 /* provide definitions for these */
 const dl_cb *_dl_cb __relro = NULL;
 
+int	pinsyscall(int, void *, size_t);
+PROTO_NORMAL(pinsyscall);
+
+int	HIDDEN(execve)(const char *, char *const *, char *const *)
+	__attribute__((weak));
+
 void _libc_preinit(int, char **, char **, dl_cb_cb *) __dso_hidden;
 void
 _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
@@ -135,8 +141,13 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 	_static_phdr_info.dlpi_phnum = phnum;
 
 	/* static libc in a static link? */
-	if (cb == NULL)
+	if (cb == NULL) {
 		setup_static_tib(phdr, phnum);
+
+		/* XXX 128 maximum size of a system call stub, hopefully */
+		if (&HIDDEN(execve))
+			pinsyscall(SYS_execve, &HIDDEN(execve), 128);
+	}
 
 	/*
 	 * If a static binary has text relocations (DT_TEXT), then un-writeable
@@ -203,12 +214,6 @@ _csu_finish(char **argv, char **envp, void (*cleanup)(void))
 	return &environ;
 }
 
-int	pinsyscall(int, void *, size_t);
-PROTO_NORMAL(pinsyscall);
-
-int	HIDDEN(execve)(const char *, char *const *, char *const *)
-	__attribute__((weak));
-
 #ifndef PIC
 /*
  * static libc in a static link?  Then set up __progname and environ
@@ -217,10 +222,6 @@ static inline void
 early_static_init(char **argv, char **envp)
 {
 	static char progname_storage[NAME_MAX+1];
-
-	/* XXX 128 maximum size of a system call stub, hopefully */
-	if (&HIDDEN(execve))
-		pinsyscall(SYS_execve, &HIDDEN(execve), 128);
 
 	environ = envp;
 
