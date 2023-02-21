@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.43 2023/02/21 05:58:08 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.44 2023/02/21 12:20:22 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -336,7 +336,7 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 	BN_ULONG c0, c1, *tp, n0 = *n0p;
 	int i = 0, j;
 
-	tp = calloc(NULL, num + 2, sizeof(BN_ULONG));
+	tp = calloc(num + 2, sizeof(BN_ULONG));
 	if (tp == NULL)
 		return 0;
 
