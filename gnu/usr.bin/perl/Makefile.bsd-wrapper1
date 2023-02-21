@@ -24,7 +24,6 @@ _quick3p=
 .for page sect file in \
     corelist 1				utils/corelist \
     cpan 1				utils/cpan \
-    DebugWrap 1				lib/perl5db.t \
     enc2xs 1				utils/enc2xs \
     encguess 1				utils/encguess \
     h2ph 1				utils/h2ph \

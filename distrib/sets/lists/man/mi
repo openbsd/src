@@ -9,7 +9,6 @@
 ./usr/share/info/libiberty.info
 ./usr/share/info/readline.info
 ./usr/share/info/texinfo
-./usr/share/man/man1/DebugWrap.1
 ./usr/share/man/man1/Internals.1
 ./usr/share/man/man1/PACKAGING.1
 ./usr/share/man/man1/acme-client.1
