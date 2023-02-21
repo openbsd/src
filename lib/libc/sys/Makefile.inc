@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.171 2023/02/16 04:43:54 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.172 2023/02/21 14:39:35 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -62,7 +62,7 @@ ASM=	__semctl.o __thrsigdivert.o \
 	mknod.o mknodat.o mlock.o mlockall.o mmap.o mount.o mprotect.o \
 	mquery.o msgctl.o msgget.o munlock.o munlockall.o munmap.o \
 	nfssvc.o \
-	pathconf.o pipe.o pipe2.o pledge.o profil.o \
+	pathconf.o pipe.o pipe2.o pinsyscall.o pledge.o profil.o \
 	quotactl.o \
 	readlink.o readlinkat.o reboot.o \
 	rename.o renameat.o revoke.o rmdir.o \
