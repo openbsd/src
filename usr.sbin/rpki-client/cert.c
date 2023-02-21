@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.101 2022/11/30 09:12:34 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.102 2023/02/21 10:18:47 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -641,13 +641,14 @@ cert_parse_ee_cert(const char *fn, X509 *x)
 struct cert *
 cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
-	int		 extsz;
-	int		 sia_present = 0;
-	size_t		 i;
-	X509		*x = NULL;
-	X509_EXTENSION	*ext = NULL;
-	ASN1_OBJECT	*obj;
-	struct parse	 p;
+	const unsigned char	*oder;
+	int			 extsz;
+	int			 sia_present = 0;
+	size_t			 i;
+	X509			*x = NULL;
+	X509_EXTENSION		*ext = NULL;
+	ASN1_OBJECT		*obj;
+	struct parse		 p;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -658,8 +659,13 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
+	oder = der;
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: d2i_X509", p.fn);
+		goto out;
+	}
+	if (der != oder + len) {
+		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
 		goto out;
 	}
 

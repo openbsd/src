@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.26 2022/12/28 21:30:18 jmc Exp $ */
+/*	$OpenBSD: cms.c,v 1.27 2023/02/21 10:18:47 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -64,9 +64,10 @@ cms_extract_econtent(const char *fn, CMS_ContentInfo *cms, unsigned char **res,
 
 static int
 cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
-    size_t derlen, const ASN1_OBJECT *oid, BIO *bio, unsigned char **res,
+    size_t len, const ASN1_OBJECT *oid, BIO *bio, unsigned char **res,
     size_t *rsz)
 {
+	const unsigned char		*oder;
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
 	ASN1_OCTET_STRING		*kid = NULL;
@@ -89,8 +90,13 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	if (der == NULL)
 		return 0;
 
-	if ((cms = d2i_CMS_ContentInfo(NULL, &der, derlen)) == NULL) {
+	oder = der;
+	if ((cms = d2i_CMS_ContentInfo(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
+		goto out;
+	}
+	if (der != oder + len) {
+		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
 		goto out;
 	}
 
