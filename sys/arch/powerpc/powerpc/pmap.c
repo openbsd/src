@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.181 2023/02/06 06:41:38 gkoehler Exp $ */
+/*	$OpenBSD: pmap.c,v 1.182 2023/02/21 04:49:43 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -81,6 +81,7 @@
 #include <sys/queue.h>
 #include <sys/pool.h>
 #include <sys/atomic.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1646,12 +1647,19 @@ pmap_enable_mmu(void)
 
 /*
  * activate a pmap entry
- * NOOP on powerpc, all PTE entries exist in the same hash table.
+ * All PTE entries exist in the same hash table.
  * Segment registers are filled on exit to user mode.
  */
 void
 pmap_activate(struct proc *p)
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	/* Set the current pmap. */
+	pcb->pcb_pm = p->p_vmspace->vm_map.pmap;
+	pmap_extract(pmap_kernel(),
+	    (vaddr_t)pcb->pcb_pm, (paddr_t *)&pcb->pcb_pmreal);
+	curcpu()->ci_curpm = pcb->pcb_pmreal;
 }
 
 /*
