@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1229 2023/02/19 23:46:22 kn Exp $
+#	$OpenBSD: install.sub,v 1.1230 2023/02/21 12:56:50 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -126,7 +126,7 @@ addel() {
 	local _a=$1
 
 	shift
-	isin "$_a" $* && echo -n "$*" || echo -n "${*:+$* }$_a"
+	isin "$_a" $* && echo "$*" || echo "${*:+$* }$_a"
 }
 
 # Remove all occurrences of first argument from list formed by the remaining
@@ -138,7 +138,7 @@ rmel() {
 	for _b; do
 		[[ $_a != "$_b" ]] && _c="${_c:+$_c }$_b"
 	done
-	echo -n "$_c"
+	echo "$_c"
 }
 
 # Sort and print unique list of provided arguments.
@@ -149,7 +149,7 @@ bsort() {
 	for _a; do
 		_l=$(addel $_a $_l)
 	done
-	echo -n $_l
+	echo $_l
 }
 
 # If possible, print the timestamp received from the ftplist.cgi output,
@@ -311,12 +311,12 @@ get_softraid_disks() {
 
 # Return disk devices found in hw.disknames.
 get_dkdevs() {
-	echo $(scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}")
+	scan_disknames "${MDDKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}"
 }
 
 # Return CDROM devices found in hw.disknames.
 get_cddevs() {
-	echo $(scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
+	scan_disknames "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}"
 }
 
 # Return sorted list of disks not in DISKS_DONE which contains disks already
@@ -341,7 +341,7 @@ get_dkdevs_root() {
 			is_rootdisk "$_d" || _disks=$(rmel "$_d" $_disks)
 		done
 	fi
-	echo -n $_disks
+	echo $_disks
 }
 
 # Return list of all network devices, optionally limited by parameters to
