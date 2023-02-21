@@ -1,4 +1,4 @@
-.\" $OpenBSD: pinsyscall.2,v 1.2 2023/02/18 13:46:40 jmc Exp $
+.\" $OpenBSD: pinsyscall.2,v 1.3 2023/02/21 02:13:27 deraadt Exp $
 .\"
 .\" Copyright (c) 2023 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2023 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt PINSYSCALL 2
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .In sys/types.h
 .In sys/syscall.h
 .Ft int
-.Fn pinsyscall "int syscall" "char *start" "size_t len"
+.Fn pinsyscall "int syscall" "void *start" "size_t len"
 .Sh DESCRIPTION
 The
 .Fn pinsyscall
