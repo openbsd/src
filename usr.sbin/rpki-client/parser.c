@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.82 2023/01/06 16:06:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.83 2023/02/21 11:13:05 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -348,7 +348,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 		f = load_file(file1, &flen);
 		if (f == NULL && errno != ENOENT)
 			warn("parse file %s", file1);
-		mft1 = proc_parser_mft_pre(file1, f, flen, entp, DIR_VALID,
+		mft1 = proc_parser_mft_pre(file1, f, flen, entp, DIR_TEMP,
 		    &crl1, &err1);
 		free(f);
 	}
