@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.13 2023/02/19 15:45:14 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.14 2023/02/21 05:58:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,9 +132,7 @@ struct bn_mont_ctx_st {
 	int ri;        /* number of bits in R */
 	BIGNUM RR;     /* used to convert to montgomery form */
 	BIGNUM N;      /* The modulus */
-	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
-	                * (Ni is only stored for bignum algorithm) */
-	BN_ULONG n0[2];/* least significant word(s) of Ni;
+	BN_ULONG n0[2];/* least significant word(s) of Ni; R*(1/R mod N) - N*Ni = 1
 	                  (type changed with 0.9.9, was "BN_ULONG n0;" before) */
 	int flags;
 };

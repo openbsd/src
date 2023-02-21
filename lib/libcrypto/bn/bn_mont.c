@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.42 2023/02/19 15:45:14 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.43 2023/02/21 05:58:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,8 +122,6 @@
 
 #include "bn_local.h"
 
-#define MONT_WORD /* use the faster word-based algorithm */
-
 BN_MONT_CTX *
 BN_MONT_CTX_new(void)
 {
@@ -135,7 +133,6 @@ BN_MONT_CTX_new(void)
 
 	BN_init(&mctx->RR);
 	BN_init(&mctx->N);
-	BN_init(&mctx->Ni);
 
 	return mctx;
 }
@@ -147,7 +144,6 @@ BN_MONT_CTX_init(BN_MONT_CTX *mctx)
 
 	BN_init(&mctx->RR);
 	BN_init(&mctx->N);
-	BN_init(&mctx->Ni);
 }
 
 void
@@ -158,7 +154,6 @@ BN_MONT_CTX_free(BN_MONT_CTX *mctx)
 
 	BN_free(&mctx->RR);
 	BN_free(&mctx->N);
-	BN_free(&mctx->Ni);
 
 	if (mctx->flags & BN_FLG_MALLOCED)
 		free(mctx);
@@ -173,8 +168,6 @@ BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
 	if (!BN_copy(&dst->RR, &src->RR))
 		return NULL;
 	if (!BN_copy(&dst->N, &src->N))
-		return NULL;
-	if (!BN_copy(&dst->Ni, &src->Ni))
 		return NULL;
 
 	dst->ri = src->ri;
@@ -201,7 +194,6 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		 goto err;				/* Set N */
 	mont->N.neg = 0;
 
-#ifdef MONT_WORD
 	{
 		BIGNUM tmod;
 		BN_ULONG buf[2];
@@ -284,24 +276,6 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		mont->n0[1] = 0;
 #endif
 	}
-#else /* !MONT_WORD */
-	{ /* bignum version */
-		mont->ri = BN_num_bits(&mont->N);
-		BN_zero(R);
-		if (!BN_set_bit(R, mont->ri))
-			goto err;  /* R = 2^ri */
-		/* Ri = R^-1 mod N*/
-		if ((BN_mod_inverse_ct(Ri, R, &mont->N, ctx)) == NULL)
-			goto err;
-		if (!BN_lshift(Ri, Ri, mont->ri))
-			goto err; /* R*Ri */
-		if (!BN_sub_word(Ri, 1))
-			goto err;
-		/* Ni = (R*Ri-1) / N */
-		if (!BN_div_ct(&(mont->Ni), NULL, Ri, &mont->N, ctx))
-			goto err;
-	}
-#endif
 
 	/* setup RR for conversions */
 	BN_zero(&(mont->RR));
@@ -406,9 +380,7 @@ bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 #endif /* !OPENSSL_BN_ASM_MONT */
 #endif /* OPENSSL_NO_ASM */
 
-#ifdef MONT_WORD
 static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont);
-#endif
 
 int
 BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
@@ -416,7 +388,8 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 {
 	BIGNUM *tmp;
 	int ret = 0;
-#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
+
+#if defined(OPENSSL_BN_ASM_MONT)
 	int num = mont->N.top;
 
 	if (num > 1 && a->top == num && b->top == num) {
@@ -443,13 +416,8 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 			goto err;
 	}
 	/* reduce from aRR to aR */
-#ifdef MONT_WORD
 	if (!BN_from_montgomery_word(r, tmp, mont))
 		goto err;
-#else
-	if (!BN_from_montgomery(r, tmp, mont, ctx))
-		goto err;
-#endif
 	ret = 1;
 err:
 	BN_CTX_end(ctx);
@@ -462,7 +430,6 @@ BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
 	return BN_mod_mul_montgomery(r, a, &mont->RR, mont, ctx);
 }
 
-#ifdef MONT_WORD
 static int
 BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 {
@@ -553,51 +520,16 @@ BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 
 	return (1);
 }
-#endif	/* MONT_WORD */
 
 int
 BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
 {
 	int retn = 0;
-#ifdef MONT_WORD
 	BIGNUM *t;
 
 	BN_CTX_start(ctx);
 	if ((t = BN_CTX_get(ctx)) && BN_copy(t, a))
 		retn = BN_from_montgomery_word(ret, t, mont);
 	BN_CTX_end(ctx);
-#else /* !MONT_WORD */
-	BIGNUM *t1, *t2;
-
-	BN_CTX_start(ctx);
-	if ((t1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((t2 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!BN_copy(t1, a))
-		goto err;
-	BN_mask_bits(t1, mont->ri);
-
-	if (!BN_mul(t2, t1, &mont->Ni, ctx))
-		goto err;
-	BN_mask_bits(t2, mont->ri);
-
-	if (!BN_mul(t1, t2, &mont->N, ctx))
-		goto err;
-	if (!BN_add(t2, a, t1))
-		goto err;
-	if (!BN_rshift(ret, t2, mont->ri))
-		goto err;
-
-	if (BN_ucmp(ret, &(mont->N)) >= 0) {
-		if (!BN_usub(ret, ret, &(mont->N)))
-			goto err;
-	}
-	retn = 1;
-
-err:
-	BN_CTX_end(ctx);
-#endif /* MONT_WORD */
 	return (retn);
 }
