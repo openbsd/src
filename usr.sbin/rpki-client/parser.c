@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.83 2023/02/21 11:13:05 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.84 2023/02/21 17:06:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -213,12 +213,13 @@ proc_parser_mft_check(const char *fn, struct mft *p)
  * Load the correct CRL using the info from the MFT.
  */
 static struct crl *
-parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc)
+parse_load_crl_from_mft(struct entity *entp, struct mft *mft)
 {
 	struct crl	*crl = NULL;
 	unsigned char	*f = NULL;
 	char		*fn = NULL;
 	size_t		 flen;
+	enum location	 loc = DIR_TEMP;
 
 	while (1) {
 		fn = parse_filepath(entp->repoid, entp->path, mft->crl, loc);
@@ -256,22 +257,36 @@ next:
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
-    struct entity *entp, enum location loc, struct crl **crl,
-    const char **errstr)
+proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
+    struct crl **crl, const char **errstr)
 {
 	struct mft	*mft;
 	X509		*x509;
 	struct auth	*a;
+	unsigned char	*der;
+	size_t		 len;
 
 	*crl = NULL;
 	*errstr = NULL;
-	if ((mft = mft_parse(&x509, file, der, len)) == NULL)
-		return NULL;
-	*crl = parse_load_crl_from_mft(entp, mft, loc);
 
-	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
-	if (!valid_x509(file, ctx, x509, a, *crl, errstr)) {
+	*file = parse_filepath(entp->repoid, entp->path, entp->file, loc);
+	if (*file == NULL)
+		return NULL;
+
+	der = load_file(*file, &len);
+	if (der == NULL && errno != ENOENT)
+		warn("parse file %s", *file);
+
+	if ((mft = mft_parse(&x509, *file, der, len)) == NULL) {
+		free(der);
+		return NULL;
+	}
+	free(der);
+
+	*crl = parse_load_crl_from_mft(entp, mft);
+
+	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki);
+	if (!valid_x509(*file, ctx, x509, a, *crl, errstr)) {
 		X509_free(x509);
 		mft_free(mft);
 		crl_free(*crl);
@@ -336,30 +351,13 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
 	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
-	char		*f, *file, *file1, *file2;
+	char		*file, *file1 = NULL, *file2 = NULL;
 	const char	*err1, *err2;
-	size_t		 flen;
 
 	*mp = NULL;
-	file1 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
-	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_TEMP);
 
-	if (file1 != NULL) {
-		f = load_file(file1, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file1);
-		mft1 = proc_parser_mft_pre(file1, f, flen, entp, DIR_TEMP,
-		    &crl1, &err1);
-		free(f);
-	}
-	if (file2 != NULL) {
-		f = load_file(file2, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file2);
-		mft2 = proc_parser_mft_pre(file2, f, flen, entp, DIR_TEMP,
-		    &crl2, &err2);
-		free(f);
-	}
+	mft1 = proc_parser_mft_pre(entp, DIR_VALID, &file1, &crl1, &err1);
+	mft2 = proc_parser_mft_pre(entp, DIR_TEMP, &file2, &crl2, &err2);
 
 	/* overload error from temp file if it is set */
 	if (mft1 == NULL && mft2 == NULL)
