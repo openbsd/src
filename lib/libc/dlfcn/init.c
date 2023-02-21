@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.14 2023/02/21 14:46:41 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.15 2023/02/21 16:21:40 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -144,9 +144,11 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 	if (cb == NULL) {
 		setup_static_tib(phdr, phnum);
 
+#ifndef __hppa__
 		/* XXX 128 maximum size of a system call stub, hopefully */
 		if (&HIDDEN(execve))
 			pinsyscall(SYS_execve, &HIDDEN(execve), 128);
+#endif
 	}
 
 	/*
