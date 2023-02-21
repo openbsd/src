@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.110 2023/02/14 00:41:02 kn Exp $
+.\"	$OpenBSD: route.8,v 1.111 2023/02/21 07:47:24 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: February 14 2023 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -173,20 +173,12 @@ only changes in that routing table will be displayed.
 .Ar interface
 .Op Ar address ...
 .Xc
-Broadcast a list of up to five nameserver address proposals.
-.Pp
-.Xr unwind 8
-will learn them and act according to
-.Xr unwind.conf 5 .
-.Pp
-.Xr resolvd 8
-will replace all existing nameservers for the given interface in
+Broadcast a list of up to five nameserver address proposals to
+.Xr resolvd 8 ,
+which is used to update the list of namservers for the given interface in
 .Xr resolv.conf 5 .
-.Pp
-If no
-.Ar address
-argument is given, a request to remove the nameservers previously entered for
-the given interface is sent.
+If no address is given,
+a request to remove the nameservers for the given interface is sent.
 .Pp
 .It Xo
 .Nm route

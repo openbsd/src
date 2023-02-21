@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.11 2023/01/03 20:58:05 deraadt Exp $
+.\"	$OpenBSD: resolvd.8,v 1.12 2023/02/21 07:47:24 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2023 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt RESOLVD 8
 .Os
 .Sh NAME
@@ -36,11 +36,10 @@ re-appended.
 .Nm
 checks whether
 .Xr unwind 8
-is running, and if so places
+is running and, if so, places a nameserver line at the top
+to cause local resolution:
 .Pp
 .Dl nameserver 127.0.0.1
-.Pp
-at the top, to cause local resolution.
 .Pp
 .Nm
 also monitors the routing socket for proposals learned by
@@ -51,13 +50,12 @@ or network devices which natively learn DNS information such as
 .Xr sppp 4
 or
 .Xr umb 4 .
-Proposals can also be sent using the
+Proposals can be sent manually using the
 .Xr route 8
 .Cm nameserver
 command.
-.Pp
-These proposals are added in priority order, but commented out
-if
+The proposals are added in priority order,
+but commented out if
 .Xr unwind 8
 is running.
 .Pp

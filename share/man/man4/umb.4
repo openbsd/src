@@ -1,4 +1,4 @@
-.\"	$OpenBSD: umb.4,v 1.15 2022/10/08 17:08:55 kevlo Exp $
+.\"	$OpenBSD: umb.4,v 1.16 2023/02/21 07:47:24 jmc Exp $
 .\"
 .\" Copyright (c) 2016 genua mbH
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 8 2022 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt UMB 4
 .Os
 .Sh NAME
@@ -31,6 +31,12 @@ MBIM devices establish connections via cellular networks such as
 GPRS, UMTS, and LTE.
 They appear as a regular point-to-point network interface,
 transporting raw IP frames.
+Once a connection is established,
+the device will automatically set an IP address
+and send out a nameserver proposal,
+which
+.Xr resolvd 8
+can act on.
 .Pp
 Required configuration parameters like PIN and APN have to be set
 with

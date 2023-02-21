@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.12 2023/01/03 20:58:05 deraadt Exp $
+.\"	$OpenBSD: unwind.8,v 1.13 2023/02/21 07:47:24 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2023 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -31,15 +31,16 @@
 is a validating DNS resolver.
 It is intended to run on client machines like workstations or laptops and only
 listens on localhost.
+.Pp
 .Nm
-sends DNS queries to nameservers to answer queries and switches to resolvers
-learned from
-.Xr dhcpleased 8
-or
-.Xr slaacd 8
-if it detects that DNS queries are blocked by the local network.
+sends DNS queries to nameservers to answer queries.
+If it detects that DNS queries are blocked by the local network,
+it can switch to resolvers learned through autoconfiguration.
 It periodically probes if DNS is no longer blocked and switches back to
 querying nameservers itself.
+A list of sources for proposals learned through autoconfiguration
+is documented in
+.Xr resolvd 8 .
 .Pp
 .Nm
 keeps the DNS answers in a cache shared by the different DNS name
@@ -103,8 +104,6 @@ socket used for communication with
 .El
 .Sh SEE ALSO
 .Xr unwind.conf 5 ,
-.Xr dhcpleased 8 ,
-.Xr slaacd 8 ,
 .Xr unbound 8 ,
 .Xr unwindctl 8
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.32 2022/03/31 17:27:20 naddy Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.33 2023/02/21 07:47:24 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -90,40 +90,41 @@ A list of DNS name server types to specify the order in which
 name servers are picked when measured round-trip time medians are equal.
 Additionally, the first mentioned type gets a time bonus.
 Validating name servers are always picked over non-validating name servers.
-DNS name server types are:
-.Pp
-.Bl -tag -width "oDoT-forwarder" -compact
-.It Ic stub
-Name servers learned via DHCP or SLAAC, queried using the libc functions.
-See
-.Xr asr_run 3 .
-Will never validate.
-Useful when running behind broken middle boxes that do not like edns0.
-DNS answers from stub name servers are not cached.
-.It Ic autoconf
-Name servers learned via DHCP or SLAAC.
-.It Ic oDoT-autoconf
-Name servers learned via DHCP or SLAAC.
-.Nm unwind
-tries to opportunistically use DNS over TLS.
+DNS name server types are,
+in default order of preference:
+.Bl -tag -width "oDoT-forwarder"
 .It Ic DoT
 DNS over TLS name servers configured in
-.Nm .
-.It Ic forwarder
-Name servers configured in
 .Nm .
 .It Ic oDoT-forwarder
 Name servers configured in
 .Nm .
 .Nm unwind
 tries to opportunistically use DNS over TLS.
+.It Ic forwarder
+Name servers configured in
+.Nm .
 .It Ic recursor
 .Nm unwind
 itself recursively resolves names.
+.It Ic oDoT-autoconf
+Name servers learned from autoconfiguration.
+A list of sources for proposals learned through autoconfiguration
+is documented in
+.Xr resolvd 8 .
+.Nm unwind
+tries to opportunistically use DNS over TLS.
+.It Ic autoconf
+Name servers learned from autoconfiguration.
+.It Ic stub
+Name servers learned from autoconfiguration,
+queried using the libc functions
+(see
+.Xr asr_run 3 ) .
+Will never validate.
+Useful when running behind broken middle boxes that do not like edns0.
+DNS answers from stub name servers are not cached.
 .El
-.Pp
-The default preference is
-.Ic DoT oDoT-forwarder forwarder recursor oDoT-autoconf autoconf stub .
 .It Ic force Oo Cm accept bogus Oc Ar type Brq Ar name ...
 Force resolving of
 .Ar name
