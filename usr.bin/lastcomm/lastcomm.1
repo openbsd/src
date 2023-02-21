@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lastcomm.1,v 1.24 2019/09/09 20:02:26 bluhm Exp $
+.\"	$OpenBSD: lastcomm.1,v 1.25 2023/02/21 14:31:07 deraadt Exp $
 .\"	$NetBSD: lastcomm.1,v 1.5 1995/10/22 01:43:41 ghudson Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)lastcomm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 9 2019 $
+.Dd $Mdocdate: February 21 2023 $
 .Dt LASTCOMM 1
 .Os
 .Sh NAME
@@ -105,6 +105,12 @@ The flags are encoded as follows:
 The command terminated with the generation of a
 .Pa core
 file.
+.It Li E
+The command terminated because it tried to
+.Xr execve 2
+in violation of
+.Xr pinsyscall 2
+policy.
 .It Li F
 The command ran after
 a fork, but without a following

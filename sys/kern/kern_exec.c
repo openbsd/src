@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.245 2023/02/17 18:08:32 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.246 2023/02/21 14:31:07 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -278,6 +278,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	    (pc >= vm->vm_execve_end || pc < vm->vm_execve)) {
 		printf("%s(%d): execve %lx outside %lx-%lx\n", pr->ps_comm,
 		    pr->ps_pid, pc, vm->vm_execve, vm->vm_execve_end);
+		p->p_p->ps_acflag |= AEXECVE;
 		sigabort(p);
 		return (0);
 	}

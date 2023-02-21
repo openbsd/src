@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.12 2022/02/22 17:22:28 deraadt Exp $	*/
+/*	$OpenBSD: acct.h,v 1.13 2023/02/21 14:31:07 deraadt Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -59,13 +59,14 @@ struct acct {
 	dev_t	  ac_tty;		/* controlling tty, or -1 */
 	pid_t	  ac_pid;		/* process id */
 
-#define	AFORK	0x01			/* fork'd but not exec'd */
-#define	AMAP	0x04			/* system call or stack mapping violation */
-#define	ACORE	0x08			/* dumped core */
-#define	AXSIG	0x10			/* killed by a signal */
-#define	APLEDGE	0x20			/* killed due to pledge violation */
-#define	ATRAP	0x40			/* memory access violation */
-#define	AUNVEIL	0x80			/* unveil access violation */
+#define	AFORK	0x00000001		/* fork'd but not exec'd */
+#define	AMAP	0x00000004		/* system call or stack mapping violation */
+#define	ACORE	0x00000008		/* dumped core */
+#define	AXSIG	0x00000010		/* killed by a signal */
+#define	APLEDGE	0x00000020		/* killed due to pledge violation */
+#define	ATRAP	0x00000040		/* memory access violation */
+#define	AUNVEIL	0x00000080		/* unveil access violation */
+#define	AEXECVE	0x00000100		/* execve from wrong libc stub */
 	u_int32_t ac_flag;		/* accounting flags */
 };
 
