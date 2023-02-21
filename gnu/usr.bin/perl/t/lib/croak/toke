@@ -421,16 +421,17 @@ BEGIN <>
 EXPECT
 Illegal declaration of subroutine BEGIN at - line 1.
 ########
-# NAME multiple conflict markers
-<<<<<<< yours:sample.txt
+# NAME multiple conflict markers.
+# NOTE the <CONFLICT< style text is auto-replaced in test.pl run_multiple_progs
+<CONFLICT< yours:sample.txt
 my $some_code;
-=======
+=CONFLICT=
 my $some_other_code;
->>>>>>> theirs:sample.txt
+>CONFLICT> theirs:sample.txt
 EXPECT
-Version control conflict marker at - line 1, near "<<<<<<<"
-Version control conflict marker at - line 3, near "======="
-Version control conflict marker at - line 5, near ">>>>>>>"
+Version control conflict marker at - line 1, near "<CONFLICT<"
+Version control conflict marker at - line 3, near "=CONFLICT="
+Version control conflict marker at - line 5, near ">CONFLICT>"
 Execution of - aborted due to compilation errors.
 ########
 # NAME (Might be a runaway multi-line...) with Latin-1 delimiters in utf8

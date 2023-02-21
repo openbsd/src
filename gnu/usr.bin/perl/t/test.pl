@@ -1311,6 +1311,14 @@ sub run_multiple_progs {
 	if (s/^(\s*-\w+)//) {
 	    $switch = $1;
 	}
+
+        s/^# NOTE.*\n//mg; # remove any NOTE comments in the content
+
+        # unhide conflict markers - we hide them so that naive
+        # conflict marker detection logic doesn't get upset with our
+        # tests.
+        s/([<=>])CONFLICT\1/$1 x 7/ge;
+
 	my ($prog, $expected) = split(/\nEXPECT(?:\n|$)/, $_, 2);
 
 	my %reason;

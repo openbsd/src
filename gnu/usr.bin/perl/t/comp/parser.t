@@ -572,16 +572,13 @@ eval 'qq{@{0]}${}},{})';
 is(1, 1, "RT #124207");
 
 # RT #127993 version control conflict markers
+my @conflict_markers = map { $_ x 7 } qw( < = > );
 " this should keep working
-<<<<<<<
+$conflict_markers[0]
 " =~ /
->>>>>>>
+$conflict_markers[2]
 /;
-for my $marker (qw(
-<<<<<<<
-=======
->>>>>>>
-)) {
+for my $marker (@conflict_markers) {
     eval "$marker";
     like $@, qr/^Version control conflict marker at \(eval \d+\) line 1, near "$marker"/, "VCS marker '$marker' at beginning";
     eval "\$_\n$marker";
